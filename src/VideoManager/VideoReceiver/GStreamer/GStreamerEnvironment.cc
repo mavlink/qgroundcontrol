@@ -258,7 +258,6 @@ void _applyGstEnvVars(const QString& pluginDir, const QString& gioModDir, const 
     qCDebug(GStreamerEnvLog) << "Applying GStreamer environment:";
 
     _clearManagedGstEnvVars();
-    _setGstEnv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", QStringLiteral("no"));
     _setGstEnvIfExists("GIO_EXTRA_MODULES", gioModDir);
     _setGstEnvIfExecutable("GST_PTP_HELPER_1_0", ptpPath);
     _setGstEnvIfExecutable("GST_PTP_HELPER", ptpPath);
@@ -493,7 +492,6 @@ ValidationResult _setGstEnvVars()
             _setGstEnv("GST_REGISTRY", _cleanJoin(cacheDir, "registry.bin"));
         }
 
-        _setGstEnv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", QStringLiteral("no"));
         // The plugins are static and the APK ships no scanner; an app process must not fork() into one.
         _setGstEnv("GST_REGISTRY_FORK", QStringLiteral("no"));
     }

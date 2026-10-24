@@ -159,8 +159,10 @@ void GStreamerEnvironmentTest::_testBundledRuntime()
     QVERIFY(!qEnvironmentVariableIsSet("GST_PLUGIN_PATH"));
     QCOMPARE(qEnvironmentVariable("GST_PLUGIN_SCANNER"), scanner);
     QCOMPARE(qEnvironmentVariable("GST_PLUGIN_SCANNER_1_0"), scanner);
-    // Desktop GStreamer scans plugins in its forked scanner, so a crashing plugin can't take QGC down.
+    // Desktop GStreamer scans plugins in its forked scanner, so a crashing plugin can't take QGC down, and reuses one
+    // scanner for the whole scan.
     QVERIFY(!qEnvironmentVariableIsSet("GST_REGISTRY_FORK"));
+    QVERIFY(!qEnvironmentVariableIsSet("GST_REGISTRY_REUSE_PLUGIN_SCANNER"));
     QCOMPARE(qEnvironmentVariable("PYTHONPATH"), QStringLiteral("/qgc-test/python"));
     QVERIFY(!qEnvironmentVariableIsSet("PYTHONNOUSERSITE"));
 }
