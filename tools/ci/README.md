@@ -78,7 +78,6 @@ and Ruff skips `build` directories.
 | `reporting/size_analysis.py` | Analyze and report binary-size changes |
 | `reporting/verify_coverage_thresholds.py` | Enforce line and branch coverage thresholds (read from `CMakeCache.txt` with `--build-dir`) |
 | `reporting/workflow_runs.py` | Library: read the triggering `workflow_run` payload and the configured platform workflows, which default the reporting scripts' run-query arguments; validate, select, and group workflow runs; load run snapshots |
-| `gstreamer/gstreamer_archive.py` | Package GStreamer builds and optionally upload them to S3 |
 | `gstreamer/mirror_gstreamer.py` | Verify and mirror upstream GStreamer release artifacts to S3 (`mirror-gstreamer.yml` sets its options through `MIRROR_*` variables) |
 | `security/generate_cpm_sbom.py` | Generate a CycloneDX or SPDX SBOM from CPM package metadata and the bundled GStreamer |
 | `security/install_grype.py` | Install checksum-verified Grype release assets into the scan action tool cache |

@@ -60,7 +60,7 @@
 | `pages.yml` | The [GitHub Pages site](#github-pages-site): CI health dashboard of master builds, JSON schemas, master downloads, and the API docs |
 | `crowdin.yml`, `lupdate.yml` | Crowdin sync and weekly source-string extraction |
 | `px4-metadata.yml` | Daily PX4 airframe and parameter metadata update PR |
-| `build-gstreamer.yml`, `mirror-gstreamer.yml` | Build GStreamer SDKs; mirror upstream GStreamer releases to the QGC S3 bucket |
+| `mirror-gstreamer.yml` | Mirror upstream GStreamer releases to the QGC S3 bucket |
 | `build-profile.yml` | Manual CMake build profiling |
 | `runner-images.yml` | Build, smoke-test, and promote QGC's managed RunsOn AMI (manual and weekly) |
 | `cache-cleanup.yml` | GitHub Actions cache cleanup (scheduled, on PR close, and manual) |
@@ -92,8 +92,7 @@
   `deploy_docs.py`, `collect_build_status.py`, `download_artifacts.py`, `gh_pr_size_label.py`,
   `report_context.py`, `apt_install_retry.py`, `enable_kvm.py`, `install_multipass.py`, and
   `runner_image.py`. Steps ahead of a later or conditional `setup-python` also run
-  `release_branch_check.py` (release tag check), `gstreamer/ci_plan.py` (Build GStreamer's
-  plan), `gstreamer_archive.py` and `build_gstreamer.py` (Android/iOS GStreamer builds),
+  `release_branch_check.py` (release tag check), `build_gstreamer.py` (GStreamer source builds),
   `install_dependencies_helper.py` and `tools/setup/install_dependencies`
   (`install-dependencies`), `build-setup`'s `build_setup.py` planner,
   `setup-python`'s own `cache_backend.py` probe, plus the
@@ -439,8 +438,8 @@ step leaves it out.
   fingerprint matches.
 - GStreamer SDKs have separate immutable caches, excluded from CPM archives. Only Windows, Android,
   and iOS jobs use them (desktop Linux and macOS use the system GStreamer), keyed on the `gstreamer`
-  section of `build-config.json` (fingerprinted in `cache_plan.py`), `cmake/GStreamer/Download.cmake`,
-  and `cmake/GStreamer/platform/*.cmake`. They hold the extracted SDK trees without the downloaded
+  section of `build-config.json` (fingerprinted in `cache_plan.py`), `cmake/GStreamer/Download.cmake`
+  and `cmake/GStreamer/Acquire.cmake`. They hold the extracted SDK trees without the downloaded
   archives; configure uses a tree stamped with the pinned checksums as is.
 
 ### Other caches

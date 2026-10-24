@@ -263,7 +263,7 @@ def test_ios_legs_share_the_device_cpm_snapshot(plan) -> None:
 
 
 def test_only_jobs_without_qgc_sources_skip_the_build_caches() -> None:
-    # build-gstreamer checks out only .github and tools: its CPM fingerprint would be wrong.
+    # Every build-setup job checks out the QGC sources, so none skips the build caches.
     assert load_action("build-setup")["inputs"]["build-cache"]["default"] == "true"
     skipping = {
         workflow
@@ -273,7 +273,7 @@ def test_only_jobs_without_qgc_sources_skip_the_build_caches() -> None:
         if step.get("uses") == "./.github/actions/build-setup"
         and (step.get("with") or {}).get("build-cache", "true") != "true"
     }
-    assert skipping == {"build-gstreamer.yml"}
+    assert skipping == set()
 
 
 def test_compiler_tools_install_in_one_step_for_every_runner() -> None:
@@ -555,7 +555,7 @@ def test_dependencies_use_immutable_separate_sdk_archives(plan, tmp_path):
     # Unrelated GStreamer CMake edits and other build-config.json sections must not invalidate the SDK caches.
     planner = next(step for step in steps if step.get("id") == "plan")
     assert planner["env"]["GST_SDK_FILES_HASH"] == (
-        "${{ hashFiles('cmake/GStreamer/Download.cmake', 'cmake/GStreamer/platform/*.cmake') }}"
+        "${{ hashFiles('cmake/GStreamer/Download.cmake', 'cmake/GStreamer/Acquire.cmake') }}"
     )
 
     release = {"target": "android", "build_type": "Release"}

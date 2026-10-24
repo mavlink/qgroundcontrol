@@ -399,8 +399,8 @@ Scripts in `setup/` configure development environments and read versions from
 detects the host. `build_gstreamer.py` is the entry for the `setup/gstreamer/` package: `config`
 (build settings, Meson options and plugins), `host` (commands, host arch and jobs), `meson` (Linux,
 macOS, Windows), `cerbero` (Android, iOS) and `cli` (arguments, CI defaults and arch/prefix
-outputs). The Build GStreamer workflow first runs `setup/gstreamer/ci_plan.py`, which rejects an
-architecture the dispatch's runner cannot build and outputs the runner's Qt and apt category.
+outputs). CMake does not consume its output: configure uses the official SDKs (or the system
+GStreamer on Linux), so a source build is only for local experiments.
 
 | Script                                    | Platform              | Description                                                                            |
 | ----------------------------------------- | --------------------- | -------------------------------------------------------------------------------------- |
@@ -422,8 +422,7 @@ Linux `--category` limits the install to `core`, `qt`, `gstreamer`, `sdl`, `audi
 On Debian, `android` is `core` plus the OpenJDK for `android.java_version` in `build-config.json`;
 the Docker Android image uses it, while CI's Android jobs install `core` and get the JDK from
 `setup-java`. Debian's `gstreamer_build` and `gstreamer_build_android`, outside the full set, hold
-what `build_gstreamer.py` needs for a Linux source build and an Android (Cerbero) build; the Build
-GStreamer workflow installs them.
+what `build_gstreamer.py` needs for a Linux source build and an Android (Cerbero) build.
 `--list [--platform NAME]` lists each platform's packages by category and
 `--print-packages [--category NAME]` prints one list on a single line; neither installs anything.
 Locally, the Linux installers also sync the locked `build` group (CMake, Ninja, `just`, ...) into

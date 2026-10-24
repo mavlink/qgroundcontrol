@@ -172,9 +172,8 @@ def test_macos_and_windows_install_through_the_retrying_ci_helper(runner_os: str
 
 def test_jobs_installing_dependencies_get_the_pinned_tools_first() -> None:
     """The helper skips the distro CMake, Ninja, ccache and mold; build-setup and its cache install them."""
-    # Windows installs MSVC before build-setup. build-gstreamer installs before build-setup, and its
-    # Android leg skips it and installs the pins itself (test_build_gstreamer_workflow.py).
-    exempt = {"windows.yml", "build-gstreamer.yml"}
+    # Windows installs MSVC before build-setup.
+    exempt = {"windows.yml"}
     checked = 0
     for workflow in workflow_names():
         if workflow in exempt:

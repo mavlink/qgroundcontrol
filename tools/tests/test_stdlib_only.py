@@ -46,9 +46,7 @@ PRE_SETUP_PYTHON_SCRIPTS: tuple[str, ...] = (
     "tools/update_px4_metadata.py",
     # Run before a later or conditional setup-python.
     "tools/ci/publish/release_branch_check.py",  # release.yml checks the tag before installing
-    "tools/ci/gstreamer/gstreamer_archive.py",  # Android and iOS GStreamer builds skip build-setup
     "tools/setup/build_gstreamer.py",
-    "tools/setup/gstreamer/ci_plan.py",  # build-gstreamer.yml plans before build-setup
     "tools/ci/runner/install_dependencies_helper.py",  # install-dependencies sets up Python on Windows only
     "tools/ci/runner/build_setup.py",  # build-setup plans before its setup-python
     "tools/setup/install_dependencies/__main__.py",
