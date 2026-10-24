@@ -7,6 +7,7 @@
 #include <QtCore/QLoggingCategory>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QOpenGLContext>
+#include <QtGui/QSurfaceFormat>
 #include <QtGui/qguiapplication_platform.h>
 
 #include "QGCLoggingCategory.h"
@@ -60,6 +61,16 @@ EGLContext qtEglContext(QOpenGLContext* qtCtx)
         return egl->nativeContext();
     }
     return EGL_NO_CONTEXT;
+}
+
+// The API of the context being wrapped, as Qt's own sink passes it: claiming both makes gst-gl try a desktop-GL share
+// of an eglfs GLES context first.
+GstGLAPI wrappedGlApi(const QOpenGLContext& qtCtx)
+{
+    if (qtCtx.isOpenGLES()) {
+        return GST_GL_API_GLES2;
+    }
+    return (qtCtx.format().profile() == QSurfaceFormat::CoreProfile) ? GST_GL_API_OPENGL3 : GST_GL_API_OPENGL;
 }
 #endif
 
@@ -138,7 +149,7 @@ bool GlContextBridge::primeLocked()
         }
 
         _context = gst_gl_context_new_wrapped(_display, reinterpret_cast<guintptr>(eglCtx), GST_GL_PLATFORM_EGL,
-                                              static_cast<GstGLAPI>(GST_GL_API_GLES2 | GST_GL_API_OPENGL));
+                                              wrappedGlApi(*qtCtx));
         if (!_context) {
             qCWarning(GstGlBridgeLog) << "gst_gl_context_new_wrapped (EGL) failed";
             gst_clear_object(&_display);
@@ -173,7 +184,7 @@ bool GlContextBridge::primeLocked()
         }
         _display = GST_GL_DISPLAY(displayX11);
         _context = gst_gl_context_new_wrapped(_display, reinterpret_cast<guintptr>(glx->nativeContext()),
-                                              GST_GL_PLATFORM_GLX, static_cast<GstGLAPI>(GST_GL_API_OPENGL));
+                                              GST_GL_PLATFORM_GLX, wrappedGlApi(*qtCtx));
         if (!_context) {
             qCWarning(GstGlBridgeLog) << "gst_gl_context_new_wrapped (GLX) failed";
             gst_clear_object(&_display);
