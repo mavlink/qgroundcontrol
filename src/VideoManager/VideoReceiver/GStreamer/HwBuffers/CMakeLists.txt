@@ -189,9 +189,10 @@ set(_qgc_gpu_row_CUDA
     SOURCES cuda/GstCudaVideoBuffer.cc cuda/GstCudaVideoBuffer.h)
 # GLMemory via gst-gl. WIN32: only reachable when Qt uses the ANGLE/EGL GL backend (D3D11/D3D12 are the primary
 # Windows paths); GstGlContextBridge wraps the EGL context only — no WGL. A GLMemory-only Linux/Android build links EGL
-# itself, else GstGlContextBridge.cc fails with "undefined symbol: eglGetDisplay".
+# itself, else GstGlContextBridge.cc fails with "undefined symbol: eglGetDisplay". Not Apple: vtdec prefers GLMemory,
+# which Metal can't import, over the IOSurface-backed CoreVideo memory the IOSurface path takes.
 set(_qgc_gpu_row_GLMemory
-    PLATFORMS LINUX MACOS ANDROID WIN32
+    PLATFORMS LINUX ANDROID WIN32
     PROBE HAS_VAR QGC_GST_HAS_GLMEMORY HEADER gst/gl/gstglmemory.h SYMBOL gst_is_gl_memory
     EGL OPTIONAL
     DEFINE QGC_HAS_GST_GLMEMORY_GPU_PATH
