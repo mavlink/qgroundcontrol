@@ -112,6 +112,7 @@ Item {
         Component {
             id: videoOutputComponent
             FlightDisplayViewVideoOutput {
+                stream: QGroundControl.videoManager.primaryStream
             }
         }
         //-- UVC Video (USB Camera or Video Device)
@@ -197,11 +198,12 @@ Item {
                 anchors.fill:   parent
                 opacity:        _camera ? (_camera.thermalMode === MavlinkCameraControlInterface.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
                 sourceComponent: thermalOutputComponent
-                onLoaded: { if (item) item.objectName = "thermalVideo" }
 
                 Component {
                     id: thermalOutputComponent
-                    FlightDisplayViewVideoOutput {}
+                    FlightDisplayViewVideoOutput {
+                        stream: QGroundControl.videoManager.thermalStream
+                    }
                 }
             }
         }

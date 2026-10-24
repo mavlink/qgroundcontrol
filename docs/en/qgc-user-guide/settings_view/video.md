@@ -6,6 +6,10 @@ Configure video streaming and recording settings.
 
 - **Source** — Video Stream Disabled / RTSP Video Stream / UDP h.264 / UDP h.265 / TCP-MPEG2 / MPEG-TS / Integrated Camera
 
+When a MAVLink camera advertises its video stream, QGC plays that stream (and any thermal stream it advertises)
+instead of the configured source. Your source and connection settings are left unchanged and apply again once no
+camera advertises a stream.
+
 ## Connection
 
 Connection settings vary by source type:

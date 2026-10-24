@@ -1,10 +1,11 @@
 #include "VideoSettings.h"
-#include "VideoManager.h"
 
-#include "QGCLoggingCategory.h"
-#include "QGCNetworkHelper.h"
 #include <QtCore/QSettings>
 #include <QtCore/QVariantList>
+
+#include "QGCLoggingCategory.h"
+#include "UVCDevices.h"
+#include "VideoStreamResolver.h"
 
 QGC_LOGGING_CATEGORY(VideoSettingsLog, "Settings.VideoSettings")
 
@@ -14,7 +15,6 @@ static constexpr bool kGstEnabled = true;
 #else
 static constexpr bool kGstEnabled = false;
 #endif
-#include "UVCReceiver.h"
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
@@ -34,7 +34,7 @@ DECLARE_SETTINGGROUP(Video, "Video")
 #else
     videoSourceList.append(videoSourceHerelinkHotspot);
 #endif
-    QStringList uvcDevices = UVCReceiver::getDeviceNameList();
+    QStringList uvcDevices = UVCDevices::deviceNames();
     for (const QString& device : uvcDevices) {
         videoSourceList.append(device);
     }
@@ -170,8 +170,9 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceCpuVideoPath)
     return _forceCpuVideoPathFact;
 }
 
-// videoConversionElement / disablePixelAspectRatio are read by GStreamer::videoSinkConfigFromSettings()
-// into a VideoSinkConfig and passed as construct-only bin properties — no env-var indirection.
+// videoConversionElement / disablePixelAspectRatio are read by GStreamer::videoSinkConfigFromSettings() as
+// construct-only properties of the receiver's display sink; VideoManager restarts the streams, which rebuilds the
+// sink, when they change.
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoConversionElement)
 {
     if (!_videoConversionElementFact) {
@@ -232,59 +233,12 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, tcpUrl)
 
 bool VideoSettings::streamConfigured(void)
 {
-    //-- First, check if it's autoconfigured
-    if(VideoManager::instance()->autoStreamConfigured()) {
-        qCDebug(VideoSettingsLog) << "Stream auto configured";
+    const QString source = videoSource()->rawValue().toString();
+    if (VideoStreamResolver::resolve(VideoStreamResolver::snapshot(this), nullptr,
+                                     VideoStreamResolver::Role::Primary)) {
         return true;
     }
-    //-- Check if it's disabled
-    QString vSource = videoSource()->rawValue().toString();
-    if(vSource == videoSourceNoVideo || vSource == videoDisabled) {
-        return false;
-    }
-    //-- If UDP, check for URL
-    if(vSource == videoSourceUDPH264 || vSource == videoSourceUDPH265) {
-        const QString url = udpUrl()->rawValue().toString();
-        qCDebug(VideoSettingsLog) << "Testing configuration for UDP Stream:"
-                                  << QGCNetworkHelper::redactedUrlForLogging(url);
-        return !url.isEmpty();
-    }
-    //-- If RTSP, check for URL
-    if(vSource == videoSourceRTSP) {
-        const QString url = rtspUrl()->rawValue().toString();
-        qCDebug(VideoSettingsLog) << "Testing configuration for RTSP Stream:"
-                                  << QGCNetworkHelper::redactedUrlForLogging(url);
-        return !url.isEmpty();
-    }
-    //-- If TCP, check for URL
-    if(vSource == videoSourceTCP) {
-        const QString url = tcpUrl()->rawValue().toString();
-        qCDebug(VideoSettingsLog) << "Testing configuration for TCP Stream:"
-                                  << QGCNetworkHelper::redactedUrlForLogging(url);
-        return !url.isEmpty();
-    }
-    //-- If MPEG-TS, check for URL
-    if(vSource == videoSourceMPEGTS) {
-        const QString url = udpUrl()->rawValue().toString();
-        qCDebug(VideoSettingsLog) << "Testing configuration for MPEG-TS Stream:"
-                                  << QGCNetworkHelper::redactedUrlForLogging(url);
-        return !url.isEmpty();
-    }
-    //-- If Herelink Air unit, good to go
-    if(vSource == videoSourceHerelinkAirUnit) {
-        qCDebug(VideoSettingsLog) << "Stream configured for Herelink Air Unit";
-        return true;
-    }
-    //-- If Herelink Hotspot, good to go
-    if(vSource == videoSourceHerelinkHotspot) {
-        qCDebug(VideoSettingsLog) << "Stream configured for Herelink Hotspot";
-        return true;
-    }
-    if (UVCReceiver::enabled() && UVCReceiver::deviceExists(vSource)) {
-        qCDebug(VideoSettingsLog) << "Stream configured for UVC";
-        return true;
-    }
-    return false;
+    return UVCDevices::deviceExists(source);
 }
 
 void VideoSettings::_configChanged(QVariant)

@@ -196,21 +196,21 @@
         },
         {
             "name": "videoConversionElement",
-            "shortDesc": "Override the GStreamer color-conversion element used in the CPU video sink path.",
-            "longDesc": "Leave blank to auto-probe (SoC-native imxvideoconvert_g2d / nvvidconv when present, otherwise videoconvert). Set to a specific GStreamer factory name to force that element. Used as a workaround when an SoC's preferred element has a defect; takes effect on next stream restart.",
+            "shortDesc": "Override the GStreamer conversion element at the head of the video sink.",
+            "longDesc": "Leave blank to auto-probe (SoC-native imxvideoconvert_g2d / nvvidconv when present, otherwise videoconvertscale). Set to a specific GStreamer factory name to force that element. Used as a workaround when an SoC's preferred element has a defect; changing it restarts the video stream.",
             "type": "string",
             "default": "",
             "label": "Video conversion element override",
-            "keywords": "videoconvert,nvvidconv,imxvideoconvert,gstreamer,advanced"
+            "keywords": "videoconvert,videoconvertscale,nvvidconv,imxvideoconvert,gstreamer,advanced"
         },
         {
             "name": "disablePixelAspectRatio",
-            "shortDesc": "Skip the PAR=1/1 capsfilter in the CPU video sink path.",
-            "longDesc": "QGC normally inserts a pixel-aspect-ratio=1/1 capsfilter so non-square-pixel sources (some RTSP cams, DVB) don't render geometrically distorted. A few v4l2 drivers without VIDIOC_CROPCAP deadlock negotiation when PAR is forced; enable this option as a workaround. Takes effect on next stream restart.",
+            "shortDesc": "Let the video sink take non-square pixels instead of scaling them to square ones.",
+            "longDesc": "QGC normally has the video sink ask for pixel-aspect-ratio=1/1, so non-square-pixel sources (some RTSP cams, DVB) are scaled instead of rendering geometrically distorted. A few v4l2 drivers without VIDIOC_CROPCAP deadlock negotiation when PAR is forced; enable this option as a workaround. Changing it restarts the video stream.",
             "type": "bool",
             "default": false,
             "label": "Disable pixel-aspect-ratio normalization",
-            "keywords": "pixel aspect ratio,capsfilter,v4l2,workaround,advanced"
+            "keywords": "pixel aspect ratio,v4l2,workaround,advanced"
         }
     ]
 }

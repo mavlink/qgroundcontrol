@@ -1,0 +1,375 @@
+#include "VideoManagerTest.h"
+
+#include <QtCore/QRegularExpression>
+#include <QtQml/QQmlComponent>
+#include <QtQml/QQmlEngine>
+#include <QtQuick/QQuickItem>
+#include <QtQuick/QQuickWindow>
+#include <QtTest/QSignalSpy>
+
+#include "Fixtures/RAIIFixtures.h"
+#include "SettingsManager.h"
+#include "VideoManager.h"
+#include "VideoSettings.h"
+#include "VideoStreamController.h"
+#include "VideoTestHelpers.h"
+
+using VideoTestHelpers::makeStreamInfo;
+
+namespace {
+
+constexpr const char* kVideoOutputQml = R"QML(
+import QtQuick
+import QtMultimedia
+
+VideoOutput {
+    width: 64
+    height: 48
+}
+)QML";
+
+// FlightDisplayViewVideoOutput inside a container that tests move between windows.
+constexpr const char* kStreamOutputQml = R"QML(
+import QtQuick
+import QGroundControl.FlyView
+
+Item {
+    id: root
+
+    property var stream
+
+    Item {
+        objectName: "holder"
+
+        FlightDisplayViewVideoOutput {
+            objectName: "output"
+            stream: root.stream
+        }
+    }
+}
+)QML";
+
+std::unique_ptr<QQuickItem> createVideoOutput(QQmlEngine& engine)
+{
+    QQmlComponent component(&engine);
+    component.setData(kVideoOutputQml, QUrl(QStringLiteral("qrc:/VideoManagerTest.qml")));
+    std::unique_ptr<QObject> object(component.create());
+    return std::unique_ptr<QQuickItem>(qobject_cast<QQuickItem*>(object.release()));
+}
+
+}  // namespace
+
+void VideoManagerTest::init()
+{
+    UnitTest::init();
+
+    _videoSettings = SettingsManager::instance()->videoSettings();
+    _facts = std::make_unique<VideoTestHelpers::FactRestorer>();
+    _facts->set(_videoSettings->videoSource(), QString(VideoSettings::videoSourceUDPH264));
+    _facts->set(_videoSettings->udpUrl(), QStringLiteral("0.0.0.0:5600"));
+    _facts->set(_videoSettings->rtspUrl(), QStringLiteral("rtsp://cam.local/manual"));
+    _facts->set(_videoSettings->streamEnabled(), true);
+    _facts->set(_videoSettings->disableWhenDisarmed(), false);
+    _facts->set(_videoSettings->lowLatencyMode(), false);
+    _facts->set(_videoSettings->rtpJitterLatencyMs(), 80);
+    _facts->set(_videoSettings->rtspAutoReconnect(), true);
+    _facts->set(_videoSettings->rtspTimeout(), 8);
+
+    _videoManager = std::make_unique<VideoManager>();
+    _videoManager->_receiverFactory = [](QObject* parent) { return new FakeVideoReceiver(parent); };
+    _videoManager->_createVideoReceivers();
+    _primary = qobject_cast<FakeVideoReceiver*>(_videoManager->primaryStream()->receiver());
+    _thermal = qobject_cast<FakeVideoReceiver*>(_videoManager->thermalStream()->receiver());
+    QVERIFY(_primary);
+    QVERIFY(_thermal);
+    _settle();
+    _resetCounters();
+}
+
+void VideoManagerTest::cleanup()
+{
+    _primary = nullptr;
+    _thermal = nullptr;
+    _videoManager.reset();
+    _facts.reset();
+    _settle();
+
+    UnitTest::cleanup();
+}
+
+void VideoManagerTest::_settle()
+{
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall);
+}
+
+void VideoManagerTest::_resetCounters()
+{
+    for (FakeVideoReceiver* receiver : {_primary, _thermal}) {
+        receiver->configChanges = 0;
+        receiver->activeChanges = 0;
+        receiver->restarts = 0;
+        receiver->videoOutputChanges = 0;
+    }
+}
+
+void VideoManagerTest::_testVideoOutputQmlTypeAvailable()
+{
+    static constexpr auto envName = "QGC_TEST_ENABLE_GSTREAMER";
+    TestFixtures::EnvVarFixture envBackup(envName);
+    qunsetenv(envName);
+
+    QQmlEngine engine;
+    QVERIFY(createVideoOutput(engine) != nullptr);
+}
+
+void VideoManagerTest::_testSettingReachesReceiver_data()
+{
+    QTest::addColumn<QString>("setting");
+    QTest::addColumn<QVariant>("value");
+    QTest::addColumn<QString>("field");
+    QTest::addColumn<QVariant>("expected");
+
+    QTest::newRow("lowLatencyMode") << "lowLatencyMode" << QVariant(true) << "lowLatency" << QVariant(true);
+    QTest::newRow("rtpJitterLatencyMs") << "rtpJitterLatencyMs" << QVariant(300) << "rtpJitterLatencyMs"
+                                        << QVariant(300);
+    QTest::newRow("rtspAutoReconnect") << "rtspAutoReconnect" << QVariant(false) << "autoReconnect" << QVariant(false);
+    QTest::newRow("udpUrl") << "udpUrl" << QVariant(QStringLiteral("0.0.0.0:5700")) << "uri"
+                            << QVariant(QStringLiteral("udp://0.0.0.0:5700"));
+}
+
+void VideoManagerTest::_testSettingReachesReceiver()
+{
+    QFETCH(QString, setting);
+    QFETCH(QVariant, value);
+    QFETCH(QString, field);
+    QFETCH(QVariant, expected);
+
+    Fact* const fact = _videoSettings->property(setting.toLatin1().constData()).value<Fact*>();
+    QVERIFY(fact);
+    _facts->set(fact, value);
+    _settle();
+
+    QCOMPARE(_primary->configChanges, 1);
+    QVERIFY(_primary->active());
+    const VideoReceiver::Config& config = _primary->config();
+    const QVariant actual = (field == QLatin1String("lowLatency"))           ? QVariant(config.lowLatency)
+                            : (field == QLatin1String("rtpJitterLatencyMs")) ? QVariant(config.rtpJitterLatencyMs)
+                            : (field == QLatin1String("autoReconnect"))      ? QVariant(config.autoReconnect)
+                                                                             : QVariant(config.uri);
+    QCOMPARE(actual, expected);
+}
+
+void VideoManagerTest::_testSettingChangesCoalesce()
+{
+    _facts->set(_videoSettings->videoSource(), QString(VideoSettings::videoSourceRTSP));
+    _facts->set(_videoSettings->rtspUrl(), QStringLiteral("rtsp://cam.local/other"));
+    _facts->set(_videoSettings->lowLatencyMode(), true);
+    _facts->set(_videoSettings->rtspTimeout(), 15);
+    _settle();
+
+    QCOMPARE(_primary->configChanges, 1);
+    QCOMPARE(_primary->activeChanges, 0);
+    QCOMPARE(_primary->config().uri, QStringLiteral("rtsp://cam.local/other"));
+    QVERIFY(_primary->config().lowLatency);
+    QCOMPARE(_primary->config().timeout, std::chrono::seconds(15));
+}
+
+void VideoManagerTest::_testSinkSettingsRestartStreams_data()
+{
+    QTest::addColumn<QString>("setting");
+    QTest::addColumn<QVariant>("value");
+
+    QTest::newRow("videoConversionElement")
+        << "videoConversionElement" << QVariant(QStringLiteral("videoconvertscale"));
+    QTest::newRow("disablePixelAspectRatio") << "disablePixelAspectRatio" << QVariant(true);
+}
+
+void VideoManagerTest::_testSinkSettingsRestartStreams()
+{
+    QFETCH(QString, setting);
+    QFETCH(QVariant, value);
+
+    Fact* const fact = _videoSettings->property(setting.toLatin1().constData()).value<Fact*>();
+    QVERIFY(fact);
+    _facts->set(fact, value);
+    _settle();
+
+    QCOMPARE(_primary->restarts, 1);
+    QCOMPARE(_primary->configChanges, 0);
+    // The thermal stream isn't active, and restart() doesn't start a stream.
+    QCOMPARE(_thermal->restarts, 0);
+    QVERIFY(!_thermal->active());
+}
+
+void VideoManagerTest::_testStreamEnabledControlsVideo()
+{
+    QVERIFY(_videoManager->hasVideo());
+    QSignalSpy hasVideoSpy(_videoManager.get(), &VideoManager::hasVideoChanged);
+
+    _facts->set(_videoSettings->streamEnabled(), false);
+    QCOMPARE(hasVideoSpy.count(), 1);
+    QVERIFY(!_videoManager->hasVideo());
+    _settle();
+    QVERIFY(!_primary->active());
+
+    _videoSettings->streamEnabled()->setRawValue(true);
+    QCOMPARE(hasVideoSpy.count(), 2);
+    QVERIFY(_videoManager->hasVideo());
+    _settle();
+    QVERIFY(_primary->active());
+}
+
+void VideoManagerTest::_testStopVideoCancelsEverything()
+{
+    QVERIFY(_primary->active());
+    _primary->setState(VideoReceiver::State::Reconnecting);
+    _facts->set(_videoSettings->lowLatencyMode(), true);
+
+    _videoManager->stopVideo();
+    QVERIFY(!_primary->active());
+
+    // The settings change queued before stopVideo() must not start the stream again.
+    _settle();
+    QVERIFY(!_primary->active());
+    QCOMPARE(_primary->activeChanges, 1);
+    QVERIFY(_primary->config().lowLatency);
+
+    _videoManager->startVideo();
+    _settle();
+    QVERIFY(_primary->active());
+}
+
+void VideoManagerTest::_testAutoStreamLeavesSettingsAlone()
+{
+    QList<QSharedPointer<QSignalSpy>> settingSpies;
+    for (Fact* fact : {_videoSettings->videoSource(), _videoSettings->udpUrl(), _videoSettings->rtspUrl(),
+                       _videoSettings->tcpUrl()}) {
+        settingSpies.append(QSharedPointer<QSignalSpy>::create(fact, &Fact::rawValueChanged));
+    }
+
+    const auto primaryInfo = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
+    const auto thermalInfo =
+        makeStreamInfo(VIDEO_STREAM_TYPE_RTSP, "rtsp://10.0.0.1/thermal", VIDEO_STREAM_ENCODING_H264, true);
+    _videoManager->primaryStream()->setStreamInfo(primaryInfo.get());
+    _videoManager->thermalStream()->setStreamInfo(thermalInfo.get());
+    _settle();
+
+    QCOMPARE(_primary->config().uri, QStringLiteral("udp://0.0.0.0:5601"));
+    QVERIFY(_primary->active());
+    QCOMPARE(_thermal->config().uri, QStringLiteral("rtsp://10.0.0.1/thermal"));
+    QVERIFY(_thermal->active());
+    QVERIFY(_videoManager->autoStreamConfigured());
+    QVERIFY(_videoManager->isStreamSource());
+    QVERIFY(_videoManager->hasThermal());
+    for (const QSharedPointer<QSignalSpy>& spy : std::as_const(settingSpies)) {
+        QCOMPARE(spy->count(), 0);
+    }
+
+    // The camera repeats its stream information: nothing restarts.
+    _resetCounters();
+    emit primaryInfo->infoChanged();
+    emit thermalInfo->infoChanged();
+    _settle();
+    QCOMPARE(_primary->configChanges, 0);
+    QCOMPARE(_thermal->configChanges, 0);
+}
+
+void VideoManagerTest::_testThermalOnlyChangeReconfiguresThermal()
+{
+    const auto first =
+        makeStreamInfo(VIDEO_STREAM_TYPE_RTSP, "rtsp://10.0.0.1/thermal1", VIDEO_STREAM_ENCODING_H264, true);
+    _videoManager->thermalStream()->setStreamInfo(first.get());
+    _settle();
+    QCOMPARE(_thermal->config().uri, QStringLiteral("rtsp://10.0.0.1/thermal1"));
+    _resetCounters();
+
+    const auto second =
+        makeStreamInfo(VIDEO_STREAM_TYPE_RTSP, "rtsp://10.0.0.1/thermal2", VIDEO_STREAM_ENCODING_H264, true);
+    _videoManager->thermalStream()->setStreamInfo(second.get());
+    _settle();
+
+    QCOMPARE(_thermal->configChanges, 1);
+    QCOMPARE(_thermal->config().uri, QStringLiteral("rtsp://10.0.0.1/thermal2"));
+    QCOMPARE(_primary->configChanges, 0);
+    QCOMPARE(_videoSettings->rtspUrl()->rawValue().toString(), QStringLiteral("rtsp://cam.local/manual"));
+}
+
+void VideoManagerTest::_testVideoOutputRegistration()
+{
+    VideoStreamController* const stream = _videoManager->primaryStream();
+    QQuickItem first;
+    QQuickItem second;
+
+    // Registered before a receiver exists: attached once one does.
+    stream->setReceiver(nullptr);
+    stream->registerVideoOutput(&first);
+    _videoManager->_createVideoReceivers();
+    auto* const receiver = qobject_cast<FakeVideoReceiver*>(stream->receiver());
+    QVERIFY(receiver);
+    QCOMPARE(receiver->videoOutput(), &first);
+
+    // Registering again (after a window change) re-attaches it.
+    receiver->videoOutputChanges = 0;
+    stream->registerVideoOutput(&first);
+    QCOMPARE(receiver->videoOutputChanges, 2);
+    QCOMPARE(receiver->videoOutput(), &first);
+
+    stream->registerVideoOutput(&second);
+    QCOMPARE(receiver->videoOutput(), &second);
+    stream->unregisterVideoOutput(&first);
+    QCOMPARE(receiver->videoOutput(), &second);
+    stream->unregisterVideoOutput(&second);
+    QCOMPARE(receiver->videoOutput(), nullptr);
+
+    {
+        QQuickItem destroyed;
+        stream->registerVideoOutput(&destroyed);
+        QCOMPARE(receiver->videoOutput(), &destroyed);
+    }
+    QCOMPARE(receiver->videoOutput(), nullptr);
+    QCOMPARE(stream->videoOutput(), nullptr);
+}
+
+void VideoManagerTest::_testQmlVideoOutputRegistersItself()
+{
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kStreamOutputQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/StreamOutput.qml")));
+    std::unique_ptr<QQuickItem> root(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
+        {{QStringLiteral("stream"), QVariant::fromValue(_videoManager->primaryStream())}})));
+    QVERIFY2(root, qPrintable(component.errorString()));
+    auto* const holder = root->findChild<QQuickItem*>(QStringLiteral("holder"));
+    auto* const output = root->findChild<QQuickItem*>(QStringLiteral("output"));
+    QVERIFY(holder && output);
+
+    QCOMPARE(_videoManager->primaryStream()->videoOutput(), output);
+    QCOMPARE(_primary->videoOutput(), output);
+    QCOMPARE(_primary->videoOutputChanges, 1);
+    QCOMPARE(_thermal->videoOutput(), nullptr);
+
+    // Each move to another window (the PiP pop-out) re-attaches the output.
+    QQuickWindow mainWindow;
+    QQuickWindow popOutWindow;
+    root->setParentItem(mainWindow.contentItem());
+    QCOMPARE(_primary->videoOutputChanges, 3);
+    holder->setParentItem(popOutWindow.contentItem());
+    QCOMPARE(_primary->videoOutputChanges, 5);
+    QCOMPARE(_primary->videoOutput(), output);
+
+    holder->setParentItem(root.get());
+    root.reset();
+    QCOMPARE(_primary->videoOutput(), nullptr);
+}
+
+void VideoManagerTest::_testStreamErrorsReachUser()
+{
+    const QRegularExpression message(QStringLiteral("stream failed"));
+    expectLogMessage("Video.VideoManager", QtWarningMsg, message);
+    expectAppMessage(message);
+    emit _thermal->errorOccurred(QStringLiteral("stream failed"));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+}
+
+UT_REGISTER_TEST(VideoManagerTest, TestLabel::Unit)

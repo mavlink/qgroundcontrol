@@ -9,9 +9,16 @@ target_sources(
     PRIVATE
         VideoManagerInitTest.cc
         VideoManagerInitTest.h
-        VideoManagerRestartTest.cc
-        VideoManagerRestartTest.h
+        VideoManagerTest.cc
+        VideoManagerTest.h
+        VideoRecordingServiceTest.cc
+        VideoRecordingServiceTest.h
+        VideoStreamResolverTest.cc
+        VideoStreamResolverTest.h
+        VideoTestHelpers.h
 )
 
 add_qgc_test(VideoManagerInitTest LABELS Unit)
-add_qgc_test(VideoManagerRestartTest LABELS Unit)
+add_qgc_test(VideoManagerTest LABELS Unit)
+add_qgc_test(VideoRecordingServiceTest LABELS Unit)
+add_qgc_test(VideoStreamResolverTest LABELS Unit)

@@ -9,34 +9,17 @@ Item {
     property Item pipView
     property Item pipState: videoPipState
 
+    // Moving the video to the pop-out window and back needs no restart: the VideoOutputs re-register themselves.
     PipState {
         id:         videoPipState
         pipView:    _root.pipView
         isDark:     true
-
-        onWindowAboutToOpen: {
-            QGroundControl.videoManager.stopVideo()
-            videoStartDelay.start()
-        }
-
-        onWindowAboutToClose: {
-            QGroundControl.videoManager.stopVideo()
-            videoStartDelay.start()
-        }
 
         onStateChanged: {
             if (pipState.state !== pipState.fullState) {
                 QGroundControl.videoManager.fullScreen = false
             }
         }
-    }
-
-    Timer {
-        id:           videoStartDelay
-        interval:     2000;
-        running:      false
-        repeat:       false
-        onTriggered:  QGroundControl.videoManager.startVideo()
     }
 
     //-- Video Streaming
