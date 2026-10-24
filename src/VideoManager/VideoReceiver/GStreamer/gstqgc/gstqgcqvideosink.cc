@@ -17,6 +17,7 @@
 #include <QtMultimedia/QVideoSink>
 
 #include "GstQgcAllocation.h"
+#include "GstQgcCaps.h"
 #include "GstQgcFrameMap.h"
 #include "HwBuffers/common/GstHwVideoInfo.h"
 #include "HwBuffers/common/HwBuffers.h"
@@ -54,6 +55,13 @@ struct PrivState
     std::atomic<bool> active{true};
     // start() derives hw_context from it.
     bool gpu_zerocopy = false;
+    // Set by qgcvideosinkbin before linking (configureSinkCaps); with gpu_zerocopy, they decide what get_caps offers.
+    HwBuffers::GpuBinMode gpu_bin = HwBuffers::GpuBinMode::Passthrough;
+    bool square_pixels = true;
+    // What get_caps last offered, and for which policy; under GST_OBJECT_LOCK. Rebuilt when the policy changes, e.g.
+    // the render target: building may query EGL.
+    GstCaps* offered_caps = nullptr;
+    GstQgc::SinkCapsPolicy offered_policy;
     // Negotiated state: set_caps/stop write it and show_frame reads it, all serialised by GstBaseSink.
     std::atomic<bool> caps_valid{false};
     GstVideoInfo video_info = {};
@@ -112,6 +120,57 @@ bool snapshot_sink(GstQgcQVideoSink* self, HwVideoBufferContext& hwOut)
     hwOut = priv_of(self)->hw_context;
     GST_OBJECT_UNLOCK(self);
     return hasSink;
+}
+
+/// The caps get_caps offers now (transfer-full); rebuilt only when the policy differs from the last call's.
+GstCaps* offered_caps(GstQgcQVideoSink* self)
+{
+    PrivState* const p = priv_of(self);
+    const GstQgc::RenderTarget target = GstQgc::currentRenderTarget();
+    GST_OBJECT_LOCK(self);
+    const GstQgc::SinkCapsPolicy policy{
+        .gpuZeroCopy = p->gpu_zerocopy, .gpuBin = p->gpu_bin, .target = target, .squarePixels = p->square_pixels};
+    if (p->offered_caps && (p->offered_policy == policy)) {
+        GstCaps* const cached = gst_caps_ref(p->offered_caps);
+        GST_OBJECT_UNLOCK(self);
+        return cached;
+    }
+    GST_OBJECT_UNLOCK(self);
+
+    GstCaps* caps = gst_caps_from_string(GstQgc::buildSinkCaps(policy).c_str());
+    if (!caps) {
+        GST_ERROR_OBJECT(self, "sink caps did not parse");
+        return gst_caps_new_empty();
+    }
+    GST_DEBUG_OBJECT(self, "offering %" GST_PTR_FORMAT " for render backend %s (EGL %d)", caps,
+                     GstQgc::toString(target.backend), target.egl);
+    GST_OBJECT_LOCK(self);
+    gst_caps_replace(&p->offered_caps, caps);
+    p->offered_policy = policy;
+    GST_OBJECT_UNLOCK(self);
+    return caps;
+}
+
+/// Asks upstream to renegotiate when the render target changed since get_caps last offered caps (the scene graph came
+/// up after negotiation, or Qt fell back to another graphics API), as the GPU memory the sink takes changed with it.
+/// The glupload variant's caps don't depend on the render target.
+void reconfigure_on_render_target_change(GstQgcQVideoSink* self)
+{
+    PrivState* const p = priv_of(self);
+    const GstQgc::RenderTarget target = GstQgc::currentRenderTarget();
+    GST_OBJECT_LOCK(self);
+    const bool changed = p->offered_caps && p->gpu_zerocopy && (p->gpu_bin != HwBuffers::GpuBinMode::GlUpload) &&
+                         (p->offered_policy.target != target);
+    if (changed) {
+        // Rebuilt by the next get_caps, which also re-arms this check.
+        gst_clear_caps(&p->offered_caps);
+    }
+    GST_OBJECT_UNLOCK(self);
+    if (changed) {
+        GST_INFO_OBJECT(self, "render backend now %s (EGL %d); asking upstream to renegotiate",
+                        GstQgc::toString(target.backend), target.egl);
+        (void) gst_pad_push_event(GST_BASE_SINK_PAD(self), gst_event_new_reconfigure());
+    }
 }
 
 /// True if @p caps name a memory feature other than system memory (memory:DMABuf, memory:GLMemory, ...).
@@ -208,10 +267,9 @@ bool push_frame_queued(GstQgcQVideoSink* self, QVideoFrame&& frame)
 
 }  // namespace
 
-/// Pad template — sink accepts any video caps. The downstream conversion
-/// (videoconvert/glupload) already happens upstream in qgcvideosinkbin.
+/// get_caps narrows this to the formats and memory the sink takes for its render target.
 static GstStaticPadTemplate sink_template =
-    GST_STATIC_PAD_TEMPLATE("sink", GST_PAD_SINK, GST_PAD_ALWAYS, GST_STATIC_CAPS_ANY);
+    GST_STATIC_PAD_TEMPLATE("sink", GST_PAD_SINK, GST_PAD_ALWAYS, GST_STATIC_CAPS("video/x-raw(ANY)"));
 
 enum
 {
@@ -253,6 +311,7 @@ static void gst_qgc_q_video_sink_finalize(GObject* obj)
 {
     GstQgcQVideoSink* self = GST_QGC_Q_VIDEO_SINK(obj);
     gst_clear_caps(&priv_of(self)->cached_caps);
+    gst_clear_caps(&priv_of(self)->offered_caps);
     self->state.~PrivState();
     G_OBJECT_CLASS(gst_qgc_q_video_sink_parent_class)->finalize(obj);
 }
@@ -322,6 +381,17 @@ static void gst_qgc_q_video_sink_get_property(GObject* obj, guint id, GValue* va
             break;
     }
     GST_OBJECT_UNLOCK(self);
+}
+
+static GstCaps* gst_qgc_q_video_sink_get_caps(GstBaseSink* bsink, GstCaps* filter)
+{
+    GstCaps* caps = offered_caps(GST_QGC_Q_VIDEO_SINK(bsink));
+    if (filter) {
+        GstCaps* const filtered = gst_caps_intersect_full(filter, caps, GST_CAPS_INTERSECT_FIRST);
+        gst_caps_unref(caps);
+        caps = filtered;
+    }
+    return caps;
 }
 
 static gboolean gst_qgc_q_video_sink_set_caps(GstBaseSink* bsink, GstCaps* caps)
@@ -395,6 +465,7 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
     PrivState* p = priv_of(self);
 
     p->input_frames.fetch_add(1, std::memory_order_relaxed);
+    reconfigure_on_render_target_change(self);
 
     if (!p->caps_valid.load(std::memory_order_acquire)) {
         // Should never happen — GstBaseSink calls set_caps before show_frame.
@@ -568,6 +639,15 @@ static gboolean gst_qgc_q_video_sink_query(GstBaseSink* bsink, GstQuery* query)
     if ((GST_QUERY_TYPE(query) == GST_QUERY_CONTEXT) && HwBuffers::answerSinkBinContextQuery(query)) {
         return TRUE;
     }
+    if (GST_QUERY_TYPE(query) == GST_QUERY_ACCEPT_CAPS) {
+        // GstBaseSink wants a subset of get_caps, which rejects caps without a pixel-aspect-ratio (square pixels).
+        GstCaps* caps = nullptr;
+        gst_query_parse_accept_caps(query, &caps);
+        GstCaps* const offered = offered_caps(GST_QGC_Q_VIDEO_SINK(bsink));
+        gst_query_set_accept_caps_result(query, caps && gst_caps_can_intersect(caps, offered));
+        gst_caps_unref(offered);
+        return TRUE;
+    }
     return GST_BASE_SINK_CLASS(gst_qgc_q_video_sink_parent_class)->query(bsink, query);
 }
 
@@ -640,6 +720,7 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
                                           "QGroundControl <https://qgroundcontrol.com/>");
     gst_element_class_add_static_pad_template(element_class, &sink_template);
 
+    basesink_class->get_caps = gst_qgc_q_video_sink_get_caps;
     basesink_class->set_caps = gst_qgc_q_video_sink_set_caps;
     basesink_class->event = gst_qgc_q_video_sink_event;
     basesink_class->start = gst_qgc_q_video_sink_start;
@@ -650,6 +731,19 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
 }
 
 namespace GstQgc {
+
+void configureSinkCaps(GstElement* sink, HwBuffers::GpuBinMode gpuBin, bool squarePixels)
+{
+    if (!sink || !GST_IS_QGC_Q_VIDEO_SINK(sink)) {
+        return;
+    }
+    GstQgcQVideoSink* const self = GST_QGC_Q_VIDEO_SINK(sink);
+    GST_OBJECT_LOCK(self);
+    priv_of(self)->gpu_bin = gpuBin;
+    priv_of(self)->square_pixels = squarePixels;
+    gst_clear_caps(&priv_of(self)->offered_caps);
+    GST_OBJECT_UNLOCK(self);
+}
 
 CapsInfo parseCapsInfo(GstMessage* message)
 {

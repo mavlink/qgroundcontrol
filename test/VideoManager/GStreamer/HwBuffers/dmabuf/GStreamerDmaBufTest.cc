@@ -26,6 +26,7 @@
 #include "HwBuffers/common/HwBuffers.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #include "gstqgc/GstQgcCaps.h"
+#include "gstqgc/GstQgcRenderTarget.h"
 #include "gstqgc/GstQgcVideoFormats.h"
 #include "gstqgc/gstqgcqvideosink.h"
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
@@ -41,6 +42,9 @@ void GStreamerTest::_testDmaBufDispatch()
     QSKIP("Direct-DMABuf bin not compiled in this build");
 #endif
     const HwBuffers::ScopedGpuBinModeForTest directBin(HwBuffers::GpuBinMode::DirectDmaBuf);
+    // The sink offers DMABuf only to Qt's OpenGL over EGL.
+    constexpr GstQgc::RenderTarget kDmaBufTarget{.backend = GstQgc::RenderBackend::OpenGL, .egl = true};
+    const GstQgc::ScopedRenderTargetForTest target(kDmaBufTarget);
 
     const QString missingVa = GstTest::firstMissingFactory({"vah264enc", "vah264dec", "vapostproc"});
     if (!missingVa.isEmpty()) {
@@ -60,8 +64,10 @@ void GStreamerTest::_testDmaBufDispatch()
         return GStreamer::adoptCaps(out);
     };
 
-    const GStreamer::GstCapsPtr qgcGpuCaps = GStreamer::adoptCaps(
-        gst_caps_from_string(GstQgc::buildGpuCapsString(HwBuffers::GpuBinMode::DirectDmaBuf).c_str()));
+    const GStreamer::GstCapsPtr qgcGpuCaps = GStreamer::adoptCaps(gst_caps_from_string(
+        GstQgc::buildSinkCaps(
+            {.gpuZeroCopy = true, .gpuBin = HwBuffers::GpuBinMode::DirectDmaBuf, .target = kDmaBufTarget})
+            .c_str()));
     QVERIFY2(qgcGpuCaps, "QGC GPU caps did not parse");
     const GStreamer::GstCapsPtr qgcDmaBufCaps = onlyDmaBufCaps(qgcGpuCaps.get());
     QVERIFY2(!gst_caps_is_empty(qgcDmaBufCaps.get()), "QGC GPU caps did not include a DMABuf structure");

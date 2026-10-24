@@ -3,19 +3,22 @@
 # GST_PLUGIN_STATIC_DECLARE/REGISTER(qgc), pulling the member from the same archive.
 target_sources(
     QGCGStreamer
-    PRIVATE gstqgc.cc
-            gstqgcelements.cc
-            gstqgcelements.h
-            gstqgcvideosinkbin.cc
-            gstqgcvideosinkbin.h
-            gstqgcqvideosink.cc
-            gstqgcqvideosink.h
-            GstQgcFrameMap.cc
-            GstQgcFrameMap.h
-            GstQgcAllocation.cc
-            GstQgcAllocation.h
-            GstQgcBinChain.h
-            GstQgcCaps.cc
-            GstQgcCaps.h
-            GstQgcVideoFormats.h
+    PRIVATE
+        gstqgc.cc
+        gstqgcelements.cc
+        gstqgcelements.h
+        gstqgcvideosinkbin.cc
+        gstqgcvideosinkbin.h
+        gstqgcqvideosink.cc
+        gstqgcqvideosink.h
+        GstQgcFrameMap.cc
+        GstQgcFrameMap.h
+        GstQgcAllocation.cc
+        GstQgcAllocation.h
+        GstQgcBinChain.h
+        GstQgcCaps.cc
+        GstQgcCaps.h
+        GstQgcRenderTarget.cc
+        GstQgcRenderTarget.h
+        GstQgcVideoFormats.h
 )

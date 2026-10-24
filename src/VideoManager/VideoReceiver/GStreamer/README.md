@@ -33,7 +33,20 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   Its construct-only `gpu-zerocopy` property (passed down by the bin) enables zero-copy import of GPU memory, and its
   `frame-stats` property reports that sink's own frame counts per delivery path (`GstQgc::formatSinkStats` formats
   them); GstBaseSink's standard `stats` property is left as is.
-- **`qgcvideosinkbin`** — a bin wrapping a format-restriction capsfilter plus `qgcqvideosink`.
+- **Sink caps** — `qgcqvideosink` answers caps queries itself (`GstQgc::buildSinkCaps`), with the formats Qt renders
+  (`kVideoFormatTable`):
+  - System memory always, with `pixel-aspect-ratio=1/1` unless the bin's `disable-par` is set.
+  - With `gpu-zerocopy`, ahead of it, only the GPU memory the renderer Qt Quick uses can import: DMA_DRM, DMABuf and
+    GLMemory under OpenGL on EGL; D3D11Memory under Direct3D11. Vulkan, Metal, Direct3D12 and OpenGL on GLX, WGL or
+    CGL get system memory only. vtdec's IOSurface-backed frames arrive as system memory.
+  - The glupload variant (see [GPU bin selection](#gpu-bin-selection)) takes GLMemory only.
+
+  The renderer is the backend of the scene graph's `QRhi` (`QGCRhiCapture`), or, until the scene graph runs, the
+  graphics API Qt Quick was asked for. When it changes mid-stream the sink asks upstream to renegotiate.
+- **`qgcvideosinkbin`** — `converter ! qgcqvideosink`, with `glupload ! glcolorconvert` in between for the glupload
+  variant. The converter is the `conversion-element` override, else `imxvideoconvert_g2d` or `nvvidconv` when present,
+  else `videoconvertscale` (`videoconvert ! videoscale` before GStreamer 1.22). It scales non-square pixels to square
+  ones, converts formats the sink doesn't take (such as a software decoder's `Y444`), and passes GPU memory through.
 - **`QGCQVideoSinkController`** — GUI-thread companion that mirrors negotiation/telemetry from the sink into QGC, and
   clears the frame its `QVideoSink` displays when the sink leaves the pipeline.
 
@@ -104,18 +117,25 @@ Unless `QGC_GST_BUNDLE_PLUGINS` is `OFF`, installs and AppImages bundle the syst
 
 #### GPU bin selection
 
-When gst-gl and DMABuf are both compiled, `qgcvideosinkbin`'s GPU branch comes in two variants. `QGC_GST_GPU_BIN`
-(case-insensitive, read once per process) picks one:
+With `gpu-zerocopy`, `qgcvideosinkbin` picks one of three variants when it is built:
 
-- `glupload` (default): glupload → glcolorconvert → GLMemory. gst-gl imports LINEAR and vendor-tiled DMABuf, at the
-  cost of its own copy/convert.
+- `glupload` (the default on Linux and Android): the converter feeds glupload → glcolorconvert → GLMemory. gst-gl
+  imports LINEAR and vendor-tiled DMABuf, at the cost of its own copy/convert.
 - `dmabuf`: DMABuf and DMA_DRM go straight to QGC's EGLImage importer, skipping gst-gl. It binds LINEAR buffers only,
-  so it suits LINEAR producers (V4L2, Mali, V3D); a driver that exports only tiled surfaces, such as Intel iHD, can
-  fail to negotiate.
+  so it suits LINEAR producers (V4L2, Mali, V3D); a driver that exports only tiled surfaces, such as Intel iHD, falls
+  back to system memory.
+- passthrough: the converter feeds the sink, which takes the GPU memory the renderer imports (see
+  [`gstqgc`](#gstqgc--custom-gstreamer-plugin)). Windows and Apple builds always use it.
 
-An unknown value logs a warning and keeps the default. Builds with only one variant ignore the variable: Android
-always uses glupload, Linux without gst-gl always imports DMABuf directly. The choice is logged once under
-`Video.GStreamer.HwBuffers.Config`.
+`glupload` and `dmabuf` hand frames to Qt through EGLImages, so they need Qt Quick on OpenGL over EGL. Under any
+other renderer, such as Vulkan or OpenGL on GLX, the bin falls back to passthrough, which on Linux means system
+memory: gst-gl's GLMemory would otherwise be downloaded and uploaded again for every frame.
+
+When both are compiled, `QGC_GST_GPU_BIN` (`glupload` or `dmabuf`, case-insensitive, read once per process) picks
+between them, and an explicit value is used even under a renderer without EGL, with a warning. An unknown value logs a
+warning and keeps the default. Builds with only one variant ignore the variable: Android always uses glupload, Linux
+without gst-gl always imports DMABuf directly. The choice is logged once under `Video.GStreamer.HwBuffers.Config`; the
+`qgc` GStreamer debug category logs each bin's variant.
 
 #### DMABuf zero-copy diagnostics
 

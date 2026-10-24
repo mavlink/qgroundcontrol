@@ -1,12 +1,12 @@
 #include "gstqgcvideosinkbin.h"
 
-#include <string>
+#include <QtCore/QtEnvironmentVariables>
 
 #include "GstQgcBinChain.h"
-#include "GstQgcCaps.h"
-#include "GstScoped.h"
+#include "GstQgcRenderTarget.h"
 #include "HwBuffers/common/HwBuffers.h"
 #include "gstqgcelements.h"
+#include "gstqgcqvideosink.h"
 
 #define GST_CAT_DEFAULT gst_qgc_debug
 
@@ -16,10 +16,10 @@ struct _GstQgcVideoSinkBin
     /// qgcqvideosink terminal element; caller-set "qvideosink" property targets a QVideoSink.
     GstElement* videosink;
     gboolean gpu_zerocopy;
-    /// Construct-only videoconvert factory override; empty/NULL auto-probes
-    /// (imxvideoconvert_g2d/nvvidconv -> videoconvert).
+    /// Construct-only converter factory override; empty/NULL auto-probes
+    /// (imxvideoconvert_g2d/nvvidconv -> videoconvertscale).
     gchar* conversion_element;
-    /// Skips the CPU branch's PAR=1/1 capsfilter (v4l2 drivers without VIDIOC_CROPCAP deadlock when PAR is forced).
+    /// Lets the sink take non-square pixels (v4l2 drivers without VIDIOC_CROPCAP deadlock when PAR is forced).
     gboolean disable_par;
     /// Proxied to the inner basesink's "sync" so callers can configure clock sync on the bin.
     gboolean sync;
@@ -77,13 +77,13 @@ static void gst_qgc_video_sink_bin_class_init(GstQgcVideoSinkBinClass* klass)
 
     properties[PROP_CONVERSION_ELEMENT] =
         g_param_spec_string("conversion-element", "Conversion element factory",
-                            "Factory name to use for the CPU branch's color conversion. Empty/NULL = auto-probe.", NULL,
+                            "Factory name of the converter at the head of the bin. Empty/NULL = auto-probe.", NULL,
                             (GParamFlags) (G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
 
     properties[PROP_DISABLE_PAR] = g_param_spec_boolean(
-        "disable-par", "Disable PAR=1/1 capsfilter",
-        "Skip the pixel-aspect-ratio=1/1 capsfilter on the CPU branch (workaround for "
-        "v4l2 drivers without VIDIOC_CROPCAP). Construct-only.",
+        "disable-par", "Allow non-square pixels",
+        "Let the sink take non-square pixels instead of having the converter scale them to pixel-aspect-ratio=1/1 "
+        "(workaround for v4l2 drivers without VIDIOC_CROPCAP). Construct-only.",
         FALSE, (GParamFlags) (G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
 
     properties[PROP_SYNC] =
@@ -120,7 +120,8 @@ static void gst_qgc_video_sink_bin_init(GstQgcVideoSinkBin* self)
     self->processing_deadline = G_GUINT64_CONSTANT(20000000);
 }
 
-// Probe: caller override → SoC-native (imxvideoconvert_g2d/nvvidconv) → videoconvert.
+// A single-element converter: the conversion-element override, else a SoC converter, else videoconvertscale (GStreamer
+// 1.22+). Null when none is available.
 static GstElement* gst_qgc_video_sink_bin_make_conversion_element(GstQgcVideoSinkBin* self)
 {
     if (self->conversion_element && self->conversion_element[0] != '\0') {
@@ -132,6 +133,8 @@ static GstElement* gst_qgc_video_sink_bin_make_conversion_element(GstQgcVideoSin
         GST_WARNING_OBJECT(self, "conversion-element='%s' factory missing — falling through to defaults",
                            self->conversion_element);
     }
+    // These SoCs' decoders output proprietary layouts under plain video/x-raw formats, which only their converter
+    // reads.
     static const char* kSoCFactories[] = {"imxvideoconvert_g2d", "nvvidconv", NULL};
     for (int i = 0; kSoCFactories[i] != NULL; ++i) {
         if (GstElement* e = gst_element_factory_make(kSoCFactories[i], NULL)) {
@@ -139,92 +142,61 @@ static GstElement* gst_qgc_video_sink_bin_make_conversion_element(GstQgcVideoSin
             return e;
         }
     }
-    return gst_element_factory_make("videoconvert", NULL);
+    return gst_element_factory_make("videoconvertscale", NULL);
 }
 
-// Link glupload -> glcolorconvert -> the adopted format-capsfilter -> qgcqvideosink and ghost glupload.
-static gboolean wireGlUploadPath(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain, GstElement* videosink,
-                                 GstElement* capsf)
+// Adds the bin's head, which converts and scales system memory into what qgcqvideosink offers (scaling lets its
+// square-pixel caps take non-square-pixel sources) and passes GPU memory through. Before GStreamer 1.22 that's
+// videoconvert ! videoscale; @p head and @p tail are its ends.
+static gboolean add_converter(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain, GstElement*& head, GstElement*& tail)
 {
-    GstElement* glupload = chain.adopt(gst_element_factory_make("glupload", NULL));
-    if (!glupload) {
-        GST_ERROR_OBJECT(self, "Failed to create glupload element");
-        return FALSE;
+    if (GstElement* const converter = gst_qgc_video_sink_bin_make_conversion_element(self)) {
+        head = tail = chain.adopt(converter);
+        return head != NULL;
     }
-    // glcolorconvert honours texture-target=2D (GstQgcCaps.cc); a passthrough when upstream is already 2D.
-    GstElement* glcolorconvert = chain.adopt(gst_element_factory_make("glcolorconvert", NULL));
-    if (!glcolorconvert) {
-        GST_ERROR_OBJECT(self, "Failed to create glcolorconvert element");
-        return FALSE;
-    }
-    if (!chain.linkChain({glupload, glcolorconvert, capsf, videosink}) || !chain.ghostSink(glupload)) {
-        GST_ERROR_OBJECT(self, "Failed to link/ghost glupload→glcolorconvert→capsfilter→qgcqvideosink GPU path");
-        return FALSE;
-    }
-    GST_INFO_OBJECT(self, "Using glupload→qgcqvideosink GPU path (DMABuf→GL EGLImage import)");
-    return TRUE;
+    head = chain.adopt(gst_element_factory_make("videoconvert", NULL));
+    tail = chain.adopt(gst_element_factory_make("videoscale", NULL));
+    return head && tail && chain.linkChain({head, tail});
 }
 
-// Wire the GPU branch of @p mode: the glupload chain, or the adopted format-capsfilter -> qgcqvideosink with the
-// capsfilter ghosted.
-static gboolean wireGpuPath(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain, GstElement* videosink, GstElement* capsf,
-                            HwBuffers::GpuBinMode mode)
+// The GPU variant for the render target. glupload and direct DMABuf hand frames to Qt's OpenGL through EGLImages; any
+// other renderer gets the passthrough variant, whose sink offers only memory that renderer imports (a glupload bin
+// under Vulkan would download every frame and upload it again). An explicit QGC_GST_GPU_BIN still wins.
+static HwBuffers::GpuBinMode select_gpu_bin(GstQgcVideoSinkBin* self)
 {
-    if (mode == HwBuffers::GpuBinMode::GlUpload) {
-        return wireGlUploadPath(self, chain, videosink, capsf);
+    const HwBuffers::GpuBinMode preferred = HwBuffers::gpuBinMode();
+    if (preferred == HwBuffers::GpuBinMode::Passthrough) {
+        return preferred;
     }
-
-    // Keep advertised native GPU formats direct. Formats outside buildGpuCapsString() must
-    // renegotiate upstream; converting here would also upload software frames instead of
-    // letting qgcqvideosink use its CPU mapping fallback.
-    if (!chain.linkChain({capsf, videosink}) || !chain.ghostSink(capsf)) {
-        GST_ERROR_OBJECT(self, "Failed to link/ghost qgcqvideosink (GPU path)");
-        return FALSE;
+    const GstQgc::RenderTarget target = GstQgc::currentRenderTarget();
+    if (target.isOpenGlOnEgl()) {
+        return preferred;
     }
-    if (mode == HwBuffers::GpuBinMode::DirectDmaBuf) {
-        GST_INFO_OBJECT(self, "Using qgcqvideosink GPU path (direct DMABuf import, no glupload)");
-    } else {
-        GST_INFO_OBJECT(self, "Using qgcqvideosink GPU path (native memory passthrough)");
+    if (!qEnvironmentVariableIsEmpty("QGC_GST_GPU_BIN")) {
+        GST_WARNING_OBJECT(self, "QGC_GST_GPU_BIN forces an EGL GPU bin while Qt renders with %s (EGL %d)",
+                           GstQgc::toString(target.backend), target.egl);
+        return preferred;
     }
-    return TRUE;
+    GST_INFO_OBJECT(self, "Qt renders with %s (EGL %d): using the passthrough GPU bin",
+                    GstQgc::toString(target.backend), target.egl);
+    return HwBuffers::GpuBinMode::Passthrough;
 }
 
-// Link videoconvert -> (optional PAR=1/1) -> the adopted format-capsfilter -> qgcqvideosink and ghost the head.
-static gboolean wireCpuPath(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain, GstElement* videosink, GstElement* capsf)
+static const char* gpu_bin_name(HwBuffers::GpuBinMode mode)
 {
-    GstElement* videoconvert = chain.adopt(gst_qgc_video_sink_bin_make_conversion_element(self));
-    if (!videoconvert) {
-        GST_ERROR_OBJECT(self, "Failed to create video conversion element");
-        return FALSE;
+    switch (mode) {
+        case HwBuffers::GpuBinMode::GlUpload:
+            return "glupload";
+        case HwBuffers::GpuBinMode::DirectDmaBuf:
+            return "direct DMABuf";
+        case HwBuffers::GpuBinMode::Passthrough:
+            break;
     }
-
-    // PAR=1/1 capsfilter normalizes non-square pixels; disable-par for v4l2 drivers without
-    // VIDIOC_CROPCAP that deadlock negotiation (GStreamer MR #6242).
-    GstElement* par = nullptr;
-    if (!self->disable_par) {
-        par = chain.adopt(gst_element_factory_make("capsfilter", "qgc-par-filter"));
-        if (!par) {
-            GST_WARNING_OBJECT(self, "capsfilter factory missing — PAR normalization disabled");
-        } else {
-            if (const GStreamer::GstCapsPtr parCaps =
-                    GStreamer::adoptCaps(gst_caps_from_string("video/x-raw, pixel-aspect-ratio=(fraction)1/1"))) {
-                g_object_set(par, "caps", parCaps.get(), NULL);
-            }
-        }
-    }
-
-    const bool linked = par ? chain.linkChain({videoconvert, par, capsf, videosink})
-                            : chain.linkChain({videoconvert, capsf, videosink});
-    if (!linked || !chain.ghostSink(videoconvert)) {
-        GST_ERROR_OBJECT(self, "Failed to link/ghost CPU path");
-        return FALSE;
-    }
-
-    GST_INFO_OBJECT(self, "Using qgcqvideosink CPU path (videoconvert%s → caps → qgcqvideosink → QVideoSink)",
-                    par ? " → PAR=1/1" : "");
-    return TRUE;
+    return "passthrough";
 }
 
+// Builds [converter ! (glupload ! glcolorconvert !) qgcqvideosink]. qgcqvideosink's get_caps decides what negotiates:
+// the formats Qt renders, the GPU memory the render target imports, square pixels unless disable-par.
 static void gst_qgc_video_sink_bin_setup(GstQgcVideoSinkBin* self)
 {
     // gpu-zerocopy is construct-only — pass it to construction; g_object_set after the fact is rejected.
@@ -236,51 +208,40 @@ static void gst_qgc_video_sink_bin_setup(GstQgcVideoSinkBin* self)
     }
     g_object_set(videosink, "active", (gboolean) TRUE, "sync", (gboolean) self->sync, "qos", (gboolean) self->qos,
                  "processing-deadline", self->processing_deadline, NULL);
+    const HwBuffers::GpuBinMode gpuBin = self->gpu_zerocopy ? select_gpu_bin(self) : HwBuffers::GpuBinMode::Passthrough;
+    GstQgc::configureSinkCaps(videosink, gpuBin, !self->disable_par);
 
-    GstElement* capsf = gst_element_factory_make("capsfilter", "qgc-format-filter");
-    if (!capsf) {
-        GST_ERROR_OBJECT(self, "Failed to create capsfilter for qgcqvideosink");
-        gst_clear_object(&videosink);
-        return;
-    }
-
-    // On failure the BinChain rolls the bin back and frees videosink/capsf; self->videosink stays NULL so change_state
-    // surfaces the construction error.
-    const char* const pathName = self->gpu_zerocopy ? "GPU" : "CPU";
+    // On failure the BinChain rolls the bin back; self->videosink stays NULL so change_state surfaces the construction
+    // error.
     GstQgc::BinChain chain(GST_BIN(self));
     if (!chain.adopt(videosink)) {
-        gst_object_unref(capsf);
-        GST_ERROR_OBJECT(self, "Failed to add qgcqvideosink %s sink element to bin", pathName);
+        GST_ERROR_OBJECT(self, "Failed to add qgcqvideosink to bin");
         return;
     }
-    if (!chain.adopt(capsf)) {
-        GST_ERROR_OBJECT(self, "Failed to add qgcqvideosink %s capsfilter element to bin", pathName);
+    GstElement* head = NULL;
+    GstElement* tail = NULL;
+    if (!add_converter(self, chain, head, tail)) {
+        GST_ERROR_OBJECT(self, "Failed to create the video conversion element");
         return;
     }
-
-    // The format capsfilter restricts negotiation to Qt-renderable formats: qgcqvideosink's pad template is CAPS_ANY,
-    // so without it upstream could pick a format that fails in set_caps. On the CPU path, listing the formats
-    // QVideoSink renders natively also keeps videoconvert from forcing BGRA.
-    HwBuffers::GpuBinMode gpuBin = HwBuffers::GpuBinMode::Passthrough;
-    std::string capsStr;
-    if (self->gpu_zerocopy) {
-        gpuBin = HwBuffers::gpuBinMode();
-        capsStr = GstQgc::buildGpuCapsString(gpuBin);
-    } else {
-        capsStr = GstQgc::buildCpuCapsString();
+    if (gpuBin == HwBuffers::GpuBinMode::GlUpload) {
+        GstElement* const glupload = chain.adopt(gst_element_factory_make("glupload", NULL));
+        // glcolorconvert honours the sink's texture-target=2D; a passthrough when upstream is already 2D.
+        GstElement* const glcolorconvert = chain.adopt(gst_element_factory_make("glcolorconvert", NULL));
+        if (!glupload || !glcolorconvert) {
+            GST_ERROR_OBJECT(self, "Failed to create glupload/glcolorconvert");
+            return;
+        }
+        tail = chain.linkChain({tail, glupload, glcolorconvert}) ? glcolorconvert : NULL;
     }
-    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_from_string(capsStr.c_str()));
-    if (!caps) {
-        GST_ERROR_OBJECT(self, "gst_caps_from_string() returned NULL for %s caps", pathName);
+    if (!tail || !chain.linkChain({tail, videosink}) || !chain.ghostSink(head)) {
+        GST_ERROR_OBJECT(self, "Failed to link/ghost the qgcqvideosink chain");
         return;
     }
-    g_object_set(capsf, "caps", caps.get(), NULL);
-
-    if (self->gpu_zerocopy ? wireGpuPath(self, chain, videosink, capsf, gpuBin)
-                           : wireCpuPath(self, chain, videosink, capsf)) {
-        chain.commit();
-        self->videosink = videosink;
-    }
+    chain.commit();
+    self->videosink = videosink;
+    GST_INFO_OBJECT(self, "qgcqvideosink %s bin%s", self->gpu_zerocopy ? gpu_bin_name(gpuBin) : "CPU",
+                    self->disable_par ? " (non-square pixels allowed)" : "");
 }
 
 static void gst_qgc_video_sink_bin_constructed(GObject* object)

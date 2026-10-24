@@ -19,7 +19,15 @@ G_DECLARE_FINAL_TYPE(GstQgcQVideoSink, gst_qgc_q_video_sink, GST, QGC_Q_VIDEO_SI
 
 G_END_DECLS
 
+namespace HwBuffers {
+enum class GpuBinMode;
+}
+
 namespace GstQgc {
+
+/// For qgcvideosinkbin, before it links @p sink: the GPU variant in front of the sink, and whether the sink asks for
+/// square pixels in system memory. Both shape the caps the sink offers.
+void configureSinkCaps(GstElement* sink, HwBuffers::GpuBinMode gpuBin, bool squarePixels);
 
 /// Name of the element message qgcqvideosink posts from set_caps with the negotiated raw caps, which are always fixed.
 inline constexpr char kCapsInfoMessage[] = "qgc-caps-info";

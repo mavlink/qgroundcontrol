@@ -58,6 +58,8 @@ private slots:
     void _testCapsCacheInvalidation();
     void _testGpuZeroCopyFallback_data();
     void _testGpuZeroCopyFallback();
+    void _testQgcVideoSinkBinScalesNonSquarePixels_data();
+    void _testQgcVideoSinkBinScalesNonSquarePixels();
     void _testWindowsGpuSinkPreservesSoftwarePixels();
     void _testWindowsGpuSinkPreservesDirectD3D11Memory();
     void _testAppsinkTeardownUnderLoad();
@@ -71,6 +73,9 @@ private slots:
     void _testQgcQVideoSinkKeepsBaseSinkStats();
     void _testQgcQVideoSinkGpuPathSelection_data();
     void _testQgcQVideoSinkGpuPathSelection();
+    void _testQgcQVideoSinkCapsFollowRenderTarget_data();
+    void _testQgcQVideoSinkCapsFollowRenderTarget();
+    void _testQgcQVideoSinkReconfiguresOnRenderTargetChange();
     void _testQgcQVideoSinkDropsUndeliveredFrame_data();
     void _testQgcQVideoSinkDropsUndeliveredFrame();
     void _testQgcQVideoSinkPtsGuardResync_data();

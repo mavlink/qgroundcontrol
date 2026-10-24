@@ -9,6 +9,7 @@
 
 #include "GStreamerTestHelpers.h"
 #include "HwBuffers/common/HwBuffers.h"
+#include "gstqgc/GstQgcRenderTarget.h"
 
 void GStreamerTest::_testGlMemoryDispatch()
 {
@@ -25,6 +26,8 @@ void GStreamerTest::_testGlMemoryDispatch()
     // The direct-DMABuf bin doesn't offer GLMemory.
     const HwBuffers::ScopedGpuBinModeForTest glBin(HwBuffers::GpuBinMode::GlUpload);
 #endif
+    // The sink offers GLMemory only to Qt's OpenGL over EGL.
+    const GstQgc::ScopedRenderTargetForTest target({.backend = GstQgc::RenderBackend::OpenGL, .egl = true});
 
     if (!GstTest::firstMissingFactory({"glupload"}).isEmpty()) {
         QSKIP("glupload factory unavailable — gst-gl not registered in this build");

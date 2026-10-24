@@ -35,6 +35,7 @@
 #include "gstqgc/GstQgcAllocation.h"
 #include "gstqgc/GstQgcBinChain.h"
 #include "gstqgc/GstQgcCaps.h"
+#include "gstqgc/GstQgcRenderTarget.h"
 #include "gstqgc/GstQgcVideoFormats.h"
 #include "gstqgc/gstqgcqvideosink.h"
 #include "gstqgc/gstqgcvideosinkbin.h"
@@ -131,6 +132,9 @@ public:
 
     GstFlowReturn pushBuffer(GstBuffer* buffer) { return gst_pad_push(_src.get(), buffer); }
 
+    /// Whether the sink asked upstream to renegotiate since the last call.
+    bool takeReconfigure() { return gst_pad_check_reconfigure(_src.get()); }
+
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
     /// A frame in memfd-backed fd memory: not system memory, and no GPU path imports it.
     static GstBuffer* makeFdFrame(GstClockTime pts)
@@ -200,6 +204,28 @@ SinkBin makeSinkBin()
     made.qvideosink = GStreamer::adoptElement(gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(bin)));
     return made;
 }
+
+/// Sorted factory names of a qgcvideosinkbin holding @p others behind its default converter: videoconvertscale, or
+/// videoconvert and videoscale before GStreamer 1.22.
+QStringList withConverter(QStringList others)
+{
+    if (GstTest::firstMissingFactory({"videoconvertscale"}).isEmpty()) {
+        others << QStringLiteral("videoconvertscale");
+    } else {
+        others << QStringLiteral("videoconvert") << QStringLiteral("videoscale");
+    }
+    others.sort();
+    return others;
+}
+
+/// What @p element's sink pad accepts.
+GStreamer::GstCapsPtr sinkPadCaps(GstElement* element)
+{
+    const GStreamer::GstPadPtr pad = GStreamer::adoptPad(gst_element_get_static_pad(element, "sink"));
+    return GStreamer::adoptCaps(pad ? gst_pad_query_caps(pad.get(), nullptr) : nullptr);
+}
+
+constexpr GstQgc::RenderTarget kOpenGlOnEgl{.backend = GstQgc::RenderBackend::OpenGL, .egl = true};
 
 struct PipelineRunResult
 {
@@ -355,19 +381,31 @@ void GStreamerTest::_testQgcVideoSinkBinGpuZeroCopyProperty()
         QCOMPARE(qos, TRUE);
         QCOMPARE(processingDeadline, kUpdatedDeadline);
 
-        // CPU branch: videoconvert, the PAR=1/1 and format capsfilters, and qgcqvideosink.
-        QCOMPARE(GstTest::childFactoryNames(GST_BIN(bin.get())),
-                 (QStringList{QStringLiteral("capsfilter"), QStringLiteral("capsfilter"),
-                              QStringLiteral("qgcqvideosink"), QStringLiteral("videoconvert")}));
+        // The converter and qgcqvideosink, whose caps ask for square pixels.
+        QCOMPARE(GstTest::childFactoryNames(GST_BIN(bin.get())), withConverter({QStringLiteral("qgcqvideosink")}));
+        const GStreamer::GstCapsPtr caps = sinkPadCaps(qvideosink.get());
+        QVERIFY(caps && !gst_caps_is_empty(caps.get()));
+        for (guint i = 0; i < gst_caps_get_size(caps.get()); ++i) {
+            gint parN = 0;
+            gint parD = 0;
+            QVERIFY(
+                gst_structure_get_fraction(gst_caps_get_structure(caps.get(), i), "pixel-aspect-ratio", &parN, &parD));
+            QCOMPARE(parN, parD);
+        }
     }
 
     {
-        // disable-par drops the PAR capsfilter.
+        // disable-par lets the sink take any pixel aspect ratio.
         const GStreamer::GstElementPtr bin = makeBin(FALSE, TRUE);
         QVERIFY2(bin, "Failed to create qgcvideosinkbin (CPU branch, disable-par=TRUE)");
-        QCOMPARE(GstTest::childFactoryNames(GST_BIN(bin.get())),
-                 (QStringList{QStringLiteral("capsfilter"), QStringLiteral("qgcqvideosink"),
-                              QStringLiteral("videoconvert")}));
+        const GStreamer::GstElementPtr qvideosink =
+            GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(bin.get()), "qgcqvideosink"));
+        QVERIFY(qvideosink);
+        const GStreamer::GstCapsPtr caps = sinkPadCaps(qvideosink.get());
+        QVERIFY(caps && !gst_caps_is_empty(caps.get()));
+        for (guint i = 0; i < gst_caps_get_size(caps.get()); ++i) {
+            QVERIFY(!gst_structure_has_field(gst_caps_get_structure(caps.get(), i), "pixel-aspect-ratio"));
+        }
     }
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
@@ -406,41 +444,46 @@ QStringList capsMemoryFeatures(const GstCaps* caps)
 void GStreamerTest::_testQgcVideoSinkBinGpuBinVariant_data()
 {
     QTest::addColumn<int>("mode");
+    QTest::addColumn<int>("backend");
+    QTest::addColumn<bool>("egl");
     QTest::addColumn<QStringList>("children");
     QTest::addColumn<QStringList>("memoryFeatures");
     QTest::addColumn<bool>("singlePlaneRgb2D");
 
     const QString systemMemory = QStringLiteral("memory:SystemMemory");
-    const QStringList directChildren{QStringLiteral("capsfilter"), QStringLiteral("qgcqvideosink")};
+    const QStringList passthroughChildren = withConverter({QStringLiteral("qgcqvideosink")});
+#if defined(QGC_GST_BIN_HAS_GLUPLOAD) || defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
+    const int openGl = int(GstQgc::RenderBackend::OpenGL);
+#endif
 #if defined(QGC_GST_BIN_HAS_GLUPLOAD)
+    const int glUpload = int(HwBuffers::GpuBinMode::GlUpload);
     // glcolorconvert turns external-OES into texture-target=2D; Qt samples multi-plane GLMemory as green frames.
-    QTest::newRow("glupload") << int(HwBuffers::GpuBinMode::GlUpload)
-                              << QStringList{QStringLiteral("capsfilter"), QStringLiteral("glcolorconvert"),
-                                             QStringLiteral("glupload"), QStringLiteral("qgcqvideosink")}
+    QTest::newRow("glupload") << glUpload << openGl << true
+                              << withConverter({QStringLiteral("glcolorconvert"), QStringLiteral("glupload"),
+                                                QStringLiteral("qgcqvideosink")})
                               << QStringList{QStringLiteral("memory:GLMemory")} << true;
+    // gst-gl's EGLImages can't reach a renderer that isn't OpenGL on EGL: the bin would round-trip every frame.
+    QTest::newRow("glupload-under-vulkan") << glUpload << int(GstQgc::RenderBackend::Vulkan) << false
+                                           << passthroughChildren << QStringList{systemMemory} << false;
+    QTest::newRow("glupload-under-glx") << glUpload << openGl << false << passthroughChildren
+                                        << QStringList{systemMemory} << false;
 #endif
 #if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
     // DMA_DRM fragments carry memory:DMABuf too; GLMemory stays out so gst-gl can't take the import over.
-    QTest::newRow("direct-dmabuf") << int(HwBuffers::GpuBinMode::DirectDmaBuf) << directChildren
+    QTest::newRow("direct-dmabuf") << int(HwBuffers::GpuBinMode::DirectDmaBuf) << openGl << true << passthroughChildren
                                    << QStringList{QStringLiteral("memory:DMABuf"), systemMemory} << false;
 #endif
 #if !defined(QGC_GST_BIN_HAS_GLUPLOAD) && !defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
-    // Every compiled native memory in caps order, D3D ahead of GLMemory, then the software-decoder fallback.
-    QStringList nativeFeatures;
+    QStringList direct3D11Features;
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-    nativeFeatures << QStringLiteral("memory:D3D11Memory");
+    direct3D11Features << QStringLiteral("memory:D3D11Memory");
 #endif
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    nativeFeatures << QStringLiteral("memory:D3D12Memory");
-#endif
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-    nativeFeatures << QStringLiteral("memory:GLMemory");
-#endif
-#if defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
-    nativeFeatures << QStringLiteral("memory:AHardwareBuffer");
-#endif
-    QTest::newRow("passthrough") << int(HwBuffers::GpuBinMode::Passthrough) << directChildren
-                                 << (nativeFeatures << systemMemory) << false;
+    QTest::newRow("passthrough-d3d11") << int(HwBuffers::GpuBinMode::Passthrough)
+                                       << int(GstQgc::RenderBackend::Direct3D11) << false << passthroughChildren
+                                       << (direct3D11Features << systemMemory) << false;
+    // vtdec's IOSurface-backed buffers arrive in system memory; GLMemory would be downloaded under Metal.
+    QTest::newRow("passthrough-metal") << int(HwBuffers::GpuBinMode::Passthrough) << int(GstQgc::RenderBackend::Metal)
+                                       << false << passthroughChildren << QStringList{systemMemory} << false;
 #endif
 }
 
@@ -450,24 +493,29 @@ void GStreamerTest::_testQgcVideoSinkBinGpuBinVariant()
     QSKIP("No GPU path compiled in this build");
 #else
     QFETCH(int, mode);
+    QFETCH(int, backend);
+    QFETCH(bool, egl);
     QFETCH(QStringList, children);
     QFETCH(QStringList, memoryFeatures);
     QFETCH(bool, singlePlaneRgb2D);
 
+    if (!qEnvironmentVariableIsEmpty("QGC_GST_GPU_BIN")) {
+        QSKIP("QGC_GST_GPU_BIN overrides the GPU bin choice");
+    }
     const HwBuffers::ScopedGpuBinModeForTest binMode(static_cast<HwBuffers::GpuBinMode>(mode));
+    const GstQgc::ScopedRenderTargetForTest target(
+        {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = egl});
 
     GstElement* element = gst_element_factory_make_full("qgcvideosinkbin", "gpu-zerocopy", TRUE, nullptr);
     QVERIFY2(element, "Failed to create qgcvideosinkbin (GPU branch)");
     const GStreamer::GstElementPtr bin = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
     QCOMPARE(GstTest::childFactoryNames(GST_BIN(bin.get())), children);
 
-    const GStreamer::GstElementPtr formatFilter =
-        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(bin.get()), "qgc-format-filter"));
-    QVERIFY2(formatFilter, "GPU bin missing qgc-format-filter");
-    GstCaps* rawCaps = nullptr;
-    g_object_get(formatFilter.get(), "caps", &rawCaps, nullptr);
-    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(rawCaps);
-    QVERIFY2(caps, "GPU bin format capsfilter has null caps");
+    const GStreamer::GstElementPtr qvideosink =
+        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(bin.get()), "qgcqvideosink"));
+    QVERIFY(qvideosink);
+    const GStreamer::GstCapsPtr caps = sinkPadCaps(qvideosink.get());
+    QVERIFY2(caps, "qgcqvideosink returned no caps");
     QCOMPARE(capsMemoryFeatures(caps.get()), memoryFeatures);
 
     if (!singlePlaneRgb2D) {
@@ -557,21 +605,33 @@ void GStreamerTest::_testCapsCacheInvalidation()
 void GStreamerTest::_testGpuZeroCopyFallback_data()
 {
     QTest::addColumn<int>("mode");
+    QTest::addColumn<int>("backend");
+    QTest::addColumn<QString>("format");
+
+    // Software-decoded frames reach every GPU variant: in a format the sink takes, and in one only the converter reads.
+    for (const QString& format : {QStringLiteral("BGRA"), QStringLiteral("Y444")}) {
+        const QByteArray tag = format.toLatin1();
 #if defined(QGC_GST_BIN_HAS_GLUPLOAD)
-    QTest::newRow("glupload") << int(HwBuffers::GpuBinMode::GlUpload);
+        QTest::addRow("glupload-%s", tag.constData())
+            << int(HwBuffers::GpuBinMode::GlUpload) << int(GstQgc::RenderBackend::OpenGL) << format;
 #endif
 #if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
-    QTest::newRow("direct-dmabuf") << int(HwBuffers::GpuBinMode::DirectDmaBuf);
+        QTest::addRow("direct-dmabuf-%s", tag.constData())
+            << int(HwBuffers::GpuBinMode::DirectDmaBuf) << int(GstQgc::RenderBackend::OpenGL) << format;
 #endif
-#if !defined(QGC_GST_BIN_HAS_GLUPLOAD) && !defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
-    QTest::newRow("passthrough") << int(HwBuffers::GpuBinMode::Passthrough);
-#endif
+        QTest::addRow("passthrough-%s", tag.constData())
+            << int(HwBuffers::GpuBinMode::Passthrough) << int(GstQgc::RenderBackend::Vulkan) << format;
+    }
 }
 
 void GStreamerTest::_testGpuZeroCopyFallback()
 {
     QFETCH(int, mode);
+    QFETCH(int, backend);
+    QFETCH(QString, format);
     const HwBuffers::ScopedGpuBinModeForTest binMode(static_cast<HwBuffers::GpuBinMode>(mode));
+    const GstQgc::ScopedRenderTargetForTest target(
+        {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = true});
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     const quint64 dmabufBefore =
@@ -579,8 +639,9 @@ void GStreamerTest::_testGpuZeroCopyFallback()
 #endif
 
     QVideoSink videoSink;
-    auto r = runPipelineThroughQVideoSink(videoSink, "video/x-raw,format=BGRA,width=320,height=240,framerate=30/1",
-                                          /*numBuffers*/ 5, /*gpuZerocopy*/ true);
+    const QByteArray capsLine =
+        QStringLiteral("video/x-raw,format=%1,width=320,height=240,framerate=30/1").arg(format).toLatin1();
+    auto r = runPipelineThroughQVideoSink(videoSink, capsLine.constData(), /*numBuffers*/ 5, /*gpuZerocopy*/ true);
     // The glupload bin needs an EGL/GL context, which a headless runner may not have.
     if (!r.eos && (r.errorMessage.contains(QStringLiteral("egl"), Qt::CaseInsensitive) ||
                    r.errorMessage.contains(QStringLiteral("gl context"), Qt::CaseInsensitive))) {
@@ -589,12 +650,71 @@ void GStreamerTest::_testGpuZeroCopyFallback()
     }
     QVERIFY2(r.eos, qUtf8Printable(QStringLiteral("Pipeline: %1").arg(r.errorMessage)));
     QVERIFY(r.frameCount > 0);
-    QCOMPARE(r.lastFormat.pixelFormat(), QVideoFrameFormat::Format_BGRA8888);
+    QVERIFY(r.lastFormat.pixelFormat() != QVideoFrameFormat::Format_Invalid);
+    if (format == QStringLiteral("BGRA")) {
+        QCOMPARE(r.lastFormat.pixelFormat(), QVideoFrameFormat::Format_BGRA8888);
+    }
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QCOMPARE(GstHwPathTelemetry::peek(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures),
              dmabufBefore);
 #endif
+}
+
+void GStreamerTest::_testQgcVideoSinkBinScalesNonSquarePixels_data()
+{
+    QTest::addColumn<bool>("gpuZeroCopy");
+    QTest::addColumn<bool>("disablePar");
+
+    QTest::newRow("cpu") << false << false;
+    QTest::newRow("gpu") << true << false;
+    QTest::newRow("cpu-disable-par") << false << true;
+}
+
+void GStreamerTest::_testQgcVideoSinkBinScalesNonSquarePixels()
+{
+    QFETCH(bool, gpuZeroCopy);
+    QFETCH(bool, disablePar);
+    // Software frames take the GPU bin's system-memory caps too.
+    const GstQgc::ScopedRenderTargetForTest target({.backend = GstQgc::RenderBackend::Vulkan});
+
+    // A 720x576 PAL source with 12/11 pixels, as analog encoders and DVRs send.
+    constexpr int kWidth = 720;
+    constexpr int kHeight = 576;
+    constexpr double kDisplayAspect = (kWidth * 12.0) / (kHeight * 11.0);
+
+    QVideoSink videoSink;
+    QSize lastSize;
+    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, &videoSink,
+                     [&lastSize](const QVideoFrame& frame) { lastSize = frame.size(); });
+    QObject owner;
+    GstTest::TestPipeline pipeline;
+    QVERIFY2(pipeline.launch(QStringLiteral("videotestsrc num-buffers=3 ! "
+                                            "video/x-raw,format=I420,width=%1,height=%2,pixel-aspect-ratio=12/11,"
+                                            "framerate=30/1 ! qgcvideosinkbin name=sink gpu-zerocopy=%3 disable-par=%4")
+                                 .arg(kWidth)
+                                 .arg(kHeight)
+                                 .arg(gpuZeroCopy ? "true" : "false")
+                                 .arg(disablePar ? "true" : "false")),
+             qPrintable(pipeline.error()));
+    const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
+    QVERIFY(sinkBin);
+    QVERIFY(GStreamer::setupQVideoSinkElement(sinkBin.get(), &videoSink, &owner));
+    QVERIFY(pipeline.play());
+    const QString failure = pipeline.runToEos();
+    QVERIFY2(failure.isEmpty(), qPrintable(failure));
+    QVERIFY_TRUE_WAIT(lastSize.isValid(), TestTimeout::mediumMs());
+
+    if (disablePar) {
+        QCOMPARE(lastSize, QSize(kWidth, kHeight));
+        return;
+    }
+    // Square pixels at the source's display aspect ratio.
+    QCOMPARE(lastSize.height(), kHeight);
+    QVERIFY2(qAbs((double(lastSize.width()) / lastSize.height()) - kDisplayAspect) < 0.01,
+             qPrintable(QStringLiteral("frame %1x%2 lost the 12/11 display aspect ratio")
+                            .arg(lastSize.width())
+                            .arg(lastSize.height())));
 }
 
 void GStreamerTest::_testWindowsGpuSinkPreservesSoftwarePixels()
@@ -1028,8 +1148,8 @@ void GStreamerTest::_testColorimetryPixelFormatMapping()
 
 void GStreamerTest::_testCpuCapsFormatsRoundTripToQt()
 {
-    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_from_string(GstQgc::buildCpuCapsString().c_str()));
-    QVERIFY2(caps, "buildCpuCapsString() did not parse");
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_from_string(GstQgc::buildSinkCaps({}).c_str()));
+    QVERIFY2(caps, "buildSinkCaps() did not parse");
     const GstStructure* s = gst_caps_get_structure(caps.get(), 0);
     const GValue* fmt = gst_structure_get_value(s, "format");
     QVERIFY2(fmt && GST_VALUE_HOLDS_LIST(fmt), "CPU caps format field is not a list");
@@ -1069,8 +1189,9 @@ void GStreamerTest::_testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta()
 {
 #if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
     const HwBuffers::ScopedGpuBinModeForTest directBin(HwBuffers::GpuBinMode::DirectDmaBuf);
-#elif defined(QGC_GST_BIN_HAS_GLUPLOAD)
-    QSKIP("Direct-DMABuf ALLOCATION VideoMeta contract does not apply to the glupload bin");
+    const GstQgc::ScopedRenderTargetForTest target(kOpenGlOnEgl);
+#else
+    QSKIP("The ALLOCATION VideoMeta contract covers the direct-DMABuf bin");
 #endif
 
     GstElement* const element = gst_element_factory_make_full("qgcvideosinkbin", "gpu-zerocopy", TRUE, nullptr);
@@ -1078,13 +1199,28 @@ void GStreamerTest::_testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta()
     const GStreamer::GstElementPtr bin = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
     const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(bin.get(), "sink"));
     QVERIFY2(sinkPad, "qgcvideosinkbin has no sink pad");
+    const GStreamer::GstPadPtr src = GStreamer::adoptPad(GST_PAD(gst_object_ref_sink(gst_pad_new("src", GST_PAD_SRC))));
+    QCOMPARE(gst_pad_link(src.get(), sinkPad.get()), GST_PAD_LINK_OK);
+    QVERIFY(gst_pad_set_active(src.get(), TRUE));
+    const auto stop = qScopeGuard([&bin, &src] {
+        (void) gst_element_set_state(bin.get(), GST_STATE_NULL);
+        (void) gst_pad_set_active(src.get(), FALSE);
+    });
+    QVERIFY(gst_element_set_state(bin.get(), GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+
+    // Negotiated as a VA decoder would, so the converter passes the DMABuf frames and their ALLOCATION query through.
     const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_from_string(
         "video/x-raw(memory:DMABuf), format=(string)NV12, width=(int)64, height=(int)64, framerate=(fraction)30/1"));
     QVERIFY2(caps, "HW caps did not parse");
+    GstSegment segment;
+    gst_segment_init(&segment, GST_FORMAT_TIME);
+    QVERIFY(gst_pad_push_event(src.get(), gst_event_new_stream_start("qgc-allocation")));
+    QVERIFY(gst_pad_push_event(src.get(), gst_event_new_caps(caps.get())));
+    QVERIFY(gst_pad_push_event(src.get(), gst_event_new_segment(&segment)));
+
     const GStreamer::GstQueryPtr query = GStreamer::adoptQuery(gst_query_new_allocation(caps.get(), TRUE));
     QVERIFY2(query, "Could not allocate ALLOCATION query");
-
-    QVERIFY2(gst_pad_query(sinkPad.get(), query.get()), "qgcvideosinkbin did not answer ALLOCATION query");
+    QVERIFY2(gst_pad_peer_query(src.get(), query.get()), "qgcvideosinkbin did not answer ALLOCATION query");
     QVERIFY2(gst_query_find_allocation_meta(query.get(), GST_VIDEO_META_API_TYPE, nullptr),
              "qgcvideosinkbin ALLOCATION query must advertise VideoMeta for gst-va DMABuf");
 
@@ -1433,19 +1569,27 @@ void GStreamerTest::_testQgcQVideoSinkGpuPathSelection_data()
 {
     QTest::addColumn<bool>("gpuZeroCopy");
     QTest::addColumn<QString>("memoryFeature");
+    QTest::addColumn<int>("backend");
     QTest::addColumn<bool>("fdMemory");
     QTest::addColumn<qint64>("expectedGpuFallbacks");
     QTest::addColumn<quint64>("expectedNoPathVerdicts");
 
+    const int openGl = int(GstQgc::RenderBackend::OpenGL);
     // Every row pushes three buffers, in system memory unless fdMemory.
-    QTest::newRow("gpu-zerocopy-off") << false << QStringLiteral("memory:DMABuf") << false << qint64(0) << quint64(0);
+    QTest::newRow("gpu-zerocopy-off") << false << QString() << openGl << true << qint64(0) << quint64(0);
     // Software-decoded frames never enter path selection.
-    QTest::newRow("system-memory-caps") << true << QString() << false << qint64(0) << quint64(0);
+    QTest::newRow("system-memory-caps") << true << QString() << openGl << false << qint64(0) << quint64(0);
     // Other memory under plain video/x-raw caps (vtdec's CoreVideo buffers, V4L2 dmabuf export) still tries the GPU
     // paths: the first frame finds no path for this allocator, the rest reuse that verdict.
-    QTest::newRow("system-memory-caps-fd-buffers") << true << QString() << true << qint64(3) << quint64(1);
+    QTest::newRow("system-memory-caps-fd-buffers") << true << QString() << openGl << true << qint64(3) << quint64(1);
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QTest::newRow("gpu-caps-system-buffers")
-        << true << QStringLiteral("memory:DMABuf") << false << qint64(3) << quint64(1);
+        << true << QStringLiteral("memory:DMABuf") << openGl << false << qint64(3) << quint64(1);
+#elif defined(QGC_HAS_GST_D3D11_GPU_PATH)
+    QTest::newRow("gpu-caps-system-buffers")
+        << true << QStringLiteral("memory:D3D11Memory") << int(GstQgc::RenderBackend::Direct3D11) << false << qint64(3)
+        << quint64(1);
+#endif
 }
 
 void GStreamerTest::_testQgcQVideoSinkGpuPathSelection()
@@ -1455,6 +1599,7 @@ void GStreamerTest::_testQgcQVideoSinkGpuPathSelection()
 #else
     QFETCH(bool, gpuZeroCopy);
     QFETCH(QString, memoryFeature);
+    QFETCH(int, backend);
     QFETCH(bool, fdMemory);
     QFETCH(qint64, expectedGpuFallbacks);
     QFETCH(quint64, expectedNoPathVerdicts);
@@ -1463,6 +1608,9 @@ void GStreamerTest::_testQgcQVideoSinkGpuPathSelection()
         QSKIP("fd-backed test buffers need memfd (desktop Linux)");
     }
 #endif
+    // A render target that imports the row's GPU memory, so the sink accepts its caps.
+    const GstQgc::ScopedRenderTargetForTest target(
+        {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = true});
 
     QVideoSink videoSink;
     const QByteArray feature = memoryFeature.toUtf8();
@@ -1491,6 +1639,87 @@ void GStreamerTest::_testQgcQVideoSinkGpuPathSelection()
     QCOMPARE(sinkStat(harness.element(), "stream-demotions"), qint64(expectedGpuFallbacks > 0 ? 1 : 0));
     QCOMPARE(noPathAfter - noPathBefore, expectedNoPathVerdicts);
 #endif
+}
+
+void GStreamerTest::_testQgcQVideoSinkCapsFollowRenderTarget_data()
+{
+    QTest::addColumn<bool>("gpuZeroCopy");
+    QTest::addColumn<int>("backend");
+    QTest::addColumn<bool>("egl");
+    QTest::addColumn<QStringList>("memoryFeatures");
+
+    const QString systemMemory = QStringLiteral("memory:SystemMemory");
+    const QStringList systemOnly{systemMemory};
+    QStringList openGlOnEgl;
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+    openGlOnEgl << QStringLiteral("memory:DMABuf");
+#endif
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
+    openGlOnEgl << QStringLiteral("memory:GLMemory");
+#endif
+#if defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
+    openGlOnEgl << QStringLiteral("memory:AHardwareBuffer");
+#endif
+    QStringList direct3D11;
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+    direct3D11 << QStringLiteral("memory:D3D11Memory");
+#endif
+
+    using GstQgc::RenderBackend;
+    QTest::newRow("cpu-sink") << false << int(RenderBackend::OpenGL) << true << systemOnly;
+    QTest::newRow("unknown") << true << int(RenderBackend::Unknown) << false << systemOnly;
+    QTest::newRow("null") << true << int(RenderBackend::Null) << false << systemOnly;
+    QTest::newRow("opengl-egl") << true << int(RenderBackend::OpenGL) << true << (openGlOnEgl << systemMemory);
+    QTest::newRow("opengl-glx") << true << int(RenderBackend::OpenGL) << false << systemOnly;
+    QTest::newRow("vulkan") << true << int(RenderBackend::Vulkan) << false << systemOnly;
+    QTest::newRow("metal") << true << int(RenderBackend::Metal) << false << systemOnly;
+    QTest::newRow("d3d11") << true << int(RenderBackend::Direct3D11) << false << (direct3D11 << systemMemory);
+    QTest::newRow("d3d12") << true << int(RenderBackend::Direct3D12) << false << systemOnly;
+}
+
+void GStreamerTest::_testQgcQVideoSinkCapsFollowRenderTarget()
+{
+    QFETCH(bool, gpuZeroCopy);
+    QFETCH(int, backend);
+    QFETCH(bool, egl);
+    QFETCH(QStringList, memoryFeatures);
+    const GstQgc::ScopedRenderTargetForTest target(
+        {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = egl});
+
+    GstElement* const element = gst_element_factory_make_full("qgcqvideosink", "gpu-zerocopy", gpuZeroCopy, nullptr);
+    QVERIFY(element);
+    const GStreamer::GstElementPtr sink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
+    const GStreamer::GstCapsPtr caps = sinkPadCaps(sink.get());
+    QVERIFY(caps);
+    QCOMPARE(capsMemoryFeatures(caps.get()), memoryFeatures);
+}
+
+void GStreamerTest::_testQgcQVideoSinkReconfiguresOnRenderTargetChange()
+{
+    QVideoSink videoSink;
+    const GstQgc::ScopedRenderTargetForTest vulkan({.backend = GstQgc::RenderBackend::Vulkan});
+    QgcQVideoSinkHarness harness(&videoSink, /*gpuZeroCopy=*/true);
+    QVERIFY(harness.isReady());
+    (void) harness.takeReconfigure();  // linking marks a source pad for reconfiguration
+
+    QCOMPARE(harness.pushFrame(GST_SECOND), GST_FLOW_OK);
+    QVERIFY(!harness.takeReconfigure());
+
+    {
+        // E.g. the scene graph came up on OpenGL after the stream negotiated: GPU memory became importable.
+        const GstQgc::ScopedRenderTargetForTest openGl(kOpenGlOnEgl);
+        QCOMPARE(harness.pushFrame(2 * GST_SECOND), GST_FLOW_OK);
+        QVERIFY(harness.takeReconfigure());
+        QCOMPARE(harness.pushFrame(3 * GST_SECOND), GST_FLOW_OK);
+        QVERIFY2(!harness.takeReconfigure(), "one change must ask for one renegotiation");
+
+        const GStreamer::GstCapsPtr caps = sinkPadCaps(harness.element());
+        QVERIFY(caps);
+        QCOMPARE(harness.pushFrame(4 * GST_SECOND), GST_FLOW_OK);
+        QVERIFY(!harness.takeReconfigure());
+    }
+    QCOMPARE(harness.pushFrame(5 * GST_SECOND), GST_FLOW_OK);
+    QVERIFY(harness.takeReconfigure());
 }
 
 void GStreamerTest::_testQgcQVideoSinkDropsUndeliveredFrame_data()
