@@ -47,17 +47,6 @@ VideoOutput {
         }
     }
 
-    Connections {
-        target: QGroundControl.videoManager
-        function onImageFileChanged(filename) {
-            grabToImage(function(result) {
-                if (!result.saveToFile(filename)) {
-                    console.error('Error capturing video frame');
-                }
-            });
-        }
-    }
-
     Component.onCompleted: {
         _completed = true
         _register()

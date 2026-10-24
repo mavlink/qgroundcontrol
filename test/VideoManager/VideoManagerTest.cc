@@ -1,6 +1,10 @@
 #include "VideoManagerTest.h"
 
 #include <QtCore/QRegularExpression>
+#include <QtCore/QTemporaryDir>
+#include <QtGui/QImage>
+#include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoSink>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
@@ -55,6 +59,11 @@ std::unique_ptr<QQuickItem> createVideoOutput(QQmlEngine& engine)
     component.setData(kVideoOutputQml, QUrl(QStringLiteral("qrc:/VideoManagerTest.qml")));
     std::unique_ptr<QObject> object(component.create());
     return std::unique_ptr<QQuickItem>(qobject_cast<QQuickItem*>(object.release()));
+}
+
+void showFrame(QQuickItem* videoOutput, const QImage& image)
+{
+    videoOutput->property("videoSink").value<QVideoSink*>()->setVideoFrame(QVideoFrame(image));
 }
 
 }  // namespace
@@ -360,6 +369,41 @@ void VideoManagerTest::_testQmlVideoOutputRegistersItself()
     holder->setParentItem(root.get());
     root.reset();
     QCOMPARE(_primary->videoOutput(), nullptr);
+}
+
+void VideoManagerTest::_testScreenshotsComeFromStreamsOnDisplay()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+
+    QQmlEngine engine;
+    const std::unique_ptr<QQuickItem> primaryOutput = createVideoOutput(engine);
+    const std::unique_ptr<QQuickItem> thermalOutput = createVideoOutput(engine);
+    QVERIFY(primaryOutput && thermalOutput);
+    _videoManager->primaryStream()->registerVideoOutput(primaryOutput.get());
+    _videoManager->thermalStream()->registerVideoOutput(thermalOutput.get());
+
+    QImage frame(QSize(64, 48), QImage::Format_RGBA8888);
+    frame.fill(Qt::red);
+    showFrame(primaryOutput.get(), frame);
+    showFrame(thermalOutput.get(), frame);
+    _primary->setState(VideoReceiver::State::Streaming);
+
+    // Qt Multimedia converts on the CPU when the platform (offscreen here) has no RHI, and says so.
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
+
+    // The thermal output holds a frame but isn't streaming: only the primary stream is saved.
+    const QString shot = tempDir.filePath(QStringLiteral("shot.png"));
+    _videoManager->grabImage(shot);
+    QCOMPARE(_videoManager->imageFile(), shot);
+    QCOMPARE(QImage(shot).size(), frame.size());
+    QVERIFY(!QFile::exists(tempDir.filePath(QStringLiteral("shot.thermalVideo.png"))));
+
+    _thermal->setState(VideoReceiver::State::Streaming);
+    const QString second = tempDir.filePath(QStringLiteral("second.png"));
+    _videoManager->grabImage(second);
+    QVERIFY(QFile::exists(second));
+    QCOMPARE(QImage(tempDir.filePath(QStringLiteral("second.thermalVideo.png"))).size(), frame.size());
 }
 
 void VideoManagerTest::_testStreamErrorsReachUser()

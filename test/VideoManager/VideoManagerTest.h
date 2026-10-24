@@ -32,6 +32,7 @@ private slots:
     void _testThermalOnlyChangeReconfiguresThermal();
     void _testVideoOutputRegistration();
     void _testQmlVideoOutputRegistersItself();
+    void _testScreenshotsComeFromStreamsOnDisplay();
     void _testStreamErrorsReachUser();
 
 private:
