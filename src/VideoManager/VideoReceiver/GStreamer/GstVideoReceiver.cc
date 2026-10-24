@@ -10,6 +10,8 @@
 #include <QtCore/QMutex>
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
+#include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoFrameFormat>
 #include <QtMultimedia/QVideoSink>
 
 #include "GStreamer.h"
@@ -534,6 +536,19 @@ void GstVideoReceiver::dumpPipelineGraph(const QString& tag)
     _postToWorker([tag](GstReceiverWorker& worker) { worker.dumpPipelineGraph(tag); });
 }
 
+QSize GstVideoReceiver::presentedSize(const QVideoFrame& frame)
+{
+    if (!frame.isValid()) {
+        return {};
+    }
+    const QVideoFrameFormat format = frame.surfaceFormat();
+    const QRect viewport = format.viewport();
+    const QSize size = viewport.isValid() ? viewport.size() : frame.size();
+    // As Qt's qRotatedFramePresentationSize(): the frame's and the format's rotation add up; mirroring keeps the size.
+    const int degrees = static_cast<int>(frame.rotation()) + static_cast<int>(format.rotation());
+    return ((degrees % 180) != 0) ? size.transposed() : size;
+}
+
 void GstVideoReceiver::onConfigChanged(const Config& /*previous*/)
 {
     _postToWorker([config = config()](GstReceiverWorker& worker) { worker.setConfig(config); });
@@ -649,11 +664,13 @@ void GstVideoReceiver::_bindVideoSink(QVideoSink* videoSink)
     (void) disconnect(_videoSizeConnection);
     _sinkController->setVideoSink(QPointer<QVideoSink>(videoSink));
     _sinkController->followWindowVisibility(videoOutput());
-    // The displayed size: rotation applied, as Qt presents the frame.
-    _videoSizeConnection = connect(videoSink, &QVideoSink::videoSizeChanged, this,
-                                   [this, videoSink]() { setVideoSize(videoSink->videoSize()); });
-    if (videoSink->videoSize().isValid()) {
-        setVideoSize(videoSink->videoSize());
+    // Per frame, not on QVideoSink::videoSizeChanged: that follows the frame size, which for a decoder's buffer cropped
+    // by crop meta is larger than the picture, and misses a viewport that changes on its own. Frames reach the sink on
+    // this thread.
+    _videoSizeConnection = connect(videoSink, &QVideoSink::videoFrameChanged, this,
+                                   [this](const QVideoFrame& frame) { setVideoSize(presentedSize(frame)); });
+    if (const QSize size = presentedSize(videoSink->videoFrame()); size.isValid()) {
+        setVideoSize(size);
     }
 }
 

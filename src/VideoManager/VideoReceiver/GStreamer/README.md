@@ -28,7 +28,8 @@ The pipeline is split into focused components (all in this directory):
 ### Threading
 
 - **GUI thread**: `GstVideoReceiver`'s API and every signal it emits, the display sink's `QGCQVideoSinkController`,
-  and the video size, taken from the output's `QVideoSink`.
+  and the video size, read from each frame the output's `QVideoSink` shows: its viewport (decoder padding and crop left
+  out), turned as Qt presents it.
 - **Worker thread** (one per receiver): the reconnect logic, every change to the pipeline, and its bus. A sync handler
   only does what can't wait: answers `NEED_CONTEXT`, selects the video streams, and closes the valve in front of a
   branch that posted an `ERROR`, so the error stays out of the tee. Everything else is popped on the worker, which a

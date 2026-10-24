@@ -23,6 +23,8 @@ private slots:
     void _testPipelineDotStaysInDirectory();
     void _testPipelineNamedAfterReceiver_data();
     void _testPipelineNamedAfterReceiver();
+    void _testPresentedSize_data();
+    void _testPresentedSize();
 #else
     void _testGStreamerDisabled();
 #endif

@@ -9,8 +9,11 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
+#include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoFrameFormat>
 
 #include "GStreamerTestHelpers.h"
+#include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
 #include "RecordingFinalizer.h"
 #include "StreamWatchdog.h"
@@ -279,6 +282,48 @@ void GstVideoReceiverComponentsTest::_testPipelineNamedAfterReceiver()
     PipelineDotDumper dumper;
     dumper.setReceiverName(receiverName);
     QCOMPARE(dumper.pipelineName(), pipelineName);
+}
+
+void GstVideoReceiverComponentsTest::_testPresentedSize_data()
+{
+    QTest::addColumn<QSize>("frameSize");  // invalid: no frame
+    QTest::addColumn<QRect>("viewport");   // null: the format's default, the whole frame
+    QTest::addColumn<int>("frameRotation");
+    QTest::addColumn<int>("formatRotation");
+    QTest::addColumn<QSize>("presented");
+
+    // A decoder's buffer padded to its alignment, with crop meta: the viewport holds the 1080-row picture.
+    const QSize padded(1920, 1088);
+    const QRect picture(0, 0, 1920, 1080);
+    QTest::newRow("whole frame") << QSize(320, 240) << QRect() << 0 << 0 << QSize(320, 240);
+    QTest::newRow("padded buffer") << padded << picture << 0 << 0 << QSize(1920, 1080);
+    QTest::newRow("cropped, upside down") << QSize(640, 480) << QRect(8, 8, 600, 400) << 180 << 0 << QSize(600, 400);
+    QTest::newRow("padded, frame turned 90") << padded << picture << 90 << 0 << QSize(1080, 1920);
+    QTest::newRow("padded, format turned 270") << padded << picture << 0 << 270 << QSize(1080, 1920);
+    QTest::newRow("turns adding up to 180") << padded << picture << 90 << 90 << QSize(1920, 1080);
+    QTest::newRow("no frame") << QSize() << QRect() << 0 << 0 << QSize();
+}
+
+void GstVideoReceiverComponentsTest::_testPresentedSize()
+{
+    QFETCH(QSize, frameSize);
+    QFETCH(QRect, viewport);
+    QFETCH(int, frameRotation);
+    QFETCH(int, formatRotation);
+    QFETCH(QSize, presented);
+
+    QVideoFrame frame;
+    if (frameSize.isValid()) {
+        QVideoFrameFormat format(frameSize, QVideoFrameFormat::Format_NV12);
+        if (!viewport.isNull()) {
+            format.setViewport(viewport);
+        }
+        format.setRotation(static_cast<QtVideo::Rotation>(formatRotation));
+        frame = QVideoFrame(format);
+        frame.setRotation(static_cast<QtVideo::Rotation>(frameRotation));
+    }
+
+    QCOMPARE(GstVideoReceiver::presentedSize(frame), presented);
 }
 
 #else
