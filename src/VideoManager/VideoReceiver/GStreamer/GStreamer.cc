@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <gst/base/gstbasesrc.h>
 #include <mutex>
+#include <utility>
 
 #include <QtCore/QByteArrayList>
 #include <QtCore/QList>
@@ -241,20 +242,13 @@ bool completeInit()
     gst_version(&major, &minor, &micro, &nano);
     qCDebug(GStreamerLog) << "GStreamer initialized:" << major << "." << minor << "." << micro;
 
-    if (major != GST_VERSION_MAJOR || minor != GST_VERSION_MINOR) {
-        qCWarning(GStreamerLog) << "GStreamer version mismatch: built against" << GST_VERSION_MAJOR << "."
-                                << GST_VERSION_MINOR << "but runtime is" << major << "." << minor << "." << micro;
+    // A newer runtime is ABI-compatible; an older one may lack API the build used.
+    if (std::make_pair(major, minor) < std::make_pair(guint{GST_VERSION_MAJOR}, guint{GST_VERSION_MINOR})) {
+        qCWarning(GStreamerLog) << "GStreamer runtime" << major << "." << minor << "." << micro << "is older than the"
+                                << GST_VERSION_MAJOR << "." << GST_VERSION_MINOR << "QGC was built against";
     }
 
     _registerPlugins();
-
-#ifdef Q_OS_IOS
-    // Prefer applemedia-backed sources on iOS. Must run after _registerPlugins() (registry empty before).
-    if (GstRegistry* reg = gst_registry_get()) {
-        GStreamer::changeFeatureRank(reg, "filesrc", GST_RANK_SECONDARY);
-        GStreamer::changeFeatureRank(reg, "giosrc", GST_RANK_SECONDARY - 1);
-    }
-#endif
 
     if (!_verifyPlugins()) {
         qCCritical(GStreamerLog) << "Plugin verification failed";

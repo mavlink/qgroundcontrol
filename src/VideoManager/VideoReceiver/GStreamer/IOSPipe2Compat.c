@@ -21,8 +21,9 @@ static int set_pipe_flags(int fd, int flags)
     return 0;
 }
 
-// GStreamer 1.28.x's x86_64 iOS archive references pipe2, which the simulator SDK omits.
-int pipe2(int fds[2], int flags)
+// GStreamer 1.28.x's x86_64 iOS archive references pipe2, which the simulator SDK omits. Weak, so a strong pipe2 in
+// the same image (say, a later archive's own shim) takes precedence instead of failing the link as a duplicate symbol.
+__attribute__((weak)) int pipe2(int fds[2], int flags)
 {
     if ((flags & ~(O_CLOEXEC | O_NONBLOCK)) != 0) {
         errno = EINVAL;
