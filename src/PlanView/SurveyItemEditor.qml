@@ -86,8 +86,23 @@ TransectStyleComplexItemEditor {
                         fact:       missionItem.flyAlternateTransects,
                         enabled:    true,
                         visible:    _vehicle ? (_vehicle.fixedWing || _vehicle.vtol) : false
+                    },
+                    {
+                        text:       qsTr("Split concave polygons"),
+                        fact:       missionItem.splitConcavePolygons,
+                        enabled:    true,
+                        visible:    true
                     }
                 ]
+            }
+
+            QGCLabel {
+                Layout.columnSpan:  2
+                Layout.fillWidth:   true
+                wrapMode:           Text.WordWrap
+                font.pointSize:     ScreenTools.smallFontPointSize
+                text:               qsTr("Images are also taken across concave gaps when images in turnarounds is enabled.")
+                visible:            !forPresets && missionItem.splitConcavePolygons.rawValue && missionItem.cameraTriggerInTurnAround.rawValue
             }
         }
     }

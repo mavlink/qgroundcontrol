@@ -23,6 +23,7 @@ THR = "THR"
 LINZ = "LINZ"  # Land Information New Zealand
 LOD = "LOD"  # level of detail
 PN = "PN"  # typos splits "PNGs" into "PN" + "Gs"
+empy = "empy"  # Python package that ArduPilot's build needs
 
 [files]
 extend-exclude = [

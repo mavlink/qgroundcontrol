@@ -12,6 +12,8 @@ target_sources(
         GeoTest.h
         KMLDomDocumentTest.cc
         KMLDomDocumentTest.h
+        PlanarGeometryTest.cc
+        PlanarGeometryTest.h
         ShapeTest.cc
         ShapeTest.h
 )
@@ -40,4 +42,5 @@ qt_add_resources(
 add_qgc_test(GeoTest LABELS Unit Utilities)
 add_qgc_test(GeoJsonHelperTest LABELS Unit Utilities)
 add_qgc_test(KMLDomDocumentTest LABELS Unit Utilities)
+add_qgc_test(PlanarGeometryTest LABELS Unit Utilities)
 add_qgc_test(ShapeTest LABELS Unit Utilities)

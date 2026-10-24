@@ -251,6 +251,8 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
         if (!GeoJsonHelper::loadGeoCoordinateArray(innerObject[_jsonVisualTransectPointsKey], false /* altitudeRequired */, _visualTransectPoints, errorString)) {
             return false;
         }
+        _visualTransectEntryIndices.clear();
+        _visualTransectExitIndices.clear();
         _entryCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
         _exitCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.last().value<QGeoCoordinate>() : QGeoCoordinate();
         _isIncomplete = false;
@@ -387,6 +389,12 @@ bool TransectStyleComplexItem::_hasTurnaround(void) const
     return _turnAroundDistance() > 0;
 }
 
+int TransectStyleComplexItem::_distanceTriggerImageCount(double transectLength, double triggerDistance)
+{
+    // Starting and stopping distance triggering each take an image, with distance triggered images in between
+    return qCeil(transectLength / triggerDistance) + 1;
+}
+
 double TransectStyleComplexItem::_turnAroundDistance(void) const
 {
     return _turnAroundDistanceFact.rawValue().toDouble();
@@ -439,8 +447,15 @@ void TransectStyleComplexItem::_rebuildTransects(void)
     double top = 0.;
     // Generate the visuals transect representation
     _visualTransectPoints.clear();
+    _visualTransectEntryIndices.clear();
+    _visualTransectExitIndices.clear();
     for (const QList<CoordInfo_t>& transect: _transects) {
         for (const CoordInfo_t& coordInfo: transect) {
+            if (coordInfo.coordType == CoordTypeSurveyEntry) {
+                _visualTransectEntryIndices.append(_visualTransectPoints.count());
+            } else if (coordInfo.coordType == CoordTypeSurveyExit) {
+                _visualTransectExitIndices.append(_visualTransectPoints.count());
+            }
             _visualTransectPoints.append(QVariant::fromValue(coordInfo.coord));
             double lat = coordInfo.coord.latitude()  + 90.0;
             double lon = coordInfo.coord.longitude() + 180.0;
@@ -1322,14 +1337,22 @@ void TransectStyleComplexItem::_appendLoadedMissionItems(QList<MissionItem*>& it
     }
 }
 
+QList<QList<QGeoCoordinate>> TransectStyleComplexItem::_surveyAreaBoundaries(void) const
+{
+    return {_surveyAreaPolygon.coordinateList()};
+}
+
 void TransectStyleComplexItem::addKMLVisuals(KMLPlanDomDocument& domDocument)
 {
     // We add the survey area polygon as a Placemark
 
-    QDomElement placemarkElement = domDocument.addPlacemark(QStringLiteral("Survey Area"), true);
-    QDomElement polygonElement = _surveyAreaPolygon.kmlPolygonElement(domDocument);
+    const QList<QList<QGeoCoordinate>> boundaries = _surveyAreaBoundaries();
+    if (boundaries.isEmpty() || boundaries.first().isEmpty()) {
+        return;
+    }
 
-    placemarkElement.appendChild(polygonElement);
+    QDomElement placemarkElement = domDocument.addPlacemark(QStringLiteral("Survey Area"), true);
+    domDocument.addPolygon(placemarkElement, boundaries.first(), boundaries.mid(1));
     domDocument.addTextElement(placemarkElement, "styleUrl", QStringLiteral("#%1").arg(domDocument.surveyPolygonStyleName));
     domDocument.appendChildToRoot(placemarkElement);
 }

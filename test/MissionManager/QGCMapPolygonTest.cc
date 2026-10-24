@@ -313,6 +313,32 @@ void QGCMapPolygonTest::_testCenterDegenerate()
     QCOMPARE_COORDS(center, expectedCenter);
 }
 
+void QGCMapPolygonTest::_testOffset()
+{
+    _mapPolygon->appendVertices(_polyPoints);
+    _mapPolygon->verifyClockwiseWinding();
+    const QList<QGeoCoordinate> originalCoordinates = _mapPolygon->coordinateList();
+    const double originalArea = _mapPolygon->area();
+
+    QVERIFY(_mapPolygon->offset(10.0));
+
+    QCOMPARE(_mapPolygon->count(), originalCoordinates.size());
+    QVERIFY(_mapPolygon->area() > originalArea);
+    for (const QGeoCoordinate& coordinate : originalCoordinates) {
+        QVERIFY(_mapPolygon->containsCoordinate(coordinate));
+    }
+
+    // Winding is preserved, which the structure scan camera yaw depends on
+    const QList<QGeoCoordinate> offsetCoordinates = _mapPolygon->coordinateList();
+    _mapPolygon->verifyClockwiseWinding();
+    QCOMPARE(_mapPolygon->coordinateList(), offsetCoordinates);
+
+    _mapPolygon->clear();
+    _mapPolygon->appendVertices(originalCoordinates.first(2));
+    QVERIFY(!_mapPolygon->offset(10.0));
+    QCOMPARE(_mapPolygon->count(), 2);
+}
+
 #include "UnitTest.h"
 
 UT_REGISTER_TEST(QGCMapPolygonTest, TestLabel::Unit, TestLabel::MissionManager)

@@ -15,6 +15,8 @@ public:
 
     Q_PROPERTY(QGCMapPolyline*  corridorPolyline    READ corridorPolyline   CONSTANT)
     Q_PROPERTY(Fact*            corridorWidth       READ corridorWidth      CONSTANT)
+    /// Corridor area outlines to draw on the map: each closed boundary ring, or the path itself for a single pass
+    Q_PROPERTY(QVariantList corridorBoundaries READ corridorBoundaries NOTIFY corridorBoundariesChanged)
 
     // Note1: These values are persisted to plan files so they cannot be changed with breaking plan file back compat
     // Note2: rotateEntryPoint expects these values in this order
@@ -28,6 +30,8 @@ public:
 
     Fact*           corridorWidth   (void) { return &_corridorWidthFact; }
     QGCMapPolyline* corridorPolyline(void) { return &_corridorPolyline; }
+
+    QVariantList corridorBoundaries(void) const { return _corridorBoundaryPaths; }
 
     Q_INVOKABLE void rotateEntryPoint(void);
 
@@ -59,6 +63,9 @@ public:
 
     static constexpr const char* jsonComplexItemTypeValue = "CorridorScan";
 
+signals:
+    void corridorBoundariesChanged(void);
+
 private slots:
     void _polylineDirtyChanged          (bool dirty);
     void _rebuildCorridorPolygon        (void);
@@ -69,7 +76,11 @@ private slots:
     void _rebuildTransectsPhase1    (void) final;
     void _recalcCameraShots         (void) final;
 
+protected:
+    QList<QList<QGeoCoordinate>> _surveyAreaBoundaries(void) const final;
+
 private:
+    void _buildCorridorArea(void);
     double  _calcTransectSpacing    (void) const;
     int     _calcTransectCount      (void) const;
     void    _saveCommon             (QJsonObject& complexObject);
@@ -77,12 +88,15 @@ private:
 
     QGCMapPolyline                  _corridorPolyline;
     QList<QList<QGeoCoordinate>>    _transectSegments;      ///< Internal transect segments including grid exit, turnaround and internal camera points
+    QList<QList<QGeoCoordinate>> _corridorBoundaryRings;    ///< Outer boundary first, followed by holes
+    QVariantList _corridorBoundaryPaths;
 
     EntryPointLocation              _entryPointLocation;
 
     QMap<QString, FactMetaData*>    _metaDataMap;
     SettingsFact                    _corridorWidthFact;
     bool                            _specifiesCoordinate = false;
+    bool _noTransects = false;
 
     static constexpr const char* _jsonEntryPointKey =       "EntryPoint";
 };

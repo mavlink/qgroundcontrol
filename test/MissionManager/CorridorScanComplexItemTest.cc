@@ -1,13 +1,16 @@
 #include "CorridorScanComplexItemTest.h"
 
-#include "CoordFixtures.h"
-#include "CorridorScanComplexItem.h"
-#include "MultiSignalSpy.h"
-#include "PlanViewSettings.h"
-#include "TransectStyleComplexItem.h"
+#include <numbers>
 
 #include <QtCore/QRegularExpression>
 #include <QtTest/QSignalSpy>
+
+#include "CoordFixtures.h"
+#include "CorridorScanComplexItem.h"
+#include "KMLPlanDomDocument.h"
+#include "MultiSignalSpy.h"
+#include "PlanViewSettings.h"
+#include "TransectStyleComplexItem.h"
 
 CorridorScanComplexItemTest::CorridorScanComplexItemTest()
 {
@@ -201,6 +204,27 @@ void CorridorScanComplexItemTest::_testItemGeneration()
     }
 }
 
+void CorridorScanComplexItemTest::_testCameraShots()
+{
+    // Triggering starts and stops with an image, so each 400m transect is imaged every 60m and at its end
+    _corridorItem->cameraTriggerInTurnAround()->setRawValue(false);
+    _corridorItem->cameraCalc()->adjustedFootprintFrontal()->setRawValue(60.0);
+    QCOMPARE(_corridorItem->cameraShots(), _expectedTransectCount * 8);
+
+    // Around a 20m square loop the inner pass cannot be offset and is not flown. The outer pass, about 180m
+    // long, is imaged every 50m and at its end, where the 80m corridor path would give 3 images per pass.
+    ignoreLogMessage("Plan.CorridorScanComplexItem", QtWarningMsg,
+                     QRegularExpression("Unable to offset corridor transect"));
+    const QGeoCoordinate origin = TestFixtures::Coord::missionTestOrigin();
+    const QGeoCoordinate north = origin.atDistanceAndAzimuth(20.0, 0.0);
+    const QGeoCoordinate northEast = north.atDistanceAndAzimuth(20.0, 90.0);
+    const QGeoCoordinate east = origin.atDistanceAndAzimuth(20.0, 90.0);
+    _corridorItem->corridorPolyline()->setPath(QList<QGeoCoordinate>{origin, north, northEast, east, origin});
+    _corridorItem->cameraCalc()->adjustedFootprintFrontal()->setRawValue(50.0);
+    QCOMPARE(_corridorItem->_transectCount(), 1);
+    QCOMPARE(_corridorItem->cameraShots(), 5);
+}
+
 void CorridorScanComplexItemTest::_testMaxTransectCount()
 {
     ignoreLogMessage("Plan.CorridorScanComplexItem", QtWarningMsg, QRegularExpression("Transect spacing.*raised"));
@@ -221,6 +245,133 @@ void CorridorScanComplexItemTest::_testMaxTransectCount()
         _corridorItem->cameraCalc()->adjustedFootprintSide()->setRawValue(0);
         QCOMPARE(rebuildSpy.count(), 1);
         QCOMPARE(_corridorItem->_transectCount(), 1);
+    }
+}
+
+void CorridorScanComplexItemTest::_testClosedAndCrossingCorridors()
+{
+    const QGeoCoordinate origin = TestFixtures::Coord::missionTestOrigin();
+    const QGeoCoordinate north = origin.atDistanceAndAzimuth(_corridorLineSegmentDistance, 0.0);
+    const QGeoCoordinate northEast = north.atDistanceAndAzimuth(_corridorLineSegmentDistance, 90.0);
+    const QGeoCoordinate east = origin.atDistanceAndAzimuth(_corridorLineSegmentDistance, 90.0);
+    const QGeoCoordinate center = origin.atDistanceAndAzimuth(_corridorLineSegmentDistance / std::numbers::sqrt2, 45.0);
+    QGCMapPolyline* corridorPolyline = _corridorItem->corridorPolyline();
+    QGCMapPolygon* corridorPolygon = _corridorItem->surveyAreaPolygon();
+
+    // A closed loop keeps the interior hole of the buffer
+    corridorPolyline->setPath(QList<QGeoCoordinate>{origin, north, northEast, east, origin});
+    QVERIFY(corridorPolygon->isValid());
+    QVERIFY(corridorPolygon->containsCoordinate(origin.atDistanceAndAzimuth(_corridorLineSegmentDistance / 2.0, 0.0)));
+    QVERIFY(!corridorPolygon->containsCoordinate(center));
+    QCOMPARE(_corridorItem->_transectCount(), _expectedTransectCount);
+
+    // The outer boundary and the hole are drawn as separate closed outlines and exported as a polygon with a hole
+    const QVariantList boundaries = _corridorItem->corridorBoundaries();
+    QCOMPARE(boundaries.size(), 2);
+    for (const QVariant& boundary : boundaries) {
+        const QVariantList path = boundary.toList();
+        QVERIFY(path.size() > 3);
+        QCOMPARE(path.first().value<QGeoCoordinate>(), path.last().value<QGeoCoordinate>());
+    }
+    KMLPlanDomDocument kmlDocument;
+    _corridorItem->addKMLVisuals(kmlDocument);
+    QCOMPARE(kmlDocument.elementsByTagName(QStringLiteral("outerBoundaryIs")).count(), 1);
+    QCOMPARE(kmlDocument.elementsByTagName(QStringLiteral("innerBoundaryIs")).count(), 1);
+
+    // A self-crossing path still produces a single buffer and a full set of transects
+    corridorPolyline->setPath(QList<QGeoCoordinate>{origin, northEast, north, east});
+    QVERIFY(corridorPolygon->isValid());
+    QVERIFY(corridorPolygon->containsCoordinate(center));
+    QCOMPARE(_corridorItem->_transectCount(), _expectedTransectCount);
+}
+
+void CorridorScanComplexItemTest::_testNoTransects()
+{
+    // Small offsets of a closed figure-eight path split it in two, so none of its transects can be generated
+    // even though the corridor area is valid
+    const QGeoCoordinate origin = TestFixtures::Coord::missionTestOrigin();
+    const QGeoCoordinate north = origin.atDistanceAndAzimuth(_corridorLineSegmentDistance, 0.0);
+    const QGeoCoordinate east = origin.atDistanceAndAzimuth(_corridorLineSegmentDistance, 90.0);
+    const QGeoCoordinate northEast = north.atDistanceAndAzimuth(_corridorLineSegmentDistance, 90.0);
+    QCOMPARE(_corridorItem->readyForSaveState(), VisualMissionItem::ReadyForSave);
+
+    QSignalSpy readySpy(_corridorItem, &VisualMissionItem::readyForSaveStateChanged);
+    ignoreLogMessage("Plan.CorridorScanComplexItem", QtWarningMsg,
+                     QRegularExpression("Unable to offset corridor transect"));
+    expectAppMessage(QRegularExpression("Unable to calculate transects"));
+    _corridorItem->corridorPolyline()->setPath(QList<QGeoCoordinate>{origin, northEast, east, north, origin});
+    verifyExpectedLogMessage();
+
+    QVERIFY(_corridorItem->surveyAreaPolygon()->isValid());
+    QCOMPARE(_corridorItem->_transectCount(), 0);
+    QCOMPARE(_corridorItem->readyForSaveState(), VisualMissionItem::NotReadyForSaveData);
+    QVERIFY(readySpy.count() > 0);
+
+    // Generating transects again restores readiness
+    readySpy.clear();
+    _corridorItem->corridorPolyline()->setPath(_polyLineVertices);
+    QCOMPARE(_corridorItem->_transectCount(), _expectedTransectCount);
+    QVERIFY(readySpy.count() > 0);
+    _waitForReadyForSave();
+}
+
+void CorridorScanComplexItemTest::_testEntryPointCameraTriggers()
+{
+    // Camera triggering starts at the entry and stops at the exit of every transect, from whichever end the
+    // scan starts (mavlink/qgroundcontrol#11758)
+    _corridorItem->turnAroundDistance()->setRawValue(0.0);
+    _corridorItem->cameraTriggerInTurnAround()->setRawValue(false);
+    _planViewSettings->useConditionGate()->setRawValue(false);
+    for (int entryLocation = 0; entryLocation < 4; ++entryLocation) {
+        QList<MissionItem*> items;
+        _corridorItem->appendMissionItems(items, this);
+
+        QList<bool> triggerStarts;
+        for (const MissionItem* item : items) {
+            if (item->command() == MAV_CMD_DO_SET_CAM_TRIGG_DIST) {
+                triggerStarts.append(item->param1() > 0.0);
+            }
+        }
+        QCOMPARE(triggerStarts.size(), _expectedTransectCount * 2);
+        for (qsizetype index = 0; index < triggerStarts.size(); ++index) {
+            QCOMPARE(triggerStarts[index], (index % 2) == 0);
+        }
+        _corridorItem->rotateEntryPoint();
+    }
+}
+
+void CorridorScanComplexItemTest::_testZeroWidthCorridor()
+{
+    // Zero width is a single pass along the path; the area must stay valid so the item can be saved
+    ignoreLogMessage("Plan.CorridorScanComplexItem", QtWarningMsg,
+                     QRegularExpression("Corridor width 0 is invalid, skipping transect count cap"));
+    _corridorItem->corridorWidth()->setRawValue(0.0);
+
+    QGCMapPolygon* corridorPolygon = _corridorItem->surveyAreaPolygon();
+    QVERIFY(corridorPolygon->isValid());
+    QCOMPARE(corridorPolygon->count(), _polyLineVertices.count() * 2);
+    QCOMPARE(_corridorItem->_transectCount(), 1);
+    _waitForReadyForSave();
+
+    // The single pass outline is the path itself
+    const QVariantList boundaries = _corridorItem->corridorBoundaries();
+    QCOMPARE(boundaries.size(), 1);
+    QCOMPARE(boundaries.first().toList().size(), _polyLineVertices.count());
+}
+
+void CorridorScanComplexItemTest::_testVisualTransectIndices()
+{
+    // Each transect follows the corridor path: entry, one interior point per inner path vertex, then exit.
+    // This holds for every entry point location.
+    for (int entryLocation = 0; entryLocation < 4; ++entryLocation) {
+        const QList<int> entryIndices = _corridorItem->visualTransectEntryIndices();
+        const QList<int> exitIndices = _corridorItem->visualTransectExitIndices();
+        QCOMPARE(entryIndices.size(), _expectedTransectCount);
+        QCOMPARE(exitIndices.size(), _expectedTransectCount);
+        for (qsizetype index = 0; index < entryIndices.size(); ++index) {
+            QCOMPARE(exitIndices[index] - entryIndices[index], _polyLineVertices.count() - 1);
+        }
+        _corridorItem->rotateEntryPoint();
     }
 }
 

@@ -36,6 +36,10 @@ public:
                               bool extrude = true, bool tessellate = true);
     QDomElement addPolygon(QDomElement &parent, const QList<QGeoCoordinate> &coords,
                            const QString &altitudeMode = QLatin1String("clampToGround"));
+    /// @param holes Inner boundary rings, written as innerBoundaryIs elements
+    QDomElement addPolygon(QDomElement& parent, const QList<QGeoCoordinate>& coords,
+                           const QList<QList<QGeoCoordinate>>& holes,
+                           const QString& altitudeMode = QLatin1String("clampToGround"));
 
     // Formatting utilities (static - can be used without instantiating)
     static QString kmlColorString(const QColor &color, double opacity = 1);

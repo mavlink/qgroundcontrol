@@ -719,7 +719,8 @@ class TestDepStatShortcut:
     def test_manifest_records_stat_of_settled_deps(self, harness: Harness) -> None:
         _settle(harness)
         harness.run(harness.make_tree("build"))
-        st = harness.dep_header.stat()
+        # Python 3.12 on Windows reports a different st_ctime_ns from os.stat than from os.fstat
+        st = core._dep_stat(str(harness.dep_header))
         assert _manifest_fields(harness)[str(harness.dep_header)] == [
             core._sha256_file(harness.dep_header),
             str(st.st_mtime_ns),

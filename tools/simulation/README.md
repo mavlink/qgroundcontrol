@@ -7,7 +7,8 @@ Tools for testing QGroundControl without physical hardware. Run them from the re
 | Tool | Use Case | Setup |
 | --- | --- | --- |
 | `mock_vehicle.py` | UI testing, quick checks | `python3 tools/setup/install_python.py simulation` (pymavlink), then activate `tools/.venv` |
-| `run_arducopter_sitl.py` | Full simulation, mission testing | Docker required |
+| `run_arducopter_sitl.py` | Full simulation, mission testing | Docker, or an ArduPilot SITL build with `--native` |
+| `fly_plan.py` | Fly a QGC `.plan` in ArduPilot or PX4 SITL and record the track and images | `python3 tools/setup/install_python.py simulation` (pymavlink), then activate `tools/.venv` |
 | `rc_transmitter.py` | RC transmitter for PX4 SITL: flight modes, switches, RC loss | `python3 tools/setup/install_python.py simulation` (pymavlink), then activate `tools/.venv` |
 | `mock_ntrip_caster.py` | NTRIP/RTK client testing | Python standard library only |
 
@@ -53,7 +54,8 @@ port it listens on.
 
 ## ArduCopter SITL (Full Simulation)
 
-Full ArduPilot simulation via Docker. Supports missions, geofences, all commands.
+Full ArduPilot simulation via Docker, or a [local build](#without-docker). Supports missions,
+geofences, all commands.
 
 ```bash
 # Run (builds image on first run, ~10-15 min)
@@ -85,6 +87,91 @@ docker logs -f arducopter-sitl   # View logs
 docker stop arducopter-sitl      # Stop simulation
 docker rm arducopter-sitl        # Remove container
 ```
+
+### Without Docker
+
+`--native` runs the SITL build in an ArduPilot checkout with the same vehicle, home position, and
+parameters as the Docker image.
+
+```bash
+# Build ArduCopter SITL once
+git clone --recurse-submodules https://github.com/ArduPilot/ardupilot.git ~/ardupilot
+cd ~/ardupilot
+Tools/environment_install/install-prereqs-ubuntu.sh -y
+./waf configure --board sitl
+./waf copter
+
+# Run from the QGC repository root; Ctrl+C stops it
+python tools/simulation/run_arducopter_sitl.py --native ~/ardupilot
+```
+
+Without root access, skip `install-prereqs-ubuntu.sh` and install the build's Python packages into
+a virtual environment instead: `empy==3.3.4 future lxml pexpect ptyprocess dronecan`.
+
+ArduPilot SITL exits when the process that started it does, so the launcher stays in the
+foreground. Each run starts in a new temporary directory, which holds the log and the vehicle's
+parameters. SITL listens on all interfaces: QGC connects on TCP 5760, and TCP 5762 and 5763 are
+spare MAVLink ports for other tools such as `fly_plan.py`. `--with-latency` needs Docker.
+
+## PX4 SITL (SIH)
+
+PX4's simulation-in-hardware (SIH) model runs PX4 SITL with its own physics, without Gazebo.
+
+```bash
+git clone --recursive https://github.com/PX4/PX4-Autopilot.git ~/PX4-Autopilot
+cd ~/PX4-Autopilot
+make px4_sitl sihsim_quadx
+```
+
+QGC connects automatically over UDP 14550. Other tools, such as `fly_plan.py` and
+`rc_transmitter.py`, use the offboard link on UDP 14540. Set `PX4_SIM_SPEED_FACTOR` to run faster
+than real time, and `PX4_HOME_LAT`, `PX4_HOME_LON`, and `PX4_HOME_ALT` to start somewhere else,
+such as a plan's planned home position:
+
+```bash
+PX4_SIM_SPEED_FACTOR=5 PX4_HOME_LAT=47.6335 PX4_HOME_LON=-122.0898 PX4_HOME_ALT=0 \
+    make px4_sitl sihsim_quadx
+```
+
+## Fly a Plan
+
+`fly_plan.py` checks mission generation against a real autopilot without driving the QGC user
+interface. It uploads a saved `.plan`, flies it in AUTO, and records the flown track and the
+position of every image the autopilot reports.
+
+```bash
+# ArduPilot SITL: a spare serial port, so QGC can stay connected on its own link
+./fly_plan.py survey.plan --connect tcp:127.0.0.1:5762 --svg flight.svg
+
+# PX4 SITL: the offboard link
+./fly_plan.py survey.plan --connect udpin:0.0.0.0:14540 --svg flight.svg
+```
+
+The plan's simple items and the mission items QGC saves for surveys and corridor scans are uploaded
+as QGC would upload them. Structure scans and landing patterns do not save their mission items, so
+upload those plans from QGC. ArduPilot takes off in GUIDED to `--takeoff-alt` before switching to
+AUTO, since it does not arm in AUTO by default; PX4 starts the mission on the ground. Afterwards the
+vehicle returns to launch unless `--no-rtl` is given.
+
+The JSON output has the uploaded mission, the track (position, altitude, heading and current
+mission item), the images, and the vehicle's status messages. `--svg` plots the planned path
+(dashed), the flown track, and the images. The script exits with 1 if the mission does not
+complete within `--timeout`.
+
+Images are only reported with a camera configured:
+
+- ArduPilot: `CAM1_TYPE 1`, then reboot. Images are reported as `CAMERA_FEEDBACK`.
+- PX4: `TRIG_MODE 4` and `TRIG_INTERFACE 3`, then restart or run `camera_trigger start`. Images
+  are reported as `CAMERA_IMAGE_CAPTURED`.
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `--connect` | required | pymavlink connection to the vehicle |
+| `--output` | `flight.json` | JSON output |
+| `--svg` | off | Also plot the planned and flown paths |
+| `--takeoff-alt` | 10 | ArduPilot takeoff altitude before AUTO (m) |
+| `--timeout` | 1800 | Seconds to wait for the mission to complete |
+| `--no-rtl` | off | Do not return to launch afterwards |
 
 ## Mock NTRIP Caster
 
@@ -155,7 +242,7 @@ param set RC_MAP_YAW 4
 | Feature | mock_vehicle.py | ArduCopter SITL |
 | --- | --- | --- |
 | Setup time | Seconds | 10-15 min (first run) |
-| Dependencies | pymavlink | Docker |
+| Dependencies | pymavlink | Docker or an ArduPilot build |
 | Flight dynamics | ❌ | ✓ |
 | Mission execution | ❌ | ✓ |
 | Geofence support | ❌ | ✓ |

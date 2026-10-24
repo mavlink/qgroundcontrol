@@ -9,9 +9,10 @@ _Structure Scans_ may be inserted into a mission using the Plan view **Pattern >
 The new version of _Structure Scan_ can't read older _Structure Scan_ plans. They will need to be recreated.
 :::
 
-::: warning
-This feature is not yet supported by ArduPilot firmware.
-It is supported in PX4.
+::: info
+Structure Scans are supported on PX4 and ArduPilot.
+ArduPilot does not support the command PX4 uses to point the camera at the structure, so on ArduPilot the vehicle turns to face the structure on each leg and the gimbal pitch is set separately.
+This adds a few mission items for each corner of the flight path.
 :::
 
 ## Overview
@@ -56,6 +57,7 @@ The user can always configure the following settings:
 - **Start scan from top/bottom:** The direction in which layers are scanned.
 - **Structure height:** The height of the object being scanned.
 - **Scan distance:** Distance from the structure to the flight path.
+  Corners sharper than 45 degrees are cut off so the flight path stays close to this distance from the structure.
 - **Entrance/Exit Alt:** Use this setting to avoid obstacles between the last/next waypoint and the structure to be scanned.
   - The vehicle will fly to the _Entrance/Exit_ point at this altitude and then descend to the initial layer to start the scan.
   - The vehicle will ascend to this altitude after completing the scan and then move to the next waypoint.
