@@ -413,6 +413,12 @@ bool RecordingBranch::beginTeardown()
         return finalizing();
     }
 
+    // Its recorder is done already, so there is nothing left to drain.
+    if (_finalizer.outcome() != RecordingFinalizer::Outcome::Pending) {
+        _finish(QString());
+        return false;
+    }
+
     if (!_fileStarted.load(std::memory_order_acquire)) {
         _end();
         return finalizing();
@@ -486,11 +492,16 @@ void RecordingBranch::onBusElement(GstMessage* message)
     if (!forwarded || (GST_MESSAGE_TYPE(forwarded.get()) != GST_MESSAGE_EOS)) {
         return;
     }
-    if (_finalizer.settleFrom(GST_MESSAGE_SRC(forwarded.get()), RecordingFinalizer::Outcome::Closed) &&
-        (_state == State::Finalizing)) {
-        qCDebug(GstVideoReceiverLog) << "Recording finalized" << _current.file;
-        _finish(QString());
+    if (!_finalizer.settleFrom(GST_MESSAGE_SRC(forwarded.get()), RecordingFinalizer::Outcome::Closed)) {
+        return;
     }
+    if (_state == State::Recording) {
+        // The stream's own EOS came through the open valve. Nothing more will stream through this pipeline, so the
+        // request waits for the next one rather than start over in the file just closed.
+        _streaming = false;
+    }
+    qCDebug(GstVideoReceiverLog) << "Recording finalized" << _current.file;
+    _finish(QString());
 }
 
 void RecordingBranch::_onFileOpened(quint64 recording)

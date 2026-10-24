@@ -936,6 +936,46 @@ void GstVideoReceiverTest::_testRecordingSwitchWithoutDisplay()
     QVERIFY2(problem.isEmpty(), qPrintable(problem));
 }
 
+void GstVideoReceiverTest::_testStreamEndClosesRecordingAtOnce()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    Receiver stream(udpListenUri(), /*autoReconnect=*/true, kShortWatchdogTimeout);
+    QVERIFY(stream.startStreaming());
+    const QString path = tempDir.filePath(QStringLiteral("ended.mp4"));
+    QVERIFY(stream.record(path));
+
+    // The stream's EOS reaches the recorder before the receiver acts on the end of the stream, as an RTSP/TCP source's
+    // EOS can. Sent past the source, which is cut off so only the watchdog ends the session, a second or two later.
+    QElapsedTimer clock;
+    QVERIFY(runOnPipeline(stream.receiver.get(), [&clock](GstElement* pipeline) {
+        const GStreamer::GstElementPtr tee = GstTest::findByFactory(GST_BIN(pipeline), "tee");
+        const GStreamer::GstPadPtr teeSink = GStreamer::adoptPad(gst_element_get_static_pad(tee.get(), "sink"));
+        const GStreamer::GstPadPtr sourcePad = GStreamer::adoptPad(gst_pad_get_peer(teeSink.get()));
+        (void) gst_pad_add_probe(
+            sourcePad.get(), GST_PAD_PROBE_TYPE_DATA_DOWNSTREAM,
+            [](GstPad*, GstPadProbeInfo*, gpointer) { return GST_PAD_PROBE_DROP; }, nullptr, nullptr);
+        clock.start();
+        (void) gst_pad_send_event(teeSink.get(), gst_event_new_eos());
+    }));
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, 1, TestTimeout::mediumMs());
+    QVERIFY2(clock.elapsed() < kFinalizeTimeoutMs,
+             qPrintable(QStringLiteral("The recording closed after %1 ms").arg(clock.elapsed())));
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 0), path);
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 1), QString());
+    const QString problem = recordingProblem(path);
+    QVERIFY2(problem.isEmpty(), qPrintable(problem));
+
+    // The closed file is the first part; the recording goes on in the next one once the stream is back.
+    QVERIFY(stream.receiver->recording());
+    QVERIFY(stream.resumeSending());
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingStartedSpy, 2, TestTimeout::mediumMs());
+    QCOMPARE(stream.recordingStartedSpy.constLast().constFirst().toString(),
+             tempDir.filePath(QStringLiteral("ended_part2.mp4")));
+    QCOMPARE(stream.recordingFinishedSpy.count(), 1);
+    QVERIFY(stream.errorSpy.isEmpty());
+}
+
 void GstVideoReceiverTest::_testRecordingErrorKeepsStreaming()
 {
     QTemporaryDir tempDir;
