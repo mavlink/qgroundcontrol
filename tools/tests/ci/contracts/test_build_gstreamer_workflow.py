@@ -54,6 +54,8 @@ def test_android_installs_the_pinned_cmake_and_ninja_build_setup_would() -> None
         **setup_step["with"],
         "cmakeVersion": "${{ steps.plan.outputs.cmake-version }}",
         "ninjaVersion": "${{ steps.plan.outputs.ninja-version }}",
+        # build-setup skips the cloud cache only in Copilot sessions, which never run this.
+        "useCloudCache": True,
     }
 
 

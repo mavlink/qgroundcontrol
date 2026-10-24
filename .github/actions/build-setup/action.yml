@@ -101,7 +101,9 @@ runs:
       with:
         cmakeVersion: ${{ steps.plan.outputs.cmake_version }}
         ninjaVersion: ${{ steps.plan.outputs.ninja_version }}
-        useCloudCache: true
+        # Copilot sessions (event "dynamic") cannot write the cache, and the input covers both
+        # restore and save; they download the two binaries instead.
+        useCloudCache: ${{ github.event_name != 'dynamic' }}
         useLocalCache: false
 
     # setup-gradle needs the java executable, which RunsOn's Windows image does not provide.

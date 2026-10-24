@@ -66,7 +66,7 @@
 | `cache-cleanup.yml` | GitHub Actions cache cleanup (scheduled, on PR close, and manual) |
 | `stale.yml` | Stale-issue labeling and closing |
 | `welcome.yml` | New contributor welcome |
-| `copilot-setup-steps.yml` | Copilot cloud agent environment: Qt, system and Python dependencies, restored caches, and `just configure` (Copilot uses it only from the default branch; run it by hand to check the setup) |
+| `copilot-setup-steps.yml` | Copilot cloud agent environment: Qt, system and Python dependencies, restored caches, and `just configure` (Copilot uses it only from the default branch; run it by hand to check the setup). Sessions (event `dynamic`) restore only the default branch's GitHub caches and cannot save, so they skip every save; daily and input-changing master runs save the apt download and Qt caches they restore, which master's RunsOn builds keep in S3 instead (sessions download CMake and Ninja). In sessions each slow step times out within Copilot's roughly 20-minute setup budget, so a stall fails that step and Copilot starts without the remaining steps rather than cancelling the session |
 
 ## Actions and Scripts
 
@@ -451,7 +451,8 @@ step leaves it out.
 - **apt**: Linux `install-dependencies` caches downloaded `.deb`s per distro, architecture, month,
   and package-list hash (`apt-debs-…`, planned by `install_dependencies_helper.py plan`); a
   `category` install uses its own `apt-debs-<category>-…` family, so it never restores into or
-  replaces the full set's cache. The cache saves only when the job succeeds.
+  replaces the full set's cache. It saves right after a successful install, except in Copilot
+  sessions, which cannot write the cache.
 - **Gradle**: Android jobs cache Gradle User Home through `setup-gradle`'s open-source `basic`
   provider, keyed on the Gradle build files, only on the S3 backend; on GitHub's cache it evicted
   compiler caches (#14474), so GitHub-hosted legs such as Android on macOS don't cache it. Saves

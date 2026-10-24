@@ -209,7 +209,9 @@ def test_dependency_caches_use_shared_backend() -> None:
         for step in get_steps(load_action("build-setup"))
         if step.get("uses", "").startswith("lukka/get-cmake@")
     )
-    assert (cmake["with"]["useCloudCache"], cmake["with"]["useLocalCache"]) == (True, False)
+    # Copilot sessions skip it: they cannot save (test_build_tools_contract.py).
+    assert cmake["with"]["useCloudCache"] == "${{ github.event_name != 'dynamic' }}"
+    assert cmake["with"]["useLocalCache"] is False
     detect = get_step(get_steps(load_action("setup-python")), "Detect Actions cache backend")
     assert "tools/ci/cache/cache_backend.py" in detect["with"]["script"]
     uv = _setup_uv()

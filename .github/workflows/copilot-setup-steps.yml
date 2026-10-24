@@ -5,6 +5,21 @@ name: Copilot Setup Steps
 # workflow by hand to check the setup after changing it or `just configure`'s inputs.
 on:
   workflow_dispatch:
+  # Copilot sessions (event "dynamic") restore only the default branch's GitHub caches and cannot
+  # save any, and master's Linux builds save theirs to RunsOn's S3. These master runs save the
+  # apt download and Qt caches the sessions restore; daily runs keep them inside GitHub's
+  # seven-day eviction window, so a slow Ubuntu mirror cannot stall a session's setup.
+  schedule:
+    - cron: '17 4 * * *'
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/copilot-setup-steps.yml'
+      - '.github/actions/build-setup/**'
+      - '.github/actions/install-dependencies/**'
+      - '.github/actions/qt-install/**'
+      - '.github/build-config.json'
+      - 'tools/setup/install_dependencies/**'
 
 permissions:
   contents: read
@@ -22,6 +37,11 @@ jobs:
       # runs; Copilot sessions (event "dynamic") restore only Qt and CPM.
       actions: read
 
+    # Copilot cancels a session whose setup runs past about 20 minutes, so a stalled step (a slow
+    # Ubuntu mirror once held Install Dependencies for 18) lost the whole session. In sessions
+    # (event "dynamic") each slow step times out within that budget instead: Copilot skips the
+    # remaining setup steps after a failed one and starts with the environment as it is. The
+    # master runs that save the sessions' caches keep generous limits so they finish.
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@v2
@@ -34,6 +54,7 @@ jobs:
           persist-credentials: false
 
       - name: Build Setup
+        timeout-minutes: ${{ github.event_name == 'dynamic' && 6 || 15 }}
         uses: ./.github/actions/build-setup
         with:
           qt-host: linux
@@ -43,9 +64,11 @@ jobs:
           python-groups: dev
 
       - name: Install Dependencies
+        timeout-minutes: ${{ github.event_name == 'dynamic' && 6 || 25 }}
         uses: ./.github/actions/install-dependencies
 
       - name: Restore prek environments
+        timeout-minutes: ${{ github.event_name == 'dynamic' && 2 || 5 }}
         uses: actions/cache/restore@v6
         with:
           path: |
@@ -56,4 +79,5 @@ jobs:
             prek-v1-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Configure
+        timeout-minutes: ${{ github.event_name == 'dynamic' && 5 || 12 }}
         run: just configure

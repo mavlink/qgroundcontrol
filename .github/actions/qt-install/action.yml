@@ -53,10 +53,10 @@ runs:
         QT_ARCH: ${{ inputs.arch }}
         QT_MODULES: ${{ inputs.modules }}
         QT_ARCHIVES: ${{ inputs.archives }}
-        # Pull requests from forks cannot write the base repository's cache.
+        # Pull requests from forks and Copilot sessions (event "dynamic") cannot write the cache.
         SAVE_ALLOWED: >-
-          ${{ github.event_name != 'pull_request' ||
-              github.event.pull_request.head.repo.full_name == github.repository }}
+          ${{ github.event_name != 'dynamic' && (github.event_name != 'pull_request' ||
+              github.event.pull_request.head.repo.full_name == github.repository) }}
       run: >-
         python3 "${GITHUB_WORKSPACE}/tools/setup/install_qt.py" plan
         --outdir "${GITHUB_WORKSPACE}/.qt/Qt" --preinstalled-prefix "${PREINSTALLED_DIR}"

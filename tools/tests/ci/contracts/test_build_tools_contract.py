@@ -9,7 +9,15 @@ from typing import Any
 import pytest
 from ci.runner.build_setup import SetupInputs, plan_setup
 
-from ..._helpers import REPO_ROOT, get_step, get_steps, load_action, load_workflow, workflow_names
+from ..._helpers import (
+    REPO_ROOT,
+    evaluate_expression,
+    get_step,
+    get_steps,
+    load_action,
+    load_workflow,
+    workflow_names,
+)
 
 CONFIG = json.loads((REPO_ROOT / ".github/build-config.json").read_text(encoding="utf-8"))
 PINS = ("cmake_version", "ninja_version")
@@ -99,16 +107,53 @@ def test_linux_install_plans_caches_and_installs_without_python_build_tools() ->
     ]
     assert [step.get("id") or step["name"] for step in steps] == [
         "apt-plan",
-        "Restore apt download cache (Linux)",
+        "apt-cache",
         "Install apt packages (Linux)",
+        "Save apt download cache (Linux)",
     ]
     cache = get_step(steps, "Restore apt download cache (Linux)")
-    assert cache["uses"].startswith("actions/cache@")
+    assert cache["uses"].startswith("actions/cache/restore@")
     assert cache["with"]["key"] == "${{ steps.apt-plan.outputs.key }}"
     assert cache["with"]["restore-keys"] == "${{ steps.apt-plan.outputs.restore-keys }}"
+    save = get_step(steps, "Save apt download cache (Linux)")
+    assert save["uses"].startswith("actions/cache/save@")
+    assert save["with"] == {"path": cache["with"]["path"], "key": cache["with"]["key"]}
+    assert save["continue-on-error"] is True
     commands = " ".join(step.get("run", "") for step in steps)
     assert "tools/setup/install_dependencies" not in commands
     assert commands.count("tools/ci/runner/install_dependencies_helper.py") == 2
+
+
+@pytest.mark.parametrize(
+    ("event", "cache_hit", "saves"),
+    [
+        ("push", "", True),
+        ("schedule", "false", True),
+        ("push", "true", False),
+        # Copilot sessions cannot write the cache; a save only logs "cache write denied".
+        ("dynamic", "", False),
+    ],
+)
+def test_apt_downloads_are_saved_by_runs_that_may_write_the_cache(
+    event: str, cache_hit: str, saves: bool
+) -> None:
+    save = get_step(
+        get_steps(load_action("install-dependencies")), "Save apt download cache (Linux)"
+    )
+    context = {
+        "runner": {"os": "Linux"},
+        "github": {"event_name": event},
+        "steps": {"apt-cache": {"outputs": {"cache-hit": cache_hit}}},
+    }
+    assert bool(evaluate_expression(save["if"], context)) is saves
+
+
+@pytest.mark.parametrize(("event", "cloud"), [("push", True), ("dynamic", False)])
+def test_get_cmake_skips_the_cloud_cache_in_copilot_sessions(event: str, cloud: bool) -> None:
+    _, step = _get_cmake()
+    context = {"github": {"event_name": event}}
+    assert evaluate_expression(step["with"]["useCloudCache"], context) is cloud
+    assert step["with"]["useLocalCache"] is False
 
 
 @pytest.mark.parametrize("runner_os", ["macOS", "Windows"])

@@ -66,7 +66,8 @@ an additional security problem.
   versions that later steps and their `if:` conditions read; Android jobs also get
   `ANDROID_MIN_SDK` and, off macOS, an SDK root under `$RUNNER_TEMP`.
 - **`qt-install`**: `install_qt.py plan` resolves the request once and outputs the cache key,
-  whether to save (never for a reused preinstalled SDK or a pull request from a fork), and the
+  whether to save (never for a reused preinstalled SDK, a pull request from a fork, or a Copilot
+  session), and the
   request as JSON; `ensure --plan` reuses or installs exactly that request and reports its source.
 - **`cache` / `save-build-cache`**: `cache` restores compiler/moc archives and immutable
   CPM/SDK snapshots and exports the save policy; `save-build-cache` checkpoints compiler/moc
