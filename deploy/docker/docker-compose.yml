@@ -30,7 +30,7 @@ services:
       dockerfile: deploy/docker/Dockerfile
       target: linux
       args:
-        BASE_REF: "public.ecr.aws/docker/library/ubuntu:22.04@sha256:4f838adc7181d9039ac795a7d0aba05a9bd9ecd480d294483169c5def983b64d"
+        BASE_REF: "public.ecr.aws/docker/library/ubuntu:22.10@sha256:e322f4808315c387868a9135beeb11435b5b83130a8599fd7d0014452c34f489"
         APT_EXTRA: "gcc-12 g++-12"
         CC_PIN: "gcc-12"
         CXX_PIN: "g++-12"
@@ -52,7 +52,7 @@ services:
       dockerfile: deploy/docker/Dockerfile
       target: linux
       args:
-        BASE_REF: "public.ecr.aws/docker/library/ubuntu:26.04@sha256:f3d28607ddd78734bb7f71f117f3c6706c666b8b76cbff7c9ff6e5718d46ff64"
+        BASE_REF: "public.ecr.aws/docker/library/ubuntu:26.10@sha256:93e29beff5257b2cdf1c024d831f6d2997e53655a653ff76a811fc9e6564a719"
     image: qgc-ubuntu-2604-docker
     user: "${QGC_UID:-1000}:${QGC_GID:-1000}"
     environment:
@@ -71,7 +71,7 @@ services:
       dockerfile: deploy/docker/Dockerfile
       target: linux
       args:
-        BASE_REF: "public.ecr.aws/docker/library/debian:bookworm-slim@sha256:96e378d7e6531ac9a15ad505478fcc2e69f371b10f5cdf87857c4b8188404716"
+        BASE_REF: "public.ecr.aws/docker/library/debian:bookworm-slim@sha256:7ff6ba31527b9e336162fa061746c366c4b2032f4d2cff2078bea43f78efe3f8"
     image: qgc-debian-docker
     user: "${QGC_UID:-1000}:${QGC_GID:-1000}"
     environment:
@@ -108,7 +108,7 @@ services:
       dockerfile: deploy/docker/Dockerfile
       target: linux
       args:
-        BASE_REF: "public.ecr.aws/docker/library/archlinux:base@sha256:ff410a88e200b133e577f5730b7bfa324e26a333075ee056bf45e911c6ac5671"
+        BASE_REF: "public.ecr.aws/docker/library/archlinux:base@sha256:52dfbd5afb23a220d5ee92dafcb4c788d96c026ed04179890c23adef4c897fa0"
         SETUP_BASE: "setup-base-pacman.sh"
         DEP_PLATFORM: "arch"
     image: qgc-arch-docker
