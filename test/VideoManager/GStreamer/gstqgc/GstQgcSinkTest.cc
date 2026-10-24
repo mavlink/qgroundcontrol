@@ -38,6 +38,9 @@
 #include "gstqgc/GstQgcVideoFormats.h"
 #include "gstqgc/gstqgcqvideosink.h"
 #include "gstqgc/gstqgcvideosinkbin.h"
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+#include "GstDmaBufVideoBuffer.h"
+#endif
 
 namespace {
 
@@ -209,6 +212,10 @@ GStreamer::GstCapsPtr sinkPadCaps(GstElement* element)
 }
 
 constexpr GstQgc::RenderTarget kOpenGlOnEgl{.backend = GstQgc::RenderBackend::OpenGL, .egl = true};
+
+/// Stands in for Qt's EGLDisplay (HwBuffers::ScopedDmaBufDisplayForTest), so the sink offers DMABuf; never passed to
+/// EGL by these tests.
+void* const kFakeQtEglDisplay = reinterpret_cast<void*>(quintptr(1));
 
 }  // namespace
 
@@ -382,6 +389,7 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant()
     const HwBuffers::ScopedGpuBinModeForTest binMode(static_cast<HwBuffers::GpuBinMode>(mode));
     const GstQgc::ScopedRenderTargetForTest target(
         {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = egl});
+    const HwBuffers::ScopedDmaBufDisplayForTest dmaBufDisplay(kFakeQtEglDisplay);
 
     GstElement* element = gst_element_factory_make_full("qgcvideosinkbin", "gpu-zerocopy", TRUE, nullptr);
     QVERIFY2(element, "Failed to create qgcvideosinkbin (GPU branch)");
@@ -762,6 +770,7 @@ void GstQgcSinkTest::_testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta()
 #if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
     const HwBuffers::ScopedGpuBinModeForTest directBin(HwBuffers::GpuBinMode::DirectDmaBuf);
     const GstQgc::ScopedRenderTargetForTest target(kOpenGlOnEgl);
+    const HwBuffers::ScopedDmaBufDisplayForTest dmaBufDisplay(kFakeQtEglDisplay);
 #else
     QSKIP("The ALLOCATION VideoMeta contract covers the direct-DMABuf bin");
 #endif
@@ -1214,6 +1223,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkGpuPathSelection()
     // A render target that imports the row's GPU memory, so the sink accepts its caps.
     const GstQgc::ScopedRenderTargetForTest target(
         {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = true});
+    const HwBuffers::ScopedDmaBufDisplayForTest dmaBufDisplay(kFakeQtEglDisplay);
 
     QVideoSink videoSink;
     const QByteArray feature = memoryFeature.toUtf8();
@@ -1293,6 +1303,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkCapsFollowRenderTarget()
     QFETCH(QStringList, memoryFeatures);
     const GstQgc::ScopedRenderTargetForTest target(
         {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = egl});
+    const HwBuffers::ScopedDmaBufDisplayForTest dmaBufDisplay(kFakeQtEglDisplay);
 
     GstElement* const element = gst_element_factory_make_full("qgcqvideosink", "gpu-zerocopy", gpuZeroCopy, nullptr);
     QVERIFY(element);
@@ -1337,6 +1348,48 @@ void GstQgcSinkTest::_testQgcQVideoSinkReconfiguresOnRenderTargetChange()
     }
     QCOMPARE(harness.pushFrame(5 * GST_SECOND), GST_FLOW_OK);
     QVERIFY(harness.takeReconfigure());
+}
+
+void GstQgcSinkTest::_testQgcQVideoSinkReconfiguresOnDmaBufImportChange()
+{
+#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+    QSKIP("DMABuf GPU path not compiled in this build");
+#else
+    GstDmaBufVideoBuffer::resetCachedState();
+    const auto resetLatch = qScopeGuard([] { GstDmaBufVideoBuffer::resetCachedState(); });
+    const GstQgc::ScopedRenderTargetForTest target(kOpenGlOnEgl);
+    const HwBuffers::ScopedDmaBufDisplayForTest dmaBufDisplay(kFakeQtEglDisplay);
+    const auto offersDmaBuf = [](GstElement* sink) {
+        const GStreamer::GstCapsPtr caps = sinkPadCaps(sink);
+        return caps && capsMemoryFeatures(caps.get()).contains(QStringLiteral("memory:DMABuf"));
+    };
+
+    QVideoSink videoSink;
+    QgcQVideoSinkHarness harness(&videoSink, /*gpuZeroCopy=*/true);
+    QVERIFY(harness.isReady());
+    (void) harness.takeReconfigure();  // linking marks a source pad for reconfiguration
+    QVERIFY(offersDmaBuf(harness.element()));
+    QCOMPARE(harness.pushFrame(GST_SECOND), GST_FLOW_OK);
+    QVERIFY(!harness.takeReconfigure());
+
+    // An import failure no later frame avoids: the sink must stop offering DMABuf (DMA_DRM included) at once, or a
+    // tiled stream would stay negotiated and its frames could only be dropped.
+    expectLogMessage("Video.GStreamer.HwBuffers.GstDmaBuf", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("EGL_BAD_MATCH")));
+    GstDmaBufVideoBuffer::recordImportFailureForTest(/*unrecoverable=*/true);
+    verifyExpectedLogMessage();
+    QCOMPARE(harness.pushFrame(2 * GST_SECOND), GST_FLOW_OK);
+    QVERIFY2(harness.takeReconfigure(), "disabling the DMABuf import must ask upstream to renegotiate");
+    QVERIFY(!offersDmaBuf(harness.element()));
+    QCOMPARE(harness.pushFrame(3 * GST_SECOND), GST_FLOW_OK);
+    QVERIFY2(!harness.takeReconfigure(), "one change must ask for one renegotiation");
+
+    // A recreated scene graph clears the latch.
+    GstDmaBufVideoBuffer::resetCachedState();
+    QCOMPARE(harness.pushFrame(4 * GST_SECOND), GST_FLOW_OK);
+    QVERIFY(harness.takeReconfigure());
+    QVERIFY(offersDmaBuf(harness.element()));
+#endif
 }
 
 void GstQgcSinkTest::_testQgcQVideoSinkDropsUndeliveredFrame_data()

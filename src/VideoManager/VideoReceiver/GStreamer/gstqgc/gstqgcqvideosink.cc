@@ -60,7 +60,7 @@ struct PrivState
     HwBuffers::GpuBinMode gpu_bin = HwBuffers::GpuBinMode::Passthrough;
     bool square_pixels = true;
     // What get_caps last offered, and for which policy; under GST_OBJECT_LOCK. Rebuilt when the policy changes, e.g.
-    // the render target: building may query EGL.
+    // the render target or the DMABuf import state: building may query EGL.
     GstCaps* offered_caps = nullptr;
     GstQgc::SinkCapsPolicy offered_policy;
     // Negotiated state: set_caps/stop write it and show_frame reads it, all serialised by GstBaseSink.
@@ -124,14 +124,29 @@ bool snapshot_sink(GstQgcQVideoSink* self, HwVideoBufferContext& hwOut)
     return hasSink;
 }
 
+/// The caps policy for @p target and the display the DMABuf path imports with (HwBuffers::dmaBufImportDisplay()); under
+/// GST_OBJECT_LOCK. A display that resolved after start() also goes into the GPU context, so the DMABuf frames these
+/// caps bring can import.
+GstQgc::SinkCapsPolicy caps_policy_locked(PrivState* p, const GstQgc::RenderTarget& target, void* dmaBufDisplay)
+{
+    if (dmaBufDisplay && p->hw_context.gpuEnabled) {
+        p->hw_context.dmaBufEglDisplay = dmaBufDisplay;
+    }
+    return {.gpuZeroCopy = p->gpu_zerocopy,
+            .gpuBin = p->gpu_bin,
+            .target = target,
+            .dmaBufImport = (dmaBufDisplay != nullptr),
+            .squarePixels = p->square_pixels};
+}
+
 /// The caps get_caps offers now (transfer-full); rebuilt only when the policy differs from the last call's.
 GstCaps* offered_caps(GstQgcQVideoSink* self)
 {
     PrivState* const p = priv_of(self);
     const GstQgc::RenderTarget target = GstQgc::currentRenderTarget();
+    void* const dmaBufDisplay = HwBuffers::dmaBufImportDisplay();
     GST_OBJECT_LOCK(self);
-    const GstQgc::SinkCapsPolicy policy{
-        .gpuZeroCopy = p->gpu_zerocopy, .gpuBin = p->gpu_bin, .target = target, .squarePixels = p->square_pixels};
+    const GstQgc::SinkCapsPolicy policy = caps_policy_locked(p, target, dmaBufDisplay);
     if (p->offered_caps && (p->offered_policy == policy)) {
         GstCaps* const cached = gst_caps_ref(p->offered_caps);
         GST_OBJECT_UNLOCK(self);
@@ -144,8 +159,8 @@ GstCaps* offered_caps(GstQgcQVideoSink* self)
         GST_ERROR_OBJECT(self, "sink caps did not parse");
         return gst_caps_new_empty();
     }
-    GST_DEBUG_OBJECT(self, "offering %" GST_PTR_FORMAT " for render backend %s (EGL %d)", caps,
-                     GstQgc::toString(target.backend), target.egl);
+    GST_DEBUG_OBJECT(self, "offering %" GST_PTR_FORMAT " for render backend %s (EGL %d, DMABuf import %d)", caps,
+                     GstQgc::toString(target.backend), target.egl, policy.dmaBufImport);
     GST_OBJECT_LOCK(self);
     gst_caps_replace(&p->offered_caps, caps);
     p->offered_policy = policy;
@@ -153,24 +168,27 @@ GstCaps* offered_caps(GstQgcQVideoSink* self)
     return caps;
 }
 
-/// Asks upstream to renegotiate when the render target changed since get_caps last offered caps (the scene graph came
-/// up after negotiation, or Qt fell back to another graphics API), as the GPU memory the sink takes changed with it.
-/// The glupload variant's caps don't depend on the render target.
-void reconfigure_on_render_target_change(GstQgcQVideoSink* self)
+/// Asks upstream to renegotiate when the GPU memory the sink takes changed since get_caps last offered caps: the render
+/// target changed (the scene graph came up after negotiation, or Qt fell back to another graphics API), or the DMABuf
+/// path started or stopped importing (Qt's EGLDisplay resolved, or an import failure disabled the path). The glupload
+/// variant's caps depend on neither.
+void reconfigure_on_policy_change(GstQgcQVideoSink* self)
 {
     PrivState* const p = priv_of(self);
     const GstQgc::RenderTarget target = GstQgc::currentRenderTarget();
+    void* const dmaBufDisplay = HwBuffers::dmaBufImportDisplay();
     GST_OBJECT_LOCK(self);
+    const GstQgc::SinkCapsPolicy policy = caps_policy_locked(p, target, dmaBufDisplay);
     const bool changed = p->offered_caps && p->gpu_zerocopy && (p->gpu_bin != HwBuffers::GpuBinMode::GlUpload) &&
-                         (p->offered_policy.target != target);
+                         (p->offered_policy != policy);
     if (changed) {
         // Rebuilt by the next get_caps, which also re-arms this check.
         gst_clear_caps(&p->offered_caps);
     }
     GST_OBJECT_UNLOCK(self);
     if (changed) {
-        GST_INFO_OBJECT(self, "render backend now %s (EGL %d); asking upstream to renegotiate",
-                        GstQgc::toString(target.backend), target.egl);
+        GST_INFO_OBJECT(self, "render backend now %s (EGL %d), DMABuf import %d; asking upstream to renegotiate",
+                        GstQgc::toString(target.backend), target.egl, policy.dmaBufImport);
         (void) gst_pad_push_event(GST_BASE_SINK_PAD(self), gst_event_new_reconfigure());
     }
 }
@@ -452,7 +470,7 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
     PrivState* p = priv_of(self);
 
     p->input_frames.fetch_add(1, std::memory_order_relaxed);
-    reconfigure_on_render_target_change(self);
+    reconfigure_on_policy_change(self);
 
     if (!p->caps_valid.load(std::memory_order_acquire)) {
         // Should never happen — GstBaseSink calls set_caps before show_frame.

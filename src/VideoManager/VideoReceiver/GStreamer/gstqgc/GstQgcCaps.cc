@@ -49,7 +49,7 @@ std::string gpuMemoryCaps(const SinkCapsPolicy& policy, const std::string& forma
             // DMABuf and AHardwareBuffer reach Qt as EGLImages on its EGLDisplay; GLMemory through the GL share group,
             // which gst-gl joins on EGL and GLX.
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-            if (policy.target.egl) {
+            if (policy.target.egl && policy.dmaBufImport) {
                 caps += sinkDmaDrmCaps();
                 // Legacy memory:DMABuf covers v4l2h264dec/Mali/V3D LINEAR. Unrestricted DMA_DRM is never offered (only
                 // the importable modifiers above): gst-va iHD would negotiate tiled+CCS, which no per-plane import can

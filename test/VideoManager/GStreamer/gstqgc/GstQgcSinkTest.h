@@ -27,6 +27,7 @@ private slots:
     void _testQgcQVideoSinkCapsFollowRenderTarget_data();
     void _testQgcQVideoSinkCapsFollowRenderTarget();
     void _testQgcQVideoSinkReconfiguresOnRenderTargetChange();
+    void _testQgcQVideoSinkReconfiguresOnDmaBufImportChange();
     void _testQgcQVideoSinkDropsUndeliveredFrame_data();
     void _testQgcQVideoSinkDropsUndeliveredFrame();
     void _testQgcQVideoSinkForwardsTimestamps();

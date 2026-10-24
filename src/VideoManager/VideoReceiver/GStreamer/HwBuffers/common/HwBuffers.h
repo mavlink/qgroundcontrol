@@ -72,6 +72,26 @@ void connectMainWindow(QQuickWindow* window) noexcept;
 /// disabled in builds without a GPU path. Safe off the GUI thread.
 HwVideoBufferContext makeAdapterContext(bool gpuEnabled) noexcept;
 
+/// The EGLDisplay (as HwVideoBufferContext::dmaBufEglDisplay stores it) the DMABuf path imports with now: Qt's, once
+/// the GUI thread has resolved it. Null when Qt renders without EGL, an import failure disabled the path (until
+/// resetCachedGpuResources()), or no DMABuf path is compiled. Safe off the GUI thread.
+void* dmaBufImportDisplay() noexcept;
+
+#ifdef QGC_UNITTEST_BUILD
+/// dmaBufImportDisplay() takes @p display for Qt's EGLDisplay while alive; the import-failure latch still applies.
+class ScopedDmaBufDisplayForTest
+{
+public:
+    explicit ScopedDmaBufDisplayForTest(void* display);
+    ~ScopedDmaBufDisplayForTest();
+    ScopedDmaBufDisplayForTest(const ScopedDmaBufDisplayForTest&) = delete;
+    ScopedDmaBufDisplayForTest& operator=(const ScopedDmaBufDisplayForTest&) = delete;
+
+private:
+    void* _previous;
+};
+#endif
+
 /// Synchronously answer GST_QUERY_CONTEXT through the GPU paths' context bridges; false -> let bus NEED_CONTEXT run.
 bool answerSinkBinContextQuery(GstQuery* query) noexcept;
 

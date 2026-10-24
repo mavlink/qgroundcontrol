@@ -53,16 +53,19 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   (`kVideoFormatTable`):
   - System memory always, with `pixel-aspect-ratio=1/1` unless the bin's `disable-par` is set.
   - With `gpu-zerocopy`, ahead of it, only the GPU memory the renderer Qt Quick uses can import. Under OpenGL: DMA_DRM
-    and DMABuf on EGL, and GLMemory, which reaches Qt through the GL share group, on EGL or GLX. Under Direct3D11:
-    D3D11Memory. Vulkan, Metal, Direct3D12 and OpenGL on WGL or CGL get system memory only. There is deliberately no
-    D3D12Memory: GPU zero-copy has never been enabled under Direct3D12 (GStreamer can't wrap Qt's `ID3D12Device`, and
-    QGC's D3D12 import isn't validated). vtdec's IOSurface-backed frames arrive as system memory.
+    and DMABuf on EGL while the DMABuf import works (see
+    [DMABuf zero-copy diagnostics](#dmabuf-zero-copy-diagnostics)), and GLMemory, which reaches Qt through the GL share
+    group, on EGL or GLX. Under Direct3D11: D3D11Memory. Vulkan, Metal, Direct3D12 and OpenGL on WGL or CGL get system
+    memory only. There is deliberately no D3D12Memory: GPU zero-copy has never been enabled under Direct3D12 (GStreamer
+    can't wrap Qt's `ID3D12Device`, and QGC's D3D12 import isn't validated). vtdec's IOSurface-backed frames arrive as
+    system memory.
   - GLMemory always carries `texture-target=2D`, the only target the GL path samples. It also makes glcolorconvert
     convert amcvideodec's external-OES textures, which Qt would otherwise sample black.
   - The glupload variant (see [GPU bin selection](#gpu-bin-selection)) takes GLMemory only.
 
   The renderer is the backend of the scene graph's `QRhi` (`QGCRhiCapture`), or, until the scene graph runs, the
-  graphics API Qt Quick was asked for. When it changes mid-stream the sink asks upstream to renegotiate.
+  graphics API Qt Quick was asked for. When it changes mid-stream, or the DMABuf import starts or stops working, the
+  sink asks upstream to renegotiate.
 - **`qgcvideosinkbin`** — `converter ! qgcqvideosink`, with `glupload ! glcolorconvert` in between for the glupload
   variant. The converter is the `conversion-element` override, else `imxvideoconvert_g2d` or `nvvidconv` when present,
   else `videoconvertscale` (`videoconvert ! videoscale` before GStreamer 1.22). It scales non-square pixels to square
@@ -185,13 +188,15 @@ GPU through the dma-buf's exported fence, else with a bounded `poll()`), and it 
 textures.
 
 - It needs Qt to render with EGL: Wayland, eglfs, or xcb with `QT_XCB_GL_INTEGRATION=xcb_egl`. Under GLX, Qt's xcb
-  default, DMABuf frames take the CPU path from the start.
+  default, the sink offers no DMABuf caps. Nor does it until the GUI thread has found Qt's EGLDisplay; once it has,
+  the sink asks upstream to renegotiate.
 - The DMA_DRM caps offer the (format, modifier) pairs Qt's EGL display reports when every plane can be sampled with
   that modifier. Plain vendor tilings (Intel X/Y/4, AMD without DCC) qualify; compressed layouts and those with
   auxiliary planes (Intel CCS, AMD DCC, Arm AFBC, Qualcomm UBWC) don't. Buffers negotiated with plain
   `memory:DMABuf` caps import without a modifier, leaving the layout to the driver.
 - `EGL_BAD_MATCH` (a broken EGL/driver pairing, QTBUG-112312), or 30 failed imports in a row, turn the path off until
-  the scene graph is recreated: frames take the CPU path, and later negotiations offer no DMA_DRM caps.
+  the scene graph is recreated: the sink stops offering DMABuf and DMA_DRM caps and asks upstream to renegotiate.
+  Until upstream has, LINEAR frames take the CPU path.
 - A tiled frame has no CPU layout: when its import fails it is dropped rather than shown scrambled.
 - The `Video.GStreamer.HwBuffers.GstDmaBuf` and `Video.GStreamer.HwBuffers.GstDmaDrmCaps` debug categories log the
   offered modifiers and the first import; Qt's `qt.multimedia.dmabuf` category logs its EGL calls.

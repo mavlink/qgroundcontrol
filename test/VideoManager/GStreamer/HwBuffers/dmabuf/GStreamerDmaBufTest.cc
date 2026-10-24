@@ -106,10 +106,12 @@ void GstHwBuffersPipelineTest::_testDmaBufDispatch()
         return GStreamer::adoptCaps(out);
     };
 
-    const GStreamer::GstCapsPtr qgcGpuCaps = GStreamer::adoptCaps(gst_caps_from_string(
-        GstQgc::buildSinkCaps(
-            {.gpuZeroCopy = true, .gpuBin = HwBuffers::GpuBinMode::DirectDmaBuf, .target = kDmaBufTarget})
-            .c_str()));
+    const GstQgc::SinkCapsPolicy dmaBufPolicy{.gpuZeroCopy = true,
+                                              .gpuBin = HwBuffers::GpuBinMode::DirectDmaBuf,
+                                              .target = kDmaBufTarget,
+                                              .dmaBufImport = true};
+    const GStreamer::GstCapsPtr qgcGpuCaps =
+        GStreamer::adoptCaps(gst_caps_from_string(GstQgc::buildSinkCaps(dmaBufPolicy).c_str()));
     QVERIFY2(qgcGpuCaps, "QGC GPU caps did not parse");
     const GStreamer::GstCapsPtr qgcDmaBufCaps = onlyDmaBufCaps(qgcGpuCaps.get());
     QVERIFY2(!gst_caps_is_empty(qgcDmaBufCaps.get()), "QGC GPU caps did not include a DMABuf structure");

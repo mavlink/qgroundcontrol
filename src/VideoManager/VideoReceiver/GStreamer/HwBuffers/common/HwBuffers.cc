@@ -16,6 +16,8 @@
 #endif
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include <QtQuick/QQuickWindow>
+
+#include "GstDmaBufVideoBuffer.h"
 #endif
 
 namespace HwBuffers {
@@ -106,6 +108,7 @@ GpuBinChoice chooseGpuBin() noexcept
 #ifdef QGC_UNITTEST_BUILD
 constexpr int kNoTestGpuBinMode = -1;
 constinit std::atomic<int> s_testGpuBinMode{kNoTestGpuBinMode};
+constinit std::atomic<void*> s_testDmaBufDisplay{nullptr};
 #endif
 
 }  // namespace
@@ -226,6 +229,34 @@ HwVideoBufferContext makeAdapterContext(bool gpuEnabled) noexcept
 #endif
     return ctx;
 }
+
+void* dmaBufImportDisplay() noexcept
+{
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+    if (GstDmaBufVideoBuffer::importDisabled()) {
+        return nullptr;
+    }
+#ifdef QGC_UNITTEST_BUILD
+    if (void* const testDisplay = s_testDmaBufDisplay.load(std::memory_order_acquire)) {
+        return testDisplay;
+    }
+#endif
+    return GstEglHelpers::qtPlatformDisplay();
+#else
+    return nullptr;
+#endif
+}
+
+#ifdef QGC_UNITTEST_BUILD
+ScopedDmaBufDisplayForTest::ScopedDmaBufDisplayForTest(void* display)
+    : _previous(s_testDmaBufDisplay.exchange(display, std::memory_order_acq_rel))
+{}
+
+ScopedDmaBufDisplayForTest::~ScopedDmaBufDisplayForTest()
+{
+    s_testDmaBufDisplay.store(_previous, std::memory_order_release);
+}
+#endif
 
 bool answerSinkBinContextQuery(GstQuery* query) noexcept
 {
