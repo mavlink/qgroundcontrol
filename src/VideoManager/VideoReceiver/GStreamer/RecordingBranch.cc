@@ -462,7 +462,8 @@ void RecordingBranch::onBusError(GstMessage* message, const QString& text, const
     } else {
         qCWarning(GstVideoReceiverLog) << "Recording error:" << text;
     }
-    if (!settled) {
+    // An error after the file closed doesn't fail it; a recording still running ends either way.
+    if (!settled && (_state != State::Recording)) {
         return;
     }
 
@@ -471,16 +472,10 @@ void RecordingBranch::onBusError(GstMessage* message, const QString& text, const
     _finish(QString());
 }
 
-void RecordingBranch::onBusEos()
-{
-    if (_finalizer.settle(RecordingFinalizer::Outcome::Closed) && (_state == State::Finalizing)) {
-        _finish(QString());
-    }
-}
-
 void RecordingBranch::onBusElement(GstMessage* message)
 {
-    // The recorder's EOS, forwarded by the pipeline (message-forward) since the display sink isn't done.
+    // The recorder's EOS as the pipeline forwards it (message-forward), ahead of the pipeline's own EOS. That one is
+    // ignored: without a display sink it follows every recorder's EOS, and may arrive once the next recording started.
     const GstStructure* structure = gst_message_get_structure(message);
     if (!structure || !gst_structure_has_name(structure, "GstBinForwarded")) {
         return;

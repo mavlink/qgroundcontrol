@@ -376,7 +376,7 @@ void PipelineSession::_drainBus()
 
 void PipelineSession::_pumpBusUntilRecordingFinalized(const QDeadlineTimer& deadline)
 {
-    constexpr auto kTypes = static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_EOS | GST_MESSAGE_ELEMENT);
+    constexpr auto kTypes = static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_ELEMENT);
     while (_recording->finalizing() && !deadline.hasExpired()) {
         const GStreamer::GstMessagePtr message = GStreamer::adoptMessage(
             gst_bus_timed_pop_filtered(_bus.get(), static_cast<GstClockTime>(deadline.remainingTimeNSecs()), kTypes));
@@ -400,9 +400,6 @@ void PipelineSession::_handleMessage(GstMessage* message)
             if (!_tearingDown) {
                 logBusWarning(message);
             }
-            break;
-        case GST_MESSAGE_EOS:
-            _recording->onBusEos();
             break;
         case GST_MESSAGE_ELEMENT:
             _recording->onBusElement(message);

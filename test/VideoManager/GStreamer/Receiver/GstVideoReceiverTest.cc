@@ -58,6 +58,15 @@ constexpr qint64 kFirstReconnectDelayMs = 1000;
 constexpr qint64 kSignalLatencySlackMs = 200;
 // A window that shows a reconnect would have started: the first one follows a failure after kFirstReconnectDelayMs.
 constexpr int kNoReconnectWindowMs = static_cast<int>(kFirstReconnectDelayMs + kSignalLatencySlackMs);
+// A recording that waits this long to close was closed by the finalize timeout, not by its recorder's EOS.
+constexpr qint64 kFinalizeTimeoutMs = std::chrono::milliseconds(RecordingBranch::kFinalizeTimeout).count();
+
+enum class RecordingEnd
+{
+    Stopped,
+    RecorderError,
+    Deactivated,
+};
 
 QString loopbackUri(QLatin1StringView scheme, quint16 port)
 {
@@ -857,6 +866,74 @@ void GstVideoReceiverTest::_testSecondRecordingIsNotTruncated()
         const QString problem = recordingProblem(path);
         QVERIFY2(problem.isEmpty(), qPrintable(problem));
     }
+}
+
+void GstVideoReceiverTest::_testRecordingSwitchWithoutDisplay_data()
+{
+    QTest::addColumn<int>("ending");
+
+    QTest::newRow("stopped") << int(RecordingEnd::Stopped);
+    QTest::newRow("recorder error") << int(RecordingEnd::RecorderError);
+    QTest::newRow("deactivated") << int(RecordingEnd::Deactivated);
+}
+
+void GstVideoReceiverTest::_testRecordingSwitchWithoutDisplay()
+{
+    QFETCH(int, ending);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    // Without a display sink the first recorder's EOS ends the whole pipeline too. That EOS can still be queued when
+    // the second recording starts, and must not be taken for the second recorder's.
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+    const QString first = tempDir.filePath(QStringLiteral("first.mp4"));
+    const QString second = tempDir.filePath(QStringLiteral("second.mp4"));
+    QVERIFY(stream.record(first));
+    // Switched without a stop: the second file starts once the first one is finalized.
+    QVERIFY(stream.record(second));
+    QCOMPARE(stream.recordingFinishedSpy.count(), 1);
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 0), first);
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 1), QString());
+
+    QElapsedTimer clock;
+    clock.start();
+    switch (static_cast<RecordingEnd>(ending)) {
+        case RecordingEnd::Stopped:
+            stream.receiver->stopRecording();
+            break;
+        case RecordingEnd::RecorderError:
+            expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                             QRegularExpression(QStringLiteral("^Recording error: .*injected recorder failure")));
+            QVERIFY(runOnPipeline(stream.receiver.get(), [](GstElement* pipeline) {
+                const GStreamer::GstElementPtr fileSink = GstTest::findByFactory(GST_BIN(pipeline), "filesink");
+                GError* const error =
+                    g_error_new_literal(GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_WRITE, "injected recorder failure");
+                (void) gst_element_post_message(fileSink.get(),
+                                                gst_message_new_error(GST_OBJECT(fileSink.get()), error, nullptr));
+                g_error_free(error);
+            }));
+            break;
+        case RecordingEnd::Deactivated:
+            stream.receiver->setActive(false);
+            break;
+    }
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, 2, TestTimeout::mediumMs());
+    QVERIFY2(clock.elapsed() < kFinalizeTimeoutMs,
+             qPrintable(QStringLiteral("The second recording closed after %1 ms").arg(clock.elapsed())));
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 0), second);
+    QVERIFY_TRUE_WAIT(!stream.receiver->recording(), TestTimeout::shortMs());
+    // A file that opened reports its error through recordingFinished() only.
+    QVERIFY(stream.errorSpy.isEmpty());
+
+    if (static_cast<RecordingEnd>(ending) == RecordingEnd::RecorderError) {
+        verifyExpectedLogMessage();
+        QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 1), QStringLiteral("injected recorder failure"));
+        return;
+    }
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 1), QString());
+    const QString problem = recordingProblem(second);
+    QVERIFY2(problem.isEmpty(), qPrintable(problem));
 }
 
 void GstVideoReceiverTest::_testRecordingErrorKeepsStreaming()

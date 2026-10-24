@@ -43,6 +43,8 @@ private slots:
     void _testRecordingPlayableWhileInProgress_data();
     void _testRecordingPlayableWhileInProgress();
     void _testSecondRecordingIsNotTruncated();
+    void _testRecordingSwitchWithoutDisplay_data();
+    void _testRecordingSwitchWithoutDisplay();
     void _testRecordingErrorKeepsStreaming();
     void _testFailedRecordingStartLeavesBranchUsable();
     void _testRecordingStartKeepsPipelinePlaying();
