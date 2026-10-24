@@ -69,6 +69,10 @@ runs:
     - name: Generate SBOM
       if: github.event_name != 'pull_request'
       uses: anchore/sbom-action@v0
+      env:
+        # A 64 MiB gen0 budget (hex) avoids a PowerShell jump-list heap corruption that intermittently
+        # crashes the pwsh extracting syft on windows-11-arm (dotnet/runtime#131636).
+        DOTNET_GCgen0size: '4000000'
       with:
         path: ${{ runner.temp }}/build
         format: spdx-json
