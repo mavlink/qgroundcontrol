@@ -26,6 +26,7 @@
 #include <QtTest/QSignalSpy>
 
 #include "CpuVideoFramePool.h"
+#include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
 #include "GStreamerTestHelpers.h"
 #include "GstHwPathTelemetry.h"
@@ -1165,8 +1166,29 @@ void GStreamerTest::_testCpuCapsFormatsRoundTripToQt()
     }
 }
 
+void GStreamerTest::_testAllocationQueryHwMemoryPoolHint_data()
+{
+    QTest::addColumn<QByteArray>("minBuffersEnv");
+    QTest::addColumn<int>("expectedMinBuffers");
+
+    // Default: a buffer beyond those the sink and Qt hold.
+    const int kDefault = CpuVideoFramePool::kMaxPinnedFrames + 1;
+    QTest::newRow("default") << QByteArray() << kDefault;
+    QTest::newRow("env-override") << QByteArrayLiteral("3") << 3;
+    QTest::newRow("env-invalid") << QByteArrayLiteral("0") << kDefault;
+}
+
 void GStreamerTest::_testAllocationQueryHwMemoryPoolHint()
 {
+    QFETCH(QByteArray, minBuffersEnv);
+    QFETCH(int, expectedMinBuffers);
+    const TestFixtures::EnvVarFixture envGuard("QGC_GST_PROPOSE_ALLOCATION_MIN_BUFFERS");
+    if (minBuffersEnv.isEmpty()) {
+        qunsetenv("QGC_GST_PROPOSE_ALLOCATION_MIN_BUFFERS");
+    } else {
+        qputenv("QGC_GST_PROPOSE_ALLOCATION_MIN_BUFFERS", minBuffersEnv);
+    }
+
     const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_from_string(
         "video/x-raw(memory:DMABuf), format=(string)NV12, width=(int)64, height=(int)64, framerate=(fraction)30/1"));
     QVERIFY2(caps, "HW caps did not parse");
@@ -1179,10 +1201,11 @@ void GStreamerTest::_testAllocationQueryHwMemoryPoolHint()
     guint size = 0, minBuffers = 0, maxBuffers = 0;
     gst_query_parse_nth_allocation_pool(query.get(), 0, &pool, &size, &minBuffers, &maxBuffers);
     QVERIFY2(pool == nullptr, "GPU path must not propose a generic pool for native memory");
-    QVERIFY2(minBuffers > guint(CpuVideoFramePool::kMaxPinnedFrames),
-             "min-buffer hint must leave the decoder a buffer beyond those the sink and Qt hold");
+    QCOMPARE(int(minBuffers), expectedMinBuffers);
     QVERIFY2(gst_query_find_allocation_meta(query.get(), GST_VIDEO_META_API_TYPE, nullptr),
              "VideoMeta not advertised on GPU path");
+    // No frame path reads it, and a producer that attaches it may skip uploading.
+    QVERIFY(!gst_query_find_allocation_meta(query.get(), GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, nullptr));
 }
 
 void GStreamerTest::_testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta()

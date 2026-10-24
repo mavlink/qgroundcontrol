@@ -48,6 +48,10 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   variant. The converter is the `conversion-element` override, else `imxvideoconvert_g2d` or `nvvidconv` when present,
   else `videoconvertscale` (`videoconvert ! videoscale` before GStreamer 1.22). It scales non-square pixels to square
   ones, converts formats the sink doesn't take (such as a software decoder's `Y444`), and passes GPU memory through.
+- **Allocation proposal** — the sink asks the decoder for at least five buffers (`kMaxPinnedFrames` + 1), covering the
+  frames Qt may still hold, and keeps the video, crop and GL sync metas it reads.
+  `QGC_GST_PROPOSE_ALLOCATION_MIN_BUFFERS` overrides the count, as Qt's `QT_GSTREAMER_PROPOSE_ALLOCATION_MIN_BUFFERS`
+  does, e.g. to save CMA memory with 4K decoders on i.MX or Raspberry Pi.
 - **`QGCQVideoSinkController`** — GUI-thread companion that mirrors negotiation/telemetry from the sink into QGC, and
   clears the frame its `QVideoSink` displays when the sink leaves the pipeline.
 

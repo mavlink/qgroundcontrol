@@ -127,6 +127,7 @@ private slots:
     void _testGpuBinModeFromEnvironment();
     void _testColorimetryPixelFormatMapping();
     void _testCpuCapsFormatsRoundTripToQt();
+    void _testAllocationQueryHwMemoryPoolHint_data();
     void _testAllocationQueryHwMemoryPoolHint();
     void _testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta();
     void _testQgcQVideoSinkSystemMemoryAllocation_data();
