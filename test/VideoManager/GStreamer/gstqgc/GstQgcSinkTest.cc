@@ -334,16 +334,16 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant_data()
 #endif
 #if defined(QGC_GST_BIN_HAS_GLUPLOAD)
     const int glUpload = int(HwBuffers::GpuBinMode::GlUpload);
+    const QStringList gluploadChildren =
+        withConverter({QStringLiteral("glcolorconvert"), QStringLiteral("glupload"), QStringLiteral("qgcqvideosink")});
+    const QStringList glMemory{QStringLiteral("memory:GLMemory")};
     // glcolorconvert turns external-OES into texture-target=2D; Qt samples multi-plane GLMemory as green frames.
-    QTest::newRow("glupload") << glUpload << openGl << true
-                              << withConverter({QStringLiteral("glcolorconvert"), QStringLiteral("glupload"),
-                                                QStringLiteral("qgcqvideosink")})
-                              << QStringList{QStringLiteral("memory:GLMemory")} << true;
-    // gst-gl's EGLImages can't reach a renderer that isn't OpenGL on EGL: the bin would round-trip every frame.
+    QTest::newRow("glupload") << glUpload << openGl << true << gluploadChildren << glMemory << true;
+    // GLMemory can't reach a renderer that isn't OpenGL: the bin would round-trip every frame.
     QTest::newRow("glupload-under-vulkan") << glUpload << int(GstQgc::RenderBackend::Vulkan) << false
                                            << passthroughChildren << QStringList{systemMemory} << false;
-    QTest::newRow("glupload-under-glx") << glUpload << openGl << false << passthroughChildren
-                                        << QStringList{systemMemory} << false;
+    // GLX, or EGL not known yet (Android before the scene graph runs): gst-gl shares Qt's OpenGL context either way.
+    QTest::newRow("glupload-egl-unknown") << glUpload << openGl << false << gluploadChildren << glMemory << true;
 #endif
 #if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
     // DMA_DRM fragments carry memory:DMABuf too; GLMemory stays out so gst-gl can't take the import over.
@@ -1254,11 +1254,16 @@ void GstQgcSinkTest::_testQgcQVideoSinkCapsFollowRenderTarget_data()
     const QString systemMemory = QStringLiteral("memory:SystemMemory");
     const QStringList systemOnly{systemMemory};
     QStringList openGlOnEgl;
+    // GLX on Linux; WGL or CGL elsewhere, which gst-gl can't share.
+    QStringList openGlNotEgl;
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     openGlOnEgl << QStringLiteral("memory:DMABuf");
 #endif
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
     openGlOnEgl << QStringLiteral("memory:GLMemory");
+#if defined(Q_OS_LINUX)
+    openGlNotEgl << QStringLiteral("memory:GLMemory");
+#endif
 #endif
 #if defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
     openGlOnEgl << QStringLiteral("memory:AHardwareBuffer");
@@ -1273,7 +1278,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkCapsFollowRenderTarget_data()
     QTest::newRow("unknown") << true << int(RenderBackend::Unknown) << false << systemOnly;
     QTest::newRow("null") << true << int(RenderBackend::Null) << false << systemOnly;
     QTest::newRow("opengl-egl") << true << int(RenderBackend::OpenGL) << true << (openGlOnEgl << systemMemory);
-    QTest::newRow("opengl-glx") << true << int(RenderBackend::OpenGL) << false << systemOnly;
+    QTest::newRow("opengl-glx") << true << int(RenderBackend::OpenGL) << false << (openGlNotEgl << systemMemory);
     QTest::newRow("vulkan") << true << int(RenderBackend::Vulkan) << false << systemOnly;
     QTest::newRow("metal") << true << int(RenderBackend::Metal) << false << systemOnly;
     QTest::newRow("d3d11") << true << int(RenderBackend::Direct3D11) << false << (direct3D11 << systemMemory);
@@ -1295,6 +1300,15 @@ void GstQgcSinkTest::_testQgcQVideoSinkCapsFollowRenderTarget()
     const GStreamer::GstCapsPtr caps = sinkPadCaps(sink.get());
     QVERIFY(caps);
     QCOMPARE(capsMemoryFeatures(caps.get()), memoryFeatures);
+    // The GL path samples only GL_TEXTURE_2D; amcvideodec's external-OES textures would show black.
+    for (guint i = 0; i < gst_caps_get_size(caps.get()); ++i) {
+        const GstCapsFeatures* const features = gst_caps_get_features(caps.get(), i);
+        if (features && gst_caps_features_contains(features, "memory:GLMemory")) {
+            QCOMPARE(
+                QString::fromUtf8(gst_structure_get_string(gst_caps_get_structure(caps.get(), i), "texture-target")),
+                QStringLiteral("2D"));
+        }
+    }
 }
 
 void GstQgcSinkTest::_testQgcQVideoSinkReconfiguresOnRenderTargetChange()

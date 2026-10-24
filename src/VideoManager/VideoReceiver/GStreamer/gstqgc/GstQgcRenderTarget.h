@@ -17,10 +17,15 @@ enum class RenderBackend
 struct RenderTarget
 {
     RenderBackend backend = RenderBackend::Unknown;
-    /// Qt's OpenGL runs on EGL (not GLX, WGL or CGL), so GStreamer's EGLImages (DMABuf, gst-gl) can share its display.
+    /// Qt's OpenGL is known to run on EGL, so GStreamer's EGLImages (DMABuf, AHardwareBuffer) can use its display.
+    /// False for GLX, WGL and CGL, and while that isn't known yet (no GL context, Android's platform plugin).
     bool egl = false;
 
     bool isOpenGlOnEgl() const { return (backend == RenderBackend::OpenGL) && egl; }
+
+    /// gst-gl can share Qt's OpenGL context (GstGlContextBridge wraps an EGL or a GLX one), so GLMemory textures reach
+    /// Qt directly. Qt's OpenGL on Linux and Android is always one of the two, even before it is known which.
+    bool sharesGlContext() const noexcept;
 
     friend bool operator==(const RenderTarget&, const RenderTarget&) = default;
 };

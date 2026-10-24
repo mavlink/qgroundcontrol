@@ -159,8 +159,9 @@ static gboolean add_converter(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain,
     return head && tail && chain.linkChain({head, tail});
 }
 
-// The GPU variant for the render target. glupload and direct DMABuf hand frames to Qt's OpenGL through EGLImages; any
-// other renderer gets the passthrough variant, whose sink offers only memory that renderer imports (a glupload bin
+// The GPU variant for the render target. glupload hands GLMemory to Qt through the GL share group, so it needs Qt on
+// OpenGL (EGL or GLX, even before it is known which); direct DMABuf hands EGLImages to Qt, so it needs OpenGL on EGL.
+// Any other renderer gets the passthrough variant, whose sink offers only memory that renderer imports (a glupload bin
 // under Vulkan would download every frame and upload it again). An explicit QGC_GST_GPU_BIN still wins.
 static HwBuffers::GpuBinMode select_gpu_bin(GstQgcVideoSinkBin* self)
 {
@@ -169,11 +170,13 @@ static HwBuffers::GpuBinMode select_gpu_bin(GstQgcVideoSinkBin* self)
         return preferred;
     }
     const GstQgc::RenderTarget target = GstQgc::currentRenderTarget();
-    if (target.isOpenGlOnEgl()) {
+    const bool supported =
+        (preferred == HwBuffers::GpuBinMode::GlUpload) ? target.sharesGlContext() : target.isOpenGlOnEgl();
+    if (supported) {
         return preferred;
     }
     if (!qEnvironmentVariableIsEmpty("QGC_GST_GPU_BIN")) {
-        GST_WARNING_OBJECT(self, "QGC_GST_GPU_BIN forces an EGL GPU bin while Qt renders with %s (EGL %d)",
+        GST_WARNING_OBJECT(self, "QGC_GST_GPU_BIN forces a GPU bin Qt's renderer doesn't suit (%s, EGL %d)",
                            GstQgc::toString(target.backend), target.egl);
         return preferred;
     }

@@ -26,7 +26,7 @@ void GstHwBuffersPipelineTest::_testGlMemoryDispatch()
     // The direct-DMABuf bin doesn't offer GLMemory.
     const HwBuffers::ScopedGpuBinModeForTest glBin(HwBuffers::GpuBinMode::GlUpload);
 #endif
-    // The sink offers GLMemory only to Qt's OpenGL over EGL.
+    // The sink offers GLMemory only where gst-gl shares Qt's OpenGL context.
     const GstQgc::ScopedRenderTargetForTest target({.backend = GstQgc::RenderBackend::OpenGL, .egl = true});
 
     if (!GstTest::firstMissingFactory({"glupload"}).isEmpty()) {

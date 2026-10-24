@@ -131,6 +131,16 @@ RenderTarget currentRenderTarget() noexcept
     return target;
 }
 
+bool RenderTarget::sharesGlContext() const noexcept
+{
+#if defined(Q_OS_LINUX)
+    return backend == RenderBackend::OpenGL;
+#else
+    // WGL and CGL contexts aren't wrapped.
+    return isOpenGlOnEgl();
+#endif
+}
+
 const char* toString(RenderBackend backend) noexcept
 {
     switch (backend) {
