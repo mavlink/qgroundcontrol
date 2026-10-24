@@ -20,8 +20,10 @@
 #include <rhi/qrhi.h>
 #include <rhi/qrhi_platform.h>
 
-#include "QGCRhiCapture.h"
+#include "CpuVideoFramePool.h"
 #include "GstHwFrameTexturesBase.h"
+#include "HwBuffers/GstHwImageReadback.h"
+#include "QGCRhiCapture.h"
 
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 #include "GstD3D11ContextBridge.h"
@@ -188,6 +190,9 @@ void testD3DMemoryDispatch(const char* uploadElement, const char* capsFilter, Hw
 {
     D3DSample sample;
     pullD3DSample(sample, "video/x-raw,format=RGBA,width=64,height=64,framerate=30/1", uploadElement, capsFilter);
+    if (!sample.sample) {
+        return;
+    }
 
     HwVideoBufferContext context;
     context.gpuEnabled = true;
@@ -210,6 +215,9 @@ void testD3DMapTextures(QRhi& rhi, const char* inputCaps, const char* uploadElem
 {
     D3DSample sample;
     pullD3DSample(sample, inputCaps, uploadElement, capsFilter, expectedPath);
+    if (!sample.sample) {
+        return;
+    }
 
     HwVideoBufferContext context;
     context.gpuEnabled = true;
@@ -233,6 +241,39 @@ void testD3DMapTextures(QRhi& rhi, const char* inputCaps, const char* uploadElem
     }
     QVERIFY2(dynamic_cast<GstHwFrameTexturesBase*>(textures.get()),
              "D3D texture bundle does not use the HW frame texture base");
+}
+
+/// Converts the uploaded frame with QVideoFrame::toImage() on @p rhi and compares it with the frame before the upload.
+void testD3DFrameToImage(QRhi& rhi, const char* inputCaps, const char* uploadElement, const char* capsFilter,
+                         QVideoFrameFormat::PixelFormat pixelFormat, HwVideoBufferPath expectedPath)
+{
+    D3DSample gpu;
+    pullD3DSample(gpu, inputCaps, uploadElement, capsFilter, expectedPath);
+    if (!gpu.sample) {
+        return;
+    }
+    D3DSample cpu;
+    pullD3DSample(cpu, inputCaps, "identity", inputCaps);
+    if (!cpu.sample) {
+        return;
+    }
+
+    HwVideoBufferContext context;
+    context.gpuEnabled = true;
+    HwVideoBufferPath path = HwVideoBufferPath::None;
+    const QVideoFrameFormat format(QSize(GST_VIDEO_INFO_WIDTH(&gpu.info), GST_VIDEO_INFO_HEIGHT(&gpu.info)),
+                                   pixelFormat);
+    std::unique_ptr<QHwVideoBuffer> buffer = makeHwVideoBuffer(
+        gst_sample_get_buffer(gpu.sample), gst_sample_get_caps(gpu.sample), gpu.info, format, context, path);
+    QVERIFY2(buffer, "D3D memory sample did not create a hardware video buffer");
+    QCOMPARE(path, expectedPath);
+
+    const QImage actual =
+        QVideoFrame(std::make_unique<GstTest::RhiBoundVideoBuffer>(std::move(buffer), &rhi)).toImage();
+    const QImage expected =
+        GstTest::cpuImage(CpuVideoFramePool::copyFromBuffer(gst_sample_get_buffer(cpu.sample), cpu.info, format));
+    const QString mismatch = GstTest::firstImageMismatch(actual, expected, /*tolerance=*/8);
+    QVERIFY2(mismatch.isEmpty(), qPrintable(mismatch));
 }
 
 } // namespace
@@ -317,6 +358,59 @@ void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi()
     const QByteArray memoryCaps = QStringLiteral("video/x-raw(memory:%1Memory),format=%2").arg(api, format).toUtf8();
     testD3DMapTextures(*rhi, inputCaps.constData(), upload.constData(), memoryCaps.constData(),
                        static_cast<QVideoFrameFormat::PixelFormat>(pixelFormat), planes, hwPath);
+#endif
+}
+
+void GstHwBuffersPipelineTest::_testD3DFrameToImage_data()
+{
+    _testD3DMapTexturesWithQRhi_data();
+}
+
+void GstHwBuffersPipelineTest::_testD3DFrameToImage()
+{
+#if !defined(Q_OS_WIN) || (!defined(QGC_HAS_GST_D3D11_GPU_PATH) && !defined(QGC_HAS_GST_D3D12_GPU_PATH))
+    QSKIP("D3D GPU paths not compiled in this build");
+#else
+    QFETCH(int, path);
+    QFETCH(QString, format);
+    QFETCH(int, pixelFormat);
+
+    const auto hwPath = static_cast<HwVideoBufferPath>(path);
+    const bool d3d11 = (hwPath == HwVideoBufferPath::D3D11);
+    GstContextBridgeBase* bridge = nullptr;
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+    if (d3d11) {
+        bridge = &GstD3D11ContextBridge::instance();
+    }
+#endif
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+    if (!d3d11) {
+        bridge = &GstD3D12ContextBridge::instance();
+    }
+#endif
+    if (!bridge) {
+        QSKIP("This D3D GPU path is not compiled in this build");
+    }
+
+    const SnapshotGuard snapshotGuard;
+    QString failure;
+    const std::unique_ptr<QRhi> rhi = createPublishedRhi(d3d11 ? QRhi::D3D11 : QRhi::D3D12, failure);
+    if (!rhi) {
+        QSKIP(qPrintable(failure));
+    }
+
+    bridge->reset();
+    const auto bridgeGuard = qScopeGuard([bridge] { bridge->reset(); });
+    QVERIFY2(bridge->prime(), "Could not prime the D3D context bridge from the QRhi snapshot");
+
+    // An SMPTE pattern: a frame sampled with the wrong pitch, plane offset or padding shows in its bars.
+    const QString api = d3d11 ? QStringLiteral("D3D11") : QStringLiteral("D3D12");
+    const QByteArray inputCaps =
+        QStringLiteral("video/x-raw,format=%1,width=64,height=64,framerate=30/1").arg(format).toUtf8();
+    const QByteArray upload = (api.toLower() + QStringLiteral("upload")).toUtf8();
+    const QByteArray memoryCaps = QStringLiteral("video/x-raw(memory:%1Memory),format=%2").arg(api, format).toUtf8();
+    testD3DFrameToImage(*rhi, inputCaps.constData(), upload.constData(), memoryCaps.constData(),
+                        static_cast<QVideoFrameFormat::PixelFormat>(pixelFormat), hwPath);
 #endif
 }
 

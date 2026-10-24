@@ -190,7 +190,7 @@ textures.
 - The `Video.GStreamer.HwBuffers.GstDmaBuf` and `Video.GStreamer.HwBuffers.GstDmaDrmCaps` debug categories log the
   offered modifiers and the first import; Qt's `qt.multimedia.dmabuf` category logs its EGL calls.
 
-`GStreamerDmaBufGlTest` reads imported planes back from a GL QRhi. CTest runs it on xcb with `xcb_egl` and skips it
+`GStreamerGlReadbackTest` reads imported DMABuf planes back from a GL QRhi. CTest runs it on xcb with `xcb_egl` and skips it
 without an X display; a plain memfd stands in for a dma-buf under Mesa's software rasterizer, and a VA-API decoder's
 tiled output is compared with its system-memory output on real hardware.
 
@@ -262,8 +262,8 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 | `GstQgcSinkPipelineTest` | Integration | `videotestsrc` pipelines played into `qgcvideosinkbin` bound to a `QVideoSink`: formats, timestamps, colorimetry, non-square pixels, GPU-bin fallbacks, teardown under load. |
 | `GstSourceFactoryStreamTest` | Integration | Source bins receiving real streams on loopback: RTP over UDP joining mid-GOP, and an RTSP session that sets up only the video stream. |
 | `GstRecordingSinkTest` | Integration | The recording file sink fed by running pipelines: a mid-stream H.265 MP4 start and frames that carry only a DTS. |
-| `GstHwBuffersPipelineTest` | Integration, GPU | Pipelines that upload into GPU memory (DMABuf, GLMemory, Vulkan, D3D11/D3D12) and the path each frame takes; skips without the device. |
-| `GStreamerDmaBufGlTest` | Integration, GPU | DMABuf planes imported into a GL QRhi on EGL, read back pixel by pixel (xcb with `xcb_egl`). |
+| `GstHwBuffersPipelineTest` | Integration, GPU | Pipelines that upload into or decode to GPU memory (DMABuf, GLMemory, Vulkan, D3D11/D3D12, IOSurface) and the path each frame takes; D3D11/D3D12 and IOSurface frames are also converted with `QVideoFrame::toImage()` on a QRhi of that API and compared with the CPU frame. Skips without the device. |
+| `GStreamerGlReadbackTest` | Integration, GPU | DMABuf planes and glupload's GLMemory frames imported into a GL QRhi that shares Qt's EGL context, read back pixel by pixel and converted with `QVideoFrame::toImage()` (xcb with `xcb_egl`). |
 | `GstVideoReceiverTest` | Integration | `GstVideoReceiver` end to end against the H.264 test stream it sends itself on loopback: states, restarts, decoder-only recovery, a mid-stream resolution change, H.265, an RTSP server that never answers, recording across reconnects, slow and hung storage, bounded teardown. Receivers and servers listen on port 0, so parallel runs never collide. |
 
 Each test skips, rather than fails, when GStreamer or a plugin it needs is missing. The two `*HarnessTest` classes use GstHarness from gst-check (`gstreamer-check-1.0`), which test builds request as an optional GStreamer component (`Check`); they compile only where the SDK or distribution ships it. No test needs a software encoder: the streams they send are the short 320x240 H.264 and H.265 files in [`test/VideoManager/GStreamer/Media/`](../../../../test/VideoManager/GStreamer/Media/) (its `generate.sh` regenerates them), split into access units and paced through `appsrc`. Only `GstVideoReceiverTest::_testDecodesMockLinkStreams` encodes in software, as MockLink's stream server does (`openh264enc`, falling back to `x264enc`; `x265enc` for H.265); the VA-API cases encode with the host's `vah264enc`. Each class runs in its own process, so a crash in a GPU path only fails its own class; `-LE GPU` leaves out the classes that use the host's GPU.
