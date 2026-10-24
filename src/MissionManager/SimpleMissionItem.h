@@ -150,6 +150,7 @@ signals:
     void isLoiterItemChanged        (void);
     void showLoiterRadiusChanged    (void);
     void loiterRadiusChanged        (double loiterRadius);
+    void loiterDistanceChanged(void);
 
 private slots:
     void _setDirty                              (void);
@@ -168,6 +169,7 @@ private slots:
     void _possibleVehicleYawChanged             (void);
     void _signalIfVTOLTransitionCommand         (void);
     void _possibleRadiusChanged                 (void);
+    void _possibleLoiterDistanceChanged(void);
 
 private:
     void _connectSignals        (void);
