@@ -97,7 +97,7 @@ runs:
     # The one CMake and Ninja for CI builds. After setup-python, so they precede the CMake and
     # Ninja that the build and dev groups add to tools/.venv (local development keeps those).
     - id: cmake
-      uses: lukka/get-cmake@v4.4.2
+      uses: lukka/get-cmake@v4.4.4
       with:
         cmakeVersion: ${{ steps.plan.outputs.cmake_version }}
         ninjaVersion: ${{ steps.plan.outputs.ninja_version }}

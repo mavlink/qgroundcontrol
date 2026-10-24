@@ -11,7 +11,7 @@
 # inspect` when bumping); BASE_REF/SETUP_BASE overridden for non-Ubuntu distros.
 # Official images come from their ECR Public mirror (same digests as Docker Hub),
 # so anonymous pulls are not held to Docker Hub's anonymous pull limit.
-ARG BASE_REF=public.ecr.aws/docker/library/ubuntu:24.04@sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55
+ARG BASE_REF=public.ecr.aws/docker/library/ubuntu:24.04@sha256:68ee22004a9109b44973313b02ff7b1de250f1de0f5ecb628d73f579aaff33ac
 FROM ${BASE_REF} AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -43,7 +43,7 @@ RUN if [ -n "${CC_PIN}" ]; then \
     fi
 
 # Locked Python environment for generators, Qt installation, and build tools.
-COPY --from=ghcr.io/astral-sh/uv:0.12.8 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.13.5 /uv /usr/local/bin/uv
 COPY tools/pyproject.toml tools/uv.lock /opt/qgc-tools/
 RUN UV_PROJECT_ENVIRONMENT=/opt/qgc-venv uv sync \
         --project /opt/qgc-tools --python python3 \
