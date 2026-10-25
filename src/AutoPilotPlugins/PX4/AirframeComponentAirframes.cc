@@ -1,5 +1,7 @@
 #include "AirframeComponentAirframes.h"
+
 #include <QtCore/QFile>
+#include <QtCore/QStringList>
 
 QMap<QString, AirframeComponentAirframes::AirframeType_t*> AirframeComponentAirframes::rgAirframeTypes;
 
@@ -53,12 +55,22 @@ QList<AirframeComponentAirframes::AirframeType_t*> AirframeComponentAirframes::s
     return sorted;
 }
 
-void AirframeComponentAirframes::insert(QString& group, QString& image, QString& name, int id)
+void AirframeComponentAirframes::insert(QString& group, QString& image, QString& name, int id,
+                                        const QString& vehicleClass)
 {
+    static const QStringList knownCategories = {
+        QStringLiteral("Copter"),
+        QStringLiteral("Plane"),
+        QStringLiteral("VTOL"),
+        QStringLiteral("Rover"),
+    };
+    const QString category = knownCategories.contains(vehicleClass) ? vehicleClass : QStringLiteral("Other");
+
     AirframeType_t *g;
     if (!rgAirframeTypes.contains(group)) {
         g = new AirframeType_t;
         g->name = group;
+        g->category = category;
 
         if (image.length() > 0) {
             g->imageResource = QString(":/qmlimages/Airframe/%1.svg").arg(image);
@@ -76,6 +88,9 @@ void AirframeComponentAirframes::insert(QString& group, QString& image, QString&
         rgAirframeTypes.insert(group, g);
     } else {
         g = rgAirframeTypes.value(group);
+        if (g->category != category) {
+            g->category = QStringLiteral("Other");
+        }
     }
 
     AirframeInfo_t *i = new AirframeInfo_t;

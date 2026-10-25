@@ -24,7 +24,7 @@ public:
 
     Q_PROPERTY(QString currentAirframeType MEMBER _currentAirframeType CONSTANT)
     Q_PROPERTY(QString currentVehicleName MEMBER _currentVehicleName CONSTANT)
-    Q_PROPERTY(int currentVehicleIndex MEMBER _currentVehicleIndex CONSTANT)
+    Q_PROPERTY(int currentAutostartId MEMBER _currentAutostartId CONSTANT)
 
     Q_PROPERTY(int autostartId MEMBER _autostartId NOTIFY autostartIdChanged)
 
@@ -47,7 +47,7 @@ private:
     QVariantList    _airframeTypes;
     QString         _currentAirframeType;
     QString         _currentVehicleName;
-    int             _currentVehicleIndex;
+    int _currentAutostartId;
     int             _autostartId;
     bool            _showCustomConfigPanel;
     int             _waitParamWriteSignalCount;
@@ -78,11 +78,12 @@ class AirframeType : public QObject
     QML_UNCREATABLE("")
 
 public:
-    AirframeType(const QString& name, const QString& imageResource, QObject* parent = nullptr);
+    AirframeType(const QString& name, const QString& imageResource, const QString& category, QObject* parent = nullptr);
     ~AirframeType();
 
     Q_PROPERTY(QString name MEMBER _name CONSTANT)
     Q_PROPERTY(QString imageResource MEMBER _imageResource CONSTANT)
+    Q_PROPERTY(QString category MEMBER _category CONSTANT)
     Q_PROPERTY(QVariantList airframes MEMBER _airframes CONSTANT)
 
     void addAirframe(const QString& name, int autostartId);
@@ -90,5 +91,6 @@ public:
 private:
     QString         _name;
     QString         _imageResource;
+    QString _category;
     QVariantList    _airframes;
 };

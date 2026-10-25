@@ -15,10 +15,10 @@
 
 bool AirframeComponentController::_typesRegistered = false;
 
-AirframeComponentController::AirframeComponentController(void) :
-    _currentVehicleIndex(0),
-    _autostartId(0),
-    _showCustomConfigPanel(false)
+AirframeComponentController::AirframeComponentController(void)
+    : _currentAutostartId(0)
+    , _autostartId(0)
+    , _showCustomConfigPanel(false)
 {
     if (!_typesRegistered) {
         _typesRegistered = true;
@@ -34,10 +34,11 @@ AirframeComponentController::AirframeComponentController(void) :
 
     bool autostartFound = false;
     _autostartId = getParameterFact(ParameterManager::defaultComponentId, "SYS_AUTOSTART")->rawValue().toInt();
+    _currentAutostartId = _autostartId;
     _currentVehicleName = QString::number(_autostartId); // Temp val. Replaced with actual vehicle name if found
 
     for (const AirframeComponentAirframes::AirframeType_t* pType : AirframeComponentAirframes::sortedTypes()) {
-        AirframeType* airframeType = new AirframeType(pType->name, pType->imageResource, this);
+        AirframeType* airframeType = new AirframeType(pType->name, pType->imageResource, pType->category, this);
         Q_CHECK_PTR(airframeType);
 
         for (int index = 0; index < pType->rgAirframeInfo.count(); index++) {
@@ -51,7 +52,6 @@ AirframeComponentController::AirframeComponentController(void) :
                 autostartFound = true;
                 _currentAirframeType = pType->name;
                 _currentVehicleName = pInfo->name;
-                _currentVehicleIndex = index;
             }
             airframeType->addAirframe(pInfo->name, pInfo->autostartId);
         }
@@ -117,10 +117,11 @@ void AirframeComponentController::_rebootAfterStackUnwind(void)
     LinkManager::instance()->disconnectAll();
 }
 
-AirframeType::AirframeType(const QString& name, const QString& imageResource, QObject* parent) :
-    QObject(parent),
-    _name(name),
-    _imageResource(imageResource)
+AirframeType::AirframeType(const QString& name, const QString& imageResource, const QString& category, QObject* parent)
+    : QObject(parent)
+    , _name(name)
+    , _imageResource(imageResource)
+    , _category(category)
 {
 
 }
