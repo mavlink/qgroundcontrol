@@ -1,6 +1,7 @@
 # Güç Kurulumu
 
-The _Power Setup_ screen is used to configure battery parameters and calibrate ESCs.
+The _Power Setup_ screen (ArduPilot) is used to configure battery parameters.
+PX4 vehicles use the [Battery](px4/battery.md) and [ESC](px4/esc.md) pages instead.
 
 ## Batarya Voltaj/Akım Kalibrasyonu
 
@@ -29,19 +30,4 @@ Bataryalar yüksek motor yüklemelerinde daha az voltaj gösterir. Motorlar boş
 
 :::warning
 Eğer değer çok yüksekse batarya deep-discharged olabilir ve hasar görebilir.
-:::
-
-## ESC PWM Minimum ve Maksimum Kalibrasyonu
-
-ESC'nin max/min PWM değerlerini kalibre etmek için:
-
-1. Pervaneleri çıkarın.
-2. Aracı QGC'ye USB (sadece) aracılığı ile bağlayın.
-3. **Calibrate** butonuna basın.
-
-::: warning
-Never attempt ESC calibration with props on.
-
-ESC kalibrasyonu sırasında motorlar dönmemelidir.
-Bununla birlikte, bir ESC kalibrasyon sırasını doğru şekilde desteklemez/tespit etmezse, motoru maksimum hızda çalıştırarak PWM girişine yanıt verecektir.
 :::

@@ -1,6 +1,7 @@
 # 전원 설정
 
-The _Power Setup_ screen is used to configure battery parameters and calibrate ESCs.
+The _Power Setup_ screen (ArduPilot) is used to configure battery parameters.
+PX4 vehicles use the [Battery](px4/battery.md) and [ESC](px4/esc.md) pages instead.
 
 ## 배터리 전압 및 전류 보정
 
@@ -29,19 +30,4 @@ _QGroundContro&#x6C;_&#xC744; 사용하여 측정에서 적절한 전압 분배�
 
 :::warning
 값이 너무 높으면 배터리가 과방전되어 손상될 수 있습니다.
-:::
-
-## ESC PWM 최소, 최대값 캘리브레이션
-
-ESC 최대/최소 PWM 값을 보정하려면:
-
-1. 프로펠러를 분리하십시오.
-2. Connect the vehicle to QGC via USB (only).
-3. **보정** 버튼을 클릭합니다.
-
-::: warning
-Never attempt ESC calibration with props on.
-
-ESC 캘리브레이션 중에는 모터가 회전하지 않아야 합니다.
-그러나, ESC가 보정 시퀀스를 적절하게 지원하거나 감지하지 않으면 모터를 최대 속도로 실행하여 PWM 입력에 응답합니다.
 :::

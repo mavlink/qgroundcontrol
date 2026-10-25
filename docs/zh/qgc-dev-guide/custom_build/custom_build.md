@@ -12,7 +12,10 @@
 - 实现您自己的工具栏、工具栏指示器和界面导航
 - 实现您自己的 Fly 视图叠加层(和如何隐藏QGC 中的元素，如飞行部件)
 - 实现您自己的 QtQuick 相机控制
-- Implement your own, custom Pre-flight Checklist (resource override `PreFlightCheckList.qml` or the per-airframe `*Checklist.qml` files, or disable it by overriding the `useChecklist` setting)
+- Implement your own, custom Pre-flight Checklist:
+  - Replace the vehicle checks by resource overriding `PreFlightCheckList.qml` or the per-airframe `*Checklist.qml` files
+  - Add checks which can be completed before a vehicle connects by resource overriding `PreVehicleChecks.qml` (single-vehicle use only: the after-flight reset only follows the active vehicle)
+  - Turn the checklist off by forcing the `useChecklist` setting to `false` and hiding it, using a [settings override file](../file_formats/settings_override.md) or `QGCCorePlugin::adjustSettingMetaData`
 - 为以上所有定义您自己的资源
 
 QGC 既为任何支持 Mavlink 的飞行器提供通用支持，又为 PX4 Pro 和 ArduPilot 提供特定固件支持，其缺点之一是用户界面的复杂性。由于QGC事先对您的无人机一无所知，因此它需要一些用户界面元素，但如果您所使用的飞行器仅采用PX4 Pro固件且为多旋翼飞行器，这些元素可能会造成不便。如果这是一件已知的事，那么用户界面就可以在不同地方简化。此外，QGC的目标用户既包括那些从零开始打造无人机的DIY用户，也包括使用现成飞行器的商业用户。从零开始设置DIY无人机需要所有类型的功能，而这种功能对于架外车辆的使用者来说是不需要的。所以对于使用现成飞行器的用户来说，所有针对 DIY 的特定内容只是他们需要忽略的额外干扰信息。创建自定义构建允许您为您的载具指定准确的详细信息并隐藏不相关的东西，从而为您的用户创建一个甚至简单的用户体验，而不是普通的 QGC。
