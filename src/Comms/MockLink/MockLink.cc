@@ -2443,6 +2443,13 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
         return;
     case MAV_CMD_SET_MESSAGE_INTERVAL:
     {
+        {
+            QMutexLocker locker(&_setMessageIntervalNoAckMutex);
+            if (_setMessageIntervalNoAckIds.contains(static_cast<uint16_t>(request.param1))) {
+                return;
+            }
+        }
+
         bool accepted = false;
 
         _handleCommandLongSetMessageInterval(request, accepted);

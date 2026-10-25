@@ -32,6 +32,8 @@ target_sources(
         MAVLinkLogManagerTest.h
         MavCommandQueueReentrancyTest.cc
         MavCommandQueueReentrancyTest.h
+        MessageIntervalManagerTest.cc
+        MessageIntervalManagerTest.h
         MultiVehicleManagerTest.cc
         MultiVehicleManagerTest.h
         PX4CalibrationStatusTextTest.cc
@@ -104,6 +106,7 @@ add_qgc_test(InitialConnectTest LABELS Integration Vehicle)
 add_qgc_test(InitialConnectPeripheralStartupTest LABELS Integration Vehicle)
 add_qgc_test(MAVLinkLogManagerTest LABELS Integration Vehicle)
 add_qgc_test(MavCommandQueueReentrancyTest LABELS Integration Vehicle)
+add_qgc_test(MessageIntervalManagerTest LABELS Integration Vehicle)
 add_qgc_test(MultiVehicleManagerTest LABELS Integration Vehicle)
 add_qgc_test(PX4CalibrationStatusTextTest LABELS Integration Vehicle)
 add_qgc_test(PX4ExternalFlightModesTest LABELS Unit Vehicle)
