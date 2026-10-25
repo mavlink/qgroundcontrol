@@ -130,8 +130,7 @@ void PX4AirframeSetupUITest::_testAirframePrereqPages()
     // requires Airframe first for Sensors, ESC, Battery, Return & Land, Collision, PID Tuning and
     // Flight Modes (COM_RC_IN_MODE defaults to 0), so clicking those pages
     // shows the prerequisite message panel instead of the page. Expandable
-    // components must still expand, and Sensors must still auto-select its
-    // first section (Compass).
+    // components must still expand.
     struct PrereqCheck {
         const char *objectName;
         bool expectPrereqShown;
@@ -139,7 +138,7 @@ void PX4AirframeSetupUITest::_testAirframePrereqPages()
     };
     // clang-format off
     const PrereqCheck checks[] = {
-        { .objectName = "vehicleConfig_comp_Sensors",     .expectPrereqShown = true,  .checkedSectionObjectName = "vehicleConfig_section_Compass" },
+        { .objectName = "vehicleConfig_comp_Sensors",     .expectPrereqShown = true,  .checkedSectionObjectName = "" },
         { .objectName = "vehicleConfig_comp_ESC",         .expectPrereqShown = true,  .checkedSectionObjectName = "" },
         { .objectName = "vehicleConfig_comp_Battery",     .expectPrereqShown = true,  .checkedSectionObjectName = "" },
         { .objectName = "vehicleConfig_comp_Return&Land", .expectPrereqShown = true,  .checkedSectionObjectName = "" },

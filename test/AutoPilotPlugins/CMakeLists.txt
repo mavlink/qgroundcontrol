@@ -17,6 +17,10 @@ target_sources(
         PX4/PX4FlightModesControllerTest.h
         PX4/PX4SerialPortConfigTest.cc
         PX4/PX4SerialPortConfigTest.h
+        PX4/PX4SensorDeviceTest.cc
+        PX4/PX4SensorDeviceTest.h
+        PX4/SensorsComponentControllerTest.cc
+        PX4/SensorsComponentControllerTest.h
         PX4/PX4SerialPortsControllerTest.cc
         PX4/PX4SerialPortsControllerTest.h
 )
@@ -28,5 +32,7 @@ add_qgc_test(APMFreshFlashParamsTest LABELS Integration Vehicle TIMEOUT ${QGC_TE
 add_qgc_test(FailureInjectionTest LABELS Unit)
 add_qgc_test(PX4BatteryControllerTest LABELS Integration Vehicle StockUI)
 add_qgc_test(PX4FlightModesControllerTest LABELS Integration Vehicle)
+add_qgc_test(PX4SensorDeviceTest LABELS Unit)
+add_qgc_test(SensorsComponentControllerTest LABELS Unit)
 add_qgc_test(PX4SerialPortConfigTest LABELS Unit)
 add_qgc_test(PX4SerialPortsControllerTest LABELS Integration Vehicle StockUI)

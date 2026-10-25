@@ -2306,12 +2306,26 @@ void MockLink::_handleCommandLong(const mavlink_message_t &msg)
     case MAV_CMD_MISSION_START:
         commandResult = MAV_RESULT_ACCEPTED;
         break;
-    case MAV_CMD_PREFLIGHT_CALIBRATION:
-        _handlePreFlightCalibration(request);
-        commandResult = MAV_RESULT_ACCEPTED;
+    case MAV_CMD_PREFLIGHT_CALIBRATION: {
+        // PX4's commander rejects every calibration command while one runs, a cancel included, while the running
+        // calibration takes the cancel. Real PX4 acks both ways; the rejection is the case the GCS must tolerate.
+        const bool px4Busy = (_firmwareType == MAV_AUTOPILOT_PX4) && _mockLinkPX4Calibration->calibrationActive();
+        const bool cancelRequest = (request.param1 == 0) && (request.param2 == 0) && (request.param3 == 0) &&
+                                   (request.param4 == 0) && (request.param5 == 0) && (request.param6 == 0) &&
+                                   (request.param7 == 0);
+        commandResult = px4Busy ? MAV_RESULT_TEMPORARILY_REJECTED : MAV_RESULT_ACCEPTED;
+        // A rejected start does nothing, so it cannot replace the calibration which is running
+        if (!px4Busy || cancelRequest) {
+            _handlePreFlightCalibration(request);
+        }
         break;
+    }
     case MAV_CMD_DO_MOTOR_TEST:
         commandResult = MAV_RESULT_ACCEPTED;
+        break;
+    case MAV_CMD_FIXED_MAG_CAL_YAW:
+        // PX4 large vehicle compass calibration: the tests send the result as a status text
+        commandResult = _largeVehicleCalibrationRejected ? MAV_RESULT_TEMPORARILY_REJECTED : MAV_RESULT_ACCEPTED;
         break;
     case MAV_CMD_DO_START_MAG_CAL:
         // APM onboard compass calibration: start sending MAG_CAL_PROGRESS then MAG_CAL_REPORT.
@@ -3014,8 +3028,22 @@ void MockLink::_handlePreFlightCalibration(const mavlink_command_long_t& request
         return;
     }
 
+    if ((request.param3 == 1) && (_firmwareType != MAV_AUTOPILOT_ARDUPILOTMEGA)) {
+        _mockLinkPX4Calibration->startBaroCalibration(_baroCalibrationFails);
+        return;
+    }
+
+    if ((request.param5 == 2) && (_firmwareType != MAV_AUTOPILOT_ARDUPILOTMEGA)) {
+        _mockLinkPX4Calibration->startLevelCalibration(_levelCalibrationFails);
+        return;
+    }
+
     if (request.param1 == 1) {
-        sendStatusTextMessage(MAV_SEVERITY_INFO, QStringLiteral("[cal] calibration started: 2 gyro"));
+        if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
+            sendStatusTextMessage(MAV_SEVERITY_INFO, QStringLiteral("[cal] calibration started: 2 gyro"));
+        } else {
+            _mockLinkPX4Calibration->startGyroCalibration(_gyroCalibrationFails);
+        }
         return;
     }
 

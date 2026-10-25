@@ -62,9 +62,28 @@ public:
     /// and resets the side state machine.
     void startAccelCalibration();
 
+    /// Starts simulated barometer calibration: sends "[cal] calibration started: 2 baro", then after a short
+    /// delay either stores the calibration and reports done, or reports that no GPS was available.
+    void startBaroCalibration(bool fails);
+
+    /// Starts simulated level horizon calibration: sends "[cal] calibration started: 2 level", then after a short
+    /// delay either stores the board offsets and reports done, or reports that the vehicle moved.
+    void startLevelCalibration(bool fails);
+
+    /// Starts simulated gyroscope calibration: sends "[cal] calibration started: 2 gyro", then after a short
+    /// delay either stores the calibration and reports done, or reports that the vehicle moved.
+    void startGyroCalibration(bool fails);
+
+    /// Makes the simulated barometer, level horizon and gyroscope calibrations run until they are cancelled
+    void setInlineCalibrationStalls(bool stalls);
+
     /// Handles an all-zero MAV_CMD_PREFLIGHT_CALIBRATION (cancel request).
     ///     @return true if a calibration was active and has been cancelled
     bool cancel();
+
+    /// Ends the running calibration the way the firmware does when it fails: it reports the failure and stops.
+    ///     @return true if a calibration was active
+    bool fail();
 
     bool calibrationActive() const;
 
@@ -80,7 +99,13 @@ private:
         None,
         Mag,
         Accel,
+        Baro,
+        Level,
+        Gyro,
     };
+
+    static QString _calTypeName(CalType calType);
+    void _finishCalibration(CalType calType);
 
     void _startCalibration(CalType calType);
     void _sideTick();
@@ -97,6 +122,10 @@ private:
     int _activeSide = -1;               ///< Side currently calibrating, -1 when waiting for pose
     int _sideTickCount = 0;             ///< Ticks elapsed in the active side
     int _finishTickCount = -1;          ///< Ticks elapsed in the finishing phase, -1 when not finishing
+    bool _baroFails = false;            ///< The simulated barometer calibration reports no GPS
+    bool _levelFails = false;           ///< The simulated level calibration reports motion
+    bool _gyroFails = false;            ///< The simulated gyroscope calibration reports motion
+    bool _inlineStalls = false;         ///< The simulated barometer, level and gyroscope calibrations never finish
     bool _sideDone[kSideCount] = {};
 
     static constexpr int kTicksPerSide = 5;     ///< 10Hz ticks to complete one side

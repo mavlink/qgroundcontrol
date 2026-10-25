@@ -78,6 +78,24 @@ public:
     /// Test API: places the simulated vehicle into the given pose during calibration
     void setCalibrationPose(MockLinkPX4Calibration::Pose pose) const { _mockLinkPX4Calibration->setPose(pose); }
 
+    /// Test API: the simulated PX4 calibration which is running fails and stops, as the firmware does
+    bool failCalibration() const { return _mockLinkPX4Calibration->fail(); }
+
+    /// Test API: makes the simulated PX4 barometer calibration report that it has no GPS
+    void setBaroCalibrationFails(bool fails) { _baroCalibrationFails = fails; }
+
+    /// Test API: makes the simulated PX4 level horizon calibration report that the vehicle moved
+    void setLevelCalibrationFails(bool fails) { _levelCalibrationFails = fails; }
+
+    /// Test API: makes the simulated PX4 gyroscope calibration report that the vehicle moved
+    void setGyroCalibrationFails(bool fails) { _gyroCalibrationFails = fails; }
+
+    /// Test API: makes the simulated PX4 baro, level horizon and gyroscope calibrations run until cancelled
+    void setInlineCalibrationStalls(bool stalls) { _mockLinkPX4Calibration->setInlineCalibrationStalls(stalls); }
+
+    /// Test API: makes the simulated PX4 refuse the large vehicle compass calibration command, as it does when armed
+    void setLargeVehicleCalibrationRejected(bool rejected) { _largeVehicleCalibrationRejected = rejected; }
+
     MockLinkFTP *mockLinkFTP() const;
     MockLinkGimbal *mockLinkGimbal() const { return _mockLinkGimbal; }
 
@@ -224,6 +242,12 @@ public:
     /// Change an int32 parameter value directly on MockLink. Used to simulate the
     /// firmware storing calibration results (e.g. CAL_MAG0_ID).
     void setInt32ParamValue(int componentId, const QString &paramName, int32_t value) { _mapParamName2Value[componentId][paramName] = QVariant::fromValue(value); }
+
+    /// Change a float parameter value directly on MockLink, like setInt32ParamValue
+    void setFloatParamValue(int componentId, const QString& paramName, float value)
+    {
+        _mapParamName2Value[componentId][paramName] = QVariant::fromValue(value);
+    }
 
     /// Returns the current MockLink-side value of a parameter, including PX4 unused parameters. Used by unit
     /// tests to verify that PARAM_SET writes reached the simulated firmware.
@@ -421,6 +445,10 @@ private:
     MockLinkCamera *const _mockLinkCamera = nullptr;
     MockLinkGimbal *const _mockLinkGimbal = nullptr;
     MockLinkPX4Calibration *const _mockLinkPX4Calibration = nullptr;
+    std::atomic<bool> _baroCalibrationFails = false;
+    std::atomic<bool> _levelCalibrationFails = false;
+    std::atomic<bool> _gyroCalibrationFails = false;
+    std::atomic<bool> _largeVehicleCalibrationRejected = false;
     MockLinkFTP *const _mockLinkFTP = nullptr;
 
     // Written by test thread, read by worker thread in _sendAttitudeQuaternion; one lock so a frame never mixes old and new angles
