@@ -2,6 +2,7 @@
 
 #include <QtCore/QList>
 #include <QtCore/QMap>
+#include <QtCore/QString>
 
 /// \brief MVC Controller for AirframeComponent.qml.
 ///
@@ -16,6 +17,7 @@ public:
     typedef struct {
         QString name;
         QString imageResource;
+        QString category;  ///< Copter, Plane, VTOL, Rover or Other
         QList<AirframeInfo_t*> rgAirframeInfo;
     } AirframeType_t;
 
@@ -26,7 +28,7 @@ public:
     static QList<AirframeType_t*> sortedTypes();
 
     static void clear();
-    static void insert(QString& group, QString& image, QString& name, int id);
+    static void insert(QString& group, QString& image, QString& name, int id, const QString& vehicleClass);
 
 protected:
     static QMap<QString, AirframeType_t*> rgAirframeTypes;

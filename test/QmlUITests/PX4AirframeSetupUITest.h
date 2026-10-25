@@ -5,9 +5,9 @@
 class QString;
 class Vehicle;
 
-/// UI test that boots the full QML UI with a PX4 MockLink vehicle connected
-/// whose parameters (including SYS_AUTOSTART) are reset to the firmware
-/// defaults, then exercises the Airframe setup page.
+/// UI test that boots the full QML UI with a PX4 MockLink vehicle connected,
+/// then exercises the Airframe setup page. Most tests reset the vehicle's
+/// parameters (including SYS_AUTOSTART) to the firmware defaults first.
 class PX4AirframeSetupUITest : public VehicleConfigUITestBase
 {
     Q_OBJECT
@@ -17,8 +17,10 @@ public:
 
 private slots:
     void _testNavigateToAirframe();
+    void _testCurrentAirframeCategorySelected();
     void _testAirframePrereqPages();
     void _testApplyAirframe();
+    void _testPendingAirframeDiscarded();
 
 private:
     /// Navigate from the Fly view to the Airframe page of the Configure view
