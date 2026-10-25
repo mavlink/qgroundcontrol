@@ -608,7 +608,7 @@ Item {
             for (i = 0; i < selectedVehicles.count; i++) {
                 var vehicle = selectedVehicles.get(i)
                 if (vehicle.armed === true){
-                    vehicle.startMission()
+                    vehicle.startMissionAsync()
                 }
             }
             break
@@ -678,7 +678,7 @@ Item {
         case actionMVPause:
             selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
             for (i = 0; i < selectedVehicles.count; i++) {
-                selectedVehicles.get(i).pauseVehicle()
+                selectedVehicles.get(i).pauseVehicleAsync()
             }
             break
         case actionROI: {

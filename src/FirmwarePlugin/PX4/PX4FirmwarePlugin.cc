@@ -316,6 +316,14 @@ void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle) const
     sendRepositionKeepLatLon(vehicle, NAN, NAN);
 }
 
+void PX4FirmwarePlugin::pauseVehicleAsync(Vehicle* vehicle) const
+{
+    if (!vehicle) {
+        return;
+    }
+    pauseVehicle(vehicle);
+}
+
 void PX4FirmwarePlugin::guidedModeRTL(Vehicle* vehicle, bool smartRTL) const
 {
     Q_UNUSED(smartRTL);
@@ -609,6 +617,22 @@ void PX4FirmwarePlugin::startMission(Vehicle* vehicle) const
         }
     } else {
         QGC::showAppMessage(tr("Unable to start mission: Vehicle not changing to %1 flight mode.").arg(missionFlightMode()));
+    }
+}
+
+void PX4FirmwarePlugin::startMissionAsync(Vehicle* vehicle) const
+{
+    if (!vehicle) {
+        return;
+    }
+
+    // Same commands as startMission(), issued for the current state without waiting.
+    // An unarmed vehicle is armed without confirming the mode change first.
+    if (vehicle->flightMode() != missionFlightMode()) {
+        vehicle->setFlightMode(missionFlightMode());
+    }
+    if (!vehicle->armed()) {
+        vehicle->setArmed(true, false /* showError */);
     }
 }
 

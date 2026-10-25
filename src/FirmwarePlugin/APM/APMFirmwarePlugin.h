@@ -33,6 +33,7 @@ public:
     double minimumTakeoffAltitudeMeters(Vehicle *vehicle) const override;
     void startTakeoff(Vehicle *vehicle) const override;
     void startMission(Vehicle *vehicle) const override;
+    void startMissionAsync(Vehicle *vehicle) const override;
     VehicleReadiness* createVehicleReadiness(Vehicle* vehicle) const override;
     QStringList flightModes(Vehicle *vehicle) const override;
     QString flightMode(uint8_t base_mode, uint32_t custom_mode) const override;
@@ -45,6 +46,7 @@ public:
     QString missionFlightMode() const override;
     virtual QString guidedFlightMode() const;
     void pauseVehicle(Vehicle *vehicle) const override;
+    void pauseVehicleAsync(Vehicle *vehicle) const override;
     void guidedModeRTL(Vehicle *vehicle, bool smartRTL) const override;
     void guidedModeChangeAltitude(Vehicle *vehicle, double altitudeChange, bool pauseVehicle) override;
     void guidedModeChangeHeading(Vehicle *vehicle, const QGeoCoordinate &headingCoord) const override;

@@ -148,3 +148,58 @@ void APMStartMissionTest::_armedPlaneSwitchesToAuto()
     QCOMPARE(vehicle()->flightMode(), vehicle()->firmwarePlugin()->missionFlightMode());
     _verifyNoMissionStartSent();
 }
+
+void APMStartMissionTest::_flyingCopterAsyncSwitchesToAuto()
+{
+    _connectAPMVehicle(false /* plane */);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    ignoreLogMessage("Utilities.QGCSensors", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Failed to connect to pressure backend")));
+    ignoreLogMessage("Utilities.QGCSensors", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Error Initializing Pressure Sensor")));
+    mockLink()->setArmed(true);
+    vehicle()->sendMavCommand(vehicle()->defaultComponentId(), MAV_CMD_NAV_TAKEOFF, false /* showError */,
+                              0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f /* altitude */);
+    QVERIFY_TRUE_WAIT(vehicle()->underway(), TestTimeout::mediumMs());
+
+    vehicle()->startMissionAsync();
+
+    QCOMPARE_TRUE_WAIT(vehicle()->flightMode(), vehicle()->firmwarePlugin()->missionFlightMode(),
+                       TestTimeout::mediumMs());
+    _verifyNoMissionStartSent();
+}
+
+void APMStartMissionTest::_armedCopterAsyncSendsMissionStart()
+{
+    _connectAPMVehicle(false /* plane */);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    _setArmedOnGround();
+    const QString flightModeBefore = vehicle()->flightMode();
+
+    vehicle()->startMissionAsync();
+
+    QVERIFY_TRUE_WAIT(mockLink()->receivedMavCommandCount(MAV_CMD_MISSION_START) == 1, TestTimeout::mediumMs());
+    QCOMPARE(vehicle()->flightMode(), flightModeBefore);
+}
+
+void APMStartMissionTest::_armedPlaneAsyncSwitchesToAuto()
+{
+    _connectAPMVehicle(true /* plane */);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    _setArmedOnGround();
+
+    vehicle()->startMissionAsync();
+
+    QCOMPARE_TRUE_WAIT(vehicle()->flightMode(), vehicle()->firmwarePlugin()->missionFlightMode(),
+                       TestTimeout::mediumMs());
+    _verifyNoMissionStartSent();
+}

@@ -758,6 +758,16 @@ void APMFirmwarePlugin::pauseVehicle(Vehicle *vehicle) const
     _setFlightModeAndValidate(vehicle, pauseFlightMode());
 }
 
+void APMFirmwarePlugin::pauseVehicleAsync(Vehicle *vehicle) const
+{
+    if (!vehicle) {
+        return;
+    }
+    if (vehicle->flightMode() != pauseFlightMode()) {
+        vehicle->setFlightMode(pauseFlightMode());
+    }
+}
+
 struct MAV_CMD_DO_REPOSITION_HandlerData {
     Vehicle *vehicle = nullptr;
 };
@@ -1118,6 +1128,41 @@ void APMFirmwarePlugin::startMission(Vehicle *vehicle) const
 
         vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /*show error */);
     }
+}
+
+void APMFirmwarePlugin::startMissionAsync(Vehicle *vehicle) const
+{
+    if (!vehicle) {
+        return;
+    }
+
+    // Same branches as startMission(). Commands are sent for the current state and are not
+    // gated on the previous command succeeding, so a multi-vehicle loop does not block.
+    if (vehicle->underway()) {
+        if (vehicle->flightMode() != missionFlightMode()) {
+            vehicle->setFlightMode(missionFlightMode());
+        }
+        return;
+    }
+
+    if (vehicle->fixedWing() || vehicle->vtol()) {
+        if (vehicle->flightMode() != missionFlightMode()) {
+            vehicle->setFlightMode(missionFlightMode());
+        }
+        if (!vehicle->armed()) {
+            vehicle->setArmed(true, false /* showError */);
+        }
+        return;
+    }
+
+    if (!vehicle->armed()) {
+        if (vehicle->flightMode() != guidedFlightMode()) {
+            vehicle->setFlightMode(guidedFlightMode());
+        }
+        vehicle->setArmed(true, false /* showError */);
+    }
+
+    vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /*show error */);
 }
 
 QString APMFirmwarePlugin::_getLatestVersionFileUrl(Vehicle *vehicle) const
