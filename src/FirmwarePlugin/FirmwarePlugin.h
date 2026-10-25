@@ -192,7 +192,7 @@ public:
 
     /// Same command as pauseVehicle(), without waiting for the vehicle to report the new state.
     /// Plugins whose pauseVehicle() waits must override this so a multi-vehicle loop cannot block the UI thread.
-    virtual void pauseVehicleAsync(Vehicle *vehicle) const;
+    virtual void pauseVehicleAsync(Vehicle* vehicle) const;
 
     /// Command vehicle to return to launch
     virtual void guidedModeRTL(Vehicle *vehicle, bool smartRTL) const;
@@ -241,7 +241,7 @@ public:
 
     /// Same commands as startMission() for the vehicle's current state, without waiting for the new state.
     /// Multi-vehicle actions use this so one vehicle cannot block the others on the UI thread.
-    virtual void startMissionAsync(Vehicle *vehicle) const;
+    virtual void startMissionAsync(Vehicle* vehicle) const;
 
     /// Command vehicle to move to specified location (altitude is ignored, vehicle uses current altitude)
     /// @return true: goto command accepted, false: goto failed (vehicle not moved)

@@ -161,8 +161,8 @@ void APMStartMissionTest::_flyingCopterAsyncSwitchesToAuto()
     ignoreLogMessage("Utilities.QGCSensors", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Error Initializing Pressure Sensor")));
     mockLink()->setArmed(true);
-    vehicle()->sendMavCommand(vehicle()->defaultComponentId(), MAV_CMD_NAV_TAKEOFF, false /* showError */,
-                              0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 10.0f /* altitude */);
+    vehicle()->sendMavCommand(vehicle()->defaultComponentId(), MAV_CMD_NAV_TAKEOFF, false /* showError */, 0.0f, 0.0f,
+                              0.0f, 0.0f, 0.0f, 0.0f, 10.0f /* altitude */);
     QVERIFY_TRUE_WAIT(vehicle()->underway(), TestTimeout::mediumMs());
 
     vehicle()->startMissionAsync();

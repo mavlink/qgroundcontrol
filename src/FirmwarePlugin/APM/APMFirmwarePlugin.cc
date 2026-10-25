@@ -758,7 +758,7 @@ void APMFirmwarePlugin::pauseVehicle(Vehicle *vehicle) const
     _setFlightModeAndValidate(vehicle, pauseFlightMode());
 }
 
-void APMFirmwarePlugin::pauseVehicleAsync(Vehicle *vehicle) const
+void APMFirmwarePlugin::pauseVehicleAsync(Vehicle* vehicle) const
 {
     if (!vehicle) {
         return;
@@ -1130,7 +1130,7 @@ void APMFirmwarePlugin::startMission(Vehicle *vehicle) const
     }
 }
 
-void APMFirmwarePlugin::startMissionAsync(Vehicle *vehicle) const
+void APMFirmwarePlugin::startMissionAsync(Vehicle* vehicle) const
 {
     if (!vehicle) {
         return;

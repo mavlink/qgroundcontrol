@@ -129,7 +129,7 @@ void FirmwarePlugin::pauseVehicle(Vehicle *vehicle) const
     QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
-void FirmwarePlugin::pauseVehicleAsync(Vehicle *vehicle) const
+void FirmwarePlugin::pauseVehicleAsync(Vehicle* vehicle) const
 {
     Q_UNUSED(vehicle);
     QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
