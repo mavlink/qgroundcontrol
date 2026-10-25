@@ -5,12 +5,14 @@ import QGroundControl.Controls
 import QGroundControl.AutoPilotPlugins.PX4
 
 SetupPage {
+    id:             sensorsPage
     pageComponent:  pageComponent
     Component {
         id: pageComponent
         SensorsSetup {
             width:      availableWidth
-            height:     availableHeight
+
+            onScrollToTopRequested: sensorsPage.scrollToTop()
         }
     }
 }

@@ -1,38 +1,66 @@
 #include "SensorsComponentController.h"
+
 #include "AppMessages.h"
+#include "MAVLinkLib.h"
+#include "PX4SensorDevice.h"
 #include "ParameterManager.h"
+#include "QGCLoggingCategory.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
-#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(SensorsComponentControllerLog, "AutoPilotPlugins.SensorsComponentController")
 
+namespace {
+
+// PX4 acks a calibration cancel twice: the commander answers TEMPORARILY_REJECTED because a calibration is running
+// while the calibration itself takes the cancel and answers ACCEPTED. Either can arrive first, so neither is an error.
+// The "calibration cancelled" status text is what ends the calibration.
+// https://github.com/PX4/PX4-Autopilot/issues/29424
+void px4SensorsCancelCalibrationResultHandler(void* /*resultHandlerData*/, int /*compId*/,
+                                              const mavlink_command_ack_t& ack,
+                                              Vehicle::MavCmdResultFailureCode_t failureCode)
+{
+    if (failureCode == Vehicle::MavCmdResultFailureNoResponseToCommand) {
+        QGC::showAppMessage(SensorsComponentController::tr("Vehicle did not respond to the calibration cancel"));
+        return;
+    }
+    if (ack.result == MAV_RESULT_ACCEPTED || ack.result == MAV_RESULT_TEMPORARILY_REJECTED) {
+        return;
+    }
+    Vehicle::showCommandAckError(ack);
+}
+
+}  // namespace
+
 SensorsComponentController::SensorsComponentController(void)
-    : _statusLog                                (nullptr)
-    , _progressBar                              (nullptr)
-    , _showOrientationCalArea                   (false)
-    , _gyroCalInProgress                        (false)
-    , _magCalInProgress                         (false)
-    , _accelCalInProgress                       (false)
-    , _airspeedCalInProgress                    (false)
-    , _levelCalInProgress                       (false)
-    , _orientationCalDownSideVisible            (false)
-    , _orientationCalUpsideDownSideVisible      (false)
-    , _orientationCalLeftSideVisible            (false)
-    , _orientationCalRightSideVisible           (false)
-    , _orientationCalNoseDownSideVisible        (false)
-    , _orientationCalTailDownSideVisible        (false)
-    , _orientationCalDownSideState              (SideCalStateIdle)
-    , _orientationCalUpsideDownSideState        (SideCalStateIdle)
-    , _orientationCalLeftSideState              (SideCalStateIdle)
-    , _orientationCalRightSideState             (SideCalStateIdle)
-    , _orientationCalNoseDownSideState          (SideCalStateIdle)
-    , _orientationCalTailDownSideState          (SideCalStateIdle)
-    , _unknownFirmwareVersion                   (false)
-    , _waitingForCancel                         (false)
+    : _showOrientationCalArea(false)
+    , _gyroCalInProgress(false)
+    , _magCalInProgress(false)
+    , _accelCalInProgress(false)
+    , _airspeedCalInProgress(false)
+    , _levelCalInProgress(false)
+    , _baroCalInProgress(false)
+    , _orientationCalDownSideVisible(false)
+    , _orientationCalUpsideDownSideVisible(false)
+    , _orientationCalLeftSideVisible(false)
+    , _orientationCalRightSideVisible(false)
+    , _orientationCalNoseDownSideVisible(false)
+    , _orientationCalTailDownSideVisible(false)
+    , _orientationCalDownSideState(SideCalStateIdle)
+    , _orientationCalUpsideDownSideState(SideCalStateIdle)
+    , _orientationCalLeftSideState(SideCalStateIdle)
+    , _orientationCalRightSideState(SideCalStateIdle)
+    , _orientationCalNoseDownSideState(SideCalStateIdle)
+    , _orientationCalTailDownSideState(SideCalStateIdle)
+    , _unknownFirmwareVersion(false)
+    , _waitingForCancel(false)
 {
     connect(_vehicle, &Vehicle::sensorsParametersResetAck, this, &SensorsComponentController::_handleParametersReset);
 
+    _largeVehicleCalibrationTimer.setSingleShot(true);
+    _largeVehicleCalibrationTimer.setInterval(_largeVehicleCalibrationTimeoutMs);
+    connect(&_largeVehicleCalibrationTimer, &QTimer::timeout, this,
+            &SensorsComponentController::_largeVehicleCalibrationTimedOut);
 }
 
 bool SensorsComponentController::usingUDPLink(void)
@@ -45,44 +73,50 @@ bool SensorsComponentController::usingUDPLink(void)
     }
 }
 
-/// Appends the specified text to the status log area in the ui
+/// Appends the specified text to the calibration log
 void SensorsComponentController::_appendStatusLog(const QString& text)
 {
-    if (!_statusLog) {
-        qWarning() << "Internal error";
-        return;
+    if (!_calibrationLog.isEmpty()) {
+        _calibrationLog += QLatin1Char('\n');
     }
+    _calibrationLog += text;
+    emit calibrationLogChanged();
+}
 
-    QString varText = text;
-    QMetaObject::invokeMethod(_statusLog,
-                              "append",
-                              Q_ARG(QString, varText));
+void SensorsComponentController::_setCalibrationResult(CalibrationResult result)
+{
+    _calibrationResult = result;
+    emit calibrationResultChanged();
 }
 
 void SensorsComponentController::_startLogCalibration(void)
 {
     _unknownFirmwareVersion = false;
+    _calibrationFailureText.clear();
+    _calibrationDetail.clear();
+    _calibrationLog.clear();
+    _sideAlreadyDone = false;
+    emit calibrationLogChanged();
+    _setCalibrationResult(CalibrationResultNone);
+    _setCalibrationProgress(0);
     _hideAllCalAreas();
 
-    connect(_vehicle, &Vehicle::textMessageReceived, this, &SensorsComponentController::_handleUASTextMessage);
+    connect(_vehicle, &Vehicle::textMessageReceived, this, &SensorsComponentController::_handleUASTextMessage,
+            Qt::UniqueConnection);
+}
+
+void SensorsComponentController::_setCalibrationProgress(double progress)
+{
+    if (!qFuzzyIsNull(_calibrationProgress - progress)) {
+        _calibrationProgress = progress;
+        emit calibrationProgressChanged();
+    }
 }
 
 void SensorsComponentController::_startVisualCalibration(void)
 {
     _setAllSidesState(SideCalStateIncomplete);
-
-    _progressBar->setProperty("value", 0);
-}
-
-/// Returns the orientation preview side indicators to the neutral Idle state.
-/// Called when the preview switches to a different sensor so completion state from
-/// a previous calibration doesn't carry over.
-void SensorsComponentController::resetSidesToIdle(void)
-{
-    if (calibrationActive()) {
-        return;
-    }
-    _setAllSidesState(SideCalStateIdle);
+    _setCalibrationProgress(0);
 }
 
 void SensorsComponentController::_setAllSidesState(SideCalState state)
@@ -101,16 +135,17 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
 {
     disconnect(_vehicle, &Vehicle::textMessageReceived, this, &SensorsComponentController::_handleUASTextMessage);
 
+    // The page shows every calibration in its row or in its panel, so a failure needs no message box
+    const bool inlineCalibration = _baroCalInProgress || _levelCalInProgress || _gyroCalInProgress;
+
     if (code == StopCalibrationSuccess) {
         _setAllSidesState(SideCalStateCompleted);
-
-        _progressBar->setProperty("value", 1);
+        _setCalibrationProgress(1);
     } else {
         // Calibration results are discarded: return any partially completed sides
         // to the neutral idle preview state
         _setAllSidesState(SideCalStateIdle);
-
-        _progressBar->setProperty("value", 0);
+        _setCalibrationProgress(0);
     }
 
     _waitingForCancel = false;
@@ -120,10 +155,7 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
 
     switch (code) {
         case StopCalibrationSuccess:
-            _orientationCalAreaHelpText->setProperty("text", tr("Calibration complete"));
-            if (!_airspeedCalInProgress && !_levelCalInProgress) {
-                emit resetStatusTextArea();
-            }
+            _setCalibrationResult(CalibrationResultSuccess);
             if (_magCalInProgress) {
                 _vehicle->setRebootRequired();
                 emit magCalComplete();
@@ -131,15 +163,18 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
             break;
 
         case StopCalibrationCancelled:
-            emit resetStatusTextArea();
             _hideAllCalAreas();
             break;
 
         default:
             // Assume failed
             _hideAllCalAreas();
-            QGC::showAppMessage(tr("Calibration failed. Calibration log will be displayed."));
+            _setCalibrationResult(CalibrationResultFailed);
             break;
+    }
+
+    if (inlineCalibration) {
+        emit inlineCalibrationFinished(code == StopCalibrationSuccess, _calibrationFailureText);
     }
 
     _magCalInProgress = false;
@@ -147,6 +182,7 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
     _gyroCalInProgress = false;
     _airspeedCalInProgress = false;
     _levelCalInProgress = false;
+    _baroCalInProgress = false;
 
     emit calibrationActiveChanged();
 }
@@ -181,6 +217,168 @@ void SensorsComponentController::calibrateAirspeed(void)
     _vehicle->startCalibration(QGCMAVLink::CalibrationPX4Airspeed);
 }
 
+void SensorsComponentController::calibrateBaro(void)
+{
+    _startLogCalibration();
+    _vehicle->startCalibration(QGCMAVLink::CalibrationPX4Pressure);
+}
+
+void SensorsComponentController::calibrateCompassLargeVehicle(double headingDegrees)
+{
+    // Watch first: a command which cannot be sent at all reports its failure before sendMavCommand returns.
+    // The result of a command which the vehicle refuses is reported here instead of as an error box.
+    _watchLargeVehicleCalibration();
+
+    // The firmware takes the vehicle's GPS position when the latitude and longitude are not set
+    _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_FIXED_MAG_CAL_YAW,
+                             false,  // showError
+                             static_cast<float>(headingDegrees),
+                             0,      // Unused by PX4
+                             0,      // Latitude, unset
+                             0);     // Longitude, unset
+}
+
+SensorsComponentController::LargeVehicleCalibrationResult SensorsComponentController::largeVehicleCalibrationResult(
+    const QString& text)
+{
+    // Texts from the firmware's do_mag_calibration_quick() and the worker thread
+    if (text.contains(QStringLiteral("Mag quick calibration finished"), Qt::CaseInsensitive)) {
+        return LargeVehicleCalibrationResult::Succeeded;
+    }
+
+    static const QStringList failureTexts = {
+        QStringLiteral("mag quick cal"),
+        QStringLiteral("calibration failed"),
+        QStringLiteral("calibration save failed"),
+        QStringLiteral("cannot open calibration storage"),
+    };
+    for (const QString& failureText : failureTexts) {
+        if (text.contains(failureText, Qt::CaseInsensitive)) {
+            return LargeVehicleCalibrationResult::Failed;
+        }
+    }
+
+    return LargeVehicleCalibrationResult::Pending;
+}
+
+void SensorsComponentController::_watchLargeVehicleCalibration(void)
+{
+    connect(_vehicle, &Vehicle::textMessageReceived, this,
+            &SensorsComponentController::_handleLargeVehicleCalibrationMessage, Qt::UniqueConnection);
+    connect(_vehicle, &Vehicle::mavCommandResult, this, &SensorsComponentController::_handleLargeVehicleCommandResult,
+            Qt::UniqueConnection);
+    _largeVehicleCalibrationTimer.start();
+    _setLargeVehicleCalibrationPending(true);
+}
+
+void SensorsComponentController::_stopWatchingLargeVehicleCalibration(void)
+{
+    _largeVehicleCalibrationTimer.stop();
+    disconnect(_vehicle, &Vehicle::textMessageReceived, this,
+               &SensorsComponentController::_handleLargeVehicleCalibrationMessage);
+    disconnect(_vehicle, &Vehicle::mavCommandResult, this,
+               &SensorsComponentController::_handleLargeVehicleCommandResult);
+    _setLargeVehicleCalibrationPending(false);
+}
+
+void SensorsComponentController::_setLargeVehicleCalibrationPending(bool pending)
+{
+    if (_largeVehicleCalibrationPending != pending) {
+        _largeVehicleCalibrationPending = pending;
+        emit largeVehicleCalibrationPendingChanged();
+    }
+}
+
+QString SensorsComponentController::largeVehicleCommandFailureText(int failureCode)
+{
+    switch (failureCode) {
+        case Vehicle::MavCmdResultFailureNoResponseToCommand:
+            return tr("The vehicle did not respond.");
+        case Vehicle::MavCmdResultFailureDuplicateCommand:
+            return tr("A calibration request is already waiting for the vehicle.");
+        default:
+            break;
+    }
+
+    return tr(
+        "The vehicle did not accept the calibration. It may be armed or busy, or its firmware may not support it.");
+}
+
+void SensorsComponentController::_handleLargeVehicleCommandResult(quint32 vehicleId, int targetComponent, int command,
+                                                                  int ackResult, int failureCode)
+{
+    Q_UNUSED(targetComponent);
+
+    if (vehicleId != _vehicle->id() || command != MAV_CMD_FIXED_MAG_CAL_YAW) {
+        return;
+    }
+
+    if (ackResult == MAV_RESULT_ACCEPTED || ackResult == MAV_RESULT_IN_PROGRESS) {
+        return;
+    }
+
+    _stopWatchingLargeVehicleCalibration();
+    emit largeVehicleCalibrationFinished(false, largeVehicleCommandFailureText(failureCode));
+}
+
+void SensorsComponentController::_handleLargeVehicleCalibrationMessage(quint32 uasId, int compId, int severity,
+                                                                       QString text, const QString& description)
+{
+    Q_UNUSED(compId);
+    Q_UNUSED(severity);
+    Q_UNUSED(description);
+
+    if (uasId != _vehicle->id()) {
+        return;
+    }
+
+    const LargeVehicleCalibrationResult result = largeVehicleCalibrationResult(text);
+    if (result == LargeVehicleCalibrationResult::Pending) {
+        return;
+    }
+
+    _stopWatchingLargeVehicleCalibration();
+    _refreshParams();
+    emit largeVehicleCalibrationFinished(result == LargeVehicleCalibrationResult::Succeeded, text);
+}
+
+void SensorsComponentController::_largeVehicleCalibrationTimedOut(void)
+{
+    // The firmware may have saved offsets without saying so, so refresh anyway
+    _stopWatchingLargeVehicleCalibration();
+    _refreshParams();
+    emit largeVehicleCalibrationFinished(false,
+                                         tr("No result from the vehicle. Check the compass offsets, or try again."));
+}
+
+QString SensorsComponentController::deviceDescription(int deviceId) const
+{
+    return PX4SensorDevice::description(static_cast<quint32>(deviceId));
+}
+
+SensorsComponentController::ActiveCalibration SensorsComponentController::activeCalibration() const
+{
+    if (_magCalInProgress) {
+        return ActiveCalibrationCompass;
+    }
+    if (_gyroCalInProgress) {
+        return ActiveCalibrationGyro;
+    }
+    if (_accelCalInProgress) {
+        return ActiveCalibrationAccel;
+    }
+    if (_levelCalInProgress) {
+        return ActiveCalibrationLevel;
+    }
+    if (_airspeedCalInProgress) {
+        return ActiveCalibrationAirspeed;
+    }
+    if (_baroCalInProgress) {
+        return ActiveCalibrationBaro;
+    }
+    return ActiveCalibrationNone;
+}
+
 void SensorsComponentController::_handleUASTextMessage(quint32 uasId, int compId, int severity, QString text,
                                                        const QString& description)
 {
@@ -201,11 +399,7 @@ void SensorsComponentController::_handleUASTextMessage(quint32 uasId, int compId
         bool ok;
         int p = percent.toInt(&ok);
         if (ok) {
-            if (_progressBar) {
-                _progressBar->setProperty("value", (float)(p / 100.0));
-            } else {
-                qWarning() << "Internal error";
-            }
+            _setCalibrationProgress(p / 100.0);
         }
         return;
     }
@@ -221,6 +415,9 @@ void SensorsComponentController::_handleUASTextMessage(quint32 uasId, int compId
     // All calibration messages start with [cal]
     QString calPrefix("[cal] ");
     if (!text.startsWith(calPrefix)) {
+        // The firmware logs the reason a calibration failed, such as "motion during calibration", just before it
+        // reports the failure
+        _calibrationDetail = text;
         return;
     }
     text = text.right(text.length() - calPrefix.length());
@@ -253,8 +450,6 @@ void SensorsComponentController::_handleUASTextMessage(quint32 uasId, int compId
             _orientationCalTailDownSideVisible = false;
             _orientationCalNoseDownSideVisible = false;
 
-            _orientationCalAreaHelpText->setProperty("text", tr("Place your vehicle into one of the Incomplete orientations shown below and hold it still"));
-
             if (text == "accel") {
                 _accelCalInProgress = true;
                 _orientationCalDownSideVisible = true;
@@ -264,19 +459,24 @@ void SensorsComponentController::_handleUASTextMessage(quint32 uasId, int compId
                 _orientationCalTailDownSideVisible = true;
                 _orientationCalNoseDownSideVisible = true;
             } else if (text == "mag") {
-
-                // Work out what the autopilot is configured to
+                // Work out what the autopilot is configured to. CAL_MAG_SIDES is the legacy name of SENS_MAG_SIDES.
                 int sides = 0;
 
-                if (_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, "CAL_MAG_SIDES")) {
+                const QString sidesParamName = _vehicle->parameterManager()->parameterExists(
+                                                   ParameterManager::defaultComponentId, "SENS_MAG_SIDES")
+                                                   ? QStringLiteral("SENS_MAG_SIDES")
+                                                   : QStringLiteral("CAL_MAG_SIDES");
+
+                if (_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId,
+                                                                  sidesParamName)) {
                     // Read the requested calibration directions off the system
                     Fact* const calMagSides = _vehicle->parameterManager()->getParameter(
-                        ParameterManager::defaultComponentId, "CAL_MAG_SIDES");
+                        ParameterManager::defaultComponentId, sidesParamName);
                     if (calMagSides) {
                         sides = calMagSides->rawValue().toFloat();
                     } else {
                         qCWarning(SensorsComponentControllerLog)
-                            << "CAL_MAG_SIDES disappeared while starting calibration";
+                            << sidesParamName << "disappeared while starting calibration";
                         sides = (1 << 5) | (1 << 4) | (1 << 3) | (1 << 2) | (1 << 1) | (1 << 0);
                     }
                 } else {
@@ -303,6 +503,8 @@ void SensorsComponentController::_handleUASTextMessage(quint32 uasId, int compId
             _airspeedCalInProgress = true;
         } else if (text == "level") {
             _levelCalInProgress = true;
+        } else if (text == "baro") {
+            _baroCalInProgress = true;
         }
         emit calibrationActiveChanged();
         return;
@@ -326,11 +528,7 @@ void SensorsComponentController::_handleUASTextMessage(quint32 uasId, int compId
             _orientationCalTailDownSideState = SideCalStateInProgress;
         }
 
-        if (_magCalInProgress) {
-            _orientationCalAreaHelpText->setProperty("text", tr("Rotate the vehicle continuously as shown in the diagram until marked as Completed"));
-        } else {
-            _orientationCalAreaHelpText->setProperty("text", tr("Hold still in the current orientation"));
-        }
+        _sideAlreadyDone = false;
 
         emit orientationCalSidesStateChanged();
         return;
@@ -354,14 +552,15 @@ void SensorsComponentController::_handleUASTextMessage(quint32 uasId, int compId
             _orientationCalTailDownSideState = SideCalStateCompleted;
         }
 
-        _orientationCalAreaHelpText->setProperty("text", tr("Place you vehicle into one of the orientations shown below and hold it still"));
+        _sideAlreadyDone = false;
 
         emit orientationCalSidesStateChanged();
         return;
     }
 
     if (text.endsWith("side already completed")) {
-        _orientationCalAreaHelpText->setProperty("text", tr("Orientation already completed, place you vehicle into one of the incomplete orientations shown below and hold it still"));
+        _sideAlreadyDone = true;
+        emit orientationCalSidesStateChanged();
         return;
     }
 
@@ -377,6 +576,8 @@ void SensorsComponentController::_handleUASTextMessage(quint32 uasId, int compId
     }
 
     if (text.startsWith("calibration failed")) {
+        _calibrationFailureText =
+            _calibrationDetail.isEmpty() ? text : _calibrationDetail + QStringLiteral(": ") + text;
         _stopCalibration(StopCalibrationFailed);
         return;
     }
@@ -405,11 +606,17 @@ void SensorsComponentController::_hideAllCalAreas(void)
 
 void SensorsComponentController::cancelCalibration(void)
 {
-    // The firmware doesn't allow us to cancel calibration. The best we can do is wait
-    // for it to timeout.
     _waitingForCancel = true;
     emit waitingForCancelChanged();
-    _vehicle->stopCalibration(true /* showError */);
+
+    const Vehicle::MavCmdAckHandlerInfo_t handlerInfo{
+        .resultHandler = px4SensorsCancelCalibrationResultHandler,
+        .resultHandlerData = nullptr,
+        .progressHandler = nullptr,
+        .progressHandlerData = nullptr,
+    };
+    // All zero params cancel the running calibration
+    _vehicle->sendMavCommandWithHandler(&handlerInfo, _vehicle->defaultComponentId(), MAV_CMD_PREFLIGHT_CALIBRATION);
 }
 
 void SensorsComponentController::_handleParametersReset(bool success)

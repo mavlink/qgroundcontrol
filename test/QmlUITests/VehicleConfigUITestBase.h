@@ -16,6 +16,10 @@ class VehicleConfigUITestBase : public QmlUITestBase
     Q_OBJECT
 
 protected:
+    /// objectName of an item with a text property on the Sensors page, whose text is a QML qsTr string so it
+    /// retranslates when the language changes. Used by clickThroughAllComponentsAllLocales() to verify the switch.
+    virtual QString languageAnchorObjectName() const;
+
     /// Navigate from the Fly view to the Configure view and wait for
     /// vehicleConfig_root to appear.
     void navigateToConfigureView();

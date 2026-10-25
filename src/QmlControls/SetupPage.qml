@@ -21,6 +21,10 @@ Item {
     property alias  advanced:               advancedCheckBox.checked
     property string sectionIdFilter:        ""
 
+    function scrollToTop() {
+        pageFlickable.contentY = 0
+    }
+
     function sectionVisible(sectionId) {
         if (pageLoader.item && typeof pageLoader.item.sectionVisible === "function") {
             return pageLoader.item.sectionVisible(sectionId)
@@ -51,6 +55,7 @@ Item {
     }
 
     QGCFlickable {
+        id:             pageFlickable
         objectName:     "setupPage_flickable"
         anchors.fill:   parent
         contentWidth:   Math.max(availableWidth, pageLoader.x + pageLoader.item.width)
