@@ -22,8 +22,14 @@ private slots:
     void _disarmedPlaneSwitchesToAutoThenArms();
     void _armedPlaneSwitchesToAuto();
     void _flyingCopterAsyncSwitchesToAuto();
+    void _flyingCopterAsyncAlreadyInAutoSendsNothing();
     void _armedCopterAsyncSendsMissionStart();
+    void _disarmedCopterAsyncArmsInGuidedThenMissionStart();
+    void _disarmedCopterAsyncAlreadyGuidedSkipsModeChange();
     void _armedPlaneAsyncSwitchesToAuto();
+    void _disarmedPlaneAsyncSwitchesToAutoThenArms();
+    void _disarmedPlaneAsyncAlreadyInAutoArmsWithoutModeChange();
+    void _pauseAsyncSetsPauseModeThenSkipsRepeat();
 
 private:
     void _connectAPMVehicle(bool plane);

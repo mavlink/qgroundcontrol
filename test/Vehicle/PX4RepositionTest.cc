@@ -64,6 +64,40 @@ void PX4RepositionTest::_pauseSendsCommandInt()
     _verifyRepositionCommandInt(qQNaN(), qQNaN());
 }
 
+void PX4RepositionTest::_pauseAsyncSendsCommandInt()
+{
+    QVERIFY(vehicle());
+
+    mockLink()->clearReceivedMavCommandCounts();
+    mockLink()->clearReceivedMavlinkMessageCounts();
+    vehicle()->pauseVehicleAsync();
+    QVERIFY_TRUE_WAIT(mockLink()->receivedMavCommandCount(MAV_CMD_DO_REPOSITION) == 1, TestTimeout::longMs());
+    _verifyRepositionCommandInt(qQNaN(), qQNaN());
+}
+
+void PX4RepositionTest::_startMissionAsyncSetsMissionModeAndArms()
+{
+    QVERIFY(vehicle());
+    QVERIFY(!vehicle()->armed());
+
+    vehicle()->startMissionAsync();
+
+    QCOMPARE_TRUE_WAIT(vehicle()->flightMode(), vehicle()->firmwarePlugin()->missionFlightMode(),
+                       TestTimeout::mediumMs());
+    QVERIFY_TRUE_WAIT(vehicle()->armed(), TestTimeout::mediumMs());
+
+    mockLink()->clearReceivedMavCommandCounts();
+    mockLink()->clearReceivedMavlinkMessageCounts();
+    vehicle()->startMissionAsync();
+
+    vehicle()->sendMavCommand(vehicle()->defaultComponentId(), MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED,
+                              false /* showError */);
+    QVERIFY_TRUE_WAIT(mockLink()->receivedMavCommandCount(MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED) == 1,
+                      TestTimeout::mediumMs());
+    QCOMPARE(mockLink()->receivedMavlinkMessageCount(MAVLINK_MSG_ID_SET_MODE), 0);
+    QCOMPARE(mockLink()->receivedMavCommandCount(MAV_CMD_COMPONENT_ARM_DISARM), 0);
+}
+
 void PX4RepositionTest::_changeHeadingSendsCommandInt()
 {
     QVERIFY(vehicle());
