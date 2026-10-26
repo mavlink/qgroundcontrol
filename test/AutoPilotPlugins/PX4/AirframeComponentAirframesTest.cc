@@ -41,3 +41,28 @@ void AirframeComponentAirframesTest::_sortedTypesStandardFramesFirst()
         }
     }
 }
+
+void AirframeComponentAirframesTest::_typeCategory_data()
+{
+    QTest::addColumn<QString>("group");
+    QTest::addColumn<QString>("category");
+
+    QTest::newRow("copter") << QStringLiteral("Quadrotor x") << QStringLiteral("Copter");
+    QTest::newRow("plane") << QStringLiteral("Standard Plane") << QStringLiteral("Plane");
+    QTest::newRow("vtol") << QStringLiteral("Standard VTOL") << QStringLiteral("VTOL");
+    QTest::newRow("rover") << QStringLiteral("Rover") << QStringLiteral("Rover");
+    QTest::newRow("other class") << QStringLiteral("Balloon") << QStringLiteral("Other");
+    QTest::newRow("mixed classes") << QStringLiteral("Simulation") << QStringLiteral("Other");
+}
+
+void AirframeComponentAirframesTest::_typeCategory()
+{
+    QFETCH(QString, group);
+    QFETCH(QString, category);
+
+    PX4AirframeLoader::loadAirframeMetaData();
+
+    const AirframeComponentAirframes::AirframeType_t* type = AirframeComponentAirframes::get().value(group, nullptr);
+    QVERIFY2(type, qPrintable(QStringLiteral("Airframe group not found: %1").arg(group)));
+    QCOMPARE(type->category, category);
+}

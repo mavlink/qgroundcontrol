@@ -11,4 +11,6 @@ class AirframeComponentAirframesTest : public UnitTest
 
 private slots:
     void _sortedTypesStandardFramesFirst();
+    void _typeCategory_data();
+    void _typeCategory();
 };

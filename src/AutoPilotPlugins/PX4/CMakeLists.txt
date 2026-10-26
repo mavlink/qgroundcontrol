@@ -44,6 +44,8 @@ target_sources(
         PX4RadioComponent.h
         PX4ReturnLandComponent.cc
         PX4ReturnLandComponent.h
+        PX4SensorDevice.cc
+        PX4SensorDevice.h
         PX4SerialPortConfig.cc
         PX4SerialPortConfig.h
         PX4SerialPortsComponent.cc
@@ -120,6 +122,9 @@ qt_add_qml_module(
         PX4ReturnLandComponent.qml
         PX4ReturnLandComponentSummary.qml
         PX4ReturnLandRows.js
+        PX4SensorsOrientation.js
+        PX4SensorsPose.js
+        PX4SensorsRows.js
         PX4SerialPortsComponent.qml
         PX4TuningComponent.qml
         PX4TuningComponentCopter.qml
@@ -140,10 +145,19 @@ qt_add_qml_module(
         PX4TuningComponentSpacecraftRate.qml
         PX4TuningComponentSpacecraftVelocity.qml
         PX4TuningComponentVTOL.qml
+        SensorsCalibrationPanel.qml
+        SensorsCalibrationRow.qml
+        SensorsCalibrationStage.qml
         SensorsComponent.qml
         SensorsComponentSummary.qml
         SensorsComponentSummaryFixedWing.qml
+        SensorsGpsStatus.qml
+        SensorsLargeVehicleForm.qml
+        SensorsLiveCard.qml
         SensorsSetup.qml
+        SensorsSideRow.qml
+        SensorsVehicleModel.qml
+        SensorsVehicleView.qml
     NO_PLUGIN
 )
 

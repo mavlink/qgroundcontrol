@@ -79,6 +79,9 @@ void PX4AirframeLoader::loadAirframeMetaData(void)
 
     QString         airframeGroup;
     QString         image;
+    QString airframeName;
+    QString airframeClass;
+    int airframeId = 0;
     int             xmlState = XmlStateNone;
 
     while (!xml.atEnd()) {
@@ -150,8 +153,10 @@ void PX4AirframeLoader::loadAirframeMetaData(void)
 
                 qCDebug(PX4AirframeLoaderLog) << "Found airframe name:" << name << " type:" << airframeGroup << " id:" << id;
 
-                // Now that we know type we can airframe meta data object and add it to the system
-                AirframeComponentAirframes::insert(airframeGroup, image, name, id.toInt());
+                // The class element follows, so the airframe is added to the system once it ends
+                airframeName = name;
+                airframeId = id.toInt();
+                airframeClass.clear();
 
             } else {
                 // We should be getting meta data now
@@ -159,11 +164,16 @@ void PX4AirframeLoader::loadAirframeMetaData(void)
                     qCWarning(PX4AirframeLoaderLog) << "Badly formed XML";
                     return;
                 }
+                if (elementName == "class") {
+                    airframeClass = xml.readElementText();
+                }
             }
         } else if (xml.isEndElement()) {
             QString elementName = xml.name().toString();
 
             if (elementName == "airframe") {
+                AirframeComponentAirframes::insert(airframeGroup, image, airframeName, airframeId, airframeClass);
+
                 // Reset for next airframe
                 xmlState = XmlStateFoundGroup;
             } else if (elementName == "airframe_group") {

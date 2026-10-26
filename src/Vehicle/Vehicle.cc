@@ -3535,6 +3535,13 @@ void Vehicle::_textMessageReceived(MAV_COMPONENT componentid, MAV_SEVERITY sever
         return;
     }
 
+    // PX4 calibration messages drive the calibration UI through textMessageReceived. Keep them out of the spoken
+    // alerts and the vehicle messages, which would otherwise fill with progress text and pop up the critical ones.
+    if (px4Firmware() && text.startsWith(QStringLiteral("[cal]"))) {
+        emit textMessageReceived(id(), componentid, severity, text, description);
+        return;
+    }
+
     bool skipSpoken = false;
     const bool ardupilotPrearm = text.startsWith(QStringLiteral("PreArm"));
     const bool px4Prearm = text.startsWith(QStringLiteral("preflight"), Qt::CaseInsensitive) && (severity >= MAV_SEVERITY::MAV_SEVERITY_CRITICAL);
@@ -3567,6 +3574,7 @@ void Vehicle::_textMessageReceived(MAV_COMPONENT componentid, MAV_SEVERITY sever
     }
 
     emit textMessageReceived(id(), componentid, severity, text, description);
+
     m_statusTextHandler->handleHTMLEscapedTextMessage(componentid, severity, text.toHtmlEscaped(), description);
 }
 

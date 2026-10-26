@@ -28,6 +28,10 @@ static constexpr const char *kSideAccelResults[MockLinkPX4Calibration::kSideCoun
 // matching the values in PX4MockLink.params
 static constexpr int32_t kMagDeviceId = 197388;
 static constexpr int32_t kAccelDeviceId = 1310988;
+static constexpr int32_t kBaroDeviceId = 6619404;
+static constexpr int32_t kGyroDeviceId = 2293772;
+static constexpr float kLevelRollOffsetDeg = 1.5f;
+static constexpr float kLevelPitchOffsetDeg = -0.8f;
 
 MockLinkPX4Calibration::MockLinkPX4Calibration(MockLink *mockLink)
     : _mockLink(mockLink)
@@ -44,6 +48,58 @@ void MockLinkPX4Calibration::startAccelCalibration()
     _startCalibration(CalType::Accel);
 }
 
+void MockLinkPX4Calibration::startBaroCalibration(bool fails)
+{
+    {
+        QMutexLocker locker(&_mutex);
+        _baroFails = fails;
+    }
+    _startCalibration(CalType::Baro);
+}
+
+void MockLinkPX4Calibration::startLevelCalibration(bool fails)
+{
+    {
+        QMutexLocker locker(&_mutex);
+        _levelFails = fails;
+    }
+    _startCalibration(CalType::Level);
+}
+
+void MockLinkPX4Calibration::startGyroCalibration(bool fails)
+{
+    {
+        QMutexLocker locker(&_mutex);
+        _gyroFails = fails;
+    }
+    _startCalibration(CalType::Gyro);
+}
+
+void MockLinkPX4Calibration::setInlineCalibrationStalls(bool stalls)
+{
+    QMutexLocker locker(&_mutex);
+    _inlineStalls = stalls;
+}
+
+QString MockLinkPX4Calibration::_calTypeName(CalType calType)
+{
+    switch (calType) {
+        case CalType::Mag:
+            return QStringLiteral("mag");
+        case CalType::Accel:
+            return QStringLiteral("accel");
+        case CalType::Baro:
+            return QStringLiteral("baro");
+        case CalType::Level:
+            return QStringLiteral("level");
+        case CalType::Gyro:
+            return QStringLiteral("gyro");
+        case CalType::None:
+            break;
+    }
+    return QString();
+}
+
 void MockLinkPX4Calibration::_startCalibration(CalType calType)
 {
     QMutexLocker locker(&_mutex);
@@ -52,11 +108,12 @@ void MockLinkPX4Calibration::_startCalibration(CalType calType)
     _requestedPose = -1;
     _activeSide = -1;
     _sideTickCount = 0;
-    _finishTickCount = -1;
+    // The barometer, gyroscope and level calibrations have no sides: they go straight to the finishing phase
+    _finishTickCount = (calType == CalType::Baro || calType == CalType::Level || calType == CalType::Gyro) ? 0 : -1;
     std::fill(std::begin(_sideDone), std::end(_sideDone), false);
 
-    _mockLink->sendStatusTextMessage(MAV_SEVERITY_INFO, QStringLiteral("[cal] calibration started: 2 %1")
-        .arg(QLatin1String((calType == CalType::Mag) ? "mag" : "accel")));
+    _mockLink->sendStatusTextMessage(MAV_SEVERITY_INFO,
+                                     QStringLiteral("[cal] calibration started: 2 %1").arg(_calTypeName(calType)));
 }
 
 bool MockLinkPX4Calibration::cancel()
@@ -73,6 +130,24 @@ bool MockLinkPX4Calibration::cancel()
     _finishTickCount = -1;
 
     _mockLink->sendStatusTextMessage(MAV_SEVERITY_CRITICAL, QStringLiteral("[cal] calibration cancelled"));
+    return true;
+}
+
+bool MockLinkPX4Calibration::fail()
+{
+    QMutexLocker locker(&_mutex);
+
+    if (_calType == CalType::None) {
+        return false;
+    }
+
+    const QString name = _calTypeName(_calType);
+    _calType = CalType::None;
+    _requestedPose = -1;
+    _activeSide = -1;
+    _finishTickCount = -1;
+
+    _mockLink->sendStatusTextMessage(MAV_SEVERITY_CRITICAL, QStringLiteral("[cal] calibration failed: %1").arg(name));
     return true;
 }
 
@@ -100,22 +175,15 @@ void MockLinkPX4Calibration::run10HzTasks()
         // Finishing phase: simulates the firmware calculating the final calibration
         // values before reporting completion. Gives the UI time to display the last
         // side as completed while the calibration is still active.
+        if (_inlineStalls && (_calType == CalType::Baro || _calType == CalType::Level || _calType == CalType::Gyro)) {
+            return;
+        }
         _finishTickCount++;
         if (_finishTickCount >= kTicksToFinish) {
             const CalType calType = _calType;
             _calType = CalType::None;
             _finishTickCount = -1;
-            if (calType == CalType::Mag) {
-                // Store the calibration result like the firmware does, before reporting
-                // done so the subsequent param refresh by QGC picks it up
-                _mockLink->setInt32ParamValue(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("CAL_MAG0_ID"), kMagDeviceId);
-                // The mag fit calculation reports its own final progress
-                _mockLink->sendStatusTextMessage(MAV_SEVERITY_INFO, QStringLiteral("[cal] progress <100>"));
-            } else {
-                _mockLink->setInt32ParamValue(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("CAL_ACC0_ID"), kAccelDeviceId);
-            }
-            _mockLink->sendStatusTextMessage(MAV_SEVERITY_INFO, QStringLiteral("[cal] calibration done: %1")
-                .arg(QLatin1String((calType == CalType::Mag) ? "mag" : "accel")));
+            _finishCalibration(calType);
         }
         return;
     }
@@ -125,6 +193,59 @@ void MockLinkPX4Calibration::run10HzTasks()
     } else {
         _detectPose();
     }
+}
+
+void MockLinkPX4Calibration::_finishCalibration(CalType calType)
+{
+    if (calType == CalType::Baro && _baroFails) {
+        _mockLink->sendStatusTextMessage(MAV_SEVERITY_CRITICAL,
+                                         QStringLiteral("[cal] calibration failed: GPS required for baro cal"));
+        return;
+    }
+
+    if (calType == CalType::Level || calType == CalType::Gyro) {
+        _mockLink->sendStatusTextMessage(MAV_SEVERITY_INFO, QStringLiteral("[cal] progress <100>"));
+        const bool fails = (calType == CalType::Level) ? _levelFails : _gyroFails;
+        if (fails) {
+            // The firmware reports the reason as a plain message, then the failure
+            const QString reason = (calType == CalType::Level) ? QStringLiteral("motion during calibration")
+                                                               : QStringLiteral("ERROR: Motion during calibration");
+            _mockLink->sendStatusTextMessage(MAV_SEVERITY_CRITICAL, reason);
+            _mockLink->sendStatusTextMessage(MAV_SEVERITY_CRITICAL,
+                                             QStringLiteral("[cal] calibration failed: %1").arg(_calTypeName(calType)));
+            return;
+        }
+    }
+
+    // Store the calibration result like the firmware does, before reporting
+    // done so the subsequent param refresh by QGC picks it up
+    switch (calType) {
+        case CalType::Mag:
+            _mockLink->setInt32ParamValue(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("CAL_MAG0_ID"), kMagDeviceId);
+            // The mag fit calculation reports its own final progress
+            _mockLink->sendStatusTextMessage(MAV_SEVERITY_INFO, QStringLiteral("[cal] progress <100>"));
+            break;
+        case CalType::Accel:
+            _mockLink->setInt32ParamValue(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("CAL_ACC0_ID"), kAccelDeviceId);
+            break;
+        case CalType::Baro:
+            _mockLink->setInt32ParamValue(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("CAL_BARO0_ID"), kBaroDeviceId);
+            break;
+        case CalType::Level:
+            _mockLink->setFloatParamValue(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("SENS_BOARD_X_OFF"),
+                                          kLevelRollOffsetDeg);
+            _mockLink->setFloatParamValue(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("SENS_BOARD_Y_OFF"),
+                                          kLevelPitchOffsetDeg);
+            break;
+        case CalType::Gyro:
+            _mockLink->setInt32ParamValue(MAV_COMP_ID_AUTOPILOT1, QStringLiteral("CAL_GYRO0_ID"), kGyroDeviceId);
+            break;
+        case CalType::None:
+            return;
+    }
+
+    _mockLink->sendStatusTextMessage(MAV_SEVERITY_INFO,
+                                     QStringLiteral("[cal] calibration done: %1").arg(_calTypeName(calType)));
 }
 
 int MockLinkPX4Calibration::_doneCount() const
@@ -174,6 +295,9 @@ void MockLinkPX4Calibration::_sideTick()
     case CalType::Accel:
         _accelSideTick();
         break;
+    case CalType::Baro:
+    case CalType::Level:
+    case CalType::Gyro:
     case CalType::None:
         return;
     }
