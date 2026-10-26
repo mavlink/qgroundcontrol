@@ -62,3 +62,49 @@ QUrl ActuatorComponent::summaryQmlSource(void) const
 {
     return QUrl();
 }
+
+QList<VehicleSummaryItem> ActuatorComponent::summaryItems() const
+{
+    if (!_actuators.isInitialized()) {
+        return {};
+    }
+
+    QList<VehicleSummaryItem> items;
+    Mixer::Mixers* const mixer = _actuators.mixer();
+    const QString geometry = mixer->title();
+    if (!geometry.isEmpty()) {
+        items.append({tr("Geometry"), geometry});
+    }
+    if (_actuators.hasUnsetRequiredFunctions()) {
+        items.append({tr("Required Outputs"), tr("Setup required"), VehicleSummaryItem::Attention});
+    }
+
+    const auto groupTitle = [mixer](int function) {
+        const Mixer::ActuatorTypes& actuatorTypes = mixer->actuatorTypes();
+        for (auto it = actuatorTypes.cbegin(); it != actuatorTypes.cend(); ++it) {
+            if (function < it->functionMin || function > it->functionMax) {
+                continue;
+            }
+            switch (ActuatorGeometry::typeFromStr(it.key())) {
+            case ActuatorGeometry::Type::Motor:
+                return tr("Motors");
+            case ActuatorGeometry::Type::Servo:
+                return tr("Servos");
+            default:
+                break;
+            }
+            break;
+        }
+
+        return tr("Other Outputs");
+    };
+
+    const QMap<int, QStringList> channels = _actuators.channelsByFunction();
+    for (auto it = channels.cbegin(); it != channels.cend(); ++it) {
+        const QString label = mixer->getSpecificLabelForFunction(it.key());
+        items.append({label.isEmpty() ? tr("Function %1").arg(it.key()) : label,
+                      it.value().join(QStringLiteral(", ")), VehicleSummaryItem::Normal, groupTitle(it.key())});
+    }
+
+    return items;
+}

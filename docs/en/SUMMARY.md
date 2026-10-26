@@ -27,7 +27,7 @@
   - [Fixed Wing Landing Pattern](qgc-user-guide/plan_view/pattern_fixed_wing_landing.md)
   - [MAVLink Actions](qgc-user-guide/custom_actions/custom_actions.md)
 - [Vehicle Configuration](qgc-user-guide/setup_view/setup_view.md)
-  - [Summary](qgc-user-guide/setup_view/summary.md)
+  - [Overview](qgc-user-guide/setup_view/summary.md)
   - [PX4](qgc-user-guide/setup_view/px4/index.md)
     - [Actuators / Motors](qgc-user-guide/setup_view/px4/actuators.md)
     - [Airframe](qgc-user-guide/setup_view/airframe_px4.md)

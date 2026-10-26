@@ -38,6 +38,8 @@ target_sources(
         PX4FailsafesComponent.h
         PX4FlightBehavior.cc
         PX4FlightBehavior.h
+        PX4FlightModeConfig.cc
+        PX4FlightModeConfig.h
         PX4FlightModesController.cc
         PX4FlightModesController.h
         PX4RadioComponent.cc
@@ -87,7 +89,6 @@ qt_add_qml_module(
         ActuatorFact.qml
         ActuatorSlider.qml
         AirframeComponent.qml
-        AirframeComponentSummary.qml
         BatteryParams.qml
         BatteryThresholdBar.qml
         CalcAmpsPerVoltDialog.qml
@@ -103,12 +104,9 @@ qt_add_qml_module(
         ESCCalibrationDialog.qml
         FailureInjectionComponent.qml
         FailureInjectionInstances.js
-        FlightModesComponentSummary.qml
         PX4BatteryComponent.qml
-        PX4BatteryComponentSummary.qml
         PX4BatteryRows.js
         PX4CollisionComponent.qml
-        PX4CollisionComponentSummary.qml
         PX4CollisionRows.js
         PX4ConfigRows.js
         PX4EscComponent.qml
@@ -118,9 +116,7 @@ qt_add_qml_module(
         PX4FlightBehaviorCopter.qml
         PX4FlightModeRows.js
         PX4FlightModes.qml
-        PX4RadioComponentSummary.qml
         PX4ReturnLandComponent.qml
-        PX4ReturnLandComponentSummary.qml
         PX4ReturnLandRows.js
         PX4SensorsOrientation.js
         PX4SensorsPose.js
@@ -149,8 +145,6 @@ qt_add_qml_module(
         SensorsCalibrationRow.qml
         SensorsCalibrationStage.qml
         SensorsComponent.qml
-        SensorsComponentSummary.qml
-        SensorsComponentSummaryFixedWing.qml
         SensorsGpsStatus.qml
         SensorsLargeVehicleForm.qml
         SensorsLiveCard.qml

@@ -17,11 +17,17 @@ public:
     virtual QString description(void) const;
     virtual QString iconResource(void) const;
     virtual bool requiresSetup(void) const;
+
+    virtual int setupOrder() const { return 0; }
     virtual bool setupComplete(void) const;
     virtual QUrl setupSource(void) const;
-    virtual QUrl summaryQmlSource(void) const;
+
+    virtual QUrl summaryQmlSource(void) const { return QUrl(); }
+
+    virtual QList<VehicleSummaryItem> summaryItems() const;
+    virtual QStringList summaryChangedTriggerList() const;
+    virtual void setupTriggerSignals();
 
 private:
-    const QString   _name;
-    QVariantList     _summaryItems;
+    const QString _name;
 };

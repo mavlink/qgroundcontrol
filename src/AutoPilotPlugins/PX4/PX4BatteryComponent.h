@@ -20,14 +20,27 @@ public:
 
     bool requiresSetup() const final { return true; }
 
+    int setupOrder() const final { return 3; }
+
     bool setupComplete() const final;
 
     QUrl setupSource() const final;
 
-    QUrl summaryQmlSource() const final;
+    QUrl summaryQmlSource() const final { return QUrl(); }
+
+    QList<VehicleSummaryItem> summaryItems() const final;
+
+    QStringList summaryChangedTriggerList() const final;
+
+    void setupTriggerSignals() final;
 
     bool allowSetupWhileArmed() const final { return true; }
 
 private:
+    static QString _batteryParam(int batteryIndex, const char* suffix);
+
+    /// DroneCAN battery data runs through the battery estimate, even for a battery whose source is disabled
+    bool _canFiltered() const;
+
     const QString _name;
 };

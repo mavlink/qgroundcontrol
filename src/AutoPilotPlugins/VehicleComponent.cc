@@ -24,6 +24,8 @@ VehicleComponent::VehicleComponent(Vehicle *vehicle, AutoPilotPlugin *autopilot,
     if (!vehicle || !autopilot) {
         qCWarning(VehicleComponentLog) << "Internal error";
     }
+
+    (void) connect(this, &VehicleComponent::setupCompleteChanged, this, &VehicleComponent::summaryItemsChanged);
 }
 
 VehicleComponent::~VehicleComponent()
@@ -264,6 +266,14 @@ void VehicleComponent::setupTriggerSignals()
         }
     }
 
+    for (const QString& paramName : summaryChangedTriggerList()) {
+        if (_vehicle->parameterManager()->parameterExists(ParameterManager::defaultComponentId, paramName)) {
+            Fact* const fact =
+                _vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, paramName);
+            (void) connect(fact, &Fact::valueChanged, this, &VehicleComponent::summaryItemsChanged);
+        }
+    }
+
     // Watch enableParam facts so the sections list updates when items are enabled/disabled
     _ensureSectionsCached();
     for (const auto &filter : _repeatFilters) {
@@ -274,4 +284,20 @@ void VehicleComponent::setupTriggerSignals()
             }
         }
     }
+}
+
+Fact* VehicleComponent::_parameterFact(const QString& name) const
+{
+    ParameterManager* const parameterManager = _vehicle->parameterManager();
+    if (!parameterManager->parameterExists(ParameterManager::defaultComponentId, name)) {
+        return nullptr;
+    }
+
+    return parameterManager->getParameter(ParameterManager::defaultComponentId, name);
+}
+
+QString VehicleComponent::_valueWithUnits(const Fact* fact)
+{
+    const QString units = fact->cookedUnits();
+    return units.isEmpty() ? fact->cookedValueString() : fact->cookedValueString() + QLatin1Char(' ') + units;
 }

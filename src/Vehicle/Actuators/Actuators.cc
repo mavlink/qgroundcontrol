@@ -110,6 +110,22 @@ bool Actuators::isMultirotor() const
     return _mixer.configuredType() == "multirotor";
 }
 
+QMap<int, QStringList> Actuators::channelsByFunction() const
+{
+    QMap<int, QStringList> channels;
+    for (int groupIdx = 0; groupIdx < _actuatorOutputs->count(); groupIdx++) {
+        const ActuatorOutput* const group = qobject_cast<ActuatorOutput*>(_actuatorOutputs->get(groupIdx));
+        group->forEachChannelFunction([&channels](ActuatorOutputChannel* channel, Fact* fact) {
+            const int function = fact->rawValue().toInt();
+            if (function != 0) {
+                channels[function].append(channel->label());
+            }
+        });
+    }
+
+    return channels;
+}
+
 void Actuators::load(const QString &json_file, const QJsonDocument &metadata)
 {
     _initError.clear();

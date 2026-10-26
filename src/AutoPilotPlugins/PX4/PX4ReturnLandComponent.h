@@ -24,7 +24,14 @@ public:
 
     QUrl setupSource() const final;
 
-    QUrl summaryQmlSource() const final;
+    QUrl summaryQmlSource() const final { return QUrl(); }
+
+    QList<VehicleSummaryItem> summaryItems() const final;
+
+    QStringList summaryChangedTriggerList() const final
+    {
+        return {QStringLiteral("RTL_RETURN_ALT"), QStringLiteral("RTL_DESCEND_ALT"), QStringLiteral("RTL_LAND_DELAY")};
+    }
 
     bool allowSetupWhileArmed() const final { return true; }
 
