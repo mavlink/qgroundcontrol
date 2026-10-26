@@ -1,4 +1,6 @@
 #include "SensorsComponent.h"
+
+#include "Fact.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
 
@@ -85,17 +87,41 @@ QUrl SensorsComponent::setupSource(void) const
     return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/SensorsComponent.qml");
 }
 
-QUrl SensorsComponent::summaryQmlSource(void) const
+QStringList SensorsComponent::summaryChangedTriggerList(void) const
 {
-    QString summaryQml;
+    return {QStringLiteral("CAL_MAG1_ID"), QStringLiteral("CAL_MAG2_ID")};
+}
 
-    if (_airspeedVehicle()) {
-        summaryQml = "qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml";
-    } else {
-        summaryQml = "qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/SensorsComponentSummary.qml";
+QList<VehicleSummaryItem> SensorsComponent::summaryItems(void) const
+{
+    QList<VehicleSummaryItem> items;
+    const auto addCalibration = [this, &items](const QString& param, const QString& caption, bool optional) {
+        const Fact* const fact = _parameterFact(param);
+        if (!fact || (optional && fact->rawValue().toInt() == 0)) {
+            return;
+        }
+        if (fact->rawValue().toInt() == 0) {
+            items.append({caption, tr("Setup required"), VehicleSummaryItem::Attention});
+        } else {
+            items.append({caption, tr("Ready"), VehicleSummaryItem::Normal});
+        }
+    };
+
+    addCalibration(QStringLiteral("CAL_MAG0_ID"), tr("Compass 0"), false);
+    addCalibration(QStringLiteral("CAL_MAG1_ID"), tr("Compass 1"), true);
+    addCalibration(QStringLiteral("CAL_MAG2_ID"), tr("Compass 2"), true);
+    addCalibration(QStringLiteral("CAL_GYRO0_ID"), tr("Gyro"), false);
+    addCalibration(QStringLiteral("CAL_ACC0_ID"), tr("Accelerometer"), false);
+
+    if (_airspeedCalSupported()) {
+        if (_airspeedCalRequired()) {
+            items.append({tr("Airspeed"), tr("Setup required"), VehicleSummaryItem::Attention});
+        } else {
+            items.append({tr("Airspeed"), tr("Ready"), VehicleSummaryItem::Normal});
+        }
     }
 
-    return QUrl::fromUserInput(summaryQml);
+    return items;
 }
 
 bool SensorsComponent::_airspeedVehicle(void) const

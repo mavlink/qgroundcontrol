@@ -27,6 +27,9 @@ public:
     /// alphabetically by group name.
     static QList<AirframeType_t*> sortedTypes();
 
+    /// Type and vehicle name of the airframe with the autostart id. Returns false when there is no such airframe.
+    static bool find(int autostartId, QString& typeName, QString& vehicleName);
+
     static void clear();
     static void insert(QString& group, QString& image, QString& name, int id, const QString& vehicleClass);
 

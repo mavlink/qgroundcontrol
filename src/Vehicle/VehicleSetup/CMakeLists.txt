@@ -46,6 +46,11 @@ qt_add_qml_module(VehicleSetupModule
         SetupParameterEditor.qml
         VehicleConfigView.qml
         VehicleSummary.qml
+        VehicleSummaryCard.qml
+        VehicleSummaryHeader.qml
+        VehicleSummaryLabel.qml
+        VehicleSummaryMasonry.qml
+        VehicleSummaryTile.qml
     NO_PLUGIN
 )
 

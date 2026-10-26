@@ -11,6 +11,7 @@ target_sources(${CMAKE_PROJECT_NAME}
         Generic/GenericAutoPilotPlugin.h
         VehicleComponent.cc
         VehicleComponent.h
+        VehicleSummaryItem.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME}

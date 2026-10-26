@@ -6,7 +6,9 @@
 #include "MotorAssignment.h"
 
 #include <QtCore/QObject>
+#include <QtCore/QMap>
 #include <QtCore/QString>
+#include <QtCore/QStringList>
 #include <QtCore/QJsonDocument>
 
 class Vehicle;
@@ -57,6 +59,9 @@ public:
     Mixer::Mixers* mixer() { return &_mixer; }
 
     bool hasUnsetRequiredFunctions() const { return _hasUnsetRequiredFunctions; }
+
+    /// Labels of the output channels each assigned output function (e.g. Motor 1) is set on, by function
+    QMap<int, QStringList> channelsByFunction() const;
 
     bool showUi() const;
     bool isInitialized() const { return _init; }

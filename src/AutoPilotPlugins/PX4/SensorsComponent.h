@@ -23,9 +23,15 @@ public:
     QStringList searchKeywords() const override;
     virtual QString iconResource(void) const override;
     virtual bool requiresSetup(void) const override;
+
+    virtual int setupOrder() const override { return 1; }
     virtual bool setupComplete(void) const override;
     virtual QUrl setupSource(void) const override;
-    virtual QUrl summaryQmlSource(void) const override;
+
+    virtual QUrl summaryQmlSource(void) const override { return QUrl(); }
+
+    QList<VehicleSummaryItem> summaryItems() const override;
+    QStringList summaryChangedTriggerList() const override;
 
 private:
     bool _airspeedCalSupported  (void) const;
@@ -35,8 +41,7 @@ private:
     bool _airspeedParamExists(const char* name) const;
     Fact* _airspeedParam(const char* name) const;
 
-    const QString   _name;
-    QVariantList    _summaryItems;
+    const QString _name;
     QStringList     _deviceIds;
 
     static constexpr const char* _airspeedCalParam = "SENS_DPRES_OFF";

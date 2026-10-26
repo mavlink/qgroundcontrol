@@ -19,9 +19,12 @@ public:
     QString description(void) const final;
     QString iconResource(void) const final;
     bool requiresSetup(void) const final;
+
+    int setupOrder(void) const final { return 4; }
     bool setupComplete(void) const final;
     virtual QUrl setupSource(void) const;
     QUrl summaryQmlSource(void) const final;
+    QList<VehicleSummaryItem> summaryItems() const final;
 
 private:
     const QString   _name;

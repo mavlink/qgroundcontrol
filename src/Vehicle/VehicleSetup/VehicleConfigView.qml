@@ -276,6 +276,15 @@ Rectangle {
         }
     }
 
+    Connections {
+        target:                 panelLoader.item
+        ignoreUnknownSignals:   true
+
+        function onComponentRequested(vehicleComponent) {
+            showVehicleComponentPanel(vehicleComponent)
+        }
+    }
+
     Component {
         id: noComponentsVehicleSummaryComponent
         Rectangle {
@@ -411,7 +420,7 @@ Rectangle {
                     objectName:         "vehicleConfig_summary"
                     icon.source:        "/qmlimages/VehicleSummaryIcon.png"
                     checked:            vehicleConfigView._selectedSpecial === "summary"
-                    text:               qsTr("Summary")
+                    text:               qsTr("Overview")
                     Layout.fillWidth:   true
                     visible:            vehicleConfigView._searchQuery.trim() === ""
 

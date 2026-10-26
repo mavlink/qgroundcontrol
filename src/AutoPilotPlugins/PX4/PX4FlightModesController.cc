@@ -1,6 +1,9 @@
 #include "PX4FlightModesController.h"
 
+#include <QtCore/QMap>
+
 #include "PX4FirmwarePlugin.h"
+#include "PX4FlightModeConfig.h"
 #include "StandardModes.h"
 #include "Vehicle.h"
 
@@ -70,13 +73,63 @@ void PX4FlightModesController::_updateExternalModeNames()
         return;
     }
 
-    const FlightModeList& modeList = _vehicle->standardModes()->modeList();
-    QStringList names;
-    for (int externalIndex = 1; externalIndex <= PX4FirmwarePlugin::kExternalFlightModeCount; externalIndex++) {
-        names.append(PX4FirmwarePlugin::externalFlightModeName(modeList, externalIndex));
-    }
+    const QStringList names = PX4FirmwarePlugin::externalFlightModeNames(_vehicle->standardModes()->modeList());
     if (names != _externalModeNames) {
         _externalModeNames = names;
         emit externalModeNamesChanged();
     }
+}
+
+QString PX4FlightModesController::selectionMethod(int modeChannel, int buttonMask) const
+{
+    switch (PX4FlightModeConfig::selectionMethod(modeChannel, buttonMask)) {
+    case PX4FlightModeConfig::SelectionMethod::Switch:
+        return QStringLiteral("switch");
+    case PX4FlightModeConfig::SelectionMethod::Buttons:
+        return QStringLiteral("buttons");
+    case PX4FlightModeConfig::SelectionMethod::None:
+        break;
+    }
+
+    return QStringLiteral("none");
+}
+
+QVariantList PX4FlightModesController::buttonChannels(int buttonMask) const
+{
+    return _toVariantList(PX4FlightModeConfig::buttonChannels(buttonMask));
+}
+
+QVariantList PX4FlightModesController::ignoredButtonChannels(int buttonMask) const
+{
+    return _toVariantList(PX4FlightModeConfig::ignoredButtonChannels(buttonMask));
+}
+
+QVariantList PX4FlightModesController::modeChoices(const QString& paramName, const QStringList& enumStrings,
+                                                   const QVariantList& enumValues, const QStringList& externalNames,
+                                                   int currentValue) const
+{
+    QVariantList choices;
+    for (const PX4FlightModeConfig::Choice& choice :
+         PX4FlightModeConfig::modeChoices(paramName, enumStrings, enumValues, externalNames, currentValue)) {
+        choices.append(QVariantMap{{QStringLiteral("label"), choice.label}, {QStringLiteral("value"), choice.value}});
+    }
+
+    return choices;
+}
+
+QString PX4FlightModesController::modeName(const QString& paramName, const QStringList& enumStrings,
+                                           const QVariantList& enumValues, const QStringList& externalNames,
+                                           int value) const
+{
+    return PX4FlightModeConfig::modeName(paramName, enumStrings, enumValues, externalNames, value);
+}
+
+QVariantList PX4FlightModesController::_toVariantList(const QList<int>& values)
+{
+    QVariantList list;
+    for (const int value : values) {
+        list.append(value);
+    }
+
+    return list;
 }

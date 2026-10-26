@@ -1,5 +1,8 @@
 #pragma once
 
+#include <limits>
+
+#include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QStringList>
 #include <QtCore/QUrl>
@@ -7,7 +10,9 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "AutoPilotPlugin.h"
+#include "VehicleSummaryItem.h"
 
+class Fact;
 class Vehicle;
 class QQuickItem;
 class QQmlContext;
@@ -23,11 +28,13 @@ class VehicleComponent : public QObject
 
     Q_PROPERTY(QString  name                                                READ name                   CONSTANT)
     Q_PROPERTY(QString  description                                         READ description            CONSTANT)
-    Q_PROPERTY(bool     requiresSetup                                       READ requiresSetup          CONSTANT)
+    Q_PROPERTY(bool     requiresSetup                                       READ requiresSetup          NOTIFY requiresSetupChanged)
+    Q_PROPERTY(int      setupOrder                                          READ setupOrder             CONSTANT)
     Q_PROPERTY(bool     setupComplete                                       READ setupComplete          STORED false NOTIFY setupCompleteChanged)
     Q_PROPERTY(QString  iconResource                                        READ iconResource           CONSTANT)
     Q_PROPERTY(QUrl     setupSource                                         READ setupSource            NOTIFY setupSourceChanged)
     Q_PROPERTY(QUrl     summaryQmlSource                                    READ summaryQmlSource       CONSTANT)
+    Q_PROPERTY(QList<VehicleSummaryItem> summaryItems                       READ summaryItems           STORED false NOTIFY summaryItemsChanged)
     Q_PROPERTY(bool     allowSetupWhileArmed                                READ allowSetupWhileArmed   CONSTANT)
     Q_PROPERTY(bool     allowSetupWhileFlying                               READ allowSetupWhileFlying  CONSTANT)
     Q_PROPERTY(AutoPilotPlugin::KnownVehicleComponent KnownVehicleComponent READ KnownVehicleComponent  CONSTANT)
@@ -45,9 +52,19 @@ public:
     virtual QString description() const { return QString(); }
     virtual QString iconResource() const = 0;
     virtual bool requiresSetup() const = 0;
+
+    /// Where the component comes in the recommended order of setting up a vehicle, lowest first. Components that
+    /// do not set one come after those that do.
+    virtual int setupOrder() const { return std::numeric_limits<int>::max(); }
     virtual bool setupComplete() const = 0;
     virtual QUrl setupSource() const = 0;
     virtual QUrl summaryQmlSource() const = 0;
+
+    /// Values for this component's card on the Summary page. A component with none falls back to summaryQmlSource().
+    virtual QList<VehicleSummaryItem> summaryItems() const { return {}; }
+
+    /// Parameters whose change emits summaryItemsChanged, besides those that change setupComplete
+    virtual QStringList summaryChangedTriggerList() const { return {}; }
 
     /// Resource path to a VehicleConfig.json page definition, or empty if none.
     virtual QString vehicleConfigJson() const { return QString(); }
@@ -92,7 +109,9 @@ public:
     AutoPilotPlugin::KnownVehicleComponent KnownVehicleComponent() const { return _KnownVehicleComponent; }
 
 signals:
+    void requiresSetupChanged();
     void setupCompleteChanged();
+    void summaryItemsChanged();
     void setupSourceChanged();
     void sectionIdsChanged();
 
@@ -100,6 +119,12 @@ protected slots:
     void _triggerUpdated(QVariant /*value*/) { emit setupCompleteChanged(); }
 
 protected:
+    /// Fact of a parameter of the default component, nullptr when the vehicle does not have it
+    Fact* _parameterFact(const QString& name) const;
+
+    /// The fact's value followed by its units, when it has any
+    static QString _valueWithUnits(const Fact* fact);
+
     Vehicle *_vehicle = nullptr;
     AutoPilotPlugin *_autopilot = nullptr;
     AutoPilotPlugin::KnownVehicleComponent _KnownVehicleComponent;

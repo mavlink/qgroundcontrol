@@ -212,6 +212,8 @@ public:
 
     void forEachOutputFunction(std::function<void(ActuatorOutputSubgroup*, ChannelConfigInstance*, Fact*)> callback) const;
 
+    void forEachChannelFunction(std::function<void(ActuatorOutputChannel*, Fact*)> callback) const;
+
 signals:
     void subgroupsChanged();
     void groupsVisibleChanged();
