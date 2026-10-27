@@ -19,14 +19,36 @@ public:
     PlanViewUITest() = default;
 
 private slots:
+    void _testPlanViewStates_data();
     void _testPlanViewStates();
+    void _testSaveAsMenu_data();
     void _testSaveAsMenu();
+    void _testRoverWaypointOnEmptyPlan_data();
     void _testRoverWaypointOnEmptyPlan();
+    void _testTakeoffNotRequiredWaypointOnEmptyPlan_data();
     void _testTakeoffNotRequiredWaypointOnEmptyPlan();
     void _testVTOLTakeoffChoices_data();
     void _testVTOLTakeoffChoices();
 
 private:
+    /// Adds the "tabbedPanel" column with a tree and a tabbed row; these tests run against both Plan panels.
+    static void _addPanelData();
+
+    /// Fetches the "tabbedPanel" column and selects that panel; call before startUI().
+    void _selectPanelFromTestData();
+
+    enum class PanelTab
+    {
+        Plan,
+        Mission
+    };
+
+    /// Opens a tabbed-panel tab. The tree panel has no tabs, so this is a no-op there.
+    /// A map click sets home only on the Plan tab, and the tool strip is only shown on the Mission tab.
+    void _showPanelTab(PanelTab tab);
+
+    bool _tabbedPanel = false;
+
     /// Complete expected state of all Plan view UI under test
     struct PlanUIState {
         bool templatesVisible;
@@ -48,6 +70,8 @@ private:
     /// Verify every Plan view UI element against the full expected state.
     /// Also checks the invariants that hold while offline: Upload disabled
     /// and not highlighted, Open/Clear always enabled.
+    /// On the tabbed panel it opens the Plan tab for the templates checks, then the Mission tab for the tool strip,
+    /// and leaves the Mission tab active; callers that click the map to set home must reopen the Plan tab first.
     void _verifyFullState(const PlanUIState &state, const QString &context);
 
     /// Navigate to the Plan view and position the map at a known center/zoom
