@@ -17,20 +17,24 @@ class FTPManager : public QObject
 public:
     FTPManager(Vehicle* vehicle);
 
-	/// Downloads the specified file.
-    ///     @param fromCompId Component id of the component to download from. If fromCompId is MAV_COMP_ID_ALL, then MAV_COMP_ID_AUTOPILOT1 is used.
-    ///     @param fromURI    File to download from component, fully qualified path. May be in the format "mftp://[;comp=<id>]..." where the component id
-    ///                       is specified. If component id is not specified, then the id set via fromCompId is used.
-    ///     @param toDir      Local directory to download file to
+    /// Downloads the specified file.
+    ///     @param fromCompId Component id of the component to download from. If fromCompId is MAV_COMP_ID_ALL,
+    ///                       then MAV_COMP_ID_AUTOPILOT1 is used.
+    ///     @param fromURI    File to download from component, fully qualified path. May be in the format
+    ///                       "mftp://[;comp=<id>]..." where the component id is specified. If component id is not
+    ///                       specified, then the id set via fromCompId is used.
+    ///     @param toDir      Local directory to download file to. Must be non-empty and already exist;
+    ///                       otherwise download() returns false without starting.
     ///     @param filename   (optional)
     ///     @param checksize  (optional, default true) If true compare the filesize indicated in the open
     ///                       response with the transmitted filesize. If false the transmission is tftp style
     ///                       and the indicated filesize from MAVFTP fileopen response is ignored.
     ///                       This is used for the APM parameter download where the filesize is wrong due to
     ///                       a dynamic file creation on the vehicle.
-    /// @return true: download has started, false: error, no download
+    /// @return true: download has started, false: error, no download and no downloadComplete signal
     /// Signals downloadComplete, commandProgress
-    bool download(uint8_t fromCompId, const QString& fromURI, const QString& toDir, const QString& fileName="", bool checksize = true);
+    bool download(uint8_t fromCompId, const QString& fromURI, const QString& toDir, const QString& fileName = "",
+                  bool checksize = true);
 
     /// Uploads a local file to the specified URI on the vehicle.
     ///     @param toCompId Component id of the component to upload to. If toCompId is MAV_COMP_ID_ALL, then MAV_COMP_ID_AUTOPILOT1 is used.
