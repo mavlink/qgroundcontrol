@@ -118,14 +118,20 @@ Item {
             visible:            text !== ""
         }
 
-        QGCColoredImage {
-            id:                 closeButton
-            Layout.alignment:   Qt.AlignTop
-            width:              height
-            height:             ScreenTools.defaultFontPixelHeight * 0.5
-            source:             "/res/XDelete.svg"
-            fillMode:           Image.PreserveAspectFit
-            color:              qgcPal.textPrimary
+        Item {
+            id:                     closeButton
+            Layout.alignment:       Qt.AlignTop
+            Layout.preferredWidth:  ScreenTools.minTouchPixels
+            Layout.preferredHeight: ScreenTools.minTouchPixels
+
+            QGCColoredImage {
+                anchors.centerIn:   parent
+                width:              height
+                height:             ScreenTools.defaultFontPixelHeight * 0.5
+                source:             "/res/XDelete.svg"
+                fillMode:           Image.PreserveAspectFit
+                color:              qgcPal.textPrimary
+            }
 
             QGCMouseArea {
                 fillItem:   parent
