@@ -51,6 +51,34 @@ void FTPManagerTest::_testDownloadExplicitFileNameIsBasename()
     _disconnectMockLink();
 }
 
+void FTPManagerTest::_testDownloadRejectsMissingDestination()
+{
+    _connectMockLinkNoInitialConnectSequence();
+    FTPManager* ftpManager = _vehicle->ftpManager();
+    QSignalSpy spyDownloadComplete(ftpManager, &FTPManager::downloadComplete);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString missingDir = QDir(tempDir.path()).filePath(QStringLiteral("does-not-exist"));
+
+    const QList<QPair<QString, QString>> refusedDestinations = {
+        {QString(), QStringLiteral("Destination directory is not set")},
+        {missingDir, QStringLiteral("Destination directory does not exist")},
+    };
+    for (const auto& [toDir, expectedWarning] : refusedDestinations) {
+        expectLogMessage("Vehicle.FTPManager", QtWarningMsg, QRegularExpression(expectedWarning));
+        QVERIFY(!ftpManager->download(MAV_COMP_ID_AUTOPILOT1, _rgTestCases[0].file, toDir));
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(spyDownloadComplete.count(), 0);
+
+    // A refused download must not leave FTPManager busy.
+    QString downloadedPath;
+    QCOMPARE(_downloadSizeFile(3 * 1024, &downloadedPath), QString());
+    _verifyFileSizeAndDelete(downloadedPath, 3 * 1024);
+    _disconnectMockLink();
+}
+
 void FTPManagerTest::cleanup()
 {
     MAVLinkSigningKeys::instance()->removeAllKeys();
