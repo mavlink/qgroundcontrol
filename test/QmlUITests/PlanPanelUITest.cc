@@ -3,7 +3,10 @@
 #include <QtCore/QList>
 #include <QtCore/QMetaObject>
 #include <QtCore/QObject>
+#include <QtCore/QPointer>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QSize>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QVariant>
 #include <QtCore/QVariantList>
 #include <QtCore/QVariantMap>
@@ -12,14 +15,19 @@
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QTest>
 
+#include "AppSettings.h"
 #include "Fact.h"
 #include "GeoFenceController.h"
 #include "MissionController.h"
+#include "MockLink.h"
 #include "PlanMasterController.h"
 #include "PlanViewSettings.h"
+#include "QGCFileDialogController.h"
+#include "QGCMAVLink.h"
 #include "QmlObjectListModel.h"
 #include "RallyPointController.h"
 #include "SettingsManager.h"
+#include "Vehicle.h"
 #include "VisualMissionItem.h"
 
 UT_REGISTER_TEST(PlanPanelUITest, TestLabel::Integration, TestLabel::MissionManager)
@@ -113,6 +121,11 @@ void PlanPanelUITest::_startPlanPanel()
     if (QTest::currentTestFailed())
         return;
 
+    _openPlanView();
+}
+
+void PlanPanelUITest::_openPlanView()
+{
     QVERIFY2(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewPlan")), "Failed to navigate to Plan view");
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("mainView_plan"), 2000), "Plan view did not appear");
     QTest::qWait(_viewDelay);
@@ -729,7 +742,148 @@ void PlanPanelUITest::_testDividerResizesListAndInspector()
                  QStringLiteral("Double click left the list at %1, expected %2").arg(listHeight()).arg(initialHeight)));
 }
 
-void PlanPanelUITest::_testItemMenuOpensFromInspector()
+void PlanPanelUITest::_testItemMenuActsOnInspectedItem()
+{
+    _startPlanPanel();
+    if (QTest::currentTestFailed())
+        return;
+
+    _buildMission(2);
+    if (QTest::currentTestFailed())
+        return;
+
+    MissionController* const controller = _missionController();
+    QVERIFY(controller);
+    VisualMissionItem* const item = controller->currentPlanViewItem();
+    QVERIFY(item);
+    const int itemIndex = controller->visualItems()->indexOf(item);
+    QVERIFY(itemIndex > 0);
+    const QmlObjectListModel* const visualItems = controller->visualItems();
+    const QGeoCoordinate previousCoordinate = visualItems->value<VisualMissionItem*>(itemIndex - 1)->coordinate();
+    QVERIFY2(item->coordinate().distanceTo(previousCoordinate) > 1.0,
+             "The inspected item must start away from the previous item");
+
+    QVERIFY2(clickButton(QLatin1String(kInspectorMenu)), "Failed to click the inspector menu button");
+    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("missionItemMenu_editPosition"), 2000),
+             "Item menu did not open");
+    verifyEnabled(QStringLiteral("missionItemMenu_editPosition"), true, QStringLiteral("edit position"));
+    // Offline there is no vehicle position to move to
+    verifyEnabled(QStringLiteral("missionItemMenu_moveToVehicle"), false, QStringLiteral("move to vehicle"));
+    verifyEnabled(QStringLiteral("missionItemMenu_moveToPrevious"), true, QStringLiteral("move to previous"));
+    if (QTest::currentTestFailed())
+        return;
+
+    QVERIFY2(clickButton(QStringLiteral("missionItemMenu_moveToPrevious")), "Failed to click Move to previous");
+    QVERIFY2(waitForCondition([&] { return item->coordinate().distanceTo(previousCoordinate) < 1.0; }, 2000,
+                              QStringLiteral("item moved")),
+             "Move to previous did not move the inspected item");
+}
+
+void PlanPanelUITest::_testVehicleClassComboChangesToolStrip_data()
+{
+    QTest::addColumn<int>("startClass");
+    QTest::addColumn<int>("chosenClass");
+    QTest::addColumn<bool>("takeoffVisible");
+
+    QTest::newRow("multi-rotor to rover")
+        << int(QGCMAVLink::VehicleClassMultiRotor) << int(QGCMAVLink::VehicleClassRoverBoat) << false;
+    QTest::newRow("rover to multi-rotor")
+        << int(QGCMAVLink::VehicleClassRoverBoat) << int(QGCMAVLink::VehicleClassMultiRotor) << true;
+}
+
+void PlanPanelUITest::_testVehicleClassComboChangesToolStrip()
+{
+    QFETCH(int, startClass);
+    QFETCH(int, chosenClass);
+    QFETCH(bool, takeoffVisible);
+
+    AppSettings* const appSettings = SettingsManager::instance()->appSettings();
+    Fact* const vehicleClass = appSettings->offlineEditingVehicleClass();
+    Fact* const firmwareClass = appSettings->offlineEditingFirmwareClass();
+    const QVariant savedVehicleClass = vehicleClass->rawValue();
+    const QVariant savedFirmwareClass = firmwareClass->rawValue();
+    const auto restoreGuard = qScopeGuard([=] {
+        vehicleClass->setRawValue(savedVehicleClass);
+        firmwareClass->setRawValue(savedFirmwareClass);
+    });
+    firmwareClass->setRawValue(QGCMAVLink::FirmwareClassPX4);
+    vehicleClass->setRawValue(startClass);
+
+    _startPlanPanel();
+    if (QTest::currentTestFailed())
+        return;
+
+    QQuickItem* const combo = findVisibleItem(_rootItem, QStringLiteral("planPanel_vehicleTypeCombo"), 2000);
+    QVERIFY2(combo, "Vehicle type combo not shown for an empty offline plan");
+    int chosenIndex = -1;
+    const QVariantList enumValues = vehicleClass->enumValues();
+    for (int i = 0; i < enumValues.size(); i++) {
+        if (enumValues.at(i).toInt() == chosenClass) {
+            chosenIndex = i;
+        }
+    }
+    QVERIFY2(chosenIndex >= 0, "Chosen vehicle class is not offered by the combo");
+    QVERIFY(QMetaObject::invokeMethod(combo, "activated", Q_ARG(int, chosenIndex)));
+    QVERIFY2(waitForCondition([&] { return vehicleClass->rawValue().toInt() == chosenClass; }, 2000,
+                              QStringLiteral("vehicle class")),
+             "Choosing a vehicle type did not change the offline vehicle class");
+
+    _setHomeAndOpenMission();
+    if (QTest::currentTestFailed())
+        return;
+    verifyVisibility(QLatin1String(kWaypointButton), true, QStringLiteral("tool strip after changing vehicle"));
+    verifyVisibility(QLatin1String(kTakeoffButton), takeoffVisible, QStringLiteral("takeoff after changing vehicle"));
+}
+
+void PlanPanelUITest::_testComplexItemEditorFitsInspector()
+{
+    _startPlanPanel();
+    if (QTest::currentTestFailed())
+        return;
+
+    _clickMap(0.4, 0.5);
+    if (QTest::currentTestFailed())
+        return;
+    MissionController* const controller = _missionController();
+    QVERIFY(controller);
+    QVERIFY2(waitForCondition([&] { return controller->homePositionSet(); }, 2000, QStringLiteral("home set")),
+             "Home was not set");
+
+    // The Survey template inserts settings, takeoff, the survey and land
+    QVERIFY2(clickButton(QStringLiteral("planCreator_Survey")), "Failed to click the Survey template");
+    QVERIFY2(waitForCondition([&] { return controller->visualItems()->count() == 4; }, 3000,
+                              QStringLiteral("survey template")),
+             "Survey template did not create the plan");
+    QVERIFY2(waitForCondition([&] { return _currentTab() == QStringLiteral("mission"); }, 2000,
+                              QStringLiteral("mission tab")),
+             "Survey template did not open the Mission tab");
+    VisualMissionItem* const survey = controller->visualItems()->value<VisualMissionItem*>(2);
+    QVERIFY(survey);
+    QVERIFY(survey->isSurveyItem());
+    const int surveySeq = survey->sequenceNumber();
+    QVERIFY2(clickButton(rowObjectName(surveySeq)), "Failed to click the survey row");
+    QVERIFY2(waitForCondition([&] { return controller->currentPlanViewItem() == survey; }, 2000,
+                              QStringLiteral("survey selected")),
+             "Clicking the survey row did not select it");
+
+    verifyText(QString::fromLatin1(kInspectorTitle), survey->commandName(), QStringLiteral("survey inspector title"));
+    QQuickItem* const editorLoader = findVisibleItem(_rootItem, QStringLiteral("planPanel_inspectorEditor"), 2000);
+    QQuickItem* const flickable = findVisibleItem(_rootItem, QStringLiteral("planPanel_inspectorFlickable"), 2000);
+    QVERIFY(editorLoader);
+    QVERIFY(flickable);
+    QVERIFY2(waitForCondition([&] { return editorLoader->property("item").value<QQuickItem*>() != nullptr; }, 2000,
+                              QStringLiteral("survey editor loaded")),
+             "Survey editor did not load in the inspector");
+    QQuickItem* const editor = editorLoader->property("item").value<QQuickItem*>();
+    QVERIFY2(waitForCondition([&] { return editor->width() > 0 && editor->width() <= flickable->width(); }, 2000,
+                              QStringLiteral("survey editor fits inspector")),
+             qPrintable(QStringLiteral("Survey editor is %1 wide in a %2 wide inspector")
+                            .arg(editor->width())
+                            .arg(flickable->width())));
+    QVERIFY2(flickable->property("contentHeight").toReal() > 0, "Survey editor has no content height");
+}
+
+void PlanPanelUITest::_testOpenedPlanShowsMissionTab()
 {
     _startPlanPanel();
     if (QTest::currentTestFailed())
@@ -738,13 +892,88 @@ void PlanPanelUITest::_testItemMenuOpensFromInspector()
     _buildMission(1);
     if (QTest::currentTestFailed())
         return;
+    PlanMasterController* const masterController = _planMasterController();
+    QVERIFY(masterController);
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString planFile = tempDir.filePath(QStringLiteral("PlanPanelUITest.plan"));
+    QVERIFY(masterController->saveToFile(planFile));
 
-    QVERIFY2(clickButton(QLatin1String(kInspectorMenu)), "Failed to click the inspector menu button");
-    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("missionItemMenu_editPosition"), 2000),
-             "Item menu did not open");
-    verifyEnabled(QStringLiteral("missionItemMenu_editPosition"), true, QStringLiteral("edit position"));
-    // Offline there is no vehicle position to move to
-    verifyEnabled(QStringLiteral("missionItemMenu_moveToVehicle"), false, QStringLiteral("move to vehicle"));
+    masterController->removeAll();
+    QVERIFY2(
+        waitForCondition([&] { return _currentTab() == QStringLiteral("plan"); }, 2000, QStringLiteral("cleared plan")),
+        "Clearing the plan did not return to the Plan tab");
+    MissionController* const controller = _missionController();
+    QVERIFY(controller);
+    QCOMPARE(controller->visualItems()->count(), 1);
+
+    QGCFileDialogController::setTestNextFileForAccept(planFile);
+    QVERIFY2(clickButton(QStringLiteral("planToolbar_openButton")), "Failed to click Open");
+    QVERIFY2(waitForCondition([] { return !QGCFileDialogController::testHookArmed(); }, 5000,
+                              QStringLiteral("file dialog shim consumed")),
+             "Open: file dialog shim was not consumed");
+    QVERIFY2(
+        waitForCondition([&] { return controller->visualItems()->count() == 3; }, 3000, QStringLiteral("plan loaded")),
+        "Open did not load the saved plan");
+    QVERIFY2(waitForCondition([&] { return _currentTab() == QStringLiteral("mission"); }, 2000,
+                              QStringLiteral("mission tab")),
+             "Opening a plan with items did not show the Mission tab");
+    const int lastSeq =
+        controller->visualItems()->value<VisualMissionItem*>(controller->visualItems()->count() - 1)->sequenceNumber();
+    QVERIFY2(findVisibleItem(_rootItem, rowObjectName(lastSeq), 2000), "Loaded plan has no row for its last item");
+}
+
+void PlanPanelUITest::_testConnectedVehicleFixesVehicleChoiceAndEnablesVehicleActions()
+{
+    setUseTabbedPlanPanel(true);
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLink(); },
+        [this](QPointer<MockLink>, Vehicle* vehicle) {
+            _openPlanView();
+            if (QTest::currentTestFailed())
+                return;
+
+            // A connected vehicle decides firmware and vehicle type, so the offline combos become labels
+            verifyVisibility(QStringLiteral("planPanel_firmwareCombo"), false,
+                             QStringLiteral("firmware combo while connected"));
+            verifyVisibility(QStringLiteral("planPanel_vehicleTypeCombo"), false,
+                             QStringLiteral("vehicle type combo while connected"));
+            verifyText(QStringLiteral("planPanel_firmwareLabel"), vehicle->firmwareTypeString(),
+                       QStringLiteral("firmware label"));
+            verifyText(QStringLiteral("planPanel_vehicleTypeLabel"), vehicle->vehicleTypeString(),
+                       QStringLiteral("vehicle type label"));
+            if (QTest::currentTestFailed())
+                return;
+
+            _buildMission(1);
+            if (QTest::currentTestFailed())
+                return;
+            verifyEnabled(QStringLiteral("planToolbar_uploadButton"), true,
+                          QStringLiteral("upload with items and a vehicle"));
+            if (QTest::currentTestFailed())
+                return;
+
+            MissionController* const controller = _missionController();
+            QVERIFY(controller);
+            VisualMissionItem* const item = controller->currentPlanViewItem();
+            QVERIFY(item);
+            QVERIFY2(waitForCondition([&] { return vehicle->coordinate().isValid(); }, 5000,
+                                      QStringLiteral("vehicle position")),
+                     "MockLink vehicle never reported a position");
+            QVERIFY2(item->coordinate().distanceTo(vehicle->coordinate()) > 1.0,
+                     "Item must start away from the vehicle");
+
+            QVERIFY2(clickButton(QLatin1String(kInspectorMenu)), "Failed to click the inspector menu button");
+            QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("missionItemMenu_moveToVehicle"), 2000),
+                     "Item menu did not open");
+            verifyEnabled(QStringLiteral("missionItemMenu_moveToVehicle"), true, QStringLiteral("move to vehicle"));
+            if (QTest::currentTestFailed())
+                return;
+            QVERIFY2(clickButton(QStringLiteral("missionItemMenu_moveToVehicle")), "Failed to click Move to vehicle");
+            QVERIFY2(waitForCondition([&] { return item->coordinate().distanceTo(vehicle->coordinate()) < 1.0; }, 2000,
+                                      QStringLiteral("item moved")),
+                     "Move to vehicle did not move the inspected item");
+        });
 }
 
 PlanMasterController* PlanPanelUITest::_planMasterController()

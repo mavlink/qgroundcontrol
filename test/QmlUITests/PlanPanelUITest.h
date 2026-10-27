@@ -7,8 +7,9 @@
 class MissionController;
 class PlanMasterController;
 
-/// UI test for the tabbed Plan View panel (offline, no vehicle). The panel is behind the
+/// UI test for the tabbed Plan View panel. It is behind the
 /// PlanViewSettings useNewPlanPanel flag, so every test sets the flag it needs before starting the UI.
+/// Tests are offline unless they connect a MockLink.
 class PlanPanelUITest : public QmlUITestBase
 {
     Q_OBJECT
@@ -28,7 +29,12 @@ private slots:
     void _testDrillInShowsListOrInspector();
     void _testPanelHeightSelectsLayout();
     void _testDividerResizesListAndInspector();
-    void _testItemMenuOpensFromInspector();
+    void _testItemMenuActsOnInspectedItem();
+    void _testVehicleClassComboChangesToolStrip_data();
+    void _testVehicleClassComboChangesToolStrip();
+    void _testComplexItemEditorFitsInspector();
+    void _testOpenedPlanShowsMissionTab();
+    void _testConnectedVehicleFixesVehicleChoiceAndEnablesVehicleActions();
     void _testFenceTabAddsSelectsAndEditsFences();
     void _testFenceInspectorStepsAcrossEntriesInDrillIn();
     void _testRallyTabListsSelectsAndDeletesPoints();
@@ -37,6 +43,9 @@ private slots:
 private:
     /// Turns the panel flag on, boots the UI and opens the Plan view with the map at a known center
     void _startPlanPanel();
+
+    /// Opens the Plan view of an already booted UI and puts the map at a known center
+    void _openPlanView();
 
     /// Sets the plan home by clicking the map while the Plan tab is active, then opens the Mission tab
     void _setHomeAndOpenMission();
