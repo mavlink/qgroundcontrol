@@ -270,7 +270,7 @@ QString QGroundControlQmlGlobal::altitudeFrameShortDescription(AltitudeFrame alt
     case AltitudeFrameAbsolute:
         return tr("Absolute (%1)").arg(altitudeFrameExtraUnits(altFrame));
     case AltitudeFrameCalcAboveTerrain:
-        return tr("Above Terrain Calced (%1)").arg(altitudeFrameExtraUnits(altFrame));
+        return tr("Above Terrain Calculated (%1)").arg(altitudeFrameExtraUnits(altFrame));
     case AltitudeFrameTerrain:
         return tr("Above Terrain (%1)").arg(altitudeFrameExtraUnits(altFrame));
     case AltitudeFrameMixed:
