@@ -145,7 +145,10 @@ TerrariumTileFetcher::TerrariumTileFetcher(QObject* parent, QNetworkAccessManage
     : HeightSource(parent),
       _networkManager(networkManager ? networkManager : new QNetworkAccessManager(this)),
       _mapId(UrlFactory::getQtMapIdFromProviderType(terrariumProviderType()))
-{}
+{
+    // Only a QtLocation map initializes the shared tile cache on its own
+    getQGCMapEngine()->ensureInitialized();
+}
 
 int TerrariumTileFetcher::requestPatchHeights(const TileMath::TileKey& key, int gridSize)
 {

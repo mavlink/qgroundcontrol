@@ -22,6 +22,8 @@ import QGroundControl.GeoMap
 GeoMapItem {
     id: root
 
+    objectName: "geoMapMissionLabel"
+
     property int index: -1     ///< Sequence number shown in the dot; < 0 shows none
     property string label: ""
     property bool checked: false

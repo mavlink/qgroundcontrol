@@ -52,6 +52,7 @@ protected slots:
         stopUI();
         _qmlUrlOverrides.clear();
         _restoreUseTabbedPlanPanel();
+        _restoreUseGeoMapPlanEngine();
         UnitTest::cleanup();
     }
 
@@ -69,6 +70,10 @@ protected:
     /// Selects the tabbed Plan panel (true) or the tree view (false) for the next startUI(). The setting is
     /// restored after each test because settings Facts are not reset between test functions.
     void setUseTabbedPlanPanel(bool use);
+
+    /// Selects the GeoMap engine (true) or the QtLocation map (false) for the Plan View map on the next startUI().
+    /// Restored after each test like setUseTabbedPlanPanel().
+    void setUseGeoMapPlanEngine(bool use);
 
     /// Close the QML window and wait for it to settle.
     void closeUIWindow();
@@ -230,8 +235,11 @@ private:
     QHash<QUrl, QUrl> _qmlUrlOverrides;
     std::unique_ptr<QQmlAbstractUrlInterceptor> _qmlUrlInterceptor;
     std::optional<bool> _savedUseTabbedPlanPanel;
+    std::optional<bool> _savedUseGeoMapPlanEngine;
 
     void _restoreUseTabbedPlanPanel();
+    void _restoreUseGeoMapPlanEngine();
+    void _setUseGeoMapPlanEngineFact(bool use);
 
     /// Shared implementation for the verify* helpers: find the visible item,
     /// guard against the property not existing (an invalid QVariant silently

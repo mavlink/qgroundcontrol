@@ -281,10 +281,22 @@ void GeoMapItemTest::_delegate3DLifecycle()
     scene.setTerrainScale(0.0);
     QCOMPARE(node->property("opacity").toReal(), 1.0);
 
+    // Dimming applies on top of the crossfade, and is kept within 0..1
+    item.setNode3DOpacity(0.5);
+    QCOMPARE(node->property("opacity").toReal(), 0.5);
+    item.setNode3DOpacity(7.0);
+    QCOMPARE(item.node3DOpacity(), 1.0);
+    item.setNode3DOpacity(0.5);
+
     // Re-enabling restores the crossfade at the current terrainScale
     item.setCrossfade3D(true);
     QCOMPARE(node->property("opacity").toReal(), 0.0);
     QCOMPARE(item.contentOpacity2D(), 1.0);
+    scene.setTerrainScale(0.5);
+    QCOMPARE(node->property("opacity").toReal(), 0.25);
+    item.setNode3DOpacity(1.0);
+    QCOMPARE(node->property("opacity").toReal(), 0.5);
+    scene.setTerrainScale(0.0);
 
     // Clearing the delegate destroys the node and restores 2D opacity
     item.setDelegate3D(nullptr);

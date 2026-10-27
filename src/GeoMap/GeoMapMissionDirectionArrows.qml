@@ -31,8 +31,12 @@ Item {
 
         GeoMapSegmentArrow {
             id: arrow
+            objectName: "geoMapDirectionArrow"
             scene: root.scene
             surfaceModel: root.surfaceModel
+            // An endpoint altitude is NaN while a terrain-frame item waits on its terrain query: it would be
+            // projected at sea level, away from the route and the markers
+            visible: !isNaN(object.coord1AMSLAlt) && !isNaN(object.coord2AMSLAlt)
             fromCoord: {
                 _terrainRev
                 return _terrainLeg ? _drapedPoint(0.75 - _halfChordFraction)

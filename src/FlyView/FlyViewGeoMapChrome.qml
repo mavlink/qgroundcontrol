@@ -16,7 +16,7 @@ import QGroundControl.GeoMap
 /// View chrome for a FlyViewGeoMap: diagnostic buttons plus the terrain
 /// stats overlay, shown only when the GeoMap debug UI setting is on. Hosted
 /// by the Fly View GeoMap engine adapter; the 2D/3D and compass camera
-/// controls live in FlyViewGeoMapControls.
+/// controls live in GeoMapControls.
 Item {
     id: root
 

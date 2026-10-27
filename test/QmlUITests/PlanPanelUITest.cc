@@ -1,5 +1,8 @@
 #include "PlanPanelUITest.h"
 
+#include <algorithm>
+#include <cmath>
+
 #include <QtCore/QList>
 #include <QtCore/QMetaObject>
 #include <QtCore/QObject>
@@ -13,17 +16,20 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
+#include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
 #include "AppSettings.h"
 #include "Fact.h"
 #include "GeoFenceController.h"
+#include "GeoMapCamera.h"
 #include "MissionController.h"
 #include "MockLink.h"
 #include "PlanMasterController.h"
 #include "PlanViewSettings.h"
 #include "QGCFileDialogController.h"
 #include "QGCMAVLink.h"
+#include "QGroundControlQmlGlobal.h"
 #include "QmlObjectListModel.h"
 #include "RallyPointController.h"
 #include "SettingsManager.h"
@@ -63,6 +69,25 @@ const char* kWaypointButton = "planToolStrip_waypointButton";
 PlanViewSettings* planViewSettings()
 {
     return SettingsManager::instance()->planViewSettings();
+}
+
+// The GeoMap items live under Loaders, which only the item tree reaches
+QList<QQuickItem*> findGeoMapItems(QQuickItem* parent, const QString& objectName)
+{
+    QList<QQuickItem*> items;
+    const auto children = parent->childItems();
+    for (QQuickItem* const child : children) {
+        if (child->objectName() == objectName) {
+            items.append(child);
+        }
+        items.append(findGeoMapItems(child, objectName));
+    }
+    return items;
+}
+
+QList<QQuickItem*> findGeoMapWaypointMarkers(QQuickItem* parent)
+{
+    return findGeoMapItems(parent, QStringLiteral("geoMapWaypointMarker"));
 }
 
 QString tabObjectName(const QString& tab)
@@ -113,13 +138,20 @@ bool restoreValidValue(QObject* textField, const QVariant& validText)
 }
 }  // namespace
 
-void PlanPanelUITest::_startPlanPanel()
+void PlanPanelUITest::_startPlanPanel(bool geoMapEngine)
 {
     setUseTabbedPlanPanel(true);
+    setUseGeoMapPlanEngine(geoMapEngine);
 
     startUI();
     if (QTest::currentTestFailed())
         return;
+
+    // Without an RHI backend the GeoMap View3D warns when it renders
+    if (geoMapEngine) {
+        const std::optional<bool> rhiBased = expectSoftwareBackendWarnings(/*strict*/ false);
+        QVERIFY2(rhiBased.has_value(), "No renderer interface on the main window");
+    }
 
     _openPlanView();
 }
@@ -238,10 +270,11 @@ void PlanPanelUITest::_buildMission(int waypointCount)
              "Mission items were not inserted");
 }
 
-void PlanPanelUITest::_testFlagDefaultsToTabbedPanel()
+void PlanPanelUITest::_testFlagDefaults()
 {
     QVERIFY2(planViewSettings()->useNewPlanPanel()->rawDefaultValue().toBool(),
              "The tabbed plan panel must be the default");
+    QVERIFY2(!planViewSettings()->useGeoMapEngine()->rawDefaultValue().toBool(), "The GeoMap Plan map must be opt-in");
 }
 
 void PlanPanelUITest::_testFlagOffShowsTreeView()
@@ -777,6 +810,781 @@ void PlanPanelUITest::_testItemMenuActsOnInspectedItem()
     QVERIFY2(waitForCondition([&] { return item->coordinate().distanceTo(previousCoordinate) < 1.0; }, 2000,
                               QStringLiteral("item moved")),
              "Move to previous did not move the inspected item");
+}
+
+void PlanPanelUITest::_testGeoMapMarkerClickSelectsItem()
+{
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    _buildMission(2);
+    if (QTest::currentTestFailed())
+        return;
+    // Disarm the Waypoint tool so a marker click can only select
+    QVERIFY2(clickButton(QLatin1String(kWaypointButton)), "Failed to disarm the Waypoint tool");
+
+    MissionController* const controller = _missionController();
+    QVERIFY(controller);
+    const int itemCount = controller->visualItems()->count();
+    VisualMissionItem* const target = controller->visualItems()->value<VisualMissionItem*>(1);
+    QVERIFY(target);
+    QVERIFY2(controller->currentPlanViewItem() != target, "The target item must start unselected");
+
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+    QVariant screenPoint;
+    QVERIFY(QMetaObject::invokeMethod(map, "fromCoordinate", Q_RETURN_ARG(QVariant, screenPoint),
+                                      Q_ARG(QVariant, QVariant::fromValue(target->coordinate())),
+                                      Q_ARG(QVariant, false)));
+    const QPointF point = screenPoint.toPointF();
+    QVERIFY2(QRectF(QPointF(0, 0), map->size()).contains(point), "The target item is not on screen");
+    QVERIFY2(clickItemFraction(QStringLiteral("planView_map"), point.x() / map->width(), point.y() / map->height()),
+             "Failed to click the item marker");
+
+    QVERIFY2(waitForCondition([&] { return controller->currentPlanViewItem() == target; }, 2000,
+                              QStringLiteral("marker selects item")),
+             "Clicking the item marker did not select the item");
+    QCOMPARE(controller->visualItems()->count(), itemCount);
+    verifyText(QString::fromLatin1(kInspectorTitle), target->commandName(), QStringLiteral("inspector title"));
+}
+
+void PlanPanelUITest::_testGeoMapMarkerDragMovesOnlyTheCurrentItem_data()
+{
+    QTest::addColumn<bool>("dragCurrentItem");
+    QTest::addColumn<QString>("tab");
+    QTest::addColumn<int>("modifier");
+
+    QTest::newRow("current item moves") << true << QStringLiteral("mission") << int(Qt::NoModifier);
+    QTest::newRow("other item pans the map") << false << QStringLiteral("mission") << int(Qt::NoModifier);
+    QTest::newRow("current item off the mission layer pans the map")
+        << true << QStringLiteral("fence") << int(Qt::NoModifier);
+    QTest::newRow("shift drag of the current item orbits the map")
+        << true << QStringLiteral("mission") << int(Qt::ShiftModifier);
+    QTest::newRow("control drag of the current item looks around")
+        << true << QStringLiteral("mission") << int(Qt::ControlModifier);
+}
+
+void PlanPanelUITest::_testGeoMapMarkerDragMovesOnlyTheCurrentItem()
+{
+    QFETCH(bool, dragCurrentItem);
+    QFETCH(QString, tab);
+    QFETCH(int, modifier);
+    const auto modifiers = Qt::KeyboardModifiers(modifier);
+    const bool expectMove = dragCurrentItem && (tab == QStringLiteral("mission")) && !modifiers;
+
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    _buildMission(2);
+    if (QTest::currentTestFailed())
+        return;
+    // Disarm the Waypoint tool so a marker press can only select or drag
+    QVERIFY2(clickButton(QLatin1String(kWaypointButton)), "Failed to disarm the Waypoint tool");
+    if (tab != QStringLiteral("mission")) {
+        QVERIFY2(_selectTab(tab), "Failed to open the tab");
+    }
+
+    MissionController* const controller = _missionController();
+    QVERIFY(controller);
+    const int itemCount = controller->visualItems()->count();
+    VisualMissionItem* const current = controller->currentPlanViewItem();
+    VisualMissionItem* const target =
+        dragCurrentItem ? current : controller->visualItems()->value<VisualMissionItem*>(itemCount - 2);
+    QVERIFY(target);
+    QCOMPARE(target == current, dragCurrentItem);
+
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+    const auto windowPoint = [map](const QGeoCoordinate& coordinate) {
+        QVariant screenPoint;
+        const bool projected =
+            QMetaObject::invokeMethod(map, "fromCoordinate", Q_RETURN_ARG(QVariant, screenPoint),
+                                      Q_ARG(QVariant, QVariant::fromValue(coordinate)), Q_ARG(QVariant, false));
+        return projected ? map->mapToScene(screenPoint.toPointF()).toPoint() : QPoint(-1, -1);
+    };
+
+    const QGeoCoordinate before = target->coordinate();
+    const double altitudeBefore = target->property("amslEntryAlt").toDouble();
+    const QPoint start = windowPoint(before);
+    QVERIFY2(map->contains(map->mapFromScene(start)), "The marker is not on screen");
+    const QPoint delta(-70, 50);
+
+    QTest::mousePress(_window, Qt::LeftButton, modifiers, start);
+    constexpr int steps = 10;
+    for (int i = 1; i <= steps; i++) {
+        QTest::mouseMove(_window, start + ((delta * i) / steps));
+    }
+    QTest::mouseRelease(_window, Qt::LeftButton, modifiers, start + delta);
+
+    if (expectMove) {
+        QVERIFY2(waitForCondition([&] { return target->coordinate().distanceTo(before) > 1.0; }, 2000,
+                                  QStringLiteral("item moved")),
+                 "Dragging the current item's marker did not move the item");
+        // The marker ends up under the cursor, with the item's altitude untouched
+        const QPoint end = windowPoint(target->coordinate());
+        QVERIFY2((end - (start + delta)).manhattanLength() <= 4,
+                 qPrintable(QStringLiteral("Marker ended at %1,%2 instead of under the cursor at %3,%4")
+                                .arg(end.x())
+                                .arg(end.y())
+                                .arg(start.x() + delta.x())
+                                .arg(start.y() + delta.y())));
+        QVERIFY(qFuzzyCompare(target->property("amslEntryAlt").toDouble(), altitudeBefore));
+        QCOMPARE(controller->currentPlanViewItem(), target);
+    } else {
+        // The press went to the map gesture: the map followed the cursor and the item stayed put
+        if (!modifiers) {
+            QVERIFY2(waitForCondition([&] { return (windowPoint(before) - start).manhattanLength() > 20; }, 2000,
+                                      QStringLiteral("map panned")),
+                     "Dragging another item's marker did not pan the map");
+        }
+        QVERIFY2(target->coordinate().distanceTo(before) < 0.01, "Dragging a non-current marker moved its item");
+    }
+    QCOMPARE(controller->visualItems()->count(), itemCount);
+}
+
+void PlanPanelUITest::_testGeoMapTerrainWaypointDragKeepsTheMarkerUnderTheCursor()
+{
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    MissionController* const controller = _missionController();
+    QVERIFY(controller);
+    // A terrain-relative marker stands at its height above the terrain, which changes as it is dragged
+    controller->setGlobalAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameCalcAboveTerrain);
+    _buildMission(2);
+    if (QTest::currentTestFailed())
+        return;
+    // Disarm the Waypoint tool so a marker press can only select or drag
+    QVERIFY2(clickButton(QLatin1String(kWaypointButton)), "Failed to disarm the Waypoint tool");
+
+    VisualMissionItem* const target = controller->currentPlanViewItem();
+    QVERIFY(target);
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+    auto* const camera = map->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+    QVERIFY2(camera, "GeoMapCamera not found");
+
+    // Tilted, close up and on terrain that rises 200 m, around the item being dragged
+    QObject* const surfaceModel = map->property("surfaceModel").value<QObject*>();
+    QVERIFY(surfaceModel);
+    QVERIFY(surfaceModel->setProperty("debugHills", true));
+    QVERIFY(map->setProperty("zoomLevel", 17.0));
+    QVERIFY(map->setProperty("center", QVariant::fromValue(target->coordinate())));
+    camera->setMode(GeoMapCamera::Mode::Mode3D);
+    QVERIFY2(waitForCondition([&] { return qFuzzyCompare(camera->tilt(), GeoMapCamera::kDefault3DTilt); }, 3000,
+                              QStringLiteral("3D transition")),
+             "The camera did not finish the transition to 3D");
+
+    const auto findMarker = [&]() -> QQuickItem* {
+        for (QQuickItem* const marker : findGeoMapWaypointMarkers(map)) {
+            if (marker->property("item").value<QObject*>() == target) {
+                return marker;
+            }
+        }
+        return nullptr;
+    };
+    const auto markerPoint = [&]() {
+        QQuickItem* const marker = findMarker();
+        return marker ? marker->mapToScene(QPointF(marker->width() / 2, marker->height() / 2)).toPoint()
+                      : QPoint(-1, -1);
+    };
+    // The rebuilt surface takes a moment to be there for the pick to find
+    QVERIFY2(waitForCondition(
+                 [&] {
+                     const QPoint point = markerPoint();
+                     return map->contains(map->mapFromScene(point));
+                 },
+                 5000, QStringLiteral("marker on screen")),
+             "The marker is not on screen");
+
+    const QGeoCoordinate before = target->coordinate();
+    const QPoint start = markerPoint();
+    const QPoint delta(-160, 110);
+    QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, start);
+    // One big step, so the marker's new height has to come from the pick and not from following the cursor
+    QTest::mouseMove(_window, start + delta);
+    QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, start + delta);
+
+    QVERIFY2(waitForCondition([&] { return target->coordinate().distanceTo(before) > 1.0; }, 2000,
+                              QStringLiteral("item moved")),
+             "Dragging the current item's marker did not move the item");
+    const QPoint end = markerPoint();
+    QVERIFY2((end - (start + delta)).manhattanLength() <= 6,
+             qPrintable(QStringLiteral("Marker ended at %1,%2 instead of under the cursor at %3,%4")
+                            .arg(end.x())
+                            .arg(end.y())
+                            .arg(start.x() + delta.x())
+                            .arg(start.y() + delta.y())));
+}
+
+void PlanPanelUITest::_testGeoMapMarkerShowsWhileTerrainAltitudePending()
+{
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    MissionController* const controller = _missionController();
+    QVERIFY(controller);
+    // Calculated above terrain altitudes have no AMSL altitude until a terrain query answers
+    controller->setGlobalAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameCalcAboveTerrain);
+    _buildMission(2);
+    if (QTest::currentTestFailed())
+        return;
+
+    VisualMissionItem* const waypoint =
+        controller->visualItems()->value<VisualMissionItem*>(controller->visualItems()->count() - 1);
+    QVERIFY(waypoint);
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+
+    const std::function<QQuickItem*(QQuickItem*)> findMarker = [&](QQuickItem* parent) -> QQuickItem* {
+        const auto children = parent->childItems();
+        for (QQuickItem* const child : children) {
+            if (child->objectName() == QStringLiteral("geoMapWaypointMarker") &&
+                child->property("item").value<QObject*>() == waypoint) {
+                return child;
+            }
+            if (QQuickItem* const found = findMarker(child)) {
+                return found;
+            }
+        }
+        return nullptr;
+    };
+    QQuickItem* marker = nullptr;
+    QVERIFY2(waitForCondition([&] { return (marker = findMarker(map)) != nullptr; }, 3000,
+                              QStringLiteral("waypoint marker created")),
+             "No marker was created for the waypoint");
+
+    // The direction arrows show once every altitude of their segment is known, and not while one is pending
+    const auto arrowsVisible = [&](bool visible) {
+        const auto arrows = findGeoMapItems(map, QStringLiteral("geoMapDirectionArrow"));
+        return !arrows.isEmpty() && std::all_of(arrows.cbegin(), arrows.cend(),
+                                                [&](QQuickItem* arrow) { return arrow->isVisible() == visible; });
+    };
+    QVERIFY2(
+        waitForCondition([&] { return !qIsNaN(waypoint->property("amslEntryAlt").toDouble()) && arrowsVisible(true); },
+                         8000, QStringLiteral("direction arrows with known altitudes")),
+        "The direction arrows are not shown once the terrain altitudes are known");
+
+    // Back to waiting on the terrain query
+    QVERIFY(QMetaObject::invokeMethod(waypoint, "_terrainDataReceived", Q_ARG(bool, false),
+                                      Q_ARG(QList<double>, QList<double>())));
+    QVERIFY2(qIsNaN(waypoint->property("amslEntryAlt").toDouble()), "The waypoint must be waiting on terrain data");
+    QVERIFY2(waitForCondition([&] { return arrowsVisible(false); }, 3000, QStringLiteral("direction arrows hidden")),
+             "The direction arrows are not hidden while a terrain altitude is pending");
+
+    // Without an altitude the marker would sit at sea level, below the terrain surface, until the query answers
+    QObject* const surfaceModel = marker->property("surfaceModel").value<QObject*>();
+    QVERIFY(surfaceModel);
+    const auto markerStandsOnTerrain = [&] {
+        const QGeoCoordinate coordinate = marker->property("coordinate").value<QGeoCoordinate>();
+        if (qIsNaN(coordinate.altitude())) {
+            return false;
+        }
+        double terrainHeight = qQNaN();
+        const bool queried = QMetaObject::invokeMethod(
+            surfaceModel, "terrainHeightAt", Q_RETURN_ARG(double, terrainHeight), Q_ARG(QGeoCoordinate, coordinate));
+        return queried && (coordinate.altitude() - terrainHeight) >= 1.0;
+    };
+    QVERIFY2(markerStandsOnTerrain(), "The waypoint marker is not drawn on the terrain while its altitude is pending");
+
+    // Terrain tiles that arrive while the query is still pending lift the marker and the route with the terrain
+    QVERIFY(surfaceModel->setProperty("debugHills", true));
+    const QGeoCoordinate waypointCoordinate = waypoint->coordinate();
+    const auto terrainHeightAt = [&](const QGeoCoordinate& coordinate) {
+        double terrainHeight = qQNaN();
+        QMetaObject::invokeMethod(surfaceModel, "terrainHeightAt", Q_RETURN_ARG(double, terrainHeight),
+                                  Q_ARG(QGeoCoordinate, coordinate));
+        return terrainHeight;
+    };
+    QVERIFY2(waitForCondition([&] { return terrainHeightAt(waypointCoordinate) >= 5.0; }, 3000,
+                              QStringLiteral("hills under the waypoint")),
+             "The debug hills did not raise the terrain under the waypoint");
+    const double heightAboveTerrain = qvariant_cast<Fact*>(waypoint->property("altitude"))->rawValue().toDouble();
+    const auto standsAboveTerrain = [&](const QGeoCoordinate& coordinate, double bias) {
+        return qAbs(coordinate.altitude() + bias - terrainHeightAt(coordinate) - heightAboveTerrain) < 0.5;
+    };
+    QVERIFY2(
+        waitForCondition([&] { return standsAboveTerrain(marker->property("coordinate").value<QGeoCoordinate>(), 0); },
+                         3000, QStringLiteral("marker follows the terrain")),
+        "The waypoint marker did not follow the terrain that arrived while its altitude is pending");
+
+    QQuickItem* const missionPath = findVisibleItem(_rootItem, QStringLiteral("geoMapMissionPath"), 3000);
+    QVERIFY(missionPath);
+    const auto routeFollowsTerrain = [&] {
+        const QVariantList points = missionPath->property("_routePoints").toList();
+        const double bias = missionPath->property("homeTerrainBias").toDouble();
+        for (const QVariant& point : points) {
+            const QVariantMap pointMap = point.toMap();
+            const QGeoCoordinate coordinate = pointMap.value(QStringLiteral("coordinate")).value<QGeoCoordinate>();
+            if (pointMap.value(QStringLiteral("pendingAmsl")).toBool() &&
+                coordinate.distanceTo(waypointCoordinate) < 1.0) {
+                return standsAboveTerrain(coordinate, bias);
+            }
+        }
+        return false;
+    };
+    QVERIFY2(waitForCondition(routeFollowsTerrain, 3000, QStringLiteral("route follows the terrain")),
+             "The mission route did not follow the terrain that arrived while an altitude is pending");
+}
+
+void PlanPanelUITest::_testGeoMapMissionPathReturnsToPlannedHome()
+{
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    _buildMission(1);
+    if (QTest::currentTestFailed())
+        return;
+
+    MissionController* const controller = _missionController();
+    QVERIFY(controller);
+    const int itemCount = controller->visualItems()->count();
+    const QGeoCoordinate lastWaypoint =
+        controller->visualItems()->value<VisualMissionItem*>(itemCount - 1)->coordinate();
+    QVERIFY(controller->insertLandItem(lastWaypoint, itemCount));
+    const QGeoCoordinate plannedHome = controller->plannedHomePosition();
+    QVERIFY(plannedHome.isValid());
+
+    QQuickItem* const missionPath = findVisibleItem(_rootItem, QStringLiteral("geoMapMissionPath"), 3000);
+    QVERIFY(missionPath);
+    const auto routeEnd = [&] {
+        const QVariantList points = missionPath->property("_routePoints").toList();
+        return points.isEmpty() ? QGeoCoordinate()
+                                : points.last().toMap().value(QStringLiteral("coordinate")).value<QGeoCoordinate>();
+    };
+    // The offline editing vehicle has no home position of its own, only the planned one
+    QVERIFY2(waitForCondition([&] { return routeEnd().isValid() && routeEnd().distanceTo(plannedHome) < 0.5; }, 3000,
+                              QStringLiteral("route returns home")),
+             "The route of a mission ending in Return does not go back to the planned home");
+}
+
+void PlanPanelUITest::_testFenceTabAddsFenceInsideTheGeoMapViewport_data()
+{
+    QTest::addColumn<bool>("steepTilt");
+    QTest::addColumn<double>("heading");
+
+    QTest::newRow("sky above the horizon") << true << 0.0;
+    QTest::newRow("south up") << false << 180.0;
+    QTest::newRow("east up") << false << 90.0;
+    QTest::newRow("diagonal heading") << false << 45.0;
+}
+
+void PlanPanelUITest::_testFenceTabAddsFenceInsideTheGeoMapViewport()
+{
+    QFETCH(bool, steepTilt);
+    QFETCH(double, heading);
+
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    PlanMasterController* const master = _planMasterController();
+    QVERIFY(master);
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+    auto* const camera = map->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+    QVERIFY2(camera, "GeoMapCamera not found");
+
+    QVERIFY2(_selectTab(QStringLiteral("fence")), "Failed to open the Fence tab");
+
+    const auto groundUnderTopLeft = [&] {
+        QVariant coordinate;
+        QMetaObject::invokeMethod(
+            map, "toCoordinate", Q_RETURN_ARG(QVariant, coordinate),
+            Q_ARG(QVariant, QVariant::fromValue(map->property("centerViewport").toRectF().topLeft())),
+            Q_ARG(QVariant, false));
+        return coordinate.value<QGeoCoordinate>().isValid();
+    };
+    if (steepTilt) {
+        // At the steepest tilt the upper viewport corners point into the sky; the tilt is set once the 3D
+        // transition ended
+        camera->setMode(GeoMapCamera::Mode::Mode3D);
+        QVERIFY2(waitForCondition([&] { return qFuzzyCompare(camera->tilt(), GeoMapCamera::kDefault3DTilt); }, 3000,
+                                  QStringLiteral("3D transition")),
+                 "The camera did not finish the transition to 3D");
+        camera->setTilt(GeoMapCamera::kMaxTilt);
+        QVERIFY2(waitForCondition([&] { return !groundUnderTopLeft(); }, 3000, QStringLiteral("sky above the horizon")),
+                 "The upper viewport corner must point into the sky for this test");
+    }
+    camera->setHeading(heading);
+    QVERIFY2(waitForCondition([&] { return qAbs(std::remainder(camera->heading() - heading, 360.0)) < 0.01; }, 3000,
+                              QStringLiteral("heading")),
+             "The camera did not take the heading");
+
+    GeoFenceController* const fence = master->geoFenceController();
+    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceAddPolygon")), "Failed to click + Polygon");
+    QVERIFY2(!steepTilt || !groundUnderTopLeft(),
+             "The upper viewport corner must still point into the sky when the polygon is added");
+    QVERIFY2(waitForCondition([&] { return fence->polygons()->count() == 1; }, 2000, QStringLiteral("polygon added")),
+             "+ Polygon did not add a polygon");
+
+    // Every vertex is a real coordinate, and the polygon is where the viewport shows ground
+    QObject* const polygon = fence->polygons()->get(0);
+    const int vertexCount = polygon->property("count").toInt();
+    QVERIFY(vertexCount >= 3);
+    const QRectF viewport = map->property("centerViewport").toRectF();
+    for (int i = 0; i < vertexCount; i++) {
+        QGeoCoordinate vertex;
+        QMetaObject::invokeMethod(polygon, "vertexCoordinate", Q_RETURN_ARG(QGeoCoordinate, vertex), Q_ARG(int, i));
+        QVERIFY2(vertex.isValid(), qPrintable(QStringLiteral("Fence vertex %1 is not a valid coordinate").arg(i)));
+        QVariant screenPoint;
+        QVERIFY(QMetaObject::invokeMethod(map, "fromCoordinate", Q_RETURN_ARG(QVariant, screenPoint),
+                                          Q_ARG(QVariant, QVariant::fromValue(vertex)), Q_ARG(QVariant, false)));
+        QVERIFY2(viewport.adjusted(-2, -2, 2, 2).contains(screenPoint.toPointF()),
+                 qPrintable(QStringLiteral("Fence vertex %1 is outside the viewport at %2,%3")
+                                .arg(i)
+                                .arg(screenPoint.toPointF().x())
+                                .arg(screenPoint.toPointF().y())));
+    }
+}
+
+void PlanPanelUITest::_testFenceTabAddsFenceInsideTheViewportOverTheDateline_data()
+{
+    QTest::addColumn<double>("zoomLevel");
+    QTest::addColumn<double>("latitude");
+    QTest::addColumn<double>("longitude");
+    QTest::addColumn<bool>("wide");
+
+    QTest::newRow("over the dateline") << 3.0 << 20.0 << 180.0 << false;
+    QTest::newRow("wider than a half turn") << 0.0 << 0.0 << 0.0 << true;
+}
+
+void PlanPanelUITest::_testFenceTabAddsFenceInsideTheViewportOverTheDateline()
+{
+    QFETCH(double, zoomLevel);
+    QFETCH(double, latitude);
+    QFETCH(double, longitude);
+    QFETCH(bool, wide);
+
+    // The QtLocation map is the one that shows both sides of the antimeridian
+    _startPlanPanel();
+    if (QTest::currentTestFailed())
+        return;
+
+    PlanMasterController* const master = _planMasterController();
+    QVERIFY(master);
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+    if (wide) {
+        // The map cannot zoom out past the world filling its height, so only a wider window shows more than half
+        // of the world's width
+        QVERIFY(_window);
+        _window->resize(_window->width() + 600, _window->height());
+    }
+    // The panel decides how wide the viewport is, so the fence tab is open before the map is moved
+    QVERIFY2(_selectTab(QStringLiteral("fence")), "Failed to open the Fence tab");
+    QVERIFY(map->setProperty("zoomLevel", zoomLevel));
+    QVERIFY(map->setProperty("center", QVariant::fromValue(QGeoCoordinate(latitude, longitude))));
+    const auto mapCenter = [&] { return map->property("center").value<QGeoCoordinate>(); };
+    QVERIFY2(waitForCondition(
+                 [&] {
+                     return qAbs(mapCenter().latitude() - latitude) < 0.5 &&
+                            qAbs(std::remainder(mapCenter().longitude() - longitude, 360.0)) < 1.0;
+                 },
+                 3000, QStringLiteral("map centered")),
+             "The map did not move to the longitude");
+
+    // The viewport must show the world beyond the antimeridian, or more than a half turn of it, for this test
+    const auto cornerLongitude = [&](const QPointF& corner) {
+        QGeoCoordinate coordinate;
+        QMetaObject::invokeMethod(map, "toCoordinate", Q_RETURN_ARG(QGeoCoordinate, coordinate), Q_ARG(QPointF, corner),
+                                  Q_ARG(bool, false));
+        return coordinate.longitude();
+    };
+    const QRectF mapViewport = map->property("centerViewport").toRectF();
+    const double leftLongitude = cornerLongitude(mapViewport.topLeft());
+    const double rightLongitude = cornerLongitude(mapViewport.bottomRight());
+    const QString shown =
+        QStringLiteral("The viewport shows longitudes %1 to %2").arg(leftLongitude).arg(rightLongitude);
+    if (wide) {
+        QVERIFY2(rightLongitude - leftLongitude > 180.0, qPrintable(shown));
+    } else {
+        QVERIFY2(leftLongitude > 90.0 && rightLongitude < -90.0, qPrintable(shown));
+    }
+    GeoFenceController* const fence = master->geoFenceController();
+    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceAddPolygon")), "Failed to click + Polygon");
+    QVERIFY2(waitForCondition([&] { return fence->polygons()->count() == 1; }, 2000, QStringLiteral("polygon added")),
+             "+ Polygon did not add a polygon");
+
+    QObject* const polygon = fence->polygons()->get(0);
+    const QRectF viewport = map->property("centerViewport").toRectF();
+    const int vertexCount = polygon->property("count").toInt();
+    QVERIFY(vertexCount >= 3);
+    for (int i = 0; i < vertexCount; i++) {
+        QGeoCoordinate vertex;
+        QMetaObject::invokeMethod(polygon, "vertexCoordinate", Q_RETURN_ARG(QGeoCoordinate, vertex), Q_ARG(int, i));
+        QPointF screenPoint;
+        QVERIFY(QMetaObject::invokeMethod(map, "fromCoordinate", Q_RETURN_ARG(QPointF, screenPoint),
+                                          Q_ARG(QGeoCoordinate, vertex), Q_ARG(bool, false)));
+        QVERIFY2(viewport.adjusted(-2, -2, 2, 2).contains(screenPoint),
+                 qPrintable(QStringLiteral("Fence vertex %1 at %2,%3 is outside the viewport at %4,%5")
+                                .arg(i)
+                                .arg(vertex.latitude())
+                                .arg(vertex.longitude())
+                                .arg(screenPoint.x())
+                                .arg(screenPoint.y())));
+    }
+}
+
+void PlanPanelUITest::_testGeoMapDimsMissionOutsideTheMissionLayer()
+{
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    _buildMission(1);
+    if (QTest::currentTestFailed())
+        return;
+
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+    auto* const camera = map->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+    QVERIFY2(camera, "GeoMapCamera not found");
+    QQuickItem* const missionPath = findVisibleItem(_rootItem, QStringLiteral("geoMapMissionPath"), 3000);
+    QVERIFY(missionPath);
+
+    // The 3D nodes do not follow the item opacity the 2D content is dimmed with
+    const auto nodeOpacity = [](QQuickItem* item) {
+        QObject* const node = item->property("node3D").value<QObject*>();
+        return node ? node->property("opacity").toReal() : qQNaN();
+    };
+    camera->setMode(GeoMapCamera::Mode::Mode3D);
+    QVERIFY2(waitForCondition([&] { return qFuzzyCompare(camera->tilt(), GeoMapCamera::kDefault3DTilt); }, 3000,
+                              QStringLiteral("3D transition")),
+             "The camera did not finish the transition to 3D");
+    // The crossfade settles on 1 asymptotically
+    const auto allMarkersAt = [&](double opacity) {
+        const auto markers = findGeoMapWaypointMarkers(map);
+        return !markers.isEmpty() && std::all_of(markers.cbegin(), markers.cend(), [&](QQuickItem* marker) {
+            return qAbs(nodeOpacity(marker) - opacity) < 0.01;
+        });
+    };
+    QVERIFY2(waitForCondition([&] { return allMarkersAt(1.0); }, 3000, QStringLiteral("opaque 3D markers")),
+             "The 3D markers must be opaque while the mission is edited");
+    QCOMPARE(nodeOpacity(missionPath), 1.0);
+
+    QVERIFY2(_selectTab(QStringLiteral("fence")), "Failed to open the Fence tab");
+    QVERIFY2(waitForCondition([&] { return qFuzzyCompare(nodeOpacity(missionPath), 0.5); }, 3000,
+                              QStringLiteral("dimmed route")),
+             "The 3D route is not dimmed outside the mission layer");
+    QVERIFY2(waitForCondition([&] { return allMarkersAt(0.5); }, 3000, QStringLiteral("dimmed 3D markers")),
+             "The 3D markers are not dimmed outside the mission layer");
+}
+
+void PlanPanelUITest::_testGeoMapControlsReceiveClicksOverMissionMarkers()
+{
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    _buildMission(2);
+    if (QTest::currentTestFailed())
+        return;
+    // Disarm the Waypoint tool so a click can only select
+    QVERIFY2(clickButton(QLatin1String(kWaypointButton)), "Failed to disarm the Waypoint tool");
+
+    MissionController* const controller = _missionController();
+    QVERIFY(controller);
+    VisualMissionItem* const current = controller->currentPlanViewItem();
+    VisualMissionItem* const target = controller->visualItems()->value<VisualMissionItem*>(1);
+    QVERIFY(target && target != current);
+
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+    auto* const camera = map->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+    QVERIFY2(camera, "GeoMapCamera not found");
+    QQuickItem* const button = findVisibleItem(_rootItem, QStringLiteral("geoMapModeButton"));
+    QVERIFY(button);
+
+    // A waypoint marker panned under the camera control
+    const QPointF buttonCenter =
+        map->mapFromScene(button->mapToScene(QPointF(button->width() / 2, button->height() / 2)));
+    QVariant coordinate;
+    QVERIFY(QMetaObject::invokeMethod(map, "toCoordinate", Q_RETURN_ARG(QVariant, coordinate),
+                                      Q_ARG(QVariant, QVariant::fromValue(buttonCenter)), Q_ARG(QVariant, false)));
+    QVERIFY(coordinate.value<QGeoCoordinate>().isValid());
+    target->setCoordinate(coordinate.value<QGeoCoordinate>());
+    const auto markerIsUnderButton = [&] {
+        for (QQuickItem* const marker : findGeoMapWaypointMarkers(map)) {
+            if (marker->property("item").value<QObject*>() == target) {
+                const QPointF center = marker->mapToScene(QPointF(marker->width() / 2, marker->height() / 2));
+                return (center - button->mapToScene(QPointF(button->width() / 2, button->height() / 2)))
+                           .manhattanLength() < 4;
+            }
+        }
+        return false;
+    };
+    QVERIFY2(waitForCondition(markerIsUnderButton, 3000, QStringLiteral("marker under the control")),
+             "The waypoint marker did not move under the camera control");
+
+    QVERIFY2(clickButton(QStringLiteral("geoMapModeButton")), "Failed to click the 2D/3D button");
+    QVERIFY2(
+        waitForCondition([&] { return camera->mode() == GeoMapCamera::Mode::Mode3D; }, 2000, QStringLiteral("3D mode")),
+        "The marker under the 2D/3D button took its click");
+    QCOMPARE(controller->currentPlanViewItem(), current);
+}
+
+void PlanPanelUITest::_testGeoMapDoesNotRecenterOnOffscreenVehicleInPlanView()
+{
+    setUseTabbedPlanPanel(true);
+    setUseGeoMapPlanEngine(true);
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLink(); },
+        [this](QPointer<MockLink>, Vehicle* vehicle) {
+            QVERIFY2(expectSoftwareBackendWarnings(/*strict*/ false).has_value(),
+                     "No renderer interface on the main window");
+            _openPlanView();
+            if (QTest::currentTestFailed())
+                return;
+
+            QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+            QVERIFY(map);
+            auto* const camera = map->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+            QVERIFY2(camera, "GeoMapCamera not found");
+            QObject* const tracker = map->property("positionTracker").value<QObject*>();
+            QVERIFY(tracker);
+            QVERIFY2(waitForCondition([&] { return tracker->property("firstVehiclePositionReceived").toBool(); }, 5000,
+                                      QStringLiteral("first vehicle position")),
+                     "The map never took the vehicle position");
+
+            // Editing the plan away from the vehicle: the map stays where the user put it
+            QSignalSpy recenterSpy(tracker, SIGNAL(recenterVehicleTo(QPointF)));
+            QVERIFY(recenterSpy.isValid());
+            QGeoCoordinate away = vehicle->coordinate();
+            away.setLatitude(away.latitude() + 0.5);
+            camera->setCenter(away);
+            QVERIFY2(!recenterSpy.wait(2000), "The Plan map was recentered on the vehicle that left the viewport");
+            QVERIFY(camera->center().distanceTo(away) < 1000.0);
+        });
+}
+
+void PlanPanelUITest::_testGeoMapMarkerClickOutsideTheMissionLayerReachesTheMap()
+{
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    _buildMission(1);
+    if (QTest::currentTestFailed())
+        return;
+
+    MissionController* const controller = _missionController();
+    PlanMasterController* const master = _planMasterController();
+    QVERIFY(controller && master);
+    RallyPointController* const rally = master->rallyPointController();
+    QVERIFY2(rally->supported(), "Offline vehicle should support rally points");
+    VisualMissionItem* const target =
+        controller->visualItems()->value<VisualMissionItem*>(controller->visualItems()->count() - 1);
+    QVERIFY(target);
+
+    QVERIFY2(_selectTab(QStringLiteral("rally")), "Failed to open the Rally tab");
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+    QVariant screenPoint;
+    QVERIFY(QMetaObject::invokeMethod(map, "fromCoordinate", Q_RETURN_ARG(QVariant, screenPoint),
+                                      Q_ARG(QVariant, QVariant::fromValue(target->coordinate())),
+                                      Q_ARG(QVariant, false)));
+    const QPointF point = screenPoint.toPointF();
+    QVERIFY2(QRectF(QPointF(0, 0), map->size()).contains(point), "The waypoint is not on screen");
+
+    // The click belongs to the map, which adds the rally point, and not to the dimmed marker under it
+    const int rallyPointCount = rally->points()->count();
+    QVERIFY2(clickItemFraction(QStringLiteral("planView_map"), point.x() / map->width(), point.y() / map->height()),
+             "Failed to click the map");
+    QVERIFY2(waitForCondition([&] { return rally->points()->count() == rallyPointCount + 1; }, 2000,
+                              QStringLiteral("rally point added")),
+             "The click on a dimmed marker did not reach the map");
+    QCOMPARE(_currentTab(), QStringLiteral("rally"));
+}
+
+void PlanPanelUITest::_testGeoMapDimsLandingPatternOutsideTheMissionLayer()
+{
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    _buildMission(1);
+    if (QTest::currentTestFailed())
+        return;
+
+    MissionController* const controller = _missionController();
+    QVERIFY(controller);
+    const int itemCount = controller->visualItems()->count();
+    QVERIFY(controller->insertComplexMissionItem(
+        QStringLiteral("Fixed Wing Landing"),
+        controller->visualItems()->value<VisualMissionItem*>(itemCount - 1)->coordinate(), itemCount));
+
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+    auto* const camera = map->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+    QVERIFY2(camera, "GeoMapCamera not found");
+    camera->setMode(GeoMapCamera::Mode::Mode3D);
+    QVERIFY2(waitForCondition([&] { return qFuzzyCompare(camera->tilt(), GeoMapCamera::kDefault3DTilt); }, 3000,
+                              QStringLiteral("3D transition")),
+             "The camera did not finish the transition to 3D");
+
+    // The landing pattern's markers show the sequence numbers of its items; the fence and rally labels show none
+    const auto labelsAt = [&](double opacity) {
+        QList<QQuickItem*> labels;
+        for (QQuickItem* const label : findGeoMapItems(map, QStringLiteral("geoMapMissionLabel"))) {
+            if (label->property("index").toInt() >= 0) {
+                labels.append(label);
+            }
+        }
+        return !labels.isEmpty() && std::all_of(labels.cbegin(), labels.cend(), [&](QQuickItem* label) {
+            QObject* const node = label->property("node3D").value<QObject*>();
+            return node && qAbs(node->property("opacity").toReal() - opacity) < 0.01;
+        });
+    };
+    QVERIFY2(waitForCondition([&] { return labelsAt(1.0); }, 3000, QStringLiteral("opaque 3D landing markers")),
+             "The landing pattern markers must be opaque while the mission is edited");
+    QVERIFY2(_selectTab(QStringLiteral("fence")), "Failed to open the Fence tab");
+    QVERIFY2(waitForCondition([&] { return labelsAt(0.5); }, 3000, QStringLiteral("dimmed 3D landing markers")),
+             "The landing pattern markers are not dimmed outside the mission layer");
+}
+
+void PlanPanelUITest::_testGeoMapKeepsTabbedPanelWhenTheSettingIsTurnedOff()
+{
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    // The tree panel does not support the GeoMap engine, which stays loaded until the restart
+    planViewSettings()->useNewPlanPanel()->setRawValue(false);
+    verifyVisibility(QStringLiteral("planPanel_tabBar"), true, QStringLiteral("tabbed panel stays"));
+    verifyVisibility(QLatin1String(kPlanTree), false, QStringLiteral("tree panel not shown"));
+    verifyVisibility(QStringLiteral("geoMapModeButton"), true, QStringLiteral("GeoMap camera controls stay"));
+}
+
+void PlanPanelUITest::_testGeoMapModeButtonTogglesCameraMode()
+{
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+    auto* const camera = map->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+    QVERIFY2(camera, "GeoMapCamera not found");
+    QCOMPARE(camera->mode(), GeoMapCamera::Mode::Mode2D);
+
+    const QString modeButton = QStringLiteral("geoMapModeButton");
+    verifyText(modeButton, QStringLiteral("3D"), QStringLiteral("button offers 3D from 2D"));
+    QVERIFY2(clickButton(modeButton), "Failed to click the 2D/3D button");
+    QVERIFY2(
+        waitForCondition([&] { return camera->mode() == GeoMapCamera::Mode::Mode3D; }, 2000, QStringLiteral("3D mode")),
+        "The 2D/3D button did not switch the Plan map to 3D");
+    verifyText(modeButton, QStringLiteral("2D"), QStringLiteral("button offers 2D from 3D"));
+
+    QVERIFY2(clickButton(modeButton), "Failed to click the 2D/3D button back");
+    QVERIFY2(
+        waitForCondition([&] { return camera->mode() == GeoMapCamera::Mode::Mode2D; }, 2000, QStringLiteral("2D mode")),
+        "The 2D/3D button did not switch the Plan map back to 2D");
 }
 
 void PlanPanelUITest::_testVehicleClassComboChangesToolStrip_data()

@@ -453,4 +453,24 @@ void QGCCacheWorkerTest::_testMapEngineCloseStopsWorkerAndRefusesInit()
     afterReinit->deleteLater();
 }
 
+// GeoMap needs the tile cache without ever creating a QtLocation map, which is what normally initializes it
+void QGCCacheWorkerTest::_testMapEngineEnsureInitializedAcceptsTasks()
+{
+    QGCMapEngine engine;
+    auto* beforeInit = new QGCFetchTileTask(QStringLiteral("hash"));
+    QVERIFY(!engine.addTask(beforeInit));
+    beforeInit->deleteLater();
+
+    engine.ensureInitialized();
+    auto* afterInit = new QGCFetchTileTask(QStringLiteral("hash"));
+    QVERIFY(engine.addTask(afterInit));
+
+    // Calling it again keeps the running worker
+    engine.ensureInitialized();
+    auto* afterSecondCall = new QGCFetchTileTask(QStringLiteral("hash"));
+    QVERIFY(engine.addTask(afterSecondCall));
+
+    engine.close();
+}
+
 UT_REGISTER_TEST(QGCCacheWorkerTest, TestLabel::Unit)

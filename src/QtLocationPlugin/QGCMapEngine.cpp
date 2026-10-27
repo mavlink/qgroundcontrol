@@ -95,6 +95,16 @@ void QGCMapEngine::init(const QString &databasePath)
     }
 }
 
+void QGCMapEngine::ensureInitialized()
+{
+    if (m_initialized || m_closed) {
+        return;
+    }
+
+    QGeoFileTileCacheQGC::ensureInitialized();
+    init(QGeoFileTileCacheQGC::getDatabaseFilePath());
+}
+
 bool QGCMapEngine::addTask(QGCMapTask *task)
 {
     if (!m_worker) {

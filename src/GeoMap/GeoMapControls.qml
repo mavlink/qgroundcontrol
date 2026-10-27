@@ -16,6 +16,7 @@ import QGroundControl.GeoMap
 
 /// Google Earth-style GeoMap camera controls: round 2D/3D mode toggle plus a
 /// compass whose needle tracks the camera heading and tilts with the camera.
+/// Used by every view that hosts a GeoMap; the host decides where it goes.
 Row {
     id: root
 
@@ -29,7 +30,7 @@ Row {
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     Rectangle {
-        objectName: "flyViewGeoMapModeButton"
+        objectName: "geoMapModeButton"
 
         // Shows the mode a click switches to (UI tests read this too)
         property string text: root._camera && root._camera.mode === GeoMapCamera.Mode2D ? qsTr("3D") : qsTr("2D")
@@ -59,7 +60,7 @@ Row {
     }
 
     Rectangle {
-        objectName: "flyViewGeoMapCompassButton"
+        objectName: "geoMapCompassButton"
         width: root._diameter
         height: root._diameter
         radius: root._diameter / 2

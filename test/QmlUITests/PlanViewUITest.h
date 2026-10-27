@@ -31,10 +31,11 @@ private slots:
     void _testVTOLTakeoffChoices();
 
 private:
-    /// Adds the "tabbedPanel" column with a tree and a tabbed row; these tests run against both Plan panels.
+    /// Adds the "tabbedPanel" and "geoMapEngine" columns with one row per Plan panel and map engine combination;
+    /// these tests run against all of them.
     static void _addPanelData();
 
-    /// Fetches the "tabbedPanel" column and selects that panel; call before startUI().
+    /// Fetches the "tabbedPanel" and "geoMapEngine" columns and selects them; call before startUI().
     void _selectPanelFromTestData();
 
     enum class PanelTab
@@ -48,6 +49,7 @@ private:
     void _showPanelTab(PanelTab tab);
 
     bool _tabbedPanel = false;
+    bool _geoMapEngine = false;
 
     /// Complete expected state of all Plan view UI under test
     struct PlanUIState {

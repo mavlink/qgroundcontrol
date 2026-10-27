@@ -21,6 +21,10 @@ public:
     static QString getDatabaseFilePath() { return _databaseFilePath; }
     static QString getCachePath() { return _cachePath; }
 
+    /// Creates the cache directory and database location once. The constructor does this too, so callers only need
+    /// it when they use the cache without a QtLocation map.
+    static void ensureInitialized();
+
 private:
     // QString tileSpecToFilename(const QGeoTileSpec &spec, const QString &format, const QString &directory) const final;
     // QGeoTileSpec filenameToTileSpec(const QString &filename) const final;
