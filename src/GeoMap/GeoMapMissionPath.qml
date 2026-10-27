@@ -15,6 +15,8 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.GeoMap
 
+import "GeoMapAltitude.js" as GeoMapAltitude
+
 /// Mission path for the GeoMap: a 3D ribbon connecting every mission item in
 /// sequence order (simple items at their coordinate; complex items via their
 /// generic entryCoordinate/exitCoordinate, so the ribbon routes straight
@@ -34,6 +36,7 @@ GeoMapItem {
 
     property var missionController
     property var vehicle       ///< Active vehicle, for the RTL-to-home segment
+    property var plannedHomePosition: QtPositioning.coordinate()  ///< Return endpoint of a plan being edited, preferred over the vehicle's home
     // DEM-vs-home-AMSL bias (see GeoMapVehicleItem), computed once by the
     // consumer for the active vehicle and shared with GeoMapMissionItems
     // instead of being re-sampled here independently
@@ -45,6 +48,7 @@ GeoMapItem {
 
     altitudeMode: GeoMapItem.Absolute
     crossfade3D: false
+    node3DOpacity: opacity
     coordinate: {
         if (!_geometry || !_geometry.anchorCoordinate.isValid) {
             return QtPositioning.coordinate()
@@ -63,6 +67,19 @@ GeoMapItem {
     // Pixel-to-scene-unit factor at unit distance; the shader scales it by
     // each vertex's own camera distance
     readonly property real _screenFactor: _camera ? _camera.unitsPerPixelAtUnitDistance : 0
+
+    // terrainHeightAt does not notify: bumped as terrain tiles arrive while a route point waits on its terrain query
+    property int _terrainRev: 0
+
+    // Altitude to draw a route point at; amsl is NaN while a terrain-frame item waits on its terrain query
+    function _displayAmsl(visualItem, coordinate, amsl) {
+        root._terrainRev
+        return GeoMapAltitude.displayAmsl(
+            amsl,
+            visualItem.isSimpleItem ? visualItem.altitude.rawValue : NaN,
+            isNaN(amsl) && root.surfaceModel ? root.surfaceModel.terrainHeightAt(coordinate) : NaN,
+            root.homeTerrainBias)
+    }
 
     // Ordered route points ({coordinate, leg}) of every item the vehicle
     // actually routes through, mirroring MissionController::_recalcFlightPathSegments:
@@ -95,8 +112,10 @@ GeoMapItem {
             for (let i = 1; i < items.count; ++i) {
                 const visualItem = items.get(i)
                 if (visualItem.isSimpleItem && visualItem.command === MAVLinkEnums.MAV_CMD_NAV_RETURN_TO_LAUNCH) {
-                    if (points.length > 0 && root.vehicle && root.vehicle.homePosition.isValid) {
-                        points.push({ coordinate: root.vehicle.homePosition, leg: GeoMapMissionPath.Generic })
+                    const returnCoordinate = root.plannedHomePosition.isValid ? root.plannedHomePosition
+                                           : (root.vehicle ? root.vehicle.homePosition : QtPositioning.coordinate())
+                    if (points.length > 0 && returnCoordinate.isValid) {
+                        points.push({ coordinate: returnCoordinate, leg: GeoMapMissionPath.Generic })
                     }
                     break
                 }
@@ -107,7 +126,9 @@ GeoMapItem {
                     points.push({
                         coordinate: QtPositioning.coordinate(visualItem.entryCoordinate.latitude,
                                                              visualItem.entryCoordinate.longitude,
-                                                             visualItem.amslEntryAlt),
+                                                             root._displayAmsl(visualItem, visualItem.entryCoordinate,
+                                                                               visualItem.amslEntryAlt)),
+                        pendingAmsl: isNaN(visualItem.amslEntryAlt),
                         leg: visualItem.isTakeoffItem ? GeoMapMissionPath.Takeoff
                              : visualItem.isLandCommand ? GeoMapMissionPath.Land
                              : (visualItem.isSimpleItem && visualItem.altitudeFrame === QGroundControl.AltitudeFrameTerrain) ? GeoMapMissionPath.Terrain
@@ -120,7 +141,9 @@ GeoMapItem {
                         points.push({
                             coordinate: QtPositioning.coordinate(visualItem.exitCoordinate.latitude,
                                                                  visualItem.exitCoordinate.longitude,
-                                                                 visualItem.amslExitAlt),
+                                                                 root._displayAmsl(visualItem, visualItem.exitCoordinate,
+                                                                                   visualItem.amslExitAlt)),
+                            pendingAmsl: isNaN(visualItem.amslExitAlt),
                             leg: GeoMapMissionPath.Interior
                         })
                     }
@@ -132,7 +155,8 @@ GeoMapItem {
                     points.unshift({
                         coordinate: QtPositioning.coordinate(home.coordinate.latitude,
                                                              home.coordinate.longitude,
-                                                             home.amslEntryAlt),
+                                                             root._displayAmsl(home, home.coordinate, home.amslEntryAlt)),
+                        pendingAmsl: isNaN(home.amslEntryAlt),
                         leg: GeoMapMissionPath.Generic
                     })
                 }
@@ -321,12 +345,16 @@ GeoMapItem {
     onHomeTerrainBiasChanged: _scheduleCollisionRefresh()
 
     readonly property bool _hasTerrainLeg: _routePoints.some(p => p.leg === GeoMapMissionPath.Terrain)
+    readonly property bool _hasPendingAmsl: _routePoints.some(p => p.pendingAmsl)
 
     Connections {
         target: root.surfaceModel
 
         // Draped legs follow the drawn mesh, which also changes on patch churn
         function onTerrainHeightsChanged() {
+            if (root._hasPendingAmsl) {
+                root._terrainRev++
+            }
             if (root._hasTerrainLeg) {
                 Qt.callLater(root._redrapePath)
             }
@@ -354,6 +382,9 @@ GeoMapItem {
                 materials: CustomMaterial {
                     shadingMode: CustomMaterial.Unshaded
                     cullMode: Material.NoCulling
+                    // Opaque unless the path is dimmed: blending would move it to the transparent pass
+                    sourceBlend: root.node3DOpacity < 1 ? CustomMaterial.SrcAlpha : CustomMaterial.NoBlend
+                    destinationBlend: root.node3DOpacity < 1 ? CustomMaterial.OneMinusSrcAlpha : CustomMaterial.NoBlend
                     vertexShader: "shaders/flightpath.vert"
                     fragmentShader: "shaders/flightpath.frag"
 
@@ -361,6 +392,7 @@ GeoMapItem {
                     property real screenFactor: root._screenFactor
                     property color pathColor: root.lineColor
                     property color highlightColor: root.collisionColor
+                    property real pathOpacity: root.node3DOpacity
                     // Ramps in as the terrain flattens, effectively disabling
                     // depth testing in 2D mode (see flightpath.vert)
                     property real depthPull: root.scene ? 0.5 * (1.0 - root.scene.terrainScale) : 0.0

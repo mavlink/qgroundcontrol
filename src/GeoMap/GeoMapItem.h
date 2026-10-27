@@ -49,6 +49,7 @@ class GeoMapItem : public QQuickItem
     Q_PROPERTY(QQmlComponent* delegate3D READ delegate3D WRITE setDelegate3D NOTIFY delegate3DChanged)
     Q_PROPERTY(QObject* node3D READ node3D NOTIFY node3DChanged)
     Q_PROPERTY(bool crossfade3D READ crossfade3D WRITE setCrossfade3D NOTIFY crossfade3DChanged)
+    Q_PROPERTY(qreal node3DOpacity READ node3DOpacity WRITE setNode3DOpacity NOTIFY node3DOpacityChanged)
     Q_PROPERTY(qreal contentOpacity2D READ contentOpacity2D NOTIFY contentOpacity2DChanged)
 
 public:
@@ -114,6 +115,12 @@ public:
 
     void setCrossfade3D(bool crossfade3D);
 
+    /// Dimming of the delegate3D node on top of the crossfade (1.0 = none). The node does not follow
+    /// the QQuickItem opacity of this item or its ancestors, so views that dim their 2D content set this too.
+    qreal node3DOpacity() const { return _node3DOpacity; }
+
+    void setNode3DOpacity(qreal node3DOpacity);
+
     /// Opacity for this item's 2D visuals: fades out during the 2D->3D
     /// transition when a delegate3D is set, 1.0 otherwise. Bind children's
     /// opacity to it (multiplying any dimming of their own).
@@ -130,6 +137,7 @@ signals:
     void delegate3DChanged();
     void node3DChanged();
     void crossfade3DChanged();
+    void node3DOpacityChanged();
     void contentOpacity2DChanged();
 
 private slots:
@@ -155,5 +163,6 @@ private:
     QQmlComponent* _delegate3D = nullptr;
     QObject* _node3D = nullptr;
     bool _crossfade3D = true;
+    qreal _node3DOpacity = 1.0;
     qreal _contentOpacity2D = 1.0;
 };

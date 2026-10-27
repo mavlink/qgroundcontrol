@@ -25,10 +25,14 @@
         },
         {
             "heading": "Experimental",
-            "keywords": ["plan panel", "tabs", "tree view"],
+            "keywords": ["plan panel", "tabs", "tree view", "geomap", "3d map"],
             "controls": [
                 {
                     "setting": "planViewSettings.useNewPlanPanel"
+                },
+                {
+                    "setting": "planViewSettings.useGeoMapEngine",
+                    "showWhen": "QGroundControl.settingsManager.planViewSettings.useNewPlanPanel.rawValue"
                 }
             ]
         }

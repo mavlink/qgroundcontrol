@@ -64,6 +64,15 @@
             "default": true,
             "label": "Use tabbed Plan panel (experimental)",
             "keywords": "plan panel tree tabs experimental"
+        },
+        {
+            "name": "useGeoMapEngine",
+            "shortDesc": "Use the experimental GeoMap 2D/3D engine for the Plan View map (preview feature). Requires the tabbed Plan panel. Waypoints can be dragged on the map, but fence, rally point and pattern editing on the map is not supported yet.",
+            "type": "bool",
+            "default": false,
+            "label": "Use GeoMap engine (preview)",
+            "keywords": "geomap 3d map engine preview experimental plan",
+            "qgcRebootRequired": true
         }
     ]
 }

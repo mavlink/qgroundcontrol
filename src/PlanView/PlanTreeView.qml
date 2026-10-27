@@ -210,7 +210,7 @@ TreeView {
         implicitWidth: root.width
         implicitHeight: (loader.item ? loader.item.height : 1) + (separatorLine.visible ? separatorLine.height + root.rowSpacing : 0)
         enabled: !root._createNewPlanMode || _enabledInCreateMode
-        opacity: enabled ? 1 : root.editorMap._nonInteractiveOpacity
+        opacity: enabled || !root.editorMap ? 1 : root.editorMap._nonInteractiveOpacity
         width: root.width
 
         required property TreeView treeView

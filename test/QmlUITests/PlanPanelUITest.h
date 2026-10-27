@@ -18,7 +18,7 @@ public:
     PlanPanelUITest() = default;
 
 private slots:
-    void _testFlagDefaultsToTabbedPanel();
+    void _testFlagDefaults();
     void _testFlagOffShowsTreeView();
     void _testEmptyPlanStartsOnPlanTab();
     void _testTabSelectionDrivesEditingLayer();
@@ -30,6 +30,23 @@ private slots:
     void _testPanelHeightSelectsLayout();
     void _testDividerResizesListAndInspector();
     void _testItemMenuActsOnInspectedItem();
+    void _testGeoMapMarkerClickSelectsItem();
+    void _testGeoMapMarkerShowsWhileTerrainAltitudePending();
+    void _testGeoMapTerrainWaypointDragKeepsTheMarkerUnderTheCursor();
+    void _testGeoMapMissionPathReturnsToPlannedHome();
+    void _testFenceTabAddsFenceInsideTheGeoMapViewport_data();
+    void _testFenceTabAddsFenceInsideTheGeoMapViewport();
+    void _testFenceTabAddsFenceInsideTheViewportOverTheDateline_data();
+    void _testFenceTabAddsFenceInsideTheViewportOverTheDateline();
+    void _testGeoMapKeepsTabbedPanelWhenTheSettingIsTurnedOff();
+    void _testGeoMapDoesNotRecenterOnOffscreenVehicleInPlanView();
+    void _testGeoMapControlsReceiveClicksOverMissionMarkers();
+    void _testGeoMapDimsMissionOutsideTheMissionLayer();
+    void _testGeoMapDimsLandingPatternOutsideTheMissionLayer();
+    void _testGeoMapMarkerClickOutsideTheMissionLayerReachesTheMap();
+    void _testGeoMapMarkerDragMovesOnlyTheCurrentItem_data();
+    void _testGeoMapMarkerDragMovesOnlyTheCurrentItem();
+    void _testGeoMapModeButtonTogglesCameraMode();
     void _testVehicleClassComboChangesToolStrip_data();
     void _testVehicleClassComboChangesToolStrip();
     void _testComplexItemEditorFitsInspector();
@@ -41,8 +58,9 @@ private slots:
     void _testRallyInspectorStepsInDrillIn();
 
 private:
-    /// Turns the panel flag on, boots the UI and opens the Plan view with the map at a known center
-    void _startPlanPanel();
+    /// Turns the panel flag on, boots the UI and opens the Plan view with the map at a known center.
+    /// \a geoMapEngine selects the GeoMap engine for the Plan map instead of QtLocation.
+    void _startPlanPanel(bool geoMapEngine = false);
 
     /// Opens the Plan view of an already booted UI and puts the map at a known center
     void _openPlanView();

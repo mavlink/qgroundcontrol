@@ -23,4 +23,5 @@ public:
     DEFINE_SETTINGFACT(showGimbalOnlyWhenSet)
     DEFINE_SETTINGFACT(vtolTransitionDistance)
     DEFINE_SETTINGFACT(useNewPlanPanel)
+    DEFINE_SETTINGFACT(useGeoMapEngine)
 };

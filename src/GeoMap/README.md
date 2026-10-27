@@ -4,7 +4,8 @@ A custom 2D/3D map engine built on Qt Quick 3D, currently an experimental previe
 alternative to QtLocation's `Map`. The ground is a mesh shaped by real elevation
 data and draped with standard map tile imagery, viewed through a gesture-driven
 camera that smoothly transitions between a classic top-down 2D map and a tilted 3D
-view. Used by the FlyView (`FlyViewGeoMapAdapter.qml` / `FlyViewGeoMap.qml`).
+view. Used by the FlyView (`FlyViewGeoMapAdapter.qml` / `FlyViewGeoMap.qml`) and by the Plan View
+(`PlanViewGeoMap.qml`), where the current simple mission item can be dragged.
 
 ## The big picture
 
@@ -126,6 +127,12 @@ underpins visibility estimation and overlay placement.
 `GeoMap.qml` composes all of the above into the top-level map control: camera,
 scene, patch model, `View3D`, gesture handlers, fog haze over the distant LOD ring,
 and the 2D↔3D mode animation.
+
+`GeoMapView.qml` extends it into the shared base of the Fly and Plan views: the writable
+`center`/`zoomLevel` and the `toCoordinate`/`fromCoordinate`/`setVisibleRegion` functions that
+`FlightMap` offers, the view shared across both views and restarts, and optionally the
+`GeoMapControls` (2D/3D toggle, compass) and a map scale. The Plan View embeds them; the Fly View
+places them itself, because it also positions the occluders and the picture-in-picture swap.
 
 ## Overlays: putting things on the map
 

@@ -147,6 +147,17 @@ void GeoMapItem::setCrossfade3D(bool crossfade3D)
     emit crossfade3DChanged();
 }
 
+void GeoMapItem::setNode3DOpacity(qreal node3DOpacity)
+{
+    node3DOpacity = std::clamp(node3DOpacity, 0.0, 1.0);
+    if (node3DOpacity == _node3DOpacity) {
+        return;
+    }
+    _node3DOpacity = node3DOpacity;
+    _updateCrossfade();
+    emit node3DOpacityChanged();
+}
+
 void GeoMapItem::_connectCamera()
 {
     GeoMapCamera* const camera = _scene ? _scene->camera() : nullptr;
@@ -251,7 +262,7 @@ void GeoMapItem::_updateCrossfade()
 {
     if (!_crossfade3D) {
         if (_node3D) {
-            _node3D->setProperty("opacity", 1.0);
+            _node3D->setProperty("opacity", _node3DOpacity);
         }
         if (_contentOpacity2D != 1.0) {
             _contentOpacity2D = 1.0;
@@ -261,7 +272,7 @@ void GeoMapItem::_updateCrossfade()
     }
     const qreal terrainScale = _scene ? std::clamp(_scene->terrainScale(), 0.0, 1.0) : 0.0;
     if (_node3D) {
-        _node3D->setProperty("opacity", terrainScale);
+        _node3D->setProperty("opacity", terrainScale * _node3DOpacity);
     }
     const qreal contentOpacity2D = _node3D ? (1.0 - terrainScale) : 1.0;
     if (contentOpacity2D != _contentOpacity2D) {

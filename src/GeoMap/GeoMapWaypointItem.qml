@@ -15,6 +15,8 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.GeoMap
 
+import "GeoMapAltitude.js" as GeoMapAltitude
+
 /// Simple-mission waypoint marker for the GeoMap: a colored dot that
 /// crossfades into a 3D sphere, with an always-visible sequence-number label.
 /// Marker color matches the existing 2D FlyView convention (MissionItemIndexLabel):
@@ -33,11 +35,14 @@ GeoMapItem {
     property real size: ScreenTools.defaultFontPixelHeight * 1.5
     property bool collapsed: false  ///< Drawn by another marker of its overlap group (see GeoMapMissionItems)
     property bool grouped: false    ///< Stands for an overlap group: shows a "…" badge
+    property bool draggable: false  ///< The marker can be dragged to move its item; the map is not panned meanwhile
+    property bool pickable: true    ///< The marker takes clicks and drags; false lets them through to the map
+
+    signal clicked()
+    signal dragged(var coordinate)  ///< Horizontal position the marker was dragged to
 
     readonly property bool hasMarker: item ? item.isSimpleItem && item.specifiesCoordinate : false
     readonly property real smallIndicatorSize: size * 0.75
-
-    signal clicked()
 
     objectName: "geoMapWaypointMarker"
     width: size
@@ -46,14 +51,60 @@ GeoMapItem {
     altitudeMode: GeoMapItem.Absolute
     // item.amslEntryAlt is AMSL per QGC's own terrain-query pipeline, which
     // can disagree with GeoMap's own DEM tiles; bias-corrected the same way
-    // GeoMapVehicleItem aligns the vehicle marker to the rendered mesh
+    // GeoMapVehicleItem aligns the vehicle marker to the rendered mesh.
+    // It is NaN while a terrain-frame item waits on its terrain query.
+    // terrainHeightAt does not notify, so _terrainRev re-evaluates the fallback as terrain tiles arrive.
+    property int _terrainRev: 0
+    readonly property real _pendingTerrainHeight: {
+        root._terrainRev
+        return item && isNaN(item.amslEntryAlt) && surfaceModel ? surfaceModel.terrainHeightAt(item.coordinate) : NaN
+    }
+    readonly property real _amsl: !item ? NaN : GeoMapAltitude.displayAmsl(
+        item.amslEntryAlt,
+        item.isSimpleItem ? item.altitude.rawValue : NaN,
+        _pendingTerrainHeight,
+        homeTerrainBias)
     coordinate: item ? QtPositioning.coordinate(item.coordinate.latitude,
                                                 item.coordinate.longitude,
-                                                item.amslEntryAlt + homeTerrainBias)
+                                                _amsl + homeTerrainBias)
                      : QtPositioning.coordinate()
     visible: hasMarker && !collapsed
 
+    // Terrain-relative items stand at their height above the terrain, so moving one changes its height
+    readonly property bool _terrainRelative: !!item && item.isSimpleItem
+        && (item.altitudeFrame === QGroundControl.AltitudeFrameTerrain
+            || item.altitudeFrame === QGroundControl.AltitudeFrameCalcAboveTerrain)
+
+    // Coordinate on the horizontal plane at the marker's height that the cursor is over. A terrain-relative marker
+    // moves to the height it has at the picked position, so the pick is repeated at that height.
+    function _coordinateUnderCursor(target) {
+        const camera = root.scene.camera
+        let coordinate = camera.coordinateAtScreenPoint(target, root.scenePosition.z)
+        if (!root._terrainRelative || !root.surfaceModel) {
+            return coordinate
+        }
+        const sceneScale = root.scene.verticalScale * root.scene.terrainScale
+        for (let round = 0; round < 3 && coordinate.isValid; ++round) {
+            const height = root.surfaceModel.terrainHeightAt(coordinate) + root.item.altitude.rawValue
+            const refined = camera.coordinateAtScreenPoint(target, height * sceneScale)
+            if (!refined.isValid) {
+                break
+            }
+            coordinate = refined
+        }
+        return coordinate
+    }
+
     QGCPalette { id: qgcPal; colorGroupEnabled: root.enabled }
+
+    Connections {
+        target: root.surfaceModel
+        enabled: !!root.item && isNaN(root.item.amslEntryAlt)
+
+        function onTerrainHeightsChanged() {
+            root._terrainRev++
+        }
+    }
 
     // Matches MissionItemIndicator.qml's _isCurrentItem exactly: current item
     // (or a complex item with a current child) is highlighted
@@ -118,7 +169,53 @@ GeoMapItem {
     // this hit target follows the 3D sphere through the 2D<->3D crossfade
     MouseArea {
         anchors.fill: parent
-        onClicked: root.clicked()
+        enabled: root.pickable
+        // The map pan DragHandler would otherwise take over past the drag threshold
+        preventStealing: root.draggable
+
+        // Cursor-to-anchor offset at press, so the marker doesn't jump to the cursor
+        property point _grabOffset
+        property point _pressPosition
+        property bool _moved: false
+
+        function _parentPosition(mouse) {
+            return root.mapToItem(root.parent, mouse.x, mouse.y)
+        }
+
+        onPressed: (mouse) => {
+            // Modified drags are the map's orbit and look gestures
+            if (mouse.modifiers !== Qt.NoModifier) {
+                mouse.accepted = false
+                return
+            }
+            const pos = _parentPosition(mouse)
+            _pressPosition = pos
+            _grabOffset = Qt.point(root.x + root.anchorPoint.x - pos.x, root.y + root.anchorPoint.y - pos.y)
+            _moved = false
+        }
+
+        onPositionChanged: (mouse) => {
+            if (!root.draggable || !pressed) {
+                return
+            }
+            const pos = _parentPosition(mouse)
+            if (!_moved && Math.hypot(pos.x - _pressPosition.x, pos.y - _pressPosition.y) < Qt.styleHints.startDragDistance) {
+                return
+            }
+            _moved = true
+            // The marker sits on the horizontal plane at its height, so it stays under the cursor at any tilt
+            const target = Qt.point(pos.x + _grabOffset.x, pos.y + _grabOffset.y)
+            const coordinate = root._coordinateUnderCursor(target)
+            if (coordinate.isValid) {
+                root.dragged(coordinate)
+            }
+        }
+
+        onClicked: {
+            if (!_moved) {
+                root.clicked()
+            }
+        }
     }
 
     GeoMapDropShadow {

@@ -31,10 +31,15 @@ Item {
     property var scene
     property var surfaceModel
     property real homeTerrainBias: 0   ///< See GeoMapWaypointItem.homeTerrainBias
+    property bool interactive: false   ///< The current item's marker can be dragged
+    property bool pickable: true       ///< The markers take clicks; false lets them through to the map
 
     /// A marker was clicked; item is its VisualMissionItem (mirrors
     /// MissionItemMapVisual.clicked as consumed by PlanMapItems)
     signal itemClicked(var item)
+
+    /// The current item's marker was dragged; coordinate is the horizontal position it was dragged to
+    signal itemDragged(var item, var coordinate)
 
     /// A marker overlapping others was clicked; items are the group's
     /// VisualMissionItems by sequence number, marker the clicked GeoMapWaypointItem
@@ -185,8 +190,17 @@ Item {
                     item.homeTerrainBias = Qt.binding(() => root.homeTerrainBias)
                 }
                 const visual = item
+                if (visual.pickable !== undefined) {
+                    visual.pickable = Qt.binding(() => root.pickable)
+                }
+                if (visual.node3DOpacity !== undefined) {
+                    // The 3D node does not follow this container's opacity
+                    visual.node3DOpacity = Qt.binding(() => root.opacity)
+                }
                 if (visual.hasOwnProperty("collapsed")) {
                     visual.clicked.connect(() => root._markerClicked(visual))
+                    visual.draggable = Qt.binding(() => root.interactive && object.isCurrentItem)
+                    visual.dragged.connect((coordinate) => root.itemDragged(object, coordinate))
                     root._scheduleRegroup()
                 } else if (visual.clicked !== undefined) {
                     visual.clicked.connect(() => root.itemClicked(object))
