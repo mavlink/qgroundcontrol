@@ -1,14 +1,16 @@
 #include "ParameterEditorControllerTest.h"
 
-#include <QtCore/QString>
-#include <QtCore/QRegularExpression>
-#include <QtTest/QTest>
-#include <QtTest/QSignalSpy>
+#include <limits>
 
+#include <QtCore/QRegularExpression>
+#include <QtCore/QString>
+#include <QtTest/QSignalSpy>
+#include <QtTest/QTest>
+
+#include "Fixtures/RAIIFixtures.h"
 #include "ParameterEditorController.h"
 #include "ParameterManager.h"
 #include "QmlObjectListModel.h"
-#include "Fixtures/RAIIFixtures.h"
 #include "UnitTest.h"
 
 UT_REGISTER_TEST(ParameterEditorControllerTest, TestLabel::Integration, TestLabel::Vehicle)
@@ -60,6 +62,29 @@ static const char* kMPParamsMixed =
     "SYS_AUTOSTART,4002\n"
     "COM_DL_LOSS_T,10\n"
     "NO_SUCH_PARAM,1\n";
+
+// QGC file saved when these int32 parameters were floats (type 9): a positive and a negative change (like RC1_REV
+// in issue 15357), and a negative value matching the vehicle
+static const char* kQGCParamsWholeNumberFloats =
+    "# Onboard parameters for Vehicle 1\n"
+    "#\n"
+    "# Vehicle-Id Component-Id Name Value Type\n"
+    "1\t1\tSYS_AUTOSTART\t4002.000000000000000000\t9\n"
+    "1\t1\tCOM_DL_LOSS_T\t-1.000000000000000000\t9\n"
+    "1\t1\tCOM_FLTMODE1\t-1.000000000000000000\t9\n";
+
+// QGC file with values that cannot be converted to the int32 vehicle parameters: a fraction, a fraction too small
+// for a double to keep, an exponent, and a whole number out of range. Plus a non-number for a parameter not on the
+// vehicle.
+static const char* kQGCParamsInvalidValues =
+    "# Onboard parameters for Vehicle 1\n"
+    "#\n"
+    "# Vehicle-Id Component-Id Name Value Type\n"
+    "1\t1\tSYS_AUTOSTART\t4002.5\t9\n"
+    "1\t1\tCOM_FLTMODE1\t1.0000000000000000001\t9\n"
+    "1\t1\tCOM_FLTMODE2\t3e1\t9\n"
+    "1\t1\tCOM_DL_LOSS_T\t5000000000.000000\t9\n"
+    "1\t1\tNO_SUCH_PARAM\tabc\t6\n";
 
 // Verify the diff summary counter invariant: parsed == diffList (sendable + cannot-send) + unchanged + readOnly.
 // MP-format missing params are included in diffList as cannot-send rows.
@@ -257,6 +282,7 @@ void ParameterEditorControllerTest::_clearDiffResetsState()
     QSignalSpy unchangedSpy(&controller, &ParameterEditorController::diffUnchangedCountChanged);
     QSignalSpy missingSpy(&controller, &ParameterEditorController::diffMissingParamsChanged);
     QSignalSpy noVehicleSpy(&controller, &ParameterEditorController::diffNoVehicleCountChanged);
+    QSignalSpy invalidSpy(&controller, &ParameterEditorController::diffInvalidParamsChanged);
 
     controller.clearDiff();
 
@@ -272,6 +298,7 @@ void ParameterEditorControllerTest::_clearDiffResetsState()
     QCOMPARE(unchangedSpy.count(), 1);
     QCOMPARE(missingSpy.count(), 1);
     QCOMPARE(noVehicleSpy.count(), 0);  // was already 0
+    QCOMPARE(invalidSpy.count(), 0);    // was already empty
 
     // Clearing an already-clear diff must not emit anything
     controller.clearDiff();
@@ -279,6 +306,7 @@ void ParameterEditorControllerTest::_clearDiffResetsState()
     QCOMPARE(unchangedSpy.count(), 1);
     QCOMPARE(missingSpy.count(), 1);
     QCOMPARE(noVehicleSpy.count(), 0);
+    QCOMPARE(invalidSpy.count(), 0);
 }
 
 void ParameterEditorControllerTest::_diffSignalsEmitOnlyOnChange()
@@ -295,6 +323,7 @@ void ParameterEditorControllerTest::_diffSignalsEmitOnlyOnChange()
     QSignalSpy noVehicleSpy(&controller, &ParameterEditorController::diffNoVehicleCountChanged);
     QSignalSpy sendableSpy(&controller, &ParameterEditorController::diffSendableCountChanged);
     QSignalSpy missingSpy(&controller, &ParameterEditorController::diffMissingParamsChanged);
+    QSignalSpy invalidSpy(&controller, &ParameterEditorController::diffInvalidParamsChanged);
     QSignalSpy otherVehicleSpy(&controller, &ParameterEditorController::diffOtherVehicleChanged);
     QSignalSpy multipleComponentsSpy(&controller, &ParameterEditorController::diffMultipleComponentsChanged);
 
@@ -314,6 +343,7 @@ void ParameterEditorControllerTest::_diffSignalsEmitOnlyOnChange()
     // Properties whose values did not change must not emit at all
     QCOMPARE(readOnlySpy.count(), 0);
     QCOMPARE(noVehicleSpy.count(), 0);
+    QCOMPARE(invalidSpy.count(), 0);
     QCOMPARE(otherVehicleSpy.count(), 0);
     QCOMPARE(multipleComponentsSpy.count(), 0);
 }
@@ -353,4 +383,213 @@ void ParameterEditorControllerTest::_sendDiffUnknownParamStopsAfterWriteFailure(
     QVERIFY_NO_SIGNAL_WAIT(readFailureSpy, 250);
     QCOMPARE(readFailureSpy.count(), 0);
     QCOMPARE(readSuccessSpy.count(), 0);
+}
+
+void ParameterEditorControllerTest::_buildDiffWholeNumberFloatForIntParam()
+{
+    TestFixtures::TempFileFixture tempFile(QStringLiteral("test_XXXXXX.params"));
+    QVERIFY(tempFile.isValid());
+    QVERIFY(tempFile.write(QByteArray(kQGCParamsWholeNumberFloats)));
+
+    ParameterEditorController controller;
+    QVERIFY(controller.buildDiffFromFile(tempFile.path()));
+
+    QCOMPARE(controller.property("diffParsedCount").toInt(), 3);
+    QCOMPARE(controller.property("diffUnchangedCount").toInt(), 1);
+    QCOMPARE(controller.property("diffSendableCount").toInt(), 2);
+    QVERIFY(controller.property("diffInvalidParams").toStringList().isEmpty());
+    QCOMPARE(controller.diffList()->count(), 2);
+
+    const QStringList changedNames = {QStringLiteral("SYS_AUTOSTART"), QStringLiteral("COM_DL_LOSS_T")};
+    const QList<int> changedValues = {4002, -1};
+    for (int i = 0; i < controller.diffList()->count(); i++) {
+        const auto* diff = controller.diffList()->value<ParameterEditorDiff*>(i);
+        QVERIFY(diff);
+        QCOMPARE(diff->name, changedNames.at(i));
+        QVERIFY(!diff->invalidFileValue);
+        QVERIFY(!diff->cannotSend);
+        QVERIFY(diff->load);
+        QCOMPARE(diff->fileValueVar.typeId(), QMetaType::Int);
+        QCOMPARE(diff->fileValueVar.toInt(), changedValues.at(i));
+    }
+    verifyDiffInvariant(controller);
+}
+
+void ParameterEditorControllerTest::_buildDiffInvalidFileValues()
+{
+    TestFixtures::TempFileFixture tempFile(QStringLiteral("test_XXXXXX.params"));
+    QVERIFY(tempFile.isValid());
+    QVERIFY(tempFile.write(QByteArray(kQGCParamsInvalidValues)));
+
+    const QStringList invalidNames = {
+        QStringLiteral("SYS_AUTOSTART"), QStringLiteral("COM_FLTMODE1"),  QStringLiteral("COM_FLTMODE2"),
+        QStringLiteral("COM_DL_LOSS_T"), QStringLiteral("NO_SUCH_PARAM"),
+    };
+    const QStringList rawFileValues = {
+        QStringLiteral("4002.5"), QStringLiteral("1.0000000000000000001"),
+        QStringLiteral("3e1"),    QStringLiteral("5000000000.000000"),
+        QStringLiteral("abc"),
+    };
+    const qsizetype noVehicleIndex = invalidNames.count() - 1;
+
+    ParameterManager* const paramMgr = parameterManager();
+    QVERIFY(paramMgr);
+    QList<Fact*> vehicleFacts;
+    QVariantList valuesBefore;
+    for (qsizetype i = 0; i < noVehicleIndex; i++) {
+        Fact* const fact = paramMgr->getParameter(ParameterManager::defaultComponentId, invalidNames.at(i));
+        vehicleFacts.append(fact);
+        valuesBefore.append(fact->rawValue());
+    }
+
+    ParameterEditorController controller;
+    QSignalSpy invalidSpy(&controller, &ParameterEditorController::diffInvalidParamsChanged);
+    for (const QString& name : invalidNames) {
+        expectLogMessage("QMLControls.ParameterEditorController", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("invalid file value.*%1").arg(name)));
+    }
+    QVERIFY(controller.buildDiffFromFile(tempFile.path()));
+    for (qsizetype i = 0; i < invalidNames.count(); i++) {
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(invalidSpy.count(), 1);
+
+    QCOMPARE(controller.property("diffParsedCount").toInt(), invalidNames.count());
+    QCOMPARE(controller.property("diffSendableCount").toInt(), 0);
+    QCOMPARE(controller.property("diffSelectedCount").toInt(), 0);
+    QCOMPARE(controller.property("diffInvalidParams").toStringList(), invalidNames);
+    QVERIFY(controller.property("diffMissingParams").toStringList().isEmpty());
+    QCOMPARE(controller.diffList()->count(), invalidNames.count());
+    verifyDiffInvariant(controller);
+
+    for (int i = 0; i < controller.diffList()->count(); i++) {
+        const auto* diff = controller.diffList()->value<ParameterEditorDiff*>(i);
+        QVERIFY(diff);
+        QCOMPARE(diff->name, invalidNames.at(i));
+        QCOMPARE(diff->fileValue, rawFileValues.at(i));
+        QVERIFY(diff->invalidFileValue);
+        QVERIFY(diff->cannotSend);
+        QVERIFY(!diff->load);
+        // Rows on the vehicle show the vehicle's value; the row new to the vehicle has none
+        if (i == noVehicleIndex) {
+            QVERIFY(diff->noVehicleValue);
+        } else {
+            QVERIFY(!diff->noVehicleValue);
+            QCOMPARE(diff->vehicleValue, vehicleFacts.at(i)->enumOrValueString());
+            QCOMPARE(diff->units, vehicleFacts.at(i)->cookedUnits());
+        }
+    }
+
+    controller.sendDiff();
+    for (qsizetype i = 0; i < vehicleFacts.count(); i++) {
+        QCOMPARE(vehicleFacts.at(i)->rawValue(), valuesBefore.at(i));
+    }
+
+    controller.clearDiff();
+    QVERIFY(controller.property("diffInvalidParams").toStringList().isEmpty());
+    QCOMPARE(invalidSpy.count(), 2);
+}
+
+// Drives _convertFileValue for every MAVLink integer type through a QGC-format parameter that is not on the vehicle,
+// since those are converted using the file's type column. Rows without an expected value must be rejected.
+void ParameterEditorControllerTest::_buildDiffFileValueConversion_data()
+{
+    QTest::addColumn<int>("mavParamType");
+    QTest::addColumn<QString>("fileValue");
+    QTest::addColumn<QVariant>("expected");
+
+    constexpr int kUint8 = 1;
+    constexpr int kInt8 = 2;
+    constexpr int kUint16 = 3;
+    constexpr int kInt16 = 4;
+    constexpr int kUint32 = 5;
+    constexpr int kInt32 = 6;
+    constexpr int kUint64 = 7;
+    constexpr int kInt64 = 8;
+    constexpr int kReal32 = 9;
+    const QVariant invalid;
+
+    QTest::newRow("int32 negative whole float") << kInt32 << "-1.000000000000000000" << QVariant(-1);
+    QTest::newRow("int32 zero float") << kInt32 << "0.0" << QVariant(0);
+    QTest::newRow("int32 negative zero float") << kInt32 << "-0.0" << QVariant(0);
+    QTest::newRow("int32 leading plus") << kInt32 << "+5" << QVariant(5);
+    QTest::newRow("int32 trailing dot") << kInt32 << "7." << QVariant(7);
+    QTest::newRow("int32 max float") << kInt32 << "2147483647.0" << QVariant(2147483647);
+    QTest::newRow("int32 min float") << kInt32 << "-2147483648.0" << QVariant(static_cast<int>(-2147483648LL));
+    QTest::newRow("int32 above max") << kInt32 << "2147483648.0" << invalid;
+    QTest::newRow("int32 below min") << kInt32 << "-2147483649" << invalid;
+    QTest::newRow("int32 fraction") << kInt32 << "1.5" << invalid;
+    QTest::newRow("int32 exponent") << kInt32 << "1e3" << invalid;
+    QTest::newRow("int32 empty fraction digits") << kInt32 << ".0" << invalid;
+
+    QTest::newRow("int8 max float") << kInt8 << "127.0" << QVariant(127);
+    QTest::newRow("int8 min") << kInt8 << "-128" << QVariant(-128);
+    QTest::newRow("int8 above max float") << kInt8 << "128.0" << invalid;
+    QTest::newRow("int8 below min") << kInt8 << "-129" << invalid;
+    QTest::newRow("int8 wraps in QVariant") << kInt8 << "300" << invalid;
+
+    QTest::newRow("int16 max float") << kInt16 << "32767.0" << QVariant(32767);
+    QTest::newRow("int16 above max") << kInt16 << "32768" << invalid;
+
+    QTest::newRow("uint8 max float") << kUint8 << "255.0" << QVariant(255u);
+    QTest::newRow("uint8 above max") << kUint8 << "256" << invalid;
+    QTest::newRow("uint8 negative float") << kUint8 << "-1.0" << invalid;
+
+    QTest::newRow("uint16 max float") << kUint16 << "65535.0" << QVariant(65535u);
+    QTest::newRow("uint16 above max") << kUint16 << "65536" << invalid;
+
+    QTest::newRow("uint32 max float") << kUint32 << "4294967295.0" << QVariant(4294967295u);
+    QTest::newRow("uint32 above max") << kUint32 << "4294967296" << invalid;
+    QTest::newRow("uint32 negative") << kUint32 << "-1" << invalid;
+
+    QTest::newRow("int64 max float") << kInt64 << "9223372036854775807.0"
+                                     << QVariant(std::numeric_limits<qlonglong>::max());
+    QTest::newRow("int64 min float") << kInt64 << "-9223372036854775808.0"
+                                     << QVariant(std::numeric_limits<qlonglong>::min());
+    QTest::newRow("int64 above max float") << kInt64 << "9223372036854775808.0" << invalid;
+    // 2^53 + 1 is not representable as a double, so this would round if parsed as one
+    QTest::newRow("int64 above 2^53 float") << kInt64 << "9007199254740993.0" << QVariant(9007199254740993LL);
+
+    QTest::newRow("uint64 max float") << kUint64 << "18446744073709551615.0"
+                                      << QVariant(std::numeric_limits<qulonglong>::max());
+    QTest::newRow("uint64 above max") << kUint64 << "18446744073709551616" << invalid;
+    QTest::newRow("uint64 negative float") << kUint64 << "-1.0" << invalid;
+
+    QTest::newRow("float fraction unaffected") << kReal32 << "1.5" << QVariant(1.5f);
+}
+
+void ParameterEditorControllerTest::_buildDiffFileValueConversion()
+{
+    QFETCH(int, mavParamType);
+    QFETCH(QString, fileValue);
+    QFETCH(QVariant, expected);
+
+    const QString fileContents =
+        QStringLiteral("# Vehicle-Id Component-Id Name Value Type\n1\t1\tNO_SUCH_PARAM\t%1\t%2\n")
+            .arg(fileValue)
+            .arg(mavParamType);
+    TestFixtures::TempFileFixture tempFile(QStringLiteral("test_XXXXXX.params"));
+    QVERIFY(tempFile.isValid());
+    QVERIFY(tempFile.write(fileContents.toUtf8()));
+
+    ParameterEditorController controller;
+    const bool expectInvalid = !expected.isValid();
+    if (expectInvalid) {
+        expectLogMessage("QMLControls.ParameterEditorController", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("invalid file value.*NO_SUCH_PARAM")));
+    }
+    QVERIFY(controller.buildDiffFromFile(tempFile.path()));
+    if (expectInvalid) {
+        verifyExpectedLogMessage();
+    }
+
+    QCOMPARE(controller.diffList()->count(), 1);
+    const auto* diff = controller.diffList()->value<ParameterEditorDiff*>(0);
+    QVERIFY(diff);
+    QCOMPARE(diff->invalidFileValue, expectInvalid);
+    QCOMPARE(diff->cannotSend, expectInvalid);
+    if (!expectInvalid) {
+        QCOMPARE(diff->fileValueVar.typeId(), expected.typeId());
+        QCOMPARE(diff->fileValueVar, expected);
+    }
 }

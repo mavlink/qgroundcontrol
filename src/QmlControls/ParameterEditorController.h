@@ -105,6 +105,7 @@ public:
     Q_PROPERTY(QString  vehicleValue        MEMBER vehicleValue     CONSTANT)
     Q_PROPERTY(bool     noVehicleValue      MEMBER noVehicleValue   CONSTANT)
     Q_PROPERTY(bool     cannotSend          MEMBER cannotSend       CONSTANT)
+    Q_PROPERTY(bool     invalidFileValue    MEMBER invalidFileValue CONSTANT)
     Q_PROPERTY(QString  units               MEMBER units            CONSTANT)
     Q_PROPERTY(bool     load                MEMBER load             NOTIFY loadChanged)
 
@@ -115,7 +116,8 @@ public:
     QVariant                    fileValueVar;
     QString                     vehicleValue;
     bool                        noVehicleValue  = false;
-    bool                        cannotSend      = false;    ///< Param not on vehicle and file has no type info (MP format) - shown but never sent
+    bool                        cannotSend      = false;    ///< Shown but never sent: MP param not on vehicle, or invalid file value
+    bool                        invalidFileValue = false;   ///< File value cannot be converted to the parameter's type
     QString                     units;
     bool                        load            = true;
 
@@ -148,6 +150,7 @@ class ParameterEditorController : public FactPanelController
     Q_PROPERTY(int                  diffSendableCount       READ diffSendableCount                                      NOTIFY diffSendableCountChanged)
     Q_PROPERTY(int                  diffSelectedCount       READ diffSelectedCount                                      NOTIFY diffSelectedCountChanged)
     Q_PROPERTY(QStringList          diffMissingParams       READ diffMissingParams                                      NOTIFY diffMissingParamsChanged)
+    Q_PROPERTY(QStringList          diffInvalidParams       READ diffInvalidParams                                      NOTIFY diffInvalidParamsChanged)
 
 public:
     explicit ParameterEditorController(QObject *parent = nullptr);
@@ -177,6 +180,7 @@ public:
     int                 diffSendableCount       (void) const { return _diffSendableCount; }
     int                 diffSelectedCount       (void) const { return _diffSelectedCount; }
     QStringList         diffMissingParams       (void) const { return _diffMissingParams; }
+    QStringList         diffInvalidParams       (void) const { return _diffInvalidParams; }
     QStringList         favoriteParameterNames  (void) const;
     void                setCurrentCategory  (QObject* currentCategory);
     void                setCurrentGroup     (QObject* currentGroup);
@@ -198,6 +202,7 @@ signals:
     void diffSendableCountChanged       (int diffSendableCount);
     void diffSelectedCountChanged       (int diffSelectedCount);
     void diffMissingParamsChanged       (const QStringList& diffMissingParams);
+    void diffInvalidParamsChanged       (const QStringList& diffInvalidParams);
     void parametersChanged              (void);
 
 private slots:
@@ -215,6 +220,12 @@ private:
     void _loadFavorites();
     void _saveFavorites();
     void _updateDiffSelectedCount();
+
+    /// Converts a parameter file value to @a metaData's type. Integer types are range checked for the exact type and
+    /// also accept whole-number floats (e.g. "-1.000000"), as written for parameters that have since changed from
+    /// float to integer.
+    static bool _convertFileValue(const FactMetaData& metaData, const QString& fileValueStr, QVariant& typedValue,
+                                  QString& errorString);
 
     /// Assigns value to member and emits changedSignal only if the value actually changed.
     template <typename T, typename SignalFn>
@@ -237,6 +248,7 @@ private:
     int                         _diffSendableCount      = 0;
     int                         _diffSelectedCount      = 0;
     QStringList                 _diffMissingParams;
+    QStringList                 _diffInvalidParams;
     QSet<QString>               _favoriteNames;
 
     QmlObjectListModel          _categories;
