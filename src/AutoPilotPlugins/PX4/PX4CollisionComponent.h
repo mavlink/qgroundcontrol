@@ -24,7 +24,11 @@ public:
 
     QUrl setupSource() const final;
 
-    QUrl summaryQmlSource() const final;
+    QUrl summaryQmlSource() const final { return QUrl(); }
+
+    QList<VehicleSummaryItem> summaryItems() const final;
+
+    QStringList summaryChangedTriggerList() const final { return {QStringLiteral("CP_DIST")}; }
 
     bool allowSetupWhileArmed() const final { return true; }
 

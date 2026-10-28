@@ -1,5 +1,7 @@
 #include "PX4CollisionComponent.h"
 
+#include "Fact.h"
+
 PX4CollisionComponent::PX4CollisionComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::UnknownVehicleComponent, parent)
     , _name(tr("Collision"))
@@ -28,8 +30,16 @@ QUrl PX4CollisionComponent::setupSource() const
         QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/PX4CollisionComponent.qml"));
 }
 
-QUrl PX4CollisionComponent::summaryQmlSource() const
+QList<VehicleSummaryItem> PX4CollisionComponent::summaryItems() const
 {
-    return QUrl::fromUserInput(
-        QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/PX4CollisionComponentSummary.qml"));
+    const Fact* const distance = _parameterFact(QStringLiteral("CP_DIST"));
+    if (!distance) {
+        return {};
+    }
+
+    if (distance->rawValue().toFloat() > 0) {
+        return {{tr("Collision Prevention"), _valueWithUnits(distance), VehicleSummaryItem::Normal}};
+    }
+
+    return {{tr("Collision Prevention"), tr("Disabled"), VehicleSummaryItem::Muted}};
 }

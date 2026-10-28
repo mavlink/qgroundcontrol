@@ -41,6 +41,16 @@ bool FTPManager::download(uint8_t fromCompId, const QString& fromURI, const QStr
         return false;
     }
 
+    // An empty path would make QDir fall back to the current working directory.
+    if (toDir.isEmpty()) {
+        qCWarning(FTPManagerLog) << "Cannot download. Destination directory is not set";
+        return false;
+    }
+    if (!QDir(toDir).exists()) {
+        qCWarning(FTPManagerLog) << "Cannot download. Destination directory does not exist:" << toDir;
+        return false;
+    }
+
     _downloadState.reset();
     _downloadState.toDir.setPath(toDir);
     _downloadState.checksize = checksize;

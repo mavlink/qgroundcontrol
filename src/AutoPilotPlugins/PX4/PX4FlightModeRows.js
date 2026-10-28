@@ -9,6 +9,7 @@
 //       midThresholdParam (switch) mid threshold of a three-position switch
 // Cell: customUi?      the row's own controls show the parameter, so it gets no generic cell
 
+// Mirrors PX4FlightModeConfig::kModeSlotCount
 var modeSlotCount = 6
 
 var _selectionChannelParam = "RC_MAP_FLTMODE"
@@ -272,31 +273,9 @@ function switchPosition(value, onThreshold, midThreshold) {
     return "off"
 }
 
-/// RC channels (1-based) of the mode buttons in RC_MAP_FLTM_BTN, lowest first. Channel N selects slot N in the list.
-/// PX4 uses at most six.
-function buttonChannels(mask) {
-    return _maskChannels(mask).slice(0, modeSlotCount)
-}
-
-/// Channels set in RC_MAP_FLTM_BTN that PX4 ignores, because only the lowest six get a slot
-function ignoredButtonChannels(mask) {
-    return _maskChannels(mask).slice(modeSlotCount)
-}
-
-function _maskChannels(mask) {
-    var channels = []
-    for (var bit = 0; bit < 18; bit++) {
-        if (mask & (1 << bit)) {
-            channels.push(bit + 1)
-        }
-    }
-    return channels
-}
-
-/// Mode slot (1-6) of the first mode button held down, 0 for none. valueOf(channel) returns the normalized channel
-/// value, or undefined without one.
-function buttonSlot(mask, valueOf) {
-    var channels = buttonChannels(mask)
+/// Mode slot (1-6) of the first mode button held down, 0 for none. channels are the button channels, lowest first,
+/// and valueOf(channel) returns the normalized channel value, or undefined without one.
+function buttonSlot(channels, valueOf) {
     for (var i = 0; i < channels.length; i++) {
         var value = valueOf(channels[i])
         if (value !== undefined && value > 0.5) {
@@ -308,23 +287,13 @@ function buttonSlot(mask, valueOf) {
 
 /// Mode slot to show after an RC update with mode buttons: the button held down, else the last one pressed, since a
 /// released button leaves its mode selected. 0 once no button channel has input.
-function nextButtonSlot(previous, mask, valueOf) {
-    var channels = buttonChannels(mask)
+function nextButtonSlot(previous, channels, valueOf) {
     var hasInput = channels.some(function (channel) { return valueOf(channel) !== undefined })
     if (!hasInput) {
         return 0
     }
-    var pressed = buttonSlot(mask, valueOf)
+    var pressed = buttonSlot(channels, valueOf)
     return pressed > 0 ? pressed : previous
-}
-
-/// "switch", "buttons" or "none" from RC_MAP_FLTMODE and RC_MAP_FLTM_BTN. PX4 ignores the buttons while a mode channel
-/// is set.
-function selectionMethod(modeChannel, buttonMask) {
-    if (modeChannel > 0) {
-        return "switch"
-    }
-    return buttonMask > 0 ? "buttons" : "none"
 }
 
 /// Parameter writes [{ param, value }] that turn off whatever the other methods use
@@ -404,45 +373,4 @@ function channelConflicts(assignments) {
         }
     })
     return conflicts
-}
-
-/// External mode number (1-8) a mode parameter value selects, 0 for a built-in mode. COM_FLTMODE_BOOT uses PX4's
-/// navigation state numbers, the mode slots their own.
-function externalModeIndex(paramName, value) {
-    var first = paramName === "COM_FLTMODE_BOOT" ? 23 : 100
-    var index = value - first + 1
-    return (index >= 1 && index <= 8) ? index : 0
-}
-
-/// Choices [{ label, value }] for a mode parameter. An external mode is offered under the name the vehicle reports
-/// for it, and left out when nothing is registered in that slot, unless currentValue already selects it.
-/// externalNames[n - 1] is External Mode n's name, empty if unknown.
-function modeChoices(paramName, enumStrings, enumValues, externalNames, currentValue) {
-    var choices = []
-    for (var i = 0; i < enumStrings.length; i++) {
-        var value = enumValues[i]
-        var external = externalModeIndex(paramName, value)
-        if (external === 0) {
-            choices.push({ label: enumStrings[i], value: value })
-            continue
-        }
-        var name = externalNames ? externalNames[external - 1] : ""
-        if (name) {
-            choices.push({ label: name, value: value })
-        } else if (Number(value) === Number(currentValue)) {
-            choices.push({ label: qsTr("%1 (not running)").arg(enumStrings[i]), value: value })
-        }
-    }
-    return choices
-}
-
-/// Label of the mode a parameter value selects, as modeChoices shows it. Empty for a value with no choice.
-function modeName(paramName, enumStrings, enumValues, externalNames, value) {
-    var choices = modeChoices(paramName, enumStrings, enumValues, externalNames, value)
-    for (var i = 0; i < choices.length; i++) {
-        if (Number(choices[i].value) === Number(value)) {
-            return choices[i].label
-        }
-    }
-    return ""
 }

@@ -6,10 +6,6 @@ import QGroundControl
 import QGroundControl.FactControls
 import QGroundControl.Controls
 
-/*
-    IMPORTANT NOTE: Any changes made here must also be made to SensorsComponentSummary.qml
-*/
-
 Item {
     implicitWidth: mainLayout.implicitWidth
     implicitHeight: mainLayout.implicitHeight

@@ -1,4 +1,6 @@
 #include "PX4RadioComponent.h"
+
+#include "Fact.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
 
@@ -53,7 +55,48 @@ QUrl PX4RadioComponent::setupSource(void) const
     return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/Common/RadioComponent.qml");
 }
 
-QUrl PX4RadioComponent::summaryQmlSource(void) const
+QStringList PX4RadioComponent::summaryChangedTriggerList() const
 {
-    return QUrl::fromUserInput("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml");
+    return {"RC_MAP_FLAPS", "RC_MAP_AUX1", "RC_MAP_AUX2"};
+}
+
+void PX4RadioComponent::setupTriggerSignals()
+{
+    VehicleComponent::setupTriggerSignals();
+
+    (void) connect(_vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "COM_RC_IN_MODE"),
+                   &Fact::valueChanged, this, &VehicleComponent::requiresSetupChanged);
+}
+
+QList<VehicleSummaryItem> PX4RadioComponent::summaryItems() const
+{
+    // Attitude controls must be mapped, unless the vehicle flies without a transmitter
+    const VehicleSummaryItem::State attitudeState =
+        setupComplete() ? VehicleSummaryItem::Muted : VehicleSummaryItem::Attention;
+
+    QList<VehicleSummaryItem> items;
+    const auto addChannel = [this, &items](const char* param, const QString& caption, const QString& unmappedText,
+                                           VehicleSummaryItem::State unmappedState) {
+        const Fact* const fact = _parameterFact(QString::fromLatin1(param));
+        if (!fact) {
+            return;
+        }
+        if (fact->rawValue().toInt() != 0) {
+            items.append({caption, fact->cookedValueString(), VehicleSummaryItem::Normal});
+        } else {
+            items.append({caption, unmappedText, unmappedState});
+        }
+    };
+
+    addChannel("RC_MAP_ROLL", tr("Roll"), tr("Setup required"), attitudeState);
+    addChannel("RC_MAP_PITCH", tr("Pitch"), tr("Setup required"), attitudeState);
+    addChannel("RC_MAP_YAW", tr("Yaw"), tr("Setup required"), attitudeState);
+    addChannel("RC_MAP_THROTTLE", tr("Throttle"), tr("Setup required"), attitudeState);
+    if (!_vehicle->multiRotor()) {
+        addChannel("RC_MAP_FLAPS", tr("Flaps"), tr("Disabled"), VehicleSummaryItem::Muted);
+    }
+    addChannel("RC_MAP_AUX1", tr("Aux1"), tr("Disabled"), VehicleSummaryItem::Muted);
+    addChannel("RC_MAP_AUX2", tr("Aux2"), tr("Disabled"), VehicleSummaryItem::Muted);
+
+    return items;
 }

@@ -55,6 +55,21 @@ QList<AirframeComponentAirframes::AirframeType_t*> AirframeComponentAirframes::s
     return sorted;
 }
 
+bool AirframeComponentAirframes::find(int autostartId, QString& typeName, QString& vehicleName)
+{
+    for (const AirframeType_t* type : std::as_const(rgAirframeTypes)) {
+        for (const AirframeInfo_t* info : std::as_const(type->rgAirframeInfo)) {
+            if (info->autostartId == autostartId) {
+                typeName = type->name;
+                vehicleName = info->name;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 void AirframeComponentAirframes::insert(QString& group, QString& image, QString& name, int id,
                                         const QString& vehicleClass)
 {

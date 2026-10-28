@@ -1,5 +1,7 @@
 #include "PX4ReturnLandComponent.h"
 
+#include "Fact.h"
+
 PX4ReturnLandComponent::PX4ReturnLandComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent(vehicle, autopilot, AutoPilotPlugin::UnknownVehicleComponent, parent)
     , _name(tr("Return & Land"))
@@ -29,8 +31,29 @@ QUrl PX4ReturnLandComponent::setupSource() const
         QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/PX4ReturnLandComponent.qml"));
 }
 
-QUrl PX4ReturnLandComponent::summaryQmlSource() const
+QList<VehicleSummaryItem> PX4ReturnLandComponent::summaryItems() const
 {
-    return QUrl::fromUserInput(
-        QStringLiteral("qrc:/qml/QGroundControl/AutoPilotPlugins/PX4/PX4ReturnLandComponentSummary.qml"));
+    const Fact* const returnAlt = _parameterFact(QStringLiteral("RTL_RETURN_ALT"));
+    const Fact* const descendAlt = _parameterFact(QStringLiteral("RTL_DESCEND_ALT"));
+    const Fact* const landDelay = _parameterFact(QStringLiteral("RTL_LAND_DELAY"));
+    const int landDelayValue = landDelay ? landDelay->rawValue().toInt() : 0;
+
+    QList<VehicleSummaryItem> items;
+    if (returnAlt) {
+        items.append({tr("RTL Climb To"), _valueWithUnits(returnAlt), VehicleSummaryItem::Normal});
+    }
+    if (landDelay) {
+        const QString then = landDelayValue == 0  ? tr("Land immediately")
+                             : landDelayValue < 0 ? tr("Loiter and do not land")
+                                                  : tr("Loiter and land after specified time");
+        items.append({tr("RTL, Then"), then, VehicleSummaryItem::Normal});
+    }
+    if (descendAlt && landDelayValue != 0) {
+        items.append({tr("Loiter Alt"), _valueWithUnits(descendAlt), VehicleSummaryItem::Normal});
+    }
+    if (landDelay && landDelayValue > 0) {
+        items.append({tr("Land Delay"), _valueWithUnits(landDelay), VehicleSummaryItem::Normal});
+    }
+
+    return items;
 }

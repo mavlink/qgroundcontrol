@@ -921,6 +921,16 @@ QString PX4FirmwarePlugin::externalFlightModeName(const FlightModeList& modeList
     return name;
 }
 
+QStringList PX4FirmwarePlugin::externalFlightModeNames(const FlightModeList& modeList)
+{
+    QStringList names;
+    for (int externalIndex = 1; externalIndex <= kExternalFlightModeCount; externalIndex++) {
+        names.append(externalFlightModeName(modeList, externalIndex));
+    }
+
+    return names;
+}
+
 QVariant PX4FirmwarePlugin::expandedToolbarIndicatorSource(const Vehicle* /*vehicle*/, const QString& indicatorName) const
 {
     if (indicatorName == "Battery") {

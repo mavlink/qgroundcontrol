@@ -193,22 +193,13 @@ TestCase {
         compare(Rows.switchPosition(data.value, data.on, data.mid), data.expected)
     }
 
-    function test_buttonChannels() {
-        compare(Rows.buttonChannels(0), [])
-        compare(Rows.buttonChannels((1 << 6) | (1 << 8)), [7, 9])
-        // PX4 uses at most six buttons
-        compare(Rows.buttonChannels((1 << 18) - 1), [1, 2, 3, 4, 5, 6])
-        compare(Rows.ignoredButtonChannels((1 << 12) - 1), [7, 8, 9, 10, 11, 12])
-        compare(Rows.ignoredButtonChannels((1 << 6) | (1 << 8)), [])
-    }
-
     function test_buttonSlot() {
-        var mask = (1 << 6) | (1 << 7)
+        var channels = [7, 8]
         var values = { 7: -1, 8: 1 }
-        compare(Rows.buttonSlot(mask, function (channel) { return values[channel] }), 2)
+        compare(Rows.buttonSlot(channels, function (channel) { return values[channel] }), 2)
         values[8] = -1
-        compare(Rows.buttonSlot(mask, function (channel) { return values[channel] }), 0)
-        compare(Rows.buttonSlot(mask, function (channel) { return undefined }), 0)
+        compare(Rows.buttonSlot(channels, function (channel) { return values[channel] }), 0)
+        compare(Rows.buttonSlot(channels, function (channel) { return undefined }), 0)
     }
 
     // A released mode button leaves its mode selected, so the page keeps showing its slot until another button is
@@ -223,21 +214,7 @@ TestCase {
     }
 
     function test_nextButtonSlot(data) {
-        var mask = (1 << 6) | (1 << 7)
-        compare(Rows.nextButtonSlot(data.previous, mask, function (channel) { return data.values[channel] }), data.expected)
-    }
-
-    function test_selectionMethod_data() {
-        return [
-            { tag: "channel",               channel: 5, mask: 0,  expected: "switch" },
-            { tag: "channel wins",          channel: 5, mask: 64, expected: "switch" },
-            { tag: "buttons",               channel: 0, mask: 64, expected: "buttons" },
-            { tag: "none",                  channel: 0, mask: 0,  expected: "none" }
-        ]
-    }
-
-    function test_selectionMethod(data) {
-        compare(Rows.selectionMethod(data.channel, data.mask), data.expected)
+        compare(Rows.nextButtonSlot(data.previous, [7, 8], function (channel) { return data.values[channel] }), data.expected)
     }
 
     // Choosing a method clears what the others use, so PX4 is left with only the chosen one
@@ -309,49 +286,5 @@ TestCase {
 
     function test_channelConflicts(data) {
         compare(Rows.channelConflicts(data.assignments), data.expected)
-    }
-
-    function test_externalModeIndex_data() {
-        return [
-            { tag: "slot built-in",     param: "COM_FLTMODE1",      value: 2,   expected: 0 },
-            { tag: "slot external 1",   param: "COM_FLTMODE1",      value: 100, expected: 1 },
-            { tag: "slot external 8",   param: "COM_FLTMODE6",      value: 107, expected: 8 },
-            { tag: "boot built-in",     param: "COM_FLTMODE_BOOT",  value: 4,   expected: 0 },
-            { tag: "boot external 1",   param: "COM_FLTMODE_BOOT",  value: 23,  expected: 1 },
-            { tag: "boot external 8",   param: "COM_FLTMODE_BOOT",  value: 30,  expected: 8 }
-        ]
-    }
-
-    function test_externalModeIndex(data) {
-        compare(Rows.externalModeIndex(data.param, data.value), data.expected)
-    }
-
-    // Only external modes the vehicle has registered are offered, by their reported name. A slot already set to one
-    // that is not registered stays listed so the combo box is not blank.
-    function test_modeChoices_data() {
-        var names = ["Survey Assist", "", "", "", "", "", "", ""]
-        return [
-            { tag: "registered named, unregistered hidden", current: 2, names: names,
-              expected: [{ label: "Position", value: 2 }, { label: "Survey Assist", value: 100 }] },
-            { tag: "current unregistered kept", current: 101, names: names,
-              expected: [{ label: "Position", value: 2 }, { label: "Survey Assist", value: 100 },
-                         { label: "External Mode 2 (not running)", value: 101 }] },
-            { tag: "no names reported", current: 2, names: [],
-              expected: [{ label: "Position", value: 2 }] }
-        ]
-    }
-
-    function test_modeChoices(data) {
-        compare(Rows.modeChoices("COM_FLTMODE1", ["Position", "External Mode 1", "External Mode 2"], [2, 100, 101],
-                                 data.names, data.current),
-                data.expected)
-    }
-
-    function test_modeName() {
-        var names = ["Survey Assist", "", "", "", "", "", "", ""]
-        var strings = ["Hold", "External 1", "External 2"]
-        compare(Rows.modeName("COM_FLTMODE_BOOT", strings, [4, 23, 24], names, 23), "Survey Assist")
-        compare(Rows.modeName("COM_FLTMODE_BOOT", strings, [4, 23, 24], names, 24), "External 2 (not running)")
-        compare(Rows.modeName("COM_FLTMODE_BOOT", strings, [4, 23, 24], names, 99), "")
     }
 }

@@ -117,3 +117,20 @@ void ActuatorOutput::forEachOutputFunction(std::function<void(ActuatorOutputSubg
         }
     }
 }
+
+void ActuatorOutput::forEachChannelFunction(std::function<void(ActuatorOutputChannel*, Fact*)> callback) const
+{
+    for (int subgroupIdx = 0; subgroupIdx < _subgroups->count(); subgroupIdx++) {
+        ActuatorOutputSubgroup *subgroup = qobject_cast<ActuatorOutputSubgroup*>(_subgroups->get(subgroupIdx));
+        for (int channelIdx = 0; channelIdx < subgroup->channels()->count(); channelIdx++) {
+            ActuatorOutputChannel *channel = qobject_cast<ActuatorOutputChannel*>(subgroup->channels()->get(channelIdx));
+            for (int configIdx = 0; configIdx < channel->configInstances()->count(); configIdx++) {
+                ChannelConfigInstance *configInstance = qobject_cast<ChannelConfigInstance*>(channel->configInstances()->get(configIdx));
+                Fact* fact = configInstance->fact();
+                if (configInstance->channelConfig()->function() == ChannelConfig::Function::OutputFunction && fact) {
+                    callback(channel, fact);
+                }
+            }
+        }
+    }
+}

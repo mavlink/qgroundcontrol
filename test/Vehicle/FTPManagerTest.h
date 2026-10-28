@@ -40,6 +40,7 @@ private slots:
     void _testReadChunkSizeFollowsLinkType();
     void _testReadChunkSizeShrinksWhenRadioDetectedMidDownload();
     void _testDownloadExplicitFileNameIsBasename();
+    void _testDownloadRejectsMissingDestination();
 
     // Overrides from UnitTest
     void cleanup() override;

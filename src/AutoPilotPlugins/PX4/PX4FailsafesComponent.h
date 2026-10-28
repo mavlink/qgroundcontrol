@@ -26,6 +26,9 @@ public:
 
     QUrl summaryQmlSource() const final { return QUrl(); }
 
+    QList<VehicleSummaryItem> summaryItems() const final;
+    QStringList summaryChangedTriggerList() const final;
+
     bool allowSetupWhileArmed() const final { return true; }
 
     bool allowSetupWhileFlying() const final { return true; }

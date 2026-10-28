@@ -46,6 +46,26 @@ public:
     VehicleCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr);
     ~VehicleCameraControl() override;
 
+    /// Read a fixed-size CAMERA_INFORMATION string field without running off the end of it.
+    /// MAVLink does not guarantee these arrays are NUL terminated, so the length is bounded
+    /// by the array itself rather than by strlen().
+    static QString boundedStringField(const uint8_t* raw, size_t maxLen);
+
+    /// Reduce a vehicle-supplied name to something safe to embed in a file name. Everything
+    /// that could act as a path separator, a drive or NTFS stream qualifier, or a directory
+    /// traversal is replaced.
+    static QString pathSafeNameToken(const QString& name);
+
+    /// True when candidateFilePath is lexically inside baseDirPath, after making both absolute and
+    /// collapsing "." and "..". Symbolic links are not followed.
+    static bool pathIsInside(const QString& baseDirPath, const QString& candidateFilePath);
+
+    /// Build the camera-definition cache file name, without extension, as
+    /// "<vendor>_<model>_<hash>_<NNN>". The vendor and model parts are path safe but lossy;
+    /// the 32-bit hash of the original names makes it practically impossible for distinct
+    /// cameras to share a cache file by accident.
+    static QString cacheFileToken(const QString& vendor, const QString& modelName, int definitionVersion);
+
     Q_INVOKABLE void setCameraModeVideo() override;
     Q_INVOKABLE void setCameraModePhoto() override;
     Q_INVOKABLE void toggleCameraMode       () override;
@@ -271,6 +291,7 @@ protected:
     QString                             _modelName;
     QString                             _vendor;
     QString                             _cacheFile;
+    QString _cacheFileToken;  ///< sanitised "<vendor>_<model>_<hash>_<NNN>", no extension
     StorageStatus                       _storageStatus      = STORAGE_NOT_SUPPORTED;
     QStringList                         _activeSettings;
     QStringList                         _settings;

@@ -37,10 +37,10 @@ SetupPage {
     readonly property int   _modeChannel:       _modeChannelFact ? _modeChannelFact.rawValue : 0
     readonly property int   _buttonMask:        _buttonMaskFact ? _buttonMaskFact.rawValue : 0
     readonly property string _method: {
-        const method = ModeRows.selectionMethod(_modeChannel, _buttonMask)
+        const method = controller.selectionMethod(_modeChannel, _buttonMask)
         return (method === "none" && _chosenMethod !== "") ? _chosenMethod : method
     }
-    readonly property var _buttonChannels: ModeRows.buttonChannels(_buttonMask)
+    readonly property var _buttonChannels: controller.buttonChannels(_buttonMask)
     readonly property var _modeChannelValue: _method === "switch" ? _channelValue(_modeChannel) : undefined
     readonly property int _activeSlot: {
         if (_method === "switch") {
@@ -58,7 +58,7 @@ SetupPage {
 
         function onRcChannelValuesChanged() {
             if (_method === "buttons") {
-                _lastButtonSlot = ModeRows.nextButtonSlot(_lastButtonSlot, _buttonMask, _channelValue)
+                _lastButtonSlot = ModeRows.nextButtonSlot(_lastButtonSlot, _buttonChannels, _channelValue)
             }
         }
     }
@@ -159,7 +159,7 @@ SetupPage {
     }
 
     function _modeChoices(fact) {
-        return ModeRows.modeChoices(fact.name, fact.enumStrings, fact.enumValues, controller.externalModeNames, fact.rawValue)
+        return controller.modeChoices(fact.name, fact.enumStrings, fact.enumValues, controller.externalModeNames, fact.rawValue)
     }
 
     /// Name of the mode a slot selects, empty when the slot is unassigned
@@ -168,7 +168,7 @@ SetupPage {
         if (!fact || fact.rawValue < 0 || fact.enumIndex < 0) {
             return ""
         }
-        return ModeRows.modeName(fact.name, fact.enumStrings, fact.enumValues, controller.externalModeNames, fact.rawValue)
+        return controller.modeName(fact.name, fact.enumStrings, fact.enumValues, controller.externalModeNames, fact.rawValue)
     }
 
     function _setMethod(method) {
@@ -384,7 +384,7 @@ SetupPage {
                                         Layout.preferredWidth:  ScreenTools.defaultFontPixelWidth * 40
                                         color:                  qgcPal.warningText
                                         text: {
-                                            const ignored = ModeRows.ignoredButtonChannels(_buttonMask)
+                                            const ignored = controller.ignoredButtonChannels(_buttonMask)
                                             return ignored.length > 0 ?
                                                        qsTr("PX4 ignores %1, as only the lowest six channels select a slot.")
                                                            .arg(ignored.map(channel => qsTr("Ch %1").arg(channel)).join(", ")) :

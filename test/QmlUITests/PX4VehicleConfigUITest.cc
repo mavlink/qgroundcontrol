@@ -2,12 +2,16 @@
 
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
+#include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
 #include "MockLink.h"
 
 #include <QtCore/QPointer>
+#include "Fact.h"
+#include "ParameterManager.h"
 #include "Vehicle.h"
+#include "VehicleComponent.h"
 
 UT_REGISTER_TEST(PX4VehicleConfigUITest, TestLabel::Integration)
 
@@ -20,10 +24,46 @@ void PX4VehicleConfigUITest::_testNavigateVehicleConfig()
     if (QTest::currentTestFailed()) return;
 
     // -------------------------------------------------------------------------
-    // Click Summary
+    // Click Overview
     // -------------------------------------------------------------------------
-    QVERIFY2(clickButton(QStringLiteral("vehicleConfig_summary")), "Failed to click Summary button");
+    QVERIFY2(clickButton(QStringLiteral("vehicleConfig_summary")), "Failed to click Overview button");
     QTest::qWait(_viewDelay);
+
+    // The Overview page lists what the vehicle still needs and shows the values of the components that have values to show
+    for (const QString& itemName :
+         {QStringLiteral("vehicleSummary_tile_Airframe"), QStringLiteral("vehicleSummary_tile_Sensors"),
+          QStringLiteral("vehicleSummary_card_Airframe"), QStringLiteral("vehicleSummary_card_Flight Modes")}) {
+        QQuickItem* const item = findItem(_rootItem, itemName);
+        QVERIFY2(item, qPrintable(itemName));
+        QVERIFY2(item->isVisible(), qPrintable(itemName));
+    }
+
+    // Each control on the Overview page opens its component's setup page
+    const auto openedComponentName = [this]() {
+        QQuickItem* const panelLoader = findItem(_rootItem, QStringLiteral("vehicleConfig_panelLoader"));
+        const auto* const component =
+            panelLoader ? panelLoader->property("vehicleComponent").value<VehicleComponent*>() : nullptr;
+        return component ? component->name() : QString();
+    };
+    const auto clickFromOverview = [&](const QString& controlName, const QString& expectedComponent) {
+        QVERIFY2(clickButton(QStringLiteral("vehicleConfig_summary")), "Failed to click Overview button");
+        QVERIFY2(clickButton(controlName), qPrintable(controlName));
+        QTRY_COMPARE_WITH_TIMEOUT(openedComponentName(), expectedComponent, TestTimeout::shortMs());
+    };
+    clickFromOverview(QStringLiteral("vehicleSummary_tile_Sensors"), QStringLiteral("Sensors"));
+    if (QTest::currentTestFailed()) return;
+    clickFromOverview(QStringLiteral("vehicleSummary_card_Airframe"), QStringLiteral("Airframe"));
+    if (QTest::currentTestFailed()) return;
+
+    // An unset battery makes Battery the next component to set up
+    Fact* const cellCount = vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId,
+                                                                      QStringLiteral("BAT1_N_CELLS"));
+    QSignalSpy ackSpy(cellCount, &Fact::vehicleUpdated);
+    QVERIFY(ackSpy.isValid());
+    cellCount->setRawValue(0);
+    QVERIFY(ackSpy.wait(TestTimeout::mediumMs()));
+    clickFromOverview(QStringLiteral("vehicleSummary_continueSetup"), QStringLiteral("Battery"));
+    if (QTest::currentTestFailed()) return;
 
     // -------------------------------------------------------------------------
     // Click through each vehicle component, in English and Chinese
