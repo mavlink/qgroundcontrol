@@ -81,6 +81,7 @@ signals:
 
 private slots:
     void _setActiveVehicle(Vehicle *vehicle);
+    void _vehicleArmedChanged(bool armed);
 
     void _logEntry(uint32_t time_utc, uint32_t size, uint16_t id, uint16_t num_logs, uint16_t last_log_num);
     void _logData(uint32_t ofs, uint16_t id, uint8_t count, const uint8_t *data);
@@ -101,6 +102,8 @@ private:
     bool _getRequestingList() const { return _requestingLogEntries; }
     bool _getDownloadingLogs() const { return _downloadingLogs; }
 
+    /// Log transfers are blocked while armed so they cannot starve the telemetry link
+    bool _vehicleArmed() const;
     bool _chunkComplete() const;
     bool _entriesComplete() const;
     bool _logComplete() const;

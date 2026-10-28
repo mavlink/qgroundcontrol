@@ -17,6 +17,10 @@ private slots:
     void _refreshDuringDownloadTest();
     void _vehicleDisconnectDuringDownloadTest();
     void _eraseAllTest();
+    void _armedBlocksActionsTest();
+    void _armDuringDownloadCancelsTest();
+    void _armDuringListCancelsTest();
+    void _armedEraseCompletionSkipsRefreshTest();
 };
 
 /// Tests the MAVLink FTP transport of OnboardLogController against a MockLink which

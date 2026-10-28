@@ -13,6 +13,7 @@ private slots:
     void _ftpDownloadUITest();
     void _messagesFullPageUITest();
     void _ftpFullPageUITest();
+    void _armedDisablesPageUITest();
 
 private:
     void _navigateToOnboardLogsPage();
