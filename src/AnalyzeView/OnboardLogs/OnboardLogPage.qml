@@ -10,6 +10,12 @@ AnalyzePage {
     pageComponent: pageComponent
     pageDescription: qsTr("Onboard Logs allows you to download binary log files from your vehicle. Click Refresh to get list of available logs.")
 
+    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    readonly property bool _vehicleArmed: _activeVehicle ? _activeVehicle.armed : false
+    readonly property bool _actionsAllowed: !_vehicleArmed && !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs
+
+    QGCPalette { id: qgcPal; colorGroupEnabled: true }
+
     function _updateNavigationBlocked() {
         if (OnboardLogController.downloadingLogs) {
             globals.navigationBlockedReason = qsTr("Wait for the log download to complete or cancel it first")
@@ -33,7 +39,11 @@ AnalyzePage {
             width: availableWidth
             height: availableHeight
 
-            Component.onCompleted: OnboardLogController.refresh()
+            Component.onCompleted: {
+                if (!onboardLogPage._vehicleArmed) {
+                    OnboardLogController.refresh()
+                }
+            }
 
             QGCFlickable {
                 Layout.fillWidth: true
@@ -123,10 +133,21 @@ AnalyzePage {
                 Layout.alignment: Qt.AlignTop
                 Layout.fillWidth: false
 
+                QGCLabel {
+                    objectName: "onboardLog_armedWarning"
+                    Layout.fillWidth: true
+                    // Zero preferred width stops the label widening the column; it wraps to the button width
+                    Layout.preferredWidth: 0
+                    visible: onboardLogPage._vehicleArmed
+                    text: qsTr("Disabled while the vehicle is armed")
+                    color: qgcPal.warningText
+                    wrapMode: Text.WordWrap
+                }
+
                 QGCButton {
                     objectName: "onboardLog_refreshButton"
                     Layout.fillWidth: true
-                    enabled: !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs
+                    enabled: onboardLogPage._actionsAllowed
                     text: qsTr("Refresh")
 
                     onClicked: {
@@ -142,7 +163,7 @@ AnalyzePage {
                 QGCButton {
                     objectName: "onboardLog_selectAllButton"
                     Layout.fillWidth: true
-                    enabled: !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs && (OnboardLogController.model.count > 0)
+                    enabled: onboardLogPage._actionsAllowed && (OnboardLogController.model.count > 0)
                     text: OnboardLogController.allLogsSelected ? qsTr("Deselect All") : qsTr("Select All")
                     onClicked: OnboardLogController.selectAll(!OnboardLogController.allLogsSelected)
                 }
@@ -150,7 +171,7 @@ AnalyzePage {
                 QGCButton {
                     objectName: "onboardLog_downloadButton"
                     Layout.fillWidth: true
-                    enabled: !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs && (OnboardLogController.selectedCount > 0)
+                    enabled: onboardLogPage._actionsAllowed && (OnboardLogController.selectedCount > 0)
                     text: qsTr("Download")
 
                     onClicked: {
@@ -177,7 +198,7 @@ AnalyzePage {
                 QGCButton {
                     objectName: "onboardLog_sortButton"
                     Layout.fillWidth: true
-                    enabled: !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs && (OnboardLogController.model.count > 1)
+                    enabled: onboardLogPage._actionsAllowed && (OnboardLogController.model.count > 1)
                     text: OnboardLogController.sortAscending ? qsTr("Sort Descending") : qsTr("Sort Ascending")
                     onClicked: OnboardLogController.toggleSortByDate()
                 }
@@ -186,7 +207,7 @@ AnalyzePage {
                     objectName: "onboardLog_eraseSelectedButton"
                     Layout.fillWidth: true
                     visible: OnboardLogController.transport === "ftp"
-                    enabled: !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs && (OnboardLogController.selectedCount > 0)
+                    enabled: onboardLogPage._actionsAllowed && (OnboardLogController.selectedCount > 0)
                     text: qsTr("Erase Selected")
                     onClicked: QGroundControl.showMessageDialog(
                         onboardLogPage,
@@ -200,7 +221,7 @@ AnalyzePage {
                 QGCButton {
                     objectName: "onboardLog_eraseAllButton"
                     Layout.fillWidth: true
-                    enabled: !OnboardLogController.requestingList && !OnboardLogController.downloadingLogs && (OnboardLogController.model.count > 0)
+                    enabled: onboardLogPage._actionsAllowed && (OnboardLogController.model.count > 0)
                     text: qsTr("Erase All")
                     onClicked: QGroundControl.showMessageDialog(
                         onboardLogPage,

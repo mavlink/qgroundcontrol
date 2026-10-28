@@ -232,6 +232,122 @@ void OnboardLogDownloadTest::_eraseAllTest()
     QCOMPARE(controller->_getModel()->count(), 0);
 }
 
+void OnboardLogDownloadTest::_armedBlocksActionsTest()
+{
+    OnboardLogController* const controller = new OnboardLogController(this);
+    MultiSignalSpy* multiSpy = new MultiSignalSpy(this);
+    QVERIFY(multiSpy->init(controller));
+
+    QVERIFY(refreshAndWaitForListComplete(controller, multiSpy));
+    QmlObjectListModel* const model = controller->_getModel();
+    QCOMPARE(model->count(), 1);
+    model->value<QGCOnboardLogEntry*>(0)->setSelected(true);
+
+    QVERIFY(!_vehicle->armed());
+    _vehicle->setArmed(true, false /* showError */);
+    QTRY_VERIFY_WITH_TIMEOUT(_vehicle->armed(), TestTimeout::longMs());
+
+    // Log traffic while armed could starve the telemetry link, so every action must be refused
+    expectLogMessage("AnalyzeView.OnboardLogController", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("vehicle is armed")));
+    controller->refresh();
+    verifyExpectedLogMessage();
+    QVERIFY(!controller->_getRequestingList());
+    QCOMPARE(model->count(), 1);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    expectLogMessage("AnalyzeView.OnboardLogController", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("vehicle is armed")));
+    controller->download(tempDir.path());
+    verifyExpectedLogMessage();
+    QVERIFY(!controller->_getDownloadingLogs());
+
+    expectLogMessage("AnalyzeView.OnboardLogController", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("vehicle is armed")));
+    controller->eraseAll();
+    verifyExpectedLogMessage();
+    QVERIFY(!controller->_getRequestingList());
+    QCOMPARE(model->count(), 1);
+
+    // The armed check precedes eraseSelected's FTP-transport check, so it must be the one that fires
+    expectLogMessage("AnalyzeView.OnboardLogController", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("vehicle is armed")));
+    controller->eraseSelected();
+    verifyExpectedLogMessage();
+    QVERIFY(!controller->_getDownloadingLogs());
+    QCOMPARE(model->count(), 1);
+
+    _vehicle->setArmed(false, false /* showError */);
+    QTRY_VERIFY_WITH_TIMEOUT(!_vehicle->armed(), TestTimeout::longMs());
+    QVERIFY(refreshAndWaitForListComplete(controller, multiSpy));
+    QCOMPARE(model->count(), 1);
+}
+
+void OnboardLogDownloadTest::_armDuringDownloadCancelsTest()
+{
+    OnboardLogController* const controller = new OnboardLogController(this);
+    MultiSignalSpy* multiSpy = new MultiSignalSpy(this);
+    QVERIFY(multiSpy->init(controller));
+
+    QVERIFY(refreshAndWaitForListComplete(controller, multiSpy));
+    QmlObjectListModel* const model = controller->_getModel();
+    QCOMPARE(model->count(), 1);
+    QGCOnboardLogEntry* const entry = model->value<QGCOnboardLogEntry*>(0);
+    entry->setSelected(true);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    controller->download(tempDir.path());
+    QVERIFY(controller->_getDownloadingLogs());
+
+    // MockLink can finish the download before a real arm round-trips, so drive the armed handler directly
+    controller->_vehicleArmedChanged(true);
+    QVERIFY(!controller->_getDownloadingLogs());
+    QCOMPARE(entry->status(), QStringLiteral("Canceled"));
+    QVERIFY(!QFile::exists(QDir(tempDir.path()).filePath("log_0_UnknownDate.ulg")));
+}
+
+void OnboardLogDownloadTest::_armDuringListCancelsTest()
+{
+    OnboardLogController* const controller = new OnboardLogController(this);
+
+    controller->refresh();
+    QVERIFY(controller->_getRequestingList());
+
+    // Same direct-drive rationale as _armDuringDownloadCancelsTest
+    controller->_vehicleArmedChanged(true);
+    QVERIFY(!controller->_getRequestingList());
+    QCOMPARE(controller->_getModel()->count(), 0);
+}
+
+void OnboardLogDownloadTest::_armedEraseCompletionSkipsRefreshTest()
+{
+    OnboardLogController* const controller = new OnboardLogController(this);
+
+    _vehicle->setArmed(true, false /* showError */);
+    QTRY_VERIFY_WITH_TIMEOUT(_vehicle->armed(), TestTimeout::longMs());
+
+    // Simulate the in-flight delete completing after arming canceled the rest of the erase.
+    // Strict log checking fails the test if the armed refresh() warning is hit.
+    QGCOnboardLogEntry* const entry = new QGCOnboardLogEntry(0, QDateTime(), 1000, true);
+    entry->setSelected(true);
+    controller->_getModel()->append(entry);
+    QCOMPARE(controller->selectedCount(), 1);
+
+    controller->_ftpDeleting = true;
+    controller->_setDownloading(true);
+    controller->_ftpDeleteNext();
+
+    QVERIFY(!controller->_ftpDeleting);
+    QVERIFY(!controller->_getDownloadingLogs());
+    QVERIFY(!controller->_getRequestingList());
+
+    // The delete's outcome is unknown, so no stale entry may stay selectable
+    QCOMPARE(controller->_getModel()->count(), 0);
+    QCOMPARE(controller->selectedCount(), 0);
+}
+
 void OnboardLogFtpDownloadTest::_ftpListAndDownloadTest()
 {
     _connectMockLink(MAV_AUTOPILOT_PX4, MockConfiguration::FailNone, MockConfiguration::OptionFtpCapability);
