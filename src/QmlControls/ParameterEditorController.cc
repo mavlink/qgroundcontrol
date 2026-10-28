@@ -1,11 +1,15 @@
-#include "QmlObjectListModel.h"
 #include "ParameterEditorController.h"
+
+#include <limits>
+#include <type_traits>
+
 #include "AppMessages.h"
-#include "ParameterManager.h"
 #include "AppSettings.h"
+#include "ParameterManager.h"
+#include "QGCLoggingCategory.h"
+#include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
-#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(ParameterEditorControllerLog, "QMLControls.ParameterEditorController")
 
@@ -382,6 +386,7 @@ void ParameterEditorController::clearDiff(void)
     _setDiffProperty(_diffSendableCount,        0,              &ParameterEditorController::diffSendableCountChanged);
     _setDiffProperty(_diffSelectedCount,        0,              &ParameterEditorController::diffSelectedCountChanged);
     _setDiffProperty(_diffMissingParams,        QStringList(),  &ParameterEditorController::diffMissingParamsChanged);
+    _setDiffProperty(_diffInvalidParams,        QStringList(),  &ParameterEditorController::diffInvalidParamsChanged);
 }
 
 // Recomputed whenever a diff row's load checkbox changes. Drives the dialog's Ok button enabled state.
@@ -406,7 +411,7 @@ void ParameterEditorController::sendDiff(void)
         ParameterEditorDiff* paramDiff = _diffList.value<ParameterEditorDiff*>(i);
 
         if (paramDiff->cannotSend) {
-            qCDebug(ParameterEditorControllerLog) << "sendDiff: skipped (cannot send, not on vehicle) -" << paramDiff->name;
+            qCDebug(ParameterEditorControllerLog) << "sendDiff: skipped (cannot send) -" << paramDiff->name;
             continue;
         }
 
@@ -429,6 +434,75 @@ void ParameterEditorController::sendDiff(void)
     }
 
     qCDebug(ParameterEditorControllerLog) << "sendDiff summary - sent:" << sentCount << "unchecked:" << uncheckedCount;
+}
+
+namespace {
+
+// Parses the text with an explicit range check for T, since QVariant's string to int conversion wraps out of
+// range values. Also accepts whole-number floats (e.g. "-1.000000"), as written for parameters that have since
+// changed from float to integer. These are matched as text rather than parsed as double, which would round
+// large values.
+template <typename T>
+bool convertParamFileInteger(const FactMetaData& metaData, const QString& fileValueStr, QVariant& typedValue,
+                             QString& errorString)
+{
+    using Wide = std::conditional_t<std::is_signed_v<T>, qint64, quint64>;
+
+    static const QRegularExpression wholeNumberFloatRegExp(QStringLiteral("^([+-]?\\d+)\\.0*$"));
+
+    QString integerStr = fileValueStr;
+    const QRegularExpressionMatch match = wholeNumberFloatRegExp.match(fileValueStr);
+    if (match.hasMatch()) {
+        integerStr = match.captured(1);
+    }
+
+    bool ok = false;
+    Wide value = 0;
+    if constexpr (std::is_signed_v<T>) {
+        value = integerStr.toLongLong(&ok);
+    } else {
+        value = integerStr.toULongLong(&ok);
+    }
+    if (!ok) {
+        errorString = QStringLiteral("Not a whole number within the parameter's range");
+        return false;
+    }
+
+    if ((value < static_cast<Wide>(std::numeric_limits<T>::min())) ||
+        (value > static_cast<Wide>(std::numeric_limits<T>::max()))) {
+        errorString = QStringLiteral("Out of range for the parameter's type");
+        return false;
+    }
+
+    // In range now, so this only produces the variant type the rest of the Fact system expects
+    return metaData.convertAndValidateRaw(QVariant::fromValue(value), true /* convertOnly */, typedValue, errorString);
+}
+
+}  // namespace
+
+bool ParameterEditorController::_convertFileValue(const FactMetaData& metaData, const QString& fileValueStr,
+                                                  QVariant& typedValue, QString& errorString)
+{
+    switch (metaData.type()) {
+        case FactMetaData::valueTypeInt8:
+            return convertParamFileInteger<qint8>(metaData, fileValueStr, typedValue, errorString);
+        case FactMetaData::valueTypeInt16:
+            return convertParamFileInteger<qint16>(metaData, fileValueStr, typedValue, errorString);
+        case FactMetaData::valueTypeInt32:
+            return convertParamFileInteger<qint32>(metaData, fileValueStr, typedValue, errorString);
+        case FactMetaData::valueTypeInt64:
+            return convertParamFileInteger<qint64>(metaData, fileValueStr, typedValue, errorString);
+        case FactMetaData::valueTypeUint8:
+            return convertParamFileInteger<quint8>(metaData, fileValueStr, typedValue, errorString);
+        case FactMetaData::valueTypeUint16:
+            return convertParamFileInteger<quint16>(metaData, fileValueStr, typedValue, errorString);
+        case FactMetaData::valueTypeUint32:
+            return convertParamFileInteger<quint32>(metaData, fileValueStr, typedValue, errorString);
+        case FactMetaData::valueTypeUint64:
+            return convertParamFileInteger<quint64>(metaData, fileValueStr, typedValue, errorString);
+        default:
+            return metaData.convertAndValidateRaw(fileValueStr, true /* convertOnly */, typedValue, errorString);
+    }
 }
 
 bool ParameterEditorController::buildDiffFromFile(const QString& filename)
@@ -456,6 +530,7 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
     int         diffNoVehicleCount      = 0;
     int         diffSendableCount       = 0;
     QStringList diffMissingParams;
+    QStringList diffInvalidParams;
 
     int firstComponentId = -1;
     while (!stream.atEnd()) {
@@ -510,6 +585,29 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
             bool        noVehicleValue  = false;
             bool        readOnly        = false;
 
+            // Shown with the raw file text but never sent, so a bad value can't silently become 0 on the vehicle
+            auto appendInvalidDiff = [&](const QString& errorString) {
+                qCWarning(ParameterEditorControllerLog) << "invalid file value, will not send -" << paramName
+                                                        << "value:" << fileValueStr << "error:" << errorString;
+                diffInvalidParams.append(paramName);
+
+                ParameterEditorDiff* paramDiff = new ParameterEditorDiff(this);
+
+                paramDiff->componentId      = componentId;
+                paramDiff->name             = paramName;
+                paramDiff->valueType        = ParameterManager::mavTypeToFactType(static_cast<MAV_PARAM_TYPE>(mavParamType));
+                paramDiff->fileValue        = fileValueStr;
+                paramDiff->fileValueVar     = fileValueStr;
+                paramDiff->vehicleValue     = vehicleValueStr;
+                paramDiff->noVehicleValue   = noVehicleValue;
+                paramDiff->units            = units;
+                paramDiff->cannotSend       = true;
+                paramDiff->invalidFileValue = true;
+                paramDiff->load             = false;
+
+                _diffList.append(paramDiff);
+            };
+
             if (_parameterMgr->parameterExists(componentId, paramName)) {
                 Fact*           vehicleFact         = _parameterMgr->getParameter(componentId, paramName);
                 FactMetaData*   vehicleFactMetaData = vehicleFact->metaData();
@@ -519,13 +617,28 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
                     mavParamType = ParameterManager::factTypeToMavType(vehicleFact->type());
                 }
 
+                readOnly = vehicleFact->readOnly();
+
+                QVariant    typedValue;
+                QString     errorString;
+                if (!_convertFileValue(*vehicleFactMetaData, fileValueStr, typedValue, errorString)) {
+                    if (readOnly) {
+                        qCDebug(ParameterEditorControllerLog) << "buildDiffFromFile: skipping read-only param -" << paramName;
+                        diffReadOnlyCount++;
+                        continue;
+                    }
+                    vehicleValueStr = vehicleFact->enumOrValueString();
+                    units           = vehicleFact->cookedUnits();
+                    appendInvalidDiff(errorString);
+                    continue;
+                }
+
                 // Turn off reboot messaging before setting value in fileFact
                 bool vehicleRebootRequired = vehicleFactMetaData->vehicleRebootRequired();
                 vehicleFactMetaData->setVehicleRebootRequired(false);
                 fileFact.setMetaData(vehicleFact->metaData());
-                fileFact.setRawValue(fileValueStr);
+                fileFact.setRawValue(typedValue);
                 vehicleFactMetaData->setVehicleRebootRequired(vehicleRebootRequired);
-                readOnly = vehicleFact->readOnly();
 
                 if (vehicleFact->rawValue() == fileFact.rawValue()) {
                     diffUnchangedCount++;
@@ -556,7 +669,6 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
                 _diffList.append(paramDiff);
                 continue;
             } else {
-                qCDebug(ParameterEditorControllerLog) << "buildDiffFromFile: not on vehicle, will send as new (QGC format) -" << paramName << "value:" << fileValueStr;
                 noVehicleValue = true;
 
                 // fileValueVar is still a QString variant. Convert it to the typed variant matching the
@@ -565,12 +677,11 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
                 const FactMetaData metaData(ParameterManager::mavTypeToFactType(static_cast<MAV_PARAM_TYPE>(mavParamType)));
                 QVariant    typedValue;
                 QString     errorString;
-                if (metaData.convertAndValidateRaw(fileValueVar, true /* convertOnly */, typedValue, errorString)) {
+                if (_convertFileValue(metaData, fileValueStr, typedValue, errorString)) {
+                    qCDebug(ParameterEditorControllerLog) << "buildDiffFromFile: not on vehicle, will send as new (QGC format) -" << paramName << "value:" << fileValueStr;
                     fileValueVar = typedValue;
                 } else {
-                    qCWarning(ParameterEditorControllerLog) << "buildDiffFromFile: value conversion failed, skipping -" << paramName
-                        << "value:" << fileValueStr << "error:" << errorString;
-                    diffParsedCount--;
+                    appendInvalidDiff(errorString);
                     continue;
                 }
             }
@@ -616,7 +727,9 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
         << "readOnly:" << diffReadOnlyCount
         << "noVehicleValue:" << diffNoVehicleCount
         << "missing:" << diffMissingParams.count()
-        << (diffMissingParams.isEmpty() ? QString() : diffMissingParams.join(QStringLiteral(", ")));
+        << (diffMissingParams.isEmpty() ? QString() : diffMissingParams.join(QStringLiteral(", ")))
+        << "invalid:" << diffInvalidParams.count()
+        << (diffInvalidParams.isEmpty() ? QString() : diffInvalidParams.join(QStringLiteral(", ")));
 
     _setDiffProperty(_diffOtherVehicle,         diffOtherVehicle,       &ParameterEditorController::diffOtherVehicleChanged);
     _setDiffProperty(_diffMultipleComponents,   diffMultipleComponents, &ParameterEditorController::diffMultipleComponentsChanged);
@@ -627,6 +740,7 @@ bool ParameterEditorController::buildDiffFromFile(const QString& filename)
     _setDiffProperty(_diffSendableCount,        diffSendableCount,      &ParameterEditorController::diffSendableCountChanged);
     _setDiffProperty(_diffSelectedCount,        diffSendableCount,      &ParameterEditorController::diffSelectedCountChanged); // All sendable rows start checked
     _setDiffProperty(_diffMissingParams,        diffMissingParams,      &ParameterEditorController::diffMissingParamsChanged);
+    _setDiffProperty(_diffInvalidParams,        diffInvalidParams,      &ParameterEditorController::diffInvalidParamsChanged);
 
     return true;
 }
