@@ -78,9 +78,6 @@ public:
     /// externalFlightModeName of each of External Mode 1-8, in order
     static QStringList externalFlightModeNames(const FlightModeList& modeList);
 
-private slots:
-    void _mavCommandResult(quint32 vehicleId, int component, int command, int result, int failureCode);
-
 private:
     void    _handleAutopilotVersion         (Vehicle* vehicle, mavlink_message_t* message);
 
