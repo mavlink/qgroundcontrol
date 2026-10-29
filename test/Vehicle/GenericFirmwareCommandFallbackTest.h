@@ -17,4 +17,5 @@ public:
 
 private slots:
     void _setCurrentMissionSequence_probesAndFallsBack();
+    void _pauseAsyncReportsUnsupported();
 };

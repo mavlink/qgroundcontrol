@@ -2,10 +2,12 @@
 
 #include "BaseClasses/VehicleTestManualConnect.h"
 
+class MockLink;
+
 /// Verifies APMFirmwarePlugin::startMission behavior for each vehicle state:
-/// flying vehicles just switch to Auto; a grounded fixed wing switches to Auto
-/// and arms (no MAV_CMD_MISSION_START); other grounded vehicles arm in Guided
-/// and start the mission via MAV_CMD_MISSION_START.
+/// flying vehicles just switch to Auto; a grounded fixed wing or VTOL switches
+/// to Auto and arms (no MAV_CMD_MISSION_START); other grounded vehicles arm in
+/// Guided and start the mission via MAV_CMD_MISSION_START.
 /// The async cases cover the multi-vehicle path, which sends the same commands
 /// without waiting inside startMission().
 class APMStartMissionTest : public VehicleTestManualConnect
@@ -29,10 +31,13 @@ private slots:
     void _armedPlaneAsyncSwitchesToAuto();
     void _disarmedPlaneAsyncSwitchesToAutoThenArms();
     void _disarmedPlaneAsyncAlreadyInAutoArmsWithoutModeChange();
+    void _disarmedVtolAsyncSwitchesToAutoThenArms();
     void _pauseAsyncSetsPauseModeThenSkipsRepeat();
 
 private:
     void _connectAPMVehicle(bool plane);
+    void _connectAPMVtol();
+    void _connectAPMMockLink(MockLink* mockLink);
     void _setArmedOnGround();
     void _verifyNoMissionStartSent();
 };

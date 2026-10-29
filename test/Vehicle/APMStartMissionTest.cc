@@ -23,10 +23,23 @@ void APMStartMissionTest::init()
 
 void APMStartMissionTest::_connectAPMVehicle(bool plane)
 {
+    _connectAPMMockLink(plane ? MockLink::startAPMArduPlaneMockLink() : MockLink::startAPMArduCopterMockLink());
+}
+
+void APMStartMissionTest::_connectAPMVtol()
+{
+    auto* const mockConfig = new MockConfiguration(QStringLiteral("ArduPlane VTOL MockLink"));
+    mockConfig->setFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+    mockConfig->setVehicleType(MAV_TYPE_VTOL_TILTROTOR);
+    _connectAPMMockLink(MockLink::startMockLink(mockConfig));
+}
+
+void APMStartMissionTest::_connectAPMMockLink(MockLink* mockLink)
+{
     QSignalSpy spyVehicle(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
     QVERIFY2(spyVehicle.isValid(), "Failed to create spy for activeVehicleChanged");
 
-    _mockLink = plane ? MockLink::startAPMArduPlaneMockLink() : MockLink::startAPMArduCopterMockLink();
+    _mockLink = mockLink;
     QVERIFY2(_mockLink, "Failed to start MockLink");
     (void) connect(_mockLink, &QObject::destroyed, this, [this]() { _mockLink = nullptr; });
 
@@ -302,6 +315,25 @@ void APMStartMissionTest::_disarmedPlaneAsyncAlreadyInAutoArmsWithoutModeChange(
     QVERIFY_TRUE_WAIT(vehicle()->armed(), TestTimeout::mediumMs());
     _verifyNoMissionStartSent();
     QCOMPARE(mockLink()->receivedMavCommandCount(MAV_CMD_DO_SET_MODE), 0);
+}
+
+void APMStartMissionTest::_disarmedVtolAsyncSwitchesToAutoThenArms()
+{
+    _connectAPMVtol();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    // VTOL is not fixed-wing, so this takes the vtol() side of the plane/VTOL branch.
+    QVERIFY(vehicle()->vtol());
+    QVERIFY(!vehicle()->fixedWing());
+    QVERIFY(!vehicle()->armed());
+    vehicle()->startMissionAsync();
+
+    QCOMPARE_TRUE_WAIT(vehicle()->flightMode(), vehicle()->firmwarePlugin()->missionFlightMode(),
+                       TestTimeout::mediumMs());
+    QVERIFY_TRUE_WAIT(vehicle()->armed(), TestTimeout::mediumMs());
+    _verifyNoMissionStartSent();
 }
 
 void APMStartMissionTest::_pauseAsyncSetsPauseModeThenSkipsRepeat()
