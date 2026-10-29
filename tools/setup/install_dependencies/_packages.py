@@ -108,6 +108,8 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "libspeechd2",
     ],
     "misc": [
+        "libssl-dev",
+        "libsecret-1-dev",
         "libvulkan-dev",
         "libpipewire-0.3-dev",
     ],
@@ -198,6 +200,7 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "libpulse-dev",
         "libasound2-dev",
         "libssl-dev",
+        "libsecret-1-dev",
         "libnss3-dev",
         "zlib1g-dev",
         "libicu-dev",
@@ -302,6 +305,8 @@ FEDORA_PACKAGES: dict[str, list[str]] = {
         "pulseaudio-libs-devel",
     ],
     "misc": [
+        "openssl-devel",
+        "libsecret-devel",
         "vulkan-loader-devel",
         "pipewire-devel",
     ],
@@ -378,6 +383,8 @@ ARCH_PACKAGES: dict[str, list[str]] = {
         "libpulse",
     ],
     "misc": [
+        "openssl",
+        "libsecret",
         "vulkan-icd-loader",
         "vulkan-headers",
         "pipewire",

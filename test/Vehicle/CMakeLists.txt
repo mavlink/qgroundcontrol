@@ -123,3 +123,7 @@ add_qgc_test(VehicleLinkManagerTest LABELS Integration Vehicle SERIAL)
 add_qgc_test(VehicleReadinessTest LABELS Unit Vehicle)
 add_qgc_test(VehicleReadinessPX4Test LABELS Integration Vehicle)
 add_qgc_test(VehicleReadinessAPMTest LABELS Integration Vehicle)
+
+if(QGC_UOM_REGISTRATION)
+    add_subdirectory(UOM)
+endif()

@@ -1,5 +1,9 @@
 #include "Vehicle.h"
 
+#ifdef QGC_UOM_REGISTRATION
+#include "VehicleUomRegistrationManager.h"
+#endif
+
 #include "ADSBVehicleManager.h"
 #include "APM.h"
 #include "Actuators.h"
@@ -313,6 +317,11 @@ void Vehicle::_commonInit(LinkInterface* link)
 
     // Remote ID manager might want to acces parameters so make sure to create it after
     _remoteIDManager = new RemoteIDManager(this);
+#ifdef QGC_UOM_REGISTRATION
+    if (!_offlineEditingVehicle) {
+        _uomRegistrationManager = new VehicleUomRegistrationManager(this);
+    }
+#endif
 
     // Flight modes can differ based on advanced mode
     connect(QGCCorePlugin::instance(), &QGCCorePlugin::showAdvancedUIChanged, this, &Vehicle::flightModesChanged);

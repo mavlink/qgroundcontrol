@@ -3,7 +3,8 @@
 # Core vehicle state management and MAVLink communication
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         Autotune.cpp
         Autotune.h
@@ -54,3 +55,7 @@ add_subdirectory(Actuators)
 add_subdirectory(ComponentInformation)
 add_subdirectory(FactGroups)
 add_subdirectory(VehicleSetup)
+
+if(QGC_UOM_REGISTRATION)
+    add_subdirectory(UOM)
+endif()
