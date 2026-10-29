@@ -14,6 +14,10 @@ public:
     // Called internally only
     void _changeAltAfterPause(void* resultHandlerData, bool pauseSucceeded);
 
+#ifdef QGC_UOM_AMOV_ADAPTER
+    UomDeviceAdapter* createUomDeviceAdapter(Vehicle* vehicle, QObject* parent) const override;
+#endif
+
     // Overrides from FirmwarePlugin
 
     QList<MAV_CMD> supportedMissionCommands(QGCMAVLink::VehicleClass_t vehicleClass) const override;

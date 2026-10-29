@@ -10,3 +10,8 @@ target_sources(
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCUomRegistrationCore)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_UOM_REGISTRATION)
+
+if(QGC_UOM_AMOV_ADAPTER)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE QGC_UOM_AMOV_ADAPTER)
+    add_subdirectory(Amov)
+endif()

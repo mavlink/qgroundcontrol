@@ -1,5 +1,9 @@
 #include "PX4FirmwarePlugin.h"
 
+#ifdef QGC_UOM_AMOV_ADAPTER
+#include "AmovUomDeviceAdapter.h"
+#endif
+
 #include <algorithm>
 
 #include <QtCore/QString>
@@ -917,3 +921,10 @@ QVariant PX4FirmwarePlugin::expandedToolbarIndicatorSource(const Vehicle* /*vehi
 
     return QVariant();
 }
+
+#ifdef QGC_UOM_AMOV_ADAPTER
+UomDeviceAdapter* PX4FirmwarePlugin::createUomDeviceAdapter(Vehicle* vehicle, QObject* parent) const
+{
+    return vehicle ? new AmovUomDeviceAdapter(vehicle, parent) : nullptr;
+}
+#endif
