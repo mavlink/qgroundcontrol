@@ -34,12 +34,12 @@ void APMStartMissionTest::_connectAPMVtol()
     _connectAPMMockLink(MockLink::startMockLink(mockConfig));
 }
 
-void APMStartMissionTest::_connectAPMMockLink(MockLink* mockLink)
+void APMStartMissionTest::_connectAPMMockLink(MockLink* link)
 {
     QSignalSpy spyVehicle(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged);
     QVERIFY2(spyVehicle.isValid(), "Failed to create spy for activeVehicleChanged");
 
-    _mockLink = mockLink;
+    _mockLink = link;
     QVERIFY2(_mockLink, "Failed to start MockLink");
     (void) connect(_mockLink, &QObject::destroyed, this, [this]() { _mockLink = nullptr; });
 

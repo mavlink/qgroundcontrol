@@ -37,7 +37,7 @@ private slots:
 private:
     void _connectAPMVehicle(bool plane);
     void _connectAPMVtol();
-    void _connectAPMMockLink(MockLink* mockLink);
+    void _connectAPMMockLink(MockLink* link);
     void _setArmedOnGround();
     void _verifyNoMissionStartSent();
 };
