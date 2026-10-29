@@ -218,8 +218,7 @@ void MissionFlightStatusCalculator::recalc(QmlObjectListModel* visualItems,
 
                         totalHorizontalDistance += distance;
                     } else if (simpleItem->mavCommand() == MAV_CMD_NAV_LOITER_TURNS) {
-                        const double distance =
-                            2.0 * M_PI * qAbs(simpleItem->loiterRadius()) * qAbs(simpleItem->missionItem().param1());
+                        const double distance = simpleItem->loiterDistance();
 
                         if (!pastLandCommand) {
                             const double hoverTime = distance / _status.hoverSpeed;
