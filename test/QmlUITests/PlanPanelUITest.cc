@@ -2097,6 +2097,9 @@ void PlanPanelUITest::_testRallyInspectorStepsInDrillIn()
     QVERIFY2(clickButton(QStringLiteral("planPanel_rallyRow_0")), "Failed to reopen the first point");
     verifyText(QStringLiteral("planPanel_rallyInspector_title"), QStringLiteral("Rally Point 1"),
                QStringLiteral("first point reopened"));
+    verifyVisibility(QStringLiteral("rallyPointAltitudeField"), true, QStringLiteral("altitude field"));
+    verifyVisibility(QStringLiteral("rallyPointAltitudeFrameCombo"), true, QStringLiteral("altitude frame selector"));
+    verifyVisibility(QStringLiteral("rallyPointAltitudeHelp"), true, QStringLiteral("altitude help"));
     QQuickItem* const field = findItem(_rootItem, QStringLiteral("planPanel_rallyField_0"));
     QVERIFY(field);
     QObject* const textField = field->property("textField").value<QObject*>();

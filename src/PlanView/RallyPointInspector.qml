@@ -51,17 +51,27 @@ Item {
                 width:      flickable.width
                 spacing:    ScreenTools.defaultFontPixelHeight * 0.5
 
-                Repeater {
-                    model: root.page.current ? root.page.current.textFieldFacts : []
+                LabelledFactTextField {
+                    objectName:         "planPanel_rallyField_0"
+                    Layout.fillWidth:   true
+                    visible:            root.page.current !== null
+                    fact:               root.page.current ? root.page.current.latitude : null
+                }
 
-                    LabelledFactTextField {
-                        required property var modelData
-                        required property int index
+                LabelledFactTextField {
+                    objectName:         "planPanel_rallyField_1"
+                    Layout.fillWidth:   true
+                    visible:            root.page.current !== null
+                    fact:               root.page.current ? root.page.current.longitude : null
+                }
 
-                        objectName:         "planPanel_rallyField_" + index
-                        Layout.fillWidth:   true
-                        label:              modelData.shortDescription
-                        fact:               modelData
+                Loader {
+                    Layout.fillWidth:   true
+                    active:             root.page.current !== null
+
+                    sourceComponent: RallyPointAltitudeEditor {
+                        rallyPoint: root.page.current
+                        vehicle:    root.page.planMasterController.controllerVehicle
                     }
                 }
             }

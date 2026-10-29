@@ -68,7 +68,7 @@ public:
     /// Determines if the plan has all information needed to be saved or sent to the vehicle.
     /// IMPORTANT NOTE: The return value is a VisualMissionItem::ReadForSaveState value. It is an int here to work around
     /// a nightmare of circular header dependency problems.
-    Q_INVOKABLE int readyForSaveState(void) const { return _missionController.readyForSaveState(); }
+    Q_INVOKABLE int readyForSaveState(void) const;
 
     /// Replaces any current plan with the plan from the manager vehicle even if offline.
     Q_INVOKABLE void showPlanFromManagerVehicle(void);

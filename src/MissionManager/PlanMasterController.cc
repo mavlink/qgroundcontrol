@@ -1,22 +1,24 @@
 #include "PlanMasterController.h"
-#include "AppMessages.h"
-#include "QGCCorePlugin.h"
-#include "MultiVehicleManager.h"
-#include "Vehicle.h"
-#include "VehicleLinkManager.h"
-#include "SettingsManager.h"
-#include "AppSettings.h"
-#include "JsonParsing.h"
-#include "MissionManager.h"
-#include "KMLPlanDomDocument.h"
-#include "PlanCreator.h"
-#include "QmlObjectListModel.h"
-#include "GeoFenceManager.h"
-#include "RallyPointManager.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QFileInfo>
 #include <QtCore/QJsonDocument>
+
+#include "AppMessages.h"
+#include "AppSettings.h"
+#include "GeoFenceManager.h"
+#include "JsonParsing.h"
+#include "KMLPlanDomDocument.h"
+#include "MissionManager.h"
+#include "MultiVehicleManager.h"
+#include "PlanCreator.h"
+#include "QGCCorePlugin.h"
+#include "QGCLoggingCategory.h"
+#include "QmlObjectListModel.h"
+#include "RallyPointManager.h"
+#include "SettingsManager.h"
+#include "Vehicle.h"
+#include "VehicleLinkManager.h"
+#include "VisualMissionItem.h"
 
 QGC_LOGGING_CATEGORY(PlanMasterControllerLog, "PlanManager.PlanMasterController")
 
@@ -752,6 +754,20 @@ void PlanMasterController::_updatePlanCreatorsList(void)
     }
 
     emit planCreatorsChanged(_planCreators);
+}
+
+int PlanMasterController::readyForSaveState(void) const
+{
+    const int missionState = _missionController.readyForSaveState();
+    if (missionState != VisualMissionItem::ReadyForSave) {
+        return missionState;
+    }
+
+    if (_rallyPointController.terrainQueryPending()) {
+        return VisualMissionItem::NotReadyForSaveTerrain;
+    }
+
+    return VisualMissionItem::ReadyForSave;
 }
 
 void PlanMasterController::showPlanFromManagerVehicle(void)
