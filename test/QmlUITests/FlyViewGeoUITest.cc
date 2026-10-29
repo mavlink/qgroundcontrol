@@ -475,12 +475,12 @@ void FlyViewGeoUITest::_testModeToggleAndCompass()
     QCOMPARE(cam->mode(), GeoMapCamera::Mode::Mode2D);
     QVERIFY(cam->isTopDown());
     QCOMPARE(sceneRoot->property("terrainScale").toDouble(), 0.0);
-    QQuickItem* const modeButton = findVisibleItem(_rootItem, QStringLiteral("flyViewGeoMapModeButton"));
+    QQuickItem* const modeButton = findVisibleItem(_rootItem, QStringLiteral("geoMapModeButton"));
     QVERIFY2(modeButton, "Mode toggle button not visible");
     QCOMPARE(modeButton->property("text").toString(), QStringLiteral("3D"));
 
     // Toggle to 3D: mode flips immediately, tilt and terrain animate up
-    QVERIFY(clickButton(QStringLiteral("flyViewGeoMapModeButton")));
+    QVERIFY(clickButton(QStringLiteral("geoMapModeButton")));
     QCOMPARE(cam->mode(), GeoMapCamera::Mode::Mode3D);
     QCOMPARE(modeButton->property("text").toString(), QStringLiteral("2D"));
     QTRY_COMPARE_WITH_TIMEOUT(cam->tilt(), GeoMapCamera::kDefault3DTilt, kSettleTimeoutMs);
@@ -488,7 +488,7 @@ void FlyViewGeoUITest::_testModeToggleAndCompass()
     QVERIFY(!cam->isTopDown());
 
     // Toggle back to 2D: tilt and terrain animate down
-    QVERIFY(clickButton(QStringLiteral("flyViewGeoMapModeButton")));
+    QVERIFY(clickButton(QStringLiteral("geoMapModeButton")));
     QCOMPARE(cam->mode(), GeoMapCamera::Mode::Mode2D);
     QTRY_COMPARE_WITH_TIMEOUT(cam->tilt(), 0.0, kSettleTimeoutMs);
     QTRY_COMPARE_WITH_TIMEOUT(sceneRoot->property("terrainScale").toDouble(), 0.0, kSettleTimeoutMs);
@@ -505,7 +505,7 @@ void FlyViewGeoUITest::_testModeToggleAndCompass()
 
     // Compass reset from a heading past 180: wraps the short way back to north
     cam->setHeading(350);
-    QVERIFY(clickButton(QStringLiteral("flyViewGeoMapCompassButton")));
+    QVERIFY(clickButton(QStringLiteral("geoMapCompassButton")));
     QTRY_COMPARE_WITH_TIMEOUT(cam->heading(), 0.0, kSettleTimeoutMs);
 
     stopUI();

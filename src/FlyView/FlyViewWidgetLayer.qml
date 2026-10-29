@@ -165,7 +165,7 @@ Item {
         property bool coversMap: geoMapControls.visible || (mapScale.visible && mapScale.opacity > 0)
 
         // Google Earth-style camera controls, GeoMap engine only
-        FlyViewGeoMapControls {
+        GeoMapControls {
             id:      geoMapControls
             geoMap:  mapControl && mapControl.geoMap ? mapControl.geoMap : null
             visible: !!geoMap && !ScreenTools.isTinyScreen && QGCViewer3DManager.displayMode !== QGCViewer3DManager.View3D && mapControl.pipState.state === mapControl.pipState.fullState

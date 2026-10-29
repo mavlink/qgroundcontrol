@@ -63,8 +63,10 @@ qt_add_qml_module(
             SurfacePatchModel.h
     QML_FILES GeoMap.qml
               GeoMapADSBVehicleItem.qml
+              GeoMapAltitude.js
               GeoMapCircle.qml
               GeoMapCircleVisuals.qml
+              GeoMapControls.qml
               GeoMapDropLine.qml
               GeoMapDropShadow.qml
               GeoMapFenceWall.qml
@@ -82,6 +84,7 @@ qt_add_qml_module(
               GeoMapPolygon.qml
               GeoMapSegmentArrow.qml
               GeoMapVehicleItem.qml
+              GeoMapView.qml
               GeoMapVTOLLandingPatternVisual.qml
               GeoMapWaypointItem.qml
     RESOURCES shaders/flightpath.frag shaders/flightpath.vert

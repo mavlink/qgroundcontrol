@@ -1,17 +1,20 @@
 #include "OnboardLogUITest.h"
 
+#include <algorithm>
+
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QTemporaryDir>
+#include <QtQml/QQmlApplicationEngine>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
 
-#include <algorithm>
-
 #include "MockLink.h"
 #include "MockLinkFTP.h"
+#include "OnboardLogController.h"
 #include "QGCFileDialogController.h"
+#include "Vehicle.h"
 
 UT_REGISTER_TEST(OnboardLogUITest, TestLabel::Integration)
 
@@ -381,5 +384,61 @@ void OnboardLogUITest::_ftpDownloadUITest()
                         QFile file(downloadFile);
                         QVERIFY(file.open(QIODevice::ReadOnly));
                         QCOMPARE(file.readAll(), mockLink->mockLinkFTP()->logFileContents(QStringLiteral("log_2.ulg")));
+                    });
+}
+
+void OnboardLogUITest::_armedDisablesPageUITest()
+{
+    _ftpTransport = false;
+    runWithMockLink([] { return MockLink::startPX4MockLink(); },
+                    [&](QPointer<MockLink> /*mockLink*/, Vehicle* vehicle) {
+                        vehicle->setArmed(true, false /* showError */);
+                        QTRY_VERIFY_WITH_TIMEOUT(vehicle->armed(), 10000);
+
+                        _navigateToOnboardLogsPage();
+                        if (QTest::currentTestFailed()) {
+                            return;
+                        }
+
+                        // refresh() sets requestingList synchronously on both transports, so this
+                        // catches a list request from page load without racing the vehicle's reply
+                        OnboardLogController* const controller = _engine->singletonInstance<OnboardLogController*>(
+                            QStringLiteral("QGroundControl"), QStringLiteral("OnboardLogController"));
+                        QVERIFY(controller);
+                        QVERIFY(!controller->property("requestingList").toBool());
+                        QObject* const model = controller->property("model").value<QObject*>();
+                        QVERIFY(model);
+                        QVERIFY(model->property("count").isValid());
+                        QCOMPARE(model->property("count").toInt(), 0);
+
+                        _verifyButtonEnabled(QStringLiteral("onboardLog_refreshButton"), false);
+                        _verifyButtonEnabled(QStringLiteral("onboardLog_eraseAllButton"), false);
+                        _verifyButtonEnabled(QStringLiteral("onboardLog_cancelButton"), false);
+                        QVERIFY(findVisibleItem(_rootItem, QStringLiteral("onboardLogCheckbox_0"), 0) == nullptr);
+
+                        QQuickItem* const armedWarning =
+                            findVisibleItem(_rootItem, QStringLiteral("onboardLog_armedWarning"), 2000);
+                        QVERIFY2(armedWarning, "armed warning label not shown");
+                        QTRY_VERIFY_WITH_TIMEOUT(armedWarning->width() > 0 && armedWarning->height() > 0, 5000);
+                        QQuickItem* const refreshButton =
+                            findVisibleItem(_rootItem, QStringLiteral("onboardLog_refreshButton"), 0);
+                        QVERIFY(refreshButton);
+                        // The label must wrap to the button column width rather than widen the column
+                        QTRY_VERIFY_WITH_TIMEOUT(refreshButton->width() < armedWarning->implicitWidth(), 5000);
+                        if (QTest::currentTestFailed()) {
+                            return;
+                        }
+
+                        vehicle->setArmed(false, false /* showError */);
+                        QTRY_VERIFY_WITH_TIMEOUT(!vehicle->armed(), 10000);
+                        _verifyButtonEnabled(QStringLiteral("onboardLog_refreshButton"), true);
+                        QVERIFY(!armedWarning->isVisible());
+                        if (QTest::currentTestFailed()) {
+                            return;
+                        }
+
+                        QVERIFY(clickButton(QStringLiteral("onboardLog_refreshButton")));
+                        QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("onboardLogCheckbox_0"), 15000),
+                                 "log entry row never appeared after disarm and refresh");
                     });
 }

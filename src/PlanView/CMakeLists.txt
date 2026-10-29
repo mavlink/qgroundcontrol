@@ -60,6 +60,8 @@ qt_add_qml_module(
         PlanTreeView.qml
         PlanView.qml
         PlanViewRightPanel.qml
+        PlanViewGeoMap.qml
+        RallyPointAltitudeEditor.qml
         RallyPointEditorHeader.qml
         RallyPointItemEditor.qml
         RallyPointList.qml

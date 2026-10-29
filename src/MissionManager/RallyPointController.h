@@ -47,6 +47,9 @@ public:
     void setCurrentRallyPoint   (QObject* rallyPoint);
     bool isEmpty                (void) const;
 
+    /// true: a rally point is still waiting on terrain data for its altitude
+    bool terrainQueryPending(void) const;
+
 signals:
     void currentRallyPointChanged(QObject* rallyPoint);
     void loadComplete(void);
@@ -67,7 +70,10 @@ private:
     QObject*            _currentRallyPoint =    nullptr;
     bool                _itemsRequested =       false;
 
-    static constexpr int    _jsonCurrentVersion = 2;
-    static constexpr const char* _jsonFileTypeValue =  "RallyPoints";
-    static constexpr const char* _jsonPointsKey =      "points";
+    static constexpr int _jsonCurrentVersion = 3;
+    static constexpr int _jsonOldestSupportedVersion = 2;
+    static constexpr const char* _jsonFileTypeValue = "RallyPoints";
+    static constexpr const char* _jsonPointsKey = "points";
+    static constexpr const char* _jsonCoordinateKey = "coordinate";
+    static constexpr const char* _jsonFrameKey = "frame";
 };

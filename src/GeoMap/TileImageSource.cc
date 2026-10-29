@@ -53,6 +53,9 @@ TileImageSource::TileImageSource(const QString& mapType, QObject* parent, QNetwo
       _mapId(UrlFactory::getQtMapIdFromProviderType(mapType)),
       _networkManager(networkManager ? networkManager : new QNetworkAccessManager(this))
 {
+    // Only a QtLocation map initializes the shared tile cache on its own
+    getQGCMapEngine()->ensureInitialized();
+
     if (_mapId < 0) {
         qCWarning(GeoMapTileImageSourceLog) << "unknown map type" << _mapType << "- all tile requests will fail";
     }

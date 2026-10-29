@@ -18,7 +18,7 @@ import QGroundControl.GeoMap
 
 /// Fly-view 2D/3D map: the GeoMap-engine counterpart of FlyViewMap.
 /// Fly-view specific map content (vehicle items, trajectory, ...) lands here.
-GeoMap {
+GeoMapView {
     id: root
 
     allowGCSLocationCenter: true

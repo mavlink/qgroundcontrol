@@ -16,7 +16,9 @@ Item {
     property var  _missionController: planMasterController.missionController
     property real _toolsMargin:       ScreenTools.defaultFontPixelWidth * 0.75
 
-    readonly property bool _useNewPlanPanel: QGroundControl.settingsManager.planViewSettings.useNewPlanPanel.rawValue
+    property bool useNewPlanPanel: QGroundControl.settingsManager.planViewSettings.useNewPlanPanel.rawValue
+
+    readonly property bool _useNewPlanPanel: useNewPlanPanel
 
     function selectNextNotReady() {
         for (var i = 0; i < _missionController.visualItems.count; i++) {

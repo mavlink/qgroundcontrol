@@ -34,12 +34,17 @@ QGeoFileTileCacheQGC::QGeoFileTileCacheQGC(const QVariantMap &parameters, QObjec
     setMinTextureUsage(_getDefaultMinTexture());
     setExtraTextureUsage(_getDefaultExtraTexture() - minTextureUsage());
 
+    ensureInitialized();
+
+    directory_ = _getCachePath(parameters);
+}
+
+void QGeoFileTileCacheQGC::ensureInitialized()
+{
     static std::once_flag cacheInit;
     std::call_once(cacheInit, [] {
         _initCache();
     });
-
-    directory_ = _getCachePath(parameters);
 }
 
 QGeoFileTileCacheQGC::~QGeoFileTileCacheQGC()

@@ -50,6 +50,11 @@ QGCPopupDialog {
                 if (paramController.diffMissingParams.length > 0) {
                     clauses.push(qsTr("%1 not found on the Vehicle and cannot be sent").arg(paramController.diffMissingParams.length))
                 }
+                if (paramController.diffInvalidParams.length === 1) {
+                    clauses.push(qsTr("1 has an invalid value and will not be sent"))
+                } else if (paramController.diffInvalidParams.length > 1) {
+                    clauses.push(qsTr("%1 have invalid values and will not be sent").arg(paramController.diffInvalidParams.length))
+                }
                 if (paramController.diffParsedCount === 1) {
                     return clauses.length === 0 ? qsTr("Loaded 1 parameter from file.")
                                                 : qsTr("Loaded 1 parameter from file: %1.").arg(clauses.join(", "))
@@ -117,15 +122,15 @@ QGCPopupDialog {
             QGCLabel { text: qsTr("File") }
             Repeater {
                 model: paramController.diffList
-                QGCLabel { text: object.fileValue + " " + object.units }
+                QGCLabel { text: object.invalidFileValue ? qsTr("%1 — invalid").arg(object.fileValue) : object.fileValue + " " + object.units }
             }
 
             QGCLabel { text: qsTr("Vehicle") }
             Repeater {
                 model: paramController.diffList
                 QGCLabel {
-                    text: object.cannotSend ? qsTr("N/A — not on Vehicle") :
-                          object.noVehicleValue ? qsTr("N/A — new to Vehicle") :
+                    text: object.noVehicleValue ? qsTr("N/A — new to Vehicle") :
+                          (object.cannotSend && !object.invalidFileValue) ? qsTr("N/A — not on Vehicle") :
                           object.vehicleValue + " " + object.units
                 }
             }
@@ -145,6 +150,14 @@ QGCPopupDialog {
             wrapMode:               Text.WordWrap
             visible:                paramController.diffMissingParams.length > 0
             text:                   qsTr("Parameters marked 'not on Vehicle' cannot be sent since the file does not include type information. They may only exist after another parameter is changed and the Vehicle is rebooted, after which you can load this file again.")
+        }
+
+        QGCLabel {
+            objectName:             "diffInvalidHintLabel"
+            Layout.preferredWidth:  summaryLabel.Layout.preferredWidth
+            wrapMode:               Text.WordWrap
+            visible:                paramController.diffInvalidParams.length > 0
+            text:                   qsTr("Parameters marked 'invalid' have a value in the file that cannot be converted to the parameter's type on the Vehicle. They will not be sent.")
         }
     }
 }

@@ -81,6 +81,31 @@ void QmlUITestBase::_restoreUseTabbedPlanPanel()
     }
 }
 
+void QmlUITestBase::setUseGeoMapPlanEngine(bool use)
+{
+    Fact* const flag = SettingsManager::instance()->planViewSettings()->useGeoMapEngine();
+    if (!_savedUseGeoMapPlanEngine) {
+        _savedUseGeoMapPlanEngine = flag->rawValue().toBool();
+    }
+    _setUseGeoMapPlanEngineFact(use);
+}
+
+void QmlUITestBase::_restoreUseGeoMapPlanEngine()
+{
+    if (_savedUseGeoMapPlanEngine) {
+        _setUseGeoMapPlanEngineFact(*_savedUseGeoMapPlanEngine);
+        _savedUseGeoMapPlanEngine.reset();
+    }
+}
+
+void QmlUITestBase::_setUseGeoMapPlanEngineFact(bool use)
+{
+    // The setting requires a restart, which the app announces on every change
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    SettingsManager::instance()->planViewSettings()->useGeoMapEngine()->setRawValue(use);
+}
+
 static QQuickItem* findVisibleItemImmediate(QQuickItem* root, const QString& objectName)
 {
     if (!root || !root->isVisible()) {

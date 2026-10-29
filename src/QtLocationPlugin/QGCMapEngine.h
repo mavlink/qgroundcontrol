@@ -15,6 +15,10 @@ public:
     ~QGCMapEngine();
 
     void init(const QString &databasePath);
+
+    /// Initializes the engine with the application's tile cache database unless that already happened. Maps other
+    /// than QtLocation's (GeoMap) call this, since only a QtLocation map initializes the engine on its own.
+    void ensureInitialized();
     bool addTask(QGCMapTask *task);
 
     /// Stops the cache worker thread and closes the database. Call before

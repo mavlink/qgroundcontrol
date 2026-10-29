@@ -49,8 +49,26 @@ OnboardLogController::~OnboardLogController()
     qCDebug(OnboardLogControllerLog) << this;
 }
 
+bool OnboardLogController::_vehicleArmed() const
+{
+    return _vehicle && _vehicle->armed();
+}
+
+void OnboardLogController::_vehicleArmedChanged(bool armed)
+{
+    if (armed && (_requestingLogEntries || _downloadingLogs)) {
+        qCDebug(OnboardLogControllerLog) << "vehicle armed - canceling log transfer";
+        cancel();
+    }
+}
+
 void OnboardLogController::download(const QString &path)
 {
+    if (_vehicleArmed()) {
+        qCWarning(OnboardLogControllerLog) << "ignored - vehicle is armed";
+        return;
+    }
+
     const QString dir = path.isEmpty() ? SettingsManager::instance()->appSettings()->logSavePath() : path;
     if (_transport == Transport::Ftp) {
         _ftpDownloadToDirectory(dir);
@@ -164,6 +182,7 @@ void OnboardLogController::_setActiveVehicle(Vehicle *vehicle)
         _logEntriesModel->clearAndDeleteContents();
         (void) disconnect(_vehicle, &Vehicle::logEntry, this, &OnboardLogController::_logEntry);
         (void) disconnect(_vehicle, &Vehicle::logData,  this, &OnboardLogController::_logData);
+        (void) disconnect(_vehicle, &Vehicle::armedChanged, this, &OnboardLogController::_vehicleArmedChanged);
 
         FTPManager *const ftp = _vehicle->ftpManager();
         (void) disconnect(ftp, &FTPManager::listDirectoryComplete, this, &OnboardLogController::_ftpListDirComplete);
@@ -188,6 +207,7 @@ void OnboardLogController::_setActiveVehicle(Vehicle *vehicle)
     if (_vehicle) {
         (void) connect(_vehicle, &Vehicle::logEntry, this, &OnboardLogController::_logEntry);
         (void) connect(_vehicle, &Vehicle::logData,  this, &OnboardLogController::_logData);
+        (void) connect(_vehicle, &Vehicle::armedChanged, this, &OnboardLogController::_vehicleArmedChanged);
 
         FTPManager *const ftp = _vehicle->ftpManager();
         (void) connect(ftp, &FTPManager::listDirectoryComplete, this, &OnboardLogController::_ftpListDirComplete);
@@ -511,6 +531,11 @@ void OnboardLogController::refresh()
         return;
     }
 
+    if (_vehicleArmed()) {
+        qCWarning(OnboardLogControllerLog) << "ignored - vehicle is armed";
+        return;
+    }
+
     _logEntriesModel->clearAndDeleteContents();
     emit selectionChanged();
 
@@ -727,6 +752,11 @@ void OnboardLogController::eraseAll()
         return;
     }
 
+    if (_vehicleArmed()) {
+        qCWarning(OnboardLogControllerLog) << "ignored - vehicle is armed";
+        return;
+    }
+
     SharedLinkInterfacePtr sharedLink = _vehicle->vehicleLinkManager()->primaryLink().lock();
     if (!sharedLink) {
         qCWarning(OnboardLogControllerLog) << "Link Unavailable";
@@ -755,6 +785,11 @@ void OnboardLogController::eraseSelected()
 {
     if (!_vehicle) {
         qCWarning(OnboardLogControllerLog) << "Vehicle Unavailable";
+        return;
+    }
+
+    if (_vehicleArmed()) {
+        qCWarning(OnboardLogControllerLog) << "ignored - vehicle is armed";
         return;
     }
 
@@ -788,7 +823,13 @@ void OnboardLogController::_ftpDeleteNext()
     if (_ftpDeleteQueue.isEmpty()) {
         _ftpDeleting = false;
         _setDownloading(false);
-        refresh();
+        if (_vehicleArmed()) {
+            // The in-flight delete's outcome is unknown, so drop the list instead of leaving a stale entry selectable
+            _logEntriesModel->clearAndDeleteContents();
+            emit selectionChanged();
+        } else {
+            refresh();
+        }
         return;
     }
 

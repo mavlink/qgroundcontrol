@@ -24,6 +24,22 @@
 
 UT_REGISTER_TEST(PlanViewUITest, TestLabel::Integration, TestLabel::MissionManager)
 
+namespace {
+// The GeoMap Plan map only supports the tabbed panel, so there is no tree panel with GeoMap row
+struct PanelConfig
+{
+    const char* name;
+    bool tabbedPanel;
+    bool geoMapEngine;
+};
+
+constexpr PanelConfig kPanelConfigs[] = {
+    {"tree panel", false, false},
+    {"tabbed panel", true, false},
+    {"tabbed panel, GeoMap engine", true, true},
+};
+}  // namespace
+
 // Offline Plan view lifecycle test. No vehicle is connected for the entire
 // test, so Upload must remain disabled and un-highlighted throughout.
 
@@ -75,6 +91,12 @@ QGeoCoordinate PlanViewUITest::_plannedHomePosition()
 
 void PlanViewUITest::_navigateToPlanAndCenterMap()
 {
+    // Without an RHI backend the GeoMap View3D warns when it renders
+    if (_geoMapEngine) {
+        const std::optional<bool> rhiBased = expectSoftwareBackendWarnings(/*strict*/ false);
+        QVERIFY2(rhiBased.has_value(), "No renderer interface on the main window");
+    }
+
     QVERIFY2(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewPlan")), "Failed to navigate to Plan view");
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("mainView_plan"), 2000), "Plan view did not appear");
     QTest::qWait(_viewDelay);
@@ -83,6 +105,11 @@ void PlanViewUITest::_navigateToPlanAndCenterMap()
     // are deterministic and offset clicks produce nearby waypoints.
     QQuickItem *map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
     QVERIFY2(map, "planView_map not found");
+    // Only the GeoMap engine has a camera, so this keeps the GeoMap rows from silently running on QtLocation
+    QCOMPARE(map->property("camera").isValid(), _geoMapEngine);
+    verifyVisibility(QStringLiteral("geoMapModeButton"), _geoMapEngine, QStringLiteral("GeoMap camera controls"));
+    if (QTest::currentTestFailed())
+        return;
     const QGeoCoordinate mapCenter(47.397742, 8.545594); // Zurich
     map->setProperty("center", QVariant::fromValue(mapCenter));
     map->setProperty("zoomLevel", 15.0);
@@ -99,15 +126,20 @@ void PlanViewUITest::_navigateToPlanAndCenterMap()
 void PlanViewUITest::_addPanelData()
 {
     QTest::addColumn<bool>("tabbedPanel");
-    QTest::newRow("tree panel") << false;
-    QTest::newRow("tabbed panel") << true;
+    QTest::addColumn<bool>("geoMapEngine");
+    for (const PanelConfig& config : kPanelConfigs) {
+        QTest::newRow(config.name) << config.tabbedPanel << config.geoMapEngine;
+    }
 }
 
 void PlanViewUITest::_selectPanelFromTestData()
 {
     QFETCH(bool, tabbedPanel);
+    QFETCH(bool, geoMapEngine);
     _tabbedPanel = tabbedPanel;
+    _geoMapEngine = geoMapEngine;
     setUseTabbedPlanPanel(_tabbedPanel);
+    setUseGeoMapPlanEngine(_geoMapEngine);
 }
 
 void PlanViewUITest::_showPanelTab(PanelTab panelTab)
@@ -232,13 +264,15 @@ void PlanViewUITest::_testVTOLTakeoffChoices_data()
     QTest::addColumn<QString>("choiceButton");
     QTest::addColumn<int>("expectedCommand");
     QTest::addColumn<bool>("tabbedPanel");
+    QTest::addColumn<bool>("geoMapEngine");
 
-    for (const bool tabbedPanel : {false, true}) {
-        const QString panel = tabbedPanel ? QStringLiteral("tabbed panel") : QStringLiteral("tree panel");
-        QTest::addRow("VTOL takeoff, %s", qPrintable(panel))
-            << QStringLiteral("planTakeoff_vtolButton") << int(MAV_CMD_NAV_VTOL_TAKEOFF) << tabbedPanel;
-        QTest::addRow("multicopter takeoff, %s", qPrintable(panel))
-            << QStringLiteral("planTakeoff_mcButton") << int(MAV_CMD_NAV_TAKEOFF) << tabbedPanel;
+    for (const PanelConfig& config : kPanelConfigs) {
+        QTest::addRow("VTOL takeoff, %s", config.name)
+            << QStringLiteral("planTakeoff_vtolButton") << int(MAV_CMD_NAV_VTOL_TAKEOFF) << config.tabbedPanel
+            << config.geoMapEngine;
+        QTest::addRow("multicopter takeoff, %s", config.name)
+            << QStringLiteral("planTakeoff_mcButton") << int(MAV_CMD_NAV_TAKEOFF) << config.tabbedPanel
+            << config.geoMapEngine;
     }
 }
 

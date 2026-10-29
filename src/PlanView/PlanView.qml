@@ -31,10 +31,22 @@ Item {
     property int    _editingLayer: _layerMission
     property var    _appSettings: QGroundControl.settingsManager.appSettings
     property var    _planViewSettings: QGroundControl.settingsManager.planViewSettings
-    readonly property bool _useNewPlanPanel: _planViewSettings.useNewPlanPanel.rawValue
+    readonly property bool _useNewPlanPanelSetting: _planViewSettings.useNewPlanPanel.rawValue
+    // The Plan map engine in use, decided once at startup (the setting is qgcRebootRequired). The GeoMap engine
+    // supports the tabbed panel only, so the panel follows it instead of the setting while it is loaded
+    property bool   _useGeoMapEngine: false
+    readonly property bool _useNewPlanPanel: _useNewPlanPanelSetting || _useGeoMapEngine
     property bool   _promptForPlanUsageShowing: false
     property bool   _addROIOnClick: false
     property bool   _addWaypointOnClick: false
+
+    // The map is created by editorMapLoader: QtLocation FlightMap or, when enabled, the experimental GeoMap engine
+    readonly property var   editorMap: editorMapLoader.item
+    readonly property real  _nonInteractiveOpacity: 0.5
+    readonly property real  _leftToolWidth: toolStrip.x + toolStrip.width
+    readonly property real  _rightToolWidth: rightPanel.width + rightPanel.anchors.rightMargin
+    // This is the center rectangle of the map which is not obscured by tools
+    readonly property rect  _centerViewport: Qt.rect(_leftToolWidth + _margin, _margin, mainPlanViewArea.width - _leftToolWidth - _rightToolWidth - (_margin * 2), (missionStatus.visible ? missionStatus.y : mainPlanViewArea.height - _margin) - _margin)
 
     readonly property int _layerMission: PlanEditLayers.layerMission
     readonly property int _layerPlan: PlanEditLayers.layerPlan
@@ -42,7 +54,7 @@ Item {
     readonly property int _layerRally: PlanEditLayers.layerRally
 
     onVisibleChanged: {
-        if(visible) {
+        if (visible && editorMap) {
             editorMap.zoomLevel = QGroundControl.flightMapZoom
             editorMap.center    = QGroundControl.flightMapPosition
         }
@@ -62,6 +74,63 @@ Item {
         coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
         coordinate.altitude  = coordinate.altitude.toFixed(_decimalPlaces)
         return coordinate
+    }
+
+    function _onEditorMapClicked(mouse) {
+        // Take focus to close any previous editing
+        editorMap.focus = true
+
+        // Collapse layer switcher on any map click
+        layerSwitcher.expanded = false
+        collapseTimer.stop()
+
+        if (!mainWindow.allowViewSwitch()) {
+            return
+        }
+        var coordinate = editorMap.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
+        if (!coordinate.isValid) {
+            return
+        }
+        coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
+        coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
+        coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
+
+        switch (_editingLayer) {
+        case _layerPlan:
+            _missionController.setHomePosition(coordinate)
+            break
+        case _layerMission:
+            if (!_useNewPlanPanel && _planMasterController.showCreateFromTemplate) {
+                _missionController.setHomePosition(coordinate)
+            } else if (_addROIOnClick) {
+                _addROIOnClick = false
+                if (_missionController.isROIActive) {
+                    var pos = Qt.point(mouse.x, mouse.y)
+                    // For some strange reason using mainWindow in mapToItem doesn't work, so we use globals.parent instead which also gets us mainWindow
+                    pos = editorMap.mapToItem(globals.parent, pos)
+                    var dropPanel = insertOrCancelROIDropPanelComponent.createObject(mainWindow, { mapClickCoord: coordinate, clickRect: Qt.rect(pos.x, pos.y, 0, 0) })
+                    dropPanel.open()
+                } else {
+                    insertROIAfterCurrent(coordinate)
+                }
+            } else if (_addWaypointOnClick) {
+                insertSimpleItemAfterCurrent(coordinate)
+            }
+            break
+        case _layerRally:
+            if (_rallyPointController.supported) {
+                _rallyPointController.addPoint(coordinate)
+            }
+            break
+        }
+    }
+
+    function _onMapItemSelected(sequenceNumber) {
+        if (!mainWindow.allowViewSwitch()) {
+            return
+        }
+        _missionController.setCurrentPlanViewSeqNum(sequenceNumber, false)
+        rightPanel.showItemInspector()
     }
 
     MapFitFunctions {
@@ -255,224 +324,197 @@ Item {
         anchors.top: planToolBar.bottom
         anchors.bottom: parent.bottom
 
-        FlightMap {
-            id: editorMap
-            objectName: "planView_map"
+        Loader {
+            id: editorMapLoader
             anchors.fill: parent
-            mapName: "MissionEditor"
-            allowGCSLocationCenter: true
-            allowVehicleLocationCenter: true
-            planView: true
 
-            zoomLevel: QGroundControl.flightMapZoom
-            center: QGroundControl.flightMapPosition
-
-            // This is the center rectangle of the map which is not obscured by tools
-            property rect centerViewport: Qt.rect(_leftToolWidth + _margin,  _margin, editorMap.width - _leftToolWidth - _rightToolWidth - (_margin * 2), (missionStatus.visible ? missionStatus.y : height - _margin) - _margin)
-
-            property real _leftToolWidth: toolStrip.x + toolStrip.width
-            property real _rightToolWidth: rightPanel.width + rightPanel.anchors.rightMargin
-            property real _nonInteractiveOpacity: 0.5
-
-            // Initial map position duplicates Fly view position
-            Component.onCompleted: editorMap.center = QGroundControl.flightMapPosition
-
-            onZoomLevelChanged: {
-                QGroundControl.flightMapZoom = editorMap.zoomLevel
+            // Engine choice is snapshotted at startup (the setting is qgcRebootRequired)
+            Component.onCompleted: {
+                _root._useGeoMapEngine = _root._planViewSettings.useGeoMapEngine.rawValue && _root._useNewPlanPanelSetting
+                sourceComponent = _root._useGeoMapEngine ? geoMapEngineComponent : qtLocationEngineComponent
             }
-            onCenterChanged: {
-                QGroundControl.flightMapPosition = editorMap.center
+        }
+
+        Component {
+            id: geoMapEngineComponent
+
+            PlanViewGeoMap {
+                objectName: "planView_map"
+                planMasterController: _root._planMasterController
+                centerViewport: _root._centerViewport
+                missionOpacity: _root._editingLayer == _root._layerMission ? 1 : _root._nonInteractiveOpacity
+                missionInteractive: _root._editingLayer == _root._layerMission
+                showControls: true
+                showScale: true
+                controlsLeftMargin: _root._leftToolWidth + _root._toolsMargin
+                controlsTopMargin: _root._toolsMargin
+                _nonInteractiveOpacity: _root._nonInteractiveOpacity
+
+                onMapClicked: (mouse) => _root._onEditorMapClicked(mouse)
+                onItemSelected: (sequenceNumber) => _root._onMapItemSelected(sequenceNumber)
             }
+        }
 
-            onMapClicked: (mouse) => {
-                // Take focus to close any previous editing
-                editorMap.focus = true
+        Component {
+            id: qtLocationEngineComponent
 
-                // Collapse layer switcher on any map click
-                layerSwitcher.expanded = false
-                collapseTimer.stop()
+            FlightMap {
+                id: qtLocationMap
+                objectName: "planView_map"
+                mapName: "MissionEditor"
+                allowGCSLocationCenter: true
+                allowVehicleLocationCenter: true
+                planView: true
 
-                if (!mainWindow.allowViewSwitch()) {
-                    return
+                zoomLevel: QGroundControl.flightMapZoom
+                center: QGroundControl.flightMapPosition
+
+                property rect centerViewport: _root._centerViewport
+                property real _nonInteractiveOpacity: _root._nonInteractiveOpacity
+
+                // Initial map position duplicates Fly view position
+                Component.onCompleted: qtLocationMap.center = QGroundControl.flightMapPosition
+
+                onZoomLevelChanged: {
+                    QGroundControl.flightMapZoom = qtLocationMap.zoomLevel
                 }
-                var coordinate = editorMap.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
-                coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
-                coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
-                coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
-
-                switch (_editingLayer) {
-                case _layerPlan:
-                    _missionController.setHomePosition(coordinate)
-                    break
-                case _layerMission:
-                    if (!_useNewPlanPanel && _planMasterController.showCreateFromTemplate) {
-                        _missionController.setHomePosition(coordinate)
-                    } else if (_addROIOnClick) {
-                        _addROIOnClick = false
-                        if (_missionController.isROIActive) {
-                            var pos = Qt.point(mouse.x, mouse.y)
-                            // For some strange reason using mainWindow in mapToItem doesn't work, so we use globals.parent instead which also gets us mainWindow
-                            pos = editorMap.mapToItem(globals.parent, pos)
-                            var dropPanel = insertOrCancelROIDropPanelComponent.createObject(mainWindow, { mapClickCoord: coordinate, clickRect: Qt.rect(pos.x, pos.y, 0, 0) })
-                            dropPanel.open()
-                        } else {
-                            insertROIAfterCurrent(coordinate)
-                        }
-                    } else if (_addWaypointOnClick) {
-                        insertSimpleItemAfterCurrent(coordinate)
-                    }
-                    break
-                case _layerRally:
-                    if (_rallyPointController.supported) {
-                        _rallyPointController.addPoint(coordinate)
-                    }
-                    break
+                onCenterChanged: {
+                    QGroundControl.flightMapPosition = qtLocationMap.center
                 }
-            }
 
-            MissionItemIndicatorGroup {
-                id: _missionItemIndicatorGroup
+                onMapClicked: (mouse) => _root._onEditorMapClicked(mouse)
 
-                objectName: "planView_missionItemIndicators"
-                map: editorMap
-                missionItems: _root._missionController.visualItems
-                onItemSelected: (sequenceNumber) => {
-                    if (!mainWindow.allowViewSwitch()) {
-                        return
-                    }
-                    _root._missionController.setCurrentPlanViewSeqNum(sequenceNumber, false)
-                    rightPanel.showItemInspector()
+                MissionItemIndicatorGroup {
+                    id: _missionItemIndicatorGroup
+
+                    objectName: "planView_missionItemIndicators"
+                    map: qtLocationMap
+                    missionItems: _root._missionController.visualItems
+                    onItemSelected: (sequenceNumber) => _root._onMapItemSelected(sequenceNumber)
                 }
-            }
 
-            // Add the mission item visuals to the map
-            Repeater {
-                model: _missionController.visualItems
-                delegate: MissionItemMapVisual {
-                    map: editorMap
-                    opacity: _editingLayer == _layerMission ? 1 : editorMap._nonInteractiveOpacity
-                    interactive: _editingLayer == _layerMission
-                    vehicle: _planMasterController.controllerVehicle
-                    indicatorGroup: _missionItemIndicatorGroup
-                    onClicked: (sequenceNumber) => {
-                        if (!mainWindow.allowViewSwitch()) {
-                            return
-                        }
-                        _root._missionController.setCurrentPlanViewSeqNum(sequenceNumber, false)
-                        rightPanel.showItemInspector()
+                // Add the mission item visuals to the map
+                Repeater {
+                    model: _missionController.visualItems
+                    delegate: MissionItemMapVisual {
+                        map: qtLocationMap
+                        opacity: _editingLayer == _layerMission ? 1 : qtLocationMap._nonInteractiveOpacity
+                        interactive: _editingLayer == _layerMission
+                        vehicle: _planMasterController.controllerVehicle
+                        indicatorGroup: _missionItemIndicatorGroup
+                        onClicked: (sequenceNumber) => _root._onMapItemSelected(sequenceNumber)
                     }
                 }
-            }
 
-            // Add lines between waypoints
-            MissionLineView {
-                showSpecialVisual: _missionController.isROIBeginCurrentItem
-                model: _missionController.simpleFlightPathSegments
-                opacity: _editingLayer == _layerMission ? 1 : editorMap._nonInteractiveOpacity
-            }
+                // Add lines between waypoints
+                MissionLineView {
+                    showSpecialVisual: _missionController.isROIBeginCurrentItem
+                    model: _missionController.simpleFlightPathSegments
+                    opacity: _editingLayer == _layerMission ? 1 : qtLocationMap._nonInteractiveOpacity
+                }
 
-            // Direction arrows in waypoint lines
-            MapItemView {
-                model: _editingLayer == _layerMission ? _missionController.directionArrows : undefined
+                // Direction arrows in waypoint lines
+                MapItemView {
+                    model: _editingLayer == _layerMission ? _missionController.directionArrows : undefined
 
-                delegate: MapLineArrow {
-                    fromCoord: object ? object.coordinate1 : undefined
-                    toCoord: object ? object.coordinate2 : undefined
-                    arrowPosition: 3
-                    mapControl: editorMap
+                    delegate: MapLineArrow {
+                        fromCoord: object ? object.coordinate1 : undefined
+                        toCoord: object ? object.coordinate2 : undefined
+                        arrowPosition: 3
+                        mapControl: qtLocationMap
+                        z: QGroundControl.zOrderWaypointLines + 1
+                    }
+                }
+
+                // UI for splitting the current segment
+                MapQuickItem {
+                    id: splitSegmentItem
+
+                    property real _screenLegLength: 0
+
+                    anchorPoint.x: sourceItem.width / 2
+                    anchorPoint.y: sourceItem.height / 2
                     z: QGroundControl.zOrderWaypointLines + 1
-                }
-            }
+                    visible: _editingLayer == _layerMission
+                             && _screenLegLength > _missionItemIndicatorGroup.groupingDistance * 2
 
-            // UI for splitting the current segment
-            MapQuickItem {
-                id: splitSegmentItem
+                    sourceItem: SplitIndicator {
+                        onClicked: _missionController.insertSimpleMissionItem(splitSegmentItem.coordinate,
+                                                                               _missionController.currentPlanViewVIIndex,
+                                                                               true /* makeCurrentItem */)
+                    }
 
-                property real _screenLegLength: 0
+                    function _updateScreenLegLength() {
+                        const segment = _root._missionController.splitSegment
+                        if (segment && segment.coordinate1.isValid && segment.coordinate2.isValid) {
+                            const fromPoint = qtLocationMap.fromCoordinate(segment.coordinate1, false /* clipToViewPort */)
+                            const toPoint = qtLocationMap.fromCoordinate(segment.coordinate2, false /* clipToViewPort */)
+                            _screenLegLength = Math.hypot(toPoint.x - fromPoint.x, toPoint.y - fromPoint.y)
+                        } else {
+                            _screenLegLength = 0
+                        }
+                    }
 
-                anchorPoint.x: sourceItem.width / 2
-                anchorPoint.y: sourceItem.height / 2
-                z: QGroundControl.zOrderWaypointLines + 1
-                visible: _editingLayer == _layerMission
-                         && _screenLegLength > _missionItemIndicatorGroup.groupingDistance * 2
+                    function _updateSplitCoord() {
+                        if (_missionController.splitSegment) {
+                            var distance = _missionController.splitSegment.coordinate1.distanceTo(_missionController.splitSegment.coordinate2)
+                            var azimuth = _missionController.splitSegment.coordinate1.azimuthTo(_missionController.splitSegment.coordinate2)
+                            splitSegmentItem.coordinate = _missionController.splitSegment.coordinate1.atDistanceAndAzimuth(distance / 2, azimuth)
+                        } else {
+                            coordinate = QtPositioning.coordinate()
+                        }
+                        _updateScreenLegLength()
+                    }
 
-                sourceItem: SplitIndicator {
-                    onClicked: _missionController.insertSimpleMissionItem(splitSegmentItem.coordinate,
-                                                                           _missionController.currentPlanViewVIIndex,
-                                                                           true /* makeCurrentItem */)
-                }
+                    Connections {
+                        target: _missionController
+                        function onSplitSegmentChanged()  { splitSegmentItem._updateSplitCoord() }
+                    }
 
-                function _updateScreenLegLength() {
-                    const segment = _root._missionController.splitSegment
-                    if (segment && segment.coordinate1.isValid && segment.coordinate2.isValid) {
-                        const fromPoint = editorMap.fromCoordinate(segment.coordinate1, false /* clipToViewPort */)
-                        const toPoint = editorMap.fromCoordinate(segment.coordinate2, false /* clipToViewPort */)
-                        _screenLegLength = Math.hypot(toPoint.x - fromPoint.x, toPoint.y - fromPoint.y)
-                    } else {
-                        _screenLegLength = 0
+                    Connections {
+                        target: _missionController.splitSegment
+                        function onCoordinate1Changed()   { splitSegmentItem._updateSplitCoord() }
+                        function onCoordinate2Changed()   { splitSegmentItem._updateSplitCoord() }
+                    }
+
+                    Connections {
+                        target: qtLocationMap
+                        function onCenterChanged() { splitSegmentItem._updateScreenLegLength() }
+                        function onZoomLevelChanged() { splitSegmentItem._updateScreenLegLength() }
                     }
                 }
 
-                function _updateSplitCoord() {
-                    if (_missionController.splitSegment) {
-                        var distance = _missionController.splitSegment.coordinate1.distanceTo(_missionController.splitSegment.coordinate2)
-                        var azimuth = _missionController.splitSegment.coordinate1.azimuthTo(_missionController.splitSegment.coordinate2)
-                        splitSegmentItem.coordinate = _missionController.splitSegment.coordinate1.atDistanceAndAzimuth(distance / 2, azimuth)
-                    } else {
-                        coordinate = QtPositioning.coordinate()
+                // Add the vehicles to the map
+                MapItemView {
+                    model: QGroundControl.multiVehicleManager.vehicles
+                    delegate: VehicleMapItem {
+                        vehicle: object
+                        coordinate: object.coordinate
+                        map: qtLocationMap
+                        size: ScreenTools.defaultFontPixelHeight * 3
+                        z: QGroundControl.zOrderMapItems - 1
                     }
-                    _updateScreenLegLength()
                 }
 
-                Connections {
-                    target: _missionController
-                    function onSplitSegmentChanged()  { splitSegmentItem._updateSplitCoord() }
+                GeoFenceMapVisuals {
+                    objectName: "planView_geoFenceMapVisuals"
+                    map: qtLocationMap
+                    myGeoFenceController: _geoFenceController
+                    interactive: _editingLayer == _layerFence
+                    homePosition: _missionController.plannedHomePosition
+                    planView: true
+                    opacity: _editingLayer != _layerFence ? qtLocationMap._nonInteractiveOpacity : 1
                 }
 
-                Connections {
-                    target: _missionController.splitSegment
-                    function onCoordinate1Changed()   { splitSegmentItem._updateSplitCoord() }
-                    function onCoordinate2Changed()   { splitSegmentItem._updateSplitCoord() }
-                }
-
-                Connections {
-                    target: editorMap
-                    function onCenterChanged() { splitSegmentItem._updateScreenLegLength() }
-                    function onZoomLevelChanged() { splitSegmentItem._updateScreenLegLength() }
-                }
-            }
-
-            // Add the vehicles to the map
-            MapItemView {
-                model: QGroundControl.multiVehicleManager.vehicles
-                delegate: VehicleMapItem {
-                    vehicle: object
-                    coordinate: object.coordinate
-                    map: editorMap
-                    size: ScreenTools.defaultFontPixelHeight * 3
-                    z: QGroundControl.zOrderMapItems - 1
+                RallyPointMapVisuals {
+                    objectName: "planView_rallyPointMapVisuals"
+                    map: qtLocationMap
+                    myRallyPointController: _rallyPointController
+                    interactive: _editingLayer == _layerRally
+                    planView: true
+                    opacity: _editingLayer != _layerRally ? qtLocationMap._nonInteractiveOpacity : 1
                 }
             }
-
-            GeoFenceMapVisuals {
-                objectName: "planView_geoFenceMapVisuals"
-                map: editorMap
-                myGeoFenceController: _geoFenceController
-                interactive: _editingLayer == _layerFence
-                homePosition: _missionController.plannedHomePosition
-                planView: true
-                opacity: _editingLayer != _layerFence ? editorMap._nonInteractiveOpacity : 1
-            }
-
-            RallyPointMapVisuals {
-                objectName: "planView_rallyPointMapVisuals"
-                map: editorMap
-                myRallyPointController: _rallyPointController
-                interactive: _editingLayer == _layerRally
-                planView: true
-                opacity: _editingLayer != _layerRally ? editorMap._nonInteractiveOpacity : 1
-            }
-
         }
 
         //-----------------------------------------------------------
@@ -585,12 +627,14 @@ Item {
             model: toolStripActionList.model
         }
 
+        // The GeoMap engine shows its own scale next to its camera controls
         MapScale {
             anchors.margins: _toolsMargin
             anchors.left: toolStrip.right
             anchors.top: parent.top
-            mapControl: editorMap
+            mapControl: _root.editorMap
             autoHide: true
+            visible: !_root._useGeoMapEngine
         }
 
         PlanViewRightPanel {
@@ -600,7 +644,8 @@ Item {
             anchors.right: parent.right
             width: _rightPanelWidth
             planMasterController: _planMasterController
-            editorMap: editorMap
+            editorMap: _root.editorMap
+            useNewPlanPanel: _root._useNewPlanPanel
             onEditingLayerChangeRequested: (layer) => _editingLayer = layer
         }
 

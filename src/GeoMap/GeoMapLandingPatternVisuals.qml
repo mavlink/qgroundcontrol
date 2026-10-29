@@ -28,6 +28,8 @@ Item {
     // DEM-vs-home-AMSL bias, wired by GeoMapMissionItems (see GeoMapWaypointItem)
     property real homeTerrainBias: 0
     property string landingLabel: ""   ///< Label for the landing-point marker (VTOL overrides to "Land")
+    property real node3DOpacity: 1     ///< Dimming of the markers' 3D nodes, see GeoMapItem.node3DOpacity
+    property bool pickable: true       ///< The markers take clicks
 
     signal clicked()
 
@@ -100,10 +102,12 @@ Item {
         index: root.item.sequenceNumber
         label: root._useLoiterToAlt ? qsTr("Loiter") : qsTr("Approach")
         checked: root.item.isCurrentItem
+        node3DOpacity: root.node3DOpacity
         visible: root.item.landingCoordSet
 
         MouseArea {
             anchors.fill: parent
+            enabled: root.pickable
             onClicked: root.clicked()
         }
     }
@@ -119,10 +123,12 @@ Item {
         index: root.item.lastSequenceNumber
         label: root.landingLabel
         checked: root.item.isCurrentItem
+        node3DOpacity: root.node3DOpacity
         visible: root.item.landingCoordSet
 
         MouseArea {
             anchors.fill: parent
+            enabled: root.pickable
             onClicked: root.clicked()
         }
     }
