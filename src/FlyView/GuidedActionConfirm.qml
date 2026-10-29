@@ -92,6 +92,7 @@ Item {
             objectName:         "guidedActionConfirmButton"
             text:               control.title
             enabled:            true
+            primary:            true
 
             onActivated: {
                 control.visible = false
