@@ -94,13 +94,23 @@ Rectangle {
             anchors.top: parent.top
             spacing: _margin
 
-            Repeater {
-                model: rallyPoint ? rallyPoint.textFieldFacts : 0
+            LabelledFactTextField {
+                Layout.fillWidth: true
+                fact: rallyPoint ? rallyPoint.latitude : null
+            }
 
-                LabelledFactTextField {
-                    Layout.fillWidth: true
-                    label: modelData.shortDescription
-                    fact: modelData
+            LabelledFactTextField {
+                Layout.fillWidth: true
+                fact: rallyPoint ? rallyPoint.longitude : null
+            }
+
+            Loader {
+                Layout.fillWidth:   true
+                active:             rallyPoint !== null && rallyPoint !== undefined
+
+                sourceComponent: RallyPointAltitudeEditor {
+                    rallyPoint: root.rallyPoint
+                    vehicle:    root.controller.masterController.controllerVehicle
                 }
             }
         }

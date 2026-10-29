@@ -465,7 +465,8 @@ The fields are:
 ## Rally Points {#rally_points}
 
 The `rallyPoints` object is required, but its `points` list may be empty.
-The plan can contain an arbitrary number of rally points, each of which has a latitude, longitude, and altitude (above home position).
+The plan can contain an arbitrary number of rally points, each of which has a latitude, longitude, altitude and altitude frame.
+What the altitude means to the vehicle depends on the firmware: PX4 uses it as the ground altitude at the rally point, ArduPilot uses it as a flight altitude.
 
 A definition with two points is shown below.
 
@@ -473,24 +474,37 @@ A definition with two points is shown below.
 
     "rallyPoints": {
         "points": [
-            [
-                47.39760401,
-                8.5509154,
-                50
-            ],
-            [
-                47.39902017,
-                8.54263274,
-                50
-            ]
+            {
+                "coordinate": [
+                    47.39760401,
+                    8.5509154,
+                    50
+                ],
+                "frame": 3
+            },
+            {
+                "coordinate": [
+                    47.39902017,
+                    8.54263274,
+                    510.5
+                ],
+                "frame": 0
+            }
         ],
-        "version": 2
+        "version": 3
     }
 ```
 
 The fields are:
 
-| Key       | Description                                                                      |
-| --------- | -------------------------------------------------------------------------------- |
-| `version` | The version number for the rally point plan format. The documented version is 2. |
-| `points`  | A list of rally points.                                                          |
+| Key       | Description                                                                                                                                                                                                 |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `version` | The version number for the rally point plan format. The documented version is 3. Version 2 files, where each point is a `[latitude, longitude, altitude]` array, are still loaded and are relative to home. |
+| `points`  | A list of rally point objects.                                                                                                                                                                              |
+
+Each rally point object has these fields:
+
+| Key          | Description                                                                                                                                                                                                                                        |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `coordinate` | `[latitude, longitude, altitude]`. The altitude is in meters in the frame given by `frame`.                                                                                                                                                        |
+| `frame`      | The [MAV_FRAME](https://mavlink.io/en/messages/common.html#MAV_FRAME) of the altitude: `3` (`MAV_FRAME_GLOBAL_RELATIVE_ALT`) relative to home, `0` (`MAV_FRAME_GLOBAL`) above mean sea level, `10` (`MAV_FRAME_GLOBAL_TERRAIN_ALT`) above terrain. |

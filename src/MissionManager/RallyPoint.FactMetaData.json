@@ -16,8 +16,8 @@
     "decimalPlaces":    6
 },
 {
-    "name":             "RelativeAltitude",
-    "shortDesc":        "Altitude (rel)",
+    "name":             "Altitude",
+    "shortDesc":        "Altitude",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "vertical m",

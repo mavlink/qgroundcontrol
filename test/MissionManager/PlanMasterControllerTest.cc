@@ -3,6 +3,8 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QSignalSpy>
@@ -16,14 +18,17 @@
 #include "PlanMasterController.h"
 #include "QGCMapCircle.h"
 #include "QGCMapPolygon.h"
+#include "QGroundControlQmlGlobal.h"
 #include "QmlObjectListModel.h"
 #include "RallyPoint.h"
 #include "RallyPointController.h"
+#include "RallyPointManager.h"
 #include "SettingsManager.h"
 #include "SimpleMissionItem.h"
 #include "SurveyPlanCreator.h"
 #include "TakeoffMissionItem.h"
 #include "Vehicle.h"
+#include "VisualMissionItem.h"
 
 void PlanMasterControllerTest::init()
 {
@@ -730,10 +735,7 @@ void PlanMasterControllerTest::_testEditMarksDirtyForSave()
         // The rally point editor writes these Facts directly
         RallyPoint* const rallyPoint = rallyPointController->points()->value<RallyPoint*>(0);
         QVERIFY(rallyPoint);
-        const QVariantList textFieldFacts = rallyPoint->property("textFieldFacts").toList();
-        QCOMPARE(textFieldFacts.count(), 3);
-        Fact* const altitudeFact = textFieldFacts[2].value<Fact*>();
-        QVERIFY(altitudeFact);
+        Fact* const altitudeFact = rallyPoint->altitude();
         altitudeFact->setRawValue(altitudeFact->rawValue().toDouble() + 10);
     } else {
         RallyPoint* const rallyPoint = rallyPointController->points()->value<RallyPoint*>(0);
@@ -742,6 +744,173 @@ void PlanMasterControllerTest::_testEditMarksDirtyForSave()
     }
 
     QVERIFY(_masterController->dirtyForSave());
+}
+
+void PlanMasterControllerTest::_testRallyPointFileFrames_data()
+{
+    QTest::addColumn<QByteArray>("json");
+    QTest::addColumn<bool>("expectLoaded");
+    QTest::addColumn<QList<int>>("expectedFrames");
+
+    const int relative = QGroundControlQmlGlobal::AltitudeFrameRelative;
+    const int absolute = QGroundControlQmlGlobal::AltitudeFrameAbsolute;
+    const int terrain = QGroundControlQmlGlobal::AltitudeFrameTerrain;
+
+    // Frames are stored as MAV_FRAME numbers: 0 global (AMSL), 3 global relative alt, 10 global terrain alt
+    QTest::newRow("version 3 keeps each frame") << QByteArray(R"({"version":3,"points":[
+               {"coordinate":[47.1,8.1,10],"frame":3},
+               {"coordinate":[47.2,8.2,500],"frame":0},
+               {"coordinate":[47.3,8.3,20],"frame":10}]})")
+                                                << true << QList<int>{relative, absolute, terrain};
+    QTest::newRow("version 2 has no frames so it is relative")
+        << QByteArray(R"({"version":2,"points":[[47.1,8.1,10],[47.2,8.2,20]]})") << true
+        << QList<int>{relative, relative};
+    QTest::newRow("version 3 unsupported frame")
+        << QByteArray(R"({"version":3,"points":[{"coordinate":[47.1,8.1,10],"frame":1}]})") << false << QList<int>{};
+    QTest::newRow("version 3 missing frame")
+        << QByteArray(R"({"version":3,"points":[{"coordinate":[47.1,8.1,10]}]})") << false << QList<int>{};
+    QTest::newRow("version 3 point is not an object")
+        << QByteArray(R"({"version":3,"points":[[47.1,8.1,10]]})") << false << QList<int>{};
+    QTest::newRow("newer version") << QByteArray(R"({"version":4,"points":[]})") << false << QList<int>{};
+}
+
+void PlanMasterControllerTest::_testRallyPointFileFrames()
+{
+    QFETCH(QByteArray, json);
+    QFETCH(bool, expectLoaded);
+    QFETCH(QList<int>, expectedFrames);
+
+    RallyPointController* const rallyPointController = _masterController->rallyPointController();
+    QString errorString;
+
+    QCOMPARE(rallyPointController->load(QJsonDocument::fromJson(json).object(), errorString), expectLoaded);
+    QCOMPARE(errorString.isEmpty(), expectLoaded);
+    if (!expectLoaded) {
+        return;
+    }
+
+    QCOMPARE(rallyPointController->points()->count(), expectedFrames.count());
+    for (int i = 0; i < expectedFrames.count(); i++) {
+        const RallyPoint* const rallyPoint = rallyPointController->points()->value<RallyPoint*>(i);
+        QVERIFY(rallyPoint);
+        QCOMPARE(int(rallyPoint->altitudeFrame()), expectedFrames[i]);
+    }
+}
+
+void PlanMasterControllerTest::_testRallyPointFramesSurviveSave()
+{
+    RallyPointController* const rallyPointController = _masterController->rallyPointController();
+    rallyPointController->points()->append(new RallyPoint(
+        QGeoCoordinate(47.1, 8.1, 10), QGroundControlQmlGlobal::AltitudeFrameRelative, rallyPointController));
+    rallyPointController->points()->append(new RallyPoint(
+        QGeoCoordinate(47.2, 8.2, 500), QGroundControlQmlGlobal::AltitudeFrameAbsolute, rallyPointController));
+
+    QJsonObject json;
+    rallyPointController->save(json);
+    QString errorString;
+    QVERIFY2(rallyPointController->load(json, errorString), qPrintable(errorString));
+
+    QCOMPARE(rallyPointController->points()->count(), 2);
+    const RallyPoint* const relativePoint = rallyPointController->points()->value<RallyPoint*>(0);
+    const RallyPoint* const absolutePoint = rallyPointController->points()->value<RallyPoint*>(1);
+    QCOMPARE(int(relativePoint->altitudeFrame()), int(QGroundControlQmlGlobal::AltitudeFrameRelative));
+    QCOMPARE(relativePoint->coordinate().altitude(), 10.0);
+    QCOMPARE(int(absolutePoint->altitudeFrame()), int(QGroundControlQmlGlobal::AltitudeFrameAbsolute));
+    QCOMPARE(absolutePoint->coordinate().altitude(), 500.0);
+}
+
+void PlanMasterControllerTest::_testRallyPointDefaultAltitude_data()
+{
+    QTest::addColumn<int>("firmwareType");
+    QTest::addColumn<double>("expectedFirstAltitude");
+    QTest::addColumn<double>("expectedAltitude");
+    QTest::addColumn<int>("expectedFrame");
+
+    const double missionAltitude =
+        SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
+
+    // ArduPilot altitudes are flight altitudes: the first point uses the default mission altitude and the next
+    // point starts from the previous one
+    QTest::newRow("ArduPilot first point uses the default mission altitude, then copies the previous")
+        << int(MAV_AUTOPILOT_ARDUPILOTMEGA) << missionAltitude << 77.0
+        << int(QGroundControlQmlGlobal::AltitudeFrameAbsolute);
+    // PX4 altitudes are ground heights that differ per point, so the previous value must not be reused
+    QTest::newRow("PX4 starts every point from the default")
+        << int(MAV_AUTOPILOT_PX4) << RallyPoint::getDefaultFactAltitude() << RallyPoint::getDefaultFactAltitude()
+        << int(QGroundControlQmlGlobal::AltitudeFrameRelative);
+}
+
+void PlanMasterControllerTest::_testRallyPointDefaultAltitude()
+{
+    QFETCH(int, firmwareType);
+    QFETCH(double, expectedFirstAltitude);
+    QFETCH(double, expectedAltitude);
+    QFETCH(int, expectedFrame);
+
+    PlanMasterController* const masterController =
+        new PlanMasterController(static_cast<MAV_AUTOPILOT>(firmwareType), MAV_TYPE_QUADROTOR, this);
+    RallyPointController* const rallyPointController = masterController->rallyPointController();
+    const QGeoCoordinate coordinate(47.3977, 8.5456);
+
+    rallyPointController->addPoint(coordinate);
+    RallyPoint* const firstPoint = rallyPointController->points()->value<RallyPoint*>(0);
+    QVERIFY(firstPoint);
+    QCOMPARE(firstPoint->coordinate().altitude(), expectedFirstAltitude);
+    firstPoint->setAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameAbsolute);
+    firstPoint->setCoordinate(QGeoCoordinate(coordinate.latitude(), coordinate.longitude(), 77.0));
+
+    rallyPointController->addPoint(coordinate.atDistanceAndAzimuth(100, 0));
+
+    const RallyPoint* const secondPoint = rallyPointController->points()->value<RallyPoint*>(1);
+    QVERIFY(secondPoint);
+    QCOMPARE(secondPoint->coordinate().altitude(), expectedAltitude);
+    QCOMPARE(int(secondPoint->altitudeFrame()), expectedFrame);
+
+    delete masterController;
+}
+
+void PlanMasterControllerTest::_testRallyPointFramesSurviveVehicleRoundTrip()
+{
+    _connectMockLink(MAV_AUTOPILOT_PX4);
+    QTRY_VERIFY_WITH_TIMEOUT(_vehicle->initialPlanRequestComplete(), 10000);
+
+    RallyPointManager* const rallyPointManager = _vehicle->rallyPointManager();
+    QSignalSpy sendSpy(rallyPointManager, &RallyPointManager::sendComplete);
+    QSignalSpy loadSpy(rallyPointManager, &RallyPointManager::loadComplete);
+
+    const QList<RallyPointData> sentPoints = {
+        {QGeoCoordinate(47.1, 8.1, 10), MAV_FRAME_GLOBAL_RELATIVE_ALT},
+        {QGeoCoordinate(47.2, 8.2, 500), MAV_FRAME_GLOBAL},
+    };
+    rallyPointManager->sendToVehicle(sentPoints);
+    QTRY_COMPARE_WITH_TIMEOUT(sendSpy.count(), 1, 10000);
+    QVERIFY(!sendSpy.first().at(0).toBool());
+
+    loadSpy.clear();
+    rallyPointManager->loadFromVehicle();
+    QTRY_VERIFY_WITH_TIMEOUT(!loadSpy.isEmpty(), 10000);
+
+    const QList<RallyPointData> loadedPoints = rallyPointManager->points();
+    QCOMPARE(loadedPoints.count(), sentPoints.count());
+    for (int i = 0; i < sentPoints.count(); i++) {
+        QCOMPARE(loadedPoints[i].coordinate.altitude(), sentPoints[i].coordinate.altitude());
+        QCOMPARE(int(loadedPoints[i].frame), int(sentPoints[i].frame));
+    }
+}
+
+void PlanMasterControllerTest::_testPendingRallyTerrainBlocksSaveAndUpload()
+{
+    RallyPointController* const rallyPointController = _masterController->rallyPointController();
+    QCOMPARE(_masterController->readyForSaveState(), int(VisualMissionItem::ReadyForSave));
+
+    rallyPointController->addPoint(QGeoCoordinate(47.3977, 8.5456));
+    RallyPoint* const rallyPoint = rallyPointController->points()->value<RallyPoint*>(0);
+    QVERIFY(rallyPoint);
+    rallyPoint->useTerrainAltitude();
+    QCOMPARE(_masterController->readyForSaveState(), int(VisualMissionItem::NotReadyForSaveTerrain));
+
+    rallyPoint->altitude()->setRawValue(50.0);
+    QCOMPARE(_masterController->readyForSaveState(), int(VisualMissionItem::ReadyForSave));
 }
 
 #include "UnitTest.h"

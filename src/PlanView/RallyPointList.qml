@@ -61,7 +61,8 @@ QGCListView {
         QGCLabel {
             color:              qgcPal.textSecondary
             font.pointSize:     ScreenTools.smallFontPointSize
-            text:               QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnitsString(row.object.coordinate.altitude)
+            text:               qsTr("%1 %2").arg(QGroundControl.unitsConversion.metersToAppSettingsVerticalDistanceUnitsString(row.object.coordinate.altitude))
+                                                .arg(QGroundControl.altitudeFrameExtraUnits(row.object.altitudeFrame))
         }
     }
 

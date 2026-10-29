@@ -89,20 +89,57 @@ bool RallyPointController::load(const QJsonObject& json, QString& errorString)
     QString errorStr;
     QString errorMessage = tr("Rally: %1");
 
-    if (json[JsonParsing::jsonVersionKey].toInt() != _jsonCurrentVersion) {
-        errorString = tr("Rally Points supports version %1").arg(_jsonCurrentVersion);
+    const int version = json[JsonParsing::jsonVersionKey].toInt();
+    if (version < _jsonOldestSupportedVersion || version > _jsonCurrentVersion) {
+        errorString =
+            tr("Rally Points supports versions %1 to %2").arg(_jsonOldestSupportedVersion).arg(_jsonCurrentVersion);
         return false;
     }
 
-    QList<QGeoCoordinate> rgPoints;
-    if (!GeoJsonHelper::loadGeoCoordinateArray(json[_jsonPointsKey], true /* altitudeRequired */, rgPoints, errorStr)) {
-        errorString = errorMessage.arg(errorStr);
-        return false;
-    }
+    // Version 2 points are [lat, lon, alt] arrays with no frame, their altitudes are relative to home
+    auto loadPoint = [version](const QJsonValue& jsonPoint, QGeoCoordinate& coordinate,
+                               QGroundControlQmlGlobal::AltitudeFrame& altitudeFrame, QString& error) {
+        altitudeFrame = QGroundControlQmlGlobal::AltitudeFrameRelative;
+        if (version < 3) {
+            return GeoJsonHelper::loadGeoCoordinate(jsonPoint, true /* altitudeRequired */, coordinate, error);
+        }
+
+        if (!jsonPoint.isObject()) {
+            error = tr("Each point must be an object");
+            return false;
+        }
+        const QJsonObject jsonPointObject = jsonPoint.toObject();
+        const QList<JsonParsing::KeyValidateInfo> pointKeyInfoList = {
+            {_jsonCoordinateKey, QJsonValue::Array, true},
+            {_jsonFrameKey, QJsonValue::Double, true},
+        };
+        if (!JsonParsing::validateKeys(jsonPointObject, pointKeyInfoList, error) ||
+            !GeoJsonHelper::loadGeoCoordinate(jsonPointObject[_jsonCoordinateKey], true /* altitudeRequired */,
+                                              coordinate, error)) {
+            return false;
+        }
+
+        const int frame = jsonPointObject[_jsonFrameKey].toInt(-1);
+        if (frame != MAV_FRAME_GLOBAL && frame != MAV_FRAME_GLOBAL_RELATIVE_ALT &&
+            frame != MAV_FRAME_GLOBAL_TERRAIN_ALT) {
+            error = tr("Unsupported frame %1").arg(frame);
+            return false;
+        }
+        altitudeFrame = RallyPoint::altitudeFrameFromMavFrame(static_cast<MAV_FRAME>(frame));
+        return true;
+    };
 
     QObjectList pointList;
-    for (int i=0; i<rgPoints.count(); i++) {
-        pointList.append(new RallyPoint(rgPoints[i], this));
+    const QJsonArray jsonPoints = json[_jsonPointsKey].toArray();
+    for (const QJsonValue& jsonPoint : jsonPoints) {
+        QGeoCoordinate coordinate;
+        QGroundControlQmlGlobal::AltitudeFrame altitudeFrame;
+        if (!loadPoint(jsonPoint, coordinate, altitudeFrame, errorStr)) {
+            qDeleteAll(pointList);
+            errorString = errorMessage.arg(errorStr);
+            return false;
+        }
+        pointList.append(new RallyPoint(coordinate, altitudeFrame, this));
     }
     _points.swapObjectList(pointList);
 
@@ -117,9 +154,13 @@ void RallyPointController::save(QJsonObject& json)
     json[JsonParsing::jsonVersionKey] = _jsonCurrentVersion;
 
     QJsonArray rgPoints;
-    QJsonValue jsonPoint;
     for (int i=0; i<_points.count(); i++) {
-        GeoJsonHelper::saveGeoCoordinate(qobject_cast<RallyPoint*>(_points[i])->coordinate(), true /* writeAltitude */, jsonPoint);
+        const RallyPoint* rallyPoint = qobject_cast<RallyPoint*>(_points[i]);
+        QJsonValue jsonCoordinate;
+        GeoJsonHelper::saveGeoCoordinate(rallyPoint->coordinate(), true /* writeAltitude */, jsonCoordinate);
+        QJsonObject jsonPoint;
+        jsonPoint[_jsonCoordinateKey] = jsonCoordinate;
+        jsonPoint[_jsonFrameKey] = static_cast<int>(RallyPoint::mavFrame(rallyPoint->altitudeFrame()));
         rgPoints.append(jsonPoint);
     }
     json[_jsonPointsKey] = QJsonValue(rgPoints);
@@ -164,9 +205,10 @@ void RallyPointController::sendToVehicle(void)
     } else {
         qCDebug(RallyPointControllerLog) << "RallyPointController::sendToVehicle";
         setDirty(false);
-        QList<QGeoCoordinate> rgPoints;
+        QList<RallyPointData> rgPoints;
         for (int i=0; i<_points.count(); i++) {
-            rgPoints.append(qobject_cast<RallyPoint*>(_points[i])->coordinate());
+            const RallyPoint* rallyPoint = qobject_cast<RallyPoint*>(_points[i]);
+            rgPoints.append({rallyPoint->coordinate(), RallyPoint::mavFrame(rallyPoint->altitudeFrame())});
         }
         _rallyPointManager->sendToVehicle(rgPoints);
     }
@@ -209,8 +251,9 @@ void RallyPointController::_managerLoadComplete(void)
     if (_flyView || _itemsRequested || isEmpty()) {
         _points.clearAndDeleteContents();
         QObjectList pointList;
-        for (int i=0; i<_rallyPointManager->points().count(); i++) {
-            pointList.append(new RallyPoint(_rallyPointManager->points()[i], this));
+        for (const RallyPointData& pointData : _rallyPointManager->points()) {
+            pointList.append(
+                new RallyPoint(pointData.coordinate, RallyPoint::altitudeFrameFromMavFrame(pointData.frame), this));
         }
         _points.swapObjectList(pointList);
         setDirty(false);
@@ -238,22 +281,45 @@ void RallyPointController::_managerRemoveAllComplete(bool error)
 
 void RallyPointController::addPoint(QGeoCoordinate point)
 {
+    Vehicle* const vehicle = _masterController->controllerVehicle();
+    const bool px4 = vehicle->px4Firmware();
+
     double defaultAlt;
-    if (_points.count()) {
-        defaultAlt = qobject_cast<RallyPoint*>(_points[_points.count() - 1])->coordinate().altitude();
+    QGroundControlQmlGlobal::AltitudeFrame altitudeFrame = QGroundControlQmlGlobal::AltitudeFrameRelative;
+    if (px4) {
+        // The altitude is the ground height at the point, it is seeded from terrain below
+        defaultAlt = RallyPoint::getDefaultFactAltitude();
+    } else if (_points.count()) {
+        const RallyPoint* lastPoint = qobject_cast<RallyPoint*>(_points[_points.count() - 1]);
+        defaultAlt = lastPoint->coordinate().altitude();
+        altitudeFrame = lastPoint->altitudeFrame();
+    } else if (vehicle->apmFirmware() || vehicle->fixedWing()) {
+        defaultAlt = SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
     } else {
-        if(_masterController->controllerVehicle()->fixedWing()) {
-            defaultAlt = SettingsManager::instance()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
-        }
-        else {
-            defaultAlt = RallyPoint::getDefaultFactAltitude();
-        }
+        defaultAlt = RallyPoint::getDefaultFactAltitude();
     }
     point.setAltitude(defaultAlt);
-    RallyPoint* newPoint = new RallyPoint(point, this);
+    RallyPoint* newPoint = new RallyPoint(point, altitudeFrame, this);
     _points.append(newPoint);
     setCurrentRallyPoint(newPoint);
     setDirty(true);
+
+    if (px4) {
+        // Stays relative with the default altitude if terrain data is not available
+        newPoint->useTerrainAltitude();
+    }
+}
+
+bool RallyPointController::terrainQueryPending(void) const
+{
+    for (int i = 0; i < _points.count(); i++) {
+        const RallyPoint* const rallyPoint = qobject_cast<const RallyPoint*>(_points[i]);
+        if (rallyPoint && rallyPoint->terrainQueryPending()) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool RallyPointController::supported(void) const

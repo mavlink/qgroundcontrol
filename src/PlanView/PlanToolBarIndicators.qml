@@ -70,7 +70,7 @@ RowLayout {
     function _saveButtonClicked() {
         if (_planMasterController.currentPlanFile === "") {
             _planMasterController.saveToSelectedFile()
-        } else {
+        } else if (_planMasterController.checkReadyForSaveUpload(true /* save */)) {
             _planMasterController.saveToCurrent()
         }
     }
