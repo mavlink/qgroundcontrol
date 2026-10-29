@@ -25,8 +25,11 @@ def test_custom_plugin_is_one_debug_build():
     # The variant separates the compiler caches; the CPM sources are Linux's own.
     assert "cache-key-suffix" not in setup
     configure = actions["./.github/actions/cmake-configure"]["with"]
-    # Linux-debug sets QGC_BUILD_TESTING=ON.
-    assert configure == {"preset": "Linux-debug", "extra-args": "-DQGC_CUSTOM_DIR=custom-example"}
+    # Linux-debug enables tests; this leg also checks that UOM can be compiled out.
+    assert configure == {
+        "preset": "Linux-debug",
+        "extra-args": "-DQGC_CUSTOM_DIR=custom-example -DQGC_UOM_REGISTRATION=OFF",
+    }
     assert sum(step.get("uses") == "./.github/actions/cmake-build" for step in steps) == 1
 
 

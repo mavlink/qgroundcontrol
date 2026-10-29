@@ -493,7 +493,10 @@ def test_ci_validation_jobs_take_cmake_settings_from_presets() -> None:
     assert configure["preset"] == (
         "${{ matrix.mode == 'coverage' && 'Linux-coverage' || 'Linux-sanitizers' }}"
     )
-    assert "extra-args" not in configure
+    # Coverage keeps the stock dialect; sanitizers additionally exercise the optional adapter.
+    assert configure["extra-args"] == (
+        "${{ matrix.mode == 'sanitizers' && '-DQGC_UOM_AMOV_ADAPTER=ON' || '' }}"
+    )
     tests = next(step for step in steps if step.get("uses") == "./.github/actions/test-phase")
     assert not [name for name in tests.get("env", {}) if name.endswith("SAN_OPTIONS")]
     sanitizer_exclusions = _load_preset_graph()["test"]["Linux-sanitizers"]["filter"]["exclude"]

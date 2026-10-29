@@ -532,6 +532,11 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   report lines, slowest tests; failed tests also become error annotations) and do not suppress the
   other suite. There are no blanket until-pass retries, and empty test selections fail. See
   [`actions/README.md`](actions/README.md#action-notes).
+- **UOM feature configurations**: Linux coverage tests the default registration workflow with the
+  AMOV adapter disabled. The Linux sanitizer job enables `QGC_UOM_AMOV_ADAPTER` to exercise the
+  optional device adapter and protocol tests. The Linux custom-plugin job disables
+  `QGC_UOM_REGISTRATION`, checking that builds and tests work without the feature. Other platforms
+  keep registration disabled by default; these jobs do not contact UOM or require aircraft hardware.
 - Unit tests run one CTest process per CPU, including coverage (GCC merges `.gcda` counters under
   file locks). Integration tests use two processes by default and for coverage, where instrumented
   tests otherwise hit their timeouts; Linux sanitizers use one per CPU.

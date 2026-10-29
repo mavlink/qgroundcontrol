@@ -159,6 +159,11 @@ ApplicationWindow {
         showTool(qsTr("Vehicle Configuration"), "qrc:/qml/QGroundControl/VehicleSetup/VehicleConfigView.qml", "/qmlimages/Gears.svg")
     }
 
+    function showUomRegistrationPage() {
+        showVehicleConfig()
+        toolDrawerLoader.item.showUomRegistrationPanel()
+    }
+
     function showVehicleConfigParametersPage() {
         showVehicleConfig()
         toolDrawerLoader.item.showParametersPanel()

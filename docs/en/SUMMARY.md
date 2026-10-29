@@ -64,6 +64,7 @@
   - [Joystick](qgc-user-guide/setup_view/joystick.md)
   - [Firmware](qgc-user-guide/setup_view/firmware.md)
   - [Parameters](qgc-user-guide/setup_view/parameters.md)
+  - [UOM registration and activation](qgc-user-guide/setup_view/uom_registration.md)
 - [Settings](qgc-user-guide/settings_view/settings_view.md)
   - [General](qgc-user-guide/settings_view/general.md)
   - [Fly View](qgc-user-guide/settings_view/fly_view.md)

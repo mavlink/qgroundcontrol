@@ -136,3 +136,13 @@ add_qgc_test(FlyViewOccluderUITest LABELS Integration NoSanitizer TIMEOUT 120 ${
 add_qgc_test(PlanViewUITest LABELS Integration NoSanitizer TIMEOUT 180 ${_viewer3d_env_mod})
 # StockUI: asserts stock UI elements that custom builds intentionally replace/omit
 add_qgc_test(PlanPanelUITest LABELS Integration NoSanitizer StockUI TIMEOUT 180 ${_viewer3d_env_mod})
+
+if(QGC_UOM_REGISTRATION)
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            UomRegistrationUITest.cc
+            UomRegistrationUITest.h
+    )
+    add_qgc_test(UomRegistrationUITest LABELS Integration QML NoSanitizer StockUI)
+endif()
