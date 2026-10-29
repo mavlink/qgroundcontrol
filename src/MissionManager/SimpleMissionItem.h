@@ -71,6 +71,8 @@ public:
     bool            isLoiterItem        (void) const;
     bool            showLoiterRadius    (void) const;
     double          loiterRadius        (void) const;
+    /// Distance flown circling a MAV_CMD_NAV_LOITER_TURNS item, 0 for other commands
+    double          loiterDistance      (void) const;
 
     CameraSection*  cameraSection       (void) { return _cameraSection; }
     SpeedSection*   speedSection        (void) { return _speedSection; }

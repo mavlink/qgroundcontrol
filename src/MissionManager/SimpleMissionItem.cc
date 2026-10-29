@@ -139,13 +139,13 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._param6Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_sendCoordinateChanged);
 
     connect(&_missionItem._param1Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleAdditionalTimeDelayChanged);
-    connect(&_missionItem._param1Fact, &Fact::valueChanged, this, &SimpleMissionItem::_possibleLoiterDistanceChanged);
+    connect(&_missionItem._param1Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleLoiterDistanceChanged);
     connect(&_missionItem._param4Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleVehicleYawChanged);
 
     // For NAV_LOITER_X commands, they must emit a radiusChanged signal
     connect(&_missionItem._param2Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleRadiusChanged);
     connect(&_missionItem._param3Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleRadiusChanged);
-    connect(&_missionItem._param3Fact, &Fact::valueChanged, this, &SimpleMissionItem::_possibleLoiterDistanceChanged);
+    connect(&_missionItem._param3Fact,          &Fact::valueChanged,                        this, &SimpleMissionItem::_possibleLoiterDistanceChanged);
 
     // Exit coordinate is the same as entrance coordinate
     connect(this,                               &SimpleMissionItem::coordinateChanged,      this, &SimpleMissionItem::entryCoordinateChanged);
@@ -167,6 +167,7 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._commandFact,         &Fact::valueChanged,                        this, &SimpleMissionItem::isLandCommandChanged);
     connect(&_missionItem._commandFact,         &Fact::valueChanged,                        this, &SimpleMissionItem::isLoiterItemChanged);
     connect(&_missionItem._commandFact,         &Fact::valueChanged,                        this, &SimpleMissionItem::showLoiterRadiusChanged);
+    connect(&_missionItem._commandFact,         &Fact::valueChanged,                        this, &SimpleMissionItem::loiterDistanceChanged);
 
     // Whenever these properties change the ui model changes as well
     connect(this,                               &SimpleMissionItem::commandChanged,         this, &SimpleMissionItem::_rebuildFacts);
@@ -591,6 +592,15 @@ double SimpleMissionItem::loiterRadius() const
     } else {
         return qQNaN();
     }
+}
+
+double SimpleMissionItem::loiterDistance() const
+{
+    if (mavCommand() != MAV_CMD_NAV_LOITER_TURNS) {
+        return 0.0;
+    }
+
+    return 2.0 * M_PI * qAbs(loiterRadius()) * qAbs(missionItem().param1());
 }
 
 void SimpleMissionItem::_rebuildComboBoxFacts(void)
