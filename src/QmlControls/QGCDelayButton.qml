@@ -16,6 +16,7 @@ DelayButton {
     font.family:    ScreenTools.normalFontFamily
     delay:          defaultDelay
 
+    property bool   primary:        false
     property bool   showBorder:     true
     property real   backRadius:     ScreenTools.defaultBorderRadius
     property real   heightFactor:   0.3
@@ -83,8 +84,16 @@ DelayButton {
                                  ScreenTools.implicitButtonWidth)
         implicitHeight: ScreenTools.implicitButtonHeight
         border.width:   showBorder ? 1 : 0
-        border.color:   control._showHighlight || (control.enabled && control.hovered) ? qgcPal.accent : qgcPal.borderSubtle
-        color:          control._showHighlight ? qgcPal.accentSubtle : qgcPal.windowCard
+        border.color:   control.primary || control._showHighlight || (control.enabled && control.hovered) ? qgcPal.accent : qgcPal.borderSubtle
+        color:          control.primary ? qgcPal.accent : (control._showHighlight ? qgcPal.accentSubtle : qgcPal.windowCard)
+
+        Rectangle {
+            anchors.fill:   parent
+            radius:         parent.radius
+            color:          qgcPal.accentText
+            visible:        control.primary
+            opacity:        control._showHighlight ? 0.25 : (control.enabled && control.hovered ? 0.12 : 0)
+        }
 
         QGCColoredImage {
             anchors.topMargin:      _sliderIndicatorMargin
@@ -97,8 +106,8 @@ DelayButton {
             source:                 "qrc:/res/chevron-double-right.svg"
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            color:                  control._showHighlight ? qgcPal.accent : qgcPal.textPrimary
-            opacity:                control._showHighlight ? 1 : 0.2
+            color:                  control.primary ? qgcPal.accentText : (control._showHighlight ? qgcPal.accent : qgcPal.textPrimary)
+            opacity:                control._showHighlight ? 1 : (control.primary ? 0.4 : 0.2)
 
             property real _sliderIndicatorMargin: ScreenTools.defaultFontPixelWidth * 0.5
         }
@@ -121,6 +130,6 @@ DelayButton {
         font.pointSize:         control.pointSize
         font.family:            control.font.family
         font.weight:            control.fontWeight
-        color:                  qgcPal.textPrimary
+        color:                  control.primary ? qgcPal.accentText : qgcPal.textPrimary
     }
 }
