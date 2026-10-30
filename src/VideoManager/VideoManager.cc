@@ -298,16 +298,7 @@ void VideoManager::grabImage(const QString& imageFile)
     }
 
     if (_thermalStream->canTakeScreenshot()) {
-        // As with recordings, the thermal stream's name goes before the extension.
-        QString thermalImageFile = file;
-        const qsizetype dot = thermalImageFile.lastIndexOf(QLatin1Char('.'));
-        const QString tag = QLatin1Char('.') + _thermalStream->name();
-        if (dot > thermalImageFile.lastIndexOf(QLatin1Char('/'))) {
-            (void) thermalImageFile.insert(dot, tag);
-        } else {
-            (void) thermalImageFile.append(tag);
-        }
-        (void) _thermalStream->takeScreenshot(thermalImageFile);
+        (void) _thermalStream->takeScreenshot(_thermalStream->taggedFile(file));
     }
 }
 

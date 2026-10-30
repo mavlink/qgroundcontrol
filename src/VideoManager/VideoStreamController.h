@@ -39,10 +39,10 @@ public:
     VideoStreamController(Role role, VideoSettings* videoSettings, QObject* parent = nullptr);
     ~VideoStreamController() override;
 
-    Role role() const { return _role; }
-
     /// "videoContent" or "thermalVideo": names the receiver, and tags the thermal stream's files.
     QString name() const;
+    /// @p file for this stream: the thermal stream's name goes before the extension, "<base>.thermalVideo.<ext>".
+    QString taggedFile(const QString& file) const;
 
     VideoReceiver* receiver() const { return _receiver; }
 

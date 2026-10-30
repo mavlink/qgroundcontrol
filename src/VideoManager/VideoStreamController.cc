@@ -30,6 +30,19 @@ QString VideoStreamController::name() const
     return (_role == Role::Primary) ? QStringLiteral("videoContent") : QStringLiteral("thermalVideo");
 }
 
+QString VideoStreamController::taggedFile(const QString& file) const
+{
+    if (_role == Role::Primary) {
+        return file;
+    }
+    const QString tag = QLatin1Char('.') + name();
+    const qsizetype dot = file.lastIndexOf(QLatin1Char('.'));
+    if (dot > file.lastIndexOf(QLatin1Char('/'))) {
+        return QString(file).insert(dot, tag);
+    }
+    return file + tag;
+}
+
 void VideoStreamController::setReceiver(VideoReceiver* receiver)
 {
     if (receiver == _receiver) {

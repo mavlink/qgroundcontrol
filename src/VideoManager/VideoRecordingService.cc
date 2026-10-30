@@ -116,9 +116,8 @@ void VideoRecordingService::stopRecording()
 QString VideoRecordingService::recordingFile(const QString& directory, const QString& baseName,
                                              const VideoStreamController* stream, VideoReceiver::FileFormat format)
 {
-    const QString tag =
-        (stream->role() == VideoStreamController::Role::Primary) ? QString() : (QLatin1Char('.') + stream->name());
-    return QStringLiteral("%1/%2%3.%4").arg(directory, baseName, tag, VideoReceiver::fileExtension(format));
+    return stream->taggedFile(
+        QStringLiteral("%1/%2.%3").arg(directory, baseName, VideoReceiver::fileExtension(format)));
 }
 
 QString VideoRecordingService::uniqueBaseName(const QString& directory, const QDateTime& time)
