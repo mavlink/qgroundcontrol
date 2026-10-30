@@ -137,7 +137,7 @@ function(_qgc_gst_create_sdk_targets)
     endforeach()
 
     set(_outputs GStreamer_VERSION)
-    if(MACOS AND GStreamer_USE_FRAMEWORK)
+    if(GStreamer_USE_FRAMEWORK)
         _qgc_gst_apply_macos_framework_overlay()
     elseif(ANDROID)
         _qgc_gst_create_android_mobile_target()

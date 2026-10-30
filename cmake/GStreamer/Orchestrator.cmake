@@ -5,9 +5,9 @@
 # Input: QGC_GST_COMPONENTS (components beyond the mandatory ones, Components.cmake) and the cache options
 # GStreamer_ROOT_DIR, QGC_GST_VERSION, QGC_GST_USE_HOMEBREW (macOS) and PKG_CONFIG_ARGN.
 # Sets, in the including directory, the discovery outputs (Platform.cmake; qgc_gst_restore_pkgconfig_env undoes their
-# pkg-config environment) and GStreamer_VERSION, GStreamer_USE_STATIC_LIBS (Android), GSTREAMER_SELECTED_COMPONENTS,
-# GSTREAMER_PLUGINS, GSTREAMER_STATIC_PLUGINS and G_IO_MODULES (mobile), GStreamer_<component>_FOUND (optional
-# components) and QGC_GST_HAS_DMABUF (Linux).
+# pkg-config environment) and GStreamer_VERSION, GSTREAMER_SELECTED_COMPONENTS, GSTREAMER_PLUGINS,
+# GSTREAMER_STATIC_PLUGINS and G_IO_MODULES (mobile), GStreamer_<component>_FOUND (optional components) and
+# QGC_GST_HAS_DMABUF (Linux).
 
 # The helper modules, each described in its header, then each platform's discovery (platform/*.cmake).
 foreach(
@@ -66,16 +66,10 @@ if(GStreamer_ROOT_DIR)
 endif()
 
 # The SDK's linkage: the desktop SDKs are shared, Android's are static archives linked into GStreamer::mobile
-# (platform/Android.cmake), and iOS links one merged static archive (platform/IOS.cmake, GStreamer_USE_MERGED_STATIC).
-# Discovery sets GStreamer_USE_FRAMEWORK for a macOS GStreamer.framework. CONTRACT: include() this file at directory
-# scope, never inside a function: these flags and the other outputs are directory-scope normal variables.
-if(ANDROID)
-    set(GStreamer_USE_STATIC_LIBS ON)
-else()
-    set(GStreamer_USE_STATIC_LIBS OFF)
-endif()
+# (platform/Android.cmake), and iOS links one merged static archive (platform/IOS.cmake). Discovery sets
+# GStreamer_USE_FRAMEWORK for a macOS GStreamer.framework. CONTRACT: include() this file at directory scope, never
+# inside a function: that flag and the other outputs are directory-scope normal variables.
 set(GStreamer_USE_FRAMEWORK OFF)
-set(GStreamer_USE_MERGED_STATIC OFF)
 
 # The cached PKG_CONFIG_ARGN is user input; discovery derives its flags into a normal variable.
 set(PKG_CONFIG_ARGN
@@ -112,11 +106,11 @@ endif()
 # Discovery derives its pkg-config flags from the root and the linkage, so only the user's cached flags join the
 # fingerprint (_qgc_gst_refresh_sdk_cache).
 set(_qgc_gst_fingerprint_pkg_config "")
-if(NOT GStreamer_USE_MERGED_STATIC)
+if(NOT IOS)
     find_package(PkgConfig REQUIRED QUIET)
     set(_qgc_gst_fingerprint_pkg_config "${PKG_CONFIG_EXECUTABLE}|$CACHE{PKG_CONFIG_ARGN}")
 endif()
-if(GStreamer_USE_STATIC_LIBS)
+if(ANDROID)
     set(_qgc_gst_linkage static)
     # A normal variable: the GStreamer subtree's later pkg-config probes (HwBuffers) need the same flags.
     if(NOT "--static" IN_LIST PKG_CONFIG_ARGN)
@@ -130,7 +124,7 @@ set(_qgc_gst_fingerprint "${GStreamer_ROOT_DIR}|${QGC_GST_REQUESTED_VERSION}|${_
 string(APPEND _qgc_gst_fingerprint "|${_qgc_gst_linkage}|${_qgc_gst_fingerprint_pkg_config}")
 _qgc_gst_refresh_sdk_cache("${_qgc_gst_fingerprint}")
 
-if(GStreamer_USE_MERGED_STATIC)
+if(IOS)
     _qgc_gst_create_ios_targets()
 else()
     _qgc_gst_create_sdk_targets()
@@ -184,7 +178,7 @@ else()
 endif()
 # Every plugin the SDK or system ships, used by this build or not: the plugin archives of static layouts (iOS: the
 # plugins registered from its merged archive), else the plugin files.
-if(GStreamer_USE_STATIC_LIBS)
+if(ANDROID)
     gstreamer_scan_plugin_basenames(_gst_shipped_plugins "${GSTREAMER_PLUGIN_PATH}" STATIC)
 else()
     set(_gst_shipped_plugins ${_gst_available_plugins})
@@ -261,11 +255,11 @@ if(LINUX)
     )
 endif()
 
-if(GStreamer_USE_MERGED_STATIC)
+if(IOS)
     set(_qgc_gst_path "merged-static")
 elseif(GStreamer_USE_FRAMEWORK)
     set(_qgc_gst_path "framework")
-elseif(GStreamer_USE_STATIC_LIBS)
+elseif(ANDROID)
     set(_qgc_gst_path "mobile-shared")
 else()
     set(_qgc_gst_path "shared")

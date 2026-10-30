@@ -3,8 +3,8 @@
 #
 # A discovery function resolves the SDK into GStreamer_ROOT_DIR (and GStreamer_AUTO_DOWNLOADED when it downloaded it),
 # its GSTREAMER_{LIB,PLUGIN,INCLUDE,PLUGIN_SCANNER,GIO_MODULE}_PATH layout (gstreamer_create_layout_target) and its
-# pkg-config view (gstreamer_apply_pkgconfig_env), sets GStreamer_USE_FRAMEWORK (a macOS GStreamer.framework) or
-# GStreamer_USE_MERGED_STATIC (iOS) for the SDK it found, and returns with _qgc_gst_return_discovery().
+# pkg-config view (gstreamer_apply_pkgconfig_env), sets GStreamer_USE_FRAMEWORK for a macOS GStreamer.framework, and
+# returns with _qgc_gst_return_discovery().
 
 include_guard(GLOBAL)
 
@@ -72,7 +72,6 @@ macro(_qgc_gst_return_discovery)
         GStreamer_ROOT_DIR
         GStreamer_AUTO_DOWNLOADED
         GStreamer_USE_FRAMEWORK
-        GStreamer_USE_MERGED_STATIC
         GSTREAMER_LIB_PATH
         GSTREAMER_PLUGIN_PATH
         GSTREAMER_INCLUDE_PATH

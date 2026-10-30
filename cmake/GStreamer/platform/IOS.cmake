@@ -196,7 +196,6 @@ function(_qgc_gst_discover_ios_sdk)
     endif()
 
     # Both kinds are consumed as one merged static archive (_qgc_gst_create_ios_targets).
-    set(GStreamer_USE_MERGED_STATIC ON)
     _qgc_gst_ios_layout("${_gst_ios_bundle}" _gst_ios)
     set(GStreamer_ROOT_DIR "${_gst_ios_ROOT}")
     set(GSTREAMER_XCFRAMEWORK_LIB "${_gst_ios_LIB}")
@@ -259,10 +258,10 @@ endfunction()
 
 # _qgc_gst_ios_usage_targets(<archive> <include_dir>)
 # Creates GStreamer_static, the merged <archive>, and GStreamer::GStreamer with only the usage requirements: the headers
-# under <include_dir> and the static-build define (_qgc_gst_create_ios_targets adds the system frameworks and link
-# options). Only GStreamer::mobile links the archive (_qgc_gst_ios_mobile_framework): a GStreamer function QGC calls
-# that the framework does not export then fails the app's link, naming the symbol, instead of linking a second copy of
-# its object, and possibly a second core, from the archive into the app.
+# under <include_dir> (_qgc_gst_create_ios_targets adds the system frameworks and link options). Only GStreamer::mobile
+# links the archive (_qgc_gst_ios_mobile_framework): a GStreamer function QGC calls that the framework does not export
+# then fails the app's link, naming the symbol, instead of linking a second copy of its object, and possibly a second
+# core, from the archive into the app.
 function(_qgc_gst_ios_usage_targets archive include_dir)
     add_library(GStreamer_static STATIC IMPORTED GLOBAL)
     set_target_properties(
@@ -279,7 +278,6 @@ function(_qgc_gst_ios_usage_targets archive include_dir)
             target_include_directories(GStreamer::GStreamer INTERFACE "${include_dir}/${_inc_sub}")
         endif()
     endforeach()
-    target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_STATIC_BUILD)
 endfunction()
 
 # _qgc_gst_ios_mobile_framework(<plugin>...)
