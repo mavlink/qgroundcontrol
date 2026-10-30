@@ -6,7 +6,6 @@
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QThread>
 #include <QtMultimedia/QVideoFrame>
-#include <QtMultimedia/QVideoFrameFormat>
 #include <QtMultimedia/QVideoSink>
 
 #include "GStreamer.h"
@@ -75,20 +74,7 @@ void GstVideoReceiver::dumpPipelineGraph(const QString& tag)
     _postToWorker([tag](GstReceiverWorker& worker) { worker.dumpPipelineGraph(tag); });
 }
 
-QSize GstVideoReceiver::presentedSize(const QVideoFrame& frame)
-{
-    if (!frame.isValid()) {
-        return {};
-    }
-    const QVideoFrameFormat format = frame.surfaceFormat();
-    const QRect viewport = format.viewport();
-    const QSize size = viewport.isValid() ? viewport.size() : frame.size();
-    // As Qt's qRotatedFramePresentationSize(): the frame's and the format's rotation add up; mirroring keeps the size.
-    const int degrees = static_cast<int>(frame.rotation()) + static_cast<int>(format.rotation());
-    return ((degrees % 180) != 0) ? size.transposed() : size;
-}
-
-void GstVideoReceiver::onConfigChanged(const Config& /*previous*/)
+void GstVideoReceiver::onConfigChanged()
 {
     _postToWorker([config = config()](GstReceiverWorker& worker) { worker.setConfig(config); });
 }

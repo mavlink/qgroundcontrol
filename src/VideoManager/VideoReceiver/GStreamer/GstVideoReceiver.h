@@ -33,10 +33,6 @@ public:
     /// Factory name of the decoder decodebin3 plugged last, empty before the first one.
     QString decoderName() const { return _decoderName; }
 
-    /// The size @p frame is presented at: its format's viewport (the picture without decoder padding or crop), else the
-    /// whole frame, turned by the rotation Qt presents it with. Invalid for an invalid frame.
-    static QSize presentedSize(const QVideoFrame& frame);
-
     /// Writes PipelineDotDumper::snapshot() under @p tag; callable from QML.
     Q_INVOKABLE void dumpPipelineGraph(const QString& tag = QStringLiteral("manual"));
 
@@ -44,7 +40,7 @@ signals:
     void decoderNameChanged();
 
 protected:
-    void onConfigChanged(const Config& previous) override;
+    void onConfigChanged() override;
     void onActiveChanged() override;
     void onRestartRequested() override;
     void onVideoOutputChanged() override;

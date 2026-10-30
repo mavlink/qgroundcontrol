@@ -1,5 +1,6 @@
 #include "VideoReceiver.h"
 
+#include <QtGui/QImage>
 #include <QtGui/QTransform>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
@@ -9,31 +10,10 @@
 
 QGC_LOGGING_CATEGORY(VideoReceiverLog, "Video.VideoReceiver")
 
-VideoReceiver::VideoReceiver(QObject* parent)
-    : QObject(parent)
-{}
+namespace {
 
-VideoReceiver::~VideoReceiver() = default;
-
-QString VideoReceiver::fileExtension(FileFormat format)
-{
-    switch (format) {
-        case FileFormat::Mkv:
-            return QStringLiteral("mkv");
-        case FileFormat::Mov:
-            return QStringLiteral("mov");
-        case FileFormat::Mp4:
-            return QStringLiteral("mp4");
-    }
-    return QStringLiteral("mkv");
-}
-
-bool VideoReceiver::isValidFileFormat(int format)
-{
-    return (format >= static_cast<int>(FileFormat::Mkv)) && (format <= static_cast<int>(FileFormat::Mp4));
-}
-
-QImage VideoReceiver::frameToImage(const QVideoFrame& frame)
+/// @p frame as displayed: rotation, mirroring and the format's viewport (crop) applied. Null for an invalid frame.
+QImage frameToImage(const QVideoFrame& frame)
 {
     if (!frame.isValid()) {
         return {};
@@ -62,6 +42,45 @@ QImage VideoReceiver::frameToImage(const QVideoFrame& frame)
     return image;
 }
 
+}  // namespace
+
+VideoReceiver::VideoReceiver(QObject* parent)
+    : QObject(parent)
+{}
+
+VideoReceiver::~VideoReceiver() = default;
+
+QString VideoReceiver::fileExtension(FileFormat format)
+{
+    switch (format) {
+        case FileFormat::Mkv:
+            return QStringLiteral("mkv");
+        case FileFormat::Mov:
+            return QStringLiteral("mov");
+        case FileFormat::Mp4:
+            return QStringLiteral("mp4");
+    }
+    return QStringLiteral("mkv");
+}
+
+bool VideoReceiver::isValidFileFormat(int format)
+{
+    return (format >= static_cast<int>(FileFormat::Mkv)) && (format <= static_cast<int>(FileFormat::Mp4));
+}
+
+QSize VideoReceiver::presentedSize(const QVideoFrame& frame)
+{
+    if (!frame.isValid()) {
+        return {};
+    }
+    const QVideoFrameFormat format = frame.surfaceFormat();
+    const QRect viewport = format.viewport();
+    const QSize size = viewport.isValid() ? viewport.size() : frame.size();
+    // As Qt's qRotatedFramePresentationSize(): the frame's and the format's rotation add up; mirroring keeps the size.
+    const int degrees = static_cast<int>(frame.rotation()) + static_cast<int>(format.rotation());
+    return ((degrees % 180) != 0) ? size.transposed() : size;
+}
+
 void VideoReceiver::setName(const QString& name)
 {
     _name = name;
@@ -72,9 +91,8 @@ void VideoReceiver::setConfig(const Config& config)
     if (config == _config) {
         return;
     }
-    const Config previous = _config;
     _config = config;
-    onConfigChanged(previous);
+    onConfigChanged();
 }
 
 void VideoReceiver::setActive(bool active)

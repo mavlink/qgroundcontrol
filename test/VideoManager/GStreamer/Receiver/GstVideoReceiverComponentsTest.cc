@@ -323,7 +323,7 @@ void GstVideoReceiverComponentsTest::_testPresentedSize()
         frame.setRotation(static_cast<QtVideo::Rotation>(frameRotation));
     }
 
-    QCOMPARE(GstVideoReceiver::presentedSize(frame), presented);
+    QCOMPARE(VideoReceiver::presentedSize(frame), presented);
 }
 
 #else

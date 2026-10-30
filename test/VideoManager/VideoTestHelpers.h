@@ -38,7 +38,7 @@ public:
     int recordingStops = 0;
 
 protected:
-    void onConfigChanged(const Config& /*previous*/) override { ++configChanges; }
+    void onConfigChanged() override { ++configChanges; }
 
     void onActiveChanged() override { ++activeChanges; }
 
