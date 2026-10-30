@@ -3,11 +3,8 @@
 #ifdef QGC_GST_STREAMING
 
 #include <gst/gst.h>
-#include <memory>
 
 #include <QtCore/QCoreApplication>
-#include <QtGui/QColor>
-#include <QtGui/QImage>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 #include <QtTest/QSignalSpy>
@@ -16,94 +13,18 @@
 #include "GStreamerTestHelpers.h"
 #include "GstHwPathTelemetry.h"
 #include "HwBuffers/common/HwBuffers.h"
-#include "QGCQVideoSinkController.h"
 #include "gstqgc/GstQgcCaps.h"
 #include "gstqgc/GstQgcTestSupport.h"
 #include "gstqgc/gstqgcqvideosink.h"
 
-namespace {
-
-struct PipelineRunResult
-{
-    int frameCount = 0;
-    QVideoFrameFormat lastFormat;
-    qint64 lastStartTime = -1;
-    QColor centerPixel;
-    bool centerPixelValid = false;
-    bool eos = false;
-    QString errorMessage;
-};
-
-/// Plays "videotestsrc ! @p capsLine ! qgcvideosinkbin" to EOS with the bin bound to @p videoSink, as VideoManager
-/// binds it, and records the frames that reach the QVideoSink.
-PipelineRunResult runPipelineThroughQVideoSink(QVideoSink& videoSink, const char* capsLine, int numBuffers = 5,
-                                               bool gpuZerocopy = false, const char* sourceProperties = "",
-                                               bool captureCenterPixel = false)
-{
-    PipelineRunResult r;
-    const auto owner = std::make_unique<QObject>();
-    // Declared after the binding's owner, so the pipeline stops first.
-    GstTest::TestPipeline pipeline;
-    if (!pipeline.launch(
-            QStringLiteral("videotestsrc %1 num-buffers=%2 ! %3 ! qgcvideosinkbin name=sink gpu-zerocopy=%4")
-                .arg(QString::fromUtf8(sourceProperties))
-                .arg(numBuffers)
-                .arg(QString::fromUtf8(capsLine))
-                .arg(gpuZerocopy ? "true" : "false"))) {
-        r.errorMessage = pipeline.error();
-        return r;
-    }
-    const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
-    if (!sinkBin || !GStreamer::setupQVideoSinkElement(sinkBin.get(), &videoSink, owner.get())) {
-        r.errorMessage = QStringLiteral("setupQVideoSinkElement() failed");
-        return r;
-    }
-    if (!owner->findChild<QGCQVideoSinkController*>(QString(), Qt::FindDirectChildrenOnly)) {
-        r.errorMessage = QStringLiteral("controller not created by setupQVideoSinkElement()");
-        return r;
-    }
-    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, owner.get(), [&](const QVideoFrame& f) {
-        ++r.frameCount;
-        r.lastFormat = f.surfaceFormat();
-        r.lastStartTime = f.startTime();
-        if (captureCenterPixel) {
-            const QImage image = f.toImage();
-            if (!image.isNull()) {
-                r.centerPixel = image.pixelColor(image.width() / 2, image.height() / 2);
-                r.centerPixelValid = true;
-            }
-        }
-    });
-
-    if (!pipeline.play()) {
-        r.errorMessage = QStringLiteral("set_state(PLAYING) failed");
-        return r;
-    }
-    const GStreamer::GstMessagePtr message = pipeline.waitForEosOrError();
-    r.eos = message && (GST_MESSAGE_TYPE(message.get()) == GST_MESSAGE_EOS);
-    if (!message) {
-        r.errorMessage = QStringLiteral("timeout waiting for EOS");
-    } else if (!r.eos) {
-        r.errorMessage = GstTest::errorText(message.get(), /*withDetails=*/false);
-    }
-    // Frames reach the QVideoSink through queued calls to this thread, and the counting connection dies with owner
-    // on return, so the caller only sees frames delivered before then.
-    if (r.eos) {
-        (void) UnitTest::waitForCondition([&r] { return r.frameCount > 0; }, TestTimeout::mediumDuration(),
-                                          u"frames delivered to the QVideoSink");
-    }
-    return r;
-}
-
-}  // namespace
-
 void GstQgcSinkPipelineTest::_testFrameDelivery()
 {
     QVideoSink videoSink;
-    const auto r = runPipelineThroughQVideoSink(videoSink,
-                                                "video/x-raw,format=I420,width=320,height=240,framerate=30/1 ! "
-                                                "videoconvert ! video/x-raw,format=BGRA",
-                                                /*numBuffers=*/10);
+    const auto r =
+        GstQgcTest::runPipelineThroughQVideoSink(videoSink,
+                                                 "video/x-raw,format=I420,width=320,height=240,framerate=30/1 ! "
+                                                 "videoconvert ! video/x-raw,format=BGRA",
+                                                 /*numBuffers=*/10);
     QVERIFY2(r.eos, qUtf8Printable(r.errorMessage));
     QVERIFY(r.frameCount > 0);
     QCOMPARE(r.lastFormat.frameSize(), QSize(320, 240));
@@ -112,7 +33,7 @@ void GstQgcSinkPipelineTest::_testFrameDelivery()
 void GstQgcSinkPipelineTest::_testYuvPassthrough()
 {
     QVideoSink videoSink;
-    const auto r = runPipelineThroughQVideoSink(
+    const auto r = GstQgcTest::runPipelineThroughQVideoSink(
         videoSink, "video/x-raw,format=I420,width=320,height=240,framerate=30/1", /*numBuffers=*/10);
     QVERIFY2(r.eos, qUtf8Printable(r.errorMessage));
     QVERIFY(r.frameCount > 0);
@@ -122,7 +43,7 @@ void GstQgcSinkPipelineTest::_testYuvPassthrough()
 void GstQgcSinkPipelineTest::_testPtsAndColorimetry()
 {
     QVideoSink videoSink;
-    const auto r = runPipelineThroughQVideoSink(
+    const auto r = GstQgcTest::runPipelineThroughQVideoSink(
         videoSink, "video/x-raw,format=I420,width=64,height=48,framerate=30/1,colorimetry=(string)bt709",
         /*numBuffers=*/5, /*gpuZerocopy=*/false, "do-timestamp=true");
     QVERIFY2(r.eos, qUtf8Printable(r.errorMessage));
@@ -135,16 +56,16 @@ void GstQgcSinkPipelineTest::_testCapsCacheInvalidation()
 {
     QVideoSink videoSink;
 
-    auto r1 = runPipelineThroughQVideoSink(videoSink,
-                                           "video/x-raw,format=I420,width=320,height=240,framerate=30/1 ! "
-                                           "videoconvert ! video/x-raw,format=BGRA");
+    auto r1 = GstQgcTest::runPipelineThroughQVideoSink(videoSink,
+                                                       "video/x-raw,format=I420,width=320,height=240,framerate=30/1 ! "
+                                                       "videoconvert ! video/x-raw,format=BGRA");
     QVERIFY2(r1.eos, qUtf8Printable(QStringLiteral("Session 1: %1").arg(r1.errorMessage)));
     QVERIFY(r1.frameCount > 0);
     QCOMPARE(r1.lastFormat.pixelFormat(), QVideoFrameFormat::Format_BGRA8888);
 
-    auto r2 = runPipelineThroughQVideoSink(videoSink,
-                                           "video/x-raw,format=I420,width=320,height=240,framerate=30/1 ! "
-                                           "videoconvert ! video/x-raw,format=RGBA");
+    auto r2 = GstQgcTest::runPipelineThroughQVideoSink(videoSink,
+                                                       "video/x-raw,format=I420,width=320,height=240,framerate=30/1 ! "
+                                                       "videoconvert ! video/x-raw,format=RGBA");
     QVERIFY2(r2.eos, qUtf8Printable(QStringLiteral("Session 2: %1").arg(r2.errorMessage)));
     QVERIFY(r2.frameCount > 0);
     QCOMPARE(r2.lastFormat.pixelFormat(), QVideoFrameFormat::Format_RGBA8888);
@@ -156,13 +77,10 @@ void GstQgcSinkPipelineTest::_testGpuZeroCopyFallback_data()
     QTest::addColumn<int>("backend");
     QTest::addColumn<QString>("format");
 
-    // Software-decoded frames reach every GPU variant: in a format the sink takes, and in one only the converter reads.
+    // Software-decoded frames reach the GPU variants that need no GPU for them (GstHwBuffersPipelineTest covers the
+    // glupload bin): in a format the sink takes, and in one only the converter reads.
     for (const QString& format : {QStringLiteral("BGRA"), QStringLiteral("Y444")}) {
         const QByteArray tag = format.toLatin1();
-#if defined(QGC_GST_BIN_HAS_GLUPLOAD)
-        QTest::addRow("glupload-%s", tag.constData())
-            << int(GstQgc::GpuBinMode::GlUpload) << int(GstQgc::RenderBackend::OpenGL) << format;
-#endif
 #if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
         QTest::addRow("direct-dmabuf-%s", tag.constData())
             << int(GstQgc::GpuBinMode::DirectDmaBuf) << int(GstQgc::RenderBackend::OpenGL) << format;
@@ -189,13 +107,8 @@ void GstQgcSinkPipelineTest::_testGpuZeroCopyFallback()
     QVideoSink videoSink;
     const QByteArray capsLine =
         QStringLiteral("video/x-raw,format=%1,width=320,height=240,framerate=30/1").arg(format).toLatin1();
-    auto r = runPipelineThroughQVideoSink(videoSink, capsLine.constData(), /*numBuffers*/ 5, /*gpuZerocopy*/ true);
-    // The glupload bin needs an EGL/GL context, which a headless runner may not have.
-    if (!r.eos && (r.errorMessage.contains(QStringLiteral("egl"), Qt::CaseInsensitive) ||
-                   r.errorMessage.contains(QStringLiteral("gl context"), Qt::CaseInsensitive))) {
-        QSKIP(qPrintable(
-            QStringLiteral("gpu-zerocopy pipeline needs a GL context (headless env): %1").arg(r.errorMessage)));
-    }
+    auto r = GstQgcTest::runPipelineThroughQVideoSink(videoSink, capsLine.constData(), /*numBuffers*/ 5,
+                                                      /*gpuZerocopy*/ true);
     QVERIFY2(r.eos, qUtf8Printable(QStringLiteral("Pipeline: %1").arg(r.errorMessage)));
     QVERIFY(r.frameCount > 0);
     QVERIFY(r.lastFormat.pixelFormat() != QVideoFrameFormat::Format_Invalid);
@@ -265,58 +178,6 @@ void GstQgcSinkPipelineTest::_testQgcVideoSinkBinScalesNonSquarePixels()
                             .arg(lastSize.height())));
 }
 
-void GstQgcSinkPipelineTest::_testWindowsGpuSinkPreservesSoftwarePixels()
-{
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
-
-    QVideoSink videoSink;
-    const auto result =
-        runPipelineThroughQVideoSink(videoSink, "video/x-raw,format=BGRA,width=320,height=240,framerate=30/1",
-                                     /*numBuffers*/ 5, /*gpuZerocopy*/ true, "pattern=red",
-                                     /*captureCenterPixel*/ true);
-
-    QVERIFY2(result.eos, qUtf8Printable(QStringLiteral("Software-frame pipeline: %1").arg(result.errorMessage)));
-    QVERIFY(result.frameCount > 0);
-    QCOMPARE(result.lastFormat.pixelFormat(), QVideoFrameFormat::Format_BGRA8888);
-    QVERIFY2(result.centerPixelValid, "System-memory fallback frame could not be mapped for pixel verification");
-    QVERIFY2((result.centerPixel.red() > 200) && (result.centerPixel.green() < 50) && (result.centerPixel.blue() < 50),
-             qUtf8Printable(QStringLiteral("Expected a red software frame, received RGB(%1,%2,%3)")
-                                .arg(result.centerPixel.red())
-                                .arg(result.centerPixel.green())
-                                .arg(result.centerPixel.blue())));
-#else
-    QSKIP("Windows D3D11 GPU sink path is unavailable in this build");
-#endif
-}
-
-void GstQgcSinkPipelineTest::_testWindowsGpuSinkPreservesDirectD3D11Memory()
-{
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
-
-    GstElementFactory* uploadFactory = gst_element_factory_find("d3d11upload");
-    if (!uploadFactory) {
-        QSKIP("d3d11upload is unavailable");
-    }
-    gst_object_unref(uploadFactory);
-
-    QVideoSink videoSink;
-    auto result =
-        runPipelineThroughQVideoSink(videoSink,
-                                     "video/x-raw,format=NV12,width=320,height=240,framerate=30/1 ! d3d11upload ! "
-                                     "video/x-raw(memory:D3D11Memory),format=NV12",
-                                     /*numBuffers*/ 5, /*gpuZerocopy*/ true);
-    if (!result.eos && result.errorMessage.contains(QStringLiteral("d3d11"), Qt::CaseInsensitive)) {
-        QSKIP(qPrintable(QStringLiteral("D3D11 device unavailable in this runner: %1").arg(result.errorMessage)));
-    }
-
-    QVERIFY2(result.eos, qUtf8Printable(QStringLiteral("D3D11 pipeline: %1").arg(result.errorMessage)));
-    QVERIFY(result.frameCount > 0);
-    QCOMPARE(result.lastFormat.pixelFormat(), QVideoFrameFormat::Format_NV12);
-#else
-    QSKIP("D3D11 GPU sink path is only available in supported Windows builds");
-#endif
-}
-
 void GstQgcSinkPipelineTest::_testTeardownUnderLoad()
 {
     QVideoSink videoSink;
@@ -338,7 +199,8 @@ void GstQgcSinkPipelineTest::_testTeardownUnderLoad()
         QVERIFY_TRUE_WAIT(GstQgcTest::framesDelivered(qvideosink.get()) > 0, TestTimeout::mediumMs());
     }
 
-    auto r = runPipelineThroughQVideoSink(videoSink, "video/x-raw,format=RGBA,width=160,height=120,framerate=30/1");
+    auto r = GstQgcTest::runPipelineThroughQVideoSink(videoSink,
+                                                      "video/x-raw,format=RGBA,width=160,height=120,framerate=30/1");
     QVERIFY2(r.eos, qUtf8Printable(QStringLiteral("Restart: %1").arg(r.errorMessage)));
     QVERIFY(r.frameCount > 0);
     QCOMPARE(r.lastFormat.pixelFormat(), QVideoFrameFormat::Format_RGBA8888);
@@ -430,8 +292,9 @@ void GstQgcSinkPipelineTest::_testCpuMemcpyActiveRowStrideHandling()
         }
     });
 
-    auto r = runPipelineThroughQVideoSink(videoSink, "video/x-raw,format=BGRA,width=753,height=432,framerate=30/1",
-                                          /*numBuffers=*/5);
+    auto r = GstQgcTest::runPipelineThroughQVideoSink(videoSink,
+                                                      "video/x-raw,format=BGRA,width=753,height=432,framerate=30/1",
+                                                      /*numBuffers=*/5);
     QVERIFY2(r.eos, qUtf8Printable(QStringLiteral("Pipeline: %1").arg(r.errorMessage)));
     QVERIFY(capturedFrame.isValid());
 
@@ -451,8 +314,9 @@ void GstQgcSinkPipelineTest::_testCpuMemcpyActiveRowStrideHandling()
 void GstQgcSinkPipelineTest::_testColorimetryFrameRatePropagation()
 {
     QVideoSink videoSink;
-    const auto r = runPipelineThroughQVideoSink(videoSink, "video/x-raw,format=I420,width=64,height=48,framerate=30/1",
-                                                /*numBuffers=*/3);
+    const auto r =
+        GstQgcTest::runPipelineThroughQVideoSink(videoSink, "video/x-raw,format=I420,width=64,height=48,framerate=30/1",
+                                                 /*numBuffers=*/3);
     QVERIFY2(r.eos, qUtf8Printable(r.errorMessage));
     QVERIFY(r.frameCount > 0);
     QCOMPARE(r.lastFormat.streamFrameRate(), 30.0);

@@ -17,8 +17,6 @@ private slots:
     void _testGpuZeroCopyFallback();
     void _testQgcVideoSinkBinScalesNonSquarePixels_data();
     void _testQgcVideoSinkBinScalesNonSquarePixels();
-    void _testWindowsGpuSinkPreservesSoftwarePixels();
-    void _testWindowsGpuSinkPreservesDirectD3D11Memory();
     void _testTeardownUnderLoad();
     void _testFrameCountsTelemetrySignal();
     void _testInactiveQgcQVideoSinkDropsAndCounts();

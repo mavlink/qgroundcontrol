@@ -6,6 +6,7 @@
 #include <gst/gst.h>
 
 #include <QtCore/QRegularExpression>
+#include <QtMultimedia/QVideoSink>
 
 #include "GStreamerTestHelpers.h"
 #include "HwBuffers/common/HwBuffers.h"
@@ -90,6 +91,44 @@ void GstHwBuffersPipelineTest::_testGlMemoryDispatch()
                             .arg(negotiatedStr)));
     QVERIFY2(negotiatedStr.contains(QStringLiteral("memory:GLMemory")),
              qPrintable(QStringLiteral("qgcqvideosink negotiated caps lack memory:GLMemory: %1").arg(negotiatedStr)));
+}
+
+void GstHwBuffersPipelineTest::_testGlUploadBinTakesSoftwareFrames_data()
+{
+    QTest::addColumn<QString>("format");
+
+    // In a format the sink takes, and in one only the converter reads.
+    QTest::newRow("BGRA") << QStringLiteral("BGRA");
+    QTest::newRow("Y444") << QStringLiteral("Y444");
+}
+
+void GstHwBuffersPipelineTest::_testGlUploadBinTakesSoftwareFrames()
+{
+#if !defined(QGC_GST_BIN_HAS_GLUPLOAD)
+    QSKIP("glupload bin not compiled in this build");
+#else
+    QFETCH(QString, format);
+    const GstQgc::ScopedSinkEnvironmentForTest environment(
+        {.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true},
+         .gpuBin = {.mode = GstQgc::GpuBinMode::GlUpload}});
+
+    QVideoSink videoSink;
+    const QByteArray capsLine =
+        QStringLiteral("video/x-raw,format=%1,width=320,height=240,framerate=30/1").arg(format).toLatin1();
+    const GstQgcTest::PipelineRunResult r = GstQgcTest::runPipelineThroughQVideoSink(
+        videoSink, capsLine.constData(), /*numBuffers*/ 5, /*gpuZerocopy*/ true);
+    // The bin's glupload needs an EGL/GL context, which a headless runner may not have.
+    if (!r.eos && (r.errorMessage.contains(QStringLiteral("egl"), Qt::CaseInsensitive) ||
+                   r.errorMessage.contains(QStringLiteral("gl context"), Qt::CaseInsensitive))) {
+        QSKIP(qPrintable(QStringLiteral("glupload needs a GL context (headless env): %1").arg(r.errorMessage)));
+    }
+    QVERIFY2(r.eos, qUtf8Printable(QStringLiteral("Pipeline: %1").arg(r.errorMessage)));
+    QVERIFY(r.frameCount > 0);
+    QVERIFY(r.lastFormat.pixelFormat() != QVideoFrameFormat::Format_Invalid);
+    if (format == QStringLiteral("BGRA")) {
+        QCOMPARE(r.lastFormat.pixelFormat(), QVideoFrameFormat::Format_BGRA8888);
+    }
+#endif
 }
 
 #endif

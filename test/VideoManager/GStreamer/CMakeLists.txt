@@ -41,6 +41,7 @@ target_sources(
         gstqgc/GstQgcSinkPipelineTest.h
         gstqgc/GstQgcSinkTest.cc
         gstqgc/GstQgcSinkTest.h
+        gstqgc/GstQgcTestSupport.cc
         gstqgc/GstQgcTestSupport.h
 )
 

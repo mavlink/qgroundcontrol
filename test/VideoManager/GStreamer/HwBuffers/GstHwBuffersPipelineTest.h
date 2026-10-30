@@ -11,7 +11,11 @@ class GstHwBuffersPipelineTest : public GStreamerTestBase
 private slots:
 #ifdef QGC_GST_STREAMING
     void _testGlMemoryDispatch();
+    void _testGlUploadBinTakesSoftwareFrames_data();
+    void _testGlUploadBinTakesSoftwareFrames();
     void _testD3D11MemoryDispatch();
+    void _testWindowsGpuSinkPreservesSoftwarePixels();
+    void _testWindowsGpuSinkPreservesDirectD3D11Memory();
     void _testD3D12MemoryDispatch();
     void _testD3DMapTexturesWithQRhi_data();
     void _testD3DMapTexturesWithQRhi();
