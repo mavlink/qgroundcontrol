@@ -8,8 +8,9 @@
 
 namespace GstHw {
 
-/// Bounded LRU cache for GPU import resources (EGLImages, imported VkImages, staging textures) sized for the handful of
-/// buffers a decoder pool recycles: a flat array searched linearly, so lookups and inserts never allocate.
+/// Bounded LRU cache for GPU import resources sized for the handful of buffers a decoder pool recycles: a flat array
+/// searched linearly, so lookups and inserts never allocate. Serves the AHardwareBuffer path (EGLImages) and the D3D12
+/// path (staging resources).
 ///
 /// Pinned entries (a frame bundle still samples them) are never destroyed: eviction skips them, and erase/clear park
 /// them until unpinned. Entries removed where @p destroyableHere rejects them (e.g. off the render thread that owns the
