@@ -24,6 +24,7 @@ private slots:
     void _testGlobalAltFrame();
     void _testFlightPathSegmentCacheReuse();
     void _testSplineWaypointPath();
+    void _testSplineTerrainProfile();
     void _testSplineAfterTakeoffStaysLevel();
     void _testSplineFromHomeStartsAtTakeoffAltitude();
     void _testSplineSampleCountGrowsWithLength();

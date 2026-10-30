@@ -8,6 +8,7 @@
 
 #include "TerrainPathHeightInfo.h"
 
+class TerrainAtCoordinateQuery;
 class TerrainPathQuery;
 
 // Important Note: The altitudes in the coordinates must be AMSL
@@ -67,8 +68,15 @@ public:
 
     const QVariantList& splinePath(void) const { return _splinePath; }
 
+    /// Distance along the leg of each splinePath sample
+    const QList<double>& splineSampleDistances(void) const { return _splineSampleDistances; }
+
     void setSpecialVisual(bool specialVisual);
     void setSplinePath(const QVariantList& splinePath);
+
+    /// AMSL altitude the vehicle flies at `distance` meters along the leg: along the spline samples for a spline
+    /// leg, otherwise a straight ramp between the endpoint altitudes
+    [[nodiscard]] double amslAltitudeAtDistance(double distance) const;
 
     /// Path of the leg arriving at points[index], curved like ArduPilot's SplineCurve when it is a spline waypoint
     [[nodiscard]] static QVariantList splineSegmentPath(const QList<SplinePoint>& points, int index);
@@ -99,6 +107,14 @@ private slots:
     void _updateTerrainCollision    (void);
 
 private:
+    void _cancelTerrainQuery(void);
+    void _terrainHeightsReceived(bool success, double distanceBetween, double finalDistanceBetween,
+                                 const QList<double>& heights);
+    /// Coordinates at even spacing along the spline for a terrain query, matching the path query spacing
+    QList<QGeoCoordinate> _splineTerrainQueryCoords(double& distanceBetween, double& finalDistanceBetween) const;
+    /// Spline sample index whose span contains `distance`, and the fraction into that span
+    int _splineSpanAtDistance(double distance, double& fraction) const;
+
     /// North/east/up offset in meters of `to` relative to `from`, up is 0 when either altitude is unknown
     static QVector3D _localOffset(const QGeoCoordinate& from, const QGeoCoordinate& to);
     /// As above, but between two terrain-frame points the vertical component is the height above terrain difference
@@ -120,12 +136,14 @@ private:
     bool                _specialVisual =                false;
     QTimer              _delayedTerrainPathQueryTimer;
     TerrainPathQuery*   _currentTerrainPathQuery =      nullptr;
+    TerrainAtCoordinateQuery* _currentTerrainCoordinateQuery = nullptr;
     QVariantList        _amslTerrainHeights;
     double              _distanceBetween =              0;
     double              _finalDistanceBetween =         0;
     double              _totalDistance =                0;
     SegmentType         _segmentType =                  SegmentTypeGeneric;
     QVariantList _splinePath;
+    QList<double> _splineSampleDistances;
 
     static constexpr double _collisionIgnoreMeters =    10; // Distance to ignore for takeoff/land segments
     static constexpr int _minSplineSampleCount = 20;

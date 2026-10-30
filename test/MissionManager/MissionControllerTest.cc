@@ -22,6 +22,8 @@
 #include "StructureScanComplexItem.h"
 #include "SurveyComplexItem.h"
 #include "TakeoffMissionItem.h"
+#include "TerrainTest.h"
+#include "TerrainTileCopernicus.h"
 #include "TestFixtures.h"
 #include "UnitTestCoords.h"
 #include "UnitsSettings.h"
@@ -1158,6 +1160,94 @@ void MissionControllerTest::_testSplineSampleCountGrowsWithLength()
     QVERIFY(shortCount >= 21);
     QVERIFY(longCount > shortCount);
     QVERIFY(longCount >= 10000 / 100);
+}
+
+void MissionControllerTest::_testSplineTerrainProfile()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+    // Synthetic terrain: constant 10 m AMSL across the whole region
+    const QGeoCoordinate regionCenter = TerrainTest::flat10Region().center();
+    const QGeoCoordinate home(regionCenter.latitude(), regionCenter.longitude(),
+                              UnitTestTerrainData::Flat10Region::amslElevation);
+    settingsItem->setCoordinate(home);
+
+    // home(0) wp1(1) spline2(2) wp3(3): the spline leg doubles back so its curve is much longer than its chord
+    SimpleMissionItem* wp1 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(200, 0), 1));
+    SimpleMissionItem* spline2 = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(
+        home.atDistanceAndAzimuth(200, 0).atDistanceAndAzimuth(100, 90), 2));
+    SimpleMissionItem* wp3 = qobject_cast<SimpleMissionItem*>(
+        _missionController->insertSimpleMissionItem(home.atDistanceAndAzimuth(100, 90), 3));
+    QVERIFY(wp1);
+    QVERIFY(spline2);
+    QVERIFY(wp3);
+    spline2->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+    wp1->altitude()->setRawValue(40.0);
+    spline2->altitude()->setRawValue(80.0);
+
+    QCOMPARE_TRUE_WAIT(_missionController->simpleFlightPathSegments()->count(), 2, TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(wp1->simpleFlightPathSegment() && !wp1->simpleFlightPathSegment()->splinePath().isEmpty(),
+                             TestTimeout::mediumMs());
+    FlightPathSegment* splineLeg = wp1->simpleFlightPathSegment();
+
+    // The leg's length is the curve's arc length, not the chord
+    const double chordLength = wp1->coordinate().distanceTo(spline2->coordinate());
+    const QList<double>& sampleDistances = splineLeg->splineSampleDistances();
+    QCOMPARE(sampleDistances.count(), splineLeg->splinePath().count());
+    QCOMPARE(sampleDistances.first(), 0.0);
+    QCOMPARE(splineLeg->totalDistance(), sampleDistances.last());
+    QVERIFY(splineLeg->totalDistance() > chordLength + 1.0);
+
+    // The flown altitude follows the samples between the endpoint altitudes
+    QCOMPARE(splineLeg->amslAltitudeAtDistance(0.0), splineLeg->coord1AMSLAlt());
+    QCOMPARE(splineLeg->amslAltitudeAtDistance(splineLeg->totalDistance()), splineLeg->coord2AMSLAlt());
+    const int middleSample = sampleDistances.count() / 2;
+    QCOMPARE(splineLeg->amslAltitudeAtDistance(sampleDistances[middleSample]),
+             splineLeg->splinePath()[middleSample].value<QGeoCoordinate>().altitude());
+
+    // Terrain is sampled along the curve: the samples span the arc length at the path query spacing. The segment
+    // first samples its chord when created, so wait for the curve's own sample count rather than any result.
+    const int heightCount = qCeil(splineLeg->totalDistance() / TerrainTileCopernicus::kTileValueSpacingMeters) + 1;
+    QVERIFY(heightCount > qCeil(chordLength / TerrainTileCopernicus::kTileValueSpacingMeters) + 1);
+    QTRY_COMPARE_WITH_TIMEOUT(splineLeg->amslTerrainHeights().count(), heightCount, TestTimeout::longMs());
+    QVERIFY(qAbs((splineLeg->distanceBetween() * (heightCount - 1)) - splineLeg->totalDistance()) < 1.0);
+    for (const QVariant& height : splineLeg->amslTerrainHeights()) {
+        QCOMPARE(height.toDouble(), UnitTestTerrainData::Flat10Region::amslElevation);
+    }
+    QVERIFY(!splineLeg->terrainCollision());
+
+    // The curve is checked along its length, not just between its endpoints: both endpoints sit 5 m above the
+    // terrain, but a steep climb demanded by the next waypoint makes the Hermite curve dip through the ground on
+    // its way in. The straight chord between the endpoints never does.
+    wp1->altitude()->setRawValue(5.0);
+    spline2->altitude()->setRawValue(5.0);
+    wp3->altitude()->setRawValue(5.0);
+    QTRY_COMPARE_WITH_TIMEOUT(splineLeg->splinePath().last().value<QGeoCoordinate>().altitude(),
+                              spline2->amslEntryAlt(), TestTimeout::mediumMs());
+    QVERIFY(splineLeg->coord1AMSLAlt() > UnitTestTerrainData::Flat10Region::amslElevation);
+    QVERIFY(splineLeg->coord2AMSLAlt() > UnitTestTerrainData::Flat10Region::amslElevation);
+    wp3->altitude()->setRawValue(100.0);
+    QTRY_VERIFY_WITH_TIMEOUT(splineLeg->terrainCollision(), TestTimeout::longMs());
+    wp3->altitude()->setRawValue(5.0);
+    QTRY_VERIFY_WITH_TIMEOUT(!splineLeg->terrainCollision(), TestTimeout::longMs());
+
+    // A vertical spline (same position, lower altitude) has no horizontal extent but still descends into terrain.
+    // The waypoint before it holds, so no velocity is carried into the spline to swing it out horizontally.
+    spline2->altitude()->setRawValue(80.0);
+    wp3->missionItem().setParam1(5.0);
+    SimpleMissionItem* verticalSpline =
+        qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(wp3->coordinate(), 4));
+    QVERIFY(verticalSpline);
+    verticalSpline->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+    verticalSpline->altitude()->setRawValue(-20.0);
+    QTRY_VERIFY_WITH_TIMEOUT(wp3->simpleFlightPathSegment() && !wp3->simpleFlightPathSegment()->splinePath().isEmpty(),
+                             TestTimeout::mediumMs());
+    FlightPathSegment* verticalLeg = wp3->simpleFlightPathSegment();
+    QCOMPARE(verticalLeg->totalDistance(), 0.0);
+    QTRY_VERIFY_WITH_TIMEOUT(verticalLeg->terrainCollision(), TestTimeout::longMs());
 }
 
 void MissionControllerTest::_testSplitSegmentTracksSegmentRebuild_data()
