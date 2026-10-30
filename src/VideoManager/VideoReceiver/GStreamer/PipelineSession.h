@@ -28,8 +28,9 @@ struct PathStats;
 /// Bus handling: a sync handler does only what can't wait (GPU context requests, stream selection, and closing the
 /// valve in front of a failing branch); everything else is popped on the worker, where the bus's poll fd wakes it up.
 ///
-/// The session recovers its branches itself: a failing or stalled decoder is replaced, a failing recorder ends the
-/// recording. Failures of the stream as a whole go to the Listener, which decides whether to reconnect.
+/// The session recovers its branches from their errors itself: a failing decoder is replaced, a failing recorder ends
+/// the recording. A stalled decoder is the listener's to notice, and to replace through restartDecoder(). Failures of
+/// the stream as a whole go to the Listener, which decides whether to reconnect.
 class PipelineSession : public QObject
 {
     Q_OBJECT
