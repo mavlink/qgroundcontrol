@@ -30,6 +30,7 @@ private slots:
     void _testSplineSampleCountGrowsWithLength();
     void _testSplineAfterLandHasNoIncomingVelocity();
     void _testDuplicateSplineWaypointCarriesNoVelocity();
+    void _testReturnLegIsMeasuredStraight();
     void _testSplitSegmentTracksSegmentRebuild_data();
     void _testSplitSegmentTracksSegmentRebuild();
     void _testSplitSegmentWhenCurrentItemGainsCoordinate();

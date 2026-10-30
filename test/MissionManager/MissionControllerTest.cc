@@ -961,6 +961,16 @@ void MissionControllerTest::_testSplineWaypointPath()
     QVERIFY(_missionController->splinePathFrom(spline3).isEmpty());
     QVERIFY(_missionController->splinePathFrom(nullptr).isEmpty());
 
+    // Mission estimates follow the curve: a spline leg counts its arc length, not its chord
+    const double wp1LegLength = wp1->simpleFlightPathSegment()->totalDistance();
+    QVERIFY(wp1LegLength > wp1->coordinate().distanceTo(spline2->coordinate()) + 1.0);
+    QCOMPARE_TRUE_WAIT(spline2->distance(), wp1LegLength, TestTimeout::mediumMs());
+    double expectedTotalDistance = 0;
+    for (int i = 0; i < segments->count(); i++) {
+        expectedTotalDistance += segments->value<FlightPathSegment*>(i)->totalDistance();
+    }
+    QCOMPARE_TRUE_WAIT(_missionController->missionTotalDistance(), expectedTotalDistance, TestTimeout::mediumMs());
+
     // A hold time stops the vehicle at the waypoint, so the leg no longer carries velocity through it
     spline2->missionItem().setParam1(5.0);
     QTRY_VERIFY_WITH_TIMEOUT(wp1->simpleFlightPathSegment()->splinePath() != wp1Path, TestTimeout::mediumMs());
@@ -1160,6 +1170,51 @@ void MissionControllerTest::_testSplineSampleCountGrowsWithLength()
     QVERIFY(shortCount >= 21);
     QVERIFY(longCount > shortCount);
     QVERIFY(longCount >= 10000 / 100);
+}
+
+void MissionControllerTest::_testReturnLegIsMeasuredStraight()
+{
+    _initForFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
+
+    MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
+    QVERIFY(settingsItem);
+    const QGeoCoordinate home = Coord::zurich();
+    settingsItem->setCoordinate(home);
+
+    // home(0) takeoff(1) splineA(2) wpB(3) wpC(4) rtl(5), with wpC on top of splineA: the return leg from wpC
+    // to home must be measured as its own chord, not mistaken for the curved home -> splineA leg that ends at
+    // the same coordinate
+    QVERIFY(_missionController->insertTakeoffItem(home, 1));
+    const QGeoCoordinate cornerA = home.atDistanceAndAzimuth(200, 0);
+    SimpleMissionItem* splineA =
+        qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(cornerA, 2));
+    SimpleMissionItem* wpB = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(
+        home.atDistanceAndAzimuth(200, 0).atDistanceAndAzimuth(200, 90), 3));
+    SimpleMissionItem* wpC = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(cornerA, 4));
+    SimpleMissionItem* rtl = qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(cornerA, 5));
+    QVERIFY(splineA);
+    QVERIFY(wpB);
+    QVERIFY(wpC);
+    QVERIFY(rtl);
+    splineA->setCommand(MAV_CMD_NAV_SPLINE_WAYPOINT);
+    rtl->setCommand(MAV_CMD_NAV_RETURN_TO_LAUNCH);
+
+    QTRY_VERIFY_WITH_TIMEOUT(
+        settingsItem->simpleFlightPathSegment() && !settingsItem->simpleFlightPathSegment()->splinePath().isEmpty(),
+        TestTimeout::mediumMs());
+    QmlObjectListModel* segments = _missionController->simpleFlightPathSegments();
+    double expectedTotalDistance = 0;
+    for (int i = 0; i < segments->count(); i++) {
+        expectedTotalDistance += segments->value<FlightPathSegment*>(i)->totalDistance();
+    }
+    QVERIFY(wpC->simpleFlightPathSegment());
+    const double returnLegLength = wpC->simpleFlightPathSegment()->totalDistance();
+    QCOMPARE(returnLegLength, cornerA.distanceTo(home));
+    // The mission total covers the legs between items; the return leg only counts towards the flown distance
+    QCOMPARE_TRUE_WAIT(_missionController->missionTotalDistance(), expectedTotalDistance - returnLegLength,
+                       TestTimeout::mediumMs());
+    QCOMPARE_TRUE_WAIT(_missionController->missionHoverDistance() + _missionController->missionCruiseDistance(),
+                       expectedTotalDistance, TestTimeout::mediumMs());
 }
 
 void MissionControllerTest::_testSplineTerrainProfile()

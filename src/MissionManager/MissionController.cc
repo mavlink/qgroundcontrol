@@ -978,6 +978,9 @@ FlightPathSegment* MissionController::_createFlightPathSegmentWorker(VisualItemP
     connect(pair.second, &VisualMissionItem::exitCoordinateChanged,     this,       &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
 
     connect(segment,    &FlightPathSegment::totalDistanceChanged,       this,       &MissionController::recalcTerrainProfile,             Qt::QueuedConnection);
+    // A spline leg's length follows its curve, which changes with the neighbouring items
+    connect(segment, &FlightPathSegment::totalDistanceChanged, this,
+            &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
     connect(segment,    &FlightPathSegment::coord1AMSLAltChanged,       this,       &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
     connect(segment,    &FlightPathSegment::coord2AMSLAltChanged,       this,       &MissionController::_recalcMissionFlightStatusSignal, Qt::QueuedConnection);
     connect(segment,    &FlightPathSegment::amslTerrainHeightsChanged,  this,       &MissionController::recalcTerrainProfile,             Qt::QueuedConnection);
