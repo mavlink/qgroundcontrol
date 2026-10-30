@@ -5,11 +5,11 @@
 # out: their stubs redefine some of these commands.
 definitions:
   - ../../cmake/CompilerWarnings.cmake
+  - ../../cmake/GStreamer/Acquire.cmake
   - ../../cmake/GStreamer/Components.cmake
   - ../../cmake/GStreamer/Download.cmake
   - ../../cmake/GStreamer/Install.cmake
   - ../../cmake/GStreamer/Layout.cmake
-  - ../../cmake/GStreamer/Link.cmake
   - ../../cmake/GStreamer/Notice.cmake
   - ../../cmake/GStreamer/PkgConfig.cmake
   - ../../cmake/GStreamer/Platform.cmake
