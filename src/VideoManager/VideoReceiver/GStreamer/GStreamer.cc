@@ -378,16 +378,8 @@ QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink*
 {
     if (!sinkBin || !videoSink || !controllerParent) {
         // controllerParent owns the controller's QObject lifetime — else it leaks (caller has no handle).
-        qCWarning(GStreamerLog) << "setupQVideoSinkElement: null sinkBin, videoSink, or controllerParent";
+        qCWarning(GStreamerLog) << "null sinkBin, videoSink, or controllerParent";
         return nullptr;
-    }
-
-    // Idempotent re-setup: tear down prior controllers so repeated setups don't accumulate dangling ones.
-    for (auto* c : QGCQVideoSinkController::controllersOf(controllerParent)) {
-        c->setActive(false);
-        // Released now: deleteLater is deferred, and the old binding must not outlive the new one's installation.
-        c->prepareForRelease();
-        c->deleteLater();
     }
 
     // Clear the GL/Vulkan bridges' exhausted-retry latches so a restart after Qt's RHI appears can
@@ -398,7 +390,7 @@ QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink*
     // its own ref for deferred QObject teardown.
     const GstObjectPtr element(GST_OBJECT(gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(sinkBin))));
     if (!element) {
-        qCCritical(GStreamerLog) << "setupQVideoSinkElement: bin has no qgcqvideosink child";
+        qCCritical(GStreamerLog) << "bin has no qgcqvideosink child";
         return nullptr;
     }
     GstElement* const elementRaw = GST_ELEMENT(element.get());
@@ -408,7 +400,6 @@ QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink*
     // Route the initial install through the controller so its destroyed-sink QPointer guard
     // covers setup, not just later swaps.
     controller->setVideoSink(QPointer<QVideoSink>(videoSink));
-    controller->setActive(true);
 
     return controller;
 }

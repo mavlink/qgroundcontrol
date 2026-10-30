@@ -104,7 +104,7 @@ void GstVideoReceiver::onRestartRequested()
 {
     // Construct-only sink settings apply to a new sink only.
     _releaseDisplaySink();
-    if (QVideoSink* const sink = videoSink(); sink && _buildDisplaySink(sink)) {
+    if (QVideoSink* const sink = videoSink()) {
         _bindVideoSink(sink);
     }
     _postToWorker(
@@ -146,9 +146,7 @@ void GstVideoReceiver::onVideoOutputChanged()
         return;
     }
 
-    if (_displaySink || _buildDisplaySink(sink)) {
-        _bindVideoSink(sink);
-    }
+    _bindVideoSink(sink);
     _scheduleVideoSinkUpdate();
 }
 
@@ -182,8 +180,6 @@ void GstVideoReceiver::_releaseDisplaySink()
 
 bool GstVideoReceiver::_buildDisplaySink(QVideoSink* videoSink)
 {
-    _releaseDisplaySink();
-
     GStreamer::GstElementPtr sink =
         GStreamer::adoptElement(GStreamer::createVideoSink(GStreamer::videoSinkConfigFromSettings()));
     QGCQVideoSinkController* const controller =
@@ -201,7 +197,11 @@ bool GstVideoReceiver::_buildDisplaySink(QVideoSink* videoSink)
 void GstVideoReceiver::_bindVideoSink(QVideoSink* videoSink)
 {
     (void) disconnect(_videoSizeConnection);
-    _sinkController->setVideoSink(QPointer<QVideoSink>(videoSink));
+    if (_displaySink) {
+        _sinkController->setVideoSink(QPointer<QVideoSink>(videoSink));
+    } else if (!_buildDisplaySink(videoSink)) {
+        return;
+    }
     _sinkController->followWindowVisibility(videoOutput());
     // Per frame, not on QVideoSink::videoSizeChanged: that follows the frame size, which for a decoder's buffer cropped
     // by crop meta is larger than the picture, and misses a viewport that changes on its own. Frames reach the sink on

@@ -566,45 +566,6 @@ void GstQgcSinkTest::_testQVideoSinkControllerNullSinkStillDeactivatesOnDestroy(
     QCOMPARE(active, FALSE);
 }
 
-void GstQgcSinkTest::_testQVideoSinkControllerRepeatedSetupKeepsNewBindingActive()
-{
-    const SinkBin sink = makeSinkBin();
-    QVERIFY2(sink.bin && sink.qvideosink, "qgcvideosinkbin or its qvideosink accessor failed");
-    GstElement* const bin = sink.bin.get();
-    GstElement* const qvideosink = sink.qvideosink.get();
-
-    auto firstSink = std::make_unique<QVideoSink>();
-    auto secondSink = std::make_unique<QVideoSink>();
-    QObject controllerOwner;
-
-    QVERIFY2(GStreamer::setupQVideoSinkElement(bin, firstSink.get(), &controllerOwner),
-             "initial setupQVideoSinkElement() failed");
-    auto* firstController = controllerOwner.findChild<QGCQVideoSinkController*>(QString(), Qt::FindDirectChildrenOnly);
-    QVERIFY(firstController);
-
-    QVERIFY2(GStreamer::setupQVideoSinkElement(bin, secondSink.get(), &controllerOwner),
-             "repeated setupQVideoSinkElement() failed");
-
-    firstController->setActive(false);
-
-    firstSink.reset();
-    QCoreApplication::sendPostedEvents(&controllerOwner, QEvent::MetaCall);
-
-    gpointer installedSink = nullptr;
-    gboolean active = FALSE;
-    g_object_get(qvideosink, "qvideosink", &installedSink, "active", &active, nullptr);
-    QCOMPARE(installedSink, static_cast<gpointer>(secondSink.get()));
-    QCOMPARE(active, TRUE);
-
-    QCoreApplication::sendPostedEvents(&controllerOwner, QEvent::DeferredDelete);
-
-    installedSink = nullptr;
-    active = FALSE;
-    g_object_get(qvideosink, "qvideosink", &installedSink, "active", &active, nullptr);
-    QCOMPARE(installedSink, static_cast<gpointer>(secondSink.get()));
-    QCOMPARE(active, TRUE);
-}
-
 void GstQgcSinkTest::_testQVideoSinkControllerNoWindowStartsInactive()
 {
     const SinkBin sink = makeSinkBin();

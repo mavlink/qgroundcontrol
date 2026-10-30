@@ -22,12 +22,6 @@ QGCQVideoSinkController::~QGCQVideoSinkController()
     _releaseElementBinding();
 }
 
-QList<QGCQVideoSinkController*> QGCQVideoSinkController::controllersOf(const QObject* receiver)
-{
-    return receiver ? receiver->findChildren<QGCQVideoSinkController*>(QString(), Qt::FindDirectChildrenOnly)
-                    : QList<QGCQVideoSinkController*>{};
-}
-
 void QGCQVideoSinkController::followWindowVisibility(QQuickItem* videoOutput)
 {
     (void) QObject::disconnect(_visibilityConnection);

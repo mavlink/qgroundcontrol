@@ -57,9 +57,10 @@ private:
     void _postToWorker(std::function<void(GstReceiverWorker&)> task);
     /// Hands the worker the display sink, or none without an output, once the current call stack is done.
     void _scheduleVideoSinkUpdate();
-    /// Builds the display sink and its controller for @p videoSink.
+    /// Builds the display sink and its controller, bound to @p videoSink.
     bool _buildDisplaySink(QVideoSink* videoSink);
     void _releaseDisplaySink();
+    /// Binds the display sink, built first when there is none, to @p videoSink and follows the output's window.
     void _bindVideoSink(QVideoSink* videoSink);
     void _setDecoderName(const QString& name);
     /// Runs @p task with the current pipeline (or null) on the worker, and waits for it. For tests.

@@ -2,7 +2,6 @@
 
 #include <gst/gst.h>
 
-#include <QtCore/QList>
 #include <QtCore/QMetaObject>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
@@ -25,9 +24,6 @@ public:
     /// can safely clear the element binding even if the parent bin is released first.
     QGCQVideoSinkController(GstElement* element, QObject* parent = nullptr);
     ~QGCQVideoSinkController() override;
-
-    /// A receiver's owning controllers — direct children only, never a deep QObject-tree walk.
-    static QList<QGCQVideoSinkController*> controllersOf(const QObject* receiver);
 
     // setActive(false) drops frames at the element; setVideoSink swaps the destination under
     // GST_OBJECT_LOCK. QPointer so a caller-thread destruction race is caught here, not in GObject.

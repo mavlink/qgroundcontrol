@@ -59,9 +59,8 @@ VideoSinkConfig videoSinkConfigFromSettings();
 GstElement* createVideoSink(const VideoSinkConfig& config);
 VideoReceiver* createVideoReceiver(QObject* parent = nullptr);
 
-/// Wire @p videoSink into the qgcqvideosink element inside @p sinkBin and create a
-/// QGCQVideoSinkController child of @p controllerParent. Idempotent: prior controllers
-/// under the same parent are torn down first. Returns the new controller, or nullptr on failure.
+/// Binds the qgcqvideosink inside @p sinkBin, a new bin as createVideoSink() returns it, to @p videoSink through a new
+/// QGCQVideoSinkController, a child of @p controllerParent. Returns the controller, or nullptr on failure.
 QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink* videoSink, QObject* controllerParent);
 
 /// Hardware decoder families currently present in the GStreamer registry, as VideoDecoderOptions
