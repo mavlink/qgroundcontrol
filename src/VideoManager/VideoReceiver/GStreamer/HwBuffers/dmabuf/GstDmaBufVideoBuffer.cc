@@ -308,15 +308,14 @@ void GstDmaBufVideoBuffer::resetCachedState() noexcept
 
 namespace {
 
-// Streaming thread (sink start): only the EGLDisplay Qt itself renders with can import for it, and Qt has none
-// under GLX. Without one the path never matches, so DMABuf frames take the CPU path up front instead of failing
-// every import.
-void prepareDmaBufContext(HwVideoBufferContext& context)
+// Streaming thread (sink start). Only the EGLDisplay Qt itself renders with can import for it, and Qt has none under
+// GLX; qgcqvideosink puts the current one (HwBuffers::dmaBufImportDisplay()) into each frame's context. Without one
+// the path never matches, so DMABuf frames take the CPU path up front instead of failing every import.
+void prepareDmaBufContext(HwVideoBufferContext&)
 {
-    context.dmaBufEglDisplay = QGCRhiCapture::qtEglDisplay();
     static std::atomic<bool> s_logged{false};
     if (!s_logged.exchange(true, std::memory_order_relaxed)) {
-        if (context.dmaBufEglDisplay == EGL_NO_DISPLAY) {
+        if (!QGCRhiCapture::qtEglDisplay()) {
             qCDebug(GstDmaBufLog) << "Qt renders without EGL on" << QGuiApplication::platformName()
                                   << "— DMABuf frames take the CPU path (xcb: QT_XCB_GL_INTEGRATION=xcb_egl)";
         } else {

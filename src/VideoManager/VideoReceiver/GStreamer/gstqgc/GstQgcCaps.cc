@@ -14,15 +14,15 @@ static_assert(GpuBinMode{} == GpuBinMode::Passthrough,
 namespace {
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-/// The DMA_DRM fragments the DMABuf importer takes; "" before GStreamer 1.24 or when EGL reports none.
-std::string sinkDmaDrmCaps()
+/// The DMA_DRM fragments the DMABuf importer takes on @p display; "" before GStreamer 1.24 or when EGL reports none.
+std::string sinkDmaDrmCaps([[maybe_unused]] void* display)
 {
     std::string caps;
 #if GST_CHECK_VERSION(1, 24, 0)
     const std::vector<GstVideoFormat> formats = advertisedFormats(kOfferDmaDrm);
     // Best-effort: advertise the GPU's actually-supported (format, modifier) pairs (EGL query) so modifier-aware
     // drivers negotiate a tiling QGC's importer can consume. Additive; empty on any query failure.
-    caps += GstHw::buildSupportedDmaDrmCaps(formats);
+    caps += GstHw::buildSupportedDmaDrmCaps(formats, display);
 #endif
     return caps;
 }
@@ -48,8 +48,8 @@ std::string gpuMemoryCaps(const SinkCapsPolicy& policy, const std::string& forma
             // DMABuf and AHardwareBuffer reach Qt as EGLImages on its EGLDisplay; GLMemory through the GL share group,
             // which gst-gl joins on EGL and GLX.
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-            if (policy.target.egl && policy.dmaBufImport) {
-                caps += sinkDmaDrmCaps();
+            if (policy.target.egl && policy.dmaBufDisplay) {
+                caps += sinkDmaDrmCaps(policy.dmaBufDisplay);
                 // Legacy memory:DMABuf covers v4l2h264dec/Mali/V3D LINEAR. Unrestricted DMA_DRM is never offered (only
                 // the importable modifiers above): gst-va iHD would negotiate tiled+CCS, which no per-plane import can
                 // read.

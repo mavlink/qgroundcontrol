@@ -36,7 +36,8 @@ struct HwPathDescriptor
                                                    QVideoFrameFormat format,
                                                    const HwVideoBufferContext& context) = nullptr;
 
-    /// Optional. Fills this path's fields of a GPU-enabled HwVideoBufferContext.
+    /// Optional. Runs for each GPU-enabled HwVideoBufferContext a sink builds at start: fills this path's fields, or
+    /// only logs once whether the path can import (DMABuf, whose display the sink sets per frame).
     void (*prepareContext)(HwVideoBufferContext& context) = nullptr;
 
     /// Optional. Drops cached native imports (scene-graph teardown, window swap, device loss).

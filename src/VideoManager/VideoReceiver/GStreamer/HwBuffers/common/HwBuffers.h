@@ -37,8 +37,9 @@ void resetCachedGpuResources() noexcept;
 /// QRhi. GUI thread; no-op without GPU.
 void connectMainWindow(QQuickWindow* window) noexcept;
 
-/// Populate the per-pipeline HwVideoBufferContext (EGL displays, gpu-enabled flag) the factory needs. GPU stays
-/// disabled in builds without a GPU path. Safe off the GUI thread.
+/// Populate the per-pipeline HwVideoBufferContext (gpu-enabled flag, AHardwareBuffer EGL display) the factory needs;
+/// the sink adds dmaBufImportDisplay() per frame. GPU stays disabled in builds without a GPU path. Safe off the GUI
+/// thread.
 HwVideoBufferContext makeAdapterContext(bool gpuEnabled) noexcept;
 
 /// The EGLDisplay (as HwVideoBufferContext::dmaBufEglDisplay stores it) the DMABuf path imports with now: Qt's

@@ -391,7 +391,7 @@ void GStreamerGlReadbackTest::_testVaDecodedFrameReadBack()
         QSKIP(qPrintable(QStringLiteral("No VA-API stack: %1 is not registered").arg(missingVa)));
     }
     constexpr std::array kNv12{GST_VIDEO_FORMAT_NV12};
-    std::string drmCaps = GstHw::buildSupportedDmaDrmCaps(kNv12);
+    std::string drmCaps = GstHw::buildSupportedDmaDrmCaps(kNv12, QGCRhiCapture::qtEglDisplay());
     if (drmCaps.empty()) {
         QSKIP("Qt's EGL display offers no importable NV12 modifier");
     }

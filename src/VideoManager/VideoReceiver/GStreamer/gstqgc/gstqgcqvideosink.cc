@@ -67,7 +67,7 @@ struct PrivState
     std::atomic<bool> caps_valid{false};
     GstVideoInfo video_info = {};
     QVideoFrameFormat format;
-    // Written by start() under GST_OBJECT_LOCK and snapshotted by show_frame.
+    // Written by start() under GST_OBJECT_LOCK and snapshotted by show_frame, which adds the current DMABuf display.
     HwVideoBufferContext hw_context = {};
     // Whether the negotiated caps carry a GPU memory feature. Without one, show_frame skips path selection for frames
     // in plain system memory.
@@ -129,17 +129,15 @@ bool snapshot_sink(GstQgcQVideoSink* self, HwVideoBufferContext& hwOut)
 }
 
 /// The caps policy for @p target and the display the DMABuf path imports with (HwBuffers::dmaBufImportDisplay()); under
-/// GST_OBJECT_LOCK. A display that resolved after start() also goes into the GPU context, so the DMABuf frames these
-/// caps bring can import.
-GstQgc::SinkCapsPolicy caps_policy_locked(PrivState* p, const GstQgc::RenderTarget& target, void* dmaBufDisplay)
+/// GST_OBJECT_LOCK. Neither decides the caps of a CPU sink or of the glupload variant, so they are left out there:
+/// equal policies offer equal caps.
+GstQgc::SinkCapsPolicy caps_policy_locked(const PrivState* p, const GstQgc::RenderTarget& target, void* dmaBufDisplay)
 {
-    if (dmaBufDisplay && p->hw_context.gpuEnabled) {
-        p->hw_context.dmaBufEglDisplay = dmaBufDisplay;
-    }
+    const bool followsRenderer = p->gpu_zerocopy && (p->gpu_bin != GstQgc::GpuBinMode::GlUpload);
     return {.gpuZeroCopy = p->gpu_zerocopy,
             .gpuBin = p->gpu_bin,
-            .target = target,
-            .dmaBufImport = (dmaBufDisplay != nullptr),
+            .target = followsRenderer ? target : GstQgc::RenderTarget{},
+            .dmaBufDisplay = followsRenderer ? dmaBufDisplay : nullptr,
             .squarePixels = p->square_pixels};
 }
 
@@ -164,7 +162,7 @@ GstCaps* offered_caps(GstQgcQVideoSink* self)
         return gst_caps_new_empty();
     }
     GST_DEBUG_OBJECT(self, "offering %" GST_PTR_FORMAT " for render backend %s (EGL %d, DMABuf import %d)", caps,
-                     GstQgc::toString(target.backend), target.egl, policy.dmaBufImport);
+                     GstQgc::toString(target.backend), target.egl, policy.dmaBufDisplay != nullptr);
     GST_OBJECT_LOCK(self);
     gst_caps_replace(&p->offered_caps, caps);
     p->offered_policy = policy;
@@ -172,19 +170,17 @@ GstCaps* offered_caps(GstQgcQVideoSink* self)
     return caps;
 }
 
-/// Asks upstream to renegotiate when the GPU memory the sink takes changed since get_caps last offered caps: the render
-/// target changed (the scene graph came up after negotiation, or Qt fell back to another graphics API), or the DMABuf
-/// path started or stopped importing (Qt's EGLDisplay resolved, or an import failure disabled the path). The glupload
-/// variant's caps depend on neither.
-void reconfigure_on_policy_change(GstQgcQVideoSink* self)
+/// The caps policy now. Asks upstream to renegotiate when it differs from the one get_caps last offered caps for: the
+/// render target changed (the scene graph came up after negotiation, or Qt fell back to another graphics API), or the
+/// DMABuf path started or stopped importing (Qt's EGLDisplay became known, or an import failure disabled the path).
+GstQgc::SinkCapsPolicy reconfigure_on_policy_change(GstQgcQVideoSink* self)
 {
     PrivState* const p = priv_of(self);
     const GstQgc::RenderTarget target = GstQgc::currentRenderTarget();
     void* const dmaBufDisplay = HwBuffers::dmaBufImportDisplay();
     GST_OBJECT_LOCK(self);
     const GstQgc::SinkCapsPolicy policy = caps_policy_locked(p, target, dmaBufDisplay);
-    const bool changed = p->offered_caps && p->gpu_zerocopy && (p->gpu_bin != GstQgc::GpuBinMode::GlUpload) &&
-                         (p->offered_policy != policy);
+    const bool changed = p->offered_caps && (p->offered_policy != policy);
     if (changed) {
         // Rebuilt by the next get_caps, which also re-arms this check.
         gst_clear_caps(&p->offered_caps);
@@ -192,9 +188,10 @@ void reconfigure_on_policy_change(GstQgcQVideoSink* self)
     GST_OBJECT_UNLOCK(self);
     if (changed) {
         GST_INFO_OBJECT(self, "render backend now %s (EGL %d), DMABuf import %d; asking upstream to renegotiate",
-                        GstQgc::toString(target.backend), target.egl, policy.dmaBufImport);
+                        GstQgc::toString(target.backend), target.egl, policy.dmaBufDisplay != nullptr);
         (void) gst_pad_push_event(GST_BASE_SINK_PAD(self), gst_event_new_reconfigure());
     }
+    return policy;
 }
 
 /// True if @p caps name a memory feature other than system memory (memory:DMABuf, memory:GLMemory, ...).
@@ -478,7 +475,7 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
     PrivState* p = priv_of(self);
 
     p->input_frames.fetch_add(1, std::memory_order_relaxed);
-    reconfigure_on_policy_change(self);
+    const GstQgc::SinkCapsPolicy policy = reconfigure_on_policy_change(self);
 
     if (!p->caps_valid.load(std::memory_order_acquire)) {
         // Should never happen — GstBaseSink calls set_caps before show_frame.
@@ -494,6 +491,7 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
         p->dropped_frames.fetch_add(1, std::memory_order_relaxed);
         return GST_FLOW_OK;  // no destination yet; drop
     }
+    hwCtx.dmaBufEglDisplay = policy.dmaBufDisplay;
     // Software-decoded frames skip GPU selection. Caps alone can't tell: GPU memory also arrives under plain
     // video/x-raw (vtdec's CoreVideo/IOSurface buffers, V4L2 dmabuf export), so frames in other memory still try it.
     hwCtx.gpuEnabled = hwCtx.gpuEnabled && (p->gpu_caps || !nothing_to_import(buf));

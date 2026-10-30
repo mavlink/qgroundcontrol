@@ -14,9 +14,8 @@ struct SinkCapsPolicy
     /// qgcvideosinkbin's GPU variant in front of the sink; value-initialized, Passthrough (a standalone sink).
     GpuBinMode gpuBin{};
     RenderTarget target;
-    /// The DMABuf path imports now (HwBuffers::dmaBufImportDisplay()): Qt's EGLDisplay is known and no import failure
-    /// disabled the path.
-    bool dmaBufImport = false;
+    /// The EGLDisplay the DMABuf path imports with now (HwBuffers::dmaBufImportDisplay()); null while it can't import.
+    void* dmaBufDisplay = nullptr;
     /// Ask for square pixels in system memory, which the bin's converter scales to.
     bool squarePixels = true;
 

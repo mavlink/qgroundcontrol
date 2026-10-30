@@ -106,8 +106,10 @@ void GstHwBuffersPipelineTest::_testDmaBufDispatch()
         return GStreamer::adoptCaps(out);
     };
 
-    const GstQgc::SinkCapsPolicy dmaBufPolicy{
-        .gpuZeroCopy = true, .gpuBin = GstQgc::GpuBinMode::DirectDmaBuf, .target = kDmaBufTarget, .dmaBufImport = true};
+    const GstQgc::SinkCapsPolicy dmaBufPolicy{.gpuZeroCopy = true,
+                                              .gpuBin = GstQgc::GpuBinMode::DirectDmaBuf,
+                                              .target = kDmaBufTarget,
+                                              .dmaBufDisplay = QGCRhiCapture::qtEglDisplay()};
     const GStreamer::GstCapsPtr qgcGpuCaps =
         GStreamer::adoptCaps(gst_caps_from_string(GstQgc::buildSinkCaps(dmaBufPolicy).c_str()));
     QVERIFY2(qgcGpuCaps, "QGC GPU caps did not parse");
@@ -295,12 +297,12 @@ void GstHwBuffersTest::_testDmaBufPathNeedsQtEglDisplay()
 #if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QSKIP("DMABuf GPU path not compiled in this build");
 #else
-    void* const qtDisplay = QGCRhiCapture::qtEglDisplay();
-    const HwVideoBufferContext context = HwBuffers::makeAdapterContext(true);
-    QCOMPARE(context.dmaBufEglDisplay, qtDisplay);
-    if (qtDisplay) {
+    if (QGCRhiCapture::qtEglDisplay()) {
         QSKIP("Qt renders with EGL on this platform");
     }
+    HwVideoBufferContext context = HwBuffers::makeAdapterContext(true);
+    context.dmaBufEglDisplay = HwBuffers::dmaBufImportDisplay();
+    QVERIFY(!context.dmaBufEglDisplay);
 
     // Without Qt's EGLDisplay no import can succeed: DMABuf memory must take the CPU path before any import attempt.
     GstVideoInfo info;

@@ -11,11 +11,9 @@
 #include <map>
 #include <vector>
 
-#include "GstDmaBufVideoBuffer.h"
 #include "GstEglHelpers.h"
 #include "GstScoped.h"
 #include "QGCLoggingCategory.h"
-#include "QGCRhiCapture.h"
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
@@ -147,21 +145,15 @@ private:
 
 }  // namespace
 
-std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats)
+std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats, void* display)
 {
     if (formats.empty()) {
         return std::string();
     }
-    if (GstDmaBufVideoBuffer::importDisabled()) {
-        qCDebug(GstDmaDrmCapsLog) << "DMABuf import disabled; offering no DMA_DRM caps";
-        return std::string();
-    }
 
-    // Only Qt's own EGLDisplay: this runs on a streaming or worker thread, where initializing the default display would
-    // create a second EGL connection Qt never renders with.
-    const EGLDisplay dpy = QGCRhiCapture::qtEglDisplay();
+    const auto dpy = static_cast<EGLDisplay>(display);
     if ((dpy == EGL_NO_DISPLAY) || !GstEglHelpers::displaySupportsExtension(dpy, kModifiersExt)) {
-        qCDebug(GstDmaDrmCapsLog) << "DMA_DRM modifier query unavailable (Qt renders without EGL, or no "
+        qCDebug(GstDmaDrmCapsLog) << "DMA_DRM modifier query unavailable (no DMABuf import display, or no "
                                      "EGL_EXT_image_dma_buf_import_modifiers); offering no DMA_DRM caps";
         return std::string();
     }
@@ -230,7 +222,7 @@ guint32 dmaDrmPlaneImportFourccForTest(GstVideoFormat format, guint plane) noexc
 
 #else
 
-std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat>)
+std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat>, void*)
 {
     return std::string();
 }
