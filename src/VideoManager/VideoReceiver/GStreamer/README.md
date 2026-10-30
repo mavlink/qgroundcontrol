@@ -13,7 +13,8 @@ The pipeline is split into focused components (all in this directory):
 
 | Component | Role |
 | --- | --- |
-| `GstVideoReceiver` | The `VideoReceiver` the app uses. Callers state what they want (config, active, video output, recording); a worker thread keeps one `PipelineSession` in line with it, reconnecting with backoff after a stream failure and giving up (`State::Stopped` plus `errorOccurred`) when reconnecting is off or can't help (unsupported URI, missing plugin). It owns the display sink, built from `VideoSettings` when an output is set and rebuilt by `restart()`. |
+| `GstVideoReceiver` | The `VideoReceiver` the app uses. Callers state what they want (config, active, video output, recording), which it hands to its `GstReceiverWorker`. It owns the display sink, built from `VideoSettings` when an output is set and rebuilt by `restart()`. |
+| `GstReceiverWorker` | Runs on the receiver's worker thread and keeps one `PipelineSession` in line with what the receiver was asked for, reconnecting with backoff after a stream failure and giving up (`State::Stopped` plus `errorOccurred`) when reconnecting is off or can't help (unsupported URI, missing plugin). Reports back to the receiver through queued signals. |
 | `PipelineSession` | One pipeline (source → tee → the branches below) and everything about it: elements, bus, probes. Lives on the worker; replaces a decoder that posts an error by itself (a stalled one when the worker's watchdog asks) and reports failures of the stream to the worker. |
 | `DecodingBranch` | Display branch behind the tee: inserts `decodebin3` once the source streams, asks upstream for a keyframe, and reports decoding and the decoder name. Its 2-buffer queue drops the oldest frame rather than hold up the tee; after a drop it also drops delta frames until the next keyframe, so the picture freezes briefly instead of smearing. |
 | `RecordingBranch` | Recording branch behind the tee: a `parser ! muxer ! filesink` bin for each file the session is asked to record, started at a keyframe (requested upstream) and, for MP4/MOV, muxed so a crash leaves a playable file. After a reconnect the recording goes on in `<base>_part<N>.<ext>`. Its queue holds 64 MB of backlog for slow storage, then ends the recording rather than stall the display. `RecordingFinalizer` tells when the file is closed. |
@@ -34,15 +35,17 @@ The pipeline is split into focused components (all in this directory):
 - **GUI thread**: `GstVideoReceiver`'s API and every signal it emits, the display sink's `QGCQVideoSinkController`,
   and the video size, read from each frame the output's `QVideoSink` shows: its viewport (decoder padding and crop left
   out), turned as Qt presents it.
-- **Worker thread** (one per receiver): the reconnect logic, every change to the pipeline, and its bus. A sync handler
-  only does what can't wait: answers `NEED_CONTEXT`, selects the video streams, and closes the valve in front of a
-  branch that posted an `ERROR`, so the error stays out of the tee. Everything else is popped on the worker, which a
-  `QSocketNotifier` (`QWinEventNotifier` on Windows) on the bus's poll fd wakes up, as Qt's `QGstBusObserver` does.
+- **Worker thread** (one per receiver, running its `GstReceiverWorker`): the reconnect logic, every change to the
+  pipeline, and its bus. A sync handler only does what can't wait: answers `NEED_CONTEXT`, selects the video streams,
+  and closes the valve in front of a branch that posted an `ERROR`, so the error stays out of the tee. Everything else
+  is popped on the worker, which a `QSocketNotifier` (`QWinEventNotifier` on Windows) on the bus's poll fd wakes up,
+  as Qt's `QGstBusObserver` does.
 - **Streaming threads**: probes and element signals only note what happened and queue the rest on their
   `PipelineSession`, which drops it once the pipeline is gone.
 - **Teardown** is bounded: an open recording drains through an EOS sent from GStreamer's thread pool, the worker waits
   for it at most 3 s and then flushes the recorder, and the receiver's destructor waits at most 5 s for the worker,
-  leaving one stuck in the kernel (a hung network mount) to finish on its own.
+  leaving one stuck in the kernel (a hung network mount) to finish on its own. The worker reaches the receiver only
+  through signals queued to it, which Qt drops once the receiver is gone.
 
 ### `gstqgc` — custom GStreamer plugin
 

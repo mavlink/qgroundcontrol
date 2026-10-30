@@ -1,7 +1,6 @@
 #pragma once
 
 #include <functional>
-#include <memory>
 
 #include <QtCore/QMetaObject>
 #include <QtCore/QString>
@@ -9,7 +8,6 @@
 #include "GstScoped.h"
 #include "VideoReceiver.h"
 
-class GstReceiverLink;
 class GstReceiverWorker;
 class GstVideoReceiverTest;
 class QGCQVideoSinkController;
@@ -19,9 +17,9 @@ class QThread;
 ///
 /// This GUI-thread facade owns the display sink, built from VideoSettings once there is an output to show and rebuilt
 /// by restart(), and binds it to the output's QVideoSink through a QGCQVideoSinkController. It forwards every request
-/// to a worker thread that runs the pipeline (one PipelineSession per connection) and steers it towards what was asked
-/// for: reconnecting with backoff, replacing a failed decoder, resuming a recording in a new part. The worker reports
-/// back through queued calls, so every signal is emitted on the GUI thread.
+/// to a GstReceiverWorker on a thread of its own, which runs the pipeline (one PipelineSession per connection) and
+/// steers it towards what was asked for: reconnecting with backoff, replacing a failed decoder, resuming a recording in
+/// a new part. The worker reports back through queued signals, so every signal is emitted on the GUI thread.
 class GstVideoReceiver : public VideoReceiver
 {
     Q_OBJECT
@@ -54,7 +52,6 @@ protected:
     void onStopRecording() override;
 
 private:
-    friend class GstReceiverWorker;
     friend class GstVideoReceiverTest;
 
     void _postToWorker(std::function<void(GstReceiverWorker&)> task);
@@ -65,11 +62,9 @@ private:
     void _releaseDisplaySink();
     void _bindVideoSink(QVideoSink* videoSink);
     void _setDecoderName(const QString& name);
-    void _releaseDisplayedFrame();
     /// Runs @p task with the current pipeline (or null) on the worker, and waits for it. For tests.
     bool _runOnPipeline(const std::function<void(GstElement* pipeline)>& task);
 
-    std::shared_ptr<GstReceiverLink> _link;
     QThread* _workerThread = nullptr;
     GstReceiverWorker* _worker = nullptr;
     GStreamer::GstElementPtr _displaySink;

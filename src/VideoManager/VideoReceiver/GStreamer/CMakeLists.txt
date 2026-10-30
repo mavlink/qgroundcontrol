@@ -130,6 +130,8 @@ target_sources(
         GStreamerHelpers.h
         GStreamerLogging.cc
         GStreamerLogging.h
+        GstReceiverWorker.cc
+        GstReceiverWorker.h
         GstScoped.h
         GstSourceFactory.cc
         GstSourceFactory.h
