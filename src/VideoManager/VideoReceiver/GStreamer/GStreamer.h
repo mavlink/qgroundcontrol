@@ -53,6 +53,9 @@ QList<MissingPluginFeature> missingPluginFeatures(const std::function<bool(const
 
 bool completeInit();
 void setDebugLevel(int level);
+/// Whether the sink may import GPU memory without a copy: not with the CPU path or a software decoder forced, nor
+/// under Direct3D12, whose device GStreamer can't wrap.
+bool gpuZeroCopyAllowedForCurrentGraphicsApi(bool forceCpuVideoPath, bool forceSoftwareDecoder);
 /// The sink configuration VideoSettings asks for, with GPU zero-copy only where the graphics API allows it. GUI thread.
 VideoSinkConfig videoSinkConfigFromSettings();
 /// A new qgcvideosinkbin, returned as an owned, non-floating reference (adopt it), or nullptr.

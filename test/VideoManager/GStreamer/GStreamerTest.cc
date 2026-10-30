@@ -17,7 +17,6 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
 #include "RecordingBranch.h"
-#include "VideoBackend.h"
 
 void GStreamerTest::_testIsValidRtspUri()
 {
@@ -103,13 +102,13 @@ void GStreamerTest::_testD3D12RhiDisablesGpuZeroCopySink()
     const TestFixtures::EnvVarFixture rhiBackend("QSG_RHI_BACKEND");
     qputenv("QSG_RHI_BACKEND", QByteArray("d3d12"));
 
-    QVERIFY2(!VideoBackend::gpuZeroCopyAllowedForCurrentGraphicsApi(false, false),
+    QVERIFY2(!GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(false, false),
              "D3D12 RHI must force the CPU sink path because gst-d3d12 cannot wrap Qt's ID3D12Device");
-    QVERIFY(VideoBackend::gpuZeroCopyAllowedForCurrentGraphicsApi(false, true) == false);
-    QVERIFY(VideoBackend::gpuZeroCopyAllowedForCurrentGraphicsApi(true, false) == false);
+    QVERIFY(GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(false, true) == false);
+    QVERIFY(GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(true, false) == false);
 
     qputenv("QSG_RHI_BACKEND", QByteArray("d3d11"));
-    QVERIFY(VideoBackend::gpuZeroCopyAllowedForCurrentGraphicsApi(false, false));
+    QVERIFY(GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(false, false));
 #endif
 }
 

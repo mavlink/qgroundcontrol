@@ -1,7 +1,5 @@
 #include "VideoBackend.h"
 
-#include <QtQuick/QQuickWindow>
-
 #include "AppMessages.h"
 #include "QGCApplication.h"
 
@@ -9,33 +7,6 @@
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
 #endif
-
-#ifdef QGC_GST_STREAMING
-namespace {
-
-bool d3d12ZeroCopyUnsupported()
-{
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    return QQuickWindow::graphicsApi() == QSGRendererInterface::Direct3D12 ||
-           qEnvironmentVariable("QSG_RHI_BACKEND").compare(QLatin1String("d3d12"), Qt::CaseInsensitive) == 0;
-#else
-    return false;
-#endif
-}
-
-}  // namespace
-#endif
-
-bool VideoBackend::gpuZeroCopyAllowedForCurrentGraphicsApi(bool forceCpuVideoPath, bool forceSoftwareDecoder)
-{
-#ifdef QGC_GST_STREAMING
-    return !forceCpuVideoPath && !forceSoftwareDecoder && !d3d12ZeroCopyUnsupported();
-#else
-    Q_UNUSED(forceCpuVideoPath);
-    Q_UNUSED(forceSoftwareDecoder);
-    return false;
-#endif
-}
 
 VideoReceiver* VideoBackend::createReceiver(QObject* parent)
 {

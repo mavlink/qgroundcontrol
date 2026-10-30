@@ -24,7 +24,6 @@
 #include "QGCLoggingCategory.h"
 #include "QGCQVideoSinkController.h"
 #include "SettingsManager.h"
-#include "VideoBackend.h"
 #include "VideoSettings.h"
 #include "gstqgc/GstQgcRenderTarget.h"
 #include "gstqgc/gstqgcvideosinkbin.h"
@@ -357,6 +356,19 @@ GstElement* createVideoSink(const VideoSinkConfig& config)
     return GST_ELEMENT(gst_object_ref_sink(videoSinkBin));
 }
 
+bool gpuZeroCopyAllowedForCurrentGraphicsApi(bool forceCpuVideoPath, bool forceSoftwareDecoder)
+{
+    if (forceCpuVideoPath || forceSoftwareDecoder) {
+        return false;
+    }
+#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
+    return (QQuickWindow::graphicsApi() != QSGRendererInterface::Direct3D12) &&
+           (qEnvironmentVariable("QSG_RHI_BACKEND").compare(QLatin1String("d3d12"), Qt::CaseInsensitive) != 0);
+#else
+    return true;
+#endif
+}
+
 VideoSinkConfig videoSinkConfigFromSettings()
 {
     VideoSettings* const settings = SettingsManager::instance()->videoSettings();
@@ -365,7 +377,7 @@ VideoSinkConfig videoSinkConfigFromSettings()
     VideoSinkConfig config;
     config.conversionElement = settings->videoConversionElement()->rawValue().toString().toUtf8();
     config.disablePixelAspectRatio = settings->disablePixelAspectRatio()->rawValue().toBool();
-    config.gpuZeroCopy = VideoBackend::gpuZeroCopyAllowedForCurrentGraphicsApi(forceCpu, softwareDecoder);
+    config.gpuZeroCopy = gpuZeroCopyAllowedForCurrentGraphicsApi(forceCpu, softwareDecoder);
     return config;
 }
 

@@ -15,9 +15,6 @@ namespace VideoBackend {
 
 VideoReceiver* createReceiver(QObject* parent);
 
-/// Applies backend-wide sink policy before constructing the GStreamer sink.
-bool gpuZeroCopyAllowedForCurrentGraphicsApi(bool forceCpuVideoPath, bool forceSoftwareDecoder);
-
 /// True when a streaming backend that requires asynchronous global init is compiled in (GStreamer).
 constexpr bool needsAsyncInit() noexcept
 {
