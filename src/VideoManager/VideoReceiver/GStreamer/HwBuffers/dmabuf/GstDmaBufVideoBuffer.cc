@@ -313,7 +313,7 @@ namespace {
 // every import.
 void prepareDmaBufContext(HwVideoBufferContext& context)
 {
-    context.dmaBufEglDisplay = GstEglHelpers::qtPlatformDisplay();
+    context.dmaBufEglDisplay = QGCRhiCapture::qtEglDisplay();
     static std::atomic<bool> s_logged{false};
     if (!s_logged.exchange(true, std::memory_order_relaxed)) {
         if (context.dmaBufEglDisplay == EGL_NO_DISPLAY) {

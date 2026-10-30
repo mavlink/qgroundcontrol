@@ -7,8 +7,17 @@
 #include <QtCore/QRunnable>
 #include <QtQuick/QQuickWindow>
 #include <rhi/qrhi.h>
+#if QT_CONFIG(opengl) && QT_CONFIG(egl)
+#include <QtCore/QThread>
+#include <QtGui/QGuiApplication>
+#include <QtGui/QOpenGLContext>
+#include <QtGui/private/qopenglcontext_p.h>
+#include <QtGui/qopenglcontext_platform.h>
+#include <qpa/qplatformnativeinterface.h>
+#define QGC_RHI_CAPTURE_PROBES_EGL 1
+#endif
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH) || \
-    (defined(QGC_HAS_GST_VULKAN_GPU_PATH) && QT_CONFIG(vulkan))
+    (defined(QGC_HAS_GST_VULKAN_GPU_PATH) && QT_CONFIG(vulkan)) || defined(QGC_RHI_CAPTURE_PROBES_EGL)
 #include <rhi/qrhi_platform.h>
 #endif
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
@@ -30,6 +39,16 @@ DeviceSnapshot s_snapshot;
 // Per-connection so a window swap (e.g. popout video) can disconnect the prior window's lambdas before they clobber the
 // new window's cached RHI.
 std::array<QMetaObject::Connection, 3> s_connections;
+// Qt's EGLDisplay once found; Qt keeps it for the application's lifetime.
+std::atomic<void*> s_qtEglDisplay{nullptr};
+
+#if defined(QGC_RHI_CAPTURE_PROBES_EGL)
+void* eglDisplayOf(const QOpenGLContext* context)
+{
+    const auto* egl = context ? context->nativeInterface<QNativeInterface::QEGLContext>() : nullptr;
+    return egl ? static_cast<void*>(egl->display()) : nullptr;
+}
+#endif
 
 void clearSnapshot()
 {
@@ -93,6 +112,15 @@ void populateSnapshot(QRhi* rhi)
         }
     }
 #endif
+#if defined(QGC_RHI_CAPTURE_PROBES_EGL)
+    if (rhi->backend() == QRhi::OpenGLES2) {
+        if (auto* h = static_cast<const QRhiGles2NativeHandles*>(rhi->nativeHandles())) {
+            if (void* const display = eglDisplayOf(h->context)) {
+                s_qtEglDisplay.store(display, std::memory_order_release);
+            }
+        }
+    }
+#endif
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH) && QT_CONFIG(vulkan)
     if (rhi->backend() == QRhi::Vulkan) {
         if (auto* h = static_cast<const QRhiVulkanNativeHandles*>(rhi->nativeHandles())) {
@@ -124,6 +152,29 @@ QRhi* cachedRhi() noexcept
 DeviceSnapshot& deviceSnapshot() noexcept
 {
     return s_snapshot;
+}
+
+void* qtEglDisplay() noexcept
+{
+    void* display = s_qtEglDisplay.load(std::memory_order_acquire);
+#if defined(QGC_RHI_CAPTURE_PROBES_EGL)
+    if (display) {
+        return display;
+    }
+    // Qt Quick's OpenGL shares with the global share context (Qt::AA_ShareOpenGLContexts): it tells EGL from GLX
+    // without creating anything, from any thread.
+    if (const QOpenGLContext* const shareContext = qt_gl_global_share_context()) {
+        display = eglDisplayOf(shareContext);
+    } else if (QThread::isMainThread() && qGuiApp) {
+        if (QPlatformNativeInterface* const native = QGuiApplication::platformNativeInterface()) {
+            display = native->nativeResourceForIntegration(QByteArrayLiteral("egldisplay"));
+        }
+    }
+    if (display) {
+        s_qtEglDisplay.store(display, std::memory_order_release);
+    }
+#endif
+    return display;
 }
 
 void connectWindow(QQuickWindow* window)

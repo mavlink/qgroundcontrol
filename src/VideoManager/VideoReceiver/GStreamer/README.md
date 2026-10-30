@@ -189,8 +189,9 @@ GPU through the dma-buf's exported fence, else with a bounded `poll()`), and it 
 textures.
 
 - It needs Qt to render with EGL: Wayland, eglfs, or xcb with `QT_XCB_GL_INTEGRATION=xcb_egl`. Under GLX, Qt's xcb
-  default, the sink offers no DMABuf caps. Nor does it until the GUI thread has found Qt's EGLDisplay; once it has,
-  the sink asks upstream to renegotiate.
+  default, the sink offers no DMABuf caps. Nor does it until Qt's EGLDisplay is known (`QGCRhiCapture::qtEglDisplay`:
+  Qt's global share context, its platform integration, or the scene graph's OpenGL context); once it is, the sink asks
+  upstream to renegotiate.
 - The DMA_DRM caps offer the (format, modifier) pairs Qt's EGL display reports when every plane can be sampled with
   that modifier. Plain vendor tilings (Intel X/Y/4, AMD without DCC) qualify; compressed layouts and those with
   auxiliary planes (Intel CCS, AMD DCC, Arm AFBC, Qualcomm UBWC) don't. Buffers negotiated with plain

@@ -36,8 +36,8 @@
 #endif
 
 #include "GstDmaBufVideoBuffer.h"
-#include "GstEglHelpers.h"
 #include "GstQtDmaBufImport.h"
+#include "QGCRhiCapture.h"
 #endif
 
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
@@ -317,8 +317,7 @@ void GStreamerGlReadbackTest::_testNv12PlanesReadBack()
     if (!rhi) {
         QSKIP(qPrintable(_rhiUnavailable));
     }
-    if ((GstEglHelpers::qtPlatformDisplay() == EGL_NO_DISPLAY) ||
-        (GstQtDmaBufImport::importDisplay(*rhi) == EGL_NO_DISPLAY)) {
+    if (!QGCRhiCapture::qtEglDisplay() || (GstQtDmaBufImport::importDisplay(*rhi) == EGL_NO_DISPLAY)) {
         QSKIP("Qt's GL context can't bind EGLImages");
     }
     GstDmaBufVideoBuffer::resetCachedState();
@@ -358,7 +357,7 @@ void GStreamerGlReadbackTest::_testNv12PlanesReadBack()
     QVERIFY(GstHw::dmaDrmAwareVideoInfo(sampleCaps.get(), &info));
     GstSample* sample = gst_sample_new(buffer, sampleCaps.get(), nullptr, nullptr);
     GstDmaBufVideoBuffer frame(sample, info, QVideoFrameFormat(QSize(kWidth, kHeight), QVideoFrameFormat::Format_NV12),
-                               GstEglHelpers::qtPlatformDisplay());
+                               static_cast<EGLDisplay>(QGCRhiCapture::qtEglDisplay()));
     gst_sample_unref(sample);
     QVERIFY(frame.validatePlaneHandles());
 
@@ -384,8 +383,7 @@ void GStreamerGlReadbackTest::_testVaDecodedFrameReadBack()
     if (!rhi) {
         QSKIP(qPrintable(_rhiUnavailable));
     }
-    if ((GstEglHelpers::qtPlatformDisplay() == EGL_NO_DISPLAY) ||
-        (GstQtDmaBufImport::importDisplay(*rhi) == EGL_NO_DISPLAY)) {
+    if (!QGCRhiCapture::qtEglDisplay() || (GstQtDmaBufImport::importDisplay(*rhi) == EGL_NO_DISPLAY)) {
         QSKIP("Qt's GL context can't bind EGLImages");
     }
     const QString missingVa = GstTest::firstMissingFactory({"vah264enc", "vah264dec"});
@@ -458,7 +456,7 @@ void GStreamerGlReadbackTest::_testVaDecodedFrameReadBack()
     QVERIFY(GstHw::dmaDrmAwareVideoInfo(gst_sample_get_caps(gpuSample), &gpuInfo));
     GstDmaBufVideoBuffer frame(gpuSample, gpuInfo,
                                QVideoFrameFormat(QSize(kVaWidth, kVaHeight), QVideoFrameFormat::Format_NV12),
-                               GstEglHelpers::qtPlatformDisplay());
+                               static_cast<EGLDisplay>(QGCRhiCapture::qtEglDisplay()));
     QVERIFY(frame.validatePlaneHandles());
     QVideoFrameTexturesUPtr none;
     const QVideoFrameTexturesUPtr textures = frame.mapTextures(*rhi, none);

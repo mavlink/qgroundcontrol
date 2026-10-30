@@ -8,13 +8,10 @@
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
 #include "GstContextBridgeBase.h"
-#include "GstEglHelpers.h"
 #include "GstHwPathRegistry.h"
 #include "QGCRhiCapture.h"
 #endif
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-#include <QtQuick/QQuickWindow>
-
 #include "GstDmaBufVideoBuffer.h"
 #endif
 
@@ -107,16 +104,6 @@ void resetCachedGpuResources() noexcept
 void connectMainWindow(QQuickWindow* window) noexcept
 {
 #if defined(QGC_HAS_ANY_GPU_PATH)
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    // Streaming threads only read the display the GUI thread found. xcb_egl opens it with its first GL context, so
-    // ask again once the scene graph has one.
-    (void) GstEglHelpers::qtPlatformDisplay();
-    if (window) {
-        (void) QObject::connect(
-            window, &QQuickWindow::sceneGraphInitialized, window, [] { (void) GstEglHelpers::qtPlatformDisplay(); },
-            Qt::QueuedConnection);
-    }
-#endif
     QGCRhiCapture::connectWindow(window);
 #else
     Q_UNUSED(window);
@@ -158,7 +145,7 @@ void* dmaBufImportDisplay() noexcept
         return testDisplay;
     }
 #endif
-    return GstEglHelpers::qtPlatformDisplay();
+    return QGCRhiCapture::qtEglDisplay();
 #else
     return nullptr;
 #endif

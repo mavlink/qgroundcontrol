@@ -17,8 +17,9 @@ enum class RenderBackend
 struct RenderTarget
 {
     RenderBackend backend = RenderBackend::Unknown;
-    /// Qt's OpenGL is known to run on EGL, so GStreamer's EGLImages (DMABuf, AHardwareBuffer) can use its display.
-    /// False for GLX, WGL and CGL, and while that isn't known yet (no GL context, Android's platform plugin).
+    /// Qt's OpenGL is known to run on EGL (QGCRhiCapture::qtEglDisplay()), so GStreamer's EGLImages (DMABuf,
+    /// AHardwareBuffer) can use its display. False for GLX, WGL and CGL, and while that isn't known yet (Android before
+    /// the scene graph runs).
     bool egl = false;
 
     bool isOpenGlOnEgl() const { return (backend == RenderBackend::OpenGL) && egl; }

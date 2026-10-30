@@ -15,6 +15,7 @@
 #include "GstEglHelpers.h"
 #include "GstScoped.h"
 #include "QGCLoggingCategory.h"
+#include "QGCRhiCapture.h"
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
@@ -156,9 +157,9 @@ std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats)
         return std::string();
     }
 
-    // Only Qt's own EGLDisplay, resolved on the GUI thread: this runs on a streaming or worker thread, where
-    // initializing the default display would create a second EGL connection Qt never renders with.
-    const EGLDisplay dpy = GstEglHelpers::qtPlatformDisplay();
+    // Only Qt's own EGLDisplay: this runs on a streaming or worker thread, where initializing the default display would
+    // create a second EGL connection Qt never renders with.
+    const EGLDisplay dpy = QGCRhiCapture::qtEglDisplay();
     if ((dpy == EGL_NO_DISPLAY) || !GstEglHelpers::displaySupportsExtension(dpy, kModifiersExt)) {
         qCDebug(GstDmaDrmCapsLog) << "DMA_DRM modifier query unavailable (Qt renders without EGL, or no "
                                      "EGL_EXT_image_dma_buf_import_modifiers); offering no DMA_DRM caps";

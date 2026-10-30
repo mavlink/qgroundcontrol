@@ -9,16 +9,7 @@
 #if defined(QGC_HAS_ANY_GPU_PATH)
 #include <rhi/qrhi.h>
 
-#include <QtGui/QGuiApplication>
-#include <qpa/qplatformnativeinterface.h>
-
 #include "HwBuffers/common/QGCRhiCapture.h"
-#if QT_CONFIG(opengl) && QT_CONFIG(egl)
-#include <QtGui/QOpenGLContext>
-#include <QtGui/private/qopenglcontext_p.h>
-#include <QtGui/qopenglcontext_platform.h>
-#define QGC_RENDER_TARGET_PROBES_EGL 1
-#endif
 #endif
 
 namespace GstQgc {
@@ -83,30 +74,6 @@ RenderBackend fromRhiImplementation(int implementation) noexcept
 }
 #endif
 
-bool qtOpenGlUsesEgl() noexcept
-{
-#if defined(QGC_RENDER_TARGET_PROBES_EGL)
-    static constinit std::atomic<int> s_cached{-1};
-    if (const int cached = s_cached.load(std::memory_order_acquire); cached >= 0) {
-        return cached == 1;
-    }
-    // Qt Quick's OpenGL RHI shares with the global share context (Qt::AA_ShareOpenGLContexts), so once the scene graph
-    // runs on OpenGL this context exists, and tells EGL from GLX without creating anything.
-    if (const QOpenGLContext* const shareContext = qt_gl_global_share_context()) {
-        const bool egl = shareContext->nativeInterface<QNativeInterface::QEGLContext>() != nullptr;
-        s_cached.store(egl ? 1 : 0, std::memory_order_release);
-        return egl;
-    }
-    // Before that only the GUI thread may ask the platform integration, whose GL side may not be up yet: don't cache.
-    if (QThread::isMainThread() && qGuiApp) {
-        if (QPlatformNativeInterface* const native = QGuiApplication::platformNativeInterface()) {
-            return native->nativeResourceForIntegration(QByteArrayLiteral("egldisplay")) != nullptr;
-        }
-    }
-#endif
-    return false;
-}
-
 }  // namespace
 
 RenderTarget currentRenderTarget() noexcept
@@ -126,8 +93,8 @@ RenderTarget currentRenderTarget() noexcept
     if (const int live = QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire); live >= 0) {
         target.backend = fromRhiImplementation(live);
     }
+    target.egl = (target.backend == RenderBackend::OpenGL) && QGCRhiCapture::qtEglDisplay();
 #endif
-    target.egl = (target.backend == RenderBackend::OpenGL) && qtOpenGlUsesEgl();
     return target;
 }
 

@@ -16,11 +16,6 @@ class QRhi;
 /// bindRhiContext(), renderDisplay(), imageTargetTexture2D() and destroyImageKHR() serve only the AHardwareBuffer path.
 namespace GstEglHelpers {
 
-/// EGLDisplay Qt's platform integration renders with (nativeResourceForIntegration("egldisplay")); EGL_NO_DISPLAY
-/// when Qt doesn't use EGL (xcb_glx, offscreen) or hasn't opened it yet. Queried on the GUI thread only, as Qt's
-/// GStreamer backend does, until it is found; other threads read the display the GUI thread found.
-EGLDisplay qtPlatformDisplay() noexcept;
-
 /// Makes @p rhi's GL context current on the calling render thread (EGL/GL calls otherwise no-op into a foreign or null
 /// context) and returns it; nullptr when the QRhi exposes none.
 QOpenGLContext* bindRhiContext(QRhi& rhi);

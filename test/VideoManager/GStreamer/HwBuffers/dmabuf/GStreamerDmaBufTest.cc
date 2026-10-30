@@ -33,7 +33,6 @@
 #include "gstqgc/gstqgcqvideosink.h"
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include "GstDmaBufVideoBuffer.h"
-#include "GstEglHelpers.h"
 #include "GstQtDmaBufImport.h"
 #endif
 #if defined(QGC_HAS_ANY_GPU_PATH)
@@ -81,7 +80,7 @@ void GstHwBuffersPipelineTest::_testDmaBufDispatch()
     QSKIP("Direct-DMABuf bin not compiled in this build");
 #else
     // The DMABuf path and its DMA_DRM caps both need the EGLDisplay Qt renders with.
-    if (GstEglHelpers::qtPlatformDisplay() == EGL_NO_DISPLAY) {
+    if (!QGCRhiCapture::qtEglDisplay()) {
         QSKIP("Qt renders without EGL here (offscreen QPA, GLX)");
     }
     const GstQgc::ScopedGpuBinModeForTest directBin(GstQgc::GpuBinMode::DirectDmaBuf);
@@ -296,10 +295,10 @@ void GstHwBuffersTest::_testDmaBufPathNeedsQtEglDisplay()
 #if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QSKIP("DMABuf GPU path not compiled in this build");
 #else
-    const EGLDisplay qtDisplay = GstEglHelpers::qtPlatformDisplay();
+    void* const qtDisplay = QGCRhiCapture::qtEglDisplay();
     const HwVideoBufferContext context = HwBuffers::makeAdapterContext(true);
-    QCOMPARE(context.dmaBufEglDisplay, static_cast<void*>(qtDisplay));
-    if (qtDisplay != EGL_NO_DISPLAY) {
+    QCOMPARE(context.dmaBufEglDisplay, qtDisplay);
+    if (qtDisplay) {
         QSKIP("Qt renders with EGL on this platform");
     }
 

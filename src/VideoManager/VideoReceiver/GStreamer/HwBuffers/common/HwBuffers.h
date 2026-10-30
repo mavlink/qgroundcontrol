@@ -33,17 +33,17 @@ void onPipelineRestart() noexcept;
 /// stream, so only for scene-graph teardown, window swaps and device loss.
 void resetCachedGpuResources() noexcept;
 
-/// Wire the main QQuickWindow into the RHI-capture path so snapshots follow its QRhi, and resolve the EGLDisplay Qt
-/// renders with for the DMABuf path. GUI thread; no-op without GPU.
+/// Wire the main QQuickWindow into the RHI-capture path so snapshots, and the EGLDisplay Qt renders with, follow its
+/// QRhi. GUI thread; no-op without GPU.
 void connectMainWindow(QQuickWindow* window) noexcept;
 
 /// Populate the per-pipeline HwVideoBufferContext (EGL displays, gpu-enabled flag) the factory needs. GPU stays
 /// disabled in builds without a GPU path. Safe off the GUI thread.
 HwVideoBufferContext makeAdapterContext(bool gpuEnabled) noexcept;
 
-/// The EGLDisplay (as HwVideoBufferContext::dmaBufEglDisplay stores it) the DMABuf path imports with now: Qt's, once
-/// the GUI thread has resolved it. Null when Qt renders without EGL, an import failure disabled the path (until
-/// resetCachedGpuResources()), or no DMABuf path is compiled. Safe off the GUI thread.
+/// The EGLDisplay (as HwVideoBufferContext::dmaBufEglDisplay stores it) the DMABuf path imports with now: Qt's
+/// (QGCRhiCapture::qtEglDisplay()). Null when Qt renders without EGL or that isn't known yet, an import failure
+/// disabled the path (until resetCachedGpuResources()), or no DMABuf path is compiled. Safe off the GUI thread.
 void* dmaBufImportDisplay() noexcept;
 
 #ifdef QGC_UNITTEST_BUILD
