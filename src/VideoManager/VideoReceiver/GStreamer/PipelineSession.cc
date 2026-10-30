@@ -306,7 +306,7 @@ void PipelineSession::_fail(const Failure& failure)
     }
     _failed = true;
     _failure = failure;
-    _listener.onSessionFailed(failure);
+    _post([this, failure]() { _listener.onSessionFailed(failure); });
 }
 
 bool PipelineSession::_attachBus()

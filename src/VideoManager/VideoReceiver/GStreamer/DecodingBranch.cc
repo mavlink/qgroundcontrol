@@ -148,7 +148,7 @@ void DecodingBranch::restartDecoder(const char* reason)
     if (++_restartsWithoutFrame > kMaxDecoderRestarts) {
         qCDebug(GstVideoReceiverLog) << "Decoder failing after" << kMaxDecoderRestarts << "restarts, last:" << reason
                                      << _context.redactedUri;
-        _listener.onDecoderFailing();
+        _context.post([this]() { _listener.onDecoderFailing(); });
         return;
     }
 

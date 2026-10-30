@@ -188,7 +188,6 @@ void GstReceiverWorker::_startSession()
         .rtpJitterLatencyMs = _config.rtpJitterLatencyMs,
     };
     _session = new PipelineSession(settings, *this, _watchdog, _dotDumper, this);
-    ++_sessionSerial;
     _watchdog.start(_config.timeout, GStreamer::SourceFactory::connectGracePeriod(_config.uri));
 
     if (!_session->start()) {
@@ -323,17 +322,8 @@ void GstReceiverWorker::onSessionStreaming()
 void GstReceiverWorker::onSessionFailed(const PipelineSession::Failure& failure)
 {
     qCDebug(GstVideoReceiverLog) << "Stream failed:" << failure.reason << _redactedUri();
-    // Later, from the event loop: the session may be in the middle of a call.
-    const quint64 serial = _sessionSerial;
-    (void) QMetaObject::invokeMethod(
-        this,
-        [this, serial, failure]() {
-            if (_session && (serial == _sessionSerial)) {
-                _stopSession();
-                _recover(failure);
-            }
-        },
-        Qt::QueuedConnection);
+    _stopSession();
+    _recover(failure);
 }
 
 void GstReceiverWorker::onDecodingChanged(bool decoding)

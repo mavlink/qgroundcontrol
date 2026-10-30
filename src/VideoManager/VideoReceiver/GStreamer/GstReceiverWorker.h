@@ -92,8 +92,6 @@ private:
     std::optional<Recording> _recording;
 
     PipelineSession* _session = nullptr;
-    /// Counts sessions, so a failure reported by one that is gone by then is ignored.
-    quint64 _sessionSerial = 0;
     /// Given up after a failure until the stream is asked for anew.
     bool _halted = false;
     bool _haltedPermanently = false;

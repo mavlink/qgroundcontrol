@@ -51,8 +51,8 @@ public:
         bool permanent = false;  ///< Retrying can't help: unsupported URI, missing plugin.
     };
 
-    /// Called on the worker, possibly from inside a call into the session: an implementation must not change the
-    /// session from there, only note what happened and act later.
+    /// Called on the worker. Only the failure reports (onSessionFailed(), onDecoderFailing()), which come from the
+    /// event loop, may change the session; the others can come from inside a call into it.
     class Listener : public DecodingBranch::Listener, public RecordingBranch::Listener
     {
     public:
