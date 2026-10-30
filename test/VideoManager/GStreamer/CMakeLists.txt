@@ -38,12 +38,16 @@ target_sources(
         SourceFactory/GstSourceFactoryStreamTest.h
         SourceFactory/GstSourceFactoryTest.cc
         SourceFactory/GstSourceFactoryTest.h
+        gstqgc/GstQgcSinkControllerTest.cc
+        gstqgc/GstQgcSinkControllerTest.h
         gstqgc/GstQgcSinkPipelineTest.cc
         gstqgc/GstQgcSinkPipelineTest.h
         gstqgc/GstQgcSinkTest.cc
         gstqgc/GstQgcSinkTest.h
         gstqgc/GstQgcTestSupport.cc
         gstqgc/GstQgcTestSupport.h
+        gstqgc/GstQgcVideoFormatsTest.cc
+        gstqgc/GstQgcVideoFormatsTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -67,7 +71,9 @@ add_qgc_test(GStreamerEnvironmentTest LABELS Unit)
 add_qgc_test(GStreamerInitTest LABELS Unit)
 add_qgc_test(GStreamerTest LABELS Unit)
 add_qgc_test(GstHwBuffersTest LABELS Unit)
+add_qgc_test(GstQgcSinkControllerTest LABELS Unit)
 add_qgc_test(GstQgcSinkTest LABELS Unit)
+add_qgc_test(GstQgcVideoFormatsTest LABELS Unit)
 add_qgc_test(GstSourceFactoryTest LABELS Unit)
 add_qgc_test(GstVideoReceiverComponentsTest LABELS Unit)
 add_qgc_test(GstHwBuffersPipelineTest LABELS Integration GPU)

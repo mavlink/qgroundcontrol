@@ -2,8 +2,8 @@
 
 #include "GStreamerTestBase.h"
 
-/// qgcqvideosink and qgcvideosinkbin as elements, without a pipeline: construction, caps, allocation, the format and
-/// colorimetry tables, the QVideoSink controller, and frames pushed straight into the sink.
+/// qgcqvideosink and qgcvideosinkbin as elements, without a pipeline: construction, caps, allocation, CPU zero-copy
+/// frames, and frames pushed straight into the sink.
 class GstQgcSinkTest : public GStreamerTestBase
 {
     Q_OBJECT
@@ -33,29 +33,13 @@ private slots:
     void _testQgcQVideoSinkForwardsTimestamps();
     void _testQgcQVideoSinkMapFailuresPostElementError();
     void _testQgcVideoSinkBinQVideoSinkAccessor();
-    void _testQVideoSinkControllerClearsElementOnDestroy();
-    void _testQVideoSinkControllerClearsElementWhenVideoSinkDestroyed();
-    void _testQVideoSinkControllerNullSinkStillDeactivatesOnDestroy();
-    void _testQVideoSinkControllerNoWindowStartsInactive();
-    void _testQVideoSinkControllerReleaseClearsVideoFrame();
     void _testCpuZeroCopyFrameRejectsWritableMap();
     void _testCpuZeroCopyPinnedFramesCappedPerSink();
-    void _testColorimetryPixelFormatMapping();
-    void _testCpuCapsFormatsRoundTripToQt();
     void _testAllocationQueryHwMemoryPoolHint_data();
     void _testAllocationQueryHwMemoryPoolHint();
     void _testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta();
     void _testQgcQVideoSinkSystemMemoryAllocation_data();
     void _testQgcQVideoSinkSystemMemoryAllocation();
-    void _testColorimetryColorSpaceMapping();
-    void _testColorimetryResolutionHeuristicMatchesQt();
-    void _testColorimetryTransferMapping();
-    void _testApplyOrientationToFrameMapping();
     void _testAdapterFlushDropsInFlightSamples();
-    void _testColorimetryColorRangeMapping();
-    void _testPixelFormatAcceptedButNotAdvertised();
-    void _testAdvertisedFormatListMatchesTable();
-    void _testAdvertisedFormatListForOffer_data();
-    void _testAdvertisedFormatListForOffer();
 #endif
 };
