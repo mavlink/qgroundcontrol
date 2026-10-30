@@ -11,8 +11,8 @@
 
 class QRhi;
 
-/// Pixel checks of GPU frames through QVideoFrame::toImage(), for the platforms whose GPU paths QGC can't read back
-/// with plain GL (D3D11, Metal).
+/// Pixel checks of GPU frames through QVideoFrame::toImage(), which converts them on a QRhi of their API: D3D11/D3D12,
+/// Metal, and GL for glupload's GLMemory.
 namespace GstTest {
 
 /// Wraps a GPU path's buffer so QVideoFrame::toImage() converts it with @p rhi, the QRhi the test created, as it uses

@@ -656,9 +656,8 @@ void GstHwBuffersTest::_testTexturePadsPicture()
 
 void GstHwBuffersTest::_testHwBufferCropMatrixFromVideoCropMeta()
 {
-    // Regression: GstVideoCropMeta is propagated via QVideoFrameFormat::viewport() in
-    // applyCropMeta (GstQgcFrameMap), NOT via externalTextureMatrix. Verify the format
-    // path round-trips a crop rect into viewport().
+    // GstVideoCropMeta reaches the frame as QVideoFrameFormat::viewport() (applyCropMeta), not through
+    // externalTextureMatrix.
     GstVideoInfo info;
     GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 400, 200, &info);
     QVERIFY(sample);

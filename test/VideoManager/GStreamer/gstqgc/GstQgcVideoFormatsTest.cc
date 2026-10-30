@@ -82,7 +82,7 @@ void GstQgcVideoFormatsTest::_testColorimetryResolutionHeuristicMatchesQt()
 void GstQgcVideoFormatsTest::_testColorimetryTransferMapping()
 {
     QCOMPARE(toQtColorTransfer(GST_VIDEO_TRANSFER_SRGB), QVideoFrameFormat::ColorTransfer_Gamma22);
-    // Regression: BT601 used to fall through to BT709 — Qt's own backend maps it distinctly.
+    // BT601 keeps its own transfer, as in Qt's own backend, rather than BT709's.
     QCOMPARE(toQtColorTransfer(GST_VIDEO_TRANSFER_BT601), QVideoFrameFormat::ColorTransfer_BT601);
     QCOMPARE(toQtColorTransfer(GST_VIDEO_TRANSFER_BT709), QVideoFrameFormat::ColorTransfer_BT709);
     QCOMPARE(toQtColorTransfer(GST_VIDEO_TRANSFER_BT2020_10), QVideoFrameFormat::ColorTransfer_BT709);
@@ -153,9 +153,8 @@ void GstQgcVideoFormatsTest::_testApplyOrientationToFrameMapping()
 #ifndef QGC_HAS_GST_VIDEO_ORIENTATION_META
     QSKIP("GStreamer build lacks GstVideoOrientationMeta");
 #else
-    // Verifies each GStreamer orientation enum maps to the correct (rotation, mirrored) tuple
-    // on QVideoFrame. Lock-down test: prior versions had subtle mismatches between gst's
-    // diagonal-flip semantics and Qt's rotate-then-mirror composition.
+    // Each GStreamer orientation as QVideoFrame's (rotation, mirrored): GStreamer's diagonal flips become Qt's
+    // rotation followed by a mirror.
     struct Case
     {
         GstVideoOrientationMethod gst;

@@ -327,7 +327,7 @@ void GstVideoReceiverTest::_testStreamingStatesAndDisplay()
 
 void GstVideoReceiverTest::_testStaticSourcePadWaitsForData()
 {
-    // udp265 exposes its source pad before any data, which used to be reported as streaming at once.
+    // udp265 exposes its source pad before any data arrives, which alone isn't streaming.
     Receiver stream(loopbackUri(QLatin1StringView("udp265"), 0));
     stream.receiver->setActive(true);
     QVERIFY(stream.waitForState(State::Connecting));
