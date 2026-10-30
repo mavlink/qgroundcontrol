@@ -62,8 +62,7 @@ void VideoStreamResolverTest::_testResolve_data()
     QTest::newRow("Herelink Hotspot") << QString(VideoSettings::videoSourceHerelinkHotspot) << QString() << kNoStreamInfo << h264 << QString() << primary << QStringLiteral("rtsp://192.168.43.1:8554/fpv_stream") << rtspTimeout;
     QTest::newRow("thermal ignores the manual source") << rtsp << QString() << kNoStreamInfo << h264 << QString() << thermal << QString() << 0;
 
-    // A camera-advertised stream wins over the manual source, including a manual UDP address (bug: it used to be
-    // overwritten by udpUrl).
+    // A camera-advertised stream wins over the manual source, including a manual UDP address.
     QTest::newRow("auto RTSP over manual UDP") << udp264 << QString() << int(VIDEO_STREAM_TYPE_RTSP) << h264 << QStringLiteral("rtsp://10.0.0.1/main") << primary << QStringLiteral("rtsp://10.0.0.1/main") << rtspTimeout;
     QTest::newRow("auto UDP port over manual UDP") << udp264 << QString() << int(VIDEO_STREAM_TYPE_RTPUDP) << h264 << QStringLiteral("5601") << primary << QStringLiteral("udp://0.0.0.0:5601") << timeout;
     QTest::newRow("auto UDP h.265 port") << QString(VideoSettings::videoDisabled) << QString() << int(VIDEO_STREAM_TYPE_RTPUDP) << h265 << QStringLiteral("5602") << primary << QStringLiteral("udp265://0.0.0.0:5602") << timeout;

@@ -40,40 +40,46 @@ QString autoStreamUri(const QGCVideoStreamInfo& streamInfo)
     }
 }
 
+/// A manual video source a VideoReceiver plays.
+struct ManualSource
+{
+    const char* videoSource;
+    /// Prefixed to the source's URL setting, or the whole URI when the source has none.
+    const char* uri;
+    QString VideoStreamResolver::Settings::* url;
+};
+
+constexpr ManualSource kManualSources[] = {
+    {VideoSettings::videoSourceUDPH264, "udp://", &VideoStreamResolver::Settings::udpUrl},
+    {VideoSettings::videoSourceUDPH265, "udp265://", &VideoStreamResolver::Settings::udpUrl},
+    {VideoSettings::videoSourceMPEGTS, "mpegts://", &VideoStreamResolver::Settings::udpUrl},
+    {VideoSettings::videoSourceRTSP, "", &VideoStreamResolver::Settings::rtspUrl},
+    {VideoSettings::videoSourceTCP, "tcp://", &VideoStreamResolver::Settings::tcpUrl},
+    {VideoSettings::videoSource3DRSolo, "udp://0.0.0.0:5600", nullptr},
+    {VideoSettings::videoSourceParrotDiscovery, "udp://0.0.0.0:8888", nullptr},
+    {VideoSettings::videoSourceYuneecMantisG, "rtsp://192.168.42.1:554/live", nullptr},
+    {VideoSettings::videoSourceHerelinkAirUnit, "rtsp://192.168.0.10:8554/H264Video", nullptr},
+    {VideoSettings::videoSourceHerelinkHotspot, "rtsp://192.168.43.1:8554/fpv_stream", nullptr},
+};
+
+const ManualSource* findManualSource(const QString& videoSource)
+{
+    for (const ManualSource& source : kManualSources) {
+        if (videoSource == QLatin1StringView(source.videoSource)) {
+            return &source;
+        }
+    }
+    return nullptr;
+}
+
 QString manualUri(const VideoStreamResolver::Settings& settings)
 {
-    const QString& source = settings.videoSource;
-    if (source == VideoSettings::videoSourceUDPH264) {
-        return addressWithScheme(QLatin1StringView("udp://"), settings.udpUrl);
+    const ManualSource* const source = findManualSource(settings.videoSource);
+    if (!source) {
+        return QString();
     }
-    if (source == VideoSettings::videoSourceUDPH265) {
-        return addressWithScheme(QLatin1StringView("udp265://"), settings.udpUrl);
-    }
-    if (source == VideoSettings::videoSourceMPEGTS) {
-        return addressWithScheme(QLatin1StringView("mpegts://"), settings.udpUrl);
-    }
-    if (source == VideoSettings::videoSourceRTSP) {
-        return settings.rtspUrl;
-    }
-    if (source == VideoSettings::videoSourceTCP) {
-        return addressWithScheme(QLatin1StringView("tcp://"), settings.tcpUrl);
-    }
-    if (source == VideoSettings::videoSource3DRSolo) {
-        return QStringLiteral("udp://0.0.0.0:5600");
-    }
-    if (source == VideoSettings::videoSourceParrotDiscovery) {
-        return QStringLiteral("udp://0.0.0.0:8888");
-    }
-    if (source == VideoSettings::videoSourceYuneecMantisG) {
-        return QStringLiteral("rtsp://192.168.42.1:554/live");
-    }
-    if (source == VideoSettings::videoSourceHerelinkAirUnit) {
-        return QStringLiteral("rtsp://192.168.0.10:8554/H264Video");
-    }
-    if (source == VideoSettings::videoSourceHerelinkHotspot) {
-        return QStringLiteral("rtsp://192.168.43.1:8554/fpv_stream");
-    }
-    return QString();
+    const QLatin1StringView uri(source->uri);
+    return source->url ? addressWithScheme(uri, settings.*(source->url)) : QString(uri);
 }
 
 }  // namespace
@@ -124,17 +130,5 @@ bool VideoStreamResolver::isAutoStream(const QGCVideoStreamInfo* streamInfo)
 
 bool VideoStreamResolver::isNetworkSource(const QString& videoSource)
 {
-    static const QStringList networkSources = {
-        VideoSettings::videoSourceUDPH264,
-        VideoSettings::videoSourceUDPH265,
-        VideoSettings::videoSourceRTSP,
-        VideoSettings::videoSourceTCP,
-        VideoSettings::videoSourceMPEGTS,
-        VideoSettings::videoSource3DRSolo,
-        VideoSettings::videoSourceParrotDiscovery,
-        VideoSettings::videoSourceYuneecMantisG,
-        VideoSettings::videoSourceHerelinkAirUnit,
-        VideoSettings::videoSourceHerelinkHotspot,
-    };
-    return networkSources.contains(videoSource);
+    return findManualSource(videoSource) != nullptr;
 }
