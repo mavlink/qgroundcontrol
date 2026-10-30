@@ -55,11 +55,11 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   - System memory always, with `pixel-aspect-ratio=1/1` unless the bin's `disable-par` is set.
   - With `gpu-zerocopy`, ahead of it, only the GPU memory the renderer Qt Quick uses can import. Under OpenGL: DMA_DRM
     and DMABuf on EGL while the DMABuf import works (see
-    [DMABuf zero-copy diagnostics](#dmabuf-zero-copy-diagnostics)), and GLMemory, which reaches Qt through the GL share
-    group, on EGL or GLX. Under Direct3D11: D3D11Memory. Vulkan, Metal, Direct3D12 and OpenGL on WGL or CGL get system
-    memory only. There is deliberately no D3D12Memory: GPU zero-copy has never been enabled under Direct3D12 (GStreamer
-    can't wrap Qt's `ID3D12Device`, and QGC's D3D12 import isn't validated). vtdec's IOSurface-backed frames arrive as
-    system memory.
+    [DMABuf zero-copy diagnostics](#dmabuf-zero-copy-diagnostics)), AHardwareBuffer on EGL (Android), and GLMemory,
+    which reaches Qt through the GL share group, on EGL or GLX. Under Direct3D11: D3D11Memory. Vulkan, Metal,
+    Direct3D12 and OpenGL on WGL or CGL get system memory only. There is deliberately no D3D12Memory: GStreamer opens
+    its own device on Qt's adapter instead of wrapping Qt's `ID3D12Device`, and QGC's D3D12 import isn't validated.
+    vtdec's IOSurface-backed frames arrive as system memory.
   - GLMemory always carries `texture-target=2D`, the only target the GL path samples. It also makes glcolorconvert
     convert amcvideodec's external-OES textures, which Qt would otherwise sample black.
   - The glupload variant (see [GPU bin selection](#gpu-bin-selection)) takes GLMemory only.

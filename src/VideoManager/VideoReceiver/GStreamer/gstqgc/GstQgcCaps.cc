@@ -78,8 +78,8 @@ std::string gpuMemoryCaps(const SinkCapsPolicy& policy, const std::string& forma
 #endif
             break;
         default:
-            // Direct3D12: deliberately no D3D12Memory. GPU zero-copy has never been enabled under this RHI (GStreamer
-            // can't wrap Qt's ID3D12Device, and QGC's D3D12 import isn't validated), so frames take system memory.
+            // Direct3D12: deliberately no D3D12Memory, so frames take system memory. GStreamer opens its own device on
+            // Qt's adapter instead of wrapping Qt's ID3D12Device, and QGC's D3D12 import isn't validated.
             // Metal: vtdec's IOSurface-backed CoreVideo buffers arrive as system memory. Vulkan: no import path.
             break;
     }
