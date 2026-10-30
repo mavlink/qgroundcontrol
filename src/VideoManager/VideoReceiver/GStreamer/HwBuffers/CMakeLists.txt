@@ -150,12 +150,13 @@ if(LINUX AND QGC_GST_HAS_DMABUF)
     )
 endif()
 
-# A static libgstvulkan (Android mobile archive; static-libs desktop) leaves gst-vulkan's own loader calls unresolved;
-# the shared .so satisfies them itself. Link the loader explicitly or Android arm64 fails with ld.lld "undefined symbol:
-# vkDestroyPipeline". find_library, not find_package(Vulkan): only the loader is needed (NDK sysroot included).
+# Android's SDK ships libgstvulkan only as an archive, which the Vulkan row links into the app (not into
+# libgstreamer_android.so), leaving gst-vulkan's own loader calls unresolved. Link the loader explicitly or Android
+# arm64 fails with ld.lld "undefined symbol: vkDestroyPipeline". find_library, not find_package(Vulkan): only the
+# loader is needed (NDK sysroot included).
 set(_qgc_vulkan_requires QT_FEATURE_vulkan)
 set(_qgc_vulkan_loader_libs "")
-if(GStreamer_USE_STATIC_LIBS OR ANDROID)
+if(ANDROID)
     if(DEFINED QGC_GST_VULKAN_LOADER_LIB AND (QGC_GST_VULKAN_LOADER_LIB MATCHES "NOTFOUND$"
                                               OR NOT EXISTS "${QGC_GST_VULKAN_LOADER_LIB}")
     )
