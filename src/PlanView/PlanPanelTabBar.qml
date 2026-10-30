@@ -43,6 +43,7 @@ Column {
 
             objectName:     "planPanel_tab_" + modelData.id
             text:           root._labels[modelData.id]
+            enabled:        modelData.enabled
             implicitWidth:  ScreenTools.defaultFontPixelHeight * 2.2
             implicitHeight: root._textStyle ? ScreenTools.defaultFontPixelHeight * 1.5 + tabText.implicitWidth : ScreenTools.defaultFontPixelHeight * 2.6
             rightPadding:   ScreenTools.defaultBorderRadius * 2
@@ -53,7 +54,7 @@ Column {
 
             onClicked: root.tabClicked(modelData.id)
 
-            QGCPalette { id: pillPal }
+            QGCPalette { id: pillPal; colorGroupEnabled: pill.enabled }
 
             background: Rectangle {
                 radius:         ScreenTools.defaultBorderRadius

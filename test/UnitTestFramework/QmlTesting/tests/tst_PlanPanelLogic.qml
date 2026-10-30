@@ -94,8 +94,20 @@ TestCase {
     }
 
     function test_tabModel(data) {
-        const model = Logic.tabModel({ incompleteCount: data.incompleteCount })
+        const model = Logic.tabModel({ incompleteCount: data.incompleteCount, homeSet: true })
         compare(model.map(function (entry) { return entry.warn }), data.warns)
+    }
+
+    function test_tabModel_enabled_data() {
+        return [
+            { tag: "onlyPlanWithoutHome", homeSet: false, enabled: [true, false, false, false] },
+            { tag: "allWithHome", homeSet: true, enabled: [true, true, true, true] },
+        ]
+    }
+
+    function test_tabModel_enabled(data) {
+        const model = Logic.tabModel({ incompleteCount: 0, homeSet: data.homeSet })
+        compare(model.map(function (entry) { return entry.enabled }), data.enabled)
     }
 
     function test_steppedIndex_data() {

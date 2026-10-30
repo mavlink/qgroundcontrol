@@ -7,12 +7,13 @@ import QGroundControl.Controls
 Rectangle {
     id: control
 
+    property string text: ""
+    property real fontPointSize: ScreenTools.smallFontPointSize
+
     width: statusLabel.implicitWidth + ScreenTools.defaultFontPixelWidth
     height: statusLabel.implicitHeight
     radius: height / 2
     visible: control.text.length > 0
-
-    property string text: ""
 
     QGCLabel {
         id: statusLabel
@@ -20,7 +21,7 @@ Rectangle {
         anchors.centerIn: parent
         text: control.text
         color: QGroundControl.globalPalette.indicatorText
-        font.pointSize: ScreenTools.smallFontPointSize
+        font.pointSize: control.fontPointSize
         font.bold: true
     }
 }

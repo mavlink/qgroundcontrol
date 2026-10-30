@@ -173,16 +173,13 @@ void PlanViewUITest::_verifyWaypointToolAddsWaypointOnEmptyPlan(bool expectTakeo
     const QString waypointBtn = QStringLiteral("planToolStrip_waypointButton");
     const QString context     = QStringLiteral("waypoint on empty plan");
 
-    // The tabbed panel only shows the tool strip on the Mission tab, and a map click sets home on the Plan tab
-    _showPanelTab(PanelTab::Mission);
-    if (QTest::currentTestFailed())
-        return;
-
-    verifyVisibility(takeoffBtn, expectTakeoffButtonVisible, context);
-    if (QTest::currentTestFailed()) return;
-
-    // Home-position gate: Waypoint tool must be disabled until home is set
-    verifyEnabled(waypointBtn, false, context);
+    // Home-position gate: the tabbed panel locks the Mission tab, the tree panel the Waypoint tool, until home is set
+    if (_tabbedPanel) {
+        verifyEnabled(QStringLiteral("planPanel_tab_mission"), false, context);
+    } else {
+        verifyVisibility(takeoffBtn, expectTakeoffButtonVisible, context);
+        verifyEnabled(waypointBtn, false, context);
+    }
     if (QTest::currentTestFailed()) return;
 
     // Click map to set home position: plan stays empty
@@ -200,6 +197,10 @@ void PlanViewUITest::_verifyWaypointToolAddsWaypointOnEmptyPlan(bool expectTakeo
     _showPanelTab(PanelTab::Mission);
     if (QTest::currentTestFailed())
         return;
+    verifyVisibility(takeoffBtn, expectTakeoffButtonVisible, context);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
 
     // Precondition that distinguishes this path from the takeoff-first flow:
     // the Waypoint tool is enabled while the plan is still empty.
@@ -366,22 +367,6 @@ void PlanViewUITest::_verifyFullState(const PlanUIState &state, const QString &c
     if (QTest::currentTestFailed())
         return;
 
-    // Toolstrip (on the tabbed panel it is only shown on the Mission tab)
-    _showPanelTab(PanelTab::Mission);
-    if (QTest::currentTestFailed())
-        return;
-    verifyEnabled(takeoffBtn,  state.takeoffEnabled,  context);
-    verifyEnabled(waypointBtn, state.waypointEnabled, context);
-    verifyChecked(waypointBtn, state.waypointChecked, context);
-    verifyEnabled(patternBtn,  state.patternEnabled,  context);
-    verifyEnabled(landBtn,     state.landEnabled,     context);
-    verifyText(landBtn,        state.landText,        context);
-    if (findVisibleItem(_rootItem, roiBtn, 0)) {
-        verifyEnabled(roiBtn, state.roiEnabled, context);
-        verifyChecked(roiBtn, state.roiChecked, context);
-        verifyText(roiBtn, state.roiCancelText ? QStringLiteral("Cancel ROI") : QStringLiteral("ROI"), context);
-    }
-
     // Toolbar
     verifyEnabled(saveBtn, state.saveEnabled, context);
     verifyPrimary(saveBtn, state.savePrimary, context);
@@ -397,6 +382,28 @@ void PlanViewUITest::_verifyFullState(const PlanUIState &state, const QString &c
                               QStringLiteral("visual item count")),
              qPrintable(QStringLiteral("%1: expected %2 visual items but found %3")
                             .arg(context).arg(state.itemCount).arg(_missionItemCount())));
+
+    // The tabbed panel locks the Mission tab, and with it the tool strip, until home is set
+    if (_tabbedPanel && !_plannedHomePosition().isValid()) {
+        verifyEnabled(QStringLiteral("planPanel_tab_mission"), false, context);
+        return;
+    }
+
+    // Toolstrip (on the tabbed panel it is only shown on the Mission tab)
+    _showPanelTab(PanelTab::Mission);
+    if (QTest::currentTestFailed())
+        return;
+    verifyEnabled(takeoffBtn, state.takeoffEnabled, context);
+    verifyEnabled(waypointBtn, state.waypointEnabled, context);
+    verifyChecked(waypointBtn, state.waypointChecked, context);
+    verifyEnabled(patternBtn, state.patternEnabled, context);
+    verifyEnabled(landBtn, state.landEnabled, context);
+    verifyText(landBtn, state.landText, context);
+    if (findVisibleItem(_rootItem, roiBtn, 0)) {
+        verifyEnabled(roiBtn, state.roiEnabled, context);
+        verifyChecked(roiBtn, state.roiChecked, context);
+        verifyText(roiBtn, state.roiCancelText ? QStringLiteral("Cancel ROI") : QStringLiteral("ROI"), context);
+    }
 }
 
 void PlanViewUITest::_testPlanViewStates_data()

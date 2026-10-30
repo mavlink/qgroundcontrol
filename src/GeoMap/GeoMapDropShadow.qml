@@ -60,7 +60,26 @@ GeoMapCircle {
             ? surfaceModel.terrainHeightAt(geoItem.coordinate) : 0
     }
 
-    Component.onCompleted: _updateGroundHeight()
+    x: geoItem ? -geoItem.x : 0
+    y: geoItem ? -geoItem.y : 0
+    visible: dropLength > 0
+    opacity: scene ? scene.terrainScale : 0
+    scene: geoItem ? geoItem.scene : null
+    surfaceModel: geoItem ? geoItem.surfaceModel : null
+    center: geoItem ? geoItem.coordinate : QtPositioning.coordinate()
+    // Ground meters for the marker's radius at the shadow's own camera distance, dropLength below the marker; the scene
+    // is in mercator units, which are 1/cos(latitude) ground meters
+    radiusMeters: (_camera && geoItem && geoItem.coordinate.isValid)
+        ? (indicatorSize / 2)
+          * _camera.scenePosition.minus(geoItem.scenePosition.minus(Qt.vector3d(0, 0, dropLength))).length()
+          * _camera.unitsPerPixelAtUnitDistance * Math.cos(geoItem.coordinate.latitude * Math.PI / 180)
+        : 1
+    strokeColor: "transparent"
+    strokeWidth: 0
+    // Translucent black (ADS-B shadow convention) so the colored drop line
+    // stays visible where it meets the shadow
+    fillColor: Qt.alpha("black", 0.35)
+
     onSurfaceModelChanged: _updateGroundHeight()
     on_LatitudeChanged: _updateGroundHeight()
     on_LongitudeChanged: _updateGroundHeight()
@@ -70,19 +89,5 @@ GeoMapCircle {
         function onTerrainHeightsChanged() { root._updateGroundHeight() }
     }
 
-    x: geoItem ? -geoItem.x : 0
-    y: geoItem ? -geoItem.y : 0
-    visible: dropLength > 0
-    opacity: scene ? scene.terrainScale : 0
-    scene: geoItem ? geoItem.scene : null
-    surfaceModel: geoItem ? geoItem.surfaceModel : null
-    center: geoItem ? geoItem.coordinate : QtPositioning.coordinate()
-    radiusMeters: _camera
-        ? (indicatorSize / 2) * _camera.distance * _camera.unitsPerPixelAtUnitDistance
-        : 1
-    strokeColor: "transparent"
-    strokeWidth: 0
-    // Translucent black (ADS-B shadow convention) so the colored drop line
-    // stays visible where it meets the shadow
-    fillColor: Qt.alpha("black", 0.35)
+    Component.onCompleted: _updateGroundHeight()
 }

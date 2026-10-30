@@ -6,6 +6,7 @@
 
 class MissionController;
 class PlanMasterController;
+class QQuickItem;
 
 /// UI test for the tabbed Plan View panel. It is behind the
 /// PlanViewSettings useNewPlanPanel flag, so every test sets the flag it needs before starting the UI.
@@ -32,7 +33,8 @@ private slots:
     void _testItemMenuActsOnInspectedItem();
     void _testGeoMapMarkerClickSelectsItem();
     void _testGeoMapMarkerShowsWhileTerrainAltitudePending();
-    void _testGeoMapTerrainWaypointDragKeepsTheMarkerUnderTheCursor();
+    void _testGeoMapTerrainRelativeDragKeepsTheMarkerUnderTheCursor_data();
+    void _testGeoMapTerrainRelativeDragKeepsTheMarkerUnderTheCursor();
     void _testGeoMapMissionPathReturnsToPlannedHome();
     void _testFenceTabAddsFenceInsideTheGeoMapViewport_data();
     void _testFenceTabAddsFenceInsideTheGeoMapViewport();
@@ -46,6 +48,13 @@ private slots:
     void _testGeoMapMarkerClickOutsideTheMissionLayerReachesTheMap();
     void _testGeoMapMarkerDragMovesOnlyTheCurrentItem_data();
     void _testGeoMapMarkerDragMovesOnlyTheCurrentItem();
+    void _testGeoMapRallyMarkerClickSelectsPoint();
+    void _testGeoMapRallyMarkerDragMovesOnlyTheCurrentPoint_data();
+    void _testGeoMapRallyMarkerDragMovesOnlyTheCurrentPoint();
+    void _testGeoMapRallyMarkerHeightFollowsFirmwareAndFrame_data();
+    void _testGeoMapRallyMarkerHeightFollowsFirmwareAndFrame();
+    void _testGeoMapRallyGroundMarkingMatchesMarkerSize_data();
+    void _testGeoMapRallyGroundMarkingMatchesMarkerSize();
     void _testGeoMapModeButtonTogglesCameraMode();
     void _testVehicleClassComboChangesToolStrip_data();
     void _testVehicleClassComboChangesToolStrip();
@@ -70,6 +79,12 @@ private:
 
     /// Home set, then a takeoff plus \a waypointCount waypoints. Leaves the Mission tab active.
     void _buildMission(int waypointCount);
+
+    /// Map click on the Plan tab sets home, which the other tabs need
+    void _setHome();
+
+    /// Home set, then one rally point added at the map center on the GeoMap engine. \a marker is its map marker.
+    void _addGeoMapRallyPoint(QQuickItem*& marker);
 
     bool _selectTab(const QString& tab);
     QString _currentTab();

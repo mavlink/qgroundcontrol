@@ -12,10 +12,14 @@ import QGroundControl.Controls
 /// In general almost everything in here has some coding style meaning including order of
 /// code. Not all style choices are explained. If there is any confusion please ask
 /// and we'll answer and update style as needed.
+/// Order follows the Qt QML Coding Conventions: id, property declarations, signal declarations,
+/// functions, object properties, child objects.
 Item {
+    id: root  // id comes first. Use descriptive id for root item, not underscore prefix
+
     // ===================================================================================
     // PUBLIC PROPERTIES SECTION
-    // Property definitions available to consumers of this Qml Item come first
+    // Property definitions available to consumers of this Qml Item
     // Group by type for readability
     // ===================================================================================
 
@@ -25,27 +29,9 @@ Item {
     property bool myBoolProperty: false
 
     // ===================================================================================
-    // SIGNALS SECTION
-    // Define custom signals for communication
-    // ===================================================================================
-
-    signal buttonClicked()
-    signal valueChanged(int newValue)
-
-    id: root  // Use descriptive id for root item, not underscore prefix
-
-    // ===================================================================================
-    // PROPERTY BINDING SECTION
-    // Bind to item properties first, before property definitions
-    // ===================================================================================
-
-    width: ScreenTools.defaultFontPixelHeight * 10 // No hardcoded sizing. All sizing must be relative to a ScreenTools font size
-    height: ScreenTools.defaultFontPixelHeight * 20
-
-    // ===================================================================================
     // PRIVATE PROPERTIES SECTION
     // Property definitions which are internal to the item are prepended with an underscore
-    // to signal private and come second. Use readonly appropriately to increase binding performance.
+    // to signal private and follow the public ones. Use readonly appropriately to increase binding performance.
     // ===================================================================================
 
     readonly property real _rectWidth: ScreenTools.defaultFontPixelWidth * 10
@@ -54,8 +40,16 @@ Item {
     readonly property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
     // ===================================================================================
+    // SIGNALS SECTION
+    // Define custom signals for communication
+    // ===================================================================================
+
+    signal buttonClicked()
+    signal valueChanged(int newValue)
+
+    // ===================================================================================
     // FUNCTIONS SECTION
-    // Function definitions come after properties
+    // Function definitions come after property and signal declarations
     // ===================================================================================
 
     function myFunction() {
@@ -77,6 +71,14 @@ Item {
         }
         return param1 * param2
     }
+
+    // ===================================================================================
+    // OBJECT PROPERTIES SECTION
+    // Assignments to existing (including inherited) properties come after functions
+    // ===================================================================================
+
+    width: ScreenTools.defaultFontPixelHeight * 10 // No hardcoded sizing. All sizing must be relative to a ScreenTools font size
+    height: ScreenTools.defaultFontPixelHeight * 20
 
     // ===================================================================================
     // VISUAL COMPONENTS SECTION
