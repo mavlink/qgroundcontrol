@@ -97,30 +97,14 @@ void GstVideoReceiver::onRestartRequested()
         [sink = GStreamer::shareObject(_displaySink.get())](GstReceiverWorker& worker) { worker.restart(sink); });
 }
 
-void GstVideoReceiver::_scheduleVideoSinkUpdate()
-{
-    // Coalesced: an output re-attached in one go (setVideoOutput(nullptr), then the item) doesn't touch the pipeline.
-    if (_videoSinkUpdatePending) {
-        return;
-    }
-    _videoSinkUpdatePending = true;
-    (void) QMetaObject::invokeMethod(
-        this,
-        [this]() {
-            _videoSinkUpdatePending = false;
-            GstElement* const sink = videoSink() ? _displaySink.get() : nullptr;
-            _postToWorker(
-                [shared = GStreamer::shareObject(sink)](GstReceiverWorker& worker) { worker.setVideoSink(shared); });
-        },
-        Qt::QueuedConnection);
-}
-
 void GstVideoReceiver::onVideoOutputChanged()
 {
     (void) disconnect(_videoSizeConnection);
 
     QVideoSink* const sink = videoSink();
-    if (!sink) {
+    if (sink) {
+        _bindVideoSink(sink);
+    } else {
         if (videoOutput()) {
             qCWarning(GstVideoReceiverLog) << "Video output" << videoOutput() << "has no videoSink; not displaying";
         }
@@ -128,12 +112,10 @@ void GstVideoReceiver::onVideoOutputChanged()
             _sinkController->setVideoSink(QPointer<QVideoSink>());
             _sinkController->followWindowVisibility(nullptr);
         }
-        _scheduleVideoSinkUpdate();
-        return;
     }
-
-    _bindVideoSink(sink);
-    _scheduleVideoSinkUpdate();
+    GstElement* const displaySink = sink ? _displaySink.get() : nullptr;
+    _postToWorker(
+        [shared = GStreamer::shareObject(displaySink)](GstReceiverWorker& worker) { worker.setVideoSink(shared); });
 }
 
 void GstVideoReceiver::onStartRecording(const QString& file, FileFormat format)

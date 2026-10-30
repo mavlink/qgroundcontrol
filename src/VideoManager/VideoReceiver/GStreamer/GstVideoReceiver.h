@@ -55,8 +55,6 @@ private:
     friend class GstVideoReceiverTest;
 
     void _postToWorker(std::function<void(GstReceiverWorker&)> task);
-    /// Hands the worker the display sink, or none without an output, once the current call stack is done.
-    void _scheduleVideoSinkUpdate();
     /// Builds the display sink and its controller, bound to @p videoSink.
     bool _buildDisplaySink(QVideoSink* videoSink);
     void _releaseDisplaySink();
@@ -71,6 +69,5 @@ private:
     GStreamer::GstElementPtr _displaySink;
     QGCQVideoSinkController* _sinkController = nullptr;
     QMetaObject::Connection _videoSizeConnection;
-    bool _videoSinkUpdatePending = false;
     QString _decoderName;
 };

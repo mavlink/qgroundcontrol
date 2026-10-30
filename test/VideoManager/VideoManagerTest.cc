@@ -366,7 +366,7 @@ void VideoManagerTest::_testVideoOutputRegistration()
     // Registering again (after a window change) re-attaches it.
     receiver->videoOutputChanges = 0;
     stream->registerVideoOutput(&first);
-    QCOMPARE(receiver->videoOutputChanges, 2);
+    QCOMPARE(receiver->videoOutputChanges, 1);
     QCOMPARE(receiver->videoOutput(), &first);
 
     stream->registerVideoOutput(&second);
@@ -407,9 +407,9 @@ void VideoManagerTest::_testQmlVideoOutputRegistersItself()
     QQuickWindow mainWindow;
     QQuickWindow popOutWindow;
     root->setParentItem(mainWindow.contentItem());
-    QCOMPARE(_primary->videoOutputChanges, 3);
+    QCOMPARE(_primary->videoOutputChanges, 2);
     holder->setParentItem(popOutWindow.contentItem());
-    QCOMPARE(_primary->videoOutputChanges, 5);
+    QCOMPARE(_primary->videoOutputChanges, 3);
     QCOMPARE(_primary->videoOutput(), output);
 
     holder->setParentItem(root.get());

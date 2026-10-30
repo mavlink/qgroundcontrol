@@ -105,7 +105,8 @@ public:
     /// construct-only sink settings apply. No-op while inactive.
     void restart();
     /// Displays the stream in @p videoOutput, a QML VideoOutput; nullptr stops displaying. Decoding runs only while an
-    /// output is set. The output's destruction is tracked: it detaches as if nullptr had been set.
+    /// output is set. Setting the current output again binds it anew, for one that moved to another window. The
+    /// output's destruction is tracked: it detaches as if nullptr had been set.
     void setVideoOutput(QQuickItem* videoOutput);
 
     /// Records to @p file until stopRecording() or setActive(false). Accepted only while active (otherwise
@@ -136,6 +137,7 @@ protected:
     virtual void onConfigChanged() = 0;
     virtual void onActiveChanged() = 0;
     virtual void onRestartRequested() = 0;
+    /// Also called when the current output is set again.
     virtual void onVideoOutputChanged() = 0;
     virtual void onStartRecording(const QString& file, FileFormat format) = 0;
     virtual void onStopRecording() = 0;

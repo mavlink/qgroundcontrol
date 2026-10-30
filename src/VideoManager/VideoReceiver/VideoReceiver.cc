@@ -118,14 +118,16 @@ QQuickItem* VideoReceiver::videoOutput() const
 
 void VideoReceiver::setVideoOutput(QQuickItem* videoOutput)
 {
-    if (videoOutput == _videoOutput) {
+    if (!videoOutput && !_videoOutput) {
         return;
     }
-    (void) disconnect(_videoOutputDestroyed);
-    _videoOutput = videoOutput;
-    if (videoOutput) {
-        _videoOutputDestroyed =
-            connect(videoOutput, &QObject::destroyed, this, &VideoReceiver::_onVideoOutputDestroyed);
+    if (videoOutput != _videoOutput) {
+        (void) disconnect(_videoOutputDestroyed);
+        _videoOutput = videoOutput;
+        if (videoOutput) {
+            _videoOutputDestroyed =
+                connect(videoOutput, &QObject::destroyed, this, &VideoReceiver::_onVideoOutputDestroyed);
+        }
     }
     onVideoOutputChanged();
 }
