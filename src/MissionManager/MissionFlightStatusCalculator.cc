@@ -217,8 +217,18 @@ void MissionFlightStatusCalculator::recalc(QmlObjectListModel* visualItems,
                         }
 
                         totalHorizontalDistance += distance;
-                    }
+                    } else if (simpleItem->mavCommand() == MAV_CMD_NAV_LOITER_TURNS) {
+                        const double distance = simpleItem->loiterDistance();
 
+                        if (!pastLandCommand) {
+                            const double hoverTime = distance / _status.hoverSpeed;
+                            const double cruiseTime = distance / _status.cruiseSpeed;
+                            _addTimeDistance(controllerVehicle, _status.vtolMode == QGCMAVLink::VehicleClassMultiRotor,
+                                             hoverTime, cruiseTime, 0, distance, item->sequenceNumber());
+                        }
+
+                        totalHorizontalDistance += distance;
+                    }
 
                     lastFlyThroughVI = item;
                 }

@@ -3,6 +3,8 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
+#include <QtMath>
+#include <QtTest/QSignalSpy>
 
 #include "AppSettings.h"
 #include "CameraCalc.h"
@@ -496,6 +498,53 @@ void MissionControllerTest::_testVehicleYawRecalc()
             expectedVehicleYaw += wpAngleInc;
         }
     }
+}
+
+void MissionControllerTest::_testLoiterTurnsDistance()
+{
+    _initForVehicleType(MAV_AUTOPILOT_PX4, MAV_TYPE_FIXED_WING);
+
+    const QGeoCoordinate coordinate = Coord::zurich();
+    _missionController->setHomePosition(coordinate);
+    SimpleMissionItem* loiterItem =
+        qobject_cast<SimpleMissionItem*>(_missionController->insertSimpleMissionItem(coordinate, 1));
+    QVERIFY(loiterItem);
+
+    loiterItem->setCommand(MAV_CMD_NAV_LOITER_TURNS);
+    const double initialDistance =
+        2.0 * M_PI * qAbs(loiterItem->missionItem().param3()) * qAbs(loiterItem->missionItem().param1());
+    QVERIFY(initialDistance > 0.0);
+    QCOMPARE(loiterItem->loiterDistance(), initialDistance);
+    QCOMPARE_TRUE_WAIT(_missionController->missionTotalDistance(), initialDistance, TestTimeout::mediumMs());
+
+    loiterItem->missionItem().setParam3(40.0);
+    loiterItem->missionItem().setParam1(2.5);
+    const double turnsDistance = 2.0 * M_PI * 40.0 * 2.5;
+    QCOMPARE(loiterItem->loiterDistance(), turnsDistance);
+    QCOMPARE_TRUE_WAIT(_missionController->missionTotalDistance(), turnsDistance, TestTimeout::mediumMs());
+
+    loiterItem->missionItem().setParam3(-25.0);
+
+    const double expectedDistance = 2.0 * M_PI * 25.0 * 2.5;
+    QCOMPARE(loiterItem->loiterDistance(), expectedDistance);
+    QCOMPARE_TRUE_WAIT(_missionController->missionTotalDistance(), expectedDistance, TestTimeout::mediumMs());
+    QCOMPARE(_missionController->missionPlannedDistance(), expectedDistance);
+    QCOMPARE(_missionController->missionCruiseDistance(), expectedDistance);
+    QCOMPARE(_missionController->missionTime(),
+             expectedDistance / _masterController->controllerVehicle()->defaultCruiseSpeed());
+
+    loiterItem->missionItem().setParam3(0.0);
+    QCOMPARE(loiterItem->loiterDistance(), 0.0);
+    QCOMPARE_TRUE_WAIT(_missionController->missionTotalDistance(), 0.0, TestTimeout::mediumMs());
+
+    loiterItem->missionItem().setParam3(25.0);
+    QCOMPARE_TRUE_WAIT(_missionController->missionTotalDistance(), expectedDistance, TestTimeout::mediumMs());
+
+    QSignalSpy loiterDistanceSpy(loiterItem, &SimpleMissionItem::loiterDistanceChanged);
+    loiterItem->setCommand(MAV_CMD_NAV_WAYPOINT);
+    QVERIFY(loiterDistanceSpy.count() > 0);
+    QCOMPARE(loiterItem->loiterDistance(), 0.0);
+    QCOMPARE_TRUE_WAIT(_missionController->missionTotalDistance(), 0.0, TestTimeout::mediumMs());
 }
 
 void MissionControllerTest::_testMissionReposition()

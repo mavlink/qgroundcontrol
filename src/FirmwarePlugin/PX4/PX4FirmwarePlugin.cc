@@ -335,26 +335,37 @@ void PX4FirmwarePlugin::guidedModeLand(Vehicle* vehicle) const
     _setFlightModeAndValidate(vehicle, landFlightMode());
 }
 
-void PX4FirmwarePlugin::_mavCommandResult(quint32 vehicleId, int component, int command, int result, int failureCode)
+namespace {
+
+void px4TakeoffResultHandler(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack,
+                             Vehicle::MavCmdResultFailureCode_t failureCode)
 {
-    Q_UNUSED(vehicleId); Q_UNUSED(component); Q_UNUSED(failureCode);
+    auto* vehicle = static_cast<Vehicle*>(resultHandlerData);
 
-    auto* vehicle = qobject_cast<Vehicle*>(sender());
-    if (!vehicle) {
-        qCWarning(PX4FirmwarePluginLog) << "Dynamic cast failed!";
-        return;
-    }
-
-    if (command == MAV_CMD_NAV_TAKEOFF && result == MAV_RESULT_ACCEPTED) {
-        // Now that we are in takeoff mode we can arm the vehicle which will cause it to takeoff.
-        // We specifically don't retry arming if it fails. This way we don't fight with the user if
-        // They are trying to disarm.
-        disconnect(vehicle, &Vehicle::mavCommandResult, this, &PX4FirmwarePlugin::_mavCommandResult);
-        if (!vehicle->armed()) {
-            vehicle->setArmedShowError(true);
-        }
+    switch (failureCode) {
+        case Vehicle::MavCmdResultCommandResultOnly:
+            if (ack.result == MAV_RESULT_ACCEPTED) {
+                // Now that we are in takeoff mode we can arm the vehicle which will cause it to takeoff.
+                // We specifically don't retry arming if it fails. This way we don't fight with the user if
+                // They are trying to disarm.
+                if (!vehicle->armed()) {
+                    vehicle->setArmedShowError(true);
+                }
+            } else {
+                Vehicle::showCommandAckError(ack);
+            }
+            break;
+        case Vehicle::MavCmdResultFailureNoResponseToCommand:
+            QGC::showAppMessage(PX4FirmwarePlugin::tr("Vehicle did not respond to takeoff command."));
+            break;
+        case Vehicle::MavCmdResultFailureDuplicateCommand:
+            QGC::showAppMessage(PX4FirmwarePlugin::tr(
+                "Takeoff not sent: a previous takeoff command is still waiting for a vehicle response."));
+            break;
     }
 }
+
+}  // namespace
 
 void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel) const
 {
@@ -366,16 +377,16 @@ void PX4FirmwarePlugin::guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel
 
     double takeoffAltAMSL = takeoffAltRel + vehicleAltitudeAMSL;
 
-    connect(vehicle, &Vehicle::mavCommandResult, this, &PX4FirmwarePlugin::_mavCommandResult);
-    vehicle->sendMavCommand(
-        vehicle->defaultComponentId(),
-        MAV_CMD_NAV_TAKEOFF,
-        true,                                   // show error is fails
-        NAN,                                    // No pitch requested
-        NAN,                                    // param 2 unused
-        0,                                      // param 3 takeoff flags
-        NAN, NAN, NAN,                          // No yaw, lat, lon
-        static_cast<float>(takeoffAltAMSL));    // AMSL altitude
+    Vehicle::MavCmdAckHandlerInfo_t handlerInfo = {};
+    handlerInfo.resultHandler = px4TakeoffResultHandler;
+    handlerInfo.resultHandlerData = vehicle;
+
+    vehicle->sendMavCommandWithHandler(&handlerInfo, vehicle->defaultComponentId(), MAV_CMD_NAV_TAKEOFF,
+                                       NAN,                                  // No pitch requested
+                                       NAN,                                  // param 2 unused
+                                       0,                                    // param 3 takeoff flags
+                                       NAN, NAN, NAN,                        // No yaw, lat, lon
+                                       static_cast<float>(takeoffAltAMSL));  // AMSL altitude
 }
 
 double PX4FirmwarePlugin::maximumHorizontalSpeedMultirotorMetersSecond(Vehicle* vehicle) const

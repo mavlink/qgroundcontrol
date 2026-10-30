@@ -168,6 +168,7 @@ RowLayout {
 
         DropPanel {
             id: dropPanel
+            onClosed: destroy()
 
             sourceComponent: Component {
                 ColumnLayout {
