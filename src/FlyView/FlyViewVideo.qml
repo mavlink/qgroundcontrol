@@ -9,7 +9,6 @@ Item {
     property Item pipView
     property Item pipState: videoPipState
 
-    // Moving the video to the pop-out window and back needs no restart: the VideoOutputs re-register themselves.
     PipState {
         id:         videoPipState
         pipView:    _root.pipView
