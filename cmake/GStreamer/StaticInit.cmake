@@ -85,6 +85,28 @@ function(qgc_gst_mobile_keep_symbols)
     endforeach()
 endfunction()
 
+# qgc_gst_add_mobile_library([SOURCES <source>...] [PLUGINS <plugin>...])
+# Creates GStreamer::mobile, the SHARED GStreamerMobile library that the platform module links the SDK's archives into:
+# its generated gst_init_static_plugins() registers the <plugin>s and loads G_IO_MODULES, and it keeps
+# QGC_GST_APP_CORE_SYMBOLS for the app. Linked as C++: OpenH264 needs the C++ runtime.
+function(qgc_gst_add_mobile_library)
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "" "SOURCES;PLUGINS")
+    _qgc_gst_check_args(qgc_gst_add_mobile_library ALLOW_EMPTY SOURCES PLUGINS)
+    add_library(GStreamerMobile SHARED ${ARG_SOURCES})
+    add_library(GStreamer::mobile ALIAS GStreamerMobile)
+    set_target_properties(
+        GStreamerMobile
+        PROPERTIES
+            LINKER_LANGUAGE CXX
+    )
+    qgc_gst_generate_static_init(
+        TARGET GStreamerMobile
+        PLUGINS ${ARG_PLUGINS}
+        GIO_MODULES ${G_IO_MODULES}
+    )
+    qgc_gst_mobile_keep_symbols(${QGC_GST_APP_CORE_SYMBOLS})
+endfunction()
+
 # qgc_gst_app_core_symbols(<nm_output> <symbol_prefix> <out_var>)
 # Sets <out_var> to the GStreamer core symbols that nm output for the app lists as defined, each C name preceded by
 # <symbol_prefix> ("_" for Mach-O). The app must take the core from GStreamer::mobile; a core symbol defined in the app

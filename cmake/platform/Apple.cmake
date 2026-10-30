@@ -85,13 +85,13 @@ elseif(IOS)
     # Adds compatibility sources and embeds the framework after its target
     # exists.
     function(_qgc_ios_finalize_gstreamer_mobile target)
-        if(NOT TARGET GStreamerMobileXcfw)
+        if(NOT TARGET GStreamerMobile)
             return()
         endif()
 
         if(CMAKE_OSX_SYSROOT MATCHES "[Ss]imulator" AND "x86_64" IN_LIST CMAKE_OSX_ARCHITECTURES)
             target_sources(
-                GStreamerMobileXcfw
+                GStreamerMobile
                 PRIVATE
                     "${CMAKE_SOURCE_DIR}/src/VideoManager/VideoReceiver/GStreamer/IOSPipe2Compat.c"
             )
@@ -101,7 +101,7 @@ elseif(IOS)
             set_property(
                 TARGET "${target}"
                 APPEND
-                PROPERTY XCODE_EMBED_FRAMEWORKS GStreamerMobileXcfw
+                PROPERTY XCODE_EMBED_FRAMEWORKS GStreamerMobile
             )
             set_target_properties(
                 "${target}"
@@ -114,26 +114,13 @@ elseif(IOS)
             add_custom_command(
                 TARGET "${target}"
                 POST_BUILD
-                COMMAND "${CMAKE_COMMAND}" -E copy_directory "$<TARGET_BUNDLE_DIR:GStreamerMobileXcfw>"
-                        "$<TARGET_BUNDLE_DIR:${target}>/Frameworks/$<TARGET_BUNDLE_DIR_NAME:GStreamerMobileXcfw>"
+                COMMAND "${CMAKE_COMMAND}" -E copy_directory "$<TARGET_BUNDLE_DIR:GStreamerMobile>"
+                        "$<TARGET_BUNDLE_DIR:${target}>/Frameworks/$<TARGET_BUNDLE_DIR_NAME:GStreamerMobile>"
                 COMMENT "Embedding the GStreamer::mobile framework"
                 VERBATIM
             )
             message(STATUS "QGC: GStreamer::mobile will be embedded at build time (Ninja)")
         endif()
-
-        set(_nm "${CMAKE_NM}")
-        if(NOT _nm)
-            set(_nm nm)
-        endif()
-        add_custom_command(
-            TARGET "${target}"
-            POST_BUILD
-            COMMAND "${CMAKE_COMMAND}" "-DAPP=$<TARGET_FILE:${target}>" "-DNM=${_nm}" -DSYMBOL_PREFIX=_ -P
-                    "${CMAKE_SOURCE_DIR}/cmake/GStreamer/SingleCoreCheck.cmake"
-            COMMENT "Checking that the app links a single GStreamer core"
-            VERBATIM
-        )
     endfunction()
 
     set(_qgc_ios_asset_catalog "${CMAKE_SOURCE_DIR}/deploy/ios/Images.xcassets")
@@ -265,7 +252,7 @@ elseif(IOS)
         )
     endif()
 
-    # GStreamerMobileXcfw is created while processing add_subdirectory(src),
+    # GStreamerMobile is created while processing add_subdirectory(src),
     # so register its compatibility source and embedding after the root
     # directory is complete.
     cmake_language(

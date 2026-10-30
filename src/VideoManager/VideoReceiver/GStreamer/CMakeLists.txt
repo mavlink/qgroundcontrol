@@ -203,8 +203,9 @@ if(ANDROID)
     # GStreamerEnvironment.cc extracts the bundled APK assets with the NDK's asset manager.
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE android)
 endif()
-# The iOS check is wired in cmake/platform/Apple.cmake. The app target is created by the top-level directory.
-if(ANDROID)
+# Deferred to the top-level directory, which creates the app target and evaluates the arguments, so they name only
+# global variables. Mach-O symbols carry a leading underscore.
+if(ANDROID OR IOS)
     cmake_language(
         DEFER
         DIRECTORY
@@ -218,6 +219,7 @@ if(ANDROID)
         "${CMAKE_COMMAND}"
         "-DAPP=$<TARGET_FILE:${CMAKE_PROJECT_NAME}>"
         "-DNM=${CMAKE_NM}"
+        "-DSYMBOL_PREFIX=$<$<PLATFORM_ID:iOS>:_>"
         -P
         "${CMAKE_SOURCE_DIR}/cmake/GStreamer/SingleCoreCheck.cmake"
         COMMENT

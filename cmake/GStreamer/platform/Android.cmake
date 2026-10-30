@@ -275,28 +275,26 @@ function(_qgc_gst_create_android_mobile_target)
         )
     endif()
 
-    add_library(GStreamerMobile SHARED "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/gst_android_jni.c")
-    add_library(GStreamer::mobile ALIAS GStreamerMobile)
-    # Linked as C++: OpenH264 needs the C++ runtime.
-    set_target_properties(
-        GStreamerMobile
-        PROPERTIES
-            LIBRARY_OUTPUT_NAME gstreamer_android
-            LINKER_LANGUAGE CXX
-    )
-    target_link_libraries(GStreamerMobile PRIVATE GStreamer::Static)
-
     set(_plugins "")
     foreach(_plugin IN LISTS GSTREAMER_PLUGINS)
-        set(_archive "${GSTREAMER_PLUGIN_PATH}/libgst${_plugin}.a")
-        if(NOT EXISTS "${_archive}" OR _plugin IN_LIST _plugins)
+        if(NOT EXISTS "${GSTREAMER_PLUGIN_PATH}/libgst${_plugin}.a" OR _plugin IN_LIST _plugins)
             continue()
         endif()
         _qgc_gst_pkg_target(plugin_${_plugin} "gst${_plugin}" QUIET)
         if(TARGET GStreamer::plugin_${_plugin})
-            _qgc_gst_android_link_archive(GStreamerMobile plugin_${_plugin} "${_archive}")
             list(APPEND _plugins ${_plugin})
         endif()
+    endforeach()
+
+    qgc_gst_add_mobile_library(SOURCES "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/gst_android_jni.c" PLUGINS ${_plugins})
+    set_target_properties(
+        GStreamerMobile
+        PROPERTIES
+            LIBRARY_OUTPUT_NAME gstreamer_android
+    )
+    target_link_libraries(GStreamerMobile PRIVATE GStreamer::Static)
+    foreach(_plugin IN LISTS _plugins)
+        _qgc_gst_android_link_archive(GStreamerMobile plugin_${_plugin} "${GSTREAMER_PLUGIN_PATH}/libgst${_plugin}.a")
     endforeach()
     # A GIO module's .pc file names the directory the SDK was built in as its -L, so its archive is linked by path.
     foreach(_module IN LISTS G_IO_MODULES)
@@ -307,11 +305,6 @@ function(_qgc_gst_create_android_mobile_target)
         _qgc_gst_pkg_target(gio_${_module} "gio${_module}" QUIET)
         _qgc_gst_android_link_archive(GStreamerMobile gio_${_module} "${_archive}")
     endforeach()
-    qgc_gst_generate_static_init(
-        TARGET GStreamerMobile
-        PLUGINS ${_plugins}
-        GIO_MODULES ${G_IO_MODULES}
-    )
 
     # Cerbero's gstreamer-1.0.mk link flags: -Bsymbolic keeps FFmpeg's page-relative relocations valid (every ABI), -z
     # text hard-errors residual text relocations (armv7/x86).
@@ -321,7 +314,6 @@ function(_qgc_gst_create_android_mobile_target)
         target_link_options(GStreamerMobile PRIVATE "LINKER:-z,text")
     endif()
     _qgc_gst_android_hide_archives(GStreamerMobile)
-    qgc_gst_mobile_keep_symbols(${QGC_GST_APP_CORE_SYMBOLS})
 
     _qgc_gst_android_usage_target()
     _qgc_gst_android_stage_sdk_files("${_ndk_build}" ${_plugins})

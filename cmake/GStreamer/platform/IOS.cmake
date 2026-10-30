@@ -281,36 +281,27 @@ function(_qgc_gst_ios_usage_targets archive include_dir)
 endfunction()
 
 # _qgc_gst_ios_mobile_framework(<plugin>...)
-# Creates GStreamerMobileXcfw (GStreamer::mobile, GStreamerMobile), the framework the app embeds and the only binary
-# that links GStreamer_static. Its generated gst_init_static_plugins() registers the <plugin>s and loads G_IO_MODULES,
-# which is what links their objects in; the core functions in QGC_GST_APP_CORE_SYMBOLS (StaticInit.cmake) that no
-# plugin pulls in are kept. The app resolves every GStreamer symbol from this framework.
+# Creates GStreamer::mobile (qgc_gst_add_mobile_library) as the framework the app embeds and the only binary that links
+# GStreamer_static. Its generated gst_init_static_plugins() registers the <plugin>s and loads G_IO_MODULES, which is
+# what links their objects in; the core functions in QGC_GST_APP_CORE_SYMBOLS (StaticInit.cmake) that no plugin pulls
+# in are kept. The app resolves every GStreamer symbol from this framework.
 function(_qgc_gst_ios_mobile_framework)
-    add_library(GStreamerMobileXcfw SHARED)
     # gioopenssl is statically linked into libGStreamer.a (nm: _g_io_openssl_load is exported from the slice);
     # loading it registers the default GIO TLS backend.
-    qgc_gst_generate_static_init(
-        TARGET GStreamerMobileXcfw
-        PLUGINS ${ARGN}
-        GIO_MODULES ${G_IO_MODULES}
-    )
+    qgc_gst_add_mobile_library(PLUGINS ${ARGN})
     target_link_libraries(
-        GStreamerMobileXcfw
+        GStreamerMobile
         PRIVATE
             GStreamer_static
             GStreamer::GStreamer
     )
-    add_library(GStreamer::mobile ALIAS GStreamerMobileXcfw)
-    add_library(GStreamerMobile ALIAS GStreamerMobileXcfw)
-    qgc_gst_mobile_keep_symbols(${QGC_GST_APP_CORE_SYMBOLS})
     set_target_properties(
-        GStreamerMobileXcfw
+        GStreamerMobile
         PROPERTIES
             LIBRARY_OUTPUT_NAME gstreamer_mobile
             FRAMEWORK TRUE
             FRAMEWORK_VERSION A
             MACOSX_FRAMEWORK_IDENTIFIER org.gstreamer.GStreamerMobile
-            LINKER_LANGUAGE CXX
     )
 endfunction()
 

@@ -516,7 +516,7 @@ elseif(SCENARIO STREQUAL "ios-link")
     set(_fixture_dir "${CMAKE_CURRENT_LIST_DIR}/fixtures/IosLink")
     _qgc_configure_ok("iOS targets")
     _qgc_link_line(_app_link qgc_ios_link_app qgc_ios_link_app)
-    _qgc_link_line(_framework_link libgstreamer_mobile.so GStreamerMobileXcfw)
+    _qgc_link_line(_framework_link libgstreamer_mobile.so GStreamerMobile)
     qgc_test_assert_not_matches("app link line" "libGStreamer\\.a" "${_app_link}")
     qgc_test_assert_matches("app link line" "libgstreamer_mobile\\.so" "${_app_link}")
     qgc_test_assert_matches("framework link line" " ([^ ]*/)?sdk/libGStreamer\\.a " "${_framework_link}")
@@ -535,7 +535,7 @@ elseif(SCENARIO STREQUAL "ios-link")
     endif()
 
     _qgc_configure_ok("iOS targets keeping a core function" -DQGC_TEST_CORE_SYMBOLS=gst_debug_bin_to_dot_file)
-    _qgc_link_line(_framework_link libgstreamer_mobile.so GStreamerMobileXcfw)
+    _qgc_link_line(_framework_link libgstreamer_mobile.so GStreamerMobile)
     qgc_test_assert_matches("-u" "-u,gst_debug_bin_to_dot_file" "${_framework_link}")
     execute_process(
         COMMAND "${CMAKE_COMMAND}" --build "${_binary_dir}"

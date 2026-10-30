@@ -24,7 +24,7 @@ set_target_properties(
 
 _qgc_gst_ios_usage_targets("${_archive}" "${CMAKE_CURRENT_SOURCE_DIR}/include")
 _qgc_gst_ios_mobile_framework(coreelements)
-add_dependencies(GStreamerMobileXcfw FakeGStreamerArchive)
+add_dependencies(GStreamerMobile FakeGStreamerArchive)
 if(QGC_TEST_KEEP_SYMBOLS)
     qgc_gst_mobile_keep_symbols(${QGC_TEST_KEEP_SYMBOLS})
 endif()
