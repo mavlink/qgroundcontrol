@@ -5,7 +5,6 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
-#include <QtCore/QTimer>
 
 #include "GStreamerHelpers.h"
 #include "PipelineDotDumper.h"
@@ -81,6 +80,13 @@ QString notFinalizedError()
 {
     return QCoreApplication::translate("RecordingBranch",
                                        "The recording was not finalized in time and may be incomplete.");
+}
+
+void warnNotFinalized()
+{
+    qCWarning(GstVideoReceiverLog) << "Recording not finalized within"
+                                   << std::chrono::milliseconds(RecordingBranch::kFinalizeTimeout).count()
+                                   << "ms; closing it (MP4/MOV stay playable up to the last moov update)";
 }
 
 }  // namespace
@@ -177,28 +183,23 @@ GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& file, Vide
     return bin;
 }
 
-RecordingBranch::RecordingBranch(const BranchContext& context, Listener& listener, QObject* timerParent)
+RecordingBranch::RecordingBranch(const BranchContext& context, Listener& listener)
     : _context(context)
     , _listener(listener)
-    , _finalizeTimer(new QTimer(timerParent))
 {
-    _finalizeTimer->setSingleShot(true);
-    _finalizeTimer->setInterval(kFinalizeTimeout);
-    (void) QObject::connect(_finalizeTimer, &QTimer::timeout, timerParent, [this]() {
-        if (_state != State::Finalizing) {
-            return;
+    _finalizeTimer.setSingleShot(true);
+    _finalizeTimer.setInterval(kFinalizeTimeout);
+    (void) QObject::connect(&_finalizeTimer, &QTimer::timeout, &_finalizeTimer, [this]() {
+        if (_state == State::Finalizing) {
+            warnNotFinalized();
+            _finish(notFinalizedError());
         }
-        qCWarning(GstVideoReceiverLog) << "Recording not finalized within"
-                                       << std::chrono::milliseconds(kFinalizeTimeout).count()
-                                       << "ms; closing it (MP4/MOV stay playable up to the last moov update)";
-        _finish(notFinalizedError());
     });
 }
 
 RecordingBranch::~RecordingBranch()
 {
     reset();
-    delete _finalizeTimer;
 }
 
 bool RecordingBranch::build()
@@ -227,7 +228,7 @@ bool RecordingBranch::build()
 
 void RecordingBranch::reset()
 {
-    _finalizeTimer->stop();
+    _finalizeTimer.stop();
     _queueOverrun.disconnect();
     _keyframeWatch.remove();
     if (_fileSink) {
@@ -310,7 +311,7 @@ void RecordingBranch::_start(const Request& request)
         GStreamer::flushAndDisposeChild(_fileSink.get());
         _failure = QCoreApplication::translate("RecordingBranch", "Unable to start recording to %1.").arg(request.file);
         _state = State::Finalizing;
-        _finalizeTimer->start();
+        _finalizeTimer.start();
         return;
     }
 
@@ -358,12 +359,12 @@ void RecordingBranch::_end(const QString& failure)
     }
     GStreamer::sendEventAsync(recorderSink.get(), gst_event_new_eos());
     _state = State::Finalizing;
-    _finalizeTimer->start();
+    _finalizeTimer.start();
 }
 
 void RecordingBranch::_finish(const QString& error)
 {
-    _finalizeTimer->stop();
+    _finalizeTimer.stop();
     _keyframeWatch.remove();
     if (_valve) {
         g_object_set(_valve, "drop", TRUE, nullptr);
@@ -439,9 +440,8 @@ void RecordingBranch::completeTeardown()
     }
 
     if (_finalizer.outcome() == RecordingFinalizer::Outcome::Pending) {
-        qCWarning(GstVideoReceiverLog) << "Recording not finalized within"
-                                       << std::chrono::milliseconds(kFinalizeTimeout).count()
-                                       << "ms; closing it (MP4/MOV stay playable up to the last moov update)";
+        // Before the flush, which a recorder stuck in the kernel can hold up.
+        warnNotFinalized();
         // Not serialized, so it doesn't wait for the stream lock: wakes the tee's thread if the full queue holds it,
         // and has the queue stop pushing into the recorder.
         const GStreamer::GstPadPtr queueSink = GStreamer::adoptPad(gst_element_get_static_pad(_queue, "sink"));

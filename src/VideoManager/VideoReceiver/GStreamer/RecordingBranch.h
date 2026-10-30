@@ -5,14 +5,12 @@
 #include <optional>
 
 #include <QtCore/QString>
+#include <QtCore/QTimer>
 
 #include "BranchContext.h"
 #include "GstScoped.h"
 #include "RecordingFinalizer.h"
 #include "VideoReceiver.h"
-
-class QObject;
-class QTimer;
 
 /// \brief The recording branch behind the session's tee: queue ! valve [! parser ! muxer ! filesink].
 ///
@@ -60,8 +58,7 @@ public:
     static GStreamer::GstElementPtr makeFileSink(const QString& file, VideoReceiver::FileFormat format,
                                                  const GstCaps* inputCaps);
 
-    /// @p timerParent owns the finalize timer; it lives on the worker.
-    RecordingBranch(const BranchContext& context, Listener& listener, QObject* timerParent);
+    RecordingBranch(const BranchContext& context, Listener& listener);
     ~RecordingBranch();
 
     RecordingBranch(const RecordingBranch&) = delete;
@@ -117,7 +114,7 @@ private:
 
     const BranchContext _context;
     Listener& _listener;
-    QTimer* _finalizeTimer = nullptr;
+    QTimer _finalizeTimer;
 
     // Owned by the pipeline.
     GstElement* _queue = nullptr;

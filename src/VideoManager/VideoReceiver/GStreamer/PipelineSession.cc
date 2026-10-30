@@ -152,7 +152,7 @@ bool PipelineSession::start()
         .post = [this](std::function<void()> task) { _post(std::move(task)); },
     };
     _decoding = std::make_unique<DecodingBranch>(context, _listener, _settings.lowLatency);
-    _recording = std::make_unique<RecordingBranch>(context, _listener, this);
+    _recording = std::make_unique<RecordingBranch>(context, _listener);
     if (!_decoding->build() || !_recording->build()) {
         _failure = {.reason = QStringLiteral("branch creation failed"),
                     .message = tr("Unable to create the video pipeline."),
