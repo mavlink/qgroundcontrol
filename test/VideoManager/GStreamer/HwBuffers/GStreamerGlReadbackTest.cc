@@ -28,7 +28,6 @@
 #include <fcntl.h>
 #include <gst/allocators/gstdmabuf.h>
 #include <sys/ioctl.h>
-#include <sys/mman.h>
 #include <unistd.h>
 #if __has_include(<linux/udmabuf.h>)
 #include <linux/udmabuf.h>
@@ -227,14 +226,8 @@ QByteArray chromaPlane()
 int makeDmaBufFd(const QByteArray& bytes, bool& realDmaBuf)
 {
     realDmaBuf = false;
-    const long page = sysconf(_SC_PAGESIZE);
-    const off_t size = static_cast<off_t>(((bytes.size() + page - 1) / page) * page);
-    const int memfd = memfd_create("qgc-dmabuf-readback", MFD_CLOEXEC | MFD_ALLOW_SEALING);
+    const int memfd = GstTest::makeMemfd(bytes);
     if (memfd < 0) {
-        return -1;
-    }
-    if ((ftruncate(memfd, size) != 0) || (pwrite(memfd, bytes.constData(), size_t(bytes.size()), 0) != bytes.size())) {
-        ::close(memfd);
         return -1;
     }
 #if __has_include(<linux/udmabuf.h>)
@@ -243,7 +236,7 @@ int makeDmaBufFd(const QByteArray& bytes, bool& realDmaBuf)
         udmabuf_create create = {};
         create.memfd = static_cast<__u32>(memfd);
         create.flags = UDMABUF_FLAGS_CLOEXEC;
-        create.size = static_cast<__u64>(size);
+        create.size = static_cast<__u64>(lseek(memfd, 0, SEEK_END));
         const int dmaBuf =
             (fcntl(memfd, F_ADD_SEALS, F_SEAL_SHRINK) == 0) ? ioctl(device, UDMABUF_CREATE, &create) : -1;
         ::close(device);

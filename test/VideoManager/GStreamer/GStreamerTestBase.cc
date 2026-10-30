@@ -27,13 +27,11 @@ void GStreamerTestBase::init()
 
     UnitTest::init();
 
-    static const QRegularExpression sGLibTypeRe(
-        QStringLiteral("cannot register existing type|"
-                       "g_type_add_interface_static.*G_TYPE_IS_INSTANTIATABLE|"
-                       "g_once_init_leave.*result != 0"));
-    // GStreamer/GLib type registration warnings are environment/startup-order dependent
-    // and may occur 0..N times across test process lifetime.
-    ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtCriticalMsg, sGLibTypeRe);
+    ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtCriticalMsg, GstTest::glibTypeRegistrationCriticals());
+    // libproxy can't parse some host proxy bypass entries (e.g. "169.254/16" on macOS runners), and warns through
+    // rtspsrc's proxy lookup.
+    ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("\"pxbackend\" \"Could not parse ignore mask")));
 
     // On headless/software-GL CI the sink bin cannot honor construct-only GPU properties
     // and the GL bridge is disabled. These warnings are environment-dependent.

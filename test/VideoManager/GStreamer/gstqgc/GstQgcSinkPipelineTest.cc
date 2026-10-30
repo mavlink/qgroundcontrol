@@ -331,8 +331,7 @@ void GstQgcSinkPipelineTest::_testTeardownUnderLoad()
         const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
         QVERIFY(sinkBin);
         QVERIFY(GStreamer::setupQVideoSinkElement(sinkBin.get(), &videoSink, &controllerOwner));
-        const GStreamer::GstElementPtr qvideosink =
-            GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(sinkBin.get()), "qgcqvideosink"));
+        const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(sinkBin.get());
         QVERIFY(qvideosink);
 
         QVERIFY(pipeline.play());
@@ -362,8 +361,7 @@ void GstQgcSinkPipelineTest::_testFrameCountsTelemetrySignal()
     const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
     QVERIFY(sinkBin);
     QVERIFY(GStreamer::setupQVideoSinkElement(sinkBin.get(), &videoSink, &controllerOwner));
-    const GStreamer::GstElementPtr qvideosink =
-        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(sinkBin.get()), "qgcqvideosink"));
+    const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(sinkBin.get());
     QVERIFY(qvideosink);
 
     QVERIFY(pipeline.play());
@@ -393,8 +391,7 @@ void GstQgcSinkPipelineTest::_testInactiveQgcQVideoSinkDropsAndCounts()
     const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
     QVERIFY(sinkBin);
     QVERIFY(GStreamer::setupQVideoSinkElement(sinkBin.get(), &videoSink, &controllerOwner));
-    const GStreamer::GstElementPtr qvideosink =
-        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(sinkBin.get()), "qgcqvideosink"));
+    const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(sinkBin.get());
     QVERIFY(qvideosink);
 
     g_object_set(qvideosink.get(), "active", FALSE, nullptr);

@@ -10,7 +10,6 @@
 #include <vector>
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include <gst/allocators/gstdmabuf.h>
-#include <sys/mman.h>
 #include <unistd.h>
 #endif
 
@@ -29,6 +28,7 @@
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #include "gstqgc/GstQgcCaps.h"
 #include "gstqgc/GstQgcRenderTarget.h"
+#include "gstqgc/GstQgcTestSupport.h"
 #include "gstqgc/GstQgcVideoFormats.h"
 #include "gstqgc/gstqgcqvideosink.h"
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
@@ -47,12 +47,8 @@ namespace {
 GstSample* makeMemfdDmaBufSample(GstVideoFormat format, GstVideoInfo& info, const char* capsString = nullptr)
 {
     gst_video_info_set_format(&info, format, 64, 64);
-    const int fd = memfd_create("qgc-dmabuf-test", MFD_CLOEXEC);
+    const int fd = GstTest::makeMemfd(QByteArray(static_cast<qsizetype>(GST_VIDEO_INFO_SIZE(&info)), '\0'));
     if (fd < 0) {
-        return nullptr;
-    }
-    if (ftruncate(fd, static_cast<off_t>(GST_VIDEO_INFO_SIZE(&info))) != 0) {
-        ::close(fd);
         return nullptr;
     }
     GstAllocator* allocator = gst_dmabuf_allocator_new();
@@ -159,8 +155,7 @@ void GstHwBuffersPipelineTest::_testDmaBufDispatch()
         QSKIP("setupQVideoSinkElement() failed (no GPU context for DMABuf)");
     }
 
-    const GStreamer::GstElementPtr qvideosink =
-        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(sinkBin.get()), "qgcqvideosink"));
+    const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(sinkBin.get());
     QVERIFY2(qvideosink, "Could not find 'qgcqvideosink' inside sink bin");
     const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
     QVERIFY2(sinkPad, "qgcqvideosink has no sink pad");

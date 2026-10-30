@@ -11,8 +11,6 @@
 #include <vector>
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #include <gst/allocators/gstfdmemory.h>
-#include <sys/mman.h>
-#include <unistd.h>
 #endif
 
 #include <QtCore/QCoreApplication>
@@ -125,12 +123,8 @@ public:
     /// A frame in memfd-backed fd memory: not system memory, and no GPU path imports it.
     static GstBuffer* makeFdFrame(GstClockTime pts)
     {
-        const int fd = memfd_create("qgc-sink-harness", MFD_CLOEXEC);
+        const int fd = GstTest::makeMemfd(QByteArray(kFrameBytes, char(0x80)));
         if (fd < 0) {
-            return nullptr;
-        }
-        if (ftruncate(fd, kFrameBytes) != 0) {
-            close(fd);
             return nullptr;
         }
         GstAllocator* allocator = gst_fd_allocator_new();
@@ -138,7 +132,6 @@ public:
         gst_object_unref(allocator);
         GstBuffer* buffer = gst_buffer_new();
         gst_buffer_append_memory(buffer, memory);
-        gst_buffer_memset(buffer, 0, 0x80, kFrameBytes);
         GST_BUFFER_PTS(buffer) = pts;
         return buffer;
     }
@@ -187,7 +180,7 @@ SinkBin makeSinkBin()
         return {};
     }
     SinkBin made{GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(bin))), nullptr};
-    made.qvideosink = GStreamer::adoptElement(gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(bin)));
+    made.qvideosink = GstQgcTest::qvideosink(bin);
     return made;
 }
 
@@ -235,8 +228,7 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuZeroCopyProperty()
         g_object_get(bin.get(), "gpu-zerocopy", &prop, NULL);
         QCOMPARE(prop, FALSE);
 
-        const GStreamer::GstElementPtr qvideosink =
-            GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(bin.get()), "qgcqvideosink"));
+        const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(bin.get());
         QVERIFY2(qvideosink, "qgcqvideosink missing from CPU bin");
 
         gboolean sync = TRUE;
@@ -282,8 +274,7 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuZeroCopyProperty()
         // disable-par lets the sink take any pixel aspect ratio.
         const GStreamer::GstElementPtr bin = makeBin(FALSE, TRUE);
         QVERIFY2(bin, "Failed to create qgcvideosinkbin (CPU branch, disable-par=TRUE)");
-        const GStreamer::GstElementPtr qvideosink =
-            GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(bin.get()), "qgcqvideosink"));
+        const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(bin.get());
         QVERIFY(qvideosink);
         const GStreamer::GstCapsPtr caps = sinkPadCaps(qvideosink.get());
         QVERIFY(caps && !gst_caps_is_empty(caps.get()));
@@ -300,8 +291,7 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuZeroCopyProperty()
         gboolean prop = FALSE;
         g_object_get(bin.get(), "gpu-zerocopy", &prop, NULL);
         QCOMPARE(prop, TRUE);
-        QVERIFY2(GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(bin.get()), "qgcqvideosink")),
-                 "qgcqvideosink missing from GPU bin");
+        QVERIFY2(GstQgcTest::qvideosink(bin.get()), "qgcqvideosink missing from GPU bin");
     }
 #endif
 }
@@ -392,8 +382,7 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant()
     const GStreamer::GstElementPtr bin = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
     QCOMPARE(GstTest::childFactoryNames(GST_BIN(bin.get())), children);
 
-    const GStreamer::GstElementPtr qvideosink =
-        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(bin.get()), "qgcqvideosink"));
+    const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(bin.get());
     QVERIFY(qvideosink);
     const GStreamer::GstCapsPtr caps = sinkPadCaps(qvideosink.get());
     QVERIFY2(caps, "qgcqvideosink returned no caps");

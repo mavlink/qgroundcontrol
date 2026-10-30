@@ -10,6 +10,7 @@
 #include "GStreamerTestHelpers.h"
 #include "HwBuffers/common/HwBuffers.h"
 #include "gstqgc/GstQgcCaps.h"
+#include "gstqgc/GstQgcTestSupport.h"
 
 void GstHwBuffersPipelineTest::_testGlMemoryDispatch()
 {
@@ -44,8 +45,7 @@ void GstHwBuffersPipelineTest::_testGlMemoryDispatch()
 
     const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
     QVERIFY2(sinkBin, "Could not find 'sink' element");
-    const GStreamer::GstElementPtr qvideosink =
-        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(sinkBin.get()), "qgcqvideosink"));
+    const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(sinkBin.get());
     QVERIFY2(qvideosink, "Could not find 'qgcqvideosink' inside sink bin");
     const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
     QVERIFY2(sinkPad, "qgcqvideosink has no sink pad");

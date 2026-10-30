@@ -273,19 +273,10 @@ void GstRecordingSinkTest::_testRecordingSinkTimestampsDtsOnlyFrames()
     (void) gst_element_set_state(pipeline.get(), GST_STATE_NULL);
     QVERIFY2(stripped.count.load(std::memory_order_relaxed) > 0, "No frame lost its PTS; the test proves nothing");
 
-    std::atomic<int> frames{0};
-    GstTest::TestPipeline verify;
-    QVERIFY2(verify.launch(QStringLiteral("filesrc name=src ! qtdemux ! fakesink name=sink sync=false")),
-             qPrintable(verify.error()));
-    g_object_set(verify.element("src").get(), "location", QFile::encodeName(outputPath).constData(), nullptr);
-    const GStreamer::GstPadPtr sinkPad =
-        GStreamer::adoptPad(gst_element_get_static_pad(verify.element("sink").get(), "sink"));
-    GStreamer::PadProbe countProbe;
-    QVERIFY(countProbe.add(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &frames));
-    QVERIFY(verify.play());
-    const QString verifyFailure = verify.runToEos();
-    QVERIFY2(verifyFailure.isEmpty(), qPrintable(verifyFailure));
-    QCOMPARE(frames.load(std::memory_order_relaxed), kFrames);
+    QString playbackFailure;
+    const int frames = GstTest::countPlayableFrames(outputPath, playbackFailure);
+    QVERIFY2(frames >= 0, qPrintable(playbackFailure));
+    QCOMPARE(frames, kFrames);
 }
 
 #endif

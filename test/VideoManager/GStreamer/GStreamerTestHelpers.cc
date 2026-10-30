@@ -6,8 +6,13 @@
 #include <gst/app/gstappsink.h>
 #include <gst/app/gstappsrc.h>
 #include <rhi/qrhi.h>
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
 
 #include <QtCore/QFile>
+#include <QtNetwork/QTcpSocket>
 
 #include "GStreamer.h"
 #include "GstSourceFactory.h"
@@ -106,9 +111,12 @@ QStringList childFactoryNames(GstBin* bin, bool recurse)
     return names;
 }
 
-GStreamer::GstElementPtr findByFactory(GstBin* bin, const char* factoryName)
+GStreamer::GstElementPtr findByFactory(GstElement* bin, const char* factoryName)
 {
-    GstIterator* const it = gst_bin_iterate_all_by_element_factory_name(bin, factoryName);
+    if (!bin) {
+        return {};
+    }
+    GstIterator* const it = gst_bin_iterate_all_by_element_factory_name(GST_BIN(bin), factoryName);
     GValue item = G_VALUE_INIT;
     GStreamer::GstElementPtr found;
     if (it && (gst_iterator_next(it, &item) == GST_ITERATOR_OK)) {
@@ -152,6 +160,59 @@ std::unique_ptr<QRhi> makeNullRhi()
 {
     QRhiNullInitParams params;
     return std::unique_ptr<QRhi>(QRhi::create(QRhi::Null, &params));
+}
+
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+int makeMemfd(const QByteArray& bytes)
+{
+    const long page = sysconf(_SC_PAGESIZE);
+    const off_t size = static_cast<off_t>(((bytes.size() + page - 1) / page) * page);
+    const int fd = memfd_create("qgc-test", MFD_CLOEXEC | MFD_ALLOW_SEALING);
+    if (fd < 0) {
+        return -1;
+    }
+    if ((ftruncate(fd, size) != 0) || (pwrite(fd, bytes.constData(), size_t(bytes.size()), 0) != bytes.size())) {
+        ::close(fd);
+        return -1;
+    }
+    return fd;
+}
+#endif
+
+QList<int> nalTypes(const QByteArray& data, bool h265)
+{
+    QList<int> types;
+    for (qsizetype start = data.indexOf(QByteArrayView("\x00\x00\x01", 3)); (start >= 0) && (start + 3 < data.size());
+         start = data.indexOf(QByteArrayView("\x00\x00\x01", 3), start + 3)) {
+        const auto header = static_cast<quint8>(data.at(start + 3));
+        types.append(h265 ? ((header >> 1) & 0x3F) : (header & 0x1F));
+    }
+    return types;
+}
+
+int countPlayableFrames(const QString& path, QString& failure)
+{
+    std::atomic<int> frames{0};
+    TestPipeline pipeline;
+    if (!pipeline.launch(QStringLiteral("filesrc name=src ! qtdemux ! fakesink name=sink sync=false"))) {
+        failure = pipeline.error();
+        return -1;
+    }
+    g_object_set(pipeline.element("src").get(), "location", QFile::encodeName(path).constData(), nullptr);
+    const GStreamer::GstPadPtr sinkPad =
+        GStreamer::adoptPad(gst_element_get_static_pad(pipeline.element("sink").get(), "sink"));
+    (void) gst_pad_add_probe(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, countBuffers, &frames, nullptr);
+
+    if (!pipeline.play()) {
+        failure = QStringLiteral("%1: demux pipeline failed to start").arg(path);
+        return -1;
+    }
+    const QString error = pipeline.runToEos();
+    if (!error.isEmpty()) {
+        failure = QStringLiteral("%1: %2").arg(path, error);
+        return -1;
+    }
+    return frames.load(std::memory_order_relaxed);
 }
 
 TestPipeline::TestPipeline(GstElement* pipeline)
@@ -369,6 +430,55 @@ DecoderRankSnapshot::~DecoderRankSnapshot()
 {
     for (const auto& [feature, rank] : _ranks) {
         gst_plugin_feature_set_rank(feature.get(), rank);
+    }
+}
+
+FakeRtspServer::FakeRtspServer(const QByteArray& sdp)
+    : _sdp(sdp)
+{
+    QObject::connect(&_server, &QTcpServer::newConnection, &_server, [this] {
+        while (QTcpSocket* const socket = _server.nextPendingConnection()) {
+            ++_connections;
+            if (!_sdp.isEmpty()) {
+                QObject::connect(socket, &QTcpSocket::readyRead, socket, [this, socket] { _serve(socket); });
+            }
+        }
+    });
+}
+
+void FakeRtspServer::_serve(QTcpSocket* socket)
+{
+    QByteArray& pending = _pending[socket];
+    pending += socket->readAll();
+    for (qsizetype end = pending.indexOf("\r\n\r\n"); end >= 0; end = pending.indexOf("\r\n\r\n")) {
+        const QList<QByteArray> lines = pending.left(end).split('\n');
+        pending.remove(0, end + 4);
+
+        const QList<QByteArray> requestLine = lines.first().trimmed().split(' ');
+        const QByteArray method = requestLine.value(0);
+        QByteArray cseq;
+        for (const QByteArray& line : lines) {
+            if (line.toLower().startsWith("cseq:")) {
+                cseq = line.mid(5).trimmed();
+            }
+        }
+
+        if (method == "SETUP") {
+            _setupUrls.append(requestLine.value(1));
+            continue;
+        }
+
+        QByteArray reply = "RTSP/1.0 200 OK\r\nCSeq: " + cseq + "\r\n";
+        if (method == "OPTIONS") {
+            reply += "Public: OPTIONS, DESCRIBE, SETUP, PLAY, TEARDOWN\r\n\r\n";
+        } else if (method == "DESCRIBE") {
+            reply += "Content-Base: " + uri().toUtf8() +
+                     "/\r\nContent-Type: application/sdp\r\nContent-Length: " + QByteArray::number(_sdp.size()) +
+                     "\r\n\r\n" + _sdp;
+        } else {
+            reply += "\r\n";
+        }
+        (void) socket->write(reply);
     }
 }
 

@@ -3,6 +3,7 @@
 #include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QRegularExpression>
 
+#include "GStreamerTestHelpers.h"
 #include "VideoManager.h"
 #include "VideoStreamController.h"
 #include "VideoTestHelpers.h"
@@ -26,12 +27,7 @@ void VideoManagerInitTest::init()
 
 #ifdef QGC_GST_STREAMING
     // Completing the init prunes the decoders from the GStreamer registry, which these tests don't initialize.
-    static const QRegularExpression sGStreamerCriticalRe(
-        QStringLiteral("cannot register existing type|"
-                       "g_type_add_interface_static.*G_TYPE_IS_INSTANTIATABLE|"
-                       "g_once_init_leave.*result != 0|"
-                       "GStreamer initialization failed"));
-    ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtCriticalMsg, sGStreamerCriticalRe);
+    ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtCriticalMsg, GstTest::glibTypeRegistrationCriticals());
 #endif
 }
 

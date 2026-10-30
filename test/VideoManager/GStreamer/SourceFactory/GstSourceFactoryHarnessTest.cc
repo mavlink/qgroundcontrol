@@ -12,18 +12,6 @@
 
 namespace {
 
-/// The NAL unit types in the Annex B @p data, in order.
-QList<int> nalTypes(const QByteArray& data, bool h265)
-{
-    QList<int> types;
-    for (qsizetype start = data.indexOf(QByteArrayView("\x00\x00\x01", 3)); (start >= 0) && (start + 3 < data.size());
-         start = data.indexOf(QByteArrayView("\x00\x00\x01", 3), start + 3)) {
-        const auto header = static_cast<quint8>(data.at(start + 3));
-        types.append(h265 ? ((header >> 1) & 0x3F) : (header & 0x1F));
-    }
-    return types;
-}
-
 /// RTP packets of @p units, payloaded by @p harness from the given unit on, PTS at 30 fps.
 QList<GstBuffer*> payload(GstHarness* harness, const QList<GstTest::AccessUnit>& units, qsizetype first,
                           qsizetype count)
@@ -107,7 +95,7 @@ void GstSourceFactoryHarnessTest::_testParameterSetGateOnDepayloadedStream()
     GstMapInfo map;
     QVERIFY(gst_buffer_map(first, &map, GST_MAP_READ));
     const QList<int> types =
-        nalTypes(QByteArray(reinterpret_cast<const char*>(map.data), static_cast<qsizetype>(map.size)), h265);
+        GstTest::nalTypes(QByteArray(reinterpret_cast<const char*>(map.data), static_cast<qsizetype>(map.size)), h265);
     gst_buffer_unmap(first, &map);
     gst_buffer_unref(first);
     for (const int type : parameterSets) {

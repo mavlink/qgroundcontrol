@@ -13,15 +13,19 @@
 #include <vector>
 
 #include <QtCore/QByteArray>
+#include <QtCore/QHash>
 #include <QtCore/QList>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
+#include <QtNetwork/QHostAddress>
+#include <QtNetwork/QTcpServer>
 
 #include "GstScoped.h"
 #include "UnitTest.h"
 
 class QRhi;
+class QTcpSocket;
 
 namespace GStreamer::SourceFactory {
 struct Config;
@@ -39,6 +43,16 @@ inline GstClockTime clockTime(std::chrono::milliseconds duration)
 /// Initializes GStreamer once per process; returns an empty string when it is usable, else why it isn't.
 /// Skip on a non-empty result before UnitTest::init(): skipping in init() after it also skips cleanup().
 QString initGStreamer();
+
+/// The GLib type-registration criticals the GStreamer log bridge passes on: they depend on the order in which the
+/// process registered its types, and come 0..N times.
+inline QRegularExpression glibTypeRegistrationCriticals()
+{
+    return QRegularExpression(
+        QStringLiteral("cannot register existing type|"
+                       "g_type_add_interface_static.*G_TYPE_IS_INSTANTIATABLE|"
+                       "g_once_init_leave.*result != 0"));
+}
 
 /// The first of @p names with no element factory registered, or an empty string.
 QString firstMissingFactory(std::initializer_list<const char*> names);
@@ -58,8 +72,8 @@ std::vector<GStreamer::GstElementPtr> childElements(GstBin* bin, bool recurse = 
 /// Factory names of @p bin's children, sorted.
 QStringList childFactoryNames(GstBin* bin, bool recurse = false);
 
-/// The first element made by @p factoryName anywhere inside @p bin, or null.
-GStreamer::GstElementPtr findByFactory(GstBin* bin, const char* factoryName);
+/// The first element made by @p factoryName anywhere inside the bin @p bin, or null (also for a null @p bin).
+GStreamer::GstElementPtr findByFactory(GstElement* bin, const char* factoryName);
 
 /// A sample holding one uninitialized @p format frame; the sample owns the only buffer ref, so the buffer is writable.
 GstSample* makeVideoSample(GstVideoFormat format, int width, int height, GstVideoInfo* info = nullptr);
@@ -72,6 +86,18 @@ GStreamer::GstElementPtr createSource(const QString& uri, const GStreamer::Sourc
 
 /// A QRhi on the Null backend: no device, and createFrom() accepts any native handle.
 std::unique_ptr<QRhi> makeNullRhi();
+
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+/// A sealable memfd holding @p bytes, padded to whole pages as udmabuf needs; the caller owns it. -1 on failure.
+int makeMemfd(const QByteArray& bytes);
+#endif
+
+/// The NAL unit types in the Annex B @p data, in order.
+QList<int> nalTypes(const QByteArray& data, bool h265);
+
+/// Demuxes the MP4/MOV at @p path to EOS. Returns the number of video samples, or -1 with @p failure set when the
+/// file can't be played to the end.
+int countPlayableFrames(const QString& path, QString& failure);
 
 /// A pipeline that is set to NULL and released on destruction.
 class TestPipeline
@@ -182,12 +208,34 @@ private:
     std::vector<std::pair<GStreamer::GstFeaturePtr, guint>> _ranks;
 };
 
-/// libproxy's warning about a host proxy bypass entry it can't parse (e.g. "169.254/16" on macOS runners), which
-/// rtspsrc's proxy lookup reaches the GStreamer log bridge with.
-inline QRegularExpression libproxyIgnoreMaskWarning()
+/// An RTSP server on a free loopback port, for driving rtspsrc without gst-rtsp-server. Given an SDP, it answers
+/// OPTIONS and DESCRIBE and records each SETUP URL without answering it, so the client stops right after picking
+/// streams. Without one it never answers, as a camera whose RTSP service hung.
+class FakeRtspServer
 {
-    return QRegularExpression(QStringLiteral("\"pxbackend\" \"Could not parse ignore mask"));
-}
+public:
+    explicit FakeRtspServer(const QByteArray& sdp = {});
+
+    FakeRtspServer(const FakeRtspServer&) = delete;
+    FakeRtspServer& operator=(const FakeRtspServer&) = delete;
+
+    [[nodiscard]] bool listen() { return _server.listen(QHostAddress::LocalHost, 0); }
+
+    QString uri() const { return QStringLiteral("rtsp://127.0.0.1:%1/test").arg(_server.serverPort()); }
+
+    int connections() const { return _connections; }
+
+    const QList<QByteArray>& setupUrls() const { return _setupUrls; }
+
+private:
+    void _serve(QTcpSocket* socket);
+
+    QTcpServer _server;
+    QByteArray _sdp;
+    QHash<QTcpSocket*, QByteArray> _pending;
+    QList<QByteArray> _setupUrls;
+    int _connections = 0;
+};
 
 }  // namespace GstTest
 

@@ -18,7 +18,6 @@
 #include <QtMultimedia/QVideoSink>
 #include <QtMultimediaQuick/private/qquickvideooutput_p.h>
 #include <QtNetwork/QHostAddress>
-#include <QtNetwork/QTcpServer>
 #include <QtNetwork/QUdpSocket>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QSignalSpy>
@@ -78,67 +77,15 @@ QString udpListenUri()
     return loopbackUri(QLatin1StringView("udp"), 0);
 }
 
-/// Demuxes the MP4/MOV at @p path to EOS. Returns the number of video samples, or -1 with
-/// @p failure set when the file can't be played to the end.
-int countPlayableFrames(const QString& path, QString& failure)
-{
-    std::atomic<int> frames{0};
-    GstTest::TestPipeline pipeline;
-    if (!pipeline.launch(QStringLiteral("filesrc name=src ! qtdemux ! fakesink name=sink sync=false"))) {
-        failure = pipeline.error();
-        return -1;
-    }
-    g_object_set(pipeline.element("src").get(), "location", QFile::encodeName(path).constData(), nullptr);
-    const GStreamer::GstPadPtr sinkPad =
-        GStreamer::adoptPad(gst_element_get_static_pad(pipeline.element("sink").get(), "sink"));
-    (void) gst_pad_add_probe(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &frames, nullptr);
-
-    if (!pipeline.play()) {
-        failure = QStringLiteral("%1: demux pipeline failed to start").arg(path);
-        return -1;
-    }
-    const QString error = pipeline.runToEos();
-    if (!error.isEmpty()) {
-        failure = QStringLiteral("%1: %2").arg(path, error);
-        return -1;
-    }
-    return frames.load(std::memory_order_relaxed);
-}
-
 /// Why the recording at @p path isn't a finalized file, or an empty string when it is.
 QString recordingProblem(const QString& path)
 {
     QString failure;
-    const int frames = countPlayableFrames(path, failure);
+    const int frames = GstTest::countPlayableFrames(path, failure);
     return (frames >= kMinRecordedFrames)
                ? QString()
                : QStringLiteral("%1: %2 frames recorded %3").arg(path).arg(frames).arg(failure);
 }
-
-/// Accepts RTSP connections and never answers, as a camera whose RTSP service hung (after Qt's UnResponsiveRtspServer,
-/// qtmultimedia/tests/auto/integration/qmediaplayerbackend/server.h).
-class UnresponsiveRtspServer
-{
-public:
-    UnresponsiveRtspServer()
-    {
-        QObject::connect(&_server, &QTcpServer::newConnection, &_server, [this] {
-            while (_server.nextPendingConnection()) {
-                ++_connections;
-            }
-        });
-    }
-
-    [[nodiscard]] bool listen() { return _server.listen(QHostAddress::LocalHost, 0); }
-
-    QString uri() const { return QStringLiteral("rtsp://127.0.0.1:%1/test").arg(_server.serverPort()); }
-
-    int connections() const { return _connections; }
-
-private:
-    QTcpServer _server;
-    int _connections = 0;
-};
 
 /// Holds a streaming thread inside a pad probe until released; shared with the probe, which may outlive the test.
 struct Gate
@@ -163,32 +110,17 @@ struct Gate
     bool open = false;
 };
 
-/// The pipeline's first element (recursively) that @p match accepts.
-GStreamer::GstElementPtr findElement(GstElement* pipeline, const std::function<bool(GstElement*)>& match)
+/// The head (queue or valve) of the tee branch @p branch.
+GStreamer::GstElementPtr branchHead(GstElement* pipeline, GStreamer::PipelineBranch branch, const char* factoryName)
 {
-    if (!pipeline) {
-        return nullptr;
-    }
     for (GStreamer::GstElementPtr& element : GstTest::childElements(GST_BIN(pipeline), /*recurse=*/true)) {
-        if (match(element.get())) {
+        GstElementFactory* const factory = gst_element_get_factory(element.get());
+        if (factory && (g_strcmp0(gst_plugin_feature_get_name(factory), factoryName) == 0) &&
+            (GStreamer::branchOf(GST_OBJECT(element.get())) == branch)) {
             return std::move(element);
         }
     }
     return nullptr;
-}
-
-bool isFactory(GstElement* element, const char* factoryName)
-{
-    GstElementFactory* const factory = gst_element_get_factory(element);
-    return factory && (g_strcmp0(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)), factoryName) == 0);
-}
-
-/// The head (queue or valve) of the tee branch @p branch.
-GStreamer::GstElementPtr branchHead(GstElement* pipeline, GStreamer::PipelineBranch branch, const char* factoryName)
-{
-    return findElement(pipeline, [branch, factoryName](GstElement* element) {
-        return isFactory(element, factoryName) && (GStreamer::branchOf(GST_OBJECT(element)) == branch);
-    });
 }
 
 /// A GstVideoReceiver receiving @p uri, with spies on its signals, a VideoOutput in a shown window, and a sender of the
@@ -232,8 +164,7 @@ struct Receiver
     {
         gint port = 0;
         (void) GstVideoReceiverTest::runOnPipeline(receiver.get(), [&port](GstElement* pipeline) {
-            if (const GStreamer::GstElementPtr source =
-                    findElement(pipeline, [](GstElement* element) { return isFactory(element, "udpsrc"); })) {
+            if (const GStreamer::GstElementPtr source = GstTest::findByFactory(pipeline, "udpsrc")) {
                 g_object_get(source.get(), "port", &port, nullptr);
             }
         });
@@ -298,8 +229,7 @@ struct Receiver
     {
         bool blocked = false;
         (void) GstVideoReceiverTest::runOnPipeline(receiver.get(), [&blocked, gate](GstElement* pipeline) {
-            const GStreamer::GstElementPtr fileSink =
-                findElement(pipeline, [](GstElement* element) { return isFactory(element, "filesink"); });
+            const GStreamer::GstElementPtr fileSink = GstTest::findByFactory(pipeline, "filesink");
             const GStreamer::GstPadPtr pad =
                 GStreamer::adoptPad(fileSink ? gst_element_get_static_pad(fileSink.get(), "sink") : nullptr);
             blocked = pad && gst_pad_add_probe(
@@ -453,9 +383,6 @@ void GstVideoReceiverTest::_testDecodesMockLinkStreams()
     if (!MockVideoStreamServer::isStreamTypeAvailable(type)) {
         QSKIP("This GStreamer install lacks the stream type's encoder or muxer");
     }
-    if (type == StreamType::RtspH264) {
-        ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg, GstTest::libproxyIgnoreMaskWarning());
-    }
 
     // The rows cover the stream paths, not decoder choice. CI's macOS VMs can't hardware-decode H.265, and
     // decodebin3 doesn't fall back from a hardware decoder that fails to start. Outlives the receiver.
@@ -579,7 +506,7 @@ void GstVideoReceiverTest::_testDecoderFailureKeepsRecording()
     expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^Decoder error from .*injected decoder failure")));
     QVERIFY(runOnPipeline(stream.receiver.get(), [](GstElement* pipeline) {
-        const GStreamer::GstElementPtr decoder = GstTest::findByFactory(GST_BIN(pipeline), "decodebin3");
+        const GStreamer::GstElementPtr decoder = GstTest::findByFactory(pipeline, "decodebin3");
         GError* const error =
             g_error_new_literal(GST_STREAM_ERROR, GST_STREAM_ERROR_DECODE, "injected decoder failure");
         (void) gst_element_post_message(decoder.get(),
@@ -835,7 +762,7 @@ void GstVideoReceiverTest::_testRecordingPlayableWhileInProgress()
     const bool playable = UnitTest::waitForCondition(
         [&] {
             (void) QFile::remove(snapshot);
-            return QFile::copy(path, snapshot) && (countPlayableFrames(snapshot, failure) > 0);
+            return QFile::copy(path, snapshot) && (GstTest::countPlayableFrames(snapshot, failure) > 0);
         },
         TestTimeout::mediumDuration(), u"mid-recording copy is playable");
     QVERIFY2(playable, qPrintable(failure));
@@ -903,7 +830,7 @@ void GstVideoReceiverTest::_testRecordingSwitchWithoutDisplay()
             expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
                              QRegularExpression(QStringLiteral("^Recording error: .*injected recorder failure")));
             QVERIFY(runOnPipeline(stream.receiver.get(), [](GstElement* pipeline) {
-                const GStreamer::GstElementPtr fileSink = GstTest::findByFactory(GST_BIN(pipeline), "filesink");
+                const GStreamer::GstElementPtr fileSink = GstTest::findByFactory(pipeline, "filesink");
                 GError* const error =
                     g_error_new_literal(GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_WRITE, "injected recorder failure");
                 (void) gst_element_post_message(fileSink.get(),
@@ -946,7 +873,7 @@ void GstVideoReceiverTest::_testStreamEndClosesRecordingAtOnce()
     // EOS can. Sent past the source, which is cut off so only the watchdog ends the session, a second or two later.
     QElapsedTimer clock;
     QVERIFY(runOnPipeline(stream.receiver.get(), [&clock](GstElement* pipeline) {
-        const GStreamer::GstElementPtr tee = GstTest::findByFactory(GST_BIN(pipeline), "tee");
+        const GStreamer::GstElementPtr tee = GstTest::findByFactory(pipeline, "tee");
         const GStreamer::GstPadPtr teeSink = GStreamer::adoptPad(gst_element_get_static_pad(tee.get(), "sink"));
         const GStreamer::GstPadPtr sourcePad = GStreamer::adoptPad(gst_pad_get_peer(teeSink.get()));
         (void) gst_pad_add_probe(
@@ -1250,9 +1177,8 @@ void GstVideoReceiverTest::_testUnresponsiveRtspServer()
     if (!GstTest::firstMissingFactory({"rtspsrc"}).isEmpty()) {
         QSKIP("rtspsrc plugin unavailable");
     }
-    UnresponsiveRtspServer server;
+    GstTest::FakeRtspServer server;
     QVERIFY(server.listen());
-    ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg, GstTest::libproxyIgnoreMaskWarning());
 
     // Either rtspsrc gives up on the unanswered OPTIONS after its TCP timeout or the first-frame watchdog fires
     // first; which one warns depends on the host's timing, and the receiver's reaction is what is checked.

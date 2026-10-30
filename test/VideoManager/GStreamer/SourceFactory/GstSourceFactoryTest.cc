@@ -15,12 +15,6 @@
 
 namespace {
 
-/// The first element inside @p bin made by @p factoryName, or null.
-GStreamer::GstElementPtr child(GstElement* bin, const char* factoryName)
-{
-    return GstTest::findByFactory(GST_BIN(bin), factoryName);
-}
-
 /// What a bare test sink pad received: each buffer's bytes and PTS.
 struct ReceivedBuffers
 {
@@ -95,8 +89,8 @@ struct MpegTsSource
 {
     explicit MpegTsSource(const GStreamer::SourceFactory::Config& config)
         : bin(GStreamer::SourceFactory::create(QStringLiteral("mpegts://127.0.0.1:5600"), config))
-        , demux(bin.get() ? child(bin.get(), "tsdemux") : nullptr)
-        , parserSink(GStreamer::adoptPad(bin.get() ? parserSinkPad(bin.get()) : nullptr))
+        , demux(GstTest::findByFactory(bin.get(), "tsdemux"))
+        , parserSink(GStreamer::adoptPad(parserSinkPad(bin.get())))
     {}
 
     /// Built, and no pad reaches the parser yet.
@@ -109,7 +103,7 @@ struct MpegTsSource
 private:
     static GstPad* parserSinkPad(GstElement* bin)
     {
-        const GStreamer::GstElementPtr parser = child(bin, "parsebin");
+        const GStreamer::GstElementPtr parser = GstTest::findByFactory(bin, "parsebin");
         return parser ? gst_element_get_static_pad(parser.get(), "sink") : nullptr;
     }
 };
@@ -131,7 +125,7 @@ void GstSourceFactoryTest::_testSourceFactoryUdpRtpJitterBuffer()
     const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("udp://127.0.0.1:5600"), config);
     QVERIFY(bin);
 
-    const GStreamer::GstElementPtr jb = child(bin.get(), "rtpjitterbuffer");
+    const GStreamer::GstElementPtr jb = GstTest::findByFactory(bin.get(), "rtpjitterbuffer");
     QVERIFY2(jb, "static UDP-RTP path must insert an rtpjitterbuffer at NULL state");
 
     guint latency = 0;
@@ -156,7 +150,8 @@ void GstSourceFactoryTest::_testSourceFactoryJitterBufferNone()
     const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("udp://127.0.0.1:5600"), config);
     QVERIFY(bin);
 
-    QVERIFY2(!child(bin.get(), "rtpjitterbuffer"), "JitterBuffer::None must link the source straight to the parser");
+    QVERIFY2(!GstTest::findByFactory(bin.get(), "rtpjitterbuffer"),
+             "JitterBuffer::None must link the source straight to the parser");
 }
 
 void GstSourceFactoryTest::_testSourceFactoryNoRetransmission()
@@ -172,7 +167,7 @@ void GstSourceFactoryTest::_testSourceFactoryNoRetransmission()
     const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("rtsp://127.0.0.1:8554/test"), config);
     QVERIFY(bin);
 
-    const GStreamer::GstElementPtr source = child(bin.get(), "rtspsrc");
+    const GStreamer::GstElementPtr source = GstTest::findByFactory(bin.get(), "rtspsrc");
     QVERIFY(source);
 
     gboolean doRtx = TRUE;
@@ -216,7 +211,7 @@ void GstSourceFactoryTest::_testSourceFactoryRtspJitterBufferPolicy()
     const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("rtsp://127.0.0.1:8554/test"), config);
     QVERIFY(bin);
 
-    const GStreamer::GstElementPtr source = child(bin.get(), "rtspsrc");
+    const GStreamer::GstElementPtr source = GstTest::findByFactory(bin.get(), "rtspsrc");
     QVERIFY(source);
 
     guint latencyMs = 0;
@@ -228,7 +223,7 @@ void GstSourceFactoryTest::_testSourceFactoryRtspJitterBufferPolicy()
     QCOMPARE(doRetransmission, expectedRetransmission ? TRUE : FALSE);
     QCOMPARE(dropOnLatency, expectedDropOnLatency ? TRUE : FALSE);
 
-    QVERIFY2(!child(bin.get(), "rtpjitterbuffer"),
+    QVERIFY2(!GstTest::findByFactory(bin.get(), "rtpjitterbuffer"),
              "rtspsrc owns its internal jitterbuffer; the factory must not add a second one");
 
     // rtspsrc only creates its rtpbin during SETUP; drive the same signals it emits so the
@@ -277,7 +272,7 @@ void GstSourceFactoryTest::_testSourceFactoryRtspSelectsOnlyVideoStreams()
     const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("rtsp://127.0.0.1:8554/test"), config);
     QVERIFY(bin);
 
-    const GStreamer::GstElementPtr source = child(bin.get(), "rtspsrc");
+    const GStreamer::GstElementPtr source = GstTest::findByFactory(bin.get(), "rtspsrc");
     QVERIFY(source);
 
     const QByteArray capsNameUtf8 = capsName.toUtf8();
@@ -316,7 +311,7 @@ void GstSourceFactoryTest::_testSourceFactoryTcpMpegTs()
     const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("tcp://192.168.1.50:5600"), config);
     QVERIFY(bin);
 
-    const GStreamer::GstElementPtr src = child(bin.get(), "tcpclientsrc");
+    const GStreamer::GstElementPtr src = GstTest::findByFactory(bin.get(), "tcpclientsrc");
     QVERIFY2(src, "tcp:// must build a tcpclientsrc");
     gchar* rawHost = nullptr;
     gint port = 0;
@@ -325,8 +320,8 @@ void GstSourceFactoryTest::_testSourceFactoryTcpMpegTs()
     QCOMPARE(QString::fromUtf8(host.get()), QStringLiteral("192.168.1.50"));
     QCOMPARE(port, 5600);
 
-    QVERIFY2(child(bin.get(), "tsdemux"), "MPEG-TS over TCP must insert tsdemux explicitly");
-    QVERIFY2(!child(bin.get(), "rtpjitterbuffer"), "raw MPEG-TS is not RTP; no jitterbuffer");
+    QVERIFY2(GstTest::findByFactory(bin.get(), "tsdemux"), "MPEG-TS over TCP must insert tsdemux explicitly");
+    QVERIFY2(!GstTest::findByFactory(bin.get(), "rtpjitterbuffer"), "raw MPEG-TS is not RTP; no jitterbuffer");
 }
 
 void GstSourceFactoryTest::_testSourceFactoryRejectsBadTcpUri()
@@ -353,7 +348,7 @@ void GstSourceFactoryTest::_testSourceFactoryUdp265()
     const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("udp265://127.0.0.1:5600"), config);
     QVERIFY(bin);
 
-    const GStreamer::GstElementPtr src = child(bin.get(), "udpsrc");
+    const GStreamer::GstElementPtr src = GstTest::findByFactory(bin.get(), "udpsrc");
     QVERIFY2(src, "udp265:// must build a udpsrc");
     GstCaps* rawCaps = nullptr;
     g_object_get(src.get(), "caps", &rawCaps, nullptr);
@@ -362,9 +357,9 @@ void GstSourceFactoryTest::_testSourceFactoryUdp265()
     QCOMPARE(QString::fromUtf8(gst_structure_get_string(gst_caps_get_structure(caps.get(), 0), "encoding-name")),
              QStringLiteral("H265"));
 
-    QVERIFY2(child(bin.get(), "rtpjitterbuffer"), "udp265 RTP path must insert a jitterbuffer");
-    QVERIFY2(!child(bin.get(), "tsdemux"), "udp265 is RTP, not MPEG-TS; no tsdemux");
-    const GStreamer::GstElementPtr depay = child(bin.get(), "rtph265depay");
+    QVERIFY2(GstTest::findByFactory(bin.get(), "rtpjitterbuffer"), "udp265 RTP path must insert a jitterbuffer");
+    QVERIFY2(!GstTest::findByFactory(bin.get(), "tsdemux"), "udp265 is RTP, not MPEG-TS; no tsdemux");
+    const GStreamer::GstElementPtr depay = GstTest::findByFactory(bin.get(), "rtph265depay");
     QVERIFY2(depay, "udp265:// must depayload H265 RTP explicitly");
 
     // hvc1 would leave the depayloader's caps unset until in-band parameter sets arrive
@@ -377,7 +372,7 @@ void GstSourceFactoryTest::_testSourceFactoryUdp265()
                  QStringLiteral("byte-stream"));
     }
 
-    const GStreamer::GstElementPtr parser = child(bin.get(), "h265parse");
+    const GStreamer::GstElementPtr parser = GstTest::findByFactory(bin.get(), "h265parse");
     QVERIFY2(parser, "udp265:// must parse H265 explicitly");
     gint configInterval = 0;
     g_object_get(parser.get(), "config-interval", &configInterval, nullptr);
@@ -394,7 +389,7 @@ void GstSourceFactoryTest::_testSourceFactoryUdpH264Caps()
     const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("udp://127.0.0.1:5600"), config);
     QVERIFY(bin);
 
-    const GStreamer::GstElementPtr src = child(bin.get(), "udpsrc");
+    const GStreamer::GstElementPtr src = GstTest::findByFactory(bin.get(), "udpsrc");
     QVERIFY(src);
     GstCaps* rawCaps = nullptr;
     g_object_get(src.get(), "caps", &rawCaps, nullptr);
@@ -459,14 +454,14 @@ void GstSourceFactoryTest::_testSourceFactoryUdpMpegTs()
     const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("mpegts://127.0.0.1:5600"), config);
     QVERIFY(bin);
 
-    const GStreamer::GstElementPtr src = child(bin.get(), "udpsrc");
+    const GStreamer::GstElementPtr src = GstTest::findByFactory(bin.get(), "udpsrc");
     QVERIFY2(src, "mpegts:// must build a udpsrc");
     GstCaps* rawCaps = nullptr;
     g_object_get(src.get(), "caps", &rawCaps, nullptr);
     QVERIFY2(!GStreamer::adoptCaps(rawCaps), "raw MPEG-TS over UDP must not force RTP caps on udpsrc");
 
-    QVERIFY2(child(bin.get(), "tsdemux"), "mpegts:// must insert tsdemux");
-    QVERIFY2(!child(bin.get(), "rtpjitterbuffer"), "raw MPEG-TS is not RTP; no jitterbuffer");
+    QVERIFY2(GstTest::findByFactory(bin.get(), "tsdemux"), "mpegts:// must insert tsdemux");
+    QVERIFY2(!GstTest::findByFactory(bin.get(), "rtpjitterbuffer"), "raw MPEG-TS is not RTP; no jitterbuffer");
 }
 
 void GstSourceFactoryTest::_testSourceFactorySchemeCaseInsensitive()
@@ -492,7 +487,7 @@ void GstSourceFactoryTest::_testSourceFactoryNegativeLatencyClamped()
     const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("udp://127.0.0.1:5600"), config);
     QVERIFY(bin);
 
-    const GStreamer::GstElementPtr jb = child(bin.get(), "rtpjitterbuffer");
+    const GStreamer::GstElementPtr jb = GstTest::findByFactory(bin.get(), "rtpjitterbuffer");
     QVERIFY(jb);
     guint latency = 99999;
     g_object_get(jb.get(), "latency", &latency, nullptr);
@@ -514,7 +509,7 @@ void GstSourceFactoryTest::_testSourceFactoryDynamicRtpLinkFailureCleansJitterBu
     // A running bin syncs the temporary jitterbuffer out of NULL, so removing it without a NULL
     // transition raises GStreamer's "disposing element in READY/PLAYING" critical. The source stays
     // locked in NULL so the test doesn't bind the UDP port.
-    const GStreamer::GstElementPtr udpsrc = child(source.bin.get(), "udpsrc");
+    const GStreamer::GstElementPtr udpsrc = GstTest::findByFactory(source.bin.get(), "udpsrc");
     QVERIFY(udpsrc);
     (void) gst_element_set_locked_state(udpsrc.get(), TRUE);
     QCOMPARE(gst_element_set_state(source.bin.get(), GST_STATE_READY), GST_STATE_CHANGE_SUCCESS);
@@ -530,7 +525,7 @@ void GstSourceFactoryTest::_testSourceFactoryDynamicRtpLinkFailureCleansJitterBu
 
     QVERIFY2(!gst_pad_is_linked(source.parserSink.get()),
              "a failed dynamic RTP pad link must leave parsebin available for the next valid pad");
-    QVERIFY2(!child(source.bin.get(), "rtpjitterbuffer"),
+    QVERIFY2(!GstTest::findByFactory(source.bin.get(), "rtpjitterbuffer"),
              "a failed dynamic RTP pad link must remove its temporary jitterbuffer");
 }
 
@@ -553,7 +548,8 @@ void GstSourceFactoryTest::_testSourceFactoryDynamicLinkSkipsNonVideoRtp()
     // gst_element_add_pad emits pad-added and consumes the floating pad.
     QVERIFY(gst_element_add_pad(source.demux.get(), gst_pad_new_from_static_template(&sAudioTemplate, "audio_rtp")));
     QVERIFY2(!gst_pad_is_linked(source.parserSink.get()), "an audio RTP pad must not be linked to the video parser");
-    QVERIFY2(!child(source.bin.get(), "rtpjitterbuffer"), "an audio RTP pad must not get a jitterbuffer");
+    QVERIFY2(!GstTest::findByFactory(source.bin.get(), "rtpjitterbuffer"),
+             "an audio RTP pad must not get a jitterbuffer");
 
     QVERIFY(
         gst_element_add_pad(source.demux.get(), gst_pad_new_from_static_template(&sH264RtpPadTemplate, "video_rtp")));
@@ -586,8 +582,8 @@ void GstSourceFactoryTest::_testSourceFactoryRtspDepayloaderRequestsKeyframes()
     config.jitterBuffer = GStreamer::SourceFactory::JitterBuffer::None;
     const GStreamer::GstElementPtr bin = GstTest::createSource(uri, config);
     QVERIFY(bin);
-    const GStreamer::GstElementPtr source = child(bin.get(), qPrintable(sourceFactory));
-    const GStreamer::GstElementPtr parser = child(bin.get(), "parsebin");
+    const GStreamer::GstElementPtr source = GstTest::findByFactory(bin.get(), qPrintable(sourceFactory));
+    const GStreamer::GstElementPtr parser = GstTest::findByFactory(bin.get(), "parsebin");
     QVERIFY(source && parser);
 
     // The source stays in NULL, so nothing connects: its RTP pad is added by hand, as it adds one after SETUP, and
@@ -609,7 +605,7 @@ void GstSourceFactoryTest::_testSourceFactoryRtspDepayloaderRequestsKeyframes()
     QVERIFY(gst_pad_push_event(pad, gst_event_new_caps(caps.get())));
     QVERIFY(gst_pad_push_event(pad, gst_event_new_segment(&segment)));
 
-    const GStreamer::GstElementPtr depayloader = child(bin.get(), "rtph264depay");
+    const GStreamer::GstElementPtr depayloader = GstTest::findByFactory(bin.get(), "rtph264depay");
     QVERIFY2(depayloader, "parsebin did not plug rtph264depay for H.264 RTP caps");
     gboolean requestKeyframe = !expectedRequestKeyframe;
     g_object_get(depayloader.get(), "request-keyframe", &requestKeyframe, nullptr);

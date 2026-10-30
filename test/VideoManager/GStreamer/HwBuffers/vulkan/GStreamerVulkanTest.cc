@@ -13,6 +13,7 @@
 #include "GStreamer.h"
 #include "GStreamerTestHelpers.h"
 #include "GstHwPathTelemetry.h"
+#include "gstqgc/GstQgcTestSupport.h"
 #include "gstqgc/gstqgcqvideosink.h"
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && defined(QGC_HAS_GST_VULKAN_GPU_PATH)
@@ -50,8 +51,7 @@ void GstHwBuffersPipelineTest::_testVulkanDispatchDemotesToCpu()
     QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, owner.get(),
                      [&frameCount](const QVideoFrame&) { ++frameCount; });
 
-    const GStreamer::GstElementPtr qvideosink =
-        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(sinkBin.get()), "qgcqvideosink"));
+    const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(sinkBin.get());
     QVERIFY2(qvideosink, "Could not find 'qgcqvideosink' inside sink bin");
     const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
     QVERIFY2(sinkPad, "qgcqvideosink has no sink pad");

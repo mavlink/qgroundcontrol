@@ -6,10 +6,18 @@
 
 #include <QtCore/QtTypes>
 
+#include "GstScoped.h"
 #include "gstqgc/gstqgcqvideosink.h"
+#include "gstqgc/gstqgcvideosinkbin.h"
 
-/// Readers of qgcqvideosink's counters shared by the gstqgc test classes.
+/// qgcqvideosink helpers shared by the test classes that drive it.
 namespace GstQgcTest {
+
+/// The qgcqvideosink inside the qgcvideosinkbin @p sinkBin.
+inline GStreamer::GstElementPtr qvideosink(GstElement* sinkBin)
+{
+    return GStreamer::adoptElement(gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(sinkBin)));
+}
 
 inline guint64 framesDelivered(GstElement* qvideosink)
 {
