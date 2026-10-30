@@ -8,8 +8,8 @@ import QGroundControl.GeoMap
 
 /// GeoMap-engine drop-in for the QtLocation FlightMap of Plan View. GeoMapView provides the editorMap contract Plan
 /// View and its panels consume (center, zoomLevel, toCoordinate/fromCoordinate, setVisibleRegion, mapClicked, ...).
-/// The plan is displayed, and the current simple mission item can be dragged. Editing fence and rally points, and
-/// pattern items, on this map is not supported yet.
+/// The plan is displayed, and the current simple mission item and rally point can be dragged. Editing fence points
+/// and pattern items on this map is not supported yet.
 GeoMapView {
     id: root
 
@@ -17,10 +17,9 @@ GeoMapView {
     property rect centerViewport: Qt.rect(0, 0, width, height) ///< Part of the map not covered by Plan View tools
     property real missionOpacity: 1                            ///< Dims the mission while another layer is edited
     property bool missionInteractive: false                    ///< The current mission item can be dragged on the map
+    property real rallyOpacity: 1                              ///< Dims the rally points while another layer is edited
+    property bool rallyInteractive: false                      ///< Rally points can be selected and the current one dragged
     property real _nonInteractiveOpacity: 0.5                  ///< Consumed by the Plan View panels
-
-    /// A mission item marker was picked on the map
-    signal itemSelected(int sequenceNumber)
 
     readonly property var _missionController: planMasterController ? planMasterController.missionController : null
     readonly property var _rallyPointController: planMasterController ? planMasterController.rallyPointController : null
@@ -29,10 +28,8 @@ GeoMapView {
 
     property var _missionItemSelectionPanel: null
 
-    allowGCSLocationCenter: true
-    allowVehicleLocationCenter: true
-    // The plan is edited away from the vehicle: only the one-time centering applies
-    followOffscreenVehicle: false
+    /// A mission item marker was picked on the map
+    signal itemSelected(int sequenceNumber)
 
     function _closeMissionItemSelectionPanel() {
         if (_missionItemSelectionPanel) {
@@ -40,14 +37,10 @@ GeoMapView {
         }
     }
 
-    // The picker lists the old mission's items: close it when the mission is replaced
-    Connections {
-        target: root._missionController
-
-        function onVisualItemsReset() {
-            root._closeMissionItemSelectionPanel()
-        }
-    }
+    allowGCSLocationCenter: true
+    allowVehicleLocationCenter: true
+    // The plan is edited away from the vehicle: only the one-time centering applies
+    followOffscreenVehicle: false
 
     GeoMapPin {
         scene: root.scene
@@ -118,11 +111,32 @@ GeoMapView {
     Repeater {
         model: root._rallyPointController ? root._rallyPointController.points : undefined
 
-        GeoMapMissionLabel {
+        GeoMapRallyPoint {
             scene: root.scene
             surfaceModel: root.surfaceModel
-            coordinate: object.coordinate
-            label: qsTr("R", "rally point map item label")
+            rallyPoint: object
+            vehicle: root.planMasterController ? root.planMasterController.controllerVehicle : null
+            homeAltitude: root._plannedHomePosition.altitude
+            checked: root.rallyInteractive && object === root._rallyPointController.currentRallyPoint
+            opacity: root.rallyOpacity
+            node3DOpacity: root.rallyOpacity
+            pickable: root.rallyInteractive
+            draggable: checked
+
+            onClicked: {
+                if (mainWindow.allowViewSwitch()) {
+                    root._rallyPointController.currentRallyPoint = object
+                }
+            }
+            // The drag only moves the point horizontally, keeping its altitude
+            onDragged: (coordinate) => object.coordinate = QtPositioning.coordinate(coordinate.latitude, coordinate.longitude, object.coordinate.altitude)
+            // A PX4 AMSL altitude is the ground height under the point, so it is read again where the point lands
+            onDragFinished: {
+                const vehicle = root.planMasterController.controllerVehicle
+                if (vehicle && vehicle.px4Firmware && object.altitudeFrame === QGroundControl.AltitudeFrameAbsolute) {
+                    object.useTerrainAltitude()
+                }
+            }
         }
     }
 
@@ -139,6 +153,15 @@ GeoMapView {
                 }
                 destroy()
             }
+        }
+    }
+
+    // The picker lists the old mission's items: close it when the mission is replaced
+    Connections {
+        target: root._missionController
+
+        function onVisualItemsReset() {
+            root._closeMissionItemSelectionPanel()
         }
     }
 }

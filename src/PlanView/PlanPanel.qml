@@ -27,7 +27,8 @@ Item {
         "fence":    PlanEditLayers.layerFence,
         "rally":    PlanEditLayers.layerRally
     })
-    readonly property var   tabModel: Logic.tabModel({ incompleteCount: _incompleteCount })
+    readonly property bool  _homeSet:               _missionController.homePositionSet
+    readonly property var   tabModel: Logic.tabModel({ incompleteCount: _incompleteCount, homeSet: _homeSet })
 
     property int _incompleteCount:  0
     property int _lastItemCount:    0
@@ -66,6 +67,9 @@ Item {
     }
 
     function _setTab(tab) {
+        if (!Logic.tabEnabled(tab, _homeSet)) {
+            tab = Logic.TabPlan
+        }
         currentTab = tab
         editingLayerChangeRequested(_layerForTab[tab])
     }
@@ -116,6 +120,12 @@ Item {
         // Plan clears reset the mission before the fence and rally points, so wait until all of them are done
         function onVisualItemsReset() {
             Qt.callLater(root._resetTab)
+        }
+
+        function onHomePositionSetChanged() {
+            if (!Logic.tabEnabled(root.currentTab, root._homeSet)) {
+                root._setTab(Logic.TabPlan)
+            }
         }
     }
 

@@ -255,10 +255,8 @@ import QGroundControl
 import QGroundControl.Controls
 
 Item {
+    // 1. id
     id: root
-
-    // 1. Property bindings (width, height, anchors)
-    width: ScreenTools.defaultFontPixelHeight * 10
 
     // 2. Public properties
     property int myProperty: 0
@@ -272,22 +270,27 @@ Item {
     // 5. Functions
     function doSomething() { }
 
-    // 6. Visual children
+    // 6. Object properties (width, height, anchors, inherited properties)
+    width: ScreenTools.defaultFontPixelHeight * 10
+
+    // 7. Visual children
     QGCButton {
         text: qsTr("Click Me")
         onClicked: root.clicked()
     }
 
-    // 7. Connections (use function syntax)
+    // 8. Connections (use function syntax)
     Connections {
         target: someObject
         function onSignalName() { }  // NOT: onSignalName: { }
     }
 
-    // 8. Component.onCompleted
+    // 9. Component.onCompleted
     Component.onCompleted: { }
 }
 ```
+
+This follows the [Qt QML Coding Conventions](https://doc.qt.io/qt-6/qml-codingconventions.html) order.
 
 ### QML Guidelines
 

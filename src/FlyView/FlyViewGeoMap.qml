@@ -237,11 +237,13 @@ GeoMapView {
     Repeater {
         model: root._rallyPointController ? root._rallyPointController.points : undefined
 
-        GeoMapMissionLabel {
+        GeoMapRallyPoint {
             scene: root.scene
             surfaceModel: root.surfaceModel
-            coordinate: object.coordinate
-            label: qsTr("R", "rally point map item label")
+            rallyPoint: object
+            vehicle: root._activeVehicle
+            homeAltitude: root._activeVehicle ? root._activeVehicle.homePosition.altitude : NaN
+            homeTerrainBias: root._activeVehicleHomeTerrainBias
         }
     }
 
