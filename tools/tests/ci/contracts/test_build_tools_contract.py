@@ -184,14 +184,6 @@ def test_jobs_installing_dependencies_get_the_pinned_tools_first() -> None:
             if "./.github/actions/install-dependencies" not in uses:
                 continue
             index = uses.index("./.github/actions/install-dependencies")
-            setups = [
-                step
-                for step in steps[:index]
-                if step.get("uses") == "./.github/actions/build-setup"
-            ]
-            assert setups, workflow
-            assert all(
-                (step.get("with") or {}).get("build-cache", "true") == "true" for step in setups
-            )
+            assert "./.github/actions/build-setup" in uses[:index], workflow
             checked += 1
     assert checked >= 8

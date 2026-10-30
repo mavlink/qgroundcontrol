@@ -42,12 +42,6 @@ inputs:
     description: Comma-separated tools/uv.lock dependency groups for setup-python (e.g. scripts,coverage)
     required: false
     default: scripts
-  build-cache:
-    description: >-
-      Set up the compiler, moc, CPM, and GStreamer SDK caches; 'false' for jobs that build no
-      QGroundControl sources (they need only Qt, Python, and the compiler toolchain).
-    required: false
-    default: 'true'
 
 outputs:
   host_qt_root_dir:
@@ -137,7 +131,6 @@ runs:
 
     - name: Setup caching
       id: cache
-      if: inputs.build-cache == 'true'
       uses: ./.github/actions/cache
       with:
         host: ${{ steps.plan.outputs.qt_host }}
@@ -282,7 +275,6 @@ runs:
         JDK_VERSION: ${{ steps.java.outputs.version }}
         JDK_REQUESTED: ${{ steps.plan.outputs.java_version }}
         PYTHON_GROUPS: ${{ inputs.python-groups }}
-        BUILD_CACHE: ${{ inputs.build-cache }}
         COMPILER_CACHE: ${{ steps.cache.outputs.compiler-cache }}
         COMPILER_CACHE_KEY: ${{ steps.cache.outputs.compiler-cache-key }}
         MOC_CACHE: ${{ steps.cache.outputs.moc-cache }}

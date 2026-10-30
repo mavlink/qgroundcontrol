@@ -247,7 +247,7 @@ def test_ios_legs_share_the_device_cpm_snapshot(plan) -> None:
     (cache,) = (step for step in steps if step.get("uses") == "./.github/actions/cache")
 
     # One cache setup serves every mode; iOS keeps its former mac/ios cache identity.
-    assert cache["if"] == "inputs.build-cache == 'true'"
+    assert "if" not in cache
     assert cache["with"]["key-suffix"] == "${{ inputs.cache-key-suffix }}"
     assert cache["with"]["host"] == "${{ steps.plan.outputs.qt_host }}"
     assert cache["with"]["target"] == "${{ steps.plan.outputs.cache_target }}"
@@ -260,20 +260,6 @@ def test_ios_legs_share_the_device_cpm_snapshot(plan) -> None:
     assert simulator.outputs["cpm_key"] == device.outputs["cpm_key"]
     for family in ("ccache", "moccache"):
         assert simulator.outputs[f"{family}_key"] != device.outputs[f"{family}_key"]
-
-
-def test_only_jobs_without_qgc_sources_skip_the_build_caches() -> None:
-    # Every build-setup job checks out the QGC sources, so none skips the build caches.
-    assert load_action("build-setup")["inputs"]["build-cache"]["default"] == "true"
-    skipping = {
-        workflow
-        for workflow in workflow_names()
-        for job in (load_workflow(workflow).get("jobs") or {}).values()
-        for step in job.get("steps") or []
-        if step.get("uses") == "./.github/actions/build-setup"
-        and (step.get("with") or {}).get("build-cache", "true") != "true"
-    }
-    assert skipping == set()
 
 
 def test_compiler_tools_install_in_one_step_for_every_runner() -> None:

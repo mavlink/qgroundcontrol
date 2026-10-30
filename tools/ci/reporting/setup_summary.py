@@ -235,8 +235,6 @@ def setup_facts(env: Mapping[str, str], host: Host | None = None) -> list[tuple[
             BACKENDS.get(get("QGC_ACTIONS_CACHE_BACKEND"), get("QGC_ACTIONS_CACHE_BACKEND")),
         ),
     ]
-    if not parse_bool(get("BUILD_CACHE") or "true"):
-        return facts
     ccache_key = ""
     ccache_fallback = ""
     if get("QGC_COMPILER_CACHE_TOOL") == "sccache":
