@@ -1,4 +1,4 @@
-#include "GStreamerGlReadbackTest.h"
+#include "GstHwBuffersGlReadbackTest.h"
 
 #include <rhi/qrhi.h>
 
@@ -62,10 +62,10 @@
 
 #endif  // QGC_GST_STREAMING
 
-GStreamerGlReadbackTest::GStreamerGlReadbackTest() = default;
-GStreamerGlReadbackTest::~GStreamerGlReadbackTest() = default;
+GstHwBuffersGlReadbackTest::GstHwBuffersGlReadbackTest() = default;
+GstHwBuffersGlReadbackTest::~GstHwBuffersGlReadbackTest() = default;
 
-QRhi* GStreamerGlReadbackTest::_glRhi()
+QRhi* GstHwBuffersGlReadbackTest::_glRhi()
 {
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) || defined(QGC_TEST_GLMEMORY_READBACK)
     if (_rhiProbed) {
@@ -94,14 +94,14 @@ QRhi* GStreamerGlReadbackTest::_glRhi()
 
 #ifdef QGC_GST_STREAMING
 
-void GStreamerGlReadbackTest::init()
+void GstHwBuffersGlReadbackTest::init()
 {
     GStreamerTestBase::init();
     // The xcb platform this class runs on registers with the desktop portal when one is around.
     ignoreLogMessage("qt.qpa.services", QtWarningMsg, QRegularExpression(QStringLiteral("host portal")));
 }
 
-void GStreamerGlReadbackTest::cleanupTestCase()
+void GstHwBuffersGlReadbackTest::cleanupTestCase()
 {
     _rhi.reset();
     _surface.reset();
@@ -266,7 +266,7 @@ GstMemory* wrapDmaBuf(GstAllocator* allocator, const QByteArray& bytes, bool& re
 }  // namespace
 #endif
 
-void GStreamerGlReadbackTest::_testNv12PlanesReadBack_data()
+void GstHwBuffersGlReadbackTest::_testNv12PlanesReadBack_data()
 {
     QTest::addColumn<bool>("dmaBufPerPlane");
     QTest::addColumn<QString>("caps");
@@ -283,7 +283,7 @@ void GStreamerGlReadbackTest::_testNv12PlanesReadBack_data()
 #endif
 }
 
-void GStreamerGlReadbackTest::_testNv12PlanesReadBack()
+void GstHwBuffersGlReadbackTest::_testNv12PlanesReadBack()
 {
 #if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QSKIP("DMABuf GPU path not compiled in this build");
@@ -352,7 +352,7 @@ void GStreamerGlReadbackTest::_testNv12PlanesReadBack()
 #endif
 }
 
-void GStreamerGlReadbackTest::_testVaDecodedFrameReadBack()
+void GstHwBuffersGlReadbackTest::_testVaDecodedFrameReadBack()
 {
 #if !defined(QGC_HAS_GST_DMABUF_GPU_PATH) || !GST_CHECK_VERSION(1, 24, 0)
     QSKIP("DMABuf DMA_DRM import not compiled in this build");
@@ -458,7 +458,7 @@ void GStreamerGlReadbackTest::_testVaDecodedFrameReadBack()
 #endif
 }
 
-void GStreamerGlReadbackTest::_testGlMemoryFrameReadsBack()
+void GstHwBuffersGlReadbackTest::_testGlMemoryFrameReadsBack()
 {
 #if !defined(QGC_TEST_GLMEMORY_READBACK)
     QSKIP("GLMemory GPU path on EGL not compiled in this build");
@@ -534,7 +534,7 @@ void GStreamerGlReadbackTest::_testGlMemoryFrameReadsBack()
 #endif
 }
 
-void GStreamerGlReadbackTest::_testGlMemoryFrameToImage()
+void GstHwBuffersGlReadbackTest::_testGlMemoryFrameToImage()
 {
 #if !defined(QGC_TEST_GLMEMORY_READBACK)
     QSKIP("GLMemory GPU path on EGL not compiled in this build");
@@ -598,4 +598,4 @@ void GStreamerGlReadbackTest::_testGlMemoryFrameToImage()
 
 #endif  // QGC_GST_STREAMING
 
-UT_REGISTER_TEST(GStreamerGlReadbackTest, TestLabel::Integration)
+UT_REGISTER_TEST(GstHwBuffersGlReadbackTest, TestLabel::Integration)
