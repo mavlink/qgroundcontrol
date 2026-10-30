@@ -23,13 +23,12 @@ set(GSTREAMER_PLUGIN_ALTERNATES "videoconvertscale|videoconvert+videoscale")
 # Codec implementations (openh264/libav) are intentionally excluded: distro
 # bundles may omit one while shipping another usable decode path.
 # opengl supplies glupload/glcolorconvert (GL zero-copy video path);
-# multifile (splitmuxsink), isomp4 (qtmux/mp4mux), and matroska (matroskamux)
-# are load-bearing for video recording (kFileMux, RecordingBranch.cc).
+# isomp4 (mp4mux/qtmux) and matroska (matroskamux) are the recording muxers
+# (RecordingBranch.cc).
 set(GSTREAMER_RUNTIME_REQUIRED_PLUGINS
     coreelements
     isomp4
     matroska
-    multifile
     opengl
     playback
     rtsp

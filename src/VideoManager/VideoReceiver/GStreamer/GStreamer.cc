@@ -96,7 +96,6 @@ constexpr PluginFeature kPluginFeatures[] = {
     {"RTSP video", false, "rtspsrc"},
     {"MPEG-TS video", false, "tsdemux"},
     {"TCP video", false, "tcpclientsrc"},
-    {"Video recording", false, "splitmuxsink"},
     {"MKV recording", false, "matroskamux"},
     {"MP4/MOV recording", false, "mp4mux qtmux"},
 };
