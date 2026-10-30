@@ -19,7 +19,6 @@ private slots:
     void _testD3DFrameToImage();
     void _testDmaBufDispatch();
     void _testVulkanDispatchDemotesToCpu();
-    void _testHwBufferMapTexturesGuard();
     void _testHwBufferFactoryDispatchSystemMemory();
     void _testIOSurfaceFrameToImage();
 #endif

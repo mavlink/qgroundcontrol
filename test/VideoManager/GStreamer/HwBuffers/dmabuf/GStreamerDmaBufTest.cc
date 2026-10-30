@@ -311,49 +311,29 @@ void GstHwBuffersTest::_testDmaBufPathNeedsQtEglDisplay()
 #endif
 }
 
-void GstHwBuffersPipelineTest::_testHwBufferMapTexturesGuard()
+void GstHwBuffersTest::_testDmaBufMapTexturesRejectsForeignRhi()
 {
 #if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QSKIP("DMABuf GPU path not compiled in this build");
 #else
-
-    const quint64 failsBefore =
-        GstHwPathTelemetry::peek(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures);
-
-    GstTest::TestPipeline pipeline;
-    if (!pipeline.launch(QStringLiteral(
-            R"(videotestsrc num-buffers=1 ! capsfilter caps="video/x-raw(memory:DMABuf),format=NV12,width=64,height=64" ! )"
-            "fakesink name=sink sync=false"))) {
-        QSKIP("Could not construct DMABuf test pipeline (element missing)");
-    }
-    if (gst_element_set_state(pipeline.get(), GST_STATE_PAUSED) == GST_STATE_CHANGE_FAILURE) {
-        QSKIP("DMABuf pipeline failed to reach PAUSED (no DMABuf source on this machine)");
-    }
-    (void) gst_element_get_state(pipeline.get(), nullptr, nullptr, GstTest::clockTime(TestTimeout::shortDuration()));
-
-    GstSample* sample = nullptr;
-    if (const GStreamer::GstElementPtr fakesink = pipeline.element("sink")) {
-        g_object_get(fakesink.get(), "last-sample", &sample, nullptr);
-    }
-    if (!sample) {
-        QSKIP("No DMABuf sample produced (caps negotiation failed on this machine)");
-    }
-
+    const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
+    QVERIFY(rhi);
     GstVideoInfo info;
-    GstCaps* caps = gst_sample_get_caps(sample);
-    gst_video_info_from_caps(&info, caps);
-    QVideoFrameFormat fmt(QSize(64, 64), QVideoFrameFormat::Format_NV12);
-
-    GstDmaBufVideoBuffer buf(sample, info, fmt, EGL_NO_DISPLAY);
-    QVideoFrameTexturesUPtr old;
-    QVideoFrameTexturesUPtr result = buf.mapTextures(*reinterpret_cast<QRhi*>(1), old);
-    QVERIFY(!result);
-
-    const quint64 failsAfter =
-        GstHwPathTelemetry::peek(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures);
-    QVERIFY(failsAfter > failsBefore);
-
+    GstSample* sample = makeMemfdDmaBufSample(GST_VIDEO_FORMAT_NV12, info);
+    QVERIFY(sample);
+    GstDmaBufVideoBuffer frame(sample, info, QVideoFrameFormat(QSize(64, 64), QVideoFrameFormat::Format_NV12),
+                               EGL_NO_DISPLAY);
     gst_sample_unref(sample);
+    const quint64 failuresBefore =
+        GstHwPathTelemetry::peek(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures);
+
+    // Warned once per process.
+    ignoreLogMessage("Video.GStreamer.HwBuffers.GstDmaBuf", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("QRhi backend is")));
+    QVideoFrameTexturesUPtr none;
+    QVERIFY2(!frame.mapTextures(*rhi, none), "Only a GL or Vulkan QRhi can import a DMABuf frame");
+    QCOMPARE(GstHwPathTelemetry::peek(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures),
+             failuresBefore + 1);
 #endif
 }
 
