@@ -112,11 +112,6 @@ private:
 
 void GstSourceFactoryTest::_testSourceFactoryUdpRtpJitterBuffer()
 {
-    const QString missing = GstTest::firstMissingFactory({"udpsrc", "rtpjitterbuffer"});
-    if (!missing.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
-    }
-
     GStreamer::SourceFactory::Config config;
     config.jitterBuffer = GStreamer::SourceFactory::JitterBuffer::DropOnLatency;
     config.latencyMs = 80;
@@ -140,10 +135,6 @@ void GstSourceFactoryTest::_testSourceFactoryUdpRtpJitterBuffer()
 
 void GstSourceFactoryTest::_testSourceFactoryJitterBufferNone()
 {
-    if (!GstTest::firstMissingFactory({"udpsrc"}).isEmpty()) {
-        QSKIP("udpsrc plugin unavailable");
-    }
-
     GStreamer::SourceFactory::Config config;
     config.jitterBuffer = GStreamer::SourceFactory::JitterBuffer::None;
 
@@ -156,9 +147,7 @@ void GstSourceFactoryTest::_testSourceFactoryJitterBufferNone()
 
 void GstSourceFactoryTest::_testSourceFactoryNoRetransmission()
 {
-    if (!GstTest::firstMissingFactory({"rtspsrc"}).isEmpty()) {
-        QSKIP("rtspsrc plugin unavailable");
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
 
     // RTSP is the only source with a back-channel for retransmission requests, so it's the one the option reaches.
     GStreamer::SourceFactory::Config config;
@@ -192,9 +181,7 @@ void GstSourceFactoryTest::_testSourceFactoryRtspJitterBufferPolicy_data()
 
 void GstSourceFactoryTest::_testSourceFactoryRtspJitterBufferPolicy()
 {
-    if (!GstTest::firstMissingFactory({"rtspsrc"}).isEmpty()) {
-        QSKIP("rtspsrc plugin unavailable");
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
 
     QFETCH(int, jitterBufferPolicy);
     QFETCH(guint, expectedLatencyMs);
@@ -260,9 +247,7 @@ void GstSourceFactoryTest::_testSourceFactoryRtspSelectsOnlyVideoStreams_data()
 
 void GstSourceFactoryTest::_testSourceFactoryRtspSelectsOnlyVideoStreams()
 {
-    if (!GstTest::firstMissingFactory({"rtspsrc"}).isEmpty()) {
-        QSKIP("rtspsrc plugin unavailable");
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
 
     QFETCH(QString, capsName);
     QFETCH(QString, media);
@@ -302,10 +287,7 @@ void GstSourceFactoryTest::_testSourceFactoryRejectsBadUri()
 
 void GstSourceFactoryTest::_testSourceFactoryTcpMpegTs()
 {
-    const QString missing = GstTest::firstMissingFactory({"tcpclientsrc", "tsdemux"});
-    if (!missing.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("tcpclientsrc", "tsdemux");
 
     GStreamer::SourceFactory::Config config;
     const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("tcp://192.168.1.50:5600"), config);
@@ -339,11 +321,6 @@ void GstSourceFactoryTest::_testSourceFactoryRejectsBadTcpUri()
 
 void GstSourceFactoryTest::_testSourceFactoryUdp265()
 {
-    const QString missing = GstTest::firstMissingFactory({"udpsrc", "rtpjitterbuffer", "rtph265depay", "h265parse"});
-    if (!missing.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
-    }
-
     GStreamer::SourceFactory::Config config;
     const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("udp265://127.0.0.1:5600"), config);
     QVERIFY(bin);
@@ -381,10 +358,6 @@ void GstSourceFactoryTest::_testSourceFactoryUdp265()
 
 void GstSourceFactoryTest::_testSourceFactoryUdpH264Caps()
 {
-    if (!GstTest::firstMissingFactory({"udpsrc"}).isEmpty()) {
-        QSKIP("udpsrc plugin unavailable");
-    }
-
     GStreamer::SourceFactory::Config config;
     const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("udp://127.0.0.1:5600"), config);
     QVERIFY(bin);
@@ -445,10 +418,7 @@ void GstSourceFactoryTest::_testParameterSetGatePassesLengthPrefixedOutput()
 
 void GstSourceFactoryTest::_testSourceFactoryUdpMpegTs()
 {
-    const QString missing = GstTest::firstMissingFactory({"udpsrc", "tsdemux"});
-    if (!missing.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("tsdemux");
 
     GStreamer::SourceFactory::Config config;
     const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("mpegts://127.0.0.1:5600"), config);
@@ -466,10 +436,6 @@ void GstSourceFactoryTest::_testSourceFactoryUdpMpegTs()
 
 void GstSourceFactoryTest::_testSourceFactorySchemeCaseInsensitive()
 {
-    if (!GstTest::firstMissingFactory({"udpsrc"}).isEmpty()) {
-        QSKIP("udpsrc plugin unavailable");
-    }
-
     GStreamer::SourceFactory::Config config;
     QVERIFY2(GstTest::createSource(QStringLiteral("UDP://127.0.0.1:5600"), config),
              "uppercase scheme must be accepted (scheme is lower-cased before matching)");
@@ -477,11 +443,6 @@ void GstSourceFactoryTest::_testSourceFactorySchemeCaseInsensitive()
 
 void GstSourceFactoryTest::_testSourceFactoryNegativeLatencyClamped()
 {
-    const QString missing = GstTest::firstMissingFactory({"udpsrc", "rtpjitterbuffer"});
-    if (!missing.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
-    }
-
     GStreamer::SourceFactory::Config config;
     config.latencyMs = -100;
     const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("udp://127.0.0.1:5600"), config);
@@ -496,10 +457,7 @@ void GstSourceFactoryTest::_testSourceFactoryNegativeLatencyClamped()
 
 void GstSourceFactoryTest::_testSourceFactoryDynamicRtpLinkFailureCleansJitterBuffer()
 {
-    const QString missing = GstTest::firstMissingFactory({"udpsrc", "tsdemux", "rtpjitterbuffer"});
-    if (!missing.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("tsdemux");
 
     GStreamer::SourceFactory::Config config;
     config.jitterBuffer = GStreamer::SourceFactory::JitterBuffer::DropOnLatency;
@@ -531,10 +489,7 @@ void GstSourceFactoryTest::_testSourceFactoryDynamicRtpLinkFailureCleansJitterBu
 
 void GstSourceFactoryTest::_testSourceFactoryDynamicLinkSkipsNonVideoRtp()
 {
-    const QString missing = GstTest::firstMissingFactory({"udpsrc", "tsdemux", "rtpjitterbuffer"});
-    if (!missing.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("tsdemux");
 
     GStreamer::SourceFactory::Config config;
     const MpegTsSource source(config);
@@ -573,10 +528,7 @@ void GstSourceFactoryTest::_testSourceFactoryRtspDepayloaderRequestsKeyframes()
     QFETCH(QString, sourceFactory);
     QFETCH(bool, expectedRequestKeyframe);
 
-    const QString missing = GstTest::firstMissingFactory({"rtspsrc", "udpsrc", "tsdemux", "parsebin", "rtph264depay"});
-    if (!missing.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc", "tsdemux");
 
     GStreamer::SourceFactory::Config config;
     config.jitterBuffer = GStreamer::SourceFactory::JitterBuffer::None;

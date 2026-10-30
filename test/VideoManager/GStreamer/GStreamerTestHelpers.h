@@ -239,4 +239,24 @@ private:
 
 }  // namespace GstTest
 
+/// Skips the test unless GStreamer initializes (GstTest::initGStreamer()).
+#define GSTTEST_REQUIRE_GSTREAMER()                                  \
+    do {                                                             \
+        const QString gstTestUnavailable = GstTest::initGStreamer(); \
+        if (!gstTestUnavailable.isEmpty()) {                         \
+            QSKIP(qPrintable(gstTestUnavailable));                   \
+        }                                                            \
+    } while (false)
+
+/// Skips the test unless every named element factory is registered. GStreamerTestBase::initTestCase() guarantees the
+/// elements GStreamer::completeInit() requires and so the rest of their plugins (coreelements, udp, rtp, rtpmanager,
+/// playback, videoparsersbad): name only the optional ones.
+#define GSTTEST_SKIP_UNLESS_FACTORIES(...)                                                              \
+    do {                                                                                                \
+        const QString gstTestMissing = GstTest::firstMissingFactory({__VA_ARGS__});                     \
+        if (!gstTestMissing.isEmpty()) {                                                                \
+            QSKIP(qPrintable(QStringLiteral("GStreamer factory unavailable: %1").arg(gstTestMissing))); \
+        }                                                                                               \
+    } while (false)
+
 #endif

@@ -30,9 +30,7 @@ void GstHwBuffersPipelineTest::_testGlMemoryDispatch()
 #endif
     const GstQgc::ScopedSinkEnvironmentForTest environment(openGl);
 
-    if (!GstTest::firstMissingFactory({"glupload"}).isEmpty()) {
-        QSKIP("glupload factory unavailable — gst-gl not registered in this build");
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("glupload");
 
     GstTest::TestPipeline pipeline;
     if (!pipeline.launch(QStringLiteral("videotestsrc num-buffers=10 ! "

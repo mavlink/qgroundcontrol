@@ -364,10 +364,7 @@ void GStreamerGlReadbackTest::_testVaDecodedFrameReadBack()
     if (!QGCRhiCapture::qtEglDisplay() || (GstQtDmaBufImport::importDisplay(*rhi) == EGL_NO_DISPLAY)) {
         QSKIP("Qt's GL context can't bind EGLImages");
     }
-    const QString missingVa = GstTest::firstMissingFactory({"vah264enc", "vah264dec"});
-    if (!missingVa.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("No VA-API stack: %1 is not registered").arg(missingVa)));
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("vah264enc", "vah264dec");
     constexpr std::array kNv12{GST_VIDEO_FORMAT_NV12};
     std::string drmCaps = GstHw::buildSupportedDmaDrmCaps(kNv12, QGCRhiCapture::qtEglDisplay());
     if (drmCaps.empty()) {
@@ -470,10 +467,7 @@ void GStreamerGlReadbackTest::_testGlMemoryFrameReadsBack()
     if (!rhi) {
         QSKIP(qPrintable(_rhiUnavailable));
     }
-    const QString missing = GstTest::firstMissingFactory({"videotestsrc", "glupload", "glcolorconvert", "fakesink"});
-    if (!missing.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("%1 factory unavailable").arg(missing)));
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc", "glupload", "glcolorconvert");
     GstQgc::SinkEnvironment openGl{.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true}};
 #if defined(QGC_GST_BIN_HAS_GLUPLOAD)
     // The direct-DMABuf bin doesn't offer GLMemory.
@@ -549,10 +543,7 @@ void GStreamerGlReadbackTest::_testGlMemoryFrameToImage()
     if (!rhi) {
         QSKIP(qPrintable(_rhiUnavailable));
     }
-    const QString missing = GstTest::firstMissingFactory({"videotestsrc", "glupload", "appsink"});
-    if (!missing.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("%1 factory unavailable").arg(missing)));
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc", "glupload", "appsink");
 
     // One frame in GLMemory from a gst-gl context the GL bridge shares with Qt's, and the same frame in system memory.
     GstTest::TestPipeline pipeline;

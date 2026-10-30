@@ -284,12 +284,7 @@ void GstVideoReceiverTest::initTestCase()
     _settings->set(SettingsManager::instance()->videoSettings()->forceCpuVideoPath(), true);
 
     if (GstTest::initGStreamer().isEmpty()) {
-        const QString missing = GstTest::firstMissingFactory(
-            {"appsrc", "h264parse", "rtph264pay", "udpsink", "udpsrc", "rtph264depay", "parsebin", "decodebin3",
-             "valve", "tee", "filesink", "mp4mux", "qtmux", "qtdemux", "qgcvideosinkbin"});
-        if (!missing.isEmpty()) {
-            QSKIP(qPrintable(QStringLiteral("Required GStreamer factory is unavailable: %1").arg(missing)));
-        }
+        GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "mp4mux", "qtmux", "qtdemux");
     }
 }
 
@@ -1125,10 +1120,7 @@ void GstVideoReceiverTest::_testDestroyWithHungRecorderIsBounded()
 
 void GstVideoReceiverTest::_testDecodesH265Stream()
 {
-    const QString missing = GstTest::firstMissingFactory({"rtph265pay", "rtph265depay", "h265parse", "avdec_h265"});
-    if (!missing.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("Required GStreamer factory is unavailable: %1").arg(missing)));
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("avdec_h265");
     // The stream path, not decoder choice, is under test; a hardware decoder that fails to start isn't replaced.
     const GstTest::DecoderRankSnapshot decoderRanks;
     GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderSoftware);
@@ -1174,9 +1166,7 @@ void GstVideoReceiverTest::_testUnresponsiveRtspServer()
 {
     QFETCH(bool, autoReconnect);
 
-    if (!GstTest::firstMissingFactory({"rtspsrc"}).isEmpty()) {
-        QSKIP("rtspsrc plugin unavailable");
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
     GstTest::FakeRtspServer server;
     QVERIFY(server.listen());
 

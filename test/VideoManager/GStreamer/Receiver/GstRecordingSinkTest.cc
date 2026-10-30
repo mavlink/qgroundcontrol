@@ -74,11 +74,7 @@ GstFlowReturn pushAccessUnit(GstElement* appsrc, const QByteArray& bytes, GstClo
 
 void GstRecordingSinkTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
 {
-    const QString missing = GstTest::firstMissingFactory({"appsrc", "h265parse", "tee", "queue", "fakesink", "valve",
-                                                          "filesink", "mp4mux", "filesrc", "qtdemux", "avdec_h265"});
-    if (!missing.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("Required GStreamer factory is unavailable: %1").arg(missing)));
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "mp4mux", "qtdemux", "avdec_h265");
 
     // Synthetic 32x32 Annex-B H.265 access units. Only the first AU contains VPS/SPS/PPS; the
     // later IDRs intentionally contain just a slice. This reproduces a camera that sends codec
@@ -204,11 +200,7 @@ void GstRecordingSinkTest::_testRecordingSinkFinalizesMidStreamH265Mp4()
 
 void GstRecordingSinkTest::_testRecordingSinkTimestampsDtsOnlyFrames()
 {
-    const QString missing = GstTest::firstMissingFactory(
-        {"appsrc", "h264parse", "identity", "filesink", "mp4mux", "filesrc", "qtdemux", "fakesink", "appsink"});
-    if (!missing.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("Required GStreamer factory is unavailable: %1").arg(missing)));
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "appsink", "mp4mux", "qtdemux");
 
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());

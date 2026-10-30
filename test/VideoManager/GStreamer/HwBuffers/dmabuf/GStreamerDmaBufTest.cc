@@ -85,10 +85,7 @@ void GstHwBuffersPipelineTest::_testDmaBufDispatch()
                                                             .gpuBin = {.mode = GstQgc::GpuBinMode::DirectDmaBuf},
                                                             .dmaBufDisplay = QGCRhiCapture::qtEglDisplay()});
 
-    const QString missingVa = GstTest::firstMissingFactory({"vah264enc", "vah264dec", "vapostproc"});
-    if (!missingVa.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("No VA-API stack: %1 is not registered").arg(missingVa)));
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("vah264enc", "vah264dec", "vapostproc");
 
     const auto onlyDmaBufCaps = [](GstCaps* caps) {
         GstCaps* out = gst_caps_new_empty();

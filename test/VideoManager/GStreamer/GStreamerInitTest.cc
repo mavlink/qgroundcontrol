@@ -64,10 +64,7 @@ void GStreamerInitTest::_testNativeDebugLogRequested()
 
 void GStreamerInitTest::_testNativeDebugLogIsNotBridged()
 {
-    const QString unavailable = GstTest::initGStreamer();
-    if (!unavailable.isEmpty()) {
-        QSKIP(qPrintable(unavailable));
-    }
+    GSTTEST_REQUIRE_GSTREAMER();
 
     GST_DEBUG_CATEGORY_STATIC(probeCategory);
     GST_DEBUG_CATEGORY_INIT(probeCategory, "qgc-init-test", 0, "QGC GStreamer init test");
@@ -99,10 +96,7 @@ void GStreamerInitTest::_testNativeDebugLogIsNotBridged()
 
 void GStreamerInitTest::_testConfigureDebugLoggingIsIdempotent()
 {
-    const QString unavailable = GstTest::initGStreamer();
-    if (!unavailable.isEmpty()) {
-        QSKIP(qPrintable(unavailable));
-    }
+    GSTTEST_REQUIRE_GSTREAMER();
 
     const NativeDebugLogEnvGuard guard;
     GStreamer::configureDebugLogging();
@@ -193,10 +187,7 @@ void GStreamerInitTest::_testUserFeatureRankKept()
     QFETCH(QByteArray, userRanks);
     QFETCH(bool, kept);
 
-    const QString unavailable = GstTest::initGStreamer();
-    if (!unavailable.isEmpty()) {
-        QSKIP(qPrintable(unavailable));
-    }
+    GSTTEST_REQUIRE_GSTREAMER();
 
     GstRegistry* const registry = gst_registry_get();
     const GStreamer::GstFeaturePtr identity =
@@ -221,10 +212,7 @@ void GStreamerInitTest::_testUserFeatureRankKept()
 
 void GStreamerInitTest::_testSetCodecPrioritiesDefault()
 {
-    const QString unavailable = GstTest::initGStreamer();
-    if (!unavailable.isEmpty()) {
-        QSKIP(qPrintable(unavailable));
-    }
+    GSTTEST_REQUIRE_GSTREAMER();
 
     const GstTest::DecoderRankSnapshot decoderRanks;
     std::vector<std::pair<GStreamer::GstFeaturePtr, guint>> softwareRanks;
@@ -252,10 +240,7 @@ void GStreamerInitTest::_testSetCodecPrioritiesDefaultPrefersMatchingD3DDecoder(
 #ifndef Q_OS_WIN
     QSKIP("D3D decoder rank steering is Windows-only");
 #else
-    const QString unavailable = GstTest::initGStreamer();
-    if (!unavailable.isEmpty()) {
-        QSKIP(qPrintable(unavailable));
-    }
+    GSTTEST_REQUIRE_GSTREAMER();
 
     GstRegistry* registry = gst_registry_get();
     QVERIFY(registry != nullptr);
@@ -294,10 +279,7 @@ void GStreamerInitTest::_testSetCodecPrioritiesSkipsAbsentD3DDecoders()
 #ifndef Q_OS_WIN
     QSKIP("D3D decoder rank steering is Windows-only");
 #else
-    const QString unavailable = GstTest::initGStreamer();
-    if (!unavailable.isEmpty()) {
-        QSKIP(qPrintable(unavailable));
-    }
+    GSTTEST_REQUIRE_GSTREAMER();
 
     GstRegistry* registry = gst_registry_get();
     QVERIFY(registry != nullptr);
@@ -319,10 +301,7 @@ void GStreamerInitTest::_testSetCodecPrioritiesSkipsAbsentD3DDecoders()
 
 void GStreamerInitTest::_testSetCodecPrioritiesSoftware()
 {
-    const QString unavailable = GstTest::initGStreamer();
-    if (!unavailable.isEmpty()) {
-        QSKIP(qPrintable(unavailable));
-    }
+    GSTTEST_REQUIRE_GSTREAMER();
 
     const GstTest::DecoderRankSnapshot decoderRanks;
     GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderSoftware);
@@ -344,10 +323,7 @@ void GStreamerInitTest::_testSetCodecPrioritiesSoftware()
 
 void GStreamerInitTest::_testSetCodecPrioritiesHardware()
 {
-    const QString unavailable = GstTest::initGStreamer();
-    if (!unavailable.isEmpty()) {
-        QSKIP(qPrintable(unavailable));
-    }
+    GSTTEST_REQUIRE_GSTREAMER();
 
     const GstTest::DecoderRankSnapshot decoderRanks;
     GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderHardware);

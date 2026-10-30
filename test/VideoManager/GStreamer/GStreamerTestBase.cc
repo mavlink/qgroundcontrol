@@ -20,10 +20,7 @@ void GStreamerTestBase::initTestCase()
 
 void GStreamerTestBase::init()
 {
-    const QString unavailable = GstTest::initGStreamer();
-    if (!unavailable.isEmpty()) {
-        QSKIP(qPrintable(unavailable));
-    }
+    GSTTEST_REQUIRE_GSTREAMER();
 
     UnitTest::init();
 

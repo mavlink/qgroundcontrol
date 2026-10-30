@@ -24,9 +24,7 @@
 
 void GstHwBuffersPipelineTest::_testVulkanDispatchDemotesToCpu()
 {
-    if (!GstTest::firstMissingFactory({"vulkanupload"}).isEmpty()) {
-        QSKIP("vulkanupload factory unavailable — gst-vulkan not registered in this build");
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("vulkanupload");
 
     QVideoSink videoSink;
     int frameCount = 0;

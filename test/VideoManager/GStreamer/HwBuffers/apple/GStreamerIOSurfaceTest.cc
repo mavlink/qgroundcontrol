@@ -25,10 +25,7 @@ void GstHwBuffersPipelineTest::_testIOSurfaceFrameToImage()
 #if !defined(Q_OS_MACOS) || !defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
     QSKIP("IOSurface GPU path not compiled in this build");
 #else
-    const QString missing = GstTest::firstMissingFactory({"appsrc", "h264parse", "vtdec", "appsink"});
-    if (!missing.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("%1 factory unavailable").arg(missing)));
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "vtdec", "appsink");
     QRhiMetalInitParams params;
     const std::unique_ptr<QRhi> rhi(QRhi::create(QRhi::Metal, &params));
     if (!rhi) {

@@ -158,10 +158,7 @@ void GstVideoReceiverComponentsTest::_testFinalizerSettlesOnlyFromArmedRecording
     QFETCH(QString, source);
     QFETCH(bool, settles);
 
-    const QString unavailable = GstTest::initGStreamer();
-    if (!unavailable.isEmpty()) {
-        QSKIP(qPrintable(unavailable));
-    }
+    GSTTEST_REQUIRE_GSTREAMER();
 
     const GStreamer::GstElementPtr oldSinkBin = ownedBin("oldsinkbin");
     const GStreamer::GstElementPtr sinkBin = ownedBin("sinkbin");
@@ -191,10 +188,7 @@ void GstVideoReceiverComponentsTest::_testFinalizerSettlesOnlyFromArmedRecording
 
 void GstVideoReceiverComponentsTest::_testFinalizerKeepsFirstOutcome()
 {
-    const QString unavailable = GstTest::initGStreamer();
-    if (!unavailable.isEmpty()) {
-        QSKIP(qPrintable(unavailable));
-    }
+    GSTTEST_REQUIRE_GSTREAMER();
 
     const GStreamer::GstElementPtr sinkBin = ownedBin("sinkbin");
 
@@ -232,10 +226,7 @@ void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory()
     QFETCH(QString, tag);
     QFETCH(QString, fileStem);
 
-    const QString unavailable = GstTest::initGStreamer();
-    if (!unavailable.isEmpty()) {
-        QSKIP(qPrintable(unavailable));
-    }
+    GSTTEST_REQUIRE_GSTREAMER();
 
     QTemporaryDir parent;
     QVERIFY(parent.isValid());

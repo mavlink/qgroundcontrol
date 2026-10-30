@@ -48,12 +48,7 @@ void GstSourceFactoryHarnessTest::_testParameterSetGateOnDepayloadedStream()
     QFETCH(QList<int>, parameterSets);
 
     const char* const codec = h265 ? "h265" : "h264";
-    const QString missing =
-        GstTest::firstMissingFactory({h265 ? "rtph265pay" : "rtph264pay", h265 ? "rtph265depay" : "rtph264depay",
-                                      "appsrc", "appsink", h265 ? "h265parse" : "h264parse"});
-    if (!missing.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "appsink");
     QString loadError;
     const QList<GstTest::AccessUnit> units = GstTest::loadAccessUnits(resource, &loadError);
     QVERIFY2(units.size() > 5, qPrintable(loadError));

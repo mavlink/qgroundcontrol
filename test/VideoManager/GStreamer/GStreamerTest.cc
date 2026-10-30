@@ -184,15 +184,11 @@ void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams()
     QFETCH(int, format);
 
     const auto fileFormat = static_cast<VideoReceiver::FileFormat>(format);
-    const char* parserFactory = capsString.startsWith(QLatin1String("video/x-h265")) ? "h265parse" : "h264parse";
     const char* muxerFactory = (fileFormat == VideoReceiver::FileFormat::Mkv)
                                    ? "matroskamux"
                                    : ((fileFormat == VideoReceiver::FileFormat::Mov) ? "qtmux" : "mp4mux");
 
-    const QString missing = GstTest::firstMissingFactory({"capsfilter", parserFactory, "filesink", muxerFactory});
-    if (!missing.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("Required GStreamer factory is unavailable: %1").arg(missing)));
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES(muxerFactory);
 
     const GStreamer::GstCapsPtr inputCaps = GStreamer::adoptCaps(gst_caps_from_string(capsString.toUtf8().constData()));
     QVERIFY(inputCaps);

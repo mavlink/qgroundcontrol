@@ -63,9 +63,7 @@ void linkToSink([[maybe_unused]] GstElement* element, GstPad* pad, gpointer data
 
 void GstSourceFactoryStreamTest::_testSourceFactoryRtspSetsUpOnlyVideoStream()
 {
-    if (!GstTest::firstMissingFactory({"rtspsrc"}).isEmpty()) {
-        QSKIP("rtspsrc plugin unavailable");
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
 
     // Audio listed first, as on many IP cameras; rtspsrc sets streams up in SDP order.
     GstTest::FakeRtspServer server(
@@ -99,11 +97,7 @@ void GstSourceFactoryStreamTest::_testSourceFactoryRtspSetsUpOnlyVideoStream()
 
 void GstSourceFactoryStreamTest::_testSourceFactoryDropsRtpUntilParameterSets()
 {
-    const QString missing = GstTest::firstMissingFactory(
-        {"appsrc", "h264parse", "rtph264pay", "udpsink", "udpsrc", "parsebin", "rtph264depay", "fakesink", "appsink"});
-    if (!missing.isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("%1 plugin unavailable").arg(missing)));
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "appsink");
 
     DepayloaderOutput output;
     GStreamer::SourceFactory::Config config;

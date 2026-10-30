@@ -147,9 +147,7 @@ struct D3DSample
 void pullD3DSample(D3DSample& result, const char* inputCaps, const char* uploadElement, const char* capsFilter,
                    HwVideoBufferPath bridgePath = HwVideoBufferPath::None)
 {
-    if (!GstTest::firstMissingFactory({uploadElement}).isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("%1 factory unavailable").arg(QString::fromUtf8(uploadElement))));
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES(uploadElement);
 
     const QString launch = QStringLiteral(
                                "videotestsrc num-buffers=1 ! "
