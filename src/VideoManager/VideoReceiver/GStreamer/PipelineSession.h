@@ -77,9 +77,6 @@ public:
     void setRecording(const std::optional<RecordingBranch::Request>& request);
     void restartDecoder(const char* reason);
 
-    bool streaming() const { return _streaming; }
-
-    bool decoding() const;
     bool displaying() const;
     GstQgc::PathStats sinkPathStats() const;
 

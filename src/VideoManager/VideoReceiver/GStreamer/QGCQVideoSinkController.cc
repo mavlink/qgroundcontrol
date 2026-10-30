@@ -28,13 +28,6 @@ QList<QGCQVideoSinkController*> QGCQVideoSinkController::controllersOf(const QOb
                     : QList<QGCQVideoSinkController*>{};
 }
 
-void QGCQVideoSinkController::syncActiveToWindowVisibility(QObject* receiver, QQuickItem* videoOutput)
-{
-    for (auto* c : controllersOf(receiver)) {
-        c->followWindowVisibility(videoOutput);
-    }
-}
-
 void QGCQVideoSinkController::followWindowVisibility(QQuickItem* videoOutput)
 {
     (void) QObject::disconnect(_visibilityConnection);
@@ -53,11 +46,6 @@ void QGCQVideoSinkController::_applyWindowVisibility()
     const QWindow* const window = _videoOutput ? _videoOutput->window() : nullptr;
     const QWindow::Visibility visibility = window ? window->visibility() : QWindow::Hidden;
     setActive((visibility != QWindow::Hidden) && (visibility != QWindow::Minimized));
-}
-
-const GstElement* QGCQVideoSinkController::element() const noexcept
-{
-    return _element.get();
 }
 
 void QGCQVideoSinkController::setActive(bool active)

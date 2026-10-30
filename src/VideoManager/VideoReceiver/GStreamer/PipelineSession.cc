@@ -227,11 +227,6 @@ void PipelineSession::restartDecoder(const char* reason)
     }
 }
 
-bool PipelineSession::decoding() const
-{
-    return _decoding && _decoding->decoding();
-}
-
 bool PipelineSession::displaying() const
 {
     return _decoding && _decoding->displaying();

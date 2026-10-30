@@ -617,7 +617,7 @@ void GstQgcSinkTest::_testQVideoSinkControllerNoWindowStartsInactive()
 
     QQuickVideoOutput videoOutput;
     QVERIFY(videoOutput.window() == nullptr);
-    QGCQVideoSinkController::syncActiveToWindowVisibility(&controllerOwner, &videoOutput);
+    controller.followWindowVisibility(&videoOutput);
 
     gboolean active = TRUE;
     g_object_get(qvideosink, "active", &active, nullptr);

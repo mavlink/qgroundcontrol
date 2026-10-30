@@ -62,8 +62,6 @@ public:
     /// Replaces the decoder and resets the sink, leaving the rest of the pipeline (and a recording) running.
     void restartDecoder(const char* reason);
 
-    bool decoding() const { return _decoding; }
-
     /// A decoder is inserted, so frames are due at the sink.
     bool displaying() const { return _decoder != nullptr; }
 

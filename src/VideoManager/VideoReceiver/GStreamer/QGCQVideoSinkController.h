@@ -29,9 +29,6 @@ public:
     /// A receiver's owning controllers — direct children only, never a deep QObject-tree walk.
     static QList<QGCQVideoSinkController*> controllersOf(const QObject* receiver);
 
-    /// followWindowVisibility(@p videoOutput) for every controller owned by @p receiver.
-    static void syncActiveToWindowVisibility(QObject* receiver, QQuickItem* videoOutput);
-
     // setActive(false) drops frames at the element; setVideoSink swaps the destination under
     // GST_OBJECT_LOCK. QPointer so a caller-thread destruction race is caught here, not in GObject.
     // Releasing a binding (swap, null, prepareForRelease, destruction) also clears the released QVideoSink's
@@ -50,8 +47,6 @@ public:
     /// Clear the bound QVideoSink's current frame, and the GstSample/decoder buffer it pins, but keep the binding for
     /// the next stream.
     void releaseFrame();
-
-    const GstElement* element() const noexcept;
 
 private:
     void _releaseElementBinding() noexcept;

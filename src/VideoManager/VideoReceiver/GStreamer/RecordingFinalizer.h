@@ -20,8 +20,6 @@ public:
     /// Returns how the recording ended.
     Outcome disarm();
 
-    bool armed() const { return _fileSink != nullptr; }
-
     Outcome outcome() const { return _outcome; }
 
     /// Settles the armed recording with @p outcome unless it already ended. Returns whether this call settled it.
