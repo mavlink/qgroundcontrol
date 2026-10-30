@@ -26,12 +26,12 @@
 #include "BranchContext.h"
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
-#include "GStreamerLogging.h"
 #include "GStreamerTestHelpers.h"
 #include "GstVideoReceiver.h"
 #include "MockVideoStreamServer.h"
 #include "RecordingBranch.h"
 #include "SettingsManager.h"
+#include "VideoManager/VideoTestHelpers.h"
 #include "VideoReceiver.h"
 #include "VideoSettings.h"
 
@@ -344,32 +344,29 @@ GstElement* GstVideoReceiverTest::displaySink(const GstVideoReceiver* receiver)
 
 void GstVideoReceiverTest::initTestCase()
 {
-    UnitTest::initTestCase();
-
-    GStreamer::redirectGLibLogging();
-    if (GstTest::initGStreamer().isEmpty()) {
-        QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
+    GStreamerTestBase::initTestCase();
+    if (QTest::currentTestFailed()) {
+        return;
     }
-    // The display sink follows VideoSettings; the CPU path needs no GPU on the test host.
-    SettingsManager::instance()->videoSettings()->forceCpuVideoPath()->setRawValue(true);
-}
 
-void GstVideoReceiverTest::init()
-{
-    QString unavailable = GstTest::initGStreamer();
-    if (unavailable.isEmpty()) {
+    // The display sink follows VideoSettings; the CPU path needs no GPU on the test host.
+    _settings = std::make_unique<VideoTestHelpers::FactRestorer>();
+    _settings->set(SettingsManager::instance()->videoSettings()->forceCpuVideoPath(), true);
+
+    if (GstTest::initGStreamer().isEmpty()) {
         const QString missing = GstTest::firstMissingFactory(
             {"appsrc", "h264parse", "rtph264pay", "udpsink", "udpsrc", "rtph264depay", "parsebin", "decodebin3",
              "valve", "tee", "filesink", "mp4mux", "qtmux", "qtdemux", "qgcvideosinkbin"});
         if (!missing.isEmpty()) {
-            unavailable = QStringLiteral("Required GStreamer factory is unavailable: %1").arg(missing);
+            QSKIP(qPrintable(QStringLiteral("Required GStreamer factory is unavailable: %1").arg(missing)));
         }
     }
-    if (!unavailable.isEmpty()) {
-        QSKIP(qPrintable(unavailable));
-    }
+}
 
-    UnitTest::init();
+void GstVideoReceiverTest::cleanupTestCase()
+{
+    _settings.reset();
+    GStreamerTestBase::cleanupTestCase();
 }
 
 void GstVideoReceiverTest::_testStreamingStatesAndDisplay()
@@ -1275,13 +1272,6 @@ void GstVideoReceiverTest::_testUnresponsiveRtspServer()
         QCOMPARE(server.connections(), 1);
     }
     QVERIFY(stream.streamingSpy.isEmpty());
-}
-
-#else
-
-void GstVideoReceiverTest::_testGStreamerDisabled()
-{
-    QSKIP("GStreamer not enabled");
 }
 
 #endif

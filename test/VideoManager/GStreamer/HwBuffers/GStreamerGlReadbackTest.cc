@@ -20,7 +20,6 @@
 #include <QtMultimedia/QVideoFrameFormat>
 
 #include "GStreamer.h"
-#include "GStreamerLogging.h"
 #include "GStreamerTestHelpers.h"
 #include "GstHwVideoInfo.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
@@ -96,22 +95,9 @@ QRhi* GStreamerGlReadbackTest::_glRhi()
 
 #ifdef QGC_GST_STREAMING
 
-void GStreamerGlReadbackTest::initTestCase()
-{
-    UnitTest::initTestCase();
-    GStreamer::redirectGLibLogging();
-    if (GstTest::initGStreamer().isEmpty()) {
-        QVERIFY2(GStreamer::completeInit(), "GStreamer::completeInit() failed");
-    }
-}
-
 void GStreamerGlReadbackTest::init()
 {
-    const QString unavailable = GstTest::initGStreamer();
-    if (!unavailable.isEmpty()) {
-        QSKIP(qPrintable(unavailable));
-    }
-    UnitTest::init();
+    GStreamerTestBase::init();
     // The xcb platform this class runs on registers with the desktop portal when one is around.
     ignoreLogMessage("qt.qpa.services", QtWarningMsg, QRegularExpression(QStringLiteral("host portal")));
 }
@@ -120,7 +106,7 @@ void GStreamerGlReadbackTest::cleanupTestCase()
 {
     _rhi.reset();
     _surface.reset();
-    UnitTest::cleanupTestCase();
+    GStreamerTestBase::cleanupTestCase();
 }
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) || defined(QGC_TEST_GLMEMORY_READBACK)

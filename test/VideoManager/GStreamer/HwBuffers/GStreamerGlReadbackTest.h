@@ -4,7 +4,7 @@
 
 #include <QtCore/QString>
 
-#include "UnitTest.h"
+#include "GStreamerTestBase.h"
 
 class QOffscreenSurface;
 class QRhi;
@@ -12,7 +12,7 @@ class QRhi;
 /// GPU frames imported into a real GL QRhi and read back plane by plane: DMABuf planes through Qt's EGLImage importer,
 /// and GLMemory from glupload through the GL bridge's shared context. Needs Qt to render with EGL, which the offscreen
 /// QPA can't: CTest runs this class on xcb with xcb_egl, and every test skips when Qt has no EGL context.
-class GStreamerGlReadbackTest : public UnitTest
+class GStreamerGlReadbackTest : public GStreamerTestBase
 {
     Q_OBJECT
 
@@ -22,7 +22,6 @@ public:
 
 private slots:
 #ifdef QGC_GST_STREAMING
-    void initTestCase() override;
     void init() override;
     void cleanupTestCase() override;
 
