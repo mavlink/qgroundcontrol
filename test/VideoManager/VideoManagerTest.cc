@@ -441,7 +441,6 @@ void VideoManagerTest::_testScreenshotsComeFromStreamsOnDisplay()
     // The thermal output holds a frame but isn't streaming: only the primary stream is saved.
     const QString shot = tempDir.filePath(QStringLiteral("shot.png"));
     _videoManager->grabImage(shot);
-    QCOMPARE(_videoManager->imageFile(), shot);
     QCOMPARE(QImage(shot).size(), frame.size());
     QVERIFY(!QFile::exists(tempDir.filePath(QStringLiteral("shot.thermalVideo.png"))));
 

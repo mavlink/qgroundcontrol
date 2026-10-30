@@ -85,12 +85,9 @@ VideoManager::VideoManager(QObject* parent)
         }
     }
 
-    (void) connect(_primaryStream, &VideoStreamController::streamingChanged, this, &VideoManager::streamingChanged);
     (void) connect(_primaryStream, &VideoStreamController::decodingChanged, this, &VideoManager::decodingChanged);
-    (void) connect(_primaryStream, &VideoStreamController::videoSizeChanged, this, &VideoManager::videoSizeChanged);
     for (VideoStreamController* stream : {_primaryStream, _thermalStream}) {
         (void) connect(stream, &VideoStreamController::aspectRatioChanged, this, &VideoManager::aspectRatioChanged);
-        (void) connect(stream, &VideoStreamController::hfovChanged, this, &VideoManager::aspectRatioChanged);
         (void) connect(stream, &VideoStreamController::streamInfoChanged, this, &VideoManager::_updateState);
         (void) connect(stream, &VideoStreamController::errorOccurred, this, [stream](const QString& message) {
             qCWarning(VideoManagerLog) << stream->name() << message;
@@ -98,7 +95,6 @@ VideoManager::VideoManager(QObject* parent)
         });
     }
     (void) connect(_recordingService, &VideoRecordingService::recordingChanged, this, &VideoManager::recordingChanged);
-    (void) connect(_recordingService, &VideoRecordingService::recordingStarted, this, &VideoManager::recordingStarted);
 
     _connectSettings();
     _updateState();
@@ -288,24 +284,22 @@ void VideoManager::stopRecording()
 
 void VideoManager::grabImage(const QString& imageFile)
 {
-    if (imageFile.isEmpty()) {
-        _imageFile = SettingsManager::instance()->appSettings()->photoSavePath() + QStringLiteral("/") +
-                     QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd_hh.mm.ss.zzz")) +
-                     QStringLiteral(".jpg");
-    } else {
-        _imageFile = imageFile;
+    QString file = imageFile;
+    if (file.isEmpty()) {
+        file = SettingsManager::instance()->appSettings()->photoSavePath() + QStringLiteral("/") +
+               QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd_hh.mm.ss.zzz")) +
+               QStringLiteral(".jpg");
     }
-    emit imageFileChanged(_imageFile);
 
     if (_primaryStream->canTakeScreenshot()) {
-        (void) _primaryStream->takeScreenshot(_imageFile);
+        (void) _primaryStream->takeScreenshot(file);
     } else {
         qCDebug(VideoManagerLog) << "No video on display to take a screenshot from";
     }
 
     if (_thermalStream->canTakeScreenshot()) {
         // As with recordings, the thermal stream's name goes before the extension.
-        QString thermalImageFile = _imageFile;
+        QString thermalImageFile = file;
         const qsizetype dot = thermalImageFile.lastIndexOf(QLatin1Char('.'));
         const QString tag = QLatin1Char('.') + _thermalStream->name();
         if (dot > thermalImageFile.lastIndexOf(QLatin1Char('/'))) {
@@ -327,34 +321,14 @@ bool VideoManager::recording() const
     return _recordingService->recording();
 }
 
-bool VideoManager::streaming() const
-{
-    return _primaryStream->streaming();
-}
-
-QSize VideoManager::videoSize() const
-{
-    return _primaryStream->videoSize();
-}
-
 double VideoManager::aspectRatio() const
 {
     return _primaryStream->aspectRatio();
 }
 
-double VideoManager::hfov() const
-{
-    return _primaryStream->hfov();
-}
-
 double VideoManager::thermalAspectRatio() const
 {
     return _thermalStream->aspectRatio();
-}
-
-double VideoManager::thermalHfov() const
-{
-    return _thermalStream->hfov();
 }
 
 void VideoManager::setfullScreen(bool on)

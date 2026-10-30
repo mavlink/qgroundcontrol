@@ -108,7 +108,6 @@ void VideoStreamController::_onStreamInfoChanged()
 {
     emit streamInfoChanged();
     emit aspectRatioChanged();
-    emit hfovChanged();
     scheduleApply();
 }
 
@@ -120,7 +119,7 @@ void VideoStreamController::setEnabled(bool enabled)
     }
 }
 
-std::optional<VideoReceiver::Config> VideoStreamController::resolvedConfig() const
+std::optional<VideoReceiver::Config> VideoStreamController::_resolvedConfig() const
 {
     return VideoStreamResolver::resolve(VideoStreamResolver::snapshot(_videoSettings), _streamInfo, _role);
 }
@@ -141,7 +140,7 @@ void VideoStreamController::_apply()
         return;
     }
 
-    const std::optional<VideoReceiver::Config> config = resolvedConfig();
+    const std::optional<VideoReceiver::Config> config = _resolvedConfig();
     const bool active = _enabled && config.has_value();
     qCDebug(VideoStreamControllerLog) << name() << "active:" << active << "uri:"
                                       << (config ? QGCNetworkHelper::redactedUrlForLogging(config->uri) : QString());
@@ -271,9 +270,4 @@ double VideoStreamController::aspectRatio() const
         return _streamInfo->aspectRatio();
     }
     return (_role == Role::Primary) ? _videoSettings->aspectRatio()->rawValue().toDouble() : 1.0;
-}
-
-double VideoStreamController::hfov() const
-{
-    return _streamInfo ? _streamInfo->hfov() : 1.0;
 }

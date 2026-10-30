@@ -41,7 +41,6 @@ public:
 
 signals:
     void recordingChanged(bool recording);
-    void recordingStarted(const QString& file);
 
 private:
     void _connectStream(VideoStreamController* stream);

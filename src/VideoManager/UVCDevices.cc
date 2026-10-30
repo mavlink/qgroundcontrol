@@ -9,11 +9,6 @@
 
 #include "AppMessages.h"
 
-bool UVCDevices::available()
-{
-    return !QMediaDevices::videoInputs().isEmpty();
-}
-
 QStringList UVCDevices::deviceNames()
 {
     QStringList names;

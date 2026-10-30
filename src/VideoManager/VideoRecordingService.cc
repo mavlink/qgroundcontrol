@@ -47,10 +47,8 @@ VideoRecordingService::~VideoRecordingService() = default;
 void VideoRecordingService::_connectStream(VideoStreamController* stream)
 {
     (void) connect(stream, &VideoStreamController::recordingChanged, this, &VideoRecordingService::_updateRecording);
-    (void) connect(stream, &VideoStreamController::recordingStarted, this, [this](const QString& file) {
-        qCDebug(VideoRecordingServiceLog) << "Recording to" << file;
-        emit recordingStarted(file);
-    });
+    (void) connect(stream, &VideoStreamController::recordingStarted, this,
+                   [](const QString& file) { qCDebug(VideoRecordingServiceLog) << "Recording to" << file; });
     (void) connect(stream, &VideoStreamController::recordingFinished, this,
                    [](const QString& file, const QString& error) {
                        if (error.isEmpty()) {

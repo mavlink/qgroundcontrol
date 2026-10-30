@@ -32,7 +32,6 @@ class VideoStreamController : public QObject
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
     Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged)
     Q_PROPERTY(double aspectRatio READ aspectRatio NOTIFY aspectRatioChanged)
-    Q_PROPERTY(double hfov READ hfov NOTIFY hfovChanged)
 
 public:
     using Role = VideoStreamResolver::Role;
@@ -57,12 +56,7 @@ public:
     /// The stream plays while it is enabled and configured().
     void setEnabled(bool enabled);
 
-    bool enabled() const { return _enabled; }
-
-    /// What the receiver is (or will be) configured with; nullopt when there is no stream to play.
-    std::optional<VideoReceiver::Config> resolvedConfig() const;
-
-    bool configured() const { return resolvedConfig().has_value(); }
+    bool configured() const { return _resolvedConfig().has_value(); }
 
     /// Pushes the current config and enabled state to the receiver on the next event loop pass. Calls before then
     /// coalesce into one update.
@@ -95,8 +89,6 @@ public:
     QSize videoSize() const;
     /// From the decoded frames, else the camera's advertised resolution, else the aspect ratio setting (primary) or 1.
     double aspectRatio() const;
-    /// The camera's advertised horizontal field of view in degrees, else 1.
-    double hfov() const;
 
 signals:
     void streamingChanged();
@@ -104,13 +96,14 @@ signals:
     void recordingChanged(bool recording);
     void videoSizeChanged();
     void aspectRatioChanged();
-    void hfovChanged();
     void streamInfoChanged();
     void recordingStarted(const QString& file);
     void recordingFinished(const QString& file, const QString& error);
     void errorOccurred(const QString& message);
 
 private:
+    /// What the receiver is (or will be) configured with; nullopt when there is no stream to play.
+    std::optional<VideoReceiver::Config> _resolvedConfig() const;
     void _apply();
     void _onStreamInfoChanged();
 

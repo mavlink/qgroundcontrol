@@ -7,8 +7,6 @@
 /// the selected camera through a QML CaptureSession; no VideoReceiver is involved.
 namespace UVCDevices {
 
-/// True when at least one camera is attached.
-bool available();
 /// Descriptions of the attached cameras.
 QStringList deviceNames();
 bool deviceExists(const QString& description);

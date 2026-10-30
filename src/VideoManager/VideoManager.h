@@ -5,7 +5,6 @@
 #include <QtCore/QFuture>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
-#include <QtCore/QSize>
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -16,8 +15,9 @@ class VideoRecordingService;
 class VideoSettings;
 class VideoStreamController;
 
-/// QML facade of the video streams. Each stream (primary, thermal) is a VideoStreamController; the top-level
-/// properties forward to the primary stream and the thermal* properties to the thermal stream.
+/// QML facade of the video streams, each a VideoStreamController (primary, thermal). decoding and aspectRatio forward
+/// to the primary stream, thermalAspectRatio to the thermal stream, and recording covers both streams. The other
+/// properties, such as hasVideo and isUvc, are the manager's own state.
 class VideoManager : public QObject
 {
     Q_OBJECT
@@ -35,13 +35,8 @@ class VideoManager : public QObject
     Q_PROPERTY(bool isStreamSource READ isStreamSource NOTIFY isStreamSourceChanged)
     Q_PROPERTY(bool isUvc READ isUvc NOTIFY isUvcChanged)
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
-    Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged)
     Q_PROPERTY(double aspectRatio READ aspectRatio NOTIFY aspectRatioChanged)
-    Q_PROPERTY(double hfov READ hfov NOTIFY aspectRatioChanged)
     Q_PROPERTY(double thermalAspectRatio READ thermalAspectRatio NOTIFY aspectRatioChanged)
-    Q_PROPERTY(double thermalHfov READ thermalHfov NOTIFY aspectRatioChanged)
-    Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged)
-    Q_PROPERTY(QString imageFile READ imageFile NOTIFY imageFileChanged)
     Q_PROPERTY(QString uvcVideoSourceID READ uvcVideoSourceID NOTIFY uvcVideoSourceIDChanged)
 
     friend class VideoManagerInitTest;
@@ -91,14 +86,8 @@ public:
     bool isUvc() const { return !_uvcVideoSourceID.isEmpty(); }
 
     bool recording() const;
-    bool streaming() const;
     double aspectRatio() const;
-    double hfov() const;
     double thermalAspectRatio() const;
-    double thermalHfov() const;
-    QSize videoSize() const;
-
-    QString imageFile() const { return _imageFile; }
 
     QString uvcVideoSourceID() const { return _uvcVideoSourceID; }
 
@@ -111,14 +100,10 @@ signals:
     void fullScreenChanged();
     void hasThermalChanged();
     void hasVideoChanged();
-    void imageFileChanged(const QString& filename);
     void isStreamSourceChanged();
     void isUvcChanged();
     void recordingChanged(bool recording);
-    void recordingStarted(const QString& filename);
-    void streamingChanged();
     void uvcVideoSourceIDChanged();
-    void videoSizeChanged();
 
 private:
     enum class InitState : uint8_t
@@ -161,6 +146,5 @@ private:
     bool _hasThermal = false;
     bool _hasVideo = false;
     bool _isStreamSource = false;
-    QString _imageFile;
     QString _uvcVideoSourceID;
 };
