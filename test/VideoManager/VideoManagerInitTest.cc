@@ -2,7 +2,6 @@
 
 #include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QRegularExpression>
-#include <QtQuick/QQuickWindow>
 
 #include "VideoManager.h"
 #include "VideoStreamController.h"
@@ -49,19 +48,18 @@ void VideoManagerInitTest::_testReceiversNeedBackendAndWindow()
     QFETCH(bool, windowFirst);
 
     VideoManager videoManager;
-    QQuickWindow mainWindow;
     int receiverCount = 0;
     videoManager._receiverFactory = countingFactory(receiverCount);
     videoManager._initState = VideoManager::InitState::Pending;
 
     if (windowFirst) {
-        videoManager._setMainWindow(&mainWindow);
+        videoManager._onMainWindowReady();
         QCOMPARE(receiverCount, 0);
         videoManager._onBackendInitComplete(true);
     } else {
         videoManager._onBackendInitComplete(true);
         QCOMPARE(receiverCount, 0);
-        videoManager._setMainWindow(&mainWindow);
+        videoManager._onMainWindowReady();
     }
     QCOMPARE(videoManager._initState, VideoManager::InitState::Ready);
     QCOMPARE(receiverCount, 2);
@@ -76,11 +74,10 @@ void VideoManagerInitTest::_testReceiversNeedBackendAndWindow()
 void VideoManagerInitTest::_testBackendInitFailure()
 {
     VideoManager videoManager;
-    QQuickWindow mainWindow;
     int receiverCount = 0;
     videoManager._receiverFactory = countingFactory(receiverCount);
     videoManager._initState = VideoManager::InitState::Pending;
-    videoManager._setMainWindow(&mainWindow);
+    videoManager._onMainWindowReady();
 
     expectLogMessage("Video.VideoManager", QtCriticalMsg,
                      QRegularExpression(QStringLiteral("video initialization failed")));
@@ -101,11 +98,10 @@ void VideoManagerInitTest::_testWaitForBackendReady()
     }
 
     VideoManager videoManager;
-    QQuickWindow mainWindow;
     int receiverCount = 0;
     videoManager._receiverFactory = countingFactory(receiverCount);
     videoManager._initState = VideoManager::InitState::Pending;
-    videoManager._setMainWindow(&mainWindow);
+    videoManager._onMainWindowReady();
     videoManager._watchBackendInit(QtConcurrent::run([] { return true; }));
 
     QVERIFY(videoManager.waitForVideoBackendReady());

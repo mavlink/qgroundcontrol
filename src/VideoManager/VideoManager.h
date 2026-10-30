@@ -52,7 +52,7 @@ public:
     /// thermal stream's frame, when it is streaming, to the same name tagged ".thermalVideo".
     Q_INVOKABLE void grabImage(const QString& imageFile = QString());
     /// See VideoRecordingService::startRecording().
-    Q_INVOKABLE void startRecording(const QString& videoFile = QString());
+    Q_INVOKABLE void startRecording(const QString& baseName = QString());
     /// Undoes stopVideo() and "disable when disarmed", and reconnects the streams.
     Q_INVOKABLE void startVideo();
     Q_INVOKABLE void stopRecording();
@@ -115,7 +115,7 @@ private:
     };
 
     void _connectSettings();
-    void _setMainWindow(QQuickWindow* mainWindow);
+    void _onMainWindowReady();
     void _watchBackendInit(const QFuture<bool>& future);
     void _onBackendInitComplete(bool success);
     void _createVideoReceivers();
@@ -124,7 +124,6 @@ private:
     void _setActiveVehicle(Vehicle* vehicle);
     void _updateStreamInfo();
     void _onArmedChanged(bool armed);
-    void _setDisabledWhileDisarmed(bool disabled);
     void _communicationLostChanged(bool communicationLost);
 
     VideoSettings* const _videoSettings;
@@ -132,13 +131,12 @@ private:
     VideoStreamController* const _thermalStream;
     VideoRecordingService* const _recordingService;
     std::function<VideoReceiver*(QObject* parent)> _receiverFactory;
-    QPointer<QQuickWindow> _mainWindow;
     QPointer<Vehicle> _activeVehicle;
 
     InitState _initState = InitState::NotStarted;
     QFuture<bool> _backendInitFuture;
-    bool _backendDisabledForTests = false;
 
+    bool _hasMainWindow = false;
     bool _fullScreen = false;
     bool _videoStopped = false;
     bool _disabledWhileDisarmed = false;

@@ -4,7 +4,6 @@
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDateTime>
-#include <QtQuick/QQuickWindow>
 
 #include "AppMessages.h"
 #include "AppSettings.h"
@@ -78,13 +77,6 @@ VideoManager::VideoManager(QObject* parent)
 {
     qCDebug(VideoManagerLog) << this;
 
-    if (VideoBackend::needsAsyncInit()) {
-        _backendDisabledForTests = VideoBackend::disabledForUnitTests();
-        if (_backendDisabledForTests) {
-            qCDebug(VideoManagerLog) << "Skipping video backend initialization for unit tests";
-        }
-    }
-
     (void) connect(_primaryStream, &VideoStreamController::decodingChanged, this, &VideoManager::decodingChanged);
     for (VideoStreamController* stream : {_primaryStream, _thermalStream}) {
         (void) connect(stream, &VideoStreamController::aspectRatioChanged, this, &VideoManager::aspectRatioChanged);
@@ -138,7 +130,7 @@ void VideoManager::startVideoBackendInit()
         return;
     }
 
-    if (!VideoBackend::needsAsyncInit() || _backendDisabledForTests) {
+    if (!VideoBackend::needsAsyncInit() || VideoBackend::disabledForUnitTests()) {
         _initState = InitState::Ready;
         return;
     }
@@ -189,14 +181,14 @@ void VideoManager::_onBackendInitComplete(bool success)
 
     _initState = InitState::Ready;
     qCDebug(VideoManagerLog) << "video backend ready";
-    if (_mainWindow) {
+    if (_hasMainWindow) {
         _createVideoReceivers();
     }
 }
 
 void VideoManager::init(QQuickWindow* mainWindow)
 {
-    if (_mainWindow) {
+    if (_hasMainWindow) {
         qCDebug(VideoManagerLog) << "Video Manager already initialized";
         return;
     }
@@ -214,12 +206,12 @@ void VideoManager::init(QQuickWindow* mainWindow)
                    &VideoManager::_setActiveVehicle);
     _setActiveVehicle(multiVehicleManager->activeVehicle());
 
-    _setMainWindow(mainWindow);
+    _onMainWindowReady();
 }
 
-void VideoManager::_setMainWindow(QQuickWindow* mainWindow)
+void VideoManager::_onMainWindowReady()
 {
-    _mainWindow = mainWindow;
+    _hasMainWindow = true;
     // The receivers need the backend and nothing from QML: the VideoOutputs register themselves whenever they exist.
     startVideoBackendInit();
     if (_initState == InitState::Ready) {
@@ -257,10 +249,8 @@ void VideoManager::startVideo()
     _videoStopped = false;
     _disabledWhileDisarmed = false;
     _updateState();
-    for (VideoStreamController* stream : {_primaryStream, _thermalStream}) {
-        stream->scheduleApply();
-        stream->restart();
-    }
+    _primaryStream->restart();
+    _thermalStream->restart();
 }
 
 void VideoManager::stopVideo()
@@ -272,9 +262,9 @@ void VideoManager::stopVideo()
     _thermalStream->stop();
 }
 
-void VideoManager::startRecording(const QString& videoFile)
+void VideoManager::startRecording(const QString& baseName)
 {
-    _recordingService->startRecording(videoFile);
+    _recordingService->startRecording(baseName);
 }
 
 void VideoManager::stopRecording()
@@ -433,11 +423,7 @@ void VideoManager::_updateStreamInfo()
 
 void VideoManager::_onArmedChanged(bool armed)
 {
-    _setDisabledWhileDisarmed(!armed && _videoSettings->disableWhenDisarmed()->rawValue().toBool());
-}
-
-void VideoManager::_setDisabledWhileDisarmed(bool disabled)
-{
+    const bool disabled = !armed && _videoSettings->disableWhenDisarmed()->rawValue().toBool();
     if (disabled != _disabledWhileDisarmed) {
         qCDebug(VideoManagerLog) << "disabled while disarmed:" << disabled;
         _disabledWhileDisarmed = disabled;
