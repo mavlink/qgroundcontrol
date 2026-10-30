@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <gst/base/gstbasesrc.h>
+#include <gst/gst.h>
 #include <mutex>
 #include <utility>
 
@@ -12,8 +13,6 @@
 #include <QtCore/QStringList>
 #include <QtCore/QVarLengthArray>
 #include <QtMultimedia/QVideoSink>
-#include <QtQuick/QQuickWindow>
-#include <QtQuick/QSGRendererInterface>
 
 #include "Fact.h"
 #include "GStreamerEnvironment.h"
@@ -22,18 +21,12 @@
 #include "GstScoped.h"
 #include "GstVideoReceiver.h"
 #include "HwBuffers/common/HwBuffers.h"
-#if defined(QGC_HAS_ANY_GPU_PATH)
-#include <rhi/qrhi.h>
-
-#include "HwBuffers/common/QGCRhiCapture.h"
-#endif
-#include <gst/gst.h>
-
 #include "QGCLoggingCategory.h"
 #include "QGCQVideoSinkController.h"
 #include "SettingsManager.h"
 #include "VideoBackend.h"
 #include "VideoSettings.h"
+#include "gstqgc/GstQgcRenderTarget.h"
 #include "gstqgc/gstqgcvideosinkbin.h"
 
 QGC_LOGGING_CATEGORY(GStreamerLog, "Video.GStreamer.GStreamer")
@@ -428,53 +421,33 @@ void bindDebugLevelFact(Fact* fact, QObject* context)
                      [](const QVariant& value) { setDebugLevel(value.toInt()); });
 }
 
-static const char* graphicsApiName(QSGRendererInterface::GraphicsApi api)
+// Zero-copy buffer family the render backend enables, or "CPU" when no import path is compiled for it.
+static const char* zeroCopyFamilyFor(GstQgc::RenderBackend backend)
 {
-    switch (api) {
-        case QSGRendererInterface::Software:
-            return "Software";
-        case QSGRendererInterface::OpenGL:
-            return "OpenGL";
-        case QSGRendererInterface::Direct3D11:
-            return "Direct3D11";
-        case QSGRendererInterface::Direct3D12:
-            return "Direct3D12";
-        case QSGRendererInterface::Vulkan:
-            return "Vulkan";
-        case QSGRendererInterface::Metal:
-            return "Metal";
-        default:
-            return "Unknown";
-    }
-}
-
-// Zero-copy buffer family the resolved RHI backend enables, or "CPU" when no import path is compiled for it.
-static const char* zeroCopyFamilyForApi(QSGRendererInterface::GraphicsApi api)
-{
-    switch (api) {
-        case QSGRendererInterface::OpenGL:
+    switch (backend) {
+        case GstQgc::RenderBackend::OpenGL:
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH)
             return "GLMemory/DMABuf";
 #else
             return "CPU";
 #endif
-        case QSGRendererInterface::Direct3D11:
+        case GstQgc::RenderBackend::Direct3D11:
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
             return "D3D11";
 #else
             return "CPU";
 #endif
-        case QSGRendererInterface::Direct3D12:
+        case GstQgc::RenderBackend::Direct3D12:
             // GStreamer 1.28 can match adapter LUID but cannot wrap Qt's ID3D12Device; D3D12 zero-copy disabled until
             // same-device import is possible.
             return "CPU (D3D12 import disabled)";
-        case QSGRendererInterface::Metal:
+        case GstQgc::RenderBackend::Metal:
 #if defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
             return "IOSurface/VideoToolbox";
 #else
             return "CPU";
 #endif
-        case QSGRendererInterface::Vulkan:
+        case GstQgc::RenderBackend::Vulkan:
             // Vulkan import is dormant (foreign-VkDevice guard → CPU copy), so it never delivers zero-copy today.
             return "CPU (Vulkan import dormant)";
         default:
@@ -485,23 +458,9 @@ static const char* zeroCopyFamilyForApi(QSGRendererInterface::GraphicsApi api)
 void onMainWindowReady(QQuickWindow* window)
 {
     HwBuffers::connectMainWindow(window);
-    // Prefer the resolved backend (cachedRhi) over the configured API once the scene graph is up; QGCRhiCapture exists
-    // only when a GPU path is compiled, hence the guard.
-    QSGRendererInterface::GraphicsApi api = QQuickWindow::graphicsApi();
-#if defined(QGC_HAS_ANY_GPU_PATH)
-    if (QRhi* rhi = QGCRhiCapture::cachedRhi()) {
-        switch (rhi->backend()) {
-            case QRhi::OpenGLES2: api = QSGRendererInterface::OpenGL; break;
-            case QRhi::D3D11:     api = QSGRendererInterface::Direct3D11; break;
-            case QRhi::D3D12:     api = QSGRendererInterface::Direct3D12; break;
-            case QRhi::Metal:     api = QSGRendererInterface::Metal; break;
-            case QRhi::Vulkan:    api = QSGRendererInterface::Vulkan; break;
-            default: break;
-        }
-    }
-#endif
-    qCInfo(GStreamerLog) << "Resolved RHI backend:" << graphicsApiName(api) << "→ zero-copy path:"
-                         << zeroCopyFamilyForApi(api);
+    const GstQgc::RenderBackend backend = GstQgc::currentRenderTarget().backend;
+    qCInfo(GStreamerLog) << "Resolved RHI backend:" << GstQgc::toString(backend)
+                         << "→ zero-copy path:" << zeroCopyFamilyFor(backend);
 }
 
 QList<VideoDecoderOptions> availableDecoderFamilies()
