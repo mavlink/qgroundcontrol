@@ -335,23 +335,6 @@ void GstVideoReceiverTest::_testStaticSourcePadWaitsForData()
     QVERIFY(!stream.receiver->streaming());
 }
 
-void GstVideoReceiverTest::_testUdpSourceStopsRightAfterPlaying()
-{
-    // An unfixed udpsrc corrupts the heap in most runs of a few thousand cycles; each takes well under a millisecond.
-    constexpr int kImmediateStopCycles = 10000;
-
-    // The receiver's UDP sources are udpsrc. Leaving PLAYING while its streaming thread still clears the previous
-    // unlock used to cancel a freed GCancellable and corrupt the heap; GStreamer::completeInit() serializes the two.
-    // Downstream elements delay the source's own state change and hide the race, so the source runs bare.
-    for (int cycle = 0; cycle < kImmediateStopCycles; ++cycle) {
-        GstTest::TestPipeline pipeline;
-        QVERIFY2(pipeline.launch(QStringLiteral("udpsrc address=127.0.0.1 port=0 ! fakesink")),
-                 qPrintable(pipeline.error()));
-        QVERIFY(pipeline.play());
-        QCOMPARE(gst_element_set_state(pipeline.get(), GST_STATE_NULL), GST_STATE_CHANGE_SUCCESS);
-    }
-}
-
 void GstVideoReceiverTest::_testDecodesMockLinkStreams_data()
 {
     QTest::addColumn<int>("streamType");

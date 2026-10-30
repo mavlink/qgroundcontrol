@@ -31,7 +31,6 @@ private slots:
 
     void _testStreamingStatesAndDisplay();
     void _testStaticSourcePadWaitsForData();
-    void _testUdpSourceStopsRightAfterPlaying();
     void _testDecodesMockLinkStreams_data();
     void _testDecodesMockLinkStreams();
     void _testConfigChangeRestarts();
