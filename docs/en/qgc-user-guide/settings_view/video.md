@@ -22,7 +22,8 @@ Connection settings vary by source type:
 
 - **Aspect Ratio** — aspect ratio for scaling video in the display widget (default: 16:9; set to 0.0 to disable scaling)
 - **Disable Video Stream When Disarmed** — stop the video stream, and any recording, when the vehicle disarms. The stream
-  starts again when the vehicle arms, or when this setting is turned off.
+  starts again when the vehicle arms, when this setting is turned off, when the active vehicle changes, or when video is
+  started again.
 - **Low Latency Mode** — minimize video decode latency at the cost of some smoothness
 - **Force CPU video path** — disable hardware-accelerated rendering (use if video displays incorrectly)
 - **Force video decoder priority** — override the automatic decoder selection: Default / Software / Hardware / NVIDIA / VA-API / DirectX 3D11 / VideoToolbox / Intel / Vulkan
