@@ -4,12 +4,11 @@
 #include <vector>
 
 #include "GstQgcVideoFormats.h"
-#include "HwBuffers/common/HwBuffers.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 
 namespace GstQgc {
 
-static_assert(HwBuffers::GpuBinMode{} == HwBuffers::GpuBinMode::Passthrough,
+static_assert(GpuBinMode{} == GpuBinMode::Passthrough,
               "SinkCapsPolicy::gpuBin's value-initialized default must be Passthrough");
 
 namespace {
@@ -58,7 +57,7 @@ std::string gpuMemoryCaps(const SinkCapsPolicy& policy, const std::string& forma
             }
 #endif
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-            if (policy.target.sharesGlContext() && (policy.gpuBin != HwBuffers::GpuBinMode::DirectDmaBuf)) {
+            if (policy.target.sharesGlContext() && (policy.gpuBin != GpuBinMode::DirectDmaBuf)) {
                 offer(kGlMemory2D);
             }
 #endif
@@ -86,7 +85,7 @@ std::string gpuMemoryCaps(const SinkCapsPolicy& policy, const std::string& forma
 
 std::string buildSinkCaps(const SinkCapsPolicy& policy)
 {
-    if (policy.gpuZeroCopy && (policy.gpuBin == HwBuffers::GpuBinMode::GlUpload)) {
+    if (policy.gpuZeroCopy && (policy.gpuBin == GpuBinMode::GlUpload)) {
         return std::string(kGlMemory2D) + ", format=" + advertisedFormatList(kOfferGlUpload);
     }
 

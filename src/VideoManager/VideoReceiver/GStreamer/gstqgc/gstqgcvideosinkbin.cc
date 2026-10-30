@@ -1,10 +1,8 @@
 #include "gstqgcvideosinkbin.h"
 
-#include <QtCore/QtEnvironmentVariables>
-
 #include "GstQgcBinChain.h"
+#include "GstQgcGpuBin.h"
 #include "GstQgcRenderTarget.h"
-#include "HwBuffers/common/HwBuffers.h"
 #include "gstqgcelements.h"
 #include "gstqgcqvideosink.h"
 
@@ -159,43 +157,22 @@ static gboolean add_converter(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain,
     return head && tail && chain.linkChain({head, tail});
 }
 
-// The GPU variant for the render target. glupload hands GLMemory to Qt through the GL share group, so it needs Qt on
-// OpenGL (EGL or GLX, even before it is known which); direct DMABuf hands EGLImages to Qt, so it needs OpenGL on EGL.
-// Any other renderer gets the passthrough variant, whose sink offers only memory that renderer imports (a glupload bin
-// under Vulkan would download every frame and upload it again). An explicit QGC_GST_GPU_BIN still wins.
-static HwBuffers::GpuBinMode select_gpu_bin(GstQgcVideoSinkBin* self)
+// The GPU variant for the render target (GstQgc::selectGpuBin). Any other renderer gets the passthrough variant, whose
+// sink offers only memory that renderer imports (a glupload bin under Vulkan would download every frame and upload it
+// again).
+static GstQgc::GpuBinMode select_gpu_bin(GstQgcVideoSinkBin* self)
 {
-    const HwBuffers::GpuBinMode preferred = HwBuffers::gpuBinMode();
-    if (preferred == HwBuffers::GpuBinMode::Passthrough) {
-        return preferred;
-    }
+    const GstQgc::GpuBinPreference preference = GstQgc::gpuBinPreference();
     const GstQgc::RenderTarget target = GstQgc::currentRenderTarget();
-    const bool supported =
-        (preferred == HwBuffers::GpuBinMode::GlUpload) ? target.sharesGlContext() : target.isOpenGlOnEgl();
-    if (supported) {
-        return preferred;
-    }
-    if (!qEnvironmentVariableIsEmpty("QGC_GST_GPU_BIN")) {
+    const GstQgc::GpuBinMode mode = GstQgc::selectGpuBin(preference, target);
+    if (mode != preference.mode) {
+        GST_INFO_OBJECT(self, "Qt renders with %s (EGL %d): using the passthrough GPU bin",
+                        GstQgc::toString(target.backend), target.egl);
+    } else if (preference.explicitChoice && (GstQgc::selectGpuBin({.mode = mode}, target) != mode)) {
         GST_WARNING_OBJECT(self, "QGC_GST_GPU_BIN forces a GPU bin Qt's renderer doesn't suit (%s, EGL %d)",
                            GstQgc::toString(target.backend), target.egl);
-        return preferred;
     }
-    GST_INFO_OBJECT(self, "Qt renders with %s (EGL %d): using the passthrough GPU bin",
-                    GstQgc::toString(target.backend), target.egl);
-    return HwBuffers::GpuBinMode::Passthrough;
-}
-
-static const char* gpu_bin_name(HwBuffers::GpuBinMode mode)
-{
-    switch (mode) {
-        case HwBuffers::GpuBinMode::GlUpload:
-            return "glupload";
-        case HwBuffers::GpuBinMode::DirectDmaBuf:
-            return "direct DMABuf";
-        case HwBuffers::GpuBinMode::Passthrough:
-            break;
-    }
-    return "passthrough";
+    return mode;
 }
 
 // Builds [converter ! (glupload ! glcolorconvert !) qgcqvideosink]. qgcqvideosink's get_caps decides what negotiates:
@@ -211,7 +188,7 @@ static void gst_qgc_video_sink_bin_setup(GstQgcVideoSinkBin* self)
     }
     g_object_set(videosink, "active", (gboolean) TRUE, "sync", (gboolean) self->sync, "qos", (gboolean) self->qos,
                  "processing-deadline", self->processing_deadline, NULL);
-    const HwBuffers::GpuBinMode gpuBin = self->gpu_zerocopy ? select_gpu_bin(self) : HwBuffers::GpuBinMode::Passthrough;
+    const GstQgc::GpuBinMode gpuBin = self->gpu_zerocopy ? select_gpu_bin(self) : GstQgc::GpuBinMode::Passthrough;
     GstQgc::configureSinkCaps(videosink, gpuBin, !self->disable_par);
 
     // On failure the BinChain rolls the bin back; self->videosink stays NULL so change_state surfaces the construction
@@ -227,7 +204,7 @@ static void gst_qgc_video_sink_bin_setup(GstQgcVideoSinkBin* self)
         GST_ERROR_OBJECT(self, "Failed to create the video conversion element");
         return;
     }
-    if (gpuBin == HwBuffers::GpuBinMode::GlUpload) {
+    if (gpuBin == GstQgc::GpuBinMode::GlUpload) {
         GstElement* const glupload = chain.adopt(gst_element_factory_make("glupload", NULL));
         // glcolorconvert honours the sink's texture-target=2D; a passthrough when upstream is already 2D.
         GstElement* const glcolorconvert = chain.adopt(gst_element_factory_make("glcolorconvert", NULL));
@@ -243,7 +220,7 @@ static void gst_qgc_video_sink_bin_setup(GstQgcVideoSinkBin* self)
     }
     chain.commit();
     self->videosink = videosink;
-    GST_INFO_OBJECT(self, "qgcqvideosink %s bin%s", self->gpu_zerocopy ? gpu_bin_name(gpuBin) : "CPU",
+    GST_INFO_OBJECT(self, "qgcqvideosink %s bin%s", self->gpu_zerocopy ? GstQgc::gpuBinName(gpuBin) : "CPU",
                     self->disable_par ? " (non-square pixels allowed)" : "");
 }
 

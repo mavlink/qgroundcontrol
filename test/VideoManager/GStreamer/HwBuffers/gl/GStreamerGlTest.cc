@@ -9,6 +9,7 @@
 
 #include "GStreamerTestHelpers.h"
 #include "HwBuffers/common/HwBuffers.h"
+#include "gstqgc/GstQgcGpuBin.h"
 #include "gstqgc/GstQgcRenderTarget.h"
 
 void GstHwBuffersPipelineTest::_testGlMemoryDispatch()
@@ -24,7 +25,7 @@ void GstHwBuffersPipelineTest::_testGlMemoryDispatch()
 #endif
 #if defined(QGC_GST_BIN_HAS_GLUPLOAD)
     // The direct-DMABuf bin doesn't offer GLMemory.
-    const HwBuffers::ScopedGpuBinModeForTest glBin(HwBuffers::GpuBinMode::GlUpload);
+    const GstQgc::ScopedGpuBinModeForTest glBin(GstQgc::GpuBinMode::GlUpload);
 #endif
     // The sink offers GLMemory only where gst-gl shares Qt's OpenGL context.
     const GstQgc::ScopedRenderTargetForTest target({.backend = GstQgc::RenderBackend::OpenGL, .egl = true});

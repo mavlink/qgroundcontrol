@@ -57,7 +57,7 @@ struct PrivState
     // start() derives hw_context from it.
     bool gpu_zerocopy = false;
     // Set by qgcvideosinkbin before linking (configureSinkCaps); with gpu_zerocopy, they decide what get_caps offers.
-    HwBuffers::GpuBinMode gpu_bin = HwBuffers::GpuBinMode::Passthrough;
+    GstQgc::GpuBinMode gpu_bin = GstQgc::GpuBinMode::Passthrough;
     bool square_pixels = true;
     // What get_caps last offered, and for which policy; under GST_OBJECT_LOCK. Rebuilt when the policy changes, e.g.
     // the render target or the DMABuf import state: building may query EGL.
@@ -183,7 +183,7 @@ void reconfigure_on_policy_change(GstQgcQVideoSink* self)
     void* const dmaBufDisplay = HwBuffers::dmaBufImportDisplay();
     GST_OBJECT_LOCK(self);
     const GstQgc::SinkCapsPolicy policy = caps_policy_locked(p, target, dmaBufDisplay);
-    const bool changed = p->offered_caps && p->gpu_zerocopy && (p->gpu_bin != HwBuffers::GpuBinMode::GlUpload) &&
+    const bool changed = p->offered_caps && p->gpu_zerocopy && (p->gpu_bin != GstQgc::GpuBinMode::GlUpload) &&
                          (p->offered_policy != policy);
     if (changed) {
         // Rebuilt by the next get_caps, which also re-arms this check.
@@ -739,7 +739,7 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
 
 namespace GstQgc {
 
-void configureSinkCaps(GstElement* sink, HwBuffers::GpuBinMode gpuBin, bool squarePixels)
+void configureSinkCaps(GstElement* sink, GpuBinMode gpuBin, bool squarePixels)
 {
     if (!sink || !GST_IS_QGC_Q_VIDEO_SINK(sink)) {
         return;

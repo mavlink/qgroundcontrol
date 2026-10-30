@@ -19,7 +19,6 @@
 #include <QtQuick/QQuickWindow>
 
 #include "CpuVideoFramePool.h"
-#include "Fixtures/RAIIFixtures.h"
 #include "GStreamerTestHelpers.h"
 #include "GstContextBridgeBase.h"
 #include "GstHwPathRegistry.h"
@@ -28,6 +27,8 @@
 #include "GstHwVideoBufferFactory.h"
 #include "GstQgcFrameMap.h"
 #include "HwBuffers/common/HwBuffers.h"
+#include "gstqgc/GstQgcGpuBin.h"
+#include "gstqgc/GstQgcRenderTarget.h"
 #include "gstqgc/GstQgcVideoFormats.h"
 #if defined(QGC_HAS_ANY_GPU_PATH)
 #include "GstHwImportPreflight.h"
@@ -287,46 +288,80 @@ void GstHwBuffersTest::_testPreflightVerdictsDroppedWithRhi()
 #endif
 }
 
-void GstHwBuffersTest::_testGpuBinModeFromEnvironment_data()
+void GstHwBuffersTest::_testGpuBinPreferenceParse_data()
 {
-    QTest::addColumn<QByteArray>("value");  // null: variable unset
+    QTest::addColumn<QByteArray>("value");
     QTest::addColumn<int>("expectedMode");
+    QTest::addColumn<bool>("explicitChoice");
     QTest::addColumn<bool>("warns");
 
-    const int glUpload = int(HwBuffers::GpuBinMode::GlUpload);
-    const int directDmaBuf = int(HwBuffers::GpuBinMode::DirectDmaBuf);
-    QTest::newRow("unset") << QByteArray() << glUpload << false;
-    QTest::newRow("empty") << QByteArray("") << glUpload << false;
-    QTest::newRow("glupload") << QByteArray("glupload") << glUpload << false;
-    QTest::newRow("dmabuf-padded-mixed-case") << QByteArray(" DmaBuf ") << directDmaBuf << false;
-    QTest::newRow("unknown") << QByteArray("vulkan") << glUpload << true;
+    const int glUpload = int(GstQgc::GpuBinMode::GlUpload);
+    const int directDmaBuf = int(GstQgc::GpuBinMode::DirectDmaBuf);
+    QTest::newRow("unset") << QByteArray() << glUpload << false << false;
+    QTest::newRow("glupload") << QByteArray("glupload") << glUpload << true << false;
+    QTest::newRow("dmabuf-padded-mixed-case") << QByteArray(" DmaBuf ") << directDmaBuf << true << false;
+    QTest::newRow("unknown") << QByteArray("vulkan") << glUpload << false << true;
 }
 
-void GstHwBuffersTest::_testGpuBinModeFromEnvironment()
+void GstHwBuffersTest::_testGpuBinPreferenceParse()
 {
 #if !defined(QGC_GST_BIN_HAS_GLUPLOAD) || !defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
     QSKIP("QGC_GST_GPU_BIN only selects a bin when both GPU bins are compiled");
 #else
     QFETCH(QByteArray, value);
     QFETCH(int, expectedMode);
+    QFETCH(bool, explicitChoice);
     QFETCH(bool, warns);
 
-    const TestFixtures::EnvVarFixture guard("QGC_GST_GPU_BIN");
-    if (value.isNull()) {
-        qunsetenv("QGC_GST_GPU_BIN");
-    } else {
-        qputenv("QGC_GST_GPU_BIN", value);
-    }
-
     if (warns) {
-        expectLogMessage("Video.GStreamer.HwBuffers.Config", QtWarningMsg,
+        expectLogMessage("Video.GStreamer.GstQgcGpuBin", QtWarningMsg,
                          QRegularExpression(QStringLiteral("Unknown QGC_GST_GPU_BIN value.*default glupload bin")));
     }
-    QCOMPARE(int(HwBuffers::readGpuBinMode()), expectedMode);
+    const GstQgc::GpuBinPreference preference = GstQgc::parseGpuBinPreference(value);
+    QCOMPARE(int(preference.mode), expectedMode);
+    QCOMPARE(preference.explicitChoice, explicitChoice);
     if (warns) {
         verifyExpectedLogMessage();
     }
 #endif
+}
+
+void GstHwBuffersTest::_testGpuBinSelection_data()
+{
+    QTest::addColumn<int>("preferred");
+    QTest::addColumn<bool>("explicitChoice");
+    QTest::addColumn<int>("backend");
+    QTest::addColumn<bool>("egl");
+    QTest::addColumn<int>("expected");
+
+    using GstQgc::GpuBinMode;
+    using GstQgc::RenderBackend;
+    const int glUpload = int(GpuBinMode::GlUpload);
+    const int directDmaBuf = int(GpuBinMode::DirectDmaBuf);
+    const int passthrough = int(GpuBinMode::Passthrough);
+    const int openGl = int(RenderBackend::OpenGL);
+    const int vulkan = int(RenderBackend::Vulkan);
+    QTest::newRow("glupload-opengl-egl") << glUpload << false << openGl << true << glUpload;
+    QTest::newRow("glupload-vulkan") << glUpload << false << vulkan << false << passthrough;
+    QTest::newRow("glupload-vulkan-explicit") << glUpload << true << vulkan << false << glUpload;
+    QTest::newRow("dmabuf-opengl-egl") << directDmaBuf << false << openGl << true << directDmaBuf;
+    QTest::newRow("dmabuf-opengl-not-egl") << directDmaBuf << false << openGl << false << passthrough;
+    QTest::newRow("dmabuf-opengl-not-egl-explicit") << directDmaBuf << true << openGl << false << directDmaBuf;
+    QTest::newRow("passthrough-vulkan") << passthrough << false << vulkan << false << passthrough;
+}
+
+void GstHwBuffersTest::_testGpuBinSelection()
+{
+    QFETCH(int, preferred);
+    QFETCH(bool, explicitChoice);
+    QFETCH(int, backend);
+    QFETCH(bool, egl);
+    QFETCH(int, expected);
+
+    const GstQgc::GpuBinPreference preference{.mode = static_cast<GstQgc::GpuBinMode>(preferred),
+                                              .explicitChoice = explicitChoice};
+    const GstQgc::RenderTarget target{.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = egl};
+    QCOMPARE(int(GstQgc::selectGpuBin(preference, target)), expected);
 }
 
 void GstHwBuffersTest::_testCpuLayoutSizesPlanesByComponent()

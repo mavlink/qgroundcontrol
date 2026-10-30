@@ -2,11 +2,8 @@
 
 #include <string>
 
+#include "GstQgcGpuBin.h"
 #include "GstQgcRenderTarget.h"
-
-namespace HwBuffers {
-enum class GpuBinMode;
-}
 
 namespace GstQgc {
 
@@ -15,7 +12,7 @@ struct SinkCapsPolicy
 {
     bool gpuZeroCopy = false;
     /// qgcvideosinkbin's GPU variant in front of the sink; value-initialized, Passthrough (a standalone sink).
-    HwBuffers::GpuBinMode gpuBin{};
+    GpuBinMode gpuBin{};
     RenderTarget target;
     /// The DMABuf path imports now (HwBuffers::dmaBufImportDisplay()): Qt's EGLDisplay is known and no import failure
     /// disabled the path.

@@ -84,7 +84,7 @@ void GstHwBuffersPipelineTest::_testDmaBufDispatch()
     if (GstEglHelpers::qtPlatformDisplay() == EGL_NO_DISPLAY) {
         QSKIP("Qt renders without EGL here (offscreen QPA, GLX)");
     }
-    const HwBuffers::ScopedGpuBinModeForTest directBin(HwBuffers::GpuBinMode::DirectDmaBuf);
+    const GstQgc::ScopedGpuBinModeForTest directBin(GstQgc::GpuBinMode::DirectDmaBuf);
     // The sink offers DMABuf only to Qt's OpenGL over EGL.
     constexpr GstQgc::RenderTarget kDmaBufTarget{.backend = GstQgc::RenderBackend::OpenGL, .egl = true};
     const GstQgc::ScopedRenderTargetForTest target(kDmaBufTarget);
@@ -107,10 +107,8 @@ void GstHwBuffersPipelineTest::_testDmaBufDispatch()
         return GStreamer::adoptCaps(out);
     };
 
-    const GstQgc::SinkCapsPolicy dmaBufPolicy{.gpuZeroCopy = true,
-                                              .gpuBin = HwBuffers::GpuBinMode::DirectDmaBuf,
-                                              .target = kDmaBufTarget,
-                                              .dmaBufImport = true};
+    const GstQgc::SinkCapsPolicy dmaBufPolicy{
+        .gpuZeroCopy = true, .gpuBin = GstQgc::GpuBinMode::DirectDmaBuf, .target = kDmaBufTarget, .dmaBufImport = true};
     const GStreamer::GstCapsPtr qgcGpuCaps =
         GStreamer::adoptCaps(gst_caps_from_string(GstQgc::buildSinkCaps(dmaBufPolicy).c_str()));
     QVERIFY2(qgcGpuCaps, "QGC GPU caps did not parse");

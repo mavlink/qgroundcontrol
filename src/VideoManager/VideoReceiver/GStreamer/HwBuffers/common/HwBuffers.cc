@@ -4,8 +4,6 @@
 #include <optional>
 #include <utility>
 
-#include <QtCore/QByteArray>
-
 #include "QGCLoggingCategory.h"
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
@@ -21,8 +19,6 @@
 #endif
 
 namespace HwBuffers {
-
-QGC_LOGGING_CATEGORY(HwBuffersConfigLog, "Video.GStreamer.HwBuffers.Config")
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
 QGC_LOGGING_CATEGORY(HwBuffersFacadeLog, "Video.GStreamer.HwBuffers.Facade")
@@ -57,91 +53,12 @@ void onPipelineError(const GError* error, const gchar* debug) noexcept
     }
 }
 
+#ifdef QGC_UNITTEST_BUILD
 namespace {
 
-struct GpuBinChoice
-{
-    GpuBinMode mode;
-    const char* reason;
-};
-
-const char* gpuBinName(GpuBinMode mode) noexcept
-{
-    switch (mode) {
-        case GpuBinMode::GlUpload:
-            return "glupload";
-        case GpuBinMode::DirectDmaBuf:
-            return "direct DMABuf";
-        case GpuBinMode::Passthrough:
-            break;
-    }
-    return "native memory passthrough";
-}
-
-GpuBinChoice chooseGpuBin() noexcept
-{
-    const QByteArray value = qgetenv("QGC_GST_GPU_BIN").trimmed().toLower();
-#if defined(QGC_GST_BIN_HAS_GLUPLOAD) && defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
-    if (value == "dmabuf") {
-        return {GpuBinMode::DirectDmaBuf, "from QGC_GST_GPU_BIN"};
-    }
-    if (value == "glupload") {
-        return {GpuBinMode::GlUpload, "from QGC_GST_GPU_BIN"};
-    }
-    if (!value.isEmpty()) {
-        qCWarning(HwBuffersConfigLog) << "Unknown QGC_GST_GPU_BIN value" << value
-                                      << "(expected glupload or dmabuf); using the default glupload bin";
-    }
-    return {GpuBinMode::GlUpload, "default"};
-#else
-#if defined(QGC_GST_BIN_HAS_GLUPLOAD)
-    constexpr GpuBinMode kOnlyMode = GpuBinMode::GlUpload;
-#elif defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
-    constexpr GpuBinMode kOnlyMode = GpuBinMode::DirectDmaBuf;
-#else
-    constexpr GpuBinMode kOnlyMode = GpuBinMode::Passthrough;
-#endif
-    return {kOnlyMode, value.isEmpty() ? "only variant compiled" : "only variant compiled; QGC_GST_GPU_BIN ignored"};
-#endif
-}
-
-#ifdef QGC_UNITTEST_BUILD
-constexpr int kNoTestGpuBinMode = -1;
-constinit std::atomic<int> s_testGpuBinMode{kNoTestGpuBinMode};
 constinit std::atomic<void*> s_testDmaBufDisplay{nullptr};
-#endif
 
 }  // namespace
-
-GpuBinMode readGpuBinMode() noexcept
-{
-    return chooseGpuBin().mode;
-}
-
-GpuBinMode gpuBinMode() noexcept
-{
-#ifdef QGC_UNITTEST_BUILD
-    if (const int testMode = s_testGpuBinMode.load(std::memory_order_acquire); testMode != kNoTestGpuBinMode) {
-        return static_cast<GpuBinMode>(testMode);
-    }
-#endif
-    static const GpuBinMode mode = []() noexcept {
-        const GpuBinChoice choice = chooseGpuBin();
-        qCInfo(HwBuffersConfigLog).nospace() << "GPU bin: " << gpuBinName(choice.mode) << " (" << choice.reason << ")";
-        return choice.mode;
-    }();
-    return mode;
-}
-
-#ifdef QGC_UNITTEST_BUILD
-ScopedGpuBinModeForTest::ScopedGpuBinModeForTest(GpuBinMode mode)
-    : _previous(s_testGpuBinMode.exchange(static_cast<int>(mode), std::memory_order_acq_rel))
-{}
-
-ScopedGpuBinModeForTest::~ScopedGpuBinModeForTest()
-{
-    s_testGpuBinMode.store(_previous, std::memory_order_release);
-}
 #endif
 
 GstBusSyncReply onBusSyncMessage(GstMessage* msg) noexcept

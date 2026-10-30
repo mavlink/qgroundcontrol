@@ -33,6 +33,7 @@
 #include "gstqgc/GstQgcAllocation.h"
 #include "gstqgc/GstQgcBinChain.h"
 #include "gstqgc/GstQgcCaps.h"
+#include "gstqgc/GstQgcGpuBin.h"
 #include "gstqgc/GstQgcRenderTarget.h"
 #include "gstqgc/GstQgcTestSupport.h"
 #include "gstqgc/GstQgcVideoFormats.h"
@@ -340,7 +341,7 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant_data()
     const int openGl = int(GstQgc::RenderBackend::OpenGL);
 #endif
 #if defined(QGC_GST_BIN_HAS_GLUPLOAD)
-    const int glUpload = int(HwBuffers::GpuBinMode::GlUpload);
+    const int glUpload = int(GstQgc::GpuBinMode::GlUpload);
     const QStringList gluploadChildren =
         withConverter({QStringLiteral("glcolorconvert"), QStringLiteral("glupload"), QStringLiteral("qgcqvideosink")});
     const QStringList glMemory{QStringLiteral("memory:GLMemory")};
@@ -354,7 +355,7 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant_data()
 #endif
 #if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
     // DMA_DRM fragments carry memory:DMABuf too; GLMemory stays out so gst-gl can't take the import over.
-    QTest::newRow("direct-dmabuf") << int(HwBuffers::GpuBinMode::DirectDmaBuf) << openGl << true << passthroughChildren
+    QTest::newRow("direct-dmabuf") << int(GstQgc::GpuBinMode::DirectDmaBuf) << openGl << true << passthroughChildren
                                    << QStringList{QStringLiteral("memory:DMABuf"), systemMemory} << false;
 #endif
 #if !defined(QGC_GST_BIN_HAS_GLUPLOAD) && !defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
@@ -362,11 +363,10 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant_data()
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
     direct3D11Features << QStringLiteral("memory:D3D11Memory");
 #endif
-    QTest::newRow("passthrough-d3d11") << int(HwBuffers::GpuBinMode::Passthrough)
-                                       << int(GstQgc::RenderBackend::Direct3D11) << false << passthroughChildren
-                                       << (direct3D11Features << systemMemory) << false;
+    QTest::newRow("passthrough-d3d11") << int(GstQgc::GpuBinMode::Passthrough) << int(GstQgc::RenderBackend::Direct3D11)
+                                       << false << passthroughChildren << (direct3D11Features << systemMemory) << false;
     // vtdec's IOSurface-backed buffers arrive in system memory; GLMemory would be downloaded under Metal.
-    QTest::newRow("passthrough-metal") << int(HwBuffers::GpuBinMode::Passthrough) << int(GstQgc::RenderBackend::Metal)
+    QTest::newRow("passthrough-metal") << int(GstQgc::GpuBinMode::Passthrough) << int(GstQgc::RenderBackend::Metal)
                                        << false << passthroughChildren << QStringList{systemMemory} << false;
 #endif
 }
@@ -383,10 +383,7 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant()
     QFETCH(QStringList, memoryFeatures);
     QFETCH(bool, singlePlaneRgb2D);
 
-    if (!qEnvironmentVariableIsEmpty("QGC_GST_GPU_BIN")) {
-        QSKIP("QGC_GST_GPU_BIN overrides the GPU bin choice");
-    }
-    const HwBuffers::ScopedGpuBinModeForTest binMode(static_cast<HwBuffers::GpuBinMode>(mode));
+    const GstQgc::ScopedGpuBinModeForTest binMode(static_cast<GstQgc::GpuBinMode>(mode));
     const GstQgc::ScopedRenderTargetForTest target(
         {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = egl});
     const HwBuffers::ScopedDmaBufDisplayForTest dmaBufDisplay(kFakeQtEglDisplay);
@@ -768,7 +765,7 @@ void GstQgcSinkTest::_testAllocationQueryHwMemoryPoolHint()
 void GstQgcSinkTest::_testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta()
 {
 #if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
-    const HwBuffers::ScopedGpuBinModeForTest directBin(HwBuffers::GpuBinMode::DirectDmaBuf);
+    const GstQgc::ScopedGpuBinModeForTest directBin(GstQgc::GpuBinMode::DirectDmaBuf);
     const GstQgc::ScopedRenderTargetForTest target(kOpenGlOnEgl);
     const HwBuffers::ScopedDmaBufDisplayForTest dmaBufDisplay(kFakeQtEglDisplay);
 #else

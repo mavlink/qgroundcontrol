@@ -55,6 +55,7 @@
 #include "GstHwVideoBufferFactory.h"
 #include "HwBuffers/GstHwImageReadback.h"
 #include "HwBuffers/common/HwBuffers.h"
+#include "gstqgc/GstQgcGpuBin.h"
 #include "gstqgc/GstQgcRenderTarget.h"
 #endif
 
@@ -499,7 +500,7 @@ void GStreamerGlReadbackTest::_testGlMemoryFrameReadsBack()
     }
 #if defined(QGC_GST_BIN_HAS_GLUPLOAD)
     // The direct-DMABuf bin doesn't offer GLMemory.
-    const HwBuffers::ScopedGpuBinModeForTest glBin(HwBuffers::GpuBinMode::GlUpload);
+    const GstQgc::ScopedGpuBinModeForTest glBin(GstQgc::GpuBinMode::GlUpload);
 #endif
     const GstQgc::ScopedRenderTargetForTest target({.backend = GstQgc::RenderBackend::OpenGL, .egl = true});
 

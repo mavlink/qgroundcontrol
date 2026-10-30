@@ -45,8 +45,10 @@ private slots:
     void _testCpuCopyOddDimensions();
     void _testQGCRhiCaptureCacheLifecycle();
     void _testPreflightVerdictsDroppedWithRhi();
-    void _testGpuBinModeFromEnvironment_data();
-    void _testGpuBinModeFromEnvironment();
+    void _testGpuBinPreferenceParse_data();
+    void _testGpuBinPreferenceParse();
+    void _testGpuBinSelection_data();
+    void _testGpuBinSelection();
     void _testHwBufferCropMatrixIdentityWithoutMeta();
     void _testTexturePadsPicture_data();
     void _testTexturePadsPicture();

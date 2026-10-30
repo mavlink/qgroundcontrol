@@ -174,7 +174,7 @@ When both are compiled, `QGC_GST_GPU_BIN` (`glupload` or `dmabuf`, case-insensit
 between them, and an explicit value is used even under a renderer the variant doesn't suit, with a warning. An unknown
 value logs a warning and keeps the default. Builds with only one variant ignore the variable: Android always uses
 glupload, Linux without gst-gl always imports DMABuf directly. The choice is logged once under
-`Video.GStreamer.HwBuffers.Config`; the `qgc` GStreamer debug category logs each bin's variant.
+`Video.GStreamer.GstQgcGpuBin`; the `qgc` GStreamer debug category logs each bin's variant.
 
 Qt's xcb platform, which the AppImage uses even in Wayland sessions, picks GLX before EGL. Linux builds with the GL or
 DMABuf path therefore set `QT_XCB_GL_INTEGRATION=xcb_egl` at startup unless it is already set; Qt still falls back to

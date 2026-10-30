@@ -17,6 +17,7 @@
 #include "GstHwPathTelemetry.h"
 #include "HwBuffers/common/HwBuffers.h"
 #include "QGCQVideoSinkController.h"
+#include "gstqgc/GstQgcGpuBin.h"
 #include "gstqgc/GstQgcRenderTarget.h"
 #include "gstqgc/GstQgcTestSupport.h"
 #include "gstqgc/gstqgcqvideosink.h"
@@ -161,14 +162,14 @@ void GstQgcSinkPipelineTest::_testGpuZeroCopyFallback_data()
         const QByteArray tag = format.toLatin1();
 #if defined(QGC_GST_BIN_HAS_GLUPLOAD)
         QTest::addRow("glupload-%s", tag.constData())
-            << int(HwBuffers::GpuBinMode::GlUpload) << int(GstQgc::RenderBackend::OpenGL) << format;
+            << int(GstQgc::GpuBinMode::GlUpload) << int(GstQgc::RenderBackend::OpenGL) << format;
 #endif
 #if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
         QTest::addRow("direct-dmabuf-%s", tag.constData())
-            << int(HwBuffers::GpuBinMode::DirectDmaBuf) << int(GstQgc::RenderBackend::OpenGL) << format;
+            << int(GstQgc::GpuBinMode::DirectDmaBuf) << int(GstQgc::RenderBackend::OpenGL) << format;
 #endif
         QTest::addRow("passthrough-%s", tag.constData())
-            << int(HwBuffers::GpuBinMode::Passthrough) << int(GstQgc::RenderBackend::Vulkan) << format;
+            << int(GstQgc::GpuBinMode::Passthrough) << int(GstQgc::RenderBackend::Vulkan) << format;
     }
 }
 
@@ -177,7 +178,7 @@ void GstQgcSinkPipelineTest::_testGpuZeroCopyFallback()
     QFETCH(int, mode);
     QFETCH(int, backend);
     QFETCH(QString, format);
-    const HwBuffers::ScopedGpuBinModeForTest binMode(static_cast<HwBuffers::GpuBinMode>(mode));
+    const GstQgc::ScopedGpuBinModeForTest binMode(static_cast<GstQgc::GpuBinMode>(mode));
     const GstQgc::ScopedRenderTargetForTest target(
         {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = true});
 

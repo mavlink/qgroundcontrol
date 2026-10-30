@@ -17,37 +17,6 @@ class QQuickWindow;
 
 namespace HwBuffers {
 
-/// Head of qgcvideosinkbin's GPU branch. Linux builds with both gst-gl and DMABuf compile GlUpload and DirectDmaBuf
-/// and pick one at runtime; every other build compiles exactly one.
-enum class GpuBinMode
-{
-    Passthrough,   ///< Every compiled native memory straight into qgcqvideosink (Windows, Apple, ...).
-    GlUpload,      ///< glupload → glcolorconvert → GLMemory 2D; gst-gl imports LINEAR and vendor-tiled DMABuf.
-    DirectDmaBuf,  ///< memory:DMABuf and DMA_DRM into QGC's own importer (LINEAR only), skipping gst-gl's copy.
-};
-
-/// Resolves QGC_GST_GPU_BIN ("glupload" or "dmabuf", case-insensitive) against the compiled bins. Unset keeps the
-/// default, GlUpload; an unknown value warns and keeps it too. With one compiled bin the variable is ignored.
-GpuBinMode readGpuBinMode() noexcept;
-
-/// readGpuBinMode() of the first call, logged once with the reason for the choice.
-GpuBinMode gpuBinMode() noexcept;
-
-#ifdef QGC_UNITTEST_BUILD
-/// gpuBinMode() returns @p mode while alive, then what it returned before.
-class ScopedGpuBinModeForTest
-{
-public:
-    explicit ScopedGpuBinModeForTest(GpuBinMode mode);
-    ~ScopedGpuBinModeForTest();
-    ScopedGpuBinModeForTest(const ScopedGpuBinModeForTest&) = delete;
-    ScopedGpuBinModeForTest& operator=(const ScopedGpuBinModeForTest&) = delete;
-
-private:
-    int _previous;
-};
-#endif
-
 /// For a receiver's bus sync handler: the context bridges answer NEED_CONTEXT. GST_BUS_DROP means @p msg was consumed
 /// (and unreffed); always GST_BUS_PASS when no GPU path is compiled.
 GstBusSyncReply onBusSyncMessage(GstMessage* msg) noexcept;
