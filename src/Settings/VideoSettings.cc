@@ -71,11 +71,15 @@ DECLARE_SETTINGGROUP(Video, "Video")
         settings.endGroup();
     }
 
-    // "Disable when disarmed" used to store streamEnabled=false, with nothing to set it back; it now holds the stream
-    // off without touching the setting. Re-enable the stream for users the old behaviour left without video.
-    if (disableWhenDisarmed()->rawValue().toBool() && !streamEnabled()->rawValue().toBool()) {
-        qCDebug(VideoSettingsLog) << "Re-enabling the video stream disabled by \"disable when disarmed\"";
-        streamEnabled()->setRawValue(true);
+    // Drop a stored streamEnabled=false: it has no UI, so it is a stale "disable when disarmed" state.
+    {
+        QSettings settings;
+        settings.beginGroup(settingsGroup);
+        if (!settings.value(streamEnabledName, true).toBool()) {
+            qCDebug(VideoSettingsLog) << "Clearing a stored streamEnabled=false";
+            settings.remove(streamEnabledName);
+        }
+        settings.endGroup();
     }
 
     // Set default value for videoSource
