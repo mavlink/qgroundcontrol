@@ -7,6 +7,7 @@
 #include <QtCore/QFile>
 
 #include "GStreamerHelpers.h"
+#include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
 
 namespace {
@@ -170,7 +171,7 @@ GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& file, Vide
     // Each element, not just the bin: a message can outlive the bin that held its source.
     for (GstElement* const element : {bin.get(), parser, muxer, fileSink}) {
         if (element) {
-            GStreamer::markBranch(element, PipelineBranch::Recording);
+            GStreamer::markBranch(element, GStreamer::PipelineBranch::Recording);
         }
     }
 
@@ -210,8 +211,8 @@ bool RecordingBranch::build()
     }
     _queue = branch.queue;
     _valve = branch.valve;
-    GStreamer::markBranch(_queue, PipelineBranch::Recording);
-    GStreamer::markBranch(_valve, PipelineBranch::Recording);
+    GStreamer::markBranch(_queue, GStreamer::PipelineBranch::Recording);
+    GStreamer::markBranch(_valve, GStreamer::PipelineBranch::Recording);
 
     // Every frame must reach the muxer, so no time or buffer limit; storage that falls this far behind ends the
     // recording (_onQueueOverrun) instead of holding up the tee.

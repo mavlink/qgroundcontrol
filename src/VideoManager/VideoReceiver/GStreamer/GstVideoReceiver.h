@@ -2,6 +2,7 @@
 
 #include <functional>
 
+#include <QtCore/QLoggingCategory>
 #include <QtCore/QMetaObject>
 #include <QtCore/QString>
 
@@ -12,6 +13,9 @@ class GstReceiverWorker;
 class GstVideoReceiverTest;
 class QGCQVideoSinkController;
 class QThread;
+
+/// Also logs the receiver's worker, its PipelineSession with the branches, and PipelineDotDumper.
+Q_DECLARE_LOGGING_CATEGORY(GstVideoReceiverLog)
 
 /// The GStreamer VideoReceiver.
 ///

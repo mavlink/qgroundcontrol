@@ -3,7 +3,6 @@
 #include <functional>
 #include <gst/gst.h>
 
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 
 #include "GstScoped.h"
@@ -11,8 +10,7 @@
 class PipelineDotDumper;
 class StreamWatchdog;
 
-/// Shared by GstVideoReceiver and its components.
-Q_DECLARE_LOGGING_CATEGORY(GstVideoReceiverLog)
+namespace GStreamer {
 
 /// The tee branch a pipeline element belongs to, so a bus message can be blamed on the part that failed.
 enum class PipelineBranch
@@ -21,8 +19,6 @@ enum class PipelineBranch
     Decoding,
     Recording,
 };
-
-namespace GStreamer {
 
 inline GQuark pipelineBranchQuark()
 {

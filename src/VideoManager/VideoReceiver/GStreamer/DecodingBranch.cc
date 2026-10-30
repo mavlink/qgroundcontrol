@@ -3,6 +3,7 @@
 #include <gst/gst.h>
 
 #include "GStreamerHelpers.h"
+#include "GstVideoReceiver.h"
 #include "HwBuffers/common/HwBuffers.h"
 #include "PipelineDotDumper.h"
 #include "StreamWatchdog.h"
@@ -63,8 +64,8 @@ bool DecodingBranch::build()
     }
     _queue = branch.queue;
     _valve = branch.valve;
-    GStreamer::markBranch(_queue, PipelineBranch::Decoding);
-    GStreamer::markBranch(_valve, PipelineBranch::Decoding);
+    GStreamer::markBranch(_queue, GStreamer::PipelineBranch::Decoding);
+    GStreamer::markBranch(_valve, GStreamer::PipelineBranch::Decoding);
 
     // Tiny and leaky: the live display must drop its oldest frame on backpressure, never stall the tee.
     gst_util_set_object_arg(G_OBJECT(_queue), "leaky", "downstream");
@@ -118,7 +119,7 @@ void DecodingBranch::setVideoSink(GstElement* sink)
     _sink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref(sink)));
     _sinkStatsAtStart = GstQgc::frameStats(_sink.get());
     _gpuCountersAtStart = GstHwPathTelemetry::snapshot();
-    GStreamer::markBranch(_sink.get(), PipelineBranch::Decoding);
+    GStreamer::markBranch(_sink.get(), GStreamer::PipelineBranch::Decoding);
     (void) _sinkFrameProbe.add(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, _sinkProbe, this);
 
     if (_streaming) {
@@ -185,7 +186,7 @@ void DecodingBranch::_insertDecoder()
         GStreamer::disposeChild(_sink.get());
         return;
     }
-    GStreamer::markBranch(_decoder.get(), PipelineBranch::Decoding);
+    GStreamer::markBranch(_decoder.get(), GStreamer::PipelineBranch::Decoding);
     (void) _decoderElementAdded.connect(_decoder.get(), "deep-element-added", G_CALLBACK(_onDecoderElementAdded), this);
     (void) _decoderPadAdded.connect(_decoder.get(), "pad-added", G_CALLBACK(_onDecoderPadAdded), this);
 
@@ -327,7 +328,7 @@ void DecodingBranch::_onDecoderElementAdded(GstBin* /*decodebin*/, GstBin* /*sub
                                             gpointer data)
 {
     // A message can outlive the decoder that held its source, which leaves nothing to blame it on but its own mark.
-    GStreamer::markBranch(element, PipelineBranch::Decoding);
+    GStreamer::markBranch(element, GStreamer::PipelineBranch::Decoding);
 
     GstElementFactory* factory = gst_element_get_factory(element);
     if (!factory || !gst_element_factory_list_is_type(factory, GST_ELEMENT_FACTORY_TYPE_DECODER)) {

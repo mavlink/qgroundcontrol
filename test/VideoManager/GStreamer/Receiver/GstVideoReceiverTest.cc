@@ -184,7 +184,7 @@ bool isFactory(GstElement* element, const char* factoryName)
 }
 
 /// The head (queue or valve) of the tee branch @p branch.
-GStreamer::GstElementPtr branchHead(GstElement* pipeline, PipelineBranch branch, const char* factoryName)
+GStreamer::GstElementPtr branchHead(GstElement* pipeline, GStreamer::PipelineBranch branch, const char* factoryName)
 {
     return findElement(pipeline, [branch, factoryName](GstElement* element) {
         return isFactory(element, factoryName) && (GStreamer::branchOf(GST_OBJECT(element)) == branch);
@@ -657,9 +657,9 @@ void GstVideoReceiverTest::_testSlowRecordingDoesNotStallDisplay()
     std::atomic<int> displayed{0};
     GStreamer::PadProbe displayProbe;
     QVERIFY(runOnPipeline(stream.receiver.get(), [&displayed, &displayProbe](GstElement* pipeline) {
-        const GStreamer::GstElementPtr queue = branchHead(pipeline, PipelineBranch::Recording, "queue");
+        const GStreamer::GstElementPtr queue = branchHead(pipeline, GStreamer::PipelineBranch::Recording, "queue");
         g_object_set(queue.get(), "max-size-bytes", kBacklogBytes, nullptr);
-        const GStreamer::GstElementPtr valve = branchHead(pipeline, PipelineBranch::Decoding, "valve");
+        const GStreamer::GstElementPtr valve = branchHead(pipeline, GStreamer::PipelineBranch::Decoding, "valve");
         const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(valve.get(), "src"));
         (void) displayProbe.add(valveSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &displayed);
     }));
@@ -677,7 +677,7 @@ void GstVideoReceiverTest::_testSlowRecordingDoesNotStallDisplay()
     const auto recorderLeaks = [&stream] {
         gint leaky = 0;
         (void) runOnPipeline(stream.receiver.get(), [&leaky](GstElement* pipeline) {
-            const GStreamer::GstElementPtr queue = branchHead(pipeline, PipelineBranch::Recording, "queue");
+            const GStreamer::GstElementPtr queue = branchHead(pipeline, GStreamer::PipelineBranch::Recording, "queue");
             g_object_get(queue.get(), "leaky", &leaky, nullptr);
         });
         return leaky != 0;

@@ -11,6 +11,7 @@
 
 #include "GStreamerHelpers.h"
 #include "GstSourceFactory.h"
+#include "GstVideoReceiver.h"
 #include "HwBuffers/common/HwBuffers.h"
 #include "PipelineDotDumper.h"
 #include "StreamWatchdog.h"
@@ -422,8 +423,8 @@ void PipelineSession::_onBusError(GstMessage* message)
         return;
     }
 
-    const PipelineBranch branch = GStreamer::branchOf(GST_MESSAGE_SRC(message));
-    if (branch == PipelineBranch::Recording) {
+    const GStreamer::PipelineBranch branch = GStreamer::branchOf(GST_MESSAGE_SRC(message));
+    if (branch == GStreamer::PipelineBranch::Recording) {
         _recording->onBusError(message, text, debug.get());
         return;
     }
@@ -436,7 +437,7 @@ void PipelineSession::_onBusError(GstMessage* message)
         return;
     }
 
-    if (branch == PipelineBranch::Decoding) {
+    if (branch == GStreamer::PipelineBranch::Decoding) {
         if (!_decoding->isCurrent(GST_MESSAGE_SRC(message))) {
             qCDebug(GstVideoReceiverLog) << "Ignoring an error from a replaced decoder:" << text;
             return;
@@ -532,17 +533,17 @@ GstBusSyncReply PipelineSession::_onBusSync(GstBus* /*bus*/, GstMessage* message
             // Closed now, before the failing element returns its flow error: the valve reports OK for a push that
             // fails after drop was set, which keeps the error out of the tee and so out of the other branch.
             switch (GStreamer::branchOf(GST_MESSAGE_SRC(message))) {
-                case PipelineBranch::Decoding:
+                case GStreamer::PipelineBranch::Decoding:
                     if (self->_displayValve) {
                         g_object_set(self->_displayValve, "drop", TRUE, nullptr);
                     }
                     break;
-                case PipelineBranch::Recording:
+                case GStreamer::PipelineBranch::Recording:
                     if (self->_recordingValve) {
                         g_object_set(self->_recordingValve, "drop", TRUE, nullptr);
                     }
                     break;
-                case PipelineBranch::None:
+                case GStreamer::PipelineBranch::None:
                     break;
             }
             break;

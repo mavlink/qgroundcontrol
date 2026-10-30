@@ -83,7 +83,7 @@ public:
     /// Closes a file whose finalization is still outstanding by flushing the recorder, and reports it.
     void completeTeardown();
 
-    /// A bus ERROR from the recording branch (PipelineBranch::Recording).
+    /// A bus ERROR from the recording branch (GStreamer::PipelineBranch::Recording).
     void onBusError(GstMessage* message, const QString& text, const char* debug);
     /// A bus ELEMENT message: the recorder's EOS, as the pipeline forwards it, means its file is closed.
     void onBusElement(GstMessage* message);

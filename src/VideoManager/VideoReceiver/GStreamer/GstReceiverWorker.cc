@@ -9,6 +9,7 @@
 #include <QtCore/QTimer>
 
 #include "GstSourceFactory.h"
+#include "GstVideoReceiver.h"
 #include "QGCNetworkHelper.h"
 #include "gstqgc/gstqgcqvideosink.h"
 
