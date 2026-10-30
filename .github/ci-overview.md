@@ -92,9 +92,8 @@
   `deploy_docs.py`, `collect_build_status.py`, `download_artifacts.py`, `gh_pr_size_label.py`,
   `report_context.py`, `apt_install_retry.py`, `enable_kvm.py`, `install_multipass.py`, and
   `runner_image.py`. Steps ahead of a later or conditional `setup-python` also run
-  `release_branch_check.py` (release tag check), `build_gstreamer.py` (GStreamer source builds),
-  `install_dependencies_helper.py` and `tools/setup/install_dependencies`
-  (`install-dependencies`), `build-setup`'s `build_setup.py` planner,
+  `release_branch_check.py` (release tag check), `install_dependencies_helper.py` and
+  `tools/setup/install_dependencies` (`install-dependencies`), `build-setup`'s `build_setup.py` planner,
   `setup-python`'s own `cache_backend.py` probe, plus the
   `install_python.py` and `install_uv.py` installers.
   `tools/tests/test_stdlib_only.py` imports each under `python -I -S`, and every module of the

@@ -96,11 +96,6 @@ def test_resolve_arch_renames_the_default_windows_host_arch() -> None:
         assert cli.resolve_arch("windows", "") == "x64"
 
 
-def test_ci_prefix_is_unset_off_github_actions() -> None:
-    assert cli.ci_prefix("linux", "x86_64") is None
-    assert cli.ci_prefix("windows", "x64") is None
-
-
 def _main_config(monkeypatch: pytest.MonkeyPatch, *args: str) -> BuildConfig:
     monkeypatch.setattr("sys.argv", ["build_gstreamer.py", "--version", "1.24.0", *args])
     with (
@@ -111,49 +106,7 @@ def _main_config(monkeypatch: pytest.MonkeyPatch, *args: str) -> BuildConfig:
     return (meson if meson.called else cerbero).call_args.args[0]
 
 
-@pytest.mark.parametrize(
-    ("args", "arch", "windows_prefix"),
-    [
-        (["--platform", "linux", "--arch", "aarch64"], "aarch64", None),
-        (["--platform", "macos", "--arch", "universal"], "universal", None),
-        (["--platform", "android", "--arch", "universal"], "universal", None),
-        (["--platform", "windows", "--arch", "x86_64"], "x64", "C:\\gstreamer-x64"),
-        (["--platform", "windows", "--arch", "arm64"], "arm64", "C:\\gstreamer-arm64"),
-    ],
-)
-def test_main_on_github_actions_outputs_the_resolved_arch_and_prefix(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-    gh_output: Path,
-    args: list[str],
-    arch: str,
-    windows_prefix: str | None,
-) -> None:
-    monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
-    prefix = windows_prefix or str(tmp_path / "gstreamer")
-
-    config = _main_config(monkeypatch, *args)
-
-    assert config.arch == arch
-    assert str(config.prefix) == prefix
-    assert gh_output.read_text(encoding="utf-8") == f"arch={arch}\nprefix={prefix}\n"
-
-
-def test_main_explicit_prefix_overrides_the_ci_default(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, gh_output: Path
-) -> None:
-    monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
-    custom = tmp_path / "custom"
-
-    config = _main_config(
-        monkeypatch, "--platform", "windows", "--arch", "x86_64", "--prefix", str(custom)
-    )
-
-    assert config.prefix == custom
-    assert gh_output.read_text(encoding="utf-8") == f"arch=x64\nprefix={custom}\n"
-
-
-def test_main_off_github_actions_defaults_the_prefix_under_the_work_dir(
+def test_main_defaults_the_prefix_under_the_work_dir(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     config = _main_config(
@@ -161,52 +114,6 @@ def test_main_off_github_actions_defaults_the_prefix_under_the_work_dir(
     )
 
     assert config.prefix == tmp_path / "gst-windows-x64"
-
-
-@pytest.mark.parametrize(
-    ("plat", "windows_work_dir", "qt_prefix"),
-    [
-        ("linux", False, False),
-        ("macos", False, True),
-        ("windows", True, True),
-        ("ios", False, False),
-    ],
-)
-def test_main_on_github_actions_defaults_the_work_dir_and_qt_prefix(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-    gh_output: Path,
-    plat: str,
-    windows_work_dir: bool,
-    qt_prefix: bool,
-) -> None:
-    """On GitHub Actions, Windows works in RUNNER_TEMP; macOS and Windows link Qt."""
-    monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
-    monkeypatch.setenv("QT_ROOT_DIR", str(tmp_path / "Qt"))
-
-    config = _main_config(monkeypatch, "--platform", plat, "--arch", "arm64")
-
-    assert config.work_dir == (tmp_path if windows_work_dir else Path(tempfile.gettempdir()))
-    assert config.qt_prefix == (tmp_path / "Qt" if qt_prefix else None)
-
-
-def test_main_explicit_work_dir_and_qt_prefix_override_the_ci_defaults(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, gh_output: Path
-) -> None:
-    monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
-    monkeypatch.setenv("QT_ROOT_DIR", str(tmp_path / "Qt"))
-    args = ("--work-dir", str(tmp_path / "work"), "--qt-prefix", str(tmp_path / "other-qt"))
-
-    config = _main_config(monkeypatch, "--platform", "windows", "--arch", "x64", *args)
-
-    assert config.work_dir == tmp_path / "work"
-    assert config.qt_prefix == tmp_path / "other-qt"
-
-
-def test_qt_root_dir_is_ignored_off_github_actions(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("QT_ROOT_DIR", "/opt/Qt")
-    assert cli.ci_qt_prefix("macos") is None
-    assert cli.ci_work_dir("windows") is None
 
 
 def test_get_meson_args_contains_prefix(tmp_path: Path) -> None:

@@ -46,13 +46,14 @@ PRE_SETUP_PYTHON_SCRIPTS: tuple[str, ...] = (
     "tools/update_px4_metadata.py",
     # Run before a later or conditional setup-python.
     "tools/ci/publish/release_branch_check.py",  # release.yml checks the tag before installing
-    "tools/setup/build_gstreamer.py",
     "tools/ci/runner/install_dependencies_helper.py",  # install-dependencies sets up Python on Windows only
     "tools/ci/runner/build_setup.py",  # build-setup plans before its setup-python
     "tools/setup/install_dependencies/__main__.py",
     "tools/ci/cache/cache_backend.py",  # setup-python's cache backend probe
     "tools/setup/install_python.py",  # setup-python's own installer
     "tools/setup/install_uv.py",  # VM and runner-image provisioning
+    # Local setup scripts, run with the host python3 before tools/.venv exists.
+    "tools/setup/build_gstreamer.py",
 )
 
 # Composite actions run scripts as `python3`. install_python.py gives the Windows tools/.venv a
