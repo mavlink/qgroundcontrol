@@ -254,12 +254,4 @@ QString extraPathStatsSince(const GstHwPathTelemetry::Snapshot& baseline) noexce
     return out;
 }
 
-QString takeExtraPathStats() noexcept
-{
-    thread_local GstHwPathTelemetry::Snapshot baseline;
-    QString out = extraPathStatsSince(baseline);
-    baseline = GstHwPathTelemetry::snapshot();
-    return out;
-}
-
 }  // namespace HwBuffers

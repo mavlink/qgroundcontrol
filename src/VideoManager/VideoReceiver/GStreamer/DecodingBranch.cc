@@ -3,6 +3,7 @@
 #include <gst/gst.h>
 
 #include "GStreamerHelpers.h"
+#include "HwBuffers/common/HwBuffers.h"
 #include "PipelineDotDumper.h"
 #include "StreamWatchdog.h"
 #include "gstqgc/gstqgcqvideosink.h"
@@ -121,6 +122,7 @@ void DecodingBranch::setVideoSink(GstElement* sink)
     }
     _sink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref(sink)));
     _sinkStatsAtStart = GstQgc::frameStats(_sink.get());
+    _gpuCountersAtStart = GstHwPathTelemetry::snapshot();
     GStreamer::markBranch(_sink.get(), PipelineBranch::Decoding);
     (void) _sinkFrameProbe.add(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, _sinkProbe, this);
 
@@ -165,7 +167,11 @@ bool DecodingBranch::isCurrent(GstObject* source) const
 GstQgc::PathStats DecodingBranch::sinkPathStats() const
 {
     const GStreamer::GstStructurePtr stats = GstQgc::frameStats(_sink.get());
-    return GstQgc::formatSinkStats(stats.get(), _sinkStatsAtStart.get());
+    GstQgc::PathStats out = GstQgc::formatSinkStats(stats.get(), _sinkStatsAtStart.get());
+    if (stats) {
+        out.line += HwBuffers::extraPathStatsSince(_gpuCountersAtStart);
+    }
+    return out;
 }
 
 void DecodingBranch::_insertDecoder()

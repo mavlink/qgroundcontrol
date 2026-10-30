@@ -7,6 +7,7 @@
 
 #include "BranchContext.h"
 #include "GstScoped.h"
+#include "HwBuffers/common/GstHwPathTelemetry.h"
 
 namespace GstQgc {
 struct PathStats;
@@ -72,8 +73,8 @@ public:
     /// anything else of the branch are left over from a replaced decoder.
     bool isCurrent(GstObject* source) const;
 
-    /// The frames the video sink delivered since setVideoSink(), from qgcqvideosink's "frame-stats"; empty for other
-    /// sinks.
+    /// The frames the video sink delivered since setVideoSink(), from qgcqvideosink's "frame-stats", followed by the
+    /// process-wide GPU-path counters since then (HwBuffers::extraPathStatsSince()); empty for other sinks.
     GstQgc::PathStats sinkPathStats() const;
 
 private:
@@ -103,6 +104,8 @@ private:
     GStreamer::GstElementPtr _decoder;
     // The sink's "frame-stats" when setVideoSink() took it: the sink outlives sessions and its counters don't restart.
     GStreamer::GstStructurePtr _sinkStatsAtStart;
+    // The process-wide GPU-path counters then, which never restart either.
+    GstHwPathTelemetry::Snapshot _gpuCountersAtStart;
     GStreamer::PadProbe _sinkFrameProbe;
     GStreamer::PadProbe _keyframeGate;
     GStreamer::ScopedSignal _queueOverrun;

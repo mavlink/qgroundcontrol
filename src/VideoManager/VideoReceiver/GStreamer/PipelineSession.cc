@@ -280,8 +280,7 @@ void PipelineSession::shutdown()
     }
 
     if (hwStats.totalDelivered > 0) {
-        qCDebug(GstVideoReceiverLog).noquote()
-            << "GPU path stats" << _settings.redactedUri << hwStats.line + HwBuffers::takeExtraPathStats();
+        qCDebug(GstVideoReceiverLog).noquote() << "GPU path stats" << _settings.redactedUri << hwStats.line;
     }
 
     if (_pipeline) {

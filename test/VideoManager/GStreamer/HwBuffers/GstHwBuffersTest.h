@@ -60,6 +60,6 @@ private slots:
     void _testTelemetryFallbackReasonMatrix();
     void _testTelemetrySyncWaitSplit();
     void _testTelemetryMapFailuresReportedInExtraStats();
-    void _testTelemetryDmaBufExtraStatsDrain();
+    void _testTelemetryDmaBufExtraStats();
 #endif
 };

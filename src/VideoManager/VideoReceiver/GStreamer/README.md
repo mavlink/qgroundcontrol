@@ -96,9 +96,9 @@ Per-platform import of decoded GPU frames without a copy. Most paths wrap their 
   without crop meta. The picture is copied out on the render thread, as a texture-array slice is, so frames keep the
   picture's size and a CPU layout for that fallback and for screenshots.
 - **`GstHwPathTelemetry`** tracks process-wide render-time counters (map failures, reuse hits, sync waits) for fallback
-  diagnostics. A receiver's `GPU path stats` debug line pairs its own sink's `frame-stats` with them. Reading never
-  resets the counters: each reader reports the change since its own snapshot, so receivers don't take each other's
-  counts.
+  diagnostics. A receiver's `GPU path live` and `GPU path stats` debug lines pair its own sink's `frame-stats` with
+  them, both counted from when its session took the sink. Reading never resets the counters: each reader reports the
+  change since its own snapshot, so receivers don't take each other's counts.
 - **`CpuVideoFramePool`** recycles CPU-backed `QVideoFrame` storage (WebRTC-style slab) for the software-fallback path, avoiding per-frame allocation.
 - **Build options**: `HwBuffers/CMakeLists.txt` probes one table row per path; the `QGC_GST_ENABLE_<PATH>` switches
   that compile a path out are listed in [`cmake/README.md`](../../../../cmake/README.md#gstreamer). Configure lists

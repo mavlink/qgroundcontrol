@@ -13,7 +13,6 @@
 #include <QtCore/QRect>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
-#include <QtCore/QThread>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/private/qvideotexturehelper_p.h>
 #include <QtQuick/QQuickWindow>
@@ -798,34 +797,27 @@ void GstHwBuffersTest::_testTelemetryMapFailuresReportedInExtraStats()
     constexpr HwVideoBufferPath path = HwVideoBufferPath::Vulkan;
 #endif
 
-    (void) HwBuffers::takeExtraPathStats();
     const GstHwPathTelemetry::Snapshot receiverBaseline = GstHwPathTelemetry::snapshot();
-
     GstHwPathTelemetry::record(path, GstHwPathTelemetry::Counter::MapFailures);
+    const GstHwPathTelemetry::Snapshot laterBaseline = GstHwPathTelemetry::snapshot();
 
+    // Reading never resets the counters: each receiver reports what changed since its own baseline.
     const QString failures = QStringLiteral(" %1-failures:1").arg(QLatin1String(GstHw::toString(path)));
-    // Another receiver tearing down on its own worker thread must not consume this thread's counts.
-    QString otherThread;
-    std::unique_ptr<QThread> other(QThread::create([&otherThread] { otherThread = HwBuffers::takeExtraPathStats(); }));
-    other->start();
-    QVERIFY(other->wait(TestTimeout::mediumMs()));
-    QVERIFY2(otherThread.contains(QStringLiteral("-failures:")), qPrintable(otherThread));
-
-    const QString first = HwBuffers::takeExtraPathStats();
-    QVERIFY2(first.contains(failures), qPrintable(first));
-    const QString second = HwBuffers::takeExtraPathStats();
-    QVERIFY2(!second.contains(QStringLiteral("-failures:")), qPrintable(second));
-    const QString sinceBaseline = HwBuffers::extraPathStatsSince(receiverBaseline);
-    QVERIFY2(sinceBaseline.contains(failures), qPrintable(sinceBaseline));
+    for (int read = 0; read < 2; ++read) {
+        const QString sinceBaseline = HwBuffers::extraPathStatsSince(receiverBaseline);
+        QVERIFY2(sinceBaseline.contains(failures), qPrintable(sinceBaseline));
+    }
+    const QString sinceLater = HwBuffers::extraPathStatsSince(laterBaseline);
+    QVERIFY2(!sinceLater.contains(QStringLiteral("-failures:")), qPrintable(sinceLater));
 #endif
 }
 
-void GstHwBuffersTest::_testTelemetryDmaBufExtraStatsDrain()
+void GstHwBuffersTest::_testTelemetryDmaBufExtraStats()
 {
 #if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QSKIP("DMABuf GPU path not compiled in this build");
 #else
-    (void) HwBuffers::takeExtraPathStats();
+    const GstHwPathTelemetry::Snapshot before = GstHwPathTelemetry::snapshot();
     GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ProducerFenceTimeouts);
     GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::CpuWaits);
     GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::GpuWaits);
@@ -833,12 +825,12 @@ void GstHwBuffersTest::_testTelemetryDmaBufExtraStatsDrain()
     GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheHits);
     GstHwPathTelemetry::record(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::ImageCacheMisses);
 
-    const QString first = HwBuffers::takeExtraPathStats();
+    const QString first = HwBuffers::extraPathStatsSince(before);
     QVERIFY2(first.contains(QStringLiteral("DMABuf-fence-timeouts:1")), qPrintable(first));
     QVERIFY2(first.contains(QStringLiteral("DMABuf-wait[gpu/cpu]:1/1")), qPrintable(first));
     QVERIFY2(first.contains(QStringLiteral("DMABuf-image-cache[hit/miss]:2/1")), qPrintable(first));
 
-    const QString second = HwBuffers::takeExtraPathStats();
+    const QString second = HwBuffers::extraPathStatsSince(GstHwPathTelemetry::snapshot());
     QVERIFY2(!second.contains(QStringLiteral("fence-timeouts")), qPrintable(second));
     QVERIFY2(!second.contains(QStringLiteral("wait[gpu/cpu]")), qPrintable(second));
     QVERIFY2(!second.contains(QStringLiteral("image-cache")), qPrintable(second));

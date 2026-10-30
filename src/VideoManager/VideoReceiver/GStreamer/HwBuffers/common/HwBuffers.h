@@ -61,8 +61,4 @@ bool proposeDeviceBoundPool(GstQuery* query, GstCaps* caps, const GstVideoInfo* 
 /// receiver can report its own window.
 QString extraPathStatsSince(const GstHwPathTelemetry::Snapshot& baseline) noexcept;
 
-/// extraPathStatsSince() the calling thread's previous call (process start on its first), then moves that thread's
-/// baseline to now. Each receiver tears down on its own worker thread, so receivers never take each other's counts.
-QString takeExtraPathStats() noexcept;
-
 }  // namespace HwBuffers
