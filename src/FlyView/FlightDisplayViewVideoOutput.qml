@@ -17,44 +17,23 @@ VideoOutput {
               ? VideoOutput.PreserveAspectCrop
               : VideoOutput.PreserveAspectFit
 
-    property VideoStreamController stream
+    required property VideoStreamController stream
 
-    property VideoStreamController _registeredStream: null
     property bool _completed: false
     // VideoOutput never emits windowChanged (QQuickVideoOutput::itemChange() doesn't chain up), so follow the
     // parent's window. Moving to another window (PiP pop-out) needs a re-registration.
     readonly property QtObject _window: parent ? parent.Window.window : null
 
-    function _register() {
-        if (_registeredStream && _registeredStream !== stream) {
-            _registeredStream.unregisterVideoOutput(_root)
-        }
-        _registeredStream = stream
-        if (stream) {
-            stream.registerVideoOutput(_root)
-        }
-    }
-
-    onStreamChanged: {
-        if (_completed) {
-            _register()
-        }
-    }
-
     on_WindowChanged: {
-        if (_completed && _window && _registeredStream) {
-            _registeredStream.registerVideoOutput(_root)
+        if (_completed && _window) {
+            stream.registerVideoOutput(_root)
         }
     }
 
     Component.onCompleted: {
         _completed = true
-        _register()
+        stream.registerVideoOutput(_root)
     }
 
-    Component.onDestruction: {
-        if (_registeredStream) {
-            _registeredStream.unregisterVideoOutput(_root)
-        }
-    }
+    Component.onDestruction: stream.unregisterVideoOutput(_root)
 }
