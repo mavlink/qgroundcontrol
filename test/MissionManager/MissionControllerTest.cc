@@ -1612,6 +1612,8 @@ void MissionControllerTest::_testUnitsChangeDoesNotDirtyPlan()
     RallyPointController* const rallyPointController = _masterController->rallyPointController();
     rallyPointController->addPoint(home.atDistanceAndAzimuth(100, 180));
     QCoreApplication::processEvents();
+    // A PX4 rally point seeds its altitude from terrain, and that raw change dirties the point: let it land first
+    QTRY_VERIFY_WITH_TIMEOUT(!rallyPointController->terrainQueryPending(), TestTimeout::longMs());
 
     _missionController->setDirty(false);
     geoFenceController->setDirty(false);
