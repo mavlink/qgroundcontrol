@@ -24,12 +24,6 @@ constexpr quint64 kSourceFlowLogIntervalFrames = 300;
 // packets arrive too late and only add load.
 constexpr int kMinRetransmissionLatencyMs = 40;
 
-// Blocking probe: returning OK keeps the pad blocked until the probe is removed.
-GstPadProbeReturn holdSourcePad(GstPad* /*pad*/, GstPadProbeInfo* /*info*/, gpointer /*data*/)
-{
-    return GST_PAD_PROBE_OK;
-}
-
 void logBusWarning(GstMessage* message)
 {
     // GStreamer posts WARNING for caps mismatches, decoder fallbacks, clock drift: surfacing keeps these visible
@@ -562,15 +556,12 @@ void PipelineSession::_onSourcePadAdded(GstElement* source, GstPad* pad, gpointe
 {
     auto* const self = static_cast<PipelineSession*>(data);
 
-    // Runs on a streaming thread; the pipeline is only changed on the worker. Data waits at the pad until the worker
-    // has linked it, since an unlinked push would fail the stream.
-    const gulong blockId = gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM, holdSourcePad, nullptr, nullptr);
-    self->_post([self, blockId, padSource = GStreamer::shareObject(source), newPad = GStreamer::shareObject(pad)]() {
+    // Runs on a streaming thread; the pipeline is only changed on the worker.
+    self->_post(GStreamer::holdPadUntilLinked(pad, [self, padSource = GStreamer::shareObject(source)](GstPad* newPad) {
         if (padSource.get() == self->_source) {
-            self->_linkSourcePad(newPad.get());
+            self->_linkSourcePad(newPad);
         }
-        gst_pad_remove_probe(newPad.get(), blockId);
-    });
+    }));
 }
 
 GstPadProbeReturn PipelineSession::_teeProbe(GstPad* /*pad*/, GstPadProbeInfo* /*info*/, gpointer data)

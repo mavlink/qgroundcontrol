@@ -14,11 +14,6 @@ constexpr guint kDisplayQueueMaxBuffers = 2;
 // A stream without keyframes (intra refresh) would otherwise freeze for good after a dropped frame.
 constexpr int kMaxGateDrops = 300;
 
-GstPadProbeReturn holdDecoderPad(GstPad* /*pad*/, GstPadProbeInfo* /*info*/, gpointer /*data*/)
-{
-    return GST_PAD_PROBE_OK;
-}
-
 /// Sets "sync" on @p sink, or on the sinks inside it when it is a bin without the property.
 void setSinkSync(GstElement* sink, bool sync)
 {
@@ -319,17 +314,13 @@ void DecodingBranch::_onDecoderPadAdded(GstElement* decoder, GstPad* pad, gpoint
 {
     auto* const self = static_cast<DecodingBranch*>(data);
 
-    // Runs on a streaming thread; the pipeline is only changed on the worker. Data waits at the pad until the worker
-    // has linked it, since an unlinked push would fail the stream.
-    const gulong blockId =
-        gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM, holdDecoderPad, nullptr, nullptr);
+    // Runs on a streaming thread; the pipeline is only changed on the worker.
     self->_context.post(
-        [self, blockId, padDecoder = GStreamer::shareObject(decoder), newPad = GStreamer::shareObject(pad)]() {
+        GStreamer::holdPadUntilLinked(pad, [self, padDecoder = GStreamer::shareObject(decoder)](GstPad* newPad) {
             if (padDecoder.get() == self->_decoder.get()) {
-                self->_linkDecoderPad(newPad.get());
+                self->_linkDecoderPad(newPad);
             }
-            gst_pad_remove_probe(newPad.get(), blockId);
-        });
+        }));
 }
 
 void DecodingBranch::_onDecoderElementAdded(GstBin* /*decodebin*/, GstBin* /*subBin*/, GstElement* element,

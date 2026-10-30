@@ -47,6 +47,10 @@ void sendEventAsync(GstPad* pad, GstEvent* event);
 /// @p element's first src pad, or null when it has none (yet).
 GstPadPtr firstSrcPad(GstElement* element);
 
+/// For a pad a streaming thread just added: blocks its data, since a push on an unlinked pad would fail the stream,
+/// and returns the task for the thread that changes the pipeline, which calls @p link with the pad and unblocks it.
+std::function<void()> holdPadUntilLinked(GstPad* pad, std::function<void(GstPad* pad)> link);
+
 bool isHardwareDecoderFactory(GstElementFactory* factory);
 
 /// "[HW|SW] <plugin>/<factory> rank=<rank> (<klass>)" for decoder logs.

@@ -163,6 +163,19 @@ GstPadPtr firstSrcPad(GstElement* element)
     return adoptPad(first);
 }
 
+std::function<void()> holdPadUntilLinked(GstPad* pad, std::function<void(GstPad* pad)> link)
+{
+    // Returning OK from a blocking probe keeps the pad blocked until the probe is removed.
+    const gulong blockId = gst_pad_add_probe(
+        pad, GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM,
+        [](GstPad* /*pad*/, GstPadProbeInfo* /*info*/, gpointer /*data*/) { return GST_PAD_PROBE_OK; }, nullptr,
+        nullptr);
+    return [blockId, heldPad = shareObject(pad), link = std::move(link)]() {
+        link(heldPad.get());
+        gst_pad_remove_probe(heldPad.get(), blockId);
+    };
+}
+
 void forEachPlugin(GstRegistry* registry, const std::function<void(GstPlugin*)>& visitor)
 {
     if (!registry || !visitor)
