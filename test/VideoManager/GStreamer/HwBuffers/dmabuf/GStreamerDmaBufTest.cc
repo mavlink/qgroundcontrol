@@ -83,10 +83,11 @@ void GstHwBuffersPipelineTest::_testDmaBufDispatch()
     if (!QGCRhiCapture::qtEglDisplay()) {
         QSKIP("Qt renders without EGL here (offscreen QPA, GLX)");
     }
-    const GstQgc::ScopedGpuBinModeForTest directBin(GstQgc::GpuBinMode::DirectDmaBuf);
     // The sink offers DMABuf only to Qt's OpenGL over EGL.
     constexpr GstQgc::RenderTarget kDmaBufTarget{.backend = GstQgc::RenderBackend::OpenGL, .egl = true};
-    const GstQgc::ScopedRenderTargetForTest target(kDmaBufTarget);
+    const GstQgc::ScopedSinkEnvironmentForTest environment({.target = kDmaBufTarget,
+                                                            .gpuBin = {.mode = GstQgc::GpuBinMode::DirectDmaBuf},
+                                                            .dmaBufDisplay = QGCRhiCapture::qtEglDisplay()});
 
     const QString missingVa = GstTest::firstMissingFactory({"vah264enc", "vah264dec", "vapostproc"});
     if (!missingVa.isEmpty()) {

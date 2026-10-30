@@ -33,7 +33,6 @@
 #include "gstqgc/GstQgcAllocation.h"
 #include "gstqgc/GstQgcBinChain.h"
 #include "gstqgc/GstQgcCaps.h"
-#include "gstqgc/GstQgcGpuBin.h"
 #include "gstqgc/GstQgcRenderTarget.h"
 #include "gstqgc/GstQgcTestSupport.h"
 #include "gstqgc/GstQgcVideoFormats.h"
@@ -214,7 +213,7 @@ GStreamer::GstCapsPtr sinkPadCaps(GstElement* element)
 
 constexpr GstQgc::RenderTarget kOpenGlOnEgl{.backend = GstQgc::RenderBackend::OpenGL, .egl = true};
 
-/// Stands in for Qt's EGLDisplay (HwBuffers::ScopedDmaBufDisplayForTest), so the sink offers DMABuf; never passed to
+/// Stands in for Qt's EGLDisplay (GstQgc::SinkEnvironment::dmaBufDisplay), so the sink offers DMABuf; never passed to
 /// EGL by these tests.
 void* const kFakeQtEglDisplay = reinterpret_cast<void*>(quintptr(1));
 
@@ -383,10 +382,10 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant()
     QFETCH(QStringList, memoryFeatures);
     QFETCH(bool, singlePlaneRgb2D);
 
-    const GstQgc::ScopedGpuBinModeForTest binMode(static_cast<GstQgc::GpuBinMode>(mode));
-    const GstQgc::ScopedRenderTargetForTest target(
-        {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = egl});
-    const HwBuffers::ScopedDmaBufDisplayForTest dmaBufDisplay(kFakeQtEglDisplay);
+    const GstQgc::ScopedSinkEnvironmentForTest environment(
+        {.target = {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = egl},
+         .gpuBin = {.mode = static_cast<GstQgc::GpuBinMode>(mode)},
+         .dmaBufDisplay = kFakeQtEglDisplay});
 
     GstElement* element = gst_element_factory_make_full("qgcvideosinkbin", "gpu-zerocopy", TRUE, nullptr);
     QVERIFY2(element, "Failed to create qgcvideosinkbin (GPU branch)");
@@ -765,9 +764,9 @@ void GstQgcSinkTest::_testAllocationQueryHwMemoryPoolHint()
 void GstQgcSinkTest::_testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta()
 {
 #if defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
-    const GstQgc::ScopedGpuBinModeForTest directBin(GstQgc::GpuBinMode::DirectDmaBuf);
-    const GstQgc::ScopedRenderTargetForTest target(kOpenGlOnEgl);
-    const HwBuffers::ScopedDmaBufDisplayForTest dmaBufDisplay(kFakeQtEglDisplay);
+    const GstQgc::ScopedSinkEnvironmentForTest environment({.target = kOpenGlOnEgl,
+                                                            .gpuBin = {.mode = GstQgc::GpuBinMode::DirectDmaBuf},
+                                                            .dmaBufDisplay = kFakeQtEglDisplay});
 #else
     QSKIP("The ALLOCATION VideoMeta contract covers the direct-DMABuf bin");
 #endif
@@ -1218,9 +1217,9 @@ void GstQgcSinkTest::_testQgcQVideoSinkGpuPathSelection()
     }
 #endif
     // A render target that imports the row's GPU memory, so the sink accepts its caps.
-    const GstQgc::ScopedRenderTargetForTest target(
-        {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = true});
-    const HwBuffers::ScopedDmaBufDisplayForTest dmaBufDisplay(kFakeQtEglDisplay);
+    const GstQgc::ScopedSinkEnvironmentForTest environment(
+        {.target = {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = true},
+         .dmaBufDisplay = kFakeQtEglDisplay});
 
     QVideoSink videoSink;
     const QByteArray feature = memoryFeature.toUtf8();
@@ -1298,9 +1297,9 @@ void GstQgcSinkTest::_testQgcQVideoSinkCapsFollowRenderTarget()
     QFETCH(int, backend);
     QFETCH(bool, egl);
     QFETCH(QStringList, memoryFeatures);
-    const GstQgc::ScopedRenderTargetForTest target(
-        {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = egl});
-    const HwBuffers::ScopedDmaBufDisplayForTest dmaBufDisplay(kFakeQtEglDisplay);
+    const GstQgc::ScopedSinkEnvironmentForTest environment(
+        {.target = {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = egl},
+         .dmaBufDisplay = kFakeQtEglDisplay});
 
     GstElement* const element = gst_element_factory_make_full("qgcqvideosink", "gpu-zerocopy", gpuZeroCopy, nullptr);
     QVERIFY(element);
@@ -1322,7 +1321,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkCapsFollowRenderTarget()
 void GstQgcSinkTest::_testQgcQVideoSinkReconfiguresOnRenderTargetChange()
 {
     QVideoSink videoSink;
-    const GstQgc::ScopedRenderTargetForTest vulkan({.backend = GstQgc::RenderBackend::Vulkan});
+    const GstQgc::ScopedSinkEnvironmentForTest vulkan({.target = {.backend = GstQgc::RenderBackend::Vulkan}});
     QgcQVideoSinkHarness harness(&videoSink, /*gpuZeroCopy=*/true);
     QVERIFY(harness.isReady());
     (void) harness.takeReconfigure();  // linking marks a source pad for reconfiguration
@@ -1332,7 +1331,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkReconfiguresOnRenderTargetChange()
 
     {
         // E.g. the scene graph came up on OpenGL after the stream negotiated: GPU memory became importable.
-        const GstQgc::ScopedRenderTargetForTest openGl(kOpenGlOnEgl);
+        const GstQgc::ScopedSinkEnvironmentForTest openGl({.target = kOpenGlOnEgl});
         QCOMPARE(harness.pushFrame(2 * GST_SECOND), GST_FLOW_OK);
         QVERIFY(harness.takeReconfigure());
         QCOMPARE(harness.pushFrame(3 * GST_SECOND), GST_FLOW_OK);
@@ -1354,8 +1353,8 @@ void GstQgcSinkTest::_testQgcQVideoSinkReconfiguresOnDmaBufImportChange()
 #else
     GstDmaBufVideoBuffer::resetCachedState();
     const auto resetLatch = qScopeGuard([] { GstDmaBufVideoBuffer::resetCachedState(); });
-    const GstQgc::ScopedRenderTargetForTest target(kOpenGlOnEgl);
-    const HwBuffers::ScopedDmaBufDisplayForTest dmaBufDisplay(kFakeQtEglDisplay);
+    const GstQgc::ScopedSinkEnvironmentForTest environment(
+        {.target = kOpenGlOnEgl, .dmaBufDisplay = kFakeQtEglDisplay});
     const auto offersDmaBuf = [](GstElement* sink) {
         const GStreamer::GstCapsPtr caps = sinkPadCaps(sink);
         return caps && capsMemoryFeatures(caps.get()).contains(QStringLiteral("memory:DMABuf"));

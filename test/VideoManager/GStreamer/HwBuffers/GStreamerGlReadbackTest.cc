@@ -55,8 +55,7 @@
 #include "GstHwVideoBufferFactory.h"
 #include "HwBuffers/GstHwImageReadback.h"
 #include "HwBuffers/common/HwBuffers.h"
-#include "gstqgc/GstQgcGpuBin.h"
-#include "gstqgc/GstQgcRenderTarget.h"
+#include "gstqgc/GstQgcCaps.h"
 #endif
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) || defined(QGC_TEST_GLMEMORY_READBACK)
@@ -496,11 +495,12 @@ void GStreamerGlReadbackTest::_testGlMemoryFrameReadsBack()
     if (!missing.isEmpty()) {
         QSKIP(qPrintable(QStringLiteral("%1 factory unavailable").arg(missing)));
     }
+    GstQgc::SinkEnvironment openGl{.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true}};
 #if defined(QGC_GST_BIN_HAS_GLUPLOAD)
     // The direct-DMABuf bin doesn't offer GLMemory.
-    const GstQgc::ScopedGpuBinModeForTest glBin(GstQgc::GpuBinMode::GlUpload);
+    openGl.gpuBin.mode = GstQgc::GpuBinMode::GlUpload;
 #endif
-    const GstQgc::ScopedRenderTargetForTest target({.backend = GstQgc::RenderBackend::OpenGL, .egl = true});
+    const GstQgc::ScopedSinkEnvironmentForTest environment(openGl);
 
     constexpr int kFrameWidth = 64;
     constexpr int kFrameHeight = 48;

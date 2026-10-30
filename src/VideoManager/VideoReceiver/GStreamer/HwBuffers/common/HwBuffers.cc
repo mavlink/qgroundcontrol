@@ -1,6 +1,5 @@
 #include "HwBuffers.h"
 
-#include <atomic>
 #include <optional>
 #include <utility>
 
@@ -13,6 +12,9 @@
 #endif
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include "GstDmaBufVideoBuffer.h"
+#ifdef QGC_UNITTEST_BUILD
+#include "gstqgc/GstQgcCaps.h"
+#endif
 #endif
 
 namespace HwBuffers {
@@ -49,14 +51,6 @@ void onPipelineError(const GError* error, const gchar* debug) noexcept
         resetCachedGpuResources();
     }
 }
-
-#ifdef QGC_UNITTEST_BUILD
-namespace {
-
-constinit std::atomic<void*> s_testDmaBufDisplay{nullptr};
-
-}  // namespace
-#endif
 
 GstBusSyncReply onBusSyncMessage(GstMessage* msg) noexcept
 {
@@ -141,8 +135,8 @@ void* dmaBufImportDisplay() noexcept
         return nullptr;
     }
 #ifdef QGC_UNITTEST_BUILD
-    if (void* const testDisplay = s_testDmaBufDisplay.load(std::memory_order_acquire)) {
-        return testDisplay;
+    if (const std::optional<GstQgc::SinkEnvironment> environment = GstQgc::sinkEnvironmentForTest()) {
+        return environment->dmaBufDisplay;
     }
 #endif
     return QGCRhiCapture::qtEglDisplay();
@@ -150,17 +144,6 @@ void* dmaBufImportDisplay() noexcept
     return nullptr;
 #endif
 }
-
-#ifdef QGC_UNITTEST_BUILD
-ScopedDmaBufDisplayForTest::ScopedDmaBufDisplayForTest(void* display)
-    : _previous(s_testDmaBufDisplay.exchange(display, std::memory_order_acq_rel))
-{}
-
-ScopedDmaBufDisplayForTest::~ScopedDmaBufDisplayForTest()
-{
-    s_testDmaBufDisplay.store(_previous, std::memory_order_release);
-}
-#endif
 
 bool answerSinkBinContextQuery(GstQuery* query) noexcept
 {

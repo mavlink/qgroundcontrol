@@ -37,19 +37,4 @@ RenderTarget currentRenderTarget() noexcept;
 
 const char* toString(RenderBackend backend) noexcept;
 
-#ifdef QGC_UNITTEST_BUILD
-/// currentRenderTarget() returns @p target while alive, then what it returned before.
-class ScopedRenderTargetForTest
-{
-public:
-    explicit ScopedRenderTargetForTest(RenderTarget target);
-    ~ScopedRenderTargetForTest();
-    ScopedRenderTargetForTest(const ScopedRenderTargetForTest&) = delete;
-    ScopedRenderTargetForTest& operator=(const ScopedRenderTargetForTest&) = delete;
-
-private:
-    int _previous;
-};
-#endif
-
 }  // namespace GstQgc

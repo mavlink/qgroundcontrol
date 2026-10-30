@@ -1,25 +1,21 @@
 #include "GstQgcGpuBin.h"
 
-#include <atomic>
+#ifdef QGC_UNITTEST_BUILD
+#include <optional>
+#endif
 
 #include <QtCore/QByteArray>
 #include <QtCore/QtEnvironmentVariables>
 
 #include "GstQgcRenderTarget.h"
 #include "QGCLoggingCategory.h"
+#ifdef QGC_UNITTEST_BUILD
+#include "GstQgcCaps.h"
+#endif
 
 QGC_LOGGING_CATEGORY(GstQgcGpuBinLog, "Video.GStreamer.GstQgcGpuBin")
 
 namespace GstQgc {
-
-namespace {
-
-#ifdef QGC_UNITTEST_BUILD
-constexpr int kNoTestGpuBinMode = -1;
-constinit std::atomic<int> s_testGpuBinMode{kNoTestGpuBinMode};
-#endif
-
-}  // namespace
 
 GpuBinPreference parseGpuBinPreference(QByteArrayView value)
 {
@@ -51,8 +47,8 @@ GpuBinPreference parseGpuBinPreference(QByteArrayView value)
 GpuBinPreference gpuBinPreference() noexcept
 {
 #ifdef QGC_UNITTEST_BUILD
-    if (const int testMode = s_testGpuBinMode.load(std::memory_order_acquire); testMode != kNoTestGpuBinMode) {
-        return {.mode = static_cast<GpuBinMode>(testMode)};
+    if (const std::optional<SinkEnvironment> environment = sinkEnvironmentForTest()) {
+        return environment->gpuBin;
     }
 #endif
     static const GpuBinPreference preference = [] {
@@ -92,16 +88,5 @@ const char* gpuBinName(GpuBinMode mode) noexcept
     }
     return "passthrough";
 }
-
-#ifdef QGC_UNITTEST_BUILD
-ScopedGpuBinModeForTest::ScopedGpuBinModeForTest(GpuBinMode mode)
-    : _previous(s_testGpuBinMode.exchange(static_cast<int>(mode), std::memory_order_acq_rel))
-{}
-
-ScopedGpuBinModeForTest::~ScopedGpuBinModeForTest()
-{
-    s_testGpuBinMode.store(_previous, std::memory_order_release);
-}
-#endif
 
 }  // namespace GstQgc

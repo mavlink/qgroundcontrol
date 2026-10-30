@@ -37,19 +37,4 @@ GpuBinMode selectGpuBin(GpuBinPreference preference, const RenderTarget& target)
 
 const char* gpuBinName(GpuBinMode mode) noexcept;
 
-#ifdef QGC_UNITTEST_BUILD
-/// gpuBinPreference() returns @p mode, not explicitly chosen, while alive, then what it returned before.
-class ScopedGpuBinModeForTest
-{
-public:
-    explicit ScopedGpuBinModeForTest(GpuBinMode mode);
-    ~ScopedGpuBinModeForTest();
-    ScopedGpuBinModeForTest(const ScopedGpuBinModeForTest&) = delete;
-    ScopedGpuBinModeForTest& operator=(const ScopedGpuBinModeForTest&) = delete;
-
-private:
-    int _previous;
-};
-#endif
-
 }  // namespace GstQgc

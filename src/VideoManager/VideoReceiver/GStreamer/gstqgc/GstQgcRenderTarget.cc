@@ -1,6 +1,9 @@
 #include "GstQgcRenderTarget.h"
 
 #include <atomic>
+#ifdef QGC_UNITTEST_BUILD
+#include <optional>
+#endif
 
 #include <QtCore/QThread>
 #include <QtQuick/QQuickWindow>
@@ -11,27 +14,15 @@
 
 #include "HwBuffers/common/QGCRhiCapture.h"
 #endif
+#ifdef QGC_UNITTEST_BUILD
+#include "GstQgcCaps.h"
+#endif
 
 namespace GstQgc {
 
 namespace {
 
 constinit std::atomic<int> s_requestedBackend{static_cast<int>(RenderBackend::Unknown)};
-
-#ifdef QGC_UNITTEST_BUILD
-constexpr int kNoTestTarget = -1;
-constinit std::atomic<int> s_testTarget{kNoTestTarget};
-
-constexpr int encodeTarget(RenderTarget target) noexcept
-{
-    return (static_cast<int>(target.backend) << 1) | (target.egl ? 1 : 0);
-}
-
-constexpr RenderTarget decodeTarget(int encoded) noexcept
-{
-    return {.backend = static_cast<RenderBackend>(encoded >> 1), .egl = (encoded & 1) != 0};
-}
-#endif
 
 RenderBackend fromGraphicsApi(QSGRendererInterface::GraphicsApi api) noexcept
 {
@@ -79,8 +70,8 @@ RenderBackend fromRhiImplementation(int implementation) noexcept
 RenderTarget currentRenderTarget() noexcept
 {
 #ifdef QGC_UNITTEST_BUILD
-    if (const int testTarget = s_testTarget.load(std::memory_order_acquire); testTarget != kNoTestTarget) {
-        return decodeTarget(testTarget);
+    if (const std::optional<SinkEnvironment> environment = sinkEnvironmentForTest()) {
+        return environment->target;
     }
 #endif
     // QQuickWindow::graphicsApi() may apply Qt Quick's settings on first use, so only the GUI thread asks it.
@@ -128,16 +119,5 @@ const char* toString(RenderBackend backend) noexcept
     }
     return "unknown";
 }
-
-#ifdef QGC_UNITTEST_BUILD
-ScopedRenderTargetForTest::ScopedRenderTargetForTest(RenderTarget target)
-    : _previous(s_testTarget.exchange(encodeTarget(target), std::memory_order_acq_rel))
-{}
-
-ScopedRenderTargetForTest::~ScopedRenderTargetForTest()
-{
-    s_testTarget.store(_previous, std::memory_order_release);
-}
-#endif
 
 }  // namespace GstQgc

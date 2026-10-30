@@ -9,8 +9,7 @@
 
 #include "GStreamerTestHelpers.h"
 #include "HwBuffers/common/HwBuffers.h"
-#include "gstqgc/GstQgcGpuBin.h"
-#include "gstqgc/GstQgcRenderTarget.h"
+#include "gstqgc/GstQgcCaps.h"
 
 void GstHwBuffersPipelineTest::_testGlMemoryDispatch()
 {
@@ -23,12 +22,12 @@ void GstHwBuffersPipelineTest::_testGlMemoryDispatch()
     ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
                      QRegularExpression(QStringLiteral("An NSApplication needs to be running")));
 #endif
+    // The sink offers GLMemory only where gst-gl shares Qt's OpenGL context, and the direct-DMABuf bin offers none.
+    GstQgc::SinkEnvironment openGl{.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true}};
 #if defined(QGC_GST_BIN_HAS_GLUPLOAD)
-    // The direct-DMABuf bin doesn't offer GLMemory.
-    const GstQgc::ScopedGpuBinModeForTest glBin(GstQgc::GpuBinMode::GlUpload);
+    openGl.gpuBin.mode = GstQgc::GpuBinMode::GlUpload;
 #endif
-    // The sink offers GLMemory only where gst-gl shares Qt's OpenGL context.
-    const GstQgc::ScopedRenderTargetForTest target({.backend = GstQgc::RenderBackend::OpenGL, .egl = true});
+    const GstQgc::ScopedSinkEnvironmentForTest environment(openGl);
 
     if (!GstTest::firstMissingFactory({"glupload"}).isEmpty()) {
         QSKIP("glupload factory unavailable — gst-gl not registered in this build");

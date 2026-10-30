@@ -2,6 +2,11 @@
 
 #include <gst/gst.h>
 #include <vector>
+#ifdef QGC_UNITTEST_BUILD
+#include <utility>
+
+#include <QtCore/QMutex>
+#endif
 
 #include "GstQgcVideoFormats.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
@@ -97,5 +102,32 @@ std::string buildSinkCaps(const SinkCapsPolicy& policy)
     }
     return caps;
 }
+
+#ifdef QGC_UNITTEST_BUILD
+namespace {
+
+Q_CONSTINIT QBasicMutex s_testEnvironmentMutex;
+std::optional<SinkEnvironment> s_testEnvironment;
+
+}  // namespace
+
+ScopedSinkEnvironmentForTest::ScopedSinkEnvironmentForTest(const SinkEnvironment& environment)
+{
+    const QMutexLocker lock(&s_testEnvironmentMutex);
+    _previous = std::exchange(s_testEnvironment, environment);
+}
+
+ScopedSinkEnvironmentForTest::~ScopedSinkEnvironmentForTest()
+{
+    const QMutexLocker lock(&s_testEnvironmentMutex);
+    s_testEnvironment = _previous;
+}
+
+std::optional<SinkEnvironment> sinkEnvironmentForTest()
+{
+    const QMutexLocker lock(&s_testEnvironmentMutex);
+    return s_testEnvironment;
+}
+#endif
 
 }  // namespace GstQgc

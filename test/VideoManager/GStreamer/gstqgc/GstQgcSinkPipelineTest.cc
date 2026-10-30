@@ -17,8 +17,7 @@
 #include "GstHwPathTelemetry.h"
 #include "HwBuffers/common/HwBuffers.h"
 #include "QGCQVideoSinkController.h"
-#include "gstqgc/GstQgcGpuBin.h"
-#include "gstqgc/GstQgcRenderTarget.h"
+#include "gstqgc/GstQgcCaps.h"
 #include "gstqgc/GstQgcTestSupport.h"
 #include "gstqgc/gstqgcqvideosink.h"
 
@@ -178,9 +177,9 @@ void GstQgcSinkPipelineTest::_testGpuZeroCopyFallback()
     QFETCH(int, mode);
     QFETCH(int, backend);
     QFETCH(QString, format);
-    const GstQgc::ScopedGpuBinModeForTest binMode(static_cast<GstQgc::GpuBinMode>(mode));
-    const GstQgc::ScopedRenderTargetForTest target(
-        {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = true});
+    const GstQgc::ScopedSinkEnvironmentForTest environment(
+        {.target = {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = true},
+         .gpuBin = {.mode = static_cast<GstQgc::GpuBinMode>(mode)}});
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     const quint64 dmabufBefore =
@@ -225,7 +224,7 @@ void GstQgcSinkPipelineTest::_testQgcVideoSinkBinScalesNonSquarePixels()
     QFETCH(bool, gpuZeroCopy);
     QFETCH(bool, disablePar);
     // Software frames take the GPU bin's system-memory caps too.
-    const GstQgc::ScopedRenderTargetForTest target({.backend = GstQgc::RenderBackend::Vulkan});
+    const GstQgc::ScopedSinkEnvironmentForTest environment({.target = {.backend = GstQgc::RenderBackend::Vulkan}});
 
     // A 720x576 PAL source with 12/11 pixels, as analog encoders and DVRs send.
     constexpr int kWidth = 720;
