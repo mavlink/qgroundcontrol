@@ -269,38 +269,31 @@ void GStreamerEnvironmentTest::_testBundledRuntime()
 #endif
 }
 
+void GStreamerEnvironmentTest::_testEnvironmentSetup()
+{
+    const ManagedEnvGuard guard;
+    QVERIFY(GStreamer::Environment::prepareEnvironment().ok);
+
+    for (const char* var :
+         {"GST_PLUGIN_PATH", "GST_PLUGIN_PATH_1_0", "GST_PLUGIN_SYSTEM_PATH", "GST_PLUGIN_SYSTEM_PATH_1_0"}) {
+        for (const QString& path : qEnvironmentVariable(var).split(QDir::listSeparator(), Qt::SkipEmptyParts)) {
+            QVERIFY2(QDir(path).exists(),
+                     qPrintable(QStringLiteral("%1 contains non-existent path: %2").arg(QLatin1String(var), path)));
+        }
+    }
+
+    for (const char* var : {"GST_PLUGIN_SCANNER", "GST_PLUGIN_SCANNER_1_0"}) {
+        if (qEnvironmentVariableIsSet(var)) {
+            const QString path = qEnvironmentVariable(var);
+            QVERIFY2(QFileInfo(path).isExecutable(),
+                     qPrintable(QStringLiteral("%1 is not executable: %2").arg(QLatin1String(var), path)));
+        }
+    }
+}
+
 #else
 
-void GStreamerEnvironmentTest::_testPrivateRegistry()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GStreamerEnvironmentTest::_testPrivateRegistryStableInstall_data() {}
-
-void GStreamerEnvironmentTest::_testPrivateRegistryStableInstall()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GStreamerEnvironmentTest::_testPrivateRegistryPrunesUnusedRegistries()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GStreamerEnvironmentTest::_testPrivateRegistryKeepsUserRegistry_data() {}
-
-void GStreamerEnvironmentTest::_testPrivateRegistryKeepsUserRegistry()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GStreamerEnvironmentTest::_testSystemGStreamerKeepsDefaultRegistry()
-{
-    QSKIP("GStreamer not enabled");
-}
-
-void GStreamerEnvironmentTest::_testBundledRuntime()
+void GStreamerEnvironmentTest::_testGStreamerDisabled()
 {
     QSKIP("GStreamer not enabled");
 }
