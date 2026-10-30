@@ -20,6 +20,23 @@
 
 namespace GstEglHelpers {
 
+namespace {
+
+/// EGLDisplay bound to @p qtCtx (else current-thread display, else EGL_NO_DISPLAY); does NOT initialize it.
+EGLDisplay resolveEglDisplay(QOpenGLContext* qtCtx) noexcept
+{
+    if (qtCtx) {
+        if (auto* egl = qtCtx->nativeInterface<QNativeInterface::QEGLContext>()) {
+            const EGLDisplay d = egl->display();
+            if (d != EGL_NO_DISPLAY)
+                return d;
+        }
+    }
+    return eglGetCurrentDisplay();
+}
+
+}  // namespace
+
 EGLDisplay qtPlatformDisplay() noexcept
 {
     static std::atomic<EGLDisplay> s_display{EGL_NO_DISPLAY};
@@ -31,18 +48,6 @@ EGLDisplay qtPlatformDisplay() noexcept
         }
     }
     return display;
-}
-
-EGLDisplay resolveEglDisplay(QOpenGLContext* qtCtx) noexcept
-{
-    if (qtCtx) {
-        if (auto* egl = qtCtx->nativeInterface<QNativeInterface::QEGLContext>()) {
-            const EGLDisplay d = egl->display();
-            if (d != EGL_NO_DISPLAY)
-                return d;
-        }
-    }
-    return eglGetCurrentDisplay();
 }
 
 QOpenGLContext* bindRhiContext(QRhi& rhi)

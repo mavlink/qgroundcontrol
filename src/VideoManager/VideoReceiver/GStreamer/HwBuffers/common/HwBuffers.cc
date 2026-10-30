@@ -318,7 +318,6 @@ QString extraPathStatsSince(const GstHwPathTelemetry::Snapshot& baseline) noexce
     };
     static constexpr std::pair<GstHwPathTelemetry::HwFallbackReason, const char*> kReasons[] = {
         {GstHwPathTelemetry::HwFallbackReason::NoExt, "no-ext"},
-        {GstHwPathTelemetry::HwFallbackReason::ModifierRejected, "modifier"},
         {GstHwPathTelemetry::HwFallbackReason::EglBadMatch, "egl-bad-match"},
         {GstHwPathTelemetry::HwFallbackReason::ValidateFailed, "validate"},
         {GstHwPathTelemetry::HwFallbackReason::UnknownMemType, "unknown-mem"},

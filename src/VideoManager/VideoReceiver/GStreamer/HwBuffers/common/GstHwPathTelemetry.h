@@ -16,7 +16,6 @@ namespace GstHwPathTelemetry {
 enum class HwFallbackReason
 {
     NoExt,
-    ModifierRejected,
     EglBadMatch,
     ValidateFailed,
     UnknownMemType,

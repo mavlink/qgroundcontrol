@@ -596,19 +596,15 @@ void GstHwBuffersTest::_testHwVideoBufferCpuMapRefusesForeignLayout_data()
 {
     QTest::addColumn<int>("memoryFormat");
     QTest::addColumn<int>("advertisedFormat");
-    QTest::addColumn<QSize>("advertisedSize");
     QTest::addColumn<bool>("expectMapped");
 
     // The sample is always YUY2: a 4x2 frame holds 8-byte rows, which Qt would read as 16-byte RGBA rows.
     QTest::newRow("advertises-its-memory")
-        << int(QVideoFrameFormat::Format_YUYV) << int(QVideoFrameFormat::Format_YUYV) << QSize(4, 2) << true;
+        << int(QVideoFrameFormat::Format_YUYV) << int(QVideoFrameFormat::Format_YUYV) << true;
     QTest::newRow("eglfs-yuyv-as-rgba") << int(QVideoFrameFormat::Format_YUYV)
-                                        << int(QVideoFrameFormat::Format_RGBA8888) << QSize(4, 2) << false;
+                                        << int(QVideoFrameFormat::Format_RGBA8888) << false;
     QTest::newRow("external-oes") << int(QVideoFrameFormat::Format_SamplerExternalOES)
-                                  << int(QVideoFrameFormat::Format_SamplerExternalOES) << QSize(4, 2) << false;
-    // Qt would upload rows past the end of the mapped picture.
-    QTest::newRow("larger-frame-size") << int(QVideoFrameFormat::Format_YUYV) << int(QVideoFrameFormat::Format_YUYV)
-                                       << QSize(4, 16) << false;
+                                  << int(QVideoFrameFormat::Format_SamplerExternalOES) << false;
 }
 
 void GstHwBuffersTest::_testHwVideoBufferCpuMapRefusesForeignLayout()
@@ -618,7 +614,6 @@ void GstHwBuffersTest::_testHwVideoBufferCpuMapRefusesForeignLayout()
 #else
     QFETCH(int, memoryFormat);
     QFETCH(int, advertisedFormat);
-    QFETCH(QSize, advertisedSize);
     QFETCH(bool, expectMapped);
 
     GstVideoInfo info;
@@ -628,7 +623,7 @@ void GstHwBuffersTest::_testHwVideoBufferCpuMapRefusesForeignLayout()
 
     AdvertisingHwVideoBuffer hw(sample, info,
                                 QVideoFrameFormat(QSize(4, 2), QVideoFrameFormat::PixelFormat(memoryFormat)),
-                                QVideoFrameFormat(advertisedSize, QVideoFrameFormat::PixelFormat(advertisedFormat)));
+                                QVideoFrameFormat(QSize(4, 2), QVideoFrameFormat::PixelFormat(advertisedFormat)));
     const QAbstractVideoBuffer::MapData mapped = hw.map(QVideoFrame::ReadOnly);
     QCOMPARE(mapped.planeCount > 0, expectMapped);
     hw.unmap();

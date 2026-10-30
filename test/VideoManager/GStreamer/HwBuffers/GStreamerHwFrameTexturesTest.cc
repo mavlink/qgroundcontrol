@@ -5,6 +5,7 @@
 #if defined(QGC_HAS_ANY_GPU_PATH)
 
 #include <array>
+#include <limits>
 #include <memory>
 #include <rhi/qrhi.h>
 #include <span>
@@ -16,11 +17,6 @@
 #include "GstHwFrameTexturesBase.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-#include <limits>
-
-#include "GstGlFrameTextures.h"
-#endif
 
 Q_LOGGING_CATEGORY(HwFrameTexturesTestLog, "Video.GStreamer.Test.HwFrameTextures")
 
@@ -212,20 +208,16 @@ void GstHwBuffersTest::_testHwFrameTexturesFinishMapRejectsIncompleteBundle()
 
 void GstHwBuffersTest::_testHwFrameTexturesKeepResourcesUntilDestroyed()
 {
-#if !defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    QSKIP("GL-texture frame bundles not compiled in this build");
-#else
     const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
     QVERIFY(rhi);
 
-    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 64, 64);
+    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, kFrameSize.width(), kFrameSize.height());
     QVERIFY(sample);
     bool sampleReleased = false;
     GstTest::watchRelease(GST_MINI_OBJECT(sample), &sampleReleased);
 
     constexpr int kPlanes = 2;
-    auto bundle = std::make_unique<GstGlFrameTextures>(rhi.get(), QSize(64, 64), QVideoFrameFormat::Format_NV12,
-                                                       std::array<GLuint, GstHw::kMaxPlanes>{11, 12}, kPlanes);
+    auto bundle = std::make_unique<TailTestTextures>(rhi.get(), /*chromaRejected=*/false);
     bundle->setSourceSample(sample);
     std::array<QRhiTexture*, kPlanes> planes{bundle->texture(0), bundle->texture(1)};
     QVERIFY(planes[0] && planes[1]);
@@ -242,7 +234,6 @@ void GstHwBuffersTest::_testHwFrameTexturesKeepResourcesUntilDestroyed()
 
     bundle.reset();
     QVERIFY2(sampleReleased, "Destroying the bundle must release the source sample");
-#endif
 }
 
 #else

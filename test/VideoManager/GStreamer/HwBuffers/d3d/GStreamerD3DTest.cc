@@ -26,6 +26,9 @@
 #include "QGCRhiCapture.h"
 
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+#include <d3d11.h>
+#include <d3d11_4.h>  // ID3D11Multithread
+
 #include "GstD3D11ContextBridge.h"
 #endif
 #if defined(QGC_HAS_GST_D3D12_GPU_PATH)
@@ -38,6 +41,20 @@ qint64 composeLuid(qint32 high, quint32 low)
 {
     return (static_cast<qint64>(high) << 32) | (static_cast<qint64>(low) & 0xFFFFFFFFLL);
 }
+
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+/// GStreamer's D3D11 elements share the immediate context of the device they wrap, as QGCRhiCapture protects it.
+void protectImmediateContext(ID3D11DeviceContext* context)
+{
+    ID3D11Multithread* multithread = nullptr;
+    if (context &&
+        SUCCEEDED(context->QueryInterface(__uuidof(ID3D11Multithread), reinterpret_cast<void**>(&multithread))) &&
+        multithread) {
+        (void) multithread->SetMultithreadProtected(TRUE);
+        multithread->Release();
+    }
+}
+#endif
 
 /// A QRhi on @p api, published in QGCRhiCapture's device snapshot as the render thread publishes it. Null, with
 /// @p failure set, when this runner can't create one.
@@ -55,6 +72,7 @@ std::unique_ptr<QRhi> createPublishedRhi(QRhi::Implementation api, QString& fail
                     rhi ? static_cast<const QRhiD3D11NativeHandles*>(rhi->nativeHandles()) : nullptr) {
                 device = handles->dev;
                 adapterLuid = composeLuid(handles->adapterLuidHigh, handles->adapterLuidLow);
+                protectImmediateContext(static_cast<ID3D11DeviceContext*>(handles->context));
             }
             break;
         }

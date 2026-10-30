@@ -23,7 +23,6 @@ GstHwVideoBuffer::GstHwVideoBuffer(QVideoFrame::HandleType handleType, GstSample
     , _videoInfo(videoInfo)
     , _format(std::move(format))
     , _memoryPixelFormat(_format.pixelFormat())
-    , _memoryFrameSize(_format.frameSize())
 {
     // Crop is applied by the renderer via QVideoFrameFormat::viewport(); see applyCropMeta (GstQgcFrameMap).
 }
@@ -42,7 +41,7 @@ QAbstractVideoBuffer::MapData GstHwVideoBuffer::map(QVideoFrame::MapMode mode)
     // another format than its memory holds (Qt would read past the end of a narrower layout).
     const QVideoFrameFormat::PixelFormat advertised = _format.pixelFormat();
     if ((mode != QVideoFrame::ReadOnly) || (advertised == QVideoFrameFormat::Format_SamplerExternalOES) ||
-        (advertised != _memoryPixelFormat) || (_format.frameSize() != _memoryFrameSize)) {
+        (advertised != _memoryPixelFormat)) {
         return {};
     }
     return _cpuView.map(_sample ? gst_sample_get_buffer(_sample) : nullptr, _videoInfo);

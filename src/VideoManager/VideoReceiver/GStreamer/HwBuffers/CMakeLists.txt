@@ -327,7 +327,6 @@ target_sources(
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstEglHelpers.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstEglHelpers.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/gl/GstGlFrameTextures.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwFrameTexturesBase.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportCache.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.cc

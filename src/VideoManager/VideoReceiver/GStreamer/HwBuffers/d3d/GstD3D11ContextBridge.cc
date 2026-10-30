@@ -3,7 +3,6 @@
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
 
 #include <d3d11.h>
-#include <d3d11_4.h>  // ID3D11Multithread
 #include <gst/d3d11/gstd3d11.h>
 #include <rhi/qrhi.h>  // QRhi::Implementation enum only; no runtime use across threads
 
@@ -40,24 +39,8 @@ GstObject* D3D11ContextBridge::createDevice()
         return nullptr;
     }
 
-    // GStreamer's elements share QRhi's immediate context. QGCRhiCapture turns its multithread protection on from the
-    // render thread before publishing the device; switching it here, while QRhi may be inside the context, is only the
-    // fallback for a device published some other way.
-    ID3D11DeviceContext* immediate = nullptr;
-    dev->GetImmediateContext(&immediate);
-    if (immediate) {
-        ID3D11Multithread* multithread = nullptr;
-        if (SUCCEEDED(immediate->QueryInterface(__uuidof(ID3D11Multithread), reinterpret_cast<void**>(&multithread))) &&
-            multithread) {
-            if (!multithread->GetMultithreadProtected()) {
-                (void) multithread->SetMultithreadProtected(TRUE);
-            }
-            multithread->Release();
-        }
-        immediate->Release();
-    }
-
-    // gst_d3d11_device_new_wrapped: shared device keeps textures QRhi-sampleable without keyed-mutex transfer.
+    // gst_d3d11_device_new_wrapped: shared device keeps textures QRhi-sampleable without keyed-mutex transfer. Its
+    // elements share QRhi's immediate context, which QGCRhiCapture made multithread-protected before publishing it.
     GstD3D11Device* device = gst_d3d11_device_new_wrapped(dev);
     if (!device) {
         qCWarning(GstD3D11BridgeLog) << "gst_d3d11_device_new_wrapped failed";
