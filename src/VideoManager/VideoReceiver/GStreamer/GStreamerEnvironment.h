@@ -14,19 +14,13 @@ struct ValidationResult
     QString error;
 };
 
-/// Apply all GStreamer env vars for this process from bundled-paths discovery + platform
-/// validation. Idempotent: clears prior managed vars first so a retry starts clean. Returns the
-/// validation outcome by value (threaded explicitly to initialize(), not a cross-thread global).
-/// Not thread-safe: call it once, on the GUI thread, before gst_init() and any thread that reads the environment.
-ValidationResult prepareEnvironment();
-
-/// Point GStreamer at a bundled runtime: @p pluginDirs (joined with QDir::listSeparator()) replace the default plugin
-/// path, and @p gioModuleDir, @p scanner and @p ptpHelper are used when they exist. GStreamer keeps scanning plugins
-/// out of process, so a plugin that crashes while loading is blacklisted instead of taking QGC down.
-/// prepareEnvironment() does this for the runtime bundled with the app. Returns false, changing nothing, in builds that
-/// only use static or system plugins (Android, iOS, QGC_GST_BUNDLE_PLUGINS=OFF).
-bool useBundledRuntime(const QString& pluginDirs, const QString& gioModuleDir, const QString& scanner,
-                       const QString& ptpHelper);
+/// Apply all GStreamer env vars for this process from bundled-paths discovery + platform validation, for the app in
+/// @p appDir (default: QCoreApplication::applicationDirPath()). A desktop runtime bundled with the app replaces the
+/// default plugin path; GStreamer keeps scanning its plugins out of process, so a plugin that crashes while loading is
+/// blacklisted instead of taking QGC down. Idempotent: clears prior managed vars first so a retry starts clean. Returns
+/// the validation outcome by value (threaded explicitly to initialize(), not a cross-thread global).
+/// Not thread-safe: call it on the GUI thread, before gst_init() and any thread that reads the environment.
+ValidationResult prepareEnvironment(const QString& appDir = QString());
 
 /// Point GST_REGISTRY at gstreamer-<runtime version>-<arch>-<install hash>.bin in @p cacheDir, creating the directory,
 /// unless GST_REGISTRY or GST_REGISTRY_1_0 is already set or @p cacheDir is empty. The hash names the install at

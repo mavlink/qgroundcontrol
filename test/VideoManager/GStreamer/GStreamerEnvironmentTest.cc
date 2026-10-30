@@ -19,20 +19,44 @@
 
 namespace {
 
-/// Saves the variables that name the private registry, unsets them, and restores them on destruction.
-struct RegistryEnvGuard
+/// Saves the variables GStreamer::Environment reads or sets, unsets them, and restores them on destruction. PATH, which
+/// a Windows bundle extends, is only saved.
+class ManagedEnvGuard
 {
-    TestFixtures::EnvVarFixture registry{"GST_REGISTRY"};
-    TestFixtures::EnvVarFixture registry10{"GST_REGISTRY_1_0"};
-    TestFixtures::EnvVarFixture appImage{"APPIMAGE"};
-    TestFixtures::EnvVarFixture appDir{"APPDIR"};
-
-    RegistryEnvGuard()
+public:
+    ManagedEnvGuard()
     {
-        for (const char* name : {"GST_REGISTRY", "GST_REGISTRY_1_0", "APPIMAGE", "APPDIR"}) {
+        static constexpr const char* kVars[] = {
+            "APPDIR",
+            "APPIMAGE",
+            "GIO_EXTRA_MODULES",
+            "GIO_MODULE_DIR",
+            "GIO_USE_VFS",
+            "GST_PLUGIN_PATH",
+            "GST_PLUGIN_PATH_1_0",
+            "GST_PLUGIN_SCANNER",
+            "GST_PLUGIN_SCANNER_1_0",
+            "GST_PLUGIN_SYSTEM_PATH",
+            "GST_PLUGIN_SYSTEM_PATH_1_0",
+            "GST_PTP_HELPER",
+            "GST_PTP_HELPER_1_0",
+            "GST_REGISTRY",
+            "GST_REGISTRY_1_0",
+            "GST_REGISTRY_FORK",
+            "GST_REGISTRY_REUSE_PLUGIN_SCANNER",
+            "PYTHONNOUSERSITE",
+            "PYTHONPATH",
+        };
+        _saved.reserve(std::size(kVars) + 1);
+        for (const char* name : kVars) {
+            _saved.emplace_back(name);
             qunsetenv(name);
         }
+        _saved.emplace_back("PATH");
     }
+
+private:
+    std::vector<TestFixtures::EnvVarFixture> _saved;
 };
 
 bool setModificationTime(const QString& path, const QDateTime& time)
@@ -45,7 +69,7 @@ bool setModificationTime(const QString& path, const QDateTime& time)
 
 void GStreamerEnvironmentTest::_testPrivateRegistry()
 {
-    const RegistryEnvGuard guard;
+    const ManagedEnvGuard guard;
     QTemporaryDir root;
     QVERIFY(root.isValid());
     const QString stablePlugins = root.filePath(QStringLiteral("stable/lib/gstreamer-1.0"));
@@ -116,7 +140,7 @@ void GStreamerEnvironmentTest::_testPrivateRegistryStableInstall()
     QFETCH(QString, secondPath);
     QFETCH(bool, shared);
 
-    const RegistryEnvGuard guard;
+    const ManagedEnvGuard guard;
     QTemporaryDir cacheDir;
     QVERIFY(cacheDir.isValid());
     const auto registryFor = [&](const QString& mount, const QString& path) {
@@ -136,7 +160,7 @@ void GStreamerEnvironmentTest::_testPrivateRegistryStableInstall()
 
 void GStreamerEnvironmentTest::_testPrivateRegistryPrunesUnusedRegistries()
 {
-    const RegistryEnvGuard guard;
+    const ManagedEnvGuard guard;
     QTemporaryDir cacheDir;
     QVERIFY(cacheDir.isValid());
     const QString plugins = cacheDir.filePath(QStringLiteral("install/lib/gstreamer-1.0"));
@@ -172,7 +196,7 @@ void GStreamerEnvironmentTest::_testPrivateRegistryKeepsUserRegistry_data()
 void GStreamerEnvironmentTest::_testPrivateRegistryKeepsUserRegistry()
 {
     QFETCH(QByteArray, variable);
-    const RegistryEnvGuard guard;
+    const ManagedEnvGuard guard;
     QTemporaryDir root;
     QVERIFY(root.isValid());
     const QString userRegistry = root.filePath(QStringLiteral("user.bin"));
@@ -194,7 +218,7 @@ void GStreamerEnvironmentTest::_testSystemGStreamerKeepsDefaultRegistry()
             QDir(QCoreApplication::applicationDirPath()).filePath(QStringLiteral("../lib/gstreamer-1.0")))) {
         QSKIP("The test binary runs from a bundle with its own GStreamer plugins");
     }
-    const RegistryEnvGuard guard;
+    const ManagedEnvGuard guard;
     QVERIFY(GStreamer::Environment::prepareEnvironment().ok);
     QVERIFY(!qEnvironmentVariableIsSet("GST_REGISTRY"));
 #else
@@ -204,48 +228,34 @@ void GStreamerEnvironmentTest::_testSystemGStreamerKeepsDefaultRegistry()
 
 void GStreamerEnvironmentTest::_testBundledRuntime()
 {
-    static constexpr const char* kTouchedVars[] = {
-        "GIO_EXTRA_MODULES",
-        "GIO_MODULE_DIR",
-        "GIO_USE_VFS",
-        "GST_PTP_HELPER",
-        "GST_PTP_HELPER_1_0",
-        "GST_PLUGIN_PATH",
-        "GST_PLUGIN_PATH_1_0",
-        "GST_PLUGIN_SYSTEM_PATH",
-        "GST_PLUGIN_SYSTEM_PATH_1_0",
-        "GST_PLUGIN_SCANNER",
-        "GST_PLUGIN_SCANNER_1_0",
-        "GST_REGISTRY_FORK",
-        "GST_REGISTRY_REUSE_PLUGIN_SCANNER",
-        "PYTHONPATH",
-        "PYTHONNOUSERSITE",
-    };
-    std::vector<TestFixtures::EnvVarFixture> restore;
-    restore.reserve(std::size(kTouchedVars));
-    for (const char* var : kTouchedVars) {
-        restore.emplace_back(var);
-        qunsetenv(var);
-    }
-    qputenv("GST_PLUGIN_PATH", QByteArrayLiteral("/qgc-test/stale-plugins"));
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS) || defined(QGC_GST_SYSTEM_PLUGINS)
+    QSKIP("This build never uses a bundled GStreamer runtime");
+#else
+    const ManagedEnvGuard guard;
     qputenv("PYTHONPATH", QByteArrayLiteral("/qgc-test/python"));
 
+    // An app in <root>/bin with its runtime in <root>/lib and <root>/libexec, as the desktop installs lay it out.
     QTemporaryDir root;
     QVERIFY(root.isValid());
-    const QString pluginDirs = root.filePath(QStringLiteral("lib/gstreamer-1.0"));
-    QVERIFY(QDir().mkpath(pluginDirs));
-    const QString scanner = root.filePath(QStringLiteral("gst-plugin-scanner"));
+    const QString appDir = root.filePath(QStringLiteral("bin"));
+    const QString pluginDir = root.filePath(QStringLiteral("lib/gstreamer-1.0"));
+#ifdef Q_OS_WIN
+    const QString scanner = root.filePath(QStringLiteral("libexec/gstreamer-1.0/gst-plugin-scanner.exe"));
+#else
+    const QString scanner = root.filePath(QStringLiteral("libexec/gstreamer-1.0/gst-plugin-scanner"));
+#endif
+    for (const QString& dir : {appDir, pluginDir, QFileInfo(scanner).absolutePath()}) {
+        QVERIFY(QDir().mkpath(dir));
+    }
     QFile scannerFile(scanner);
     QVERIFY(scannerFile.open(QIODevice::WriteOnly));
     scannerFile.close();
     QVERIFY(scannerFile.setPermissions(scannerFile.permissions() | QFileDevice::ExeOwner));
 
-    if (!GStreamer::Environment::useBundledRuntime(pluginDirs, QString(), scanner, QString())) {
-        QSKIP("This build never uses a bundled GStreamer runtime");
-    }
+    QVERIFY(GStreamer::Environment::prepareEnvironment(appDir).ok);
 
-    QCOMPARE(qEnvironmentVariable("GST_PLUGIN_SYSTEM_PATH"), pluginDirs);
-    QCOMPARE(qEnvironmentVariable("GST_PLUGIN_SYSTEM_PATH_1_0"), pluginDirs);
+    QCOMPARE(qEnvironmentVariable("GST_PLUGIN_SYSTEM_PATH"), pluginDir);
+    QCOMPARE(qEnvironmentVariable("GST_PLUGIN_SYSTEM_PATH_1_0"), pluginDir);
     QVERIFY(!qEnvironmentVariableIsSet("GST_PLUGIN_PATH"));
     QCOMPARE(qEnvironmentVariable("GST_PLUGIN_SCANNER"), scanner);
     QCOMPARE(qEnvironmentVariable("GST_PLUGIN_SCANNER_1_0"), scanner);
@@ -253,8 +263,10 @@ void GStreamerEnvironmentTest::_testBundledRuntime()
     // scanner for the whole scan.
     QVERIFY(!qEnvironmentVariableIsSet("GST_REGISTRY_FORK"));
     QVERIFY(!qEnvironmentVariableIsSet("GST_REGISTRY_REUSE_PLUGIN_SCANNER"));
+    QVERIFY(qEnvironmentVariableIsSet("GST_REGISTRY"));
     QCOMPARE(qEnvironmentVariable("PYTHONPATH"), QStringLiteral("/qgc-test/python"));
     QVERIFY(!qEnvironmentVariableIsSet("PYTHONNOUSERSITE"));
+#endif
 }
 
 #else

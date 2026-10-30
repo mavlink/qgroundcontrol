@@ -53,20 +53,6 @@ void _setGstEnv(const char* name, const QString& value)
     qCDebug(GStreamerEnvLog) << "  " << name << "=" << value;
 }
 
-// Set @p var to the first existing candidate, but only if unset (explicit user/system value wins).
-[[maybe_unused]] void _setCaBundleIfUnset(const char* var, const QStringList& candidates)
-{
-    if (!qEnvironmentVariableIsEmpty(var)) {
-        return;
-    }
-    for (const QString& path : candidates) {
-        if (QFileInfo::exists(path)) {
-            _setGstEnv(var, path);
-            return;
-        }
-    }
-}
-
 // An AppImage is mounted, and a quarantined macOS app translocated, to a new random directory on every launch: name
 // such an install after what stays put, the AppImage file or the translocated app's name.
 QString _stableInstallPath(const QString& installPath)
@@ -141,12 +127,23 @@ QString _usePrivateRegistry(const QString& cacheDir, const QString& installPath)
     return registry;
 }
 
-[[maybe_unused]] void _setTmpDirVars(const QString& dir)
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+void _setTmpDirVars(const QString& dir)
 {
     _setGstEnv("TMP", dir);
     _setGstEnv("TEMP", dir);
     _setGstEnv("TMPDIR", dir);
 }
+
+// Points CA_CERTIFICATES, which the static plugin init makes GIO's default TLS database (gst_static_plugins.c.in), at
+// the bundled @p caBundle unless it is set.
+void _setCaBundleIfUnset(const QString& caBundle)
+{
+    if (qEnvironmentVariableIsEmpty("CA_CERTIFICATES") && QFileInfo::exists(caBundle)) {
+        _setGstEnv("CA_CERTIFICATES", caBundle);
+    }
+}
+#endif
 
 #ifdef Q_OS_ANDROID
 // Extract an APK asset to destPath; skip rewrite when sizes already match
@@ -366,11 +363,10 @@ bool _applyBundleLayout(const QString& platformLabel, const BundleLayout& layout
 
 #endif  // !Q_OS_ANDROID && !Q_OS_IOS && !QGC_GST_SYSTEM_PLUGINS
 
-ValidationResult _setGstEnvVars()
+ValidationResult _setGstEnvVars(const QString& appDir)
 {
     ValidationResult result;
 
-    const QString appDir = QCoreApplication::applicationDirPath();
     qCDebug(GStreamerEnvLog) << "App directory:" << appDir;
 
 #if defined(Q_OS_MACOS)
@@ -461,7 +457,7 @@ ValidationResult _setGstEnvVars()
         }
 
         if (!resources.isEmpty()) {
-            _setCaBundleIfUnset("CA_CERTIFICATES", {_cleanJoin(resources, "ssl/certs/ca-certificates.crt")});
+            _setCaBundleIfUnset(_cleanJoin(resources, "ssl/certs/ca-certificates.crt"));
         }
     }
 
@@ -476,9 +472,8 @@ ValidationResult _setGstEnvVars()
             _setGstEnv("HOME", filesDir);
             _setGstEnv("FONTCONFIG_PATH", _cleanJoin(filesDir, "fontconfig"));
             const QString caBundle = _cleanJoin(filesDir, "ssl/certs/ca-certificates.crt");
-            if (_extractApkAsset("ssl/certs/ca-certificates.crt", caBundle) &&
-                qEnvironmentVariableIsEmpty("CA_CERTIFICATES")) {
-                _setGstEnv("CA_CERTIFICATES", caBundle);
+            if (_extractApkAsset("ssl/certs/ca-certificates.crt", caBundle)) {
+                _setCaBundleIfUnset(caBundle);
             }
             _setGstEnv("XDG_DATA_DIRS", filesDir);
             _setGstEnv("XDG_CONFIG_DIRS", filesDir);
@@ -526,29 +521,14 @@ ValidationResult _setGstEnvVars()
 
 namespace GStreamer::Environment {
 
-ValidationResult prepareEnvironment()
+ValidationResult prepareEnvironment(const QString& appDir)
 {
     // qputenv is not thread-safe against concurrent getenv; this must run on the GUI thread before
     // the QtConcurrent init worker spawns. Warn loudly rather than corrupt the environment silently.
     if (QCoreApplication::instance() && (QThread::currentThread() != QCoreApplication::instance()->thread())) {
         qCWarning(GStreamerEnvLog) << "prepareEnvironment() called off the GUI thread; qputenv is not thread-safe";
     }
-    return _setGstEnvVars();
-}
-
-bool useBundledRuntime(const QString& pluginDirs, const QString& gioModuleDir, const QString& scanner,
-                       const QString& ptpHelper)
-{
-#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS) && !defined(QGC_GST_SYSTEM_PLUGINS)
-    _applyGstEnvVars(pluginDirs, gioModuleDir, scanner, ptpHelper);
-    return true;
-#else
-    Q_UNUSED(pluginDirs);
-    Q_UNUSED(gioModuleDir);
-    Q_UNUSED(scanner);
-    Q_UNUSED(ptpHelper);
-    return false;
-#endif
+    return _setGstEnvVars(appDir.isEmpty() ? QCoreApplication::applicationDirPath() : appDir);
 }
 
 QString usePrivateRegistry(const QString& cacheDir, const QString& installPath)

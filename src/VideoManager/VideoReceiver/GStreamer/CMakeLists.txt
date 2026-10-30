@@ -252,11 +252,8 @@ if(LINUX AND NOT QGC_GST_BUNDLE_PLUGINS)
                         "the system; an AppImage must bundle them. Set QGC_CREATE_APPIMAGE=OFF."
         )
     endif()
-    set_property(
-        SOURCE GStreamerEnvironment.cc TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
-        APPEND
-        PROPERTY COMPILE_DEFINITIONS QGC_GST_SYSTEM_PLUGINS
-    )
+    # Public, so the environment tests know the build bundles no runtime.
+    target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_SYSTEM_PLUGINS)
 endif()
 
 # Native packages install only the Runtime component. Keep this assignment
