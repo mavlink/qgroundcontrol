@@ -1,7 +1,8 @@
 # Unified pkg-config env management for GStreamer discovery — single mutator
 # for PKG_CONFIG_PATH / PKG_CONFIG_LIBDIR / --dont-define-prefix, used by the
 # platform discovery functions: platform/Linux.cmake (system-augment) and
-# platform/{Windows,MacOS,Android}.cmake (SDK lock-in).
+# platform/{Windows,MacOS,Android}.cmake (SDK lock-in) — and the pkg-config
+# lookup of macOS hosts (_qgc_gst_find_apple_pkg_config).
 #
 # The pkg-config state discovery derives is scoped to the GStreamer subtree, whose
 # later probes (HwBuffers' gstreamer-{cuda,vulkan,d3d*}-1.0) need the same SDK view:
@@ -116,4 +117,33 @@ function(qgc_gst_restore_pkgconfig_env)
         endif()
     endforeach()
     set_property(GLOBAL PROPERTY _QGC_GST_PKG_CONFIG_ENV_SAVED FALSE)
+endfunction()
+
+# Sets the cache entry <out_var> to a pkg-config executable, preferring Homebrew's; an existing entry is kept.
+function(_qgc_gst_find_apple_pkg_config out_var)
+    if(DEFINED CACHE{${out_var}} AND EXISTS "$CACHE{${out_var}}")
+        return()
+    endif()
+    find_program(
+        _qgc_pkg_config
+        NAMES pkg-config pkgconf
+        PATHS /opt/homebrew/bin /usr/local/bin
+        NO_DEFAULT_PATH
+    )
+    if(NOT _qgc_pkg_config)
+        find_program(_qgc_pkg_config NAMES pkg-config pkgconf)
+    endif()
+    if(NOT _qgc_pkg_config)
+        message(
+            FATAL_ERROR
+                "Could not find pkg-config.\n"
+                "Install dependencies with: python3 tools/setup/install_dependencies --platform macos\n"
+                "or install pkg-config manually (for example: brew install pkg-config)."
+        )
+    endif()
+    set(${out_var}
+        "${_qgc_pkg_config}"
+        CACHE FILEPATH "pkg-config executable" FORCE
+    )
+    unset(_qgc_pkg_config CACHE)
 endfunction()

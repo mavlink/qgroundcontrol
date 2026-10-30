@@ -26,7 +26,6 @@ foreach(
         Notice
         StaticInit
         SdkState
-        platform/Apple
         platform/Windows
         platform/Linux
         platform/Android
