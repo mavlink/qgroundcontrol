@@ -72,18 +72,6 @@ qgc_test_assert_streq("absent" typo "${_absent}")
 qgc_test_assert_streq("unusable" "udp;videoconvertscale" "${_unusable}")
 qgc_test_pass("classify_missing_plugins")
 
-# plugin|expected alternatives, "|"-separated
-foreach(
-    _case IN ITEMS "coreelements|coreelements" "videoconvertscale|videoconvertscale|videoconvert+videoscale"
-                   "videoscale|videoscale|videoconvertscale|videoconvert+videoscale"
-)
-    string(REPLACE "|" ";" _parts "${_case}")
-    list(POP_FRONT _parts _plugin)
-    gstreamer_plugin_alternatives(${_plugin} _alternatives)
-    qgc_test_assert_streq("alternatives of ${_plugin}" "${_parts}" "${_alternatives}")
-endforeach()
-qgc_test_pass("plugin_alternatives")
-
 # Neither the allowlist nor the mobile Debug plugins may name a GPL plugin.
 file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../.github/build-config.json" QGC_BUILD_CONFIG_CONTENT)
 foreach(_key IN ITEMS android apple windows linux)

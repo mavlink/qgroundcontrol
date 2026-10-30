@@ -26,7 +26,7 @@ set(_qgc_gst_tests
     test_android_pkg_config
     test_static_init
     test_ios_static_plugins
-    test_ios_single_core
+    test_single_core
     test_ios_sdk_version
     test_notice
 )

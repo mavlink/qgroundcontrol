@@ -14,7 +14,7 @@
 #     GStreamer itself (GStreamer.cc), so the core is linked like any archive and gst_android_jni.c provides the JNI
 #     state from the app instead;
 #   - it registers every plugin it is given, while QGC registers only the allowlisted plugins that have a static
-#     archive (failing configure when a runtime-required one is missing), with its own registration template
+#     archive (failing configure when a bundle-required one is missing), with its own registration template
 #     (StaticInit.cmake);
 #   - it copies the plugin Java sources and fonts/CA assets into the source tree, while QGC stages them in the build
 #     directory for Gradle;

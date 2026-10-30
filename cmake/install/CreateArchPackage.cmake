@@ -29,7 +29,7 @@ set(_qgc_arch_depends
     hicolor-icon-theme
 )
 # Built with QGC_GST_BUNDLE_PLUGINS=OFF, the package uses the system's GStreamer plugins. Arch ships the
-# runtime-required ones (PluginPolicy.cmake) outside gstreamer and gst-plugins-base-libs in gst-plugins-good and
+# bundle-required ones (PluginPolicy.cmake) outside gstreamer and gst-plugins-base-libs in gst-plugins-good and
 # gst-plugins-bad-libs, and the libav decoders in gst-libav.
 if(QGC_ENABLE_GST_VIDEOSTREAMING AND NOT QGC_GST_BUNDLE_PLUGINS)
     list(APPEND _qgc_arch_depends gst-plugins-good gst-plugins-bad-libs gst-libav)

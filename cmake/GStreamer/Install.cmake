@@ -5,7 +5,7 @@
 # helpers and QGC itself load (_qgc_gst_install_runtime_closure), and every installer fails an install that would ship a
 # GPL library or plugin (_qgc_gst_install_gpl_check).
 # Depends on: Components.cmake (gstreamer_platform_plugin_attrs), Platform.cmake (qgc_gst_platform),
-#             PluginPolicy.cmake (GSTREAMER_RUNTIME_REQUIRED_PLUGINS, GSTREAMER_GPL_DENYLIST; included again by the
+#             PluginPolicy.cmake (GSTREAMER_BUNDLE_REQUIRED_PLUGINS, GSTREAMER_GPL_DENYLIST; included again by the
 #             install-time checks).
 
 include_guard(GLOBAL)
@@ -151,61 +151,66 @@ function(_qgc_gst_linked_sdk_libraries out_var)
     )
 endfunction()
 
-# _qgc_gst_install_runtime_closure(<library_dest>)
-# Installs into <library_dest> the libraries of the SDK at GStreamer_ROOT_DIR that the files installed since the
-# previous call (the runtime dependency set qgc_gstreamer, see _qgc_gst_install_files) and the SDK libraries QGC links
-# load, directly or not, instead of every library the SDK ships (which include unused codecs, some GPL). Libraries
-# loaded with dlopen, such as libproxy's backends, must be installed as files (seeds) themselves. Call it with ON before
-# installing the seeds and OFF after them.
+# _qgc_gst_begin_runtime_closure()
+# Makes the files the caller installs from here on with _qgc_gst_install_files seed the runtime dependency set
+# qgc_gstreamer that _qgc_gst_install_runtime_closure installs.
 # cmake-lint: disable=C0103
-macro(_qgc_gst_install_runtime_closure mode library_dest)
-    if(${mode})
-        set(_QGC_GST_RUNTIME_CLOSURE ON)
-    else()
-        _qgc_gst_linked_sdk_libraries(_qgc_gst_linked)
-        _qgc_gst_install_files("${library_dest}" ${_qgc_gst_linked})
-        set_property(GLOBAL APPEND PROPERTY _QGC_GST_INSTALL_DIRS "${library_dest}")
-        set(_QGC_GST_RUNTIME_CLOSURE OFF)
-        string(REGEX REPLACE "([][.+*?^$()|\\\\])" "\\\\\\1" _qgc_gst_root_re "${GStreamer_ROOT_DIR}")
-        if(WIN32)
-            # DLL lookups also see the lowercased path.
-            string(TOLOWER "${_qgc_gst_root_re}" _qgc_gst_root_lower_re)
-            set(_qgc_gst_include_res "^${_qgc_gst_root_re}/" "^${_qgc_gst_root_lower_re}/")
-        else()
-            set(_qgc_gst_include_res "^${_qgc_gst_root_re}/")
-        endif()
-        # The system's libraries resolve outside the SDK and are excluded; API sets, the MSVC runtime (installed by
-        # InstallRequiredSystemLibraries) and macOS system libraries in the dyld cache may not resolve at all.
-        # libproxy keeps the backend library its own library links (pxbackend) in lib/libproxy.
-        install(
-            RUNTIME_DEPENDENCY_SET
-            qgc_gstreamer
-            DIRECTORIES
-            "${GStreamer_ROOT_DIR}/bin"
-            "${GSTREAMER_LIB_PATH}"
-            "${GSTREAMER_LIB_PATH}/libproxy"
-            PRE_EXCLUDE_REGEXES
-            "^api-ms-"
-            "^ext-ms-"
-            "^(vcruntime|msvcp|concrt|ucrtbase)"
-            "^/usr/lib/"
-            "^/System/"
-            POST_INCLUDE_REGEXES
-            ${_qgc_gst_include_res}
-            POST_EXCLUDE_REGEXES
-            ".*"
-            RUNTIME
-            DESTINATION
-            "${library_dest}"
-            LIBRARY
-            DESTINATION
-            "${library_dest}"
-            FRAMEWORK
-            DESTINATION
-            "${library_dest}"
-        )
-    endif()
+macro(_qgc_gst_begin_runtime_closure)
+    set(_QGC_GST_RUNTIME_CLOSURE ON)
 endmacro()
+
+# _qgc_gst_install_runtime_closure(<library_dest>)
+# Installs into <library_dest> the libraries of the SDK at GStreamer_ROOT_DIR that the seeds installed since
+# _qgc_gst_begin_runtime_closure() and the SDK libraries QGC links load, directly or not, instead of every library the
+# SDK ships (which include unused codecs, some GPL), and ends the closure in the caller. Libraries loaded with dlopen,
+# such as libproxy's backends, must be installed as seeds themselves.
+function(_qgc_gst_install_runtime_closure library_dest)
+    _qgc_gst_linked_sdk_libraries(_qgc_gst_linked)
+    _qgc_gst_install_files("${library_dest}" ${_qgc_gst_linked})
+    set_property(GLOBAL APPEND PROPERTY _QGC_GST_INSTALL_DIRS "${library_dest}")
+    set(_QGC_GST_RUNTIME_CLOSURE
+        OFF
+        PARENT_SCOPE
+    )
+    string(REGEX REPLACE "([][.+*?^$()|\\\\])" "\\\\\\1" _qgc_gst_root_re "${GStreamer_ROOT_DIR}")
+    if(WIN32)
+        # DLL lookups also see the lowercased path.
+        string(TOLOWER "${_qgc_gst_root_re}" _qgc_gst_root_lower_re)
+        set(_qgc_gst_include_res "^${_qgc_gst_root_re}/" "^${_qgc_gst_root_lower_re}/")
+    else()
+        set(_qgc_gst_include_res "^${_qgc_gst_root_re}/")
+    endif()
+    # The system's libraries resolve outside the SDK and are excluded; API sets, the MSVC runtime (installed by
+    # InstallRequiredSystemLibraries) and macOS system libraries in the dyld cache may not resolve at all.
+    # libproxy keeps the backend library its own library links (pxbackend) in lib/libproxy.
+    install(
+        RUNTIME_DEPENDENCY_SET
+        qgc_gstreamer
+        DIRECTORIES
+        "${GStreamer_ROOT_DIR}/bin"
+        "${GSTREAMER_LIB_PATH}"
+        "${GSTREAMER_LIB_PATH}/libproxy"
+        PRE_EXCLUDE_REGEXES
+        "^api-ms-"
+        "^ext-ms-"
+        "^(vcruntime|msvcp|concrt|ucrtbase)"
+        "^/usr/lib/"
+        "^/System/"
+        POST_INCLUDE_REGEXES
+        ${_qgc_gst_include_res}
+        POST_EXCLUDE_REGEXES
+        ".*"
+        RUNTIME
+        DESTINATION
+        "${library_dest}"
+        LIBRARY
+        DESTINATION
+        "${library_dest}"
+        FRAMEWORK
+        DESTINATION
+        "${library_dest}"
+    )
+endfunction()
 
 # _qgc_gst_install_gpl_check()
 # Fails the install when a GSTREAMER_GPL_DENYLIST library or plugin landed in a directory the GStreamer installers
@@ -296,7 +301,7 @@ endfunction()
 # notice. gioopenssl verifies against the Windows certificate stores, so the SDK's CA bundle stays out.
 function(gstreamer_install_windows_sdk app_name plugin_dest_out)
     set(_plugin_dest "${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0")
-    _qgc_gst_install_runtime_closure(ON "${CMAKE_INSTALL_BINDIR}")
+    _qgc_gst_begin_runtime_closure()
     gstreamer_install_plugins("${GSTREAMER_PLUGIN_PATH}" "${_plugin_dest}" "gst" "dll")
     gstreamer_install_gio_modules("${GSTREAMER_GIO_MODULE_PATH}" "${CMAKE_INSTALL_LIBDIR}/gio/modules" "dll")
     # giolibproxy.dll loads proxy-1.dll, which loads its backends from lib/libproxy; startup only puts the app's bin
@@ -305,7 +310,7 @@ function(gstreamer_install_windows_sdk app_name plugin_dest_out)
     _qgc_gst_install_files("${CMAKE_INSTALL_BINDIR}" ${_gst_libproxy_backends})
     file(GLOB _gst_helpers "${GSTREAMER_PLUGIN_SCANNER_PATH}/*.exe")
     _qgc_gst_install_files("${CMAKE_INSTALL_LIBEXECDIR}/gstreamer-1.0" PROGRAMS ${_gst_helpers})
-    _qgc_gst_install_runtime_closure(OFF "${CMAKE_INSTALL_BINDIR}")
+    _qgc_gst_install_runtime_closure("${CMAKE_INSTALL_BINDIR}")
     _qgc_gst_install_notice(share/licenses/gstreamer)
     set(${plugin_dest_out}
         "${_plugin_dest}"
@@ -387,7 +392,7 @@ function(gstreamer_install_macos_flat_sdk app_name plugin_dest_out)
     set(_mac_lib_dest "${app_name}.app/Contents/lib")
     set(_mac_libexec_dest "${app_name}.app/Contents/libexec/gstreamer-1.0")
 
-    _qgc_gst_install_runtime_closure(ON "${_mac_fw_dest}")
+    _qgc_gst_begin_runtime_closure()
     set(_plugin_dest "${_mac_lib_dest}/gstreamer-1.0")
     gstreamer_install_plugins("${GSTREAMER_PLUGIN_PATH}" "${_plugin_dest}" "libgst" "dylib")
     gstreamer_install_gio_modules("${GSTREAMER_GIO_MODULE_PATH}" "${_mac_lib_dest}/gio/modules" "dylib")
@@ -399,7 +404,7 @@ function(gstreamer_install_macos_flat_sdk app_name plugin_dest_out)
         endif()
     endforeach()
     _qgc_gst_install_files("${_mac_libexec_dest}" PROGRAMS ${_gst_helpers})
-    _qgc_gst_install_runtime_closure(OFF "${_mac_fw_dest}")
+    _qgc_gst_install_runtime_closure("${_mac_fw_dest}")
 
     # Entry "<dir>:<rpath>:<glob>" — libexec helpers are extensionless, so * not *.dylib.
     foreach(
@@ -506,7 +511,7 @@ function(gstreamer_install_platform_sdk app_name)
         return()
     endif()
     if(NOT ARG_REQUIRED_PLUGINS)
-        list(APPEND ARG_REQUIRED_PLUGINS ${GSTREAMER_RUNTIME_REQUIRED_PLUGINS})
+        list(APPEND ARG_REQUIRED_PLUGINS ${GSTREAMER_BUNDLE_REQUIRED_PLUGINS})
     endif()
 
     # Extend verification beyond the structural floor to every configured plugin

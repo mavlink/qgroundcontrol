@@ -405,10 +405,10 @@ elseif(SCENARIO STREQUAL "android-mobile")
         message(STATUS "QGC_TEST_SKIPPED: link lines are only read from Ninja and Makefile builds")
         return()
     endif()
-    # Mobile builds fail configure without the runtime-required plugins, so the SDK ships them; udp is left out
+    # Mobile builds fail configure without the bundle-required plugins, so the SDK ships them; udp is left out
     # first to check that.
     include("${CMAKE_CURRENT_LIST_DIR}/../PluginPolicy.cmake")
-    set(_plugins ${GSTREAMER_RUNTIME_REQUIRED_PLUGINS})
+    set(_plugins ${GSTREAMER_BUNDLE_REQUIRED_PLUGINS})
     list(REMOVE_ITEM _plugins udp)
     list(APPEND _plugins androidmedia)
     string(REPLACE ";" "," _requested "${_plugins};udp")
@@ -431,7 +431,7 @@ elseif(SCENARIO STREQUAL "android-mobile")
         file(WRITE "${_source}" "${_source}\n")
     endforeach()
     _qgc_configure_fails(
-        "Android SDK without udp" "runtime-required plugins are missing from the static SDK .*: udp\\." --fresh
+        "Android SDK without udp" "bundle-required plugins are missing from the static SDK .*: udp\\." --fresh
         "-DGStreamer_ROOT_DIR=${_sdk_a}" ${_android}
     )
 
@@ -508,7 +508,7 @@ elseif(SCENARIO STREQUAL "android-mobile")
 elseif(SCENARIO STREQUAL "ios-link")
     # iOS (platform/IOS.cmake, built here from fixtures/IosLink): only GStreamer::mobile links the merged archive. A
     # core function QGC calls that the framework does not export fails the app's link, naming it, rather than linking
-    # a second core into the app; QGC_GST_IOS_APP_CORE_SYMBOLS keeps such functions in the framework.
+    # a second core into the app; QGC_GST_APP_CORE_SYMBOLS keeps such functions in the framework.
     if(NOT GENERATOR MATCHES "Ninja|Makefiles")
         message(STATUS "QGC_TEST_SKIPPED: link lines are only read from Ninja and Makefile builds")
         return()
@@ -567,13 +567,13 @@ elseif(SCENARIO STREQUAL "ios-link")
         ERROR_VARIABLE _output
     )
     if(NOT _result EQUAL 0)
-        message(FATAL_ERROR "ASSERT [qgc_gst_ios_keep_symbols]: the app does not link:\n${_output}")
+        message(FATAL_ERROR "ASSERT [qgc_gst_mobile_keep_symbols]: the app does not link:\n${_output}")
     endif()
 elseif(SCENARIO STREQUAL "sdk-prefix-decoy")
     # A bundled SDK locks pkg-config to itself: another GStreamer in CMAKE_PREFIX_PATH (vcpkg, Homebrew) must not
     # shadow it for the core targets or for the optional-library probes HwBuffers runs after discovery.
     include("${CMAKE_CURRENT_LIST_DIR}/../PluginPolicy.cmake")
-    set(_plugins ${GSTREAMER_RUNTIME_REQUIRED_PLUGINS})
+    set(_plugins ${GSTREAMER_BUNDLE_REQUIRED_PLUGINS})
     string(REPLACE ";" "," _requested "${_plugins}")
     set(_decoy "${WORK_DIR}/decoy")
     _qgc_write_fake_android_sdk("${_sdk_a}" 1.24.0 ${_plugins})

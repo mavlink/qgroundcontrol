@@ -219,7 +219,7 @@ endif()
 # Mobile apps have no other way to load a plugin at runtime.
 if(ANDROID OR IOS)
     gstreamer_missing_required(
-        REQUIRED ${GSTREAMER_RUNTIME_REQUIRED_PLUGINS}
+        REQUIRED ${GSTREAMER_BUNDLE_REQUIRED_PLUGINS}
         AVAILABLE ${_gst_available_plugins}
         OUT_VAR _gst_missing_required
     )
@@ -227,7 +227,7 @@ if(ANDROID OR IOS)
         list(JOIN _gst_missing_required ", " _gst_missing_required)
         message(
             FATAL_ERROR
-                "GStreamer: runtime-required plugins are missing from the static SDK at "
+                "GStreamer: bundle-required plugins are missing from the static SDK at "
                 "${GStreamer_ROOT_DIR}: ${_gst_missing_required}. The SDK is incomplete or "
                 "corrupt — re-download it."
         )
@@ -264,13 +264,15 @@ elseif(ANDROID)
 else()
     set(_qgc_gst_path "shared")
 endif()
-list(LENGTH GSTREAMER_PLUGINS _qgc_gst_plugin_total)
-set(_qgc_gst_plugin_count 0)
+# The requested plugins this build ships, as the status line counts and the notice lists them.
+set(_qgc_gst_shipped_plugins "")
 foreach(_p IN LISTS GSTREAMER_PLUGINS)
     if(_p IN_LIST _gst_available_plugins)
-        math(EXPR _qgc_gst_plugin_count "${_qgc_gst_plugin_count}+1")
+        list(APPEND _qgc_gst_shipped_plugins "${_p}")
     endif()
 endforeach()
+list(LENGTH GSTREAMER_PLUGINS _qgc_gst_plugin_total)
+list(LENGTH _qgc_gst_shipped_plugins _qgc_gst_plugin_count)
 message(
     STATUS "QGCGStreamer: version=${GStreamer_VERSION} path=${_qgc_gst_path} root=${GStreamer_ROOT_DIR} "
            "plugins=${_qgc_gst_plugin_count}/${_qgc_gst_plugin_total} auto_downloaded=${GStreamer_AUTO_DOWNLOADED}"
@@ -290,11 +292,5 @@ if(ANDROID)
 else()
     set(_qgc_gst_notice_dir "${CMAKE_BINARY_DIR}/gstreamer-notice")
 endif()
-set(_qgc_gst_shipped_plugins "")
-foreach(_p IN LISTS GSTREAMER_PLUGINS)
-    if(_p IN_LIST _gst_available_plugins)
-        list(APPEND _qgc_gst_shipped_plugins "${_p}")
-    endif()
-endforeach()
 qgc_gst_write_notice("${_qgc_gst_notice_dir}" PLUGINS ${_qgc_gst_shipped_plugins})
 gstreamer_layout_set(NOTICE_DIR "${_qgc_gst_notice_dir}")

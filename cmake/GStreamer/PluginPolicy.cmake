@@ -1,7 +1,7 @@
 # Centralised GStreamer plugin policy — single source of truth for plugin
-# alternate groups, runtime-required and optional plugins, and the GPL denylist.
+# alternate groups, bundle-required and optional plugins, and the GPL denylist.
 # Consumed by Orchestrator (build-config plugin loader / alternate-satisfied
-# check) and Install (runtime-required verifier, GPL check).
+# check) and Install (bundle-required verifier, GPL check).
 
 include_guard(GLOBAL)
 
@@ -17,15 +17,16 @@ include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
 # are the group/AND delimiters and are not escapable.
 set(GSTREAMER_PLUGIN_ALTERNATES "videoconvertscale|videoconvert+videoscale")
 
-# Structural plugins guaranteed to exist post-install — the install verifier
-# fails the build if any are missing. At runtime GStreamer.cc checks the elements
-# per feature instead, and fails initialization only without the display core.
+# Structural plugins every bundled GStreamer must ship: a mobile configure and the
+# desktop install verifier fail without one. At runtime GStreamer.cc checks the
+# elements per feature instead, and fails initialization only without the display
+# core.
 # Codec implementations (openh264/libav) are intentionally excluded: distro
 # bundles may omit one while shipping another usable decode path.
 # opengl supplies glupload/glcolorconvert (GL zero-copy video path);
 # isomp4 (mp4mux/qtmux) and matroska (matroskamux) are the recording muxers
 # (RecordingBranch.cc).
-set(GSTREAMER_RUNTIME_REQUIRED_PLUGINS
+set(GSTREAMER_BUNDLE_REQUIRED_PLUGINS
     coreelements
     isomp4
     matroska
@@ -122,26 +123,6 @@ function(gstreamer_plugins_for key out_var)
     )
 endfunction()
 
-# gstreamer_plugin_alternatives(<plugin> <out_var>)
-# Sets <out_var> to the plugin sets, each "+"-joined, that satisfy <plugin>: <plugin> itself, then the alternates of its
-# GSTREAMER_PLUGIN_ALTERNATES group.
-function(gstreamer_plugin_alternatives plugin out_var)
-    set(_alternatives "${plugin}")
-    foreach(_group IN LISTS GSTREAMER_PLUGIN_ALTERNATES)
-        string(REGEX REPLACE "[|+]" ";" _group_plugins "${_group}")
-        if(plugin IN_LIST _group_plugins)
-            string(REPLACE "|" ";" _group_alternatives "${_group}")
-            list(APPEND _alternatives ${_group_alternatives})
-            list(REMOVE_DUPLICATES _alternatives)
-            break()
-        endif()
-    endforeach()
-    set(${out_var}
-        "${_alternatives}"
-        PARENT_SCOPE
-    )
-endfunction()
-
 # gstreamer_missing_required(REQUIRED <plugin>... AVAILABLE <plugin>... OUT_VAR <var>)
 # Sets <var> to the REQUIRED plugins, in order, that are not AVAILABLE. A member of a GSTREAMER_PLUGIN_ALTERNATES group
 # is also satisfied by any alternate of its group whose plugins are all AVAILABLE, so the install verifier accepts
@@ -151,7 +132,16 @@ function(gstreamer_missing_required)
     _qgc_gst_check_args(gstreamer_missing_required OUT_VAR ALLOW_EMPTY REQUIRED AVAILABLE)
     set(_missing "")
     foreach(_plugin IN LISTS ARG_REQUIRED)
-        gstreamer_plugin_alternatives("${_plugin}" _alternates)
+        # The plugin sets, each "+"-joined, that satisfy _plugin: itself, then the alternates of its group.
+        set(_alternates "${_plugin}")
+        foreach(_group IN LISTS GSTREAMER_PLUGIN_ALTERNATES)
+            string(REGEX REPLACE "[|+]" ";" _group_plugins "${_group}")
+            if(_plugin IN_LIST _group_plugins)
+                string(REPLACE "|" ";" _group_alternates "${_group}")
+                list(APPEND _alternates ${_group_alternates})
+                break()
+            endif()
+        endforeach()
         set(_satisfied FALSE)
         foreach(_alternate IN LISTS _alternates)
             string(REPLACE "+" ";" _alternate_plugins "${_alternate}")
