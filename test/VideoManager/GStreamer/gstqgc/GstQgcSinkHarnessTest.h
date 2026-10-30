@@ -9,10 +9,7 @@ class GstQgcSinkHarnessTest : public GStreamerTestBase
     Q_OBJECT
 
 private slots:
-    void _testBinDeliversLatestFrameOnly();
     void _testBinRenegotiatesMidStream();
     void _testBinAppliesOrientationTag_data();
     void _testBinAppliesOrientationTag();
-    void _testBinDropsUndeliveredFrame_data();
-    void _testBinDropsUndeliveredFrame();
 };

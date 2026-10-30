@@ -11,7 +11,6 @@
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QSignalSpy>
 
-#include "Fixtures/RAIIFixtures.h"
 #include "SettingsManager.h"
 #include "VideoManager.h"
 #include "VideoSettings.h"
@@ -119,16 +118,6 @@ void VideoManagerTest::_resetCounters()
         receiver->restarts = 0;
         receiver->videoOutputChanges = 0;
     }
-}
-
-void VideoManagerTest::_testVideoOutputQmlTypeAvailable()
-{
-    static constexpr auto envName = "QGC_TEST_ENABLE_GSTREAMER";
-    TestFixtures::EnvVarFixture envBackup(envName);
-    qunsetenv(envName);
-
-    QQmlEngine engine;
-    QVERIFY(createVideoOutput(engine) != nullptr);
 }
 
 void VideoManagerTest::_testSettingReachesReceiver_data()

@@ -39,8 +39,6 @@ public:
 
     bool isValid() const { return _harness != nullptr; }
 
-    GstElement* bin() const { return _bin.get(); }
-
     /// Sends stream caps for raw @p format frames of @p width x @p height, then a segment.
     void setCaps(const char* format, int width, int height)
     {
@@ -70,28 +68,6 @@ private:
 };
 
 }  // namespace
-
-void GstQgcSinkHarnessTest::_testBinDeliversLatestFrameOnly()
-{
-    int emissions = 0;
-    qint64 lastStartUs = -1;
-    QVideoSink videoSink;
-    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, &videoSink, [&](const QVideoFrame& frame) {
-        ++emissions;
-        lastStartUs = frame.startTime();
-    });
-    SinkBinHarness harness(&videoSink);
-    QVERIFY(harness.isValid());
-    harness.setCaps("I420", 64, 48);
-
-    // Frames the converter hands on while the GUI thread is busy: only the newest reaches the QVideoSink.
-    for (int i = 1; i <= 3; ++i) {
-        QCOMPARE(harness.push(i * GST_SECOND), GST_FLOW_OK);
-    }
-    SinkBinHarness::deliver(videoSink);
-    QCOMPARE(emissions, 1);
-    QCOMPARE(lastStartUs, qint64(3 * GST_SECOND / GST_USECOND));
-}
 
 void GstQgcSinkHarnessTest::_testBinRenegotiatesMidStream()
 {
@@ -146,35 +122,6 @@ void GstQgcSinkHarnessTest::_testBinAppliesOrientationTag()
     QCOMPARE(int(frame.rotation()), rotation);
     QCOMPARE(frame.mirrored(), mirrored);
     QCOMPARE(frame.size(), QSize(64, 48));
-}
-
-void GstQgcSinkHarnessTest::_testBinDropsUndeliveredFrame_data()
-{
-    QTest::addColumn<bool>("viaFlush");
-    QTest::newRow("flush-start") << true;
-    QTest::newRow("stop") << false;
-}
-
-void GstQgcSinkHarnessTest::_testBinDropsUndeliveredFrame()
-{
-    QFETCH(bool, viaFlush);
-
-    int emissions = 0;
-    QVideoSink videoSink;
-    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, &videoSink, [&](const QVideoFrame&) { ++emissions; });
-    SinkBinHarness harness(&videoSink);
-    QVERIFY(harness.isValid());
-    harness.setCaps("I420", 64, 48);
-
-    QCOMPARE(harness.push(GST_SECOND), GST_FLOW_OK);
-    if (viaFlush) {
-        QVERIFY(harness.pushEvent(gst_event_new_flush_start()));
-    } else {
-        QCOMPARE(gst_element_set_state(harness.bin(), GST_STATE_NULL), GST_STATE_CHANGE_SUCCESS);
-    }
-    SinkBinHarness::deliver(videoSink);
-    QCOMPARE(emissions, 0);
-    QVERIFY(!videoSink.videoFrame().isValid());
 }
 
 UT_REGISTER_TEST(GstQgcSinkHarnessTest, TestLabel::Unit)

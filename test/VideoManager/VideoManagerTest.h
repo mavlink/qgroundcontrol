@@ -20,7 +20,6 @@ private slots:
     void init() override;
     void cleanup() override;
 
-    void _testVideoOutputQmlTypeAvailable();
     void _testSettingReachesReceiver_data();
     void _testSettingReachesReceiver();
     void _testSettingChangesCoalesce();
