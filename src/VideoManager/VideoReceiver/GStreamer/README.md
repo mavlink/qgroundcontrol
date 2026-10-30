@@ -84,7 +84,7 @@ Per-platform import of decoded GPU frames without a copy. Most paths wrap their 
 `GstHwFrameTexturesBase : QVideoFrameTextures`; the DMABuf path hands its planes to Qt Multimedia's DMABuf importer
 (`dmabuf/GstQtDmaBufImport`, the only code using that private Qt API):
 
-- **Platforms**: `dmabuf` (Linux/VA-API), `gl`, `vulkan`, `d3d` (D3D11/D3D12), `cuda`, `apple` (IOSurface), `android` (AHardwareBuffer).
+- **Platforms**: `dmabuf` (Linux/VA-API), `gl` (Linux, Android), `vulkan`, `d3d` (D3D11/D3D12), `cuda`, `apple` (IOSurface), `android` (AHardwareBuffer).
 - **`HwPathDescriptor`**: each backend describes its path once (memory match, buffer construction, cache reset,
   pool proposal, context bridge). `GstHwPathRegistry` lists the compiled ones in a constant array. The factory selects
   the first path whose descriptor matches a frame's memory, and the facade loops over the list for bus messages,
@@ -103,7 +103,8 @@ Per-platform import of decoded GPU frames without a copy. Most paths wrap their 
 - **Build options**: `HwBuffers/CMakeLists.txt` probes one table row per path; the `QGC_GST_ENABLE_<PATH>` switches
   that compile a path out are listed in [`cmake/README.md`](../../../../cmake/README.md#gstreamer). Configure lists
   compiled paths that the sink can't reach at runtime: Android's glupload bin offers only GLMemory caps, and no bin
-  advertises CUDAMemory or VulkanImage caps. Linux builds with gst-gl and DMABuf compile both GPU bins; see
+  advertises CUDAMemory, VulkanImage or D3D12Memory caps. Windows builds leave out the GLMemory path: Qt 6's OpenGL
+  there is WGL, which gst-gl can't share. Linux builds with gst-gl and DMABuf compile both GPU bins; see
   [GPU bin selection](#gpu-bin-selection).
 
 ## Build Configuration

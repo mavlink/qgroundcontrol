@@ -199,12 +199,12 @@ set(_qgc_gpu_row_CUDA
     UNSTABLE_API
     DEFINE QGC_HAS_GST_CUDA_GPU_PATH
     SOURCES cuda/GstCudaVideoBuffer.cc cuda/GstCudaVideoBuffer.h)
-# GLMemory via gst-gl. WIN32: only reachable when Qt uses the ANGLE/EGL GL backend (D3D11/D3D12 are the primary
-# Windows paths); GstGlContextBridge wraps the EGL context only — no WGL. A GLMemory-only Linux/Android build links EGL
-# itself, else GstGlContextBridge.cc fails with "undefined symbol: eglGetDisplay". Not Apple: vtdec prefers GLMemory,
-# which Metal can't import, over the IOSurface-backed CoreVideo memory the IOSurface path takes.
+# GLMemory via gst-gl. A GLMemory-only Linux/Android build links EGL itself, else GstGlContextBridge.cc fails with
+# "undefined symbol: eglGetDisplay". Not Windows: Qt 6's OpenGL there is WGL, which GstGlContextBridge can't wrap, so
+# the sink never offers GLMemory. Not Apple: vtdec prefers GLMemory, which Metal can't import, over the IOSurface-backed
+# CoreVideo memory the IOSurface path takes.
 set(_qgc_gpu_row_GLMemory
-    PLATFORMS LINUX ANDROID WIN32
+    PLATFORMS LINUX ANDROID
     PROBE HAS_VAR QGC_GST_HAS_GLMEMORY HEADER gst/gl/gstglmemory.h SYMBOL gst_is_gl_memory
     EGL OPTIONAL
     DEFINE QGC_HAS_GST_GLMEMORY_GPU_PATH
@@ -275,12 +275,12 @@ if(_qgc_gpu_D3D11 OR _qgc_gpu_D3D12)
     )
 endif()
 
-# GPU bin variants; HwBuffers::gpuBinMode() picks one at runtime. glupload is Android's only bin (GstGLContext handshake
+# GPU bin variants; GstQgc::selectGpuBin() picks one at runtime. glupload is Android's only bin (GstGLContext handshake
 # amcvideodec needs for Surface output) and Linux's default (gst-gl imports both LINEAR and vendor-tiled dmabuf to
 # GLMemory). Direct DMABuf feeds Qt's per-plane importer, with the plain tilings EGL reports. Linux builds with both
 # pick one via QGC_GST_GPU_BIN.
 set(_qgc_unreachable_paths "")
-if((ANDROID OR LINUX) AND _qgc_gpu_GLMemory)
+if(_qgc_gpu_GLMemory)
     target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_BIN_HAS_GLUPLOAD=1)
 endif()
 if(LINUX AND _qgc_gpu_DMABuf)
@@ -291,7 +291,7 @@ if(LINUX
    AND _qgc_gpu_DMABuf
 )
     message(STATUS "QGCGStreamer: GPU bins compiled: glupload (default) and direct DMABuf; QGC_GST_GPU_BIN selects one")
-elseif((ANDROID OR LINUX) AND _qgc_gpu_GLMemory)
+elseif(_qgc_gpu_GLMemory)
     message(STATUS "QGCGStreamer: GPU bin routes through glupload (gst-gl EGLImage import)")
 elseif(LINUX AND _qgc_gpu_DMABuf)
     message(STATUS "QGCGStreamer: GPU bin direct-imports DMABuf (no gst-gl/GLMemory available)")
@@ -303,8 +303,8 @@ if(ANDROID
 )
     list(APPEND _qgc_unreachable_paths "AHardwareBuffer (glupload bin)")
 endif()
-# The sink never advertises memory:CUDAMemory or memory:VulkanImage caps.
-foreach(_path IN ITEMS CUDA Vulkan)
+# The sink never advertises memory:CUDAMemory, memory:VulkanImage or memory:D3D12Memory caps.
+foreach(_path IN ITEMS CUDA Vulkan D3D12)
     if(_qgc_gpu_${_path})
         list(APPEND _qgc_unreachable_paths "${_path} (caps not advertised)")
     endif()

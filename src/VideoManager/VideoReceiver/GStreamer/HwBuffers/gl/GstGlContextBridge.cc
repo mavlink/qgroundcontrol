@@ -11,9 +11,8 @@
 #include <QtGui/qguiapplication_platform.h>
 
 #include "QGCLoggingCategory.h"
-// Shared by Linux and Windows-ANGLE (ANGLE ships EGL/egl.h); on Windows it's a fallback behind D3D11/D3D12.
-// GLX/Wayland/X11 wrapping stays Linux-only below.
-#if defined(__linux__) || (defined(_WIN32) && __has_include(<EGL/egl.h>))
+// EGL on Linux and Android; GLX/Wayland/X11 wrapping below only where their headers exist.
+#if defined(__linux__)
 #include <EGL/egl.h>
 #include <gst/gl/egl/gstgldisplay_egl.h>
 #define QGC_GST_BRIDGE_HAS_EGL 1
@@ -111,7 +110,7 @@ bool GlContextBridge::primeLocked()
     }
 
 #if defined(QGC_GST_BRIDGE_HAS_EGL)
-    // Try EGL first (Linux: Wayland/eglfs/xcb_egl; Windows: ANGLE-EGL); fall back to GLX (Linux xcb default on Qt 6).
+    // Try EGL first (Wayland, eglfs, xcb_egl, Android); fall back to GLX (Linux xcb default on Qt 6).
     EGLContext eglCtx = qtEglContext(qtCtx);
     EGLDisplay eglDisp = (eglCtx != EGL_NO_CONTEXT) ? qtEglDisplay(qtCtx) : EGL_NO_DISPLAY;
     if (eglCtx != EGL_NO_CONTEXT && eglDisp != EGL_NO_DISPLAY) {
