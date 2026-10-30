@@ -5,7 +5,6 @@
 
 #include "QGCLoggingCategory.h"
 #include "UVCDevices.h"
-#include "VideoStreamResolver.h"
 
 QGC_LOGGING_CATEGORY(VideoSettingsLog, "Settings.VideoSettings")
 
@@ -101,6 +100,9 @@ DECLARE_SETTINGSFACT(VideoSettings, maxVideoSize)
 DECLARE_SETTINGSFACT(VideoSettings, enableStorageLimit)
 DECLARE_SETTINGSFACT(VideoSettings, streamEnabled)
 DECLARE_SETTINGSFACT(VideoSettings, disableWhenDisarmed)
+DECLARE_SETTINGSFACT(VideoSettings, udpUrl)
+DECLARE_SETTINGSFACT(VideoSettings, rtspUrl)
+DECLARE_SETTINGSFACT(VideoSettings, tcpUrl)
 
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
 {
@@ -114,7 +116,6 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
                 _videoSourceFact->setRawValue(videoDisabled);
             }
         }
-        connect(_videoSourceFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _videoSourceFact;
 }
@@ -125,8 +126,6 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceVideoDecoder)
         _forceVideoDecoderFact = _createSettingsFact(forceVideoDecoderName);
 
         _forceVideoDecoderFact->setUserVisible(kGstEnabled);
-
-        connect(_forceVideoDecoderFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _forceVideoDecoderFact;
 }
@@ -137,8 +136,6 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, lowLatencyMode)
         _lowLatencyModeFact = _createSettingsFact(lowLatencyModeName);
 
         _lowLatencyModeFact->setUserVisible(kGstEnabled);
-
-        connect(_lowLatencyModeFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _lowLatencyModeFact;
 }
@@ -148,7 +145,6 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtpJitterLatencyMs)
     if (!_rtpJitterLatencyMsFact) {
         _rtpJitterLatencyMsFact = _createSettingsFact(rtpJitterLatencyMsName);
         _rtpJitterLatencyMsFact->setUserVisible(kGstEnabled);
-        connect(_rtpJitterLatencyMsFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _rtpJitterLatencyMsFact;
 }
@@ -158,7 +154,6 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspAutoReconnect)
     if (!_rtspAutoReconnectFact) {
         _rtspAutoReconnectFact = _createSettingsFact(rtspAutoReconnectName);
         _rtspAutoReconnectFact->setUserVisible(kGstEnabled);
-        connect(_rtspAutoReconnectFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _rtspAutoReconnectFact;
 }
@@ -205,52 +200,8 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspTimeout)
         _rtspTimeoutFact = _createSettingsFact(rtspTimeoutName);
 
         _rtspTimeoutFact->setUserVisible(kGstEnabled);
-
-        connect(_rtspTimeoutFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _rtspTimeoutFact;
-}
-
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, udpUrl)
-{
-    if (!_udpUrlFact) {
-        _udpUrlFact = _createSettingsFact(udpUrlName);
-        connect(_udpUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
-    }
-    return _udpUrlFact;
-}
-
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspUrl)
-{
-    if (!_rtspUrlFact) {
-        _rtspUrlFact = _createSettingsFact(rtspUrlName);
-        connect(_rtspUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
-    }
-    return _rtspUrlFact;
-}
-
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, tcpUrl)
-{
-    if (!_tcpUrlFact) {
-        _tcpUrlFact = _createSettingsFact(tcpUrlName);
-        connect(_tcpUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
-    }
-    return _tcpUrlFact;
-}
-
-bool VideoSettings::streamConfigured(void)
-{
-    const QString source = videoSource()->rawValue().toString();
-    if (VideoStreamResolver::resolve(VideoStreamResolver::snapshot(this), nullptr,
-                                     VideoStreamResolver::Role::Primary)) {
-        return true;
-    }
-    return UVCDevices::deviceExists(source);
-}
-
-void VideoSettings::_configChanged(QVariant)
-{
-    emit streamConfiguredChanged(streamConfigured());
 }
 
 void VideoSettings::_setForceVideoDecodeList()
