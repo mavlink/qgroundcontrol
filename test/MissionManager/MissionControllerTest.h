@@ -23,6 +23,12 @@ private slots:
     void _testLoadJsonSectionAvailable();
     void _testGlobalAltFrame();
     void _testFlightPathSegmentCacheReuse();
+    void _testSplineWaypointPath();
+    void _testSplineAfterTakeoffStaysLevel();
+    void _testSplineFromHomeStartsAtTakeoffAltitude();
+    void _testSplineSampleCountGrowsWithLength();
+    void _testSplineAfterLandHasNoIncomingVelocity();
+    void _testDuplicateSplineWaypointCarriesNoVelocity();
     void _testSplitSegmentTracksSegmentRebuild_data();
     void _testSplitSegmentTracksSegmentRebuild();
     void _testSplitSegmentWhenCurrentItemGainsCoordinate();
