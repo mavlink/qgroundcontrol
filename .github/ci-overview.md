@@ -625,7 +625,21 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   fontconfig, HarfBuzz, which brings GLib, ALSA) and no GStreamer or Qt, so it must bring its own.
 - **Android**: legs are Linux (primary), macOS, Windows (not on PRs), and a Linux emulator smoke
   test. PRs build `arm64-v8a` only; other events build `arm64-v8a` + `armeabi-v7a` on the primary
-  leg. Android jobs install only the `core` apt category. The Linux leg runs Android Lint
+  leg. Android jobs install only the `core` apt category. Every leg checks its APK
+  (`android_apk_check.py`, the NDK's llvm-readelf on each `lib/<abi>/*.so`): on the 64-bit ABIs
+  every `PT_LOAD` segment must be aligned to 16 KB, which 16 KB-page devices and Google Play need;
+  every `DT_NEEDED` library must be packaged for the same ABI or be an NDK system library at the
+  minimum API level (the sysroot's stubs); `libgstreamer_android.so` must be packaged when GStreamer
+  is enabled; and `zipalign -c -P 16 -v 4` must pass (skipped with a notice by a zipalign without
+  `-P`). Problems become error annotations and an APK check job-summary section. The emulator
+  leg's APK, which is not published, runs QGC's simple boot test at every launch: its configure
+  loads `android-emulator-test`'s `boot-test.cmake` initial cache (`QT_ANDROID_APPLICATION_ARGUMENTS`
+  `--simple-boot-test --logging:Main,...`; a release APK ignores `am start` arguments, and
+  `extra-args` cannot hold a space). `android_boot_test.py` grants the app all-files access before
+  launching it (QGC otherwise opens the system settings over its window and the boot test never
+  completes) and passes only on QGC's `Simple boot test completed` marker; a crash, a process exit
+  or a running app without the marker fails, and the failure annotation quotes the
+  `Simple boot test failed` and `Video.GStreamer.SelfTest` logcat lines. The Linux leg runs Android Lint
   (`android_lint.py`, `gradlew lintRelease` in `android-build`): up to ten Error and Fatal issues
   from lint's XML report become error annotations titled with the issue id, at the `android/`
   source that androiddeployqt copied (`QGC_ANDROID_PACKAGE_SOURCE_DIR`; a copy that differs, like
@@ -930,6 +944,7 @@ numbers, durations, and sizes from `common.format`. A build job reads top-down:
 | Configure | `cmake-configure` (`cmake_helper.py configure`, also after failures): result, duration, preset, generator, configure-check reuse; after a failure the first CMake error and the end of the output collapsed, and a link to the configure logs |
 | Build | `cmake-build` (`cmake_helper.py build`, also after failures): result, duration, toolchain, this build's compiler (ccache or sccache) and moc cache hit rates; failed targets and first errors, slowest steps, time by kind, and moc cache events collapsed; a link to the Ninja reports |
 | Android Lint | `android_lint.py` on Android's Linux leg (also after failures): result, duration, error and warning counts; the first errors collapsed; after a failure a link to the lint reports |
+| APK check | `android_apk_check.py` on every Android leg: result, ABIs, native library count, problem count, zipalign result; the problems collapsed |
 | Unit Tests / Integration Tests (*suite*) | `run-unit-tests` (`junit_report.py`): counts, failures with their first lines, slowest tests and failure output collapsed; a link to the results artifact |
 | Coverage, Binary size | `coverage_report.py --step-summary`, `size_analysis.py` |
 | Artifact report | `artifact-report` (`artifact_report.py`, after packaging): result, package, master baseline run, files added, removed, and changed; package and contents sizes against master; GPL findings (a known issue with `gpl-findings: warn`); added and removed files and the largest size changes, with the full lists collapsed |

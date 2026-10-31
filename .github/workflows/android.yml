@@ -146,6 +146,7 @@ jobs:
         shell: bash
         run: python3 "${GITHUB_WORKSPACE}/tools/ci/android/android_sdk_helper.py" debug-keystore
 
+      # The emulator leg's APK, which is not published, runs QGC's simple boot test at every launch.
       - name: Configure
         uses: ./.github/actions/cmake-configure
         with:
@@ -159,6 +160,7 @@ jobs:
             -DQT_HOST_PATH=${{ steps.setup.outputs.host_qt_root_dir }}
             -DQT_ANDROID_SIGN_APK=ON
             -DQT_ANDROID_SIGN_AAB=ON
+            ${{ matrix.emulator && format('-C {0}/.github/actions/android-emulator-test/boot-test.cmake', github.workspace) || '' }}
 
       - name: Build
         id: build
@@ -240,6 +242,13 @@ jobs:
             --build-dir "${RUNNER_TEMP}/build/android-build" \
             --pattern '*.apk' --top-level \
             --copy-to "${RUNNER_TEMP}/build/${PACKAGE}.apk"
+
+      - name: Check APK native libraries
+        shell: bash
+        run: |
+          python3 "${GITHUB_WORKSPACE}/tools/ci/android/android_apk_check.py" \
+            --apk "${RUNNER_TEMP}/build/${PACKAGE}.apk" \
+            --build-dir "${RUNNER_TEMP}/build"
 
       - name: Report APK contents
         if: ${{ !matrix.emulator }}
