@@ -24,6 +24,10 @@ PiperTtsEngine::PiperTtsEngine(QObject* parent)
     , _player(new QSoundEffect(this))
 {
     (void) connect(_player, &QSoundEffect::statusChanged, this, [this]() {
+        // stop() may have canceled the utterance while its WAV was loading.
+        if (_playingFile.isEmpty()) {
+            return;
+        }
         if (_player->status() == QSoundEffect::Ready) {
             _player->play();
         } else if (_player->status() == QSoundEffect::Error) {
@@ -63,20 +67,44 @@ bool PiperTtsEngine::isAvailable()
 
 QString PiperTtsEngine::_findExecutable()
 {
+    // Cached because verifying a candidate runs it.
+    static const QString executable = _searchExecutable();
+    return executable;
+}
+
+QString PiperTtsEngine::_searchExecutable()
+{
     // Desktop launchers often don't have ~/.local/bin in PATH, which is where pip/uv/pipx install Piper.
     const QStringList fallbackPaths = {QDir::homePath() + QStringLiteral("/.local/bin")};
 
     // Some distributions name it piper-tts because "piper" is also a mouse configuration tool.
+    QStringList candidates;
     for (const QString& name : {QStringLiteral("piper-tts"), QStringLiteral("piper")}) {
-        QString path = QStandardPaths::findExecutable(name);
-        if (path.isEmpty()) {
-            path = QStandardPaths::findExecutable(name, fallbackPaths);
-        }
-        if (!path.isEmpty()) {
+        candidates << QStandardPaths::findExecutable(name) << QStandardPaths::findExecutable(name, fallbackPaths);
+    }
+    (void) candidates.removeAll(QString());
+    (void) candidates.removeDuplicates();
+
+    for (const QString& path : candidates) {
+        if (_isPiperTts(path)) {
             return path;
         }
+        qCDebug(PiperTtsEngineLog) << "Skipping" << path << "which is not Piper text-to-speech";
     }
     return QString();
+}
+
+bool PiperTtsEngine::_isPiperTts(const QString& path)
+{
+    QProcess process;
+    process.setProcessChannelMode(QProcess::MergedChannels);
+    process.start(path, {QStringLiteral("--help")});
+    if (!process.waitForFinished(5000)) {
+        process.kill();
+        (void) process.waitForFinished(1000);
+        return false;
+    }
+    return process.readAll().contains("--model");
 }
 
 QList<QVoice> PiperTtsEngine::_findVoices()
@@ -166,13 +194,14 @@ void PiperTtsEngine::_readProcessOutput()
         }
 
         const QString path = line.mid(pathStart);
-        if (_pendingCount > 0) {
-            _pendingCount--;
-        }
+        // Piper answers in order, so canceled utterances come before the current ones.
         if (_discardCount > 0) {
             _discardCount--;
             (void) QFile::remove(path);
             continue;
+        }
+        if (_pendingCount > 0) {
+            _pendingCount--;
         }
         _playWavFile(path);
     }
@@ -269,7 +298,7 @@ void PiperTtsEngine::synthesize(const QString& text)
 void PiperTtsEngine::stop(QTextToSpeech::BoundaryHint boundaryHint)
 {
     Q_UNUSED(boundaryHint);
-    _discardCount = _pendingCount;
+    _discardCount += _pendingCount;
     _pendingCount = 0;
     _player->stop();
     _finishUtterance();

@@ -49,6 +49,8 @@ public:
 
 private:
     static QString _findExecutable();
+    static QString _searchExecutable();
+    static bool _isPiperTts(const QString& path);
     static QList<QVoice> _findVoices();
 
     void _startProcess();
