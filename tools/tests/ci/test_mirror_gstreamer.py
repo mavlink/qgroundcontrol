@@ -13,6 +13,7 @@ from ci.gstreamer.mirror_gstreamer import (
     artifacts_for,
     resolve_platforms,
 )
+from common.build_config import get_gstreamer_version
 from common.gstreamer import pinned_checksum
 
 from .._helpers import get_step, get_steps, load_workflow
@@ -100,8 +101,9 @@ def test_pinned_checksum_is_authoritative(monkeypatch) -> None:
         raise AssertionError(f"fetched {url}")
 
     monkeypatch.setattr(mirror_gstreamer, "read_url_text", no_sidecar)
-    (art,) = artifacts_for("android", "1.28.4")
-    assert _expected_sha(art, "1.28.4") == pinned_checksum("1.28.4", "android")
+    version = get_gstreamer_version("android")
+    (art,) = artifacts_for("android", version)
+    assert _expected_sha(art, version) == pinned_checksum(version, "android")
 
 
 def test_unpinned_version_uses_sidecar(monkeypatch) -> None:

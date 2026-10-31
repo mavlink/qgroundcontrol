@@ -293,7 +293,7 @@ The plugins' Java sources and GStreamer's fonts and CA bundle are staged in the 
 
 ### Caching downloaded SDKs
 
-Auto-downloaded SDK archives are cached to `${CPM_SOURCE_CACHE}/gstreamer-*`. `CPM_SOURCE_CACHE` defaults to `.cache/CPM` in the source tree; set it to a location shared by your checkouts (e.g. `~/.cache/CPM`) to download the archives only once (GStreamer 1.28.4: 0.3-1 GB per platform, e.g. ~1 GB for Android and 880 MB for Windows x64):
+Auto-downloaded SDK archives are cached to `${CPM_SOURCE_CACHE}/gstreamer-*`. `CPM_SOURCE_CACHE` defaults to `.cache/CPM` in the source tree; set it to a location shared by your checkouts (e.g. `~/.cache/CPM`) to download the archives only once (GStreamer 1.28.8: 0.3-1.2 GB per platform, e.g. ~1 GB for Android, 1.2 GB for iOS and 540 MB for Windows x64):
 
 ```bash
 export CPM_SOURCE_CACHE=$HOME/.cache/CPM
