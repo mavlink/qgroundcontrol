@@ -127,6 +127,7 @@ CTEST_INPUTS = {
     "INPUT_PARALLEL": "2",
     "INPUT_INCLUDE_LABELS": "Integration",
     "INPUT_EXCLUDE_LABELS": "Flaky|Network",
+    "INPUT_TESTS_REGEX": "^(Gst|Video)",
 }
 STABLE_REF = {"GITHUB_REF_TYPE": "tag", "GITHUB_REF": "refs/tags/v5.0.0"}
 
@@ -358,6 +359,8 @@ def test_ctest_resolves_auto_jobs_and_forwards_selection(monkeypatch: pytest.Mon
             "Unit",
             "--exclude-labels",
             "Flaky|Network",
+            "--tests-regex",
+            "^Gst",
         )
     assert command == [
         "ctest",
@@ -373,6 +376,8 @@ def test_ctest_resolves_auto_jobs_and_forwards_selection(monkeypatch: pytest.Mon
         "Unit",
         "-LE",
         "Flaky|Network",
+        "-R",
+        "^Gst",
     ]
 
 
@@ -384,6 +389,7 @@ def test_ctest_defaults_to_auto_jobs_and_propagates_failure(
     assert command[command.index("--parallel") + 1] == "3"
     assert "-C" not in command
     assert "-L" not in command
+    assert "-R" not in command
 
 
 def test_ctest_reads_action_inputs(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -408,6 +414,8 @@ def test_ctest_reads_action_inputs(monkeypatch: pytest.MonkeyPatch) -> None:
         "Integration",
         "-LE",
         "Flaky|Network",
+        "-R",
+        "^(Gst|Video)",
     ]
 
 

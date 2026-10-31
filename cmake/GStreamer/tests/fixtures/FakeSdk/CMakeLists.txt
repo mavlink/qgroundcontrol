@@ -13,9 +13,9 @@ if(NOT QGC_TEST_PLUGINS)
     set(QGC_TEST_PLUGINS coreelements)
 endif()
 string(REPLACE "," "\", \"" _qgc_test_plugins_json "${QGC_TEST_PLUGINS}")
-string(CONCAT QGC_BUILD_CONFIG_CONTENT
-              "{\"gstreamer\": {\"version\": {\"minimum\": \"1.20.0\", \"android\": \"1.20.0\", "
-              "\"macos\": \"1.22.0\"}, \"plugins\": {\"common\": [\"${_qgc_test_plugins_json}\"]}}}"
+string(
+    CONCAT QGC_BUILD_CONFIG_CONTENT "{\"gstreamer\": {\"version\": {\"minimum\": \"1.20.0\", \"android\": \"1.20.0\", "
+           "\"macos\": \"1.22.0\"}, \"plugins\": {\"common\": [\"${_qgc_test_plugins_json}\"]}}}"
 )
 # The fake SDK's libraries are empty files, so feature probes must compile without linking.
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
@@ -56,22 +56,17 @@ include(GStreamer/Orchestrator)
 if(EXPECT_PROBE_ROOT)
     _qgc_probe_gst_lib(
         QGCProbe
-        HAS_VAR
-        QGC_GST_HAS_TEST_PROBE
-        HEADER
-        gst/qgcprobe.h
-        SYMBOL
-        qgc_probe
-        PC_MODULE
-        gstreamer-qgcprobe-1.0
-        LIBNAMES
-        gstqgcprobe-1.0
-        LIB_VAR
-        QGC_GST_TEST_PROBE_LIB
+        HAS_VAR QGC_GST_HAS_TEST_PROBE
+        HEADER gst/qgcprobe.h
+        SYMBOL qgc_probe
+        PC_MODULE gstreamer-qgcprobe-1.0
+        LIBNAMES gstqgcprobe-1.0
+        LIB_VAR QGC_GST_TEST_PROBE_LIB
     )
     qgc_test_assert_streq("core version" "${EXPECT_VERSION}" "${GStreamer_VERSION}")
-    qgc_test_assert_property("core include dirs" GStreamer::GStreamer INTERFACE_INCLUDE_DIRECTORIES
-                             "${EXPECT_PROBE_ROOT}/include/gstreamer-1.0"
+    qgc_test_assert_property(
+        "core include dirs" PkgConfig::PC_GStreamer_Core INTERFACE_INCLUDE_DIRECTORIES
+        "${EXPECT_PROBE_ROOT}/include/gstreamer-1.0"
     )
     qgc_test_assert_streq("probe found" TRUE "${QGCProbe_FOUND}")
     qgc_test_assert_streq("probe include dirs" "${EXPECT_PROBE_ROOT}/include/gstreamer-1.0" "${QGCProbe_INCLUDE_DIRS}")
@@ -84,7 +79,7 @@ if(NOT DEFINED EXPECT_CACHED_PKG_CONFIG_ARGN)
     set(EXPECT_CACHED_PKG_CONFIG_ARGN "")
 endif()
 qgc_test_assert_streq("cached PKG_CONFIG_ARGN" "${EXPECT_CACHED_PKG_CONFIG_ARGN}" "$CACHE{PKG_CONFIG_ARGN}")
-if(GStreamer_USE_STATIC_LIBS)
+if(QGC_TEST_ANDROID_ABI)
     qgc_test_assert_in_list("derived pkg-config flags" --static PKG_CONFIG_ARGN)
 endif()
 qgc_test_assert_streq("CMAKE_PREFIX_PATH" "${_qgc_prefix_path_before}" "${CMAKE_PREFIX_PATH}")
@@ -94,15 +89,17 @@ qgc_test_assert_streq("restored PKG_CONFIG_LIBDIR" "${_qgc_pkg_config_libdir_bef
 
 set(_qgc_state_targets
     GStreamer::GStreamer
-    GStreamer::deps
-    GStreamer::api_base
-    GStreamer::api_rtsp
-    GStreamer::api_video
-    GStreamer::api_app
-    GStreamer::api_allocators
+    GStreamer::Core
+    PkgConfig::PC_GStreamer_Core
+    GStreamer::Base
+    GStreamer::Rtsp
+    GStreamer::Video
+    PkgConfig::PC_GStreamer_Video
+    GStreamer::App
+    GStreamer::Allocators
 )
 # EXPECT_GL=OFF: the SDK lacks the optional gst-gl modules, so configure succeeds without their targets.
-set(_qgc_gl_targets GStreamer::api_gl GStreamer::api_gl_prototypes)
+set(_qgc_gl_targets GStreamer::Gl GStreamer::GlPrototypes)
 if(NOT DEFINED EXPECT_GL OR EXPECT_GL)
     list(APPEND _qgc_state_targets ${_qgc_gl_targets})
     qgc_test_assert_streq("Gl found" TRUE "${GStreamer_Gl_FOUND}")
@@ -119,8 +116,9 @@ endif()
 set(_qgc_state "")
 foreach(_target IN LISTS _qgc_state_targets)
     qgc_test_assert_target("${_target} exists" ${_target})
-    foreach(_property IN ITEMS INTERFACE_INCLUDE_DIRECTORIES INTERFACE_LINK_LIBRARIES INTERFACE_COMPILE_DEFINITIONS
-                               INTERFACE_COMPILE_OPTIONS INTERFACE_LINK_OPTIONS
+    foreach(
+        _property IN ITEMS INTERFACE_INCLUDE_DIRECTORIES INTERFACE_LINK_LIBRARIES INTERFACE_COMPILE_DEFINITIONS
+                           INTERFACE_COMPILE_OPTIONS INTERFACE_LINK_OPTIONS
     )
         get_target_property(_value ${_target} ${_property})
         string(APPEND _qgc_state "${_target}.${_property}=${_value}\n")
@@ -128,14 +126,15 @@ foreach(_target IN LISTS _qgc_state_targets)
 endforeach()
 foreach(
     _var IN
-    ITEMS GStreamer_VERSION
-          GStreamer_ROOT_DIR
-          GSTREAMER_LIB_PATH
-          GSTREAMER_PLUGIN_PATH
-          GSTREAMER_INCLUDE_PATH
-          GSTREAMER_APIS
-          GSTREAMER_PLUGINS
-          QGC_GST_HAS_DMABUF
+    ITEMS
+        GStreamer_VERSION
+        GStreamer_ROOT_DIR
+        GSTREAMER_LIB_PATH
+        GSTREAMER_PLUGIN_PATH
+        GSTREAMER_INCLUDE_PATH
+        GSTREAMER_SELECTED_COMPONENTS
+        GSTREAMER_PLUGINS
+        QGC_GST_HAS_DMABUF
 )
     string(APPEND _qgc_state "${_var}=${${_var}}\n")
 endforeach()
@@ -145,12 +144,16 @@ endforeach()
 file(WRITE "${CMAKE_BINARY_DIR}/gst-state.txt" "${_qgc_state}")
 
 # Links the app the way src/VideoManager/VideoReceiver/GStreamer/CMakeLists.txt does: through a static library
-# carrying GStreamer::GStreamer, then GStreamer::mobile and the generated plugin registration.
+# carrying GStreamer::GStreamer, then GStreamer::mobile, which registers the plugins.
 if(QGC_TEST_ANDROID_ABI)
     add_library(QGCFakeGStreamer STATIC "${CMAKE_CURRENT_SOURCE_DIR}/fake_app.cpp")
     target_link_libraries(QGCFakeGStreamer PUBLIC GStreamer::GStreamer)
-    target_link_libraries(${PROJECT_NAME} PRIVATE QGCFakeGStreamer GStreamer::mobile)
-    qgc_gst_generate_static_init(TARGET ${PROJECT_NAME} PLUGINS ${GSTREAMER_STATIC_PLUGINS} GIO_MODULES ${G_IO_MODULES})
+    target_link_libraries(
+        ${PROJECT_NAME}
+        PRIVATE
+            QGCFakeGStreamer
+            GStreamer::mobile
+    )
 endif()
 
 # QGC_TEST_INSTALL_REQUIRED_PLUGINS: comma-separated plugins the install rules must verify.
@@ -163,9 +166,9 @@ endif()
 if(QGC_TEST_INSTALL_MACOS_FRAMEWORK)
     gstreamer_layout_set(FRAMEWORK_BUNDLE "${QGC_TEST_INSTALL_MACOS_FRAMEWORK}")
     gstreamer_install_macos_sdk(QGCFake _qgc_plugin_dest)
-    qgc_test_assert_streq("framework plugin dir"
-                          "QGCFake.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0"
-                          "${_qgc_plugin_dest}"
+    qgc_test_assert_streq(
+        "framework plugin dir" "QGCFake.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0"
+        "${_qgc_plugin_dest}"
     )
 elseif(QGC_TEST_INSTALL_MACOS_FLAT)
     gstreamer_install_macos_sdk(QGCFake _qgc_plugin_dest)
@@ -177,44 +180,25 @@ if(NOT DEFINED EXPECT_ROOT)
 endif()
 
 qgc_test_assert_streq("version" "${EXPECT_VERSION}" "${GStreamer_VERSION}")
-qgc_test_assert_property("core include dirs" GStreamer::GStreamer INTERFACE_INCLUDE_DIRECTORIES
-                         "${EXPECT_ROOT}/include/gstreamer-1.0"
+qgc_test_assert_property(
+    "core include dirs" PkgConfig::PC_GStreamer_Core INTERFACE_INCLUDE_DIRECTORIES
+    "${EXPECT_ROOT}/include/gstreamer-1.0"
 )
-qgc_test_assert_property("video include dirs" GStreamer::api_video INTERFACE_INCLUDE_DIRECTORIES
-                         "${EXPECT_ROOT}/include/gstreamer-1.0"
+qgc_test_assert_property(
+    "video include dirs" PkgConfig::PC_GStreamer_Video INTERFACE_INCLUDE_DIRECTORIES
+    "${EXPECT_ROOT}/include/gstreamer-1.0"
 )
 get_target_property(_qgc_core_libs GStreamer::GStreamer INTERFACE_LINK_LIBRARIES)
-qgc_test_assert_in_list("core links video" GStreamer::api_video _qgc_core_libs)
-if(GStreamer_USE_STATIC_LIBS)
-    # Static layouts resolve archives and link a target per plugin that has a .pc file.
-    qgc_test_assert_in_list("core archive" "${EXPECT_ROOT}/lib/libgstreamer-1.0.a" _qgc_core_libs)
-    qgc_test_assert_in_list("core links plugin" GStreamer::coreelements _qgc_core_libs)
-    qgc_test_assert_property("video libraries" GStreamer::api_video INTERFACE_LINK_LIBRARIES
-                             "${EXPECT_ROOT}/lib/libgstvideo-1.0.a"
-    )
-    qgc_test_assert_property("plugin libraries" GStreamer::coreelements INTERFACE_LINK_LIBRARIES
-                             "${EXPECT_ROOT}/lib/gstreamer-1.0/libgstcoreelements.a"
-    )
-    # The static plugins get a generated gst_init_static_plugins() compiled into the consuming target.
-    qgc_test_assert_streq("static plugins" coreelements "${GSTREAMER_STATIC_PLUGINS}")
-    add_library(QGCFakeApp STATIC "${CMAKE_CURRENT_SOURCE_DIR}/fake_app.cpp")
-    qgc_gst_generate_static_init(TARGET QGCFakeApp PLUGINS ${GSTREAMER_STATIC_PLUGINS})
-    set(_qgc_static_init "${CMAKE_CURRENT_BINARY_DIR}/QGCFakeApp_gst_static_plugins.c")
-    get_target_property(_qgc_app_sources QGCFakeApp SOURCES)
-    qgc_test_assert_in_list("static init source" "${_qgc_static_init}" _qgc_app_sources)
-    get_source_file_property(_qgc_skip_pch "${_qgc_static_init}" TARGET_DIRECTORY QGCFakeApp SKIP_PRECOMPILE_HEADERS)
-    qgc_test_assert_streq("static init skips the precompiled header" ON "${_qgc_skip_pch}")
-else()
-    qgc_test_assert_property("core libraries" GStreamer::deps INTERFACE_LINK_LIBRARIES
-                             "${EXPECT_ROOT}/lib/libgstreamer-1.0.so"
-    )
-    qgc_test_assert_property("video libraries" GStreamer::api_video INTERFACE_LINK_LIBRARIES
-                             "${EXPECT_ROOT}/lib/libgstvideo-1.0.so"
-    )
-    # Shared layouts load plugins at runtime, so no plugin target is created.
-    if(TARGET GStreamer::coreelements)
-        message(FATAL_ERROR "ASSERT [shared plugins]: GStreamer::coreelements was created")
-    endif()
+qgc_test_assert_in_list("core links video" GStreamer::Video _qgc_core_libs)
+qgc_test_assert_property(
+    "core libraries" PkgConfig::PC_GStreamer_Core INTERFACE_LINK_LIBRARIES "${EXPECT_ROOT}/lib/libgstreamer-1.0.so"
+)
+qgc_test_assert_property(
+    "video libraries" PkgConfig::PC_GStreamer_Video INTERFACE_LINK_LIBRARIES "${EXPECT_ROOT}/lib/libgstvideo-1.0.so"
+)
+# Desktop layouts load plugins at runtime, so no plugin target is created.
+if(TARGET GStreamer::plugin_coreelements)
+    message(FATAL_ERROR "ASSERT [shared plugins]: GStreamer::plugin_coreelements was created")
 endif()
 qgc_test_assert_streq("plugin dir" "${EXPECT_ROOT}/lib/gstreamer-1.0" "${GSTREAMER_PLUGIN_PATH}")
 qgc_test_assert_streq("recorded version" "${EXPECT_VERSION}" "$CACHE{QGC_GST_RESOLVED_SDK_VERSION}")

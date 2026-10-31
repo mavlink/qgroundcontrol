@@ -4,6 +4,7 @@
     "\\.(keystore|lz4|mesh)$",
     "\\.ambr$",
     "^test/GPS/Core/Protocols/(corpus|fixtures)/",
+    "^test/VideoManager/GStreamer/Media/.*\\.h26[45]$",
     "^translations/",
     "^android/res/values/strings\\.xml$",
     "^android/src/org/mavlink/qgroundcontrol/QGCActivity\\.java$",

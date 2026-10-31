@@ -48,7 +48,11 @@ foreach(_case IN LISTS _missing_cases)
     string(REPLACE "," ";" _required "${_required}")
     string(REPLACE "," ";" _available "${_available}")
     string(REPLACE "," ";" _expected "${_expected}")
-    gstreamer_missing_required(REQUIRED ${_required} AVAILABLE ${_available} OUT_VAR _missing)
+    gstreamer_missing_required(
+        REQUIRED ${_required}
+        AVAILABLE ${_available}
+        OUT_VAR _missing
+    )
     qgc_test_assert_streq("missing for ${_case}" "${_expected}" "${_missing}")
 endforeach()
 qgc_test_pass("missing_required honours alternate sets")
@@ -56,44 +60,42 @@ qgc_test_pass("missing_required honours alternate sets")
 # Missing optional decoders are only reported; the other missing plugins are absent from the SDK, or shipped but not
 # usable by the build. The fused videoconvertscale is satisfied by the shipped videoconvert+videoscale.
 gstreamer_classify_missing_plugins(
-    REQUESTED
-    coreelements
-    qsv
-    typo
-    udp
-    videoconvertscale
-    AVAILABLE
-    coreelements
-    SHIPPED
-    coreelements
-    udp
-    videoconvert
-    videoscale
-    OUT_OPTIONAL
-    _optional
-    OUT_ABSENT
-    _absent
-    OUT_UNUSABLE
-    _unusable
+    REQUESTED coreelements qsv typo udp videoconvertscale
+    AVAILABLE coreelements
+    SHIPPED coreelements udp videoconvert videoscale
+    OUT_OPTIONAL _optional
+    OUT_ABSENT _absent
+    OUT_UNUSABLE _unusable
 )
 qgc_test_assert_streq("optional" qsv "${_optional}")
 qgc_test_assert_streq("absent" typo "${_absent}")
 qgc_test_assert_streq("unusable" "udp;videoconvertscale" "${_unusable}")
 qgc_test_pass("classify_missing_plugins")
 
-# plugin|expected alternatives, "|"-separated
-foreach(_case IN ITEMS "coreelements|coreelements" "videoconvertscale|videoconvertscale|videoconvert+videoscale"
-                       "videoscale|videoscale|videoconvertscale|videoconvert+videoscale"
-)
-    string(REPLACE "|" ";" _parts "${_case}")
-    list(POP_FRONT _parts _plugin)
-    gstreamer_plugin_alternatives(${_plugin} _alternatives)
-    qgc_test_assert_streq("alternatives of ${_plugin}" "${_parts}" "${_alternatives}")
-endforeach()
-qgc_test_pass("plugin_alternatives")
-
-# A plugin iOS cannot link must not be one the app cannot run without.
-foreach(_plugin IN LISTS GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS)
-    qgc_test_assert_not_in_list("iOS skips a required plugin" "${_plugin}" GSTREAMER_RUNTIME_REQUIRED_PLUGINS)
+# Neither the allowlist nor the mobile Debug plugins may name a GPL plugin.
+file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../.github/build-config.json" QGC_BUILD_CONFIG_CONTENT)
+foreach(_key IN ITEMS android apple windows linux)
+    gstreamer_plugins_for(${_key} _plugins)
+    list(TRANSFORM _plugins PREPEND libgst)
+    gstreamer_gpl_files(_gpl ${_plugins} ${GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS})
+    qgc_test_assert_streq("GPL plugins for ${_key}" "" "${_gpl}")
 endforeach()
 qgc_test_pass("policy lists")
+
+# GPL libraries and plugins by file name, on every platform; names merely starting like one are not.
+set(_gpl_files
+    /sdk/lib/libx264.so.164
+    /sdk/bin/libx264-164.dll
+    /sdk/lib/libx265.215.dylib
+    /sdk/lib/gstreamer-1.0/libgstx264.so
+    /sdk/lib/gstreamer-1.0/gstx265.dll
+    /sdk/lib/libmpeg2.0.dylib
+    /sdk/lib/gstreamer-1.0/libgsta52dec.dylib
+    /sdk/bin/dvdread-8.dll
+)
+set(_lgpl_files /sdk/lib/libgstsidebyside.so /sdk/lib/libx2640.so /sdk/lib/gstreamer-1.0/libgstopenh264.so
+                /sdk/lib/libavcodec.so.61
+)
+gstreamer_gpl_files(_found ${_gpl_files} ${_lgpl_files})
+qgc_test_assert_streq("GPL files" "${_gpl_files}" "${_found}")
+qgc_test_pass("gpl_files")

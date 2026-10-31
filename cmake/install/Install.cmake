@@ -60,10 +60,11 @@ if(NOT ANDROID AND NOT IOS)
     endif()
 endif()
 
-# First-pass filter for unused Qt plugins whose missing backing libs would trip
-# CPackDeb's shlibdeps; the post-deploy strip below is the real guarantee.
+# QGC uses only Qt's SQLite driver. The other drivers' client libraries (libpq, OCI, ...) don't
+# ship, so they could never load: on Linux they would trip CPackDeb's shlibdeps (the post-deploy
+# strip below is the real guarantee there), on Windows CI's DLL dependency audit.
 set(_deploy_exclude_plugins "")
-if(LINUX)
+if(LINUX OR WIN32)
     set(_deploy_exclude_plugins
         EXCLUDE_PLUGINS
         qsqlmysql
@@ -72,8 +73,10 @@ if(LINUX)
         qsqloci
         qsqlibase
         qsqlmimer
-        qtiff
     )
+    if(LINUX)
+        list(APPEND _deploy_exclude_plugins qtiff)
+    endif()
 endif()
 
 qt_generate_deploy_qml_app_script(
@@ -166,6 +169,49 @@ if(MACOS AND _qgc_gst_framework_bundle)
     )
 endif()
 
+# Bundle cleanup after macdeployqt, which can't exclude plugins: drop the SQL drivers but SQLite, whose client
+# libraries the bundle lacks, and the absolute LC_RPATHs that pkg-config link flags (the GStreamer SDK's) leave on the
+# executable ahead of the bundle's, through which dyld would load an installed GStreamer.framework instead.
+if(MACOS)
+    install(CODE "set(_qgc_bundle \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${CMAKE_PROJECT_NAME}.app\")")
+    install(
+        CODE [[
+        file(GLOB _qgc_strip_plugins "${_qgc_bundle}/Contents/PlugIns/sqldrivers/libqsql*.dylib")
+        list(FILTER _qgc_strip_plugins EXCLUDE REGEX "/libqsqlite\\.dylib$")
+        if(_qgc_strip_plugins)
+            message(STATUS "QGC: stripping unused Qt plugins from bundle: ${_qgc_strip_plugins}")
+            file(REMOVE ${_qgc_strip_plugins})
+        endif()
+
+        cmake_path(GET _qgc_bundle STEM _qgc_app_name)
+        set(_qgc_binary "${_qgc_bundle}/Contents/MacOS/${_qgc_app_name}")
+        if(EXISTS "${_qgc_binary}")
+            execute_process(
+                COMMAND otool -l -arch all "${_qgc_binary}"
+                OUTPUT_VARIABLE _qgc_load_commands
+                COMMAND_ERROR_IS_FATAL ANY
+            )
+            string(REGEX MATCHALL "path /[^\n]+ \\(offset" _qgc_rpath_lines "${_qgc_load_commands}")
+            set(_qgc_rpaths "")
+            foreach(_qgc_line IN LISTS _qgc_rpath_lines)
+                string(REGEX REPLACE "^path (.+) \\(offset$" "\\1" _qgc_rpath "${_qgc_line}")
+                if(NOT _qgc_rpath MATCHES "^/(usr/lib|System)/")
+                    list(APPEND _qgc_rpaths "${_qgc_rpath}")
+                endif()
+            endforeach()
+            list(REMOVE_DUPLICATES _qgc_rpaths)
+            foreach(_qgc_rpath IN LISTS _qgc_rpaths)
+                message(STATUS "QGC: removing the build machine's LC_RPATH ${_qgc_rpath}")
+                execute_process(
+                    COMMAND install_name_tool -delete_rpath "${_qgc_rpath}" "${_qgc_binary}"
+                    COMMAND_ERROR_IS_FATAL ANY
+                )
+            endforeach()
+        endif()
+    ]]
+    )
+endif()
+
 # ============================================================================
 # Platform-Specific Installation
 # ============================================================================
@@ -195,8 +241,8 @@ elseif(LINUX)
         RENAME ${CMAKE_PROJECT_NAME}.svg
     )
     configure_file("${QGC_APPIMAGE_METADATA_PATH}" "${CMAKE_BINARY_DIR}/${QGC_PACKAGE_NAME}.appdata.xml" @ONLY)
-    install(FILES "${CMAKE_BINARY_DIR}/${QGC_PACKAGE_NAME}.appdata.xml"
-            DESTINATION "${CMAKE_INSTALL_DATADIR}/metainfo/"
+    install(
+        FILES "${CMAKE_BINARY_DIR}/${QGC_PACKAGE_NAME}.appdata.xml" DESTINATION "${CMAKE_INSTALL_DATADIR}/metainfo/"
     )
     configure_file("${QGC_APPIMAGE_APPRUN_PATH}" "${CMAKE_BINARY_DIR}/AppRun" COPYONLY)
 
@@ -204,8 +250,9 @@ elseif(LINUX)
     # the linters are present, so hosts without them aren't gated.
     find_program(QGC_DESKTOP_FILE_VALIDATE desktop-file-validate)
     if(QGC_DESKTOP_FILE_VALIDATE)
-        execute_process(COMMAND "${QGC_DESKTOP_FILE_VALIDATE}" "${CMAKE_BINARY_DIR}/${QGC_PACKAGE_NAME}.desktop"
-                        RESULT_VARIABLE _qgc_desktop_lint
+        execute_process(
+            COMMAND "${QGC_DESKTOP_FILE_VALIDATE}" "${CMAKE_BINARY_DIR}/${QGC_PACKAGE_NAME}.desktop"
+            RESULT_VARIABLE _qgc_desktop_lint
         )
         if(NOT _qgc_desktop_lint EQUAL 0)
             message(WARNING "QGC: desktop-file-validate reported issues for ${QGC_PACKAGE_NAME}.desktop")
@@ -213,9 +260,9 @@ elseif(LINUX)
     endif()
     find_program(QGC_APPSTREAMCLI appstreamcli)
     if(QGC_APPSTREAMCLI)
-        execute_process(COMMAND "${QGC_APPSTREAMCLI}" validate --no-net
-                                "${CMAKE_BINARY_DIR}/${QGC_PACKAGE_NAME}.appdata.xml"
-                        RESULT_VARIABLE _qgc_appstream_lint
+        execute_process(
+            COMMAND "${QGC_APPSTREAMCLI}" validate --no-net "${CMAKE_BINARY_DIR}/${QGC_PACKAGE_NAME}.appdata.xml"
+            RESULT_VARIABLE _qgc_appstream_lint
         )
         if(NOT _qgc_appstream_lint EQUAL 0)
             message(WARNING "QGC: appstreamcli validate reported issues for ${QGC_PACKAGE_NAME}.appdata.xml")
@@ -250,8 +297,9 @@ elseif(LINUX)
 elseif(MACOS)
     # macdeployqt ignores INCLUDE_PLUGINS — manually deploy offscreen plugin
     if(TARGET Qt6::QOffscreenIntegrationPlugin)
-        install(FILES "$<TARGET_FILE:Qt6::QOffscreenIntegrationPlugin>"
-                DESTINATION "${CMAKE_PROJECT_NAME}.app/Contents/PlugIns/platforms"
+        install(
+            FILES "$<TARGET_FILE:Qt6::QOffscreenIntegrationPlugin>"
+            DESTINATION "${CMAKE_PROJECT_NAME}.app/Contents/PlugIns/platforms"
         )
     endif()
 
@@ -326,8 +374,9 @@ else()
 endif()
 
 if(NOT QGC_CPACK_GENERATOR STREQUAL "" AND NOT QGC_CPACK_GENERATOR IN_LIST _qgc_platform_cpack_generators)
-    message(FATAL_ERROR "QGC: QGC_CPACK_GENERATOR='${QGC_CPACK_GENERATOR}' is unavailable on ${CMAKE_SYSTEM_NAME}. "
-                        "Supported generators: ${_qgc_platform_cpack_generators}"
+    message(
+        FATAL_ERROR "QGC: QGC_CPACK_GENERATOR='${QGC_CPACK_GENERATOR}' is unavailable on ${CMAKE_SYSTEM_NAME}. "
+                    "Supported generators: ${_qgc_platform_cpack_generators}"
     )
 endif()
 
@@ -349,8 +398,9 @@ elseif(QGC_CPACK_GENERATOR STREQUAL "productbuild")
 elseif(QGC_CPACK_GENERATOR STREQUAL "TXZ")
     set(_qgc_cpack_module "CPack/CreateCPackArchive.cmake")
 elseif(NOT QGC_CPACK_GENERATOR STREQUAL "")
-    message(FATAL_ERROR "QGC: unsupported QGC_CPACK_GENERATOR='${QGC_CPACK_GENERATOR}'. "
-                        "Choose DEB, RPM, NSIS, IFW, DragNDrop, Bundle, productbuild, TXZ, or empty."
+    message(
+        FATAL_ERROR "QGC: unsupported QGC_CPACK_GENERATOR='${QGC_CPACK_GENERATOR}'. "
+                    "Choose DEB, RPM, NSIS, IFW, DragNDrop, Bundle, productbuild, TXZ, or empty."
     )
 endif()
 
@@ -360,8 +410,9 @@ if(QGC_CPACK_GENERATOR STREQUAL "DEB"
    AND NOT QGC_LINUX_DISTRO_FAMILY STREQUAL ""
    AND NOT QGC_LINUX_DISTRO_FAMILY STREQUAL "debian"
 )
-    message(WARNING "QGC: QGC_CPACK_GENERATOR=DEB on a non-Debian host (${QGC_LINUX_DISTRO}); "
-                    "cpack needs dpkg-dev/dpkg-shlibdeps to build the .deb."
+    message(
+        WARNING "QGC: QGC_CPACK_GENERATOR=DEB on a non-Debian host (${QGC_LINUX_DISTRO}); "
+                "cpack needs dpkg-dev/dpkg-shlibdeps to build the .deb."
     )
 elseif(
     QGC_CPACK_GENERATOR STREQUAL "RPM"
@@ -369,8 +420,9 @@ elseif(
     AND NOT QGC_LINUX_DISTRO_FAMILY STREQUAL ""
     AND NOT QGC_LINUX_DISTRO_FAMILY STREQUAL "rhel"
 )
-    message(WARNING "QGC: QGC_CPACK_GENERATOR=RPM on a non-RPM host (${QGC_LINUX_DISTRO}); "
-                    "cpack needs rpmbuild to build the .rpm."
+    message(
+        WARNING "QGC: QGC_CPACK_GENERATOR=RPM on a non-RPM host (${QGC_LINUX_DISTRO}); "
+                "cpack needs rpmbuild to build the .rpm."
     )
 endif()
 

@@ -10,6 +10,7 @@
 
 #include "GstQgcVideoFormats.h"
 #include "HwBuffers/common/CpuVideoFramePool.h"
+#include "HwBuffers/common/GstHwVideoInfo.h"
 #include "QGCLoggingCategory.h"
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
@@ -159,9 +160,6 @@ void applyOrientationAndTiming(QVideoFrame& frame, [[maybe_unused]] GstBuffer* b
         frame.setStartTime(GST_BUFFER_PTS(buffer) / GST_USECOND);
         if (GST_BUFFER_DURATION_IS_VALID(buffer)) {
             frame.setEndTime((GST_BUFFER_PTS(buffer) + GST_BUFFER_DURATION(buffer)) / GST_USECOND);
-        } else {
-            // No duration: collapse the interval so consumers never see a stale/zero endTime.
-            frame.setEndTime(GST_BUFFER_PTS(buffer) / GST_USECOND);
         }
     }
 }
@@ -221,7 +219,7 @@ QVideoFrameFormat applyCropMeta(QVideoFrameFormat format, GstBuffer* buffer)
     return format;
 }
 
-MappedFrame mapSampleToFrame(GstBuffer* buffer, [[maybe_unused]] GstCaps* caps, const GstVideoInfo& info,
+MappedFrame mapSampleToFrame(GstBuffer* buffer, GstCaps* caps, const GstVideoInfo& info,
                              const QVideoFrameFormat& format, [[maybe_unused]] const HwVideoBufferContext& hwContext,
                              const CpuVideoFramePool::PinnedFrameCounter& pinnedCpuFrames,
                              [[maybe_unused]] HwResolvedPathCache* pathCache) noexcept
@@ -240,6 +238,10 @@ MappedFrame mapSampleToFrame(GstBuffer* buffer, [[maybe_unused]] GstCaps* caps, 
         out.demoted = true;
     }
 #endif
+    if (!GstHw::hasCpuLayout(caps)) {
+        out.noCpuLayout = true;
+        return out;
+    }
     if (auto cpuBuf = CpuVideoFramePool::wrapZeroCopy(buffer, info, format, pinnedCpuFrames)) {
         out.frame = QVideoFrame(std::move(cpuBuf));
     } else {

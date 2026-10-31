@@ -397,7 +397,6 @@ def test_host_tools_use_host_platform_predicates() -> None:
 def test_windows_qt_architectures_use_one_msvc_generation() -> None:
     sources = (
         REPO_ROOT / "tools/ci/planning/android_matrix.py",
-        REPO_ROOT / ".github/workflows/build-gstreamer.yml",
         REPO_ROOT / ".github/workflows/windows.yml",
     )
     generations = {

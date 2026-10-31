@@ -1,4 +1,4 @@
-#include "GStreamerTest.h"
+#include "HwBuffers/GstHwBuffersPipelineTest.h"
 
 #ifdef QGC_GST_STREAMING
 
@@ -9,21 +9,29 @@
 
 #include <QtCore/QScopeGuard>
 #include <QtMultimedia/QVideoFrameFormat>
+#include <QtMultimedia/QVideoSink>
 
 #include "GStreamer.h"
 #include "GStreamerLogging.h"
 #include "GStreamerTestHelpers.h"
 #include "GstHwVideoBuffer.h"
 #include "GstHwVideoBufferFactory.h"
+#include "gstqgc/GstQgcTestSupport.h"
 
 #if defined(Q_OS_WIN) && (defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH))
+#include <algorithm>
 #include <rhi/qrhi.h>
 #include <rhi/qrhi_platform.h>
 
-#include "QGCRhiCapture.h"
+#include "CpuVideoFramePool.h"
 #include "GstHwFrameTexturesBase.h"
+#include "HwBuffers/GstHwImageReadback.h"
+#include "QGCRhiCapture.h"
 
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+#include <d3d11.h>
+#include <d3d11_4.h>  // ID3D11Multithread
+
 #include "GstD3D11ContextBridge.h"
 #endif
 #if defined(QGC_HAS_GST_D3D12_GPU_PATH)
@@ -37,6 +45,35 @@ qint64 composeLuid(qint32 high, quint32 low)
     return (static_cast<qint64>(high) << 32) | (static_cast<qint64>(low) & 0xFFFFFFFFLL);
 }
 
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+/// GStreamer's D3D11 elements share the immediate context of the device they wrap, as QGCRhiCapture protects it.
+void protectImmediateContext(ID3D11DeviceContext* context)
+{
+    ID3D11Multithread* multithread = nullptr;
+    if (context &&
+        SUCCEEDED(context->QueryInterface(__uuidof(ID3D11Multithread), reinterpret_cast<void**>(&multithread))) &&
+        multithread) {
+        (void) multithread->SetMultithreadProtected(TRUE);
+        multithread->Release();
+    }
+}
+#endif
+
+/// A QRhi on @p api, on the software adapter (WARP) when QSG_RHI_PREFER_SOFTWARE_RENDERER is set, as it is in CI, or
+/// when DXGI lists no hardware adapter, as on a runner without a GPU.
+QRhi* createD3DRhi(QRhi::Implementation api, QRhiInitParams* params)
+{
+    bool software = qEnvironmentVariableIntValue("QSG_RHI_PREFER_SOFTWARE_RENDERER") != 0;
+    if (!software) {
+        const QRhi::AdapterList adapters = QRhi::enumerateAdapters(api, params);
+        software = std::ranges::none_of(adapters, [](const QRhiAdapter* adapter) {
+            return adapter->info().deviceType != QRhiDriverInfo::CpuDevice;
+        });
+        qDeleteAll(adapters);
+    }
+    return QRhi::create(api, params, software ? QRhi::Flags(QRhi::PreferSoftwareRenderer) : QRhi::Flags());
+}
+
 /// A QRhi on @p api, published in QGCRhiCapture's device snapshot as the render thread publishes it. Null, with
 /// @p failure set, when this runner can't create one.
 std::unique_ptr<QRhi> createPublishedRhi(QRhi::Implementation api, QString& failure)
@@ -48,11 +85,12 @@ std::unique_ptr<QRhi> createPublishedRhi(QRhi::Implementation api, QString& fail
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
         case QRhi::D3D11: {
             QRhiD3D11InitParams params;
-            rhi.reset(QRhi::create(QRhi::D3D11, &params));
+            rhi.reset(createD3DRhi(QRhi::D3D11, &params));
             if (const auto* handles =
                     rhi ? static_cast<const QRhiD3D11NativeHandles*>(rhi->nativeHandles()) : nullptr) {
                 device = handles->dev;
                 adapterLuid = composeLuid(handles->adapterLuidHigh, handles->adapterLuidLow);
+                protectImmediateContext(static_cast<ID3D11DeviceContext*>(handles->context));
             }
             break;
         }
@@ -60,7 +98,7 @@ std::unique_ptr<QRhi> createPublishedRhi(QRhi::Implementation api, QString& fail
 #if defined(QGC_HAS_GST_D3D12_GPU_PATH)
         case QRhi::D3D12: {
             QRhiD3D12InitParams params;
-            rhi.reset(QRhi::create(QRhi::D3D12, &params));
+            rhi.reset(createD3DRhi(QRhi::D3D12, &params));
             if (const auto* handles =
                     rhi ? static_cast<const QRhiD3D12NativeHandles*>(rhi->nativeHandles()) : nullptr) {
                 device = handles->dev;
@@ -127,9 +165,7 @@ struct D3DSample
 void pullD3DSample(D3DSample& result, const char* inputCaps, const char* uploadElement, const char* capsFilter,
                    HwVideoBufferPath bridgePath = HwVideoBufferPath::None)
 {
-    if (!GstTest::firstMissingFactory({uploadElement}).isEmpty()) {
-        QSKIP(qPrintable(QStringLiteral("%1 factory unavailable").arg(QString::fromUtf8(uploadElement))));
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES(uploadElement);
 
     const QString launch = QStringLiteral(
                                "videotestsrc num-buffers=1 ! "
@@ -188,6 +224,9 @@ void testD3DMemoryDispatch(const char* uploadElement, const char* capsFilter, Hw
 {
     D3DSample sample;
     pullD3DSample(sample, "video/x-raw,format=RGBA,width=64,height=64,framerate=30/1", uploadElement, capsFilter);
+    if (!sample.sample) {
+        return;
+    }
 
     HwVideoBufferContext context;
     context.gpuEnabled = true;
@@ -210,6 +249,9 @@ void testD3DMapTextures(QRhi& rhi, const char* inputCaps, const char* uploadElem
 {
     D3DSample sample;
     pullD3DSample(sample, inputCaps, uploadElement, capsFilter, expectedPath);
+    if (!sample.sample) {
+        return;
+    }
 
     HwVideoBufferContext context;
     context.gpuEnabled = true;
@@ -235,10 +277,45 @@ void testD3DMapTextures(QRhi& rhi, const char* inputCaps, const char* uploadElem
              "D3D texture bundle does not use the HW frame texture base");
 }
 
+/// Converts the uploaded frame with QVideoFrame::toImage() on @p rhi and compares it with the frame before the upload.
+void testD3DFrameToImage(QRhi& rhi, const char* inputCaps, const char* uploadElement, const char* capsFilter,
+                         QVideoFrameFormat::PixelFormat pixelFormat, HwVideoBufferPath expectedPath)
+{
+    D3DSample gpu;
+    pullD3DSample(gpu, inputCaps, uploadElement, capsFilter, expectedPath);
+    if (!gpu.sample) {
+        return;
+    }
+    D3DSample cpu;
+    pullD3DSample(cpu, inputCaps, "identity", inputCaps);
+    if (!cpu.sample) {
+        return;
+    }
+
+    HwVideoBufferContext context;
+    context.gpuEnabled = true;
+    HwVideoBufferPath path = HwVideoBufferPath::None;
+    const QVideoFrameFormat format(QSize(GST_VIDEO_INFO_WIDTH(&gpu.info), GST_VIDEO_INFO_HEIGHT(&gpu.info)),
+                                   pixelFormat);
+    std::unique_ptr<QHwVideoBuffer> buffer = makeHwVideoBuffer(
+        gst_sample_get_buffer(gpu.sample), gst_sample_get_caps(gpu.sample), gpu.info, format, context, path);
+    QVERIFY2(buffer, "D3D memory sample did not create a hardware video buffer");
+    QCOMPARE(path, expectedPath);
+
+    const QImage actual =
+        QVideoFrame(std::make_unique<GstTest::RhiBoundVideoBuffer>(std::move(buffer), &rhi)).toImage();
+    const QImage expected =
+        GstTest::cpuImage(CpuVideoFramePool::copyFromBuffer(gst_sample_get_buffer(cpu.sample), cpu.info, format));
+    // NV12 carries one chroma sample per 2x2 pixels, which the GPU interpolates up to two pixels into a neighbor bar.
+    const int chromaEdgeRadius = (pixelFormat == QVideoFrameFormat::Format_NV12) ? 2 : 0;
+    const QString mismatch = GstTest::firstImageMismatch(actual, expected, /*tolerance=*/8, chromaEdgeRadius);
+    QVERIFY2(mismatch.isEmpty(), qPrintable(mismatch));
+}
+
 } // namespace
 #endif
 
-void GStreamerTest::_testD3D11MemoryDispatch()
+void GstHwBuffersPipelineTest::_testD3D11MemoryDispatch()
 {
 #if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
     testD3DMemoryDispatch("d3d11upload", "video/x-raw(memory:D3D11Memory)", HwVideoBufferPath::D3D11);
@@ -247,7 +324,7 @@ void GStreamerTest::_testD3D11MemoryDispatch()
 #endif
 }
 
-void GStreamerTest::_testD3D12MemoryDispatch()
+void GstHwBuffersPipelineTest::_testD3D12MemoryDispatch()
 {
 #if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
     testD3DMemoryDispatch("d3d12upload", "video/x-raw(memory:D3D12Memory)", HwVideoBufferPath::D3D12);
@@ -256,7 +333,7 @@ void GStreamerTest::_testD3D12MemoryDispatch()
 #endif
 }
 
-void GStreamerTest::_testD3DMapTexturesWithQRhi_data()
+void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi_data()
 {
     QTest::addColumn<int>("path");
     QTest::addColumn<QString>("format");
@@ -272,7 +349,7 @@ void GStreamerTest::_testD3DMapTexturesWithQRhi_data()
     }
 }
 
-void GStreamerTest::_testD3DMapTexturesWithQRhi()
+void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi()
 {
 #if !defined(Q_OS_WIN) || (!defined(QGC_HAS_GST_D3D11_GPU_PATH) && !defined(QGC_HAS_GST_D3D12_GPU_PATH))
     QSKIP("D3D GPU paths not compiled in this build");
@@ -300,6 +377,8 @@ void GStreamerTest::_testD3DMapTexturesWithQRhi()
     }
 
     const SnapshotGuard snapshotGuard;
+    // A runner whose WARP adapter can't create this device skips the test; QRhi warns first.
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("^Failed to create D3D1[12] device")));
     QString failure;
     const std::unique_ptr<QRhi> rhi = createPublishedRhi(d3d11 ? QRhi::D3D11 : QRhi::D3D12, failure);
     if (!rhi) {
@@ -317,6 +396,109 @@ void GStreamerTest::_testD3DMapTexturesWithQRhi()
     const QByteArray memoryCaps = QStringLiteral("video/x-raw(memory:%1Memory),format=%2").arg(api, format).toUtf8();
     testD3DMapTextures(*rhi, inputCaps.constData(), upload.constData(), memoryCaps.constData(),
                        static_cast<QVideoFrameFormat::PixelFormat>(pixelFormat), planes, hwPath);
+#endif
+}
+
+void GstHwBuffersPipelineTest::_testD3DFrameToImage_data()
+{
+    _testD3DMapTexturesWithQRhi_data();
+}
+
+void GstHwBuffersPipelineTest::_testD3DFrameToImage()
+{
+#if !defined(Q_OS_WIN) || (!defined(QGC_HAS_GST_D3D11_GPU_PATH) && !defined(QGC_HAS_GST_D3D12_GPU_PATH))
+    QSKIP("D3D GPU paths not compiled in this build");
+#else
+    QFETCH(int, path);
+    QFETCH(QString, format);
+    QFETCH(int, pixelFormat);
+
+    const auto hwPath = static_cast<HwVideoBufferPath>(path);
+    const bool d3d11 = (hwPath == HwVideoBufferPath::D3D11);
+    GstContextBridgeBase* bridge = nullptr;
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+    if (d3d11) {
+        bridge = &GstD3D11ContextBridge::instance();
+    }
+#endif
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+    if (!d3d11) {
+        bridge = &GstD3D12ContextBridge::instance();
+    }
+#endif
+    if (!bridge) {
+        QSKIP("This D3D GPU path is not compiled in this build");
+    }
+
+    const SnapshotGuard snapshotGuard;
+    // A runner whose WARP adapter can't create this device skips the test; QRhi warns first.
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("^Failed to create D3D1[12] device")));
+    QString failure;
+    const std::unique_ptr<QRhi> rhi = createPublishedRhi(d3d11 ? QRhi::D3D11 : QRhi::D3D12, failure);
+    if (!rhi) {
+        QSKIP(qPrintable(failure));
+    }
+
+    bridge->reset();
+    const auto bridgeGuard = qScopeGuard([bridge] { bridge->reset(); });
+    QVERIFY2(bridge->prime(), "Could not prime the D3D context bridge from the QRhi snapshot");
+
+    // An SMPTE pattern: a frame sampled with the wrong pitch, plane offset or padding shows in its bars.
+    const QString api = d3d11 ? QStringLiteral("D3D11") : QStringLiteral("D3D12");
+    const QByteArray inputCaps =
+        QStringLiteral("video/x-raw,format=%1,width=64,height=64,framerate=30/1").arg(format).toUtf8();
+    const QByteArray upload = (api.toLower() + QStringLiteral("upload")).toUtf8();
+    const QByteArray memoryCaps = QStringLiteral("video/x-raw(memory:%1Memory),format=%2").arg(api, format).toUtf8();
+    testD3DFrameToImage(*rhi, inputCaps.constData(), upload.constData(), memoryCaps.constData(),
+                        static_cast<QVideoFrameFormat::PixelFormat>(pixelFormat), hwPath);
+#endif
+}
+
+void GstHwBuffersPipelineTest::_testWindowsGpuSinkPreservesSoftwarePixels()
+{
+#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
+    // Mapping the center pixel converts on the CPU when Qt Multimedia finds no RHI for this thread, and says so.
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
+    QVideoSink videoSink;
+    const auto result = GstQgcTest::runPipelineThroughQVideoSink(
+        videoSink, "video/x-raw,format=BGRA,width=320,height=240,framerate=30/1",
+        /*numBuffers*/ 5, /*gpuZerocopy*/ true, "pattern=red",
+        /*captureCenterPixel*/ true);
+
+    QVERIFY2(result.eos, qUtf8Printable(QStringLiteral("Software-frame pipeline: %1").arg(result.errorMessage)));
+    QVERIFY(result.frameCount > 0);
+    QCOMPARE(result.lastFormat.pixelFormat(), QVideoFrameFormat::Format_BGRA8888);
+    QVERIFY2(result.centerPixelValid, "System-memory fallback frame could not be mapped for pixel verification");
+    QVERIFY2((result.centerPixel.red() > 200) && (result.centerPixel.green() < 50) && (result.centerPixel.blue() < 50),
+             qUtf8Printable(QStringLiteral("Expected a red software frame, received RGB(%1,%2,%3)")
+                                .arg(result.centerPixel.red())
+                                .arg(result.centerPixel.green())
+                                .arg(result.centerPixel.blue())));
+#else
+    QSKIP("Windows D3D11 GPU sink path is unavailable in this build");
+#endif
+}
+
+void GstHwBuffersPipelineTest::_testWindowsGpuSinkPreservesDirectD3D11Memory()
+{
+#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
+    GSTTEST_SKIP_UNLESS_FACTORIES("d3d11upload");
+
+    QVideoSink videoSink;
+    auto result = GstQgcTest::runPipelineThroughQVideoSink(
+        videoSink,
+        "video/x-raw,format=NV12,width=320,height=240,framerate=30/1 ! d3d11upload ! "
+        "video/x-raw(memory:D3D11Memory),format=NV12",
+        /*numBuffers*/ 5, /*gpuZerocopy*/ true);
+    if (!result.eos && result.errorMessage.contains(QStringLiteral("d3d11"), Qt::CaseInsensitive)) {
+        QSKIP(qPrintable(QStringLiteral("D3D11 device unavailable in this runner: %1").arg(result.errorMessage)));
+    }
+
+    QVERIFY2(result.eos, qUtf8Printable(QStringLiteral("D3D11 pipeline: %1").arg(result.errorMessage)));
+    QVERIFY(result.frameCount > 0);
+    QCOMPARE(result.lastFormat.pixelFormat(), QVideoFrameFormat::Format_NV12);
+#else
+    QSKIP("D3D11 GPU sink path is only available in supported Windows builds");
 #endif
 }
 

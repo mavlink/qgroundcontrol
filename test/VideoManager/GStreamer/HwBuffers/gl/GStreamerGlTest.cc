@@ -1,4 +1,4 @@
-#include "GStreamerTest.h"
+#include "HwBuffers/GstHwBuffersPipelineTest.h"
 
 #ifdef QGC_GST_STREAMING
 
@@ -6,11 +6,14 @@
 #include <gst/gst.h>
 
 #include <QtCore/QRegularExpression>
+#include <QtMultimedia/QVideoSink>
 
 #include "GStreamerTestHelpers.h"
 #include "HwBuffers/common/HwBuffers.h"
+#include "gstqgc/GstQgcCaps.h"
+#include "gstqgc/GstQgcTestSupport.h"
 
-void GStreamerTest::_testGlMemoryDispatch()
+void GstHwBuffersPipelineTest::_testGlMemoryDispatch()
 {
 #if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
     ignoreLogMessage("default", QtWarningMsg,
@@ -21,14 +24,14 @@ void GStreamerTest::_testGlMemoryDispatch()
     ignoreLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
                      QRegularExpression(QStringLiteral("An NSApplication needs to be running")));
 #endif
+    // The sink offers GLMemory only where gst-gl shares Qt's OpenGL context, and the direct-DMABuf bin offers none.
+    GstQgc::SinkEnvironment openGl{.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true}};
 #if defined(QGC_GST_BIN_HAS_GLUPLOAD)
-    // The direct-DMABuf bin doesn't offer GLMemory.
-    const HwBuffers::ScopedGpuBinModeForTest glBin(HwBuffers::GpuBinMode::GlUpload);
+    openGl.gpuBin.mode = GstQgc::GpuBinMode::GlUpload;
 #endif
+    const GstQgc::ScopedSinkEnvironmentForTest environment(openGl);
 
-    if (!GstTest::firstMissingFactory({"glupload"}).isEmpty()) {
-        QSKIP("glupload factory unavailable — gst-gl not registered in this build");
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("glupload");
 
     GstTest::TestPipeline pipeline;
     if (!pipeline.launch(QStringLiteral("videotestsrc num-buffers=10 ! "
@@ -41,11 +44,10 @@ void GStreamerTest::_testGlMemoryDispatch()
 
     const GStreamer::GstElementPtr sinkBin = pipeline.element("sink");
     QVERIFY2(sinkBin, "Could not find 'sink' element");
-    const GStreamer::GstElementPtr qvideosink =
-        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(sinkBin.get()), "qgcqvideosink"));
+    const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(sinkBin.get());
     QVERIFY2(qvideosink, "Could not find 'qgcqvideosink' inside sink bin");
-    const GStreamer::GstPadPtr appsinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
-    QVERIFY2(appsinkPad, "qgcqvideosink has no sink pad");
+    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
+    QVERIFY2(sinkPad, "qgcqvideosink has no sink pad");
 
     struct ProbeState
     {
@@ -67,7 +69,7 @@ void GStreamerTest::_testGlMemoryDispatch()
         return GST_PAD_PROBE_OK;
     };
     GStreamer::PadProbe bufferProbe;
-    QVERIFY(bufferProbe.add(appsinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, probeCb, &probe));
+    QVERIFY(bufferProbe.add(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, probeCb, &probe));
 
     if (!pipeline.play()) {
         QSKIP("GLMemory pipeline failed to PLAY (no GL context available?)");
@@ -80,7 +82,7 @@ void GStreamerTest::_testGlMemoryDispatch()
         QSKIP(qPrintable(
             QStringLiteral("GLMemory pipeline error (likely no GL context): %1").arg(GstTest::errorText(msg.get()))));
     }
-    const QString negotiatedStr = GstTest::currentCapsString(appsinkPad.get());
+    const QString negotiatedStr = GstTest::currentCapsString(sinkPad.get());
     QVERIFY2(probe.bufferCount.load() > 0, "No buffers reached qgcqvideosink under GLMemory caps");
     QVERIFY2(probe.glMemoryCount.load() > 0,
              qPrintable(QStringLiteral("GLMemory negotiated but buffers carried non-GL allocator. "
@@ -88,7 +90,45 @@ void GStreamerTest::_testGlMemoryDispatch()
                             .arg(probe.bufferCount.load())
                             .arg(negotiatedStr)));
     QVERIFY2(negotiatedStr.contains(QStringLiteral("memory:GLMemory")),
-             qPrintable(QStringLiteral("Appsink negotiated caps lack memory:GLMemory: %1").arg(negotiatedStr)));
+             qPrintable(QStringLiteral("qgcqvideosink negotiated caps lack memory:GLMemory: %1").arg(negotiatedStr)));
+}
+
+void GstHwBuffersPipelineTest::_testGlUploadBinTakesSoftwareFrames_data()
+{
+    QTest::addColumn<QString>("format");
+
+    // In a format the sink takes, and in one only the converter reads.
+    QTest::newRow("BGRA") << QStringLiteral("BGRA");
+    QTest::newRow("Y444") << QStringLiteral("Y444");
+}
+
+void GstHwBuffersPipelineTest::_testGlUploadBinTakesSoftwareFrames()
+{
+#if !defined(QGC_GST_BIN_HAS_GLUPLOAD)
+    QSKIP("glupload bin not compiled in this build");
+#else
+    QFETCH(QString, format);
+    const GstQgc::ScopedSinkEnvironmentForTest environment(
+        {.target = {.backend = GstQgc::RenderBackend::OpenGL, .egl = true},
+         .gpuBin = {.mode = GstQgc::GpuBinMode::GlUpload}});
+
+    QVideoSink videoSink;
+    const QByteArray capsLine =
+        QStringLiteral("video/x-raw,format=%1,width=320,height=240,framerate=30/1").arg(format).toLatin1();
+    const GstQgcTest::PipelineRunResult r = GstQgcTest::runPipelineThroughQVideoSink(
+        videoSink, capsLine.constData(), /*numBuffers*/ 5, /*gpuZerocopy*/ true);
+    // The bin's glupload needs an EGL/GL context, which a headless runner may not have.
+    if (!r.eos && (r.errorMessage.contains(QStringLiteral("egl"), Qt::CaseInsensitive) ||
+                   r.errorMessage.contains(QStringLiteral("gl context"), Qt::CaseInsensitive))) {
+        QSKIP(qPrintable(QStringLiteral("glupload needs a GL context (headless env): %1").arg(r.errorMessage)));
+    }
+    QVERIFY2(r.eos, qUtf8Printable(QStringLiteral("Pipeline: %1").arg(r.errorMessage)));
+    QVERIFY(r.frameCount > 0);
+    QVERIFY(r.lastFormat.pixelFormat() != QVideoFrameFormat::Format_Invalid);
+    if (format == QStringLiteral("BGRA")) {
+        QCOMPARE(r.lastFormat.pixelFormat(), QVideoFrameFormat::Format_BGRA8888);
+    }
+#endif
 }
 
 #endif

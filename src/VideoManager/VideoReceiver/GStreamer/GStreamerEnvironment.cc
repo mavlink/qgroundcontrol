@@ -1,10 +1,12 @@
 #include "GStreamerEnvironment.h"
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QCryptographicHash>
+#include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
-#include <QtCore/QMutex>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QStringList>
 #include <QtCore/QSysInfo>
@@ -21,14 +23,16 @@
 
 #include <gst/gst.h>
 
+#ifdef Q_OS_WIN
+#include <cstdlib>
+#endif
+
 QGC_LOGGING_CATEGORY(GStreamerEnvLog, "Video.GStreamer.Environment")
 
 namespace {
 
+using GStreamer::Environment::BundledRuntime;
 using GStreamer::Environment::ValidationResult;
-
-// Serializes the whole env mutation: qputenv/setenv aren't thread-safe vs gst_init's getenv.
-static QMutex s_setEnvVarsMutex;
 
 // Single source of truth for the managed plugin-path/scanner vars: keeps _clearManagedGstEnvVars
 // and logDiagnostics from drifting. Each site layers its own extras (GIO/PTP, registry) on top.
@@ -36,6 +40,8 @@ constexpr const char* kManagedGstPathVars[] = {
     "GST_PLUGIN_PATH",    "GST_PLUGIN_PATH_1_0",    "GST_PLUGIN_SYSTEM_PATH", "GST_PLUGIN_SYSTEM_PATH_1_0",
     "GST_PLUGIN_SCANNER", "GST_PLUGIN_SCANNER_1_0",
 };
+
+BundledRuntime s_bundledRuntime;
 
 QString _cleanJoin(const QString& base, const QString& relative)
 {
@@ -46,38 +52,62 @@ void _setGstEnv(const char* name, const QString& value)
 {
 #ifdef Q_OS_WIN
     // GLib reads the wide environment; qputenv's _putenv_s would decode these UTF-8 bytes in the ANSI
-    // code page and corrupt non-ASCII install paths.
+    // code page and corrupt non-ASCII install paths. g_setenv sets the process environment and GLib's C runtime copy;
+    // _wputenv_s sets QGC's, which qEnvironmentVariable reads and which is a separate (debug) runtime in Debug builds.
     (void) g_setenv(name, value.toUtf8().constData(), TRUE);
+    (void) _wputenv_s(QString::fromLatin1(name).toStdWString().c_str(), value.toStdWString().c_str());
 #else
     qputenv(name, value.toUtf8());
 #endif
     qCDebug(GStreamerEnvLog) << "  " << name << "=" << value;
 }
 
-// Set @p var to the first existing candidate, but only if unset (explicit user/system value wins).
-// @p nativePath uses native separators + 8-bit encoding, required for OpenSSL SSL_CERT_FILE on Windows.
-[[maybe_unused]] void _setCaBundleIfUnset(const char* var, const QStringList& candidates, bool nativePath = false)
+// An AppImage is mounted, and a quarantined macOS app translocated, to a new random directory on every launch: name
+// such an install after what stays put, the AppImage file or the translocated app's name.
+QString _stableInstallPath(const QString& installPath)
 {
-    if (!qEnvironmentVariableIsEmpty(var)) {
-        return;
+    // Whatever an AppImage starts inherits APPIMAGE and APPDIR, so they only name an install inside the mount.
+    const QString appImage = qEnvironmentVariable("APPIMAGE");
+    const QString mountDir = qEnvironmentVariable("APPDIR");
+    if (!appImage.isEmpty() && !mountDir.isEmpty() &&
+        installPath.startsWith(QDir::cleanPath(mountDir) + QLatin1Char('/'))) {
+        return appImage;
     }
-    for (const QString& path : candidates) {
-        if (QFileInfo::exists(path)) {
-            if (nativePath) {
-                const QByteArray encoded = QFile::encodeName(QDir::toNativeSeparators(path));
-                qputenv(var, encoded);
-                qCDebug(GStreamerEnvLog) << "  " << var << "=" << encoded;
-            } else {
-                _setGstEnv(var, path);
-            }
-            return;
+
+    static const QRegularExpression translocation(QStringLiteral("/AppTranslocation/[^/]+/"));
+    return QString(installPath).replace(translocation, QStringLiteral("/AppTranslocation/"));
+}
+
+// GStreamer only rewrites a registry when the plugins change, so touch @p registry to mark it in use, and remove the
+// registries next to it that no install has used for a month (an old GStreamer version, a replaced AppImage). Removing
+// one that is still in use only costs its install a rescan.
+void _pruneUnusedRegistries(const QString& registry)
+{
+    static constexpr int kUnusedRegistryDays = 30;
+
+    const QDateTime now = QDateTime::currentDateTimeUtc();
+    QFile current(registry);
+    if (current.open(QIODevice::ReadWrite | QIODevice::ExistingOnly)) {
+        (void) current.setFileTime(now, QFileDevice::FileModificationTime);
+        current.close();
+    }
+
+    const QFileInfo registryInfo(registry);
+    const QDateTime cutoff = now.addDays(-kUnusedRegistryDays);
+    const QFileInfoList registries =
+        registryInfo.absoluteDir().entryInfoList({QStringLiteral("gstreamer-*.bin")}, QDir::Files);
+    for (const QFileInfo& other : registries) {
+        if ((other.fileName() != registryInfo.fileName()) && (other.lastModified() < cutoff) &&
+            QFile::remove(other.absoluteFilePath())) {
+            qCDebug(GStreamerEnvLog) << "Removed unused GStreamer registry" << other.absoluteFilePath();
         }
     }
 }
 
 // A bundled runtime's plugins differ from the system GStreamer's, so sharing the default per-user registry would make
-// each invalidate the other's plugin cache; the runtime version in the name keeps upgrades from reusing it too.
-QString _usePrivateRegistry(const QString& cacheDir)
+// each invalidate the other's plugin cache. The runtime version in the name keeps upgrades from reusing it, and the
+// install hash keeps two installs of one version (stable and daily builds) from rescanning over each other's.
+QString _usePrivateRegistry(const QString& cacheDir, const QString& installPath)
 {
     if (cacheDir.isEmpty() || qEnvironmentVariableIsSet("GST_REGISTRY_1_0") ||
         qEnvironmentVariableIsSet("GST_REGISTRY")) {
@@ -93,21 +123,36 @@ QString _usePrivateRegistry(const QString& cacheDir)
     guint micro = 0;
     guint nano = 0;
     gst_version(&major, &minor, &micro, &nano);
-    const QString registry = _cleanJoin(cacheDir, QStringLiteral("gstreamer-%1.%2.%3-%4.bin")
-                                                      .arg(major)
-                                                      .arg(minor)
-                                                      .arg(micro)
-                                                      .arg(QSysInfo::buildCpuArchitecture()));
+    const QByteArray installHash =
+        QCryptographicHash::hash(_stableInstallPath(installPath).toUtf8(), QCryptographicHash::Sha256).toHex().left(8);
+    const QString registry =
+        _cleanJoin(cacheDir, QStringLiteral("gstreamer-%1.%2.%3-%4-%5.bin")
+                                 .arg(major)
+                                 .arg(minor)
+                                 .arg(micro)
+                                 .arg(QSysInfo::buildCpuArchitecture(), QLatin1String(installHash)));
     _setGstEnv("GST_REGISTRY", registry);
+    _pruneUnusedRegistries(registry);
     return registry;
 }
 
-[[maybe_unused]] void _setTmpDirVars(const QString& dir)
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+void _setTmpDirVars(const QString& dir)
 {
     _setGstEnv("TMP", dir);
     _setGstEnv("TEMP", dir);
     _setGstEnv("TMPDIR", dir);
 }
+
+// Points CA_CERTIFICATES, which the static plugin init makes GIO's default TLS database (gst_static_plugins.c.in), at
+// the bundled @p caBundle unless it is set.
+void _setCaBundleIfUnset(const QString& caBundle)
+{
+    if (qEnvironmentVariableIsEmpty("CA_CERTIFICATES") && QFileInfo::exists(caBundle)) {
+        _setGstEnv("CA_CERTIFICATES", caBundle);
+    }
+}
+#endif
 
 #ifdef Q_OS_ANDROID
 // Extract an APK asset to destPath; skip rewrite when sizes already match
@@ -254,28 +299,12 @@ void _setGstEnvIfExecutable(const char* name, const QString& path)
     }
 }
 
-void _sanitizePythonEnvForScanner()
-{
-    static constexpr const char* varsToUnset[] = {
-        "PYTHONHOME", "PYTHONPATH", "VIRTUAL_ENV", "CONDA_PREFIX", "CONDA_DEFAULT_ENV", "PYTHONUSERBASE",
-    };
-
-    for (const char* name : varsToUnset) {
-        _unsetEnv(name);
-    }
-
-    _setGstEnv("PYTHONNOUSERSITE", QStringLiteral("1"));
-}
-
 void _applyGstEnvVars(const QString& pluginDir, const QString& gioModDir, const QString& scannerPath,
                       const QString& ptpPath)
 {
     qCDebug(GStreamerEnvLog) << "Applying GStreamer environment:";
 
-    _sanitizePythonEnvForScanner();
     _clearManagedGstEnvVars();
-    _setGstEnv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", QStringLiteral("no"));
-    _setGstEnv("GST_REGISTRY_FORK", QStringLiteral("no"));
     _setGstEnvIfExists("GIO_EXTRA_MODULES", gioModDir);
     _setGstEnvIfExecutable("GST_PTP_HELPER_1_0", ptpPath);
     _setGstEnvIfExecutable("GST_PTP_HELPER", ptpPath);
@@ -335,19 +364,20 @@ bool _applyBundleLayout(const QString& platformLabel, const BundleLayout& layout
 
     const QString scanner = _firstExistingPath(layout.scannerCandidates);
     _warnIfScannerMissing(platformLabel, scanner);
-    _applyGstEnvVars(pluginDirs, _firstExistingPath(layout.gioModuleDirs), scanner,
-                     _firstExistingPath(layout.ptpCandidates));
-    (void) _usePrivateRegistry(QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
+    const QString gioModuleDir = _firstExistingPath(layout.gioModuleDirs);
+    _applyGstEnvVars(pluginDirs, gioModuleDir, scanner, _firstExistingPath(layout.ptpCandidates));
+    (void) _usePrivateRegistry(QStandardPaths::writableLocation(QStandardPaths::CacheLocation), pluginDirs);
+    s_bundledRuntime = {.pluginDirs = pluginDirs.split(QDir::listSeparator()), .gioModuleDir = gioModuleDir};
     return true;
 }
 
 #endif  // !Q_OS_ANDROID && !Q_OS_IOS && !QGC_GST_SYSTEM_PLUGINS
 
-ValidationResult _setGstEnvVars()
+ValidationResult _setGstEnvVars(const QString& appDir)
 {
     ValidationResult result;
+    s_bundledRuntime = {};
 
-    const QString appDir = QCoreApplication::applicationDirPath();
     qCDebug(GStreamerEnvLog) << "App directory:" << appDir;
 
 #if defined(Q_OS_MACOS)
@@ -386,19 +416,6 @@ ValidationResult _setGstEnvVars()
         qCCritical(GStreamerEnvLog) << result.error;
     }
 
-#if defined(QGC_GST_MACOS_FRAMEWORK)
-    if (hasBundledFramework) {
-        _setGstEnv("GTK_PATH", rootDir);
-    }
-#endif
-
-    // libgioopenssl's compiled-in CA path is the Cerbero prefix; repoint OpenSSL at the
-    // bundled file (framework Versions/1.0/etc vs non-framework Contents/Resources/etc).
-    _setCaBundleIfUnset("SSL_CERT_FILE", {
-                                             _cleanJoin(rootDir, "etc/ssl/certs/ca-certificates.crt"),
-                                             _cleanJoin(appDir, "../Resources/etc/ssl/certs/ca-certificates.crt"),
-                                         });
-
 #elif defined(Q_OS_WIN)
     const QString libDir = _cleanJoin(appDir, "../lib");
     const QString helperDir = _cleanJoin(appDir, "../libexec/gstreamer-1.0");
@@ -418,11 +435,6 @@ ValidationResult _setGstEnvVars()
         if (!curPath.split(QDir::listSeparator()).contains(binDir, Qt::CaseInsensitive)) {
             _setGstEnv("PATH", binDir + QDir::listSeparator() + curPath);
         }
-
-        // gioopenssl.dll's compiled-in CA path is relative to the Cerbero SDK root and breaks once
-        // detached; point OpenSSL at the bundled CA file (installed by gstreamer_install_windows_sdk).
-        _setCaBundleIfUnset("SSL_CERT_FILE", {_cleanJoin(appDir, "../etc/ssl/certs/ca-certificates.crt")},
-                            /*nativePath=*/true);
     }
 
 #elif defined(Q_OS_IOS)
@@ -440,10 +452,10 @@ ValidationResult _setGstEnvVars()
         if (!cache.isEmpty()) {
             _setGstEnv("XDG_CACHE_HOME", cache);
             _setGstEnv("XDG_CONFIG_HOME", cache);
-            // Writable-cache registry, no fork rescan: sandbox rejects fork, static plugins need no scanner.
             _setGstEnv("GST_REGISTRY", _cleanJoin(cache, "registry.bin"));
-            _setGstEnv("GST_REGISTRY_FORK", QStringLiteral("no"));
         }
+        // The sandbox forbids fork(), and the plugins are static, so there is no scanner to run.
+        _setGstEnv("GST_REGISTRY_FORK", QStringLiteral("no"));
         // Tutorial 5 binds XDG_RUNTIME_DIR to the read-only bundle; libGStreamer never writes there on iOS.
         if (!resources.isEmpty()) {
             _setGstEnv("XDG_RUNTIME_DIR", resources);
@@ -456,7 +468,7 @@ ValidationResult _setGstEnvVars()
         }
 
         if (!resources.isEmpty()) {
-            _setCaBundleIfUnset("CA_CERTIFICATES", {_cleanJoin(resources, "ssl/certs/ca-certificates.crt")});
+            _setCaBundleIfUnset(_cleanJoin(resources, "ssl/certs/ca-certificates.crt"));
         }
     }
 
@@ -471,9 +483,8 @@ ValidationResult _setGstEnvVars()
             _setGstEnv("HOME", filesDir);
             _setGstEnv("FONTCONFIG_PATH", _cleanJoin(filesDir, "fontconfig"));
             const QString caBundle = _cleanJoin(filesDir, "ssl/certs/ca-certificates.crt");
-            if (_extractApkAsset("ssl/certs/ca-certificates.crt", caBundle) &&
-                qEnvironmentVariableIsEmpty("CA_CERTIFICATES")) {
-                _setGstEnv("CA_CERTIFICATES", caBundle);
+            if (_extractApkAsset("ssl/certs/ca-certificates.crt", caBundle)) {
+                _setCaBundleIfUnset(caBundle);
             }
             _setGstEnv("XDG_DATA_DIRS", filesDir);
             _setGstEnv("XDG_CONFIG_DIRS", filesDir);
@@ -488,7 +499,8 @@ ValidationResult _setGstEnvVars()
             _setGstEnv("GST_REGISTRY", _cleanJoin(cacheDir, "registry.bin"));
         }
 
-        _setGstEnv("GST_REGISTRY_REUSE_PLUGIN_SCANNER", QStringLiteral("no"));
+        // The plugins are static and the APK ships no scanner; an app process must not fork() into one.
+        _setGstEnv("GST_REGISTRY_FORK", QStringLiteral("no"));
     }
 
 #elif defined(Q_OS_LINUX) && !defined(QGC_GST_SYSTEM_PLUGINS)
@@ -520,21 +532,24 @@ ValidationResult _setGstEnvVars()
 
 namespace GStreamer::Environment {
 
-ValidationResult prepareEnvironment()
+ValidationResult prepareEnvironment(const QString& appDir)
 {
     // qputenv is not thread-safe against concurrent getenv; this must run on the GUI thread before
     // the QtConcurrent init worker spawns. Warn loudly rather than corrupt the environment silently.
     if (QCoreApplication::instance() && (QThread::currentThread() != QCoreApplication::instance()->thread())) {
         qCWarning(GStreamerEnvLog) << "prepareEnvironment() called off the GUI thread; qputenv is not thread-safe";
     }
-    const QMutexLocker setEnvLocker(&s_setEnvVarsMutex);
-    return _setGstEnvVars();
+    return _setGstEnvVars(appDir.isEmpty() ? QCoreApplication::applicationDirPath() : appDir);
 }
 
-QString usePrivateRegistry(const QString& cacheDir)
+QString usePrivateRegistry(const QString& cacheDir, const QString& installPath)
 {
-    const QMutexLocker setEnvLocker(&s_setEnvVarsMutex);
-    return _usePrivateRegistry(cacheDir);
+    return _usePrivateRegistry(cacheDir, installPath);
+}
+
+BundledRuntime bundledRuntime()
+{
+    return s_bundledRuntime;
 }
 
 void logDiagnostics()
@@ -547,6 +562,7 @@ void logDiagnostics()
     for (const char* var : kManagedGstPathVars) {
         dumpVar(var);
     }
+    dumpVar("GST_REGISTRY_FORK");
     dumpVar("GST_REGISTRY_REUSE_PLUGIN_SCANNER");
     dumpVar("GST_REGISTRY");
 }

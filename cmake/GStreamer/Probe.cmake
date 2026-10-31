@@ -1,7 +1,7 @@
 # Feature-test helpers for GStreamer headers, symbols and optional gst-plugins-bad libraries, used to gate the HwBuffers
 # GPU paths. Probing only: callers register sources so their paths resolve against the caller's
-# CMAKE_CURRENT_SOURCE_DIR. Results are cached under QGC_GST_HAS_*, PC_GStreamer_*, GST_D3D* and QGC_GST_VULKAN* names,
-# which cmake/GStreamer/SdkState.cmake purges whenever the GStreamer SDK changes.
+# CMAKE_CURRENT_SOURCE_DIR. Results are cached under QGC_GST_HAS_* (compile tests) and PC_GStreamer_* (pkg-config)
+# names, which cmake/GStreamer/SdkState.cmake purges whenever the GStreamer SDK changes.
 
 include_guard(GLOBAL)
 include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
@@ -10,16 +10,16 @@ include(CMakePushCheckState)
 
 # qgc_check_gst_header(VAR <out_var> HEADER <header_path> SYMBOL <symbol> [TARGET <gst_target>] [INCLUDES <dirs>])
 # Compile-tests that <header> can be included and <symbol> referenced when linked against <gst_target> (defaults to
-# GStreamer::GStreamer, falling back to GStreamerMobile on Android where that's the primary target). Result is set in
-# OUT_VAR (TRUE/FALSE in PARENT_SCOPE) and cached under that name, so incremental reconfigures skip the test; an SDK
-# change purges it.
+# GStreamer::GStreamer, or on Android GStreamer::Static, the libraries GStreamer::mobile is built from). Result is set
+# in OUT_VAR (TRUE/FALSE in PARENT_SCOPE) and cached under that name, which must start with QGC_GST_HAS_, so incremental
+# reconfigures skip the test; an SDK change purges it.
 function(qgc_check_gst_header)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "VAR;HEADER;SYMBOL;TARGET" "INCLUDES")
     _qgc_gst_check_args(qgc_check_gst_header VAR HEADER SYMBOL)
 
     if(NOT ARG_TARGET)
-        if(ANDROID AND TARGET GStreamerMobile)
-            set(ARG_TARGET GStreamerMobile)
+        if(ANDROID)
+            set(ARG_TARGET GStreamer::Static)
         else()
             set(ARG_TARGET GStreamer::GStreamer)
         endif()
@@ -46,28 +46,19 @@ function(qgc_check_gst_header)
 endfunction()
 
 # _qgc_probe_gst_lib(<name> HAS_VAR <cache_var> HEADER <header> SYMBOL <symbol>
-#                    [PC_MODULE <module>] [LIBNAMES <names>... LIB_VAR <cache_var>] [INCLUDES <dirs>...])
+#                    [PC_MODULE <module>] [LIBNAMES <names>... LIB_VAR <var>] [INCLUDES <dirs>...])
 # Probes one optional GStreamer library:
-#   1. pkg-config <module> into PC_GStreamer_<name>_*, rejoining Windows paths that pkg-config split at spaces.
+#   1. pkg-config <module> into PkgConfig::PC_GStreamer_<name>.
 #   2. <header>/<symbol> compile test cached as <HAS_VAR>, with <INCLUDES> plus the module's include dirs.
-#   3. With LIBNAMES, find_library into the <LIB_VAR> cache entry and link that absolute path: the bare pkg-config name
-#      misses the link path for Windows import libs (LNK1181) and for the macOS framework's gstreamer-vulkan-1.0.pc.
-#      Without LIBNAMES the module's own library names and dirs are used, and the module itself is required.
+#   3. With LIBNAMES, find_library (uncached, set in <LIB_VAR>) in the module's library dirs and the SDK's and link only
+#      that library: the macOS framework's gstreamer-vulkan-1.0.pc names a library the framework does not ship, which
+#      leaves the probe unusable instead of failing the link. Without LIBNAMES the module's imported target is linked,
+#      and the module itself is required.
 # Sets in PARENT_SCOPE: <name>_FOUND, <name>_LIBRARIES, <name>_INCLUDE_DIRS (<INCLUDES> plus the module's),
 # <name>_LIBRARY_DIRS and, when not found, <name>_REASON.
 function(_qgc_probe_gst_lib name)
     cmake_parse_arguments(PARSE_ARGV 1 ARG "" "HAS_VAR;HEADER;SYMBOL;PC_MODULE;LIB_VAR" "LIBNAMES;INCLUDES")
-    _qgc_gst_check_args(
-        _qgc_probe_gst_lib
-        HAS_VAR
-        HEADER
-        SYMBOL
-        ALLOW_EMPTY
-        PC_MODULE
-        LIB_VAR
-        LIBNAMES
-        INCLUDES
-    )
+    _qgc_gst_check_args(_qgc_probe_gst_lib HAS_VAR HEADER SYMBOL ALLOW_EMPTY PC_MODULE LIB_VAR LIBNAMES INCLUDES)
     if(ARG_LIBNAMES AND NOT ARG_LIB_VAR)
         message(FATAL_ERROR "_qgc_probe_gst_lib(${name}): LIBNAMES requires LIB_VAR")
     endif()
@@ -79,10 +70,7 @@ function(_qgc_probe_gst_lib name)
     )
     set(_pc PC_GStreamer_${name})
     if(ARG_PC_MODULE AND PkgConfig_FOUND)
-        pkg_check_modules(${_pc} QUIET ${ARG_PC_MODULE})
-        _gst_recover_split_pkgconfig_paths(${_pc})
-        _gst_coalesce_existing_paths(${_pc}_INCLUDE_DIRS)
-        _gst_coalesce_existing_paths(${_pc}_LIBRARY_DIRS)
+        pkg_check_modules(${_pc} QUIET IMPORTED_TARGET GLOBAL ${ARG_PC_MODULE})
     endif()
 
     set(_check_args VAR ${ARG_HAS_VAR} HEADER ${ARG_HEADER} SYMBOL ${ARG_SYMBOL})
@@ -98,21 +86,23 @@ function(_qgc_probe_gst_lib name)
         return()
     endif()
 
-    set(_libraries ${${_pc}_LIBRARIES})
+    set(_libraries "")
+    if(TARGET PkgConfig::${_pc})
+        set(_libraries PkgConfig::${_pc})
+    endif()
     if(ARG_LIBNAMES)
-        if(DEFINED ${ARG_LIB_VAR} AND NOT EXISTS "${${ARG_LIB_VAR}}")
-            unset(${ARG_LIB_VAR} CACHE)
-        endif()
         # A bundled SDK (gstreamer_apply_pkgconfig_env MODE SDK) must not lose to another GStreamer in
         # CMAKE_PREFIX_PATH, which find_library searches before HINTS.
         set(_prefix_path_args "")
         if(DEFINED PKG_CONFIG_USE_CMAKE_PREFIX_PATH AND NOT PKG_CONFIG_USE_CMAKE_PREFIX_PATH)
             set(_prefix_path_args NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH)
         endif()
+        # find_library skips the search while a cache entry (from configures before NO_CACHE) holds the name.
+        unset(${ARG_LIB_VAR} CACHE)
         find_library(
             ${ARG_LIB_VAR}
             NAMES ${ARG_LIBNAMES}
-            HINTS ${${_pc}_LIBRARY_DIRS} "${GSTREAMER_LIB_PATH}" ${_prefix_path_args}
+            HINTS ${${_pc}_LIBRARY_DIRS} "${GSTREAMER_LIB_PATH}" ${_prefix_path_args} NO_CACHE
         )
         if(NOT ${ARG_LIB_VAR})
             list(GET ARG_LIBNAMES 0 _lib)

@@ -31,8 +31,19 @@ def test_ctest_reads_every_selection_input_from_its_environment() -> None:
     ctest = _steps("run-unit-tests")[0]
     assert ctest["run"] == 'python3 "${GITHUB_WORKSPACE}/tools/ci/compile/cmake_helper.py" ctest'
     assert ctest["env"] == {
-        f"INPUT_{name.upper().replace('-', '_')}": f"${{{{ inputs.{name} }}}}"
-        for name in ("junit-output", "ctest-output", "parallel", "include-labels", "exclude-labels")
+        **{
+            f"INPUT_{name.upper().replace('-', '_')}": f"${{{{ inputs.{name} }}}}"
+            for name in (
+                "junit-output",
+                "ctest-output",
+                "parallel",
+                "include-labels",
+                "exclude-labels",
+                "tests-regex",
+            )
+        },
+        # Without it, Windows QtTest sends its results to OutputDebugString instead of CTest's output.
+        "QT_FORCE_STDERR_LOGGING": "1",
     }
 
 

@@ -10,3 +10,4 @@ Source code of GStreamer @_version@:
     https://gstreamer.freedesktop.org/src/
 
 @_binaries@
+@_third_party@@_relink@

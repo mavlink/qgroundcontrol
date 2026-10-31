@@ -1,20 +1,20 @@
 #include "GStreamerHelpers.h"
 
-#include <QtCore/QLatin1String>
-#include <QtCore/QString>
-#include <QtQuick/QQuickWindow>
-#include <QtQuick/QSGRendererInterface>
+#include <algorithm>
 #include <gst/rtsp/gstrtspurl.h>
+#include <gst/video/video-event.h>
 
-#if defined(Q_OS_WIN) && defined(QGC_HAS_ANY_GPU_PATH)
-#include <rhi/qrhi.h>
-
-#include "HwBuffers/common/QGCRhiCapture.h"
-#endif
+#include <QtCore/QByteArray>
+#include <QtCore/QLatin1String>
+#include <QtCore/QList>
+#include <QtCore/QString>
 
 #include "GStreamer.h"
 #include "GstScoped.h"
 #include "QGCLoggingCategory.h"
+#ifdef Q_OS_WIN
+#include "gstqgc/GstQgcRenderTarget.h"
+#endif
 
 QGC_LOGGING_CATEGORY(GStreamerHelpersLog, "Video.GStreamer.GStreamerHelpers")
 
@@ -84,18 +84,25 @@ void flushAndDisposeChild(GstElement* element)
 
 GstElement* addToBin(GstElement* bin, GstElementPtr element, const char* what)
 {
-    GstElement* const borrowed = element.release();
-    if (!gst_bin_add(GST_BIN(bin), borrowed)) {
+    if (!element || g_object_is_floating(element.get())) {
+        qCCritical(GStreamerHelpersLog) << "Missing or floating element for" << what;
+        return nullptr;
+    }
+    GstElement* const added = element.release();
+    const bool ok = gst_bin_add(GST_BIN(bin), added);
+    // The bin took its own reference; drop ours.
+    gst_object_unref(added);
+    if (!ok) {
         qCWarning(GStreamerHelpersLog) << "gst_bin_add() failed for" << what;
         return nullptr;
     }
-    return borrowed;
+    return added;
 }
 
 TeeBranch addTeeBranch(GstElement* pipeline, GstElement* tee, const char* what)
 {
-    GstElementPtr queue = adoptElement(gst_element_factory_make("queue", nullptr));
-    GstElementPtr valve = adoptElement(gst_element_factory_make("valve", nullptr));
+    GstElementPtr queue = makeElement("queue");
+    GstElementPtr valve = makeElement("valve");
     if (!queue || !valve) {
         qCWarning(GStreamerHelpersLog) << "Failed to create the queue and valve of the" << what << "branch";
         return {};
@@ -111,6 +118,37 @@ TeeBranch addTeeBranch(GstElement* pipeline, GstElement* tee, const char* what)
     return branch;
 }
 
+void requestKeyframe(GstPad* sinkPad)
+{
+    if (!sinkPad) {
+        return;
+    }
+    (void) gst_pad_push_event(sinkPad, gst_video_event_new_upstream_force_key_unit(GST_CLOCK_TIME_NONE, TRUE, 0));
+}
+
+void sendEventAsync(GstPad* pad, GstEvent* event)
+{
+    struct PendingEvent
+    {
+        GstPadPtr pad;
+        GstEventPtr event;
+    };
+
+    GstElementPtr parent = pad ? adoptElement(gst_pad_get_parent_element(pad)) : nullptr;
+    if (!parent) {
+        gst_event_unref(event);
+        return;
+    }
+    gst_element_call_async(
+        parent.get(),
+        [](GstElement* /*element*/, gpointer data) {
+            auto* const pending = static_cast<PendingEvent*>(data);
+            (void) gst_pad_send_event(pending->pad.get(), pending->event.release());
+        },
+        new PendingEvent{.pad = adoptPad(GST_PAD(gst_object_ref(pad))), .event = adoptEvent(event)},
+        [](gpointer data) { delete static_cast<PendingEvent*>(data); });
+}
+
 GstPadPtr firstSrcPad(GstElement* element)
 {
     GstPad* first = nullptr;
@@ -123,6 +161,19 @@ GstPadPtr firstSrcPad(GstElement* element)
         },
         &first);
     return adoptPad(first);
+}
+
+std::function<void()> holdPadUntilLinked(GstPad* pad, std::function<void(GstPad* pad)> link)
+{
+    // Returning OK from a blocking probe keeps the pad blocked until the probe is removed.
+    const gulong blockId = gst_pad_add_probe(
+        pad, GST_PAD_PROBE_TYPE_BLOCK_DOWNSTREAM,
+        [](GstPad* /*pad*/, GstPadProbeInfo* /*info*/, gpointer /*data*/) { return GST_PAD_PROBE_OK; }, nullptr,
+        nullptr);
+    return [blockId, heldPad = shareObject(pad), link = std::move(link)]() {
+        link(heldPad.get());
+        gst_pad_remove_probe(heldPad.get(), blockId);
+    };
 }
 
 void forEachPlugin(GstRegistry* registry, const std::function<void(GstPlugin*)>& visitor)
@@ -243,10 +294,24 @@ QString describeDecoderFactory(GstElementFactory* factory)
 
 namespace {
 
+// gst_init() applies GST_PLUGIN_FEATURE_RANK ("name:rank,..."), and nothing re-applies it after QGC's overrides.
+bool rankedByUser(const gchar* featureName)
+{
+    const QList<QByteArray> userRanks = qgetenv("GST_PLUGIN_FEATURE_RANK").split(',');
+    return std::ranges::any_of(userRanks, [featureName](const QByteArray& entry) {
+        return entry.left(entry.indexOf(':')).trimmed() == featureName;
+    });
+}
+
+// Every QGC rank change goes through here, so a feature the user ranked keeps its rank.
 void setFeatureRank(GstPluginFeature* feature, uint16_t rank)
 {
-    qCDebug(GStreamerHelpersLog) << "  Changing feature (" << gst_plugin_feature_get_name(feature)
-                                 << ") to use rank:" << rank;
+    const gchar* const name = gst_plugin_feature_get_name(feature);
+    if (rankedByUser(name)) {
+        qCDebug(GStreamerHelpersLog) << "  Keeping the GST_PLUGIN_FEATURE_RANK rank of" << name;
+        return;
+    }
+    qCDebug(GStreamerHelpersLog) << "  Changing feature (" << name << ") to use rank:" << rank;
     gst_plugin_feature_set_rank(feature, rank);
 }
 
@@ -286,10 +351,7 @@ void lowerDecoderRanksByClass(bool lowerHardware)
         if (isHardwareDecoderFactory(factory) != lowerHardware) {
             return;
         }
-        GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
-        qCDebug(GStreamerHelpersLog) << "Lowering" << (lowerHardware ? "hardware" : "software")
-                                     << "decoder rank:" << gst_plugin_feature_get_name(feature);
-        gst_plugin_feature_set_rank(feature, GST_RANK_NONE);
+        setFeatureRank(GST_PLUGIN_FEATURE(factory), GST_RANK_NONE);
     });
 }
 
@@ -342,31 +404,19 @@ void applyPrefixRank(const char* prefix, uint16_t rank)
 // A decoder whose D3D family mismatches the active QRhi backend can't be sampled zero-copy and drops to a CPU copy.
 void alignD3DDecoderRanksToRhi(bool promoteMatchedFamily)
 {
-    // Prefer the resolved QRhi backend; ranks usually apply before the scene graph resolves, so cachedRhi() is often
-    // null here and graphicsApi() Unknown — fall back to QSG_RHI_BACKEND (Qt's D3D11 default) in that Windows case.
-    // QGCRhiCapture/qrhi.h link only when a GPU path is compiled (GuiPrivate), so the resolved-backend lookup is gated;
-    // a no-GPU Windows build relies on graphicsApi()/QSG_RHI_BACKEND alone.
+    // Ranks usually apply before the scene graph resolves its backend, while the render target is still Unknown: fall
+    // back to QSG_RHI_BACKEND (Qt's D3D11 default) then.
     bool wantD3D12 = false;
-    bool resolved = false;
-#if defined(QGC_HAS_ANY_GPU_PATH)
-    if (QRhi* rhi = QGCRhiCapture::cachedRhi()) {
-        wantD3D12 = (rhi->backend() == QRhi::D3D12);
-        resolved = true;
-    }
-#endif
-    if (!resolved) {
-        switch (QQuickWindow::graphicsApi()) {
-            case QSGRendererInterface::Direct3D12:
-                wantD3D12 = true;
-                break;
-            case QSGRendererInterface::Direct3D11:
-                wantD3D12 = false;
-                break;
-            default:
-                wantD3D12 =
-                    qEnvironmentVariable("QSG_RHI_BACKEND").compare(QLatin1String("d3d12"), Qt::CaseInsensitive) == 0;
-                break;
-        }
+    switch (GstQgc::currentRenderTarget().backend) {
+        case GstQgc::RenderBackend::Direct3D12:
+            wantD3D12 = true;
+            break;
+        case GstQgc::RenderBackend::Unknown:
+            wantD3D12 =
+                qEnvironmentVariable("QSG_RHI_BACKEND").compare(QLatin1String("d3d12"), Qt::CaseInsensitive) == 0;
+            break;
+        default:
+            break;
     }
     const char* const matched = wantD3D12 ? "d3d12" : "d3d11";
     const char* const mismatched = wantD3D12 ? "d3d11" : "d3d12";

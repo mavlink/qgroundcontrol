@@ -45,13 +45,18 @@ function incompleteItemCount(readyStates, readyValue) {
     return count
 }
 
+// Every tab but Plan needs the home position, which is set on the Plan tab
+function tabEnabled(tab, homeSet) {
+    return tab === TabPlan || homeSet
+}
+
 // Entries for the tab pills, in tab order. warn shows a warning dot on the pill.
 function tabModel(summary) {
     return [
-        { id: TabPlan,    warn: false },
-        { id: TabMission, warn: summary.incompleteCount > 0 },
-        { id: TabFence,   warn: false },
-        { id: TabRally,   warn: false },
+        { id: TabPlan,    warn: false,                          enabled: tabEnabled(TabPlan, summary.homeSet) },
+        { id: TabMission, warn: summary.incompleteCount > 0,    enabled: tabEnabled(TabMission, summary.homeSet) },
+        { id: TabFence,   warn: false,                          enabled: tabEnabled(TabFence, summary.homeSet) },
+        { id: TabRally,   warn: false,                          enabled: tabEnabled(TabRally, summary.homeSet) },
     ]
 }
 

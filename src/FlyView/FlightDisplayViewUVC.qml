@@ -8,22 +8,13 @@ Rectangle {
     width:              parent.width
     height:             parent.height
     implicitWidth:      videoOutput.implicitWidth
-    implicitHeight:     videoOutput.implicitHeight   
+    implicitHeight:     videoOutput.implicitHeight
     color:              Qt.rgba(0,0,0,0.75)
     clip:               true
     anchors.centerIn:   parent
     visible:            _videoManager.isUvc
 
     property var _videoManager: QGroundControl.videoManager
-
-    function adjustAspectRatio() {
-        //-- Set aspect ratio
-        var resolution = camera.cameraFormat.resolution
-        if (resolution.height > 0 && resolution.width > 0) {
-            var aspectRatio = resolution.width / resolution.height
-            _root.height = parent.height * aspectRatio
-        }
-    }
 
     MediaDevices {
         id: mediaDevices
@@ -44,18 +35,6 @@ Rectangle {
             id:             camera
             cameraDevice:   mediaDevices.findCameraDevice(_videoManager.uvcVideoSourceID)
             active:         _videoManager.isUvc
-
-            onCameraDeviceChanged: {
-                if (active) {
-                    adjustAspectRatio()
-                }
-            }
-
-            onActiveChanged: {
-                if (active) {
-                    adjustAspectRatio()
-                }
-            }
         }
         videoOutput: videoOutput
     }

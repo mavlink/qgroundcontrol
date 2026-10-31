@@ -65,11 +65,11 @@ function(gstreamer_scan_plugin_basenames output_var plugin_path)
     )
 endfunction()
 
-# The GStreamer libraries the build can request, in probe and link order. A component's pkg-config module and target
-# follow from its CamelCase name: GlPrototypes is gstreamer-gl-prototypes-1.0 and GStreamer::api_gl_prototypes. The
-# mandatory ones are always probed and fail configure when missing: the sources include their headers unconditionally.
-# Gl/GlPrototypes are optional: a sysroot whose x11 .pc files are incomplete fails their pkg-config checks, and only the
-# GL GPU path needs them.
+# The GStreamer libraries the build can request, in probe order. As in Qt's FindGStreamer.cmake, a component's target
+# is GStreamer::<Component> and its pkg-config module follows from the CamelCase name: GlPrototypes is
+# gstreamer-gl-prototypes-1.0. The mandatory ones are always probed and fail configure when missing: the sources include
+# their headers unconditionally. Gl/GlPrototypes are optional: a sysroot whose x11 .pc files are incomplete fails their
+# pkg-config checks, and only the GL GPU path needs them. Check (gst-check's GstHarness) serves only the unit tests.
 set(GSTREAMER_COMPONENTS
     Base
     Gl
@@ -82,20 +82,16 @@ set(GSTREAMER_COMPONENTS
     Pbutils
     Tag
     Audio
+    Check
 )
 set(GSTREAMER_MANDATORY_COMPONENTS Base Rtsp Video)
 
-# gstreamer_component_names(<component> <api_out> <pc_out>)
-# Sets <api_out> to the component's api_<snake_case> name and <pc_out> to its gstreamer-<kebab-case>-1.0 module.
-function(gstreamer_component_names component api_out pc_out)
-    string(REGEX REPLACE "([a-z0-9])([A-Z])" "\\1_\\2" _snake "${component}")
-    string(TOLOWER "${_snake}" _snake)
-    string(REPLACE "_" "-" _module "${_snake}")
-    set(${api_out}
-        "api_${_snake}"
-        PARENT_SCOPE
-    )
-    set(${pc_out}
+# gstreamer_component_module(<component> <out_var>)
+# Sets <out_var> to the component's gstreamer-<kebab-case>-1.0 pkg-config module.
+function(gstreamer_component_module component out_var)
+    string(REGEX REPLACE "([a-z0-9])([A-Z])" "\\1-\\2" _module "${component}")
+    string(TOLOWER "${_module}" _module)
+    set(${out_var}
         "gstreamer-${_module}-1.0"
         PARENT_SCOPE
     )

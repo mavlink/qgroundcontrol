@@ -1,10 +1,10 @@
 #include "VideoSettings.h"
-#include "VideoManager.h"
 
-#include "QGCLoggingCategory.h"
-#include "QGCNetworkHelper.h"
 #include <QtCore/QSettings>
 #include <QtCore/QVariantList>
+
+#include "QGCLoggingCategory.h"
+#include "UVCDevices.h"
 
 QGC_LOGGING_CATEGORY(VideoSettingsLog, "Settings.VideoSettings")
 
@@ -14,7 +14,6 @@ static constexpr bool kGstEnabled = true;
 #else
 static constexpr bool kGstEnabled = false;
 #endif
-#include "UVCReceiver.h"
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
@@ -34,7 +33,7 @@ DECLARE_SETTINGGROUP(Video, "Video")
 #else
     videoSourceList.append(videoSourceHerelinkHotspot);
 #endif
-    QStringList uvcDevices = UVCReceiver::getDeviceNameList();
+    QStringList uvcDevices = UVCDevices::deviceNames();
     for (const QString& device : uvcDevices) {
         videoSourceList.append(device);
     }
@@ -72,6 +71,17 @@ DECLARE_SETTINGGROUP(Video, "Video")
         settings.endGroup();
     }
 
+    // Drop a stored streamEnabled=false: it has no UI, so it is a stale "disable when disarmed" state.
+    {
+        QSettings settings;
+        settings.beginGroup(settingsGroup);
+        if (!settings.value(streamEnabledName, true).toBool()) {
+            qCDebug(VideoSettingsLog) << "Clearing a stored streamEnabled=false";
+            settings.remove(streamEnabledName);
+        }
+        settings.endGroup();
+    }
+
     // Set default value for videoSource
     _setDefaults();
 }
@@ -94,6 +104,9 @@ DECLARE_SETTINGSFACT(VideoSettings, maxVideoSize)
 DECLARE_SETTINGSFACT(VideoSettings, enableStorageLimit)
 DECLARE_SETTINGSFACT(VideoSettings, streamEnabled)
 DECLARE_SETTINGSFACT(VideoSettings, disableWhenDisarmed)
+DECLARE_SETTINGSFACT(VideoSettings, udpUrl)
+DECLARE_SETTINGSFACT(VideoSettings, rtspUrl)
+DECLARE_SETTINGSFACT(VideoSettings, tcpUrl)
 
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
 {
@@ -107,7 +120,6 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
                 _videoSourceFact->setRawValue(videoDisabled);
             }
         }
-        connect(_videoSourceFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _videoSourceFact;
 }
@@ -118,8 +130,6 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceVideoDecoder)
         _forceVideoDecoderFact = _createSettingsFact(forceVideoDecoderName);
 
         _forceVideoDecoderFact->setUserVisible(kGstEnabled);
-
-        connect(_forceVideoDecoderFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _forceVideoDecoderFact;
 }
@@ -130,8 +140,6 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, lowLatencyMode)
         _lowLatencyModeFact = _createSettingsFact(lowLatencyModeName);
 
         _lowLatencyModeFact->setUserVisible(kGstEnabled);
-
-        connect(_lowLatencyModeFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _lowLatencyModeFact;
 }
@@ -141,7 +149,6 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtpJitterLatencyMs)
     if (!_rtpJitterLatencyMsFact) {
         _rtpJitterLatencyMsFact = _createSettingsFact(rtpJitterLatencyMsName);
         _rtpJitterLatencyMsFact->setUserVisible(kGstEnabled);
-        connect(_rtpJitterLatencyMsFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _rtpJitterLatencyMsFact;
 }
@@ -151,7 +158,6 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspAutoReconnect)
     if (!_rtspAutoReconnectFact) {
         _rtspAutoReconnectFact = _createSettingsFact(rtspAutoReconnectName);
         _rtspAutoReconnectFact->setUserVisible(kGstEnabled);
-        connect(_rtspAutoReconnectFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _rtspAutoReconnectFact;
 }
@@ -170,8 +176,9 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceCpuVideoPath)
     return _forceCpuVideoPathFact;
 }
 
-// videoConversionElement / disablePixelAspectRatio are read by VideoBackend::createSink()
-// into a VideoSinkConfig and passed as construct-only bin properties — no env-var indirection.
+// videoConversionElement / disablePixelAspectRatio are read by GStreamer::videoSinkConfigFromSettings() as
+// construct-only properties of the receiver's display sink; VideoManager restarts the streams, which rebuilds the
+// sink, when they change.
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoConversionElement)
 {
     if (!_videoConversionElementFact) {
@@ -197,99 +204,8 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspTimeout)
         _rtspTimeoutFact = _createSettingsFact(rtspTimeoutName);
 
         _rtspTimeoutFact->setUserVisible(kGstEnabled);
-
-        connect(_rtspTimeoutFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _rtspTimeoutFact;
-}
-
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, udpUrl)
-{
-    if (!_udpUrlFact) {
-        _udpUrlFact = _createSettingsFact(udpUrlName);
-        connect(_udpUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
-    }
-    return _udpUrlFact;
-}
-
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspUrl)
-{
-    if (!_rtspUrlFact) {
-        _rtspUrlFact = _createSettingsFact(rtspUrlName);
-        connect(_rtspUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
-    }
-    return _rtspUrlFact;
-}
-
-DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, tcpUrl)
-{
-    if (!_tcpUrlFact) {
-        _tcpUrlFact = _createSettingsFact(tcpUrlName);
-        connect(_tcpUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
-    }
-    return _tcpUrlFact;
-}
-
-bool VideoSettings::streamConfigured(void)
-{
-    //-- First, check if it's autoconfigured
-    if(VideoManager::instance()->autoStreamConfigured()) {
-        qCDebug(VideoSettingsLog) << "Stream auto configured";
-        return true;
-    }
-    //-- Check if it's disabled
-    QString vSource = videoSource()->rawValue().toString();
-    if(vSource == videoSourceNoVideo || vSource == videoDisabled) {
-        return false;
-    }
-    //-- If UDP, check for URL
-    if(vSource == videoSourceUDPH264 || vSource == videoSourceUDPH265) {
-        const QString url = udpUrl()->rawValue().toString();
-        qCDebug(VideoSettingsLog) << "Testing configuration for UDP Stream:"
-                                  << QGCNetworkHelper::redactedUrlForLogging(url);
-        return !url.isEmpty();
-    }
-    //-- If RTSP, check for URL
-    if(vSource == videoSourceRTSP) {
-        const QString url = rtspUrl()->rawValue().toString();
-        qCDebug(VideoSettingsLog) << "Testing configuration for RTSP Stream:"
-                                  << QGCNetworkHelper::redactedUrlForLogging(url);
-        return !url.isEmpty();
-    }
-    //-- If TCP, check for URL
-    if(vSource == videoSourceTCP) {
-        const QString url = tcpUrl()->rawValue().toString();
-        qCDebug(VideoSettingsLog) << "Testing configuration for TCP Stream:"
-                                  << QGCNetworkHelper::redactedUrlForLogging(url);
-        return !url.isEmpty();
-    }
-    //-- If MPEG-TS, check for URL
-    if(vSource == videoSourceMPEGTS) {
-        const QString url = udpUrl()->rawValue().toString();
-        qCDebug(VideoSettingsLog) << "Testing configuration for MPEG-TS Stream:"
-                                  << QGCNetworkHelper::redactedUrlForLogging(url);
-        return !url.isEmpty();
-    }
-    //-- If Herelink Air unit, good to go
-    if(vSource == videoSourceHerelinkAirUnit) {
-        qCDebug(VideoSettingsLog) << "Stream configured for Herelink Air Unit";
-        return true;
-    }
-    //-- If Herelink Hotspot, good to go
-    if(vSource == videoSourceHerelinkHotspot) {
-        qCDebug(VideoSettingsLog) << "Stream configured for Herelink Hotspot";
-        return true;
-    }
-    if (UVCReceiver::enabled() && UVCReceiver::deviceExists(vSource)) {
-        qCDebug(VideoSettingsLog) << "Stream configured for UVC";
-        return true;
-    }
-    return false;
-}
-
-void VideoSettings::_configChanged(QVariant)
-{
-    emit streamConfiguredChanged(streamConfigured());
 }
 
 void VideoSettings::_setForceVideoDecodeList()

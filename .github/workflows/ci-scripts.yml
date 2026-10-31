@@ -86,6 +86,7 @@ jobs:
             src/**/*.VehicleConfig.json
             src/Vehicle/FactGroups/VehicleGPSFactGroup.h
             src/FactSystem/factmetadata.schema.json
+            src/VideoManager/VideoReceiver/GStreamer/README.md
             tools
             deploy
           sparse-checkout-cone-mode: false
@@ -116,6 +117,7 @@ jobs:
           fetch-depth: 1
           sparse-checkout: |
             .github
+            cmake/GStreamer/PluginPolicy.cmake
             cmake/Helpers.cmake
             cmake/ccache-launcher.cmd.in
             deploy/docker/Dockerfile
@@ -132,6 +134,7 @@ jobs:
 
       # Collection imports every test module and expands every parametrization, so the checkout
       # needs .github and the VehicleConfig pages test_config_qml_generator.py enumerates;
-      # test_read_config.py reads the Dockerfile.
+      # test_read_config.py reads the Dockerfile and test_artifact_report.py the GPL denylist in
+      # PluginPolicy.cmake.
       - name: Run Windows-marked tests
         run: pytest -q -n 2 --durations=15 -m windows tools/tests

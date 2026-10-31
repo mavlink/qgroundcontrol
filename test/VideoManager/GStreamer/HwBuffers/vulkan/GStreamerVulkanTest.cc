@@ -1,4 +1,5 @@
-#include "GStreamerTest.h"
+#include "HwBuffers/GstHwBuffersPipelineTest.h"
+#include "HwBuffers/GstHwBuffersTest.h"
 
 #ifdef QGC_GST_STREAMING
 
@@ -12,6 +13,7 @@
 #include "GStreamer.h"
 #include "GStreamerTestHelpers.h"
 #include "GstHwPathTelemetry.h"
+#include "gstqgc/GstQgcTestSupport.h"
 #include "gstqgc/gstqgcqvideosink.h"
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && defined(QGC_HAS_GST_VULKAN_GPU_PATH)
@@ -20,11 +22,9 @@
 #include "GstDmaBufVulkanImport.h"
 #endif
 
-void GStreamerTest::_testVulkanDispatchDemotesToCpu()
+void GstHwBuffersPipelineTest::_testVulkanDispatchDemotesToCpu()
 {
-    if (!GstTest::firstMissingFactory({"vulkanupload"}).isEmpty()) {
-        QSKIP("vulkanupload factory unavailable — gst-vulkan not registered in this build");
-    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("vulkanupload");
 
     QVideoSink videoSink;
     int frameCount = 0;
@@ -49,15 +49,14 @@ void GStreamerTest::_testVulkanDispatchDemotesToCpu()
     QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, owner.get(),
                      [&frameCount](const QVideoFrame&) { ++frameCount; });
 
-    const GStreamer::GstElementPtr qvideosink =
-        GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(sinkBin.get()), "qgcqvideosink"));
+    const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(sinkBin.get());
     QVERIFY2(qvideosink, "Could not find 'qgcqvideosink' inside sink bin");
-    const GStreamer::GstPadPtr appsinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
-    QVERIFY2(appsinkPad, "qgcqvideosink has no sink pad");
+    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(qvideosink.get(), "sink"));
+    QVERIFY2(sinkPad, "qgcqvideosink has no sink pad");
 
     std::atomic<int> bufferCount{0};
     GStreamer::PadProbe bufferProbe;
-    QVERIFY(bufferProbe.add(appsinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &bufferCount));
+    QVERIFY(bufferProbe.add(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &bufferCount));
 
     using GstHwPathTelemetry::HwFallbackReason;
     const quint64 noSyncBefore =
@@ -84,7 +83,7 @@ void GStreamerTest::_testVulkanDispatchDemotesToCpu()
         },
         TestTimeout::shortDuration());
 
-    const QString negotiatedStr = GstTest::currentCapsString(appsinkPad.get());
+    const QString negotiatedStr = GstTest::currentCapsString(sinkPad.get());
     const int probedBuffers = bufferCount.load();
     guint64 vulkanFrames = 0;
     if (const GStreamer::GstStructurePtr stats = GstQgc::frameStats(qvideosink.get())) {
@@ -116,7 +115,7 @@ void GStreamerTest::_testVulkanDispatchDemotesToCpu()
     }
 }
 
-void GStreamerTest::_testVulkanOwnedFrameTexturesReleaseOnDestroy()
+void GstHwBuffersTest::_testVulkanOwnedFrameTexturesReleaseOnDestroy()
 {
 #if !defined(QGC_HAS_GST_DMABUF_GPU_PATH) || !defined(QGC_HAS_GST_VULKAN_GPU_PATH)
     QSKIP("DMABuf->Vulkan frame bundles not compiled in this build");

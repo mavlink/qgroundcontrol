@@ -413,7 +413,8 @@ void TopLevelViewsTest::_testDiscoveredCameraReceiverSettingsVisible()
 #ifndef QGC_GST_STREAMING
     QSKIP("GStreamer receiver settings are unavailable in this build");
 #else
-    const auto restoreVideoSource = setVideoSourceWithRestore(VideoSettings::videoSourceRTSP);
+    // The default source: a camera-advertised stream plays without the user picking one, and nothing writes it.
+    const auto restoreVideoSource = setVideoSourceWithRestore(VideoSettings::videoDisabled);
 
     Fact* const lowLatencyMode = SettingsManager::instance()->videoSettings()->lowLatencyMode();
     const QVariant savedLowLatencyMode = lowLatencyMode->rawValue();
@@ -432,11 +433,11 @@ void TopLevelViewsTest::_testDiscoveredCameraReceiverSettingsVisible()
 
     QQuickItem* const videoPage = findVisibleItem(_rootItem, QStringLiteral("settingsPage_Video"));
     QVERIFY(videoPage);
-    QVERIFY(videoPage->property("isStreamSource").toBool());
 
-    // autoStreamConfig mirrors the read-only VideoManager property. Override the
-    // page binding to isolate these UI visibility rules from camera transport.
+    // autoStreamConfig and isStreamSource mirror read-only VideoManager properties. Override the
+    // page bindings to isolate these UI visibility rules from camera transport.
     QVERIFY(videoPage->setProperty("autoStreamConfig", true));
+    QVERIFY(videoPage->setProperty("isStreamSource", true));
 
     QQuickItem* const sourceGroup = findVisibleItem(_rootItem, QStringLiteral("settingsGroup_VideoSource"));
     QVERIFY(sourceGroup);

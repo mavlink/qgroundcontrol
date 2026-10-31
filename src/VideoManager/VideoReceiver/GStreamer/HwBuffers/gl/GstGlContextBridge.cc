@@ -7,12 +7,12 @@
 #include <QtCore/QLoggingCategory>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QOpenGLContext>
+#include <QtGui/QSurfaceFormat>
 #include <QtGui/qguiapplication_platform.h>
 
 #include "QGCLoggingCategory.h"
-// Shared by Linux and Windows-ANGLE (ANGLE ships EGL/egl.h); on Windows it's a fallback behind D3D11/D3D12.
-// GLX/Wayland/X11 wrapping stays Linux-only below.
-#if defined(__linux__) || (defined(_WIN32) && __has_include(<EGL/egl.h>))
+// EGL on Linux and Android; GLX/Wayland/X11 wrapping below only where their headers exist.
+#if defined(__linux__)
 #include <EGL/egl.h>
 #include <gst/gl/egl/gstgldisplay_egl.h>
 #define QGC_GST_BRIDGE_HAS_EGL 1
@@ -61,6 +61,16 @@ EGLContext qtEglContext(QOpenGLContext* qtCtx)
     }
     return EGL_NO_CONTEXT;
 }
+
+// The API of the context being wrapped, as Qt's own sink passes it: claiming both makes gst-gl try a desktop-GL share
+// of an eglfs GLES context first.
+GstGLAPI wrappedGlApi(const QOpenGLContext& qtCtx)
+{
+    if (qtCtx.isOpenGLES()) {
+        return GST_GL_API_GLES2;
+    }
+    return (qtCtx.format().profile() == QSurfaceFormat::CoreProfile) ? GST_GL_API_OPENGL3 : GST_GL_API_OPENGL;
+}
 #endif
 
 constexpr char kGlAppContextType[] = "gst.gl.app_context";
@@ -100,7 +110,7 @@ bool GlContextBridge::primeLocked()
     }
 
 #if defined(QGC_GST_BRIDGE_HAS_EGL)
-    // Try EGL first (Linux: Wayland/eglfs/xcb_egl; Windows: ANGLE-EGL); fall back to GLX (Linux xcb default on Qt 6).
+    // Try EGL first (Wayland, eglfs, xcb_egl, Android); fall back to GLX (Linux xcb default on Qt 6).
     EGLContext eglCtx = qtEglContext(qtCtx);
     EGLDisplay eglDisp = (eglCtx != EGL_NO_CONTEXT) ? qtEglDisplay(qtCtx) : EGL_NO_DISPLAY;
     if (eglCtx != EGL_NO_CONTEXT && eglDisp != EGL_NO_DISPLAY) {
@@ -138,7 +148,7 @@ bool GlContextBridge::primeLocked()
         }
 
         _context = gst_gl_context_new_wrapped(_display, reinterpret_cast<guintptr>(eglCtx), GST_GL_PLATFORM_EGL,
-                                              static_cast<GstGLAPI>(GST_GL_API_GLES2 | GST_GL_API_OPENGL));
+                                              wrappedGlApi(*qtCtx));
         if (!_context) {
             qCWarning(GstGlBridgeLog) << "gst_gl_context_new_wrapped (EGL) failed";
             gst_clear_object(&_display);
@@ -173,7 +183,7 @@ bool GlContextBridge::primeLocked()
         }
         _display = GST_GL_DISPLAY(displayX11);
         _context = gst_gl_context_new_wrapped(_display, reinterpret_cast<guintptr>(glx->nativeContext()),
-                                              GST_GL_PLATFORM_GLX, static_cast<GstGLAPI>(GST_GL_API_OPENGL));
+                                              GST_GL_PLATFORM_GLX, wrappedGlApi(*qtCtx));
         if (!_context) {
             qCWarning(GstGlBridgeLog) << "gst_gl_context_new_wrapped (GLX) failed";
             gst_clear_object(&_display);

@@ -302,10 +302,9 @@ ID3D12Resource* copySliceToStaging(ID3D12Resource* resource, guint subIdx, int p
 
 using PlaneLeases = std::array<std::shared_ptr<StagingSlotLease>, kMaxPlanes>;
 
-/// D3D12 pieces of GstD3DVideoBufferCommon's resolvePlanes(), VideoBuffer and proposePool(). Staged planes share one
-/// copy queue, resolved on the first staged plane (constant per device); finish() does a single fence wait on the
-/// highest submitted value. An early return still waits for submitted copies (destructor) before the slot leases are
-/// released.
+/// D3D12 pieces of GstD3DVideoBufferCommon's resolvePlanes() and proposePool(). Staged planes share one copy queue,
+/// resolved on the first staged plane (constant per device); finish() does a single fence wait on the highest submitted
+/// value. An early return still waits for submitted copies (destructor) before the slot leases are released.
 class D3D12PlaneResolver
 {
 public:
@@ -314,8 +313,6 @@ public:
     using Device = GstD3D12Device;
 
     static constexpr const char* kMemoryName = "GstD3D12Memory";
-    static constexpr HwVideoBufferPath kPath = HwVideoBufferPath::D3D12;
-    static constexpr QRhi::Implementation kBackend = QRhi::D3D12;
     static constexpr const char* kCapsFeature = GST_CAPS_FEATURE_MEMORY_D3D12_MEMORY;
 
     D3D12PlaneResolver() = default;
@@ -331,8 +328,6 @@ public:
     }
 
     static const QLoggingCategory& log() { return GstD3D12Log(); }
-
-    static MapDiagnostics& diag() { return s_diag; }
 
     static bool isMemory(GstMemory* mem) { return gst_is_d3d12_memory(mem); }
 
@@ -441,6 +436,78 @@ private:
     bool _waited = false;
 };
 
+/// Wraps a D3D12Memory-backed GstSample as a QHwVideoBuffer. The device guard, decoder sync and slice copies run in the
+/// constructor, on the streaming thread (blocking there is harmless: the decoder is async), so mapTextures() on the
+/// render thread only imports resolved resources. D3D11 has its own buffer: it shares QRhi's immediate context, so it
+/// copies on the render thread instead.
+class D3D12VideoBuffer final : public GstHwVideoBuffer
+{
+public:
+    D3D12VideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format)
+        : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, format)
+    {
+        GstBuffer* buffer = _sample ? gst_sample_get_buffer(_sample) : nullptr;
+        if (!buffer) {
+            return;
+        }
+        GstD3DVideoBufferCommon::PlaneResourceGuard<ID3D12Resource> guard;
+        D3D12PlaneResolver resolver;
+        const int resolvedCount = GstD3DVideoBufferCommon::resolvePlanes(buffer, resolver, s_diag, guard);
+        if (resolvedCount == 0) {
+            return;
+        }
+        _handles = guard.handles;
+        _resolvedCount = resolvedCount;
+        guard.commit();
+        _keepAlive = resolver.takeKeepAlive();
+    }
+
+    ~D3D12VideoBuffer() override
+    {
+        for (int i = 0; i < _resolvedCount; ++i) {
+            if (_handles[i]) {
+                _handles[i]->Release();
+            }
+        }
+    }
+
+    bool validatePlaneHandles() const override
+    {
+        // A failed constructor-time resolve (device mismatch, sync or copy failure) sends the frame to the CPU.
+        if (_resolvedCount == 0) {
+            return false;
+        }
+        return validatePlanes([](GstMemory* mem) {
+            return mem && D3D12PlaneResolver::isMemory(mem) &&
+                   (D3D12PlaneResolver::resource(reinterpret_cast<GstD3D12Memory*>(mem)) != nullptr);
+        });
+    }
+
+    QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old) override
+    {
+        // The device bridge must be primed: resources on another device import fine but render corrupt.
+        GstBuffer* buffer = nullptr;
+        if (!checkMapPreconditions(rhi, static_cast<int>(QRhi::D3D12), GstD3D12Log(), s_diag, buffer) ||
+            (_resolvedCount == 0)) {
+            return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
+        }
+        const GstHwMapTail tail{.path = HwVideoBufferPath::D3D12,
+                                .frameSize = _format.frameSize(),
+                                .pixelFormat = _format.pixelFormat(),
+                                .log = &GstD3D12Log(),
+                                .diag = &s_diag,
+                                .successTag = GstHw::toString(HwVideoBufferPath::D3D12)};
+        return GstD3DVideoBufferCommon::mapResolvedTextures(*this, rhi, old, tail, _handles, _resolvedCount,
+                                                            _keepAlive);
+    }
+
+private:
+    std::array<ID3D12Resource*, kMaxPlanes> _handles{};
+    int _resolvedCount = 0;
+    /// Staging slot leases the frame bundles share while QRhi samples them.
+    std::shared_ptr<void> _keepAlive;
+};
+
 void resetCachedState() noexcept
 {
     StagingResourcePool::instance().clear();
@@ -452,7 +519,7 @@ void resetCachedState() noexcept
 constinit const HwPathDescriptor GstHwPaths::kD3D12 = {
     .path = HwVideoBufferPath::D3D12,
     .matches = [](GstMemory* mem, const HwVideoBufferContext&) -> bool { return gst_is_d3d12_memory(mem); },
-    .construct = &GstHwPaths::construct<GstD3DVideoBufferCommon::VideoBuffer<D3D12PlaneResolver>>,
+    .construct = &GstHwPaths::construct<D3D12VideoBuffer>,
     .resetCaches = &resetCachedState,
     .proposePool = &GstD3DVideoBufferCommon::proposePool<D3D12PlaneResolver>,
     .bridge = &GstD3D12ContextBridge::instance,

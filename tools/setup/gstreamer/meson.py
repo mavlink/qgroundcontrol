@@ -17,7 +17,6 @@ from .config import (
     PLUGINS_BAD,
     PLUGINS_BASE,
     PLUGINS_GOOD,
-    PLUGINS_UGLY,
     BuildConfig,
 )
 from .host import detect_jobs, run_cmd
@@ -99,10 +98,6 @@ class MesonBuilder:
 
         # Add bad plugins
         for key, value in PLUGINS_BAD.items():
-            args.append(f"-D{key}={value}")
-
-        # Add ugly plugins
-        for key, value in PLUGINS_UGLY.items():
             args.append(f"-D{key}={value}")
 
         # Add platform-specific GL config

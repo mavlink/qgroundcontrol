@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 
 #include <QtCore/QList>
 #include <QtCore/QMetaObject>
@@ -13,6 +14,7 @@
 #include <QtCore/QVariant>
 #include <QtCore/QVariantList>
 #include <QtCore/QVariantMap>
+#include <QtCore/QtNumeric>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
@@ -23,6 +25,8 @@
 #include "Fact.h"
 #include "GeoFenceController.h"
 #include "GeoMapCamera.h"
+#include "GeoMapItem.h"
+#include "GeoMapProjectedPath.h"
 #include "MissionController.h"
 #include "MockLink.h"
 #include "PlanMasterController.h"
@@ -31,6 +35,7 @@
 #include "QGCMAVLink.h"
 #include "QGroundControlQmlGlobal.h"
 #include "QmlObjectListModel.h"
+#include "RallyPoint.h"
 #include "RallyPointController.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
@@ -61,6 +66,7 @@ const char* kTemplatesColumn = "planPanel_templatesColumn";
 const char* kHomeStatus = "planPanel_homeStatus";
 const char* kGeoFenceVisuals = "planView_geoFenceMapVisuals";
 const char* kRallyVisuals = "planView_rallyPointMapVisuals";
+const char* kStatusHint = "planToolbar_statusHint";
 const char* kPanelLayerSwitcher = "planView_layerSwitcher";
 const char* kPlanTree = "planView_planTree";
 const char* kTakeoffButton = "planToolStrip_takeoffButton";
@@ -88,6 +94,16 @@ QList<QQuickItem*> findGeoMapItems(QQuickItem* parent, const QString& objectName
 QList<QQuickItem*> findGeoMapWaypointMarkers(QQuickItem* parent)
 {
     return findGeoMapItems(parent, QStringLiteral("geoMapWaypointMarker"));
+}
+
+/// Position in \a map of \a coordinate
+QPointF mapScreenPoint(QQuickItem* map, const QGeoCoordinate& coordinate)
+{
+    QVariant screenPoint;
+    const bool projected =
+        QMetaObject::invokeMethod(map, "fromCoordinate", Q_RETURN_ARG(QVariant, screenPoint),
+                                  Q_ARG(QVariant, QVariant::fromValue(coordinate)), Q_ARG(QVariant, false));
+    return projected ? screenPoint.toPointF() : QPointF(-1, -1);
 }
 
 QString tabObjectName(const QString& tab)
@@ -189,6 +205,20 @@ void PlanPanelUITest::_clickMap(qreal fractionX, qreal fractionY)
     QVERIFY2(clickItemFraction(QStringLiteral("planView_map"), fractionX, fractionY), "Failed to click planView_map");
 }
 
+void PlanPanelUITest::_setHome()
+{
+    _clickMap(0.4, 0.5);
+    if (QTest::currentTestFailed())
+        return;
+    QVERIFY2(waitForCondition(
+                 [&] {
+                     MissionController* const controller = _missionController();
+                     return controller && controller->homePositionSet();
+                 },
+                 2000, QStringLiteral("home position set")),
+             "Map click on the Plan tab did not set home");
+}
+
 MissionController* PlanPanelUITest::_missionController()
 {
     QQuickItem* const planView = findVisibleItem(_rootItem, QStringLiteral("mainView_plan"));
@@ -232,16 +262,9 @@ bool PlanPanelUITest::_selectTab(const QString& tab)
 
 void PlanPanelUITest::_setHomeAndOpenMission()
 {
-    _clickMap(0.4, 0.5);
+    _setHome();
     if (QTest::currentTestFailed())
         return;
-    QVERIFY2(waitForCondition(
-                 [&] {
-                     MissionController* const controller = _missionController();
-                     return controller && controller->homePositionSet();
-                 },
-                 2000, QStringLiteral("home position set")),
-             "Map click on the Plan tab did not set home");
     QVERIFY2(_selectTab(QStringLiteral("mission")), "Failed to open the Mission tab");
 }
 
@@ -381,15 +404,28 @@ void PlanPanelUITest::_testTabSelectionDrivesEditingLayer()
         bool toolStripVisible;
         bool fenceInteractive;
         bool rallyInteractive;
+        const char* statusHint;  // Empty: no hint pill
     };
 
     // One UI session walks all tabs since each step starts from the state the previous one left
     const TabState states[] = {
-        {"mission", kPanelLayerMission, true, false, false},
-        {"fence", kPanelLayerFence, false, true, false},
-        {"rally", kPanelLayerRally, false, false, true},
-        {"plan", kPanelLayerPlan, false, false, false},
+        {"mission", kPanelLayerMission, true, false, false, ""},
+        {"fence", kPanelLayerFence, false, true, false, ""},
+        {"rally", kPanelLayerRally, false, false, true, "Click in map to add rally points"},
+        {"plan", kPanelLayerPlan, false, false, false, "Click in map to move Home"},
     };
+
+    // Only the Plan tab, where home is set, can be opened until there is a home position
+    verifyText(QLatin1String(kStatusHint), QStringLiteral("Click in map to set Home"),
+               QStringLiteral("plan tab without home"));
+    for (const QString& tab : {QStringLiteral("mission"), QStringLiteral("fence"), QStringLiteral("rally")}) {
+        verifyEnabled(tabObjectName(tab), false, QStringLiteral("%1 tab without home").arg(tab));
+    }
+    if (QTest::currentTestFailed())
+        return;
+    _setHome();
+    if (QTest::currentTestFailed())
+        return;
 
     for (const TabState& state : states) {
         const QString tab = QLatin1String(state.tab);
@@ -406,6 +442,11 @@ void PlanPanelUITest::_testTabSelectionDrivesEditingLayer()
         verifyVisibility(QString::fromLatin1(kTakeoffButton), state.toolStripVisible, tab);
         verifyProperty(QLatin1String(kGeoFenceVisuals), "interactive", state.fenceInteractive, tab);
         verifyProperty(QLatin1String(kRallyVisuals), "interactive", state.rallyInteractive, tab);
+        const QString statusHint = QLatin1String(state.statusHint);
+        verifyVisibility(QLatin1String(kStatusHint), !statusHint.isEmpty(), tab);
+        if (!statusHint.isEmpty()) {
+            verifyText(QLatin1String(kStatusHint), statusHint, tab);
+        }
         for (const QString& other :
              {QStringLiteral("plan"), QStringLiteral("mission"), QStringLiteral("fence"), QStringLiteral("rally")}) {
             if (other != tab) {
@@ -433,7 +474,9 @@ void PlanPanelUITest::_testDefaultAltitudeChipOpensPlanTab()
     if (QTest::currentTestFailed())
         return;
 
-    QVERIFY2(_selectTab(QStringLiteral("mission")), "Failed to open the Mission tab");
+    _setHomeAndOpenMission();
+    if (QTest::currentTestFailed())
+        return;
     QVERIFY2(clickButton(QStringLiteral("planPanel_defaultAltitudeChip")), "Failed to click the default altitude chip");
     QVERIFY2(
         waitForCondition([&] { return _currentTab() == QStringLiteral("plan"); }, 2000, QStringLiteral("chip to plan")),
@@ -944,48 +987,393 @@ void PlanPanelUITest::_testGeoMapMarkerDragMovesOnlyTheCurrentItem()
     QCOMPARE(controller->visualItems()->count(), itemCount);
 }
 
-void PlanPanelUITest::_testGeoMapTerrainWaypointDragKeepsTheMarkerUnderTheCursor()
+void PlanPanelUITest::_testGeoMapRallyMarkerClickSelectsPoint()
 {
     _startPlanPanel(true /* geoMapEngine */);
     if (QTest::currentTestFailed())
         return;
-
-    MissionController* const controller = _missionController();
-    QVERIFY(controller);
-    // A terrain-relative marker stands at its height above the terrain, which changes as it is dragged
-    controller->setGlobalAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameCalcAboveTerrain);
-    _buildMission(2);
+    _setHome();
     if (QTest::currentTestFailed())
         return;
-    // Disarm the Waypoint tool so a marker press can only select or drag
-    QVERIFY2(clickButton(QLatin1String(kWaypointButton)), "Failed to disarm the Waypoint tool");
 
-    VisualMissionItem* const target = controller->currentPlanViewItem();
-    QVERIFY(target);
+    RallyPointController* const rally = _planMasterController()->rallyPointController();
+    QVERIFY2(rally->supported(), "Offline vehicle should support rally points");
+    QVERIFY2(_selectTab(QStringLiteral("rally")), "Failed to open the Rally tab");
+    _clickMap(0.3, 0.4);
+    _clickMap(0.45, 0.6);
+    QVERIFY2(waitForCondition([&] { return rally->points()->count() == 2; }, 2000, QStringLiteral("points added")),
+             "Map clicks did not add rally points");
+    QObject* const first = rally->points()->get(0);
+    QCOMPARE(rally->currentRallyPoint(), rally->points()->get(1));
+
     QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
     QVERIFY(map);
-    auto* const camera = map->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
-    QVERIFY2(camera, "GeoMapCamera not found");
+    const QPointF point = mapScreenPoint(map, first->property("coordinate").value<QGeoCoordinate>());
+    QVERIFY2(QRectF(QPointF(0, 0), map->size()).contains(point), "The rally point is not on screen");
+    QVERIFY2(clickItemFraction(QStringLiteral("planView_map"), point.x() / map->width(), point.y() / map->height()),
+             "Failed to click the rally point marker");
 
-    // Tilted, close up and on terrain that rises 200 m, around the item being dragged
+    QVERIFY2(waitForCondition([&] { return rally->currentRallyPoint() == first; }, 2000,
+                              QStringLiteral("marker selects point")),
+             "Clicking the rally point marker did not select the point");
+    QCOMPARE(rally->points()->count(), 2);
+}
+
+void PlanPanelUITest::_testGeoMapRallyMarkerDragMovesOnlyTheCurrentPoint_data()
+{
+    QTest::addColumn<bool>("dragCurrentPoint");
+    QTest::addColumn<QString>("tab");
+
+    QTest::newRow("current point moves") << true << QStringLiteral("rally");
+    QTest::newRow("other point pans the map") << false << QStringLiteral("rally");
+    QTest::newRow("current point off the rally layer pans the map") << true << QStringLiteral("fence");
+}
+
+void PlanPanelUITest::_testGeoMapRallyMarkerDragMovesOnlyTheCurrentPoint()
+{
+    QFETCH(bool, dragCurrentPoint);
+    QFETCH(QString, tab);
+    const bool expectMove = dragCurrentPoint && (tab == QStringLiteral("rally"));
+
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+    _setHome();
+    if (QTest::currentTestFailed())
+        return;
+
+    RallyPointController* const rally = _planMasterController()->rallyPointController();
+    QVERIFY2(rally->supported(), "Offline vehicle should support rally points");
+    QVERIFY2(_selectTab(QStringLiteral("rally")), "Failed to open the Rally tab");
+    _clickMap(0.3, 0.4);
+    _clickMap(0.45, 0.6);
+    QVERIFY2(waitForCondition([&] { return rally->points()->count() == 2; }, 2000, QStringLiteral("points added")),
+             "Map clicks did not add rally points");
+    if (tab != QStringLiteral("rally")) {
+        QVERIFY2(_selectTab(tab), "Failed to open the tab");
+    }
+
+    QObject* const current = rally->currentRallyPoint();
+    QObject* const target = dragCurrentPoint ? current : rally->points()->get(0);
+    QVERIFY(target);
+    QCOMPARE(target == current, dragCurrentPoint);
+
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+    const auto windowPoint = [&](const QGeoCoordinate& coordinate) {
+        return map->mapToScene(mapScreenPoint(map, coordinate)).toPoint();
+    };
+    const auto targetCoordinate = [&]() { return target->property("coordinate").value<QGeoCoordinate>(); };
+
+    const QGeoCoordinate before = targetCoordinate();
+    const QPoint start = windowPoint(before);
+    QVERIFY2(map->contains(map->mapFromScene(start)), "The marker is not on screen");
+    const QPoint delta(-70, 50);
+
+    QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, start);
+    constexpr int steps = 10;
+    for (int i = 1; i <= steps; i++) {
+        QTest::mouseMove(_window, start + ((delta * i) / steps));
+    }
+    QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, start + delta);
+
+    if (expectMove) {
+        QVERIFY2(waitForCondition([&] { return targetCoordinate().distanceTo(before) > 1.0; }, 2000,
+                                  QStringLiteral("point moved")),
+                 "Dragging the current point's marker did not move the point");
+        // The marker ends up under the cursor, with the point's altitude untouched
+        const QPoint end = windowPoint(targetCoordinate());
+        QVERIFY2((end - (start + delta)).manhattanLength() <= 4,
+                 qPrintable(QStringLiteral("Marker ended at %1,%2 instead of under the cursor at %3,%4")
+                                .arg(end.x())
+                                .arg(end.y())
+                                .arg(start.x() + delta.x())
+                                .arg(start.y() + delta.y())));
+        QVERIFY(qFuzzyCompare(targetCoordinate().altitude(), before.altitude()));
+        QCOMPARE(rally->currentRallyPoint(), target);
+    } else {
+        // The press went to the map gesture: the map followed the cursor and the point stayed put
+        QVERIFY2(waitForCondition([&] { return (windowPoint(before) - start).manhattanLength() > 20; }, 2000,
+                                  QStringLiteral("map panned")),
+                 "Dragging a marker that is not draggable did not pan the map");
+        QVERIFY2(targetCoordinate().distanceTo(before) < 0.01, "Dragging a non-current marker moved its point");
+    }
+    QCOMPARE(rally->points()->count(), 2);
+}
+
+void PlanPanelUITest::_addGeoMapRallyPoint(QQuickItem*& marker)
+{
+    marker = nullptr;
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    _clickMap(0.4, 0.5);
+    if (QTest::currentTestFailed())
+        return;
+    MissionController* const controller = _missionController();
+    QVERIFY(controller);
+    QVERIFY2(waitForCondition([&] { return controller->homePositionSet(); }, 2000, QStringLiteral("home set")),
+             "Map click on the Plan tab did not set home");
+
+    RallyPointController* const rally = _planMasterController()->rallyPointController();
+    QVERIFY2(rally->supported(), "Offline vehicle should support rally points");
+    QVERIFY2(_selectTab(QStringLiteral("rally")), "Failed to open the Rally tab");
+    _clickMap(0.5, 0.5);
+    if (QTest::currentTestFailed())
+        return;
+    QVERIFY2(waitForCondition([&] { return rally->points()->count() == 1; }, 2000, QStringLiteral("point added")),
+             "Map click did not add a rally point");
+
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+    QVERIFY2(waitForCondition(
+                 [&] {
+                     const auto markers = findGeoMapItems(map, QStringLiteral("geoMapRallyPoint"));
+                     marker = markers.isEmpty() ? nullptr : markers.first();
+                     return marker != nullptr;
+                 },
+                 2000, QStringLiteral("rally marker")),
+             "The rally point has no map marker");
+}
+
+void PlanPanelUITest::_testGeoMapRallyMarkerHeightFollowsFirmwareAndFrame_data()
+{
+    QTest::addColumn<int>("firmwareClass");
+    QTest::addColumn<int>("frame");
+    QTest::addColumn<double>("altitude");
+    QTest::addColumn<bool>("onGround");
+
+    // A PX4 rally altitude is the ground elevation, an ArduPilot one a flight altitude
+    QTest::newRow("px4 point lies on the terrain")
+        << int(QGCMAVLink::FirmwareClassPX4) << int(QGroundControlQmlGlobal::AltitudeFrameRelative) << 50.0 << true;
+    QTest::newRow("ardupilot relative point floats above home")
+        << int(QGCMAVLink::FirmwareClassArduPilot) << int(QGroundControlQmlGlobal::AltitudeFrameRelative) << 50.0
+        << false;
+    QTest::newRow("ardupilot amsl point floats at its altitude")
+        << int(QGCMAVLink::FirmwareClassArduPilot) << int(QGroundControlQmlGlobal::AltitudeFrameAbsolute) << 900.0
+        << false;
+    QTest::newRow("ardupilot terrain point floats above the terrain")
+        << int(QGCMAVLink::FirmwareClassArduPilot) << int(QGroundControlQmlGlobal::AltitudeFrameTerrain) << 50.0
+        << false;
+}
+
+void PlanPanelUITest::_testGeoMapRallyMarkerHeightFollowsFirmwareAndFrame()
+{
+    QFETCH(int, firmwareClass);
+    QFETCH(int, frame);
+    QFETCH(double, altitude);
+    QFETCH(bool, onGround);
+
+    if ((firmwareClass == QGCMAVLink::FirmwareClassArduPilot) && !apmFirmwareSupported()) {
+        QSKIP("ArduPilot firmware support is not built");
+    }
+    Fact* const firmwareFact = SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass();
+    const QVariant savedFirmwareClass = firmwareFact->rawValue();
+    const auto restoreGuard = qScopeGuard([=] { firmwareFact->setRawValue(savedFirmwareClass); });
+    firmwareFact->setRawValue(firmwareClass);
+
+    QQuickItem* marker = nullptr;
+    _addGeoMapRallyPoint(marker);
+    if (QTest::currentTestFailed())
+        return;
+
+    QCOMPARE(marker->property("groundMarker").toBool(), onGround);
+    QCOMPARE(marker->property("altitudeMode").toInt(),
+             int(onGround ? GeoMapItem::AltitudeMode::ClampToGround : GeoMapItem::AltitudeMode::Absolute));
+    if (onGround) {
+        return;
+    }
+
+    auto* const point = qobject_cast<RallyPoint*>(_planMasterController()->rallyPointController()->points()->get(0));
+    QVERIFY(point);
+    point->setAltitudeFrame(static_cast<QGroundControlQmlGlobal::AltitudeFrame>(frame));
+    point->altitude()->setRawValue(altitude);
+
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
     QObject* const surfaceModel = map->property("surfaceModel").value<QObject*>();
     QVERIFY(surfaceModel);
-    QVERIFY(surfaceModel->setProperty("debugHills", true));
-    QVERIFY(map->setProperty("zoomLevel", 17.0));
-    QVERIFY(map->setProperty("center", QVariant::fromValue(target->coordinate())));
+    MissionController* const controller = _missionController();
+    QVERIFY(controller);
+    const auto expectedAltitude = [&]() {
+        switch (frame) {
+            case QGroundControlQmlGlobal::AltitudeFrameAbsolute:
+                return altitude;
+            case QGroundControlQmlGlobal::AltitudeFrameTerrain: {
+                double terrainHeight = qQNaN();
+                QMetaObject::invokeMethod(surfaceModel, "terrainHeightAt", Q_RETURN_ARG(double, terrainHeight),
+                                          Q_ARG(QGeoCoordinate, point->coordinate()));
+                return terrainHeight + altitude;
+            }
+            default:
+                return controller->plannedHomePosition().altitude() + altitude;
+        }
+    };
+    const auto markerAltitude = [&]() { return marker->property("coordinate").value<QGeoCoordinate>().altitude(); };
+    QVERIFY2(waitForCondition([&] { return qAbs(markerAltitude() - expectedAltitude()) < 0.01; }, 2000,
+                              QStringLiteral("marker altitude")),
+             qPrintable(
+                 QStringLiteral("Marker drawn at %1 m instead of %2 m").arg(markerAltitude()).arg(expectedAltitude())));
+}
+
+void PlanPanelUITest::_testGeoMapRallyGroundMarkingMatchesMarkerSize_data()
+{
+    QTest::addColumn<int>("firmwareClass");
+    QTest::addColumn<QString>("markingName");
+    QTest::addColumn<double>("altitude");  // NaN: the default altitude
+    QTest::addColumn<double>("zoomLevel");
+
+    QTest::newRow("px4 ground circle") << int(QGCMAVLink::FirmwareClassPX4)
+                                       << QStringLiteral("geoMapGroundMarkerCircle") << qQNaN() << 15.0;
+    QTest::newRow("ardupilot drop shadow")
+        << int(QGCMAVLink::FirmwareClassArduPilot) << QStringLiteral("geoMapDropShadow") << qQNaN() << 15.0;
+    // The shadow is much farther from the camera than the marker it belongs to
+    QTest::newRow("ardupilot drop shadow under a high point close up")
+        << int(QGCMAVLink::FirmwareClassArduPilot) << QStringLiteral("geoMapDropShadow") << 400.0 << 18.0;
+}
+
+void PlanPanelUITest::_testGeoMapRallyGroundMarkingMatchesMarkerSize()
+{
+    QFETCH(int, firmwareClass);
+    QFETCH(QString, markingName);
+    QFETCH(double, altitude);
+    QFETCH(double, zoomLevel);
+
+    if ((firmwareClass == QGCMAVLink::FirmwareClassArduPilot) && !apmFirmwareSupported()) {
+        QSKIP("ArduPilot firmware support is not built");
+    }
+    Fact* const firmwareFact = SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass();
+    const QVariant savedFirmwareClass = firmwareFact->rawValue();
+    const auto restoreGuard = qScopeGuard([=] { firmwareFact->setRawValue(savedFirmwareClass); });
+    firmwareFact->setRawValue(firmwareClass);
+
+    QQuickItem* marker = nullptr;
+    _addGeoMapRallyPoint(marker);
+    if (QTest::currentTestFailed())
+        return;
+
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+    auto* const point = qobject_cast<RallyPoint*>(_planMasterController()->rallyPointController()->points()->get(0));
+    QVERIFY(point);
+    if (!qIsNaN(altitude)) {
+        point->altitude()->setRawValue(altitude);
+    }
+    QVERIFY(map->setProperty("zoomLevel", zoomLevel));
+    QVERIFY(map->setProperty("center", QVariant::fromValue(point->coordinate())));
+    auto* const camera = map->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+    QVERIFY2(camera, "GeoMapCamera not found");
     camera->setMode(GeoMapCamera::Mode::Mode3D);
     QVERIFY2(waitForCondition([&] { return qFuzzyCompare(camera->tilt(), GeoMapCamera::kDefault3DTilt); }, 3000,
                               QStringLiteral("3D transition")),
              "The camera did not finish the transition to 3D");
 
-    const auto findMarker = [&]() -> QQuickItem* {
-        for (QQuickItem* const marker : findGeoMapWaypointMarkers(map)) {
-            if (marker->property("item").value<QObject*>() == target) {
-                return marker;
-            }
+    const QList<QQuickItem*> markings = findGeoMapItems(marker, markingName);
+    QVERIFY2(!markings.isEmpty(), qPrintable(QStringLiteral("No %1 under the rally marker").arg(markingName)));
+    auto* const path = markings.first()->findChild<GeoMapProjectedPath*>();
+    QVERIFY(path);
+
+    // Its across-the-view width is not foreshortened by the tilt, so it matches the marker diameter
+    const auto markingWidth = [&]() {
+        const QVariantList points = path->screenPoints();
+        if (points.isEmpty()) {
+            return 0.0;
         }
-        return nullptr;
+        qreal minX = points.first().toPointF().x();
+        qreal maxX = minX;
+        for (const QVariant& point : points) {
+            minX = std::min(minX, point.toPointF().x());
+            maxX = std::max(maxX, point.toPointF().x());
+        }
+        return maxX - minX;
     };
+    const qreal markerSize = marker->property("_indicatorSize").toReal();
+    QVERIFY(markerSize > 0);
+    QVERIFY2(
+        waitForCondition([&] { return qAbs(markingWidth() - markerSize) < markerSize * 0.1; }, 3000,
+                         QStringLiteral("marking size")),
+        qPrintable(
+            QStringLiteral("%1 is %2 px wide, the marker %3 px").arg(markingName).arg(markingWidth()).arg(markerSize)));
+}
+
+void PlanPanelUITest::_testGeoMapTerrainRelativeDragKeepsTheMarkerUnderTheCursor_data()
+{
+    QTest::addColumn<bool>("rallyPoint");
+
+    QTest::newRow("waypoint") << false;
+    QTest::newRow("ardupilot terrain rally point") << true;
+}
+
+void PlanPanelUITest::_testGeoMapTerrainRelativeDragKeepsTheMarkerUnderTheCursor()
+{
+    QFETCH(bool, rallyPoint);
+
+    if (rallyPoint && !apmFirmwareSupported()) {
+        QSKIP("ArduPilot firmware support is not built");
+    }
+    Fact* const firmwareFact = SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass();
+    const QVariant savedFirmwareClass = firmwareFact->rawValue();
+    const auto restoreGuard = qScopeGuard([=] { firmwareFact->setRawValue(savedFirmwareClass); });
+
+    // A terrain-relative marker stands at its height above the terrain, which changes as it is dragged
+    QQuickItem* map = nullptr;
+    std::function<QGeoCoordinate()> targetCoordinate;
+    std::function<QQuickItem*()> findMarker;
+    if (rallyPoint) {
+        firmwareFact->setRawValue(QGCMAVLink::FirmwareClassArduPilot);
+        QQuickItem* rallyMarker = nullptr;
+        _addGeoMapRallyPoint(rallyMarker);
+        if (QTest::currentTestFailed())
+            return;
+        auto* const point =
+            qobject_cast<RallyPoint*>(_planMasterController()->rallyPointController()->points()->get(0));
+        QVERIFY(point);
+        point->setAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameTerrain);
+        point->altitude()->setRawValue(50.0);
+        targetCoordinate = [point] { return point->coordinate(); };
+        findMarker = [rallyMarker] { return rallyMarker; };
+    } else {
+        _startPlanPanel(true /* geoMapEngine */);
+        if (QTest::currentTestFailed())
+            return;
+        MissionController* const controller = _missionController();
+        QVERIFY(controller);
+        controller->setGlobalAltitudeFrame(QGroundControlQmlGlobal::AltitudeFrameCalcAboveTerrain);
+        _buildMission(2);
+        if (QTest::currentTestFailed())
+            return;
+        // Disarm the Waypoint tool so a marker press can only select or drag
+        QVERIFY2(clickButton(QLatin1String(kWaypointButton)), "Failed to disarm the Waypoint tool");
+        VisualMissionItem* const target = controller->currentPlanViewItem();
+        QVERIFY(target);
+        targetCoordinate = [target] { return target->coordinate(); };
+        findMarker = [&map, target]() -> QQuickItem* {
+            for (QQuickItem* const marker : findGeoMapWaypointMarkers(map)) {
+                if (marker->property("item").value<QObject*>() == target) {
+                    return marker;
+                }
+            }
+            return nullptr;
+        };
+    }
+
+    map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+    auto* const camera = map->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+    QVERIFY2(camera, "GeoMapCamera not found");
+
+    // Tilted, close up and on terrain that rises 200 m, around the marker being dragged
+    QObject* const surfaceModel = map->property("surfaceModel").value<QObject*>();
+    QVERIFY(surfaceModel);
+    QVERIFY(surfaceModel->setProperty("debugHills", true));
+    QVERIFY(map->setProperty("zoomLevel", 17.0));
+    QVERIFY(map->setProperty("center", QVariant::fromValue(targetCoordinate())));
+    camera->setMode(GeoMapCamera::Mode::Mode3D);
+    QVERIFY2(waitForCondition([&] { return qFuzzyCompare(camera->tilt(), GeoMapCamera::kDefault3DTilt); }, 3000,
+                              QStringLiteral("3D transition")),
+             "The camera did not finish the transition to 3D");
+
     const auto markerPoint = [&]() {
         QQuickItem* const marker = findMarker();
         return marker ? marker->mapToScene(QPointF(marker->width() / 2, marker->height() / 2)).toPoint()
@@ -1000,7 +1388,7 @@ void PlanPanelUITest::_testGeoMapTerrainWaypointDragKeepsTheMarkerUnderTheCursor
                  5000, QStringLiteral("marker on screen")),
              "The marker is not on screen");
 
-    const QGeoCoordinate before = target->coordinate();
+    const QGeoCoordinate before = targetCoordinate();
     const QPoint start = markerPoint();
     const QPoint delta(-160, 110);
     QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, start);
@@ -1008,9 +1396,9 @@ void PlanPanelUITest::_testGeoMapTerrainWaypointDragKeepsTheMarkerUnderTheCursor
     QTest::mouseMove(_window, start + delta);
     QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, start + delta);
 
-    QVERIFY2(waitForCondition([&] { return target->coordinate().distanceTo(before) > 1.0; }, 2000,
-                              QStringLiteral("item moved")),
-             "Dragging the current item's marker did not move the item");
+    QVERIFY2(waitForCondition([&] { return targetCoordinate().distanceTo(before) > 1.0; }, 2000,
+                              QStringLiteral("marker moved")),
+             "Dragging the current marker did not move it");
     const QPoint end = markerPoint();
     QVERIFY2((end - (start + delta)).manhattanLength() <= 6,
              qPrintable(QStringLiteral("Marker ended at %1,%2 instead of under the cursor at %3,%4")
@@ -1182,6 +1570,9 @@ void PlanPanelUITest::_testFenceTabAddsFenceInsideTheGeoMapViewport()
     _startPlanPanel(true /* geoMapEngine */);
     if (QTest::currentTestFailed())
         return;
+    _setHome();
+    if (QTest::currentTestFailed())
+        return;
 
     PlanMasterController* const master = _planMasterController();
     QVERIFY(master);
@@ -1263,6 +1654,9 @@ void PlanPanelUITest::_testFenceTabAddsFenceInsideTheViewportOverTheDateline()
 
     // The QtLocation map is the one that shows both sides of the antimeridian
     _startPlanPanel();
+    if (QTest::currentTestFailed())
+        return;
+    _setHome();
     if (QTest::currentTestFailed())
         return;
 
@@ -1795,6 +2189,9 @@ void PlanPanelUITest::_testFenceTabAddsSelectsAndEditsFences()
     _startPlanPanel();
     if (QTest::currentTestFailed())
         return;
+    _setHome();
+    if (QTest::currentTestFailed())
+        return;
 
     PlanMasterController* const master = _planMasterController();
     QVERIFY(master);
@@ -1935,6 +2332,9 @@ void PlanPanelUITest::_testFenceInspectorStepsAcrossEntriesInDrillIn()
     _startPlanPanel();
     if (QTest::currentTestFailed())
         return;
+    _setHome();
+    if (QTest::currentTestFailed())
+        return;
 
     GeoFenceController* const fence = _planMasterController()->geoFenceController();
     QVERIFY2(_selectTab(QStringLiteral("fence")), "Failed to open the Fence tab");
@@ -1988,6 +2388,9 @@ void PlanPanelUITest::_testFenceInspectorStepsAcrossEntriesInDrillIn()
 void PlanPanelUITest::_testRallyTabListsSelectsAndDeletesPoints()
 {
     _startPlanPanel();
+    if (QTest::currentTestFailed())
+        return;
+    _setHome();
     if (QTest::currentTestFailed())
         return;
 
@@ -2046,6 +2449,9 @@ void PlanPanelUITest::_testRallyTabListsSelectsAndDeletesPoints()
 void PlanPanelUITest::_testRallyInspectorStepsInDrillIn()
 {
     _startPlanPanel();
+    if (QTest::currentTestFailed())
+        return;
+    _setHome();
     if (QTest::currentTestFailed())
         return;
 

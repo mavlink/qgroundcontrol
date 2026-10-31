@@ -1,10 +1,7 @@
 #include "HwBuffers.h"
 
-#include <atomic>
 #include <optional>
 #include <utility>
-
-#include <QtCore/QByteArray>
 
 #include "QGCLoggingCategory.h"
 
@@ -13,10 +10,14 @@
 #include "GstHwPathRegistry.h"
 #include "QGCRhiCapture.h"
 #endif
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+#include "GstDmaBufVideoBuffer.h"
+#ifdef QGC_UNITTEST_BUILD
+#include "gstqgc/GstQgcCaps.h"
+#endif
+#endif
 
 namespace HwBuffers {
-
-QGC_LOGGING_CATEGORY(HwBuffersConfigLog, "Video.GStreamer.HwBuffers.Config")
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
 QGC_LOGGING_CATEGORY(HwBuffersFacadeLog, "Video.GStreamer.HwBuffers.Facade")
@@ -50,123 +51,6 @@ void onPipelineError(const GError* error, const gchar* debug) noexcept
         resetCachedGpuResources();
     }
 }
-
-HwBufferEnvConfig readHwBufferEnvConfig() noexcept
-{
-    const auto truthy = [](const char* name, bool dflt) noexcept {
-        const QByteArray v = qgetenv(name).trimmed().toLower();
-        if (v.isEmpty()) {
-            return dflt;
-        }
-        return v != "0" && v != "false" && v != "off" && v != "no";
-    };
-    HwBufferEnvConfig c;
-    c.dmaBufCache = truthy("QGC_GST_DMABUF_CACHE", false);
-    c.dmaBufSingleEglImage = truthy("QGC_GST_DMABUF_SINGLE_EGLIMAGE", true);
-    c.dmaBufNoMmapFence = truthy("QGC_GST_DMABUF_NO_MMAP_FENCE", false);
-    c.offerDmaDrmLinear = truthy("QGC_GST_OFFER_DMA_DRM_LINEAR", false);
-    return c;
-}
-
-const HwBufferEnvConfig& hwBufferEnvConfig() noexcept
-{
-    static const HwBufferEnvConfig cfg = []() noexcept {
-        const HwBufferEnvConfig c = readHwBufferEnvConfig();
-        qCInfo(HwBuffersConfigLog).nospace()
-            << "HwBuffer env config: QGC_GST_DMABUF_CACHE=" << c.dmaBufCache
-            << " QGC_GST_DMABUF_SINGLE_EGLIMAGE=" << c.dmaBufSingleEglImage
-            << " QGC_GST_DMABUF_NO_MMAP_FENCE=" << c.dmaBufNoMmapFence
-            << " QGC_GST_OFFER_DMA_DRM_LINEAR=" << c.offerDmaDrmLinear;
-        return c;
-    }();
-    return cfg;
-}
-
-namespace {
-
-struct GpuBinChoice
-{
-    GpuBinMode mode;
-    const char* reason;
-};
-
-const char* gpuBinName(GpuBinMode mode) noexcept
-{
-    switch (mode) {
-        case GpuBinMode::GlUpload:
-            return "glupload";
-        case GpuBinMode::DirectDmaBuf:
-            return "direct DMABuf";
-        case GpuBinMode::Passthrough:
-            break;
-    }
-    return "native memory passthrough";
-}
-
-GpuBinChoice chooseGpuBin() noexcept
-{
-    const QByteArray value = qgetenv("QGC_GST_GPU_BIN").trimmed().toLower();
-#if defined(QGC_GST_BIN_HAS_GLUPLOAD) && defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
-    if (value == "dmabuf") {
-        return {GpuBinMode::DirectDmaBuf, "from QGC_GST_GPU_BIN"};
-    }
-    if (value == "glupload") {
-        return {GpuBinMode::GlUpload, "from QGC_GST_GPU_BIN"};
-    }
-    if (!value.isEmpty()) {
-        qCWarning(HwBuffersConfigLog) << "Unknown QGC_GST_GPU_BIN value" << value
-                                      << "(expected glupload or dmabuf); using the default glupload bin";
-    }
-    return {GpuBinMode::GlUpload, "default"};
-#else
-#if defined(QGC_GST_BIN_HAS_GLUPLOAD)
-    constexpr GpuBinMode kOnlyMode = GpuBinMode::GlUpload;
-#elif defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
-    constexpr GpuBinMode kOnlyMode = GpuBinMode::DirectDmaBuf;
-#else
-    constexpr GpuBinMode kOnlyMode = GpuBinMode::Passthrough;
-#endif
-    return {kOnlyMode, value.isEmpty() ? "only variant compiled" : "only variant compiled; QGC_GST_GPU_BIN ignored"};
-#endif
-}
-
-#ifdef QGC_UNITTEST_BUILD
-constexpr int kNoTestGpuBinMode = -1;
-constinit std::atomic<int> s_testGpuBinMode{kNoTestGpuBinMode};
-#endif
-
-}  // namespace
-
-GpuBinMode readGpuBinMode() noexcept
-{
-    return chooseGpuBin().mode;
-}
-
-GpuBinMode gpuBinMode() noexcept
-{
-#ifdef QGC_UNITTEST_BUILD
-    if (const int testMode = s_testGpuBinMode.load(std::memory_order_acquire); testMode != kNoTestGpuBinMode) {
-        return static_cast<GpuBinMode>(testMode);
-    }
-#endif
-    static const GpuBinMode mode = []() noexcept {
-        const GpuBinChoice choice = chooseGpuBin();
-        qCInfo(HwBuffersConfigLog).nospace() << "GPU bin: " << gpuBinName(choice.mode) << " (" << choice.reason << ")";
-        return choice.mode;
-    }();
-    return mode;
-}
-
-#ifdef QGC_UNITTEST_BUILD
-ScopedGpuBinModeForTest::ScopedGpuBinModeForTest(GpuBinMode mode)
-    : _previous(s_testGpuBinMode.exchange(static_cast<int>(mode), std::memory_order_acq_rel))
-{}
-
-ScopedGpuBinModeForTest::~ScopedGpuBinModeForTest()
-{
-    s_testGpuBinMode.store(_previous, std::memory_order_release);
-}
-#endif
 
 GstBusSyncReply onBusSyncMessage(GstMessage* msg) noexcept
 {
@@ -244,6 +128,23 @@ HwVideoBufferContext makeAdapterContext(bool gpuEnabled) noexcept
     return ctx;
 }
 
+void* dmaBufImportDisplay() noexcept
+{
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+    if (GstDmaBufVideoBuffer::importDisabled()) {
+        return nullptr;
+    }
+#ifdef QGC_UNITTEST_BUILD
+    if (const std::optional<GstQgc::SinkEnvironment> environment = GstQgc::sinkEnvironmentForTest()) {
+        return environment->dmaBufDisplay;
+    }
+#endif
+    return QGCRhiCapture::qtEglDisplay();
+#else
+    return nullptr;
+#endif
+}
+
 bool answerSinkBinContextQuery(GstQuery* query) noexcept
 {
 #if defined(QGC_HAS_ANY_GPU_PATH)
@@ -277,11 +178,15 @@ bool proposeDeviceBoundPool(GstQuery* query, GstCaps* caps, const GstVideoInfo* 
     return false;
 }
 
-QString takeExtraPathStats() noexcept
+QString extraPathStatsSince(const GstHwPathTelemetry::Snapshot& baseline) noexcept
 {
     QString out;
 #if defined(QGC_HAS_ANY_GPU_PATH)
     using GstHwPathTelemetry::Counter;
+    const GstHwPathTelemetry::Snapshot now = GstHwPathTelemetry::snapshot();
+    const auto delta = [&now, &baseline](HwVideoBufferPath path, auto key) {
+        return now.count(path, key) - baseline.count(path, key);
+    };
 
     // "<path>-<label>:<count>", or "<count>/<count>" for a pair, when any count is nonzero.
     struct CounterField
@@ -300,7 +205,6 @@ QString takeExtraPathStats() noexcept
     };
     static constexpr std::pair<GstHwPathTelemetry::HwFallbackReason, const char*> kReasons[] = {
         {GstHwPathTelemetry::HwFallbackReason::NoExt, "no-ext"},
-        {GstHwPathTelemetry::HwFallbackReason::ModifierRejected, "modifier"},
         {GstHwPathTelemetry::HwFallbackReason::EglBadMatch, "egl-bad-match"},
         {GstHwPathTelemetry::HwFallbackReason::ValidateFailed, "validate"},
         {GstHwPathTelemetry::HwFallbackReason::UnknownMemType, "unknown-mem"},
@@ -308,14 +212,14 @@ QString takeExtraPathStats() noexcept
         {GstHwPathTelemetry::HwFallbackReason::VulkanNoSync, "vulkan-no-sync"},
         {GstHwPathTelemetry::HwFallbackReason::ImportUnsupported, "import-unsupported"},
     };
-    forEachCompiledPath([&out](HwVideoBufferPath path) {
+    forEachCompiledPath([&out, &delta](HwVideoBufferPath path) {
         const QLatin1String pathLabel(GstHw::toString(path));
         for (const CounterField& field : kCounterFields) {
-            const quint64 first = GstHwPathTelemetry::take(path, field.first);
+            const quint64 first = delta(path, field.first);
             bool nonzero = (first > 0);
             QString counts = QString::number(first);
             if (field.second) {
-                const quint64 second = GstHwPathTelemetry::take(path, *field.second);
+                const quint64 second = delta(path, *field.second);
                 nonzero = nonzero || (second > 0);
                 counts += u'/' + QString::number(second);
             }
@@ -329,7 +233,7 @@ QString takeExtraPathStats() noexcept
         }
         QString reasonBreakdown;
         for (const auto& [reason, label] : kReasons) {
-            const quint64 n = GstHwPathTelemetry::takeFallbackReason(path, reason);
+            const quint64 n = delta(path, reason);
             if (n > 0) {
                 reasonBreakdown += QStringLiteral("%1=%2,").arg(QLatin1String(label)).arg(n);
             }
@@ -340,11 +244,12 @@ QString takeExtraPathStats() noexcept
         }
     });
     // None-path accumulates UnknownMemType (no allocator matched any compiled path).
-    const quint64 unknownMem = GstHwPathTelemetry::takeFallbackReason(
-        HwVideoBufferPath::None, GstHwPathTelemetry::HwFallbackReason::UnknownMemType);
+    const quint64 unknownMem = delta(HwVideoBufferPath::None, GstHwPathTelemetry::HwFallbackReason::UnknownMemType);
     if (unknownMem > 0) {
         out += QStringLiteral(" None-fallback[unknown-mem=%1]").arg(unknownMem);
     }
+#else
+    Q_UNUSED(baseline);
 #endif
     return out;
 }

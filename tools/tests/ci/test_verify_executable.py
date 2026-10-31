@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 
 import pytest
-from ci.packaging import verify_executable
+from ci.packaging import macho_bundle_audit, verify_executable
 from ci.packaging.verify_executable import (
     BOOT_TIMEOUT_EXIT_CODE,
     _boot_command,
@@ -23,7 +23,7 @@ from ci.packaging.verify_executable import (
     _verify_appimage_update_information,
 )
 
-from .._helpers import load_action, load_workflow
+from .._helpers import load_action, load_workflow, read_github_file
 
 pytestmark = pytest.mark.windows
 
@@ -106,6 +106,80 @@ class TestSetupGstreamerEnv:
                 "gstrtp.dll",
             ]
             assert (stage / "gstrtp.dll").read_bytes() == b"gstrtp.dll"
+
+
+def _fake_windows_sdk(build_dir: Path, plugins: tuple[str, ...], shipped: tuple[str, ...]) -> Path:
+    gst_root = build_dir / "gstreamer"
+    plugin_dir = gst_root / "lib" / "gstreamer-1.0"
+    plugin_dir.mkdir(parents=True)
+    for name in plugins:
+        (plugin_dir / name).write_bytes(name.encode())
+    scanner = gst_root / "libexec" / "gstreamer-1.0" / "gst-plugin-scanner.exe"
+    scanner.parent.mkdir(parents=True)
+    scanner.write_bytes(b"MZ")
+    scanner.chmod(0o755)
+    libproxy = gst_root / "lib" / "libproxy"
+    libproxy.mkdir()
+    (libproxy / "pxbackend-1.0.dll").write_bytes(b"MZ")
+    cached = ";".join(str(plugin_dir / name) for name in shipped)
+    (build_dir / "CMakeCache.txt").write_text(
+        f"QGC_GST_RESOLVED_ROOT:INTERNAL={gst_root}\nQGC_GST_SHIPPED_PLUGINS:INTERNAL={cached}\n"
+    )
+    return gst_root
+
+
+def test_export_gives_later_steps_the_shipped_and_test_only_plugins(
+    tmp_path, monkeypatch, gh_env, gh_path
+):
+    """CTest loads the shipped plugins plus the test-only sources and encoders the SDK has."""
+    gst_root = _fake_windows_sdk(
+        tmp_path,
+        (
+            "gstcoreelements.dll",
+            "gstrtp.dll",
+            "gstvideotestsrc.dll",
+            "gstx264.dll",
+            "gstwebrtc.dll",
+        ),
+        ("gstcoreelements.dll", "gstrtp.dll"),
+    )
+    monkeypatch.setattr(verify_executable.platform, "system", lambda: "Windows")
+
+    assert verify_executable.main(["--build-dir", str(tmp_path), "--export-gstreamer-env"]) == 0
+
+    stage = tmp_path / verify_executable.TEST_PLUGIN_DIR
+    assert sorted(path.name for path in stage.iterdir()) == [
+        "gstcoreelements.dll",
+        "gstrtp.dll",
+        "gstvideotestsrc.dll",
+        "gstx264.dll",
+    ]
+    scanner = str(gst_root / "libexec" / "gstreamer-1.0" / "gst-plugin-scanner.exe")
+    assert read_github_file(gh_env) == {
+        "GST_PLUGIN_SYSTEM_PATH": str(stage),
+        "GST_PLUGIN_SYSTEM_PATH_1_0": str(stage),
+        "GST_PLUGIN_SCANNER": scanner,
+        "GST_PLUGIN_SCANNER_1_0": scanner,
+    }
+    # The SDK's DLLs, and the libproxy backends proxy-1.dll loads for giolibproxy.dll, which the install puts in bin.
+    assert (
+        gh_path.read_text(encoding="utf-8")
+        == f"{gst_root / 'bin'}\n{gst_root / 'lib' / 'libproxy'}\n"
+    )
+    assert not (tmp_path / verify_executable.SHIPPED_PLUGIN_DIR).exists()
+
+
+def test_export_without_an_sdk_fails(tmp_path, capsys, gh_env):
+    assert verify_executable.main(["--build-dir", str(tmp_path), "--export-gstreamer-env"]) == 1
+    assert "records no GStreamer SDK" in capsys.readouterr().out
+    assert gh_env.read_text(encoding="utf-8") == ""
+
+
+def test_export_needs_a_build_dir(capsys):
+    with pytest.raises(SystemExit) as exit_info:
+        verify_executable.main(["--export-gstreamer-env"])
+    assert exit_info.value.code == 2
+    assert "--export-gstreamer-env needs --build-dir" in capsys.readouterr().err
 
 
 def test_verify_appimage_update_information(tmp_path, monkeypatch):
@@ -515,6 +589,8 @@ class FakeDmgTools:
             return subprocess.CompletedProcess(cmd, rc, stdout="", stderr="resource busy")
         if cmd[0] == "lipo":
             return subprocess.CompletedProcess(cmd, 0, stdout=f"{self.archs}\n", stderr="")
+        if cmd[:2] == ["codesign", "--display"]:
+            return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="Signature=adhoc\n")
         raise AssertionError(f"unexpected command: {cmd}")
 
     def execute(self, cmd, env, cwd, timeout, on_timeout=None):
@@ -532,6 +608,7 @@ def _run_dmg_main(monkeypatch, tmp_path, tools: FakeDmgTools, *, create_dmg=True
         dmg.write_bytes(b"dmg")
     monkeypatch.delenv("QT_QPA_PLATFORM", raising=False)
     monkeypatch.setattr(subprocess, "run", tools)
+    monkeypatch.setattr(macho_bundle_audit.shutil, "which", lambda name: f"/usr/bin/{name}")
     monkeypatch.setattr(verify_executable, "_execute", tools.execute)
     monkeypatch.setattr(verify_executable.platform, "system", lambda: "Darwin")
     return verify_executable.main(
@@ -543,9 +620,12 @@ def test_dmg_verifies_bundle_inside_image_and_detaches(monkeypatch, tmp_path, gh
     tools = FakeDmgTools()
 
     assert _run_dmg_main(monkeypatch, tmp_path, tools) == 0
-    summary = gh_summary.read_text(encoding="utf-8")
-    assert summary.startswith("### Boot test\n\n| Item | Value |")
-    assert "| Result | passed |\n| Package | `QGroundControl.dmg` |\n| Type | dmg |" in summary
+    audit, boot = gh_summary.read_text(encoding="utf-8").split("### Boot test\n\n")
+    assert audit.startswith("### Bundle audit\n\n| Item | Value |")
+    assert "| Result | passed |\n| Bundle | `QGroundControl.app` |" in audit
+    assert "| Signature | ad-hoc, not verified |" in audit
+    assert boot.startswith("| Item | Value |")
+    assert "| Result | passed |\n| Package | `QGroundControl.dmg` |\n| Type | dmg |" in boot
 
     attach, detach = tools.commands("hdiutil")
     assert attach[:4] == ["hdiutil", "attach", "-nobrowse", "-readonly"]
@@ -558,8 +638,26 @@ def test_dmg_verifies_bundle_inside_image_and_detaches(monkeypatch, tmp_path, gh
     assert boot == [str(executable.resolve()), "--simple-boot-test", BOOT_LOGGING]
     assert env["QT_QPA_PLATFORM"] == "offscreen"
     assert detach == ["hdiutil", "detach", str(tools.mount_point)]
-    assert tools.calls.index(boot) < tools.calls.index(detach)
+    (codesign,) = tools.commands("codesign")
+    assert codesign[-1] == str(executable.parents[2])
+    assert tools.calls.index(codesign) < tools.calls.index(boot) < tools.calls.index(detach)
     assert not tools.mount_point.exists()
+
+
+def test_dmg_bundle_audit_failure_fails_after_the_boot_test(monkeypatch, tmp_path, gh_summary):
+    tools = FakeDmgTools()
+    audited: list[Path] = []
+    monkeypatch.setattr(
+        verify_executable, "audit_bundle", lambda bundle: audited.append(bundle) or False
+    )
+
+    assert _run_dmg_main(monkeypatch, tmp_path, tools) == 1
+
+    assert tools.mount_point is not None
+    assert audited == [tools.mount_point / "QGroundControl.app"]
+    assert len(tools.boots) == 1
+    assert "| Result | passed |" in gh_summary.read_text(encoding="utf-8")
+    assert tools.calls[-1][:2] == ["hdiutil", "detach"]
 
 
 @pytest.mark.parametrize(

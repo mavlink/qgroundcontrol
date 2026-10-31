@@ -14,11 +14,12 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 
 | Action | Purpose |
 | --- | --- |
-| `android-emulator-test` | Boot a fresh x86_64 AVD, install and launch the APK, and collect failure diagnostics, linked from the job summary |
+| `android-emulator-test` | Boot a fresh x86_64 AVD, install and launch the APK, which must run QGC's `--simple-boot-test` to completion, and collect failure diagnostics, linked from the job summary |
+| `artifact-report` | Compare a package's contents and size with master's same-named artifact in the job summary (warning beyond `size-threshold` percent) and fail when it ships GPL-licensed GStreamer code, or warn with `gpl-findings: warn` (only the Linux AppImage, a known issue); the job needs `actions: read` |
 | `attest-and-upload` | Checksum, SBOM scan, provenance and SBOM attestations, GitHub artifact upload, and optional AWS publish |
 | `aws-credentials` | Configure AWS credentials via OIDC (preferred) or static keys in one step |
 | `build-action` | Build a JavaScript action from source when no release ships a rebuilt `dist/` (kept intentionally; no current callers) |
-| `build-setup` | Platform build setup: `build_setup.py` validates the inputs and plans every mode-dependent value, then runner preparation, Python, the CMake and Ninja pinned in `build-config.json`, caches (skipped with `build-cache: 'false'`), Xcode/MSVC, Java and the Android SDK/NDK, and Qt for desktop, Android (each requested ABI), or iOS; ends with the job summary's Setup section, also after a failed step, which it names |
+| `build-setup` | Platform build setup: `build_setup.py` validates the inputs and plans every mode-dependent value, then runner preparation, Python, the CMake and Ninja pinned in `build-config.json`, caches, Xcode/MSVC, Java and the Android SDK/NDK, and Qt for desktop, Android (each requested ABI), or iOS; ends with the job summary's Setup section, also after a failed step, which it names |
 | `cache` | Plan caches with `cache_plan.py`, install ccache/mold, and restore compiler, moc, CPM, and GStreamer SDK caches (each restore result, and the compiler and moc caches' matched key, is an output) |
 | `cmake-build` | Build through `cmake_helper.py`, save build caches after success, upload and link Ninja reports, annotate build errors and PR warnings, and write the job summary's Build section |
 | `cmake-configure` | Configure QGroundControl from a required CMake preset, which sets the build type and testing; requires `qt-cmake` unless `use-qt-cmake` is `false`; writes the job summary's Configure section and, after a failure, annotates the first CMake error and uploads and links the configure logs |
@@ -33,7 +34,7 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 | `save-build-cache` | Save compiler and moc caches once per job after successful compilation |
 | `setup-python` | Detect the cache backend, set up uv and Python, and sync `tools/uv.lock` groups into `tools/.venv` |
 | `test-phase` | Run the Unit and Integration suites through `run-unit-tests`, one job-summary section each |
-| `verify-executable` | Boot-test a built binary, AppImage, DMG, or Windows executable from its directory; a failure uploads its diagnostics (7 days), linked from the job summary |
+| `verify-executable` | Boot-test a built binary, AppImage, DMG, or Windows executable from its directory (a DMG's bundle is first audited: signature, and every library its Mach-O files load); a failure uploads its diagnostics (7 days), linked from the job summary |
 
 ## External Action Reference Policy
 
@@ -56,7 +57,8 @@ an additional security problem.
   slower than 60 s. Callers must gate it on a successful build. Integration tests default to two CTest processes (`integration-parallel`); Unit tests use
   one per CPU.
 - **`run-unit-tests`** runs `cmake_helper.py ctest` (`--no-tests=error`, so empty selections
-  fail). Reporting steps run after test failures; the failed CTest step still fails the job.
+  fail), selecting by labels and, with `tests-regex`, by test name (`-R`). Reporting steps run
+  after test failures; the failed CTest step still fails the job.
   `junit_report.py` writes the `report-name` section and error annotations for failed tests
   (no `checks: write` needed), and `artifact_link.py` links the uploaded results below it; Codecov
   test analytics (`upload-codecov`) needs `id-token: write`.

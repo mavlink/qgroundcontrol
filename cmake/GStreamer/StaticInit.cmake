@@ -1,4 +1,6 @@
-# gst_init_static_plugins() generation for static GStreamer layouts (Android, iOS, desktop static SDKs).
+# The mobile GStreamer layouts (Android, iOS), where GStreamer::mobile is the one library that links the SDK's static
+# archives: its generated gst_init_static_plugins(), the symbols it keeps for the app, and the check that the app
+# carries no second GStreamer core.
 
 include_guard(GLOBAL)
 
@@ -43,8 +45,81 @@ function(qgc_gst_generate_static_init)
 
     get_target_property(_binary_dir ${ARG_TARGET} BINARY_DIR)
     set(_source "${_binary_dir}/${ARG_TARGET}_gst_static_plugins.c")
-    _qgc_gst_write_static_init("${_source}" PLUGINS ${ARG_PLUGINS} GIO_MODULES ${ARG_GIO_MODULES})
-    target_sources(${ARG_TARGET} PRIVATE "${_source}")
+    _qgc_gst_write_static_init(
+        "${_source}"
+        PLUGINS ${ARG_PLUGINS}
+        GIO_MODULES ${ARG_GIO_MODULES}
+    )
+    target_sources(
+        ${ARG_TARGET}
+        PRIVATE
+            "${_source}"
+    )
     # A C++ precompiled header (the application's) cannot be used from this C source.
-    set_source_files_properties("${_source}" TARGET_DIRECTORY ${ARG_TARGET} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+    set_source_files_properties(
+        "${_source}"
+        TARGET_DIRECTORY
+        ${ARG_TARGET}
+        PROPERTIES
+            SKIP_PRECOMPILE_HEADERS ON
+    )
+endfunction()
+
+# Core functions QGC calls that the registered plugins do not necessarily pull into GStreamer::mobile. The app links no
+# GStreamer archive, so a missing one fails its link with an undefined-symbol error naming it: add it here.
+set(QGC_GST_APP_CORE_SYMBOLS gst_debug_bin_to_dot_data gst_debug_bin_to_dot_file)
+
+# qgc_gst_mobile_keep_symbols(<symbol>...)
+# Keeps the GStreamer functions <symbol>... (C names) in GStreamer::mobile, because the app resolves every GStreamer
+# symbol from it. Use it for optional libraries QGC calls beyond QGC_GST_APP_CORE_SYMBOLS, such as the RTSP server.
+function(qgc_gst_mobile_keep_symbols)
+    if(NOT TARGET GStreamer::mobile)
+        message(FATAL_ERROR "qgc_gst_mobile_keep_symbols: GStreamer::mobile has not been created")
+    endif()
+    get_target_property(_target GStreamer::mobile ALIASED_TARGET)
+    foreach(_symbol IN LISTS ARGN)
+        if(APPLE)
+            set(_symbol "_${_symbol}")
+        endif()
+        target_link_options(${_target} PRIVATE "LINKER:-u,${_symbol}")
+    endforeach()
+endfunction()
+
+# qgc_gst_add_mobile_library([SOURCES <source>...] [PLUGINS <plugin>...])
+# Creates GStreamer::mobile, the SHARED GStreamerMobile library that the platform module links the SDK's archives into:
+# its generated gst_init_static_plugins() registers the <plugin>s and loads G_IO_MODULES, and it keeps
+# QGC_GST_APP_CORE_SYMBOLS for the app. Linked as C++: OpenH264 needs the C++ runtime.
+function(qgc_gst_add_mobile_library)
+    cmake_parse_arguments(PARSE_ARGV 0 ARG "" "" "SOURCES;PLUGINS")
+    _qgc_gst_check_args(qgc_gst_add_mobile_library ALLOW_EMPTY SOURCES PLUGINS)
+    add_library(GStreamerMobile SHARED ${ARG_SOURCES})
+    add_library(GStreamer::mobile ALIAS GStreamerMobile)
+    set_target_properties(
+        GStreamerMobile
+        PROPERTIES
+            LINKER_LANGUAGE CXX
+    )
+    qgc_gst_generate_static_init(
+        TARGET GStreamerMobile
+        PLUGINS ${ARG_PLUGINS}
+        GIO_MODULES ${G_IO_MODULES}
+    )
+    qgc_gst_mobile_keep_symbols(${QGC_GST_APP_CORE_SYMBOLS})
+endfunction()
+
+# qgc_gst_app_core_symbols(<nm_output> <symbol_prefix> <out_var>)
+# Sets <out_var> to the GStreamer core symbols that nm output for the app lists as defined, each C name preceded by
+# <symbol_prefix> ("_" for Mach-O). The app must take the core from GStreamer::mobile; a core symbol defined in the app
+# means a second core was linked into it.
+function(qgc_gst_app_core_symbols nm_output symbol_prefix out_var)
+    set(_found "")
+    foreach(_symbol IN ITEMS gst_init_check gst_element_get_type gst_plugin_feature_get_type)
+        if(nm_output MATCHES "[ \t]${symbol_prefix}${_symbol}(\n|$)")
+            list(APPEND _found "${symbol_prefix}${_symbol}")
+        endif()
+    endforeach()
+    set(${out_var}
+        "${_found}"
+        PARENT_SCOPE
+    )
 endfunction()

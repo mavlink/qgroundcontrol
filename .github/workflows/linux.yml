@@ -142,6 +142,15 @@ jobs:
         working-directory: ${{ runner.temp }}/build
         run: cmake --install . --config Release
 
+      # Known issue: Ubuntu's libavcodec, loaded by the bundled gst-libav plugin, pulls GPL x264 and x265
+      # into the AppImage, so its GPL findings only warn (ci-overview.md#artifact-report).
+      - name: Report AppImage contents
+        uses: ./.github/actions/artifact-report
+        with:
+          package: ${{ runner.temp }}/build/${{ matrix.package }}.AppImage
+          artifact-name: ${{ matrix.package }}
+          gpl-findings: warn
+
       - name: Verify AppImage
         uses: ./.github/actions/verify-executable
         with:
@@ -166,6 +175,62 @@ jobs:
         if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
         timeout-minutes: 15
         uses: ./.github/actions/debug-runner
+
+  # Boots the x86_64 AppImage in clean containers of the oldest distributions it supports (glibc 2.38+, so
+  # not Ubuntu 22.04 or Debian 12), which have no GStreamer or Qt: it must bring its own. The images come from
+  # Docker Hub, whose pull limit GitHub-hosted runners are exempt from, rather than the ECR Public mirror the
+  # RunsOn jobs use: ECR Public meters anonymous pulls by data per IP, which the shared hosted-runner IPs exhaust.
+  appimage-distros:
+    name: AppImage on ${{ matrix.distro }}
+    needs: [changes, build]
+    if: needs.changes.outputs.should_build == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    permissions:
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: Ubuntu 24.04
+            image: docker.io/library/ubuntu:24.04
+          - distro: Debian 13
+            image: docker.io/library/debian:13
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout repo
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
+
+      - name: Download AppImage
+        uses: actions/download-artifact@v8
+        with:
+          name: QGroundControl-x86_64
+          path: ${{ runner.temp }}/appimage
+
+      - name: Boot AppImage in ${{ matrix.distro }}
+        env:
+          IMAGE: ${{ matrix.image }}
+        run: >-
+          python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/appimage_container_boot.py"
+          --appimage "${RUNNER_TEMP}/appimage/QGroundControl-x86_64.AppImage" --image "${IMAGE}"
 
   debug-validation:
     name: ${{ matrix.mode == 'coverage' && 'Test + Coverage linux_gcc_64 Debug' || 'Sanitizers linux_gcc_64 Debug (ASan+UBSan)' }}
@@ -431,7 +496,7 @@ jobs:
   linux-ok:
     name: Linux
     if: always()
-    needs: [changes, build, debug-validation, custom-plugin]
+    needs: [changes, build, appimage-distros, debug-validation, custom-plugin]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
@@ -444,5 +509,5 @@ jobs:
       - name: Require every leg to pass
         uses: re-actors/alls-green@v1.3.0
         with:
-          allowed-skips: build, debug-validation, custom-plugin
+          allowed-skips: build, appimage-distros, debug-validation, custom-plugin
           jobs: ${{ toJSON(needs) }}

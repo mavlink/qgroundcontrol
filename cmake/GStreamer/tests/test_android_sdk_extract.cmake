@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.25)
 # ABIs built from one cache coexist, as with Qt's multi-ABI sub-builds.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
-include(Download)
+include(Acquire)
 include(Layout)
 include(PkgConfig)
 include(Platform)
@@ -28,8 +28,9 @@ foreach(_abi_dir IN LISTS _abi_dirs)
     file(WRITE "${_sandbox}/src/${_abi_dir}/lib/gstreamer-1.0/libgstcoreelements.a" "")
 endforeach()
 file(MAKE_DIRECTORY "${_cache_dir}")
-execute_process(COMMAND "${CMAKE_COMMAND}" -E tar cJf "${_archive}" ${_abi_dirs}
-                WORKING_DIRECTORY "${_sandbox}/src" COMMAND_ERROR_IS_FATAL ANY
+execute_process(
+    COMMAND "${CMAKE_COMMAND}" -E tar cJf "${_archive}" ${_abi_dirs} WORKING_DIRECTORY "${_sandbox}/src"
+                                                                                       COMMAND_ERROR_IS_FATAL ANY
 )
 file(SHA256 "${_archive}" _hash)
 set(QGC_BUILD_CONFIG_CONTENT

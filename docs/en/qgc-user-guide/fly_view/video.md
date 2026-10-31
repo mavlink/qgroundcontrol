@@ -27,6 +27,7 @@ Video stored on the camera may be of much higher quality, but it is likely that 
 
 Video stream recording is controlled on the [video stream instrument page](hud.md#video_instrument_page).
 Press the red circle to start recording a new video (a new video file is created each time the circle is pressed); the circle will change into a red square while recording is in progress.
+If the stream drops out while recording, the recording continues once the stream is back, in a new file named after the first with `_part2`, `_part3` and so on added (for example `2026-10-24_10.15.00_part2.mp4`).
 
 Video stream recording is configured in the [Application Settings > General tab](../settings_view/general.md):
 

@@ -1,5 +1,6 @@
 #include "GstSourceFactory.h"
 
+#include <chrono>
 #include <gst/gst.h>
 #include <gst/rtsp/gstrtsptransport.h>
 #include <utility>
@@ -18,8 +19,8 @@ namespace {
 
 using namespace GStreamer;
 
+// rtspsrc gives up on a TCP connection (RTSP control, or interleaved data) that stays silent this long.
 constexpr guint64 kRtspTcpTimeoutUs = G_GUINT64_CONSTANT(5000000);
-constexpr int kRtspRetry = 3;
 constexpr int kUdpBufferSizeBytes = 8 * 1024 * 1024;
 
 const char* elementFactoryName(GstElement* element)
@@ -172,22 +173,28 @@ GstPadProbeReturn holdUntilParameterSets(GstPad* pad, GstPadProbeInfo* info, gpo
     return GST_PAD_PROBE_REMOVE;
 }
 
-void configureH26xRtpDepayloader(GstElement* element)
+/// @p requestKeyframes: the source has a return channel (RTSP's RTCP) that carries a keyframe request upstream.
+void configureH26xRtpDepayloader(GstElement* element, bool requestKeyframes)
 {
     const char* factoryName = elementFactoryName(element);
     if (!isH26xRtpDepayloader(factoryName)) {
         return;
+    }
+    // After packet loss, ask the camera for a keyframe rather than wait out the GOP (GStreamer 1.20+).
+    if (requestKeyframes && g_object_class_find_property(G_OBJECT_GET_CLASS(element), "request-keyframe")) {
+        g_object_set(element, "request-keyframe", TRUE, nullptr);
     }
     if (const GstPadPtr srcPad = adoptPad(gst_element_get_static_pad(element, "src"))) {
         GStreamer::SourceFactory::gateOnParameterSets(srcPad.get(), g_strcmp0(factoryName, "rtph265depay") == 0);
     }
 }
 
+/// @p data: non-null when the source is RTSP.
 void configureAutopluggedElement([[maybe_unused]] GstBin* bin, [[maybe_unused]] GstBin* subBin, GstElement* element,
-                                 [[maybe_unused]] gpointer data)
+                                 gpointer data)
 {
     configureH26xParser(element);
-    configureH26xRtpDepayloader(element);
+    configureH26xRtpDepayloader(element, data != nullptr);
 }
 
 // Older Linux/system GStreamer needs an autoplug-query caps filter to keep parsebin on byte-stream output.
@@ -315,7 +322,7 @@ constexpr int kRtxMaxRetries = 1;
 // retransmission requests would only reach the source element, which drops them.
 GstElement* addJitterBuffer(GstElement* bin, guint latencyMs)
 {
-    GstElementPtr buffer = adoptElement(gst_element_factory_make("rtpjitterbuffer", nullptr));
+    GstElementPtr buffer = makeElement("rtpjitterbuffer");
     if (!buffer) {
         qCWarning(GstSourceFactoryLog) << "gst_element_factory_make('rtpjitterbuffer') failed";
         return nullptr;
@@ -454,7 +461,7 @@ GstElementPtr buildRtspSource(const QString& uri, const QUrl& sourceUrl, const C
         return nullptr;
     }
 
-    GstElementPtr source = adoptElement(gst_element_factory_make("rtspsrc", "source"));
+    GstElementPtr source = makeElement("rtspsrc", "source");
     if (!source) {
         qCWarning(GstSourceFactoryLog) << "gst_element_factory_make('rtspsrc') failed";
         return nullptr;
@@ -464,10 +471,11 @@ GstElementPtr buildRtspSource(const QString& uri, const QUrl& sourceUrl, const C
     cleanUrl.setUserInfo(QString());
     const QByteArray cleanLocation = cleanUrl.toEncoded();
 
-    // protocols mask enables TCP-interleaved fallback when UDP is blocked; without it
-    // firewalled networks hang until tcp-timeout instead of negotiating TCP.
+    // Unicast UDP, then TCP-interleaved: rtspsrc retries over TCP when no UDP data arrives within "timeout". The
+    // default would also try UDP multicast, which a GCS link never uses.
     constexpr GstRTSPLowerTrans kRtspProtocols =
         static_cast<GstRTSPLowerTrans>(GST_RTSP_LOWER_TRANS_UDP | GST_RTSP_LOWER_TRANS_TCP);
+    constexpr guint64 kRtspUdpTimeoutUs = std::chrono::microseconds(kRtspUdpTimeout).count();
 
     // rtspsrc always owns an internal jitterbuffer, so None maps to zero playout latency and no retransmission.
     const guint rtspLatencyMs = (config.jitterBuffer == JitterBuffer::None) ? 0u : latencyMs;
@@ -475,7 +483,7 @@ GstElementPtr buildRtspSource(const QString& uri, const QUrl& sourceUrl, const C
         ((config.jitterBuffer != JitterBuffer::None) && config.doRetransmission) ? TRUE : FALSE;
     g_object_set(source.get(), "location", cleanLocation.constData(), "latency", rtspLatencyMs, "do-rtcp", TRUE,
                  "do-retransmission", doRetransmission, "tcp-timeout", kRtspTcpTimeoutUs, "udp-reconnect", TRUE,
-                 "drop-on-latency", TRUE, "retry", kRtspRetry, "protocols", kRtspProtocols, nullptr);
+                 "drop-on-latency", TRUE, "timeout", kRtspUdpTimeoutUs, "protocols", kRtspProtocols, nullptr);
 
     // rtspsrc forwards latency/drop-on-latency/do-retransmission to its rtpbin, but not the rtx timing.
     if (doRetransmission) {
@@ -507,7 +515,7 @@ GstElementPtr buildTcpSource(const QUrl& sourceUrl)
         return nullptr;
     }
 
-    GstElementPtr source = adoptElement(gst_element_factory_make("tcpclientsrc", "source"));
+    GstElementPtr source = makeElement("tcpclientsrc", "source");
     if (!source) {
         qCWarning(GstSourceFactoryLog) << "gst_element_factory_make('tcpclientsrc') failed";
         return nullptr;
@@ -519,14 +527,15 @@ GstElementPtr buildTcpSource(const QUrl& sourceUrl)
 
 GstElementPtr buildUdpSource(const QUrl& sourceUrl, bool isUdpH264, bool isUdpH265)
 {
+    // Port 0 binds a free port, which udpsrc then reports in its "port" property.
     const int port = sourceUrl.port();
-    if (!validPort(port)) {
+    if ((port != 0) && !validPort(port)) {
         qCWarning(GstSourceFactoryLog) << "Invalid UDP port" << port << "in"
                                        << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
     }
 
-    GstElementPtr source = adoptElement(gst_element_factory_make("udpsrc", "source"));
+    GstElementPtr source = makeElement("udpsrc", "source");
     if (!source) {
         qCWarning(GstSourceFactoryLog) << "gst_element_factory_make('udpsrc') failed";
         return nullptr;
@@ -699,7 +708,7 @@ GstElement* create(const QString& uri, const Config& config)
     }
 
     const char* const parserFactory = isUdpH265 ? "h265parse" : "parsebin";
-    GstElementPtr parser = adoptElement(gst_element_factory_make(parserFactory, "parser"));
+    GstElementPtr parser = makeElement(parserFactory, "parser");
     if (!parser) {
         qCWarning(GstSourceFactoryLog) << "gst_element_factory_make(" << parserFactory << ") failed";
         return nullptr;
@@ -710,17 +719,18 @@ GstElement* create(const QString& uri, const Config& config)
         // UDP H.265 has no SDP/RTSP control plane. Make depayloading and parser config explicit
         // so hardware decoders, especially Android MediaCodec, see repeated VPS/SPS/PPS at IDR
         // boundaries instead of depending on parsebin's defaults after startup or reconnect.
-        rtpDepay = adoptElement(gst_element_factory_make("rtph265depay", nullptr));
+        rtpDepay = makeElement("rtph265depay");
         if (!rtpDepay) {
             qCWarning(GstSourceFactoryLog) << "gst_element_factory_make('rtph265depay') failed";
             return nullptr;
         }
         configureH26xParser(parser.get());
-        configureH26xRtpDepayloader(rtpDepay.get());
+        configureH26xRtpDepayloader(rtpDepay.get(), false);
     } else {
         // parsebin creates the depayloader and codec parser only after it sees the stream caps. Configure them
         // as soon as they are autoplugged, before data flows.
-        (void) g_signal_connect(parser.get(), "deep-element-added", G_CALLBACK(configureAutopluggedElement), nullptr);
+        (void) g_signal_connect(parser.get(), "deep-element-added", G_CALLBACK(configureAutopluggedElement),
+                                isRtsp ? GINT_TO_POINTER(TRUE) : nullptr);
     }
 
     // Older Linux/system GStreamer misnegotiates parser->decoder caps; force avc/hvc1 there only.
@@ -752,7 +762,7 @@ GstElement* create(const QString& uri, const Config& config)
 
     // Android can't determine MPEG2-TS via parsebin, so create tsdemux explicitly.
     if (isTcpMPEGTS || isUdpMPEGTS) {
-        GstElementPtr tsdemux = adoptElement(gst_element_factory_make("tsdemux", nullptr));
+        GstElementPtr tsdemux = makeElement("tsdemux");
         if (!tsdemux) {
             qCWarning(GstSourceFactoryLog) << "gst_element_factory_make('tsdemux') failed";
             return nullptr;
@@ -786,6 +796,12 @@ GstElement* create(const QString& uri, const Config& config)
     }
 
     return bin.release();
+}
+
+std::chrono::milliseconds connectGracePeriod(const QString& uri)
+{
+    return QUrl(uri).scheme().startsWith(QLatin1String("rtsp"), Qt::CaseInsensitive) ? kRtspUdpTimeout
+                                                                                     : std::chrono::milliseconds{0};
 }
 
 void gateOnParameterSets(GstPad* depayloaderSrc, bool h265)

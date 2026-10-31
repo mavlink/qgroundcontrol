@@ -314,7 +314,15 @@ Item {
     PlanViewToolBar {
         id: planToolBar
         planMasterController: _planMasterController
-        showRallyPointsHelp: _editingLayer === _layerRally
+        statusHint: {
+            if (_editingLayer === _layerPlan) {
+                return _missionController.homePositionSet ? qsTr("Click in map to move Home") : qsTr("Click in map to set Home")
+            }
+            if (_editingLayer === _layerRally) {
+                return qsTr("Click in map to add rally points")
+            }
+            return ""
+        }
     }
 
     Item {
@@ -344,6 +352,8 @@ Item {
                 centerViewport: _root._centerViewport
                 missionOpacity: _root._editingLayer == _root._layerMission ? 1 : _root._nonInteractiveOpacity
                 missionInteractive: _root._editingLayer == _root._layerMission
+                rallyOpacity: _root._editingLayer == _root._layerRally ? 1 : _root._nonInteractiveOpacity
+                rallyInteractive: _root._editingLayer == _root._layerRally
                 showControls: true
                 showScale: true
                 controlsLeftMargin: _root._leftToolWidth + _root._toolsMargin

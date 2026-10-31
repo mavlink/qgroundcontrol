@@ -107,8 +107,6 @@ set(QGC_LINK_PARALLEL_LEVEL
     CACHE STRING "Maximum parallel link jobs (prevents OOM during LTO)"
 )
 # ---- GStreamer ----
-# GStreamer_USE_STATIC_LIBS / GStreamer_USE_FRAMEWORK depend on the target platform and are declared in
-# cmake/GStreamer/Orchestrator.cmake.
 set(GStreamer_ROOT_DIR
     ""
     CACHE PATH "GStreamer SDK to use; empty selects the system SDK or an auto-downloaded one"
@@ -121,7 +119,6 @@ set(QGC_GST_VERSION
 # Fail closed: only the SDK-download platforms (Android/macOS/iOS/Windows) hit this path;
 # Linux uses system pkg-config and never downloads, so ON is a no-op there.
 option(GStreamer_REQUIRE_CHECKSUM "Fail if an SDK download's checksum cannot be verified (set OFF to bypass)" ON)
-option(GStreamer_DEBUG "Print GStreamer CMake debug messages" OFF)
 set(QGC_GST_DOWNLOAD_TIMEOUT
     ""
     CACHE STRING "GStreamer SDK download wall-clock timeout (seconds, default 1200)"

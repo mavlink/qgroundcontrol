@@ -13,9 +13,6 @@ Item {
     property var  pipView           // PipView control
     property bool isDark:   true    // true: Use dark overlay visuals
 
-    signal windowAboutToOpen    // Catch this signal to do something special prior to the item transition to windowed mode
-    signal windowAboutToClose   // Catch this signal to do special processing prior to the item transition back to pip mode
-
     property var _viewControl: control.parent
 
     states: [
@@ -68,10 +65,7 @@ Item {
             }
 
             StateChangeScript {
-                script: {
-                    control.windowAboutToOpen()
-                    pipView.showWindow()
-                }
+                script: pipView.showWindow()
             }
         }
     ]

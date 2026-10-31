@@ -22,6 +22,10 @@ inputs:
     description: CTest labels regex to exclude
     required: false
     default: 'Flaky|Network'
+  tests-regex:
+    description: CTest test-name regex to include (-R); empty selects every test the labels select
+    required: false
+    default: ''
   parallel:
     description: Number of parallel CTest jobs, or 'auto' (one per CPU)
     required: false
@@ -57,6 +61,8 @@ runs:
   using: composite
   steps:
     # cmake_helper.py and junit_report.py read the INPUT_* variables as argument defaults.
+    # QT_FORCE_STDERR_LOGGING sends QtTest's results to the captured output on Windows, where with no
+    # console attached they otherwise go to OutputDebugString.
     - name: Run CTest
       shell: bash
       working-directory: ${{ inputs.build-dir }}
@@ -67,6 +73,8 @@ runs:
         INPUT_PARALLEL: ${{ inputs.parallel }}
         INPUT_INCLUDE_LABELS: ${{ inputs.include-labels }}
         INPUT_EXCLUDE_LABELS: ${{ inputs.exclude-labels }}
+        INPUT_TESTS_REGEX: ${{ inputs.tests-regex }}
+        QT_FORCE_STDERR_LOGGING: '1'
 
     # The steps below also run after test failures; the failed CTest step still fails the action.
     - name: Report test results

@@ -78,7 +78,6 @@
 #include "VehicleTemperatureFactGroup.h"
 #include "VehicleVibrationFactGroup.h"
 #include "VehicleWindFactGroup.h"
-#include "VideoManager.h"
 #include "VideoSettings.h"
 
 #ifdef QT_DEBUG
@@ -1266,11 +1265,6 @@ void Vehicle::_updateArmed(bool armed)
         } else {
             _trajectoryPoints->stop();
             _flightTimerStop();
-            // Also handle Video Streaming
-            if(SettingsManager::instance()->videoSettings()->disableWhenDisarmed()->rawValue().toBool()) {
-                SettingsManager::instance()->videoSettings()->streamEnabled()->setRawValue(false);
-                VideoManager::instance()->stopVideo();
-            }
         }
     }
 }
