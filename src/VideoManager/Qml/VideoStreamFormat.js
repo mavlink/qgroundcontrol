@@ -14,8 +14,3 @@ function durationText(ms) {
     return hours > 0 ? qsTr("%1:%2:%3").arg(hours).arg(String(minutes).padStart(2, "0")).arg(seconds)
                      : qsTr("%1:%2").arg(minutes).arg(seconds)
 }
-
-function sizeText(bytes) {
-    const megabytes = bytes / (1024 * 1024)
-    return megabytes >= 1024 ? qsTr("%1 GB").arg((megabytes / 1024).toFixed(2)) : qsTr("%1 MB").arg(megabytes.toFixed(1))
-}

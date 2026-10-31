@@ -11,17 +11,14 @@ Item {
     property bool useSmallFont: true
     /// Height covered at the top of the view, which the thermal picture-in-picture stays below.
     property real thermalPipTopInset: 0
-    readonly property var camera: _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
+    /// The camera whose thermal mode and zoom the view follows: the active vehicle's current camera by default.
+    property var camera: _activeVehicle && _activeVehicle.cameraManager ? _activeVehicle.cameraManager.currentCameraInstance : null
 
     property double _ar:                (cameraLoader.visible && cameraLoader.status === Loader.Ready)
                                             ? cameraLoader.item.implicitWidth / cameraLoader.item.implicitHeight
                                             : QGroundControl.videoManager.aspectRatio
     property bool   _showGrid:          QGroundControl.settingsManager.videoSettings.gridLines.rawValue
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property var    _dynamicCameras:    _activeVehicle ? _activeVehicle.cameraManager : null
-    property bool   _connected:         _activeVehicle ? !_activeVehicle.communicationLost : false
-    property int    _curCameraIndex:    _dynamicCameras ? _dynamicCameras.currentCamera : 0
-    property bool   _isCamera:          _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property bool   _hasZoom:           camera && camera.hasZoom
     property int    _fitMode:           QGroundControl.settingsManager.videoSettings.videoFit.rawValue
     property bool   _showStreamLoader:  QGroundControl.videoManager.decoding
@@ -164,33 +161,27 @@ Item {
         //-- Thermal Image
         Item {
             id:                 thermalItem
+            objectName:         "videoViewThermal"
             width:              height * QGroundControl.videoManager.thermalAspectRatio
             height:             camera ? (camera.thermalMode === MavlinkCameraControlInterface.THERMAL_FULL ? parent.height : (camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP ? ScreenTools.defaultFontPixelHeight * 12 : parent.height * _thermalHeightFactor)) : 0
-            anchors.centerIn:   parent
+            anchors.horizontalCenter:   parent.horizontalCenter
+            anchors.verticalCenter:     parent.verticalCenter
+            // Apply only in the pip state, which anchors the top left corner instead.
+            anchors.topMargin:          root.thermalPipTopInset + (ScreenTools.defaultFontPixelHeight * 0.5)
+            anchors.leftMargin:         ScreenTools.defaultFontPixelWidth * 12
             visible:            QGroundControl.videoManager.hasThermal && camera && camera.thermalMode !== MavlinkCameraControlInterface.THERMAL_OFF
-            function pipOrNot() {
-                if(camera) {
-                    if(camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP) {
-                        anchors.centerIn    = undefined
-                        anchors.top         = parent.top
-                        anchors.topMargin   = Qt.binding(() => root.thermalPipTopInset + (ScreenTools.defaultFontPixelHeight * 0.5))
-                        anchors.left        = parent.left
-                        anchors.leftMargin  = ScreenTools.defaultFontPixelWidth * 12
-                    } else {
-                        anchors.top         = undefined
-                        anchors.topMargin   = undefined
-                        anchors.left        = undefined
-                        anchors.leftMargin  = undefined
-                        anchors.centerIn    = parent
-                    }
+
+            states: State {
+                name:   "pip"
+                when:   !!root.camera && root.camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP
+
+                AnchorChanges {
+                    target:                     thermalItem
+                    anchors.horizontalCenter:   undefined
+                    anchors.verticalCenter:     undefined
+                    anchors.top:                thermalItem.parent.top
+                    anchors.left:               thermalItem.parent.left
                 }
-            }
-            Connections {
-                target:                 camera
-                function onThermalModeChanged() { thermalItem.pipOrNot() }
-            }
-            onVisibleChanged: {
-                thermalItem.pipOrNot()
             }
             Loader {
                 id:             thermalVideo

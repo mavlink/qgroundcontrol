@@ -160,7 +160,7 @@ QGCGroupBox {
     LabelledLabel {
         label:      qsTr("Recording")
         labelText:  qsTr("%1, %2").arg(VideoStreamFormat.durationText(root._stats.recordingMs))
-                                  .arg(VideoStreamFormat.sizeText(root._stats.recordingBytes))
+                                  .arg(QGroundControl.bigSizeToString(root._stats.recordingBytes))
         visible:    root._stats.recordingMs >= 0
     }
 }

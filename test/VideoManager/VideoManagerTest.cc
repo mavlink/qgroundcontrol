@@ -13,6 +13,7 @@
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QSignalSpy>
 
+#include "MavlinkCameraControlInterface.h"
 #include "SettingsManager.h"
 #include "VideoManager.h"
 #include "VideoSettings.h"
@@ -72,8 +73,38 @@ QtObject {
     readonly property string mbit: VideoStreamFormat.bitrateText(8000)
     readonly property string minutes: VideoStreamFormat.durationText(65000)
     readonly property string hours: VideoStreamFormat.durationText(3725000)
-    readonly property string megabytes: VideoStreamFormat.sizeText(5 * 1024 * 1024)
-    readonly property string gigabytes: VideoStreamFormat.sizeText(1.5 * 1024 * 1024 * 1024)
+}
+)QML";
+
+constexpr const char* kVideoViewQml = R"QML(
+import QtQuick
+import QGroundControl.VideoManager
+
+VideoView {
+    width: 400
+    height: 400
+}
+)QML";
+
+// A VideoView following a stand-in camera, whose thermal mode the test changes.
+constexpr const char* kThermalVideoViewQml = R"QML(
+import QtQuick
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.VideoManager
+
+VideoView {
+    width: 400
+    height: 400
+    thermalPipTopInset: 30
+    camera: QtObject {
+        property int thermalMode: MavlinkCameraControlInterface.THERMAL_PIP
+        property real thermalOpacity: 100
+        property bool hasZoom: false
+    }
+
+    readonly property real pipX: ScreenTools.defaultFontPixelWidth * 12
+    readonly property real pipY: thermalPipTopInset + (ScreenTools.defaultFontPixelHeight * 0.5)
 }
 )QML";
 
@@ -541,7 +572,7 @@ void VideoManagerTest::_testStreamStatsReachQml()
     QVERIFY(showsText(group.get(), QStringLiteral("1.0 s")));
     QVERIFY(showsText(group.get(), QStringLiteral("Decoder restarts")));
     QVERIFY(showsText(group.get(), QStringLiteral("1:02:05")));
-    QVERIFY(showsText(group.get(), QStringLiteral("1:05, 2.0 MB")));
+    QVERIFY(showsText(group.get(), QStringLiteral("1:05, 2.0MB")));
 
     // The same measurement again is no change, and the thermal stream's are its own.
     _primary->setStats(stats);
@@ -587,8 +618,69 @@ void VideoManagerTest::_testStreamFormatText()
     QCOMPARE(format->property("mbit").toString(), QStringLiteral("8.0 Mbit/s"));
     QCOMPARE(format->property("minutes").toString(), QStringLiteral("1:05"));
     QCOMPARE(format->property("hours").toString(), QStringLiteral("1:02:05"));
-    QCOMPARE(format->property("megabytes").toString(), QStringLiteral("5.0 MB"));
-    QCOMPARE(format->property("gigabytes").toString(), QStringLiteral("1.50 GB"));
+}
+
+void VideoManagerTest::_testVideoViewFitsVideo_data()
+{
+    // Whether the fitted video takes its width from the view's height, and its height from the view's width, for a
+    // video wider than the square view.
+    QTest::addColumn<int>("fitMode");
+    QTest::addColumn<bool>("widthFromHeight");
+    QTest::addColumn<bool>("heightFromWidth");
+
+    QTest::newRow("fit width") << 0 << false << true;
+    QTest::newRow("fit height") << 1 << true << false;
+    QTest::newRow("fill") << 2 << true << false;
+    QTest::newRow("no crop") << 3 << false << true;
+}
+
+void VideoManagerTest::_testVideoViewFitsVideo()
+{
+    QFETCH(int, fitMode);
+    QFETCH(bool, widthFromHeight);
+    QFETCH(bool, heightFromWidth);
+
+    _facts->set(_videoSettings->videoFit(), fitMode);
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kVideoViewQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/VideoView.qml")));
+    const std::unique_ptr<QObject> view(component.create());
+    QVERIFY2(view, qPrintable(component.errorString()));
+
+    const qreal aspectRatio = view->property("_ar").toReal();
+    QVERIFY(aspectRatio > 1.0);
+    QCOMPARE(view->property("videoWidth").toReal(), widthFromHeight ? (400 * aspectRatio) : 400);
+    QCOMPARE(view->property("videoHeight").toReal(), heightFromWidth ? (400 / aspectRatio) : 400);
+}
+
+void VideoManagerTest::_testVideoViewPlacesThermalPip()
+{
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kThermalVideoViewQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/ThermalVideoView.qml")));
+    const std::unique_ptr<QObject> view(component.create());
+    QVERIFY2(view, qPrintable(component.errorString()));
+    auto* const thermal = view->findChild<QQuickItem*>(QStringLiteral("videoViewThermal"));
+    QVERIFY(thermal);
+    auto* const camera = view->property("camera").value<QObject*>();
+    QVERIFY(camera);
+
+    QCOMPARE(thermal->x(), view->property("pipX").toReal());
+    QCOMPARE(thermal->y(), view->property("pipY").toReal());
+
+    (void) view->setProperty("thermalPipTopInset", 60);
+    QCOMPARE(thermal->y(), view->property("pipY").toReal());
+
+    (void) camera->setProperty("thermalMode", MavlinkCameraControlInterface::THERMAL_FULL);
+    QCOMPARE(thermal->height(), 400.0);
+    QCOMPARE(thermal->x() + (thermal->width() / 2), 200.0);
+    QCOMPARE(thermal->y(), 0.0);
+
+    (void) camera->setProperty("thermalMode", MavlinkCameraControlInterface::THERMAL_PIP);
+    QCOMPARE(thermal->x(), view->property("pipX").toReal());
+    QCOMPARE(thermal->y(), view->property("pipY").toReal());
 }
 
 void VideoManagerTest::_testStreamUriAndTransport_data()

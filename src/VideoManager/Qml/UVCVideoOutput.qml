@@ -5,14 +5,10 @@ import QGroundControl
 
 Rectangle {
     id:                 _root
-    width:              parent.width
-    height:             parent.height
     implicitWidth:      videoOutput.implicitWidth
     implicitHeight:     videoOutput.implicitHeight
     color:              Qt.rgba(0,0,0,0.75)
     clip:               true
-    anchors.centerIn:   parent
-    visible:            _videoManager.isUvc
 
     property var _videoManager: QGroundControl.videoManager
 

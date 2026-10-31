@@ -14,8 +14,7 @@
     "^src/Utilities/Geo/Formats/ogckml22\\.xsd$",
     "^src/Vehicle/Actuators/(Actuators|Mixer)\\.cc$",
     "^src/Vehicle/FTPManager\\.h$",
-    "^src/Vehicle/VehicleSetup/(Bootloader\\.h|FirmwareUpgradeController\\.(cc|h))$",
-    "^src/VideoManager/Qml/UVCVideoOutput\\.qml$"
+    "^src/Vehicle/VehicleSetup/(Bootloader\\.h|FirmwareUpgradeController\\.(cc|h))$"
   ],
   "Disable": {
     "IndentSize": true,
