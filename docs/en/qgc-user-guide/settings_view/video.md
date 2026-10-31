@@ -32,7 +32,7 @@ Connection settings vary by source type:
   and up to 30 s between later ones (default: on). When off, the stream stops after the first failure.
 - **Force CPU video path** — disable hardware-accelerated rendering (use if video displays incorrectly). Changing it
   restarts the video stream.
-- **Force video decoder priority** — override the automatic decoder selection: Default / Software / Hardware / NVIDIA / VA-API / DirectX 3D11 / VideoToolbox / Intel / Vulkan. Changing it restarts the video stream.
+- **Force video decoder priority** — override the automatic decoder selection: Default / Software / Hardware / NVIDIA / VA-API / Direct3D / VideoToolbox / Intel / Vulkan. Changing it restarts the video stream.
 
 ## Local Video Storage
 
