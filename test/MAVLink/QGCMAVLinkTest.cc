@@ -317,4 +317,52 @@ void QGCMAVLinkTest::_testAllVehicleClasses()
     }
 }
 
+void QGCMAVLinkTest::_testBoundedStringField_data()
+{
+    QTest::addColumn<QByteArray>("bytes");
+    QTest::addColumn<int>("maxLen");
+    QTest::addColumn<QString>("expected");
+
+    QTest::newRow("empty") << QByteArray("\0ignored", 8) << 8 << QString();
+    QTest::newRow("zero-length") << QByteArray("Camera") << 0 << QString();
+    QTest::newRow("terminated") << QByteArray("Camera\0", 7) << 7 << QStringLiteral("Camera");
+    QTest::newRow("embedded-null") << QByteArray("Cam\0ignored", 11) << 11 << QStringLiteral("Cam");
+    QTest::newRow("full-field") << QByteArray("CameraIGNORE") << 6 << QStringLiteral("Camera");
+    QTest::newRow("single-byte") << QByteArray("AB") << 1 << QStringLiteral("A");
+    QTest::newRow("whitespace") << QByteArray(" Camera \0ignored", 16) << 16 << QStringLiteral(" Camera ");
+    QTest::newRow("utf8") << QByteArray::fromHex("43c3a16d61726100") << 8 << QStringLiteral("C\u00e1mara");
+    QTest::newRow("full-utf8-field") << QByteArray::fromHex("43c3a16d61726158") << 7
+                                    << QStringLiteral("C\u00e1mara");
+    QTest::newRow("truncated-utf8") << QByteArray::fromHex("c3a1") << 1 << QStringLiteral("\ufffd");
+}
+
+void QGCMAVLinkTest::_testBoundedStringField()
+{
+    QFETCH(QByteArray, bytes);
+    QFETCH(int, maxLen);
+    QFETCH(QString, expected);
+
+    const char* raw = bytes.constData();
+    const auto length = static_cast<size_t>(maxLen);
+    QCOMPARE(QGCMAVLink::boundedStringField(raw, length), expected);
+    QCOMPARE(QGCMAVLink::boundedStringField(reinterpret_cast<const uint8_t*>(raw), length), expected);
+}
+
+void QGCMAVLinkTest::_testBoundedStringFieldNull_data()
+{
+    QTest::addColumn<int>("maxLen");
+
+    QTest::newRow("zero-length") << 0;
+    QTest::newRow("nonzero-length") << 32;
+}
+
+void QGCMAVLinkTest::_testBoundedStringFieldNull()
+{
+    QFETCH(int, maxLen);
+
+    const auto length = static_cast<size_t>(maxLen);
+    QVERIFY(QGCMAVLink::boundedStringField(static_cast<const char*>(nullptr), length).isEmpty());
+    QVERIFY(QGCMAVLink::boundedStringField(static_cast<const uint8_t*>(nullptr), length).isEmpty());
+}
+
 UT_REGISTER_TEST(QGCMAVLinkTest, TestLabel::Unit)

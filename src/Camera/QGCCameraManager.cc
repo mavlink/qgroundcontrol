@@ -332,9 +332,8 @@ void QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
 
     mavlink_camera_information_t info{};
     mavlink_msg_camera_information_decode(&message, &info);
-    const char* modelName = reinterpret_cast<const char*>(info.model_name);
     qCDebug(CameraManagerLog) << "Camera information received from" << QGCMAVLink::compIdToString(message.compid)
-                              << "Model:" << QString::fromUtf8(modelName, qstrnlen(modelName, sizeof(info.model_name)));
+                              << "Model:" << QGCMAVLink::boundedStringField(info.model_name, sizeof(info.model_name));
     qCDebug(CameraManagerLog) << "Creating MavlinkCameraControlInterface for camera";
 
     MavlinkCameraControlInterface *pCamera = _vehicle->firmwarePlugin()->createCameraControl(&info, _vehicle, message.compid, this);

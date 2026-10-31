@@ -307,7 +307,7 @@ void GimbalController::_handleGimbalDeviceInformation(const mavlink_message_t& m
     // Build a human-readable name: prefer the user-set custom name, otherwise
     // combine vendor and model. The char arrays are not guaranteed null-terminated.
     const auto toString = [](const char* field, size_t size) {
-        return QString::fromLatin1(field, static_cast<int>(strnlen(field, size))).trimmed();
+        return QGCMAVLink::boundedStringField(field, size).trimmed();
     };
     QString name = toString(information.custom_name, sizeof(information.custom_name));
     if (name.isEmpty()) {

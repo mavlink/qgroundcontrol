@@ -70,6 +70,8 @@ public:
     static int                      motorCount                  (MAV_TYPE mavType, uint8_t frameType = 0);
     static uint32_t                 highLatencyFailuresToMavSysStatus(mavlink_high_latency2_t& highLatency2);
     static QString                  compIdToString              (uint8_t compId);
+    static QString                  boundedStringField          (const char* raw, size_t maxLen);
+    static QString                  boundedStringField          (const uint8_t* raw, size_t maxLen);
 
     enum CalibrationType {
         CalibrationNone,

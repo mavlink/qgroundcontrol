@@ -139,7 +139,7 @@ void RemoteIDManager::_handleArmStatus(mavlink_message_t& message)
             emit armStatusGoodToArmChanged();
         }
         // MAVLink char fields are only null-terminated when shorter than the field, so bound the decode
-        const QString armStatusError = QString::fromUtf8(armStatus.error, qstrnlen(armStatus.error, sizeof(armStatus.error)));
+        const QString armStatusError = QGCMAVLink::boundedStringField(armStatus.error, sizeof(armStatus.error));
         // The flag tracks the current reported error: set while the device blames basic ID,
         // cleared when it fails for a different reason (don't leave the UI blaming basic ID)
         const bool basicIDMissing = (armStatusError == QStringLiteral("missing basic_id message"));
