@@ -618,9 +618,9 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   MSVC runtime counts only from `bin/`, as a clean Windows lacks it. Off Windows it checks a
   built-in list of system DLLs, so it can audit an installer extracted with `7z x`.
 - **Linux AppImage**: `linux.yml`'s `appimage-distros` job boots the x86_64 AppImage
-  (`appimage_container_boot.py`: `--appimage-extract-and-run` under xvfb-run, no `GST_PLUGIN_*` or
-  `GST_REGISTRY*` variables) in Ubuntu 24.04 and Debian 13 containers, the oldest releases its
-  glibc 2.38 and libstdc++ requirements allow. They hold only the
+  (`appimage_container_boot.py`: `--appimage-extract-and-run` under xvfb-run as an unprivileged
+  user, no `GST_PLUGIN_*` or `GST_REGISTRY*` variables) in Ubuntu 24.04 and Debian 13 containers,
+  the oldest releases its glibc 2.38 and libstdc++ requirements allow. They hold only the
   desktop libraries the AppImage leaves to the system (X11, OpenGL/EGL, GBM, Wayland client,
   fontconfig, HarfBuzz, which brings GLib, ALSA) and no GStreamer or Qt, so it must bring its own.
   The images come from Docker Hub, not the ECR Public mirror: the job runs on a GitHub-hosted

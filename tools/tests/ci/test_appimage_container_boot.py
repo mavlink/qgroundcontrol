@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 import pytest
 from ci.packaging import appimage_container_boot
 from ci.packaging.appimage_container_boot import (
+    BOOT_USER,
     CONTAINER_SCRIPT,
     RUNTIME_PACKAGES,
     docker_command,
@@ -82,6 +83,12 @@ def test_container_script_boots_the_appimage_without_fuse_under_xvfb():
     assert "GST_REGISTRY GST_REGISTRY_1_0" in CONTAINER_SCRIPT
     assert 'xvfb-run -a "$appimage" --appimage-extract-and-run' in CONTAINER_SCRIPT
     assert "--simple-boot-test" in CONTAINER_SCRIPT
+
+
+def test_container_script_boots_as_an_unprivileged_user():
+    # QGroundControl exits at startup when it runs as root, the container's default user.
+    assert f"useradd --create-home {BOOT_USER}" in CONTAINER_SCRIPT
+    assert f"exec runuser -u {BOOT_USER} -- timeout" in CONTAINER_SCRIPT
 
 
 @pytest.mark.skipif(shutil.which("bash") is None, reason="needs bash")

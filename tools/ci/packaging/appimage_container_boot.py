@@ -50,6 +50,7 @@ SETUP_FAILED_EXIT_CODE = 90
 HOST_GSTREAMER_EXIT_CODE = 91
 DOCKER_EXIT_CODES = (125, 126, 127)
 MOUNT_POINT = "/appimage"
+BOOT_USER = "qgc"
 SETUP_TIMEOUT_SECONDS = 600
 OUTPUT_TAIL_LINES = 40
 # $1 is the AppImage's file name; the packages follow.
@@ -68,10 +69,12 @@ for library in libgstreamer-1.0.so libQt6Core.so; do
 done
 unset GST_PLUGIN_PATH GST_PLUGIN_PATH_1_0 GST_PLUGIN_SYSTEM_PATH GST_PLUGIN_SYSTEM_PATH_1_0 \\
     GST_PLUGIN_SCANNER GST_PLUGIN_SCANNER_1_0 GST_REGISTRY GST_REGISTRY_1_0
+# QGroundControl refuses to run as root, which a container runs as.
+useradd --create-home {BOOT_USER} || exit {SETUP_FAILED_EXIT_CODE}
 grep '^PRETTY_NAME=' /etc/os-release
 echo "Booting $appimage"
-exec timeout --kill-after=10 "$QGC_BOOT_TIMEOUT" xvfb-run -a "$appimage" --appimage-extract-and-run \\
-    --simple-boot-test "--logging:{BOOT_LOGGING_CATEGORIES}"
+exec runuser -u {BOOT_USER} -- timeout --kill-after=10 "$QGC_BOOT_TIMEOUT" \\
+    xvfb-run -a "$appimage" --appimage-extract-and-run --simple-boot-test "--logging:{BOOT_LOGGING_CATEGORIES}"
 """
 
 
