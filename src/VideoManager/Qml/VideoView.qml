@@ -32,11 +32,36 @@ Item {
     property bool   _isMode_FILL:       _fitMode === 2
     property bool   _isMode_NO_CROP:    _fitMode === 3
 
-    function getWidth() {
-        return videoBackground.getWidth()
+    /// Size of the video fitted to the view: larger than the view where the fit mode crops, smaller where it doesn't.
+    readonly property real videoWidth: {
+        if(_ar != 0.0){
+            if(_isMode_FIT_HEIGHT
+                    || (_isMode_FILL && (root.width/root.height < _ar))
+                    || (_isMode_NO_CROP && (root.width/root.height > _ar))){
+                // This return value has different implications depending on the mode
+                // For FIT_HEIGHT and FILL
+                //    makes so the video width will be larger than (or equal to) the screen width
+                // For NO_CROP Mode
+                //    makes so the video width will be smaller than (or equal to) the screen width
+                return root.height * _ar
+            }
+        }
+        return root.width
     }
-    function getHeight() {
-        return videoBackground.getHeight()
+    readonly property real videoHeight: {
+        if(_ar != 0.0){
+            if(_isMode_FIT_WIDTH
+                    || (_isMode_FILL && (root.width/root.height > _ar))
+                    || (_isMode_NO_CROP && (root.width/root.height < _ar))){
+                // This return value has different implications depending on the mode
+                // For FIT_WIDTH and FILL
+                //    makes so the video height will be larger than (or equal to) the screen height
+                // For NO_CROP Mode
+                //    makes so the video height will be smaller than (or equal to) the screen height
+                return root.width * (1 / _ar)
+            }
+        }
+        return root.height
     }
 
     property double _thermalHeightFactor: 0.85 //-- TODO
@@ -72,36 +97,6 @@ Item {
         anchors.fill:   parent
         color:          "black"
         visible:        _showStreamLoader || _showUvcLoader
-        function getWidth() {
-            if(_ar != 0.0){
-                if(_isMode_FIT_HEIGHT
-                        || (_isMode_FILL && (root.width/root.height < _ar))
-                        || (_isMode_NO_CROP && (root.width/root.height > _ar))){
-                    // This return value has different implications depending on the mode
-                    // For FIT_HEIGHT and FILL
-                    //    makes so the video width will be larger than (or equal to) the screen width
-                    // For NO_CROP Mode
-                    //    makes so the video width will be smaller than (or equal to) the screen width
-                    return root.height * _ar
-                }
-            }
-            return root.width
-        }
-        function getHeight() {
-            if(_ar != 0.0){
-                if(_isMode_FIT_WIDTH
-                        || (_isMode_FILL && (root.width/root.height > _ar))
-                        || (_isMode_NO_CROP && (root.width/root.height < _ar))){
-                    // This return value has different implications depending on the mode
-                    // For FIT_WIDTH and FILL
-                    //    makes so the video height will be larger than (or equal to) the screen height
-                    // For NO_CROP Mode
-                    //    makes so the video height will be smaller than (or equal to) the screen height
-                    return root.width * (1 / _ar)
-                }
-            }
-            return root.height
-        }
         Loader {
             id:                 videoStreamLoader
             anchors.fill:       videoContentArea
@@ -129,8 +124,8 @@ Item {
 
         Item {
             id:                 videoContentArea
-            height:             parent.getHeight()
-            width:              parent.getWidth()
+            height:             root.videoHeight
+            width:              root.videoWidth
             anchors.centerIn:   parent
             visible:           _showStreamLoader || _showUvcLoader
 

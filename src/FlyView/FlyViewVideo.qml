@@ -64,8 +64,8 @@ Item {
         id:                      cameraTrackingController
         anchors.fill:            parent
         camera:                  videoStreaming.camera
-        videoWidth:              videoStreaming.getWidth()
-        videoHeight:             videoStreaming.getHeight()
+        videoWidth:              videoStreaming.videoWidth
+        videoHeight:             videoStreaming.videoHeight
     }
 
     MouseArea {
