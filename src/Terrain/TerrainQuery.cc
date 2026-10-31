@@ -122,22 +122,23 @@ void TerrainAtCoordinateBatchManager::_coordinateHeights(bool success, const QLi
 
     qCDebug(TerrainQueryLog) << Q_FUNC_INFO << "signalled success:count" << success << heights.count();
 
-    if (!success) {
-        _batchFailed();
-        return;
-    }
-
-    int currentIndex = 0;
-    for (const SentRequestInfo_t &sentRequestInfo: _sentRequests) {
-        if (!sentRequestInfo.terrainAtCoordinateQuery.isNull()) {
-            qCDebug(TerrainQueryVerboseLog) << Q_FUNC_INFO << "returned TerrainCoordinateQuery:count" << sentRequestInfo.terrainAtCoordinateQuery << sentRequestInfo.cCoord;
-            const QList<double> requestAltitudes = heights.mid(currentIndex, sentRequestInfo.cCoord);
-            sentRequestInfo.terrainAtCoordinateQuery->signalTerrainData(true, requestAltitudes);
+    if (success) {
+        int currentIndex = 0;
+        for (const SentRequestInfo_t& sentRequestInfo : _sentRequests) {
+            if (!sentRequestInfo.terrainAtCoordinateQuery.isNull()) {
+                qCDebug(TerrainQueryVerboseLog) << Q_FUNC_INFO << "returned TerrainCoordinateQuery:count"
+                                                << sentRequestInfo.terrainAtCoordinateQuery << sentRequestInfo.cCoord;
+                const QList<double> requestAltitudes = heights.mid(currentIndex, sentRequestInfo.cCoord);
+                sentRequestInfo.terrainAtCoordinateQuery->signalTerrainData(true, requestAltitudes);
+            }
+            currentIndex += sentRequestInfo.cCoord;
         }
-        currentIndex += sentRequestInfo.cCoord;
+        _sentRequests.clear();
+    } else {
+        _batchFailed();
     }
-    _sentRequests.clear();
 
+    // Requests queued behind this batch must still go out, whether or not the batch succeeded
     if (!_requestQueue.isEmpty()) {
         _batchTimer->start();
     }

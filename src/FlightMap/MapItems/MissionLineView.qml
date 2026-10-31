@@ -26,6 +26,10 @@ MapItemView {
                 return []
             }
 
+            if (object.splinePath.length > 0) {
+                return object.splinePath
+            }
+
             var coord1 = object.coordinate1
             var coord2 = object.coordinate2
 
