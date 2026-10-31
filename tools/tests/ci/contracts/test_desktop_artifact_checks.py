@@ -49,6 +49,8 @@ def test_windows_runs_the_gstreamer_test_classes_on_warp() -> None:
     assert documented
     assert all(pattern.match(name) for name in documented)
     assert all(pattern.match(name) for name in ("VideoManagerTest", "SubtitleWriterTest"))
+    # cmake/GStreamer's script tests, for their Windows-only branches.
+    assert pattern.match("GStreamer.test_platform")
     assert not pattern.match("ParameterManagerTest")
 
     gate = workflow["jobs"]["windows-ok"]

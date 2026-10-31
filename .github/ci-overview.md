@@ -559,8 +559,10 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   bodies with the full harness and do not enable test hooks in the packaged application. There is
   no separate Extended Tests workflow.
 - **Windows GStreamer tests**: `windows.yml`'s `gstreamer-tests` job builds x64 Debug with tests
-  and runs only the GStreamer and video test classes (`run-unit-tests`' `tests-regex`
-  `^(Gst|GStreamer[A-Z]|Video|Subtitle|QGCVideo)`, Unit and Integration). The build tree finds the
+  and runs only the GStreamer and video test classes and `cmake/GStreamer`'s script tests
+  (`run-unit-tests`' `tests-regex` `^(Gst|GStreamer[A-Z.]|Video|Subtitle|QGCVideo)`, Unit and
+  Integration), so the latter's Windows-only branches (8.3 short paths, SDK architecture) run on
+  Windows. The build tree finds the
   SDK only through `verify_executable.py --export-gstreamer-env`, which puts its `bin/` on `PATH`
   and stages the shipped plugins plus the sources and encoders the tests send streams with
   (`videotestsrc`, `mpegtsmux`, `x264`, `x265`). `QSG_RHI_PREFER_SOFTWARE_RENDERER=1` makes the
