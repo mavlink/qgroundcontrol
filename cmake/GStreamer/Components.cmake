@@ -1,69 +1,7 @@
-# GStreamer component names and plugin scanning helpers.
+# The GStreamer libraries (components) the build can request, and their pkg-config modules. The plugins are
+# PluginPolicy.cmake's.
 
 include_guard(GLOBAL)
-
-include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
-
-# gstreamer_platform_plugin_attrs(<ext_out> <prefix_out>)
-# Sets the extension and file-name prefix of the platform's plugin libraries. Used by plugin discovery and post-install
-# verify.
-function(gstreamer_platform_plugin_attrs ext_out prefix_out)
-    if(WIN32)
-        set(_ext "dll")
-        set(_prefix "gst")
-    elseif(APPLE)
-        set(_ext "dylib")
-        set(_prefix "libgst")
-    else()
-        set(_ext "so")
-        set(_prefix "libgst")
-    endif()
-    set(${ext_out}
-        "${_ext}"
-        PARENT_SCOPE
-    )
-    set(${prefix_out}
-        "${_prefix}"
-        PARENT_SCOPE
-    )
-endfunction()
-
-# gstreamer_scan_plugin_basenames(<output_var> <plugin_path> [STATIC])
-# Returns plugin basenames (e.g. "videoconvert", "x264") found in <plugin_path>,
-# stripped of the platform's lib prefix and extension, or with STATIC of the static archives' libgst and .a. Empty
-# string if path missing.
-function(gstreamer_scan_plugin_basenames output_var plugin_path)
-    cmake_parse_arguments(PARSE_ARGV 2 ARG "STATIC" "" "")
-    _qgc_gst_check_args(gstreamer_scan_plugin_basenames)
-    if(NOT EXISTS "${plugin_path}")
-        set(${output_var}
-            ""
-            PARENT_SCOPE
-        )
-        return()
-    endif()
-    if(ARG_STATIC)
-        set(_prefix "libgst")
-        set(_ext "a")
-    else()
-        gstreamer_platform_plugin_attrs(_ext _prefix)
-    endif()
-    # Underscore included: a hypothetical libgstvideo_foo.so must not truncate to "video".
-    set(_re "^${_prefix}([a-zA-Z0-9_]+)")
-    file(GLOB _files "${plugin_path}/${_prefix}*.${_ext}")
-    set(_names "")
-    foreach(_p IN LISTS _files)
-        get_filename_component(_n "${_p}" NAME)
-        if(_n MATCHES "${_re}")
-            list(APPEND _names "${CMAKE_MATCH_1}")
-        endif()
-    endforeach()
-    list(REMOVE_DUPLICATES _names)
-    set(${output_var}
-        "${_names}"
-        PARENT_SCOPE
-    )
-endfunction()
 
 # The GStreamer libraries the build can request, in probe order. As in Qt's FindGStreamer.cmake, a component's target
 # is GStreamer::<Component> and its pkg-config module follows from the CamelCase name: GlPrototypes is

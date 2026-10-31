@@ -4,9 +4,9 @@
 # early-return. Windows and a flat macOS SDK install only the SDK libraries that the installed plugins, GIO modules,
 # helpers and QGC itself load (_qgc_gst_install_runtime_closure), and every installer fails an install that would ship a
 # GPL library or plugin (_qgc_gst_install_gpl_check).
-# Depends on: Components.cmake (gstreamer_platform_plugin_attrs), Platform.cmake (qgc_gst_platform),
-#             PluginPolicy.cmake (GSTREAMER_BUNDLE_REQUIRED_PLUGINS, GSTREAMER_GPL_DENYLIST; included again by the
-#             install-time checks).
+# Depends on: Platform.cmake (qgc_gst_platform) and PluginPolicy.cmake (gstreamer_platform_plugin_attrs,
+#             gstreamer_scan_plugin_basenames, GSTREAMER_BUNDLE_REQUIRED_PLUGINS, GSTREAMER_GPL_DENYLIST; included again
+#             by the install-time checks).
 
 include_guard(GLOBAL)
 

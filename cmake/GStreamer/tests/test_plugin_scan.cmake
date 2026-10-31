@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
-include(Components)
+include(PluginPolicy)
 
 qgc_test_sandbox(_sandbox qgc_plugin_scan_sandbox)
 
@@ -32,3 +32,24 @@ file(TOUCH "${_sandbox}/libgstudp.a")
 gstreamer_scan_plugin_basenames(_static_names "${_sandbox}" STATIC)
 qgc_test_assert_streq("static archives" udp "${_static_names}")
 qgc_test_pass("scan_plugin_basenames STATIC")
+
+set(WIN32 OFF)
+set(APPLE OFF)
+gstreamer_platform_plugin_attrs(_ext _prefix)
+qgc_test_assert_streq("linux ext" "so" "${_ext}")
+qgc_test_assert_streq("linux prefix" "libgst" "${_prefix}")
+qgc_test_pass("platform_plugin_attrs linux")
+
+set(WIN32 ON)
+gstreamer_platform_plugin_attrs(_ext _prefix)
+qgc_test_assert_streq("win ext" "dll" "${_ext}")
+qgc_test_assert_streq("win prefix" "gst" "${_prefix}")
+set(WIN32 OFF)
+qgc_test_pass("platform_plugin_attrs windows")
+
+set(APPLE ON)
+gstreamer_platform_plugin_attrs(_ext _prefix)
+qgc_test_assert_streq("apple ext" "dylib" "${_ext}")
+qgc_test_assert_streq("apple prefix" "libgst" "${_prefix}")
+set(APPLE OFF)
+qgc_test_pass("platform_plugin_attrs apple")

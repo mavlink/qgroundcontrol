@@ -184,56 +184,21 @@ if(ANDROID)
 else()
     set(_gst_shipped_plugins ${_gst_available_plugins})
 endif()
-gstreamer_classify_missing_plugins(
-    REQUESTED ${GSTREAMER_PLUGINS}
-    AVAILABLE ${_gst_available_plugins}
-    SHIPPED ${_gst_shipped_plugins}
-    OUT_OPTIONAL _gst_missing_optional
-    OUT_ABSENT _gst_absent_plugins
-    OUT_UNUSABLE _gst_unusable_plugins
-)
-if(_gst_absent_plugins)
-    list(JOIN _gst_absent_plugins ", " _gst_absent_plugins)
-    message(
-        WARNING
-            "GStreamer: plugin allowlist names not found as plugins in ${_gst_plugin_source}: "
-            "${_gst_absent_plugins}\nCheck them in gstreamer.plugins of .github/build-config.json (misspelled, or "
-            "not built for this platform) or install the plugins; video features depending on them will not "
-            "work at runtime."
-    )
-endif()
-if(_gst_unusable_plugins)
-    list(JOIN _gst_unusable_plugins ", " _gst_unusable_plugins)
-    message(
-        WARNING
-            "GStreamer: requested plugins in ${_gst_plugin_source} that have no pkg-config module to link "
-            "them by: ${_gst_unusable_plugins}\nVideo features depending on these plugins will not work at " "runtime."
-    )
-endif()
-if(_gst_missing_optional)
-    list(JOIN _gst_missing_optional ", " _gst_missing_optional)
-    message(
-        STATUS "GStreamer: optional decoder plugins not in ${_gst_plugin_source}: ${_gst_missing_optional} "
-               "(hardware-specific or alternatives; decoding uses those present)"
-    )
-endif()
-# Mobile apps have no other way to load a plugin at runtime.
+set(_gst_static_args "")
 if(ANDROID OR IOS)
-    gstreamer_missing_required(
-        REQUIRED ${GSTREAMER_BUNDLE_REQUIRED_PLUGINS}
-        AVAILABLE ${_gst_available_plugins}
-        OUT_VAR _gst_missing_required
-    )
-    if(_gst_missing_required)
-        list(JOIN _gst_missing_required ", " _gst_missing_required)
-        message(
-            FATAL_ERROR
-                "GStreamer: bundle-required plugins are missing from the static SDK at "
-                "${GStreamer_ROOT_DIR}: ${_gst_missing_required}. The SDK is incomplete or "
-                "corrupt — re-download it."
-        )
-    endif()
+    set(_gst_static_args STATIC)
 endif()
+gstreamer_check_plugins(
+    REQUESTED
+    ${GSTREAMER_PLUGINS}
+    AVAILABLE
+    ${_gst_available_plugins}
+    SHIPPED
+    ${_gst_shipped_plugins}
+    SOURCE
+    "${_gst_plugin_source}"
+    ${_gst_static_args}
+)
 
 # GstVideoOrientationMeta is officially in 1.26+, but bundled iOS/Android SDKs sometimes strip it, so test the header.
 # A sizeof() needs no archive, so iOS can probe GStreamer::GStreamer, which carries headers only.

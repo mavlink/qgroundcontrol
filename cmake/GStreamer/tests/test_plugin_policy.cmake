@@ -99,3 +99,39 @@ set(_lgpl_files /sdk/lib/libgstsidebyside.so /sdk/lib/libx2640.so /sdk/lib/gstre
 gstreamer_gpl_files(_found ${_gpl_files} ${_lgpl_files})
 qgc_test_assert_streq("GPL files" "${_gpl_files}" "${_found}")
 qgc_test_pass("gpl_files")
+
+# A static (mobile) layout cannot load a plugin at runtime: a missing bundle-required plugin fails configure there, and
+# only warns on a desktop layout.
+set(GSTREAMER_BUNDLE_REQUIRED_PLUGINS coreelements rtsp)
+if(TEST_CASE STREQUAL "missing-required")
+    gstreamer_check_plugins(
+        REQUESTED
+        coreelements
+        rtsp
+        AVAILABLE
+        coreelements
+        SHIPPED
+        coreelements
+        SOURCE
+        "the fake SDK"
+        STATIC
+    )
+    message(FATAL_ERROR "${TEST_CASE} unexpectedly succeeded")
+elseif(DEFINED TEST_CASE)
+    message(FATAL_ERROR "Unknown test case: ${TEST_CASE}")
+endif()
+gstreamer_check_plugins(
+    REQUESTED
+    coreelements
+    rtsp
+    AVAILABLE
+    coreelements
+    rtsp
+    SHIPPED
+    coreelements
+    rtsp
+    SOURCE
+    "the fake SDK"
+    STATIC
+)
+qgc_test_pass("check_plugins")

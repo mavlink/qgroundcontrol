@@ -73,6 +73,7 @@ set(_qgc_gst_failure_cases
     "test_checksum_authority|SidecarOnlyRequired|sidecar-only-required|cannot satisfy GStreamer_REQUIRE_CHECKSUM=ON"
     "test_components|UnknownComponent|unknown|unknown components Bogus"
     "test_plugin_policy_errors|||qgc_config_read: build-config.json is not loaded"
+    "test_plugin_policy|MissingRequired|missing-required|bundle-required plugins are missing from the fake SDK: rtsp"
     "test_platform|Spaces|spaces|'C:/Program Files/gstreamer' contains a space"
     "test_platform|DownloadSpaces|download-spaces-unix|where the GStreamer SDK is downloaded, contains a space,"
     "test_platform|DownloadNoShortName|download-spaces-no-short-name|contains a space and no 8.3 short path without one"
