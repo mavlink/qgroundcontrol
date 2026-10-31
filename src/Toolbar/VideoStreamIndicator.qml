@@ -123,26 +123,7 @@ Item {
                         }
                     }
 
-                    QGCGroupBox {
-                        heading: qsTr("Decoding")
-                        visible: control._videoSettings.forceVideoDecoder.userVisible
-                                 || control._videoSettings.forceCpuVideoPath.userVisible
-
-                        LabelledFactComboBox {
-                            Layout.fillWidth:   true
-                            label:              qsTr("Decoder Priority")
-                            fact:               control._videoSettings.forceVideoDecoder
-                            indexModel:         false
-                            visible:            fact.userVisible
-                        }
-
-                        FactCheckBoxSlider {
-                            Layout.fillWidth:   true
-                            text:               qsTr("Force CPU Video Path")
-                            fact:               control._videoSettings.forceCpuVideoPath
-                            visible:            fact.userVisible
-                        }
-                    }
+                    VideoDecodingSettingsGroup { }
 
                     VideoDisplaySettingsGroup { }
 

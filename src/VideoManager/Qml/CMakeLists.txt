@@ -12,6 +12,7 @@ qt_add_qml_module(
     RESOURCE_PREFIX /qml
     QML_FILES
         UVCVideoOutput.qml
+        VideoDecodingSettingsGroup.qml
         VideoDisplaySettingsGroup.qml
         VideoStreamFormat.js
         VideoStreamOutput.qml

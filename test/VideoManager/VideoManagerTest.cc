@@ -35,6 +35,16 @@ VideoOutput {
 }
 )QML";
 
+// The Video indicator's decoding settings.
+constexpr const char* kDecodingSettingsQml = R"QML(
+import QtQuick
+import QGroundControl.VideoManager
+
+VideoDecodingSettingsGroup {
+    width: 400
+}
+)QML";
+
 // VideoStreamOutput inside a container that tests move between windows.
 constexpr const char* kStreamOutputQml = R"QML(
 import QtQuick
@@ -265,6 +275,49 @@ void VideoManagerTest::_testRestartingSettingsRestartStreams()
     // The thermal stream isn't active, and restart() doesn't start a stream.
     QCOMPARE(_thermal->restarts, 0);
     QVERIFY(!_thermal->active());
+}
+
+void VideoManagerTest::_testDecodingSettingsGroupRestartsStreams()
+{
+    Fact* const decoderFact = _videoSettings->forceVideoDecoder();
+    Fact* const cpuPathFact = _videoSettings->forceCpuVideoPath();
+    _facts->set(decoderFact, static_cast<int>(VideoDecoder::ForceVideoDecoderDefault));
+    _facts->set(cpuPathFact, false);
+    _settle();
+    _resetCounters();
+
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kDecodingSettingsQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/DecodingSettings.qml")));
+    const std::unique_ptr<QObject> group(component.create());
+    QVERIFY2(group, qPrintable(component.errorString()));
+
+    QObject* const decoderControl = group->findChild<QObject*>(QStringLiteral("videoDecoderPriority"));
+    QObject* const cpuPathControl = group->findChild<QObject*>(QStringLiteral("videoForceCpuPath"));
+    QVERIFY(decoderControl);
+    QVERIFY(cpuPathControl);
+    QCOMPARE(decoderControl->property("visible"), decoderFact->property("userVisible"));
+    QCOMPARE(cpuPathControl->property("visible"), cpuPathFact->property("userVisible"));
+
+    // As a click on the switch does.
+    QVERIFY(cpuPathControl->setProperty("checked", true));
+    QVERIFY(QMetaObject::invokeMethod(cpuPathControl, "clicked"));
+    _settle();
+    QVERIFY(cpuPathFact->rawValue().toBool());
+    QCOMPARE(_primary->restarts, 1);
+
+    // As picking the software decoder in the combo box does.
+    QObject* const comboBox = decoderControl->property("comboBox").value<QObject*>();
+    QVERIFY(comboBox);
+    const int softwareIndex =
+        decoderFact->enumValues().indexOf(QVariant(static_cast<int>(VideoDecoder::ForceVideoDecoderSoftware)));
+    QVERIFY(softwareIndex >= 0);
+    QVERIFY(QMetaObject::invokeMethod(comboBox, "activated", Q_ARG(int, softwareIndex)));
+    _settle();
+    QCOMPARE(decoderFact->rawValue().toInt(), static_cast<int>(VideoDecoder::ForceVideoDecoderSoftware));
+    QCOMPARE(_primary->restarts, 2);
+    QCOMPARE(_primary->configChanges, 0);
 }
 
 void VideoManagerTest::_testStreamEnabledControlsVideo()
