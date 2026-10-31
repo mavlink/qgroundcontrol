@@ -2,10 +2,9 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 #
 # iOS GStreamer SDK discovery — invoked by Orchestrator.cmake.
-# GStreamer 1.28 for iOS ships a universal GStreamer.framework (cerbero
-# versioned bundle) whose Versions/1.0/GStreamer binary is a single merged
-# static archive containing every library and plugin. Older/future SDKs may
-# ship a GStreamer.xcframework with a fat libGStreamer.a per slice. Both reduce
+# Up to 1.28.7 the iOS package is a .pkg holding a universal GStreamer.framework (cerbero versioned bundle) whose
+# Versions/1.0/GStreamer binary is a single merged static archive containing every library and plugin. From 1.28.8 on
+# it is a tarball holding a GStreamer.xcframework with a fat libGStreamer.a per slice. Both reduce
 # to the same single-merged-archive consumption model
 # (_qgc_gst_create_ios_targets) — discovery just locates the binary + Headers.
 #
@@ -162,7 +161,7 @@ function(_qgc_gst_discover_ios_sdk)
 
     if(NOT _gst_ios_bundle)
         _qgc_gst_acquire_ios_sdk(_gst_ios_expanded)
-        # The package's bundle, an xcframework when it has one (future SDKs).
+        # The package's bundle: the 1.28.8+ tarball's GStreamer.xcframework, else the older .pkg's GStreamer.framework.
         file(
             GLOB_RECURSE _gst_ios_bundles
             LIST_DIRECTORIES true
@@ -175,7 +174,7 @@ function(_qgc_gst_discover_ios_sdk)
         if(NOT _gst_ios_bundles)
             message(
                 FATAL_ERROR "GStreamer: no GStreamer.xcframework or GStreamer.framework in the expanded iOS SDK at "
-                            "${_gst_ios_expanded}; the .pkg layout may have changed."
+                            "${_gst_ios_expanded}; the package layout may have changed."
             )
         endif()
         list(GET _gst_ios_bundles 0 _gst_ios_bundle)

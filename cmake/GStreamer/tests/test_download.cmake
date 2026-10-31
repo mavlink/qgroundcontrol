@@ -16,6 +16,12 @@ qgc_test_assert_streq(
     "${_u_ios}"
 )
 
+qgc_gst_get_package_url(ios 1.28.8 _u_ios_xcfw)
+qgc_test_assert_streq(
+    "ios xcframework url" "https://gstreamer.freedesktop.org/data/pkg/ios/1.28.8/gstreamer-1.28.8-xcframework.tar.xz"
+    "${_u_ios_xcfw}"
+)
+
 qgc_gst_get_package_url(macos 1.28.2 _u_mac)
 qgc_test_assert_streq(
     "macos url" "https://gstreamer.freedesktop.org/data/pkg/macos/1.28.2/gstreamer-1.0-1.28.2-universal.pkg"

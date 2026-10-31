@@ -56,10 +56,17 @@ def test_rejects_versions_below_the_bundled_minimum(platform: str) -> None:
         artifacts_for(platform, "1.28.3", minimum="1.29.0")
 
 
-def test_ios_devel_pkg() -> None:
-    (art,) = artifacts_for("ios", "1.28.3")
-    assert art.filename == "gstreamer-1.0-devel-1.28.3-ios-universal.pkg"
-    assert art.url.startswith("https://gstreamer.freedesktop.org/data/pkg/ios/")
+@pytest.mark.parametrize(
+    ("version", "filename"),
+    [
+        ("1.28.7", "gstreamer-1.0-devel-1.28.7-ios-universal.pkg"),
+        ("1.28.8", "gstreamer-1.28.8-xcframework.tar.xz"),
+    ],
+)
+def test_ios_package_by_version(version: str, filename: str) -> None:
+    (art,) = artifacts_for("ios", version)
+    assert art.filename == filename
+    assert art.url == f"https://gstreamer.freedesktop.org/data/pkg/ios/{version}/{filename}"
 
 
 def test_unknown_platform_raises() -> None:
@@ -216,5 +223,5 @@ def test_main_mirrors_each_platforms_own_version(
     assert mirror_gstreamer.main(argv) == 0
     assert mirrored == [
         ("gstreamer-1.0-android-universal-1.28.7.tar.xz", "1.28.7"),
-        ("gstreamer-1.0-devel-1.28.8-ios-universal.pkg", "1.28.8"),
+        ("gstreamer-1.28.8-xcframework.tar.xz", "1.28.8"),
     ]

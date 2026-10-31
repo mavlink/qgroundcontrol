@@ -23,6 +23,7 @@ set(_qgc_gst_tests
     test_ios_xcframework_slice
     test_sdk_acquire
     test_android_sdk_extract
+    test_ios_sdk_extract
     test_android_pkg_config
     test_static_init
     test_ios_static_plugins

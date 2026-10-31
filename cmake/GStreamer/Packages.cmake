@@ -15,7 +15,12 @@ function(qgc_gst_get_package_url platform version output_var)
 
     # URL templates for simple platforms — version substituted via _base.
     set(_url_android "${_base}/data/pkg/android/${version}/gstreamer-1.0-android-universal-${version}.tar.xz")
-    set(_url_ios "${_base}/data/pkg/ios/${version}/gstreamer-1.0-devel-${version}-ios-universal.pkg")
+    # From 1.28.8 on, the iOS SDK is an xcframework tarball instead of a devel .pkg.
+    if(version VERSION_GREATER_EQUAL 1.28.8)
+        set(_url_ios "${_base}/data/pkg/ios/${version}/gstreamer-${version}-xcframework.tar.xz")
+    else()
+        set(_url_ios "${_base}/data/pkg/ios/${version}/gstreamer-1.0-devel-${version}-ios-universal.pkg")
+    endif()
     set(_url_macos "${_base}/data/pkg/macos/${version}/gstreamer-1.0-${version}-universal.pkg")
     set(_url_macos_devel "${_base}/data/pkg/macos/${version}/gstreamer-1.0-devel-${version}-universal.pkg")
 

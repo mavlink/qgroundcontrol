@@ -7,6 +7,7 @@ entry in .github/build-config.json that pins it.
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 from .build_config import load_build_config
@@ -26,6 +27,10 @@ _PACKAGES: dict[str, tuple[str, str]] = {
     "windows_msvc_x64": ("windows", "msvc/gstreamer-1.0-msvc-x86_64-{version}.exe"),
     "windows_msvc_arm64": ("windows", "msvc/gstreamer-1.0-msvc-arm64-{version}.exe"),
 }
+
+# From 1.28.8 on, the iOS SDK is an xcframework tarball instead of a devel .pkg.
+_IOS_XCFRAMEWORK_SINCE = (1, 28, 8)
+_IOS_XCFRAMEWORK_PATH = "gstreamer-{version}-xcframework.tar.xz"
 
 # Platforms with prebuilt upstream SDKs, and their packages.
 PLATFORM_PACKAGES: dict[str, tuple[str, ...]] = {
@@ -53,9 +58,15 @@ def package_filename(package: str, version: str) -> str:
     return package_url(package, version).rsplit("/", 1)[-1]
 
 
+def _version_key(version: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in re.findall(r"\d+", version)[:3])
+
+
 def package_url(package: str, version: str) -> str:
     """Return the gstreamer.freedesktop.org URL of *package* at *version*."""
     platform, path = _package(package)
+    if package == "ios" and _version_key(version) >= _IOS_XCFRAMEWORK_SINCE:
+        path = _IOS_XCFRAMEWORK_PATH
     return f"{UPSTREAM_BASE_URL}/{platform}/{version}/{path.format(version=version)}"
 
 
