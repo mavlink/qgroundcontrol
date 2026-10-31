@@ -23,6 +23,10 @@
 
 #include <gst/gst.h>
 
+#ifdef Q_OS_WIN
+#include <cstdlib>
+#endif
+
 QGC_LOGGING_CATEGORY(GStreamerEnvLog, "Video.GStreamer.Environment")
 
 namespace {
@@ -48,8 +52,10 @@ void _setGstEnv(const char* name, const QString& value)
 {
 #ifdef Q_OS_WIN
     // GLib reads the wide environment; qputenv's _putenv_s would decode these UTF-8 bytes in the ANSI
-    // code page and corrupt non-ASCII install paths.
+    // code page and corrupt non-ASCII install paths. g_setenv sets the process environment and GLib's C runtime copy;
+    // _wputenv_s sets QGC's, which qEnvironmentVariable reads and which is a separate (debug) runtime in Debug builds.
     (void) g_setenv(name, value.toUtf8().constData(), TRUE);
+    (void) _wputenv_s(QString::fromLatin1(name).toStdWString().c_str(), value.toStdWString().c_str());
 #else
     qputenv(name, value.toUtf8());
 #endif
