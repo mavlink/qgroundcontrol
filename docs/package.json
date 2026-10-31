@@ -10,7 +10,7 @@
         "start": "npm run docs:dev"
     },
     "dependencies": {
-        "vitepress": "2.0.0-alpha.20",
+        "vitepress": "2.0.0-alpha.21",
         "vue": "^3.5.41"
     },
     "license": "CC-BY-4.0",
