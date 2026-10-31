@@ -19,6 +19,7 @@
 #include "gstqgc/GstQgcTestSupport.h"
 
 #if defined(Q_OS_WIN) && (defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH))
+#include <algorithm>
 #include <rhi/qrhi.h>
 #include <rhi/qrhi_platform.h>
 
@@ -58,6 +59,21 @@ void protectImmediateContext(ID3D11DeviceContext* context)
 }
 #endif
 
+/// A QRhi on @p api, on the software adapter (WARP) when QSG_RHI_PREFER_SOFTWARE_RENDERER is set, as it is in CI, or
+/// when DXGI lists no hardware adapter, as on a runner without a GPU.
+QRhi* createD3DRhi(QRhi::Implementation api, QRhiInitParams* params)
+{
+    bool software = qEnvironmentVariableIntValue("QSG_RHI_PREFER_SOFTWARE_RENDERER") != 0;
+    if (!software) {
+        const QRhi::AdapterList adapters = QRhi::enumerateAdapters(api, params);
+        software = std::ranges::none_of(adapters, [](const QRhiAdapter* adapter) {
+            return adapter->info().deviceType != QRhiDriverInfo::CpuDevice;
+        });
+        qDeleteAll(adapters);
+    }
+    return QRhi::create(api, params, software ? QRhi::Flags(QRhi::PreferSoftwareRenderer) : QRhi::Flags());
+}
+
 /// A QRhi on @p api, published in QGCRhiCapture's device snapshot as the render thread publishes it. Null, with
 /// @p failure set, when this runner can't create one.
 std::unique_ptr<QRhi> createPublishedRhi(QRhi::Implementation api, QString& failure)
@@ -69,7 +85,7 @@ std::unique_ptr<QRhi> createPublishedRhi(QRhi::Implementation api, QString& fail
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
         case QRhi::D3D11: {
             QRhiD3D11InitParams params;
-            rhi.reset(QRhi::create(QRhi::D3D11, &params));
+            rhi.reset(createD3DRhi(QRhi::D3D11, &params));
             if (const auto* handles =
                     rhi ? static_cast<const QRhiD3D11NativeHandles*>(rhi->nativeHandles()) : nullptr) {
                 device = handles->dev;
@@ -82,7 +98,7 @@ std::unique_ptr<QRhi> createPublishedRhi(QRhi::Implementation api, QString& fail
 #if defined(QGC_HAS_GST_D3D12_GPU_PATH)
         case QRhi::D3D12: {
             QRhiD3D12InitParams params;
-            rhi.reset(QRhi::create(QRhi::D3D12, &params));
+            rhi.reset(createD3DRhi(QRhi::D3D12, &params));
             if (const auto* handles =
                     rhi ? static_cast<const QRhiD3D12NativeHandles*>(rhi->nativeHandles()) : nullptr) {
                 device = handles->dev;

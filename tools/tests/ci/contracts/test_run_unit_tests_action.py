@@ -32,7 +32,14 @@ def test_ctest_reads_every_selection_input_from_its_environment() -> None:
     assert ctest["run"] == 'python3 "${GITHUB_WORKSPACE}/tools/ci/compile/cmake_helper.py" ctest'
     assert ctest["env"] == {
         f"INPUT_{name.upper().replace('-', '_')}": f"${{{{ inputs.{name} }}}}"
-        for name in ("junit-output", "ctest-output", "parallel", "include-labels", "exclude-labels")
+        for name in (
+            "junit-output",
+            "ctest-output",
+            "parallel",
+            "include-labels",
+            "exclude-labels",
+            "tests-regex",
+        )
     }
 
 

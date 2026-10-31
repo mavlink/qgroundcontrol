@@ -596,6 +596,8 @@ def cmd_ctest(args: argparse.Namespace) -> int:
         cmd += ["-L", args.include_labels]
     if args.exclude_labels:
         cmd += ["-LE", args.exclude_labels]
+    if args.tests_regex:
+        cmd += ["-R", args.tests_regex]
 
     start = time.monotonic()
     exit_code = run_tee(_maybe_wrap_xvfb(cmd), args.ctest_output)
@@ -644,6 +646,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_ctest.add_argument("--include-labels", default=env_default("INPUT_INCLUDE_LABELS"))
     p_ctest.add_argument("--exclude-labels", default=env_default("INPUT_EXCLUDE_LABELS"))
+    p_ctest.add_argument("--tests-regex", default=env_default("INPUT_TESTS_REGEX"))
 
     args = parser.parse_args(argv)
     if args.command == "ctest" and not (args.junit_output and args.ctest_output):

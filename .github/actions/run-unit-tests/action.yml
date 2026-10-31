@@ -22,6 +22,10 @@ inputs:
     description: CTest labels regex to exclude
     required: false
     default: 'Flaky|Network'
+  tests-regex:
+    description: CTest test-name regex to include (-R); empty selects every test the labels select
+    required: false
+    default: ''
   parallel:
     description: Number of parallel CTest jobs, or 'auto' (one per CPU)
     required: false
@@ -67,6 +71,7 @@ runs:
         INPUT_PARALLEL: ${{ inputs.parallel }}
         INPUT_INCLUDE_LABELS: ${{ inputs.include-labels }}
         INPUT_EXCLUDE_LABELS: ${{ inputs.exclude-labels }}
+        INPUT_TESTS_REGEX: ${{ inputs.tests-regex }}
 
     # The steps below also run after test failures; the failed CTest step still fails the action.
     - name: Report test results

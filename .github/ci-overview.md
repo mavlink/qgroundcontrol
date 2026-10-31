@@ -558,6 +558,15 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   utility executables (`QGC_BUILD_PORTABLE_TESTS=ON`, CTest label `Portable`). They share test
   bodies with the full harness and do not enable test hooks in the packaged application. There is
   no separate Extended Tests workflow.
+- **Windows GStreamer tests**: `windows.yml`'s `gstreamer-tests` job builds x64 Debug with tests
+  and runs only the GStreamer and video test classes (`run-unit-tests`' `tests-regex`
+  `^(Gst|GStreamer[A-Z]|Video|Subtitle|QGCVideo)`, Unit and Integration). The build tree finds the
+  SDK only through `verify_executable.py --export-gstreamer-env`, which puts its `bin/` on `PATH`
+  and stages the shipped plugins plus the sources and encoders the tests send streams with
+  (`videotestsrc`, `mpegtsmux`, `x264`, `x265`). `QSG_RHI_PREFER_SOFTWARE_RENDERER=1` makes the
+  D3D11/D3D12 pixel tests create their QRhi on WARP, as the runners have no GPU; the job is
+  required like the build legs, since WARP renders deterministically and a test whose device or
+  element is missing skips.
 
 ### Platform notes
 
@@ -566,7 +575,14 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   gates signing and notarization (CMake option, certificate import, and secrets) to non-PR Release
   legs in `mavlink` repositories or forks that set `MACOS_SIGNING_IDENTITY`; other forks build an
   unsigned DMG instead of failing in `SignMacBundle.cmake`.
-  `verify_executable.py --type dmg` mounts the image, verifies the bundle, and always detaches it.
+  `verify_executable.py --type dmg` mounts the image, audits and boots the bundle, and always
+  detaches it. The audit (`macho_bundle_audit.py`) runs `codesign --verify --deep --strict` on a
+  Developer ID signed bundle (PR builds are ad-hoc signed and only get a notice) and reads every
+  Mach-O file's load commands with `otool -l`: each library must resolve inside the bundle,
+  through @rpath (the file's and the main executable's LC_RPATHs), @loader_path or
+  @executable_path, or to /usr/lib or /System; absolute paths elsewhere (Homebrew,
+  /Library/Frameworks/GStreamer.framework, the build machine) fail it, as do such LC_RPATHs where
+  dyld searches them. A failed audit fails the step after the boot test.
   On a boot-test timeout it captures the hung process's stacks before killing it and prints them
   after the captured output, and its `lipo`/`hdiutil`/AppImage helper
   calls time out after 120 s. The boot test forces QGC's log to stderr (a Windows GUI app otherwise
@@ -595,7 +611,18 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   crash reports beside the log before cleanup. A failure ends in an error annotation naming the
   phase and attempt; every run writes a Boot test summary section, and the `ios-boot-test` artifact
   is linked below it.
-- **Windows**: installer verification lives in `deploy/windows/verify-installer.ps1`.
+- **Windows**: installer verification lives in `deploy/windows/verify-installer.ps1`. Between its
+  install phase and the installed boot test, `pe_dependency_audit.py` reads the import and
+  delay-load tables of every .exe and .dll in the install (a small PE parser, no `pefile`) and
+  names each imported DLL that is neither in `bin/` or beside the importer nor in System32; the
+  MSVC runtime counts only from `bin/`, as a clean Windows lacks it. Off Windows it checks a
+  built-in list of system DLLs, so it can audit an installer extracted with `7z x`.
+- **Linux AppImage**: `linux.yml`'s `appimage-distros` job boots the x86_64 AppImage
+  (`appimage_container_boot.py`: `--appimage-extract-and-run` under xvfb-run, no `GST_PLUGIN_*` or
+  `GST_REGISTRY*` variables) in Ubuntu 24.04 and Debian 13 containers from the ECR Public mirror,
+  the oldest releases its glibc 2.38 and libstdc++ requirements allow. They hold only the
+  desktop libraries the AppImage leaves to the system (X11, OpenGL/EGL, GBM, Wayland client,
+  fontconfig, HarfBuzz, which brings GLib, ALSA) and no GStreamer or Qt, so it must bring its own.
 - **Android**: legs are Linux (primary), macOS, Windows (not on PRs), and a Linux emulator smoke
   test. PRs build `arm64-v8a` only; other events build `arm64-v8a` + `armeabi-v7a` on the primary
   leg. Android jobs install only the `core` apt category. The Linux leg runs Android Lint

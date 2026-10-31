@@ -150,7 +150,7 @@ def test_runson_selection_keeps_independent_forks_on_hosted_runners() -> None:
     ("workflow", "route_count"),
     [
         ("linux.yml", 3),
-        ("windows.yml", 1),
+        ("windows.yml", 2),
         ("android.yml", 1),
         ("docker.yml", 1),
         ("vm-builds.yml", 2),

@@ -34,7 +34,7 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 | `save-build-cache` | Save compiler and moc caches once per job after successful compilation |
 | `setup-python` | Detect the cache backend, set up uv and Python, and sync `tools/uv.lock` groups into `tools/.venv` |
 | `test-phase` | Run the Unit and Integration suites through `run-unit-tests`, one job-summary section each |
-| `verify-executable` | Boot-test a built binary, AppImage, DMG, or Windows executable from its directory; a failure uploads its diagnostics (7 days), linked from the job summary |
+| `verify-executable` | Boot-test a built binary, AppImage, DMG, or Windows executable from its directory (a DMG's bundle is first audited: signature, and every library its Mach-O files load); a failure uploads its diagnostics (7 days), linked from the job summary |
 
 ## External Action Reference Policy
 
@@ -57,7 +57,8 @@ an additional security problem.
   slower than 60 s. Callers must gate it on a successful build. Integration tests default to two CTest processes (`integration-parallel`); Unit tests use
   one per CPU.
 - **`run-unit-tests`** runs `cmake_helper.py ctest` (`--no-tests=error`, so empty selections
-  fail). Reporting steps run after test failures; the failed CTest step still fails the job.
+  fail), selecting by labels and, with `tests-regex`, by test name (`-R`). Reporting steps run
+  after test failures; the failed CTest step still fails the job.
   `junit_report.py` writes the `report-name` section and error annotations for failed tests
   (no `checks: write` needed), and `artifact_link.py` links the uploaded results below it; Codecov
   test analytics (`upload-codecov`) needs `id-token: write`.

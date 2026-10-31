@@ -196,6 +196,15 @@ jobs:
           EXPECT_GSTREAMER: ${{ matrix.gstreamer }}
         run: ./deploy/windows/verify-installer.ps1 -Phase Install
 
+      # Names each DLL an installed file imports that neither ships nor comes with Windows, which the
+      # boot test below would only report as a failed start.
+      - name: Audit installed DLL dependencies
+        if: matrix.build_type == 'Release' && matrix.variant != 'arm64-cross'
+        shell: bash
+        run: >-
+          python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/pe_dependency_audit.py"
+          --install-dir "${QGC_INSTALL_TEST_DIR}"
+
       - name: Verify installed executable
         if: matrix.build_type == 'Release' && matrix.variant != 'arm64-cross'
         uses: ./.github/actions/verify-executable
@@ -226,12 +235,106 @@ jobs:
         timeout-minutes: 15
         uses: ./.github/actions/debug-runner
 
+  # The only Windows run of the GStreamer and video test classes: a Debug build with tests, which
+  # packages nothing.
+  gstreamer-tests:
+    name: GStreamer tests win64_msvc2022_64 Debug
+    needs: changes
+    if: needs.changes.outputs.should_build == 'true'
+    runs-on: >-
+      ${{
+        github.repository_owner == 'mavlink' &&
+        format('runs-on={0}-gstreamer-tests-{1}-{2}/{3}',
+          github.run_id, github.run_attempt, strategy.job-index,
+          vars.RUNS_ON_WINDOWS_POOL != '' && format('pool={0}', vars.RUNS_ON_WINDOWS_POOL) ||
+          'runner=windows-x64-builder/volume=130gb') ||
+        'windows-2022'
+      }}
+    timeout-minutes: 120
+
+    permissions:
+      contents: read
+      actions: read
+
+    defaults:
+      run:
+        shell: cmd
+
+    steps:
+      # The Harden-Runner community tier audits GitHub-hosted runners only, not RunsOn.
+      - name: Harden Runner
+        if: runner.environment == 'github-hosted'
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Enable RunsOn magic cache
+        uses: runs-on/action@v2
+        with:
+          show_costs: summary
+
+      - name: Checkout repo
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install Visual Studio Build Tools
+        if: runner.environment != 'github-hosted'
+        uses: ./.github/actions/install-dependencies
+
+      - name: Build Setup
+        uses: ./.github/actions/build-setup
+        with:
+          qt-host: windows
+          qt-arch: win64_msvc2022_64
+          build-type: Debug
+
+      - name: Configure
+        uses: ./.github/actions/cmake-configure
+        with:
+          preset: Windows-debug
+          extra-args: -DQGC_ENABLE_GST_VIDEOSTREAMING=ON -DQGC_USE_LLD_LINK=ON
+
+      - name: Build
+        id: build
+        uses: ./.github/actions/cmake-build
+
+      # CTest runs the build tree, which finds the SDK's DLLs, and the shipped plugins plus the test
+      # sources and encoders, only through this environment.
+      - name: Point CTest at the GStreamer SDK
+        id: gst-env
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        shell: bash
+        run: >-
+          python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/verify_executable.py"
+          --build-dir "${RUNNER_TEMP}/build" --export-gstreamer-env
+
+      # QSG_RHI_PREFER_SOFTWARE_RENDERER makes the D3D11/D3D12 pixel tests' QRhi use WARP, as runners
+      # have no GPU.
+      - name: Run GStreamer tests
+        if: ${{ !cancelled() && steps.gst-env.outcome == 'success' }}
+        uses: ./.github/actions/run-unit-tests
+        env:
+          QSG_RHI_PREFER_SOFTWARE_RENDERER: '1'
+        with:
+          include-labels: 'Unit|Integration'
+          tests-regex: '^(Gst|GStreamer[A-Z]|Video|Subtitle|QGCVideo)'
+          junit-output: junit-gstreamer.xml
+          ctest-output: gstreamer-output.txt
+          report-name: GStreamer tests (windows)
+          artifact-name: test-results-gstreamer-windows
+
+      - name: Debug failed runner
+        if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
+        timeout-minutes: 15
+        uses: ./.github/actions/debug-runner
+
   # The required status check: a skipped matrix job reports an unexpanded name, so branch
   # protection requires this stable name instead. always(): a skipped gate would count as passing.
   windows-ok:
     name: Windows
     if: always()
-    needs: [changes, build]
+    needs: [changes, build, gstreamer-tests]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
@@ -244,5 +347,5 @@ jobs:
       - name: Require every leg to pass
         uses: re-actors/alls-green@v1.3.0
         with:
-          allowed-skips: build
+          allowed-skips: build, gstreamer-tests
           jobs: ${{ toJSON(needs) }}

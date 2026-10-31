@@ -288,7 +288,7 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 | `GstSourceFactoryStreamTest` | Integration | Source bins receiving real streams on loopback: RTP over UDP joining mid-GOP, and an RTSP session that sets up only the video stream; and their `udpsrc` stopped right after it starts, thousands of times. |
 | `GstRecordingSinkTest` | Integration | The recording file sink fed by running pipelines: a mid-stream H.265 MP4 start and frames that carry only a DTS. |
 | `GstSelfTestPipelineTest` | Integration | The [boot self-test](#boot-self-test) against the GStreamer the tests run on, and its software retry after a hardware decoder fails mid-stream, which restores the decoder ranks. |
-| `GstHwBuffersPipelineTest` | Integration, GPU | Pipelines that upload into or decode to GPU memory (DMABuf, GLMemory, Vulkan, D3D11/D3D12, IOSurface) and the path each frame takes; D3D11/D3D12 and IOSurface frames are also converted with `QVideoFrame::toImage()` on a QRhi of that API and compared with the CPU frame. Software frames through the glupload bin and the Windows D3D11 sink. Skips without the device. |
+| `GstHwBuffersPipelineTest` | Integration, GPU | Pipelines that upload into or decode to GPU memory (DMABuf, GLMemory, Vulkan, D3D11/D3D12, IOSurface) and the path each frame takes; D3D11/D3D12 and IOSurface frames are also converted with `QVideoFrame::toImage()` on a QRhi of that API and compared with the CPU frame; the D3D QRhi uses the WARP software adapter when `QSG_RHI_PREFER_SOFTWARE_RENDERER` is set or DXGI lists no hardware adapter. Software frames through the glupload bin and the Windows D3D11 sink. Skips without the device. |
 | `GstHwBuffersGlReadbackTest` | Integration, GPU | DMABuf planes and glupload's GLMemory frames imported into a GL QRhi that shares Qt's EGL context, read back pixel by pixel and converted with `QVideoFrame::toImage()` (xcb with `xcb_egl`). |
 | `GstVideoReceiverTest` | Integration | `GstVideoReceiver` end to end against the H.264 test stream it sends itself on loopback: states, restarts, decoder-only recovery, a mid-stream resolution change, H.265, an RTSP server that never answers, recording across reconnects, slow and hung storage, bounded teardown. Receivers and servers listen on port 0, so parallel runs never collide. |
 
@@ -297,6 +297,14 @@ The classes derived from `GStreamerTestBase` fail in `initTestCase()` when `GStr
 ```bash
 ctest --test-dir build -R '^(GStreamer|Gst)[A-Za-z]*Test$' --output-on-failure
 ```
+
+CI runs these classes in the Linux coverage and sanitizer jobs and the macOS Debug leg with the rest of the suite, and on
+Windows in `windows.yml`'s `gstreamer-tests` job, a Debug build that runs only the GStreamer and video classes against
+the SDK's shipped plugins plus the sources and encoders the tests send streams with, with the D3D tests on WARP. The
+packages are checked beyond their boot test: every DLL the Windows install imports must ship or come with Windows
+(`pe_dependency_audit.py`), every library a Mach-O file in the macOS bundle loads must resolve inside the bundle or to
+macOS (`macho_bundle_audit.py`), and the AppImage must boot in clean Ubuntu 24.04 and Debian 13 containers without
+GStreamer or Qt (`appimage_container_boot.py`); see [`.github/ci-overview.md`](../../../../.github/ci-overview.md).
 
 ### Boot self-test
 
