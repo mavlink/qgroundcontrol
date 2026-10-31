@@ -96,8 +96,8 @@ PROCESS_VM_READ = 0x0010
 
 def _gstreamer_env(
     build_dir: Path, *, for_tests: bool = False
-) -> tuple[dict[str, str], Path | None]:
-    """Return the GStreamer variables and SDK library directory a build tree runs with.
+) -> tuple[dict[str, str], list[Path]]:
+    """Return the GStreamer variables and SDK library directories a build tree runs with.
 
     For dev builds (before cmake --install), GStreamer plugins haven't been copied into the app
     bundle yet. These let the runtime find the auto-downloaded SDK's plugins; without one recorded
@@ -105,16 +105,16 @@ def _gstreamer_env(
     """
     cache = build_dir / "CMakeCache.txt"
     if not cache.is_file():
-        return {}, None
+        return {}, []
 
     value = read_cache_var(str(cache), "QGC_GST_RESOLVED_ROOT")
     if not value:
-        return {}, None
+        return {}, []
 
     gst_root = Path(value)
     plugin_dir = gst_root / "lib" / "gstreamer-1.0"
     if not plugin_dir.is_dir():
-        return {}, None
+        return {}, []
 
     print(f"Setting GStreamer env from build cache: {gst_root}")
     shipped = read_cache_var(str(cache), "QGC_GST_SHIPPED_PLUGINS")
@@ -139,21 +139,28 @@ def _gstreamer_env(
     if scanner.is_file() and os.access(scanner, os.X_OK):
         env["GST_PLUGIN_SCANNER"] = env["GST_PLUGIN_SCANNER_1_0"] = str(scanner)
 
-    library_dir = {"Darwin": gst_root / "lib", "Windows": gst_root / "bin"}.get(platform.system())
-    return env, library_dir
+    if platform.system() == "Darwin":
+        return env, [gst_root / "lib"]
+    if platform.system() == "Windows":
+        # giolibproxy.dll's proxy-1.dll loads its backends from lib/libproxy, which the install copies into bin.
+        libproxy = gst_root / "lib" / "libproxy"
+        return env, [gst_root / "bin", *([libproxy] if libproxy.is_dir() else [])]
+    return env, []
 
 
 def _setup_gstreamer_env(build_dir: Path) -> None:
     """Point this process, and the boot test it starts, at the build tree's GStreamer SDK."""
-    env, library_dir = _gstreamer_env(build_dir)
+    env, library_dirs = _gstreamer_env(build_dir)
     os.environ.update(env)
-    if library_dir is None:
+    if not library_dirs:
         return
     name, separator = (
         ("PATH", ";") if platform.system() == "Windows" else ("DYLD_LIBRARY_PATH", ":")
     )
-    existing = os.environ.get(name, "")
-    os.environ[name] = f"{library_dir}{separator}{existing}" if existing else str(library_dir)
+    paths = [str(path) for path in library_dirs]
+    if existing := os.environ.get(name, ""):
+        paths.append(existing)
+    os.environ[name] = separator.join(paths)
 
 
 def _export_gstreamer_env(build_dir: Path) -> int:
@@ -161,16 +168,16 @@ def _export_gstreamer_env(build_dir: Path) -> int:
 
     Unlike the boot test, the tests also load the plugins in TEST_ONLY_PLUGINS.
     """
-    env, library_dir = _gstreamer_env(build_dir, for_tests=True)
+    env, library_dirs = _gstreamer_env(build_dir, for_tests=True)
     if not env:
         gh_error(f"{build_dir / 'CMakeCache.txt'} records no GStreamer SDK with plugins")
         return 1
     append_github_env(env)
-    if library_dir is not None:
-        if platform.system() == "Windows":
+    if platform.system() == "Windows":
+        for library_dir in library_dirs:
             append_github_path(str(library_dir))
-        else:
-            append_github_env({"DYLD_LIBRARY_PATH": str(library_dir)})
+    elif library_dirs:
+        append_github_env({"DYLD_LIBRARY_PATH": ":".join(str(path) for path in library_dirs)})
     for name, value in env.items():
         print(f"{name}={value}")
     return 0

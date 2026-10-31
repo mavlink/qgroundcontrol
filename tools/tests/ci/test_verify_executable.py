@@ -118,6 +118,9 @@ def _fake_windows_sdk(build_dir: Path, plugins: tuple[str, ...], shipped: tuple[
     scanner.parent.mkdir(parents=True)
     scanner.write_bytes(b"MZ")
     scanner.chmod(0o755)
+    libproxy = gst_root / "lib" / "libproxy"
+    libproxy.mkdir()
+    (libproxy / "pxbackend-1.0.dll").write_bytes(b"MZ")
     cached = ";".join(str(plugin_dir / name) for name in shipped)
     (build_dir / "CMakeCache.txt").write_text(
         f"QGC_GST_RESOLVED_ROOT:INTERNAL={gst_root}\nQGC_GST_SHIPPED_PLUGINS:INTERNAL={cached}\n"
@@ -158,7 +161,11 @@ def test_export_gives_later_steps_the_shipped_and_test_only_plugins(
         "GST_PLUGIN_SCANNER": scanner,
         "GST_PLUGIN_SCANNER_1_0": scanner,
     }
-    assert gh_path.read_text(encoding="utf-8") == f"{gst_root / 'bin'}\n"
+    # The SDK's DLLs, and the libproxy backends proxy-1.dll loads for giolibproxy.dll, which the install puts in bin.
+    assert (
+        gh_path.read_text(encoding="utf-8")
+        == f"{gst_root / 'bin'}\n{gst_root / 'lib' / 'libproxy'}\n"
+    )
     assert not (tmp_path / verify_executable.SHIPPED_PLUGIN_DIR).exists()
 
 
