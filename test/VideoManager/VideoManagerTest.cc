@@ -548,7 +548,7 @@ void VideoManagerTest::_testStreamStatsReachQml()
     _settle();
     QVERIFY(showsText(group.get(), QStringLiteral("Main camera")));
     QVERIFY(showsText(group.get(), QStringLiteral("29.5 fps (camera 30 fps)")));
-    QVERIFY(showsText(group.get(), QStringLiteral("0 kbit/s (camera 8.00 Mbit/s)")));
+    QVERIFY(showsText(group.get(), QStringLiteral("0 kbit/s (camera 8.0 Mbit/s)")));
     QVERIFY(showsText(group.get(), QStringLiteral("H.264 (camera 1280 × 720)")));
     stream->setStreamInfo(nullptr);
     _settle();

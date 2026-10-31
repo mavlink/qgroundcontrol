@@ -7,6 +7,8 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
+import "VideoStreamFormat.js" as VideoStreamFormat
+
 // Frame rate and bitrate of the measured video stream, orange while a stream degrades. The drawer shows each stream's
 // statistics, and expands to the video settings that change a running stream.
 Item {
@@ -63,9 +65,7 @@ Item {
 
             QGCLabel {
                 objectName: "videoStreamBitrate"
-                text:       control._stats.bitrateKbps >= 1000
-                            ? qsTr("%1 Mbit/s").arg((control._stats.bitrateKbps / 1000).toFixed(1))
-                            : qsTr("%1 kbit/s").arg(control._stats.bitrateKbps.toFixed(0))
+                text:       VideoStreamFormat.bitrateText(control._stats.bitrateKbps)
             }
         }
     }
@@ -107,36 +107,24 @@ Item {
                     spacing: ScreenTools.defaultFontPixelHeight / 4
 
                     QGCGroupBox {
-                        heading: qsTr("Video Settings")
+                        heading: qsTr("Video Stream")
+                        visible: QGroundControl.videoManager.isStreamSource
 
                         FactCheckBoxSlider {
                             Layout.fillWidth:   true
                             text:               qsTr("Low Latency Mode")
                             fact:               control._videoSettings.lowLatencyMode
-                            visible:            fact.userVisible && QGroundControl.videoManager.isStreamSource
+                            visible:            fact.userVisible
                         }
 
                         LabelledFactTextField {
                             label:      qsTr("RTP jitter latency")
                             fact:       control._videoSettings.rtpJitterLatencyMs
-                            visible:    fact.userVisible && QGroundControl.videoManager.isStreamSource
-                                        && !control._videoSettings.lowLatencyMode.rawValue
-                        }
-
-                        FactCheckBoxSlider {
-                            Layout.fillWidth:   true
-                            text:               qsTr("Grid Lines")
-                            fact:               control._videoSettings.gridLines
-                            visible:            fact.userVisible
-                        }
-
-                        LabelledFactComboBox {
-                            label:      qsTr("Display Fit")
-                            fact:       control._videoSettings.videoFit
-                            indexModel: false
-                            visible:    fact.userVisible
+                            visible:    fact.userVisible && !control._videoSettings.lowLatencyMode.rawValue
                         }
                     }
+
+                    VideoDisplaySettingsGroup { }
 
                     RowLayout {
                         spacing: ScreenTools.defaultFontPixelWidth

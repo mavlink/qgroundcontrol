@@ -394,7 +394,6 @@ Rectangle {
                 property bool _multipleMavlinkCameras: _cameraManager.cameras.count > 1
                 property bool _multipleMavlinkCameraStreams: _camera.streamLabels.length > 1
                 property bool _cameraStorageSupported: _camera.storageStatus !== MavlinkCameraControlInterface.STORAGE_NOT_SUPPORTED
-                property var _videoSettings: QGroundControl.settingsManager.videoSettings
 
                 ColumnLayout {
                     spacing: _margins
@@ -404,7 +403,7 @@ Rectangle {
                         flow: GridLayout.TopToBottom
                         rows: dynamicRows + _camera.activeSettings.length
 
-                        property int dynamicRows: 10
+                        property int dynamicRows: 8
 
                         // First column
                         QGCLabel {
@@ -449,18 +448,6 @@ Rectangle {
                         QGCLabel {
                             text: qsTr("Photo Interval (seconds)")
                             visible: _camera.capturesPhotos && _camera.photoCaptureMode === MavlinkCameraControlInterface.PHOTO_CAPTURE_TIMELAPSE
-                            onVisibleChanged: gridLayout.dynamicRows += visible ? 1 : -1
-                        }
-
-                        QGCLabel {
-                            text: qsTr("Video Grid Lines")
-                            visible: _camera.hasVideoStream
-                            onVisibleChanged: gridLayout.dynamicRows += visible ? 1 : -1
-                        }
-
-                        QGCLabel {
-                            text: qsTr("Video Screen Fit")
-                            visible: _camera.hasVideoStream
                             onVisibleChanged: gridLayout.dynamicRows += visible ? 1 : -1
                         }
 
@@ -594,20 +581,6 @@ Rectangle {
                             onValueChanged: _camera.photoLapse = value
                         }
 
-                        QGCCheckBoxSlider {
-                            checked: _videoSettings.gridLines.rawValue
-                            visible: _camera.hasVideoStream
-                            onClicked: _videoSettings.gridLines.rawValue = checked ? 1 : 0
-                        }
-
-                        FactComboBox {
-                            Layout.fillWidth: true
-                            sizeToContents: true
-                            fact: _videoSettings.videoFit
-                            indexModel: false
-                            visible: _camera.hasVideoStream
-                        }
-
                         QGCButton {
                             Layout.fillWidth: true
                             text: qsTr("Reset")
@@ -656,6 +629,10 @@ Rectangle {
                                 }
                             }
                         }
+                    }
+
+                    VideoDisplaySettingsGroup {
+                        visible: _camera.hasVideoStream
                     }
                 }
             }

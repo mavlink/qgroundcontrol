@@ -4,6 +4,8 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
+import "VideoStreamFormat.js" as VideoStreamFormat
+
 // The health of one video stream, from its controller's stats; shown only while the stream is measured. The camera's
 // advertised values follow the measured ones when they are known.
 QGCGroupBox {
@@ -25,25 +27,6 @@ QGCGroupBox {
                                             : _stats.codec
     readonly property string _decoderText:  _stats.hardwareDecoder ? qsTr("%1 (hardware)").arg(_stats.decoder)
                                                                    : qsTr("%1 (software)").arg(_stats.decoder)
-
-    function _bitrateText(kbps) {
-        return kbps >= 1000 ? qsTr("%1 Mbit/s").arg((kbps / 1000).toFixed(2)) : qsTr("%1 kbit/s").arg(kbps.toFixed(0))
-    }
-
-    function _durationText(ms) {
-        const totalSeconds = Math.floor(ms / 1000)
-        const hours = Math.floor(totalSeconds / 3600)
-        const minutes = Math.floor(totalSeconds / 60) % 60
-        const seconds = String(totalSeconds % 60).padStart(2, "0")
-        return hours > 0 ? qsTr("%1:%2:%3").arg(hours).arg(String(minutes).padStart(2, "0")).arg(seconds)
-                         : qsTr("%1:%2").arg(minutes).arg(seconds)
-    }
-
-    function _sizeText(bytes) {
-        const megabytes = bytes / (1024 * 1024)
-        return megabytes >= 1024 ? qsTr("%1 GB").arg((megabytes / 1024).toFixed(2))
-                                 : qsTr("%1 MB").arg(megabytes.toFixed(1))
-    }
 
     function _withCamera(measured, camera) {
         return camera !== "" ? qsTr("%1 (camera %2)").arg(measured).arg(camera) : measured
@@ -92,8 +75,8 @@ QGCGroupBox {
 
     LabelledLabel {
         label:      qsTr("Bitrate")
-        labelText:  root._withCamera(root._bitrateText(root._stats.bitrateKbps),
-                                     root._cameraKbps > 0 ? root._bitrateText(root._cameraKbps) : "")
+        labelText:  root._withCamera(VideoStreamFormat.bitrateText(root._stats.bitrateKbps),
+                                     root._cameraKbps > 0 ? VideoStreamFormat.bitrateText(root._cameraKbps) : "")
     }
 
     LabelledLabel {
@@ -165,7 +148,7 @@ QGCGroupBox {
 
     LabelledLabel {
         label:      qsTr("Uptime")
-        labelText:  root._durationText(root._stats.uptimeMs)
+        labelText:  VideoStreamFormat.durationText(root._stats.uptimeMs)
     }
 
     LabelledLabel {
@@ -176,8 +159,8 @@ QGCGroupBox {
 
     LabelledLabel {
         label:      qsTr("Recording")
-        labelText:  qsTr("%1, %2").arg(root._durationText(root._stats.recordingMs))
-                                  .arg(root._sizeText(root._stats.recordingBytes))
+        labelText:  qsTr("%1, %2").arg(VideoStreamFormat.durationText(root._stats.recordingMs))
+                                  .arg(VideoStreamFormat.sizeText(root._stats.recordingBytes))
         visible:    root._stats.recordingMs >= 0
     }
 }
