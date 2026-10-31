@@ -10,9 +10,33 @@
 #
 # The two 160x120 streams are also the samples GStreamer::selfTest() decodes and records in the app.
 # Every IDR repeats the parameter sets, so any keyframe starts a stream; there are no B-frames, so PTS equals DTS.
-# Needs gst-launch-1.0 with videotestsrc, x264enc, x265enc, h264parse and h265parse.
+# The streams carry no SEI: x264 and x265 write their name, version and options into one, and CI's artifact
+# report fails a mobile binary, which embeds the 160x120 streams, that contains those GPL encoder markers.
+# Needs gst-launch-1.0 with videotestsrc, x264enc, x265enc, h264parse and h265parse, and python3.
 set -euo pipefail
 cd "$(dirname "$0")"
+
+# strip_sei <file> <h264|h265>: drop the SEI NAL units (H.264 type 6, H.265 types 39 and 40) from an Annex B stream.
+strip_sei() {
+    python3 - "$1" "$2" <<'EOF'
+import re
+import sys
+from pathlib import Path
+
+path, codec = Path(sys.argv[1]), sys.argv[2]
+data = path.read_bytes()
+# A NAL unit runs from its start code, with the leading zero byte of a 4-byte one, to the next start code.
+starts = [m.start() for m in re.finditer(b"\x00\x00\x01", data)]
+begins = [s - 1 if s > 0 and data[s - 1] == 0 else s for s in starts]
+kept = bytearray(data[: begins[0]])
+for begin, start, end in zip(begins, starts, [*begins[1:], len(data)]):
+    header = data[start + 3]
+    nal_type = header & 0x1F if codec == "h264" else (header >> 1) & 0x3F
+    if nal_type not in ({6} if codec == "h264" else {39, 40}):
+        kept += data[begin:end]
+path.write_bytes(kept)
+EOF
+}
 
 source_caps() {
     echo "videotestsrc num-buffers=$3 pattern=ball ! video/x-raw,format=I420,width=$1,height=$2,framerate=30/1"
@@ -24,6 +48,7 @@ h264() {
         x264enc tune=zerolatency speed-preset=ultrafast threads=1 key-int-max=5 bitrate=250 \
         option-string=repeat-headers=1 ! video/x-h264,profile=constrained-baseline ! \
         h264parse ! video/x-h264,stream-format=byte-stream,alignment=au ! filesink location="$4"
+    strip_sei "$4" h264
 }
 
 h265() {
@@ -32,6 +57,7 @@ h265() {
         x265enc tune=zerolatency speed-preset=ultrafast key-int-max=5 bitrate=250 log-level=error \
         option-string=repeat-headers=1:open-gop=0:frame-threads=1:pools=none ! \
         h265parse ! video/x-h265,stream-format=byte-stream,alignment=au ! filesink location="$4"
+    strip_sei "$4" h265
 }
 
 h264 320 240 60 h264_320x240.h264
