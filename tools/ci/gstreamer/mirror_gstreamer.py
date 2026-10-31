@@ -8,8 +8,8 @@ given version, verifies each against its checksum pinned in .github/build-config
 build's S3 fallback mirror reads. ``common.gstreamer`` holds the package layout
 shared with cmake/GStreamer/Packages.cmake and the installers.
 
-Options default to `mirror-gstreamer.yml`'s MIRROR_* variables; the version falls back to
-build-config.json's ``gstreamer.version.default`` and the work directory to RUNNER_TEMP.
+Options default to `mirror-gstreamer.yml`'s MIRROR_* variables; without a version each platform's
+``gstreamer.version.<platform>`` in build-config.json is mirrored, and the work directory falls back to RUNNER_TEMP.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
 from common.aws import s3_object_exists, upload_public_file
-from common.build_config import get_build_config_value
+from common.build_config import get_build_config_value, get_gstreamer_version
 from common.gh_actions import env_default, env_flag, gh_error, write_step_summary
 from common.gstreamer import PLATFORM_PACKAGES, package_platform, package_url, pinned_checksum
 from common.markdown import code_span, md_table, summary_section
@@ -123,10 +123,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--version",
-        default=env_default("MIRROR_VERSION")
-        or get_build_config_value("gstreamer.version.default"),
-        help="GStreamer version to mirror, e.g. 1.28.3 "
-        "(default: $MIRROR_VERSION, else build-config.json's gstreamer.version.default)",
+        default=env_default("MIRROR_VERSION"),
+        help="GStreamer version to mirror for every platform, e.g. 1.28.3 "
+        "(default: $MIRROR_VERSION, else each platform's gstreamer.version.<platform> in build-config.json)",
     )
     parser.add_argument(
         "--platforms",
@@ -150,17 +149,20 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=env_flag("MIRROR_FORCE"),
         help="Re-upload even if the object already exists (default: $MIRROR_FORCE)",
     )
-    args = parser.parse_args(argv)
-    if not args.version:
-        parser.error("--version is required: build-config.json has no gstreamer.version.default")
-    return args
+    return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     try:
-        platforms = resolve_platforms(args.platforms)
-        artifacts = [a for p in platforms for a in artifacts_for(p, args.version)]
+        jobs: list[tuple[Artifact, str]] = []
+        for platform in resolve_platforms(args.platforms):
+            version = args.version or get_gstreamer_version(platform)
+            if not version:
+                raise ValueError(
+                    f"build-config.json has no gstreamer.version.{platform}; pass --version"
+                )
+            jobs.extend((artifact, version) for artifact in artifacts_for(platform, version))
     except ValueError as exc:
         gh_error(str(exc))
         return 1
@@ -169,11 +171,11 @@ def main(argv: list[str] | None = None) -> int:
     work_dir.mkdir(parents=True, exist_ok=True)
 
     rows: list[list[str]] = []
-    for artifact in artifacts:
+    for artifact, version in jobs:
         try:
             status = mirror_artifact(
                 artifact,
-                version=args.version,
+                version=version,
                 work_dir=work_dir,
                 dry_run=args.dry_run,
                 force=args.force,
@@ -181,18 +183,18 @@ def main(argv: list[str] | None = None) -> int:
         except (OSError, RuntimeError) as exc:
             gh_error(f"Failed to mirror {artifact.filename}: {exc}")
             return 1
-        rows.append([code_span(artifact.s3_dir), code_span(artifact.filename), status])
+        rows.append([code_span(artifact.s3_dir), version, code_span(artifact.filename), status])
 
     write_step_summary(
         summary_section(
             "GStreamer mirror",
             [
-                ("Version", args.version),
+                ("Version", args.version or "gstreamer.version.<platform> of build-config.json"),
                 ("Destination", code_span(f"s3://{S3_BUCKET}/dependencies/gstreamer/")),
                 ("Mode", "dry run" if args.dry_run else "upload"),
                 ("Files", len(rows)),
             ],
-            body=md_table(["Platform", "File", "Status"], rows, markdown=True),
+            body=md_table(["Platform", "Version", "File", "Status"], rows, markdown=True),
         )
     )
     return 0

@@ -135,21 +135,18 @@ def test_main_summarizes_each_mirrored_file(
     assert summary.startswith("### GStreamer mirror\n\n| Item | Value |")
     assert "| Mode | dry run |" in summary
     assert "| Files | 1 |" in summary
-    assert "| Platform | File | Status |" in summary
+    assert "| Platform | Version | File | Status |" in summary
     assert "| uploaded |" in summary
 
 
-def test_options_default_to_the_workflow_environment_and_build_config(
+def test_options_default_to_the_workflow_environment(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    config = tmp_path / "build-config.json"
-    config.write_text('{"gstreamer": {"version": {"default": "1.28.9"}}}', encoding="utf-8")
-    monkeypatch.setenv("CONFIG_FILE", str(config))
     monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
     for name in ("VERSION", "PLATFORMS", "DRY_RUN", "FORCE"):
         monkeypatch.delenv(f"MIRROR_{name}", raising=False)
     args = mirror_gstreamer.parse_args([])
-    assert (args.version, args.platforms, args.work_dir) == ("1.28.9", "all", str(tmp_path))
+    assert (args.version, args.platforms, args.work_dir) == ("", "all", str(tmp_path))
     assert (args.dry_run, args.force) == (False, False)
 
     # mirror-gstreamer.yml passes its inputs as MIRROR_* (booleans as true/false).
@@ -166,21 +163,22 @@ def test_options_default_to_the_workflow_environment_and_build_config(
     # An empty workflow input falls back to the defaults.
     monkeypatch.setenv("MIRROR_VERSION", "")
     monkeypatch.setenv("MIRROR_PLATFORMS", "")
-    assert mirror_gstreamer.parse_args([]).version == "1.28.9"
+    assert mirror_gstreamer.parse_args([]).version == ""
     assert mirror_gstreamer.parse_args(["--force"]).platforms == "all"
 
 
-def test_version_is_required_without_a_build_config_default(
+def test_version_is_required_without_a_build_config_version(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     config = tmp_path / "build-config.json"
     config.write_text('{"gstreamer": {}}', encoding="utf-8")
     monkeypatch.setenv("CONFIG_FILE", str(config))
     monkeypatch.delenv("MIRROR_VERSION", raising=False)
-    with pytest.raises(SystemExit) as exc:
-        mirror_gstreamer.parse_args([])
-    assert exc.value.code == 2
-    assert "build-config.json has no gstreamer.version.default" in capsys.readouterr().err
+    assert mirror_gstreamer.main(["--platforms", "android", "--work-dir", str(tmp_path)]) == 1
+    assert (
+        "build-config.json has no gstreamer.version.android; pass --version"
+        in capsys.readouterr().out
+    )
 
 
 def test_workflow_passes_its_inputs_as_mirror_variables() -> None:
@@ -195,3 +193,28 @@ def test_workflow_passes_its_inputs_as_mirror_variables() -> None:
         "MIRROR_FORCE": "${{ inputs.force }}",
     }
     assert get_step(steps, "Configure AWS Credentials")["if"] == "${{ !inputs.dry_run }}"
+
+
+def test_main_mirrors_each_platforms_own_version(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, gh_summary: Path
+) -> None:
+    config = tmp_path / "build-config.json"
+    config.write_text(
+        '{"gstreamer": {"version": {"default": "1.28.9", "android": "1.28.7", "ios": "1.28.8"}}}',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("CONFIG_FILE", str(config))
+    monkeypatch.delenv("MIRROR_VERSION", raising=False)
+    mirrored: list[tuple[str, str]] = []
+
+    def record(artifact: Artifact, *, version: str, **_kwargs: object) -> str:
+        mirrored.append((artifact.filename, version))
+        return "dry-run"
+
+    monkeypatch.setattr(mirror_gstreamer, "mirror_artifact", record)
+    argv = ["--platforms", "android,ios", "--work-dir", str(tmp_path), "--dry-run"]
+    assert mirror_gstreamer.main(argv) == 0
+    assert mirrored == [
+        ("gstreamer-1.0-android-universal-1.28.7.tar.xz", "1.28.7"),
+        ("gstreamer-1.0-devel-1.28.8-ios-universal.pkg", "1.28.8"),
+    ]

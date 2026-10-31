@@ -3,13 +3,13 @@ name: Mirror GStreamer
 # Mirror official upstream GStreamer release artifacts into the QGC S3 bucket
 # (s3://qgroundcontrol/dependencies/gstreamer/<platform>/<filename>) — the
 # fallback mirror the build reads when the upstream download is unavailable.
-# Run this after bumping gstreamer.version in build-config.json.
+# Run this after bumping gstreamer.version.<platform> in build-config.json.
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'GStreamer version (empty = build-config default)'
+        description: "GStreamer version (empty = each platform's gstreamer.version.<platform>)"
         required: false
         default: ''
         type: string
@@ -39,7 +39,7 @@ permissions:
 
 jobs:
   mirror:
-    name: Mirror GStreamer ${{ inputs.version || 'default' }}
+    name: Mirror GStreamer ${{ inputs.version || 'build-config versions' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60
 
@@ -67,7 +67,7 @@ jobs:
           aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      # An empty version mirrors build-config.json's gstreamer.version.default.
+      # An empty version mirrors each platform's gstreamer.version.<platform> in build-config.json.
       - name: Mirror artifacts
         env:
           MIRROR_VERSION: ${{ inputs.version }}
