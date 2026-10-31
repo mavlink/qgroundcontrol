@@ -1,6 +1,7 @@
 #include "GStreamerLogging.h"
 
 #include <algorithm>
+#include <atomic>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QList>
@@ -17,6 +18,8 @@ QGC_LOGGING_CATEGORY_ON(GStreamerAPILog, "Video.GStreamer.GStreamerAPI")
 QGC_LOGGING_CATEGORY(GStreamerDecoderRanksLog, "Video.GStreamer.DecoderRanks")
 
 namespace {
+
+std::atomic<bool> s_externalPluginLoaderFailed = false;
 
 #ifdef QT_DEBUG
 constexpr int kMaxBridgedLevel = GST_LEVEL_MEMDUMP;
@@ -40,6 +43,10 @@ void glib_log_handler(const gchar* log_domain, GLogLevelFlags log_level, const g
     Q_UNUSED(user_data);
     const QString domain = log_domain ? QString::fromUtf8(log_domain) : QStringLiteral("GLib");
     const QString msg = QString::fromUtf8(message);
+
+    if (msg.contains(QStringLiteral("External plugin loader failed"))) {
+        s_externalPluginLoaderFailed.store(true);
+    }
 
     if (msg.contains(QStringLiteral("pygobject initialization failed"), Qt::CaseInsensitive)) {
         qCDebug(GStreamerLoggingLog) << domain << msg;
@@ -68,6 +75,16 @@ void glib_log_handler(const gchar* log_domain, GLogLevelFlags log_level, const g
 }  // anonymous namespace
 
 namespace GStreamer {
+
+bool externalPluginLoaderFailed()
+{
+    return s_externalPluginLoaderFailed.load();
+}
+
+void resetExternalPluginLoaderFailed()
+{
+    s_externalPluginLoaderFailed.store(false);
+}
 
 void redirectGLibLogging()
 {

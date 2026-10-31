@@ -221,6 +221,7 @@ void GStreamerEnvironmentTest::_testSystemGStreamerKeepsDefaultRegistry()
     const ManagedEnvGuard guard;
     QVERIFY(GStreamer::Environment::prepareEnvironment().ok);
     QVERIFY(!qEnvironmentVariableIsSet("GST_REGISTRY"));
+    QVERIFY(GStreamer::Environment::bundledRuntime().pluginDirs.isEmpty());
 #else
     QSKIP("Only Linux builds use a system GStreamer");
 #endif
@@ -254,6 +255,7 @@ void GStreamerEnvironmentTest::_testBundledRuntime()
 
     QVERIFY(GStreamer::Environment::prepareEnvironment(appDir).ok);
 
+    QCOMPARE(GStreamer::Environment::bundledRuntime().pluginDirs, QStringList{pluginDir});
     QCOMPARE(qEnvironmentVariable("GST_PLUGIN_SYSTEM_PATH"), pluginDir);
     QCOMPARE(qEnvironmentVariable("GST_PLUGIN_SYSTEM_PATH_1_0"), pluginDir);
     QVERIFY(!qEnvironmentVariableIsSet("GST_PLUGIN_PATH"));

@@ -14,6 +14,8 @@ target_sources(
         GStreamerTestBase.h
         GStreamerTestHelpers.cc
         GStreamerTestHelpers.h
+        GstSelfTestPipelineTest.cc
+        GstSelfTestPipelineTest.h
         HwBuffers/GStreamerHwFrameTexturesTest.cc
         HwBuffers/GStreamerHwImportCacheTest.cc
         HwBuffers/GstHwBuffersGlReadbackTest.cc
@@ -79,6 +81,7 @@ add_qgc_test(GstVideoReceiverComponentsTest LABELS Unit)
 add_qgc_test(GstHwBuffersPipelineTest LABELS Integration GPU)
 add_qgc_test(GstQgcSinkPipelineTest LABELS Integration)
 add_qgc_test(GstRecordingSinkTest LABELS Integration)
+add_qgc_test(GstSelfTestPipelineTest LABELS Integration)
 add_qgc_test(GstSourceFactoryStreamTest LABELS Integration)
 add_qgc_test(GstVideoReceiverTest LABELS Integration)
 # Needs Qt on EGL, which the offscreen QPA lacks: xcb with xcb_egl, falling back to offscreen (and skipping) without an

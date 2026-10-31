@@ -130,6 +130,8 @@ target_sources(
         GStreamerHelpers.h
         GStreamerLogging.cc
         GStreamerLogging.h
+        GStreamerSelfTest.cc
+        GStreamerSelfTest.h
         GstReceiverWorker.cc
         GstReceiverWorker.h
         GstScoped.h
@@ -151,6 +153,17 @@ target_sources(
         RecordingFinalizer.h
         DecodingBranch.cc
         DecodingBranch.h
+)
+
+# The samples GStreamer::selfTest() decodes and records: the GStreamer tests' 160x120 streams (generate.sh there).
+set(_qgc_gst_selftest_media "${CMAKE_SOURCE_DIR}/test/VideoManager/GStreamer/Media")
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} "GStreamerSelfTestMedia_res"
+    PREFIX "/gstreamer/selftest"
+    BASE "${_qgc_gst_selftest_media}"
+    FILES
+        "${_qgc_gst_selftest_media}/h264_160x120.h264"
+        "${_qgc_gst_selftest_media}/h265_160x120.h265"
 )
 
 # Its file-scope `using namespace GStreamer;` would leak into later sources of a unity unit.

@@ -536,6 +536,10 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
 - Set the repository variable `CODECOV_TEST_ANALYTICS=true` to upload JUnit results from the Linux test
   jobs (including the custom plugin's) to Codecov test analytics (OIDC, informational). JUnit artifacts and job
   summary reports are produced either way.
+- **Boot test**: `QGroundControl --simple-boot-test`, which every platform's package runs, also runs QGC's
+  GStreamer self-test: H.264 (and, given a decoder, H.265) decoding, MP4 and MKV recording, every feature's
+  elements, and for a bundled runtime its plugins, plugin scanner and GIO TLS/proxy modules
+  ([details](../src/VideoManager/VideoReceiver/GStreamer/README.md#boot-self-test)).
 - **Sanitizers**: `Linux-sanitizers` (ASan + UBSan, leak detection on) excludes the `NoSanitizer`
   label. Runtime options come from CTest: `cmake/QGCTest.cmake` sets `*SAN_OPTIONS`
   (`halt_on_error=1`) on every test, overriding the shell environment. ThreadSanitizer runs only on

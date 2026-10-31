@@ -75,6 +75,9 @@ QList<VideoDecoderOptions> availableDecoderFamilies();
 // no-ops these for builds without GStreamer; this header is included solely under QGC_GST_STREAMING.
 Environment::ValidationResult prepareEnvironment();
 bool initialize(const QStringList& arguments, const Environment::ValidationResult& envResult);
+/// Proves, for the boot test, that the runtime initialize() set up works: decoding, recording, the bundled plugins
+/// and GIO (GStreamerSelfTest.h). Logs each failure under Video.GStreamer.SelfTest; GUI thread, after initialize().
+bool selfTest();
 void bindDebugLevelFact(Fact* fact, QObject* context);
 void onMainWindowReady(QQuickWindow* window);
 

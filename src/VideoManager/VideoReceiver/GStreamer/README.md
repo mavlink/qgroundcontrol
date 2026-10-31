@@ -27,6 +27,7 @@ The pipeline is split into focused components (all in this directory):
 | `GStreamerEnvironment` | Process-wide environment setup (plugin/scanner/helper/GIO paths, private registry, mobile CA file) run before `gst_init()`. See [Runtime Environment Setup](#runtime-environment-setup). |
 | `GStreamerHelpers` | Small utilities: decoder classification and rank overrides, tee branch heads, keyframe requests, events sent without blocking, holding a new pad's data until it is linked, and taking a child element out of a running bin. |
 | `GStreamerLogging` | Routes GStreamer's log output through QGC's logging, unless GStreamer's own output was requested, and applies the persisted debug level. See [GStreamer Logging](#gstreamer-logging). |
+| `GStreamerSelfTest` | `GStreamer::selfTest()`, which the boot test runs to prove the packaged runtime decodes and records. See [Boot self-test](#boot-self-test). |
 | `GstScoped` | RAII owners for transfer-full GStreamer returns so refs can't leak on early return, `makeElement()` (never floating), `PadProbe` and `ScopedSignal`. |
 | `MockVideoStreamServer` | Serves a synthetic `videotestsrc` stream (RTP H.264 or H.265 over UDP, RTSP, MPEG-TS over UDP or TCP) that MockLink advertises, so the receiver runs without a vehicle. Debug builds only. |
 
@@ -137,7 +138,7 @@ QGC configures GStreamer runtime paths before `gst_init()`:
 - **Desktop (Linux/macOS/Windows)**: `GStreamer::prepareEnvironment()` sets plugin paths, scanner/helper paths, and GIO module paths when bundled runtimes are detected (never in a Linux build with `QGC_GST_BUNDLE_PLUGINS=OFF`). A bundled runtime also gets its own plugin registry, `gstreamer-<runtime version>-<arch>-<install hash>.bin` in the app's cache directory (`QStandardPaths::CacheLocation`), unless `GST_REGISTRY` or `GST_REGISTRY_1_0` is set, so it does not share the default per-user registry with the system GStreamer. The install hash keeps two installs of one GStreamer version (such as a stable and a daily build) from rescanning over each other's registry. It names what stays put across launches: the bundled plugin directory, the AppImage file (`$APPIMAGE`) rather than its mount point, which changes on every launch, and the app's name rather than the random directory macOS translocates a quarantined app to (such launches still rescan the plugins, whose recorded paths have moved). Each launch touches its registry and removes the `gstreamer-*.bin` registries there that no install has used for 30 days, such as those of an earlier GStreamer version or a replaced AppImage.
 - **Linux AppImage**: the same Linux bundle detection applies to the AppImage's `usr/lib`; it is skipped when the user already set a `GST_PLUGIN_PATH*` or `GST_PLUGIN_SYSTEM_PATH*` variable. [`deploy/linux/AppRun`](../../../../deploy/linux/AppRun) only sets the library, GIO and Qt environment.
 - **Plugin search path**: The bundled plugin directory is set as `GST_PLUGIN_SYSTEM_PATH*`, which replaces GStreamer's default system and user plugin directories. `GST_PLUGIN_PATH*` is cleared, because it would only rescan the same directory.
-- **Plugin scanner**: On desktop, GStreamer loads each new or changed plugin in its `gst-plugin-scanner` helper process, as it does by default, so a plugin that crashes while loading (a GPU driver probe, say) is blacklisted instead of taking QGC down on every launch. One scanner process loads every plugin of a scan, and GStreamer starts a new one only after such a crash. QGC points `GST_PLUGIN_SCANNER*` at the bundled scanner, and on Windows puts the app directory on `PATH` so the scanner finds the GStreamer DLLs. A missing, non-executable or failing scanner only logs a warning: GStreamer then loads the plugins in-process. Android and iOS set `GST_REGISTRY_FORK=no`: their plugins are static, they ship no scanner, and iOS forbids `fork()`.
+- **Plugin scanner**: On desktop, GStreamer loads each new or changed plugin in its `gst-plugin-scanner` helper process, as it does by default, so a plugin that crashes while loading (a GPU driver probe, say) is blacklisted instead of taking QGC down on every launch. One scanner process loads every plugin of a scan, and GStreamer starts a new one only after such a crash. QGC points `GST_PLUGIN_SCANNER*` at the bundled scanner, and on Windows puts the app directory on `PATH` so the scanner finds the GStreamer DLLs. A missing, non-executable or failing scanner only logs a warning: GStreamer then loads the plugins in-process (the [boot self-test](#boot-self-test) fails on it). Android and iOS set `GST_REGISTRY_FORK=no`: their plugins are static, they ship no scanner, and iOS forbids `fork()`.
 - **TLS certificates**: GStreamer's TLS users (RTSP over TLS, HTTPS sources) verify against GIO's default TLS database. On macOS and Windows, the bundled `gioopenssl` fills it from the system trust store (the Keychain's trust settings, the Windows `ROOT` and `CA` certificate stores), so roots an administrator or user added keep working; QGC leaves it alone and installs no CA bundle there. On Android and iOS, `gioopenssl` only knows OpenSSL's compiled-in certificate paths, which don't exist on the device, so the static plugin init makes the bundled `ca-certificates.crt` (`CA_CERTIFICATES`) the default database. On Linux, `libgiognutls` reads GnuTLS's system trust store.
 - **Decoder ranks**: QGC's decoder rank changes (the video decoder setting, the zero-copy preferences) skip the features named in `GST_PLUGIN_FEATURE_RANK`, which keep the user's rank.
 - **Validation**: A macOS app that ships `GStreamer.framework` without its plugin directory fails initialization with a clear error.
@@ -273,7 +274,7 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 | Test | Label | Covers |
 | --- | --- | --- |
 | `GStreamerEnvironmentTest` | Unit | The environment `prepareEnvironment()` sets for a fake bundled desktop install (plugin path and scanner, which still forks and is reused) and for the running app, and the bundled runtime's private plugin registry: named per install, also across AppImage mounts and macOS translocation, pruned of registries unused for 30 days, and replaced by a user-set `GST_REGISTRY` or `GST_REGISTRY_1_0`; a system GStreamer keeps the default registry. |
-| `GStreamerInitTest` | Unit | Init policy: how GLib's and GStreamer's logs reach Qt logging, which missing elements disable video and which only a feature, and the decoder ranks the decoder setting applies, except those set with `GST_PLUGIN_FEATURE_RANK`. |
+| `GStreamerInitTest` | Unit | Init policy: how GLib's and GStreamer's logs reach Qt logging, which missing elements disable video and which only a feature, and the decoder ranks the decoder setting applies, except those set with `GST_PLUGIN_FEATURE_RANK`; the boot self-test's verdict on a failing plugin scanner and on a bundle's blacklisted, foreign, stale or unloaded plugins. |
 | `GStreamerTest` | Unit | The `GStreamer` facade: URI checks, decoder classification, init, and the recording sink's accepted streams. |
 | `GstQgcSinkTest` | Unit | `qgcqvideosink` and `qgcvideosinkbin` as elements: construction, caps, allocation, CPU zero-copy frames, and frames pushed straight into the sink (latest frame only, flushes, orientation tags, crop, renegotiation). |
 | `GstQgcSinkControllerTest` | Unit | `QGCQVideoSinkController` binding `qgcqvideosink` to a `QVideoSink`: inactive without a window, and unbound when its owner or the `QVideoSink` goes away or the sink is released. |
@@ -286,6 +287,7 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 | `GstQgcSinkPipelineTest` | Integration | `videotestsrc` pipelines played into `qgcvideosinkbin` bound to a `QVideoSink`: formats, timestamps, colorimetry, non-square pixels, software frames through the GPU bins that need no GPU for them, teardown under load. |
 | `GstSourceFactoryStreamTest` | Integration | Source bins receiving real streams on loopback: RTP over UDP joining mid-GOP, and an RTSP session that sets up only the video stream; and their `udpsrc` stopped right after it starts, thousands of times. |
 | `GstRecordingSinkTest` | Integration | The recording file sink fed by running pipelines: a mid-stream H.265 MP4 start and frames that carry only a DTS. |
+| `GstSelfTestPipelineTest` | Integration | The [boot self-test](#boot-self-test) against the GStreamer the tests run on, and its software retry after a hardware decoder fails mid-stream, which restores the decoder ranks. |
 | `GstHwBuffersPipelineTest` | Integration, GPU | Pipelines that upload into or decode to GPU memory (DMABuf, GLMemory, Vulkan, D3D11/D3D12, IOSurface) and the path each frame takes; D3D11/D3D12 and IOSurface frames are also converted with `QVideoFrame::toImage()` on a QRhi of that API and compared with the CPU frame. Software frames through the glupload bin and the Windows D3D11 sink. Skips without the device. |
 | `GstHwBuffersGlReadbackTest` | Integration, GPU | DMABuf planes and glupload's GLMemory frames imported into a GL QRhi that shares Qt's EGL context, read back pixel by pixel and converted with `QVideoFrame::toImage()` (xcb with `xcb_egl`). |
 | `GstVideoReceiverTest` | Integration | `GstVideoReceiver` end to end against the H.264 test stream it sends itself on loopback: states, restarts, decoder-only recovery, a mid-stream resolution change, H.265, an RTSP server that never answers, recording across reconnects, slow and hung storage, bounded teardown. Receivers and servers listen on port 0, so parallel runs never collide. |
@@ -296,12 +298,45 @@ The classes derived from `GStreamerTestBase` fail in `initTestCase()` when `GStr
 ctest --test-dir build -R '^(GStreamer|Gst)[A-Za-z]*Test$' --output-on-failure
 ```
 
+### Boot self-test
+
+`QGroundControl --simple-boot-test`, which CI runs on every package (the installed Windows app, the macOS DMG, the
+Linux build tree and AppImage, the Android emulator and the iOS simulator), initializes video and then runs
+`GStreamer::selfTest()` (`GStreamerSelfTest.cc`, through `VideoBackend::selfTest()`). The boot test fails when any of
+these checks fails, each logged as a critical message under `Video.GStreamer.SelfTest` that names the plugin, element
+or file:
+
+- **Bundled plugins** (a desktop runtime bundled with the app, as `GStreamerEnvironment` set it up; not a build tree
+  using the system GStreamer, nor a `QGC_GST_BUNDLE_PLUGINS=OFF` build): no plugin in the bundle's plugin directory is
+  blacklisted, as one whose library dependency is missing is; every plugin GStreamer registered from a file comes from
+  that directory; and the registry and the directory hold the same plugin files.
+- **Plugin scanner** (bundled desktop runtimes): GStreamer did not log `External plugin loader failed` during init,
+  i.e. the bundled `gst-plugin-scanner` ran.
+- **Features**: every feature in `GStreamer.cc`'s plugin table has its elements. Unlike initialization, which needs
+  only the display core, the self-test requires them all, since `gstreamer.plugins.common` and
+  `GSTREAMER_BUNDLE_REQUIRED_PLUGINS` ship them on every platform.
+- **GIO** (bundled runtimes, Android and iOS): GIO's default TLS backend supports TLS and has a certificate database;
+  where the bundle ships the libproxy GIO module, libproxy looks up the proxy for `rtsp://127.0.0.1`, which loads the
+  backend libproxy opens by name.
+- **Decoding**: the 160x120 H.264 sample from [`test/VideoManager/GStreamer/Media/`](../../../../test/VideoManager/GStreamer/Media/),
+  embedded in the app, decodes through `decodebin3` with the decoder ranks the app applied, to at least one raw frame;
+  so does the H.265 sample when an H.265 decoder is ranked for autoplugging. When a hardware decoder fails mid-stream
+  (as in a VM; `decodebin3` replaces only one that fails to start), the check is retried once with software decoders
+  forced, then the ranks are restored; a software decoder that works only logs a warning.
+- **Recording**: the H.264 sample, muxed by the recording branch's file sink into MP4 and MKV, makes a non-empty file
+  that `qtdemux` or `matroskademux` reads back.
+
+The whole self-test takes well under a second on a working runtime, gives each pipeline at most 4 s and stops within
+15 s. It is quiet on success but for one summary line at info level, shown with
+`--logging:Video.GStreamer.SelfTest`.
+
 ## GStreamer Logging
 
 - In-app: The GStreamer debug level setting (Application settings) sets GStreamer's default threshold, and QGC forwards GStreamer's log to the `Video.GStreamer.GStreamerAPI` category; enable that category's debug output in QGC's logging settings to see levels below Info. Release builds forward up to the Debug level.
 - Native output: Setting `GST_DEBUG`, `GST_DEBUG_FILE` or `GST_TRACERS` keeps GStreamer's own log handler and turns the forwarding off. The log then goes to stderr, or to `GST_DEBUG_FILE`, in GStreamer's format, which its tools (`gst-stats`, tracer plotters) parse, in every build type. `GST_DEBUG` replaces the in-app level, and `GST_DEBUG_NO_COLOR=1` drops the color codes. See <https://gstreamer.freedesktop.org/documentation/gstreamer/running.html>.
 - Command line options: `--gst-debug-level`, `--gst-debug`, `--gst-debug-help`, etc.
 - GLib messages (`g_warning()`, `g_critical()`, ...) always go to the `Video.GStreamer.GStreamerLogging` category.
+- The [boot self-test](#boot-self-test) logs its failures under `Video.GStreamer.SelfTest`, and its summary at info level.
 - Receiver flow (starts, stops, reconnects, the decoder chosen, pipeline latency, GPU path statistics): enable the `Video.GStreamer.GstVideoReceiver` category. Failures are logged as warnings even with it off.
 
 ## Pipeline Observability

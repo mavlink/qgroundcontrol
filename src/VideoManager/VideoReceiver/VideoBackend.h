@@ -38,6 +38,8 @@ struct EnvPrepResult
 
 EnvPrepResult prepareEnvironment();
 bool initialize(const QStringList& arguments, const EnvPrepResult& envResult);
+/// The boot test's check that the initialized backend decodes and records; true without GStreamer.
+bool selfTest();
 void applyDecoderPriorities(int rawOption);
 void onMainWindowReady(QQuickWindow* window);
 void bindDebugLevelFact(Fact* fact, QObject* context);

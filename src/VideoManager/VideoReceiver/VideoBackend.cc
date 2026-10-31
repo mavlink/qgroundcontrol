@@ -44,6 +44,15 @@ bool VideoBackend::initialize(const QStringList& arguments, const EnvPrepResult&
 #endif
 }
 
+bool VideoBackend::selfTest()
+{
+#ifdef QGC_GST_STREAMING
+    return GStreamer::selfTest();
+#else
+    return true;
+#endif
+}
+
 void VideoBackend::applyDecoderPriorities(int rawOption)
 {
 #ifdef QGC_GST_STREAMING

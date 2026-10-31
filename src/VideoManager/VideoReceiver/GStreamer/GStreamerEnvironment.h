@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QString>
+#include <QtCore/QStringList>
 
 /// Process-wide GStreamer environment setup: plugin-path discovery, GIO compat override,
 /// env var management, APK asset extraction, mobile CA file.
@@ -12,6 +13,13 @@ struct ValidationResult
 {
     bool ok = true;
     QString error;
+};
+
+/// The desktop GStreamer runtime bundled with the app that prepareEnvironment() pointed GStreamer at.
+struct BundledRuntime
+{
+    QStringList pluginDirs;  ///< Empty when GStreamer uses the system's plugins, or Android's and iOS's static ones.
+    QString gioModuleDir;    ///< Empty when the bundle has no GIO modules.
 };
 
 /// Apply all GStreamer env vars for this process from bundled-paths discovery + platform validation, for the app in
@@ -30,6 +38,9 @@ ValidationResult prepareEnvironment(const QString& appDir = QString());
 /// with the app's cache location and plugin path for a bundled desktop runtime. Returns the registry it set, else an
 /// empty string.
 QString usePrivateRegistry(const QString& cacheDir, const QString& installPath);
+
+/// The bundled runtime the last prepareEnvironment() applied; empty before it ran.
+BundledRuntime bundledRuntime();
 
 /// Dump the GST_PLUGIN_*/GST_REGISTRY* vars managed by this layer to the log at critical level.
 /// Called from plugin-verification failure paths so a stripped registry shows how the loader was

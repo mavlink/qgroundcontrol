@@ -306,6 +306,7 @@ bool completeInit()
 
 bool initialize(const QStringList& arguments, const Environment::ValidationResult& envResult)
 {
+    GStreamer::resetExternalPluginLoaderFailed();
     GStreamer::redirectGLibLogging();
 
     // Unless the user asked for GStreamer's own output, remove its default stderr handler before gst_init_check(),

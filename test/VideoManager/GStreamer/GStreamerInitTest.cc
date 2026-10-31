@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QStringList>
@@ -14,6 +15,7 @@
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
+#include "GStreamerSelfTest.h"
 #include "GStreamerTestHelpers.h"
 #include "LogManager.h"
 
@@ -131,6 +133,31 @@ void GStreamerInitTest::_testRedirectGLibLogging()
     verifyExpectedLogMessage();
 }
 
+void GStreamerInitTest::_testExternalPluginLoaderFailed()
+{
+    GStreamer::redirectGLibLogging();
+    GStreamer::resetExternalPluginLoaderFailed();
+    const auto reset = qScopeGuard([] { GStreamer::resetExternalPluginLoaderFailed(); });
+
+    expectLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Failed to load plugin")));
+    g_log("GStreamer", G_LOG_LEVEL_WARNING, "Failed to load plugin 'libgstfoo.so': file too short");
+    verifyExpectedLogMessage();
+    QVERIFY(!GStreamer::externalPluginLoaderFailed());
+
+    // GStreamer's warning when its gst-plugin-scanner helper can't run (gstregistry.c).
+    expectLogMessage("Video.GStreamer.GStreamerLogging", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("External plugin loader failed")));
+    g_log("GStreamer", G_LOG_LEVEL_WARNING,
+          "External plugin loader failed. This most likely means that the plugin loader helper binary was not found "
+          "or could not be run.");
+    verifyExpectedLogMessage();
+    QVERIFY(GStreamer::externalPluginLoaderFailed());
+
+    GStreamer::resetExternalPluginLoaderFailed();
+    QVERIFY(!GStreamer::externalPluginLoaderFailed());
+}
+
 void GStreamerInitTest::_testMissingPluginFeatures_data()
 {
     QTest::addColumn<QStringList>("absent");
@@ -170,6 +197,56 @@ void GStreamerInitTest::_testMissingPluginFeatures()
     QCOMPARE(missing.size(), missingFeatures);
     QCOMPARE(factories, missingFactories);
     QCOMPARE(required, videoUnavailable);
+}
+
+void GStreamerInitTest::_testBundledPluginIssues_data()
+{
+    QTest::addColumn<QString>("pluginDir");
+    QTest::addColumn<QStringList>("shipped");
+    QTest::addColumn<QStringList>("registered");
+    QTest::addColumn<QStringList>("blacklisted");
+    QTest::addColumn<QStringList>("issues");
+
+    const QString dir = QStringLiteral("/app/lib/gstreamer-1.0");
+    const QString app = dir + QStringLiteral("/libgstapp.so");
+    const QString rtp = dir + QStringLiteral("/libgstrtp.so");
+    const QStringList bundle{app, rtp};
+
+    QTest::newRow("complete") << dir << bundle << bundle << QStringList() << QStringList();
+    QTest::newRow("unnormalized plugin dir")
+        << QStringLiteral("/app/bin/../lib/gstreamer-1.0/") << bundle << bundle << QStringList() << QStringList();
+    QTest::newRow("blacklisted") << dir << bundle << bundle << QStringList{rtp}
+                                 << QStringList{QStringLiteral("libgstrtp.so.*is blacklisted")};
+    QTest::newRow("host plugin") << dir << bundle
+                                 << QStringList{app, rtp, QStringLiteral("/usr/lib/gstreamer-1.0/libgstvpx.so")}
+                                 << QStringList() << QStringList{QStringLiteral("libgstvpx.so, outside")};
+    QTest::newRow("unregistered file") << dir << bundle << QStringList{app} << QStringList()
+                                       << QStringList{QStringLiteral("libgstrtp.so is not in GStreamer's registry")};
+    QTest::newRow("stale registry") << dir << QStringList{app} << bundle << QStringList()
+                                    << QStringList{QStringLiteral("libgstrtp.so, which the bundle does not ship")};
+}
+
+void GStreamerInitTest::_testBundledPluginIssues()
+{
+    QFETCH(QString, pluginDir);
+    QFETCH(QStringList, shipped);
+    QFETCH(QStringList, registered);
+    QFETCH(QStringList, blacklisted);
+    QFETCH(QStringList, issues);
+
+    // A static plugin has no file, so it is never blamed on the bundle.
+    QList<GStreamer::SelfTest::RegisteredPlugin> plugins{
+        {.name = QStringLiteral("qgc"), .filename = QString(), .blacklisted = false}};
+    for (const QString& file : registered) {
+        plugins.append(
+            {.name = QFileInfo(file).fileName(), .filename = file, .blacklisted = blacklisted.contains(file)});
+    }
+
+    const QStringList found = GStreamer::SelfTest::bundledPluginIssues(plugins, {pluginDir}, shipped);
+    QVERIFY2(found.size() == issues.size(), qPrintable(found.join(QLatin1Char('\n'))));
+    for (qsizetype i = 0; i < issues.size(); ++i) {
+        QVERIFY2(found.at(i).contains(QRegularExpression(issues.at(i))), qPrintable(found.at(i)));
+    }
 }
 
 void GStreamerInitTest::_testUserFeatureRankKept_data()

@@ -27,6 +27,7 @@ QGC_LOGGING_CATEGORY(GStreamerEnvLog, "Video.GStreamer.Environment")
 
 namespace {
 
+using GStreamer::Environment::BundledRuntime;
 using GStreamer::Environment::ValidationResult;
 
 // Single source of truth for the managed plugin-path/scanner vars: keeps _clearManagedGstEnvVars
@@ -35,6 +36,8 @@ constexpr const char* kManagedGstPathVars[] = {
     "GST_PLUGIN_PATH",    "GST_PLUGIN_PATH_1_0",    "GST_PLUGIN_SYSTEM_PATH", "GST_PLUGIN_SYSTEM_PATH_1_0",
     "GST_PLUGIN_SCANNER", "GST_PLUGIN_SCANNER_1_0",
 };
+
+BundledRuntime s_bundledRuntime;
 
 QString _cleanJoin(const QString& base, const QString& relative)
 {
@@ -355,9 +358,10 @@ bool _applyBundleLayout(const QString& platformLabel, const BundleLayout& layout
 
     const QString scanner = _firstExistingPath(layout.scannerCandidates);
     _warnIfScannerMissing(platformLabel, scanner);
-    _applyGstEnvVars(pluginDirs, _firstExistingPath(layout.gioModuleDirs), scanner,
-                     _firstExistingPath(layout.ptpCandidates));
+    const QString gioModuleDir = _firstExistingPath(layout.gioModuleDirs);
+    _applyGstEnvVars(pluginDirs, gioModuleDir, scanner, _firstExistingPath(layout.ptpCandidates));
     (void) _usePrivateRegistry(QStandardPaths::writableLocation(QStandardPaths::CacheLocation), pluginDirs);
+    s_bundledRuntime = {.pluginDirs = pluginDirs.split(QDir::listSeparator()), .gioModuleDir = gioModuleDir};
     return true;
 }
 
@@ -366,6 +370,7 @@ bool _applyBundleLayout(const QString& platformLabel, const BundleLayout& layout
 ValidationResult _setGstEnvVars(const QString& appDir)
 {
     ValidationResult result;
+    s_bundledRuntime = {};
 
     qCDebug(GStreamerEnvLog) << "App directory:" << appDir;
 
@@ -534,6 +539,11 @@ ValidationResult prepareEnvironment(const QString& appDir)
 QString usePrivateRegistry(const QString& cacheDir, const QString& installPath)
 {
     return _usePrivateRegistry(cacheDir, installPath);
+}
+
+BundledRuntime bundledRuntime()
+{
+    return s_bundledRuntime;
 }
 
 void logDiagnostics()

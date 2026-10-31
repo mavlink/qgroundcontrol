@@ -6,7 +6,9 @@
 #   h264_320x240.h264  H.264 Annex B, 320x240, 30 fps, 60 frames, constrained baseline, IDR every 5 frames
 #   h265_320x240.h265  H.265 Annex B, 320x240, 30 fps, 60 frames, main, IDR every 5 frames
 #   h264_160x120.h264  H.264 Annex B, 160x120, 30 fps, 30 frames, constrained baseline, IDR every 5 frames
+#   h265_160x120.h265  H.265 Annex B, 160x120, 30 fps, 15 frames, main, IDR every 5 frames
 #
+# The two 160x120 streams are also the samples GStreamer::selfTest() decodes and records in the app.
 # Every IDR repeats the parameter sets, so any keyframe starts a stream; there are no B-frames, so PTS equals DTS.
 # Needs gst-launch-1.0 with videotestsrc, x264enc, x265enc, h264parse and h265parse.
 set -euo pipefail
@@ -35,3 +37,4 @@ h265() {
 h264 320 240 60 h264_320x240.h264
 h265 320 240 60 h265_320x240.h265
 h264 160 120 30 h264_160x120.h264
+h265 160 120 15 h265_160x120.h265
