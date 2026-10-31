@@ -402,6 +402,12 @@ QList<VideoDecoderOptions> availableDecoderFamilies()
     forEachVideoDecoderFactory(GST_RANK_NONE, [&families](GstElementFactory* factory) {
         const VideoDecoderOptions family =
             decoderFamilyForFactory(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
+#ifndef QGC_HAS_GST_VULKAN_GPU_PATH
+        // Without the opt-in Vulkan GPU path, forcing Vulkan decoders only adds a CPU copy of every frame.
+        if (family == ForceVideoDecoderVulkan) {
+            return;
+        }
+#endif
         if ((family != ForceVideoDecoderDefault) && !families.contains(family)) {
             families.append(family);
         }

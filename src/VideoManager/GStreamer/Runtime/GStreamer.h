@@ -55,7 +55,8 @@ QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink*
 
 /// Hardware decoder families currently present in the GStreamer registry, as VideoDecoderOptions
 /// values (always omits ForceVideoDecoderDefault/Software). Lets the settings layer validate a
-/// persisted ForceVideoDecoder* choice against what the running build can actually provide.
+/// persisted ForceVideoDecoder* choice against what the running build can actually provide. Vulkan is
+/// only offered with the opt-in Vulkan GPU path.
 QList<VideoDecoderOptions> availableDecoderFamilies();
 
 // Process/runtime lifecycle, reached through GStreamerVideoBackend.

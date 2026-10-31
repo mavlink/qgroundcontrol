@@ -96,6 +96,23 @@ void GStreamerTest::_testDecoderFamilyForFactory()
     QCOMPARE(int(GStreamer::decoderFamilyForFactory(factoryName.toUtf8().constData())), expectedFamily);
 }
 
+void GStreamerTest::_testAvailableDecoderFamilies()
+{
+    QList<GStreamer::VideoDecoderOptions> installed;
+    GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&installed](GstElementFactory* factory) {
+        const auto family =
+            GStreamer::decoderFamilyForFactory(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
+        if ((family != GStreamer::ForceVideoDecoderDefault) && !installed.contains(family)) {
+            installed.append(family);
+        }
+    });
+#ifndef QGC_HAS_GST_VULKAN_GPU_PATH
+    // Without the Vulkan GPU path, forcing Vulkan decoders would only add a CPU copy of every frame.
+    installed.removeAll(GStreamer::ForceVideoDecoderVulkan);
+#endif
+    QCOMPARE(GStreamer::availableDecoderFamilies(), installed);
+}
+
 void GStreamerTest::_testPipelineDotOmitsElementProperties()
 {
     const GStreamer::GstElementPtr pipeline =

@@ -14,6 +14,7 @@ private slots:
     void _testIsHardwareDecoderFactory();
     void _testDecoderFamilyForFactory_data();
     void _testDecoderFamilyForFactory();
+    void _testAvailableDecoderFamilies();
     void _testPipelineDotOmitsElementProperties();
     void _testCompleteInit();
     void _testCreateVideoReceiver();
