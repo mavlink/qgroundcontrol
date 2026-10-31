@@ -362,7 +362,7 @@ bool gpuZeroCopyAllowedForCurrentGraphicsApi(bool forceCpuVideoPath, bool forceS
         return false;
     }
 #if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    return (QQuickWindow::graphicsApi() != QSGRendererInterface::Direct3D12) &&
+    return (GstQgc::currentRenderTarget().backend != GstQgc::RenderBackend::Direct3D12) &&
            (qEnvironmentVariable("QSG_RHI_BACKEND").compare(QLatin1String("d3d12"), Qt::CaseInsensitive) != 0);
 #else
     return true;
