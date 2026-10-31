@@ -177,7 +177,9 @@ jobs:
         uses: ./.github/actions/debug-runner
 
   # Boots the x86_64 AppImage in clean containers of the oldest distributions it supports (glibc 2.38+, so
-  # not Ubuntu 22.04 or Debian 12), which have no GStreamer or Qt: it must bring its own.
+  # not Ubuntu 22.04 or Debian 12), which have no GStreamer or Qt: it must bring its own. The images come from
+  # Docker Hub, whose pull limit GitHub-hosted runners are exempt from, rather than the ECR Public mirror the
+  # RunsOn jobs use: ECR Public meters anonymous pulls by data per IP, which the shared hosted-runner IPs exhaust.
   appimage-distros:
     name: AppImage on ${{ matrix.distro }}
     needs: [changes, build]
@@ -194,9 +196,9 @@ jobs:
       matrix:
         include:
           - distro: Ubuntu 24.04
-            image: public.ecr.aws/docker/library/ubuntu:24.04
+            image: docker.io/library/ubuntu:24.04
           - distro: Debian 13
-            image: public.ecr.aws/docker/library/debian:13
+            image: docker.io/library/debian:13
 
     defaults:
       run:

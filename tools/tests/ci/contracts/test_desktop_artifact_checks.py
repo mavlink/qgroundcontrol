@@ -60,10 +60,12 @@ def test_linux_boots_the_appimage_in_clean_distribution_containers() -> None:
     job = workflow["jobs"]["appimage-distros"]
     assert job["needs"] == ["changes", "build"]
     images = [leg["image"] for leg in job["strategy"]["matrix"]["include"]]
-    # The ECR Public mirror of Docker's official images avoids Docker Hub's anonymous pull limit.
+    # GitHub-hosted runners are exempt from Docker Hub's pull limit; ECR Public's anonymous data quota is not
+    # enough for their shared IPs.
+    assert job["runs-on"] == "ubuntu-24.04"
     assert images == [
-        "public.ecr.aws/docker/library/ubuntu:24.04",
-        "public.ecr.aws/docker/library/debian:13",
+        "docker.io/library/ubuntu:24.04",
+        "docker.io/library/debian:13",
     ]
     x86_64 = next(
         leg
