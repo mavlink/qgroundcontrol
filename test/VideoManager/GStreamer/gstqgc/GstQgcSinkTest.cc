@@ -26,8 +26,8 @@
 #include "gstqgc/GstQgcBinChain.h"
 #include "gstqgc/GstQgcCaps.h"
 #include "gstqgc/GstQgcRenderTarget.h"
+#include "gstqgc/GstQgcSinkStats.h"
 #include "gstqgc/GstQgcTestSupport.h"
-#include "gstqgc/gstqgcqvideosink.h"
 #include "gstqgc/gstqgcvideosinkbin.h"
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include "GstDmaBufVideoBuffer.h"

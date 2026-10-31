@@ -18,7 +18,7 @@
 #include "PipelineDotDumper.h"
 #include "StreamWatchdog.h"
 #include "VideoStreamStats.h"
-#include "gstqgc/gstqgcqvideosink.h"
+#include "gstqgc/GstQgcSinkStats.h"
 
 namespace {
 

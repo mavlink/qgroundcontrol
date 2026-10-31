@@ -37,4 +37,8 @@ RenderTarget currentRenderTarget() noexcept;
 
 const char* toString(RenderBackend backend) noexcept;
 
+/// The zero-copy buffer family qgcqvideosink imports under @p backend in this build, or "CPU" when none is compiled
+/// for it. For logs.
+const char* zeroCopyPathName(RenderBackend backend) noexcept;
+
 }  // namespace GstQgc

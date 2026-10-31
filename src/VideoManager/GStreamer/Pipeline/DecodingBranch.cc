@@ -7,7 +7,7 @@
 #include "HwBuffers/common/HwBuffers.h"
 #include "PipelineDotDumper.h"
 #include "StreamWatchdog.h"
-#include "gstqgc/gstqgcqvideosink.h"
+#include "gstqgc/GstQgcSinkStats.h"
 
 namespace {
 

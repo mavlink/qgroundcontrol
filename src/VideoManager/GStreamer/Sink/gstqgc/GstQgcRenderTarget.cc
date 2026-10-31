@@ -120,4 +120,40 @@ const char* toString(RenderBackend backend) noexcept
     return "unknown";
 }
 
+const char* zeroCopyPathName(RenderBackend backend) noexcept
+{
+    switch (backend) {
+        case RenderBackend::OpenGL:
+#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+            return "GLMemory/DMABuf";
+#else
+            return "CPU";
+#endif
+        case RenderBackend::Direct3D11:
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+            return "D3D11";
+#else
+            return "CPU";
+#endif
+        case RenderBackend::Direct3D12:
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+            // A D3D12 device is a per-adapter singleton, so GStreamer's device on Qt's adapter is Qt's device.
+            return "D3D12 (d3d12convert to RGBA)";
+#else
+            return "CPU";
+#endif
+        case RenderBackend::Metal:
+#if defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
+            return "IOSurface/VideoToolbox";
+#else
+            return "CPU";
+#endif
+        case RenderBackend::Vulkan:
+            // Vulkan import is dormant (foreign-VkDevice guard → CPU copy), so it never delivers zero-copy today.
+            return "CPU (Vulkan import dormant)";
+        default:
+            return "CPU";
+    }
+}
+
 }  // namespace GstQgc

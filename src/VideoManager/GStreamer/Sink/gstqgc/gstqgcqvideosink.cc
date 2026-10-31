@@ -8,7 +8,6 @@
 #include <new>
 #include <utility>
 
-#include <QtCore/QByteArray>
 #include <QtCore/QMetaObject>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
@@ -20,6 +19,7 @@
 #include "GstQgcAllocation.h"
 #include "GstQgcCaps.h"
 #include "GstQgcFrameMap.h"
+#include "GstQgcSinkStats.h"
 #include "HwBuffers/common/GstHwVideoInfo.h"
 #include "HwBuffers/common/HwBuffers.h"
 #include "QGCLoggingCategory.h"
@@ -223,9 +223,6 @@ bool nothing_to_import(GstBuffer* buf)
     return mem && gst_memory_is_type(mem, GST_ALLOCATOR_SYSMEM);
 }
 
-constexpr const char* kStreamDemotionsField = "stream-demotions";
-constexpr const char* kTiledDropsField = "tiled-drops";
-
 /// The "frame-stats" property value (transfer-full).
 GstStructure* make_stats(const PrivState& p)
 {
@@ -235,9 +232,10 @@ GstStructure* make_stats(const PrivState& p)
                           static_cast<guint64>(p.path_frames[i].load(std::memory_order_relaxed)), nullptr);
     }
     gst_structure_set(stats, GstQgc::kGpuFallbacksField, G_TYPE_UINT64,
-                      static_cast<guint64>(p.gpu_fallbacks.load(std::memory_order_relaxed)), kStreamDemotionsField,
-                      G_TYPE_UINT64, static_cast<guint64>(p.stream_demotions.load(std::memory_order_relaxed)), nullptr);
-    gst_structure_set(stats, kTiledDropsField, G_TYPE_UINT64,
+                      static_cast<guint64>(p.gpu_fallbacks.load(std::memory_order_relaxed)),
+                      GstQgc::kStreamDemotionsField, G_TYPE_UINT64,
+                      static_cast<guint64>(p.stream_demotions.load(std::memory_order_relaxed)), nullptr);
+    gst_structure_set(stats, GstQgc::kTiledDropsField, G_TYPE_UINT64,
                       static_cast<guint64>(p.tiled_drops.load(std::memory_order_relaxed)), nullptr);
     gst_structure_set(stats, GstQgc::kSupersededFramesField, G_TYPE_UINT64,
                       static_cast<guint64>(p.superseded_frames.load(std::memory_order_relaxed)), nullptr);
@@ -756,57 +754,6 @@ void configureSinkCaps(GstElement* sink, GpuBinMode gpuBin, bool squarePixels)
     priv_of(self)->square_pixels = squarePixels;
     gst_clear_caps(&priv_of(self)->offered_caps);
     GST_OBJECT_UNLOCK(self);
-}
-
-const char* sinkFramesField(HwVideoBufferPath path) noexcept
-{
-    static const std::array<QByteArray, GstHw::kPathCount> s_fields = [] {
-        std::array<QByteArray, GstHw::kPathCount> fields;
-        for (std::size_t i = 0; i < fields.size(); ++i) {
-            fields[i] = QByteArray("frames-") + QByteArray(GstHw::toString(HwVideoBufferPath(i))).toLower();
-        }
-        return fields;
-    }();
-    const auto index = static_cast<std::size_t>(path);
-    return (index < s_fields.size()) ? s_fields[index].constData() : nullptr;
-}
-
-GStreamer::GstStructurePtr frameStats(GstElement* sinkOrBin)
-{
-    GStreamer::GstElementPtr inner;
-    if (sinkOrBin && GST_IS_QGC_VIDEO_SINK_BIN(sinkOrBin)) {
-        inner = GStreamer::adoptElement(gst_qgc_video_sink_bin_get_qvideosink(GST_QGC_VIDEO_SINK_BIN(sinkOrBin)));
-        sinkOrBin = inner.get();
-    }
-    if (!sinkOrBin || !GST_IS_QGC_Q_VIDEO_SINK(sinkOrBin)) {
-        return {};
-    }
-    GstStructure* stats = nullptr;
-    g_object_get(sinkOrBin, "frame-stats", &stats, nullptr);
-    return GStreamer::adoptStructure(stats);
-}
-
-PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since) noexcept
-{
-    PathStats out;
-    if (!stats) {
-        return out;
-    }
-    for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
-        const auto path = HwVideoBufferPath(i);
-        if (const quint64 frames = frameStatsGrowth(stats, since, sinkFramesField(path)); frames > 0) {
-            out.line += QStringLiteral(" %1:%2").arg(QLatin1String(GstHw::toString(path))).arg(frames);
-            if (path != HwVideoBufferPath::None) {
-                out.totalDelivered += frames;
-            }
-        }
-    }
-    for (const char* const field : {GstQgc::kGpuFallbacksField, kStreamDemotionsField, kTiledDropsField}) {
-        if (const quint64 count = frameStatsGrowth(stats, since, field); count > 0) {
-            out.line += QStringLiteral(" %1:%2").arg(QLatin1String(field)).arg(count);
-        }
-    }
-    return out;
 }
 
 }  // namespace GstQgc

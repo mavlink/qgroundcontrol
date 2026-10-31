@@ -28,9 +28,9 @@
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #include "gstqgc/GstQgcCaps.h"
 #include "gstqgc/GstQgcRenderTarget.h"
+#include "gstqgc/GstQgcSinkStats.h"
 #include "gstqgc/GstQgcTestSupport.h"
 #include "gstqgc/GstQgcVideoFormats.h"
-#include "gstqgc/gstqgcqvideosink.h"
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include "GstDmaBufVideoBuffer.h"
 #include "GstQtDmaBufImport.h"

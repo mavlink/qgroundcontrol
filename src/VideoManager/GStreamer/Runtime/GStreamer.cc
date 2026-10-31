@@ -388,49 +388,12 @@ QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink*
     return controller;
 }
 
-// Zero-copy buffer family the render backend enables, or "CPU" when no import path is compiled for it.
-static const char* zeroCopyFamilyFor(GstQgc::RenderBackend backend)
-{
-    switch (backend) {
-        case GstQgc::RenderBackend::OpenGL:
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-            return "GLMemory/DMABuf";
-#else
-            return "CPU";
-#endif
-        case GstQgc::RenderBackend::Direct3D11:
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-            return "D3D11";
-#else
-            return "CPU";
-#endif
-        case GstQgc::RenderBackend::Direct3D12:
-#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
-            // A D3D12 device is a per-adapter singleton, so GStreamer's device on Qt's adapter is Qt's device.
-            return "D3D12 (d3d12convert to RGBA)";
-#else
-            return "CPU";
-#endif
-        case GstQgc::RenderBackend::Metal:
-#if defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
-            return "IOSurface/VideoToolbox";
-#else
-            return "CPU";
-#endif
-        case GstQgc::RenderBackend::Vulkan:
-            // Vulkan import is dormant (foreign-VkDevice guard → CPU copy), so it never delivers zero-copy today.
-            return "CPU (Vulkan import dormant)";
-        default:
-            return "CPU";
-    }
-}
-
 void onMainWindowReady(QQuickWindow* window)
 {
     HwBuffers::connectMainWindow(window);
     const GstQgc::RenderBackend backend = GstQgc::currentRenderTarget().backend;
     qCInfo(GStreamerLog) << "Resolved RHI backend:" << GstQgc::toString(backend)
-                         << "→ zero-copy path:" << zeroCopyFamilyFor(backend);
+                         << "→ zero-copy path:" << GstQgc::zeroCopyPathName(backend);
 }
 
 QList<VideoDecoderOptions> availableDecoderFamilies()

@@ -22,5 +22,7 @@ target_sources(
         GstQgcGpuBin.h
         GstQgcRenderTarget.cc
         GstQgcRenderTarget.h
+        GstQgcSinkStats.cc
+        GstQgcSinkStats.h
         GstQgcVideoFormats.h
 )

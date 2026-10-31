@@ -12,7 +12,7 @@
 #include "GstSourceFactory.h"
 #include "GstVideoReceiver.h"
 #include "QGCNetworkHelper.h"
-#include "gstqgc/gstqgcqvideosink.h"
+#include "gstqgc/GstQgcSinkStats.h"
 
 namespace {
 

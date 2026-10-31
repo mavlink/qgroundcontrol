@@ -15,7 +15,7 @@
 
 #include "GStreamerTestHelpers.h"
 #include "GstScoped.h"
-#include "gstqgc/gstqgcqvideosink.h"
+#include "gstqgc/GstQgcSinkStats.h"
 #include "gstqgc/gstqgcvideosinkbin.h"
 
 class QVideoSink;
