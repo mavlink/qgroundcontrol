@@ -1,173 +1,26 @@
 #pragma once
 
-#include "UnitTest.h"
+#include "GStreamerTestBase.h"
 
-class GStreamerTest : public UnitTest
+/// The GStreamer facade without a running pipeline: URI checks, decoder classification, recording sinks and init.
+class GStreamerTest : public GStreamerTestBase
 {
     Q_OBJECT
 
 private slots:
 #ifdef QGC_GST_STREAMING
-    void initTestCase() override;
-    void init() override;
-
     void _testIsValidRtspUri();
     void _testIsHardwareDecoderFactory_data();
     void _testIsHardwareDecoderFactory();
     void _testDecoderFamilyForFactory_data();
     void _testDecoderFamilyForFactory();
-    void _testSetCodecPrioritiesDefault();
-    void _testSetCodecPrioritiesDefaultPrefersMatchingD3DDecoder();
-    void _testSetCodecPrioritiesSkipsAbsentD3DDecoders();
     void _testD3D12RhiDisablesGpuZeroCopySink();
-    void _testSetCodecPrioritiesSoftware();
-    void _testSetCodecPrioritiesHardware();
-    void _testRedirectGLibLogging();
-    void _testConfigureDebugLoggingIsIdempotent();
-    void _testVerifyRequiredPlugins();
-    void _testEnvironmentSetup();
     void _testPipelineDotOmitsElementProperties();
     void _testCompleteInit();
     void _testCreateVideoReceiver();
     void _testRecordingSinkAcceptsElementaryStreams_data();
     void _testRecordingSinkAcceptsElementaryStreams();
-    void _testRecordingSinkFinalizesMidStreamH265Mp4();
-    void _testRecordingSinkTimestampsDtsOnlyFrames();
     void _testBindDebugLevelFactRejectsNullContext();
     void _testRuntimeVersionCheck();
-    void _testAppsinkFrameDelivery();
-    void _testAppsinkYuvPassthrough();
-    void _testAppsinkPtsAndColorimetry();
-    void _testQgcVideoSinkBinGpuZeroCopyProperty();
-    void _testQgcVideoSinkBinGpuBinVariant_data();
-    void _testQgcVideoSinkBinGpuBinVariant();
-    void _testQgcVideoSinkBinRejectsFailedAdopt();
-    void _testQgcBinChainFailedAdoptDropsFloatingRefOnce();
-    void _testGlMemoryDispatch();
-    void _testD3D11MemoryDispatch();
-    void _testD3D12MemoryDispatch();
-    void _testD3DMapTexturesWithQRhi_data();
-    void _testD3DMapTexturesWithQRhi();
-    void _testDmaBufDispatch();
-    void _testDmaDrmCapsRejectNonLinearModifiers();
-    void _testLinearDmaDrmCapsFollowFormatTable();
-    void _testDmaBufRejectsNonLinearDirectImport();
-    void _testDmaBufTiledImportAvoidsTexStorage();
-    void _testVulkanDispatchDemotesToCpu();
-    void _testVulkanOwnedFrameTexturesReleaseOnDestroy();
-    void _testCapsCacheInvalidation();
-    void _testGpuZeroCopyFallback_data();
-    void _testGpuZeroCopyFallback();
-    void _testWindowsGpuSinkPreservesSoftwarePixels();
-    void _testWindowsGpuSinkPreservesDirectD3D11Memory();
-    void _testAppsinkTeardownUnderLoad();
-    void _testHwBufferMapTexturesGuard();
-    void _testFrameCountsTelemetrySignal();
-    void _testInactiveQgcQVideoSinkDropsAndCounts();
-    void _testQgcQVideoSinkDeliversLatestFrameOnly();
-    void _testQgcQVideoSinkRenegotiatesMidStream();
-    void _testQgcQVideoSinkAppliesCropMeta();
-    void _testQgcQVideoSinkStatsArePerSink();
-    void _testQgcQVideoSinkKeepsBaseSinkStats();
-    void _testQgcQVideoSinkGpuPathSelection_data();
-    void _testQgcQVideoSinkGpuPathSelection();
-    void _testQgcQVideoSinkDropsUndeliveredFrame_data();
-    void _testQgcQVideoSinkDropsUndeliveredFrame();
-    void _testQgcQVideoSinkPtsGuardResync_data();
-    void _testQgcQVideoSinkPtsGuardResync();
-    void _testQgcQVideoSinkMapFailuresPostElementError();
-    void _testGetAppsinkAccessor();
-    void _testQVideoSinkControllerClearsElementOnDestroy();
-    void _testQVideoSinkControllerClearsElementWhenVideoSinkDestroyed();
-    void _testQVideoSinkControllerNullSinkStillDeactivatesOnDestroy();
-    void _testQVideoSinkControllerRepeatedSetupKeepsNewBindingActive();
-    void _testQVideoSinkControllerNoWindowStartsInactive();
-    void _testQVideoSinkControllerReleaseClearsVideoFrame();
-    void _testContextBridgeRegistry();
-    void _testHwBufferLifecycleResetsNativeCaches();
-    void _testHwFrameTexturesRejectsForeignOldTextures();
-    void _testHwFrameTexturesZeroHandleInvalidatesBundle_data();
-    void _testHwFrameTexturesZeroHandleInvalidatesBundle();
-    void _testHwFrameTexturesFinishMapReusesAcceptedBundle_data();
-    void _testHwFrameTexturesFinishMapReusesAcceptedBundle();
-    void _testHwFrameTexturesFinishMapRejectsIncompleteBundle();
-    void _testHwFrameTexturesKeepResourcesUntilDestroyed();
-    void _testHwImportCacheEvictsLeastRecentlyUsed();
-    void _testHwImportCacheReplaceDestroysPrevious();
-    void _testHwImportCacheEraseIfDestroysMatches();
-    void _testHwImportCachePinnedEntriesOutliveRemoval();
-    void _testHwImportCacheRejectsInsertWhenAllPinned();
-    void _testHwImportCacheDefersDestroyToOwnerThread();
-    void _testHwBufferFactoryDispatchSystemMemory();
-    void _testHwPathRegistrySelection_data();
-    void _testHwPathRegistrySelection();
-    void _testHwBufferFactoryCacheRejectsMemoryTypeChange();
-    void _testDmaBufSingleFdImportEnvGate();
-    void _testDmaBufEglBadMatchLatch_data();
-    void _testDmaBufEglBadMatchLatch();
-    void _testDmaBufVulkanImportRejectsMultiPlanar_data();
-    void _testDmaBufVulkanImportRejectsMultiPlanar();
-    void _testCpuZeroCopyFrameRejectsWritableMap();
-    void _testCpuZeroCopyPinnedFramesCappedPerSink();
-    void _testCpuMemcpyActiveRowStrideHandling();
-    void _testCpuLayoutSizesPlanesByComponent();
-    void _testCpuCopyOddDimensions_data();
-    void _testCpuCopyOddDimensions();
-    void _testQGCRhiCaptureCacheLifecycle();
-    void _testPreflightVerdictsDroppedWithRhi();
-    void _testHwBufferEnvConfigParsing_data();
-    void _testHwBufferEnvConfigParsing();
-    void _testGpuBinModeFromEnvironment_data();
-    void _testGpuBinModeFromEnvironment();
-    void _testColorimetryPixelFormatMapping();
-    void _testCpuCapsFormatsRoundTripToQt();
-    void _testAllocationQueryHwMemoryPoolHint();
-    void _testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta();
-    void _testQgcQVideoSinkSystemMemoryAllocation_data();
-    void _testQgcQVideoSinkSystemMemoryAllocation();
-    void _testColorimetryColorSpaceMapping();
-    void _testColorimetryResolutionHeuristicMatchesQt();
-    void _testColorimetryTransferMapping();
-    void _testColorimetryFrameRatePropagation();
-    void _testHwBufferCropMatrixIdentityWithoutMeta();
-    void _testHwBufferCropMatrixFromVideoCropMeta();
-    void _testHwVideoBufferCpuMapFallback();
-    void _testHwVideoBufferCpuMapRefusesForeignLayout_data();
-    void _testHwVideoBufferCpuMapRefusesForeignLayout();
-    void _testApplyOrientationToFrameMapping();
-    void _testAdapterFlushDropsInFlightSamples();
-    void _testSourceFactoryUdpRtpJitterBuffer();
-    void _testSourceFactoryJitterBufferNone();
-    void _testSourceFactoryNoRetransmission();
-    void _testSourceFactoryRtspJitterBufferPolicy_data();
-    void _testSourceFactoryRtspJitterBufferPolicy();
-    void _testSourceFactoryRtspSelectsOnlyVideoStreams_data();
-    void _testSourceFactoryRtspSelectsOnlyVideoStreams();
-    void _testSourceFactoryRtspSetsUpOnlyVideoStream();
-    void _testSourceFactoryRejectsBadUri();
-    void _testSourceFactoryTcpMpegTs();
-    void _testSourceFactoryRejectsBadTcpUri();
-    void _testSourceFactoryUdp265();
-    void _testSourceFactoryUdpH264Caps();
-    void _testSourceFactoryDropsRtpUntilParameterSets();
-    void _testParameterSetGateHoldsUntilCompleteSet();
-    void _testParameterSetGatePassesLengthPrefixedOutput();
-    void _testSourceFactoryUdpMpegTs();
-    void _testSourceFactorySchemeCaseInsensitive();
-    void _testSourceFactoryNegativeLatencyClamped();
-    void _testSourceFactoryDynamicRtpLinkFailureCleansJitterBuffer();
-    void _testSourceFactoryDynamicLinkSkipsNonVideoRtp();
-    void _testColorimetryColorRangeMapping();
-    void _testPixelFormatAcceptedButNotAdvertised();
-    void _testAdvertisedFormatListMatchesTable();
-    void _testAdvertisedFormatListForOffer_data();
-    void _testAdvertisedFormatListForOffer();
-    void _testTelemetryMapDurationEwma();
-    void _testTelemetryFallbackReasonMatrix();
-    void _testTelemetrySyncWaitSplit();
-    void _testTelemetryMapFailuresReportedInExtraStats();
-    void _testTelemetryDmaBufExtraStatsDrain();
-#else
-    void _testGStreamerDisabled();
 #endif
 };

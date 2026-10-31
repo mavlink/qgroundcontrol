@@ -13,6 +13,8 @@ private slots:
     void _testReconnectBackoffRestartsAfterRecovery();
     void _testStallDetection_data();
     void _testStallDetection();
+    void _testFirstFrameGrace();
+    void _testDecoderSilenceCountsFromInsertion();
     void _testSourceTimeoutStartsAtFirstCheck();
     void _testFinalizerSettlesOnlyFromArmedRecording_data();
     void _testFinalizerSettlesOnlyFromArmedRecording();
@@ -21,6 +23,8 @@ private slots:
     void _testPipelineDotStaysInDirectory();
     void _testPipelineNamedAfterReceiver_data();
     void _testPipelineNamedAfterReceiver();
+    void _testPresentedSize_data();
+    void _testPresentedSize();
 #else
     void _testGStreamerDisabled();
 #endif

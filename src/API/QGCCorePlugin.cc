@@ -325,16 +325,6 @@ VideoReceiver *QGCCorePlugin::createVideoReceiver(QObject *parent)
     return VideoBackend::createReceiver(parent);
 }
 
-void *QGCCorePlugin::createVideoSink(QQuickItem *widget, QObject *parent)
-{
-    return VideoBackend::createSink(widget, parent);
-}
-
-void QGCCorePlugin::releaseVideoSink(void *sink)
-{
-    VideoBackend::releaseSink(sink);
-}
-
 const QVariantList &QGCCorePlugin::toolBarIndicators()
 {
     static const QVariantList toolBarIndicatorList = QVariantList({

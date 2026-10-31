@@ -40,7 +40,8 @@ public:
     MockVideoStreamServer(const MockVideoStreamServer &) = delete;
     MockVideoStreamServer &operator=(const MockVideoStreamServer &) = delete;
 
-    /// Start serving a test pattern of the given type on host:port.
+    /// Start serving a test pattern of the given type on host:port. A server (RTSP, MPEG-TS over TCP) given port 0
+    /// listens on a free port, which servedUri() names.
     /// @return true on success; on success servedUri() holds the URI QGC should connect to.
     bool start(StreamType type, const QString &host, quint16 port);
 
@@ -58,7 +59,8 @@ public:
 private:
     bool _startPipeline(const QString &launch);
 #ifdef QGC_GST_RTSP_SERVER
-    bool _startRtsp(const QString &host, quint16 port);
+    /// Returns the port the server listens on, or 0 on failure.
+    int _startRtsp(const QString& host, quint16 port);
     void _stopRtsp();
 
     GstRTSPServer *_rtspServer = nullptr;

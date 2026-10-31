@@ -16,6 +16,10 @@ endif()
 if(LINUX)
     list(APPEND _qgc_gst_components Allocators)
 endif()
+# Check (gstreamer-check-1.0) is optional too: the GstHarness tests compile only where the SDK or distribution ships it.
+if(QGC_BUILD_TESTING AND NOT (ANDROID OR IOS))
+    list(APPEND _qgc_gst_components Check)
+endif()
 set(QGC_GST_COMPONENTS ${_qgc_gst_components})
 include(GStreamer/Orchestrator)
 
@@ -42,22 +46,23 @@ target_link_libraries(
 target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_STREAMING)
 
 # gstreamer-rtsp-server-1.0 is only requested in Debug (MockLink test server) and may be absent
-# on minimal installs. Its api_rtsp_server target is already aggregated into GStreamer::GStreamer
+# on minimal installs. Its GStreamer::RtspServer target is already aggregated into GStreamer::GStreamer
 # when found; just flag availability for MockVideoStreamServer.
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND GStreamer_RtspServer_FOUND)
     target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_RTSP_SERVER)
-    if(IOS)
+    if(ANDROID OR IOS)
         # The app links only GStreamer::mobile, so keep the RTSP server functions MockVideoStreamServer calls in it.
-        qgc_gst_ios_keep_symbols(
-            _gst_rtsp_media_factory_new
-            _gst_rtsp_media_factory_set_launch
-            _gst_rtsp_media_factory_set_shared
-            _gst_rtsp_mount_points_add_factory
-            _gst_rtsp_server_attach
-            _gst_rtsp_server_get_mount_points
-            _gst_rtsp_server_new
-            _gst_rtsp_server_set_address
-            _gst_rtsp_server_set_service
+        qgc_gst_mobile_keep_symbols(
+            gst_rtsp_media_factory_new
+            gst_rtsp_media_factory_set_launch
+            gst_rtsp_media_factory_set_shared
+            gst_rtsp_mount_points_add_factory
+            gst_rtsp_server_attach
+            gst_rtsp_server_get_bound_port
+            gst_rtsp_server_get_mount_points
+            gst_rtsp_server_new
+            gst_rtsp_server_set_address
+            gst_rtsp_server_set_service
         )
     endif()
 endif()
@@ -116,6 +121,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGStreamer)
 target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE
+        BranchContext.h
         GStreamer.cc
         GStreamer.h
         GStreamerEnvironment.cc
@@ -124,6 +130,10 @@ target_sources(
         GStreamerHelpers.h
         GStreamerLogging.cc
         GStreamerLogging.h
+        GStreamerSelfTest.cc
+        GStreamerSelfTest.h
+        GstReceiverWorker.cc
+        GstReceiverWorker.h
         GstScoped.h
         GstSourceFactory.cc
         GstSourceFactory.h
@@ -135,12 +145,25 @@ target_sources(
         StreamWatchdog.h
         PipelineDotDumper.cc
         PipelineDotDumper.h
+        PipelineSession.cc
+        PipelineSession.h
         RecordingBranch.cc
         RecordingBranch.h
         RecordingFinalizer.cc
         RecordingFinalizer.h
         DecodingBranch.cc
         DecodingBranch.h
+)
+
+# The samples GStreamer::selfTest() decodes and records: the GStreamer tests' 160x120 streams (generate.sh there).
+set(_qgc_gst_selftest_media "${CMAKE_SOURCE_DIR}/test/VideoManager/GStreamer/Media")
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} "GStreamerSelfTestMedia_res"
+    PREFIX "/gstreamer/selftest"
+    BASE "${_qgc_gst_selftest_media}"
+    FILES
+        "${_qgc_gst_selftest_media}/h264_160x120.h264"
+        "${_qgc_gst_selftest_media}/h265_160x120.h265"
 )
 
 # Its file-scope `using namespace GStreamer;` would leak into later sources of a unity unit.
@@ -150,21 +173,6 @@ set_source_files_properties(
     ${CMAKE_PROJECT_NAME}
     PROPERTIES
         SKIP_UNITY_BUILD_INCLUSION ON
-)
-
-# GStreamer.cc fails initialization when a runtime-required plugin (PluginPolicy.cmake) is not registered. Each entry
-# lists, "|"-separated, the plugin sets that satisfy it, a set's plugins joined by "+".
-set(_qgc_gst_required_entries "")
-foreach(_qgc_gst_plugin IN LISTS GSTREAMER_RUNTIME_REQUIRED_PLUGINS)
-    gstreamer_plugin_alternatives("${_qgc_gst_plugin}" _qgc_gst_alternatives)
-    list(JOIN _qgc_gst_alternatives "|" _qgc_gst_entry)
-    list(APPEND _qgc_gst_required_entries "\"${_qgc_gst_entry}\"")
-endforeach()
-list(JOIN _qgc_gst_required_entries "," _qgc_gst_required_entries)
-set_property(
-    SOURCE GStreamer.cc TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
-    APPEND
-    PROPERTY COMPILE_DEFINITIONS "QGC_GST_RUNTIME_REQUIRED_PLUGINS=${_qgc_gst_required_entries}"
 )
 
 # The iOS SDK ships no CA list / no keychain-via-OpenSSL; bundle a Mozilla NSS extract for
@@ -199,26 +207,43 @@ if(IOS)
     )
 endif()
 
-# Static layouts register their plugins in a generated gst_init_static_plugins() (called by
-# GStreamer.cc::_registerPlugins) for GSTREAMER_STATIC_PLUGINS, which Orchestrator.cmake resolves. iOS generates it
-# into GStreamer::mobile (platform/IOS.cmake), the only target that links the merged archive; Android and desktop
-# static SDKs into the app. The Android SDK registers none of its plugins itself (verified on-device: without this,
-# coreelements/tcp/udp/rtp/... stay unregistered); gst_init() only runs the function generated here (see
-# gst_static_plugins.c.in).
-if(ANDROID AND TARGET GStreamer::mobile)
+# Mobile layouts link the SDK into GStreamer::mobile (libgstreamer_android.so, the iOS framework), which registers
+# GSTREAMER_STATIC_PLUGINS in its generated gst_init_static_plugins(), called by GStreamer.cc::_registerPlugins. The
+# Android and iOS SDKs register none of their plugins themselves (verified on-device: without it, coreelements, tcp,
+# udp, rtp, ... stay unregistered).
+if(ANDROID OR IOS)
     target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GStreamer::mobile)
-    qgc_gst_generate_static_init(
-        TARGET ${CMAKE_PROJECT_NAME}
-        PLUGINS ${GSTREAMER_STATIC_PLUGINS}
-        GIO_MODULES ${G_IO_MODULES}
+endif()
+if(ANDROID)
+    # GStreamerEnvironment.cc extracts the bundled APK assets with the NDK's asset manager.
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE android)
+endif()
+# Deferred to the top-level directory, which creates the app target and evaluates the arguments, so they name only
+# global variables. Mach-O symbols carry a leading underscore.
+if(ANDROID OR IOS)
+    cmake_language(
+        DEFER
+        DIRECTORY
+        "${CMAKE_SOURCE_DIR}"
+        CALL
+        add_custom_command
+        TARGET
+        ${CMAKE_PROJECT_NAME}
+        POST_BUILD
+        COMMAND
+        "${CMAKE_COMMAND}"
+        "-DAPP=$<TARGET_FILE:${CMAKE_PROJECT_NAME}>"
+        "-DNM=${CMAKE_NM}"
+        "-DSYMBOL_PREFIX=$<$<PLATFORM_ID:iOS>:_>"
+        -P
+        "${CMAKE_SOURCE_DIR}/cmake/GStreamer/SingleCoreCheck.cmake"
+        COMMENT
+        "Checking that the app links a single GStreamer core"
+        VERBATIM
     )
-elseif(IOS AND TARGET GStreamer::mobile)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GStreamer::mobile)
-elseif(GStreamer_USE_STATIC_LIBS)
-    qgc_gst_generate_static_init(TARGET ${CMAKE_PROJECT_NAME} PLUGINS ${GSTREAMER_STATIC_PLUGINS})
 endif()
 
-# Mobile platforms ship plugins inside the static .a / xcfw — no install steps below.
+# Mobile platforms ship their plugins inside GStreamer::mobile; no install steps below.
 if(ANDROID OR IOS)
     return()
 endif()
@@ -242,11 +267,8 @@ if(LINUX AND NOT QGC_GST_BUNDLE_PLUGINS)
                         "the system; an AppImage must bundle them. Set QGC_CREATE_APPIMAGE=OFF."
         )
     endif()
-    set_property(
-        SOURCE GStreamerEnvironment.cc TARGET_DIRECTORY ${CMAKE_PROJECT_NAME}
-        APPEND
-        PROPERTY COMPILE_DEFINITIONS QGC_GST_SYSTEM_PLUGINS
-    )
+    # Public, so the environment tests know the build bundles no runtime.
+    target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_SYSTEM_PLUGINS)
 endif()
 
 # Native packages install only the Runtime component. Keep this assignment

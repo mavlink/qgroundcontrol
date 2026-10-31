@@ -9,18 +9,19 @@ include(GStreamer/Probe)
 # qualified) still links the base sources. Qt-private bits stay gated below.
 target_sources(
     QGCGStreamer
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/common/HwBuffers.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/HwBuffers.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathTelemetry.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathTelemetry.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwTypes.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoInfo.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoInfo.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBufferFactory.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/CpuVideoFramePool.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/CpuVideoFramePool.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstDmaDrmCaps.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstDmaDrmCaps.h
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/HwBuffers.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/HwBuffers.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathTelemetry.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathTelemetry.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwTypes.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoInfo.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoInfo.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBufferFactory.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/CpuVideoFramePool.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/CpuVideoFramePool.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstDmaDrmCaps.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstDmaDrmCaps.h
 )
 
 # _qgc_add_gpu_path(<name> PLATFORMS <vars>... DEFINE <macro> SOURCES <files>...
@@ -38,8 +39,9 @@ function(_qgc_add_gpu_path name)
        OR NOT ARG_DEFINE
        OR NOT ARG_SOURCES
     )
-        message(FATAL_ERROR "_qgc_add_gpu_path(${name}): PLATFORMS, DEFINE and SOURCES required; "
-                            "unknown: ${ARG_UNPARSED_ARGUMENTS}"
+        message(
+            FATAL_ERROR "_qgc_add_gpu_path(${name}): PLATFORMS, DEFINE and SOURCES required; "
+                        "unknown: ${ARG_UNPARSED_ARGUMENTS}"
         )
     endif()
     set(_platform_match FALSE)
@@ -85,7 +87,11 @@ function(_qgc_add_gpu_path name)
     endif()
 
     list(TRANSFORM ARG_SOURCES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
-    target_sources(QGCGStreamer PRIVATE ${ARG_SOURCES})
+    target_sources(
+        QGCGStreamer
+        PRIVATE
+            ${ARG_SOURCES}
+    )
     target_include_directories(QGCGStreamer PRIVATE ${${name}_INCLUDE_DIRS})
     target_link_directories(QGCGStreamer PRIVATE ${${name}_LIBRARY_DIRS})
     set(_libs ${${name}_LIBRARIES} ${ARG_LIBS})
@@ -144,12 +150,13 @@ if(LINUX AND QGC_GST_HAS_DMABUF)
     )
 endif()
 
-# A static libgstvulkan (Android mobile archive; static-libs desktop) leaves gst-vulkan's own loader calls unresolved;
-# the shared .so satisfies them itself. Link the loader explicitly or Android arm64 fails with ld.lld "undefined symbol:
-# vkDestroyPipeline". find_library, not find_package(Vulkan): only the loader is needed (NDK sysroot included).
+# Android's SDK ships libgstvulkan only as an archive, which the Vulkan row links into the app (not into
+# libgstreamer_android.so), leaving gst-vulkan's own loader calls unresolved. Link the loader explicitly or Android
+# arm64 fails with ld.lld "undefined symbol: vkDestroyPipeline". find_library, not find_package(Vulkan): only the
+# loader is needed (NDK sysroot included).
 set(_qgc_vulkan_requires QT_FEATURE_vulkan)
 set(_qgc_vulkan_loader_libs "")
-if(GStreamer_USE_STATIC_LIBS OR ANDROID)
+if(ANDROID)
     if(DEFINED QGC_GST_VULKAN_LOADER_LIB AND (QGC_GST_VULKAN_LOADER_LIB MATCHES "NOTFOUND$"
                                               OR NOT EXISTS "${QGC_GST_VULKAN_LOADER_LIB}")
     )
@@ -163,21 +170,26 @@ endif()
 if(MACOS OR IOS)
     # TARGET_DIRECTORY: source-file props are dir-scoped; QGCGStreamer is created in the parent CMakeLists, so name it
     # explicitly here for SKIP_PRECOMPILE_HEADERS to bind to that target.
-    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/apple/GstIOSurfaceVideoBuffer.mm TARGET_DIRECTORY
-                                QGCGStreamer PROPERTIES SKIP_PRECOMPILE_HEADERS ON
+    set_source_files_properties(
+        ${CMAKE_CURRENT_SOURCE_DIR}/apple/GstIOSurfaceVideoBuffer.mm
+        TARGET_DIRECTORY
+        QGCGStreamer
+        PROPERTIES
+            SKIP_PRECOMPILE_HEADERS ON
     )
 endif()
 
 # ---- GPU path table (row order matters: CUDA builds on DMABuf) ----
 # cmake-format: off
-# Linux DMABuf zero-copy (VA-API / V4L2 / Mesa). QGC_GST_HAS_DMABUF comes from cmake/GStreamer/Orchestrator.cmake.
+# Linux DMABuf zero-copy (VA-API / V4L2 / Mesa) through Qt Multimedia's DMABuf importer. QGC_GST_HAS_DMABUF comes from
+# cmake/GStreamer/Orchestrator.cmake.
 set(_qgc_gpu_row_DMABuf
     PLATFORMS LINUX
-    REQUIRES QGC_GST_HAS_DMABUF
+    REQUIRES QGC_GST_HAS_DMABUF QT_FEATURE_linux_dmabuf
     EGL REQUIRED
     DEFINE QGC_HAS_GST_DMABUF_GPU_PATH
-    SOURCES dmabuf/GstDmaBufVideoBuffer.cc dmabuf/GstDmaBufVideoBuffer.h dmabuf/GstDmaFourcc.cc dmabuf/GstDmaFourcc.h
-            dmabuf/GstDmaBufVulkanImport.cc dmabuf/GstDmaBufVulkanImport.h)
+    SOURCES dmabuf/GstDmaBufVideoBuffer.cc dmabuf/GstDmaBufVideoBuffer.h dmabuf/GstQtDmaBufImport.cc
+            dmabuf/GstQtDmaBufImport.h dmabuf/GstDmaBufVulkanImport.cc dmabuf/GstDmaBufVulkanImport.h)
 # NVMM/CUDA: exports CUDA memory as a DMABuf fd and reuses the DMABuf EGLImage path; gst_cuda_memory_export is 1.24+.
 set(_qgc_gpu_row_CUDA
     PLATFORMS LINUX
@@ -187,11 +199,12 @@ set(_qgc_gpu_row_CUDA
     UNSTABLE_API
     DEFINE QGC_HAS_GST_CUDA_GPU_PATH
     SOURCES cuda/GstCudaVideoBuffer.cc cuda/GstCudaVideoBuffer.h)
-# GLMemory via gst-gl. WIN32: only reachable when Qt uses the ANGLE/EGL GL backend (D3D11/D3D12 are the primary
-# Windows paths); GstGlContextBridge wraps the EGL context only — no WGL. A GLMemory-only Linux/Android build links EGL
-# itself, else GstGlContextBridge.cc fails with "undefined symbol: eglGetDisplay".
+# GLMemory via gst-gl. A GLMemory-only Linux/Android build links EGL itself, else GstGlContextBridge.cc fails with
+# "undefined symbol: eglGetDisplay". Not Windows: Qt 6's OpenGL there is WGL, which GstGlContextBridge can't wrap, so
+# the sink never offers GLMemory. Not Apple: vtdec prefers GLMemory, which Metal can't import, over the IOSurface-backed
+# CoreVideo memory the IOSurface path takes.
 set(_qgc_gpu_row_GLMemory
-    PLATFORMS LINUX MACOS ANDROID WIN32
+    PLATFORMS LINUX ANDROID
     PROBE HAS_VAR QGC_GST_HAS_GLMEMORY HEADER gst/gl/gstglmemory.h SYMBOL gst_is_gl_memory
     EGL OPTIONAL
     DEFINE QGC_HAS_GST_GLMEMORY_GPU_PATH
@@ -254,17 +267,20 @@ if(_qgc_gpu_unstable_api)
 endif()
 
 if(_qgc_gpu_D3D11 OR _qgc_gpu_D3D12)
-    target_sources(QGCGStreamer PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/d3d/GstD3DContextBridge.cc
-                                        ${CMAKE_CURRENT_SOURCE_DIR}/d3d/GstD3DContextBridge.h
+    target_sources(
+        QGCGStreamer
+        PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/d3d/GstD3DContextBridge.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/d3d/GstD3DContextBridge.h
     )
 endif()
 
-# GPU bin variants; HwBuffers::gpuBinMode() picks one at runtime. glupload is Android's only bin (GstGLContext handshake
+# GPU bin variants; GstQgc::selectGpuBin() picks one at runtime. glupload is Android's only bin (GstGLContext handshake
 # amcvideodec needs for Surface output) and Linux's default (gst-gl imports both LINEAR and vendor-tiled dmabuf to
-# GLMemory). Direct DMABuf feeds QGC's own importer, which binds LINEAR only. Linux builds with both pick one via
-# QGC_GST_GPU_BIN.
+# GLMemory). Direct DMABuf feeds Qt's per-plane importer, with the plain tilings EGL reports. Linux builds with both
+# pick one via QGC_GST_GPU_BIN.
 set(_qgc_unreachable_paths "")
-if((ANDROID OR LINUX) AND _qgc_gpu_GLMemory)
+if(_qgc_gpu_GLMemory)
     target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_BIN_HAS_GLUPLOAD=1)
 endif()
 if(LINUX AND _qgc_gpu_DMABuf)
@@ -275,7 +291,7 @@ if(LINUX
    AND _qgc_gpu_DMABuf
 )
     message(STATUS "QGCGStreamer: GPU bins compiled: glupload (default) and direct DMABuf; QGC_GST_GPU_BIN selects one")
-elseif((ANDROID OR LINUX) AND _qgc_gpu_GLMemory)
+elseif(_qgc_gpu_GLMemory)
     message(STATUS "QGCGStreamer: GPU bin routes through glupload (gst-gl EGLImage import)")
 elseif(LINUX AND _qgc_gpu_DMABuf)
     message(STATUS "QGCGStreamer: GPU bin direct-imports DMABuf (no gst-gl/GLMemory available)")
@@ -287,8 +303,8 @@ if(ANDROID
 )
     list(APPEND _qgc_unreachable_paths "AHardwareBuffer (glupload bin)")
 endif()
-# The sink never advertises memory:CUDAMemory or memory:VulkanImage caps.
-foreach(_path IN ITEMS CUDA Vulkan)
+# The sink never advertises memory:CUDAMemory, memory:VulkanImage or memory:D3D12Memory caps.
+foreach(_path IN ITEMS CUDA Vulkan D3D12)
     if(_qgc_gpu_${_path})
         list(APPEND _qgc_unreachable_paths "${_path} (caps not advertised)")
     endif()
@@ -309,20 +325,20 @@ target_link_libraries(QGCGStreamer PRIVATE Qt6::GuiPrivate)
 # GPU-only TUs (base class, factory, bridge registry, RHI capture) depend on qrhi.h.
 target_sources(
     QGCGStreamer
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstEglHelpers.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstEglHelpers.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/gl/GstGlFrameTextures.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwFrameTexturesBase.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportCache.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBuffer.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBuffer.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeBase.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeBase.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathRegistry.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathRegistry.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBufferFactory.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/QGCRhiCapture.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/common/QGCRhiCapture.h
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstEglHelpers.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstEglHelpers.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwFrameTexturesBase.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportCache.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBuffer.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBuffer.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeBase.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstContextBridgeBase.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathRegistry.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwPathRegistry.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwVideoBufferFactory.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/QGCRhiCapture.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/QGCRhiCapture.h
 )

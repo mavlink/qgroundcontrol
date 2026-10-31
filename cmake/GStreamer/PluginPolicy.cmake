@@ -1,7 +1,7 @@
 # Centralised GStreamer plugin policy — single source of truth for plugin
-# alternate groups, runtime-required and optional plugins, and the iOS skip list.
+# alternate groups, bundle-required and optional plugins, and the GPL denylist.
 # Consumed by Orchestrator (build-config plugin loader / alternate-satisfied
-# check), Install (runtime-required verifier), and the iOS plugin list (xcfw skip).
+# check) and Install (bundle-required verifier, GPL check).
 
 include_guard(GLOBAL)
 
@@ -17,19 +17,19 @@ include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
 # are the group/AND delimiters and are not escapable.
 set(GSTREAMER_PLUGIN_ALTERNATES "videoconvertscale|videoconvert+videoscale")
 
-# Structural plugins guaranteed to exist post-install — the install verifier
-# fails the build if any are missing, and GStreamer.cc fails initialization
-# (QGC_GST_RUNTIME_REQUIRED_PLUGINS, set by src/.../GStreamer/CMakeLists.txt).
+# Structural plugins every bundled GStreamer must ship: a mobile configure and the
+# desktop install verifier fail without one. At runtime GStreamer.cc checks the
+# elements per feature instead, and fails initialization only without the display
+# core.
 # Codec implementations (openh264/libav) are intentionally excluded: distro
 # bundles may omit one while shipping another usable decode path.
 # opengl supplies glupload/glcolorconvert (GL zero-copy video path);
-# multifile (splitmuxsink), isomp4 (qtmux/mp4mux), and matroska (matroskamux)
-# are load-bearing for video recording (kFileMux, RecordingBranch.cc).
-set(GSTREAMER_RUNTIME_REQUIRED_PLUGINS
+# isomp4 (mp4mux/qtmux) and matroska (matroskamux) are the recording muxers
+# (RecordingBranch.cc).
+set(GSTREAMER_BUNDLE_REQUIRED_PLUGINS
     coreelements
     isomp4
     matroska
-    multifile
     opengl
     playback
     rtsp
@@ -59,17 +59,54 @@ set(GSTREAMER_OPTIONAL_PLUGINS
     vulkan
 )
 
-# iOS: plugins whose dependent static libs aren't bundled in the merged
-# archive. Registering them would cause unresolved-symbol link failures, so the
-# Orchestrator drops them from the iOS plugin list.
-# x265: gstreamer-ios 1.28.2 ships libgstx265.a but not libx265.a.
-set(GSTREAMER_XCFRAMEWORK_SKIP_PLUGINS x265)
+# Encode-side plugins needed only by the Debug-only MockLink test video stream server (MockVideoStreamServer), which
+# encodes with openh264enc (allowlisted). Statically registered on Android and iOS Debug builds only: desktop builds
+# load whatever the SDK or system ships, and release builds must not carry them.
+set(GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS mpegtsmux videotestsrc)
 
-# Encode-side plugins needed only by the Debug-only MockLink test video stream
-# server (MockVideoStreamServer). Statically registered on Android and iOS Debug
-# builds only — desktop builds find them via the full SDK plugin scan, and release
-# builds must not ship them (app size; x264/x265 are GPL).
-set(GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS mpegtsmux videotestsrc x264 x265)
+# GPL-licensed plugins and libraries of the official SDKs (cerbero builds them with its gpl and ugly options) that QGC
+# must never bundle: its GStreamer license notice (Notice.cmake) covers an LGPL GStreamer. The desktop installers fail
+# an install that would ship one (Install.cmake).
+set(GSTREAMER_GPL_DENYLIST
+    a52
+    a52dec
+    cdio
+    cdio_cdda
+    cdio_paranoia
+    dvdnav
+    dvdread
+    faad
+    mpeg2
+    mpeg2convert
+    mpeg2dec
+    mpeg2enc
+    mpeg2encpp
+    mplex
+    mplex2
+    resindvd
+    sid
+    sidplay
+    x264
+    x265
+)
+
+# gstreamer_gpl_files(<out_var> <file>...)
+# Sets <out_var> to the <file>s whose name is a GSTREAMER_GPL_DENYLIST library or plugin: the name, after an optional
+# lib and gst prefix, followed by a version, extension or nothing (libx264.so.164, x264-164.dll, libgstx264.dylib).
+function(gstreamer_gpl_files out_var)
+    list(JOIN GSTREAMER_GPL_DENYLIST "|" _names)
+    set(_gpl "")
+    foreach(_file IN LISTS ARGN)
+        cmake_path(GET _file FILENAME _name)
+        if(_name MATCHES "^(lib)?(gst)?(${_names})([-_.]|$)")
+            list(APPEND _gpl "${_file}")
+        endif()
+    endforeach()
+    set(${out_var}
+        "${_gpl}"
+        PARENT_SCOPE
+    )
+endfunction()
 
 # gstreamer_plugins_for(<key> <out_var>)
 # Sets <out_var> to the plugin list of build-config.json for <key> ("android", "apple", "windows", "linux" or ""):
@@ -86,26 +123,6 @@ function(gstreamer_plugins_for key out_var)
     )
 endfunction()
 
-# gstreamer_plugin_alternatives(<plugin> <out_var>)
-# Sets <out_var> to the plugin sets, each "+"-joined, that satisfy <plugin>: <plugin> itself, then the alternates of its
-# GSTREAMER_PLUGIN_ALTERNATES group.
-function(gstreamer_plugin_alternatives plugin out_var)
-    set(_alternatives "${plugin}")
-    foreach(_group IN LISTS GSTREAMER_PLUGIN_ALTERNATES)
-        string(REGEX REPLACE "[|+]" ";" _group_plugins "${_group}")
-        if(plugin IN_LIST _group_plugins)
-            string(REPLACE "|" ";" _group_alternatives "${_group}")
-            list(APPEND _alternatives ${_group_alternatives})
-            list(REMOVE_DUPLICATES _alternatives)
-            break()
-        endif()
-    endforeach()
-    set(${out_var}
-        "${_alternatives}"
-        PARENT_SCOPE
-    )
-endfunction()
-
 # gstreamer_missing_required(REQUIRED <plugin>... AVAILABLE <plugin>... OUT_VAR <var>)
 # Sets <var> to the REQUIRED plugins, in order, that are not AVAILABLE. A member of a GSTREAMER_PLUGIN_ALTERNATES group
 # is also satisfied by any alternate of its group whose plugins are all AVAILABLE, so the install verifier accepts
@@ -115,7 +132,16 @@ function(gstreamer_missing_required)
     _qgc_gst_check_args(gstreamer_missing_required OUT_VAR ALLOW_EMPTY REQUIRED AVAILABLE)
     set(_missing "")
     foreach(_plugin IN LISTS ARG_REQUIRED)
-        gstreamer_plugin_alternatives("${_plugin}" _alternates)
+        # The plugin sets, each "+"-joined, that satisfy _plugin: itself, then the alternates of its group.
+        set(_alternates "${_plugin}")
+        foreach(_group IN LISTS GSTREAMER_PLUGIN_ALTERNATES)
+            string(REGEX REPLACE "[|+]" ";" _group_plugins "${_group}")
+            if(_plugin IN_LIST _group_plugins)
+                string(REPLACE "|" ";" _group_alternates "${_group}")
+                list(APPEND _alternates ${_group_alternates})
+                break()
+            endif()
+        endforeach()
         set(_satisfied FALSE)
         foreach(_alternate IN LISTS _alternates)
             string(REPLACE "+" ";" _alternate_plugins "${_alternate}")
@@ -148,21 +174,22 @@ endfunction()
 function(gstreamer_classify_missing_plugins)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "OUT_OPTIONAL;OUT_ABSENT;OUT_UNUSABLE" "REQUESTED;AVAILABLE;SHIPPED")
     _qgc_gst_check_args(
-        gstreamer_classify_missing_plugins
-        OUT_OPTIONAL
-        OUT_ABSENT
-        OUT_UNUSABLE
-        ALLOW_EMPTY
-        REQUESTED
-        AVAILABLE
-        SHIPPED
+        gstreamer_classify_missing_plugins OUT_OPTIONAL OUT_ABSENT OUT_UNUSABLE ALLOW_EMPTY REQUESTED AVAILABLE SHIPPED
     )
-    gstreamer_missing_required(REQUIRED ${ARG_REQUESTED} AVAILABLE ${ARG_AVAILABLE} OUT_VAR _missing)
+    gstreamer_missing_required(
+        REQUIRED ${ARG_REQUESTED}
+        AVAILABLE ${ARG_AVAILABLE}
+        OUT_VAR _missing
+    )
     set(_optional "")
     set(_absent "")
     set(_unusable "")
     foreach(_plugin IN LISTS _missing)
-        gstreamer_missing_required(REQUIRED ${_plugin} AVAILABLE ${ARG_SHIPPED} OUT_VAR _not_shipped)
+        gstreamer_missing_required(
+            REQUIRED ${_plugin}
+            AVAILABLE ${ARG_SHIPPED}
+            OUT_VAR _not_shipped
+        )
         if(_plugin IN_LIST GSTREAMER_OPTIONAL_PLUGINS)
             list(APPEND _optional "${_plugin}")
         elseif(_not_shipped)

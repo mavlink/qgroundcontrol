@@ -1,87 +1,123 @@
 #pragma once
 
 #include <atomic>
-#include <gst/gstbin.h>
-#include <gst/gstpad.h>
+#include <gst/gst.h>
 
-#include <QtCore/QMutex>
 #include <QtCore/QString>
 
+#include "BranchContext.h"
 #include "GstScoped.h"
-
-class GstVideoReceiver;
+#include "HwBuffers/common/GstHwPathTelemetry.h"
 
 namespace GstQgc {
 struct PathStats;
 }
 
-/// \brief The display branch behind GstVideoReceiver's tee: leaky queue ! valve [! decodebin3 ! video sink].
+/// \brief The display branch behind the session's tee: leaky queue ! valve [! decodebin3 ! video sink].
 ///
-/// Holds the caller's video sink until the source streams, then inserts decodebin3 and links its pad to the sink.
-/// The caller keeps its own ref on the sink; the branch takes one more, and the pipeline its own while the sink is
-/// inside. Decoding is reported from the first frame that reaches the sink; taking the sink out again clears the frame
-/// its QVideoSink displays. Also keeps the name of the decoder decodebin3 plugged, which the receiver exposes. Reports
-/// through the receiver's signals.
+/// Takes the receiver's video sink, inserts decodebin3 once the source streams and links its pad to the sink, asking
+/// upstream for a keyframe so the picture starts soon. Decoding is reported from the first frame that reaches the sink.
+/// A failing or stalled decoder is replaced without touching the rest of the pipeline. The sink outlives the session:
+/// the branch holds a ref and takes it out of the pipeline again.
 ///
-/// Threading: the receiver's worker, except the sink probe and the decoder-added callback (streaming threads) and
-/// onBusCapsInfo() (whichever thread posts). decoderName() is thread-safe.
+/// The queue drops the oldest frame when the decoder falls behind, so the tee (and with it the recording) never waits
+/// for the decoder. A decoder can't recover a dropped compressed frame, so after a drop the branch also drops delta
+/// frames until the next keyframe, which it requests: the picture freezes briefly instead of smearing for a whole GOP.
+///
+/// Threading: the receiver's worker, except the probes and the decoder's signal handlers (streaming threads), which
+/// hand their work to the worker through BranchContext::post().
 class DecodingBranch
 {
 public:
-    explicit DecodingBranch(GstVideoReceiver& receiver);
+    class Listener
+    {
+    public:
+        virtual void onDecodingChanged(bool decoding) = 0;
+        virtual void onDecoderNameChanged(const QString& name) = 0;
+        /// The decoder kept failing: kMaxDecoderRestarts replacements in a row produced no frame.
+        virtual void onDecoderFailing() = 0;
 
-    /// Adds the branch's leaky queue and closed valve to @p pipeline behind @p tee.
-    [[nodiscard]] bool build(GstElement* pipeline, GstElement* tee);
-    /// Detaches the video sink and decoder and forgets the pipeline, which must be in NULL with its callbacks stopped.
+    protected:
+        ~Listener() = default;
+    };
+
+    static constexpr int kMaxDecoderRestarts = 3;
+
+    /// @p lowLatency: frames are shown as soon as decoded instead of at their presentation time.
+    DecodingBranch(const BranchContext& context, Listener& listener, bool lowLatency);
+    ~DecodingBranch();
+
+    DecodingBranch(const DecodingBranch&) = delete;
+    DecodingBranch& operator=(const DecodingBranch&) = delete;
+
+    /// Adds the branch's leaky queue and closed valve behind the tee.
+    [[nodiscard]] bool build();
+    /// Takes the video sink and decoder out of the pipeline, which must be in NULL, and releases the sink.
     void reset();
 
-    /// Takes @p videoSink and, once @p streaming, inserts the decoder. Reports onStartDecodingComplete.
-    void start(GstElement* videoSink, bool hasWidget, bool streaming);
-    /// Tears the branch down at once (there is nothing to flush). Reports onStopDecodingComplete.
-    void stop();
-    /// The source pad is linked: inserts the decoder when a video sink is waiting for it.
+    /// Decodes into @p sink from now on, or stops decoding for nullptr.
+    void setVideoSink(GstElement* sink);
+    /// The first frame reached the tee: inserts the decoder when a video sink is waiting for it.
     void onSourceStreaming();
-    void onDecoderPad(GstPad* pad);
+    /// Replaces the decoder and resets the sink, leaving the rest of the pipeline (and a recording) running.
+    void restartDecoder(const char* reason);
 
-    GstElement* decoder() const { return _decoder.get(); }
+    /// A decoder is inserted, so frames are due at the sink.
+    bool displaying() const { return _decoder != nullptr; }
 
-    bool isDecoding() const { return _decoding.load(std::memory_order_relaxed); }
+    GstElement* valve() const { return _valve; }
 
-    /// The sink's negotiated raw caps (GstQgc::kCapsInfoMessage).
-    void onBusCapsInfo(GstMessage* message);
+    /// Whether @p source is (inside) the current decoder or video sink, or the branch's queue or valve. Errors from
+    /// anything else of the branch are left over from a replaced decoder.
+    bool isCurrent(GstObject* source) const;
 
-    QString decoderName() const;
-
-    /// The frames the video sink delivered since start() took it, from qgcqvideosink's "frame-stats"; empty for other
-    /// sinks.
+    /// The frames the video sink delivered since setVideoSink(), from qgcqvideosink's "frame-stats", followed by the
+    /// process-wide GPU-path counters since then (HwBuffers::extraPathStatsSince()); empty for other sinks.
     GstQgc::PathStats sinkPathStats() const;
 
 private:
-    /// Puts the video sink into the pipeline and decodebin3 between it and the valve, then opens the valve.
-    bool _insertDecoder();
-    bool _addDecoder();
-    void _ensureVideoSinkInPipeline();
-    bool _addVideoSink(GstPad* pad);
-    void _onFirstFrame();
-    void _shutdown();
-    /// Has the receiver's QVideoSink controllers drop the frame on display, which pins the last decoder buffer.
-    void _releaseDisplayedFrame();
+    void _insertDecoder();
+    /// Closes the valve and takes the video sink and the decoder out of the pipeline; keeps the sink.
+    void _removeDecoder();
+    void _linkDecoderPad(GstPad* pad);
+    void _onFirstFrame(quint64 insertion);
+    void _setDecoding(bool decoding);
+    void _setDecoderName(const QString& name);
 
+    static void _onQueueOverrun(GstElement* queue, gpointer data);
+    static GstPadProbeReturn _gateProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data);
+    static GstPadProbeReturn _sinkProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data);
+    static void _onDecoderPadAdded(GstElement* decoder, GstPad* pad, gpointer data);
     static void _onDecoderElementAdded(GstBin* decodebin, GstBin* subBin, GstElement* element, gpointer data);
-    static GstPadProbeReturn _sinkProbe(GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
 
-    GstVideoReceiver& _receiver;
-    // Borrowed: the receiver owns the pipeline, the pipeline the valve.
-    GstElement* _pipeline = nullptr;
+    const BranchContext _context;
+    Listener& _listener;
+    const bool _lowLatency;
+
+    // Owned by the pipeline.
+    GstElement* _queue = nullptr;
     GstElement* _valve = nullptr;
 
+    GStreamer::GstElementPtr _sink;
     GStreamer::GstElementPtr _decoder;
-    GStreamer::GstElementPtr _videoSink;
-    // The sink's "frame-stats" when start() took it: the sink outlives sessions and its counters don't restart.
+    // The sink's "frame-stats" when setVideoSink() took it: the sink outlives sessions and its counters don't restart.
     GStreamer::GstStructurePtr _sinkStatsAtStart;
+    // The process-wide GPU-path counters then, which never restart either.
+    GstHwPathTelemetry::Snapshot _gpuCountersAtStart;
     GStreamer::PadProbe _sinkFrameProbe;
-    std::atomic<bool> _decoding = false;  ///< Read by the receiver's tee probe log.
+    GStreamer::PadProbe _keyframeGate;
+    GStreamer::ScopedSignal _queueOverrun;
+    GStreamer::ScopedSignal _decoderPadAdded;
+    GStreamer::ScopedSignal _decoderElementAdded;
 
-    mutable QMutex _decoderNameMutex;     // Written on the worker, read from any thread.
+    /// Set when the queue drops a frame; delta frames are dropped while it is set.
+    std::atomic<bool> _gateClosed = false;
+    std::atomic<int> _gateDrops = 0;
+    /// Counts decoder insertions, so a first-frame report from a replaced decoder is ignored.
+    std::atomic<quint64> _insertions = 0;
+
+    bool _streaming = false;
+    bool _decoding = false;
+    int _restartsWithoutFrame = 0;
     QString _decoderName;
 };

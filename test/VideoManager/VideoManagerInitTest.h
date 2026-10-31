@@ -7,13 +7,10 @@ class VideoManagerInitTest : public UnitTest
     Q_OBJECT
 
 private slots:
-#ifdef QGC_GST_STREAMING
     void init() override;
 
-    void _testQmlReadyBeforeBackendReady();
-    void _testBackendReadyBeforeQmlReady();
+    void _testReceiversNeedBackendAndWindow_data();
+    void _testReceiversNeedBackendAndWindow();
     void _testBackendInitFailure();
-#else
-    void _testGStreamerDisabled();
-#endif
+    void _testWaitForBackendReady();
 };

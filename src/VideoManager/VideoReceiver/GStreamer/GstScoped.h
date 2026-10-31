@@ -6,7 +6,7 @@
 /// Scoped owners for transfer-full GStreamer returns so refs can't leak on early return.
 /// Use the adopt* helpers at the transfer-full call boundary; .get() yields a non-owning view.
 /// Floating refs (e.g. gst_element_factory_make) are consumed by gst_bin_add/gst_element_add_pad even
-/// when the call fails, so release() the owner into the call.
+/// when the call fails, so release() the owner into the call, or sink them at creation with makeElement().
 namespace GStreamer {
 
 struct GstObjectDeleter
@@ -139,6 +139,62 @@ inline GErrorPtr adoptError(GError* error) noexcept
 {
     return GErrorPtr(error);
 }
+
+/// A copyable owner of a new ref on @p object, for tasks that must be copyable (std::function).
+template <typename T>
+std::shared_ptr<T> shareObject(T* object)
+{
+    return object ? std::shared_ptr<T>(static_cast<T*>(gst_object_ref(object)), GstObjectDeleter{}) : nullptr;
+}
+
+/// gst_element_factory_make() with the floating ref sunk, so the caller owns a plain ref that adding the element to a
+/// bin never consumes. Null when the factory is missing.
+inline GstElementPtr makeElement(const char* factory, const char* name = nullptr)
+{
+    GstElement* const element = gst_element_factory_make(factory, name);
+    return adoptElement(element ? GST_ELEMENT(gst_object_ref_sink(element)) : nullptr);
+}
+
+/// A GObject signal handler owned like a scoped pointer: connected by connect(), disconnected by disconnect() or
+/// destruction unless the object is gone by then. For handlers whose data dies before the object.
+class ScopedSignal
+{
+public:
+    ScopedSignal() = default;
+
+    ~ScopedSignal() { disconnect(); }
+
+    ScopedSignal(const ScopedSignal&) = delete;
+    ScopedSignal& operator=(const ScopedSignal&) = delete;
+
+    /// g_signal_connect() on @p object, replacing the handler held so far. False when nothing was connected.
+    bool connect(gpointer object, const char* signal, GCallback callback, gpointer data)
+    {
+        disconnect();
+        _id = g_signal_connect(object, signal, callback, data);
+        if (_id != 0) {
+            g_weak_ref_init(&_object, object);
+        }
+        return _id != 0;
+    }
+
+    void disconnect() noexcept
+    {
+        if (_id == 0) {
+            return;
+        }
+        if (gpointer object = g_weak_ref_get(&_object)) {
+            g_signal_handler_disconnect(object, _id);
+            g_object_unref(object);
+        }
+        g_weak_ref_clear(&_object);
+        _id = 0;
+    }
+
+private:
+    GWeakRef _object{};
+    gulong _id = 0;
+};
 
 /// A pad probe owned like a scoped pointer: holds the pad and the probe id from add() until remove() or destruction.
 /// Call remove() explicitly where the probe must go before something else is torn down.

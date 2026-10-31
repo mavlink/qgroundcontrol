@@ -9,8 +9,11 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
+#include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoFrameFormat>
 
 #include "GStreamerTestHelpers.h"
+#include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
 #include "RecordingFinalizer.h"
 #include "StreamWatchdog.h"
@@ -49,11 +52,11 @@ void GstVideoReceiverComponentsTest::_testReconnectBackoffRestartsAfterRecovery(
     }
 
     // The reconnect worked and delivered frames before the stream failed again.
-    watchdog.start(1);
+    watchdog.start(std::chrono::seconds(1));
     (void) watchdog.noteSourceFrame(kNowMs);
     QCOMPARE(nextDelaySec(watchdog), qint64(1));
     // Its own retry failing to start backs off from there.
-    watchdog.start(1);
+    watchdog.start(std::chrono::seconds(1));
     QCOMPARE(nextDelaySec(watchdog), qint64(2));
 }
 
@@ -88,7 +91,7 @@ void GstVideoReceiverComponentsTest::_testStallDetection()
     QFETCH(int, expected);
 
     StreamWatchdog watchdog;
-    watchdog.start(timeoutSec);
+    watchdog.start(std::chrono::seconds(timeoutSec));
     (void) watchdog.noteSourceFrame(kNowMs - sourceFrameAgeMs);
     if (sinkFrameAgeMs != kNoFrame) {
         (void) watchdog.noteSinkFrame(kNowMs - sinkFrameAgeMs);
@@ -97,11 +100,41 @@ void GstVideoReceiverComponentsTest::_testStallDetection()
     QCOMPARE(int(watchdog.check(kNowMs, decoding).stall), expected);
 }
 
+void GstVideoReceiverComponentsTest::_testFirstFrameGrace()
+{
+    // RTSP's UDP to TCP fallback must not be cut short before the first frame; once frames flow, the timeout applies.
+    StreamWatchdog watchdog;
+    watchdog.start(std::chrono::seconds(1), std::chrono::milliseconds(5000));
+    QCOMPARE(watchdog.check(kNowMs, false).stall, StreamWatchdog::Stall::None);
+    QCOMPARE(watchdog.check(kNowMs + 6000, false).stall, StreamWatchdog::Stall::None);
+    QCOMPARE(watchdog.check(kNowMs + 6001, false).stall, StreamWatchdog::Stall::Source);
+
+    (void) watchdog.noteSourceFrame(kNowMs + 7000);
+    QCOMPARE(watchdog.check(kNowMs + 8000, false).stall, StreamWatchdog::Stall::None);
+    QCOMPARE(watchdog.check(kNowMs + 8001, false).stall, StreamWatchdog::Stall::Source);
+}
+
+void GstVideoReceiverComponentsTest::_testDecoderSilenceCountsFromInsertion()
+{
+    // A decoder that never delivers a frame stalls too, counted from its insertion.
+    StreamWatchdog watchdog;
+    watchdog.start(std::chrono::seconds(1));
+    watchdog.startSinkClock(kNowMs);
+    (void) watchdog.noteSourceFrame(kNowMs + 2000);
+    QCOMPARE(watchdog.check(kNowMs + 2000, true).stall, StreamWatchdog::Stall::None);
+    QCOMPARE(watchdog.check(kNowMs + 2001, true).stall, StreamWatchdog::Stall::Decoder);
+
+    QVERIFY(watchdog.noteSinkFrame(kNowMs + 2001));
+    QVERIFY(!watchdog.noteSinkFrame(kNowMs + 2002));
+    watchdog.startSinkClock(kNowMs + 2002);
+    QVERIFY2(watchdog.noteSinkFrame(kNowMs + 2003), "A new decoder's first frame must be reported again");
+}
+
 void GstVideoReceiverComponentsTest::_testSourceTimeoutStartsAtFirstCheck()
 {
     // A source that never delivers a frame must still time out, counted from the first check.
     StreamWatchdog watchdog;
-    watchdog.start(1);
+    watchdog.start(std::chrono::seconds(1));
     QCOMPARE(watchdog.check(kNowMs, false).stall, StreamWatchdog::Stall::None);
     QCOMPARE(watchdog.check(kNowMs + 1000, false).stall, StreamWatchdog::Stall::None);
     const StreamWatchdog::Result result = watchdog.check(kNowMs + 1001, false);
@@ -125,10 +158,7 @@ void GstVideoReceiverComponentsTest::_testFinalizerSettlesOnlyFromArmedRecording
     QFETCH(QString, source);
     QFETCH(bool, settles);
 
-    const QString unavailable = GstTest::initGStreamer();
-    if (!unavailable.isEmpty()) {
-        QSKIP(qPrintable(unavailable));
-    }
+    GSTTEST_REQUIRE_GSTREAMER();
 
     const GStreamer::GstElementPtr oldSinkBin = ownedBin("oldsinkbin");
     const GStreamer::GstElementPtr sinkBin = ownedBin("sinkbin");
@@ -158,10 +188,7 @@ void GstVideoReceiverComponentsTest::_testFinalizerSettlesOnlyFromArmedRecording
 
 void GstVideoReceiverComponentsTest::_testFinalizerKeepsFirstOutcome()
 {
-    const QString unavailable = GstTest::initGStreamer();
-    if (!unavailable.isEmpty()) {
-        QSKIP(qPrintable(unavailable));
-    }
+    GSTTEST_REQUIRE_GSTREAMER();
 
     const GStreamer::GstElementPtr sinkBin = ownedBin("sinkbin");
 
@@ -199,10 +226,7 @@ void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory()
     QFETCH(QString, tag);
     QFETCH(QString, fileStem);
 
-    const QString unavailable = GstTest::initGStreamer();
-    if (!unavailable.isEmpty()) {
-        QSKIP(qPrintable(unavailable));
-    }
+    GSTTEST_REQUIRE_GSTREAMER();
 
     QTemporaryDir parent;
     QVERIFY(parent.isValid());
@@ -249,6 +273,48 @@ void GstVideoReceiverComponentsTest::_testPipelineNamedAfterReceiver()
     PipelineDotDumper dumper;
     dumper.setReceiverName(receiverName);
     QCOMPARE(dumper.pipelineName(), pipelineName);
+}
+
+void GstVideoReceiverComponentsTest::_testPresentedSize_data()
+{
+    QTest::addColumn<QSize>("frameSize");  // invalid: no frame
+    QTest::addColumn<QRect>("viewport");   // null: the format's default, the whole frame
+    QTest::addColumn<int>("frameRotation");
+    QTest::addColumn<int>("formatRotation");
+    QTest::addColumn<QSize>("presented");
+
+    // A decoder's buffer padded to its alignment, with crop meta: the viewport holds the 1080-row picture.
+    const QSize padded(1920, 1088);
+    const QRect picture(0, 0, 1920, 1080);
+    QTest::newRow("whole frame") << QSize(320, 240) << QRect() << 0 << 0 << QSize(320, 240);
+    QTest::newRow("padded buffer") << padded << picture << 0 << 0 << QSize(1920, 1080);
+    QTest::newRow("cropped, upside down") << QSize(640, 480) << QRect(8, 8, 600, 400) << 180 << 0 << QSize(600, 400);
+    QTest::newRow("padded, frame turned 90") << padded << picture << 90 << 0 << QSize(1080, 1920);
+    QTest::newRow("padded, format turned 270") << padded << picture << 0 << 270 << QSize(1080, 1920);
+    QTest::newRow("turns adding up to 180") << padded << picture << 90 << 90 << QSize(1920, 1080);
+    QTest::newRow("no frame") << QSize() << QRect() << 0 << 0 << QSize();
+}
+
+void GstVideoReceiverComponentsTest::_testPresentedSize()
+{
+    QFETCH(QSize, frameSize);
+    QFETCH(QRect, viewport);
+    QFETCH(int, frameRotation);
+    QFETCH(int, formatRotation);
+    QFETCH(QSize, presented);
+
+    QVideoFrame frame;
+    if (frameSize.isValid()) {
+        QVideoFrameFormat format(frameSize, QVideoFrameFormat::Format_NV12);
+        if (!viewport.isNull()) {
+            format.setViewport(viewport);
+        }
+        format.setRotation(static_cast<QtVideo::Rotation>(formatRotation));
+        frame = QVideoFrame(format);
+        frame.setRotation(static_cast<QtVideo::Rotation>(frameRotation));
+    }
+
+    QCOMPARE(VideoReceiver::presentedSize(frame), presented);
 }
 
 #else

@@ -32,12 +32,14 @@ void applyColorimetry(QVideoFrameFormat& format, const GstVideoInfo& info, GstCa
 QVideoFrameFormat applyCropMeta(QVideoFrameFormat format, GstBuffer* buffer);
 
 /// Sample-to-frame result (GPU wins when it can, CPU fallback). mapSampleToFrame() does NOT take the caller's refs on
-/// @p buffer/@p caps: a GPU frame holds its own GstSample, a zero-copy CPU frame its own buffer ref.
+/// @p buffer/@p caps: a GPU frame holds its own GstSample, a zero-copy CPU frame its own buffer ref. A frame no GPU
+/// path takes whose layout the CPU can't read (a tiled DMA_DRM modifier) comes back invalid, with noCpuLayout set.
 struct MappedFrame
 {
     QVideoFrame frame;
     HwVideoBufferPath gpuPath = HwVideoBufferPath::None;  ///< None for a CPU frame
     bool demoted = false;  ///< A GPU path was requested for this stream but this frame fell back to CPU.
+    bool noCpuLayout = false;  ///< Dropped instead of read as linear rows, which would show it scrambled.
 };
 
 MappedFrame mapSampleToFrame(GstBuffer* buffer, GstCaps* caps, const GstVideoInfo& info,

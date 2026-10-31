@@ -45,7 +45,6 @@
         "libav",
         "matroska",
         "mpegtsdemux",
-        "multifile",
         "opengl",
         "openh264",
         "playback",

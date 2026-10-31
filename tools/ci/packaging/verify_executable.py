@@ -3,11 +3,15 @@
 
 Resolves paths, sets permissions, and runs the binary with --simple-boot-test (offscreen, or under
 xvfb-run for AppImages on Linux without a display). With --type dmg, attaches the disk image,
-verifies the app bundle inside it, and detaches it.
+audits the app bundle inside it (macho_bundle_audit.py: code signature, and every library its
+Mach-O files load), boot-tests it, and detaches it.
 
 A failed boot keeps its diagnostics in a per-package directory, named by the diagnostics-dir and
 diagnostics-name step outputs: the output, stacks captured before a timeout kill, macOS crash
 reports, and on Windows QGC's crash minidumps (QGC_CRASH_DUMP_DIR) with the executable's PDB.
+
+With --export-gstreamer-env it boots nothing: it gives the job's later steps, such as CTest, the
+GStreamer environment a build tree boots with.
 """
 
 from __future__ import annotations
@@ -34,6 +38,8 @@ import _bootstrap as _bootstrap
 from common.cmake import read_cache_var
 from common.format import format_bytes, format_duration
 from common.gh_actions import (
+    append_github_env,
+    append_github_path,
     env_default,
     gh_error,
     gh_group,
@@ -44,6 +50,8 @@ from common.gh_actions import (
 )
 from common.markdown import code_block, code_span, summary_section
 from common.proc import output_text, run_captured, wait_until
+
+from ci.packaging.macho_bundle_audit import audit_bundle
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
@@ -61,6 +69,9 @@ EXE_TYPES = ("binary", "appimage", "dmg", "exe")
 # QGC's own category filter decides debug output, so these go through --logging rather than QT_LOGGING_RULES.
 BOOT_LOGGING_CATEGORIES = "API.QGCApplication,Video.VideoManager,Video.GStreamer"
 SHIPPED_PLUGIN_DIR = "boot-test-gstreamer-plugins"
+TEST_PLUGIN_DIR = "test-gstreamer-plugins"
+# Sources, muxers and encoders the GStreamer tests send their streams with; the package ships none.
+TEST_ONLY_PLUGINS = ("videotestsrc", "mpegtsmux", "x264", "x265")
 DIAGNOSTICS_DIR = "boot-test-diagnostics"
 # Exit codes of a Windows process ended by an unhandled exception.
 NTSTATUS_NAMES = {
@@ -83,66 +94,106 @@ PROCESS_QUERY_INFORMATION = 0x0400
 PROCESS_VM_READ = 0x0010
 
 
-def _setup_gstreamer_env(build_dir: Path) -> None:
-    """Read the resolved GStreamer SDK root from CMakeCache and set plugin env vars.
+def _gstreamer_env(
+    build_dir: Path, *, for_tests: bool = False
+) -> tuple[dict[str, str], list[Path]]:
+    """Return the GStreamer variables and SDK library directories a build tree runs with.
 
-    For dev builds (before cmake --install), GStreamer plugins haven't been
-    copied into the app bundle yet. This lets the runtime find the
-    auto-downloaded SDK's plugins.
+    For dev builds (before cmake --install), GStreamer plugins haven't been copied into the app
+    bundle yet. These let the runtime find the auto-downloaded SDK's plugins; without one recorded
+    in CMakeCache, there is nothing to set.
     """
     cache = build_dir / "CMakeCache.txt"
     if not cache.is_file():
-        return
+        return {}, []
 
     value = read_cache_var(str(cache), "QGC_GST_RESOLVED_ROOT")
     if not value:
-        return
+        return {}, []
 
     gst_root = Path(value)
     plugin_dir = gst_root / "lib" / "gstreamer-1.0"
     if not plugin_dir.is_dir():
-        return
+        return {}, []
 
     print(f"Setting GStreamer env from build cache: {gst_root}")
     shipped = read_cache_var(str(cache), "QGC_GST_SHIPPED_PLUGINS")
     if shipped and platform.system() == "Windows":
-        plugin_dir = _stage_shipped_plugins(build_dir, shipped)
+        plugins = [Path(path) for path in shipped.split(";") if path]
+        stage = build_dir / SHIPPED_PLUGIN_DIR
+        if for_tests:
+            stage = build_dir / TEST_PLUGIN_DIR
+            extra = (plugin_dir / f"gst{name}.dll" for name in TEST_ONLY_PLUGINS)
+            plugins += [path for path in extra if path.is_file()]
+        plugin_dir = _stage_plugins(stage, plugins)
     plugin_str = str(plugin_dir)
     # SYSTEM_PATH replaces the default plugin dirs; GST_PLUGIN_PATH would only rescan the same dir.
-    for var in ("GST_PLUGIN_SYSTEM_PATH", "GST_PLUGIN_SYSTEM_PATH_1_0"):
-        os.environ[var] = plugin_str
+    env: dict[str, str] = {
+        "GST_PLUGIN_SYSTEM_PATH": plugin_str,
+        "GST_PLUGIN_SYSTEM_PATH_1_0": plugin_str,
+    }
 
     scanner = gst_root / "libexec" / "gstreamer-1.0" / "gst-plugin-scanner"
     if platform.system() == "Windows":
         scanner = scanner.with_suffix(".exe")
     if scanner.is_file() and os.access(scanner, os.X_OK):
-        scanner_str = str(scanner)
-        os.environ["GST_PLUGIN_SCANNER"] = scanner_str
-        os.environ["GST_PLUGIN_SCANNER_1_0"] = scanner_str
+        env["GST_PLUGIN_SCANNER"] = env["GST_PLUGIN_SCANNER_1_0"] = str(scanner)
 
-    lib_dir = str(gst_root / "lib")
     if platform.system() == "Darwin":
-        existing = os.environ.get("DYLD_LIBRARY_PATH", "")
-        os.environ["DYLD_LIBRARY_PATH"] = f"{lib_dir}:{existing}" if existing else lib_dir
-    elif platform.system() == "Windows":
-        bin_dir = str(gst_root / "bin")
-        existing = os.environ.get("PATH", "")
-        os.environ["PATH"] = f"{bin_dir};{existing}" if existing else bin_dir
+        return env, [gst_root / "lib"]
+    if platform.system() == "Windows":
+        # giolibproxy.dll's proxy-1.dll loads its backends from lib/libproxy, which the install copies into bin.
+        libproxy = gst_root / "lib" / "libproxy"
+        return env, [gst_root / "bin", *([libproxy] if libproxy.is_dir() else [])]
+    return env, []
 
 
-def _stage_shipped_plugins(build_dir: Path, shipped: str) -> Path:
-    """Copy the plugins the package ships into one directory, for a boot test that loads only those.
+def _setup_gstreamer_env(build_dir: Path) -> None:
+    """Point this process, and the boot test it starts, at the build tree's GStreamer SDK."""
+    env, library_dirs = _gstreamer_env(build_dir)
+    os.environ.update(env)
+    if not library_dirs:
+        return
+    name, separator = (
+        ("PATH", ";") if platform.system() == "Windows" else ("DYLD_LIBRARY_PATH", ":")
+    )
+    paths = [str(path) for path in library_dirs]
+    if existing := os.environ.get(name, ""):
+        paths.append(existing)
+    os.environ[name] = separator.join(paths)
+
+
+def _export_gstreamer_env(build_dir: Path) -> int:
+    """Give the job's later steps, such as CTest, the build tree's GStreamer environment.
+
+    Unlike the boot test, the tests also load the plugins in TEST_ONLY_PLUGINS.
+    """
+    env, library_dirs = _gstreamer_env(build_dir, for_tests=True)
+    if not env:
+        gh_error(f"{build_dir / 'CMakeCache.txt'} records no GStreamer SDK with plugins")
+        return 1
+    append_github_env(env)
+    if platform.system() == "Windows":
+        for library_dir in library_dirs:
+            append_github_path(str(library_dir))
+    elif library_dirs:
+        append_github_env({"DYLD_LIBRARY_PATH": ":".join(str(path) for path in library_dirs)})
+    for name, value in env.items():
+        print(f"{name}={value}")
+    return 0
+
+
+def _stage_plugins(stage: Path, plugins: list[Path]) -> Path:
+    """Copy *plugins* into the empty directory *stage*, for a process that loads only those.
 
     The whole Windows SDK holds ~270 plugins: a cold registry scan of them takes ~40 s, and some the
     package doesn't ship hang or crash QGC on exit. Their DLL dependencies load from the SDK's bin/.
     """
-    stage = build_dir / SHIPPED_PLUGIN_DIR
     shutil.rmtree(stage, ignore_errors=True)
     stage.mkdir(parents=True)
-    plugins = [Path(path) for path in shipped.split(";") if path]
     for plugin in plugins:
         shutil.copy2(plugin, stage / plugin.name)
-    print(f"Loading only the {len(plugins)} GStreamer plugins the package ships")
+    print(f"Loading only the {len(plugins)} GStreamer plugins in {stage}")
     return stage
 
 
@@ -656,7 +707,16 @@ def main(argv: list[str] | None = None) -> int:
         "--expected-appimage-update-information",
         default=env_default("INPUT_EXPECTED_APPIMAGE_UPDATE_INFORMATION"),
     )
+    parser.add_argument(
+        "--export-gstreamer-env",
+        action="store_true",
+        help="Instead of booting, export --build-dir's GStreamer environment to later steps (CTest)",
+    )
     args = parser.parse_args(argv)
+    if args.export_gstreamer_env:
+        if not args.build_dir:
+            parser.error("--export-gstreamer-env needs --build-dir")
+        return _export_gstreamer_env(Path(args.build_dir))
     if not args.binary_path:
         parser.error("--binary-path (or INPUT_BINARY_PATH) is required")
     if args.exe_type not in EXE_TYPES:
@@ -666,17 +726,20 @@ def main(argv: list[str] | None = None) -> int:
     diagnostics = _prepare_diagnostics(package)
     start = time.monotonic()
     output = ""
+    audited = True
     if args.exe_type != "dmg":
         code, output = _verify(package, args, diagnostics)
     else:
         try:
             with _attached_dmg(package) as mount_point:
-                code, output = _verify(_bundle_executable(mount_point), args, diagnostics)
+                executable = _bundle_executable(mount_point)
+                audited = audit_bundle(executable.parents[2])
+                code, output = _verify(executable, args, diagnostics)
         except RuntimeError as error:
             gh_error(str(error))
             code = 1
     write_step_summary(_summary(package, args, code, output, time.monotonic() - start))
-    return _step_exit_code(code)
+    return _step_exit_code(code) or int(not audited)
 
 
 if __name__ == "__main__":

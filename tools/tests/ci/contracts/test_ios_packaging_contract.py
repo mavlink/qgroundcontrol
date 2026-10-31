@@ -279,10 +279,10 @@ def test_ios_packaging_uses_consolidated_bundle_sources() -> None:
     assert "QGCLaunchScreen.storyboard" in apple
     assert "qgc_find_ios_xcframework_slice" in apple
     assert "QGC_IOS_APP_STORE_BUILD requires the Xcode generator" in apple
-    assert "XCODE_EMBED_FRAMEWORKS GStreamerMobileXcfw" in apple
+    assert "XCODE_EMBED_FRAMEWORKS GStreamerMobile" in apple
     assert "XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY YES" in apple
     assert "IOSPipe2Compat.c" in apple
-    assert "TARGET_BUNDLE_DIR_NAME:GStreamerMobileXcfw" in apple
+    assert "TARGET_BUNDLE_DIR_NAME:GStreamerMobile" in apple
     assert "${GStreamer_Mobile_MODULE_NAME}.framework" not in apple
     assert "GStreamer_VERSION VERSION_" not in apple
     assert any(

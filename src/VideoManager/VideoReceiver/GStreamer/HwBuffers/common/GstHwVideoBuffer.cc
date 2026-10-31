@@ -10,6 +10,12 @@ QVideoFrameTexturesUPtr GstHwPathTelemetry::fail(HwVideoBufferPath path) noexcep
     return {};
 }
 
+bool GstHw::texturePadsPicture(QSize textureSize, QSize picture, bool evenSizes)
+{
+    const auto rounded = [evenSizes](int extent) { return evenSizes ? ((extent + 1) & ~1) : extent; };
+    return (textureSize.width() > rounded(picture.width())) || (textureSize.height() > rounded(picture.height()));
+}
+
 GstHwVideoBuffer::GstHwVideoBuffer(QVideoFrame::HandleType handleType, GstSample* sample, const GstVideoInfo& videoInfo,
                                    QVideoFrameFormat format)
     : QHwVideoBuffer(handleType)

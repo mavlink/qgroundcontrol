@@ -20,6 +20,8 @@ target_sources(
         RTKSettingsTest.h
         SettingsManagerTest.cc
         SettingsManagerTest.h
+        VideoSettingsTest.cc
+        VideoSettingsTest.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -31,3 +33,4 @@ add_qgc_test(MavlinkSettingsTest LABELS Unit)
 add_qgc_test(RemoteIDSettingsTest LABELS Unit)
 add_qgc_test(RTKSettingsTest LABELS Unit GPS)
 add_qgc_test(SettingsManagerTest LABELS Unit)
+add_qgc_test(VideoSettingsTest LABELS Unit)

@@ -201,6 +201,7 @@ always wins; `${QGC_TEST_TIMEOUT_EXTENDED}` (180s, 360s with sanitizers) is the 
 | `StockUI`        | Asserts stock UI that custom builds replace; excluded from Custom Build integration tests |
 | `Portable`       | [Portable utility tests](#portable-utility-tests)                                         |
 | `CMake`          | [CMake script tests](../cmake/README.md#tests); the GStreamer ones also carry `GStreamer` |
+| `GPU`            | Uses the host's GPU when it has one (GStreamer GPU paths, GL readback); skips without one |
 
 Other CTest-only labels (`MAVLink`, `Camera`, `Viewer3D`) only name an area.
 

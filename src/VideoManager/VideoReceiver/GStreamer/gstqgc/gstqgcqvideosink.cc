@@ -12,11 +12,13 @@
 #include <QtCore/QMetaObject>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
+#include <QtCore/QSize>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 #include <QtMultimedia/QVideoSink>
 
 #include "GstQgcAllocation.h"
+#include "GstQgcCaps.h"
 #include "GstQgcFrameMap.h"
 #include "HwBuffers/common/GstHwVideoInfo.h"
 #include "HwBuffers/common/HwBuffers.h"
@@ -54,16 +56,24 @@ struct PrivState
     std::atomic<bool> active{true};
     // start() derives hw_context from it.
     bool gpu_zerocopy = false;
+    // Set by qgcvideosinkbin before linking (configureSinkCaps); with gpu_zerocopy, they decide what get_caps offers.
+    GstQgc::GpuBinMode gpu_bin = GstQgc::GpuBinMode::Passthrough;
+    bool square_pixels = true;
+    // What get_caps last offered, and for which policy; under GST_OBJECT_LOCK. Rebuilt when the policy changes, e.g.
+    // the render target or the DMABuf import state: building may query EGL.
+    GstCaps* offered_caps = nullptr;
+    GstQgc::SinkCapsPolicy offered_policy;
     // Negotiated state: set_caps/stop write it and show_frame reads it, all serialised by GstBaseSink.
     std::atomic<bool> caps_valid{false};
     GstVideoInfo video_info = {};
     QVideoFrameFormat format;
-    // Written by start() under GST_OBJECT_LOCK and snapshotted by show_frame.
+    // Written by start() under GST_OBJECT_LOCK and snapshotted by show_frame, which adds the current DMABuf display.
     HwVideoBufferContext hw_context = {};
     // Whether the negotiated caps carry a GPU memory feature. Without one, show_frame skips path selection for frames
     // in plain system memory.
     bool gpu_caps = false;
-    std::atomic<int64_t> last_pts_ns{-1};
+    // GstVideoOrientationMethod from the stream's image-orientation tag, for frames without an orientation meta.
+    std::atomic<int> stream_orientation{GST_VIDEO_ORIENTATION_IDENTITY};
     std::atomic<quint64> input_frames{0};
     std::atomic<quint64> dropped_frames{0};
     std::atomic<quint64> consecutive_map_failures{0};  // sustained run escalates show_frame to error
@@ -75,8 +85,12 @@ struct PrivState
     std::array<std::atomic<quint64>, GstHw::kPathCount> path_frames{};
     std::atomic<quint64> gpu_fallbacks{0};
     std::atomic<quint64> stream_demotions{0};
-    // One stream demotion per caps epoch; reset with the path cache.
+    // Frames no GPU path imported whose tiled DMA_DRM layout the CPU can't read: dropped; reported through
+    // "frame-stats".
+    std::atomic<quint64> tiled_drops{0};
+    // One stream demotion, and one tiled-drop warning, per caps epoch; reset with the path cache.
     bool demotion_recorded = false;
+    bool tiled_drop_logged = false;
     // Live zero-copy CPU frames pinning this sink's decoder buffers; shared because Qt may hold frames past finalize.
     CpuVideoFramePool::PinnedFrameCounter pinned_cpu_frames = std::make_shared<std::atomic<int>>(0);
     // Replaced (under GST_OBJECT_LOCK) whenever `qvideosink` changes: an invoke queued to a destroyed QVideoSink is
@@ -114,6 +128,72 @@ bool snapshot_sink(GstQgcQVideoSink* self, HwVideoBufferContext& hwOut)
     return hasSink;
 }
 
+/// The caps policy for @p target and the display the DMABuf path imports with (HwBuffers::dmaBufImportDisplay()); under
+/// GST_OBJECT_LOCK. Neither decides the caps of a CPU sink or of the glupload variant, so they are left out there:
+/// equal policies offer equal caps.
+GstQgc::SinkCapsPolicy caps_policy_locked(const PrivState* p, const GstQgc::RenderTarget& target, void* dmaBufDisplay)
+{
+    const bool followsRenderer = p->gpu_zerocopy && (p->gpu_bin != GstQgc::GpuBinMode::GlUpload);
+    return {.gpuZeroCopy = p->gpu_zerocopy,
+            .gpuBin = p->gpu_bin,
+            .target = followsRenderer ? target : GstQgc::RenderTarget{},
+            .dmaBufDisplay = followsRenderer ? dmaBufDisplay : nullptr,
+            .squarePixels = p->square_pixels};
+}
+
+/// The caps get_caps offers now (transfer-full); rebuilt only when the policy differs from the last call's.
+GstCaps* offered_caps(GstQgcQVideoSink* self)
+{
+    PrivState* const p = priv_of(self);
+    const GstQgc::RenderTarget target = GstQgc::currentRenderTarget();
+    void* const dmaBufDisplay = HwBuffers::dmaBufImportDisplay();
+    GST_OBJECT_LOCK(self);
+    const GstQgc::SinkCapsPolicy policy = caps_policy_locked(p, target, dmaBufDisplay);
+    if (p->offered_caps && (p->offered_policy == policy)) {
+        GstCaps* const cached = gst_caps_ref(p->offered_caps);
+        GST_OBJECT_UNLOCK(self);
+        return cached;
+    }
+    GST_OBJECT_UNLOCK(self);
+
+    GstCaps* caps = gst_caps_from_string(GstQgc::buildSinkCaps(policy).c_str());
+    if (!caps) {
+        GST_ERROR_OBJECT(self, "sink caps did not parse");
+        return gst_caps_new_empty();
+    }
+    GST_DEBUG_OBJECT(self, "offering %" GST_PTR_FORMAT " for render backend %s (EGL %d, DMABuf import %d)", caps,
+                     GstQgc::toString(target.backend), target.egl, policy.dmaBufDisplay != nullptr);
+    GST_OBJECT_LOCK(self);
+    gst_caps_replace(&p->offered_caps, caps);
+    p->offered_policy = policy;
+    GST_OBJECT_UNLOCK(self);
+    return caps;
+}
+
+/// The caps policy now. Asks upstream to renegotiate when it differs from the one get_caps last offered caps for: the
+/// render target changed (the scene graph came up after negotiation, or Qt fell back to another graphics API), or the
+/// DMABuf path started or stopped importing (Qt's EGLDisplay became known, or an import failure disabled the path).
+GstQgc::SinkCapsPolicy reconfigure_on_policy_change(GstQgcQVideoSink* self)
+{
+    PrivState* const p = priv_of(self);
+    const GstQgc::RenderTarget target = GstQgc::currentRenderTarget();
+    void* const dmaBufDisplay = HwBuffers::dmaBufImportDisplay();
+    GST_OBJECT_LOCK(self);
+    const GstQgc::SinkCapsPolicy policy = caps_policy_locked(p, target, dmaBufDisplay);
+    const bool changed = p->offered_caps && (p->offered_policy != policy);
+    if (changed) {
+        // Rebuilt by the next get_caps, which also re-arms this check.
+        gst_clear_caps(&p->offered_caps);
+    }
+    GST_OBJECT_UNLOCK(self);
+    if (changed) {
+        GST_INFO_OBJECT(self, "render backend now %s (EGL %d), DMABuf import %d; asking upstream to renegotiate",
+                        GstQgc::toString(target.backend), target.egl, policy.dmaBufDisplay != nullptr);
+        (void) gst_pad_push_event(GST_BASE_SINK_PAD(self), gst_event_new_reconfigure());
+    }
+    return policy;
+}
+
 /// True if @p caps name a memory feature other than system memory (memory:DMABuf, memory:GLMemory, ...).
 bool caps_carry_gpu_memory(GstCaps* caps)
 {
@@ -142,6 +222,7 @@ bool nothing_to_import(GstBuffer* buf)
 
 constexpr const char* kGpuFallbacksField = "gpu-fallbacks";
 constexpr const char* kStreamDemotionsField = "stream-demotions";
+constexpr const char* kTiledDropsField = "tiled-drops";
 
 /// The "frame-stats" property value (transfer-full).
 GstStructure* make_stats(const PrivState& p)
@@ -154,6 +235,8 @@ GstStructure* make_stats(const PrivState& p)
     gst_structure_set(stats, kGpuFallbacksField, G_TYPE_UINT64,
                       static_cast<guint64>(p.gpu_fallbacks.load(std::memory_order_relaxed)), kStreamDemotionsField,
                       G_TYPE_UINT64, static_cast<guint64>(p.stream_demotions.load(std::memory_order_relaxed)), nullptr);
+    gst_structure_set(stats, kTiledDropsField, G_TYPE_UINT64,
+                      static_cast<guint64>(p.tiled_drops.load(std::memory_order_relaxed)), nullptr);
     return stats;
 }
 
@@ -208,10 +291,9 @@ bool push_frame_queued(GstQgcQVideoSink* self, QVideoFrame&& frame)
 
 }  // namespace
 
-/// Pad template — sink accepts any video caps. The downstream conversion
-/// (videoconvert/glupload) already happens upstream in qgcvideosinkbin.
+/// get_caps narrows this to the formats and memory the sink takes for its render target.
 static GstStaticPadTemplate sink_template =
-    GST_STATIC_PAD_TEMPLATE("sink", GST_PAD_SINK, GST_PAD_ALWAYS, GST_STATIC_CAPS_ANY);
+    GST_STATIC_PAD_TEMPLATE("sink", GST_PAD_SINK, GST_PAD_ALWAYS, GST_STATIC_CAPS("video/x-raw(ANY)"));
 
 enum
 {
@@ -253,6 +335,7 @@ static void gst_qgc_q_video_sink_finalize(GObject* obj)
 {
     GstQgcQVideoSink* self = GST_QGC_Q_VIDEO_SINK(obj);
     gst_clear_caps(&priv_of(self)->cached_caps);
+    gst_clear_caps(&priv_of(self)->offered_caps);
     self->state.~PrivState();
     G_OBJECT_CLASS(gst_qgc_q_video_sink_parent_class)->finalize(obj);
 }
@@ -273,9 +356,6 @@ static void gst_qgc_q_video_sink_set_property(GObject* obj, guint id, const GVal
                 p->pending = std::make_shared<PendingFrameSlot>();
             }
             p->qvideosink = target;
-            // Reset PTS guard on sink swap so a new sink doesn't see a stale last_pts_ns
-            // from the previous sink and erroneously drop the first frames.
-            p->last_pts_ns.store(-1, std::memory_order_relaxed);
             break;
         }
         case PROP_ACTIVE:
@@ -324,6 +404,17 @@ static void gst_qgc_q_video_sink_get_property(GObject* obj, guint id, GValue* va
     GST_OBJECT_UNLOCK(self);
 }
 
+static GstCaps* gst_qgc_q_video_sink_get_caps(GstBaseSink* bsink, GstCaps* filter)
+{
+    GstCaps* caps = offered_caps(GST_QGC_Q_VIDEO_SINK(bsink));
+    if (filter) {
+        GstCaps* const filtered = gst_caps_intersect_full(filter, caps, GST_CAPS_INTERSECT_FIRST);
+        gst_caps_unref(caps);
+        caps = filtered;
+    }
+    return caps;
+}
+
 static gboolean gst_qgc_q_video_sink_set_caps(GstBaseSink* bsink, GstCaps* caps)
 {
     GstQgcQVideoSink* self = GST_QGC_Q_VIDEO_SINK(bsink);
@@ -366,16 +457,8 @@ static gboolean gst_qgc_q_video_sink_set_caps(GstBaseSink* bsink, GstCaps* caps)
     p->gpu_caps = caps_carry_gpu_memory(caps);
     p->resolved_path_cache = HwResolvedPathCache{};
     p->demotion_recorded = false;
-    // New caps = new segment; clear PTS history so a restart/format change that resumes at a
-    // lower PTS isn't wedged by the monotonic-PTS guard in show_frame.
-    p->last_pts_ns.store(-1, std::memory_order_relaxed);
+    p->tiled_drop_logged = false;
     p->caps_valid.store(true, std::memory_order_release);
-
-    // Posted on the bus so the controller can mirror negotiation state into Q_PROPERTY.
-    GstStructure* const capsInfo =
-        gst_structure_new(GstQgc::kCapsInfoMessage, "width", G_TYPE_INT, w, "height", G_TYPE_INT, h, "format",
-                          G_TYPE_STRING, gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(&parsedInfo)), nullptr);
-    gst_element_post_message(GST_ELEMENT(self), gst_message_new_element(GST_OBJECT(self), capsInfo));
 
     qCInfo(GstQgcQVideoSinkLog).noquote()
         << "set_caps: format=" << gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(&parsedInfo)) << w << "x" << h
@@ -386,15 +469,13 @@ static gboolean gst_qgc_q_video_sink_set_caps(GstBaseSink* bsink, GstCaps* caps)
 // Sustained run of map failures (not a transient hiccup) means the import is broken — tear down + restart.
 constexpr quint64 kMaxConsecutiveMapFailures = 120;
 
-// A backward PTS jump larger than this is a new timeline (source restart, loop), not reordered output to drop.
-constexpr int64_t kPtsResyncThresholdNs = static_cast<int64_t>(GST_SECOND);
-
 static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuffer* buf)
 {
     GstQgcQVideoSink* self = GST_QGC_Q_VIDEO_SINK(vsink);
     PrivState* p = priv_of(self);
 
     p->input_frames.fetch_add(1, std::memory_order_relaxed);
+    const GstQgc::SinkCapsPolicy policy = reconfigure_on_policy_change(self);
 
     if (!p->caps_valid.load(std::memory_order_acquire)) {
         // Should never happen — GstBaseSink calls set_caps before show_frame.
@@ -410,25 +491,10 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
         p->dropped_frames.fetch_add(1, std::memory_order_relaxed);
         return GST_FLOW_OK;  // no destination yet; drop
     }
+    hwCtx.dmaBufEglDisplay = policy.dmaBufDisplay;
     // Software-decoded frames skip GPU selection. Caps alone can't tell: GPU memory also arrives under plain
     // video/x-raw (vtdec's CoreVideo/IOSurface buffers, V4L2 dmabuf export), so frames in other memory still try it.
     hwCtx.gpuEnabled = hwCtx.gpuEnabled && (p->gpu_caps || !nothing_to_import(buf));
-
-    // PTS regression guard ahead of mapping: a regressed timestamp wedges QVideoOutput's internal
-    // advance, and checking first avoids a wasted full-frame map on a buffer we'd drop anyway.
-    // last_pts_ns is advanced only once the frame is actually delivered (below) so a transient map
-    // failure doesn't push it past a buffer we never rendered. DISCONT and large jumps resync instead.
-    const bool hasPts = GST_BUFFER_PTS_IS_VALID(buf);
-    const int64_t pts = hasPts ? static_cast<int64_t>(GST_BUFFER_PTS(buf)) : -1;
-    if (hasPts) {
-        const int64_t lastPts = p->last_pts_ns.load(std::memory_order_acquire);
-        const bool resync =
-            GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_DISCONT) || (lastPts - pts) > kPtsResyncThresholdNs;
-        if (lastPts >= 0 && pts < lastPts && !resync) {
-            p->dropped_frames.fetch_add(1, std::memory_order_relaxed);
-            return GST_FLOW_OK;
-        }
-    }
 
     // Build a cropped format copy only when crop meta is present (rare); otherwise pass
     // p->format by reference to avoid a per-frame QVideoFrameFormat refcount bump.
@@ -442,7 +508,13 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
     if (!mapped.frame.isValid()) {
         p->dropped_frames.fetch_add(1, std::memory_order_relaxed);
         const quint64 c = p->consecutive_map_failures.fetch_add(1, std::memory_order_relaxed) + 1;
-        if ((c & 0x3F) == 1) {
+        if (mapped.noCpuLayout) {
+            // Until upstream renegotiates (the sink asked for it when the DMABuf import stopped), or the run escalates.
+            p->tiled_drops.fetch_add(1, std::memory_order_relaxed);
+            if (!std::exchange(p->tiled_drop_logged, true)) {
+                qCWarning(GstQgcQVideoSinkLog) << "tiled DMA_DRM frame not imported and has no CPU layout — dropped";
+            }
+        } else if ((c & 0x3F) == 1) {
             qCWarning(GstQgcQVideoSinkLog) << "mapping failed, consecutive=" << c;
         }
         if (c >= kMaxConsecutiveMapFailures) {
@@ -458,9 +530,7 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
     }
     p->consecutive_map_failures.store(0, std::memory_order_relaxed);
 
-    // Stream orientation is always IDENTITY here; tag-driven orientation lives in the
-    // controller (GST_TAG_IMAGE_ORIENTATION). Per-buffer GstVideoOrientationMeta still wins.
-    applyOrientationAndTiming(mapped.frame, buf, static_cast<int>(GST_VIDEO_ORIENTATION_IDENTITY));
+    applyOrientationAndTiming(mapped.frame, buf, p->stream_orientation.load(std::memory_order_relaxed));
 
     const QSize frameSize = mapped.frame.size();
     if (!push_frame_queued(self, std::move(mapped.frame))) {
@@ -489,25 +559,30 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
             << "dropped=" << p->dropped_frames.load(std::memory_order_relaxed)
             << "cpuFrames=" << cpuFrames.load(std::memory_order_relaxed);
     }
-    if (hasPts) {
-        p->last_pts_ns.store(pts, std::memory_order_release);
-    }
     return GST_FLOW_OK;
 }
 
-// Resets the PTS guard on every timeline boundary GstBaseSink does not route through set_caps (it skips set_caps when
-// the caps are unchanged), and releases an undelivered frame on flush.
+// Tracks the stream's orientation tag and releases an undelivered frame on flush.
 static gboolean gst_qgc_q_video_sink_event(GstBaseSink* bsink, GstEvent* event)
 {
     GstQgcQVideoSink* self = GST_QGC_Q_VIDEO_SINK(bsink);
     switch (GST_EVENT_TYPE(event)) {
+        case GST_EVENT_TAG: {
+            // A camera mounted sideways tags the stream (e.g. "rotate-90") instead of rotating every frame.
+            GstTagList* tags = nullptr;
+            gst_event_parse_tag(event, &tags);
+            GstVideoOrientationMethod method = GST_VIDEO_ORIENTATION_IDENTITY;
+            if (tags && gst_video_orientation_from_tag(tags, &method)) {
+                priv_of(self)->stream_orientation.store(method, std::memory_order_relaxed);
+            }
+            break;
+        }
         case GST_EVENT_FLUSH_START:
             drop_pending_frame(self);
             break;
-        case GST_EVENT_FLUSH_STOP:
-        case GST_EVENT_SEGMENT:
         case GST_EVENT_STREAM_START:
-            priv_of(self)->last_pts_ns.store(-1, std::memory_order_release);
+            // A new stream starts untagged; its tags follow this event.
+            priv_of(self)->stream_orientation.store(GST_VIDEO_ORIENTATION_IDENTITY, std::memory_order_relaxed);
             break;
         default:
             break;
@@ -539,7 +614,8 @@ static gboolean gst_qgc_q_video_sink_stop(GstBaseSink* bsink)
     p->gpu_caps = false;
     p->resolved_path_cache = HwResolvedPathCache{};
     p->demotion_recorded = false;
-    p->last_pts_ns.store(-1, std::memory_order_release);
+    p->tiled_drop_logged = false;
+    p->stream_orientation.store(GST_VIDEO_ORIENTATION_IDENTITY, std::memory_order_relaxed);
     p->consecutive_map_failures.store(0, std::memory_order_relaxed);
     drop_pending_frame(self);
 
@@ -566,6 +642,15 @@ static gboolean gst_qgc_q_video_sink_propose_allocation(GstBaseSink* bsink, GstQ
 static gboolean gst_qgc_q_video_sink_query(GstBaseSink* bsink, GstQuery* query)
 {
     if ((GST_QUERY_TYPE(query) == GST_QUERY_CONTEXT) && HwBuffers::answerSinkBinContextQuery(query)) {
+        return TRUE;
+    }
+    if (GST_QUERY_TYPE(query) == GST_QUERY_ACCEPT_CAPS) {
+        // GstBaseSink wants a subset of get_caps, which rejects caps without a pixel-aspect-ratio (square pixels).
+        GstCaps* caps = nullptr;
+        gst_query_parse_accept_caps(query, &caps);
+        GstCaps* const offered = offered_caps(GST_QGC_Q_VIDEO_SINK(bsink));
+        gst_query_set_accept_caps_result(query, caps && gst_caps_can_intersect(caps, offered));
+        gst_caps_unref(offered);
         return TRUE;
     }
     return GST_BASE_SINK_CLASS(gst_qgc_q_video_sink_parent_class)->query(bsink, query);
@@ -611,9 +696,8 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
     g_object_class_install_property(
         gobject_class, PROP_FRAMES_DROPPED,
         g_param_spec_uint64("frames-dropped", "Frames dropped",
-                            "Buffers rejected by show_frame (inactive sink, missing QVideoSink, "
-                            "PTS regression, or map failure). Detailed map failures are tracked separately "
-                            "in GstHwPathTelemetry.",
+                            "Buffers rejected by show_frame (inactive sink, missing QVideoSink, or map failure). "
+                            "Detailed map failures are tracked separately in GstHwPathTelemetry.",
                             0, G_MAXUINT64, 0, (GParamFlags) (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS)));
 
     g_object_class_install_property(
@@ -631,8 +715,9 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
                            "This sink's own frame accounting, as a qgc-video-sink-stats structure of guint64 fields: "
                            "frames-<path> per delivery path (frames-cpu, frames-dmabuf, frames-gl, frames-d3d11, "
                            "frames-d3d12, frames-iosurface, frames-ahwbuf, frames-vulkan); gpu-fallbacks (frames a GPU "
-                           "path was tried for but the CPU delivered) and stream-demotions (caps epochs that fell back "
-                           "from a GPU path).",
+                           "path was tried for but the CPU delivered), stream-demotions (caps epochs that fell back "
+                           "from a GPU path) and tiled-drops (frames in a tiled DMA_DRM layout that no GPU path "
+                           "imported and the CPU can't read).",
                            GST_TYPE_STRUCTURE, (GParamFlags) (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS)));
 
     gst_element_class_set_static_metadata(element_class, "QGC QVideoSink", "Sink/Video",
@@ -640,6 +725,7 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
                                           "QGroundControl <https://qgroundcontrol.com/>");
     gst_element_class_add_static_pad_template(element_class, &sink_template);
 
+    basesink_class->get_caps = gst_qgc_q_video_sink_get_caps;
     basesink_class->set_caps = gst_qgc_q_video_sink_set_caps;
     basesink_class->event = gst_qgc_q_video_sink_event;
     basesink_class->start = gst_qgc_q_video_sink_start;
@@ -651,14 +737,17 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
 
 namespace GstQgc {
 
-CapsInfo parseCapsInfo(GstMessage* message)
+void configureSinkCaps(GstElement* sink, GpuBinMode gpuBin, bool squarePixels)
 {
-    const GstStructure* const structure = gst_message_get_structure(message);
-    gint width = 0;
-    gint height = 0;
-    (void) gst_structure_get_int(structure, "width", &width);
-    (void) gst_structure_get_int(structure, "height", &height);
-    return {.format = QString::fromUtf8(gst_structure_get_string(structure, "format")), .size = QSize(width, height)};
+    if (!sink || !GST_IS_QGC_Q_VIDEO_SINK(sink)) {
+        return;
+    }
+    GstQgcQVideoSink* const self = GST_QGC_Q_VIDEO_SINK(sink);
+    GST_OBJECT_LOCK(self);
+    priv_of(self)->gpu_bin = gpuBin;
+    priv_of(self)->square_pixels = squarePixels;
+    gst_clear_caps(&priv_of(self)->offered_caps);
+    GST_OBJECT_UNLOCK(self);
 }
 
 const char* sinkFramesField(HwVideoBufferPath path) noexcept
@@ -713,7 +802,7 @@ PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since) 
             }
         }
     }
-    for (const char* const field : {kGpuFallbacksField, kStreamDemotionsField}) {
+    for (const char* const field : {kGpuFallbacksField, kStreamDemotionsField, kTiledDropsField}) {
         if (const quint64 count = countOf(field); count > 0) {
             out.line += QStringLiteral(" %1:%2").arg(QLatin1String(field)).arg(count);
         }

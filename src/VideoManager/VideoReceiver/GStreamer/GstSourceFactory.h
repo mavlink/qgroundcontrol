@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <gst/gstelement.h>
 #include <gst/gstpad.h>
 
@@ -27,7 +28,7 @@ struct Config
 
 /// Build a source bin (`source` [+ `tsdemux`] [+ `rtpjitterbuffer`] + `parsebin`)
 /// for `uri`. Supported schemes: rtsp/rtspt, tcp:// (MPEG-TS), udp:// (H.264 RTP),
-/// udp265:// (H.265 RTP), mpegts:// (MPEG-TS over UDP).
+/// udp265:// (H.265 RTP), mpegts:// (MPEG-TS over UDP). A UDP URI with port 0 listens on a free port.
 ///
 /// Ghost pads on the returned bin are wired lazily; for `rtspsrc`/`tsdemux`/`parsebin`
 /// they appear only after upstream produces pads, so callers must connect any
@@ -35,6 +36,13 @@ struct Config
 ///
 /// Returns the source bin or nullptr on failure.
 GstElement* create(const QString& uri, const Config& config);
+
+/// rtspsrc waits this long for UDP data before it retries the session over TCP ("timeout").
+inline constexpr std::chrono::milliseconds kRtspUdpTimeout{5000};
+
+/// How much longer than the stream timeout the first data for @p uri may take: kRtspUdpTimeout for RTSP, whose UDP to
+/// TCP fallback must not be cut short; zero for other sources.
+std::chrono::milliseconds connectGracePeriod(const QString& uri);
 
 /// Holds an RTP H.264/H.265 depayloader's byte-stream output back until a full parameter set (SPS and PPS, plus VPS
 /// for H.265) has arrived, then emits the parameter sets together with the first slice and removes itself. create()

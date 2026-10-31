@@ -5,7 +5,8 @@
 
 qt_add_library(FlyViewModule STATIC)
 
-qt_add_qml_module(FlyViewModule
+qt_add_qml_module(
+    FlyViewModule
     URI QGroundControl.FlyView
     VERSION 1.0
     RESOURCE_PREFIX /qml
@@ -15,7 +16,6 @@ qt_add_qml_module(FlyViewModule
         FixedWingChecklist.qml
         FlightDisplayViewDummy.qml
         FlightDisplayViewVideoOutput.qml
-        FlightDisplayViewQtMultimedia.qml
         FlightDisplayViewUVC.qml
         FlightDisplayViewVideo.qml
         FlyView.qml
@@ -39,7 +39,6 @@ qt_add_qml_module(FlyViewModule
         FlyViewOccluderViewer.qml
         FlyViewToolStrip.qml
         FlyViewToolStripActionList.qml
-
         FlyViewTopRightColumnLayout.qml
         FlyViewTopRightPanel.qml
         FlyViewVideo.qml
@@ -79,7 +78,8 @@ qt_add_qml_module(FlyViewModule
     NO_PLUGIN
 )
 
-qt_add_resources(FlyViewModule flyview_resources
+qt_add_resources(
+    FlyViewModule flyview_resources
     PREFIX "/res"
     BASE "${CMAKE_SOURCE_DIR}/resources"
     FILES
@@ -89,7 +89,8 @@ qt_add_resources(FlyViewModule flyview_resources
         "${CMAKE_SOURCE_DIR}/resources/pause-mission.svg"
 )
 
-qt_add_resources(FlyViewModule flyview_qmlimages
+qt_add_resources(
+    FlyViewModule flyview_qmlimages
     PREFIX "/qmlimages"
     BASE "${CMAKE_SOURCE_DIR}/resources"
     FILES

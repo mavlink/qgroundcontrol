@@ -4,7 +4,7 @@
     "bindings": {
         "videoSource": "QGroundControl.settingsManager.videoSettings.videoSource.rawValue",
         "autoStreamConfig": "QGroundControl.videoManager.autoStreamConfigured",
-        "sourceDisabled": "videoSource === QGroundControl.settingsManager.videoSettings.disabledVideoSource",
+        "sourceDisabled": "videoSource === QGroundControl.settingsManager.videoSettings.disabledVideoSource && !autoStreamConfig",
         "isStreamSource": "QGroundControl.videoManager.isStreamSource",
         "rtpLatencyVisible": "!QGroundControl.settingsManager.videoSettings.lowLatencyMode.rawValue"
     },

@@ -99,7 +99,6 @@ Item {
         onClosing: {
             var item = contentItem.children[0]
             if (item) {
-                item.pipState.windowAboutToClose()
                 item.pipState.state = item.pipState.pipState
             }
         }

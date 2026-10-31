@@ -60,7 +60,7 @@
 | `pages.yml` | The [GitHub Pages site](#github-pages-site): CI health dashboard of master builds, JSON schemas, master downloads, and the API docs |
 | `crowdin.yml`, `lupdate.yml` | Crowdin sync and weekly source-string extraction |
 | `px4-metadata.yml` | Daily PX4 airframe and parameter metadata update PR |
-| `build-gstreamer.yml`, `mirror-gstreamer.yml` | Build GStreamer SDKs; mirror upstream GStreamer releases to the QGC S3 bucket |
+| `mirror-gstreamer.yml` | Mirror upstream GStreamer releases to the QGC S3 bucket |
 | `build-profile.yml` | Manual CMake build profiling |
 | `runner-images.yml` | Build, smoke-test, and promote QGC's managed RunsOn AMI (manual and weekly) |
 | `cache-cleanup.yml` | GitHub Actions cache cleanup (scheduled, on PR close, and manual) |
@@ -72,8 +72,8 @@
 
 - Composite actions: one-line index, external-action reference policy, and behavior notes in
   [`actions/README.md`](actions/README.md). Platform jobs typically chain `build-setup`,
-  `install-dependencies`, `cmake-configure`, `cmake-build`, tests, packaging, `verify-executable`,
-  and `attest-and-upload`.
+  `install-dependencies`, `cmake-configure`, `cmake-build`, tests, packaging, `artifact-report`,
+  `verify-executable`, and `attest-and-upload`.
 - Python helpers live in the `tools/ci/` package, grouped by concern (`planning`, `cache`, `compile`,
   `publish`, `reporting`, ...); workflows run them by path. Index, bootstrap rules, and the
   one-test-per-script rule (tests in `tools/tests/ci/`; workflow and action contracts in
@@ -92,10 +92,8 @@
   `deploy_docs.py`, `collect_build_status.py`, `download_artifacts.py`, `gh_pr_size_label.py`,
   `report_context.py`, `apt_install_retry.py`, `enable_kvm.py`, `install_multipass.py`, and
   `runner_image.py`. Steps ahead of a later or conditional `setup-python` also run
-  `release_branch_check.py` (release tag check), `gstreamer/ci_plan.py` (Build GStreamer's
-  plan), `gstreamer_archive.py` and `build_gstreamer.py` (Android/iOS GStreamer builds),
-  `install_dependencies_helper.py` and `tools/setup/install_dependencies`
-  (`install-dependencies`), `build-setup`'s `build_setup.py` planner,
+  `release_branch_check.py` (release tag check), `install_dependencies_helper.py` and
+  `tools/setup/install_dependencies` (`install-dependencies`), `build-setup`'s `build_setup.py` planner,
   `setup-python`'s own `cache_backend.py` probe, plus the
   `install_python.py` and `install_uv.py` installers.
   `tools/tests/test_stdlib_only.py` imports each under `python -I -S`, and every module of the
@@ -439,8 +437,8 @@ step leaves it out.
   fingerprint matches.
 - GStreamer SDKs have separate immutable caches, excluded from CPM archives. Only Windows, Android,
   and iOS jobs use them (desktop Linux and macOS use the system GStreamer), keyed on the `gstreamer`
-  section of `build-config.json` (fingerprinted in `cache_plan.py`), `cmake/GStreamer/Download.cmake`,
-  and `cmake/GStreamer/platform/*.cmake`. They hold the extracted SDK trees without the downloaded
+  section of `build-config.json` (fingerprinted in `cache_plan.py`), `cmake/GStreamer/Download.cmake`
+  and `cmake/GStreamer/Acquire.cmake`. They hold the extracted SDK trees without the downloaded
   archives; configure uses a tree stamped with the pinned checksums as is.
 
 ### Other caches
@@ -538,6 +536,10 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
 - Set the repository variable `CODECOV_TEST_ANALYTICS=true` to upload JUnit results from the Linux test
   jobs (including the custom plugin's) to Codecov test analytics (OIDC, informational). JUnit artifacts and job
   summary reports are produced either way.
+- **Boot test**: `QGroundControl --simple-boot-test`, which every platform's package runs, also runs QGC's
+  GStreamer self-test: H.264 (and, given a decoder, H.265) decoding, MP4 and MKV recording, every feature's
+  elements, and for a bundled runtime its plugins, plugin scanner and GIO TLS/proxy modules
+  ([details](../src/VideoManager/VideoReceiver/GStreamer/README.md#boot-self-test)).
 - **Sanitizers**: `Linux-sanitizers` (ASan + UBSan, leak detection on) excludes the `NoSanitizer`
   label. Runtime options come from CTest: `cmake/QGCTest.cmake` sets `*SAN_OPTIONS`
   (`halt_on_error=1`) on every test, overriding the shell environment. ThreadSanitizer runs only on
@@ -556,6 +558,15 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   utility executables (`QGC_BUILD_PORTABLE_TESTS=ON`, CTest label `Portable`). They share test
   bodies with the full harness and do not enable test hooks in the packaged application. There is
   no separate Extended Tests workflow.
+- **Windows GStreamer tests**: `windows.yml`'s `gstreamer-tests` job builds x64 Debug with tests
+  and runs only the GStreamer and video test classes (`run-unit-tests`' `tests-regex`
+  `^(Gst|GStreamer[A-Z]|Video|Subtitle|QGCVideo)`, Unit and Integration). The build tree finds the
+  SDK only through `verify_executable.py --export-gstreamer-env`, which puts its `bin/` on `PATH`
+  and stages the shipped plugins plus the sources and encoders the tests send streams with
+  (`videotestsrc`, `mpegtsmux`, `x264`, `x265`). `QSG_RHI_PREFER_SOFTWARE_RENDERER=1` makes the
+  D3D11/D3D12 pixel tests create their QRhi on WARP, as the runners have no GPU; the job is
+  required like the build legs, since WARP renders deterministically and a test whose device or
+  element is missing skips.
 
 ### Platform notes
 
@@ -564,7 +575,14 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   gates signing and notarization (CMake option, certificate import, and secrets) to non-PR Release
   legs in `mavlink` repositories or forks that set `MACOS_SIGNING_IDENTITY`; other forks build an
   unsigned DMG instead of failing in `SignMacBundle.cmake`.
-  `verify_executable.py --type dmg` mounts the image, verifies the bundle, and always detaches it.
+  `verify_executable.py --type dmg` mounts the image, audits and boots the bundle, and always
+  detaches it. The audit (`macho_bundle_audit.py`) runs `codesign --verify --deep --strict` on a
+  Developer ID signed bundle (PR builds are ad-hoc signed and only get a notice) and reads every
+  Mach-O file's load commands with `otool -l`: each library must resolve inside the bundle,
+  through @rpath (the file's and the main executable's LC_RPATHs), @loader_path or
+  @executable_path, or to /usr/lib or /System; absolute paths elsewhere (Homebrew,
+  /Library/Frameworks/GStreamer.framework, the build machine) fail it, as do such LC_RPATHs where
+  dyld searches them. A failed audit fails the step after the boot test.
   On a boot-test timeout it captures the hung process's stacks before killing it and prints them
   after the captured output, and its `lipo`/`hdiutil`/AppImage helper
   calls time out after 120 s. The boot test forces QGC's log to stderr (a Windows GUI app otherwise
@@ -593,10 +611,39 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   crash reports beside the log before cleanup. A failure ends in an error annotation naming the
   phase and attempt; every run writes a Boot test summary section, and the `ios-boot-test` artifact
   is linked below it.
-- **Windows**: installer verification lives in `deploy/windows/verify-installer.ps1`.
+- **Windows**: installer verification lives in `deploy/windows/verify-installer.ps1`. Between its
+  install phase and the installed boot test, `pe_dependency_audit.py` reads the import and
+  delay-load tables of every .exe and .dll in the install (a small PE parser, no `pefile`) and
+  names each imported DLL that is neither in `bin/` or beside the importer nor in System32; the
+  MSVC runtime counts only from `bin/`, as a clean Windows lacks it. Off Windows it checks a
+  built-in list of system DLLs, so it can audit an installer extracted with `7z x`.
+- **Linux AppImage**: `linux.yml`'s `appimage-distros` job boots the x86_64 AppImage
+  (`appimage_container_boot.py`: `--appimage-extract-and-run` under xvfb-run as an unprivileged
+  user, no `GST_PLUGIN_*` or `GST_REGISTRY*` variables) in Ubuntu 24.04 and Debian 13 containers,
+  the oldest releases its glibc 2.38 and libstdc++ requirements allow. They hold only the
+  desktop libraries the AppImage leaves to the system (X11, OpenGL/EGL, GBM, Wayland client,
+  fontconfig, HarfBuzz, which brings GLib, ALSA, com_err, libgpg-error) and CA certificates, with
+  no GStreamer, Qt or GSettings schemas, so it must bring its own and must not need the schemas.
+  The images come from Docker Hub, not the ECR Public mirror: the job runs on a GitHub-hosted
+  runner, which Docker Hub's pull limit exempts and whose shared IPs exhaust ECR Public's
+  anonymous data quota.
 - **Android**: legs are Linux (primary), macOS, Windows (not on PRs), and a Linux emulator smoke
   test. PRs build `arm64-v8a` only; other events build `arm64-v8a` + `armeabi-v7a` on the primary
-  leg. Android jobs install only the `core` apt category. The Linux leg runs Android Lint
+  leg. Android jobs install only the `core` apt category. Every leg checks its APK
+  (`android_apk_check.py`, the NDK's llvm-readelf on each `lib/<abi>/*.so`): on the 64-bit ABIs
+  every `PT_LOAD` segment must be aligned to 16 KB, which 16 KB-page devices and Google Play need;
+  every `DT_NEEDED` library must be packaged for the same ABI or be an NDK system library at the
+  minimum API level (the sysroot's stubs); `libgstreamer_android.so` must be packaged when GStreamer
+  is enabled; and `zipalign -c -P 16 -v 4` must pass (skipped with a notice by a zipalign without
+  `-P`). Problems become error annotations and an APK check job-summary section. The emulator
+  leg's APK, which is not published, runs QGC's simple boot test at every launch: its configure
+  loads `android-emulator-test`'s `boot-test.cmake` initial cache (`QT_ANDROID_APPLICATION_ARGUMENTS`
+  `--simple-boot-test --logging:Main,...`; a release APK ignores `am start` arguments, and
+  `extra-args` cannot hold a space). `android_boot_test.py` grants the app all-files access before
+  launching it (QGC otherwise opens the system settings over its window and the boot test never
+  completes) and passes only on QGC's `Simple boot test completed` marker; a crash, a process exit
+  or a running app without the marker fails, and the failure annotation quotes the
+  `Simple boot test failed` and `Video.GStreamer.SelfTest` logcat lines. The Linux leg runs Android Lint
   (`android_lint.py`, `gradlew lintRelease` in `android-build`): up to ten Error and Fatal issues
   from lint's XML report become error annotations titled with the issue id, at the `android/`
   source that androiddeployqt copied (`QGC_ANDROID_PACKAGE_SOURCE_DIR`; a copy that differs, like
@@ -740,6 +787,40 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   artifacts go to `builds/<ref>/` (the runner's ref), and release tags also go to `latest/` with
   one CloudFront invalidation. Credentials come only from the environment.
 
+### Artifact report
+
+- Every platform build job runs `artifact-report` (`tools/ci/packaging/artifact_report.py`) right
+  after creating the package that `attest-and-upload` uploads, under the same condition: the Windows
+  installers and the macOS DMG of Release legs, the Linux AppImages, the Android APKs (not the
+  emulator leg), and the iOS IPA. It lists the package with tools the runners have: 7-Zip
+  (`7z l -slt`) for the NSIS installer, `hdiutil` for the DMG, the AppImage's own
+  `--appimage-extract`, and Python's `zipfile` for APK, App Bundle, and IPA.
+- The baseline is the package in the artifact of the same name from the newest successful
+  non-PR master run of the same workflow (`GITHUB_WORKFLOW_REF`), found and downloaded through the
+  REST API with the job's token, which needs `actions: read`. The job summary's Artifact report
+  section shows the package and contents sizes against master with their change, the files added
+  and removed (the largest 10; the full lists collapsed), and the 10 largest file size changes. A
+  package or contents size change beyond the `size-threshold` input (10% either way by default) is
+  a warning, never a failure. Without a baseline (no successful master run with a live artifact of
+  that name, as on a first run, after the 30-day retention, or for Android PR legs whose ABI suffix
+  master does not build, or an API or download failure) the section says why and shows this
+  build's sizes only.
+- The step also checks licensing and fails with error annotations: any file in the package whose
+  name is a `GSTREAMER_GPL_DENYLIST` library or plugin (read from
+  `cmake/GStreamer/PluginPolicy.cmake` and matched like its `gstreamer_gpl_files()`, which the
+  CMake install check uses only for the GStreamer install directories), and, in APK, App Bundle,
+  and IPA, whose static GStreamer leaves no plugin files, any ELF or Mach-O member containing
+  x264's or x265's entry point (`x264_encoder_open`, `x265_encoder_open`) or the banner it writes
+  into every stream, which stripping keeps. A package the step cannot list (for example without
+  7-Zip) fails it too, since its GPL check did not run. It uploads nothing.
+- **Known issue**: the Linux AppImages ship GPL `libx264` and `libx265`. Ubuntu's `libavcodec`,
+  which the bundled gst-libav plugin (`libgstlibav.so`) loads, links them, and the AppImage's
+  dependency deployment bundles them outside the GStreamer directories that the install check
+  covers. Until that is fixed, `linux.yml` sets the action's `gpl-findings` input to `warn`: the
+  findings become warning annotations and the section lists them first as a known issue with this
+  explanation (`KNOWN_GPL_ISSUES` in `artifact_report.py`). Every other package keeps the default
+  `fail`.
+
 ### GitHub Pages site
 
 `pages.yml` builds and deploys <https://mavlink.github.io/qgroundcontrol/> with
@@ -867,8 +948,10 @@ numbers, durations, and sizes from `common.format`. A build job reads top-down:
 | Configure | `cmake-configure` (`cmake_helper.py configure`, also after failures): result, duration, preset, generator, configure-check reuse; after a failure the first CMake error and the end of the output collapsed, and a link to the configure logs |
 | Build | `cmake-build` (`cmake_helper.py build`, also after failures): result, duration, toolchain, this build's compiler (ccache or sccache) and moc cache hit rates; failed targets and first errors, slowest steps, time by kind, and moc cache events collapsed; a link to the Ninja reports |
 | Android Lint | `android_lint.py` on Android's Linux leg (also after failures): result, duration, error and warning counts; the first errors collapsed; after a failure a link to the lint reports |
+| APK check | `android_apk_check.py` on every Android leg: result, ABIs, native library count, problem count, zipalign result; the problems collapsed |
 | Unit Tests / Integration Tests (*suite*) | `run-unit-tests` (`junit_report.py`): counts, failures with their first lines, slowest tests and failure output collapsed; a link to the results artifact |
 | Coverage, Binary size | `coverage_report.py --step-summary`, `size_analysis.py` |
+| Artifact report | `artifact-report` (`artifact_report.py`, after packaging): result, package, master baseline run, files added, removed, and changed; package and contents sizes against master; GPL findings (a known issue with `gpl-findings: warn`); added and removed files and the largest size changes, with the full lists collapsed |
 | Boot test, Artifact | `verify_executable.py` (result with the crash's signal or NTSTATUS name, package, size, duration; after a failure the last log line, the last 40 lines collapsed, and a link to the diagnostics artifact) or, for the iOS simulator, `ios_boot_test.py` (result with the failing phase and attempt, simulator, attempts, duration, and the end of the boot log); and `attest_helper.py prepare` (file, size, SHA-256) |
 | Disk | `disk-watch`'s post step, at the end of every `build-setup` and Docker job: the workspace volume's size and its start, peak (with free space and time), and end use, sampled every 10 s; a peak whose free space is below 10% of the volume, kept between 5 and 10 GiB, gets ⚠️ and a "Disk nearly full" warning annotation |
 

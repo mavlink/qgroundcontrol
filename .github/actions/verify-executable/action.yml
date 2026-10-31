@@ -8,7 +8,9 @@ inputs:
     description: "Path to the executable or package to verify; the boot test runs in its directory"
     required: true
   type:
-    description: "Type of executable (binary, appimage, dmg, exe); dmg attaches the image, verifies its app bundle, and detaches it"
+    description: >-
+      Type of executable (binary, appimage, dmg, exe); dmg attaches the image, audits its app bundle's
+      signature and the libraries its Mach-O files load, boot-tests it, and detaches it
     required: false
     default: "binary"
   build-dir:

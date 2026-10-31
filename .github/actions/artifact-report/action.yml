@@ -1,0 +1,36 @@
+name: Artifact Report
+description: >-
+  Compare a package's contents and size with the same-named artifact of the newest successful
+  master run of this workflow in the job summary, warn about large size changes, and fail when the
+  package ships GPL-licensed GStreamer code, or warn for a known issue (the job needs actions: read)
+
+inputs:
+  package:
+    description: "Path to the package: NSIS .exe, .dmg, .AppImage, .apk, .aab, or .ipa"
+    required: true
+  artifact-name:
+    description: "Name attest-and-upload uploads the package as (its package-name); master's artifact of this name is the baseline"
+    required: true
+  size-threshold:
+    description: "Package or contents size change, in percent either way, above which the report warns"
+    required: false
+    default: "10"
+  gpl-findings:
+    description: "fail (default) on GPL-licensed files, or warn: report them as warnings for a package type with a known issue"
+    required: false
+    default: "fail"
+
+runs:
+  using: composite
+  steps:
+    # artifact_report.py reads the INPUT_* variables as argument defaults and takes the baseline
+    # workflow from GITHUB_WORKFLOW_REF.
+    - name: Report package contents
+      shell: bash
+      run: python3 "${GITHUB_WORKSPACE}/tools/ci/packaging/artifact_report.py"
+      env:
+        GH_TOKEN: ${{ github.token }}
+        INPUT_PACKAGE: ${{ inputs.package }}
+        INPUT_ARTIFACT_NAME: ${{ inputs.artifact-name }}
+        INPUT_SIZE_THRESHOLD: ${{ inputs.size-threshold }}
+        INPUT_GPL_FINDINGS: ${{ inputs.gpl-findings }}

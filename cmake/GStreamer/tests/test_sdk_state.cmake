@@ -20,8 +20,9 @@ set(QGC_GST_RESOLVED_PACKAGES
     CACHE INTERNAL ""
 )
 _qgc_gst_record_resolved_sdk("${_sandbox}/auto-root" 1.28.4 TRUE 1.28.4)
-qgc_test_assert_streq("auto-downloaded SDK keeps its packages" "https://example.invalid/sdk.tar.xz|0123"
-                      "$CACHE{QGC_GST_RESOLVED_PACKAGES}"
+qgc_test_assert_streq(
+    "auto-downloaded SDK keeps its packages" "https://example.invalid/sdk.tar.xz|0123"
+    "$CACHE{QGC_GST_RESOLVED_PACKAGES}"
 )
 # requested version|user root|expected root|expected auto
 set(_cases "1.28.4|${_sandbox}/user-root|${_sandbox}/user-root|FALSE" "1.28.4||${_sandbox}/auto-root|TRUE"
@@ -45,20 +46,19 @@ qgc_test_assert_streq("SDK version" 1.24.2 "$CACHE{QGC_GST_RESOLVED_SDK_VERSION}
 qgc_test_assert_streq("discovered SDK has no packages" "" "$CACHE{QGC_GST_RESOLVED_PACKAGES}")
 qgc_test_pass("resolved SDK root selection")
 
+# The pkg-config results (PC_GStreamer_ prefix) and compile probes (QGC_GST_HAS_ prefix) of the GStreamer modules.
 set(_stale
-    __pkg_config_checked_PC_GStreamer
-    __pkg_config_arguments_PC_GStreamer_api_video
-    PC_GStreamer_INCLUDE_DIRS
-    pkgcfg_lib_PC_GStreamer_gstreamer-1.0
-    _gst_arm64-v8a_gstreamer_1_0
-    GStreamer_FW_CoreFoundation_LIB
-    "QGC_GST_HAS_VIDEO_ORIENTATION_META_GStreamer::GStreamer"
-    GST_D3D11_LIB
-    QGC_GST_VULKAN_LIB
-    _GST_gst_plugin_scanner_PROG
-    _xcfw_foundation
+    __pkg_config_checked_PC_GStreamer_Core
+    __pkg_config_arguments_PC_GStreamer_Video
+    PC_GStreamer_Core_INCLUDE_DIRS
+    pkgcfg_lib_PC_GStreamer_Core_gstreamer-1.0
+    pkgcfg_lib_PC_GStreamer_plugin_coreelements_gstcoreelements
+    "QGC_GST_HAS_VIDEO_ORIENTATION_META"
+    QGC_GST_HAS_D3D11
 )
-set(_kept __pkg_config_checked_LIBURING PC_LibUSB_FOUND PKG_CONFIG_EXECUTABLE GStreamer_ROOT_DIR QGC_GST_RESOLVED_ROOT)
+set(_kept __pkg_config_checked_LIBURING PC_LibUSB_FOUND PKG_CONFIG_EXECUTABLE GStreamer_ROOT_DIR QGC_GST_RESOLVED_ROOT
+          _xcfw_foundation
+)
 # User options share the QGC_GST_ / GStreamer_ prefixes and must survive an SDK change.
 set(_gpu_paths
     DMABUF
@@ -78,10 +78,9 @@ list(
     QGC_GST_VERSION
     QGC_GST_CUDA_STUB_DIR
     QGC_GST_DOWNLOAD_TIMEOUT
-    GStreamer_USE_STATIC_LIBS
-    GStreamer_USE_FRAMEWORK
+    QGC_GST_BUNDLE_PLUGINS
+    QGC_GST_USE_HOMEBREW
     GStreamer_REQUIRE_CHECKSUM
-    GStreamer_DEBUG
 )
 # Returns <var>'s cache value, or "<unset>"; get_property handles names that ${} cannot (e.g. "::").
 function(_qgc_test_cache_value var out_var)

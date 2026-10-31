@@ -3,8 +3,7 @@ cmake_minimum_required(VERSION 3.25)
 # GStreamer_REQUIRE_CHECKSUM=OFF. A stand-in installer script is pre-seeded in the cache, so nothing is downloaded.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
-include(Download)
-include("${CMAKE_CURRENT_LIST_DIR}/../platform/Windows.cmake")
+include(Acquire)
 
 # Unpinned, the installer is verified against a seeded same-origin sidecar instead, which must not be enough.
 if(TEST_CASE STREQUAL "unpinned")
@@ -49,22 +48,8 @@ else()
     )
 endif()
 
-qgc_gst_acquire_sdk(
-    PLATFORM
-    windows_msvc_x64
-    VERSION
-    ${_version}
-    CACHE_SUBDIR
-    "${_cache_subdir}"
-    ARCHIVES
-    gstreamer-x86_64.exe
-    CONTENT
-    install
-    EXTRACT_FUNCTION
-    _qgc_gst_windows_extract
-    CONTENT_DIR_OUT
-    _install_dir
-)
+set(QGC_GST_REQUESTED_VERSION ${_version})
+_qgc_gst_acquire_windows_sdk(x86_64 _install_dir)
 if(DEFINED TEST_CASE)
     message(FATAL_ERROR "${TEST_CASE} unexpectedly succeeded")
 endif()

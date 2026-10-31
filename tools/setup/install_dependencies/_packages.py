@@ -111,7 +111,7 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "libvulkan-dev",
         "libpipewire-0.3-dev",
     ],
-    # GStreamer source builds (build_gstreamer.py, build-gstreamer.yml): the toolchain plus the X11,
+    # GStreamer source builds (build_gstreamer.py): the toolchain plus the X11,
     # Wayland, GL, VA and audio headers its Linux Meson options enable. Excluded from the aggregate
     # (desktop) set by get_packages.
     "gstreamer_build": [
@@ -134,7 +134,7 @@ DEBIAN_PACKAGES: dict[str, list[str]] = {
         "nasm",
         "yasm",
     ],
-    # Cerbero's Android GStreamer builds (build_gstreamer.py --platform android, build-gstreamer.yml);
+    # Cerbero's Android GStreamer builds (build_gstreamer.py --platform android);
     # Cerbero bootstraps the NDK and target toolchain itself. Excluded from the aggregate set too.
     "gstreamer_build_android": [
         "python3-venv",

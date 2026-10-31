@@ -41,7 +41,6 @@ LINUX_COVERAGE = {
     "XCODE_VERSION": "26.x",
     "JDK_REQUESTED": "21",
     "PYTHON_GROUPS": "scripts,coverage",
-    "BUILD_CACHE": "true",
     "QGC_ACTIONS_CACHE_BACKEND": "s3",
     "QGC_COMPILER_CACHE_TOOL": "ccache",
     "QGC_CCACHE_KEY": "ccache-linux-gcc_64-Debug-coverage-pr-15370-1a2b3c-v2",
@@ -186,10 +185,7 @@ def test_android_lists_target_qt_installs_and_the_gstreamer_sdk() -> None:
     assert ndk.startswith("r")
 
 
-def test_jobs_without_build_caches_and_the_sccache_pilot() -> None:
-    no_cache = dict(mod.setup_facts({**LINUX_COVERAGE, "BUILD_CACHE": "false"}))
-    assert "Compiler cache" not in no_cache
-    assert no_cache["Cache backend"] == "RunsOn S3"
+def test_sccache_pilot() -> None:
     sccache = dict(mod.setup_facts({**LINUX_COVERAGE, "QGC_COMPILER_CACHE_TOOL": "sccache"}))
     assert sccache["Compiler cache"] == "sccache reads S3 directly (no archive)"
     assert sccache["ccache primary key"] == ""

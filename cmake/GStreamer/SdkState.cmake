@@ -91,21 +91,18 @@ function(_qgc_gst_record_resolved_sdk root requested_version auto_downloaded ver
 endfunction()
 
 # _qgc_gst_refresh_sdk_cache(<fingerprint>)
-# pkg-config results, find_library/find_program paths and try-compile probes are cached under
-# fixed names and never re-run on their own. When <fingerprint> (the SDK identity) differs from
-# the one they were computed for, drop them so this configure recomputes them.
+# pkg-config results and try-compile probes are cached and never re-run on their own. When <fingerprint> (the SDK
+# identity) differs from the one they were computed for, drop them so this configure recomputes them: the pkg-config
+# results of the GStreamer modules (Targets.cmake, Probe.cmake) all use the PC_GStreamer_ prefix, and the compile probes
+# the QGC_GST_HAS_ one.
 function(_qgc_gst_refresh_sdk_cache fingerprint)
     if(DEFINED CACHE{_QGC_GST_SDK_FINGERPRINT} AND "$CACHE{_QGC_GST_SDK_FINGERPRINT}" STREQUAL "${fingerprint}")
         return()
     endif()
-    set(_stale_regex
-        "^(__pkg_config_(checked|arguments)_PC_GStreamer|PC_GStreamer|pkgcfg_lib_PC_GStreamer|_gst_|GStreamer_FW_"
-    )
-    string(APPEND _stale_regex "|QGC_GST_HAS_|GST_D3D|QGC_GST_VULKAN|_GST_.*_PROG$|_xcfw_)")
     get_cmake_property(_cache_vars CACHE_VARIABLES)
     set(_purged 0)
     foreach(_var IN LISTS _cache_vars)
-        if(_var MATCHES "${_stale_regex}")
+        if(_var MATCHES "^(__pkg_config_(checked|arguments)_|pkgcfg_lib_)?PC_GStreamer_|^QGC_GST_HAS_")
             unset(${_var} CACHE)
             math(EXPR _purged "${_purged} + 1")
         endif()

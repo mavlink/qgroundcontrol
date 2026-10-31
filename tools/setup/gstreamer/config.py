@@ -6,7 +6,9 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
-# Common meson options for all Meson-based platforms
+# Common meson options for all Meson-based platforms. QGC ships only LGPL-compatible GStreamer, so the GPL plugins (and
+# gst-plugins-ugly, whose only plugin QGC used was the GPL x264enc) stay off; QGC renders through its own video sink,
+# so neither is the Qt6 plugin built.
 MESON_COMMON = {
     "auto_features": "disabled",
     "introspection": "disabled",
@@ -14,14 +16,14 @@ MESON_COMMON = {
     "examples": "disabled",
     "gtk_doc": "disabled",
     "gst-full-libraries": "app,video,audio,gl,codecparsers",
-    "gpl": "enabled",
+    "gpl": "disabled",
     "libav": "enabled",
     "orc": "enabled",
-    "qt6": "enabled",
+    "qt6": "disabled",
     "base": "enabled",
     "good": "enabled",
     "bad": "enabled",
-    "ugly": "enabled",
+    "ugly": "disabled",
 }
 
 # Base plugins (shared across Meson platforms)
@@ -36,8 +38,6 @@ PLUGINS_BASE = {
 PLUGINS_GOOD = {
     "gst-plugins-good:isomp4": "enabled",
     "gst-plugins-good:matroska": "enabled",
-    "gst-plugins-good:qt-method": "auto",
-    "gst-plugins-good:qt6": "enabled",
     "gst-plugins-good:rtp": "enabled",
     "gst-plugins-good:rtpmanager": "enabled",
     "gst-plugins-good:rtsp": "enabled",
@@ -53,11 +53,6 @@ PLUGINS_BAD = {
     "gst-plugins-bad:videoparsers": "enabled",
 }
 
-# Ugly plugins (shared across Meson platforms)
-PLUGINS_UGLY = {
-    "gst-plugins-ugly:x264": "enabled",
-}
-
 # Platform-specific GL configurations
 GL_CONFIG = {
     "linux": {
@@ -65,13 +60,9 @@ GL_CONFIG = {
         "gst-plugins-base:gl_platform": "glx,egl",
         "gst-plugins-base:gl_winsys": "x11,egl,wayland",
         "gst-plugins-base:x11": "enabled",
-        "gst-plugins-good:qt-egl": "enabled",
-        "gst-plugins-good:qt-wayland": "enabled",
-        "gst-plugins-good:qt-x11": "enabled",
         "gst-plugins-bad:va": "enabled",
         "gst-plugins-bad:wayland": "enabled",
         "gst-plugins-bad:x11": "enabled",
-        "gst-plugins-bad:x265": "enabled",
         "vaapi": "enabled",
     },
     "macos": {

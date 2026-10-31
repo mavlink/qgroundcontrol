@@ -2,8 +2,8 @@
 # (platform/*.cmake) and, on desktop, its installer gstreamer_install_<platform>_sdk (Install.cmake).
 #
 # A discovery function resolves the SDK into GStreamer_ROOT_DIR (and GStreamer_AUTO_DOWNLOADED when it downloaded it),
-# its GSTREAMER_{LIB,PLUGIN,INCLUDE}_PATH layout (gstreamer_create_layout_target) and its pkg-config view
-# (gstreamer_apply_pkgconfig_env), overrides the GStreamer_USE_* layout preferences when the SDK it found differs, and
+# its GSTREAMER_{LIB,PLUGIN,INCLUDE,PLUGIN_SCANNER,GIO_MODULE}_PATH layout (gstreamer_create_layout_target) and its
+# pkg-config view (gstreamer_apply_pkgconfig_env), sets GStreamer_USE_FRAMEWORK for a macOS GStreamer.framework, and
 # returns with _qgc_gst_return_discovery().
 
 include_guard(GLOBAL)
@@ -72,11 +72,11 @@ macro(_qgc_gst_return_discovery)
         GStreamer_ROOT_DIR
         GStreamer_AUTO_DOWNLOADED
         GStreamer_USE_FRAMEWORK
-        GStreamer_USE_STATIC_LIBS
-        GStreamer_USE_MERGED_STATIC
         GSTREAMER_LIB_PATH
         GSTREAMER_PLUGIN_PATH
         GSTREAMER_INCLUDE_PATH
+        GSTREAMER_PLUGIN_SCANNER_PATH
+        GSTREAMER_GIO_MODULE_PATH
         GSTREAMER_FRAMEWORK_PATH
         GSTREAMER_XCFRAMEWORK_LIB
         GStreamer_IOS_CA_BUNDLE
@@ -85,3 +85,80 @@ macro(_qgc_gst_return_discovery)
         PKG_CONFIG_USE_CMAKE_PREFIX_PATH
     )
 endmacro()
+
+# _qgc_gst_require_no_spaces(<what> <path>)
+# Fails configure when <path> contains a space: pkg-config prints paths unquoted, so FindPkgConfig would split them. iOS
+# reads its SDK without pkg-config, so any path does there.
+function(_qgc_gst_require_no_spaces what path)
+    if(IOS OR NOT path MATCHES " ")
+        return()
+    endif()
+    message(
+        FATAL_ERROR
+            "GStreamer: ${what} '${path}' contains a space, which pkg-config cannot pass on: it prints paths "
+            "unquoted. Use an SDK in a path without spaces (e.g. C:/gstreamer/1.0/msvc_x86_64, where "
+            "tools/setup/install_dependencies installs it) and point GStreamer_ROOT_DIR at it, or unset "
+            "GStreamer_ROOT_DIR to download one."
+    )
+endfunction()
+
+# _qgc_gst_space_free_download_cache()
+# Discovery calls this just before it downloads an SDK to CPM_SOURCE_CACHE, which defaults to the source tree.
+# pkg-config needs the SDK's path without spaces (_qgc_gst_require_no_spaces), so when CPM_SOURCE_CACHE has one, a
+# Windows host sets CPM_SOURCE_CACHE in the caller's scope to its 8.3 short path. Configure fails on other hosts, or
+# when that short path still has a space.
+function(_qgc_gst_space_free_download_cache)
+    if(NOT CPM_SOURCE_CACHE MATCHES " ")
+        return()
+    endif()
+    set(_reason "")
+    if(CMAKE_HOST_WIN32)
+        file(MAKE_DIRECTORY "${CPM_SOURCE_CACHE}")
+        _qgc_gst_windows_short_path("${CPM_SOURCE_CACHE}" _short)
+        if(_short
+           AND NOT _short MATCHES " "
+           AND IS_DIRECTORY "${_short}"
+        )
+            message(STATUS "GStreamer: downloading the SDK to ${_short}, the short path of ${CPM_SOURCE_CACHE}")
+            set(CPM_SOURCE_CACHE
+                "${_short}"
+                PARENT_SCOPE
+            )
+            return()
+        endif()
+        set(_reason " and no 8.3 short path without one (its volume may not create short names)")
+    endif()
+    message(
+        FATAL_ERROR
+            "GStreamer: CPM_SOURCE_CACHE '${CPM_SOURCE_CACHE}', where the GStreamer SDK is downloaded, contains a "
+            "space${_reason}, which pkg-config cannot pass on: it prints paths unquoted. Set CPM_SOURCE_CACHE (as a "
+            "CMake or environment variable) to a directory without spaces, e.g. C:/cpm-cache or ~/.cache/CPM, or "
+            "point GStreamer_ROOT_DIR at an SDK in such a path."
+    )
+endfunction()
+
+# _qgc_gst_windows_short_path(<path> <out_var>)
+# Sets <out_var> to the 8.3 short form of the existing <path>, with forward slashes, as cmd's %~s modifier prints it: a
+# component without a short name keeps its long one. Sets "" when cmd fails.
+function(_qgc_gst_windows_short_path path out_var)
+    cmake_path(NATIVE_PATH path _native)
+    # execute_process quotes arguments for the C runtime, whose escaped quotes cmd does not understand. cmd expands the
+    # command from the environment instead, so the path keeps its plain quotes.
+    set(ENV{QGC_GST_SHORT_PATH_COMMAND} "for %I in (\"${_native}\") do @echo %~sI")
+    execute_process(
+        COMMAND cmd /d /v:off /c %QGC_GST_SHORT_PATH_COMMAND%
+        RESULT_VARIABLE _result
+        OUTPUT_VARIABLE _short
+        ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    unset(ENV{QGC_GST_SHORT_PATH_COMMAND})
+    if(_result EQUAL 0 AND NOT _short STREQUAL "")
+        cmake_path(SET _short "${_short}")
+    else()
+        set(_short "")
+    endif()
+    set(${out_var}
+        "${_short}"
+        PARENT_SCOPE
+    )
+endfunction()

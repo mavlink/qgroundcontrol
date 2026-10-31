@@ -2,7 +2,7 @@
 
 #include "CpuVideoFramePool.h"
 #include "GstGlContextBridge.h"
-#include "GstGlFrameTextures.h"
+#include "GstHwFrameTexturesBase.h"
 #include "GstHwImportPreflight.h"
 #include "GstHwPathRegistry.h"
 #include "GstHwPathTelemetry.h"
@@ -43,11 +43,13 @@ namespace {
 
 using GstHw::kMaxPlanes;
 
-// Its own type, so reuse never adopts a DMABuf bundle (also a GstGlFrameTextures).
-class FrameTextures final : public GstGlFrameTextures
+class FrameTextures final : public GstHwFrameTexturesBase
 {
 public:
-    using GstGlFrameTextures::GstGlFrameTextures;
+    FrameTextures(QRhi* rhi, QSize size, QVideoFrameFormat::PixelFormat pixelFormat, std::span<const GLuint> names)
+    {
+        wrapPlanes(rhi, size, pixelFormat, names);
+    }
 };
 
 GstHw::MapDiagnostics s_diag;
@@ -168,6 +170,7 @@ QVideoFrameTexturesUPtr GstGlVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameText
     }
 
     mapping.unmap();
+    const std::span<const GLuint> planeNames(names.data(), std::size_t(planeCount));
 
     const GstHwMapTail tail{.path = HwVideoBufferPath::GlMemory,
                             .frameSize = _format.frameSize(),
@@ -178,10 +181,9 @@ QVideoFrameTexturesUPtr GstGlVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameText
     return GstHwFrameTexturesBase::finishMap<FrameTextures>(
         *this, rhi, old, tail,
         [&](const FrameTextures& prev) {
-            return prev.matchesImport(&rhi, tail.frameSize, tail.pixelFormat,
-                                      std::span<const GLuint>(names.data(), std::size_t(planeCount)));
+            return prev.matchesImport(&rhi, tail.frameSize, tail.pixelFormat, planeNames);
         },
-        [&] { return std::make_unique<FrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, names, planeCount); });
+        [&] { return std::make_unique<FrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, planeNames); });
 }
 
 constinit const HwPathDescriptor GstHwPaths::kGlMemory = {

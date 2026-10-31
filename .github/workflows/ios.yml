@@ -184,6 +184,13 @@ jobs:
         working-directory: ${{ runner.temp }}/build/${{ matrix.build_type }}
         run: python3 "$GITHUB_WORKSPACE/tools/ci/ios/ios_package.py" package
 
+      - name: Report IPA contents
+        if: matrix.target == 'device'
+        uses: ./.github/actions/artifact-report
+        with:
+          package: ${{ runner.temp }}/build/${{ matrix.build_type }}/${{ env.PACKAGE }}.ipa
+          artifact-name: ${{ env.PACKAGE }}-ios
+
       - name: Attest and Upload
         if: matrix.target == 'device'
         uses: ./.github/actions/attest-and-upload
