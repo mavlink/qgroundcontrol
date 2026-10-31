@@ -202,6 +202,19 @@ def test_workflow_passes_its_inputs_as_mirror_variables() -> None:
     assert get_step(steps, "Configure AWS Credentials")["if"] == "${{ !inputs.dry_run }}"
 
 
+def test_workflow_mirrors_build_config_changes_on_master() -> None:
+    workflow = load_workflow("mirror-gstreamer.yml")
+    assert workflow["on"]["push"] == {
+        "branches": ["master"],
+        "paths": [".github/build-config.json"],
+    }
+    # A push has no inputs: every platform's build-config version is mirrored and uploaded.
+    assert resolve_platforms("") == list(PLATFORMS)
+    assert workflow["jobs"]["mirror"]["if"] == (
+        "github.event_name == 'workflow_dispatch' || github.repository == 'mavlink/qgroundcontrol'"
+    )
+
+
 def test_main_mirrors_each_platforms_own_version(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, gh_summary: Path
 ) -> None:

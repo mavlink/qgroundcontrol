@@ -3,9 +3,14 @@ name: Mirror GStreamer
 # Mirror official upstream GStreamer release artifacts into the QGC S3 bucket
 # (s3://qgroundcontrol/dependencies/gstreamer/<platform>/<filename>) — the
 # fallback mirror the build reads when the upstream download is unavailable.
-# Run this after bumping gstreamer.version.<platform> in build-config.json.
+# Every master push that changes build-config.json, where
+# gstreamer.version.<platform> is bumped, mirrors each platform's version;
+# packages already in the bucket are skipped before downloading.
 
 on:
+  push:
+    branches: [master]
+    paths: ['.github/build-config.json']
   workflow_dispatch:
     inputs:
       version:
@@ -40,6 +45,8 @@ permissions:
 jobs:
   mirror:
     name: Mirror GStreamer ${{ inputs.version || 'build-config versions' }}
+    # Forks have no AWS credentials; they can still dispatch a dry run.
+    if: github.event_name == 'workflow_dispatch' || github.repository == 'mavlink/qgroundcontrol'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
 

@@ -60,7 +60,7 @@
 | `pages.yml` | The [GitHub Pages site](#github-pages-site): CI health dashboard of master builds, JSON schemas, master downloads, and the API docs |
 | `crowdin.yml`, `lupdate.yml` | Crowdin sync and weekly source-string extraction |
 | `px4-metadata.yml` | Daily PX4 airframe and parameter metadata update PR |
-| `mirror-gstreamer.yml` | Mirror upstream GStreamer releases to the QGC S3 bucket |
+| `mirror-gstreamer.yml` | Mirror upstream GStreamer releases to the QGC S3 bucket (on master changes to `build-config.json`, and manual) |
 | `build-profile.yml` | Manual CMake build profiling |
 | `runner-images.yml` | Build, smoke-test, and promote QGC's managed RunsOn AMI (manual and weekly) |
 | `cache-cleanup.yml` | GitHub Actions cache cleanup (scheduled, on PR close, and manual) |
