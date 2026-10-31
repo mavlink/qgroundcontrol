@@ -306,7 +306,9 @@ void testD3DFrameToImage(QRhi& rhi, const char* inputCaps, const char* uploadEle
         QVideoFrame(std::make_unique<GstTest::RhiBoundVideoBuffer>(std::move(buffer), &rhi)).toImage();
     const QImage expected =
         GstTest::cpuImage(CpuVideoFramePool::copyFromBuffer(gst_sample_get_buffer(cpu.sample), cpu.info, format));
-    const QString mismatch = GstTest::firstImageMismatch(actual, expected, /*tolerance=*/8);
+    // NV12 carries one chroma sample per 2x2 pixels, which the GPU interpolates up to two pixels into a neighbor bar.
+    const int chromaEdgeRadius = (pixelFormat == QVideoFrameFormat::Format_NV12) ? 2 : 0;
+    const QString mismatch = GstTest::firstImageMismatch(actual, expected, /*tolerance=*/8, chromaEdgeRadius);
     QVERIFY2(mismatch.isEmpty(), qPrintable(mismatch));
 }
 

@@ -56,8 +56,10 @@ inline QImage cpuImage(const QVideoFrame& frame)
 }
 
 /// Where @p actual first differs from @p expected by more than @p tolerance in a color channel (GPU and CPU YUV
-/// conversions round differently); empty when they match.
-inline QString firstImageMismatch(const QImage& actual, const QImage& expected, int tolerance)
+/// conversions round differently); empty when they match. A mismatch within @p edgeRadius pixels of a color edge in
+/// @p expected is let through: a GPU samples subsampled chroma (NV12) bilinearly across the edge, where the CPU
+/// conversion repeats each chroma sample. A wrong pitch, plane offset or padding still shows inside the bars.
+inline QString firstImageMismatch(const QImage& actual, const QImage& expected, int tolerance, int edgeRadius = 0)
 {
     if (actual.isNull() || expected.isNull()) {
         return QStringLiteral("no image (actual null: %1, expected null: %2)")
@@ -71,12 +73,25 @@ inline QString firstImageMismatch(const QImage& actual, const QImage& expected, 
             .arg(expected.width())
             .arg(expected.height());
     }
+    const auto close = [tolerance](const QColor& a, const QColor& b) {
+        return (qAbs(a.red() - b.red()) <= tolerance) && (qAbs(a.green() - b.green()) <= tolerance) &&
+               (qAbs(a.blue() - b.blue()) <= tolerance);
+    };
+    const auto nearEdge = [&expected, &close, edgeRadius](int x, int y, const QColor& want) {
+        for (int ny = qMax(0, y - edgeRadius); ny <= qMin(expected.height() - 1, y + edgeRadius); ++ny) {
+            for (int nx = qMax(0, x - edgeRadius); nx <= qMin(expected.width() - 1, x + edgeRadius); ++nx) {
+                if (!close(expected.pixelColor(nx, ny), want)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
     for (int y = 0; y < expected.height(); ++y) {
         for (int x = 0; x < expected.width(); ++x) {
             const QColor got = actual.pixelColor(x, y);
             const QColor want = expected.pixelColor(x, y);
-            if ((qAbs(got.red() - want.red()) > tolerance) || (qAbs(got.green() - want.green()) > tolerance) ||
-                (qAbs(got.blue() - want.blue()) > tolerance)) {
+            if (!close(got, want) && !nearEdge(x, y, want)) {
                 return QStringLiteral("(%1,%2): got %3, expected %4").arg(x).arg(y).arg(got.name(), want.name());
             }
         }
