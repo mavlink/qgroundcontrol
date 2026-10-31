@@ -25,6 +25,11 @@ Connection settings vary by source type:
   starts again when the vehicle arms, when this setting is turned off, when the active vehicle changes, or when video is
   started again.
 - **Low Latency Mode** — minimize video decode latency at the cost of some smoothness
+- **RTP jitter latency** — how long RTSP and UDP h.264/h.265 streams hold packets before showing them (default: 80 ms).
+  A lower value shortens the video delay; a higher one leaves more time to reorder packets and to recover lost ones by
+  retransmission, which values below about 40 ms prevent. Not used, and hidden, in **Low Latency Mode**.
+- **Auto-reconnect on stream loss** — reconnect a stream that times out or fails, waiting 1 s before the first attempt
+  and up to 30 s between later ones (default: on). When off, the stream stops after the first failure.
 - **Force CPU video path** — disable hardware-accelerated rendering (use if video displays incorrectly)
 - **Force video decoder priority** — override the automatic decoder selection: Default / Software / Hardware / NVIDIA / VA-API / DirectX 3D11 / VideoToolbox / Intel / Vulkan
 
