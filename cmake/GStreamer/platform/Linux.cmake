@@ -1,4 +1,5 @@
-# Linux GStreamer SDK discovery — invoked by Orchestrator.cmake.
+# Linux GStreamer: SDK discovery, invoked by Orchestrator.cmake, and the installer gstreamer_install_platform_sdk
+# (Install.cmake) runs.
 
 include_guard(GLOBAL)
 
@@ -73,4 +74,37 @@ function(_qgc_gst_discover_linux_sdk)
     endforeach()
     gstreamer_create_layout_target(${_layout})
     _qgc_gst_return_discovery()
+endfunction()
+
+# Linux: plugins, the GIO modules for TLS and proxies, the gst-plugin-scanner/gst-ptp-helper binaries and the notice.
+# The libraries come from the AppImage's dependency deployment (cmake/install/CreateAppImage.cmake).
+function(gstreamer_install_linux_sdk app_name plugin_dest_out)
+    set(_plugin_dest "lib/gstreamer-1.0")
+    gstreamer_install_plugins("${GSTREAMER_PLUGIN_PATH}" "${_plugin_dest}" "libgst" "so")
+    # glib-networking's GnuTLS backend and libproxy proxy resolver, and dconf's GSettings backend, through which
+    # libproxy reads GNOME's proxy settings (it reads KDE's itself). glib-networking's GNOME resolver stays out: GIO
+    # instantiates every resolver before asking which applies, and it aborts the process where org.gnome.system.proxy's
+    # schema isn't installed. The VFS modules (gvfsdbus, remote volume monitor) stay out: the bundle runs GIO with
+    # GIO_USE_VFS=local (AppRun, and GStreamerEnvironment.cc on GLib 2.76+) or alongside the system's modules.
+    gstreamer_install_gio_modules(
+        "${GSTREAMER_GIO_MODULE_PATH}" "lib/gio/modules" "so" giognutls giolibproxy dconfsettings
+    )
+    # gstreamer-1.0.pc's pluginscannerdir (Debian lib/<multiarch>/gstreamer1.0/gstreamer-1.0, Fedora
+    # libexec/gstreamer-1.0, Arch lib/gstreamer-1.0).
+    foreach(_helper IN ITEMS gst-plugin-scanner gst-ptp-helper)
+        set(_path "${GSTREAMER_PLUGIN_SCANNER_PATH}/${_helper}")
+        if(EXISTS "${_path}")
+            install(PROGRAMS "${_path}" DESTINATION "lib/gstreamer1.0/gstreamer-1.0")
+        elseif(_helper STREQUAL "gst-plugin-scanner")
+            message(
+                WARNING "gst-plugin-scanner not found in ${GSTREAMER_PLUGIN_SCANNER_PATH}; AppImage video may not "
+                        "work"
+            )
+        endif()
+    endforeach()
+    _qgc_gst_install_notice(share/licenses/gstreamer)
+    set(${plugin_dest_out}
+        "${_plugin_dest}"
+        PARENT_SCOPE
+    )
 endfunction()

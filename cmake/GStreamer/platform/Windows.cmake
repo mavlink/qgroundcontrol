@@ -1,4 +1,5 @@
-# Windows GStreamer SDK discovery — invoked by Orchestrator.cmake.
+# Windows GStreamer: SDK discovery, invoked by Orchestrator.cmake, and the installer gstreamer_install_platform_sdk
+# (Install.cmake) runs.
 
 include_guard(GLOBAL)
 
@@ -126,4 +127,25 @@ function(_qgc_gst_discover_windows_sdk)
         DONT_DEFINE_PREFIX
     )
     _qgc_gst_return_discovery()
+endfunction()
+
+# Windows: the plugins, GIO modules, libproxy backends and libexec helpers, the SDK DLLs they and QGC load, and the
+# notice. gioopenssl verifies against the Windows certificate stores, so the SDK's CA bundle stays out.
+function(gstreamer_install_windows_sdk app_name plugin_dest_out)
+    set(_plugin_dest "${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0")
+    _qgc_gst_begin_runtime_closure()
+    gstreamer_install_plugins("${GSTREAMER_PLUGIN_PATH}" "${_plugin_dest}" "gst" "dll")
+    gstreamer_install_gio_modules("${GSTREAMER_GIO_MODULE_PATH}" "${CMAKE_INSTALL_LIBDIR}/gio/modules" "dll")
+    # giolibproxy.dll loads proxy-1.dll, which loads its backends from lib/libproxy; startup only puts the app's bin
+    # directory on PATH, so they go there too.
+    file(GLOB _gst_libproxy_backends "${GStreamer_ROOT_DIR}/lib/libproxy/*.dll")
+    _qgc_gst_install_files("${CMAKE_INSTALL_BINDIR}" ${_gst_libproxy_backends})
+    file(GLOB _gst_helpers "${GSTREAMER_PLUGIN_SCANNER_PATH}/*.exe")
+    _qgc_gst_install_files("${CMAKE_INSTALL_LIBEXECDIR}/gstreamer-1.0" PROGRAMS ${_gst_helpers})
+    _qgc_gst_install_runtime_closure("${CMAKE_INSTALL_BINDIR}")
+    _qgc_gst_install_notice(share/licenses/gstreamer)
+    set(${plugin_dest_out}
+        "${_plugin_dest}"
+        PARENT_SCOPE
+    )
 endfunction()

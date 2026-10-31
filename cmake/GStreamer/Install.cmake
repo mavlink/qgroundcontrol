@@ -1,9 +1,8 @@
-# Platform SDK install helpers — copy GStreamer plugins, GIO modules and helper
-# binaries into the install tree. Called from
-# src/VideoManager/GStreamer/CMakeLists.txt after the ANDROID/IOS
-# early-return. Windows and a flat macOS SDK install only the SDK libraries that the installed plugins, GIO modules,
-# helpers and QGC itself load (_qgc_gst_install_runtime_closure), and every installer fails an install that would ship a
-# GPL library or plugin (_qgc_gst_install_gpl_check).
+# Installing the GStreamer runtime a desktop app bundles: the shared machinery (copying plugins, GIO modules and
+# helpers; installing only the SDK libraries they and QGC load, _qgc_gst_install_runtime_closure; failing an install
+# that would ship a GPL library or plugin, _qgc_gst_install_gpl_check; verifying the installed plugins) and the
+# dispatcher gstreamer_install_platform_sdk, called from src/VideoManager/GStreamer/CMakeLists.txt after the
+# ANDROID/IOS early-return. Each platform's installer is in platform/<platform>.cmake.
 # Depends on: Platform.cmake (qgc_gst_platform) and PluginPolicy.cmake (gstreamer_platform_plugin_attrs,
 #             gstreamer_scan_plugin_basenames, GSTREAMER_BUNDLE_REQUIRED_PLUGINS, GSTREAMER_GPL_DENYLIST; included again
 #             by the install-time checks).
@@ -247,10 +246,10 @@ cmake_policy(POP)
     install(CODE "${_check_code}")
 endfunction()
 
-# Per-platform install helpers, named gstreamer_install_<platform>_sdk (Platform.cmake) and called as
+# The per-platform installers, gstreamer_install_<platform>_sdk in platform/<platform>.cmake, are called as
 # <helper>(<app_name> <plugin_dest_out>): each sets <plugin_dest_out> to the install-prefix-relative directory it
-# installs the plugins to. They use variables set by cmake/GStreamer/Orchestrator.cmake (GSTREAMER_*_PATH,
-# GStreamer_ROOT_DIR, GStreamer_AUTO_DOWNLOADED, etc.).
+# installs the plugins to, using the shared helpers above and the layout discovery set (GSTREAMER_*_PATH,
+# GStreamer_ROOT_DIR, ...).
 
 # Installs the LGPL text and notice the Orchestrator wrote (GStreamer::Layout NOTICE_DIR) into <dest>.
 function(_qgc_gst_install_notice dest)
@@ -258,218 +257,6 @@ function(_qgc_gst_install_notice dest)
     if(_notice_dir)
         install(FILES "${_notice_dir}/NOTICE.txt" "${_notice_dir}/LGPL-2.1.txt" DESTINATION "${dest}")
     endif()
-endfunction()
-
-# Linux: plugins, the GIO modules for TLS and proxies, the gst-plugin-scanner/gst-ptp-helper binaries and the notice.
-# The libraries come from the AppImage's dependency deployment (cmake/install/CreateAppImage.cmake).
-function(gstreamer_install_linux_sdk app_name plugin_dest_out)
-    set(_plugin_dest "lib/gstreamer-1.0")
-    gstreamer_install_plugins("${GSTREAMER_PLUGIN_PATH}" "${_plugin_dest}" "libgst" "so")
-    # glib-networking's GnuTLS backend and libproxy proxy resolver, and dconf's GSettings backend, through which
-    # libproxy reads GNOME's proxy settings (it reads KDE's itself). glib-networking's GNOME resolver stays out: GIO
-    # instantiates every resolver before asking which applies, and it aborts the process where org.gnome.system.proxy's
-    # schema isn't installed. The VFS modules (gvfsdbus, remote volume monitor) stay out: the bundle runs GIO with
-    # GIO_USE_VFS=local (AppRun, and GStreamerEnvironment.cc on GLib 2.76+) or alongside the system's modules.
-    gstreamer_install_gio_modules(
-        "${GSTREAMER_GIO_MODULE_PATH}" "lib/gio/modules" "so" giognutls giolibproxy dconfsettings
-    )
-    # gstreamer-1.0.pc's pluginscannerdir (Debian lib/<multiarch>/gstreamer1.0/gstreamer-1.0, Fedora
-    # libexec/gstreamer-1.0, Arch lib/gstreamer-1.0).
-    foreach(_helper IN ITEMS gst-plugin-scanner gst-ptp-helper)
-        set(_path "${GSTREAMER_PLUGIN_SCANNER_PATH}/${_helper}")
-        if(EXISTS "${_path}")
-            install(PROGRAMS "${_path}" DESTINATION "lib/gstreamer1.0/gstreamer-1.0")
-        elseif(_helper STREQUAL "gst-plugin-scanner")
-            message(
-                WARNING "gst-plugin-scanner not found in ${GSTREAMER_PLUGIN_SCANNER_PATH}; AppImage video may not "
-                        "work"
-            )
-        endif()
-    endforeach()
-    _qgc_gst_install_notice(share/licenses/gstreamer)
-    set(${plugin_dest_out}
-        "${_plugin_dest}"
-        PARENT_SCOPE
-    )
-endfunction()
-
-# Windows: the plugins, GIO modules, libproxy backends and libexec helpers, the SDK DLLs they and QGC load, and the
-# notice. gioopenssl verifies against the Windows certificate stores, so the SDK's CA bundle stays out.
-function(gstreamer_install_windows_sdk app_name plugin_dest_out)
-    set(_plugin_dest "${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0")
-    _qgc_gst_begin_runtime_closure()
-    gstreamer_install_plugins("${GSTREAMER_PLUGIN_PATH}" "${_plugin_dest}" "gst" "dll")
-    gstreamer_install_gio_modules("${GSTREAMER_GIO_MODULE_PATH}" "${CMAKE_INSTALL_LIBDIR}/gio/modules" "dll")
-    # giolibproxy.dll loads proxy-1.dll, which loads its backends from lib/libproxy; startup only puts the app's bin
-    # directory on PATH, so they go there too.
-    file(GLOB _gst_libproxy_backends "${GStreamer_ROOT_DIR}/lib/libproxy/*.dll")
-    _qgc_gst_install_files("${CMAKE_INSTALL_BINDIR}" ${_gst_libproxy_backends})
-    file(GLOB _gst_helpers "${GSTREAMER_PLUGIN_SCANNER_PATH}/*.exe")
-    _qgc_gst_install_files("${CMAKE_INSTALL_LIBEXECDIR}/gstreamer-1.0" PROGRAMS ${_gst_helpers})
-    _qgc_gst_install_runtime_closure("${CMAKE_INSTALL_BINDIR}")
-    _qgc_gst_install_notice(share/licenses/gstreamer)
-    set(${plugin_dest_out}
-        "${_plugin_dest}"
-        PARENT_SCOPE
-    )
-endfunction()
-
-# Stage GStreamer.framework into the app bundle's Contents/Frameworks/. Used
-# when the SDK is consumed via the Cerbero macOS framework (Layout target
-# stashed FRAMEWORK_BUNDLE).
-function(gstreamer_install_macos_framework_sdk app_name plugin_dest_out)
-    gstreamer_layout_get(FRAMEWORK_BUNDLE _gst_framework_bundle)
-    if(NOT _gst_framework_bundle)
-        message(FATAL_ERROR "gstreamer_install_macos_framework_sdk: FRAMEWORK_BUNDLE not set on GStreamer::Layout")
-    endif()
-    get_filename_component(_gst_framework_real "${_gst_framework_bundle}" REALPATH)
-    # Relative to the install prefix; install(CODE) prepends $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX} at install time.
-    set(_gst_fw_dest "${app_name}.app/Contents/Frameworks/GStreamer.framework")
-    # The framework's GPL libraries serve only GPL plugins, which the plugin allowlist leaves out.
-    list(JOIN GSTREAMER_GPL_DENYLIST "|" _gst_gpl_names)
-
-    install(CODE "file(REMOVE_RECURSE \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${_gst_fw_dest}\")")
-    install(
-        DIRECTORY "${_gst_framework_real}/Versions/1.0/"
-        DESTINATION "${_gst_fw_dest}/Versions/1.0"
-        USE_SOURCE_PERMISSIONS
-        PATTERN "*.la" EXCLUDE
-        PATTERN "*.a" EXCLUDE
-        PATTERN "*/bin" EXCLUDE
-        PATTERN "*/gst-validate-launcher" EXCLUDE
-        PATTERN "*/Headers" EXCLUDE
-        PATTERN "*/include" EXCLUDE
-        PATTERN "*/pkgconfig" EXCLUDE
-        PATTERN "*/share/aclocal" EXCLUDE
-        PATTERN "*/share/bash-completion" EXCLUDE
-        PATTERN "*/share/gdb" EXCLUDE
-        PATTERN "*/share/gst-android" EXCLUDE
-        PATTERN "*/share/gtk-doc" EXCLUDE
-        PATTERN "*/share/installed-tests" EXCLUDE
-        PATTERN "*/share/locale" EXCLUDE
-        PATTERN "*/share/man" EXCLUDE
-        PATTERN "*gstpython*" EXCLUDE
-        PATTERN "*/lib/python3*" EXCLUDE
-        PATTERN "Commands" EXCLUDE
-        REGEX ".*/lib/gstreamer-1.0/libgst.*" EXCLUDE
-        REGEX "/(lib)?(${_gst_gpl_names})([-_.][^/]*)?$" EXCLUDE
-    )
-    set_property(GLOBAL APPEND PROPERTY _QGC_GST_INSTALL_DIRS "${_gst_fw_dest}")
-
-    install(
-        CODE "
-        set(_fw \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${_gst_fw_dest}\")
-        if(NOT EXISTS \"\${_fw}/Versions/1.0/GStreamer\")
-            message(FATAL_ERROR \"GStreamer framework: Versions/1.0/GStreamer not found — SDK layout may have changed\")
-        endif()
-        file(CREATE_LINK 1.0 \"\${_fw}/Versions/Current\" SYMBOLIC)
-        file(CREATE_LINK Versions/Current/GStreamer \"\${_fw}/GStreamer\" SYMBOLIC)
-        if(IS_DIRECTORY \"\${_fw}/Versions/1.0/Resources\")
-            file(CREATE_LINK Versions/Current/Resources \"\${_fw}/Resources\" SYMBOLIC)
-        endif()
-    "
-    )
-
-    set(_plugin_dest "${_gst_fw_dest}/Versions/1.0/lib/gstreamer-1.0")
-    gstreamer_install_plugins(
-        "${_gst_framework_real}/Versions/1.0/lib/gstreamer-1.0" "${_plugin_dest}" "libgst" "dylib"
-    )
-    set(${plugin_dest_out}
-        "${_plugin_dest}"
-        PARENT_SCOPE
-    )
-endfunction()
-
-# Stage flat-layout dylibs/plugins/gio modules + rpath fixups + helpers. Used for a flat (downloaded or user-supplied)
-# macOS GStreamer, which has no framework wrapper. gioopenssl verifies against the Keychain, so the SDK's CA bundle
-# stays out.
-function(gstreamer_install_macos_flat_sdk app_name plugin_dest_out)
-    # Relative to the install prefix; install(CODE) prepends $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX} at install time.
-    set(_mac_fw_dest "${app_name}.app/Contents/Frameworks")
-    set(_mac_lib_dest "${app_name}.app/Contents/lib")
-    set(_mac_libexec_dest "${app_name}.app/Contents/libexec/gstreamer-1.0")
-
-    _qgc_gst_begin_runtime_closure()
-    set(_plugin_dest "${_mac_lib_dest}/gstreamer-1.0")
-    gstreamer_install_plugins("${GSTREAMER_PLUGIN_PATH}" "${_plugin_dest}" "libgst" "dylib")
-    gstreamer_install_gio_modules("${GSTREAMER_GIO_MODULE_PATH}" "${_mac_lib_dest}/gio/modules" "dylib")
-    # Libexec helpers are installed before the rpath fixup below, which patches the installed copies.
-    set(_gst_helpers "")
-    foreach(_helper IN ITEMS gst-plugin-scanner gst-ptp-helper)
-        if(EXISTS "${GSTREAMER_PLUGIN_SCANNER_PATH}/${_helper}")
-            list(APPEND _gst_helpers "${GSTREAMER_PLUGIN_SCANNER_PATH}/${_helper}")
-        endif()
-    endforeach()
-    _qgc_gst_install_files("${_mac_libexec_dest}" PROGRAMS ${_gst_helpers})
-    _qgc_gst_install_runtime_closure("${_mac_fw_dest}")
-
-    # Entry "<dir>:<rpath>:<glob>" — libexec helpers are extensionless, so * not *.dylib.
-    foreach(
-        _rpath_dir IN
-        ITEMS "${_plugin_dest}:@loader_path/../../Frameworks:*.dylib"
-              "${_mac_lib_dest}/gio/modules:@loader_path/../../../Frameworks:*.dylib"
-              "${_mac_libexec_dest}:@loader_path/../../Frameworks:*"
-    )
-        string(REPLACE ":" ";" _parts "${_rpath_dir}")
-        list(GET _parts 0 _dir)
-        list(GET _parts 1 _rpath)
-        list(GET _parts 2 _glob)
-        install(
-            CODE "
-            file(GLOB _libs \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${_dir}/${_glob}\")
-            foreach(_lib \${_libs})
-                if(IS_DIRECTORY \"\${_lib}\")
-                    continue()
-                endif()
-                execute_process(
-                    COMMAND otool -l \"\${_lib}\"
-                    OUTPUT_VARIABLE _otool_out
-                    RESULT_VARIABLE _otool_rc
-                    ERROR_VARIABLE  _otool_err
-                )
-                if(NOT _otool_rc EQUAL 0)
-                    # otool failed: empty output would make the FIND below wrongly
-                    # conclude 'rpath absent' and add a duplicate — skip and warn.
-                    message(WARNING \"GStreamer: otool -l failed for \${_lib} (rc=\${_otool_rc}): \${_otool_err}; \"
-                                    \"skipping rpath fixup\")
-                    continue()
-                endif()
-                string(FIND \"\${_otool_out}\" \"${_rpath}\" _has_rpath)
-                if(_has_rpath EQUAL -1)
-                    execute_process(
-                        COMMAND install_name_tool -add_rpath \"${_rpath}\" \"\${_lib}\"
-                        RESULT_VARIABLE _int_rc
-                        ERROR_VARIABLE _int_err
-                    )
-                    if(NOT _int_rc EQUAL 0)
-                        message(WARNING \"GStreamer: install_name_tool -add_rpath failed for \${_lib}: \${_int_err}\")
-                    endif()
-                endif()
-            endforeach()
-        "
-        )
-    endforeach()
-
-    set(${plugin_dest_out}
-        "${_plugin_dest}"
-        PARENT_SCOPE
-    )
-endfunction()
-
-# Dispatch to the framework or flat installer based on whether the Layout
-# target stashed FRAMEWORK_BUNDLE (set when GStreamer.framework is in use), then install the notice.
-function(gstreamer_install_macos_sdk app_name plugin_dest_out)
-    gstreamer_layout_get(FRAMEWORK_BUNDLE _gst_framework_bundle)
-    if(_gst_framework_bundle)
-        gstreamer_install_macos_framework_sdk("${app_name}" _plugin_dest)
-    else()
-        gstreamer_install_macos_flat_sdk("${app_name}" _plugin_dest)
-    endif()
-    _qgc_gst_install_notice("${app_name}.app/Contents/Resources/licenses/gstreamer")
-    set(${plugin_dest_out}
-        "${_plugin_dest}"
-        PARENT_SCOPE
-    )
 endfunction()
 
 # Top-level dispatcher — call this from CMakeLists.txt after the ANDROID/IOS guard (mobile platforms link their plugins

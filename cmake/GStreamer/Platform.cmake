@@ -1,5 +1,6 @@
 # Target platform of the GStreamer modules. A platform's SDK discovery is _qgc_gst_discover_<platform>_sdk
-# (platform/*.cmake) and, on desktop, its installer gstreamer_install_<platform>_sdk (Install.cmake).
+# (platform/*.cmake) and, on desktop, its installer gstreamer_install_<platform>_sdk (platform/*.cmake too, run by
+# Install.cmake).
 #
 # A discovery function resolves the SDK into GStreamer_ROOT_DIR (and GStreamer_AUTO_DOWNLOADED when it downloaded it),
 # its GSTREAMER_{LIB,PLUGIN,INCLUDE,PLUGIN_SCANNER,GIO_MODULE}_PATH layout (gstreamer_create_layout_target) and its
