@@ -55,9 +55,8 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING
     add_test(
         NAME GStreamer.test_install_component
         COMMAND
-            "${CMAKE_COMMAND}"
-            "-DINSTALL_SCRIPT=${PROJECT_BINARY_DIR}/src/VideoManager/VideoReceiver/GStreamer/cmake_install.cmake" -P
-            "${CMAKE_CURRENT_SOURCE_DIR}/test_install_component.cmake"
+            "${CMAKE_COMMAND}" "-DINSTALL_SCRIPT=${PROJECT_BINARY_DIR}/src/VideoManager/GStreamer/cmake_install.cmake"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/test_install_component.cmake"
     )
     set_tests_properties(
         GStreamer.test_install_component

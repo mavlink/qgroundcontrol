@@ -1,25 +1,34 @@
 # ============================================================================
 # Video Manager Module
-# Handles video streaming, recording and subtitle generation
+# VideoManager, the QML facade; Streams: per-stream control and the settings resolver; Recording: file naming, storage
+# and subtitles; UVC: local cameras; Receiver: the backend-neutral receiver API; GStreamer: the network backend.
 # ============================================================================
 
 target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE
-        SubtitleWriter.cc
-        SubtitleWriter.h
-        UVCDevices.cc
-        UVCDevices.h
         VideoManager.cc
         VideoManager.h
-        VideoRecordingService.cc
-        VideoRecordingService.h
-        VideoStreamController.cc
-        VideoStreamController.h
-        VideoStreamResolver.cc
-        VideoStreamResolver.h
+        Recording/SubtitleWriter.cc
+        Recording/SubtitleWriter.h
+        Recording/VideoRecordingService.cc
+        Recording/VideoRecordingService.h
+        Streams/VideoStreamController.cc
+        Streams/VideoStreamController.h
+        Streams/VideoStreamResolver.cc
+        Streams/VideoStreamResolver.h
+        UVC/UVCDevices.cc
+        UVC/UVCDevices.h
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/Recording
+        ${CMAKE_CURRENT_SOURCE_DIR}/Streams
+        ${CMAKE_CURRENT_SOURCE_DIR}/UVC
+)
 
-add_subdirectory(VideoReceiver)
+add_subdirectory(Receiver)
+add_subdirectory(GStreamer)

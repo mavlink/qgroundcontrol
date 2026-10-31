@@ -6,7 +6,7 @@ import re
 
 from ..._helpers import REPO_ROOT, get_step, get_steps, load_workflow
 
-GSTREAMER_README = REPO_ROOT / "src/VideoManager/VideoReceiver/GStreamer/README.md"
+GSTREAMER_README = REPO_ROOT / "src/VideoManager/GStreamer/README.md"
 
 
 def test_windows_audits_installed_dlls_between_install_and_boot() -> None:

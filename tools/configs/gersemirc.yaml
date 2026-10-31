@@ -28,7 +28,7 @@ definitions:
   - ../../cmake/platform
   - ../../cmake/tests/CMakeLists.txt
   - ../../cmake/tests/ExpectedFailureTest.cmake
-  - ../../src/VideoManager/VideoReceiver/GStreamer/HwBuffers/CMakeLists.txt
+  - ../../src/VideoManager/GStreamer/HwBuffers/CMakeLists.txt
   - ../../test/CMakeLists.txt
   - ../../test/GPS/CMakeLists.txt
   - ../../test/Portable/CMakeLists.txt

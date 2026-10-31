@@ -26,6 +26,8 @@ private slots:
     void _testParameterSetGatePassesLengthPrefixedOutput();
     void _testSourceFactoryUdpMpegTs();
     void _testSourceFactorySchemeCaseInsensitive();
+    void _testTransportFor_data();
+    void _testTransportFor();
     void _testSourceFactoryNegativeLatencyClamped();
     void _testSourceFactoryDynamicRtpLinkFailureCleansJitterBuffer();
     void _testSourceFactoryDynamicLinkSkipsNonVideoRtp();

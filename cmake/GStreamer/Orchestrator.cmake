@@ -1,4 +1,4 @@
-# GStreamer SDK orchestration, included once by src/VideoManager/VideoReceiver/GStreamer/CMakeLists.txt: picks the
+# GStreamer SDK orchestration, included once by src/VideoManager/GStreamer/CMakeLists.txt: picks the
 # requested version, discovers or downloads the target platform's SDK (Platform.cmake, platform/*.cmake), creates the
 # GStreamer:: targets, checks the plugin set and records the resolved SDK (SdkState.cmake, GStreamer::Layout).
 #
@@ -284,7 +284,7 @@ _qgc_gst_record_resolved_sdk(
 )
 
 # The app ships the LGPL text and a notice naming this GStreamer and its sources: Android stages them as APK assets,
-# iOS as bundle resources (src/VideoManager/VideoReceiver/GStreamer/CMakeLists.txt) and desktop installs copy them from
+# iOS as bundle resources (src/VideoManager/GStreamer/CMakeLists.txt) and desktop installs copy them from
 # GStreamer::Layout's NOTICE_DIR (Install.cmake).
 if(ANDROID)
     set(_qgc_gst_notice_dir "${QGC_ANDROID_EXTRA_ASSETS_DIR}/licenses/gstreamer")

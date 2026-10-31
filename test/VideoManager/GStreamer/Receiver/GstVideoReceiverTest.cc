@@ -30,10 +30,7 @@
 #include "GstVideoReceiver.h"
 #include "MockVideoStreamServer.h"
 #include "RecordingBranch.h"
-#include "SettingsManager.h"
-#include "VideoManager/VideoTestHelpers.h"
 #include "VideoReceiver.h"
-#include "VideoSettings.h"
 #include "VideoStreamStats.h"
 
 namespace {
@@ -148,6 +145,8 @@ struct Receiver
         output->setSize(QSizeF(kFrameWidth, kFrameHeight));
         receiver->setName(QStringLiteral("test"));
         receiver->setConfig({.uri = uri, .timeout = timeout, .autoReconnect = autoReconnect});
+        // The CPU display path needs no GPU on the test host.
+        receiver->setDisplayConfig({.conversionElement = {}, .disablePixelAspectRatio = false, .gpuZeroCopy = false});
     }
 
     ~Receiver() { receiver.reset(); }
@@ -281,19 +280,9 @@ void GstVideoReceiverTest::initTestCase()
         return;
     }
 
-    // The display sink follows VideoSettings; the CPU path needs no GPU on the test host.
-    _settings = std::make_unique<VideoTestHelpers::FactRestorer>();
-    _settings->set(SettingsManager::instance()->videoSettings()->forceCpuVideoPath(), true);
-
     if (GstTest::initGStreamer().isEmpty()) {
         GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "mp4mux", "qtmux", "qtdemux");
     }
-}
-
-void GstVideoReceiverTest::cleanupTestCase()
-{
-    _settings.reset();
-    GStreamerTestBase::cleanupTestCase();
 }
 
 void GstVideoReceiverTest::_testStreamingStatesAndDisplay()
@@ -1199,7 +1188,7 @@ void GstVideoReceiverTest::_testStatsMeasureStream()
     QVERIFY(!stats.decoder.isEmpty());
     QCOMPARE(stats.decoder, receiving.receiver->decoderName());
     QVERIFY(!stats.hardwareDecoder);
-    // initTestCase() forces the CPU path.
+    // The fixture's receiver displays through the CPU path.
     QCOMPARE(stats.gpuPath, QStringLiteral("CPU"));
     QVERIFY(stats.latencyMs >= 0);
     QCOMPARE(stats.hasRtpStats(), !lowLatency);

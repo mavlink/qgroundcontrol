@@ -19,6 +19,7 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
 #include "RecordingBranch.h"
+#include "VideoBackend.h"
 
 void GStreamerTest::_testIsValidRtspUri()
 {
@@ -219,7 +220,7 @@ void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams()
 void GStreamerTest::_testBindDebugLevelFactRejectsNullContext()
 {
     Fact fact;
-    GStreamer::bindDebugLevelFact(&fact, nullptr);
+    VideoBackend::bindDebugLevelFact(&fact, nullptr);
 }
 
 void GStreamerTest::_testRuntimeVersionCheck()

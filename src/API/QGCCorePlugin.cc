@@ -322,7 +322,7 @@ void QGCCorePlugin::createRootWindow(QQmlApplicationEngine *qmlEngine)
 
 VideoReceiver *QGCCorePlugin::createVideoReceiver(QObject *parent)
 {
-    return VideoBackend::createReceiver(parent);
+    return VideoBackend::instance().createReceiver(parent);
 }
 
 const QVariantList &QGCCorePlugin::toolBarIndicators()

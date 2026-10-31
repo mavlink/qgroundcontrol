@@ -1,6 +1,6 @@
 # Platform SDK install helpers — copy GStreamer plugins, GIO modules and helper
 # binaries into the install tree. Called from
-# src/VideoManager/VideoReceiver/GStreamer/CMakeLists.txt after the ANDROID/IOS
+# src/VideoManager/GStreamer/CMakeLists.txt after the ANDROID/IOS
 # early-return. Windows and a flat macOS SDK install only the SDK libraries that the installed plugins, GIO modules,
 # helpers and QGC itself load (_qgc_gst_install_runtime_closure), and every installer fails an install that would ship a
 # GPL library or plugin (_qgc_gst_install_gpl_check).

@@ -248,7 +248,7 @@ void QGCApplication::init()
     if (_simpleBootTest) {
         // Since GStreamer builds are so problematic, the simple boot test initializes video and proves that the
         // packaged runtime decodes and records.
-        const bool videoInitialized = _initVideo() && VideoBackend::selfTest();
+        const bool videoInitialized = _initVideo() && VideoBackend::instance().selfTest();
         const bool qmlRootLoaded = _initQmlRootWindow();
         _bootTestPassed = videoInitialized && qmlRootLoaded;
     } else if (!_runningUnitTests) {
@@ -258,10 +258,6 @@ void QGCApplication::init()
 
 bool QGCApplication::_initVideo()
 {
-#ifdef QGC_GST_STREAMING
-    qCDebug(QGCApplicationLog) << "Using default graphics API for appsink → VideoOutput video path";
-#endif
-
     QGCCorePlugin::instance();  // CorePlugin must be initialized before VideoManager for Video Cleanup
     VideoManager* videoManager = VideoManager::instance();
     videoManager->startVideoBackendInit();
