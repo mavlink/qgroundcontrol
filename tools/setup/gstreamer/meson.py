@@ -7,6 +7,7 @@ import shutil
 import subprocess
 from dataclasses import replace
 
+from common.build_config import load_build_config
 from common.logging import log_info, log_ok
 from common.proc import require_tools
 from qgc_tools.python_env import executable, sync_groups
@@ -14,10 +15,9 @@ from qgc_tools.python_env import executable, sync_groups
 from .config import (
     GL_CONFIG,
     MESON_COMMON,
-    PLUGINS_BAD,
-    PLUGINS_BASE,
-    PLUGINS_GOOD,
+    PLUGINS_BAD_SUPPORT,
     BuildConfig,
+    plugin_options,
 )
 from .host import detect_jobs, run_cmd
 
@@ -88,16 +88,12 @@ class MesonBuilder:
         for key, value in MESON_COMMON.items():
             args.append(f"-D{key}={value}")
 
-        # Add base plugins
-        for key, value in PLUGINS_BASE.items():
-            args.append(f"-D{key}={value}")
-
-        # Add good plugins
-        for key, value in PLUGINS_GOOD.items():
-            args.append(f"-D{key}={value}")
-
-        # Add bad plugins
-        for key, value in PLUGINS_BAD.items():
+        # The allowlisted plugins (gstreamer.plugins in build-config.json) and the support they need
+        allowlist = load_build_config().get("gstreamer", {}).get("plugins", {})
+        for key, value in {
+            **plugin_options(self.config.platform, allowlist),
+            **PLUGINS_BAD_SUPPORT,
+        }.items():
             args.append(f"-D{key}={value}")
 
         # Add platform-specific GL config

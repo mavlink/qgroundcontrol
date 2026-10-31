@@ -397,7 +397,7 @@ Scripts in `setup/` configure development environments and read versions from
 `python3` before `tools/.venv` exists. `install_dependencies` is a package
 (`tools/setup/install_dependencies/`) run through its `__main__.py`; without `--platform` it
 detects the host. `build_gstreamer.py` is the entry for the `setup/gstreamer/` package: `config`
-(build settings, Meson options and plugins), `host` (commands, host arch and jobs), `meson` (Linux,
+(build settings, and the Meson options, one per plugin of `gstreamer.plugins`), `host` (commands, host arch and jobs), `meson` (Linux,
 macOS, Windows), `cerbero` (Android, iOS) and `cli` (arguments and defaults). Configure uses the
 official SDKs (or the system GStreamer on Linux) unless `GStreamer_ROOT_DIR` points it at another
 install prefix, such as a source build's.
