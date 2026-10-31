@@ -3,6 +3,7 @@
 #include "GstQgcBinChain.h"
 #include "GstQgcGpuBin.h"
 #include "GstQgcRenderTarget.h"
+#include "GstScoped.h"
 #include "gstqgcelements.h"
 #include "gstqgcqvideosink.h"
 
@@ -157,15 +158,6 @@ static gboolean add_converter(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain,
     return head && tail && chain.linkChain({head, tail});
 }
 
-static gboolean has_factory(const char* name)
-{
-    GstElementFactory* const factory = gst_element_factory_find(name);
-    if (factory) {
-        gst_object_unref(factory);
-    }
-    return factory != NULL;
-}
-
 // The GPU variant for the render target (GstQgc::selectGpuBin). Any other renderer gets the passthrough variant, whose
 // sink offers only memory that renderer imports (a glupload bin under Vulkan would download every frame and upload it
 // again).
@@ -174,7 +166,8 @@ static GstQgc::GpuBinMode select_gpu_bin(GstQgcVideoSinkBin* self)
     const GstQgc::GpuBinPreference preference = GstQgc::gpuBinPreference();
     const GstQgc::RenderTarget target = GstQgc::currentRenderTarget();
     const GstQgc::GpuBinMode mode = GstQgc::selectGpuBin(preference, target);
-    if ((mode == GstQgc::GpuBinMode::D3D12Convert) && (!has_factory("d3d12upload") || !has_factory("d3d12convert"))) {
+    if ((mode == GstQgc::GpuBinMode::D3D12Convert) &&
+        (!GStreamer::hasElementFactory("d3d12upload") || !GStreamer::hasElementFactory("d3d12convert"))) {
         GST_WARNING_OBJECT(self,
                            "Qt renders with Direct3D12 but d3d12upload/d3d12convert are missing: using the "
                            "passthrough GPU bin, which takes system memory");

@@ -61,8 +61,7 @@ void _registerPlugins()
 // stripping the GST_ELEMENT_REGISTER side effect.
 bool requireFactory(const char* name, const char* hint)
 {
-    const GstFactoryPtr factory = adoptFactory(gst_element_factory_find(name));
-    if (!factory) {
+    if (!hasElementFactory(name)) {
         qCCritical(GStreamerLog) << name << "factory not found —" << hint;
         return false;
     }
@@ -99,8 +98,7 @@ bool _verifyPluginFeatures()
         });
     }
 
-    const QList<MissingPluginFeature> missing = missingPluginFeatures(
-        [](const char* name) { return static_cast<bool>(adoptFactory(gst_element_factory_find(name))); });
+    const QList<MissingPluginFeature> missing = missingPluginFeatures(hasElementFactory);
     if (missing.isEmpty()) {
         return true;
     }

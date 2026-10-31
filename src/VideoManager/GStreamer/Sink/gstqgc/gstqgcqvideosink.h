@@ -40,6 +40,24 @@ inline constexpr const char* kGpuFallbacksField = "gpu-fallbacks";
 /// The "frame-stats" of @p sinkOrBin, a qgcqvideosink or the qgcvideosinkbin around one; null for other elements.
 GStreamer::GstStructurePtr frameStats(GstElement* sinkOrBin);
 
+/// The guint64 @p field of a "frame-stats" structure; 0 without the structure or the field.
+inline quint64 frameStatsField(const GstStructure* stats, const char* field) noexcept
+{
+    guint64 value = 0;
+    if (stats) {
+        (void) gst_structure_get_uint64(stats, field, &value);
+    }
+    return value;
+}
+
+/// How far the guint64 @p field grew from @p since to @p stats, two "frame-stats" values of the same sink.
+inline quint64 frameStatsGrowth(const GstStructure* stats, const GstStructure* since, const char* field) noexcept
+{
+    const quint64 now = frameStatsField(stats, field);
+    const quint64 before = frameStatsField(since, field);
+    return (now > before) ? (now - before) : 0;
+}
+
 /// Formatted per-path frame counts + the total delivered through GPU paths.
 struct PathStats
 {

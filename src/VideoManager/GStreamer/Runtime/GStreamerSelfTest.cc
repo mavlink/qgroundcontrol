@@ -289,8 +289,7 @@ void Checker::_checkFeatures()
     // completeInit() only needs the display core, but every package ships every feature's plugins (the common
     // gstreamer.plugins of build-config.json, GSTREAMER_BUNDLE_REQUIRED_PLUGINS), so all are required on every
     // platform.
-    const QList<MissingPluginFeature> missing = missingPluginFeatures(
-        [](const char* name) { return static_cast<bool>(adoptFactory(gst_element_factory_find(name))); });
+    const QList<MissingPluginFeature> missing = missingPluginFeatures(hasElementFactory);
     for (const MissingPluginFeature& feature : missing) {
         _fail(
             QStringLiteral("%1 unavailable: GStreamer elements %2 not found; their plugin is missing or failed to load")

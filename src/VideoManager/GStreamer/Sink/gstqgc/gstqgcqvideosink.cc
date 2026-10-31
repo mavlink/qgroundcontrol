@@ -792,18 +792,9 @@ PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since) 
     if (!stats) {
         return out;
     }
-    const auto countOf = [stats, since](const char* field) -> quint64 {
-        guint64 now = 0;
-        guint64 before = 0;
-        (void) gst_structure_get_uint64(stats, field, &now);
-        if (since) {
-            (void) gst_structure_get_uint64(since, field, &before);
-        }
-        return (now > before) ? (now - before) : 0;
-    };
     for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
         const auto path = HwVideoBufferPath(i);
-        if (const quint64 frames = countOf(sinkFramesField(path)); frames > 0) {
+        if (const quint64 frames = frameStatsGrowth(stats, since, sinkFramesField(path)); frames > 0) {
             out.line += QStringLiteral(" %1:%2").arg(QLatin1String(GstHw::toString(path))).arg(frames);
             if (path != HwVideoBufferPath::None) {
                 out.totalDelivered += frames;
@@ -811,7 +802,7 @@ PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since) 
         }
     }
     for (const char* const field : {GstQgc::kGpuFallbacksField, kStreamDemotionsField, kTiledDropsField}) {
-        if (const quint64 count = countOf(field); count > 0) {
+        if (const quint64 count = frameStatsGrowth(stats, since, field); count > 0) {
             out.line += QStringLiteral(" %1:%2").arg(QLatin1String(field)).arg(count);
         }
     }

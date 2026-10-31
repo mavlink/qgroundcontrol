@@ -85,10 +85,8 @@ void GstHwBuffersPipelineTest::_testVulkanDispatchDemotesToCpu()
 
     const QString negotiatedStr = GstTest::currentCapsString(sinkPad.get());
     const int probedBuffers = bufferCount.load();
-    guint64 vulkanFrames = 0;
-    if (const GStreamer::GstStructurePtr stats = GstQgc::frameStats(qvideosink.get())) {
-        (void) gst_structure_get_uint64(stats.get(), GstQgc::sinkFramesField(HwVideoBufferPath::Vulkan), &vulkanFrames);
-    }
+    const quint64 vulkanFrames = GstQgc::frameStatsField(GstQgc::frameStats(qvideosink.get()).get(),
+                                                         GstQgc::sinkFramesField(HwVideoBufferPath::Vulkan));
 
     if (sawError) {
         QSKIP(qPrintable(QStringLiteral("Vulkan pipeline error (likely no Vulkan device): %1").arg(errMsg)));

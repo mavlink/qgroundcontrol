@@ -132,7 +132,7 @@ void GStreamerTest::_testCompleteInit()
     gst_clear_object(&qgcPlugin);
 
     for (const char* const name : {"appsink", "qgcvideosinkbin"}) {
-        QVERIFY2(GStreamer::adoptFactory(gst_element_factory_find(name)),
+        QVERIFY2(GStreamer::hasElementFactory(name),
                  qPrintable(QStringLiteral("Factory '%1' not found after completeInit()").arg(QLatin1String(name))));
     }
 }

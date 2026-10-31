@@ -2,7 +2,6 @@
 
 #include <utility>
 
-#include <QtCore/QUrl>
 #include <QtQuick/QQuickItem>
 
 #include "Fact.h"
@@ -313,15 +312,5 @@ QString VideoStreamController::uri() const
 
 QString VideoStreamController::transport() const
 {
-    static constexpr std::pair<const char*, const char*> kTransports[] = {
-        {"rtsp", "RTSP"},          {"rtsps", "RTSP"},      {"udp", "RTP/UDP (H.264)"}, {"udp265", "RTP/UDP (H.265)"},
-        {"mpegts", "MPEG-TS/UDP"}, {"tcp", "MPEG-TS/TCP"},
-    };
-    const QString scheme = QUrl(_uri).scheme();
-    for (const auto& [uriScheme, transport] : kTransports) {
-        if (scheme.compare(QLatin1StringView(uriScheme), Qt::CaseInsensitive) == 0) {
-            return QString::fromLatin1(transport);
-        }
-    }
-    return scheme.toUpper();
+    return VideoStreamResolver::transportName(_uri);
 }

@@ -10,6 +10,7 @@
 #pragma pop_macro("signals")
 #endif
 
+#include "GstScoped.h"
 #include "MockVideoStreamServer.h"
 #include "QGCLoggingCategory.h"
 
@@ -32,23 +33,13 @@ constexpr const char* kOpenH264Encoder = "openh264enc complexity=low rate-contro
 constexpr const char* kX264Encoder = "x264enc tune=zerolatency speed-preset=ultrafast bitrate=2000 key-int-max=30";
 constexpr const char* kH265Encoder = "x265enc tune=zerolatency speed-preset=ultrafast bitrate=2000 key-int-max=30";
 
-bool factoryExists(const char* name)
-{
-    GstElementFactory* factory = gst_element_factory_find(name);
-    if (factory) {
-        gst_object_unref(factory);
-        return true;
-    }
-    return false;
-}
-
 // The H.264 encoder description for gst_parse_launch, or nullptr when no H.264 encoder is installed.
 const char* h264Encoder()
 {
-    if (factoryExists("openh264enc")) {
+    if (GStreamer::hasElementFactory("openh264enc")) {
         return kOpenH264Encoder;
     }
-    if (factoryExists("x264enc")) {
+    if (GStreamer::hasElementFactory("x264enc")) {
         return kX264Encoder;
     }
     return nullptr;
@@ -82,16 +73,17 @@ bool MockVideoStreamServer::isStreamTypeAvailable(StreamType type)
 
     switch (type) {
         case StreamType::RtpUdpH264:
-            return (h264Encoder() != nullptr) && factoryExists("videotestsrc");
+            return (h264Encoder() != nullptr) && GStreamer::hasElementFactory("videotestsrc");
         case StreamType::MpegTsUdp:
         case StreamType::MpegTsTcp:
             // mpegtsmux ships in gst-plugins-bad and can be absent even when the encoder is present.
-            return (h264Encoder() != nullptr) && factoryExists("videotestsrc") && factoryExists("mpegtsmux");
+            return (h264Encoder() != nullptr) && GStreamer::hasElementFactory("videotestsrc") &&
+                   GStreamer::hasElementFactory("mpegtsmux");
         case StreamType::RtpUdpH265:
-            return factoryExists("x265enc") && factoryExists("videotestsrc");
+            return GStreamer::hasElementFactory("x265enc") && GStreamer::hasElementFactory("videotestsrc");
         case StreamType::RtspH264:
 #ifdef QGC_GST_RTSP_SERVER
-            return (h264Encoder() != nullptr) && factoryExists("videotestsrc");
+            return (h264Encoder() != nullptr) && GStreamer::hasElementFactory("videotestsrc");
 #else
             return false;
 #endif

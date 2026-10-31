@@ -42,7 +42,7 @@ QString initGStreamer()
 QString firstMissingFactory(std::initializer_list<const char*> names)
 {
     for (const char* name : names) {
-        if (!GStreamer::adoptFactory(gst_element_factory_find(name))) {
+        if (!GStreamer::hasElementFactory(name)) {
             return QString::fromLatin1(name);
         }
     }

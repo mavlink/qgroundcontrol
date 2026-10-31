@@ -155,6 +155,11 @@ inline GstElementPtr makeElement(const char* factory, const char* name = nullptr
     return adoptElement(element ? GST_ELEMENT(gst_object_ref_sink(element)) : nullptr);
 }
 
+inline bool hasElementFactory(const char* name)
+{
+    return static_cast<bool>(adoptFactory(gst_element_factory_find(name)));
+}
+
 /// A GObject signal handler owned like a scoped pointer: connected by connect(), disconnected by disconnect() or
 /// destruction unless the object is gone by then. For handlers whose data dies before the object.
 class ScopedSignal

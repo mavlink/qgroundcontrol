@@ -53,4 +53,8 @@ bool isAutoStream(const QGCVideoStreamInfo* streamInfo);
 /// True for the manual sources a VideoReceiver plays (not "disabled", not a UVC camera).
 bool isNetworkSource(const QString& videoSource);
 
+/// How a stream arrives, from its URI scheme: "RTSP", "RTP/UDP (H.264)", "MPEG-TS/TCP", ...; the upper-cased scheme
+/// for one resolve() never produces, empty for an empty @p uri.
+QString transportName(const QString& uri);
+
 }  // namespace VideoStreamResolver

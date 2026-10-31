@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <climits>
 
+#include <QtCore/QUrl>
+
 #include "Fact.h"
 #include "QGCVideoStreamInfo.h"
 #include "VideoDecoderOptions.h"
@@ -61,6 +63,18 @@ constexpr ManualSource kManualSources[] = {
     {VideoSettings::videoSourceYuneecMantisG, "rtsp://192.168.42.1:554/live", nullptr},
     {VideoSettings::videoSourceHerelinkAirUnit, "rtsp://192.168.0.10:8554/H264Video", nullptr},
     {VideoSettings::videoSourceHerelinkHotspot, "rtsp://192.168.43.1:8554/fpv_stream", nullptr},
+};
+
+struct TransportName
+{
+    const char* scheme;
+    const char* name;
+};
+
+/// Every URI scheme autoStreamUri() and kManualSources produce.
+constexpr TransportName kTransportNames[] = {
+    {"rtsp", "RTSP"},          {"rtsps", "RTSP"},      {"udp", "RTP/UDP (H.264)"}, {"udp265", "RTP/UDP (H.265)"},
+    {"mpegts", "MPEG-TS/UDP"}, {"tcp", "MPEG-TS/TCP"},
 };
 
 const ManualSource* findManualSource(const QString& videoSource)
@@ -146,4 +160,15 @@ bool VideoStreamResolver::isAutoStream(const QGCVideoStreamInfo* streamInfo)
 bool VideoStreamResolver::isNetworkSource(const QString& videoSource)
 {
     return findManualSource(videoSource) != nullptr;
+}
+
+QString VideoStreamResolver::transportName(const QString& uri)
+{
+    const QString scheme = QUrl(uri).scheme();
+    for (const TransportName& transport : kTransportNames) {
+        if (scheme.compare(QLatin1StringView(transport.scheme), Qt::CaseInsensitive) == 0) {
+            return QString::fromLatin1(transport.name);
+        }
+    }
+    return scheme.toUpper();
 }

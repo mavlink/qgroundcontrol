@@ -43,16 +43,6 @@ bool isInside(GstObject* object, GstElement* element)
     return element && object && gst_object_has_as_ancestor(object, GST_OBJECT_CAST(element));
 }
 
-/// The guint64 @p field of a qgcqvideosink "frame-stats" structure, 0 without one.
-quint64 sinkStatsField(const GstStructure* stats, const char* field)
-{
-    guint64 value = 0;
-    if (stats) {
-        (void) gst_structure_get_uint64(stats, field, &value);
-    }
-    return value;
-}
-
 struct SinkFrameCounts
 {
     quint64 displayed = 0;
@@ -64,11 +54,7 @@ struct SinkFrameCounts
 /// @p stats.
 SinkFrameCounts sinkFrameCountsSince(const GstStructure* stats, const GstStructure* since)
 {
-    const auto growth = [stats, since](const char* field) {
-        const quint64 now = sinkStatsField(stats, field);
-        const quint64 before = sinkStatsField(since, field);
-        return (now > before) ? (now - before) : 0;
-    };
+    const auto growth = [stats, since](const char* field) { return GstQgc::frameStatsGrowth(stats, since, field); };
     quint64 delivered = 0;
     for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
         delivered += growth(GstQgc::sinkFramesField(HwVideoBufferPath(i)));
@@ -156,7 +142,8 @@ void DecodingBranch::setVideoSink(GstElement* sink)
     _sink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref(sink)));
     _sinkStatsAtStart = GstQgc::frameStats(_sink.get());
     for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
-        _pathFramesAtSample[i] = sinkStatsField(_sinkStatsAtStart.get(), GstQgc::sinkFramesField(HwVideoBufferPath(i)));
+        _pathFramesAtSample[i] =
+            GstQgc::frameStatsField(_sinkStatsAtStart.get(), GstQgc::sinkFramesField(HwVideoBufferPath(i)));
     }
     _gpuCountersAtStart = GstHwPathTelemetry::snapshot();
     GStreamer::markBranch(_sink.get(), GStreamer::PipelineBranch::Decoding);
@@ -219,7 +206,7 @@ DecodingBranch::StatsSample DecodingBranch::sampleStats()
     quint64 busiestPathFrames = 0;
     for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
         const auto path = HwVideoBufferPath(i);
-        const quint64 frames = sinkStatsField(stats.get(), GstQgc::sinkFramesField(path));
+        const quint64 frames = GstQgc::frameStatsField(stats.get(), GstQgc::sinkFramesField(path));
         const quint64 sinceSample = (frames > _pathFramesAtSample[i]) ? (frames - _pathFramesAtSample[i]) : 0;
         if (sinceSample > busiestPathFrames) {
             busiestPathFrames = sinceSample;
