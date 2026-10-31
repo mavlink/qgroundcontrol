@@ -25,7 +25,8 @@ struct Sample
 };
 
 inline constexpr Sample kH264Sample{"H.264", ":/gstreamer/selftest/h264_160x120.h264", "video/x-h264", "h264parse"};
-inline constexpr Sample kH265Sample{"H.265", ":/gstreamer/selftest/h265_160x120.h265", "video/x-h265", "h265parse"};
+// 320x240: NVIDIA's HEVC decoders (NVDEC, and d3d11/d3d12 on an NVIDIA GPU) reject frames under 144 pixels high.
+inline constexpr Sample kH265Sample{"H.265", ":/gstreamer/selftest/h265_320x240.h265", "video/x-h265", "h265parse"};
 
 struct RecordingFormat
 {

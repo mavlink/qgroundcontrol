@@ -382,7 +382,8 @@ or file:
   backend libproxy opens by name.
 - **Decoding**: the 160x120 H.264 sample from [`test/VideoManager/GStreamer/Media/`](../../../test/VideoManager/GStreamer/Media/),
   embedded in the app, decodes through `decodebin3` with the decoder ranks the app applied, to at least one raw frame;
-  so does the H.265 sample when an H.265 decoder is ranked for autoplugging. When a hardware decoder fails mid-stream
+  so does the 320x240 H.265 sample when an H.265 decoder is ranked for autoplugging (NVIDIA's HEVC decoders reject
+  frames under 144 pixels high). When a hardware decoder fails mid-stream
   (as in a VM; `decodebin3` replaces only one that fails to start), the check is retried once with software decoders
   forced, then the ranks are restored; a software decoder that works only logs a warning.
 - **Recording**: the H.264 sample, muxed by the recording branch's file sink into MP4 and MKV, makes a non-empty file
