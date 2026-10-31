@@ -14,6 +14,8 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerTestHelpers.h"
+#include "GstQgcCaps.h"
+#include "GstQgcRenderTarget.h"
 #include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
 #include "RecordingBranch.h"
@@ -99,16 +101,24 @@ void GStreamerTest::_testD3D12RhiDisablesGpuZeroCopySink()
 #if !defined(Q_OS_WIN) || !defined(QGC_HAS_GST_D3D12_GPU_PATH)
     QSKIP("D3D12 sink policy is Windows D3D12-only");
 #else
+    // The render target comes from the sink environment: QQuickWindow::graphicsApi() keeps the first API it reports
+    // for the whole process, so QSG_RHI_BACKEND could not switch it between these checks.
     const TestFixtures::EnvVarFixture rhiBackend("QSG_RHI_BACKEND");
-    qputenv("QSG_RHI_BACKEND", QByteArray("d3d12"));
+    qunsetenv("QSG_RHI_BACKEND");
+    {
+        const GstQgc::ScopedSinkEnvironmentForTest d3d12({.target = {.backend = GstQgc::RenderBackend::Direct3D12}});
+        QVERIFY2(!GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(false, false),
+                 "D3D12 RHI must force the CPU sink path because gst-d3d12 cannot wrap Qt's ID3D12Device");
+    }
 
-    QVERIFY2(!GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(false, false),
-             "D3D12 RHI must force the CPU sink path because gst-d3d12 cannot wrap Qt's ID3D12Device");
-    QVERIFY(GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(false, true) == false);
-    QVERIFY(GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(true, false) == false);
-
-    qputenv("QSG_RHI_BACKEND", QByteArray("d3d11"));
+    const GstQgc::ScopedSinkEnvironmentForTest d3d11({.target = {.backend = GstQgc::RenderBackend::Direct3D11}});
     QVERIFY(GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(false, false));
+    QVERIFY(!GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(false, true));
+    QVERIFY(!GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(true, false));
+
+    qputenv("QSG_RHI_BACKEND", QByteArray("d3d12"));
+    QVERIFY2(!GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(false, false),
+             "A D3D12 request in QSG_RHI_BACKEND must force the CPU sink path too");
 #endif
 }
 

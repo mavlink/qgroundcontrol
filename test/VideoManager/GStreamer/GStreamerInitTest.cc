@@ -403,7 +403,19 @@ void GStreamerInitTest::_testSetCodecPrioritiesHardware()
     GSTTEST_REQUIRE_GSTREAMER();
 
     const GstTest::DecoderRankSnapshot decoderRanks;
+    // A host without GPU decoders, such as a CI runner, gets the warning that none could be preferred.
+    bool hasHardwareDecoder = false;
+    GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&hasHardwareDecoder](GstElementFactory* factory) {
+        hasHardwareDecoder = hasHardwareDecoder || GStreamer::isHardwareDecoderFactory(factory);
+    });
+    if (!hasHardwareDecoder) {
+        expectLogMessage("Video.GStreamer.GStreamerHelpers", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("^No hardware video decoder factories found")));
+    }
     GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderHardware);
+    if (!hasHardwareDecoder) {
+        verifyExpectedLogMessage();
+    }
 
     QStringList rankedSoftware;
     GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&rankedSoftware](GstElementFactory* factory) {

@@ -375,6 +375,8 @@ void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi()
     }
 
     const SnapshotGuard snapshotGuard;
+    // A runner whose WARP adapter can't create this device skips the test; QRhi warns first.
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("^Failed to create D3D1[12] device")));
     QString failure;
     const std::unique_ptr<QRhi> rhi = createPublishedRhi(d3d11 ? QRhi::D3D11 : QRhi::D3D12, failure);
     if (!rhi) {
@@ -427,6 +429,8 @@ void GstHwBuffersPipelineTest::_testD3DFrameToImage()
     }
 
     const SnapshotGuard snapshotGuard;
+    // A runner whose WARP adapter can't create this device skips the test; QRhi warns first.
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("^Failed to create D3D1[12] device")));
     QString failure;
     const std::unique_ptr<QRhi> rhi = createPublishedRhi(d3d11 ? QRhi::D3D11 : QRhi::D3D12, failure);
     if (!rhi) {
@@ -451,6 +455,8 @@ void GstHwBuffersPipelineTest::_testD3DFrameToImage()
 void GstHwBuffersPipelineTest::_testWindowsGpuSinkPreservesSoftwarePixels()
 {
 #if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D11_GPU_PATH)
+    // Mapping the center pixel converts on the CPU when Qt Multimedia finds no RHI for this thread, and says so.
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
     QVideoSink videoSink;
     const auto result = GstQgcTest::runPipelineThroughQVideoSink(
         videoSink, "video/x-raw,format=BGRA,width=320,height=240,framerate=30/1",
