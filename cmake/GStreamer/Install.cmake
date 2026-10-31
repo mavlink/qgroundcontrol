@@ -265,17 +265,13 @@ endfunction()
 function(gstreamer_install_linux_sdk app_name plugin_dest_out)
     set(_plugin_dest "lib/gstreamer-1.0")
     gstreamer_install_plugins("${GSTREAMER_PLUGIN_PATH}" "${_plugin_dest}" "libgst" "so")
-    # glib-networking's GnuTLS backend and proxy resolvers (libproxy; GNOME's reads its settings through dconf). The
-    # VFS modules (gvfsdbus, remote volume monitor) stay out: the bundle runs GIO with GIO_USE_VFS=local (AppRun, and
-    # GStreamerEnvironment.cc on GLib 2.76+) or alongside the system's modules.
+    # glib-networking's GnuTLS backend and libproxy proxy resolver, and dconf's GSettings backend, through which
+    # libproxy reads GNOME's proxy settings (it reads KDE's itself). glib-networking's GNOME resolver stays out: GIO
+    # instantiates every resolver before asking which applies, and it aborts the process where org.gnome.system.proxy's
+    # schema isn't installed. The VFS modules (gvfsdbus, remote volume monitor) stay out: the bundle runs GIO with
+    # GIO_USE_VFS=local (AppRun, and GStreamerEnvironment.cc on GLib 2.76+) or alongside the system's modules.
     gstreamer_install_gio_modules(
-        "${GSTREAMER_GIO_MODULE_PATH}"
-        "lib/gio/modules"
-        "so"
-        giognutls
-        giolibproxy
-        giognomeproxy
-        dconfsettings
+        "${GSTREAMER_GIO_MODULE_PATH}" "lib/gio/modules" "so" giognutls giolibproxy dconfsettings
     )
     # gstreamer-1.0.pc's pluginscannerdir (Debian lib/<multiarch>/gstreamer1.0/gstreamer-1.0, Fedora
     # libexec/gstreamer-1.0, Arch lib/gstreamer-1.0).

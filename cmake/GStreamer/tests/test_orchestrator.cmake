@@ -761,12 +761,13 @@ elseif(SCENARIO STREQUAL "install")
     foreach(_plugin IN ITEMS videoconvert videoscale)
         file(WRITE "${_sdk_a}/lib/gstreamer-1.0/libgst${_plugin}.so" "")
     endforeach()
-    # A system GIO module directory: the TLS/proxy/dconf modules are bundled, the VFS ones and the cache are not.
-    set(_gio_bundled libgiognutls.so libgiolibproxy.so libgiognomeproxy.so libdconfsettings.so)
+    # A system GIO module directory: the TLS/libproxy/dconf modules are bundled; the GNOME proxy resolver, the VFS ones
+    # and the cache are not.
+    set(_gio_bundled libgiognutls.so libgiolibproxy.so libdconfsettings.so)
     foreach(
         _module IN
         LISTS _gio_bundled
-        ITEMS libgvfsdbus.so libgioremote-volume-monitor.so giomodule.cache
+        ITEMS libgiognomeproxy.so libgvfsdbus.so libgioremote-volume-monitor.so giomodule.cache
     )
         file(WRITE "${_sdk_a}/lib/gio/modules/${_module}" "")
     endforeach()
