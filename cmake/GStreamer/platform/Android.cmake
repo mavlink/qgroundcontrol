@@ -23,22 +23,28 @@
 
 include_guard(GLOBAL)
 
-# Single source of truth for Android ABI → cerbero dir + textrel flag.
-# Sets, in PARENT_SCOPE: <prefix>_DIR, <prefix>_NEEDS_TEXTREL_ERROR.
+# Single source of truth for Android ABI → cerbero dir, textrel flag and 16 KB page alignment.
+# Sets, in PARENT_SCOPE: <prefix>_DIR, <prefix>_NEEDS_TEXTREL_ERROR, <prefix>_16KB_PAGES.
+# <prefix>_16KB_PAGES follows Qt's android_16kb_pages feature (the 64-bit ABIs), for which Qt::Platform links every
+# Qt-linked target with -z max-page-size=16384.
 # cmake-lint: disable=C0103
 function(_qgc_gst_android_abi_info abi prefix)
     if(abi STREQUAL "armeabi-v7a")
         set(_dir "armv7")
         set(_textrel TRUE)
+        set(_16kb_pages FALSE)
     elseif(abi STREQUAL "arm64-v8a")
         set(_dir "arm64")
         set(_textrel FALSE)
+        set(_16kb_pages TRUE)
     elseif(abi STREQUAL "x86")
         set(_dir "x86")
         set(_textrel TRUE)
+        set(_16kb_pages FALSE)
     elseif(abi STREQUAL "x86_64")
         set(_dir "x86_64")
         set(_textrel FALSE)
+        set(_16kb_pages TRUE)
     else()
         message(FATAL_ERROR "Unsupported Android ABI: ${abi}")
     endif()
@@ -48,6 +54,10 @@ function(_qgc_gst_android_abi_info abi prefix)
     )
     set(${prefix}_NEEDS_TEXTREL_ERROR
         "${_textrel}"
+        PARENT_SCOPE
+    )
+    set(${prefix}_16KB_PAGES
+        "${_16kb_pages}"
         PARENT_SCOPE
     )
 endfunction()
@@ -312,6 +322,11 @@ function(_qgc_gst_create_android_mobile_target)
     target_link_options(GStreamerMobile PRIVATE "LINKER:-Bsymbolic")
     if(_abi_NEEDS_TEXTREL_ERROR)
         target_link_options(GStreamerMobile PRIVATE "LINKER:-z,text")
+    endif()
+    # The library links no Qt target, so it does not get Qt::Platform's 16 KB alignment; a 4 KB-aligned library does
+    # not load on a device with 16 KB pages, and Google Play rejects it.
+    if(_abi_16KB_PAGES)
+        target_link_options(GStreamerMobile PRIVATE "LINKER:-z,max-page-size=16384")
     endif()
     _qgc_gst_android_hide_archives(GStreamerMobile)
 

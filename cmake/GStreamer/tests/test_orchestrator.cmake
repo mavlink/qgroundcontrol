@@ -501,6 +501,8 @@ elseif(SCENARIO STREQUAL "android-mobile")
     qgc_test_assert_in_list("GIO module hidden" libgioopenssl.a _hidden)
     qgc_test_assert_not_in_list("core exported" libgstreamer-1.0.a _hidden)
     qgc_test_assert_matches("kept core function" "-u,gst_debug_bin_to_dot_data" "${_mobile_link}")
+    # The library links no Qt target, so it sets the 16 KB segment alignment Qt::Platform gives Qt-linked targets.
+    qgc_test_assert_matches("16 KB pages" "-z,max-page-size=16384" "${_mobile_link}")
     # The library registers the plugins with the shared registration template.
     file(READ "${_binary_dir}/GStreamerMobile_gst_static_plugins.c" _registration)
     qgc_test_assert_matches("registers a plugin" "QGC_REGISTER_STATIC_PLUGIN\\(coreelements\\);" "${_registration}")
