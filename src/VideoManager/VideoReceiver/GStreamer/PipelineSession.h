@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <memory>
 #include <optional>
 
@@ -10,10 +11,12 @@
 #include "DecodingBranch.h"
 #include "GstScoped.h"
 #include "RecordingBranch.h"
+#include "VideoStreamStatsMeter.h"
 
 class PipelineDotDumper;
 class QDeadlineTimer;
 class StreamWatchdog;
+struct VideoStreamStats;
 
 namespace GstQgc {
 struct PathStats;
@@ -81,6 +84,11 @@ public:
     bool displaying() const;
     GstQgc::PathStats sinkPathStats() const;
 
+    /// Measures the stream for VideoStreamStats: its cumulative counters into @p counters, for VideoStreamStatsMeter,
+    /// and what it is now into @p stats (latency, RTP jitter, codec, decoder and display path). Not const: the display
+    /// path is the one most frames took since the previous call.
+    void sampleStats(VideoStreamStatsMeter::Counters& counters, VideoStreamStats& stats);
+
     GstElement* pipeline() const { return _pipeline.get(); }
 
     /// Writes PipelineDotDumper::snapshot() of the pipeline under @p tag.
@@ -111,6 +119,8 @@ private:
     static GstBusSyncReply _onBusSync(GstBus* bus, GstMessage* message, gpointer data);
     static void _onSourcePadAdded(GstElement* source, GstPad* pad, gpointer data);
     static GstPadProbeReturn _teeProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data);
+    /// Streaming thread: measures the time between keyframes from @p buffer's timestamp.
+    void _noteKeyframe(const GstBuffer* buffer);
     static GstPadProbeReturn _sourceEosProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data);
 
     const Settings _settings;
@@ -140,6 +150,12 @@ private:
     Failure _failure;
     bool _failed = false;
     bool _streaming = false;
+    /// Compressed bytes that reached the tee.
+    std::atomic<quint64> _bytesReceived = 0;
+    /// Timestamp of the last keyframe at the tee, and the time from the keyframe before it; GST_CLOCK_TIME_NONE until
+    /// known.
+    std::atomic<GstClockTime> _lastKeyframeTime = GST_CLOCK_TIME_NONE;
+    std::atomic<GstClockTime> _keyframeInterval = GST_CLOCK_TIME_NONE;
     bool _tearingDown = false;
     bool _shutDown = false;
 };

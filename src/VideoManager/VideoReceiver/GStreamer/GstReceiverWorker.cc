@@ -5,6 +5,7 @@
 #include <utility>
 
 #include <QtCore/QCoreApplication>
+#include <QtCore/QFileInfo>
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 
@@ -57,6 +58,15 @@ QString GstReceiverWorker::Recording::currentFile() const
     return (part == 1) ? file : partFile(file, part);
 }
 
+qint64 GstReceiverWorker::Recording::bytesWritten() const
+{
+    qint64 bytes = QFileInfo(file).size();
+    for (int n = 2; n <= part; ++n) {
+        bytes += QFileInfo(partFile(file, n)).size();
+    }
+    return bytes;
+}
+
 void GstReceiverWorker::setActive(bool active, const QString& name, const VideoReceiver::Config& config)
 {
     _active = active;
@@ -64,6 +74,7 @@ void GstReceiverWorker::setActive(bool active, const QString& name, const VideoR
     _halted = false;
     _reconnectTimer->stop();
     _watchdog.resetBackoff();
+    _streamedSessions = 0;
     if (active) {
         _dotDumper.setReceiverName(name);
     } else {
@@ -176,6 +187,7 @@ void GstReceiverWorker::_restartStream()
     _reconnectTimer->stop();
     _halted = false;
     _watchdog.resetBackoff();
+    _streamedSessions = 0;
     _stopSession();
     _reconcile();
 }
@@ -211,6 +223,8 @@ void GstReceiverWorker::_stopSession()
         return;
     }
     _watchdogTimer->stop();
+    _statsMeter.reset();
+    _publishStats({});
     PipelineSession* const session = std::exchange(_session, nullptr);
     session->shutdown();
     // Deleted from the event loop: this may run inside one of its calls. Its leftover work is dropped with it.
@@ -277,6 +291,7 @@ void GstReceiverWorker::_onWatchdogTick()
             qCDebug(GstVideoReceiverLog).noquote() << "GPU path live" << _redactedUri() << hwStats.line;
         }
     }
+    _sampleStats();
 
     const StreamWatchdog::Result result = _watchdog.check(StreamWatchdog::now(), _session->displaying());
     switch (result.stall) {
@@ -301,6 +316,39 @@ void GstReceiverWorker::_onWatchdogTick()
     }
 }
 
+void GstReceiverWorker::_sampleStats()
+{
+    // Rates from before the first frame would only measure the connection's setup.
+    if (_state != VideoReceiver::State::Streaming) {
+        return;
+    }
+    VideoStreamStatsMeter::Counters counters;
+    VideoStreamStats stats = _stats;
+    _session->sampleStats(counters, stats);
+    const auto now = std::chrono::steady_clock::now();
+    stats.uptimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - _streamingSince).count();
+    stats.reconnects = std::max(0, _streamedSessions - 1);
+    if (_recording && _recording->startedAt) {
+        stats.recordingMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - *_recording->startedAt).count();
+        stats.recordingBytes = _recording->bytesWritten();
+    } else {
+        stats.recordingMs = -1;
+        stats.recordingBytes = -1;
+    }
+    if (_statsMeter.update(counters, stats)) {
+        _publishStats(stats);
+    }
+}
+
+void GstReceiverWorker::_publishStats(const VideoStreamStats& stats)
+{
+    if (stats == _stats) {
+        return;
+    }
+    _stats = stats;
+    emit statsChanged(_stats);
+}
+
 void GstReceiverWorker::_setState(VideoReceiver::State state)
 {
     if (state == _state) {
@@ -317,6 +365,8 @@ QString GstReceiverWorker::_redactedUri() const
 
 void GstReceiverWorker::onSessionStreaming()
 {
+    ++_streamedSessions;
+    _streamingSince = std::chrono::steady_clock::now();
     _setState(VideoReceiver::State::Streaming);
 }
 
@@ -348,6 +398,9 @@ void GstReceiverWorker::onRecordingFileOpened(const QString& file)
 {
     if (_recording && (file == _recording->currentFile())) {
         _recording->opened = true;
+        if (!_recording->startedAt) {
+            _recording->startedAt = std::chrono::steady_clock::now();
+        }
     }
     emit recordingStarted(file);
 }

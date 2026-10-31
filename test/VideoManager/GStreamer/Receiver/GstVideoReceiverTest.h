@@ -60,6 +60,8 @@ private slots:
     void _testDestroyWithHungRecorderIsBounded();
     void _testDecodesH265Stream();
     void _testResolutionChangeUpdatesVideoSize();
+    void _testStatsMeasureStream_data();
+    void _testStatsMeasureStream();
     void _testUnresponsiveRtspServer_data();
     void _testUnresponsiveRtspServer();
 #endif

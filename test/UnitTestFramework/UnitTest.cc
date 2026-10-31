@@ -912,6 +912,11 @@ void UnitTest::init()
     ignoreLogMessage("qt.qpa.fonts", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Populating font family aliases")));
 
+    // On Windows the offscreen QPA's FreeType font database looks for fonts Qt no longer ships in its lib/fonts, and
+    // warns once per process when a test first lays out text.
+    ignoreLogMessage("default", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^QFontDatabase: Cannot find font directory")));
+
     // Headless software-GL (xvfb) gives GStreamer no usable X11/EGL GL context, so the
     // GL bridge disables itself and falls back to software decode — by design in tests.
     ignoreLogMessage("Video.GStreamer.HwBuffers.GstGlBridge", QtWarningMsg,

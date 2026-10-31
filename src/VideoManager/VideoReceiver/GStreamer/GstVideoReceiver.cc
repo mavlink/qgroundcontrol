@@ -42,6 +42,7 @@ GstVideoReceiver::GstVideoReceiver(QObject* parent)
     (void) connect(_worker, &GstReceiverWorker::recordingStarted, this, &GstVideoReceiver::recordingStarted);
     (void) connect(_worker, &GstReceiverWorker::recordingFinished, this, &GstVideoReceiver::recordingFinished);
     (void) connect(_worker, &GstReceiverWorker::errorOccurred, this, &GstVideoReceiver::errorOccurred);
+    (void) connect(_worker, &GstReceiverWorker::statsChanged, this, &GstVideoReceiver::setStats);
 
     _workerThread->setObjectName(QStringLiteral("GstVideoReceiver"));
     _worker->moveToThread(_workerThread);

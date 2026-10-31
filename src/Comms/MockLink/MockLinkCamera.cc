@@ -773,24 +773,19 @@ void MockLinkCamera::_sendVideoStreamInformation(uint8_t compId, uint8_t streamI
 
     mavlink_message_t msg{};
     (void) mavlink_msg_video_stream_information_pack_chan(
-        _mockLink->vehicleId(),
-        compId,
-        _mockLink->outgoingMavlinkChannel(),
-        &msg,
-        streamId,                               // stream_id
-        kNumStreams,                            // count
-        streamType,                             // type
-        flags,                                  // flags
-        30,                                     // framerate
-        1280,                                   // resolution_h (matches MockVideoStreamServer test source)
-        720,                                    // resolution_v
-        2000,                                   // bitrate (kbit/s, matches encoder settings)
-        0,                                      // rotation
-        70,                                     // hfov
-        nameBA.constData(),
-        uriBA.constData(),
-        encoding,
-        0);                                     // encoding_sub
+        _mockLink->vehicleId(), compId, _mockLink->outgoingMavlinkChannel(), &msg,
+        streamId,     // stream_id
+        kNumStreams,  // count
+        streamType,   // type
+        flags,        // flags
+        30,           // framerate
+        1280,         // resolution_h (matches MockVideoStreamServer test source)
+        720,          // resolution_v
+        2'000'000,    // bitrate (bits/s, matches encoder settings)
+        0,            // rotation
+        70,           // hfov
+        nameBA.constData(), uriBA.constData(), encoding,
+        0);           // encoding_sub
     _mockLink->respondWithMavlinkMessage(msg);
 
     qCDebug(MockLinkCameraLog) << "Sent VIDEO_STREAM_INFORMATION for compId:" << compId << "stream:" << streamId
@@ -814,20 +809,17 @@ void MockLinkCamera::_sendVideoStreamStatus(uint8_t compId, uint8_t streamId)
 #endif
 
     mavlink_message_t msg{};
-    (void) mavlink_msg_video_stream_status_pack_chan(
-        _mockLink->vehicleId(),
-        compId,
-        _mockLink->outgoingMavlinkChannel(),
-        &msg,
-        streamId,                               // stream_id
-        flags,                                  // flags
-        30,                                     // framerate
-        1280,                                   // resolution_h (matches MockVideoStreamServer test source)
-        720,                                    // resolution_v
-        2000,                                   // bitrate (kbit/s, matches encoder settings)
-        0,                                      // rotation
-        70,                                     // hfov
-        0);                                     // encoding (reserved in status)
+    (void) mavlink_msg_video_stream_status_pack_chan(_mockLink->vehicleId(), compId,
+                                                     _mockLink->outgoingMavlinkChannel(), &msg,
+                                                     streamId,  // stream_id
+                                                     flags,     // flags
+                                                     30,        // framerate
+                                                     1280,  // resolution_h (matches MockVideoStreamServer test source)
+                                                     720,   // resolution_v
+                                                     2'000'000,  // bitrate (bits/s, matches encoder settings)
+                                                     0,          // rotation
+                                                     70,         // hfov
+                                                     0);         // encoding (reserved in status)
     _mockLink->respondWithMavlinkMessage(msg);
 
     qCDebug(MockLinkCameraLog) << "Sent VIDEO_STREAM_STATUS for compId:" << compId << "stream:" << streamId;

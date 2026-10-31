@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include <QtCore/QUrl>
 #include <QtQuick/QQuickItem>
 
 #include "Fact.h"
@@ -53,6 +54,7 @@ void VideoStreamController::setReceiver(VideoReceiver* receiver)
     const bool wasDecoding = decoding();
     const bool wasRecording = recording();
     const QSize oldVideoSize = videoSize();
+    const VideoStreamStats oldStats = stats();
 
     // Detach the old receiver first: what it emits while being destroyed must not reach a half-destroyed object.
     VideoReceiver* const oldReceiver = std::exchange(_receiver, receiver);
@@ -72,6 +74,7 @@ void VideoStreamController::setReceiver(VideoReceiver* receiver)
             emit videoSizeChanged();
             emit aspectRatioChanged();
         });
+        (void) connect(_receiver, &VideoReceiver::statsChanged, this, &VideoStreamController::statsChanged);
         (void) connect(_receiver, &VideoReceiver::recordingStarted, this, &VideoStreamController::recordingStarted);
         (void) connect(_receiver, &VideoReceiver::recordingFinished, this, &VideoStreamController::recordingFinished);
         (void) connect(_receiver, &VideoReceiver::errorOccurred, this, &VideoStreamController::errorOccurred);
@@ -91,6 +94,9 @@ void VideoStreamController::setReceiver(VideoReceiver* receiver)
     if (videoSize() != oldVideoSize) {
         emit videoSizeChanged();
         emit aspectRatioChanged();
+    }
+    if (stats() != oldStats) {
+        emit statsChanged();
     }
 }
 
@@ -149,11 +155,15 @@ void VideoStreamController::scheduleApply()
 void VideoStreamController::_apply()
 {
     _applyPending = false;
+    const std::optional<VideoReceiver::Config> config = _resolvedConfig();
+    if (const QString uri = config ? config->uri : QString(); uri != _uri) {
+        _uri = uri;
+        emit uriChanged();
+    }
     if (!_receiver) {
         return;
     }
 
-    const std::optional<VideoReceiver::Config> config = _resolvedConfig();
     const bool active = _enabled && config.has_value();
     qCDebug(VideoStreamControllerLog) << name() << "active:" << active << "uri:"
                                       << (config ? QGCNetworkHelper::redactedUrlForLogging(config->uri) : QString());
@@ -282,4 +292,29 @@ double VideoStreamController::aspectRatio() const
         return _streamInfo->aspectRatio();
     }
     return (_role == Role::Primary) ? _videoSettings->aspectRatio()->rawValue().toDouble() : 1.0;
+}
+
+VideoStreamStats VideoStreamController::stats() const
+{
+    return _receiver ? _receiver->stats() : VideoStreamStats{};
+}
+
+QString VideoStreamController::uri() const
+{
+    return _uri.isEmpty() ? QString() : QGCNetworkHelper::redactedUrlForLogging(_uri);
+}
+
+QString VideoStreamController::transport() const
+{
+    static constexpr std::pair<const char*, const char*> kTransports[] = {
+        {"rtsp", "RTSP"},          {"rtsps", "RTSP"},      {"udp", "RTP/UDP (H.264)"}, {"udp265", "RTP/UDP (H.265)"},
+        {"mpegts", "MPEG-TS/UDP"}, {"tcp", "MPEG-TS/TCP"},
+    };
+    const QString scheme = QUrl(_uri).scheme();
+    for (const auto& [uriScheme, transport] : kTransports) {
+        if (scheme.compare(QLatin1StringView(uriScheme), Qt::CaseInsensitive) == 0) {
+            return QString::fromLatin1(transport);
+        }
+    }
+    return scheme.toUpper();
 }

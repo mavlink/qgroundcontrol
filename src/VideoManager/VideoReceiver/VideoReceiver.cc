@@ -222,3 +222,11 @@ void VideoReceiver::setVideoSize(QSize size)
         emit videoSizeChanged(_videoSize);
     }
 }
+
+void VideoReceiver::setStats(const VideoStreamStats& stats)
+{
+    if (stats != _stats) {
+        _stats = stats;
+        emit statsChanged(_stats);
+    }
+}

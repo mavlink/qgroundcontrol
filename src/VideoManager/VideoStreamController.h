@@ -32,6 +32,11 @@ class VideoStreamController : public QObject
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
     Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged)
     Q_PROPERTY(double aspectRatio READ aspectRatio NOTIFY aspectRatioChanged)
+    Q_PROPERTY(VideoStreamStats stats READ stats NOTIFY statsChanged)
+    Q_PROPERTY(QGCVideoStreamInfo* streamInfo READ streamInfo NOTIFY streamInfoChanged)
+    Q_PROPERTY(QString uri READ uri NOTIFY uriChanged)
+    Q_PROPERTY(QString transport READ transport NOTIFY uriChanged)
+    Q_MOC_INCLUDE("QGCVideoStreamInfo.h")
 
 public:
     using Role = VideoStreamResolver::Role;
@@ -89,6 +94,12 @@ public:
     QSize videoSize() const;
     /// From the decoded frames, else the camera's advertised resolution, else the aspect ratio setting (primary) or 1.
     double aspectRatio() const;
+    /// The receiver's VideoReceiver::stats(); invalid without a receiver.
+    VideoStreamStats stats() const;
+    /// The URI the receiver plays, without user info or query values, for display; empty without a stream.
+    QString uri() const;
+    /// How the stream arrives, from its URI: "RTSP", "RTP/UDP (H.264)", "MPEG-TS/TCP", ...; empty without a stream.
+    QString transport() const;
 
 signals:
     void streamingChanged();
@@ -96,7 +107,9 @@ signals:
     void recordingChanged(bool recording);
     void videoSizeChanged();
     void aspectRatioChanged();
+    void statsChanged();
     void streamInfoChanged();
+    void uriChanged();
     void recordingStarted(const QString& file);
     void recordingFinished(const QString& file, const QString& error);
     void errorOccurred(const QString& message);
@@ -112,6 +125,8 @@ private:
     VideoReceiver* _receiver = nullptr;
     QPointer<QGCVideoStreamInfo> _streamInfo;
     QPointer<QQuickItem> _videoOutput;
+    /// The URI the receiver was last configured with.
+    QString _uri;
     bool _enabled = false;
     bool _applyPending = false;
 };

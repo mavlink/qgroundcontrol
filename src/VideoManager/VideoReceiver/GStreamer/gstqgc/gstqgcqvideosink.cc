@@ -88,6 +88,8 @@ struct PrivState
     // Frames no GPU path imported whose tiled DMA_DRM layout the CPU can't read: dropped; reported through
     // "frame-stats".
     std::atomic<quint64> tiled_drops{0};
+    // Delivered frames a newer frame replaced before the GUI thread took them; reported through "frame-stats".
+    std::atomic<quint64> superseded_frames{0};
     // One stream demotion, and one tiled-drop warning, per caps epoch; reset with the path cache.
     bool demotion_recorded = false;
     bool tiled_drop_logged = false;
@@ -220,7 +222,6 @@ bool nothing_to_import(GstBuffer* buf)
     return mem && gst_memory_is_type(mem, GST_ALLOCATOR_SYSMEM);
 }
 
-constexpr const char* kGpuFallbacksField = "gpu-fallbacks";
 constexpr const char* kStreamDemotionsField = "stream-demotions";
 constexpr const char* kTiledDropsField = "tiled-drops";
 
@@ -232,11 +233,13 @@ GstStructure* make_stats(const PrivState& p)
         gst_structure_set(stats, GstQgc::sinkFramesField(HwVideoBufferPath(i)), G_TYPE_UINT64,
                           static_cast<guint64>(p.path_frames[i].load(std::memory_order_relaxed)), nullptr);
     }
-    gst_structure_set(stats, kGpuFallbacksField, G_TYPE_UINT64,
+    gst_structure_set(stats, GstQgc::kGpuFallbacksField, G_TYPE_UINT64,
                       static_cast<guint64>(p.gpu_fallbacks.load(std::memory_order_relaxed)), kStreamDemotionsField,
                       G_TYPE_UINT64, static_cast<guint64>(p.stream_demotions.load(std::memory_order_relaxed)), nullptr);
     gst_structure_set(stats, kTiledDropsField, G_TYPE_UINT64,
                       static_cast<guint64>(p.tiled_drops.load(std::memory_order_relaxed)), nullptr);
+    gst_structure_set(stats, GstQgc::kSupersededFramesField, G_TYPE_UINT64,
+                      static_cast<guint64>(p.superseded_frames.load(std::memory_order_relaxed)), nullptr);
     return stats;
 }
 
@@ -268,6 +271,9 @@ bool push_frame_queued(GstQgcQVideoSink* self, QVideoFrame&& frame)
         QMutexLocker locker(&slot->mutex);
         superseded = std::exchange(slot->frame, std::move(frame));
         needPost = !std::exchange(slot->posted, true);
+    }
+    if (superseded.isValid()) {
+        priv_of(self)->superseded_frames.fetch_add(1, std::memory_order_relaxed);
     }
     if (needPost) {
         QMetaObject::invokeMethod(
@@ -716,8 +722,9 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
                            "frames-<path> per delivery path (frames-cpu, frames-dmabuf, frames-gl, frames-d3d11, "
                            "frames-d3d12, frames-iosurface, frames-ahwbuf, frames-vulkan); gpu-fallbacks (frames a GPU "
                            "path was tried for but the CPU delivered), stream-demotions (caps epochs that fell back "
-                           "from a GPU path) and tiled-drops (frames in a tiled DMA_DRM layout that no GPU path "
-                           "imported and the CPU can't read).",
+                           "from a GPU path), tiled-drops (frames in a tiled DMA_DRM layout that no GPU path "
+                           "imported and the CPU can't read) and superseded-frames (delivered frames a newer one "
+                           "replaced before the QVideoSink took them).",
                            GST_TYPE_STRUCTURE, (GParamFlags) (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS)));
 
     gst_element_class_set_static_metadata(element_class, "QGC QVideoSink", "Sink/Video",
@@ -802,7 +809,7 @@ PathStats formatSinkStats(const GstStructure* stats, const GstStructure* since) 
             }
         }
     }
-    for (const char* const field : {kGpuFallbacksField, kStreamDemotionsField, kTiledDropsField}) {
+    for (const char* const field : {GstQgc::kGpuFallbacksField, kStreamDemotionsField, kTiledDropsField}) {
         if (const quint64 count = countOf(field); count > 0) {
             out.line += QStringLiteral(" %1:%2").arg(QLatin1String(field)).arg(count);
         }

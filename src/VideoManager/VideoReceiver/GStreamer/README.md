@@ -56,8 +56,9 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   latest frame, so a stalled GUI thread never holds more than one undelivered frame (or the decoder buffer behind it).
   Frames carry the rotation and mirroring of the stream's `image-orientation` tag, as a camera mounted sideways sends
   it, unless a buffer has its own orientation meta. Its construct-only `gpu-zerocopy` property (passed down by the bin) enables zero-copy import of GPU memory, and its
-  `frame-stats` property reports that sink's own frame counts per delivery path, GPU fallbacks and dropped tiled frames
-  (`GstQgc::formatSinkStats` formats them); GstBaseSink's standard `stats` property is left as is.
+  `frame-stats` property reports that sink's own frame counts per delivery path, GPU fallbacks, dropped tiled frames
+  (`GstQgc::formatSinkStats` formats them) and delivered frames a newer one replaced before the `QVideoSink` took them
+  (`superseded-frames`); GstBaseSink's standard `stats` property is left as is.
 - **Sink caps** — `qgcqvideosink` answers caps queries itself (`GstQgc::buildSinkCaps`), with the formats Qt renders
   (`kVideoFormatTable`):
   - System memory always, with `pixel-aspect-ratio=1/1` unless the bin's `disable-par` is set.
@@ -114,6 +115,36 @@ Per-platform import of decoded GPU frames without a copy. Most paths wrap their 
   advertises CUDAMemory, VulkanImage or D3D12Memory caps. Windows builds leave out the GLMemory path: Qt 6's OpenGL
   there is WGL, which gst-gl can't share. Linux builds with gst-gl and DMABuf compile both GPU bins; see
   [GPU bin selection](#gpu-bin-selection).
+
+### Stream statistics
+
+`VideoReceiver::stats` (`VideoStreamStats`, a QML value type that `VideoStreamController` forwards) tells how healthy a
+stream is; the Fly View toolbar's video indicator shows it. While the stream is `Streaming`, `GstReceiverWorker` samples
+its `PipelineSession` on each watchdog tick (once a second), and `VideoStreamStatsMeter` (`../VideoStreamStatsMeter.h`,
+a pure class with an injectable clock) turns the cumulative counters into rates. The first sample is the rates'
+baseline, so stats are valid from the second one on. The worker hands them to the receiver like its other reports, so
+`statsChanged` is emitted on the GUI thread, and sends invalid stats when its session stops: on a stop, a reconnect or a
+failure. The streaming threads only add to atomic counters, with no lock and no allocation per frame; everything else is
+read on the worker.
+
+| Field | Measured from |
+| --- | --- |
+| `fps` | Frames the display sink delivered to the `QVideoSink` (its `frame-stats` counts per path) less those it superseded, per second over the last `VideoStreamStatsMeter::kRateWindowIntervals` samples. |
+| `bitrateKbps` | The compressed elementary stream reaching the tee, after the depayloader or demuxer and the parser, counted by the tee's buffer probe, over the same window as `fps`. |
+| `framesDropped`, `droppedFps` | Since the stream started, and per second over the last interval: buffers the display queue leaked (one per `overrun`), delta frames its keyframe gate dropped, and superseded frames. |
+| `packetsLost`, `lossPercent`, `jitterMs` | The `stats` of every `rtpjitterbuffer` in the source bin, `rtspsrc`'s internal ones included: `num-lost` since the stream started, `num-lost` against `num-pushed` over the last second, and `avg-jitter`. -1 without a jitter buffer: MPEG-TS, and UDP RTP in low-latency mode. |
+| `latencyMs` | The minimum latency of a latency query on the pipeline, as logged when it reaches PLAYING. 0 in low-latency mode, whose display sink doesn't sync. |
+| `decoder`, `hardwareDecoder` | The decoder factory decodebin3 plugged last, and `GStreamer::isHardwareDecoderFactory()`. |
+| `gpuPath` | The delivery path most frames took since the previous sample, as `GstHw::toString()` names it: `CPU`, `DMABuf`, `GL`, `D3D11`, `D3D12`, `IOSurface`, `AHWBuf` or `Vulkan`. Empty for a display sink other than `qgcvideosinkbin`. |
+| `codec` | The caps on the tee: `H.264`, `H.265`, `AV1`, `VP8`, `VP9`, `MJPEG`, `MPEG-2`, ... |
+| `packetsLate`, `packetsDuplicate`, `rtxRequested`, `rtxRecovered` | The same jitter buffers' `num-late`, `num-duplicates`, `rtx-count` and `rtx-success-count`, since the stream started. -1 without a jitter buffer. |
+| `keyframeIntervalMs` | The tee's buffer probe: the timestamps (PTS, else DTS) of the last two buffers without `DELTA_UNIT`. -1 until two keyframes arrived, so a stream without keyframes, such as one with intra refresh, never has one. |
+| `gpuFallbacks` | The display sink's `gpu-fallbacks` count since the stream started, the sinks a decoder restart replaced included. |
+| `decoderRestarts` | Decoders `DecodingBranch::restartDecoder()` replaced since the stream started. |
+| `uptimeMs`, `reconnects` | The worker: the time since its session reported its first frame, and the sessions that streamed since the stream was started or restarted, less one. |
+| `recordingMs`, `recordingBytes` | The worker, while recording: the time since the first part got its first frame, and the sizes of the parts' files. -1 otherwise. |
+
+`VideoStreamStatsMeterTest` covers the rate math on a fake clock, `GstVideoReceiverTest` the stats of real streams.
 
 ## Build Configuration
 
@@ -276,7 +307,7 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 | `GStreamerEnvironmentTest` | Unit | The environment `prepareEnvironment()` sets for a fake bundled desktop install (plugin path and scanner, which still forks and is reused) and for the running app, and the bundled runtime's private plugin registry: named per install, also across AppImage mounts and macOS translocation, pruned of registries unused for 30 days, and replaced by a user-set `GST_REGISTRY` or `GST_REGISTRY_1_0`; a system GStreamer keeps the default registry. |
 | `GStreamerInitTest` | Unit | Init policy: how GLib's and GStreamer's logs reach Qt logging, which missing elements disable video and which only a feature, and the decoder ranks the decoder setting applies, except those set with `GST_PLUGIN_FEATURE_RANK`; the boot self-test's verdict on a failing plugin scanner and on a bundle's blacklisted, foreign, stale or unloaded plugins. |
 | `GStreamerTest` | Unit | The `GStreamer` facade: URI checks, decoder classification, init, and the recording sink's accepted streams. |
-| `GstQgcSinkTest` | Unit | `qgcqvideosink` and `qgcvideosinkbin` as elements: construction, caps, allocation, CPU zero-copy frames, and frames pushed straight into the sink (latest frame only, flushes, orientation tags, crop, renegotiation). |
+| `GstQgcSinkTest` | Unit | `qgcqvideosink` and `qgcvideosinkbin` as elements: construction, caps, allocation, CPU zero-copy frames, and frames pushed straight into the sink (latest frame only, with the superseded ones counted, flushes, orientation tags, crop, renegotiation). |
 | `GstQgcSinkControllerTest` | Unit | `QGCQVideoSinkController` binding `qgcqvideosink` to a `QVideoSink`: inactive without a window, and unbound when its owner or the `QVideoSink` goes away or the sink is released. |
 | `GstQgcVideoFormatsTest` | Unit | The sink's format tables: GStreamer formats, colorimetry and orientations mapped to Qt's, and the formats the sink advertises. |
 | `GstSourceFactoryTest` | Unit | The source bin built for each URI, its jitter-buffer and retransmission policy, RTSP stream selection and keyframe requests from RTSP depayloaders, dynamic-pad linking and the parameter-set gate, without a stream. |
@@ -290,7 +321,7 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 | `GstSelfTestPipelineTest` | Integration | The [boot self-test](#boot-self-test) against the GStreamer the tests run on, and its software retry after a hardware decoder fails mid-stream, which restores the decoder ranks. |
 | `GstHwBuffersPipelineTest` | Integration, GPU | Pipelines that upload into or decode to GPU memory (DMABuf, GLMemory, Vulkan, D3D11/D3D12, IOSurface) and the path each frame takes; D3D11/D3D12 and IOSurface frames are also converted with `QVideoFrame::toImage()` on a QRhi of that API and compared with the CPU frame; the D3D QRhi uses the WARP software adapter when `QSG_RHI_PREFER_SOFTWARE_RENDERER` is set or DXGI lists no hardware adapter. Software frames through the glupload bin and the Windows D3D11 sink. Skips without the device. |
 | `GstHwBuffersGlReadbackTest` | Integration, GPU | DMABuf planes and glupload's GLMemory frames imported into a GL QRhi that shares Qt's EGL context, read back pixel by pixel and converted with `QVideoFrame::toImage()` (xcb with `xcb_egl`). |
-| `GstVideoReceiverTest` | Integration | `GstVideoReceiver` end to end against the H.264 test stream it sends itself on loopback: states, restarts, decoder-only recovery, a mid-stream resolution change, H.265, an RTSP server that never answers, recording across reconnects, slow and hung storage, bounded teardown. Receivers and servers listen on port 0, so parallel runs never collide. |
+| `GstVideoReceiverTest` | Integration | `GstVideoReceiver` end to end against the H.264 test stream it sends itself on loopback: states, restarts, decoder-only recovery, a mid-stream resolution change, H.265, the stream statistics of H.264 and H.265 RTP with and without a jitter buffer, an RTSP server that never answers, recording across reconnects, slow and hung storage, bounded teardown. Receivers and servers listen on port 0, so parallel runs never collide. |
 
 The classes derived from `GStreamerTestBase` fail in `initTestCase()` when `GStreamer::completeInit()` fails, as it does when an element video needs is missing, and their tests skip where GStreamer can't be initialized at all (as under AddressSanitizer). A test skips, rather than fails, when an optional element it uses is missing (`GSTTEST_SKIP_UNLESS_FACTORIES` in `GStreamerTestHelpers.h`). The two `*HarnessTest` classes use GstHarness from gst-check (`gstreamer-check-1.0`), which test builds request as an optional GStreamer component (`Check`); they compile only where the SDK or distribution ships it. No test needs a software encoder: the streams they send are the short 320x240 H.264 and H.265 files, and a 160x120 H.264 one a stream switches to mid-way, in [`test/VideoManager/GStreamer/Media/`](../../../../test/VideoManager/GStreamer/Media/) (its `generate.sh` regenerates them), split into access units and paced through `appsrc`. Only `GstVideoReceiverTest::_testDecodesMockLinkStreams` encodes in software, as MockLink's stream server does (`openh264enc`, falling back to `x264enc`; `x265enc` for H.265); the VA-API cases encode with the host's `vah264enc`. Each class runs in its own process, so a crash in a GPU path only fails its own class; `-LE GPU` leaves out the classes that use the host's GPU.
 
@@ -345,7 +376,7 @@ The whole self-test takes well under a second on a working runtime, gives each p
 - Command line options: `--gst-debug-level`, `--gst-debug`, `--gst-debug-help`, etc.
 - GLib messages (`g_warning()`, `g_critical()`, ...) always go to the `Video.GStreamer.GStreamerLogging` category.
 - The [boot self-test](#boot-self-test) logs its failures under `Video.GStreamer.SelfTest`, and its summary at info level.
-- Receiver flow (starts, stops, reconnects, the decoder chosen, pipeline latency, GPU path statistics): enable the `Video.GStreamer.GstVideoReceiver` category. Failures are logged as warnings even with it off.
+- Receiver flow (starts, stops, reconnects, the decoder chosen, pipeline latency, GPU path statistics): enable the `Video.GStreamer.GstVideoReceiver` category. The stream's health is also measured continuously: see [Stream statistics](#stream-statistics). Failures are logged as warnings even with it off.
 
 ## Pipeline Observability
 

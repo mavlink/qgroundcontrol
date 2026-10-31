@@ -1,5 +1,7 @@
 #include "VideoManagerTest.h"
 
+#include <algorithm>
+
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtGui/QImage>
@@ -52,6 +54,14 @@ Item {
 }
 )QML";
 
+constexpr const char* kStatsGroupQml = R"QML(
+import QtQuick
+import QGroundControl.Toolbar
+
+VideoStreamStatsGroup {
+}
+)QML";
+
 std::unique_ptr<QQuickItem> createVideoOutput(QQmlEngine& engine)
 {
     QQmlComponent component(&engine);
@@ -63,6 +73,14 @@ std::unique_ptr<QQuickItem> createVideoOutput(QQmlEngine& engine)
 void showFrame(QQuickItem* videoOutput, const QImage& image)
 {
     videoOutput->property("videoSink").value<QVideoSink*>()->setVideoFrame(QVideoFrame(image));
+}
+
+/// Whether @p root shows a label reading @p text.
+bool showsText(const QQuickItem* root, const QString& text)
+{
+    const QList<QQuickItem*> items = root->findChildren<QQuickItem*>();
+    return std::ranges::any_of(
+        items, [&text](const QQuickItem* item) { return item->isVisible() && (item->property("text") == text); });
 }
 
 }  // namespace
@@ -448,6 +466,145 @@ void VideoManagerTest::_testStreamErrorsReachUser()
     emit _thermal->errorOccurred(QStringLiteral("stream failed"));
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
+}
+
+void VideoManagerTest::_testStreamStatsReachQml()
+{
+    VideoStreamController* const stream = _videoManager->primaryStream();
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kStatsGroupQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/StatsGroup.qml")));
+    const std::unique_ptr<QQuickItem> group(qobject_cast<QQuickItem*>(
+        component.createWithInitialProperties({{QStringLiteral("stream"), QVariant::fromValue(stream)}})));
+    QVERIFY2(group, qPrintable(component.errorString()));
+    // Items outside a scene are never visible.
+    QQuickWindow window;
+    group->setParentItem(window.contentItem());
+    QSignalSpy statsSpy(stream, &VideoStreamController::statsChanged);
+    QVERIFY(!group->isVisible());
+
+    VideoStreamStats stats;
+    stats.valid = true;
+    stats.fps = 29.5;
+    stats.decoder = QStringLiteral("avdec_h264");
+    _primary->setStats(stats);
+    QCOMPARE(statsSpy.count(), 1);
+    QVERIFY(stream->stats() == stats);
+    QVERIFY(group->isVisible());
+    QVERIFY(showsText(group.get(), QStringLiteral("29.5 fps")));
+    QVERIFY(showsText(group.get(), QStringLiteral("avdec_h264 (software)")));
+    // A stream without RTP counters hides the rows that need them.
+    QVERIFY(!showsText(group.get(), QStringLiteral("Packet loss")));
+
+    QVERIFY(showsText(group.get(), QStringLiteral("RTP/UDP (H.264)")));
+    QVERIFY(showsText(group.get(), QStringLiteral("0:00")));
+    // Counts that are still zero, and what wasn't measured, stay hidden.
+    QVERIFY(!showsText(group.get(), QStringLiteral("Decoder restarts")));
+    QVERIFY(!showsText(group.get(), QStringLiteral("Keyframe interval")));
+    QVERIFY(!showsText(group.get(), QStringLiteral("Recording")));
+
+    stats.packetsLost = 3;
+    stats.lossPercent = 1.5;
+    stats.jitterMs = 2.0;
+    stats.packetsLate = 1;
+    stats.packetsDuplicate = 0;
+    stats.rtxRequested = 4;
+    stats.rtxRecovered = 3;
+    stats.keyframeIntervalMs = 1000.0;
+    stats.decoderRestarts = 2;
+    stats.uptimeMs = 3'725'000;
+    stats.recordingMs = 65'000;
+    stats.recordingBytes = 2 * 1024 * 1024;
+    stats.codec = QStringLiteral("H.264");
+    _primary->setStats(stats);
+    QCOMPARE(statsSpy.count(), 2);
+    QVERIFY(showsText(group.get(), QStringLiteral("Packet loss")));
+    QVERIFY(showsText(group.get(), QStringLiteral("1.5% (3 packet(s))")));
+    QVERIFY(showsText(group.get(), QStringLiteral("1 / 0")));
+    QVERIFY(showsText(group.get(), QStringLiteral("4 requested, 3 recovered")));
+    QVERIFY(showsText(group.get(), QStringLiteral("1.0 s")));
+    QVERIFY(showsText(group.get(), QStringLiteral("Decoder restarts")));
+    QVERIFY(showsText(group.get(), QStringLiteral("1:02:05")));
+    QVERIFY(showsText(group.get(), QStringLiteral("1:05, 2.0 MB")));
+
+    // The same measurement again is no change, and the thermal stream's are its own.
+    _primary->setStats(stats);
+    _thermal->setStats(stats);
+    QCOMPARE(statsSpy.count(), 2);
+
+    // A camera's advertised stream follows the measured values.
+    mavlink_video_stream_information_t info{};
+    info.type = VIDEO_STREAM_TYPE_RTPUDP;
+    info.encoding = VIDEO_STREAM_ENCODING_H264;
+    info.framerate = 30.0f;
+    info.bitrate = 8'000'000;
+    info.resolution_h = 1280;
+    info.resolution_v = 720;
+    (void) qstrncpy(info.uri, "5601", sizeof(info.uri));
+    (void) qstrncpy(info.name, "Main camera", sizeof(info.name));
+    QGCVideoStreamInfo cameraStream(info);
+    stream->setStreamInfo(&cameraStream);
+    _settle();
+    QVERIFY(showsText(group.get(), QStringLiteral("Main camera")));
+    QVERIFY(showsText(group.get(), QStringLiteral("29.5 fps (camera 30 fps)")));
+    QVERIFY(showsText(group.get(), QStringLiteral("0 kbit/s (camera 8.00 Mbit/s)")));
+    QVERIFY(showsText(group.get(), QStringLiteral("H.264 (camera 1280 × 720)")));
+    stream->setStreamInfo(nullptr);
+    _settle();
+
+    // A receiver going away takes its measurements with it.
+    stream->setReceiver(nullptr);
+    _primary = nullptr;
+    QCOMPARE(statsSpy.count(), 3);
+    QVERIFY(!group->isVisible());
+}
+
+void VideoManagerTest::_testStreamUriAndTransport_data()
+{
+    QTest::addColumn<QString>("source");
+    QTest::addColumn<QString>("url");
+    QTest::addColumn<QString>("uri");
+    QTest::addColumn<QString>("transport");
+
+    QTest::newRow("udp h.264") << QString(VideoSettings::videoSourceUDPH264) << "0.0.0.0:5600"
+                               << "udp://0.0.0.0:5600" << "RTP/UDP (H.264)";
+    QTest::newRow("udp h.265") << QString(VideoSettings::videoSourceUDPH265) << "0.0.0.0:5600"
+                               << "udp265://0.0.0.0:5600" << "RTP/UDP (H.265)";
+    QTest::newRow("mpeg-ts") << QString(VideoSettings::videoSourceMPEGTS) << "0.0.0.0:5600"
+                             << "mpegts://0.0.0.0:5600" << "MPEG-TS/UDP";
+    QTest::newRow("tcp") << QString(VideoSettings::videoSourceTCP) << "10.0.0.2:5600" << "tcp://10.0.0.2:5600"
+                         << "MPEG-TS/TCP";
+    // The URI is shown in the Fly View, so it loses credentials and query values.
+    QTest::newRow("rtsp") << QString(VideoSettings::videoSourceRTSP) << "rtsp://pilot:secret@cam.local/live?token=abc"
+                          << "rtsp://cam.local/live?token=REDACTED" << "RTSP";
+}
+
+void VideoManagerTest::_testStreamUriAndTransport()
+{
+    QFETCH(QString, source);
+    QFETCH(QString, url);
+    QFETCH(QString, uri);
+    QFETCH(QString, transport);
+
+    VideoStreamController* const stream = _videoManager->primaryStream();
+    QSignalSpy uriSpy(stream, &VideoStreamController::uriChanged);
+    _facts->set(_videoSettings->videoSource(), source);
+    Fact* const urlFact = (source == QString(VideoSettings::videoSourceRTSP))  ? _videoSettings->rtspUrl()
+                          : (source == QString(VideoSettings::videoSourceTCP)) ? _videoSettings->tcpUrl()
+                                                                               : _videoSettings->udpUrl();
+    _facts->set(urlFact, url);
+    _settle();
+
+    QCOMPARE(stream->uri(), uri);
+    QCOMPARE(stream->transport(), transport);
+    QCOMPARE(uriSpy.count(), (uri == QStringLiteral("udp://0.0.0.0:5600")) ? 0 : 1);
+
+    // Without a stream to play there is nothing to show.
+    _facts->set(_videoSettings->videoSource(), QString(VideoSettings::videoDisabled));
+    _settle();
+    QVERIFY(stream->uri().isEmpty());
+    QVERIFY(stream->transport().isEmpty());
 }
 
 UT_REGISTER_TEST(VideoManagerTest, TestLabel::Unit)

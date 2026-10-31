@@ -1,6 +1,8 @@
 #include "PipelineSession.h"
 
+#include <algorithm>
 #include <gst/gst.h>
+#include <utility>
 
 #include <QtCore/QDeadlineTimer>
 #ifdef Q_OS_WIN
@@ -15,6 +17,7 @@
 #include "HwBuffers/common/HwBuffers.h"
 #include "PipelineDotDumper.h"
 #include "StreamWatchdog.h"
+#include "VideoStreamStats.h"
 #include "gstqgc/gstqgcqvideosink.h"
 
 namespace {
@@ -101,6 +104,97 @@ QString messageSourcePath(GstMessage* message)
     const GStreamer::GCharPtr path = GStreamer::adoptGChar(
         GST_MESSAGE_SRC(message) ? gst_object_get_path_string(GST_MESSAGE_SRC(message)) : nullptr);
     return QString::fromUtf8(path ? path.get() : "(unknown)");
+}
+
+/// The latency @p pipeline reports; false when it doesn't answer the latency query.
+bool queryPipelineLatency(GstElement* pipeline, GstClockTime& min, GstClockTime& max)
+{
+    const GStreamer::GstQueryPtr query = GStreamer::adoptQuery(gst_query_new_latency());
+    if (!gst_element_query(pipeline, query.get())) {
+        return false;
+    }
+    gboolean live = FALSE;
+    gst_query_parse_latency(query.get(), &live, &min, &max);
+    return true;
+}
+
+struct JitterBufferTotals
+{
+    bool found = false;
+    quint64 packetsPushed = 0;
+    quint64 packetsLost = 0;
+    quint64 packetsLate = 0;
+    quint64 packetsDuplicate = 0;
+    quint64 rtxRequested = 0;
+    quint64 rtxRecovered = 0;
+    guint64 maxJitterNs = 0;
+};
+
+/// The "stats" of every rtpjitterbuffer in @p bin added up, rtspsrc's internal ones included.
+JitterBufferTotals jitterBufferTotals(GstElement* bin)
+{
+    JitterBufferTotals totals;
+    if (!bin || !GST_IS_BIN(bin)) {
+        return totals;
+    }
+    const auto addStats = [](const GValue* item, gpointer data) {
+        auto* const element = GST_ELEMENT(g_value_get_object(item));
+        GstElementFactory* const factory = gst_element_get_factory(element);
+        if (!factory || (g_strcmp0(GST_OBJECT_NAME(factory), "rtpjitterbuffer") != 0)) {
+            return;
+        }
+        GstStructure* rawStats = nullptr;
+        g_object_get(element, "stats", &rawStats, nullptr);
+        const GStreamer::GstStructurePtr stats = GStreamer::adoptStructure(rawStats);
+        const auto field = [&stats](const char* name) {
+            guint64 value = 0;
+            if (stats) {
+                (void) gst_structure_get_uint64(stats.get(), name, &value);
+            }
+            return value;
+        };
+        auto* const sum = static_cast<JitterBufferTotals*>(data);
+        sum->found = true;
+        sum->packetsPushed += field("num-pushed");
+        sum->packetsLost += field("num-lost");
+        sum->packetsLate += field("num-late");
+        sum->packetsDuplicate += field("num-duplicates");
+        sum->rtxRequested += field("rtx-count");
+        sum->rtxRecovered += field("rtx-success-count");
+        sum->maxJitterNs = std::max(sum->maxJitterNs, field("avg-jitter"));
+    };
+    GstIterator* const elements = gst_bin_iterate_recurse(GST_BIN(bin));
+    // rtspsrc adds its rtpbin, and rtpbin its jitter buffers, while the stream runs.
+    while (gst_iterator_foreach(elements, addStats, &totals) == GST_ITERATOR_RESYNC) {
+        gst_iterator_resync(elements);
+        totals = {};
+    }
+    gst_iterator_free(elements);
+    return totals;
+}
+
+/// The codec of the compressed video @p caps describe: "H.264", "H.265", ...; empty without caps.
+QString codecName(const GstCaps* caps)
+{
+    if (!caps || gst_caps_is_empty(caps) || gst_caps_is_any(caps)) {
+        return {};
+    }
+    const GstStructure* const structure = gst_caps_get_structure(caps, 0);
+    static constexpr std::pair<const char*, const char*> kCodecs[] = {
+        {"video/x-h264", "H.264"}, {"video/x-h265", "H.265"}, {"video/x-av1", "AV1"},
+        {"video/x-vp8", "VP8"},    {"video/x-vp9", "VP9"},    {"image/jpeg", "MJPEG"},
+    };
+    for (const auto& [mediaType, codec] : kCodecs) {
+        if (gst_structure_has_name(structure, mediaType)) {
+            return QString::fromLatin1(codec);
+        }
+    }
+    gint mpegVersion = 0;
+    if (gst_structure_has_name(structure, "video/mpeg") &&
+        gst_structure_get_int(structure, "mpegversion", &mpegVersion)) {
+        return QStringLiteral("MPEG-%1").arg(mpegVersion);
+    }
+    return QString::fromUtf8(gst_structure_get_name(structure));
 }
 
 }  // namespace
@@ -230,6 +324,54 @@ bool PipelineSession::displaying() const
 GstQgc::PathStats PipelineSession::sinkPathStats() const
 {
     return _decoding ? _decoding->sinkPathStats() : GstQgc::PathStats{};
+}
+
+void PipelineSession::sampleStats(VideoStreamStatsMeter::Counters& counters, VideoStreamStats& stats)
+{
+    counters.bytesReceived = _bytesReceived.load(std::memory_order_relaxed);
+    if (_decoding) {
+        const DecodingBranch::StatsSample display = _decoding->sampleStats();
+        counters.framesDisplayed = display.framesDisplayed;
+        counters.framesDropped = display.framesDropped;
+        stats.gpuPath = display.displayPath;
+        stats.decoder = _decoding->decoderName();
+        stats.hardwareDecoder = _decoding->hardwareDecoder();
+        stats.gpuFallbacks = static_cast<qint64>(display.gpuFallbacks);
+        stats.decoderRestarts = static_cast<qint64>(display.decoderRestarts);
+    }
+
+    const JitterBufferTotals jitterBuffers = jitterBufferTotals(_source);
+    if (jitterBuffers.found) {
+        counters.rtp = VideoStreamStatsMeter::RtpCounters{.packetsReceived = jitterBuffers.packetsPushed,
+                                                          .packetsLost = jitterBuffers.packetsLost};
+        stats.jitterMs = static_cast<double>(jitterBuffers.maxJitterNs) / GST_MSECOND;
+        stats.packetsLate = static_cast<qint64>(jitterBuffers.packetsLate);
+        stats.packetsDuplicate = static_cast<qint64>(jitterBuffers.packetsDuplicate);
+        stats.rtxRequested = static_cast<qint64>(jitterBuffers.rtxRequested);
+        stats.rtxRecovered = static_cast<qint64>(jitterBuffers.rtxRecovered);
+    } else {
+        counters.rtp.reset();
+        stats.jitterMs = -1.0;
+        stats.packetsLate = -1;
+        stats.packetsDuplicate = -1;
+        stats.rtxRequested = -1;
+        stats.rtxRecovered = -1;
+    }
+
+    const GstClockTime keyframeInterval = _keyframeInterval.load(std::memory_order_relaxed);
+    stats.keyframeIntervalMs =
+        GST_CLOCK_TIME_IS_VALID(keyframeInterval) ? static_cast<double>(keyframeInterval) / GST_MSECOND : -1.0;
+
+    GstClockTime minLatency = 0;
+    GstClockTime maxLatency = 0;
+    stats.latencyMs = (_pipeline && queryPipelineLatency(_pipeline.get(), minLatency, maxLatency))
+                          ? static_cast<double>(minLatency) / GST_MSECOND
+                          : -1.0;
+
+    const GStreamer::GstPadPtr teeSink = GStreamer::adoptPad(_tee ? gst_element_get_static_pad(_tee, "sink") : nullptr);
+    const GStreamer::GstCapsPtr caps =
+        GStreamer::adoptCaps(teeSink ? gst_pad_get_current_caps(teeSink.get()) : nullptr);
+    stats.codec = codecName(caps.get());
 }
 
 void PipelineSession::snapshot(const QString& tag) const
@@ -506,11 +648,7 @@ void PipelineSession::_onFirstFrame()
 void PipelineSession::_logLatency()
 {
     GstClockTime min = 0, max = 0;
-    const GStreamer::GstQueryPtr query = GStreamer::adoptQuery(gst_query_new_latency());
-    if (gst_element_query(_pipeline.get(), query.get())) {
-        gboolean live = FALSE;
-        gst_query_parse_latency(query.get(), &live, &min, &max);
-    }
+    (void) queryPipelineLatency(_pipeline.get(), min, max);
     qCDebug(GstVideoReceiverLog).noquote()
         << "Pipeline PLAYING:" << _settings.redactedUri << "min-latency:" << GST_TIME_AS_MSECONDS(min) << "ms"
         << "max-latency:" << GST_TIME_AS_MSECONDS(max) << "ms";
@@ -565,9 +703,13 @@ void PipelineSession::_onSourcePadAdded(GstElement* source, GstPad* pad, gpointe
     }));
 }
 
-GstPadProbeReturn PipelineSession::_teeProbe(GstPad* /*pad*/, GstPadProbeInfo* /*info*/, gpointer data)
+GstPadProbeReturn PipelineSession::_teeProbe(GstPad* /*pad*/, GstPadProbeInfo* info, gpointer data)
 {
     auto* const self = static_cast<PipelineSession*>(data);
+    if (GstBuffer* const buffer = GST_PAD_PROBE_INFO_BUFFER(info)) {
+        (void) self->_bytesReceived.fetch_add(gst_buffer_get_size(buffer), std::memory_order_relaxed);
+        self->_noteKeyframe(buffer);
+    }
     const quint64 frames = self->_watchdog.noteSourceFrame(StreamWatchdog::now());
     if (frames == 1) {
         self->_post([self]() { self->_onFirstFrame(); });
@@ -575,6 +717,22 @@ GstPadProbeReturn PipelineSession::_teeProbe(GstPad* /*pad*/, GstPadProbeInfo* /
         qCDebug(GstVideoReceiverLog).noquote() << "Source flow: teeFrames=" << frames << self->_settings.redactedUri;
     }
     return GST_PAD_PROBE_OK;
+}
+
+void PipelineSession::_noteKeyframe(const GstBuffer* buffer)
+{
+    if (GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT)) {
+        return;
+    }
+    const GstClockTime time = GST_BUFFER_PTS_IS_VALID(buffer) ? GST_BUFFER_PTS(buffer) : GST_BUFFER_DTS(buffer);
+    if (!GST_CLOCK_TIME_IS_VALID(time)) {
+        return;
+    }
+    // Parameter sets that arrive in a buffer of their own share the keyframe's timestamp.
+    const GstClockTime previous = _lastKeyframeTime.exchange(time, std::memory_order_relaxed);
+    if (GST_CLOCK_TIME_IS_VALID(previous) && (time > previous)) {
+        _keyframeInterval.store(time - previous, std::memory_order_relaxed);
+    }
 }
 
 GstPadProbeReturn PipelineSession::_sourceEosProbe(GstPad* /*pad*/, GstPadProbeInfo* info, gpointer data)

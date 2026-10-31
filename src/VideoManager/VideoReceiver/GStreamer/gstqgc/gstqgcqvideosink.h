@@ -30,6 +30,13 @@ void configureSinkCaps(GstElement* sink, GpuBinMode gpuBin, bool squarePixels);
 /// GstHw::toString(path).
 const char* sinkFramesField(HwVideoBufferPath path) noexcept;
 
+/// guint64 "frame-stats" field holding the delivered frames a newer frame replaced before the QVideoSink took them,
+/// which were never shown.
+inline constexpr const char* kSupersededFramesField = "superseded-frames";
+
+/// guint64 "frame-stats" field holding the frames a GPU path was tried for but the CPU delivered.
+inline constexpr const char* kGpuFallbacksField = "gpu-fallbacks";
+
 /// The "frame-stats" of @p sinkOrBin, a qgcqvideosink or the qgcvideosinkbin around one; null for other elements.
 GStreamer::GstStructurePtr frameStats(GstElement* sinkOrBin);
 

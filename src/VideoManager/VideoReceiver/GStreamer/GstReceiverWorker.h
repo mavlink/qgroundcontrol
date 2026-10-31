@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <memory>
 #include <optional>
 
@@ -10,6 +11,8 @@
 #include "PipelineSession.h"
 #include "StreamWatchdog.h"
 #include "VideoReceiver.h"
+#include "VideoStreamStats.h"
+#include "VideoStreamStatsMeter.h"
 
 class QTimer;
 
@@ -45,6 +48,8 @@ signals:
     void recordingStarted(const QString& file);
     void recordingFinished(const QString& file, const QString& error);
     void errorOccurred(const QString& message);
+    /// About once a second while streaming, and an invalid one once the session stops.
+    void statsChanged(const VideoStreamStats& stats);
 
 private:
     /// What startRecording() asked for; after a reconnect it continues in the next part.
@@ -54,8 +59,12 @@ private:
         VideoReceiver::FileFormat format = VideoReceiver::FileFormat::Mkv;
         int part = 1;
         bool opened = false;  ///< The current part has a frame.
+        /// When the first part got its first frame.
+        std::optional<std::chrono::steady_clock::time_point> startedAt = std::nullopt;
 
         QString currentFile() const;
+        /// The bytes in the files of the parts so far.
+        qint64 bytesWritten() const;
     };
 
     void _reconcile();
@@ -69,6 +78,8 @@ private:
     void _endRecording();
     std::optional<RecordingBranch::Request> _recordingRequest() const;
     void _onWatchdogTick();
+    void _sampleStats();
+    void _publishStats(const VideoStreamStats& stats);
     void _setState(VideoReceiver::State state);
     QString _redactedUri() const;
 
@@ -98,4 +109,9 @@ private:
     QString _lastFailure;
     VideoReceiver::State _state = VideoReceiver::State::Stopped;
     int _statsTicks = 0;
+    /// Sessions that streamed since the stream was started or restarted; each one after the first is a reconnect.
+    int _streamedSessions = 0;
+    std::chrono::steady_clock::time_point _streamingSince;
+    VideoStreamStatsMeter _statsMeter;
+    VideoStreamStats _stats;
 };

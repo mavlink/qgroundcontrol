@@ -562,12 +562,15 @@ void GstQgcSinkTest::_testQgcQVideoSinkDeliversLatestFrameOnly()
     QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
     QCOMPARE(emissions, 1);
     QCOMPARE(lastStartUs, qint64(3 * GST_SECOND / GST_USECOND));
+    // The two frames never shown are counted as superseded.
+    QCOMPARE(GstQgcTest::sinkStat(harness.element(), GstQgc::kSupersededFramesField), qint64(2));
 
     // Delivery re-arms once the GUI side has taken the frame.
     QCOMPARE(harness.pushFrame(4 * GST_SECOND), GST_FLOW_OK);
     QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
     QCOMPARE(emissions, 2);
     QCOMPARE(lastStartUs, qint64(4 * GST_SECOND / GST_USECOND));
+    QCOMPARE(GstQgcTest::sinkStat(harness.element(), GstQgc::kSupersededFramesField), qint64(2));
 }
 
 void GstQgcSinkTest::_testQgcQVideoSinkRenegotiatesMidStream()

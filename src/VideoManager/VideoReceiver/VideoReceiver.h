@@ -9,6 +9,8 @@
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include "VideoStreamStats.h"
+
 class QQuickItem;
 class QVideoFrame;
 class QVideoSink;
@@ -32,6 +34,7 @@ class VideoReceiver : public QObject
     Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged)
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
     Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged)
+    Q_PROPERTY(VideoStreamStats stats READ stats NOTIFY statsChanged)
 
 public:
     enum class State : uint8_t
@@ -96,6 +99,9 @@ public:
 
     QSize videoSize() const { return _videoSize; }
 
+    /// The stream's health, measured about once a second while it streams; invalid while it doesn't.
+    VideoStreamStats stats() const { return _stats; }
+
     /// Stores @p config. While active, a change to anything but autoReconnect restarts the stream; an empty URI stops
     /// it until a URI is set again.
     void setConfig(const Config& config);
@@ -129,6 +135,7 @@ signals:
     /// A recording file closed. @p error is empty when the file was finalized cleanly.
     void recordingFinished(const QString& file, const QString& error);
     void videoSizeChanged(QSize size);
+    void statsChanged(const VideoStreamStats& stats);
     /// A failure worth telling the user about (stream error with autoReconnect off, recording error). Not emitted for
     /// failures the receiver recovers from by reconnecting.
     void errorOccurred(const QString& message);
@@ -150,6 +157,8 @@ protected:
     void setDecoding(bool decoding);
     void setRecording(bool recording);
     void setVideoSize(QSize size);
+    /// Backends publish a new measurement, and an invalid one once the stream stops or reconnects.
+    void setStats(const VideoStreamStats& stats);
 
 private:
     void _onVideoOutputDestroyed();
@@ -163,4 +172,5 @@ private:
     bool _decoding = false;
     bool _recording = false;
     QSize _videoSize;
+    VideoStreamStats _stats;
 };

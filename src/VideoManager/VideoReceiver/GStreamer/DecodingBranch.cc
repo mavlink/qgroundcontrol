@@ -43,6 +43,42 @@ bool isInside(GstObject* object, GstElement* element)
     return element && object && gst_object_has_as_ancestor(object, GST_OBJECT_CAST(element));
 }
 
+/// The guint64 @p field of a qgcqvideosink "frame-stats" structure, 0 without one.
+quint64 sinkStatsField(const GstStructure* stats, const char* field)
+{
+    guint64 value = 0;
+    if (stats) {
+        (void) gst_structure_get_uint64(stats, field, &value);
+    }
+    return value;
+}
+
+struct SinkFrameCounts
+{
+    quint64 displayed = 0;
+    quint64 superseded = 0;
+    quint64 gpuFallbacks = 0;
+};
+
+/// The frames a sink displayed, superseded and fell back to the CPU for, between its "frame-stats" @p since and
+/// @p stats.
+SinkFrameCounts sinkFrameCountsSince(const GstStructure* stats, const GstStructure* since)
+{
+    const auto growth = [stats, since](const char* field) {
+        const quint64 now = sinkStatsField(stats, field);
+        const quint64 before = sinkStatsField(since, field);
+        return (now > before) ? (now - before) : 0;
+    };
+    quint64 delivered = 0;
+    for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
+        delivered += growth(GstQgc::sinkFramesField(HwVideoBufferPath(i)));
+    }
+    const quint64 superseded = growth(GstQgc::kSupersededFramesField);
+    return {.displayed = (delivered > superseded) ? (delivered - superseded) : 0,
+            .superseded = superseded,
+            .gpuFallbacks = growth(GstQgc::kGpuFallbacksField)};
+}
+
 }  // namespace
 
 DecodingBranch::DecodingBranch(const BranchContext& context, Listener& listener, bool lowLatency)
@@ -103,6 +139,7 @@ void DecodingBranch::setVideoSink(GstElement* sink)
 
     _removeDecoder();
     _sinkFrameProbe.remove();
+    _retireSinkCounts();
     _sink.reset();
     _sinkStatsAtStart.reset();
     _setDecoding(false);
@@ -118,6 +155,9 @@ void DecodingBranch::setVideoSink(GstElement* sink)
     }
     _sink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref(sink)));
     _sinkStatsAtStart = GstQgc::frameStats(_sink.get());
+    for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
+        _pathFramesAtSample[i] = sinkStatsField(_sinkStatsAtStart.get(), GstQgc::sinkFramesField(HwVideoBufferPath(i)));
+    }
     _gpuCountersAtStart = GstHwPathTelemetry::snapshot();
     GStreamer::markBranch(_sink.get(), GStreamer::PipelineBranch::Decoding);
     (void) _sinkFrameProbe.add(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, _sinkProbe, this);
@@ -149,6 +189,7 @@ void DecodingBranch::restartDecoder(const char* reason)
     }
 
     qCDebug(GstVideoReceiverLog) << "Restarting the decoder after" << reason << _context.redactedUri;
+    ++_decoderRestarts;
     _removeDecoder();
     _setDecoding(false);
     _insertDecoder();
@@ -168,6 +209,45 @@ GstQgc::PathStats DecodingBranch::sinkPathStats() const
         out.line += HwBuffers::extraPathStatsSince(_gpuCountersAtStart);
     }
     return out;
+}
+
+DecodingBranch::StatsSample DecodingBranch::sampleStats()
+{
+    const GStreamer::GstStructurePtr stats = GstQgc::frameStats(_sink.get());
+    const SinkFrameCounts sinkCounts = sinkFrameCountsSince(stats.get(), _sinkStatsAtStart.get());
+
+    quint64 busiestPathFrames = 0;
+    for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
+        const auto path = HwVideoBufferPath(i);
+        const quint64 frames = sinkStatsField(stats.get(), GstQgc::sinkFramesField(path));
+        const quint64 sinceSample = (frames > _pathFramesAtSample[i]) ? (frames - _pathFramesAtSample[i]) : 0;
+        if (sinceSample > busiestPathFrames) {
+            busiestPathFrames = sinceSample;
+            _displayPath = QString::fromLatin1(GstHw::toString(path));
+        }
+        _pathFramesAtSample[i] = frames;
+    }
+
+    return {
+        .framesDisplayed = _retiredFramesDisplayed + sinkCounts.displayed,
+        .framesDropped =
+            _framesDropped.load(std::memory_order_relaxed) + _retiredFramesSuperseded + sinkCounts.superseded,
+        .displayPath = _displayPath,
+        .gpuFallbacks = _retiredGpuFallbacks + sinkCounts.gpuFallbacks,
+        .decoderRestarts = _decoderRestarts,
+    };
+}
+
+void DecodingBranch::_retireSinkCounts()
+{
+    if (!_sink) {
+        return;
+    }
+    const GStreamer::GstStructurePtr stats = GstQgc::frameStats(_sink.get());
+    const SinkFrameCounts counts = sinkFrameCountsSince(stats.get(), _sinkStatsAtStart.get());
+    _retiredFramesDisplayed += counts.displayed;
+    _retiredFramesSuperseded += counts.superseded;
+    _retiredGpuFallbacks += counts.gpuFallbacks;
 }
 
 void DecodingBranch::_insertDecoder()
@@ -273,6 +353,8 @@ void DecodingBranch::_setDecoderName(const QString& name)
 void DecodingBranch::_onQueueOverrun(GstElement* /*queue*/, gpointer data)
 {
     auto* const self = static_cast<DecodingBranch*>(data);
+    // Each overrun leaks the oldest buffer: the queue fills by buffer count only.
+    (void) self->_framesDropped.fetch_add(1, std::memory_order_relaxed);
     if (self->_gateClosed.exchange(true, std::memory_order_relaxed)) {
         return;
     }
@@ -295,6 +377,7 @@ GstPadProbeReturn DecodingBranch::_gateProbe(GstPad* /*pad*/, GstPadProbeInfo* i
     const GstBuffer* const buffer = GST_PAD_PROBE_INFO_BUFFER(info);
     const bool delta = buffer && GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT);
     if (delta && (self->_gateDrops.fetch_add(1, std::memory_order_relaxed) < kMaxGateDrops)) {
+        (void) self->_framesDropped.fetch_add(1, std::memory_order_relaxed);
         return GST_PAD_PROBE_DROP;
     }
     self->_gateClosed.store(false, std::memory_order_relaxed);
@@ -344,7 +427,11 @@ void DecodingBranch::_onDecoderElementAdded(GstBin* /*decodebin*/, GstBin* /*sub
     qCDebug(GstVideoReceiverLog).noquote()
         << "Decodebin3 selected" << GStreamer::describeDecoderFactory(factory) << "- QoS disabled";
     const QString name = QString::fromUtf8(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
+    const bool hardware = GStreamer::isHardwareDecoderFactory(factory);
 
     auto* const self = static_cast<DecodingBranch*>(data);
-    self->_context.post([self, name]() { self->_setDecoderName(name); });
+    self->_context.post([self, name, hardware]() {
+        self->_hardwareDecoder = hardware;
+        self->_setDecoderName(name);
+    });
 }

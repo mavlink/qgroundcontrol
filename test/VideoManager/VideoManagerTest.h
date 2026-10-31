@@ -35,6 +35,9 @@ private slots:
     void _testQmlVideoOutputRegistersItself();
     void _testScreenshotsComeFromStreamsOnDisplay();
     void _testStreamErrorsReachUser();
+    void _testStreamStatsReachQml();
+    void _testStreamUriAndTransport_data();
+    void _testStreamUriAndTransport();
 
 private:
     /// Runs the queued stream updates.
