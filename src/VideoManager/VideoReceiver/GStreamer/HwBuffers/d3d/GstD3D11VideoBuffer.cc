@@ -70,7 +70,19 @@ public:
         return subIdx > 0 || desc.ArraySize > 1;
     }
 
-    static bool prepare(Memory* /*mem*/, int /*plane*/) { return true; }
+    // A frame written through the CPU, as d3d11upload writes system memory, reaches the texture only when its memory
+    // is mapped for D3D11; a decoder's frame has no such upload pending.
+    static bool prepare(Memory* mem, int plane)
+    {
+        GstMapInfo info;
+        if (!gst_memory_map(GST_MEMORY_CAST(mem), &info, static_cast<GstMapFlags>(GST_MAP_READ | GST_MAP_D3D11))) {
+            QGC_HW_WARN_ONCE(GstD3D11Log, s_diag.loggedNullResource,
+                             "resolve: mapping the GstD3D11Memory for D3D11 failed for plane" << plane);
+            return false;
+        }
+        gst_memory_unmap(GST_MEMORY_CAST(mem), &info);
+        return true;
+    }
 
     Handle* copySlice(Handle* tex, guint subIdx, int plane, Memory* /*mem*/)
     {
