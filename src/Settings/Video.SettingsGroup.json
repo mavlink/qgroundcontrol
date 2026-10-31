@@ -39,14 +39,6 @@
             "keywords": "tcp,video url,stream url"
         },
         {
-            "name": "videoSavePath",
-            "shortDesc": "Video save directory",
-            "longDesc": "Directory to save videos to.",
-            "type": "string",
-            "default": "",
-            "label": "Video save directory"
-        },
-        {
             "name": "aspectRatio",
             "shortDesc": "Video frame aspect ratio as width divided by height. Use 0 to auto-detect.",
             "longDesc": "Video Aspect Ratio (width / height). Use 0.0 to ignore it.",
