@@ -110,23 +110,17 @@ endfunction()
 
 # _qgc_gst_ios_sdk_version(<include_dir> <out_var>)
 # Sets <out_var> to the version gst/gstversion.h under <include_dir> defines, which works for every SDK layout, and
-# fails configure below the 1.28 floor: discovery only checked the requested version. Without the header it warns and
-# falls back to QGC_GST_REQUESTED_VERSION.
+# fails configure when it is older than QGC_GST_REQUESTED_VERSION, as the pkg-config platforms' version check does.
+# Without the header it warns and falls back to QGC_GST_REQUESTED_VERSION.
 function(_qgc_gst_ios_sdk_version include_dir out_var)
     _qgc_gst_header_version("${include_dir}" _version)
     if(_version)
-        if(_version VERSION_LESS "1.28.0")
+        if(_version VERSION_LESS QGC_GST_REQUESTED_VERSION)
             message(
                 FATAL_ERROR
-                    "GStreamer iOS SDK headers (${include_dir}/gst/gstversion.h) report version "
-                    "'${_version}', which is older than the required 1.28 floor. A downgraded or stale "
-                    "SDK was found — remove it / clear the SDK cache and re-fetch the pinned version."
-            )
-        endif()
-        if(QGC_GST_REQUESTED_VERSION AND _version VERSION_LESS QGC_GST_REQUESTED_VERSION)
-            message(
-                WARNING "GStreamer iOS SDK version '${_version}' is older than the requested "
-                        "'${QGC_GST_REQUESTED_VERSION}'. Using the SDK's actual version."
+                    "GStreamer iOS SDK headers (${include_dir}/gst/gstversion.h) report version '${_version}', "
+                    "older than the requested ${QGC_GST_REQUESTED_VERSION}. Point GStreamer_ROOT_DIR at an SDK of "
+                    "that version, or unset it and clear the SDK cache to download one."
             )
         endif()
     else()

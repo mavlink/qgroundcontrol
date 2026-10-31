@@ -79,7 +79,9 @@ set(_qgc_gst_failure_cases
     "test_ios_xcframework_slice|NoMatchingArch|no-matching-arch|no iphoneos slice for architectures 'x86_64'"
     "test_download_win_version_guard|||Windows GStreamer SDK requires version 1.28 or later"
     "test_windows_installer_guard|Unpinned|unpinned|refusing to silently run the downloaded Windows installer"
-    "test_ios_sdk_version|BelowFloor|below-floor|older than the required 1.28 floor"
+    "test_ios_sdk_version|BelowRequested|below-requested|older than the requested 1.28.4"
+    "test_windows_sdk_root|ExplicitIncomplete|explicit-incomplete|\\(GStreamer_ROOT_DIR\\) is incomplete"
+    "test_windows_sdk_root|ExplicitOld|explicit-old|\\(GStreamer_ROOT_DIR\\) has version '1.26.0'"
 )
 foreach(_qgc_failure_case IN LISTS _qgc_gst_failure_cases)
     string(REPLACE "|" ";" _qgc_failure_parts "${_qgc_failure_case}")

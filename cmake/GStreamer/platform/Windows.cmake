@@ -61,35 +61,40 @@ endfunction()
 
 # _qgc_gst_discover_windows_sdk()
 # Uses the SDK under GStreamer_ROOT_DIR, the GSTREAMER_1_0_ROOT_* environment or a standard install location when it is
-# complete and recent enough, else downloads the official MSVC SDK for the target architecture. The SDK brings its own
-# pkg-config.
+# complete and recent enough, else downloads the official MSVC SDK for the target architecture. An SDK the user named
+# in GStreamer_ROOT_DIR that is incomplete or too old fails configure; one found elsewhere is replaced by a download.
+# The SDK brings its own pkg-config.
 # cmake-lint: disable=C0103
 function(_qgc_gst_discover_windows_sdk)
     _qgc_gst_windows_sdk_arch(_gst_win_arch)
 
-    if(NOT GStreamer_ROOT_DIR)
+    set(_gst_win_user_root FALSE)
+    if(GStreamer_ROOT_DIR AND NOT GStreamer_AUTO_DOWNLOADED)
+        set(_gst_win_user_root TRUE)
+    elseif(NOT GStreamer_ROOT_DIR)
         _qgc_gst_windows_installed_sdk(${_gst_win_arch} GStreamer_ROOT_DIR)
     endif()
 
     if(GStreamer_ROOT_DIR)
         _qgc_gst_windows_sdk_complete("${GStreamer_ROOT_DIR}" _gst_win_sdk_complete)
         _qgc_gst_header_version("${GStreamer_ROOT_DIR}/include" _gst_win_sdk_version)
+        set(_gst_win_problem "")
         if(NOT _gst_win_sdk_complete)
-            message(
-                WARNING "Existing GStreamer SDK at ${GStreamer_ROOT_DIR} is incomplete "
-                        "(missing devel/runtime artifacts). Falling back to auto-download."
-            )
-            unset(GStreamer_ROOT_DIR)
-            unset(GStreamer_ROOT_DIR CACHE)
+            set(_gst_win_problem "is incomplete (missing devel or runtime files)")
         elseif(NOT _gst_win_sdk_version OR _gst_win_sdk_version VERSION_LESS QGC_GST_REQUESTED_VERSION)
-            message(
-                WARNING
-                    "Existing GStreamer SDK at ${GStreamer_ROOT_DIR} has version "
-                    "'${_gst_win_sdk_version}', but ${QGC_GST_REQUESTED_VERSION}+ is required. "
-                    "Falling back to auto-download."
+            set(_gst_win_problem
+                "has version '${_gst_win_sdk_version}', but ${QGC_GST_REQUESTED_VERSION} or later is required"
             )
+        endif()
+        if(_gst_win_problem AND _gst_win_user_root)
+            message(
+                FATAL_ERROR
+                    "GStreamer: the SDK at ${GStreamer_ROOT_DIR} (GStreamer_ROOT_DIR) ${_gst_win_problem}. Point "
+                    "GStreamer_ROOT_DIR at a complete SDK of that version, or unset it to download one."
+            )
+        elseif(_gst_win_problem)
+            message(WARNING "GStreamer: the SDK at ${GStreamer_ROOT_DIR} ${_gst_win_problem}; downloading one instead.")
             unset(GStreamer_ROOT_DIR)
-            unset(GStreamer_ROOT_DIR CACHE)
         endif()
     endif()
 
