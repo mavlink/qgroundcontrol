@@ -15,6 +15,7 @@ private slots:
     void _testNativeDebugLogRequested();
     void _testNativeDebugLogIsNotBridged();
     void _testConfigureDebugLoggingIsIdempotent();
+    void _testConfigureDebugLoggingDefaultsToDisabled();
     void _testRedirectGLibLogging();
     void _testExternalPluginLoaderFailed();
     void _testMissingPluginFeatures_data();

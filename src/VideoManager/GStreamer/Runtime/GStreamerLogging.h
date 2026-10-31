@@ -18,7 +18,7 @@ void resetExternalPluginLoaderFailed();
 bool nativeDebugLogRequested();
 
 // Unless nativeDebugLogRequested(), replace gst's default log function with qtGstLog. Then apply @p level, the
-// persisted gstDebugLevel setting, unless GST_DEBUG is set.
+// persisted gstDebugLevel setting, else that setting's default (disabled), unless GST_DEBUG is set.
 void configureDebugLogging(std::optional<int> level = std::nullopt);
 
 // Diagnostic dump of installed video-decoder factories, sorted by rank, with

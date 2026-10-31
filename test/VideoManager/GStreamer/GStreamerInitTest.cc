@@ -120,6 +120,21 @@ void GStreamerInitTest::_testConfigureDebugLoggingIsIdempotent()
     verifyExpectedLogMessage();
 }
 
+void GStreamerInitTest::_testConfigureDebugLoggingDefaultsToDisabled()
+{
+    GSTTEST_REQUIRE_GSTREAMER();
+
+    const NativeDebugLogEnvGuard guard;
+    const auto restore = qScopeGuard([] { gst_debug_set_default_threshold(GST_LEVEL_NONE); });
+    // A GStreamer development build (nano > 0) starts at GST_LEVEL_ERROR.
+    gst_debug_set_default_threshold(GST_LEVEL_ERROR);
+    GStreamer::configureDebugLogging();
+    QCOMPARE(gst_debug_get_default_threshold(), GST_LEVEL_NONE);
+
+    GStreamer::configureDebugLogging(GST_LEVEL_WARNING);
+    QCOMPARE(gst_debug_get_default_threshold(), GST_LEVEL_WARNING);
+}
+
 void GStreamerInitTest::_testRedirectGLibLogging()
 {
     GStreamer::redirectGLibLogging();

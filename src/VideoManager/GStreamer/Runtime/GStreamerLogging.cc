@@ -145,9 +145,9 @@ void configureDebugLogging(std::optional<int> level)
         return;
     }
 
-    if (level) {
-        setDebugLevel(*level);
-    }
+    // A GStreamer development build (nano > 0, as the official 1.28.8 Windows SDK is) defaults to GST_LEVEL_ERROR
+    // rather than GST_LEVEL_NONE, so the setting's default is applied explicitly.
+    setDebugLevel(level.value_or(GST_LEVEL_NONE));
 }
 
 void setDebugLevel(int level)

@@ -42,7 +42,7 @@ struct MissingPluginFeature
 /// completeInit() fails only when a required one is missing, and warns about the others.
 QList<MissingPluginFeature> missingPluginFeatures(const std::function<bool(const char* factoryName)>& hasFactory);
 
-/// @p debugLevel: the debug threshold to start with, unless GST_DEBUG is set.
+/// @p debugLevel: the debug threshold to start with (none when unset), unless GST_DEBUG is set.
 bool completeInit(std::optional<int> debugLevel = std::nullopt);
 void setDebugLevel(int level);
 /// A new qgcvideosinkbin, returned as an owned, non-floating reference (adopt it), or nullptr.
