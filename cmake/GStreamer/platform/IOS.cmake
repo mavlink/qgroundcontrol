@@ -270,7 +270,7 @@ endfunction()
 # _qgc_gst_ios_mobile_framework(<plugin>...)
 # Creates GStreamer::mobile (qgc_gst_add_mobile_library) as the framework the app embeds and the only binary that links
 # GStreamer_static. Its generated gst_init_static_plugins() registers the <plugin>s and loads G_IO_MODULES, which is
-# what links their objects in; the core functions in QGC_GST_APP_CORE_SYMBOLS (StaticInit.cmake) that no plugin pulls
+# what links their objects in; the core functions in QGC_GST_APP_CORE_SYMBOLS (Mobile.cmake) that no plugin pulls
 # in are kept. The app resolves every GStreamer symbol from this framework.
 function(_qgc_gst_ios_mobile_framework)
     # gioopenssl is statically linked into libGStreamer.a (nm: _g_io_openssl_load is exported from the slice);

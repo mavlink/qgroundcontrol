@@ -15,7 +15,7 @@
 #     (src/VideoManager/GStreamer/Platform) provides the JNI state from the app instead;
 #   - it registers every plugin it is given, while QGC registers only the allowlisted plugins that have a static
 #     archive (failing configure when a bundle-required one is missing), with its own registration template
-#     (StaticInit.cmake);
+#     (Mobile.cmake);
 #   - it copies the plugin Java sources and fonts/CA assets into the source tree, while QGC stages them in the build
 #     directory for Gradle;
 #   - its static-library and SDK discovery come from the SDK's FindGStreamer.cmake, while QGC's are its own

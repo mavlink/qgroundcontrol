@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 # The generated gst_init_static_plugins() source declares and registers exactly the requested plugins and GIO
 # modules, and compiles against the host's GStreamer headers when they are installed.
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/../StaticInit.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/../Mobile.cmake")
 
 qgc_test_sandbox(_sandbox static-init)
 

@@ -24,7 +24,7 @@ foreach(
         PluginPolicy
         Install
         Notice
-        StaticInit
+        Mobile
         SdkState
         platform/Windows
         platform/Linux
@@ -162,7 +162,7 @@ if(_qgc_gst_missing_components)
     message(STATUS "QGCGStreamer: optional components not found: ${_qgc_gst_missing_components}")
 endif()
 
-# Mobile apps register their plugins in GStreamer::mobile's generated gst_init_static_plugins() (StaticInit.cmake).
+# Mobile apps register their plugins in GStreamer::mobile's generated gst_init_static_plugins() (Mobile.cmake).
 if(ANDROID OR IOS)
     target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_STATIC_BUILD)
 endif()

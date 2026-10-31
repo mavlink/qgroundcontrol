@@ -42,7 +42,7 @@ constexpr std::chrono::milliseconds kPipelineTimeout = 4s;
 constexpr const char* kProxyLookupUri = "rtsp://127.0.0.1";
 
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
-// The plugins and the OpenSSL GIO module are linked into the app (StaticInit.cmake).
+// The plugins and the OpenSSL GIO module are linked into the app (Mobile.cmake).
 constexpr bool kStaticRuntime = true;
 #else
 constexpr bool kStaticRuntime = false;

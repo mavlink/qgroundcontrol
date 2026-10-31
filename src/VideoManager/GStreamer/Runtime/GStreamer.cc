@@ -29,7 +29,7 @@ QGC_LOGGING_CATEGORY(GStreamerLog, "Video.GStreamer.GStreamer")
 
 G_BEGIN_DECLS
 #ifdef QGC_GST_STATIC_BUILD
-// Generated from cmake/GStreamer/gst_static_plugins.c.in by qgc_gst_generate_static_init (StaticInit.cmake):
+// Generated from cmake/GStreamer/gst_static_plugins.c.in by qgc_gst_generate_static_init (Mobile.cmake):
 // registers every configured plugin and loads the static GIO modules (gioopenssl + the bundled CA bundle on mobile).
 extern void gst_init_static_plugins(void);
 #endif

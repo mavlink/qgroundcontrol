@@ -7,16 +7,16 @@ definitions:
   - ../../cmake/CompilerWarnings.cmake
   - ../../cmake/GStreamer/Acquire.cmake
   - ../../cmake/GStreamer/Components.cmake
-  - ../../cmake/GStreamer/Download.cmake
   - ../../cmake/GStreamer/Install.cmake
   - ../../cmake/GStreamer/Layout.cmake
+  - ../../cmake/GStreamer/Mobile.cmake
   - ../../cmake/GStreamer/Notice.cmake
+  - ../../cmake/GStreamer/Packages.cmake
   - ../../cmake/GStreamer/PkgConfig.cmake
   - ../../cmake/GStreamer/Platform.cmake
   - ../../cmake/GStreamer/PluginPolicy.cmake
   - ../../cmake/GStreamer/Probe.cmake
   - ../../cmake/GStreamer/SdkState.cmake
-  - ../../cmake/GStreamer/StaticInit.cmake
   - ../../cmake/GStreamer/Targets.cmake
   - ../../cmake/GStreamer/platform
   - ../../cmake/GStreamer/tests/_assert.cmake

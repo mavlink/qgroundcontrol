@@ -5,7 +5,7 @@ project(QGCGStreamerIosLink LANGUAGES C CXX)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 include("${QGC_MODULE_DIR}/GStreamer/Probe.cmake")
-include("${QGC_MODULE_DIR}/GStreamer/StaticInit.cmake")
+include("${QGC_MODULE_DIR}/GStreamer/Mobile.cmake")
 include("${QGC_MODULE_DIR}/GStreamer/platform/IOS.cmake")
 # The core functions GStreamer::mobile keeps (on this ELF host without the Mach-O underscore).
 set(QGC_GST_APP_CORE_SYMBOLS ${QGC_TEST_CORE_SYMBOLS})
