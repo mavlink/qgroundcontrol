@@ -10,7 +10,7 @@
 #include "VideoReceiver.h"
 
 class GstReceiverWorker;
-class GstVideoReceiverTest;
+class GstVideoReceiverTestBase;
 class QGCQVideoSinkController;
 class QThread;
 
@@ -52,7 +52,7 @@ protected:
     void onStopRecording() override;
 
 private:
-    friend class GstVideoReceiverTest;
+    friend class GstVideoReceiverTestBase;
 
     void _postToWorker(std::function<void(GstReceiverWorker&)> task);
     /// Builds the display sink and its controller, bound to @p videoSink.

@@ -34,8 +34,16 @@ target_sources(
         Receiver/GstRecordingSinkTest.h
         Receiver/GstVideoReceiverComponentsTest.cc
         Receiver/GstVideoReceiverComponentsTest.h
-        Receiver/GstVideoReceiverTest.cc
-        Receiver/GstVideoReceiverTest.h
+        Receiver/GstVideoReceiverPipelineTest.cc
+        Receiver/GstVideoReceiverPipelineTest.h
+        Receiver/GstVideoReceiverReconnectTest.cc
+        Receiver/GstVideoReceiverReconnectTest.h
+        Receiver/GstVideoReceiverRecordingTest.cc
+        Receiver/GstVideoReceiverRecordingTest.h
+        Receiver/GstVideoReceiverStatsTest.cc
+        Receiver/GstVideoReceiverStatsTest.h
+        Receiver/GstVideoReceiverTestBase.cc
+        Receiver/GstVideoReceiverTestBase.h
         SourceFactory/GstSourceFactoryStreamTest.cc
         SourceFactory/GstSourceFactoryStreamTest.h
         SourceFactory/GstSourceFactoryTest.cc
@@ -83,7 +91,10 @@ add_qgc_test(GstQgcSinkPipelineTest LABELS Integration)
 add_qgc_test(GstRecordingSinkTest LABELS Integration)
 add_qgc_test(GstSelfTestPipelineTest LABELS Integration)
 add_qgc_test(GstSourceFactoryStreamTest LABELS Integration)
-add_qgc_test(GstVideoReceiverTest LABELS Integration)
+add_qgc_test(GstVideoReceiverPipelineTest LABELS Integration)
+add_qgc_test(GstVideoReceiverReconnectTest LABELS Integration)
+add_qgc_test(GstVideoReceiverRecordingTest LABELS Integration)
+add_qgc_test(GstVideoReceiverStatsTest LABELS Integration)
 # Needs Qt on EGL, which the offscreen QPA lacks: xcb with xcb_egl, falling back to offscreen (and skipping) without an
 # X display.
 set(_qgc_gl_readback_env ENV_MODIFICATION "QT_QPA_PLATFORM=cmake_list_prepend:xcb" "QT_XCB_GL_INTEGRATION=set:xcb_egl")
@@ -107,7 +118,7 @@ endif()
 # MockVideoStreamServer is only compiled into single-config Debug builds (see its directory's CMakeLists.txt).
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set_property(
-        SOURCE Receiver/GstVideoReceiverTest.cc TARGET_DIRECTORY QGCUnitTests
+        SOURCE Receiver/GstVideoReceiverPipelineTest.cc TARGET_DIRECTORY QGCUnitTests
         APPEND
         PROPERTY COMPILE_DEFINITIONS QGC_HAS_MOCK_VIDEO_STREAM_SERVER
     )
