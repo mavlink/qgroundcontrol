@@ -386,7 +386,7 @@ def test_docker_package_checksum_requires_cpack_sidecars_and_writes_arch(
 
 def test_linux_package_defaults_do_not_leak_into_mobile_cross_compiles() -> None:
     install = (REPO_ROOT / "cmake/install/Install.cmake").read_text()
-    gstreamer = (REPO_ROOT / "src/VideoManager/VideoReceiver/GStreamer/CMakeLists.txt").read_text()
+    gstreamer = (REPO_ROOT / "src/VideoManager/GStreamer/CMakeLists.txt").read_text()
     for preset_file, base_name in (("Android.json", "android-base"), ("iOS.json", "ios-base")):
         presets = json.loads((REPO_ROOT / "cmake/presets" / preset_file).read_text())[
             "configurePresets"

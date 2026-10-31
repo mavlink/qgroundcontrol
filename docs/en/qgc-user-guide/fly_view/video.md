@@ -15,6 +15,45 @@ You can further configure video display using controls on the switcher:
   (once detached, you can move and resize the window just like any other in your OS).
   If you close the detached window the switcher will re-lock to the QGC Fly view.
 
+## Video Statistics
+
+While a video stream plays, the [Video indicator](fly_view_toolbar.md#video) in the Fly View toolbar shows its frame
+rate and bitrate. The indicator turns orange while a stream loses packets, drops frames, or shows less than three
+quarters of the frame rate its camera advertises. To check the health of the video link, click the indicator: its
+dropdown shows, about once a second:
+
+- **Source** and **URL**: how the stream arrives (RTSP, RTP/UDP, MPEG-TS over UDP or TCP) and its address, without
+  user name, password or query values.
+- **Camera stream**: the name of the stream a MAVLink camera advertises.
+- **Frame rate**: frames shown per second, averaged over the last three seconds.
+- **Dropped**: frames dropped since the stream started because display couldn't keep up.
+- **Bitrate**: compressed video received, averaged over the last three seconds.
+- **Video**: resolution and video format, such as H.264.
+- **Keyframe interval**: the time between the last two keyframes. A long interval makes the picture take longer to
+  recover from packet loss.
+- **Decoder**: the video decoder, and whether it decodes in hardware or software. **Decoder restarts** counts the times
+  the decoder was replaced after an error or a stall.
+- **Display path**: how decoded frames reach the screen: `CPU`, or the zero-copy GPU path (for example `DMABuf`, `GL`
+  or `D3D11`). **GPU fallbacks** counts frames the GPU path couldn't import, which took the CPU path instead.
+- **Latency**: the delay the video pipeline adds on top of the network (mostly the RTP jitter buffer).
+- **Packet loss** and **Jitter** (RTP streams only: UDP h.264/h.265 and RTSP): the share of packets lost over the last
+  second (with the number lost since the stream started), and the variation in packet arrival times.
+  They are not shown for MPEG-TS streams, nor for UDP streams in **Low Latency Mode**, which has no jitter buffer to
+  measure them.
+- **Late / duplicate packets** (RTP streams only): packets that arrived after their playout time, and packets that
+  arrived twice.
+- **Retransmissions** (RTSP): lost packets QGroundControl asked the camera to send again, and how many arrived in time.
+- **Uptime**: how long the stream has played since it last connected. **Reconnects** counts the times it came back
+  after a loss.
+- **Recording**: while recording, how long and how much has been written.
+
+For a MAVLink camera, its advertised frame rate, bitrate and resolution follow the measured ones in brackets.
+When a camera also sends a thermal stream, its statistics appear below.
+
+Expand the dropdown (">") to change **Low Latency Mode**, the **RTP jitter latency**, **Grid Lines** and **Display Fit**
+without leaving the Fly View. **Restart Video** reconnects the streams, and **All Video Settings** opens
+[Application Settings > Video](../settings_view/video.md).
+
 ## Record Video
 
 If supported by the camera and vehicle, _QGroundControl_ can start and stop video recording on the camera itself. _QGroundControl_ can also record the video stream and save it locally.

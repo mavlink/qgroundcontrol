@@ -10,6 +10,7 @@
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QFile>
+#include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
@@ -29,10 +30,8 @@
 #include "GstVideoReceiver.h"
 #include "MockVideoStreamServer.h"
 #include "RecordingBranch.h"
-#include "SettingsManager.h"
-#include "VideoManager/VideoTestHelpers.h"
 #include "VideoReceiver.h"
-#include "VideoSettings.h"
+#include "VideoStreamStats.h"
 
 namespace {
 
@@ -146,6 +145,8 @@ struct Receiver
         output->setSize(QSizeF(kFrameWidth, kFrameHeight));
         receiver->setName(QStringLiteral("test"));
         receiver->setConfig({.uri = uri, .timeout = timeout, .autoReconnect = autoReconnect});
+        // The CPU display path needs no GPU on the test host.
+        receiver->setDisplayConfig({.conversionElement = {}, .disablePixelAspectRatio = false, .gpuZeroCopy = false});
     }
 
     ~Receiver() { receiver.reset(); }
@@ -279,19 +280,9 @@ void GstVideoReceiverTest::initTestCase()
         return;
     }
 
-    // The display sink follows VideoSettings; the CPU path needs no GPU on the test host.
-    _settings = std::make_unique<VideoTestHelpers::FactRestorer>();
-    _settings->set(SettingsManager::instance()->videoSettings()->forceCpuVideoPath(), true);
-
     if (GstTest::initGStreamer().isEmpty()) {
         GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "mp4mux", "qtmux", "qtdemux");
     }
-}
-
-void GstVideoReceiverTest::cleanupTestCase()
-{
-    _settings.reset();
-    GStreamerTestBase::cleanupTestCase();
 }
 
 void GstVideoReceiverTest::_testStreamingStatesAndDisplay()
@@ -499,6 +490,9 @@ void GstVideoReceiverTest::_testDecoderFailureKeepsRecording()
     QVERIFY(stream.framesSent(kRecordFrames));
     QCOMPARE(stream.receiver->state(), State::Streaming);
     QVERIFY(stream.recordingFinishedSpy.isEmpty());
+    QVERIFY_TRUE_WAIT(stream.receiver->stats().decoderRestarts == 1, TestTimeout::mediumMs());
+    QVERIFY(stream.receiver->stats().recordingMs >= 0);
+    QVERIFY_TRUE_WAIT(stream.receiver->stats().recordingBytes > 0, TestTimeout::mediumMs());
 
     stream.receiver->stopRecording();
     QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, 1, TestTimeout::mediumMs());
@@ -531,6 +525,11 @@ void GstVideoReceiverTest::_testReconnectResumesRecordingInNextPart()
     QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingStartedSpy, 2, TestTimeout::mediumMs());
     QCOMPARE(stream.recordingStartedSpy.constLast().constFirst().toString(), part2);
     QVERIFY(stream.framesSent(kRecordFrames));
+    // The recording's size counts the closed first part too.
+    const qint64 part1Bytes = QFileInfo(path).size();
+    QVERIFY(part1Bytes > 0);
+    QVERIFY_TRUE_WAIT(stream.receiver->stats().reconnects == 1, TestTimeout::mediumMs());
+    QVERIFY(stream.receiver->stats().recordingBytes >= part1Bytes);
 
     stream.receiver->stopRecording();
     QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, 2, TestTimeout::mediumMs());
@@ -1135,6 +1134,94 @@ void GstVideoReceiverTest::_testResolutionChangeUpdatesVideoSize()
     QCOMPARE(stream.stateSpy.count(), stateChanges);
     QCOMPARE(stream.receiver->state(), State::Streaming);
     QVERIFY(stream.errorSpy.isEmpty());
+}
+
+void GstVideoReceiverTest::_testStatsMeasureStream_data()
+{
+    QTest::addColumn<QString>("uri");
+    QTest::addColumn<QString>("stream");
+    QTest::addColumn<QString>("decoderFactory");
+    QTest::addColumn<bool>("lowLatency");
+    QTest::addColumn<QString>("codec");
+
+    const QString h264 = QString::fromLatin1(GstTest::kH264Stream);
+    const QString h265 = QString::fromLatin1(GstTest::kH265Stream);
+    QTest::newRow("rtp h264") << udpListenUri() << h264 << QStringLiteral("avdec_h264") << false
+                              << QStringLiteral("H.264");
+    QTest::newRow("rtp h265") << loopbackUri(QLatin1StringView("udp265"), 0) << h265 << QStringLiteral("avdec_h265")
+                              << false << QStringLiteral("H.265");
+    // Low-latency UDP has no jitter buffer, which is what measures RTP loss and jitter.
+    QTest::newRow("rtp h264 low latency")
+        << udpListenUri() << h264 << QStringLiteral("avdec_h264") << true << QStringLiteral("H.264");
+}
+
+void GstVideoReceiverTest::_testStatsMeasureStream()
+{
+    QFETCH(QString, uri);
+    QFETCH(QString, stream);
+    QFETCH(QString, decoderFactory);
+    QFETCH(bool, lowLatency);
+    QFETCH(QString, codec);
+
+    const QByteArray softwareDecoder = decoderFactory.toLatin1();
+    GSTTEST_SKIP_UNLESS_FACTORIES(softwareDecoder.constData());
+    const GstTest::DecoderRankSnapshot decoderRanks;
+    GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderSoftware);
+
+    Receiver receiving(uri, /*autoReconnect=*/false, kWatchdogTimeout, stream);
+    QVERIFY2(receiving.sender.error().isEmpty(), qPrintable(receiving.sender.error()));
+    VideoReceiver::Config config = receiving.receiver->config();
+    config.lowLatency = lowLatency;
+    receiving.receiver->setConfig(config);
+    QSignalSpy statsSpy(receiving.receiver.get(), &VideoReceiver::statsChanged);
+    QVERIFY(!receiving.receiver->stats().valid);
+
+    QVERIFY(receiving.startStreaming());
+    QVERIFY(receiving.display());
+    // The first sample once streaming is the baseline for rates; a later one measures the frames on display.
+    QVERIFY_TRUE_WAIT(receiving.receiver->stats().valid && (receiving.receiver->stats().fps > 0),
+                      TestTimeout::mediumMs());
+
+    const VideoStreamStats stats = receiving.receiver->stats();
+    QVERIFY(stats.bitrateKbps > 0);
+    QCOMPARE(stats.codec, codec);
+    QVERIFY(!stats.decoder.isEmpty());
+    QCOMPARE(stats.decoder, receiving.receiver->decoderName());
+    QVERIFY(!stats.hardwareDecoder);
+    // The fixture's receiver displays through the CPU path.
+    QCOMPARE(stats.gpuPath, QStringLiteral("CPU"));
+    QVERIFY(stats.latencyMs >= 0);
+    QCOMPARE(stats.hasRtpStats(), !lowLatency);
+    if (stats.hasRtpStats()) {
+        QVERIFY(stats.lossPercent >= 0);
+        QVERIFY(stats.lossPercent <= 100);
+        QVERIFY(stats.jitterMs >= 0);
+        QVERIFY(stats.packetsLate >= 0);
+        QVERIFY(stats.packetsDuplicate >= 0);
+        QVERIFY(stats.rtxRequested >= 0);
+        QVERIFY(stats.rtxRecovered >= 0);
+    } else {
+        QCOMPARE(stats.lossPercent, -1.0);
+        QCOMPARE(stats.jitterMs, -1.0);
+        QCOMPARE(stats.packetsLate, qint64(-1));
+        QCOMPARE(stats.rtxRequested, qint64(-1));
+    }
+    // The fixture streams have a keyframe every 5 frames at 30 fps.
+    QVERIFY2((stats.keyframeIntervalMs > 100) && (stats.keyframeIntervalMs < 400),
+             qPrintable(QString::number(stats.keyframeIntervalMs)));
+    QVERIFY(stats.uptimeMs > 0);
+    QCOMPARE(stats.reconnects, 0);
+    QCOMPARE(stats.decoderRestarts, qint64(0));
+    QCOMPARE(stats.gpuFallbacks, qint64(0));
+    QCOMPARE(stats.recordingMs, qint64(-1));
+    QCOMPARE(stats.recordingBytes, qint64(-1));
+
+    // A stopped stream has nothing to measure.
+    receiving.receiver->setActive(false);
+    QVERIFY(receiving.waitForState(State::Stopped));
+    QVERIFY_TRUE_WAIT(!receiving.receiver->stats().valid, TestTimeout::shortMs());
+    QVERIFY(!statsSpy.constLast().constFirst().value<VideoStreamStats>().valid);
+    QVERIFY(receiving.errorSpy.isEmpty());
 }
 
 void GstVideoReceiverTest::_testUnresponsiveRtspServer_data()

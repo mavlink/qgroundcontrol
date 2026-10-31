@@ -1,16 +1,11 @@
 #pragma once
 
 #include <functional>
-#include <memory>
 
 #include "GStreamerTestBase.h"
 
 typedef struct _GstElement GstElement;
 class GstVideoReceiver;
-
-namespace VideoTestHelpers {
-class FactRestorer;
-}
 
 /// Drives GstVideoReceiver end to end against in-process H.264 streams on loopback.
 class GstVideoReceiverTest : public GStreamerTestBase
@@ -27,7 +22,6 @@ public:
 private slots:
 #ifdef QGC_GST_STREAMING
     void initTestCase() override;
-    void cleanupTestCase() override;
 
     void _testStreamingStatesAndDisplay();
     void _testStaticSourcePadWaitsForData();
@@ -60,12 +54,9 @@ private slots:
     void _testDestroyWithHungRecorderIsBounded();
     void _testDecodesH265Stream();
     void _testResolutionChangeUpdatesVideoSize();
+    void _testStatsMeasureStream_data();
+    void _testStatsMeasureStream();
     void _testUnresponsiveRtspServer_data();
     void _testUnresponsiveRtspServer();
-#endif
-
-private:
-#ifdef QGC_GST_STREAMING
-    std::unique_ptr<VideoTestHelpers::FactRestorer> _settings;
 #endif
 };

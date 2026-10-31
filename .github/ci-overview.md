@@ -539,7 +539,7 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
 - **Boot test**: `QGroundControl --simple-boot-test`, which every platform's package runs, also runs QGC's
   GStreamer self-test: H.264 (and, given a decoder, H.265) decoding, MP4 and MKV recording, every feature's
   elements, and for a bundled runtime its plugins, plugin scanner and GIO TLS/proxy modules
-  ([details](../src/VideoManager/VideoReceiver/GStreamer/README.md#boot-self-test)).
+  ([details](../src/VideoManager/GStreamer/README.md#boot-self-test)).
 - **Sanitizers**: `Linux-sanitizers` (ASan + UBSan, leak detection on) excludes the `NoSanitizer`
   label. Runtime options come from CTest: `cmake/QGCTest.cmake` sets `*SAN_OPTIONS`
   (`halt_on_error=1`) on every test, overriding the shell environment. ThreadSanitizer runs only on
@@ -643,7 +643,13 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   launching it (QGC otherwise opens the system settings over its window and the boot test never
   completes) and passes only on QGC's `Simple boot test completed` marker; a crash, a process exit
   or a running app without the marker fails, and the failure annotation quotes the
-  `Simple boot test failed` and `Video.GStreamer.SelfTest` logcat lines. The Linux leg runs Android Lint
+  `Simple boot test failed` and `Video.GStreamer.SelfTest` logcat lines. After the marker, main()
+  returns, Android destroys the activity and Qt calls `exit()`; the script watches logcat until the
+  app's process (the marker line's pid) exits, for up to 30 s (`--exit-timeout`; a process still
+  running then only warns). A crash of that process (its `Fatal signal`, `FORTIFY` or
+  `FATAL EXCEPTION` lines, or crash_dump's naming it) fails the step without another attempt, and
+  the annotation quotes those lines: libhwui's static destructors aborted QGC that way at exit until
+  `Platform::skipStaticDestructorsAtExit` ended the process before they ran. The Linux leg runs Android Lint
   (`android_lint.py`, `gradlew lintRelease` in `android-build`): up to ten Error and Fatal issues
   from lint's XML report become error annotations titled with the issue id, at the `android/`
   source that androiddeployqt copied (`QGC_ANDROID_PACKAGE_SOURCE_DIR`; a copy that differs, like

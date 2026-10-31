@@ -5,15 +5,18 @@
 
 #include "QGCLoggingCategory.h"
 #include "UVCDevices.h"
+#include "VideoBackend.h"
 
 QGC_LOGGING_CATEGORY(VideoSettingsLog, "Settings.VideoSettings")
 
-#ifdef QGC_GST_STREAMING
-#include "GStreamer.h"
-static constexpr bool kGstEnabled = true;
-#else
-static constexpr bool kGstEnabled = false;
-#endif
+namespace {
+
+bool hasStreaming()
+{
+    return VideoBackend::instance().hasStreaming();
+}
+
+}  // namespace
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
@@ -129,7 +132,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceVideoDecoder)
     if (!_forceVideoDecoderFact) {
         _forceVideoDecoderFact = _createSettingsFact(forceVideoDecoderName);
 
-        _forceVideoDecoderFact->setUserVisible(kGstEnabled);
+        _forceVideoDecoderFact->setUserVisible(hasStreaming());
     }
     return _forceVideoDecoderFact;
 }
@@ -139,7 +142,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, lowLatencyMode)
     if (!_lowLatencyModeFact) {
         _lowLatencyModeFact = _createSettingsFact(lowLatencyModeName);
 
-        _lowLatencyModeFact->setUserVisible(kGstEnabled);
+        _lowLatencyModeFact->setUserVisible(hasStreaming());
     }
     return _lowLatencyModeFact;
 }
@@ -148,7 +151,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtpJitterLatencyMs)
 {
     if (!_rtpJitterLatencyMsFact) {
         _rtpJitterLatencyMsFact = _createSettingsFact(rtpJitterLatencyMsName);
-        _rtpJitterLatencyMsFact->setUserVisible(kGstEnabled);
+        _rtpJitterLatencyMsFact->setUserVisible(hasStreaming());
     }
     return _rtpJitterLatencyMsFact;
 }
@@ -157,7 +160,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspAutoReconnect)
 {
     if (!_rtspAutoReconnectFact) {
         _rtspAutoReconnectFact = _createSettingsFact(rtspAutoReconnectName);
-        _rtspAutoReconnectFact->setUserVisible(kGstEnabled);
+        _rtspAutoReconnectFact->setUserVisible(hasStreaming());
     }
     return _rtspAutoReconnectFact;
 }
@@ -167,23 +170,19 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceCpuVideoPath)
     if (!_forceCpuVideoPathFact) {
         _forceCpuVideoPathFact = _createSettingsFact(forceCpuVideoPathName);
 
-#if defined(QGC_HAS_ANY_GPU_PATH)
-        _forceCpuVideoPathFact->setUserVisible(kGstEnabled);
-#else
-        _forceCpuVideoPathFact->setUserVisible(false);
-#endif
+        _forceCpuVideoPathFact->setUserVisible(VideoBackend::instance().hasGpuVideoPath());
     }
     return _forceCpuVideoPathFact;
 }
 
-// videoConversionElement / disablePixelAspectRatio are read by GStreamer::videoSinkConfigFromSettings() as
-// construct-only properties of the receiver's display sink; VideoManager restarts the streams, which rebuilds the
-// sink, when they change.
+// videoConversionElement / disablePixelAspectRatio reach the receivers' display sinks as construct-only properties
+// (VideoStreamResolver::displayConfig()); VideoManager restarts the streams, which rebuilds the sinks, when they
+// change.
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoConversionElement)
 {
     if (!_videoConversionElementFact) {
         _videoConversionElementFact = _createSettingsFact(videoConversionElementName);
-        _videoConversionElementFact->setUserVisible(kGstEnabled);
+        _videoConversionElementFact->setUserVisible(hasStreaming());
     }
     return _videoConversionElementFact;
 }
@@ -192,7 +191,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, disablePixelAspectRatio)
 {
     if (!_disablePixelAspectRatioFact) {
         _disablePixelAspectRatioFact = _createSettingsFact(disablePixelAspectRatioName);
-        _disablePixelAspectRatioFact->setUserVisible(kGstEnabled);
+        _disablePixelAspectRatioFact->setUserVisible(hasStreaming());
     }
     return _disablePixelAspectRatioFact;
 }
@@ -203,57 +202,55 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspTimeout)
     if (!_rtspTimeoutFact) {
         _rtspTimeoutFact = _createSettingsFact(rtspTimeoutName);
 
-        _rtspTimeoutFact->setUserVisible(kGstEnabled);
+        _rtspTimeoutFact->setUserVisible(hasStreaming());
     }
     return _rtspTimeoutFact;
 }
 
 void VideoSettings::_setForceVideoDecodeList()
 {
-#ifdef QGC_GST_STREAMING
-    static const QList<GStreamer::VideoDecoderOptions> removeForceVideoDecodeList{
+    if (!hasStreaming()) {
+        return;
+    }
+    static const QList<VideoDecoder::Options> removeForceVideoDecodeList{
 #if defined(Q_OS_ANDROID)
-    GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
-    GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
-    GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
-    GStreamer::VideoDecoderOptions::ForceVideoDecoderNVIDIA,
-    GStreamer::VideoDecoderOptions::ForceVideoDecoderIntel,
+        VideoDecoder::ForceVideoDecoderDirectX3D, VideoDecoder::ForceVideoDecoderVideoToolbox,
+        VideoDecoder::ForceVideoDecoderVAAPI,     VideoDecoder::ForceVideoDecoderNVIDIA,
+        VideoDecoder::ForceVideoDecoderIntel,
 #elif defined(Q_OS_LINUX)
-    GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
-    GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
+        VideoDecoder::ForceVideoDecoderDirectX3D,
+        VideoDecoder::ForceVideoDecoderVideoToolbox,
 #elif defined(Q_OS_WIN)
-    GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
-    GStreamer::VideoDecoderOptions::ForceVideoDecoderVulkan,
+        VideoDecoder::ForceVideoDecoderVideoToolbox,
+        VideoDecoder::ForceVideoDecoderVulkan,
 #elif defined(Q_OS_MACOS)
-    GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
-    GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
+        VideoDecoder::ForceVideoDecoderDirectX3D,
+        VideoDecoder::ForceVideoDecoderVAAPI,
 #elif defined(Q_OS_IOS)
-    GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
-    GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
-    GStreamer::VideoDecoderOptions::ForceVideoDecoderNVIDIA,
-    GStreamer::VideoDecoderOptions::ForceVideoDecoderIntel,
+        VideoDecoder::ForceVideoDecoderDirectX3D,
+        VideoDecoder::ForceVideoDecoderVAAPI,
+        VideoDecoder::ForceVideoDecoderNVIDIA,
+        VideoDecoder::ForceVideoDecoderIntel,
 #endif
     };
 
-    for (const auto &value : removeForceVideoDecodeList) {
+    for (const auto& value : removeForceVideoDecodeList) {
         _nameToMetaDataMap[forceVideoDecoderName]->removeEnumInfo(value);
     }
-#endif
 }
 
 void VideoSettings::pruneUnavailableDecoders()
 {
-#ifdef QGC_GST_STREAMING
-    static const QList<GStreamer::VideoDecoderOptions> hardwareFamilies{
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderNVIDIA,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderVAAPI,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderDirectX3D,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderVideoToolbox,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderIntel,
-        GStreamer::VideoDecoderOptions::ForceVideoDecoderVulkan,
+    if (!hasStreaming()) {
+        return;
+    }
+    static const QList<VideoDecoder::Options> hardwareFamilies{
+        VideoDecoder::ForceVideoDecoderNVIDIA,    VideoDecoder::ForceVideoDecoderVAAPI,
+        VideoDecoder::ForceVideoDecoderDirectX3D, VideoDecoder::ForceVideoDecoderVideoToolbox,
+        VideoDecoder::ForceVideoDecoderIntel,     VideoDecoder::ForceVideoDecoderVulkan,
     };
 
-    const QList<GStreamer::VideoDecoderOptions> available = GStreamer::availableDecoderFamilies();
+    const QList<VideoDecoder::Options> available = VideoBackend::instance().availableDecoderFamilies();
     const auto metaIt = _nameToMetaDataMap.constFind(forceVideoDecoderName);
     if (metaIt == _nameToMetaDataMap.constEnd() || !metaIt.value()) {
         return;
@@ -276,7 +273,6 @@ void VideoSettings::pruneUnavailableDecoders()
         emit fact->enumsChanged();
     }
     if (!metaData->enumValues().contains(fact->rawValue())) {
-        fact->setRawValue(GStreamer::VideoDecoderOptions::ForceVideoDecoderDefault);
+        fact->setRawValue(VideoDecoder::ForceVideoDecoderDefault);
     }
-#endif
 }

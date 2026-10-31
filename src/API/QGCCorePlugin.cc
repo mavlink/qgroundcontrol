@@ -322,13 +322,15 @@ void QGCCorePlugin::createRootWindow(QQmlApplicationEngine *qmlEngine)
 
 VideoReceiver *QGCCorePlugin::createVideoReceiver(QObject *parent)
 {
-    return VideoBackend::createReceiver(parent);
+    return VideoBackend::instance().createReceiver(parent);
 }
 
 const QVariantList &QGCCorePlugin::toolBarIndicators()
 {
     static const QVariantList toolBarIndicatorList = QVariantList({
         QVariant::fromValue(QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/Toolbar/GPSIndicator.qml"))),
+        QVariant::fromValue(
+            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/Toolbar/VideoStreamIndicator.qml"))),
     });
 
     return toolBarIndicatorList;

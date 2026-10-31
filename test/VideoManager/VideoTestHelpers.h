@@ -22,6 +22,7 @@ public:
     using VideoReceiver::setDecoding;
     using VideoReceiver::setRecording;
     using VideoReceiver::setState;
+    using VideoReceiver::setStats;
     using VideoReceiver::setVideoSize;
 
     struct Recording

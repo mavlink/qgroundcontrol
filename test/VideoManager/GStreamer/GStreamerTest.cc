@@ -10,15 +10,13 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include <memory>
 
 #include "Fact.h"
-#include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerTestHelpers.h"
-#include "GstQgcCaps.h"
-#include "GstQgcRenderTarget.h"
 #include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
 #include "RecordingBranch.h"
+#include "VideoBackend.h"
 
 void GStreamerTest::_testIsValidRtspUri()
 {
@@ -94,32 +92,6 @@ void GStreamerTest::_testDecoderFamilyForFactory()
     QFETCH(int, expectedFamily);
 
     QCOMPARE(int(GStreamer::decoderFamilyForFactory(factoryName.toUtf8().constData())), expectedFamily);
-}
-
-void GStreamerTest::_testD3D12RhiDisablesGpuZeroCopySink()
-{
-#if !defined(Q_OS_WIN) || !defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    QSKIP("D3D12 sink policy is Windows D3D12-only");
-#else
-    // The render target comes from the sink environment: QQuickWindow::graphicsApi() keeps the first API it reports
-    // for the whole process, so QSG_RHI_BACKEND could not switch it between these checks.
-    const TestFixtures::EnvVarFixture rhiBackend("QSG_RHI_BACKEND");
-    qunsetenv("QSG_RHI_BACKEND");
-    {
-        const GstQgc::ScopedSinkEnvironmentForTest d3d12({.target = {.backend = GstQgc::RenderBackend::Direct3D12}});
-        QVERIFY2(!GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(false, false),
-                 "D3D12 RHI must force the CPU sink path because gst-d3d12 cannot wrap Qt's ID3D12Device");
-    }
-
-    const GstQgc::ScopedSinkEnvironmentForTest d3d11({.target = {.backend = GstQgc::RenderBackend::Direct3D11}});
-    QVERIFY(GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(false, false));
-    QVERIFY(!GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(false, true));
-    QVERIFY(!GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(true, false));
-
-    qputenv("QSG_RHI_BACKEND", QByteArray("d3d12"));
-    QVERIFY2(!GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(false, false),
-             "A D3D12 request in QSG_RHI_BACKEND must force the CPU sink path too");
-#endif
 }
 
 void GStreamerTest::_testPipelineDotOmitsElementProperties()
@@ -219,7 +191,7 @@ void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams()
 void GStreamerTest::_testBindDebugLevelFactRejectsNullContext()
 {
     Fact fact;
-    GStreamer::bindDebugLevelFact(&fact, nullptr);
+    VideoBackend::bindDebugLevelFact(&fact, nullptr);
 }
 
 void GStreamerTest::_testRuntimeVersionCheck()

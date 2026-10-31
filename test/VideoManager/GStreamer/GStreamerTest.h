@@ -14,7 +14,6 @@ private slots:
     void _testIsHardwareDecoderFactory();
     void _testDecoderFamilyForFactory_data();
     void _testDecoderFamilyForFactory();
-    void _testD3D12RhiDisablesGpuZeroCopySink();
     void _testPipelineDotOmitsElementProperties();
     void _testCompleteInit();
     void _testCreateVideoReceiver();

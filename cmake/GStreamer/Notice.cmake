@@ -76,7 +76,7 @@ function(qgc_gst_write_notice dir)
                 "modified\nGStreamer, build QGroundControl from its source code, "
                 "https://github.com/mavlink/qgroundcontrol, with\nGStreamer_ROOT_DIR set to your GStreamer SDK: the "
                 "build links the framework, and the app, against it\n"
-                "(src/VideoManager/VideoReceiver/GStreamer/README.md describes the build).\n"
+                "(src/VideoManager/GStreamer/README.md describes the build).\n"
         )
     endif()
     configure_file("${CMAKE_CURRENT_FUNCTION_LIST_DIR}/notice/NOTICE.txt.in" "${dir}/NOTICE.txt" @ONLY)

@@ -143,7 +143,7 @@ foreach(_var IN ITEMS QGC_GST_RESOLVED_ROOT QGC_GST_RESOLVED_VERSION QGC_GST_RES
 endforeach()
 file(WRITE "${CMAKE_BINARY_DIR}/gst-state.txt" "${_qgc_state}")
 
-# Links the app the way src/VideoManager/VideoReceiver/GStreamer/CMakeLists.txt does: through a static library
+# Links the app the way src/VideoManager/GStreamer/CMakeLists.txt does: through a static library
 # carrying GStreamer::GStreamer, then GStreamer::mobile, which registers the plugins.
 if(QGC_TEST_ANDROID_ABI)
     add_library(QGCFakeGStreamer STATIC "${CMAKE_CURRENT_SOURCE_DIR}/fake_app.cpp")

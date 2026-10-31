@@ -145,7 +145,7 @@ def test_defaults_are_the_emulator_actions_settings(monkeypatch: pytest.MonkeyPa
     monkeypatch.setenv("RUNNER_TEMP", "/runner/temp")
     args = mod.parse_args(["--apk", "qgc.apk"])
     assert args.log_output == Path("/runner/temp/qgc_emulator_boot.log")
-    assert (args.timeout, args.launch_retries) == (120, 2)
+    assert (args.timeout, args.launch_retries, args.exit_timeout) == (120, 2, 30)
     assert (args.install_retries, args.install_retry_delay) == (4, 5)
     # The former `timeout 180s adb wait-for-device` plus --adb-ready-timeout 180.
     assert args.adb_ready_timeout == 360
@@ -357,6 +357,163 @@ def test_failure_annotation_quotes_the_boot_test_report(
         "(main:48)\n"
     ) in out
     assert (tmp_path / "boot.log").read_text() == logcat
+
+
+# Logcat lines in LogcatPoller's `-v time` format from QGC's crash at exit on the emulator.
+_COMPLETED = (
+    "10-31 07:42:06.713 I/QGroundControl_unittest_9653( 9653):      1.532 Simple boot test "
+    "completed - Main - (main:51)"
+)
+_RETURNED = (
+    "10-31 07:42:06.734 I/QGroundControl_unittest_9653( 9653):      1.553 main() returned 0 - "
+    "default - (unknown:0)"
+)
+_FORTIFY = (
+    "10-31 07:42:07.897 F/libc    ( 9653): FORTIFY: pthread_mutex_lock called on a destroyed "
+    "mutex (0x7d70d9602c38)"
+)
+_FATAL_SIGNAL = (
+    "10-31 07:42:07.897 F/libc    ( 9653): Fatal signal 6 (SIGABRT), code -1 (SI_QUEUE) in tid "
+    "9674 (hwuiTask1), pid 9653 (.qgroundcontrol)"
+)
+_CRASH_DUMP = (
+    "10-31 07:42:07.945 I/crash_dump64( 9723): performing dump of process 9653 (target tid = 9674)"
+)
+_TOMBSTONE = (
+    "10-31 07:42:08.010 F/DEBUG   ( 9723): pid: 9653, tid: 9674, name: hwuiTask1  >>> "
+    "org.mavlink.qgroundcontrol <<<"
+)
+_DIED = (
+    "10-31 07:42:07.963 I/ActivityManager(  671): Process org.mavlink.qgroundcontrol (pid 9653) "
+    "has died: cch CRE"
+)
+_PROCESS_TABLE = (
+    "USER PID PPID VSZ RSS WCHAN ADDR S NAME\n"
+    "u0_a217 9653 1388 8677416 6272 0 0 S org.mavlink.qgroundcontrol"
+)
+
+
+def test_boot_test_pid_reads_the_completion_lines_pid() -> None:
+    assert mod.logcat_pid(_DIED) == 671
+    assert mod.logcat_pid("not a log line") is None
+    assert mod.boot_test_pid("\n".join([_DIED, _COMPLETED, _RETURNED])) == 9653
+    assert mod.boot_test_pid(_RETURNED) is None
+
+
+def test_crash_lines_keep_only_the_crash_reports_of_the_process() -> None:
+    other_crash = (
+        "10-31 07:42:07.900 F/libc    ( 4242): Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR) "
+        "in tid 4243 (other), pid 4242 (other)"
+    )
+    other_dump = "10-31 07:42:07.946 I/crash_dump64( 9724): performing dump of process 96531"
+    logcat = "\n".join(
+        [_COMPLETED, _RETURNED, _FORTIFY, other_crash, _FATAL_SIGNAL, _CRASH_DUMP, other_dump]
+    )
+    assert mod.crash_lines(logcat, 9653) == [_FORTIFY, _FATAL_SIGNAL, _CRASH_DUMP]
+    assert mod.crash_lines(_TOMBSTONE, 9653) == [_TOMBSTONE]
+    assert mod.crash_lines("\n".join([_COMPLETED, _RETURNED, _DIED]), 9653) == []
+
+
+def test_pid_in_process_table_matches_the_pid_column() -> None:
+    assert mod.pid_in_process_table(9653, _PROCESS_TABLE) is True
+    assert mod.pid_in_process_table(1388, _PROCESS_TABLE) is False
+    assert mod.pid_in_process_table(9653, "") is False
+
+
+class TestWatchAppExit:
+    def _watch(self, logcat: list[str], process_tables: list[str], timeout: int = 5):
+        """Watch the exit while each poll reads the next logcat delta and `ps -A` the next table."""
+        content: list[str] = []
+
+        def poll(_self):
+            delta = logcat.pop(0) if logcat else ""
+            content.append(delta)
+            return "\n".join(content), delta
+
+        with (
+            patch.object(mod.LogcatPoller, "poll", poll),
+            patch.object(mod, "get_process_table", side_effect=process_tables),
+            patch.object(mod.time, "sleep", lambda *_: None),
+        ):
+            return mod.watch_app_exit(_COMPLETED, timeout)
+
+    def test_reports_a_crash_of_the_process_after_the_boot_test(self) -> None:
+        crashes, content = self._watch(
+            [_COMPLETED, f"{_RETURNED}\n{_FORTIFY}\n{_FATAL_SIGNAL}"], [_PROCESS_TABLE] * 2
+        )
+        assert crashes == [_FORTIFY, _FATAL_SIGNAL]
+        assert content.endswith(_FATAL_SIGNAL)
+
+    def test_reads_what_the_process_logged_as_it_exited(self) -> None:
+        crashes, _ = self._watch([_COMPLETED, _RETURNED, _CRASH_DUMP], [_PROCESS_TABLE, ""])
+        assert crashes == [_CRASH_DUMP]
+
+    def test_passes_when_the_process_exits_cleanly(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        crashes, content = self._watch(
+            [_COMPLETED, _RETURNED, _DIED], [_PROCESS_TABLE, _PROCESS_TABLE, ""]
+        )
+        assert crashes == []
+        assert content.splitlines() == [_COMPLETED, _RETURNED, _DIED]
+        out = capsys.readouterr().out
+        assert "Watching QGroundControl (pid 9653) exit (timeout: 5s)" in out
+        assert "::warning" not in out
+
+    def test_a_process_that_keeps_running_only_warns(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        crashes, _ = self._watch([_COMPLETED], [_PROCESS_TABLE] * 3, timeout=3)
+        assert crashes == []
+        assert (
+            "::warning::QGroundControl (pid 9653) was still running 3s after the boot test"
+            in capsys.readouterr().out
+        )
+
+    def test_without_a_pid_only_warns(self, capsys: pytest.CaptureFixture[str]) -> None:
+        with patch.object(mod, "get_process_table") as process_table:
+            assert mod.watch_app_exit(_RETURNED, 5) == ([], _RETURNED)
+        process_table.assert_not_called()
+        assert "::warning::No pid on the 'Simple boot test completed' logcat line" in (
+            capsys.readouterr().out
+        )
+
+
+class TestMainWatchesTheExit:
+    def _main(self, tmp_path: Path, watch: tuple[list[str], str]) -> tuple[int, Any]:
+        attempt = (True, None, None, _COMPLETED, _APP_PATTERN)
+        with (
+            patch.object(mod, "wait_for_adb_ready", return_value=True),
+            patch.object(mod, "install_with_retries", return_value=True),
+            patch.object(mod, "grant_all_files_access"),
+            patch.object(mod, "run_boot_attempt", return_value=attempt) as run_attempt,
+            patch.object(mod, "watch_app_exit", return_value=watch) as watch_exit,
+        ):
+            exit_code = mod.main(["--apk", "qgc.apk", "--log-output", str(tmp_path / "boot.log")])
+        watch_exit.assert_called_once_with(_COMPLETED, mod.EXIT_TIMEOUT_SECONDS)
+        return exit_code, run_attempt
+
+    def test_a_crash_at_exit_fails_without_another_attempt(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        logcat = "\n".join([_COMPLETED, _FORTIFY, _FATAL_SIGNAL])
+        exit_code, run_attempt = self._main(tmp_path, ([_FORTIFY, _FATAL_SIGNAL], logcat))
+        assert exit_code == 1
+        assert run_attempt.call_count == 1
+        assert (
+            f"::error::QGroundControl crashed after completing the boot test%0A{_FORTIFY}%0A"
+            f"{_FATAL_SIGNAL}\n"
+        ) in capsys.readouterr().out
+        assert (tmp_path / "boot.log").read_text() == logcat
+
+    def test_a_clean_exit_passes(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        logcat = "\n".join([_COMPLETED, _DIED])
+        exit_code, _ = self._main(tmp_path, ([], logcat))
+        assert exit_code == 0
+        assert "Emulator boot test passed for org.mavlink.qgroundcontrol" in (
+            capsys.readouterr().out
+        )
+        assert (tmp_path / "boot.log").read_text() == logcat
 
 
 _GRANT_COMMAND = [

@@ -277,9 +277,23 @@ void testD3DMapTextures(QRhi& rhi, const char* inputCaps, const char* uploadElem
              "D3D texture bundle does not use the HW frame texture base");
 }
 
-/// Converts the uploaded frame with QVideoFrame::toImage() on @p rhi and compares it with the frame before the upload.
+/// The caps filter after the upload: @p api's memory in @p outputFormat, converted by d3d12convert first when it
+/// differs from @p format.
+QByteArray d3dMemoryCaps(const QString& api, const QString& format, const QString& outputFormat)
+{
+    QByteArray caps = QStringLiteral("video/x-raw(memory:%1Memory),format=%2").arg(api, outputFormat).toUtf8();
+    if (outputFormat != format) {
+        caps.prepend(QByteArrayLiteral("d3d12convert ! "));
+    }
+    return caps;
+}
+
+/// Converts the uploaded frame with QVideoFrame::toImage() on @p rhi and compares it with the frame before the upload,
+/// passed through @p cpuElement into @p cpuCaps. @p subsampledInput: the source has 2x2 chroma, which a GPU
+/// interpolates across bar edges.
 void testD3DFrameToImage(QRhi& rhi, const char* inputCaps, const char* uploadElement, const char* capsFilter,
-                         QVideoFrameFormat::PixelFormat pixelFormat, HwVideoBufferPath expectedPath)
+                         const char* cpuElement, const char* cpuCaps, QVideoFrameFormat::PixelFormat pixelFormat,
+                         bool subsampledInput, HwVideoBufferPath expectedPath)
 {
     D3DSample gpu;
     pullD3DSample(gpu, inputCaps, uploadElement, capsFilter, expectedPath);
@@ -287,7 +301,7 @@ void testD3DFrameToImage(QRhi& rhi, const char* inputCaps, const char* uploadEle
         return;
     }
     D3DSample cpu;
-    pullD3DSample(cpu, inputCaps, "identity", inputCaps);
+    pullD3DSample(cpu, inputCaps, cpuElement, cpuCaps);
     if (!cpu.sample) {
         return;
     }
@@ -307,7 +321,7 @@ void testD3DFrameToImage(QRhi& rhi, const char* inputCaps, const char* uploadEle
     const QImage expected =
         GstTest::cpuImage(CpuVideoFramePool::copyFromBuffer(gst_sample_get_buffer(cpu.sample), cpu.info, format));
     // NV12 carries one chroma sample per 2x2 pixels, which the GPU interpolates up to two pixels into a neighbor bar.
-    const int chromaEdgeRadius = (pixelFormat == QVideoFrameFormat::Format_NV12) ? 2 : 0;
+    const int chromaEdgeRadius = subsampledInput ? 2 : 0;
     const QString mismatch = GstTest::firstImageMismatch(actual, expected, /*tolerance=*/8, chromaEdgeRadius);
     QVERIFY2(mismatch.isEmpty(), qPrintable(mismatch));
 }
@@ -336,17 +350,20 @@ void GstHwBuffersPipelineTest::_testD3D12MemoryDispatch()
 void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi_data()
 {
     QTest::addColumn<int>("path");
-    QTest::addColumn<QString>("format");
+    QTest::addColumn<QString>("format");        ///< Uploaded.
+    QTest::addColumn<QString>("outputFormat");  ///< Imported.
     QTest::addColumn<int>("pixelFormat");
     QTest::addColumn<int>("planes");
 
-    for (const HwVideoBufferPath path : {HwVideoBufferPath::D3D11, HwVideoBufferPath::D3D12}) {
-        const char* const api = (path == HwVideoBufferPath::D3D11) ? "d3d11" : "d3d12";
-        QTest::addRow("%s-rgba", api) << int(path) << QStringLiteral("RGBA") << int(QVideoFrameFormat::Format_RGBA8888)
-                                      << 1;
-        QTest::addRow("%s-nv12", api) << int(path) << QStringLiteral("NV12") << int(QVideoFrameFormat::Format_NV12)
-                                      << 2;
-    }
+    const QString rgba = QStringLiteral("RGBA");
+    const QString nv12 = QStringLiteral("NV12");
+    const int rgba8888 = int(QVideoFrameFormat::Format_RGBA8888);
+    QTest::newRow("d3d11-rgba") << int(HwVideoBufferPath::D3D11) << rgba << rgba << rgba8888 << 1;
+    QTest::newRow("d3d11-nv12") << int(HwVideoBufferPath::D3D11) << nv12 << nv12 << int(QVideoFrameFormat::Format_NV12)
+                                << 2;
+    QTest::newRow("d3d12-rgba") << int(HwVideoBufferPath::D3D12) << rgba << rgba << rgba8888 << 1;
+    // As the D3D12Convert bin does: Qt's D3D12 QRhi can't sample NV12's planes, so d3d12convert makes it RGBA.
+    QTest::newRow("d3d12-nv12") << int(HwVideoBufferPath::D3D12) << nv12 << rgba << rgba8888 << 1;
 }
 
 void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi()
@@ -356,6 +373,7 @@ void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi()
 #else
     QFETCH(int, path);
     QFETCH(QString, format);
+    QFETCH(QString, outputFormat);
     QFETCH(int, pixelFormat);
     QFETCH(int, planes);
 
@@ -393,7 +411,7 @@ void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi()
     const QByteArray inputCaps =
         QStringLiteral("video/x-raw,format=%1,width=64,height=64,framerate=30/1").arg(format).toUtf8();
     const QByteArray upload = (api.toLower() + QStringLiteral("upload")).toUtf8();
-    const QByteArray memoryCaps = QStringLiteral("video/x-raw(memory:%1Memory),format=%2").arg(api, format).toUtf8();
+    const QByteArray memoryCaps = d3dMemoryCaps(api, format, outputFormat);
     testD3DMapTextures(*rhi, inputCaps.constData(), upload.constData(), memoryCaps.constData(),
                        static_cast<QVideoFrameFormat::PixelFormat>(pixelFormat), planes, hwPath);
 #endif
@@ -411,6 +429,7 @@ void GstHwBuffersPipelineTest::_testD3DFrameToImage()
 #else
     QFETCH(int, path);
     QFETCH(QString, format);
+    QFETCH(QString, outputFormat);
     QFETCH(int, pixelFormat);
 
     const auto hwPath = static_cast<HwVideoBufferPath>(path);
@@ -448,9 +467,14 @@ void GstHwBuffersPipelineTest::_testD3DFrameToImage()
     const QByteArray inputCaps =
         QStringLiteral("video/x-raw,format=%1,width=64,height=64,framerate=30/1").arg(format).toUtf8();
     const QByteArray upload = (api.toLower() + QStringLiteral("upload")).toUtf8();
-    const QByteArray memoryCaps = QStringLiteral("video/x-raw(memory:%1Memory),format=%2").arg(api, format).toUtf8();
-    testD3DFrameToImage(*rhi, inputCaps.constData(), upload.constData(), memoryCaps.constData(),
-                        static_cast<QVideoFrameFormat::PixelFormat>(pixelFormat), hwPath);
+    const QByteArray memoryCaps = d3dMemoryCaps(api, format, outputFormat);
+    // A converted frame's reference is GStreamer's CPU conversion of the same frame.
+    const QByteArray cpuCaps = QStringLiteral("video/x-raw,format=%1").arg(outputFormat).toUtf8();
+    const bool converted = (outputFormat != format);
+    testD3DFrameToImage(
+        *rhi, inputCaps.constData(), upload.constData(), memoryCaps.constData(),
+        converted ? "videoconvert" : "identity", converted ? cpuCaps.constData() : inputCaps.constData(),
+        static_cast<QVideoFrameFormat::PixelFormat>(pixelFormat), (format == QStringLiteral("NV12")), hwPath);
 #endif
 }
 

@@ -130,14 +130,18 @@ void VideoManager::startVideoBackendInit()
         return;
     }
 
-    if (!VideoBackend::needsAsyncInit() || VideoBackend::disabledForUnitTests()) {
+    VideoBackend& backend = VideoBackend::instance();
+    if (!backend.needsAsyncInit() || VideoBackend::disabledForUnitTests()) {
         _initState = InitState::Ready;
         return;
     }
 
     _initState = InitState::Pending;
-    const VideoBackend::EnvPrepResult envResult = VideoBackend::prepareEnvironment();
-    _watchBackendInit(QtConcurrent::run(&VideoBackend::initialize, QCoreApplication::arguments(), envResult));
+    const VideoBackend::EnvPrepResult envResult = backend.prepareEnvironment();
+    _watchBackendInit(QtConcurrent::run([&backend, arguments = QCoreApplication::arguments(), envResult,
+                                         debugLevel = VideoBackend::persistedDebugLevel()] {
+        return backend.initialize(arguments, envResult, debugLevel);
+    }));
 }
 
 void VideoManager::_watchBackendInit(const QFuture<bool>& future)
@@ -177,7 +181,7 @@ void VideoManager::_onBackendInitComplete(bool success)
     }
 
     _videoSettings->pruneUnavailableDecoders();
-    VideoBackend::applyDecoderPriorities(_videoSettings->forceVideoDecoder()->rawValue().toInt());
+    VideoBackend::instance().applyDecoderPriorities(_videoSettings->forceVideoDecoder()->rawValue().toInt());
 
     _initState = InitState::Ready;
     qCDebug(VideoManagerLog) << "video backend ready";
@@ -198,7 +202,7 @@ void VideoManager::init(QQuickWindow* mainWindow)
         return;
     }
 
-    VideoBackend::onMainWindowReady(mainWindow);
+    VideoBackend::instance().onMainWindowReady(mainWindow);
     VideoBackend::bindDebugLevelFact(SettingsManager::instance()->appSettings()->gstDebugLevel(), this);
 
     MultiVehicleManager* const multiVehicleManager = MultiVehicleManager::instance();

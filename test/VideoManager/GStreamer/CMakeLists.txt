@@ -90,7 +90,7 @@ set(_qgc_gl_readback_env ENV_MODIFICATION "QT_QPA_PLATFORM=cmake_list_prepend:xc
 add_qgc_test(GstHwBuffersGlReadbackTest LABELS Integration GPU ${_qgc_gl_readback_env})
 
 # The GstHarness tests need gst-check, which the GStreamer layer finds only for test builds and only where the SDK or
-# distribution ships it (src/VideoManager/VideoReceiver/GStreamer/CMakeLists.txt).
+# distribution ships it (src/VideoManager/GStreamer/CMakeLists.txt).
 if(TARGET GStreamer::Check)
     target_sources(
         QGCUnitTests
