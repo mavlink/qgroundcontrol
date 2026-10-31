@@ -367,6 +367,22 @@ void applyFamilyRank(VideoDecoderOptions family, uint16_t rank)
     });
 }
 
+// Ranks @p family's video decoders, at least @p minimumRank, above every other video decoder: GStreamer already ranks
+// some PRIMARY + 1 (the d3d11 and va ones), which a tie would leave winning. The others stay as fallbacks for the
+// codecs the family can't decode.
+void prioritizeFamily(VideoDecoderOptions family, uint16_t minimumRank)
+{
+    guint highestOtherRank = GST_RANK_NONE;
+    forEachVideoDecoderFactory(GST_RANK_NONE, [family, &highestOtherRank](GstElementFactory* factory) {
+        GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
+        if (decoderFamilyForFactory(gst_plugin_feature_get_name(feature)) != family) {
+            highestOtherRank = std::max(highestOtherRank, gst_plugin_feature_get_rank(feature));
+        }
+    });
+    const guint rank = std::max<guint>(minimumRank, std::min<guint>(highestOtherRank, G_MAXUINT16 - 1) + 1);
+    applyFamilyRank(family, static_cast<uint16_t>(rank));
+}
+
 void lowerDecoderRanksByClass(bool lowerHardware)
 {
     forEachVideoDecoderFactory(GST_RANK_MARGINAL, [lowerHardware](GstElementFactory* factory) {
@@ -516,15 +532,15 @@ void setCodecPriorities(VideoDecoderOptions option)
         case ForceVideoDecoderDirectX3D:
         case ForceVideoDecoderVideoToolbox:
         case ForceVideoDecoderIntel:
-            applyFamilyRank(option, PrioritizedRank);
+            prioritizeFamily(option, PrioritizedRank);
             break;
     }
 
 #ifdef Q_OS_WIN
     // After any option-driven rank changes, force the D3D decoder API to match the active QRhi
     // backend so a D3D12 decoder never wins over D3D11 on Qt's default Windows RHI (and vice-versa).
-    const bool promoteMatchingD3D = (option == ForceVideoDecoderDefault) || (option == ForceVideoDecoderHardware) ||
-                                    (option == ForceVideoDecoderDirectX3D);
+    // Forcing the D3D family already ranks it above every other decoder, so only the mismatched API is demoted.
+    const bool promoteMatchingD3D = (option == ForceVideoDecoderDefault) || (option == ForceVideoDecoderHardware);
     alignD3DDecoderRanksToRhi(promoteMatchingD3D);
 #endif
 }

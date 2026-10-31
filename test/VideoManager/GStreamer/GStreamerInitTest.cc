@@ -2,6 +2,7 @@
 
 #ifdef QGC_GST_STREAMING
 
+#include <algorithm>
 #include <gst/gst.h>
 #include <utility>
 #include <vector>
@@ -443,6 +444,47 @@ void GStreamerInitTest::_testSetCodecPrioritiesReplacesThePreviousOption()
     QVERIFY(decoderRanksNow() != defaultRanks);
     GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderDefault);
     QCOMPARE(decoderRanksNow(), defaultRanks);
+}
+
+void GStreamerInitTest::_testSetCodecPrioritiesFamilyOutranksOtherDecoders()
+{
+    GSTTEST_REQUIRE_GSTREAMER();
+
+    const GstTest::DecoderRankSnapshot decoderRanks;
+    ignoreLogMessage("Video.GStreamer.GStreamerHelpers", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Forcing Vulkan video decoders")));
+    QList<GStreamer::VideoDecoderOptions> families;
+    GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&families](GstElementFactory* factory) {
+        const auto family =
+            GStreamer::decoderFamilyForFactory(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
+        if ((family != GStreamer::ForceVideoDecoderDefault) && !families.contains(family)) {
+            families.append(family);
+        }
+    });
+    if (families.isEmpty()) {
+        QSKIP("No decoder of a forceable family is installed");
+    }
+
+    // GStreamer ranks d3d11 and va decoders PRIMARY + 1 already: forcing another family must not tie with them.
+    for (const GStreamer::VideoDecoderOptions family : std::as_const(families)) {
+        GStreamer::setCodecPriorities(family);
+        guint lowestFamilyRank = G_MAXUINT;
+        guint highestOtherRank = GST_RANK_NONE;
+        GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&](GstElementFactory* factory) {
+            GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
+            const guint rank = gst_plugin_feature_get_rank(feature);
+            if (GStreamer::decoderFamilyForFactory(gst_plugin_feature_get_name(feature)) != family) {
+                highestOtherRank = std::max(highestOtherRank, rank);
+            } else if (rank > GST_RANK_NONE) {
+                // A member at NONE was demoted on purpose, as the D3D decoders not matching the renderer are.
+                lowestFamilyRank = std::min(lowestFamilyRank, rank);
+            }
+        });
+        QVERIFY2(lowestFamilyRank > highestOtherRank, qPrintable(QStringLiteral("family %1: rank %2 <= %3")
+                                                                     .arg(static_cast<int>(family))
+                                                                     .arg(lowestFamilyRank)
+                                                                     .arg(highestOtherRank)));
+    }
 }
 
 void GStreamerInitTest::_testSetCodecPrioritiesHardware()

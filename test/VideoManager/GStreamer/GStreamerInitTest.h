@@ -29,6 +29,7 @@ private slots:
     void _testSetCodecPrioritiesSkipsAbsentD3DDecoders();
     void _testSetCodecPrioritiesSoftware();
     void _testSetCodecPrioritiesReplacesThePreviousOption();
+    void _testSetCodecPrioritiesFamilyOutranksOtherDecoders();
     void _testSetCodecPrioritiesHardware();
 #else
     void _testGStreamerDisabled();
