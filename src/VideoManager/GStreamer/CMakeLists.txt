@@ -152,9 +152,9 @@ target_sources(
         Sink/QGCQVideoSinkController.h
 )
 
-# The samples GStreamer::selfTest() decodes and records: the GStreamer tests' 160x120 H.264 and 320x240 H.265 streams
-# (generate.sh there).
-set(_qgc_gst_selftest_media "${CMAKE_SOURCE_DIR}/test/VideoManager/GStreamer/Media")
+# The samples GStreamer::selfTest() decodes and records, the 160x120 H.264 and 320x240 H.265 streams of Runtime/Media
+# (generate.sh there), which the GStreamer tests send too.
+set(_qgc_gst_selftest_media "${CMAKE_CURRENT_SOURCE_DIR}/Runtime/Media")
 qt_add_resources(
     ${CMAKE_PROJECT_NAME} "GStreamerSelfTestMedia_res"
     PREFIX "/gstreamer/selftest"

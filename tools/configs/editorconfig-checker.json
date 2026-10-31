@@ -4,7 +4,6 @@
     "\\.(keystore|lz4|mesh)$",
     "\\.ambr$",
     "^test/GPS/Core/Protocols/(corpus|fixtures)/",
-    "^test/VideoManager/GStreamer/Media/.*\\.h26[45]$",
     "^translations/",
     "^android/res/values/strings\\.xml$",
     "^android/src/org/mavlink/qgroundcontrol/QGCActivity\\.java$",
@@ -14,7 +13,8 @@
     "^src/Utilities/Geo/Formats/ogckml22\\.xsd$",
     "^src/Vehicle/Actuators/(Actuators|Mixer)\\.cc$",
     "^src/Vehicle/FTPManager\\.h$",
-    "^src/Vehicle/VehicleSetup/(Bootloader\\.h|FirmwareUpgradeController\\.(cc|h))$"
+    "^src/Vehicle/VehicleSetup/(Bootloader\\.h|FirmwareUpgradeController\\.(cc|h))$",
+    "^src/VideoManager/GStreamer/Runtime/Media/.*\\.h26[45]$"
   ],
   "Disable": {
     "IndentSize": true,

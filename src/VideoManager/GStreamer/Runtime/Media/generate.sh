@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Regenerates the encoded streams the GStreamer tests send, so the tests themselves need no encoder (x264enc and x265enc
-# are GPL and CPU-heavy). The tests split the files into access units with h264parse/h265parse and pace them through
+# Regenerates the encoded streams the app's GStreamer self-test decodes and the GStreamer tests send, so neither needs
+# an encoder (x264enc and x265enc are GPL and CPU-heavy). The tests split the files into access units with h264parse/h265parse and pace them through
 # appsrc (GStreamerTestHelpers.h, GstTest::FixtureRtpSender).
 #
 #   h264_320x240.h264  H.264 Annex B, 320x240, 30 fps, 60 frames, constrained baseline, IDR every 5 frames

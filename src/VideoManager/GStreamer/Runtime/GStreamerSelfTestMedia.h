@@ -15,7 +15,7 @@
 /// The self-test's media pipelines: decoding the embedded samples and recording and reading back a file.
 namespace GStreamer::SelfTest {
 
-/// An encoded sample in the app's resources (test/VideoManager/GStreamer/Media/generate.sh makes them).
+/// An encoded sample in the app's resources (Runtime/Media/generate.sh makes them).
 struct Sample
 {
     const char* codec;

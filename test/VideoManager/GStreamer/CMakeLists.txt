@@ -62,16 +62,18 @@ target_sources(
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# Encoded streams the tests send instead of encoding their own (GstTest::FixtureRtpSender), made by Media/generate.sh.
+# Encoded streams the tests send instead of encoding their own (GstTest::FixtureRtpSender): the app's self-test
+# samples, made by src/VideoManager/GStreamer/Runtime/Media/generate.sh.
 if(QGC_ENABLE_GST_VIDEOSTREAMING)
+    set(_qgc_gst_test_media "${CMAKE_SOURCE_DIR}/src/VideoManager/GStreamer/Runtime/Media")
     qt_add_resources(
         ${CMAKE_PROJECT_NAME} "GStreamerTestMedia_res"
         PREFIX "/unittest/video"
-        BASE Media
+        BASE "${_qgc_gst_test_media}"
         FILES
-            Media/h264_160x120.h264
-            Media/h264_320x240.h264
-            Media/h265_320x240.h265
+            "${_qgc_gst_test_media}/h264_160x120.h264"
+            "${_qgc_gst_test_media}/h264_320x240.h264"
+            "${_qgc_gst_test_media}/h265_320x240.h265"
     )
 endif()
 
