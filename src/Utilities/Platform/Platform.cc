@@ -21,6 +21,11 @@
     #include <sys/wait.h>
 #endif
 
+#ifdef Q_OS_ANDROID
+#include <atomic>
+#include <cstdlib>
+#endif
+
 #if defined(Q_OS_MACOS)
     #include <CoreFoundation/CoreFoundation.h>
 #elif defined(Q_OS_WIN)
@@ -40,6 +45,10 @@
 #endif
 
 namespace {
+
+#ifdef Q_OS_ANDROID
+std::atomic_int g_exitCode = EXIT_SUCCESS;
+#endif
 
 #if (defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD)) && !defined(Q_OS_ANDROID)
 static void showLinuxErrorDialog(const QByteArray& msg)
@@ -420,6 +429,18 @@ void Platform::setupPostApp()
     (void) signalHandler->setupSignalHandlers();
 #endif
 }
+
+#ifdef Q_OS_ANDROID
+void Platform::skipStaticDestructorsAtExit(int exitCode)
+{
+    // Once the activity is destroyed, Qt calls exit(), whose static destructors include libhwui's CommonPool: it
+    // destroys its mutex while the pool's detached hwuiTask threads still lock it, which aborts the process ("FORTIFY:
+    // pthread_mutex_lock called on a destroyed mutex"). Android apps normally end without running static destructors.
+    // exit() runs the handler registered last first, so this one ends the process before the others run.
+    g_exitCode = exitCode;
+    (void) std::atexit([] { std::_Exit(g_exitCode); });
+}
+#endif
 
 #if (defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD)) && !defined(Q_OS_ANDROID)
 bool Platform::isRunningAsRoot()
