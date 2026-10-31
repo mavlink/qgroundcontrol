@@ -157,6 +157,15 @@ static gboolean add_converter(GstQgcVideoSinkBin* self, GstQgc::BinChain& chain,
     return head && tail && chain.linkChain({head, tail});
 }
 
+static gboolean has_factory(const char* name)
+{
+    GstElementFactory* const factory = gst_element_factory_find(name);
+    if (factory) {
+        gst_object_unref(factory);
+    }
+    return factory != NULL;
+}
+
 // The GPU variant for the render target (GstQgc::selectGpuBin). Any other renderer gets the passthrough variant, whose
 // sink offers only memory that renderer imports (a glupload bin under Vulkan would download every frame and upload it
 // again).
@@ -165,9 +174,15 @@ static GstQgc::GpuBinMode select_gpu_bin(GstQgcVideoSinkBin* self)
     const GstQgc::GpuBinPreference preference = GstQgc::gpuBinPreference();
     const GstQgc::RenderTarget target = GstQgc::currentRenderTarget();
     const GstQgc::GpuBinMode mode = GstQgc::selectGpuBin(preference, target);
+    if ((mode == GstQgc::GpuBinMode::D3D12Convert) && (!has_factory("d3d12upload") || !has_factory("d3d12convert"))) {
+        GST_WARNING_OBJECT(self,
+                           "Qt renders with Direct3D12 but d3d12upload/d3d12convert are missing: using the "
+                           "passthrough GPU bin, which takes system memory");
+        return GstQgc::GpuBinMode::Passthrough;
+    }
     if (mode != preference.mode) {
-        GST_INFO_OBJECT(self, "Qt renders with %s (EGL %d): using the passthrough GPU bin",
-                        GstQgc::toString(target.backend), target.egl);
+        GST_INFO_OBJECT(self, "Qt renders with %s (EGL %d): using the %s GPU bin", GstQgc::toString(target.backend),
+                        target.egl, GstQgc::gpuBinName(mode));
     } else if (preference.explicitChoice && (GstQgc::selectGpuBin({.mode = mode}, target) != mode)) {
         GST_WARNING_OBJECT(self, "QGC_GST_GPU_BIN forces a GPU bin Qt's renderer doesn't suit (%s, EGL %d)",
                            GstQgc::toString(target.backend), target.egl);
@@ -175,7 +190,8 @@ static GstQgc::GpuBinMode select_gpu_bin(GstQgcVideoSinkBin* self)
     return mode;
 }
 
-// Builds [converter ! (glupload ! glcolorconvert !) qgcqvideosink]. qgcqvideosink's get_caps decides what negotiates:
+// Builds [converter ! (glupload ! glcolorconvert | d3d12upload ! d3d12convert !) qgcqvideosink]. qgcqvideosink's
+// get_caps decides what negotiates:
 // the formats Qt renders, the GPU memory the render target imports, square pixels unless disable-par.
 static void gst_qgc_video_sink_bin_setup(GstQgcVideoSinkBin* self)
 {
@@ -213,6 +229,15 @@ static void gst_qgc_video_sink_bin_setup(GstQgcVideoSinkBin* self)
             return;
         }
         tail = chain.linkChain({tail, glupload, glcolorconvert}) ? glcolorconvert : NULL;
+    } else if (gpuBin == GstQgc::GpuBinMode::D3D12Convert) {
+        // Decoder output passes the converter as D3D12Memory; d3d12upload uploads software-decoded frames.
+        GstElement* const upload = chain.adopt(gst_element_factory_make("d3d12upload", NULL));
+        GstElement* const convert = chain.adopt(gst_element_factory_make("d3d12convert", NULL));
+        if (!upload || !convert) {
+            GST_ERROR_OBJECT(self, "Failed to create d3d12upload/d3d12convert");
+            return;
+        }
+        tail = chain.linkChain({tail, upload, convert}) ? convert : NULL;
     }
     if (!tail || !chain.linkChain({tail, videosink}) || !chain.ghostSink(head)) {
         GST_ERROR_OBJECT(self, "Failed to link/ghost the qgcqvideosink chain");

@@ -38,6 +38,10 @@ std::string sinkDmaDrmCaps([[maybe_unused]] void* display)
 // black.
 constexpr const char* kGlMemory2D = "video/x-raw(memory:GLMemory), texture-target=2D";
 
+// What the D3D12Convert bin's d3d12convert outputs: single-plane formats, the only ones Qt's D3D12 QRhi can sample.
+constexpr const char* kD3D12MemoryRgb = "video/x-raw(memory:D3D12Memory)";
+constexpr const char* kD3D12ConvertFormats = "(string){ RGBA, BGRA }";
+
 /// "<media type>, format=<formats>; " for each memory the render target of @p policy imports.
 std::string gpuMemoryCaps(const SinkCapsPolicy& policy, const std::string& formats)
 {
@@ -78,9 +82,8 @@ std::string gpuMemoryCaps(const SinkCapsPolicy& policy, const std::string& forma
 #endif
             break;
         default:
-            // Direct3D12: deliberately no D3D12Memory, so frames take system memory. GStreamer opens its own device on
-            // Qt's adapter instead of wrapping Qt's ID3D12Device, and QGC's D3D12 import isn't validated.
-            // Metal: vtdec's IOSurface-backed CoreVideo buffers arrive as system memory. Vulkan: no import path.
+            // Direct3D12: D3D12Memory only through the D3D12Convert bin (buildSinkCaps). Metal: vtdec's
+            // IOSurface-backed CoreVideo buffers arrive as system memory. Vulkan: no import path.
             break;
     }
     return caps;
@@ -92,6 +95,14 @@ std::string buildSinkCaps(const SinkCapsPolicy& policy)
 {
     if (policy.gpuZeroCopy && (policy.gpuBin == GpuBinMode::GlUpload)) {
         return std::string(kGlMemory2D) + ", format=" + advertisedFormatList(kOfferGlUpload);
+    }
+    if (policy.gpuZeroCopy && (policy.gpuBin == GpuBinMode::D3D12Convert)) {
+        // d3d12convert scales as well, so it gives square pixels on the GPU.
+        std::string caps = std::string(kD3D12MemoryRgb) + ", format=" + kD3D12ConvertFormats;
+        if (policy.squarePixels) {
+            caps += ", pixel-aspect-ratio=(fraction)1/1";
+        }
+        return caps;
     }
 
     const std::string formats = advertisedFormatList();

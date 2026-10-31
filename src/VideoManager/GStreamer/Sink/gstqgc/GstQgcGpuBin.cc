@@ -62,6 +62,11 @@ GpuBinPreference gpuBinPreference() noexcept
 
 GpuBinMode selectGpuBin(GpuBinPreference preference, const RenderTarget& target) noexcept
 {
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+    if (target.backend == RenderBackend::Direct3D12) {
+        return GpuBinMode::D3D12Convert;
+    }
+#endif
     bool suited = true;
     switch (preference.mode) {
         case GpuBinMode::GlUpload:
@@ -69,6 +74,9 @@ GpuBinMode selectGpuBin(GpuBinPreference preference, const RenderTarget& target)
             break;
         case GpuBinMode::DirectDmaBuf:
             suited = target.isOpenGlOnEgl();
+            break;
+        case GpuBinMode::D3D12Convert:
+            suited = (target.backend == RenderBackend::Direct3D12);
             break;
         case GpuBinMode::Passthrough:
             break;
@@ -83,6 +91,8 @@ const char* gpuBinName(GpuBinMode mode) noexcept
             return "glupload";
         case GpuBinMode::DirectDmaBuf:
             return "direct DMABuf";
+        case GpuBinMode::D3D12Convert:
+            return "d3d12convert";
         case GpuBinMode::Passthrough:
             break;
     }

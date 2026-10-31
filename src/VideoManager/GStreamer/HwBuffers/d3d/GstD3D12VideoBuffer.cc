@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cstddef>
 #include <d3d12.h>
 #include <gst/d3d12/gstd3d12.h>
@@ -26,6 +27,7 @@ using GstD3DVideoBufferCommon::MapDiagnostics;
 using GstD3DVideoBufferCommon::StagingKey;
 
 MapDiagnostics s_diag;
+std::atomic<bool> s_loggedMultiPlane{false};
 
 /// One ring slot's COPY/DIRECT-queue objects: staging resource plus the allocator/list that record its slice copy.
 struct StagingEntry
@@ -50,14 +52,20 @@ class StagingEntryRef
 public:
     StagingEntryRef() = default;
 
-    explicit StagingEntryRef(const StagingEntry& e) : _entry(e) {}
+    explicit StagingEntryRef(const StagingEntry& e)
+        : _entry(e)
+    {}
 
     ~StagingEntryRef() { releaseEntryResources(_entry); }
 
     StagingEntryRef(const StagingEntryRef&) = delete;
     StagingEntryRef& operator=(const StagingEntryRef&) = delete;
 
-    StagingEntryRef(StagingEntryRef&& other) noexcept : _entry(other._entry) { other._entry = {}; }
+    StagingEntryRef(StagingEntryRef&& other) noexcept
+        : _entry(other._entry)
+    {
+        other._entry = {};
+    }
 
     StagingEntryRef& operator=(StagingEntryRef&& other) noexcept
     {
@@ -448,6 +456,14 @@ public:
     {
         GstBuffer* buffer = _sample ? gst_sample_get_buffer(_sample) : nullptr;
         if (!buffer) {
+            return;
+        }
+        // Qt's D3D12 QRhi creates no per-plane views, so it can't sample an NV12/P010 resource's chroma. The
+        // D3D12Convert bin negotiates single-plane formats only; anything else takes the CPU path.
+        if (const auto* description = QVideoTextureHelper::textureDescription(format.pixelFormat());
+            !description || (description->nplanes != 1)) {
+            QGC_HW_WARN_ONCE(GstD3D12Log, s_loggedMultiPlane,
+                             "resolve: multi-plane D3D12Memory" << format.pixelFormat() << "can't be sampled by QRhi");
             return;
         }
         GstD3DVideoBufferCommon::PlaneResourceGuard<ID3D12Resource> guard;

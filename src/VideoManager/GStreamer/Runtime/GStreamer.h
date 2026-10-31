@@ -45,9 +45,6 @@ QList<MissingPluginFeature> missingPluginFeatures(const std::function<bool(const
 /// @p debugLevel: the debug threshold to start with, unless GST_DEBUG is set.
 bool completeInit(std::optional<int> debugLevel = std::nullopt);
 void setDebugLevel(int level);
-/// Whether the sink may import GPU memory without a copy: not with the CPU path or a software decoder forced, nor
-/// under Direct3D12, whose device GStreamer can't wrap.
-bool gpuZeroCopyAllowedForCurrentGraphicsApi(bool forceCpuVideoPath, bool forceSoftwareDecoder);
 /// A new qgcvideosinkbin, returned as an owned, non-floating reference (adopt it), or nullptr.
 GstElement* createVideoSink(const VideoSinkConfig& config);
 VideoReceiver* createVideoReceiver(QObject* parent = nullptr);

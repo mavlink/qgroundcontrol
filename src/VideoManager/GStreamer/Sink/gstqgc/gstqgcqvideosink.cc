@@ -131,11 +131,12 @@ bool snapshot_sink(GstQgcQVideoSink* self, HwVideoBufferContext& hwOut)
 }
 
 /// The caps policy for @p target and the display the DMABuf path imports with (HwBuffers::dmaBufImportDisplay()); under
-/// GST_OBJECT_LOCK. Neither decides the caps of a CPU sink or of the glupload variant, so they are left out there:
-/// equal policies offer equal caps.
+/// GST_OBJECT_LOCK. Neither decides the caps of a CPU sink or of the glupload and d3d12convert variants, so they are
+/// left out there: equal policies offer equal caps.
 GstQgc::SinkCapsPolicy caps_policy_locked(const PrivState* p, const GstQgc::RenderTarget& target, void* dmaBufDisplay)
 {
-    const bool followsRenderer = p->gpu_zerocopy && (p->gpu_bin != GstQgc::GpuBinMode::GlUpload);
+    const bool followsRenderer = p->gpu_zerocopy && (p->gpu_bin != GstQgc::GpuBinMode::GlUpload) &&
+                                 (p->gpu_bin != GstQgc::GpuBinMode::D3D12Convert);
     return {.gpuZeroCopy = p->gpu_zerocopy,
             .gpuBin = p->gpu_bin,
             .target = followsRenderer ? target : GstQgc::RenderTarget{},

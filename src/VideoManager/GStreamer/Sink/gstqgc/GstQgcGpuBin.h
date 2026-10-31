@@ -13,6 +13,9 @@ enum class GpuBinMode
     Passthrough,   ///< Every compiled native memory straight into qgcqvideosink (Windows, Apple, ...).
     GlUpload,      ///< glupload → glcolorconvert → GLMemory 2D; gst-gl imports LINEAR and vendor-tiled DMABuf.
     DirectDmaBuf,  ///< memory:DMABuf and DMA_DRM into QGC's own importer (LINEAR only), skipping gst-gl's copy.
+    /// d3d12upload → d3d12convert → single-plane D3D12Memory RGBA/BGRA: Qt's D3D12 QRhi has no plane views, so it
+    /// can't sample NV12/P010 resources. The only variant for a Direct3D12 render target.
+    D3D12Convert,
 };
 
 /// The GPU bin asked for, before the render target is known.

@@ -303,8 +303,8 @@ if(ANDROID
 )
     list(APPEND _qgc_unreachable_paths "AHardwareBuffer (glupload bin)")
 endif()
-# The sink never advertises memory:CUDAMemory, memory:VulkanImage or memory:D3D12Memory caps.
-foreach(_path IN ITEMS CUDA Vulkan D3D12)
+# The sink never advertises memory:CUDAMemory or memory:VulkanImage caps.
+foreach(_path IN ITEMS CUDA Vulkan)
     if(_qgc_gpu_${_path})
         list(APPEND _qgc_unreachable_paths "${_path} (caps not advertised)")
     endif()

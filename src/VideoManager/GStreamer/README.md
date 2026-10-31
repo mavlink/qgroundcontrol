@@ -79,21 +79,26 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   - With `gpu-zerocopy`, ahead of it, only the GPU memory the renderer Qt Quick uses can import. Under OpenGL: DMA_DRM
     and DMABuf on EGL while the DMABuf import works (see
     [DMABuf zero-copy diagnostics](#dmabuf-zero-copy-diagnostics)), AHardwareBuffer on EGL (Android), and GLMemory,
-    which reaches Qt through the GL share group, on EGL or GLX. Under Direct3D11: D3D11Memory. Vulkan, Metal,
-    Direct3D12 and OpenGL on WGL or CGL get system memory only. There is deliberately no D3D12Memory: GStreamer opens
-    its own device on Qt's adapter instead of wrapping Qt's `ID3D12Device`, and QGC's D3D12 import isn't validated.
-    vtdec's IOSurface-backed frames arrive as system memory.
+    which reaches Qt through the GL share group, on EGL or GLX. Under Direct3D11: D3D11Memory. Under Direct3D12, the
+    d3d12convert variant (below). Vulkan, Metal and OpenGL on WGL or CGL get system memory only. vtdec's
+    IOSurface-backed frames arrive as system memory.
   - GLMemory always carries `texture-target=2D`, the only target the GL path samples. It also makes glcolorconvert
     convert amcvideodec's external-OES textures, which Qt would otherwise sample black.
   - The glupload variant (see [GPU bin selection](#gpu-bin-selection)) takes GLMemory only.
+  - The d3d12convert variant, the bin Qt's Direct3D12 renderer always gets, takes RGBA or BGRA D3D12Memory only: its
+    `d3d12upload ! d3d12convert` uploads software-decoded frames and converts the d3d12 decoders' NV12/P010 on the GPU,
+    because Qt's D3D12 QRhi creates no per-plane views and can't sample a planar resource's chroma (the D3D12 import
+    sends any multi-plane frame to the CPU path). A D3D12 device is a per-adapter singleton, so the device GStreamer
+    opens on Qt's adapter is Qt's own, and the decoders are ranked to match the renderer.
 
   The renderer is the backend of the scene graph's `QRhi` (`QGCRhiCapture`), or, until the scene graph runs, the
   graphics API Qt Quick was asked for. When it changes mid-stream, or the DMABuf import starts or stops working, the
   sink asks upstream to renegotiate.
 - **`qgcvideosinkbin`** — `converter ! qgcqvideosink`, with `glupload ! glcolorconvert` in between for the glupload
-  variant. The converter is the `conversion-element` override, else `imxvideoconvert_g2d` or `nvvidconv` when present,
-  else `videoconvertscale` (`videoconvert ! videoscale` before GStreamer 1.22). It scales non-square pixels to square
-  ones, converts formats the sink doesn't take (such as a software decoder's `Y444`), and passes GPU memory through.
+  variant and `d3d12upload ! d3d12convert` for the d3d12convert variant. The converter is the `conversion-element`
+  override, else `imxvideoconvert_g2d` or `nvvidconv` when present, else `videoconvertscale`
+  (`videoconvert ! videoscale` before GStreamer 1.22). It scales non-square pixels to square ones, converts formats the
+  sink doesn't take (such as a software decoder's `Y444`), and passes GPU memory through.
 - **Allocation proposal** — the sink asks the decoder for at least five buffers (`kMaxPinnedFrames` + 1), covering the
   frames Qt may still hold, and keeps the video, crop and GL sync metas it reads.
   `QGC_GST_PROPOSE_ALLOCATION_MIN_BUFFERS` overrides the count, as Qt's `QT_GSTREAMER_PROPOSE_ALLOCATION_MIN_BUFFERS`
@@ -126,7 +131,7 @@ Per-platform import of decoded GPU frames without a copy. Most paths wrap their 
 - **Build options**: `HwBuffers/CMakeLists.txt` probes one table row per path; the `QGC_GST_ENABLE_<PATH>` switches
   that compile a path out are listed in [`cmake/README.md`](../../../cmake/README.md#gstreamer). Configure lists
   compiled paths that the sink can't reach at runtime: Android's glupload bin offers only GLMemory caps, and no bin
-  advertises CUDAMemory, VulkanImage or D3D12Memory caps. Windows builds leave out the GLMemory path: Qt 6's OpenGL
+  advertises CUDAMemory or VulkanImage caps. Windows builds leave out the GLMemory path: Qt 6's OpenGL
   there is WGL, which gst-gl can't share. Linux builds with gst-gl and DMABuf compile both GPU bins; see
   [GPU bin selection](#gpu-bin-selection).
 
@@ -209,14 +214,17 @@ Unless `QGC_GST_BUNDLE_PLUGINS` is `OFF`, installs and AppImages bundle the syst
 
 #### GPU bin selection
 
-With `gpu-zerocopy`, `qgcvideosinkbin` picks one of three variants when it is built:
+With `gpu-zerocopy`, `qgcvideosinkbin` picks one of four variants when it is built:
 
 - `glupload` (the default on Linux and Android): the converter feeds glupload → glcolorconvert → GLMemory. On EGL,
   gst-gl imports LINEAR and vendor-tiled DMABuf, at the cost of its own copy/convert; on GLX it uploads system memory.
 - `dmabuf`: DMABuf and DMA_DRM go straight to Qt's DMABuf importer, skipping gst-gl. It takes LINEAR and the plain
   tilings Qt's EGL display reports (see [DMABuf zero-copy diagnostics](#dmabuf-zero-copy-diagnostics)).
+- `d3d12convert`: the converter feeds d3d12upload → d3d12convert → RGBA/BGRA D3D12Memory, for Qt Quick on Direct3D12
+  (`QSG_RHI_BACKEND=d3d12`), whatever `QGC_GST_GPU_BIN` says. It falls back to passthrough if the d3d12 plugin lacks
+  those elements.
 - passthrough: the converter feeds the sink, which takes the GPU memory the renderer imports (see
-  [`gstqgc`](#gstqgc--custom-gstreamer-plugin)). Windows and Apple builds always use it.
+  [`gstqgc`](#gstqgc--custom-gstreamer-plugin)). Windows on Direct3D11 and Apple builds use it.
 
 `glupload` hands GLMemory to Qt through the GL share group, so it needs Qt Quick on OpenGL, over EGL or GLX. That
 holds for any OpenGL on Linux and Android, so the bin doesn't wait to learn which: it may be built before the scene

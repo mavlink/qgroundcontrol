@@ -355,19 +355,6 @@ GstElement* createVideoSink(const VideoSinkConfig& config)
     return GST_ELEMENT(gst_object_ref_sink(videoSinkBin));
 }
 
-bool gpuZeroCopyAllowedForCurrentGraphicsApi(bool forceCpuVideoPath, bool forceSoftwareDecoder)
-{
-    if (forceCpuVideoPath || forceSoftwareDecoder) {
-        return false;
-    }
-#if defined(Q_OS_WIN) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    return (GstQgc::currentRenderTarget().backend != GstQgc::RenderBackend::Direct3D12) &&
-           (qEnvironmentVariable("QSG_RHI_BACKEND").compare(QLatin1String("d3d12"), Qt::CaseInsensitive) != 0);
-#else
-    return true;
-#endif
-}
-
 VideoReceiver* createVideoReceiver(QObject* parent)
 {
     return new GstVideoReceiver(parent);
@@ -420,9 +407,12 @@ static const char* zeroCopyFamilyFor(GstQgc::RenderBackend backend)
             return "CPU";
 #endif
         case GstQgc::RenderBackend::Direct3D12:
-            // GStreamer 1.28 can match adapter LUID but cannot wrap Qt's ID3D12Device; D3D12 zero-copy disabled until
-            // same-device import is possible.
-            return "CPU (D3D12 import disabled)";
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+            // A D3D12 device is a per-adapter singleton, so GStreamer's device on Qt's adapter is Qt's device.
+            return "D3D12 (d3d12convert to RGBA)";
+#else
+            return "CPU";
+#endif
         case GstQgc::RenderBackend::Metal:
 #if defined(QGC_HAS_GST_IOSURFACE_GPU_PATH)
             return "IOSurface/VideoToolbox";

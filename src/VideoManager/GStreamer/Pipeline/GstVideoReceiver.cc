@@ -153,7 +153,7 @@ bool GstVideoReceiver::_buildDisplaySink(QVideoSink* videoSink)
     const GStreamer::VideoSinkConfig sinkConfig{
         .conversionElement = display.conversionElement,
         .disablePixelAspectRatio = display.disablePixelAspectRatio,
-        .gpuZeroCopy = display.gpuZeroCopy && GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(false, false),
+        .gpuZeroCopy = display.gpuZeroCopy,
     };
     GStreamer::GstElementPtr sink = GStreamer::adoptElement(GStreamer::createVideoSink(sinkConfig));
     QGCQVideoSinkController* const controller =
