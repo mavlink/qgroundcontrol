@@ -118,10 +118,15 @@ Item {
         }
         //-- UVC Video (USB Camera or Video Device)
         Loader {
-            id:             cameraLoader
-            anchors.fill:   videoContentArea
-            visible:        _showUvcLoader
-            source:         _showUvcLoader ? "qrc:/qml/QGroundControl/VideoManager/UVCVideoOutput.qml" : "qrc:/qml/QGroundControl/FlyView/FlightDisplayViewDummy.qml"
+            id:                 cameraLoader
+            anchors.fill:       videoContentArea
+            visible:            _showUvcLoader
+            active:             _showUvcLoader
+            sourceComponent:    uvcVideoOutputComponent
+        }
+        Component {
+            id: uvcVideoOutputComponent
+            UVCVideoOutput { }
         }
 
         Item {
