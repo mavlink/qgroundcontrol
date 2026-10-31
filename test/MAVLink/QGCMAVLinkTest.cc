@@ -331,8 +331,7 @@ void QGCMAVLinkTest::_testBoundedStringField_data()
     QTest::newRow("single-byte") << QByteArray("AB") << 1 << QStringLiteral("A");
     QTest::newRow("whitespace") << QByteArray(" Camera \0ignored", 16) << 16 << QStringLiteral(" Camera ");
     QTest::newRow("utf8") << QByteArray::fromHex("43c3a16d61726100") << 8 << QStringLiteral("C\u00e1mara");
-    QTest::newRow("full-utf8-field") << QByteArray::fromHex("43c3a16d61726158") << 7
-                                    << QStringLiteral("C\u00e1mara");
+    QTest::newRow("full-utf8-field") << QByteArray::fromHex("43c3a16d61726158") << 7 << QStringLiteral("C\u00e1mara");
     QTest::newRow("truncated-utf8") << QByteArray::fromHex("c3a1") << 1 << QStringLiteral("\ufffd");
 }
 

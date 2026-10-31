@@ -7,8 +7,8 @@
 #include "MAVLinkSigning.h"
 #include "MAVLinkSigningKeys.h"
 #include "QGCLoggingCategory.h"
-#include "SecureMemory.h"
 #include "QGCMAVLink.h"
+#include "SecureMemory.h"
 
 QGC_LOGGING_CATEGORY(SigningControllerLog, "MAVLink.SigningController")
 
