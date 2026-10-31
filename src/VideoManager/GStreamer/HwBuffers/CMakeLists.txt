@@ -222,6 +222,7 @@ set(_qgc_gpu_row_IOSurface
     DEFINE QGC_HAS_GST_IOSURFACE_GPU_PATH
     SOURCES apple/GstIOSurfaceVideoBuffer.mm apple/GstIOSurfaceVideoBuffer.h)
 # Windows D3D11/D3D12 (gst-plugins-bad d3d{11,12}h264dec / vp9dec).
+set(_qgc_d3d12_extra_sources d3d/GstD3D12StagingPool.cc d3d/GstD3D12StagingPool.h)
 foreach(_ver IN ITEMS 11 12)
     set(_qgc_gpu_row_D3D${_ver}
         PLATFORMS WIN32
@@ -231,7 +232,7 @@ foreach(_ver IN ITEMS 11 12)
         UNSTABLE_API
         DEFINE QGC_HAS_GST_D3D${_ver}_GPU_PATH
         SOURCES d3d/GstD3D${_ver}VideoBuffer.cc d3d/GstD3D${_ver}ContextBridge.cc d3d/GstD3D${_ver}ContextBridge.h
-                d3d/GstD3DVideoBufferCommon.h)
+                d3d/GstD3DVideoBufferCommon.h ${_qgc_d3d${_ver}_extra_sources})
 endforeach()
 # Android AHardwareBuffer (gst-plugins-bad >= 1.28; GLMemory covers older SDKs).
 set(_qgc_gpu_row_AHardwareBuffer
