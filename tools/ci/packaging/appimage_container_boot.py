@@ -2,8 +2,8 @@
 """Boot-test an AppImage in a clean container of a distribution it supports.
 
 The container holds only what an end user's desktop gives the AppImage: glibc and libstdc++, the
-X11, OpenGL/EGL, GBM, Wayland client, ALSA, font and com_err libraries it leaves to the system, the
-CA certificates GnuTLS verifies servers with, and Xvfb.
+X11, OpenGL/EGL, GBM, Wayland client, ALSA, font, com_err and libgpg-error libraries it leaves to
+the system, the CA certificates GnuTLS verifies servers with, and Xvfb.
 No GStreamer or Qt is installed, and no GST_PLUGIN_* or GST_REGISTRY* variable is set, so a boot
 proves the AppImage brings its own. It runs with --appimage-extract-and-run (a container has no
 FUSE) under xvfb-run, like verify_executable.py's AppImage boot.
@@ -31,7 +31,7 @@ from common.proc import output_text, run_captured
 from ci.packaging.verify_executable import BOOT_LOGGING_CATEGORIES, BOOT_TIMEOUT_EXIT_CODE
 
 # Debian and Ubuntu package names; libasound2t64 needs Ubuntu 24.04 or Debian 13. Debian's base image,
-# unlike Ubuntu's, lacks libcom-err2, which every desktop install has.
+# unlike Ubuntu's, lacks libcom-err2 and libgpg-error0 (for the bundled libgcrypt), which every desktop has.
 RUNTIME_PACKAGES = (
     "ca-certificates",
     "libasound2t64",
@@ -41,6 +41,7 @@ RUNTIME_PACKAGES = (
     "libfribidi0",
     "libgbm1",
     "libgl1",
+    "libgpg-error0",
     "libharfbuzz0b",
     "libwayland-client0",
     "libx11-xcb1",

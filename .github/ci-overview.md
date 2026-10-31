@@ -622,8 +622,8 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   user, no `GST_PLUGIN_*` or `GST_REGISTRY*` variables) in Ubuntu 24.04 and Debian 13 containers,
   the oldest releases its glibc 2.38 and libstdc++ requirements allow. They hold only the
   desktop libraries the AppImage leaves to the system (X11, OpenGL/EGL, GBM, Wayland client,
-  fontconfig, HarfBuzz, which brings GLib, ALSA, com_err) and CA certificates, with no GStreamer,
-  Qt or GSettings schemas, so it must bring its own and must not need the schemas.
+  fontconfig, HarfBuzz, which brings GLib, ALSA, com_err, libgpg-error) and CA certificates, with
+  no GStreamer, Qt or GSettings schemas, so it must bring its own and must not need the schemas.
   The images come from Docker Hub, not the ECR Public mirror: the job runs on a GitHub-hosted
   runner, which Docker Hub's pull limit exempts and whose shared IPs exhaust ECR Public's
   anonymous data quota.
