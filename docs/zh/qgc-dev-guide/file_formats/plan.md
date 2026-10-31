@@ -168,8 +168,9 @@ The geofence and rally point objects are required, but their lists can be empty.
                         144.99457681259048
                     ]
                 ],
+                "splitConcavePolygons": false,
                 "type": "ComplexItem",
-                "version": 4
+                "version": 5
             },
 ```
 
@@ -177,7 +178,7 @@ The geofence and rally point objects are required, but their lists can be empty.
 
 | 键                                                        | 描述                                                                                                                                                                                                                      |
 | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `version`                                                | The version number for this `survey` definition. Current version is 3.                                                                                                                  |
+| `version`                                                | The version number for this `survey` definition. Current version is 5.                                                                                                                  |
 | `type`                                                   | ComplexItem（这是一个复杂的项目）。                                                                                                                                                                                                 |
 | `complexItemType`                                        | `survey`                                                                                                                                                                                                                |
 | [`TransectStyleComplexItem	`](#TransectStyleComplexItem) | Survey和CorridorScan复杂项目的通用基础定义。                                                                                                                                                                                         |
@@ -185,6 +186,7 @@ The geofence and rally point objects are required, but their lists can be empty.
 | `entryLocation`                                          | ?                                                                                                                                                                                                                       |
 | `flyAlternateTransects`                                  | 团结积分信息是可选的。 该计划可以包含任意数量的拉力点，每个拉力点具有纬度，经度和高度（高于原始位置）。如果是，则载具会跳过每个其他横断面，然后在最后返回并飞行这些替代。 This can be used for fixed wing aircraft when the turnaround would be too acute for the vehicle to make the turn. |
 | `polygon`                                                | The polygon array which represents the polygonal survey area. Each point is a latitude, longitude pair for a polygon vertex.                                                            |
+| `splitConcavePolygons`                                   | If true, transects are split where they cross a concave part of the polygon so that each transect stays inside the survey area (version 5).                                          |
 
 #### 走廊扫描 {#corridor_scan}
 

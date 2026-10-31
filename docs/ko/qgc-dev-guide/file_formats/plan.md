@@ -170,8 +170,9 @@ The object definition for a `Survey` complex mission item is given below.
                         144.99457681259048
                     ]
                 ],
+                "splitConcavePolygons": false,
                 "type": "ComplexItem",
-                "version": 4
+                "version": 5
             },
 ```
 
@@ -179,7 +180,7 @@ Complex items have these values associated with them:
 
 | Key                                                     | Description                                                                                                                                                                                                                                                   |
 | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `version`                                               | The version number for this `survey` definition. Current version is 3.                                                                                                                                                        |
+| `version`                                               | The version number for this `survey` definition. Current version is 5.                                                                                                                                                        |
 | `type`                                                  | `ComplexItem` (this is a complex item).                                                                                                                                                                                    |
 | `complexItemType`                                       | `survey`                                                                                                                                                                                                                                                      |
 | [`TransectStyleComplexItem`](#TransectStyleComplexItem) | The common base definition for Survey and CorridorScan complex items.                                                                                                                                                                         |
@@ -187,6 +188,7 @@ Complex items have these values associated with them:
 | `entryLocation`                                         | ?                                                                                                                                                                                                                                                             |
 | `flyAlternateTransects`                                 | If true, the vehicle will skip every other transect and then come back at the end and fly these alternates. This can be used for fixed wing aircraft when the turnaround would be too acute for the vehicle to make the turn. |
 | `polygon`                                               | The polygon array which represents the polygonal survey area. Each point is a latitude, longitude pair for a polygon vertex.                                                                                                  |
+| `splitConcavePolygons`                                  | If true, transects are split where they cross a concave part of the polygon so that each transect stays inside the survey area (version 5).                                                                                |
 
 #### Corridor Scan {#corridor_scan}
 

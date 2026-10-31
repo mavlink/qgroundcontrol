@@ -26,29 +26,43 @@ Linux终端：
 ./QGroundControl-<arch>.AppImage --logging:full --log-output
 ```
 
+Options take their value either after a colon (`--logging:full`) or as the next argument (`--logging full`).
+Run with `--help` to list the options available in your build.
+
 ## 选项
 
 选项/命令行参数列在下表中。
 
-| 选项                                                        | 描述                                                                                                                                                                                         |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `--clear-settings`                                        | Clears the app settings (reverts _QGroundControl_ back to default settings).                                                                            |
-| `--logging:full`                                          | Turns on full logging. See [Console Logging](../qgc-user-guide/troubleshooting/console_logging.md#logging-from-the-command-line).                          |
-| `--logging:Comms.LinkManager,FactSystem.ParameterManager` | Turns on the specified comma separated logging categories.                                                                                                                 |
-| `--log-output`                                            | Writes log messages to stderr (the terminal on macOS/Linux).                                                                                            |
-| `--unittest:name`                                         | （仅限调试版本）连续运行指定的单元测试次。 Leave off `:name` to run all tests.                                                                                                                  |
-| `--unittest-stress:count`                                 | (Debug builds only) Repeats unit tests `count` times (`count > 0`). Combine with `--unittest:name` to select a test. |
-| `--fake-mobile`                                           | Simulates running on a mobile device.                                                                                                                                      |
+| 选项                                                        | 描述                                                                                                                                                                |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--help`, `--version`                                     | Prints the available options or the version, then exits.                                                                                          |
+| `--clear-settings`                                        | Clears the app settings (reverts _QGroundControl_ back to default settings).                                                   |
+| `--clear-cache`                                           | Clears the cached parameter and airframe data.                                                                                                    |
+| `--logging:full`                                          | Turns on full logging. See [Console Logging](../qgc-user-guide/troubleshooting/console_logging.md#logging-from-the-command-line). |
+| `--logging:Comms.LinkManager,FactSystem.ParameterManager` | Turns on the specified comma separated logging categories. A category prefix such as `Comms` also turns on its sub-categories.    |
+| `--log-output`                                            | Writes log messages to stderr (the terminal on macOS/Linux).                                                                   |
+| `--system-id:id`                                          | Sets the MAVLink system ID used by _QGroundControl_.                                                                                              |
+| `--simple-boot-test`                                      | Initializes the application subsystems and exits (a quick startup check).                                                      |
+| `--fake-mobile`                                           | (Desktop only) Simulates running on a mobile device.                                                                           |
+| `--allow-multiple`                                        | (Desktop only) Allows more than one instance of _QGroundControl_ to run at a time.                                             |
+| `--swrast`                                                | (Windows and macOS only) Forces software rendering.                                                                            |
+| `--no-windows-assert-ui`                                  | (Windows only) Disables the assert dialog boxes.                                                                               |
+
+### Unit Test Options
+
+These options are only available in builds with unit tests (`QGC_BUILD_TESTING`, on by default in Debug builds). See [Unit Tests](contribute/unit_tests.md).
+
+| Option                         | Description                                                                                                                                         |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--unittest:name`              | Runs the specified unit test. Leave off `:name` to run all tests.                                                   |
+| `--unittest-stress:count`      | Repeats unit tests `count` times (`count > 0`). Combine with `--unittest:name` to select a test. |
+| `--unittest-output:file`       | Writes the results to `file` in JUnit XML format.                                                                                   |
+| `--unittest-shard:index/count` | Runs every `count`-th test function of a single test, starting at `index` (1-based).                             |
+| `--label:labels`               | Selects tests by comma separated labels, for example `--label:Unit,Vehicle`.                                                        |
+| `--list-tests`                 | Lists the registered tests (combine with `--label` to filter) and exits.                                         |
+| `--onscreen`                   | Shows test windows on screen instead of running offscreen.                                                                          |
 
 笔记：
 
 - For example, `--unittest:ParameterManagerTest --unittest-stress:20` runs `ParameterManagerTest` 20 times.
-- 单元测试自动包含在调试版本中（作为QGroundControl的一部分）。 QGroundControl在单元测试的控制下运行（它不能正常启动）。 | `
-  clear-settings` | 清除应用程序设置（将QGroundControl恢复为默认设置）。 |
-  \| `logging:full` | 打开完整日志记录。 请参阅控制台日志记录 |
-  \| `logging:full,LinkManagerVerboseLog,ParameterLoaderLog` | 打开完整日志记录并关闭以下列出的以逗号分隔的日志记录选项。 |
-  \| `--llogging:LinkManagerLog,ParameterLoaderLog` | 打开指定的逗号分隔日志记录选项 |
-  \| `--unittest:name` | （仅限Debug构建）运行指定单元测试。 离开：运行所有测试的名称。 |
-  \| `--unittest-stress:name` | （仅限调试版本）连续运行指定的单元测试20次。 离开：运行所有测试的名称。 |
-  \| `-fake-mobile` | 模拟在移动设备上运行。 |
-  \| `--test-high-dpi` | 模拟在高DPI设备上运行QGroundControl。 |
+- When running unit tests, _QGroundControl_ runs under the control of the unit test (it does not start normally).
