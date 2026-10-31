@@ -36,6 +36,7 @@ private slots:
     void _testScreenshotsComeFromStreamsOnDisplay();
     void _testStreamErrorsReachUser();
     void _testStreamStatsReachQml();
+    void _testStreamFormatText();
     void _testStreamUriAndTransport_data();
     void _testStreamUriAndTransport();
 

@@ -206,7 +206,6 @@ qt_add_qml_module(
         ValueSlider.qml
         VehicleRotationCal.qml
         VehicleSummaryRow.qml
-        VideoDisplaySettingsGroup.qml
         # NOTE: ScreenTools.qml is declared here because CMake's
         # set_source_files_properties() has directory scope. The QT_QML_SINGLETON_TYPE
         # property must be visible in the same CMakeLists.txt that calls

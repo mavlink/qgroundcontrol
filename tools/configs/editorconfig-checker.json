@@ -11,11 +11,11 @@
     "^src/AutoPilotPlugins/PX4/(ActuatorFact\\.qml|AirframeComponentController\\.cc)$",
     "^src/Comms/MockLink/MockLink\\.General\\.MetaData\\.json$",
     "^src/FirmwarePlugin/PX4/px4_custom_mode\\.h$",
-    "^src/FlyView/FlightDisplayViewUVC\\.qml$",
     "^src/Utilities/Geo/Formats/ogckml22\\.xsd$",
     "^src/Vehicle/Actuators/(Actuators|Mixer)\\.cc$",
     "^src/Vehicle/FTPManager\\.h$",
-    "^src/Vehicle/VehicleSetup/(Bootloader\\.h|FirmwareUpgradeController\\.(cc|h))$"
+    "^src/Vehicle/VehicleSetup/(Bootloader\\.h|FirmwareUpgradeController\\.(cc|h))$",
+    "^src/VideoManager/Qml/UVCVideoOutput\\.qml$"
   ],
   "Disable": {
     "IndentSize": true,

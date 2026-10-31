@@ -20,7 +20,7 @@ class VideoSettings;
 /// displays it.
 ///
 /// The VideoOutput registers itself: registerVideoOutput() once it is created and again after it moved to another
-/// window, unregisterVideoOutput() when it is destroyed (see FlightDisplayViewVideoOutput.qml). The registration
+/// window, unregisterVideoOutput() when it is destroyed (see VideoStreamOutput.qml). The registration
 /// outlives receivers, so an output registered before the video backend is ready is attached once a receiver exists.
 class VideoStreamController : public QObject
 {

@@ -6,8 +6,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
-
-import "VideoStreamFormat.js" as VideoStreamFormat
+import QGroundControl.VideoManager
 
 // Frame rate and bitrate of the measured video stream, orange while a stream degrades. The drawer shows each stream's
 // statistics, and expands to the video settings that change a running stream.

@@ -7,6 +7,7 @@ import QtQuick.Dialogs
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
+import QGroundControl.VideoManager
 
 Rectangle {
     id: photoVideoControl

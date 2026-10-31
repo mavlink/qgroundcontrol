@@ -34,9 +34,7 @@ qt_add_qml_module(
         StatusPill.qml
         TelemetryRSSIIndicator.qml
         VehicleMessageList.qml
-        VideoStreamFormat.js
         VideoStreamIndicator.qml
-        VideoStreamStatsGroup.qml
     NO_PLUGIN
 )
 

@@ -1,7 +1,8 @@
 # ============================================================================
 # Video Manager Module
 # VideoManager, the QML facade; Streams: per-stream control and the settings resolver; Recording: file naming, storage
-# and subtitles; UVC: local cameras; Receiver: the backend-neutral receiver API; GStreamer: the network backend.
+# and subtitles; UVC: local cameras; Receiver: the backend-neutral receiver API; GStreamer: the network backend; Qml:
+# the QGroundControl.VideoManager QML module.
 # ============================================================================
 
 target_sources(
@@ -32,3 +33,6 @@ target_include_directories(
 
 add_subdirectory(Receiver)
 add_subdirectory(GStreamer)
+add_subdirectory(Qml)
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE VideoManagerModule)

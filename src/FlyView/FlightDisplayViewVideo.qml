@@ -5,6 +5,7 @@ import QGroundControl
 import QGroundControl.FlyView
 import QGroundControl.FlightMap
 import QGroundControl.Controls
+import QGroundControl.VideoManager
 
 Item {
     id:     root
@@ -111,7 +112,7 @@ Item {
         }
         Component {
             id: videoOutputComponent
-            FlightDisplayViewVideoOutput {
+            VideoStreamOutput {
                 stream: QGroundControl.videoManager.primaryStream
             }
         }
@@ -120,7 +121,7 @@ Item {
             id:             cameraLoader
             anchors.fill:   videoContentArea
             visible:        _showUvcLoader
-            source:         _showUvcLoader ? "qrc:/qml/QGroundControl/FlyView/FlightDisplayViewUVC.qml" : "qrc:/qml/QGroundControl/FlyView/FlightDisplayViewDummy.qml"
+            source:         _showUvcLoader ? "qrc:/qml/QGroundControl/VideoManager/UVCVideoOutput.qml" : "qrc:/qml/QGroundControl/FlyView/FlightDisplayViewDummy.qml"
         }
 
         Item {
@@ -201,7 +202,7 @@ Item {
 
                 Component {
                     id: thermalOutputComponent
-                    FlightDisplayViewVideoOutput {
+                    VideoStreamOutput {
                         stream: QGroundControl.videoManager.thermalStream
                     }
                 }

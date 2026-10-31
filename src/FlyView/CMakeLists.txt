@@ -15,8 +15,6 @@ qt_add_qml_module(
         DefaultChecklist.qml
         FixedWingChecklist.qml
         FlightDisplayViewDummy.qml
-        FlightDisplayViewVideoOutput.qml
-        FlightDisplayViewUVC.qml
         FlightDisplayViewVideo.qml
         FlyView.qml
         FlyViewAdditionalActionsButton.qml

@@ -33,10 +33,10 @@ VideoOutput {
 }
 )QML";
 
-// FlightDisplayViewVideoOutput inside a container that tests move between windows.
+// VideoStreamOutput inside a container that tests move between windows.
 constexpr const char* kStreamOutputQml = R"QML(
 import QtQuick
-import QGroundControl.FlyView
+import QGroundControl.VideoManager
 
 Item {
     id: root
@@ -46,7 +46,7 @@ Item {
     Item {
         objectName: "holder"
 
-        FlightDisplayViewVideoOutput {
+        VideoStreamOutput {
             objectName: "output"
             stream: root.stream
         }
@@ -56,9 +56,24 @@ Item {
 
 constexpr const char* kStatsGroupQml = R"QML(
 import QtQuick
-import QGroundControl.Toolbar
+import QGroundControl.VideoManager
 
 VideoStreamStatsGroup {
+}
+)QML";
+
+// VideoStreamFormat as other modules reach it: a JavaScript resource of the module, not a relative import.
+constexpr const char* kStreamFormatQml = R"QML(
+import QtQml
+import QGroundControl.VideoManager
+
+QtObject {
+    readonly property string kbit: VideoStreamFormat.bitrateText(850)
+    readonly property string mbit: VideoStreamFormat.bitrateText(8000)
+    readonly property string minutes: VideoStreamFormat.durationText(65000)
+    readonly property string hours: VideoStreamFormat.durationText(3725000)
+    readonly property string megabytes: VideoStreamFormat.sizeText(5 * 1024 * 1024)
+    readonly property string gigabytes: VideoStreamFormat.sizeText(1.5 * 1024 * 1024 * 1024)
 }
 )QML";
 
@@ -558,6 +573,22 @@ void VideoManagerTest::_testStreamStatsReachQml()
     _primary = nullptr;
     QCOMPARE(statsSpy.count(), 3);
     QVERIFY(!group->isVisible());
+}
+
+void VideoManagerTest::_testStreamFormatText()
+{
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kStreamFormatQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/StreamFormat.qml")));
+    const std::unique_ptr<QObject> format(component.create());
+    QVERIFY2(format, qPrintable(component.errorString()));
+    QCOMPARE(format->property("kbit").toString(), QStringLiteral("850 kbit/s"));
+    QCOMPARE(format->property("mbit").toString(), QStringLiteral("8.0 Mbit/s"));
+    QCOMPARE(format->property("minutes").toString(), QStringLiteral("1:05"));
+    QCOMPARE(format->property("hours").toString(), QStringLiteral("1:02:05"));
+    QCOMPARE(format->property("megabytes").toString(), QStringLiteral("5.0 MB"));
+    QCOMPARE(format->property("gigabytes").toString(), QStringLiteral("1.50 GB"));
 }
 
 void VideoManagerTest::_testStreamUriAndTransport_data()
