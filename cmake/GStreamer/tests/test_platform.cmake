@@ -52,9 +52,18 @@ elseif(TEST_CASE MATCHES "^download-spaces-(unix|no-short-name)$")
     set(CPM_SOURCE_CACHE "${_sandbox}/Jane Doe/.cache/CPM")
     _qgc_gst_space_free_download_cache()
     message(FATAL_ERROR "${TEST_CASE} unexpectedly succeeded")
+elseif(TEST_CASE STREQUAL "below-bundled-floor")
+    _qgc_gst_require_bundled_version(windows 1.27.0 1.28.0)
+    message(FATAL_ERROR "${TEST_CASE} unexpectedly succeeded")
 elseif(DEFINED TEST_CASE)
     message(FATAL_ERROR "Unknown test case: ${TEST_CASE}")
 endif()
+
+# Linux's system GStreamer has its own, older floor; the official SDKs meet the bundled one.
+_qgc_gst_require_bundled_version(linux 1.20.0 1.28.0)
+_qgc_gst_require_bundled_version(ios 1.28.0 1.28.0)
+_qgc_gst_require_bundled_version(windows 1.28.4 1.28.0)
+qgc_test_pass("bundled SDK floor")
 
 # host is Windows|CPM_SOURCE_CACHE under the sandbox|expected CPM_SOURCE_CACHE under the sandbox
 foreach(_case IN ITEMS "FALSE|cache|cache" "TRUE|cache|cache" "TRUE|Jane Doe/.cache/CPM|JANEDO~1")

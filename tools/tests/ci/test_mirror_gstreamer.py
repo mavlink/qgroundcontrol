@@ -48,9 +48,12 @@ def test_windows_has_both_arches() -> None:
     ]
 
 
-def test_windows_rejects_pre_1_28() -> None:
-    with pytest.raises(ValueError, match="requires version"):
-        artifacts_for("windows", "1.26.5")
+@pytest.mark.parametrize("platform", ["windows", "android"])
+def test_rejects_versions_below_the_bundled_minimum(platform: str) -> None:
+    with pytest.raises(ValueError, match=r"require version >= 1\.28\.0"):
+        artifacts_for(platform, "1.26.5")
+    with pytest.raises(ValueError, match=r"require version >= 1\.29\.0"):
+        artifacts_for(platform, "1.28.3", minimum="1.29.0")
 
 
 def test_ios_devel_pkg() -> None:
@@ -99,8 +102,8 @@ def test_unpinned_version_uses_sidecar(monkeypatch) -> None:
     monkeypatch.setattr(
         mirror_gstreamer, "read_url_text", lambda url, **_kwargs: f"{sidecar}  file.tar.xz\n"
     )
-    (art,) = artifacts_for("android", "0.0.1")
-    assert _expected_sha(art, "0.0.1") == sidecar.lower()
+    (art,) = artifacts_for("android", "1.99.0")
+    assert _expected_sha(art, "1.99.0") == sidecar.lower()
 
 
 def test_main_reports_errors_as_escaped_annotations(capsys: pytest.CaptureFixture[str]) -> None:

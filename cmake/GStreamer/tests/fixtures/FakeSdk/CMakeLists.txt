@@ -14,8 +14,9 @@ if(NOT QGC_TEST_PLUGINS)
 endif()
 string(REPLACE "," "\", \"" _qgc_test_plugins_json "${QGC_TEST_PLUGINS}")
 string(
-    CONCAT QGC_BUILD_CONFIG_CONTENT "{\"gstreamer\": {\"version\": {\"minimum\": \"1.20.0\", \"android\": \"1.20.0\", "
-           "\"macos\": \"1.22.0\"}, \"plugins\": {\"common\": [\"${_qgc_test_plugins_json}\"]}}}"
+    CONCAT QGC_BUILD_CONFIG_CONTENT "{\"gstreamer\": {\"version\": {\"minimum\": \"1.20.0\", \"bundled_minimum\": "
+           "\"1.20.0\", \"android\": \"1.20.0\", \"macos\": \"1.22.0\"}, \"plugins\": {\"common\": "
+           "[\"${_qgc_test_plugins_json}\"]}}}"
 )
 # The fake SDK's libraries are empty files, so feature probes must compile without linking.
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)

@@ -31,7 +31,6 @@ from common.net import download_file, read_url_text
 
 S3_BUCKET = "qgroundcontrol"
 PLATFORMS = tuple(PLATFORM_PACKAGES)
-WINDOWS_MIN_VERSION = (1, 28, 0)
 
 
 @dataclass(frozen=True)
@@ -54,12 +53,16 @@ def _version_tuple(version: str) -> tuple[int, ...]:
     return tuple(int(part) for part in version.split(".") if part.isdigit())
 
 
-def artifacts_for(platform: str, version: str) -> list[Artifact]:
-    """Return the upstream artifact(s) to mirror for *platform* at *version*."""
+def artifacts_for(platform: str, version: str, minimum: str | None = None) -> list[Artifact]:
+    """Return the upstream artifact(s) to mirror for *platform* at *version*.
+
+    *minimum* defaults to build-config.json's ``gstreamer.version.bundled_minimum``, the oldest SDK the build accepts.
+    """
     if platform not in PLATFORM_PACKAGES:
         raise ValueError(f"Unknown platform: {platform!r}")
-    if platform == "windows" and _version_tuple(version) < WINDOWS_MIN_VERSION:
-        raise ValueError(f"Windows GStreamer SDK requires version >= 1.28.0 (got {version!r})")
+    minimum = minimum or get_build_config_value("gstreamer.version.bundled_minimum")
+    if minimum and _version_tuple(version) < _version_tuple(minimum):
+        raise ValueError(f"GStreamer SDKs require version >= {minimum} (got {version!r})")
     return [
         Artifact(package, package_url(package, version), package_platform(package))
         for package in PLATFORM_PACKAGES[platform]

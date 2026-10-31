@@ -53,6 +53,8 @@ if(QGC_GST_VERSION)
 else()
     qgc_config_read(QGC_GST_REQUESTED_VERSION gstreamer version ${_qgc_gst_platform_VERSION_KEY})
 endif()
+qgc_config_read(_qgc_gst_bundled_minimum gstreamer version bundled_minimum)
+_qgc_gst_require_bundled_version(${_qgc_gst_platform} "${QGC_GST_REQUESTED_VERSION}" "${_qgc_gst_bundled_minimum}")
 
 if(GStreamer_ROOT_DIR AND NOT EXISTS "${GStreamer_ROOT_DIR}")
     message(

@@ -77,7 +77,7 @@ set(_qgc_gst_failure_cases
     "test_platform|DownloadSpaces|download-spaces-unix|where the GStreamer SDK is downloaded, contains a space,"
     "test_platform|DownloadNoShortName|download-spaces-no-short-name|contains a space and no 8.3 short path without one"
     "test_ios_xcframework_slice|NoMatchingArch|no-matching-arch|no iphoneos slice for architectures 'x86_64'"
-    "test_download_win_version_guard|||Windows GStreamer SDK requires version 1.28 or later"
+    "test_platform|BelowBundledFloor|below-bundled-floor|the windows SDK must be 1.28.0 or later"
     "test_windows_installer_guard|Unpinned|unpinned|refusing to silently run the downloaded Windows installer"
     "test_ios_sdk_version|BelowRequested|below-requested|older than the requested 1.28.4"
     "test_windows_sdk_root|ExplicitIncomplete|explicit-incomplete|\\(GStreamer_ROOT_DIR\\) is incomplete"

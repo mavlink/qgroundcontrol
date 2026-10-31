@@ -64,6 +64,22 @@ function(qgc_gst_platform prefix)
     return(PROPAGATE ${prefix} ${prefix}_VERSION_KEY ${prefix}_PLUGIN_KEY)
 endfunction()
 
+# _qgc_gst_require_bundled_version(<platform> <version> <floor>)
+# Fails configure when <platform> uses an official SDK (every platform but Linux, whose system GStreamer has its own
+# floor) and <version> is older than <floor>, gstreamer.version.bundled_minimum: discovery reads the SDK layouts from
+# that release on (the Windows installers' names, iOS's merged framework).
+function(_qgc_gst_require_bundled_version platform version floor)
+    if(platform STREQUAL "linux" OR version VERSION_GREATER_EQUAL floor)
+        return()
+    endif()
+    message(
+        FATAL_ERROR
+            "GStreamer: the ${platform} SDK must be ${floor} or later (gstreamer.version.bundled_minimum), but "
+            "${version} was requested. Set QGC_GST_VERSION, or gstreamer.version.${platform} in "
+            ".github/build-config.json, to ${floor} or later."
+    )
+endfunction()
+
 # _qgc_gst_return_discovery()
 # Returns from a discovery function, setting every discovery output in the caller's scope as the function left it.
 macro(_qgc_gst_return_discovery)

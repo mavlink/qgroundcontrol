@@ -182,6 +182,7 @@
           "required": [
             "default",
             "minimum",
+            "bundled_minimum",
             "android",
             "ios",
             "macos",
@@ -194,6 +195,11 @@
               "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
             },
             "minimum": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+            },
+            "bundled_minimum": {
+              "description": "Oldest official SDK (Windows, macOS, Android, iOS) the build can download or bundle; the system GStreamer of Linux has minimum instead.",
               "type": "string",
               "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
             },

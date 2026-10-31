@@ -9,6 +9,8 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include <gst/gst.h>
 #include <memory>
 
+#include <QtCore/QVersionNumber>
+
 #include "Fact.h"
 #include "GStreamer.h"
 #include "GStreamerHelpers.h"
@@ -200,17 +202,11 @@ void GStreamerTest::_testRuntimeVersionCheck()
     gst_version(&major, &minor, &micro, &nano);
 
     QVERIFY2(major == 1, "Unexpected GStreamer major version");
-#if defined(Q_OS_LINUX)
-    QVERIFY2(minor >= 20, qPrintable(QStringLiteral("GStreamer runtime version %1.%2.%3 is below minimum 1.20.0")
-                                         .arg(major)
-                                         .arg(minor)
-                                         .arg(micro)));
-#else
-    QVERIFY2(minor >= 28, qPrintable(QStringLiteral("GStreamer runtime version %1.%2.%3 is below bundled SDK minimum 1.28.0")
-                                         .arg(major)
-                                         .arg(minor)
-                                         .arg(micro)));
-#endif
+    const QVersionNumber runtime(static_cast<int>(major), static_cast<int>(minor), static_cast<int>(micro));
+    const QVersionNumber minimum = QVersionNumber::fromString(QStringLiteral(QGC_GST_RUNTIME_MINIMUM_VERSION));
+    QVERIFY(!minimum.isNull());
+    QVERIFY2(runtime >= minimum, qPrintable(QStringLiteral("GStreamer runtime version %1 is below the minimum %2")
+                                                .arg(runtime.toString(), minimum.toString())));
 
     if (major != GST_VERSION_MAJOR || minor != GST_VERSION_MINOR) {
         qCWarning(GStreamerTestLog) << "GStreamer version mismatch: built against" << GST_VERSION_MAJOR << "."

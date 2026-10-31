@@ -148,13 +148,6 @@ function(_qgc_gst_discover_ios_sdk)
         message(FATAL_ERROR "GStreamer for iOS can only be built on macOS")
     endif()
 
-    if(QGC_GST_REQUESTED_VERSION VERSION_LESS "1.28.0")
-        message(
-            FATAL_ERROR "GStreamer for iOS requires version 1.28 or later. "
-                        "Got '${QGC_GST_REQUESTED_VERSION}' — bump gstreamer.version.ios in build-config.json."
-        )
-    endif()
-
     if(GStreamer_ROOT_DIR)
         _qgc_gst_ios_bundle_from_root("${GStreamer_ROOT_DIR}" _gst_ios_bundle)
         if(NOT _gst_ios_bundle)

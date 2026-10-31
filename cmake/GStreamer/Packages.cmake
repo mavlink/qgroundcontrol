@@ -20,13 +20,7 @@ function(gstreamer_get_package_url platform version output_var)
     set(_url_macos_devel "${_base}/data/pkg/macos/${version}/gstreamer-1.0-devel-${version}-universal.pkg")
 
     if(platform MATCHES "^windows_msvc_(x64|arm64)$")
-        # Windows: 1.28+ ships .exe with arch-tagged filename (defensive guard against manual override).
-        if(version VERSION_LESS "1.28.0")
-            message(
-                FATAL_ERROR "Windows GStreamer SDK requires version 1.28 or later (got '${version}'). "
-                            "Bump gstreamer.version.windows in build-config.json."
-            )
-        endif()
+        # The MSVC installers are named by architecture (from 1.28 on, gstreamer.version.bundled_minimum).
         if(CMAKE_MATCH_1 STREQUAL "x64")
             set(_arch "x86_64")
         else()
