@@ -234,6 +234,7 @@ public:
     Q_PROPERTY(VehicleLinkManager*      vehicleLinkManager  READ vehicleLinkManager CONSTANT)
     Q_PROPERTY(VehicleObjectAvoidance*  objectAvoidance     READ objectAvoidance    CONSTANT)
     Q_PROPERTY(Autotune*                autotune            READ autotune           CONSTANT)
+    Q_PROPERTY(QObject* uomRegistrationManager READ uomRegistrationManager CONSTANT)
     Q_PROPERTY(RemoteIDManager*         remoteIDManager     READ remoteIDManager    CONSTANT)
 
     // FactGroup object model properties
@@ -605,6 +606,8 @@ public:
     VehicleObjectAvoidance*         objectAvoidance     () { return _objectAvoidance; }
     Autotune*                       autotune            () const { return _autotune; }
     RemoteIDManager*                remoteIDManager     () { return _remoteIDManager; }
+
+    QObject* uomRegistrationManager() const { return _uomRegistrationManager; }
 
     static void showCommandAckError(const mavlink_command_ack_t& ack);
 
@@ -1163,6 +1166,7 @@ public:
     FTPManager*                     _ftpManager                 = nullptr;
     InitialConnectStateMachine*     _initialConnectStateMachine = nullptr;
     Actuators*                      _actuators                  = nullptr;
+    QObject* _uomRegistrationManager = nullptr;
     RemoteIDManager*                _remoteIDManager            = nullptr;
     StandardModes*                  _standardModes              = nullptr;
 

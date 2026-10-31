@@ -3,7 +3,8 @@
 # Vehicle configuration, calibration, and firmware upgrade
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         JoystickConfigController.cc
         JoystickConfigController.h
@@ -14,7 +15,8 @@ target_sources(${CMAKE_PROJECT_NAME}
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(NOT QGC_NO_SERIAL_LINK)
-    target_sources(${CMAKE_PROJECT_NAME}
+    target_sources(
+        ${CMAKE_PROJECT_NAME}
         PRIVATE
             Bootloader.cc
             Bootloader.h
@@ -29,7 +31,8 @@ endif()
 
 qt_add_library(VehicleSetupModule STATIC)
 
-qt_add_qml_module(VehicleSetupModule
+qt_add_qml_module(
+    VehicleSetupModule
     URI QGroundControl.VehicleSetup
     VERSION 1.0
     RESOURCE_PREFIX /qml
@@ -44,6 +47,8 @@ qt_add_qml_module(VehicleSetupModule
         RemoteControlChannelMonitor.qml
         RemoteControlChannelValueDisplay.qml
         SetupParameterEditor.qml
+        UomRegistration.qml
+        UomRegistrationPanel.qml
         VehicleConfigView.qml
         VehicleSummary.qml
         VehicleSummaryCard.qml
@@ -54,7 +59,8 @@ qt_add_qml_module(VehicleSetupModule
     NO_PLUGIN
 )
 
-qt_add_resources(${CMAKE_PROJECT_NAME} vehiclesetup_qmlimages
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} vehiclesetup_qmlimages
     PREFIX "/qmlimages"
     BASE "${CMAKE_CURRENT_SOURCE_DIR}"
     FILES

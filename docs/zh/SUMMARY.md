@@ -62,6 +62,7 @@
   - [虚拟操纵杆 (PX4)](qgc-user-guide/settings_view/virtual_joystick.md)
   - [固件](qgc-user-guide/setup_view/firmware.md)
   - [参数](qgc-user-guide/setup_view/parameters.md)
+  - [UOM 实名登记与激活](qgc-user-guide/setup_view/uom_registration.md)
 
 - [Settings](qgc-user-guide/settings_view/settings_view.md)
   - [常规](qgc-user-guide/settings_view/general.md)

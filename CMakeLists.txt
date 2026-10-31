@@ -134,6 +134,20 @@ project(
     LANGUAGES C CXX
 )
 
+set(_qgc_uom_linux OFF)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT ANDROID)
+    set(_qgc_uom_linux ON)
+endif()
+option(QGC_UOM_REGISTRATION "Build UOM registration and activation support (Linux)" ${_qgc_uom_linux})
+option(QGC_UOM_AMOV_ADAPTER "Build the optional AMOV UOM device adapter and MAVLink extension" OFF)
+if(QGC_UOM_REGISTRATION AND NOT _qgc_uom_linux)
+    message(FATAL_ERROR "UOM registration currently supports Linux only")
+endif()
+if(QGC_UOM_AMOV_ADAPTER AND NOT QGC_UOM_REGISTRATION)
+    message(FATAL_ERROR "QGC_UOM_AMOV_ADAPTER requires QGC_UOM_REGISTRATION")
+endif()
+unset(_qgc_uom_linux)
+
 # Ninja otherwise makes each custom command (rcc, Qt metatypes and type registration) wait for every target its
 # target links, which runs the libraries, the tests and the application one after another. Commands must therefore
 # list the files they read in DEPENDS: a target name alone no longer orders them. Android keeps the default: Qt's

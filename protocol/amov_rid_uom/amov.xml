@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<!-- Optional AMOV activation bridge; message layouts match the existing device firmware. -->
+<mavlink>
+  <version>3</version>
+  <dialect>0</dialect>
+  <enums>
+    <enum name="AMOV_DEVICE_OPERATION">
+      <description>Transport operations only. Device business operations are opaque payload bytes.</description>
+      <entry value="0" name="AMOV_DEVICE_OPERATION_LIST_NODES"/>
+      <entry value="1" name="AMOV_DEVICE_OPERATION_TRANSFER"/>
+    </enum>
+    <enum name="AMOV_DEVICE_STATUS">
+      <description>Communication result only, never a device save or activation result.</description>
+      <entry value="0" name="AMOV_DEVICE_STATUS_OK"/>
+      <entry value="1" name="AMOV_DEVICE_STATUS_UNSUPPORTED"/>
+      <entry value="2" name="AMOV_DEVICE_STATUS_INVALID"/>
+      <entry value="3" name="AMOV_DEVICE_STATUS_BUSY"/>
+      <entry value="4" name="AMOV_DEVICE_STATUS_TIMEOUT"/>
+      <entry value="5" name="AMOV_DEVICE_STATUS_UNAVAILABLE"/>
+    </enum>
+  </enums>
+  <messages>
+    <message id="61003" name="AMOV_DEVICE_REQUEST">
+      <description>Bounded transparent device request. LIST_NODES has an empty payload; TRANSFER carries an opaque device service request. MAVLink 2 only.</description>
+      <field type="uint64_t" name="session_id">Nonzero random ground station connection session.</field>
+      <field type="uint32_t" name="request_id">Nonzero request correlation identifier.</field>
+      <field type="uint8_t" name="target_system">Destination MAVLink system.</field>
+      <field type="uint8_t" name="target_component">Destination MAVLink component.</field>
+      <field type="uint8_t" name="protocol_version">Transport version, currently 1.</field>
+      <field type="uint8_t" name="operation" enum="AMOV_DEVICE_OPERATION">Transport operation.</field>
+      <field type="uint8_t" name="node_id">Target DroneCAN node 1 to 127 for TRANSFER; zero for LIST_NODES.</field>
+      <field type="uint8_t" name="payload_length">Number of valid payload bytes, 0 to 192.</field>
+      <field type="uint8_t[192]" name="payload">Opaque device request bytes; unused bytes zero.</field>
+    </message>
+    <message id="61004" name="AMOV_DEVICE_RESPONSE">
+      <description>Response routed to the original ground station on the original connection. LIST_NODES returns one live CAN node ID per payload byte. Device result bytes are not interpreted by the bridge.</description>
+      <field type="uint64_t" name="session_id">Nonzero random ground station connection session.</field>
+      <field type="uint32_t" name="request_id">Nonzero request correlation identifier.</field>
+      <field type="uint8_t" name="target_system">Destination MAVLink system.</field>
+      <field type="uint8_t" name="target_component">Destination MAVLink component.</field>
+      <field type="uint8_t" name="protocol_version">Transport version, currently 1.</field>
+      <field type="uint8_t" name="operation" enum="AMOV_DEVICE_OPERATION">Transport operation.</field>
+      <field type="uint8_t" name="node_id">Target DroneCAN node 1 to 127 for TRANSFER; zero for LIST_NODES.</field>
+      <field type="uint8_t" name="payload_length">Number of valid payload bytes, 0 to 192.</field>
+      <field type="uint8_t" name="status" enum="AMOV_DEVICE_STATUS">Transport result. OK does not imply a successful device operation.</field>
+      <field type="uint8_t[192]" name="payload">Opaque device response, or node list. Unused bytes zero.</field>
+    </message>
+  </messages>
+</mavlink>

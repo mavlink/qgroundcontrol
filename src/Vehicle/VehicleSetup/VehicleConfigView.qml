@@ -230,6 +230,12 @@ Rectangle {
         }
     }
 
+    function showUomRegistrationPanel() {
+        if (_activeVehicle && _activeVehicle.uomRegistrationManager) {
+            showPanel("uom", "qrc:/qml/QGroundControl/VehicleSetup/UomRegistration.qml")
+        }
+    }
+
     function showParametersPanel() {
         showPanel("parameters", "qrc:/qml/QGroundControl/VehicleSetup/SetupParameterEditor.qml")
     }
@@ -564,6 +570,17 @@ Rectangle {
                             }
                         }
                     }
+                }
+
+                ConfigButton {
+                    objectName: "vehicleConfig_uomButton"
+                    visible: vehicleConfigView._activeVehicle && vehicleConfigView._activeVehicle.uomRegistrationManager &&
+                             (vehicleConfigView._searchQuery.trim() === "" ||
+                              text.toLowerCase().indexOf(vehicleConfigView._searchQuery.toLowerCase().trim()) !== -1)
+                    text: qsTr("UOM registration")
+                    Layout.fillWidth: true
+                    checked: vehicleConfigView._selectedSpecial === "uom"
+                    onClicked: vehicleConfigView.showUomRegistrationPanel()
                 }
 
                 // Optical Flow (special)

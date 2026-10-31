@@ -21497,6 +21497,11 @@ If a vehicle still has this key configured, you will no longer be able to commun
         <source>Firmware</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/VehicleConfigView.qml" line="580"/>
+        <source>UOM registration</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>VehicleLinkManager</name>
@@ -22285,6 +22290,885 @@ Source: %6 (session %7); destination: %8 (session %9)</source>
     <message>
         <location filename="../src/GPS/NTRIP/NTRIPConnectionStatus.qml" line="124"/>
         <source>Queued to vehicle links (all sources)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AmovUomDeviceAdapter</name>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="37"/>
+        <source>Read devices to discover activation support</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="111"/>
+        <source>Read aircraft parameters to check existing flight restrictions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="120"/>
+        <source>The flight controller requires a healthy RID; verify matching firmware on hardware</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="121"/>
+        <source>The flight-controller settings do not confirm mandatory RID arming protection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="123"/>
+        <source>. Live flight reporting is also required; registration and activation do not satisfy it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="125"/>
+        <source>. QGC does not change these parameters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="132"/>
+        <source>Node %1 — %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="151"/>
+        <source>Aircraft or connection changed; read devices again while on the ground and disarmed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="193"/>
+        <source>Finding activation-capable RID devices</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="195"/>
+        <source>Device management is unavailable on this link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="214"/>
+        <source>Device identity read; verify registration before activation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="255"/>
+        <source>No activation-capable RID identity was confirmed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="256"/>
+        <source>Select the RID device to register and activate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="285"/>
+        <source>Invalid activation request</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="300"/>
+        <source>RID link is unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="310"/>
+        <source>Read devices while the aircraft is on the ground and disarmed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="316"/>
+        <source>Reading current activation state</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="323"/>
+        <source>Device or aircraft state changed; read devices before retrying</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="331"/>
+        <source>Checking identity before changing activation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="339"/>
+        <source>Activation outcome is unknown; read devices before retrying</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="363"/>
+        <source>Unexpected device-list response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="369"/>
+        <source>Invalid CAN node list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="387"/>
+        <source>Invalid or unrelated device response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="394"/>
+        <source>Node %1 did not return a valid provisioned identity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="400"/>
+        <source>Device identity or boot changed; read devices again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="416"/>
+        <source>Activation was not confirmed as durably saved; read devices before retrying</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="421"/>
+        <source>Reading back saved activation state</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="426"/>
+        <source>Invalid device identity response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="434"/>
+        <source>Device identity or state changed before activation; read devices again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="442"/>
+        <source>Saving activation state</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="447"/>
+        <source>Device activation readback differs from the saved receipt</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="453"/>
+        <source>Activation state saved and verified</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="458"/>
+        <source>Activation state read</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.cc" line="466"/>
+        <source>Node %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomDeviceAdapter.h" line="26"/>
+        <source>AMOV activation device</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AmovUomTransport</name>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomTransport.cc" line="20"/>
+        <source>RID response timed out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomTransport.cc" line="97"/>
+        <source>Invalid RID transport response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomTransport.cc" line="102"/>
+        <source>Flight-controller firmware does not support RID management. Install matching firmware.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomTransport.cc" line="105"/>
+        <source>Flight controller rejected an invalid RID management request</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomTransport.cc" line="108"/>
+        <source>RID management is busy; try again after the current operation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomTransport.cc" line="111"/>
+        <source>RID did not respond before the deadline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomTransport.cc" line="114"/>
+        <source>RID is unavailable; check the device and CAN connection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Amov/AmovUomTransport.cc" line="117"/>
+        <source>Unexpected RID transport status (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UomRegistration</name>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistration.qml" line="30"/>
+        <source>Connect an aircraft to manage UOM registration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistration.qml" line="40"/>
+        <source>Read activation devices</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UomRegistrationClient</name>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationClient.cc" line="71"/>
+        <source>Another UOM request is still pending</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationClient.cc" line="75"/>
+        <source>Check the official UOM profile, aircraft identity and encryption key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationClient.cc" line="79"/>
+        <source>UOM transaction storage is unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationClient.cc" line="88"/>
+        <source>A cancellation token, reason type and reason of at most 200 UTF-8 bytes are required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationClient.cc" line="111"/>
+        <source>Identical UOM requests must be at least one minute apart</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationClient.cc" line="116"/>
+        <source>UOM request encryption failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationClient.cc" line="120"/>
+        <source>The UOM request could not be recorded safely</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationClient.cc" line="158"/>
+        <source>UOM did not return a confirmed result; check the saved operation before continuing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationClient.cc" line="183"/>
+        <source>UOM returned HTTP status %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationClient.cc" line="189"/>
+        <source>UOM returned an invalid response</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationClient.cc" line="193"/>
+        <source>UOM rejected the request (code %1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationClient.cc" line="214"/>
+        <source>UOM returned a state that does not confirm this operation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationClient.cc" line="219"/>
+        <source>UOM confirmed the result</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UomRegistrationCredentials</name>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationCredentials.cc" line="116"/>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationCredentials.cc" line="146"/>
+        <source>Stored in the system keyring</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationCredentials.cc" line="117"/>
+        <source>Stored in memory for this session only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationCredentials.cc" line="147"/>
+        <source>Credential removed from memory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationCredentials.cc" line="148"/>
+        <source>System keyring unavailable; credentials are kept only for this session</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UomRegistrationIndicator</name>
+    <message>
+        <location filename="../src/Toolbar/UomRegistrationIndicator.qml" line="23"/>
+        <source>UOM</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/UomRegistrationIndicator.qml" line="44"/>
+        <source>UOM registration and activation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/UomRegistrationIndicator.qml" line="51"/>
+        <source>Registration: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/UomRegistrationIndicator.qml" line="51"/>
+        <location filename="../src/Toolbar/UomRegistrationIndicator.qml" line="59"/>
+        <location filename="../src/Toolbar/UomRegistrationIndicator.qml" line="67"/>
+        <source>Unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/UomRegistrationIndicator.qml" line="59"/>
+        <source>Device: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/UomRegistrationIndicator.qml" line="67"/>
+        <source>UOM acknowledgement: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Toolbar/UomRegistrationIndicator.qml" line="74"/>
+        <source>Manage registration</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UomRegistrationPanel</name>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="28"/>
+        <source>UOM real-name registration and activation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="33"/>
+        <source>Complete real-name registration and activation before first use. Registration is completed on the official UOM website.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="43"/>
+        <source>Product model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="51"/>
+        <source>Aircraft product code (SN)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="57"/>
+        <source>Not available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="63"/>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="273"/>
+        <source>Environment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="68"/>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="282"/>
+        <source>Official</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="68"/>
+        <source>Integration — isolated test data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="72"/>
+        <source>Real-name registration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="78"/>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="90"/>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="102"/>
+        <source>Unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="84"/>
+        <source>Device activation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="96"/>
+        <source>Latest UOM acknowledgement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="108"/>
+        <source>Registration checked at</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="112"/>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="116"/>
+        <source>Activation reported at</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="120"/>
+        <source>Not recorded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="127"/>
+        <source>Connect an aircraft to manage UOM registration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="154"/>
+        <source>Open official UOM website</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="162"/>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="242"/>
+        <source>Configure UOM connection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="173"/>
+        <source>Check real-name registration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="186"/>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="423"/>
+        <source>Activate aircraft</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="199"/>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="468"/>
+        <source>Deactivate and cancel registration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="211"/>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="547"/>
+        <source>Retry pending operation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="257"/>
+        <source>Use the producer ID and key ID issued for this environment. Official URLs are provided by UOM after approval.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="263"/>
+        <source>An operation is pending. You may correct its producer ID, URLs or key. The environment, aircraft and original operation stay fixed. Continue will read the aircraft and check UOM registration again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="282"/>
+        <source>Integration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="297"/>
+        <source>Producer ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="310"/>
+        <source>Expected aircraft SN</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="325"/>
+        <source>Registration query URL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="338"/>
+        <source>Activation report URL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="351"/>
+        <source>Registration cancellation URL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="364"/>
+        <source>Key ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="375"/>
+        <source>Leave blank to keep this environment&apos;s saved key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="384"/>
+        <source>I confirm these corrections for the pending operation. Continuing may send its original cancellation request.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="390"/>
+        <source>The expected SN identifies one aircraft. It does not provision or change the RID product code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="432"/>
+        <source>Activate aircraft %1 and report its confirmed device state to UOM?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="481"/>
+        <source>Aircraft %1 will be deactivated and its UOM registration cancelled. Complete this before transferring ownership.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="491"/>
+        <source>Retired from use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="491"/>
+        <source>Ownership transfer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="491"/>
+        <source>Other reason</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="500"/>
+        <source>Enter the cancellation reason</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="505"/>
+        <source>Reason size: %1 / 200 UTF-8 bytes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="514"/>
+        <source>I confirm this aircraft and understand that registration will be cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/VehicleSetup/UomRegistrationPanel.qml" line="556"/>
+        <source>Continue the pending operation for aircraft %1? A pending cancellation may resend the UOM registration cancellation request.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>UomRegistrationWorkflow</name>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="30"/>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="246"/>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="276"/>
+        <source>No report acknowledgement recorded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="31"/>
+        <source>Configure UOM and read the connected device to begin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="87"/>
+        <source>Registered</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="90"/>
+        <source>Registration cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="93"/>
+        <source>No registration record</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="95"/>
+        <source>Not verified</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="101"/>
+        <source>Unknown; read the device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="103"/>
+        <source>Activated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="103"/>
+        <source>Not activated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="109"/>
+        <source>Accessing credentials</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="112"/>
+        <source>UOM key is not configured</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="115"/>
+        <source>Credentials stored in the system keyring</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="116"/>
+        <source>Credentials are kept for this session only; enter the key again after restarting QGC</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="147"/>
+        <source>Finish the pending transaction before changing its UOM environment or aircraft identity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="156"/>
+        <source>Check the environment, 36-character producer ID, 20-character product code, official HTTPS URLs and SM4 key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="170"/>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="317"/>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="544"/>
+        <source>Could not durably record the transaction. No further operation was sent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="189"/>
+        <source>Loading UOM credentials</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="205"/>
+        <source>Pending transaction recovered; read the device and continue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="206"/>
+        <source>UOM profile ready; registration has not been verified</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="207"/>
+        <source>Enter the key for this UOM profile to continue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="218"/>
+        <source>Cancellation token is unavailable. Confirm Continue to request a new token and finish deregistration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="265"/>
+        <source>An unfinished transaction was recovered; no device write has been replayed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="277"/>
+        <source>Activation report accepted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="278"/>
+        <source>Unactivated state report accepted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="333"/>
+        <source>Reading the current device identity and activation state</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="365"/>
+        <source>Select a cancellation reason and enter a description within 200 UTF-8 bytes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="392"/>
+        <source>The aircraft identity or activation state could not be confirmed; read the selected device again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="415"/>
+        <source>Durable device state is not confirmed. Confirm Continue to revalidate the aircraft before any device write</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="431"/>
+        <source>Pending transaction belongs to a different aircraft or UOM environment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="444"/>
+        <source>Checking whether deregistration already completed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="444"/>
+        <source>Verifying UOM registration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="456"/>
+        <source>Activating device and verifying durable storage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="457"/>
+        <source>Cancelling device activation and verifying durable storage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="471"/>
+        <source>Device readback did not confirm the requested identity and state; no UOM report was sent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="480"/>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="581"/>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="642"/>
+        <source>Device is not activated and UOM registration is cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="497"/>
+        <source>Device outcome is unknown. Re-read device before continuing: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="503"/>
+        <source>Device state no longer matches this transaction; no UOM report was sent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="510"/>
+        <source>Reporting the verified device state to UOM</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="519"/>
+        <source>A verified unactivated device and cancellation token are required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="526"/>
+        <source>Cancelling UOM registration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="595"/>
+        <source>Deregistration is not confirmed. Review the UOM record and confirm Continue before retrying</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="599"/>
+        <source>Registration verified; this does not activate the aircraft</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="600"/>
+        <source>Complete or renew registration on the official UOM website</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="612"/>
+        <source>Activation blocked: UOM registration is not normal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="619"/>
+        <source>UOM response does not confirm the reported activation state</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="630"/>
+        <source>Device activation verified and UOM activation report accepted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="644"/>
+        <source>Unexpected UOM response; transaction remains pending</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="652"/>
+        <source>UOM replied successfully but the completion could not be stored; reconcile before retrying</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="672"/>
+        <source>; synchronization will retry after the request cooldown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/UomRegistrationWorkflow.cc" line="682"/>
+        <source>Aircraft connection or operating state changed. Re-read the same device before continuing</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VehicleUomRegistrationManager</name>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/VehicleUomRegistrationManager.cc" line="95"/>
+        <source>No UOM activation adapter is available for this vehicle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/VehicleUomRegistrationManager.cc" line="165"/>
+        <source>UOM transaction storage is unavailable; operations are disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/VehicleUomRegistrationManager.cc" line="168"/>
+        <source>Connected product code does not match the configured aircraft; no operation is permitted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/Vehicle/UOM/Registration/VehicleUomRegistrationManager.cc" line="176"/>
+        <source>Device firmware must enforce flight restrictions before activation and after deactivation</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

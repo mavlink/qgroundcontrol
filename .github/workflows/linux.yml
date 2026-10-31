@@ -236,6 +236,8 @@ jobs:
           # Both presets use line tables (-g1) and unity builds of QGC targets: full -g costs ~17% compile CPU
           # and ~3.5x object size, and unity halves compile CPU. Release jobs stay non-unity because they ship.
           preset: ${{ matrix.mode == 'coverage' && 'Linux-coverage' || 'Linux-sanitizers' }}
+          # Coverage exercises the stock dialect; sanitizers also exercise optional AMOV activation.
+          extra-args: ${{ matrix.mode == 'sanitizers' && '-DQGC_UOM_AMOV_ADAPTER=ON' || '' }}
 
       - name: Build
         id: build
@@ -382,7 +384,7 @@ jobs:
         uses: ./.github/actions/cmake-configure
         with:
           preset: Linux-debug
-          extra-args: -DQGC_CUSTOM_DIR=custom-example
+          extra-args: -DQGC_CUSTOM_DIR=custom-example -DQGC_UOM_REGISTRATION=OFF
 
       - name: Build
         id: build

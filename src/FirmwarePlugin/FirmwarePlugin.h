@@ -12,6 +12,7 @@
 #include "VehicleTypes.h"
 
 class Vehicle;
+class UomDeviceAdapter;
 
 class VehicleComponent;
 class AutoPilotPlugin;
@@ -343,6 +344,12 @@ public:
     ///     signals toolIndicatorsChanged
     /// @return A list of QUrl with the indicators
     virtual const QVariantList &toolIndicators(const Vehicle *vehicle);
+
+    /// Creates a vehicle-scoped registration activation transport; null means unsupported.
+    virtual UomDeviceAdapter* createUomDeviceAdapter(Vehicle* /*vehicle*/, QObject* /*parent*/) const
+    {
+        return nullptr;
+    }
 
     /// Creates vehicle camera manager.
     virtual QGCCameraManager *createCameraManager(Vehicle *vehicle) const;
