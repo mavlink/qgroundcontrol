@@ -7,7 +7,7 @@
 #include <jni.h>
 
 // GStreamer's Android plugins (e.g. androidmedia) look up the JNI state in libgstreamer_android.so, which keeps what
-// this sets (cmake/GStreamer/platform/gst_android_jni.c).
+// this sets (Platform/gst_android_jni.c).
 extern "C" void qgc_gst_android_set_jni_state(JavaVM* javaVm, jobject context, jobject classLoader);
 #endif
 

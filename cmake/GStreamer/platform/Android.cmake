@@ -11,8 +11,8 @@
 #   - it whole-archives libgstreamer-1.0.a, whose gstandroid.c.o brings a JNI_OnLoad that fails the library's load
 #     unless the APK ships org.freedesktop.gstreamer.GStreamer, and whose JNI state is set only by GStreamer.init(),
 #     which also runs gst_init() on the Java thread with its own environment and log handlers. QGC initializes
-#     GStreamer itself (GStreamer.cc), so the core is linked like any archive and gst_android_jni.c provides the JNI
-#     state from the app instead;
+#     GStreamer itself (GStreamer.cc), so the core is linked like any archive and gst_android_jni.c
+#     (src/VideoManager/GStreamer/Platform) provides the JNI state from the app instead;
 #   - it registers every plugin it is given, while QGC registers only the allowlisted plugins that have a static
 #     archive (failing configure when a bundle-required one is missing), with its own registration template
 #     (StaticInit.cmake);
@@ -296,7 +296,11 @@ function(_qgc_gst_create_android_mobile_target)
         endif()
     endforeach()
 
-    qgc_gst_add_mobile_library(SOURCES "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/gst_android_jni.c" PLUGINS ${_plugins})
+    cmake_path(
+        SET _jni_state NORMALIZE
+        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../../src/VideoManager/GStreamer/Platform/gst_android_jni.c"
+    )
+    qgc_gst_add_mobile_library(SOURCES "${_jni_state}" PLUGINS ${_plugins})
     set_target_properties(
         GStreamerMobile
         PROPERTIES
