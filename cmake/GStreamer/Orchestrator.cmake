@@ -19,7 +19,7 @@ foreach(
         Targets
         Probe
         PkgConfig
-        Download
+        Packages
         Acquire
         PluginPolicy
         Install

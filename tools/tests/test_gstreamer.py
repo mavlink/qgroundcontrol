@@ -59,10 +59,10 @@ def test_pinned_checksum(tmp_path: Path) -> None:
 
 @pytest.mark.skipif(shutil.which("cmake") is None, reason="cmake is not installed")
 def test_layout_matches_cmake(tmp_path: Path) -> None:
-    """The configure-time download (cmake/GStreamer/Download.cmake) must fetch the same files."""
+    """The configure-time download (cmake/GStreamer/Packages.cmake) must fetch the same files."""
     script = tmp_path / "urls.cmake"
     script.write_text(
-        f'include("{REPO_ROOT}/cmake/GStreamer/Download.cmake")\n'
+        f'include("{REPO_ROOT}/cmake/GStreamer/Packages.cmake")\n'
         f"foreach(_package IN ITEMS {' '.join(PACKAGES)})\n"
         "    gstreamer_get_package_url(${_package} 1.28.4 _url)\n"
         "    gstreamer_get_s3_mirror_url(${_package} 1.28.4 _mirror)\n"

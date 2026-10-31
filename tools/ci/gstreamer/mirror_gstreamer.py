@@ -6,7 +6,7 @@ given version, verifies each against its checksum pinned in .github/build-config
 (else its upstream ``.sha256sum`` sidecar), then uploads them to
 ``s3://qgroundcontrol/dependencies/gstreamer/<platform>/<filename>`` — the layout the
 build's S3 fallback mirror reads. ``common.gstreamer`` holds the package layout
-shared with cmake/GStreamer/Download.cmake and the installers.
+shared with cmake/GStreamer/Packages.cmake and the installers.
 
 Options default to `mirror-gstreamer.yml`'s MIRROR_* variables; the version falls back to
 build-config.json's ``gstreamer.version.default`` and the work directory to RUNNER_TEMP.

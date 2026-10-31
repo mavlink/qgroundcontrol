@@ -437,7 +437,7 @@ step leaves it out.
   fingerprint matches.
 - GStreamer SDKs have separate immutable caches, excluded from CPM archives. Only Windows, Android,
   and iOS jobs use them (desktop Linux and macOS use the system GStreamer), keyed on the `gstreamer`
-  section of `build-config.json` (fingerprinted in `cache_plan.py`), `cmake/GStreamer/Download.cmake`
+  section of `build-config.json` (fingerprinted in `cache_plan.py`), `cmake/GStreamer/Packages.cmake`
   and `cmake/GStreamer/Acquire.cmake`. They hold the extracted SDK trees without the downloaded
   archives; configure uses a tree stamped with the pinned checksums as is.
 

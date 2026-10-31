@@ -1,7 +1,7 @@
 """GStreamer SDK package layout shared by the installers, the S3 mirror and dependency checks.
 
 Mirrors ``gstreamer_get_package_url`` / ``gstreamer_get_s3_mirror_url`` in
-cmake/GStreamer/Download.cmake. A package key is the ``gstreamer.checksums.<version>.<key>``
+cmake/GStreamer/Packages.cmake. A package key is the ``gstreamer.checksums.<version>.<key>``
 entry in .github/build-config.json that pins it.
 """
 

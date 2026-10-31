@@ -541,7 +541,7 @@ def test_dependencies_use_immutable_separate_sdk_archives(plan, tmp_path):
     # Unrelated GStreamer CMake edits and other build-config.json sections must not invalidate the SDK caches.
     planner = next(step for step in steps if step.get("id") == "plan")
     assert planner["env"]["GST_SDK_FILES_HASH"] == (
-        "${{ hashFiles('cmake/GStreamer/Download.cmake', 'cmake/GStreamer/Acquire.cmake') }}"
+        "${{ hashFiles('cmake/GStreamer/Packages.cmake', 'cmake/GStreamer/Acquire.cmake') }}"
     )
 
     release = {"target": "android", "build_type": "Release"}

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/.." "${CMAKE_CURRENT_LIST_DIR}/../../modules")
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
-include(Download)
+include(Packages)
 
 gstreamer_get_package_url(android 1.28.2 _u_android)
 qgc_test_assert_streq(
@@ -17,15 +17,15 @@ qgc_test_assert_streq(
 )
 
 gstreamer_get_package_url(macos 1.28.2 _u_mac)
-qgc_test_assert_streq("macos url"
-                      "https://gstreamer.freedesktop.org/data/pkg/macos/1.28.2/gstreamer-1.0-1.28.2-universal.pkg"
-                      "${_u_mac}"
+qgc_test_assert_streq(
+    "macos url" "https://gstreamer.freedesktop.org/data/pkg/macos/1.28.2/gstreamer-1.0-1.28.2-universal.pkg"
+    "${_u_mac}"
 )
 
 gstreamer_get_package_url(macos_devel 1.28.2 _u_macd)
-qgc_test_assert_streq("macos_devel url"
-                      "https://gstreamer.freedesktop.org/data/pkg/macos/1.28.2/gstreamer-1.0-devel-1.28.2-universal.pkg"
-                      "${_u_macd}"
+qgc_test_assert_streq(
+    "macos_devel url"
+    "https://gstreamer.freedesktop.org/data/pkg/macos/1.28.2/gstreamer-1.0-devel-1.28.2-universal.pkg" "${_u_macd}"
 )
 
 gstreamer_get_package_url(windows_msvc_x64 1.28.2 _u_winx)
