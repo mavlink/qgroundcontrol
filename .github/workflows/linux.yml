@@ -142,6 +142,15 @@ jobs:
         working-directory: ${{ runner.temp }}/build
         run: cmake --install . --config Release
 
+      # Known issue: Ubuntu's libavcodec, loaded by the bundled gst-libav plugin, pulls GPL x264 and x265
+      # into the AppImage, so its GPL findings only warn (ci-overview.md#artifact-report).
+      - name: Report AppImage contents
+        uses: ./.github/actions/artifact-report
+        with:
+          package: ${{ runner.temp }}/build/${{ matrix.package }}.AppImage
+          artifact-name: ${{ matrix.package }}
+          gpl-findings: warn
+
       - name: Verify AppImage
         uses: ./.github/actions/verify-executable
         with:

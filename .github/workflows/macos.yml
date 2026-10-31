@@ -148,6 +148,13 @@ jobs:
           QGC_MACOS_NOTARIZATION_PASSWORD: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_NOTARIZATION_PASSWORD || '' }}
           QGC_MACOS_NOTARIZATION_TEAM_ID: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_NOTARIZATION_TEAM_ID || '' }}
 
+      - name: Report DMG contents
+        if: matrix.build_type == 'Release'
+        uses: ./.github/actions/artifact-report
+        with:
+          package: ${{ runner.temp }}/build/QGroundControl.dmg
+          artifact-name: QGroundControl
+
       - name: Verify DMG executable
         if: matrix.build_type == 'Release'
         uses: ./.github/actions/verify-executable

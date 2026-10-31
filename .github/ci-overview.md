@@ -72,8 +72,8 @@
 
 - Composite actions: one-line index, external-action reference policy, and behavior notes in
   [`actions/README.md`](actions/README.md). Platform jobs typically chain `build-setup`,
-  `install-dependencies`, `cmake-configure`, `cmake-build`, tests, packaging, `verify-executable`,
-  and `attest-and-upload`.
+  `install-dependencies`, `cmake-configure`, `cmake-build`, tests, packaging, `artifact-report`,
+  `verify-executable`, and `attest-and-upload`.
 - Python helpers live in the `tools/ci/` package, grouped by concern (`planning`, `cache`, `compile`,
   `publish`, `reporting`, ...); workflows run them by path. Index, bootstrap rules, and the
   one-test-per-script rule (tests in `tools/tests/ci/`; workflow and action contracts in
@@ -738,6 +738,40 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   artifacts go to `builds/<ref>/` (the runner's ref), and release tags also go to `latest/` with
   one CloudFront invalidation. Credentials come only from the environment.
 
+### Artifact report
+
+- Every platform build job runs `artifact-report` (`tools/ci/packaging/artifact_report.py`) right
+  after creating the package that `attest-and-upload` uploads, under the same condition: the Windows
+  installers and the macOS DMG of Release legs, the Linux AppImages, the Android APKs (not the
+  emulator leg), and the iOS IPA. It lists the package with tools the runners have: 7-Zip
+  (`7z l -slt`) for the NSIS installer, `hdiutil` for the DMG, the AppImage's own
+  `--appimage-extract`, and Python's `zipfile` for APK, App Bundle, and IPA.
+- The baseline is the package in the artifact of the same name from the newest successful
+  non-PR master run of the same workflow (`GITHUB_WORKFLOW_REF`), found and downloaded through the
+  REST API with the job's token, which needs `actions: read`. The job summary's Artifact report
+  section shows the package and contents sizes against master with their change, the files added
+  and removed (the largest 10; the full lists collapsed), and the 10 largest file size changes. A
+  package or contents size change beyond the `size-threshold` input (10% either way by default) is
+  a warning, never a failure. Without a baseline (no successful master run with a live artifact of
+  that name, as on a first run, after the 30-day retention, or for Android PR legs whose ABI suffix
+  master does not build, or an API or download failure) the section says why and shows this
+  build's sizes only.
+- The step also checks licensing and fails with error annotations: any file in the package whose
+  name is a `GSTREAMER_GPL_DENYLIST` library or plugin (read from
+  `cmake/GStreamer/PluginPolicy.cmake` and matched like its `gstreamer_gpl_files()`, which the
+  CMake install check uses only for the GStreamer install directories), and, in APK, App Bundle,
+  and IPA, whose static GStreamer leaves no plugin files, any ELF or Mach-O member containing
+  x264's or x265's entry point (`x264_encoder_open`, `x265_encoder_open`) or the banner it writes
+  into every stream, which stripping keeps. A package the step cannot list (for example without
+  7-Zip) fails it too, since its GPL check did not run. It uploads nothing.
+- **Known issue**: the Linux AppImages ship GPL `libx264` and `libx265`. Ubuntu's `libavcodec`,
+  which the bundled gst-libav plugin (`libgstlibav.so`) loads, links them, and the AppImage's
+  dependency deployment bundles them outside the GStreamer directories that the install check
+  covers. Until that is fixed, `linux.yml` sets the action's `gpl-findings` input to `warn`: the
+  findings become warning annotations and the section lists them first as a known issue with this
+  explanation (`KNOWN_GPL_ISSUES` in `artifact_report.py`). Every other package keeps the default
+  `fail`.
+
 ### GitHub Pages site
 
 `pages.yml` builds and deploys <https://mavlink.github.io/qgroundcontrol/> with
@@ -867,6 +901,7 @@ numbers, durations, and sizes from `common.format`. A build job reads top-down:
 | Android Lint | `android_lint.py` on Android's Linux leg (also after failures): result, duration, error and warning counts; the first errors collapsed; after a failure a link to the lint reports |
 | Unit Tests / Integration Tests (*suite*) | `run-unit-tests` (`junit_report.py`): counts, failures with their first lines, slowest tests and failure output collapsed; a link to the results artifact |
 | Coverage, Binary size | `coverage_report.py --step-summary`, `size_analysis.py` |
+| Artifact report | `artifact-report` (`artifact_report.py`, after packaging): result, package, master baseline run, files added, removed, and changed; package and contents sizes against master; GPL findings (a known issue with `gpl-findings: warn`); added and removed files and the largest size changes, with the full lists collapsed |
 | Boot test, Artifact | `verify_executable.py` (result with the crash's signal or NTSTATUS name, package, size, duration; after a failure the last log line, the last 40 lines collapsed, and a link to the diagnostics artifact) or, for the iOS simulator, `ios_boot_test.py` (result with the failing phase and attempt, simulator, attempts, duration, and the end of the boot log); and `attest_helper.py prepare` (file, size, SHA-256) |
 | Disk | `disk-watch`'s post step, at the end of every `build-setup` and Docker job: the workspace volume's size and its start, peak (with free space and time), and end use, sampled every 10 s; a peak whose free space is below 10% of the volume, kept between 5 and 10 GiB, gets ⚠️ and a "Disk nearly full" warning annotation |
 

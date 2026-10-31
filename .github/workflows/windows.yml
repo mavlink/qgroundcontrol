@@ -179,6 +179,13 @@ jobs:
           target: qgc-package
           parallel: 'false'
 
+      - name: Report installer contents
+        if: matrix.build_type == 'Release'
+        uses: ./.github/actions/artifact-report
+        with:
+          package: ${{ runner.temp }}/build/${{ matrix.package }}.exe
+          artifact-name: ${{ matrix.package }}
+
       - name: Install, upgrade, and verify installer
         if: matrix.build_type == 'Release' && matrix.variant != 'arm64-cross'
         shell: pwsh

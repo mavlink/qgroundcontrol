@@ -241,6 +241,13 @@ jobs:
             --pattern '*.apk' --top-level \
             --copy-to "${RUNNER_TEMP}/build/${PACKAGE}.apk"
 
+      - name: Report APK contents
+        if: ${{ !matrix.emulator }}
+        uses: ./.github/actions/artifact-report
+        with:
+          package: ${{ runner.temp }}/build/${{ env.PACKAGE }}.apk
+          artifact-name: ${{ format('{0}-{1}-{2}', env.PACKAGE, matrix.host, matrix.artifact_abi_suffix) }}
+
       # Master pushes also publish an App Bundle of the same multi-ABI release build. androiddeployqt runs
       # Gradle's all-variant `bundle` task, so only outputs/bundle/release holds the release bundle.
       - name: Build Android App Bundle

@@ -15,6 +15,7 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 | Action | Purpose |
 | --- | --- |
 | `android-emulator-test` | Boot a fresh x86_64 AVD, install and launch the APK, and collect failure diagnostics, linked from the job summary |
+| `artifact-report` | Compare a package's contents and size with master's same-named artifact in the job summary (warning beyond `size-threshold` percent) and fail when it ships GPL-licensed GStreamer code, or warn with `gpl-findings: warn` (only the Linux AppImage, a known issue); the job needs `actions: read` |
 | `attest-and-upload` | Checksum, SBOM scan, provenance and SBOM attestations, GitHub artifact upload, and optional AWS publish |
 | `aws-credentials` | Configure AWS credentials via OIDC (preferred) or static keys in one step |
 | `build-action` | Build a JavaScript action from source when no release ships a rebuilt `dist/` (kept intentionally; no current callers) |
