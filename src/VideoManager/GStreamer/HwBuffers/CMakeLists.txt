@@ -141,9 +141,12 @@ if(LINUX OR ANDROID)
 endif()
 
 # gst/cuda/gstcuda.h transitively pulls <cuda.h>: find a CUDA include dir (full Toolkit, or gst-plugins-bad's stub
-# headers for compile-only builds without the SDK) for the CUDA row's probe. find_path cache var: a hit survives a CUDA
-# toolkit swap until the cache is cleared.
-if(LINUX AND QGC_GST_HAS_DMABUF)
+# headers for compile-only builds without the SDK) for the CUDA row's probe, which runs only with QGC_GST_ENABLE_CUDA.
+# find_path cache var: a hit survives a CUDA toolkit swap until the cache is cleared.
+if(LINUX
+   AND QGC_GST_HAS_DMABUF
+   AND QGC_GST_ENABLE_CUDA
+)
     set(_qgc_cuda_hints ${CUDAToolkit_INCLUDE_DIRS})
     if(DEFINED ENV{CUDA_PATH} AND NOT "$ENV{CUDA_PATH}" STREQUAL "")
         list(APPEND _qgc_cuda_hints "$ENV{CUDA_PATH}/include")
@@ -159,10 +162,10 @@ endif()
 # Android's SDK ships libgstvulkan only as an archive, which the Vulkan row links into the app (not into
 # libgstreamer_android.so), leaving gst-vulkan's own loader calls unresolved. Link the loader explicitly or Android
 # arm64 fails with ld.lld "undefined symbol: vkDestroyPipeline". find_library, not find_package(Vulkan): only the
-# loader is needed (NDK sysroot included).
+# loader is needed (NDK sysroot included). Searched only with QGC_GST_ENABLE_VULKAN, the row's switch.
 set(_qgc_vulkan_requires QT_FEATURE_vulkan)
 set(_qgc_vulkan_loader_libs "")
-if(ANDROID)
+if(ANDROID AND QGC_GST_ENABLE_VULKAN)
     if(DEFINED QGC_GST_VULKAN_LOADER_LIB AND (QGC_GST_VULKAN_LOADER_LIB MATCHES "NOTFOUND$"
                                               OR NOT EXISTS "${QGC_GST_VULKAN_LOADER_LIB}")
     )

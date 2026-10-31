@@ -79,9 +79,6 @@ set(GSTREAMER_COMPONENTS
     App
     RtspServer
     Allocators
-    Pbutils
-    Tag
-    Audio
     Check
 )
 set(GSTREAMER_MANDATORY_COMPONENTS Base Rtsp Video)

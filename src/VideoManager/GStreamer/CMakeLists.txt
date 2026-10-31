@@ -41,6 +41,8 @@ target_link_libraries(
         Qt6::Multimedia
         Qt6::MultimediaPrivate
         QGCLogging
+    # The render target and the RHI capture follow Qt Quick's window (QQuickWindow).
+    PRIVATE Qt6::Quick
 )
 
 target_compile_definitions(QGCGStreamer PUBLIC QGC_GST_STREAMING)
@@ -90,16 +92,6 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/HwBuffers/cuda
     PRIVATE ${CMAKE_BINARY_DIR}
 )
-
-# Qt6::MultimediaQuickPrivate is OPTIONAL at the root find_package; link it when present
-# (GStreamer.cc / GstQgcFrameMap.cc need MultimediaQuick) rather than failing configure.
-if(TARGET Qt6::MultimediaQuickPrivate)
-    target_link_libraries(QGCGStreamer PUBLIC Qt6::MultimediaQuickPrivate)
-else()
-    message(
-        WARNING "QGCGStreamer: Qt6::MultimediaQuickPrivate not found - GStreamer video sink integration may not build"
-    )
-endif()
 
 add_subdirectory(HwBuffers)
 add_subdirectory(Sink/gstqgc)
