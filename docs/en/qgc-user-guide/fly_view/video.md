@@ -51,7 +51,8 @@ For a MAVLink camera, its advertised frame rate, bitrate and resolution follow t
 When a camera also sends a thermal stream, its statistics appear below.
 
 Expand the dropdown (">") to change, without leaving the Fly View, the **Low Latency Mode** and **RTP jitter latency**
-of a network stream (under **Video Stream**) and the **Grid Lines** and **Display Fit** of the video (under
+of a network stream (under **Video Stream**), the **Decoder Priority** and **Force CPU Video Path** (under
+**Decoding**; changing either restarts the video) and the **Grid Lines** and **Display Fit** of the video (under
 **Video Display**). **Restart Video** reconnects the streams, and **All Video Settings** opens
 [Application Settings > Video](../settings_view/video.md).
 
