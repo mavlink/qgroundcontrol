@@ -55,7 +55,13 @@ function(_qgc_add_gpu_path name)
     endif()
 
     string(TOUPPER "${name}" _upper)
-    option(QGC_GST_ENABLE_${_upper} "Build the ${name} zero-copy GPU path when its GStreamer pieces are found" ON)
+    set(_default ON)
+    if(name IN_LIST _qgc_gpu_opt_in_rows)
+        set(_default OFF)
+    endif()
+    option(
+        QGC_GST_ENABLE_${_upper} "Build the ${name} zero-copy GPU path when its GStreamer pieces are found" ${_default}
+    )
     set(_reason "")
     if(NOT QGC_GST_ENABLE_${_upper})
         set(_reason "QGC_GST_ENABLE_${_upper}=OFF")
@@ -248,6 +254,8 @@ set(_qgc_gpu_row_Vulkan
             vulkan/GstVulkanContextBridge.h)
 # cmake-format: on
 
+# No bin offers these memories (no caps, or no import Qt can use), so they are compiled only on request.
+set(_qgc_gpu_opt_in_rows CUDA AHardwareBuffer Vulkan)
 set(_qgc_gpu_rows
     DMABuf
     CUDA

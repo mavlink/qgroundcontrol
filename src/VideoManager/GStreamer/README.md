@@ -129,9 +129,10 @@ Per-platform import of decoded GPU frames without a copy. Most paths wrap their 
   change since its own snapshot, so receivers don't take each other's counts.
 - **`CpuVideoFramePool`** recycles CPU-backed `QVideoFrame` storage (WebRTC-style slab) for the software-fallback path, avoiding per-frame allocation.
 - **Build options**: `HwBuffers/CMakeLists.txt` probes one table row per path; the `QGC_GST_ENABLE_<PATH>` switches
-  that compile a path out are listed in [`cmake/README.md`](../../../cmake/README.md#gstreamer). Configure lists
-  compiled paths that the sink can't reach at runtime: Android's glupload bin offers only GLMemory caps, and no bin
-  advertises CUDAMemory or VulkanImage caps. Windows builds leave out the GLMemory path: Qt 6's OpenGL
+  that compile a path in or out are listed in [`cmake/README.md`](../../../cmake/README.md#gstreamer). The CUDA,
+  AHardwareBuffer and Vulkan paths are opt-in (`QGC_GST_ENABLE_<PATH>=ON`): no bin advertises CUDAMemory or
+  VulkanImage caps, and Android's glupload bin offers only GLMemory. Configure lists compiled paths that the sink can't
+  reach at runtime. Windows builds leave out the GLMemory path: Qt 6's OpenGL
   there is WGL, which gst-gl can't share. Linux builds with gst-gl and DMABuf compile both GPU bins; see
   [GPU bin selection](#gpu-bin-selection).
 
