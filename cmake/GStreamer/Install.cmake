@@ -353,6 +353,7 @@ function(gstreamer_install_macos_framework_sdk app_name plugin_dest_out)
         PATTERN "*/share/locale" EXCLUDE
         PATTERN "*/share/man" EXCLUDE
         PATTERN "*gstpython*" EXCLUDE
+        PATTERN "*/lib/python3*" EXCLUDE
         PATTERN "Commands" EXCLUDE
         REGEX ".*/lib/gstreamer-1.0/libgst.*" EXCLUDE
         REGEX "/(lib)?(${_gst_gpl_names})([-_.][^/]*)?$" EXCLUDE
