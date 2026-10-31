@@ -32,3 +32,19 @@ if(_found_source EQUAL -1 OR NOT _found_packages EQUAL -1)
     message(FATAL_ERROR "ASSERT [installed GStreamer notice]: expected the source and no packages\n${_notice}")
 endif()
 qgc_test_pass("installed GStreamer notice")
+
+# A post-release build's nano version has no tag; its source links name the release.
+set(GStreamer_VERSION 1.28.8.1)
+set(GStreamer_AUTO_DOWNLOADED TRUE)
+qgc_gst_write_notice("${_sandbox}/nano")
+file(READ "${_sandbox}/nano/NOTICE.txt" _notice)
+foreach(
+    _expected IN ITEMS "GStreamer 1.28.8.1\n" "https://gitlab.freedesktop.org/gstreamer/gstreamer/-/tree/1.28.8\n"
+                       "https://gitlab.freedesktop.org/gstreamer/cerbero/-/tree/1.28.8\n"
+)
+    string(FIND "${_notice}" "${_expected}" _found)
+    if(_found EQUAL -1)
+        message(FATAL_ERROR "ASSERT [nano version notice]: '${_expected}' missing from\n${_notice}")
+    endif()
+endforeach()
+qgc_test_pass("nano version notice links the release")

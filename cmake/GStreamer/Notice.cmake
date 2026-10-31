@@ -11,6 +11,12 @@ include_guard(GLOBAL)
 function(qgc_gst_write_notice dir)
     cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "PLUGINS")
     set(_version "${GStreamer_VERSION}")
+    # A build after a release reports its nano version, which has no tag: the official 1.28.8 Windows SDK reports
+    # 1.28.8.1. Its source links name the release it follows.
+    string(REGEX MATCH "^[0-9]+\\.[0-9]+\\.[0-9]+" _release "${_version}")
+    if(NOT _release)
+        set(_release "${_version}")
+    endif()
     if(GStreamer_AUTO_DOWNLOADED AND QGC_GST_RESOLVED_PACKAGES)
         set(_binaries "The libraries and plugins come from the official GStreamer packages")
         foreach(_package IN LISTS QGC_GST_RESOLVED_PACKAGES)
@@ -21,7 +27,7 @@ function(qgc_gst_write_notice dir)
         endforeach()
         string(
             APPEND _binaries "\nbuilt by Cerbero, which also builds the libraries GStreamer uses:\n"
-            "    https://gitlab.freedesktop.org/gstreamer/cerbero/-/tree/${_version}"
+            "    https://gitlab.freedesktop.org/gstreamer/cerbero/-/tree/${_release}"
         )
     else()
         string(
