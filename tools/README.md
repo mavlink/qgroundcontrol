@@ -429,9 +429,9 @@ Locally, the Linux installers also sync the locked `build` group (CMake, Ninja, 
 `tools/.venv` and print how to activate it; CI build jobs instead use the `build.cmake_version` and
 `build.ninja_version` pins in `build-config.json`, which `build-setup` installs.
 
-On macOS, the GStreamer runtime and development packages come from the official server, falling
-back to QGroundControl's public S3 mirror. Both sources are verified against the SHA-256 checksums
-pinned in `.github/build-config.json`; installation stops if either package cannot be verified.
+On macOS and Windows, the GStreamer packages come from the official server, falling back to
+QGroundControl's public S3 mirror. Both sources are verified against the SHA-256 checksums
+pinned in `.github/build-config.json`; installation stops if a package cannot be verified.
 
 ```bash
 # Linux: Install all dependencies

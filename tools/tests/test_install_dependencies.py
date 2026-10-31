@@ -697,13 +697,14 @@ def test_install_windows_gstreamer(monkeypatch, tmp_path: Path) -> None:
 
     installer = dl.call_args_list[0].args[1]
     assert installer.name == f"gstreamer-1.0-msvc-x86_64-{version}.exe"
+    # Upstream first, then QGC's mirror.
     assert [call.args[0] for call in dl.call_args_list] == [
         (
-            "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer/windows/"
+            f"https://gstreamer.freedesktop.org/data/pkg/windows/{version}/msvc/"
             f"gstreamer-1.0-msvc-x86_64-{version}.exe"
         ),
         (
-            f"https://gstreamer.freedesktop.org/data/pkg/windows/{version}/msvc/"
+            "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer/windows/"
             f"gstreamer-1.0-msvc-x86_64-{version}.exe"
         ),
     ]
