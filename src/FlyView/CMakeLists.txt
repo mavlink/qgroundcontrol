@@ -14,7 +14,6 @@ qt_add_qml_module(
         CustomGuidedActionsController.qml
         DefaultChecklist.qml
         FixedWingChecklist.qml
-        FlightDisplayViewVideo.qml
         FlyView.qml
         FlyViewAdditionalActionsButton.qml
         FlyViewAdditionalActionsList.qml

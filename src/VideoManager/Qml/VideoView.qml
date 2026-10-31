@@ -1,28 +1,28 @@
 import QtQuick
-import QtQuick.Controls
 
 import QGroundControl
-import QGroundControl.FlyView
-import QGroundControl.FlightMap
 import QGroundControl.Controls
-import QGroundControl.VideoManager
 
+// The video of the primary stream or the UVC camera, fitted to the view, with grid lines and the thermal stream.
 Item {
     id:     root
     clip:   true
 
     property bool useSmallFont: true
+    /// Height covered at the top of the view, which the thermal picture-in-picture stays below.
+    property real thermalPipTopInset: 0
+    readonly property var camera: _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
 
     property double _ar:                (cameraLoader.visible && cameraLoader.status === Loader.Ready)
                                             ? cameraLoader.item.implicitWidth / cameraLoader.item.implicitHeight
                                             : QGroundControl.videoManager.aspectRatio
     property bool   _showGrid:          QGroundControl.settingsManager.videoSettings.gridLines.rawValue
-    property var    _dynamicCameras:    globals.activeVehicle ? globals.activeVehicle.cameraManager : null
-    property bool   _connected:         globals.activeVehicle ? !globals.activeVehicle.communicationLost : false
+    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+    property var    _dynamicCameras:    _activeVehicle ? _activeVehicle.cameraManager : null
+    property bool   _connected:         _activeVehicle ? !_activeVehicle.communicationLost : false
     property int    _curCameraIndex:    _dynamicCameras ? _dynamicCameras.currentCamera : 0
     property bool   _isCamera:          _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
-    property var    _camera:            _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
-    property bool   _hasZoom:           _camera && _camera.hasZoom
+    property bool   _hasZoom:           camera && camera.hasZoom
     property int    _fitMode:           QGroundControl.settingsManager.videoSettings.videoFit.rawValue
     property bool   _showStreamLoader:  QGroundControl.videoManager.decoding
     property bool   _showUvcLoader:     QGroundControl.videoManager.isUvc
@@ -107,8 +107,6 @@ Item {
             anchors.fill:       videoContentArea
             visible:            _showStreamLoader
             sourceComponent:    videoOutputComponent
-
-            property bool videoDisabled: QGroundControl.settingsManager.videoSettings.videoSource.rawValue === QGroundControl.settingsManager.videoSettings.disabledVideoSource
         }
         Component {
             id: videoOutputComponent
@@ -172,15 +170,15 @@ Item {
         Item {
             id:                 thermalItem
             width:              height * QGroundControl.videoManager.thermalAspectRatio
-            height:             _camera ? (_camera.thermalMode === MavlinkCameraControlInterface.THERMAL_FULL ? parent.height : (_camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP ? ScreenTools.defaultFontPixelHeight * 12 : parent.height * _thermalHeightFactor)) : 0
+            height:             camera ? (camera.thermalMode === MavlinkCameraControlInterface.THERMAL_FULL ? parent.height : (camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP ? ScreenTools.defaultFontPixelHeight * 12 : parent.height * _thermalHeightFactor)) : 0
             anchors.centerIn:   parent
-            visible:            QGroundControl.videoManager.hasThermal && _camera && _camera.thermalMode !== MavlinkCameraControlInterface.THERMAL_OFF
+            visible:            QGroundControl.videoManager.hasThermal && camera && camera.thermalMode !== MavlinkCameraControlInterface.THERMAL_OFF
             function pipOrNot() {
-                if(_camera) {
-                    if(_camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP) {
+                if(camera) {
+                    if(camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP) {
                         anchors.centerIn    = undefined
                         anchors.top         = parent.top
-                        anchors.topMargin   = mainWindow.header.height + (ScreenTools.defaultFontPixelHeight * 0.5)
+                        anchors.topMargin   = Qt.binding(() => root.thermalPipTopInset + (ScreenTools.defaultFontPixelHeight * 0.5))
                         anchors.left        = parent.left
                         anchors.leftMargin  = ScreenTools.defaultFontPixelWidth * 12
                     } else {
@@ -193,7 +191,7 @@ Item {
                 }
             }
             Connections {
-                target:                 _camera
+                target:                 camera
                 function onThermalModeChanged() { thermalItem.pipOrNot() }
             }
             onVisibleChanged: {
@@ -202,7 +200,7 @@ Item {
             Loader {
                 id:             thermalVideo
                 anchors.fill:   parent
-                opacity:        _camera ? (_camera.thermalMode === MavlinkCameraControlInterface.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
+                opacity:        camera ? (camera.thermalMode === MavlinkCameraControlInterface.THERMAL_BLEND ? camera.thermalOpacity / 100 : 1.0) : 0
                 sourceComponent: thermalOutputComponent
 
                 Component {
@@ -228,7 +226,7 @@ Item {
                         z = Math.round(pinch.scale)
                     }
                     if(pinchZoom.zoom != z) {
-                        _camera.stepZoom(z)
+                        camera.stepZoom(z)
                     }
                 }
             }

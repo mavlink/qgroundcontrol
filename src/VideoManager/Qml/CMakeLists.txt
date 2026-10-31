@@ -16,5 +16,6 @@ qt_add_qml_module(
         VideoStreamFormat.js
         VideoStreamOutput.qml
         VideoStreamStatsGroup.qml
+        VideoView.qml
     NO_PLUGIN
 )
