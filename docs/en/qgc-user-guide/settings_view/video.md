@@ -30,8 +30,9 @@ Connection settings vary by source type:
   retransmission, which values below about 40 ms prevent. Not used, and hidden, in **Low Latency Mode**.
 - **Auto-reconnect on stream loss** — reconnect a stream that times out or fails, waiting 1 s before the first attempt
   and up to 30 s between later ones (default: on). When off, the stream stops after the first failure.
-- **Force CPU video path** — disable hardware-accelerated rendering (use if video displays incorrectly)
-- **Force video decoder priority** — override the automatic decoder selection: Default / Software / Hardware / NVIDIA / VA-API / DirectX 3D11 / VideoToolbox / Intel / Vulkan
+- **Force CPU video path** — disable hardware-accelerated rendering (use if video displays incorrectly). Changing it
+  restarts the video stream.
+- **Force video decoder priority** — override the automatic decoder selection: Default / Software / Hardware / NVIDIA / VA-API / DirectX 3D11 / VideoToolbox / Intel / Vulkan. Changing it restarts the video stream.
 
 ## Local Video Storage
 

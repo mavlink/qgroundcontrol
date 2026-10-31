@@ -167,22 +167,20 @@
         {
             "name": "forceVideoDecoder",
             "shortDesc": "Override automatic video decoder selection to force a specific decoding method.",
-            "longDesc": "Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.",
+            "longDesc": "Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary. Changing it restarts the video stream.",
             "type": "uint32",
             "enumStrings": "Default,Force software decoder,Force hardware decoder,Force NVIDIA decoder,Force VA-API decoder,Force DirectX3D 11 decoder,Force VideoToolbox decoder,Force Intel decoder,Force Vulkan decoder",
             "enumValues": "0,1,8,2,3,4,5,6,7",
             "default": 0,
-            "qgcRebootRequired": true,
             "label": "Force video decoder priority",
             "keywords": "decoder,hardware decode"
         },
         {
             "name": "forceCpuVideoPath",
             "shortDesc": "Force the video pipeline to copy frames through CPU instead of importing GPU memory directly.",
-            "longDesc": "By default, when a hardware decoder produces GPU-backed frames (DMABuf, GLMemory, D3D11, IOSurface, AHardwareBuffer), the pipeline imports them directly into Qt's render thread to avoid a per-frame CPU copy. The pipeline already falls back to the CPU path automatically when a GPU import fails, so this option is only needed for debugging or to work around a broken driver.",
+            "longDesc": "By default, when a hardware decoder produces GPU-backed frames (DMABuf, GLMemory, D3D11, IOSurface, AHardwareBuffer), the pipeline imports them directly into Qt's render thread to avoid a per-frame CPU copy. The pipeline already falls back to the CPU path automatically when a GPU import fails, so this option is only needed for debugging or to work around a broken driver. Changing it restarts the video stream.",
             "type": "bool",
             "default": false,
-            "qgcRebootRequired": true,
             "label": "Force CPU video path",
             "keywords": "gpu,zero-copy,dmabuf,cpu,performance,force"
         },

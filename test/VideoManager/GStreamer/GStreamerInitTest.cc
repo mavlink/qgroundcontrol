@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <QtCore/QFileInfo>
+#include <QtCore/QHash>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QStringList>
@@ -411,6 +412,37 @@ void GStreamerInitTest::_testSetCodecPrioritiesSoftware()
         QSKIP("No video decoder factories available on this system");
     }
     QVERIFY(foundPrioritizedSoftware);
+}
+
+void GStreamerInitTest::_testSetCodecPrioritiesReplacesThePreviousOption()
+{
+    GSTTEST_REQUIRE_GSTREAMER();
+
+    const GstTest::DecoderRankSnapshot decoderRanks;
+    bool hasSoftwareDecoder = false;
+    GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&hasSoftwareDecoder](GstElementFactory* factory) {
+        hasSoftwareDecoder = hasSoftwareDecoder || !GStreamer::isHardwareDecoderFactory(factory);
+    });
+    if (!hasSoftwareDecoder) {
+        QSKIP("No software video decoder factories available on this system");
+    }
+
+    const auto decoderRanksNow = [] {
+        QHash<QByteArray, guint> ranks;
+        GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&ranks](GstElementFactory* factory) {
+            GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
+            ranks.insert(QByteArray(gst_plugin_feature_get_name(feature)), gst_plugin_feature_get_rank(feature));
+        });
+        return ranks;
+    };
+    GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderDefault);
+    const QHash<QByteArray, guint> defaultRanks = decoderRanksNow();
+
+    // The setting can change at runtime: going back to the default must not keep the software decoders promoted.
+    GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderSoftware);
+    QVERIFY(decoderRanksNow() != defaultRanks);
+    GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderDefault);
+    QCOMPARE(decoderRanksNow(), defaultRanks);
 }
 
 void GStreamerInitTest::_testSetCodecPrioritiesHardware()

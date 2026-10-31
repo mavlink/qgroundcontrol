@@ -65,8 +65,9 @@ VideoDecoderOptions decoderFamilyForFactory(const char* factoryName);
 /// A feature named in GST_PLUGIN_FEATURE_RANK keeps the user's rank, here and in setCodecPriorities().
 bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t rank);
 
-/// Apply decoder rank overrides for @p option to the global GStreamer registry. Defined here
-/// alongside the decoder-rank table it drives; re-exported through the GStreamer facade.
+/// Apply decoder rank overrides for @p option to the global GStreamer registry, starting from the ranks the features
+/// had before QGC first changed them, so a new option replaces the previous one rather than adding to it. Defined
+/// here alongside the decoder-rank table it drives; re-exported through the GStreamer facade. GUI thread.
 void setCodecPriorities(VideoDecoderOptions option);
 /// Overload taking the raw forceVideoDecoder setting value; the cast/range-check lives in the impl.
 void setCodecPriorities(int rawOption);

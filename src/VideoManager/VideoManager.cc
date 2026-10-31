@@ -37,6 +37,9 @@ enum class VideoSettingReaction : uint8_t
     Reconfigure,
     /// Construct-only property of the display sink: the streams restart, which rebuilds the sink.
     RebuildSink,
+    /// The decoder ranks, which are global: once the backend is ready they are applied again, and the streams restart
+    /// so their new pipelines pick decoders by them.
+    RerankDecoders,
 };
 
 struct VideoSettingReactionEntry
@@ -46,8 +49,7 @@ struct VideoSettingReactionEntry
 };
 
 // Not listed: aspectRatio, read by VideoStreamController::aspectRatio(); videoFit, gridLines and showRecControl, read
-// by QML; recordingFormat, enableStorageLimit and maxVideoSize, read when a recording starts; forceVideoDecoder and
-// forceCpuVideoPath, which take effect after an application restart.
+// by QML; recordingFormat, enableStorageLimit and maxVideoSize, read when a recording starts.
 constexpr VideoSettingReactionEntry kVideoSettingReactions[] = {
     {&VideoSettings::videoSource, VideoSettingReaction::Reconfigure},
     {&VideoSettings::udpUrl, VideoSettingReaction::Reconfigure},
@@ -61,6 +63,8 @@ constexpr VideoSettingReactionEntry kVideoSettingReactions[] = {
     {&VideoSettings::disableWhenDisarmed, VideoSettingReaction::Reconfigure},
     {&VideoSettings::videoConversionElement, VideoSettingReaction::RebuildSink},
     {&VideoSettings::disablePixelAspectRatio, VideoSettingReaction::RebuildSink},
+    {&VideoSettings::forceCpuVideoPath, VideoSettingReaction::RebuildSink},
+    {&VideoSettings::forceVideoDecoder, VideoSettingReaction::RerankDecoders},
 };
 
 }  // namespace
@@ -116,6 +120,16 @@ void VideoManager::_connectSettings()
                 break;
             case VideoSettingReaction::RebuildSink:
                 (void) connect(fact, &Fact::rawValueChanged, this, [this] {
+                    _primaryStream->restart();
+                    _thermalStream->restart();
+                });
+                break;
+            case VideoSettingReaction::RerankDecoders:
+                (void) connect(fact, &Fact::rawValueChanged, this, [this](const QVariant& value) {
+                    // Until then, _onBackendInitComplete() applies the setting.
+                    if (_initState == InitState::Ready) {
+                        VideoBackend::instance().applyDecoderPriorities(value.toInt());
+                    }
                     _primaryStream->restart();
                     _thermalStream->restart();
                 });

@@ -15,6 +15,7 @@
 
 #include "MavlinkCameraControlInterface.h"
 #include "SettingsManager.h"
+#include "VideoDecoderOptions.h"
 #include "VideoManager.h"
 #include "VideoSettings.h"
 #include "VideoStreamController.h"
@@ -236,7 +237,7 @@ void VideoManagerTest::_testSettingChangesCoalesce()
     QCOMPARE(_primary->config().timeout, std::chrono::seconds(15));
 }
 
-void VideoManagerTest::_testSinkSettingsRestartStreams_data()
+void VideoManagerTest::_testRestartingSettingsRestartStreams_data()
 {
     QTest::addColumn<QString>("setting");
     QTest::addColumn<QVariant>("value");
@@ -244,9 +245,12 @@ void VideoManagerTest::_testSinkSettingsRestartStreams_data()
     QTest::newRow("videoConversionElement")
         << "videoConversionElement" << QVariant(QStringLiteral("videoconvertscale"));
     QTest::newRow("disablePixelAspectRatio") << "disablePixelAspectRatio" << QVariant(true);
+    QTest::newRow("forceCpuVideoPath") << "forceCpuVideoPath" << QVariant(true);
+    QTest::newRow("forceVideoDecoder") << "forceVideoDecoder"
+                                       << QVariant(static_cast<int>(VideoDecoder::ForceVideoDecoderSoftware));
 }
 
-void VideoManagerTest::_testSinkSettingsRestartStreams()
+void VideoManagerTest::_testRestartingSettingsRestartStreams()
 {
     QFETCH(QString, setting);
     QFETCH(QVariant, value);

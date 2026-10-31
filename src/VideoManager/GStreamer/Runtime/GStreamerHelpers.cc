@@ -5,6 +5,7 @@
 #include <gst/video/video-event.h>
 
 #include <QtCore/QByteArray>
+#include <QtCore/QHash>
 #include <QtCore/QLatin1String>
 #include <QtCore/QList>
 #include <QtCore/QString>
@@ -303,6 +304,13 @@ bool rankedByUser(const gchar* featureName)
     });
 }
 
+// The rank each feature had before QGC first changed it, which setCodecPriorities() restores before applying an option.
+QHash<QByteArray, guint>& originalRanks()
+{
+    static QHash<QByteArray, guint> ranks;
+    return ranks;
+}
+
 // Every QGC rank change goes through here, so a feature the user ranked keeps its rank.
 void setFeatureRank(GstPluginFeature* feature, uint16_t rank)
 {
@@ -311,8 +319,22 @@ void setFeatureRank(GstPluginFeature* feature, uint16_t rank)
         qCDebug(GStreamerHelpersLog) << "  Keeping the GST_PLUGIN_FEATURE_RANK rank of" << name;
         return;
     }
+    const QByteArray key(name);
+    if (!originalRanks().contains(key)) {
+        originalRanks().insert(key, gst_plugin_feature_get_rank(feature));
+    }
     qCDebug(GStreamerHelpersLog) << "  Changing feature (" << name << ") to use rank:" << rank;
     gst_plugin_feature_set_rank(feature, rank);
+}
+
+void restoreOriginalRanks(GstRegistry* registry)
+{
+    for (auto it = originalRanks().cbegin(); it != originalRanks().cend(); ++it) {
+        const GstFeaturePtr feature = adoptFeature(gst_registry_lookup_feature(registry, it.key().constData()));
+        if (feature) {
+            gst_plugin_feature_set_rank(feature.get(), it.value());
+        }
+    }
 }
 
 }  // namespace
@@ -459,10 +481,15 @@ void setCodecPriorities(int rawOption)
 
 void setCodecPriorities(VideoDecoderOptions option)
 {
-    if (!gst_registry_get()) {
+    if (!gst_is_initialized()) {
+        return;
+    }
+    GstRegistry* const registry = gst_registry_get();
+    if (!registry) {
         qCCritical(GStreamerHelpersLog) << "Failed to get gstreamer registry.";
         return;
     }
+    restoreOriginalRanks(registry);
 
     static constexpr uint16_t PrioritizedRank = GST_RANK_PRIMARY + 1;
 

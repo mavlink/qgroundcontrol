@@ -23,8 +23,8 @@ private slots:
     void _testSettingReachesReceiver_data();
     void _testSettingReachesReceiver();
     void _testSettingChangesCoalesce();
-    void _testSinkSettingsRestartStreams_data();
-    void _testSinkSettingsRestartStreams();
+    void _testRestartingSettingsRestartStreams_data();
+    void _testRestartingSettingsRestartStreams();
     void _testStreamEnabledControlsVideo();
     void _testStopVideoCancelsEverything();
     void _testAutoStreamLeavesSettingsAlone();
