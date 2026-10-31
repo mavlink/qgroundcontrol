@@ -5,11 +5,11 @@ include(PluginPolicy)
 
 qgc_test_sandbox(_sandbox qgc_plugin_scan_sandbox)
 
-gstreamer_scan_plugin_basenames(_empty "${_sandbox}/does-not-exist")
+qgc_gst_scan_plugin_basenames(_empty "${_sandbox}/does-not-exist")
 qgc_test_assert_streq("missing path returns empty" "" "${_empty}")
 qgc_test_pass("missing path")
 
-gstreamer_platform_plugin_attrs(_ext _prefix)
+qgc_gst_platform_plugin_attrs(_ext _prefix)
 file(TOUCH "${_sandbox}/${_prefix}coreelements.${_ext}")
 file(TOUCH "${_sandbox}/${_prefix}playback.${_ext}")
 file(TOUCH "${_sandbox}/${_prefix}videoconvertscale.${_ext}")
@@ -18,7 +18,7 @@ file(TOUCH "${_sandbox}/notaplugin.${_ext}") # Non-plugin file — must be exclu
 file(TOUCH "${_sandbox}/${_prefix}-helper.${_ext}"
 )# Dash-prefixed name — alphanumeric regex captures empty group, deduped away
 
-gstreamer_scan_plugin_basenames(_names "${_sandbox}")
+qgc_gst_scan_plugin_basenames(_names "${_sandbox}")
 
 qgc_test_assert_in_list("found coreelements" coreelements _names)
 qgc_test_assert_in_list("found playback" playback _names)
@@ -29,26 +29,26 @@ qgc_test_pass("scan_plugin_basenames platform")
 
 # STATIC scans the static archives, whatever the platform's shared library naming.
 file(TOUCH "${_sandbox}/libgstudp.a")
-gstreamer_scan_plugin_basenames(_static_names "${_sandbox}" STATIC)
+qgc_gst_scan_plugin_basenames(_static_names "${_sandbox}" STATIC)
 qgc_test_assert_streq("static archives" udp "${_static_names}")
 qgc_test_pass("scan_plugin_basenames STATIC")
 
 set(WIN32 OFF)
 set(APPLE OFF)
-gstreamer_platform_plugin_attrs(_ext _prefix)
+qgc_gst_platform_plugin_attrs(_ext _prefix)
 qgc_test_assert_streq("linux ext" "so" "${_ext}")
 qgc_test_assert_streq("linux prefix" "libgst" "${_prefix}")
 qgc_test_pass("platform_plugin_attrs linux")
 
 set(WIN32 ON)
-gstreamer_platform_plugin_attrs(_ext _prefix)
+qgc_gst_platform_plugin_attrs(_ext _prefix)
 qgc_test_assert_streq("win ext" "dll" "${_ext}")
 qgc_test_assert_streq("win prefix" "gst" "${_prefix}")
 set(WIN32 OFF)
 qgc_test_pass("platform_plugin_attrs windows")
 
 set(APPLE ON)
-gstreamer_platform_plugin_attrs(_ext _prefix)
+qgc_gst_platform_plugin_attrs(_ext _prefix)
 qgc_test_assert_streq("apple ext" "dylib" "${_ext}")
 qgc_test_assert_streq("apple prefix" "libgst" "${_prefix}")
 set(APPLE OFF)

@@ -7,7 +7,7 @@ include_guard(GLOBAL)
 
 include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
 
-# gstreamer_create_layout_target(SDK_ROOT <root> [LIB_PATH <dir>] [PLUGIN_PATH <dir>] [INCLUDE_PATH <dir>]
+# qgc_gst_create_layout_target(SDK_ROOT <root> [LIB_PATH <dir>] [PLUGIN_PATH <dir>] [INCLUDE_PATH <dir>]
 #                                [PLUGIN_SCANNER_PATH <dir>] [GIO_MODULE_PATH <dir>] [FRAMEWORK_BUNDLE <bundle>])
 # Sets, in the caller's scope, GStreamer_ROOT_DIR to the normalized <root> and the SDK layout, each defaulting to the
 # SDK directory layout: GSTREAMER_LIB_PATH (<root>/lib), GSTREAMER_PLUGIN_PATH (<lib>/gstreamer-1.0),
@@ -15,12 +15,12 @@ include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
 # GSTREAMER_GIO_MODULE_PATH (<lib>/gio/modules). Fails configure when the root, library, plugin or include directory
 # does not exist; with FRAMEWORK_BUNDLE also sets GSTREAMER_FRAMEWORK_PATH and the FRAMEWORK_BUNDLE layout property.
 # cmake-lint: disable=C0103,E1121
-function(gstreamer_create_layout_target)
+function(qgc_gst_create_layout_target)
     cmake_parse_arguments(
         PARSE_ARGV 0 ARG ""
         "SDK_ROOT;LIB_PATH;PLUGIN_PATH;INCLUDE_PATH;PLUGIN_SCANNER_PATH;GIO_MODULE_PATH;FRAMEWORK_BUNDLE" ""
     )
-    _qgc_gst_check_args(gstreamer_create_layout_target SDK_ROOT)
+    _qgc_gst_check_args(qgc_gst_create_layout_target SDK_ROOT)
 
     cmake_path(SET _root NORMALIZE "${ARG_SDK_ROOT}")
     set(_lib "${_root}/lib")
@@ -57,14 +57,14 @@ function(gstreamer_create_layout_target)
     if(ARG_FRAMEWORK_BUNDLE)
         set(GSTREAMER_FRAMEWORK_PATH "${ARG_FRAMEWORK_BUNDLE}")
         list(APPEND _outputs GSTREAMER_FRAMEWORK_PATH)
-        gstreamer_layout_set(FRAMEWORK_BUNDLE "${ARG_FRAMEWORK_BUNDLE}")
+        qgc_gst_layout_set(FRAMEWORK_BUNDLE "${ARG_FRAMEWORK_BUNDLE}")
     endif()
     return(PROPAGATE ${_outputs})
 endfunction()
 
-# gstreamer_layout_get(<key> <out_var>)
+# qgc_gst_layout_get(<key> <out_var>)
 # Sets <out_var> to the GSTREAMER_<key> property of GStreamer::Layout, or "" when it or the target does not exist.
-function(gstreamer_layout_get key out_var)
+function(qgc_gst_layout_get key out_var)
     set(_value "")
     if(TARGET GStreamer::Layout)
         get_target_property(_value GStreamer::Layout "GSTREAMER_${key}")
@@ -78,9 +78,9 @@ function(gstreamer_layout_get key out_var)
     )
 endfunction()
 
-# gstreamer_layout_set(<key> <value>)
+# qgc_gst_layout_set(<key> <value>)
 # Sets the GSTREAMER_<key> property of GStreamer::Layout, creating the target; does nothing in script mode.
-function(gstreamer_layout_set key value)
+function(qgc_gst_layout_set key value)
     if(CMAKE_SCRIPT_MODE_FILE)
         return()
     endif()

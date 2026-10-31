@@ -1,10 +1,10 @@
 # Installing the GStreamer runtime a desktop app bundles: the shared machinery (copying plugins, GIO modules and
 # helpers; installing only the SDK libraries they and QGC load, _qgc_gst_install_runtime_closure; failing an install
 # that would ship a GPL library or plugin, _qgc_gst_install_gpl_check; verifying the installed plugins) and the
-# dispatcher gstreamer_install_platform_sdk, called from src/VideoManager/GStreamer/CMakeLists.txt after the
+# dispatcher qgc_gst_install_platform_sdk, called from src/VideoManager/GStreamer/CMakeLists.txt after the
 # ANDROID/IOS early-return. Each platform's installer is in platform/<platform>.cmake.
-# Depends on: Platform.cmake (qgc_gst_platform) and PluginPolicy.cmake (gstreamer_platform_plugin_attrs,
-#             gstreamer_scan_plugin_basenames, GSTREAMER_BUNDLE_REQUIRED_PLUGINS, GSTREAMER_GPL_DENYLIST; included again
+# Depends on: Platform.cmake (qgc_gst_platform) and PluginPolicy.cmake (qgc_gst_platform_plugin_attrs,
+#             qgc_gst_scan_plugin_basenames, GSTREAMER_BUNDLE_REQUIRED_PLUGINS, GSTREAMER_GPL_DENYLIST; included again
 #             by the install-time checks).
 
 include_guard(GLOBAL)
@@ -37,17 +37,17 @@ function(_qgc_gst_filter_plugin_paths prefix paths out_var)
     )
 endfunction()
 
-# gstreamer_install_plugins(<source_dir> <dest_dir> <prefix> <extension>)
+# qgc_gst_install_plugins(<source_dir> <dest_dir> <prefix> <extension>)
 # Installs the GSTREAMER_PLUGINS found as <prefix><name>*.<extension> in <source_dir>. Fails when none match: the glob
 # runs at configure time, so the SDK must be complete then. Records the files in QGC_GST_SHIPPED_PLUGINS, which the
 # CI boot test of a build tree loads instead of the whole SDK, under that public QGC_ name.
 # cmake-lint: disable=C0103
-function(gstreamer_install_plugins source_dir dest_dir prefix extension)
+function(qgc_gst_install_plugins source_dir dest_dir prefix extension)
     file(GLOB _plugins "${source_dir}/${prefix}*.${extension}")
     _qgc_gst_filter_plugin_paths("${prefix}" "${_plugins}" _plugins)
     if(NOT _plugins)
         message(
-            FATAL_ERROR "gstreamer_install_plugins: no requested plugin matches ${source_dir}/${prefix}*.${extension}. "
+            FATAL_ERROR "qgc_gst_install_plugins: no requested plugin matches ${source_dir}/${prefix}*.${extension}. "
                         "Re-run cmake configure against a complete SDK."
         )
     endif()
@@ -58,11 +58,11 @@ function(gstreamer_install_plugins source_dir dest_dir prefix extension)
     )
 endfunction()
 
-# gstreamer_install_gio_modules(<source_dir> <dest_dir> <extension> [<module>...])
+# qgc_gst_install_gio_modules(<source_dir> <dest_dir> <extension> [<module>...])
 # Installs every *.<extension> GIO module in <source_dir>, or only the lib<module>.<extension> ones given.
-function(gstreamer_install_gio_modules source_dir dest_dir extension)
+function(qgc_gst_install_gio_modules source_dir dest_dir extension)
     if(NOT EXISTS "${source_dir}")
-        message(WARNING "gstreamer_install_gio_modules: ${source_dir} does not exist")
+        message(WARNING "qgc_gst_install_gio_modules: ${source_dir} does not exist")
         return()
     endif()
     file(GLOB _modules "${source_dir}/*.${extension}")
@@ -225,7 +225,7 @@ include("@_policy_file@")
 set(_gpl_files "")
 foreach(_dir IN ITEMS @_dirs@)
     file(GLOB_RECURSE _files "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/${_dir}/*")
-    gstreamer_gpl_files(_found ${_files})
+    qgc_gst_gpl_files(_found ${_files})
     list(APPEND _gpl_files ${_found})
 endforeach()
 if(_gpl_files)
@@ -246,32 +246,32 @@ cmake_policy(POP)
     install(CODE "${_check_code}")
 endfunction()
 
-# The per-platform installers, gstreamer_install_<platform>_sdk in platform/<platform>.cmake, are called as
+# The per-platform installers, qgc_gst_install_<platform>_sdk in platform/<platform>.cmake, are called as
 # <helper>(<app_name> <plugin_dest_out>): each sets <plugin_dest_out> to the install-prefix-relative directory it
 # installs the plugins to, using the shared helpers above and the layout discovery set (GSTREAMER_*_PATH,
 # GStreamer_ROOT_DIR, ...).
 
 # Installs the LGPL text and notice the Orchestrator wrote (GStreamer::Layout NOTICE_DIR) into <dest>.
 function(_qgc_gst_install_notice dest)
-    gstreamer_layout_get(NOTICE_DIR _notice_dir)
+    qgc_gst_layout_get(NOTICE_DIR _notice_dir)
     if(_notice_dir)
         install(FILES "${_notice_dir}/NOTICE.txt" "${_notice_dir}/LGPL-2.1.txt" DESTINATION "${dest}")
     endif()
 endfunction()
 
 # Top-level dispatcher — call this from CMakeLists.txt after the ANDROID/IOS guard (mobile platforms link their plugins
-# statically and have no install helper). Runs the platform's gstreamer_install_<platform>_sdk.
+# statically and have no install helper). Runs the platform's qgc_gst_install_<platform>_sdk.
 # <app_name> is CMAKE_PROJECT_NAME in the caller.
-# gstreamer_install_platform_sdk(<app_name> [REQUIRED_PLUGINS <names…>])
+# qgc_gst_install_platform_sdk(<app_name> [REQUIRED_PLUGINS <names…>])
 # REQUIRED_PLUGINS: list of plugin basenames (no platform prefix or extension) to
 # verify exist post-install; default is the minimum needed to run any pipeline,
 # extended with every configured plugin present in the SDK at configure time.
-function(gstreamer_install_platform_sdk app_name)
+function(qgc_gst_install_platform_sdk app_name)
     if(NOT app_name)
-        message(FATAL_ERROR "gstreamer_install_platform_sdk: app_name is required")
+        message(FATAL_ERROR "qgc_gst_install_platform_sdk: app_name is required")
     endif()
     cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "REQUIRED_PLUGINS")
-    _qgc_gst_check_args(gstreamer_install_platform_sdk)
+    _qgc_gst_check_args(qgc_gst_install_platform_sdk)
     qgc_gst_platform(_gips_platform)
     # QGC_GST_BUNDLE_PLUGINS=OFF (unset means ON): a Linux distribution package depends on the system's plugins, which
     # the app then uses as they are (GStreamerEnvironment.cc, QGC_GST_SYSTEM_PLUGINS).
@@ -284,7 +284,7 @@ function(gstreamer_install_platform_sdk app_name)
     endif()
     # Homebrew's libraries, plugins and plugin scanner load each other by absolute paths under its prefix (no @rpath),
     # so copies bundled into the app would not be the ones loaded.
-    gstreamer_layout_get(HOMEBREW_PREFIX _gips_homebrew_prefix)
+    qgc_gst_layout_get(HOMEBREW_PREFIX _gips_homebrew_prefix)
     if(_gips_homebrew_prefix)
         set(_gips_message "GStreamer: this build uses Homebrew's GStreamer (${_gips_homebrew_prefix}), which cannot be")
         string(
@@ -301,7 +301,7 @@ function(gstreamer_install_platform_sdk app_name)
     # Extend verification beyond the structural floor to every configured plugin
     # present in the SDK at configure time, so an install-filter drop fails loudly.
     if(GSTREAMER_PLUGINS)
-        gstreamer_scan_plugin_basenames(_gips_sdk_plugins "${GSTREAMER_PLUGIN_PATH}")
+        qgc_gst_scan_plugin_basenames(_gips_sdk_plugins "${GSTREAMER_PLUGIN_PATH}")
         foreach(_p IN LISTS GSTREAMER_PLUGINS)
             if(_p IN_LIST _gips_sdk_plugins)
                 list(APPEND ARG_REQUIRED_PLUGINS "${_p}")
@@ -310,13 +310,13 @@ function(gstreamer_install_platform_sdk app_name)
         list(REMOVE_DUPLICATES ARG_REQUIRED_PLUGINS)
     endif()
 
-    cmake_language(CALL gstreamer_install_${_gips_platform}_sdk "${app_name}" _verify_dest)
+    cmake_language(CALL qgc_gst_install_${_gips_platform}_sdk "${app_name}" _verify_dest)
     _qgc_gst_install_gpl_check()
 
     # Post-install plugin verification, against the plugin directory the installer reported.
     # Checked at install time against $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}, where CPack stages packages. Install
     # scripts run with every policy unset, which PluginPolicy.cmake (IN_LIST) cannot use.
-    gstreamer_platform_plugin_attrs(_verify_ext _verify_prefix)
+    qgc_gst_platform_plugin_attrs(_verify_ext _verify_prefix)
     set(_verify_code
         [=[
 cmake_policy(PUSH)
@@ -325,7 +325,7 @@ include("@_policy_file@")
 set(_verify_dir "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/@_verify_dest@")
 file(GLOB _installed_plugins RELATIVE "${_verify_dir}" "${_verify_dir}/@_verify_prefix@*.@_verify_ext@")
 list(TRANSFORM _installed_plugins REPLACE "^@_verify_prefix@(.*)\\.@_verify_ext@$" "\\1")
-gstreamer_missing_required(REQUIRED @ARG_REQUIRED_PLUGINS@ AVAILABLE ${_installed_plugins} OUT_VAR _missing_plugins)
+qgc_gst_missing_required(REQUIRED @ARG_REQUIRED_PLUGINS@ AVAILABLE ${_installed_plugins} OUT_VAR _missing_plugins)
 if(_missing_plugins)
     list(JOIN _missing_plugins ", " _missing_list)
     message(FATAL_ERROR "GStreamer install verification: missing required plugins in @_verify_dest@: "

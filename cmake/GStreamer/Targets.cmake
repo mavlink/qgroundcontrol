@@ -124,7 +124,7 @@ function(_qgc_gst_create_sdk_targets)
     add_library(${_libraries} INTERFACE IMPORTED GLOBAL)
     target_link_libraries(${_libraries} INTERFACE GStreamer::Core)
     foreach(_component IN LISTS GSTREAMER_SELECTED_COMPONENTS)
-        gstreamer_component_module(${_component} _module)
+        qgc_gst_component_module(${_component} _module)
         # A missing mandatory module fails configure with its own message (Orchestrator.cmake); the others are optional.
         set(_quiet QUIET)
         if(_component IN_LIST GSTREAMER_MANDATORY_COMPONENTS)

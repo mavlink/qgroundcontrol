@@ -7,10 +7,10 @@ include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/../modules/Download.cmake") # qgc_resilient_download / qgc_parse_expected_hash
 include("${CMAKE_CURRENT_LIST_DIR}/../modules/BuildConfigReader.cmake")
 
-# gstreamer_get_package_url(<platform> <version> <output_var>)
+# qgc_gst_get_package_url(<platform> <version> <output_var>)
 # Sets <output_var> to the gstreamer.freedesktop.org URL of the <version> SDK package for <platform> (android, ios,
 # macos, macos_devel, windows_msvc_x64 or windows_msvc_arm64).
-function(gstreamer_get_package_url platform version output_var)
+function(qgc_gst_get_package_url platform version output_var)
     set(_base "https://gstreamer.freedesktop.org")
 
     # URL templates for simple platforms — version substituted via _base.
@@ -30,7 +30,7 @@ function(gstreamer_get_package_url platform version output_var)
     elseif(DEFINED _url_${platform})
         set(_url "${_url_${platform}}")
     else()
-        message(FATAL_ERROR "gstreamer_get_package_url: Unknown platform '${platform}'")
+        message(FATAL_ERROR "qgc_gst_get_package_url: Unknown platform '${platform}'")
     endif()
 
     set(${output_var}
@@ -39,10 +39,10 @@ function(gstreamer_get_package_url platform version output_var)
     )
 endfunction()
 
-# gstreamer_get_s3_mirror_url(<platform> <version> <output_var>)
+# qgc_gst_get_s3_mirror_url(<platform> <version> <output_var>)
 # Sets <output_var> to the QGC S3 mirror of that package: the same file under the mirror's <platform directory>/.
-function(gstreamer_get_s3_mirror_url platform version output_var)
-    gstreamer_get_package_url("${platform}" "${version}" _url)
+function(qgc_gst_get_s3_mirror_url platform version output_var)
+    qgc_gst_get_package_url("${platform}" "${version}" _url)
     string(
         REGEX REPLACE "^https://gstreamer\\.freedesktop\\.org/data/pkg/([a-z]+)/.*/([^/]+)$"
                       "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer/\\1/\\2" _url "${_url}"
@@ -53,10 +53,10 @@ function(gstreamer_get_s3_mirror_url platform version output_var)
     )
 endfunction()
 
-# gstreamer_get_fallback_checksum(<platform> <version> <output_var>)
+# qgc_gst_get_fallback_checksum(<platform> <version> <output_var>)
 # Sets <output_var> to "SHA256=<hex>" pinned at gstreamer.checksums.<version>.<platform> in build-config.json, or ""
 # when the package is not pinned.
-function(gstreamer_get_fallback_checksum platform version output_var)
+function(qgc_gst_get_fallback_checksum platform version output_var)
     qgc_config_read(_hash OPTIONAL gstreamer checksums ${version} ${platform})
     set(_checksum "")
     if(_hash)
@@ -68,13 +68,13 @@ function(gstreamer_get_fallback_checksum platform version output_var)
     )
 endfunction()
 
-# gstreamer_fetch_checksum(<platform> <version> <output_var>)
+# qgc_gst_fetch_checksum(<platform> <version> <output_var>)
 # Sets <output_var> to the checksum to verify the package against: the pinned one, else the upstream .sha256sum
 # sidecar, else "" (unverified). Without a pin, GStreamer_REQUIRE_CHECKSUM fails configure.
-function(gstreamer_fetch_checksum platform version output_var)
+function(qgc_gst_fetch_checksum platform version output_var)
     # The in-tree pin is authoritative and the download is verified against it, so the
     # same-origin .sha256sum sidecar is only fetched for unpinned SDKs.
-    gstreamer_get_fallback_checksum(${platform} ${version} _pinned_hash)
+    qgc_gst_get_fallback_checksum(${platform} ${version} _pinned_hash)
     if(_pinned_hash)
         set(${output_var}
             "${_pinned_hash}"
@@ -93,7 +93,7 @@ function(gstreamer_fetch_checksum platform version output_var)
         )
     endif()
 
-    gstreamer_get_package_url(${platform} ${version} _pkg_url)
+    qgc_gst_get_package_url(${platform} ${version} _pkg_url)
 
     set(_checksum_url "${_pkg_url}.sha256sum")
     string(SHA256 _url_hash "${_checksum_url}")
@@ -160,9 +160,9 @@ endfunction()
 # cached copy that matches its checksum, and sets <hash_out> to the "SHA256=<hex>" it was verified against, or "" when
 # it is unverified. The mirror's copy is held to the same checksum. A failed download fails configure.
 function(_qgc_gst_download_archive platform version filename dir hash_out)
-    gstreamer_get_package_url("${platform}" "${version}" _url)
-    gstreamer_get_s3_mirror_url("${platform}" "${version}" _s3_url)
-    gstreamer_fetch_checksum("${platform}" "${version}" _hash)
+    qgc_gst_get_package_url("${platform}" "${version}" _url)
+    qgc_gst_get_s3_mirror_url("${platform}" "${version}" _s3_url)
+    qgc_gst_fetch_checksum("${platform}" "${version}" _hash)
     set(_hash_args "")
     if(_hash)
         set(_hash_args EXPECTED_HASH "${_hash}")

@@ -89,10 +89,10 @@ set(GSTREAMER_GPL_DENYLIST
     x265
 )
 
-# gstreamer_gpl_files(<out_var> <file>...)
+# qgc_gst_gpl_files(<out_var> <file>...)
 # Sets <out_var> to the <file>s whose name is a GSTREAMER_GPL_DENYLIST library or plugin: the name, after an optional
 # lib and gst prefix, followed by a version, extension or nothing (libx264.so.164, x264-164.dll, libgstx264.dylib).
-function(gstreamer_gpl_files out_var)
+function(qgc_gst_gpl_files out_var)
     list(JOIN GSTREAMER_GPL_DENYLIST "|" _names)
     set(_gpl "")
     foreach(_file IN LISTS ARGN)
@@ -107,10 +107,10 @@ function(gstreamer_gpl_files out_var)
     )
 endfunction()
 
-# gstreamer_platform_plugin_attrs(<ext_out> <prefix_out>)
+# qgc_gst_platform_plugin_attrs(<ext_out> <prefix_out>)
 # Sets the extension and file-name prefix of the platform's plugin libraries. Used by plugin discovery and post-install
 # verify.
-function(gstreamer_platform_plugin_attrs ext_out prefix_out)
+function(qgc_gst_platform_plugin_attrs ext_out prefix_out)
     if(WIN32)
         set(_ext "dll")
         set(_prefix "gst")
@@ -131,13 +131,13 @@ function(gstreamer_platform_plugin_attrs ext_out prefix_out)
     )
 endfunction()
 
-# gstreamer_scan_plugin_basenames(<output_var> <plugin_path> [STATIC])
+# qgc_gst_scan_plugin_basenames(<output_var> <plugin_path> [STATIC])
 # Returns plugin basenames (e.g. "videoconvert", "x264") found in <plugin_path>,
 # stripped of the platform's lib prefix and extension, or with STATIC of the static archives' libgst and .a. Empty
 # string if path missing.
-function(gstreamer_scan_plugin_basenames output_var plugin_path)
+function(qgc_gst_scan_plugin_basenames output_var plugin_path)
     cmake_parse_arguments(PARSE_ARGV 2 ARG "STATIC" "" "")
-    _qgc_gst_check_args(gstreamer_scan_plugin_basenames)
+    _qgc_gst_check_args(qgc_gst_scan_plugin_basenames)
     if(NOT EXISTS "${plugin_path}")
         set(${output_var}
             ""
@@ -149,7 +149,7 @@ function(gstreamer_scan_plugin_basenames output_var plugin_path)
         set(_prefix "libgst")
         set(_ext "a")
     else()
-        gstreamer_platform_plugin_attrs(_ext _prefix)
+        qgc_gst_platform_plugin_attrs(_ext _prefix)
     endif()
     # Underscore included: a hypothetical libgstvideo_foo.so must not truncate to "video".
     set(_re "^${_prefix}([a-zA-Z0-9_]+)")
@@ -168,10 +168,10 @@ function(gstreamer_scan_plugin_basenames output_var plugin_path)
     )
 endfunction()
 
-# gstreamer_plugins_for(<key> <out_var>)
+# qgc_gst_plugins_for(<key> <out_var>)
 # Sets <out_var> to the plugin list of build-config.json for <key> ("android", "apple", "windows", "linux" or ""):
 # gstreamer.plugins.common plus gstreamer.plugins.<key>.
-function(gstreamer_plugins_for key out_var)
+function(qgc_gst_plugins_for key out_var)
     qgc_config_read(_plugins LIST gstreamer plugins common)
     if(key)
         qgc_config_read(_extra LIST OPTIONAL gstreamer plugins ${key})
@@ -183,13 +183,13 @@ function(gstreamer_plugins_for key out_var)
     )
 endfunction()
 
-# gstreamer_missing_required(REQUIRED <plugin>... AVAILABLE <plugin>... OUT_VAR <var>)
+# qgc_gst_missing_required(REQUIRED <plugin>... AVAILABLE <plugin>... OUT_VAR <var>)
 # Sets <var> to the REQUIRED plugins, in order, that are not AVAILABLE. A member of a GSTREAMER_PLUGIN_ALTERNATES group
 # is also satisfied by any alternate of its group whose plugins are all AVAILABLE, so the install verifier accepts
 # videoconvert+videoscale (1.20) in place of the fused videoconvertscale (1.22+).
-function(gstreamer_missing_required)
+function(qgc_gst_missing_required)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "OUT_VAR" "REQUIRED;AVAILABLE")
-    _qgc_gst_check_args(gstreamer_missing_required OUT_VAR ALLOW_EMPTY REQUIRED AVAILABLE)
+    _qgc_gst_check_args(qgc_gst_missing_required OUT_VAR ALLOW_EMPTY REQUIRED AVAILABLE)
     set(_missing "")
     foreach(_plugin IN LISTS ARG_REQUIRED)
         # The plugin sets, each "+"-joined, that satisfy _plugin: itself, then the alternates of its group.
@@ -225,18 +225,18 @@ function(gstreamer_missing_required)
     )
 endfunction()
 
-# gstreamer_classify_missing_plugins(REQUESTED <plugin>... AVAILABLE <plugin>... SHIPPED <plugin>...
+# qgc_gst_classify_missing_plugins(REQUESTED <plugin>... AVAILABLE <plugin>... SHIPPED <plugin>...
 #                                    OUT_OPTIONAL <var> OUT_ABSENT <var> OUT_UNUSABLE <var>)
 # Sorts the REQUESTED plugins that are not AVAILABLE to the build (alternate groups count as in
-# gstreamer_missing_required) into GSTREAMER_OPTIONAL_PLUGINS (OUT_OPTIONAL), the others that the SDK or system does not
+# qgc_gst_missing_required) into GSTREAMER_OPTIONAL_PLUGINS (OUT_OPTIONAL), the others that the SDK or system does not
 # ship at all, i.e. are not in SHIPPED (OUT_ABSENT: misspelled, not built for the platform, or not installed), and the
 # rest, shipped but not usable by this build (OUT_UNUSABLE).
-function(gstreamer_classify_missing_plugins)
+function(qgc_gst_classify_missing_plugins)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "" "OUT_OPTIONAL;OUT_ABSENT;OUT_UNUSABLE" "REQUESTED;AVAILABLE;SHIPPED")
     _qgc_gst_check_args(
-        gstreamer_classify_missing_plugins OUT_OPTIONAL OUT_ABSENT OUT_UNUSABLE ALLOW_EMPTY REQUESTED AVAILABLE SHIPPED
+        qgc_gst_classify_missing_plugins OUT_OPTIONAL OUT_ABSENT OUT_UNUSABLE ALLOW_EMPTY REQUESTED AVAILABLE SHIPPED
     )
-    gstreamer_missing_required(
+    qgc_gst_missing_required(
         REQUIRED ${ARG_REQUESTED}
         AVAILABLE ${ARG_AVAILABLE}
         OUT_VAR _missing
@@ -245,7 +245,7 @@ function(gstreamer_classify_missing_plugins)
     set(_absent "")
     set(_unusable "")
     foreach(_plugin IN LISTS _missing)
-        gstreamer_missing_required(
+        qgc_gst_missing_required(
             REQUIRED ${_plugin}
             AVAILABLE ${ARG_SHIPPED}
             OUT_VAR _not_shipped
@@ -272,15 +272,15 @@ function(gstreamer_classify_missing_plugins)
     )
 endfunction()
 
-# gstreamer_check_plugins(REQUESTED <plugin>... AVAILABLE <plugin>... SHIPPED <plugin>... SOURCE <where> [STATIC])
-# Reports the REQUESTED plugins the build cannot use (gstreamer_classify_missing_plugins), SOURCE naming where they
+# qgc_gst_check_plugins(REQUESTED <plugin>... AVAILABLE <plugin>... SHIPPED <plugin>... SOURCE <where> [STATIC])
+# Reports the REQUESTED plugins the build cannot use (qgc_gst_classify_missing_plugins), SOURCE naming where they
 # were looked for: a warning for those not shipped at all or shipped without a way to link them, a status line for
 # missing GSTREAMER_OPTIONAL_PLUGINS. With STATIC (the mobile layouts, which cannot load a plugin at runtime), a missing
 # GSTREAMER_BUNDLE_REQUIRED_PLUGINS entry fails configure.
-function(gstreamer_check_plugins)
+function(qgc_gst_check_plugins)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "STATIC" "SOURCE" "REQUESTED;AVAILABLE;SHIPPED")
-    _qgc_gst_check_args(gstreamer_check_plugins SOURCE ALLOW_EMPTY REQUESTED AVAILABLE SHIPPED)
-    gstreamer_classify_missing_plugins(
+    _qgc_gst_check_args(qgc_gst_check_plugins SOURCE ALLOW_EMPTY REQUESTED AVAILABLE SHIPPED)
+    qgc_gst_classify_missing_plugins(
         REQUESTED ${ARG_REQUESTED}
         AVAILABLE ${ARG_AVAILABLE}
         SHIPPED ${ARG_SHIPPED}
@@ -314,7 +314,7 @@ function(gstreamer_check_plugins)
     if(NOT ARG_STATIC)
         return()
     endif()
-    gstreamer_missing_required(
+    qgc_gst_missing_required(
         REQUIRED ${GSTREAMER_BUNDLE_REQUIRED_PLUGINS}
         AVAILABLE ${ARG_AVAILABLE}
         OUT_VAR _missing_required

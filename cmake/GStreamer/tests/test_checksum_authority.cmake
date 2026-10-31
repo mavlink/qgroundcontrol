@@ -7,9 +7,9 @@ include(Packages)
 # never read or write the same pre-seeded sidecar.
 set(_platform android)
 
-# Pre-seeds the cached .sha256sum sidecar gstreamer_fetch_checksum reads for <version>.
+# Pre-seeds the cached .sha256sum sidecar qgc_gst_fetch_checksum reads for <version>.
 function(_qgc_test_seed_sidecar version hash)
-    gstreamer_get_package_url(${_platform} ${version} _url)
+    qgc_gst_get_package_url(${_platform} ${version} _url)
     string(SHA256 _url_hash "${_url}.sha256sum")
     file(WRITE "${CMAKE_BINARY_DIR}/_deps/checksums/${_url_hash}.sha256sum" "${hash}  archive.tar.xz\n")
 endfunction()
@@ -29,7 +29,7 @@ if(TEST_CASE STREQUAL "sidecar-only-required")
     # Nothing is seeded: the check must fail before it would fetch the upstream sidecar.
     set(QGC_BUILD_CONFIG_CONTENT "{}")
     set(GStreamer_REQUIRE_CHECKSUM ON)
-    gstreamer_fetch_checksum(${_platform} 9.0.4 _hash)
+    qgc_gst_fetch_checksum(${_platform} 9.0.4 _hash)
 elseif(DEFINED TEST_CASE)
     message(FATAL_ERROR "Unknown test case: ${TEST_CASE}")
 endif()
@@ -41,13 +41,13 @@ endif()
 # A pinned SDK never consults the sidecar, so even a disagreeing cached one is ignored.
 _qgc_test_set_pin(9.0.1 "${_pinned}")
 _qgc_test_seed_sidecar(9.0.1 "${_other}")
-gstreamer_fetch_checksum(${_platform} 9.0.1 _hash)
+qgc_gst_fetch_checksum(${_platform} 9.0.1 _hash)
 qgc_test_assert_streq("pin" "SHA256=${_pinned}" "${_hash}")
 qgc_test_pass("pinned checksum is authoritative")
 
 set(QGC_BUILD_CONFIG_CONTENT "{}")
 set(GStreamer_REQUIRE_CHECKSUM OFF)
 _qgc_test_seed_sidecar(9.0.2 "${_other}")
-gstreamer_fetch_checksum(${_platform} 9.0.2 _hash)
+qgc_gst_fetch_checksum(${_platform} 9.0.2 _hash)
 qgc_test_assert_streq("unpinned sidecar" "SHA256=${_other}" "${_hash}")
 qgc_test_pass("sidecar accepted only when checksums are optional")

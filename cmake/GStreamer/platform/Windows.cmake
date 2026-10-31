@@ -1,4 +1,4 @@
-# Windows GStreamer: SDK discovery, invoked by Orchestrator.cmake, and the installer gstreamer_install_platform_sdk
+# Windows GStreamer: SDK discovery, invoked by Orchestrator.cmake, and the installer qgc_gst_install_platform_sdk
 # (Install.cmake) runs.
 
 include_guard(GLOBAL)
@@ -115,12 +115,12 @@ function(_qgc_gst_discover_windows_sdk)
         set(GStreamer_AUTO_DOWNLOADED TRUE)
     endif()
 
-    gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}")
+    qgc_gst_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}")
     list(APPEND PKG_CONFIG_ARGN "--define-variable=prefix=${GStreamer_ROOT_DIR}"
          "--define-variable=libdir=${GSTREAMER_LIB_PATH}" "--define-variable=includedir=${GSTREAMER_INCLUDE_PATH}"
     )
 
-    gstreamer_apply_pkgconfig_env(
+    qgc_gst_apply_pkgconfig_env(
         MODE SDK
         PKG_CONFIG_EXE "${GStreamer_ROOT_DIR}/bin/pkg-config.exe"
         LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig" "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
@@ -131,11 +131,11 @@ endfunction()
 
 # Windows: the plugins, GIO modules, libproxy backends and libexec helpers, the SDK DLLs they and QGC load, and the
 # notice. gioopenssl verifies against the Windows certificate stores, so the SDK's CA bundle stays out.
-function(gstreamer_install_windows_sdk app_name plugin_dest_out)
+function(qgc_gst_install_windows_sdk app_name plugin_dest_out)
     set(_plugin_dest "${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0")
     _qgc_gst_begin_runtime_closure()
-    gstreamer_install_plugins("${GSTREAMER_PLUGIN_PATH}" "${_plugin_dest}" "gst" "dll")
-    gstreamer_install_gio_modules("${GSTREAMER_GIO_MODULE_PATH}" "${CMAKE_INSTALL_LIBDIR}/gio/modules" "dll")
+    qgc_gst_install_plugins("${GSTREAMER_PLUGIN_PATH}" "${_plugin_dest}" "gst" "dll")
+    qgc_gst_install_gio_modules("${GSTREAMER_GIO_MODULE_PATH}" "${CMAKE_INSTALL_LIBDIR}/gio/modules" "dll")
     # giolibproxy.dll loads proxy-1.dll, which loads its backends from lib/libproxy; startup only puts the app's bin
     # directory on PATH, so they go there too.
     file(GLOB _gst_libproxy_backends "${GStreamer_ROOT_DIR}/lib/libproxy/*.dll")

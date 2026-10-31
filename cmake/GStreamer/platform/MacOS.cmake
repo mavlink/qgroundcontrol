@@ -1,4 +1,4 @@
-# macOS GStreamer: SDK discovery, invoked by Orchestrator.cmake, and the installers gstreamer_install_platform_sdk
+# macOS GStreamer: SDK discovery, invoked by Orchestrator.cmake, and the installers qgc_gst_install_platform_sdk
 # (Install.cmake) runs for a GStreamer.framework or a flat SDK.
 
 include_guard(GLOBAL)
@@ -68,13 +68,13 @@ function(_qgc_gst_discover_homebrew_sdk prefix)
         STATUS "GStreamer: Using Homebrew's GStreamer at ${GStreamer_ROOT_DIR} (builds only; installs and "
                "packages need the official SDK)"
     )
-    gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}")
-    gstreamer_apply_pkgconfig_env(
+    qgc_gst_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}")
+    qgc_gst_apply_pkgconfig_env(
         MODE SYSTEM_AUGMENT
         PKG_CONFIG_EXE "${prefix}/bin/pkg-config"
         LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig" "${prefix}/lib/pkgconfig" "${prefix}/opt/glib/lib/pkgconfig"
     )
-    gstreamer_layout_set(HOMEBREW_PREFIX "${prefix}")
+    qgc_gst_layout_set(HOMEBREW_PREFIX "${prefix}")
     _qgc_gst_return_discovery()
 endfunction()
 
@@ -108,16 +108,16 @@ function(_qgc_gst_discover_macos_sdk)
     set(GStreamer_USE_FRAMEWORK OFF)
     if(GStreamer_ROOT_DIR MATCHES "^(.*\\.framework)(/|$)")
         set(GStreamer_USE_FRAMEWORK ON)
-        gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}" FRAMEWORK_BUNDLE "${CMAKE_MATCH_1}")
-        gstreamer_apply_pkgconfig_env(
+        qgc_gst_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}" FRAMEWORK_BUNDLE "${CMAKE_MATCH_1}")
+        qgc_gst_apply_pkgconfig_env(
             MODE SDK
             PKG_CONFIG_EXE "${GStreamer_ROOT_DIR}/bin/pkg-config"
             LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig" "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
         )
     else()
-        gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}")
+        qgc_gst_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}")
         _qgc_gst_find_apple_pkg_config(PKG_CONFIG_EXECUTABLE)
-        gstreamer_apply_pkgconfig_env(
+        qgc_gst_apply_pkgconfig_env(
             MODE SDK LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig" "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
         )
     endif()
@@ -140,17 +140,17 @@ function(_qgc_gst_apply_macos_framework_overlay)
     target_include_directories(GStreamer::GStreamer INTERFACE "${_gst_framework_bundle}/Headers")
     target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_MACOS_FRAMEWORK)
     # Stash the discovered framework bundle path on GStreamer::Layout so the
-    # install helpers read it via gstreamer_layout_get instead of via cache pickup.
-    gstreamer_layout_set(FRAMEWORK_BUNDLE "${_gst_framework_bundle}")
+    # install helpers read it via qgc_gst_layout_get instead of via cache pickup.
+    qgc_gst_layout_set(FRAMEWORK_BUNDLE "${_gst_framework_bundle}")
 endfunction()
 
 # Stage GStreamer.framework into the app bundle's Contents/Frameworks/. Used
 # when the SDK is consumed via the Cerbero macOS framework (Layout target
 # stashed FRAMEWORK_BUNDLE).
-function(gstreamer_install_macos_framework_sdk app_name plugin_dest_out)
-    gstreamer_layout_get(FRAMEWORK_BUNDLE _gst_framework_bundle)
+function(qgc_gst_install_macos_framework_sdk app_name plugin_dest_out)
+    qgc_gst_layout_get(FRAMEWORK_BUNDLE _gst_framework_bundle)
     if(NOT _gst_framework_bundle)
-        message(FATAL_ERROR "gstreamer_install_macos_framework_sdk: FRAMEWORK_BUNDLE not set on GStreamer::Layout")
+        message(FATAL_ERROR "qgc_gst_install_macos_framework_sdk: FRAMEWORK_BUNDLE not set on GStreamer::Layout")
     endif()
     get_filename_component(_gst_framework_real "${_gst_framework_bundle}" REALPATH)
     # Relative to the install prefix; install(CODE) prepends $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX} at install time.
@@ -201,9 +201,7 @@ function(gstreamer_install_macos_framework_sdk app_name plugin_dest_out)
     )
 
     set(_plugin_dest "${_gst_fw_dest}/Versions/1.0/lib/gstreamer-1.0")
-    gstreamer_install_plugins(
-        "${_gst_framework_real}/Versions/1.0/lib/gstreamer-1.0" "${_plugin_dest}" "libgst" "dylib"
-    )
+    qgc_gst_install_plugins("${_gst_framework_real}/Versions/1.0/lib/gstreamer-1.0" "${_plugin_dest}" "libgst" "dylib")
     set(${plugin_dest_out}
         "${_plugin_dest}"
         PARENT_SCOPE
@@ -213,7 +211,7 @@ endfunction()
 # Stage flat-layout dylibs/plugins/gio modules + rpath fixups + helpers. Used for a flat (downloaded or user-supplied)
 # macOS GStreamer, which has no framework wrapper. gioopenssl verifies against the Keychain, so the SDK's CA bundle
 # stays out.
-function(gstreamer_install_macos_flat_sdk app_name plugin_dest_out)
+function(qgc_gst_install_macos_flat_sdk app_name plugin_dest_out)
     # Relative to the install prefix; install(CODE) prepends $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX} at install time.
     set(_mac_fw_dest "${app_name}.app/Contents/Frameworks")
     set(_mac_lib_dest "${app_name}.app/Contents/lib")
@@ -221,8 +219,8 @@ function(gstreamer_install_macos_flat_sdk app_name plugin_dest_out)
 
     _qgc_gst_begin_runtime_closure()
     set(_plugin_dest "${_mac_lib_dest}/gstreamer-1.0")
-    gstreamer_install_plugins("${GSTREAMER_PLUGIN_PATH}" "${_plugin_dest}" "libgst" "dylib")
-    gstreamer_install_gio_modules("${GSTREAMER_GIO_MODULE_PATH}" "${_mac_lib_dest}/gio/modules" "dylib")
+    qgc_gst_install_plugins("${GSTREAMER_PLUGIN_PATH}" "${_plugin_dest}" "libgst" "dylib")
+    qgc_gst_install_gio_modules("${GSTREAMER_GIO_MODULE_PATH}" "${_mac_lib_dest}/gio/modules" "dylib")
     # Libexec helpers are installed before the rpath fixup below, which patches the installed copies.
     set(_gst_helpers "")
     foreach(_helper IN ITEMS gst-plugin-scanner gst-ptp-helper)
@@ -288,12 +286,12 @@ endfunction()
 
 # Dispatch to the framework or flat installer based on whether the Layout
 # target stashed FRAMEWORK_BUNDLE (set when GStreamer.framework is in use), then install the notice.
-function(gstreamer_install_macos_sdk app_name plugin_dest_out)
-    gstreamer_layout_get(FRAMEWORK_BUNDLE _gst_framework_bundle)
+function(qgc_gst_install_macos_sdk app_name plugin_dest_out)
+    qgc_gst_layout_get(FRAMEWORK_BUNDLE _gst_framework_bundle)
     if(_gst_framework_bundle)
-        gstreamer_install_macos_framework_sdk("${app_name}" _plugin_dest)
+        qgc_gst_install_macos_framework_sdk("${app_name}" _plugin_dest)
     else()
-        gstreamer_install_macos_flat_sdk("${app_name}" _plugin_dest)
+        qgc_gst_install_macos_flat_sdk("${app_name}" _plugin_dest)
     endif()
     _qgc_gst_install_notice("${app_name}.app/Contents/Resources/licenses/gstreamer")
     set(${plugin_dest_out}

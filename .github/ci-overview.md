@@ -815,7 +815,7 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   build's sizes only.
 - The step also checks licensing and fails with error annotations: any file in the package whose
   name is a `GSTREAMER_GPL_DENYLIST` library or plugin (read from
-  `cmake/GStreamer/PluginPolicy.cmake` and matched like its `gstreamer_gpl_files()`, which the
+  `cmake/GStreamer/PluginPolicy.cmake` and matched like its `qgc_gst_gpl_files()`, which the
   CMake install check uses only for the GStreamer install directories), and, in APK, App Bundle,
   and IPA, whose static GStreamer leaves no plugin files, any ELF or Mach-O member containing
   x264's or x265's entry point (`x264_encoder_open`, `x265_encoder_open`) or the banner it writes

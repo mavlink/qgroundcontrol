@@ -87,11 +87,11 @@ cmake_language(CALL _qgc_gst_discover_${_qgc_gst_platform}_sdk)
 # settled on.
 _qgc_gst_require_no_spaces("The GStreamer SDK" "${GStreamer_ROOT_DIR}")
 
-gstreamer_select_components(GSTREAMER_SELECTED_COMPONENTS ${QGC_GST_COMPONENTS})
+qgc_gst_select_components(GSTREAMER_SELECTED_COMPONENTS ${QGC_GST_COMPONENTS})
 
 # The plugin list lives in .github/build-config.json; the alternate groups of PluginPolicy.cmake (e.g. the 1.22
 # videoconvertscale fusion of videoconvert+videoscale) apply to the missing-plugin check below.
-gstreamer_plugins_for("${_qgc_gst_platform_PLUGIN_KEY}" GSTREAMER_PLUGINS)
+qgc_gst_plugins_for("${_qgc_gst_platform_PLUGIN_KEY}" GSTREAMER_PLUGINS)
 
 if((ANDROID OR IOS) AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     list(APPEND GSTREAMER_PLUGINS ${GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS})
@@ -135,7 +135,7 @@ endif()
 set(_qgc_gst_missing_mandatory "")
 foreach(_qgc_gst_component IN LISTS GSTREAMER_MANDATORY_COMPONENTS)
     if(NOT TARGET GStreamer::${_qgc_gst_component})
-        gstreamer_component_module(${_qgc_gst_component} _qgc_gst_module)
+        qgc_gst_component_module(${_qgc_gst_component} _qgc_gst_module)
         list(APPEND _qgc_gst_missing_mandatory "${_qgc_gst_module}")
     endif()
 endforeach()
@@ -174,13 +174,13 @@ if(ANDROID OR IOS)
     set(_gst_available_plugins ${GSTREAMER_STATIC_PLUGINS})
     set(_gst_plugin_source "the static SDK at ${GStreamer_ROOT_DIR}")
 else()
-    gstreamer_scan_plugin_basenames(_gst_available_plugins "${GSTREAMER_PLUGIN_PATH}")
+    qgc_gst_scan_plugin_basenames(_gst_available_plugins "${GSTREAMER_PLUGIN_PATH}")
     set(_gst_plugin_source "${GSTREAMER_PLUGIN_PATH}")
 endif()
 # Every plugin the SDK or system ships, used by this build or not: the plugin archives of static layouts (iOS: the
 # plugins registered from its merged archive), else the plugin files.
 if(ANDROID)
-    gstreamer_scan_plugin_basenames(_gst_shipped_plugins "${GSTREAMER_PLUGIN_PATH}" STATIC)
+    qgc_gst_scan_plugin_basenames(_gst_shipped_plugins "${GSTREAMER_PLUGIN_PATH}" STATIC)
 else()
     set(_gst_shipped_plugins ${_gst_available_plugins})
 endif()
@@ -188,21 +188,16 @@ set(_gst_static_args "")
 if(ANDROID OR IOS)
     set(_gst_static_args STATIC)
 endif()
-gstreamer_check_plugins(
-    REQUESTED
-    ${GSTREAMER_PLUGINS}
-    AVAILABLE
-    ${_gst_available_plugins}
-    SHIPPED
-    ${_gst_shipped_plugins}
-    SOURCE
-    "${_gst_plugin_source}"
-    ${_gst_static_args}
+qgc_gst_check_plugins(
+    REQUESTED ${GSTREAMER_PLUGINS}
+    AVAILABLE ${_gst_available_plugins}
+    SHIPPED ${_gst_shipped_plugins}
+    SOURCE "${_gst_plugin_source}" ${_gst_static_args}
 )
 
 # GstVideoOrientationMeta is officially in 1.26+, but bundled iOS/Android SDKs sometimes strip it, so test the header.
 # A sizeof() needs no archive, so iOS can probe GStreamer::GStreamer, which carries headers only.
-qgc_check_gst_header(
+qgc_gst_check_header(
     VAR QGC_GST_HAS_VIDEO_ORIENTATION_META
     HEADER gst/video/gstvideometa.h
     SYMBOL "sizeof(GstVideoOrientationMeta)"
@@ -214,7 +209,7 @@ endif()
 # Zero-copy DMABuf GPU path probe: HwBuffers/CMakeLists.txt builds the DMABuf path when QGC_GST_HAS_DMABUF is set. It
 # needs gst-allocators, which the Linux branch of src/.../GStreamer/CMakeLists.txt requests (the Allocators component).
 if(LINUX)
-    qgc_check_gst_header(
+    qgc_gst_check_header(
         VAR QGC_GST_HAS_DMABUF
         HEADER gst/allocators/gstdmabuf.h
         SYMBOL gst_is_dmabuf_memory
@@ -259,4 +254,4 @@ else()
     set(_qgc_gst_notice_dir "${CMAKE_BINARY_DIR}/gstreamer-notice")
 endif()
 qgc_gst_write_notice("${_qgc_gst_notice_dir}" PLUGINS ${_qgc_gst_shipped_plugins})
-gstreamer_layout_set(NOTICE_DIR "${_qgc_gst_notice_dir}")
+qgc_gst_layout_set(NOTICE_DIR "${_qgc_gst_notice_dir}")

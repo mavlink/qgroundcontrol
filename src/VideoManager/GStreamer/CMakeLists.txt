@@ -190,7 +190,7 @@ if(IOS AND GStreamer_IOS_CA_BUNDLE)
 endif()
 # The GStreamer license notice (Orchestrator.cmake); Android stages it with the APK assets, desktop installs it.
 if(IOS)
-    gstreamer_layout_get(NOTICE_DIR _qgc_gst_notice_dir)
+    qgc_gst_layout_get(NOTICE_DIR _qgc_gst_notice_dir)
     set(_qgc_gst_notice_files "${_qgc_gst_notice_dir}/NOTICE.txt" "${_qgc_gst_notice_dir}/LGPL-2.1.txt")
     target_sources(
         ${CMAKE_PROJECT_NAME}
@@ -273,4 +273,4 @@ endif()
 # scoped here so bundled SDK files are included without packaging dependency
 # development files declared elsewhere in the source tree.
 set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME Runtime)
-gstreamer_install_platform_sdk(${CMAKE_PROJECT_NAME})
+qgc_gst_install_platform_sdk(${CMAKE_PROJECT_NAME})

@@ -404,4 +404,4 @@ def test_linux_package_defaults_do_not_leak_into_mobile_cross_compiles() -> None
     runtime_component = "set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME Runtime)"
     assert runtime_component in install
     assert runtime_component in gstreamer
-    assert gstreamer.index(runtime_component) < gstreamer.index("gstreamer_install_platform_sdk")
+    assert gstreamer.index(runtime_component) < gstreamer.index("qgc_gst_install_platform_sdk")

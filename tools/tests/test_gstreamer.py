@@ -64,8 +64,8 @@ def test_layout_matches_cmake(tmp_path: Path) -> None:
     script.write_text(
         f'include("{REPO_ROOT}/cmake/GStreamer/Packages.cmake")\n'
         f"foreach(_package IN ITEMS {' '.join(PACKAGES)})\n"
-        "    gstreamer_get_package_url(${_package} 1.28.4 _url)\n"
-        "    gstreamer_get_s3_mirror_url(${_package} 1.28.4 _mirror)\n"
+        "    qgc_gst_get_package_url(${_package} 1.28.4 _url)\n"
+        "    qgc_gst_get_s3_mirror_url(${_package} 1.28.4 _mirror)\n"
         '    message(STATUS "${_package} ${_url} ${_mirror}")\n'
         "endforeach()\n"
     )

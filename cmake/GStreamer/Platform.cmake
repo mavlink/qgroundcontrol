@@ -1,10 +1,10 @@
 # Target platform of the GStreamer modules. A platform's SDK discovery is _qgc_gst_discover_<platform>_sdk
-# (platform/*.cmake) and, on desktop, its installer gstreamer_install_<platform>_sdk (platform/*.cmake too, run by
+# (platform/*.cmake) and, on desktop, its installer qgc_gst_install_<platform>_sdk (platform/*.cmake too, run by
 # Install.cmake).
 #
 # A discovery function resolves the SDK into GStreamer_ROOT_DIR (and GStreamer_AUTO_DOWNLOADED when it downloaded it),
-# its GSTREAMER_{LIB,PLUGIN,INCLUDE,PLUGIN_SCANNER,GIO_MODULE}_PATH layout (gstreamer_create_layout_target) and its
-# pkg-config view (gstreamer_apply_pkgconfig_env), sets GStreamer_USE_FRAMEWORK for a macOS GStreamer.framework, and
+# its GSTREAMER_{LIB,PLUGIN,INCLUDE,PLUGIN_SCANNER,GIO_MODULE}_PATH layout (qgc_gst_create_layout_target) and its
+# pkg-config view (qgc_gst_apply_pkgconfig_env), sets GStreamer_USE_FRAMEWORK for a macOS GStreamer.framework, and
 # returns with _qgc_gst_return_discovery().
 
 include_guard(GLOBAL)

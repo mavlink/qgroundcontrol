@@ -4,7 +4,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 include(Components)
 
 if(TEST_CASE STREQUAL "unknown")
-    gstreamer_select_components(_selected App Bogus)
+    qgc_gst_select_components(_selected App Bogus)
     message(FATAL_ERROR "${TEST_CASE} unexpectedly succeeded")
 elseif(DEFINED TEST_CASE)
     message(FATAL_ERROR "Unknown test case: ${TEST_CASE}")
@@ -16,14 +16,14 @@ foreach(
                    "RtspServer|gstreamer-rtsp-server-1.0"
 )
     qgc_test_split("${_case}" _component)
-    gstreamer_component_module(${_component} _module)
+    qgc_gst_component_module(${_component} _module)
     qgc_test_assert_streq("module of ${_component}" "${_case}" "${_component}|${_module}")
 endforeach()
 qgc_test_pass("component modules")
 
 # The mandatory components come first and every selection keeps GSTREAMER_COMPONENTS order.
-gstreamer_select_components(_selected)
+qgc_gst_select_components(_selected)
 qgc_test_assert_streq("mandatory only" "Base;Rtsp;Video" "${_selected}")
-gstreamer_select_components(_selected Allocators App GlPrototypes Gl App)
+qgc_gst_select_components(_selected Allocators App GlPrototypes Gl App)
 qgc_test_assert_streq("registry order" "Base;Gl;GlPrototypes;Rtsp;Video;App;Allocators" "${_selected}")
 qgc_test_pass("select_components")

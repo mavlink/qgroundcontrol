@@ -21,9 +21,9 @@ set(GSTREAMER_COMPONENTS
 )
 set(GSTREAMER_MANDATORY_COMPONENTS Base Rtsp Video)
 
-# gstreamer_component_module(<component> <out_var>)
+# qgc_gst_component_module(<component> <out_var>)
 # Sets <out_var> to the component's gstreamer-<kebab-case>-1.0 pkg-config module.
-function(gstreamer_component_module component out_var)
+function(qgc_gst_component_module component out_var)
     string(REGEX REPLACE "([a-z0-9])([A-Z])" "\\1-\\2" _module "${component}")
     string(TOLOWER "${_module}" _module)
     set(${out_var}
@@ -32,9 +32,9 @@ function(gstreamer_component_module component out_var)
     )
 endfunction()
 
-# gstreamer_select_components(<out_var> <component>...)
+# qgc_gst_select_components(<out_var> <component>...)
 # Sets <out_var> to the mandatory components and the given ones, in GSTREAMER_COMPONENTS order; fails on an unknown one.
-function(gstreamer_select_components out_var)
+function(qgc_gst_select_components out_var)
     set(_unknown ${ARGN})
     list(REMOVE_ITEM _unknown ${GSTREAMER_COMPONENTS})
     if(_unknown)

@@ -92,7 +92,7 @@ function(_qgc_gst_discover_android_sdk)
         set(GStreamer_AUTO_DOWNLOADED TRUE)
     endif()
 
-    gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}")
+    qgc_gst_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}")
 
     if(CMAKE_HOST_WIN32)
         set(_host windows)
@@ -112,7 +112,7 @@ function(_qgc_gst_discover_android_sdk)
     if(CMAKE_HOST_WIN32)
         list(APPEND _pkg_config_args DONT_DEFINE_PREFIX)
     endif()
-    gstreamer_apply_pkgconfig_env(
+    qgc_gst_apply_pkgconfig_env(
         MODE SDK ${_pkg_config_args} LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig" "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
                                             "${GSTREAMER_GIO_MODULE_PATH}/pkgconfig"
     )

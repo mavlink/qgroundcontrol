@@ -30,7 +30,7 @@ if(QGC_TEST_KEEP_SYMBOLS)
 endif()
 
 # The Orchestrator's iOS probe runs before anything is built, so it must not need the archive.
-qgc_check_gst_header(
+qgc_gst_check_header(
     VAR QGC_TEST_PROBE
     HEADER gst/gst.h
     SYMBOL "sizeof(GstRegistry *)"

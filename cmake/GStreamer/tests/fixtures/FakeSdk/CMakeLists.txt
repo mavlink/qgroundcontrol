@@ -55,7 +55,7 @@ include(GStreamer/Orchestrator)
 # EXPECT_PROBE_ROOT: probe the optional gstreamer-qgcprobe-1.0 library before the pkg-config environment is restored, as
 # HwBuffers/CMakeLists.txt probes gst-d3d11 or gst-vulkan, and check that it and the core resolved to that SDK.
 if(EXPECT_PROBE_ROOT)
-    _qgc_probe_gst_lib(
+    qgc_gst_probe_library(
         QGCProbe
         HAS_VAR QGC_GST_HAS_TEST_PROBE
         HEADER gst/qgcprobe.h
@@ -160,19 +160,19 @@ endif()
 # QGC_TEST_INSTALL_REQUIRED_PLUGINS: comma-separated plugins the install rules must verify.
 if(QGC_TEST_INSTALL_REQUIRED_PLUGINS)
     string(REPLACE "," ";" _qgc_required_plugins "${QGC_TEST_INSTALL_REQUIRED_PLUGINS}")
-    gstreamer_install_platform_sdk(QGCFake REQUIRED_PLUGINS ${_qgc_required_plugins})
+    qgc_gst_install_platform_sdk(QGCFake REQUIRED_PLUGINS ${_qgc_required_plugins})
 endif()
 # QGC_TEST_INSTALL_MACOS_FRAMEWORK: install this GStreamer.framework into a QGCFake.app bundle.
 # QGC_TEST_INSTALL_MACOS_FLAT: install the SDK's .dylib files into a QGCFake.app bundle.
 if(QGC_TEST_INSTALL_MACOS_FRAMEWORK)
-    gstreamer_layout_set(FRAMEWORK_BUNDLE "${QGC_TEST_INSTALL_MACOS_FRAMEWORK}")
-    gstreamer_install_macos_sdk(QGCFake _qgc_plugin_dest)
+    qgc_gst_layout_set(FRAMEWORK_BUNDLE "${QGC_TEST_INSTALL_MACOS_FRAMEWORK}")
+    qgc_gst_install_macos_sdk(QGCFake _qgc_plugin_dest)
     qgc_test_assert_streq(
         "framework plugin dir" "QGCFake.app/Contents/Frameworks/GStreamer.framework/Versions/1.0/lib/gstreamer-1.0"
         "${_qgc_plugin_dest}"
     )
 elseif(QGC_TEST_INSTALL_MACOS_FLAT)
-    gstreamer_install_macos_sdk(QGCFake _qgc_plugin_dest)
+    qgc_gst_install_macos_sdk(QGCFake _qgc_plugin_dest)
     qgc_test_assert_streq("flat plugin dir" "QGCFake.app/Contents/lib/gstreamer-1.0" "${_qgc_plugin_dest}")
 endif()
 

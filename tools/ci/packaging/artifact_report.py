@@ -133,7 +133,7 @@ def gpl_denylist(policy: Path = PLUGIN_POLICY) -> list[str]:
 
 
 def gpl_name_pattern(names: Iterable[str]) -> re.Pattern[str]:
-    """Match a file name the way PluginPolicy.cmake's gstreamer_gpl_files() does."""
+    """Match a file name the way PluginPolicy.cmake's qgc_gst_gpl_files() does."""
     alternatives = "|".join(re.escape(name) for name in names)
     return re.compile(rf"^(lib)?(gst)?({alternatives})([-_.]|$)")
 

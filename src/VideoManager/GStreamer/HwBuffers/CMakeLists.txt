@@ -25,8 +25,8 @@ target_sources(
 )
 
 # _qgc_add_gpu_path(<name> PLATFORMS <vars>... DEFINE <macro> SOURCES <files>...
-#                   [REQUIRES <vars>...] [PROBE <_qgc_probe_gst_lib args>...] [EGL REQUIRED|OPTIONAL] [LIBS <libs>...]
-#                   [UNSTABLE_API])
+#                   [REQUIRES <vars>...] [PROBE <qgc_gst_probe_library args>...] [EGL REQUIRED|OPTIONAL]
+#                   [LIBS <libs>...] [UNSTABLE_API])
 # One row of the GPU path table. On a matching platform with QGC_GST_ENABLE_<NAME> on, every REQUIRES variable truthy
 # and the probe found, adds the sources and libraries to QGCGStreamer and defines <macro>=1. Sets _qgc_gpu_<name> and
 # _qgc_any_gpu_path TRUE in the caller's scope; UNSTABLE_API rows set _qgc_gpu_unstable_api.
@@ -76,7 +76,7 @@ function(_qgc_add_gpu_path name)
         endif()
     endforeach()
     if(NOT _reason AND ARG_PROBE)
-        _qgc_probe_gst_lib(${name} ${ARG_PROBE})
+        qgc_gst_probe_library(${name} ${ARG_PROBE})
         if(NOT ${name}_FOUND)
             set(_reason "${${name}_REASON}")
         endif()
