@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <span>
 
 #include "MonotonicClock.h"
 
