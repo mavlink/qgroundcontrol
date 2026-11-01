@@ -270,7 +270,6 @@ find_package(
         HttpServer
         LinguistTools
         Location
-        LocationPrivate
         Multimedia
         Network
         Positioning
@@ -287,7 +286,7 @@ find_package(
         Xml
         Quick3D
         StateMachine
-    OPTIONAL_COMPONENTS Bluetooth MultimediaQuickPrivate OpenGL QuickTest SerialPort Test
+    OPTIONAL_COMPONENTS Bluetooth MultimediaQuickPrivate LocationPrivate OpenGL QuickTest SerialPort Test
 )
 
 if(LINUX AND NOT ANDROID)
