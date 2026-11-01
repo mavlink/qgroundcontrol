@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <atomic>
 #include <memory>
 #include <optional>
@@ -11,6 +10,7 @@
 #include "DecodingBranch.h"
 #include "GstBusPump.h"
 #include "GstScoped.h"
+#include "PipelineStatsProbe.h"
 #include "RecordingBranch.h"
 #include "VideoStreamStatsMeter.h"
 
@@ -116,8 +116,6 @@ private:
 
     static void _onSourcePadAdded(GstElement* source, GstPad* pad, gpointer data);
     static GstPadProbeReturn _teeProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data);
-    /// Streaming thread: measures the time between keyframes from @p buffer's timestamp.
-    void _noteKeyframe(const GstBuffer* buffer);
     static GstPadProbeReturn _sourceEosProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data);
 
     const Settings _settings;
@@ -154,15 +152,5 @@ private:
     Phase _phase = Phase::Running;
     Failure _failure;
     bool _streaming = false;
-    /// Compressed bytes that reached the tee.
-    std::atomic<quint64> _bytesReceived = 0;
-    /// Keyframes whose timestamps the keyframe interval averages over: on a stream without a jitter buffer they are
-    /// arrival times, which a busy sender or network bunches up, and an average across several keyframes evens that
-    /// out.
-    static constexpr std::size_t kKeyframeWindow = 5;
-    /// Timestamps of the last keyframes at the tee, oldest first. Only the tee's streaming thread uses them.
-    std::array<GstClockTime, kKeyframeWindow> _keyframeTimes{};
-    std::size_t _keyframeTimeCount = 0;
-    /// The average time between the keyframes in _keyframeTimes; GST_CLOCK_TIME_NONE before the second.
-    std::atomic<GstClockTime> _keyframeInterval = GST_CLOCK_TIME_NONE;
+    PipelineStatsProbe _statsProbe;
 };

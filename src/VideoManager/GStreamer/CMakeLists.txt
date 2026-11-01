@@ -150,6 +150,8 @@ target_sources(
         Pipeline/GstVideoReceiver.h
         Pipeline/PipelineSession.cc
         Pipeline/PipelineSession.h
+        Pipeline/PipelineStatsProbe.cc
+        Pipeline/PipelineStatsProbe.h
         Pipeline/RecordingBranch.cc
         Pipeline/RecordingBranch.h
         Pipeline/RecordingFinalizer.cc

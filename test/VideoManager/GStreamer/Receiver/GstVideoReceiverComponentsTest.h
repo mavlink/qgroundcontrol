@@ -24,6 +24,7 @@ private slots:
     void _testPresentedSize_data();
     void _testPresentedSize();
     void _testBusPump();
+    void _testStatsProbe();
 #else
     void _testGStreamerDisabled();
 #endif

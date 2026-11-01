@@ -17,8 +17,10 @@
 #include "GstBusPump.h"
 #include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
+#include "PipelineStatsProbe.h"
 #include "RecordingFinalizer.h"
 #include "StreamWatchdog.h"
+#include "VideoStreamStats.h"
 
 namespace {
 
@@ -359,6 +361,57 @@ void GstVideoReceiverComponentsTest::_testBusPump()
     pump.drain();
     QCOMPARE(synced.size(), 5);
     QCOMPARE(handled.size(), 3);
+}
+
+void GstVideoReceiverComponentsTest::_testStatsProbe()
+{
+    PipelineStatsProbe probe;
+    const auto note = [&probe](qint64 ptsMs, bool keyframe) {
+        GstBuffer* const buffer = gst_buffer_new_allocate(nullptr, 100, nullptr);
+        GST_BUFFER_PTS(buffer) = static_cast<GstClockTime>(ptsMs) * GST_MSECOND;
+        if (!keyframe) {
+            GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT);
+        }
+        probe.noteBuffer(buffer);
+        gst_buffer_unref(buffer);
+    };
+    const auto sample = [&probe]() {
+        VideoStreamStatsMeter::Counters counters;
+        VideoStreamStats stats;
+        probe.sample(nullptr, nullptr, nullptr, counters, stats);
+        return std::pair{counters, stats};
+    };
+
+    // Nothing to ask without a pipeline, and nothing measured yet.
+    auto [counters, stats] = sample();
+    QCOMPARE(counters.bytesReceived, std::optional<quint64>(0));
+    QVERIFY(!counters.rtp);
+    QCOMPARE(stats.keyframeIntervalMs, -1.0);
+    QCOMPARE(stats.latencyMs, -1.0);
+    QVERIFY(stats.codec.isEmpty());
+
+    // A 500 ms GOP whose keyframes arrive bunched up, read from arrival times: the average evens it out. Parameter sets
+    // in a buffer of their own share their keyframe's timestamp and don't count.
+    note(0, true);
+    note(0, true);
+    note(250, false);
+    note(500, true);
+    note(1080, true);
+    note(1420, true);
+    note(2000, true);
+    std::tie(counters, stats) = sample();
+    QCOMPARE(counters.bytesReceived, std::optional<quint64>(700));
+    QCOMPARE(stats.keyframeIntervalMs, 500.0);
+    // The window moves on: the average of the last five keyframes.
+    note(2700, true);
+    std::tie(counters, stats) = sample();
+    QCOMPARE(stats.keyframeIntervalMs, 550.0);
+
+    // Timestamps that go back start over.
+    note(100, true);
+    note(400, true);
+    std::tie(counters, stats) = sample();
+    QCOMPARE(stats.keyframeIntervalMs, 300.0);
 }
 
 #else
