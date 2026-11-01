@@ -11,58 +11,86 @@
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
 #include "SubtitleWriter.h"
+#include "UVCCameraController.h"
+#include "UVCStreamMonitor.h"
 #include "VideoSettings.h"
 #include "VideoStreamController.h"
 
 QGC_LOGGING_CATEGORY(VideoRecordingServiceLog, "Video.VideoRecordingService")
 
+namespace {
+
+QMediaFormat::FileFormat mediaFileFormat(VideoReceiver::FileFormat format)
+{
+    switch (format) {
+        case VideoReceiver::FileFormat::Mkv:
+            return QMediaFormat::Matroska;
+        case VideoReceiver::FileFormat::Mov:
+            return QMediaFormat::QuickTime;
+        case VideoReceiver::FileFormat::Mp4:
+            break;
+    }
+    return QMediaFormat::MPEG4;
+}
+
+}  // namespace
+
 VideoRecordingService::VideoRecordingService(VideoStreamController* primaryStream, VideoStreamController* thermalStream,
-                                             QObject* parent)
+                                             UVCCameraController* uvcCamera, QObject* parent)
     : QObject(parent)
     , _primaryStream(primaryStream)
     , _thermalStream(thermalStream)
+    , _uvcCamera(uvcCamera)
     , _subtitleWriter(new SubtitleWriter(this))
 {
-    _connectStream(_primaryStream);
-    _connectStream(_thermalStream);
+    _connectRecordings(_primaryStream);
+    _connectRecordings(_thermalStream);
+    _connectRecordings(_uvcCamera);
 
-    // Each file of the primary stream, including the parts after a reconnect, gets its own subtitle file.
-    (void) connect(_primaryStream, &VideoStreamController::recordingStarted, this, [this](const QString& file) {
-        _subtitleWriter->startCapturingTelemetry(file, _primaryStream->videoSize());
+    _connectSubtitles(_primaryStream, [this] { return _primaryStream->videoSize(); });
+    _connectSubtitles(_uvcCamera, [this] { return _uvcCamera->monitor()->videoSize(); });
+}
+
+VideoRecordingService::~VideoRecordingService() = default;
+
+template <class Source, class VideoSize>
+void VideoRecordingService::_connectSubtitles(Source* source, VideoSize videoSize)
+{
+    // Each file, including a stream's parts after a reconnect, gets its own subtitle file.
+    (void) connect(source, &Source::recordingStarted, this, [this, videoSize](const QString& file) {
+        _subtitleWriter->startCapturingTelemetry(file, videoSize());
     });
-    (void) connect(_primaryStream, &VideoStreamController::recordingFinished, this, [this](const QString& file) {
+    (void) connect(source, &Source::recordingFinished, this, [this](const QString& file) {
         if (file == _subtitleWriter->videoFile()) {
             _subtitleWriter->stopCapturingTelemetry();
         }
     });
-    (void) connect(_primaryStream, &VideoStreamController::recordingChanged, this, [this](bool recording) {
+    (void) connect(source, &Source::recordingChanged, this, [this](bool recording) {
         if (!recording) {
             _subtitleWriter->stopCapturingTelemetry();
         }
     });
 }
 
-VideoRecordingService::~VideoRecordingService() = default;
-
-void VideoRecordingService::_connectStream(VideoStreamController* stream)
+template <class Source>
+void VideoRecordingService::_connectRecordings(Source* source)
 {
-    (void) connect(stream, &VideoStreamController::recordingChanged, this, &VideoRecordingService::_updateRecording);
-    (void) connect(stream, &VideoStreamController::recordingStarted, this,
+    (void) connect(source, &Source::recordingChanged, this, &VideoRecordingService::_updateRecording);
+    (void) connect(source, &Source::recordingStarted, this,
                    [](const QString& file) { qCDebug(VideoRecordingServiceLog) << "Recording to" << file; });
-    (void) connect(stream, &VideoStreamController::recordingFinished, this,
-                   [](const QString& file, const QString& error) {
-                       if (error.isEmpty()) {
-                           qCDebug(VideoRecordingServiceLog) << "Recorded" << file;
-                           return;
-                       }
-                       qCWarning(VideoRecordingServiceLog) << "Recording" << file << "failed:" << error;
-                       QGC::showAppMessage(tr("Video recording %1 failed: %2").arg(QFileInfo(file).fileName(), error));
-                   });
+    (void) connect(source, &Source::recordingFinished, this, [](const QString& file, const QString& error) {
+        if (error.isEmpty()) {
+            qCDebug(VideoRecordingServiceLog) << "Recorded" << file;
+            return;
+        }
+        qCWarning(VideoRecordingServiceLog) << "Recording" << file << "failed:" << error;
+        QGC::showAppMessage(tr("Video recording %1 failed: %2").arg(QFileInfo(file).fileName(), error));
+    });
 }
 
 void VideoRecordingService::_updateRecording()
 {
-    const bool recording = _primaryStream->recording() || _thermalStream->recording();
+    const bool recording = _primaryStream->recording() || _thermalStream->recording() || _uvcCamera->recording();
     if (recording != _recording) {
         _recording = recording;
         emit recordingChanged(_recording);
@@ -91,7 +119,8 @@ void VideoRecordingService::startRecording(const QString& baseName)
             streams.append(stream);
         }
     }
-    if (streams.isEmpty()) {
+    const bool recordUvc = _uvcCamera->canRecord() && !_uvcCamera->recording();
+    if (streams.isEmpty() && !recordUvc) {
         QGC::showAppMessage(tr("Unable to record video: no video stream is active."));
         return;
     }
@@ -105,12 +134,18 @@ void VideoRecordingService::startRecording(const QString& baseName)
     for (VideoStreamController* stream : std::as_const(streams)) {
         stream->startRecording(recordingFile(directory, name, stream, format), format);
     }
+    if (recordUvc) {
+        _uvcCamera->startRecording(
+            QStringLiteral("%1/%2.%3").arg(directory, name, VideoReceiver::fileExtension(format)),
+            mediaFileFormat(format));
+    }
 }
 
 void VideoRecordingService::stopRecording()
 {
     _primaryStream->stopRecording();
     _thermalStream->stopRecording();
+    _uvcCamera->stopRecording();
 }
 
 QString VideoRecordingService::recordingFile(const QString& directory, const QString& baseName,

@@ -134,8 +134,8 @@ private:
     VideoSettings* const _videoSettings;
     VideoStreamController* const _primaryStream;
     VideoStreamController* const _thermalStream;
-    VideoRecordingService* const _recordingService;
     UVCCameraController* const _uvcCamera;
+    VideoRecordingService* const _recordingService;
     std::function<VideoReceiver*(QObject* parent)> _receiverFactory;
     QPointer<Vehicle> _activeVehicle;
 

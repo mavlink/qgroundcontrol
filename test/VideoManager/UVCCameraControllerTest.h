@@ -11,4 +11,7 @@ private slots:
     void _testMissingCameraNeverRuns();
     void _testUnpluggedCameraReported();
     void _testCameraErrorRetries();
+    void _testRecordingFormat_data();
+    void _testRecordingFormat();
+    void _testRecordingNeedsRunningCamera();
 };

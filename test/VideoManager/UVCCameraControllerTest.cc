@@ -4,6 +4,7 @@
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTimer>
 #include <QtGui/QImage>
+#include <QtMultimedia/QMediaFormat>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QSignalSpy>
@@ -142,6 +143,57 @@ void UVCCameraControllerTest::_testCameraErrorRetries()
     // Selecting a camera starts a new run.
     controller.setDevice(QString());
     QCOMPARE(controller._retries, 0);
+}
+
+void UVCCameraControllerTest::_testRecordingFormat_data()
+{
+    QTest::addColumn<QMediaFormat::FileFormat>("container");
+    QTest::newRow("mkv") << QMediaFormat::Matroska;
+    QTest::newRow("mov") << QMediaFormat::QuickTime;
+    QTest::newRow("mp4") << QMediaFormat::MPEG4;
+}
+
+void UVCCameraControllerTest::_testRecordingFormat()
+{
+    QFETCH(QMediaFormat::FileFormat, container);
+
+    // Whatever this platform's Qt encodes, best first: H.264 where Qt counts it encodable, in the container asked for
+    // where Qt can write it.
+    const QList<QMediaFormat> formats = UVCCameraController::recordingFormats(container);
+    QVERIFY(!formats.isEmpty());
+    const QMediaFormat::FileFormat used = formats.first().fileFormat();
+    for (const QMediaFormat& format : formats) {
+        QVERIFY(format.isSupported(QMediaFormat::Encode));
+        QCOMPARE(format.fileFormat(), used);
+        QCOMPARE(formats.count(format), 1);
+    }
+    QMediaFormat h264(used);
+    h264.setVideoCodec(QMediaFormat::VideoCodec::H264);
+    if (h264.isSupported(QMediaFormat::Encode)) {
+        QCOMPARE(formats.first().videoCodec(), QMediaFormat::VideoCodec::H264);
+    }
+    QMediaFormat asked(container);
+    asked.setVideoCodec(formats.first().videoCodec());
+    if (asked.isSupported(QMediaFormat::Encode)) {
+        QCOMPARE(used, container);
+    }
+}
+
+void UVCCameraControllerTest::_testRecordingNeedsRunningCamera()
+{
+    UVCCameraController controller;
+    QSignalSpy finishedSpy(&controller, &UVCCameraController::recordingFinished);
+    QSignalSpy recordingSpy(&controller, &UVCCameraController::recordingChanged);
+
+    expectLogMessage("Video.UVCCameraController", QtWarningMsg, QRegularExpression(QStringLiteral("Can't record")));
+    controller.startRecording(QStringLiteral("/tmp/uvc.mp4"), QMediaFormat::MPEG4);
+    verifyExpectedLogMessage();
+    QCOMPARE(finishedSpy.count(), 1);
+    QCOMPARE(finishedSpy.first().at(0).toString(), QStringLiteral("/tmp/uvc.mp4"));
+    QVERIFY(!finishedSpy.first().at(1).toString().isEmpty());
+    QCOMPARE(recordingSpy.count(), 0);
+    QVERIFY(!controller.recording());
+    QVERIFY(!controller._recorder);
 }
 
 UT_REGISTER_TEST(UVCCameraControllerTest, TestLabel::Unit)

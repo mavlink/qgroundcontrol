@@ -2,11 +2,17 @@
 
 #include <algorithm>
 
+#include <QtCore/QEventLoop>
+#include <QtCore/QFile>
+#include <QtCore/QFileInfo>
+#include <QtCore/QMimeType>
 #include <QtCore/QTimer>
+#include <QtCore/QUrl>
 #include <QtMultimedia/QCamera>
 #include <QtMultimedia/QCameraDevice>
 #include <QtMultimedia/QMediaCaptureSession>
 #include <QtMultimedia/QMediaDevices>
+#include <QtMultimedia/QMediaRecorder>
 #include <QtMultimedia/QVideoSink>
 #include <QtQuick/QQuickItem>
 
@@ -90,6 +96,176 @@ void UVCCameraController::unregisterVideoOutput(QQuickItem* videoOutput)
     _connectVideoOutput();
 }
 
+namespace {
+
+QString uvcFileSuffix(const QMediaFormat& format)
+{
+    switch (format.fileFormat()) {
+        case QMediaFormat::Matroska:
+            return QStringLiteral("mkv");
+        case QMediaFormat::QuickTime:
+            return QStringLiteral("mov");
+        case QMediaFormat::MPEG4:
+            return QStringLiteral("mp4");
+        default:
+            return format.mimeType().preferredSuffix();
+    }
+}
+
+void removeIfEmpty(const QString& file)
+{
+    const QFileInfo info(file);
+    if (info.exists() && (info.size() == 0)) {
+        (void) QFile::remove(file);
+    }
+}
+
+}  // namespace
+
+QList<QMediaFormat> UVCCameraController::recordingFormats(QMediaFormat::FileFormat container)
+{
+    static constexpr QMediaFormat::VideoCodec kCodecs[] = {
+        QMediaFormat::VideoCodec::H264, QMediaFormat::VideoCodec::H265,  QMediaFormat::VideoCodec::AV1,
+        QMediaFormat::VideoCodec::VP9,  QMediaFormat::VideoCodec::MPEG4, QMediaFormat::VideoCodec::MPEG2,
+    };
+    QList<QMediaFormat::FileFormat> containers{container};
+    for (const QMediaFormat::FileFormat other :
+         {QMediaFormat::MPEG4, QMediaFormat::Matroska, QMediaFormat::QuickTime}) {
+        if (!containers.contains(other)) {
+            containers.append(other);
+        }
+    }
+    for (const QMediaFormat::FileFormat candidate : std::as_const(containers)) {
+        QList<QMediaFormat> formats;
+        for (const QMediaFormat::VideoCodec codec : kCodecs) {
+            QMediaFormat format(candidate);
+            format.setVideoCodec(codec);
+            if (format.isSupported(QMediaFormat::Encode)) {
+                formats.append(format);
+            }
+        }
+        if (!formats.isEmpty()) {
+            return formats;
+        }
+    }
+    return {};
+}
+
+void UVCCameraController::startRecording(const QString& file, QMediaFormat::FileFormat container)
+{
+    const bool recorderBusy = _recorder && (_recorder->recorderState() != QMediaRecorder::StoppedState);
+    if (recorderBusy || !_captureSession || !canRecord()) {
+        qCWarning(UVCCameraControllerLog) << "Can't record the camera now:" << file;
+        emit recordingFinished(file, tr("The USB camera isn't running"));
+        return;
+    }
+    _pendingFormats = recordingFormats(container);
+    if (_pendingFormats.isEmpty()) {
+        qCWarning(UVCCameraControllerLog) << "No video encoder:" << file;
+        emit recordingFinished(file, tr("No video encoder is available"));
+        return;
+    }
+    if (!_recorder) {
+        _recorder = new QMediaRecorder(this);
+        (void) connect(_recorder, &QMediaRecorder::recorderStateChanged, this,
+                       &UVCCameraController::_onRecorderStateChanged);
+        (void) connect(_recorder, &QMediaRecorder::errorOccurred, this,
+                       [this](QMediaRecorder::Error, const QString& errorString) { _onRecorderError(errorString); });
+        // The first encoded frame starts the recording: Qt reports RecordingState before its encoder is set up.
+        (void) connect(_recorder, &QMediaRecorder::durationChanged, this, [this](qint64 duration) {
+            if (!_recording && (duration > 0) && (_recorder->recorderState() == QMediaRecorder::RecordingState)) {
+                _recording = true;
+                emit recordingStarted(_recordingFile);
+                emit recordingChanged(true);
+            }
+        });
+    }
+    _captureSession->setRecorder(_recorder);
+
+    const QFileInfo info(file);
+    _recordingBase = QStringLiteral("%1/%2").arg(info.path(), info.completeBaseName());
+    _stopRequested = false;
+    _recordNextFormat();
+}
+
+void UVCCameraController::_recordNextFormat()
+{
+    const QMediaFormat format = _pendingFormats.takeFirst();
+    _recordingFile = QStringLiteral("%1.%2").arg(_recordingBase, uvcFileSuffix(format));
+    _recordingError.clear();
+    qCDebug(UVCCameraControllerLog) << "record" << _recordingFile << format.fileFormat() << format.videoCodec();
+    _recorder->setMediaFormat(format);
+    _recorder->setQuality(QMediaRecorder::HighQuality);
+    _recorder->setOutputLocation(QUrl::fromLocalFile(_recordingFile));
+    _recorder->record();
+}
+
+void UVCCameraController::stopRecording()
+{
+    _stopRequested = true;
+    if (_recorder) {
+        _recorder->stop();
+    }
+}
+
+void UVCCameraController::stopRecordingAndWait(int timeoutMs)
+{
+    if (!_recording) {
+        return;
+    }
+    QEventLoop loop;
+    QTimer::singleShot(timeoutMs, &loop, &QEventLoop::quit);
+    (void) connect(this, &UVCCameraController::recordingChanged, &loop, [&loop](bool recording) {
+        if (!recording) {
+            loop.quit();
+        }
+    });
+    stopRecording();
+    if (_recording) {
+        (void) loop.exec();
+    }
+}
+
+void UVCCameraController::_onRecorderStateChanged(QMediaRecorder::RecorderState state)
+{
+    if (state != QMediaRecorder::StoppedState) {
+        return;
+    }
+    if (_recording) {
+        _recording = false;
+        emit recordingFinished(_recordingFile, _recordingError);
+        emit recordingChanged(false);
+    } else {
+        _onRecordingNotStarted();
+    }
+}
+
+void UVCCameraController::_onRecorderError(const QString& errorString)
+{
+    qCWarning(UVCCameraControllerLog) << "Recording error:" << _recordingFile << errorString;
+    _recordingError = errorString;
+    // A recorder that is still running reports the end when it stops.
+    if (!_recording && (_recorder->recorderState() == QMediaRecorder::StoppedState)) {
+        _onRecordingNotStarted();
+    }
+}
+
+void UVCCameraController::_onRecordingNotStarted()
+{
+    removeIfEmpty(_recordingFile);
+    if (_recordingError.isEmpty() || _stopRequested) {
+        return;
+    }
+    if (!_pendingFormats.isEmpty() && _captureSession) {
+        qCDebug(UVCCameraControllerLog) << "Encoder failed, trying the next format:" << _recordingError;
+        // Not from the recorder's own signal.
+        QMetaObject::invokeMethod(this, &UVCCameraController::_recordNextFormat, Qt::QueuedConnection);
+        return;
+    }
+    const QString error = std::exchange(_recordingError, QString());
+    emit recordingFinished(_recordingFile, error);
+}
+
 bool UVCCameraController::canTakeScreenshot() const
 {
     return _camera && _camera->isActive() && _videoSink();
@@ -132,6 +308,9 @@ void UVCCameraController::_createCamera()
                    [this](QCamera::Error, const QString& errorString) { _onCameraError(errorString); });
     _captureSession = new QMediaCaptureSession(this);
     _captureSession->setCamera(_camera);
+    if (_recorder) {
+        _captureSession->setRecorder(_recorder);
+    }
 }
 
 void UVCCameraController::_releaseCamera()

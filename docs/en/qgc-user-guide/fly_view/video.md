@@ -87,6 +87,12 @@ Video stream recording is controlled on the [video stream instrument page](hud.m
 Press the red circle to start recording a new video (a new video file is created each time the circle is pressed); the circle will change into a red square while recording is in progress.
 If the stream drops out while recording, the recording continues once the stream is back, in a new file named after the first with `_part2`, `_part3` and so on added (for example `2026-10-24_10.15.00_part2.mp4`).
 
+A USB camera is recorded the same way, with its telemetry subtitles. QGroundControl encodes it with Qt: as H.264
+where the platform's encoder accepts the camera's frames, otherwise with the next codec that does (H.265, AV1, VP9,
+MPEG-4 Part 2 or MPEG-2). On Linux, Qt encodes H.264 only on the GPU (VA-API or NVENC), so without one a USB camera
+recording is MPEG-4 Part 2. If Qt can't write the recording format's container, another container is used and the file
+is named for it. A recording ends when the USB camera, or its format, changes.
+
 Video stream recording is configured in the [Application Settings > General tab](../settings_view/general.md):
 
 - [Video Recording](../settings_view/general.md#video-recording) - specifies the recording file format and storage limits.

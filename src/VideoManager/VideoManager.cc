@@ -78,8 +78,8 @@ VideoManager::VideoManager(QObject* parent)
     , _videoSettings(SettingsManager::instance()->videoSettings())
     , _primaryStream(new VideoStreamController(VideoStreamController::Role::Primary, _videoSettings, this))
     , _thermalStream(new VideoStreamController(VideoStreamController::Role::Thermal, _videoSettings, this))
-    , _recordingService(new VideoRecordingService(_primaryStream, _thermalStream, this))
     , _uvcCamera(new UVCCameraController(this))
+    , _recordingService(new VideoRecordingService(_primaryStream, _thermalStream, _uvcCamera, this))
     , _receiverFactory([](QObject* owner) { return QGCCorePlugin::instance()->createVideoReceiver(owner); })
 {
     qCDebug(VideoManagerLog) << this;
@@ -267,7 +267,9 @@ void VideoManager::cleanup()
     // longer delivered, so a receiver's worker thread never gets its quit task and the destructor waits forever.
     _primaryStream->setReceiver(nullptr);
     _thermalStream->setReceiver(nullptr);
-    // Qt Multimedia's backend goes away with the application, before ~VideoManager.
+    // Qt Multimedia's backend goes away with the application, before ~VideoManager; it writes a recording's file on a
+    // thread of its own, which the exit would cut short.
+    _uvcCamera->stopRecordingAndWait(5000);
     _uvcCamera->setDevice(QString());
 }
 
