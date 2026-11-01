@@ -137,7 +137,6 @@ VideoView {
 }
 )QML";
 
-
 }  // namespace
 
 void VideoManagerTest::init()
