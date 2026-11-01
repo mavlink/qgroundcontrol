@@ -2,6 +2,7 @@
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
+#include <QtCore/QTimer>
 #include <QtGui/QImage>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
@@ -84,33 +85,63 @@ void UVCCameraControllerTest::_testUnpluggedCameraReported()
     UVCCameraController controller;
     QSignalSpy camerasSpy(&controller, &UVCCameraController::camerasChanged);
 
-    // Without a selected camera, a change of cameras is only announced.
+    // Without a camera in use, a change of cameras is only announced.
     controller._onVideoInputsChanged();
     QCOMPARE(camerasSpy.count(), 1);
 
-    // A selected camera that is no longer attached was unplugged.
+    // The camera in use, identified by its device id, is no longer attached: it was unplugged.
     ignoreLogMessage("Video.UVCCameraController", QtWarningMsg, QRegularExpression(QStringLiteral("No camera named")));
     controller.setDevice(QString::fromLatin1(kMissingCamera));
-    const QRegularExpression message(QStringLiteral("USB camera QGC Test Missing Camera was disconnected"));
+    controller._cameraId = QByteArrayLiteral("qgc-test-unplugged");
     expectLogMessage("Video.UVCCameraController", QtWarningMsg, QRegularExpression(QStringLiteral("Camera unplugged")));
-    expectAppMessage(message);
+    expectAppMessage(QRegularExpression(QStringLiteral("USB camera QGC Test Missing Camera was disconnected")));
     controller._onVideoInputsChanged();
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
     QCOMPARE(camerasSpy.count(), 2);
+    QVERIFY(controller._cameraId.isEmpty());
+
+    // Reported once: the camera is gone now.
+    controller._onVideoInputsChanged();
+    QCOMPARE(camerasSpy.count(), 3);
 }
 
-void UVCCameraControllerTest::_testCameraErrorReported()
+void UVCCameraControllerTest::_testCameraErrorRetries()
 {
     UVCCameraController controller;
     ignoreLogMessage("Video.UVCCameraController", QtWarningMsg, QRegularExpression(QStringLiteral("No camera named")));
+    ignoreLogMessage("Video.UVCCameraController", QtWarningMsg, QRegularExpression(QStringLiteral("^Camera error")));
     controller.setDevice(QString::fromLatin1(kMissingCamera));
+    const QString error = QStringLiteral("Camera is in use");
 
-    expectLogMessage("Video.UVCCameraController", QtWarningMsg, QRegularExpression(QStringLiteral("Camera error")));
-    expectAppMessage(QRegularExpression(QStringLiteral("USB camera QGC Test Missing Camera: Camera is in use")));
-    controller._onCameraError(QStringLiteral("Camera is in use"));
+    // The first error of a run is reported, and the camera is recreated later, not from its own signal.
+    expectAppMessage(
+        QRegularExpression(QStringLiteral("USB camera QGC Test Missing Camera: Camera is in use. Retrying.")));
+    controller._onCameraError(error);
     verifyExpectedLogMessage();
+    QVERIFY(controller._retryTimer->isActive());
+    QCOMPARE(controller._retryTimer->interval(), UVCCameraController::kRetryIntervalMs);
+
+    // Later errors of the run retry silently, up to kMaxRetries.
+    for (int retry = 2; retry <= UVCCameraController::kMaxRetries; ++retry) {
+        controller._retryTimer->stop();
+        controller._recreateCamera();
+        controller._onCameraError(error);
+        QCOMPARE(controller._retries, retry);
+        QVERIFY(controller._retryTimer->isActive());
+    }
+
+    // Then the controller gives up and says so.
+    controller._retryTimer->stop();
+    expectAppMessage(
+        QRegularExpression(QStringLiteral(R"(USB camera QGC Test Missing Camera: Camera is in use(?!\. Retrying))")));
+    controller._onCameraError(error);
     verifyExpectedLogMessage();
+    QVERIFY(!controller._retryTimer->isActive());
+
+    // Selecting a camera starts a new run.
+    controller.setDevice(QString());
+    QCOMPARE(controller._retries, 0);
 }
 
 UT_REGISTER_TEST(UVCCameraControllerTest, TestLabel::Unit)

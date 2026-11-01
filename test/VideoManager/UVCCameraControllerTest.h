@@ -10,5 +10,5 @@ private slots:
     void _testScreenshotFromVideoOutput();
     void _testMissingCameraNeverRuns();
     void _testUnpluggedCameraReported();
-    void _testCameraErrorReported();
+    void _testCameraErrorRetries();
 };

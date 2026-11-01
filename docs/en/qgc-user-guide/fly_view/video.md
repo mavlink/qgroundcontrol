@@ -60,8 +60,8 @@ under **USB Camera**:
 - **Display path**: `CPU` for frames in memory, `GPU` for frames that reach the screen as textures.
 - **Uptime**: how long the camera has shown video.
 
-QGroundControl tells you when the USB camera reports an error or is unplugged, and shows its video again once it is
-plugged back in.
+QGroundControl tells you when the USB camera reports an error, and tries it again a few times, two seconds apart. It
+also tells you when the camera is unplugged, and shows its video again once it is plugged back in.
 
 Expand the dropdown (">") to change, without leaving the Fly View, the **Low Latency Mode** and **RTP jitter latency**
 of a network stream (under **Video Stream**), the **Decoder Priority** and **Force CPU Video Path** (under

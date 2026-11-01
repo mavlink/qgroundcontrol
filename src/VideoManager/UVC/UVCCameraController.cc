@@ -1,5 +1,8 @@
 #include "UVCCameraController.h"
 
+#include <algorithm>
+
+#include <QtCore/QTimer>
 #include <QtMultimedia/QCamera>
 #include <QtMultimedia/QCameraDevice>
 #include <QtMultimedia/QMediaCaptureSession>
@@ -19,7 +22,18 @@ UVCCameraController::UVCCameraController(QObject* parent)
     : QObject(parent)
     , _monitor(new UVCStreamMonitor(this))
     , _mediaDevices(new QMediaDevices(this))
-{}
+    , _retryTimer(new QTimer(this))
+{
+    _retryTimer->setSingleShot(true);
+    _retryTimer->setInterval(kRetryIntervalMs);
+    (void) connect(_retryTimer, &QTimer::timeout, this, &UVCCameraController::_recreateCamera);
+    // Frames flowing again end a run of retries.
+    (void) connect(_monitor, &UVCStreamMonitor::statsChanged, this, [this] {
+        if (_monitor->stats().valid) {
+            _retries = 0;
+        }
+    });
+}
 
 UVCCameraController::~UVCCameraController()
 {
@@ -32,10 +46,10 @@ void UVCCameraController::setDevice(const QString& description)
         return;
     }
     qCDebug(UVCCameraControllerLog) << "device" << description;
-    _releaseCamera();
+    _retryTimer->stop();
+    _retries = 0;
     _deviceName = description;
-    _createCamera();
-    _connectVideoOutput();
+    _recreateCamera();
 }
 
 void UVCCameraController::watchCameras()
@@ -91,6 +105,7 @@ void UVCCameraController::_createCamera()
     }
 
     UVCDevices::requestPermission();
+    _cameraId = device.id();
     _camera = new QCamera(device, this);
     (void) connect(_camera, &QCamera::errorOccurred, this,
                    [this](QCamera::Error, const QString& errorString) { _onCameraError(errorString); });
@@ -105,6 +120,14 @@ void UVCCameraController::_releaseCamera()
     _captureSession = nullptr;
     delete _camera;
     _camera = nullptr;
+    _cameraId.clear();
+}
+
+void UVCCameraController::_recreateCamera()
+{
+    _releaseCamera();
+    _createCamera();
+    _connectVideoOutput();
 }
 
 void UVCCameraController::_connectVideoOutput()
@@ -125,18 +148,42 @@ void UVCCameraController::_connectVideoOutput()
 
 void UVCCameraController::_onCameraError(const QString& errorString)
 {
-    qCWarning(UVCCameraControllerLog) << "Camera error:" << _deviceName << errorString;
-    QGC::showAppMessage(tr("USB camera %1: %2").arg(_deviceName, errorString));
+    qCWarning(UVCCameraControllerLog) << "Camera error:" << _deviceName << errorString << "retries" << _retries;
+    if (_retries >= kMaxRetries) {
+        QGC::showAppMessage(tr("USB camera %1: %2").arg(_deviceName, errorString));
+        return;
+    }
+    if (_retries == 0) {
+        QGC::showAppMessage(tr("USB camera %1: %2. Retrying.").arg(_deviceName, errorString));
+    }
+    ++_retries;
+    // Deferred: the camera emitting this error can't be deleted from its own signal.
+    _retryTimer->start();
 }
 
 void UVCCameraController::_onVideoInputsChanged()
 {
-    // Qt stops an unplugged camera without an error.
-    if (!_deviceName.isEmpty() && !UVCDevices::deviceExists(_deviceName)) {
-        qCWarning(UVCCameraControllerLog) << "Camera unplugged:" << _deviceName;
+    if (!_cameraId.isEmpty() && !_cameraAttached()) {
+        // Qt stops an unplugged camera without an error.
+        qCWarning(UVCCameraControllerLog) << "Camera unplugged:" << _deviceName << _cameraId;
         QGC::showAppMessage(tr("USB camera %1 was disconnected").arg(_deviceName));
+        // Runs another camera of the same name, if one is attached.
+        _recreateCamera();
+    } else if (!_deviceName.isEmpty() && !_camera && _cameraAttached()) {
+        // Plugged back in.
+        _recreateCamera();
     }
     emit camerasChanged();
+}
+
+bool UVCCameraController::_cameraAttached() const
+{
+    if (_cameraId.isEmpty()) {
+        return UVCDevices::deviceExists(_deviceName);
+    }
+    const QList<QCameraDevice> cameras = QMediaDevices::videoInputs();
+    return std::any_of(cameras.cbegin(), cameras.cend(),
+                       [this](const QCameraDevice& camera) { return camera.id() == _cameraId; });
 }
 
 QVideoSink* UVCCameraController::_videoSink() const

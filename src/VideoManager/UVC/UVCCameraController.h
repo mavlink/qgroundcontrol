@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QByteArray>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QString>
@@ -9,11 +10,15 @@ class QCamera;
 class QMediaCaptureSession;
 class QMediaDevices;
 class QQuickItem;
+class QTimer;
 class QVideoSink;
 class UVCStreamMonitor;
 
 /// The USB (UVC) camera VideoManager selected: owns its QCamera and capture session, measures its frames and takes its
 /// screenshots. The user hears of camera errors and of the camera being unplugged.
+///
+/// The camera is tracked by its device id, so unplugging it is noticed even while another camera of the same name stays
+/// attached; the controller then runs that one. After an error the camera is recreated up to kMaxRetries times.
 ///
 /// The camera runs while one is selected and a QML VideoOutput is registered: registerVideoOutput() once it is created,
 /// unregisterVideoOutput() when it is destroyed (see UVCVideoOutput.qml).
@@ -29,6 +34,9 @@ class UVCCameraController : public QObject
     friend class UVCCameraControllerTest;
 
 public:
+    static constexpr int kMaxRetries = 3;
+    static constexpr int kRetryIntervalMs = 2000;
+
     explicit UVCCameraController(QObject* parent = nullptr);
     ~UVCCameraController() override;
 
@@ -61,14 +69,21 @@ private:
     void _releaseCamera();
     /// Connects the camera, the registered VideoOutput and the monitor, and runs the camera while both exist.
     void _connectVideoOutput();
+    /// Replaces the camera with a new one for the selected device, if one is attached.
+    void _recreateCamera();
     void _onCameraError(const QString& errorString);
     void _onVideoInputsChanged();
+    /// Whether the camera in use is attached; without one, whether a camera of the selected name is.
+    bool _cameraAttached() const;
     QVideoSink* _videoSink() const;
 
     UVCStreamMonitor* const _monitor;
     QMediaDevices* const _mediaDevices;
+    QTimer* const _retryTimer;
     QCamera* _camera = nullptr;
     QMediaCaptureSession* _captureSession = nullptr;
     QPointer<QQuickItem> _videoOutput;
     QString _deviceName;
+    QByteArray _cameraId;
+    int _retries = 0;
 };
