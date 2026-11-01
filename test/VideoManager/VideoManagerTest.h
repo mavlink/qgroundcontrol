@@ -26,6 +26,7 @@ private slots:
     void _testRestartingSettingsRestartStreams_data();
     void _testRestartingSettingsRestartStreams();
     void _testDecodingSettingsGroupRestartsStreams();
+    void _testStreamSettingsGroupFollowsLowLatency();
     void _testStreamEnabledControlsVideo();
     void _testStopVideoCancelsEverything();
     void _testAutoStreamLeavesSettingsAlone();
@@ -40,7 +41,7 @@ private slots:
     void _testStreamFormatText();
     void _testVideoViewFitsVideo_data();
     void _testVideoViewFitsVideo();
-    void _testVideoViewPinchZoomSteps();
+    void _testCameraPinchZoomSteps();
     void _testVideoViewPlacesThermalPip();
     void _testStreamUriAndTransport_data();
     void _testStreamUriAndTransport();

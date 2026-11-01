@@ -45,6 +45,16 @@ VideoDecodingSettingsGroup {
 }
 )QML";
 
+// The Video indicator's network stream settings.
+constexpr const char* kStreamSettingsQml = R"QML(
+import QtQuick
+import QGroundControl.VideoManager
+
+VideoStreamSettingsGroup {
+    width: 400
+}
+)QML";
+
 // VideoStreamOutput inside a container that tests move between windows.
 constexpr const char* kStreamOutputQml = R"QML(
 import QtQuick
@@ -97,14 +107,12 @@ VideoView {
 }
 )QML";
 
-// A VideoView following a stand-in zoom camera, which records the zoom steps it is sent.
-constexpr const char* kZoomVideoViewQml = R"QML(
+// CameraPinchZoom on a stand-in zoom camera, which records the zoom steps it is sent.
+constexpr const char* kCameraPinchZoomQml = R"QML(
 import QtQuick
 import QGroundControl.VideoManager
 
-VideoView {
-    width: 400
-    height: 400
+CameraPinchZoom {
     camera: QtObject {
         property bool hasZoom: true
         property var steps: []
@@ -337,6 +345,30 @@ void VideoManagerTest::_testDecodingSettingsGroupRestartsStreams()
     QCOMPARE(decoderFact->rawValue().toInt(), static_cast<int>(VideoDecoder::ForceVideoDecoderSoftware));
     QCOMPARE(_primary->restarts, 2);
     QCOMPARE(_primary->configChanges, 0);
+}
+
+void VideoManagerTest::_testStreamSettingsGroupFollowsLowLatency()
+{
+    _facts->set(_videoSettings->lowLatencyMode(), false);
+
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kStreamSettingsQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/StreamSettings.qml")));
+    const std::unique_ptr<QObject> group(component.create());
+    QVERIFY2(group, qPrintable(component.errorString()));
+
+    QObject* const lowLatencyControl = group->findChild<QObject*>(QStringLiteral("videoLowLatencyMode"));
+    QObject* const jitterControl = group->findChild<QObject*>(QStringLiteral("videoRtpJitterLatency"));
+    QVERIFY(lowLatencyControl);
+    QVERIFY(jitterControl);
+    QCOMPARE(lowLatencyControl->property("fact").value<Fact*>(), _videoSettings->lowLatencyMode());
+    QCOMPARE(jitterControl->property("fact").value<Fact*>(), _videoSettings->rtpJitterLatencyMs());
+    QVERIFY(jitterControl->property("visible").toBool());
+
+    // Low Latency Mode has no jitter buffer, so its latency is hidden.
+    _facts->set(_videoSettings->lowLatencyMode(), true);
+    QVERIFY(!jitterControl->property("visible").toBool());
 }
 
 void VideoManagerTest::_testStreamEnabledControlsVideo()
@@ -730,24 +762,24 @@ void VideoManagerTest::_testVideoViewFitsVideo()
     QCOMPARE(view->property("videoHeight").toReal(), heightFromWidth ? (400 / aspectRatio) : 400);
 }
 
-void VideoManagerTest::_testVideoViewPinchZoomSteps()
+void VideoManagerTest::_testCameraPinchZoomSteps()
 {
     QQmlEngine engine;
     engine.addImportPath(QStringLiteral("qrc:/qml"));
     QQmlComponent component(&engine);
-    component.setData(kZoomVideoViewQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/ZoomVideoView.qml")));
-    const std::unique_ptr<QObject> view(component.create());
-    QVERIFY2(view, qPrintable(component.errorString()));
-    auto* const camera = view->property("camera").value<QObject*>();
+    component.setData(kCameraPinchZoomQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/CameraPinchZoom.qml")));
+    const std::unique_ptr<QObject> zoom(component.create());
+    QVERIFY2(zoom, qPrintable(component.errorString()));
+    auto* const camera = zoom->property("camera").value<QObject*>();
     QVERIFY(camera);
 
-    // Feeds one pinch's scales through the view, as its PinchArea does, and returns the zoom steps the camera got.
-    const auto pinch = [&view, camera](std::initializer_list<qreal> scales) {
+    // Feeds one pinch's scales through it, as its pinch updates do, and returns the zoom steps the camera got.
+    const auto pinch = [&zoom, camera](std::initializer_list<qreal> scales) {
         (void) camera->setProperty("steps", QVariantList());
         QVariant sent = 0;
         for (const qreal scale : scales) {
             QVariant next;
-            if (!QMetaObject::invokeMethod(view.get(), "_stepZoomToward", Q_RETURN_ARG(QVariant, next),
+            if (!QMetaObject::invokeMethod(zoom.get(), "_stepToward", Q_RETURN_ARG(QVariant, next),
                                            Q_ARG(QVariant, scale), Q_ARG(QVariant, sent))) {
                 return QVariantList({QStringLiteral("invoke failed")});
             }

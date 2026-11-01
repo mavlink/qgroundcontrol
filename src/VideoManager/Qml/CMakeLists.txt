@@ -11,11 +11,16 @@ qt_add_qml_module(
     VERSION 1.0
     RESOURCE_PREFIX /qml
     QML_FILES
+        CameraPinchZoom.qml
+        NoVideoPlaceholder.qml
+        ThermalVideoOverlay.qml
         UVCVideoOutput.qml
         VideoDecodingSettingsGroup.qml
         VideoDisplaySettingsGroup.qml
+        VideoGridLines.qml
         VideoStreamFormat.js
         VideoStreamOutput.qml
+        VideoStreamSettingsGroup.qml
         VideoStreamStatsGroup.qml
         VideoView.qml
     NO_PLUGIN

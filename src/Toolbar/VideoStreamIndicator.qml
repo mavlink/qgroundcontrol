@@ -5,7 +5,6 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
-import QGroundControl.FactControls
 import QGroundControl.VideoManager
 
 // Frame rate and bitrate of the measured video stream, orange while a stream degrades. The drawer shows each stream's
@@ -24,7 +23,6 @@ Item {
     // The thermal stream's figures only while it is the one measured.
     readonly property var _stats: _primary.stats.valid ? _primary.stats : _thermal.stats
     readonly property bool _degraded: _streamDegraded(_primary) || _streamDegraded(_thermal)
-    readonly property VideoSettings _videoSettings: QGroundControl.settingsManager.videoSettings
 
     // Losing packets or dropping frames now, or showing under three quarters of the frame rate the camera advertises.
     function _streamDegraded(stream) {
@@ -105,23 +103,7 @@ Item {
                 ColumnLayout {
                     spacing: ScreenTools.defaultFontPixelHeight / 4
 
-                    QGCGroupBox {
-                        heading: qsTr("Video Stream")
-                        visible: QGroundControl.videoManager.isStreamSource
-
-                        FactCheckBoxSlider {
-                            Layout.fillWidth:   true
-                            text:               qsTr("Low Latency Mode")
-                            fact:               control._videoSettings.lowLatencyMode
-                            visible:            fact.userVisible
-                        }
-
-                        LabelledFactTextField {
-                            label:      qsTr("RTP jitter latency")
-                            fact:       control._videoSettings.rtpJitterLatencyMs
-                            visible:    fact.userVisible && !control._videoSettings.lowLatencyMode.rawValue
-                        }
-                    }
+                    VideoStreamSettingsGroup { }
 
                     VideoDecodingSettingsGroup { }
 

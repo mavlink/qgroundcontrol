@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
@@ -40,20 +39,12 @@ QGCGroupBox {
         visible:    root.stream.transport !== ""
     }
 
-    RowLayout {
-        spacing: ScreenTools.defaultFontPixelWidth * 2
-        visible: root.stream.uri !== ""
-
-        QGCLabel {
-            text:               qsTr("URL")
-            Layout.fillWidth:   true
-        }
-
-        QGCLabel {
-            text:                   root.stream.uri
-            elide:                  Text.ElideMiddle
-            Layout.maximumWidth:    ScreenTools.defaultFontPixelWidth * 40
-        }
+    LabelledLabel {
+        label:              qsTr("URL")
+        labelText:          root.stream.uri
+        labelTextElide:     Text.ElideMiddle
+        labelMaximumWidth:  ScreenTools.defaultFontPixelWidth * 40
+        visible:            root.stream.uri !== ""
     }
 
     LabelledLabel {

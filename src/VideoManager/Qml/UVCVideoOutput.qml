@@ -4,14 +4,12 @@ import QtMultimedia
 import QGroundControl
 
 // The UVC camera VideoManager selected, cropped to fill the item.
-Rectangle {
+VideoOutput {
     id: root
 
     readonly property VideoManager _videoManager: QGroundControl.videoManager
 
-    implicitWidth:  uvcOutput.implicitWidth
-    implicitHeight: uvcOutput.implicitHeight
-    color:          Qt.rgba(0, 0, 0, 0.75)
+    fillMode: VideoOutput.PreserveAspectCrop
 
     MediaDevices {
         id: mediaDevices
@@ -32,12 +30,6 @@ Rectangle {
             cameraDevice:   mediaDevices.findCameraDevice(root._videoManager.uvcVideoSourceID)
             active:         root._videoManager.isUvc
         }
-        videoOutput: uvcOutput
-    }
-
-    VideoOutput {
-        id:             uvcOutput
-        anchors.fill:   parent
-        fillMode:       VideoOutput.PreserveAspectCrop
+        videoOutput: root
     }
 }
