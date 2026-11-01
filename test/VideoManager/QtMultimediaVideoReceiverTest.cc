@@ -2,9 +2,11 @@
 
 #include <memory>
 
+#include <QtCore/QElapsedTimer>
 #include <QtCore/QRandomGenerator>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
+#include <QtCore/QTimer>
 #include <QtNetwork/QUdpSocket>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
@@ -296,6 +298,49 @@ void QtMultimediaVideoReceiverTest::_testStopsWithoutAutoReconnect()
     QVERIFY(stream.waitForState(State::Stopped));
     QCOMPARE(stream.errorSpy.count(), 1);
     QVERIFY(!stream.stateSpy.contains(QVariantList{QVariant::fromValue(State::Reconnecting)}));
+#endif
+}
+
+void QtMultimediaVideoReceiverTest::_testDetachingOutputDoesNotBlock()
+{
+#ifndef QGC_HAS_MOCK_VIDEO_STREAM_SERVER
+    QSKIP("MockVideoStreamServer is only built into single-config Debug builds");
+#else
+    using StreamType = MockVideoStreamServer::StreamType;
+    if (!MockVideoStreamServer::isStreamTypeAvailable(StreamType::RtpUdpH264)) {
+        QSKIP("This GStreamer install lacks an H.264 encoder");
+    }
+
+    const quint16 port = freeUdpPort();
+    MockVideoStreamServer server;
+    QVERIFY(server.start(StreamType::RtpUdpH264, QStringLiteral("127.0.0.1"), port));
+    _ignoreLoopWarning();
+    constexpr auto kTimeout = std::chrono::seconds(10);
+    Receiver stream(server.servedUri(), true, kTimeout);
+    stream.receiver->setActive(true);
+    QVERIFY(stream.waitForDisplay());
+
+    // The stream stalls, so the player waits on a read for up to the timeout: taking its output doesn't wait it out.
+    server.stop();
+    QElapsedTimer sinceDetached;
+    sinceDetached.start();
+    stream.receiver->setVideoOutput(nullptr);
+    QTimer eventLoopTurn;
+    eventLoopTurn.setSingleShot(true);
+    QSignalSpy turned(&eventLoopTurn, &QTimer::timeout);
+    eventLoopTurn.start(TestTimeout::shortDuration() / 4);
+    QVERIFY(turned.wait(TestTimeout::longMs()));
+    QVERIFY2(sinceDetached.elapsed() < (TestTimeout::shortDuration().count() * 2),
+             qPrintable(QStringLiteral("blocked for %1 ms").arg(sinceDetached.elapsed())));
+    QCOMPARE(stream.receiver->state(), State::Connecting);
+    QVERIFY(!stream.receiver->decoding());
+
+    // The session started without an output takes the next one.
+    QVERIFY(server.start(StreamType::RtpUdpH264, QStringLiteral("127.0.0.1"), port));
+    stream.receiver->setVideoOutput(stream.output.get());
+    QVERIFY(stream.waitForDisplay());
+    QCOMPARE(stream.receiver->stats().reconnects, 0);
+    QVERIFY(stream.errorSpy.isEmpty());
 #endif
 }
 

@@ -22,5 +22,6 @@ private slots:
     void _testRestartReopensPort();
     void _testReconnectsAfterStreamLoss();
     void _testStopsWithoutAutoReconnect();
+    void _testDetachingOutputDoesNotBlock();
 #endif
 };

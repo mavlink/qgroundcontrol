@@ -55,7 +55,8 @@ protected:
     void onStopRecording() override;
 
 private:
-    /// A user start, stop or restart, or a new config: the backoff and the reconnect count start over.
+    /// A user start, stop or restart, a new config, or the output going: the backoff and the reconnect count start
+    /// over.
     void _startOver();
     /// Starts a new session when the stream should run; stops it otherwise.
     void _start();

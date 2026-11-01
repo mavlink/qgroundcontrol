@@ -106,6 +106,11 @@ void QtMultimediaVideoReceiver::_startOver()
 
 void QtMultimediaVideoReceiver::onVideoOutputChanged()
 {
+    // Taking its output from a playing player waits out its network read on this thread, as stopping it would (Qt
+    // joins the demuxer's thread uncancelled): the session starts over without one instead.
+    if (_player && _player->videoSink() && !videoSink()) {
+        _startOver();
+    }
     _bindVideoSink();
     // The watchdog counts from now: no frame reached an output while there was none.
     _sinceFrame.restart();
