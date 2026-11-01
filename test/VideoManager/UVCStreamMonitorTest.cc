@@ -18,7 +18,7 @@ using VideoTestHelpers::showsText;
 
 namespace {
 
-constexpr const char* kStatsGroupQml = R"QML(
+constexpr const char* kUvcStatsGroupQml = R"QML(
 import QtQuick
 import QGroundControl.VideoManager
 
@@ -148,7 +148,7 @@ void UVCStreamMonitorTest::_testStatsGroupShowsCamera()
     QQmlEngine engine;
     engine.addImportPath(QStringLiteral("qrc:/qml"));
     QQmlComponent component(&engine);
-    component.setData(kStatsGroupQml, QUrl(QStringLiteral("qrc:/UVCStreamMonitorTest/StatsGroup.qml")));
+    component.setData(kUvcStatsGroupQml, QUrl(QStringLiteral("qrc:/UVCStreamMonitorTest/StatsGroup.qml")));
     const std::unique_ptr<QQuickItem> group(qobject_cast<QQuickItem*>(
         component.createWithInitialProperties({{QStringLiteral("monitor"), QVariant::fromValue(&monitor)}})));
     QVERIFY2(group, qPrintable(component.errorString()));

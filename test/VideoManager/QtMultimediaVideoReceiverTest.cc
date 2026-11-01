@@ -46,10 +46,10 @@ quint16 freeUdpPort()
 }
 
 /// A QtMultimediaVideoReceiver playing @p uri into a VideoOutput, with spies on its signals.
-struct Receiver
+struct ReceiverUnderTest
 {
-    explicit Receiver(const QString& uri, bool autoReconnect = false,
-                      std::chrono::seconds timeout = std::chrono::seconds(2))
+    explicit ReceiverUnderTest(const QString& uri, bool autoReconnect = false,
+                               std::chrono::seconds timeout = std::chrono::seconds(2))
         : output(VideoTestHelpers::createVideoOutput(engine))
         , receiver(std::make_unique<QtMultimediaVideoReceiver>())
         , stateSpy(receiver.get(), &VideoReceiver::stateChanged)
@@ -156,7 +156,7 @@ void QtMultimediaVideoReceiverTest::_testUnplayableUri()
     QVERIFY(!QtMultimediaVideoReceiver::playerSource(QStringLiteral("0.0.0.0:5600")));
     QVERIFY(!QtMultimediaVideoReceiver::playerSource(QStringLiteral("udp://0.0.0.0")));
 
-    Receiver stream(QStringLiteral("udp://0.0.0.0"));
+    ReceiverUnderTest stream(QStringLiteral("udp://0.0.0.0"));
     expectLogMessage("Video.QtMultimediaVideoReceiver", QtWarningMsg, QRegularExpression(QStringLiteral("can't play")));
     stream.receiver->setActive(true);
     verifyExpectedLogMessage();
@@ -170,7 +170,7 @@ void QtMultimediaVideoReceiverTest::_testRecordingNeedsActiveStream()
     QVERIFY(dir.isValid());
     const QString file = dir.filePath(QStringLiteral("stream.mkv"));
 
-    Receiver stream(QStringLiteral("udp://127.0.0.1:%1").arg(freeUdpPort()));
+    ReceiverUnderTest stream(QStringLiteral("udp://127.0.0.1:%1").arg(freeUdpPort()));
     expectLogMessage("Video.VideoReceiver", QtWarningMsg, QRegularExpression(QStringLiteral("not active")));
     stream.receiver->startRecording(file, VideoReceiver::FileFormat::Mkv);
     verifyExpectedLogMessage();
@@ -253,7 +253,7 @@ void QtMultimediaVideoReceiverTest::_testPlaysMockStreams()
     QVERIFY(server.start(type, QStringLiteral("127.0.0.1"), port));
 
     _ignorePlayerLogs();
-    Receiver stream(server.servedUri());
+    ReceiverUnderTest stream(server.servedUri());
     stream.receiver->setActive(true);
     QVERIFY(stream.waitForDisplay());
     QCOMPARE(stream.receiver->state(), State::Streaming);
@@ -286,7 +286,7 @@ void QtMultimediaVideoReceiverTest::_testRestartReopensPort()
     MockVideoStreamServer server;
     QVERIFY(server.start(StreamType::RtpUdpH264, QStringLiteral("127.0.0.1"), freeUdpPort()));
     _ignorePlayerLogs();
-    Receiver stream(server.servedUri(), true);
+    ReceiverUnderTest stream(server.servedUri(), true);
     stream.receiver->setActive(true);
     QVERIFY(stream.waitForDisplay());
 
@@ -316,7 +316,7 @@ void QtMultimediaVideoReceiverTest::_testReconnectsAfterStreamLoss()
     MockVideoStreamServer server;
     QVERIFY(server.start(StreamType::RtpUdpH264, QStringLiteral("127.0.0.1"), port));
     _ignorePlayerLogs();
-    Receiver stream(server.servedUri(), true);
+    ReceiverUnderTest stream(server.servedUri(), true);
     stream.receiver->setActive(true);
     QVERIFY(stream.waitForDisplay());
 
@@ -346,7 +346,7 @@ void QtMultimediaVideoReceiverTest::_testStopsWithoutAutoReconnect()
     MockVideoStreamServer server;
     QVERIFY(server.start(StreamType::RtpUdpH264, QStringLiteral("127.0.0.1"), freeUdpPort()));
     _ignorePlayerLogs();
-    Receiver stream(server.servedUri());
+    ReceiverUnderTest stream(server.servedUri());
     stream.receiver->setActive(true);
     QVERIFY(stream.waitForDisplay());
 
@@ -372,7 +372,7 @@ void QtMultimediaVideoReceiverTest::_testDetachingOutputDoesNotBlock()
     QVERIFY(server.start(StreamType::RtpUdpH264, QStringLiteral("127.0.0.1"), port));
     _ignorePlayerLogs();
     constexpr auto kTimeout = std::chrono::seconds(10);
-    Receiver stream(server.servedUri(), true, kTimeout);
+    ReceiverUnderTest stream(server.servedUri(), true, kTimeout);
     stream.receiver->setActive(true);
     QVERIFY(stream.waitForDisplay());
 
@@ -415,7 +415,7 @@ void QtMultimediaVideoReceiverTest::_testPlaysRtspOverTcp()
     QUrl uri(server.servedUri());
     uri.setScheme(QStringLiteral("rtspt"));
     _ignorePlayerLogs();
-    Receiver stream(uri.toString());
+    ReceiverUnderTest stream(uri.toString());
     stream.receiver->setActive(true);
     QVERIFY(stream.waitForDisplay());
     QCOMPARE(qgetenv("QT_FFMPEG_RTSP_TRANSPORT"), QByteArrayLiteral("tcp"));
@@ -446,7 +446,7 @@ void QtMultimediaVideoReceiverTest::_testRecordsStream()
     QVERIFY(server.start(StreamType::RtpUdpH264, QStringLiteral("127.0.0.1"), freeUdpPort()));
     _ignorePlayerLogs();
     _ignoreEncoderFallbacks();
-    Receiver stream(server.servedUri());
+    ReceiverUnderTest stream(server.servedUri());
     QSignalSpy startedSpy(stream.receiver.get(), &VideoReceiver::recordingStarted);
     QSignalSpy finishedSpy(stream.receiver.get(), &VideoReceiver::recordingFinished);
     stream.receiver->setActive(true);
