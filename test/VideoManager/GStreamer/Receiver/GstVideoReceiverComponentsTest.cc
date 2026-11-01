@@ -310,6 +310,8 @@ void postApplication(GstElement* pipeline, const char* name)
 
 void GstVideoReceiverComponentsTest::_testBusPump()
 {
+    GSTTEST_REQUIRE_GSTREAMER();
+
     const GStreamer::GstElementPtr pipeline =
         GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new("pump"))));
     QVERIFY(pipeline);
@@ -365,6 +367,8 @@ void GstVideoReceiverComponentsTest::_testBusPump()
 
 void GstVideoReceiverComponentsTest::_testStatsProbe()
 {
+    GSTTEST_REQUIRE_GSTREAMER();
+
     PipelineStatsProbe probe;
     const auto note = [&probe](qint64 ptsMs, bool keyframe) {
         GstBuffer* const buffer = gst_buffer_new_allocate(nullptr, 100, nullptr);

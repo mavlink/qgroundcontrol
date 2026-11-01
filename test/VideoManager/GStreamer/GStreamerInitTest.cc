@@ -228,6 +228,8 @@ void GStreamerInitTest::_testMissingPluginFeatures()
 
 void GStreamerInitTest::_testUdpSrcUnlockSerializedBefore1_24_10()
 {
+    GSTTEST_REQUIRE_GSTREAMER();
+
     GStreamer::serializeUdpSrcUnlock();
 
     const GStreamer::GstFactoryPtr factory = GStreamer::adoptFactory(gst_element_factory_find("udpsrc"));
