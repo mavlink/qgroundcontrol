@@ -33,7 +33,8 @@ public:
     struct Counters
     {
         quint64 framesDisplayed = 0;
-        quint64 bytesReceived = 0;
+        /// Only for a backend that counts the bytes it receives: bitrateKbps is -1 without.
+        std::optional<quint64> bytesReceived;
         quint64 framesDropped = 0;
         /// Only for a stream that goes through an RTP jitter buffer.
         std::optional<RtpCounters> rtp;
@@ -45,9 +46,9 @@ public:
     /// A new stream starts: its counters start from zero, and the next update() only sets the baseline for rates.
     void reset();
 
-    /// Fills the fields of @p stats that @p counters measure: valid, fps, bitrateKbps, framesDropped, droppedFps,
-    /// packetsLost and lossPercent (-1 without RTP counters). Returns false, leaving @p stats alone, for the first
-    /// sample after reset() and for a sample taken no later than the previous one.
+    /// Fills the fields of @p stats that @p counters measure: valid, fps, bitrateKbps (-1 without a byte count),
+    /// framesDropped, droppedFps, packetsLost and lossPercent (-1 without RTP counters). Returns false, leaving @p
+    /// stats alone, for the first sample after reset() and for a sample taken no later than the previous one.
     bool update(const Counters& counters, VideoStreamStats& stats);
 
 private:

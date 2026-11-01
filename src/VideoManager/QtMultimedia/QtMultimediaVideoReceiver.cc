@@ -60,6 +60,7 @@ QByteArray rtpSdp(const QString& host, int port, QByteArrayView encoding)
 QtMultimediaVideoReceiver::QtMultimediaVideoReceiver(QObject* parent)
     : VideoReceiver(parent)
     , _supervisor(new StreamSupervisor(this))
+    , _statsSampler(*_supervisor)
     , _recorder(new QtVideoRecorder(this))
 {
     (void) connect(_supervisor, &StreamSupervisor::stateChanged, this, &QtMultimediaVideoReceiver::setState);
@@ -262,11 +263,11 @@ void QtMultimediaVideoReceiver::_stopSession()
             },
             Qt::QueuedConnection);
     }
-    _meter.reset();
+    (void) _statsSampler.reset();
     _frames = 0;
     _gpuFrames = false;
     setDecoding(false);
-    setStats(VideoStreamStats());
+    setStats(_statsSampler.stats());
 }
 
 void QtMultimediaVideoReceiver::_fail(const QString& reason)
@@ -386,7 +387,7 @@ void QtMultimediaVideoReceiver::_sample()
         return;
     }
 
-    VideoStreamStats stats = this->stats();
+    VideoStreamStats stats = _statsSampler.stats();
     stats.decoder = QStringLiteral("Qt Multimedia");
     // Qt's FFmpeg backend hands over GPU frames only from a hardware decoder; a hardware decoder's frames copied to
     // memory read as software.
@@ -395,13 +396,10 @@ void QtMultimediaVideoReceiver::_sample()
     const auto codec = _player->metaData().value(QMediaMetaData::VideoCodec).value<QMediaFormat::VideoCodec>();
     stats.codec =
         (codec == QMediaFormat::VideoCodec::Unspecified) ? QString() : QMediaFormat::videoCodecDescription(codec);
-    stats.uptimeMs = _supervisor->uptime().count();
-    stats.reconnects = _supervisor->reconnects();
+    // The player doesn't tell how many bytes it received, so there is no bitrate.
     VideoStreamStatsMeter::Counters counters;
     counters.framesDisplayed = _frames;
-    if (_meter.update(counters, stats)) {
-        // The player doesn't tell how many bytes it received.
-        stats.bitrateKbps = -1;
-        setStats(stats);
+    if (_statsSampler.sample(counters, stats, nullptr)) {
+        setStats(_statsSampler.stats());
     }
 }

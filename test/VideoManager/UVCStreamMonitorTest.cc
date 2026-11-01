@@ -77,7 +77,8 @@ void UVCStreamMonitorTest::_testFramesBecomeStats()
     QCOMPARE(stats.codec, QStringLiteral("MJPEG"));
     QCOMPARE(stats.gpuPath, QStringLiteral("CPU"));
     QCOMPARE(stats.uptimeMs, qint64(1000));
-    QCOMPARE(stats.bitrateKbps, 0.0);
+    // The camera hands over frames, not the bytes it sent.
+    QCOMPARE(stats.bitrateKbps, -1.0);
     QVERIFY(!stats.hasRtpStats());
     QCOMPARE(monitor.videoSize(), QSize(640, 480));
     QCOMPARE(monitor.cameraFrameRate(), 30.0);

@@ -11,7 +11,7 @@
 
 #include "StreamSupervisor.h"
 #include "VideoReceiver.h"
-#include "VideoStreamStatsMeter.h"
+#include "VideoStreamStatsSampler.h"
 
 class QMediaCaptureSession;
 class QtVideoRecorder;
@@ -96,7 +96,7 @@ private:
     QTimer _sampleTimer;
     /// Since the session started, or its last frame.
     QElapsedTimer _sinceFrame;
-    VideoStreamStatsMeter _meter;
+    VideoStreamStatsSampler _statsSampler;
     quint64 _frames = 0;
     bool _gpuFrames = false;
     QtVideoRecorder* const _recorder;

@@ -146,8 +146,9 @@ Per-platform import of decoded GPU frames without a copy. Most paths wrap their 
 
 `VideoReceiver::stats` (`VideoStreamStats`, a QML value type that `VideoStreamController` forwards) tells how healthy a
 stream is; the Fly View toolbar's video indicator shows it. While the stream is `Streaming`, `GstReceiverWorker` samples
-its `PipelineSession` on each watchdog tick (once a second), and `VideoStreamStatsMeter` (`../VideoStreamStatsMeter.h`,
-a pure class with an injectable clock) turns the cumulative counters into rates. The first sample is the rates'
+its `PipelineSession` on each watchdog tick (once a second) through `VideoStreamStatsSampler`
+(`../Receiver/VideoStreamStatsSampler.h`, shared with the Qt Multimedia receiver): its `VideoStreamStatsMeter`, a pure
+class with an injectable clock, turns the cumulative counters into rates, and it adds the session's fields below. The first sample is the rates'
 baseline, so stats are valid from the second one on. The worker hands them to the receiver like its other reports, so
 `statsChanged` is emitted on the GUI thread, and sends invalid stats when its session stops: on a stop, a reconnect or a
 failure. The streaming threads only add to atomic counters, with no lock and no allocation per frame; everything else is
@@ -167,10 +168,10 @@ read on the worker.
 | `keyframeIntervalMs` | The tee's buffer probe: the average time between the timestamps (PTS, else DTS) of the last five buffers without `DELTA_UNIT`, so the arrival times a stream without a jitter buffer is stamped with don't swing it. -1 until two keyframes arrived, so a stream without keyframes, such as one with intra refresh, never has one. |
 | `gpuFallbacks` | The display sink's `gpu-fallbacks` count since the stream started, the sinks a decoder restart replaced included. |
 | `decoderRestarts` | Decoders `DecodingBranch::restartDecoder()` replaced since the stream started. |
-| `uptimeMs`, `reconnects` | The worker: the time since its session reported its first frame, and the sessions that streamed since the stream was started or restarted, less one. |
-| `recordingMs`, `recordingBytes` | The worker, while recording: the time since the first part got its first frame, and the sizes of the parts' files. -1 otherwise. |
+| `uptimeMs`, `reconnects` | The worker's `StreamSupervisor`: the time since the session reported its first frame, and the sessions that streamed since the stream was started or restarted, less one. |
+| `recordingMs`, `recordingBytes` | The worker's `RecordingPlan`, while recording: the time since the first part got its first frame, and the sizes of the parts' files. -1 otherwise. |
 
-`VideoStreamStatsMeterTest` covers the rate math on a fake clock, `GstVideoReceiverStatsTest` the stats of real streams.
+`VideoStreamStatsMeterTest` covers the rate math on a fake clock and the sampler's session fields, `GstVideoReceiverStatsTest` the stats of real streams.
 
 ## Build Configuration
 

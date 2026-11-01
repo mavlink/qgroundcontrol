@@ -52,8 +52,8 @@ public:
     /// Frames shown per second over the last few seconds: handed to the display and not replaced by a newer frame
     /// before it was shown.
     double fps = 0.0;
-    /// Compressed video received over the last few seconds, in kbit/s; -1 for a receiver that can't count it (Qt
-    /// Multimedia's player).
+    /// Compressed video received over the last few seconds, in kbit/s; -1 for a source that can't count it (Qt
+    /// Multimedia's player, a USB camera).
     double bitrateKbps = 0.0;
     /// Since the stream started: frames the display dropped to keep up with the stream.
     qint64 framesDropped = 0;

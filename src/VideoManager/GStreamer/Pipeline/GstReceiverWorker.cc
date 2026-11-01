@@ -24,6 +24,7 @@ GstReceiverWorker::GstReceiverWorker(QObject* parent)
     : QObject(parent)
     , _watchdogTimer(new QTimer(this))
     , _supervisor(new StreamSupervisor(this))
+    , _statsSampler(*_supervisor)
 {
     _watchdogTimer->setInterval(kWatchdogInterval);
     (void) connect(_watchdogTimer, &QTimer::timeout, this, [this]() { _onWatchdogTick(); });
@@ -193,8 +194,9 @@ void GstReceiverWorker::_stopSession()
         return;
     }
     _watchdogTimer->stop();
-    _statsMeter.reset();
-    _publishStats({});
+    if (_statsSampler.reset()) {
+        emit statsChanged(_statsSampler.stats());
+    }
     PipelineSession* const session = std::exchange(_session, nullptr);
     session->shutdown();
     // Deleted from the event loop: this may run inside one of its calls. Its leftover work is dropped with it.
@@ -285,29 +287,11 @@ void GstReceiverWorker::_sampleStats()
         return;
     }
     VideoStreamStatsMeter::Counters counters;
-    VideoStreamStats stats = _stats;
+    VideoStreamStats stats = _statsSampler.stats();
     _session->sampleStats(counters, stats);
-    stats.uptimeMs = _supervisor->uptime().count();
-    stats.reconnects = _supervisor->reconnects();
-    if (_recording && (_recording->recordingMs() >= 0)) {
-        stats.recordingMs = _recording->recordingMs();
-        stats.recordingBytes = _recording->bytesWritten();
-    } else {
-        stats.recordingMs = -1;
-        stats.recordingBytes = -1;
+    if (_statsSampler.sample(counters, stats, _recording ? &*_recording : nullptr)) {
+        emit statsChanged(_statsSampler.stats());
     }
-    if (_statsMeter.update(counters, stats)) {
-        _publishStats(stats);
-    }
-}
-
-void GstReceiverWorker::_publishStats(const VideoStreamStats& stats)
-{
-    if (stats == _stats) {
-        return;
-    }
-    _stats = stats;
-    emit statsChanged(_stats);
 }
 
 QString GstReceiverWorker::_redactedUri() const

@@ -45,7 +45,7 @@ bool VideoStreamStatsMeter::update(const Counters& counters, VideoStreamStats& s
 
     // Totals count from reset(), the baseline sample included.
     _framesDisplayed += statsCounterGrowth(counters.framesDisplayed, _last.framesDisplayed);
-    _bytesReceived += statsCounterGrowth(counters.bytesReceived, _last.bytesReceived);
+    _bytesReceived += statsCounterGrowth(counters.bytesReceived.value_or(0), _last.bytesReceived.value_or(0));
     const quint64 framesDropped = statsCounterGrowth(counters.framesDropped, _last.framesDropped);
     _framesDropped += framesDropped;
     quint64 packetsReceived = 0;
@@ -72,7 +72,10 @@ bool VideoStreamStatsMeter::update(const Counters& counters, VideoStreamStats& s
     const double windowSeconds = static_cast<double>(nowMs - oldest.ms) / 1000.0;
     stats.valid = true;
     stats.fps = static_cast<double>(_framesDisplayed - oldest.framesDisplayed) / windowSeconds;
-    stats.bitrateKbps = static_cast<double>(_bytesReceived - oldest.bytesReceived) * 8.0 / 1000.0 / windowSeconds;
+    stats.bitrateKbps =
+        counters.bytesReceived
+            ? (static_cast<double>(_bytesReceived - oldest.bytesReceived) * 8.0 / 1000.0 / windowSeconds)
+            : -1.0;
     stats.framesDropped = static_cast<qint64>(_framesDropped);
     stats.droppedFps = static_cast<double>(framesDropped) / seconds;
     if (counters.rtp) {

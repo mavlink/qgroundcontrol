@@ -1,7 +1,12 @@
 #include "VideoStreamStatsMeterTest.h"
 
+#include <QtCore/QTemporaryDir>
+
+#include "RecordingPlan.h"
+#include "StreamSupervisor.h"
 #include "VideoStreamStats.h"
 #include "VideoStreamStatsMeter.h"
+#include "VideoStreamStatsSampler.h"
 
 namespace {
 
@@ -203,6 +208,59 @@ void VideoStreamStatsMeterTest::_testRatesAverageOverWindow()
         QCOMPARE(stats.fps, sample.fps);
         QCOMPARE(stats.droppedFps, sample.droppedFps);
     }
+}
+
+void VideoStreamStatsMeterTest::_testBitrateNeedsByteCount()
+{
+    qint64 nowMs = 1000;
+    VideoStreamStatsMeter meter([&nowMs] { return nowMs; });
+    VideoStreamStats stats;
+    VideoStreamStatsMeter::Counters counters;
+    QVERIFY(!meter.update(counters, stats));
+
+    nowMs += 1000;
+    counters.framesDisplayed = 30;
+    QVERIFY(meter.update(counters, stats));
+    QCOMPARE(stats.fps, 30.0);
+    QCOMPARE(stats.bitrateKbps, -1.0);
+}
+
+void VideoStreamStatsMeterTest::_testSamplerAddsSessionFields()
+{
+    qint64 nowMs = 1000;
+    StreamSupervisor supervisor;
+    supervisor.sessionStarted();
+    supervisor.sessionStreaming();
+    VideoStreamStatsSampler sampler(supervisor, [&nowMs] { return nowMs; });
+    const QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    RecordingPlan recording(dir.filePath(QStringLiteral("clip.mkv")), VideoReceiver::FileFormat::Mkv);
+
+    VideoStreamStats stats = sampler.stats();
+    stats.decoder = QStringLiteral("avdec_h264");
+    QVERIFY(!sampler.sample(meterCounters(0, 0), stats, &recording));
+    QVERIFY(!sampler.stats().valid);
+
+    nowMs += 1000;
+    QVERIFY(sampler.sample(meterCounters(30, 125000), stats, &recording));
+    QVERIFY(sampler.stats().valid);
+    QCOMPARE(sampler.stats().decoder, QStringLiteral("avdec_h264"));
+    QCOMPARE(sampler.stats().reconnects, 0);
+    QVERIFY(sampler.stats().uptimeMs >= 0);
+    // Not recording until the file got a frame.
+    QCOMPARE(sampler.stats().recordingMs, qint64(-1));
+    QCOMPARE(sampler.stats().recordingBytes, qint64(-1));
+
+    nowMs += 1000;
+    QVERIFY(recording.onFileOpened(recording.currentFile()));
+    QVERIFY(sampler.sample(meterCounters(60, 250000), sampler.stats(), &recording));
+    QVERIFY(sampler.stats().recordingMs >= 0);
+    QCOMPARE(sampler.stats().recordingBytes, qint64(0));
+
+    // A session's end publishes invalid stats once.
+    QVERIFY(sampler.reset());
+    QVERIFY(!sampler.stats().valid);
+    QVERIFY(!sampler.reset());
 }
 
 UT_REGISTER_TEST(VideoStreamStatsMeterTest, TestLabel::Unit)

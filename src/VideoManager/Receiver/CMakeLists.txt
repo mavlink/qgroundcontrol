@@ -23,6 +23,8 @@ target_sources(
         VideoStreamStats.h
         VideoStreamStatsMeter.cc
         VideoStreamStatsMeter.h
+        VideoStreamStatsSampler.cc
+        VideoStreamStatsSampler.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

@@ -13,7 +13,7 @@
 #include "StreamWatchdog.h"
 #include "VideoReceiver.h"
 #include "VideoStreamStats.h"
-#include "VideoStreamStatsMeter.h"
+#include "VideoStreamStatsSampler.h"
 
 class QTimer;
 
@@ -67,7 +67,6 @@ private:
     std::optional<RecordingBranch::Request> _recordingRequest() const;
     void _onWatchdogTick();
     void _sampleStats();
-    void _publishStats(const VideoStreamStats& stats);
     QString _redactedUri() const;
 
     void onSessionStreaming() override;
@@ -92,6 +91,5 @@ private:
 
     PipelineSession* _session = nullptr;
     int _statsTicks = 0;
-    VideoStreamStatsMeter _statsMeter;
-    VideoStreamStats _stats;
+    VideoStreamStatsSampler _statsSampler;
 };
