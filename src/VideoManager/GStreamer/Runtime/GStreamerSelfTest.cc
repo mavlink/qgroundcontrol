@@ -292,9 +292,10 @@ void Checker::_checkFeatures()
     // platform.
     const QList<MissingPluginFeature> missing = missingPluginFeatures(hasElementFactory);
     for (const MissingPluginFeature& feature : missing) {
-        _fail(
-            QStringLiteral("%1 unavailable: GStreamer elements %2 not found; their plugin is missing or failed to load")
-                .arg(feature.feature, feature.factories.join(QStringLiteral(", "))));
+        _fail(QStringLiteral("%1 unavailable: GStreamer elements %2 not found; %3")
+                  .arg(feature.feature, feature.factories.join(QStringLiteral(", ")),
+                       feature.hint.isEmpty() ? QStringLiteral("their plugin is missing or failed to load")
+                                              : feature.hint));
     }
 }
 

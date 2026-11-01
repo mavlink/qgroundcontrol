@@ -57,29 +57,22 @@ void _registerPlugins()
     });
 }
 
-// plugin_init can fail silently; confirm the element factory is exposed so failures surface here
-// rather than as a misleading "create returned nullptr" later. Common cause: iOS LTO / Android R8
-// stripping the GST_ELEMENT_REGISTER side effect.
-bool requireFactory(const char* name, const char* hint)
-{
-    if (!hasElementFactory(name)) {
-        qCCritical(GStreamerLog) << name << "factory not found —" << hint;
-        return false;
-    }
-    qCDebug(GStreamerLog) << name << "factory available";
-    return true;
-}
-
 struct PluginFeature
 {
     const char* name;
     bool required;
-    const char* factories;  // space-separated; "a|b" is satisfied by either factory
+    const char* factories;       // space-separated; "a|b" is satisfied by either factory
+    const char* hint = nullptr;  // the likely cause when the factories are missing, if not a missing plugin
 };
 
 // Checked per element, as Qt's qGstErrorMessageIfElementsNotAvailable does, so a missing optional plugin disables only
-// its feature. Only the display core is required. The qgc elements are checked separately (requireFactory).
+// its feature. Only the display core is required.
 constexpr PluginFeature kPluginFeatures[] = {
+    // The qgc plugin is linked in and registered by completeInit(), so plugin_init succeeded; a missing element means
+    // its GST_ELEMENT_REGISTER side effect was stripped at link time.
+    {"QGC video sink", true, "qgcqvideosink qgcvideosinkbin",
+     "the qgc plugin registered without exposing its elements; link-time symbol stripping (iOS LTO / Android R8) "
+     "likely removed the GST_ELEMENT_REGISTER side effect: add gstqgcelements.cc to a -force_load / keep rule"},
     {"Video display", true, "decodebin3 tee queue valve capsfilter videoconvertscale|videoconvert"},
     {"RTP/UDP video", true, "udpsrc rtpjitterbuffer parsebin rtph264depay h264parse rtph265depay h265parse"},
     {"RTSP video", false, "rtspsrc"},
@@ -106,13 +99,15 @@ bool _verifyPluginFeatures()
 
     bool displayAvailable = true;
     for (const MissingPluginFeature& feature : missing) {
+        const QString message =
+            QStringLiteral("%1 unavailable, GStreamer elements not found: %2%3")
+                .arg(feature.feature, feature.factories.join(QStringLiteral(", ")),
+                     feature.hint.isEmpty() ? QString() : QStringLiteral(" (%1)").arg(feature.hint));
         if (feature.required) {
-            qCCritical(GStreamerLog) << feature.feature
-                                     << "unavailable, GStreamer elements not found:" << feature.factories;
+            qCCritical(GStreamerLog).noquote() << message;
             displayAvailable = false;
         } else {
-            qCWarning(GStreamerLog) << feature.feature
-                                    << "unavailable, GStreamer elements not found:" << feature.factories;
+            qCWarning(GStreamerLog).noquote() << message;
         }
     }
 
@@ -202,8 +197,10 @@ QList<MissingPluginFeature> missingPluginFeatures(const std::function<bool(const
             }
         }
         if (!absent.isEmpty()) {
-            missing.append(
-                {.feature = QString::fromLatin1(feature.name), .factories = absent, .required = feature.required});
+            missing.append({.feature = QString::fromLatin1(feature.name),
+                            .factories = absent,
+                            .required = feature.required,
+                            .hint = QString::fromLatin1(feature.hint)});
         }
     }
     return missing;
@@ -286,16 +283,6 @@ bool completeInit(std::optional<int> debugLevel)
     _serializeUdpSrcUnlock();
 
     GStreamer::logDecoderRanks();
-
-    if (!requireFactory("qgcqvideosink", "sink bin will fail to construct")) {
-        return false;
-    }
-    if (!requireFactory("qgcvideosinkbin",
-                        "qgc plugin registered but element exposure failed. Likely link-time symbol "
-                        "stripping (iOS LTO / Android R8) removed the GST_ELEMENT_REGISTER side effect; "
-                        "add gstqgcelements.cc to a -force_load / keep rule.")) {
-        return false;
-    }
 
     return true;
 }

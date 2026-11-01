@@ -182,17 +182,21 @@ void GStreamerInitTest::_testMissingPluginFeatures_data()
     QTest::addColumn<QStringList>("missingFactories");
     QTest::addColumn<int>("missingFeatures");
     QTest::addColumn<bool>("videoUnavailable");
+    QTest::addColumn<bool>("hinted");
 
-    QTest::newRow("complete") << QStringList() << QStringList() << 0 << false;
+    QTest::newRow("complete") << QStringList() << QStringList() << 0 << false << false;
     QTest::newRow("videoconvert stands in for videoconvertscale")
-        << QStringList{"videoconvertscale"} << QStringList() << 0 << false;
+        << QStringList{"videoconvertscale"} << QStringList() << 0 << false << false;
     QTest::newRow("no converter") << QStringList{"videoconvertscale", "videoconvert"}
-                                  << QStringList{"videoconvertscale|videoconvert"} << 1 << true;
-    QTest::newRow("no udpsrc") << QStringList{"udpsrc"} << QStringList{"udpsrc"} << 1 << true;
-    QTest::newRow("no matroska") << QStringList{"matroskamux"} << QStringList{"matroskamux"} << 1 << false;
-    QTest::newRow("no isomp4") << QStringList{"mp4mux", "qtmux"} << QStringList{"mp4mux", "qtmux"} << 1 << false;
+                                  << QStringList{"videoconvertscale|videoconvert"} << 1 << true << false;
+    QTest::newRow("no udpsrc") << QStringList{"udpsrc"} << QStringList{"udpsrc"} << 1 << true << false;
+    QTest::newRow("no matroska") << QStringList{"matroskamux"} << QStringList{"matroskamux"} << 1 << false << false;
+    QTest::newRow("no isomp4") << QStringList{"mp4mux", "qtmux"} << QStringList{"mp4mux", "qtmux"} << 1 << false
+                               << false;
     QTest::newRow("no rtsp or tcp") << QStringList{"rtspsrc", "tcpclientsrc"} << QStringList{"rtspsrc", "tcpclientsrc"}
-                                    << 2 << false;
+                                    << 2 << false << false;
+    QTest::newRow("qgc elements stripped")
+        << QStringList{"qgcvideosinkbin"} << QStringList{"qgcvideosinkbin"} << 1 << true << true;
 }
 
 void GStreamerInitTest::_testMissingPluginFeatures()
@@ -201,21 +205,26 @@ void GStreamerInitTest::_testMissingPluginFeatures()
     QFETCH(QStringList, missingFactories);
     QFETCH(int, missingFeatures);
     QFETCH(bool, videoUnavailable);
+    QFETCH(bool, hinted);
 
     const QList<GStreamer::MissingPluginFeature> missing = GStreamer::missingPluginFeatures(
         [&absent](const char* factoryName) { return !absent.contains(QLatin1String(factoryName)); });
 
     QStringList factories;
     bool required = false;
+    bool hint = false;
     for (const GStreamer::MissingPluginFeature& feature : missing) {
         QVERIFY(!feature.feature.isEmpty());
         factories << feature.factories;
         required = required || feature.required;
+        hint = hint || !feature.hint.isEmpty();
     }
     QCOMPARE(missing.size(), missingFeatures);
     QCOMPARE(factories, missingFactories);
     QCOMPARE(required, videoUnavailable);
+    QCOMPARE(hint, hinted);
 }
+
 
 void GStreamerInitTest::_testBundledPluginIssues_data()
 {
