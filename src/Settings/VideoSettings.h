@@ -35,6 +35,8 @@ public:
     DEFINE_SETTINGFACT(videoConversionElement)
     DEFINE_SETTINGFACT(disablePixelAspectRatio)
     DEFINE_SETTINGFACT(uvcCameraFormat)
+    DEFINE_SETTINGFACT(uvcCameraRotation)
+    DEFINE_SETTINGFACT(uvcCameraMirror)
 
     /// videoFit's values (Video.SettingsGroup.json).
     enum VideoFit

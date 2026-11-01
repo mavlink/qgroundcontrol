@@ -73,7 +73,8 @@ public:
 
     /// True while the camera runs into a registered VideoOutput.
     bool canTakeScreenshot() const;
-    /// Saves the frame on display to @p file. False, with a warning logged, without one.
+    /// Saves the frame on display to @p file, rotated and mirrored as the registered VideoOutput shows it. False, with
+    /// a warning logged, without one.
     bool takeScreenshot(const QString& file) const;
 
     /// True while the camera runs into a registered VideoOutput, so startRecording() can record it.

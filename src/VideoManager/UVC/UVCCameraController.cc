@@ -278,7 +278,11 @@ bool UVCCameraController::takeScreenshot(const QString& file) const
         qCWarning(UVCCameraControllerLog) << "No video output to take a screenshot from";
         return false;
     }
-    return VideoScreenshot::save(videoSink->videoFrame(), file);
+    // VideoOutput's orientation is in degrees, a multiple of 90; QtVideo::Rotation's values are those degrees.
+    const int degrees = ((_videoOutput->property("orientation").toInt() % 360) + 360) % 360;
+    return VideoScreenshot::save(videoSink->videoFrame(), file,
+                                 static_cast<QtVideo::Rotation>(degrees - (degrees % 90)),
+                                 _videoOutput->property("mirrored").toBool());
 }
 
 void UVCCameraController::_createCamera()

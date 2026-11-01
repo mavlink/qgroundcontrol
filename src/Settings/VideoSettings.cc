@@ -111,6 +111,8 @@ DECLARE_SETTINGSFACT(VideoSettings, udpUrl)
 DECLARE_SETTINGSFACT(VideoSettings, rtspUrl)
 DECLARE_SETTINGSFACT(VideoSettings, tcpUrl)
 DECLARE_SETTINGSFACT(VideoSettings, uvcCameraFormat)
+DECLARE_SETTINGSFACT(VideoSettings, uvcCameraRotation)
+DECLARE_SETTINGSFACT(VideoSettings, uvcCameraMirror)
 
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
 {

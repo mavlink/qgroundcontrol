@@ -60,6 +60,46 @@ void UVCCameraControllerTest::_testScreenshotFromVideoOutput()
     verifyExpectedLogMessage();
 }
 
+void UVCCameraControllerTest::_testScreenshotFollowsOutputTransform()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString shot = tempDir.filePath(QStringLiteral("uvc.png"));
+
+    UVCCameraController controller;
+    QQmlEngine engine;
+    const std::unique_ptr<QQuickItem> output = createVideoOutput(engine);
+    QVERIFY(output);
+    // As UVCVideoOutput sets them from the rotation and mirror settings.
+    QVERIFY(output->setProperty("orientation", 90));
+    QVERIFY(output->setProperty("mirrored", true));
+    controller.registerVideoOutput(output.get());
+
+    // 64 × 48, red in the top-left quadrant only.
+    QImage frame(QSize(64, 48), QImage::Format_RGBA8888);
+    frame.fill(Qt::blue);
+    for (int y = 0; y < 24; ++y) {
+        for (int x = 0; x < 32; ++x) {
+            frame.setPixelColor(x, y, Qt::red);
+        }
+    }
+    showFrame(output.get(), frame);
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
+    QVERIFY(controller.takeScreenshot(shot));
+
+    // Turned clockwise the quadrant is the top-right one, and mirrored the top-left one again.
+    const QImage saved(shot);
+    QCOMPARE(saved.size(), QSize(48, 64));
+    const auto isRed = [&saved](int x, int y) {
+        const QColor color = saved.pixelColor(x, y);
+        return (color.red() > 200) && (color.blue() < 50);
+    };
+    QVERIFY(isRed(10, 10));
+    QVERIFY(!isRed(40, 10));
+    QVERIFY(!isRed(10, 50));
+    QVERIFY(!isRed(40, 50));
+}
+
 void UVCCameraControllerTest::_testMissingCameraNeverRuns()
 {
     UVCCameraController controller;

@@ -24,6 +24,15 @@
                     "control": "component",
                     "component": "UVCCameraFormatComboBox",
                     "showWhen": "QGroundControl.videoManager.isUvc"
+                },
+                {
+                    "setting": "videoSettings.uvcCameraRotation",
+                    "control": "combobox",
+                    "showWhen": "QGroundControl.videoManager.isUvc"
+                },
+                {
+                    "setting": "videoSettings.uvcCameraMirror",
+                    "showWhen": "QGroundControl.videoManager.isUvc"
                 }
             ]
         },

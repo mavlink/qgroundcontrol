@@ -210,6 +210,26 @@
             "default": "",
             "label": "USB Camera Format",
             "keywords": "usb camera,uvc,webcam,resolution,frame rate,pixel format,mjpeg"
+        },
+        {
+            "name": "uvcCameraRotation",
+            "shortDesc": "Rotates the USB camera's picture clockwise, for a camera mounted on its side or upside down.",
+            "longDesc": "Rotates the USB camera's picture clockwise on screen and in screenshots, for a camera mounted on its side or upside down. Recordings keep the camera's own orientation.",
+            "type": "uint32",
+            "enumStrings": "0°,90°,180°,270°",
+            "enumValues": "0,90,180,270",
+            "default": 0,
+            "label": "USB Camera Rotation",
+            "keywords": "usb camera,uvc,webcam,rotate,rotation,orientation,upside down"
+        },
+        {
+            "name": "uvcCameraMirror",
+            "shortDesc": "Mirrors the USB camera's picture left to right, after any rotation.",
+            "longDesc": "Mirrors the USB camera's picture left to right, after any rotation, on screen and in screenshots, for a camera that looks at the operator or through a mirror. Recordings keep the camera's own picture.",
+            "type": "bool",
+            "default": false,
+            "label": "Mirror USB Camera",
+            "keywords": "usb camera,uvc,webcam,mirror,flip,selfie"
         }
     ]
 }

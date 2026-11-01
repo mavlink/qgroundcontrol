@@ -8,7 +8,7 @@
 
 QGC_LOGGING_CATEGORY(VideoScreenshotLog, "Video.VideoScreenshot")
 
-QImage VideoScreenshot::displayedImage(const QVideoFrame& frame)
+QImage VideoScreenshot::displayedImage(const QVideoFrame& frame, QtVideo::Rotation outputRotation, bool outputMirrored)
 {
     if (!frame.isValid()) {
         return {};
@@ -26,20 +26,25 @@ QImage VideoScreenshot::displayedImage(const QVideoFrame& frame)
         image = image.copy(viewport.intersected(image.rect()));
     }
 
-    // Same order as Qt's presentation (qNormalizedFrameTransformation): rotate, then mirror horizontally.
-    const int degrees = static_cast<int>(frame.rotation());
-    if (degrees != 0) {
-        image = image.transformed(QTransform().rotate(degrees));
-    }
-    if (frame.mirrored()) {
-        image = image.flipped(Qt::Horizontal);
-    }
+    // Same order as Qt's presentation (qNormalizedFrameTransformation): the frame's rotation and mirroring, then the
+    // output's.
+    const auto rotateAndMirror = [&image](QtVideo::Rotation rotation, bool mirrored) {
+        if (const int degrees = static_cast<int>(rotation); degrees != 0) {
+            image = image.transformed(QTransform().rotate(degrees));
+        }
+        if (mirrored) {
+            image = image.flipped(Qt::Horizontal);
+        }
+    };
+    rotateAndMirror(frame.rotation(), frame.mirrored());
+    rotateAndMirror(outputRotation, outputMirrored);
     return image;
 }
 
-bool VideoScreenshot::save(const QVideoFrame& frame, const QString& file)
+bool VideoScreenshot::save(const QVideoFrame& frame, const QString& file, QtVideo::Rotation outputRotation,
+                           bool outputMirrored)
 {
-    const QImage image = displayedImage(frame);
+    const QImage image = displayedImage(frame, outputRotation, outputMirrored);
     if (image.isNull()) {
         qCWarning(VideoScreenshotLog) << "No video frame to take a screenshot from";
         return false;

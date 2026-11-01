@@ -8,6 +8,9 @@ Configure video streaming and recording settings.
 - **USB Camera Format** (USB cameras only) — the resolution, frame rate and pixel format the camera runs in, from the
   ones it offers, best first. **Auto** lets Qt choose: the highest resolution at 30 fps or more, often an MJPEG format,
   which costs CPU time to decode. YUYV and NV12 formats need no decoding but more USB bandwidth.
+- **USB Camera Rotation** and **Mirror USB Camera** (USB cameras only) — turn the picture clockwise, for a camera mounted
+  on its side or upside down, and mirror it left to right after that. Screenshots follow; recordings keep the camera's
+  own picture.
 
 When a MAVLink camera advertises its video stream, QGC plays that stream (and any thermal stream it advertises)
 instead of the configured source. Your source and connection settings are left unchanged and apply again once no
