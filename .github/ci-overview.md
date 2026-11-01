@@ -560,8 +560,9 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   no separate Extended Tests workflow.
 - **Windows GStreamer tests**: `windows.yml`'s `gstreamer-tests` job builds x64 Debug with tests
   and runs only the GStreamer and video test classes and `cmake/GStreamer`'s script tests
-  (`run-unit-tests`' `tests-regex` `^(Gst|GStreamer[A-Z.]|Video|Subtitle|QGCVideo)`, Unit and
-  Integration), so the latter's Windows-only branches (8.3 short paths, SDK architecture) run on
+  (`run-unit-tests`' `tests-regex` `^(Gst|GStreamer[A-Z.]|Video|Subtitle|QGCVideo|QtMultimedia|QtVideo|UVC)`,
+  Unit and Integration), with the Qt Multimedia receiver, its recorder and the USB camera classes, so the latter's
+  Windows-only branches (8.3 short paths, SDK architecture) run on
   Windows. The build tree finds the
   SDK only through `verify_executable.py --export-gstreamer-env`, which puts its `bin/` on `PATH`
   and stages the shipped plugins plus the sources and encoders the tests send streams with
