@@ -2,7 +2,7 @@
 
 #include "GStreamerTestBase.h"
 
-/// The pipeline-building helpers of GStreamerHelpers.h.
+/// The pipeline-building helpers of GStreamerHelpers.h, and the TeeBranchHead every tee branch starts with.
 class GStreamerHelpersTest : public GStreamerTestBase
 {
     Q_OBJECT
@@ -13,7 +13,7 @@ private slots:
     void _testAddToBinRejects();
     void _testDisposeChild();
     void _testFlushAndDisposeChildFlushes();
-    void _testAddTeeBranch();
+    void _testTeeBranchHead();
     void _testRequestKeyframe();
     void _testSendEventAsync();
     void _testFirstSrcPad();

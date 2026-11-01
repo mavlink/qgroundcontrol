@@ -12,6 +12,7 @@
 #include "GStreamerHelpers.h"
 #include "GStreamerTestHelpers.h"
 #include "GstScoped.h"
+#include "TeeBranchHead.h"
 
 namespace {
 
@@ -132,31 +133,60 @@ void GStreamerHelpersTest::_testFlushAndDisposeChildFlushes()
     QCOMPARE(state, GST_STATE_NULL);
 }
 
-void GStreamerHelpersTest::_testAddTeeBranch()
+void GStreamerHelpersTest::_testTeeBranchHead()
 {
     GstTest::TestPipeline pipeline(gst_pipeline_new("helpers"));
     QVERIFY(pipeline.get());
     GstElement* const tee = GStreamer::addToBin(pipeline.get(), GStreamer::makeElement("tee", "tee"), "tee");
     QVERIFY(tee);
 
-    const GStreamer::TeeBranch branch = GStreamer::addTeeBranch(pipeline.get(), tee, "test");
-    QVERIFY(branch.queue);
-    QVERIFY(branch.valve);
-    QCOMPARE(parentOf(branch.queue), pipeline.get());
-    QCOMPARE(parentOf(branch.valve), pipeline.get());
+    TeeBranchHead head;
+    QVERIFY(head.build(pipeline.get(), tee, GStreamer::PipelineBranch::Recording, "test"));
+    GstElement* const queue = head.queue();
+    GstElement* const valve = head.valve();
+    QVERIFY(queue);
+    QVERIFY(valve);
+    QCOMPARE(parentOf(queue), pipeline.get());
+    QCOMPARE(parentOf(valve), pipeline.get());
+    QVERIFY(head.contains(GST_OBJECT(queue)));
+    QVERIFY(head.contains(GST_OBJECT(valve)));
+    QVERIFY(!head.contains(GST_OBJECT(tee)));
+    QCOMPARE(GStreamer::branchOf(GST_OBJECT(queue)), GStreamer::PipelineBranch::Recording);
+    QCOMPARE(GStreamer::branchOf(GST_OBJECT(valve)), GStreamer::PipelineBranch::Recording);
     gboolean drop = FALSE;
-    g_object_get(branch.valve, "drop", &drop, nullptr);
+    g_object_get(valve, "drop", &drop, nullptr);
     QVERIFY(drop);
 
     // tee ! queue ! valve
-    const GStreamer::GstPadPtr queueSink = GStreamer::adoptPad(gst_element_get_static_pad(branch.queue, "sink"));
+    const GStreamer::GstPadPtr queueSink = GStreamer::adoptPad(gst_element_get_static_pad(queue, "sink"));
     const GStreamer::GstPadPtr teeSrc = GStreamer::adoptPad(gst_pad_get_peer(queueSink.get()));
     QVERIFY(teeSrc);
     QCOMPARE(GST_PAD_PARENT(teeSrc.get()), tee);
-    const GStreamer::GstPadPtr valveSink = GStreamer::adoptPad(gst_element_get_static_pad(branch.valve, "sink"));
+    const GStreamer::GstPadPtr valveSink = GStreamer::adoptPad(gst_element_get_static_pad(valve, "sink"));
     const GStreamer::GstPadPtr queueSrc = GStreamer::adoptPad(gst_pad_get_peer(valveSink.get()));
     QVERIFY(queueSrc);
-    QCOMPARE(GST_PAD_PARENT(queueSrc.get()), branch.queue);
+    QCOMPARE(GST_PAD_PARENT(queueSrc.get()), queue);
+
+    // Opening asks upstream for a keyframe to start from; the pads must be active for the request to leave the valve.
+    QVERIFY(gst_element_set_state(pipeline.get(), GST_STATE_PAUSED) != GST_STATE_CHANGE_FAILURE);
+    std::atomic<int> requests{0};
+    GStreamer::PadProbe probe;
+    QVERIFY(probe.add(queueSrc.get(), GST_PAD_PROBE_TYPE_EVENT_UPSTREAM, countKeyframeRequests, &requests));
+    head.open();
+    g_object_get(valve, "drop", &drop, nullptr);
+    QVERIFY(!drop);
+    QCOMPARE(requests.load(), 1);
+
+    head.close();
+    g_object_get(valve, "drop", &drop, nullptr);
+    QVERIFY(drop);
+
+    head.reset();
+    QVERIFY(!head.queue());
+    QVERIFY(!head.valve());
+    head.open();
+    head.close();
+    QCOMPARE(requests.load(), 1);
 }
 
 void GStreamerHelpersTest::_testRequestKeyframe()

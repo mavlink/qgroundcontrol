@@ -81,23 +81,19 @@ DecodingBranch::~DecodingBranch()
 
 bool DecodingBranch::build()
 {
-    const GStreamer::TeeBranch branch = GStreamer::addTeeBranch(_context.pipeline, _context.tee, "display");
-    if (!branch.valve) {
+    if (!_head.build(_context.pipeline, _context.tee, GStreamer::PipelineBranch::Decoding, "display")) {
         return false;
     }
-    _queue = branch.queue;
-    _valve = branch.valve;
-    GStreamer::markBranch(_queue, GStreamer::PipelineBranch::Decoding);
-    GStreamer::markBranch(_valve, GStreamer::PipelineBranch::Decoding);
+    GstElement* const queue = _head.queue();
 
     // Tiny and leaky: the live display must drop its oldest frame on backpressure, never stall the tee.
-    gst_util_set_object_arg(G_OBJECT(_queue), "leaky", "downstream");
-    g_object_set(_queue, "max-size-buffers", kDisplayQueueMaxBuffers, "max-size-bytes", 0, "max-size-time",
+    gst_util_set_object_arg(G_OBJECT(queue), "leaky", "downstream");
+    g_object_set(queue, "max-size-buffers", kDisplayQueueMaxBuffers, "max-size-bytes", 0, "max-size-time",
                  G_GUINT64_CONSTANT(0), nullptr);
 
     // "overrun" fires before the queue drops its oldest frame.
-    (void) _queueOverrun.connect(_queue, "overrun", G_CALLBACK(_onQueueOverrun), this);
-    const GStreamer::GstPadPtr queueSrc = GStreamer::adoptPad(gst_element_get_static_pad(_queue, "src"));
+    _head.onOverrun(G_CALLBACK(_onQueueOverrun), this);
+    const GStreamer::GstPadPtr queueSrc = GStreamer::adoptPad(gst_element_get_static_pad(queue, "src"));
     if (!queueSrc || !_keyframeGate.add(queueSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, _gateProbe, this)) {
         qCCritical(GstVideoReceiverLog) << "Failed to add the display keyframe gate";
         return false;
@@ -107,15 +103,13 @@ bool DecodingBranch::build()
 
 void DecodingBranch::reset()
 {
-    _queueOverrun.disconnect();
     _keyframeGate.remove();
     _removeDecoder();
     _sinkFrameProbe.remove();
     _sink.reset();
     _sinkStatsAtStart.reset();
     _setDecoding(false);
-    _queue = nullptr;
-    _valve = nullptr;
+    _head.reset();
 }
 
 void DecodingBranch::setVideoSink(GstElement* sink)
@@ -185,8 +179,7 @@ void DecodingBranch::restartDecoder(const char* reason)
 
 bool DecodingBranch::isCurrent(GstObject* source) const
 {
-    return (source == GST_OBJECT_CAST(_queue)) || (source == GST_OBJECT_CAST(_valve)) ||
-           isInside(source, _decoder.get()) || (_decoder && isInside(source, _sink.get()));
+    return _head.contains(source) || isInside(source, _decoder.get()) || (_decoder && isInside(source, _sink.get()));
 }
 
 GstQgc::PathStats DecodingBranch::sinkPathStats() const
@@ -259,7 +252,7 @@ void DecodingBranch::_insertDecoder()
     (void) _decoderPadAdded.connect(_decoder.get(), "pad-added", G_CALLBACK(_onDecoderPadAdded), this);
 
     if (!gst_bin_add(GST_BIN(_context.pipeline), _decoder.get()) ||
-        !gst_element_sync_state_with_parent(_decoder.get()) || !gst_element_link(_valve, _decoder.get())) {
+        !gst_element_sync_state_with_parent(_decoder.get()) || !gst_element_link(_head.valve(), _decoder.get())) {
         qCWarning(GstVideoReceiverLog) << "Unable to insert the decoder" << _context.redactedUri;
         _removeDecoder();
         return;
@@ -269,20 +262,15 @@ void DecodingBranch::_insertDecoder()
     (void) _insertions.fetch_add(1, std::memory_order_relaxed);
     _context.watchdog->startSinkClock(StreamWatchdog::now());
     _gateClosed.store(false, std::memory_order_relaxed);
-    g_object_set(_valve, "drop", FALSE, nullptr);
-
     // Without a keyframe the new decoder has nothing to start from until the stream's next one.
-    const GStreamer::GstPadPtr valveSink = GStreamer::adoptPad(gst_element_get_static_pad(_valve, "sink"));
-    GStreamer::requestKeyframe(valveSink.get());
+    _head.open();
 
     qCDebug(GstVideoReceiverLog) << "Decoder inserted" << _context.redactedUri;
 }
 
 void DecodingBranch::_removeDecoder()
 {
-    if (_valve) {
-        g_object_set(_valve, "drop", TRUE, nullptr);
-    }
+    _head.close();
     // The sink first: going NULL releases a decoder thread waiting inside it, so the decoder can stop.
     if (_sink) {
         GStreamer::disposeChild(_sink.get());
@@ -347,13 +335,7 @@ void DecodingBranch::_onQueueOverrun(GstElement* /*queue*/, gpointer data)
         return;
     }
     self->_gateDrops.store(0, std::memory_order_relaxed);
-    self->_context.post([self]() {
-        if (self->_valve) {
-            const GStreamer::GstPadPtr valveSink =
-                GStreamer::adoptPad(gst_element_get_static_pad(self->_valve, "sink"));
-            GStreamer::requestKeyframe(valveSink.get());
-        }
-    });
+    self->_context.post([self]() { self->_head.requestKeyframe(); });
 }
 
 GstPadProbeReturn DecodingBranch::_gateProbe(GstPad* /*pad*/, GstPadProbeInfo* info, gpointer data)

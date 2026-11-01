@@ -69,25 +69,6 @@ GstElement* addToBin(GstElement* bin, GstElementPtr element, const char* what)
     return added;
 }
 
-TeeBranch addTeeBranch(GstElement* pipeline, GstElement* tee, const char* what)
-{
-    GstElementPtr queue = makeElement("queue");
-    GstElementPtr valve = makeElement("valve");
-    if (!queue || !valve) {
-        qCWarning(GStreamerHelpersLog) << "Failed to create the queue and valve of the" << what << "branch";
-        return {};
-    }
-    g_object_set(valve.get(), "drop", TRUE, nullptr);
-
-    const TeeBranch branch{.queue = addToBin(pipeline, std::move(queue), "queue"),
-                           .valve = addToBin(pipeline, std::move(valve), "valve")};
-    if (!branch.queue || !branch.valve || !gst_element_link_many(tee, branch.queue, branch.valve, nullptr)) {
-        qCWarning(GStreamerHelpersLog) << "Unable to link the" << what << "branch";
-        return {};
-    }
-    return branch;
-}
-
 void requestKeyframe(GstPad* sinkPad)
 {
     if (!sinkPad) {

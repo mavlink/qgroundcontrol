@@ -212,32 +212,26 @@ RecordingBranch::~RecordingBranch()
 
 bool RecordingBranch::build()
 {
-    const GStreamer::TeeBranch branch = GStreamer::addTeeBranch(_context.pipeline, _context.tee, "recording");
-    if (!branch.valve) {
+    if (!_head.build(_context.pipeline, _context.tee, GStreamer::PipelineBranch::Recording, "recording")) {
         return false;
     }
-    _queue = branch.queue;
-    _valve = branch.valve;
-    GStreamer::markBranch(_queue, GStreamer::PipelineBranch::Recording);
-    GStreamer::markBranch(_valve, GStreamer::PipelineBranch::Recording);
 
     // Every frame must reach the muxer, so no time or buffer limit; storage that falls this far behind ends the
     // recording (_onQueueOverrun) instead of holding up the tee.
-    g_object_set(_queue, "max-size-time", G_GUINT64_CONSTANT(0), "max-size-buffers", 0, "max-size-bytes",
+    g_object_set(_head.queue(), "max-size-time", G_GUINT64_CONSTANT(0), "max-size-buffers", 0, "max-size-bytes",
                  static_cast<guint>(kQueueMaxBytes), nullptr);
-    (void) _queueOverrun.connect(_queue, "overrun", G_CALLBACK(_onQueueOverrun), this);
+    _head.onOverrun(G_CALLBACK(_onQueueOverrun), this);
 
     // Preserve stream-start/caps/segment events while buffers are dropped. When recording
     // starts later, the newly linked parser receives the negotiated codec configuration.
     // drop-mode exists since GStreamer 1.20, the oldest version QGC supports.
-    gst_util_set_object_arg(G_OBJECT(_valve), "drop-mode", "forward-sticky-events");
+    gst_util_set_object_arg(G_OBJECT(_head.valve()), "drop-mode", "forward-sticky-events");
     return true;
 }
 
 void RecordingBranch::reset()
 {
     _finalizeTimer.stop();
-    _queueOverrun.disconnect();
     _keyframeWatch.remove();
     if (_fileSink) {
         GStreamer::flushAndDisposeChild(_fileSink.get());
@@ -245,8 +239,7 @@ void RecordingBranch::reset()
     }
     (void) _finalizer.disarm();
     _state = State::Idle;
-    _queue = nullptr;
-    _valve = nullptr;
+    _head.reset();
 }
 
 void RecordingBranch::setRequest(const std::optional<Request>& request)
@@ -291,7 +284,7 @@ void RecordingBranch::_start(const Request& request)
     qCDebug(GstVideoReceiverLog) << "Starting recording" << request.file << _context.redactedUri;
 
     // forward-sticky-events keeps the negotiated caps on the closed valve; the query covers the moment before.
-    const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(_valve, "src"));
+    const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(_head.valve(), "src"));
     GStreamer::GstCapsPtr inputCaps = GStreamer::adoptCaps(gst_pad_get_current_caps(valveSrc.get()));
     if (!inputCaps) {
         inputCaps = GStreamer::adoptCaps(gst_pad_query_caps(valveSrc.get(), nullptr));
@@ -306,8 +299,9 @@ void RecordingBranch::_start(const Request& request)
     // Before the sink can post, so its ERROR (such as a file that can't be opened) settles this recording.
     _finalizer.arm(_fileSink.get());
 
-    gst_util_set_object_arg(G_OBJECT(_queue), "leaky", "no");
-    if (!gst_bin_add(GST_BIN(_context.pipeline), _fileSink.get()) || !gst_element_link(_valve, _fileSink.get())) {
+    gst_util_set_object_arg(G_OBJECT(_head.queue()), "leaky", "no");
+    if (!gst_bin_add(GST_BIN(_context.pipeline), _fileSink.get()) ||
+        !gst_element_link(_head.valve(), _fileSink.get())) {
         qCWarning(GstVideoReceiverLog) << "Failed to add the recording sink" << _context.redactedUri;
         _failure = QCoreApplication::translate("RecordingBranch", "Unable to add the recording sink.");
         _finish(QString());
@@ -333,9 +327,7 @@ void RecordingBranch::_start(const Request& request)
         return;
     }
 
-    g_object_set(_valve, "drop", FALSE, nullptr);
-    const GStreamer::GstPadPtr valveSink = GStreamer::adoptPad(gst_element_get_static_pad(_valve, "sink"));
-    GStreamer::requestKeyframe(valveSink.get());
+    _head.open();
     _context.dotDumper->dump(_context.pipeline, "pipeline-with-filesink");
 }
 
@@ -348,7 +340,7 @@ void RecordingBranch::_end(const QString& failure)
         _failure = failure;
     }
 
-    g_object_set(_valve, "drop", TRUE, nullptr);
+    _head.close();
     _keyframeWatch.remove();
 
     if (!_fileStarted.load(std::memory_order_acquire)) {
@@ -358,7 +350,7 @@ void RecordingBranch::_end(const QString& failure)
 
     // Unlinked, so the next recording can take the valve while this one drains parser -> muxer -> file. Not sent from
     // here: the EOS waits for the recorder's streaming thread, which slow storage can hold up.
-    const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(_valve, "src"));
+    const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(_head.valve(), "src"));
     const GStreamer::GstPadPtr recorderSink = GStreamer::adoptPad(gst_pad_get_peer(valveSrc.get()));
     if (!recorderSink || !gst_pad_unlink(valveSrc.get(), recorderSink.get())) {
         qCWarning(GstVideoReceiverLog) << "Unable to unlink the recording sink";
@@ -374,9 +366,7 @@ void RecordingBranch::_finish(const QString& error)
 {
     _finalizeTimer.stop();
     _keyframeWatch.remove();
-    if (_valve) {
-        g_object_set(_valve, "drop", TRUE, nullptr);
-    }
+    _head.close();
 
     const RecordingFinalizer::Outcome outcome = _finalizer.disarm();
     if (_fileSink) {
@@ -452,7 +442,7 @@ void RecordingBranch::completeTeardown()
         warnNotFinalized();
         // Not serialized, so it doesn't wait for the stream lock: wakes the tee's thread if the full queue holds it,
         // and has the queue stop pushing into the recorder.
-        const GStreamer::GstPadPtr queueSink = GStreamer::adoptPad(gst_element_get_static_pad(_queue, "sink"));
+        const GStreamer::GstPadPtr queueSink = GStreamer::adoptPad(gst_element_get_static_pad(_head.queue(), "sink"));
         (void) gst_pad_send_event(queueSink.get(), gst_event_new_flush_start());
         _finish(notFinalizedError());
         return;

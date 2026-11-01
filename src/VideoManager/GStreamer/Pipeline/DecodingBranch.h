@@ -9,6 +9,7 @@
 #include "BranchContext.h"
 #include "GstScoped.h"
 #include "HwBuffers/common/GstHwPathTelemetry.h"
+#include "TeeBranchHead.h"
 
 namespace GstQgc {
 struct PathStats;
@@ -83,7 +84,7 @@ public:
     /// A decoder is inserted, so frames are due at the sink.
     bool displaying() const { return _decoder != nullptr; }
 
-    GstElement* valve() const { return _valve; }
+    GstElement* valve() const { return _head.valve(); }
 
     /// Whether @p source is (inside) the current decoder or video sink, or the branch's queue or valve. Errors from
     /// anything else of the branch are left over from a replaced decoder.
@@ -122,9 +123,7 @@ private:
     Listener& _listener;
     const bool _lowLatency;
 
-    // Owned by the pipeline.
-    GstElement* _queue = nullptr;
-    GstElement* _valve = nullptr;
+    TeeBranchHead _head;
 
     GStreamer::GstElementPtr _sink;
     GStreamer::GstElementPtr _decoder;
@@ -141,7 +140,6 @@ private:
     QString _displayPath;
     GStreamer::PadProbe _sinkFrameProbe;
     GStreamer::PadProbe _keyframeGate;
-    GStreamer::ScopedSignal _queueOverrun;
     GStreamer::ScopedSignal _decoderPadAdded;
     GStreamer::ScopedSignal _decoderElementAdded;
 

@@ -21,16 +21,6 @@ void flushAndDisposeChild(GstElement* element);
 /// dropped. Returns the borrowed (bin-owned) element, or null if the bin rejected it; @p what names it in the warning.
 GstElement* addToBin(GstElement* bin, GstElementPtr element, const char* what);
 
-/// The head of a branch behind @p tee: a queue and a closed valve (drop=TRUE), added to @p pipeline and linked
-/// tee ! queue ! valve. Both are null on failure, which is logged with @p what naming the branch.
-struct TeeBranch
-{
-    GstElement* queue = nullptr;
-    GstElement* valve = nullptr;
-};
-
-TeeBranch addTeeBranch(GstElement* pipeline, GstElement* tee, const char* what);
-
 /// Asks the encoder upstream of @p sinkPad for a keyframe with its parameter sets (on RTSP, rtpbin turns this into an
 /// RTCP PLI/FIR). Doesn't block: the event is not serialized.
 void requestKeyframe(GstPad* sinkPad);

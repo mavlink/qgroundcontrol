@@ -10,6 +10,7 @@
 #include "BranchContext.h"
 #include "GstScoped.h"
 #include "RecordingFinalizer.h"
+#include "TeeBranchHead.h"
 #include "VideoReceiver.h"
 
 /// \brief The recording branch behind the session's tee: queue ! valve [! parser ! muxer ! filesink].
@@ -88,7 +89,7 @@ public:
     /// A bus ELEMENT message: the recorder's EOS, as the pipeline forwards it, means its file is closed.
     void onBusElement(GstMessage* message);
 
-    GstElement* valve() const { return _valve; }
+    GstElement* valve() const { return _head.valve(); }
 
 private:
     enum class State
@@ -116,9 +117,7 @@ private:
     Listener& _listener;
     QTimer _finalizeTimer;
 
-    // Owned by the pipeline.
-    GstElement* _queue = nullptr;
-    GstElement* _valve = nullptr;
+    TeeBranchHead _head;
 
     State _state = State::Idle;
     bool _streaming = false;
@@ -129,7 +128,6 @@ private:
     GStreamer::GstElementPtr _fileSink;
     RecordingFinalizer _finalizer;
     GStreamer::PadProbe _keyframeWatch;
-    GStreamer::ScopedSignal _queueOverrun;
     /// Set by the keyframe probe once the file got its first frame.
     std::atomic<bool> _fileStarted = false;
     bool _openedReported = false;
