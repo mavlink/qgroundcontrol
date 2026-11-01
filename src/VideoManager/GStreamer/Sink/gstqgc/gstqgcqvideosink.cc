@@ -16,6 +16,7 @@
 #include "GstQgcCaps.h"
 #include "GstQgcFrameDelivery.h"
 #include "GstQgcFrameMap.h"
+#include "GstQgcPathSession.h"
 #include "GstQgcSinkCounters.h"
 #include "GstQgcSinkStats.h"
 #include "HwBuffers/common/GstHwVideoInfo.h"
@@ -58,16 +59,13 @@ struct PrivState
     bool gpu_caps = false;
     // GstVideoOrientationMethod from the stream's image-orientation tag, for frames without an orientation meta.
     std::atomic<int> stream_orientation{GST_VIDEO_ORIENTATION_IDENTITY};
-    std::atomic<quint64> consecutive_map_failures{0};  // sustained run escalates show_frame to error
-    // One stream demotion, and one tiled-drop warning, per caps epoch; reset with the path cache.
-    bool demotion_recorded = false;
-    bool tiled_drop_logged = false;
     // Live zero-copy CPU frames pinning this sink's decoder buffers; shared because Qt may hold frames past finalize.
     CpuVideoFramePool::PinnedFrameCounter pinned_cpu_frames = std::make_shared<std::atomic<int>>(0);
     // Negotiated caps held from set_caps; avoids per-frame allocation and preserves DRM modifiers.
     GstCaps* cached_caps{nullptr};
-    // Per-caps-epoch resolved-path cache; reset on set_caps so a format change re-runs path selection.
-    HwResolvedPathCache resolved_path_cache = {};
+    // The path frames take through the caps epoch; set_caps starts a new one, so a format change re-runs path
+    // selection.
+    GstQgc::PathSession path_session;
 };
 
 }  // namespace
@@ -346,9 +344,7 @@ static gboolean gst_qgc_q_video_sink_set_caps(GstBaseSink* bsink, GstCaps* caps)
     // negotiated fields the downstream frame mapping relies on.
     p->cached_caps = gst_caps_ref(caps);
     p->gpu_caps = caps_carry_gpu_memory(caps);
-    p->resolved_path_cache = HwResolvedPathCache{};
-    p->demotion_recorded = false;
-    p->tiled_drop_logged = false;
+    p->path_session.startEpoch();
     p->caps_valid.store(true, std::memory_order_release);
 
     qCInfo(GstQgcQVideoSinkLog).noquote()
@@ -356,9 +352,6 @@ static gboolean gst_qgc_q_video_sink_set_caps(GstBaseSink* bsink, GstCaps* caps)
         << "pixfmt=" << int(pixelFormat);
     return TRUE;
 }
-
-// Sustained run of map failures (not a transient hiccup) means the import is broken — tear down + restart.
-constexpr quint64 kMaxConsecutiveMapFailures = 120;
 
 static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuffer* buf)
 {
@@ -395,31 +388,22 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
         croppedFmt = applyCropMeta(p->format, buf);
     }
     MappedFrame mapped = mapSampleToFrame(buf, p->cached_caps, p->video_info, hasCrop ? croppedFmt : p->format, hwCtx,
-                                          p->pinned_cpu_frames, &p->resolved_path_cache);
+                                          p->pinned_cpu_frames, p->path_session.pathCache());
     if (!mapped.frame.isValid()) {
         p->counters.noteDropped();
-        const quint64 c = p->consecutive_map_failures.fetch_add(1, std::memory_order_relaxed) + 1;
-        if (mapped.noCpuLayout) {
-            // Until upstream renegotiates (the sink asked for it when the DMABuf import stopped), or the run escalates.
-            p->counters.noteTiledDrop();
-            if (!std::exchange(p->tiled_drop_logged, true)) {
-                qCWarning(GstQgcQVideoSinkLog) << "tiled DMA_DRM frame not imported and has no CPU layout — dropped";
-            }
-        } else if ((c & 0x3F) == 1) {
-            qCWarning(GstQgcQVideoSinkLog) << "mapping failed, consecutive=" << c;
-        }
-        if (c >= kMaxConsecutiveMapFailures) {
+        if (p->path_session.onMapFailed(mapped, p->counters) == GstQgc::PathSession::Verdict::Error) {
+            const quint64 failures = p->path_session.consecutiveMapFailures();
             const char* const format = gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(&p->video_info));
-            qCWarning(GstQgcQVideoSinkLog) << c << "consecutive map failures — erroring out";
             // Without an element error upstream reports only a generic "Internal data stream error".
-            GST_ELEMENT_ERROR(self, STREAM, FAILED, ("Video frames could not be mapped for display"),
-                              ("%" G_GUINT64_FORMAT " consecutive map failures (path %s, format %s)",
-                               static_cast<guint64>(c), GstHw::toString(mapped.gpuPath), format ? format : "unknown"));
+            GST_ELEMENT_ERROR(
+                self, STREAM, FAILED, ("Video frames could not be mapped for display"),
+                ("%" G_GUINT64_FORMAT " consecutive map failures (path %s, format %s)", static_cast<guint64>(failures),
+                 GstHw::toString(mapped.gpuPath), format ? format : "unknown"));
             return GST_FLOW_ERROR;
         }
         return GST_FLOW_OK;  // drop transient failure, keep the stream alive
     }
-    p->consecutive_map_failures.store(0, std::memory_order_relaxed);
+    p->path_session.onMapped();
 
     applyOrientationAndTiming(mapped.frame, buf, p->stream_orientation.load(std::memory_order_relaxed));
 
@@ -430,10 +414,7 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
         return GST_FLOW_OK;  // QVideoSink unbound while mapping
     }
     const quint64 delivered = p->counters.noteDelivered(mapped.gpuPath, delivery.superseded);
-
-    if (mapped.demoted) {
-        p->counters.noteGpuFallback(!std::exchange(p->demotion_recorded, true));
-    }
+    p->path_session.onDelivered(mapped, p->counters);
 
     if (delivered == 1) {
         qCInfo(GstQgcQVideoSinkLog).noquote()
@@ -498,11 +479,8 @@ static gboolean gst_qgc_q_video_sink_stop(GstBaseSink* bsink)
     p->caps_valid.store(false, std::memory_order_release);
     gst_clear_caps(&p->cached_caps);
     p->gpu_caps = false;
-    p->resolved_path_cache = HwResolvedPathCache{};
-    p->demotion_recorded = false;
-    p->tiled_drop_logged = false;
+    p->path_session.stop();
     p->stream_orientation.store(GST_VIDEO_ORIENTATION_IDENTITY, std::memory_order_relaxed);
-    p->consecutive_map_failures.store(0, std::memory_order_relaxed);
     p->delivery.dropPending();
 
     GstBaseSinkClass* parentClass = GST_BASE_SINK_CLASS(gst_qgc_q_video_sink_parent_class);

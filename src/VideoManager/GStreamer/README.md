@@ -82,6 +82,8 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   `frame-stats` property reports that sink's own frame counts per delivery path, GPU fallbacks, dropped tiled frames
   (`GstQgc::formatSinkStats` in `GstQgcSinkStats.h` formats them) and delivered frames a newer one replaced before the `QVideoSink` took them
   (`superseded-frames`), all counted by its `GstQgcSinkCounters`; GstBaseSink's standard `stats` property is left as is.
+  Its `GstQgcPathSession` keeps what holds for one caps epoch (the GPU path resolved, one demotion and one tiled-drop
+  warning per epoch) and fails the stream after 120 frames in a row fail to map.
 - **Sink caps** — `qgcqvideosink` answers caps queries itself (`GstQgc::buildSinkCaps`), with the formats Qt renders
   (`kVideoFormatTable`):
   - System memory always, with `pixel-aspect-ratio=1/1` unless the bin's `disable-par` is set.

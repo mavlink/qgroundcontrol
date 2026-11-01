@@ -22,6 +22,8 @@ target_sources(
         GstQgcFrameDelivery.h
         GstQgcGpuBin.cc
         GstQgcGpuBin.h
+        GstQgcPathSession.cc
+        GstQgcPathSession.h
         GstQgcRenderTarget.cc
         GstQgcRenderTarget.h
         GstQgcSinkCounters.cc

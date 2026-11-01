@@ -28,7 +28,10 @@
 #include "gstqgc/GstQgcBinChain.h"
 #include "gstqgc/GstQgcCaps.h"
 #include "gstqgc/GstQgcFrameDelivery.h"
+#include "gstqgc/GstQgcFrameMap.h"
+#include "gstqgc/GstQgcPathSession.h"
 #include "gstqgc/GstQgcRenderTarget.h"
+#include "gstqgc/GstQgcSinkCounters.h"
 #include "gstqgc/GstQgcSinkStats.h"
 #include "gstqgc/GstQgcTestSupport.h"
 #include "gstqgc/gstqgcvideosinkbin.h"
@@ -1126,6 +1129,64 @@ void GstQgcSinkTest::_testFrameDeliveryKeepsTheLatestFrame()
 
     delivery.setSink(nullptr);
     QVERIFY(!delivery.deliver(frameOfWidth(12)).delivered);
+}
+
+void GstQgcSinkTest::_testPathSessionFailurePolicy()
+{
+    GSTTEST_REQUIRE_GSTREAMER();
+
+    using Verdict = GstQgc::PathSession::Verdict;
+    constexpr const char* kSinkLog = "Video.GStreamer.QgcQVideoSink";
+    GstQgc::PathSession session;
+    GstQgc::SinkCounters counters;
+    const MappedFrame failed;
+
+    // Failures are dropped, logged on the first of every 64, until a sustained run fails the stream.
+    for (quint64 failure = 1; failure < GstQgc::PathSession::kMaxConsecutiveMapFailures; ++failure) {
+        const bool logged = (failure % 64) == 1;
+        if (logged) {
+            expectLogMessage(kSinkLog, QtWarningMsg, QRegularExpression(QStringLiteral("^mapping failed")));
+        }
+        QCOMPARE(session.onMapFailed(failed, counters), Verdict::Drop);
+        if (logged) {
+            verifyExpectedLogMessage();
+        }
+    }
+    expectLogMessage(kSinkLog, QtWarningMsg, QRegularExpression(QStringLiteral("consecutive map failures")));
+    QCOMPARE(session.onMapFailed(failed, counters), Verdict::Error);
+    verifyExpectedLogMessage();
+
+    // New caps keep the run going; a frame that maps, or a stop, ends it.
+    session.startEpoch();
+    QCOMPARE(session.consecutiveMapFailures(), GstQgc::PathSession::kMaxConsecutiveMapFailures);
+    session.onMapped();
+    QCOMPARE(session.consecutiveMapFailures(), quint64(0));
+
+    // Tiled frames the CPU can't read are counted, and warned about once per epoch.
+    MappedFrame tiled;
+    tiled.noCpuLayout = true;
+    expectLogMessage(kSinkLog, QtWarningMsg, QRegularExpression(QStringLiteral("^tiled DMA_DRM frame")));
+    QCOMPARE(session.onMapFailed(tiled, counters), Verdict::Drop);
+    QCOMPARE(session.onMapFailed(tiled, counters), Verdict::Drop);
+    verifyExpectedLogMessage();
+    session.stop();
+    QCOMPARE(session.consecutiveMapFailures(), quint64(0));
+    expectLogMessage(kSinkLog, QtWarningMsg, QRegularExpression(QStringLiteral("^tiled DMA_DRM frame")));
+    QCOMPARE(session.onMapFailed(tiled, counters), Verdict::Drop);
+    verifyExpectedLogMessage();
+
+    // A CPU fallback from a GPU path counts every time, as a stream demotion once per epoch.
+    MappedFrame demoted;
+    demoted.demoted = true;
+    session.onDelivered(demoted, counters);
+    session.onDelivered(demoted, counters);
+    session.onDelivered(MappedFrame{}, counters);
+    session.startEpoch();
+    session.onDelivered(demoted, counters);
+    const GStreamer::GstStructurePtr stats = GStreamer::adoptStructure(counters.frameStats());
+    QCOMPARE(GstQgc::frameStatsField(stats.get(), GstQgc::kGpuFallbacksField), quint64(3));
+    QCOMPARE(GstQgc::frameStatsField(stats.get(), GstQgc::kStreamDemotionsField), quint64(2));
+    QCOMPARE(GstQgc::frameStatsField(stats.get(), GstQgc::kTiledDropsField), quint64(3));
 }
 #endif
 
