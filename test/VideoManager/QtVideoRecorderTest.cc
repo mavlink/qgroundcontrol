@@ -1,5 +1,6 @@
 #include "QtVideoRecorderTest.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QMetaEnum>
 #include <QtCore/QRegularExpression>
@@ -172,4 +173,58 @@ void QtVideoRecorderTest::_testRecordsFrameInput()
     QVERIFY2(player.duration() >= 900, qPrintable(QString::number(player.duration())));
 }
 
-UT_REGISTER_TEST(QtVideoRecorderTest, TestLabel::Unit)
+void QtVideoRecorderTest::_testQueuedRetryHonorsStop()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    QMediaCaptureSession session;
+    QVideoFrameInput input;
+    session.setVideoFrameInput(&input);
+    QtVideoRecorder recorder;
+    session.setRecorder(recorder.mediaRecorder());
+    QSignalSpy finishedSpy(&recorder, &QtVideoRecorder::recordingFinished);
+
+    // A format failed with others left to try: the next one is queued...
+    recorder._pendingFormats = QtVideoRecorder::recordingFormats(QMediaFormat::Matroska);
+    QVERIFY(!recorder._pendingFormats.isEmpty());
+    recorder._recordingBase = tempDir.filePath(QStringLiteral("failed"));
+    recorder._recordingError = QStringLiteral("encoder failed");
+    recorder._onRecordingNotStarted();
+
+    // ...and a stop before it runs leaves the recorder stopped.
+    recorder.stop();
+    QCoreApplication::sendPostedEvents(&recorder, QEvent::MetaCall);
+    QVERIFY(!recorder.active());
+    QVERIFY(finishedSpy.isEmpty());
+}
+
+void QtVideoRecorderTest::_testQueuedRetryYieldsToNewStart()
+{
+    _ignoreEncoderFallbacks();
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    QMediaCaptureSession session;
+    QVideoFrameInput input;
+    session.setVideoFrameInput(&input);
+    QtVideoRecorder recorder;
+    session.setRecorder(recorder.mediaRecorder());
+
+    recorder._pendingFormats = QtVideoRecorder::recordingFormats(QMediaFormat::Matroska);
+    recorder._recordingBase = tempDir.filePath(QStringLiteral("failed"));
+    recorder._recordingError = QStringLiteral("encoder failed");
+    recorder._onRecordingNotStarted();
+
+    // A new recording starts before the queued retry runs, which then leaves its file and formats alone.
+    recorder.start(tempDir.filePath(QStringLiteral("new.mkv")), QMediaFormat::Matroska);
+    QVERIFY(recorder.active());
+    const QString file = recorder._recordingFile;
+    const qsizetype pending = recorder._pendingFormats.size();
+    QCoreApplication::sendPostedEvents(&recorder, QEvent::MetaCall);
+    QCOMPARE(recorder._recordingFile, file);
+    QCOMPARE(recorder._pendingFormats.size(), pending);
+
+    recorder.stop();
+    QTRY_VERIFY_WITH_TIMEOUT(!recorder.active(), TestTimeout::mediumMs());
+}
+
+UT_REGISTER_TEST(QtVideoRecorderTest, TestLabel::Integration)

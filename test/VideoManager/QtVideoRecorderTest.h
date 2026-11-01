@@ -17,4 +17,6 @@ private slots:
     void _testRecordingCodecs();
     void _testContainers();
     void _testRecordsFrameInput();
+    void _testQueuedRetryHonorsStop();
+    void _testQueuedRetryYieldsToNewStart();
 };

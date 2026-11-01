@@ -196,6 +196,14 @@ void QtVideoRecorder::_recordNextFormat()
     _recorder->record();
 }
 
+void QtVideoRecorder::_retryNextFormat()
+{
+    if (_stopRequested || active() || _pendingFormats.isEmpty()) {
+        return;
+    }
+    _recordNextFormat();
+}
+
 void QtVideoRecorder::stop()
 {
     _stopRequested = true;
@@ -254,7 +262,7 @@ void QtVideoRecorder::_onRecordingNotStarted()
     if (!_pendingFormats.isEmpty() && _recorder->captureSession()) {
         qCDebug(QtVideoRecorderLog) << "Encoder failed, trying the next format:" << _recordingError;
         // Not from the recorder's own signal.
-        QMetaObject::invokeMethod(this, &QtVideoRecorder::_recordNextFormat, Qt::QueuedConnection);
+        QMetaObject::invokeMethod(this, &QtVideoRecorder::_retryNextFormat, Qt::QueuedConnection);
         return;
     }
     const QString error = std::exchange(_recordingError, QString());

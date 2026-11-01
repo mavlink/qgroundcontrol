@@ -68,6 +68,8 @@ signals:
 private:
     /// Records with the next of _pendingFormats.
     void _recordNextFormat();
+    /// _recordNextFormat() after a format failed, unless a stop or another start came first.
+    void _retryNextFormat();
     void _onRecorderStateChanged(QMediaRecorder::RecorderState state);
     void _onRecorderError(const QString& errorString);
     /// The recorder stopped before it encoded a frame: tries the next format after a failure, else reports it.
