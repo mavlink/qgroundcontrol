@@ -14,6 +14,7 @@
 #include "MavlinkCameraControlInterface.h"
 #include "SettingsManager.h"
 #include "UVCCameraController.h"
+#include "VideoBackend.h"
 #include "VideoDecoderOptions.h"
 #include "VideoManager.h"
 #include "VideoSettings.h"
@@ -320,6 +321,9 @@ void VideoManagerTest::_testDecodingSettingsGroupRestartsStreams()
 
 void VideoManagerTest::_testStreamSettingsGroupFollowsLowLatency()
 {
+    if (!VideoBackend::instance().capabilities().pipelineSettings) {
+        QSKIP("The RTP jitter-buffer latency is a GStreamer setting");
+    }
     _facts->set(_videoSettings->lowLatencyMode(), false);
 
     QQmlEngine engine;
