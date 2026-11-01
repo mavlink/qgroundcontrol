@@ -93,43 +93,35 @@ qgc_gst_select_components(GSTREAMER_SELECTED_COMPONENTS ${QGC_GST_COMPONENTS})
 # videoconvertscale fusion of videoconvert+videoscale) apply to the missing-plugin check below.
 qgc_gst_plugins_for("${_qgc_gst_platform_PLUGIN_KEY}" GSTREAMER_PLUGINS)
 
-if((ANDROID OR IOS) AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(_qgc_gst_platform_STATIC_PLUGINS AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     list(APPEND GSTREAMER_PLUGINS ${GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS})
     list(REMOVE_DUPLICATES GSTREAMER_PLUGINS)
 endif()
 
 # Mobile apps register the OpenSSL GIO module (TLS) statically along with their plugins; on iOS the merged
 # archive carries it.
-if(ANDROID OR IOS)
+if(_qgc_gst_platform_STATIC_PLUGINS)
     set(G_IO_MODULES openssl)
 endif()
 
 # Discovery derives its pkg-config flags from the root and the linkage, so only the user's cached flags join the
 # fingerprint (_qgc_gst_refresh_sdk_cache).
 set(_qgc_gst_fingerprint_pkg_config "")
-if(NOT IOS)
+if(_qgc_gst_platform_PKG_CONFIG)
     find_package(PkgConfig REQUIRED QUIET)
     set(_qgc_gst_fingerprint_pkg_config "${PKG_CONFIG_EXECUTABLE}|$CACHE{PKG_CONFIG_ARGN}")
 endif()
-if(ANDROID)
-    set(_qgc_gst_linkage static)
-    # A normal variable: the GStreamer subtree's later pkg-config probes (HwBuffers) need the same flags.
-    if(NOT "--static" IN_LIST PKG_CONFIG_ARGN)
-        list(APPEND PKG_CONFIG_ARGN --static)
-    endif()
-else()
-    set(_qgc_gst_linkage shared)
+set(_qgc_gst_linkage ${_qgc_gst_platform_LINKAGE})
+# A normal variable: the GStreamer subtree's later pkg-config probes (HwBuffers) need the same flags.
+if(_qgc_gst_linkage STREQUAL "static" AND NOT "--static" IN_LIST PKG_CONFIG_ARGN)
+    list(APPEND PKG_CONFIG_ARGN --static)
 endif()
 _qgc_gst_header_version("${GSTREAMER_INCLUDE_PATH}" _qgc_gst_sdk_version)
 set(_qgc_gst_fingerprint "${GStreamer_ROOT_DIR}|${QGC_GST_REQUESTED_VERSION}|${_qgc_gst_sdk_version}")
 string(APPEND _qgc_gst_fingerprint "|${_qgc_gst_linkage}|${_qgc_gst_fingerprint_pkg_config}")
 _qgc_gst_refresh_sdk_cache("${_qgc_gst_fingerprint}")
 
-if(IOS)
-    _qgc_gst_create_ios_targets()
-else()
-    _qgc_gst_create_sdk_targets()
-endif()
+cmake_language(CALL ${_qgc_gst_platform_TARGETS})
 
 # The sources include the mandatory components' headers unconditionally, so fail here rather than at compile time.
 set(_qgc_gst_missing_mandatory "")
@@ -163,30 +155,28 @@ if(_qgc_gst_missing_components)
 endif()
 
 # Mobile apps register their plugins in GStreamer::mobile's generated gst_init_static_plugins() (Mobile.cmake).
-if(ANDROID OR IOS)
+if(_qgc_gst_platform_STATIC_PLUGINS)
     target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_STATIC_BUILD)
 endif()
 
 # Plugins the app can use: mobile layouts register GSTREAMER_STATIC_PLUGINS, which their backends resolve from the
 # SDK's plugin archives while creating GStreamer::mobile; desktop layouts load the plugin files at runtime, and
 # Install.cmake verifies what desktop installs bundle.
-if(ANDROID OR IOS)
+set(_gst_static_args "")
+if(_qgc_gst_platform_STATIC_PLUGINS)
     set(_gst_available_plugins ${GSTREAMER_STATIC_PLUGINS})
     set(_gst_plugin_source "the static SDK at ${GStreamer_ROOT_DIR}")
+    set(_gst_static_args STATIC)
 else()
     qgc_gst_scan_plugin_basenames(_gst_available_plugins "${GSTREAMER_PLUGIN_PATH}")
     set(_gst_plugin_source "${GSTREAMER_PLUGIN_PATH}")
 endif()
 # Every plugin the SDK or system ships, used by this build or not: the plugin archives of static layouts (iOS: the
 # plugins registered from its merged archive), else the plugin files.
-if(ANDROID)
+if(_qgc_gst_platform_PLUGIN_ARCHIVES)
     qgc_gst_scan_plugin_basenames(_gst_shipped_plugins "${GSTREAMER_PLUGIN_PATH}" STATIC)
 else()
     set(_gst_shipped_plugins ${_gst_available_plugins})
-endif()
-set(_gst_static_args "")
-if(ANDROID OR IOS)
-    set(_gst_static_args STATIC)
 endif()
 qgc_gst_check_plugins(
     REQUESTED ${GSTREAMER_PLUGINS}
@@ -216,14 +206,9 @@ if(LINUX)
     )
 endif()
 
-if(IOS)
-    set(_qgc_gst_path "merged-static")
-elseif(GStreamer_USE_FRAMEWORK)
+set(_qgc_gst_path "${_qgc_gst_platform_PATH_LABEL}")
+if(GStreamer_USE_FRAMEWORK)
     set(_qgc_gst_path "framework")
-elseif(ANDROID)
-    set(_qgc_gst_path "mobile-shared")
-else()
-    set(_qgc_gst_path "shared")
 endif()
 # The requested plugins this build ships, as the status line counts and the notice lists them.
 set(_qgc_gst_shipped_plugins "")
@@ -252,7 +237,7 @@ _qgc_gst_record_resolved_sdk(
 # The app ships the LGPL text and a notice naming this GStreamer and its sources: Android stages them as APK assets,
 # iOS as bundle resources (src/VideoManager/GStreamer/CMakeLists.txt) and desktop installs copy them from
 # GStreamer::Layout's NOTICE_DIR (Install.cmake).
-if(ANDROID)
+if(_qgc_gst_platform_NOTICE_ASSETS)
     set(_qgc_gst_notice_dir "${QGC_ANDROID_EXTRA_ASSETS_DIR}/licenses/gstreamer")
 else()
     set(_qgc_gst_notice_dir "${CMAKE_BINARY_DIR}/gstreamer-notice")

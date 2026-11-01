@@ -76,11 +76,24 @@ qgc_test_pass("SDK paths with spaces")
 
 file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../.github/build-config.json" QGC_BUILD_CONFIG_CONTENT)
 
-# platform variable|platform|installs an SDK
+# platform variable|platform|installs an SDK|static plugins|linkage|pkg-config|plugin archives|path label
 foreach(
-    _case IN ITEMS "ANDROID|android|FALSE" "IOS|ios|FALSE" "WIN32|windows|TRUE" "MACOS|macos|TRUE" "LINUX|linux|TRUE"
+    _case IN
+    ITEMS "ANDROID|android|FALSE|TRUE|static|TRUE|TRUE|mobile-shared"
+          "IOS|ios|FALSE|TRUE|shared|FALSE|FALSE|merged-static" "WIN32|windows|TRUE|FALSE|shared|TRUE|FALSE|shared"
+          "MACOS|macos|TRUE|FALSE|shared|TRUE|FALSE|shared" "LINUX|linux|TRUE|FALSE|shared|TRUE|FALSE|shared"
 )
-    qgc_test_split("${_case}" _variable _expected _installs)
+    qgc_test_split(
+        "${_case}"
+        _variable
+        _expected
+        _installs
+        _static
+        _linkage
+        _pkg_config
+        _archives
+        _label
+    )
     foreach(_platform_variable IN ITEMS ANDROID IOS WIN32 MACOS LINUX)
         set(${_platform_variable} FALSE)
     endforeach()
@@ -88,6 +101,15 @@ foreach(
 
     qgc_gst_platform(_platform)
     qgc_test_assert_streq("${_variable} platform" "${_expected}" "${_platform}")
+    qgc_test_assert_streq("${_platform} static plugins" "${_static}" "${_platform_STATIC_PLUGINS}")
+    qgc_test_assert_streq("${_platform} linkage" "${_linkage}" "${_platform_LINKAGE}")
+    qgc_test_assert_streq("${_platform} pkg-config" "${_pkg_config}" "${_platform_PKG_CONFIG}")
+    qgc_test_assert_streq("${_platform} plugin archives" "${_archives}" "${_platform_PLUGIN_ARCHIVES}")
+    qgc_test_assert_streq("${_platform} path label" "${_label}" "${_platform_PATH_LABEL}")
+    # Defined by Targets.cmake and platform/IOS.cmake, which the Orchestrator includes before it calls it.
+    if(NOT _platform_TARGETS MATCHES "^_qgc_gst_create_(sdk|ios)_targets$")
+        message(FATAL_ERROR "ASSERT [${_platform} targets]: unexpected '${_platform_TARGETS}'")
+    endif()
     if(NOT COMMAND _qgc_gst_discover_${_platform}_sdk)
         message(FATAL_ERROR "ASSERT [${_platform} discovery]: _qgc_gst_discover_${_platform}_sdk is not defined")
     endif()

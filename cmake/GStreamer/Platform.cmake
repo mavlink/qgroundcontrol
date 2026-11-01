@@ -32,37 +32,70 @@ function(_qgc_gst_check_args fn)
 endfunction()
 
 # qgc_gst_platform(<prefix>)
-# Sets, in the caller's scope:
-#   <prefix>              the target platform: windows, linux, android, macos or ios
-#   <prefix>_VERSION_KEY  gstreamer.version.<key> in build-config.json: the SDK version, or on Linux the floor
-#   <prefix>_PLUGIN_KEY   gstreamer.plugins.<key> list in build-config.json added to the common plugins
+# Sets, in the caller's scope, the target platform's profile:
+#   <prefix>                  the target platform: windows, linux, android, macos or ios
+#   <prefix>_VERSION_KEY      gstreamer.version.<key> in build-config.json: the SDK version, or on Linux the floor
+#   <prefix>_PLUGIN_KEY       gstreamer.plugins.<key> list in build-config.json added to the common plugins
+#   <prefix>_STATIC_PLUGINS   TRUE when the app registers static plugins (GSTREAMER_STATIC_PLUGINS) in
+#                             GStreamer::mobile, with the OpenSSL GIO module; FALSE when it loads plugin files
+#   <prefix>_LINKAGE          static (pkg-config --static) or shared, as the SDK's libraries link
+#   <prefix>_PKG_CONFIG       TRUE when the SDK is read through pkg-config (not iOS's merged framework)
+#   <prefix>_TARGETS          the function that creates the GStreamer:: targets (Targets.cmake, platform/IOS.cmake)
+#   <prefix>_PLUGIN_ARCHIVES  TRUE when the SDK ships its plugins as static archives the build may leave unused
+#   <prefix>_PATH_LABEL       how the configure status line names the SDK's linkage (a macOS framework says so)
+#   <prefix>_NOTICE_ASSETS    TRUE when the GStreamer notice ships as an APK asset
 # Fails configure on any other platform.
 # cmake-lint: disable=C0103,E1121
 function(qgc_gst_platform prefix)
     if(ANDROID)
-        set(${prefix} android)
-        set(${prefix}_VERSION_KEY android)
-        set(${prefix}_PLUGIN_KEY android)
+        set(_platform android)
     elseif(IOS)
-        set(${prefix} ios)
-        set(${prefix}_VERSION_KEY ios)
-        set(${prefix}_PLUGIN_KEY apple)
+        set(_platform ios)
     elseif(WIN32)
-        set(${prefix} windows)
-        set(${prefix}_VERSION_KEY windows)
-        set(${prefix}_PLUGIN_KEY windows)
+        set(_platform windows)
     elseif(MACOS)
-        set(${prefix} macos)
-        set(${prefix}_VERSION_KEY macos)
-        set(${prefix}_PLUGIN_KEY apple)
+        set(_platform macos)
     elseif(LINUX)
-        set(${prefix} linux)
-        set(${prefix}_VERSION_KEY minimum)
-        set(${prefix}_PLUGIN_KEY linux)
+        set(_platform linux)
     else()
         message(FATAL_ERROR "GStreamer: unsupported target platform (CMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME})")
     endif()
-    return(PROPAGATE ${prefix} ${prefix}_VERSION_KEY ${prefix}_PLUGIN_KEY)
+
+    # cmake-format: off
+    # platform|version key|plugin key|static plugins|linkage|pkg-config|targets|plugin archives|path label|notice assets
+    set(_profiles
+        "android|android|android|TRUE|static|TRUE|_qgc_gst_create_sdk_targets|TRUE|mobile-shared|TRUE"
+        "ios|ios|apple|TRUE|shared|FALSE|_qgc_gst_create_ios_targets|FALSE|merged-static|FALSE"
+        "windows|windows|windows|FALSE|shared|TRUE|_qgc_gst_create_sdk_targets|FALSE|shared|FALSE"
+        "macos|macos|apple|FALSE|shared|TRUE|_qgc_gst_create_sdk_targets|FALSE|shared|FALSE"
+        "linux|minimum|linux|FALSE|shared|TRUE|_qgc_gst_create_sdk_targets|FALSE|shared|FALSE"
+    )
+    # cmake-format: on
+    set(_fields
+        VERSION_KEY
+        PLUGIN_KEY
+        STATIC_PLUGINS
+        LINKAGE
+        PKG_CONFIG
+        TARGETS
+        PLUGIN_ARCHIVES
+        PATH_LABEL
+        NOTICE_ASSETS
+    )
+    set(${prefix} ${_platform})
+    set(_outputs ${prefix})
+    foreach(_profile IN LISTS _profiles)
+        string(REPLACE "|" ";" _profile "${_profile}")
+        list(POP_FRONT _profile _name)
+        if(NOT _name STREQUAL _platform)
+            continue()
+        endif()
+        foreach(_field IN LISTS _fields)
+            list(POP_FRONT _profile ${prefix}_${_field})
+            list(APPEND _outputs ${prefix}_${_field})
+        endforeach()
+    endforeach()
+    return(PROPAGATE ${_outputs})
 endfunction()
 
 # _qgc_gst_require_bundled_version(<platform> <version> <floor>)
