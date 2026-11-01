@@ -255,10 +255,16 @@ AnalyzePage {
 
                         from:               0
                         to:                 Math.max(1, player.duration)
-                        value:              player.position
                         enabled:            player.seekable
                         Layout.fillWidth:   true
                         onMoved:            player.position = seekSlider.value
+
+                        // Playback must not pull the handle back from under a drag.
+                        Binding on value {
+                            value:          player.position
+                            when:           !seekSlider.pressed
+                            restoreMode:    Binding.RestoreNone
+                        }
                     }
 
                     QGCLabel {
