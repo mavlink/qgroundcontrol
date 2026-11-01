@@ -12,6 +12,8 @@ target_sources(
         QtMultimediaVideoReceiverTest.h
         QtVideoRecorderTest.cc
         QtVideoRecorderTest.h
+        RecordingPlanTest.cc
+        RecordingPlanTest.h
         StreamSupervisorTest.cc
         StreamSupervisorTest.h
         SubtitleWriterTest.cc
@@ -43,6 +45,7 @@ target_sources(
 
 add_qgc_test(QtMultimediaVideoReceiverTest LABELS Integration)
 add_qgc_test(QtVideoRecorderTest LABELS Integration)
+add_qgc_test(RecordingPlanTest LABELS Unit)
 add_qgc_test(StreamSupervisorTest LABELS Unit)
 add_qgc_test(SubtitleWriterTest LABELS Integration Vehicle)
 add_qgc_test(UVCCameraControllerTest LABELS Unit)

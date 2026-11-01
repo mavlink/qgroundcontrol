@@ -1,6 +1,5 @@
 #pragma once
 
-#include <chrono>
 #include <memory>
 #include <optional>
 
@@ -9,6 +8,7 @@
 
 #include "PipelineDotDumper.h"
 #include "PipelineSession.h"
+#include "RecordingPlan.h"
 #include "StreamSupervisor.h"
 #include "StreamWatchdog.h"
 #include "VideoReceiver.h"
@@ -54,21 +54,6 @@ signals:
     void statsChanged(const VideoStreamStats& stats);
 
 private:
-    /// What startRecording() asked for; after a reconnect it continues in the next part.
-    struct Recording
-    {
-        QString file;
-        VideoReceiver::FileFormat format = VideoReceiver::FileFormat::Mkv;
-        int part = 1;
-        bool opened = false;  ///< The current part has a frame.
-        /// When the first part got its first frame.
-        std::optional<std::chrono::steady_clock::time_point> startedAt = std::nullopt;
-
-        QString currentFile() const;
-        /// The bytes in the files of the parts so far.
-        qint64 bytesWritten() const;
-    };
-
     void _reconcile();
     /// Stops the stream and connects again now.
     void _restartStream();
@@ -102,7 +87,8 @@ private:
     bool _active = false;
     VideoReceiver::Config _config;
     std::shared_ptr<GstElement> _videoSink;
-    std::optional<Recording> _recording;
+    /// What startRecording() asked for; after a reconnect it continues in the next part.
+    std::optional<RecordingPlan> _recording;
 
     PipelineSession* _session = nullptr;
     int _statsTicks = 0;

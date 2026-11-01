@@ -1,11 +1,9 @@
 #include "GstReceiverWorker.h"
 
-#include <algorithm>
 #include <chrono>
 #include <utility>
 
 #include <QtCore/QCoreApplication>
-#include <QtCore/QFileInfo>
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 
@@ -19,15 +17,6 @@ namespace {
 constexpr std::chrono::milliseconds kWatchdogInterval{1000};
 // The live GPU path counters are logged every this many watchdog ticks.
 constexpr int kHwStatsLogIntervalTicks = 10;
-
-/// "<base>_part<part>.<ext>" for @p file "<base>.<ext>".
-QString partFile(const QString& file, int part)
-{
-    const QString suffix = QStringLiteral("_part%1").arg(part);
-    const qsizetype dot = file.lastIndexOf(u'.');
-    const qsizetype separator = std::max(file.lastIndexOf(u'/'), file.lastIndexOf(u'\\'));
-    return (dot > separator) ? (file.left(dot) + suffix + file.mid(dot)) : (file + suffix);
-}
 
 }  // namespace
 
@@ -49,20 +38,6 @@ GstReceiverWorker::GstReceiverWorker(QObject* parent)
 GstReceiverWorker::~GstReceiverWorker()
 {
     _stopSession();
-}
-
-QString GstReceiverWorker::Recording::currentFile() const
-{
-    return (part == 1) ? file : partFile(file, part);
-}
-
-qint64 GstReceiverWorker::Recording::bytesWritten() const
-{
-    qint64 bytes = QFileInfo(file).size();
-    for (int n = 2; n <= part; ++n) {
-        bytes += QFileInfo(partFile(file, n)).size();
-    }
-    return bytes;
 }
 
 void GstReceiverWorker::setActive(bool active, const QString& name, const VideoReceiver::Config& config)
@@ -132,7 +107,7 @@ void GstReceiverWorker::startRecording(const QString& file, VideoReceiver::FileF
         return;
     }
 
-    _recording = Recording{.file = file, .format = format};
+    _recording.emplace(file, format);
     emit recordingChanged(true);
     if (_session) {
         _session->setRecording(_recordingRequest());
@@ -225,9 +200,8 @@ void GstReceiverWorker::_stopSession()
     // Deleted from the event loop: this may run inside one of its calls. Its leftover work is dropped with it.
     session->deleteLater();
 
-    if (_recording && _recording->opened) {
-        ++_recording->part;
-        _recording->opened = false;
+    if (_recording) {
+        _recording->onSessionEnded();
     }
 }
 
@@ -264,7 +238,7 @@ std::optional<RecordingBranch::Request> GstReceiverWorker::_recordingRequest() c
     if (!_recording) {
         return std::nullopt;
     }
-    return RecordingBranch::Request{.file = _recording->currentFile(), .format = _recording->format};
+    return RecordingBranch::Request{.file = _recording->currentFile(), .format = _recording->format()};
 }
 
 void GstReceiverWorker::_onWatchdogTick()
@@ -313,11 +287,10 @@ void GstReceiverWorker::_sampleStats()
     VideoStreamStatsMeter::Counters counters;
     VideoStreamStats stats = _stats;
     _session->sampleStats(counters, stats);
-    const auto now = std::chrono::steady_clock::now();
     stats.uptimeMs = _supervisor->uptime().count();
     stats.reconnects = _supervisor->reconnects();
-    if (_recording && _recording->startedAt) {
-        stats.recordingMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - *_recording->startedAt).count();
+    if (_recording && (_recording->recordingMs() >= 0)) {
+        stats.recordingMs = _recording->recordingMs();
         stats.recordingBytes = _recording->bytesWritten();
     } else {
         stats.recordingMs = -1;
@@ -373,11 +346,8 @@ void GstReceiverWorker::onDecoderFailing()
 
 void GstReceiverWorker::onRecordingFileOpened(const QString& file)
 {
-    if (_recording && (file == _recording->currentFile())) {
-        _recording->opened = true;
-        if (!_recording->startedAt) {
-            _recording->startedAt = std::chrono::steady_clock::now();
-        }
+    if (_recording) {
+        (void) _recording->onFileOpened(file);
     }
     emit recordingStarted(file);
 }

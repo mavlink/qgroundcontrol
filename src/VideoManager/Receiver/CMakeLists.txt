@@ -7,6 +7,8 @@
 target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE
+        RecordingPlan.cc
+        RecordingPlan.h
         SharedVideoFrame.cc
         SharedVideoFrame.h
         StreamSupervisor.cc
