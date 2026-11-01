@@ -9,4 +9,5 @@ class SubtitleWriterTest : public VehicleTestNoInitialConnect
 private slots:
     void _testLayoutFollowsEachRecording();
     void _testFollowsActiveVehicle();
+    void _testReadsBack();
 };

@@ -88,27 +88,34 @@ const QVariantList &QGCCorePlugin::analyzePages()
         QVariant::fromValue(new QmlComponentInfo(
             tr("Onboard Logs"),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/OnboardLogs/OnboardLogPage.qml")),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/OnboardLogIcon.svg")),
-            nullptr, true /* requiresVehicle */)),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/OnboardLogIcon.svg")), nullptr,
+            true /* requiresVehicle */)),
         QVariant::fromValue(new QmlComponentInfo(
             tr("GeoTag Images"),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/GeoTag/GeoTagPage.qml")),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/GeoTag/GeoTagIcon.svg")))),
         QVariant::fromValue(new QmlComponentInfo(
+            tr("Video Recordings"),
+            QUrl::fromUserInput(
+                QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/VideoRecordings/VideoRecordingsPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/camera_video.svg")))),
+        QVariant::fromValue(new QmlComponentInfo(
             tr("MAVLink Console"),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/MAVLinkConsole/MAVLinkConsolePage.qml")),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkConsoleIcon.svg")),
-            nullptr, true /* requiresVehicle */)),
+            QUrl::fromUserInput(
+                QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/MAVLinkConsole/MAVLinkConsolePage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkConsoleIcon.svg")), nullptr,
+            true /* requiresVehicle */)),
         QVariant::fromValue(new QmlComponentInfo(
             tr("MAVLink Inspector"),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml")),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkInspector.svg")),
-            nullptr, true /* requiresVehicle */)),
+            QUrl::fromUserInput(
+                QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/MAVLinkInspector/MAVLinkInspectorPage.qml")),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/MAVLinkInspector.svg")), nullptr,
+            true /* requiresVehicle */)),
         QVariant::fromValue(new QmlComponentInfo(
             tr("Vibration"),
             QUrl::fromUserInput(QStringLiteral("qrc:/qml/QGroundControl/AnalyzeView/Vibration/VibrationPage.qml")),
-            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/VibrationPageIcon")),
-            nullptr, true /* requiresVehicle */)),
+            QUrl::fromUserInput(QStringLiteral("qrc:/qmlimages/VibrationPageIcon")), nullptr,
+            true /* requiresVehicle */)),
     };
 
     return analyzeList;
