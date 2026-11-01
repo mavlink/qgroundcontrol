@@ -40,6 +40,7 @@ private slots:
     void _testStreamFormatText();
     void _testVideoViewFitsVideo_data();
     void _testVideoViewFitsVideo();
+    void _testVideoViewPinchZoomSteps();
     void _testVideoViewPlacesThermalPip();
     void _testStreamUriAndTransport_data();
     void _testStreamUriAndTransport();

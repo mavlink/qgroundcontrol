@@ -97,6 +97,25 @@ VideoView {
 }
 )QML";
 
+// A VideoView following a stand-in zoom camera, which records the zoom steps it is sent.
+constexpr const char* kZoomVideoViewQml = R"QML(
+import QtQuick
+import QGroundControl.VideoManager
+
+VideoView {
+    width: 400
+    height: 400
+    camera: QtObject {
+        property bool hasZoom: true
+        property var steps: []
+
+        function stepZoom(direction) {
+            steps.push(direction)
+        }
+    }
+}
+)QML";
+
 // A VideoView following a stand-in camera, whose thermal mode the test changes.
 constexpr const char* kThermalVideoViewQml = R"QML(
 import QtQuick
@@ -709,6 +728,40 @@ void VideoManagerTest::_testVideoViewFitsVideo()
     QVERIFY(aspectRatio > 1.0);
     QCOMPARE(view->property("videoWidth").toReal(), widthFromHeight ? (400 * aspectRatio) : 400);
     QCOMPARE(view->property("videoHeight").toReal(), heightFromWidth ? (400 / aspectRatio) : 400);
+}
+
+void VideoManagerTest::_testVideoViewPinchZoomSteps()
+{
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kZoomVideoViewQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/ZoomVideoView.qml")));
+    const std::unique_ptr<QObject> view(component.create());
+    QVERIFY2(view, qPrintable(component.errorString()));
+    auto* const camera = view->property("camera").value<QObject*>();
+    QVERIFY(camera);
+
+    // Feeds one pinch's scales through the view, as its PinchArea does, and returns the zoom steps the camera got.
+    const auto pinch = [&view, camera](std::initializer_list<qreal> scales) {
+        (void) camera->setProperty("steps", QVariantList());
+        QVariant sent = 0;
+        for (const qreal scale : scales) {
+            QVariant next;
+            if (!QMetaObject::invokeMethod(view.get(), "_stepZoomToward", Q_RETURN_ARG(QVariant, next),
+                                           Q_ARG(QVariant, scale), Q_ARG(QVariant, sent))) {
+                return QVariantList({QStringLiteral("invoke failed")});
+            }
+            sent = next;
+        }
+        return camera->property("steps").toList();
+    };
+
+    // Two fingers that don't move send nothing; each 25% of spread or pinch sends one step, one per update.
+    QCOMPARE(pinch({1.0, 1.0, 1.1}), QVariantList());
+    QCOMPARE(pinch({1.0, 1.3, 1.3, 1.6}), QVariantList({1, 1}));
+    QCOMPARE(pinch({1.0, 2.0, 2.0, 2.0}), QVariantList({1, 1, 1}));
+    QCOMPARE(pinch({1.0, 0.75, 0.6}), QVariantList({-1, -1}));
+    QCOMPARE(pinch({1.0, 1.3, 1.0}), QVariantList({1, -1}));
 }
 
 void VideoManagerTest::_testVideoViewPlacesThermalPip()

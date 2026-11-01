@@ -62,6 +62,21 @@ Item {
     }
 
     property double _thermalHeightFactor: 0.85 //-- TODO
+    // Pinch scale per camera zoom step, the same in and out.
+    readonly property real _zoomStepScale: 1.25
+
+    /// Sends the camera one zoom step (stepZoom() takes -1 or 1) toward the step count @p scale stands for, one per
+    /// _zoomStepScale of pinch, given the @p sent steps of this pinch so far; returns the count sent after it. A step a
+    /// pinch update skips goes with the next one.
+    function _stepZoomToward(scale, sent) {
+        const target = Math.round(Math.log(scale) / Math.log(root._zoomStepScale))
+        if (!root._hasZoom || target === sent) {
+            return sent
+        }
+        const direction = target > sent ? 1 : -1
+        root.camera.stepZoom(direction)
+        return sent + direction
+    }
 
         Image {
             id:             noVideo
@@ -203,19 +218,8 @@ Item {
             enabled:        _hasZoom
             anchors.fill:   parent
             onPinchStarted: pinchZoom.zoom = 0
-            onPinchUpdated: {
-                if(_hasZoom) {
-                    var z = 0
-                    if(pinch.scale < 1) {
-                        z = Math.round(pinch.scale * -10)
-                    } else {
-                        z = Math.round(pinch.scale)
-                    }
-                    if(pinchZoom.zoom != z) {
-                        camera.stepZoom(z)
-                    }
-                }
-            }
+            onPinchUpdated: (pinch) => { pinchZoom.zoom = root._stepZoomToward(pinch.scale, pinchZoom.zoom) }
+            // Zoom steps sent during the current pinch.
             property int zoom: 0
         }
     }
