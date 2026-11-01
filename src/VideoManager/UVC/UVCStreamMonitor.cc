@@ -3,7 +3,6 @@
 #include <chrono>
 #include <utility>
 
-#include <QtCore/QMutexLocker>
 #include <QtMultimedia/QCamera>
 #include <QtMultimedia/QCameraDevice>
 #include <QtMultimedia/QVideoFrame>
@@ -45,9 +44,8 @@ void UVCStreamMonitor::attach(QCamera* camera, QVideoSink* videoSink)
     _disconnect();
     _camera = camera;
     _videoSink = videoSink;
-    _connections.append(connect(
-        videoSink, &QVideoSink::videoFrameChanged, this, [this](const QVideoFrame& frame) { _onVideoFrame(frame); },
-        Qt::DirectConnection));
+    // Qt's capture session queues the camera's frames to the sink's thread, which is this monitor's.
+    _connections.append(connect(videoSink, &QVideoSink::videoFrameChanged, this, &UVCStreamMonitor::_onVideoFrame));
     if (camera) {
         _connections.append(connect(camera, &QCamera::activeChanged, this, &UVCStreamMonitor::_restart));
         _connections.append(connect(camera, &QCamera::cameraDeviceChanged, this, &UVCStreamMonitor::_updateCameraName));
@@ -84,7 +82,6 @@ void UVCStreamMonitor::_onVideoFrame(const QVideoFrame& frame)
         return;
     }
     const QVideoFrameFormat format = frame.surfaceFormat();
-    const QMutexLocker locker(&_frameMutex);
     ++_frameCounters.frames;
     _frameCounters.size = frame.size();
     _frameCounters.pixelFormat = format.pixelFormat();
@@ -101,11 +98,7 @@ void UVCStreamMonitor::_sample()
         _updateCameraName();
         return;
     }
-    FrameCounters frameCounters;
-    {
-        const QMutexLocker locker(&_frameMutex);
-        frameCounters = _frameCounters;
-    }
+    const FrameCounters& frameCounters = _frameCounters;
     // Rates from before the first frame would only measure the camera's startup.
     if (frameCounters.frames == 0) {
         return;
@@ -128,10 +121,7 @@ void UVCStreamMonitor::_sample()
 
 void UVCStreamMonitor::_restart()
 {
-    {
-        const QMutexLocker locker(&_frameMutex);
-        _frameCounters = FrameCounters();
-    }
+    _frameCounters = FrameCounters();
     _meter.reset();
     _streamingSinceMs.reset();
     _publish(VideoStreamStats(), QSize(), 0.0);

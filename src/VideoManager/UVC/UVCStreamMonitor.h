@@ -4,7 +4,6 @@
 
 #include <QtCore/QList>
 #include <QtCore/QMetaObject>
-#include <QtCore/QMutex>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QSize>
@@ -72,7 +71,6 @@ private:
         bool gpu = false;
     };
 
-    /// Any thread: the sink hands frames over from the camera's thread.
     void _onVideoFrame(const QVideoFrame& frame);
     void _sample();
     /// A new stream starts: the measurements so far are cleared.
@@ -88,7 +86,6 @@ private:
     QPointer<QVideoSink> _videoSink;
     QList<QMetaObject::Connection> _connections;
 
-    QMutex _frameMutex;
     FrameCounters _frameCounters;
 
     std::optional<qint64> _streamingSinceMs;
