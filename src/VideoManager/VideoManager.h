@@ -9,6 +9,7 @@
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class QQuickWindow;
+class UVCStreamMonitor;
 class Vehicle;
 class VideoReceiver;
 class VideoRecordingService;
@@ -16,17 +17,19 @@ class VideoSettings;
 class VideoStreamController;
 
 /// QML facade of the video streams, each a VideoStreamController (primary, thermal). decoding and aspectRatio forward
-/// to the primary stream, thermalAspectRatio to the thermal stream, and recording covers both streams. The other
-/// properties, such as hasVideo and isUvc, are the manager's own state.
+/// to the primary stream, thermalAspectRatio to the thermal stream, and recording covers both streams. uvcMonitor
+/// measures the USB camera on display. The other properties, such as hasVideo and isUvc, are the manager's own state.
 class VideoManager : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
+    Q_MOC_INCLUDE("UVCStreamMonitor.h")
     Q_MOC_INCLUDE("VideoStreamController.h")
 
     Q_PROPERTY(VideoStreamController* primaryStream READ primaryStream CONSTANT)
     Q_PROPERTY(VideoStreamController* thermalStream READ thermalStream CONSTANT)
+    Q_PROPERTY(UVCStreamMonitor* uvcMonitor READ uvcMonitor CONSTANT)
     Q_PROPERTY(bool autoStreamConfigured READ autoStreamConfigured NOTIFY autoStreamConfiguredChanged)
     Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged)
     Q_PROPERTY(bool fullScreen READ fullScreen WRITE setfullScreen NOTIFY fullScreenChanged)
@@ -70,6 +73,8 @@ public:
     VideoStreamController* primaryStream() const { return _primaryStream; }
 
     VideoStreamController* thermalStream() const { return _thermalStream; }
+
+    UVCStreamMonitor* uvcMonitor() const { return _uvcMonitor; }
 
     bool autoStreamConfigured() const { return _autoStreamConfigured; }
 
@@ -130,6 +135,7 @@ private:
     VideoStreamController* const _primaryStream;
     VideoStreamController* const _thermalStream;
     VideoRecordingService* const _recordingService;
+    UVCStreamMonitor* const _uvcMonitor;
     std::function<VideoReceiver*(QObject* parent)> _receiverFactory;
     QPointer<Vehicle> _activeVehicle;
 

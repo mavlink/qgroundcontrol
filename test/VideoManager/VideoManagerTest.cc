@@ -1,7 +1,5 @@
 #include "VideoManagerTest.h"
 
-#include <algorithm>
-
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtGui/QImage>
@@ -22,6 +20,7 @@
 #include "VideoTestHelpers.h"
 
 using VideoTestHelpers::makeStreamInfo;
+using VideoTestHelpers::showsText;
 
 namespace {
 
@@ -157,14 +156,6 @@ std::unique_ptr<QQuickItem> createVideoOutput(QQmlEngine& engine)
 void showFrame(QQuickItem* videoOutput, const QImage& image)
 {
     videoOutput->property("videoSink").value<QVideoSink*>()->setVideoFrame(QVideoFrame(image));
-}
-
-/// Whether @p root shows a label reading @p text.
-bool showsText(const QQuickItem* root, const QString& text)
-{
-    const QList<QQuickItem*> items = root->findChildren<QQuickItem*>();
-    return std::ranges::any_of(
-        items, [&text](const QQuickItem* item) { return item->isVisible() && (item->property("text") == text); });
 }
 
 }  // namespace

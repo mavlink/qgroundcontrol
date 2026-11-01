@@ -109,7 +109,7 @@ The dropdown also shows the GNSS receiver status, the correction stream sent to 
 
 ### Video
 
-The Video indicator appears while QGroundControl measures a video stream. It shows the stream's frame rate and bitrate, and turns orange while a stream loses packets, drops frames or falls well below the camera's frame rate. The dropdown shows the [video statistics](video.md#video-statistics) of the video stream and of a thermal stream. The expanded page changes the video settings that apply to a running stream, restarts the video, and opens the video settings.
+The Video indicator appears while QGroundControl measures a video stream or a USB camera. It shows the frame rate and the stream's bitrate (a USB camera's resolution), and turns orange while a stream loses packets, drops frames or falls well below the camera's frame rate. The dropdown shows the [video statistics](video.md#video-statistics) of the video stream and of a thermal stream, or of the USB camera. The expanded page changes the video settings that apply to a running stream, restarts the video, and opens the video settings.
 
 ### Battery <img src="../../../assets/fly/toolbar/battery_indicator.png" alt="Battery indicator" style="height: 1.15em; vertical-align: text-bottom;" />
 

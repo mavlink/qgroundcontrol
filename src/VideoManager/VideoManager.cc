@@ -16,6 +16,7 @@
 #include "QGCVideoStreamInfo.h"
 #include "SettingsManager.h"
 #include "UVCDevices.h"
+#include "UVCStreamMonitor.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 #include "VideoBackend.h"
@@ -77,6 +78,7 @@ VideoManager::VideoManager(QObject* parent)
     , _primaryStream(new VideoStreamController(VideoStreamController::Role::Primary, _videoSettings, this))
     , _thermalStream(new VideoStreamController(VideoStreamController::Role::Thermal, _videoSettings, this))
     , _recordingService(new VideoRecordingService(_primaryStream, _thermalStream, this))
+    , _uvcMonitor(new UVCStreamMonitor(this))
     , _receiverFactory([](QObject* owner) { return QGCCorePlugin::instance()->createVideoReceiver(owner); })
 {
     qCDebug(VideoManagerLog) << this;

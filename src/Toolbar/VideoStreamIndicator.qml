@@ -7,8 +7,9 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.VideoManager
 
-// Frame rate and bitrate of the measured video stream, orange while a stream degrades. The drawer shows each stream's
-// statistics, and expands to the video settings that change a running stream.
+// Frame rate and bitrate of the measured video stream, or frame rate and resolution of the USB camera, orange while a
+// stream degrades. The drawer shows each stream's statistics, and expands to the video settings that change a running
+// stream.
 Item {
     id:             control
     objectName:     "toolbar_videoStreamIndicator"
@@ -18,16 +19,23 @@ Item {
 
     property bool showIndicator: _stats.valid
 
-    readonly property VideoStreamController _primary: QGroundControl.videoManager.primaryStream
-    readonly property VideoStreamController _thermal: QGroundControl.videoManager.thermalStream
+    readonly property VideoManager          _videoManager:  QGroundControl.videoManager
+    readonly property VideoStreamController _primary:       _videoManager.primaryStream
+    readonly property VideoStreamController _thermal:       _videoManager.thermalStream
+    readonly property UVCStreamMonitor      _uvc:           _videoManager.uvcMonitor
+    readonly property bool _uvcMeasured: _uvc.stats.valid && !_primary.stats.valid && !_thermal.stats.valid
     // The thermal stream's figures only while it is the one measured.
-    readonly property var _stats: _primary.stats.valid ? _primary.stats : _thermal.stats
-    readonly property bool _degraded: _streamDegraded(_primary) || _streamDegraded(_thermal)
+    readonly property var _stats: _uvcMeasured ? _uvc.stats : (_primary.stats.valid ? _primary.stats : _thermal.stats)
+    readonly property bool _degraded: _statsDegraded(_primary.stats, _streamCameraFps(_primary))
+                                      || _statsDegraded(_thermal.stats, _streamCameraFps(_thermal))
+                                      || _statsDegraded(_uvc.stats, _uvc.cameraFrameRate)
+
+    function _streamCameraFps(stream) {
+        return stream.streamInfo ? stream.streamInfo.framerate : 0
+    }
 
     // Losing packets or dropping frames now, or showing under three quarters of the frame rate the camera advertises.
-    function _streamDegraded(stream) {
-        const stats = stream.stats
-        const cameraFps = stream.streamInfo ? stream.streamInfo.framerate : 0
+    function _statsDegraded(stats, cameraFps) {
         return stats.valid && (stats.lossPercent > 0 || stats.droppedFps > 0
                                || (cameraFps > 0 && stats.fps < cameraFps * 0.75))
     }
@@ -61,8 +69,9 @@ Item {
             }
 
             QGCLabel {
-                objectName: "videoStreamBitrate"
-                text:       VideoStreamFormat.bitrateText(control._stats.bitrateKbps)
+                objectName: "videoStreamDetail"
+                text:       control._uvcMeasured ? qsTr("%1p").arg(control._uvc.videoSize.height)
+                                                 : VideoStreamFormat.bitrateText(control._stats.bitrateKbps)
             }
         }
     }
@@ -92,9 +101,13 @@ Item {
                         stream:     control._thermal
                     }
 
+                    UVCStatsGroup {
+                        monitor: control._uvc
+                    }
+
                     QGCLabel {
                         text:       qsTr("No video stream")
-                        visible:    !control._primary.stats.valid && !control._thermal.stats.valid
+                        visible:    !control._stats.valid
                     }
                 }
             }
@@ -114,7 +127,8 @@ Item {
 
                         QGCButton {
                             text:       qsTr("Restart Video")
-                            onClicked:  QGroundControl.videoManager.startVideo()
+                            visible:    !control._videoManager.isUvc
+                            onClicked:  control._videoManager.startVideo()
                         }
 
                         QGCButton {

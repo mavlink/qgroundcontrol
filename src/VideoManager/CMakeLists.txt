@@ -20,6 +20,8 @@ target_sources(
         Streams/VideoStreamResolver.h
         UVC/UVCDevices.cc
         UVC/UVCDevices.h
+        UVC/UVCStreamMonitor.cc
+        UVC/UVCStreamMonitor.h
 )
 
 target_include_directories(

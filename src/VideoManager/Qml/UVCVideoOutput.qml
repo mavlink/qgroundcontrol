@@ -3,13 +3,16 @@ import QtMultimedia
 
 import QGroundControl
 
-// The UVC camera VideoManager selected, cropped to fill the item.
+// The UVC camera VideoManager selected, cropped to fill the item. VideoManager.uvcMonitor measures its frames.
 VideoOutput {
     id: root
 
     readonly property VideoManager _videoManager: QGroundControl.videoManager
 
     fillMode: VideoOutput.PreserveAspectCrop
+
+    Component.onCompleted:      root._videoManager.uvcMonitor.attach(uvcCamera, root.videoSink)
+    Component.onDestruction:    root._videoManager.uvcMonitor.detach(root.videoSink)
 
     MediaDevices {
         id: mediaDevices
@@ -25,11 +28,14 @@ VideoOutput {
         }
     }
 
+    Camera {
+        id:             uvcCamera
+        cameraDevice:   mediaDevices.findCameraDevice(root._videoManager.uvcVideoSourceID)
+        active:         root._videoManager.isUvc
+    }
+
     CaptureSession {
-        camera: Camera {
-            cameraDevice:   mediaDevices.findCameraDevice(root._videoManager.uvcVideoSourceID)
-            active:         root._videoManager.isUvc
-        }
-        videoOutput: root
+        camera:         uvcCamera
+        videoOutput:    root
     }
 }

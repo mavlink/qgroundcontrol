@@ -1,11 +1,13 @@
 #pragma once
 
+#include <algorithm>
 #include <memory>
 
 #include <QtCore/QHash>
 #include <QtCore/QList>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
+#include <QtQuick/QQuickItem>
 
 #include "Fact.h"
 #include "QGCVideoStreamInfo.h"
@@ -95,6 +97,14 @@ inline std::unique_ptr<QGCVideoStreamInfo> makeStreamInfo(VIDEO_STREAM_TYPE type
     info.hfov = 90;
     (void) qstrncpy(info.uri, uri, sizeof(info.uri));
     return std::make_unique<QGCVideoStreamInfo>(info);
+}
+
+/// Whether @p root shows a label reading @p text.
+inline bool showsText(const QQuickItem* root, const QString& text)
+{
+    const QList<QQuickItem*> items = root->findChildren<QQuickItem*>();
+    return std::ranges::any_of(
+        items, [&text](const QQuickItem* item) { return item->isVisible() && (item->property("text") == text); });
 }
 
 }  // namespace VideoTestHelpers

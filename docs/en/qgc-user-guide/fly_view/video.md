@@ -50,11 +50,22 @@ dropdown shows, about once a second:
 For a MAVLink camera, its advertised frame rate, bitrate and resolution follow the measured ones in brackets.
 When a camera also sends a thermal stream, its statistics appear below.
 
+For a USB camera, the indicator shows the frame rate and the resolution (for example `1080p`), and its dropdown shows
+under **USB Camera**:
+
+- **Camera**: the camera's name.
+- **Frame rate**: frames shown per second, averaged over the last three seconds, followed by the frame rate the camera
+  was set up for. Many USB cameras lower their frame rate in dim light to expose longer.
+- **Video**: resolution and the format the camera sends, such as MJPEG or YUYV.
+- **Display path**: `CPU` for frames in memory, `GPU` for frames that reach the screen as textures.
+- **Uptime**: how long the camera has shown video.
+
 Expand the dropdown (">") to change, without leaving the Fly View, the **Low Latency Mode** and **RTP jitter latency**
 of a network stream (under **Video Stream**), the **Decoder Priority** and **Force CPU Video Path** (under
 **Decoding**; changing either restarts the video) and the **Grid Lines** and **Display Fit** of the video (under
 **Video Display**). **Restart Video** reconnects the streams, and **All Video Settings** opens
-[Application Settings > Video](../settings_view/video.md).
+[Application Settings > Video](../settings_view/video.md). For a USB camera, only the **Video Display** settings and
+**All Video Settings** apply.
 
 ## Record Video
 

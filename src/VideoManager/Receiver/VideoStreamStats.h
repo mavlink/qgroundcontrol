@@ -5,7 +5,8 @@
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-/// One video stream's health, as its VideoReceiver measured it last: about once a second while it streams.
+/// One video stream's health, as its VideoReceiver (UVCStreamMonitor for a USB camera) measured it last: about once a
+/// second while it streams.
 ///
 /// A field that doesn't apply to the stream is -1, which tells it apart from a measured zero: the RTP fields for a
 /// stream without an RTP jitter buffer (MPEG-TS, or UDP RTP in low-latency mode), latencyMs while the pipeline
@@ -66,9 +67,10 @@ public:
     /// The decoder's element factory, e.g. "avdec_h264".
     QString decoder;
     bool hardwareDecoder = false;
-    /// How decoded frames reach the display: "CPU", or a zero-copy GPU path such as "DMABuf", "GL" or "D3D11".
+    /// How decoded frames reach the display: "CPU", or a zero-copy GPU path such as "DMABuf", "GL" or "D3D11". A USB
+    /// camera's frames: "CPU" or "GPU".
     QString gpuPath;
-    /// "H.264", "H.265", ...
+    /// "H.264", "H.265", ..., or a USB camera's capture format, such as "MJPEG" or "YUYV".
     QString codec;
     /// Frames dropped per second in the last interval.
     double droppedFps = 0.0;
