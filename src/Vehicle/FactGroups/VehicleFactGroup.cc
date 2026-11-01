@@ -199,7 +199,7 @@ void VehicleFactGroup::_handleNavControllerOutput(const mavlink_message_t &messa
     mavlink_nav_controller_output_t navControllerOutput{};
     mavlink_msg_nav_controller_output_decode(&message, &navControllerOutput);
 
-    altitudeTuningSetpoint()->setRawValue(_altitudeTuningFact.rawValue().toDouble() - navControllerOutput.alt_error);
+    altitudeTuningSetpoint()->setRawValue(_altitudeTuningFact.rawValue().toDouble() + navControllerOutput.alt_error);
     xTrackError()->setRawValue(navControllerOutput.xtrack_error);
     airSpeedSetpoint()->setRawValue(_airSpeedFact.rawValue().toDouble() - navControllerOutput.aspd_error);
     distanceToNextWP()->setRawValue(navControllerOutput.wp_dist);
