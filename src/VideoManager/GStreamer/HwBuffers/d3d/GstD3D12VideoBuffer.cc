@@ -166,16 +166,12 @@ private:
 /// constructor, on the streaming thread (blocking there is harmless: the decoder is async), so mapTextures() on the
 /// render thread only imports resolved resources. D3D11 has its own buffer: it shares QRhi's immediate context, so it
 /// copies on the render thread instead.
-class D3D12VideoBuffer final : public GstHwVideoBuffer
+class D3D12VideoBuffer final : public GstD3DVideoBufferCommon::VideoBuffer<D3D12PlaneResolver>
 {
 public:
     D3D12VideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format)
-        : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, format)
+        : VideoBuffer(sample, videoInfo, format, HwVideoBufferPath::D3D12, s_diag)
     {
-        GstBuffer* buffer = _sample ? gst_sample_get_buffer(_sample) : nullptr;
-        if (!buffer) {
-            return;
-        }
         // Qt's D3D12 QRhi creates no per-plane views, so it can't sample an NV12/P010 resource's chroma. The
         // D3D12Convert bin negotiates single-plane formats only; anything else takes the CPU path.
         if (const auto* description = QVideoTextureHelper::textureDescription(format.pixelFormat());
@@ -184,60 +180,23 @@ public:
                              "resolve: multi-plane D3D12Memory" << format.pixelFormat() << "can't be sampled by QRhi");
             return;
         }
-        GstD3DVideoBufferCommon::PlaneResourceGuard<ID3D12Resource> guard;
         D3D12PlaneResolver resolver;
-        const int resolvedCount = GstD3DVideoBufferCommon::resolvePlanes(buffer, resolver, s_diag, guard);
-        if (resolvedCount == 0) {
+        if (!resolve(resolver)) {
             return;
         }
-        _handles = guard.handles;
-        _resolvedCount = resolvedCount;
-        guard.commit();
         _keepAlive = resolver.takeKeepAlive();
-    }
-
-    ~D3D12VideoBuffer() override
-    {
-        for (int i = 0; i < _resolvedCount; ++i) {
-            if (_handles[i]) {
-                _handles[i]->Release();
-            }
-        }
-    }
-
-    bool validatePlaneHandles() const override
-    {
-        // A failed constructor-time resolve (device mismatch, sync or copy failure) sends the frame to the CPU.
-        if (_resolvedCount == 0) {
-            return false;
-        }
-        return validatePlanes([](GstMemory* mem) {
-            return mem && D3D12PlaneResolver::isMemory(mem) &&
-                   (D3D12PlaneResolver::resource(reinterpret_cast<GstD3D12Memory*>(mem)) != nullptr);
-        });
     }
 
     QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old) override
     {
         // The device bridge must be primed: resources on another device import fine but render corrupt.
-        GstBuffer* buffer = nullptr;
-        if (!checkMapPreconditions(rhi, static_cast<int>(QRhi::D3D12), GstD3D12Log(), s_diag, buffer) ||
-            (_resolvedCount == 0)) {
+        if (!beginMap(rhi, QRhi::D3D12)) {
             return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
         }
-        const GstHwMapTail tail{.path = HwVideoBufferPath::D3D12,
-                                .frameSize = _format.frameSize(),
-                                .pixelFormat = _format.pixelFormat(),
-                                .log = &GstD3D12Log(),
-                                .diag = &s_diag,
-                                .successTag = GstHw::toString(HwVideoBufferPath::D3D12)};
-        return GstD3DVideoBufferCommon::mapResolvedTextures(*this, rhi, old, tail, _handles, _resolvedCount,
-                                                            _keepAlive);
+        return finishMap(rhi, old, _handles, _keepAlive);
     }
 
 private:
-    std::array<ID3D12Resource*, kMaxPlanes> _handles{};
-    int _resolvedCount = 0;
     /// Staging slot leases the frame bundles share while QRhi samples them.
     std::shared_ptr<void> _keepAlive;
 };

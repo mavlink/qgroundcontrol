@@ -268,6 +268,96 @@ QVideoFrameTexturesUPtr mapResolvedTextures(GstHwVideoBuffer& self, QRhi& rhi, Q
         });
 }
 
+/// The D3D11/D3D12 QHwVideoBuffer shell: the planes resolvePlanes() resolved on the streaming thread (AddRef'd, and
+/// released with the buffer), their check before import, and the start and end of mapTextures(). Each API's buffer
+/// adds what differs: D3D11 copies array slices and padded textures on the render thread, D3D12 stages them while
+/// resolving.
+template <class Resolver>
+class VideoBuffer : public GstHwVideoBuffer
+{
+public:
+    using Handle = typename Resolver::Handle;
+
+    ~VideoBuffer() override
+    {
+        for (int i = 0; i < _count; ++i) {
+            if (_handles[std::size_t(i)]) {
+                _handles[std::size_t(i)]->Release();
+            }
+        }
+    }
+
+    bool validatePlaneHandles() const override
+    {
+        // A failed constructor-time resolve (device mismatch, missing resource, sync or copy failure) sends the frame
+        // to the CPU.
+        if (_count == 0) {
+            return false;
+        }
+        return validatePlanes([](GstMemory* mem) {
+            return mem && Resolver::isMemory(mem) &&
+                   (Resolver::resource(reinterpret_cast<typename Resolver::Memory*>(mem)) != nullptr);
+        });
+    }
+
+protected:
+    VideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format,
+                HwVideoBufferPath path, MapDiagnostics& diag)
+        : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, format)
+        , _path(path)
+        , _diag(diag)
+    {}
+
+    /// Resolves the sample's planes through @p resolver into _handles; false, holding none, when none resolved.
+    bool resolve(Resolver& resolver)
+    {
+        GstBuffer* const buffer = _sample ? gst_sample_get_buffer(_sample) : nullptr;
+        if (!buffer) {
+            return false;
+        }
+        PlaneResourceGuard<Handle> guard;
+        const int count = resolvePlanes(buffer, resolver, _diag, guard);
+        if (count == 0) {
+            return false;
+        }
+        _handles = guard.handles;
+        _count = count;
+        guard.commit();
+        return true;
+    }
+
+    /// mapTextures()'s preconditions on @p backend: the buffer to import, or null when the frame goes to the CPU.
+    GstBuffer* beginMap(QRhi& rhi, QRhi::Implementation backend)
+    {
+        GstBuffer* buffer = nullptr;
+        if (!checkMapPreconditions(rhi, static_cast<int>(backend), Resolver::log(), _diag, buffer) || (_count == 0)) {
+            return nullptr;
+        }
+        return buffer;
+    }
+
+    /// Imports @p planes, the resolved planes or copies of them, through mapResolvedTextures().
+    QVideoFrameTexturesUPtr finishMap(QRhi& rhi, QVideoFrameTexturesUPtr& old,
+                                      const std::array<Handle*, kMaxPlanes>& planes,
+                                      const std::shared_ptr<void>& keepAlive = {})
+    {
+        const GstHwMapTail tail{.path = _path,
+                                .frameSize = _format.frameSize(),
+                                .pixelFormat = _format.pixelFormat(),
+                                .log = &Resolver::log(),
+                                .diag = &_diag,
+                                .successTag = GstHw::toString(_path)};
+        return mapResolvedTextures(*this, rhi, old, tail, planes, _count, keepAlive);
+    }
+
+    std::array<Handle*, kMaxPlanes> _handles{};
+    int _count = 0;
+
+private:
+    const HwVideoBufferPath _path;
+    MapDiagnostics& _diag;
+};
+
 /// HwPathDescriptor::proposePool for @p Api's memory: adds a pool on the bridge's device (Qt's) to an ALLOCATION query
 /// whose caps carry that memory, so the decoder allocates on the device QRhi samples from.
 template <class Api>

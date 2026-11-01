@@ -158,25 +158,16 @@ bool onDevice(ID3D11Texture2D* texture, ID3D11Device* device)
 /// GstD3D11Memory frame. The streaming thread only resolves the decoder's textures. mapTextures() runs on the render
 /// thread, where QRhi drives the same immediate context: a texture-array slice or a padded texture is copied there,
 /// ordered with QRhi's own reads and writes without a Flush(), and only for frames that are actually shown.
-class D3D11VideoBuffer final : public GstHwVideoBuffer
+class D3D11VideoBuffer final : public GstD3DVideoBufferCommon::VideoBuffer<D3D11PlaneResolver>
 {
 public:
     D3D11VideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format)
-        : GstHwVideoBuffer(QVideoFrame::RhiTextureHandle, sample, videoInfo, format)
+        : VideoBuffer(sample, videoInfo, format, HwVideoBufferPath::D3D11, s_diag)
     {
-        GstBuffer* buffer = _sample ? gst_sample_get_buffer(_sample) : nullptr;
-        if (!buffer) {
-            return;
-        }
-        GstD3DVideoBufferCommon::PlaneResourceGuard<ID3D11Texture2D> guard;
         D3D11PlaneResolver resolver;
-        const int count = GstD3DVideoBufferCommon::resolvePlanes(buffer, resolver, s_diag, guard);
-        if (count == 0) {
+        if (!resolve(resolver)) {
             return;
         }
-        _textures = guard.handles;
-        _count = count;
-        guard.commit();
         _slices = resolver.slices();
         _copied = resolver.copied();
 
@@ -184,39 +175,17 @@ public:
         // picture is copied out like an array slice's, so the frame keeps the picture's size and its CPU layout: Qt
         // maps it to the CPU for a window on another device and for screenshots.
         D3D11_TEXTURE2D_DESC desc = {};
-        _textures[0]->GetDesc(&desc);
+        _handles[0]->GetDesc(&desc);
         if (GstHw::texturePadsPicture(QSize(int(desc.Width), int(desc.Height)), _format.frameSize(),
                                       hasEvenSizes(desc.Format))) {
             std::fill_n(_copied.begin(), _count, true);
         }
     }
 
-    ~D3D11VideoBuffer() override
-    {
-        for (int i = 0; i < _count; ++i) {
-            if (_textures[std::size_t(i)]) {
-                _textures[std::size_t(i)]->Release();
-            }
-        }
-    }
-
-    bool validatePlaneHandles() const override
-    {
-        // A failed constructor-time resolve (device mismatch, missing resource) sends the frame to the CPU.
-        if (_count == 0) {
-            return false;
-        }
-        return validatePlanes([](GstMemory* mem) {
-            return mem && gst_is_d3d11_memory(mem) &&
-                   (D3D11PlaneResolver::resource(reinterpret_cast<GstD3D11Memory*>(mem)) != nullptr);
-        });
-    }
-
     QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old) override
     {
-        GstBuffer* buffer = nullptr;
-        if (!checkMapPreconditions(rhi, static_cast<int>(QRhi::D3D11), GstD3D11Log(), s_diag, buffer) ||
-            (_count == 0)) {
+        GstBuffer* const buffer = beginMap(rhi, QRhi::D3D11);
+        if (!buffer) {
             return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D11);
         }
         // Also catches an unprimed bridge, which skips resolvePlanes()'s device guard: QRhi can't sample another
@@ -224,13 +193,13 @@ public:
         const auto* native = static_cast<const QRhiD3D11NativeHandles*>(rhi.nativeHandles());
         auto* device = native ? static_cast<ID3D11Device*>(native->dev) : nullptr;
         auto* context = native ? static_cast<ID3D11DeviceContext*>(native->context) : nullptr;
-        if (!device || !context || !onDevice(_textures[0], device)) {
+        if (!device || !context || !onDevice(_handles[0], device)) {
             QGC_HW_WARN_ONCE(GstD3D11Log, s_loggedForeignDevice,
                              "mapTextures: decoder texture is not on QRhi's device — CPU fallback");
             return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D11);
         }
 
-        std::array<ID3D11Texture2D*, kMaxPlanes> planes = _textures;
+        std::array<ID3D11Texture2D*, kMaxPlanes> planes = _handles;
         std::array<ID3D11Texture2D*, kMaxPlanes> copies{};
         const auto releaseCopies = qScopeGuard([&copies] {
             for (ID3D11Texture2D* copy : copies) {
@@ -250,13 +219,7 @@ public:
             planes[std::size_t(i)] = copies[std::size_t(i)];
         }
 
-        const GstHwMapTail tail{.path = HwVideoBufferPath::D3D11,
-                                .frameSize = _format.frameSize(),
-                                .pixelFormat = _format.pixelFormat(),
-                                .log = &GstD3D11Log(),
-                                .diag = &s_diag,
-                                .successTag = GstHw::toString(HwVideoBufferPath::D3D11)};
-        return GstD3DVideoBufferCommon::mapResolvedTextures(*this, rhi, old, tail, planes, _count);
+        return finishMap(rhi, old, planes);
     }
 
 private:
@@ -267,7 +230,7 @@ private:
     ID3D11Texture2D* copyPicture(QRhi& rhi, ID3D11Device* device, ID3D11DeviceContext* context, GstBuffer* buffer,
                                  int plane, QVideoFrameTexturesUPtr& old)
     {
-        ID3D11Texture2D* source = _textures[std::size_t(plane)];
+        ID3D11Texture2D* source = _handles[std::size_t(plane)];
         D3D11_TEXTURE2D_DESC sourceDesc = {};
         source->GetDesc(&sourceDesc);
         // One texture holds every plane (NV12, P010), else this plane's texture holds only its own share of the frame.
@@ -324,10 +287,8 @@ private:
         return texture;
     }
 
-    std::array<ID3D11Texture2D*, kMaxPlanes> _textures{};
     std::array<guint, kMaxPlanes> _slices{};
     std::array<bool, kMaxPlanes> _copied{};
-    int _count = 0;
 };
 
 void resetCachedState() noexcept
