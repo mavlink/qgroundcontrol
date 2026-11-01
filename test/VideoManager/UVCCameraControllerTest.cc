@@ -183,6 +183,21 @@ void UVCCameraControllerTest::_testPhotoWithoutCameraIsScreenshot()
     verifyExpectedLogMessage();
 }
 
+void UVCCameraControllerTest::_testControlsWithoutCamera()
+{
+    UVCCameraController controller;
+    QVERIFY(!controller.whiteBalanceAdjustable());
+    QCOMPARE(controller.minimumZoom(), 1.0);
+    QCOMPARE(controller.maximumZoom(), 1.0);
+    QVERIFY(!controller.exposureAdjustable());
+    QVERIFY(!controller.focusAdjustable());
+
+    // Kept for the camera to come.
+    const UVCCameraController::Controls controls{.whiteBalance = QCamera::WhiteBalanceSunlight, .zoom = 2.f};
+    controller.setControls(controls);
+    QCOMPARE(controller.controls(), controls);
+}
+
 void UVCCameraControllerTest::_testMissingCameraNeverRuns()
 {
     UVCCameraController controller;

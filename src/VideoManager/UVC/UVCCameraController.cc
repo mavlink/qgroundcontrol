@@ -42,6 +42,20 @@ constexpr bool kStillPhotos = true;
 constexpr bool kStillPhotos = false;
 #endif
 
+// Qt's V4L2 camera (Qt 6.12) reads the focus range into the exposure compensation range and never sets its focus
+// range, so neither control does what it is asked.
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+constexpr bool kExposureAndFocusControls = false;
+#else
+constexpr bool kExposureAndFocusControls = true;
+#endif
+
+constexpr QCamera::WhiteBalanceMode kWhiteBalancePresets[] = {
+    QCamera::WhiteBalanceSunlight, QCamera::WhiteBalanceCloudy,      QCamera::WhiteBalanceShade,
+    QCamera::WhiteBalanceTungsten, QCamera::WhiteBalanceFluorescent, QCamera::WhiteBalanceFlash,
+    QCamera::WhiteBalanceSunset,
+};
+
 }  // namespace
 
 UVCCameraController::UVCCameraController(QObject* parent)
@@ -379,6 +393,61 @@ void UVCCameraController::setTransform(QtVideo::Rotation rotation, bool mirrored
     _frameRelay->setTransform(rotation, mirrored);
 }
 
+void UVCCameraController::setControls(const Controls& controls)
+{
+    if (controls == _controls) {
+        return;
+    }
+    _controls = controls;
+    _applyControls();
+}
+
+bool UVCCameraController::whiteBalanceAdjustable() const
+{
+    return _camera && std::ranges::any_of(kWhiteBalancePresets, [this](QCamera::WhiteBalanceMode mode) {
+               return _camera->isWhiteBalanceModeSupported(mode);
+           });
+}
+
+qreal UVCCameraController::minimumZoom() const
+{
+    return _camera ? _camera->minimumZoomFactor() : 1.;
+}
+
+qreal UVCCameraController::maximumZoom() const
+{
+    return _camera ? std::max(_camera->maximumZoomFactor(), _camera->minimumZoomFactor()) : 1.;
+}
+
+bool UVCCameraController::exposureAdjustable() const
+{
+    return kExposureAndFocusControls && _camera &&
+           _camera->supportedFeatures().testFlag(QCamera::Feature::ExposureCompensation);
+}
+
+bool UVCCameraController::focusAdjustable() const
+{
+    return kExposureAndFocusControls && _camera && _camera->isFocusModeSupported(QCamera::FocusModeInfinity);
+}
+
+void UVCCameraController::_applyControls()
+{
+    if (!_camera) {
+        return;
+    }
+    // QCamera leaves a white balance or focus mode the camera lacks as it is.
+    _camera->setWhiteBalanceMode(_controls.whiteBalance);
+    if (maximumZoom() > minimumZoom()) {
+        _camera->setZoomFactor(std::clamp(static_cast<qreal>(_controls.zoom), minimumZoom(), maximumZoom()));
+    }
+    if (exposureAdjustable()) {
+        _camera->setExposureCompensation(_controls.exposureCompensation);
+    }
+    if (focusAdjustable() && _camera->isFocusModeSupported(_controls.focusMode)) {
+        _camera->setFocusMode(_controls.focusMode);
+    }
+}
+
 void UVCCameraController::capturePhoto(const QString& file, const VideoScreenshot::Exif& exif)
 {
     const int id =
@@ -452,6 +521,17 @@ void UVCCameraController::_createCamera()
     }
     (void) connect(_camera, &QCamera::errorOccurred, this,
                    [this](QCamera::Error, const QString& errorString) { _onCameraError(errorString); });
+    // Some platforms know what a camera supports, or take its settings, only once it runs.
+    (void) connect(_camera, &QCamera::supportedFeaturesChanged, this, &UVCCameraController::controlsChanged);
+    (void) connect(_camera, &QCamera::minimumZoomFactorChanged, this, &UVCCameraController::controlsChanged);
+    (void) connect(_camera, &QCamera::maximumZoomFactorChanged, this, &UVCCameraController::controlsChanged);
+    (void) connect(_camera, &QCamera::activeChanged, this, [this](bool active) {
+        if (active) {
+            _applyControls();
+            emit controlsChanged();
+        }
+    });
+    _applyControls();
     _captureSession = new QMediaCaptureSession(this);
     _captureSession->setCamera(_camera);
     if (_recorder) {
@@ -481,6 +561,7 @@ void UVCCameraController::_recreateCamera()
 {
     _releaseCamera();
     _createCamera();
+    emit controlsChanged();
     _connectVideoOutput();
 }
 

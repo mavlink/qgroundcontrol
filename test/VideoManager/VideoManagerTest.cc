@@ -658,6 +658,22 @@ void VideoManagerTest::_testUvcCameraFormatReachesCamera()
     QVERIFY(camera->format().isEmpty());
 }
 
+void VideoManagerTest::_testUvcControlsReachCamera()
+{
+    UVCCameraController* const camera = _videoManager->uvcCamera();
+    QCOMPARE(camera->controls(), UVCCameraController::Controls{});
+
+    _facts->set(_videoSettings->uvcWhiteBalance(), int(QCamera::WhiteBalanceCloudy));
+    _facts->set(_videoSettings->uvcZoom(), 1.5);
+    _facts->set(_videoSettings->uvcExposureCompensation(), -0.5);
+    _facts->set(_videoSettings->uvcFocusMode(), int(QCamera::FocusModeInfinity));
+    const UVCCameraController::Controls expected{.whiteBalance = QCamera::WhiteBalanceCloudy,
+                                                 .zoom = 1.5f,
+                                                 .exposureCompensation = -0.5f,
+                                                 .focusMode = QCamera::FocusModeInfinity};
+    QCOMPARE(camera->controls(), expected);
+}
+
 void VideoManagerTest::_testStreamStatsReachQml()
 {
     VideoStreamController* const stream = _videoManager->primaryStream();

@@ -11,6 +11,15 @@ Configure video streaming and recording settings.
 - **USB Camera Rotation** and **Mirror USB Camera** (USB cameras only) — turn the picture clockwise, for a camera mounted
   on its side or upside down, and mirror it left to right after that. Photos follow; recordings keep the camera's own
   picture.
+- **USB Camera White Balance** (USB cameras that can set it) — **Auto**, or set for the light: **Sunlight**, **Cloudy**,
+  **Shade**, **Tungsten**, **Fluorescent**, **Flash** or **Sunset**.
+- **USB Camera Zoom** (USB cameras that zoom) — from 1x up to the most the camera offers. On Linux Qt scales every
+  camera's zoom range to 1x to 2x.
+- **USB Camera Exposure Compensation** and **USB Camera Focus** (USB cameras that can set them, not on Linux) — brighten
+  or darken the automatic exposure, in EV, and focus automatically, at the hyperfocal distance or at infinity. Qt's
+  Linux camera support can't set these.
+
+The camera takes these settings each time it starts.
 
 When a MAVLink camera advertises its video stream, QGC plays that stream (and any thermal stream it advertises)
 instead of the configured source. Your source and connection settings are left unchanged and apply again once no

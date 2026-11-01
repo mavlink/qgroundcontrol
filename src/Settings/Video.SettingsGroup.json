@@ -252,6 +252,53 @@
             "keywords": "usb camera,uvc,webcam,mirror,flip,selfie"
         },
         {
+            "name": "uvcWhiteBalance",
+            "shortDesc": "White balance the USB camera uses: automatic, or set for the light.",
+            "longDesc": "White balance the USB camera uses: automatic, or set for the light, such as Sunlight (5600 K) or Cloudy (6000 K). Shown for a camera that can set it; one the camera lacks leaves its white balance as it is.",
+            "type": "uint32",
+            "enumStrings": "Auto,Sunlight,Cloudy,Shade,Tungsten,Fluorescent,Flash,Sunset",
+            "enumValues": "0,2,3,4,5,6,7,8",
+            "default": 0,
+            "label": "USB Camera White Balance",
+            "keywords": "usb camera,uvc,webcam,white balance,color temperature,colour"
+        },
+        {
+            "name": "uvcZoom",
+            "shortDesc": "Zoom of the USB camera, from 1x up to the most the camera offers.",
+            "longDesc": "Zoom of the USB camera, from 1x up to the most the camera offers. Shown for a camera that zooms. On Linux Qt scales a camera's zoom range to 1x to 2x.",
+            "type": "double",
+            "min": 1,
+            "max": 100,
+            "decimalPlaces": 1,
+            "default": 1,
+            "label": "USB Camera Zoom",
+            "keywords": "usb camera,uvc,webcam,zoom,magnify"
+        },
+        {
+            "name": "uvcExposureCompensation",
+            "shortDesc": "Brightens (positive) or darkens (negative) the USB camera's automatic exposure, in EV.",
+            "longDesc": "Brightens (positive) or darkens (negative) the USB camera's automatic exposure, in EV. Shown for a camera that can set it, except on Linux, where Qt can't.",
+            "type": "double",
+            "min": -2,
+            "max": 2,
+            "decimalPlaces": 1,
+            "units": "EV",
+            "default": 0,
+            "label": "USB Camera Exposure Compensation",
+            "keywords": "usb camera,uvc,webcam,exposure,brightness,ev"
+        },
+        {
+            "name": "uvcFocusMode",
+            "shortDesc": "How the USB camera focuses: automatically, or fixed far away.",
+            "longDesc": "How the USB camera focuses: automatically, preferring near or far subjects, or fixed at the hyperfocal distance or at infinity, as for a camera looking at the ground from the air. Shown for a camera that can set it, except on Linux, where Qt can't.",
+            "type": "uint32",
+            "enumStrings": "Auto,Auto (Near),Auto (Far),Hyperfocal,Infinity",
+            "enumValues": "0,1,2,3,4",
+            "default": 0,
+            "label": "USB Camera Focus",
+            "keywords": "usb camera,uvc,webcam,focus,infinity,hyperfocal"
+        },
+        {
             "name": "uvcRecordingCodec",
             "shortDesc": "Video codec a USB camera recording tries first.",
             "longDesc": "One of the codecs Qt can encode on this computer, by its QMediaFormat::VideoCodec key, such as \"H264\". Empty (Auto), or a codec the encoder turns down, records with the first of H.264, H.265, AV1, VP9, MPEG-4 Part 2 and MPEG-2 that encodes.",

@@ -39,6 +39,10 @@ public:
     DEFINE_SETTINGFACT(uvcCameraFormat)
     DEFINE_SETTINGFACT(uvcCameraRotation)
     DEFINE_SETTINGFACT(uvcCameraMirror)
+    DEFINE_SETTINGFACT(uvcWhiteBalance)
+    DEFINE_SETTINGFACT(uvcZoom)
+    DEFINE_SETTINGFACT(uvcExposureCompensation)
+    DEFINE_SETTINGFACT(uvcFocusMode)
     DEFINE_SETTINGFACT(uvcRecordingCodec)
 
     /// videoFit's values (Video.SettingsGroup.json).

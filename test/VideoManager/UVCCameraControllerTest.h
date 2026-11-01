@@ -12,6 +12,7 @@ private slots:
     void _testPhotoFollowsTransform();
     void _testPhotoWithoutCameraIsScreenshot();
     void _testMissingCameraNeverRuns();
+    void _testControlsWithoutCamera();
     void _testUnpluggedCameraReported();
     void _testCameraErrorRetries();
     void _testRecordingFormat_data();

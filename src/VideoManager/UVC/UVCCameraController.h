@@ -9,6 +9,7 @@
 #include <QtCore/QPointer>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
+#include <QtMultimedia/QCamera>
 #include <QtMultimedia/QMediaFormat>
 #include <QtMultimedia/QMediaRecorder>
 #include <QtMultimedia/qtvideo.h>
@@ -16,7 +17,6 @@
 
 #include "VideoScreenshot.h"
 
-class QCamera;
 class QImageCapture;
 class QMediaCaptureSession;
 class QMediaDevices;
@@ -46,6 +46,11 @@ class UVCCameraController : public QObject
     Q_PROPERTY(UVCStreamMonitor* monitor READ monitor CONSTANT)
     Q_PROPERTY(QStringList formats READ formats NOTIFY formatsChanged)
     Q_PROPERTY(QStringList recordingCodecs READ recordingCodecs CONSTANT)
+    Q_PROPERTY(bool whiteBalanceAdjustable READ whiteBalanceAdjustable NOTIFY controlsChanged)
+    Q_PROPERTY(qreal minimumZoom READ minimumZoom NOTIFY controlsChanged)
+    Q_PROPERTY(qreal maximumZoom READ maximumZoom NOTIFY controlsChanged)
+    Q_PROPERTY(bool exposureAdjustable READ exposureAdjustable NOTIFY controlsChanged)
+    Q_PROPERTY(bool focusAdjustable READ focusAdjustable NOTIFY controlsChanged)
 
     friend class UVCCameraControllerTest;
 
@@ -75,6 +80,35 @@ public:
 
     /// Runs the camera in format @p name, recreating it: not every platform switches a running camera's format.
     void setFormat(const QString& name);
+
+    /// The picture settings the camera takes on, from VideoSettings' uvcWhiteBalance, uvcZoom, uvcExposureCompensation
+    /// and uvcFocusMode. Each applies where the camera supports it: as the *Adjustable() and *Zoom() properties say.
+    struct Controls
+    {
+        QCamera::WhiteBalanceMode whiteBalance = QCamera::WhiteBalanceAuto;
+        float zoom = 1.f;
+        float exposureCompensation = 0.f;
+        QCamera::FocusMode focusMode = QCamera::FocusModeAuto;
+
+        friend bool operator==(const Controls&, const Controls&) = default;
+    };
+
+    /// Applies @p controls to the camera, and to each camera from now on as it starts.
+    void setControls(const Controls& controls);
+
+    const Controls& controls() const { return _controls; }
+
+    /// Whether the camera has a white balance besides automatic.
+    bool whiteBalanceAdjustable() const;
+    /// The camera's zoom range; both 1 for a camera that doesn't zoom, or without a camera.
+    qreal minimumZoom() const;
+    qreal maximumZoom() const;
+    /// Whether the camera's exposure compensation can be set. Never on Linux, where Qt's V4L2 camera reads the focus
+    /// range into the exposure compensation range.
+    bool exposureAdjustable() const;
+    /// Whether the camera can focus at infinity, one of the fixed focus modes. Never on Linux, where Qt's V4L2 camera
+    /// doesn't read the focus range, so it can't set a focus distance.
+    bool focusAdjustable() const;
 
     /// Displays the camera in @p videoOutput, a QML VideoOutput, replacing any other.
     Q_INVOKABLE void registerVideoOutput(QQuickItem* videoOutput);
@@ -133,6 +167,8 @@ signals:
     /// A camera was plugged in or unplugged.
     void camerasChanged();
     void formatsChanged();
+    /// The camera's adjustable controls, or its zoom range, changed.
+    void controlsChanged();
     void recordingChanged(bool recording);
     void recordingStarted(const QString& file);
     /// @p error is empty for a recording that finished normally.
@@ -149,6 +185,7 @@ private:
     void _onVideoInputsChanged();
     void _onImageAvailable(int id, const QVideoFrame& frame);
     void _onImageCaptureError(int id, const QString& errorString);
+    void _applyControls();
     /// Saves the frame on display to @p file off the GUI thread; logs a warning without a VideoOutput.
     void _savePhotoOnDisplay(const QString& file, const VideoScreenshot::Exif& exif) const;
     /// Records with the next of _pendingFormats.
@@ -169,6 +206,7 @@ private:
     /// Outlives the capture sessions, like _recorder.
     QImageCapture* const _imageCapture;
     QCamera* _camera = nullptr;
+    Controls _controls;
     QMediaCaptureSession* _captureSession = nullptr;
     /// Outlives the capture sessions: a session going away mid-recording makes it finish the file and report it.
     QMediaRecorder* _recorder = nullptr;

@@ -13,7 +13,7 @@
     "groups": [
         {
             "heading": "Video Source",
-            "keywords": ["video source", "camera", "stream", "usb camera", "resolution", "frame rate", "camera format"],
+            "keywords": ["video source", "camera", "stream", "usb camera", "resolution", "frame rate", "camera format", "white balance", "zoom", "exposure", "focus"],
             "enableWhen": "!autoStreamConfig",
             "headingDescription": "autoStreamConfig ? qsTr(\"MAVLink camera stream is automatically configured\") : \"\"",
             "controls": [
@@ -34,6 +34,36 @@
                 {
                     "setting": "videoSettings.uvcCameraMirror",
                     "showWhen": "QGroundControl.videoManager.isUvc"
+                },
+                {
+                    "setting": "videoSettings.uvcWhiteBalance",
+                    "control": "combobox",
+                    "showWhen": "QGroundControl.videoManager.isUvc && QGroundControl.videoManager.uvcCamera.whiteBalanceAdjustable"
+                },
+                {
+                    "control": "component",
+                    "component": "UVCControlSlider",
+                    "showWhen": "QGroundControl.videoManager.isUvc && (QGroundControl.videoManager.uvcCamera.maximumZoom > QGroundControl.videoManager.uvcCamera.minimumZoom)",
+                    "properties": {
+                        "setting": "QGroundControl.settingsManager.videoSettings.uvcZoom",
+                        "from": "QGroundControl.videoManager.uvcCamera.minimumZoom",
+                        "to": "QGroundControl.videoManager.uvcCamera.maximumZoom",
+                        "valueText": "QGroundControl.settingsManager.videoSettings.uvcZoom.rawValue.toFixed(1) + \"x\""
+                    }
+                },
+                {
+                    "control": "component",
+                    "component": "UVCControlSlider",
+                    "showWhen": "QGroundControl.videoManager.isUvc && QGroundControl.videoManager.uvcCamera.exposureAdjustable",
+                    "properties": {
+                        "setting": "QGroundControl.settingsManager.videoSettings.uvcExposureCompensation",
+                        "stepSize": 0.5
+                    }
+                },
+                {
+                    "setting": "videoSettings.uvcFocusMode",
+                    "control": "combobox",
+                    "showWhen": "QGroundControl.videoManager.isUvc && QGroundControl.videoManager.uvcCamera.focusAdjustable"
                 }
             ]
         },

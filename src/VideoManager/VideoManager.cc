@@ -55,8 +55,8 @@ struct VideoSettingReactionEntry
 
 // Not listed: aspectRatio, read by VideoStreamController::aspectRatio(); videoFit, gridLines and showRecControl, read
 // by QML; showTelemetryOverlay, read by VideoTelemetryOverlay; recordingFormat, enableStorageLimit, maxVideoSize and
-// uvcRecordingCodec, read when a recording starts; uvcCameraFormat, uvcCameraRotation and uvcCameraMirror, which go to
-// the USB camera (_connectSettings()).
+// uvcRecordingCodec, read when a recording starts; uvcCameraFormat, uvcCameraRotation, uvcCameraMirror,
+// uvcWhiteBalance, uvcZoom, uvcExposureCompensation and uvcFocusMode, which go to the USB camera (_connectSettings()).
 constexpr VideoSettingReactionEntry kVideoSettingReactions[] = {
     {&VideoSettings::videoSource, VideoSettingReaction::Reconfigure},
     {&VideoSettings::udpUrl, VideoSettingReaction::Reconfigure},
@@ -178,6 +178,22 @@ void VideoManager::_connectSettings()
     applyUvcTransform();
     (void) connect(_videoSettings->uvcCameraRotation(), &Fact::rawValueChanged, this, applyUvcTransform);
     (void) connect(_videoSettings->uvcCameraMirror(), &Fact::rawValueChanged, this, applyUvcTransform);
+
+    const auto applyUvcControls = [this] {
+        UVCCameraController::Controls controls;
+        // uvcWhiteBalance's and uvcFocusMode's values are QCamera's.
+        controls.whiteBalance =
+            static_cast<QCamera::WhiteBalanceMode>(_videoSettings->uvcWhiteBalance()->rawValue().toInt());
+        controls.zoom = _videoSettings->uvcZoom()->rawValue().toFloat();
+        controls.exposureCompensation = _videoSettings->uvcExposureCompensation()->rawValue().toFloat();
+        controls.focusMode = static_cast<QCamera::FocusMode>(_videoSettings->uvcFocusMode()->rawValue().toInt());
+        _uvcCamera->setControls(controls);
+    };
+    applyUvcControls();
+    for (Fact* const fact : {_videoSettings->uvcWhiteBalance(), _videoSettings->uvcZoom(),
+                             _videoSettings->uvcExposureCompensation(), _videoSettings->uvcFocusMode()}) {
+        (void) connect(fact, &Fact::rawValueChanged, this, applyUvcControls);
+    }
 }
 
 void VideoManager::startVideoBackendInit()
