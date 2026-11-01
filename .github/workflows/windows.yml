@@ -311,7 +311,8 @@ jobs:
 
       # QSG_RHI_PREFER_SOFTWARE_RENDERER makes the D3D11/D3D12 pixel tests' QRhi use WARP, as runners
       # have no GPU. GStreamer.* are cmake/GStreamer's script tests, whose Windows-only branches only
-      # run here. The Qt Multimedia receiver, its recorder and the USB camera classes run here too.
+      # run here. The Qt Multimedia receiver, its recorder, the USB camera classes and the reconnect and recording-part
+      # policies both receivers share run here too.
       - name: Run GStreamer tests
         if: ${{ !cancelled() && steps.gst-env.outcome == 'success' }}
         uses: ./.github/actions/run-unit-tests
@@ -319,7 +320,7 @@ jobs:
           QSG_RHI_PREFER_SOFTWARE_RENDERER: '1'
         with:
           include-labels: 'Unit|Integration'
-          tests-regex: '^(Gst|GStreamer[A-Z.]|Video|Subtitle|QGCVideo|QtMultimedia|QtVideo|UVC)'
+          tests-regex: '^(Gst|GStreamer[A-Z.]|Video|Subtitle|QGCVideo|QtMultimedia|QtVideo|UVC|StreamSupervisor|RecordingPlan)'
           junit-output: junit-gstreamer.xml
           ctest-output: gstreamer-output.txt
           report-name: GStreamer tests (windows)
