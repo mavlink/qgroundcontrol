@@ -11,16 +11,15 @@
 #include <QtCore/QStringList>
 #include <QtMultimedia/QCamera>
 #include <QtMultimedia/QMediaFormat>
-#include <QtMultimedia/QMediaRecorder>
 #include <QtMultimedia/qtvideo.h>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include "QtVideoRecorder.h"
 #include "VideoScreenshot.h"
 
 class QImageCapture;
 class QMediaCaptureSession;
 class QMediaDevices;
-class QMediaRecorder;
 class QQuickItem;
 class QTimer;
 class QVideoFrame;
@@ -134,12 +133,10 @@ public:
     /// True while the camera runs into a registered VideoOutput, so startRecording() can record it.
     bool canRecord() const { return canTakeScreenshot(); }
 
-    bool recording() const { return _recording; }
+    bool recording() const { return _recorder->recording(); }
 
-    /// Records the camera's video to "<file without suffix>.<suffix of the format used>", trying recordingFormats() in
-    /// turn until one encodes. recordingStarted() follows once the first frame is encoded, or recordingFinished() with
-    /// an error; a failed attempt leaves no file behind. Recreating the camera (another device or format, an unplug, a
-    /// retry) ends the recording; Qt finishes writing the file.
+    /// Records the camera's video to @p file as QtVideoRecorder::start() does. Recreating the camera (another device or
+    /// format, an unplug, a retry) ends the recording; Qt finishes writing the file.
     void startRecording(const QString& file, QMediaFormat::FileFormat container,
                         QMediaFormat::VideoCodec codec = QMediaFormat::VideoCodec::Unspecified);
     void stopRecording();
@@ -147,21 +144,13 @@ public:
     /// the application's exit would cut short.
     void stopRecordingAndWait(int timeoutMs);
 
-    /// The formats startRecording() tries for @p container, best first: @p codec where Qt can encode it, then H.264
-    /// and the other codecs Qt can encode here, down to software MPEG-2. In @p container where Qt can write it, else in
-    /// another container. Qt counts a hardware encoder as encodable even where the hardware turns it down, hence the
-    /// fallbacks.
-    static QList<QMediaFormat> recordingFormats(QMediaFormat::FileFormat container,
-                                                QMediaFormat::VideoCodec codec = QMediaFormat::VideoCodec::Unspecified);
+    /// For QML: QtVideoRecorder::recordingCodecs() and recordingCodecName().
+    static QStringList recordingCodecs() { return QtVideoRecorder::recordingCodecs(); }
 
-    /// The codecs Qt can encode a recording in here, in any of the recording containers, as the keys of
-    /// QMediaFormat::VideoCodec (such as "H264"): the values of VideoSettings::uvcRecordingCodec. recordingFormats()'s
-    /// fallbacks come first, in its order.
-    static QStringList recordingCodecs();
-    /// The codec of key @p key, as recordingCodecs() names it; Unspecified for an empty or unknown key.
-    static QMediaFormat::VideoCodec recordingCodec(const QString& key);
-    /// The name of the codec of key @p key, such as "H.264", for display.
-    Q_INVOKABLE static QString recordingCodecName(const QString& key);
+    Q_INVOKABLE static QString recordingCodecName(const QString& key)
+    {
+        return QtVideoRecorder::recordingCodecName(key);
+    }
 
 signals:
     /// A camera was plugged in or unplugged.
@@ -188,12 +177,6 @@ private:
     void _applyControls();
     /// Saves the frame on display to @p file off the GUI thread; logs a warning without a VideoOutput.
     void _savePhotoOnDisplay(const QString& file, const VideoScreenshot::Exif& exif) const;
-    /// Records with the next of _pendingFormats.
-    void _recordNextFormat();
-    void _onRecorderStateChanged(QMediaRecorder::RecorderState state);
-    void _onRecorderError(const QString& errorString);
-    /// The recorder stopped before it encoded a frame: tries the next format after a failure, else reports it.
-    void _onRecordingNotStarted();
     /// Whether the camera in use is attached; without one, whether a camera of the selected name is.
     bool _cameraAttached() const;
     QVideoSink* _videoSink() const;
@@ -205,11 +188,10 @@ private:
     QTimer* const _retryTimer;
     /// Outlives the capture sessions, like _recorder.
     QImageCapture* const _imageCapture;
+    QtVideoRecorder* const _recorder;
     QCamera* _camera = nullptr;
     Controls _controls;
     QMediaCaptureSession* _captureSession = nullptr;
-    /// Outlives the capture sessions: a session going away mid-recording makes it finish the file and report it.
-    QMediaRecorder* _recorder = nullptr;
     QPointer<QQuickItem> _videoOutput;
     QString _deviceName;
     QString _formatName;
@@ -225,12 +207,4 @@ private:
 
     /// The photos requested and not taken yet, by request id.
     QHash<int, PendingPhoto> _photoFiles;
-    QList<QMediaFormat> _pendingFormats;
-    /// The file being recorded, without its suffix.
-    QString _recordingBase;
-    QString _recordingFile;
-    QString _recordingError;
-    /// From the first encoded frame until the recorder stops.
-    bool _recording = false;
-    bool _stopRequested = false;
 };

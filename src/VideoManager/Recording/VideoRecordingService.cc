@@ -9,6 +9,7 @@
 #include "AppSettings.h"
 #include "Fact.h"
 #include "QGCLoggingCategory.h"
+#include "QtVideoRecorder.h"
 #include "SettingsManager.h"
 #include "SubtitleWriter.h"
 #include "UVCCameraController.h"
@@ -17,23 +18,6 @@
 #include "VideoStreamController.h"
 
 QGC_LOGGING_CATEGORY(VideoRecordingServiceLog, "Video.VideoRecordingService")
-
-namespace {
-
-QMediaFormat::FileFormat mediaFileFormat(VideoReceiver::FileFormat format)
-{
-    switch (format) {
-        case VideoReceiver::FileFormat::Mkv:
-            return QMediaFormat::Matroska;
-        case VideoReceiver::FileFormat::Mov:
-            return QMediaFormat::QuickTime;
-        case VideoReceiver::FileFormat::Mp4:
-            break;
-    }
-    return QMediaFormat::MPEG4;
-}
-
-}  // namespace
 
 VideoRecordingService::VideoRecordingService(VideoStreamController* primaryStream, VideoStreamController* thermalStream,
                                              UVCCameraController* uvcCamera, QObject* parent)
@@ -137,8 +121,8 @@ void VideoRecordingService::startRecording(const QString& baseName)
     if (recordUvc) {
         _uvcCamera->startRecording(
             QStringLiteral("%1/%2.%3").arg(directory, name, VideoReceiver::fileExtension(format)),
-            mediaFileFormat(format),
-            UVCCameraController::recordingCodec(videoSettings->uvcRecordingCodec()->rawValue().toString()));
+            QtVideoRecorder::container(format),
+            QtVideoRecorder::recordingCodec(videoSettings->uvcRecordingCodec()->rawValue().toString()));
     }
 }
 
