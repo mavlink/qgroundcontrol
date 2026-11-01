@@ -6,6 +6,8 @@
 class GStreamerVideoBackend final : public VideoBackend
 {
 public:
+    void configureQtGraphics(bool softwareRendering) override;
+
     bool hasStreaming() const override { return true; }
 
     bool hasGpuVideoPath() const override;

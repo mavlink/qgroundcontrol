@@ -33,6 +33,11 @@ void onPipelineRestart() noexcept;
 /// stream, so only for scene-graph teardown, window swaps and device loss.
 void resetCachedGpuResources() noexcept;
 
+/// Qt graphics setup the GPU paths need, which Qt reads at startup: call before the QGuiApplication exists. On
+/// desktop Linux it pins the scene graph to OpenGL, unless @p softwareRendering (--swrast) or QSG_RHI_BACKEND chose
+/// one, and Qt's xcb platform to EGL; with the GL or DMABuf path it shares Qt's OpenGL contexts. No-op otherwise.
+void configureQtGraphics(bool softwareRendering) noexcept;
+
 /// Wire the main QQuickWindow into the RHI-capture path so snapshots, and the EGLDisplay Qt renders with, follow its
 /// QRhi. GUI thread; no-op without GPU.
 void connectMainWindow(QQuickWindow* window) noexcept;

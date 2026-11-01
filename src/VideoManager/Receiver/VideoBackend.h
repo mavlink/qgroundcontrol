@@ -40,6 +40,10 @@ public:
     /// Routes changes of @p fact (AppSettings::gstDebugLevel) to setDebugLevel() while @p context lives.
     static void bindDebugLevelFact(Fact* fact, QObject* context);
 
+    /// Qt graphics setup the backend's GPU video paths need; call it before the QGuiApplication exists, as Qt reads it
+    /// at startup. @p softwareRendering: the user asked for software rendering (--swrast), which it must keep.
+    virtual void configureQtGraphics(bool softwareRendering) = 0;
+
     /// True when the build plays network video streams; their settings are shown only then.
     virtual bool hasStreaming() const = 0;
 

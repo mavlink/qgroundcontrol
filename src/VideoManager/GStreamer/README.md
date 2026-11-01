@@ -241,7 +241,7 @@ glupload, Linux without gst-gl always imports DMABuf directly. The choice is log
 `Video.GStreamer.GstQgcGpuBin`; the `qgc` GStreamer debug category logs each bin's variant.
 
 Qt's xcb platform, which the AppImage uses even in Wayland sessions, picks GLX before EGL. Linux builds with the GL or
-DMABuf path therefore set `QT_XCB_GL_INTEGRATION=xcb_egl` at startup unless it is already set; Qt still falls back to
+DMABuf path therefore set `QT_XCB_GL_INTEGRATION=xcb_egl` at startup unless it is already set (`HwBuffers::configureQtGraphics()`, which the platform startup code calls through `VideoBackend` before Qt starts); Qt still falls back to
 GLX when EGL fails to initialize. Set `QT_XCB_GL_INTEGRATION=xcb_glx` to keep GLX, e.g. for a driver whose EGL
 misbehaves; video then reaches Qt as GLMemory that glupload uploads, without DMABuf import.
 

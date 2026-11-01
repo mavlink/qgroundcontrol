@@ -1,14 +1,15 @@
 #include "Platform.h"
-#include "qgc_version.h"
+
+#include <cstdio>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QProcessEnvironment>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
 
-#include <cstdio>
-
 #include "QGCCommandLineParser.h"
+#include "VideoBackend.h"
+#include "qgc_version.h"
 
 #if !defined(Q_OS_IOS) && !defined(Q_OS_ANDROID)
     #include "RunGuard.h"
@@ -398,25 +399,7 @@ std::optional<int> Platform::initialize(int argc, char* argv[],
         QCoreApplication::setAttribute(Qt::AA_UseSoftwareOpenGL);
 #endif
     }
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && \
-    (defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH))
-    // GL is the only working desktop-Linux GStreamer zero-copy backend (GLMemory and DMABuf/EGLImage both import into a
-    // GL RHI; Vulkan import dormant); pin it unless the user set QSG_RHI_BACKEND. No QRhi::probe — needs GuiPrivate (not
-    // linked here) and GL is always present on Linux.
-    else if (!qEnvironmentVariableIsSet("QSG_RHI_BACKEND")) {
-        QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
-    }
-    // GStreamer's zero-copy imports need Qt on EGL, but Qt's xcb integration picks GLX first (the AppImage runs xcb
-    // even in Wayland sessions). Qt falls back to GLX when EGL fails to initialize; the user's value wins.
-    if (!qEnvironmentVariableIsSet("QT_XCB_GL_INTEGRATION")) {
-        (void) qputenv("QT_XCB_GL_INTEGRATION", "xcb_egl");
-    }
-#endif
-
-    // GStreamer's GL/DMABuf zero-copy paths both need QOpenGLContext::globalShareContext(), which this attribute enables.
-#if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH)
-    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-#endif
+    VideoBackend::instance().configureQtGraphics(args.useSwRast);
     QCoreApplication::setAttribute(Qt::AA_CompressTabletEvents);
 
     return std::nullopt;

@@ -2,6 +2,7 @@
 
 #include "GStreamer.h"
 #include "GStreamerDecoderRanks.h"
+#include "HwBuffers/common/HwBuffers.h"
 
 #ifdef Q_OS_ANDROID
 #include <jni.h>
@@ -10,6 +11,11 @@
 // this sets (Platform/gst_android_jni.c).
 extern "C" void qgc_gst_android_set_jni_state(JavaVM* javaVm, jobject context, jobject classLoader);
 #endif
+
+void GStreamerVideoBackend::configureQtGraphics(bool softwareRendering)
+{
+    HwBuffers::configureQtGraphics(softwareRendering);
+}
 
 bool GStreamerVideoBackend::hasGpuVideoPath() const
 {

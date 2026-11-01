@@ -16,6 +16,8 @@ namespace {
 class NullVideoBackend final : public VideoBackend
 {
 public:
+    void configureQtGraphics(bool) override {}
+
     bool hasStreaming() const override { return false; }
 
     bool hasGpuVideoPath() const override { return false; }
