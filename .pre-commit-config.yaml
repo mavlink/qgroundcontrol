@@ -97,7 +97,7 @@ repos:
 
   # Secret detection
   - repo: https://github.com/trufflesecurity/trufflehog
-    rev: v3.97.1
+    rev: v3.99.7
     hooks:
       - id: trufflehog
         args: ['--only-verified', '--exclude-paths=tools/configs/trufflehog-exclude.txt']
@@ -192,7 +192,7 @@ repos:
 
   # GitHub Actions security scanning
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.30.1
+    rev: v1.31.1
     hooks:
       - id: zizmor
         name: zizmor (GitHub Actions security)
@@ -206,7 +206,7 @@ repos:
 
   # Vendor config schema validation (validate-configs checks .github/build-config.json)
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.38.0
+    rev: 0.39.0
     hooks:
       - id: check-dependabot
       - id: check-codecov
@@ -218,7 +218,7 @@ repos:
   # Renovate's own validator installs Renovate from npm, so it runs only on demand and in the
   # CI Scripts workflow when renovate.json or this file changes.
   - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 44.56.1
+    rev: 44.199.2
     hooks:
       - id: renovate-config-validator
         # Also revalidates when this file bumps the validator's own Renovate version.
@@ -229,7 +229,7 @@ repos:
 
   # Markdown linting (report-only, doesn't auto-fix)
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.49.1
+    rev: v0.50.0
     hooks:
       - id: markdownlint
         exclude: ^(translations/|docs/(zh|ko|tr|ru|ja|de|es|fa|fr|he|uk)/|CHANGELOG\.md)
@@ -240,7 +240,7 @@ repos:
   # Both hooks share one built environment and the `vale` id, so `prek run vale`
   # syncs then lints; the `vale-sync` alias selects or skips only the sync.
   - repo: https://github.com/errata-ai/vale
-    rev: v3.19.0
+    rev: v3.26.0
     hooks:
       - id: vale
         alias: vale-sync
@@ -255,7 +255,7 @@ repos:
 
   # Spell checking (report-only, doesn't auto-fix)
   - repo: https://github.com/crate-ci/typos
-    rev: v1.50.1
+    rev: v1.51.1
     hooks:
       - id: typos
         args: ['--force-exclude']  # Honor .typos.toml exclusions for explicit pre-commit paths
