@@ -1,6 +1,9 @@
 #pragma once
 
+#include <utility>
+
 #include <QtCore/QByteArray>
+#include <QtCore/QHash>
 #include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
@@ -8,19 +11,22 @@
 #include <QtCore/QStringList>
 #include <QtMultimedia/QMediaFormat>
 #include <QtMultimedia/QMediaRecorder>
+#include <QtMultimedia/qtvideo.h>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class QCamera;
+class QImageCapture;
 class QMediaCaptureSession;
 class QMediaDevices;
 class QMediaRecorder;
 class QQuickItem;
 class QTimer;
+class QVideoFrame;
 class QVideoSink;
 class UVCStreamMonitor;
 
 /// The USB (UVC) camera VideoManager selected: owns its QCamera and capture session, measures its frames, takes its
-/// screenshots and records it. The user hears of camera errors and of the camera being unplugged.
+/// photos and records it. The user hears of camera errors and of the camera being unplugged.
 ///
 /// The camera is tracked by its device id, so unplugging it is noticed even while another camera of the same name stays
 /// attached; the controller then runs that one. After an error the camera is recreated up to kMaxRetries times.
@@ -77,6 +83,11 @@ public:
     /// a warning logged, without one.
     bool takeScreenshot(const QString& file) const;
 
+    /// Takes a photo into @p file: a still capture where Qt takes one (Android, Apple), else the camera's next frame,
+    /// rotated and mirrored as the registered VideoOutput shows it and saved off the GUI thread. Saves the frame on
+    /// display instead (takeScreenshot()) while the camera can't capture, or when a capture fails.
+    void capturePhoto(const QString& file);
+
     /// True while the camera runs into a registered VideoOutput, so startRecording() can record it.
     bool canRecord() const { return canTakeScreenshot(); }
 
@@ -115,6 +126,10 @@ private:
     void _recreateCamera();
     void _onCameraError(const QString& errorString);
     void _onVideoInputsChanged();
+    void _onImageAvailable(int id, const QVideoFrame& frame);
+    void _onImageCaptureError(int id, const QString& errorString);
+    /// The registered output's orientation and mirroring, which screenshots and photos apply.
+    std::pair<QtVideo::Rotation, bool> _outputTransform() const;
     /// Records with the next of _pendingFormats.
     void _recordNextFormat();
     void _onRecorderStateChanged(QMediaRecorder::RecorderState state);
@@ -128,6 +143,8 @@ private:
     UVCStreamMonitor* const _monitor;
     QMediaDevices* const _mediaDevices;
     QTimer* const _retryTimer;
+    /// Outlives the capture sessions, like _recorder.
+    QImageCapture* const _imageCapture;
     QCamera* _camera = nullptr;
     QMediaCaptureSession* _captureSession = nullptr;
     /// Outlives the capture sessions: a session going away mid-recording makes it finish the file and report it.
@@ -138,6 +155,8 @@ private:
     QStringList _formats;
     QByteArray _cameraId;
     int _retries = 0;
+    /// The files of the photos requested and not taken yet, by request id.
+    QHash<int, QString> _photoFiles;
     QList<QMediaFormat> _pendingFormats;
     /// The file being recorded, without its suffix.
     QString _recordingBase;

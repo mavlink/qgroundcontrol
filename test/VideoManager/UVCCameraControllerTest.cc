@@ -1,10 +1,12 @@
 #include "UVCCameraControllerTest.h"
 
+#include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTimer>
 #include <QtGui/QImage>
 #include <QtMultimedia/QMediaFormat>
+#include <QtMultimedia/QVideoFrame>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QSignalSpy>
@@ -19,6 +21,43 @@ using VideoTestHelpers::showFrame;
 namespace {
 
 constexpr const char* kMissingCamera = "QGC Test Missing Camera";
+
+/// 64 × 48, red in the top-left quadrant only.
+QImage redTopLeftQuadrant()
+{
+    QImage image(QSize(64, 48), QImage::Format_RGBA8888);
+    image.fill(Qt::blue);
+    for (int y = 0; y < 24; ++y) {
+        for (int x = 0; x < 32; ++x) {
+            image.setPixelColor(x, y, Qt::red);
+        }
+    }
+    return image;
+}
+
+/// A VideoOutput turned 90° clockwise and mirrored, as UVCVideoOutput sets it from the rotation and mirror settings.
+std::unique_ptr<QQuickItem> turnedMirroredOutput(QQmlEngine& engine)
+{
+    std::unique_ptr<QQuickItem> output = createVideoOutput(engine);
+    if (output && !(output->setProperty("orientation", 90) && output->setProperty("mirrored", true))) {
+        output.reset();
+    }
+    return output;
+}
+
+/// Whether @p image is redTopLeftQuadrant() turned clockwise, which puts the red quadrant top right, and mirrored,
+/// which brings it back to the top left.
+bool showsTurnedMirroredQuadrant(const QImage& image)
+{
+    if (image.size() != QSize(48, 64)) {
+        return false;
+    }
+    const auto isRed = [&image](int x, int y) {
+        const QColor color = image.pixelColor(x, y);
+        return (color.red() > 200) && (color.blue() < 50);
+    };
+    return isRed(10, 10) && !isRed(40, 10) && !isRed(10, 50) && !isRed(40, 50);
+}
 
 }  // namespace
 
@@ -68,36 +107,67 @@ void UVCCameraControllerTest::_testScreenshotFollowsOutputTransform()
 
     UVCCameraController controller;
     QQmlEngine engine;
-    const std::unique_ptr<QQuickItem> output = createVideoOutput(engine);
+    const std::unique_ptr<QQuickItem> output = turnedMirroredOutput(engine);
     QVERIFY(output);
-    // As UVCVideoOutput sets them from the rotation and mirror settings.
-    QVERIFY(output->setProperty("orientation", 90));
-    QVERIFY(output->setProperty("mirrored", true));
     controller.registerVideoOutput(output.get());
 
-    // 64 × 48, red in the top-left quadrant only.
-    QImage frame(QSize(64, 48), QImage::Format_RGBA8888);
-    frame.fill(Qt::blue);
-    for (int y = 0; y < 24; ++y) {
-        for (int x = 0; x < 32; ++x) {
-            frame.setPixelColor(x, y, Qt::red);
-        }
-    }
-    showFrame(output.get(), frame);
+    showFrame(output.get(), redTopLeftQuadrant());
     ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
     QVERIFY(controller.takeScreenshot(shot));
+    QVERIFY(showsTurnedMirroredQuadrant(QImage(shot)));
+}
 
-    // Turned clockwise the quadrant is the top-right one, and mirrored the top-left one again.
-    const QImage saved(shot);
-    QCOMPARE(saved.size(), QSize(48, 64));
-    const auto isRed = [&saved](int x, int y) {
-        const QColor color = saved.pixelColor(x, y);
-        return (color.red() > 200) && (color.blue() < 50);
-    };
-    QVERIFY(isRed(10, 10));
-    QVERIFY(!isRed(40, 10));
-    QVERIFY(!isRed(10, 50));
-    QVERIFY(!isRed(40, 50));
+void UVCCameraControllerTest::_testPhotoFollowsOutputTransform()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString photo = tempDir.filePath(QStringLiteral("photo.png"));
+
+    UVCCameraController controller;
+    QQmlEngine engine;
+    const std::unique_ptr<QQuickItem> output = turnedMirroredOutput(engine);
+    QVERIFY(output);
+    controller.registerVideoOutput(output.get());
+
+    // A captured frame, as QImageCapture hands it over for request 7, is saved as displayed.
+    controller._photoFiles.insert(7, photo);
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
+    controller._onImageAvailable(7, QVideoFrame(redTopLeftQuadrant()));
+    QVERIFY(controller._photoFiles.isEmpty());
+    QTRY_VERIFY_WITH_TIMEOUT(QFileInfo(photo).size() > 0, 5000);
+    QTRY_VERIFY_WITH_TIMEOUT(showsTurnedMirroredQuadrant(QImage(photo)), 5000);
+
+    // Frames of requests this controller didn't make are ignored.
+    controller._onImageAvailable(8, QVideoFrame(redTopLeftQuadrant()));
+}
+
+void UVCCameraControllerTest::_testPhotoWithoutCameraIsScreenshot()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString photo = tempDir.filePath(QStringLiteral("photo.png"));
+
+    UVCCameraController controller;
+    QQmlEngine engine;
+    const std::unique_ptr<QQuickItem> output = createVideoOutput(engine);
+    QVERIFY(output);
+    controller.registerVideoOutput(output.get());
+    showFrame(output.get(), redTopLeftQuadrant());
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
+
+    // No camera captures, so the frame on display is saved, right away.
+    controller.capturePhoto(photo);
+    QCOMPARE(QImage(photo).size(), QSize(64, 48));
+    QVERIFY(controller._photoFiles.isEmpty());
+
+    // A failed capture falls back the same way.
+    const QString failed = tempDir.filePath(QStringLiteral("failed.png"));
+    controller._photoFiles.insert(9, failed);
+    expectLogMessage("Video.UVCCameraController", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Photo capture failed")));
+    controller._onImageCaptureError(9, QStringLiteral("Camera busy"));
+    verifyExpectedLogMessage();
+    QCOMPARE(QImage(failed).size(), QSize(64, 48));
 }
 
 void UVCCameraControllerTest::_testMissingCameraNeverRuns()

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QEventLoop>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
@@ -10,6 +11,7 @@
 #include <QtCore/QUrl>
 #include <QtMultimedia/QCamera>
 #include <QtMultimedia/QCameraDevice>
+#include <QtMultimedia/QImageCapture>
 #include <QtMultimedia/QMediaCaptureSession>
 #include <QtMultimedia/QMediaDevices>
 #include <QtMultimedia/QMediaRecorder>
@@ -29,7 +31,12 @@ UVCCameraController::UVCCameraController(QObject* parent)
     , _monitor(new UVCStreamMonitor(this))
     , _mediaDevices(new QMediaDevices(this))
     , _retryTimer(new QTimer(this))
+    , _imageCapture(new QImageCapture(this))
 {
+    (void) connect(_imageCapture, &QImageCapture::imageAvailable, this, &UVCCameraController::_onImageAvailable);
+    (void) connect(
+        _imageCapture, &QImageCapture::errorOccurred, this,
+        [this](int id, QImageCapture::Error, const QString& errorString) { _onImageCaptureError(id, errorString); });
     _retryTimer->setSingleShot(true);
     _retryTimer->setInterval(kRetryIntervalMs);
     (void) connect(_retryTimer, &QTimer::timeout, this, &UVCCameraController::_recreateCamera);
@@ -278,11 +285,51 @@ bool UVCCameraController::takeScreenshot(const QString& file) const
         qCWarning(UVCCameraControllerLog) << "No video output to take a screenshot from";
         return false;
     }
+    const auto [rotation, mirrored] = _outputTransform();
+    return VideoScreenshot::save(videoSink->videoFrame(), file, rotation, mirrored);
+}
+
+std::pair<QtVideo::Rotation, bool> UVCCameraController::_outputTransform() const
+{
+    if (!_videoOutput) {
+        return {QtVideo::Rotation::None, false};
+    }
     // VideoOutput's orientation is in degrees, a multiple of 90; QtVideo::Rotation's values are those degrees.
     const int degrees = ((_videoOutput->property("orientation").toInt() % 360) + 360) % 360;
-    return VideoScreenshot::save(videoSink->videoFrame(), file,
-                                 static_cast<QtVideo::Rotation>(degrees - (degrees % 90)),
-                                 _videoOutput->property("mirrored").toBool());
+    return {static_cast<QtVideo::Rotation>(degrees - (degrees % 90)), _videoOutput->property("mirrored").toBool()};
+}
+
+void UVCCameraController::capturePhoto(const QString& file)
+{
+    const int id =
+        (_captureSession && canTakeScreenshot() && _imageCapture->isReadyForCapture()) ? _imageCapture->capture() : -1;
+    if (id < 0) {
+        (void) takeScreenshot(file);
+        return;
+    }
+    qCDebug(UVCCameraControllerLog) << "photo" << id << file;
+    _photoFiles.insert(id, file);
+}
+
+void UVCCameraController::_onImageAvailable(int id, const QVideoFrame& frame)
+{
+    const QString file = _photoFiles.take(id);
+    if (file.isEmpty()) {
+        return;
+    }
+    const auto [rotation, mirrored] = _outputTransform();
+    // Converting and encoding a full-resolution photo would stall the UI.
+    (void) QtConcurrent::run(
+        [frame, file, rotation, mirrored] { (void) VideoScreenshot::save(frame, file, rotation, mirrored); });
+}
+
+void UVCCameraController::_onImageCaptureError(int id, const QString& errorString)
+{
+    const QString file = _photoFiles.take(id);
+    qCWarning(UVCCameraControllerLog) << "Photo capture failed:" << id << file << errorString;
+    if (!file.isEmpty()) {
+        (void) takeScreenshot(file);
+    }
 }
 
 void UVCCameraController::_createCamera()
@@ -315,10 +362,16 @@ void UVCCameraController::_createCamera()
     if (_recorder) {
         _captureSession->setRecorder(_recorder);
     }
+    _captureSession->setImageCapture(_imageCapture);
 }
 
 void UVCCameraController::_releaseCamera()
 {
+    // The capture session's photos still pending won't come: save the frame on display instead.
+    for (const QString& file : std::as_const(_photoFiles)) {
+        (void) takeScreenshot(file);
+    }
+    _photoFiles.clear();
     _monitor->detach();
     delete _captureSession;
     _captureSession = nullptr;

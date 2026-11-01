@@ -315,7 +315,7 @@ void VideoManager::grabImage(const QString& imageFile)
     if (_primaryStream->canTakeScreenshot()) {
         (void) _primaryStream->takeScreenshot(file);
     } else if (_uvcCamera->canTakeScreenshot()) {
-        (void) _uvcCamera->takeScreenshot(file);
+        _uvcCamera->capturePhoto(file);
     } else {
         qCDebug(VideoManagerLog) << "No video on display to take a screenshot from";
     }
