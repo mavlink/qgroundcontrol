@@ -29,6 +29,18 @@
 
 QGC_LOGGING_CATEGORY(UVCCameraControllerLog, "Video.UVCCameraController")
 
+namespace {
+
+// Qt takes still photos with Android's and Apple's cameras. With the others QImageCapture converts the camera's next
+// frame on the camera's thread, the GUI thread for a V4L2 camera, so the photo is the frame on display instead.
+#if defined(Q_OS_ANDROID) || defined(Q_OS_DARWIN)
+constexpr bool kStillPhotos = true;
+#else
+constexpr bool kStillPhotos = false;
+#endif
+
+}  // namespace
+
 UVCCameraController::UVCCameraController(QObject* parent)
     : QObject(parent)
     , _monitor(new UVCStreamMonitor(this))
@@ -364,7 +376,7 @@ void UVCCameraController::capturePhoto(const QString& file)
     const int id =
         (_captureSession && canTakeScreenshot() && _imageCapture->isReadyForCapture()) ? _imageCapture->capture() : -1;
     if (id < 0) {
-        (void) takeScreenshot(file);
+        _savePhotoOnDisplay(file);
         return;
     }
     qCDebug(UVCCameraControllerLog) << "photo" << id << file;
@@ -389,8 +401,20 @@ void UVCCameraController::_onImageCaptureError(int id, const QString& errorStrin
     const QString file = _photoFiles.take(id);
     qCWarning(UVCCameraControllerLog) << "Photo capture failed:" << id << file << errorString;
     if (!file.isEmpty()) {
-        (void) takeScreenshot(file);
+        _savePhotoOnDisplay(file);
     }
+}
+
+void UVCCameraController::_savePhotoOnDisplay(const QString& file) const
+{
+    QVideoSink* const videoSink = _videoSink();
+    if (!videoSink) {
+        qCWarning(UVCCameraControllerLog) << "No video output to take a photo from";
+        return;
+    }
+    // Converting and encoding a full-resolution photo would stall the UI. The frame on display carries the transform
+    // already (UVCFrameRelay).
+    (void) QtConcurrent::run([frame = videoSink->videoFrame(), file] { (void) VideoScreenshot::save(frame, file); });
 }
 
 void UVCCameraController::_createCamera()
@@ -423,14 +447,16 @@ void UVCCameraController::_createCamera()
     if (_recorder) {
         _captureSession->setRecorder(_recorder);
     }
-    _captureSession->setImageCapture(_imageCapture);
+    if (kStillPhotos) {
+        _captureSession->setImageCapture(_imageCapture);
+    }
 }
 
 void UVCCameraController::_releaseCamera()
 {
     // The capture session's photos still pending won't come: save the frame on display instead.
     for (const QString& file : std::as_const(_photoFiles)) {
-        (void) takeScreenshot(file);
+        _savePhotoOnDisplay(file);
     }
     _photoFiles.clear();
     _monitor->detach();

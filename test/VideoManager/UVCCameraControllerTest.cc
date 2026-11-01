@@ -161,10 +161,10 @@ void UVCCameraControllerTest::_testPhotoWithoutCameraIsScreenshot()
     showFrame(output.get(), redTopLeftQuadrant());
     ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
 
-    // No camera captures, so the frame on display is saved, right away.
+    // No camera captures, so the frame on display is saved, off the GUI thread.
     controller.capturePhoto(photo);
-    QCOMPARE(QImage(photo).size(), QSize(64, 48));
     QVERIFY(controller._photoFiles.isEmpty());
+    QTRY_COMPARE_WITH_TIMEOUT(QImage(photo).size(), QSize(64, 48), 5000);
 
     // A failed capture falls back the same way.
     const QString failed = tempDir.filePath(QStringLiteral("failed.png"));
@@ -173,7 +173,14 @@ void UVCCameraControllerTest::_testPhotoWithoutCameraIsScreenshot()
                      QRegularExpression(QStringLiteral("Photo capture failed")));
     controller._onImageCaptureError(9, QStringLiteral("Camera busy"));
     verifyExpectedLogMessage();
-    QCOMPARE(QImage(failed).size(), QSize(64, 48));
+    QTRY_COMPARE_WITH_TIMEOUT(QImage(failed).size(), QSize(64, 48), 5000);
+
+    // Without an output there is nothing to save.
+    controller.unregisterVideoOutput(output.get());
+    expectLogMessage("Video.UVCCameraController", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^No video output to take a photo from")));
+    controller.capturePhoto(tempDir.filePath(QStringLiteral("none.png")));
+    verifyExpectedLogMessage();
 }
 
 void UVCCameraControllerTest::_testMissingCameraNeverRuns()
