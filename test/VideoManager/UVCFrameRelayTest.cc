@@ -9,6 +9,7 @@
 #include <QtTest/QSignalSpy>
 
 #include "UVCFrameRelay.h"
+#include "VideoScreenshot.h"
 
 namespace {
 
@@ -16,6 +17,18 @@ QImage solidImage(const QColor& color)
 {
     QImage image(QSize(16, 8), QImage::Format_RGBA8888);
     image.fill(color);
+    return image;
+}
+
+/// Every pixel differs, so any turn or flip changes the picture.
+QImage asymmetricImage()
+{
+    QImage image(QSize(4, 2), QImage::Format_RGBA8888);
+    for (int y = 0; y < image.height(); ++y) {
+        for (int x = 0; x < image.width(); ++x) {
+            image.setPixelColor(x, y, QColor(x * 60, y * 120, 255 - (x * 60), 255));
+        }
+    }
     return image;
 }
 
@@ -49,6 +62,36 @@ void UVCFrameRelayTest::_testTransformedLeavesFrameAlone()
     mapped.unmap();
 
     QVERIFY(!UVCFrameRelay::transformed(QVideoFrame(), QtVideo::Rotation::Clockwise90, true).isValid());
+}
+
+void UVCFrameRelayTest::_testTransformedShowsTheOutputTransform()
+{
+    // The relayed frame must look as the camera's frame does under a VideoOutput with the same transform, the picture a
+    // photo of the camera's frame takes. A mirrored camera frame (Android's and iOS's front cameras) turns the other
+    // way.
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
+    constexpr QtVideo::Rotation kRotations[] = {QtVideo::Rotation::None, QtVideo::Rotation::Clockwise90,
+                                                QtVideo::Rotation::Clockwise180, QtVideo::Rotation::Clockwise270};
+    for (const QtVideo::Rotation frameRotation : kRotations) {
+        for (const bool frameMirrored : {false, true}) {
+            QVideoFrame frame(asymmetricImage());
+            frame.setRotation(frameRotation);
+            frame.setMirrored(frameMirrored);
+            for (const QtVideo::Rotation rotation : kRotations) {
+                for (const bool mirrored : {false, true}) {
+                    const QImage relayed =
+                        VideoScreenshot::displayedImage(UVCFrameRelay::transformed(frame, rotation, mirrored));
+                    const QImage displayed = VideoScreenshot::displayedImage(frame, rotation, mirrored);
+                    QVERIFY2(!displayed.isNull() && (relayed == displayed),
+                             qPrintable(QStringLiteral("frame %1%2, transform %3%4")
+                                            .arg(static_cast<int>(frameRotation))
+                                            .arg(frameMirrored ? QStringLiteral(" mirrored") : QString())
+                                            .arg(static_cast<int>(rotation))
+                                            .arg(mirrored ? QStringLiteral(" mirrored") : QString())));
+                }
+            }
+        }
+    }
 }
 
 void UVCFrameRelayTest::_testRelaysLatestFrameOnItsThread()

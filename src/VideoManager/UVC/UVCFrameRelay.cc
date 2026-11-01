@@ -31,9 +31,11 @@ QVideoFrame UVCFrameRelay::transformed(const QVideoFrame& frame, QtVideo::Rotati
         return frame;
     }
     QVideoFrame result = SharedVideoFrame::withOwnMetadata(frame);
-    // QtVideo::Rotation's values are degrees.
-    result.setRotation(
-        static_cast<QtVideo::Rotation>((static_cast<int>(frame.rotation()) + static_cast<int>(rotation)) % 360));
+    // Qt mirrors a frame after rotating it, so a rotation applied on top of a mirrored frame turns the other way
+    // (Rot(a) * Mirror == Mirror * Rot(-a)), as Qt's own VideoTransformation::rotate() composes it. QtVideo::Rotation's
+    // values are degrees.
+    const int added = frame.mirrored() ? (360 - static_cast<int>(rotation)) : static_cast<int>(rotation);
+    result.setRotation(static_cast<QtVideo::Rotation>((static_cast<int>(frame.rotation()) + added) % 360));
     result.setMirrored(frame.mirrored() != mirrored);
     return result;
 }

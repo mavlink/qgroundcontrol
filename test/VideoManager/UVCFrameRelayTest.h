@@ -8,5 +8,6 @@ class UVCFrameRelayTest : public UnitTest
 
 private slots:
     void _testTransformedLeavesFrameAlone();
+    void _testTransformedShowsTheOutputTransform();
     void _testRelaysLatestFrameOnItsThread();
 };
