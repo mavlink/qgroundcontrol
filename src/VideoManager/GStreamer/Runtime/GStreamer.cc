@@ -14,6 +14,7 @@
 #include <QtCore/QVarLengthArray>
 #include <QtMultimedia/QVideoSink>
 
+#include "GStreamerDecoderRanks.h"
 #include "GStreamerEnvironment.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
@@ -394,25 +395,6 @@ void onMainWindowReady(QQuickWindow* window)
     const GstQgc::RenderBackend backend = GstQgc::currentRenderTarget().backend;
     qCInfo(GStreamerLog) << "Resolved RHI backend:" << GstQgc::toString(backend)
                          << "→ zero-copy path:" << GstQgc::zeroCopyPathName(backend);
-}
-
-QList<VideoDecoderOptions> availableDecoderFamilies()
-{
-    QList<VideoDecoderOptions> families;
-    forEachVideoDecoderFactory(GST_RANK_NONE, [&families](GstElementFactory* factory) {
-        const VideoDecoderOptions family =
-            decoderFamilyForFactory(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
-#ifndef QGC_HAS_GST_VULKAN_GPU_PATH
-        // Without the opt-in Vulkan GPU path, forcing Vulkan decoders only adds a CPU copy of every frame.
-        if (family == ForceVideoDecoderVulkan) {
-            return;
-        }
-#endif
-        if ((family != ForceVideoDecoderDefault) && !families.contains(family)) {
-            families.append(family);
-        }
-    });
-    return families;
 }
 
 }  // namespace GStreamer

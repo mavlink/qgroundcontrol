@@ -7,6 +7,7 @@
 
 #include <QtCore/QFile>
 
+#include "GStreamerDecoderRanks.h"
 #include "GStreamerHelpers.h"
 #include "RecordingBranch.h"
 

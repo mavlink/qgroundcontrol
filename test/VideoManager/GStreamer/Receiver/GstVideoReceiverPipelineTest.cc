@@ -9,7 +9,8 @@
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QUdpSocket>
 
-#include "GStreamerHelpers.h"
+#include "GStreamerDecoderRanks.h"
+#include "GstScoped.h"
 #include "MockVideoStreamServer.h"
 
 namespace {

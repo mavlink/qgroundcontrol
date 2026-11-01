@@ -2,7 +2,7 @@
 
 #ifdef QGC_GST_STREAMING
 
-#include "GStreamerHelpers.h"
+#include "GStreamerDecoderRanks.h"
 #include "VideoStreamStats.h"
 
 namespace {

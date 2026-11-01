@@ -21,10 +21,6 @@ bool nativeDebugLogRequested();
 // persisted gstDebugLevel setting, else that setting's default (disabled), unless GST_DEBUG is set.
 void configureDebugLogging(std::optional<int> level = std::nullopt);
 
-// Diagnostic dump of installed video-decoder factories, sorted by rank, with
-// HW/SW classification. No-op once the registry is empty.
-void logDecoderRanks();
-
 void qtGstLog(GstDebugCategory* category, GstDebugLevel level, const gchar* file, const gchar* function, gint line,
               GObject* object, GstDebugMessage* message, gpointer data);
 }  // namespace GStreamer

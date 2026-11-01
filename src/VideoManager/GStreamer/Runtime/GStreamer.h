@@ -53,12 +53,6 @@ VideoReceiver* createVideoReceiver(QObject* parent = nullptr);
 /// QGCQVideoSinkController, a child of @p controllerParent. Returns the controller, or nullptr on failure.
 QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink* videoSink, QObject* controllerParent);
 
-/// Hardware decoder families currently present in the GStreamer registry, as VideoDecoderOptions
-/// values (always omits ForceVideoDecoderDefault/Software). Lets the settings layer validate a
-/// persisted ForceVideoDecoder* choice against what the running build can actually provide. Vulkan is
-/// only offered with the opt-in Vulkan GPU path.
-QList<VideoDecoderOptions> availableDecoderFamilies();
-
 // Process/runtime lifecycle, reached through GStreamerVideoBackend.
 Environment::ValidationResult prepareEnvironment();
 bool initialize(const QStringList& arguments, const Environment::ValidationResult& envResult,

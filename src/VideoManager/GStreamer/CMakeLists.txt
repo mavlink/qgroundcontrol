@@ -108,6 +108,8 @@ target_sources(
         # Runtime: initialization, environment, logging, helpers, the boot self-test and the VideoBackend.
         Runtime/GStreamer.cc
         Runtime/GStreamer.h
+        Runtime/GStreamerDecoderRanks.cc
+        Runtime/GStreamerDecoderRanks.h
         Runtime/GStreamerEnvironment.cc
         Runtime/GStreamerEnvironment.h
         Runtime/GStreamerHelpers.cc

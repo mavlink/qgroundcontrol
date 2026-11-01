@@ -15,10 +15,11 @@
 
 #include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
-#include "GStreamerHelpers.h"
+#include "GStreamerDecoderRanks.h"
 #include "GStreamerLogging.h"
 #include "GStreamerSelfTest.h"
 #include "GStreamerTestHelpers.h"
+#include "GstScoped.h"
 #include "LogManager.h"
 
 namespace {
@@ -378,13 +379,12 @@ void GStreamerInitTest::_testSetCodecPrioritiesSkipsAbsentD3DDecoders()
     GstRegistry* registry = gst_registry_get();
     QVERIFY(registry != nullptr);
 
-    const TestFixtures::LoggingCategoryFixture helpersLog(QStringLiteral("Video.GStreamer.GStreamerHelpers"));
+    const TestFixtures::LoggingCategoryFixture ranksLog(QStringLiteral("Video.GStreamer.DecoderRanks"));
 
     LogManager::clearCapturedMessages();
     QVERIFY(!GStreamer::changeFeatureRank(registry, "__qgc_missing_d3d_decoder_for_test__", GST_RANK_NONE));
 
-    const QList<LogEntry> helperMessages =
-        LogManager::capturedMessages(QStringLiteral("Video.GStreamer.GStreamerHelpers"));
+    const QList<LogEntry> helperMessages = LogManager::capturedMessages(QStringLiteral("Video.GStreamer.DecoderRanks"));
     for (const LogEntry& entry : helperMessages) {
         QVERIFY2(
             !entry.message.contains(QStringLiteral("Feature does not exist")),
@@ -451,7 +451,7 @@ void GStreamerInitTest::_testSetCodecPrioritiesFamilyOutranksOtherDecoders()
     GSTTEST_REQUIRE_GSTREAMER();
 
     const GstTest::DecoderRankSnapshot decoderRanks;
-    ignoreLogMessage("Video.GStreamer.GStreamerHelpers", QtWarningMsg,
+    ignoreLogMessage("Video.GStreamer.DecoderRanks", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^Forcing Vulkan video decoders")));
     QList<GStreamer::VideoDecoderOptions> families;
     GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&families](GstElementFactory* factory) {
@@ -498,7 +498,7 @@ void GStreamerInitTest::_testSetCodecPrioritiesHardware()
         hasHardwareDecoder = hasHardwareDecoder || GStreamer::isHardwareDecoderFactory(factory);
     });
     if (!hasHardwareDecoder) {
-        expectLogMessage("Video.GStreamer.GStreamerHelpers", QtWarningMsg,
+        expectLogMessage("Video.GStreamer.DecoderRanks", QtWarningMsg,
                          QRegularExpression(QStringLiteral("^No hardware video decoder factories found")));
     }
     GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderHardware);

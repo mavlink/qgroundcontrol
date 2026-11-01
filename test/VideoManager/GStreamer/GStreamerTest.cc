@@ -13,6 +13,7 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 
 #include "Fact.h"
 #include "GStreamer.h"
+#include "GStreamerDecoderRanks.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerTestHelpers.h"
 #include "GstVideoReceiver.h"

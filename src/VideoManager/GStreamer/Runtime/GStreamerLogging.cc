@@ -3,8 +3,6 @@
 #include <algorithm>
 #include <atomic>
 
-#include <QtCore/QByteArray>
-#include <QtCore/QList>
 #include <QtCore/QString>
 
 #include "GStreamer.h"
@@ -13,7 +11,6 @@
 
 QGC_LOGGING_CATEGORY(GStreamerLoggingLog, "Video.GStreamer.GStreamerLogging")
 QGC_LOGGING_CATEGORY_ON(GStreamerAPILog, "Video.GStreamer.GStreamerAPI")
-QGC_LOGGING_CATEGORY(GStreamerDecoderRanksLog, "Video.GStreamer.DecoderRanks")
 
 namespace {
 
@@ -159,37 +156,6 @@ void setDebugLevel(int level)
     const int clamped = std::clamp(level, 0, maxLevel);
     gst_debug_set_default_threshold(static_cast<GstDebugLevel>(clamped));
     qCDebug(GStreamerLoggingLog) << "GStreamer debug threshold set to" << clamped;
-}
-
-void logDecoderRanks()
-{
-    struct Decoder
-    {
-        guint rank;
-        QByteArray name;
-        QString description;
-    };
-
-    QList<Decoder> decoders;
-    GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&decoders](GstElementFactory* factory) {
-        GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
-        decoders.append({gst_plugin_feature_get_rank(feature), QByteArray(gst_plugin_feature_get_name(feature)),
-                         GStreamer::describeDecoderFactory(factory)});
-    });
-
-    if (decoders.isEmpty()) {
-        qCDebug(GStreamerDecoderRanksLog) << "No video decoder factories found";
-        return;
-    }
-
-    std::ranges::sort(decoders, [](const Decoder& lhs, const Decoder& rhs) {
-        return (lhs.rank != rhs.rank) ? (lhs.rank > rhs.rank) : (lhs.name < rhs.name);
-    });
-
-    qCDebug(GStreamerDecoderRanksLog) << "Video decoder ranks:";
-    for (const Decoder& decoder : std::as_const(decoders)) {
-        qCDebug(GStreamerDecoderRanksLog).noquote() << "  " + decoder.description;
-    }
 }
 
 }  // namespace GStreamer

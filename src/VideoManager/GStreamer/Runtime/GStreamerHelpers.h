@@ -1,13 +1,9 @@
 #pragma once
 
-#include <cstdint>
 #include <functional>
 #include <glib.h>
 #include <gst/gst.h>
 
-#include <QtCore/QString>
-
-#include "GStreamer.h"  // VideoDecoderOptions
 #include "GstScoped.h"
 
 namespace GStreamer {
@@ -51,32 +47,8 @@ GstPadPtr firstSrcPad(GstElement* element);
 /// and returns the task for the thread that changes the pipeline, which calls @p link with the pad and unblocks it.
 std::function<void()> holdPadUntilLinked(GstPad* pad, std::function<void(GstPad* pad)> link);
 
-bool isHardwareDecoderFactory(GstElementFactory* factory);
-
-/// "[HW|SW] <plugin>/<factory> rank=<rank> (<klass>)" for decoder logs.
-QString describeDecoderFactory(GstElementFactory* factory);
-
-/// ForceVideoDecoder* family that claims decoder factory @p factoryName by name prefix, or
-/// ForceVideoDecoderDefault when it belongs to no user-selectable hardware family.
-VideoDecoderOptions decoderFamilyForFactory(const char* factoryName);
-
-/// Look up @p featureName in @p registry and set its autoplug rank to @p rank, releasing the
-/// transfer-full feature ref. Returns false when the registry/name is null or the feature is absent.
-/// A feature named in GST_PLUGIN_FEATURE_RANK keeps the user's rank, here and in setCodecPriorities().
-bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t rank);
-
-/// Apply decoder rank overrides for @p option to the global GStreamer registry, starting from the ranks the features
-/// had before QGC first changed them, so a new option replaces the previous one rather than adding to it. Defined
-/// here alongside the decoder-rank table it drives; re-exported through the GStreamer facade. GUI thread.
-void setCodecPriorities(VideoDecoderOptions option);
-/// Overload taking the raw forceVideoDecoder setting value; the cast/range-check lives in the impl.
-void setCodecPriorities(int rawOption);
-
 /// Walk every plugin in the GStreamer registry, invoking @p visitor for each; frees the GList
 /// internally. The plugin pointer is valid only for the duration of the call (don't ref it).
 void forEachPlugin(GstRegistry* registry, const std::function<void(GstPlugin*)>& visitor);
 
-/// Invokes @p visitor for every video decoder factory of at least @p minRank in the default registry. The factory is
-/// valid only for the duration of the call.
-void forEachVideoDecoderFactory(GstRank minRank, const std::function<void(GstElementFactory*)>& visitor);
 }  // namespace GStreamer

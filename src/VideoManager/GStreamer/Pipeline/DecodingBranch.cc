@@ -2,6 +2,7 @@
 
 #include <gst/gst.h>
 
+#include "GStreamerDecoderRanks.h"
 #include "GStreamerHelpers.h"
 #include "GstVideoReceiver.h"
 #include "HwBuffers/common/HwBuffers.h"

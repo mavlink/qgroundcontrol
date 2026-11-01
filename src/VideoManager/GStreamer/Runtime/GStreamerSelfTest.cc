@@ -23,6 +23,7 @@
 #include <QtCore/QTemporaryDir>
 
 #include "GStreamer.h"
+#include "GStreamerDecoderRanks.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerLogging.h"
 #include "GStreamerSelfTestMedia.h"

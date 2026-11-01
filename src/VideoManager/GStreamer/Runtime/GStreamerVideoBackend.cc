@@ -1,7 +1,7 @@
 #include "GStreamerVideoBackend.h"
 
 #include "GStreamer.h"
-#include "GStreamerHelpers.h"
+#include "GStreamerDecoderRanks.h"
 
 #ifdef Q_OS_ANDROID
 #include <jni.h>
