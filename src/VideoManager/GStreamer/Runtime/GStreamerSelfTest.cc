@@ -359,8 +359,7 @@ void Checker::_checkDecoding(const Sample& sample, const QByteArray& data)
     if (!result.failure.isEmpty() && result.hardware) {
         // decodebin3 doesn't fall back when the decoder it plugged fails, as a hardware decoder may in a VM: retry once
         // the way the Software decoder setting does.
-        const DecoderRankRestorer restorer;
-        setCodecPriorities(ForceVideoDecoderSoftware);
+        const ScopedDecoderOption forceSoftware(ForceVideoDecoderSoftware);
         const DecodeResult software = decodeSample(sample, data, _timeout());
         if (software.failure.isEmpty()) {
             qCWarning(GStreamerSelfTestLog).noquote()

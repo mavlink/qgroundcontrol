@@ -326,6 +326,126 @@ void GStreamerInitTest::_testUserFeatureRankKept()
     QCOMPARE(gst_plugin_feature_get_rank(identity.get()), kept ? originalRank : requestedRank);
 }
 
+namespace {
+
+/// "name rank hw|sw" per decoder; the family comes from the name, as for an installed factory.
+QList<GStreamer::DecoderInfo> decoderInfos(const QStringList& specs)
+{
+    QList<GStreamer::DecoderInfo> decoders;
+    for (const QString& spec : specs) {
+        const QStringList fields = spec.split(QLatin1Char(' '));
+        const QByteArray name = fields.at(0).toLatin1();
+        decoders.append({.name = name,
+                         .rank = fields.at(1).toUInt(),
+                         .hardware = (fields.at(2) == QLatin1String("hw")),
+                         .family = GStreamer::decoderFamilyForFactory(name.constData())});
+    }
+    return decoders;
+}
+
+}  // namespace
+
+void GStreamerInitTest::_testPlanRanks_data()
+{
+    QTest::addColumn<int>("option");
+    QTest::addColumn<bool>("zeroCopy");
+    QTest::addColumn<int>("d3d");              // 0: no RHI D3D API, else 11 or 12
+    QTest::addColumn<QStringList>("decoders");
+    QTest::addColumn<QStringList>("changes");  // "name=rank", in input order
+    QTest::addColumn<QString>("warning");      // a regex one warning must match; empty for none
+
+    using namespace GStreamer;
+    const QStringList linuxDecoders{"vaapih264dec 256 hw", "vah264dec 257 hw", "v4l2slh264dec 256 hw",
+                                    "avdec_h264 256 sw"};
+    const QStringList windowsDecoders{"d3d11h264dec 257 hw", "d3d12h264dec 256 hw", "nvh264dec 256 hw",
+                                      "avdec_h264 256 sw"};
+
+    QTest::newRow("default without platform rules")
+        << int(ForceVideoDecoderDefault) << false << 0 << linuxDecoders << QStringList() << QString();
+    QTest::newRow("default on Linux prefers va over vaapi")
+        << int(ForceVideoDecoderDefault) << true << 0 << linuxDecoders
+        << QStringList{"vaapih264dec=0", "vah264dec=258", "v4l2slh264dec=258"} << QString();
+    QTest::newRow("default on D3D11 RHI") << int(ForceVideoDecoderDefault) << false << 11 << windowsDecoders
+                                          << QStringList{"d3d11h264dec=258", "d3d12h264dec=0"} << QString();
+    QTest::newRow("default on D3D12 RHI") << int(ForceVideoDecoderDefault) << false << 12 << windowsDecoders
+                                          << QStringList{"d3d11h264dec=0", "d3d12h264dec=258"} << QString();
+    QTest::newRow("software lowers autoplugged hardware")
+        << int(ForceVideoDecoderSoftware) << false << 0
+        << QStringList{"avdec_h264 256 sw", "openh264dec 64 sw", "vah264dec 257 hw", "nvh264dec 0 hw"}
+        << QStringList{"avdec_h264=257", "openh264dec=257", "vah264dec=0"} << QString();
+    QTest::newRow("hardware without hardware decoders")
+        << int(ForceVideoDecoderHardware) << false << 0 << QStringList{"avdec_h264 256 sw", "openh264dec 32 sw"}
+        << QStringList{"avdec_h264=0"} << QStringLiteral("^No hardware video decoder factories found");
+    QTest::newRow("hardware on D3D11 RHI")
+        << int(ForceVideoDecoderHardware) << false << 11 << windowsDecoders
+        << QStringList{"d3d11h264dec=258", "d3d12h264dec=0", "nvh264dec=257", "avdec_h264=0"} << QString();
+    QTest::newRow("family outranks a PRIMARY + 1 decoder")
+        << int(ForceVideoDecoderNVIDIA) << false << 0 << windowsDecoders << QStringList{"nvh264dec=258"} << QString();
+    QTest::newRow("D3D family keeps the other API demoted")
+        << int(ForceVideoDecoderDirectX3D) << false << 12 << windowsDecoders
+        << QStringList{"d3d11h264dec=0", "d3d12h264dec=257"} << QString();
+    QTest::newRow("vulkan warns") << int(ForceVideoDecoderVulkan) << false << 0
+                                  << QStringList{"vulkanh264dec 256 hw", "avdec_h264 256 sw"}
+                                  << QStringList{"vulkanh264dec=257"}
+                                  << QStringLiteral("^Forcing Vulkan video decoders");
+}
+
+void GStreamerInitTest::_testPlanRanks()
+{
+    QFETCH(int, option);
+    QFETCH(bool, zeroCopy);
+    QFETCH(int, d3d);
+    QFETCH(QStringList, decoders);
+    QFETCH(QStringList, changes);
+    QFETCH(QString, warning);
+
+    GStreamer::RankTraits traits;
+    traits.preferZeroCopyDecoders = zeroCopy;
+    if (d3d != 0) {
+        traits.rhiD3DApi = (d3d == 12) ? GStreamer::D3DApi::D3D12 : GStreamer::D3DApi::D3D11;
+    }
+    const GStreamer::RankPlan plan =
+        GStreamer::planRanks(static_cast<GStreamer::VideoDecoderOptions>(option), decoderInfos(decoders), traits);
+
+    QStringList planned;
+    for (const GStreamer::RankChange& change : plan.changes) {
+        planned.append(QStringLiteral("%1=%2").arg(QString::fromLatin1(change.feature)).arg(change.rank));
+    }
+    QCOMPARE(planned, changes);
+    if (warning.isEmpty()) {
+        QVERIFY2(plan.warnings.isEmpty(), qPrintable(plan.warnings.join(QStringLiteral("; "))));
+    } else {
+        QCOMPARE(plan.warnings.size(), 1);
+        QVERIFY2(QRegularExpression(warning).match(plan.warnings.first()).hasMatch(),
+                 qPrintable(plan.warnings.first()));
+    }
+}
+
+void GStreamerInitTest::_testScopedDecoderOptionRestoresThePreviousOption()
+{
+    GSTTEST_REQUIRE_GSTREAMER();
+
+    const GstTest::DecoderRankSnapshot decoderRanks;
+    const auto decoderRanksNow = [] {
+        QHash<QByteArray, guint> ranks;
+        GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&ranks](GstElementFactory* factory) {
+            GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
+            ranks.insert(QByteArray(gst_plugin_feature_get_name(feature)), gst_plugin_feature_get_rank(feature));
+        });
+        return ranks;
+    };
+
+    GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderDefault);
+    const QHash<QByteArray, guint> defaultRanks = decoderRanksNow();
+    {
+        const GStreamer::ScopedDecoderOption software(GStreamer::ForceVideoDecoderSoftware);
+        QCOMPARE(GStreamer::DecoderRankApplier::instance().applied(),
+                 std::optional(GStreamer::ForceVideoDecoderSoftware));
+    }
+    QCOMPARE(GStreamer::DecoderRankApplier::instance().applied(), std::optional(GStreamer::ForceVideoDecoderDefault));
+    QCOMPARE(decoderRanksNow(), defaultRanks);
+}
+
 void GStreamerInitTest::_testSetCodecPrioritiesDefault()
 {
     GSTTEST_REQUIRE_GSTREAMER();

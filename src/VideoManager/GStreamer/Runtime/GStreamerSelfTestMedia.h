@@ -2,14 +2,11 @@
 
 #include <chrono>
 #include <gst/gst.h>
-#include <utility>
-#include <vector>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 
-#include "GstScoped.h"
 #include "VideoReceiver.h"
 
 /// The self-test's media pipelines: decoding the embedded samples and recording and reading back a file.
@@ -43,20 +40,6 @@ inline constexpr RecordingFormat kRecordingFormats[] = {
 
 /// Whether decodebin3 has a decoder for @p sample's codec to plug: one ranked at least MARGINAL.
 bool hasDecoderFor(const Sample& sample);
-
-/// Restores every video decoder's rank on destruction.
-class DecoderRankRestorer
-{
-public:
-    DecoderRankRestorer();
-    ~DecoderRankRestorer();
-
-    DecoderRankRestorer(const DecoderRankRestorer&) = delete;
-    DecoderRankRestorer& operator=(const DecoderRankRestorer&) = delete;
-
-private:
-    std::vector<std::pair<GstFeaturePtr, guint>> _ranks;
-};
 
 struct DecodeResult
 {

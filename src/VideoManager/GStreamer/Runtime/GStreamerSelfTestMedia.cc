@@ -9,6 +9,7 @@
 
 #include "GStreamerDecoderRanks.h"
 #include "GStreamerHelpers.h"
+#include "GstScoped.h"
 #include "RecordingBranch.h"
 
 using namespace std::chrono_literals;
@@ -114,22 +115,6 @@ bool hasDecoderFor(const Sample& sample)
         found = found || gst_element_factory_can_sink_any_caps(factory, caps.get());
     });
     return found;
-}
-
-DecoderRankRestorer::DecoderRankRestorer()
-{
-    forEachVideoDecoderFactory(GST_RANK_NONE, [this](GstElementFactory* factory) {
-        GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
-        _ranks.emplace_back(adoptFeature(GST_PLUGIN_FEATURE(gst_object_ref(feature))),
-                            gst_plugin_feature_get_rank(feature));
-    });
-}
-
-DecoderRankRestorer::~DecoderRankRestorer()
-{
-    for (const auto& [feature, rank] : _ranks) {
-        gst_plugin_feature_set_rank(feature.get(), rank);
-    }
 }
 
 /// appsrc ! <parser> ! decodebin3 ! appsink, the sink taking raw video in system memory, which every decoder can give.
