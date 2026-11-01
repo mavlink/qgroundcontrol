@@ -170,7 +170,7 @@ _비디오_ 섹션은 _비행 화&#xBA74;_&#xC5D0; 표시될 비디오의 소스
 
 - **Aspect Ratio**: 비디오 위젯에서 비디오 크기 조정을 위한 종횡비(크기 조정을 무시하려면 0.0으로 설정)
 
-- **Disabled When Disarmed**: 기체 비시동시 비디오 전송을 비활성화합니다.
+- **Disabled When Disarmed**: Stop the video stream, and any recording, when the vehicle disarms. The stream starts again when the vehicle arms, when this setting is turned off, when the active vehicle changes, or when video is started again.
 
 - **낮은 대기 시간 모드**: 짧은 대기 시간 모드를 사용하면 동영상 스트림 대기 시간이 줄어들지만 프레임 손실과 끊김 현상이 발생할 수 있습니다(특히 네트워크 연결이 불량한 경우). <!-- disables the internal jitter buffer -->
 

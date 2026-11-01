@@ -6,6 +6,10 @@ Configure video streaming and recording settings.
 
 - **Source** — Video Stream Disabled / RTSP Video Stream / UDP h.264 / UDP h.265 / TCP-MPEG2 / MPEG-TS / Integrated Camera
 
+When a MAVLink camera advertises its video stream, QGC plays that stream (and any thermal stream it advertises)
+instead of the configured source. Your source and connection settings are left unchanged and apply again once no
+camera advertises a stream.
+
 ## Connection
 
 Connection settings vary by source type:
@@ -17,7 +21,9 @@ Connection settings vary by source type:
 ## Settings
 
 - **Aspect Ratio** — aspect ratio for scaling video in the display widget (default: 16:9; set to 0.0 to disable scaling)
-- **Stop recording when disarmed** — automatically stop recording when the vehicle disarms
+- **Disable Video Stream When Disarmed** — stop the video stream, and any recording, when the vehicle disarms. The stream
+  starts again when the vehicle arms, when this setting is turned off, when the active vehicle changes, or when video is
+  started again.
 - **Low Latency Mode** — minimize video decode latency at the cost of some smoothness
 - **Force CPU video path** — disable hardware-accelerated rendering (use if video displays incorrectly)
 - **Force video decoder priority** — override the automatic decoder selection: Default / Software / Hardware / NVIDIA / VA-API / DirectX 3D11 / VideoToolbox / Intel / Vulkan
