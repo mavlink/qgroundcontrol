@@ -48,11 +48,24 @@ void QGCVideoStreamInfoTest::_aspectRatioFromResolution_test()
     QCOMPARE(streamInfo.aspectRatio(), static_cast<qreal>(1920.0 / 1080.0));
 }
 
-void QGCVideoStreamInfoTest::_aspectRatioDefaultsToOneForNullResolution_test()
+void QGCVideoStreamInfoTest::_aspectRatioDefaultsToOneWithoutResolution_test_data()
 {
+    QTest::addColumn<int>("width");
+    QTest::addColumn<int>("height");
+
+    QTest::newRow("none") << 0 << 0;
+    QTest::newRow("no width") << 0 << 1080;
+    QTest::newRow("no height") << 1920 << 0;
+}
+
+void QGCVideoStreamInfoTest::_aspectRatioDefaultsToOneWithoutResolution_test()
+{
+    QFETCH(int, width);
+    QFETCH(int, height);
+
     mavlink_video_stream_information_t info = _makeVideoStreamInfo();
-    info.resolution_h = 0;
-    info.resolution_v = 0;
+    info.resolution_h = static_cast<uint16_t>(width);
+    info.resolution_v = static_cast<uint16_t>(height);
 
     QGCVideoStreamInfo streamInfo(info);
     QCOMPARE(streamInfo.aspectRatio(), 1.0);
@@ -101,4 +114,3 @@ void QGCVideoStreamInfoTest::_updateChangedFieldsEmitsSignal_test()
 }
 
 UT_REGISTER_TEST(QGCVideoStreamInfoTest, TestLabel::Unit)
-

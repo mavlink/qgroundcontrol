@@ -859,6 +859,14 @@ void VideoManagerTest::_testVideoViewPlacesThermalPip()
     QCOMPARE(thermal->x() + (thermal->width() / 2), 200.0);
     QCOMPARE(thermal->y(), 0.0);
 
+    // A view narrower than the thermal video bounds its width.
+    const qreal aspectRatio = thermal->width() / thermal->height();
+    (void) view->setProperty("width", 200);
+    QCOMPARE(thermal->width(), 200.0);
+    QCOMPARE(thermal->height(), 200.0 / aspectRatio);
+    QCOMPARE(thermal->y() + (thermal->height() / 2), 200.0);
+    (void) view->setProperty("width", 400);
+
     (void) camera->setProperty("thermalMode", MavlinkCameraControlInterface::THERMAL_PIP);
     QCOMPARE(thermal->x(), view->property("pipX").toReal());
     QCOMPARE(thermal->y(), view->property("pipY").toReal());

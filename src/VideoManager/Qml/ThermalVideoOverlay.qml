@@ -5,8 +5,8 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 
-// The thermal stream over the main video, placed as the camera's thermal mode asks: filling the view's height, blended
-// over the video, or as a picture-in-picture in the top left corner.
+// The thermal stream over the main video, placed as the camera's thermal mode asks: fitting the view, blended over the
+// video, or as a picture-in-picture in the top left corner.
 Item {
     id: root
 
@@ -16,11 +16,24 @@ Item {
     property real pipTopInset: 0
 
     readonly property VideoManager _videoManager: QGroundControl.videoManager
-    // Height of the thermal video blended over the main one, relative to the view.
-    readonly property real _blendHeightFactor: 0.85
-
-    width:      height * root._videoManager.thermalAspectRatio
-    height: {
+    readonly property real _aspectRatio: root._videoManager.thermalAspectRatio
+    // Size of the thermal video blended over the main one, relative to the view.
+    readonly property real _blendSizeFactor: 0.85
+    // The box the thermal video fits in, as the thermal mode asks.
+    readonly property real _boxWidth: {
+        if (!root.camera) {
+            return 0
+        }
+        switch (root.camera.thermalMode) {
+        case MavlinkCameraControlInterface.THERMAL_FULL:
+            return parent.width
+        case MavlinkCameraControlInterface.THERMAL_PIP:
+            return Math.max(0, parent.width - root.anchors.leftMargin)
+        default:
+            return parent.width * root._blendSizeFactor
+        }
+    }
+    readonly property real _boxHeight: {
         if (!root.camera) {
             return 0
         }
@@ -30,9 +43,12 @@ Item {
         case MavlinkCameraControlInterface.THERMAL_PIP:
             return ScreenTools.defaultFontPixelHeight * 12
         default:
-            return parent.height * root._blendHeightFactor
+            return parent.height * root._blendSizeFactor
         }
     }
+
+    width:      Math.min(root._boxWidth, root._boxHeight * root._aspectRatio)
+    height:     root.width / root._aspectRatio
     visible:    root._videoManager.hasThermal && !!root.camera
                 && root.camera.thermalMode !== MavlinkCameraControlInterface.THERMAL_OFF
 
