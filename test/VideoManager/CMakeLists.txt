@@ -7,6 +7,7 @@ add_subdirectory(GStreamer)
 target_sources(
     QGCUnitTests
     PRIVATE
+        QtMultimediaPrivateApiCheck.cc
         SubtitleWriterTest.cc
         SubtitleWriterTest.h
         UVCCameraControllerTest.cc
