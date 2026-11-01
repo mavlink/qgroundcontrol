@@ -72,34 +72,32 @@ function(_qgc_gst_discover_linux_sdk)
             )
         endif()
     endforeach()
-    qgc_gst_create_layout_target(${_layout})
+    qgc_gst_resolve_layout(${_layout})
     _qgc_gst_return_discovery()
 endfunction()
 
 # Linux: plugins, the GIO modules for TLS and proxies, the gst-plugin-scanner/gst-ptp-helper binaries and the notice.
 # The libraries come from the AppImage's dependency deployment (cmake/install/CreateAppImage.cmake).
 function(qgc_gst_install_linux_sdk app_name plugin_dest_out)
+    qgc_gst_layout_get(PLUGIN_PATH _gst_plugin_path)
+    qgc_gst_layout_get(PLUGIN_SCANNER_PATH _gst_scanner_path)
+    qgc_gst_layout_get(GIO_MODULE_PATH _gst_gio_module_path)
     set(_plugin_dest "lib/gstreamer-1.0")
-    qgc_gst_install_plugins("${GSTREAMER_PLUGIN_PATH}" "${_plugin_dest}" "libgst" "so")
+    qgc_gst_install_plugins("${_gst_plugin_path}" "${_plugin_dest}" "libgst" "so")
     # glib-networking's GnuTLS backend and libproxy proxy resolver, and dconf's GSettings backend, through which
     # libproxy reads GNOME's proxy settings (it reads KDE's itself). glib-networking's GNOME resolver stays out: GIO
     # instantiates every resolver before asking which applies, and it aborts the process where org.gnome.system.proxy's
     # schema isn't installed. The VFS modules (gvfsdbus, remote volume monitor) stay out: the bundle runs GIO with
     # GIO_USE_VFS=local (AppRun, and GStreamerEnvironment.cc on GLib 2.76+) or alongside the system's modules.
-    qgc_gst_install_gio_modules(
-        "${GSTREAMER_GIO_MODULE_PATH}" "lib/gio/modules" "so" giognutls giolibproxy dconfsettings
-    )
+    qgc_gst_install_gio_modules("${_gst_gio_module_path}" "lib/gio/modules" "so" giognutls giolibproxy dconfsettings)
     # gstreamer-1.0.pc's pluginscannerdir (Debian lib/<multiarch>/gstreamer1.0/gstreamer-1.0, Fedora
     # libexec/gstreamer-1.0, Arch lib/gstreamer-1.0).
     foreach(_helper IN ITEMS gst-plugin-scanner gst-ptp-helper)
-        set(_path "${GSTREAMER_PLUGIN_SCANNER_PATH}/${_helper}")
+        set(_path "${_gst_scanner_path}/${_helper}")
         if(EXISTS "${_path}")
             install(PROGRAMS "${_path}" DESTINATION "lib/gstreamer1.0/gstreamer-1.0")
         elseif(_helper STREQUAL "gst-plugin-scanner")
-            message(
-                WARNING "gst-plugin-scanner not found in ${GSTREAMER_PLUGIN_SCANNER_PATH}; AppImage video may not "
-                        "work"
-            )
+            message(WARNING "gst-plugin-scanner not found in ${_gst_scanner_path}; AppImage video may not " "work")
         endif()
     endforeach()
     _qgc_gst_install_notice(share/licenses/gstreamer)

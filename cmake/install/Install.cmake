@@ -149,7 +149,7 @@ endif()
 # Contents/Frameworks/ (flat). Add the framework lib path so dyld finds them.
 # Runs after Qt deploy to survive any rpath rewriting by macdeployqt.
 set(_qgc_gst_framework_bundle "")
-if(MACOS AND TARGET GStreamer::Layout)
+if(MACOS AND COMMAND qgc_gst_layout_get)
     qgc_gst_layout_get(FRAMEWORK_BUNDLE _qgc_gst_framework_bundle)
 endif()
 if(MACOS AND _qgc_gst_framework_bundle)

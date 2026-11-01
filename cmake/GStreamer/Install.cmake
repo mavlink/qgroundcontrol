@@ -9,6 +9,7 @@
 
 include_guard(GLOBAL)
 
+include("${CMAKE_CURRENT_LIST_DIR}/Layout.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
 
 # _qgc_gst_filter_plugin_paths(<prefix> <paths> <out_var> [<name>...])
@@ -126,10 +127,11 @@ endfunction()
 # Sets <out_var> to the SDK's shared libraries QGC links through GStreamer::GStreamer: the .dylib files on macOS, and on
 # Windows the <name>[-<n>].dll in <root>/bin of each <name>.lib import library.
 function(_qgc_gst_linked_sdk_libraries out_var)
+    qgc_gst_layout_get(ROOT_DIR _gst_root)
     _qgc_gst_link_closure(_items GStreamer::GStreamer)
     set(_libraries "")
     foreach(_item IN LISTS _items)
-        cmake_path(IS_PREFIX GStreamer_ROOT_DIR "${_item}" NORMALIZE _in_sdk)
+        cmake_path(IS_PREFIX _gst_root "${_item}" NORMALIZE _in_sdk)
         if(NOT IS_ABSOLUTE "${_item}" OR NOT _in_sdk)
             continue()
         endif()
@@ -137,7 +139,7 @@ function(_qgc_gst_linked_sdk_libraries out_var)
             list(APPEND _libraries "${_item}")
         elseif(_item MATCHES "\\.lib$")
             cmake_path(GET _item STEM _stem)
-            file(GLOB _dlls "${GStreamer_ROOT_DIR}/bin/${_stem}*.dll")
+            file(GLOB _dlls "${_gst_root}/bin/${_stem}*.dll")
             string(REGEX REPLACE "([][.+*?^$()|\\\\])" "\\\\\\1" _stem_re "${_stem}")
             list(FILTER _dlls INCLUDE REGEX "/${_stem_re}(-[0-9]+)?\\.dll$")
             list(APPEND _libraries ${_dlls})
@@ -164,6 +166,8 @@ endmacro()
 # SDK ships (which include unused codecs, some GPL), and ends the closure in the caller. Libraries loaded with dlopen,
 # such as libproxy's backends, must be installed as seeds themselves.
 function(_qgc_gst_install_runtime_closure library_dest)
+    qgc_gst_layout_get(ROOT_DIR _gst_root)
+    qgc_gst_layout_get(LIB_PATH _gst_lib_path)
     _qgc_gst_linked_sdk_libraries(_qgc_gst_linked)
     _qgc_gst_install_files("${library_dest}" ${_qgc_gst_linked})
     set_property(GLOBAL APPEND PROPERTY _QGC_GST_INSTALL_DIRS "${library_dest}")
@@ -171,7 +175,7 @@ function(_qgc_gst_install_runtime_closure library_dest)
         OFF
         PARENT_SCOPE
     )
-    string(REGEX REPLACE "([][.+*?^$()|\\\\])" "\\\\\\1" _qgc_gst_root_re "${GStreamer_ROOT_DIR}")
+    string(REGEX REPLACE "([][.+*?^$()|\\\\])" "\\\\\\1" _qgc_gst_root_re "${_gst_root}")
     if(WIN32)
         # DLL lookups also see the lowercased path.
         string(TOLOWER "${_qgc_gst_root_re}" _qgc_gst_root_lower_re)
@@ -186,9 +190,9 @@ function(_qgc_gst_install_runtime_closure library_dest)
         RUNTIME_DEPENDENCY_SET
         qgc_gstreamer
         DIRECTORIES
-        "${GStreamer_ROOT_DIR}/bin"
-        "${GSTREAMER_LIB_PATH}"
-        "${GSTREAMER_LIB_PATH}/libproxy"
+        "${_gst_root}/bin"
+        "${_gst_lib_path}"
+        "${_gst_lib_path}/libproxy"
         PRE_EXCLUDE_REGEXES
         "^api-ms-"
         "^ext-ms-"
@@ -248,10 +252,9 @@ endfunction()
 
 # The per-platform installers, qgc_gst_install_<platform>_sdk in platform/<platform>.cmake, are called as
 # <helper>(<app_name> <plugin_dest_out>): each sets <plugin_dest_out> to the install-prefix-relative directory it
-# installs the plugins to, using the shared helpers above and the layout discovery set (GSTREAMER_*_PATH,
-# GStreamer_ROOT_DIR, ...).
+# installs the plugins to, using the shared helpers above and the SDK layout discovery recorded (qgc_gst_layout_get).
 
-# Installs the LGPL text and notice the Orchestrator wrote (GStreamer::Layout NOTICE_DIR) into <dest>.
+# Installs the LGPL text and notice the Orchestrator wrote (the layout's NOTICE_DIR) into <dest>.
 function(_qgc_gst_install_notice dest)
     qgc_gst_layout_get(NOTICE_DIR _notice_dir)
     if(_notice_dir)

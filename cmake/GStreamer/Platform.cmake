@@ -3,9 +3,9 @@
 # Install.cmake).
 #
 # A discovery function resolves the SDK into GStreamer_ROOT_DIR (and GStreamer_AUTO_DOWNLOADED when it downloaded it),
-# its GSTREAMER_{LIB,PLUGIN,INCLUDE,PLUGIN_SCANNER,GIO_MODULE}_PATH layout (qgc_gst_create_layout_target) and its
+# its GSTREAMER_{LIB,PLUGIN,INCLUDE,PLUGIN_SCANNER,GIO_MODULE}_PATH layout (qgc_gst_resolve_layout) and its
 # pkg-config view (qgc_gst_apply_pkgconfig_env), sets GStreamer_USE_FRAMEWORK for a macOS GStreamer.framework, and
-# returns with _qgc_gst_return_discovery().
+# returns with _qgc_gst_return_discovery() (Layout.cmake), which records those in the GStreamer layout store.
 
 include_guard(GLOBAL)
 
@@ -113,28 +113,6 @@ function(_qgc_gst_require_bundled_version platform version floor)
             ".github/build-config.json, to ${floor} or later."
     )
 endfunction()
-
-# _qgc_gst_return_discovery()
-# Returns from a discovery function, setting every discovery output in the caller's scope as the function left it.
-macro(_qgc_gst_return_discovery)
-    return(
-        PROPAGATE
-        GStreamer_ROOT_DIR
-        GStreamer_AUTO_DOWNLOADED
-        GStreamer_USE_FRAMEWORK
-        GSTREAMER_LIB_PATH
-        GSTREAMER_PLUGIN_PATH
-        GSTREAMER_INCLUDE_PATH
-        GSTREAMER_PLUGIN_SCANNER_PATH
-        GSTREAMER_GIO_MODULE_PATH
-        GSTREAMER_FRAMEWORK_PATH
-        GSTREAMER_XCFRAMEWORK_LIB
-        GStreamer_IOS_CA_BUNDLE
-        PKG_CONFIG_EXECUTABLE
-        PKG_CONFIG_ARGN
-        PKG_CONFIG_USE_CMAKE_PREFIX_PATH
-    )
-endmacro()
 
 # _qgc_gst_require_no_spaces(<what> <path>)
 # Fails configure when <path> contains a space: pkg-config prints paths unquoted, so FindPkgConfig would split them. iOS

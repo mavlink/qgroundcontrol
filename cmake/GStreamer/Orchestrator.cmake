@@ -1,11 +1,13 @@
 # GStreamer SDK orchestration, included once by src/VideoManager/GStreamer/CMakeLists.txt: picks the
 # requested version, discovers or downloads the target platform's SDK (Platform.cmake, platform/*.cmake), creates the
-# GStreamer:: targets, checks the plugin set and records the resolved SDK (SdkState.cmake, GStreamer::Layout).
+# GStreamer:: targets, checks the plugin set and records the resolved SDK (SdkState.cmake, the layout store of
+# Layout.cmake).
 #
 # Input: QGC_GST_COMPONENTS (components beyond the mandatory ones, Components.cmake) and the cache options
 # GStreamer_ROOT_DIR, QGC_GST_VERSION, QGC_GST_USE_HOMEBREW (macOS) and PKG_CONFIG_ARGN.
-# Sets, in the including directory, the discovery outputs (Platform.cmake; qgc_gst_restore_pkgconfig_env undoes their
-# pkg-config environment) and GStreamer_VERSION, GSTREAMER_SELECTED_COMPONENTS, GSTREAMER_PLUGINS,
+# Sets, in the including directory, the discovery outputs (Platform.cmake), recorded in the layout store (Layout.cmake)
+# and copied into their GStreamer_*/GSTREAMER_* variables (qgc_gst_restore_pkgconfig_env undoes their pkg-config
+# environment) and GStreamer_VERSION, GSTREAMER_SELECTED_COMPONENTS, GSTREAMER_PLUGINS,
 # GSTREAMER_STATIC_PLUGINS and G_IO_MODULES (mobile), GStreamer_<component>_FOUND (optional components) and
 # QGC_GST_HAS_DMABUF (Linux).
 
@@ -69,7 +71,8 @@ endif()
 # The SDK's linkage: the desktop SDKs are shared, Android's are static archives linked into GStreamer::mobile
 # (platform/Android.cmake), and iOS links one merged static archive (platform/IOS.cmake). Discovery sets
 # GStreamer_USE_FRAMEWORK for a macOS GStreamer.framework. CONTRACT: include() this file at directory scope, never
-# inside a function: that flag and the other outputs are directory-scope normal variables.
+# inside a function: the compatibility copies of the discovery outputs (qgc_gst_layout_export) are directory-scope
+# normal variables.
 set(GStreamer_USE_FRAMEWORK OFF)
 
 # The cached PKG_CONFIG_ARGN is user input; discovery derives its flags into a normal variable.
@@ -83,6 +86,9 @@ _qgc_gst_select_sdk_root(
 )
 
 cmake_language(CALL _qgc_gst_discover_${_qgc_gst_platform}_sdk)
+# Discovery recorded its outputs in the layout store, which the GStreamer modules read; this directory, and the code
+# that reads it, keep them as the GStreamer_*/GSTREAMER_* variables too.
+qgc_gst_layout_export()
 # Discovery downloads only to a CPM_SOURCE_CACHE without spaces (_qgc_gst_space_free_download_cache); check the SDK it
 # settled on.
 _qgc_gst_require_no_spaces("The GStreamer SDK" "${GStreamer_ROOT_DIR}")
@@ -236,7 +242,7 @@ _qgc_gst_record_resolved_sdk(
 
 # The app ships the LGPL text and a notice naming this GStreamer and its sources: Android stages them as APK assets,
 # iOS as bundle resources (src/VideoManager/GStreamer/CMakeLists.txt) and desktop installs copy them from
-# GStreamer::Layout's NOTICE_DIR (Install.cmake).
+# the layout's NOTICE_DIR (Install.cmake).
 if(_qgc_gst_platform_NOTICE_ASSETS)
     set(_qgc_gst_notice_dir "${QGC_ANDROID_EXTRA_ASSETS_DIR}/licenses/gstreamer")
 else()

@@ -115,7 +115,7 @@ function(_qgc_gst_discover_windows_sdk)
         set(GStreamer_AUTO_DOWNLOADED TRUE)
     endif()
 
-    qgc_gst_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}")
+    qgc_gst_resolve_layout(SDK_ROOT "${GStreamer_ROOT_DIR}")
     list(APPEND PKG_CONFIG_ARGN "--define-variable=prefix=${GStreamer_ROOT_DIR}"
          "--define-variable=libdir=${GSTREAMER_LIB_PATH}" "--define-variable=includedir=${GSTREAMER_INCLUDE_PATH}"
     )
@@ -132,15 +132,19 @@ endfunction()
 # Windows: the plugins, GIO modules, libproxy backends and libexec helpers, the SDK DLLs they and QGC load, and the
 # notice. gioopenssl verifies against the Windows certificate stores, so the SDK's CA bundle stays out.
 function(qgc_gst_install_windows_sdk app_name plugin_dest_out)
+    qgc_gst_layout_get(ROOT_DIR _gst_root)
+    qgc_gst_layout_get(PLUGIN_PATH _gst_plugin_path)
+    qgc_gst_layout_get(PLUGIN_SCANNER_PATH _gst_scanner_path)
+    qgc_gst_layout_get(GIO_MODULE_PATH _gst_gio_module_path)
     set(_plugin_dest "${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0")
     _qgc_gst_begin_runtime_closure()
-    qgc_gst_install_plugins("${GSTREAMER_PLUGIN_PATH}" "${_plugin_dest}" "gst" "dll")
-    qgc_gst_install_gio_modules("${GSTREAMER_GIO_MODULE_PATH}" "${CMAKE_INSTALL_LIBDIR}/gio/modules" "dll")
+    qgc_gst_install_plugins("${_gst_plugin_path}" "${_plugin_dest}" "gst" "dll")
+    qgc_gst_install_gio_modules("${_gst_gio_module_path}" "${CMAKE_INSTALL_LIBDIR}/gio/modules" "dll")
     # giolibproxy.dll loads proxy-1.dll, which loads its backends from lib/libproxy; startup only puts the app's bin
     # directory on PATH, so they go there too.
-    file(GLOB _gst_libproxy_backends "${GStreamer_ROOT_DIR}/lib/libproxy/*.dll")
+    file(GLOB _gst_libproxy_backends "${_gst_root}/lib/libproxy/*.dll")
     _qgc_gst_install_files("${CMAKE_INSTALL_BINDIR}" ${_gst_libproxy_backends})
-    file(GLOB _gst_helpers "${GSTREAMER_PLUGIN_SCANNER_PATH}/*.exe")
+    file(GLOB _gst_helpers "${_gst_scanner_path}/*.exe")
     _qgc_gst_install_files("${CMAKE_INSTALL_LIBEXECDIR}/gstreamer-1.0" PROGRAMS ${_gst_helpers})
     _qgc_gst_install_runtime_closure("${CMAKE_INSTALL_BINDIR}")
     _qgc_gst_install_notice(share/licenses/gstreamer)

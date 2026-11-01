@@ -190,14 +190,15 @@ set_source_files_properties(
 
 # The iOS SDK ships no CA list / no keychain-via-OpenSSL; bundle a Mozilla NSS extract for
 # libgioopenssl (fetched at configure time, IOS.cmake). On the app target for MACOSX_PACKAGE_LOCATION.
-if(IOS AND GStreamer_IOS_CA_BUNDLE)
+qgc_gst_layout_get(IOS_CA_BUNDLE _qgc_gst_ios_ca_bundle)
+if(IOS AND _qgc_gst_ios_ca_bundle)
     target_sources(
         ${CMAKE_PROJECT_NAME}
         PRIVATE
-            "${GStreamer_IOS_CA_BUNDLE}"
+            "${_qgc_gst_ios_ca_bundle}"
     )
     set_source_files_properties(
-        "${GStreamer_IOS_CA_BUNDLE}"
+        "${_qgc_gst_ios_ca_bundle}"
         PROPERTIES
             MACOSX_PACKAGE_LOCATION "ssl/certs"
             HEADER_FILE_ONLY TRUE
@@ -263,11 +264,12 @@ endif()
 
 # Build-time rpath so the unrelocated binary finds component dylibs in the SDK
 # (framework /lib or flat /lib); install-time rpath is set in cmake/install/Install.cmake.
-if(MACOS AND GSTREAMER_LIB_PATH)
+qgc_gst_layout_get(LIB_PATH _qgc_gst_lib_path)
+if(MACOS AND _qgc_gst_lib_path)
     set_property(
         TARGET ${CMAKE_PROJECT_NAME}
         APPEND
-        PROPERTY BUILD_RPATH "${GSTREAMER_LIB_PATH}"
+        PROPERTY BUILD_RPATH "${_qgc_gst_lib_path}"
     )
 endif()
 

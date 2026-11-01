@@ -297,13 +297,15 @@ endfunction()
 # that one archive, so the steps share its state in one function.
 # cmake-lint: disable=R0912,R0915
 function(_qgc_gst_create_ios_targets)
-    _qgc_gst_ios_sdk_version("${GSTREAMER_INCLUDE_PATH}" GStreamer_VERSION)
+    qgc_gst_layout_get(INCLUDE_PATH _gst_include_path)
+    qgc_gst_layout_get(XCFRAMEWORK_LIB _gst_xcframework_lib)
+    _qgc_gst_ios_sdk_version("${_gst_include_path}" GStreamer_VERSION)
     set(GStreamer_VERSION
         "${GStreamer_VERSION}"
         PARENT_SCOPE
     )
 
-    _qgc_gst_ios_usage_targets("${GSTREAMER_XCFRAMEWORK_LIB}" "${GSTREAMER_INCLUDE_PATH}")
+    _qgc_gst_ios_usage_targets("${_gst_xcframework_lib}" "${_gst_include_path}")
     # System frameworks required by GStreamer on iOS.
     # Note: gstreamer-ios 1.28+ bundles libass (CoreText), MoltenVK (Metal/IOSurface/QuartzCore),
     # applemedia iosassetsrc (AssetsLibrary), and EAGL/CAMetalLayer (QuartzCore) — all of which
@@ -369,9 +371,9 @@ function(_qgc_gst_create_ios_targets)
 
     # nm on the ~300 MB archive takes 2-5 s, so its descriptor list is cached, keyed on the archive's path, the SDK
     # version and the archive's size and mtime; hashing the archive would cost as much as nm on every configure.
-    file(SIZE "${GSTREAMER_XCFRAMEWORK_LIB}" _xcfw_lib_size)
-    file(TIMESTAMP "${GSTREAMER_XCFRAMEWORK_LIB}" _xcfw_lib_mtime "%s")
-    set(_xcfw_cache_key "${GSTREAMER_XCFRAMEWORK_LIB}|${GStreamer_VERSION}|${_xcfw_lib_size}|${_xcfw_lib_mtime}")
+    file(SIZE "${_gst_xcframework_lib}" _xcfw_lib_size)
+    file(TIMESTAMP "${_gst_xcframework_lib}" _xcfw_lib_mtime "%s")
+    set(_xcfw_cache_key "${_gst_xcframework_lib}|${GStreamer_VERSION}|${_xcfw_lib_size}|${_xcfw_lib_mtime}")
     set(_xcfw_cache_file "${CMAKE_BINARY_DIR}/qgc_xcfw_plugins.cmake")
     set(_xcfw_descs "")
     if(EXISTS "${_xcfw_cache_file}")
@@ -387,7 +389,7 @@ function(_qgc_gst_create_ios_targets)
 
         # No -arch first (works for llvm-nm + thin archives); on failure (BSD nm on a fat binary) retry per slice.
         execute_process(
-            COMMAND "${_xcfw_nm}" -gjU "${GSTREAMER_XCFRAMEWORK_LIB}"
+            COMMAND "${_xcfw_nm}" -gjU "${_gst_xcframework_lib}"
             OUTPUT_VARIABLE _xcfw_nm_out
             ERROR_VARIABLE _xcfw_nm_err
             RESULT_VARIABLE _xcfw_nm_rc
@@ -395,7 +397,7 @@ function(_qgc_gst_create_ios_targets)
         if(NOT _xcfw_nm_rc EQUAL 0)
             foreach(_xcfw_arch IN LISTS CMAKE_OSX_ARCHITECTURES)
                 execute_process(
-                    COMMAND "${_xcfw_nm}" -arch "${_xcfw_arch}" -gjU "${GSTREAMER_XCFRAMEWORK_LIB}"
+                    COMMAND "${_xcfw_nm}" -arch "${_xcfw_arch}" -gjU "${_gst_xcframework_lib}"
                     OUTPUT_VARIABLE _xcfw_nm_out
                     ERROR_VARIABLE _xcfw_nm_err
                     RESULT_VARIABLE _xcfw_nm_rc
@@ -413,7 +415,7 @@ function(_qgc_gst_create_ios_targets)
         if(NOT _xcfw_descs)
             message(
                 FATAL_ERROR
-                    "nm produced no plugin descriptors for ${GSTREAMER_XCFRAMEWORK_LIB} (rc=${_xcfw_nm_rc})\n"
+                    "nm produced no plugin descriptors for ${_gst_xcframework_lib} (rc=${_xcfw_nm_rc})\n"
                     "  tool:        ${_xcfw_nm}\n"
                     "  archs tried: ${CMAKE_OSX_ARCHITECTURES} (plus a no-arch attempt)\n"
                     "  stderr:      ${_xcfw_nm_err}\n"

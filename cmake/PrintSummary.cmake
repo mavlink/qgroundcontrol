@@ -130,11 +130,15 @@ _qgc_kv("Package name:       " "${QGC_PACKAGE_NAME}")
 _qgc_kv("Settings version:   " "${QGC_SETTINGS_VERSION}")
 
 # GStreamer discovery runs in the VideoReceiver directory scope; read its results from the
-# GLOBAL GStreamer::Layout target and the resolved-SDK cache entries.
+# GStreamer layout store (cmake/GStreamer/Layout.cmake) and the resolved-SDK cache entries.
 set(_qgc_gst_version "")
 set(_qgc_gst_root "")
 set(_qgc_gst_auto_downloaded OFF)
-if(QGC_ENABLE_GST_VIDEOSTREAMING AND TARGET GStreamer::Layout)
+set(_qgc_gst_layout_root "")
+if(QGC_ENABLE_GST_VIDEOSTREAMING AND COMMAND qgc_gst_layout_get)
+    qgc_gst_layout_get(ROOT_DIR _qgc_gst_layout_root)
+endif()
+if(_qgc_gst_layout_root)
     set(_qgc_gst_version "$CACHE{QGC_GST_RESOLVED_SDK_VERSION}")
     set(_qgc_gst_root "$CACHE{QGC_GST_RESOLVED_ROOT}")
     set(_qgc_gst_auto_downloaded "$CACHE{QGC_GST_RESOLVED_AUTO}")

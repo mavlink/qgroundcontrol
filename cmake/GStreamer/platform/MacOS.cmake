@@ -68,7 +68,7 @@ function(_qgc_gst_discover_homebrew_sdk prefix)
         STATUS "GStreamer: Using Homebrew's GStreamer at ${GStreamer_ROOT_DIR} (builds only; installs and "
                "packages need the official SDK)"
     )
-    qgc_gst_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}")
+    qgc_gst_resolve_layout(SDK_ROOT "${GStreamer_ROOT_DIR}")
     qgc_gst_apply_pkgconfig_env(
         MODE SYSTEM_AUGMENT
         PKG_CONFIG_EXE "${prefix}/bin/pkg-config"
@@ -84,7 +84,7 @@ endfunction()
 # packages. A root in a Homebrew prefix goes to _qgc_gst_discover_homebrew_sdk. A root inside a .framework bundle is
 # used as that framework (GStreamer_USE_FRAMEWORK, GSTREAMER_FRAMEWORK_PATH) with the pkg-config it brings; another
 # flat SDK uses Homebrew's pkg-config (cached PKG_CONFIG_EXECUTABLE).
-# cmake-lint: disable=C0103
+# cmake-lint: disable=C0103,E1121
 function(_qgc_gst_discover_macos_sdk)
     if(QGC_GST_USE_HOMEBREW AND (NOT GStreamer_ROOT_DIR OR GStreamer_AUTO_DOWNLOADED))
         _qgc_gst_find_homebrew_gstreamer(GStreamer_ROOT_DIR)
@@ -101,21 +101,22 @@ function(_qgc_gst_discover_macos_sdk)
 
     _qgc_gst_homebrew_prefix("${GStreamer_ROOT_DIR}" _brew_prefix)
     if(_brew_prefix)
+        # It recorded the discovery itself; only its pkg-config view still has to reach the caller.
         _qgc_gst_discover_homebrew_sdk("${_brew_prefix}")
-        _qgc_gst_return_discovery()
+        return(PROPAGATE PKG_CONFIG_EXECUTABLE PKG_CONFIG_ARGN PKG_CONFIG_USE_CMAKE_PREFIX_PATH)
     endif()
 
     set(GStreamer_USE_FRAMEWORK OFF)
     if(GStreamer_ROOT_DIR MATCHES "^(.*\\.framework)(/|$)")
         set(GStreamer_USE_FRAMEWORK ON)
-        qgc_gst_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}" FRAMEWORK_BUNDLE "${CMAKE_MATCH_1}")
+        qgc_gst_resolve_layout(SDK_ROOT "${GStreamer_ROOT_DIR}" FRAMEWORK_BUNDLE "${CMAKE_MATCH_1}")
         qgc_gst_apply_pkgconfig_env(
             MODE SDK
             PKG_CONFIG_EXE "${GStreamer_ROOT_DIR}/bin/pkg-config"
             LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig" "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
         )
     else()
-        qgc_gst_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}")
+        qgc_gst_resolve_layout(SDK_ROOT "${GStreamer_ROOT_DIR}")
         _qgc_gst_find_apple_pkg_config(PKG_CONFIG_EXECUTABLE)
         qgc_gst_apply_pkgconfig_env(
             MODE SDK LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig" "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
@@ -127,11 +128,12 @@ endfunction()
 # _qgc_gst_apply_macos_framework_overlay()
 # Links GStreamer::GStreamer to the GStreamer.framework at GSTREAMER_FRAMEWORK_PATH and adds its Headers.
 function(_qgc_gst_apply_macos_framework_overlay)
+    qgc_gst_layout_get(FRAMEWORK_PATH _gst_framework_path)
     set(CMAKE_FIND_FRAMEWORK ONLY)
-    cmake_path(GET GSTREAMER_FRAMEWORK_PATH PARENT_PATH _gst_framework_parent)
+    cmake_path(GET _gst_framework_path PARENT_PATH _gst_framework_parent)
     find_library(
-        _gst_framework_bundle GStreamer PATHS "${_gst_framework_parent}" "${GSTREAMER_FRAMEWORK_PATH}"
-                                              "/Library/Frameworks" NO_CACHE
+        _gst_framework_bundle GStreamer PATHS "${_gst_framework_parent}" "${_gst_framework_path}" "/Library/Frameworks"
+                                              NO_CACHE
     )
     if(NOT _gst_framework_bundle)
         message(FATAL_ERROR "GStreamer: Could not locate GStreamer.framework")
@@ -139,7 +141,7 @@ function(_qgc_gst_apply_macos_framework_overlay)
     target_link_libraries(GStreamer::GStreamer INTERFACE ${_gst_framework_bundle})
     target_include_directories(GStreamer::GStreamer INTERFACE "${_gst_framework_bundle}/Headers")
     target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_GST_MACOS_FRAMEWORK)
-    # Stash the discovered framework bundle path on GStreamer::Layout so the
+    # Stash the discovered framework bundle path in the layout so the
     # install helpers read it via qgc_gst_layout_get instead of via cache pickup.
     qgc_gst_layout_set(FRAMEWORK_BUNDLE "${_gst_framework_bundle}")
 endfunction()
@@ -150,7 +152,7 @@ endfunction()
 function(qgc_gst_install_macos_framework_sdk app_name plugin_dest_out)
     qgc_gst_layout_get(FRAMEWORK_BUNDLE _gst_framework_bundle)
     if(NOT _gst_framework_bundle)
-        message(FATAL_ERROR "qgc_gst_install_macos_framework_sdk: FRAMEWORK_BUNDLE not set on GStreamer::Layout")
+        message(FATAL_ERROR "qgc_gst_install_macos_framework_sdk: FRAMEWORK_BUNDLE not set in the GStreamer layout")
     endif()
     get_filename_component(_gst_framework_real "${_gst_framework_bundle}" REALPATH)
     # Relative to the install prefix; install(CODE) prepends $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX} at install time.
@@ -212,6 +214,9 @@ endfunction()
 # macOS GStreamer, which has no framework wrapper. gioopenssl verifies against the Keychain, so the SDK's CA bundle
 # stays out.
 function(qgc_gst_install_macos_flat_sdk app_name plugin_dest_out)
+    qgc_gst_layout_get(PLUGIN_PATH _gst_plugin_path)
+    qgc_gst_layout_get(PLUGIN_SCANNER_PATH _gst_scanner_path)
+    qgc_gst_layout_get(GIO_MODULE_PATH _gst_gio_module_path)
     # Relative to the install prefix; install(CODE) prepends $ENV{DESTDIR}${CMAKE_INSTALL_PREFIX} at install time.
     set(_mac_fw_dest "${app_name}.app/Contents/Frameworks")
     set(_mac_lib_dest "${app_name}.app/Contents/lib")
@@ -219,13 +224,13 @@ function(qgc_gst_install_macos_flat_sdk app_name plugin_dest_out)
 
     _qgc_gst_begin_runtime_closure()
     set(_plugin_dest "${_mac_lib_dest}/gstreamer-1.0")
-    qgc_gst_install_plugins("${GSTREAMER_PLUGIN_PATH}" "${_plugin_dest}" "libgst" "dylib")
-    qgc_gst_install_gio_modules("${GSTREAMER_GIO_MODULE_PATH}" "${_mac_lib_dest}/gio/modules" "dylib")
+    qgc_gst_install_plugins("${_gst_plugin_path}" "${_plugin_dest}" "libgst" "dylib")
+    qgc_gst_install_gio_modules("${_gst_gio_module_path}" "${_mac_lib_dest}/gio/modules" "dylib")
     # Libexec helpers are installed before the rpath fixup below, which patches the installed copies.
     set(_gst_helpers "")
     foreach(_helper IN ITEMS gst-plugin-scanner gst-ptp-helper)
-        if(EXISTS "${GSTREAMER_PLUGIN_SCANNER_PATH}/${_helper}")
-            list(APPEND _gst_helpers "${GSTREAMER_PLUGIN_SCANNER_PATH}/${_helper}")
+        if(EXISTS "${_gst_scanner_path}/${_helper}")
+            list(APPEND _gst_helpers "${_gst_scanner_path}/${_helper}")
         endif()
     endforeach()
     _qgc_gst_install_files("${_mac_libexec_dest}" PROGRAMS ${_gst_helpers})

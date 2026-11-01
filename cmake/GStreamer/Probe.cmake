@@ -4,6 +4,8 @@
 # names, which cmake/GStreamer/SdkState.cmake purges whenever the GStreamer SDK changes.
 
 include_guard(GLOBAL)
+
+include("${CMAKE_CURRENT_LIST_DIR}/Layout.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
 include(CheckCXXSourceCompiles)
 include(CMakePushCheckState)
@@ -57,6 +59,7 @@ endfunction()
 # Sets in PARENT_SCOPE: <name>_FOUND, <name>_LIBRARIES, <name>_INCLUDE_DIRS (<INCLUDES> plus the module's),
 # <name>_LIBRARY_DIRS and, when not found, <name>_REASON.
 function(qgc_gst_probe_library name)
+    qgc_gst_layout_get(LIB_PATH _gst_lib_path)
     cmake_parse_arguments(PARSE_ARGV 1 ARG "" "HAS_VAR;HEADER;SYMBOL;PC_MODULE;LIB_VAR" "LIBNAMES;INCLUDES")
     _qgc_gst_check_args(qgc_gst_probe_library HAS_VAR HEADER SYMBOL ALLOW_EMPTY PC_MODULE LIB_VAR LIBNAMES INCLUDES)
     if(ARG_LIBNAMES AND NOT ARG_LIB_VAR)
@@ -102,7 +105,7 @@ function(qgc_gst_probe_library name)
         find_library(
             ${ARG_LIB_VAR}
             NAMES ${ARG_LIBNAMES}
-            HINTS ${${_pc}_LIBRARY_DIRS} "${GSTREAMER_LIB_PATH}" ${_prefix_path_args} NO_CACHE
+            HINTS ${${_pc}_LIBRARY_DIRS} "${_gst_lib_path}" ${_prefix_path_args} NO_CACHE
         )
         if(NOT ${ARG_LIB_VAR})
             list(GET ARG_LIBNAMES 0 _lib)
