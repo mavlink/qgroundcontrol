@@ -728,10 +728,25 @@ void PipelineSession::_noteKeyframe(const GstBuffer* buffer)
     if (!GST_CLOCK_TIME_IS_VALID(time)) {
         return;
     }
-    // Parameter sets that arrive in a buffer of their own share the keyframe's timestamp.
-    const GstClockTime previous = _lastKeyframeTime.exchange(time, std::memory_order_relaxed);
-    if (GST_CLOCK_TIME_IS_VALID(previous) && (time > previous)) {
-        _keyframeInterval.store(time - previous, std::memory_order_relaxed);
+    if (_keyframeTimeCount > 0) {
+        const GstClockTime previous = _keyframeTimes[_keyframeTimeCount - 1];
+        // Parameter sets that arrive in a buffer of their own share the keyframe's timestamp.
+        if (time == previous) {
+            return;
+        }
+        // Timestamps that went back start over, as after a new segment.
+        if (time < previous) {
+            _keyframeTimeCount = 0;
+        }
+    }
+    if (_keyframeTimeCount == kKeyframeWindow) {
+        std::shift_left(_keyframeTimes.begin(), _keyframeTimes.end(), 1);
+        --_keyframeTimeCount;
+    }
+    _keyframeTimes[_keyframeTimeCount++] = time;
+    if (_keyframeTimeCount >= 2) {
+        const GstClockTime span = _keyframeTimes[_keyframeTimeCount - 1] - _keyframeTimes[0];
+        _keyframeInterval.store(span / (_keyframeTimeCount - 1), std::memory_order_relaxed);
     }
 }
 

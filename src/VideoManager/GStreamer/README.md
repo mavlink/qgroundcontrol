@@ -164,7 +164,7 @@ read on the worker.
 | `gpuPath` | The delivery path most frames took since the previous sample, as `GstHw::toString()` names it: `CPU`, `DMABuf`, `GL`, `D3D11`, `D3D12`, `IOSurface`, `AHWBuf` or `Vulkan`. Empty for a display sink other than `qgcvideosinkbin`. |
 | `codec` | The caps on the tee: `H.264`, `H.265`, `AV1`, `VP8`, `VP9`, `MJPEG`, `MPEG-2`, ... |
 | `packetsLate`, `packetsDuplicate`, `rtxRequested`, `rtxRecovered` | The same jitter buffers' `num-late`, `num-duplicates`, `rtx-count` and `rtx-success-count`, since the stream started. -1 without a jitter buffer. |
-| `keyframeIntervalMs` | The tee's buffer probe: the timestamps (PTS, else DTS) of the last two buffers without `DELTA_UNIT`. -1 until two keyframes arrived, so a stream without keyframes, such as one with intra refresh, never has one. |
+| `keyframeIntervalMs` | The tee's buffer probe: the average time between the timestamps (PTS, else DTS) of the last five buffers without `DELTA_UNIT`, so the arrival times a stream without a jitter buffer is stamped with don't swing it. -1 until two keyframes arrived, so a stream without keyframes, such as one with intra refresh, never has one. |
 | `gpuFallbacks` | The display sink's `gpu-fallbacks` count since the stream started, the sinks a decoder restart replaced included. |
 | `decoderRestarts` | Decoders `DecodingBranch::restartDecoder()` replaced since the stream started. |
 | `uptimeMs`, `reconnects` | The worker: the time since its session reported its first frame, and the sessions that streamed since the stream was started or restarted, less one. |

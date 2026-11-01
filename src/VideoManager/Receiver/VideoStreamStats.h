@@ -79,7 +79,7 @@ public:
     qint64 gpuFallbacks = 0;
     /// Since the stream started: times the decoder was replaced after an error or a stall.
     qint64 decoderRestarts = 0;
-    /// Between the last two keyframes, from their timestamps.
+    /// Between keyframes, from their timestamps, averaged over the last few.
     double keyframeIntervalMs = -1.0;
     /// Since the stream started: RTP packets that arrived after their playout time, and duplicate RTP packets.
     qint64 packetsLate = -1;

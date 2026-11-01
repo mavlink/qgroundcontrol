@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <atomic>
 #include <memory>
 #include <optional>
@@ -152,9 +153,14 @@ private:
     bool _streaming = false;
     /// Compressed bytes that reached the tee.
     std::atomic<quint64> _bytesReceived = 0;
-    /// Timestamp of the last keyframe at the tee, and the time from the keyframe before it; GST_CLOCK_TIME_NONE until
-    /// known.
-    std::atomic<GstClockTime> _lastKeyframeTime = GST_CLOCK_TIME_NONE;
+    /// Keyframes whose timestamps the keyframe interval averages over: on a stream without a jitter buffer they are
+    /// arrival times, which a busy sender or network bunches up, and an average across several keyframes evens that
+    /// out.
+    static constexpr std::size_t kKeyframeWindow = 5;
+    /// Timestamps of the last keyframes at the tee, oldest first. Only the tee's streaming thread uses them.
+    std::array<GstClockTime, kKeyframeWindow> _keyframeTimes{};
+    std::size_t _keyframeTimeCount = 0;
+    /// The average time between the keyframes in _keyframeTimes; GST_CLOCK_TIME_NONE before the second.
     std::atomic<GstClockTime> _keyframeInterval = GST_CLOCK_TIME_NONE;
     bool _tearingDown = false;
     bool _shutDown = false;
