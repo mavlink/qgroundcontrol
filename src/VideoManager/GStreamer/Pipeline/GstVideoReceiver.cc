@@ -1,9 +1,12 @@
 #include "GstVideoReceiver.h"
 
 #include <chrono>
+#include <memory>
+#include <mutex>
 #include <utility>
 
 #include <QtCore/QDeadlineTimer>
+#include <QtCore/QSemaphore>
 #include <QtCore/QThread>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
@@ -19,6 +22,8 @@ namespace {
 
 // The destructor's wait for the worker: a recording's finalization plus time for the pipeline to stop.
 constexpr std::chrono::seconds kWorkerShutdownTimeout = RecordingBranch::kFinalizeTimeout + std::chrono::seconds{2};
+// _runOnPipeline()'s wait for the worker to run a task.
+constexpr std::chrono::seconds kRunOnPipelineTimeout{10};
 
 }  // namespace
 
@@ -30,19 +35,10 @@ GstVideoReceiver::GstVideoReceiver(QObject* parent)
     qCDebug(GstVideoReceiverLog) << this;
 
     // Queued, with this receiver as the context: once it is destroyed, the worker's reports go nowhere.
-    (void) connect(_worker, &GstReceiverWorker::stateChanged, this, &GstVideoReceiver::setState);
-    (void) connect(_worker, &GstReceiverWorker::decodingChanged, this, [this](bool decoding) {
-        setDecoding(decoding);
-        if (!decoding && _sinkController) {
-            _sinkController->releaseFrame();
-        }
-    });
-    (void) connect(_worker, &GstReceiverWorker::decoderNameChanged, this, &GstVideoReceiver::_setDecoderName);
-    (void) connect(_worker, &GstReceiverWorker::recordingChanged, this, &GstVideoReceiver::setRecording);
+    (void) connect(_worker, &GstReceiverWorker::statusChanged, this, &GstVideoReceiver::_applyStatus);
     (void) connect(_worker, &GstReceiverWorker::recordingStarted, this, &GstVideoReceiver::recordingStarted);
     (void) connect(_worker, &GstReceiverWorker::recordingFinished, this, &GstVideoReceiver::recordingFinished);
     (void) connect(_worker, &GstReceiverWorker::errorOccurred, this, &GstVideoReceiver::errorOccurred);
-    (void) connect(_worker, &GstReceiverWorker::statsChanged, this, &GstVideoReceiver::setStats);
 
     _workerThread->setObjectName(QStringLiteral("GstVideoReceiver"));
     _worker->moveToThread(_workerThread);
@@ -77,14 +73,12 @@ void GstVideoReceiver::dumpPipelineGraph(const QString& tag)
 
 void GstVideoReceiver::onConfigChanged()
 {
-    _postToWorker([config = config()](GstReceiverWorker& worker) { worker.setConfig(config); });
+    _postRequest();
 }
 
 void GstVideoReceiver::onActiveChanged()
 {
-    _postToWorker([active = active(), name = name(), config = config()](GstReceiverWorker& worker) {
-        worker.setActive(active, name, config);
-    });
+    _postRequest();
 }
 
 void GstVideoReceiver::onRestartRequested()
@@ -94,8 +88,8 @@ void GstVideoReceiver::onRestartRequested()
     if (QVideoSink* const sink = videoSink()) {
         _bindVideoSink(sink);
     }
-    _postToWorker(
-        [sink = GStreamer::shareObject(_displaySink.get())](GstReceiverWorker& worker) { worker.restart(sink); });
+    ++_request.restarts;
+    _postRequest();
 }
 
 void GstVideoReceiver::onVideoOutputChanged()
@@ -114,19 +108,45 @@ void GstVideoReceiver::onVideoOutputChanged()
             _sinkController->followWindowVisibility(nullptr);
         }
     }
-    GstElement* const displaySink = sink ? _displaySink.get() : nullptr;
-    _postToWorker(
-        [shared = GStreamer::shareObject(displaySink)](GstReceiverWorker& worker) { worker.setVideoSink(shared); });
+    _postRequest();
 }
 
 void GstVideoReceiver::onStartRecording(const QString& file, FileFormat format)
 {
-    _postToWorker([file, format](GstReceiverWorker& worker) { worker.startRecording(file, format); });
+    const quint64 id = (_request.recording ? _request.recording->id : 0) + 1;
+    _request.recording = GstRecordingRequest{.file = file, .format = format, .id = id};
+    _postRequest();
 }
 
 void GstVideoReceiver::onStopRecording()
 {
-    _postToWorker([](GstReceiverWorker& worker) { worker.stopRecording(); });
+    _request.recording.reset();
+    _postRequest();
+}
+
+void GstVideoReceiver::_postRequest()
+{
+    _request.active = active();
+    _request.name = name();
+    _request.config = config();
+    GstElement* const displaySink = videoSink() ? _displaySink.get() : nullptr;
+    if (displaySink != _request.videoSink.get()) {
+        _request.videoSink = GStreamer::shareObject(displaySink);
+    }
+    _postToWorker([request = _request](GstReceiverWorker& worker) { worker.apply(request); });
+}
+
+void GstVideoReceiver::_applyStatus(const GstReceiverStatus& status)
+{
+    setState(status.state);
+    const bool wasDecoding = decoding();
+    setDecoding(status.decoding);
+    if (wasDecoding && !status.decoding && _sinkController) {
+        _sinkController->releaseFrame();
+    }
+    _setDecoderName(status.decoderName);
+    setRecording(status.recording);
+    setStats(status.stats);
 }
 
 void GstVideoReceiver::_postToWorker(std::function<void(GstReceiverWorker&)> task)
@@ -197,7 +217,34 @@ void GstVideoReceiver::_setDecoderName(const QString& name)
 
 bool GstVideoReceiver::_runOnPipeline(const std::function<void(GstElement*)>& task)
 {
+    // Not a BlockingQueuedConnection, which would wait for good on a worker that never gets to the task. The task
+    // runs under the mutex, so once the wait is given up it is either done or never runs.
+    struct Call
+    {
+        std::mutex mutex;
+        bool abandoned = false;
+        QSemaphore done;
+    };
+
+    const auto call = std::make_shared<Call>();
     GstReceiverWorker* const worker = _worker;
-    return QMetaObject::invokeMethod(
-        worker, [worker, &task]() { task(worker->pipeline()); }, Qt::BlockingQueuedConnection);
+    const bool posted = QMetaObject::invokeMethod(
+        worker,
+        [worker, call, &task]() {
+            const std::lock_guard lock(call->mutex);
+            if (!call->abandoned) {
+                task(worker->pipeline());
+                call->done.release();
+            }
+        },
+        Qt::QueuedConnection);
+    if (!posted) {
+        return false;
+    }
+    if (call->done.tryAcquire(1, QDeadlineTimer(kRunOnPipelineTimeout))) {
+        return true;
+    }
+    const std::lock_guard lock(call->mutex);
+    call->abandoned = true;
+    return call->done.tryAcquire();
 }

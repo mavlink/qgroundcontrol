@@ -6,6 +6,7 @@
 #include <QtCore/QMetaObject>
 #include <QtCore/QString>
 
+#include "GstReceiverRequest.h"
 #include "GstScoped.h"
 #include "VideoReceiver.h"
 
@@ -20,10 +21,11 @@ Q_DECLARE_LOGGING_CATEGORY(GstVideoReceiverLog)
 /// The GStreamer VideoReceiver.
 ///
 /// This GUI-thread facade owns the display sink, built from VideoSettings once there is an output to show and rebuilt
-/// by restart(), and binds it to the output's QVideoSink through a QGCQVideoSinkController. It forwards every request
-/// to a GstReceiverWorker on a thread of its own, which runs the pipeline (one PipelineSession per connection) and
-/// steers it towards what was asked for: reconnecting with backoff, replacing a failed decoder, resuming a recording in
-/// a new part. The worker reports back through queued signals, so every signal is emitted on the GUI thread.
+/// by restart(), and binds it to the output's QVideoSink through a QGCQVideoSinkController. After every request it
+/// hands the whole GstReceiverRequest to a GstReceiverWorker on a thread of its own, which runs the pipeline
+/// (one PipelineSession per connection) and steers it towards what was asked for: reconnecting with backoff, replacing
+/// a failed decoder, resuming a recording in a new part. The worker reports its GstReceiverStatus and events back
+/// through queued signals, so every signal is emitted on the GUI thread.
 class GstVideoReceiver : public VideoReceiver
 {
     Q_OBJECT
@@ -55,17 +57,23 @@ private:
     friend class GstVideoReceiverTestBase;
 
     void _postToWorker(std::function<void(GstReceiverWorker&)> task);
+    /// Hands _request, brought up to date, to the worker.
+    void _postRequest();
+    void _applyStatus(const GstReceiverStatus& status);
     /// Builds the display sink and its controller, bound to @p videoSink.
     bool _buildDisplaySink(QVideoSink* videoSink);
     void _releaseDisplaySink();
     /// Binds the display sink, built first when there is none, to @p videoSink and follows the output's window.
     void _bindVideoSink(QVideoSink* videoSink);
     void _setDecoderName(const QString& name);
-    /// Runs @p task with the current pipeline (or null) on the worker, and waits for it. For tests.
+    /// Runs @p task with the current pipeline (or null) on the worker, and waits for it, for at most a few seconds:
+    /// false when the worker didn't get to it. For tests.
     bool _runOnPipeline(const std::function<void(GstElement* pipeline)>& task);
 
     QThread* _workerThread = nullptr;
     GstReceiverWorker* _worker = nullptr;
+    /// What was asked of the worker last.
+    GstReceiverRequest _request;
     GStreamer::GstElementPtr _displaySink;
     QGCQVideoSinkController* _sinkController = nullptr;
     QMetaObject::Connection _videoSizeConnection;

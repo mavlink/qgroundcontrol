@@ -28,7 +28,8 @@ GstReceiverWorker::GstReceiverWorker(QObject* parent)
 {
     _watchdogTimer->setInterval(kWatchdogInterval);
     (void) connect(_watchdogTimer, &QTimer::timeout, this, [this]() { _onWatchdogTick(); });
-    (void) connect(_supervisor, &StreamSupervisor::stateChanged, this, &GstReceiverWorker::stateChanged);
+    (void) connect(_supervisor, &StreamSupervisor::stateChanged, this,
+                   [this](VideoReceiver::State state) { _updateStatus(&Status::state, state); });
     (void) connect(_supervisor, &StreamSupervisor::reconnectDue, this, [this]() {
         qCDebug(GstVideoReceiverLog) << "Reconnecting (attempt" << _supervisor->reconnectAttempts() << ")"
                                      << _redactedUri();
@@ -41,27 +42,56 @@ GstReceiverWorker::~GstReceiverWorker()
     _stopSession();
 }
 
-void GstReceiverWorker::setActive(bool active, const QString& name, const VideoReceiver::Config& config)
+void GstReceiverWorker::apply(const Request& request)
 {
-    _active = active;
-    _config = config;
+    const Request previous = std::exchange(_requested, request);
+
+    // A start, stop or restart takes the config and the video sink as they are now.
+    if (request.active != previous.active) {
+        _onActiveChanged();
+    } else if (request.restarts != previous.restarts) {
+        if (_requested.active) {
+            _restartStream();
+        }
+    } else {
+        if (request.config != previous.config) {
+            _onConfigChanged(previous.config);
+        }
+        if ((request.videoSink != previous.videoSink) && _session) {
+            _session->setVideoSink(_requested.videoSink.get());
+        }
+    }
+
+    const quint64 recordingId = request.recording ? request.recording->id : 0;
+    const quint64 previousRecordingId = previous.recording ? previous.recording->id : 0;
+    if (recordingId != previousRecordingId) {
+        if (request.recording) {
+            _startRecording(*request.recording);
+        } else {
+            _stopRecording();
+        }
+    }
+}
+
+void GstReceiverWorker::_onActiveChanged()
+{
     _supervisor->startOver();
-    if (active) {
-        _dotDumper.setReceiverName(name);
+    if (_requested.active) {
+        _dotDumper.setReceiverName(_requested.name);
     } else {
         _endRecording();
     }
     _reconcile();
 }
 
-void GstReceiverWorker::setConfig(const VideoReceiver::Config& config)
+void GstReceiverWorker::_onConfigChanged(const VideoReceiver::Config& previous)
 {
-    VideoReceiver::Config sameStream = std::exchange(_config, config);
-    sameStream.autoReconnect = config.autoReconnect;
-    if (!_active) {
+    if (!_requested.active) {
         return;
     }
-
+    const VideoReceiver::Config& config = _requested.config;
+    VideoReceiver::Config sameStream = previous;
+    sameStream.autoReconnect = config.autoReconnect;
     if (sameStream != config) {
         _restartStream();
         return;
@@ -80,25 +110,9 @@ void GstReceiverWorker::setConfig(const VideoReceiver::Config& config)
     }
 }
 
-void GstReceiverWorker::restart(const std::shared_ptr<GstElement>& videoSink)
+void GstReceiverWorker::_startRecording(const RecordingRequest& request)
 {
-    _videoSink = videoSink;
-    if (_active) {
-        _restartStream();
-    }
-}
-
-void GstReceiverWorker::setVideoSink(const std::shared_ptr<GstElement>& videoSink)
-{
-    _videoSink = videoSink;
-    if (_session) {
-        _session->setVideoSink(_videoSink.get());
-    }
-}
-
-void GstReceiverWorker::startRecording(const QString& file, VideoReceiver::FileFormat format)
-{
-    if (!_active) {
+    if (!_requested.active) {
         return;
     }
     if (_supervisor->halted()) {
@@ -108,14 +122,14 @@ void GstReceiverWorker::startRecording(const QString& file, VideoReceiver::FileF
         return;
     }
 
-    _recording.emplace(file, format);
-    emit recordingChanged(true);
+    _recording.emplace(request.file, request.format);
+    _updateStatus(&Status::recording, true);
     if (_session) {
         _session->setRecording(_recordingRequest());
     }
 }
 
-void GstReceiverWorker::stopRecording()
+void GstReceiverWorker::_stopRecording()
 {
     if (!_recording) {
         return;
@@ -137,7 +151,7 @@ void GstReceiverWorker::dumpPipelineGraph(const QString& tag) const
 
 void GstReceiverWorker::shutdown()
 {
-    _active = false;
+    _requested.active = false;
     _stopSession();
     _supervisor->stop();
     thread()->quit();
@@ -145,7 +159,7 @@ void GstReceiverWorker::shutdown()
 
 void GstReceiverWorker::_reconcile()
 {
-    if (!_active || _config.uri.isEmpty()) {
+    if (!_requested.active || _requested.config.uri.isEmpty()) {
         _stopSession();
         _supervisor->stop();
         return;
@@ -166,13 +180,13 @@ void GstReceiverWorker::_restartStream()
 void GstReceiverWorker::_startSession()
 {
     const PipelineSession::Settings settings{
-        .uri = _config.uri,
+        .uri = _requested.config.uri,
         .redactedUri = _redactedUri(),
-        .lowLatency = _config.lowLatency,
-        .rtpJitterLatencyMs = _config.rtpJitterLatencyMs,
+        .lowLatency = _requested.config.lowLatency,
+        .rtpJitterLatencyMs = _requested.config.rtpJitterLatencyMs,
     };
     _session = new PipelineSession(settings, *this, _watchdog, _dotDumper, this);
-    _watchdog.start(_config.timeout, GStreamer::SourceFactory::connectGracePeriod(_config.uri));
+    _watchdog.start(_requested.config.timeout, GStreamer::SourceFactory::connectGracePeriod(_requested.config.uri));
 
     if (!_session->start()) {
         const PipelineSession::Failure failure = _session->failure();
@@ -182,7 +196,7 @@ void GstReceiverWorker::_startSession()
     }
 
     _supervisor->sessionStarted();
-    _session->setVideoSink(_videoSink.get());
+    _session->setVideoSink(_requested.videoSink.get());
     _session->setRecording(_recordingRequest());
     _statsTicks = 0;
     _watchdogTimer->start();
@@ -195,7 +209,7 @@ void GstReceiverWorker::_stopSession()
     }
     _watchdogTimer->stop();
     if (_statsSampler.reset()) {
-        emit statsChanged(_statsSampler.stats());
+        _updateStatus(&Status::stats, _statsSampler.stats());
     }
     PipelineSession* const session = std::exchange(_session, nullptr);
     session->shutdown();
@@ -210,7 +224,7 @@ void GstReceiverWorker::_stopSession()
 void GstReceiverWorker::_recover(const PipelineSession::Failure& failure)
 {
     const StreamSupervisor::FailureOutcome outcome =
-        _supervisor->sessionFailed(failure.message, failure.permanent, _config.autoReconnect);
+        _supervisor->sessionFailed(failure.message, failure.permanent, _requested.config.autoReconnect);
     if (outcome.halted) {
         _onHalted(failure.message);
         return;
@@ -232,7 +246,7 @@ void GstReceiverWorker::_endRecording()
         return;
     }
     _recording.reset();
-    emit recordingChanged(false);
+    _updateStatus(&Status::recording, false);
 }
 
 std::optional<RecordingBranch::Request> GstReceiverWorker::_recordingRequest() const
@@ -290,13 +304,13 @@ void GstReceiverWorker::_sampleStats()
     VideoStreamStats stats = _statsSampler.stats();
     _session->sampleStats(counters, stats);
     if (_statsSampler.sample(counters, stats, _recording ? &*_recording : nullptr)) {
-        emit statsChanged(_statsSampler.stats());
+        _updateStatus(&Status::stats, _statsSampler.stats());
     }
 }
 
 QString GstReceiverWorker::_redactedUri() const
 {
-    return QGCNetworkHelper::redactedUrlForLogging(_config.uri);
+    return QGCNetworkHelper::redactedUrlForLogging(_requested.config.uri);
 }
 
 void GstReceiverWorker::onSessionStreaming()
@@ -313,12 +327,12 @@ void GstReceiverWorker::onSessionFailed(const PipelineSession::Failure& failure)
 
 void GstReceiverWorker::onDecodingChanged(bool decoding)
 {
-    emit decodingChanged(decoding);
+    _updateStatus(&Status::decoding, decoding);
 }
 
 void GstReceiverWorker::onDecoderNameChanged(const QString& name)
 {
-    emit decoderNameChanged(name);
+    _updateStatus(&Status::decoderName, name);
 }
 
 void GstReceiverWorker::onDecoderFailing()

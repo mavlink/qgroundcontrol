@@ -135,6 +135,7 @@ target_sources(
         Pipeline/DecodingBranch.h
         Pipeline/GstH26xParameterSetGate.cc
         Pipeline/GstH26xParameterSetGate.h
+        Pipeline/GstReceiverRequest.h
         Pipeline/GstReceiverWorker.cc
         Pipeline/GstReceiverWorker.h
         Pipeline/GstRtspSource.cc
