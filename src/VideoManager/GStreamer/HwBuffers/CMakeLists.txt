@@ -338,8 +338,8 @@ target_link_libraries(QGCGStreamer PRIVATE Qt6::GuiPrivate)
 target_sources(
     QGCGStreamer
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstEglHelpers.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/dmabuf/GstEglHelpers.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstEglHelpers.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/GstEglHelpers.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwFrameTexturesBase.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportCache.h
         ${CMAKE_CURRENT_SOURCE_DIR}/common/GstHwImportPreflight.cc
