@@ -14,8 +14,11 @@ Item {
     /// The camera whose thermal mode and zoom the view follows: the active vehicle's current camera by default.
     property var camera: _activeVehicle && _activeVehicle.cameraManager ? _activeVehicle.cameraManager.currentCameraInstance : null
 
-    property double _ar:                (cameraLoader.visible && cameraLoader.status === Loader.Ready)
-                                            ? cameraLoader.item.implicitWidth / cameraLoader.item.implicitHeight
+    // A UVC camera's ratio is known once its first frame sets the output's implicit size; until then the video fills the
+    // view.
+    property double _ar:                _showUvcLoader
+                                            ? ((cameraLoader.status === Loader.Ready && cameraLoader.item.implicitHeight > 0)
+                                               ? cameraLoader.item.implicitWidth / cameraLoader.item.implicitHeight : 0)
                                             : QGroundControl.videoManager.aspectRatio
     property bool   _showGrid:          QGroundControl.settingsManager.videoSettings.gridLines.rawValue
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
@@ -31,7 +34,7 @@ Item {
 
     /// Size of the video fitted to the view: larger than the view where the fit mode crops, smaller where it doesn't.
     readonly property real videoWidth: {
-        if(_ar != 0.0){
+        if(_ar > 0){
             if(_isMode_FIT_HEIGHT
                     || (_isMode_FILL && (root.width/root.height < _ar))
                     || (_isMode_NO_CROP && (root.width/root.height > _ar))){
@@ -46,7 +49,7 @@ Item {
         return root.width
     }
     readonly property real videoHeight: {
-        if(_ar != 0.0){
+        if(_ar > 0){
             if(_isMode_FIT_WIDTH
                     || (_isMode_FILL && (root.width/root.height > _ar))
                     || (_isMode_NO_CROP && (root.width/root.height < _ar))){
