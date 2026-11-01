@@ -20,7 +20,8 @@ camera advertises a stream.
 
 Connection settings vary by source type:
 
-- **RTSP URL** — full RTSP stream address
+- **RTSP URL** — full RTSP stream address. An `rtsp://` stream arrives over UDP, or over TCP when no UDP data arrives;
+  enter `rtspt://` instead to receive it over TCP from the start, as through a firewall that blocks UDP.
 - **TCP URL** — TCP stream address
 - **UDP URL** — UDP stream address and port (default: `0.0.0.0:5600`)
 

@@ -36,14 +36,16 @@ public:
     {
         QUrl url;
         QByteArray sdp;
+        /// RTSP interleaved over its TCP connection, rather than over UDP with FFmpeg's fallback to TCP.
+        bool rtspOverTcp = false;
     };
 
     explicit QtMultimediaVideoReceiver(QObject* parent = nullptr);
     ~QtMultimediaVideoReceiver() override;
 
-    /// The source for @p uri, one of VideoStreamResolver's: rtsp(s):// and tcp:// as they are, mpegts:// as udp://,
-    /// and udp:// (H.264) or udp265:// (H.265) RTP as an SDP description. Other URLs play as they are; nullopt for an
-    /// invalid one.
+    /// The source for @p uri, one of VideoStreamResolver's: rtsp(s):// and tcp:// as they are, rtspt:// as rtsp:// over
+    /// TCP, as GStreamer plays it, mpegts:// as udp://, and udp:// (H.264) or udp265:// (H.265) RTP as an SDP
+    /// description. Other URLs play as they are; nullopt for an invalid one.
     static std::optional<Source> playerSource(const QString& uri);
 
 protected:

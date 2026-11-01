@@ -323,7 +323,8 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 
 `GstSourceFactory` accepts these URI schemes:
 
-- `rtsp://`, `rtspt://`: RTSP (the video stream only), over UDP and, when no UDP data arrives within 5 s, over TCP.
+- `rtsp://`, `rtspt://`: RTSP (the video stream only), over UDP and, when no UDP data arrives within 5 s, over TCP;
+  `rtspt://` over TCP only.
 - `udp://`: H.264 over RTP/UDP; `udp265://`: H.265 over RTP/UDP. Port 0 listens on a free port.
 - `mpegts://`: MPEG-TS over UDP; `tcp://`: MPEG-TS over TCP.
 

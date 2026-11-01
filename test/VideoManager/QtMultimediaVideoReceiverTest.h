@@ -23,5 +23,6 @@ private slots:
     void _testReconnectsAfterStreamLoss();
     void _testStopsWithoutAutoReconnect();
     void _testDetachingOutputDoesNotBlock();
+    void _testPlaysRtspOverTcp();
 #endif
 };

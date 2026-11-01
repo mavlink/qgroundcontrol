@@ -21,6 +21,22 @@ constexpr int kSampleIntervalMs = 1000;
 /// analyzeduration) before it decodes, and then waits for a keyframe.
 constexpr qint64 kFirstFrameGraceMs = 5000;
 
+constexpr const char* kRtspTransportEnv = "QT_FFMPEG_RTSP_TRANSPORT";
+
+/// Qt's FFmpeg player takes the RTSP transport from the environment alone, as it loads a source. A stream opening at
+/// the same time may get the other's, which costs it no more than FFmpeg's own fallback from UDP to TCP.
+void setRtspTransport(bool overTcp)
+{
+    static const QByteArray userTransport = qgetenv(kRtspTransportEnv);
+    if (overTcp) {
+        (void) qputenv(kRtspTransportEnv, QByteArrayLiteral("tcp"));
+    } else if (userTransport.isNull()) {
+        (void) qunsetenv(kRtspTransportEnv);
+    } else {
+        (void) qputenv(kRtspTransportEnv, userTransport);
+    }
+}
+
 /// An SDP description of a stream of @p encoding RTP packets, payload type 96, arriving at @p port.
 QByteArray rtpSdp(const QString& host, int port, QByteArrayView encoding)
 {
@@ -66,6 +82,11 @@ std::optional<QtMultimediaVideoReceiver::Source> QtMultimediaVideoReceiver::play
         QUrl udp(url);
         udp.setScheme(QStringLiteral("udp"));
         return Source{udp, {}};
+    }
+    if (scheme == QStringLiteral("rtspt")) {
+        QUrl rtsp(url);
+        rtsp.setScheme(QStringLiteral("rtsp"));
+        return Source{rtsp, {}, true};
     }
     return Source{url, {}};
 }
@@ -169,6 +190,9 @@ void QtMultimediaVideoReceiver::_open()
     (void) connect(_player, &QMediaPlayer::errorOccurred, this,
                    [this](QMediaPlayer::Error, const QString& errorString) { _fail(errorString); });
     _bindVideoSink();
+    if (source->url.scheme().compare(QStringLiteral("rtsp"), Qt::CaseInsensitive) == 0) {
+        setRtspTransport(source->rtspOverTcp);
+    }
     if (source->sdp.isEmpty()) {
         _player->setSource(source->url);
     } else {
