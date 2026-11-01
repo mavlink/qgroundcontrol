@@ -704,10 +704,10 @@ void VideoManagerTest::_testVideoViewFitsVideo_data()
     QTest::addColumn<bool>("widthFromHeight");
     QTest::addColumn<bool>("heightFromWidth");
 
-    QTest::newRow("fit width") << 0 << false << true;
-    QTest::newRow("fit height") << 1 << true << false;
-    QTest::newRow("fill") << 2 << true << false;
-    QTest::newRow("no crop") << 3 << false << true;
+    QTest::newRow("fit width") << int(VideoSettings::VideoFitWidth) << false << true;
+    QTest::newRow("fit height") << int(VideoSettings::VideoFitHeight) << true << false;
+    QTest::newRow("fill") << int(VideoSettings::VideoFitFill) << true << false;
+    QTest::newRow("no crop") << int(VideoSettings::VideoFitNoCrop) << false << true;
 }
 
 void VideoManagerTest::_testVideoViewFitsVideo()

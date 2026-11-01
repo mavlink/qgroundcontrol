@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 
 import QGroundControl
@@ -5,66 +7,68 @@ import QGroundControl.Controls
 
 // The video of the primary stream or the UVC camera, fitted to the view, with grid lines and the thermal stream.
 Item {
-    id:     root
-    clip:   true
+    id: root
 
     property bool useSmallFont: true
     /// Height covered at the top of the view, which the thermal picture-in-picture stays below.
     property real thermalPipTopInset: 0
-    /// The camera whose thermal mode and zoom the view follows: the active vehicle's current camera by default.
-    property var camera: _activeVehicle && _activeVehicle.cameraManager ? _activeVehicle.cameraManager.currentCameraInstance : null
-
-    // A UVC camera's ratio is known once its first frame sets the output's implicit size; until then the video fills the
-    // view.
-    property double _ar:                _showUvcLoader
-                                            ? ((cameraLoader.status === Loader.Ready && cameraLoader.item.implicitHeight > 0)
-                                               ? cameraLoader.item.implicitWidth / cameraLoader.item.implicitHeight : 0)
-                                            : QGroundControl.videoManager.aspectRatio
-    property bool   _showGrid:          QGroundControl.settingsManager.videoSettings.gridLines.rawValue
-    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _hasZoom:           camera && camera.hasZoom
-    property int    _fitMode:           QGroundControl.settingsManager.videoSettings.videoFit.rawValue
-    property bool   _showStreamLoader:  QGroundControl.videoManager.decoding
-    property bool   _showUvcLoader:     QGroundControl.videoManager.isUvc
-
-    property bool   _isMode_FIT_WIDTH:  _fitMode === 0
-    property bool   _isMode_FIT_HEIGHT: _fitMode === 1
-    property bool   _isMode_FILL:       _fitMode === 2
-    property bool   _isMode_NO_CROP:    _fitMode === 3
+    /// The camera whose thermal mode and zoom the view follows: the active vehicle's current camera by default. Any
+    /// object with the camera properties the view reads will do, as the tests' stand-ins.
+    property var camera: root._activeVehicle && root._activeVehicle.cameraManager
+                         ? root._activeVehicle.cameraManager.currentCameraInstance : null
 
     /// Size of the video fitted to the view: larger than the view where the fit mode crops, smaller where it doesn't.
     readonly property real videoWidth: {
-        if(_ar > 0){
-            if(_isMode_FIT_HEIGHT
-                    || (_isMode_FILL && (root.width/root.height < _ar))
-                    || (_isMode_NO_CROP && (root.width/root.height > _ar))){
+        if (root._ar > 0) {
+            if (root._isModeFitHeight
+                    || (root._isModeFill && (root.width / root.height < root._ar))
+                    || (root._isModeNoCrop && (root.width / root.height > root._ar))) {
                 // This return value has different implications depending on the mode
                 // For FIT_HEIGHT and FILL
                 //    makes so the video width will be larger than (or equal to) the screen width
                 // For NO_CROP Mode
                 //    makes so the video width will be smaller than (or equal to) the screen width
-                return root.height * _ar
+                return root.height * root._ar
             }
         }
         return root.width
     }
     readonly property real videoHeight: {
-        if(_ar > 0){
-            if(_isMode_FIT_WIDTH
-                    || (_isMode_FILL && (root.width/root.height > _ar))
-                    || (_isMode_NO_CROP && (root.width/root.height < _ar))){
+        if (root._ar > 0) {
+            if (root._isModeFitWidth
+                    || (root._isModeFill && (root.width / root.height > root._ar))
+                    || (root._isModeNoCrop && (root.width / root.height < root._ar))) {
                 // This return value has different implications depending on the mode
                 // For FIT_WIDTH and FILL
                 //    makes so the video height will be larger than (or equal to) the screen height
                 // For NO_CROP Mode
                 //    makes so the video height will be smaller than (or equal to) the screen height
-                return root.width * (1 / _ar)
+                return root.width * (1 / root._ar)
             }
         }
         return root.height
     }
 
-    property double _thermalHeightFactor: 0.85 //-- TODO
+    readonly property VideoManager _videoManager: QGroundControl.videoManager
+    readonly property VideoSettings _videoSettings: QGroundControl.settingsManager.videoSettings
+    readonly property Vehicle _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    readonly property bool _showStreamLoader: root._videoManager.decoding
+    readonly property bool _showUvcLoader: root._videoManager.isUvc
+    // A UVC camera's ratio is known once its first frame sets the output's implicit size; until then the video fills the
+    // view.
+    readonly property real _ar: root._showUvcLoader
+                                ? ((cameraLoader.status === Loader.Ready && cameraLoader.item.implicitHeight > 0)
+                                   ? cameraLoader.item.implicitWidth / cameraLoader.item.implicitHeight : 0)
+                                : root._videoManager.aspectRatio
+    readonly property bool _showGrid: root._videoSettings.gridLines.rawValue
+    readonly property int _fitMode: root._videoSettings.videoFit.rawValue
+    readonly property bool _isModeFitWidth: root._fitMode === VideoSettings.VideoFitWidth
+    readonly property bool _isModeFitHeight: root._fitMode === VideoSettings.VideoFitHeight
+    readonly property bool _isModeFill: root._fitMode === VideoSettings.VideoFitFill
+    readonly property bool _isModeNoCrop: root._fitMode === VideoSettings.VideoFitNoCrop
+    readonly property bool _hasZoom: !!root.camera && root.camera.hasZoom
+    // Height of the thermal video blended over the main one, relative to the view.
+    readonly property real _thermalBlendHeightFactor: 0.85
     // Pinch scale per camera zoom step, the same in and out.
     readonly property real _zoomStepScale: 1.25
 
@@ -81,94 +85,101 @@ Item {
         return sent + direction
     }
 
-        Image {
-            id:             noVideo
-            anchors.fill:   parent
-            source:         "/res/NoVideoBackground.jpg"
-            fillMode:       Image.PreserveAspectCrop
-            visible:        !_showStreamLoader && !_showUvcLoader
+    // The cropping fit modes size the video beyond the view.
+    clip: true
 
-            Rectangle {
-                anchors.centerIn:   parent
-                width:              noVideoLabel.contentWidth + ScreenTools.defaultFontPixelHeight
-                height:             noVideoLabel.contentHeight + ScreenTools.defaultFontPixelHeight
-                radius:             ScreenTools.defaultFontPixelWidth / 2
-                color:              "black"
-                opacity:            0.5
-            }
+    Image {
+        anchors.fill:   parent
+        source:         "/res/NoVideoBackground.jpg"
+        sourceSize:     Qt.size(root.width, root.height)
+        fillMode:       Image.PreserveAspectCrop
+        visible:        !root._showStreamLoader && !root._showUvcLoader
 
-            QGCLabel {
-                id:                 noVideoLabel
-                text:               QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
-                font.bold:          true
-                color:              "white"
-                font.pointSize:     useSmallFont ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
-                anchors.centerIn:   parent
-            }
+        Rectangle {
+            anchors.centerIn:   parent
+            width:              noVideoLabel.contentWidth + ScreenTools.defaultFontPixelHeight
+            height:             noVideoLabel.contentHeight + ScreenTools.defaultFontPixelHeight
+            radius:             ScreenTools.defaultFontPixelWidth / 2
+            color:              "black"
+            opacity:            0.5
         }
+
+        QGCLabel {
+            id:                 noVideoLabel
+            text:               root._videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
+            font.bold:          true
+            color:              "white"
+            font.pointSize:     root.useSmallFont ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
+            anchors.centerIn:   parent
+        }
+    }
 
     Rectangle {
-        id:             videoBackground
         anchors.fill:   parent
         color:          "black"
-        visible:        _showStreamLoader || _showUvcLoader
+        visible:        root._showStreamLoader || root._showUvcLoader
+
         Loader {
-            id:                 videoStreamLoader
             anchors.fill:       videoContentArea
-            visible:            _showStreamLoader
+            visible:            root._showStreamLoader
             sourceComponent:    videoOutputComponent
         }
+
         Component {
             id: videoOutputComponent
+
             VideoStreamOutput {
-                stream: QGroundControl.videoManager.primaryStream
+                stream: root._videoManager.primaryStream
             }
         }
+
         //-- UVC Video (USB Camera or Video Device)
         Loader {
             id:                 cameraLoader
             anchors.fill:       videoContentArea
-            visible:            _showUvcLoader
-            active:             _showUvcLoader
+            visible:            root._showUvcLoader
+            active:             root._showUvcLoader
             sourceComponent:    uvcVideoOutputComponent
         }
+
         Component {
             id: uvcVideoOutputComponent
+
             UVCVideoOutput { }
         }
 
         Item {
             id:                 videoContentArea
-            height:             root.videoHeight
             width:              root.videoWidth
+            height:             root.videoHeight
             anchors.centerIn:   parent
-            visible:           _showStreamLoader || _showUvcLoader
+            visible:            root._showStreamLoader || root._showUvcLoader
 
             // grid lines
             Item {
                 anchors.fill:   parent
-                visible:        _showGrid && !QGroundControl.videoManager.fullScreen
+                visible:        root._showGrid && !root._videoManager.fullScreen
 
                 Rectangle {
-                    color:  Qt.rgba(1,1,1,0.5)
+                    color:  Qt.rgba(1, 1, 1, 0.5)
                     height: parent.height
                     width:  1
                     x:      parent.width * 0.33
                 }
                 Rectangle {
-                    color:  Qt.rgba(1,1,1,0.5)
+                    color:  Qt.rgba(1, 1, 1, 0.5)
                     height: parent.height
                     width:  1
                     x:      parent.width * 0.66
                 }
                 Rectangle {
-                    color:  Qt.rgba(1,1,1,0.5)
+                    color:  Qt.rgba(1, 1, 1, 0.5)
                     width:  parent.width
                     height: 1
                     y:      parent.height * 0.33
                 }
                 Rectangle {
-                    color:  Qt.rgba(1,1,1,0.5)
+                    color:  Qt.rgba(1, 1, 1, 0.5)
                     width:  parent.width
                     height: 1
                     y:      parent.height * 0.66
@@ -178,52 +189,79 @@ Item {
 
         //-- Thermal Image
         Item {
-            id:                 thermalItem
-            objectName:         "videoViewThermal"
-            width:              height * QGroundControl.videoManager.thermalAspectRatio
-            height:             camera ? (camera.thermalMode === MavlinkCameraControlInterface.THERMAL_FULL ? parent.height : (camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP ? ScreenTools.defaultFontPixelHeight * 12 : parent.height * _thermalHeightFactor)) : 0
-            anchors.horizontalCenter:   parent.horizontalCenter
-            anchors.verticalCenter:     parent.verticalCenter
-            // Apply only in the pip state, which anchors the top left corner instead.
-            anchors.topMargin:          root.thermalPipTopInset + (ScreenTools.defaultFontPixelHeight * 0.5)
-            anchors.leftMargin:         ScreenTools.defaultFontPixelWidth * 12
-            visible:            QGroundControl.videoManager.hasThermal && camera && camera.thermalMode !== MavlinkCameraControlInterface.THERMAL_OFF
-
-            states: State {
-                name:   "pip"
-                when:   !!root.camera && root.camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP
-
-                AnchorChanges {
-                    target:                     thermalItem
-                    anchors.horizontalCenter:   undefined
-                    anchors.verticalCenter:     undefined
-                    anchors.top:                thermalItem.parent.top
-                    anchors.left:               thermalItem.parent.left
+            id:         thermalItem
+            objectName: "videoViewThermal"
+            width:      height * root._videoManager.thermalAspectRatio
+            height: {
+                if (!root.camera) {
+                    return 0
+                }
+                switch (root.camera.thermalMode) {
+                case MavlinkCameraControlInterface.THERMAL_FULL:
+                    return parent.height
+                case MavlinkCameraControlInterface.THERMAL_PIP:
+                    return ScreenTools.defaultFontPixelHeight * 12
+                default:
+                    return parent.height * root._thermalBlendHeightFactor
                 }
             }
+            visible:    root._videoManager.hasThermal && !!root.camera
+                        && root.camera.thermalMode !== MavlinkCameraControlInterface.THERMAL_OFF
+
+            anchors {
+                horizontalCenter:   parent.horizontalCenter
+                verticalCenter:     parent.verticalCenter
+                // Apply only in the pip state, which anchors the top left corner instead.
+                topMargin:          root.thermalPipTopInset + (ScreenTools.defaultFontPixelHeight * 0.5)
+                leftMargin:         ScreenTools.defaultFontPixelWidth * 12
+            }
+
+            states: [
+                State {
+                    name:   "pip"
+                    when:   !!root.camera && root.camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP
+
+                    AnchorChanges {
+                        target: thermalItem
+                        anchors {
+                            horizontalCenter:   undefined
+                            verticalCenter:     undefined
+                            top:                thermalItem.parent.top
+                            left:               thermalItem.parent.left
+                        }
+                    }
+                }
+            ]
+
             Loader {
-                id:             thermalVideo
-                anchors.fill:   parent
-                opacity:        camera ? (camera.thermalMode === MavlinkCameraControlInterface.THERMAL_BLEND ? camera.thermalOpacity / 100 : 1.0) : 0
-                sourceComponent: thermalOutputComponent
+                anchors.fill:       parent
+                opacity:            !root.camera ? 0
+                                    : (root.camera.thermalMode === MavlinkCameraControlInterface.THERMAL_BLEND
+                                       ? root.camera.thermalOpacity / 100 : 1.0)
+                sourceComponent:    thermalOutputComponent
 
                 Component {
                     id: thermalOutputComponent
+
                     VideoStreamOutput {
-                        stream: QGroundControl.videoManager.thermalStream
+                        stream: root._videoManager.thermalStream
                     }
                 }
             }
         }
+
         //-- Zoom
         PinchArea {
-            id:             pinchZoom
-            enabled:        _hasZoom
-            anchors.fill:   parent
-            onPinchStarted: pinchZoom.zoom = 0
-            onPinchUpdated: (pinch) => { pinchZoom.zoom = root._stepZoomToward(pinch.scale, pinchZoom.zoom) }
+            id: pinchZoom
+
             // Zoom steps sent during the current pinch.
             property int zoom: 0
+
+            anchors.fill:   parent
+            enabled:        root._hasZoom
+
+            onPinchStarted: pinchZoom.zoom = 0
+            onPinchUpdated: (pinch) => { pinchZoom.zoom = root._stepZoomToward(pinch.scale, pinchZoom.zoom) }
         }
     }
 }

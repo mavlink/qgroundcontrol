@@ -45,14 +45,14 @@ QGCGroupBox {
         visible: root.stream.uri !== ""
 
         QGCLabel {
-            Layout.fillWidth:   true
             text:               qsTr("URL")
+            Layout.fillWidth:   true
         }
 
         QGCLabel {
-            Layout.maximumWidth:    ScreenTools.defaultFontPixelWidth * 40
             text:                   root.stream.uri
             elide:                  Text.ElideMiddle
+            Layout.maximumWidth:    ScreenTools.defaultFontPixelWidth * 40
         }
     }
 

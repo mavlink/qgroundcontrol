@@ -3,21 +3,22 @@ import QtMultimedia
 
 import QGroundControl
 
+// The UVC camera VideoManager selected, cropped to fill the item.
 Rectangle {
-    id:                 _root
-    implicitWidth:      videoOutput.implicitWidth
-    implicitHeight:     videoOutput.implicitHeight
-    color:              Qt.rgba(0,0,0,0.75)
-    clip:               true
+    id: root
 
-    property var _videoManager: QGroundControl.videoManager
+    readonly property VideoManager _videoManager: QGroundControl.videoManager
+
+    implicitWidth:  uvcOutput.implicitWidth
+    implicitHeight: uvcOutput.implicitHeight
+    color:          Qt.rgba(0, 0, 0, 0.75)
 
     MediaDevices {
         id: mediaDevices
 
         function findCameraDevice(cameraId) {
-            var videoInputs = mediaDevices.videoInputs
-            for (var i = 0; i < videoInputs.length; i++) {
+            const videoInputs = mediaDevices.videoInputs
+            for (let i = 0; i < videoInputs.length; i++) {
                 if (videoInputs[i].description === cameraId) {
                     return videoInputs[i]
                 }
@@ -28,15 +29,14 @@ Rectangle {
 
     CaptureSession {
         camera: Camera {
-            id:             camera
-            cameraDevice:   mediaDevices.findCameraDevice(_videoManager.uvcVideoSourceID)
-            active:         _videoManager.isUvc
+            cameraDevice:   mediaDevices.findCameraDevice(root._videoManager.uvcVideoSourceID)
+            active:         root._videoManager.isUvc
         }
-        videoOutput: videoOutput
+        videoOutput: uvcOutput
     }
 
     VideoOutput {
-        id:             videoOutput
+        id:             uvcOutput
         anchors.fill:   parent
         fillMode:       VideoOutput.PreserveAspectCrop
     }

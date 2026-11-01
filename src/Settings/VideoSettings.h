@@ -35,6 +35,16 @@ public:
     DEFINE_SETTINGFACT(videoConversionElement)
     DEFINE_SETTINGFACT(disablePixelAspectRatio)
 
+    /// videoFit's values (Video.SettingsGroup.json).
+    enum VideoFit
+    {
+        VideoFitWidth = 0,
+        VideoFitHeight = 1,
+        VideoFitFill = 2,
+        VideoFitNoCrop = 3,
+    };
+    Q_ENUM(VideoFit)
+
     Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)
     Q_PROPERTY(QString  udp264VideoSource       READ udp264VideoSource      CONSTANT)
     Q_PROPERTY(QString  udp265VideoSource       READ udp265VideoSource      CONSTANT)

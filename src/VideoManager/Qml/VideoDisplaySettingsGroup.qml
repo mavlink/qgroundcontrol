@@ -7,23 +7,24 @@ import QGroundControl.FactControls
 
 // How the video is drawn: the grid lines over it and how it fits the view.
 QGCGroupBox {
-    id:         root
-    heading:    qsTr("Video Display")
+    id: root
 
     readonly property VideoSettings _videoSettings: QGroundControl.settingsManager.videoSettings
 
+    heading: qsTr("Video Display")
+
     FactCheckBoxSlider {
-        Layout.fillWidth:   true
         text:               qsTr("Grid Lines")
         fact:               root._videoSettings.gridLines
         visible:            fact.userVisible
+        Layout.fillWidth:   true
     }
 
     LabelledFactComboBox {
-        Layout.fillWidth:   true
         label:              qsTr("Display Fit")
         fact:               root._videoSettings.videoFit
         indexModel:         false
         visible:            fact.userVisible
+        Layout.fillWidth:   true
     }
 }
