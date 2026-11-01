@@ -4,6 +4,7 @@
 
 #include <QtCore/QList>
 #include <QtCore/QString>
+#include <QtCore/QStringList>
 #include <QtCore/qcontainerfwd.h>
 
 #include "VideoDecoderOptions.h"
@@ -40,44 +41,60 @@ public:
     /// Routes changes of @p fact (AppSettings::gstDebugLevel) to setDebugLevel() while @p context lives.
     static void bindDebugLevelFact(Fact* fact, QObject* context);
 
-    /// Qt graphics setup the backend's GPU video paths need; call it before the QGuiApplication exists, as Qt reads it
-    /// at startup. @p softwareRendering: the user asked for software rendering (--swrast), which it must keep.
-    virtual void configureQtGraphics(bool softwareRendering) = 0;
+    /// What the backend offers.
+    struct Capabilities
+    {
+        /// Plays network video streams; their settings are shown only then.
+        bool streaming = false;
+        /// GStreamer: the decoder, RTP jitter-buffer and display-sink settings apply, and Qt Multimedia's player is the
+        /// alternative VideoSettings::videoBackend offers.
+        bool pipelineSettings = false;
+        /// Shows decoded frames without copying them through the CPU.
+        bool gpuVideoPath = false;
+        /// initialize() must run, off the GUI thread, before receivers are created.
+        bool asyncInit = false;
+    };
 
-    /// True when the build plays network video streams; their settings are shown only then.
-    virtual bool hasStreaming() const = 0;
+    struct InitParams
+    {
+        /// QCoreApplication::arguments(), snapshotted on the GUI thread.
+        QStringList arguments;
+        /// What prepareEnvironment() did.
+        EnvPrepResult environment;
+        /// The persisted debug threshold to start with (persistedDebugLevel()).
+        std::optional<int> debugLevel;
+    };
 
-    /// True for GStreamer: the decoder, RTP jitter-buffer and display-sink settings apply, and Qt Multimedia's player
-    /// is the alternative VideoSettings::videoBackend offers.
-    virtual bool hasPipelineSettings() const = 0;
-
-    /// True when the build can show decoded frames without copying them through the CPU.
-    virtual bool hasGpuVideoPath() const = 0;
-
-    /// True when initialize() must run, off the GUI thread, before receivers are created.
-    virtual bool needsAsyncInit() const = 0;
+    virtual Capabilities capabilities() const = 0;
 
     virtual VideoReceiver* createReceiver(QObject* parent) = 0;
 
-    virtual EnvPrepResult prepareEnvironment() = 0;
+    // The rest is setup and tuning a backend that needs none leaves alone.
 
-    /// @p debugLevel: the persisted debug threshold to start with (persistedDebugLevel()).
-    virtual bool initialize(const QStringList& arguments, const EnvPrepResult& envResult,
-                            std::optional<int> debugLevel) = 0;
+    /// Qt graphics setup the backend's GPU video paths need; call it before the QGuiApplication exists, as Qt reads it
+    /// at startup. @p softwareRendering: the user asked for software rendering (--swrast), which it must keep.
+    virtual void configureQtGraphics([[maybe_unused]] bool softwareRendering) {}
 
-    /// The boot test's check that the initialized backend decodes and records; true without a backend.
-    virtual bool selfTest() = 0;
+    /// GUI thread, before initialize().
+    virtual EnvPrepResult prepareEnvironment() { return {}; }
 
-    virtual void applyDecoderPriorities(int rawOption) = 0;
+    virtual bool initialize([[maybe_unused]] const InitParams& params) { return true; }
+
+    /// The boot test's check that the initialized backend decodes and records.
+    virtual bool selfTest() { return true; }
+
+    virtual void applyDecoderPriorities([[maybe_unused]] int rawOption) {}
 
     /// The hardware decoder families present, as forceVideoDecoder values (never Default or Software).
-    virtual QList<VideoDecoder::Options> availableDecoderFamilies() = 0;
+    virtual QList<VideoDecoder::Options> availableDecoderFamilies() { return {}; }
 
-    virtual void setDebugLevel(int level) = 0;
+    virtual void setDebugLevel([[maybe_unused]] int level) {}
 
-    virtual void onMainWindowReady(QQuickWindow* window) = 0;
+    virtual void onMainWindowReady([[maybe_unused]] QQuickWindow* window) {}
 
     /// Android: hands the backend the JavaVM, application context and class loader (jobject, or null) its plugins
     /// look up through JNI.
-    virtual void setAndroidJniState(void* javaVm, void* appContext, void* classLoader) = 0;
+    virtual void setAndroidJniState([[maybe_unused]] void* javaVm, [[maybe_unused]] void* appContext,
+                                    [[maybe_unused]] void* classLoader)
+    {}
 };

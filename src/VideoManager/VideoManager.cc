@@ -203,17 +203,16 @@ void VideoManager::startVideoBackendInit()
     }
 
     VideoBackend& backend = VideoBackend::instance();
-    if (!backend.needsAsyncInit() || VideoBackend::disabledForUnitTests()) {
+    if (!backend.capabilities().asyncInit || VideoBackend::disabledForUnitTests()) {
         _initState = InitState::Ready;
         return;
     }
 
     _initState = InitState::Pending;
-    const VideoBackend::EnvPrepResult envResult = backend.prepareEnvironment();
-    _watchBackendInit(QtConcurrent::run([&backend, arguments = QCoreApplication::arguments(), envResult,
-                                         debugLevel = VideoBackend::persistedDebugLevel()] {
-        return backend.initialize(arguments, envResult, debugLevel);
-    }));
+    const VideoBackend::InitParams params{.arguments = QCoreApplication::arguments(),
+                                          .environment = backend.prepareEnvironment(),
+                                          .debugLevel = VideoBackend::persistedDebugLevel()};
+    _watchBackendInit(QtConcurrent::run([&backend, params] { return backend.initialize(params); }));
 }
 
 void VideoManager::_watchBackendInit(const QFuture<bool>& future)

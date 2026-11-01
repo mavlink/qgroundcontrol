@@ -6,20 +6,12 @@
 class GStreamerVideoBackend final : public VideoBackend
 {
 public:
-    void configureQtGraphics(bool softwareRendering) override;
-
-    bool hasStreaming() const override { return true; }
-
-    bool hasPipelineSettings() const override { return true; }
-
-    bool hasGpuVideoPath() const override;
-
-    bool needsAsyncInit() const override { return true; }
+    Capabilities capabilities() const override;
 
     VideoReceiver* createReceiver(QObject* parent) override;
+    void configureQtGraphics(bool softwareRendering) override;
     EnvPrepResult prepareEnvironment() override;
-    bool initialize(const QStringList& arguments, const EnvPrepResult& envResult,
-                    std::optional<int> debugLevel) override;
+    bool initialize(const InitParams& params) override;
     bool selfTest() override;
     void applyDecoderPriorities(int rawOption) override;
     QList<VideoDecoder::Options> availableDecoderFamilies() override;

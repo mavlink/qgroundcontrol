@@ -13,12 +13,12 @@ namespace {
 
 bool hasStreaming()
 {
-    return VideoBackend::instance().hasStreaming();
+    return VideoBackend::instance().capabilities().streaming;
 }
 
 bool hasPipelineSettings()
 {
-    return VideoBackend::instance().hasPipelineSettings();
+    return VideoBackend::instance().capabilities().pipelineSettings;
 }
 
 }  // namespace
@@ -194,7 +194,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceCpuVideoPath)
     if (!_forceCpuVideoPathFact) {
         _forceCpuVideoPathFact = _createSettingsFact(forceCpuVideoPathName);
 
-        _forceCpuVideoPathFact->setUserVisible(VideoBackend::instance().hasGpuVideoPath());
+        _forceCpuVideoPathFact->setUserVisible(VideoBackend::instance().capabilities().gpuVideoPath);
     }
     return _forceCpuVideoPathFact;
 }

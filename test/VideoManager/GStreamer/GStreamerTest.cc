@@ -189,13 +189,14 @@ void GStreamerTest::_testCreateVideoReceiver()
 void GStreamerTest::_testVideoBackendForwards()
 {
     GStreamerVideoBackend backend;
-    QVERIFY(backend.hasStreaming());
-    QVERIFY(backend.hasPipelineSettings());
-    QVERIFY(backend.needsAsyncInit());
+    const VideoBackend::Capabilities capabilities = backend.capabilities();
+    QVERIFY(capabilities.streaming);
+    QVERIFY(capabilities.pipelineSettings);
+    QVERIFY(capabilities.asyncInit);
 #ifdef QGC_HAS_ANY_GPU_PATH
-    QVERIFY(backend.hasGpuVideoPath());
+    QVERIFY(capabilities.gpuVideoPath);
 #else
-    QVERIFY(!backend.hasGpuVideoPath());
+    QVERIFY(!capabilities.gpuVideoPath);
 #endif
 
     const std::unique_ptr<VideoReceiver> receiver(backend.createReceiver(nullptr));

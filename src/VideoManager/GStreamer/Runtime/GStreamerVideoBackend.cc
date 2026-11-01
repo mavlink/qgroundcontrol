@@ -17,13 +17,14 @@ void GStreamerVideoBackend::configureQtGraphics(bool softwareRendering)
     HwBuffers::configureQtGraphics(softwareRendering);
 }
 
-bool GStreamerVideoBackend::hasGpuVideoPath() const
+VideoBackend::Capabilities GStreamerVideoBackend::capabilities() const
 {
 #ifdef QGC_HAS_ANY_GPU_PATH
-    return true;
+    constexpr bool gpuVideoPath = true;
 #else
-    return false;
+    constexpr bool gpuVideoPath = false;
 #endif
+    return {.streaming = true, .pipelineSettings = true, .gpuVideoPath = gpuVideoPath, .asyncInit = true};
 }
 
 VideoReceiver* GStreamerVideoBackend::createReceiver(QObject* parent)
@@ -37,10 +38,10 @@ VideoBackend::EnvPrepResult GStreamerVideoBackend::prepareEnvironment()
     return {result.ok, result.error};
 }
 
-bool GStreamerVideoBackend::initialize(const QStringList& arguments, const EnvPrepResult& envResult,
-                                       std::optional<int> debugLevel)
+bool GStreamerVideoBackend::initialize(const InitParams& params)
 {
-    return GStreamer::initialize(arguments, {envResult.ok, envResult.error}, debugLevel);
+    return GStreamer::initialize(params.arguments, {params.environment.ok, params.environment.error},
+                                 params.debugLevel);
 }
 
 bool GStreamerVideoBackend::selfTest()
