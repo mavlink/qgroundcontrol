@@ -6,6 +6,7 @@
 definitions:
   - ../../cmake/CompilerWarnings.cmake
   - ../../cmake/GStreamer/Acquire.cmake
+  - ../../cmake/GStreamer/acquire
   - ../../cmake/GStreamer/Components.cmake
   - ../../cmake/GStreamer/Install.cmake
   - ../../cmake/GStreamer/Layout.cmake
