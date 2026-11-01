@@ -94,7 +94,7 @@ void VehicleFactGroup::handleMessage(Vehicle *vehicle, const mavlink_message_t &
         _handleVfrHud(message);
         break;
     case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
-        _handleNavControllerOutput(message);
+        _handleNavControllerOutput(vehicle, message);
         break;
     case MAVLINK_MSG_ID_RAW_IMU:
         _handleRawImuTemp(message);
@@ -194,12 +194,19 @@ void VehicleFactGroup::_handleAttitudeQuaternion(Vehicle *vehicle, const mavlink
     _setTelemetryAvailable(true);
 }
 
-void VehicleFactGroup::_handleNavControllerOutput(const mavlink_message_t &message)
+void VehicleFactGroup::_handleNavControllerOutput(Vehicle* vehicle, const mavlink_message_t& message)
 {
     mavlink_nav_controller_output_t navControllerOutput{};
     mavlink_msg_nav_controller_output_decode(&message, &navControllerOutput);
 
-    altitudeTuningSetpoint()->setRawValue(_altitudeTuningFact.rawValue().toDouble() + navControllerOutput.alt_error);
+    // alt_error is setpoint minus current altitude, but PX4 before 1.14 sent current minus setpoint
+    double altError = navControllerOutput.alt_error;
+    if (vehicle && vehicle->px4Firmware() && (vehicle->firmwareMajorVersion() != Vehicle::versionNotSetValue) &&
+        (vehicle->versionCompare(1, 14, 0) < 0)) {
+        altError = -altError;
+    }
+
+    altitudeTuningSetpoint()->setRawValue(_altitudeTuningFact.rawValue().toDouble() + altError);
     xTrackError()->setRawValue(navControllerOutput.xtrack_error);
     airSpeedSetpoint()->setRawValue(_airSpeedFact.rawValue().toDouble() - navControllerOutput.aspd_error);
     distanceToNextWP()->setRawValue(navControllerOutput.wp_dist);
