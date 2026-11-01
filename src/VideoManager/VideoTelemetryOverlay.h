@@ -30,8 +30,8 @@ private:
     void _update();
 
     TelemetryBarValues _telemetry;
-    /// The bar's layout is read on the next update: not while the application starts, and again for a new vehicle,
-    /// whose type picks the bar's defaults.
+    /// The bar's layout is read on the next update: not while the application starts, and again once the bar saves a
+    /// new layout or another vehicle, whose type picks the bar's defaults, becomes active.
     bool _layoutStale = true;
     QTimer _timer;
     QString _text;

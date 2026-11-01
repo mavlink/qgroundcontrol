@@ -2,8 +2,13 @@
 
 #include <QtTest/QSignalSpy>
 
+#include "FactValueGrid.h"
+#include "HorizontalFactValueGrid.h"
+#include "InstrumentValueData.h"
 #include "MultiVehicleManager.h"
+#include "QmlObjectListModel.h"
 #include "SettingsManager.h"
+#include "Vehicle.h"
 #include "VideoSettings.h"
 #include "VideoTelemetryOverlay.h"
 #include "VideoTestHelpers.h"
@@ -42,6 +47,28 @@ void VideoTelemetryOverlayTest::_testFollowsSettingAndVehicle()
     QCOMPARE(textChanged.count(), 1);
     QVERIFY(overlay.text().isEmpty());
     QVERIFY(!overlay._timer.isActive());
+}
+
+void VideoTelemetryOverlayTest::_testFollowsTelemetryBarEdits()
+{
+    Fact* const enabled = SettingsManager::instance()->videoSettings()->showTelemetryOverlay();
+    VideoTestHelpers::FactRestorer restorer;
+    restorer.set(enabled, true);
+    VideoTelemetryOverlay overlay(enabled);
+
+    Vehicle* const vehicle = MultiVehicleManager::instance()->activeVehicle();
+    QVERIFY(vehicle);
+    const QString heading = vehicle->getFact(QStringLiteral("heading"))->shortDescription() + QStringLiteral(":");
+    QTRY_VERIFY_WITH_TIMEOUT(!overlay.text().isEmpty(), TestTimeout::mediumMs());
+    QVERIFY(!overlay.text().contains(heading));
+
+    // The user puts the heading in the bar's first cell.
+    FactValueGrid bar;
+    (void) bar.setProperty("settingsGroup", HorizontalFactValueGrid::telemetryBarSettingsGroup);
+    bar.componentComplete();
+    const QmlObjectListModel* const column = bar.columns()->value<const QmlObjectListModel*>(0);
+    column->value<InstrumentValueData*>(0)->setFact(QStringLiteral("Vehicle"), QStringLiteral("Heading"));
+    QTRY_VERIFY_WITH_TIMEOUT(overlay.text().contains(heading), TestTimeout::mediumMs());
 }
 
 UT_REGISTER_TEST(VideoTelemetryOverlayTest, TestLabel::Integration, TestLabel::Vehicle)

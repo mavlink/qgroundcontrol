@@ -10,6 +10,20 @@ class InstrumentValueData;
 class QmlObjectListModel;
 class Vehicle;
 
+/// Announces the layouts FactValueGrids save, for code that reads a saved layout without showing its grid (the video
+/// telemetry overlay reads the telemetry bar's).
+class FactValueGridLayouts : public QObject
+{
+    Q_OBJECT
+
+public:
+    static FactValueGridLayouts* instance();
+
+signals:
+    /// A grid of settings group @p settingsGroup saved its layout.
+    void saved(const QString& settingsGroup);
+};
+
 class FactValueGrid : public QQuickItem
 {
     Q_OBJECT

@@ -3,6 +3,8 @@
 #include <QtCore/QStringList>
 
 #include "Fact.h"
+#include "FactValueGrid.h"
+#include "HorizontalFactValueGrid.h"
 #include "MultiVehicleManager.h"
 
 VideoTelemetryOverlay::VideoTelemetryOverlay(Fact* enabled, QObject* parent)
@@ -14,6 +16,12 @@ VideoTelemetryOverlay::VideoTelemetryOverlay(Fact* enabled, QObject* parent)
                    [this](const QVariant& value) { _setEnabled(value.toBool()); });
     (void) connect(MultiVehicleManager::instance(), &MultiVehicleManager::activeVehicleChanged, this,
                    [this] { _layoutStale = true; });
+    (void) connect(FactValueGridLayouts::instance(), &FactValueGridLayouts::saved, this,
+                   [this](const QString& settingsGroup) {
+                       if (settingsGroup == HorizontalFactValueGrid::telemetryBarSettingsGroup) {
+                           _layoutStale = true;
+                       }
+                   });
     _setEnabled(enabled->rawValue().toBool());
 }
 

@@ -8,4 +8,5 @@ class VideoTelemetryOverlayTest : public VehicleTestNoInitialConnect
 
 private slots:
     void _testFollowsSettingAndVehicle();
+    void _testFollowsTelemetryBarEdits();
 };
