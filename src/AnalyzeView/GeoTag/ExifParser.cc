@@ -74,13 +74,19 @@ bool write(QByteArray &buffer, const GeoTagData &geotag)
     ExifEntry *lonEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE), EXIF_FORMAT_RATIONAL, 3);
     ExifUtility::writeGpsCoordinate(lonEntry, order, geotag.coordinate.longitude());
 
-    // Altitude, where the coordinate has one
+    // Altitude, where the coordinate has one; any the image had is another position's
     if (!qIsNaN(geotag.coordinate.altitude())) {
         ExifEntry* altRefEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE_REF), EXIF_FORMAT_BYTE, 1);
         ExifUtility::writeGpsAltRef(altRefEntry, geotag.coordinate.altitude() < 0 ? 1 : 0);
 
         ExifEntry* altEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE), EXIF_FORMAT_RATIONAL, 1);
         ExifUtility::writeRational(altEntry, order, geotag.coordinate.altitude(), 100);
+    } else {
+        for (const int tag : {EXIF_TAG_GPS_ALTITUDE_REF, EXIF_TAG_GPS_ALTITUDE}) {
+            if (ExifEntry* const stale = exif_content_get_entry(data->ifd[EXIF_IFD_GPS], static_cast<ExifTag>(tag))) {
+                exif_content_remove_entry(data->ifd[EXIF_IFD_GPS], stale);
+            }
+        }
     }
 
     // Save back to buffer
