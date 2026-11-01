@@ -2,10 +2,10 @@
 
 #include <chrono>
 #include <gst/rtsp/gstrtsptransport.h>
+#include <gst/rtsp/gstrtspurl.h>
 
 #include <QtCore/QUrl>
 
-#include "GStreamerHelpers.h"
 #include "QGCNetworkHelper.h"
 
 namespace GStreamer::SourceFactory {
@@ -53,6 +53,30 @@ gboolean selectVideoStream([[maybe_unused]] GstElement* rtspsrc, guint num, GstC
 
 }  // namespace
 
+bool isValidRtspUri(const gchar* uri_str)
+{
+    if (!uri_str) {
+        return false;
+    }
+
+    if (!gst_uri_is_valid(uri_str)) {
+        return false;
+    }
+
+    GstRTSPUrl* url = nullptr;
+    const GstRTSPResult res = gst_rtsp_url_parse(uri_str, &url);
+    if ((res != GST_RTSP_OK) || !url) {
+        if (url) {
+            gst_rtsp_url_free(url);
+        }
+        return false;
+    }
+
+    const bool hasHost = (url->host && url->host[0] != '\0');
+    gst_rtsp_url_free(url);
+    return hasHost;
+}
+
 bool isVideoMedia(const GstStructure* structure)
 {
     return g_strcmp0(gst_structure_get_string(structure, "media"), "video") == 0;
@@ -60,7 +84,7 @@ bool isVideoMedia(const GstStructure* structure)
 
 GstElementPtr buildRtspSource(const QString& uri, const QUrl& sourceUrl, const Config& config, guint latencyMs)
 {
-    if (!GStreamer::isValidRtspUri(uri.toUtf8().constData())) {
+    if (!isValidRtspUri(uri.toUtf8().constData())) {
         qCWarning(GstSourceFactoryLog) << "Invalid RTSP URI:" << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
     }

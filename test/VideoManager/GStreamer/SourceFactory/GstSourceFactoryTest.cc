@@ -10,6 +10,7 @@
 #include <QtCore/QScopeGuard>
 
 #include "GStreamerTestHelpers.h"
+#include "GstRtspSource.h"
 #include "GstScoped.h"
 #include "GstSourceFactory.h"
 #include "GstSourceUri.h"
@@ -110,6 +111,21 @@ private:
 };
 
 }  // namespace
+
+void GstSourceFactoryTest::_testIsValidRtspUri()
+{
+    QVERIFY(GStreamer::SourceFactory::isValidRtspUri("rtsp://127.0.0.1:8554/test"));
+    QVERIFY(GStreamer::SourceFactory::isValidRtspUri("rtsp://user:pass@10.0.0.1/stream"));
+    QVERIFY(GStreamer::SourceFactory::isValidRtspUri("rtspu://192.168.1.1:554/video"));
+    QVERIFY(GStreamer::SourceFactory::isValidRtspUri("rtspt://example.com/live"));
+
+    QVERIFY(!GStreamer::SourceFactory::isValidRtspUri(nullptr));
+    QVERIFY(!GStreamer::SourceFactory::isValidRtspUri(""));
+    QVERIFY(!GStreamer::SourceFactory::isValidRtspUri("not-a-uri"));
+    QVERIFY(!GStreamer::SourceFactory::isValidRtspUri("http://example.com"));
+    QVERIFY(!GStreamer::SourceFactory::isValidRtspUri("udp://127.0.0.1:5600"));
+    QVERIFY(!GStreamer::SourceFactory::isValidRtspUri("rtsp://"));
+}
 
 void GstSourceFactoryTest::_testSourceFactoryUdpRtpJitterBuffer()
 {

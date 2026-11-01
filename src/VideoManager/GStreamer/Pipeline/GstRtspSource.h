@@ -12,6 +12,9 @@ class QUrl;
 /// The RTSP source GStreamer::SourceFactory::create() builds, with QGC's transport, latency and retransmission policy.
 namespace GStreamer::SourceFactory {
 
+/// True for a syntactically valid rtsp* URI with a host.
+bool isValidRtspUri(const gchar* uri_str);
+
 /// SDP-derived caps carry the stream's media type; audio and metadata streams must never reach the video parser.
 bool isVideoMedia(const GstStructure* structure);
 

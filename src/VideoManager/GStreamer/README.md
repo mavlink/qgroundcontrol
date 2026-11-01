@@ -31,7 +31,7 @@ The backend-neutral `VideoReceiver`, `VideoBackend` and `VideoStreamStats` are i
 | `PipelineDotDumper` | Writes the pipeline's `.dot` graphs; see [Pipeline Observability](#pipeline-observability). |
 | `GstSourceFactory` | Constructs the source element from the stream URI and applies RTP jitter-buffer policy for `application/x-rtp` sources. |
 | `GstSourceUri` | The transport each video URI scheme selects (`rtsp*`, `udp`, `udp265`, `mpegts`, `tcp`), without GStreamer. |
-| `GstRtspSource` | The `rtspsrc` the source factory builds: transports, timeouts, latency, retransmission timing and video-only stream selection. |
+| `GstRtspSource` | The `rtspsrc` the source factory builds: the RTSP URI check, transports, timeouts, latency, retransmission timing and video-only stream selection. |
 | `GstH26xParameterSetGate` | H.264/H.265 setup for the depayloaders and parsers the source factory builds or `parsebin` plugs: parameter sets repeated at every IDR, keyframe requests after loss, and output held until a full parameter set arrives. |
 | `QGCQVideoSinkController` | GUI-thread companion of the display sink; see [`gstqgc`](#gstqgc--custom-gstreamer-plugin). |
 | `GStreamer` | The facade QGC calls, through `VideoBackend` where it must also build without GStreamer: initialization (`initialize()`, with `completeInit()` checking the plugin features), the display sink (`createVideoSink()` configured from the receiver's `VideoReceiver::DisplayConfig`, bound to a `QVideoSink` by `setupQVideoSinkElement()`), and `createVideoReceiver()`. |

@@ -21,21 +21,6 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include "RecordingBranch.h"
 #include "VideoBackend.h"
 
-void GStreamerTest::_testIsValidRtspUri()
-{
-    QVERIFY(GStreamer::isValidRtspUri("rtsp://127.0.0.1:8554/test"));
-    QVERIFY(GStreamer::isValidRtspUri("rtsp://user:pass@10.0.0.1/stream"));
-    QVERIFY(GStreamer::isValidRtspUri("rtspu://192.168.1.1:554/video"));
-    QVERIFY(GStreamer::isValidRtspUri("rtspt://example.com/live"));
-
-    QVERIFY(!GStreamer::isValidRtspUri(nullptr));
-    QVERIFY(!GStreamer::isValidRtspUri(""));
-    QVERIFY(!GStreamer::isValidRtspUri("not-a-uri"));
-    QVERIFY(!GStreamer::isValidRtspUri("http://example.com"));
-    QVERIFY(!GStreamer::isValidRtspUri("udp://127.0.0.1:5600"));
-    QVERIFY(!GStreamer::isValidRtspUri("rtsp://"));
-}
-
 void GStreamerTest::_testIsHardwareDecoderFactory_data()
 {
     QTest::addColumn<QString>("factoryName");

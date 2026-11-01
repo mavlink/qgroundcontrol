@@ -1,7 +1,6 @@
 #include "GStreamerHelpers.h"
 
 #include <algorithm>
-#include <gst/rtsp/gstrtspurl.h>
 #include <gst/video/video-event.h>
 
 #include <QtCore/QByteArray>
@@ -14,30 +13,6 @@
 QGC_LOGGING_CATEGORY(GStreamerHelpersLog, "Video.GStreamer.GStreamerHelpers")
 
 namespace GStreamer {
-
-bool isValidRtspUri(const gchar* uri_str)
-{
-    if (!uri_str) {
-        return false;
-    }
-
-    if (!gst_uri_is_valid(uri_str)) {
-        return false;
-    }
-
-    GstRTSPUrl* url = nullptr;
-    const GstRTSPResult res = gst_rtsp_url_parse(uri_str, &url);
-    if ((res != GST_RTSP_OK) || !url) {
-        if (url) {
-            gst_rtsp_url_free(url);
-        }
-        return false;
-    }
-
-    const bool hasHost = (url->host && url->host[0] != '\0');
-    gst_rtsp_url_free(url);
-    return hasHost;
-}
 
 namespace {
 

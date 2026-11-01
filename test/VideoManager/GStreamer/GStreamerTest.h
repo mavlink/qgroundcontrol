@@ -9,7 +9,6 @@ class GStreamerTest : public GStreamerTestBase
 
 private slots:
 #ifdef QGC_GST_STREAMING
-    void _testIsValidRtspUri();
     void _testIsHardwareDecoderFactory_data();
     void _testIsHardwareDecoderFactory();
     void _testDecoderFamilyForFactory_data();
