@@ -1,0 +1,9 @@
+{
+    "Keys": ["piper"],
+    "Provider": "piper",
+    "Version": 100,
+    "Priority": 0,
+    "Capabilities": [
+        "Speak"
+    ]
+}

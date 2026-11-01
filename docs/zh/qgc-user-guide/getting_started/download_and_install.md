@@ -102,6 +102,29 @@ chmod +x QGroundControl-<arch>.AppImage
 ./QGroundControl-<arch>.AppImage
 ```
 
+**(Optional) Install a better text-to-speech voice:**
+
+By default, spoken announcements on Linux use the system speech engine, which often sounds robotic.
+If [Piper](https://github.com/OHF-Voice/piper1-gpl) and a Piper voice are installed, _QGroundControl_ uses them automatically instead.
+
+1. Install Piper:
+
+```bash
+sudo apt install -y pipx
+pipx install piper-tts
+```
+
+1. Download a voice into `~/.local/share/piper-voices` (see the [list of Piper voices](https://huggingface.co/rhasspy/piper-voices) for other voices):
+
+```bash
+mkdir -p ~/.local/share/piper-voices
+cd ~/.local/share/piper-voices
+wget https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx
+wget https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json
+```
+
+1. Restart _QGroundControl_.
+
 ## Android {#android}
 
 Supported versions: Android 9 (API 28) or later (arm 32/64):

@@ -87,6 +87,9 @@ The configurable options are:
 - **마우스를 가져가서 이미지 캡처** - 마우스를 가져가서 이미지를 캡처합니다(멀티콥터만 해당).
 - **90도 오프셋으로 비행** - 전체 임무를 90도 오프셋으로 되돌립니다.
 - **회전 중인 이미지** - 회전시 이미지를 촬영합니다.
+- **Split concave polygons** - Check to split transects where they cross a concave part of the survey area, so each transect stops at the polygon boundary.
+  The vehicle still flies straight across the gap to the next part of the transect, and turnarounds are only added at the ends of each pass.
+  Images are not taken over the gap unless _Images in turnarounds_ is checked.
 - **상대 고도** - 홈을 기준으로 지정된 고도를 지정하려면 선택합니다(선택하지 않은 경우 AMSL임).
 
 ### 지형

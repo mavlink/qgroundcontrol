@@ -15,15 +15,21 @@ Mock Link允许您在QGroundControl调试版本中创建和停止指向多个模
 
 为了使用Mock Link：
 
-1. 通过[构建源代码](https://github.com/mavlink/qgroundcontrol#supported-builds)创建一个调试版本。
+1. Create a Debug build by [building the source](../getting_started/index.md).
 
 2. Access _Mock Link_ by selecting the _Application Settings_ icon in the top toolbar and then **Mock Link** in the sidebar.
 
-3. 可以单击面板中的按钮以创建相关类型的载具链接。
+3. Choose the **Vehicle Type** (PX4, ArduPilot Copter/Plane/Sub/Rover, or Generic) and **Home Location**, and optionally a served video stream and simulated camera, gimbal, proximity sensors or ADS-B vehicles.
 
-   - 每次单击按钮时，都会创建一个新连接。
+4. Click **Start MockLink** to create a vehicle link with those settings.
+
+   - Each time you click the button a new connection will be created.
    - 当存在多个连接时，将显示多载具UI。
 
-4. 点击 **停止一个 Mock 连接** 来停止当前正在使用的载具。
+5. Click **Stop One MockLink** to stop the currently active vehicle.
 
 然后使用模拟链接或多或少与使用任何其他载具相同，只是模拟不允许飞行。
+
+:::tip
+To test with a vehicle that flies, use a SITL simulator. [`tools/simulation`](https://github.com/mavlink/qgroundcontrol/tree/master/tools/simulation) in the source tree has a lightweight MAVLink vehicle simulator and an ArduCopter SITL launcher.
+:::

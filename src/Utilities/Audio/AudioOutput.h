@@ -54,6 +54,7 @@ private:
     QTextToSpeech *_engine = nullptr;
     qsizetype _textQueueSize = 0;
     bool _initialized = false;
+    bool _engineSwitched = false;
     bool _speakCapable = false;
     Fact *_volumeFact = nullptr;
     Fact *_mutedFact = nullptr;
@@ -73,6 +74,12 @@ private:
 
     /// Finalizes initialization once the engine is Ready: applies settings, wires Facts, sets volume.
     void _finishInit();
+
+    /// Returns the QTextToSpeech engine to use; empty selects Qt's default for the platform.
+    static QString _engineName();
+
+    /// Replaces a failed Piper engine with Qt's default engine for the platform.
+    void _fallBackToDefaultEngine();
 
     static const QHash<QString, QString> _textHash;
     static const QSet<QString> _spelledAcronyms;

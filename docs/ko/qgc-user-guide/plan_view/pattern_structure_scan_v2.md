@@ -9,9 +9,10 @@ _구조물 스&#xCE94;_&#xC740; 계획 보기 **패턴 > 구조 스캔** 도구�
 The new version of _Structure Scan_ can't read older _Structure Scan_ plans. 다시 생성하여야 합니다.
 :::
 
-:::warning
-이 기능은 아직 ArduPilot 펌웨어에서 지원되지 않습니다.
-PX4에서만 지원됩니다.
+:::info
+Structure Scans are supported on PX4 and ArduPilot.
+ArduPilot does not support the command PX4 uses to point the camera at the structure, so on ArduPilot the vehicle turns to face the structure on each leg and the gimbal pitch is set separately.
+This adds a few mission items for each corner of the flight path.
 :::
 
 ## 개요
@@ -56,6 +57,7 @@ PX4에서만 지원됩니다.
 - **위/아래에서 스캔 시작:** 레이어가 스캔되는 방향입니다.
 - **구조 높이:** 스캔 중인 개체의 높이입니다.
 - **스캔 거리:** 구조물에서 비행 경로까지의 거리입니다.
+  Corners sharper than 45 degrees are cut off so the flight path stays close to this distance from the structure.
 - **고도 진입/진출** 이 설정을 사용하면 마지막/다음 웨이포인트와 스캔할 구조물 사이의 장애물을 회피할 수 있습니다.
   - 차량은 이 고도의 _출입구_ 지점으로 비행한 다음 초기 레이어로 하강하여 스캔을 시작합니다.
   - 차량은 스캔을 완료한 후 이 고도까지 상승한 후 다음 웨이포인트로 이동합니다.

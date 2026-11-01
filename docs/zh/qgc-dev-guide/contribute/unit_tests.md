@@ -1,23 +1,58 @@
 # 单元测试
 
-_QGroundControl_ (QGC) contains a set of unit tests that must pass before a pull request will be accepted. 向QGC添加新的复杂子系统应该有相应的新单元测试来测试它。
+_QGroundControl_ (QGC) contains a set of unit and integration tests that must pass before a pull request will be accepted. 向QGC添加新的复杂子系统应该有相应的新单元测试来测试它。
 
-The full list of unit tests can be found in [UnitTestList.cc](https://github.com/mavlink/qgroundcontrol/blob/master/test/UnitTestList.cc).
+Tests are compiled into the _QGroundControl_ executable when the `QGC_BUILD_TESTING` CMake option is on, which is the default for Debug builds (including `just configure` and the `*-debug` presets).
+Each test is registered with CTest, which runs it in a separate _QGroundControl_ process.
 
-要运行单元测试：
+## Running Tests
 
-1. 使用 `QGC_UNITTEST_BUILD` 定义在 `调试` 模式下构建。
+After a Debug build, run the tests with `just` (from the repository root):
 
-2. 复制debug目录中的deploy / qgroundcontrol-start.sh脚本
+```sh
+just test                      # Unit and Integration tests, excluding Flaky and Network (like CI)
+LABELS=Unit just test          # Override the included labels
+EXCLUDE=Network just test      # Override the excluded labels
+```
 
-3. 在命令行使用 `--unittst` 选项从命令行运行 _所有_ 单元测试。对于 Linux，操作方法如下：
+Or call CTest directly:
 
-   ```bash
-   使用--unittest命令行选项从命令行运行所有单元测试。 对于Linux，这是完成如下所示： `qgroundcontrol-start.sh --unittest`
-   ```
+```sh
+ctest --test-dir build --output-on-failure -L Unit   # Tests with the Unit label
+ctest --test-dir build -R ParameterManagerTest       # Tests whose name matches a regex
+ctest --test-dir build --rerun-failed                # Only the tests that failed last time
+```
 
-4. 也指定测试名称：`--unittest:RadioConfigTest`，单独运行 _单个_ 单元测试。对于 Linux，操作方法如下：
+You can also run tests straight from the executable, which is handy when debugging (see [Command Line Options](../command_line_options.md)):
 
-   ```bash
-   通过指定测试名称来运行单个单元测试： - unittest：RadioConfigTest。 对于Linux，这是完成如下所示： `qgroundcontrol-start.sh --unittest:RadioConfigTest`
-   ```
+```sh
+./build/Debug/QGroundControl --list-tests                     # List the registered tests
+./build/Debug/QGroundControl --unittest:ParameterManagerTest  # Run one test
+./build/Debug/QGroundControl --unittest                       # Run all tests
+```
+
+## Labels and Parallel Runs
+
+Every test has CTest labels: `Unit`, `Integration` or `Slow` set its timeout, and category labels such as `Vehicle`, `MissionManager` or `Comms` are for filtering.
+`Flaky` and `Network` tests are excluded from pull request runs.
+
+CTest runs tests in parallel, with isolated settings and temporary directories for each test.
+Tests that share hardware or fixed resources declare a CTest `RESOURCE_LOCK`.
+Timing-sensitive tests marked `SERIAL` run alone (`RUN_SERIAL`) in sanitizer and coverage builds, and otherwise reserve two CTest processors.
+
+## Sanitizers and Coverage (Linux)
+
+CI also runs the tests on Linux with AddressSanitizer + UndefinedBehaviorSanitizer and with coverage instrumentation.
+Reproduce those runs with the matching presets (`QT_ROOT_DIR` must point at your Qt kit):
+
+```sh-vue
+export QT_ROOT_DIR=~/Qt/{{ $frontmatter.qt_version }}/gcc_64
+cmake --workflow --preset Linux-sanitizers   # ASan + UBSan build and tests
+just coverage                                # Linux-coverage build, tests and report in build/Linux-coverage/
+```
+
+CTest sets the sanitizer runtime options (for example `halt_on_error=1`) on every test, overriding any `*SAN_OPTIONS` in your shell; run the test executable directly to try other options.
+
+## Writing Tests
+
+See the [testing guide](https://github.com/mavlink/qgroundcontrol/blob/master/test/README.md) in the source tree for the test base classes, registering a test with `add_qgc_test()`, labels and timeouts, wait helpers and `MultiSignalSpy`.
