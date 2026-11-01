@@ -59,30 +59,16 @@ void MotorIdentificationControllerTest::_quadLayout()
     QVERIFY(!controller.complete());
 }
 
-void MotorIdentificationControllerTest::_identify_data()
-{
-    QTest::addColumn<QList<int>>("positions");
-    QTest::addColumn<bool>("expectClockwiseOrder");
-    QTest::addColumn<bool>("expectedOrderCorrect");
-
-    QTest::newRow("expectedOrder") << QList<int>{0, 1, 2, 3} << true << true;
-    QTest::newRow("swappedMotors") << QList<int>{1, 0, 2, 3} << true << false;
-    // Without an expected order there is nothing to check the positions against
-    QTest::newRow("noExpectedOrder") << QList<int>{0, 1, 2, 3} << false << false;
-}
-
+// Without a known layout the positions are only recorded, never judged or remapped
 void MotorIdentificationControllerTest::_identify()
 {
-    QFETCH(QList<int>, positions);
-    QFETCH(bool, expectClockwiseOrder);
-    QFETCH(bool, expectedOrderCorrect);
-
+    const QList<int> positions{1, 0, 2, 3};
     constexpr int throttlePercent = 10;
     constexpr int pulseDurationSecs = 1;
 
     MotorIdentificationController controller;
-    controller.setExpectClockwiseOrder(expectClockwiseOrder);
     controller.setPulseIntervalMs(50);
+    QVERIFY(!controller.layoutKnown());
     QSignalSpy runningSpy(&controller, &MotorIdentificationController::runningChanged);
     QVERIFY(runningSpy.isValid());
 
@@ -94,6 +80,7 @@ void MotorIdentificationControllerTest::_identify()
     for (int motor = 0; motor < positions.count(); motor++) {
         QCOMPARE(controller.currentMotor(), motor);
         // MockLink sees each pulse as a motor test of the current motor, which is numbered from 1
+        QCOMPARE(controller.motorTestNumber(motor), motor + 1);
         QVERIFY_TRUE_WAIT(_lastMotorTestIs(motor + 1, throttlePercent, pulseDurationSecs), TestTimeout::mediumMs());
 
         controller.selectPosition(positions[motor]);
@@ -106,7 +93,8 @@ void MotorIdentificationControllerTest::_identify()
     QVERIFY(!controller.running());
     QCOMPARE(controller.currentMotor(), -1);
     QCOMPARE(runningSpy.count(), 2);
-    QCOMPARE(controller.orderCorrect(), expectedOrderCorrect);
+    QVERIFY(!controller.orderCorrect());
+    QVERIFY(controller.remapChanges().isEmpty());
 }
 
 void MotorIdentificationControllerTest::_ignoresUnavailablePositions()

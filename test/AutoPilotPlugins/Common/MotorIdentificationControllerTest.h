@@ -16,7 +16,6 @@ private slots:
     void _layoutAngles_data();
     void _layoutAngles();
     void _quadLayout();
-    void _identify_data();
     void _identify();
     void _ignoresUnavailablePositions();
     void _cancelStopsPulsingMotor();
