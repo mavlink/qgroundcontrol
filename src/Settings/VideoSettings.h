@@ -34,6 +34,7 @@ public:
     DEFINE_SETTINGFACT(forceCpuVideoPath)
     DEFINE_SETTINGFACT(videoConversionElement)
     DEFINE_SETTINGFACT(disablePixelAspectRatio)
+    DEFINE_SETTINGFACT(uvcCameraFormat)
 
     /// videoFit's values (Video.SettingsGroup.json).
     enum VideoFit

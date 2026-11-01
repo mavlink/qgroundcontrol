@@ -50,7 +50,8 @@ struct VideoSettingReactionEntry
 };
 
 // Not listed: aspectRatio, read by VideoStreamController::aspectRatio(); videoFit, gridLines and showRecControl, read
-// by QML; recordingFormat, enableStorageLimit and maxVideoSize, read when a recording starts.
+// by QML; recordingFormat, enableStorageLimit and maxVideoSize, read when a recording starts; uvcCameraFormat, which
+// goes to the USB camera (_connectSettings()).
 constexpr VideoSettingReactionEntry kVideoSettingReactions[] = {
     {&VideoSettings::videoSource, VideoSettingReaction::Reconfigure},
     {&VideoSettings::udpUrl, VideoSettingReaction::Reconfigure},
@@ -139,6 +140,11 @@ void VideoManager::_connectSettings()
                 break;
         }
     }
+
+    Fact* const uvcCameraFormat = _videoSettings->uvcCameraFormat();
+    _uvcCamera->setFormat(uvcCameraFormat->rawValue().toString());
+    (void) connect(uvcCameraFormat, &Fact::rawValueChanged, this,
+                   [this](const QVariant& value) { _uvcCamera->setFormat(value.toString()); });
 }
 
 void VideoManager::startVideoBackendInit()

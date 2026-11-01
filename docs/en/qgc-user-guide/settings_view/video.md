@@ -5,6 +5,9 @@ Configure video streaming and recording settings.
 ## Video Source
 
 - **Source** — Video Stream Disabled / RTSP Video Stream / UDP h.264 / UDP h.265 / TCP-MPEG2 / MPEG-TS / Integrated Camera
+- **USB Camera Format** (USB cameras only) — the resolution, frame rate and pixel format the camera runs in, from the
+  ones it offers, best first. **Auto** lets Qt choose: the highest resolution at 30 fps or more, often an MJPEG format,
+  which costs CPU time to decode. YUYV and NV12 formats need no decoding but more USB bandwidth.
 
 When a MAVLink camera advertises its video stream, QGC plays that stream (and any thermal stream it advertises)
 instead of the configured source. Your source and connection settings are left unchanged and apply again once no

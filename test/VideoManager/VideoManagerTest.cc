@@ -13,6 +13,7 @@
 
 #include "MavlinkCameraControlInterface.h"
 #include "SettingsManager.h"
+#include "UVCCameraController.h"
 #include "VideoDecoderOptions.h"
 #include "VideoManager.h"
 #include "VideoSettings.h"
@@ -644,6 +645,17 @@ void VideoManagerTest::_testReconnectingFollowsLostStream()
     _videoManager->stopVideo();
     _settle();
     QVERIFY(!stream->reconnecting());
+}
+
+void VideoManagerTest::_testUvcCameraFormatReachesCamera()
+{
+    UVCCameraController* const camera = _videoManager->uvcCamera();
+    QCOMPARE(camera->format(), _videoSettings->uvcCameraFormat()->rawValue().toString());
+
+    _facts->set(_videoSettings->uvcCameraFormat(), QStringLiteral("640x480 30 fps YUYV"));
+    QCOMPARE(camera->format(), QStringLiteral("640x480 30 fps YUYV"));
+    _facts->set(_videoSettings->uvcCameraFormat(), QString());
+    QVERIFY(camera->format().isEmpty());
 }
 
 void VideoManagerTest::_testStreamStatsReachQml()

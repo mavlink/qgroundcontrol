@@ -4,6 +4,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QString>
+#include <QtCore/QStringList>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class QCamera;
@@ -30,6 +31,7 @@ class UVCCameraController : public QObject
     Q_MOC_INCLUDE("UVCStreamMonitor.h")
 
     Q_PROPERTY(UVCStreamMonitor* monitor READ monitor CONSTANT)
+    Q_PROPERTY(QStringList formats READ formats NOTIFY formatsChanged)
 
     friend class UVCCameraControllerTest;
 
@@ -50,6 +52,16 @@ public:
     /// Emits camerasChanged() from now on when a camera is plugged in or unplugged.
     void watchCameras();
 
+    /// The formats the selected camera offers, as UVCDevices::formatNames(); empty without a camera.
+    QStringList formats() const { return _formats; }
+
+    /// The format the camera runs in, named as in formats(). Empty, or a format the camera doesn't offer, lets Qt
+    /// choose.
+    QString format() const { return _formatName; }
+
+    /// Runs the camera in format @p name, recreating it: not every platform switches a running camera's format.
+    void setFormat(const QString& name);
+
     /// Displays the camera in @p videoOutput, a QML VideoOutput, replacing any other.
     Q_INVOKABLE void registerVideoOutput(QQuickItem* videoOutput);
     /// Stops displaying in @p videoOutput, if it is the registered output.
@@ -63,6 +75,7 @@ public:
 signals:
     /// A camera was plugged in or unplugged.
     void camerasChanged();
+    void formatsChanged();
 
 private:
     void _createCamera();
@@ -84,6 +97,8 @@ private:
     QMediaCaptureSession* _captureSession = nullptr;
     QPointer<QQuickItem> _videoOutput;
     QString _deviceName;
+    QString _formatName;
+    QStringList _formats;
     QByteArray _cameraId;
     int _retries = 0;
 };

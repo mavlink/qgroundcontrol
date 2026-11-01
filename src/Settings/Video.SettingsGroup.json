@@ -201,6 +201,15 @@
             "default": false,
             "label": "Disable pixel-aspect-ratio normalization",
             "keywords": "pixel aspect ratio,v4l2,workaround,advanced"
+        },
+        {
+            "name": "uvcCameraFormat",
+            "shortDesc": "Resolution, frame rate and pixel format the USB camera runs in.",
+            "longDesc": "One of the formats the USB camera offers, such as \"1920x1080 30 fps MJPEG\". Empty (Auto), or a format the camera doesn't offer, lets Qt choose: the highest resolution at 30 fps or more. MJPEG formats cost CPU time to decode; YUYV and NV12 formats don't, but need more USB bandwidth.",
+            "type": "string",
+            "default": "",
+            "label": "USB Camera Format",
+            "keywords": "usb camera,uvc,webcam,resolution,frame rate,pixel format,mjpeg"
         }
     ]
 }

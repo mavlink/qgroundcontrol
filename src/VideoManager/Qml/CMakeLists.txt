@@ -14,6 +14,7 @@ qt_add_qml_module(
         CameraPinchZoom.qml
         NoVideoPlaceholder.qml
         ThermalVideoOverlay.qml
+        UVCCameraFormatComboBox.qml
         UVCStatsGroup.qml
         UVCVideoOutput.qml
         VideoDecodingSettingsGroup.qml

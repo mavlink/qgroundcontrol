@@ -52,6 +52,18 @@ void UVCCameraController::setDevice(const QString& description)
     _recreateCamera();
 }
 
+void UVCCameraController::setFormat(const QString& name)
+{
+    if (name == _formatName) {
+        return;
+    }
+    qCDebug(UVCCameraControllerLog) << "format" << name;
+    _formatName = name;
+    if (_camera) {
+        _recreateCamera();
+    }
+}
+
 void UVCCameraController::watchCameras()
 {
     (void) connect(_mediaDevices, &QMediaDevices::videoInputsChanged, this, &UVCCameraController::_onVideoInputsChanged,
@@ -95,10 +107,15 @@ bool UVCCameraController::takeScreenshot(const QString& file) const
 
 void UVCCameraController::_createCamera()
 {
+    const QCameraDevice device = UVCDevices::device(_deviceName);
+    const QStringList formats = UVCDevices::formatNames(device);
+    if (formats != _formats) {
+        _formats = formats;
+        emit formatsChanged();
+    }
     if (_deviceName.isEmpty()) {
         return;
     }
-    const QCameraDevice device = UVCDevices::device(_deviceName);
     if (device.isNull()) {
         qCWarning(UVCCameraControllerLog) << "No camera named" << _deviceName;
         return;
@@ -107,6 +124,10 @@ void UVCCameraController::_createCamera()
     UVCDevices::requestPermission();
     _cameraId = device.id();
     _camera = new QCamera(device, this);
+    if (const QCameraFormat format = UVCDevices::format(device, _formatName); !format.isNull()) {
+        qCDebug(UVCCameraControllerLog) << "camera format" << _formatName;
+        _camera->setCameraFormat(format);
+    }
     (void) connect(_camera, &QCamera::errorOccurred, this,
                    [this](QCamera::Error, const QString& errorString) { _onCameraError(errorString); });
     _captureSession = new QMediaCaptureSession(this);

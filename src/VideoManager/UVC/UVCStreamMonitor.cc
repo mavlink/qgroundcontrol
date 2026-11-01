@@ -10,6 +10,7 @@
 #include <QtMultimedia/QVideoSink>
 
 #include "QGCLoggingCategory.h"
+#include "UVCDevices.h"
 
 QGC_LOGGING_CATEGORY(UVCStreamMonitorLog, "Video.UVCStreamMonitor")
 
@@ -21,19 +22,6 @@ qint64 uvcSteadyClockMs()
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
         .count();
-}
-
-QString uvcPixelFormatText(QVideoFrameFormat::PixelFormat pixelFormat)
-{
-    switch (pixelFormat) {
-        case QVideoFrameFormat::Format_Invalid:
-            return QString();
-        case QVideoFrameFormat::Format_Jpeg:
-            // A camera's JPEG frames are motion JPEG.
-            return QStringLiteral("MJPEG");
-        default:
-            return QVideoFrameFormat::pixelFormatToString(pixelFormat);
-    }
 }
 
 }  // namespace
@@ -128,7 +116,7 @@ void UVCStreamMonitor::_sample()
     }
 
     VideoStreamStats stats = _stats;
-    stats.codec = uvcPixelFormatText(frameCounters.pixelFormat);
+    stats.codec = UVCDevices::pixelFormatName(frameCounters.pixelFormat);
     stats.gpuPath = frameCounters.gpu ? QStringLiteral("GPU") : QStringLiteral("CPU");
     stats.uptimeMs = nowMs - *_streamingSinceMs;
     VideoStreamStatsMeter::Counters counters;

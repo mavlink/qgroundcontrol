@@ -38,6 +38,7 @@ private slots:
     void _testScreenshotsComeFromStreamsOnDisplay();
     void _testStreamErrorsReachUser();
     void _testReconnectingFollowsLostStream();
+    void _testUvcCameraFormatReachesCamera();
     void _testStreamStatsReachQml();
     void _testStreamFormatText();
     void _testVideoViewFitsVideo_data();

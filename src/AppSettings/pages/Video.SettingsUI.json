@@ -1,6 +1,7 @@
 {
     "version": 1,
     "fileType": "SettingsUI",
+    "imports": ["QGroundControl.VideoManager"],
     "bindings": {
         "videoSource": "QGroundControl.settingsManager.videoSettings.videoSource.rawValue",
         "autoStreamConfig": "QGroundControl.videoManager.autoStreamConfigured",
@@ -11,13 +12,18 @@
     "groups": [
         {
             "heading": "Video Source",
-            "keywords": ["video source", "camera", "stream"],
+            "keywords": ["video source", "camera", "stream", "usb camera", "resolution", "frame rate", "camera format"],
             "enableWhen": "!autoStreamConfig",
             "headingDescription": "autoStreamConfig ? qsTr(\"MAVLink camera stream is automatically configured\") : \"\"",
             "controls": [
                 {
                     "setting": "videoSettings.videoSource",
                     "control": "combobox"
+                },
+                {
+                    "control": "component",
+                    "component": "UVCCameraFormatComboBox",
+                    "showWhen": "QGroundControl.videoManager.isUvc"
                 }
             ]
         },
