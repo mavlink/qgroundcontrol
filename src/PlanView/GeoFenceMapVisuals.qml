@@ -109,6 +109,8 @@ Item {
             interiorColor:      object.inclusion ? _interiorColorInclusion : _interiorColorExclusion
             interiorOpacity:    object.inclusion ? _interiorOpacityInclusion : _interiorOpacityExclusion
             interactive:         _root.interactive && mapCircle && mapCircle.interactive
+            centerDragHandleVisible: !object.homeCentered
+            visible:            !object.homeCentered || _root.homePosition.isValid
         }
     }
 
