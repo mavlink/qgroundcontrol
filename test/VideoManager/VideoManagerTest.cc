@@ -592,6 +592,60 @@ void VideoManagerTest::_testStreamErrorsReachUser()
     verifyExpectedLogMessage();
 }
 
+void VideoManagerTest::_testReconnectingFollowsLostStream()
+{
+    using State = VideoReceiver::State;
+    VideoStreamController* const stream = _videoManager->primaryStream();
+    QSignalSpy reconnectingSpy(stream, &VideoStreamController::reconnectingChanged);
+    QList<bool> reconnectingAtDecodingChange;
+    (void) connect(stream, &VideoStreamController::decodingChanged, this,
+                   [&] { reconnectingAtDecodingChange.append(stream->reconnecting()); });
+
+    // Before the first decoded frame there is nothing to recover.
+    _primary->setState(State::Connecting);
+    _primary->setState(State::Streaming);
+    QVERIFY(!stream->reconnecting());
+
+    // Lost after it was decoded: reconnecting through the backoff and the next attempt, until it decodes again.
+    _primary->setDecoding(true);
+    QVERIFY(!stream->reconnecting());
+    _primary->setDecoding(false);
+    QVERIFY(stream->reconnecting());
+    // Already reconnecting when decodingChanged arrives, so QML never sees the stream neither.
+    QCOMPARE(reconnectingAtDecodingChange, QList<bool>({false, true}));
+    _primary->setState(State::Reconnecting);
+    _primary->setState(State::Connecting);
+    QVERIFY(stream->reconnecting());
+    _primary->setDecoding(true);
+    QVERIFY(!stream->reconnecting());
+    QCOMPARE(reconnectingSpy.count(), 2);
+
+    // Given up.
+    _primary->setDecoding(false);
+    QVERIFY(stream->reconnecting());
+    _primary->setState(State::Stopped);
+    QVERIFY(!stream->reconnecting());
+
+    // A new URI is a new stream, not a reconnect of the old one.
+    _primary->setState(State::Streaming);
+    _primary->setDecoding(true);
+    _primary->setDecoding(false);
+    QVERIFY(stream->reconnecting());
+    _facts->set(_videoSettings->udpUrl(), QStringLiteral("0.0.0.0:5601"));
+    _settle();
+    QVERIFY(!stream->reconnecting());
+    _primary->setState(State::Connecting);
+    QVERIFY(!stream->reconnecting());
+
+    // So is the stream after the video was stopped.
+    _primary->setDecoding(true);
+    _primary->setDecoding(false);
+    QVERIFY(stream->reconnecting());
+    _videoManager->stopVideo();
+    _settle();
+    QVERIFY(!stream->reconnecting());
+}
+
 void VideoManagerTest::_testStreamStatsReachQml()
 {
     VideoStreamController* const stream = _videoManager->primaryStream();

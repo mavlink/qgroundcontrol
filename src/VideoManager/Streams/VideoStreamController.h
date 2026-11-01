@@ -29,6 +29,7 @@ class VideoStreamController : public QObject
     QML_UNCREATABLE("")
     Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged)
     Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged)
+    Q_PROPERTY(bool reconnecting READ reconnecting NOTIFY reconnectingChanged)
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
     Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged)
     Q_PROPERTY(double aspectRatio READ aspectRatio NOTIFY aspectRatioChanged)
@@ -90,6 +91,11 @@ public:
 
     bool streaming() const;
     bool decoding() const;
+
+    /// True while the stream, lost after it was decoded, is being recovered: its last frame is still worth showing.
+    /// False again once it decodes, when the receiver gives up, and after a stop or a change of URI.
+    bool reconnecting() const { return _reconnecting; }
+
     bool recording() const;
     QSize videoSize() const;
     /// From the decoded frames, else the camera's advertised resolution, else the aspect ratio setting (primary) or 1.
@@ -104,6 +110,7 @@ public:
 signals:
     void streamingChanged();
     void decodingChanged();
+    void reconnectingChanged();
     void recordingChanged(bool recording);
     void videoSizeChanged();
     void aspectRatioChanged();
@@ -120,6 +127,10 @@ private:
     VideoReceiver::DisplayConfig _resolvedDisplayConfig() const;
     void _apply();
     void _onStreamInfoChanged();
+    void _onReceiverStateChanged(VideoReceiver::State state);
+    /// Forgets that the stream was decoded: what follows is a new stream, not a reconnect.
+    void _forgetDecoded();
+    void _updateReconnecting();
 
     const Role _role;
     VideoSettings* const _videoSettings;
@@ -130,4 +141,6 @@ private:
     QString _uri;
     bool _enabled = false;
     bool _applyPending = false;
+    bool _decoded = false;
+    bool _reconnecting = false;
 };

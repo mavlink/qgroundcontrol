@@ -16,20 +16,9 @@ Image {
     sourceSize: Qt.size(root.width, root.height)
     fillMode:   Image.PreserveAspectCrop
 
-    Rectangle {
+    VideoStatusLabel {
         anchors.centerIn:   parent
-        width:              noVideoLabel.contentWidth + ScreenTools.defaultFontPixelHeight
-        height:             noVideoLabel.contentHeight + ScreenTools.defaultFontPixelHeight
-        radius:             ScreenTools.defaultFontPixelWidth / 2
-        color:              Qt.rgba(0, 0, 0, 0.5)
-    }
-
-    QGCLabel {
-        id:                 noVideoLabel
-        anchors.centerIn:   parent
+        useSmallFont:       root.useSmallFont
         text:               root._videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
-        font.bold:          true
-        color:              "white"
-        font.pointSize:     root.useSmallFont ? ScreenTools.smallFontPointSize : ScreenTools.largeFontPointSize
     }
 }

@@ -19,6 +19,7 @@ qt_add_qml_module(
         VideoDecodingSettingsGroup.qml
         VideoDisplaySettingsGroup.qml
         VideoGridLines.qml
+        VideoStatusLabel.qml
         VideoStreamFormat.js
         VideoStreamOutput.qml
         VideoStreamSettingsGroup.qml

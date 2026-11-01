@@ -51,7 +51,10 @@ Item {
     readonly property VideoManager _videoManager: QGroundControl.videoManager
     readonly property VideoSettings _videoSettings: QGroundControl.settingsManager.videoSettings
     readonly property Vehicle _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-    readonly property bool _showStreamLoader: root._videoManager.decoding
+    readonly property VideoStreamController _primaryStream: root._videoManager.primaryStream
+    // A lost stream's last frame stays up, under a notice, while it reconnects.
+    readonly property bool _streamLost: root._primaryStream.reconnecting
+    readonly property bool _showStreamLoader: root._videoManager.decoding || root._streamLost
     readonly property bool _showUvcLoader: root._videoManager.isUvc
     // A UVC camera's ratio is known once its first frame sets the output's implicit size; until then the video fills the
     // view.
@@ -89,7 +92,7 @@ Item {
             id: videoOutputComponent
 
             VideoStreamOutput {
-                stream: root._videoManager.primaryStream
+                stream: root._primaryStream
             }
         }
 
@@ -118,6 +121,15 @@ Item {
                 anchors.fill:   parent
                 visible:        root._videoSettings.gridLines.rawValue && !root._videoManager.fullScreen
             }
+        }
+
+        // Frozen video must not pass for live.
+        VideoStatusLabel {
+            objectName:         "videoLostLabel"
+            anchors.centerIn:   parent
+            useSmallFont:       root.useSmallFont
+            text:               qsTr("VIDEO LOST - RECONNECTING")
+            visible:            root._streamLost
         }
 
         ThermalVideoOverlay {

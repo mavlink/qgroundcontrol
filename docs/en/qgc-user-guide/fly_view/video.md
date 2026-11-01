@@ -15,6 +15,9 @@ You can further configure video display using controls on the switcher:
   (once detached, you can move and resize the window just like any other in your OS).
   If you close the detached window the switcher will re-lock to the QGC Fly view.
 
+When a stream is lost, its last picture stays on screen, dimmed, under **VIDEO LOST - RECONNECTING** until the video
+returns. A stream you stop or change is cleared instead.
+
 ## Video Statistics
 
 While a video stream plays, the [Video indicator](fly_view_toolbar.md#video) in the Fly View toolbar shows its frame

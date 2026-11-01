@@ -37,6 +37,7 @@ private slots:
     void _testQmlVideoOutputRegistersItself();
     void _testScreenshotsComeFromStreamsOnDisplay();
     void _testStreamErrorsReachUser();
+    void _testReconnectingFollowsLostStream();
     void _testStreamStatsReachQml();
     void _testStreamFormatText();
     void _testVideoViewFitsVideo_data();

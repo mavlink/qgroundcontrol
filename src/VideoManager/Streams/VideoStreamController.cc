@@ -61,12 +61,22 @@ void VideoStreamController::setReceiver(VideoReceiver* receiver)
         (void) disconnect(oldReceiver, nullptr, this, nullptr);
         delete oldReceiver;
     }
+    _decoded = false;
 
     if (_receiver) {
         _receiver->setParent(this);
         _receiver->setName(name());
         (void) connect(_receiver, &VideoReceiver::streamingChanged, this, &VideoStreamController::streamingChanged);
-        (void) connect(_receiver, &VideoReceiver::decodingChanged, this, &VideoStreamController::decodingChanged);
+        (void) connect(_receiver, &VideoReceiver::decodingChanged, this, [this] {
+            // Updated first: a stream that loses its decoder is reconnecting by the time decodingChanged arrives, so
+            // QML never sees it neither decoding nor reconnecting, which would clear the frame it keeps.
+            if (decoding()) {
+                _decoded = true;
+            }
+            _updateReconnecting();
+            emit decodingChanged();
+        });
+        (void) connect(_receiver, &VideoReceiver::stateChanged, this, &VideoStreamController::_onReceiverStateChanged);
         (void) connect(_receiver, &VideoReceiver::recordingChanged, this, &VideoStreamController::recordingChanged);
         (void) connect(_receiver, &VideoReceiver::videoSizeChanged, this, [this](QSize size) {
             qCDebug(VideoStreamControllerLog) << name() << "video size" << size;
@@ -98,6 +108,7 @@ void VideoStreamController::setReceiver(VideoReceiver* receiver)
     if (stats() != oldStats) {
         emit statsChanged();
     }
+    _updateReconnecting();
 }
 
 QGCVideoStreamInfo* VideoStreamController::streamInfo() const
@@ -163,6 +174,7 @@ void VideoStreamController::_apply()
     const std::optional<VideoReceiver::Config> config = _resolvedConfig();
     if (const QString uri = config ? config->uri : QString(); uri != _uri) {
         _uri = uri;
+        _forgetDecoded();
         emit uriChanged();
     }
     if (!_receiver) {
@@ -170,6 +182,9 @@ void VideoStreamController::_apply()
     }
 
     const bool active = _enabled && config.has_value();
+    if (!active) {
+        _forgetDecoded();
+    }
     qCDebug(VideoStreamControllerLog) << name() << "active:" << active << "uri:"
                                       << (config ? QGCNetworkHelper::redactedUrlForLogging(config->uri) : QString());
 
@@ -197,6 +212,31 @@ void VideoStreamController::restart()
     if (_receiver) {
         _receiver->setDisplayConfig(_resolvedDisplayConfig());
         _receiver->restart();
+    }
+}
+
+void VideoStreamController::_onReceiverStateChanged(VideoReceiver::State state)
+{
+    if (state == VideoReceiver::State::Stopped) {
+        _decoded = false;
+    }
+    _updateReconnecting();
+}
+
+void VideoStreamController::_forgetDecoded()
+{
+    _decoded = false;
+    _updateReconnecting();
+}
+
+void VideoStreamController::_updateReconnecting()
+{
+    const bool reconnecting =
+        _decoded && _receiver && !_receiver->decoding() && (_receiver->state() != VideoReceiver::State::Stopped);
+    if (reconnecting != _reconnecting) {
+        _reconnecting = reconnecting;
+        qCDebug(VideoStreamControllerLog) << name() << "reconnecting" << reconnecting;
+        emit reconnectingChanged();
     }
 }
 
