@@ -18,9 +18,10 @@ void VehicleFactGroupTest::_altitudeTuningSetpoint_data()
     // PX4 1.13 and earlier send current altitude minus setpoint
     QTest::newRow("px4-1.13-below-setpoint") << 1 << 13 << 3 << -5.0f << 0.0;
     QTest::newRow("px4-1.13-above-setpoint") << 1 << 13 << 3 << 5.0f << -10.0;
-    // Until AUTOPILOT_VERSION arrives, the current convention is assumed
-    QTest::newRow("px4-version-not-set") << Vehicle::versionNotSetValue << Vehicle::versionNotSetValue
-                                         << Vehicle::versionNotSetValue << 5.0f << 0.0;
+    // Until AUTOPILOT_VERSION arrives, the current convention is assumed. The copy keeps operator<< from
+    // binding a reference to versionNotSetValue, which has no out-of-line definition.
+    const int notSet = Vehicle::versionNotSetValue;
+    QTest::newRow("px4-version-not-set") << notSet << notSet << notSet << 5.0f << 0.0;
 }
 
 void VehicleFactGroupTest::_altitudeTuningSetpoint()
