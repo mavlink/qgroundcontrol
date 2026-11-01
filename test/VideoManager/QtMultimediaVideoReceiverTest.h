@@ -19,6 +19,8 @@ private slots:
     void _testPlayerSource();
     void _testUnplayableUri();
     void _testRecordingNeedsActiveStream();
+    void _testRecordingTimes_data();
+    void _testRecordingTimes();
 #ifdef QGC_GST_STREAMING
     void _testPlaysMockStreams_data();
     void _testPlaysMockStreams();

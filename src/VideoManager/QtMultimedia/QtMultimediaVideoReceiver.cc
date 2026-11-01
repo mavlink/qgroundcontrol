@@ -26,6 +26,10 @@ constexpr int kSampleIntervalMs = 1000;
 constexpr qint64 kFirstFrameGraceMs = 5000;
 /// How long the destructor waits for a recording's file to be finished.
 constexpr int kRecordingFinishTimeoutMs = 5000;
+/// The encoder's time base for a recording without a fixed frame rate is as coarse as a millisecond.
+constexpr qint64 kMinFrameStepUs = 1000;
+/// A larger step in the stream's times is a jump, as after a reconnect.
+constexpr qint64 kMaxStreamStepUs = 1000000;
 
 constexpr const char* kRtspTransportEnv = "QT_FFMPEG_RTSP_TRANSPORT";
 
@@ -65,6 +69,8 @@ QtMultimediaVideoReceiver::QtMultimediaVideoReceiver(QObject* parent)
                    [this](QMediaRecorder::RecorderState state) {
                        if (state == QMediaRecorder::RecordingState) {
                            _sinceRecordingStarted.invalidate();
+                           _lastRecordedUs = -1;
+                           _lastStreamUs = -1;
                        }
                    });
     _reconnectTimer.setSingleShot(true);
@@ -354,10 +360,28 @@ void QtMultimediaVideoReceiver::_recordFrame(const QVideoFrame& frame)
     }
     // A frame of its own: its times are the recording's, not the stream's, and copies of a frame share them.
     QVideoFrame recorded = SharedVideoFrame::withOwnMetadata(frame);
-    recorded.setStartTime(_sinceRecordingStarted.nsecsElapsed() / 1000);
+    const qint64 recordedUs = recordingTimeUs(_lastRecordedUs, _lastStreamUs, frame.startTime(),
+                                              _sinceRecordingStarted.nsecsElapsed() / 1000);
+    recorded.setStartTime(recordedUs);
     recorded.setEndTime(-1);
     // One the encoder can't take yet is dropped, as the display drops a frame it can't show in time.
-    (void) _frameInput->sendVideoFrame(recorded);
+    if (_frameInput->sendVideoFrame(recorded)) {
+        _lastRecordedUs = recordedUs;
+        _lastStreamUs = frame.startTime();
+    }
+}
+
+qint64 QtMultimediaVideoReceiver::recordingTimeUs(qint64 lastRecordedUs, qint64 lastStreamUs, qint64 streamUs,
+                                                  qint64 arrivalUs)
+{
+    if (lastRecordedUs < 0) {
+        return arrivalUs;
+    }
+    // Frames queued while the GUI thread was busy arrive together, so they take the stream's spacing.
+    const qint64 streamStepUs = ((streamUs >= 0) && (lastStreamUs >= 0)) ? (streamUs - lastStreamUs) : -1;
+    const qint64 timeUs =
+        ((streamStepUs > 0) && (streamStepUs < kMaxStreamStepUs)) ? (lastRecordedUs + streamStepUs) : arrivalUs;
+    return std::max(timeUs, lastRecordedUs + kMinFrameStepUs);
 }
 
 void QtMultimediaVideoReceiver::_sample()

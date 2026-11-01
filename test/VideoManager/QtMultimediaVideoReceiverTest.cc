@@ -179,6 +179,45 @@ void QtMultimediaVideoReceiverTest::_testRecordingNeedsActiveStream()
     QVERIFY(!QFile::exists(file));
 }
 
+void QtMultimediaVideoReceiverTest::_testRecordingTimes_data()
+{
+    QTest::addColumn<qint64>("lastRecordedUs");
+    QTest::addColumn<qint64>("lastStreamUs");
+    QTest::addColumn<qint64>("streamUs");
+    QTest::addColumn<qint64>("arrivalUs");
+    QTest::addColumn<qint64>("expectedUs");
+
+    QTest::newRow("first frame") << qint64(-1) << qint64(-1) << qint64(5000000) << qint64(0) << qint64(0);
+    QTest::newRow("stream spacing") << qint64(100000) << qint64(5000000) << qint64(5033333) << qint64(140000)
+                                    << qint64(133333);
+    // Frames the GUI thread took together keep the stream's spacing.
+    QTest::newRow("arrived together") << qint64(100000) << qint64(5000000) << qint64(5033333) << qint64(100010)
+                                      << qint64(133333);
+    // A jump in the stream's times, or a frame without one, goes by its arrival...
+    QTest::newRow("stream jumped") << qint64(100000) << qint64(5000000) << qint64(90000000) << qint64(400000)
+                                   << qint64(400000);
+    QTest::newRow("stream went back") << qint64(100000) << qint64(5000000) << qint64(0) << qint64(400000)
+                                      << qint64(400000);
+    QTest::newRow("no stream time") << qint64(100000) << qint64(5000000) << qint64(-1) << qint64(140000)
+                                    << qint64(140000);
+    // ...but never sooner than a millisecond after the last frame, which the encoder couldn't tell apart.
+    QTest::newRow("no time to tell apart")
+        << qint64(100000) << qint64(-1) << qint64(-1) << qint64(100000) << qint64(101000);
+    QTest::newRow("same stream time") << qint64(100000) << qint64(5000000) << qint64(5000000) << qint64(100000)
+                                      << qint64(101000);
+}
+
+void QtMultimediaVideoReceiverTest::_testRecordingTimes()
+{
+    QFETCH(qint64, lastRecordedUs);
+    QFETCH(qint64, lastStreamUs);
+    QFETCH(qint64, streamUs);
+    QFETCH(qint64, arrivalUs);
+    QFETCH(qint64, expectedUs);
+
+    QCOMPARE(QtMultimediaVideoReceiver::recordingTimeUs(lastRecordedUs, lastStreamUs, streamUs, arrivalUs), expectedUs);
+}
+
 #ifdef QGC_GST_STREAMING
 
 void QtMultimediaVideoReceiverTest::_testPlaysMockStreams_data()

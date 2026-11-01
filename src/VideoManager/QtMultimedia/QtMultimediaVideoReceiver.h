@@ -78,6 +78,11 @@ private:
     void _sample();
     /// Hands @p frame, on display, to the recording.
     void _recordFrame(const QVideoFrame& frame);
+    /// The time in the recording, in µs, of a frame of stream time @p streamUs that arrived @p arrivalUs after the
+    /// recording's first, after one at @p lastRecordedUs of stream time @p lastStreamUs (both -1 for the first): the
+    /// stream's spacing while it runs on, the arrival time across a jump, and always at least kMinFrameStepUs after
+    /// the last, since the encoder rejects a frame no later than the one before it.
+    static qint64 recordingTimeUs(qint64 lastRecordedUs, qint64 lastStreamUs, qint64 streamUs, qint64 arrivalUs);
 
     QMediaPlayer* _player = nullptr;
     bool _openPending = false;
@@ -104,4 +109,7 @@ private:
     QVideoFrameInput* _frameInput = nullptr;
     /// Since the recorder started a file: the times of the frames in it.
     QElapsedTimer _sinceRecordingStarted;
+    /// The recording and stream times of the last frame the recording took; -1 before its first.
+    qint64 _lastRecordedUs = -1;
+    qint64 _lastStreamUs = -1;
 };
