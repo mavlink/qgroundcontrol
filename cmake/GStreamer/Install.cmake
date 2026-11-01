@@ -3,9 +3,9 @@
 # that would ship a GPL library or plugin, _qgc_gst_install_gpl_check; verifying the installed plugins) and the
 # dispatcher qgc_gst_install_platform_sdk, called from src/VideoManager/GStreamer/CMakeLists.txt after the
 # ANDROID/IOS early-return. Each platform's installer is in platform/<platform>.cmake.
-# Depends on: Platform.cmake (qgc_gst_platform) and PluginPolicy.cmake (qgc_gst_platform_plugin_attrs,
-#             qgc_gst_scan_plugin_basenames, GSTREAMER_BUNDLE_REQUIRED_PLUGINS, GSTREAMER_GPL_DENYLIST; included again
-#             by the install-time checks).
+# Depends on: Platform.cmake (qgc_gst_platform), Layout.cmake (the Orchestrator's BUNDLED_PLUGINS, HOMEBREW_PREFIX)
+#             and PluginPolicy.cmake (qgc_gst_platform_plugin_attrs, GSTREAMER_BUNDLE_REQUIRED_PLUGINS,
+#             GSTREAMER_GPL_DENYLIST; included again by the install-time checks).
 
 include_guard(GLOBAL)
 
@@ -298,17 +298,11 @@ function(qgc_gst_install_platform_sdk app_name)
         list(APPEND ARG_REQUIRED_PLUGINS ${GSTREAMER_BUNDLE_REQUIRED_PLUGINS})
     endif()
 
-    # Extend verification beyond the structural floor to every configured plugin
-    # present in the SDK at configure time, so an install-filter drop fails loudly.
-    if(GSTREAMER_PLUGINS)
-        qgc_gst_scan_plugin_basenames(_gips_sdk_plugins "${GSTREAMER_PLUGIN_PATH}")
-        foreach(_p IN LISTS GSTREAMER_PLUGINS)
-            if(_p IN_LIST _gips_sdk_plugins)
-                list(APPEND ARG_REQUIRED_PLUGINS "${_p}")
-            endif()
-        endforeach()
-        list(REMOVE_DUPLICATES ARG_REQUIRED_PLUGINS)
-    endif()
+    # Extend verification beyond the structural floor to every configured plugin the SDK had at configure time (the
+    # Orchestrator's BUNDLED_PLUGINS), so an install-filter drop fails loudly.
+    qgc_gst_layout_get(BUNDLED_PLUGINS _gips_bundled_plugins)
+    list(APPEND ARG_REQUIRED_PLUGINS ${_gips_bundled_plugins})
+    list(REMOVE_DUPLICATES ARG_REQUIRED_PLUGINS)
 
     cmake_language(CALL qgc_gst_install_${_gips_platform}_sdk "${app_name}" _verify_dest)
     _qgc_gst_install_gpl_check()

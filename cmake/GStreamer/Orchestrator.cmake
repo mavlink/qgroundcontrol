@@ -232,6 +232,10 @@ foreach(_p IN LISTS GSTREAMER_PLUGINS)
         list(APPEND _qgc_gst_shipped_plugins "${_p}")
     endif()
 endforeach()
+# The plugin facts of this configure, which the install rules (Install.cmake) read instead of scanning the plugin
+# directory again.
+qgc_gst_layout_set(AVAILABLE_PLUGINS "${_gst_available_plugins}")
+qgc_gst_layout_set(BUNDLED_PLUGINS "${_qgc_gst_shipped_plugins}")
 list(LENGTH GSTREAMER_PLUGINS _qgc_gst_plugin_total)
 list(LENGTH _qgc_gst_shipped_plugins _qgc_gst_plugin_count)
 message(

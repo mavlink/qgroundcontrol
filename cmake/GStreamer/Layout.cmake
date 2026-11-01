@@ -1,7 +1,8 @@
 # The SDK layout every platform's discovery derives from the SDK it resolved, and GStreamer::Layout, a GLOBAL target
 # whose GSTREAMER_<KEY> properties carry what directories outside the Orchestrator's read: FRAMEWORK_BUNDLE (the macOS
 # GStreamer.framework) and HOMEBREW_PREFIX (a Homebrew GStreamer's prefix), both from platform/MacOS.cmake, and
-# NOTICE_DIR (Orchestrator.cmake).
+# NOTICE_DIR, AVAILABLE_PLUGINS (the plugins the SDK offers the build) and BUNDLED_PLUGINS (the requested ones among
+# them, which the build ships), from Orchestrator.cmake.
 
 include_guard(GLOBAL)
 
