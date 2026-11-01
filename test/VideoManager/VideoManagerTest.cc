@@ -767,15 +767,16 @@ void VideoManagerTest::_testStreamFormatText()
 void VideoManagerTest::_testVideoViewFitsVideo_data()
 {
     // Whether the fitted video takes its width from the view's height, and its height from the view's width, for a
-    // video wider than the square view.
+    // video wider than the square view, and whether the outputs crop it to the view.
     QTest::addColumn<int>("fitMode");
     QTest::addColumn<bool>("widthFromHeight");
     QTest::addColumn<bool>("heightFromWidth");
+    QTest::addColumn<bool>("crops");
 
-    QTest::newRow("fit width") << int(VideoSettings::VideoFitWidth) << false << true;
-    QTest::newRow("fit height") << int(VideoSettings::VideoFitHeight) << true << false;
-    QTest::newRow("fill") << int(VideoSettings::VideoFitFill) << true << false;
-    QTest::newRow("no crop") << int(VideoSettings::VideoFitNoCrop) << false << true;
+    QTest::newRow("fit width") << int(VideoSettings::VideoFitWidth) << false << true << false;
+    QTest::newRow("fit height") << int(VideoSettings::VideoFitHeight) << true << false << true;
+    QTest::newRow("fill") << int(VideoSettings::VideoFitFill) << true << false << true;
+    QTest::newRow("no crop") << int(VideoSettings::VideoFitNoCrop) << false << true << false;
 }
 
 void VideoManagerTest::_testVideoViewFitsVideo()
@@ -783,6 +784,7 @@ void VideoManagerTest::_testVideoViewFitsVideo()
     QFETCH(int, fitMode);
     QFETCH(bool, widthFromHeight);
     QFETCH(bool, heightFromWidth);
+    QFETCH(bool, crops);
 
     _facts->set(_videoSettings->videoFit(), fitMode);
     QQmlEngine engine;
@@ -796,6 +798,7 @@ void VideoManagerTest::_testVideoViewFitsVideo()
     QVERIFY(aspectRatio > 1.0);
     QCOMPARE(view->property("videoWidth").toReal(), widthFromHeight ? (400 * aspectRatio) : 400);
     QCOMPARE(view->property("videoHeight").toReal(), heightFromWidth ? (400 / aspectRatio) : 400);
+    QCOMPARE(view->property("_cropsVideo").toBool(), crops);
 }
 
 void VideoManagerTest::_testCameraPinchZoomSteps()

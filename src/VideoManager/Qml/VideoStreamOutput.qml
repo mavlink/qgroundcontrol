@@ -20,10 +20,6 @@ VideoOutput {
     // QVideoFrame's own rotation()/mirrored() metadata that qgcqvideosink forwards from
     // GstVideoOrientationMeta. Setting it would double-rotate any stream with orientation tags.
 
-    // The container sizes the video for the other fit modes; only Fill needs the cropping fillMode.
-    fillMode: QGroundControl.settingsManager.videoSettings.videoFit.rawValue === VideoSettings.VideoFitFill
-              ? VideoOutput.PreserveAspectCrop
-              : VideoOutput.PreserveAspectFit
     endOfStreamPolicy: VideoOutput.KeepLastFrame
     opacity: root.stream.decoding ? 1 : 0.5
 

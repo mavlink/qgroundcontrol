@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtMultimedia
 
 import QGroundControl
 
@@ -68,8 +69,17 @@ Item {
     readonly property bool _isModeFitHeight: root._fitMode === VideoSettings.VideoFitHeight
     readonly property bool _isModeFill: root._fitMode === VideoSettings.VideoFitFill
     readonly property bool _isModeNoCrop: root._fitMode === VideoSettings.VideoFitNoCrop
+    // The outputs fill the view and crop the video to it where the fitted video is larger, so that Qt draws the
+    // telemetry subtitle in the part on screen.
+    readonly property real _viewAr: root.width / root.height
+    readonly property bool _cropsVideo: root._isModeFill
+                                        || ((root._ar > 0)
+                                            && ((root._isModeFitWidth && (root._viewAr > root._ar))
+                                                || (root._isModeFitHeight && (root._viewAr < root._ar))))
+    readonly property int _outputFillMode: root._cropsVideo ? VideoOutput.PreserveAspectCrop
+                                                            : VideoOutput.PreserveAspectFit
 
-    // The cropping fit modes size the video beyond the view.
+    // The grid lines span the fitted video, beyond the view where it crops.
     clip: true
 
     NoVideoPlaceholder {
@@ -84,7 +94,7 @@ Item {
         visible:        root._showStreamLoader || root._showUvcLoader
 
         Loader {
-            anchors.fill:       videoContentArea
+            anchors.fill:       parent
             visible:            root._showStreamLoader
             sourceComponent:    videoOutputComponent
         }
@@ -94,6 +104,7 @@ Item {
 
             VideoStreamOutput {
                 stream:                 root._primaryStream
+                fillMode:               root._outputFillMode
                 videoSink.subtitleText: root._videoManager.telemetryOverlayText
             }
         }
@@ -101,7 +112,7 @@ Item {
         //-- UVC Video (USB Camera or Video Device)
         Loader {
             id:                 cameraLoader
-            anchors.fill:       videoContentArea
+            anchors.fill:       parent
             visible:            root._showUvcLoader
             active:             root._showUvcLoader
             sourceComponent:    uvcVideoOutputComponent
@@ -111,6 +122,7 @@ Item {
             id: uvcVideoOutputComponent
 
             UVCVideoOutput {
+                fillMode:               root._outputFillMode
                 videoSink.subtitleText: root._videoManager.telemetryOverlayText
             }
         }
