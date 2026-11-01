@@ -6,6 +6,8 @@
 target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE
+        SharedVideoFrame.cc
+        SharedVideoFrame.h
         VideoReceiver.cc
         VideoReceiver.h
         VideoBackend.cc

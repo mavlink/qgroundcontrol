@@ -3,13 +3,17 @@
 #include <algorithm>
 
 #include <QtCore/QBuffer>
+#include <QtMultimedia/QMediaCaptureSession>
 #include <QtMultimedia/QMediaFormat>
 #include <QtMultimedia/QMediaMetaData>
 #include <QtMultimedia/QPlaybackOptions>
 #include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoFrameInput>
 #include <QtMultimedia/QVideoSink>
 
 #include "QGCLoggingCategory.h"
+#include "QtVideoRecorder.h"
+#include "SharedVideoFrame.h"
 #include "VideoStreamStats.h"
 
 QGC_LOGGING_CATEGORY(QtMultimediaVideoReceiverLog, "Video.QtMultimediaVideoReceiver")
@@ -20,6 +24,8 @@ constexpr int kSampleIntervalMs = 1000;
 /// Before a session's first frame, on top of the timeout: FFmpeg probes a stream for up to 5 s (its default
 /// analyzeduration) before it decodes, and then waits for a keyframe.
 constexpr qint64 kFirstFrameGraceMs = 5000;
+/// How long the destructor waits for a recording's file to be finished.
+constexpr int kRecordingFinishTimeoutMs = 5000;
 
 constexpr const char* kRtspTransportEnv = "QT_FFMPEG_RTSP_TRANSPORT";
 
@@ -49,7 +55,18 @@ QByteArray rtpSdp(const QString& host, int port, QByteArrayView encoding)
 
 QtMultimediaVideoReceiver::QtMultimediaVideoReceiver(QObject* parent)
     : VideoReceiver(parent)
+    , _recorder(new QtVideoRecorder(this))
 {
+    (void) connect(_recorder, &QtVideoRecorder::recordingChanged, this, &QtMultimediaVideoReceiver::setRecording);
+    (void) connect(_recorder, &QtVideoRecorder::recordingStarted, this, &QtMultimediaVideoReceiver::recordingStarted);
+    (void) connect(_recorder, &QtVideoRecorder::recordingFinished, this, &QtMultimediaVideoReceiver::recordingFinished);
+    // Each file's times start at its first frame, also after a format that failed to encode.
+    (void) connect(_recorder->mediaRecorder(), &QMediaRecorder::recorderStateChanged, this,
+                   [this](QMediaRecorder::RecorderState state) {
+                       if (state == QMediaRecorder::RecordingState) {
+                           _sinceRecordingStarted.invalidate();
+                       }
+                   });
     _reconnectTimer.setSingleShot(true);
     (void) connect(&_reconnectTimer, &QTimer::timeout, this, &QtMultimediaVideoReceiver::_start);
     _sampleTimer.setInterval(kSampleIntervalMs);
@@ -58,6 +75,11 @@ QtMultimediaVideoReceiver::QtMultimediaVideoReceiver(QObject* parent)
 
 QtMultimediaVideoReceiver::~QtMultimediaVideoReceiver()
 {
+    _closing = true;
+    _reconnectTimer.stop();
+    _sampleTimer.stop();
+    // Qt writes the file on a thread of its own, which the application's exit would cut short.
+    _recorder->stopAndWait(kRecordingFinishTimeoutMs);
     // As _stopSession(): unloaded first, so that its destruction doesn't wait out a network read.
     if (_player) {
         _player->setSource(QUrl());
@@ -110,6 +132,9 @@ void QtMultimediaVideoReceiver::onConfigChanged()
 
 void QtMultimediaVideoReceiver::onActiveChanged()
 {
+    if (!active()) {
+        _recorder->stop();
+    }
     _startOver();
 }
 
@@ -137,14 +162,26 @@ void QtMultimediaVideoReceiver::onVideoOutputChanged()
     _sinceFrame.restart();
 }
 
-void QtMultimediaVideoReceiver::onStartRecording(const QString& file, FileFormat)
+void QtMultimediaVideoReceiver::onStartRecording(const QString& file, FileFormat format)
 {
-    qCWarning(QtMultimediaVideoReceiverLog)
-        << "Not recording" << name() << "to" << file << "- the Qt Multimedia backend doesn't record";
-    emit errorOccurred(tr("Unable to record video: the Qt Multimedia video backend doesn't record streams."));
+    if (_recorder->active()) {
+        qCWarning(QtMultimediaVideoReceiverLog) << "Not recording" << name() << "to" << file << "- recording already";
+        return;
+    }
+    if (!_recordingSession) {
+        _recordingSession = new QMediaCaptureSession(this);
+        _frameInput = new QVideoFrameInput(this);
+        _recordingSession->setVideoFrameInput(_frameInput);
+        _recordingSession->setRecorder(_recorder->mediaRecorder());
+    }
+    qCDebug(QtMultimediaVideoReceiverLog) << name() << "recording to" << file;
+    _recorder->start(file, QtVideoRecorder::container(format));
 }
 
-void QtMultimediaVideoReceiver::onStopRecording() {}
+void QtMultimediaVideoReceiver::onStopRecording()
+{
+    _recorder->stop();
+}
 
 void QtMultimediaVideoReceiver::_start()
 {
@@ -174,7 +211,7 @@ void QtMultimediaVideoReceiver::_open()
     _openPending = false;
     // Stopped or restarted meanwhile: that _start() reported or opens it.
     const std::optional<Source> source = playerSource(config().uri);
-    if (_player || !active() || !source) {
+    if (_player || !active() || !source || _closing) {
         return;
     }
 
@@ -304,6 +341,23 @@ void QtMultimediaVideoReceiver::_onVideoFrame(const QVideoFrame& frame)
     }
     setState(State::Streaming);
     setDecoding(true);
+    _recordFrame(frame);
+}
+
+void QtMultimediaVideoReceiver::_recordFrame(const QVideoFrame& frame)
+{
+    if (!_frameInput || !_recorder->active()) {
+        return;
+    }
+    if (!_sinceRecordingStarted.isValid()) {
+        _sinceRecordingStarted.start();
+    }
+    // A frame of its own: its times are the recording's, not the stream's, and copies of a frame share them.
+    QVideoFrame recorded = SharedVideoFrame::withOwnMetadata(frame);
+    recorded.setStartTime(_sinceRecordingStarted.nsecsElapsed() / 1000);
+    recorded.setEndTime(-1);
+    // One the encoder can't take yet is dropped, as the display drops a frame it can't show in time.
+    (void) _frameInput->sendVideoFrame(recorded);
 }
 
 void QtMultimediaVideoReceiver::_sample()

@@ -10,12 +10,14 @@ class QtMultimediaVideoReceiverTest : public GStreamerTestBase
 private:
     /// Qt's FFmpeg player warns that a live stream can't loop, though nothing asked it to.
     void _ignoreLoopWarning();
+    /// Qt reports each format this platform can't encode, which the recorder moves past.
+    void _ignoreEncoderFallbacks();
 
 private slots:
     void _testPlayerSource_data();
     void _testPlayerSource();
     void _testUnplayableUri();
-    void _testRecordingUnsupported();
+    void _testRecordingNeedsActiveStream();
 #ifdef QGC_GST_STREAMING
     void _testPlaysMockStreams_data();
     void _testPlaysMockStreams();
@@ -24,5 +26,6 @@ private slots:
     void _testStopsWithoutAutoReconnect();
     void _testDetachingOutputDoesNotBlock();
     void _testPlaysRtspOverTcp();
+    void _testRecordsStream();
 #endif
 };

@@ -176,7 +176,7 @@
         {
             "name": "videoBackend",
             "shortDesc": "Plays network video streams with GStreamer, or with Qt Multimedia's player.",
-            "longDesc": "GStreamer plays every stream source and records them. Qt Multimedia plays them with FFmpeg: RTSP, MPEG-TS over UDP or TCP, and H.264 or H.265 RTP over UDP with payload type 96. It doesn't record streams, and the decoder, CPU video path and RTP jitter latency settings don't apply to it. Changing it restarts the video stream.",
+            "longDesc": "GStreamer plays every stream source and records them. Qt Multimedia plays them with FFmpeg: RTSP, MPEG-TS over UDP or TCP, and H.264 or H.265 RTP over UDP with payload type 96. It records a stream by encoding the video on display anew, and the decoder, CPU video path and RTP jitter latency settings don't apply to it. Changing it restarts the video stream.",
             "type": "uint32",
             "enumStrings": "GStreamer,Qt Multimedia",
             "enumValues": "0,1",

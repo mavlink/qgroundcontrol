@@ -136,8 +136,9 @@ public:
     void setVideoOutput(QQuickItem* videoOutput);
 
     /// Records to @p file until stopRecording() or setActive(false). Accepted only while active (otherwise
-    /// errorOccurred()); the file opens at the next keyframe once streaming. After a reconnect the recording continues
-    /// into "<base>_part<N>.<ext>", N counting from 2.
+    /// errorOccurred()); the file opens once streaming, at the next keyframe for a receiver that records the stream as
+    /// it arrives. After a reconnect the recording continues, into "<base>_part<N>.<ext>", N counting from 2, or in the
+    /// same file for a receiver that encodes the frames anew.
     void startRecording(const QString& file, FileFormat format);
     void stopRecording();
 

@@ -37,9 +37,10 @@ Connection settings vary by source type:
 ## Settings
 
 - **Video backend** — plays network streams with **GStreamer** (default) or **Qt Multimedia**'s player (FFmpeg).
-  Qt Multimedia plays RTSP, MPEG-TS over UDP or TCP, and H.264 or H.265 RTP over UDP with payload type 96; it doesn't
-  record streams, doesn't measure their bitrate or packet loss, and the decoder, CPU video path and RTP jitter latency
-  settings don't apply to it, so they are hidden. Changing it restarts the video stream. Builds without GStreamer always
+  Qt Multimedia plays RTSP, MPEG-TS over UDP or TCP, and H.264 or H.265 RTP over UDP with payload type 96. It records
+  a stream by encoding the video on display anew, as it does a USB camera, so only while the video is shown; it doesn't
+  measure a stream's bitrate or packet loss, and the decoder, CPU video path and RTP jitter latency settings don't
+  apply to it, so they are hidden. Changing it restarts the video stream. Builds without GStreamer always
   use Qt Multimedia and don't show the setting.
 - **Aspect Ratio** — aspect ratio for scaling video in the display widget (default: 16:9; set to 0.0 to disable scaling)
 - **Disable Video Stream When Disarmed** — stop the video stream, and any recording, when the vehicle disarms. The stream

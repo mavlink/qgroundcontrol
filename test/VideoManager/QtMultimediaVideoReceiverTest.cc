@@ -7,6 +7,9 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTimer>
+#include <QtCore/QUrl>
+#include <QtMultimedia/QMediaMetaData>
+#include <QtMultimedia/QMediaPlayer>
 #include <QtNetwork/QUdpSocket>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
@@ -86,6 +89,19 @@ void QtMultimediaVideoReceiverTest::_ignoreLoopWarning()
                      QRegularExpression(QStringLiteral("^Cannot set loops for non-seekable source$")));
 }
 
+void QtMultimediaVideoReceiverTest::_ignoreEncoderFallbacks()
+{
+    ignoreLogMessage("qt.multimedia.ffmpeg.encoder", QtInfoMsg,
+                     QRegularExpression(QStringLiteral("^Recording new media")));
+    ignoreLogMessage(
+        "default", QtWarningMsg,
+        QRegularExpression(QStringLiteral("^(Cannot find software target format|Could not find target format)")));
+    ignoreLogMessage("qt.multimedia.ffmpeg.videoencoder", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^No valid video codecs found")));
+    ignoreLogMessage("Video.QtVideoRecorder", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Recording error: .* \"Could not initialize encoder\"$")));
+}
+
 void QtMultimediaVideoReceiverTest::_testPlayerSource_data()
 {
     QTest::addColumn<QString>("uri");
@@ -146,26 +162,19 @@ void QtMultimediaVideoReceiverTest::_testUnplayableUri()
     QCOMPARE(stream.errorSpy.count(), 1);
 }
 
-void QtMultimediaVideoReceiverTest::_testRecordingUnsupported()
+void QtMultimediaVideoReceiverTest::_testRecordingNeedsActiveStream()
 {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
-    const QString file = dir.filePath(QStringLiteral("stream.mp4"));
+    const QString file = dir.filePath(QStringLiteral("stream.mkv"));
 
     Receiver stream(QStringLiteral("udp://127.0.0.1:%1").arg(freeUdpPort()));
-    stream.receiver->setActive(true);
-    QCOMPARE(stream.receiver->state(), State::Connecting);
-
-    expectLogMessage("Video.QtMultimediaVideoReceiver", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("Not recording")));
-    stream.receiver->startRecording(file, VideoReceiver::FileFormat::Mp4);
+    expectLogMessage("Video.VideoReceiver", QtWarningMsg, QRegularExpression(QStringLiteral("not active")));
+    stream.receiver->startRecording(file, VideoReceiver::FileFormat::Mkv);
     verifyExpectedLogMessage();
     QCOMPARE(stream.errorSpy.count(), 1);
     QVERIFY(!stream.receiver->recording());
     QVERIFY(!QFile::exists(file));
-
-    stream.receiver->setActive(false);
-    QCOMPARE(stream.receiver->state(), State::Stopped);
 }
 
 #ifdef QGC_GST_STREAMING
@@ -376,6 +385,58 @@ void QtMultimediaVideoReceiverTest::_testPlaysRtspOverTcp()
     stream.receiver->setConfig(config);
     QVERIFY(stream.waitForDisplay());
     QVERIFY(qgetenv("QT_FFMPEG_RTSP_TRANSPORT").isNull());
+    QVERIFY(stream.errorSpy.isEmpty());
+#endif
+}
+
+void QtMultimediaVideoReceiverTest::_testRecordsStream()
+{
+#ifndef QGC_HAS_MOCK_VIDEO_STREAM_SERVER
+    QSKIP("MockVideoStreamServer is only built into single-config Debug builds");
+#else
+    using StreamType = MockVideoStreamServer::StreamType;
+    if (!MockVideoStreamServer::isStreamTypeAvailable(StreamType::RtpUdpH264)) {
+        QSKIP("This GStreamer install lacks an H.264 encoder");
+    }
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    MockVideoStreamServer server;
+    QVERIFY(server.start(StreamType::RtpUdpH264, QStringLiteral("127.0.0.1"), freeUdpPort()));
+    _ignoreLoopWarning();
+    _ignoreEncoderFallbacks();
+    Receiver stream(server.servedUri());
+    QSignalSpy startedSpy(stream.receiver.get(), &VideoReceiver::recordingStarted);
+    QSignalSpy finishedSpy(stream.receiver.get(), &VideoReceiver::recordingFinished);
+    stream.receiver->setActive(true);
+    QVERIFY(stream.waitForDisplay());
+
+    // The frames on display, encoded anew.
+    stream.receiver->startRecording(dir.filePath(QStringLiteral("stream.mkv")), VideoReceiver::FileFormat::Mkv);
+    QTRY_COMPARE_WITH_TIMEOUT(startedSpy.count(), 1, TestTimeout::longMs());
+    QVERIFY(stream.receiver->recording());
+    const QString file = startedSpy.first().first().toString();
+    QElapsedTimer recorded;
+    recorded.start();
+    QTRY_VERIFY_WITH_TIMEOUT(recorded.hasExpired(1500), TestTimeout::longMs());
+    stream.receiver->stopRecording();
+    QTRY_COMPARE_WITH_TIMEOUT(finishedSpy.count(), 1, TestTimeout::longMs());
+    QCOMPARE(finishedSpy.first().at(0).toString(), file);
+    QVERIFY2(finishedSpy.first().at(1).toString().isEmpty(), qPrintable(finishedSpy.first().at(1).toString()));
+    QVERIFY(!stream.receiver->recording());
+
+    QMediaPlayer player;
+    player.setSource(QUrl::fromLocalFile(file));
+    QTRY_VERIFY_WITH_TIMEOUT(player.mediaStatus() == QMediaPlayer::LoadedMedia, TestTimeout::mediumMs());
+    QVERIFY2(player.duration() >= 1000, qPrintable(QString::number(player.duration())));
+    QCOMPARE(player.metaData().value(QMediaMetaData::Resolution).toSize(), stream.receiver->videoSize());
+
+    // Stopping the stream ends a recording.
+    stream.receiver->startRecording(dir.filePath(QStringLiteral("stopped.mkv")), VideoReceiver::FileFormat::Mkv);
+    QTRY_COMPARE_WITH_TIMEOUT(startedSpy.count(), 2, TestTimeout::longMs());
+    stream.receiver->setActive(false);
+    QTRY_COMPARE_WITH_TIMEOUT(finishedSpy.count(), 2, TestTimeout::longMs());
+    QVERIFY(!stream.receiver->recording());
     QVERIFY(stream.errorSpy.isEmpty());
 #endif
 }

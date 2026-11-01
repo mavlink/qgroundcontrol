@@ -13,12 +13,15 @@
 #include "VideoReceiver.h"
 #include "VideoStreamStatsMeter.h"
 
+class QMediaCaptureSession;
+class QtVideoRecorder;
+class QVideoFrameInput;
 class QVideoSink;
 
 /// A network video stream played by Qt Multimedia's QMediaPlayer (FFmpeg): the receiver of builds without GStreamer,
 /// and of VideoSettings::videoBackend's Qt Multimedia choice. Plays RTSP, MPEG-TS over UDP or TCP, and H.264 or H.265
-/// RTP over UDP with payload type 96, which an SDP description tells FFmpeg about. Doesn't record: startRecording()
-/// reports errorOccurred().
+/// RTP over UDP with payload type 96, which an SDP description tells FFmpeg about. Records by encoding the frames it
+/// displays anew (QtVideoRecorder): only while an output displays the stream, and after a reconnect in the same file.
 ///
 /// Streaming once the first frame arrives; decoding while frames reach the output. A stream that errors, ends, or
 /// shows no frame for the config's timeout while displaying (5 s more for the first, while FFmpeg probes the stream)
@@ -73,9 +76,13 @@ private:
     void _onVideoFrame(const QVideoFrame& frame);
     /// Once a second while a session runs: the stats, and the frame watchdog.
     void _sample();
+    /// Hands @p frame, on display, to the recording.
+    void _recordFrame(const QVideoFrame& frame);
 
     QMediaPlayer* _player = nullptr;
     bool _openPending = false;
+    /// Set by the destructor: no session opens while it waits for a recording's file to be finished.
+    bool _closing = false;
     /// The config the session started with.
     Config _sessionConfig;
     QPointer<QVideoSink> _videoSink;
@@ -91,4 +98,10 @@ private:
     bool _gpuFrames = false;
     /// Sessions that showed a frame since _startOver(), for VideoStreamStats::reconnects.
     int _streamedSessions = 0;
+    QtVideoRecorder* const _recorder;
+    /// Created for the first recording: the frames on display reach the recorder through its frame input.
+    QMediaCaptureSession* _recordingSession = nullptr;
+    QVideoFrameInput* _frameInput = nullptr;
+    /// Since the recorder started a file: the times of the frames in it.
+    QElapsedTimer _sinceRecordingStarted;
 };

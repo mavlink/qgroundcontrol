@@ -7,7 +7,7 @@
 //   Sink/gstqgc/GstQgcFrameMap.cc (QHwVideoBuffer::mapTextures(), the texture pool's slot reuse, plane formats).
 // - qdmabuftextureimporter_p.h, qmultimedia_drm_support_p.h: HwBuffers/dmabuf/GstQtDmaBufImport.cc, including its fix
 //   for Qt's BGRA fourcc.
-// - qvideoframe_p.h with qhwvideobuffer_p.h: src/VideoManager/UVC/UVCFrameRelay.cc, whose frames share another
+// - qvideoframe_p.h with qhwvideobuffer_p.h: src/VideoManager/Receiver/SharedVideoFrame.cc, whose frames share another
 //   frame's buffer (QVideoFramePrivate::createFrame(), hwBuffer(), and each QHwVideoBuffer virtual it forwards).
 // - qvideoframeconverter_p.h, qquickvideooutput_p.h, qcameradevice_p.h: tests only.
 
