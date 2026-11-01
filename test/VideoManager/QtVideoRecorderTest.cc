@@ -147,6 +147,10 @@ void QtVideoRecorderTest::_testRecordsFrameInput()
         frame.setStartTime(frames * kFrameUs);
         frame.setEndTime((frames + 1) * kFrameUs);
         if (input.sendVideoFrame(frame)) {
+            // A live stream's frames arrive from the event loop, which the recording needs between them: Qt updates
+            // what sendVideoFrame() accepts and starts the encoders from queued events. A loop that never yields while
+            // it accepts frames can keep the encoders waiting until it times out.
+            QCoreApplication::processEvents();
             frames++;
             if (recorder.recording()) {
                 framesRecorded++;
