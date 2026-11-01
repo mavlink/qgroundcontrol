@@ -2,9 +2,10 @@
 
 #include "UnitTest.h"
 
-/// GStreamer init policy: how GLib's and GStreamer's logs reach Qt logging, which missing elements disable video, the
-/// decoder ranks the decoder setting applies, except those a user set with GST_PLUGIN_FEATURE_RANK, and what the boot
-/// self-test makes of a failing plugin scanner and of a bundled runtime's plugins.
+/// GStreamer init policy: how GLib's and GStreamer's logs reach Qt logging, which missing elements disable video, when
+/// udpsrc's unlock race is patched, the decoder ranks the decoder setting applies, except those a user set with
+/// GST_PLUGIN_FEATURE_RANK, and what the boot self-test makes of a failing plugin scanner and of a bundled runtime's
+/// plugins.
 class GStreamerInitTest : public UnitTest
 {
     Q_OBJECT
@@ -20,6 +21,7 @@ private slots:
     void _testExternalPluginLoaderFailed();
     void _testMissingPluginFeatures_data();
     void _testMissingPluginFeatures();
+    void _testUdpSrcUnlockSerializedBefore1_24_10();
     void _testBundledPluginIssues_data();
     void _testBundledPluginIssues();
     void _testUserFeatureRankKept_data();

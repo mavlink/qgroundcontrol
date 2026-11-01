@@ -120,6 +120,8 @@ target_sources(
         Runtime/GStreamerSelfTest.h
         Runtime/GStreamerSelfTestMedia.cc
         Runtime/GStreamerSelfTestMedia.h
+        Runtime/GStreamerUdpSrcWorkaround.cc
+        Runtime/GStreamerUdpSrcWorkaround.h
         Runtime/GStreamerVideoBackend.cc
         Runtime/GStreamerVideoBackend.h
         Runtime/GstScoped.h

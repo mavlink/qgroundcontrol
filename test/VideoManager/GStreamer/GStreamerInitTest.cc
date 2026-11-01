@@ -19,6 +19,7 @@
 #include "GStreamerLogging.h"
 #include "GStreamerSelfTest.h"
 #include "GStreamerTestHelpers.h"
+#include "GStreamerUdpSrcWorkaround.h"
 #include "GstScoped.h"
 #include "LogManager.h"
 
@@ -225,6 +226,17 @@ void GStreamerInitTest::_testMissingPluginFeatures()
     QCOMPARE(hint, hinted);
 }
 
+void GStreamerInitTest::_testUdpSrcUnlockSerializedBefore1_24_10()
+{
+    GStreamer::serializeUdpSrcUnlock();
+
+    const GStreamer::GstFactoryPtr factory = GStreamer::adoptFactory(gst_element_factory_find("udpsrc"));
+    if (!factory) {
+        QSKIP("udpsrc is not available");
+    }
+    QCOMPARE(GStreamer::udpSrcUnlockSerialized(),
+             !gst_plugin_feature_check_version(GST_PLUGIN_FEATURE(factory.get()), 1, 24, 10));
+}
 
 void GStreamerInitTest::_testBundledPluginIssues_data()
 {

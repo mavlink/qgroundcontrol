@@ -43,6 +43,7 @@ builds without GStreamer, and where `VideoSettings::videoBackend` picks it.
 | `GStreamerLogging` | Routes GStreamer's log output through QGC's logging, unless GStreamer's own output was requested, and applies the persisted debug level. See [GStreamer Logging](#gstreamer-logging). |
 | `GStreamerSelfTest` | `GStreamer::selfTest()`, which the boot test runs to prove the packaged runtime decodes and records. See [Boot self-test](#boot-self-test). |
 | `GStreamerSelfTestMedia` | The self-test's media pipelines: decoding the embedded samples and recording and reading back MP4 and MKV. |
+| `GStreamerUdpSrcWorkaround` | Serializes `udpsrc`'s `unlock()`/`unlock_stop()` on gst-plugins-good before 1.24.10, whose race corrupts the heap when a UDP stream stops right after it starts; `completeInit()` applies it. |
 | `GstScoped` | RAII owners for transfer-full GStreamer returns so refs can't leak on early return, `makeElement()` (never floating), `PadProbe` and `ScopedSignal`. |
 | `GStreamerVideoBackend` | The `VideoBackend` implementation: the only way the app reaches GStreamer's lifecycle (environment, init, self-test, decoder priorities, debug level, Android JNI state). Settings reach the backend as values: `VideoReceiver::Config`, `VideoReceiver::DisplayConfig` and the persisted debug level. |
 
