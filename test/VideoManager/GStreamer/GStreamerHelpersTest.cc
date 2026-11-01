@@ -77,10 +77,14 @@ void GStreamerHelpersTest::_testAddToBinRejects()
 
 void GStreamerHelpersTest::_testDisposeChild()
 {
+    // Played to its end, so no streaming thread is left inside the identity: without a flush, one parked downstream
+    // (as in a PAUSED sink, on data or EOS) would keep the identity from stopping (see flushAndDisposeChild()).
     GstTest::TestPipeline pipeline;
-    QVERIFY2(pipeline.launch(QStringLiteral("fakesrc num-buffers=1 ! identity name=id ! fakesink")),
+    QVERIFY2(pipeline.launch(QStringLiteral("fakesrc num-buffers=1 ! identity name=id ! fakesink sync=false")),
              qPrintable(pipeline.error()));
-    QVERIFY(gst_element_set_state(pipeline.get(), GST_STATE_PAUSED) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY(pipeline.play());
+    const GStreamer::GstMessagePtr end = pipeline.waitForEosOrError();
+    QVERIFY(end && (GST_MESSAGE_TYPE(end.get()) == GST_MESSAGE_EOS));
     const GStreamer::GstElementPtr identity = pipeline.element("id");
     QVERIFY(identity);
     const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(identity.get(), "sink"));
@@ -104,23 +108,27 @@ void GStreamerHelpersTest::_testDisposeChild()
 
 void GStreamerHelpersTest::_testFlushAndDisposeChildFlushes()
 {
+    // Once prerolled, the streaming thread waits inside the sink, holding its stream lock: the flush wakes it, so the
+    // sink can stop. Without one, going NULL would wait for that thread forever.
     GstTest::TestPipeline pipeline;
-    QVERIFY2(pipeline.launch(QStringLiteral("fakesrc num-buffers=1 ! identity name=id ! fakesink")),
+    QVERIFY2(pipeline.launch(QStringLiteral("fakesrc num-buffers=1 ! fakesink name=sink")),
              qPrintable(pipeline.error()));
     QVERIFY(gst_element_set_state(pipeline.get(), GST_STATE_PAUSED) != GST_STATE_CHANGE_FAILURE);
-    const GStreamer::GstElementPtr identity = pipeline.element("id");
-    QVERIFY(identity);
-    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(identity.get(), "sink"));
+    QCOMPARE(gst_element_get_state(pipeline.get(), nullptr, nullptr, GstTest::clockTime(TestTimeout::mediumDuration())),
+             GST_STATE_CHANGE_SUCCESS);
+    const GStreamer::GstElementPtr sink = pipeline.element("sink");
+    QVERIFY(sink);
+    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(sink.get(), "sink"));
     std::atomic<int> flushes{0};
     GStreamer::PadProbe flushProbe;
     QVERIFY(
         flushProbe.add(sinkPad.get(), GST_PAD_PROBE_TYPE_EVENT_FLUSH, countEvents<GST_EVENT_FLUSH_START>, &flushes));
 
-    GStreamer::flushAndDisposeChild(identity.get());
+    GStreamer::flushAndDisposeChild(sink.get());
     QCOMPARE(flushes.load(), 1);
-    QVERIFY(!parentOf(identity.get()));
+    QVERIFY(!parentOf(sink.get()));
     GstState state = GST_STATE_VOID_PENDING;
-    QCOMPARE(gst_element_get_state(identity.get(), &state, nullptr, 0), GST_STATE_CHANGE_SUCCESS);
+    QCOMPARE(gst_element_get_state(sink.get(), &state, nullptr, 0), GST_STATE_CHANGE_SUCCESS);
     QCOMPARE(state, GST_STATE_NULL);
 }
 
