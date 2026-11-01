@@ -1,6 +1,7 @@
 #include "UVCCameraControllerTest.h"
 
 #include <QtCore/QFileInfo>
+#include <QtCore/QMetaEnum>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTimer>
@@ -287,6 +288,50 @@ void UVCCameraControllerTest::_testRecordingFormat()
     if (asked.isSupported(QMediaFormat::Encode)) {
         QCOMPARE(used, container);
     }
+}
+
+void UVCCameraControllerTest::_testRecordingFormatTriesCodecFirst()
+{
+    const QStringList codecs = UVCCameraController::recordingCodecs();
+    QVERIFY(!codecs.isEmpty());
+    const QList<QMediaFormat> fallbacks = UVCCameraController::recordingFormats(QMediaFormat::Matroska);
+    for (const QString& key : codecs) {
+        const QMediaFormat::VideoCodec codec = UVCCameraController::recordingCodec(key);
+        const QList<QMediaFormat> formats = UVCCameraController::recordingFormats(QMediaFormat::Matroska, codec);
+        QVERIFY2(!formats.isEmpty(), qPrintable(key));
+        QCOMPARE(formats.first().videoCodec(), codec);
+        QVERIFY(formats.first().isSupported(QMediaFormat::Encode));
+        // The fallbacks follow, in their order, without the codec's own format again.
+        QList<QMediaFormat> rest = fallbacks;
+        rest.removeAll(formats.first());
+        QCOMPARE(formats.mid(1), rest);
+    }
+    QCOMPARE(UVCCameraController::recordingFormats(QMediaFormat::Matroska, QMediaFormat::VideoCodec::Unspecified),
+             fallbacks);
+}
+
+void UVCCameraControllerTest::_testRecordingCodecs()
+{
+    // Each container's fallbacks appear in the list in the order a recording tries them. The list covers every
+    // container, so it can hold codecs a given container can't.
+    const QStringList codecs = UVCCameraController::recordingCodecs();
+    for (const QMediaFormat::FileFormat container :
+         {QMediaFormat::MPEG4, QMediaFormat::Matroska, QMediaFormat::QuickTime}) {
+        qsizetype previous = -1;
+        for (const QMediaFormat& format : UVCCameraController::recordingFormats(container)) {
+            const qsizetype index = codecs.indexOf(QString::fromLatin1(
+                QMetaEnum::fromType<QMediaFormat::VideoCodec>().valueToKey(static_cast<int>(format.videoCodec()))));
+            QVERIFY(index > previous);
+            previous = index;
+        }
+    }
+    for (const QString& key : codecs) {
+        QCOMPARE(codecs.count(key), 1);
+        QVERIFY(!UVCCameraController::recordingCodecName(key).isEmpty());
+    }
+    QCOMPARE(UVCCameraController::recordingCodec(QStringLiteral("H264")), QMediaFormat::VideoCodec::H264);
+    QCOMPARE(UVCCameraController::recordingCodec(QString()), QMediaFormat::VideoCodec::Unspecified);
+    QCOMPARE(UVCCameraController::recordingCodec(QStringLiteral("NoSuchCodec")), QMediaFormat::VideoCodec::Unspecified);
 }
 
 void UVCCameraControllerTest::_testRecordingNeedsRunningCamera()

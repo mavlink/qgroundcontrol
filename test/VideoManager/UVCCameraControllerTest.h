@@ -16,5 +16,7 @@ private slots:
     void _testCameraErrorRetries();
     void _testRecordingFormat_data();
     void _testRecordingFormat();
+    void _testRecordingFormatTriesCodecFirst();
+    void _testRecordingCodecs();
     void _testRecordingNeedsRunningCamera();
 };

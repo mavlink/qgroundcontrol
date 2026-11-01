@@ -239,6 +239,15 @@
             "default": false,
             "label": "Mirror USB Camera",
             "keywords": "usb camera,uvc,webcam,mirror,flip,selfie"
+        },
+        {
+            "name": "uvcRecordingCodec",
+            "shortDesc": "Video codec a USB camera recording tries first.",
+            "longDesc": "One of the codecs Qt can encode on this computer, by its QMediaFormat::VideoCodec key, such as \"H264\". Empty (Auto), or a codec the encoder turns down, records with the first of H.264, H.265, AV1, VP9, MPEG-4 Part 2 and MPEG-2 that encodes.",
+            "type": "string",
+            "default": "",
+            "label": "USB Camera Recording Codec",
+            "keywords": "usb camera,uvc,webcam,record,codec,encoder,h264,h265,av1,vp9"
         }
     ]
 }

@@ -38,6 +38,7 @@ public:
     DEFINE_SETTINGFACT(uvcCameraFormat)
     DEFINE_SETTINGFACT(uvcCameraRotation)
     DEFINE_SETTINGFACT(uvcCameraMirror)
+    DEFINE_SETTINGFACT(uvcRecordingCodec)
 
     /// videoFit's values (Video.SettingsGroup.json).
     enum VideoFit

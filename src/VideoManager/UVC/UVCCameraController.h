@@ -42,6 +42,7 @@ class UVCCameraController : public QObject
 
     Q_PROPERTY(UVCStreamMonitor* monitor READ monitor CONSTANT)
     Q_PROPERTY(QStringList formats READ formats NOTIFY formatsChanged)
+    Q_PROPERTY(QStringList recordingCodecs READ recordingCodecs CONSTANT)
 
     friend class UVCCameraControllerTest;
 
@@ -97,16 +98,28 @@ public:
     /// turn until one encodes. recordingStarted() follows once the first frame is encoded, or recordingFinished() with
     /// an error; a failed attempt leaves no file behind. Recreating the camera (another device or format, an unplug, a
     /// retry) ends the recording; Qt finishes writing the file.
-    void startRecording(const QString& file, QMediaFormat::FileFormat container);
+    void startRecording(const QString& file, QMediaFormat::FileFormat container,
+                        QMediaFormat::VideoCodec codec = QMediaFormat::VideoCodec::Unspecified);
     void stopRecording();
     /// Stops recording and waits up to @p timeoutMs for the file to be finished: Qt writes it on its own thread, which
     /// the application's exit would cut short.
     void stopRecordingAndWait(int timeoutMs);
 
-    /// The formats startRecording() tries for @p container, best first: H.264, then the other codecs Qt can encode
-    /// here, down to software MPEG-2. In @p container where Qt can write it, else in another container. Qt counts a
-    /// hardware encoder as encodable even where the hardware turns it down, hence the fallbacks.
-    static QList<QMediaFormat> recordingFormats(QMediaFormat::FileFormat container);
+    /// The formats startRecording() tries for @p container, best first: @p codec where Qt can encode it, then H.264
+    /// and the other codecs Qt can encode here, down to software MPEG-2. In @p container where Qt can write it, else in
+    /// another container. Qt counts a hardware encoder as encodable even where the hardware turns it down, hence the
+    /// fallbacks.
+    static QList<QMediaFormat> recordingFormats(QMediaFormat::FileFormat container,
+                                                QMediaFormat::VideoCodec codec = QMediaFormat::VideoCodec::Unspecified);
+
+    /// The codecs Qt can encode a recording in here, in any of the recording containers, as the keys of
+    /// QMediaFormat::VideoCodec (such as "H264"): the values of VideoSettings::uvcRecordingCodec. recordingFormats()'s
+    /// fallbacks come first, in its order.
+    static QStringList recordingCodecs();
+    /// The codec of key @p key, as recordingCodecs() names it; Unspecified for an empty or unknown key.
+    static QMediaFormat::VideoCodec recordingCodec(const QString& key);
+    /// The name of the codec of key @p key, such as "H.264", for display.
+    Q_INVOKABLE static QString recordingCodecName(const QString& key);
 
 signals:
     /// A camera was plugged in or unplugged.

@@ -1,11 +1,13 @@
 #include "UVCCameraController.h"
 
 #include <algorithm>
+#include <optional>
 
 #include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QEventLoop>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#include <QtCore/QMetaEnum>
 #include <QtCore/QMimeType>
 #include <QtCore/QTimer>
 #include <QtCore/QUrl>
@@ -119,6 +121,23 @@ QString uvcFileSuffix(const QMediaFormat& format)
     }
 }
 
+/// The containers a recording can go into, as VideoSettings::recordingFormat offers them.
+constexpr QMediaFormat::FileFormat kRecordingContainers[] = {QMediaFormat::MPEG4, QMediaFormat::Matroska,
+                                                             QMediaFormat::QuickTime};
+
+/// The codecs a recording falls back to, best first.
+constexpr QMediaFormat::VideoCodec kFallbackCodecs[] = {
+    QMediaFormat::VideoCodec::H264, QMediaFormat::VideoCodec::H265,  QMediaFormat::VideoCodec::AV1,
+    QMediaFormat::VideoCodec::VP9,  QMediaFormat::VideoCodec::MPEG4, QMediaFormat::VideoCodec::MPEG2,
+};
+
+std::optional<QMediaFormat> encodableFormat(QMediaFormat::FileFormat container, QMediaFormat::VideoCodec codec)
+{
+    QMediaFormat format(container);
+    format.setVideoCodec(codec);
+    return format.isSupported(QMediaFormat::Encode) ? std::optional(format) : std::nullopt;
+}
+
 void removeIfEmpty(const QString& file)
 {
     const QFileInfo info(file);
@@ -129,36 +148,80 @@ void removeIfEmpty(const QString& file)
 
 }  // namespace
 
-QList<QMediaFormat> UVCCameraController::recordingFormats(QMediaFormat::FileFormat container)
+QList<QMediaFormat> UVCCameraController::recordingFormats(QMediaFormat::FileFormat container,
+                                                          QMediaFormat::VideoCodec codec)
 {
-    static constexpr QMediaFormat::VideoCodec kCodecs[] = {
-        QMediaFormat::VideoCodec::H264, QMediaFormat::VideoCodec::H265,  QMediaFormat::VideoCodec::AV1,
-        QMediaFormat::VideoCodec::VP9,  QMediaFormat::VideoCodec::MPEG4, QMediaFormat::VideoCodec::MPEG2,
-    };
     QList<QMediaFormat::FileFormat> containers{container};
-    for (const QMediaFormat::FileFormat other :
-         {QMediaFormat::MPEG4, QMediaFormat::Matroska, QMediaFormat::QuickTime}) {
+    for (const QMediaFormat::FileFormat other : kRecordingContainers) {
         if (!containers.contains(other)) {
             containers.append(other);
         }
     }
-    for (const QMediaFormat::FileFormat candidate : std::as_const(containers)) {
-        QList<QMediaFormat> formats;
-        for (const QMediaFormat::VideoCodec codec : kCodecs) {
-            QMediaFormat format(candidate);
-            format.setVideoCodec(codec);
-            if (format.isSupported(QMediaFormat::Encode)) {
-                formats.append(format);
+    QList<QMediaFormat> formats;
+    if (codec != QMediaFormat::VideoCodec::Unspecified) {
+        for (const QMediaFormat::FileFormat candidate : std::as_const(containers)) {
+            if (const std::optional<QMediaFormat> format = encodableFormat(candidate, codec)) {
+                formats.append(*format);
+                break;
             }
         }
-        if (!formats.isEmpty()) {
-            return formats;
+    }
+    for (const QMediaFormat::FileFormat candidate : std::as_const(containers)) {
+        QList<QMediaFormat> fallbacks;
+        for (const QMediaFormat::VideoCodec fallback : kFallbackCodecs) {
+            if (const std::optional<QMediaFormat> format = encodableFormat(candidate, fallback)) {
+                fallbacks.append(*format);
+            }
+        }
+        if (!fallbacks.isEmpty()) {
+            for (const QMediaFormat& format : std::as_const(fallbacks)) {
+                if (!formats.contains(format)) {
+                    formats.append(format);
+                }
+            }
+            break;
         }
     }
-    return {};
+    return formats;
 }
 
-void UVCCameraController::startRecording(const QString& file, QMediaFormat::FileFormat container)
+QStringList UVCCameraController::recordingCodecs()
+{
+    QList<QMediaFormat::VideoCodec> codecs(std::begin(kFallbackCodecs), std::end(kFallbackCodecs));
+    const QMetaEnum codecEnum = QMetaEnum::fromType<QMediaFormat::VideoCodec>();
+    for (int i = 0; i < codecEnum.keyCount(); i++) {
+        const auto codec = static_cast<QMediaFormat::VideoCodec>(codecEnum.value(i));
+        if ((codec != QMediaFormat::VideoCodec::Unspecified) && !codecs.contains(codec)) {
+            codecs.append(codec);
+        }
+    }
+
+    QStringList keys;
+    for (const QMediaFormat::VideoCodec codec : std::as_const(codecs)) {
+        const bool encodable = std::ranges::any_of(kRecordingContainers, [codec](QMediaFormat::FileFormat container) {
+            return encodableFormat(container, codec).has_value();
+        });
+        if (encodable) {
+            keys.append(QString::fromLatin1(codecEnum.valueToKey(static_cast<int>(codec))));
+        }
+    }
+    return keys;
+}
+
+QMediaFormat::VideoCodec UVCCameraController::recordingCodec(const QString& key)
+{
+    bool ok = false;
+    const int value = QMetaEnum::fromType<QMediaFormat::VideoCodec>().keyToValue(key.toLatin1().constData(), &ok);
+    return ok ? static_cast<QMediaFormat::VideoCodec>(value) : QMediaFormat::VideoCodec::Unspecified;
+}
+
+QString UVCCameraController::recordingCodecName(const QString& key)
+{
+    return QMediaFormat::videoCodecDescription(recordingCodec(key));
+}
+
+void UVCCameraController::startRecording(const QString& file, QMediaFormat::FileFormat container,
+                                         QMediaFormat::VideoCodec codec)
 {
     const bool recorderBusy = _recorder && (_recorder->recorderState() != QMediaRecorder::StoppedState);
     if (recorderBusy || !_captureSession || !canRecord()) {
@@ -166,7 +229,7 @@ void UVCCameraController::startRecording(const QString& file, QMediaFormat::File
         emit recordingFinished(file, tr("The USB camera isn't running"));
         return;
     }
-    _pendingFormats = recordingFormats(container);
+    _pendingFormats = recordingFormats(container, codec);
     if (_pendingFormats.isEmpty()) {
         qCWarning(UVCCameraControllerLog) << "No video encoder:" << file;
         emit recordingFinished(file, tr("No video encoder is available"));

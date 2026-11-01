@@ -43,5 +43,9 @@ Connection settings vary by source type:
 ## Local Video Storage
 
 - **Record File Format** — mp4 / mov / mkv
+- **USB Camera Recording Codec** (USB cameras only) — the codec a USB camera recording tries first, from the ones Qt
+  can encode on this computer. **Auto** records with the first of H.264, H.265, AV1, VP9, MPEG-4 Part 2 and MPEG-2 that
+  encodes, which also follow a chosen codec the encoder turns down. A codec the recording format's container can't hold
+  goes into another container.
 - **Auto-Delete Saved Recordings** — automatically delete old recordings when storage limit is reached
 - **Max Storage Usage** — maximum disk space for saved recordings (default: 10240 MB)
