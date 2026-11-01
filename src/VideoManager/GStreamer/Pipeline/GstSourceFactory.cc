@@ -136,6 +136,39 @@ namespace GStreamer::SourceFactory {
 
 namespace {
 
+enum class SourceElement : uint8_t
+{
+    Rtsp,       ///< rtspsrc, which runs its own jitterbuffer
+    TcpClient,  ///< tcpclientsrc
+    Udp,        ///< udpsrc
+};
+
+// What create() builds for one Transport.
+struct TransportSpec
+{
+    SourceElement element;
+    const char* rtpEncoding;  ///< udpsrc caps announce RTP video in this encoding-name; nullptr leaves them unset
+    bool demuxMpegTs;         ///< tsdemux ahead of the parser: Android's parsebin can't detect MPEG-TS
+    bool explicitH265Depay;   ///< rtph265depay + h265parse instead of parsebin
+};
+
+constexpr TransportSpec specFor(Transport transport)
+{
+    switch (transport) {
+        case Transport::Rtsp:
+            return {SourceElement::Rtsp, nullptr, false, false};
+        case Transport::RtpUdpH264:
+            return {SourceElement::Udp, "H264", false, false};
+        case Transport::RtpUdpH265:
+            return {SourceElement::Udp, "H265", false, true};
+        case Transport::MpegTsUdp:
+            return {SourceElement::Udp, nullptr, true, false};
+        case Transport::MpegTsTcp:
+            return {SourceElement::TcpClient, nullptr, true, false};
+    }
+    return {SourceElement::Udp, nullptr, false, false};
+}
+
 // Shared by the static and dynamic (pad-added) link paths so both apply the identical jitter-buffer
 // policy. Retransmission stays off: these sources have no RTCP back-channel, so the jitterbuffer's
 // retransmission requests would only reach the source element, which drops them.
@@ -267,7 +300,7 @@ GstElementPtr buildTcpSource(const QUrl& sourceUrl)
     return source;
 }
 
-GstElementPtr buildUdpSource(const QUrl& sourceUrl, bool isUdpH264, bool isUdpH265)
+GstElementPtr buildUdpSource(const QUrl& sourceUrl, const char* rtpEncoding)
 {
     // Port 0 binds a free port, which udpsrc then reports in its "port" property.
     const int port = sourceUrl.port();
@@ -313,17 +346,78 @@ GstElementPtr buildUdpSource(const QUrl& sourceUrl, bool isUdpH264, bool isUdpH2
 #endif
     g_object_set(source.get(), "uri", udpUri.constData(), "buffer-size", udpBufferSize, nullptr);
 
-    if (isUdpH264 || isUdpH265) {
-        const GstCapsPtr caps = adoptCaps(gst_caps_from_string(
-            isUdpH264 ? "application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264"
-                      : "application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H265"));
-        if (!caps) {
-            qCCritical(GstSourceFactoryLog) << "gst_caps_from_string() failed";
-            return nullptr;
-        }
+    if (rtpEncoding) {
+        const GstCapsPtr caps =
+            adoptCaps(gst_caps_new_simple("application/x-rtp", "media", G_TYPE_STRING, "video", "clock-rate",
+                                          G_TYPE_INT, 90000, "encoding-name", G_TYPE_STRING, rtpEncoding, nullptr));
         g_object_set(source.get(), "caps", caps.get(), nullptr);
     }
     return source;
+}
+
+struct ParserStage
+{
+    GstElementPtr parser;
+    GstElementPtr depay;  ///< Set only for TransportSpec::explicitH265Depay
+};
+
+// The parser (and, for explicit H.265 depayloading, the depayloader) for @p spec, configured but not yet in a bin.
+ParserStage buildParserStage(const TransportSpec& spec, bool isRtsp)
+{
+    const char* const parserFactory = spec.explicitH265Depay ? "h265parse" : "parsebin";
+    ParserStage stage{makeElement(parserFactory, "parser"), {}};
+    if (!stage.parser) {
+        qCWarning(GstSourceFactoryLog) << "gst_element_factory_make(" << parserFactory << ") failed";
+        return {};
+    }
+
+    if (spec.explicitH265Depay) {
+        // UDP H.265 has no SDP/RTSP control plane. Make depayloading and parser config explicit
+        // so hardware decoders, especially Android MediaCodec, see repeated VPS/SPS/PPS at IDR
+        // boundaries instead of depending on parsebin's defaults after startup or reconnect.
+        stage.depay = makeElement("rtph265depay");
+        if (!stage.depay) {
+            qCWarning(GstSourceFactoryLog) << "gst_element_factory_make('rtph265depay') failed";
+            return {};
+        }
+        configureH26xParser(stage.parser.get());
+        configureH26xRtpDepayloader(stage.depay.get(), false);
+        return stage;
+    }
+
+    // parsebin creates the depayloader and codec parser only after it sees the stream caps. Configure them
+    // as soon as they are autoplugged, before data flows.
+    (void) g_signal_connect(stage.parser.get(), "deep-element-added", G_CALLBACK(configureAutopluggedElement),
+                            isRtsp ? GINT_TO_POINTER(TRUE) : nullptr);
+
+    // Older Linux/system GStreamer misnegotiates parser->decoder caps; force avc/hvc1 there only.
+    // Bundled 1.28+ SDKs do not need it, and the forced caps break byte-stream HW decoders.
+#if defined(QGC_GST_ENABLE_LEGACY_PARSEBIN_CAPS_FILTER)
+    (void) g_signal_connect(stage.parser.get(), "autoplug-query", G_CALLBACK(filterParserCaps), nullptr);
+#endif
+    return stage;
+}
+
+// Android can't determine MPEG2-TS via parsebin, so MPEG-TS sources get an explicit tsdemux. Returns the bin-owned
+// demuxer linked after @p upstream, or nullptr (logged).
+GstElement* addTsDemux(GstElement* bin, GstElement* upstream)
+{
+    GstElementPtr tsdemux = makeElement("tsdemux");
+    if (!tsdemux) {
+        qCWarning(GstSourceFactoryLog) << "gst_element_factory_make('tsdemux') failed";
+        return nullptr;
+    }
+
+    GstElement* const demux = addToBin(bin, std::move(tsdemux), "tsdemux");
+    if (!demux) {
+        return nullptr;
+    }
+
+    if (!gst_element_link(upstream, demux)) {
+        qCWarning(GstSourceFactoryLog) << "gst_element_link(source, tsdemux) failed";
+        return nullptr;
+    }
+    return demux;
 }
 
 // Wire upstream → (optional rtpjitterbuffer) → binParser, topology chosen by RTP probe (MPEG-TS
@@ -424,19 +518,20 @@ GstElement* create(const QString& uri, const Config& config)
         return nullptr;
     }
 
-    const bool isRtsp = (*transport == Transport::Rtsp);
-    const bool isUdpH264 = (*transport == Transport::RtpUdpH264);
-    const bool isUdpH265 = (*transport == Transport::RtpUdpH265);
-    const bool isUdpMPEGTS = (*transport == Transport::MpegTsUdp);
-    const bool isTcpMPEGTS = (*transport == Transport::MpegTsTcp);
+    const TransportSpec spec = specFor(*transport);
+    const bool isRtsp = (spec.element == SourceElement::Rtsp);
 
     GstElementPtr source;
-    if (isRtsp) {
-        source = buildRtspSource(uri, sourceUrl, config, latencyMs);
-    } else if (isTcpMPEGTS) {
-        source = buildTcpSource(sourceUrl);
-    } else {  // isUdpH264 || isUdpH265 || isUdpMPEGTS
-        source = buildUdpSource(sourceUrl, isUdpH264, isUdpH265);
+    switch (spec.element) {
+        case SourceElement::Rtsp:
+            source = buildRtspSource(uri, sourceUrl, config, latencyMs);
+            break;
+        case SourceElement::TcpClient:
+            source = buildTcpSource(sourceUrl);
+            break;
+        case SourceElement::Udp:
+            source = buildUdpSource(sourceUrl, spec.rtpEncoding);
+            break;
     }
     if (!source) {
         return nullptr;
@@ -448,39 +543,10 @@ GstElement* create(const QString& uri, const Config& config)
         return nullptr;
     }
 
-    const char* const parserFactory = isUdpH265 ? "h265parse" : "parsebin";
-    GstElementPtr parser = makeElement(parserFactory, "parser");
-    if (!parser) {
-        qCWarning(GstSourceFactoryLog) << "gst_element_factory_make(" << parserFactory << ") failed";
+    ParserStage parserStage = buildParserStage(spec, isRtsp);
+    if (!parserStage.parser) {
         return nullptr;
     }
-
-    GstElementPtr rtpDepay;
-    if (isUdpH265) {
-        // UDP H.265 has no SDP/RTSP control plane. Make depayloading and parser config explicit
-        // so hardware decoders, especially Android MediaCodec, see repeated VPS/SPS/PPS at IDR
-        // boundaries instead of depending on parsebin's defaults after startup or reconnect.
-        rtpDepay = makeElement("rtph265depay");
-        if (!rtpDepay) {
-            qCWarning(GstSourceFactoryLog) << "gst_element_factory_make('rtph265depay') failed";
-            return nullptr;
-        }
-        configureH26xParser(parser.get());
-        configureH26xRtpDepayloader(rtpDepay.get(), false);
-    } else {
-        // parsebin creates the depayloader and codec parser only after it sees the stream caps. Configure them
-        // as soon as they are autoplugged, before data flows.
-        (void) g_signal_connect(parser.get(), "deep-element-added", G_CALLBACK(configureAutopluggedElement),
-                                isRtsp ? GINT_TO_POINTER(TRUE) : nullptr);
-    }
-
-    // Older Linux/system GStreamer misnegotiates parser->decoder caps; force avc/hvc1 there only.
-    // Bundled 1.28+ SDKs do not need it, and the forced caps break byte-stream HW decoders.
-#if defined(QGC_GST_ENABLE_LEGACY_PARSEBIN_CAPS_FILTER)
-    if (!isUdpH265) {
-        (void) g_signal_connect(parser.get(), "autoplug-query", G_CALLBACK(filterParserCaps), nullptr);
-    }
-#endif
 
     // From here on the bin owns every element; the borrowed pointers stay valid while bin is alive.
     GstElement* upstream = addToBin(bin.get(), std::move(source), "source");
@@ -489,51 +555,34 @@ GstElement* create(const QString& uri, const Config& config)
     }
 
     GstElement* depay = nullptr;
-    if (rtpDepay) {
-        depay = addToBin(bin.get(), std::move(rtpDepay), "rtph265depay");
+    if (parserStage.depay) {
+        depay = addToBin(bin.get(), std::move(parserStage.depay), "rtph265depay");
         if (!depay) {
             return nullptr;
         }
     }
 
-    GstElement* const binParser = addToBin(bin.get(), std::move(parser), "parser");
+    GstElement* const binParser = addToBin(bin.get(), std::move(parserStage.parser), "parser");
     if (!binParser) {
         return nullptr;
     }
 
-    // Android can't determine MPEG2-TS via parsebin, so create tsdemux explicitly.
-    if (isTcpMPEGTS || isUdpMPEGTS) {
-        GstElementPtr tsdemux = makeElement("tsdemux");
-        if (!tsdemux) {
-            qCWarning(GstSourceFactoryLog) << "gst_element_factory_make('tsdemux') failed";
+    if (spec.demuxMpegTs) {
+        upstream = addTsDemux(bin.get(), upstream);
+        if (!upstream) {
             return nullptr;
         }
-
-        GstElement* const demux = addToBin(bin.get(), std::move(tsdemux), "tsdemux");
-        if (!demux) {
-            return nullptr;
-        }
-
-        if (!gst_element_link(upstream, demux)) {
-            qCWarning(GstSourceFactoryLog) << "gst_element_link(source, tsdemux) failed";
-            return nullptr;
-        }
-
-        upstream = demux;
     }
 
-    if (isUdpH265) {
+    if (spec.explicitH265Depay) {
         if (!linkUdpRtpToDepayAndParser(bin.get(), upstream, depay, binParser, config, latencyMs)) {
             return nullptr;
         }
         if (!addStaticGhostPad(binParser)) {
             return nullptr;
         }
-    } else {
-        if (!linkSourceToParser(bin.get(), upstream, binParser, config, latencyMs, isTcpMPEGTS || isUdpMPEGTS,
-                                isRtsp)) {
-            return nullptr;
-        }
+    } else if (!linkSourceToParser(bin.get(), upstream, binParser, config, latencyMs, spec.demuxMpegTs, isRtsp)) {
+        return nullptr;
     }
 
     return bin.release();
