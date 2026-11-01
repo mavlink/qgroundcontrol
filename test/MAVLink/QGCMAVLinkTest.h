@@ -45,4 +45,8 @@ private slots:
 
     void _testAllFirmwareClasses();
     void _testAllVehicleClasses();
+
+    void _testBoundedStringField_data();
+    void _testBoundedStringField();
+    void _testBoundedStringFieldEmpty();
 };
