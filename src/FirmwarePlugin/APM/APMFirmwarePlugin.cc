@@ -429,17 +429,24 @@ void APMFirmwarePlugin::initializeStreamRates(Vehicle *vehicle)
         }
     }
 
-    // The MAV_CMD_SET_MESSAGE_INTERVAL command is only supported on newer firmwares. So we set showError=false.
-    // Which also means than on older firmwares you may be left with some missing features.
+    // The MAV_CMD_SET_MESSAGE_INTERVAL command is only supported on newer firmwares. setMessageRate() doesn't show
+    // errors, which also means than on older firmwares you may be left with some missing features. setMessageRate()
+    // sends these one at a time, so that it can tell which one a refusal is for, and doesn't send one again when the
+    // stream rates are re-initialized if the vehicle refused it.
+
+    // ArduPilot reports its estimator health in EKF_STATUS_REPORT, which the estimatorStatus FactGroup falls back
+    // to, and only sends the common ESTIMATOR_STATUS (which adds position accuracies) when requested.
+    // Firmware without it refuses the request.
+    vehicle->setMessageRate(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_ESTIMATOR_STATUS, 1 /* Hz */);
 
     // ArduPilot only sends home position on first boot and then when it arms. It does not stream the position.
     // This means that depending on when QGC connects to the vehicle it may not have home position.
     // This can cause various features to not be available. So we request home position streaming ourselves.
-    vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_SET_MESSAGE_INTERVAL, false /* showError */, MAVLINK_MSG_ID_HOME_POSITION, 1000000 /* 1 second interval in usec */);
+    vehicle->setMessageRate(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_HOME_POSITION, 1 /* Hz */);
 
     // ArduPilot doesn't send MAVLINK_MSG_ID_EXTENDED_SYS_STATE messages unless requested, so we request it to
     // make the LandAbort action available.
-    vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_SET_MESSAGE_INTERVAL, false /* showError */, MAVLINK_MSG_ID_EXTENDED_SYS_STATE, 1000000 /* 1 second interval in usec */);
+    vehicle->setMessageRate(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_EXTENDED_SYS_STATE, 1 /* Hz */);
 
     instanceData->lastBatteryStatusTime = instanceData->lastHomePositionTime = QTime::currentTime();
 }

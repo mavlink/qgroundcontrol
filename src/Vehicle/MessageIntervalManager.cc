@@ -25,6 +25,8 @@ struct SetRateData {
     QPointer<MessageIntervalManager> manager;
     uint8_t                          compId;
     uint16_t                         msgId;
+    int32_t rate;
+    bool unambiguous;  ///< No other SET_MESSAGE_INTERVAL to compId was pending when this was sent
 };
 
 } // namespace
@@ -59,17 +61,45 @@ void MessageIntervalManager::_requestMessageIntervalResultHandler(void* resultHa
         return;
     }
 
+    MessageIntervalManager* const manager = ctx->manager;
+
     if ((result != MAV_RESULT_ACCEPTED) || (failureCode != RequestMessageNoFailure)) {
-        (void) ctx->manager->_unsupportedMessageIds.insert(ctx->compId, ctx->msgId);
+        (void) manager->_unsupportedMessageIds.insert(ctx->compId, ctx->msgId);
     }
+
+    QQueue<uint16_t>& queue = manager->_intervalRequestQueues[ctx->compId];
+    if (!queue.isEmpty()) {
+        (void) queue.dequeue();
+    }
+    manager->_sendQueuedMessageIntervalRequest(ctx->compId);
 }
 
 void MessageIntervalManager::_requestMessageInterval(uint8_t compId, uint16_t msgId)
 {
-    if (_unsupportedMessageIds.contains(compId, msgId)) {
+    // RequestMessageCoordinator fails a MESSAGE_INTERVAL request while another to the same component
+    // is outstanding, whichever message it is for, so send them one at a time
+    QQueue<uint16_t>& queue = _intervalRequestQueues[compId];
+    if (_unsupportedMessageIds.contains(compId, msgId) || queue.contains(msgId)) {
         return;
     }
 
+    queue.enqueue(msgId);
+    if (queue.count() == 1) {
+        _sendQueuedMessageIntervalRequest(compId);
+    }
+}
+
+void MessageIntervalManager::_sendQueuedMessageIntervalRequest(uint8_t compId)
+{
+    QQueue<uint16_t>& queue = _intervalRequestQueues[compId];
+    while (!queue.isEmpty() && _unsupportedMessageIds.contains(compId, queue.head())) {
+        (void) queue.dequeue();
+    }
+    if (queue.isEmpty()) {
+        return;
+    }
+
+    const uint16_t msgId = queue.head();
     auto* ctx = new RequestIntervalData{this, compId, msgId};
     _reqMsgCoord->requestMessage(
         &MessageIntervalManager::_requestMessageIntervalResultHandler,
@@ -98,15 +128,66 @@ void MessageIntervalManager::_setMessageRateCommandResultHandler(void* resultHan
     if (!ctx || !ctx->manager) {
         return;
     }
+    MessageIntervalManager* const manager = ctx->manager;
 
-    if ((ack.result == MAV_RESULT_ACCEPTED) && (failureCode == MavCmdResultCommandResultOnly)) {
-        ctx->manager->_requestMessageInterval(ctx->compId, ctx->msgId);
+    if (failureCode == MavCmdResultCommandResultOnly) {
+        switch (ack.result) {
+            case MAV_RESULT_ACCEPTED:
+                manager->_requestMessageInterval(ctx->compId, ctx->msgId);
+                break;
+            case MAV_RESULT_DENIED:  // ArduPilot: no such message
+            case MAV_RESULT_UNSUPPORTED:
+                // COMMAND_ACK doesn't say which message it is for, and acks are matched to the oldest
+                // pending command, so if this command's ack was lost a later one's could be matched to
+                // it. So only remember the refusal if no other SET_MESSAGE_INTERVAL to the component
+                // was pending, either when this was sent or now.
+                if (ctx->unambiguous && !manager->_commandQueue->isPending(ctx->compId, MAV_CMD_SET_MESSAGE_INTERVAL)) {
+                    qCDebug(MessageIntervalManagerLog) << "compId" << ctx->compId << "refused msgId" << ctx->msgId
+                                                       << "rate" << ctx->rate << "- not requesting it again";
+                    (void) manager->_refusedSetRates.insert({ctx->compId, ctx->msgId}, ctx->rate);
+                }
+                break;
+            default:
+                break;
+        }
     }
+
+    QQueue<MsgIdRate>& queue = manager->_setRateQueues[ctx->compId];
+    if (!queue.isEmpty()) {
+        (void) queue.dequeue();
+    }
+    manager->_sendQueuedMessageRate(ctx->compId);
+}
+
+bool MessageIntervalManager::messageRateRefused(uint8_t compId, uint16_t msgId, int32_t rate) const
+{
+    return _refusedSetRates.contains({compId, msgId}, rate);
 }
 
 void MessageIntervalManager::setMessageRate(uint8_t compId, uint16_t msgId, int32_t rate)
 {
-    auto* ctx = new SetRateData{this, compId, msgId};
+    QQueue<MsgIdRate>& queue = _setRateQueues[compId];
+    queue.enqueue({msgId, rate});
+    if (queue.count() == 1) {
+        _sendQueuedMessageRate(compId);
+    }
+}
+
+void MessageIntervalManager::_sendQueuedMessageRate(uint8_t compId)
+{
+    QQueue<MsgIdRate>& queue = _setRateQueues[compId];
+    while (!queue.isEmpty() && messageRateRefused(compId, queue.head().first, queue.head().second)) {
+        qCDebug(MessageIntervalManagerLog)
+            << "skipping SET_MESSAGE_INTERVAL for msgId" << queue.head().first << "refused by compId" << compId;
+        (void) queue.dequeue();
+    }
+    if (queue.isEmpty()) {
+        return;
+    }
+
+    const auto [msgId, rate] = queue.head();
+    const bool unambiguous = !_commandQueue->isPending(compId, MAV_CMD_SET_MESSAGE_INTERVAL);
+    auto* ctx = new SetRateData{this, compId, msgId, rate, unambiguous};
     const MavCmdAckHandlerInfo_t handlerInfo = {
         /* .resultHandler        = */ &MessageIntervalManager::_setMessageRateCommandResultHandler,
         /* .resultHandlerData    = */ ctx,
@@ -116,6 +197,7 @@ void MessageIntervalManager::setMessageRate(uint8_t compId, uint16_t msgId, int3
 
     const float interval = (rate > 0) ? 1000000.0 / rate : rate;
 
+    // The result handler sends the next queued request, possibly before this returns
     _commandQueue->sendCommandWithHandler(
         &handlerInfo,
         compId,
@@ -123,4 +205,3 @@ void MessageIntervalManager::setMessageRate(uint8_t compId, uint16_t msgId, int3
         static_cast<float>(msgId),
         interval);
 }
-

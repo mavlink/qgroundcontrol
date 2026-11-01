@@ -32,33 +32,97 @@ void VehicleEstimatorStatusFactGroup::handleMessage(Vehicle *vehicle, const mavl
 {
     Q_UNUSED(vehicle);
 
-    if (message.msgid != MAVLINK_MSG_ID_ESTIMATOR_STATUS) {
-        return;
+    switch (message.msgid) {
+        case MAVLINK_MSG_ID_ESTIMATOR_STATUS:
+            _handleEstimatorStatus(message);
+            break;
+        case MAVLINK_MSG_ID_EKF_STATUS_REPORT:
+            _handleEkfStatusReport(message);
+            break;
+        default:
+            break;
     }
+}
 
+void VehicleEstimatorStatusFactGroup::_handleEstimatorStatus(const mavlink_message_t& message)
+{
     mavlink_estimator_status_t estimatorStatus{};
     mavlink_msg_estimator_status_decode(&message, &estimatorStatus);
 
-    goodAttitudeEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_ATTITUDE));
-    goodHorizVelEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_VELOCITY_HORIZ));
-    goodVertVelEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_VELOCITY_VERT));
-    goodHorizPosRelEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_POS_HORIZ_REL));
-    goodHorizPosAbsEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_POS_HORIZ_ABS));
-    goodVertPosAbsEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_POS_VERT_ABS));
-    goodVertPosAGLEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_POS_VERT_AGL));
-    goodConstPosModeEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_CONST_POS_MODE));
-    goodPredHorizPosRelEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_PRED_POS_HORIZ_REL));
-    goodPredHorizPosAbsEstimate()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_PRED_POS_HORIZ_ABS));
-    gpsGlitch()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_GPS_GLITCH));
-    accelError()->setRawValue(!!(estimatorStatus.flags & ESTIMATOR_ACCEL_ERROR));
-    velRatio()->setRawValue(estimatorStatus.vel_ratio);
-    horizPosRatio()->setRawValue(estimatorStatus.pos_horiz_ratio);
-    vertPosRatio()->setRawValue(estimatorStatus.pos_vert_ratio);
-    magRatio()->setRawValue(estimatorStatus.mag_ratio);
-    haglRatio()->setRawValue(estimatorStatus.hagl_ratio);
-    tasRatio()->setRawValue(estimatorStatus.tas_ratio);
+    _estimatorStatusTimer.start();
+
+    _setFlags(estimatorStatus.flags);
+    _setRatios(estimatorStatus.vel_ratio, estimatorStatus.pos_horiz_ratio, estimatorStatus.pos_vert_ratio,
+               estimatorStatus.mag_ratio, estimatorStatus.hagl_ratio, estimatorStatus.tas_ratio);
     horizPosAccuracy()->setRawValue(estimatorStatus.pos_horiz_accuracy);
     vertPosAccuracy()->setRawValue(estimatorStatus.pos_vert_accuracy);
 
     _setTelemetryAvailable(true);
+}
+
+void VehicleEstimatorStatusFactGroup::_handleEkfStatusReport(const mavlink_message_t& message)
+{
+    // ArduPilot's own equivalent of ESTIMATOR_STATUS, which it streams by default; older
+    // ArduPilot sends only this. Prefer ESTIMATOR_STATUS when the vehicle sends both.
+    if (_estimatorStatusTimer.isValid() && !_estimatorStatusTimer.hasExpired(kEstimatorStatusPreferredMs)) {
+        return;
+    }
+
+    mavlink_ekf_status_report_t ekfStatusReport{};
+    mavlink_msg_ekf_status_report_decode(&message, &ekfStatusReport);
+
+    // Flags up to EKF_PRED_POS_HORIZ_ABS have the same values as the ESTIMATOR_STATUS_FLAGS;
+    // the GPS glitch flag has a different value, and EKF_UNINITIALIZED (1024) has no equivalent here
+    static constexpr uint16_t kCommonFlags = EKF_ATTITUDE | EKF_VELOCITY_HORIZ | EKF_VELOCITY_VERT | EKF_POS_HORIZ_REL |
+                                             EKF_POS_HORIZ_ABS | EKF_POS_VERT_ABS | EKF_POS_VERT_AGL |
+                                             EKF_CONST_POS_MODE | EKF_PRED_POS_HORIZ_REL | EKF_PRED_POS_HORIZ_ABS;
+    static_assert(kCommonFlags == (ESTIMATOR_ATTITUDE | ESTIMATOR_VELOCITY_HORIZ | ESTIMATOR_VELOCITY_VERT |
+                                   ESTIMATOR_POS_HORIZ_REL | ESTIMATOR_POS_HORIZ_ABS | ESTIMATOR_POS_VERT_ABS |
+                                   ESTIMATOR_POS_VERT_AGL | ESTIMATOR_CONST_POS_MODE | ESTIMATOR_PRED_POS_HORIZ_REL |
+                                   ESTIMATOR_PRED_POS_HORIZ_ABS),
+                  "EKF_STATUS_FLAGS and ESTIMATOR_STATUS_FLAGS differ");
+    uint16_t flags = ekfStatusReport.flags & kCommonFlags;
+    if (ekfStatusReport.flags & EKF_GPS_GLITCHING) {
+        flags |= ESTIMATOR_GPS_GLITCH;
+    }
+    _setFlags(flags);
+
+    // Despite their names, EKF_STATUS_REPORT's *_variance fields are innovation test ratios,
+    // on the same scale as ESTIMATOR_STATUS's
+    _setRatios(ekfStatusReport.velocity_variance, ekfStatusReport.pos_horiz_variance, ekfStatusReport.pos_vert_variance,
+               ekfStatusReport.compass_variance, ekfStatusReport.terrain_alt_variance,
+               ekfStatusReport.airspeed_variance);
+
+    // EKF_STATUS_REPORT has no accuracies
+    horizPosAccuracy()->setRawValue(qQNaN());
+    vertPosAccuracy()->setRawValue(qQNaN());
+
+    _setTelemetryAvailable(true);
+}
+
+void VehicleEstimatorStatusFactGroup::_setFlags(uint16_t flags)
+{
+    goodAttitudeEstimate()->setRawValue(!!(flags & ESTIMATOR_ATTITUDE));
+    goodHorizVelEstimate()->setRawValue(!!(flags & ESTIMATOR_VELOCITY_HORIZ));
+    goodVertVelEstimate()->setRawValue(!!(flags & ESTIMATOR_VELOCITY_VERT));
+    goodHorizPosRelEstimate()->setRawValue(!!(flags & ESTIMATOR_POS_HORIZ_REL));
+    goodHorizPosAbsEstimate()->setRawValue(!!(flags & ESTIMATOR_POS_HORIZ_ABS));
+    goodVertPosAbsEstimate()->setRawValue(!!(flags & ESTIMATOR_POS_VERT_ABS));
+    goodVertPosAGLEstimate()->setRawValue(!!(flags & ESTIMATOR_POS_VERT_AGL));
+    goodConstPosModeEstimate()->setRawValue(!!(flags & ESTIMATOR_CONST_POS_MODE));
+    goodPredHorizPosRelEstimate()->setRawValue(!!(flags & ESTIMATOR_PRED_POS_HORIZ_REL));
+    goodPredHorizPosAbsEstimate()->setRawValue(!!(flags & ESTIMATOR_PRED_POS_HORIZ_ABS));
+    gpsGlitch()->setRawValue(!!(flags & ESTIMATOR_GPS_GLITCH));
+    accelError()->setRawValue(!!(flags & ESTIMATOR_ACCEL_ERROR));
+}
+
+void VehicleEstimatorStatusFactGroup::_setRatios(float vel, float horizPos, float vertPos, float mag, float hagl,
+                                                 float tas)
+{
+    velRatio()->setRawValue(vel);
+    horizPosRatio()->setRawValue(horizPos);
+    vertPosRatio()->setRawValue(vertPos);
+    magRatio()->setRawValue(mag);
+    haglRatio()->setRawValue(hagl);
+    tasRatio()->setRawValue(tas);
 }
