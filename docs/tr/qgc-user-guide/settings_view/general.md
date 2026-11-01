@@ -170,7 +170,7 @@ The settings are:
 
 - **Aspect Ratio**: Aspect ratio for scaling video in video widget (set to 0.0 to ignore scaling)
 
-- **Disabled When Disarmed**: Disable video feed when vehicle is disarmed.
+- **Disabled When Disarmed**: Stop the video stream, and any recording, when the vehicle disarms. The stream starts again when the vehicle arms, when this setting is turned off, when the active vehicle changes, or when video is started again.
 
 - **Low Latency Mode**: Enabling low latency mode reduces the video stream latency, but may cause frame loss and choppy video (especially with a poor network connection). <!-- disables the internal jitter buffer -->
 

@@ -168,7 +168,7 @@ _视频_ 部分用于定义视频的源和连接设置，将显示在 _飞行视
 
 - **宽高比**：视频小部件中缩放视频的宽高比(设置为0.0 忽略缩放)
 
-- **锁定时禁用**：飞行器锁定时禁用视频传输。
+- **Disabled When Disarmed**: Stop the video stream, and any recording, when the vehicle disarms. The stream starts again when the vehicle arms, when this setting is turned off, when the active vehicle changes, or when video is started again.
 
 - **低延迟模式**：启用低延迟模式可降低视频流延迟，但可能会导致丢帧和视频卡顿（特别是在网络连接不佳的情况下）。 <!-- disables the internal jitter buffer -->
 

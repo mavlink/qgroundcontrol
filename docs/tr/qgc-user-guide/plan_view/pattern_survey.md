@@ -87,6 +87,9 @@ The configurable options are:
 - **Hover and capture image** - Görüntü yakalamak için havada durmak (sadece multikopterler).
 - **Refly at 90 degree offset** - Tüm görevi 90 derece dönmüş şekliyle yeniden uçmak için işaretleyin.
 - **Images in turnarounds** - Dönüşlerde fotoğraf çekilmesi için işaretleyin
+- **Split concave polygons** - Check to split transects where they cross a concave part of the survey area, so each transect stops at the polygon boundary.
+  The vehicle still flies straight across the gap to the next part of the transect, and turnarounds are only added at the ends of each pass.
+  Images are not taken over the gap unless _Images in turnarounds_ is checked.
 - **Relative altitude** - Ev konumuna bağlı olarak belirli yükseklikleri ayarlamak için işaretleyin (işaretlenmezse ortalama deniz seviyesine göre olur).
 
 ### Arazi

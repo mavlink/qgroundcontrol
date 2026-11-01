@@ -9,9 +9,10 @@ _Yapı Taramaları_, Plan ekranında **Pattern > Structure Scan** aracı kullan�
 _Structure Scan_'ın yeni versiyonu, eski _Structure Scan_ planlarını okuyamaz. Eskilerin tekar oluşturulmaları gerekir.
 :::
 
-:::warning
-Bu özellik henüz ArduPilot yazılımı tarafından desteklenmemektedir.
-PX4'de desteklenir.
+:::info
+Structure Scans are supported on PX4 and ArduPilot.
+ArduPilot does not support the command PX4 uses to point the camera at the structure, so on ArduPilot the vehicle turns to face the structure on each leg and the gimbal pitch is set separately.
+This adds a few mission items for each corner of the flight path.
 :::
 
 ## Genel Bakış
@@ -56,6 +57,7 @@ Kullanıcı her zaman aşağıdaki ayarları yapılandırabilir:
 - **Start scan from top/bottom:** Katmanların taranma yönü.
 - \*\*Structure height:\*\*Taranan nesnenin yüksekliği.
 - **Scan distance:** Distance from the structure to the flight path.
+  Corners sharper than 45 degrees are cut off so the flight path stays close to this distance from the structure.
 - **Entrance/Exit Alt:** Son/sonraki hedef noktası ile taranacak yapı arasındaki engellerden kaçınmak için bu ayarı kullanın.
   - Araç, bu irtifada _Entrance/Exit_ noktasına yükselecek ve ardından taramayı başlatmak için ilk katmana alçalacaktır.
   - Araç, taramayı tamamladıktan sonra bu irtifaya yükselecek ve ardından bir sonraki hedef noktaya geçecektir.
