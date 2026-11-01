@@ -7,6 +7,8 @@ target_sources(
     PRIVATE
         APM/APMFreshFlashParamsTest.cc
         APM/APMFreshFlashParamsTest.h
+        APM/APMMotorIdentificationControllerTest.cc
+        APM/APMMotorIdentificationControllerTest.h
         Common/MotorIdentificationControllerTest.cc
         Common/MotorIdentificationControllerTest.h
         PX4/AirframeComponentAirframesTest.cc
@@ -34,6 +36,7 @@ target_sources(
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/PX4)
 
 add_qgc_test(AirframeComponentAirframesTest LABELS Unit)
+add_qgc_test(APMMotorIdentificationControllerTest LABELS Integration Vehicle)
 add_qgc_test(APMFreshFlashParamsTest LABELS Integration Vehicle TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
 add_qgc_test(FailureInjectionTest LABELS Unit)
 add_qgc_test(MotorIdentificationControllerTest LABELS Integration Vehicle)

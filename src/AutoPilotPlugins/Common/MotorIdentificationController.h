@@ -2,6 +2,7 @@
 
 #include <QtCore/QList>
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QStringList>
 #include <QtCore/QTimer>
 #include <QtCore/QVariantList>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -13,7 +14,9 @@ Q_DECLARE_LOGGING_CATEGORY(MotorIdentificationControllerLog)
 /// Pulses one motor at a time and records which frame position the user saw spinning, so the motor numbering can be
 /// checked against the frame layout.
 ///
-/// Positions are numbered clockwise (viewed from above) starting at the first motor on or clockwise of the nose.
+/// By default the positions are spaced evenly around the frame, numbered clockwise (viewed from above) from the first
+/// position on or clockwise of the nose, and nothing is known about which motor belongs where. Firmware specific
+/// subclasses provide the real layout with _setLayout().
 class MotorIdentificationController : public FactPanelController
 {
     Q_OBJECT
@@ -22,9 +25,8 @@ class MotorIdentificationController : public FactPanelController
     Q_PROPERTY(int motorCount READ motorCount CONSTANT)
     /// Angle of each position in degrees, clockwise from the nose
     Q_PROPERTY(QVariantList positionAngles READ positionAngles CONSTANT)
-    /// true: motor N is expected at position N (ArduPilot motor test order)
-    Q_PROPERTY(bool expectClockwiseOrder READ expectClockwiseOrder WRITE setExpectClockwiseOrder NOTIFY
-                   expectClockwiseOrderChanged)
+    /// true: position N is where motor N belongs, so selections can be checked
+    Q_PROPERTY(bool layoutKnown READ layoutKnown CONSTANT)
     Q_PROPERTY(bool running READ running NOTIFY runningChanged)
     /// Motor being pulsed, -1 when not running
     Q_PROPERTY(int currentMotor READ currentMotor NOTIFY currentMotorChanged)
@@ -32,6 +34,8 @@ class MotorIdentificationController : public FactPanelController
     Q_PROPERTY(QVariantList selectedPositions READ selectedPositions NOTIFY selectedPositionsChanged)
     Q_PROPERTY(bool complete READ complete NOTIFY selectedPositionsChanged)
     Q_PROPERTY(bool orderCorrect READ orderCorrect NOTIFY selectedPositionsChanged)
+    /// Settings changes which would fix a wrong motor order, one line each. Empty if the firmware can't fix it.
+    Q_PROPERTY(QStringList remapChanges READ remapChanges NOTIFY selectedPositionsChanged)
 
 public:
     explicit MotorIdentificationController(QObject* parent = nullptr);
@@ -46,17 +50,21 @@ public:
     /// Stops the motor being pulsed and discards the selections
     Q_INVOKABLE void cancel();
 
+    /// Applies remapChanges, then discards the selections so identification can be run again to confirm
+    Q_INVOKABLE virtual void remapMotors() {}
+
+    /// @return Motor number sent in MAV_CMD_DO_MOTOR_TEST for the motor, numbered from 1
+    Q_INVOKABLE int motorTestNumber(int motor) const;
+
     [[nodiscard]] static QList<double> layoutAngles(int motorCount, bool xLayout);
 
-    bool supported() const { return _motorCount >= _minimumMotorCount; }
+    bool supported() const { return motorCount() >= _minimumMotorCount; }
 
-    int motorCount() const { return _motorCount; }
+    int motorCount() const { return static_cast<int>(_motorTestNumbers.count()); }
 
     QVariantList positionAngles() const;
 
-    bool expectClockwiseOrder() const { return _expectClockwiseOrder; }
-
-    void setExpectClockwiseOrder(bool expectClockwiseOrder);
+    bool layoutKnown() const { return _layoutKnown; }
 
     bool running() const { return _currentMotor != -1; }
 
@@ -64,17 +72,27 @@ public:
 
     QVariantList selectedPositions() const;
 
-    bool complete() const { return supported() && (_selectedPositions.count() == _motorCount); }
+    bool complete() const { return supported() && (_selectedPositions.count() == motorCount()); }
 
     bool orderCorrect() const;
+
+    virtual QStringList remapChanges() const { return {}; }
 
     void setPulseIntervalMs(int intervalMs) { _pulseTimer.setInterval(intervalMs); }
 
 signals:
-    void expectClockwiseOrderChanged();
     void runningChanged();
     void currentMotorChanged();
     void selectedPositionsChanged();
+
+protected:
+    /// Replaces the layout. Only call from a subclass constructor, before QML reads the constant properties.
+    ///     @param motorTestNumbers Motor test number of each motor, in the order they are pulsed
+    ///     @param positionAngles Angle of each position, clockwise from the nose
+    ///     @param layoutKnown true: position N is where motor N belongs
+    void _setLayout(const QList<int>& motorTestNumbers, const QList<double>& positionAngles, bool layoutKnown);
+
+    const QList<int>& _selections() const { return _selectedPositions; }
 
 private slots:
     void _pulseCurrentMotor();
@@ -87,9 +105,9 @@ private:
     static constexpr int _pulseDurationSecs = 1;
     static constexpr int _pulseIntervalMsDefault = 1500;
 
-    int _motorCount = 0;
-    bool _xLayout = true;
-    bool _expectClockwiseOrder = false;
+    QList<int> _motorTestNumbers;
+    QList<double> _positionAngles;
+    bool _layoutKnown = false;
     int _throttlePercent = 0;
     int _currentMotor = -1;
     QList<int> _selectedPositions;

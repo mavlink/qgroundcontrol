@@ -10,9 +10,13 @@ MotorIdentificationController::MotorIdentificationController(QObject* parent)
 {
     // Stacked coaxial motors share a position, so they can't be told apart from above
     if (_vehicle && !_vehicle->coaxialMotors()) {
-        _motorCount = _vehicle->motorCount();
+        const int motorCount = _vehicle->motorCount();
         // A tricopter has no plus variant: its motors are always front-right, rear and front-left
-        _xLayout = (_motorCount == 3) || _vehicle->xConfigMotors();
+        const bool xLayout = (motorCount == 3) || _vehicle->xConfigMotors();
+        for (int motor = 0; motor < motorCount; motor++) {
+            _motorTestNumbers.append(motor + 1);
+        }
+        _positionAngles = layoutAngles(motorCount, xLayout);
     }
 
     _pulseTimer.setInterval(_pulseIntervalMsDefault);
@@ -46,18 +50,30 @@ QVariantList MotorIdentificationController::positionAngles() const
         return angles;
     }
 
-    for (const double angle : layoutAngles(_motorCount, _xLayout)) {
+    for (const double angle : _positionAngles) {
         angles.append(angle);
     }
     return angles;
 }
 
-void MotorIdentificationController::setExpectClockwiseOrder(bool expectClockwiseOrder)
+int MotorIdentificationController::motorTestNumber(int motor) const
 {
-    if (expectClockwiseOrder != _expectClockwiseOrder) {
-        _expectClockwiseOrder = expectClockwiseOrder;
-        emit expectClockwiseOrderChanged();
+    return _motorTestNumbers.value(motor, -1);
+}
+
+void MotorIdentificationController::_setLayout(const QList<int>& motorTestNumbers, const QList<double>& positionAngles,
+                                               bool layoutKnown)
+{
+    if (motorTestNumbers.count() != positionAngles.count()) {
+        qCWarning(MotorIdentificationControllerLog)
+            << "Mismatched layout"
+            << "motors:" << motorTestNumbers.count() << "positions:" << positionAngles.count();
+        return;
     }
+
+    _motorTestNumbers = motorTestNumbers;
+    _positionAngles = positionAngles;
+    _layoutKnown = layoutKnown;
 }
 
 QVariantList MotorIdentificationController::selectedPositions() const
@@ -71,7 +87,7 @@ QVariantList MotorIdentificationController::selectedPositions() const
 
 bool MotorIdentificationController::orderCorrect() const
 {
-    if (!complete() || !_expectClockwiseOrder) {
+    if (!complete() || !_layoutKnown) {
         return false;
     }
 
@@ -110,7 +126,7 @@ void MotorIdentificationController::selectPosition(int position)
         qCDebug(MotorIdentificationControllerLog) << "Not running";
         return;
     }
-    if ((position < 0) || (position >= _motorCount) || _selectedPositions.contains(position)) {
+    if ((position < 0) || (position >= motorCount()) || _selectedPositions.contains(position)) {
         qCDebug(MotorIdentificationControllerLog) << "Ignoring unavailable position:" << position;
         return;
     }
@@ -118,7 +134,7 @@ void MotorIdentificationController::selectPosition(int position)
     _stopCurrentMotor();
     _selectedPositions.append(position);
 
-    if (_selectedPositions.count() == _motorCount) {
+    if (_selectedPositions.count() == motorCount()) {
         _pulseTimer.stop();
         _setCurrentMotor(-1);
     } else {
@@ -149,14 +165,14 @@ void MotorIdentificationController::_pulseCurrentMotor()
     // Only the first pulse reports errors, so a vehicle which rejects the test doesn't raise one per pulse
     const bool firstPulse = !_pulseTimer.isActive();
     qCDebug(MotorIdentificationControllerLog)
-        << "Pulsing motor:" << _currentMotor + 1 << "throttle:" << _throttlePercent;
-    _vehicle->motorTest(_currentMotor + 1, _throttlePercent, _pulseDurationSecs, firstPulse);
+        << "Pulsing motor:" << motorTestNumber(_currentMotor) << "throttle:" << _throttlePercent;
+    _vehicle->motorTest(motorTestNumber(_currentMotor), _throttlePercent, _pulseDurationSecs, firstPulse);
 }
 
 void MotorIdentificationController::_stopCurrentMotor()
 {
     if (running() && _vehicle) {
-        _vehicle->motorTest(_currentMotor + 1, 0, 0, false);
+        _vehicle->motorTest(motorTestNumber(_currentMotor), 0, 0, false);
     }
 }
 
