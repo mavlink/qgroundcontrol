@@ -303,9 +303,9 @@ bool VideoStreamController::canTakeScreenshot() const
     return _receiver && _receiver->streaming() && _receiver->videoOutput();
 }
 
-bool VideoStreamController::takeScreenshot(const QString& file) const
+bool VideoStreamController::takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif) const
 {
-    return _receiver && _receiver->takeScreenshot(file);
+    return _receiver && _receiver->takeScreenshot(file, exif);
 }
 
 bool VideoStreamController::streaming() const

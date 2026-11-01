@@ -1,12 +1,55 @@
 #include "VideoScreenshot.h"
 
+#include <QtCore/QBuffer>
+#include <QtCore/QFileInfo>
+#include <QtCore/QSaveFile>
 #include <QtGui/QImage>
 #include <QtGui/QTransform>
 #include <QtMultimedia/QVideoFrame>
 
+#include "ExifParser.h"
+#include "ExifUtility.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(VideoScreenshotLog, "Video.VideoScreenshot")
+
+namespace {
+
+bool isJpegFile(const QString& file)
+{
+    const QString suffix = QFileInfo(file).suffix();
+    return (suffix.compare(QStringLiteral("jpg"), Qt::CaseInsensitive) == 0) ||
+           (suffix.compare(QStringLiteral("jpeg"), Qt::CaseInsensitive) == 0);
+}
+
+/// Adds @p exif to the JPEG in @p jpeg.
+bool addExif(QByteArray& jpeg, const VideoScreenshot::Exif& exif)
+{
+    if (exif.position.isValid()) {
+        GeoTagData geoTag;
+        geoTag.coordinate = exif.position;
+        if (!ExifParser::write(jpeg, geoTag)) {
+            return false;
+        }
+    }
+    if (exif.taken.isValid()) {
+        ExifData* data = ExifUtility::loadFromBuffer(jpeg);
+        if (!data) {
+            data = ExifUtility::createNew();
+        }
+        const bool written =
+            data && ExifUtility::writeDateTimeOriginal(data, exif.taken) && ExifUtility::saveToBuffer(data, jpeg);
+        if (data) {
+            exif_data_unref(data);
+        }
+        if (!written) {
+            return false;
+        }
+    }
+    return true;
+}
+
+}  // namespace
 
 QImage VideoScreenshot::displayedImage(const QVideoFrame& frame, QtVideo::Rotation outputRotation, bool outputMirrored)
 {
@@ -41,8 +84,8 @@ QImage VideoScreenshot::displayedImage(const QVideoFrame& frame, QtVideo::Rotati
     return image;
 }
 
-bool VideoScreenshot::save(const QVideoFrame& frame, const QString& file, QtVideo::Rotation outputRotation,
-                           bool outputMirrored)
+bool VideoScreenshot::save(const QVideoFrame& frame, const QString& file, const Exif& exif,
+                           QtVideo::Rotation outputRotation, bool outputMirrored)
 {
     const QImage image = displayedImage(frame, outputRotation, outputMirrored);
     if (image.isNull()) {
@@ -50,8 +93,29 @@ bool VideoScreenshot::save(const QVideoFrame& frame, const QString& file, QtVide
         return false;
     }
 
-    if (!image.save(file)) {
-        qCWarning(VideoScreenshotLog) << "Failed to save screenshot" << file;
+    if (!isJpegFile(file) || (!exif.taken.isValid() && !exif.position.isValid())) {
+        if (!image.save(file)) {
+            qCWarning(VideoScreenshotLog) << "Failed to save screenshot" << file;
+            return false;
+        }
+        qCDebug(VideoScreenshotLog) << "Screenshot saved:" << file;
+        return true;
+    }
+
+    QByteArray jpeg;
+    QBuffer buffer(&jpeg);
+    if (!buffer.open(QIODevice::WriteOnly) || !image.save(&buffer, "JPG")) {
+        qCWarning(VideoScreenshotLog) << "Failed to encode screenshot" << file;
+        return false;
+    }
+    buffer.close();
+    // The picture matters more than its tags.
+    if (!addExif(jpeg, exif)) {
+        qCWarning(VideoScreenshotLog) << "Failed to add EXIF data to screenshot" << file;
+    }
+    QSaveFile out(file);
+    if (!out.open(QIODevice::WriteOnly) || (out.write(jpeg) != jpeg.size()) || !out.commit()) {
+        qCWarning(VideoScreenshotLog) << "Failed to save screenshot" << file << out.errorString();
         return false;
     }
 

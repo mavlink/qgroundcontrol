@@ -363,7 +363,7 @@ bool UVCCameraController::canTakeScreenshot() const
     return _camera && _camera->isActive() && _videoSink();
 }
 
-bool UVCCameraController::takeScreenshot(const QString& file) const
+bool UVCCameraController::takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif) const
 {
     QVideoSink* const videoSink = _videoSink();
     if (!videoSink) {
@@ -371,7 +371,7 @@ bool UVCCameraController::takeScreenshot(const QString& file) const
         return false;
     }
     // The frame on display carries the transform already (UVCFrameRelay).
-    return VideoScreenshot::save(videoSink->videoFrame(), file);
+    return VideoScreenshot::save(videoSink->videoFrame(), file, exif);
 }
 
 void UVCCameraController::setTransform(QtVideo::Rotation rotation, bool mirrored)
@@ -379,41 +379,42 @@ void UVCCameraController::setTransform(QtVideo::Rotation rotation, bool mirrored
     _frameRelay->setTransform(rotation, mirrored);
 }
 
-void UVCCameraController::capturePhoto(const QString& file)
+void UVCCameraController::capturePhoto(const QString& file, const VideoScreenshot::Exif& exif)
 {
     const int id =
         (_captureSession && canTakeScreenshot() && _imageCapture->isReadyForCapture()) ? _imageCapture->capture() : -1;
     if (id < 0) {
-        _savePhotoOnDisplay(file);
+        _savePhotoOnDisplay(file, exif);
         return;
     }
     qCDebug(UVCCameraControllerLog) << "photo" << id << file;
-    _photoFiles.insert(id, file);
+    _photoFiles.insert(id, {file, exif});
 }
 
 void UVCCameraController::_onImageAvailable(int id, const QVideoFrame& frame)
 {
-    const QString file = _photoFiles.take(id);
-    if (file.isEmpty()) {
+    const PendingPhoto photo = _photoFiles.take(id);
+    if (photo.file.isEmpty()) {
         return;
     }
     const QtVideo::Rotation rotation = _frameRelay->rotation();
     const bool mirrored = _frameRelay->mirrored();
     // Converting and encoding a full-resolution photo would stall the UI.
-    (void) QtConcurrent::run(
-        [frame, file, rotation, mirrored] { (void) VideoScreenshot::save(frame, file, rotation, mirrored); });
+    (void) QtConcurrent::run([frame, photo, rotation, mirrored] {
+        (void) VideoScreenshot::save(frame, photo.file, photo.exif, rotation, mirrored);
+    });
 }
 
 void UVCCameraController::_onImageCaptureError(int id, const QString& errorString)
 {
-    const QString file = _photoFiles.take(id);
-    qCWarning(UVCCameraControllerLog) << "Photo capture failed:" << id << file << errorString;
-    if (!file.isEmpty()) {
-        _savePhotoOnDisplay(file);
+    const PendingPhoto photo = _photoFiles.take(id);
+    qCWarning(UVCCameraControllerLog) << "Photo capture failed:" << id << photo.file << errorString;
+    if (!photo.file.isEmpty()) {
+        _savePhotoOnDisplay(photo.file, photo.exif);
     }
 }
 
-void UVCCameraController::_savePhotoOnDisplay(const QString& file) const
+void UVCCameraController::_savePhotoOnDisplay(const QString& file, const VideoScreenshot::Exif& exif) const
 {
     QVideoSink* const videoSink = _videoSink();
     if (!videoSink) {
@@ -422,7 +423,8 @@ void UVCCameraController::_savePhotoOnDisplay(const QString& file) const
     }
     // Converting and encoding a full-resolution photo would stall the UI. The frame on display carries the transform
     // already (UVCFrameRelay).
-    (void) QtConcurrent::run([frame = videoSink->videoFrame(), file] { (void) VideoScreenshot::save(frame, file); });
+    (void) QtConcurrent::run(
+        [frame = videoSink->videoFrame(), file, exif] { (void) VideoScreenshot::save(frame, file, exif); });
 }
 
 void UVCCameraController::_createCamera()
@@ -463,8 +465,8 @@ void UVCCameraController::_createCamera()
 void UVCCameraController::_releaseCamera()
 {
     // The capture session's photos still pending won't come: save the frame on display instead.
-    for (const QString& file : std::as_const(_photoFiles)) {
-        _savePhotoOnDisplay(file);
+    for (const PendingPhoto& photo : std::as_const(_photoFiles)) {
+        _savePhotoOnDisplay(photo.file, photo.exif);
     }
     _photoFiles.clear();
     _monitor->detach();

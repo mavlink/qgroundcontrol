@@ -14,6 +14,8 @@
 #include <QtMultimedia/qtvideo.h>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include "VideoScreenshot.h"
+
 class QCamera;
 class QImageCapture;
 class QMediaCaptureSession;
@@ -86,13 +88,14 @@ public:
 
     /// True while the camera runs into a registered VideoOutput.
     bool canTakeScreenshot() const;
-    /// Saves the frame on display to @p file, as displayed. False, with a warning logged, without a VideoOutput.
-    bool takeScreenshot(const QString& file) const;
+    /// Saves the frame on display to @p file, as displayed, with @p exif for a JPEG. False, with a warning logged,
+    /// without a VideoOutput.
+    bool takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif = {}) const;
 
     /// Takes a photo into @p file, turned and mirrored as setTransform() says and saved off the GUI thread: a still
     /// capture where Qt takes one (Android, Apple), else the frame on display. Saves the frame on display too while the
-    /// camera can't capture, or when a capture fails.
-    void capturePhoto(const QString& file);
+    /// camera can't capture, or when a capture fails. A JPEG carries @p exif.
+    void capturePhoto(const QString& file, const VideoScreenshot::Exif& exif = {});
 
     /// True while the camera runs into a registered VideoOutput, so startRecording() can record it.
     bool canRecord() const { return canTakeScreenshot(); }
@@ -147,7 +150,7 @@ private:
     void _onImageAvailable(int id, const QVideoFrame& frame);
     void _onImageCaptureError(int id, const QString& errorString);
     /// Saves the frame on display to @p file off the GUI thread; logs a warning without a VideoOutput.
-    void _savePhotoOnDisplay(const QString& file) const;
+    void _savePhotoOnDisplay(const QString& file, const VideoScreenshot::Exif& exif) const;
     /// Records with the next of _pendingFormats.
     void _recordNextFormat();
     void _onRecorderStateChanged(QMediaRecorder::RecorderState state);
@@ -175,8 +178,15 @@ private:
     QStringList _formats;
     QByteArray _cameraId;
     int _retries = 0;
-    /// The files of the photos requested and not taken yet, by request id.
-    QHash<int, QString> _photoFiles;
+
+    struct PendingPhoto
+    {
+        QString file;
+        VideoScreenshot::Exif exif;
+    };
+
+    /// The photos requested and not taken yet, by request id.
+    QHash<int, PendingPhoto> _photoFiles;
     QList<QMediaFormat> _pendingFormats;
     /// The file being recorded, without its suffix.
     QString _recordingBase;

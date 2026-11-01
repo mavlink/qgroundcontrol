@@ -19,3 +19,8 @@ Most of the settings that are displayed depend on the camera (they are defined i
 
 The video page is used to enable/disable video streaming.
 When enabled, you can start/stop the video stream, enable a grid overlay or the [live telemetry overlay](video_overlay.md#live-overlay), change how the image fits the screen, and record the video locally with QGC.
+
+A single photo the camera can't take itself (it can't capture images, or not in video mode) is saved by QGC instead,
+from the video on display, to the `Photo` folder of the
+[Application Load/Save Path](../settings_view/general.md#load_save_path). The JPEG records when it was taken and where
+the vehicle was (EXIF date and GPS position).

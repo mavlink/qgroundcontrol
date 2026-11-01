@@ -87,7 +87,7 @@ public:
 
     /// True while the stream is streaming into a registered output.
     bool canTakeScreenshot() const;
-    bool takeScreenshot(const QString& file) const;
+    bool takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif = {}) const;
 
     bool streaming() const;
     bool decoding() const;

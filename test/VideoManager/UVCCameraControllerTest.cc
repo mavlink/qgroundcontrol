@@ -136,7 +136,7 @@ void UVCCameraControllerTest::_testPhotoFollowsTransform()
     controller.registerVideoOutput(output.get());
 
     // A captured frame, as QImageCapture hands it over for request 7, is saved as displayed.
-    controller._photoFiles.insert(7, photo);
+    controller._photoFiles.insert(7, {photo, {}});
     ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
     controller._onImageAvailable(7, QVideoFrame(redTopLeftQuadrant()));
     QVERIFY(controller._photoFiles.isEmpty());
@@ -168,7 +168,7 @@ void UVCCameraControllerTest::_testPhotoWithoutCameraIsScreenshot()
 
     // A failed capture falls back the same way.
     const QString failed = tempDir.filePath(QStringLiteral("failed.png"));
-    controller._photoFiles.insert(9, failed);
+    controller._photoFiles.insert(9, {failed, {}});
     expectLogMessage("Video.UVCCameraController", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Photo capture failed")));
     controller._onImageCaptureError(9, QStringLiteral("Camera busy"));

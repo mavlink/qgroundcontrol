@@ -10,6 +10,7 @@
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include "VideoScreenshot.h"
 #include "VideoStreamStats.h"
 
 class QQuickItem;
@@ -140,9 +141,10 @@ public:
     void startRecording(const QString& file, FileFormat format);
     void stopRecording();
 
-    /// Saves the frame on display to @p file as shown: cropped to its format's viewport, rotated and mirrored. Returns
-    /// false, with a warning logged, when there is no output, no frame, or the file can't be written.
-    bool takeScreenshot(const QString& file) const;
+    /// Saves the frame on display to @p file as shown: cropped to its format's viewport, rotated and mirrored, with
+    /// @p exif for a JPEG. Returns false, with a warning logged, when there is no output, no frame, or the file can't
+    /// be written.
+    bool takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif = {}) const;
 
 signals:
     void stateChanged(VideoReceiver::State state);

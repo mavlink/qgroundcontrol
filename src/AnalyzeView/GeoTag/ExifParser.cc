@@ -74,12 +74,14 @@ bool write(QByteArray &buffer, const GeoTagData &geotag)
     ExifEntry *lonEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_LONGITUDE), EXIF_FORMAT_RATIONAL, 3);
     ExifUtility::writeGpsCoordinate(lonEntry, order, geotag.coordinate.longitude());
 
-    // Altitude
-    ExifEntry *altRefEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE_REF), EXIF_FORMAT_BYTE, 1);
-    ExifUtility::writeGpsAltRef(altRefEntry, geotag.coordinate.altitude() < 0 ? 1 : 0);
+    // Altitude, where the coordinate has one
+    if (!qIsNaN(geotag.coordinate.altitude())) {
+        ExifEntry* altRefEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE_REF), EXIF_FORMAT_BYTE, 1);
+        ExifUtility::writeGpsAltRef(altRefEntry, geotag.coordinate.altitude() < 0 ? 1 : 0);
 
-    ExifEntry *altEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE), EXIF_FORMAT_RATIONAL, 1);
-    ExifUtility::writeRational(altEntry, order, geotag.coordinate.altitude(), 100);
+        ExifEntry* altEntry = getOrCreateEntry(static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE), EXIF_FORMAT_RATIONAL, 1);
+        ExifUtility::writeRational(altEntry, order, geotag.coordinate.altitude(), 100);
+    }
 
     // Save back to buffer
     const bool success = ExifUtility::saveToBuffer(data, buffer);

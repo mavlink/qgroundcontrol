@@ -129,7 +129,7 @@ void VideoReceiver::stopRecording()
     onStopRecording();
 }
 
-bool VideoReceiver::takeScreenshot(const QString& file) const
+bool VideoReceiver::takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif) const
 {
     QVideoSink* const sink = videoSink();
     if (!sink) {
@@ -137,7 +137,7 @@ bool VideoReceiver::takeScreenshot(const QString& file) const
         return false;
     }
 
-    return VideoScreenshot::save(sink->videoFrame(), file);
+    return VideoScreenshot::save(sink->videoFrame(), file, exif);
 }
 
 QVideoSink* VideoReceiver::videoSink() const

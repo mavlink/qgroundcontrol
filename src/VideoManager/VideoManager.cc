@@ -345,16 +345,22 @@ void VideoManager::grabImage(const QString& imageFile)
                QStringLiteral(".jpg");
     }
 
+    VideoScreenshot::Exif exif;
+    exif.taken = QDateTime::currentDateTime();
+    if (_activeVehicle) {
+        exif.position = _activeVehicle->coordinate();
+    }
+
     if (_primaryStream->canTakeScreenshot()) {
-        (void) _primaryStream->takeScreenshot(file);
+        (void) _primaryStream->takeScreenshot(file, exif);
     } else if (_uvcCamera->canTakeScreenshot()) {
-        _uvcCamera->capturePhoto(file);
+        _uvcCamera->capturePhoto(file, exif);
     } else {
         qCDebug(VideoManagerLog) << "No video on display to take a screenshot from";
     }
 
     if (_thermalStream->canTakeScreenshot()) {
-        (void) _thermalStream->takeScreenshot(_thermalStream->taggedFile(file));
+        (void) _thermalStream->takeScreenshot(_thermalStream->taggedFile(file), exif);
     }
 }
 
