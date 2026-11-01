@@ -18,6 +18,7 @@ import QGroundControl.GeoMap
 /// 2D). Backs the extrudeHeightMeters mode of GeoMapPolygon/GeoMapCircle.
 GeoMapItem {
     id: root
+    objectName: "geoMapFenceWall"
 
     property var coordinates: []        ///< QGeoCoordinate ring vertices
     property real heightAglMeters: 0

@@ -303,6 +303,7 @@ Rectangle {
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     text:           qsTr("Breach Return Point")
+                    visible:        myGeoFenceController.breachReturnSupported
                 }
 
                 QGCButton {
@@ -321,21 +322,6 @@ Rectangle {
                     anchors.right:      parent.right
 
                     onClicked: myGeoFenceController.breachReturnPoint = QtPositioning.coordinate()
-                }
-
-                ColumnLayout {
-                    anchors.left:       parent.left
-                    anchors.right:      parent.right
-                    spacing:            _margin
-                    visible:            breachReturnSection.visible && myGeoFenceController.breachReturnPoint.isValid
-
-                    QGCLabel {
-                        text: qsTr("Altitude")
-                    }
-
-                    FactTextField {
-                        fact: myGeoFenceController.breachReturnAltitude
-                    }
                 }
 
             }

@@ -32,6 +32,7 @@ Item {
     property color fillColor: "transparent"
     property real extrudeHeightMeters: 0    ///< 0 = flat outline only
     property color extrudeColor: Qt.alpha(strokeColor, 0.25)
+    property real node3DOpacity: 1          ///< Dimming of the wall, see GeoMapItem.node3DOpacity
     property alias altitudeMode: pathProjector.altitudeMode
 
     GeoMapProjectedPath {
@@ -62,6 +63,7 @@ Item {
         surfaceModel: root.surfaceModel
         heightAglMeters: root.extrudeHeightMeters
         color: root.extrudeColor
+        node3DOpacity: root.node3DOpacity
         // Skip the ring construction entirely while hidden
         coordinates: (wallItem.visible && root.center && root.center.isValid && root.radiusMeters > 0)
                      ? pathProjector.circleCoordinates(root.center, root.radiusMeters)

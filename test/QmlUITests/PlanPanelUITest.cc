@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <optional>
 
 #include <QtCore/QList>
 #include <QtCore/QMetaObject>
@@ -16,6 +17,7 @@
 #include <QtCore/QVariantMap>
 #include <QtCore/QtNumeric>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQml/QQmlContext>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QSignalSpy>
@@ -23,6 +25,7 @@
 
 #include "AppSettings.h"
 #include "Fact.h"
+#include "FactMetaData.h"
 #include "GeoFenceController.h"
 #include "GeoMapCamera.h"
 #include "GeoMapItem.h"
@@ -33,6 +36,7 @@
 #include "PlanViewSettings.h"
 #include "QGCFileDialogController.h"
 #include "QGCMAVLink.h"
+#include "QGCMapCircle.h"
 #include "QGroundControlQmlGlobal.h"
 #include "QmlObjectListModel.h"
 #include "RallyPoint.h"
@@ -145,6 +149,35 @@ bool enterInvalidValue(QObject* textField)
     return QMetaObject::invokeMethod(textField, "_onEditingFinished") &&
            textField->property("validationError").toBool();
 }
+
+/// Plans for an offline vehicle of firmwareClass and vehicleClass until destroyed
+class OfflineVehicleScope
+{
+public:
+    OfflineVehicleScope(int firmwareClass, int vehicleClass)
+        : _firmware(SettingsManager::instance()->appSettings()->offlineEditingFirmwareClass())
+        , _vehicle(SettingsManager::instance()->appSettings()->offlineEditingVehicleClass())
+        , _savedFirmware(_firmware->rawValue())
+        , _savedVehicle(_vehicle->rawValue())
+    {
+        _firmware->setRawValue(firmwareClass);
+        _vehicle->setRawValue(vehicleClass);
+    }
+
+    ~OfflineVehicleScope()
+    {
+        _firmware->setRawValue(_savedFirmware);
+        _vehicle->setRawValue(_savedVehicle);
+    }
+
+    Q_DISABLE_COPY_MOVE(OfflineVehicleScope)
+
+private:
+    Fact* const _firmware;
+    Fact* const _vehicle;
+    const QVariant _savedFirmware;
+    const QVariant _savedVehicle;
+};
 
 bool restoreValidValue(QObject* textField, const QVariant& validText)
 {
@@ -466,6 +499,68 @@ void PlanPanelUITest::_testTabSelectionDrivesEditingLayer()
     QVERIFY2(
         waitForCondition([&] { return _editingLayer() == kPanelLayerMission; }, 2000, QStringLiteral("mission layer")),
         qPrintable(QStringLiteral("Tree view left the editing layer at %1").arg(_editingLayer())));
+}
+
+void PlanPanelUITest::_testDisabledTabsDoNotPassClicksToTheMap_data()
+{
+    QTest::addColumn<bool>("geoMapEngine");
+
+    QTest::newRow("QtLocation map") << false;
+    QTest::newRow("GeoMap") << true;
+}
+
+void PlanPanelUITest::_testDisabledTabsDoNotPassClicksToTheMap()
+{
+    QFETCH(bool, geoMapEngine);
+
+    _startPlanPanel(geoMapEngine);
+    if (QTest::currentTestFailed())
+        return;
+
+    MissionController* const controller = _missionController();
+    QVERIFY(controller);
+    QVERIFY(!controller->homePositionSet());
+
+    // A map click on the Plan tab sets home, so one passed through a disabled tab would set it behind the tab
+    for (const QString& tab : {QStringLiteral("mission"), QStringLiteral("fence"), QStringLiteral("rally")}) {
+        verifyEnabled(tabObjectName(tab), false, QStringLiteral("%1 tab without home").arg(tab));
+        if (QTest::currentTestFailed())
+            return;
+        QVERIFY2(clickButton(tabObjectName(tab)), qPrintable(QStringLiteral("Failed to click the %1 tab").arg(tab)));
+        QVERIFY2(!controller->homePositionSet(),
+                 qPrintable(QStringLiteral("Clicking the disabled %1 tab set home").arg(tab)));
+        QCOMPARE(_currentTab(), QStringLiteral("plan"));
+    }
+
+    // The gap between two pills
+    QQuickItem* const missionTab = findVisibleItem(_rootItem, tabObjectName(QStringLiteral("mission")));
+    QQuickItem* const fenceTab = findVisibleItem(_rootItem, tabObjectName(QStringLiteral("fence")));
+    QVERIFY(missionTab && fenceTab);
+    const QPointF gap((missionTab->mapToScene(QPointF(missionTab->width() / 2, missionTab->height())) +
+                       fenceTab->mapToScene(QPointF(fenceTab->width() / 2, 0))) /
+                      2);
+    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, gap.toPoint());
+    QVERIFY2(!controller->homePositionSet(), "Clicking between two tabs set home");
+
+    // The other buttons stay on the tab bar too: on the GeoMap a right drag would orbit the camera
+    if (geoMapEngine) {
+        QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+        QVERIFY(map);
+        auto* const camera = map->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera"));
+        QVERIFY2(camera, "GeoMapCamera not found");
+        const double headingBefore = camera->heading();
+        const QPoint start = fenceTab->mapToScene(QPointF(fenceTab->width() / 2, fenceTab->height() / 2)).toPoint();
+        QTest::mousePress(_window, Qt::RightButton, Qt::NoModifier, start);
+        constexpr int steps = 10;
+        for (int i = 1; i <= steps; i++) {
+            QTest::mouseMove(_window, start + (QPoint(-80, 0) * i / steps));
+        }
+        QTest::mouseRelease(_window, Qt::RightButton, Qt::NoModifier, start + QPoint(-80, 0));
+        QVERIFY2(
+            qFuzzyCompare(camera->heading() + 1, headingBefore + 1),
+            qPrintable(
+                QStringLiteral("A right drag on the tab bar turned the map to heading %1").arg(camera->heading())));
+    }
 }
 
 void PlanPanelUITest::_testDefaultAltitudeChipOpensPlanTab()
@@ -1942,6 +2037,760 @@ void PlanPanelUITest::_testGeoMapDimsLandingPatternOutsideTheMissionLayer()
              "The landing pattern markers are not dimmed outside the mission layer");
 }
 
+void PlanPanelUITest::_testGeoMapFenceIsEditedOnlyOnTheFenceLayer_data()
+{
+    QTest::addColumn<QString>("addButton");
+    QTest::addColumn<QString>("handleName");
+    QTest::addColumn<QPoint>("delta");
+    QTest::addColumn<bool>("edgeLengths");
+
+    // The radius handle stays east of the center, so it is only dragged east
+    QTest::newRow("circle radius") << QStringLiteral("planPanel_fenceAddCircle")
+                                   << QStringLiteral("geoMapCircleRadiusHandle") << QPoint(40, 0) << false;
+    QTest::newRow("circle center") << QStringLiteral("planPanel_fenceAddCircle")
+                                   << QStringLiteral("geoMapCircleCenterHandle") << QPoint(40, 30) << false;
+    QTest::newRow("polygon vertex") << QStringLiteral("planPanel_fenceAddPolygon")
+                                    << QStringLiteral("geoMapPolygonVertexHandle") << QPoint(40, 30) << true;
+    QTest::newRow("polygon center") << QStringLiteral("planPanel_fenceAddPolygon")
+                                    << QStringLiteral("geoMapPolygonCenterHandle") << QPoint(40, 30) << false;
+}
+
+void PlanPanelUITest::_testGeoMapFenceIsEditedOnlyOnTheFenceLayer()
+{
+    QFETCH(QString, addButton);
+    QFETCH(QString, handleName);
+    QFETCH(QPoint, delta);
+    QFETCH(bool, edgeLengths);
+
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    _setHomeAndOpenMission();
+    if (QTest::currentTestFailed())
+        return;
+
+    PlanMasterController* const master = _planMasterController();
+    QVERIFY(master);
+    GeoFenceController* const fence = master->geoFenceController();
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+
+    QVERIFY2(_selectTab(QStringLiteral("fence")), "Failed to open the Fence tab");
+    QVERIFY2(clickButton(addButton), "Failed to add the fence");
+    QVERIFY2(waitForCondition([&] { return (fence->polygons()->count() + fence->circles()->count()) == 1; }, 2000,
+                              QStringLiteral("fence added")),
+             "The fence was not added");
+
+    const auto fenceVisuals = [&]() -> QQuickItem* {
+        const auto items = findGeoMapItems(map, QLatin1String(kGeoFenceVisuals));
+        return items.isEmpty() ? nullptr : items.first();
+    };
+    const auto visibleHandles = [&] {
+        QList<QQuickItem*> handles = findGeoMapItems(map, handleName);
+        handles.removeIf([](QQuickItem* handle) { return !handle->isVisible(); });
+        return handles;
+    };
+    const auto anchorInWindow = [](QQuickItem* handle) {
+        return handle->mapToScene(handle->property("anchorPoint").toPointF()).toPoint();
+    };
+    // The wall's 3D node does not follow the 2D opacity the fence visuals are dimmed with. Rings without a wall, such
+    // as the drag handles' ground shadows, have a hidden one.
+    const auto wallsAt = [&](double opacity) {
+        QList<QQuickItem*> walls = findGeoMapItems(map, QStringLiteral("geoMapFenceWall"));
+        walls.removeIf([](QQuickItem* wall) { return !wall->isVisible(); });
+        return !walls.isEmpty() && std::all_of(walls.cbegin(), walls.cend(), [&](QQuickItem* wall) {
+            QObject* const node = wall->property("node3D").value<QObject*>();
+            return node && qAbs(node->property("opacity").toReal() - opacity) < 0.01;
+        });
+    };
+    QVERIFY2(fenceVisuals(), "Fence visuals not found on the GeoMap");
+    QCOMPARE(fenceVisuals()->opacity(), 1.0);
+    QVERIFY2(waitForCondition([&] { return wallsAt(1.0); }, 3000, QStringLiteral("opaque fence walls")),
+             "The fence walls must be opaque while the fence is edited");
+    QVERIFY2(waitForCondition([&] { return !visibleHandles().isEmpty(); }, 2000, QStringLiteral("handle shown")),
+             "The selected fence has no handle on the Fence tab");
+    // Polygons also get the polygon tools toolbar
+    const bool isPolygon = fence->polygons()->count() == 1;
+    verifyVisibility(QStringLiteral("geoMapPolygonToolbar"), isPolygon,
+                     QStringLiteral("polygon toolbar on the Fence tab"));
+    if (QTest::currentTestFailed())
+        return;
+
+    const QPoint start = anchorInWindow(visibleHandles().first());
+    QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, start);
+    constexpr int steps = 10;
+    for (int i = 1; i <= steps; i++) {
+        QTest::mouseMove(_window, start + ((delta * i) / steps));
+    }
+    // Only a polygon vertex drag shows the length of every edge
+    const auto visibleEdgeLengths = [&] {
+        QList<QQuickItem*> labels = findGeoMapItems(map, QStringLiteral("geoMapPolygonEdgeLength"));
+        labels.removeIf([](QQuickItem* label) { return !label->isVisible(); });
+        return labels.count();
+    };
+    const int edgeCount = (fence->polygons()->count() == 1) ? fence->polygons()->get(0)->property("count").toInt() : 0;
+    QVERIFY2(waitForCondition([&] { return visibleEdgeLengths() == (edgeLengths ? edgeCount : 0); }, 2000,
+                              QStringLiteral("edge lengths while dragging")),
+             qPrintable(QStringLiteral("%1 edge lengths show while dragging").arg(visibleEdgeLengths())));
+    QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, start + delta);
+    QVERIFY2(waitForCondition([&] { return visibleEdgeLengths() == 0; }, 2000, QStringLiteral("edge lengths hidden")),
+             "Edge lengths still show after the drag");
+
+    // The fence follows the handle to the cursor
+    const QPoint end = start + delta;
+    const auto handleUnderCursor = [&] {
+        const auto handles = visibleHandles();
+        return std::any_of(handles.cbegin(), handles.cend(),
+                           [&](QQuickItem* handle) { return (anchorInWindow(handle) - end).manhattanLength() <= 4; });
+    };
+    QVERIFY2(waitForCondition(handleUnderCursor, 2000, QStringLiteral("handle dragged")),
+             "The dragged handle did not end up under the cursor");
+    // A polygon left in its drag state stops notifying path changes
+    if (fence->polygons()->count() == 1) {
+        QObject* const polygon = fence->polygons()->get(0);
+        QVERIFY(!polygon->property("vertexDrag").toBool());
+        QVERIFY(!polygon->property("centerDrag").toBool());
+    }
+
+    // Off the Fence tab the fence is dimmed and cannot be edited
+    QVERIFY2(_selectTab(QStringLiteral("mission")), "Failed to open the Mission tab");
+    QVERIFY2(waitForCondition([&] { return qFuzzyCompare(fenceVisuals()->opacity(), 0.5); }, 2000,
+                              QStringLiteral("dimmed fence")),
+             "The fence is not dimmed outside the fence layer");
+    QVERIFY2(waitForCondition([&] { return wallsAt(0.5); }, 3000, QStringLiteral("dimmed fence walls")),
+             "The fence walls are not dimmed outside the fence layer");
+    QVERIFY2(visibleHandles().isEmpty(), "The fence handle shows outside the fence layer");
+    verifyVisibility(QStringLiteral("geoMapPolygonToolbar"), false,
+                     QStringLiteral("polygon toolbar off the Fence tab"));
+}
+
+void PlanPanelUITest::_testGeoMapFencePolygonSplitHandleInsertsVertex()
+{
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    _setHomeAndOpenMission();
+    if (QTest::currentTestFailed())
+        return;
+
+    PlanMasterController* const master = _planMasterController();
+    QVERIFY(master);
+    GeoFenceController* const fence = master->geoFenceController();
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+
+    QVERIFY2(_selectTab(QStringLiteral("fence")), "Failed to open the Fence tab");
+    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceAddPolygon")), "Failed to click + Polygon");
+    QVERIFY2(waitForCondition([&] { return fence->polygons()->count() == 1; }, 2000, QStringLiteral("polygon added")),
+             "+ Polygon did not add a polygon");
+    QObject* const polygon = fence->polygons()->get(0);
+    const int vertexCount = polygon->property("count").toInt();
+
+    // One split handle per edge, each halfway between its two vertices
+    const auto splitHandles = [&] { return findGeoMapItems(map, QStringLiteral("geoMapPolygonSplitHandle")); };
+    QVERIFY2(
+        waitForCondition([&] { return splitHandles().count() == vertexCount; }, 2000, QStringLiteral("split handles")),
+        qPrintable(QStringLiteral("%1 split handles for %2 edges").arg(splitHandles().count()).arg(vertexCount)));
+    const auto handles = splitHandles();
+    const auto firstEdge = std::find_if(handles.cbegin(), handles.cend(),
+                                        [](QQuickItem* splitHandle) { return splitHandle->property("index") == 0; });
+    QVERIFY(firstEdge != handles.cend());
+    QQuickItem* const handle = *firstEdge;
+    QGeoCoordinate first;
+    QGeoCoordinate second;
+    QMetaObject::invokeMethod(polygon, "vertexCoordinate", Q_RETURN_ARG(QGeoCoordinate, first), Q_ARG(int, 0));
+    QMetaObject::invokeMethod(polygon, "vertexCoordinate", Q_RETURN_ARG(QGeoCoordinate, second), Q_ARG(int, 1));
+    const QGeoCoordinate midpoint = handle->property("coordinate").value<QGeoCoordinate>();
+    QVERIFY2(qAbs(midpoint.distanceTo(first) - midpoint.distanceTo(second)) < 1.0,
+             "The split handle is not halfway along its edge");
+
+    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier,
+                      handle->mapToScene(handle->property("anchorPoint").toPointF()).toPoint());
+    QVERIFY2(waitForCondition([&] { return polygon->property("count").toInt() == vertexCount + 1; }, 2000,
+                              QStringLiteral("vertex inserted")),
+             "Clicking the split handle did not insert a vertex");
+    QGeoCoordinate inserted;
+    QMetaObject::invokeMethod(polygon, "vertexCoordinate", Q_RETURN_ARG(QGeoCoordinate, inserted), Q_ARG(int, 1));
+    QVERIFY2(inserted.distanceTo(midpoint) < 1.0, "The vertex was not inserted at the split handle");
+}
+
+void PlanPanelUITest::_testGeoMapFencePolygonMenuActsOnClickedHandle_data()
+{
+    QTest::addColumn<QString>("handleName");
+    QTest::addColumn<QString>("menuItem");
+    QTest::addColumn<int>("vertexCountBefore");
+
+    QTest::newRow("remove vertex") << QStringLiteral("geoMapPolygonVertexHandle")
+                                   << QStringLiteral("geoMapPolygonRemoveVertex") << 4;
+    QTest::newRow("no removal below three vertices") << QStringLiteral("geoMapPolygonVertexHandle") << QString() << 3;
+    QTest::newRow("edit vertex position")
+        << QStringLiteral("geoMapPolygonVertexHandle") << QStringLiteral("geoMapPolygonEditPosition") << 4;
+    QTest::newRow("edit center position")
+        << QStringLiteral("geoMapPolygonCenterHandle") << QStringLiteral("geoMapPolygonEditPosition") << 4;
+}
+
+void PlanPanelUITest::_testGeoMapFencePolygonMenuActsOnClickedHandle()
+{
+    QFETCH(QString, handleName);
+    QFETCH(QString, menuItem);
+    QFETCH(int, vertexCountBefore);
+
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    _setHomeAndOpenMission();
+    if (QTest::currentTestFailed())
+        return;
+
+    PlanMasterController* const master = _planMasterController();
+    QVERIFY(master);
+    GeoFenceController* const fence = master->geoFenceController();
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+
+    QVERIFY2(_selectTab(QStringLiteral("fence")), "Failed to open the Fence tab");
+    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceAddPolygon")), "Failed to click + Polygon");
+    QVERIFY2(waitForCondition([&] { return fence->polygons()->count() == 1; }, 2000, QStringLiteral("polygon added")),
+             "+ Polygon did not add a polygon");
+    QObject* const polygon = fence->polygons()->get(0);
+    const auto vertexCount = [polygon] { return polygon->property("count").toInt(); };
+    while (vertexCount() > vertexCountBefore) {
+        QMetaObject::invokeMethod(polygon, "removeVertex", Q_ARG(int, vertexCount() - 1));
+    }
+    QCOMPARE(vertexCount(), vertexCountBefore);
+
+    const auto path = [polygon] { return polygon->property("path").toList(); };
+    // Vertex 1, so an action applied to the default index 0 shows; or the center
+    constexpr int clickedVertex = 1;
+    const auto clickedHandle = [&]() -> QQuickItem* {
+        const auto handles = findGeoMapItems(map, handleName);
+        for (QQuickItem* const handle : handles) {
+            if (handle->isVisible() &&
+                (!handle->property("index").isValid() || handle->property("index") == clickedVertex)) {
+                return handle;
+            }
+        }
+        return nullptr;
+    };
+    QVERIFY2(waitForCondition([&] { return clickedHandle() != nullptr; }, 2000, QStringLiteral("handle shown")),
+             "The handle is not shown");
+    QQuickItem* const handle = clickedHandle();
+    const QVariantList pathBefore = path();
+    // A click that wobbles a little, as taps and trackpad clicks do, is still a click
+    const QPoint clickPoint = handle->mapToScene(handle->property("anchorPoint").toPointF()).toPoint();
+    QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, clickPoint);
+    QTest::mouseMove(_window, clickPoint + QPoint(2, 1));
+    QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, clickPoint + QPoint(2, 1));
+    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("geoMapPolygonEditPosition"), 2000),
+             "Clicking the handle did not open its menu");
+    QVERIFY2(path() == pathBefore, "Clicking the handle moved the polygon");
+
+    // A polygon keeps at least three vertices, and the center has none to remove
+    const bool removable = (handleName == QStringLiteral("geoMapPolygonVertexHandle")) && (vertexCountBefore > 3);
+    verifyVisibility(QStringLiteral("geoMapPolygonRemoveVertex"), removable, QStringLiteral("Remove vertex"));
+    if (QTest::currentTestFailed() || menuItem.isEmpty())
+        return;
+
+    const QGeoCoordinate vertex = pathBefore[clickedVertex].value<QGeoCoordinate>();
+    const QGeoCoordinate center = polygon->property("center").value<QGeoCoordinate>();
+    // Whether the polygon has a vertex at coordinate, within a meter
+    const auto hasVertexAt = [&](const QGeoCoordinate& coordinate) {
+        const QVariantList vertices = path();
+        return std::any_of(vertices.cbegin(), vertices.cend(), [&](const QVariant& other) {
+            return other.value<QGeoCoordinate>().distanceTo(coordinate) < 1.0;
+        });
+    };
+    // The vertices other than the clicked one are all still there
+    const auto othersKept = [&] {
+        for (int i = 0; i < pathBefore.count(); i++) {
+            if ((i != clickedVertex) && !hasVertexAt(pathBefore[i].value<QGeoCoordinate>())) {
+                return false;
+            }
+        }
+        return true;
+    };
+    QVERIFY2(clickButton(menuItem), "Failed to click the menu item");
+
+    if (menuItem == QStringLiteral("geoMapPolygonRemoveVertex")) {
+        QVERIFY2(waitForCondition([&] { return vertexCount() == vertexCountBefore - 1; }, 2000,
+                                  QStringLiteral("vertex removed")),
+                 "Remove vertex did not remove the vertex");
+        QVERIFY2(!hasVertexAt(vertex) && othersKept(), "Remove vertex removed another vertex than the clicked one");
+        return;
+    }
+
+    const bool editsCenter = (handleName == QStringLiteral("geoMapPolygonCenterHandle"));
+    const QString dialogName = editsCenter ? QStringLiteral("geoMapPolygonCenterPositionDialog")
+                                           : QStringLiteral("geoMapPolygonVertexPositionDialog");
+    const QString dialogTitle =
+        editsCenter ? QStringLiteral("Edit Center Position") : QStringLiteral("Edit Vertex Position");
+    QVERIFY2(waitForDialog(dialogTitle), "Edit position did not open the position dialog");
+    // The popup has no QObject parent to search from; the title label's context names it
+    QObject* dialog = nullptr;
+    for (QQuickItem* const title : findGeoMapItems(_rootItem, QStringLiteral("popupDialog_title"))) {
+        if (title->isVisible() && (title->property("text").toString() == dialogTitle)) {
+            if (QQmlContext* const context = qmlContext(title)) {
+                dialog = context->objectForName(QStringLiteral("root"));
+            }
+        }
+    }
+    QVERIFY2(dialog && (dialog->objectName() == dialogName), "The position dialog was not found");
+    const QGeoCoordinate edited = (editsCenter ? center : vertex).atDistanceAndAzimuth(100, 45);
+    dialog->setProperty("coordinate", QVariant::fromValue(edited));
+    if (editsCenter) {
+        QVERIFY2(waitForCondition(
+                     [&] { return polygon->property("center").value<QGeoCoordinate>().distanceTo(edited) < 1.0; }, 2000,
+                     QStringLiteral("center moved")),
+                 "The polygon center did not move to the edited position");
+        QVERIFY(!polygon->property("centerDrag").toBool());
+    } else {
+        // Winding may reorder the vertices, so they are compared as a set
+        QVERIFY2(waitForCondition([&] { return hasVertexAt(edited); }, 2000, QStringLiteral("vertex moved")),
+                 "No vertex moved to the edited position");
+        QVERIFY2(othersKept(), "Edit position moved another vertex than the clicked one");
+        QCOMPARE(vertexCount(), vertexCountBefore);
+    }
+    QMetaObject::invokeMethod(dialog, "close");
+}
+
+void PlanPanelUITest::_testGeoMapFencePolygonToolsReshapeThePolygon_data()
+{
+    QTest::addColumn<QString>("tool");
+
+    QTest::newRow("basic") << QStringLiteral("basic");
+    QTest::newRow("circular") << QStringLiteral("circular");
+    QTest::newRow("circle radius drag") << QStringLiteral("radiusDrag");
+    QTest::newRow("circle set radius") << QStringLiteral("setRadius");
+    QTest::newRow("trace") << QStringLiteral("trace");
+    QTest::newRow("trace with too few vertices") << QStringLiteral("traceTooFew");
+    QTest::newRow("load file") << QStringLiteral("loadFile");
+    QTest::newRow("load file from a toolbar too wide for the map") << QStringLiteral("loadFileNarrow");
+    QTest::newRow("basic starts a polygon from none") << QStringLiteral("basicFromEmpty");
+}
+
+void PlanPanelUITest::_testGeoMapFencePolygonToolsReshapeThePolygon()
+{
+    QFETCH(QString, tool);
+
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    _setHomeAndOpenMission();
+    if (QTest::currentTestFailed())
+        return;
+
+    PlanMasterController* const master = _planMasterController();
+    QVERIFY(master);
+    GeoFenceController* const fence = master->geoFenceController();
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+
+    QVERIFY2(_selectTab(QStringLiteral("fence")), "Failed to open the Fence tab");
+    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceAddPolygon")), "Failed to click + Polygon");
+    QVERIFY2(waitForCondition([&] { return fence->polygons()->count() == 1; }, 2000, QStringLiteral("polygon added")),
+             "+ Polygon did not add a polygon");
+    QObject* const polygon = fence->polygons()->get(0);
+    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("geoMapPolygonToolbar"), 2000), "No polygon tools toolbar");
+
+    const auto vertices = [polygon] {
+        QList<QGeoCoordinate> list;
+        const QVariantList path = polygon->property("path").toList();
+        for (const QVariant& vertex : path) {
+            list.append(vertex.value<QGeoCoordinate>());
+        }
+        return list;
+    };
+    const auto center = [polygon] { return polygon->property("center").value<QGeoCoordinate>(); };
+    // Every vertex at radius meters from the center, within tolerance meters
+    const auto allAtRadius = [&](double radius, double tolerance = 1.0) {
+        const auto list = vertices();
+        return !list.isEmpty() && std::all_of(list.cbegin(), list.cend(), [&](const QGeoCoordinate& vertex) {
+            return qAbs(center().distanceTo(vertex) - radius) < tolerance;
+        });
+    };
+    const auto meanDistance = [&] {
+        const auto list = vertices();
+        double total = 0;
+        for (const QGeoCoordinate& vertex : list) {
+            total += center().distanceTo(vertex);
+        }
+        return total / list.count();
+    };
+    const auto windowPoint = [map](const QGeoCoordinate& coordinate) {
+        QVariant point;
+        QMetaObject::invokeMethod(map, "fromCoordinate", Q_RETURN_ARG(QVariant, point),
+                                  Q_ARG(QVariant, QVariant::fromValue(coordinate)), Q_ARG(QVariant, false));
+        return map->mapToScene(point.toPointF()).toPoint();
+    };
+    // Basic and Circular start over in view with the shapes a new fence gets: the polygon + Polygon just added, and
+    // the circle that fits in it
+    const QList<QGeoCoordinate> original = vertices();
+    QCOMPARE(original.count(), 4);
+    const QGeoCoordinate originalCenter = center();
+    const double circleRadius = qMin(original[0].distanceTo(original[1]), original[1].distanceTo(original[2])) / 2;
+    const auto matchesOriginal = [&] {
+        const auto list = vertices();
+        if (list.count() != original.count()) {
+            return false;
+        }
+        for (int i = 0; i < list.count(); i++) {
+            if (list[i].distanceTo(original[i]) > 1.0) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    const auto clickCircular = [&] {
+        QVERIFY2(clickButton(QStringLiteral("geoMapPolygonCircular")), "Failed to click Circular");
+        QVERIFY2(waitForCondition([&] { return vertices().count() == 16 && allAtRadius(circleRadius); }, 2000,
+                                  QStringLiteral("circle")),
+                 "Circular did not start over with the circle a new fence gets");
+    };
+
+    if (tool == QStringLiteral("basic")) {
+        clickCircular();
+        if (QTest::currentTestFailed())
+            return;
+        QVERIFY2(clickButton(QStringLiteral("geoMapPolygonBasic")), "Failed to click Basic");
+        QVERIFY2(waitForCondition(matchesOriginal, 2000, QStringLiteral("new polygon")),
+                 "Basic did not start over with the polygon a new fence gets");
+        // Back out of circle mode: vertices are edited again
+        QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("geoMapPolygonVertexHandle"), 2000),
+                 "The new polygon has no vertex handles");
+        QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("geoMapPolygonRadiusHandle"), 0));
+    } else if (tool == QStringLiteral("circular")) {
+        clickCircular();
+        if (QTest::currentTestFailed())
+            return;
+        QVERIFY(center().distanceTo(originalCenter) < 1.0);
+        // A circle is sized by its radius handle instead of its vertices
+        QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("geoMapPolygonRadiusHandle"), 2000),
+                 "The circle has no radius handle");
+        QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("geoMapPolygonVertexHandle"), 0));
+        QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("geoMapPolygonSplitHandle"), 0));
+    } else if (tool == QStringLiteral("radiusDrag")) {
+        clickCircular();
+        if (QTest::currentTestFailed())
+            return;
+        QQuickItem* const handle = findVisibleItem(_rootItem, QStringLiteral("geoMapPolygonRadiusHandle"), 2000);
+        QVERIFY(handle);
+        // The circle is wider than the viewport: zoom out until its radius handle is on screen
+        const QRectF viewport = map->property("centerViewport").toRectF();
+        const auto handleInWindow = [&] {
+            return handle->mapToScene(handle->property("anchorPoint").toPointF()).toPoint();
+        };
+        map->setProperty("zoomLevel", map->property("zoomLevel").toDouble() - 1);
+        QVERIFY2(waitForCondition([&] { return viewport.contains(map->mapFromScene(handleInWindow())); }, 3000,
+                                  QStringLiteral("radius handle on screen")),
+                 "The radius handle is not on screen");
+        const QPoint start = handleInWindow();
+        const QPoint delta(40, 0);
+        QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, start);
+        constexpr int steps = 10;
+        for (int i = 1; i <= steps; i++) {
+            QTest::mouseMove(_window, start + ((delta * i) / steps));
+        }
+        QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, start + delta);
+        QVariant cursor;
+        QMetaObject::invokeMethod(map, "toCoordinate", Q_RETURN_ARG(QVariant, cursor),
+                                  Q_ARG(QVariant, QVariant::fromValue(QPointF(map->mapFromScene(start + delta)))),
+                                  Q_ARG(QVariant, false));
+        const double expectedRadius = center().distanceTo(cursor.value<QGeoCoordinate>());
+        QVERIFY(expectedRadius > circleRadius);
+        // The handle keeps its sub-pixel grab offset, so the radius is within a pixel of the cursor's distance
+        QVERIFY2(waitForCondition(
+                     [&] { return vertices().count() == 16 && allAtRadius(expectedRadius, expectedRadius * 0.01); },
+                     2000, QStringLiteral("circle resized")),
+                 qPrintable(QStringLiteral("The circle is %1 m around after the radius drag instead of %2 m")
+                                .arg(meanDistance())
+                                .arg(expectedRadius)));
+        QVERIFY(!polygon->property("vertexDrag").toBool());
+        QVERIFY2(center().distanceTo(originalCenter) < 1.0, "The circle's center moved while its radius was dragged");
+    } else if (tool == QStringLiteral("setRadius")) {
+        clickCircular();
+        if (QTest::currentTestFailed())
+            return;
+        QQuickItem* const handle = findVisibleItem(_rootItem, QStringLiteral("geoMapPolygonCenterHandle"), 2000);
+        QVERIFY(handle);
+        QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier,
+                          handle->mapToScene(handle->property("anchorPoint").toPointF()).toPoint());
+        QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("geoMapPolygonSetRadius"), 2000),
+                 "The circle's center menu has no Set radius");
+        QVERIFY2(clickButton(QStringLiteral("geoMapPolygonSetRadius")), "Failed to click Set radius");
+        QVERIFY2(waitForDialog(QStringLiteral("Set Radius")), "Set radius did not open its dialog");
+        QQuickItem* const radiusField = findVisibleItem(_rootItem, QStringLiteral("geoMapPolygonRadiusField"), 2000);
+        QVERIFY(radiusField);
+        radiusField->setProperty("text", QStringLiteral("123"));
+        QVERIFY2(acceptDialog(), "Failed to save the radius");
+        const double expectedRadius = FactMetaData::appSettingsHorizontalDistanceUnitsToMeters(123.0).toDouble();
+        QVERIFY2(waitForCondition([&] { return vertices().count() == 16 && allAtRadius(expectedRadius); }, 2000,
+                                  QStringLiteral("radius set")),
+                 "Set radius did not resize the circle");
+    } else if (tool.startsWith(QStringLiteral("trace"))) {
+        const int clicks = (tool == QStringLiteral("trace")) ? 3 : 2;
+        QVERIFY2(clickButton(QStringLiteral("geoMapPolygonTrace")), "Failed to click Trace");
+        QVERIFY2(waitForCondition([&] { return polygon->property("traceMode").toBool() && vertices().isEmpty(); }, 2000,
+                                  QStringLiteral("tracing")),
+                 "Trace did not clear the polygon for tracing");
+        const QList<QPointF> fractions = {QPointF(0.45, 0.45), QPointF(0.55, 0.45), QPointF(0.5, 0.55)};
+        for (int i = 0; i < clicks; i++) {
+            _clickMap(fractions[i].x(), fractions[i].y());
+            QVERIFY2(waitForCondition([&] { return vertices().count() == i + 1; }, 2000, QStringLiteral("traced")),
+                     "A map click did not add a vertex");
+        }
+        QVERIFY2(clickButton(QStringLiteral("geoMapPolygonTrace")), "Failed to click Done Tracing");
+        QVERIFY2(waitForCondition([&] { return !polygon->property("traceMode").toBool(); }, 2000,
+                                  QStringLiteral("tracing done")),
+                 "Done Tracing did not end tracing");
+        if (clicks < 3) {
+            // Too few vertices for a polygon: the polygon from before tracing comes back
+            QCOMPARE(vertices(), original);
+        } else {
+            QCOMPARE(vertices().count(), clicks);
+        }
+    } else if (tool == QStringLiteral("basicFromEmpty")) {
+        // An empty polygon, like a new survey area: Basic gives it its first vertices
+        QMetaObject::invokeMethod(polygon, "clear");
+        QVERIFY(vertices().isEmpty());
+        QVERIFY2(clickButton(QStringLiteral("geoMapPolygonBasic")), "Failed to click Basic");
+        QVERIFY2(waitForCondition(matchesOriginal, 2000, QStringLiteral("new polygon")),
+                 "Basic did not start over with the polygon a new fence gets");
+    } else if (tool.startsWith(QStringLiteral("loadFile"))) {
+        if (tool == QStringLiteral("loadFileNarrow")) {
+            QQuickItem* const flickable =
+                findVisibleItem(_rootItem, QStringLiteral("geoMapPolygonToolbarFlickable"), 2000);
+            QVERIFY2(flickable, "The polygon toolbar does not scroll");
+            QQuickItem* const loadButton = findVisibleItem(_rootItem, QStringLiteral("geoMapPolygonLoadFile"), 2000);
+            QVERIFY(loadButton);
+            const auto buttonInView = [&] {
+                const QRectF shown(flickable->mapToScene(QPointF(0, 0)), flickable->size());
+                return shown.contains(loadButton->mapToScene(loadButton->boundingRect().center()));
+            };
+            // Narrow the map well below the toolbar's width (the window has a minimum width): the last buttons are cut
+            // off
+            const double rowWidth = flickable->property("contentWidth").toDouble();
+            const double viewportWidth = map->property("centerViewport").toRectF().width();
+            _window->resize(_window->width() - qRound(viewportWidth - rowWidth / 2), _window->height());
+            QVERIFY2(waitForCondition([&] { return flickable->width() < rowWidth && !buttonInView(); }, 2000,
+                                      QStringLiteral("toolbar cut off")),
+                     "The narrow map does not cut off the toolbar");
+            // Swiping the toolbar sideways scrolls to them
+            flickable->setProperty("contentX", rowWidth - flickable->width());
+            QVERIFY2(waitForCondition(buttonInView, 2000, QStringLiteral("button scrolled into view")),
+                     "Scrolling the toolbar did not bring Load KML/SHP into view");
+        }
+        QGCFileDialogController::setTestNextFileForAccept(QStringLiteral(":/unittest/PolygonGood.kml"));
+        QVERIFY2(clickButton(QStringLiteral("geoMapPolygonLoadFile")), "Failed to click Load KML/SHP");
+        QVERIFY2(waitForCondition([&] { return vertices().count() == 4 && vertices() != original; }, 2000,
+                                  QStringLiteral("file loaded")),
+                 "Loading the file did not replace the polygon");
+        // The file's polygon is far from the map: the map moves to show it
+        const QRectF viewport = map->property("centerViewport").toRectF();
+        QVERIFY2(waitForCondition([&] { return viewport.contains(map->mapFromScene(windowPoint(center()))); }, 3000,
+                                  QStringLiteral("map fit to the file")),
+                 "The map did not move to the loaded polygon");
+    }
+}
+
+void PlanPanelUITest::_testGeoMapBreachReturnPointDragsOnlyOnTheFenceLayer_data()
+{
+    QTest::addColumn<QString>("tab");
+
+    QTest::newRow("fence tab moves the point") << QStringLiteral("fence");
+    QTest::newRow("other tab pans the map") << QStringLiteral("mission");
+}
+
+void PlanPanelUITest::_testGeoMapBreachReturnPointDragsOnlyOnTheFenceLayer()
+{
+    QFETCH(QString, tab);
+    const bool expectMove = (tab == QStringLiteral("fence"));
+
+    // Only ArduPilot planes use a breach return point
+    if (!apmFirmwareSupported()) {
+        QSKIP("ArduPilot firmware support is not built");
+    }
+    const OfflineVehicleScope arduPlane(QGCMAVLink::FirmwareClassArduPilot, QGCMAVLink::VehicleClassFixedWing);
+
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    _setHomeAndOpenMission();
+    if (QTest::currentTestFailed())
+        return;
+
+    PlanMasterController* const master = _planMasterController();
+    QVERIFY(master);
+    GeoFenceController* const fence = master->geoFenceController();
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+    QVERIFY2(_selectTab(tab), "Failed to open the tab");
+
+    const QGeoCoordinate mapCenter = map->property("center").value<QGeoCoordinate>();
+    const double altitude = 55.0;
+    fence->setBreachReturnPoint(
+        QGeoCoordinate(mapCenter.latitude(), mapCenter.longitude(), altitude).atDistanceAndAzimuth(200, 225));
+    QQuickItem* const marker = findVisibleItem(_rootItem, QStringLiteral("geoMapBreachReturnPoint"), 2000);
+    QVERIFY2(marker, "The breach return point marker is not shown");
+
+    const auto windowPoint = [map](const QGeoCoordinate& coordinate) {
+        QVariant point;
+        QMetaObject::invokeMethod(map, "fromCoordinate", Q_RETURN_ARG(QVariant, point),
+                                  Q_ARG(QVariant, QVariant::fromValue(coordinate)), Q_ARG(QVariant, false));
+        return map->mapToScene(point.toPointF()).toPoint();
+    };
+    const QGeoCoordinate before = fence->breachReturnPoint();
+    const QPoint start = windowPoint(before);
+    const QPoint delta(-60, 40);
+    QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, start);
+    constexpr int steps = 10;
+    for (int i = 1; i <= steps; i++) {
+        QTest::mouseMove(_window, start + ((delta * i) / steps));
+    }
+    QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, start + delta);
+
+    if (expectMove) {
+        // The point ends up under the cursor and keeps the altitude set in the inspector
+        QVERIFY2(waitForCondition(
+                     [&] { return (windowPoint(fence->breachReturnPoint()) - (start + delta)).manhattanLength() <= 4; },
+                     2000, QStringLiteral("point dragged")),
+                 "Dragging the breach return point did not move it under the cursor");
+        QVERIFY(qFuzzyCompare(fence->breachReturnPoint().altitude(), altitude));
+    } else {
+        QVERIFY2(waitForCondition([&] { return (windowPoint(before) - start).manhattanLength() > 20; }, 2000,
+                                  QStringLiteral("map panned")),
+                 "Dragging the breach return point off the Fence tab did not pan the map");
+        QCOMPARE(fence->breachReturnPoint(), before);
+    }
+}
+
+void PlanPanelUITest::_testGeoMapFenceClickSelectsTheFenceUnderIt_data()
+{
+    QTest::addColumn<QString>("target");
+    QTest::addColumn<QString>("expectedRow");
+    QTest::addColumn<bool>("drillIn");
+
+    QTest::newRow("polygon") << QStringLiteral("polygon") << QStringLiteral("planPanel_fenceRow_polygon_0") << false;
+    QTest::newRow("smaller of overlapping fences")
+        << QStringLiteral("nestedCircle") << QStringLiteral("planPanel_fenceRow_circle_0") << false;
+    QTest::newRow("outside every fence keeps the selection")
+        << QStringLiteral("outside") << QStringLiteral("planPanel_fenceRow_polygon_0") << false;
+    // The marker sits inside the polygon: the click goes to the marker, not to the fence under it
+    QTest::newRow("breach return point") << QStringLiteral("breach") << QStringLiteral("planPanel_fenceRow_breach")
+                                         << false;
+    // Where the list and the inspector take turns, a pick on the map shows the inspector as a row click does
+    QTest::newRow("polygon in the drill-in layout")
+        << QStringLiteral("polygon") << QStringLiteral("planPanel_fenceRow_polygon_0") << true;
+    QTest::newRow("breach return point in the drill-in layout")
+        << QStringLiteral("breach") << QStringLiteral("planPanel_fenceRow_breach") << true;
+}
+
+void PlanPanelUITest::_testGeoMapFenceClickSelectsTheFenceUnderIt()
+{
+    QFETCH(QString, target);
+    QFETCH(QString, expectedRow);
+    QFETCH(bool, drillIn);
+
+    // Only ArduPilot planes use a breach return point
+    std::optional<OfflineVehicleScope> arduPlane;
+    if (target == QStringLiteral("breach")) {
+        if (!apmFirmwareSupported()) {
+            QSKIP("ArduPilot firmware support is not built");
+        }
+        arduPlane.emplace(QGCMAVLink::FirmwareClassArduPilot, QGCMAVLink::VehicleClassFixedWing);
+    }
+
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+
+    _setHomeAndOpenMission();
+    if (QTest::currentTestFailed())
+        return;
+
+    PlanMasterController* const master = _planMasterController();
+    QVERIFY(master);
+    GeoFenceController* const fence = master->geoFenceController();
+    QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+    QVERIFY(map);
+
+    QVERIFY2(_selectTab(QStringLiteral("fence")), "Failed to open the Fence tab");
+    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceAddPolygon")), "Failed to click + Polygon");
+    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceAddCircle")), "Failed to click + Circle");
+    QVERIFY2(waitForCondition([&] { return fence->polygons()->count() == 1 && fence->circles()->count() == 1; }, 2000,
+                              QStringLiteral("fences added")),
+             "The fences were not added");
+    QObject* const polygon = fence->polygons()->get(0);
+    QObject* const circle = fence->circles()->get(0);
+
+    // A small circle inside the polygon, away from the polygon's handles
+    const QGeoCoordinate polygonCenter = polygon->property("center").value<QGeoCoordinate>();
+    QGeoCoordinate corner;
+    QMetaObject::invokeMethod(polygon, "vertexCoordinate", Q_RETURN_ARG(QGeoCoordinate, corner), Q_ARG(int, 0));
+    const double cornerDistance = polygonCenter.distanceTo(corner);
+    const QGeoCoordinate circleCenter = polygonCenter.atDistanceAndAzimuth(cornerDistance * 0.4, 45);
+    circle->setProperty("center", QVariant::fromValue(circleCenter));
+    fence->circles()->value<QGCMapCircle*>(0)->radius()->setRawValue(cornerDistance * 0.15);
+
+    // The polygon starts selected, except when the click goes to the circle nested in it
+    QVERIFY2(clickButton(target == QStringLiteral("nestedCircle") ? QStringLiteral("planPanel_fenceRow_polygon_0")
+                                                                  : QStringLiteral("planPanel_fenceRow_circle_0")),
+             "Failed to select the starting fence");
+
+    const QRectF viewport = map->property("centerViewport").toRectF();
+    QPointF point;
+    if (target == QStringLiteral("outside")) {
+        // The new polygon is inset from the viewport edges
+        point = QPointF(viewport.left() + viewport.width() * 0.04, viewport.center().y());
+        QVERIFY2(clickButton(QStringLiteral("planPanel_fenceRow_polygon_0")), "Failed to select the polygon");
+    } else {
+        const QGeoCoordinate clickCoordinate = (target == QStringLiteral("nestedCircle"))
+                                                   ? circleCenter
+                                                   : polygonCenter.atDistanceAndAzimuth(cornerDistance * 0.5, 225);
+        if (target == QStringLiteral("breach")) {
+            fence->setBreachReturnPoint(clickCoordinate);
+            QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("geoMapBreachReturnPoint"), 2000),
+                     "The breach return point marker is not shown");
+        }
+        QVariant projected;
+        QMetaObject::invokeMethod(map, "fromCoordinate", Q_RETURN_ARG(QVariant, projected),
+                                  Q_ARG(QVariant, QVariant::fromValue(clickCoordinate)), Q_ARG(QVariant, false));
+        point = projected.toPointF();
+    }
+    QVERIFY2(viewport.contains(point), "The click point is off screen");
+    if (drillIn) {
+        QQuickItem* const listInspector = findItem(_rootItem, QStringLiteral("planPanel_fenceListInspector"));
+        QVERIFY(listInspector);
+        listInspector->setProperty("layoutModeOverride", QStringLiteral("drillIn"));
+        verifyVisibility(QStringLiteral("planPanel_fenceInspector_title"), false,
+                         QStringLiteral("list shown before the map click"));
+        if (QTest::currentTestFailed())
+            return;
+    }
+    QTest::mouseClick(_window, Qt::LeftButton, Qt::NoModifier, map->mapToScene(point).toPoint());
+
+    QCOMPARE(polygon->property("interactive").toBool(), expectedRow.contains(QStringLiteral("polygon")));
+    QCOMPARE(circle->property("interactive").toBool(), expectedRow.contains(QStringLiteral("circle")));
+    QString expectedTitle;
+    if (expectedRow.contains(QStringLiteral("polygon"))) {
+        expectedTitle = QStringLiteral("Polygon 1");
+    } else if (expectedRow.contains(QStringLiteral("circle"))) {
+        expectedTitle = QStringLiteral("Circle 1");
+    } else {
+        expectedTitle = QStringLiteral("Breach return point");
+    }
+    verifyText(QStringLiteral("planPanel_fenceInspector_title"), expectedTitle,
+               QStringLiteral("inspector of the fence selected by the map click"));
+    if (!drillIn) {
+        verifyProperty(expectedRow, "selected", true, QStringLiteral("fence selected by the map click"));
+    }
+}
+
 void PlanPanelUITest::_testGeoMapKeepsTabbedPanelWhenTheSettingIsTurnedOff()
 {
     _startPlanPanel(true /* geoMapEngine */);
@@ -2199,7 +3048,6 @@ void PlanPanelUITest::_testFenceTabAddsSelectsAndEditsFences()
     QVERIFY2(fence->supported(), "Offline vehicle should support GeoFence");
 
     QVERIFY2(_selectTab(QStringLiteral("fence")), "Failed to open the Fence tab");
-    verifyVisibility(QStringLiteral("planPanel_fenceRow_breach"), true, QStringLiteral("breach row on an empty fence"));
     verifyVisibility(QStringLiteral("planPanel_fenceInspector_title"), false,
                      QStringLiteral("no inspector without selection"));
     if (QTest::currentTestFailed())
@@ -2275,37 +3123,6 @@ void PlanPanelUITest::_testFenceTabAddsSelectsAndEditsFences()
     if (QTest::currentTestFailed())
         return;
 
-    // Breach return point is set and removed from its inspector
-    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceRow_breach")), "Failed to click the breach row");
-    verifyText(QStringLiteral("planPanel_fenceInspector_title"), QStringLiteral("Breach return point"),
-               QStringLiteral("breach title"));
-    verifyVisibility(QStringLiteral("planPanel_fenceInspector_delete"), false,
-                     QStringLiteral("breach cannot be deleted"));
-    verifyVisibility(QStringLiteral("planPanel_fenceBreachAltitude"), false,
-                     QStringLiteral("no altitude without a point"));
-    QVERIFY(!polygon->property("interactive").toBool());
-    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceBreachToggle")), "Failed to set the breach return point");
-    QVERIFY2(waitForCondition([&] { return fence->breachReturnPoint().isValid(); }, 2000, QStringLiteral("breach set")),
-             "Set at map center did not set the breach return point");
-    verifyVisibility(QStringLiteral("planPanel_fenceBreachAltitude"), true, QStringLiteral("altitude with a point"));
-    verifyText(QStringLiteral("planPanel_fenceRowMeta"), QStringLiteral("Exclude"),
-               QStringLiteral("first row meta unchanged"));
-    QQuickItem* const breachAltitude = findItem(_rootItem, QStringLiteral("planPanel_fenceBreachAltitude"));
-    QVERIFY(breachAltitude);
-    QObject* const breachAltitudeField = breachAltitude->property("textField").value<QObject*>();
-    QVERIFY(breachAltitudeField);
-    const QVariant validAltitude = breachAltitudeField->property("fact").value<QObject*>()->property("valueString");
-    QVERIFY2(enterInvalidValue(breachAltitudeField), "Non-numeric altitude was accepted");
-    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceBreachToggle")), "Failed to click Remove");
-    QVERIFY2(fence->breachReturnPoint().isValid(), "Removal not blocked by the invalid altitude");
-    QVERIFY(restoreValidValue(breachAltitudeField, validAltitude));
-    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceBreachToggle")), "Failed to remove the breach return point");
-    QVERIFY2(
-        waitForCondition([&] { return !fence->breachReturnPoint().isValid(); }, 2000, QStringLiteral("breach removed")),
-        "Remove did not clear the breach return point");
-    if (QTest::currentTestFailed())
-        return;
-
     // Deleting the selected fence removes its row and closes the inspector
     QVERIFY2(clickButton(QStringLiteral("planPanel_fenceRow_polygon_0")), "Failed to select the polygon");
     QVERIFY2(clickButton(QStringLiteral("planPanel_fenceInspector_delete")), "Failed to click delete");
@@ -2325,6 +3142,81 @@ void PlanPanelUITest::_testFenceTabAddsSelectsAndEditsFences()
     fence->removeAll();
     verifyProperty(QStringLiteral("planPanel_page_fence"), "selectedKind", QString(),
                    QStringLiteral("selection cleared with the fences"));
+}
+
+void PlanPanelUITest::_testBreachReturnPointOnlyForArduPilotPlanes_data()
+{
+    QTest::addColumn<int>("firmwareClass");
+    QTest::addColumn<int>("vehicleClass");
+    QTest::addColumn<bool>("supported");
+
+    // PX4 ignores the point; of ArduPilot only Plane flies to it
+    QTest::newRow("PX4 multi-rotor") << int(QGCMAVLink::FirmwareClassPX4) << int(QGCMAVLink::VehicleClassMultiRotor)
+                                     << false;
+    QTest::newRow("PX4 fixed-wing") << int(QGCMAVLink::FirmwareClassPX4) << int(QGCMAVLink::VehicleClassFixedWing)
+                                    << false;
+    QTest::newRow("ArduPilot multi-rotor")
+        << int(QGCMAVLink::FirmwareClassArduPilot) << int(QGCMAVLink::VehicleClassMultiRotor) << false;
+    QTest::newRow("ArduPilot rover") << int(QGCMAVLink::FirmwareClassArduPilot)
+                                     << int(QGCMAVLink::VehicleClassRoverBoat) << false;
+    QTest::newRow("ArduPilot fixed-wing")
+        << int(QGCMAVLink::FirmwareClassArduPilot) << int(QGCMAVLink::VehicleClassFixedWing) << true;
+    QTest::newRow("ArduPilot VTOL") << int(QGCMAVLink::FirmwareClassArduPilot) << int(QGCMAVLink::VehicleClassVTOL)
+                                    << true;
+}
+
+void PlanPanelUITest::_testBreachReturnPointOnlyForArduPilotPlanes()
+{
+    QFETCH(int, firmwareClass);
+    QFETCH(int, vehicleClass);
+    QFETCH(bool, supported);
+
+    if ((firmwareClass == QGCMAVLink::FirmwareClassArduPilot) && !apmFirmwareSupported()) {
+        QSKIP("ArduPilot firmware support is not built");
+    }
+    const OfflineVehicleScope offlineVehicle(firmwareClass, vehicleClass);
+
+    _startPlanPanel(true /* geoMapEngine */);
+    if (QTest::currentTestFailed())
+        return;
+    _setHome();
+    if (QTest::currentTestFailed())
+        return;
+
+    GeoFenceController* const fence = _planMasterController()->geoFenceController();
+    QCOMPARE(fence->breachReturnSupported(), supported);
+    QVERIFY2(_selectTab(QStringLiteral("fence")), "Failed to open the Fence tab");
+    // The polygon row is the barrier that the list is built
+    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceAddPolygon")), "Failed to click + Polygon");
+    verifyVisibility(QStringLiteral("planPanel_fenceRow_polygon_0"), true, QStringLiteral("polygon row"));
+    verifyVisibility(QStringLiteral("planPanel_fenceRow_breach"), supported, QStringLiteral("breach row"));
+    if (QTest::currentTestFailed())
+        return;
+
+    if (!supported) {
+        // A point from a plan file is kept but not shown
+        QQuickItem* const map = findVisibleItem(_rootItem, QStringLiteral("planView_map"));
+        QVERIFY(map);
+        fence->setBreachReturnPoint(map->property("center").value<QGeoCoordinate>());
+        QVERIFY(!findVisibleItem(_rootItem, QStringLiteral("geoMapBreachReturnPoint"), 0));
+        return;
+    }
+
+    // Set and removed from its inspector, which has no altitude: Plane returns at FENCE_RET_ALT
+    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceRow_breach")), "Failed to click the breach row");
+    verifyText(QStringLiteral("planPanel_fenceInspector_title"), QStringLiteral("Breach return point"),
+               QStringLiteral("breach title"));
+    verifyVisibility(QStringLiteral("planPanel_fenceInspector_delete"), false,
+                     QStringLiteral("breach cannot be deleted"));
+    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceBreachToggle")), "Failed to set the breach return point");
+    QVERIFY2(waitForCondition([&] { return fence->breachReturnPoint().isValid(); }, 2000, QStringLiteral("breach set")),
+             "Set at map center did not set the breach return point");
+    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("geoMapBreachReturnPoint"), 2000),
+             "The breach return point is not shown on the map");
+    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceBreachToggle")), "Failed to remove the breach return point");
+    QVERIFY2(
+        waitForCondition([&] { return !fence->breachReturnPoint().isValid(); }, 2000, QStringLiteral("breach removed")),
+        "Remove did not clear the breach return point");
 }
 
 void PlanPanelUITest::_testFenceInspectorStepsAcrossEntriesInDrillIn()
@@ -2365,18 +3257,15 @@ void PlanPanelUITest::_testFenceInspectorStepsAcrossEntriesInDrillIn()
     if (QTest::currentTestFailed())
         return;
 
-    // Stepping walks polygons, circles and the breach return point in list order
+    // Stepping walks polygons, then circles, in list order
     QVERIFY2(clickButton(QStringLiteral("planPanel_fenceInspector_next")), "Failed to step to the circle");
     verifyText(QStringLiteral("planPanel_fenceInspector_title"), QStringLiteral("Circle 1"),
                QStringLiteral("stepped to circle"));
-    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceInspector_next")), "Failed to step to the breach point");
-    verifyText(QStringLiteral("planPanel_fenceInspector_title"), QStringLiteral("Breach return point"),
-               QStringLiteral("stepped to breach"));
     verifyEnabled(QStringLiteral("planPanel_fenceInspector_next"), false, QStringLiteral("no entry after the last"));
-    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceInspector_previous")), "Failed to step back");
-    verifyText(QStringLiteral("planPanel_fenceInspector_title"), QStringLiteral("Circle 1"),
-               QStringLiteral("stepped back"));
     QVERIFY(fence->circles()->get(0)->property("interactive").toBool());
+    QVERIFY2(clickButton(QStringLiteral("planPanel_fenceInspector_previous")), "Failed to step back");
+    verifyText(QStringLiteral("planPanel_fenceInspector_title"), QStringLiteral("Polygon 1"),
+               QStringLiteral("stepped back"));
     if (QTest::currentTestFailed())
         return;
 

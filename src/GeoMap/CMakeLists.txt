@@ -74,6 +74,7 @@ qt_add_qml_module(
         GeoMapCircle.qml
         GeoMapCircleVisuals.qml
         GeoMapControls.qml
+        GeoMapDragHandle.qml
         GeoMapDropLine.qml
         GeoMapDropShadow.qml
         GeoMapFenceWall.qml
@@ -90,6 +91,7 @@ qt_add_qml_module(
         GeoMapMissionPath.qml
         GeoMapPin.qml
         GeoMapPolygon.qml
+        GeoMapPolygonVisuals.qml
         GeoMapRallyPoint.qml
         GeoMapSegmentArrow.qml
         GeoMapVehicleItem.qml

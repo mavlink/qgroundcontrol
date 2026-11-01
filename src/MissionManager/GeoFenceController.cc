@@ -97,11 +97,16 @@ void GeoFenceController::_managerVehicleChanged(Vehicle* managerVehicle)
         Q_UNUSED(capabilityBits);
         emit supportedChanged(supported());
     });
+    (void) connect(_managerVehicle, &Vehicle::firmwareTypeChanged, this,
+                   &GeoFenceController::breachReturnSupportedChanged);
+    (void) connect(_managerVehicle, &Vehicle::vehicleTypeChanged, this,
+                   &GeoFenceController::breachReturnSupportedChanged);
 
     connect(_managerVehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &GeoFenceController::_parametersReady);
     _parametersReady();
 
     emit supportedChanged(supported());
+    emit breachReturnSupportedChanged();
 }
 
 bool GeoFenceController::load(const QJsonObject& json, QString& errorString)
@@ -462,6 +467,12 @@ void GeoFenceController::clearAllInteractive(void)
 bool GeoFenceController::supported(void) const
 {
     return _managerVehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_FENCE;
+}
+
+bool GeoFenceController::breachReturnSupported(void) const
+{
+    return _managerVehicle && _managerVehicle->apmFirmware() &&
+           (_managerVehicle->fixedWing() || _managerVehicle->vtol());
 }
 
 /* Returns the radius of the "paramCircularFence"

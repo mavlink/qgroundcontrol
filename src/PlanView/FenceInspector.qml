@@ -114,15 +114,7 @@ Item {
                     wrapMode:           Text.WordWrap
                     color:              qgcPal.textSecondary
                     font.pointSize:     ScreenTools.smallFontPointSize
-                    text:               qsTr("Optional point the vehicle flies to after a fence breach.")
-                }
-
-                LabelledFactTextField {
-                    objectName:         "planPanel_fenceBreachAltitude"
-                    Layout.fillWidth:   true
-                    label:              qsTr("Altitude")
-                    fact:               root._controller.breachReturnAltitude
-                    visible:            root._kind === "breach" && root._controller.breachReturnPoint.isValid
+                    text:               qsTr("Optional point the vehicle flies to after a fence breach, at the altitude of the FENCE_RET_ALT parameter.")
                 }
 
                 QGCButton {
