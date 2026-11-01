@@ -9,7 +9,7 @@
 #include <QtCore/QUrl>
 #include <QtMultimedia/QMediaPlayer>
 
-#include "ExponentialBackoff.h"
+#include "StreamSupervisor.h"
 #include "VideoReceiver.h"
 #include "VideoStreamStatsMeter.h"
 
@@ -25,8 +25,8 @@ class QVideoSink;
 ///
 /// Streaming once the first frame arrives; decoding while frames reach the output. A stream that errors, ends, or
 /// shows no frame for the config's timeout while displaying (5 s more for the first, while FFmpeg probes the stream)
-/// has failed: it reconnects after 1 s, doubling up to 30 s, while autoReconnect is on, and stops with errorOccurred()
-/// otherwise.
+/// has failed: its StreamSupervisor reconnects it after 1 s, doubling up to 30 s, while autoReconnect is on, and it
+/// stops with errorOccurred() otherwise.
 class QtMultimediaVideoReceiver : public VideoReceiver
 {
     Q_OBJECT
@@ -92,17 +92,13 @@ private:
     Config _sessionConfig;
     QPointer<QVideoSink> _videoSink;
     QMetaObject::Connection _frameConnection;
-    QTimer _reconnectTimer;
+    StreamSupervisor* const _supervisor;
     QTimer _sampleTimer;
-    ExponentialBackoff _backoff{std::chrono::seconds(1), 2, std::chrono::seconds(30)};
     /// Since the session started, or its last frame.
     QElapsedTimer _sinceFrame;
-    QElapsedTimer _sinceStreaming;
     VideoStreamStatsMeter _meter;
     quint64 _frames = 0;
     bool _gpuFrames = false;
-    /// Sessions that showed a frame since _startOver(), for VideoStreamStats::reconnects.
-    int _streamedSessions = 0;
     QtVideoRecorder* const _recorder;
     /// Created for the first recording: the frames on display reach the recorder through its frame input.
     QMediaCaptureSession* _recordingSession = nullptr;

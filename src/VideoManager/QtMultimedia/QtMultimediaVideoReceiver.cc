@@ -59,8 +59,10 @@ QByteArray rtpSdp(const QString& host, int port, QByteArrayView encoding)
 
 QtMultimediaVideoReceiver::QtMultimediaVideoReceiver(QObject* parent)
     : VideoReceiver(parent)
+    , _supervisor(new StreamSupervisor(this))
     , _recorder(new QtVideoRecorder(this))
 {
+    (void) connect(_supervisor, &StreamSupervisor::stateChanged, this, &QtMultimediaVideoReceiver::setState);
     (void) connect(_recorder, &QtVideoRecorder::recordingChanged, this, &QtMultimediaVideoReceiver::setRecording);
     (void) connect(_recorder, &QtVideoRecorder::recordingStarted, this, &QtMultimediaVideoReceiver::recordingStarted);
     (void) connect(_recorder, &QtVideoRecorder::recordingFinished, this, &QtMultimediaVideoReceiver::recordingFinished);
@@ -73,8 +75,7 @@ QtMultimediaVideoReceiver::QtMultimediaVideoReceiver(QObject* parent)
                            _lastStreamUs = -1;
                        }
                    });
-    _reconnectTimer.setSingleShot(true);
-    (void) connect(&_reconnectTimer, &QTimer::timeout, this, &QtMultimediaVideoReceiver::_start);
+    (void) connect(_supervisor, &StreamSupervisor::reconnectDue, this, &QtMultimediaVideoReceiver::_start);
     _sampleTimer.setInterval(kSampleIntervalMs);
     (void) connect(&_sampleTimer, &QTimer::timeout, this, &QtMultimediaVideoReceiver::_sample);
 }
@@ -82,7 +83,6 @@ QtMultimediaVideoReceiver::QtMultimediaVideoReceiver(QObject* parent)
 QtMultimediaVideoReceiver::~QtMultimediaVideoReceiver()
 {
     _closing = true;
-    _reconnectTimer.stop();
     _sampleTimer.stop();
     // Qt writes the file on a thread of its own, which the application's exit would cut short.
     _recorder->stopAndWait(kRecordingFinishTimeoutMs);
@@ -122,14 +122,11 @@ std::optional<QtMultimediaVideoReceiver::Source> QtMultimediaVideoReceiver::play
 void QtMultimediaVideoReceiver::onConfigChanged()
 {
     // autoReconnect alone applies at once: a reconnect it no longer allows is dropped.
-    if (_player || _reconnectTimer.isActive()) {
+    if (_player || _supervisor->reconnectPending()) {
         Config previous = _sessionConfig;
         previous.autoReconnect = config().autoReconnect;
         if (previous == config()) {
-            if (!config().autoReconnect && _reconnectTimer.isActive()) {
-                _reconnectTimer.stop();
-                setState(State::Stopped);
-            }
+            (void) _supervisor->autoReconnectChanged(config().autoReconnect);
             return;
         }
     }
@@ -151,8 +148,7 @@ void QtMultimediaVideoReceiver::onRestartRequested()
 
 void QtMultimediaVideoReceiver::_startOver()
 {
-    _backoff.reset();
-    _streamedSessions = 0;
+    _supervisor->startOver();
     _start();
 }
 
@@ -191,19 +187,18 @@ void QtMultimediaVideoReceiver::onStopRecording()
 
 void QtMultimediaVideoReceiver::_start()
 {
-    _reconnectTimer.stop();
     _stopSession();
     if (!active() || config().uri.isEmpty()) {
-        setState(State::Stopped);
+        _supervisor->stop();
         return;
     }
     if (!playerSource(config().uri)) {
         qCWarning(QtMultimediaVideoReceiverLog) << name() << "can't play" << config().uri;
-        setState(State::Stopped);
+        _supervisor->stop();
         emit errorOccurred(tr("Unable to play the video stream %1.").arg(config().uri));
         return;
     }
-    setState(State::Connecting);
+    _supervisor->sessionStarted();
     // Queued after the replaced player's unloading (_stopSession()): Windows doesn't let the new player bind a UDP port
     // the old one still holds.
     if (!_openPending) {
@@ -270,7 +265,6 @@ void QtMultimediaVideoReceiver::_stopSession()
     _meter.reset();
     _frames = 0;
     _gpuFrames = false;
-    _sinceStreaming.invalidate();
     setDecoding(false);
     setStats(VideoStreamStats());
 }
@@ -281,15 +275,14 @@ void QtMultimediaVideoReceiver::_fail(const QString& reason)
         return;
     }
     _stopSession();
-    if (config().autoReconnect) {
-        const auto delay = _backoff.next();
-        qCDebug(QtMultimediaVideoReceiverLog) << name() << "failed, reconnecting in" << delay << ":" << reason;
-        setState(State::Reconnecting);
-        _reconnectTimer.start(delay);
-    } else {
+    const StreamSupervisor::FailureOutcome outcome =
+        _supervisor->sessionFailed(reason, /*permanent=*/false, config().autoReconnect);
+    if (outcome.halted) {
         qCDebug(QtMultimediaVideoReceiverLog) << name() << "failed:" << reason;
-        setState(State::Stopped);
         emit errorOccurred(tr("Video stream failed: %1").arg(reason));
+    } else {
+        qCDebug(QtMultimediaVideoReceiverLog)
+            << name() << "failed, reconnecting in" << outcome.reconnectDelay << ":" << reason;
     }
 }
 
@@ -316,7 +309,7 @@ void QtMultimediaVideoReceiver::_onMediaStatusChanged(QMediaPlayer::MediaStatus 
 {
     switch (status) {
         case QMediaPlayer::BufferedMedia:
-            setState(State::Streaming);
+            _supervisor->sessionStreaming();
             break;
         case QMediaPlayer::EndOfMedia:
             _fail(tr("the stream ended"));
@@ -339,13 +332,7 @@ void QtMultimediaVideoReceiver::_onVideoFrame(const QVideoFrame& frame)
     ++_frames;
     _gpuFrames = (frame.handleType() != QVideoFrame::NoHandle);
     setVideoSize(presentedSize(frame));
-    if (!_sinceStreaming.isValid()) {
-        _sinceStreaming.start();
-        ++_streamedSessions;
-        // The stream recovered: a later failure starts the backoff over.
-        _backoff.reset();
-    }
-    setState(State::Streaming);
+    _supervisor->sessionStreaming();
     setDecoding(true);
     _recordFrame(frame);
 }
@@ -408,8 +395,8 @@ void QtMultimediaVideoReceiver::_sample()
     const auto codec = _player->metaData().value(QMediaMetaData::VideoCodec).value<QMediaFormat::VideoCodec>();
     stats.codec =
         (codec == QMediaFormat::VideoCodec::Unspecified) ? QString() : QMediaFormat::videoCodecDescription(codec);
-    stats.uptimeMs = _sinceStreaming.isValid() ? _sinceStreaming.elapsed() : 0;
-    stats.reconnects = std::max(0, _streamedSessions - 1);
+    stats.uptimeMs = _supervisor->uptime().count();
+    stats.reconnects = _supervisor->reconnects();
     VideoStreamStatsMeter::Counters counters;
     counters.framesDisplayed = _frames;
     if (_meter.update(counters, stats)) {

@@ -9,6 +9,7 @@
 
 #include "PipelineDotDumper.h"
 #include "PipelineSession.h"
+#include "StreamSupervisor.h"
 #include "StreamWatchdog.h"
 #include "VideoReceiver.h"
 #include "VideoStreamStats.h"
@@ -17,7 +18,8 @@
 class QTimer;
 
 /// GstVideoReceiver's worker, on a thread of its own: holds what the receiver was asked for (active, config, video
-/// sink, recording) and keeps a PipelineSession in line with it, reconnecting with backoff after a failure.
+/// sink, recording) and keeps a PipelineSession in line with it, reconnecting after a failure as its StreamSupervisor
+/// decides.
 ///
 /// Reports back through its signals only, so it can outlive a receiver that stopped waiting for it.
 class GstReceiverWorker : public QObject, private PipelineSession::Listener
@@ -74,13 +76,13 @@ private:
     void _stopSession();
     /// After a failure: reconnects with backoff, or gives up.
     void _recover(const PipelineSession::Failure& failure);
-    void _halt(const QString& message, bool permanent);
+    /// The supervisor halted the stream after @p message.
+    void _onHalted(const QString& message);
     void _endRecording();
     std::optional<RecordingBranch::Request> _recordingRequest() const;
     void _onWatchdogTick();
     void _sampleStats();
     void _publishStats(const VideoStreamStats& stats);
-    void _setState(VideoReceiver::State state);
     QString _redactedUri() const;
 
     void onSessionStreaming() override;
@@ -93,7 +95,7 @@ private:
     void onRecordingFailed(const QString& file, const QString& error, bool fileOpened) override;
 
     QTimer* const _watchdogTimer;
-    QTimer* const _reconnectTimer;
+    StreamSupervisor* const _supervisor;
     StreamWatchdog _watchdog;
     PipelineDotDumper _dotDumper;
 
@@ -103,15 +105,7 @@ private:
     std::optional<Recording> _recording;
 
     PipelineSession* _session = nullptr;
-    /// Given up after a failure until the stream is asked for anew.
-    bool _halted = false;
-    bool _haltedPermanently = false;
-    QString _lastFailure;
-    VideoReceiver::State _state = VideoReceiver::State::Stopped;
     int _statsTicks = 0;
-    /// Sessions that streamed since the stream was started or restarted; each one after the first is a reconnect.
-    int _streamedSessions = 0;
-    std::chrono::steady_clock::time_point _streamingSince;
     VideoStreamStatsMeter _statsMeter;
     VideoStreamStats _stats;
 };

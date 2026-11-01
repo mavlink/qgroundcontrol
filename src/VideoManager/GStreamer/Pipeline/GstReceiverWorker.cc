@@ -34,15 +34,13 @@ QString partFile(const QString& file, int part)
 GstReceiverWorker::GstReceiverWorker(QObject* parent)
     : QObject(parent)
     , _watchdogTimer(new QTimer(this))
-    , _reconnectTimer(new QTimer(this))
+    , _supervisor(new StreamSupervisor(this))
 {
     _watchdogTimer->setInterval(kWatchdogInterval);
-    _reconnectTimer->setSingleShot(true);
-    // Backoff delays are asserted by tests; a coarse timer may fire up to 5% early.
-    _reconnectTimer->setTimerType(Qt::PreciseTimer);
     (void) connect(_watchdogTimer, &QTimer::timeout, this, [this]() { _onWatchdogTick(); });
-    (void) connect(_reconnectTimer, &QTimer::timeout, this, [this]() {
-        qCDebug(GstVideoReceiverLog) << "Reconnecting (attempt" << _watchdog.reconnectAttempts() << ")"
+    (void) connect(_supervisor, &StreamSupervisor::stateChanged, this, &GstReceiverWorker::stateChanged);
+    (void) connect(_supervisor, &StreamSupervisor::reconnectDue, this, [this]() {
+        qCDebug(GstVideoReceiverLog) << "Reconnecting (attempt" << _supervisor->reconnectAttempts() << ")"
                                      << _redactedUri();
         _reconcile();
     });
@@ -71,10 +69,7 @@ void GstReceiverWorker::setActive(bool active, const QString& name, const VideoR
 {
     _active = active;
     _config = config;
-    _halted = false;
-    _reconnectTimer->stop();
-    _watchdog.resetBackoff();
-    _streamedSessions = 0;
+    _supervisor->startOver();
     if (active) {
         _dotDumper.setReceiverName(name);
     } else {
@@ -97,11 +92,15 @@ void GstReceiverWorker::setConfig(const VideoReceiver::Config& config)
     }
 
     // Only autoReconnect changed, which applies at once.
-    if (!config.autoReconnect && _reconnectTimer->isActive()) {
-        _halt(_lastFailure, false);
-    } else if (config.autoReconnect && _halted && !_haltedPermanently) {
-        _halted = false;
-        _reconcile();
+    switch (_supervisor->autoReconnectChanged(config.autoReconnect)) {
+        case StreamSupervisor::AutoReconnectChange::Halted:
+            _onHalted(_supervisor->lastFailure());
+            break;
+        case StreamSupervisor::AutoReconnectChange::Resumable:
+            _reconcile();
+            break;
+        case StreamSupervisor::AutoReconnectChange::None:
+            break;
     }
 }
 
@@ -126,7 +125,7 @@ void GstReceiverWorker::startRecording(const QString& file, VideoReceiver::FileF
     if (!_active) {
         return;
     }
-    if (_halted) {
+    if (_supervisor->halted()) {
         const QString message =
             QCoreApplication::translate("GstVideoReceiver", "Unable to record video: the video stream has stopped.");
         emit errorOccurred(message);
@@ -163,20 +162,19 @@ void GstReceiverWorker::dumpPipelineGraph(const QString& tag) const
 void GstReceiverWorker::shutdown()
 {
     _active = false;
-    _reconnectTimer->stop();
     _stopSession();
+    _supervisor->stop();
     thread()->quit();
 }
 
 void GstReceiverWorker::_reconcile()
 {
     if (!_active || _config.uri.isEmpty()) {
-        _reconnectTimer->stop();
         _stopSession();
-        _setState(VideoReceiver::State::Stopped);
+        _supervisor->stop();
         return;
     }
-    if (_session || _halted || _reconnectTimer->isActive()) {
+    if (_session || _supervisor->halted() || _supervisor->reconnectPending()) {
         return;
     }
     _startSession();
@@ -184,10 +182,7 @@ void GstReceiverWorker::_reconcile()
 
 void GstReceiverWorker::_restartStream()
 {
-    _reconnectTimer->stop();
-    _halted = false;
-    _watchdog.resetBackoff();
-    _streamedSessions = 0;
+    _supervisor->startOver();
     _stopSession();
     _reconcile();
 }
@@ -210,7 +205,7 @@ void GstReceiverWorker::_startSession()
         return;
     }
 
-    _setState(VideoReceiver::State::Connecting);
+    _supervisor->sessionStarted();
     _session->setVideoSink(_videoSink.get());
     _session->setRecording(_recordingRequest());
     _statsTicks = 0;
@@ -238,27 +233,20 @@ void GstReceiverWorker::_stopSession()
 
 void GstReceiverWorker::_recover(const PipelineSession::Failure& failure)
 {
-    _lastFailure = failure.message;
-    if (failure.permanent || !_config.autoReconnect) {
-        _halt(failure.message, failure.permanent);
+    const StreamSupervisor::FailureOutcome outcome =
+        _supervisor->sessionFailed(failure.message, failure.permanent, _config.autoReconnect);
+    if (outcome.halted) {
+        _onHalted(failure.message);
         return;
     }
-
-    const std::chrono::seconds delay = _watchdog.nextReconnectDelay();
-    qCDebug(GstVideoReceiverLog) << "Scheduling reconnect #" << _watchdog.reconnectAttempts() << "in" << delay.count()
-                                 << "s after" << failure.reason << _redactedUri();
-    _reconnectTimer->start(delay);
-    _setState(VideoReceiver::State::Reconnecting);
+    qCDebug(GstVideoReceiverLog) << "Scheduling reconnect #" << _supervisor->reconnectAttempts() << "in"
+                                 << outcome.reconnectDelay.count() << "ms after" << failure.reason << _redactedUri();
 }
 
-void GstReceiverWorker::_halt(const QString& message, bool permanent)
+void GstReceiverWorker::_onHalted(const QString& message)
 {
-    _halted = true;
-    _haltedPermanently = permanent;
-    _reconnectTimer->stop();
     qCWarning(GstVideoReceiverLog) << "Video stream stopped:" << message;
     _endRecording();
-    _setState(VideoReceiver::State::Stopped);
     emit errorOccurred(message);
 }
 
@@ -319,15 +307,15 @@ void GstReceiverWorker::_onWatchdogTick()
 void GstReceiverWorker::_sampleStats()
 {
     // Rates from before the first frame would only measure the connection's setup.
-    if (_state != VideoReceiver::State::Streaming) {
+    if (_supervisor->phase() != StreamSupervisor::Phase::Streaming) {
         return;
     }
     VideoStreamStatsMeter::Counters counters;
     VideoStreamStats stats = _stats;
     _session->sampleStats(counters, stats);
     const auto now = std::chrono::steady_clock::now();
-    stats.uptimeMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - _streamingSince).count();
-    stats.reconnects = std::max(0, _streamedSessions - 1);
+    stats.uptimeMs = _supervisor->uptime().count();
+    stats.reconnects = _supervisor->reconnects();
     if (_recording && _recording->startedAt) {
         stats.recordingMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - *_recording->startedAt).count();
         stats.recordingBytes = _recording->bytesWritten();
@@ -349,15 +337,6 @@ void GstReceiverWorker::_publishStats(const VideoStreamStats& stats)
     emit statsChanged(_stats);
 }
 
-void GstReceiverWorker::_setState(VideoReceiver::State state)
-{
-    if (state == _state) {
-        return;
-    }
-    _state = state;
-    emit stateChanged(state);
-}
-
 QString GstReceiverWorker::_redactedUri() const
 {
     return QGCNetworkHelper::redactedUrlForLogging(_config.uri);
@@ -365,9 +344,7 @@ QString GstReceiverWorker::_redactedUri() const
 
 void GstReceiverWorker::onSessionStreaming()
 {
-    ++_streamedSessions;
-    _streamingSince = std::chrono::steady_clock::now();
-    _setState(VideoReceiver::State::Streaming);
+    _supervisor->sessionStreaming();
 }
 
 void GstReceiverWorker::onSessionFailed(const PipelineSession::Failure& failure)

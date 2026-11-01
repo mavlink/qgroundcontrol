@@ -72,11 +72,3 @@ StreamWatchdog::Result StreamWatchdog::check(qint64 nowMs, bool displaying)
 
     return {};
 }
-
-std::chrono::seconds StreamWatchdog::nextReconnectDelay()
-{
-    if (_sourceFrames.exchange(0, std::memory_order_relaxed) > 0) {
-        _reconnectBackoff.reset();
-    }
-    return std::chrono::duration_cast<std::chrono::seconds>(_reconnectBackoff.next());
-}

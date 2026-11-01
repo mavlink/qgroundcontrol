@@ -1,6 +1,7 @@
 # ============================================================================
 # Video Receiver API
-# The backend-neutral VideoReceiver and VideoBackend, the stream statistics and screenshots; GStreamer/ implements them
+# The backend-neutral VideoReceiver and VideoBackend, the reconnect policy, the stream statistics and screenshots;
+# GStreamer/ implements them
 # ============================================================================
 
 target_sources(
@@ -8,6 +9,8 @@ target_sources(
     PRIVATE
         SharedVideoFrame.cc
         SharedVideoFrame.h
+        StreamSupervisor.cc
+        StreamSupervisor.h
         VideoReceiver.cc
         VideoReceiver.h
         VideoBackend.cc

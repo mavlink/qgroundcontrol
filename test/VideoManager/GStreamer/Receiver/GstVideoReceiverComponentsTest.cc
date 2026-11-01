@@ -24,41 +24,12 @@ namespace {
 constexpr qint64 kNowMs = 100000;
 constexpr qint64 kNoFrame = -1;
 
-qint64 nextDelaySec(StreamWatchdog& watchdog)
-{
-    return watchdog.nextReconnectDelay().count();
-}
-
 GStreamer::GstElementPtr ownedBin(const char* name)
 {
     return GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_bin_new(name))));
 }
 
 }  // namespace
-
-void GstVideoReceiverComponentsTest::_testReconnectBackoffSequence()
-{
-    StreamWatchdog watchdog;
-    for (const qint64 expectedSec : {1, 2, 4, 8, 16, 30, 30}) {
-        QCOMPARE(nextDelaySec(watchdog), expectedSec);
-    }
-}
-
-void GstVideoReceiverComponentsTest::_testReconnectBackoffRestartsAfterRecovery()
-{
-    StreamWatchdog watchdog;
-    for (int failedStart = 0; failedStart < 3; ++failedStart) {
-        (void) nextDelaySec(watchdog);
-    }
-
-    // The reconnect worked and delivered frames before the stream failed again.
-    watchdog.start(std::chrono::seconds(1));
-    (void) watchdog.noteSourceFrame(kNowMs);
-    QCOMPARE(nextDelaySec(watchdog), qint64(1));
-    // Its own retry failing to start backs off from there.
-    watchdog.start(std::chrono::seconds(1));
-    QCOMPARE(nextDelaySec(watchdog), qint64(2));
-}
 
 void GstVideoReceiverComponentsTest::_testStallDetection_data()
 {
