@@ -74,13 +74,14 @@ MockLink's `MockVideoStreamServer` (`src/Comms/MockLink`, Debug builds only) ser
 
 A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
 
-- **`qgcqvideosink`** — a `GstVideoSink` that pushes decoded frames into a Qt `QVideoSink`. Delivery keeps only the
-  latest frame, so a stalled GUI thread never holds more than one undelivered frame (or the decoder buffer behind it).
+- **`qgcqvideosink`** — a `GstVideoSink` that pushes decoded frames into a Qt `QVideoSink`. Delivery
+  (`GstQgcFrameDelivery`) keeps only the latest frame, so a stalled GUI thread never holds more than one undelivered
+  frame (or the decoder buffer behind it).
   Frames carry the rotation and mirroring of the stream's `image-orientation` tag, as a camera mounted sideways sends
   it, unless a buffer has its own orientation meta. Its construct-only `gpu-zerocopy` property (passed down by the bin) enables zero-copy import of GPU memory, and its
   `frame-stats` property reports that sink's own frame counts per delivery path, GPU fallbacks, dropped tiled frames
   (`GstQgc::formatSinkStats` in `GstQgcSinkStats.h` formats them) and delivered frames a newer one replaced before the `QVideoSink` took them
-  (`superseded-frames`); GstBaseSink's standard `stats` property is left as is.
+  (`superseded-frames`), all counted by its `GstQgcSinkCounters`; GstBaseSink's standard `stats` property is left as is.
 - **Sink caps** — `qgcqvideosink` answers caps queries itself (`GstQgc::buildSinkCaps`), with the formats Qt renders
   (`kVideoFormatTable`):
   - System memory always, with `pixel-aspect-ratio=1/1` unless the bin's `disable-par` is set.

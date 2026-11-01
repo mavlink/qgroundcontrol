@@ -1,6 +1,5 @@
 #include "gstqgcqvideosink.h"
 
-#include <array>
 #include <atomic>
 #include <gst/video/video-info.h>
 #include <gst/video/video.h>
@@ -8,9 +7,6 @@
 #include <new>
 #include <utility>
 
-#include <QtCore/QMetaObject>
-#include <QtCore/QMutex>
-#include <QtCore/QMutexLocker>
 #include <QtCore/QSize>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
@@ -18,7 +14,9 @@
 
 #include "GstQgcAllocation.h"
 #include "GstQgcCaps.h"
+#include "GstQgcFrameDelivery.h"
 #include "GstQgcFrameMap.h"
+#include "GstQgcSinkCounters.h"
 #include "GstQgcSinkStats.h"
 #include "HwBuffers/common/GstHwVideoInfo.h"
 #include "HwBuffers/common/HwBuffers.h"
@@ -32,26 +30,12 @@ QGC_LOGGING_CATEGORY(GstQgcQVideoSinkLog, "Video.GStreamer.QgcQVideoSink")
 
 namespace {
 
-/// Latest-frame-only hand-off to the GUI thread. At most one invoke is queued (`posted`); the GUI side takes whatever
-/// frame is newest when it runs, so a stalled GUI thread never accumulates frames (or the decoder buffers they pin).
-struct PendingFrameSlot
-{
-    QMutex mutex;
-    QVideoFrame frame;
-    bool posted = false;
-};
-
-QVideoFrame take_pending_frame(PendingFrameSlot& slot)
-{
-    QMutexLocker locker(&slot.mutex);
-    return std::exchange(slot.frame, QVideoFrame());
-}
-
 /// The element's C++ state, placement-constructed in instance_init and destroyed in finalize.
 struct PrivState
 {
-    // Caller-owned and never unref'd; written by the controller on the GUI thread under GST_OBJECT_LOCK.
-    QVideoSink* qvideosink = nullptr;
+    // The QVideoSink frames go to, set by the controller on the GUI thread.
+    GstQgc::FrameDelivery delivery;
+    GstQgc::SinkCounters counters;
     // Read lock-free by show_frame.
     std::atomic<bool> active{true};
     // start() derives hw_context from it.
@@ -74,34 +58,12 @@ struct PrivState
     bool gpu_caps = false;
     // GstVideoOrientationMethod from the stream's image-orientation tag, for frames without an orientation meta.
     std::atomic<int> stream_orientation{GST_VIDEO_ORIENTATION_IDENTITY};
-    std::atomic<quint64> input_frames{0};
-    std::atomic<quint64> dropped_frames{0};
     std::atomic<quint64> consecutive_map_failures{0};  // sustained run escalates show_frame to error
-    // Per-element render counter (read via `frames-delivered`) so multi-receiver setups
-    // don't see a shared process-global total.
-    std::atomic<quint64> delivered_frames{0};
-    // Delivered frames per path (None counts CPU frames), frames a GPU path was tried for but delivered through the
-    // CPU, and caps epochs that started on a GPU path and fell back to the CPU; reported through "frame-stats".
-    std::array<std::atomic<quint64>, GstHw::kPathCount> path_frames{};
-    std::atomic<quint64> gpu_fallbacks{0};
-    std::atomic<quint64> stream_demotions{0};
-    // Frames no GPU path imported whose tiled DMA_DRM layout the CPU can't read: dropped; reported through
-    // "frame-stats".
-    std::atomic<quint64> tiled_drops{0};
-    // Delivered frames a newer frame replaced before the GUI thread took them; reported through "frame-stats".
-    std::atomic<quint64> superseded_frames{0};
-    // Held while a delivery and the frame it superseded are counted, and while "frame-stats" reads them: its readers
-    // count the frames displayed as those delivered less those superseded, which a snapshot seeing one count without
-    // the other would make fall.
-    mutable QMutex delivery_counts_mutex;
     // One stream demotion, and one tiled-drop warning, per caps epoch; reset with the path cache.
     bool demotion_recorded = false;
     bool tiled_drop_logged = false;
     // Live zero-copy CPU frames pinning this sink's decoder buffers; shared because Qt may hold frames past finalize.
     CpuVideoFramePool::PinnedFrameCounter pinned_cpu_frames = std::make_shared<std::atomic<int>>(0);
-    // Replaced (under GST_OBJECT_LOCK) whenever `qvideosink` changes: an invoke queued to a destroyed QVideoSink is
-    // purged without running, which would otherwise leave `posted` latched and starve the next sink.
-    std::shared_ptr<PendingFrameSlot> pending = std::make_shared<PendingFrameSlot>();
     // Negotiated caps held from set_caps; avoids per-frame allocation and preserves DRM modifiers.
     GstCaps* cached_caps{nullptr};
     // Per-caps-epoch resolved-path cache; reset on set_caps so a format change re-runs path selection.
@@ -128,10 +90,9 @@ inline PrivState* priv_of(GstQgcQVideoSink* self)
 bool snapshot_sink(GstQgcQVideoSink* self, HwVideoBufferContext& hwOut)
 {
     GST_OBJECT_LOCK(self);
-    const bool hasSink = (priv_of(self)->qvideosink != nullptr);
     hwOut = priv_of(self)->hw_context;
     GST_OBJECT_UNLOCK(self);
-    return hasSink;
+    return priv_of(self)->delivery.sink() != nullptr;
 }
 
 /// The caps policy for @p target and the display the DMABuf path imports with (HwBuffers::dmaBufImportDisplay()); under
@@ -227,86 +188,6 @@ bool nothing_to_import(GstBuffer* buf)
     return mem && gst_memory_is_type(mem, GST_ALLOCATOR_SYSMEM);
 }
 
-/// The "frame-stats" property value (transfer-full).
-GstStructure* make_stats(const PrivState& p)
-{
-    GstStructure* const stats = gst_structure_new_empty("qgc-video-sink-stats");
-    gst_structure_set(stats, GstQgc::kGpuFallbacksField, G_TYPE_UINT64,
-                      static_cast<guint64>(p.gpu_fallbacks.load(std::memory_order_relaxed)),
-                      GstQgc::kStreamDemotionsField, G_TYPE_UINT64,
-                      static_cast<guint64>(p.stream_demotions.load(std::memory_order_relaxed)), nullptr);
-    gst_structure_set(stats, GstQgc::kTiledDropsField, G_TYPE_UINT64,
-                      static_cast<guint64>(p.tiled_drops.load(std::memory_order_relaxed)), nullptr);
-    {
-        const QMutexLocker locker(&p.delivery_counts_mutex);
-        for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
-            gst_structure_set(stats, GstQgc::sinkFramesField(HwVideoBufferPath(i)), G_TYPE_UINT64,
-                              static_cast<guint64>(p.path_frames[i].load(std::memory_order_relaxed)), nullptr);
-        }
-        gst_structure_set(stats, GstQgc::kSupersededFramesField, G_TYPE_UINT64,
-                          static_cast<guint64>(p.superseded_frames.load(std::memory_order_relaxed)), nullptr);
-    }
-    return stats;
-}
-
-/// Releases an undelivered frame (and the decoder buffer it pins); a queued invoke then finds the slot empty.
-void drop_pending_frame(GstQgcQVideoSink* self)
-{
-    QVideoFrame dropped;
-    GST_OBJECT_LOCK(self);
-    dropped = take_pending_frame(*priv_of(self)->pending);
-    GST_OBJECT_UNLOCK(self);
-}
-
-/// Stores @p frame, delivered through @p path, as the latest pending frame and posts a GUI-thread invoke only if none
-/// is queued. Returns false when no QVideoSink is bound. Runs under GST_OBJECT_LOCK: the controller clears `qvideosink`
-/// under the same lock (destroyed-handler/setVideoSink on the GUI thread), so the clear cannot interleave between the
-/// null-check and the post; an invoke posted while the destroyed-handler blocks here is purged by ~QObject's
-/// removePostedEvents.
-bool push_frame_queued(GstQgcQVideoSink* self, QVideoFrame&& frame, HwVideoBufferPath path)
-{
-    QVideoFrame superseded;
-    GST_OBJECT_LOCK(self);
-    QVideoSink* const sink = priv_of(self)->qvideosink;
-    if (!sink) {
-        GST_OBJECT_UNLOCK(self);
-        return false;
-    }
-    const std::shared_ptr<PendingFrameSlot> slot = priv_of(self)->pending;
-    bool needPost = false;
-    {
-        QMutexLocker locker(&slot->mutex);
-        superseded = std::exchange(slot->frame, std::move(frame));
-        needPost = !std::exchange(slot->posted, true);
-    }
-    {
-        PrivState* const p = priv_of(self);
-        const QMutexLocker locker(&p->delivery_counts_mutex);
-        p->path_frames[static_cast<std::size_t>(path)].fetch_add(1, std::memory_order_relaxed);
-        if (superseded.isValid()) {
-            p->superseded_frames.fetch_add(1, std::memory_order_relaxed);
-        }
-    }
-    if (needPost) {
-        QMetaObject::invokeMethod(
-            sink,
-            [sink, slot]() {
-                QVideoFrame latest;
-                {
-                    QMutexLocker locker(&slot->mutex);
-                    latest = std::exchange(slot->frame, QVideoFrame());
-                    slot->posted = false;
-                }
-                if (latest.isValid()) {
-                    sink->setVideoFrame(latest);
-                }
-            },
-            Qt::QueuedConnection);
-    }
-    GST_OBJECT_UNLOCK(self);
-    return true;
-}
-
 }  // namespace
 
 /// get_caps narrows this to the formats and memory the sink takes for its render target.
@@ -362,20 +243,12 @@ static void gst_qgc_q_video_sink_set_property(GObject* obj, guint id, const GVal
 {
     GstQgcQVideoSink* self = GST_QGC_Q_VIDEO_SINK(obj);
     PrivState* p = priv_of(self);
-    QVideoFrame undelivered;
+    if (id == PROP_QVIDEOSINK) {
+        p->delivery.setSink(static_cast<QVideoSink*>(g_value_get_pointer(val)));
+        return;
+    }
     GST_OBJECT_LOCK(self);
     switch (id) {
-        case PROP_QVIDEOSINK: {
-            auto* const target = static_cast<QVideoSink*>(g_value_get_pointer(val));
-            if (target != p->qvideosink) {
-                // A frame bound for the previous sink must not reach the new one; a fresh slot also detaches any
-                // invoke still queued to the old sink.
-                undelivered = take_pending_frame(*p->pending);
-                p->pending = std::make_shared<PendingFrameSlot>();
-            }
-            p->qvideosink = target;
-            break;
-        }
         case PROP_ACTIVE:
             p->active.store(g_value_get_boolean(val), std::memory_order_relaxed);
             break;
@@ -395,7 +268,7 @@ static void gst_qgc_q_video_sink_get_property(GObject* obj, guint id, GValue* va
     GST_OBJECT_LOCK(self);
     switch (id) {
         case PROP_QVIDEOSINK:
-            g_value_set_pointer(val, priv_of(self)->qvideosink);
+            g_value_set_pointer(val, priv_of(self)->delivery.sink());
             break;
         case PROP_ACTIVE:
             g_value_set_boolean(val, priv_of(self)->active.load(std::memory_order_relaxed));
@@ -404,16 +277,16 @@ static void gst_qgc_q_video_sink_get_property(GObject* obj, guint id, GValue* va
             g_value_set_boolean(val, priv_of(self)->gpu_zerocopy);
             break;
         case PROP_FRAMES_INPUT:
-            g_value_set_uint64(val, priv_of(self)->input_frames.load(std::memory_order_relaxed));
+            g_value_set_uint64(val, priv_of(self)->counters.input());
             break;
         case PROP_FRAMES_DROPPED:
-            g_value_set_uint64(val, priv_of(self)->dropped_frames.load(std::memory_order_relaxed));
+            g_value_set_uint64(val, priv_of(self)->counters.dropped());
             break;
         case PROP_FRAMES_DELIVERED:
-            g_value_set_uint64(val, priv_of(self)->delivered_frames.load(std::memory_order_relaxed));
+            g_value_set_uint64(val, priv_of(self)->counters.delivered());
             break;
         case PROP_FRAME_STATS:
-            g_value_take_boxed(val, make_stats(*priv_of(self)));
+            g_value_take_boxed(val, priv_of(self)->counters.frameStats());
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(obj, id, pspec);
@@ -492,7 +365,7 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
     GstQgcQVideoSink* self = GST_QGC_Q_VIDEO_SINK(vsink);
     PrivState* p = priv_of(self);
 
-    p->input_frames.fetch_add(1, std::memory_order_relaxed);
+    p->counters.noteInput();
     const GstQgc::SinkCapsPolicy policy = reconfigure_on_policy_change(self);
 
     if (!p->caps_valid.load(std::memory_order_acquire)) {
@@ -500,13 +373,13 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
         return GST_FLOW_NOT_NEGOTIATED;
     }
     if (!p->active.load(std::memory_order_relaxed)) {
-        p->dropped_frames.fetch_add(1, std::memory_order_relaxed);
+        p->counters.noteDropped();
         return GST_FLOW_OK;  // drop silently — controller drives the active flag
     }
 
     HwVideoBufferContext hwCtx;
     if (!snapshot_sink(self, hwCtx)) {
-        p->dropped_frames.fetch_add(1, std::memory_order_relaxed);
+        p->counters.noteDropped();
         return GST_FLOW_OK;  // no destination yet; drop
     }
     hwCtx.dmaBufEglDisplay = policy.dmaBufDisplay;
@@ -524,11 +397,11 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
     MappedFrame mapped = mapSampleToFrame(buf, p->cached_caps, p->video_info, hasCrop ? croppedFmt : p->format, hwCtx,
                                           p->pinned_cpu_frames, &p->resolved_path_cache);
     if (!mapped.frame.isValid()) {
-        p->dropped_frames.fetch_add(1, std::memory_order_relaxed);
+        p->counters.noteDropped();
         const quint64 c = p->consecutive_map_failures.fetch_add(1, std::memory_order_relaxed) + 1;
         if (mapped.noCpuLayout) {
             // Until upstream renegotiates (the sink asked for it when the DMABuf import stopped), or the run escalates.
-            p->tiled_drops.fetch_add(1, std::memory_order_relaxed);
+            p->counters.noteTiledDrop();
             if (!std::exchange(p->tiled_drop_logged, true)) {
                 qCWarning(GstQgcQVideoSinkLog) << "tiled DMA_DRM frame not imported and has no CPU layout — dropped";
             }
@@ -551,30 +424,26 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
     applyOrientationAndTiming(mapped.frame, buf, p->stream_orientation.load(std::memory_order_relaxed));
 
     const QSize frameSize = mapped.frame.size();
-    if (!push_frame_queued(self, std::move(mapped.frame), mapped.gpuPath)) {
-        p->dropped_frames.fetch_add(1, std::memory_order_relaxed);
+    const GstQgc::FrameDelivery::Result delivery = p->delivery.deliver(std::move(mapped.frame));
+    if (!delivery.delivered) {
+        p->counters.noteDropped();
         return GST_FLOW_OK;  // QVideoSink unbound while mapping
     }
+    const quint64 delivered = p->counters.noteDelivered(mapped.gpuPath, delivery.superseded);
 
     if (mapped.demoted) {
-        p->gpu_fallbacks.fetch_add(1, std::memory_order_relaxed);
-        if (!std::exchange(p->demotion_recorded, true)) {
-            p->stream_demotions.fetch_add(1, std::memory_order_relaxed);
-        }
+        p->counters.noteGpuFallback(!std::exchange(p->demotion_recorded, true));
     }
 
-    const quint64 delivered = p->delivered_frames.fetch_add(1, std::memory_order_relaxed) + 1;
     if (delivered == 1) {
         qCInfo(GstQgcQVideoSinkLog).noquote()
             << "first frame delivered via" << GstHw::toString(mapped.gpuPath) << "path"
             << QStringLiteral("%1x%2").arg(frameSize.width()).arg(frameSize.height());
     } else if ((delivered % 300) == 0) {
-        const auto& cpuFrames = p->path_frames[static_cast<std::size_t>(HwVideoBufferPath::None)];
         qCDebug(GstQgcQVideoSinkLog).noquote()
             << "frame flow:" << GstHw::toString(mapped.gpuPath) << "delivered=" << delivered
-            << "input=" << p->input_frames.load(std::memory_order_relaxed)
-            << "dropped=" << p->dropped_frames.load(std::memory_order_relaxed)
-            << "cpuFrames=" << cpuFrames.load(std::memory_order_relaxed);
+            << "input=" << p->counters.input() << "dropped=" << p->counters.dropped()
+            << "cpuFrames=" << p->counters.pathFrames(HwVideoBufferPath::None);
     }
     return GST_FLOW_OK;
 }
@@ -595,7 +464,7 @@ static gboolean gst_qgc_q_video_sink_event(GstBaseSink* bsink, GstEvent* event)
             break;
         }
         case GST_EVENT_FLUSH_START:
-            drop_pending_frame(self);
+            priv_of(self)->delivery.dropPending();
             break;
         case GST_EVENT_STREAM_START:
             // A new stream starts untagged; its tags follow this event.
@@ -634,7 +503,7 @@ static gboolean gst_qgc_q_video_sink_stop(GstBaseSink* bsink)
     p->tiled_drop_logged = false;
     p->stream_orientation.store(GST_VIDEO_ORIENTATION_IDENTITY, std::memory_order_relaxed);
     p->consecutive_map_failures.store(0, std::memory_order_relaxed);
-    drop_pending_frame(self);
+    p->delivery.dropPending();
 
     GstBaseSinkClass* parentClass = GST_BASE_SINK_CLASS(gst_qgc_q_video_sink_parent_class);
     return parentClass->stop ? parentClass->stop(bsink) : TRUE;

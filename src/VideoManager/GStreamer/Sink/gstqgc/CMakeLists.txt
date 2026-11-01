@@ -18,10 +18,14 @@ target_sources(
         GstQgcBinChain.h
         GstQgcCaps.cc
         GstQgcCaps.h
+        GstQgcFrameDelivery.cc
+        GstQgcFrameDelivery.h
         GstQgcGpuBin.cc
         GstQgcGpuBin.h
         GstQgcRenderTarget.cc
         GstQgcRenderTarget.h
+        GstQgcSinkCounters.cc
+        GstQgcSinkCounters.h
         GstQgcSinkStats.cc
         GstQgcSinkStats.h
         GstQgcVideoFormats.h

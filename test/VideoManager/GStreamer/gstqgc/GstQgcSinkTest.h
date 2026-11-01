@@ -45,5 +45,6 @@ private slots:
     void _testQgcQVideoSinkSystemMemoryAllocation_data();
     void _testQgcQVideoSinkSystemMemoryAllocation();
     void _testAdapterFlushDropsInFlightSamples();
+    void _testFrameDeliveryKeepsTheLatestFrame();
 #endif
 };

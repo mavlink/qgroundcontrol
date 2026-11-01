@@ -27,6 +27,7 @@
 #include "gstqgc/GstQgcAllocation.h"
 #include "gstqgc/GstQgcBinChain.h"
 #include "gstqgc/GstQgcCaps.h"
+#include "gstqgc/GstQgcFrameDelivery.h"
 #include "gstqgc/GstQgcRenderTarget.h"
 #include "gstqgc/GstQgcSinkStats.h"
 #include "gstqgc/GstQgcTestSupport.h"
@@ -1087,6 +1088,45 @@ void GstQgcSinkTest::_testQgcQVideoSinkMapFailuresPostElementError()
     QVERIFY2(details.contains(QStringLiteral("consecutive map failures")), qPrintable(details));
 }
 
+void GstQgcSinkTest::_testFrameDeliveryKeepsTheLatestFrame()
+{
+    const auto frameOfWidth = [](int width) {
+        return QVideoFrame(QVideoFrameFormat(QSize(width, 2), QVideoFrameFormat::Format_RGBA8888));
+    };
+    GstQgc::FrameDelivery delivery;
+
+    // Nothing is delivered without a QVideoSink.
+    QVERIFY(!delivery.deliver(frameOfWidth(2)).delivered);
+
+    QVideoSink first;
+    delivery.setSink(&first);
+    QCOMPARE(delivery.sink(), &first);
+    const GstQgc::FrameDelivery::Result delivered = delivery.deliver(frameOfWidth(2));
+    QVERIFY(delivered.delivered);
+    QVERIFY(!delivered.superseded);
+    // A newer frame replaces one the QVideoSink hasn't taken, which then only gets the newest.
+    QVERIFY(delivery.deliver(frameOfWidth(4)).superseded);
+    QTRY_COMPARE_WITH_TIMEOUT(first.videoFrame().width(), 4, TestTimeout::shortMs());
+    QVERIFY(!delivery.deliver(frameOfWidth(6)).superseded);
+
+    // A frame bound for the previous sink reaches neither.
+    QVideoSink second;
+    delivery.setSink(&second);
+    QCoreApplication::processEvents();
+    QCOMPARE(first.videoFrame().width(), 4);
+    QVERIFY(!second.videoFrame().isValid());
+
+    // A dropped frame is never shown, and the next one is delivered anew.
+    QVERIFY(delivery.deliver(frameOfWidth(8)).delivered);
+    delivery.dropPending();
+    QCoreApplication::processEvents();
+    QVERIFY(!second.videoFrame().isValid());
+    QVERIFY(!delivery.deliver(frameOfWidth(10)).superseded);
+    QTRY_COMPARE_WITH_TIMEOUT(second.videoFrame().width(), 10, TestTimeout::shortMs());
+
+    delivery.setSink(nullptr);
+    QVERIFY(!delivery.deliver(frameOfWidth(12)).delivered);
+}
 #endif
 
 UT_REGISTER_TEST(GstQgcSinkTest, TestLabel::Unit)
