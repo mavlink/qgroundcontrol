@@ -55,6 +55,14 @@ MouseArea {
         }
     }
 
+    // A drag cut short (the grab taken away, the item hidden) still ends
+    onCanceled: {
+        if (_moved) {
+            _moved = false
+            root.dragFinished()
+        }
+    }
+
     onClicked: {
         if (!_moved) {
             root.markerClicked()

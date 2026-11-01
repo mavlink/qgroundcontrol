@@ -34,7 +34,7 @@ You can create multiple regions by pressing the buttons multiple times, allowing
 1. By default new regions are created as _inclusion_ zones (vehicles must stay within the region).
    Change them to exclusion zones (where the vehicle can't travel) by unchecking the associated _Inclusion_ checkbox in the fence panel.
 
-Depending on the firmware, the GeoFence section may also show fence parameters (e.g. breach action) and a **Breach Return Point** that the vehicle will fly to if it breaches the fence.
+Depending on the firmware, the GeoFence section may also show fence parameters (e.g. breach action). For ArduPilot planes it also offers a **Breach Return Point** that the vehicle flies to if it breaches the fence (with `FENCE_ACTION` set to Guided), at the altitude of the `FENCE_RET_ALT` parameter. Other ArduPilot vehicles and PX4 do not use a breach return point.
 
 ## Edit/Delete a GeoFence
 
