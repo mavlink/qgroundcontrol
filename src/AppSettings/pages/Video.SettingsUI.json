@@ -30,7 +30,7 @@
         {
             "heading": "Connection",
             "keywords": ["rtsp", "tcp", "udp", "mpegts", "video url", "stream url"],
-            "showWhen": "!sourceDisabled && !autoStreamConfig",
+            "showWhen": "!sourceDisabled && !autoStreamConfig && isStreamSource",
             "controls": [
                 {
                     "setting": "videoSettings.rtspUrl",
@@ -49,7 +49,7 @@
         {
             "heading": "Settings",
             "keywords": ["aspect ratio", "low latency", "decoder", "hardware decode", "disable when disarmed", "gpu", "zero-copy"],
-            "showWhen": "!sourceDisabled",
+            "showWhen": "!sourceDisabled && isStreamSource",
             "controls": [
                 {
                     "setting": "videoSettings.aspectRatio",
