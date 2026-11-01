@@ -15,6 +15,7 @@ class VideoReceiver;
 class VideoRecordingService;
 class VideoSettings;
 class VideoStreamController;
+class VideoTelemetryOverlay;
 
 /// QML facade of the video streams, each a VideoStreamController (primary, thermal). decoding and aspectRatio forward
 /// to the primary stream, thermalAspectRatio to the thermal stream, and recording covers both streams. uvcCamera
@@ -41,6 +42,9 @@ class VideoManager : public QObject
     Q_PROPERTY(double aspectRatio READ aspectRatio NOTIFY aspectRatioChanged)
     Q_PROPERTY(double thermalAspectRatio READ thermalAspectRatio NOTIFY aspectRatioChanged)
     Q_PROPERTY(QString uvcVideoSourceID READ uvcVideoSourceID NOTIFY uvcVideoSourceIDChanged)
+    /// The telemetry the primary stream's and the USB camera's outputs show as their subtitle: empty while
+    /// VideoSettings::showTelemetryOverlay is off.
+    Q_PROPERTY(QString telemetryOverlayText READ telemetryOverlayText NOTIFY telemetryOverlayTextChanged)
 
     friend class VideoManagerInitTest;
     friend class VideoManagerTest;
@@ -96,6 +100,8 @@ public:
 
     QString uvcVideoSourceID() const { return _uvcVideoSourceID; }
 
+    QString telemetryOverlayText() const;
+
     void setfullScreen(bool on);
 
 signals:
@@ -108,6 +114,7 @@ signals:
     void isStreamSourceChanged();
     void isUvcChanged();
     void recordingChanged(bool recording);
+    void telemetryOverlayTextChanged();
     void uvcVideoSourceIDChanged();
 
 private:
@@ -136,6 +143,7 @@ private:
     VideoStreamController* const _thermalStream;
     UVCCameraController* const _uvcCamera;
     VideoRecordingService* const _recordingService;
+    VideoTelemetryOverlay* const _telemetryOverlay;
     std::function<VideoReceiver*(QObject* parent)> _receiverFactory;
     QPointer<Vehicle> _activeVehicle;
 

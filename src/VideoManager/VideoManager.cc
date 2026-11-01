@@ -25,6 +25,7 @@
 #include "VideoSettings.h"
 #include "VideoStreamController.h"
 #include "VideoStreamResolver.h"
+#include "VideoTelemetryOverlay.h"
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "Video.VideoManager")
 
@@ -50,8 +51,8 @@ struct VideoSettingReactionEntry
 };
 
 // Not listed: aspectRatio, read by VideoStreamController::aspectRatio(); videoFit, gridLines and showRecControl, read
-// by QML; recordingFormat, enableStorageLimit and maxVideoSize, read when a recording starts; uvcCameraFormat, which
-// goes to the USB camera (_connectSettings()).
+// by QML; showTelemetryOverlay, read by VideoTelemetryOverlay; recordingFormat, enableStorageLimit and maxVideoSize,
+// read when a recording starts; uvcCameraFormat, which goes to the USB camera (_connectSettings()).
 constexpr VideoSettingReactionEntry kVideoSettingReactions[] = {
     {&VideoSettings::videoSource, VideoSettingReaction::Reconfigure},
     {&VideoSettings::udpUrl, VideoSettingReaction::Reconfigure},
@@ -80,6 +81,7 @@ VideoManager::VideoManager(QObject* parent)
     , _thermalStream(new VideoStreamController(VideoStreamController::Role::Thermal, _videoSettings, this))
     , _uvcCamera(new UVCCameraController(this))
     , _recordingService(new VideoRecordingService(_primaryStream, _thermalStream, _uvcCamera, this))
+    , _telemetryOverlay(new VideoTelemetryOverlay(_videoSettings->showTelemetryOverlay(), this))
     , _receiverFactory([](QObject* owner) { return QGCCorePlugin::instance()->createVideoReceiver(owner); })
 {
     qCDebug(VideoManagerLog) << this;
@@ -95,6 +97,8 @@ VideoManager::VideoManager(QObject* parent)
     }
     (void) connect(_recordingService, &VideoRecordingService::recordingChanged, this, &VideoManager::recordingChanged);
     (void) connect(_uvcCamera, &UVCCameraController::camerasChanged, this, &VideoManager::_updateState);
+    (void) connect(_telemetryOverlay, &VideoTelemetryOverlay::textChanged, this,
+                   &VideoManager::telemetryOverlayTextChanged);
 
     _connectSettings();
     _updateState();
@@ -328,6 +332,11 @@ void VideoManager::grabImage(const QString& imageFile)
 bool VideoManager::decoding() const
 {
     return _primaryStream->decoding();
+}
+
+QString VideoManager::telemetryOverlayText() const
+{
+    return _telemetryOverlay->text();
 }
 
 bool VideoManager::recording() const

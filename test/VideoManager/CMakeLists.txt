@@ -26,6 +26,8 @@ target_sources(
         VideoStreamResolverTest.h
         VideoStreamStatsMeterTest.cc
         VideoStreamStatsMeterTest.h
+        VideoTelemetryOverlayTest.cc
+        VideoTelemetryOverlayTest.h
         VideoTestHelpers.h
 )
 
@@ -38,3 +40,4 @@ add_qgc_test(VideoManagerTest LABELS Unit)
 add_qgc_test(VideoRecordingServiceTest LABELS Unit)
 add_qgc_test(VideoStreamResolverTest LABELS Unit)
 add_qgc_test(VideoStreamStatsMeterTest LABELS Unit)
+add_qgc_test(VideoTelemetryOverlayTest LABELS Integration Vehicle)

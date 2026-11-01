@@ -4,7 +4,8 @@ import QtQuick
 
 import QGroundControl
 
-// The video of the primary stream or the UVC camera, fitted to the view, with grid lines and the thermal stream.
+// The video of the primary stream or the UVC camera, fitted to the view, with grid lines, the telemetry overlay and the
+// thermal stream.
 Item {
     id: root
 
@@ -92,7 +93,8 @@ Item {
             id: videoOutputComponent
 
             VideoStreamOutput {
-                stream: root._primaryStream
+                stream:                 root._primaryStream
+                videoSink.subtitleText: root._videoManager.telemetryOverlayText
             }
         }
 
@@ -108,7 +110,13 @@ Item {
         Component {
             id: uvcVideoOutputComponent
 
-            UVCVideoOutput { }
+            UVCVideoOutput {
+                id: uvcOutput
+
+                // Qt turns the subtitle with the output's orientation, so a rotated camera's would be sideways or
+                // upside down.
+                videoSink.subtitleText: uvcOutput.orientation === 0 ? root._videoManager.telemetryOverlayText : ""
+            }
         }
 
         Item {

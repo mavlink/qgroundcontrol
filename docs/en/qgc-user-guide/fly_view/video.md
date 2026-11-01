@@ -68,8 +68,8 @@ also tells you when the camera is unplugged, and shows its video again once it i
 
 Expand the dropdown (">") to change, without leaving the Fly View, the **Low Latency Mode** and **RTP jitter latency**
 of a network stream (under **Video Stream**), the **Decoder Priority** and **Force CPU Video Path** (under
-**Decoding**; changing either restarts the video) and the **Grid Lines** and **Display Fit** of the video (under
-**Video Display**). **Restart Video** reconnects the streams, and **All Video Settings** opens
+**Decoding**; changing either restarts the video) and the **Grid Lines**,
+[Telemetry Overlay](video_overlay.md#live-overlay) and **Display Fit** of the video (under **Video Display**). **Restart Video** reconnects the streams, and **All Video Settings** opens
 [Application Settings > Video](../settings_view/video.md). For a USB camera, only the **Video Display** settings and
 **All Video Settings** apply.
 

@@ -9,6 +9,8 @@
 #include <QtCore/QStringList>
 #include <QtCore/QTimer>
 
+#include "TelemetryBarValues.h"
+
 /// Writes the telemetry bar's values next to a video recording, as an Advanced SubStation Alpha (.ass) subtitle file
 /// that players overlay on the video.
 class SubtitleWriter : public QObject
@@ -32,12 +34,6 @@ public:
     QString videoFile() const { return _videoFile; }
 
 private:
-    struct Field
-    {
-        QString factGroupName;
-        QString factName;
-    };
-
     struct Sample
     {
         qint64 startMs = -1;
@@ -46,14 +42,13 @@ private:
         QString date;
     };
 
-    static QList<Field> _telemetryBarFields();
     void _captureTelemetry();
     Sample _sample(qint64 startMs) const;
     void _writeSample(const Sample& sample, qint64 endMs);
 
     QFile _file;
     QString _videoFile;
-    QList<Field> _fields;
+    TelemetryBarValues _telemetry;
     QSize _size;
     int _rowWidth = 0;
     QElapsedTimer _elapsed;

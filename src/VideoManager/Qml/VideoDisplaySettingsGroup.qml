@@ -5,7 +5,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FactControls
 
-// How the video is drawn: the grid lines over it and how it fits the view.
+// How the video is drawn: the grid lines and telemetry over it, and how it fits the view.
 QGCGroupBox {
     id: root
 
@@ -16,6 +16,13 @@ QGCGroupBox {
     FactCheckBoxSlider {
         text:               qsTr("Grid Lines")
         fact:               root._videoSettings.gridLines
+        visible:            fact.userVisible
+        Layout.fillWidth:   true
+    }
+
+    FactCheckBoxSlider {
+        text:               qsTr("Telemetry Overlay")
+        fact:               root._videoSettings.showTelemetryOverlay
         visible:            fact.userVisible
         Layout.fillWidth:   true
     }

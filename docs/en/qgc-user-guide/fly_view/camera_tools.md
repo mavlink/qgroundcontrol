@@ -12,10 +12,10 @@ For example, if your camera supports video mode you will be able to switch betwe
 ::: info
 Most of the settings that are displayed depend on the camera (they are defined in its [MAVLink Camera Definition File](https://mavlink.io/en/services/camera_def.html)).
 
-> A few common settings at the end are hard-coded: Photo Mode (Single/Time Lapse), Photo Interval (if Time Lapse), Reset Camera Defaults (sends a reset command to the camera), Format (storage), and for a camera with a video stream, Grid Lines and Display Fit (under Video Display)
+> A few common settings at the end are hard-coded: Photo Mode (Single/Time Lapse), Photo Interval (if Time Lapse), Reset Camera Defaults (sends a reset command to the camera), Format (storage), and for a camera with a video stream, Grid Lines, Telemetry Overlay and Display Fit (under Video Display)
 > :::
 
 ## Video Stream {#video_instrument_page}
 
 The video page is used to enable/disable video streaming.
-When enabled, you can start/stop the video stream, enable a grid overlay, change how the image fits the screen, and record the video locally with QGC.
+When enabled, you can start/stop the video stream, enable a grid overlay or the [live telemetry overlay](video_overlay.md#live-overlay), change how the image fits the screen, and record the video locally with QGC.

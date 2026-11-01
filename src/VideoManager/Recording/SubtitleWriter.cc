@@ -5,14 +5,7 @@
 #include <QtCore/QLocale>
 #include <QtCore/QTextStream>
 
-#include "Fact.h"
-#include "FactValueGrid.h"
-#include "HorizontalFactValueGrid.h"
-#include "InstrumentValueData.h"
-#include "MultiVehicleManager.h"
 #include "QGCLoggingCategory.h"
-#include "QmlObjectListModel.h"
-#include "Vehicle.h"
 
 QGC_LOGGING_CATEGORY(SubtitleWriterLog, "Video.SubtitleWriter")
 
@@ -48,25 +41,6 @@ SubtitleWriter::~SubtitleWriter()
     stopCapturingTelemetry();
 }
 
-QList<SubtitleWriter::Field> SubtitleWriter::_telemetryBarFields()
-{
-    // The telemetry bar's layout, defaults included, comes from FactValueGrid and the core plugin.
-    QList<Field> fields;
-    FactValueGrid grid;
-    (void) grid.setProperty("settingsGroup", HorizontalFactValueGrid::telemetryBarSettingsGroup);
-    grid.componentComplete();
-    for (int colIndex = 0; colIndex < grid.columns()->count(); colIndex++) {
-        const QmlObjectListModel* const column = grid.columns()->value<const QmlObjectListModel*>(colIndex);
-        for (int rowIndex = 0; rowIndex < column->count(); rowIndex++) {
-            const InstrumentValueData* const value = column->value<InstrumentValueData*>(rowIndex);
-            if (value->fact()) {
-                fields.append({value->factGroupName(), value->factName()});
-            }
-        }
-    }
-    return fields;
-}
-
 void SubtitleWriter::startCapturingTelemetry(const QString& videoFile, QSize videoSize)
 {
     stopCapturingTelemetry();
@@ -74,7 +48,7 @@ void SubtitleWriter::startCapturingTelemetry(const QString& videoFile, QSize vid
     _videoFile = videoFile;
     _size = videoSize.isEmpty() ? kDefaultVideoSize : videoSize;
     _rowWidth = (_size.width() + kOffsetFactor) / (kColumnCount + 1);
-    _fields = _telemetryBarFields();
+    _telemetry.readLayout();
 
     const QFileInfo videoFileInfo(videoFile);
     _file.setFileName(QStringLiteral("%1/%2.ass").arg(videoFileInfo.path(), videoFileInfo.completeBaseName()));
@@ -146,33 +120,15 @@ SubtitleWriter::Sample SubtitleWriter::_sample(qint64 startMs) const
     Sample sample;
     sample.startMs = startMs;
 
-    // Resolved on every sample: the active vehicle, and the Facts it owns, can change during a recording.
-    Vehicle* const vehicle = MultiVehicleManager::instance()->activeVehicle();
-    if (!vehicle) {
+    const std::optional<QList<TelemetryBarValues::Value>> values = _telemetry.read();
+    if (!values) {
         return sample;
     }
 
     sample.date = QDateTime::currentDateTime().toString(QLocale::system().dateFormat(QLocale::ShortFormat));
-    for (const Field& field : _fields) {
-        FactGroup* factGroup = nullptr;
-        if (field.factGroupName == QLatin1StringView(InstrumentValueData::vehicleFactGroupName)) {
-            factGroup = vehicle;
-        } else {
-            // Like getFactGroup(), which camel-cases the name, but without its warning for a group this vehicle lacks.
-            const QMap<QString, FactGroup*>& factGroups = vehicle->factGroups();
-            for (auto it = factGroups.cbegin(); it != factGroups.cend(); ++it) {
-                if (it.key().compare(field.factGroupName, Qt::CaseInsensitive) == 0) {
-                    factGroup = it.value();
-                    break;
-                }
-            }
-        }
-        if (!factGroup || !factGroup->factExists(field.factName)) {
-            continue;
-        }
-        const Fact* const fact = factGroup->getFact(field.factName);
-        sample.names << QStringLiteral("%1:").arg(fact->shortDescription());
-        sample.values << QStringLiteral("%1 %2").arg(fact->cookedValueString(), fact->cookedUnits());
+    for (const TelemetryBarValues::Value& value : *values) {
+        sample.names << QStringLiteral("%1:").arg(value.name);
+        sample.values << value.value;
     }
     return sample;
 }

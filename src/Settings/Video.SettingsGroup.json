@@ -57,6 +57,15 @@
             "label": "Video Grid Lines"
         },
         {
+            "name": "showTelemetryOverlay",
+            "shortDesc": "Shows the telemetry bar's values along the bottom of the video.",
+            "longDesc": "Shows the values the telemetry bar shows along the bottom of the video stream or USB camera, updated twice a second. Recordings don't include it: their telemetry goes to subtitle files.",
+            "type": "bool",
+            "default": false,
+            "label": "Telemetry Overlay",
+            "keywords": "telemetry,overlay,subtitle,hud,osd"
+        },
+        {
             "name": "videoFit",
             "shortDesc": "Video Display Fit",
             "longDesc": "Handle Video Aspect Ratio.",
