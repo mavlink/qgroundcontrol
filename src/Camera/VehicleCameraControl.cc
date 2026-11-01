@@ -173,10 +173,9 @@ VehicleCameraControl::VehicleCameraControl(const mavlink_camera_information_t *i
     // from the wire by an unauthenticated peer, with no NUL guarantee. Bound the reads, and
     // keep the display strings as sent; only the file-name tokens are reduced to a safe
     // character set.
-    _vendor = QGCMAVLink::boundedStringField(info->vendor_name, sizeof(info->vendor_name));
-    _modelName = QGCMAVLink::boundedStringField(info->model_name, sizeof(info->model_name));
-    const QString definitionUri =
-        QGCMAVLink::boundedStringField(info->cam_definition_uri, sizeof(info->cam_definition_uri));
+    _vendor = QGCMAVLink::boundedStringField(info->vendor_name);
+    _modelName = QGCMAVLink::boundedStringField(info->model_name);
+    const QString definitionUri = QGCMAVLink::boundedStringField(info->cam_definition_uri);
 
     _cacheFileToken = cacheFileToken(_vendor, _modelName, static_cast<int>(_mavlinkCameraInfo.cam_definition_version));
 

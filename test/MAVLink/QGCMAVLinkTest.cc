@@ -343,25 +343,14 @@ void QGCMAVLinkTest::_testBoundedStringField()
 
     const char* raw = bytes.constData();
     const auto length = static_cast<size_t>(maxLen);
-    QCOMPARE(QGCMAVLink::boundedStringField(raw, length), expected);
-    QCOMPARE(QGCMAVLink::boundedStringField(reinterpret_cast<const uint8_t*>(raw), length), expected);
+    QCOMPARE(QGCMAVLink::boundedStringField({raw, length}), expected);
+    QCOMPARE(QGCMAVLink::boundedStringField({reinterpret_cast<const uint8_t*>(raw), length}), expected);
 }
 
-void QGCMAVLinkTest::_testBoundedStringFieldNull_data()
+void QGCMAVLinkTest::_testBoundedStringFieldEmpty()
 {
-    QTest::addColumn<int>("maxLen");
-
-    QTest::newRow("zero-length") << 0;
-    QTest::newRow("nonzero-length") << 32;
-}
-
-void QGCMAVLinkTest::_testBoundedStringFieldNull()
-{
-    QFETCH(int, maxLen);
-
-    const auto length = static_cast<size_t>(maxLen);
-    QVERIFY(QGCMAVLink::boundedStringField(static_cast<const char*>(nullptr), length).isEmpty());
-    QVERIFY(QGCMAVLink::boundedStringField(static_cast<const uint8_t*>(nullptr), length).isEmpty());
+    QVERIFY(QGCMAVLink::boundedStringField(std::span<const char>{}).isEmpty());
+    QVERIFY(QGCMAVLink::boundedStringField(std::span<const uint8_t>{}).isEmpty());
 }
 
 UT_REGISTER_TEST(QGCMAVLinkTest, TestLabel::Unit)

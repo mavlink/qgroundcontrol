@@ -48,6 +48,5 @@ private slots:
 
     void _testBoundedStringField_data();
     void _testBoundedStringField();
-    void _testBoundedStringFieldNull_data();
-    void _testBoundedStringFieldNull();
+    void _testBoundedStringFieldEmpty();
 };
