@@ -18,6 +18,8 @@ target_sources(
         Streams/VideoStreamController.h
         Streams/VideoStreamResolver.cc
         Streams/VideoStreamResolver.h
+        UVC/UVCCameraController.cc
+        UVC/UVCCameraController.h
         UVC/UVCDevices.cc
         UVC/UVCDevices.h
         UVC/UVCStreamMonitor.cc

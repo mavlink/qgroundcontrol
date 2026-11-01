@@ -7,6 +7,11 @@
 #include <QtCore/QList>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
+#include <QtGui/QImage>
+#include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoSink>
+#include <QtQml/QQmlComponent>
+#include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 
 #include "Fact.h"
@@ -97,6 +102,30 @@ inline std::unique_ptr<QGCVideoStreamInfo> makeStreamInfo(VIDEO_STREAM_TYPE type
     info.hfov = 90;
     (void) qstrncpy(info.uri, uri, sizeof(info.uri));
     return std::make_unique<QGCVideoStreamInfo>(info);
+}
+
+/// A QML VideoOutput of 64 × 48, as created by @p engine.
+inline std::unique_ptr<QQuickItem> createVideoOutput(QQmlEngine& engine)
+{
+    QQmlComponent component(&engine);
+    component.setData(R"QML(
+import QtQuick
+import QtMultimedia
+
+VideoOutput {
+    width: 64
+    height: 48
+}
+)QML",
+                      QUrl(QStringLiteral("qrc:/VideoTestHelpers/VideoOutput.qml")));
+    std::unique_ptr<QObject> object(component.create());
+    return std::unique_ptr<QQuickItem>(qobject_cast<QQuickItem*>(object.release()));
+}
+
+/// Hands @p videoOutput's sink @p image as its next frame.
+inline void showFrame(QQuickItem* videoOutput, const QImage& image)
+{
+    videoOutput->property("videoSink").value<QVideoSink*>()->setVideoFrame(QVideoFrame(image));
 }
 
 /// Whether @p root shows a label reading @p text.

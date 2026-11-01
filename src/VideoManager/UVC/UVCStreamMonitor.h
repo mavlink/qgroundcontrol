@@ -20,8 +20,8 @@ class QCamera;
 class QVideoFrame;
 class QVideoSink;
 
-/// Measures the USB camera on display, from the frames its QML CaptureSession hands the video sink, about once a
-/// second while frames arrive. UVCVideoOutput attaches its camera and sink.
+/// Measures the USB camera on display, from the frames its capture session hands the video sink, about once a second
+/// while frames arrive. UVCCameraController attaches its camera and the sink of the registered VideoOutput.
 ///
 /// stats fills valid, fps, codec (the camera's capture format, e.g. "MJPEG" or "YUYV"), gpuPath ("CPU" for frames in
 /// memory, "GPU" for textures) and uptimeMs; the network stream fields keep their defaults.
@@ -30,8 +30,6 @@ class UVCStreamMonitor : public QObject
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
-    Q_MOC_INCLUDE(<QtMultimedia / QCamera>)
-    Q_MOC_INCLUDE(<QtMultimedia / QVideoSink>)
 
     Q_PROPERTY(VideoStreamStats stats READ stats NOTIFY statsChanged)
     Q_PROPERTY(QSize videoSize READ videoSize NOTIFY statsChanged)
@@ -45,9 +43,9 @@ public:
     explicit UVCStreamMonitor(QObject* parent = nullptr, VideoStreamStatsMeter::Clock clock = {});
 
     /// Measures the frames @p videoSink receives from @p camera (optional), in place of any other sink attached.
-    Q_INVOKABLE void attach(QCamera* camera, QVideoSink* videoSink);
-    /// Stops measuring, unless another sink was attached since @p videoSink.
-    Q_INVOKABLE void detach(QVideoSink* videoSink);
+    void attach(QCamera* camera, QVideoSink* videoSink);
+    /// Stops measuring.
+    void detach();
 
     VideoStreamStats stats() const { return _stats; }
 

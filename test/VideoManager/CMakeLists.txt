@@ -9,6 +9,8 @@ target_sources(
     PRIVATE
         SubtitleWriterTest.cc
         SubtitleWriterTest.h
+        UVCCameraControllerTest.cc
+        UVCCameraControllerTest.h
         UVCStreamMonitorTest.cc
         UVCStreamMonitorTest.h
         VideoManagerInitTest.cc
@@ -25,6 +27,7 @@ target_sources(
 )
 
 add_qgc_test(SubtitleWriterTest LABELS Integration Vehicle)
+add_qgc_test(UVCCameraControllerTest LABELS Unit)
 add_qgc_test(UVCStreamMonitorTest LABELS Unit)
 add_qgc_test(VideoManagerInitTest LABELS Unit)
 add_qgc_test(VideoManagerTest LABELS Unit)

@@ -103,12 +103,8 @@ void UVCStreamMonitorTest::_testDetachClearsStats()
     _measureSecond(monitor, sink, nowMs);
     QVERIFY(monitor.stats().valid);
 
-    // A sink no longer attached leaves the measurement alone.
-    monitor.detach(&otherSink);
-    QVERIFY(monitor.stats().valid);
-
     QSignalSpy statsSpy(&monitor, &UVCStreamMonitor::statsChanged);
-    monitor.detach(&sink);
+    monitor.detach();
     QCOMPARE(statsSpy.count(), 1);
     QVERIFY(!monitor.stats().valid);
     QCOMPARE(monitor.videoSize(), QSize());

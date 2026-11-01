@@ -4,7 +4,6 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QPermissions>
-#include <QtMultimedia/QCameraDevice>
 #include <QtMultimedia/QMediaDevices>
 
 #include "AppMessages.h"
@@ -18,14 +17,21 @@ QStringList UVCDevices::deviceNames()
     return names;
 }
 
-bool UVCDevices::deviceExists(const QString& description)
+QCameraDevice UVCDevices::device(const QString& description)
 {
     if (description.isEmpty()) {
-        return false;
+        return QCameraDevice();
     }
     const QList<QCameraDevice> cameras = QMediaDevices::videoInputs();
-    return std::any_of(cameras.cbegin(), cameras.cend(),
-                       [&description](const QCameraDevice& camera) { return camera.description() == description; });
+    const auto camera = std::find_if(cameras.cbegin(), cameras.cend(), [&description](const QCameraDevice& candidate) {
+        return candidate.description() == description;
+    });
+    return (camera != cameras.cend()) ? *camera : QCameraDevice();
+}
+
+bool UVCDevices::deviceExists(const QString& description)
+{
+    return !device(description).isNull();
 }
 
 void UVCDevices::requestPermission()

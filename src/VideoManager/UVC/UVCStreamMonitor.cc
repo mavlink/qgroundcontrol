@@ -70,12 +70,9 @@ void UVCStreamMonitor::attach(QCamera* camera, QVideoSink* videoSink)
     _sampleTimer.start();
 }
 
-void UVCStreamMonitor::detach(QVideoSink* videoSink)
+void UVCStreamMonitor::detach()
 {
-    if (videoSink != _videoSink) {
-        return;
-    }
-    qCDebug(UVCStreamMonitorLog) << "detach" << videoSink;
+    qCDebug(UVCStreamMonitorLog) << "detach" << _videoSink.data();
     _disconnect();
     _restart();
     _updateCameraName();

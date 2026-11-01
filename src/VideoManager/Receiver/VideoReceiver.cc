@@ -1,48 +1,13 @@
 #include "VideoReceiver.h"
 
-#include <QtGui/QImage>
-#include <QtGui/QTransform>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 #include <QtQuick/QQuickItem>
 
 #include "QGCLoggingCategory.h"
+#include "VideoScreenshot.h"
 
 QGC_LOGGING_CATEGORY(VideoReceiverLog, "Video.VideoReceiver")
-
-namespace {
-
-/// @p frame as displayed: rotation, mirroring and the format's viewport (crop) applied. Null for an invalid frame.
-QImage frameToImage(const QVideoFrame& frame)
-{
-    if (!frame.isValid()) {
-        return {};
-    }
-
-    // toImage() applies only the surface format's own transformation: not the frame's rotation or mirroring, nor the
-    // viewport that crops decoder padding.
-    QImage image = frame.toImage();
-    if (image.isNull()) {
-        return image;
-    }
-
-    const QRect viewport = frame.surfaceFormat().viewport();
-    if (viewport.isValid() && (image.size() == frame.size()) && (viewport != image.rect())) {
-        image = image.copy(viewport.intersected(image.rect()));
-    }
-
-    // Same order as Qt's presentation (qNormalizedFrameTransformation): rotate, then mirror horizontally.
-    const int degrees = static_cast<int>(frame.rotation());
-    if (degrees != 0) {
-        image = image.transformed(QTransform().rotate(degrees));
-    }
-    if (frame.mirrored()) {
-        image = image.flipped(Qt::Horizontal);
-    }
-    return image;
-}
-
-}  // namespace
 
 VideoReceiver::VideoReceiver(QObject* parent)
     : QObject(parent)
@@ -166,19 +131,7 @@ bool VideoReceiver::takeScreenshot(const QString& file) const
         return false;
     }
 
-    const QImage image = frameToImage(sink->videoFrame());
-    if (image.isNull()) {
-        qCWarning(VideoReceiverLog) << "No video frame to take a screenshot from" << _name;
-        return false;
-    }
-
-    if (!image.save(file)) {
-        qCWarning(VideoReceiverLog) << "Failed to save screenshot" << file;
-        return false;
-    }
-
-    qCDebug(VideoReceiverLog) << "Screenshot saved:" << file;
-    return true;
+    return VideoScreenshot::save(sink->videoFrame(), file);
 }
 
 QVideoSink* VideoReceiver::videoSink() const

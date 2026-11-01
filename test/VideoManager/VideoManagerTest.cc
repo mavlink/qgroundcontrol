@@ -19,20 +19,12 @@
 #include "VideoStreamController.h"
 #include "VideoTestHelpers.h"
 
+using VideoTestHelpers::createVideoOutput;
 using VideoTestHelpers::makeStreamInfo;
+using VideoTestHelpers::showFrame;
 using VideoTestHelpers::showsText;
 
 namespace {
-
-constexpr const char* kVideoOutputQml = R"QML(
-import QtQuick
-import QtMultimedia
-
-VideoOutput {
-    width: 64
-    height: 48
-}
-)QML";
 
 // The Video indicator's decoding settings.
 constexpr const char* kDecodingSettingsQml = R"QML(
@@ -145,18 +137,6 @@ VideoView {
 }
 )QML";
 
-std::unique_ptr<QQuickItem> createVideoOutput(QQmlEngine& engine)
-{
-    QQmlComponent component(&engine);
-    component.setData(kVideoOutputQml, QUrl(QStringLiteral("qrc:/VideoManagerTest.qml")));
-    std::unique_ptr<QObject> object(component.create());
-    return std::unique_ptr<QQuickItem>(qobject_cast<QQuickItem*>(object.release()));
-}
-
-void showFrame(QQuickItem* videoOutput, const QImage& image)
-{
-    videoOutput->property("videoSink").value<QVideoSink*>()->setVideoFrame(QVideoFrame(image));
-}
 
 }  // namespace
 

@@ -1,6 +1,6 @@
 # ============================================================================
 # Video Receiver API
-# The backend-neutral VideoReceiver, the VideoBackend facade and the stream statistics; GStreamer/ implements them
+# The backend-neutral VideoReceiver and VideoBackend, the stream statistics and screenshots; GStreamer/ implements them
 # ============================================================================
 
 target_sources(
@@ -11,6 +11,8 @@ target_sources(
         VideoBackend.cc
         VideoBackend.h
         VideoDecoderOptions.h
+        VideoScreenshot.cc
+        VideoScreenshot.h
         VideoStreamStats.h
         VideoStreamStatsMeter.cc
         VideoStreamStatsMeter.h

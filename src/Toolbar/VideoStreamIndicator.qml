@@ -22,7 +22,7 @@ Item {
     readonly property VideoManager          _videoManager:  QGroundControl.videoManager
     readonly property VideoStreamController _primary:       _videoManager.primaryStream
     readonly property VideoStreamController _thermal:       _videoManager.thermalStream
-    readonly property UVCStreamMonitor      _uvc:           _videoManager.uvcMonitor
+    readonly property UVCStreamMonitor      _uvc:           _videoManager.uvcCamera.monitor
     readonly property bool _uvcMeasured: _uvc.stats.valid && !_primary.stats.valid && !_thermal.stats.valid
     // The thermal stream's figures only while it is the one measured.
     readonly property var _stats: _uvcMeasured ? _uvc.stats : (_primary.stats.valid ? _primary.stats : _thermal.stats)

@@ -15,8 +15,8 @@
 #include "QGCLoggingCategory.h"
 #include "QGCVideoStreamInfo.h"
 #include "SettingsManager.h"
+#include "UVCCameraController.h"
 #include "UVCDevices.h"
-#include "UVCStreamMonitor.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 #include "VideoBackend.h"
@@ -78,7 +78,7 @@ VideoManager::VideoManager(QObject* parent)
     , _primaryStream(new VideoStreamController(VideoStreamController::Role::Primary, _videoSettings, this))
     , _thermalStream(new VideoStreamController(VideoStreamController::Role::Thermal, _videoSettings, this))
     , _recordingService(new VideoRecordingService(_primaryStream, _thermalStream, this))
-    , _uvcMonitor(new UVCStreamMonitor(this))
+    , _uvcCamera(new UVCCameraController(this))
     , _receiverFactory([](QObject* owner) { return QGCCorePlugin::instance()->createVideoReceiver(owner); })
 {
     qCDebug(VideoManagerLog) << this;
@@ -93,6 +93,7 @@ VideoManager::VideoManager(QObject* parent)
         });
     }
     (void) connect(_recordingService, &VideoRecordingService::recordingChanged, this, &VideoManager::recordingChanged);
+    (void) connect(_uvcCamera, &UVCCameraController::camerasChanged, this, &VideoManager::_updateState);
 
     _connectSettings();
     _updateState();
@@ -260,6 +261,8 @@ void VideoManager::cleanup()
     // longer delivered, so a receiver's worker thread never gets its quit task and the destructor waits forever.
     _primaryStream->setReceiver(nullptr);
     _thermalStream->setReceiver(nullptr);
+    // Qt Multimedia's backend goes away with the application, before ~VideoManager.
+    _uvcCamera->setDevice(QString());
 }
 
 void VideoManager::startVideo()
@@ -303,6 +306,8 @@ void VideoManager::grabImage(const QString& imageFile)
 
     if (_primaryStream->canTakeScreenshot()) {
         (void) _primaryStream->takeScreenshot(file);
+    } else if (_uvcCamera->canTakeScreenshot()) {
+        (void) _uvcCamera->takeScreenshot(file);
     } else {
         qCDebug(VideoManagerLog) << "No video on display to take a screenshot from";
     }
@@ -354,8 +359,12 @@ void VideoManager::_updateState()
     const bool streamWanted = _videoSettings->streamEnabled()->rawValue().toBool() && !_disabledWhileDisarmed;
     const bool autoStreamConfigured = VideoStreamResolver::isAutoStream(_primaryStream->streamInfo());
     const bool isStreamSource = VideoStreamResolver::isNetworkSource(videoSource) || autoStreamConfigured;
-    const QString uvcVideoSourceID =
-        (streamWanted && !isStreamSource && UVCDevices::deviceExists(videoSource)) ? videoSource : QString();
+    const bool cameraSource = streamWanted && !isStreamSource;
+    if (cameraSource) {
+        // A camera plugged in or unplugged changes uvcVideoSourceID.
+        _uvcCamera->watchCameras();
+    }
+    const QString uvcVideoSourceID = (cameraSource && UVCDevices::deviceExists(videoSource)) ? videoSource : QString();
     const bool hasVideo = streamWanted && (_primaryStream->configured() || !uvcVideoSourceID.isEmpty());
     const QGCVideoStreamInfo* const thermalStreamInfo = _thermalStream->streamInfo();
     const bool hasThermal = thermalStreamInfo && thermalStreamInfo->isThermal();
@@ -374,9 +383,7 @@ void VideoManager::_updateState()
     if (uvcVideoSourceID != _uvcVideoSourceID) {
         qCDebug(VideoManagerLog) << "UVC changed from [" << _uvcVideoSourceID << "] to [" << uvcVideoSourceID << "]";
         _uvcVideoSourceID = uvcVideoSourceID;
-        if (!_uvcVideoSourceID.isEmpty()) {
-            UVCDevices::requestPermission();
-        }
+        _uvcCamera->setDevice(_uvcVideoSourceID);
         emit uvcVideoSourceIDChanged();
         emit isUvcChanged();
     }
