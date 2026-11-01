@@ -52,10 +52,33 @@ AnalyzePage {
                 return null
             }
             readonly property bool _hasSubtitles: page._selected !== null && page._selected.subtitles.toString() !== ""
+            readonly property int _seekStepMs: 5000
 
             width:      root.availableWidth
             height:     root.availableHeight
             spacing:    root._margin
+            focus:      true
+
+            Keys.onSpacePressed: page._togglePlayback()
+            Keys.onLeftPressed: page._seekBy(-page._seekStepMs)
+            Keys.onRightPressed: page._seekBy(page._seekStepMs)
+
+            function _togglePlayback() {
+                if (page.selectedPath === "") {
+                    return
+                }
+                if (player.playbackState === MediaPlayer.PlayingState) {
+                    player.pause()
+                } else {
+                    player.play()
+                }
+            }
+
+            function _seekBy(ms) {
+                if (player.seekable) {
+                    player.position = Math.max(0, Math.min(player.duration, player.position + ms))
+                }
+            }
 
             function _deleteSelected() {
                 const path = page.selectedPath
@@ -73,6 +96,7 @@ AnalyzePage {
                 source:         page._selected ? page._selected.url : ""
                 videoOutput:    playerOutput
                 audioOutput:    AudioOutput { }
+                playbackRate:   speedComboBox.currentValue ?? 1
 
                 onSourceChanged: {
                     if (player.source.toString() !== "") {
@@ -137,7 +161,10 @@ AnalyzePage {
 
                     MouseArea {
                         anchors.fill:   parent
-                        onClicked:      page.selectedPath = recordingDelegate.modelData.path
+                        onClicked: {
+                            page.selectedPath = recordingDelegate.modelData.path
+                            page.forceActiveFocus()
+                        }
                     }
                 }
 
@@ -166,6 +193,14 @@ AnalyzePage {
 
                         anchors.fill:       parent
                         endOfStreamPolicy:  VideoOutput.KeepLastFrame
+                    }
+
+                    MouseArea {
+                        anchors.fill:   parent
+                        onClicked: {
+                            page.forceActiveFocus()
+                            page._togglePlayback()
+                        }
                     }
 
                     // The subtitle file's coordinates span the video's frame, as shown.
@@ -247,7 +282,7 @@ AnalyzePage {
                     QGCButton {
                         objectName: "videoRecordingsPlayButton"
                         text:       player.playbackState === MediaPlayer.PlayingState ? qsTr("Pause") : qsTr("Play")
-                        onClicked:  player.playbackState === MediaPlayer.PlayingState ? player.pause() : player.play()
+                        onClicked:  page._togglePlayback()
                     }
 
                     QGCSlider {
@@ -255,6 +290,7 @@ AnalyzePage {
 
                         from:               0
                         to:                 Math.max(1, player.duration)
+                        stepSize:           page._seekStepMs
                         enabled:            player.seekable
                         Layout.fillWidth:   true
                         onMoved:            player.position = seekSlider.value
@@ -269,6 +305,21 @@ AnalyzePage {
 
                     QGCLabel {
                         text: root._formatTime(player.position) + " / " + root._formatTime(player.duration)
+                    }
+
+                    QGCComboBox {
+                        id: speedComboBox
+
+                        objectName:     "videoRecordingsSpeedComboBox"
+                        textRole:       "text"
+                        valueRole:      "value"
+                        currentIndex:   1
+                        sizeToContents: true
+                        model: [
+                            { text: "0.5x", value: 0.5 },
+                            { text: "1x",   value: 1.0 },
+                            { text: "2x",   value: 2.0 }
+                        ]
                     }
 
                     QGCCheckBox {
