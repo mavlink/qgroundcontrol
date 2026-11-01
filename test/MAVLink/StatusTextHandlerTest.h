@@ -20,6 +20,8 @@ private slots:
     void _testChunkedStatusTextReassembly();
     void _testChunkedStatusTextLateChunkStartsNewSequence();
     void _testChunkedStatusTextTimeoutAddsEllipsis();
+    void _testOtherComponentCompletionKeepsChunkTimeout_data();
+    void _testOtherComponentCompletionKeepsChunkTimeout();
     void _testChunkedStatusTextResetsWhenChunkIdChanges();
     void _testMavlinkMessageReceivedIgnoresNonStatusText();
 };
