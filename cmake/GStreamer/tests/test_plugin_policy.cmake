@@ -3,6 +3,14 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 include(PluginPolicy)
 
+# Included without a loaded config, PluginPolicy.cmake reads the policy from the repository's build-config.json.
+qgc_test_assert_in_list("required has coreelements" coreelements GSTREAMER_BUNDLE_REQUIRED_PLUGINS)
+qgc_test_assert_in_list("optional has libav" libav GSTREAMER_OPTIONAL_PLUGINS)
+qgc_test_assert_in_list("GPL denylist has x264" x264 GSTREAMER_GPL_DENYLIST)
+qgc_test_assert_in_list("Debug mock server has videotestsrc" videotestsrc GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS)
+qgc_test_assert_streq("alternates" "videoconvertscale|videoconvert+videoscale" "${GSTREAMER_PLUGIN_ALTERNATES}")
+qgc_test_pass("policy from build-config.json")
+
 set(QGC_BUILD_CONFIG_CONTENT
     [[{
     "gstreamer": {

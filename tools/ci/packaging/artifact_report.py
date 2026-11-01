@@ -6,7 +6,8 @@ Lists the package's files (NSIS installer with 7-Zip, DMG mounted with hdiutil, 
 the same-named artifact of the newest successful master run of this workflow: package and contents
 size with their change, files added and removed, and the largest size changes, in the job summary.
 A size change beyond --size-threshold percent is a warning; a missing baseline only leaves the
-comparison out. Files named after a GSTREAMER_GPL_DENYLIST library or plugin, and mobile binaries
+comparison out. Files named after a GPL-denylisted library or plugin (build-config.json's
+gstreamer_plugin_policy.gpl_denylist), and mobile binaries
 containing a GPL encoder's markers, fail the step; with --gpl-findings warn they are warnings, for a
 package type with a known issue (KNOWN_GPL_ISSUES).
 """
@@ -15,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import json
 import os
 import re
 import shutil
@@ -48,7 +50,7 @@ from common.proc import run_captured
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
 
-PLUGIN_POLICY = REPO_ROOT / "cmake" / "GStreamer" / "PluginPolicy.cmake"
+BUILD_CONFIG = REPO_ROOT / ".github" / "build-config.json"
 ZIP_SUFFIXES = (".aab", ".apk", ".ipa")
 PACKAGE_SUFFIXES = (".appimage", ".dmg", ".exe", *ZIP_SUFFIXES)
 NON_PR_EVENTS = frozenset({"push", "schedule", "workflow_dispatch"})
@@ -87,7 +89,6 @@ BINARY_MAGIC = frozenset(
     }
 )
 SCAN_CHUNK_BYTES = 8 * 1024 * 1024
-_DENYLIST_BLOCK = re.compile(r"set\(\s*GSTREAMER_GPL_DENYLIST\s+([^)]*)\)")
 
 
 @dataclass(frozen=True)
@@ -119,17 +120,13 @@ class Comparison:
     changed: dict[str, tuple[int, int]]
 
 
-def gpl_denylist(policy: Path = PLUGIN_POLICY) -> list[str]:
-    """Return GSTREAMER_GPL_DENYLIST from PluginPolicy.cmake, which the install check uses."""
-    match = _DENYLIST_BLOCK.search(policy.read_text(encoding="utf-8"))
-    names = [
-        line.split("#", 1)[0].strip()
-        for line in (match.group(1) if match else "").splitlines()
-        if line.split("#", 1)[0].strip()
-    ]
+def gpl_denylist(config: Path = BUILD_CONFIG) -> list[str]:
+    """Return build-config.json's gstreamer_plugin_policy.gpl_denylist, which the CMake install check uses too."""
+    policy = json.loads(config.read_text(encoding="utf-8")).get("gstreamer_plugin_policy", {})
+    names = policy.get("gpl_denylist") or []
     if not names:
-        raise RuntimeError(f"GSTREAMER_GPL_DENYLIST not found in {policy}")
-    return names
+        raise RuntimeError(f"gstreamer_plugin_policy.gpl_denylist not found in {config}")
+    return list(names)
 
 
 def gpl_name_pattern(names: Iterable[str]) -> re.Pattern[str]:

@@ -1,93 +1,30 @@
-# GStreamer plugins: the policy (alternate groups, bundle-required and optional plugins, the GPL denylist), the
-# allowlist of build-config.json, finding the plugin files an SDK ships, and the configure-time and install-time checks
-# Orchestrator.cmake and Install.cmake run with them.
+# GStreamer plugins: the policy and the allowlist of build-config.json (alternate groups, bundle-required, optional and
+# Debug mock-server plugins, the GPL denylist), finding the plugin files an SDK ships, and the configure-time and
+# install-time checks Orchestrator.cmake and Install.cmake run with them.
 
 include_guard(GLOBAL)
 
 include("${CMAKE_CURRENT_LIST_DIR}/../modules/BuildConfigReader.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/Platform.cmake")
 
-# Plugin alternate groups — within each group, only one member typically ships
-# per SDK (e.g. videoconvertscale is the 1.22 fusion of videoconvert+videoscale).
-# Format: each entry is a "|"-separated alternate set; member sub-groups are
-# "+"-separated for AND-satisfaction. Example: "videoconvertscale|videoconvert+videoscale"
-# means satisfied if videoconvertscale is present OR if both videoconvert AND
-# videoscale are present. Plugin basenames must not contain '|' or '+' — those
-# are the group/AND delimiters and are not escapable.
-set(GSTREAMER_PLUGIN_ALTERNATES "videoconvertscale|videoconvert+videoscale")
+# The policy lives in .github/build-config.json's gstreamer_plugin_policy, whose schema describes each list; install
+# scripts include this file without the configure's copy of the config, so it reads the file itself then.
+if(NOT DEFINED QGC_BUILD_CONFIG_CONTENT)
+    file(READ "${CMAKE_CURRENT_LIST_DIR}/../../.github/build-config.json" QGC_BUILD_CONFIG_CONTENT)
+endif()
 
-# Structural plugins every bundled GStreamer must ship: a mobile configure and the
-# desktop install verifier fail without one. At runtime GStreamer.cc checks the
-# elements per feature instead, and fails initialization only without the display
-# core.
-# Codec implementations (openh264/libav) are intentionally excluded: distro
-# bundles may omit one while shipping another usable decode path.
-# opengl supplies glupload/glcolorconvert (GL zero-copy video path);
-# isomp4 (mp4mux/qtmux) and matroska (matroskamux) are the recording muxers
-# (RecordingBranch.cc).
-set(GSTREAMER_BUNDLE_REQUIRED_PLUGINS
-    coreelements
-    isomp4
-    matroska
-    opengl
-    playback
-    rtsp
-    rtp
-    rtpmanager
-    tcp
-    udp
-    videoparsersbad
-    videoconvertscale
-)
-
-# Hardware-specific and alternative decoder plugins: decoding uses whichever of them a host or SDK provides, so the
-# Orchestrator only lists missing ones in a status line. The other allowlisted plugins are warned about.
-set(GSTREAMER_OPTIONAL_PLUGINS
-    androidmedia
-    applemedia
-    d3d
-    d3d11
-    d3d12
-    dav1d
-    libav
-    nvcodec
-    openh264
-    qsv
-    va
-    vpx
-    vulkan
-)
-
-# Encode-side plugins needed only by the Debug-only MockLink test video stream server (MockVideoStreamServer), which
-# encodes with openh264enc (allowlisted). Statically registered on Android and iOS Debug builds only: desktop builds
-# load whatever the SDK or system ships, and release builds must not carry them.
-set(GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS mpegtsmux videotestsrc)
-
-# GPL-licensed plugins and libraries of the official SDKs (cerbero builds them with its gpl and ugly options) that QGC
-# must never bundle: its GStreamer license notice (Notice.cmake) covers an LGPL GStreamer. The desktop installers fail
-# an install that would ship one (Install.cmake).
-set(GSTREAMER_GPL_DENYLIST
-    a52
-    a52dec
-    cdio
-    cdio_cdda
-    cdio_paranoia
-    dvdnav
-    dvdread
-    faad
-    mpeg2
-    mpeg2convert
-    mpeg2dec
-    mpeg2enc
-    mpeg2encpp
-    mplex
-    mplex2
-    resindvd
-    sid
-    sidplay
-    x264
-    x265
-)
+# Alternate groups: "|" separates a group's alternates, "+" the plugins one alternate needs together, so
+# "videoconvertscale|videoconvert+videoscale" is satisfied by videoconvertscale, or by videoconvert and videoscale.
+qgc_config_read(GSTREAMER_PLUGIN_ALTERNATES LIST gstreamer_plugin_policy alternates)
+# Structural plugins every bundled GStreamer must ship: a mobile configure and the desktop install verifier fail without
+# one.
+qgc_config_read(GSTREAMER_BUNDLE_REQUIRED_PLUGINS LIST gstreamer_plugin_policy bundle_required)
+# Hardware-specific and alternative decoder plugins, which the Orchestrator only lists in a status line when missing.
+qgc_config_read(GSTREAMER_OPTIONAL_PLUGINS LIST gstreamer_plugin_policy optional_decoders)
+# The Debug-only MockLink test video server's encode-side plugins, registered statically on Android and iOS Debug only.
+qgc_config_read(GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS LIST gstreamer_plugin_policy mock_server_debug)
+# GPL plugins and libraries QGC must never bundle; the desktop installers fail an install that would ship one.
+qgc_config_read(GSTREAMER_GPL_DENYLIST LIST gstreamer_plugin_policy gpl_denylist)
 
 # qgc_gst_gpl_files(<out_var> <file>...)
 # Sets <out_var> to the <file>s whose name is a GSTREAMER_GPL_DENYLIST library or plugin: the name, after an optional

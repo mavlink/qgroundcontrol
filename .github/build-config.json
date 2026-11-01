@@ -97,6 +97,66 @@
     "ca_bundle_url": "https://curl.se/ca/cacert-2026-08-13.pem",
     "ca_bundle_sha256": "f66dff1bdf8f96060b8177976f8b7d9254bc89bc4db933d769f7384d28480bc9"
   },
+  "gstreamer_plugin_policy": {
+    "alternates": [
+      "videoconvertscale|videoconvert+videoscale"
+    ],
+    "bundle_required": [
+      "coreelements",
+      "isomp4",
+      "matroska",
+      "opengl",
+      "playback",
+      "rtsp",
+      "rtp",
+      "rtpmanager",
+      "tcp",
+      "udp",
+      "videoparsersbad",
+      "videoconvertscale"
+    ],
+    "optional_decoders": [
+      "androidmedia",
+      "applemedia",
+      "d3d",
+      "d3d11",
+      "d3d12",
+      "dav1d",
+      "libav",
+      "nvcodec",
+      "openh264",
+      "qsv",
+      "va",
+      "vpx",
+      "vulkan"
+    ],
+    "mock_server_debug": [
+      "mpegtsmux",
+      "videotestsrc"
+    ],
+    "gpl_denylist": [
+      "a52",
+      "a52dec",
+      "cdio",
+      "cdio_cdda",
+      "cdio_paranoia",
+      "dvdnav",
+      "dvdread",
+      "faad",
+      "mpeg2",
+      "mpeg2convert",
+      "mpeg2dec",
+      "mpeg2enc",
+      "mpeg2encpp",
+      "mplex",
+      "mplex2",
+      "resindvd",
+      "sid",
+      "sidplay",
+      "x264",
+      "x265"
+    ]
+  },
   "analysis": {
     "llvm_version": "18",
     "clazy_revision": "f3fb82cb8cd82664e5e5a546aa2a73d3a297d1bd",
