@@ -8,8 +8,9 @@ class QtMultimediaVideoReceiverTest : public GStreamerTestBase
     Q_OBJECT
 
 private:
-    /// Qt's FFmpeg player warns that a live stream can't loop, though nothing asked it to.
-    void _ignoreLoopWarning();
+    /// Qt's FFmpeg player warns that a live stream can't loop, though nothing asked it to, and tells when the machine
+    /// has no hardware decoder for the stream.
+    void _ignorePlayerLogs();
     /// Qt reports each format this platform can't encode, which the recorder moves past.
     void _ignoreEncoderFallbacks();
 
