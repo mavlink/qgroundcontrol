@@ -68,6 +68,7 @@ QGCGroupBox {
         label:      qsTr("Bitrate")
         labelText:  root._withCamera(VideoStreamFormat.bitrateText(root._stats.bitrateKbps),
                                      root._cameraKbps > 0 ? VideoStreamFormat.bitrateText(root._cameraKbps) : "")
+        visible:    root._stats.bitrateKbps >= 0
     }
 
     LabelledLabel {

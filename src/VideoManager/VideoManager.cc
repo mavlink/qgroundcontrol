@@ -14,6 +14,7 @@
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
 #include "QGCVideoStreamInfo.h"
+#include "QtMultimediaVideoReceiver.h"
 #include "SettingsManager.h"
 #include "UVCCameraController.h"
 #include "UVCDevices.h"
@@ -42,6 +43,8 @@ enum class VideoSettingReaction : uint8_t
     /// The decoder ranks, which are global: once the backend is ready they are applied again, and the streams restart
     /// so their new pipelines pick decoders by them.
     RerankDecoders,
+    /// Which receiver plays the streams: each stream gets a new one.
+    RecreateReceivers,
 };
 
 struct VideoSettingReactionEntry
@@ -68,6 +71,7 @@ constexpr VideoSettingReactionEntry kVideoSettingReactions[] = {
     {&VideoSettings::disablePixelAspectRatio, VideoSettingReaction::RebuildSink},
     {&VideoSettings::forceCpuVideoPath, VideoSettingReaction::RebuildSink},
     {&VideoSettings::forceVideoDecoder, VideoSettingReaction::RerankDecoders},
+    {&VideoSettings::videoBackend, VideoSettingReaction::RecreateReceivers},
 };
 
 }  // namespace
@@ -82,7 +86,12 @@ VideoManager::VideoManager(QObject* parent)
     , _uvcCamera(new UVCCameraController(this))
     , _recordingService(new VideoRecordingService(_primaryStream, _thermalStream, _uvcCamera, this))
     , _telemetryOverlay(new VideoTelemetryOverlay(_videoSettings->showTelemetryOverlay(), this))
-    , _receiverFactory([](QObject* owner) { return QGCCorePlugin::instance()->createVideoReceiver(owner); })
+    , _receiverFactory([this](QObject* owner) -> VideoReceiver* {
+        if (_videoSettings->videoBackend()->rawValue().toInt() == VideoSettings::VideoBackendQtMultimedia) {
+            return new QtMultimediaVideoReceiver(owner);
+        }
+        return QGCCorePlugin::instance()->createVideoReceiver(owner);
+    })
 {
     qCDebug(VideoManagerLog) << this;
 
@@ -130,6 +139,15 @@ void VideoManager::_connectSettings()
                 (void) connect(fact, &Fact::rawValueChanged, this, [this] {
                     _primaryStream->restart();
                     _thermalStream->restart();
+                });
+                break;
+            case VideoSettingReaction::RecreateReceivers:
+                (void) connect(fact, &Fact::rawValueChanged, this, [this] {
+                    _primaryStream->setReceiver(nullptr);
+                    _thermalStream->setReceiver(nullptr);
+                    if ((_initState == InitState::Ready) && _hasMainWindow) {
+                        _createVideoReceivers();
+                    }
                 });
                 break;
             case VideoSettingReaction::RerankDecoders:

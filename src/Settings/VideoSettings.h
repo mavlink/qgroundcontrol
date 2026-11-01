@@ -31,6 +31,7 @@ public:
     DEFINE_SETTINGFACT(lowLatencyMode)
     DEFINE_SETTINGFACT(rtpJitterLatencyMs)
     DEFINE_SETTINGFACT(rtspAutoReconnect)
+    DEFINE_SETTINGFACT(videoBackend)
     DEFINE_SETTINGFACT(forceVideoDecoder)
     DEFINE_SETTINGFACT(forceCpuVideoPath)
     DEFINE_SETTINGFACT(videoConversionElement)
@@ -49,6 +50,14 @@ public:
         VideoFitNoCrop = 3,
     };
     Q_ENUM(VideoFit)
+
+    /// videoBackend's values (Video.SettingsGroup.json).
+    enum VideoBackendChoice
+    {
+        VideoBackendGStreamer = 0,
+        VideoBackendQtMultimedia = 1,
+    };
+    Q_ENUM(VideoBackendChoice)
 
     Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)
     Q_PROPERTY(QString  udp264VideoSource       READ udp264VideoSource      CONSTANT)

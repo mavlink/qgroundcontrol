@@ -7,7 +7,8 @@
         "autoStreamConfig": "QGroundControl.videoManager.autoStreamConfigured",
         "sourceDisabled": "videoSource === QGroundControl.settingsManager.videoSettings.disabledVideoSource && !autoStreamConfig",
         "isStreamSource": "QGroundControl.videoManager.isStreamSource",
-        "rtpLatencyVisible": "!QGroundControl.settingsManager.videoSettings.lowLatencyMode.rawValue"
+        "rtpLatencyVisible": "!QGroundControl.settingsManager.videoSettings.lowLatencyMode.rawValue",
+        "gstreamer": "QGroundControl.settingsManager.videoSettings.videoBackend.rawValue === 0"
     },
     "groups": [
         {
@@ -57,9 +58,14 @@
         },
         {
             "heading": "Settings",
-            "keywords": ["aspect ratio", "low latency", "decoder", "hardware decode", "disable when disarmed", "gpu", "zero-copy"],
+            "keywords": ["aspect ratio", "low latency", "decoder", "hardware decode", "disable when disarmed", "gpu", "zero-copy", "backend", "gstreamer", "qt multimedia", "ffmpeg"],
             "showWhen": "!sourceDisabled && isStreamSource",
             "controls": [
+                {
+                    "setting": "videoSettings.videoBackend",
+                    "control": "combobox",
+                    "showWhen": "isStreamSource"
+                },
                 {
                     "setting": "videoSettings.aspectRatio",
                     "showWhen": "!autoStreamConfig && isStreamSource"
@@ -74,17 +80,19 @@
                 },
                 {
                     "setting": "videoSettings.rtpJitterLatencyMs",
-                    "showWhen": "isStreamSource && rtpLatencyVisible"
+                    "showWhen": "isStreamSource && rtpLatencyVisible && gstreamer"
                 },
                 {
                     "setting": "videoSettings.rtspAutoReconnect",
                     "showWhen": "isStreamSource"
                 },
                 {
-                    "setting": "videoSettings.forceCpuVideoPath"
+                    "setting": "videoSettings.forceCpuVideoPath",
+                    "showWhen": "gstreamer"
                 },
                 {
-                    "setting": "videoSettings.forceVideoDecoder"
+                    "setting": "videoSettings.forceVideoDecoder",
+                    "showWhen": "gstreamer"
                 }
             ]
         },

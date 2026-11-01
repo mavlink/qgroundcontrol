@@ -14,8 +14,8 @@ class QQuickWindow;
 class VideoReceiver;
 
 /// The network video backend this build has, behind which callers (VideoManager, VideoSettings, QGCCorePlugin, the
-/// platform startup code) never name a concrete one: GStreamer, or, without it, a null backend whose createReceiver()
-/// returns nullptr (UVC cameras still work through Qt Multimedia).
+/// platform startup code) never name a concrete one: GStreamer, or, without it, Qt Multimedia's player
+/// (QtMultimediaVideoReceiver), which a GStreamer build also offers through VideoSettings::videoBackend.
 class VideoBackend
 {
 public:
@@ -46,6 +46,10 @@ public:
 
     /// True when the build plays network video streams; their settings are shown only then.
     virtual bool hasStreaming() const = 0;
+
+    /// True for GStreamer: the decoder, RTP jitter-buffer and display-sink settings apply, and Qt Multimedia's player
+    /// is the alternative VideoSettings::videoBackend offers.
+    virtual bool hasPipelineSettings() const = 0;
 
     /// True when the build can show decoded frames without copying them through the CPU.
     virtual bool hasGpuVideoPath() const = 0;

@@ -7,8 +7,8 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.VideoManager
 
-// Frame rate and bitrate of the measured video stream, or frame rate and resolution of the USB camera, orange while a
-// stream degrades. The drawer shows each stream's statistics, and expands to the video settings that change a running
+// Frame rate and bitrate of the measured video stream (its resolution where the receiver can't count the bitrate), or
+// frame rate and resolution of the USB camera, orange while a stream degrades. The drawer shows each stream's statistics, and expands to the video settings that change a running
 // stream.
 Item {
     id:             control
@@ -25,7 +25,8 @@ Item {
     readonly property UVCStreamMonitor      _uvc:           _videoManager.uvcCamera.monitor
     readonly property bool _uvcMeasured: _uvc.stats.valid && !_primary.stats.valid && !_thermal.stats.valid
     // The thermal stream's figures only while it is the one measured.
-    readonly property var _stats: _uvcMeasured ? _uvc.stats : (_primary.stats.valid ? _primary.stats : _thermal.stats)
+    readonly property VideoStreamController _measuredStream: _primary.stats.valid ? _primary : _thermal
+    readonly property var _stats: _uvcMeasured ? _uvc.stats : _measuredStream.stats
     readonly property bool _degraded: _statsDegraded(_primary.stats, _streamCameraFps(_primary))
                                       || _statsDegraded(_thermal.stats, _streamCameraFps(_thermal))
                                       || _statsDegraded(_uvc.stats, _uvc.cameraFrameRate)
@@ -71,7 +72,9 @@ Item {
             QGCLabel {
                 objectName: "videoStreamDetail"
                 text:       control._uvcMeasured ? qsTr("%1p").arg(control._uvc.videoSize.height)
-                                                 : VideoStreamFormat.bitrateText(control._stats.bitrateKbps)
+                                                 : (control._stats.bitrateKbps >= 0
+                                                    ? VideoStreamFormat.bitrateText(control._stats.bitrateKbps)
+                                                    : qsTr("%1p").arg(control._measuredStream.videoSize.height))
             }
         }
     }

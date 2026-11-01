@@ -21,7 +21,7 @@ returns. A stream you stop or change is cleared instead.
 ## Video Statistics
 
 While a video stream plays, the [Video indicator](fly_view_toolbar.md#video) in the Fly View toolbar shows its frame
-rate and bitrate. The indicator turns orange while a stream loses packets, drops frames, or shows less than three
+rate and bitrate (its resolution with the Qt Multimedia video backend, which can't measure the bitrate). The indicator turns orange while a stream loses packets, drops frames, or shows less than three
 quarters of the frame rate its camera advertises. To check the health of the video link, click the indicator: its
 dropdown shows, about once a second:
 
@@ -67,9 +67,10 @@ QGroundControl tells you when the USB camera reports an error, and tries it agai
 also tells you when the camera is unplugged, and shows its video again once it is plugged back in.
 
 Expand the dropdown (">") to change, without leaving the Fly View, the **Low Latency Mode** and **RTP jitter latency**
-of a network stream (under **Video Stream**), the **Decoder Priority** and **Force CPU Video Path** (under
-**Decoding**; changing either restarts the video) and the **Grid Lines**,
-[Telemetry Overlay](video_overlay.md#live-overlay) and **Display Fit** of the video (under **Video Display**). **Restart Video** reconnects the streams, and **All Video Settings** opens
+of a network stream (under **Video Stream**), the **Video Backend**, **Decoder Priority** and **Force CPU Video Path**
+(under **Decoding**; changing any restarts the video) and the **Grid Lines**,
+[Telemetry Overlay](video_overlay.md#live-overlay) and **Display Fit** of the video (under **Video Display**).
+**Restart Video** reconnects the streams, and **All Video Settings** opens
 [Application Settings > Video](../settings_view/video.md). For a USB camera, only the **Video Display** settings and
 **All Video Settings** apply.
 

@@ -6,6 +6,7 @@
 #include "AppSettings.h"
 #include "Fact.h"
 #include "QGCApplication.h"
+#include "QtMultimediaVideoReceiver.h"
 
 #ifdef QGC_GST_STREAMING
 #include "GStreamerVideoBackend.h"
@@ -13,18 +14,21 @@
 
 namespace {
 
-class NullVideoBackend final : public VideoBackend
+/// Without GStreamer: streams play in Qt Multimedia's player, which needs no setup.
+class QtMultimediaVideoBackend final : public VideoBackend
 {
 public:
     void configureQtGraphics(bool) override {}
 
-    bool hasStreaming() const override { return false; }
+    bool hasStreaming() const override { return true; }
+
+    bool hasPipelineSettings() const override { return false; }
 
     bool hasGpuVideoPath() const override { return false; }
 
     bool needsAsyncInit() const override { return false; }
 
-    VideoReceiver* createReceiver(QObject*) override { return nullptr; }
+    VideoReceiver* createReceiver(QObject* parent) override { return new QtMultimediaVideoReceiver(parent); }
 
     EnvPrepResult prepareEnvironment() override { return {}; }
 
@@ -50,7 +54,7 @@ VideoBackend& VideoBackend::instance()
 #ifdef QGC_GST_STREAMING
     static GStreamerVideoBackend backend;
 #else
-    static NullVideoBackend backend;
+    static QtMultimediaVideoBackend backend;
 #endif
     return backend;
 }

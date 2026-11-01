@@ -16,6 +16,11 @@ bool hasStreaming()
     return VideoBackend::instance().hasStreaming();
 }
 
+bool hasPipelineSettings()
+{
+    return VideoBackend::instance().hasPipelineSettings();
+}
+
 }  // namespace
 
 DECLARE_SETTINGGROUP(Video, "Video")
@@ -132,12 +137,22 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
     return _videoSourceFact;
 }
 
+// Only a GStreamer build offers a choice: without GStreamer, Qt Multimedia plays the streams.
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoBackend)
+{
+    if (!_videoBackendFact) {
+        _videoBackendFact = _createSettingsFact(videoBackendName);
+        _videoBackendFact->setUserVisible(hasPipelineSettings());
+    }
+    return _videoBackendFact;
+}
+
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, forceVideoDecoder)
 {
     if (!_forceVideoDecoderFact) {
         _forceVideoDecoderFact = _createSettingsFact(forceVideoDecoderName);
 
-        _forceVideoDecoderFact->setUserVisible(hasStreaming());
+        _forceVideoDecoderFact->setUserVisible(hasPipelineSettings());
     }
     return _forceVideoDecoderFact;
 }
@@ -156,7 +171,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtpJitterLatencyMs)
 {
     if (!_rtpJitterLatencyMsFact) {
         _rtpJitterLatencyMsFact = _createSettingsFact(rtpJitterLatencyMsName);
-        _rtpJitterLatencyMsFact->setUserVisible(hasStreaming());
+        _rtpJitterLatencyMsFact->setUserVisible(hasPipelineSettings());
     }
     return _rtpJitterLatencyMsFact;
 }
@@ -187,7 +202,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoConversionElement)
 {
     if (!_videoConversionElementFact) {
         _videoConversionElementFact = _createSettingsFact(videoConversionElementName);
-        _videoConversionElementFact->setUserVisible(hasStreaming());
+        _videoConversionElementFact->setUserVisible(hasPipelineSettings());
     }
     return _videoConversionElementFact;
 }
@@ -196,7 +211,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, disablePixelAspectRatio)
 {
     if (!_disablePixelAspectRatioFact) {
         _disablePixelAspectRatioFact = _createSettingsFact(disablePixelAspectRatioName);
-        _disablePixelAspectRatioFact->setUserVisible(hasStreaming());
+        _disablePixelAspectRatioFact->setUserVisible(hasPipelineSettings());
     }
     return _disablePixelAspectRatioFact;
 }
@@ -214,7 +229,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspTimeout)
 
 void VideoSettings::_setForceVideoDecodeList()
 {
-    if (!hasStreaming()) {
+    if (!hasPipelineSettings()) {
         return;
     }
     static const QList<VideoDecoder::Options> removeForceVideoDecodeList{
@@ -246,7 +261,7 @@ void VideoSettings::_setForceVideoDecodeList()
 
 void VideoSettings::pruneUnavailableDecoders()
 {
-    if (!hasStreaming()) {
+    if (!hasPipelineSettings()) {
         return;
     }
     static const QList<VideoDecoder::Options> hardwareFamilies{

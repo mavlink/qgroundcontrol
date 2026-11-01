@@ -10,6 +10,8 @@ public:
 
     bool hasStreaming() const override { return true; }
 
+    bool hasPipelineSettings() const override { return true; }
+
     bool hasGpuVideoPath() const override;
 
     bool needsAsyncInit() const override { return true; }
