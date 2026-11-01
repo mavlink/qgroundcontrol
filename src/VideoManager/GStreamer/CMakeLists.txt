@@ -133,6 +133,8 @@ target_sources(
         Pipeline/BranchContext.h
         Pipeline/DecodingBranch.cc
         Pipeline/DecodingBranch.h
+        Pipeline/GstBusPump.cc
+        Pipeline/GstBusPump.h
         Pipeline/GstH26xParameterSetGate.cc
         Pipeline/GstH26xParameterSetGate.h
         Pipeline/GstReceiverRequest.h

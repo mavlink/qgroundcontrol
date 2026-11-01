@@ -5,11 +5,6 @@
 #include <utility>
 
 #include <QtCore/QDeadlineTimer>
-#ifdef Q_OS_WIN
-#include <QtCore/QWinEventNotifier>
-#else
-#include <QtCore/QSocketNotifier>
-#endif
 
 #include "GStreamerHelpers.h"
 #include "GstSourceFactory.h"
@@ -219,7 +214,15 @@ bool PipelineSession::start()
 
     GstElement* const pipeline = gst_pipeline_new(_dotDumper.pipelineName().constData());
     _pipeline = GStreamer::adoptElement(pipeline ? GST_ELEMENT(gst_object_ref_sink(pipeline)) : nullptr);
-    if (!_pipeline || !_attachBus()) {
+    // The sync handler is in place before anything can post: the context bridges must see NEED_CONTEXT, which upstream
+    // queries during PAUSED->PLAYING.
+    if (!_pipeline || !_bus.attach(
+                          _pipeline.get(), [this](GstMessage* message) { return _onBusSync(message); },
+                          [this](GstMessage* message) {
+                              if (_phase != Phase::Down) {
+                                  _handleMessage(message);
+                              }
+                          })) {
         _failure = {.reason = QStringLiteral("pipeline creation failed"),
                     .message = tr("Unable to create the video pipeline."),
                     .permanent = true};
@@ -297,21 +300,21 @@ bool PipelineSession::start()
 
 void PipelineSession::setVideoSink(GstElement* sink)
 {
-    if (_decoding && !_tearingDown) {
+    if (_decoding && !_tearingDown()) {
         _decoding->setVideoSink(sink);
     }
 }
 
 void PipelineSession::setRecording(const std::optional<RecordingBranch::Request>& request)
 {
-    if (_recording && !_tearingDown) {
+    if (_recording && !_tearingDown()) {
         _recording->setRequest(request);
     }
 }
 
 void PipelineSession::restartDecoder(const char* reason)
 {
-    if (_decoding && !_tearingDown) {
+    if (_decoding && !_tearingDown()) {
         _decoding->restartDecoder(reason);
     }
 }
@@ -381,17 +384,20 @@ void PipelineSession::snapshot(const QString& tag) const
 
 void PipelineSession::shutdown()
 {
-    if (_shutDown) {
+    if (_phase == Phase::Down) {
         return;
     }
-    _tearingDown = true;
+    _phase = Phase::TearingDown;
 
     if (_recording && _pipeline && _recording->beginTeardown()) {
-        _pumpBusUntilRecordingFinalized(QDeadlineTimer(RecordingBranch::kFinalizeTimeout));
+        // Handles the recorder's messages until it is finalized.
+        _bus.pumpUntil(
+            static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_ELEMENT),
+            [this]() { return !_recording->finalizing(); }, QDeadlineTimer(RecordingBranch::kFinalizeTimeout));
         _recording->completeTeardown();
     }
     // From here on, work queued by streaming threads is stale.
-    _shutDown = true;
+    _phase = Phase::Down;
 
     const GstQgc::PathStats hwStats = sinkPathStats();
 
@@ -399,7 +405,7 @@ void PipelineSession::shutdown()
         // Synchronous: the streaming threads have stopped when this returns.
         (void) gst_element_set_state(_pipeline.get(), GST_STATE_NULL);
     }
-    _detachBus();
+    _bus.detach();
 
     _teeFrameProbe.remove();
     _sourceEos.remove();
@@ -429,7 +435,7 @@ void PipelineSession::_post(std::function<void()> task)
     (void) QMetaObject::invokeMethod(
         this,
         [this, task = std::move(task)]() {
-            if (!_shutDown) {
+            if (_phase != Phase::Down) {
                 task();
             }
         },
@@ -438,84 +444,12 @@ void PipelineSession::_post(std::function<void()> task)
 
 void PipelineSession::_fail(const Failure& failure)
 {
-    if (_failed || _tearingDown) {
+    if (_phase != Phase::Running) {
         return;
     }
-    _failed = true;
+    _phase = Phase::Failed;
     _failure = failure;
     _post([this, failure]() { _listener.onSessionFailed(failure); });
-}
-
-bool PipelineSession::_attachBus()
-{
-    _bus = GStreamer::adoptBus(gst_pipeline_get_bus(GST_PIPELINE(_pipeline.get())));
-    if (!_bus) {
-        qCCritical(GstVideoReceiverLog) << "gst_pipeline_get_bus() failed";
-        return false;
-    }
-    // Installed before anything can post: the context bridges must see NEED_CONTEXT, which upstream queries during
-    // PAUSED->PLAYING.
-    gst_bus_set_sync_handler(_bus.get(), _onBusSync, this, [](gpointer session) {
-        static_cast<PipelineSession*>(session)->_busHandlerReleased.release();
-    });
-    _busHandlerInstalled = true;
-
-    // Readable while messages are queued, like Qt's QGstBusObserver.
-    GPollFD pollFd{};
-    gst_bus_get_pollfd(_bus.get(), &pollFd);
-#ifdef Q_OS_WIN
-    auto* const notifier = new QWinEventNotifier(reinterpret_cast<Qt::HANDLE>(pollFd.fd), this);
-    (void) connect(notifier, &QWinEventNotifier::activated, this, &PipelineSession::_drainBus);
-#else
-    auto* const notifier = new QSocketNotifier(pollFd.fd, QSocketNotifier::Read, this);
-    (void) connect(notifier, &QSocketNotifier::activated, this, &PipelineSession::_drainBus);
-#endif
-    _busNotifier = notifier;
-    return true;
-}
-
-void PipelineSession::_detachBus()
-{
-    // Before the bus, which owns the fd it watches.
-    delete _busNotifier;
-    _busNotifier = nullptr;
-
-    if (!_bus) {
-        return;
-    }
-    if (_busHandlerInstalled) {
-        gst_bus_set_sync_handler(_bus.get(), nullptr, nullptr, nullptr);
-        // GStreamer refcounts the handler per post and releases it once the last in-flight call has returned.
-        _busHandlerReleased.acquire();
-        _busHandlerInstalled = false;
-    }
-    // Drops what is still queued.
-    gst_bus_set_flushing(_bus.get(), TRUE);
-    _bus.reset();
-}
-
-void PipelineSession::_drainBus()
-{
-    while (_bus && !_shutDown) {
-        const GStreamer::GstMessagePtr message = GStreamer::adoptMessage(gst_bus_pop(_bus.get()));
-        if (!message) {
-            return;
-        }
-        _handleMessage(message.get());
-    }
-}
-
-void PipelineSession::_pumpBusUntilRecordingFinalized(const QDeadlineTimer& deadline)
-{
-    constexpr auto kTypes = static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_ELEMENT);
-    while (_recording->finalizing() && !deadline.hasExpired()) {
-        const GStreamer::GstMessagePtr message = GStreamer::adoptMessage(
-            gst_bus_timed_pop_filtered(_bus.get(), static_cast<GstClockTime>(deadline.remainingTimeNSecs()), kTypes));
-        if (!message) {
-            return;
-        }
-        _handleMessage(message.get());
-    }
 }
 
 void PipelineSession::_handleMessage(GstMessage* message)
@@ -528,7 +462,7 @@ void PipelineSession::_handleMessage(GstMessage* message)
             _onBusError(message);
             break;
         case GST_MESSAGE_WARNING:
-            if (!_tearingDown) {
+            if (!_tearingDown()) {
                 logBusWarning(message);
             }
             break;
@@ -536,13 +470,13 @@ void PipelineSession::_handleMessage(GstMessage* message)
             _recording->onBusElement(message);
             break;
         case GST_MESSAGE_STATE_CHANGED:
-            if (!_tearingDown && pipelineEnteredPlaying(message)) {
+            if (!_tearingDown() && pipelineEnteredPlaying(message)) {
                 _logLatency();
             }
             break;
         case GST_MESSAGE_LATENCY:
             // Recalculation hands the sinks their new latency in a LATENCY event.
-            if (!_tearingDown) {
+            if (!_tearingDown()) {
                 (void) gst_bin_recalculate_latency(GST_BIN(_pipeline.get()));
             }
             break;
@@ -574,7 +508,7 @@ void PipelineSession::_onBusError(GstMessage* message)
     if (debug) {
         qCDebug(GstVideoReceiverLog) << "GStreamer debug:" << debug.get();
     }
-    if (_tearingDown || _failed) {
+    if (_phase != Phase::Running) {
         qCDebug(GstVideoReceiverLog) << "Ignoring an error after the stream ended:" << text;
         return;
     }
@@ -607,8 +541,7 @@ void PipelineSession::_onBusError(GstMessage* message)
 QString PipelineSession::_takeStartError()
 {
     // The state change posted why it failed; nothing else in the queue matters for a pipeline that never ran.
-    const GStreamer::GstMessagePtr message =
-        GStreamer::adoptMessage(_bus ? gst_bus_pop_filtered(_bus.get(), GST_MESSAGE_ERROR) : nullptr);
+    const GStreamer::GstMessagePtr message = _bus.pop(GST_MESSAGE_ERROR);
     if (!message) {
         return tr("unknown error");
     }
@@ -654,14 +587,13 @@ void PipelineSession::_logLatency()
         << "max-latency:" << GST_TIME_AS_MSECONDS(max) << "ms";
 }
 
-GstBusSyncReply PipelineSession::_onBusSync(GstBus* /*bus*/, GstMessage* message, gpointer data)
+GstBusSyncReply PipelineSession::_onBusSync(GstMessage* message)
 {
     // The context bridges answer NEED_CONTEXT synchronously and consume (unref) the requests they handle.
     if (HwBuffers::onBusSyncMessage(message) == GST_BUS_DROP) {
         return GST_BUS_DROP;
     }
 
-    auto* const self = static_cast<PipelineSession*>(data);
     switch (GST_MESSAGE_TYPE(message)) {
         case GST_MESSAGE_STREAM_COLLECTION:
             selectVideoStreams(message);
@@ -672,13 +604,13 @@ GstBusSyncReply PipelineSession::_onBusSync(GstBus* /*bus*/, GstMessage* message
             // fails after drop was set, which keeps the error out of the tee and so out of the other branch.
             switch (GStreamer::branchOf(GST_MESSAGE_SRC(message))) {
                 case GStreamer::PipelineBranch::Decoding:
-                    if (self->_displayValve) {
-                        g_object_set(self->_displayValve, "drop", TRUE, nullptr);
+                    if (_displayValve) {
+                        g_object_set(_displayValve, "drop", TRUE, nullptr);
                     }
                     break;
                 case GStreamer::PipelineBranch::Recording:
-                    if (self->_recordingValve) {
-                        g_object_set(self->_recordingValve, "drop", TRUE, nullptr);
+                    if (_recordingValve) {
+                        g_object_set(_recordingValve, "drop", TRUE, nullptr);
                     }
                     break;
                 case GStreamer::PipelineBranch::None:

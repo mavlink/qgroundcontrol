@@ -6,16 +6,15 @@
 #include <optional>
 
 #include <QtCore/QObject>
-#include <QtCore/QSemaphore>
 #include <QtCore/QString>
 
 #include "DecodingBranch.h"
+#include "GstBusPump.h"
 #include "GstScoped.h"
 #include "RecordingBranch.h"
 #include "VideoStreamStatsMeter.h"
 
 class PipelineDotDumper;
-class QDeadlineTimer;
 class StreamWatchdog;
 struct VideoStreamStats;
 
@@ -29,8 +28,9 @@ struct PathStats;
 /// and the branches. Streaming threads hand their work to the session as queued calls, so once shutdown() has stopped
 /// the pipeline and detached the bus, deleting the session drops whatever they left behind.
 ///
-/// Bus handling: a sync handler does only what can't wait (GPU context requests, stream selection, and closing the
-/// valve in front of a failing branch); everything else is popped on the worker, where the bus's poll fd wakes it up.
+/// Bus handling, through a GstBusPump: a sync handler does only what can't wait (GPU context requests, stream
+/// selection, and closing the valve in front of a failing branch); everything else is popped on the worker, where the
+/// bus's poll fd wakes it up.
 ///
 /// The session recovers its branches from their errors itself: a failing decoder is replaced, a failing recorder ends
 /// the recording. A stalled decoder is the listener's to notice, and to replace through restartDecoder(). Failures of
@@ -104,11 +104,8 @@ private:
     void _post(std::function<void()> task);
     void _fail(const Failure& failure);
 
-    bool _attachBus();
-    void _detachBus();
-    void _drainBus();
-    /// Handles the recorder's messages until it is finalized or @p deadline expires.
-    void _pumpBusUntilRecordingFinalized(const QDeadlineTimer& deadline);
+    /// Posting threads: what can't wait for the worker.
+    GstBusSyncReply _onBusSync(GstMessage* message);
     void _handleMessage(GstMessage* message);
     void _onBusError(GstMessage* message);
     QString _takeStartError();
@@ -117,7 +114,6 @@ private:
     void _onFirstFrame();
     void _logLatency();
 
-    static GstBusSyncReply _onBusSync(GstBus* bus, GstMessage* message, gpointer data);
     static void _onSourcePadAdded(GstElement* source, GstPad* pad, gpointer data);
     static GstPadProbeReturn _teeProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data);
     /// Streaming thread: measures the time between keyframes from @p buffer's timestamp.
@@ -137,10 +133,7 @@ private:
     GstElement* _displayValve = nullptr;
     GstElement* _recordingValve = nullptr;
 
-    GStreamer::GstBusPtr _bus;
-    QObject* _busNotifier = nullptr;
-    bool _busHandlerInstalled = false;
-    QSemaphore _busHandlerReleased;  ///< Released by GStreamer once the detached sync handler no longer runs.
+    GstBusPump _bus;
 
     std::unique_ptr<DecodingBranch> _decoding;
     std::unique_ptr<RecordingBranch> _recording;
@@ -148,8 +141,18 @@ private:
     GStreamer::PadProbe _sourceEos;
     GStreamer::ScopedSignal _sourcePadAdded;
 
+    enum class Phase : uint8_t
+    {
+        Running,
+        Failed,       ///< Reported to the listener; later failures are ignored.
+        TearingDown,  ///< In shutdown(): finalizing a recording, then stopping.
+        Down,         ///< Stopped: work streaming threads queued is stale.
+    };
+
+    bool _tearingDown() const { return _phase >= Phase::TearingDown; }
+
+    Phase _phase = Phase::Running;
     Failure _failure;
-    bool _failed = false;
     bool _streaming = false;
     /// Compressed bytes that reached the tee.
     std::atomic<quint64> _bytesReceived = 0;
@@ -162,6 +165,4 @@ private:
     std::size_t _keyframeTimeCount = 0;
     /// The average time between the keyframes in _keyframeTimes; GST_CLOCK_TIME_NONE before the second.
     std::atomic<GstClockTime> _keyframeInterval = GST_CLOCK_TIME_NONE;
-    bool _tearingDown = false;
-    bool _shutDown = false;
 };

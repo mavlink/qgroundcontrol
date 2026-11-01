@@ -4,6 +4,7 @@
 
 #include <gst/gst.h>
 
+#include <QtCore/QDeadlineTimer>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
@@ -13,6 +14,7 @@
 #include <QtMultimedia/QVideoFrameFormat>
 
 #include "GStreamerTestHelpers.h"
+#include "GstBusPump.h"
 #include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
 #include "RecordingFinalizer.h"
@@ -286,6 +288,77 @@ void GstVideoReceiverComponentsTest::_testPresentedSize()
     }
 
     QCOMPARE(VideoReceiver::presentedSize(frame), presented);
+}
+
+namespace {
+
+QString messageName(GstMessage* message)
+{
+    const GstStructure* const structure = gst_message_get_structure(message);
+    return structure ? QString::fromUtf8(gst_structure_get_name(structure)) : QString();
+}
+
+void postApplication(GstElement* pipeline, const char* name)
+{
+    (void) gst_element_post_message(pipeline,
+                                    gst_message_new_application(GST_OBJECT(pipeline), gst_structure_new_empty(name)));
+}
+
+}  // namespace
+
+void GstVideoReceiverComponentsTest::_testBusPump()
+{
+    const GStreamer::GstElementPtr pipeline =
+        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new("pump"))));
+    QVERIFY(pipeline);
+
+    QStringList synced;
+    QStringList handled;
+    GstBusPump pump;
+    QVERIFY(pump.attach(
+        pipeline.get(),
+        [&synced](GstMessage* message) {
+            const QString name = messageName(message);
+            synced.append(name);
+            if (name == QStringLiteral("taken")) {
+                gst_message_unref(message);
+                return GST_BUS_DROP;
+            }
+            return GST_BUS_PASS;
+        },
+        [&handled](GstMessage* message) { handled.append(messageName(message)); }));
+
+    // The sync handler sees every message as it is posted; one it takes is never queued.
+    postApplication(pipeline.get(), "taken");
+    postApplication(pipeline.get(), "queued");
+    QCOMPARE(synced, (QStringList{QStringLiteral("taken"), QStringLiteral("queued")}));
+    QVERIFY(handled.isEmpty());
+    pump.drain();
+    QCOMPARE(handled, QStringList{QStringLiteral("queued")});
+
+    // The bus's poll fd wakes the pump on its own.
+    postApplication(pipeline.get(), "woken");
+    QTRY_COMPARE_WITH_TIMEOUT(handled.size(), 2, TestTimeout::shortMs());
+
+    // A teardown handles messages until it has what it waits for.
+    postApplication(pipeline.get(), "first");
+    postApplication(pipeline.get(), "second");
+    pump.pumpUntil(
+        GST_MESSAGE_APPLICATION, [&handled]() { return handled.size() == 3; }, QDeadlineTimer(TestTimeout::shortMs()));
+    QCOMPARE(handled.last(), QStringLiteral("first"));
+    const GStreamer::GstMessagePtr second = pump.pop(GST_MESSAGE_APPLICATION);
+    QVERIFY(second);
+    QCOMPARE(messageName(second.get()), QStringLiteral("second"));
+    QVERIFY(!pump.pop(GST_MESSAGE_APPLICATION));
+
+    // Detached, nothing the pipeline posts reaches either handler.
+    pump.detach();
+    pump.detach();
+    postApplication(pipeline.get(), "late");
+    QCoreApplication::processEvents();
+    pump.drain();
+    QCOMPARE(synced.size(), 5);
+    QCOMPARE(handled.size(), 3);
 }
 
 #else

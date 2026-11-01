@@ -23,6 +23,7 @@ private slots:
     void _testPipelineNamedAfterReceiver();
     void _testPresentedSize_data();
     void _testPresentedSize();
+    void _testBusPump();
 #else
     void _testGStreamerDisabled();
 #endif
