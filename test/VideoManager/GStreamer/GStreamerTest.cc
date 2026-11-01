@@ -18,6 +18,7 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include "GStreamer.h"
 #include "GStreamerDecoderRanks.h"
 #include "GStreamerHelpers.h"
+#include "GStreamerRuntime.h"
 #include "GStreamerTestHelpers.h"
 #include "GStreamerVideoBackend.h"
 #include "GstVideoReceiver.h"
@@ -208,6 +209,35 @@ void GStreamerTest::_testVideoBackendForwards()
     backend.setDebugLevel(static_cast<int>(threshold));
     QCOMPARE(gst_debug_get_default_threshold(), threshold);
     backend.applyDecoderPriorities(GStreamer::ForceVideoDecoderDefault);
+}
+
+void GStreamerTest::_testRuntimeRunsInOrder()
+{
+    GStreamer::Runtime runtime;
+    QCOMPARE(runtime.state(), GStreamer::Runtime::State::Unprepared);
+
+    // Nothing to self-test before GStreamer runs.
+    expectLogMessage("Video.GStreamer.Runtime", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^GStreamer self-test")));
+    QVERIFY(!runtime.selfTest());
+    verifyExpectedLogMessage();
+
+    // A setup that fails isn't retried: gst_init() can't be undone.
+    expectLogMessage("Video.GStreamer.Runtime", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Initializing GStreamer without preparing")));
+    expectLogMessage("Video.GStreamer.GStreamer", QtCriticalMsg,
+                     QRegularExpression(QStringLiteral("^Invalid GStreamer environment configuration")));
+    QVERIFY(!runtime.initialize({}, {.ok = false, .error = QStringLiteral("test")}, std::nullopt));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QCOMPARE(runtime.state(), GStreamer::Runtime::State::Failed);
+    QVERIFY(!runtime.initialize({}, {}, std::nullopt));
+    QCOMPARE(runtime.state(), GStreamer::Runtime::State::Failed);
+
+    expectLogMessage("Video.GStreamer.Runtime", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^GStreamer self-test")));
+    QVERIFY(!runtime.selfTest());
+    verifyExpectedLogMessage();
 }
 
 void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams_data()

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "GStreamerRuntime.h"
 #include "VideoBackend.h"
 
 /// VideoBackend on GStreamer: the only place the app reaches GStreamer's lifecycle from.
@@ -18,4 +19,7 @@ public:
     void setDebugLevel(int level) override;
     void onMainWindowReady(QQuickWindow* window) override;
     void setAndroidJniState(void* javaVm, void* appContext, void* classLoader) override;
+
+private:
+    GStreamer::Runtime _runtime;
 };

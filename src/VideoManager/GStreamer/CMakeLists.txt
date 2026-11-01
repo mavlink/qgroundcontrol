@@ -118,6 +118,8 @@ target_sources(
         Runtime/GStreamerHelpers.h
         Runtime/GStreamerLogging.cc
         Runtime/GStreamerLogging.h
+        Runtime/GStreamerRuntime.cc
+        Runtime/GStreamerRuntime.h
         Runtime/GStreamerSelfTest.cc
         Runtime/GStreamerSelfTest.h
         Runtime/GStreamerSelfTestMedia.cc

@@ -49,7 +49,8 @@ builds without GStreamer, and where `VideoSettings::videoBackend` picks it.
 | `GStreamerSelfTestMedia` | The self-test's media pipelines: decoding the embedded samples and recording and reading back MP4 and MKV. |
 | `GStreamerUdpSrcWorkaround` | Serializes `udpsrc`'s `unlock()`/`unlock_stop()` on gst-plugins-good before 1.24.10, whose race corrupts the heap when a UDP stream stops right after it starts; `completeInit()` applies it. |
 | `GstScoped` | RAII owners for transfer-full GStreamer returns so refs can't leak on early return, `makeElement()` (never floating), `PadProbe` and `ScopedSignal`. |
-| `GStreamerVideoBackend` | The `VideoBackend` implementation: the only way the app reaches GStreamer's lifecycle (environment, init, self-test, decoder priorities, debug level, Android JNI state). Settings reach the backend as values: `VideoReceiver::Config`, `VideoReceiver::DisplayConfig` and the persisted debug level. |
+| `GStreamerRuntime` | GStreamer's process lifecycle as states (unprepared, prepared, initialized, failed): the environment first, initialization once (a failed or repeated one isn't retried, as `gst_init()` can't be undone), the self-test only once initialized. |
+| `GStreamerVideoBackend` | The `VideoBackend` implementation: the only way the app reaches GStreamer's lifecycle, through its `GStreamerRuntime` (environment, init, self-test), and its tuning (decoder priorities, debug level, Android JNI state). Settings reach the backend as values: `VideoReceiver::Config`, `VideoReceiver::DisplayConfig` and the persisted debug level. |
 
 MockLink's `MockVideoStreamServer` (`src/Comms/MockLink`, Debug builds only) serves a synthetic `videotestsrc` stream (RTP H.264 or H.265 over UDP, RTSP, MPEG-TS over UDP or TCP) that MockLink advertises, so the receiver runs without a vehicle; builds without GStreamer compile a null server instead.
 

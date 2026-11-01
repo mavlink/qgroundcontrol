@@ -34,19 +34,18 @@ VideoReceiver* GStreamerVideoBackend::createReceiver(QObject* parent)
 
 VideoBackend::EnvPrepResult GStreamerVideoBackend::prepareEnvironment()
 {
-    const GStreamer::Environment::ValidationResult result = GStreamer::prepareEnvironment();
+    const GStreamer::Environment::ValidationResult result = _runtime.prepare();
     return {result.ok, result.error};
 }
 
 bool GStreamerVideoBackend::initialize(const InitParams& params)
 {
-    return GStreamer::initialize(params.arguments, {params.environment.ok, params.environment.error},
-                                 params.debugLevel);
+    return _runtime.initialize(params.arguments, {params.environment.ok, params.environment.error}, params.debugLevel);
 }
 
 bool GStreamerVideoBackend::selfTest()
 {
-    return GStreamer::selfTest();
+    return _runtime.selfTest();
 }
 
 void GStreamerVideoBackend::applyDecoderPriorities(int rawOption)
