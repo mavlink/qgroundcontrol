@@ -16,6 +16,10 @@ private slots:
     void _testQgcVideoSinkBinRejectsFailedAdopt();
     void _testQgcBinChainFailedAdoptDropsFloatingRefOnce();
     void _testQgcQVideoSinkDeliversLatestFrameOnly();
+    void _testQgcQVideoSinkDisplayedCountNeverFalls();
+    void _testRenderBackendNames();
+    void _testRenderTargetSharesGlContext();
+    void _testCurrentRenderTarget();
     void _testQgcQVideoSinkRenegotiatesMidStream();
     void _testQgcQVideoSinkAppliesCropMeta();
     void _testQgcQVideoSinkAppliesOrientationTag_data();
@@ -41,5 +45,7 @@ private slots:
     void _testQgcQVideoSinkSystemMemoryAllocation_data();
     void _testQgcQVideoSinkSystemMemoryAllocation();
     void _testAdapterFlushDropsInFlightSamples();
+    void _testFrameDeliveryKeepsTheLatestFrame();
+    void _testPathSessionFailurePolicy();
 #endif
 };

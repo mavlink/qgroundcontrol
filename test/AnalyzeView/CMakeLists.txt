@@ -4,6 +4,7 @@
 # ============================================================================
 
 add_subdirectory(GeoTag)
+add_subdirectory(VideoRecordings)
 
 target_sources(
     QGCUnitTests

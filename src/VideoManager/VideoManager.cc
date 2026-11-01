@@ -14,7 +14,9 @@
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
 #include "QGCVideoStreamInfo.h"
+#include "QtMultimediaVideoReceiver.h"
 #include "SettingsManager.h"
+#include "UVCCameraController.h"
 #include "UVCDevices.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
@@ -24,6 +26,7 @@
 #include "VideoSettings.h"
 #include "VideoStreamController.h"
 #include "VideoStreamResolver.h"
+#include "VideoTelemetryOverlay.h"
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "Video.VideoManager")
 
@@ -37,6 +40,11 @@ enum class VideoSettingReaction : uint8_t
     Reconfigure,
     /// Construct-only property of the display sink: the streams restart, which rebuilds the sink.
     RebuildSink,
+    /// The decoder ranks, which are global: once the backend is ready they are applied again, and the streams restart
+    /// so their new pipelines pick decoders by them.
+    RerankDecoders,
+    /// Which receiver plays the streams: each stream gets a new one.
+    RecreateReceivers,
 };
 
 struct VideoSettingReactionEntry
@@ -46,8 +54,9 @@ struct VideoSettingReactionEntry
 };
 
 // Not listed: aspectRatio, read by VideoStreamController::aspectRatio(); videoFit, gridLines and showRecControl, read
-// by QML; recordingFormat, enableStorageLimit and maxVideoSize, read when a recording starts; forceVideoDecoder and
-// forceCpuVideoPath, which take effect after an application restart.
+// by QML; showTelemetryOverlay, read by VideoTelemetryOverlay; recordingFormat, enableStorageLimit, maxVideoSize and
+// uvcRecordingCodec, read when a recording starts; uvcCameraFormat, uvcCameraRotation, uvcCameraMirror,
+// uvcWhiteBalance, uvcZoom, uvcExposureCompensation and uvcFocusMode, which go to the USB camera (_connectSettings()).
 constexpr VideoSettingReactionEntry kVideoSettingReactions[] = {
     {&VideoSettings::videoSource, VideoSettingReaction::Reconfigure},
     {&VideoSettings::udpUrl, VideoSettingReaction::Reconfigure},
@@ -61,6 +70,9 @@ constexpr VideoSettingReactionEntry kVideoSettingReactions[] = {
     {&VideoSettings::disableWhenDisarmed, VideoSettingReaction::Reconfigure},
     {&VideoSettings::videoConversionElement, VideoSettingReaction::RebuildSink},
     {&VideoSettings::disablePixelAspectRatio, VideoSettingReaction::RebuildSink},
+    {&VideoSettings::forceCpuVideoPath, VideoSettingReaction::RebuildSink},
+    {&VideoSettings::forceVideoDecoder, VideoSettingReaction::RerankDecoders},
+    {&VideoSettings::videoBackend, VideoSettingReaction::RecreateReceivers},
 };
 
 }  // namespace
@@ -72,8 +84,15 @@ VideoManager::VideoManager(QObject* parent)
     , _videoSettings(SettingsManager::instance()->videoSettings())
     , _primaryStream(new VideoStreamController(VideoStreamController::Role::Primary, _videoSettings, this))
     , _thermalStream(new VideoStreamController(VideoStreamController::Role::Thermal, _videoSettings, this))
-    , _recordingService(new VideoRecordingService(_primaryStream, _thermalStream, this))
-    , _receiverFactory([](QObject* owner) { return QGCCorePlugin::instance()->createVideoReceiver(owner); })
+    , _uvcCamera(new UVCCameraController(this))
+    , _recordingService(new VideoRecordingService(_primaryStream, _thermalStream, _uvcCamera, this))
+    , _telemetryOverlay(new VideoTelemetryOverlay(_videoSettings->showTelemetryOverlay(), this))
+    , _receiverFactory([this](QObject* owner) -> VideoReceiver* {
+        if (_videoSettings->videoBackend()->rawValue().toInt() == VideoSettings::VideoBackendQtMultimedia) {
+            return new QtMultimediaVideoReceiver(owner);
+        }
+        return QGCCorePlugin::instance()->createVideoReceiver(owner);
+    })
 {
     qCDebug(VideoManagerLog) << this;
 
@@ -87,6 +106,9 @@ VideoManager::VideoManager(QObject* parent)
         });
     }
     (void) connect(_recordingService, &VideoRecordingService::recordingChanged, this, &VideoManager::recordingChanged);
+    (void) connect(_uvcCamera, &UVCCameraController::camerasChanged, this, &VideoManager::_updateState);
+    (void) connect(_telemetryOverlay, &VideoTelemetryOverlay::textChanged, this,
+                   &VideoManager::telemetryOverlayTextChanged);
 
     _connectSettings();
     _updateState();
@@ -120,7 +142,57 @@ void VideoManager::_connectSettings()
                     _thermalStream->restart();
                 });
                 break;
+            case VideoSettingReaction::RecreateReceivers:
+                (void) connect(fact, &Fact::rawValueChanged, this, [this] {
+                    _primaryStream->setReceiver(nullptr);
+                    _thermalStream->setReceiver(nullptr);
+                    if ((_initState == InitState::Ready) && _hasMainWindow) {
+                        _createVideoReceivers();
+                    }
+                });
+                break;
+            case VideoSettingReaction::RerankDecoders:
+                (void) connect(fact, &Fact::rawValueChanged, this, [this](const QVariant& value) {
+                    // Until then, _onBackendInitComplete() applies the setting.
+                    if (_initState == InitState::Ready) {
+                        VideoBackend::instance().applyDecoderPriorities(value.toInt());
+                    }
+                    _primaryStream->restart();
+                    _thermalStream->restart();
+                });
+                break;
         }
+    }
+
+    Fact* const uvcCameraFormat = _videoSettings->uvcCameraFormat();
+    _uvcCamera->setFormat(uvcCameraFormat->rawValue().toString());
+    (void) connect(uvcCameraFormat, &Fact::rawValueChanged, this,
+                   [this](const QVariant& value) { _uvcCamera->setFormat(value.toString()); });
+
+    const auto applyUvcTransform = [this] {
+        // uvcCameraRotation's values are degrees, as QtVideo::Rotation's are.
+        _uvcCamera->setTransform(
+            static_cast<QtVideo::Rotation>(_videoSettings->uvcCameraRotation()->rawValue().toInt()),
+            _videoSettings->uvcCameraMirror()->rawValue().toBool());
+    };
+    applyUvcTransform();
+    (void) connect(_videoSettings->uvcCameraRotation(), &Fact::rawValueChanged, this, applyUvcTransform);
+    (void) connect(_videoSettings->uvcCameraMirror(), &Fact::rawValueChanged, this, applyUvcTransform);
+
+    const auto applyUvcControls = [this] {
+        UVCCameraController::Controls controls;
+        // uvcWhiteBalance's and uvcFocusMode's values are QCamera's.
+        controls.whiteBalance =
+            static_cast<QCamera::WhiteBalanceMode>(_videoSettings->uvcWhiteBalance()->rawValue().toInt());
+        controls.zoom = _videoSettings->uvcZoom()->rawValue().toFloat();
+        controls.exposureCompensation = _videoSettings->uvcExposureCompensation()->rawValue().toFloat();
+        controls.focusMode = static_cast<QCamera::FocusMode>(_videoSettings->uvcFocusMode()->rawValue().toInt());
+        _uvcCamera->setControls(controls);
+    };
+    applyUvcControls();
+    for (Fact* const fact : {_videoSettings->uvcWhiteBalance(), _videoSettings->uvcZoom(),
+                             _videoSettings->uvcExposureCompensation(), _videoSettings->uvcFocusMode()}) {
+        (void) connect(fact, &Fact::rawValueChanged, this, applyUvcControls);
     }
 }
 
@@ -130,14 +202,17 @@ void VideoManager::startVideoBackendInit()
         return;
     }
 
-    if (!VideoBackend::needsAsyncInit() || VideoBackend::disabledForUnitTests()) {
+    VideoBackend& backend = VideoBackend::instance();
+    if (!backend.capabilities().asyncInit || VideoBackend::disabledForUnitTests()) {
         _initState = InitState::Ready;
         return;
     }
 
     _initState = InitState::Pending;
-    const VideoBackend::EnvPrepResult envResult = VideoBackend::prepareEnvironment();
-    _watchBackendInit(QtConcurrent::run(&VideoBackend::initialize, QCoreApplication::arguments(), envResult));
+    const VideoBackend::InitParams params{.arguments = QCoreApplication::arguments(),
+                                          .environment = backend.prepareEnvironment(),
+                                          .debugLevel = VideoBackend::persistedDebugLevel()};
+    _watchBackendInit(QtConcurrent::run([&backend, params] { return backend.initialize(params); }));
 }
 
 void VideoManager::_watchBackendInit(const QFuture<bool>& future)
@@ -177,7 +252,7 @@ void VideoManager::_onBackendInitComplete(bool success)
     }
 
     _videoSettings->pruneUnavailableDecoders();
-    VideoBackend::applyDecoderPriorities(_videoSettings->forceVideoDecoder()->rawValue().toInt());
+    VideoBackend::instance().applyDecoderPriorities(_videoSettings->forceVideoDecoder()->rawValue().toInt());
 
     _initState = InitState::Ready;
     qCDebug(VideoManagerLog) << "video backend ready";
@@ -198,7 +273,7 @@ void VideoManager::init(QQuickWindow* mainWindow)
         return;
     }
 
-    VideoBackend::onMainWindowReady(mainWindow);
+    VideoBackend::instance().onMainWindowReady(mainWindow);
     VideoBackend::bindDebugLevelFact(SettingsManager::instance()->appSettings()->gstDebugLevel(), this);
 
     MultiVehicleManager* const multiVehicleManager = MultiVehicleManager::instance();
@@ -240,6 +315,10 @@ void VideoManager::cleanup()
     // longer delivered, so a receiver's worker thread never gets its quit task and the destructor waits forever.
     _primaryStream->setReceiver(nullptr);
     _thermalStream->setReceiver(nullptr);
+    // Qt Multimedia's backend goes away with the application, before ~VideoManager; it writes a recording's file on a
+    // thread of its own, which the exit would cut short.
+    _uvcCamera->stopRecordingAndWait(5000);
+    _uvcCamera->setDevice(QString());
 }
 
 void VideoManager::startVideo()
@@ -281,20 +360,33 @@ void VideoManager::grabImage(const QString& imageFile)
                QStringLiteral(".jpg");
     }
 
+    VideoScreenshot::Exif exif;
+    exif.taken = QDateTime::currentDateTime();
+    if (_activeVehicle) {
+        exif.position = _activeVehicle->coordinate();
+    }
+
     if (_primaryStream->canTakeScreenshot()) {
-        (void) _primaryStream->takeScreenshot(file);
+        (void) _primaryStream->takeScreenshot(file, exif);
+    } else if (_uvcCamera->canTakeScreenshot()) {
+        _uvcCamera->capturePhoto(file, exif);
     } else {
         qCDebug(VideoManagerLog) << "No video on display to take a screenshot from";
     }
 
     if (_thermalStream->canTakeScreenshot()) {
-        (void) _thermalStream->takeScreenshot(_thermalStream->taggedFile(file));
+        (void) _thermalStream->takeScreenshot(_thermalStream->taggedFile(file), exif);
     }
 }
 
 bool VideoManager::decoding() const
 {
     return _primaryStream->decoding();
+}
+
+QString VideoManager::telemetryOverlayText() const
+{
+    return _telemetryOverlay->text();
 }
 
 bool VideoManager::recording() const
@@ -334,8 +426,12 @@ void VideoManager::_updateState()
     const bool streamWanted = _videoSettings->streamEnabled()->rawValue().toBool() && !_disabledWhileDisarmed;
     const bool autoStreamConfigured = VideoStreamResolver::isAutoStream(_primaryStream->streamInfo());
     const bool isStreamSource = VideoStreamResolver::isNetworkSource(videoSource) || autoStreamConfigured;
-    const QString uvcVideoSourceID =
-        (streamWanted && !isStreamSource && UVCDevices::deviceExists(videoSource)) ? videoSource : QString();
+    const bool cameraSource = streamWanted && !isStreamSource;
+    if (cameraSource) {
+        // A camera plugged in or unplugged changes uvcVideoSourceID.
+        _uvcCamera->watchCameras();
+    }
+    const QString uvcVideoSourceID = (cameraSource && UVCDevices::deviceExists(videoSource)) ? videoSource : QString();
     const bool hasVideo = streamWanted && (_primaryStream->configured() || !uvcVideoSourceID.isEmpty());
     const QGCVideoStreamInfo* const thermalStreamInfo = _thermalStream->streamInfo();
     const bool hasThermal = thermalStreamInfo && thermalStreamInfo->isThermal();
@@ -354,9 +450,7 @@ void VideoManager::_updateState()
     if (uvcVideoSourceID != _uvcVideoSourceID) {
         qCDebug(VideoManagerLog) << "UVC changed from [" << _uvcVideoSourceID << "] to [" << uvcVideoSourceID << "]";
         _uvcVideoSourceID = uvcVideoSourceID;
-        if (!_uvcVideoSourceID.isEmpty()) {
-            UVCDevices::requestPermission();
-        }
+        _uvcCamera->setDevice(_uvcVideoSourceID);
         emit uvcVideoSourceIDChanged();
         emit isUvcChanged();
     }

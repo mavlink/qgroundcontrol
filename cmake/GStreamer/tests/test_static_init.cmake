@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 # The generated gst_init_static_plugins() source declares and registers exactly the requested plugins and GIO
 # modules, and compiles against the host's GStreamer headers when they are installed.
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/../StaticInit.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/../Mobile.cmake")
 
 qgc_test_sandbox(_sandbox static-init)
 
@@ -22,7 +22,11 @@ foreach(_case IN ITEMS "coreelements,rtp,videoconvertscale|openssl" "coreelement
     string(REPLACE "," ";" _plugins "${_plugins}")
     string(REPLACE "," ";" _gio_modules "${_gio_modules}")
     set(_source "${_sandbox}/static_init.c")
-    _qgc_gst_write_static_init("${_source}" PLUGINS ${_plugins} GIO_MODULES ${_gio_modules})
+    _qgc_gst_write_static_init(
+        "${_source}"
+        PLUGINS ${_plugins}
+        GIO_MODULES ${_gio_modules}
+    )
 
     _qgc_test_macro_args("${_source}" "" GST_PLUGIN_STATIC_DECLARE _declared)
     qgc_test_assert_streq("declared plugins for ${_case}" "${_plugins}" "${_declared}")
@@ -35,9 +39,13 @@ foreach(_case IN ITEMS "coreelements,rtp,videoconvertscale|openssl" "coreelement
 endforeach()
 qgc_test_pass("static init declares and registers exactly the given plugins and GIO modules")
 
+# Not on a Windows host: its GStreamer SDK's headers are for MSVC, not for a cc or gcc its PATH may hold.
 find_program(_qgc_pkg_config NAMES pkg-config pkgconf NO_CACHE)
 find_program(_qgc_cc NAMES cc gcc clang NO_CACHE)
-if(_qgc_pkg_config AND _qgc_cc)
+if(_qgc_pkg_config
+   AND _qgc_cc
+   AND NOT CMAKE_HOST_WIN32
+)
     execute_process(
         COMMAND "${_qgc_pkg_config}" --cflags gstreamer-1.0 gio-2.0
         RESULT_VARIABLE _cflags_result
@@ -47,7 +55,11 @@ if(_qgc_pkg_config AND _qgc_cc)
     if(_cflags_result EQUAL 0)
         separate_arguments(_cflags UNIX_COMMAND "${_cflags}")
         set(_source "${_sandbox}/compile_check.c")
-        _qgc_gst_write_static_init("${_source}" PLUGINS coreelements rtp GIO_MODULES openssl)
+        _qgc_gst_write_static_init(
+            "${_source}"
+            PLUGINS coreelements rtp
+            GIO_MODULES openssl
+        )
         execute_process(
             COMMAND "${_qgc_cc}" -fsyntax-only -Werror ${_cflags} "${_source}"
             RESULT_VARIABLE _compile_result

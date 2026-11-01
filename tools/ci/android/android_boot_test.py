@@ -3,8 +3,8 @@
 
 Passes only when QGC logs its simple boot test's completion marker, so the APK must launch QGC with
 ``--simple-boot-test --logging:Main`` (android.yml configures the emulator leg's APK with
-android-emulator-test's ``boot-test.cmake``). The defaults are android-emulator-test's settings; it
-passes only the APK and package.
+android-emulator-test's ``boot-test.cmake``), and its process then exits without crashing. The
+defaults are android-emulator-test's settings; it passes only the APK and package.
 """
 
 from __future__ import annotations
@@ -37,6 +37,12 @@ _BOOT_TEST_REPORT_PATTERN = re.compile(
     rf"{re.escape(BOOT_TEST_FAILED)}|{re.escape(GSTREAMER_SELF_TEST_CATEGORY)}"
 )
 MAX_BOOT_TEST_REPORT_LINES = 20
+# After main() returns, Android destroys QGC's activity and Qt ends the process (exit-time teardown).
+EXIT_TIMEOUT_SECONDS = 30
+EXIT_CRASH_MESSAGE = "QGroundControl crashed after completing the boot test"
+# What a crashing process logs itself: libc's abort and fatal-signal reports, ART's uncaught exceptions.
+_APP_CRASH_PATTERN = re.compile(r"Fatal signal|FORTIFY:|FATAL EXCEPTION")
+MAX_CRASH_REPORT_LINES = 10
 
 
 def run_command(
@@ -171,6 +177,10 @@ def print_gstreamer_log_group(content: str, max_lines: int = 120) -> None:
 
 
 _LOGCAT_TIME_PATTERN = re.compile(r"^(?P<timestamp>\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})")
+# LogcatPoller's `-v time` format: "MM-DD HH:MM:SS.mmm L/Tag( PID): message".
+_LOGCAT_PID_PATTERN = re.compile(
+    r"^\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} [VDIWEFS]/[^(]*\(\s*(?P<pid>\d+)\):"
+)
 
 
 def _extract_logcat_timestamp(line: str) -> str | None:
@@ -178,6 +188,30 @@ def _extract_logcat_timestamp(line: str) -> str | None:
     if not match:
         return None
     return match.group("timestamp")
+
+
+def logcat_pid(line: str) -> int | None:
+    match = _LOGCAT_PID_PATTERN.match(line)
+    return int(match.group("pid")) if match else None
+
+
+def boot_test_pid(content: str) -> int | None:
+    """Return the pid of the process that logged the boot test's completion marker."""
+    for line in content.splitlines():
+        if BOOT_TEST_COMPLETED in line:
+            return logcat_pid(line)
+    return None
+
+
+def crash_lines(content: str, pid: int) -> list[str]:
+    """Return the lines reporting a crash of process *pid*: its own and crash_dump's."""
+    dump_pattern = re.compile(rf"performing dump of process {pid}\b|\bpid: {pid}, tid: ")
+    return [
+        line
+        for line in content.splitlines()
+        if (logcat_pid(line) == pid and _APP_CRASH_PATTERN.search(line))
+        or dump_pattern.search(line)
+    ]
 
 
 class LogcatPoller:
@@ -246,6 +280,42 @@ def app_running_from_process_table(package_name: str, process_table: str) -> boo
     return False
 
 
+def pid_in_process_table(pid: int, process_table: str) -> bool:
+    """Report whether `ps -A` output, whose second column is the PID, lists *pid*."""
+    return any(line.split()[1:2] == [str(pid)] for line in process_table.splitlines())
+
+
+def watch_app_exit(logcat_content: str, timeout: int) -> tuple[list[str], str]:
+    """Read logcat until the boot-tested process exits, for at most *timeout* seconds.
+
+    Returns the lines reporting a crash of that process and the attempt's logcat. A process that
+    is still running at the end only warns.
+    """
+    pid = boot_test_pid(logcat_content)
+    if pid is None:
+        gh_warning(f"No pid on the '{BOOT_TEST_COMPLETED}' logcat line; not watching the app exit")
+        return [], logcat_content
+
+    print(f"Watching QGroundControl (pid {pid}) exit (timeout: {timeout}s)...")
+    poller = LogcatPoller()
+    content = ""
+    for _ in range(timeout):
+        running = pid_in_process_table(pid, get_process_table())
+        content, delta = poller.poll()
+        crashes = crash_lines(delta, pid)
+        if crashes or not running:
+            if not crashes:
+                # Let logd take what the process and crash_dump logged as it ended.
+                time.sleep(1)
+                content, delta = poller.poll()
+                crashes = crash_lines(delta, pid)
+            return crashes, content or logcat_content
+        time.sleep(1)
+
+    gh_warning(f"QGroundControl (pid {pid}) was still running {timeout}s after the boot test")
+    return [], content or logcat_content
+
+
 def emit_failure(
     message: str,
     log_output: Path,
@@ -302,6 +372,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=int,
         default=2,
         help="Number of launch attempts before failing the boot test",
+    )
+    parser.add_argument(
+        "--exit-timeout",
+        type=int,
+        default=EXIT_TIMEOUT_SECONDS,
+        help="Seconds to watch the app exit after the boot test completes",
     )
     return parser.parse_args(argv)
 
@@ -505,7 +581,13 @@ def main(argv: list[str] | None = None) -> int:
         )
 
         if passed:
+            # A crash at exit is QGC's, not the emulator's, so a new attempt must not hide it.
+            crashes, logcat_content = watch_app_exit(logcat_content, args.exit_timeout)
             write_log(args.log_output, logcat_content)
+            if crashes:
+                gh_error("\n".join([EXIT_CRASH_MESSAGE, *crashes[:MAX_CRASH_REPORT_LINES]]))
+                print_log_group(logcat_content, crash_log_pattern)
+                return 1
             print_log_group(logcat_content, app_log_pattern)
             print_gstreamer_log_group(logcat_content)
             print(f"Emulator boot test passed for {args.package}")

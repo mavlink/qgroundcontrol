@@ -6,7 +6,7 @@ next to this file holds the license text. Some GStreamer plugins, and the librar
 each plugin declares its license, which gst-inspect-1.0 <plugin> shows.
 
 Source code of GStreamer @_version@:
-    https://gitlab.freedesktop.org/gstreamer/gstreamer/-/tree/@_version@
+    https://gitlab.freedesktop.org/gstreamer/gstreamer/-/tree/@_release@
     https://gstreamer.freedesktop.org/src/
 
 @_binaries@

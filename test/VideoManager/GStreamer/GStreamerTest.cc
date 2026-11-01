@@ -9,31 +9,22 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include <gst/gst.h>
 #include <memory>
 
+#include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
+#include <QtCore/QVersionNumber>
+
 #include "Fact.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
+#include "GStreamerDecoderRanks.h"
 #include "GStreamerHelpers.h"
+#include "GStreamerRuntime.h"
 #include "GStreamerTestHelpers.h"
-#include "GstQgcCaps.h"
-#include "GstQgcRenderTarget.h"
+#include "GStreamerVideoBackend.h"
 #include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
 #include "RecordingBranch.h"
-
-void GStreamerTest::_testIsValidRtspUri()
-{
-    QVERIFY(GStreamer::isValidRtspUri("rtsp://127.0.0.1:8554/test"));
-    QVERIFY(GStreamer::isValidRtspUri("rtsp://user:pass@10.0.0.1/stream"));
-    QVERIFY(GStreamer::isValidRtspUri("rtspu://192.168.1.1:554/video"));
-    QVERIFY(GStreamer::isValidRtspUri("rtspt://example.com/live"));
-
-    QVERIFY(!GStreamer::isValidRtspUri(nullptr));
-    QVERIFY(!GStreamer::isValidRtspUri(""));
-    QVERIFY(!GStreamer::isValidRtspUri("not-a-uri"));
-    QVERIFY(!GStreamer::isValidRtspUri("http://example.com"));
-    QVERIFY(!GStreamer::isValidRtspUri("udp://127.0.0.1:5600"));
-    QVERIFY(!GStreamer::isValidRtspUri("rtsp://"));
-}
+#include "VideoBackend.h"
 
 void GStreamerTest::_testIsHardwareDecoderFactory_data()
 {
@@ -96,30 +87,54 @@ void GStreamerTest::_testDecoderFamilyForFactory()
     QCOMPARE(int(GStreamer::decoderFamilyForFactory(factoryName.toUtf8().constData())), expectedFamily);
 }
 
-void GStreamerTest::_testD3D12RhiDisablesGpuZeroCopySink()
+void GStreamerTest::_testAvailableDecoderFamilies()
 {
-#if !defined(Q_OS_WIN) || !defined(QGC_HAS_GST_D3D12_GPU_PATH)
-    QSKIP("D3D12 sink policy is Windows D3D12-only");
-#else
-    // The render target comes from the sink environment: QQuickWindow::graphicsApi() keeps the first API it reports
-    // for the whole process, so QSG_RHI_BACKEND could not switch it between these checks.
-    const TestFixtures::EnvVarFixture rhiBackend("QSG_RHI_BACKEND");
-    qunsetenv("QSG_RHI_BACKEND");
-    {
-        const GstQgc::ScopedSinkEnvironmentForTest d3d12({.target = {.backend = GstQgc::RenderBackend::Direct3D12}});
-        QVERIFY2(!GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(false, false),
-                 "D3D12 RHI must force the CPU sink path because gst-d3d12 cannot wrap Qt's ID3D12Device");
-    }
-
-    const GstQgc::ScopedSinkEnvironmentForTest d3d11({.target = {.backend = GstQgc::RenderBackend::Direct3D11}});
-    QVERIFY(GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(false, false));
-    QVERIFY(!GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(false, true));
-    QVERIFY(!GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(true, false));
-
-    qputenv("QSG_RHI_BACKEND", QByteArray("d3d12"));
-    QVERIFY2(!GStreamer::gpuZeroCopyAllowedForCurrentGraphicsApi(false, false),
-             "A D3D12 request in QSG_RHI_BACKEND must force the CPU sink path too");
+    QList<GStreamer::VideoDecoderOptions> installed;
+    GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&installed](GstElementFactory* factory) {
+        const auto family =
+            GStreamer::decoderFamilyForFactory(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
+        if ((family != GStreamer::ForceVideoDecoderDefault) && !installed.contains(family)) {
+            installed.append(family);
+        }
+    });
+#ifndef QGC_HAS_GST_VULKAN_GPU_PATH
+    // Without the Vulkan GPU path, forcing Vulkan decoders would only add a CPU copy of every frame.
+    installed.removeAll(GStreamer::ForceVideoDecoderVulkan);
 #endif
+    QCOMPARE(GStreamer::availableDecoderFamilies(), installed);
+}
+
+void GStreamerTest::_testDecoderPriorityWarnings()
+{
+    const auto restoreRanks = qScopeGuard([] { GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderDefault); });
+
+    // A stored value outside the options changes nothing.
+    expectLogMessage("Video.GStreamer.DecoderRanks", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Ignoring invalid decode option: 99$")));
+    GStreamer::setCodecPriorities(99);
+    verifyExpectedLogMessage();
+    expectLogMessage("Video.GStreamer.DecoderRanks", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Ignoring invalid decode option: -1$")));
+    GStreamer::setCodecPriorities(-1);
+    verifyExpectedLogMessage();
+
+    // Vulkan decoders are ranked first, though their frames are copied through the CPU.
+    expectLogMessage("Video.GStreamer.DecoderRanks", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Forcing Vulkan video decoders")));
+    GStreamer::setCodecPriorities(static_cast<int>(GStreamer::ForceVideoDecoderVulkan));
+    verifyExpectedLogMessage();
+}
+
+void GStreamerTest::_testLogDecoderRanks()
+{
+    const TestFixtures::LoggingCategoryFixture ranksLog(QStringLiteral("Video.GStreamer.DecoderRanks"));
+
+    // A header, then a line per decoder, best ranked first.
+    ignoreLogMessage("Video.GStreamer.DecoderRanks", QtDebugMsg, QRegularExpression(QStringLiteral("^  ")));
+    expectLogMessage("Video.GStreamer.DecoderRanks", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("^Video decoder ranks:$")));
+    GStreamer::logDecoderRanks();
+    verifyExpectedLogMessage();
 }
 
 void GStreamerTest::_testPipelineDotOmitsElementProperties()
@@ -160,7 +175,7 @@ void GStreamerTest::_testCompleteInit()
     gst_clear_object(&qgcPlugin);
 
     for (const char* const name : {"appsink", "qgcvideosinkbin"}) {
-        QVERIFY2(GStreamer::adoptFactory(gst_element_factory_find(name)),
+        QVERIFY2(GStreamer::hasElementFactory(name),
                  qPrintable(QStringLiteral("Factory '%1' not found after completeInit()").arg(QLatin1String(name))));
     }
 }
@@ -170,6 +185,59 @@ void GStreamerTest::_testCreateVideoReceiver()
     std::unique_ptr<VideoReceiver> receiver(GStreamer::createVideoReceiver(nullptr));
     QVERIFY2(receiver, "GStreamer::createVideoReceiver() returned nullptr");
     QVERIFY(qobject_cast<GstVideoReceiver*>(receiver.get()));
+}
+
+void GStreamerTest::_testVideoBackendForwards()
+{
+    GStreamerVideoBackend backend;
+    const VideoBackend::Capabilities capabilities = backend.capabilities();
+    QVERIFY(capabilities.streaming);
+    QVERIFY(capabilities.pipelineSettings);
+    QVERIFY(capabilities.asyncInit);
+#ifdef QGC_HAS_ANY_GPU_PATH
+    QVERIFY(capabilities.gpuVideoPath);
+#else
+    QVERIFY(!capabilities.gpuVideoPath);
+#endif
+
+    const std::unique_ptr<VideoReceiver> receiver(backend.createReceiver(nullptr));
+    QVERIFY(qobject_cast<GstVideoReceiver*>(receiver.get()));
+    QCOMPARE(backend.availableDecoderFamilies(), GStreamer::availableDecoderFamilies());
+
+    // The default decoder priorities and debug threshold change nothing a test sees.
+    const GstDebugLevel threshold = gst_debug_get_default_threshold();
+    backend.setDebugLevel(static_cast<int>(threshold));
+    QCOMPARE(gst_debug_get_default_threshold(), threshold);
+    backend.applyDecoderPriorities(GStreamer::ForceVideoDecoderDefault);
+}
+
+void GStreamerTest::_testRuntimeRunsInOrder()
+{
+    GStreamer::Runtime runtime;
+    QCOMPARE(runtime.state(), GStreamer::Runtime::State::Unprepared);
+
+    // Nothing to self-test before GStreamer runs.
+    expectLogMessage("Video.GStreamer.Runtime", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^GStreamer self-test")));
+    QVERIFY(!runtime.selfTest());
+    verifyExpectedLogMessage();
+
+    // A setup that fails isn't retried: gst_init() can't be undone.
+    expectLogMessage("Video.GStreamer.Runtime", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Initializing GStreamer without preparing")));
+    expectLogMessage("Video.GStreamer.GStreamer", QtCriticalMsg,
+                     QRegularExpression(QStringLiteral("^Invalid GStreamer environment configuration")));
+    QVERIFY(!runtime.initialize({}, {.ok = false, .error = QStringLiteral("test")}, std::nullopt));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QCOMPARE(runtime.state(), GStreamer::Runtime::State::Failed);
+    QVERIFY(!runtime.initialize({}, {}, std::nullopt));
+    QCOMPARE(runtime.state(), GStreamer::Runtime::State::Failed);
+
+    expectLogMessage("Video.GStreamer.Runtime", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^GStreamer self-test")));
+    QVERIFY(!runtime.selfTest());
+    verifyExpectedLogMessage();
 }
 
 void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams_data()
@@ -219,7 +287,7 @@ void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams()
 void GStreamerTest::_testBindDebugLevelFactRejectsNullContext()
 {
     Fact fact;
-    GStreamer::bindDebugLevelFact(&fact, nullptr);
+    VideoBackend::bindDebugLevelFact(&fact, nullptr);
 }
 
 void GStreamerTest::_testRuntimeVersionCheck()
@@ -228,17 +296,11 @@ void GStreamerTest::_testRuntimeVersionCheck()
     gst_version(&major, &minor, &micro, &nano);
 
     QVERIFY2(major == 1, "Unexpected GStreamer major version");
-#if defined(Q_OS_LINUX)
-    QVERIFY2(minor >= 20, qPrintable(QStringLiteral("GStreamer runtime version %1.%2.%3 is below minimum 1.20.0")
-                                         .arg(major)
-                                         .arg(minor)
-                                         .arg(micro)));
-#else
-    QVERIFY2(minor >= 28, qPrintable(QStringLiteral("GStreamer runtime version %1.%2.%3 is below bundled SDK minimum 1.28.0")
-                                         .arg(major)
-                                         .arg(minor)
-                                         .arg(micro)));
-#endif
+    const QVersionNumber runtime(static_cast<int>(major), static_cast<int>(minor), static_cast<int>(micro));
+    const QVersionNumber minimum = QVersionNumber::fromString(QStringLiteral(QGC_GST_RUNTIME_MINIMUM_VERSION));
+    QVERIFY(!minimum.isNull());
+    QVERIFY2(runtime >= minimum, qPrintable(QStringLiteral("GStreamer runtime version %1 is below the minimum %2")
+                                                .arg(runtime.toString(), minimum.toString())));
 
     if (major != GST_VERSION_MAJOR || minor != GST_VERSION_MINOR) {
         qCWarning(GStreamerTestLog) << "GStreamer version mismatch: built against" << GST_VERSION_MAJOR << "."

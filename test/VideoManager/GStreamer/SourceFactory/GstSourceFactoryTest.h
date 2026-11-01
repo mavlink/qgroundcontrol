@@ -10,6 +10,7 @@ class GstSourceFactoryTest : public GStreamerTestBase
 
 private slots:
 #ifdef QGC_GST_STREAMING
+    void _testIsValidRtspUri();
     void _testSourceFactoryUdpRtpJitterBuffer();
     void _testSourceFactoryJitterBufferNone();
     void _testSourceFactoryNoRetransmission();
@@ -17,6 +18,7 @@ private slots:
     void _testSourceFactoryRtspJitterBufferPolicy();
     void _testSourceFactoryRtspSelectsOnlyVideoStreams_data();
     void _testSourceFactoryRtspSelectsOnlyVideoStreams();
+    void _testSourceFactoryRtspCredentials();
     void _testSourceFactoryRejectsBadUri();
     void _testSourceFactoryTcpMpegTs();
     void _testSourceFactoryRejectsBadTcpUri();
@@ -26,6 +28,8 @@ private slots:
     void _testParameterSetGatePassesLengthPrefixedOutput();
     void _testSourceFactoryUdpMpegTs();
     void _testSourceFactorySchemeCaseInsensitive();
+    void _testTransportFor_data();
+    void _testTransportFor();
     void _testSourceFactoryNegativeLatencyClamped();
     void _testSourceFactoryDynamicRtpLinkFailureCleansJitterBuffer();
     void _testSourceFactoryDynamicLinkSkipsNonVideoRtp();

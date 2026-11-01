@@ -60,7 +60,7 @@
 | `pages.yml` | The [GitHub Pages site](#github-pages-site): CI health dashboard of master builds, JSON schemas, master downloads, and the API docs |
 | `crowdin.yml`, `lupdate.yml` | Crowdin sync and weekly source-string extraction |
 | `px4-metadata.yml` | Daily PX4 airframe and parameter metadata update PR |
-| `mirror-gstreamer.yml` | Mirror upstream GStreamer releases to the QGC S3 bucket |
+| `mirror-gstreamer.yml` | Mirror upstream GStreamer releases to the QGC S3 bucket (on master changes to `build-config.json`, and manual) |
 | `build-profile.yml` | Manual CMake build profiling |
 | `runner-images.yml` | Build, smoke-test, and promote QGC's managed RunsOn AMI (manual and weekly) |
 | `cache-cleanup.yml` | GitHub Actions cache cleanup (scheduled, on PR close, and manual) |
@@ -437,8 +437,8 @@ step leaves it out.
   fingerprint matches.
 - GStreamer SDKs have separate immutable caches, excluded from CPM archives. Only Windows, Android,
   and iOS jobs use them (desktop Linux and macOS use the system GStreamer), keyed on the `gstreamer`
-  section of `build-config.json` (fingerprinted in `cache_plan.py`), `cmake/GStreamer/Download.cmake`
-  and `cmake/GStreamer/Acquire.cmake`. They hold the extracted SDK trees without the downloaded
+  section of `build-config.json` (fingerprinted in `cache_plan.py`), `cmake/GStreamer/Packages.cmake`,
+  `cmake/GStreamer/Acquire.cmake` and `cmake/GStreamer/acquire/`. They hold the extracted SDK trees without the downloaded
   archives; configure uses a tree stamped with the pinned checksums as is.
 
 ### Other caches
@@ -539,7 +539,7 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
 - **Boot test**: `QGroundControl --simple-boot-test`, which every platform's package runs, also runs QGC's
   GStreamer self-test: H.264 (and, given a decoder, H.265) decoding, MP4 and MKV recording, every feature's
   elements, and for a bundled runtime its plugins, plugin scanner and GIO TLS/proxy modules
-  ([details](../src/VideoManager/VideoReceiver/GStreamer/README.md#boot-self-test)).
+  ([details](../src/VideoManager/GStreamer/README.md#boot-self-test)).
 - **Sanitizers**: `Linux-sanitizers` (ASan + UBSan, leak detection on) excludes the `NoSanitizer`
   label. Runtime options come from CTest: `cmake/QGCTest.cmake` sets `*SAN_OPTIONS`
   (`halt_on_error=1`) on every test, overriding the shell environment. ThreadSanitizer runs only on
@@ -559,8 +559,12 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   bodies with the full harness and do not enable test hooks in the packaged application. There is
   no separate Extended Tests workflow.
 - **Windows GStreamer tests**: `windows.yml`'s `gstreamer-tests` job builds x64 Debug with tests
-  and runs only the GStreamer and video test classes (`run-unit-tests`' `tests-regex`
-  `^(Gst|GStreamer[A-Z]|Video|Subtitle|QGCVideo)`, Unit and Integration). The build tree finds the
+  and runs only the GStreamer and video test classes and `cmake/GStreamer`'s script tests
+  (`run-unit-tests`' `tests-regex`
+  `^(Gst|GStreamer[A-Z.]|Video|Subtitle|QGCVideo|QtMultimedia|QtVideo|UVC|StreamSupervisor|RecordingPlan)`, Unit and
+  Integration), with the Qt Multimedia receiver, its recorder, the USB camera classes and the reconnect and
+  recording-part policies both receivers share, so the script tests' Windows-only branches (8.3 short paths, SDK
+  architecture) run on Windows. The build tree finds the
   SDK only through `verify_executable.py --export-gstreamer-env`, which puts its `bin/` on `PATH`
   and stages the shipped plugins plus the sources and encoders the tests send streams with
   (`videotestsrc`, `mpegtsmux`, `x264`, `x265`). `QSG_RHI_PREFER_SOFTWARE_RENDERER=1` makes the
@@ -643,7 +647,13 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   launching it (QGC otherwise opens the system settings over its window and the boot test never
   completes) and passes only on QGC's `Simple boot test completed` marker; a crash, a process exit
   or a running app without the marker fails, and the failure annotation quotes the
-  `Simple boot test failed` and `Video.GStreamer.SelfTest` logcat lines. The Linux leg runs Android Lint
+  `Simple boot test failed` and `Video.GStreamer.SelfTest` logcat lines. After the marker, main()
+  returns, Android destroys the activity and Qt calls `exit()`; the script watches logcat until the
+  app's process (the marker line's pid) exits, for up to 30 s (`--exit-timeout`; a process still
+  running then only warns). A crash of that process (its `Fatal signal`, `FORTIFY` or
+  `FATAL EXCEPTION` lines, or crash_dump's naming it) fails the step without another attempt, and
+  the annotation quotes those lines: libhwui's static destructors aborted QGC that way at exit until
+  `Platform::skipStaticDestructorsAtExit` ended the process before they ran. The Linux leg runs Android Lint
   (`android_lint.py`, `gradlew lintRelease` in `android-build`): up to ten Error and Fatal issues
   from lint's XML report become error annotations titled with the issue id, at the `android/`
   source that androiddeployqt copied (`QGC_ANDROID_PACKAGE_SOURCE_DIR`; a copy that differs, like
@@ -806,8 +816,8 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   master does not build, or an API or download failure) the section says why and shows this
   build's sizes only.
 - The step also checks licensing and fails with error annotations: any file in the package whose
-  name is a `GSTREAMER_GPL_DENYLIST` library or plugin (read from
-  `cmake/GStreamer/PluginPolicy.cmake` and matched like its `gstreamer_gpl_files()`, which the
+  name is a GPL-denylisted library or plugin (`gstreamer_plugin_policy.gpl_denylist` in
+  `.github/build-config.json`, matched like `PluginPolicy.cmake`'s `qgc_gst_gpl_files()`, which the
   CMake install check uses only for the GStreamer install directories), and, in APK, App Bundle,
   and IPA, whose static GStreamer leaves no plugin files, any ELF or Mach-O member containing
   x264's or x265's entry point (`x264_encoder_open`, `x265_encoder_open`) or the banner it writes

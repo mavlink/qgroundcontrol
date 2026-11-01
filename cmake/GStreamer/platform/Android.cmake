@@ -11,11 +11,11 @@
 #   - it whole-archives libgstreamer-1.0.a, whose gstandroid.c.o brings a JNI_OnLoad that fails the library's load
 #     unless the APK ships org.freedesktop.gstreamer.GStreamer, and whose JNI state is set only by GStreamer.init(),
 #     which also runs gst_init() on the Java thread with its own environment and log handlers. QGC initializes
-#     GStreamer itself (GStreamer.cc), so the core is linked like any archive and gst_android_jni.c provides the JNI
-#     state from the app instead;
+#     GStreamer itself (GStreamer.cc), so the core is linked like any archive and gst_android_jni.c
+#     (src/VideoManager/GStreamer/Platform) provides the JNI state from the app instead;
 #   - it registers every plugin it is given, while QGC registers only the allowlisted plugins that have a static
 #     archive (failing configure when a bundle-required one is missing), with its own registration template
-#     (StaticInit.cmake);
+#     (Mobile.cmake);
 #   - it copies the plugin Java sources and fonts/CA assets into the source tree, while QGC stages them in the build
 #     directory for Gradle;
 #   - its static-library and SDK discovery come from the SDK's FindGStreamer.cmake, while QGC's are its own
@@ -92,7 +92,7 @@ function(_qgc_gst_discover_android_sdk)
         set(GStreamer_AUTO_DOWNLOADED TRUE)
     endif()
 
-    gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}")
+    qgc_gst_resolve_layout(SDK_ROOT "${GStreamer_ROOT_DIR}")
 
     if(CMAKE_HOST_WIN32)
         set(_host windows)
@@ -112,7 +112,7 @@ function(_qgc_gst_discover_android_sdk)
     if(CMAKE_HOST_WIN32)
         list(APPEND _pkg_config_args DONT_DEFINE_PREFIX)
     endif()
-    gstreamer_apply_pkgconfig_env(
+    qgc_gst_apply_pkgconfig_env(
         MODE SDK ${_pkg_config_args} LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig" "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
                                             "${GSTREAMER_GIO_MODULE_PATH}/pkgconfig"
     )
@@ -183,6 +183,7 @@ endfunction()
 # android-build/ itself). Removes stale copies under QGC_ANDROID_PACKAGE_SOURCE_DIR, which Gradle would package twice.
 # cmake-lint: disable=C0113,E1126
 function(_qgc_gst_android_stage_sdk_files ndk_build)
+    qgc_gst_layout_get(ROOT_DIR _gst_root)
     if(NOT QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR OR NOT QGC_ANDROID_EXTRA_ASSETS_DIR)
         message(
             FATAL_ERROR "GStreamer: QGC_ANDROID_EXTRA_JAVA_SOURCES_DIR and QGC_ANDROID_EXTRA_ASSETS_DIR must be "
@@ -210,7 +211,7 @@ function(_qgc_gst_android_stage_sdk_files ndk_build)
              "${_fonts}/fonts.conf|${_asset_dirs}|fontconfig/fonts.conf"
         )
     endif()
-    set(_ca_bundle "${GStreamer_ROOT_DIR}/etc/ssl/certs/ca-certificates.crt")
+    set(_ca_bundle "${_gst_root}/etc/ssl/certs/ca-certificates.crt")
     if(EXISTS "${_ca_bundle}")
         list(APPEND _files "${_ca_bundle}|${_asset_dirs}|ssl/certs/ca-certificates.crt")
     endif()
@@ -274,7 +275,10 @@ endfunction()
 # Java sources and the fonts/CA assets for the APK. Sets GSTREAMER_STATIC_PLUGINS, the plugins registered, in the
 # caller's scope.
 function(_qgc_gst_create_android_mobile_target)
-    set(_ndk_build "${GStreamer_ROOT_DIR}/share/gst-android/ndk-build")
+    qgc_gst_layout_get(ROOT_DIR _gst_root)
+    qgc_gst_layout_get(PLUGIN_PATH _gst_plugin_path)
+    qgc_gst_layout_get(GIO_MODULE_PATH _gst_gio_module_path)
+    set(_ndk_build "${_gst_root}/share/gst-android/ndk-build")
     # GStreamer.java (not used, see this file's header) anchors the ndk-build layout whatever the plugin selection.
     if(NOT EXISTS "${_ndk_build}/GStreamer.java")
         message(
@@ -287,7 +291,7 @@ function(_qgc_gst_create_android_mobile_target)
 
     set(_plugins "")
     foreach(_plugin IN LISTS GSTREAMER_PLUGINS)
-        if(NOT EXISTS "${GSTREAMER_PLUGIN_PATH}/libgst${_plugin}.a" OR _plugin IN_LIST _plugins)
+        if(NOT EXISTS "${_gst_plugin_path}/libgst${_plugin}.a" OR _plugin IN_LIST _plugins)
             continue()
         endif()
         _qgc_gst_pkg_target(plugin_${_plugin} "gst${_plugin}" QUIET)
@@ -296,7 +300,11 @@ function(_qgc_gst_create_android_mobile_target)
         endif()
     endforeach()
 
-    qgc_gst_add_mobile_library(SOURCES "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/gst_android_jni.c" PLUGINS ${_plugins})
+    cmake_path(
+        SET _jni_state NORMALIZE
+        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../../src/VideoManager/GStreamer/Platform/gst_android_jni.c"
+    )
+    qgc_gst_add_mobile_library(SOURCES "${_jni_state}" PLUGINS ${_plugins})
     set_target_properties(
         GStreamerMobile
         PROPERTIES
@@ -304,11 +312,11 @@ function(_qgc_gst_create_android_mobile_target)
     )
     target_link_libraries(GStreamerMobile PRIVATE GStreamer::Static)
     foreach(_plugin IN LISTS _plugins)
-        _qgc_gst_android_link_archive(GStreamerMobile plugin_${_plugin} "${GSTREAMER_PLUGIN_PATH}/libgst${_plugin}.a")
+        _qgc_gst_android_link_archive(GStreamerMobile plugin_${_plugin} "${_gst_plugin_path}/libgst${_plugin}.a")
     endforeach()
     # A GIO module's .pc file names the directory the SDK was built in as its -L, so its archive is linked by path.
     foreach(_module IN LISTS G_IO_MODULES)
-        set(_archive "${GSTREAMER_GIO_MODULE_PATH}/libgio${_module}.a")
+        set(_archive "${_gst_gio_module_path}/libgio${_module}.a")
         if(NOT EXISTS "${_archive}")
             message(FATAL_ERROR "GStreamer::mobile: GIO module archive ${_archive} not found")
         endif()

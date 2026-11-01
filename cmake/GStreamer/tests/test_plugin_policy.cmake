@@ -3,6 +3,14 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
 include(PluginPolicy)
 
+# Included without a loaded config, PluginPolicy.cmake reads the policy from the repository's build-config.json.
+qgc_test_assert_in_list("required has coreelements" coreelements GSTREAMER_BUNDLE_REQUIRED_PLUGINS)
+qgc_test_assert_in_list("optional has libav" libav GSTREAMER_OPTIONAL_PLUGINS)
+qgc_test_assert_in_list("GPL denylist has x264" x264 GSTREAMER_GPL_DENYLIST)
+qgc_test_assert_in_list("Debug mock server has videotestsrc" videotestsrc GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS)
+qgc_test_assert_streq("alternates" "videoconvertscale|videoconvert+videoscale" "${GSTREAMER_PLUGIN_ALTERNATES}")
+qgc_test_pass("policy from build-config.json")
+
 set(QGC_BUILD_CONFIG_CONTENT
     [[{
     "gstreamer": {
@@ -15,19 +23,19 @@ set(QGC_BUILD_CONFIG_CONTENT
 }]]
 )
 
-gstreamer_plugins_for("" _plugins_common)
+qgc_gst_plugins_for("" _plugins_common)
 qgc_test_assert_in_list("common has coreelements" coreelements _plugins_common)
 qgc_test_assert_in_list("common has playback" playback _plugins_common)
 qgc_test_assert_not_in_list("common excludes va" va _plugins_common)
 qgc_test_pass("plugins_for common-only")
 
-gstreamer_plugins_for(linux _plugins_linux)
+qgc_gst_plugins_for(linux _plugins_linux)
 qgc_test_assert_in_list("linux has coreelements" coreelements _plugins_linux)
 qgc_test_assert_in_list("linux has va" va _plugins_linux)
 qgc_test_assert_not_in_list("linux excludes vtenc" vtenc _plugins_linux)
 qgc_test_pass("plugins_for linux addenda")
 
-gstreamer_plugins_for(apple _plugins_apple)
+qgc_gst_plugins_for(apple _plugins_apple)
 qgc_test_assert_in_list("apple has vtenc" vtenc _plugins_apple)
 qgc_test_assert_in_list("apple has vtdec" vtdec _plugins_apple)
 qgc_test_pass("plugins_for apple addenda")
@@ -48,7 +56,7 @@ foreach(_case IN LISTS _missing_cases)
     string(REPLACE "," ";" _required "${_required}")
     string(REPLACE "," ";" _available "${_available}")
     string(REPLACE "," ";" _expected "${_expected}")
-    gstreamer_missing_required(
+    qgc_gst_missing_required(
         REQUIRED ${_required}
         AVAILABLE ${_available}
         OUT_VAR _missing
@@ -59,7 +67,7 @@ qgc_test_pass("missing_required honours alternate sets")
 
 # Missing optional decoders are only reported; the other missing plugins are absent from the SDK, or shipped but not
 # usable by the build. The fused videoconvertscale is satisfied by the shipped videoconvert+videoscale.
-gstreamer_classify_missing_plugins(
+qgc_gst_classify_missing_plugins(
     REQUESTED coreelements qsv typo udp videoconvertscale
     AVAILABLE coreelements
     SHIPPED coreelements udp videoconvert videoscale
@@ -75,9 +83,9 @@ qgc_test_pass("classify_missing_plugins")
 # Neither the allowlist nor the mobile Debug plugins may name a GPL plugin.
 file(READ "${CMAKE_CURRENT_LIST_DIR}/../../../.github/build-config.json" QGC_BUILD_CONFIG_CONTENT)
 foreach(_key IN ITEMS android apple windows linux)
-    gstreamer_plugins_for(${_key} _plugins)
+    qgc_gst_plugins_for(${_key} _plugins)
     list(TRANSFORM _plugins PREPEND libgst)
-    gstreamer_gpl_files(_gpl ${_plugins} ${GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS})
+    qgc_gst_gpl_files(_gpl ${_plugins} ${GSTREAMER_MOCK_SERVER_DEBUG_PLUGINS})
     qgc_test_assert_streq("GPL plugins for ${_key}" "" "${_gpl}")
 endforeach()
 qgc_test_pass("policy lists")
@@ -96,6 +104,30 @@ set(_gpl_files
 set(_lgpl_files /sdk/lib/libgstsidebyside.so /sdk/lib/libx2640.so /sdk/lib/gstreamer-1.0/libgstopenh264.so
                 /sdk/lib/libavcodec.so.61
 )
-gstreamer_gpl_files(_found ${_gpl_files} ${_lgpl_files})
+qgc_gst_gpl_files(_found ${_gpl_files} ${_lgpl_files})
 qgc_test_assert_streq("GPL files" "${_gpl_files}" "${_found}")
 qgc_test_pass("gpl_files")
+
+# A static (mobile) layout cannot load a plugin at runtime: a missing bundle-required plugin fails configure there, and
+# only warns on a desktop layout.
+set(GSTREAMER_BUNDLE_REQUIRED_PLUGINS coreelements rtsp)
+if(TEST_CASE STREQUAL "missing-required")
+    qgc_gst_check_plugins(
+        REQUESTED coreelements rtsp
+        AVAILABLE coreelements
+        SHIPPED coreelements
+        SOURCE "the fake SDK"
+        STATIC
+    )
+    message(FATAL_ERROR "${TEST_CASE} unexpectedly succeeded")
+elseif(DEFINED TEST_CASE)
+    message(FATAL_ERROR "Unknown test case: ${TEST_CASE}")
+endif()
+qgc_gst_check_plugins(
+    REQUESTED coreelements rtsp
+    AVAILABLE coreelements rtsp
+    SHIPPED coreelements rtsp
+    SOURCE "the fake SDK"
+    STATIC
+)
+qgc_test_pass("check_plugins")

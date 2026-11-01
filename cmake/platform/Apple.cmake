@@ -93,7 +93,7 @@ elseif(IOS)
             target_sources(
                 GStreamerMobile
                 PRIVATE
-                    "${CMAKE_SOURCE_DIR}/src/VideoManager/VideoReceiver/GStreamer/IOSPipe2Compat.c"
+                    "${CMAKE_SOURCE_DIR}/src/VideoManager/GStreamer/Platform/IOSPipe2Compat.c"
             )
         endif()
 

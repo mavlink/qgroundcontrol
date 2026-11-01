@@ -19,7 +19,7 @@ QGCVideoStreamInfo::~QGCVideoStreamInfo()
 qreal QGCVideoStreamInfo::aspectRatio() const
 {
     qreal ar = 1.0;
-    if (!resolution().isNull()) {
+    if (!resolution().isEmpty()) {
         ar = static_cast<double>(_streamInfo.resolution_h) / static_cast<double>(_streamInfo.resolution_v);
     }
     return ar;

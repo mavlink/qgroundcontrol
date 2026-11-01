@@ -15,5 +15,6 @@ private slots:
     void _writeAndReadBackTest();
     void _writeNegativeCoordinatesTest();
     void _writeNegativeAltitudeTest();
+    void _writeWithoutAltitudeDropsOldAltitudeTest();
     void _writePreservesExistingDataTest();
 };

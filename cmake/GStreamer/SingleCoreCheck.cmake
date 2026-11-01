@@ -1,9 +1,9 @@
 # Script mode: cmake -DAPP=<app binary> [-DNM=<nm>] [-DSYMBOL_PREFIX=_] -P SingleCoreCheck.cmake
 # Fails when the Android or iOS app binary defines GStreamer core symbols, i.e. it carries a second core besides
-# GStreamer::mobile (StaticInit.cmake). On Apple (SYMBOL_PREFIX "_") nm lists the defined global symbols; elsewhere
+# GStreamer::mobile (Mobile.cmake). On Apple (SYMBOL_PREFIX "_") nm lists the defined global symbols; elsewhere
 # every defined symbol, so a copy with hidden visibility is caught too.
 cmake_minimum_required(VERSION 3.25)
-include("${CMAKE_CURRENT_LIST_DIR}/StaticInit.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/Mobile.cmake")
 
 if(NOT NM)
     set(NM nm)

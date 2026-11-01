@@ -10,8 +10,10 @@
 #include <QtCore/QScopeGuard>
 
 #include "GStreamerTestHelpers.h"
+#include "GstRtspSource.h"
 #include "GstScoped.h"
 #include "GstSourceFactory.h"
+#include "GstSourceUri.h"
 
 namespace {
 
@@ -109,6 +111,21 @@ private:
 };
 
 }  // namespace
+
+void GstSourceFactoryTest::_testIsValidRtspUri()
+{
+    QVERIFY(GStreamer::SourceFactory::isValidRtspUri("rtsp://127.0.0.1:8554/test"));
+    QVERIFY(GStreamer::SourceFactory::isValidRtspUri("rtsp://user:pass@10.0.0.1/stream"));
+    QVERIFY(GStreamer::SourceFactory::isValidRtspUri("rtspu://192.168.1.1:554/video"));
+    QVERIFY(GStreamer::SourceFactory::isValidRtspUri("rtspt://example.com/live"));
+
+    QVERIFY(!GStreamer::SourceFactory::isValidRtspUri(nullptr));
+    QVERIFY(!GStreamer::SourceFactory::isValidRtspUri(""));
+    QVERIFY(!GStreamer::SourceFactory::isValidRtspUri("not-a-uri"));
+    QVERIFY(!GStreamer::SourceFactory::isValidRtspUri("http://example.com"));
+    QVERIFY(!GStreamer::SourceFactory::isValidRtspUri("udp://127.0.0.1:5600"));
+    QVERIFY(!GStreamer::SourceFactory::isValidRtspUri("rtsp://"));
+}
 
 void GstSourceFactoryTest::_testSourceFactoryUdpRtpJitterBuffer()
 {
@@ -270,6 +287,41 @@ void GstSourceFactoryTest::_testSourceFactoryRtspSelectsOnlyVideoStreams()
     gboolean selected = expectedSelected ? FALSE : TRUE;
     g_signal_emit_by_name(source.get(), "select-stream", 0u, caps.get(), &selected);
     QCOMPARE(selected, expectedSelected ? TRUE : FALSE);
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspCredentials()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+
+    // The URI's credentials go to rtspsrc's authentication properties, decoded, and leave its location.
+    const GStreamer::GstElementPtr bin = GstTest::createSource(
+        QStringLiteral("rtsp://pilot:p%40ss%20word@127.0.0.1:8554/test"), GStreamer::SourceFactory::Config{});
+    QVERIFY(bin);
+    const GStreamer::GstElementPtr source = GstTest::findByFactory(bin.get(), "rtspsrc");
+    QVERIFY(source);
+    gchar* user = nullptr;
+    gchar* password = nullptr;
+    gchar* location = nullptr;
+    g_object_get(source.get(), "user-id", &user, "user-pw", &password, "location", &location, nullptr);
+    const auto release = qScopeGuard([&] {
+        g_free(user);
+        g_free(password);
+        g_free(location);
+    });
+    QCOMPARE(QString::fromUtf8(user), QStringLiteral("pilot"));
+    QCOMPARE(QString::fromUtf8(password), QStringLiteral("p@ss word"));
+    QCOMPARE(QString::fromUtf8(location), QStringLiteral("rtsp://127.0.0.1:8554/test"));
+
+    // Without credentials, none are set.
+    const GStreamer::GstElementPtr anonymousBin =
+        GstTest::createSource(QStringLiteral("rtsp://127.0.0.1:8554/test"), GStreamer::SourceFactory::Config{});
+    QVERIFY(anonymousBin);
+    const GStreamer::GstElementPtr anonymous = GstTest::findByFactory(anonymousBin.get(), "rtspsrc");
+    QVERIFY(anonymous);
+    gchar* noUser = nullptr;
+    g_object_get(anonymous.get(), "user-id", &noUser, nullptr);
+    const auto releaseNoUser = qScopeGuard([&noUser] { g_free(noUser); });
+    QVERIFY(!noUser || (noUser[0] == '\0'));
 }
 
 void GstSourceFactoryTest::_testSourceFactoryRejectsBadUri()
@@ -562,6 +614,34 @@ void GstSourceFactoryTest::_testSourceFactoryRtspDepayloaderRequestsKeyframes()
     gboolean requestKeyframe = !expectedRequestKeyframe;
     g_object_get(depayloader.get(), "request-keyframe", &requestKeyframe, nullptr);
     QCOMPARE(bool(requestKeyframe), expectedRequestKeyframe);
+}
+
+void GstSourceFactoryTest::_testTransportFor_data()
+{
+    using GStreamer::SourceFactory::Transport;
+    QTest::addColumn<QString>("uri");
+    QTest::addColumn<int>("transport");  // -1: unsupported
+
+    QTest::newRow("rtsp") << QStringLiteral("rtsp://10.0.0.1:554/live") << int(Transport::Rtsp);
+    QTest::newRow("rtspt") << QStringLiteral("rtspt://10.0.0.1/live") << int(Transport::Rtsp);
+    QTest::newRow("upper-case rtsp") << QStringLiteral("RTSP://10.0.0.1/live") << int(Transport::Rtsp);
+    QTest::newRow("udp") << QStringLiteral("udp://0.0.0.0:5600") << int(Transport::RtpUdpH264);
+    QTest::newRow("udp265") << QStringLiteral("udp265://0.0.0.0:5600") << int(Transport::RtpUdpH265);
+    QTest::newRow("mpegts") << QStringLiteral("mpegts://0.0.0.0:5600") << int(Transport::MpegTsUdp);
+    QTest::newRow("tcp") << QStringLiteral("tcp://192.168.1.2:5000") << int(Transport::MpegTsTcp);
+    QTest::newRow("http") << QStringLiteral("http://10.0.0.1/video") << -1;
+    QTest::newRow("no scheme") << QStringLiteral("10.0.0.1:5600") << -1;
+}
+
+void GstSourceFactoryTest::_testTransportFor()
+{
+    QFETCH(QString, uri);
+    QFETCH(int, transport);
+
+    const std::optional<GStreamer::SourceFactory::Transport> actual = GStreamer::SourceFactory::transportFor(QUrl(uri));
+    QCOMPARE(actual ? int(*actual) : -1, transport);
+    QCOMPARE(GStreamer::SourceFactory::connectGracePeriod(uri) > std::chrono::milliseconds{0},
+             transport == int(GStreamer::SourceFactory::Transport::Rtsp));
 }
 
 #endif

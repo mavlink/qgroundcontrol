@@ -110,7 +110,7 @@ See [Android and iOS](#android-and-ios) below for the QGC-specific settings.
 Optional features that depend on the operating system and user-installed libraries are described below.
 Features can be forcibly enabled or disabled by passing `-D` options to CMake (for example `-DQGC_ENABLE_GST_VIDEOSTREAMING=OFF`).
 
-- **Video Streaming/GStreamer:** Installed by the dependency script on Linux. On Windows, macOS, Android and iOS, CMake also downloads the GStreamer SDK at configure time if it isn't already installed. See [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoManager/VideoReceiver/GStreamer/README.md) for details.
+- **Video Streaming/GStreamer:** Installed by the dependency script on Linux. On Windows, macOS, Android and iOS, CMake also downloads the GStreamer SDK at configure time if it isn't already installed. See [Video Streaming](https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoManager/GStreamer/README.md) for details. Without GStreamer, network streams play through Qt Multimedia's player, which records a stream by encoding the video on display anew, so only while it is shown.
   When cross-compiling for Windows ARM64 from an x64 host, disable video streaming with `-DQGC_ENABLE_GST_VIDEOSTREAMING=OFF` (this is what CI does): the ARM64 GStreamer SDK installer cannot run on an x64 host, so the automatic download fails.
 - **Windows Installer:** Building the Windows installer requires [NSIS](https://nsis.sourceforge.io/Download), which the dependency script installs when run with `--nsis`.
 

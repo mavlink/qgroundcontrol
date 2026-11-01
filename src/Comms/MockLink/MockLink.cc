@@ -15,9 +15,7 @@
 #include "AppMessages.h"
 #include "QGCMath.h"
 
-#ifdef QGC_GST_STREAMING
 #include "MockVideoStreamServer.h"
-#endif
 
 #include <QtCore/QFile>
 #include <QtCore/QJsonArray>
@@ -353,7 +351,6 @@ void MockLink::disconnect()
 
 void MockLink::_startVideoStreamServer()
 {
-#ifdef QGC_GST_STREAMING
     // Only serve a stream when a camera advertising a video stream is present and a type was requested.
     if (_videoStreamServer || !_mockLinkCamera || !_mockConfig->cameraHasVideoStream()
             || _requestedVideoStreamType == MockConfiguration::VideoStreamNone) {
@@ -401,12 +398,10 @@ void MockLink::_startVideoStreamServer()
         _videoStreamUri = server->servedUri();
     }
     qCDebug(MockLinkLog) << "Mock video stream server serving" << server->servedUri();
-#endif
 }
 
 void MockLink::_stopVideoStreamServer()
 {
-#ifdef QGC_GST_STREAMING
     // Clear the served-stream snapshot first so observers (servedVideoStream) stop
     // advertising the URI before the server actually goes away.
     {
@@ -418,7 +413,6 @@ void MockLink::_stopVideoStreamServer()
         delete _videoStreamServer;
         _videoStreamServer = nullptr;
     }
-#endif
 }
 
 void MockLink::servedVideoStream(MockConfiguration::VideoStreamType &type, QString &uri) const

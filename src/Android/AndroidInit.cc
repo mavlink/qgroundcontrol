@@ -7,14 +7,9 @@
 #include <QtCore/QLoggingCategory>
 
 #include "QGCLoggingCategory.h"
+#include "VideoBackend.h"
 
 QGC_LOGGING_CATEGORY(AndroidInitLog, "Android.AndroidInit");
-
-#ifdef QGC_GST_STREAMING
-// GStreamer's Android plugins (e.g. androidmedia) look up the JNI state in libgstreamer_android.so, which keeps what
-// this sets (cmake/GStreamer/platform/gst_android_jni.c).
-extern "C" void qgc_gst_android_set_jni_state(JavaVM* javaVm, jobject context, jobject classLoader);
-#endif
 
 static jboolean jniInit(JNIEnv *env, jobject thiz)
 {
@@ -55,12 +50,10 @@ static jboolean jniInit(JNIEnv *env, jobject thiz)
         return JNI_FALSE;
     }
 
-#ifdef QGC_GST_STREAMING
     JavaVM* javaVm = nullptr;
     if (env->GetJavaVM(&javaVm) == JNI_OK) {
-        qgc_gst_android_set_jni_state(javaVm, app_context, class_loader);
+        VideoBackend::instance().setAndroidJniState(javaVm, app_context, class_loader);
     }
-#endif
 
     env->DeleteLocalRef(app_context);
     env->DeleteLocalRef(class_loader);
@@ -105,9 +98,7 @@ jint JNI_OnLoad(JavaVM* vm, void*)
 {
     qCDebug(AndroidInitLog) << Q_FUNC_INFO;
 
-#ifdef QGC_GST_STREAMING
-    qgc_gst_android_set_jni_state(vm, nullptr, nullptr);
-#endif
+    VideoBackend::instance().setAndroidJniState(vm, nullptr, nullptr);
 
     JNIEnv *env;
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
@@ -133,11 +124,7 @@ void JNI_OnUnload(JavaVM* vm, void*)
 {
     qCDebug(AndroidInitLog) << Q_FUNC_INFO;
 
-#ifdef QGC_GST_STREAMING
-    qgc_gst_android_set_jni_state(vm, nullptr, nullptr);
-#else
-    Q_UNUSED(vm);
-#endif
+    VideoBackend::instance().setAndroidJniState(vm, nullptr, nullptr);
 
 #ifndef QGC_NO_SERIAL_LINK
     AndroidSerial::cleanupJniCache();

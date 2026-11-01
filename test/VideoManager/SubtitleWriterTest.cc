@@ -2,8 +2,11 @@
 
 #include <QtCore/QFile>
 #include <QtCore/QTemporaryDir>
+#include <QtCore/QUrl>
+#include <QtCore/QVariantMap>
 
 #include "MultiVehicleManager.h"
+#include "SubtitleTrack.h"
 #include "SubtitleWriter.h"
 
 namespace {
@@ -66,6 +69,34 @@ void SubtitleWriterTest::_testFollowsActiveVehicle()
     QVERIFY(writer._sample(1000).values.isEmpty());
     writer._captureTelemetry();
     writer.stopCapturingTelemetry();
+}
+
+void SubtitleWriterTest::_testReadsBack()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    SubtitleWriter writer;
+    writer.startCapturingTelemetry(dir.filePath(QStringLiteral("flight.mp4")), QSize(1280, 720));
+    const QStringList names = writer._sample(0).names;
+    QVERIFY(!names.isEmpty());
+    writer._writeSample(writer._sample(0), 1000);
+    writer.stopCapturingTelemetry();
+
+    // The Video Recordings page's reader shows each column's names and values, and the date.
+    SubtitleTrack track;
+    track.setSource(QUrl::fromLocalFile(dir.filePath(QStringLiteral("flight.ass"))));
+    QCOMPARE(track.playResX(), 1280);
+    QCOMPARE(track.playResY(), 720);
+    track.setPosition(500);
+    const QVariantList events = track.events();
+    QCOMPARE(events.size(), 7);
+    const QVariantMap firstNames = events.at(0).toMap();
+    QCOMPARE(firstNames.value(QStringLiteral("alignment")).toInt(), 3);
+    QVERIFY(firstNames.value(QStringLiteral("text")).toString().startsWith(names.first()));
+    QCOMPARE(events.at(1).toMap().value(QStringLiteral("alignment")).toInt(), 1);
+    track.setPosition(1000);
+    QVERIFY(track.events().isEmpty());
 }
 
 UT_REGISTER_TEST(SubtitleWriterTest, TestLabel::Integration, TestLabel::Vehicle)

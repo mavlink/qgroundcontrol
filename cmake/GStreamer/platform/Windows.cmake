@@ -1,4 +1,5 @@
-# Windows GStreamer SDK discovery — invoked by Orchestrator.cmake.
+# Windows GStreamer: SDK discovery, invoked by Orchestrator.cmake, and the installer qgc_gst_install_platform_sdk
+# (Install.cmake) runs.
 
 include_guard(GLOBAL)
 
@@ -61,35 +62,40 @@ endfunction()
 
 # _qgc_gst_discover_windows_sdk()
 # Uses the SDK under GStreamer_ROOT_DIR, the GSTREAMER_1_0_ROOT_* environment or a standard install location when it is
-# complete and recent enough, else downloads the official MSVC SDK for the target architecture. The SDK brings its own
-# pkg-config.
+# complete and recent enough, else downloads the official MSVC SDK for the target architecture. An SDK the user named
+# in GStreamer_ROOT_DIR that is incomplete or too old fails configure; one found elsewhere is replaced by a download.
+# The SDK brings its own pkg-config.
 # cmake-lint: disable=C0103
 function(_qgc_gst_discover_windows_sdk)
     _qgc_gst_windows_sdk_arch(_gst_win_arch)
 
-    if(NOT GStreamer_ROOT_DIR)
+    set(_gst_win_user_root FALSE)
+    if(GStreamer_ROOT_DIR AND NOT GStreamer_AUTO_DOWNLOADED)
+        set(_gst_win_user_root TRUE)
+    elseif(NOT GStreamer_ROOT_DIR)
         _qgc_gst_windows_installed_sdk(${_gst_win_arch} GStreamer_ROOT_DIR)
     endif()
 
     if(GStreamer_ROOT_DIR)
         _qgc_gst_windows_sdk_complete("${GStreamer_ROOT_DIR}" _gst_win_sdk_complete)
         _qgc_gst_header_version("${GStreamer_ROOT_DIR}/include" _gst_win_sdk_version)
+        set(_gst_win_problem "")
         if(NOT _gst_win_sdk_complete)
-            message(
-                WARNING "Existing GStreamer SDK at ${GStreamer_ROOT_DIR} is incomplete "
-                        "(missing devel/runtime artifacts). Falling back to auto-download."
-            )
-            unset(GStreamer_ROOT_DIR)
-            unset(GStreamer_ROOT_DIR CACHE)
+            set(_gst_win_problem "is incomplete (missing devel or runtime files)")
         elseif(NOT _gst_win_sdk_version OR _gst_win_sdk_version VERSION_LESS QGC_GST_REQUESTED_VERSION)
-            message(
-                WARNING
-                    "Existing GStreamer SDK at ${GStreamer_ROOT_DIR} has version "
-                    "'${_gst_win_sdk_version}', but ${QGC_GST_REQUESTED_VERSION}+ is required. "
-                    "Falling back to auto-download."
+            set(_gst_win_problem
+                "has version '${_gst_win_sdk_version}', but ${QGC_GST_REQUESTED_VERSION} or later is required"
             )
+        endif()
+        if(_gst_win_problem AND _gst_win_user_root)
+            message(
+                FATAL_ERROR
+                    "GStreamer: the SDK at ${GStreamer_ROOT_DIR} (GStreamer_ROOT_DIR) ${_gst_win_problem}. Point "
+                    "GStreamer_ROOT_DIR at a complete SDK of that version, or unset it to download one."
+            )
+        elseif(_gst_win_problem)
+            message(WARNING "GStreamer: the SDK at ${GStreamer_ROOT_DIR} ${_gst_win_problem}; downloading one instead.")
             unset(GStreamer_ROOT_DIR)
-            unset(GStreamer_ROOT_DIR CACHE)
         endif()
     endif()
 
@@ -109,16 +115,41 @@ function(_qgc_gst_discover_windows_sdk)
         set(GStreamer_AUTO_DOWNLOADED TRUE)
     endif()
 
-    gstreamer_create_layout_target(SDK_ROOT "${GStreamer_ROOT_DIR}")
+    qgc_gst_resolve_layout(SDK_ROOT "${GStreamer_ROOT_DIR}")
     list(APPEND PKG_CONFIG_ARGN "--define-variable=prefix=${GStreamer_ROOT_DIR}"
          "--define-variable=libdir=${GSTREAMER_LIB_PATH}" "--define-variable=includedir=${GSTREAMER_INCLUDE_PATH}"
     )
 
-    gstreamer_apply_pkgconfig_env(
+    qgc_gst_apply_pkgconfig_env(
         MODE SDK
         PKG_CONFIG_EXE "${GStreamer_ROOT_DIR}/bin/pkg-config.exe"
         LIBDIR "${GSTREAMER_LIB_PATH}/pkgconfig" "${GSTREAMER_PLUGIN_PATH}/pkgconfig"
         DONT_DEFINE_PREFIX
     )
     _qgc_gst_return_discovery()
+endfunction()
+
+# Windows: the plugins, GIO modules, libproxy backends and libexec helpers, the SDK DLLs they and QGC load, and the
+# notice. gioopenssl verifies against the Windows certificate stores, so the SDK's CA bundle stays out.
+function(qgc_gst_install_windows_sdk app_name plugin_dest_out)
+    qgc_gst_layout_get(ROOT_DIR _gst_root)
+    qgc_gst_layout_get(PLUGIN_PATH _gst_plugin_path)
+    qgc_gst_layout_get(PLUGIN_SCANNER_PATH _gst_scanner_path)
+    qgc_gst_layout_get(GIO_MODULE_PATH _gst_gio_module_path)
+    set(_plugin_dest "${CMAKE_INSTALL_LIBDIR}/gstreamer-1.0")
+    _qgc_gst_begin_runtime_closure()
+    qgc_gst_install_plugins("${_gst_plugin_path}" "${_plugin_dest}" "gst" "dll")
+    qgc_gst_install_gio_modules("${_gst_gio_module_path}" "${CMAKE_INSTALL_LIBDIR}/gio/modules" "dll")
+    # giolibproxy.dll loads proxy-1.dll, which loads its backends from lib/libproxy; startup only puts the app's bin
+    # directory on PATH, so they go there too.
+    file(GLOB _gst_libproxy_backends "${_gst_root}/lib/libproxy/*.dll")
+    _qgc_gst_install_files("${CMAKE_INSTALL_BINDIR}" ${_gst_libproxy_backends})
+    file(GLOB _gst_helpers "${_gst_scanner_path}/*.exe")
+    _qgc_gst_install_files("${CMAKE_INSTALL_LIBEXECDIR}/gstreamer-1.0" PROGRAMS ${_gst_helpers})
+    _qgc_gst_install_runtime_closure("${CMAKE_INSTALL_BINDIR}")
+    _qgc_gst_install_notice(share/licenses/gstreamer)
+    set(${plugin_dest_out}
+        "${_plugin_dest}"
+        PARENT_SCOPE
+    )
 endfunction()

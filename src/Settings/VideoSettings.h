@@ -20,6 +20,7 @@ public:
     DEFINE_SETTINGFACT(aspectRatio)
     DEFINE_SETTINGFACT(videoFit)
     DEFINE_SETTINGFACT(gridLines)
+    DEFINE_SETTINGFACT(showTelemetryOverlay)
     DEFINE_SETTINGFACT(showRecControl)
     DEFINE_SETTINGFACT(recordingFormat)
     DEFINE_SETTINGFACT(maxVideoSize)
@@ -30,10 +31,37 @@ public:
     DEFINE_SETTINGFACT(lowLatencyMode)
     DEFINE_SETTINGFACT(rtpJitterLatencyMs)
     DEFINE_SETTINGFACT(rtspAutoReconnect)
+    DEFINE_SETTINGFACT(videoBackend)
     DEFINE_SETTINGFACT(forceVideoDecoder)
     DEFINE_SETTINGFACT(forceCpuVideoPath)
     DEFINE_SETTINGFACT(videoConversionElement)
     DEFINE_SETTINGFACT(disablePixelAspectRatio)
+    DEFINE_SETTINGFACT(uvcCameraFormat)
+    DEFINE_SETTINGFACT(uvcCameraRotation)
+    DEFINE_SETTINGFACT(uvcCameraMirror)
+    DEFINE_SETTINGFACT(uvcWhiteBalance)
+    DEFINE_SETTINGFACT(uvcZoom)
+    DEFINE_SETTINGFACT(uvcExposureCompensation)
+    DEFINE_SETTINGFACT(uvcFocusMode)
+    DEFINE_SETTINGFACT(uvcRecordingCodec)
+
+    /// videoFit's values (Video.SettingsGroup.json).
+    enum VideoFit
+    {
+        VideoFitWidth = 0,
+        VideoFitHeight = 1,
+        VideoFitFill = 2,
+        VideoFitNoCrop = 3,
+    };
+    Q_ENUM(VideoFit)
+
+    /// videoBackend's values (Video.SettingsGroup.json).
+    enum VideoBackendChoice
+    {
+        VideoBackendGStreamer = 0,
+        VideoBackendQtMultimedia = 1,
+    };
+    Q_ENUM(VideoBackendChoice)
 
     Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)
     Q_PROPERTY(QString  udp264VideoSource       READ udp264VideoSource      CONSTANT)

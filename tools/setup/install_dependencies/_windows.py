@@ -187,10 +187,10 @@ def install_windows_gstreamer(version: str, dry_run: bool = False) -> bool:
     print(f"\nInstalling GStreamer {version}...")
     with tempfile.TemporaryDirectory() as tmpdir:
         installer = Path(tmpdir) / installer_name
-        # QGC's mirror first, then upstream.
+        # Upstream first, then QGC's mirror, like cmake/GStreamer/Packages.cmake.
         installer_urls = (
-            _c.mirror_url("windows_msvc_x64", version),
             _c.package_url("windows_msvc_x64", version),
+            _c.mirror_url("windows_msvc_x64", version),
         )
         if not _c.download_first(installer_urls, installer, expected_sha256, dry_run):
             return False

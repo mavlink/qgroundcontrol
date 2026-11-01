@@ -6,6 +6,8 @@ target_sources(
     PRIVATE
         GStreamerEnvironmentTest.cc
         GStreamerEnvironmentTest.h
+        GStreamerHelpersTest.cc
+        GStreamerHelpersTest.h
         GStreamerInitTest.cc
         GStreamerInitTest.h
         GStreamerTest.cc
@@ -34,8 +36,16 @@ target_sources(
         Receiver/GstRecordingSinkTest.h
         Receiver/GstVideoReceiverComponentsTest.cc
         Receiver/GstVideoReceiverComponentsTest.h
-        Receiver/GstVideoReceiverTest.cc
-        Receiver/GstVideoReceiverTest.h
+        Receiver/GstVideoReceiverPipelineTest.cc
+        Receiver/GstVideoReceiverPipelineTest.h
+        Receiver/GstVideoReceiverReconnectTest.cc
+        Receiver/GstVideoReceiverReconnectTest.h
+        Receiver/GstVideoReceiverRecordingTest.cc
+        Receiver/GstVideoReceiverRecordingTest.h
+        Receiver/GstVideoReceiverStatsTest.cc
+        Receiver/GstVideoReceiverStatsTest.h
+        Receiver/GstVideoReceiverTestBase.cc
+        Receiver/GstVideoReceiverTestBase.h
         SourceFactory/GstSourceFactoryStreamTest.cc
         SourceFactory/GstSourceFactoryStreamTest.h
         SourceFactory/GstSourceFactoryTest.cc
@@ -54,16 +64,18 @@ target_sources(
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# Encoded streams the tests send instead of encoding their own (GstTest::FixtureRtpSender), made by Media/generate.sh.
+# Encoded streams the tests send instead of encoding their own (GstTest::FixtureRtpSender): the app's self-test
+# samples, made by src/VideoManager/GStreamer/Runtime/Media/generate.sh.
 if(QGC_ENABLE_GST_VIDEOSTREAMING)
+    set(_qgc_gst_test_media "${CMAKE_SOURCE_DIR}/src/VideoManager/GStreamer/Runtime/Media")
     qt_add_resources(
         ${CMAKE_PROJECT_NAME} "GStreamerTestMedia_res"
         PREFIX "/unittest/video"
-        BASE Media
+        BASE "${_qgc_gst_test_media}"
         FILES
-            Media/h264_160x120.h264
-            Media/h264_320x240.h264
-            Media/h265_320x240.h265
+            "${_qgc_gst_test_media}/h264_160x120.h264"
+            "${_qgc_gst_test_media}/h264_320x240.h264"
+            "${_qgc_gst_test_media}/h265_320x240.h265"
     )
 endif()
 
@@ -78,19 +90,23 @@ add_qgc_test(GstQgcSinkTest LABELS Unit)
 add_qgc_test(GstQgcVideoFormatsTest LABELS Unit)
 add_qgc_test(GstSourceFactoryTest LABELS Unit)
 add_qgc_test(GstVideoReceiverComponentsTest LABELS Unit)
+add_qgc_test(GStreamerHelpersTest LABELS Integration)
 add_qgc_test(GstHwBuffersPipelineTest LABELS Integration GPU)
 add_qgc_test(GstQgcSinkPipelineTest LABELS Integration)
 add_qgc_test(GstRecordingSinkTest LABELS Integration)
 add_qgc_test(GstSelfTestPipelineTest LABELS Integration)
 add_qgc_test(GstSourceFactoryStreamTest LABELS Integration)
-add_qgc_test(GstVideoReceiverTest LABELS Integration)
+add_qgc_test(GstVideoReceiverPipelineTest LABELS Integration)
+add_qgc_test(GstVideoReceiverReconnectTest LABELS Integration)
+add_qgc_test(GstVideoReceiverRecordingTest LABELS Integration)
+add_qgc_test(GstVideoReceiverStatsTest LABELS Integration)
 # Needs Qt on EGL, which the offscreen QPA lacks: xcb with xcb_egl, falling back to offscreen (and skipping) without an
 # X display.
 set(_qgc_gl_readback_env ENV_MODIFICATION "QT_QPA_PLATFORM=cmake_list_prepend:xcb" "QT_XCB_GL_INTEGRATION=set:xcb_egl")
 add_qgc_test(GstHwBuffersGlReadbackTest LABELS Integration GPU ${_qgc_gl_readback_env})
 
 # The GstHarness tests need gst-check, which the GStreamer layer finds only for test builds and only where the SDK or
-# distribution ships it (src/VideoManager/VideoReceiver/GStreamer/CMakeLists.txt).
+# distribution ships it (src/VideoManager/GStreamer/CMakeLists.txt).
 if(TARGET GStreamer::Check)
     target_sources(
         QGCUnitTests
@@ -104,10 +120,23 @@ if(TARGET GStreamer::Check)
     add_qgc_test(GstSourceFactoryHarnessTest LABELS Unit)
 endif()
 
+# GStreamerTest checks the runtime GStreamer against the floor the build accepts: the system minimum on Linux, the
+# official SDKs' elsewhere.
+if(LINUX)
+    qgc_config_read(_qgc_gst_runtime_minimum gstreamer version minimum)
+else()
+    qgc_config_read(_qgc_gst_runtime_minimum gstreamer version bundled_minimum)
+endif()
+set_property(
+    SOURCE GStreamerTest.cc TARGET_DIRECTORY QGCUnitTests
+    APPEND
+    PROPERTY COMPILE_DEFINITIONS "QGC_GST_RUNTIME_MINIMUM_VERSION=\"${_qgc_gst_runtime_minimum}\""
+)
+
 # MockVideoStreamServer is only compiled into single-config Debug builds (see its directory's CMakeLists.txt).
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set_property(
-        SOURCE Receiver/GstVideoReceiverTest.cc TARGET_DIRECTORY QGCUnitTests
+        SOURCE Receiver/GstVideoReceiverPipelineTest.cc TARGET_DIRECTORY QGCUnitTests
         APPEND
         PROPERTY COMPILE_DEFINITIONS QGC_HAS_MOCK_VIDEO_STREAM_SERVER
     )

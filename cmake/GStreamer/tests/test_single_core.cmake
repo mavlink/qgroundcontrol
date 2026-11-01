@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 # The Android and iOS apps must take the GStreamer core from GStreamer::mobile. The post-build check
 # (SingleCoreCheck.cmake) flags an app binary that defines core symbols itself, which means it linked a second core.
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/../StaticInit.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/../Mobile.cmake")
 
 # symbol prefix|platform: Mach-O symbols carry a leading underscore, ELF ones do not.
 foreach(_case IN ITEMS "_|iOS" "|Android")

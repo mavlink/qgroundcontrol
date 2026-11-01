@@ -8,11 +8,13 @@
 #include <gst/gst.h>
 #include <gst/video/gstvideometa.h>
 #include <memory>
+#include <thread>
 #include <vector>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QSet>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 
@@ -25,9 +27,13 @@
 #include "gstqgc/GstQgcAllocation.h"
 #include "gstqgc/GstQgcBinChain.h"
 #include "gstqgc/GstQgcCaps.h"
+#include "gstqgc/GstQgcFrameDelivery.h"
+#include "gstqgc/GstQgcFrameMap.h"
+#include "gstqgc/GstQgcPathSession.h"
 #include "gstqgc/GstQgcRenderTarget.h"
+#include "gstqgc/GstQgcSinkCounters.h"
+#include "gstqgc/GstQgcSinkStats.h"
 #include "gstqgc/GstQgcTestSupport.h"
-#include "gstqgc/gstqgcqvideosink.h"
 #include "gstqgc/gstqgcvideosinkbin.h"
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include "GstDmaBufVideoBuffer.h"
@@ -562,12 +568,101 @@ void GstQgcSinkTest::_testQgcQVideoSinkDeliversLatestFrameOnly()
     QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
     QCOMPARE(emissions, 1);
     QCOMPARE(lastStartUs, qint64(3 * GST_SECOND / GST_USECOND));
+    // The two frames never shown are counted as superseded.
+    QCOMPARE(GstQgcTest::sinkStat(harness.element(), GstQgc::kSupersededFramesField), qint64(2));
 
     // Delivery re-arms once the GUI side has taken the frame.
     QCOMPARE(harness.pushFrame(4 * GST_SECOND), GST_FLOW_OK);
     QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
     QCOMPARE(emissions, 2);
     QCOMPARE(lastStartUs, qint64(4 * GST_SECOND / GST_USECOND));
+    QCOMPARE(GstQgcTest::sinkStat(harness.element(), GstQgc::kSupersededFramesField), qint64(2));
+}
+
+void GstQgcSinkTest::_testQgcQVideoSinkDisplayedCountNeverFalls()
+{
+    QVideoSink videoSink;
+    GstQgcTest::SinkHarness harness(&videoSink);
+    QVERIFY(harness.isReady());
+
+    // Readers of "frame-stats" count the frames displayed as those delivered less those superseded, so no snapshot may
+    // see a delivery without the frame it superseded, or the other way round. With the GUI thread taking none, each
+    // frame a streaming thread pushes supersedes the one before it.
+    const auto displayed = [&harness] {
+        const GStreamer::GstStructurePtr stats = GstQgc::frameStats(harness.element());
+        guint64 delivered = 0;
+        for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
+            guint64 frames = 0;
+            (void) gst_structure_get_uint64(stats.get(), GstQgc::sinkFramesField(HwVideoBufferPath(i)), &frames);
+            delivered += frames;
+        }
+        guint64 superseded = 0;
+        (void) gst_structure_get_uint64(stats.get(), GstQgc::kSupersededFramesField, &superseded);
+        return static_cast<qint64>(delivered) - static_cast<qint64>(superseded);
+    };
+    QCOMPARE(harness.pushFrame(GST_MSECOND), GST_FLOW_OK);
+    QCOMPARE(displayed(), qint64(1));
+
+    constexpr int kFrames = 20000;
+    std::atomic<bool> done{false};
+    std::thread streaming([&harness, &done] {
+        for (int i = 2; i <= kFrames; ++i) {
+            (void) harness.pushFrame(i * GST_MSECOND);
+        }
+        done.store(true);
+    });
+    int snapshots = 0;
+    int wrong = 0;
+    while (!done.load()) {
+        ++snapshots;
+        wrong += (displayed() != 1) ? 1 : 0;
+    }
+    streaming.join();
+    QVERIFY(snapshots > 0);
+    QCOMPARE(wrong, 0);
+    QCOMPARE(displayed(), qint64(1));
+}
+
+void GstQgcSinkTest::_testRenderBackendNames()
+{
+    using GstQgc::RenderBackend;
+    QSet<QString> names;
+    for (const RenderBackend backend :
+         {RenderBackend::Unknown, RenderBackend::Null, RenderBackend::OpenGL, RenderBackend::Direct3D11,
+          RenderBackend::Direct3D12, RenderBackend::Metal, RenderBackend::Vulkan}) {
+        names.insert(QString::fromLatin1(GstQgc::toString(backend)));
+        QVERIFY(QString::fromLatin1(GstQgc::zeroCopyPathName(backend)).size() > 0);
+    }
+    QCOMPARE(names.size(), 7);
+    // No GPU import without a GPU API, nor through the dormant Vulkan import.
+    QCOMPARE(QString::fromLatin1(GstQgc::zeroCopyPathName(RenderBackend::Unknown)), QStringLiteral("CPU"));
+    QCOMPARE(QString::fromLatin1(GstQgc::zeroCopyPathName(RenderBackend::Null)), QStringLiteral("CPU"));
+    QVERIFY(QString::fromLatin1(GstQgc::zeroCopyPathName(RenderBackend::Vulkan)).startsWith(QStringLiteral("CPU")));
+}
+
+void GstQgcSinkTest::_testRenderTargetSharesGlContext()
+{
+    using GstQgc::RenderBackend;
+    QVERIFY(kOpenGlOnEgl.sharesGlContext());
+    // Qt's OpenGL off EGL is GLX on Linux, which gst-gl wraps too, but WGL or CGL elsewhere, which it doesn't.
+    constexpr GstQgc::RenderTarget kOpenGlOffEgl{.backend = RenderBackend::OpenGL, .egl = false};
+#ifdef Q_OS_LINUX
+    QVERIFY(kOpenGlOffEgl.sharesGlContext());
+#else
+    QVERIFY(!kOpenGlOffEgl.sharesGlContext());
+#endif
+    QVERIFY(!GstQgc::RenderTarget{.backend = RenderBackend::Direct3D11}.sharesGlContext());
+    QVERIFY(!GstQgc::RenderTarget{.backend = RenderBackend::Vulkan}.sharesGlContext());
+}
+
+void GstQgcSinkTest::_testCurrentRenderTarget()
+{
+    // Before a scene graph runs: the API Qt Quick was asked to use, which the GUI thread reads.
+    QVERIFY(GstQgc::currentRenderTarget().backend != GstQgc::RenderBackend::Unknown);
+
+    constexpr GstQgc::RenderTarget kDirect3D12{.backend = GstQgc::RenderBackend::Direct3D12};
+    const GstQgc::ScopedSinkEnvironmentForTest environment({.target = kDirect3D12});
+    QCOMPARE(GstQgc::currentRenderTarget(), kDirect3D12);
 }
 
 void GstQgcSinkTest::_testQgcQVideoSinkRenegotiatesMidStream()
@@ -996,6 +1091,103 @@ void GstQgcSinkTest::_testQgcQVideoSinkMapFailuresPostElementError()
     QVERIFY2(details.contains(QStringLiteral("consecutive map failures")), qPrintable(details));
 }
 
+void GstQgcSinkTest::_testFrameDeliveryKeepsTheLatestFrame()
+{
+    const auto frameOfWidth = [](int width) {
+        return QVideoFrame(QVideoFrameFormat(QSize(width, 2), QVideoFrameFormat::Format_RGBA8888));
+    };
+    GstQgc::FrameDelivery delivery;
+
+    // Nothing is delivered without a QVideoSink.
+    QVERIFY(!delivery.deliver(frameOfWidth(2)).delivered);
+
+    QVideoSink first;
+    delivery.setSink(&first);
+    QCOMPARE(delivery.sink(), &first);
+    const GstQgc::FrameDelivery::Result delivered = delivery.deliver(frameOfWidth(2));
+    QVERIFY(delivered.delivered);
+    QVERIFY(!delivered.superseded);
+    // A newer frame replaces one the QVideoSink hasn't taken, which then only gets the newest.
+    QVERIFY(delivery.deliver(frameOfWidth(4)).superseded);
+    QTRY_COMPARE_WITH_TIMEOUT(first.videoFrame().width(), 4, TestTimeout::shortMs());
+    QVERIFY(!delivery.deliver(frameOfWidth(6)).superseded);
+
+    // A frame bound for the previous sink reaches neither.
+    QVideoSink second;
+    delivery.setSink(&second);
+    QCoreApplication::processEvents();
+    QCOMPARE(first.videoFrame().width(), 4);
+    QVERIFY(!second.videoFrame().isValid());
+
+    // A dropped frame is never shown, and the next one is delivered anew.
+    QVERIFY(delivery.deliver(frameOfWidth(8)).delivered);
+    delivery.dropPending();
+    QCoreApplication::processEvents();
+    QVERIFY(!second.videoFrame().isValid());
+    QVERIFY(!delivery.deliver(frameOfWidth(10)).superseded);
+    QTRY_COMPARE_WITH_TIMEOUT(second.videoFrame().width(), 10, TestTimeout::shortMs());
+
+    delivery.setSink(nullptr);
+    QVERIFY(!delivery.deliver(frameOfWidth(12)).delivered);
+}
+
+void GstQgcSinkTest::_testPathSessionFailurePolicy()
+{
+    GSTTEST_REQUIRE_GSTREAMER();
+
+    using Verdict = GstQgc::PathSession::Verdict;
+    constexpr const char* kSinkLog = "Video.GStreamer.QgcQVideoSink";
+    GstQgc::PathSession session;
+    GstQgc::SinkCounters counters;
+    const MappedFrame failed;
+
+    // Failures are dropped, logged on the first of every 64, until a sustained run fails the stream.
+    for (quint64 failure = 1; failure < GstQgc::PathSession::kMaxConsecutiveMapFailures; ++failure) {
+        const bool logged = (failure % 64) == 1;
+        if (logged) {
+            expectLogMessage(kSinkLog, QtWarningMsg, QRegularExpression(QStringLiteral("^mapping failed")));
+        }
+        QCOMPARE(session.onMapFailed(failed, counters), Verdict::Drop);
+        if (logged) {
+            verifyExpectedLogMessage();
+        }
+    }
+    expectLogMessage(kSinkLog, QtWarningMsg, QRegularExpression(QStringLiteral("consecutive map failures")));
+    QCOMPARE(session.onMapFailed(failed, counters), Verdict::Error);
+    verifyExpectedLogMessage();
+
+    // New caps keep the run going; a frame that maps, or a stop, ends it.
+    session.startEpoch();
+    QCOMPARE(session.consecutiveMapFailures(), GstQgc::PathSession::kMaxConsecutiveMapFailures);
+    session.onMapped();
+    QCOMPARE(session.consecutiveMapFailures(), quint64(0));
+
+    // Tiled frames the CPU can't read are counted, and warned about once per epoch.
+    MappedFrame tiled;
+    tiled.noCpuLayout = true;
+    expectLogMessage(kSinkLog, QtWarningMsg, QRegularExpression(QStringLiteral("^tiled DMA_DRM frame")));
+    QCOMPARE(session.onMapFailed(tiled, counters), Verdict::Drop);
+    QCOMPARE(session.onMapFailed(tiled, counters), Verdict::Drop);
+    verifyExpectedLogMessage();
+    session.stop();
+    QCOMPARE(session.consecutiveMapFailures(), quint64(0));
+    expectLogMessage(kSinkLog, QtWarningMsg, QRegularExpression(QStringLiteral("^tiled DMA_DRM frame")));
+    QCOMPARE(session.onMapFailed(tiled, counters), Verdict::Drop);
+    verifyExpectedLogMessage();
+
+    // A CPU fallback from a GPU path counts every time, as a stream demotion once per epoch.
+    MappedFrame demoted;
+    demoted.demoted = true;
+    session.onDelivered(demoted, counters);
+    session.onDelivered(demoted, counters);
+    session.onDelivered(MappedFrame{}, counters);
+    session.startEpoch();
+    session.onDelivered(demoted, counters);
+    const GStreamer::GstStructurePtr stats = GStreamer::adoptStructure(counters.frameStats());
+    QCOMPARE(GstQgc::frameStatsField(stats.get(), GstQgc::kGpuFallbacksField), quint64(3));
+    QCOMPARE(GstQgc::frameStatsField(stats.get(), GstQgc::kStreamDemotionsField), quint64(2));
+    QCOMPARE(GstQgc::frameStatsField(stats.get(), GstQgc::kTiledDropsField), quint64(3));
+}
 #endif
 
 UT_REGISTER_TEST(GstQgcSinkTest, TestLabel::Unit)

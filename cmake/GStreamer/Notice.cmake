@@ -3,15 +3,25 @@
 
 include_guard(GLOBAL)
 
+include("${CMAKE_CURRENT_LIST_DIR}/Layout.cmake")
+
 # qgc_gst_write_notice(<dir> [PLUGINS <plugin>...])
-# Writes LGPL-2.1.txt and NOTICE.txt into <dir> for GStreamer_VERSION. When GStreamer_AUTO_DOWNLOADED, NOTICE.txt also
-# lists the packages in QGC_GST_RESOLVED_PACKAGES ("<url>|<sha256>" entries, see qgc_gst_acquire_sdk) and the Cerbero
-# release that built them. It names the third-party libraries that the shipped <plugin>s, and on every platform but
-# Linux the OpenSSL GIO module, bring along, and on iOS, which links GStreamer statically, how to relink it.
+# Writes LGPL-2.1.txt and NOTICE.txt into <dir> for GStreamer_VERSION. When the layout records AUTO_DOWNLOADED,
+# NOTICE.txt also lists the packages in QGC_GST_RESOLVED_PACKAGES ("<url>|<sha256>" entries, see
+# qgc_gst_acquire_sdk) and the Cerbero release that built them. It names the third-party libraries that the shipped
+# <plugin>s, and on every platform but Linux the OpenSSL GIO module, bring along, and on iOS, which links GStreamer
+# statically, how to relink it.
 function(qgc_gst_write_notice dir)
+    qgc_gst_layout_get(AUTO_DOWNLOADED _gst_auto_downloaded)
     cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "PLUGINS")
     set(_version "${GStreamer_VERSION}")
-    if(GStreamer_AUTO_DOWNLOADED AND QGC_GST_RESOLVED_PACKAGES)
+    # A build after a release reports its nano version, which has no tag: the official 1.28.8 Windows SDK reports
+    # 1.28.8.1. Its source links name the release it follows.
+    string(REGEX MATCH "^[0-9]+\\.[0-9]+\\.[0-9]+" _release "${_version}")
+    if(NOT _release)
+        set(_release "${_version}")
+    endif()
+    if(_gst_auto_downloaded AND QGC_GST_RESOLVED_PACKAGES)
         set(_binaries "The libraries and plugins come from the official GStreamer packages")
         foreach(_package IN LISTS QGC_GST_RESOLVED_PACKAGES)
             string(REPLACE "|" ";" _package "${_package}")
@@ -21,7 +31,7 @@ function(qgc_gst_write_notice dir)
         endforeach()
         string(
             APPEND _binaries "\nbuilt by Cerbero, which also builds the libraries GStreamer uses:\n"
-            "    https://gitlab.freedesktop.org/gstreamer/cerbero/-/tree/${_version}"
+            "    https://gitlab.freedesktop.org/gstreamer/cerbero/-/tree/${_release}"
         )
     else()
         string(
@@ -76,7 +86,7 @@ function(qgc_gst_write_notice dir)
                 "modified\nGStreamer, build QGroundControl from its source code, "
                 "https://github.com/mavlink/qgroundcontrol, with\nGStreamer_ROOT_DIR set to your GStreamer SDK: the "
                 "build links the framework, and the app, against it\n"
-                "(src/VideoManager/VideoReceiver/GStreamer/README.md describes the build).\n"
+                "(src/VideoManager/GStreamer/README.md describes the build).\n"
         )
     endif()
     configure_file("${CMAKE_CURRENT_FUNCTION_LIST_DIR}/notice/NOTICE.txt.in" "${dir}/NOTICE.txt" @ONLY)

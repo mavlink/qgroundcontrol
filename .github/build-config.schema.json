@@ -8,7 +8,8 @@
     "android",
     "apple",
     "build",
-    "gstreamer"
+    "gstreamer",
+    "gstreamer_plugin_policy"
   ],
   "definitions": {
     "github_repository": {
@@ -182,6 +183,7 @@
           "required": [
             "default",
             "minimum",
+            "bundled_minimum",
             "android",
             "ios",
             "macos",
@@ -194,6 +196,11 @@
               "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
             },
             "minimum": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+            },
+            "bundled_minimum": {
+              "description": "Oldest official SDK (Windows, macOS, Android, iOS) the build can download or bundle; the system GStreamer of Linux has minimum instead.",
               "type": "string",
               "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
             },
@@ -306,6 +313,60 @@
           "type": "string",
           "description": "Immutable dated curl.se Mozilla CA snapshot baked into the iOS app",
           "pattern": "^https://curl\\.se/ca/cacert-[0-9]{4}-[0-9]{2}-[0-9]{2}\\.pem$"
+        }
+      }
+    },
+    "gstreamer_plugin_policy": {
+      "type": "object",
+      "description": "GStreamer plugin policy, outside the gstreamer section so its edits leave the CI SDK caches (keyed on that section) alone. cmake/GStreamer/PluginPolicy.cmake reads it at configure and install time; tools/ci/packaging/artifact_report.py reads the GPL denylist.",
+      "required": [
+        "alternates",
+        "bundle_required",
+        "optional_decoders",
+        "mock_server_debug",
+        "gpl_denylist"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "alternates": {
+          "description": "Plugin alternate groups: within each group only one member typically ships per SDK (videoconvertscale is the 1.22 fusion of videoconvert and videoscale). '|' separates the alternates, '+' the plugins one alternate needs together: 'videoconvertscale|videoconvert+videoscale' is satisfied by videoconvertscale, or by videoconvert and videoscale. Plugin names can't contain '|' or '+'.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+([|+][a-z0-9_]+)*$"
+          }
+        },
+        "bundle_required": {
+          "description": "Structural plugins every bundled GStreamer must ship: a mobile configure and the desktop install verifier fail without one (at runtime GStreamer.cc checks elements per feature, and fails only without the display core). Codec implementations (openh264, libav) are left out: a distribution bundle may ship another decode path. opengl supplies glupload/glcolorconvert for the GL zero-copy path; isomp4 and matroska are the recording muxers.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          }
+        },
+        "optional_decoders": {
+          "description": "Hardware-specific and alternative decoder plugins: decoding uses whichever a host or SDK provides, so a missing one only shows in a configure status line. Other missing allowlisted plugins are warned about.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          }
+        },
+        "mock_server_debug": {
+          "description": "Encode-side plugins only the Debug-only MockLink test video server (MockVideoStreamServer) needs; it encodes with the allowlisted openh264enc. Registered statically on Android and iOS Debug builds only: desktop builds load what the SDK or system ships, and release builds must not carry them.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          }
+        },
+        "gpl_denylist": {
+          "description": "GPL-licensed plugins and libraries of the official SDKs (cerbero builds them with its gpl and ugly options) that QGC must never bundle, as its GStreamer notice covers an LGPL GStreamer. The desktop installers fail an install that would ship one.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          }
         }
       }
     },

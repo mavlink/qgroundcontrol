@@ -80,6 +80,15 @@ def test_gstreamer_component_names_the_bundled_sdk_and_its_packages() -> None:
     assert gstreamer_component({**cache, "QGC_ENABLE_GST_VIDEOSTREAMING": "OFF"}) is None
 
 
+def test_gstreamer_component_links_a_nano_version_to_its_release() -> None:
+    cache = {"QGC_ENABLE_GST_VIDEOSTREAMING": "ON", "QGC_GST_RESOLVED_SDK_VERSION": "1.28.8.1"}
+    component = gstreamer_component(cache)
+    assert component is not None
+    assert component["version"] == "1.28.8.1"
+    (vcs,) = [r for r in component["externalReferences"] if r["type"] == "vcs"]
+    assert vcs["url"] == "https://gitlab.freedesktop.org/gstreamer/gstreamer/-/tree/1.28.8"
+
+
 def test_spdx_declares_the_gstreamer_license(tmp_path: Path) -> None:
     cache = SAMPLE_CACHE + (
         "QGC_ENABLE_GST_VIDEOSTREAMING:BOOL=ON\nQGC_GST_RESOLVED_SDK_VERSION:INTERNAL=1.24.2\n"

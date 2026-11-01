@@ -28,12 +28,13 @@
   },
   "gstreamer": {
     "version": {
-      "default": "1.28.4",
+      "default": "1.28.8",
       "minimum": "1.20.0",
-      "android": "1.28.4",
-      "ios": "1.28.4",
-      "macos": "1.28.4",
-      "windows": "1.28.4"
+      "bundled_minimum": "1.28.0",
+      "android": "1.28.8",
+      "ios": "1.28.8",
+      "macos": "1.28.8",
+      "windows": "1.28.8"
     },
     "plugins": {
       "common": [
@@ -84,17 +85,77 @@
       ]
     },
     "checksums": {
-      "1.28.4": {
-        "android": "a48aeb1b4fbae67a2fe0a0daa55af4a6af22b48f15a9c09f09dcd9ab3e8e943e",
-        "windows_msvc_x64": "1a745d67225e43394a4a5db929c97397cb56e74b1c38bb77c6ded4b037d3c040",
-        "windows_msvc_arm64": "6f810ad85e0fe7b566ab2f2841c0fec52e010265af6883427652e0a159a40fc7",
-        "macos": "9f9ae8ba1a25eb42d6740c4e5f15b09ee6b9127b7359e9662c45a2b9a5029f85",
-        "macos_devel": "2758abb2abe10b79ad4cf17cbcf0a75e3cb71ee8ce01724960b8f3e0b715e065",
-        "ios": "d82c51bd81eafa77fd322c39ce7e6d663a5b860359ace6ed98060c87092e4845"
+      "1.28.8": {
+        "android": "f19c6f971a956675402452fce0fe772d66dbd0d28d70999618355813ea593a99",
+        "windows_msvc_x64": "e4c41ee6ee9c6c32a45d198463ec08d79bac3bd5fa58adc93d13fe4a08abc9d9",
+        "windows_msvc_arm64": "52974e1717bb680272bd3db79a0bde231464eca54b6db83f0b3e57d202fe1600",
+        "macos": "d371ab04a7632713626836c2fc234e863cc98484c74c473eba99b0fbd9b3a3fe",
+        "macos_devel": "e6d380bc17be7eccf13e0154567d4718fc9321da822408c7ca0cd808b3d4a3f7",
+        "ios": "d34ae6bd55b6cb9959734299536003d315deea1ab46f84182113692528d04fb5"
       }
     },
     "ca_bundle_url": "https://curl.se/ca/cacert-2026-08-13.pem",
     "ca_bundle_sha256": "f66dff1bdf8f96060b8177976f8b7d9254bc89bc4db933d769f7384d28480bc9"
+  },
+  "gstreamer_plugin_policy": {
+    "alternates": [
+      "videoconvertscale|videoconvert+videoscale"
+    ],
+    "bundle_required": [
+      "coreelements",
+      "isomp4",
+      "matroska",
+      "opengl",
+      "playback",
+      "rtsp",
+      "rtp",
+      "rtpmanager",
+      "tcp",
+      "udp",
+      "videoparsersbad",
+      "videoconvertscale"
+    ],
+    "optional_decoders": [
+      "androidmedia",
+      "applemedia",
+      "d3d",
+      "d3d11",
+      "d3d12",
+      "dav1d",
+      "libav",
+      "nvcodec",
+      "openh264",
+      "qsv",
+      "va",
+      "vpx",
+      "vulkan"
+    ],
+    "mock_server_debug": [
+      "mpegtsmux",
+      "videotestsrc"
+    ],
+    "gpl_denylist": [
+      "a52",
+      "a52dec",
+      "cdio",
+      "cdio_cdda",
+      "cdio_paranoia",
+      "dvdnav",
+      "dvdread",
+      "faad",
+      "mpeg2",
+      "mpeg2convert",
+      "mpeg2dec",
+      "mpeg2enc",
+      "mpeg2encpp",
+      "mplex",
+      "mplex2",
+      "resindvd",
+      "sid",
+      "sidplay",
+      "x264",
+      "x265"
+    ]
   },
   "analysis": {
     "llvm_version": "18",
