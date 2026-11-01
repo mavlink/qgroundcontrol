@@ -1945,6 +1945,11 @@ void Vehicle::startMission()
     _firmwarePlugin->startMission(this);
 }
 
+void Vehicle::startMissionAsync()
+{
+    _firmwarePlugin->startMissionAsync(this);
+}
+
 bool Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord, double forwardFlightLoiterRadius)
 {
     if (!_vehicleSupports->guidedMode()) {
@@ -2106,6 +2111,15 @@ void Vehicle::pauseVehicle()
         return;
     }
     _firmwarePlugin->pauseVehicle(this);
+}
+
+void Vehicle::pauseVehicleAsync()
+{
+    if (!_vehicleSupports->pauseVehicle()) {
+        QGC::showAppMessage(tr("Pause not supported by vehicle."));
+        return;
+    }
+    _firmwarePlugin->pauseVehicleAsync(this);
 }
 
 void Vehicle::abortLanding(double climbOutAltitude)

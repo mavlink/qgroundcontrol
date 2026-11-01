@@ -338,6 +338,10 @@ public:
     /// in guided mode after pause.
     Q_INVOKABLE void pauseVehicle();
 
+    /// Pause without waiting for the vehicle to report the new state.
+    /// Multi-vehicle actions use this so one vehicle cannot block the others.
+    Q_INVOKABLE void pauseVehicleAsync();
+
     /// Command vehicle to kill all motors no matter what state
     Q_INVOKABLE void emergencyStop();
 
@@ -353,6 +357,10 @@ public:
     Q_INVOKABLE void startTakeoff();
 
     Q_INVOKABLE void startMission();
+
+    /// Start the mission without waiting for the vehicle to report the new state.
+    /// Multi-vehicle actions use this so one vehicle cannot block the others.
+    Q_INVOKABLE void startMissionAsync();
 
     /// Alter the current mission item on the vehicle
     Q_INVOKABLE void setCurrentMissionSequence(int seq);

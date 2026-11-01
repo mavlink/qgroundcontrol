@@ -129,6 +129,12 @@ void FirmwarePlugin::pauseVehicle(Vehicle *vehicle) const
     QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
+void FirmwarePlugin::pauseVehicleAsync(Vehicle* vehicle) const
+{
+    Q_UNUSED(vehicle);
+    QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
+}
+
 void FirmwarePlugin::guidedModeRTL(Vehicle *vehicle, bool smartRTL) const
 {
     Q_UNUSED(vehicle);
@@ -227,6 +233,11 @@ void FirmwarePlugin::startTakeoff(Vehicle*) const
 }
 
 void FirmwarePlugin::startMission(Vehicle*) const
+{
+    QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
+}
+
+void FirmwarePlugin::startMissionAsync(Vehicle*) const
 {
     QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
 }
