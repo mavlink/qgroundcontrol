@@ -19,11 +19,16 @@ QGC_LOGGING_CATEGORY(MockVideoStreamServerLog, "VideoManager.MockVideoStreamServ
 namespace {
 
 // Shared test pattern source. videotestsrc's "ball" pattern makes motion obvious so a
-// stalled pipeline is easy to spot by eye.
+// stalled pipeline is easy to spot by eye. 8-bit 4:2:0, as cameras send: left to choose, an
+// encoder takes its richest format, which for a Windows x265enc is 12-bit 4:4:4.
 constexpr const char* kTestSource =
     "videotestsrc is-live=true pattern=ball ! "
     "video/x-raw,width=1280,height=720,framerate=30/1 ! "
-    "videoconvert";
+    "videoconvert ! video/x-raw,format=I420";
+
+// SPS and PPS ahead of every keyframe, which a receiver joining an MPEG-TS stream needs (RTP payloaders insert them
+// themselves): openh264enc sends them only with the first.
+constexpr const char* kH264InBandHeaders = "h264parse config-interval=-1";
 
 // Receivers join mid-stream and wait for the next keyframe, so the encoders key every second. Their fastest settings
 // keep a 720p encode real-time on a loaded CI runner; x265's medium preset and 250-frame default GOP do not.
@@ -76,9 +81,9 @@ bool MockVideoStreamServer::isStreamTypeAvailable(StreamType type)
             return (h264Encoder() != nullptr) && GStreamer::hasElementFactory("videotestsrc");
         case StreamType::MpegTsUdp:
         case StreamType::MpegTsTcp:
-            // mpegtsmux ships in gst-plugins-bad and can be absent even when the encoder is present.
+            // mpegtsmux and h264parse ship in gst-plugins-bad and can be absent even when the encoder is present.
             return (h264Encoder() != nullptr) && GStreamer::hasElementFactory("videotestsrc") &&
-                   GStreamer::hasElementFactory("mpegtsmux");
+                   GStreamer::hasElementFactory("mpegtsmux") && GStreamer::hasElementFactory("h264parse");
         case StreamType::RtpUdpH265:
             return GStreamer::hasElementFactory("x265enc") && GStreamer::hasElementFactory("videotestsrc");
         case StreamType::RtspH264:
@@ -134,13 +139,13 @@ bool MockVideoStreamServer::start(StreamType type, const QString& host, quint16 
             uri = QStringLiteral("udp265://%1:%2").arg(host, portString);
             break;
         case StreamType::MpegTsUdp:
-            launch = QStringLiteral("%1 ! %2 ! mpegtsmux ! udpsink host=%3 port=%4")
-                         .arg(kTestSource, h264Encoder(), host, portString);
+            launch = QStringLiteral("%1 ! %2 ! %3 ! mpegtsmux ! udpsink host=%4 port=%5")
+                         .arg(kTestSource, h264Encoder(), kH264InBandHeaders, host, portString);
             uri = QStringLiteral("mpegts://%1:%2").arg(host, portString);
             break;
         case StreamType::MpegTsTcp:
-            launch = QStringLiteral("%1 ! %2 ! mpegtsmux ! tcpserversink name=server host=%3 port=%4")
-                         .arg(kTestSource, h264Encoder(), host, portString);
+            launch = QStringLiteral("%1 ! %2 ! %3 ! mpegtsmux ! tcpserversink name=server host=%4 port=%5")
+                         .arg(kTestSource, h264Encoder(), kH264InBandHeaders, host, portString);
             uri = QStringLiteral("tcp://%1:%2").arg(host, portString);
             break;
         case StreamType::RtspH264:
