@@ -14,6 +14,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QSet>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 
@@ -616,6 +617,48 @@ void GstQgcSinkTest::_testQgcQVideoSinkDisplayedCountNeverFalls()
     QVERIFY(snapshots > 0);
     QCOMPARE(wrong, 0);
     QCOMPARE(displayed(), qint64(1));
+}
+
+void GstQgcSinkTest::_testRenderBackendNames()
+{
+    using GstQgc::RenderBackend;
+    QSet<QString> names;
+    for (const RenderBackend backend :
+         {RenderBackend::Unknown, RenderBackend::Null, RenderBackend::OpenGL, RenderBackend::Direct3D11,
+          RenderBackend::Direct3D12, RenderBackend::Metal, RenderBackend::Vulkan}) {
+        names.insert(QString::fromLatin1(GstQgc::toString(backend)));
+        QVERIFY(QString::fromLatin1(GstQgc::zeroCopyPathName(backend)).size() > 0);
+    }
+    QCOMPARE(names.size(), 7);
+    // No GPU import without a GPU API, nor through the dormant Vulkan import.
+    QCOMPARE(QString::fromLatin1(GstQgc::zeroCopyPathName(RenderBackend::Unknown)), QStringLiteral("CPU"));
+    QCOMPARE(QString::fromLatin1(GstQgc::zeroCopyPathName(RenderBackend::Null)), QStringLiteral("CPU"));
+    QVERIFY(QString::fromLatin1(GstQgc::zeroCopyPathName(RenderBackend::Vulkan)).startsWith(QStringLiteral("CPU")));
+}
+
+void GstQgcSinkTest::_testRenderTargetSharesGlContext()
+{
+    using GstQgc::RenderBackend;
+    QVERIFY(kOpenGlOnEgl.sharesGlContext());
+    // Qt's OpenGL off EGL is GLX on Linux, which gst-gl wraps too, but WGL or CGL elsewhere, which it doesn't.
+    constexpr GstQgc::RenderTarget kOpenGlOffEgl{.backend = RenderBackend::OpenGL, .egl = false};
+#ifdef Q_OS_LINUX
+    QVERIFY(kOpenGlOffEgl.sharesGlContext());
+#else
+    QVERIFY(!kOpenGlOffEgl.sharesGlContext());
+#endif
+    QVERIFY(!GstQgc::RenderTarget{.backend = RenderBackend::Direct3D11}.sharesGlContext());
+    QVERIFY(!GstQgc::RenderTarget{.backend = RenderBackend::Vulkan}.sharesGlContext());
+}
+
+void GstQgcSinkTest::_testCurrentRenderTarget()
+{
+    // Before a scene graph runs: the API Qt Quick was asked to use, which the GUI thread reads.
+    QVERIFY(GstQgc::currentRenderTarget().backend != GstQgc::RenderBackend::Unknown);
+
+    constexpr GstQgc::RenderTarget kDirect3D12{.backend = GstQgc::RenderBackend::Direct3D12};
+    const GstQgc::ScopedSinkEnvironmentForTest environment({.target = kDirect3D12});
+    QCOMPARE(GstQgc::currentRenderTarget(), kDirect3D12);
 }
 
 void GstQgcSinkTest::_testQgcQVideoSinkRenegotiatesMidStream()

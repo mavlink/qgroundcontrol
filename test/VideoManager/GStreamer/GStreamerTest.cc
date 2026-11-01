@@ -9,13 +9,17 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include <gst/gst.h>
 #include <memory>
 
+#include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QVersionNumber>
 
 #include "Fact.h"
+#include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
 #include "GStreamerDecoderRanks.h"
 #include "GStreamerHelpers.h"
 #include "GStreamerTestHelpers.h"
+#include "GStreamerVideoBackend.h"
 #include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
 #include "RecordingBranch.h"
@@ -99,6 +103,39 @@ void GStreamerTest::_testAvailableDecoderFamilies()
     QCOMPARE(GStreamer::availableDecoderFamilies(), installed);
 }
 
+void GStreamerTest::_testDecoderPriorityWarnings()
+{
+    const auto restoreRanks = qScopeGuard([] { GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderDefault); });
+
+    // A stored value outside the options changes nothing.
+    expectLogMessage("Video.GStreamer.DecoderRanks", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Ignoring invalid decode option: 99$")));
+    GStreamer::setCodecPriorities(99);
+    verifyExpectedLogMessage();
+    expectLogMessage("Video.GStreamer.DecoderRanks", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Ignoring invalid decode option: -1$")));
+    GStreamer::setCodecPriorities(-1);
+    verifyExpectedLogMessage();
+
+    // Vulkan decoders are ranked first, though their frames are copied through the CPU.
+    expectLogMessage("Video.GStreamer.DecoderRanks", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Forcing Vulkan video decoders")));
+    GStreamer::setCodecPriorities(static_cast<int>(GStreamer::ForceVideoDecoderVulkan));
+    verifyExpectedLogMessage();
+}
+
+void GStreamerTest::_testLogDecoderRanks()
+{
+    const TestFixtures::LoggingCategoryFixture ranksLog(QStringLiteral("Video.GStreamer.DecoderRanks"));
+
+    // A header, then a line per decoder, best ranked first.
+    ignoreLogMessage("Video.GStreamer.DecoderRanks", QtDebugMsg, QRegularExpression(QStringLiteral("^  ")));
+    expectLogMessage("Video.GStreamer.DecoderRanks", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("^Video decoder ranks:$")));
+    GStreamer::logDecoderRanks();
+    verifyExpectedLogMessage();
+}
+
 void GStreamerTest::_testPipelineDotOmitsElementProperties()
 {
     const GStreamer::GstElementPtr pipeline =
@@ -147,6 +184,29 @@ void GStreamerTest::_testCreateVideoReceiver()
     std::unique_ptr<VideoReceiver> receiver(GStreamer::createVideoReceiver(nullptr));
     QVERIFY2(receiver, "GStreamer::createVideoReceiver() returned nullptr");
     QVERIFY(qobject_cast<GstVideoReceiver*>(receiver.get()));
+}
+
+void GStreamerTest::_testVideoBackendForwards()
+{
+    GStreamerVideoBackend backend;
+    QVERIFY(backend.hasStreaming());
+    QVERIFY(backend.hasPipelineSettings());
+    QVERIFY(backend.needsAsyncInit());
+#ifdef QGC_HAS_ANY_GPU_PATH
+    QVERIFY(backend.hasGpuVideoPath());
+#else
+    QVERIFY(!backend.hasGpuVideoPath());
+#endif
+
+    const std::unique_ptr<VideoReceiver> receiver(backend.createReceiver(nullptr));
+    QVERIFY(qobject_cast<GstVideoReceiver*>(receiver.get()));
+    QCOMPARE(backend.availableDecoderFamilies(), GStreamer::availableDecoderFamilies());
+
+    // The default decoder priorities and debug threshold change nothing a test sees.
+    const GstDebugLevel threshold = gst_debug_get_default_threshold();
+    backend.setDebugLevel(static_cast<int>(threshold));
+    QCOMPARE(gst_debug_get_default_threshold(), threshold);
+    backend.applyDecoderPriorities(GStreamer::ForceVideoDecoderDefault);
 }
 
 void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams_data()

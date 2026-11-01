@@ -18,6 +18,7 @@ private slots:
     void _testSourceFactoryRtspJitterBufferPolicy();
     void _testSourceFactoryRtspSelectsOnlyVideoStreams_data();
     void _testSourceFactoryRtspSelectsOnlyVideoStreams();
+    void _testSourceFactoryRtspCredentials();
     void _testSourceFactoryRejectsBadUri();
     void _testSourceFactoryTcpMpegTs();
     void _testSourceFactoryRejectsBadTcpUri();

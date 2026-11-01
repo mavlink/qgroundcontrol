@@ -6,6 +6,8 @@ target_sources(
     PRIVATE
         GStreamerEnvironmentTest.cc
         GStreamerEnvironmentTest.h
+        GStreamerHelpersTest.cc
+        GStreamerHelpersTest.h
         GStreamerInitTest.cc
         GStreamerInitTest.h
         GStreamerTest.cc
@@ -88,6 +90,7 @@ add_qgc_test(GstQgcSinkTest LABELS Unit)
 add_qgc_test(GstQgcVideoFormatsTest LABELS Unit)
 add_qgc_test(GstSourceFactoryTest LABELS Unit)
 add_qgc_test(GstVideoReceiverComponentsTest LABELS Unit)
+add_qgc_test(GStreamerHelpersTest LABELS Integration)
 add_qgc_test(GstHwBuffersPipelineTest LABELS Integration GPU)
 add_qgc_test(GstQgcSinkPipelineTest LABELS Integration)
 add_qgc_test(GstRecordingSinkTest LABELS Integration)

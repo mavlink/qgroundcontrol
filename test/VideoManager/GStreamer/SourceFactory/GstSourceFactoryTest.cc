@@ -289,6 +289,41 @@ void GstSourceFactoryTest::_testSourceFactoryRtspSelectsOnlyVideoStreams()
     QCOMPARE(selected, expectedSelected ? TRUE : FALSE);
 }
 
+void GstSourceFactoryTest::_testSourceFactoryRtspCredentials()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+
+    // The URI's credentials go to rtspsrc's authentication properties, decoded, and leave its location.
+    const GStreamer::GstElementPtr bin = GstTest::createSource(
+        QStringLiteral("rtsp://pilot:p%40ss%20word@127.0.0.1:8554/test"), GStreamer::SourceFactory::Config{});
+    QVERIFY(bin);
+    const GStreamer::GstElementPtr source = GstTest::findByFactory(bin.get(), "rtspsrc");
+    QVERIFY(source);
+    gchar* user = nullptr;
+    gchar* password = nullptr;
+    gchar* location = nullptr;
+    g_object_get(source.get(), "user-id", &user, "user-pw", &password, "location", &location, nullptr);
+    const auto release = qScopeGuard([&] {
+        g_free(user);
+        g_free(password);
+        g_free(location);
+    });
+    QCOMPARE(QString::fromUtf8(user), QStringLiteral("pilot"));
+    QCOMPARE(QString::fromUtf8(password), QStringLiteral("p@ss word"));
+    QCOMPARE(QString::fromUtf8(location), QStringLiteral("rtsp://127.0.0.1:8554/test"));
+
+    // Without credentials, none are set.
+    const GStreamer::GstElementPtr anonymousBin =
+        GstTest::createSource(QStringLiteral("rtsp://127.0.0.1:8554/test"), GStreamer::SourceFactory::Config{});
+    QVERIFY(anonymousBin);
+    const GStreamer::GstElementPtr anonymous = GstTest::findByFactory(anonymousBin.get(), "rtspsrc");
+    QVERIFY(anonymous);
+    gchar* noUser = nullptr;
+    g_object_get(anonymous.get(), "user-id", &noUser, nullptr);
+    const auto releaseNoUser = qScopeGuard([&noUser] { g_free(noUser); });
+    QVERIFY(!noUser || (noUser[0] == '\0'));
+}
+
 void GstSourceFactoryTest::_testSourceFactoryRejectsBadUri()
 {
     ignoreLogMessage(
