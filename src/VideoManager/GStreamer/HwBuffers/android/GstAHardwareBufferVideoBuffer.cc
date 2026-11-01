@@ -42,6 +42,7 @@ GstHw::MapDiagnostics s_diag;
 constexpr const char* kNativeBufferExt = "EGL_ANDROID_image_native_buffer";
 
 std::atomic<bool> s_loggedNoFenceSync{false};
+std::atomic<bool> s_loggedImageTargetFailed{false};
 
 // LRU cache (QRhi, AHardwareBuffer, EGLDisplay) -> (EGLImage, GL texture): MediaCodec recycles the same AHB so the
 // import stays valid, saving ~50-200 us/frame on Mali/Adreno.
@@ -278,14 +279,21 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
             return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
         }
 
+        // Errors still pending from earlier GL calls would read as this import failing. Bounded: a lost context
+        // reports an error forever.
+        for (int i = 0; (i < 8) && (functions.glGetError() != GL_NO_ERROR); ++i) {
+        }
         functions.glGenTextures(1, &name);
         functions.glBindTexture(GL_TEXTURE_EXTERNAL_OES, name);
         glEGLImageTargetTexture2DOES_(GL_TEXTURE_EXTERNAL_OES, image);
-        if (Q_UNLIKELY(GstAHWBufLog().isDebugEnabled())) {
-            if (const GLenum glErr = functions.glGetError(); glErr != GL_NO_ERROR) {
-                qCDebug(GstAHWBufLog) << "glEGLImageTargetTexture2DOES glError=" << Qt::hex << glErr
-                                      << "eglError=" << eglGetError();
-            }
+        // A failed bind leaves an empty texture; cached, it would show black whenever the decoder recycles this AHB.
+        if (const GLenum glErr = functions.glGetError(); glErr != GL_NO_ERROR) {
+            QGC_HW_WARN_ONCE(GstAHWBufLog, s_loggedImageTargetFailed,
+                             "glEGLImageTargetTexture2DOES failed, glError="
+                                 << Qt::hex << glErr << "eglError=" << eglGetError() << "; using the CPU path");
+            functions.glDeleteTextures(1, &name);
+            eglDestroyImageKHR_(eglDpy, image);
+            return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
         }
 
         const QMutexLocker lock(&s_imageCacheMutex);
