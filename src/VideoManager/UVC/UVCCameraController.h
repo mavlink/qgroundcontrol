@@ -23,6 +23,7 @@ class QQuickItem;
 class QTimer;
 class QVideoFrame;
 class QVideoSink;
+class UVCFrameRelay;
 class UVCStreamMonitor;
 
 /// The USB (UVC) camera VideoManager selected: owns its QCamera and capture session, measures its frames, takes its
@@ -78,15 +79,19 @@ public:
     /// Stops displaying in @p videoOutput, if it is the registered output.
     Q_INVOKABLE void unregisterVideoOutput(QQuickItem* videoOutput);
 
+    /// Turns the camera's picture clockwise by @p rotation and then mirrors it when @p mirrored, on display, in
+    /// screenshots and in photos; recordings keep the camera's own picture. The frames themselves are turned, not the
+    /// VideoOutput, so what Qt draws over them (the telemetry overlay) stays upright.
+    void setTransform(QtVideo::Rotation rotation, bool mirrored);
+
     /// True while the camera runs into a registered VideoOutput.
     bool canTakeScreenshot() const;
-    /// Saves the frame on display to @p file, rotated and mirrored as the registered VideoOutput shows it. False, with
-    /// a warning logged, without one.
+    /// Saves the frame on display to @p file, as displayed. False, with a warning logged, without a VideoOutput.
     bool takeScreenshot(const QString& file) const;
 
     /// Takes a photo into @p file: a still capture where Qt takes one (Android, Apple), else the camera's next frame,
-    /// rotated and mirrored as the registered VideoOutput shows it and saved off the GUI thread. Saves the frame on
-    /// display instead (takeScreenshot()) while the camera can't capture, or when a capture fails.
+    /// turned and mirrored as setTransform() says and saved off the GUI thread. Saves the frame on display instead
+    /// (takeScreenshot()) while the camera can't capture, or when a capture fails.
     void capturePhoto(const QString& file);
 
     /// True while the camera runs into a registered VideoOutput, so startRecording() can record it.
@@ -141,8 +146,6 @@ private:
     void _onVideoInputsChanged();
     void _onImageAvailable(int id, const QVideoFrame& frame);
     void _onImageCaptureError(int id, const QString& errorString);
-    /// The registered output's orientation and mirroring, which screenshots and photos apply.
-    std::pair<QtVideo::Rotation, bool> _outputTransform() const;
     /// Records with the next of _pendingFormats.
     void _recordNextFormat();
     void _onRecorderStateChanged(QMediaRecorder::RecorderState state);
@@ -154,6 +157,8 @@ private:
     QVideoSink* _videoSink() const;
 
     UVCStreamMonitor* const _monitor;
+    /// Between the capture session and the registered VideoOutput.
+    UVCFrameRelay* const _frameRelay;
     QMediaDevices* const _mediaDevices;
     QTimer* const _retryTimer;
     /// Outlives the capture sessions, like _recorder.

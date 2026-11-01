@@ -8,11 +8,13 @@
 #include <QtGui/QImage>
 #include <QtMultimedia/QMediaFormat>
 #include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/QVideoSink>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QSignalSpy>
 
 #include "UVCCameraController.h"
+#include "UVCFrameRelay.h"
 #include "UVCStreamMonitor.h"
 #include "VideoTestHelpers.h"
 
@@ -34,16 +36,6 @@ QImage redTopLeftQuadrant()
         }
     }
     return image;
-}
-
-/// A VideoOutput turned 90° clockwise and mirrored, as UVCVideoOutput sets it from the rotation and mirror settings.
-std::unique_ptr<QQuickItem> turnedMirroredOutput(QQmlEngine& engine)
-{
-    std::unique_ptr<QQuickItem> output = createVideoOutput(engine);
-    if (output && !(output->setProperty("orientation", 90) && output->setProperty("mirrored", true))) {
-        output.reset();
-    }
-    return output;
 }
 
 /// Whether @p image is redTopLeftQuadrant() turned clockwise, which puts the red quadrant top right, and mirrored,
@@ -100,33 +92,46 @@ void UVCCameraControllerTest::_testScreenshotFromVideoOutput()
     verifyExpectedLogMessage();
 }
 
-void UVCCameraControllerTest::_testScreenshotFollowsOutputTransform()
+void UVCCameraControllerTest::_testFramesFollowTransform()
 {
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());
     const QString shot = tempDir.filePath(QStringLiteral("uvc.png"));
 
     UVCCameraController controller;
+    controller.setTransform(QtVideo::Rotation::Clockwise90, true);
     QQmlEngine engine;
-    const std::unique_ptr<QQuickItem> output = turnedMirroredOutput(engine);
+    const std::unique_ptr<QQuickItem> output = createVideoOutput(engine);
     QVERIFY(output);
     controller.registerVideoOutput(output.get());
 
-    showFrame(output.get(), redTopLeftQuadrant());
+    // The camera's frame reaches the output turned and mirrored, and the output keeps its own orientation, so what Qt
+    // draws over the frame stays upright.
+    controller._frameRelay->input()->setVideoFrame(QVideoFrame(redTopLeftQuadrant()));
+    auto* const sink = output->property("videoSink").value<QVideoSink*>();
+    QVERIFY(sink);
+    const QVideoFrame shown = sink->videoFrame();
+    QCOMPARE(shown.rotation(), QtVideo::Rotation::Clockwise90);
+    QVERIFY(shown.mirrored());
+    QCOMPARE(output->property("orientation").toInt(), 0);
+    QVERIFY(!output->property("mirrored").toBool());
+
+    // Screenshots save it as displayed.
     ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
     QVERIFY(controller.takeScreenshot(shot));
     QVERIFY(showsTurnedMirroredQuadrant(QImage(shot)));
 }
 
-void UVCCameraControllerTest::_testPhotoFollowsOutputTransform()
+void UVCCameraControllerTest::_testPhotoFollowsTransform()
 {
     QTemporaryDir tempDir;
     QVERIFY(tempDir.isValid());
     const QString photo = tempDir.filePath(QStringLiteral("photo.png"));
 
     UVCCameraController controller;
+    controller.setTransform(QtVideo::Rotation::Clockwise90, true);
     QQmlEngine engine;
-    const std::unique_ptr<QQuickItem> output = turnedMirroredOutput(engine);
+    const std::unique_ptr<QQuickItem> output = createVideoOutput(engine);
     QVERIFY(output);
     controller.registerVideoOutput(output.get());
 

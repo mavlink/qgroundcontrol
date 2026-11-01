@@ -23,6 +23,7 @@
 #include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 #include "UVCDevices.h"
+#include "UVCFrameRelay.h"
 #include "UVCStreamMonitor.h"
 #include "VideoScreenshot.h"
 
@@ -31,6 +32,7 @@ QGC_LOGGING_CATEGORY(UVCCameraControllerLog, "Video.UVCCameraController")
 UVCCameraController::UVCCameraController(QObject* parent)
     : QObject(parent)
     , _monitor(new UVCStreamMonitor(this))
+    , _frameRelay(new UVCFrameRelay(this))
     , _mediaDevices(new QMediaDevices(this))
     , _retryTimer(new QTimer(this))
     , _imageCapture(new QImageCapture(this))
@@ -348,18 +350,13 @@ bool UVCCameraController::takeScreenshot(const QString& file) const
         qCWarning(UVCCameraControllerLog) << "No video output to take a screenshot from";
         return false;
     }
-    const auto [rotation, mirrored] = _outputTransform();
-    return VideoScreenshot::save(videoSink->videoFrame(), file, rotation, mirrored);
+    // The frame on display carries the transform already (UVCFrameRelay).
+    return VideoScreenshot::save(videoSink->videoFrame(), file);
 }
 
-std::pair<QtVideo::Rotation, bool> UVCCameraController::_outputTransform() const
+void UVCCameraController::setTransform(QtVideo::Rotation rotation, bool mirrored)
 {
-    if (!_videoOutput) {
-        return {QtVideo::Rotation::None, false};
-    }
-    // VideoOutput's orientation is in degrees, a multiple of 90; QtVideo::Rotation's values are those degrees.
-    const int degrees = ((_videoOutput->property("orientation").toInt() % 360) + 360) % 360;
-    return {static_cast<QtVideo::Rotation>(degrees - (degrees % 90)), _videoOutput->property("mirrored").toBool()};
+    _frameRelay->setTransform(rotation, mirrored);
 }
 
 void UVCCameraController::capturePhoto(const QString& file)
@@ -380,7 +377,8 @@ void UVCCameraController::_onImageAvailable(int id, const QVideoFrame& frame)
     if (file.isEmpty()) {
         return;
     }
-    const auto [rotation, mirrored] = _outputTransform();
+    const QtVideo::Rotation rotation = _frameRelay->rotation();
+    const bool mirrored = _frameRelay->mirrored();
     // Converting and encoding a full-resolution photo would stall the UI.
     (void) QtConcurrent::run(
         [frame, file, rotation, mirrored] { (void) VideoScreenshot::save(frame, file, rotation, mirrored); });
@@ -453,8 +451,9 @@ void UVCCameraController::_recreateCamera()
 void UVCCameraController::_connectVideoOutput()
 {
     QVideoSink* const videoSink = _videoSink();
+    _frameRelay->setOutput(videoSink);
     if (_captureSession) {
-        _captureSession->setVideoOutput(_videoOutput.data());
+        _captureSession->setVideoSink(videoSink ? _frameRelay->input() : nullptr);
     }
     if (_camera && videoSink) {
         _monitor->attach(_camera, videoSink);

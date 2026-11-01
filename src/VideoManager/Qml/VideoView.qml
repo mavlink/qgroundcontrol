@@ -111,11 +111,7 @@ Item {
             id: uvcVideoOutputComponent
 
             UVCVideoOutput {
-                id: uvcOutput
-
-                // Qt turns the subtitle with the output's orientation, so a rotated camera's would be sideways or
-                // upside down.
-                videoSink.subtitleText: uvcOutput.orientation === 0 ? root._videoManager.telemetryOverlayText : ""
+                videoSink.subtitleText: root._videoManager.telemetryOverlayText
             }
         }
 

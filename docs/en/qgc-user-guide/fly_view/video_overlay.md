@@ -8,9 +8,8 @@ The selected values are laid out in three columns to optimize the screen utiliza
 
 **Telemetry Overlay** (under **Video Display** in the [video stream instrument page](hud.md#video_instrument_page)
 and in the video indicator's expanded page) shows the same values along the bottom of the video while you fly,
-updated twice a second, and follows changes to the telemetry bar. It is off by default, and appears over the main video stream or a USB camera (but not over a
-USB camera turned with **USB Camera Rotation**: Qt would turn the text with the picture). It isn't part of
-recordings, whose telemetry goes to the subtitle file.
+updated twice a second, and follows changes to the telemetry bar. It is off by default, and appears over the main
+video stream or a USB camera. It isn't part of recordings, whose telemetry goes to the subtitle file.
 
 ## Playing
 

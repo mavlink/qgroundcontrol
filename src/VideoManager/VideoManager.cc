@@ -55,7 +55,8 @@ struct VideoSettingReactionEntry
 
 // Not listed: aspectRatio, read by VideoStreamController::aspectRatio(); videoFit, gridLines and showRecControl, read
 // by QML; showTelemetryOverlay, read by VideoTelemetryOverlay; recordingFormat, enableStorageLimit, maxVideoSize and
-// uvcRecordingCodec, read when a recording starts; uvcCameraFormat, which goes to the USB camera (_connectSettings()).
+// uvcRecordingCodec, read when a recording starts; uvcCameraFormat, uvcCameraRotation and uvcCameraMirror, which go to
+// the USB camera (_connectSettings()).
 constexpr VideoSettingReactionEntry kVideoSettingReactions[] = {
     {&VideoSettings::videoSource, VideoSettingReaction::Reconfigure},
     {&VideoSettings::udpUrl, VideoSettingReaction::Reconfigure},
@@ -167,6 +168,16 @@ void VideoManager::_connectSettings()
     _uvcCamera->setFormat(uvcCameraFormat->rawValue().toString());
     (void) connect(uvcCameraFormat, &Fact::rawValueChanged, this,
                    [this](const QVariant& value) { _uvcCamera->setFormat(value.toString()); });
+
+    const auto applyUvcTransform = [this] {
+        // uvcCameraRotation's values are degrees, as QtVideo::Rotation's are.
+        _uvcCamera->setTransform(
+            static_cast<QtVideo::Rotation>(_videoSettings->uvcCameraRotation()->rawValue().toInt()),
+            _videoSettings->uvcCameraMirror()->rawValue().toBool());
+    };
+    applyUvcTransform();
+    (void) connect(_videoSettings->uvcCameraRotation(), &Fact::rawValueChanged, this, applyUvcTransform);
+    (void) connect(_videoSettings->uvcCameraMirror(), &Fact::rawValueChanged, this, applyUvcTransform);
 }
 
 void VideoManager::startVideoBackendInit()
