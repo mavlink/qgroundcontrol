@@ -33,6 +33,8 @@ QGC_LOGGING_CATEGORY(GStreamerEnvLog, "Video.GStreamer.Environment")
 namespace {
 
 using GStreamer::Environment::BundledRuntime;
+using GStreamer::Environment::BundleLayout;
+using GStreamer::Environment::DesktopInstall;
 using GStreamer::Environment::ValidationResult;
 
 // Single source of truth for the managed plugin-path/scanner vars: keeps _clearManagedGstEnvVars
@@ -49,6 +51,16 @@ QString _cleanJoin(const QString& base, const QString& relative)
     return QDir::cleanPath(QDir(base).filePath(relative));
 }
 
+QStringList _cleanJoinAll(const QStringList& bases, const QString& relative)
+{
+    QStringList joined;
+    joined.reserve(bases.size());
+    for (const QString& base : bases) {
+        joined.append(_cleanJoin(base, relative));
+    }
+    return joined;
+}
+
 void _setGstEnv(const char* name, const QString& value)
 {
 #ifdef Q_OS_WIN
@@ -61,6 +73,17 @@ void _setGstEnv(const char* name, const QString& value)
     qputenv(name, value.toUtf8());
 #endif
     qCDebug(GStreamerEnvLog) << "  " << name << "=" << value;
+}
+
+QString _firstExistingPath(const QStringList& paths)
+{
+    for (const QString& path : paths) {
+        if (QFileInfo::exists(path)) {
+            return path;
+        }
+    }
+
+    return {};
 }
 
 // An AppImage is mounted, and a quarantined macOS app translocated, to a new random directory on every launch: name
@@ -242,17 +265,6 @@ bool _isExecutableFile(const QString& path)
     return fileInfo.exists() && fileInfo.isFile() && fileInfo.isExecutable();
 }
 
-QString _firstExistingPath(const QStringList& paths)
-{
-    for (const QString& path : paths) {
-        if (QFileInfo::exists(path)) {
-            return path;
-        }
-    }
-
-    return {};
-}
-
 QString _joinExistingPaths(const QStringList& paths)
 {
     QStringList existing;
@@ -265,16 +277,6 @@ QString _joinExistingPaths(const QStringList& paths)
     }
 
     return existing.join(QDir::listSeparator());
-}
-
-QStringList _cleanJoinAll(const QStringList& bases, const QString& relative)
-{
-    QStringList joined;
-    joined.reserve(bases.size());
-    for (const QString& base : bases) {
-        joined.append(_cleanJoin(base, relative));
-    }
-    return joined;
 }
 
 void _clearManagedGstEnvVars()
@@ -345,15 +347,6 @@ void _warnIfScannerMissing(const QString& platformLabel, const QString& scannerP
     }
 }
 
-// Candidate locations of a desktop bundle's GStreamer runtime, in priority order.
-struct BundleLayout
-{
-    QStringList pluginDirs;         // every existing entry is searched
-    QStringList gioModuleDirs;      // first existing entry wins
-    QStringList scannerCandidates;  // first existing entry wins
-    QStringList ptpCandidates;      // first existing entry wins
-};
-
 // Points GStreamer at the bundled runtime. Returns false, leaving the environment untouched, when no
 // bundled plugin directory exists (system GStreamer is used as-is).
 bool _applyBundleLayout(const QString& platformLabel, const BundleLayout& layout)
@@ -383,51 +376,24 @@ ValidationResult _setGstEnvVars(const QString& appDir)
 
 #if defined(Q_OS_MACOS)
     const QString frameworkDir = _cleanJoin(appDir, "../Frameworks/GStreamer.framework");
-    QString rootDir = _firstExistingPath({
-        _cleanJoin(frameworkDir, "Versions/1.0"),
-        _cleanJoin(frameworkDir, "Versions/Current"),
-        frameworkDir,
-    });
-    if (rootDir.isEmpty()) {
-        rootDir = _cleanJoin(frameworkDir, "Versions/1.0");
-    }
-
 #if defined(QGC_GST_MACOS_FRAMEWORK)
-    // Framework builds prefer framework paths over app-relative paths
-    const QStringList libDirs = {_cleanJoin(rootDir, "lib"), _cleanJoin(appDir, "../lib")};
+    const BundleLayout layout = GStreamer::Environment::bundleLayout(DesktopInstall::MacOSFramework, appDir);
 #else
-    // Flat (non-framework) SDK builds prefer app-relative paths
-    const QStringList libDirs = {_cleanJoin(appDir, "../lib"), _cleanJoin(rootDir, "lib")};
+    const BundleLayout layout = GStreamer::Environment::bundleLayout(DesktopInstall::MacOSFlat, appDir);
 #endif
-    const QStringList helperDirs = {_cleanJoin(appDir, "../libexec/gstreamer-1.0"),
-                                    _cleanJoin(rootDir, "libexec/gstreamer-1.0")};
-    const BundleLayout layout{
-        .pluginDirs = _cleanJoinAll(libDirs, "gstreamer-1.0"),
-        .gioModuleDirs = _cleanJoinAll(libDirs, "gio/modules"),
-        .scannerCandidates = _cleanJoinAll(helperDirs, "gst-plugin-scanner"),
-        .ptpCandidates = _cleanJoinAll(helperDirs, "gst-ptp-helper"),
-    };
     const bool hasBundledFramework = QFileInfo::exists(frameworkDir);
 
     if (!_applyBundleLayout(QStringLiteral("macOS"), layout) && hasBundledFramework) {
         result.ok = false;
         result.error =
             QStringLiteral("GStreamer: bundled macOS framework found but plugin directory is missing under %1")
-                .arg(rootDir);
+                .arg(frameworkDir);
         qCCritical(GStreamerEnvLog) << result.error;
     }
 
 #elif defined(Q_OS_WIN)
-    const QString libDir = _cleanJoin(appDir, "../lib");
-    const QString helperDir = _cleanJoin(appDir, "../libexec/gstreamer-1.0");
-    const BundleLayout layout{
-        .pluginDirs = {_cleanJoin(libDir, "gstreamer-1.0")},
-        .gioModuleDirs = {_cleanJoin(libDir, "gio/modules")},
-        .scannerCandidates = {_cleanJoin(helperDir, "gst-plugin-scanner.exe")},
-        .ptpCandidates = {_cleanJoin(helperDir, "gst-ptp-helper.exe")},
-    };
-
-    if (_applyBundleLayout(QStringLiteral("Windows"), layout)) {
+    if (_applyBundleLayout(QStringLiteral("Windows"),
+                           GStreamer::Environment::bundleLayout(DesktopInstall::Windows, appDir))) {
         // Put the app's bin dir on PATH so child processes (gst-plugin-scanner.exe) can locate
         // GStreamer DLLs installed alongside the main executable.
         const QString curPath = qEnvironmentVariable("PATH");
@@ -509,19 +475,9 @@ ValidationResult _setGstEnvVars(const QString& appDir)
     if (!qEnvironmentVariableIsSet("GST_PLUGIN_PATH_1_0") && !qEnvironmentVariableIsSet("GST_PLUGIN_PATH") &&
         !qEnvironmentVariableIsSet("GST_PLUGIN_SYSTEM_PATH_1_0") &&
         !qEnvironmentVariableIsSet("GST_PLUGIN_SYSTEM_PATH")) {
-        const QString libDir = _cleanJoin(appDir, "../lib");
-        const QString gioMod = _cleanJoin(libDir, "gio/modules");
-        const QStringList helperDirs = {_cleanJoin(libDir, "gstreamer1.0/gstreamer-1.0"),
-                                        _cleanJoin(appDir, "../libexec/gstreamer-1.0")};
-        const BundleLayout layout{
-            .pluginDirs = {_cleanJoin(libDir, "gstreamer-1.0")},
-            .gioModuleDirs = {gioMod},
-            .scannerCandidates = _cleanJoinAll(helperDirs, "gst-plugin-scanner"),
-            .ptpCandidates = _cleanJoinAll(helperDirs, "gst-ptp-helper"),
-        };
-
+        const BundleLayout layout = GStreamer::Environment::bundleLayout(DesktopInstall::Linux, appDir);
         if (_applyBundleLayout(QStringLiteral("Linux"), layout)) {
-            _applyGioCompatOverride(gioMod);
+            _applyGioCompatOverride(layout.gioModuleDirs.constFirst());
         }
     }
 #endif
@@ -532,6 +488,58 @@ ValidationResult _setGstEnvVars(const QString& appDir)
 }  // anonymous namespace
 
 namespace GStreamer::Environment {
+
+BundleLayout bundleLayout(DesktopInstall install, const QString& appDir)
+{
+    switch (install) {
+        case DesktopInstall::MacOSFramework:
+        case DesktopInstall::MacOSFlat: {
+            const QString frameworkDir = _cleanJoin(appDir, "../Frameworks/GStreamer.framework");
+            QString rootDir = _firstExistingPath({
+                _cleanJoin(frameworkDir, "Versions/1.0"),
+                _cleanJoin(frameworkDir, "Versions/Current"),
+                frameworkDir,
+            });
+            if (rootDir.isEmpty()) {
+                rootDir = _cleanJoin(frameworkDir, "Versions/1.0");
+            }
+            const QString frameworkLib = _cleanJoin(rootDir, "lib");
+            const QString appLib = _cleanJoin(appDir, "../lib");
+            const QStringList libDirs = (install == DesktopInstall::MacOSFramework) ? QStringList{frameworkLib, appLib}
+                                                                                    : QStringList{appLib, frameworkLib};
+            const QStringList helperDirs = {_cleanJoin(appDir, "../libexec/gstreamer-1.0"),
+                                            _cleanJoin(rootDir, "libexec/gstreamer-1.0")};
+            return {
+                .pluginDirs = _cleanJoinAll(libDirs, "gstreamer-1.0"),
+                .gioModuleDirs = _cleanJoinAll(libDirs, "gio/modules"),
+                .scannerCandidates = _cleanJoinAll(helperDirs, "gst-plugin-scanner"),
+                .ptpCandidates = _cleanJoinAll(helperDirs, "gst-ptp-helper"),
+            };
+        }
+        case DesktopInstall::Windows: {
+            const QString libDir = _cleanJoin(appDir, "../lib");
+            const QString helperDir = _cleanJoin(appDir, "../libexec/gstreamer-1.0");
+            return {
+                .pluginDirs = {_cleanJoin(libDir, "gstreamer-1.0")},
+                .gioModuleDirs = {_cleanJoin(libDir, "gio/modules")},
+                .scannerCandidates = {_cleanJoin(helperDir, "gst-plugin-scanner.exe")},
+                .ptpCandidates = {_cleanJoin(helperDir, "gst-ptp-helper.exe")},
+            };
+        }
+        case DesktopInstall::Linux: {
+            const QString libDir = _cleanJoin(appDir, "../lib");
+            const QStringList helperDirs = {_cleanJoin(libDir, "gstreamer1.0/gstreamer-1.0"),
+                                            _cleanJoin(appDir, "../libexec/gstreamer-1.0")};
+            return {
+                .pluginDirs = {_cleanJoin(libDir, "gstreamer-1.0")},
+                .gioModuleDirs = {_cleanJoin(libDir, "gio/modules")},
+                .scannerCandidates = _cleanJoinAll(helperDirs, "gst-plugin-scanner"),
+                .ptpCandidates = _cleanJoinAll(helperDirs, "gst-ptp-helper"),
+            };
+        }
+    }
+    return {};
+}
 
 ValidationResult prepareEnvironment(const QString& appDir)
 {

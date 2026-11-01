@@ -22,6 +22,30 @@ struct BundledRuntime
     QString gioModuleDir;    ///< Empty when the bundle has no GIO modules.
 };
 
+/// Where a desktop install keeps its GStreamer runtime, as candidate paths in priority order.
+struct BundleLayout
+{
+    QStringList pluginDirs;         ///< Every existing entry is searched.
+    QStringList gioModuleDirs;      ///< The first existing entry wins.
+    QStringList scannerCandidates;  ///< The first existing entry wins.
+    QStringList ptpCandidates;      ///< The first existing entry wins.
+
+    friend bool operator==(const BundleLayout&, const BundleLayout&) = default;
+};
+
+/// The desktop installs prepareEnvironment() knows how to point GStreamer into.
+enum class DesktopInstall
+{
+    MacOSFramework,  ///< An app bundle with GStreamer.framework, whose paths win over the app's own lib.
+    MacOSFlat,       ///< An app bundle with a flat SDK copied next to the app, whose paths win over the framework's.
+    Windows,         ///< bin/ beside lib/gstreamer-1.0 and libexec/gstreamer-1.0.
+    Linux,           ///< An AppImage or other prefix: bin/ beside lib/ and libexec/.
+};
+
+/// The layout of @p install for the app in @p appDir. Only reads the filesystem to find the macOS framework's version
+/// directory, so every platform's layout can be checked on any host.
+BundleLayout bundleLayout(DesktopInstall install, const QString& appDir);
+
 /// Apply all GStreamer env vars for this process from bundled-paths discovery + platform validation, for the app in
 /// @p appDir (default: QCoreApplication::applicationDirPath()). A desktop runtime bundled with the app replaces the
 /// default plugin path; GStreamer keeps scanning its plugins out of process, so a plugin that crashes while loading is
