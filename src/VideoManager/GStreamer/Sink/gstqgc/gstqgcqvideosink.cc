@@ -90,6 +90,10 @@ struct PrivState
     std::atomic<quint64> tiled_drops{0};
     // Delivered frames a newer frame replaced before the GUI thread took them; reported through "frame-stats".
     std::atomic<quint64> superseded_frames{0};
+    // Held while a delivery and the frame it superseded are counted, and while "frame-stats" reads them: its readers
+    // count the frames displayed as those delivered less those superseded, which a snapshot seeing one count without
+    // the other would make fall.
+    mutable QMutex delivery_counts_mutex;
     // One stream demotion, and one tiled-drop warning, per caps epoch; reset with the path cache.
     bool demotion_recorded = false;
     bool tiled_drop_logged = false;
@@ -227,18 +231,21 @@ bool nothing_to_import(GstBuffer* buf)
 GstStructure* make_stats(const PrivState& p)
 {
     GstStructure* const stats = gst_structure_new_empty("qgc-video-sink-stats");
-    for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
-        gst_structure_set(stats, GstQgc::sinkFramesField(HwVideoBufferPath(i)), G_TYPE_UINT64,
-                          static_cast<guint64>(p.path_frames[i].load(std::memory_order_relaxed)), nullptr);
-    }
     gst_structure_set(stats, GstQgc::kGpuFallbacksField, G_TYPE_UINT64,
                       static_cast<guint64>(p.gpu_fallbacks.load(std::memory_order_relaxed)),
                       GstQgc::kStreamDemotionsField, G_TYPE_UINT64,
                       static_cast<guint64>(p.stream_demotions.load(std::memory_order_relaxed)), nullptr);
     gst_structure_set(stats, GstQgc::kTiledDropsField, G_TYPE_UINT64,
                       static_cast<guint64>(p.tiled_drops.load(std::memory_order_relaxed)), nullptr);
-    gst_structure_set(stats, GstQgc::kSupersededFramesField, G_TYPE_UINT64,
-                      static_cast<guint64>(p.superseded_frames.load(std::memory_order_relaxed)), nullptr);
+    {
+        const QMutexLocker locker(&p.delivery_counts_mutex);
+        for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
+            gst_structure_set(stats, GstQgc::sinkFramesField(HwVideoBufferPath(i)), G_TYPE_UINT64,
+                              static_cast<guint64>(p.path_frames[i].load(std::memory_order_relaxed)), nullptr);
+        }
+        gst_structure_set(stats, GstQgc::kSupersededFramesField, G_TYPE_UINT64,
+                          static_cast<guint64>(p.superseded_frames.load(std::memory_order_relaxed)), nullptr);
+    }
     return stats;
 }
 
@@ -251,11 +258,12 @@ void drop_pending_frame(GstQgcQVideoSink* self)
     GST_OBJECT_UNLOCK(self);
 }
 
-/// Stores @p frame as the latest pending frame and posts a GUI-thread invoke only if none is queued. Returns false
-/// when no QVideoSink is bound. Runs under GST_OBJECT_LOCK: the controller clears `qvideosink` under the same lock
-/// (destroyed-handler/setVideoSink on the GUI thread), so the clear cannot interleave between the null-check and the
-/// post; an invoke posted while the destroyed-handler blocks here is purged by ~QObject's removePostedEvents.
-bool push_frame_queued(GstQgcQVideoSink* self, QVideoFrame&& frame)
+/// Stores @p frame, delivered through @p path, as the latest pending frame and posts a GUI-thread invoke only if none
+/// is queued. Returns false when no QVideoSink is bound. Runs under GST_OBJECT_LOCK: the controller clears `qvideosink`
+/// under the same lock (destroyed-handler/setVideoSink on the GUI thread), so the clear cannot interleave between the
+/// null-check and the post; an invoke posted while the destroyed-handler blocks here is purged by ~QObject's
+/// removePostedEvents.
+bool push_frame_queued(GstQgcQVideoSink* self, QVideoFrame&& frame, HwVideoBufferPath path)
 {
     QVideoFrame superseded;
     GST_OBJECT_LOCK(self);
@@ -271,8 +279,13 @@ bool push_frame_queued(GstQgcQVideoSink* self, QVideoFrame&& frame)
         superseded = std::exchange(slot->frame, std::move(frame));
         needPost = !std::exchange(slot->posted, true);
     }
-    if (superseded.isValid()) {
-        priv_of(self)->superseded_frames.fetch_add(1, std::memory_order_relaxed);
+    {
+        PrivState* const p = priv_of(self);
+        const QMutexLocker locker(&p->delivery_counts_mutex);
+        p->path_frames[static_cast<std::size_t>(path)].fetch_add(1, std::memory_order_relaxed);
+        if (superseded.isValid()) {
+            p->superseded_frames.fetch_add(1, std::memory_order_relaxed);
+        }
     }
     if (needPost) {
         QMetaObject::invokeMethod(
@@ -538,12 +551,11 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
     applyOrientationAndTiming(mapped.frame, buf, p->stream_orientation.load(std::memory_order_relaxed));
 
     const QSize frameSize = mapped.frame.size();
-    if (!push_frame_queued(self, std::move(mapped.frame))) {
+    if (!push_frame_queued(self, std::move(mapped.frame), mapped.gpuPath)) {
         p->dropped_frames.fetch_add(1, std::memory_order_relaxed);
         return GST_FLOW_OK;  // QVideoSink unbound while mapping
     }
 
-    p->path_frames[static_cast<std::size_t>(mapped.gpuPath)].fetch_add(1, std::memory_order_relaxed);
     if (mapped.demoted) {
         p->gpu_fallbacks.fetch_add(1, std::memory_order_relaxed);
         if (!std::exchange(p->demotion_recorded, true)) {

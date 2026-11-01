@@ -8,6 +8,7 @@
 #include <gst/gst.h>
 #include <gst/video/gstvideometa.h>
 #include <memory>
+#include <thread>
 #include <vector>
 
 #include <QtCore/QCoreApplication>
@@ -571,6 +572,50 @@ void GstQgcSinkTest::_testQgcQVideoSinkDeliversLatestFrameOnly()
     QCOMPARE(emissions, 2);
     QCOMPARE(lastStartUs, qint64(4 * GST_SECOND / GST_USECOND));
     QCOMPARE(GstQgcTest::sinkStat(harness.element(), GstQgc::kSupersededFramesField), qint64(2));
+}
+
+void GstQgcSinkTest::_testQgcQVideoSinkDisplayedCountNeverFalls()
+{
+    QVideoSink videoSink;
+    GstQgcTest::SinkHarness harness(&videoSink);
+    QVERIFY(harness.isReady());
+
+    // Readers of "frame-stats" count the frames displayed as those delivered less those superseded, so no snapshot may
+    // see a delivery without the frame it superseded, or the other way round. With the GUI thread taking none, each
+    // frame a streaming thread pushes supersedes the one before it.
+    const auto displayed = [&harness] {
+        const GStreamer::GstStructurePtr stats = GstQgc::frameStats(harness.element());
+        guint64 delivered = 0;
+        for (std::size_t i = 0; i < GstHw::kPathCount; ++i) {
+            guint64 frames = 0;
+            (void) gst_structure_get_uint64(stats.get(), GstQgc::sinkFramesField(HwVideoBufferPath(i)), &frames);
+            delivered += frames;
+        }
+        guint64 superseded = 0;
+        (void) gst_structure_get_uint64(stats.get(), GstQgc::kSupersededFramesField, &superseded);
+        return static_cast<qint64>(delivered) - static_cast<qint64>(superseded);
+    };
+    QCOMPARE(harness.pushFrame(GST_MSECOND), GST_FLOW_OK);
+    QCOMPARE(displayed(), qint64(1));
+
+    constexpr int kFrames = 20000;
+    std::atomic<bool> done{false};
+    std::thread streaming([&harness, &done] {
+        for (int i = 2; i <= kFrames; ++i) {
+            (void) harness.pushFrame(i * GST_MSECOND);
+        }
+        done.store(true);
+    });
+    int snapshots = 0;
+    int wrong = 0;
+    while (!done.load()) {
+        ++snapshots;
+        wrong += (displayed() != 1) ? 1 : 0;
+    }
+    streaming.join();
+    QVERIFY(snapshots > 0);
+    QCOMPARE(wrong, 0);
+    QCOMPARE(displayed(), qint64(1));
 }
 
 void GstQgcSinkTest::_testQgcQVideoSinkRenegotiatesMidStream()

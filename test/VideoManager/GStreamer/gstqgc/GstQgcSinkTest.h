@@ -16,6 +16,7 @@ private slots:
     void _testQgcVideoSinkBinRejectsFailedAdopt();
     void _testQgcBinChainFailedAdoptDropsFloatingRefOnce();
     void _testQgcQVideoSinkDeliversLatestFrameOnly();
+    void _testQgcQVideoSinkDisplayedCountNeverFalls();
     void _testQgcQVideoSinkRenegotiatesMidStream();
     void _testQgcQVideoSinkAppliesCropMeta();
     void _testQgcQVideoSinkAppliesOrientationTag_data();
