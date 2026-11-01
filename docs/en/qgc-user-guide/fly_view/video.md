@@ -84,7 +84,7 @@ Video stored on the camera may be of much higher quality, but it is likely that 
 
 ### Record Video Stream (on GCS)
 
-Video stream recording is controlled on the [video stream instrument page](hud.md#video_instrument_page).
+Video stream recording is controlled on the [video stream instrument page](camera_tools.md#video_instrument_page).
 Press the red circle to start recording a new video (a new video file is created each time the circle is pressed); the circle will change into a red square while recording is in progress.
 If the stream drops out while recording, the recording continues once the stream is back, in a new file named after the first with `_part2`, `_part3` and so on added (for example `2026-10-24_10.15.00_part2.mp4`).
 With the Qt Multimedia [video backend](../settings_view/video.md#settings) a stream is recorded as a USB camera is (below),

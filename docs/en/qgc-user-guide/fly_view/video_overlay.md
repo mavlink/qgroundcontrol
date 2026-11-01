@@ -6,7 +6,7 @@ The selected values are laid out in three columns to optimize the screen utiliza
 
 ## Live Overlay
 
-**Telemetry Overlay** (under **Video Display** in the [video stream instrument page](hud.md#video_instrument_page)
+**Telemetry Overlay** (under **Video Display** in the [video stream instrument page](camera_tools.md#video_instrument_page)
 and in the video indicator's expanded page) shows the same values along the bottom of the video while you fly,
 updated twice a second, and follows changes to the telemetry bar. It is off by default, and appears over the main
 video stream or a USB camera. It isn't part of recordings, whose telemetry goes to the subtitle file.
