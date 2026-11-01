@@ -129,6 +129,13 @@ GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& file, Vide
         return nullptr;
     }
 
+    // Tagged with the time it starts and the application, as a USB camera's recordings are (UVCCameraController).
+    if (GST_IS_TAG_SETTER(muxerOwner.get())) {
+        GstDateTime* const started = gst_date_time_new_from_g_date_time(g_date_time_new_now_utc());
+        gst_tag_setter_add_tags(GST_TAG_SETTER(muxerOwner.get()), GST_TAG_MERGE_REPLACE, GST_TAG_DATE_TIME, started,
+                                GST_TAG_COMMENT, VideoReceiver::recordingComment().toUtf8().constData(), nullptr);
+        gst_date_time_unref(started);
+    }
     // faststart stays off: it would spool the recording to a temp file and write the real file only at EOS.
     if ((format == VideoReceiver::FileFormat::Mp4) || (format == VideoReceiver::FileFormat::Mov)) {
         g_object_set(muxerOwner.get(), "reserved-max-duration", kRecordingReservedMaxDurationNs,

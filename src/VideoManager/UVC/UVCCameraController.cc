@@ -4,6 +4,7 @@
 #include <optional>
 
 #include <QtConcurrent/QtConcurrentRun>
+#include <QtCore/QDateTime>
 #include <QtCore/QEventLoop>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
@@ -16,6 +17,7 @@
 #include <QtMultimedia/QImageCapture>
 #include <QtMultimedia/QMediaCaptureSession>
 #include <QtMultimedia/QMediaDevices>
+#include <QtMultimedia/QMediaMetaData>
 #include <QtMultimedia/QMediaRecorder>
 #include <QtMultimedia/QVideoSink>
 #include <QtQuick/QQuickItem>
@@ -25,6 +27,7 @@
 #include "UVCDevices.h"
 #include "UVCFrameRelay.h"
 #include "UVCStreamMonitor.h"
+#include "VideoReceiver.h"
 #include "VideoScreenshot.h"
 
 QGC_LOGGING_CATEGORY(UVCCameraControllerLog, "Video.UVCCameraController")
@@ -280,6 +283,11 @@ void UVCCameraController::_recordNextFormat()
     qCDebug(UVCCameraControllerLog) << "record" << _recordingFile << format.fileFormat() << format.videoCodec();
     _recorder->setMediaFormat(format);
     _recorder->setQuality(QMediaRecorder::HighQuality);
+    // Tagged with the time it starts and the application, as GStreamer's recordings are (RecordingBranch).
+    QMediaMetaData metaData;
+    metaData.insert(QMediaMetaData::Date, QDateTime::currentDateTimeUtc());
+    metaData.insert(QMediaMetaData::Comment, VideoReceiver::recordingComment());
+    _recorder->setMetaData(metaData);
     _recorder->setOutputLocation(QUrl::fromLocalFile(_recordingFile));
     _recorder->record();
 }

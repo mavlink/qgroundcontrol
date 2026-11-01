@@ -11,5 +11,7 @@ private slots:
 #ifdef QGC_GST_STREAMING
     void _testRecordingSinkFinalizesMidStreamH265Mp4();
     void _testRecordingSinkTimestampsDtsOnlyFrames();
+    void _testRecordingSinkTagsFile_data();
+    void _testRecordingSinkTagsFile();
 #endif
 };

@@ -84,6 +84,8 @@ public:
 
     /// "mkv", "mov" or "mp4".
     static QString fileExtension(FileFormat format);
+    /// The comment recordings carry, of GStreamer and of a USB camera alike: the application and its version.
+    static QString recordingComment();
     static bool isValidFileFormat(int format);
     /// The size @p frame is presented at: its format's viewport (the picture without decoder padding or crop), else the
     /// whole frame, turned by the rotation Qt presents it with. Invalid for an invalid frame.

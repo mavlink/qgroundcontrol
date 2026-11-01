@@ -1,5 +1,6 @@
 #include "VideoReceiver.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 #include <QtQuick/QQuickItem>
@@ -14,6 +15,11 @@ VideoReceiver::VideoReceiver(QObject* parent)
 {}
 
 VideoReceiver::~VideoReceiver() = default;
+
+QString VideoReceiver::recordingComment()
+{
+    return QStringLiteral("%1 %2").arg(QCoreApplication::applicationName(), QCoreApplication::applicationVersion());
+}
 
 QString VideoReceiver::fileExtension(FileFormat format)
 {
