@@ -12,7 +12,6 @@
 #include <QtCore/QThread>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QOpenGLContext>
-#include <QtGui/private/qopenglcontext_p.h>
 #include <QtGui/qopenglcontext_platform.h>
 #include <qpa/qplatformnativeinterface.h>
 #define QGC_RHI_CAPTURE_PROBES_EGL 1
@@ -164,7 +163,7 @@ void* qtEglDisplay() noexcept
     }
     // Qt Quick's OpenGL shares with the global share context (Qt::AA_ShareOpenGLContexts): it tells EGL from GLX
     // without creating anything, from any thread.
-    if (const QOpenGLContext* const shareContext = qt_gl_global_share_context()) {
+    if (const QOpenGLContext* const shareContext = QOpenGLContext::globalShareContext()) {
         display = eglDisplayOf(shareContext);
     } else if (QThread::isMainThread() && qGuiApp) {
         if (QPlatformNativeInterface* const native = QGuiApplication::platformNativeInterface()) {
