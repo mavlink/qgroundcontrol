@@ -28,9 +28,9 @@
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 #include "gstqgc/GstQgcCaps.h"
 #include "gstqgc/GstQgcRenderTarget.h"
+#include "gstqgc/GstQgcSinkStats.h"
 #include "gstqgc/GstQgcTestSupport.h"
 #include "gstqgc/GstQgcVideoFormats.h"
-#include "gstqgc/gstqgcqvideosink.h"
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include "GstDmaBufVideoBuffer.h"
 #include "GstQtDmaBufImport.h"
@@ -204,11 +204,8 @@ void GstHwBuffersPipelineTest::_testDmaBufDispatch()
     }
 
     const auto dmaBufFrames = [&qvideosink] {
-        guint64 frames = 0;
-        if (const GStreamer::GstStructurePtr stats = GstQgc::frameStats(qvideosink.get())) {
-            (void) gst_structure_get_uint64(stats.get(), GstQgc::sinkFramesField(HwVideoBufferPath::DmaBuf), &frames);
-        }
-        return frames;
+        return GstQgc::frameStatsField(GstQgc::frameStats(qvideosink.get()).get(),
+                                       GstQgc::sinkFramesField(HwVideoBufferPath::DmaBuf));
     };
     const int bufferCount = probe.bufferCount.load();
     const int dmaBufCount = probe.dmaBufCount.load();

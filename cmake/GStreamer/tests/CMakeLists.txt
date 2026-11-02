@@ -23,6 +23,7 @@ set(_qgc_gst_tests
     test_ios_xcframework_slice
     test_sdk_acquire
     test_android_sdk_extract
+    test_ios_sdk_extract
     test_android_pkg_config
     test_static_init
     test_ios_static_plugins
@@ -55,9 +56,8 @@ if(QGC_ENABLE_GST_VIDEOSTREAMING
     add_test(
         NAME GStreamer.test_install_component
         COMMAND
-            "${CMAKE_COMMAND}"
-            "-DINSTALL_SCRIPT=${PROJECT_BINARY_DIR}/src/VideoManager/VideoReceiver/GStreamer/cmake_install.cmake" -P
-            "${CMAKE_CURRENT_SOURCE_DIR}/test_install_component.cmake"
+            "${CMAKE_COMMAND}" "-DINSTALL_SCRIPT=${PROJECT_BINARY_DIR}/src/VideoManager/GStreamer/cmake_install.cmake"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/test_install_component.cmake"
     )
     set_tests_properties(
         GStreamer.test_install_component
@@ -74,13 +74,16 @@ set(_qgc_gst_failure_cases
     "test_checksum_authority|SidecarOnlyRequired|sidecar-only-required|cannot satisfy GStreamer_REQUIRE_CHECKSUM=ON"
     "test_components|UnknownComponent|unknown|unknown components Bogus"
     "test_plugin_policy_errors|||qgc_config_read: build-config.json is not loaded"
+    "test_plugin_policy|MissingRequired|missing-required|bundle-required plugins are missing from the fake SDK: rtsp"
     "test_platform|Spaces|spaces|'C:/Program Files/gstreamer' contains a space"
     "test_platform|DownloadSpaces|download-spaces-unix|where the GStreamer SDK is downloaded, contains a space,"
     "test_platform|DownloadNoShortName|download-spaces-no-short-name|contains a space and no 8.3 short path without one"
     "test_ios_xcframework_slice|NoMatchingArch|no-matching-arch|no iphoneos slice for architectures 'x86_64'"
-    "test_download_win_version_guard|||Windows GStreamer SDK requires version 1.28 or later"
+    "test_platform|BelowBundledFloor|below-bundled-floor|the windows SDK must be 1.28.0 or later"
     "test_windows_installer_guard|Unpinned|unpinned|refusing to silently run the downloaded Windows installer"
-    "test_ios_sdk_version|BelowFloor|below-floor|older than the required 1.28 floor"
+    "test_ios_sdk_version|BelowRequested|below-requested|older than the requested 1.28.4"
+    "test_windows_sdk_root|ExplicitIncomplete|explicit-incomplete|\\(GStreamer_ROOT_DIR\\) is incomplete"
+    "test_windows_sdk_root|ExplicitOld|explicit-old|\\(GStreamer_ROOT_DIR\\) has version '1.26.0'"
 )
 foreach(_qgc_failure_case IN LISTS _qgc_gst_failure_cases)
     string(REPLACE "|" ";" _qgc_failure_parts "${_qgc_failure_case}")

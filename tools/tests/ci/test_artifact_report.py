@@ -133,19 +133,19 @@ def _main(package: Path, *args: str, artifact: str = ARTIFACT) -> int:
     return artifact_report.main(["--package", str(package), "--artifact-name", artifact, *args])
 
 
-def test_gpl_denylist_reads_plugin_policy() -> None:
+def test_gpl_denylist_reads_the_plugin_policy() -> None:
     names = artifact_report.gpl_denylist()
     assert {"x264", "x265", "dvdread", "dvdnav", "faad", "a52dec", "mpeg2dec"} <= set(names)
     assert "openh264" not in names
 
 
-def test_gpl_denylist_ignores_comments_and_requires_the_list(tmp_path: Path) -> None:
-    policy = tmp_path / "PluginPolicy.cmake"
-    policy.write_text("set(GSTREAMER_GPL_DENYLIST\n    a52 # liba52\n\n    x264\n)\n")
-    assert artifact_report.gpl_denylist(policy) == ["a52", "x264"]
-    policy.write_text("set(GSTREAMER_OPTIONAL_PLUGINS va)\n")
-    with pytest.raises(RuntimeError, match="GSTREAMER_GPL_DENYLIST not found"):
-        artifact_report.gpl_denylist(policy)
+def test_gpl_denylist_requires_the_list(tmp_path: Path) -> None:
+    config = tmp_path / "build-config.json"
+    config.write_text('{"gstreamer_plugin_policy": {"gpl_denylist": ["a52", "x264"]}}')
+    assert artifact_report.gpl_denylist(config) == ["a52", "x264"]
+    config.write_text('{"gstreamer_plugin_policy": {"optional_decoders": ["va"]}}')
+    with pytest.raises(RuntimeError, match="gpl_denylist not found"):
+        artifact_report.gpl_denylist(config)
 
 
 @pytest.mark.parametrize(

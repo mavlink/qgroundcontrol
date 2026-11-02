@@ -2,21 +2,25 @@
 
 #ifdef QGC_GST_STREAMING
 
+#include <algorithm>
 #include <gst/gst.h>
 #include <utility>
 #include <vector>
 
 #include <QtCore/QFileInfo>
+#include <QtCore/QHash>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QStringList>
 
 #include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
-#include "GStreamerHelpers.h"
+#include "GStreamerDecoderRanks.h"
 #include "GStreamerLogging.h"
 #include "GStreamerSelfTest.h"
 #include "GStreamerTestHelpers.h"
+#include "GStreamerUdpSrcWorkaround.h"
+#include "GstScoped.h"
 #include "LogManager.h"
 
 namespace {
@@ -120,6 +124,21 @@ void GStreamerInitTest::_testConfigureDebugLoggingIsIdempotent()
     verifyExpectedLogMessage();
 }
 
+void GStreamerInitTest::_testConfigureDebugLoggingDefaultsToDisabled()
+{
+    GSTTEST_REQUIRE_GSTREAMER();
+
+    const NativeDebugLogEnvGuard guard;
+    const auto restore = qScopeGuard([] { gst_debug_set_default_threshold(GST_LEVEL_NONE); });
+    // A GStreamer development build (nano > 0) starts at GST_LEVEL_ERROR.
+    gst_debug_set_default_threshold(GST_LEVEL_ERROR);
+    GStreamer::configureDebugLogging();
+    QCOMPARE(gst_debug_get_default_threshold(), GST_LEVEL_NONE);
+
+    GStreamer::configureDebugLogging(GST_LEVEL_WARNING);
+    QCOMPARE(gst_debug_get_default_threshold(), GST_LEVEL_WARNING);
+}
+
 void GStreamerInitTest::_testRedirectGLibLogging()
 {
     GStreamer::redirectGLibLogging();
@@ -164,17 +183,21 @@ void GStreamerInitTest::_testMissingPluginFeatures_data()
     QTest::addColumn<QStringList>("missingFactories");
     QTest::addColumn<int>("missingFeatures");
     QTest::addColumn<bool>("videoUnavailable");
+    QTest::addColumn<bool>("hinted");
 
-    QTest::newRow("complete") << QStringList() << QStringList() << 0 << false;
+    QTest::newRow("complete") << QStringList() << QStringList() << 0 << false << false;
     QTest::newRow("videoconvert stands in for videoconvertscale")
-        << QStringList{"videoconvertscale"} << QStringList() << 0 << false;
+        << QStringList{"videoconvertscale"} << QStringList() << 0 << false << false;
     QTest::newRow("no converter") << QStringList{"videoconvertscale", "videoconvert"}
-                                  << QStringList{"videoconvertscale|videoconvert"} << 1 << true;
-    QTest::newRow("no udpsrc") << QStringList{"udpsrc"} << QStringList{"udpsrc"} << 1 << true;
-    QTest::newRow("no matroska") << QStringList{"matroskamux"} << QStringList{"matroskamux"} << 1 << false;
-    QTest::newRow("no isomp4") << QStringList{"mp4mux", "qtmux"} << QStringList{"mp4mux", "qtmux"} << 1 << false;
+                                  << QStringList{"videoconvertscale|videoconvert"} << 1 << true << false;
+    QTest::newRow("no udpsrc") << QStringList{"udpsrc"} << QStringList{"udpsrc"} << 1 << true << false;
+    QTest::newRow("no matroska") << QStringList{"matroskamux"} << QStringList{"matroskamux"} << 1 << false << false;
+    QTest::newRow("no isomp4") << QStringList{"mp4mux", "qtmux"} << QStringList{"mp4mux", "qtmux"} << 1 << false
+                               << false;
     QTest::newRow("no rtsp or tcp") << QStringList{"rtspsrc", "tcpclientsrc"} << QStringList{"rtspsrc", "tcpclientsrc"}
-                                    << 2 << false;
+                                    << 2 << false << false;
+    QTest::newRow("qgc elements stripped")
+        << QStringList{"qgcvideosinkbin"} << QStringList{"qgcvideosinkbin"} << 1 << true << true;
 }
 
 void GStreamerInitTest::_testMissingPluginFeatures()
@@ -183,20 +206,38 @@ void GStreamerInitTest::_testMissingPluginFeatures()
     QFETCH(QStringList, missingFactories);
     QFETCH(int, missingFeatures);
     QFETCH(bool, videoUnavailable);
+    QFETCH(bool, hinted);
 
     const QList<GStreamer::MissingPluginFeature> missing = GStreamer::missingPluginFeatures(
         [&absent](const char* factoryName) { return !absent.contains(QLatin1String(factoryName)); });
 
     QStringList factories;
     bool required = false;
+    bool hint = false;
     for (const GStreamer::MissingPluginFeature& feature : missing) {
         QVERIFY(!feature.feature.isEmpty());
         factories << feature.factories;
         required = required || feature.required;
+        hint = hint || !feature.hint.isEmpty();
     }
     QCOMPARE(missing.size(), missingFeatures);
     QCOMPARE(factories, missingFactories);
     QCOMPARE(required, videoUnavailable);
+    QCOMPARE(hint, hinted);
+}
+
+void GStreamerInitTest::_testUdpSrcUnlockSerializedBefore1_24_10()
+{
+    GSTTEST_REQUIRE_GSTREAMER();
+
+    GStreamer::serializeUdpSrcUnlock();
+
+    const GStreamer::GstFactoryPtr factory = GStreamer::adoptFactory(gst_element_factory_find("udpsrc"));
+    if (!factory) {
+        QSKIP("udpsrc is not available");
+    }
+    QCOMPARE(GStreamer::udpSrcUnlockSerialized(),
+             !gst_plugin_feature_check_version(GST_PLUGIN_FEATURE(factory.get()), 1, 24, 10));
 }
 
 void GStreamerInitTest::_testBundledPluginIssues_data()
@@ -287,6 +328,126 @@ void GStreamerInitTest::_testUserFeatureRankKept()
     QCOMPARE(gst_plugin_feature_get_rank(identity.get()), kept ? originalRank : requestedRank);
 }
 
+namespace {
+
+/// "name rank hw|sw" per decoder; the family comes from the name, as for an installed factory.
+QList<GStreamer::DecoderInfo> decoderInfos(const QStringList& specs)
+{
+    QList<GStreamer::DecoderInfo> decoders;
+    for (const QString& spec : specs) {
+        const QStringList fields = spec.split(QLatin1Char(' '));
+        const QByteArray name = fields.at(0).toLatin1();
+        decoders.append({.name = name,
+                         .rank = fields.at(1).toUInt(),
+                         .hardware = (fields.at(2) == QLatin1String("hw")),
+                         .family = GStreamer::decoderFamilyForFactory(name.constData())});
+    }
+    return decoders;
+}
+
+}  // namespace
+
+void GStreamerInitTest::_testPlanRanks_data()
+{
+    QTest::addColumn<int>("option");
+    QTest::addColumn<bool>("zeroCopy");
+    QTest::addColumn<int>("d3d");              // 0: no RHI D3D API, else 11 or 12
+    QTest::addColumn<QStringList>("decoders");
+    QTest::addColumn<QStringList>("changes");  // "name=rank", in input order
+    QTest::addColumn<QString>("warning");      // a regex one warning must match; empty for none
+
+    using namespace GStreamer;
+    const QStringList linuxDecoders{"vaapih264dec 256 hw", "vah264dec 257 hw", "v4l2slh264dec 256 hw",
+                                    "avdec_h264 256 sw"};
+    const QStringList windowsDecoders{"d3d11h264dec 257 hw", "d3d12h264dec 256 hw", "nvh264dec 256 hw",
+                                      "avdec_h264 256 sw"};
+
+    QTest::newRow("default without platform rules")
+        << int(ForceVideoDecoderDefault) << false << 0 << linuxDecoders << QStringList() << QString();
+    QTest::newRow("default on Linux prefers va over vaapi")
+        << int(ForceVideoDecoderDefault) << true << 0 << linuxDecoders
+        << QStringList{"vaapih264dec=0", "vah264dec=258", "v4l2slh264dec=258"} << QString();
+    QTest::newRow("default on D3D11 RHI") << int(ForceVideoDecoderDefault) << false << 11 << windowsDecoders
+                                          << QStringList{"d3d11h264dec=258", "d3d12h264dec=0"} << QString();
+    QTest::newRow("default on D3D12 RHI") << int(ForceVideoDecoderDefault) << false << 12 << windowsDecoders
+                                          << QStringList{"d3d11h264dec=0", "d3d12h264dec=258"} << QString();
+    QTest::newRow("software lowers autoplugged hardware")
+        << int(ForceVideoDecoderSoftware) << false << 0
+        << QStringList{"avdec_h264 256 sw", "openh264dec 64 sw", "vah264dec 257 hw", "nvh264dec 0 hw"}
+        << QStringList{"avdec_h264=257", "openh264dec=257", "vah264dec=0"} << QString();
+    QTest::newRow("hardware without hardware decoders")
+        << int(ForceVideoDecoderHardware) << false << 0 << QStringList{"avdec_h264 256 sw", "openh264dec 32 sw"}
+        << QStringList{"avdec_h264=0"} << QStringLiteral("^No hardware video decoder factories found");
+    QTest::newRow("hardware on D3D11 RHI")
+        << int(ForceVideoDecoderHardware) << false << 11 << windowsDecoders
+        << QStringList{"d3d11h264dec=258", "d3d12h264dec=0", "nvh264dec=257", "avdec_h264=0"} << QString();
+    QTest::newRow("family outranks a PRIMARY + 1 decoder")
+        << int(ForceVideoDecoderNVIDIA) << false << 0 << windowsDecoders << QStringList{"nvh264dec=258"} << QString();
+    QTest::newRow("D3D family keeps the other API demoted")
+        << int(ForceVideoDecoderDirectX3D) << false << 12 << windowsDecoders
+        << QStringList{"d3d11h264dec=0", "d3d12h264dec=257"} << QString();
+    QTest::newRow("vulkan warns") << int(ForceVideoDecoderVulkan) << false << 0
+                                  << QStringList{"vulkanh264dec 256 hw", "avdec_h264 256 sw"}
+                                  << QStringList{"vulkanh264dec=257"}
+                                  << QStringLiteral("^Forcing Vulkan video decoders");
+}
+
+void GStreamerInitTest::_testPlanRanks()
+{
+    QFETCH(int, option);
+    QFETCH(bool, zeroCopy);
+    QFETCH(int, d3d);
+    QFETCH(QStringList, decoders);
+    QFETCH(QStringList, changes);
+    QFETCH(QString, warning);
+
+    GStreamer::RankTraits traits;
+    traits.preferZeroCopyDecoders = zeroCopy;
+    if (d3d != 0) {
+        traits.rhiD3DApi = (d3d == 12) ? GStreamer::D3DApi::D3D12 : GStreamer::D3DApi::D3D11;
+    }
+    const GStreamer::RankPlan plan =
+        GStreamer::planRanks(static_cast<GStreamer::VideoDecoderOptions>(option), decoderInfos(decoders), traits);
+
+    QStringList planned;
+    for (const GStreamer::RankChange& change : plan.changes) {
+        planned.append(QStringLiteral("%1=%2").arg(QString::fromLatin1(change.feature)).arg(change.rank));
+    }
+    QCOMPARE(planned, changes);
+    if (warning.isEmpty()) {
+        QVERIFY2(plan.warnings.isEmpty(), qPrintable(plan.warnings.join(QStringLiteral("; "))));
+    } else {
+        QCOMPARE(plan.warnings.size(), 1);
+        QVERIFY2(QRegularExpression(warning).match(plan.warnings.first()).hasMatch(),
+                 qPrintable(plan.warnings.first()));
+    }
+}
+
+void GStreamerInitTest::_testScopedDecoderOptionRestoresThePreviousOption()
+{
+    GSTTEST_REQUIRE_GSTREAMER();
+
+    const GstTest::DecoderRankSnapshot decoderRanks;
+    const auto decoderRanksNow = [] {
+        QHash<QByteArray, guint> ranks;
+        GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&ranks](GstElementFactory* factory) {
+            GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
+            ranks.insert(QByteArray(gst_plugin_feature_get_name(feature)), gst_plugin_feature_get_rank(feature));
+        });
+        return ranks;
+    };
+
+    GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderDefault);
+    const QHash<QByteArray, guint> defaultRanks = decoderRanksNow();
+    {
+        const GStreamer::ScopedDecoderOption software(GStreamer::ForceVideoDecoderSoftware);
+        QCOMPARE(GStreamer::DecoderRankApplier::instance().applied(),
+                 std::optional(GStreamer::ForceVideoDecoderSoftware));
+    }
+    QCOMPARE(GStreamer::DecoderRankApplier::instance().applied(), std::optional(GStreamer::ForceVideoDecoderDefault));
+    QCOMPARE(decoderRanksNow(), defaultRanks);
+}
+
 void GStreamerInitTest::_testSetCodecPrioritiesDefault()
 {
     GSTTEST_REQUIRE_GSTREAMER();
@@ -361,13 +522,12 @@ void GStreamerInitTest::_testSetCodecPrioritiesSkipsAbsentD3DDecoders()
     GstRegistry* registry = gst_registry_get();
     QVERIFY(registry != nullptr);
 
-    const TestFixtures::LoggingCategoryFixture helpersLog(QStringLiteral("Video.GStreamer.GStreamerHelpers"));
+    const TestFixtures::LoggingCategoryFixture ranksLog(QStringLiteral("Video.GStreamer.DecoderRanks"));
 
     LogManager::clearCapturedMessages();
     QVERIFY(!GStreamer::changeFeatureRank(registry, "__qgc_missing_d3d_decoder_for_test__", GST_RANK_NONE));
 
-    const QList<LogEntry> helperMessages =
-        LogManager::capturedMessages(QStringLiteral("Video.GStreamer.GStreamerHelpers"));
+    const QList<LogEntry> helperMessages = LogManager::capturedMessages(QStringLiteral("Video.GStreamer.DecoderRanks"));
     for (const LogEntry& entry : helperMessages) {
         QVERIFY2(
             !entry.message.contains(QStringLiteral("Feature does not exist")),
@@ -398,6 +558,78 @@ void GStreamerInitTest::_testSetCodecPrioritiesSoftware()
     QVERIFY(foundPrioritizedSoftware);
 }
 
+void GStreamerInitTest::_testSetCodecPrioritiesReplacesThePreviousOption()
+{
+    GSTTEST_REQUIRE_GSTREAMER();
+
+    const GstTest::DecoderRankSnapshot decoderRanks;
+    bool hasSoftwareDecoder = false;
+    GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&hasSoftwareDecoder](GstElementFactory* factory) {
+        hasSoftwareDecoder = hasSoftwareDecoder || !GStreamer::isHardwareDecoderFactory(factory);
+    });
+    if (!hasSoftwareDecoder) {
+        QSKIP("No software video decoder factories available on this system");
+    }
+
+    const auto decoderRanksNow = [] {
+        QHash<QByteArray, guint> ranks;
+        GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&ranks](GstElementFactory* factory) {
+            GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
+            ranks.insert(QByteArray(gst_plugin_feature_get_name(feature)), gst_plugin_feature_get_rank(feature));
+        });
+        return ranks;
+    };
+    GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderDefault);
+    const QHash<QByteArray, guint> defaultRanks = decoderRanksNow();
+
+    // The setting can change at runtime: going back to the default must not keep the software decoders promoted.
+    GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderSoftware);
+    QVERIFY(decoderRanksNow() != defaultRanks);
+    GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderDefault);
+    QCOMPARE(decoderRanksNow(), defaultRanks);
+}
+
+void GStreamerInitTest::_testSetCodecPrioritiesFamilyOutranksOtherDecoders()
+{
+    GSTTEST_REQUIRE_GSTREAMER();
+
+    const GstTest::DecoderRankSnapshot decoderRanks;
+    ignoreLogMessage("Video.GStreamer.DecoderRanks", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Forcing Vulkan video decoders")));
+    QList<GStreamer::VideoDecoderOptions> families;
+    GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&families](GstElementFactory* factory) {
+        const auto family =
+            GStreamer::decoderFamilyForFactory(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
+        if ((family != GStreamer::ForceVideoDecoderDefault) && !families.contains(family)) {
+            families.append(family);
+        }
+    });
+    if (families.isEmpty()) {
+        QSKIP("No decoder of a forceable family is installed");
+    }
+
+    // GStreamer ranks d3d11 and va decoders PRIMARY + 1 already: forcing another family must not tie with them.
+    for (const GStreamer::VideoDecoderOptions family : std::as_const(families)) {
+        GStreamer::setCodecPriorities(family);
+        guint lowestFamilyRank = G_MAXUINT;
+        guint highestOtherRank = GST_RANK_NONE;
+        GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&](GstElementFactory* factory) {
+            GstPluginFeature* const feature = GST_PLUGIN_FEATURE(factory);
+            const guint rank = gst_plugin_feature_get_rank(feature);
+            if (GStreamer::decoderFamilyForFactory(gst_plugin_feature_get_name(feature)) != family) {
+                highestOtherRank = std::max(highestOtherRank, rank);
+            } else if (rank > GST_RANK_NONE) {
+                // A member at NONE was demoted on purpose, as the D3D decoders not matching the renderer are.
+                lowestFamilyRank = std::min(lowestFamilyRank, rank);
+            }
+        });
+        QVERIFY2(lowestFamilyRank > highestOtherRank, qPrintable(QStringLiteral("family %1: rank %2 <= %3")
+                                                                     .arg(static_cast<int>(family))
+                                                                     .arg(lowestFamilyRank)
+                                                                     .arg(highestOtherRank)));
+    }
+}
+
 void GStreamerInitTest::_testSetCodecPrioritiesHardware()
 {
     GSTTEST_REQUIRE_GSTREAMER();
@@ -409,7 +641,7 @@ void GStreamerInitTest::_testSetCodecPrioritiesHardware()
         hasHardwareDecoder = hasHardwareDecoder || GStreamer::isHardwareDecoderFactory(factory);
     });
     if (!hasHardwareDecoder) {
-        expectLogMessage("Video.GStreamer.GStreamerHelpers", QtWarningMsg,
+        expectLogMessage("Video.GStreamer.DecoderRanks", QtWarningMsg,
                          QRegularExpression(QStringLiteral("^No hardware video decoder factories found")));
     }
     GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderHardware);

@@ -10,6 +10,7 @@ from unittest.mock import MagicMock, call, patch
 from urllib.error import HTTPError
 
 import pytest
+from common.build_config import get_gstreamer_version
 from setup.install_dependencies import _cli, _debian, _linux, _macos, _windows
 from setup.install_dependencies import _common as install_common
 from setup.install_dependencies._cli import parse_args
@@ -683,6 +684,7 @@ def test_windows_installers_are_pinned_and_verified(install: str, url: str, sha2
 
 
 def test_install_windows_gstreamer(monkeypatch, tmp_path: Path) -> None:
+    version = get_gstreamer_version("windows")
     monkeypatch.setenv("PROCESSOR_ARCHITECTURE", "AMD64")
     monkeypatch.setattr(_windows, "WINDOWS_GSTREAMER_PREFIX", str(tmp_path))
     with (
@@ -691,21 +693,23 @@ def test_install_windows_gstreamer(monkeypatch, tmp_path: Path) -> None:
         patch.object(_windows._c, "set_env_var"),
         patch.object(_windows._c, "add_to_path"),
     ):
-        assert _windows.install_windows_gstreamer("1.28.4") is True
+        assert _windows.install_windows_gstreamer(version) is True
 
     installer = dl.call_args_list[0].args[1]
-    assert installer.name == "gstreamer-1.0-msvc-x86_64-1.28.4.exe"
+    assert installer.name == f"gstreamer-1.0-msvc-x86_64-{version}.exe"
+    # Upstream first, then QGC's mirror.
     assert [call.args[0] for call in dl.call_args_list] == [
         (
-            "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer/windows/"
-            "gstreamer-1.0-msvc-x86_64-1.28.4.exe"
+            f"https://gstreamer.freedesktop.org/data/pkg/windows/{version}/msvc/"
+            f"gstreamer-1.0-msvc-x86_64-{version}.exe"
         ),
         (
-            "https://gstreamer.freedesktop.org/data/pkg/windows/1.28.4/msvc/"
-            "gstreamer-1.0-msvc-x86_64-1.28.4.exe"
+            "https://qgroundcontrol.s3.us-west-2.amazonaws.com/dependencies/gstreamer/windows/"
+            f"gstreamer-1.0-msvc-x86_64-{version}.exe"
         ),
     ]
-    expected_sha256 = _windows._c.pinned_checksum("1.28.4", "windows_msvc_x64")
+    expected_sha256 = _windows._c.pinned_checksum(version, "windows_msvc_x64")
+    assert expected_sha256
     assert dl.call_args_list[0].kwargs == {
         "warn_on_failure": True,
         "expected_sha256": expected_sha256,

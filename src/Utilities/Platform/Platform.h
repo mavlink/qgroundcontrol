@@ -23,6 +23,12 @@ std::optional<int> initialize(int argc, char* argv[],
 /// @note Call after Q(Core)Application exists and logging is installed
 void setupPostApp();
 
+#ifdef Q_OS_ANDROID
+/// @brief Make the exit() Qt calls after main() returns end the process with @p exitCode before static destructors run
+/// @note Call at the end of main(), once QGC has shut down and saved its state
+void skipStaticDestructorsAtExit(int exitCode);
+#endif
+
 #if (defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD)) && !defined(Q_OS_ANDROID)
 /// @brief Check if running as root (dangerous on Linux)
 /// @return true if running as root

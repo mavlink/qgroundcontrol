@@ -304,6 +304,15 @@ void GstHwBuffersTest::_testGpuBinSelection_data()
     QTest::newRow("dmabuf-opengl-not-egl") << directDmaBuf << false << openGl << false << passthrough;
     QTest::newRow("dmabuf-opengl-not-egl-explicit") << directDmaBuf << true << openGl << false << directDmaBuf;
     QTest::newRow("passthrough-vulkan") << passthrough << false << vulkan << false << passthrough;
+    const int direct3D12 = int(RenderBackend::Direct3D12);
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+    // Direct3D12 has one GPU variant, whatever was asked for.
+    const int d3d12Convert = int(GpuBinMode::D3D12Convert);
+    QTest::newRow("passthrough-d3d12") << passthrough << false << direct3D12 << false << d3d12Convert;
+    QTest::newRow("glupload-d3d12-explicit") << glUpload << true << direct3D12 << false << d3d12Convert;
+#else
+    QTest::newRow("passthrough-d3d12") << passthrough << false << direct3D12 << false << passthrough;
+#endif
 }
 
 void GstHwBuffersTest::_testGpuBinSelection()

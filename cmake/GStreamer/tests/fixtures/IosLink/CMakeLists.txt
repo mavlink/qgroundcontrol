@@ -5,7 +5,7 @@ project(QGCGStreamerIosLink LANGUAGES C CXX)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 include("${QGC_MODULE_DIR}/GStreamer/Probe.cmake")
-include("${QGC_MODULE_DIR}/GStreamer/StaticInit.cmake")
+include("${QGC_MODULE_DIR}/GStreamer/Mobile.cmake")
 include("${QGC_MODULE_DIR}/GStreamer/platform/IOS.cmake")
 # The core functions GStreamer::mobile keeps (on this ELF host without the Mach-O underscore).
 set(QGC_GST_APP_CORE_SYMBOLS ${QGC_TEST_CORE_SYMBOLS})
@@ -30,7 +30,7 @@ if(QGC_TEST_KEEP_SYMBOLS)
 endif()
 
 # The Orchestrator's iOS probe runs before anything is built, so it must not need the archive.
-qgc_check_gst_header(
+qgc_gst_check_header(
     VAR QGC_TEST_PROBE
     HEADER gst/gst.h
     SYMBOL "sizeof(GstRegistry *)"

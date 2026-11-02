@@ -20,7 +20,7 @@ enum Edge
 
 constexpr QChar kEdgeChars[] = {u'N', u'S', u'E', u'W'};
 
-QRectF patchRect(const TileMath::TileKey& key)
+QRectF analyzedPatchRect(const TileMath::TileKey& key)
 {
     const double span = TileMath::tileSpanAtZoom(key.zoom);
     const QPointF minCorner = TileMath::tileMinCorner(key);
@@ -99,7 +99,7 @@ std::optional<double> surfaceHeightAt(const QList<SurfaceModel::Patch>& patches,
 {
     const SurfaceModel::Patch* best = nullptr;
     for (const SurfaceModel::Patch& patch : patches) {
-        if (patch.covered || patch.heights.isEmpty() || !patchRect(patch.key).contains(point)) {
+        if (patch.covered || patch.heights.isEmpty() || !analyzedPatchRect(patch.key).contains(point)) {
             continue;
         }
         if (!best || (patch.key.zoom > best->key.zoom)) {
@@ -110,7 +110,7 @@ std::optional<double> surfaceHeightAt(const QList<SurfaceModel::Patch>& patches,
         return std::nullopt;
     }
 
-    const QRectF rect = patchRect(best->key);
+    const QRectF rect = analyzedPatchRect(best->key);
     const double step = rect.width() / gridSize;
     // Row 0 is the north (max y) edge
     const double colF = std::clamp((point.x() - rect.left()) / step, 0.0, static_cast<double>(gridSize));
@@ -194,7 +194,7 @@ void findHoles(const QList<SurfaceModel::Patch>& patches, int gridSize, const Vi
         bool renderedHere = false;
         const SurfaceModel::Patch* suppressed = nullptr;
         for (const SurfaceModel::Patch& patch : patches) {
-            if (!patchRect(patch.key).contains(point)) {
+            if (!analyzedPatchRect(patch.key).contains(point)) {
                 continue;
             }
             if (patch.covered) {

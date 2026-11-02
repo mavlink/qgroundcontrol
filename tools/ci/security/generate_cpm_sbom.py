@@ -98,10 +98,13 @@ def gstreamer_component(cache: dict[str, str]) -> dict | None:
                     "hashes": [{"alg": "SHA-256", "content": sha256}],
                 }
             )
+    # A build after a release reports its nano version (1.28.8.1), which has no tag; link the release it follows.
+    release = re.match(r"\d+\.\d+\.\d+", version)
     references.append(
         {
             "type": "vcs",
-            "url": f"https://gitlab.freedesktop.org/gstreamer/gstreamer/-/tree/{version}",
+            "url": "https://gitlab.freedesktop.org/gstreamer/gstreamer/-/tree/"
+            + (release.group() if release else version),
         }
     )
     references.append({"type": "website", "url": "https://gstreamer.freedesktop.org"})

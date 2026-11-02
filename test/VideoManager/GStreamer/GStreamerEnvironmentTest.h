@@ -16,6 +16,9 @@ private slots:
     void _testPrivateRegistryKeepsUserRegistry_data();
     void _testPrivateRegistryKeepsUserRegistry();
     void _testSystemGStreamerKeepsDefaultRegistry();
+    void _testBundleLayouts_data();
+    void _testBundleLayouts();
+    void _testMacOSFrameworkVersionDir();
     void _testBundledRuntime();
     void _testEnvironmentSetup();
 #else

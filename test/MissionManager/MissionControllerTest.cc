@@ -1191,6 +1191,9 @@ void MissionControllerTest::_testUnitsChangeDoesNotDirtyPlan()
     geoFenceController->addInclusionPolygon(home.atDistanceAndAzimuth(800, 315), home.atDistanceAndAzimuth(800, 135));
     RallyPointController* const rallyPointController = _masterController->rallyPointController();
     rallyPointController->addPoint(home.atDistanceAndAzimuth(100, 180));
+    // A PX4 rally point asks for its terrain altitude, whose answer dirties it: settled first, so it can't land after
+    // the reset below.
+    QTRY_VERIFY_WITH_TIMEOUT(!rallyPointController->terrainQueryPending(), TestTimeout::longMs());
     QCoreApplication::processEvents();
 
     _missionController->setDirty(false);

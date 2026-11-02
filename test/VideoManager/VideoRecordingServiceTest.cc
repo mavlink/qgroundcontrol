@@ -11,6 +11,7 @@
 #include "MultiVehicleManager.h"
 #include "SettingsManager.h"
 #include "SubtitleWriter.h"
+#include "UVCCameraController.h"
 #include "VideoRecordingService.h"
 #include "VideoSettings.h"
 #include "VideoStreamController.h"
@@ -56,7 +57,8 @@ void VideoRecordingServiceTest::init()
     _thermal = new FakeVideoReceiver();
     _primaryStream->setReceiver(_primary);
     _thermalStream->setReceiver(_thermal);
-    _service = new VideoRecordingService(_primaryStream, _thermalStream, _owner.get());
+    _service =
+        new VideoRecordingService(_primaryStream, _thermalStream, new UVCCameraController(_owner.get()), _owner.get());
 }
 
 void VideoRecordingServiceTest::cleanup()

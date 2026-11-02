@@ -41,6 +41,18 @@ def test_package_urls() -> None:
 
 
 @pytest.mark.parametrize(
+    ("version", "filename"),
+    [
+        ("1.28.7", "gstreamer-1.0-devel-1.28.7-ios-universal.pkg"),
+        ("1.28.8", "gstreamer-1.28.8-xcframework.tar.xz"),
+        ("1.29.1", "gstreamer-1.29.1-xcframework.tar.xz"),
+    ],
+)
+def test_ios_package_format_depends_on_version(version: str, filename: str) -> None:
+    assert package_filename("ios", version) == filename
+
+
+@pytest.mark.parametrize(
     "call", [lambda: package_url("linux", "1.28.4"), lambda: release_index_url("linux")]
 )
 def test_unknown_names_are_rejected(call) -> None:
@@ -58,14 +70,15 @@ def test_pinned_checksum(tmp_path: Path) -> None:
 
 
 @pytest.mark.skipif(shutil.which("cmake") is None, reason="cmake is not installed")
-def test_layout_matches_cmake(tmp_path: Path) -> None:
-    """The configure-time download (cmake/GStreamer/Download.cmake) must fetch the same files."""
+@pytest.mark.parametrize("version", ["1.28.7", "1.28.8"])
+def test_layout_matches_cmake(tmp_path: Path, version: str) -> None:
+    """The configure-time download (cmake/GStreamer/Packages.cmake) must fetch the same files."""
     script = tmp_path / "urls.cmake"
     script.write_text(
-        f'include("{REPO_ROOT}/cmake/GStreamer/Download.cmake")\n'
+        f'include("{REPO_ROOT}/cmake/GStreamer/Packages.cmake")\n'
         f"foreach(_package IN ITEMS {' '.join(PACKAGES)})\n"
-        "    gstreamer_get_package_url(${_package} 1.28.4 _url)\n"
-        "    gstreamer_get_s3_mirror_url(${_package} 1.28.4 _mirror)\n"
+        f"    qgc_gst_get_package_url(${{_package}} {version} _url)\n"
+        f"    qgc_gst_get_s3_mirror_url(${{_package}} {version} _mirror)\n"
         '    message(STATUS "${_package} ${_url} ${_mirror}")\n'
         "endforeach()\n"
     )
@@ -75,6 +88,6 @@ def test_layout_matches_cmake(tmp_path: Path) -> None:
 
     cmake_urls = [line.split()[1:] for line in result.stdout.splitlines()]
     assert cmake_urls == [
-        [package, package_url(package, "1.28.4"), mirror_url(package, "1.28.4")]
+        [package, package_url(package, version), mirror_url(package, version)]
         for package in PACKAGES
     ]

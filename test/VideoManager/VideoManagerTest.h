@@ -23,8 +23,10 @@ private slots:
     void _testSettingReachesReceiver_data();
     void _testSettingReachesReceiver();
     void _testSettingChangesCoalesce();
-    void _testSinkSettingsRestartStreams_data();
-    void _testSinkSettingsRestartStreams();
+    void _testRestartingSettingsRestartStreams_data();
+    void _testRestartingSettingsRestartStreams();
+    void _testDecodingSettingsGroupRestartsStreams();
+    void _testStreamSettingsGroupFollowsLowLatency();
     void _testStreamEnabledControlsVideo();
     void _testStopVideoCancelsEverything();
     void _testAutoStreamLeavesSettingsAlone();
@@ -35,6 +37,17 @@ private slots:
     void _testQmlVideoOutputRegistersItself();
     void _testScreenshotsComeFromStreamsOnDisplay();
     void _testStreamErrorsReachUser();
+    void _testReconnectingFollowsLostStream();
+    void _testUvcCameraFormatReachesCamera();
+    void _testUvcControlsReachCamera();
+    void _testStreamStatsReachQml();
+    void _testStreamFormatText();
+    void _testVideoViewFitsVideo_data();
+    void _testVideoViewFitsVideo();
+    void _testCameraPinchZoomSteps();
+    void _testVideoViewPlacesThermalPip();
+    void _testStreamUriAndTransport_data();
+    void _testStreamUriAndTransport();
 
 private:
     /// Runs the queued stream updates.

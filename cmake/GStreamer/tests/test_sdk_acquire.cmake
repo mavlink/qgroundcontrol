@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.25)
 # download step is a verified cache hit and only locking, extraction and stamping are exercised.
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/..")
 include("${CMAKE_CURRENT_LIST_DIR}/_assert.cmake")
-include(Download)
+include(Acquire)
 
 qgc_test_sandbox(_sandbox sdk-acquire)
 set(CPM_SOURCE_CACHE "${_sandbox}/cache")
@@ -21,8 +21,9 @@ function(_qgc_test_seed_archive marker)
     file(REMOVE_RECURSE "${_sandbox}/src")
     file(WRITE "${_sandbox}/src/payload/marker.txt" "${marker}")
     file(MAKE_DIRECTORY "${_cache_dir}")
-    execute_process(COMMAND "${CMAKE_COMMAND}" -E tar cJf "${_cache_dir}/sdk.tar.xz" payload
-                    WORKING_DIRECTORY "${_sandbox}/src" COMMAND_ERROR_IS_FATAL ANY
+    execute_process(
+        COMMAND "${CMAKE_COMMAND}" -E tar cJf "${_cache_dir}/sdk.tar.xz" payload
+        WORKING_DIRECTORY "${_sandbox}/src" COMMAND_ERROR_IS_FATAL ANY
     )
     file(SHA256 "${_cache_dir}/sdk.tar.xz" _hash)
     set(QGC_BUILD_CONFIG_CONTENT
@@ -49,20 +50,13 @@ endfunction()
 # Acquires the SDK and asserts the published tree holds <marker> after <extractions> extractions.
 function(_qgc_test_acquire label marker extractions)
     qgc_gst_acquire_sdk(
-        PLATFORM
-        android
-        VERSION
-        ${_version}
-        CACHE_SUBDIR
-        "gstreamer-test-${_version}"
-        ARCHIVES
-        sdk.tar.xz
-        CONTENT
-        sdk
-        EXTRACT_FUNCTION
-        _qgc_test_extract
-        CONTENT_DIR_OUT
-        _dir
+        PLATFORM android
+        VERSION ${_version}
+        CACHE_SUBDIR "gstreamer-test-${_version}"
+        ARCHIVES sdk.tar.xz
+        CONTENT sdk
+        EXTRACT_FUNCTION _qgc_test_extract
+        CONTENT_DIR_OUT _dir
     )
     qgc_test_assert_streq("${label}: content dir" "${_content}" "${_dir}")
     get_property(_extracted GLOBAL PROPERTY _qgc_test_extractions)
@@ -110,8 +104,8 @@ _qgc_test_acquire("archive not cached" second ${_extractions})
 qgc_test_pass("a pinned tree is used without its archive")
 
 # Either way the SDK's notice and SBOM entry name the package it came from.
-gstreamer_get_package_url(android ${_version} _url)
-gstreamer_get_fallback_checksum(android ${_version} _pin)
+qgc_gst_get_package_url(android ${_version} _url)
+qgc_gst_get_fallback_checksum(android ${_version} _pin)
 string(REPLACE "SHA256=" "" _pin "${_pin}")
 qgc_test_assert_streq("recorded package" "${_url}|${_pin}" "$CACHE{QGC_GST_RESOLVED_PACKAGES}")
 qgc_test_pass("acquired package recorded")

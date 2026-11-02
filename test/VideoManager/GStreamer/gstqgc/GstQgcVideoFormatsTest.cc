@@ -12,6 +12,7 @@
 #include "GstQgcFrameMap.h"
 #include "GstScoped.h"
 #include "gstqgc/GstQgcCaps.h"
+#include "gstqgc/GstQgcGpuBin.h"
 #include "gstqgc/GstQgcVideoFormats.h"
 
 void GstQgcVideoFormatsTest::_testColorimetryPixelFormatMapping()
@@ -51,6 +52,33 @@ void GstQgcVideoFormatsTest::_testCpuCapsFormatsRoundTripToQt()
         QVERIFY2(toQtPixelFormat(gf) != QVideoFrameFormat::Format_Invalid,
                  qPrintable(QStringLiteral("format '%1' advertised but not Qt-renderable").arg(name)));
     }
+}
+
+void GstQgcVideoFormatsTest::_testD3D12ConvertCapsAreSinglePlane()
+{
+    // Qt's D3D12 QRhi has no plane views, so the d3d12convert bin must deliver single-plane RGB.
+    const GStreamer::GstCapsPtr caps =
+        GStreamer::adoptCaps(gst_caps_from_string(GstQgc::buildSinkCaps({.gpuZeroCopy = true,
+                                                                         .gpuBin = GstQgc::GpuBinMode::D3D12Convert,
+                                                                         .target = {},
+                                                                         .dmaBufDisplay = nullptr,
+                                                                         .squarePixels = true})
+                                                      .c_str()));
+    QVERIFY2(caps, "buildSinkCaps() did not parse");
+    QCOMPARE(gst_caps_get_size(caps.get()), 1u);
+    QVERIFY(gst_caps_features_contains(gst_caps_get_features(caps.get(), 0), "memory:D3D12Memory"));
+    const GstStructure* const s = gst_caps_get_structure(caps.get(), 0);
+    const GValue* const formats = gst_structure_get_value(s, "format");
+    QVERIFY(formats && GST_VALUE_HOLDS_LIST(formats));
+    QStringList names;
+    for (guint i = 0; i < gst_value_list_get_size(formats); ++i) {
+        names << QString::fromUtf8(g_value_get_string(gst_value_list_get_value(formats, i)));
+    }
+    QCOMPARE(names, (QStringList{QStringLiteral("RGBA"), QStringLiteral("BGRA")}));
+    gint parN = 0;
+    gint parD = 0;
+    QVERIFY(gst_structure_get_fraction(s, "pixel-aspect-ratio", &parN, &parD));
+    QCOMPARE(parN, parD);
 }
 
 void GstQgcVideoFormatsTest::_testColorimetryColorSpaceMapping()

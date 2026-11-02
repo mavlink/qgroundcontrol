@@ -7,9 +7,16 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from common.build_config import load_build_config
 from setup.gstreamer import cli
 from setup.gstreamer.cerbero import CerberoBuilder
-from setup.gstreamer.config import BuildConfig
+from setup.gstreamer.config import (
+    PLUGIN_KEYS,
+    PLUGIN_OPTIONS,
+    PLUGINS_WITHOUT_OPTION,
+    BuildConfig,
+    plugin_options,
+)
 from setup.gstreamer.host import detect_host_arch, detect_jobs
 from setup.gstreamer.meson import MesonBuilder
 
@@ -155,6 +162,31 @@ def test_get_meson_args_includes_plugins(tmp_path: Path) -> None:
     args = builder.get_meson_args()
     assert "-Dgst-plugins-base:gl=enabled" in args
     assert "-Dgst-plugins-bad:videoparsers=enabled" in args
+
+
+@pytest.mark.parametrize("plat", ["linux", "macos", "windows"])
+def test_meson_builds_every_allowlisted_plugin(plat: str) -> None:
+    allowlist = load_build_config()["gstreamer"]["plugins"]
+    options = plugin_options(plat, allowlist)
+    for name in [*allowlist["common"], *allowlist[PLUGIN_KEYS[plat]]]:
+        assert name in PLUGINS_WITHOUT_OPTION or options.get(PLUGIN_OPTIONS[name]) == "enabled", (
+            name
+        )
+    assert options["gst-plugins-base:videoconvertscale"] == "enabled"
+
+
+def test_plugin_options_reject_an_unmapped_plugin() -> None:
+    with pytest.raises(
+        ValueError, match="No Meson option for allowlisted GStreamer plugins: newplugin"
+    ):
+        plugin_options("linux", {"common": ["app", "newplugin"]})
+
+
+def test_get_meson_args_use_only_gstreamer_1_28_options(tmp_path: Path) -> None:
+    cfg = BuildConfig(platform="linux", arch="x86_64", version="1.28.4", work_dir=tmp_path)
+    args = MesonBuilder(cfg).get_meson_args()
+    assert "-Dgst-plugins-bad:va=enabled" in args
+    assert not any(a.startswith("-Dvaapi=") for a in args)
 
 
 def test_get_meson_args_builds_no_gpl_or_qt6_plugin(tmp_path: Path) -> None:
