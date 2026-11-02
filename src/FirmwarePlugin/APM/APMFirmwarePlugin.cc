@@ -1,5 +1,6 @@
 #include "APMFirmwarePlugin.h"
 
+#include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QRegularExpressionMatch>
 #include <QtNetwork/QTcpSocket>
@@ -1130,39 +1131,159 @@ void APMFirmwarePlugin::startMission(Vehicle *vehicle) const
     }
 }
 
+namespace {
+
+enum class StartMissionAsyncStep
+{
+    Guided,
+    Auto,
+    Arm,
+};
+
+class StartMissionAsyncChain : public QObject
+{
+public:
+    StartMissionAsyncChain(Vehicle* vehicle, StartMissionAsyncStep step, bool armAfterMode, bool missionStartAfterArm)
+        : QObject(vehicle)
+        , vehicle(vehicle)
+        , step(step)
+        , armAfterMode(armAfterMode)
+        , missionStartAfterArm(missionStartAfterArm)
+    {}
+
+    QPointer<Vehicle> vehicle;
+    StartMissionAsyncStep step;
+    bool armAfterMode = false;
+    bool missionStartAfterArm = false;
+};
+
+void _startMissionAsyncShowFailure(StartMissionAsyncStep step)
+{
+    switch (step) {
+        case StartMissionAsyncStep::Guided:
+            QGC::showAppMessage(
+                APMFirmwarePlugin::tr("Unable to start mission: Vehicle failed to change to Guided mode."));
+            break;
+        case StartMissionAsyncStep::Auto:
+            QGC::showAppMessage(
+                APMFirmwarePlugin::tr("Unable to start mission: Vehicle failed to change to Auto mode."));
+            break;
+        case StartMissionAsyncStep::Arm:
+            QGC::showAppMessage(APMFirmwarePlugin::tr("Unable to start mission: Vehicle failed to arm."));
+            break;
+    }
+}
+
+void _startMissionAsyncAck(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack,
+                           Vehicle::MavCmdResultFailureCode_t failureCode);
+
+void _startMissionAsyncSend(StartMissionAsyncChain* chain, MAV_CMD command, float param1, float param2)
+{
+    Vehicle* vehicle = chain->vehicle;
+    if (!vehicle) {
+        delete chain;
+        return;
+    }
+
+    Vehicle::MavCmdAckHandlerInfo_t handlerInfo{};
+    handlerInfo.resultHandler = &_startMissionAsyncAck;
+    handlerInfo.resultHandlerData = chain;
+    vehicle->sendMavCommandWithHandler(&handlerInfo, vehicle->defaultComponentId(), command, param1, param2);
+}
+
+void _startMissionAsyncAck(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack,
+                           Vehicle::MavCmdResultFailureCode_t failureCode)
+{
+    auto* chain = static_cast<StartMissionAsyncChain*>(resultHandlerData);
+    // A second Start while the first command is still pending is the same sequence, not a failure.
+    if ((failureCode == Vehicle::MavCmdResultFailureDuplicateCommand) || !chain->vehicle) {
+        delete chain;
+        return;
+    }
+
+    const bool accepted =
+        (failureCode == Vehicle::MavCmdResultCommandResultOnly) && (ack.result == MAV_RESULT_ACCEPTED);
+    if (!accepted) {
+        _startMissionAsyncShowFailure(chain->step);
+        delete chain;
+        return;
+    }
+
+    if (((chain->step == StartMissionAsyncStep::Guided) || (chain->step == StartMissionAsyncStep::Auto)) &&
+        chain->armAfterMode) {
+        chain->step = StartMissionAsyncStep::Arm;
+        _startMissionAsyncSend(chain, MAV_CMD_COMPONENT_ARM_DISARM, 1.0f, 0.0f);
+        return;
+    }
+
+    if ((chain->step == StartMissionAsyncStep::Arm) && chain->missionStartAfterArm) {
+        Vehicle* vehicle = chain->vehicle;
+        delete chain;
+        vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /* showError */);
+        return;
+    }
+
+    delete chain;
+}
+
+void _startMissionAsyncChangeMode(const APMFirmwarePlugin* plugin, Vehicle* vehicle, const QString& flightMode,
+                                  StartMissionAsyncStep step, bool armAfterMode, bool missionStartAfterArm)
+{
+    uint8_t baseMode = 0;
+    uint32_t customMode = 0;
+    if (!plugin->setFlightMode(flightMode, &baseMode, &customMode)) {
+        _startMissionAsyncShowFailure(step);
+        return;
+    }
+
+    auto* chain = new StartMissionAsyncChain(vehicle, step, armAfterMode, missionStartAfterArm);
+    _startMissionAsyncSend(chain, MAV_CMD_DO_SET_MODE, static_cast<float>(baseMode), static_cast<float>(customMode));
+}
+
+void _startMissionAsyncArm(Vehicle* vehicle, bool missionStartAfterArm)
+{
+    auto* chain = new StartMissionAsyncChain(vehicle, StartMissionAsyncStep::Arm, false, missionStartAfterArm);
+    _startMissionAsyncSend(chain, MAV_CMD_COMPONENT_ARM_DISARM, 1.0f, 0.0f);
+}
+
+}  // namespace
+
 void APMFirmwarePlugin::startMissionAsync(Vehicle* vehicle) const
 {
     if (!vehicle) {
         return;
     }
 
-    // Same branches as startMission(). Commands are sent for the current state and are not
-    // gated on the previous command succeeding, so a multi-vehicle loop does not block.
+    // Same branches as startMission(). Each vehicle waits for its own ack before the next command.
+    // The wait is the command callback, so a multi-vehicle Start does not block the UI thread.
     if (vehicle->underway()) {
         if (vehicle->flightMode() != missionFlightMode()) {
-            vehicle->setFlightMode(missionFlightMode());
+            _startMissionAsyncChangeMode(this, vehicle, missionFlightMode(), StartMissionAsyncStep::Auto, false, false);
         }
         return;
     }
 
     if (vehicle->fixedWing() || vehicle->vtol()) {
+        const bool needArm = !vehicle->armed();
         if (vehicle->flightMode() != missionFlightMode()) {
-            vehicle->setFlightMode(missionFlightMode());
-        }
-        if (!vehicle->armed()) {
-            vehicle->setArmed(true, false /* showError */);
+            _startMissionAsyncChangeMode(this, vehicle, missionFlightMode(), StartMissionAsyncStep::Auto, needArm,
+                                         false);
+        } else if (needArm) {
+            _startMissionAsyncArm(vehicle, false);
         }
         return;
     }
 
     if (!vehicle->armed()) {
         if (vehicle->flightMode() != guidedFlightMode()) {
-            vehicle->setFlightMode(guidedFlightMode());
+            _startMissionAsyncChangeMode(this, vehicle, guidedFlightMode(), StartMissionAsyncStep::Guided, true, true);
+        } else {
+            _startMissionAsyncArm(vehicle, true);
         }
-        vehicle->setArmed(true, false /* showError */);
+        return;
     }
 
-    vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /*show error */);
+    vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /* showError */);
 }
 
 QString APMFirmwarePlugin::_getLatestVersionFileUrl(Vehicle *vehicle) const

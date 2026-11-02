@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include <QtCore/QPointer>
 #include <QtCore/QString>
 
 #include "AppMessages.h"
@@ -631,20 +632,56 @@ void PX4FirmwarePlugin::startMission(Vehicle* vehicle) const
     }
 }
 
+namespace {
+
+constexpr char kStartMissionArmWaiter[] = "px4StartMissionArmWaiter";
+
+void _armWhenMissionMode(Vehicle* vehicle, const QString& missionMode)
+{
+    if (QObject* previous =
+            vehicle->findChild<QObject*>(QLatin1String(kStartMissionArmWaiter), Qt::FindDirectChildrenOnly)) {
+        delete previous;
+    }
+
+    if (vehicle->armed()) {
+        return;
+    }
+    // SET_MODE has no ack. Arm once a heartbeat reports Mission, which is after setFlightMode returns.
+    if (vehicle->flightMode() == missionMode) {
+        vehicle->setArmed(true, false /* showError */);
+        return;
+    }
+
+    auto* waiter = new QObject(vehicle);
+    waiter->setObjectName(QLatin1String(kStartMissionArmWaiter));
+    const QPointer<Vehicle> vehiclePtr(vehicle);
+    (void) QObject::connect(
+        vehicle, &Vehicle::flightModeChanged, waiter, [waiter, vehiclePtr, missionMode](const QString& flightMode) {
+            if (!vehiclePtr || (flightMode != missionMode)) {
+                return;
+            }
+            (void) QObject::disconnect(vehiclePtr.data(), &Vehicle::flightModeChanged, waiter, nullptr);
+            waiter->deleteLater();
+            if (!vehiclePtr->armed()) {
+                vehiclePtr->setArmed(true, false /* showError */);
+            }
+        });
+}
+
+}  // namespace
+
 void PX4FirmwarePlugin::startMissionAsync(Vehicle* vehicle) const
 {
     if (!vehicle) {
         return;
     }
 
-    // Same commands as startMission(), issued for the current state without waiting.
-    // An unarmed vehicle is armed without confirming the mode change first.
-    if (vehicle->flightMode() != missionFlightMode()) {
-        vehicle->setFlightMode(missionFlightMode());
+    // Same commands as startMission(). PX4 SET_MODE has no command ack, so arm follows the reported mode.
+    const QString missionMode = missionFlightMode();
+    if (vehicle->flightMode() != missionMode) {
+        vehicle->setFlightMode(missionMode);
     }
-    if (!vehicle->armed()) {
-        vehicle->setArmed(true, false /* showError */);
-    }
+    _armWhenMissionMode(vehicle, missionMode);
 }
 
 void PX4FirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode) const

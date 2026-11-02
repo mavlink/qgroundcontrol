@@ -607,9 +607,10 @@ Item {
             selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
             for (i = 0; i < selectedVehicles.count; i++) {
                 var vehicle = selectedVehicles.get(i)
-                if (vehicle.armed === true){
-                    vehicle.startMissionAsync()
+                if (vehicle.underway === true && vehicle.flightMode === vehicle.missionFlightMode) {
+                    continue
                 }
+                vehicle.startMissionAsync()
             }
             break
         case actionArm:
