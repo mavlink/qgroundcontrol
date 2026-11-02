@@ -1250,8 +1250,9 @@ void _startMissionAsyncArm(Vehicle* vehicle, bool missionStartAfterArm)
 
 StartMissionAsyncChain* _activeStartMissionChain(Vehicle* vehicle)
 {
-    return vehicle->findChild<StartMissionAsyncChain*>(QStringLiteral("apmStartMissionChain"),
-                                                       Qt::FindDirectChildrenOnly);
+    // findChild<StartMissionAsyncChain*> needs Q_OBJECT. The chain is a plain QObject identified by name.
+    auto* object = vehicle->findChild<QObject*>(QStringLiteral("apmStartMissionChain"), Qt::FindDirectChildrenOnly);
+    return static_cast<StartMissionAsyncChain*>(object);
 }
 
 }  // namespace

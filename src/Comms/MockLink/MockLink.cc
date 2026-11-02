@@ -1,5 +1,20 @@
 #include "MockLink.h"
 
+#include <cmath>
+#include <cstring>
+
+#include <QtCore/QFile>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
+#include <QtCore/QLatin1StringView>
+#include <QtCore/QMutexLocker>
+#include <QtCore/QRandomGenerator>
+#include <QtCore/QSet>
+#include <QtCore/QTemporaryFile>
+#include <QtCore/QThread>
+#include <QtCore/QTimer>
+
 #include "AppMessages.h"
 #include "FactMetaData.h"
 #include "FirmwarePlugin.h"
@@ -11,28 +26,12 @@
 #include "MockLinkFTP.h"
 #include "MockLinkGimbal.h"
 #include "MockLinkWorker.h"
+#include "MockVideoStreamServer.h"
 #include "ParameterManager.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMAVLink.h"
 #include "QGCMath.h"
 #include "SecureMemory.h"
-
-#include "MockVideoStreamServer.h"
-
-#include <QtCore/QFile>
-#include <QtCore/QJsonArray>
-#include <QtCore/QJsonDocument>
-#include <QtCore/QJsonObject>
-#include <QtCore/QLatin1StringView>
-#include <QtCore/QMutexLocker>
-#include <QtCore/QSet>
-#include <QtCore/QRandomGenerator>
-#include <QtCore/QTemporaryFile>
-#include <QtCore/QThread>
-#include <QtCore/QTimer>
-
-#include <cmath>
-#include <cstring>
 
 QGC_LOGGING_CATEGORY(MockLinkLog, "Comms.MockLink.MockLink")
 QGC_LOGGING_CATEGORY(MockLinkVerboseLog, "Comms.MockLink.MockLink:verbose")
