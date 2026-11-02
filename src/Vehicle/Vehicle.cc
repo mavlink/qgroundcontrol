@@ -1759,15 +1759,19 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
     // The following if statement prevents the virtualTabletJoystick from sending values if the standard joystick is enabled
     bool isActiveVehicle = (MultiVehicleManager::instance()->activeVehicle() == this);
     bool joystickEnabled = isActiveVehicle && JoystickManager::instance()->activeJoystickEnabledForActiveVehicle();
-    if (!joystickEnabled) {
-        sendJoystickDataThreadSafe(
-                    static_cast<float>(roll),
-                    static_cast<float>(pitch),
-                    static_cast<float>(yaw),
-                    static_cast<float>(thrust),
-                    0, 0, // buttons
-                    NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN); // extension values
+    if (joystickEnabled) {
+        return;
     }
+
+    // The stick rests in the middle, so thrust is 0.5. ArduCopter turns that into RC throttle 1500
+    // and rejects a Stabilize arm with "Throttle too high". Only the selected vehicle receives this.
+    if (apmFirmware() && multiRotor() && !armed() && (thrust <= 0.5)) {
+        thrust = 0.0;
+    }
+
+    sendJoystickDataThreadSafe(static_cast<float>(roll), static_cast<float>(pitch), static_cast<float>(yaw),
+                               static_cast<float>(thrust), 0, 0,         // buttons
+                               NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN);  // extension values
 }
 
 void Vehicle::_say(const QString& text)
