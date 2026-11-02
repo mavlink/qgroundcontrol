@@ -90,6 +90,10 @@ Google publishes the NDK for x86_64 Linux hosts only, so on arm64 run the x86_64
 In VS Code, add `"options": ["--platform=linux/amd64"]` to `build` and `"runArgs": ["--platform=linux/amd64"]` in your local `devcontainer.json`.
 Open the repository in VS Code with the [Dev Containers](https://code.visualstudio.com/docs/devcontainers/containers) extension installed and choose **Reopen in Container**.
 The container installs the C++, CMake, QML and Python extensions and the QGC workspace settings, tasks and launch configurations, so you can build, test and debug from VS Code.
+CI publishes the image for both architectures as `ghcr.io/mavlink/qgc-dev` (`latest` from `master`, and each release's version tag), and the Dev Container uses it as a build cache.
+Docker reuses the published layers only while your checkout's files match CI's, including their permissions, so a checkout made with a umask other than `022` rebuilds every layer.
+You can also run the image directly, for example `docker run --rm -it -v "$PWD:/workspaces/qgroundcontrol" ghcr.io/mavlink/qgc-dev:latest`.
+It runs as the `vscode` user (UID 1000), so that user needs write access to the mounted checkout.
 
 ## Troubleshooting
 

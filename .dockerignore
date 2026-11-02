@@ -39,11 +39,11 @@ CMakeUserPresets.json
 *~
 tags
 
-# Python
-*.pyc
-__pycache__/
-.ruff_cache/
-.pytest_cache/
+# Python (anywhere in the tree: a stray cache file changes the COPY layers' cache keys)
+**/*.pyc
+**/__pycache__/
+**/.ruff_cache/
+**/.pytest_cache/
 .venv/
 *.egg-info/
 

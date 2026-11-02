@@ -42,6 +42,7 @@
 | `linux.yml`, `macos.yml`, `windows.yml` | Desktop builds, tests, and packages (`linux.yml` also builds the `custom-example` plugin) |
 | `android.yml`, `ios.yml` | Mobile builds, emulator/simulator smoke tests, and store uploads |
 | `docker.yml` | Builder images and containerized Linux/Android builds |
+| `devcontainer.yml` | Dev Container: builds the `devcontainer` image natively for amd64 and arm64 and smoke-tests it (`deploy/docker/smoke_devcontainer.py` builds and analyzes a small Qt program, and on amd64 compiles it for Android), then opens it through `devcontainer.json` with `devcontainers/ci` to check its features and `postCreateCommand`; pushes and manual runs also Grype-scan the image. Upstream `master` pushes that change its inputs publish `ghcr.io/mavlink/qgc-dev:latest`, release tags publish their version (with provenance and per-platform SBOM attestations), and pull requests only build |
 | `vm-builds.yml` | Builds inside the Multipass and Vagrant developer VMs |
 | `flatpak.yml` | Manual Flatpak build |
 | `_detect-changes.yml` | Reusable: decide whether a platform builds (`should_build`) and plan Android's and Docker's build legs (`matrix`) |
@@ -468,7 +469,8 @@ step leaves it out.
   (`prek cache gc`, which only warns on failure), and saves; PRs only restore. Docs
   Lint and Copilot Setup Steps restore the same entry read-only.
 - **lychee** restores and saves `.lycheecache` with a three-day entry lifetime; fork PRs only restore.
-- **Docker BuildKit** layers use `type=gha,version=2`, scoped by variant and target. On RunsOn,
+- **Docker BuildKit** layers use `type=gha,version=2`, scoped by variant and target (the Dev
+  Container uses `qgc-devcontainer-<arch>`). On RunsOn,
   `runs-on/action` initializes [Magic Cache](https://runs-on.com/docs/performance/caching/docker/)
   before Buildx to store layers in S3. Only non-PR jobs export layer caches.
 - **Not cached**: Android emulator AVDs (each run creates a fresh AVD), Flatpak, and uv/Python on
@@ -687,7 +689,8 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   (`public.ecr.aws/docker/library/<image>:<tag>@<digest>`, same digests as Docker Hub), so PR builds,
   which don't log in to Docker Hub, avoid its anonymous pull limit. Buildx's `moby/buildkit` image
   and the `docker/dockerfile:1` frontend still come from Docker Hub. No QEMU: every target builds
-  for the x86_64 runner, and aarch64 cross-compiles.
+  for the x86_64 runner, and aarch64 cross-compiles; `devcontainer.yml` builds the `devcontainer`
+  target natively on arm64 runners too.
 - Application builds use the shared `cache` action (separate from the BuildKit layer cache) with
   keys that separate image variants and compiler identities. The action skips host tool
   installation and resets/reports statistics inside the container. The workspace mount exposes
