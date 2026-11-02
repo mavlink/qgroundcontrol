@@ -33,7 +33,8 @@ private slots:
     void _disarmedPlaneAsyncSwitchesToAutoThenArms();
     void _disarmedPlaneAsyncAlreadyInAutoArmsWithoutModeChange();
     void _disarmedVtolAsyncSwitchesToAutoThenArms();
-    void _pauseAsyncSetsPauseModeThenSkipsRepeat();
+    void _pauseAsyncSetsPauseModeThenSendsItAgain();
+    void _pauseAsyncDuringStartDoesNotArm();
 
 private:
     void _connectAPMVehicle(bool plane);

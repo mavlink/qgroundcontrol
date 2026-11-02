@@ -353,7 +353,7 @@ void APMStartMissionTest::_disarmedVtolAsyncSwitchesToAutoThenArms()
     _verifyNoMissionStartSent();
 }
 
-void APMStartMissionTest::_pauseAsyncSetsPauseModeThenSkipsRepeat()
+void APMStartMissionTest::_pauseAsyncSetsPauseModeThenSendsItAgain()
 {
     _connectAPMVehicle(false /* plane */);
     if (QTest::currentTestFailed()) {
@@ -364,11 +364,30 @@ void APMStartMissionTest::_pauseAsyncSetsPauseModeThenSkipsRepeat()
     QCOMPARE_TRUE_WAIT(vehicle()->flightMode(), vehicle()->firmwarePlugin()->pauseFlightMode(),
                        TestTimeout::mediumMs());
 
+    // The reported mode can still be the pause mode after Start has requested Auto, so a second
+    // Pause has to send Brake as well.
     mockLink()->clearReceivedMavCommandCounts();
     vehicle()->pauseVehicleAsync();
+    QVERIFY_TRUE_WAIT(mockLink()->receivedMavCommandCount(MAV_CMD_DO_SET_MODE) == 1, TestTimeout::mediumMs());
+}
+
+void APMStartMissionTest::_pauseAsyncDuringStartDoesNotArm()
+{
+    _connectAPMVehicle(false /* plane */);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QVERIFY(!vehicle()->armed());
+    vehicle()->startMissionAsync();
+    vehicle()->pauseVehicleAsync();
+
+    QCOMPARE_TRUE_WAIT(vehicle()->flightMode(), vehicle()->firmwarePlugin()->pauseFlightMode(),
+                       TestTimeout::mediumMs());
     vehicle()->sendMavCommand(vehicle()->defaultComponentId(), MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED,
                               false /* showError */);
     QVERIFY_TRUE_WAIT(mockLink()->receivedMavCommandCount(MockLink::MAV_CMD_MOCKLINK_ALWAYS_RESULT_ACCEPTED) == 1,
                       TestTimeout::mediumMs());
-    QCOMPARE(mockLink()->receivedMavCommandCount(MAV_CMD_DO_SET_MODE), 0);
+    QVERIFY(!vehicle()->armed());
+    QCOMPARE(mockLink()->receivedMavCommandCount(MAV_CMD_MISSION_START), 0);
 }

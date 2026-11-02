@@ -4,6 +4,7 @@
 
 #include <QtCore/QPointer>
 #include <QtCore/QString>
+#include <QtCore/QTimer>
 
 #include "AppMessages.h"
 #include "MAVLinkLib.h"
@@ -636,6 +637,26 @@ namespace {
 
 constexpr char kStartMissionArmWaiter[] = "px4StartMissionArmWaiter";
 
+void _settleStartMission(QObject* waiter, const QPointer<Vehicle>& vehicle, const QString& missionMode, bool timedOut)
+{
+    if (waiter->property("settled").toBool()) {
+        return;
+    }
+    waiter->setProperty("settled", true);
+    if (vehicle) {
+        (void) QObject::disconnect(vehicle.data(), &Vehicle::flightModeChanged, waiter, nullptr);
+        const bool inMissionMode = vehicle->flightMode() == missionMode;
+        if (timedOut && !inMissionMode) {
+            QGC::showAppMessage(
+                PX4FirmwarePlugin::tr("Unable to start mission: Vehicle not changing to %1 flight mode.")
+                    .arg(missionMode));
+        } else if (inMissionMode && !vehicle->armed()) {
+            vehicle->setArmed(true, false /* showError */);
+        }
+    }
+    waiter->deleteLater();
+}
+
 void _armWhenMissionMode(Vehicle* vehicle, const QString& missionMode)
 {
     if (QObject* previous =
@@ -643,29 +664,31 @@ void _armWhenMissionMode(Vehicle* vehicle, const QString& missionMode)
         delete previous;
     }
 
-    if (vehicle->armed()) {
-        return;
-    }
-    // SET_MODE has no ack. Arm once a heartbeat reports Mission, which is after setFlightMode returns.
+    // SET_MODE has no ack. Arm only after a heartbeat reports Mission, and report the same failure
+    // as startMission() if that never happens. The budget matches _setFlightModeAndValidate.
     if (vehicle->flightMode() == missionMode) {
-        vehicle->setArmed(true, false /* showError */);
+        if (!vehicle->armed()) {
+            vehicle->setArmed(true, false /* showError */);
+        }
         return;
     }
 
     auto* waiter = new QObject(vehicle);
     waiter->setObjectName(QLatin1String(kStartMissionArmWaiter));
     const QPointer<Vehicle> vehiclePtr(vehicle);
-    (void) QObject::connect(
-        vehicle, &Vehicle::flightModeChanged, waiter, [waiter, vehiclePtr, missionMode](const QString& flightMode) {
-            if (!vehiclePtr || (flightMode != missionMode)) {
-                return;
-            }
-            (void) QObject::disconnect(vehiclePtr.data(), &Vehicle::flightModeChanged, waiter, nullptr);
-            waiter->deleteLater();
-            if (!vehiclePtr->armed()) {
-                vehiclePtr->setArmed(true, false /* showError */);
-            }
-        });
+    auto* timer = new QTimer(waiter);
+    timer->setSingleShot(true);
+    timer->setInterval(3 * 13 * 100);
+    (void) QObject::connect(timer, &QTimer::timeout, waiter, [waiter, vehiclePtr, missionMode]() {
+        _settleStartMission(waiter, vehiclePtr, missionMode, true);
+    });
+    (void) QObject::connect(vehicle, &Vehicle::flightModeChanged, waiter,
+                            [waiter, vehiclePtr, missionMode](const QString& flightMode) {
+                                if (flightMode == missionMode) {
+                                    _settleStartMission(waiter, vehiclePtr, missionMode, false);
+                                }
+                            });
+    timer->start();
 }
 
 }  // namespace

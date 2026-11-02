@@ -759,14 +759,16 @@ void APMFirmwarePlugin::pauseVehicle(Vehicle *vehicle) const
     _setFlightModeAndValidate(vehicle, pauseFlightMode());
 }
 
+namespace {
+void _pauseAfterStartChain(Vehicle* vehicle);
+}
+
 void APMFirmwarePlugin::pauseVehicleAsync(Vehicle* vehicle) const
 {
     if (!vehicle) {
         return;
     }
-    if (vehicle->flightMode() != pauseFlightMode()) {
-        vehicle->setFlightMode(pauseFlightMode());
-    }
+    _pauseAfterStartChain(vehicle);
 }
 
 struct MAV_CMD_DO_REPOSITION_HandlerData {
@@ -1158,6 +1160,8 @@ public:
     StartMissionAsyncStep step;
     bool armAfterMode = false;
     bool missionStartAfterArm = false;
+    // Pause arrived while this command was still in flight. The ack must not arm or start the mission.
+    bool cancelled = false;
 };
 
 void _startMissionAsyncShowFailure(StartMissionAsyncStep step)
@@ -1198,6 +1202,17 @@ void _startMissionAsyncAck(void* resultHandlerData, int /*compId*/, const mavlin
                            Vehicle::MavCmdResultFailureCode_t failureCode)
 {
     auto* chain = static_cast<StartMissionAsyncChain*>(resultHandlerData);
+    if (chain->cancelled) {
+        const bool pauseAlreadySent = chain->step == StartMissionAsyncStep::Arm;
+        Vehicle* target = chain->vehicle;
+        delete chain;
+        // Guided/Auto still owns the DO_SET_MODE slot, so Brake goes out when that ack arrives.
+        // An in-flight arm is a different command, and Pause already sent Brake.
+        if (target && !pauseAlreadySent) {
+            target->setFlightMode(target->firmwarePlugin()->pauseFlightMode());
+        }
+        return;
+    }
     // A second Start while the first command is still pending is the same sequence, not a failure.
     if ((failureCode == Vehicle::MavCmdResultFailureDuplicateCommand) || !chain->vehicle) {
         delete chain;
@@ -1256,6 +1271,22 @@ StartMissionAsyncChain* _activeStartMissionChain(Vehicle* vehicle)
     return static_cast<StartMissionAsyncChain*>(object);
 }
 
+void _pauseAfterStartChain(Vehicle* vehicle)
+{
+    // Start may already have sent Auto while the last heartbeat still says Brake. Skipping Pause on
+    // that report leaves the vehicle in Auto. A second DO_SET_MODE is dropped while the first is
+    // pending, so mark the chain and send Brake from its ack. With no chain, send Brake anyway.
+    if (StartMissionAsyncChain* chain = _activeStartMissionChain(vehicle)) {
+        chain->cancelled = true;
+        // Arm does not occupy DO_SET_MODE, so Brake can go out now. The ack must not start the mission.
+        if (chain->step == StartMissionAsyncStep::Arm) {
+            vehicle->setFlightMode(vehicle->firmwarePlugin()->pauseFlightMode());
+        }
+        return;
+    }
+    vehicle->setFlightMode(vehicle->firmwarePlugin()->pauseFlightMode());
+}
+
 }  // namespace
 
 void APMFirmwarePlugin::startMissionAsync(Vehicle* vehicle) const
@@ -1287,6 +1318,8 @@ void APMFirmwarePlugin::startMissionAsync(Vehicle* vehicle) const
     if (!vehicle->armed()) {
         // Group Arm may already be moving this copter to Guided. Keep that chain and add the mission start.
         if (StartMissionAsyncChain* chain = _activeStartMissionChain(vehicle)) {
+            // Start after Pause keeps the mission. The in-flight command is still the mode change.
+            chain->cancelled = false;
             chain->armAfterMode = true;
             chain->missionStartAfterArm = true;
             return;
@@ -1313,6 +1346,7 @@ void APMFirmwarePlugin::armVehicleAsync(Vehicle* vehicle) const
     // Guided skips the check for a GCS arm, matching startMission(). Plane and VTOL keep the current mode.
     if (!vehicle->fixedWing() && !vehicle->vtol() && !vehicle->underway()) {
         if (StartMissionAsyncChain* chain = _activeStartMissionChain(vehicle)) {
+            chain->cancelled = false;
             chain->armAfterMode = true;
             return;
         }
