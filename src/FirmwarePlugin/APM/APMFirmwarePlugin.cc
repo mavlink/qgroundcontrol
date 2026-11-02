@@ -1143,12 +1143,13 @@ enum class StartMissionAsyncStep
 class StartMissionAsyncChain : public QObject
 {
 public:
-    StartMissionAsyncChain(Vehicle* vehicle, StartMissionAsyncStep step, bool armAfterMode, bool missionStartAfterArm)
-        : QObject(vehicle)
-        , vehicle(vehicle)
-        , step(step)
-        , armAfterMode(armAfterMode)
-        , missionStartAfterArm(missionStartAfterArm)
+    StartMissionAsyncChain(Vehicle* targetVehicle, StartMissionAsyncStep initialStep, bool armAfterModeChange,
+                           bool startMissionAfterArm)
+        : QObject(targetVehicle)
+        , vehicle(targetVehicle)
+        , step(initialStep)
+        , armAfterMode(armAfterModeChange)
+        , missionStartAfterArm(startMissionAfterArm)
     {
         setObjectName(QStringLiteral("apmStartMissionChain"));
     }
