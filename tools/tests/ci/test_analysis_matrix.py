@@ -312,7 +312,10 @@ def test_main_writes_include_and_toolchain_outputs(repo, gh_output: Path, build_
     assert main(["--event", "pull_request", "--base", base, "--root", str(root)]) == 0
     outputs = read_github_file(gh_output)
     assert _plan(json.loads(outputs.pop("include"))) == (1, "changed")
-    assert outputs == {key: str(value) for key, value in build_config.items()}
+    assert outputs["llvm_version"] == build_config["llvm_version"]
+    assert outputs["clazy_sha256"] == build_config["clazy_sha256"]
+    # A per-architecture pin is not a usable step output.
+    assert "clang_tidy_sha256" not in outputs
 
 
 def test_main_writes_an_empty_include_when_nothing_needs_analysis(

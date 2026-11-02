@@ -31,7 +31,7 @@ from typing import NamedTuple
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
-from common.build_config import load_build_config
+from common.build_config import pinned_release
 from common.gh_actions import (
     append_github_env,
     append_github_path,
@@ -54,19 +54,6 @@ from ci.cache.build_cache_artifact import pack_snapshot
 # ---------------------------------------------------------------------------
 
 _LINUX_BIN = Path("/usr/local/bin")
-
-
-class PinnedRelease(NamedTuple):
-    version: str
-    sha256: dict[str, str]
-    url: str
-
-
-def pinned_release(tool: str) -> PinnedRelease:
-    """Return build-config.json's ``tools.<tool>`` version, per-platform digests and asset URL."""
-    pin = load_build_config()["tools"][tool]
-    url = f"https://github.com/{pin['repository']}/releases/download/v{pin['version']}"
-    return PinnedRelease(pin["version"], pin["sha256"], url)
 
 
 def _run(command: list[str]) -> str:

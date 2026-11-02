@@ -10,6 +10,7 @@
     "min_sdk": "28",
     "build_tools": "36.0.0",
     "cmdline_tools": "14742923",
+    "cmdline_tools_sha256": "04453066b540409d975c676d781da1477479dde3761310f1a7eb92a1dfb15af7",
     "ndk_version": "r27c",
     "ndk_full_version": "27.2.12479018",
     "java_version": "21"
@@ -162,7 +163,10 @@
     "clazy_revision": "f3fb82cb8cd82664e5e5a546aa2a73d3a297d1bd",
     "clazy_sha256": "8b440cccf2ab6d40c9ad3e97605e22fa48f29ef0430add48afae47f2db19ef46",
     "clang_tidy_version": "23.1.3",
-    "clang_tidy_sha256": "6b2558bc396a6e792190700134609e041f657d7f8d15385e8b0aa66f5ffe21b5"
+    "clang_tidy_sha256": {
+      "x86_64": "6b2558bc396a6e792190700134609e041f657d7f8d15385e8b0aa66f5ffe21b5",
+      "aarch64": "5639a8e65df6701ac144ee6b9e73aef4bdd3706cdc5849de1a5147c5aeaddf24"
+    }
   },
   "tools": {
     "ccache": {

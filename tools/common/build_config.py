@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 from .io import read_json
 
@@ -32,6 +32,7 @@ DEFAULT_EXPORT_KEYS = [
     "android.min_sdk",
     "android.build_tools",
     "android.cmdline_tools",
+    "android.cmdline_tools_sha256",
     "build.cmake_minimum_version",
     "build.cmake_version",
     "build.ninja_version",
@@ -91,6 +92,19 @@ def load_build_config(
     if not isinstance(data, dict):
         raise ValueError(f"Expected JSON object in {path}")
     return data
+
+
+class PinnedRelease(NamedTuple):
+    version: str
+    sha256: dict[str, str]
+    url: str
+
+
+def pinned_release(tool: str) -> PinnedRelease:
+    """Return build-config.json's ``tools.<tool>`` version, per-platform digests and asset URL."""
+    pin = load_build_config()["tools"][tool]
+    url = f"https://github.com/{pin['repository']}/releases/download/v{pin['version']}"
+    return PinnedRelease(pin["version"], pin["sha256"], url)
 
 
 def get_build_config_value(

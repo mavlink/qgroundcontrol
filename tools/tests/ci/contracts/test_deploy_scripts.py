@@ -426,3 +426,29 @@ def test_deployment_scans_only_application_qml(tmp_path, platform, custom):
     else:
         assert "-no-quick-import" in options
         assert not any(option.startswith("-qmldir=") for option in options)
+
+
+def _qgc_android(tmp_path: Path, machine: str, *args: str) -> subprocess.CompletedProcess[str]:
+    """Run qgc-android with `uname -m` reporting *machine*."""
+    uname = tmp_path / "uname"
+    uname.write_text(f"#!/bin/sh\necho {machine}\n")
+    uname.chmod(0o755)
+    return subprocess.run(
+        ["bash", str(REPO_ROOT / "deploy/docker/qgc-android.sh"), *args],
+        env={**os.environ, "PATH": f"{tmp_path}:{os.environ['PATH']}"},
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_qgc_android_explains_that_arm64_needs_the_x86_64_image(tmp_path):
+    result = _qgc_android(tmp_path, "aarch64", "arm64-v8a", "true")
+    assert result.returncode == 1
+    assert "--platform linux/amd64" in result.stderr
+
+
+@pytest.mark.parametrize("args", [("arm64-v8a",), ("mips", "true")])
+def test_qgc_android_rejects_missing_commands_and_unknown_abis(tmp_path, args):
+    result = _qgc_android(tmp_path, "x86_64", *args)
+    assert result.returncode == 2
+    assert "arm64-v8a" in result.stderr
