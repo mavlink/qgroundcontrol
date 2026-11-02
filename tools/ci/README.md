@@ -40,6 +40,7 @@ and Ruff skips `build` directories.
 | `cache/cpm_helper.py` | Fingerprint CPM dependencies and the GStreamer SDK config for `cache_plan.py`, and create and apply runner-image CPM seeds |
 | `cache/gh_cache_cleanup.py` | List and optionally delete GitHub Actions caches, taking the branch and mode from `cache-cleanup.yml`'s triggering event (`CLEANUP_*` variables override them) |
 | `runner/analysis_tools.py` | Install the clang-tidy wheel hash-pinned in `build-config.json`, verify `.clang-tidy`, and put LLVM, clang-tidy, and Clazy on `PATH` for `analysis.yml` |
+| `runner/apt_debs_artifact.py` | Restore a Copilot session's apt downloads from the newest `copilot-apt-debs` artifact of a master `copilot-setup-steps.yml` run, extracting only top-level `.deb` files; a failure only warns |
 | `runner/apt_install_retry.py` | Install apt packages with bounded retries, RunsOn's in-region EC2 mirror, and a runner-owned download cache |
 | `runner/build_setup.py` | Validate `build-setup`'s inputs and resolve the values its steps read: Qt hosts, architectures and modules, cache target, Xcode and MSVC selections, Windows ARM64 cross builds' host Qt, Android ABIs and SDK environment, and the `build-config.json` tool versions |
 | `runner/enable_kvm.py` | Open `/dev/kvm` to every user on a nested-virtualization runner |
