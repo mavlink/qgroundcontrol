@@ -80,6 +80,50 @@ set(CUSTOM_QML_OVERRIDES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/CustomGuidedActionsController.qml"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/FlyViewCustomLayer.qml"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/FlyViewToolStripActionList.qml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/QGCToolBarButton.qml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/MainStatusIndicator.qml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/GPSIndicator.qml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/FlightModeIndicator.qml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/FlyViewMapClickDropPanel.qml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/BatteryIndicator.qml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/EscIndicator.qml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/FlyViewToolStrip.qml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/FlyViewBottomRightRowLayout.qml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/PlanMapItems.qml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/GeoMapMissionItems.qml"
+)
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/src/PlanMapItems.qml"
+    PROPERTIES QT_RESOURCE_ALIAS "QGroundControl/FlightMap/MapItems/PlanMapItems.qml"
+)
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/src/GeoMapMissionItems.qml"
+    PROPERTIES QT_RESOURCE_ALIAS "QGroundControl/GeoMap/GeoMapMissionItems.qml"
+)
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/src/BatteryIndicator.qml"
+    PROPERTIES QT_RESOURCE_ALIAS "QGroundControl/Toolbar/BatteryIndicator.qml"
+)
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/src/EscIndicator.qml"
+    PROPERTIES QT_RESOURCE_ALIAS "QGroundControl/Toolbar/EscIndicator.qml"
+)
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/src/FlyViewToolStrip.qml"
+    PROPERTIES QT_RESOURCE_ALIAS "QGroundControl/FlyView/FlyViewToolStrip.qml"
+)
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/src/FlyViewBottomRightRowLayout.qml"
+    PROPERTIES QT_RESOURCE_ALIAS "QGroundControl/FlyView/FlyViewBottomRightRowLayout.qml"
+)
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/src/FlyViewMapClickDropPanel.qml"
+    PROPERTIES QT_RESOURCE_ALIAS "QGroundControl/FlyView/FlyViewMapClickDropPanel.qml"
+)
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/src/FlightModeIndicator.qml"
+    PROPERTIES QT_RESOURCE_ALIAS "QGroundControl/Toolbar/FlightModeIndicator.qml"
+)
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/src/MainStatusIndicator.qml"
+    PROPERTIES QT_RESOURCE_ALIAS "QGroundControl/Toolbar/MainStatusIndicator.qml"
+)
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/src/GPSIndicator.qml"
+    PROPERTIES QT_RESOURCE_ALIAS "QGroundControl/Toolbar/GPSIndicator.qml"
+)
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/src/QGCToolBarButton.qml"
+    PROPERTIES QT_RESOURCE_ALIAS "QGroundControl/Controls/QGCToolBarButton.qml"
 )
 set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/src/CustomGuidedActionsController.qml"
     PROPERTIES QT_RESOURCE_ALIAS "QGroundControl/FlyView/CustomGuidedActionsController.qml"
@@ -96,10 +140,10 @@ qt_add_resources(${CMAKE_PROJECT_NAME} custom_qml_overrides
 )
 
 set(CUSTOM_BRAND_RESOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/res/Images/QGCLogoFull.svg"
+    "${CMAKE_CURRENT_SOURCE_DIR}/res/Images/CODRONE_logo_small.svg"
     "${CMAKE_CURRENT_SOURCE_DIR}/res/icons/custom_qgroundcontrol.ico"
 )
-set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/res/Images/QGCLogoFull.svg"
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/res/Images/CODRONE_logo_small.svg"
     PROPERTIES QT_RESOURCE_ALIAS "QGCLogoFull.svg"
 )
 set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/res/icons/custom_qgroundcontrol.ico"

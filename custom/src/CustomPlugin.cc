@@ -7,6 +7,8 @@
 #include "QGCMAVLink.h"
 #include "AppSettings.h"
 #include "SettingsManager.h"
+#include "MavlinkSettings.h"
+#include "UnitsSettings.h"
 
 #include <QtCore/QApplicationStatic>
 #include <QtQml/QQmlApplicationEngine>
@@ -56,13 +58,84 @@ void CustomPlugin::_advancedChanged(bool changed)
 void CustomPlugin::registerCustomSettings(SettingsManager *settingsManager)
 {
     settingsManager->registerCustomSettingsGroup(QStringLiteral("customSettings"), new CustomSettings());
+
+    Fact *const heartbeat = settingsManager->mavlinkSettings()->sendGCSHeartbeat();
+    // Fact setters do not enforce readOnly. Restore false synchronously after persistence writes.
+    (void) connect(heartbeat, &Fact::rawValueChanged, heartbeat, [heartbeat](const QVariant &value) {
+        if (value.toBool()) {
+            heartbeat->setRawValue(false);
+        }
+    }, Qt::DirectConnection);
+    // Persist the enforced value too, replacing any saved or migrated true value.
+    heartbeat->forceSetRawValue(false);
+
+    Fact *const virtualJoystick = settingsManager->appSettings()->virtualJoystick();
+    (void) connect(virtualJoystick, &Fact::rawValueChanged, virtualJoystick, [virtualJoystick](const QVariant &value) {
+        if (!value.toBool()) {
+            virtualJoystick->setRawValue(true);
+        }
+    }, Qt::DirectConnection);
+    virtualJoystick->forceSetRawValue(true);
+
+    const auto forceMetricUnit = [](Fact *fact, uint32_t metricUnit) {
+        (void) QObject::connect(fact, &Fact::rawValueChanged, fact, [fact, metricUnit](const QVariant &value) {
+            if (value.toUInt() != metricUnit) {
+                fact->setRawValue(metricUnit);
+            }
+        }, Qt::DirectConnection);
+        fact->forceSetRawValue(metricUnit);
+    };
+    UnitsSettings *const units = settingsManager->unitsSettings();
+    forceMetricUnit(units->horizontalDistanceUnits(), UnitsSettings::HorizontalDistanceUnitsMeters);
+    forceMetricUnit(units->verticalDistanceUnits(), UnitsSettings::VerticalDistanceUnitsMeters);
+    forceMetricUnit(units->areaUnits(), UnitsSettings::AreaUnitsSquareMeters);
+    forceMetricUnit(units->speedUnits(), UnitsSettings::SpeedUnitsMetersPerSecond);
+    forceMetricUnit(units->temperatureUnits(), UnitsSettings::TemperatureUnitsCelsius);
+    forceMetricUnit(units->weightUnits(), UnitsSettings::WeightUnitsKg);
 }
 
 void CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData, bool &userVisible)
 {
     QGCCorePlugin::adjustSettingMetaData(settingsGroup, metaData, userVisible);
 
+    if (settingsGroup == MavlinkSettings::settingsGroup && metaData.name() == MavlinkSettings::sendGCSHeartbeatName) {
+        // Hidden SettingsFacts ignore saved values, including migrated legacy settings.
+        metaData.setRawDefaultValue(false);
+        metaData.setReadOnly(true);
+        userVisible = false;
+        return;
+    }
+
+    if (settingsGroup == UnitsSettings::settingsGroup) {
+        const QString &name = metaData.name();
+        if (name == UnitsSettings::horizontalDistanceUnitsName) {
+            metaData.setRawDefaultValue(UnitsSettings::HorizontalDistanceUnitsMeters);
+        } else if (name == UnitsSettings::verticalDistanceUnitsName) {
+            metaData.setRawDefaultValue(UnitsSettings::VerticalDistanceUnitsMeters);
+        } else if (name == UnitsSettings::areaUnitsName) {
+            metaData.setRawDefaultValue(UnitsSettings::AreaUnitsSquareMeters);
+        } else if (name == UnitsSettings::speedUnitsName) {
+            metaData.setRawDefaultValue(UnitsSettings::SpeedUnitsMetersPerSecond);
+        } else if (name == UnitsSettings::temperatureUnitsName) {
+            metaData.setRawDefaultValue(UnitsSettings::TemperatureUnitsCelsius);
+        } else if (name == UnitsSettings::weightUnitsName) {
+            metaData.setRawDefaultValue(UnitsSettings::WeightUnitsKg);
+        } else {
+            return;
+        }
+        metaData.setReadOnly(true);
+        userVisible = false;
+        return;
+    }
+
     if (settingsGroup == AppSettings::settingsGroup) {
+        if (metaData.name() == AppSettings::virtualJoystickName) {
+            metaData.setRawDefaultValue(true);
+            metaData.setReadOnly(true);
+            userVisible = false;
+            return;
+        }
+
         // This tells QGC than when you are creating Plans while not connected to a vehicle
         // the specific firmware/vehicle the plan is for.
         if (metaData.name() == AppSettings::offlineEditingFirmwareClassName) {

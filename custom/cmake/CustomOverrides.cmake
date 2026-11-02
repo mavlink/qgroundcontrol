@@ -6,7 +6,14 @@
 # ----------------------------------------------------------------------------
 # Application Branding
 # ----------------------------------------------------------------------------
-set(QGC_APP_NAME "QGroundControl" CACHE STRING "App Name" FORCE)
+# Separate RunGuard keys, QSettings, standard data paths and desktop identity from upstream QGC.
+set(QGC_APP_NAME "CODRONEControl" CACHE STRING "App Name" FORCE)
+set(QGC_ORG_NAME "CODRONE" CACHE STRING "Organization name" FORCE)
+set(QGC_ORG_DOMAIN "codrone.local" CACHE STRING "Organization domain" FORCE)
+set(QGC_PACKAGE_NAME "org.codrone.control" CACHE STRING "Package identifier" FORCE)
+# Ship this customer build as AppImage. Upstream DEB/RPM packaging still hardcodes
+# the official QGC package name and /opt/QGroundControl installation directory.
+set(QGC_CPACK_GENERATOR "" CACHE STRING "Native package generator (portable customer build only)" FORCE)
 set(QGC_ANDROID_PACKAGE_NAME "org.mavlink.customqgroundcontrol" CACHE STRING "Android package identifier" FORCE)
 
 # ----------------------------------------------------------------------------

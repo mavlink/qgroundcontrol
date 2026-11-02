@@ -1,17 +1,25 @@
+#include <algorithm>
+
 #include "CustomFirmwarePlugin.h"
 #include "CustomAutoPilotPlugin.h"
 #include "px4_custom_mode.h"
 #include "Vehicle.h"
 
+namespace {
+constexpr uint32_t EXTERNAL_MODE_3 = (uint32_t(PX4_CUSTOM_MAIN_MODE_AUTO) << 16) |
+                                     (uint32_t(PX4_CUSTOM_SUB_MODE_EXTERNAL3) << 24);
+constexpr uint32_t EXTERNAL_MODE_4 = (uint32_t(PX4_CUSTOM_MAIN_MODE_AUTO) << 16) |
+                                     (uint32_t(PX4_CUSTOM_SUB_MODE_EXTERNAL4) << 24);
+} // namespace
+
 CustomFirmwarePlugin::CustomFirmwarePlugin()
 {
-    for (auto &mode: _flightModeList) {
-        //-- Narrow the flight mode options to only these
-        if ((mode.mode_name != pauseFlightMode()) && (mode.mode_name != rtlFlightMode()) && (mode.mode_name != missionFlightMode())) {
-            // No other flight modes can be set
-            mode.canBeSet = false;
-        }
-    }
+    // Base-constructor virtual calls cannot apply our policy. Keep the complete fallback table for
+    // telemetry and safety commands; a later authoritative AVAILABLE_MODES list replaces it entirely.
+    FlightModeList modeList = _flightModeList;
+    modeList.append({tr("External Mode 3"), uint8_t(0), EXTERNAL_MODE_3, true, false, true, true});
+    modeList.append({tr("External Mode 4"), uint8_t(0), EXTERNAL_MODE_4, true, false, true, true});
+    updateAvailableFlightModes(modeList);
 }
 
 AutoPilotPlugin* CustomFirmwarePlugin::autopilotPlugin(Vehicle *vehicle) const
@@ -43,12 +51,17 @@ bool CustomFirmwarePlugin::hasGimbal(Vehicle* /*vehicle*/, bool &rollSupported, 
 
 void CustomFirmwarePlugin::updateAvailableFlightModes(FlightModeList &modeList)
 {
-    // This custom build only allows Hold, Return and Mission to be set by the user.
-    for (auto &mode: modeList) {
-        const PX4CustomMode::Mode cMode = static_cast<PX4CustomMode::Mode>(mode.custom_mode);
-        mode.canBeSet = (cMode == PX4CustomMode::AUTO_LOITER) ||
-                        (cMode == PX4CustomMode::AUTO_RTL) ||
-                        (cMode == PX4CustomMode::AUTO_MISSION);
+    for (auto &mode : modeList) {
+        mode.canBeSet = mode.canBeSet &&
+                        ((mode.custom_mode == EXTERNAL_MODE_3) || (mode.custom_mode == EXTERNAL_MODE_4)) &&
+                        !mode.mode_name.trimmed().isEmpty();
+        if (mode.canBeSet) {
+            // PX4 setFlightMode resolves names case-insensitively, including non-selectable entries.
+            // Do not expose a label that could command a different numeric mode.
+            mode.canBeSet = std::count_if(modeList.cbegin(), modeList.cend(), [&mode](const auto &other) {
+                return mode.mode_name.compare(other.mode_name, Qt::CaseInsensitive) == 0;
+            }) == 1;
+        }
     }
 
     // Let the base class do the standard airframe (fixed wing / multi rotor) classification
