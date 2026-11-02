@@ -69,6 +69,7 @@ FULL_SCAN_INPUTS = (
     "tools/analyzers/compiler.py",
     "tools/analyzers/dependencies.py",
     "tools/analyzers/result_cache.py",
+    "tools/common/analysis_diagnostics.py",
     "tools/setup/build_clazy.py",
     "tools/ci/runner/analysis_tools.py",
     # Generators of headers that analyzed sources include.

@@ -707,6 +707,45 @@ def test_main_falls_back_to_older_successful_run_with_matching_artifacts(tmp_pat
     assert download_mock.call_args.args[0] == 100
 
 
+def test_only_triggering_run_never_falls_back_to_an_older_run(tmp_path: Path) -> None:
+    runs = [
+        {"id": run_id, "name": "Code Analysis", "status": "completed", "conclusion": "failure"}
+        for run_id in (101, 100)
+    ]
+    with (
+        patch.object(mod, "triggering_run", return_value={"id": 101}),
+        patch.object(mod, "list_workflow_runs_for_sha", return_value=runs),
+        patch.object(
+            mod,
+            "list_run_artifacts",
+            side_effect=lambda repo, run_id: (
+                [{"name": "clang-tidy-clazy-output-1", "size_in_bytes": 1}] if run_id == 100 else []
+            ),
+        ),
+        patch.object(mod, "download_run_artifacts") as download_mock,
+    ):
+        rc = mod.main(
+            [
+                "--repo",
+                "owner/repo",
+                "--head-sha",
+                "abc123",
+                "--output-dir",
+                str(tmp_path),
+                "--workflows",
+                "Code Analysis",
+                "--artifact-prefixes",
+                "clang-tidy-clazy-output",
+                "--include-failed",
+                "--allow-missing",
+                "--only-triggering-run",
+            ],
+        )
+
+    assert rc == 0
+    download_mock.assert_not_called()
+
+
 def test_main_writes_sizes_file(tmp_path: Path) -> None:
     runs = [{"id": 42, "name": "Linux", "status": "completed", "conclusion": "success"}]
     artifacts = [

@@ -5,7 +5,11 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
-from common.analysis_diagnostics import AnalysisWarning, load_unique_warnings
+from common.analysis_diagnostics import (
+    AnalysisWarning,
+    load_changed_findings,
+    load_unique_warnings,
+)
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -62,3 +66,18 @@ def test_unreadable_reports_are_logged_and_skipped(
     assert {tool: len(found) for tool, found in warnings.items()} == {"other": 1}
     assert changed == {}
     assert "Failed to parse analysis diagnostics" in caplog.text
+
+
+def test_changed_findings_skip_malformed_rows_and_keep_exact_paths(tmp_path: Path) -> None:
+    # Reports come from pull request code; GitHub's file names must match exactly.
+    long_path = "src/" + "deeply/nested  dir/" * 8 + "Long File.cc"
+    _write(
+        tmp_path / "clang-tidy-diagnostics.json",
+        "clang-tidy",
+        {},
+        {long_path: [[1, 1, [], "check"], [2, 3, "error", "check", "message", "  2 | code"]]},
+    )
+
+    (finding,) = load_changed_findings(tmp_path)
+
+    assert (finding.file, finding.line, finding.severity) == (long_path, 2, "error")

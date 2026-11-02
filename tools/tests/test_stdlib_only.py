@@ -34,6 +34,7 @@ PRE_SETUP_PYTHON_SCRIPTS: tuple[str, ...] = (
     "tools/ci/planning/analysis_matrix.py",
     "tools/ci/planning/plan_platform.py",
     "tools/ci/publish/deploy_docs.py",
+    "tools/ci/reporting/analysis_review.py",
     "tools/ci/reporting/collect_build_status.py",
     "tools/ci/reporting/download_artifacts.py",
     "tools/ci/reporting/gh_pr_size_label.py",

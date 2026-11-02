@@ -208,6 +208,7 @@ def test_unique_diagnostics_are_recorded_once_per_location(tmp_path, monkeypatch
         "diagnostics": {
             "build/gen/moc.h": [[4, 1, "error", "bugprone-macro"]],
             "src/a.cc": [[1, 2, "warning", "readability-braces"]],
+            "src/b.cc": [[2, 1, "error", ""]],
             "src/shared.h": [[3, 7, "warning", "modernize-use-nodiscard"]],
         },
     }
@@ -232,8 +233,13 @@ def test_pull_request_diagnostics_repeat_those_on_changed_lines(git_repo, monkey
     outputs = {
         "a.cc": f"{src}/a.cc:2:1: warning: old [check-old]\n"
         f"{src}/a.cc:3:5: warning: new [check-new]\n"
-        f"{src}/shared.h:1:1: warning: header [check-header]\n",
-        "b.cc": f"{src}/b.cc:2:1: warning: added file [check-added]\n",
+        "    3 | three\n"
+        "      |     ^\n"
+        f"{src}/shared.h:1:1: warning: header [check-header]\n"
+        # Another unit repeats one of b.cc's diagnostics; the repeat collapses.
+        f"{src}/b.cc:2:1: warning: added file [check-added]\n",
+        "b.cc": f"{src}/b.cc:2:1: warning: added file [check-added]\n"
+        f"{src}/b.cc:2:1: warning: other message [check-added]\n",
     }
 
     def run(command, **kwargs):
@@ -251,10 +257,16 @@ def test_pull_request_diagnostics_repeat_those_on_changed_lines(git_repo, monkey
     assert report["commit"] == (github_sha or head)
     assert len(report["diagnostics"]["src/a.cc"]) == 2
     # Only line 3 of a.cc changed, b.cc is new, and the header did not change.
+    # Changed rows add the message and the source excerpt printed under the diagnostic.
     assert report["changed"] == {
-        "src/a.cc": [[3, 5, "warning", "check-new"]],
-        "src/b.cc": [[2, 1, "warning", "check-added"]],
+        "src/a.cc": [[3, 5, "warning", "check-new", "new", "    3 | three\n      |     ^"]],
+        # Distinct messages at one location each keep their own row.
+        "src/b.cc": [
+            [2, 1, "warning", "check-added", "added file", ""],
+            [2, 1, "warning", "check-added", "other message", ""],
+        ],
     }
+    assert len(report["diagnostics"]["src/b.cc"]) == 1
 
 
 @pytest.mark.parametrize("checkout", ["no repository", "no commits", "no git"])

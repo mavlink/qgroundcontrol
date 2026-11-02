@@ -45,7 +45,7 @@
 | `vm-builds.yml` | Builds inside the Multipass and Vagrant developer VMs |
 | `flatpak.yml` | Manual Flatpak build |
 | `_detect-changes.yml` | Reusable: decide whether a platform builds (`should_build`) and plan Android's and Docker's build legs (`matrix`) |
-| `build-results.yml` | PR build-results comment, compared with the PR base's own builds (`workflow_run` trigger) |
+| `build-results.yml` | PR build-results comment, compared with the PR base's own builds, and Code Analysis's inline review (`workflow_run` trigger) |
 | `release.yml` | Draft a GitHub Release with git-cliff notes for a pushed `vX.Y.Z` tag (assets are uploaded by hand) |
 | `analysis.yml` | Code Analysis: clang-tidy and Clazy; manual IWYU, qmllint, and ThreadSanitizer |
 | `codeql.yml` | CodeQL for Actions, Java/Kotlin, and Python |
@@ -948,6 +948,18 @@ Actions" (Settings → Pages) before the first deploy.
 - `report_context.py --comment comment.md` rechecks that the PR head is still the build's commit,
   then creates or updates the PR's comment marked `<!-- build-results -->` (or the marker of the
   comments `thollander/actions-comment-pull-request` posted before) through `gh api`.
+- When the triggering run is Code Analysis, a separate `analysis-review` job (in its own
+  `analysis-review-pr-<N>` concurrency group, so a trigger queueing behind the comment job cannot
+  cancel it) downloads the triggering run's `clang-tidy-clazy-output` artifacts, and
+  `analysis_review.py` posts their warnings and errors on lines the PR's diff adds as one inline
+  `COMMENT` review on the PR head (at most 25, each finding once, with its escaped message, bare
+  URLs and mentions broken, and fenced source excerpt, and marked so a later run never repeats it,
+  even after its line moves); past 25 the review points to the analysis run for the rest, and it
+  says its results are partial when the analysis run did not succeed. Those rows carry each
+  diagnostic's message and excerpt (`changed` in `*-diagnostics.json`); files that one
+  `compare/<head>...<merge commit>` call shows the merge changed are skipped, since their line
+  numbers can differ (past the 300 files that call lists, each file's blobs are compared instead).
+  The job needs only the standard library and only warns on failure.
 
 ### Job summaries
 

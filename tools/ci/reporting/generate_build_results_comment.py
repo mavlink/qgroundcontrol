@@ -12,7 +12,6 @@ from __future__ import annotations
 import argparse
 import logging
 import os
-import re
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -26,7 +25,11 @@ if TYPE_CHECKING:
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
-from common.analysis_diagnostics import DIAGNOSTICS_SUFFIX, AnalysisWarning, load_unique_warnings
+from common.analysis_diagnostics import (
+    AnalysisWarning,
+    load_analysis_commit,
+    load_unique_warnings,
+)
 from common.coverage_summary import CoverageSummary, CoverageSummaryError, read_gcovr_summary
 from common.format import clip, format_bytes, format_count, format_duration, format_percent
 from common.gh_actions import parse_github_timestamp, write_step_summary
@@ -499,21 +502,6 @@ def load_analysis(analysis_dir: Path) -> list[AnalysisTool]:
         )
         for name, rows in sorted(merged.items())
     ]
-
-
-def load_analysis_commit(analysis_dir: Path) -> str:
-    """Return the commit that every ``*-diagnostics.json`` naming one analyzed, else ''.
-
-    On a pull request Code Analysis checks out GitHub's merge commit, whose line numbers can
-    differ from the PR head's where the base branch changed the same file.
-    """
-    commits = set()
-    for path in sorted(analysis_dir.glob(f"**/*{DIAGNOSTICS_SUFFIX}")):
-        data = _load_json(path, "analysis diagnostics")
-        commit = data.get("commit") if isinstance(data, dict) else None
-        if isinstance(commit, str) and re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", commit):
-            commits.add(commit)
-    return commits.pop() if len(commits) == 1 else ""
 
 
 def _manifest_entries(env: Mapping[str, str], base_dir: Path, *, expired: bool) -> list[str]:

@@ -109,6 +109,12 @@ def test_escape_text_neutralizes_markup_links_and_mentions() -> None:
     )
 
 
+def test_escape_text_can_break_bare_url_autolinks() -> None:
+    assert escape_text("see https://x.io or WWW.y.io", break_urls=True) == (
+        "see https:\u200b//x.io or WWW\u200b.y.io"
+    )
+
+
 def test_markdown_cells_keep_their_escapes() -> None:
     assert md_table(["H"], [[escape_text("a_b|c")]], markdown=True) == (
         "| H |\n| --- |\n| a\\_b\\\\|c |"

@@ -27,6 +27,8 @@ __all__ = [
 _ALIGN_SEP = {"left": "---", "right": "---:", "center": ":---:"}
 _BACKTICK_RUN = re.compile(r"`+")
 _MARKDOWN_PUNCTUATION = re.compile(r"([\\`*_\[\]()#!|~])")
+# Where GFM autolinks a bare URL (scheme://) or www. domain; a zero-width space there breaks it.
+_AUTOLINK = re.compile(r"(?<=:)(?=//)|(?<=www)(?=\.)", re.IGNORECASE)
 
 Fact = tuple[str, object]
 
@@ -84,14 +86,17 @@ def code_span(text: object) -> str:
     return f"{fence}{pad}{value}{pad}{fence}"
 
 
-def escape_text(text: object) -> str:
+def escape_text(text: object, *, break_urls: bool = False) -> str:
     """Return untrusted *text* as one line of literal Markdown/HTML text.
 
     Escapes HTML and Markdown punctuation and breaks ``@`` so names from pull requests cannot
-    inject links or markup or mention users.
+    inject links or markup or mention users; *break_urls* also keeps bare URLs from autolinking.
     """
     value = html.escape(" ".join(str(text).split()), quote=False)
-    return _MARKDOWN_PUNCTUATION.sub(r"\\\1", value).replace("@", "@\u200b")
+    value = _MARKDOWN_PUNCTUATION.sub(r"\\\1", value)
+    if break_urls:
+        value = _AUTOLINK.sub("\u200b", value)
+    return value.replace("@", "@\u200b")
 
 
 def code_block(text: str, language: str = "") -> str:

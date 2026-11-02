@@ -13,10 +13,15 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
-from ci.reporting import collect_build_status, download_artifacts, generate_build_results_comment
+from ci.reporting import (
+    analysis_review,
+    collect_build_status,
+    download_artifacts,
+    generate_build_results_comment,
+)
 from ci.reporting.workflow_runs import configured_platform_workflows
 
-from ..._helpers import load_workflow
+from ..._helpers import REPO_ROOT, load_workflow
 
 if TYPE_CHECKING:
     import argparse
@@ -184,7 +189,7 @@ def test_comment_defaults_to_the_triggering_build(
 
 def test_jobs_run_only_for_pull_request_builds() -> None:
     jobs = load_workflow(WORKFLOW)["jobs"]
-    assert set(jobs) == {"report-context", "post-pr-comment"}
+    assert set(jobs) == {"report-context", "post-pr-comment", "analysis-review"}
     assert jobs["report-context"]["if"] == "github.event.workflow_run.event == 'pull_request'"
     assert jobs["report-context"]["outputs"] == {
         "pr": "${{ steps.context.outputs.pr }}",
@@ -193,6 +198,12 @@ def test_jobs_run_only_for_pull_request_builds() -> None:
     # report_context.py sets `pr` only while the build's commit is an open PR's head
     # (tools/tests/ci/test_report_context.py).
     assert jobs["post-pr-comment"]["if"] == "needs.report-context.outputs.pr != ''"
+    assert jobs["analysis-review"]["needs"] == "report-context"
+    assert jobs["analysis-review"]["if"] == (
+        f"github.event.workflow_run.path == '{analysis_review.ANALYSIS_WORKFLOW}' && "
+        "needs.report-context.outputs.pr != ''"
+    )
+    assert (REPO_ROOT / analysis_review.ANALYSIS_WORKFLOW).is_file()
 
 
 def test_publishing_needs_only_the_jobs_comment_permissions() -> None:
@@ -203,3 +214,36 @@ def test_publishing_needs_only_the_jobs_comment_permissions() -> None:
     assert not any(
         "actions-comment-pull-request" in str(step.get("uses", "")) for step in job["steps"]
     )
+
+
+def test_inline_analysis_review_queues_apart_from_the_comment(
+    trigger: Callable[[str], Path],
+) -> None:
+    trigger("pull_request")
+    jobs = load_workflow(WORKFLOW)["jobs"]
+    job = jobs["analysis-review"]
+    # A newer run queueing in a concurrency group cancels the one pending there, so a review
+    # waiting behind a comment job would be lost.
+    assert job["concurrency"] == {
+        "group": "analysis-review-pr-${{ needs.report-context.outputs.pr }}",
+        "cancel-in-progress": False,
+    }
+    assert job["concurrency"]["group"] != jobs["post-pr-comment"]["concurrency"]["group"]
+    assert job["permissions"] == {"contents": "read", "actions": "read", "pull-requests": "write"}
+    assert not _script_args("post-pr-comment", "analysis_review.py")
+
+    steps = _steps("analysis-review")
+    review = _step("analysis-review", "Post inline analysis review")
+    assert steps.index(review) == len(steps) - 1
+    assert review["run"] == "python3 tools/ci/reporting/analysis_review.py"
+    assert review["env"] == {
+        "GH_TOKEN": "${{ github.token }}",
+        "PR_NUMBER": "${{ needs.report-context.outputs.pr }}",
+    }
+    # It reviews the reports the comment reads, downloaded the same way to its default directory
+    # but only from the run that triggered it, whose link and conclusion the review reports.
+    (download,) = _downloads("analysis-review").values()
+    comment_download = _downloads("post-pr-comment")["Download Code Analysis results"]
+    assert not comment_download.only_triggering_run
+    assert vars(download) == {**vars(comment_download), "only_triggering_run": True}
+    assert download.output_dir == analysis_review.DEFAULT_ANALYSIS_DIR
