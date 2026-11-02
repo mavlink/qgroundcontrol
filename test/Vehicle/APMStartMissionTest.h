@@ -28,6 +28,7 @@ private slots:
     void _armedCopterAsyncSendsMissionStart();
     void _disarmedCopterAsyncArmsInGuidedThenMissionStart();
     void _disarmedCopterAsyncAlreadyGuidedSkipsModeChange();
+    void _disarmedCopterArmAsyncUsesGuidedWithoutMissionStart();
     void _armedPlaneAsyncSwitchesToAuto();
     void _disarmedPlaneAsyncSwitchesToAutoThenArms();
     void _disarmedPlaneAsyncAlreadyInAutoArmsWithoutModeChange();

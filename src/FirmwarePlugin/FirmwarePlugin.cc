@@ -242,6 +242,13 @@ void FirmwarePlugin::startMissionAsync(Vehicle*) const
     QGC::showAppMessage(guided_mode_not_supported_by_vehicle);
 }
 
+void FirmwarePlugin::armVehicleAsync(Vehicle* vehicle) const
+{
+    if (vehicle) {
+        vehicle->setArmed(true, true /* showError */);
+    }
+}
+
 const FirmwarePlugin::remapParamNameMajorVersionMap_t &FirmwarePlugin::paramNameRemapMajorVersionMap(void) const
 {
     static const remapParamNameMajorVersionMap_t remap;

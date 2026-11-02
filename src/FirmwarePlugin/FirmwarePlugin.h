@@ -243,6 +243,11 @@ public:
     /// Multi-vehicle actions use this so one vehicle cannot block the others on the UI thread.
     virtual void startMissionAsync(Vehicle* vehicle) const;
 
+    /// Arm for a multi-vehicle action without blocking the UI thread.
+    /// ArduPilot copters arm in Guided. A centered virtual joystick otherwise fails the Stabilize throttle check on the
+    /// selected vehicle.
+    virtual void armVehicleAsync(Vehicle* vehicle) const;
+
     /// Command vehicle to move to specified location (altitude is ignored, vehicle uses current altitude)
     /// @return true: goto command accepted, false: goto failed (vehicle not moved)
     virtual bool guidedModeGotoLocation(Vehicle *vehicle, const QGeoCoordinate &gotoCoord, double forwardFlightLoiterRadius = 0.0) const;

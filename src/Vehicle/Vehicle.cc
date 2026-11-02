@@ -1950,6 +1950,11 @@ void Vehicle::startMissionAsync()
     _firmwarePlugin->startMissionAsync(this);
 }
 
+void Vehicle::armVehicleAsync()
+{
+    _firmwarePlugin->armVehicleAsync(this);
+}
+
 bool Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord, double forwardFlightLoiterRadius)
 {
     if (!_vehicleSupports->guidedMode()) {

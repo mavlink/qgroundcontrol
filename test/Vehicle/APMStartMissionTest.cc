@@ -281,6 +281,23 @@ void APMStartMissionTest::_disarmedCopterAsyncAlreadyGuidedSkipsModeChange()
     QCOMPARE(mockLink()->receivedMavCommandCount(MAV_CMD_DO_SET_MODE), 0);
 }
 
+void APMStartMissionTest::_disarmedCopterArmAsyncUsesGuidedWithoutMissionStart()
+{
+    _connectAPMVehicle(false /* plane */);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QVERIFY(!vehicle()->armed());
+    vehicle()->armVehicleAsync();
+
+    const APMFirmwarePlugin* apmPlugin = qobject_cast<const APMFirmwarePlugin*>(vehicle()->firmwarePlugin());
+    QVERIFY(apmPlugin);
+    QCOMPARE_TRUE_WAIT(vehicle()->flightMode(), apmPlugin->guidedFlightMode(), TestTimeout::mediumMs());
+    QVERIFY_TRUE_WAIT(vehicle()->armed(), TestTimeout::mediumMs());
+    _verifyNoMissionStartSent();
+}
+
 void APMStartMissionTest::_disarmedPlaneAsyncSwitchesToAutoThenArms()
 {
     _connectAPMVehicle(true /* plane */);

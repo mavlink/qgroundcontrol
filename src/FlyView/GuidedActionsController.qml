@@ -619,7 +619,7 @@ Item {
         case actionMVArm:
             selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
             for (i = 0; i < selectedVehicles.count; i++) {
-                selectedVehicles.get(i).armed = true
+                selectedVehicles.get(i).armVehicleAsync()
             }
             break
         case actionForceArm:

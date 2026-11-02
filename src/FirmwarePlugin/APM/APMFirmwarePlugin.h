@@ -34,6 +34,7 @@ public:
     void startTakeoff(Vehicle *vehicle) const override;
     void startMission(Vehicle *vehicle) const override;
     void startMissionAsync(Vehicle* vehicle) const override;
+    void armVehicleAsync(Vehicle* vehicle) const override;
     VehicleReadiness* createVehicleReadiness(Vehicle* vehicle) const override;
     QStringList flightModes(Vehicle *vehicle) const override;
     QString flightMode(uint8_t base_mode, uint32_t custom_mode) const override;

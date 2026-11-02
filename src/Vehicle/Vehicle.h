@@ -362,6 +362,10 @@ public:
     /// Multi-vehicle actions use this so one vehicle cannot block the others.
     Q_INVOKABLE void startMissionAsync();
 
+    /// Arm without waiting for the vehicle to report the new state.
+    /// Multi-vehicle Arm uses this. ArduPilot copters are armed in Guided.
+    Q_INVOKABLE void armVehicleAsync();
+
     /// Alter the current mission item on the vehicle
     Q_INVOKABLE void setCurrentMissionSequence(int seq);
 

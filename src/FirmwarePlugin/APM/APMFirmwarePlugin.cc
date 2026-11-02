@@ -1149,7 +1149,9 @@ public:
         , step(step)
         , armAfterMode(armAfterMode)
         , missionStartAfterArm(missionStartAfterArm)
-    {}
+    {
+        setObjectName(QStringLiteral("apmStartMissionChain"));
+    }
 
     QPointer<Vehicle> vehicle;
     StartMissionAsyncStep step;
@@ -1246,6 +1248,12 @@ void _startMissionAsyncArm(Vehicle* vehicle, bool missionStartAfterArm)
     _startMissionAsyncSend(chain, MAV_CMD_COMPONENT_ARM_DISARM, 1.0f, 0.0f);
 }
 
+StartMissionAsyncChain* _activeStartMissionChain(Vehicle* vehicle)
+{
+    return vehicle->findChild<StartMissionAsyncChain*>(QStringLiteral("apmStartMissionChain"),
+                                                       Qt::FindDirectChildrenOnly);
+}
+
 }  // namespace
 
 void APMFirmwarePlugin::startMissionAsync(Vehicle* vehicle) const
@@ -1275,6 +1283,12 @@ void APMFirmwarePlugin::startMissionAsync(Vehicle* vehicle) const
     }
 
     if (!vehicle->armed()) {
+        // Group Arm may already be moving this copter to Guided. Keep that chain and add the mission start.
+        if (StartMissionAsyncChain* chain = _activeStartMissionChain(vehicle)) {
+            chain->armAfterMode = true;
+            chain->missionStartAfterArm = true;
+            return;
+        }
         if (vehicle->flightMode() != guidedFlightMode()) {
             _startMissionAsyncChangeMode(this, vehicle, guidedFlightMode(), StartMissionAsyncStep::Guided, true, true);
         } else {
@@ -1284,6 +1298,31 @@ void APMFirmwarePlugin::startMissionAsync(Vehicle* vehicle) const
     }
 
     vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /* showError */);
+}
+
+void APMFirmwarePlugin::armVehicleAsync(Vehicle* vehicle) const
+{
+    if (!vehicle || vehicle->armed()) {
+        return;
+    }
+
+    // Copter rejects a GCS arm in Stabilize when the throttle is up. The virtual joystick holds the
+    // selected vehicle at mid-throttle, so that iris fails with "Throttle too high" and stays down.
+    // Guided skips the check for a GCS arm, matching startMission(). Plane and VTOL keep the current mode.
+    if (!vehicle->fixedWing() && !vehicle->vtol() && !vehicle->underway()) {
+        if (StartMissionAsyncChain* chain = _activeStartMissionChain(vehicle)) {
+            chain->armAfterMode = true;
+            return;
+        }
+        if (vehicle->flightMode() != guidedFlightMode()) {
+            _startMissionAsyncChangeMode(this, vehicle, guidedFlightMode(), StartMissionAsyncStep::Guided, true, false);
+        } else {
+            _startMissionAsyncArm(vehicle, false);
+        }
+        return;
+    }
+
+    vehicle->setArmed(true, true /* showError */);
 }
 
 QString APMFirmwarePlugin::_getLatestVersionFileUrl(Vehicle *vehicle) const
