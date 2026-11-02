@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import itertools
 import json
 import os
 import re
@@ -12,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, ClassVar, NamedTuple, TypedDict
 
+from common.analysis_diagnostics import MAX_CONTEXT_CHARS, MAX_MESSAGE_CHARS
 from common.git import changed_ranges, diff_base, pr_diff_refs, run_git
 from common.io import read_json, write_json
 from common.proc import require_tools, run_captured
@@ -47,12 +49,16 @@ class DiagnosticDeduplicator:
 # A header's diagnostics repeat in every translation unit that includes it.
 _DIAGNOSTIC = re.compile(
     r"^(?P<path>.+?):(?P<line>\d+):(?P<column>\d+): (?P<severity>warning|error): "
-    r".*?(?: \[(?P<check>[^\]\n]+)\])?$",
+    r"(?P<message>.*?)(?: \[(?P<check>[^\]\n]+)\])?$",
     re.MULTILINE,
 )
 
 Diagnostic = tuple[str, int, int, str, str]
 """One diagnostic location: file, line, column, severity, and check name."""
+
+# The source excerpt clang prints under a diagnostic: numbered code, caret, and fix-it lines.
+_EXCERPT_LINE = re.compile(r"^\s*(?:\d+\s*)?\|")
+_EXCERPT_LINES = 4
 
 
 class FileTiming(TypedDict):
@@ -265,18 +271,26 @@ class CompilerAnalyzer(AnalyzerBase):
                 continue
         return resolved.as_posix()
 
-    def _diagnostics(self, output: str) -> set[Diagnostic]:
-        """Return the output's diagnostics, identified by file, location, severity, and check."""
-        return {
-            (
+    def _diagnostics(self, output: str) -> dict[Diagnostic, tuple[str, str]]:
+        """Map each of the output's diagnostics (file, location, severity, check) to its message
+        and the source excerpt printed under it."""
+        found: dict[Diagnostic, tuple[str, str]] = {}
+        for match in _DIAGNOSTIC.finditer(output):
+            start = match.end() + 1
+            following = output[start : start + MAX_CONTEXT_CHARS].split("\n", _EXCERPT_LINES)
+            excerpt = list(itertools.takewhile(_EXCERPT_LINE.match, following[:_EXCERPT_LINES]))
+            identity = (
                 self._diagnostic_file(match["path"]),
                 int(match["line"]),
                 int(match["column"]),
                 match["severity"],
                 match["check"] or "",
             )
-            for match in _DIAGNOSTIC.finditer(output)
-        }
+            found[identity] = (
+                match["message"][:MAX_MESSAGE_CHARS],
+                "\n".join(excerpt)[:MAX_CONTEXT_CHARS],
+            )
+        return found
 
     def _changed_lines(self, files: set[str]) -> dict[str, list[tuple[int, int]] | None] | None:
         """Map each of *files* that the pull request changed to its changed line ranges.
@@ -318,15 +332,17 @@ class CompilerAnalyzer(AnalyzerBase):
             return ""
         return head.stdout.strip()
 
-    def _write_diagnostics(self, diagnostics: set[Diagnostic]) -> None:
+    def _write_diagnostics(self, diagnostics: dict[Diagnostic, tuple[str, str]]) -> None:
         """Write each unique diagnostic once; reports merge shards by the same identity.
 
         ``commit`` names the analyzed checkout. In a pull request, ``changed`` repeats the
-        diagnostics on the lines it changed.
+        diagnostics on the lines it changed, each followed by its message and source excerpt.
         """
         by_file: dict[str, list[list[int | str]]] = {}
-        for file, line, column, severity, check in sorted(diagnostics):
+        details: dict[str, list[tuple[str, str]]] = {}
+        for (file, line, column, severity, check), detail in sorted(diagnostics.items()):
             by_file.setdefault(file, []).append([line, column, severity, check])
+            details.setdefault(file, []).append(detail)
         report: dict[str, Any] = {"tool": self.name, "shard": self.shard, "diagnostics": by_file}
         if commit := self._analyzed_commit():
             report["commit"] = commit
@@ -334,8 +350,8 @@ class CompilerAnalyzer(AnalyzerBase):
         if changed_lines is not None:
             changed = {
                 file: [
-                    row
-                    for row in by_file[file]
+                    [*row, *detail]
+                    for row, detail in zip(by_file[file], details[file], strict=True)
                     if ranges is None or any(start <= int(row[0]) <= end for start, end in ranges)
                 ]
                 for file, ranges in changed_lines.items()
@@ -383,7 +399,7 @@ class CompilerAnalyzer(AnalyzerBase):
 
         outputs: list[str] = []
         diagnostics = DiagnosticDeduplicator()
-        unique_diagnostics: set[Diagnostic] = set()
+        unique_diagnostics: dict[Diagnostic, tuple[str, str]] = {}
         raw_path = self.build_dir / f"{self.name}-raw.txt"
         affected: list[str] = []
         errors = False
