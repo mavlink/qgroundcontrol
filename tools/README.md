@@ -210,7 +210,10 @@ diagnostics and tool or compiler invocation errors still fail.
 then build only `cmake --build <dir> --target qgc-analysis-headers` (`autogen` is needed only for
 IWYU). Repeating `--tool` shares one file selection and dependency scan; `--cache-dir <dir>`
 replays unchanged results and needs `clang-scan-deps`. `tools/setup/build_clazy.py` builds the
-Clazy that CI uses. `--tool clang-tidy --fix` applies the selected translation units' fixes with
+Clazy that CI uses; `tools/setup/install_analysis_tools.py` installs CI's clang-tidy and Clazy
+toolchain (the analysis LLVM, the pinned clang-tidy wheel, and Clazy, but not IWYU), as the
+devcontainer image does; `source .cache/analysis-tools/env.sh` (its default prefix) before running
+`tools/analyze.py`. `--tool clang-tidy --fix` applies the selected translation units' fixes with
 `clang-apply-replacements` ([analyzers/README.md](analyzers/README.md#clang-tidy-fixes)); CI never
 applies fixes. The clang-tidy and Clazy pre-commit hooks run only with `--hook-stage manual`;
 fast hooks remain the required PR gate. CI sharding and result caching are described in
@@ -417,6 +420,8 @@ install prefix, such as a source build's.
 | `build_gstreamer.py`                      | All                   | Build GStreamer from source (optional)                                                 |
 | `build_android_openssl.py`                | Android               | Cross-compile OpenSSL for Android; configure builds only the build type's variant      |
 | `build_clazy.py`                          | Linux                 | Build the pinned `clazy-standalone` against the analysis LLVM, as CI does              |
+| `install_analysis_tools.py`               | Debian 13+/Ubuntu 24+ | Install the analysis LLVM, pinned clang-tidy and Clazy, as CI and the devcontainer     |
+| `install_ccache.py`                       | Linux                 | Install the ccache release pinned in `build-config.json`, as CI and the devcontainer   |
 
 Linux `--category` limits the install to `core`, `qt`, `gstreamer`, `sdl`, `audio` or `misc`.
 On Debian, `android` is `core` plus the OpenJDK for `android.java_version` in `build-config.json`;

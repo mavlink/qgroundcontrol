@@ -29,7 +29,9 @@ def _file_identity(file: Path) -> str:
 class ClangTidyAnalyzer(CompilerAnalyzer):
     name: ClassVar[str] = "clang-tidy"
     executable: ClassVar[str] = "clang-tidy"
-    install_hint: ClassVar[str] = "Install clang-tidy matching the analysis compiler."
+    install_hint: ClassVar[str] = (
+        "Run tools/setup/install_analysis_tools.py and source its env.sh for CI's clang-tidy."
+    )
     profile_checks: bool = False
     fixes_dir: Path | None = None
 

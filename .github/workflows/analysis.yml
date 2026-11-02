@@ -33,6 +33,7 @@ on:
       - 'tools/analyzers/dependencies.py'
       - 'tools/analyzers/result_cache.py'
       - 'tools/setup/build_clazy.py'
+      - 'tools/setup/install_analysis_tools.py'
       - 'tools/ci/runner/analysis_tools.py'
       - 'tools/common/io.py'
       - 'tools/common/xml.py'

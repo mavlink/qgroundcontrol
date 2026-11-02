@@ -65,7 +65,8 @@
         "ndk_version",
         "ndk_full_version",
         "java_version",
-        "cmdline_tools"
+        "cmdline_tools",
+        "cmdline_tools_sha256"
       ],
       "additionalProperties": false,
       "properties": {
@@ -88,6 +89,10 @@
           "type": "string",
           "pattern": "^[0-9]+$",
           "description": "Android command-line tools version"
+        },
+        "cmdline_tools_sha256": {
+          "$ref": "#/definitions/sha256",
+          "description": "SHA256 of commandlinetools-linux-<cmdline_tools>_latest.zip; update it together with cmdline_tools"
         },
         "ndk_version": {
           "type": "string",
@@ -399,9 +404,21 @@
           "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
         },
         "clang_tidy_sha256": {
-          "description": "SHA-256 of the clang-tidy manylinux x86_64 wheel",
-          "type": "string",
-          "pattern": "^[a-f0-9]{64}$"
+          "description": "SHA-256 of the clang-tidy manylinux wheel for each machine architecture; update together with clang_tidy_version",
+          "type": "object",
+          "required": [
+            "x86_64",
+            "aarch64"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "x86_64": {
+              "$ref": "#/definitions/sha256"
+            },
+            "aarch64": {
+              "$ref": "#/definitions/sha256"
+            }
+          }
         }
       }
     },
