@@ -10,7 +10,7 @@
         "llvm-vs-code-extensions.vscode-clangd",
         "ms-vscode.cmake-tools",
         "twxs.cmake",
-        "QML.qml-official",
+        "TheQtCompany.qt-qml",
         "ms-python.python",
         "GitHub.copilot"
       ]
