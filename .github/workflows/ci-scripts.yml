@@ -86,7 +86,7 @@ jobs:
             src/**/*.VehicleConfig.json
             src/Vehicle/FactGroups/VehicleGPSFactGroup.h
             src/FactSystem/factmetadata.schema.json
-            src/VideoManager/VideoReceiver/GStreamer/README.md
+            src/VideoManager/GStreamer/README.md
             tools
             deploy
           sparse-checkout-cone-mode: false

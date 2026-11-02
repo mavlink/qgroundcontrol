@@ -14,8 +14,8 @@
 #include "GstHwPathTelemetry.h"
 #include "HwBuffers/common/HwBuffers.h"
 #include "gstqgc/GstQgcCaps.h"
+#include "gstqgc/GstQgcSinkStats.h"
 #include "gstqgc/GstQgcTestSupport.h"
-#include "gstqgc/gstqgcqvideosink.h"
 
 void GstQgcSinkPipelineTest::_testFrameDelivery()
 {

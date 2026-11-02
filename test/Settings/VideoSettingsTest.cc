@@ -36,4 +36,18 @@ void VideoSettingsTest::_streamEnabledMigration()
     settings.endGroup();
 }
 
+void VideoSettingsTest::_videoFitEnumMatchesMetaData()
+{
+    VideoSettings videoSettings;
+    const Fact* const videoFit = videoSettings.videoFit();
+    QCOMPARE(videoFit->enumStrings(), QStringList({QStringLiteral("Fit Width"), QStringLiteral("Fit Height"),
+                                                   QStringLiteral("Fill"), QStringLiteral("No Crop")}));
+    const QVariantList values = videoFit->enumValues();
+    QCOMPARE(values.size(), 4);
+    QCOMPARE(values.at(0).toInt(), static_cast<int>(VideoSettings::VideoFitWidth));
+    QCOMPARE(values.at(1).toInt(), static_cast<int>(VideoSettings::VideoFitHeight));
+    QCOMPARE(values.at(2).toInt(), static_cast<int>(VideoSettings::VideoFitFill));
+    QCOMPARE(values.at(3).toInt(), static_cast<int>(VideoSettings::VideoFitNoCrop));
+}
+
 UT_REGISTER_TEST(VideoSettingsTest, TestLabel::Unit)

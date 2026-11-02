@@ -1,30 +1,76 @@
 {
     "version": 1,
     "fileType": "SettingsUI",
+    "imports": ["QGroundControl.VideoManager"],
     "bindings": {
         "videoSource": "QGroundControl.settingsManager.videoSettings.videoSource.rawValue",
         "autoStreamConfig": "QGroundControl.videoManager.autoStreamConfigured",
         "sourceDisabled": "videoSource === QGroundControl.settingsManager.videoSettings.disabledVideoSource && !autoStreamConfig",
         "isStreamSource": "QGroundControl.videoManager.isStreamSource",
-        "rtpLatencyVisible": "!QGroundControl.settingsManager.videoSettings.lowLatencyMode.rawValue"
+        "rtpLatencyVisible": "!QGroundControl.settingsManager.videoSettings.lowLatencyMode.rawValue",
+        "gstreamer": "QGroundControl.settingsManager.videoSettings.videoBackend.rawValue === 0"
     },
     "groups": [
         {
             "heading": "Video Source",
-            "keywords": ["video source", "camera", "stream"],
+            "keywords": ["video source", "camera", "stream", "usb camera", "resolution", "frame rate", "camera format", "white balance", "zoom", "exposure", "focus"],
             "enableWhen": "!autoStreamConfig",
             "headingDescription": "autoStreamConfig ? qsTr(\"MAVLink camera stream is automatically configured\") : \"\"",
             "controls": [
                 {
                     "setting": "videoSettings.videoSource",
                     "control": "combobox"
+                },
+                {
+                    "control": "component",
+                    "component": "UVCCameraFormatComboBox",
+                    "showWhen": "QGroundControl.videoManager.isUvc"
+                },
+                {
+                    "setting": "videoSettings.uvcCameraRotation",
+                    "control": "combobox",
+                    "showWhen": "QGroundControl.videoManager.isUvc"
+                },
+                {
+                    "setting": "videoSettings.uvcCameraMirror",
+                    "showWhen": "QGroundControl.videoManager.isUvc"
+                },
+                {
+                    "setting": "videoSettings.uvcWhiteBalance",
+                    "control": "combobox",
+                    "showWhen": "QGroundControl.videoManager.isUvc && QGroundControl.videoManager.uvcCamera.whiteBalanceAdjustable"
+                },
+                {
+                    "control": "component",
+                    "component": "UVCControlSlider",
+                    "showWhen": "QGroundControl.videoManager.isUvc && (QGroundControl.videoManager.uvcCamera.maximumZoom > QGroundControl.videoManager.uvcCamera.minimumZoom)",
+                    "properties": {
+                        "setting": "QGroundControl.settingsManager.videoSettings.uvcZoom",
+                        "from": "QGroundControl.videoManager.uvcCamera.minimumZoom",
+                        "to": "QGroundControl.videoManager.uvcCamera.maximumZoom",
+                        "valueText": "QGroundControl.settingsManager.videoSettings.uvcZoom.rawValue.toFixed(1) + \"x\""
+                    }
+                },
+                {
+                    "control": "component",
+                    "component": "UVCControlSlider",
+                    "showWhen": "QGroundControl.videoManager.isUvc && QGroundControl.videoManager.uvcCamera.exposureAdjustable",
+                    "properties": {
+                        "setting": "QGroundControl.settingsManager.videoSettings.uvcExposureCompensation",
+                        "stepSize": 0.5
+                    }
+                },
+                {
+                    "setting": "videoSettings.uvcFocusMode",
+                    "control": "combobox",
+                    "showWhen": "QGroundControl.videoManager.isUvc && QGroundControl.videoManager.uvcCamera.focusAdjustable"
                 }
             ]
         },
         {
             "heading": "Connection",
             "keywords": ["rtsp", "tcp", "udp", "mpegts", "video url", "stream url"],
-            "showWhen": "!sourceDisabled && !autoStreamConfig",
+            "showWhen": "!sourceDisabled && !autoStreamConfig && isStreamSource",
             "controls": [
                 {
                     "setting": "videoSettings.rtspUrl",
@@ -42,9 +88,14 @@
         },
         {
             "heading": "Settings",
-            "keywords": ["aspect ratio", "low latency", "decoder", "hardware decode", "disable when disarmed", "gpu", "zero-copy"],
-            "showWhen": "!sourceDisabled",
+            "keywords": ["aspect ratio", "low latency", "decoder", "hardware decode", "disable when disarmed", "gpu", "zero-copy", "backend", "gstreamer", "qt multimedia", "ffmpeg"],
+            "showWhen": "!sourceDisabled && isStreamSource",
             "controls": [
+                {
+                    "setting": "videoSettings.videoBackend",
+                    "control": "combobox",
+                    "showWhen": "isStreamSource"
+                },
                 {
                     "setting": "videoSettings.aspectRatio",
                     "showWhen": "!autoStreamConfig && isStreamSource"
@@ -59,27 +110,34 @@
                 },
                 {
                     "setting": "videoSettings.rtpJitterLatencyMs",
-                    "showWhen": "isStreamSource && rtpLatencyVisible"
+                    "showWhen": "isStreamSource && rtpLatencyVisible && gstreamer"
                 },
                 {
                     "setting": "videoSettings.rtspAutoReconnect",
                     "showWhen": "isStreamSource"
                 },
                 {
-                    "setting": "videoSettings.forceCpuVideoPath"
+                    "setting": "videoSettings.forceCpuVideoPath",
+                    "showWhen": "gstreamer"
                 },
                 {
-                    "setting": "videoSettings.forceVideoDecoder"
+                    "setting": "videoSettings.forceVideoDecoder",
+                    "showWhen": "gstreamer"
                 }
             ]
         },
         {
             "heading": "Local Video Storage",
-            "keywords": ["record", "recording format", "mp4", "mkv", "storage limit", "video file"],
+            "keywords": ["record", "recording format", "mp4", "mkv", "storage limit", "video file", "codec"],
             "showWhen": "!sourceDisabled",
             "controls": [
                 {
                     "setting": "videoSettings.recordingFormat"
+                },
+                {
+                    "control": "component",
+                    "component": "UVCRecordingCodecComboBox",
+                    "showWhen": "QGroundControl.videoManager.isUvc"
                 },
                 {
                     "setting": "videoSettings.enableStorageLimit"

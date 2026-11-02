@@ -39,7 +39,7 @@ file(
 file(SHA256 "${_installer}" _hash)
 if(TEST_CASE STREQUAL "unpinned")
     set(QGC_BUILD_CONFIG_CONTENT "{}")
-    gstreamer_get_package_url(windows_msvc_x64 ${_version} _url)
+    qgc_gst_get_package_url(windows_msvc_x64 ${_version} _url)
     string(SHA256 _url_hash "${_url}.sha256sum")
     file(WRITE "${CMAKE_BINARY_DIR}/_deps/checksums/${_url_hash}.sha256sum" "${_hash}  gstreamer.exe\n")
 else()

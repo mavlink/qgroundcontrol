@@ -9,4 +9,5 @@ class VideoSettingsTest : public UnitTest
 private slots:
     void _streamEnabledMigration_data();
     void _streamEnabledMigration();
+    void _videoFitEnumMatchesMetaData();
 };

@@ -84,6 +84,7 @@
   - [Log Download](qgc-user-guide/analyze_view/log_download.md)
   - [Replay Flight Data](qgc-user-guide/fly_view/replay_flight_data.md)
   - [GeoTag Images (PX4)](qgc-user-guide/analyze_view/geotag_images.md)
+  - [Video Recordings](qgc-user-guide/analyze_view/video_recordings.md)
   - [MAVLink Console (PX4)](qgc-user-guide/analyze_view/mavlink_console.md)
   - [MAVLink Inspector](qgc-user-guide/analyze_view/mavlink_inspector.md)
 - [Reference](qgc-user-guide/reference/index.md)

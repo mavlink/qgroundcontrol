@@ -8,7 +8,7 @@ set(GStreamer_VERSION 1.28.4)
 set(_source "https://gitlab.freedesktop.org/gstreamer/gstreamer/-/tree/1.28.4")
 set(_cerbero "https://gitlab.freedesktop.org/gstreamer/cerbero/-/tree/1.28.4")
 
-set(GStreamer_AUTO_DOWNLOADED TRUE)
+qgc_gst_layout_set(AUTO_DOWNLOADED TRUE)
 set(QGC_GST_RESOLVED_PACKAGES "https://example.invalid/runtime.pkg|0a1b" "https://example.invalid/devel.pkg|2c3d")
 qgc_gst_write_notice("${_sandbox}/downloaded")
 file(READ "${_sandbox}/downloaded/NOTICE.txt" _notice)
@@ -23,7 +23,7 @@ file(SHA256 "${_sandbox}/downloaded/LGPL-2.1.txt" _copied_license)
 qgc_test_assert_streq("license text" "${_license}" "${_copied_license}")
 qgc_test_pass("downloaded SDK notice")
 
-set(GStreamer_AUTO_DOWNLOADED FALSE)
+qgc_gst_layout_set(AUTO_DOWNLOADED FALSE)
 qgc_gst_write_notice("${_sandbox}/installed")
 file(READ "${_sandbox}/installed/NOTICE.txt" _notice)
 string(FIND "${_notice}" "${_source}" _found_source)
@@ -32,3 +32,19 @@ if(_found_source EQUAL -1 OR NOT _found_packages EQUAL -1)
     message(FATAL_ERROR "ASSERT [installed GStreamer notice]: expected the source and no packages\n${_notice}")
 endif()
 qgc_test_pass("installed GStreamer notice")
+
+# A post-release build's nano version has no tag; its source links name the release.
+set(GStreamer_VERSION 1.28.8.1)
+qgc_gst_layout_set(AUTO_DOWNLOADED TRUE)
+qgc_gst_write_notice("${_sandbox}/nano")
+file(READ "${_sandbox}/nano/NOTICE.txt" _notice)
+foreach(
+    _expected IN ITEMS "GStreamer 1.28.8.1\n" "https://gitlab.freedesktop.org/gstreamer/gstreamer/-/tree/1.28.8\n"
+                       "https://gitlab.freedesktop.org/gstreamer/cerbero/-/tree/1.28.8\n"
+)
+    string(FIND "${_notice}" "${_expected}" _found)
+    if(_found EQUAL -1)
+        message(FATAL_ERROR "ASSERT [nano version notice]: '${_expected}' missing from\n${_notice}")
+    endif()
+endforeach()
+qgc_test_pass("nano version notice links the release")

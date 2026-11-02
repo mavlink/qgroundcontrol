@@ -11,30 +11,47 @@
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QSignalSpy>
 
+#include "MavlinkCameraControlInterface.h"
 #include "SettingsManager.h"
+#include "UVCCameraController.h"
+#include "VideoBackend.h"
+#include "VideoDecoderOptions.h"
 #include "VideoManager.h"
 #include "VideoSettings.h"
 #include "VideoStreamController.h"
 #include "VideoTestHelpers.h"
 
+using VideoTestHelpers::createVideoOutput;
 using VideoTestHelpers::makeStreamInfo;
+using VideoTestHelpers::showFrame;
+using VideoTestHelpers::showsText;
 
 namespace {
 
-constexpr const char* kVideoOutputQml = R"QML(
+// The Video indicator's decoding settings.
+constexpr const char* kDecodingSettingsQml = R"QML(
 import QtQuick
-import QtMultimedia
+import QGroundControl.VideoManager
 
-VideoOutput {
-    width: 64
-    height: 48
+VideoDecodingSettingsGroup {
+    width: 400
 }
 )QML";
 
-// FlightDisplayViewVideoOutput inside a container that tests move between windows.
+// The Video indicator's network stream settings.
+constexpr const char* kStreamSettingsQml = R"QML(
+import QtQuick
+import QGroundControl.VideoManager
+
+VideoStreamSettingsGroup {
+    width: 400
+}
+)QML";
+
+// VideoStreamOutput inside a container that tests move between windows.
 constexpr const char* kStreamOutputQml = R"QML(
 import QtQuick
-import QGroundControl.FlyView
+import QGroundControl.VideoManager
 
 Item {
     id: root
@@ -44,7 +61,7 @@ Item {
     Item {
         objectName: "holder"
 
-        FlightDisplayViewVideoOutput {
+        VideoStreamOutput {
             objectName: "output"
             stream: root.stream
         }
@@ -52,18 +69,75 @@ Item {
 }
 )QML";
 
-std::unique_ptr<QQuickItem> createVideoOutput(QQmlEngine& engine)
-{
-    QQmlComponent component(&engine);
-    component.setData(kVideoOutputQml, QUrl(QStringLiteral("qrc:/VideoManagerTest.qml")));
-    std::unique_ptr<QObject> object(component.create());
-    return std::unique_ptr<QQuickItem>(qobject_cast<QQuickItem*>(object.release()));
-}
+constexpr const char* kStatsGroupQml = R"QML(
+import QtQuick
+import QGroundControl.VideoManager
 
-void showFrame(QQuickItem* videoOutput, const QImage& image)
-{
-    videoOutput->property("videoSink").value<QVideoSink*>()->setVideoFrame(QVideoFrame(image));
+VideoStreamStatsGroup {
 }
+)QML";
+
+// VideoStreamFormat as other modules reach it: a JavaScript resource of the module, not a relative import.
+constexpr const char* kStreamFormatQml = R"QML(
+import QtQml
+import QGroundControl.VideoManager
+
+QtObject {
+    readonly property string kbit: VideoStreamFormat.bitrateText(850)
+    readonly property string mbit: VideoStreamFormat.bitrateText(8000)
+    readonly property string minutes: VideoStreamFormat.durationText(65000)
+    readonly property string hours: VideoStreamFormat.durationText(3725000)
+}
+)QML";
+
+constexpr const char* kVideoViewQml = R"QML(
+import QtQuick
+import QGroundControl.VideoManager
+
+VideoView {
+    width: 400
+    height: 400
+}
+)QML";
+
+// CameraPinchZoom on a stand-in zoom camera, which records the zoom steps it is sent.
+constexpr const char* kCameraPinchZoomQml = R"QML(
+import QtQuick
+import QGroundControl.VideoManager
+
+CameraPinchZoom {
+    camera: QtObject {
+        property bool hasZoom: true
+        property var steps: []
+
+        function stepZoom(direction) {
+            steps.push(direction)
+        }
+    }
+}
+)QML";
+
+// A VideoView following a stand-in camera, whose thermal mode the test changes.
+constexpr const char* kThermalVideoViewQml = R"QML(
+import QtQuick
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.VideoManager
+
+VideoView {
+    width: 400
+    height: 400
+    thermalPipTopInset: 30
+    camera: QtObject {
+        property int thermalMode: MavlinkCameraControlInterface.THERMAL_PIP
+        property real thermalOpacity: 100
+        property bool hasZoom: false
+    }
+
+    readonly property real pipX: ScreenTools.defaultFontPixelWidth * 12
+    readonly property real pipY: thermalPipTopInset + (ScreenTools.defaultFontPixelHeight * 0.5)
+}
+)QML";
 
 }  // namespace
 
@@ -172,7 +246,7 @@ void VideoManagerTest::_testSettingChangesCoalesce()
     QCOMPARE(_primary->config().timeout, std::chrono::seconds(15));
 }
 
-void VideoManagerTest::_testSinkSettingsRestartStreams_data()
+void VideoManagerTest::_testRestartingSettingsRestartStreams_data()
 {
     QTest::addColumn<QString>("setting");
     QTest::addColumn<QVariant>("value");
@@ -180,9 +254,12 @@ void VideoManagerTest::_testSinkSettingsRestartStreams_data()
     QTest::newRow("videoConversionElement")
         << "videoConversionElement" << QVariant(QStringLiteral("videoconvertscale"));
     QTest::newRow("disablePixelAspectRatio") << "disablePixelAspectRatio" << QVariant(true);
+    QTest::newRow("forceCpuVideoPath") << "forceCpuVideoPath" << QVariant(true);
+    QTest::newRow("forceVideoDecoder") << "forceVideoDecoder"
+                                       << QVariant(static_cast<int>(VideoDecoder::ForceVideoDecoderSoftware));
 }
 
-void VideoManagerTest::_testSinkSettingsRestartStreams()
+void VideoManagerTest::_testRestartingSettingsRestartStreams()
 {
     QFETCH(QString, setting);
     QFETCH(QVariant, value);
@@ -197,6 +274,76 @@ void VideoManagerTest::_testSinkSettingsRestartStreams()
     // The thermal stream isn't active, and restart() doesn't start a stream.
     QCOMPARE(_thermal->restarts, 0);
     QVERIFY(!_thermal->active());
+}
+
+void VideoManagerTest::_testDecodingSettingsGroupRestartsStreams()
+{
+    Fact* const decoderFact = _videoSettings->forceVideoDecoder();
+    Fact* const cpuPathFact = _videoSettings->forceCpuVideoPath();
+    _facts->set(decoderFact, static_cast<int>(VideoDecoder::ForceVideoDecoderDefault));
+    _facts->set(cpuPathFact, false);
+    _settle();
+    _resetCounters();
+
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kDecodingSettingsQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/DecodingSettings.qml")));
+    const std::unique_ptr<QObject> group(component.create());
+    QVERIFY2(group, qPrintable(component.errorString()));
+
+    QObject* const decoderControl = group->findChild<QObject*>(QStringLiteral("videoDecoderPriority"));
+    QObject* const cpuPathControl = group->findChild<QObject*>(QStringLiteral("videoForceCpuPath"));
+    QVERIFY(decoderControl);
+    QVERIFY(cpuPathControl);
+    QCOMPARE(decoderControl->property("visible"), decoderFact->property("userVisible"));
+    QCOMPARE(cpuPathControl->property("visible"), cpuPathFact->property("userVisible"));
+
+    // As a click on the switch does.
+    QVERIFY(cpuPathControl->setProperty("checked", true));
+    QVERIFY(QMetaObject::invokeMethod(cpuPathControl, "clicked"));
+    _settle();
+    QVERIFY(cpuPathFact->rawValue().toBool());
+    QCOMPARE(_primary->restarts, 1);
+
+    // As picking the software decoder in the combo box does.
+    QObject* const comboBox = decoderControl->property("comboBox").value<QObject*>();
+    QVERIFY(comboBox);
+    const int softwareIndex =
+        decoderFact->enumValues().indexOf(QVariant(static_cast<int>(VideoDecoder::ForceVideoDecoderSoftware)));
+    QVERIFY(softwareIndex >= 0);
+    QVERIFY(QMetaObject::invokeMethod(comboBox, "activated", Q_ARG(int, softwareIndex)));
+    _settle();
+    QCOMPARE(decoderFact->rawValue().toInt(), static_cast<int>(VideoDecoder::ForceVideoDecoderSoftware));
+    QCOMPARE(_primary->restarts, 2);
+    QCOMPARE(_primary->configChanges, 0);
+}
+
+void VideoManagerTest::_testStreamSettingsGroupFollowsLowLatency()
+{
+    if (!VideoBackend::instance().capabilities().pipelineSettings) {
+        QSKIP("The RTP jitter-buffer latency is a GStreamer setting");
+    }
+    _facts->set(_videoSettings->lowLatencyMode(), false);
+
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kStreamSettingsQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/StreamSettings.qml")));
+    const std::unique_ptr<QObject> group(component.create());
+    QVERIFY2(group, qPrintable(component.errorString()));
+
+    QObject* const lowLatencyControl = group->findChild<QObject*>(QStringLiteral("videoLowLatencyMode"));
+    QObject* const jitterControl = group->findChild<QObject*>(QStringLiteral("videoRtpJitterLatency"));
+    QVERIFY(lowLatencyControl);
+    QVERIFY(jitterControl);
+    QCOMPARE(lowLatencyControl->property("fact").value<Fact*>(), _videoSettings->lowLatencyMode());
+    QCOMPARE(jitterControl->property("fact").value<Fact*>(), _videoSettings->rtpJitterLatencyMs());
+    QVERIFY(jitterControl->property("visible").toBool());
+
+    // Low Latency Mode has no jitter buffer, so its latency is hidden.
+    _facts->set(_videoSettings->lowLatencyMode(), true);
+    QVERIFY(!jitterControl->property("visible").toBool());
 }
 
 void VideoManagerTest::_testStreamEnabledControlsVideo()
@@ -448,6 +595,348 @@ void VideoManagerTest::_testStreamErrorsReachUser()
     emit _thermal->errorOccurred(QStringLiteral("stream failed"));
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
+}
+
+void VideoManagerTest::_testReconnectingFollowsLostStream()
+{
+    using State = VideoReceiver::State;
+    VideoStreamController* const stream = _videoManager->primaryStream();
+    QSignalSpy reconnectingSpy(stream, &VideoStreamController::reconnectingChanged);
+    QList<bool> reconnectingAtDecodingChange;
+    (void) connect(stream, &VideoStreamController::decodingChanged, this,
+                   [&] { reconnectingAtDecodingChange.append(stream->reconnecting()); });
+
+    // Before the first decoded frame there is nothing to recover.
+    _primary->setState(State::Connecting);
+    _primary->setState(State::Streaming);
+    QVERIFY(!stream->reconnecting());
+
+    // Lost after it was decoded: reconnecting through the backoff and the next attempt, until it decodes again.
+    _primary->setDecoding(true);
+    QVERIFY(!stream->reconnecting());
+    _primary->setDecoding(false);
+    QVERIFY(stream->reconnecting());
+    // Already reconnecting when decodingChanged arrives, so QML never sees the stream neither.
+    QCOMPARE(reconnectingAtDecodingChange, QList<bool>({false, true}));
+    _primary->setState(State::Reconnecting);
+    _primary->setState(State::Connecting);
+    QVERIFY(stream->reconnecting());
+    _primary->setDecoding(true);
+    QVERIFY(!stream->reconnecting());
+    QCOMPARE(reconnectingSpy.count(), 2);
+
+    // Given up.
+    _primary->setDecoding(false);
+    QVERIFY(stream->reconnecting());
+    _primary->setState(State::Stopped);
+    QVERIFY(!stream->reconnecting());
+
+    // A new URI is a new stream, not a reconnect of the old one.
+    _primary->setState(State::Streaming);
+    _primary->setDecoding(true);
+    _primary->setDecoding(false);
+    QVERIFY(stream->reconnecting());
+    _facts->set(_videoSettings->udpUrl(), QStringLiteral("0.0.0.0:5601"));
+    _settle();
+    QVERIFY(!stream->reconnecting());
+    _primary->setState(State::Connecting);
+    QVERIFY(!stream->reconnecting());
+
+    // So is the stream after the video was stopped.
+    _primary->setDecoding(true);
+    _primary->setDecoding(false);
+    QVERIFY(stream->reconnecting());
+    _videoManager->stopVideo();
+    _settle();
+    QVERIFY(!stream->reconnecting());
+}
+
+void VideoManagerTest::_testUvcCameraFormatReachesCamera()
+{
+    UVCCameraController* const camera = _videoManager->uvcCamera();
+    QCOMPARE(camera->format(), _videoSettings->uvcCameraFormat()->rawValue().toString());
+
+    _facts->set(_videoSettings->uvcCameraFormat(), QStringLiteral("640x480 30 fps YUYV"));
+    QCOMPARE(camera->format(), QStringLiteral("640x480 30 fps YUYV"));
+    _facts->set(_videoSettings->uvcCameraFormat(), QString());
+    QVERIFY(camera->format().isEmpty());
+}
+
+void VideoManagerTest::_testUvcControlsReachCamera()
+{
+    UVCCameraController* const camera = _videoManager->uvcCamera();
+    QCOMPARE(camera->controls(), UVCCameraController::Controls{});
+
+    _facts->set(_videoSettings->uvcWhiteBalance(), int(QCamera::WhiteBalanceCloudy));
+    _facts->set(_videoSettings->uvcZoom(), 1.5);
+    _facts->set(_videoSettings->uvcExposureCompensation(), -0.5);
+    _facts->set(_videoSettings->uvcFocusMode(), int(QCamera::FocusModeInfinity));
+    const UVCCameraController::Controls expected{.whiteBalance = QCamera::WhiteBalanceCloudy,
+                                                 .zoom = 1.5f,
+                                                 .exposureCompensation = -0.5f,
+                                                 .focusMode = QCamera::FocusModeInfinity};
+    QCOMPARE(camera->controls(), expected);
+}
+
+void VideoManagerTest::_testStreamStatsReachQml()
+{
+    VideoStreamController* const stream = _videoManager->primaryStream();
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kStatsGroupQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/StatsGroup.qml")));
+    const std::unique_ptr<QQuickItem> group(qobject_cast<QQuickItem*>(
+        component.createWithInitialProperties({{QStringLiteral("stream"), QVariant::fromValue(stream)}})));
+    QVERIFY2(group, qPrintable(component.errorString()));
+    // Items outside a scene are never visible.
+    QQuickWindow window;
+    group->setParentItem(window.contentItem());
+    QSignalSpy statsSpy(stream, &VideoStreamController::statsChanged);
+    QVERIFY(!group->isVisible());
+
+    VideoStreamStats stats;
+    stats.valid = true;
+    stats.fps = 29.5;
+    stats.decoder = QStringLiteral("avdec_h264");
+    _primary->setStats(stats);
+    QCOMPARE(statsSpy.count(), 1);
+    QVERIFY(stream->stats() == stats);
+    QVERIFY(group->isVisible());
+    QVERIFY(showsText(group.get(), QStringLiteral("29.5 fps")));
+    QVERIFY(showsText(group.get(), QStringLiteral("avdec_h264 (software)")));
+    // A stream without RTP counters hides the rows that need them.
+    QVERIFY(!showsText(group.get(), QStringLiteral("Packet loss")));
+
+    QVERIFY(showsText(group.get(), QStringLiteral("RTP/UDP (H.264)")));
+    QVERIFY(showsText(group.get(), QStringLiteral("0:00")));
+    // Counts that are still zero, and what wasn't measured, stay hidden.
+    QVERIFY(!showsText(group.get(), QStringLiteral("Decoder restarts")));
+    QVERIFY(!showsText(group.get(), QStringLiteral("Keyframe interval")));
+    QVERIFY(!showsText(group.get(), QStringLiteral("Recording")));
+
+    stats.packetsLost = 3;
+    stats.lossPercent = 1.5;
+    stats.jitterMs = 2.0;
+    stats.packetsLate = 1;
+    stats.packetsDuplicate = 0;
+    stats.rtxRequested = 4;
+    stats.rtxRecovered = 3;
+    stats.keyframeIntervalMs = 1000.0;
+    stats.decoderRestarts = 2;
+    stats.uptimeMs = 3'725'000;
+    stats.recordingMs = 65'000;
+    stats.recordingBytes = 2 * 1024 * 1024;
+    stats.codec = QStringLiteral("H.264");
+    _primary->setStats(stats);
+    QCOMPARE(statsSpy.count(), 2);
+    QVERIFY(showsText(group.get(), QStringLiteral("Packet loss")));
+    QVERIFY(showsText(group.get(), QStringLiteral("1.5% (3 packet(s))")));
+    QVERIFY(showsText(group.get(), QStringLiteral("1 / 0")));
+    QVERIFY(showsText(group.get(), QStringLiteral("4 requested, 3 recovered")));
+    QVERIFY(showsText(group.get(), QStringLiteral("1.0 s")));
+    QVERIFY(showsText(group.get(), QStringLiteral("Decoder restarts")));
+    QVERIFY(showsText(group.get(), QStringLiteral("1:02:05")));
+    QVERIFY(showsText(group.get(), QStringLiteral("1:05, 2.0MB")));
+
+    // The same measurement again is no change, and the thermal stream's are its own.
+    _primary->setStats(stats);
+    _thermal->setStats(stats);
+    QCOMPARE(statsSpy.count(), 2);
+
+    // A camera's advertised stream follows the measured values.
+    mavlink_video_stream_information_t info{};
+    info.type = VIDEO_STREAM_TYPE_RTPUDP;
+    info.encoding = VIDEO_STREAM_ENCODING_H264;
+    info.framerate = 30.0f;
+    info.bitrate = 8'000'000;
+    info.resolution_h = 1280;
+    info.resolution_v = 720;
+    (void) qstrncpy(info.uri, "5601", sizeof(info.uri));
+    (void) qstrncpy(info.name, "Main camera", sizeof(info.name));
+    QGCVideoStreamInfo cameraStream(info);
+    stream->setStreamInfo(&cameraStream);
+    _settle();
+    QVERIFY(showsText(group.get(), QStringLiteral("Main camera")));
+    QVERIFY(showsText(group.get(), QStringLiteral("29.5 fps (camera 30 fps)")));
+    QVERIFY(showsText(group.get(), QStringLiteral("0 kbit/s (camera 8.0 Mbit/s)")));
+    QVERIFY(showsText(group.get(), QStringLiteral("H.264 (camera 1280 × 720)")));
+    stream->setStreamInfo(nullptr);
+    _settle();
+
+    // A receiver going away takes its measurements with it.
+    stream->setReceiver(nullptr);
+    _primary = nullptr;
+    QCOMPARE(statsSpy.count(), 3);
+    QVERIFY(!group->isVisible());
+}
+
+void VideoManagerTest::_testStreamFormatText()
+{
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kStreamFormatQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/StreamFormat.qml")));
+    const std::unique_ptr<QObject> format(component.create());
+    QVERIFY2(format, qPrintable(component.errorString()));
+    QCOMPARE(format->property("kbit").toString(), QStringLiteral("850 kbit/s"));
+    QCOMPARE(format->property("mbit").toString(), QStringLiteral("8.0 Mbit/s"));
+    QCOMPARE(format->property("minutes").toString(), QStringLiteral("1:05"));
+    QCOMPARE(format->property("hours").toString(), QStringLiteral("1:02:05"));
+}
+
+void VideoManagerTest::_testVideoViewFitsVideo_data()
+{
+    // Whether the fitted video takes its width from the view's height, and its height from the view's width, for a
+    // video wider than the square view, and whether the outputs crop it to the view.
+    QTest::addColumn<int>("fitMode");
+    QTest::addColumn<bool>("widthFromHeight");
+    QTest::addColumn<bool>("heightFromWidth");
+    QTest::addColumn<bool>("crops");
+
+    QTest::newRow("fit width") << int(VideoSettings::VideoFitWidth) << false << true << false;
+    QTest::newRow("fit height") << int(VideoSettings::VideoFitHeight) << true << false << true;
+    QTest::newRow("fill") << int(VideoSettings::VideoFitFill) << true << false << true;
+    QTest::newRow("no crop") << int(VideoSettings::VideoFitNoCrop) << false << true << false;
+}
+
+void VideoManagerTest::_testVideoViewFitsVideo()
+{
+    QFETCH(int, fitMode);
+    QFETCH(bool, widthFromHeight);
+    QFETCH(bool, heightFromWidth);
+    QFETCH(bool, crops);
+
+    _facts->set(_videoSettings->videoFit(), fitMode);
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kVideoViewQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/VideoView.qml")));
+    const std::unique_ptr<QObject> view(component.create());
+    QVERIFY2(view, qPrintable(component.errorString()));
+
+    const qreal aspectRatio = view->property("_ar").toReal();
+    QVERIFY(aspectRatio > 1.0);
+    QCOMPARE(view->property("videoWidth").toReal(), widthFromHeight ? (400 * aspectRatio) : 400);
+    QCOMPARE(view->property("videoHeight").toReal(), heightFromWidth ? (400 / aspectRatio) : 400);
+    QCOMPARE(view->property("_cropsVideo").toBool(), crops);
+}
+
+void VideoManagerTest::_testCameraPinchZoomSteps()
+{
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kCameraPinchZoomQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/CameraPinchZoom.qml")));
+    const std::unique_ptr<QObject> zoom(component.create());
+    QVERIFY2(zoom, qPrintable(component.errorString()));
+    auto* const camera = zoom->property("camera").value<QObject*>();
+    QVERIFY(camera);
+
+    // Feeds one pinch's scales through it, as its pinch updates do, and returns the zoom steps the camera got.
+    const auto pinch = [&zoom, camera](std::initializer_list<qreal> scales) {
+        (void) camera->setProperty("steps", QVariantList());
+        QVariant sent = 0;
+        for (const qreal scale : scales) {
+            QVariant next;
+            if (!QMetaObject::invokeMethod(zoom.get(), "_stepToward", Q_RETURN_ARG(QVariant, next),
+                                           Q_ARG(QVariant, scale), Q_ARG(QVariant, sent))) {
+                return QVariantList({QStringLiteral("invoke failed")});
+            }
+            sent = next;
+        }
+        return camera->property("steps").toList();
+    };
+
+    // Two fingers that don't move send nothing; each 25% of spread or pinch sends one step, one per update.
+    QCOMPARE(pinch({1.0, 1.0, 1.1}), QVariantList());
+    QCOMPARE(pinch({1.0, 1.3, 1.3, 1.6}), QVariantList({1, 1}));
+    QCOMPARE(pinch({1.0, 2.0, 2.0, 2.0}), QVariantList({1, 1, 1}));
+    QCOMPARE(pinch({1.0, 0.75, 0.6}), QVariantList({-1, -1}));
+    QCOMPARE(pinch({1.0, 1.3, 1.0}), QVariantList({1, -1}));
+}
+
+void VideoManagerTest::_testVideoViewPlacesThermalPip()
+{
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kThermalVideoViewQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/ThermalVideoView.qml")));
+    const std::unique_ptr<QObject> view(component.create());
+    QVERIFY2(view, qPrintable(component.errorString()));
+    auto* const thermal = view->findChild<QQuickItem*>(QStringLiteral("videoViewThermal"));
+    QVERIFY(thermal);
+    auto* const camera = view->property("camera").value<QObject*>();
+    QVERIFY(camera);
+
+    QCOMPARE(thermal->x(), view->property("pipX").toReal());
+    QCOMPARE(thermal->y(), view->property("pipY").toReal());
+
+    (void) view->setProperty("thermalPipTopInset", 60);
+    QCOMPARE(thermal->y(), view->property("pipY").toReal());
+
+    (void) camera->setProperty("thermalMode", MavlinkCameraControlInterface::THERMAL_FULL);
+    QCOMPARE(thermal->height(), 400.0);
+    QCOMPARE(thermal->x() + (thermal->width() / 2), 200.0);
+    QCOMPARE(thermal->y(), 0.0);
+
+    // A view narrower than the thermal video bounds its width.
+    const qreal aspectRatio = thermal->width() / thermal->height();
+    (void) view->setProperty("width", 200);
+    QCOMPARE(thermal->width(), 200.0);
+    QCOMPARE(thermal->height(), 200.0 / aspectRatio);
+    QCOMPARE(thermal->y() + (thermal->height() / 2), 200.0);
+    (void) view->setProperty("width", 400);
+
+    (void) camera->setProperty("thermalMode", MavlinkCameraControlInterface::THERMAL_PIP);
+    QCOMPARE(thermal->x(), view->property("pipX").toReal());
+    QCOMPARE(thermal->y(), view->property("pipY").toReal());
+}
+
+void VideoManagerTest::_testStreamUriAndTransport_data()
+{
+    QTest::addColumn<QString>("source");
+    QTest::addColumn<QString>("url");
+    QTest::addColumn<QString>("uri");
+    QTest::addColumn<QString>("transport");
+
+    QTest::newRow("udp h.264") << QString(VideoSettings::videoSourceUDPH264) << "0.0.0.0:5600"
+                               << "udp://0.0.0.0:5600" << "RTP/UDP (H.264)";
+    QTest::newRow("udp h.265") << QString(VideoSettings::videoSourceUDPH265) << "0.0.0.0:5600"
+                               << "udp265://0.0.0.0:5600" << "RTP/UDP (H.265)";
+    QTest::newRow("mpeg-ts") << QString(VideoSettings::videoSourceMPEGTS) << "0.0.0.0:5600"
+                             << "mpegts://0.0.0.0:5600" << "MPEG-TS/UDP";
+    QTest::newRow("tcp") << QString(VideoSettings::videoSourceTCP) << "10.0.0.2:5600" << "tcp://10.0.0.2:5600"
+                         << "MPEG-TS/TCP";
+    // The URI is shown in the Fly View, so it loses credentials and query values.
+    QTest::newRow("rtsp") << QString(VideoSettings::videoSourceRTSP) << "rtsp://pilot:secret@cam.local/live?token=abc"
+                          << "rtsp://cam.local/live?token=REDACTED" << "RTSP";
+}
+
+void VideoManagerTest::_testStreamUriAndTransport()
+{
+    QFETCH(QString, source);
+    QFETCH(QString, url);
+    QFETCH(QString, uri);
+    QFETCH(QString, transport);
+
+    VideoStreamController* const stream = _videoManager->primaryStream();
+    QSignalSpy uriSpy(stream, &VideoStreamController::uriChanged);
+    _facts->set(_videoSettings->videoSource(), source);
+    Fact* const urlFact = (source == QString(VideoSettings::videoSourceRTSP))  ? _videoSettings->rtspUrl()
+                          : (source == QString(VideoSettings::videoSourceTCP)) ? _videoSettings->tcpUrl()
+                                                                               : _videoSettings->udpUrl();
+    _facts->set(urlFact, url);
+    _settle();
+
+    QCOMPARE(stream->uri(), uri);
+    QCOMPARE(stream->transport(), transport);
+    QCOMPARE(uriSpy.count(), (uri == QStringLiteral("udp://0.0.0.0:5600")) ? 0 : 1);
+
+    // Without a stream to play there is nothing to show.
+    _facts->set(_videoSettings->videoSource(), QString(VideoSettings::videoDisabled));
+    _settle();
+    QVERIFY(stream->uri().isEmpty());
+    QVERIFY(stream->transport().isEmpty());
 }
 
 UT_REGISTER_TEST(VideoManagerTest, TestLabel::Unit)

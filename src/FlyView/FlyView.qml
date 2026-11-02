@@ -109,6 +109,7 @@ Item {
         FlyViewVideo {
             id:         videoControl
             pipView:    _pipView
+            topInset:   toolbar.height
         }
 
         PipView {

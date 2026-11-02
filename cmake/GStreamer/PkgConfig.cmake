@@ -31,7 +31,7 @@ function(_qgc_gst_save_pkgconfig_env)
     set_property(GLOBAL PROPERTY _QGC_GST_PKG_CONFIG_ENV_SAVED TRUE)
 endfunction()
 
-# gstreamer_apply_pkgconfig_env(
+# qgc_gst_apply_pkgconfig_env(
 #     MODE <SDK|SYSTEM_AUGMENT>
 #     LIBDIR <dir>...                 # one or more pkgconfig dirs (semicolon list)
 #     [PKG_CONFIG_EXE <path>]         # optional explicit pkg-config binary (PKG_CONFIG_EXECUTABLE)
@@ -49,9 +49,9 @@ endfunction()
 # scope.
 # cmakelang reads set(ENV{<name>}) as a variable name.
 # cmake-lint: disable=C0103
-function(gstreamer_apply_pkgconfig_env)
+function(qgc_gst_apply_pkgconfig_env)
     cmake_parse_arguments(PARSE_ARGV 0 ARG "DONT_DEFINE_PREFIX" "MODE;PKG_CONFIG_EXE" "LIBDIR")
-    _qgc_gst_check_args(gstreamer_apply_pkgconfig_env MODE LIBDIR)
+    _qgc_gst_check_args(qgc_gst_apply_pkgconfig_env MODE LIBDIR)
 
     _qgc_gst_save_pkgconfig_env()
     if(ARG_PKG_CONFIG_EXE)
@@ -85,9 +85,7 @@ function(gstreamer_apply_pkgconfig_env)
         string(REPLACE ";" "${_sep}" _pkg_config_path "${_pkg_config_paths}")
         set(ENV{PKG_CONFIG_PATH} "${_pkg_config_path}")
     else()
-        message(
-            FATAL_ERROR "gstreamer_apply_pkgconfig_env: invalid MODE='${ARG_MODE}' (expected SDK or SYSTEM_AUGMENT)"
-        )
+        message(FATAL_ERROR "qgc_gst_apply_pkgconfig_env: invalid MODE='${ARG_MODE}' (expected SDK or SYSTEM_AUGMENT)")
     endif()
 
     if(ARG_DONT_DEFINE_PREFIX AND NOT "--dont-define-prefix" IN_LIST PKG_CONFIG_ARGN)
@@ -100,7 +98,7 @@ function(gstreamer_apply_pkgconfig_env)
 endfunction()
 
 # qgc_gst_restore_pkgconfig_env()
-# Restores the PKG_CONFIG_PATH / PKG_CONFIG_LIBDIR environment gstreamer_apply_pkgconfig_env found.
+# Restores the PKG_CONFIG_PATH / PKG_CONFIG_LIBDIR environment qgc_gst_apply_pkgconfig_env found.
 # cmakelang reads set(ENV{<name>}) as a variable name.
 # cmake-lint: disable=C0103
 function(qgc_gst_restore_pkgconfig_env)

@@ -1,10 +1,11 @@
 # Target platform of the GStreamer modules. A platform's SDK discovery is _qgc_gst_discover_<platform>_sdk
-# (platform/*.cmake) and, on desktop, its installer gstreamer_install_<platform>_sdk (Install.cmake).
+# (platform/*.cmake) and, on desktop, its installer qgc_gst_install_<platform>_sdk (platform/*.cmake too, run by
+# Install.cmake).
 #
 # A discovery function resolves the SDK into GStreamer_ROOT_DIR (and GStreamer_AUTO_DOWNLOADED when it downloaded it),
-# its GSTREAMER_{LIB,PLUGIN,INCLUDE,PLUGIN_SCANNER,GIO_MODULE}_PATH layout (gstreamer_create_layout_target) and its
-# pkg-config view (gstreamer_apply_pkgconfig_env), sets GStreamer_USE_FRAMEWORK for a macOS GStreamer.framework, and
-# returns with _qgc_gst_return_discovery().
+# its GSTREAMER_{LIB,PLUGIN,INCLUDE,PLUGIN_SCANNER,GIO_MODULE}_PATH layout (qgc_gst_resolve_layout) and its
+# pkg-config view (qgc_gst_apply_pkgconfig_env), sets GStreamer_USE_FRAMEWORK for a macOS GStreamer.framework, and
+# returns with _qgc_gst_return_discovery() (Layout.cmake), which records those in the GStreamer layout store.
 
 include_guard(GLOBAL)
 
@@ -31,60 +32,87 @@ function(_qgc_gst_check_args fn)
 endfunction()
 
 # qgc_gst_platform(<prefix>)
-# Sets, in the caller's scope:
-#   <prefix>              the target platform: windows, linux, android, macos or ios
-#   <prefix>_VERSION_KEY  gstreamer.version.<key> in build-config.json: the SDK version, or on Linux the floor
-#   <prefix>_PLUGIN_KEY   gstreamer.plugins.<key> list in build-config.json added to the common plugins
+# Sets, in the caller's scope, the target platform's profile:
+#   <prefix>                  the target platform: windows, linux, android, macos or ios
+#   <prefix>_VERSION_KEY      gstreamer.version.<key> in build-config.json: the SDK version, or on Linux the floor
+#   <prefix>_PLUGIN_KEY       gstreamer.plugins.<key> list in build-config.json added to the common plugins
+#   <prefix>_STATIC_PLUGINS   TRUE when the app registers static plugins (GSTREAMER_STATIC_PLUGINS) in
+#                             GStreamer::mobile, with the OpenSSL GIO module; FALSE when it loads plugin files
+#   <prefix>_LINKAGE          static (pkg-config --static) or shared, as the SDK's libraries link
+#   <prefix>_PKG_CONFIG       TRUE when the SDK is read through pkg-config (not iOS's merged framework)
+#   <prefix>_TARGETS          the function that creates the GStreamer:: targets (Targets.cmake, platform/IOS.cmake)
+#   <prefix>_PLUGIN_ARCHIVES  TRUE when the SDK ships its plugins as static archives the build may leave unused
+#   <prefix>_PATH_LABEL       how the configure status line names the SDK's linkage (a macOS framework says so)
+#   <prefix>_NOTICE_ASSETS    TRUE when the GStreamer notice ships as an APK asset
 # Fails configure on any other platform.
 # cmake-lint: disable=C0103,E1121
 function(qgc_gst_platform prefix)
     if(ANDROID)
-        set(${prefix} android)
-        set(${prefix}_VERSION_KEY android)
-        set(${prefix}_PLUGIN_KEY android)
+        set(_platform android)
     elseif(IOS)
-        set(${prefix} ios)
-        set(${prefix}_VERSION_KEY ios)
-        set(${prefix}_PLUGIN_KEY apple)
+        set(_platform ios)
     elseif(WIN32)
-        set(${prefix} windows)
-        set(${prefix}_VERSION_KEY windows)
-        set(${prefix}_PLUGIN_KEY windows)
+        set(_platform windows)
     elseif(MACOS)
-        set(${prefix} macos)
-        set(${prefix}_VERSION_KEY macos)
-        set(${prefix}_PLUGIN_KEY apple)
+        set(_platform macos)
     elseif(LINUX)
-        set(${prefix} linux)
-        set(${prefix}_VERSION_KEY minimum)
-        set(${prefix}_PLUGIN_KEY linux)
+        set(_platform linux)
     else()
         message(FATAL_ERROR "GStreamer: unsupported target platform (CMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME})")
     endif()
-    return(PROPAGATE ${prefix} ${prefix}_VERSION_KEY ${prefix}_PLUGIN_KEY)
+
+    # cmake-format: off
+    # platform|version key|plugin key|static plugins|linkage|pkg-config|targets|plugin archives|path label|notice assets
+    set(_profiles
+        "android|android|android|TRUE|static|TRUE|_qgc_gst_create_sdk_targets|TRUE|mobile-shared|TRUE"
+        "ios|ios|apple|TRUE|shared|FALSE|_qgc_gst_create_ios_targets|FALSE|merged-static|FALSE"
+        "windows|windows|windows|FALSE|shared|TRUE|_qgc_gst_create_sdk_targets|FALSE|shared|FALSE"
+        "macos|macos|apple|FALSE|shared|TRUE|_qgc_gst_create_sdk_targets|FALSE|shared|FALSE"
+        "linux|minimum|linux|FALSE|shared|TRUE|_qgc_gst_create_sdk_targets|FALSE|shared|FALSE"
+    )
+    # cmake-format: on
+    set(_fields
+        VERSION_KEY
+        PLUGIN_KEY
+        STATIC_PLUGINS
+        LINKAGE
+        PKG_CONFIG
+        TARGETS
+        PLUGIN_ARCHIVES
+        PATH_LABEL
+        NOTICE_ASSETS
+    )
+    set(${prefix} ${_platform})
+    set(_outputs ${prefix})
+    foreach(_profile IN LISTS _profiles)
+        string(REPLACE "|" ";" _profile "${_profile}")
+        list(POP_FRONT _profile _name)
+        if(NOT _name STREQUAL _platform)
+            continue()
+        endif()
+        foreach(_field IN LISTS _fields)
+            list(POP_FRONT _profile ${prefix}_${_field})
+            list(APPEND _outputs ${prefix}_${_field})
+        endforeach()
+    endforeach()
+    return(PROPAGATE ${_outputs})
 endfunction()
 
-# _qgc_gst_return_discovery()
-# Returns from a discovery function, setting every discovery output in the caller's scope as the function left it.
-macro(_qgc_gst_return_discovery)
-    return(
-        PROPAGATE
-        GStreamer_ROOT_DIR
-        GStreamer_AUTO_DOWNLOADED
-        GStreamer_USE_FRAMEWORK
-        GSTREAMER_LIB_PATH
-        GSTREAMER_PLUGIN_PATH
-        GSTREAMER_INCLUDE_PATH
-        GSTREAMER_PLUGIN_SCANNER_PATH
-        GSTREAMER_GIO_MODULE_PATH
-        GSTREAMER_FRAMEWORK_PATH
-        GSTREAMER_XCFRAMEWORK_LIB
-        GStreamer_IOS_CA_BUNDLE
-        PKG_CONFIG_EXECUTABLE
-        PKG_CONFIG_ARGN
-        PKG_CONFIG_USE_CMAKE_PREFIX_PATH
+# _qgc_gst_require_bundled_version(<platform> <version> <floor>)
+# Fails configure when <platform> uses an official SDK (every platform but Linux, whose system GStreamer has its own
+# floor) and <version> is older than <floor>, gstreamer.version.bundled_minimum: discovery reads the SDK layouts from
+# that release on (the Windows installers' names, iOS's merged framework).
+function(_qgc_gst_require_bundled_version platform version floor)
+    if(platform STREQUAL "linux" OR version VERSION_GREATER_EQUAL floor)
+        return()
+    endif()
+    message(
+        FATAL_ERROR
+            "GStreamer: the ${platform} SDK must be ${floor} or later (gstreamer.version.bundled_minimum), but "
+            "${version} was requested. Set QGC_GST_VERSION, or gstreamer.version.${platform} in "
+            ".github/build-config.json, to ${floor} or later."
     )
-endmacro()
+endfunction()
 
 # _qgc_gst_require_no_spaces(<what> <path>)
 # Fails configure when <path> contains a space: pkg-config prints paths unquoted, so FindPkgConfig would split them. iOS

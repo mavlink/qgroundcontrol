@@ -1,5 +1,6 @@
 #include "VideoStreamResolverTest.h"
 
+#include "VideoDecoderOptions.h"
 #include "VideoSettings.h"
 #include "VideoStreamResolver.h"
 #include "VideoTestHelpers.h"
@@ -128,6 +129,36 @@ void VideoStreamResolverTest::_testStreamSettingsPassThrough()
         QCOMPARE(config->rtpJitterLatencyMs, 250);
         QVERIFY(!config->autoReconnect);
     }
+}
+
+void VideoStreamResolverTest::_testDisplayConfig_data()
+{
+    QTest::addColumn<bool>("forceCpuVideoPath");
+    QTest::addColumn<int>("forceVideoDecoder");
+    QTest::addColumn<bool>("gpuZeroCopy");
+
+    QTest::newRow("default") << false << int(VideoDecoder::ForceVideoDecoderDefault) << true;
+    QTest::newRow("hardware decoder") << false << int(VideoDecoder::ForceVideoDecoderHardware) << true;
+    QTest::newRow("CPU path forced") << true << int(VideoDecoder::ForceVideoDecoderDefault) << false;
+    QTest::newRow("software decoder forced") << false << int(VideoDecoder::ForceVideoDecoderSoftware) << false;
+}
+
+void VideoStreamResolverTest::_testDisplayConfig()
+{
+    QFETCH(bool, forceCpuVideoPath);
+    QFETCH(int, forceVideoDecoder);
+    QFETCH(bool, gpuZeroCopy);
+
+    VideoStreamResolver::Settings settings = manualSettings(VideoSettings::videoSourceRTSP);
+    settings.conversionElement = QByteArrayLiteral("videoconvert");
+    settings.disablePixelAspectRatio = true;
+    settings.forceCpuVideoPath = forceCpuVideoPath;
+    settings.forceVideoDecoder = forceVideoDecoder;
+
+    const VideoReceiver::DisplayConfig display = VideoStreamResolver::displayConfig(settings);
+    QCOMPARE(display.conversionElement, QByteArrayLiteral("videoconvert"));
+    QVERIFY(display.disablePixelAspectRatio);
+    QCOMPARE(display.gpuZeroCopy, gpuZeroCopy);
 }
 
 void VideoStreamResolverTest::_testNetworkSources_data()

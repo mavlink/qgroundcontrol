@@ -13,8 +13,8 @@
 #include "GStreamer.h"
 #include "GStreamerTestHelpers.h"
 #include "GstHwPathTelemetry.h"
+#include "gstqgc/GstQgcSinkStats.h"
 #include "gstqgc/GstQgcTestSupport.h"
-#include "gstqgc/gstqgcqvideosink.h"
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && defined(QGC_HAS_GST_VULKAN_GPU_PATH)
 #include <rhi/qrhi.h>
@@ -85,10 +85,8 @@ void GstHwBuffersPipelineTest::_testVulkanDispatchDemotesToCpu()
 
     const QString negotiatedStr = GstTest::currentCapsString(sinkPad.get());
     const int probedBuffers = bufferCount.load();
-    guint64 vulkanFrames = 0;
-    if (const GStreamer::GstStructurePtr stats = GstQgc::frameStats(qvideosink.get())) {
-        (void) gst_structure_get_uint64(stats.get(), GstQgc::sinkFramesField(HwVideoBufferPath::Vulkan), &vulkanFrames);
-    }
+    const quint64 vulkanFrames = GstQgc::frameStatsField(GstQgc::frameStats(qvideosink.get()).get(),
+                                                         GstQgc::sinkFramesField(HwVideoBufferPath::Vulkan));
 
     if (sawError) {
         QSKIP(qPrintable(QStringLiteral("Vulkan pipeline error (likely no Vulkan device): %1").arg(errMsg)));

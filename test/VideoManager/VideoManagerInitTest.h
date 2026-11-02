@@ -13,4 +13,5 @@ private slots:
     void _testReceiversNeedBackendAndWindow();
     void _testBackendInitFailure();
     void _testWaitForBackendReady();
+    void _testBackendSettingReplacesReceivers();
 };

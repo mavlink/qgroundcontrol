@@ -8,8 +8,8 @@ class QGCVideoStreamInfoTest : public UnitTest
 
 private slots:
     void _aspectRatioFromResolution_test();
-    void _aspectRatioDefaultsToOneForNullResolution_test();
+    void _aspectRatioDefaultsToOneWithoutResolution_test_data();
+    void _aspectRatioDefaultsToOneWithoutResolution_test();
     void _updateNoChange_test();
     void _updateChangedFieldsEmitsSignal_test();
 };
-

@@ -6,7 +6,7 @@ import re
 
 from ..._helpers import REPO_ROOT, get_step, get_steps, load_workflow
 
-GSTREAMER_README = REPO_ROOT / "src/VideoManager/VideoReceiver/GStreamer/README.md"
+GSTREAMER_README = REPO_ROOT / "src/VideoManager/GStreamer/README.md"
 
 
 def test_windows_audits_installed_dlls_between_install_and_boot() -> None:
@@ -48,7 +48,18 @@ def test_windows_runs_the_gstreamer_test_classes_on_warp() -> None:
     )
     assert documented
     assert all(pattern.match(name) for name in documented)
-    assert all(pattern.match(name) for name in ("VideoManagerTest", "SubtitleWriterTest"))
+    assert all(
+        pattern.match(name)
+        for name in (
+            "VideoManagerTest",
+            "SubtitleWriterTest",
+            "QtMultimediaVideoReceiverTest",
+            "QtVideoRecorderTest",
+            "UVCCameraControllerTest",
+        )
+    )
+    # cmake/GStreamer's script tests, for their Windows-only branches.
+    assert pattern.match("GStreamer.test_platform")
     assert not pattern.match("ParameterManagerTest")
 
     gate = workflow["jobs"]["windows-ok"]

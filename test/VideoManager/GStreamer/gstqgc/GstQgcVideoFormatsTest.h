@@ -12,6 +12,7 @@ private slots:
 #ifdef QGC_GST_STREAMING
     void _testColorimetryPixelFormatMapping();
     void _testCpuCapsFormatsRoundTripToQt();
+    void _testD3D12ConvertCapsAreSinglePlane();
     void _testColorimetryColorSpaceMapping();
     void _testColorimetryResolutionHeuristicMatchesQt();
     void _testColorimetryTransferMapping();

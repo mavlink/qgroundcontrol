@@ -208,17 +208,6 @@ parse:
         PLUGINS: '*'
         GIO_MODULES: '*'
 
-    _qgc_probe_gst_lib:
-      pargs: {nargs: '1+'}
-      kwargs:
-        HAS_VAR: '?'
-        HEADER: '?'
-        SYMBOL: '?'
-        PC_MODULE: '?'
-        LIB_VAR: '?'
-        LIBNAMES: '*'
-        INCLUDES: '*'
-
     _qgc_write_fake_homebrew:
       pargs: {nargs: '1+', flags: [LINKED]}
 
@@ -232,45 +221,6 @@ parse:
       pargs: {nargs: '2+'}
       kwargs:
         EXPECTED_HASH: '?'
-
-    gstreamer_apply_pkgconfig_env:
-      pargs: {nargs: '*', flags: [DONT_DEFINE_PREFIX]}
-      kwargs:
-        MODE: '?'
-        PKG_CONFIG_EXE: '?'
-        LIBDIR: '*'
-
-    gstreamer_classify_missing_plugins:
-      pargs: {nargs: '*'}
-      kwargs:
-        OUT_OPTIONAL: '?'
-        OUT_ABSENT: '?'
-        OUT_UNUSABLE: '?'
-        REQUESTED: '*'
-        AVAILABLE: '*'
-        SHIPPED: '*'
-
-    gstreamer_create_layout_target:
-      pargs: {nargs: '*'}
-      kwargs:
-        SDK_ROOT: '?'
-        LIB_PATH: '?'
-        FRAMEWORK_BUNDLE: '?'
-
-    gstreamer_install_platform_sdk:
-      pargs: {nargs: '1+'}
-      kwargs:
-        REQUIRED_PLUGINS: '*'
-
-    gstreamer_missing_required:
-      pargs: {nargs: '*'}
-      kwargs:
-        OUT_VAR: '?'
-        REQUIRED: '*'
-        AVAILABLE: '*'
-
-    gstreamer_scan_plugin_basenames:
-      pargs: {nargs: '2+', flags: [STATIC]}
 
     qgc_add_expected_failure_test:
       pargs: {nargs: '*'}
@@ -305,15 +255,6 @@ parse:
         DEPENDS: '*'
         BUILD_DEPENDS: '*'
 
-    qgc_check_gst_header:
-      pargs: {nargs: '*'}
-      kwargs:
-        VAR: '?'
-        HEADER: '?'
-        SYMBOL: '?'
-        TARGET: '?'
-        INCLUDES: '*'
-
     qgc_config_read:
       pargs: {nargs: '1+', flags: [LIST, OPTIONAL]}
 
@@ -343,12 +284,79 @@ parse:
         CONTENT_DIR_OUT: '?'
         ARCHIVES: '*'
 
+    qgc_gst_apply_pkgconfig_env:
+      pargs: {nargs: '*', flags: [DONT_DEFINE_PREFIX]}
+      kwargs:
+        MODE: '?'
+        PKG_CONFIG_EXE: '?'
+        LIBDIR: '*'
+
+    qgc_gst_check_header:
+      pargs: {nargs: '*'}
+      kwargs:
+        VAR: '?'
+        HEADER: '?'
+        SYMBOL: '?'
+        TARGET: '?'
+        INCLUDES: '*'
+
+    qgc_gst_check_plugins:
+      pargs: {nargs: '*', flags: [STATIC]}
+      kwargs:
+        SOURCE: '?'
+        REQUESTED: '*'
+        AVAILABLE: '*'
+        SHIPPED: '*'
+
+    qgc_gst_classify_missing_plugins:
+      pargs: {nargs: '*'}
+      kwargs:
+        OUT_OPTIONAL: '?'
+        OUT_ABSENT: '?'
+        OUT_UNUSABLE: '?'
+        REQUESTED: '*'
+        AVAILABLE: '*'
+        SHIPPED: '*'
+
+    qgc_gst_create_layout_target:
+      pargs: {nargs: '*'}
+      kwargs:
+        SDK_ROOT: '?'
+        LIB_PATH: '?'
+        FRAMEWORK_BUNDLE: '?'
+
     qgc_gst_generate_static_init:
       pargs: {nargs: '*'}
       kwargs:
         TARGET: '?'
         PLUGINS: '*'
         GIO_MODULES: '*'
+
+    qgc_gst_install_platform_sdk:
+      pargs: {nargs: '1+'}
+      kwargs:
+        REQUIRED_PLUGINS: '*'
+
+    qgc_gst_missing_required:
+      pargs: {nargs: '*'}
+      kwargs:
+        OUT_VAR: '?'
+        REQUIRED: '*'
+        AVAILABLE: '*'
+
+    qgc_gst_probe_library:
+      pargs: {nargs: '1+'}
+      kwargs:
+        HAS_VAR: '?'
+        HEADER: '?'
+        SYMBOL: '?'
+        PC_MODULE: '?'
+        LIB_VAR: '?'
+        LIBNAMES: '*'
+        INCLUDES: '*'
+
+    qgc_gst_scan_plugin_basenames:
+      pargs: {nargs: '2+', flags: [STATIC]}
 
     qgc_track_git_head:
       pargs: {nargs: '*', flags: [OFFLINE_OK]}

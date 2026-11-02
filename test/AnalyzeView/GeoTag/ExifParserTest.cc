@@ -209,6 +209,32 @@ void ExifParserTest::_writeNegativeAltitudeTest()
     exif_data_unref(data);
 }
 
+void ExifParserTest::_writeWithoutAltitudeDropsOldAltitudeTest()
+{
+    QFile file(":/unittest/DSCN0010.jpg");
+    QVERIFY(file.open(QIODevice::ReadOnly));
+
+    QByteArray buffer = file.readAll();
+    file.close();
+
+    GeoTagData geotag;
+    geotag.coordinate = QGeoCoordinate(31.5, 35.5, -400.0);
+    QVERIFY(ExifParser::write(buffer, geotag));
+
+    // A position without an altitude leaves none behind, not the earlier position's.
+    geotag.coordinate = QGeoCoordinate(47.3977, 8.5456);
+    QVERIFY(ExifParser::write(buffer, geotag));
+
+    ExifData* data = ExifUtility::loadFromBuffer(buffer);
+    QVERIFY(data != nullptr);
+    ExifContent* gpsIfd = data->ifd[EXIF_IFD_GPS];
+    QVERIFY(gpsIfd != nullptr);
+    QVERIFY(exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_LATITUDE)) != nullptr);
+    QVERIFY(exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE)) == nullptr);
+    QVERIFY(exif_content_get_entry(gpsIfd, static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE_REF)) == nullptr);
+    exif_data_unref(data);
+}
+
 void ExifParserTest::_writePreservesExistingDataTest()
 {
     QFile file(":/unittest/DSCN0010.jpg");

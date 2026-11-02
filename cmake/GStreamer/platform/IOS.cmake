@@ -2,10 +2,9 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 #
 # iOS GStreamer SDK discovery — invoked by Orchestrator.cmake.
-# GStreamer 1.28 for iOS ships a universal GStreamer.framework (cerbero
-# versioned bundle) whose Versions/1.0/GStreamer binary is a single merged
-# static archive containing every library and plugin. Older/future SDKs may
-# ship a GStreamer.xcframework with a fat libGStreamer.a per slice. Both reduce
+# Up to 1.28.7 the iOS package is a .pkg holding a universal GStreamer.framework (cerbero versioned bundle) whose
+# Versions/1.0/GStreamer binary is a single merged static archive containing every library and plugin. From 1.28.8 on
+# it is a tarball holding a GStreamer.xcframework with a fat libGStreamer.a per slice. Both reduce
 # to the same single-merged-archive consumption model
 # (_qgc_gst_create_ios_targets) — discovery just locates the binary + Headers.
 #
@@ -110,23 +109,17 @@ endfunction()
 
 # _qgc_gst_ios_sdk_version(<include_dir> <out_var>)
 # Sets <out_var> to the version gst/gstversion.h under <include_dir> defines, which works for every SDK layout, and
-# fails configure below the 1.28 floor: discovery only checked the requested version. Without the header it warns and
-# falls back to QGC_GST_REQUESTED_VERSION.
+# fails configure when it is older than QGC_GST_REQUESTED_VERSION, as the pkg-config platforms' version check does.
+# Without the header it warns and falls back to QGC_GST_REQUESTED_VERSION.
 function(_qgc_gst_ios_sdk_version include_dir out_var)
     _qgc_gst_header_version("${include_dir}" _version)
     if(_version)
-        if(_version VERSION_LESS "1.28.0")
+        if(_version VERSION_LESS QGC_GST_REQUESTED_VERSION)
             message(
                 FATAL_ERROR
-                    "GStreamer iOS SDK headers (${include_dir}/gst/gstversion.h) report version "
-                    "'${_version}', which is older than the required 1.28 floor. A downgraded or stale "
-                    "SDK was found — remove it / clear the SDK cache and re-fetch the pinned version."
-            )
-        endif()
-        if(QGC_GST_REQUESTED_VERSION AND _version VERSION_LESS QGC_GST_REQUESTED_VERSION)
-            message(
-                WARNING "GStreamer iOS SDK version '${_version}' is older than the requested "
-                        "'${QGC_GST_REQUESTED_VERSION}'. Using the SDK's actual version."
+                    "GStreamer iOS SDK headers (${include_dir}/gst/gstversion.h) report version '${_version}', "
+                    "older than the requested ${QGC_GST_REQUESTED_VERSION}. Point GStreamer_ROOT_DIR at an SDK of "
+                    "that version, or unset it and clear the SDK cache to download one."
             )
         endif()
     else()
@@ -154,13 +147,6 @@ function(_qgc_gst_discover_ios_sdk)
         message(FATAL_ERROR "GStreamer for iOS can only be built on macOS")
     endif()
 
-    if(QGC_GST_REQUESTED_VERSION VERSION_LESS "1.28.0")
-        message(
-            FATAL_ERROR "GStreamer for iOS requires version 1.28 or later. "
-                        "Got '${QGC_GST_REQUESTED_VERSION}' — bump gstreamer.version.ios in build-config.json."
-        )
-    endif()
-
     if(GStreamer_ROOT_DIR)
         _qgc_gst_ios_bundle_from_root("${GStreamer_ROOT_DIR}" _gst_ios_bundle)
         if(NOT _gst_ios_bundle)
@@ -175,7 +161,7 @@ function(_qgc_gst_discover_ios_sdk)
 
     if(NOT _gst_ios_bundle)
         _qgc_gst_acquire_ios_sdk(_gst_ios_expanded)
-        # The package's bundle, an xcframework when it has one (future SDKs).
+        # The package's bundle: the 1.28.8+ tarball's GStreamer.xcframework, else the older .pkg's GStreamer.framework.
         file(
             GLOB_RECURSE _gst_ios_bundles
             LIST_DIRECTORIES true
@@ -188,7 +174,7 @@ function(_qgc_gst_discover_ios_sdk)
         if(NOT _gst_ios_bundles)
             message(
                 FATAL_ERROR "GStreamer: no GStreamer.xcframework or GStreamer.framework in the expanded iOS SDK at "
-                            "${_gst_ios_expanded}; the .pkg layout may have changed."
+                            "${_gst_ios_expanded}; the package layout may have changed."
             )
         endif()
         list(GET _gst_ios_bundles 0 _gst_ios_bundle)
@@ -283,7 +269,7 @@ endfunction()
 # _qgc_gst_ios_mobile_framework(<plugin>...)
 # Creates GStreamer::mobile (qgc_gst_add_mobile_library) as the framework the app embeds and the only binary that links
 # GStreamer_static. Its generated gst_init_static_plugins() registers the <plugin>s and loads G_IO_MODULES, which is
-# what links their objects in; the core functions in QGC_GST_APP_CORE_SYMBOLS (StaticInit.cmake) that no plugin pulls
+# what links their objects in; the core functions in QGC_GST_APP_CORE_SYMBOLS (Mobile.cmake) that no plugin pulls
 # in are kept. The app resolves every GStreamer symbol from this framework.
 function(_qgc_gst_ios_mobile_framework)
     # gioopenssl is statically linked into libGStreamer.a (nm: _g_io_openssl_load is exported from the slice);
@@ -311,13 +297,15 @@ endfunction()
 # that one archive, so the steps share its state in one function.
 # cmake-lint: disable=R0912,R0915
 function(_qgc_gst_create_ios_targets)
-    _qgc_gst_ios_sdk_version("${GSTREAMER_INCLUDE_PATH}" GStreamer_VERSION)
+    qgc_gst_layout_get(INCLUDE_PATH _gst_include_path)
+    qgc_gst_layout_get(XCFRAMEWORK_LIB _gst_xcframework_lib)
+    _qgc_gst_ios_sdk_version("${_gst_include_path}" GStreamer_VERSION)
     set(GStreamer_VERSION
         "${GStreamer_VERSION}"
         PARENT_SCOPE
     )
 
-    _qgc_gst_ios_usage_targets("${GSTREAMER_XCFRAMEWORK_LIB}" "${GSTREAMER_INCLUDE_PATH}")
+    _qgc_gst_ios_usage_targets("${_gst_xcframework_lib}" "${_gst_include_path}")
     # System frameworks required by GStreamer on iOS.
     # Note: gstreamer-ios 1.28+ bundles libass (CoreText), MoltenVK (Metal/IOSurface/QuartzCore),
     # applemedia iosassetsrc (AssetsLibrary), and EAGL/CAMetalLayer (QuartzCore) — all of which
@@ -383,9 +371,9 @@ function(_qgc_gst_create_ios_targets)
 
     # nm on the ~300 MB archive takes 2-5 s, so its descriptor list is cached, keyed on the archive's path, the SDK
     # version and the archive's size and mtime; hashing the archive would cost as much as nm on every configure.
-    file(SIZE "${GSTREAMER_XCFRAMEWORK_LIB}" _xcfw_lib_size)
-    file(TIMESTAMP "${GSTREAMER_XCFRAMEWORK_LIB}" _xcfw_lib_mtime "%s")
-    set(_xcfw_cache_key "${GSTREAMER_XCFRAMEWORK_LIB}|${GStreamer_VERSION}|${_xcfw_lib_size}|${_xcfw_lib_mtime}")
+    file(SIZE "${_gst_xcframework_lib}" _xcfw_lib_size)
+    file(TIMESTAMP "${_gst_xcframework_lib}" _xcfw_lib_mtime "%s")
+    set(_xcfw_cache_key "${_gst_xcframework_lib}|${GStreamer_VERSION}|${_xcfw_lib_size}|${_xcfw_lib_mtime}")
     set(_xcfw_cache_file "${CMAKE_BINARY_DIR}/qgc_xcfw_plugins.cmake")
     set(_xcfw_descs "")
     if(EXISTS "${_xcfw_cache_file}")
@@ -401,7 +389,7 @@ function(_qgc_gst_create_ios_targets)
 
         # No -arch first (works for llvm-nm + thin archives); on failure (BSD nm on a fat binary) retry per slice.
         execute_process(
-            COMMAND "${_xcfw_nm}" -gjU "${GSTREAMER_XCFRAMEWORK_LIB}"
+            COMMAND "${_xcfw_nm}" -gjU "${_gst_xcframework_lib}"
             OUTPUT_VARIABLE _xcfw_nm_out
             ERROR_VARIABLE _xcfw_nm_err
             RESULT_VARIABLE _xcfw_nm_rc
@@ -409,7 +397,7 @@ function(_qgc_gst_create_ios_targets)
         if(NOT _xcfw_nm_rc EQUAL 0)
             foreach(_xcfw_arch IN LISTS CMAKE_OSX_ARCHITECTURES)
                 execute_process(
-                    COMMAND "${_xcfw_nm}" -arch "${_xcfw_arch}" -gjU "${GSTREAMER_XCFRAMEWORK_LIB}"
+                    COMMAND "${_xcfw_nm}" -arch "${_xcfw_arch}" -gjU "${_gst_xcframework_lib}"
                     OUTPUT_VARIABLE _xcfw_nm_out
                     ERROR_VARIABLE _xcfw_nm_err
                     RESULT_VARIABLE _xcfw_nm_rc
@@ -427,7 +415,7 @@ function(_qgc_gst_create_ios_targets)
         if(NOT _xcfw_descs)
             message(
                 FATAL_ERROR
-                    "nm produced no plugin descriptors for ${GSTREAMER_XCFRAMEWORK_LIB} (rc=${_xcfw_nm_rc})\n"
+                    "nm produced no plugin descriptors for ${_gst_xcframework_lib} (rc=${_xcfw_nm_rc})\n"
                     "  tool:        ${_xcfw_nm}\n"
                     "  archs tried: ${CMAKE_OSX_ARCHITECTURES} (plus a no-arch attempt)\n"
                     "  stderr:      ${_xcfw_nm_err}\n"

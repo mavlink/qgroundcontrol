@@ -72,7 +72,7 @@ runs:
         PR_NUMBER: ${{ github.event.pull_request.number }}
         COMPILER_CACHE_HASH: ${{ hashFiles('.github/build-config.json', 'tools/configs/ccache.conf') }}
         MOC_CACHE_HASH: ${{ hashFiles('.github/build-config.json', 'cmake/Helpers.cmake', 'tools/moccache/*.py', 'tools/moccache_launcher.py') }}
-        GST_SDK_FILES_HASH: ${{ hashFiles('cmake/GStreamer/Download.cmake', 'cmake/GStreamer/Acquire.cmake') }}
+        GST_SDK_FILES_HASH: ${{ hashFiles('cmake/GStreamer/Packages.cmake', 'cmake/GStreamer/Acquire.cmake', 'cmake/GStreamer/acquire/*.cmake') }}
       run: python3 "${GITHUB_WORKSPACE}/tools/ci/cache/cache_plan.py"
 
     # Pinned ccache for the runner's OS and architecture, plus mold on Linux and, for the
@@ -142,7 +142,7 @@ runs:
     # Only Windows, Android and iOS builds download one; desktop Linux and
     # macOS use the system GStreamer. The key covers what selects, fetches
     # and extracts the SDK (the build-config.json gstreamer section, not the
-    # whole file, and cmake/GStreamer/{Download,Acquire}.cmake), so other
+    # whole file, and cmake/GStreamer/{Packages,Acquire}.cmake), so other
     # GStreamer CMake edits keep it. Only the extracted
     # trees are cached: configure uses a tree stamped with the pinned
     # checksums without its downloaded archive. actions/cache archives a

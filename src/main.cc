@@ -67,5 +67,9 @@ int main(int argc, char *argv[])
     // Destroy LogManager while Qt is still fully functional (before static destruction).
     delete LogManager::instance();
 
+#ifdef Q_OS_ANDROID
+    Platform::skipStaticDestructorsAtExit(exitCode);
+#endif
+
     return exitCode;
 }

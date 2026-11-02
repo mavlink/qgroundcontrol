@@ -6,11 +6,15 @@
 #include <gst/app/gstappsrc.h>
 #include <gst/gst.h>
 
+#include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
+#include <QtCore/QUrl>
+#include <QtMultimedia/QMediaMetaData>
+#include <QtMultimedia/QMediaPlayer>
 
 #include "GStreamerTestHelpers.h"
 #include "GstScoped.h"
@@ -269,6 +273,75 @@ void GstRecordingSinkTest::_testRecordingSinkTimestampsDtsOnlyFrames()
     const int frames = GstTest::countPlayableFrames(outputPath, playbackFailure);
     QVERIFY2(frames >= 0, qPrintable(playbackFailure));
     QCOMPARE(frames, kFrames);
+}
+
+void GstRecordingSinkTest::_testRecordingSinkTagsFile_data()
+{
+    QTest::addColumn<int>("format");
+    QTest::addColumn<QString>("muxer");
+    // matroskamux writes the comment as COMMENTS, which FFmpeg passes on as no comment of its own.
+    QTest::addColumn<bool>("commentReadable");
+
+    QTest::newRow("mkv") << int(VideoReceiver::FileFormat::Mkv) << QStringLiteral("matroskamux") << false;
+    QTest::newRow("mov") << int(VideoReceiver::FileFormat::Mov) << QStringLiteral("qtmux") << true;
+    QTest::newRow("mp4") << int(VideoReceiver::FileFormat::Mp4) << QStringLiteral("mp4mux") << true;
+}
+
+void GstRecordingSinkTest::_testRecordingSinkTagsFile()
+{
+    QFETCH(int, format);
+    QFETCH(QString, muxer);
+    QFETCH(bool, commentReadable);
+    const QByteArray muxerFactory = muxer.toLatin1();
+    GSTTEST_SKIP_UNLESS_FACTORIES("appsrc", "h264parse", muxerFactory.constData());
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const auto fileFormat = static_cast<VideoReceiver::FileFormat>(format);
+    const QString outputPath = tempDir.filePath(QStringLiteral("tagged.") + VideoReceiver::fileExtension(fileFormat));
+    constexpr int kFrames = 10;
+    QString loadError;
+    const QList<GstTest::AccessUnit> units =
+        GstTest::loadAccessUnits(QString::fromLatin1(GstTest::kH264Stream), &loadError);
+    QVERIFY2(units.size() >= kFrames, qPrintable(loadError));
+
+    GstTest::TestPipeline pipeline;
+    QVERIFY2(pipeline.launch(QStringLiteral("appsrc name=src format=time "
+                                            "caps=video/x-h264,stream-format=byte-stream,alignment=au ! "
+                                            "h264parse name=parse")),
+             qPrintable(pipeline.error()));
+    const GStreamer::GstCapsPtr recordingCaps =
+        GStreamer::adoptCaps(gst_caps_from_string("video/x-h264,stream-format=byte-stream,alignment=au"));
+    const QDateTime started = QDateTime::currentDateTimeUtc();
+    const GStreamer::GstElementPtr fileSink =
+        RecordingBranch::makeFileSink(outputPath, fileFormat, recordingCaps.get());
+    QVERIFY(fileSink);
+    QVERIFY(gst_bin_add(pipeline.bin(), fileSink.get()));
+    QVERIFY(gst_element_link(pipeline.element("parse").get(), fileSink.get()));
+
+    QVERIFY(pipeline.play());
+    const GStreamer::GstElementPtr source = pipeline.element("src");
+    constexpr GstClockTime kFrameDuration = GST_SECOND / GstTest::kStreamFrameRate;
+    for (int frame = 0; frame < kFrames; ++frame) {
+        QCOMPARE(pushAccessUnit(source.get(), units.at(frame).bytes, frame * kFrameDuration, kFrameDuration),
+                 GST_FLOW_OK);
+    }
+    QCOMPARE(gst_app_src_end_of_stream(GST_APP_SRC(source.get())), GST_FLOW_OK);
+    const QString failure = pipeline.runToEos();
+    QVERIFY2(failure.isEmpty(), qPrintable(failure));
+    (void) gst_element_set_state(pipeline.get(), GST_STATE_NULL);
+
+    // As other players (FFmpeg's) read them.
+    QMediaPlayer player;
+    player.setSource(QUrl::fromLocalFile(outputPath));
+    QTRY_VERIFY_WITH_TIMEOUT(player.mediaStatus() == QMediaPlayer::LoadedMedia, TestTimeout::mediumMs());
+    const QMediaMetaData metaData = player.metaData();
+    if (commentReadable) {
+        QCOMPARE(metaData.value(QMediaMetaData::Comment).toString(), VideoReceiver::recordingComment());
+    }
+    const QDateTime date = metaData.value(QMediaMetaData::Date).toDateTime();
+    QVERIFY2(date.isValid(), qPrintable(metaData.stringValue(QMediaMetaData::Date)));
+    QVERIFY2(qAbs(date.secsTo(started)) <= 60, qPrintable(date.toString(Qt::ISODate)));
 }
 
 #endif

@@ -10,6 +10,12 @@
 #include <QtCore/QSettings>
 #include <QtCore/QDir>
 
+FactValueGridLayouts* FactValueGridLayouts::instance()
+{
+    static FactValueGridLayouts layouts;
+    return &layouts;
+}
+
 QStringList FactValueGrid::_iconNames;
 
 QList<FactValueGrid*> FactValueGrid::_vehicleCardInstanceList;
@@ -285,6 +291,8 @@ void FactValueGrid::_saveSettings(void)
         settings.endArray();
     }
     settings.endArray();
+
+    emit FactValueGridLayouts::instance() -> saved(_settingsGroup);
 
     // If this settings change was set from a Vehicle card, this makes so the changes are
     // immediately applied to the other Vehicle cards.

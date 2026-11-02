@@ -67,7 +67,7 @@ def install_macos(dry_run: bool = False, packages: list[str] | None = None) -> b
         with tempfile.TemporaryDirectory() as tmpdir:
             downloads = {
                 label: (
-                    # Upstream first, then QGC's mirror, like cmake/GStreamer/Download.cmake.
+                    # Upstream first, then QGC's mirror, like cmake/GStreamer/Packages.cmake.
                     (_c.package_url(package, gst_version), _c.mirror_url(package, gst_version)),
                     Path(tmpdir) / _c.package_filename(package, gst_version),
                 )

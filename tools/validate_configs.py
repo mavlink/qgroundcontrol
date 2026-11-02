@@ -17,7 +17,6 @@ from setup.install_uv import required_version
 if TYPE_CHECKING:
     from pathlib import Path
 
-GSTREAMER_BUNDLED_MINIMUM = Version("1.28.0")
 UV_IMAGE_RE = re.compile(r"^COPY --from=ghcr\.io/astral-sh/uv:(\S+) ", re.MULTILINE)
 
 
@@ -37,16 +36,15 @@ def validate_build_config(config: dict[str, Any], schema: dict[str, Any]) -> lis
     for platform, version in gst["version"].items():
         if Version(version) < Version(gst["version"]["minimum"]):
             errors.append(f"gstreamer.version.{platform} must meet the minimum")
-    # Bundled SDKs are 1.28+ (GStreamerTest's floor; the iOS and Windows downloads need it).
-    # The Linux system floor stays older.
+    # The official SDKs meet bundled_minimum (cmake/GStreamer/Orchestrator.cmake and GStreamerTest check it too);
+    # the Linux system floor stays older.
+    bundled_minimum = Version(gst["version"]["bundled_minimum"])
     for platform in ("android", "ios", "macos", "windows"):
-        if Version(gst["version"][platform]) < GSTREAMER_BUNDLED_MINIMUM:
-            errors.append(
-                f"gstreamer.version.{platform} must be at least {GSTREAMER_BUNDLED_MINIMUM}"
-            )
-    if Version(gst["version"]["minimum"]) >= GSTREAMER_BUNDLED_MINIMUM:
+        if Version(gst["version"][platform]) < bundled_minimum:
+            errors.append(f"gstreamer.version.{platform} must be at least {bundled_minimum}")
+    if Version(gst["version"]["minimum"]) >= bundled_minimum:
         errors.append(
-            f"gstreamer.version.minimum must stay below {GSTREAMER_BUNDLED_MINIMUM} for system GStreamer"
+            f"gstreamer.version.minimum must stay below {bundled_minimum} for system GStreamer"
         )
     for platform, artifacts in {
         "android": ("android",),

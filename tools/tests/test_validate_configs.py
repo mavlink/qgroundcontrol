@@ -69,6 +69,7 @@ def test_inconsistent_versions_are_rejected(mutation):
     "key,version,error",
     [
         ("ios", "1.26.0", "gstreamer.version.ios must be at least 1.28.0"),
+        ("bundled_minimum", "1.29.0", "gstreamer.version.ios must be at least 1.29.0"),
         (
             "minimum",
             "1.28.0",

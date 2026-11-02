@@ -138,7 +138,7 @@ Video stored on the camera may be of much higher quality, but it is likely that 
 
 #### Record Video Stream (on GCS)
 
-Video stream recording is controlled on the [video stream instrument page](hud.md#video_instrument_page).
+Video stream recording is controlled on the [video stream instrument page](camera_tools.md#video_instrument_page).
 Press the red circle to start recording a new video (a new video file is created each time the circle is pressed); the circle will change into a red square while recording is in progress.
 
 Video stream recording is configured in the [Application Settings > General tab](../settings_view/general.md):

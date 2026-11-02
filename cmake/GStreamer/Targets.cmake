@@ -11,9 +11,12 @@
 
 include_guard(GLOBAL)
 
+include("${CMAKE_CURRENT_LIST_DIR}/Layout.cmake")
+
 # _qgc_gst_pkg_target(<name> <module> [REQUIRED|QUIET])
 # Creates GStreamer::<name>, linking PkgConfig::PC_GStreamer_<name> from pkg-config <module>, when the module is found.
 function(_qgc_gst_pkg_target name module)
+    qgc_gst_layout_get(ROOT_DIR _gst_root)
     if(TARGET GStreamer::${name})
         return()
     endif()
@@ -51,7 +54,7 @@ function(_qgc_gst_pkg_target name module)
             # (libc.so, not the libc.a find_library may resolve).
             set(_by_name "")
             foreach(_library IN LISTS _libraries)
-                cmake_path(IS_PREFIX GStreamer_ROOT_DIR "${_library}" NORMALIZE _in_sdk)
+                cmake_path(IS_PREFIX _gst_root "${_library}" NORMALIZE _in_sdk)
                 if(IS_ABSOLUTE "${_library}" AND NOT _in_sdk)
                     cmake_path(GET _library STEM _library)
                     string(REGEX REPLACE "^lib" "" _library "${_library}")
@@ -111,6 +114,7 @@ endfunction()
 # builds GStreamer::mobile. Sets GStreamer_VERSION and, on Android, GSTREAMER_STATIC_PLUGINS in the caller's scope.
 # cmake-lint: disable=C0103,E1121
 function(_qgc_gst_create_sdk_targets)
+    qgc_gst_layout_get(USE_FRAMEWORK _gst_use_framework)
     # QGC_GST_REQUESTED_VERSION is the per-platform floor chosen by Orchestrator.cmake: Linux honors the distribution
     # minimum (1.20), the bundled-SDK platforms the SDK version they download, so a downgraded SDK fails configure.
     _qgc_gst_pkg_target(Core "gstreamer-1.0>=${QGC_GST_REQUESTED_VERSION}" REQUIRED)
@@ -124,7 +128,7 @@ function(_qgc_gst_create_sdk_targets)
     add_library(${_libraries} INTERFACE IMPORTED GLOBAL)
     target_link_libraries(${_libraries} INTERFACE GStreamer::Core)
     foreach(_component IN LISTS GSTREAMER_SELECTED_COMPONENTS)
-        gstreamer_component_module(${_component} _module)
+        qgc_gst_component_module(${_component} _module)
         # A missing mandatory module fails configure with its own message (Orchestrator.cmake); the others are optional.
         set(_quiet QUIET)
         if(_component IN_LIST GSTREAMER_MANDATORY_COMPONENTS)
@@ -137,7 +141,7 @@ function(_qgc_gst_create_sdk_targets)
     endforeach()
 
     set(_outputs GStreamer_VERSION)
-    if(GStreamer_USE_FRAMEWORK)
+    if(_gst_use_framework)
         _qgc_gst_apply_macos_framework_overlay()
     elseif(ANDROID)
         _qgc_gst_create_android_mobile_target()

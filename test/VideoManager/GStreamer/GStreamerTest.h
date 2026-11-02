@@ -9,15 +9,18 @@ class GStreamerTest : public GStreamerTestBase
 
 private slots:
 #ifdef QGC_GST_STREAMING
-    void _testIsValidRtspUri();
     void _testIsHardwareDecoderFactory_data();
     void _testIsHardwareDecoderFactory();
     void _testDecoderFamilyForFactory_data();
     void _testDecoderFamilyForFactory();
-    void _testD3D12RhiDisablesGpuZeroCopySink();
+    void _testAvailableDecoderFamilies();
+    void _testDecoderPriorityWarnings();
+    void _testLogDecoderRanks();
     void _testPipelineDotOmitsElementProperties();
     void _testCompleteInit();
     void _testCreateVideoReceiver();
+    void _testVideoBackendForwards();
+    void _testRuntimeRunsInOrder();
     void _testRecordingSinkAcceptsElementaryStreams_data();
     void _testRecordingSinkAcceptsElementaryStreams();
     void _testBindDebugLevelFactRejectsNullContext();

@@ -8,7 +8,7 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 
-#include "GStreamerHelpers.h"
+#include "GStreamerDecoderRanks.h"
 #include "GStreamerSelfTest.h"
 #include "GstScoped.h"
 
