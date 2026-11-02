@@ -153,7 +153,8 @@ ENV SHELL=/bin/bash
 WORKDIR /workspaces/qgroundcontrol
 USER ${DEV_USER}
 ENTRYPOINT []
-CMD ["/bin/bash"]
+# A login shell reads /etc/profile.d, where Qt's environment is set up.
+CMD ["/bin/bash", "-l"]
 
 # ---------- linux-cross: aarch64 cross-compile (host tools + :arm64 sysroot) ----------
 # Why this exists (CI already builds arm64 natively on ubuntu-24.04-arm):

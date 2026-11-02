@@ -1,5 +1,6 @@
 {
   "build": {
+    "cacheFrom": "ghcr.io/mavlink/qgc-dev:latest",
     "context": "..",
     "dockerfile": "../deploy/docker/Dockerfile",
     "target": "devcontainer"

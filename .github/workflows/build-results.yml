@@ -18,6 +18,7 @@ on:
       - ClusterFuzzLite
       - CodeQL
       - Dependency Review
+      - Dev Container
       - Docker
       - Docs
       - Doxygen API Docs
