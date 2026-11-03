@@ -1,6 +1,7 @@
 #include "FactGroup.h"
 
 #include <QtCore/QJsonArray>
+#include <QtQml/QQmlEngine>
 
 #include "QGCLoggingCategory.h"
 
@@ -92,6 +93,9 @@ Fact *FactGroup::getFact(const QString &name) const
 
     if (_nameToFactMap.contains(camelCaseName)) {
         fact = _nameToFactMap[camelCaseName];
+        // getFact() is Q_INVOKABLE: without this, QML would take ownership of the returned Fact and its garbage
+        // collector would delete a Fact this group still owns.
+        QQmlEngine::setObjectOwnership(fact, QQmlEngine::CppOwnership);
     } else {
         qCWarning(FactGroupLog) << "Unknown Fact" << camelCaseName;
     }
@@ -106,6 +110,8 @@ FactGroup *FactGroup::getFactGroup(const QString &name) const
 
     if (_nameToFactGroupMap.contains(camelCaseName)) {
         factGroup = _nameToFactGroupMap[camelCaseName];
+        // Q_INVOKABLE as well: keep the returned group out of QML's garbage collector.
+        QQmlEngine::setObjectOwnership(factGroup, QQmlEngine::CppOwnership);
     } else {
         qCWarning(FactGroupLog) << "Unknown FactGroup" << camelCaseName;
     }
