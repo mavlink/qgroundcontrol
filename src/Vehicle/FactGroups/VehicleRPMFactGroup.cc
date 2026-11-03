@@ -3,6 +3,16 @@
 #include "MAVLinkLib.h"
 #include "Vehicle.h"
 
+namespace {
+
+// ArduPilot sends a negative value in RPM (#226) for an unconfigured or unhealthy sensor.
+double rpmSensorOrNaN(float rpm)
+{
+    return (rpm < 0.0F) ? qQNaN() : rpm;
+}
+
+}  // namespace
+
 VehicleRPMFactGroup::VehicleRPMFactGroup(QObject *parent)
     : FactGroup(1000, QStringLiteral(":/json/Vehicle/RPMFact.json"), parent)
 {
@@ -66,8 +76,8 @@ void VehicleRPMFactGroup::_handleRPMSensor(const mavlink_message_t &message)
     mavlink_rpm_t rpm{};
     mavlink_msg_rpm_decode(&message, &rpm);
 
-    _rpmSensor1Fact.setRawValue(rpm.rpm1);
-    _rpmSensor2Fact.setRawValue(rpm.rpm2);
+    _rpmSensor1Fact.setRawValue(rpmSensorOrNaN(rpm.rpm1));
+    _rpmSensor2Fact.setRawValue(rpmSensorOrNaN(rpm.rpm2));
 
     _setTelemetryAvailable(true);
 }
