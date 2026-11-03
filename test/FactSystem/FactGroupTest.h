@@ -24,4 +24,5 @@ private slots:
     void _telemetryAvailable_test();
     void _factNames_test();
     void _factGroupNames_test();
+    void _qmlCallKeepsCppOwnership_test();
 };
