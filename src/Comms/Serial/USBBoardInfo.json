@@ -83,7 +83,9 @@
         { "vendorID": 16325, "productID": 71,       "boardClass": "Pixhawk",    "name": "VOLOLAND NarinFC-H7" },
         { "vendorID": 5840,  "productID": 5318,     "boardClass": "Pixhawk",    "name": "CBU H753-SOM" },
         { "vendorID": 5840,  "productID": 5387,     "boardClass": "Pixhawk",    "name": "CORVON 743V2" },
-        { "vendorID": 5840,  "productID": 5418,     "boardClass": "Pixhawk",    "name": "CORVON V5" }
+        { "vendorID": 5840,  "productID": 5418,     "boardClass": "Pixhawk",    "name": "CORVON V5" },
+        { "vendorID": 11914, "productID": 64,       "boardClass": "Pixhawk",    "name": "RPI-UAVFC-R4",         "comment": "Bootloader" },
+        { "vendorID": 12677, "productID": 64,       "boardClass": "Pixhawk",    "name": "RPI-UAVFC-R4" }
     ],
 
     "boardDescriptionFallback": [
@@ -138,6 +140,8 @@
         { "regExp": "^PX4 TROPIC Community","boardClass": "Pixhawk" },
         { "regExp": "^PX4 MR-TROPIC",       "boardClass": "Pixhawk" },
         { "regExp": "^PX4 BL MR-TROPIC",    "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 RPI-UAVFC-R4$",   "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 BL RPI-UAVFC-R4$","boardClass": "Pixhawk" },
         { "regExp": "^FT231X USB UART$",    "boardClass": "SiK Radio" },
         { "regExp": "USB UART$",            "boardClass": "SiK Radio",  "androidOnly": true, "comment": "Very broad fallback, too dangerous for non-android" }
     ],
