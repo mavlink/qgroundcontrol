@@ -277,6 +277,9 @@ public:
     /// (CompassMot). Default is true.
     virtual bool supportsMotorInterference() const { return true; }
 
+    /// Returns true if the firmware accepts MAV_CMD_NAV_FENCE_HOME_CIRCLE_INCLUSION fence items. Default is false.
+    virtual bool supportsFenceHomeCircle(const Vehicle* /*vehicle*/) const { return false; }
+
     /// Called before any mavlink message is processed by Vehicle such that the firmwre plugin
     /// can adjust any message characteristics. This is handy to adjust or differences in mavlink
     /// spec implementations such that the base code can remain mavlink generic.
