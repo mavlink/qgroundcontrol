@@ -1,7 +1,8 @@
 #include "FactGroupTest.h"
-#include <QtCore/QRegularExpression>
-#include <QtTest/QSignalSpy>
 
+#include <QtCore/QRegularExpression>
+#include <QtQml/QJSEngine>
+#include <QtTest/QSignalSpy>
 
 #include "Fact.h"
 #include "FactGroup.h"
@@ -232,6 +233,28 @@ void FactGroupTest::_factGroupNames_test()
     QCOMPARE(names.count(), 2);
     QVERIFY(names.contains(QStringLiteral("sub1")));
     QVERIFY(names.contains(QStringLiteral("sub2")));
+}
+
+void FactGroupTest::_qmlCallKeepsCppOwnership_test()
+{
+    // Facts and groups returned to QML stay owned by their group; JavaScript ownership would let the garbage
+    // collector delete objects the group still holds.
+    TestableFactGroup group;
+    QJSEngine::setObjectOwnership(&group, QJSEngine::CppOwnership);
+    Fact* fact = new Fact(0, "testFact", FactMetaData::valueTypeDouble, &group);
+    group._addFact(fact, QStringLiteral("testFact"));
+    TestableFactGroup* child = new TestableFactGroup(&group);
+    group._addFactGroup(child, QStringLiteral("childGroup"));
+
+    QJSEngine engine;
+    engine.globalObject().setProperty(QStringLiteral("group"), engine.newQObject(&group));
+    const QJSValue result = engine.evaluate(
+        QStringLiteral("group.getFact('testFact') !== null && group.getFactGroup('childGroup') !== null"));
+
+    QVERIFY2(!result.isError(), qPrintable(result.toString()));
+    QVERIFY(result.toBool());
+    QCOMPARE(QJSEngine::objectOwnership(fact), QJSEngine::CppOwnership);
+    QCOMPARE(QJSEngine::objectOwnership(child), QJSEngine::CppOwnership);
 }
 
 #include "FactGroupTest.moc"
