@@ -64,6 +64,8 @@ target_sources(
         VehicleAirborneTest.h
         VehicleDistanceSensorFactGroupTest.cc
         VehicleDistanceSensorFactGroupTest.h
+        VehicleFactGroupTest.cc
+        VehicleFactGroupTest.h
         VehicleFirmwareUpdateTest.cc
         VehicleFirmwareUpdateTest.h
         VehicleGPSFactGroupTest.cc
@@ -120,6 +122,7 @@ add_qgc_test(StandardModesTest LABELS Integration Vehicle)
 add_qgc_test(TrajectoryPointsTest LABELS Unit Vehicle)
 add_qgc_test(VehicleAirborneTest LABELS Integration Vehicle)
 add_qgc_test(VehicleDistanceSensorFactGroupTest LABELS Integration Vehicle)
+add_qgc_test(VehicleFactGroupTest LABELS Integration Vehicle)
 add_qgc_test(VehicleFirmwareUpdateTest LABELS Integration Vehicle)
 add_qgc_test(VehicleGPSFactGroupTest LABELS Unit GPS)
 add_qgc_test(VehicleLinkManagerTest LABELS Integration Vehicle SERIAL)
