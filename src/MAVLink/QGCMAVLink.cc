@@ -551,3 +551,18 @@ QString QGCMAVLink::compIdToString(uint8_t compId)
 
     return QStringLiteral("%1 (%2)").arg(compIdStr).arg(static_cast<int>(compId));
 }
+
+QString QGCMAVLink::boundedStringField(std::span<const char> raw)
+{
+    if (raw.empty()) {
+        return {};
+    }
+
+    const auto length = static_cast<qsizetype>(qstrnlen(raw.data(), raw.size()));
+    return QString::fromUtf8(raw.data(), length);
+}
+
+QString QGCMAVLink::boundedStringField(std::span<const uint8_t> raw)
+{
+    return boundedStringField(std::span<const char>(reinterpret_cast<const char*>(raw.data()), raw.size()));
+}
