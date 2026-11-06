@@ -35,6 +35,7 @@ public:
     QString             stabilizedFlightMode            (void) const override;
     VehicleReadiness* createVehicleReadiness(Vehicle* vehicle) const override;
     void                pauseVehicle                    (Vehicle* vehicle) const override;
+    void pauseVehicleAsync(Vehicle* vehicle) const override;
     void                guidedModeRTL                   (Vehicle* vehicle, bool smartRTL) const override;
     void                guidedModeLand                  (Vehicle* vehicle) const override;
     void                guidedModeTakeoff               (Vehicle* vehicle, double takeoffAltRel) const override;
@@ -51,6 +52,7 @@ public:
     bool                guidedModeROI                   (Vehicle* vehicle, const QGeoCoordinate& roiCenterCoord, double relativeAltitudeMeters) const override;
     void                startTakeoff                    (Vehicle* vehicle) const override;
     void                startMission                    (Vehicle* vehicle) const override;
+    void startMissionAsync(Vehicle* vehicle) const override;
     bool                isGuidedMode                    (const Vehicle* vehicle) const override;
     void                initializeVehicle               (Vehicle* vehicle) override;
     bool                sendHomePositionToVehicle       (void) const override;

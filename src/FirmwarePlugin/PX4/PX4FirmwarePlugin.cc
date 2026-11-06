@@ -2,7 +2,9 @@
 
 #include <algorithm>
 
+#include <QtCore/QPointer>
 #include <QtCore/QString>
+#include <QtCore/QTimer>
 
 #include "AppMessages.h"
 #include "MAVLinkLib.h"
@@ -316,6 +318,14 @@ void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle) const
     sendRepositionKeepLatLon(vehicle, NAN, NAN);
 }
 
+void PX4FirmwarePlugin::pauseVehicleAsync(Vehicle* vehicle) const
+{
+    if (!vehicle) {
+        return;
+    }
+    pauseVehicle(vehicle);
+}
+
 void PX4FirmwarePlugin::guidedModeRTL(Vehicle* vehicle, bool smartRTL) const
 {
     Q_UNUSED(smartRTL);
@@ -621,6 +631,80 @@ void PX4FirmwarePlugin::startMission(Vehicle* vehicle) const
     } else {
         QGC::showAppMessage(tr("Unable to start mission: Vehicle not changing to %1 flight mode.").arg(missionFlightMode()));
     }
+}
+
+namespace {
+
+constexpr char kStartMissionArmWaiter[] = "px4StartMissionArmWaiter";
+
+void _settleStartMission(QObject* waiter, const QPointer<Vehicle>& vehicle, const QString& missionMode, bool timedOut)
+{
+    if (waiter->property("settled").toBool()) {
+        return;
+    }
+    waiter->setProperty("settled", true);
+    if (vehicle) {
+        (void) QObject::disconnect(vehicle.data(), &Vehicle::flightModeChanged, waiter, nullptr);
+        const bool inMissionMode = vehicle->flightMode() == missionMode;
+        if (timedOut && !inMissionMode) {
+            QGC::showAppMessage(
+                PX4FirmwarePlugin::tr("Unable to start mission: Vehicle not changing to %1 flight mode.")
+                    .arg(missionMode));
+        } else if (inMissionMode && !vehicle->armed()) {
+            vehicle->setArmed(true, false /* showError */);
+        }
+    }
+    waiter->deleteLater();
+}
+
+void _armWhenMissionMode(Vehicle* vehicle, const QString& missionMode)
+{
+    if (QObject* previous =
+            vehicle->findChild<QObject*>(QLatin1String(kStartMissionArmWaiter), Qt::FindDirectChildrenOnly)) {
+        delete previous;
+    }
+
+    // SET_MODE has no ack. Arm only after a heartbeat reports Mission, and report the same failure
+    // as startMission() if that never happens. The budget matches _setFlightModeAndValidate.
+    if (vehicle->flightMode() == missionMode) {
+        if (!vehicle->armed()) {
+            vehicle->setArmed(true, false /* showError */);
+        }
+        return;
+    }
+
+    auto* waiter = new QObject(vehicle);
+    waiter->setObjectName(QLatin1String(kStartMissionArmWaiter));
+    const QPointer<Vehicle> vehiclePtr(vehicle);
+    auto* timer = new QTimer(waiter);
+    timer->setSingleShot(true);
+    timer->setInterval(3 * 13 * 100);
+    (void) QObject::connect(timer, &QTimer::timeout, waiter, [waiter, vehiclePtr, missionMode]() {
+        _settleStartMission(waiter, vehiclePtr, missionMode, true);
+    });
+    (void) QObject::connect(vehicle, &Vehicle::flightModeChanged, waiter,
+                            [waiter, vehiclePtr, missionMode](const QString& flightMode) {
+                                if (flightMode == missionMode) {
+                                    _settleStartMission(waiter, vehiclePtr, missionMode, false);
+                                }
+                            });
+    timer->start();
+}
+
+}  // namespace
+
+void PX4FirmwarePlugin::startMissionAsync(Vehicle* vehicle) const
+{
+    if (!vehicle) {
+        return;
+    }
+
+    // Same commands as startMission(). PX4 SET_MODE has no command ack, so arm follows the reported mode.
+    const QString missionMode = missionFlightMode();
+    if (vehicle->flightMode() != missionMode) {
+        vehicle->setFlightMode(missionMode);
+    }
+    _armWhenMissionMode(vehicle, missionMode);
 }
 
 void PX4FirmwarePlugin::setGuidedMode(Vehicle* vehicle, bool guidedMode) const

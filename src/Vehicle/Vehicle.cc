@@ -1759,15 +1759,19 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
     // The following if statement prevents the virtualTabletJoystick from sending values if the standard joystick is enabled
     bool isActiveVehicle = (MultiVehicleManager::instance()->activeVehicle() == this);
     bool joystickEnabled = isActiveVehicle && JoystickManager::instance()->activeJoystickEnabledForActiveVehicle();
-    if (!joystickEnabled) {
-        sendJoystickDataThreadSafe(
-                    static_cast<float>(roll),
-                    static_cast<float>(pitch),
-                    static_cast<float>(yaw),
-                    static_cast<float>(thrust),
-                    0, 0, // buttons
-                    NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN); // extension values
+    if (joystickEnabled) {
+        return;
     }
+
+    // The stick rests in the middle, so thrust is 0.5. ArduCopter turns that into RC throttle 1500
+    // and rejects a Stabilize arm with "Throttle too high". Only the selected vehicle receives this.
+    if (apmFirmware() && multiRotor() && !armed() && (thrust <= 0.5)) {
+        thrust = 0.0;
+    }
+
+    sendJoystickDataThreadSafe(static_cast<float>(roll), static_cast<float>(pitch), static_cast<float>(yaw),
+                               static_cast<float>(thrust), 0, 0,         // buttons
+                               NAN, NAN, NAN, NAN, NAN, NAN, NAN, NAN);  // extension values
 }
 
 void Vehicle::_say(const QString& text)
@@ -1945,6 +1949,16 @@ void Vehicle::startMission()
     _firmwarePlugin->startMission(this);
 }
 
+void Vehicle::startMissionAsync()
+{
+    _firmwarePlugin->startMissionAsync(this);
+}
+
+void Vehicle::armVehicleAsync()
+{
+    _firmwarePlugin->armVehicleAsync(this);
+}
+
 bool Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord, double forwardFlightLoiterRadius)
 {
     if (!_vehicleSupports->guidedMode()) {
@@ -2106,6 +2120,15 @@ void Vehicle::pauseVehicle()
         return;
     }
     _firmwarePlugin->pauseVehicle(this);
+}
+
+void Vehicle::pauseVehicleAsync()
+{
+    if (!_vehicleSupports->pauseVehicle()) {
+        QGC::showAppMessage(tr("Pause not supported by vehicle."));
+        return;
+    }
+    _firmwarePlugin->pauseVehicleAsync(this);
 }
 
 void Vehicle::abortLanding(double climbOutAltitude)

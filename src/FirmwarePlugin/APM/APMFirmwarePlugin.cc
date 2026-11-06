@@ -1,5 +1,6 @@
 #include "APMFirmwarePlugin.h"
 
+#include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QRegularExpressionMatch>
 #include <QtNetwork/QTcpSocket>
@@ -758,6 +759,18 @@ void APMFirmwarePlugin::pauseVehicle(Vehicle *vehicle) const
     _setFlightModeAndValidate(vehicle, pauseFlightMode());
 }
 
+namespace {
+void _pauseAfterStartChain(Vehicle* vehicle);
+}
+
+void APMFirmwarePlugin::pauseVehicleAsync(Vehicle* vehicle) const
+{
+    if (!vehicle) {
+        return;
+    }
+    _pauseAfterStartChain(vehicle);
+}
+
 struct MAV_CMD_DO_REPOSITION_HandlerData {
     Vehicle *vehicle = nullptr;
 };
@@ -1118,6 +1131,234 @@ void APMFirmwarePlugin::startMission(Vehicle *vehicle) const
 
         vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /*show error */);
     }
+}
+
+namespace {
+
+enum class StartMissionAsyncStep
+{
+    Guided,
+    Auto,
+    Arm,
+};
+
+class StartMissionAsyncChain : public QObject
+{
+public:
+    StartMissionAsyncChain(Vehicle* targetVehicle, StartMissionAsyncStep initialStep, bool armAfterModeChange,
+                           bool startMissionAfterArm)
+        : QObject(targetVehicle)
+        , vehicle(targetVehicle)
+        , step(initialStep)
+        , armAfterMode(armAfterModeChange)
+        , missionStartAfterArm(startMissionAfterArm)
+    {
+        setObjectName(QStringLiteral("apmStartMissionChain"));
+    }
+
+    QPointer<Vehicle> vehicle;
+    StartMissionAsyncStep step;
+    bool armAfterMode = false;
+    bool missionStartAfterArm = false;
+    // Pause arrived while this command was still in flight. The ack must not arm or start the mission.
+    bool cancelled = false;
+};
+
+void _startMissionAsyncShowFailure(StartMissionAsyncStep step)
+{
+    switch (step) {
+        case StartMissionAsyncStep::Guided:
+            QGC::showAppMessage(
+                APMFirmwarePlugin::tr("Unable to start mission: Vehicle failed to change to Guided mode."));
+            break;
+        case StartMissionAsyncStep::Auto:
+            QGC::showAppMessage(
+                APMFirmwarePlugin::tr("Unable to start mission: Vehicle failed to change to Auto mode."));
+            break;
+        case StartMissionAsyncStep::Arm:
+            QGC::showAppMessage(APMFirmwarePlugin::tr("Unable to start mission: Vehicle failed to arm."));
+            break;
+    }
+}
+
+void _startMissionAsyncAck(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack,
+                           Vehicle::MavCmdResultFailureCode_t failureCode);
+
+void _startMissionAsyncSend(StartMissionAsyncChain* chain, MAV_CMD command, float param1, float param2)
+{
+    Vehicle* vehicle = chain->vehicle;
+    if (!vehicle) {
+        delete chain;
+        return;
+    }
+
+    Vehicle::MavCmdAckHandlerInfo_t handlerInfo{};
+    handlerInfo.resultHandler = &_startMissionAsyncAck;
+    handlerInfo.resultHandlerData = chain;
+    vehicle->sendMavCommandWithHandler(&handlerInfo, vehicle->defaultComponentId(), command, param1, param2);
+}
+
+void _startMissionAsyncAck(void* resultHandlerData, int /*compId*/, const mavlink_command_ack_t& ack,
+                           Vehicle::MavCmdResultFailureCode_t failureCode)
+{
+    auto* chain = static_cast<StartMissionAsyncChain*>(resultHandlerData);
+    if (chain->cancelled) {
+        const bool pauseAlreadySent = chain->step == StartMissionAsyncStep::Arm;
+        Vehicle* target = chain->vehicle;
+        delete chain;
+        // Guided/Auto still owns the DO_SET_MODE slot, so Brake goes out when that ack arrives.
+        // An in-flight arm is a different command, and Pause already sent Brake.
+        if (target && !pauseAlreadySent) {
+            target->setFlightMode(target->firmwarePlugin()->pauseFlightMode());
+        }
+        return;
+    }
+    // A second Start while the first command is still pending is the same sequence, not a failure.
+    if ((failureCode == Vehicle::MavCmdResultFailureDuplicateCommand) || !chain->vehicle) {
+        delete chain;
+        return;
+    }
+
+    const bool accepted =
+        (failureCode == Vehicle::MavCmdResultCommandResultOnly) && (ack.result == MAV_RESULT_ACCEPTED);
+    if (!accepted) {
+        _startMissionAsyncShowFailure(chain->step);
+        delete chain;
+        return;
+    }
+
+    if (((chain->step == StartMissionAsyncStep::Guided) || (chain->step == StartMissionAsyncStep::Auto)) &&
+        chain->armAfterMode) {
+        chain->step = StartMissionAsyncStep::Arm;
+        _startMissionAsyncSend(chain, MAV_CMD_COMPONENT_ARM_DISARM, 1.0f, 0.0f);
+        return;
+    }
+
+    if ((chain->step == StartMissionAsyncStep::Arm) && chain->missionStartAfterArm) {
+        Vehicle* vehicle = chain->vehicle;
+        delete chain;
+        vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /* showError */);
+        return;
+    }
+
+    delete chain;
+}
+
+void _startMissionAsyncChangeMode(const APMFirmwarePlugin* plugin, Vehicle* vehicle, const QString& flightMode,
+                                  StartMissionAsyncStep step, bool armAfterMode, bool missionStartAfterArm)
+{
+    uint8_t baseMode = 0;
+    uint32_t customMode = 0;
+    if (!plugin->setFlightMode(flightMode, &baseMode, &customMode)) {
+        _startMissionAsyncShowFailure(step);
+        return;
+    }
+
+    auto* chain = new StartMissionAsyncChain(vehicle, step, armAfterMode, missionStartAfterArm);
+    _startMissionAsyncSend(chain, MAV_CMD_DO_SET_MODE, static_cast<float>(baseMode), static_cast<float>(customMode));
+}
+
+void _startMissionAsyncArm(Vehicle* vehicle, bool missionStartAfterArm)
+{
+    auto* chain = new StartMissionAsyncChain(vehicle, StartMissionAsyncStep::Arm, false, missionStartAfterArm);
+    _startMissionAsyncSend(chain, MAV_CMD_COMPONENT_ARM_DISARM, 1.0f, 0.0f);
+}
+
+StartMissionAsyncChain* _activeStartMissionChain(Vehicle* vehicle)
+{
+    // findChild<StartMissionAsyncChain*> needs Q_OBJECT. The chain is a plain QObject identified by name.
+    auto* object = vehicle->findChild<QObject*>(QStringLiteral("apmStartMissionChain"), Qt::FindDirectChildrenOnly);
+    return static_cast<StartMissionAsyncChain*>(object);
+}
+
+void _pauseAfterStartChain(Vehicle* vehicle)
+{
+    // Start may already have sent Auto while the last heartbeat still says Brake. Skipping Pause on
+    // that report leaves the vehicle in Auto. A second DO_SET_MODE is dropped while the first is
+    // pending, so mark the chain and send Brake from its ack. With no chain, send Brake anyway.
+    if (StartMissionAsyncChain* chain = _activeStartMissionChain(vehicle)) {
+        chain->cancelled = true;
+        // Arm does not occupy DO_SET_MODE, so Brake can go out now. The ack must not start the mission.
+        if (chain->step == StartMissionAsyncStep::Arm) {
+            vehicle->setFlightMode(vehicle->firmwarePlugin()->pauseFlightMode());
+        }
+        return;
+    }
+    vehicle->setFlightMode(vehicle->firmwarePlugin()->pauseFlightMode());
+}
+
+}  // namespace
+
+void APMFirmwarePlugin::startMissionAsync(Vehicle* vehicle) const
+{
+    if (!vehicle) {
+        return;
+    }
+
+    // Same branches as startMission(). Each vehicle waits for its own ack before the next command.
+    // The wait is the command callback, so a multi-vehicle Start does not block the UI thread.
+    if (vehicle->underway()) {
+        if (vehicle->flightMode() != missionFlightMode()) {
+            _startMissionAsyncChangeMode(this, vehicle, missionFlightMode(), StartMissionAsyncStep::Auto, false, false);
+        }
+        return;
+    }
+
+    if (vehicle->fixedWing() || vehicle->vtol()) {
+        const bool needArm = !vehicle->armed();
+        if (vehicle->flightMode() != missionFlightMode()) {
+            _startMissionAsyncChangeMode(this, vehicle, missionFlightMode(), StartMissionAsyncStep::Auto, needArm,
+                                         false);
+        } else if (needArm) {
+            _startMissionAsyncArm(vehicle, false);
+        }
+        return;
+    }
+
+    if (!vehicle->armed()) {
+        // Group Arm may already be moving this copter to Guided. Keep that chain and add the mission start.
+        if (StartMissionAsyncChain* chain = _activeStartMissionChain(vehicle)) {
+            // Start after Pause keeps the mission. The in-flight command is still the mode change.
+            chain->cancelled = false;
+            chain->armAfterMode = true;
+            chain->missionStartAfterArm = true;
+            return;
+        }
+        if (vehicle->flightMode() != guidedFlightMode()) {
+            _startMissionAsyncChangeMode(this, vehicle, guidedFlightMode(), StartMissionAsyncStep::Guided, true, true);
+        } else {
+            _startMissionAsyncArm(vehicle, true);
+        }
+        return;
+    }
+
+    vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /* showError */);
+}
+
+void APMFirmwarePlugin::armVehicleAsync(Vehicle* vehicle) const
+{
+    if (!vehicle || vehicle->armed()) {
+        return;
+    }
+
+    // Copter rejects a GCS arm in Stabilize when the throttle is up. The virtual joystick holds the
+    // selected vehicle at mid-throttle, so that iris fails with "Throttle too high" and stays down.
+    // Guided skips the check for a GCS arm, matching startMission(). Plane and VTOL keep the current mode.
+    if (!vehicle->fixedWing() && !vehicle->vtol() && !vehicle->underway()) {
+        if (StartMissionAsyncChain* chain = _activeStartMissionChain(vehicle)) {
+            chain->cancelled = false;
+            chain->armAfterMode = true;
+            return;
+        }
+        if (vehicle->flightMode() != guidedFlightMode()) {
+            _startMissionAsyncChangeMode(this, vehicle, guidedFlightMode(), StartMissionAsyncStep::Guided, true, false);
+        } else {
+            _startMissionAsyncArm(vehicle, false);
+        }
+        return;
+    }
+
+    vehicle->setArmed(true, true /* showError */);
 }
 
 QString APMFirmwarePlugin::_getLatestVersionFileUrl(Vehicle *vehicle) const

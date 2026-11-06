@@ -17,6 +17,8 @@ public:
 private slots:
     void _noChangeLatLonSentAsInt32Max();
     void _pauseSendsCommandInt();
+    void _pauseAsyncSendsCommandInt();
+    void _startMissionAsyncSetsMissionModeAndArms();
     void _changeHeadingSendsCommandInt();
     void _changeAltitudeSendsCommandInt();
     void _changeAltitudeAfterPauseSendsCommandInt();
