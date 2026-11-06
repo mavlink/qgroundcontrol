@@ -36,6 +36,8 @@ target_sources(
         APMLoggingComponent.h
         APMMotorComponent.cc
         APMMotorComponent.h
+        APMMotorIdentificationController.cc
+        APMMotorIdentificationController.h
         APMServoComponent.cc
         APMServoComponent.h
         APMPowerComponent.cc
@@ -155,6 +157,7 @@ qt_add_resources(
     PREFIX "/json"
     FILES
         APMFollowComponent.FactMetaData.json
+        APMMotorLayouts.json
 )
 
 qt_add_resources(

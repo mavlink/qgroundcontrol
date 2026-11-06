@@ -13,6 +13,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         ScriptingComponent.h
         MotorComponent.cc
         MotorComponent.h
+        MotorIdentificationController.cc
+        MotorIdentificationController.h
         JoystickComponent.cc
         JoystickComponent.h
         PowerModulePresetController.cc
