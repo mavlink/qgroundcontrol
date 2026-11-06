@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QtCore/QElapsedTimer>
+
 #include "FactGroup.h"
 
 class VehicleEstimatorStatusFactGroup : public FactGroup
@@ -53,7 +55,17 @@ public:
     // Overrides from FactGroup
     void handleMessage(Vehicle *vehicle, const mavlink_message_t &message) final;
 
+    /// ArduPilot's EKF_STATUS_REPORT is used only when no ESTIMATOR_STATUS has arrived for this long
+    static constexpr qint64 kEstimatorStatusPreferredMs = 5000;
+
 private:
+    void _handleEstimatorStatus(const mavlink_message_t& message);
+    void _handleEkfStatusReport(const mavlink_message_t& message);
+    void _setFlags(uint16_t flags);
+    void _setRatios(float vel, float horizPos, float vertPos, float mag, float hagl, float tas);
+
+    QElapsedTimer _estimatorStatusTimer;  ///< Started when an ESTIMATOR_STATUS is received
+
     Fact _goodAttitudeEstimateFact = Fact(0, QStringLiteral("goodAttitudeEsimate"), FactMetaData::valueTypeBool);
     Fact _goodHorizVelEstimateFact = Fact(0, QStringLiteral("goodHorizVelEstimate"), FactMetaData::valueTypeBool);
     Fact _goodVertVelEstimateFact = Fact(0, QStringLiteral("goodVertVelEstimate"), FactMetaData::valueTypeBool);

@@ -219,6 +219,9 @@ void ArduSubFirmwarePlugin::initializeStreamRates(Vehicle *vehicle)
     vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA1, 20);
     vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA2, 10);
     vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA3, 3);
+
+    // As in APMFirmwarePlugin::initializeStreamRates()
+    vehicle->setMessageRate(MAV_COMP_ID_AUTOPILOT1, MAVLINK_MSG_ID_ESTIMATOR_STATUS, 1 /* Hz */);
 }
 
 bool ArduSubFirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities) const

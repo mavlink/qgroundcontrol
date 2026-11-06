@@ -187,6 +187,17 @@ public:
         }
     }
 
+    /// Drop the COMMAND_ACK for MAV_CMD_SET_MESSAGE_INTERVAL requests for a specific message ID, as if it were lost.
+    void setSetMessageIntervalNoAck(uint16_t messageId, bool noAck = true)
+    {
+        QMutexLocker locker(&_setMessageIntervalNoAckMutex);
+        if (noAck) {
+            _setMessageIntervalNoAckIds.insert(messageId);
+        } else {
+            _setMessageIntervalNoAckIds.remove(messageId);
+        }
+    }
+
     enum ParamSetFailureMode_t {
         FailParamSetNone,               ///< Normal behavior
         FailParamSetNoAck,              ///< Do not send PARAM_VALUE ack
@@ -551,6 +562,8 @@ private:
     RequestMessageFailureMode_t _requestMessageFailureMode = FailRequestMessageNone;
     mutable QMutex _requestMessageNoResponseMutex;
     QSet<uint32_t> _requestMessageNoResponseIds;
+    mutable QMutex _setMessageIntervalNoAckMutex;
+    QSet<uint16_t> _setMessageIntervalNoAckIds;
     ParamSetFailureMode_t _paramSetFailureMode = FailParamSetNone;
     bool _paramSetFailureFirstAttemptPending = false;
     ParamRequestReadFailureMode_t _paramRequestReadFailureMode = FailParamRequestReadNone;
