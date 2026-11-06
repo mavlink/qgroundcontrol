@@ -150,8 +150,13 @@ Dependency updates are split between two bots to avoid overlapping PRs:
   variant base images, the uv `required-version` floor, and the CI CMake (following get-cmake's
   tags) and Ninja pins in `build-config.json` via regex managers. Workflow paths are
   excluded so the bots do not open overlapping action updates. Updates arrive as weekly grouped PRs;
-  major updates wait for approval on the Dependency Dashboard issue. `androidx.core` is not updated
-  because newer releases require a compileSdk newer than Qt supports. A new release of a
+  major updates wait for approval on the Dependency Dashboard issue. The Qt-coupled Android
+  toolchain (the Android Gradle Plugin, the Gradle wrapper, the Kotlin Gradle plugin, and
+  `androidx` libraries) also waits for approval there, as its own `android toolchain` group: Qt's
+  Android template (`<Qt>/<android kit>/src/android/templates/build.gradle` and
+  `src/3rdparty/gradle`) pins these per Qt release, and a newer release can need a compileSdk or
+  Android Gradle Plugin newer than Qt supports, breaking `androidx` and other libraries. Update them
+  with Qt, following its template. A new release of a
   `build-config.json` `tools` pin also waits for approval there and then opens its own PR, which
   must add the release's SHA-256 digests before its checksum checks pass.
 

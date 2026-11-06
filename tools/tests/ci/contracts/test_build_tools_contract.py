@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 import json
 import re
 from typing import Any
@@ -99,6 +100,31 @@ def test_schema_requires_the_pins_and_renovate_tracks_them() -> None:
     assert rule["groupName"] is None
     weekly = next(i for i, rule in enumerate(rules) if rule.get("groupName") == "all dependencies")
     assert rules.index(rule) > weekly
+
+
+def test_renovate_holds_the_qt_coupled_android_toolchain_for_approval() -> None:
+    """Qt's Android template pins these; an unreviewed bump can outrun the compileSdk Qt supports."""
+    renovate = json.loads((REPO_ROOT / ".github/renovate.json").read_text(encoding="utf-8"))
+    (rule,) = [
+        rule
+        for rule in renovate["packageRules"]
+        if "com.android.tools.build:gradle" in rule.get("matchDepNames", [])
+    ]
+    assert rule["dependencyDashboardApproval"] is True
+    assert rule["groupName"] == "android toolchain"
+    assert set(rule["matchManagers"]) == {"gradle", "gradle-wrapper"}
+    # The gradle-wrapper manager names the wrapper's Gradle "gradle".
+    assert "gradle" in rule["matchDepNames"]
+    held = [re.compile(fnmatch.translate(name)) for name in rule["matchDepNames"]]
+    build_gradle = (REPO_ROOT / "android/build.gradle").read_text(encoding="utf-8")
+    coupled = [
+        dependency
+        for dependency in re.findall(r"""['"]([\w.-]+:[\w.-]+):[^'"]+['"]""", build_gradle)
+        if dependency.startswith(("androidx.", "com.android.", "org.jetbrains.kotlin:"))
+    ]
+    assert "androidx.core:core" in coupled
+    for dependency in coupled:
+        assert any(name.match(dependency) for name in held), dependency
 
 
 def test_linux_install_plans_caches_and_installs_without_python_build_tools() -> None:
