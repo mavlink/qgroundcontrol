@@ -71,6 +71,7 @@ jobs:
           sparse-checkout: |
             .clusterfuzzlite
             .clang-tidy
+            .devcontainer
             .github
             .vscode
             .gitattributes

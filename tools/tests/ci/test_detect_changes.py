@@ -313,6 +313,12 @@ def test_variant_inputs_trigger_docker_builds(filename: str) -> None:
     assert not has_relevant_changes([f"deploy/docker/{filename}"], "linux")
 
 
+def test_android_sdk_installer_triggers_the_android_image_only() -> None:
+    changed = ["deploy/docker/install_android_sdk.sh"]
+    assert has_relevant_changes(changed, "docker-android")
+    assert not has_relevant_changes(changed, "docker-linux")
+
+
 class TestWorkflowNameForPlatform:
     def test_regular_platform(self) -> None:
         assert workflow_name_for_platform("linux") == "linux"

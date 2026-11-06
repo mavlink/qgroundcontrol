@@ -2,8 +2,9 @@
 """Put the analysis.yml job's analysis executables on PATH for its later steps.
 
 LLVM's bin directory goes on PATH first. clang-tidy installs from the PyPI wheel pinned by
-version and SHA-256 and goes ahead of it, after verifying .clang-tidy; Clazy comes from the
-tools/setup/build_clazy.py prefix. Clazy and clang-scan-deps stay on the compiler's LLVM.
+version and the machine's SHA-256 (tools/setup/install_analysis_tools.py) and goes ahead of it,
+after verifying .clang-tidy; Clazy comes from the tools/setup/build_clazy.py prefix. Clazy and
+clang-scan-deps stay on the compiler's LLVM.
 The LLVM version and clang-tidy pins default to build-config.json's `analysis` section and the
 tools to the step's ANALYSIS_TOOLS (space-separated).
 """
@@ -12,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import platform
 import subprocess
 import sys
 from pathlib import Path
@@ -21,33 +23,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import _bootstrap as _bootstrap
 from common.build_config import get_build_config_value
 from common.gh_actions import append_github_path, env_default, gh_error
+from setup.install_analysis_tools import install_clang_tidy
 
 CLAZY_PREFIX = Path(".cache/clazy")
-
-
-def install_clang_tidy(version: str, sha256: str, runner_temp: Path) -> Path:
-    """Install the hash-pinned clang-tidy wheel under runner_temp and return its bin directory."""
-    requirements = runner_temp / "clang-tidy-requirements.txt"
-    requirements.write_text(f"clang-tidy=={version} --hash=sha256:{sha256}\n", encoding="utf-8")
-    target = runner_temp / "clang-tidy"
-    subprocess.run(
-        [
-            "uv",
-            "pip",
-            "install",
-            "--quiet",
-            "--require-hashes",
-            "--no-deps",
-            "--only-binary",
-            ":all:",
-            "--target",
-            str(target),
-            "-r",
-            str(requirements),
-        ],
-        check=True,
-    )
-    return target / "clang_tidy" / "data" / "bin"
 
 
 def select_tools(
@@ -84,7 +62,8 @@ def main(argv: list[str] | None = None) -> int:
         "--clang-tidy-version", default=get_build_config_value("analysis.clang_tidy_version")
     )
     parser.add_argument(
-        "--clang-tidy-sha256", default=get_build_config_value("analysis.clang_tidy_sha256")
+        "--clang-tidy-sha256",
+        default=get_build_config_value(f"analysis.clang_tidy_sha256.{platform.machine()}"),
     )
     args = parser.parse_args(argv)
 
@@ -93,7 +72,7 @@ def main(argv: list[str] | None = None) -> int:
     if "clang-tidy" in tools:
         required |= {
             "analysis.clang_tidy_version": args.clang_tidy_version,
-            "analysis.clang_tidy_sha256": args.clang_tidy_sha256,
+            f"analysis.clang_tidy_sha256.{platform.machine()}": args.clang_tidy_sha256,
         }
     missing = [name for name, value in required.items() if not value]
     if missing:

@@ -7,8 +7,9 @@ on:
   workflow_dispatch:
   # Copilot sessions (event "dynamic") restore only the default branch's GitHub caches and cannot
   # save any, and master's Linux builds save theirs to RunsOn's S3. These master runs save the
-  # apt download and Qt caches the sessions restore; daily runs keep them inside GitHub's
-  # seven-day eviction window, so a slow Ubuntu mirror cannot stall a session's setup.
+  # apt download and Qt caches the sessions restore, but GitHub evicts both from the repository's
+  # full 10 GB cache pool within hours. The runs therefore also upload the apt downloads as an
+  # artifact for sessions, so a slow Ubuntu mirror cannot stall a session's setup.
   schedule:
     - cron: '17 4 * * *'
   push:
@@ -34,7 +35,7 @@ jobs:
     permissions:
       contents: read
       # build-setup's cache action reads the default branch's compiler snapshot artifacts on manual
-      # runs; Copilot sessions (event "dynamic") restore only Qt and CPM.
+      # runs, and sessions (event "dynamic") and manual runs read the apt download artifact.
       actions: read
 
     # Copilot cancels a session whose setup runs past about 20 minutes, so a stalled step (a slow
@@ -54,7 +55,7 @@ jobs:
           persist-credentials: false
 
       - name: Build Setup
-        timeout-minutes: ${{ github.event_name == 'dynamic' && 6 || 15 }}
+        timeout-minutes: ${{ github.event_name == 'dynamic' && 5 || 15 }}
         uses: ./.github/actions/build-setup
         with:
           qt-host: linux
@@ -63,9 +64,29 @@ jobs:
           save-cache: 'false'
           python-groups: dev
 
+      # Manual runs restore too, so checking the setup by hand exercises what sessions do.
+      - name: Restore apt downloads
+        if: github.event_name == 'dynamic' || github.event_name == 'workflow_dispatch'
+        timeout-minutes: 2
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 "${GITHUB_WORKSPACE}/tools/ci/runner/apt_debs_artifact.py"
+
       - name: Install Dependencies
-        timeout-minutes: ${{ github.event_name == 'dynamic' && 6 || 25 }}
+        timeout-minutes: ${{ github.event_name == 'dynamic' && 5 || 25 }}
         uses: ./.github/actions/install-dependencies
+
+      # Restores trust only master's runs, so other branches' manual runs would only use storage.
+      - name: Upload apt downloads
+        if: github.event_name != 'dynamic' && github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v7
+        with:
+          name: copilot-apt-debs
+          path: ~/.cache/qgc-apt-archives/*.deb
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
 
       - name: Restore prek environments
         timeout-minutes: ${{ github.event_name == 'dynamic' && 2 || 5 }}

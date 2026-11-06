@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 
 PRE_SETUP_PYTHON_SCRIPTS: tuple[str, ...] = (
     # Run by jobs without setup-python (test_jobs_without_setup_python_run_only_listed_scripts).
+    "deploy/docker/smoke_devcontainer.py",  # runs inside the devcontainer image it tests
     "deploy/multipass/run_multipass.py",
     "deploy/vagrant/run_vagrant.py",
     "tools/ci/cache/gh_cache_cleanup.py",
@@ -34,6 +35,7 @@ PRE_SETUP_PYTHON_SCRIPTS: tuple[str, ...] = (
     "tools/ci/planning/analysis_matrix.py",
     "tools/ci/planning/plan_platform.py",
     "tools/ci/publish/deploy_docs.py",
+    "tools/ci/reporting/analysis_review.py",
     "tools/ci/reporting/collect_build_status.py",
     "tools/ci/reporting/download_artifacts.py",
     "tools/ci/reporting/gh_pr_size_label.py",
@@ -42,6 +44,7 @@ PRE_SETUP_PYTHON_SCRIPTS: tuple[str, ...] = (
     "tools/ci/runner/enable_kvm.py",
     "tools/ci/runner/install_multipass.py",
     "tools/ci/runner/runner_image.py",
+    "tools/ci/security/install_grype.py",
     "tools/setup/read_config.py",
     "tools/update_px4_metadata.py",
     # Run before a later or conditional setup-python.
