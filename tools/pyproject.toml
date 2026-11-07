@@ -16,7 +16,7 @@ scripts = [
 ]
 precommit = [
   # prek runs .pre-commit-config.yaml; pre-commit stays as a fallback runner for one release.
-  "prek==0.5.7",
+  "prek==0.5.10",
   "pre-commit",
 ]
 test = [
@@ -74,22 +74,22 @@ build = [
 ]
 lint = [
   {include-group = "scripts"},
-  "ruff==0.16.5",
-  "pyright==1.1.411",
+  "ruff==0.17.4",
+  "pyright==1.1.414",
   "import-linter>=2.0",
   "jsonschema>=4.23",
-  "clang-format==23.1.0",
+  "clang-format==23.1.5",
 ]
 
 [tool.uv]
 default-groups = []
 # The single uv version: CI installs this floor exactly, as do install_uv.py and the Docker image.
-required-version = ">=0.12.8"
+required-version = ">=0.13.7"
 
 [tool.uv.sources]
 # install_qt.py's fallback installer and parity reference (--installer aqt). Qt 6.12's split iOS SDKs
 # and versioned extensions need miurahr/aqtinstall#1048; return to PyPI once released.
-aqtinstall = { git = "https://github.com/miurahr/aqtinstall", rev = "6f0f842da47c744cdc814cd94da9828d934d7bf0" }
+aqtinstall = { git = "https://github.com/miurahr/aqtinstall", rev = "5a49f2b391ae8ee1d3c0dd87f8b33c1d49a4deb7" }
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
