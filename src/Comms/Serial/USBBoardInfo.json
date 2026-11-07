@@ -83,6 +83,8 @@
         { "vendorID": 16325, "productID": 71,       "boardClass": "Pixhawk",    "name": "VOLOLAND NarinFC-H7" },
         { "vendorID": 5840,  "productID": 5318,     "boardClass": "Pixhawk",    "name": "CBU H753-SOM" },
         { "vendorID": 5840,  "productID": 5387,     "boardClass": "Pixhawk",    "name": "CORVON 743V2" },
+        { "vendorID": 5840,  "productID": 5442,     "boardClass": "Pixhawk",    "name": "Tustin Mach" },
+        { "vendorID": 5840,  "productID": 5443,     "boardClass": "Pixhawk",    "name": "Tustin Core" },
         { "vendorID": 5840,  "productID": 5418,     "boardClass": "Pixhawk",    "name": "CORVON V5" }
     ],
 
