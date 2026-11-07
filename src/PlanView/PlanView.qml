@@ -354,6 +354,8 @@ Item {
                 missionInteractive: _root._editingLayer == _root._layerMission
                 rallyOpacity: _root._editingLayer == _root._layerRally ? 1 : _root._nonInteractiveOpacity
                 rallyInteractive: _root._editingLayer == _root._layerRally
+                fenceOpacity: _root._editingLayer == _root._layerFence ? 1 : _root._nonInteractiveOpacity
+                fenceInteractive: _root._editingLayer == _root._layerFence
                 showControls: true
                 showScale: true
                 controlsLeftMargin: _root._leftToolWidth + _root._toolsMargin
@@ -362,6 +364,8 @@ Item {
 
                 onMapClicked: (mouse) => _root._onEditorMapClicked(mouse)
                 onItemSelected: (sequenceNumber) => _root._onMapItemSelected(sequenceNumber)
+                onBreachReturnPointSelected: rightPanel.showBreachReturnPoint()
+                onFenceSelected: rightPanel.showFenceInspector()
             }
         }
 

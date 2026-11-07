@@ -66,6 +66,23 @@ Item {
         missionPage.openInspector()
     }
 
+    /// Called when the user picks the breach return point on the map, which is only editable on the Fence tab
+    function showBreachReturnPoint() {
+        if (currentTab === Logic.TabFence) {
+            fencePage.selectEntry({ key: "breach", kind: "breach", index: 0 })
+            if (fencePage.selectedKind === "breach") {
+                fencePage.openInspector()
+            }
+        }
+    }
+
+    /// Called when the user picks a fence on the map, which selects it: like a row click, show its inspector
+    function showFenceInspector() {
+        if (currentTab === Logic.TabFence && fencePage.hasSelection) {
+            fencePage.openInspector()
+        }
+    }
+
     function _setTab(tab) {
         if (!Logic.tabEnabled(tab, _homeSet)) {
             tab = Logic.TabPlan
@@ -180,6 +197,8 @@ Item {
         }
 
         FenceTabPage {
+            id: fencePage
+
             planMasterController:   root.planMasterController
             editorMap:              root.editorMap
         }
