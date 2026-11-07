@@ -2,11 +2,13 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QTimer>
+#include <QtGui/QVector3D>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "TerrainPathHeightInfo.h"
 
+class TerrainAtCoordinateQuery;
 class TerrainPathQuery;
 
 // Important Note: The altitudes in the coordinates must be AMSL
@@ -37,6 +39,20 @@ public:
     Q_PROPERTY(double           totalDistance           MEMBER _totalDistance                                   NOTIFY totalDistanceChanged)
     Q_PROPERTY(bool             terrainCollision        MEMBER _terrainCollision                                NOTIFY terrainCollisionChanged)
     Q_PROPERTY(SegmentType      segmentType             MEMBER _segmentType                                     CONSTANT)
+    /// Curved path of a NAV_SPLINE_WAYPOINT leg with AMSL altitudes, empty when the leg is straight
+    Q_PROPERTY(QVariantList splinePath READ splinePath NOTIFY splinePathChanged)
+
+    /// Route point used to derive the tangents of the spline legs around it
+    struct SplinePoint
+    {
+        QGeoCoordinate coord;       ///< Altitude is AMSL, NaN when not yet known
+        bool spline = false;        ///< The leg arriving at this point is a NAV_SPLINE_WAYPOINT
+        bool flyThrough = false;    ///< No hold time, so the vehicle keeps its velocity through it
+        bool navTarget = false;     ///< A mission item the vehicle navigates to (not the home position)
+        bool terrainFrame = false;  ///< The leg arriving at this point is flown in MAV_FRAME_GLOBAL_TERRAIN_ALT
+        bool runStart = false;      ///< No leg arrives here: home, or the first point after a land or incomplete item
+        double aglAlt = qQNaN();    ///< Height above terrain of a terrain-frame point, NaN otherwise
+    };
 
     QGeoCoordinate      coordinate1         (void) const { return _coord1; }
     QGeoCoordinate      coordinate2         (void) const { return _coord2; }
@@ -50,7 +66,20 @@ public:
     bool                terrainCollision    (void) const { return _terrainCollision; }
     SegmentType         segmentType         (void) const { return _segmentType; }
 
+    const QVariantList& splinePath(void) const { return _splinePath; }
+
+    /// Distance along the leg of each splinePath sample
+    const QList<double>& splineSampleDistances(void) const { return _splineSampleDistances; }
+
     void setSpecialVisual(bool specialVisual);
+    void setSplinePath(const QVariantList& splinePath);
+
+    /// AMSL altitude the vehicle flies at `distance` meters along the leg: along the spline samples for a spline
+    /// leg, otherwise a straight ramp between the endpoint altitudes
+    [[nodiscard]] double amslAltitudeAtDistance(double distance) const;
+
+    /// Path of the leg arriving at points[index], curved like ArduPilot's SplineCurve when it is a spline waypoint
+    [[nodiscard]] static QVariantList splineSegmentPath(const QList<SplinePoint>& points, int index);
 
 public slots:
     void setCoordinate1     (const QGeoCoordinate& coordinate);
@@ -69,6 +98,7 @@ signals:
     void finalDistanceBetweenChanged(double finalDistanceBetween);
     void totalDistanceChanged       (double totalDistance);
     void terrainCollisionChanged    (bool terrainCollision);
+    void splinePathChanged(void);
 
 private slots:
     void _sendTerrainPathQuery      (void);
@@ -77,6 +107,26 @@ private slots:
     void _updateTerrainCollision    (void);
 
 private:
+    void _cancelTerrainQuery(void);
+    void _terrainHeightsReceived(bool success, double distanceBetween, double finalDistanceBetween,
+                                 const QList<double>& heights);
+    /// Coordinates at even spacing along the spline for a terrain query, matching the path query spacing
+    QList<QGeoCoordinate> _splineTerrainQueryCoords(double& distanceBetween, double& finalDistanceBetween) const;
+    /// Spline sample index whose span contains `distance`, and the fraction into that span
+    int _splineSpanAtDistance(double distance, double& fraction) const;
+
+    /// North/east/up offset in meters of `to` relative to `from`, up is 0 when either altitude is unknown
+    static QVector3D _localOffset(const QGeoCoordinate& from, const QGeoCoordinate& to);
+    /// As above, but between two terrain-frame points the vertical component is the height above terrain difference
+    static QVector3D _localOffset(const SplinePoint& from, const SplinePoint& to);
+    static QVariantList _hermiteSplinePath(const QGeoCoordinate& origin, const QGeoCoordinate& destination,
+                                           const QVector3D& legOffset, const QVector3D& originTangent,
+                                           const QVector3D& destinationTangent);
+    /// Tangents of the spline leg arriving at points[index] per ArduPilot's AC_WPNav rules
+    static void _splineTangents(const QList<SplinePoint>& points, int index, QVector3D& originTangent,
+                                QVector3D& destinationTangent);
+    static void _capSplineTangents(const QVector3D& legOffset, QVector3D& originTangent, QVector3D& destinationTangent);
+
     QGeoCoordinate      _coord1;
     QGeoCoordinate      _coord2;
     double              _coord1AMSLAlt =                qQNaN();
@@ -86,11 +136,17 @@ private:
     bool                _specialVisual =                false;
     QTimer              _delayedTerrainPathQueryTimer;
     TerrainPathQuery*   _currentTerrainPathQuery =      nullptr;
+    TerrainAtCoordinateQuery* _currentTerrainCoordinateQuery = nullptr;
     QVariantList        _amslTerrainHeights;
     double              _distanceBetween =              0;
     double              _finalDistanceBetween =         0;
     double              _totalDistance =                0;
     SegmentType         _segmentType =                  SegmentTypeGeneric;
+    QVariantList _splinePath;
+    QList<double> _splineSampleDistances;
 
     static constexpr double _collisionIgnoreMeters =    10; // Distance to ignore for takeoff/land segments
+    static constexpr int _minSplineSampleCount = 20;
+    static constexpr int _maxSplineSampleCount = 400;
+    static constexpr double _splineSampleSpacingMeters = 100;  ///< Target spacing between samples on long legs
 };

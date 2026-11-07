@@ -39,17 +39,45 @@ Item {
             visible: !isNaN(object.coord1AMSLAlt) && !isNaN(object.coord2AMSLAlt)
             fromCoord: {
                 _terrainRev
+                if (_splineLeg) {
+                    return _splinePoint(_splineIndex)
+                }
                 return _terrainLeg ? _drapedPoint(0.75 - _halfChordFraction)
                                    : QtPositioning.coordinate(object.coordinate1.latitude, object.coordinate1.longitude,
                                                               object.coord1AMSLAlt + root.homeTerrainBias)
             }
             toCoord: {
                 _terrainRev
+                if (_splineLeg) {
+                    return _splinePoint(_splineIndex + 1)
+                }
                 return _terrainLeg ? _drapedPoint(0.75 + _halfChordFraction)
                                    : QtPositioning.coordinate(object.coordinate2.latitude, object.coordinate2.longitude,
                                                               object.coord2AMSLAlt + root.homeTerrainBias)
             }
-            fraction: _terrainLeg ? 0.5 : 0.75
+            fraction: _splineLeg ? 0 : (_terrainLeg ? 0.5 : 0.75)
+
+            // A spline leg follows the segment's samples (see GeoMapMissionPath),
+            // so anchor the arrow to the sample at the 0.75 mark and head it
+            // towards the next sample. A terrain-frame spline is draped over
+            // the DEM like a straight terrain leg.
+            readonly property bool _splineLeg: object.splinePath.length > 1
+            readonly property int _splineIndex: Math.min(Math.round((object.splinePath.length - 1) * 0.75),
+                                                         object.splinePath.length - 2)
+
+            function _splinePoint(index) {
+                const sample = object.splinePath[index]
+                let altitude = sample.altitude
+                if (_terrainLeg) {
+                    const c1 = object.coordinate1
+                    const c2 = object.coordinate2
+                    const agl1 = object.coord1AMSLAlt - root.surfaceModel.terrainHeightAt(c1)
+                    const agl2 = object.coord2AMSLAlt - root.surfaceModel.terrainHeightAt(c2)
+                    const fraction = index / (object.splinePath.length - 1)
+                    altitude = root.surfaceModel.terrainHeightAt(sample) + agl1 + ((agl2 - agl1) * fraction)
+                }
+                return QtPositioning.coordinate(sample.latitude, sample.longitude, altitude + root.homeTerrainBias)
+            }
 
             // Terrain-frame legs are draped over the DEM (see
             // GeoMapMissionPath), so anchor the arrow to a short draped chord
