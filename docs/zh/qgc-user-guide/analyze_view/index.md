@@ -7,5 +7,6 @@
 - [Log Viewer](../analyze_view/log_viewer.md) — Open and analyze `.bin` DataFlash logs and `.tlog` telemetry logs.
 - [日志下载](../analyze_view/log_download.md) - 列出、下载和清空设备上的日志。
 - [图像地理信息标签(PX4)](../analyze_view/geotag_images.md) - 利用飞行日志将航测图片打上地理信息(导入电脑后)。
+- [Video Recordings](../analyze_view/video_recordings.md) — Play recorded videos with their telemetry.
 - [MAVLink Console (PX4)](../analyze_view/mavlink_console.md) — Access the nsh shell running on the vehicle.
 - [MAVLink 检查器](../analyze_view/mavlink_inspector.md) — 显示和记录已接收到的 信息/参数。

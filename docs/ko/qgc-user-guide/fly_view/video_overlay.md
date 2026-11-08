@@ -4,9 +4,17 @@ QGroundControl이 비디오 스트림을 파일에 기록할 때 재생하는 �
 
 선택한 값은 화면 활용을 최적화하기 위해 3개의 열에 배치됩니다.![작동 중 오버레이](../../../assets/fly/overlay_capture.png)
 
+## Live Overlay
+
+**Telemetry Overlay** (under **Video Display** in the [video stream instrument page](camera_tools.md#video_instrument_page)
+and in the video indicator's expanded page) shows the same values along the bottom of the video while you fly,
+updated twice a second, and follows changes to the telemetry bar. It is off by default, and appears over the main
+video stream or a USB camera. It isn't part of recordings, whose telemetry goes to the subtitle file.
+
 ## 재생 중
 
-오버레이는 [SubStation Alpha](https://en.wikipedia.org/wiki/SubStation_Alpha#Players_and_renderers) 자막 형식을 지원하는 모든 플레이어와 함께 사용할 수 있습니다.
+The [Video Recordings](../analyze_view/video_recordings.md) page in _Analyze Tools_ plays a recording with its
+overlay. It can also be used with any player that [supports the SubStation Alpha](https://en.wikipedia.org/wiki/SubStation_Alpha#Players_and_renderers) subtitle format.
 대부분의 플레이어는 비디오를 재생하려고 할 때 두 파일을 함께 오픈합니다. 그들은 같은 폴더에 있어야 하고 같은 이름을 가져야 합니다.
 
 ## 수동 브레이크를 사용한 영구 비디오 자막
