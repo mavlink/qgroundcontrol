@@ -9,9 +9,15 @@
 ::: 信息
 所显示的大多数设置都依赖摄像头(它们是在 [MAVLink 相机定义文件](https://mavlink.io/en/services/camera_def.html) 中定义的)。
 
-> 末尾的一些常见设置是硬编码的：照片模式 (单张/时间线), 照片间隔(如果时间线)，重置相机默认值(将重置命令发送到相机)，格式(存储)
+> A few common settings at the end are hard-coded: Photo Mode (Single/Time Lapse), Photo Interval (if Time Lapse), Reset Camera Defaults (sends a reset command to the camera), Format (storage), and for a camera with a video stream, Grid Lines, Telemetry Overlay and Display Fit (under Video Display)
 > :::
 
 ## 视频流 {#video_instrument_page}
 
-视频页面用于启用/禁用视频流。启用后，您可以开始/停止视频流，启用网格叠加层， 更改图像如何适合屏幕，并用QGC 在本地录制视频。
+视频页面用于启用/禁用视频流。
+When enabled, you can start/stop the video stream, enable a grid overlay or the [live telemetry overlay](video_overlay.md#live-overlay), change how the image fits the screen, and record the video locally with QGC.
+
+A single photo the camera can't take itself (it can't capture images, or not in video mode) is saved by QGC instead,
+from the video on display, to the `Photo` folder of the
+[Application Load/Save Path](../settings_view/general.md#load_save_path). The JPEG records when it was taken and where
+the vehicle was (EXIF date and GPS position).

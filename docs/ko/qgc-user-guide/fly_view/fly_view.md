@@ -139,7 +139,7 @@ You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground.
 
 #### 비디오 스트림 녹화(GCS에서)
 
-Video stream recording is controlled on the [video stream instrument page](hud.md#video_instrument_page).
+Video stream recording is controlled on the [video stream instrument page](camera_tools.md#video_instrument_page).
 새 비디오 녹화를 시작하려면, 빨간색 원을 누르십시오(원을 누를 때마다 새 비디오 파일이 생성됨).
 
 비디오 스트림 녹화는 [애플리케이션 설정 > 일반 탭](../settings_view/general.md)에서 설정합니다.

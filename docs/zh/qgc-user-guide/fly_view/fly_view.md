@@ -133,7 +133,7 @@ You can press the switcher anywhere to toggle _Video_ and _Map_ to foreground.
 
 #### 录制视频流 (GCS)
 
-Video stream recording is controlled on the [video stream instrument page](hud.md#video_instrument_page).
+Video stream recording is controlled on the [video stream instrument page](camera_tools.md#video_instrument_page).
 按下红色圆圈开始录制新视频(每次按下圆圈时创建新视频文件)； 正在录制时，圆圈将会变成红色正方形。
 
 视频流录制已配置在 [应用程序设置 > 常规](../settings_view/general.md)：
