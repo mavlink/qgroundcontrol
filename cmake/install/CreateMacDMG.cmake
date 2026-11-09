@@ -37,10 +37,7 @@ set(QGC_DMG_DROP_ICON_POS 480 220)
 
 message(STATUS "QGC: Building ${QGC_DMG_NAME}...")
 
-set(QGC_CREATE_DMG_ARGS
-    --volname "${QGC_TARGET_APP_NAME}"
-    --filesystem APFS
-)
+set(QGC_CREATE_DMG_ARGS --volname "${QGC_TARGET_APP_NAME}" --filesystem APFS)
 list(APPEND QGC_CREATE_DMG_ARGS --window-pos ${QGC_DMG_WINDOW_POS})
 list(APPEND QGC_CREATE_DMG_ARGS --window-size ${QGC_DMG_WINDOW_SIZE})
 list(APPEND QGC_CREATE_DMG_ARGS --icon-size ${QGC_DMG_ICON_SIZE})
@@ -49,11 +46,28 @@ list(APPEND QGC_CREATE_DMG_ARGS --icon "${QGC_TARGET_APP_BUNDLE}" ${QGC_DMG_APP_
 list(APPEND QGC_CREATE_DMG_ARGS --app-drop-link ${QGC_DMG_DROP_ICON_POS})
 list(APPEND QGC_CREATE_DMG_ARGS "${QGC_DMG_NAME}" "${QGC_DMG_PATH}/")
 
-execute_process(
-    COMMAND "${CREATE_DMG_PROGRAM}" ${QGC_CREATE_DMG_ARGS}
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-    COMMAND_ECHO STDOUT
-    COMMAND_ERROR_IS_FATAL ANY
-)
+# create-dmg sometimes cannot find the APFS volume it has just attached ("the interstitial disk
+# image was not found"), a race in hdiutil on CI runners. Detach that volume and try once more.
+foreach(_qgc_dmg_attempt RANGE 1 2 1)
+    execute_process(
+        COMMAND "${CREATE_DMG_PROGRAM}" ${QGC_CREATE_DMG_ARGS}
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}" COMMAND_ECHO STDOUT
+        RESULT_VARIABLE _qgc_dmg_result
+        OUTPUT_VARIABLE _qgc_dmg_output
+        ERROR_VARIABLE _qgc_dmg_output ECHO_OUTPUT_VARIABLE ECHO_ERROR_VARIABLE
+    )
+    if(_qgc_dmg_result EQUAL 0)
+        break()
+    endif()
+    if(_qgc_dmg_attempt EQUAL 2)
+        message(FATAL_ERROR "QGC: create-dmg failed: ${_qgc_dmg_result}")
+    endif()
+    message(WARNING "QGC: create-dmg failed (${_qgc_dmg_result}); detaching its image and retrying")
+    if(_qgc_dmg_output MATCHES "Device name: +(/dev/disk[0-9]+)")
+        execute_process(COMMAND hdiutil detach "${CMAKE_MATCH_1}" -force OUTPUT_QUIET ERROR_QUIET)
+    endif()
+    file(GLOB _qgc_dmg_leftovers "${CMAKE_BINARY_DIR}/rw.*.${QGC_DMG_NAME}")
+    file(REMOVE ${_qgc_dmg_leftovers} "${CMAKE_BINARY_DIR}/${QGC_DMG_NAME}")
+endforeach()
 
 message(STATUS "QGC: DMG created successfully: ${CMAKE_BINARY_DIR}/${QGC_DMG_NAME}")
