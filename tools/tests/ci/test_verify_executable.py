@@ -234,8 +234,8 @@ def _process_gone(pid: int) -> bool:
         return False
     try:
         state = Path(f"/proc/{pid}/stat").read_text().split(")")[-1].split()[0]
-    except FileNotFoundError:
-        # Reaped between the liveness probe and the read.
+    except (FileNotFoundError, ProcessLookupError):
+        # Reaped between the liveness probe and the read (ESRCH when it exits mid-read).
         return True
     return state == "Z"
 
