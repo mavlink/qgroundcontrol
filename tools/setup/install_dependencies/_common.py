@@ -329,15 +329,23 @@ def add_to_path(path_entry: str) -> None:
                 winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, f"{current};{path_entry}")
 
 
+# A download URL that has a fallback gets two attempts and three minutes in all, so a slow server
+# leaves the next URL most of a CI install attempt (ten minutes on macOS) to resume its partial file.
+FALLBACK_RETRIES = 1
+FALLBACK_TIME_LIMIT = 180.0
+
+
 def download_file(
     url: str,
     dest: Path,
     dry_run: bool = False,
-    timeout: float = 300.0,
+    # Seconds without data before a stalled connection is dropped and retried (or resumed).
+    timeout: float = 60.0,
     retries: int = 3,
     *,
     warn_on_failure: bool = False,
     expected_sha256: str | None = None,
+    time_limit: float | None = None,
 ) -> bool:
     """Download with bounded retries using only bootstrap-safe standard-library dependencies."""
     if dry_run:
@@ -351,6 +359,7 @@ def download_file(
             expected_sha256=expected_sha256,
             attempts=retries + 1,
             timeout=timeout,
+            time_limit=time_limit,
         )
         return True
     except (OSError, RuntimeError) as error:
@@ -362,16 +371,42 @@ def download_file(
 def download_first(
     urls: Sequence[str], dest: Path, expected_sha256: str, dry_run: bool = False
 ) -> bool:
-    """Download dest from the first of urls that succeeds, warning before each fallback."""
+    """Download dest from the first of urls that succeeds, warning before each fallback.
+
+    A URL with a fallback gets FALLBACK_RETRIES and FALLBACK_TIME_LIMIT, so a slow server cannot
+    use up an install attempt; the pinned digest lets the next URL resume the partial file.
+    """
     for index, url in enumerate(urls):
         fallback = index + 1 < len(urls)
         if download_file(
-            url, dest, dry_run, warn_on_failure=fallback, expected_sha256=expected_sha256
+            url,
+            dest,
+            dry_run,
+            retries=FALLBACK_RETRIES if fallback else 3,
+            warn_on_failure=fallback,
+            expected_sha256=expected_sha256,
+            time_limit=FALLBACK_TIME_LIMIT if fallback else None,
         ):
             return True
         if fallback:
             log_warn(f"Retrying from {urls[index + 1]}")
     return False
+
+
+def download_dir(name: str) -> Path:
+    """Return a private per-user directory for large downloads that outlives an install attempt.
+
+    CI kills an install attempt that runs too long; the next attempt finds the partial files here
+    and resumes them. It is in the user's cache directory rather than a shared temporary one,
+    where another user could plant a symlink or swap a package before it is installed.
+    """
+    if is_windows():
+        base = Path(os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local")
+    else:
+        base = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
+    path = base / "qgc" / f"{name}-downloads"
+    path.mkdir(mode=0o700, parents=True, exist_ok=True)
+    return path
 
 
 __all__ = [
@@ -382,6 +417,7 @@ __all__ = [
     "append_github_env",
     "check_apt_package_available",
     "detect_platform",
+    "download_dir",
     "download_file",
     "download_first",
     "get_apt_install_command",

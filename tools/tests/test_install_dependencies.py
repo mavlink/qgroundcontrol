@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import os
+import sys
 from email.message import Message
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, call, patch
@@ -592,7 +593,7 @@ def test_get_brew_install_command_brew_list_failure_passes_all() -> None:
     [(None, True), ("runtime", True), ("devel", True), ("runtime", False), ("devel", False)],
 )
 def test_install_macos_gstreamer_fallback(
-    fallback_package: str | None, mirror_succeeds: bool
+    fallback_package: str | None, mirror_succeeds: bool, tmp_path: Path
 ) -> None:
     from common.gstreamer import mirror_url, package_filename, package_url
 
@@ -615,6 +616,7 @@ def test_install_macos_gstreamer_fallback(
             _macos._c, "pinned_checksum", side_effect=lambda _, artifact: checksums[artifact]
         ),
         patch.object(_macos.Path, "exists", return_value=False),
+        patch.object(_macos._c, "download_dir", return_value=tmp_path),
         patch.object(_macos._c, "download_file", side_effect=download) as dl,
         patch.object(_macos._c, "run_command", return_value=True) as run_command,
     ):
@@ -641,6 +643,30 @@ def test_install_macos_gstreamer_fallback(
         assert all(command[3:] == ["-target", "/"] for command in installs)
     else:
         assert installs == []
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX cache directory and permissions")
+def test_download_dir_is_private_to_the_user(monkeypatch, tmp_path: Path) -> None:
+    # Not a shared temporary directory, where another user could swap a package before install.
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+    path = install_common.download_dir("gstreamer")
+    assert path == tmp_path / "qgc/gstreamer-downloads"
+    assert path.stat().st_mode & 0o777 == 0o700
+
+
+def test_dry_run_keeps_downloads_from_earlier_attempts(tmp_path: Path) -> None:
+    kept = tmp_path / "gstreamer-1.0-1.28.4-universal.pkg"
+    kept.write_bytes(b"pkg")
+    with (
+        patch.object(_macos._c, "has_command", return_value=True),
+        patch.object(_macos._c, "get_brew_install_command", return_value=["true"]),
+        patch.object(_macos._c, "get_build_config_value", return_value="1.28.4"),
+        patch.object(_macos._c, "pinned_checksum", return_value="a" * 64),
+        patch.object(_macos.Path, "exists", return_value=False),
+        patch.object(_macos._c, "download_dir", return_value=tmp_path),
+    ):
+        assert _macos.install_macos(dry_run=True) is True
+    assert kept.read_bytes() == b"pkg"
 
 
 def test_homebrew_bootstrap_downloads_with_retries_and_runs_non_interactively() -> None:
@@ -687,6 +713,7 @@ def test_install_windows_gstreamer(monkeypatch, tmp_path: Path) -> None:
     version = get_gstreamer_version("windows")
     monkeypatch.setenv("PROCESSOR_ARCHITECTURE", "AMD64")
     monkeypatch.setattr(_windows, "WINDOWS_GSTREAMER_PREFIX", str(tmp_path))
+    monkeypatch.setattr(_windows._c, "download_dir", lambda _name: tmp_path)
     with (
         patch.object(_windows._c, "download_file", side_effect=[False, True]) as dl,
         patch.object(_windows._c, "run_command", return_value=True) as rc,
@@ -710,13 +737,18 @@ def test_install_windows_gstreamer(monkeypatch, tmp_path: Path) -> None:
     ]
     expected_sha256 = _windows._c.pinned_checksum(version, "windows_msvc_x64")
     assert expected_sha256
+    # Upstream gets fewer retries and a time limit, so a slow upstream cannot use up the attempt.
     assert dl.call_args_list[0].kwargs == {
+        "retries": _windows._c.FALLBACK_RETRIES,
         "warn_on_failure": True,
         "expected_sha256": expected_sha256,
+        "time_limit": _windows._c.FALLBACK_TIME_LIMIT,
     }
     assert dl.call_args_list[1].kwargs == {
+        "retries": 3,
         "warn_on_failure": False,
         "expected_sha256": expected_sha256,
+        "time_limit": None,
     }
     assert rc.call_args.args[0] == [
         str(installer),

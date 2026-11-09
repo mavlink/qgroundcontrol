@@ -5,13 +5,15 @@ from __future__ import annotations
 import functools
 import hashlib
 import io
+import itertools
 from email.message import Message
 from http.client import IncompleteRead
+from typing import ClassVar
 from unittest.mock import MagicMock, patch
 from urllib.error import HTTPError, URLError
 
 import pytest
-from common.net import download_file, fetch_bytes, read_url_text
+from common.net import DownloadTimeLimitError, download_file, fetch_bytes, read_url_text
 
 pytestmark = pytest.mark.windows
 
@@ -159,6 +161,173 @@ def test_verified_download_publishes_matching_content(tmp_path) -> None:
             expected_sha256=hashlib.sha256(content).hexdigest().upper(),
         )
     assert destination.read_bytes() == content
+
+
+def _resumed_response(content: bytes, *, start: int, total: int) -> MagicMock:
+    response = _response(content)
+    response.status = 206
+    response.headers = {"Content-Range": f"bytes {start}-{total - 1}/{total}"}
+    return response
+
+
+def _ranges(urlopen: MagicMock) -> list[str | None]:
+    return [call.args[0].get_header("Range") for call in urlopen.call_args_list]
+
+
+@pytest.mark.parametrize("pinned", [True, False])
+def test_interrupted_download_resumes_only_when_its_digest_is_pinned(
+    tmp_path, pinned: bool
+) -> None:
+    destination = tmp_path / "sdk.zip"
+    digest = hashlib.sha256(b"helloworld").hexdigest() if pinned else None
+    # Without a digest nothing proves a resumed file is one version, so it starts over.
+    rest = _resumed_response(b"world", start=5, total=10) if pinned else io.BytesIO(b"helloworld")
+    with (
+        patch(
+            "common.net.urllib.request.urlopen",
+            side_effect=[_response(b"hello", content_length=10), rest],
+        ) as urlopen,
+        patch("common.net.time.sleep"),
+    ):
+        download_file("https://example.test/sdk.zip", destination, expected_sha256=digest)
+    assert _ranges(urlopen) == [None, "bytes=5-" if pinned else None]
+    assert destination.read_bytes() == b"helloworld"
+    assert list(tmp_path.iterdir()) == [destination]
+
+
+def test_a_destination_matching_its_digest_is_not_downloaded_again(tmp_path) -> None:
+    destination = tmp_path / "sdk.zip"
+    destination.write_bytes(b"complete")
+    with patch("common.net.urllib.request.urlopen") as urlopen:
+        download_file(
+            "https://example.test/sdk.zip",
+            destination,
+            expected_sha256=hashlib.sha256(b"complete").hexdigest(),
+        )
+    urlopen.assert_not_called()
+
+
+def test_a_call_takes_over_the_partial_so_a_concurrent_call_cannot_share_it(tmp_path) -> None:
+    destination = tmp_path / "sdk.zip"
+    digest = hashlib.sha256(b"helloworld").hexdigest()
+    with (
+        patch(
+            "common.net.urllib.request.urlopen",
+            return_value=_response(b"hello", content_length=10),
+        ),
+        pytest.raises(RuntimeError, match="incomplete download"),
+    ):
+        download_file(
+            "https://example.test/sdk.zip", destination, expected_sha256=digest, attempts=1
+        )
+    (partial,) = tmp_path.iterdir()
+
+    def resume(request, timeout):
+        # While this call downloads, the shared partial name is free for no one else to append to.
+        assert not partial.exists()
+        return _resumed_response(b"world", start=5, total=10)
+
+    with patch("common.net.urllib.request.urlopen", side_effect=resume):
+        download_file("https://example.test/sdk.zip", destination, expected_sha256=digest)
+    assert destination.read_bytes() == b"helloworld"
+
+
+def test_time_limit_holds_against_a_server_that_trickles_data(tmp_path) -> None:
+    class Trickle(io.BufferedIOBase):
+        status = 200
+        headers: ClassVar[dict[str, str]] = {"Content-Length": "100"}
+
+        def read1(self, size: int = -1) -> bytes:
+            return b"x"
+
+        def read(self, size: int | None = -1) -> bytes:
+            raise AssertionError("read waits for a whole chunk; read1 returns what arrived")
+
+    with (
+        patch("common.net.urllib.request.urlopen", return_value=Trickle()),
+        patch("common.net.time.monotonic", side_effect=itertools.count(0, 1)),
+        pytest.raises(DownloadTimeLimitError),
+    ):
+        download_file("https://slow.test/sdk.zip", tmp_path / "sdk.zip", time_limit=5)
+
+
+def test_verified_partial_outlives_the_call_for_another_source_to_resume(tmp_path) -> None:
+    destination = tmp_path / "sdk.zip"
+    digest = hashlib.sha256(b"helloworld").hexdigest()
+    with (
+        patch(
+            "common.net.urllib.request.urlopen",
+            return_value=_response(b"hello", content_length=10),
+        ),
+        pytest.raises(RuntimeError, match="incomplete download"),
+    ):
+        download_file(
+            "https://upstream.test/sdk.zip", destination, expected_sha256=digest, attempts=1
+        )
+    assert not destination.exists()
+
+    with patch(
+        "common.net.urllib.request.urlopen",
+        return_value=_resumed_response(b"world", start=5, total=10),
+    ) as urlopen:
+        download_file("https://mirror.test/sdk.zip", destination, expected_sha256=digest)
+    assert _ranges(urlopen) == ["bytes=5-"]
+    assert destination.read_bytes() == b"helloworld"
+    assert list(tmp_path.iterdir()) == [destination]
+
+
+def test_time_limit_stops_retrying_and_keeps_the_verified_partial(tmp_path) -> None:
+    destination = tmp_path / "sdk.zip"
+    digest = hashlib.sha256(b"helloworld").hexdigest()
+    with (
+        patch(
+            "common.net.urllib.request.urlopen",
+            return_value=_response(b"hello", content_length=10),
+        ) as urlopen,
+        patch("common.net.time.sleep"),
+        # Each clock reading is 100 s after the last, so the 150 s limit passes after one attempt.
+        patch("common.net.time.monotonic", side_effect=itertools.count(0, 100)),
+        pytest.raises(DownloadTimeLimitError, match="time limit"),
+    ):
+        download_file(
+            "https://slow.test/sdk.zip", destination, expected_sha256=digest, time_limit=150
+        )
+    urlopen.assert_called_once()
+    (partial,) = tmp_path.iterdir()
+    assert partial.read_bytes() == b"hello"
+
+
+@pytest.mark.parametrize("resumed", ["stale", "complete"])
+def test_unusable_partial_is_downloaded_again(tmp_path, resumed: str) -> None:
+    destination = tmp_path / "sdk.zip"
+    content = b"helloworld"
+    digest = hashlib.sha256(content).hexdigest()
+    # A stale partial from different bytes, or a complete one whose publish was interrupted.
+    partial = b"HELLO" if resumed == "stale" else content
+    with (
+        patch(
+            "common.net.urllib.request.urlopen",
+            return_value=_response(partial, content_length=len(partial) + 1),
+        ),
+        pytest.raises(RuntimeError, match="incomplete download"),
+    ):
+        download_file(
+            "https://example.test/sdk.zip", destination, expected_sha256=digest, attempts=1
+        )
+
+    reply = (
+        _resumed_response(b"world", start=5, total=10) if resumed == "stale" else _http_error(416)
+    )
+    with (
+        patch(
+            "common.net.urllib.request.urlopen", side_effect=[reply, io.BytesIO(content)]
+        ) as urlopen,
+        patch("common.net.time.sleep"),
+    ):
+        download_file("https://example.test/sdk.zip", destination, expected_sha256=digest)
+    assert _ranges(urlopen) == [f"bytes={len(partial)}-", None]
+    assert destination.read_bytes() == content
+    assert list(tmp_path.iterdir()) == [destination]
 
 
 def test_failed_atomic_replace_preserves_existing_destination(tmp_path) -> None:
