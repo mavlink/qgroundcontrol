@@ -40,6 +40,7 @@ def test_current_configuration():
     [
         ("apple", "macos_deployment_target"),
         ("android", "cmdline_tools"),
+        ("android", "cmdline_tools_sha256"),
         ("qt", "modules"),
         ("tools", "grype"),
     ],

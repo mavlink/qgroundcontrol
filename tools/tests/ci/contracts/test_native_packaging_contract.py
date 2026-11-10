@@ -242,6 +242,67 @@ include(CreateCPackNSIS)
         assert "GPU Safe Mode" in config
 
 
+@pytest.mark.parametrize("recovers", [True, False])
+def test_macos_dmg_retries_once_after_detaching_a_lost_interstitial_image(
+    tmp_path, recovers: bool
+) -> None:
+    build_dir = tmp_path / "build"
+    bundle = tmp_path / "staging/QGroundControl.app"
+    (bundle / "Contents").mkdir(parents=True)
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    calls = tmp_path / "calls.log"
+    create_dmg = bin_dir / "create-dmg"
+    # Like create-dmg's APFS race: the image attaches, then its mount cannot be found.
+    create_dmg.write_text(
+        f"""#!/bin/bash
+echo create-dmg >> {shlex.quote(str(calls))}
+if [[ {str(recovers).lower()} == true ]] && grep -q failed {shlex.quote(str(calls))}; then
+    touch QGroundControl.dmg
+    exit 0
+fi
+echo failed >> {shlex.quote(str(calls))}
+touch "rw.$$.QGroundControl.dmg"
+echo "Device name:     /dev/disk9s1"
+echo "ERROR: the interstitial disk image was not found." >&2
+exit 1
+"""
+    )
+    hdiutil = bin_dir / "hdiutil"
+    hdiutil.write_text(f'#!/bin/bash\necho "hdiutil $*" >> {shlex.quote(str(calls))}\n')
+    for program in (create_dmg, hdiutil):
+        program.chmod(0o755)
+    build_dir.mkdir()
+
+    result = subprocess.run(
+        [
+            "cmake",
+            f"-DQGC_STAGING_BUNDLE_PATH={bundle}",
+            f"-DCREATE_DMG_PROGRAM={create_dmg}",
+            "-P",
+            str(REPO_ROOT / "cmake/install/CreateMacDMG.cmake"),
+        ],
+        cwd=build_dir,
+        env={**os.environ, "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}"},
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    log = calls.read_text().splitlines()
+    assert log.count("create-dmg") == 2
+    assert "hdiutil detach /dev/disk9 -force" in log
+    leftovers = sorted(path.name for path in build_dir.glob("rw.*"))
+    if recovers:
+        assert result.returncode == 0, result.stderr
+        assert (build_dir / "QGroundControl.dmg").is_file()
+        # The first attempt's read-write image is removed before the retry.
+        assert leftovers == []
+    else:
+        assert result.returncode != 0
+        assert "create-dmg failed" in result.stderr
+
+
 def test_docker_workflow_requires_and_validates_native_packages() -> None:
     steps = get_steps(load_workflow("docker.yml"), "build")
 

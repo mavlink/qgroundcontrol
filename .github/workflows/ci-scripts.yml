@@ -21,6 +21,7 @@ on:
       - 'justfile'
       - 'tools/**'
       - 'deploy/**'
+      - 'android/build.gradle'
       - 'src/Settings/**'
       - 'src/AppSettings/pages/**'
       - 'src/**/*.VehicleConfig.json'
@@ -71,6 +72,7 @@ jobs:
           sparse-checkout: |
             .clusterfuzzlite
             .clang-tidy
+            .devcontainer
             .github
             .vscode
             .gitattributes
@@ -89,6 +91,7 @@ jobs:
             src/VideoManager/GStreamer/README.md
             tools
             deploy
+            android/build.gradle
           sparse-checkout-cone-mode: false
           persist-credentials: false
 

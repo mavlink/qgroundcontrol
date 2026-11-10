@@ -120,7 +120,7 @@
       ]
     },
     {
-      "description": "Group Android build updates; the Android Gradle Plugin, Kotlin, and Gradle versions are coupled",
+      "description": "Group Android library updates such as usb-serial-for-android; the Qt-coupled Android toolchain has its own group below",
       "groupName": "android dependencies",
       "matchManagers": [
         "gradle",
@@ -135,11 +135,19 @@
       "groupName": null
     },
     {
-      "description": "Newer androidx.core releases require a compileSdk newer than the one Qt supports",
-      "matchPackageNames": [
-        "androidx.core:core"
+      "description": "Qt's Android template pins the Android Gradle Plugin, Gradle, and androidx.core for each Qt release, and the Kotlin Gradle plugin must support them. A newer release can need a compileSdk or Android Gradle Plugin newer than that Qt supports, which breaks androidx and other libraries, so these wait for approval on the Dependency Dashboard and move together with Qt upgrades, following Qt's template",
+      "groupName": "android toolchain",
+      "matchManagers": [
+        "gradle",
+        "gradle-wrapper"
       ],
-      "enabled": false
+      "matchDepNames": [
+        "gradle",
+        "com.android.tools.build:gradle",
+        "org.jetbrains.kotlin:kotlin-gradle-plugin",
+        "androidx.**"
+      ],
+      "dependencyDashboardApproval": true
     },
     {
       "description": "lukka/get-cmake picks up new Ninja releases only when it next refreshes its bundled catalog",

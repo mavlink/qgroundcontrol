@@ -70,6 +70,7 @@ _PLATFORM_PATTERNS: dict[str, list[str]] = {
         r"^deploy/docker/run_docker\.py$",
         r"^deploy/docker/run-docker\.sh$",
         r"^deploy/docker/lib/",
+        r"^deploy/docker/install_android_sdk\.sh$",
         r"^android/",
         r"^deploy/android/",
     ],

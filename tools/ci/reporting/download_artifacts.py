@@ -43,6 +43,7 @@ from ci.reporting.workflow_runs import (
     group_runs_by_name,
     resolve_workflow_runs,
     select_latest_runs_by_name,
+    triggering_run,
 )
 
 MANIFEST_NAME = "download-manifest.json"
@@ -267,6 +268,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Allow absent diagnostic artifacts selected by prefix",
     )
+    parser.add_argument(
+        "--only-triggering-run",
+        action="store_true",
+        help="Consider only the workflow run that triggered this one, never an older run",
+    )
     return parser.parse_args(argv)
 
 
@@ -292,6 +298,9 @@ def main(argv: list[str] | None = None) -> int:
     all_runs = resolve_workflow_runs(repo, head_sha, args.runs_cache, list_workflow_runs_for_sha)
     if all_runs is None:
         return 1
+    if args.only_triggering_run:
+        trigger = int(triggering_run().get("id") or 0)
+        all_runs = [run for run in all_runs if int(run.get("id") or 0) == trigger]
     preloaded_artifacts: dict[int, list[dict[str, Any]]] = {}
     had_successful_runs = bool(select_latest_successful_runs(all_runs, workflows, event=event))
     runs: list[dict[str, Any]] = []

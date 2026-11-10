@@ -69,7 +69,9 @@ FULL_SCAN_INPUTS = (
     "tools/analyzers/compiler.py",
     "tools/analyzers/dependencies.py",
     "tools/analyzers/result_cache.py",
+    "tools/common/analysis_diagnostics.py",
     "tools/setup/build_clazy.py",
+    "tools/setup/install_analysis_tools.py",
     "tools/ci/runner/analysis_tools.py",
     # Generators of headers that analyzed sources include.
     "tools/common/io.py",
@@ -303,7 +305,10 @@ def build_matrix(
 def analysis_toolchain(root: Path) -> dict[str, str]:
     """Return the pinned analysis toolchain from build-config.json as step outputs."""
     config = load_build_config(find_build_config(root))
-    return {key: str(value) for key, value in config["analysis"].items()}
+    # Per-architecture pins (clang_tidy_sha256) are read by install_analysis_tools.py instead.
+    return {
+        key: str(value) for key, value in config["analysis"].items() if not isinstance(value, dict)
+    }
 
 
 def main(argv: list[str] | None = None) -> int:

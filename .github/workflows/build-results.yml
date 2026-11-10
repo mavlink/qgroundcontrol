@@ -18,6 +18,7 @@ on:
       - ClusterFuzzLite
       - CodeQL
       - Dependency Review
+      - Dev Container
       - Docker
       - Docs
       - Doxygen API Docs
@@ -189,3 +190,64 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 tools/ci/reporting/report_context.py --comment comment.md
+
+  analysis-review:
+    name: Post Analysis Review
+    needs: report-context
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.workflow_run.path == '.github/workflows/analysis.yml' &&
+      needs.report-context.outputs.pr != ''
+    # Not the comment's group: a newer trigger queueing there would cancel this job while it waits,
+    # and with it the only review of this analysis run.
+    concurrency:
+      group: analysis-review-pr-${{ needs.report-context.outputs.pr }}
+      cancel-in-progress: false
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      # The scripts below need only the standard library, so no Python dependencies are installed.
+      - name: Checkout analysis review scripts
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            tools/ci/__init__.py
+            tools/ci/reporting/__init__.py
+            tools/ci/reporting/analysis_review.py
+            tools/ci/reporting/download_artifacts.py
+            tools/ci/reporting/report_context.py
+            tools/ci/reporting/workflow_runs.py
+            tools/_bootstrap.py
+            tools/common
+            tools/qgc_tools
+          sparse-checkout-cone-mode: false
+          fetch-depth: 1
+          persist-credentials: false
+
+      # The comment's download, limited to the Code Analysis run that triggered this one, so the
+      # review's run link and conclusion describe the reports it posts.
+      - name: Download Code Analysis results
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 tools/ci/reporting/download_artifacts.py --include-failed --allow-missing \
+            --workflows "Code Analysis" --artifact-prefixes clang-tidy-clazy-output \
+            --output-dir analysis-artifacts --only-triggering-run
+
+      # Code Analysis's findings on changed lines become one inline review; the step only warns
+      # on failure.
+      - name: Post inline analysis review
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ needs.report-context.outputs.pr }}
+        run: python3 tools/ci/reporting/analysis_review.py

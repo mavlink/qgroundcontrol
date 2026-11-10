@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING
+import platform
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from ci.runner import analysis_tools
@@ -14,10 +15,14 @@ if TYPE_CHECKING:
     from pytest_subprocess import FakeProcess
 
 SHA256 = "a" * 64
-TOOLCHAIN = {"llvm_version": "21", "clang_tidy_version": "22.1.0", "clang_tidy_sha256": SHA256}
+TOOLCHAIN: dict[str, Any] = {
+    "llvm_version": "21",
+    "clang_tidy_version": "22.1.0",
+    "clang_tidy_sha256": {platform.machine(): SHA256},
+}
 
 
-def _pin_toolchain(monkeypatch: pytest.MonkeyPatch, path: Path, **toolchain: str) -> None:
+def _pin_toolchain(monkeypatch: pytest.MonkeyPatch, path: Path, **toolchain: Any) -> None:
     """Point common.build_config at a build-config.json holding only this analysis section."""
     path.write_text(json.dumps({"analysis": toolchain}), encoding="utf-8")
     monkeypatch.setenv("CONFIG_FILE", str(path))

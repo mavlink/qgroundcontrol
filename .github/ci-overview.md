@@ -42,10 +42,11 @@
 | `linux.yml`, `macos.yml`, `windows.yml` | Desktop builds, tests, and packages (`linux.yml` also builds the `custom-example` plugin) |
 | `android.yml`, `ios.yml` | Mobile builds, emulator/simulator smoke tests, and store uploads |
 | `docker.yml` | Builder images and containerized Linux/Android builds |
+| `devcontainer.yml` | Dev Container: builds the `devcontainer` image natively for amd64 and arm64 and smoke-tests it (`deploy/docker/smoke_devcontainer.py` builds and analyzes a small Qt program, and on amd64 compiles it for Android), then opens it through `devcontainer.json` with `devcontainers/ci` to check its features and `postCreateCommand`; pushes and manual runs also Grype-scan the image. Upstream `master` pushes that change its inputs publish `ghcr.io/mavlink/qgc-dev:latest`, release tags publish their version (with provenance and per-platform SBOM attestations), and pull requests only build |
 | `vm-builds.yml` | Builds inside the Multipass and Vagrant developer VMs |
 | `flatpak.yml` | Manual Flatpak build |
 | `_detect-changes.yml` | Reusable: decide whether a platform builds (`should_build`) and plan Android's and Docker's build legs (`matrix`) |
-| `build-results.yml` | PR build-results comment, compared with the PR base's own builds (`workflow_run` trigger) |
+| `build-results.yml` | PR build-results comment, compared with the PR base's own builds, and Code Analysis's inline review (`workflow_run` trigger) |
 | `release.yml` | Draft a GitHub Release with git-cliff notes for a pushed `vX.Y.Z` tag (assets are uploaded by hand) |
 | `analysis.yml` | Code Analysis: clang-tidy and Clazy; manual IWYU, qmllint, and ThreadSanitizer |
 | `codeql.yml` | CodeQL for Actions, Java/Kotlin, and Python |
@@ -66,7 +67,8 @@
 | `cache-cleanup.yml` | GitHub Actions cache cleanup (scheduled, on PR close, and manual) |
 | `stale.yml` | Stale-issue labeling and closing |
 | `welcome.yml` | New contributor welcome |
-| `copilot-setup-steps.yml` | Copilot cloud agent environment: Qt, system and Python dependencies, restored caches, and `just configure` (Copilot uses it only from the default branch; run it by hand to check the setup). Sessions (event `dynamic`) restore only the default branch's GitHub caches and cannot save, so they skip every save; daily and input-changing master runs save the apt download and Qt caches they restore, which master's RunsOn builds keep in S3 instead (sessions download CMake and Ninja). In sessions each slow step times out within Copilot's roughly 20-minute setup budget, so a stall fails that step and Copilot starts without the remaining steps rather than cancelling the session |
+| `copilot-setup-steps.yml` | Copilot cloud agent environment: Qt, system and Python dependencies, restored caches, and `just configure` (Copilot uses it only from the default branch; run it by hand to check the setup). Sessions (event `dynamic`) restore only the default branch's GitHub caches and cannot save, so they skip every save; daily and input-changing master runs save the apt download and Qt caches they restore, which master's RunsOn builds keep in S3 instead (sessions download CMake and Ninja). GitHub evicts both caches from the repository's full 10 GB pool within hours, so the master runs also upload the apt downloads as the `copilot-apt-debs` artifact, which sessions and manual runs restore with `apt_debs_artifact.py` before installing. In sessions each slow step times out within Copilot's roughly 20-minute setup budget, so a stall fails that step and Copilot starts without the remaining steps rather than cancelling the session |
+| `copilot-code-review.yml` | Copilot code review environment, used instead of `copilot-setup-steps.yml`: only a checkout, because the review reads the pull request without building it, its credential expires about 30 minutes after the run starts, and a slow Ubuntu mirror could fail the cloud agent's Install Dependencies step |
 
 ## Actions and Scripts
 
@@ -148,8 +150,13 @@ Dependency updates are split between two bots to avoid overlapping PRs:
   variant base images, the uv `required-version` floor, and the CI CMake (following get-cmake's
   tags) and Ninja pins in `build-config.json` via regex managers. Workflow paths are
   excluded so the bots do not open overlapping action updates. Updates arrive as weekly grouped PRs;
-  major updates wait for approval on the Dependency Dashboard issue. `androidx.core` is not updated
-  because newer releases require a compileSdk newer than Qt supports. A new release of a
+  major updates wait for approval on the Dependency Dashboard issue. The Qt-coupled Android
+  toolchain (the Android Gradle Plugin, the Gradle wrapper, the Kotlin Gradle plugin, and
+  `androidx` libraries) also waits for approval there, as its own `android toolchain` group: Qt's
+  Android template (`<Qt>/<android kit>/src/android/templates/build.gradle` and
+  `src/3rdparty/gradle`) pins these per Qt release, and a newer release can need a compileSdk or
+  Android Gradle Plugin newer than Qt supports, breaking `androidx` and other libraries. Update them
+  with Qt, following its template. A new release of a
   `build-config.json` `tools` pin also waits for approval there and then opens its own PR, which
   must add the release's SHA-256 digests before its checksum checks pass.
 
@@ -450,7 +457,9 @@ step leaves it out.
   and package-list hash (`apt-debs-…`, planned by `install_dependencies_helper.py plan`); a
   `category` install uses its own `apt-debs-<category>-…` family, so it never restores into or
   replaces the full set's cache. It saves right after a successful install, except in Copilot
-  sessions, which cannot write the cache.
+  sessions, which cannot write the cache; they restore the `copilot-apt-debs` artifact that
+  `copilot-setup-steps.yml`'s master runs upload instead, since GitHub evicts those runs' cache
+  entries within hours.
 - **Gradle**: Android jobs cache Gradle User Home through `setup-gradle`'s open-source `basic`
   provider, keyed on the Gradle build files, only on the S3 backend; on GitHub's cache it evicted
   compiler caches (#14474), so GitHub-hosted legs such as Android on macOS don't cache it. Saves
@@ -465,7 +474,8 @@ step leaves it out.
   (`prek cache gc`, which only warns on failure), and saves; PRs only restore. Docs
   Lint and Copilot Setup Steps restore the same entry read-only.
 - **lychee** restores and saves `.lycheecache` with a three-day entry lifetime; fork PRs only restore.
-- **Docker BuildKit** layers use `type=gha,version=2`, scoped by variant and target. On RunsOn,
+- **Docker BuildKit** layers use `type=gha,version=2`, scoped by variant and target (the Dev
+  Container uses `qgc-devcontainer-<arch>`). On RunsOn,
   `runs-on/action` initializes [Magic Cache](https://runs-on.com/docs/performance/caching/docker/)
   before Buildx to store layers in S3. Only non-PR jobs export layer caches.
 - **Not cached**: Android emulator AVDs (each run creates a fresh AVD), Flatpak, and uv/Python on
@@ -684,7 +694,8 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   (`public.ecr.aws/docker/library/<image>:<tag>@<digest>`, same digests as Docker Hub), so PR builds,
   which don't log in to Docker Hub, avoid its anonymous pull limit. Buildx's `moby/buildkit` image
   and the `docker/dockerfile:1` frontend still come from Docker Hub. No QEMU: every target builds
-  for the x86_64 runner, and aarch64 cross-compiles.
+  for the x86_64 runner, and aarch64 cross-compiles; `devcontainer.yml` builds the `devcontainer`
+  target natively on arm64 runners too.
 - Application builds use the shared `cache` action (separate from the BuildKit layer cache) with
   keys that separate image variants and compiler identities. The action skips host tool
   installation and resets/reports statistics inside the container. The workspace mount exposes
@@ -945,6 +956,18 @@ Actions" (Settings → Pages) before the first deploy.
 - `report_context.py --comment comment.md` rechecks that the PR head is still the build's commit,
   then creates or updates the PR's comment marked `<!-- build-results -->` (or the marker of the
   comments `thollander/actions-comment-pull-request` posted before) through `gh api`.
+- When the triggering run is Code Analysis, a separate `analysis-review` job (in its own
+  `analysis-review-pr-<N>` concurrency group, so a trigger queueing behind the comment job cannot
+  cancel it) downloads the triggering run's `clang-tidy-clazy-output` artifacts, and
+  `analysis_review.py` posts their warnings and errors on lines the PR's diff adds as one inline
+  `COMMENT` review on the PR head (at most 25, each finding once, with its escaped message, bare
+  URLs and mentions broken, and fenced source excerpt, and marked so a later run never repeats it,
+  even after its line moves); past 25 the review points to the analysis run for the rest, and it
+  says its results are partial when the analysis run did not succeed. Those rows carry each
+  diagnostic's message and excerpt (`changed` in `*-diagnostics.json`); files that one
+  `compare/<head>...<merge commit>` call shows the merge changed are skipped, since their line
+  numbers can differ (past the 300 files that call lists, each file's blobs are compared instead).
+  The job needs only the standard library and only warns on failure.
 
 ### Job summaries
 

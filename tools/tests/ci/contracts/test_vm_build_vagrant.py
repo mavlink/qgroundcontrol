@@ -290,7 +290,8 @@ def test_vagrant_failure_raises_with_exit_code(
 def _alive(pid: int) -> bool:
     try:
         stat = Path(f"/proc/{pid}/stat").read_text()
-    except FileNotFoundError:
+    # A process that exits between the open and the read raises ESRCH instead.
+    except (FileNotFoundError, ProcessLookupError):
         return False
     return stat.rsplit(")", 1)[1].split()[0] != "Z"
 
