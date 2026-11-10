@@ -92,6 +92,19 @@ android {
         buildConfig = true
     }
 
+    testOptions {
+        // Let JVM unit tests call android.jar stubs such as android.util.Log, which otherwise throw.
+        unitTests.returnDefaultValues = true
+        unitTests.all {
+            // Gradle prints only the class and line of a failed test's exception otherwise, without what the test
+            // expected and what it got.
+            testLogging {
+                events 'failed'
+                exceptionFormat = 'full'
+            }
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21

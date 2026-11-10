@@ -61,7 +61,7 @@ Packages = files that `publish.yml` publishes.
 | `linux.yml` | all | AppImages, coverage and sanitizer test legs, custom plugin, translation extraction check | Packages; coverage to Codecov |
 | `windows.yml` | all | Installers, portable and GStreamer tests | Packages |
 | `macos.yml` | all | Universal DMG (signed and notarized outside PRs), Debug test leg | Packages |
-| `android.yml` | all | APKs, emulator boot test, Android Lint | Packages; Play Store: beta on `master`, 20% production rollout on tags |
+| `android.yml` | all | APKs, emulator boot test, Android Lint, Java unit tests | Packages; Play Store: beta on `master`, 20% production rollout on tags |
 | `ios.yml` | all | Device IPA, simulator boot test | TestFlight on tags |
 | `docker.yml` | PR, push, tag, manual | Builder images; containerized Linux and Android builds | GHCR on pushes, Docker Hub on tags |
 | `devcontainer.yml` | PR and `master` push (paths), tag, manual | Build and smoke-test the Dev Container image | `ghcr.io/mavlink/qgc-dev`: `latest` on `master`, `vX.Y.Z` on tags |
