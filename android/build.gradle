@@ -92,6 +92,11 @@ android {
         buildConfig = true
     }
 
+    testOptions {
+        // Let JVM unit tests call android.jar stubs such as android.util.Log, which otherwise throw.
+        unitTests.returnDefaultValues = true
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
         targetCompatibility JavaVersion.VERSION_21

@@ -670,6 +670,8 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   the rewritten `AndroidManifest.xml`, keeps the file but not the line), or Gradle's errors when
   lint wrote no report; an Android Lint job-summary section follows the Build section, and a
   failure uploads the HTML and XML reports and the Gradle log for seven days, linked below it.
+  The same leg then runs the Java unit tests in `android/src/test` (`gradlew testDebugUnitTest`; AGP adds
+  unit tests only to the debug build type).
   Master pushes also build a signed multi-ABI App Bundle on the primary leg through `cmake-build`
   (`target: aab`, logged to `qgc-aab-build.log` with its own "Build (aab)" section and failure
   annotations; it saves no build caches), uploaded as its own attested GitHub artifact
