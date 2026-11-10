@@ -668,7 +668,7 @@ Item {
             _activeVehicle.guidedModeOrbit(orbitMapCircle.center, orbitMapCircle.radius() * (orbitMapCircle.clockwiseRotation ? 1 : -1), _activeVehicle.homePosition.altitude + valueInMeters)
             break
         case actionLandAbort:
-            _activeVehicle.abortLanding(50)     // hardcoded value for climbOutAltitude that is currently ignored
+            _activeVehicle.abortLanding(50)     // hardcoded climbOutAltitude: ArduPilot Plane climbs to 50m above home, PX4 ignores it
             break
         case actionPause:
             var valueInMeters = _unitsConversion.appSettingsVerticalDistanceUnitsToMeters(sliderOutputValue)
