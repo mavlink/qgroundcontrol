@@ -342,6 +342,7 @@ bool DecodingBranch::_tryInsertDecoder()
         return false;
     }
     GStreamer::markBranch(_decoder.get(), GStreamer::PipelineBranch::Decoding);
+    TeeBranchHead::absorbFlowErrors(_decoder.get());
     (void) _decoderElementAdded.connect(_decoder.get(), "deep-element-added", G_CALLBACK(_onDecoderElementAdded), this);
     (void) _decoderPadAdded.connect(_decoder.get(), "pad-added", G_CALLBACK(_onDecoderPadAdded), this);
 

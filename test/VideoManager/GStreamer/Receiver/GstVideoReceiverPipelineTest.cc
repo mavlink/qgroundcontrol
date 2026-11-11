@@ -25,6 +25,7 @@ namespace {
 
 using GstReceiverTest::kFrameHeight;
 using GstReceiverTest::kFrameWidth;
+using GstReceiverTest::kRecordFrames;
 using GstReceiverTest::kWatchdogTimeout;
 using GstReceiverTest::loopbackUri;
 using GstReceiverTest::Receiver;
@@ -226,6 +227,16 @@ bool stageDisplayQueue(GstVideoReceiver* receiver, const std::shared_ptr<Display
         }
     });
     return staged && QTest::qWaitFor([&scenario]() { return scenario->gateOpen.load(); }, TestTimeout::mediumMs());
+}
+
+/// Buffer probe that fails the push with not-negotiated and posts nothing, as qtmux does for a caps change it refuses
+/// and a decoder for an output format it can't negotiate.
+GstPadProbeReturn refuseBufferSilently([[maybe_unused]] GstPad* pad, GstPadProbeInfo* info,
+                                       [[maybe_unused]] gpointer data)
+{
+    gst_buffer_unref(GST_PAD_PROBE_INFO_BUFFER(info));
+    GST_PAD_PROBE_INFO_FLOW_RETURN(info) = GST_FLOW_NOT_NEGOTIATED;
+    return GST_PAD_PROBE_HANDLED;
 }
 
 }  // namespace
@@ -797,6 +808,65 @@ void GstVideoReceiverPipelineTest::_testMissingDecoderIsNamed()
     const QString message = stream.errorSpy.constFirst().constFirst().toString();
     QVERIFY2(message.contains(QLatin1String("H.265")), qPrintable(message));
     QVERIFY(stream.waitForState(State::Stopped));
+}
+
+void GstVideoReceiverPipelineTest::_testSilentFlowErrorStaysInItsBranch_data()
+{
+    QTest::addColumn<bool>("recorder");
+
+    QTest::newRow("decoder") << false;
+    QTest::newRow("recorder") << true;
+}
+
+void GstVideoReceiverPipelineTest::_testSilentFlowErrorStaysInItsBranch()
+{
+    QFETCH(bool, recorder);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+    QVERIFY(stream.display());
+    if (recorder) {
+        QVERIFY(stream.record(tempDir.filePath(QStringLiteral("flow-error.mp4"))));
+    }
+    const GStreamer::GstElementPtr pipeline = stream.pipeline();
+    const qsizetype decodingChanges = stream.decodingSpy.count();
+    stream.stateSpy.clear();
+
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(recorder ? QStringLiteral("^Recording error: .*Internal data stream error")
+                                                 : QStringLiteral("^Decoder error from .*Internal data stream error")));
+    bool refusing = false;
+    QVERIFY(runOnPipeline(stream.receiver.get(), [&refusing, recorder](GstElement* streamPipeline) {
+        // Behind the sink pad the branch's valve pushes into: the first pad inside the part the branch can replace.
+        const GStreamer::GstElementPtr part =
+            recorder ? GStreamer::adoptElement(gst_bin_get_by_name(GST_BIN(streamPipeline), "sinkbin"))
+                     : GstTest::findByFactory(streamPipeline, "decodebin3");
+        const GStreamer::GstPadPtr entrance =
+            GStreamer::adoptPad(part ? gst_element_get_static_pad(part.get(), "sink") : nullptr);
+        const GStreamer::GstPadPtr inside =
+            GStreamer::adoptPad(entrance ? gst_ghost_pad_get_target(GST_GHOST_PAD(entrance.get())) : nullptr);
+        refusing = inside && (gst_pad_add_probe(inside.get(), GST_PAD_PROBE_TYPE_BUFFER, refuseBufferSilently, nullptr,
+                                                nullptr) != 0);
+    }));
+    QVERIFY(refusing);
+
+    if (recorder) {
+        QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, 1, TestTimeout::mediumMs());
+        QVERIFY(!Receiver::lastFinished(stream.recordingFinishedSpy, 1).isEmpty());
+    } else {
+        // A new decoder takes over.
+        QVERIFY_SIGNAL_COUNT_WAIT(stream.decodingSpy, decodingChanges + 2, TestTimeout::mediumMs());
+        QVERIFY(stream.receiver->decoding());
+    }
+    verifyExpectedLogMessage();
+
+    // The tee never saw the failure: the stream runs on in the same pipeline.
+    QVERIFY(stream.framesSent(kRecordFrames));
+    QCOMPARE(stream.pipeline().get(), pipeline.get());
+    QVERIFY2(stream.stateSpy.isEmpty(), "A branch's flow error restarted the stream");
+    QVERIFY(stream.errorSpy.isEmpty());
 }
 
 #endif

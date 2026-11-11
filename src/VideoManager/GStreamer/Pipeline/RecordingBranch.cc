@@ -344,6 +344,7 @@ void RecordingBranch::_start(const Request& request)
         _finish(QString());
         return;
     }
+    TeeBranchHead::absorbFlowErrors(_fileSink.get());
 
     gst_util_set_object_arg(G_OBJECT(_head.queue()), "leaky", "no");
     if (!gst_bin_add(GST_BIN(_context.pipeline), _fileSink.get()) ||
