@@ -3,10 +3,13 @@
 # Custom map tile providers and caching engine
 # ============================================================================
 
-qt_add_plugin(QGCLocation
+qt_add_plugin(
+    QGCLocation
     STATIC
-    CLASS_NAME QGeoServiceProviderFactoryQGC
-    OUTPUT_TARGETS QGCLocation_targets
+    CLASS_NAME
+    QGeoServiceProviderFactoryQGC
+    OUTPUT_TARGETS
+    QGCLocation_targets
     Providers/BingMapProvider.cpp
     Providers/BingMapProvider.h
     Providers/ElevationMapProvider.cpp
@@ -60,7 +63,8 @@ if(IOS)
     target_compile_definitions(QGCLocation PRIVATE QGC_NO_GOOGLE_MAPS)
 endif()
 
-target_link_libraries(QGCLocation
+target_link_libraries(
+    QGCLocation
     PRIVATE
         Qt6::Positioning
         QGCCompression
@@ -76,7 +80,8 @@ target_link_libraries(QGCLocation
         Qt6::Network
 )
 
-target_include_directories(QGCLocation
+target_include_directories(
+    QGCLocation
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/Providers
@@ -92,19 +97,22 @@ target_include_directories(QGCLocation
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCLocation)
 
-target_precompile_headers(QGCLocation PRIVATE
-    <QtCore/QDir>
-    <QtCore/QLoggingCategory>
-    <QtCore/QObject>
-    <QtCore/QString>
-    <QtCore/QStringList>
-    <QtCore/QVariant>
-    <QtNetwork/QNetworkRequest>
-    <QtPositioning/QGeoCoordinate>
-    <QtQml/QQmlEngine>
+target_precompile_headers(
+    QGCLocation
+    PRIVATE
+        <QtCore/QDir>
+        <QtCore/QLoggingCategory>
+        <QtCore/QObject>
+        <QtCore/QString>
+        <QtCore/QStringList>
+        <QtCore/QVariant>
+        <QtNetwork/QNetworkRequest>
+        <QtPositioning/QGeoCoordinate>
+        <QtQml/QQmlEngine>
 )
 
-qt_add_resources(${CMAKE_PROJECT_NAME} qtlocationplugin_resources
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} qtlocationplugin_resources
     PREFIX "/res"
     BASE "${CMAKE_SOURCE_DIR}/resources"
     FILES
