@@ -218,14 +218,14 @@ void QtVideoRecorder::stop()
     _recorder->stop();
 }
 
-void QtVideoRecorder::stopAndWait(int timeoutMs)
+void QtVideoRecorder::stopAndWait(std::chrono::milliseconds timeout)
 {
     if (!_recording) {
         stop();
         return;
     }
     QEventLoop loop;
-    QTimer::singleShot(timeoutMs, &loop, &QEventLoop::quit);
+    QTimer::singleShot(timeout, &loop, &QEventLoop::quit);
     (void) connect(this, &QtVideoRecorder::recordingChanged, &loop, [&loop](bool recording) {
         if (!recording) {
             loop.quit();

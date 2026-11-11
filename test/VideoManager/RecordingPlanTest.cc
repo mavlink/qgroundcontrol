@@ -90,14 +90,22 @@ void RecordingPlanTest::_testRecordingTimeAndSize()
     QCOMPARE(plan.recordingMs(start), qint64(-1));
     QCOMPARE(plan.bytesWritten(), qint64(0));
 
-    QVERIFY(plan.onFileOpened(plan.currentFile(), start));
-    QVERIFY(writeFile(plan.currentFile(), 100));
+    const QString part1 = plan.currentFile();
+    QVERIFY(plan.onFileOpened(part1, start));
+    QVERIFY(writeFile(part1, 100));
+    QCOMPARE(plan.bytesWritten(), qint64(100));
     plan.nextPart();
+    plan.onFileClosed(part1);
     // The time counts from the first part's first frame, across parts.
     QVERIFY(plan.onFileOpened(plan.currentFile(), start + 5s));
     QVERIFY(writeFile(plan.currentFile(), 50));
 
     QCOMPARE(plan.recordingMs(start + 7s), qint64(7000));
+    QCOMPARE(plan.bytesWritten(), qint64(150));
+
+    // A closed part counts as it was, also once the storage limit removed it; another recording's file doesn't.
+    QVERIFY(QFile::remove(part1));
+    plan.onFileClosed(dir.filePath(QStringLiteral("other.mkv")));
     QCOMPARE(plan.bytesWritten(), qint64(150));
 }
 

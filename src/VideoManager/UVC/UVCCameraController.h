@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <utility>
 
 #include <QtCore/QByteArray>
@@ -55,7 +56,7 @@ class UVCCameraController : public QObject
 
 public:
     static constexpr int kMaxRetries = 3;
-    static constexpr int kRetryIntervalMs = 2000;
+    static constexpr std::chrono::seconds kRetryInterval{2};
 
     explicit UVCCameraController(QObject* parent = nullptr);
     ~UVCCameraController() override;
@@ -141,9 +142,9 @@ public:
                         QMediaFormat::VideoCodec codec = QMediaFormat::VideoCodec::Unspecified,
                         QMediaRecorder::Quality quality = QMediaRecorder::HighQuality);
     void stopRecording();
-    /// Stops recording and waits up to @p timeoutMs for the file to be finished: Qt writes it on its own thread, which
+    /// Stops recording and waits up to @p timeout for the file to be finished: Qt writes it on its own thread, which
     /// the application's exit would cut short.
-    void stopRecordingAndWait(int timeoutMs);
+    void stopRecordingAndWait(std::chrono::milliseconds timeout = QtVideoRecorder::kFinishTimeout);
 
     /// For QML: QtVideoRecorder::recordingCodecs() and recordingCodecName().
     static QStringList recordingCodecs() { return QtVideoRecorder::recordingCodecs(); }

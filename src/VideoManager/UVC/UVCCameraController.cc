@@ -64,7 +64,7 @@ UVCCameraController::UVCCameraController(QObject* parent)
         _imageCapture, &QImageCapture::errorOccurred, this,
         [this](int id, QImageCapture::Error, const QString& errorString) { _onImageCaptureError(id, errorString); });
     _retryTimer->setSingleShot(true);
-    _retryTimer->setInterval(kRetryIntervalMs);
+    _retryTimer->setInterval(kRetryInterval);
     (void) connect(_retryTimer, &QTimer::timeout, this, &UVCCameraController::_recreateCamera);
     // Frames flowing again end a run of retries.
     (void) connect(_monitor, &UVCStreamMonitor::statsChanged, this, [this] {
@@ -145,9 +145,9 @@ void UVCCameraController::stopRecording()
     _recorder->stop();
 }
 
-void UVCCameraController::stopRecordingAndWait(int timeoutMs)
+void UVCCameraController::stopRecordingAndWait(std::chrono::milliseconds timeout)
 {
-    _recorder->stopAndWait(timeoutMs);
+    _recorder->stopAndWait(timeout);
 }
 
 bool UVCCameraController::canTakeScreenshot() const

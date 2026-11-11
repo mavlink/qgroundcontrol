@@ -258,7 +258,8 @@ void UVCCameraControllerTest::_testCameraErrorRetries()
     controller._onCameraError(error);
     verifyExpectedLogMessage();
     QVERIFY(controller._retryTimer->isActive());
-    QCOMPARE(controller._retryTimer->interval(), UVCCameraController::kRetryIntervalMs);
+    QCOMPARE(controller._retryTimer->intervalAsDuration(),
+             std::chrono::milliseconds(UVCCameraController::kRetryInterval));
 
     // Later errors of the run retry silently, up to kMaxRetries.
     for (int retry = 2; retry <= UVCCameraController::kMaxRetries; ++retry) {

@@ -318,7 +318,7 @@ void VideoManager::cleanup()
     _thermalStream->setReceiver(nullptr);
     // Qt Multimedia's backend goes away with the application, before ~VideoManager; it writes a recording's file on a
     // thread of its own, which the exit would cut short.
-    _uvcCamera->stopRecordingAndWait(5000);
+    _uvcCamera->stopRecordingAndWait();
     _uvcCamera->setDevice(QString());
 }
 

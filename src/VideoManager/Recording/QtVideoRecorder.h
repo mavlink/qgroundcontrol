@@ -1,5 +1,7 @@
 #pragma once
 
+#include <chrono>
+
 #include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QString>
@@ -24,6 +26,9 @@ class QtVideoRecorder : public QObject
     friend class QtVideoRecorderTest;
 
 public:
+    /// How long an owner going away waits for a recording's file to be finished.
+    static constexpr std::chrono::seconds kFinishTimeout{5};
+
     explicit QtVideoRecorder(QObject* parent = nullptr);
     ~QtVideoRecorder() override;
 
@@ -42,9 +47,9 @@ public:
                QMediaFormat::VideoCodec codec = QMediaFormat::VideoCodec::Unspecified,
                QMediaRecorder::Quality quality = QMediaRecorder::HighQuality);
     void stop();
-    /// Stops recording and waits up to @p timeoutMs for the file to be finished: Qt writes it on its own thread, which
+    /// Stops recording and waits up to @p timeout for the file to be finished: Qt writes it on its own thread, which
     /// the application's exit would cut short.
-    void stopAndWait(int timeoutMs);
+    void stopAndWait(std::chrono::milliseconds timeout = kFinishTimeout);
 
     /// The formats start() tries for @p container, best first: @p codec where Qt can encode it, then H.264 and the
     /// other codecs Qt can encode here, down to software MPEG-2. In @p container where Qt can write it, else in another

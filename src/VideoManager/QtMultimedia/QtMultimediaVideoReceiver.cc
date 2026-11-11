@@ -25,8 +25,6 @@ constexpr int kSampleIntervalMs = 1000;
 /// Before a session's first frame, on top of the timeout: FFmpeg probes a stream for up to 5 s (its default
 /// analyzeduration) before it decodes, and then waits for a keyframe.
 constexpr qint64 kFirstFrameGraceMs = 5000;
-/// How long the destructor waits for a recording's file to be finished.
-constexpr int kRecordingFinishTimeoutMs = 5000;
 /// The encoder's time base for a recording without a fixed frame rate is as coarse as a millisecond.
 constexpr qint64 kMinFrameStepUs = 1000;
 /// A larger step in the stream's times is a jump, as after a reconnect.
@@ -87,7 +85,7 @@ QtMultimediaVideoReceiver::~QtMultimediaVideoReceiver()
     _closing = true;
     _sampleTimer.stop();
     // Qt writes the file on a thread of its own, which the application's exit would cut short.
-    _recorder->stopAndWait(kRecordingFinishTimeoutMs);
+    _recorder->stopAndWait();
     // As _stopSession(): unloaded first, so that its destruction doesn't wait out a network read.
     if (_player) {
         _player->setSource(QUrl());

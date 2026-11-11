@@ -25,6 +25,8 @@ public:
     RecordingPlan(const QString& file, VideoReceiver::FileFormat format,
                   std::chrono::milliseconds maxPartDuration = kMaxPartDuration);
 
+    /// "<base><tag>.<ext>" for @p file "<base>.<ext>", and "<file><tag>" for one without an extension.
+    static QString insertBeforeExtension(const QString& file, const QString& tag);
     /// "<base>_part<part>.<ext>" for @p file "<base>.<ext>"; @p file itself for part 1.
     static QString partFile(const QString& file, int part);
 
@@ -42,6 +44,8 @@ public:
 
     /// @p file got its first frame at @p now. False, changing nothing, unless it is the current part's file.
     bool onFileOpened(const QString& file, Clock::time_point now = Clock::now());
+    /// @p file is closed. Counts for the one that opened last only: a file of an earlier recording can close late.
+    void onFileClosed(const QString& file);
     /// The current part has recorded for its maximum duration by @p now.
     bool partDue(Clock::time_point now = Clock::now()) const;
     /// What is recorded next goes to the next part, if the current one got frames: after partDue(), and once the
@@ -50,7 +54,7 @@ public:
 
     /// For VideoStreamStats::recordingMs: since the first part got its first frame; -1 before.
     qint64 recordingMs(Clock::time_point now = Clock::now()) const;
-    /// For VideoStreamStats::recordingBytes: the size of the parts' files so far.
+    /// For VideoStreamStats::recordingBytes: what the parts' files held when they closed, and the open one holds now.
     qint64 bytesWritten() const;
 
 private:
@@ -62,4 +66,7 @@ private:
     std::optional<Clock::time_point> _startedAt;
     /// When the current part got its first frame; meaningful while _opened.
     Clock::time_point _partStartedAt;
+    /// The file that opened last, until it closes: the only one whose size still changes.
+    QString _openFile;
+    qint64 _closedBytes = 0;
 };

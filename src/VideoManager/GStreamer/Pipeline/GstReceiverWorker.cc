@@ -363,6 +363,9 @@ void GstReceiverWorker::onRecordingFileOpened(const QString& file)
 
 void GstReceiverWorker::onRecordingFileClosed(const QString& file, const QString& error)
 {
+    if (_recording) {
+        _recording->onFileClosed(file);
+    }
     emit recordingFinished(file, error);
 }
 

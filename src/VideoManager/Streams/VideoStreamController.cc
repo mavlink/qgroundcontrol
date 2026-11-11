@@ -8,6 +8,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCNetworkHelper.h"
 #include "QGCVideoStreamInfo.h"
+#include "RecordingPlan.h"
 #include "VideoSettings.h"
 
 QGC_LOGGING_CATEGORY(VideoStreamControllerLog, "Video.VideoStreamController")
@@ -35,12 +36,7 @@ QString VideoStreamController::taggedFile(const QString& file) const
     if (_role == Role::Primary) {
         return file;
     }
-    const QString tag = QLatin1Char('.') + name();
-    const qsizetype dot = file.lastIndexOf(QLatin1Char('.'));
-    if (dot > file.lastIndexOf(QLatin1Char('/'))) {
-        return QString(file).insert(dot, tag);
-    }
-    return file + tag;
+    return RecordingPlan::insertBeforeExtension(file, QLatin1Char('.') + name());
 }
 
 void VideoStreamController::setReceiver(VideoReceiver* receiver)
