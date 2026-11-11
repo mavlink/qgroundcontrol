@@ -19,11 +19,14 @@ private slots:
     void _receiverFramesAreValidated();
     void _logsFixTransitionsWithoutCoordinates();
     void _automaticConnection();
+    void _statusTextFollowsState_data();
+    void _statusTextFollowsState();
     void _udpPositionOnlyReceiver();
     void _passiveForwardingRegistersCorrections_data();
     void _passiveForwardingRegistersCorrections();
     void _passiveInputStatus_data();
     void _passiveInputStatus();
+    void _tcpEndpointNamesHostAsEntered();
     void _openFailureNamesCause();
     void _outputOverflowWarning_data();
     void _outputOverflowWarning();

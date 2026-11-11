@@ -284,12 +284,17 @@ void NTRIPHttpDecoder::_lineReceived(Result& result, const QDateTime& utcNow)
             const int status = _status.code;
             // Redirects are not followed, so the caster would answer a repeated request the same way.
             const bool redirect = status < 400;
+            // Only the request for corrections names a mountpoint.
+            const bool noMountpoint = _purpose == NTRIPHttpPurpose::Corrections && (status == 404 || status == 410);
             const auto code = status == 401                                ? NTRIPError::AuthFailed
+                              : noMountpoint                               ? NTRIPError::InvalidMountpoint
                               : redirect || status == 400 || status == 403 ? NTRIPError::RequestRejected
                                                                            : NTRIPError::HttpError;
-            const QString detail = status == 401 ? tr("Authentication failed (401): check username and password")
-                                   : redirect    ? _redirectDetail(status, _headers)
-                                                 : tr("HTTP %1: %2").arg(status).arg(errorPreview(_status.reason));
+            const QString detail =
+                status == 401  ? tr("Authentication failed (401): check username and password")
+                : noMountpoint ? tr("Caster has no such mountpoint (HTTP %1); select a valid mountpoint").arg(status)
+                : redirect     ? _redirectDetail(status, _headers)
+                               : tr("HTTP %1: %2").arg(status).arg(errorPreview(_status.reason));
             _pendingFailure = NTRIPFailure{code, detail};
             if (_headers.values(QHttpHeaders::WellKnownHeader::RetryAfter).size() == 1) {
                 _pendingFailure->retryAfter = retryAfter(_headers, utcNow);

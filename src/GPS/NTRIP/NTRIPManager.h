@@ -47,9 +47,8 @@ class NTRIPManager : public QObject
     QML_UNCREATABLE("Provided by the GPS manager")
     Q_MOC_INCLUDE("NTRIPConnectionStats.h")
     Q_PROPERTY(ConnectionStatus connectionStatus READ connectionStatus NOTIFY connectionStatusChanged FINAL)
+    /// What the connection is doing, or why it stopped; never empty.
     Q_PROPERTY(QString statusMessage READ statusMessage NOTIFY statusMessageChanged FINAL)
-    /// Short connection state for compact views.
-    Q_PROPERTY(QString connectionStatusText READ connectionStatusText NOTIFY connectionStatusChanged FINAL)
     Q_PROPERTY(QString securityWarning READ securityWarning NOTIFY securityWarningChanged FINAL)
     Q_PROPERTY(QString ggaSource READ ggaSource NOTIFY ggaSourceChanged FINAL)
     Q_PROPERTY(NTRIPSourceTableController* sourceTableController READ sourceTableController CONSTANT FINAL)
@@ -110,9 +109,7 @@ public:
 
     ConnectionStatus connectionStatus() const { return _connectionStatus; }
 
-    QString connectionStatusText() const;
-
-    QString statusMessage() const { return _statusMessage; }
+    QString statusMessage() const;
 
     /// Set while a connected stream sends its credentials without TLS.
     QString securityWarning() const;
@@ -135,8 +132,11 @@ public:
 
     void setGgaPositionProvider(NTRIPGgaReporter::PositionSource source, NTRIPGgaReporter::PositionProvider provider);
 
-    /// Retry a user-visible error, preserving the enabled setting for subsequent automatic retries.
-    Q_INVOKABLE void retryNTRIP();
+    /// Turns the saved connection on, which connects after the settings debounce. After an error the connection is
+    /// still on, so this starts a new attempt at once instead.
+    Q_INVOKABLE void connectCaster();
+    /// Turns the saved connection off, which disconnects after the settings debounce.
+    Q_INVOKABLE void disconnectCaster();
     /// Permanently retire this manager, including deferred settings work.
     void shutdown();
 
@@ -145,8 +145,8 @@ signals:
     void statusMessageChanged();
     void securityWarningChanged();
     void ggaSourceChanged();
-    /// Retrying after an error turns the saved connection on.
-    void enableRequested();
+    /// The user turned the saved connection on or off; the settings should store it.
+    void enabledRequested(bool enabled);
     /// The trusted self-signed caster certificate changed, or was forgotten (empty); the settings should store it.
     void certificatePinChanged(const QString& pin);
 
@@ -180,6 +180,11 @@ private:
 
     /// Default user-visible message for a state. Callers may override via detail.
     static QString _defaultMessageFor(ConnectionStatus state);
+    /// The message of the Connected state. A network RTK (VRS) mountpoint sends nothing until it is told a position,
+    /// so the message says when none has been reported and no corrections have arrived.
+    QString _connectedMessage() const;
+    /// Publishes _connectedMessage() while connected; the other states publish their own message.
+    void _refreshConnectedMessage();
 
     /// Stops the previous stream, registers the new one as the NTRIP correction source in place of the previous
     /// registration, then validates the configuration and opens a new transport.
@@ -201,6 +206,7 @@ private:
 
     bool _reconnectExhausted() const { return _reconnectBackoff.attempts() >= MAX_RECONNECT_ATTEMPTS; }
 
+    void _onGgaSourceChanged();
     void _onTransportConnected();
     void _onTransportError(const NTRIPFailure& failure);
     void _onCertificatePinned(const QString& pin);

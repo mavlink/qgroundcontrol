@@ -27,11 +27,9 @@ class GPSManager : public QObject
     Q_MOC_INCLUDE("GPSCorrectionManager.h")
     Q_MOC_INCLUDE("GPSReceiver.h")
     Q_MOC_INCLUDE("NTRIPManager.h")
-    Q_MOC_INCLUDE("PositionManager.h")
     Q_PROPERTY(GPSCorrectionManager* corrections READ corrections CONSTANT FINAL)
     Q_PROPERTY(GPSReceiver* receiver READ receiver CONSTANT FINAL)
     Q_PROPERTY(NTRIPManager* ntrip READ ntrip CONSTANT FINAL)
-    Q_PROPERTY(PositionManager* positionManager READ positionManager CONSTANT FINAL)
 
     friend class GPSManagerTest;
 

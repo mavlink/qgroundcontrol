@@ -20,6 +20,7 @@ class NTRIPManagerTest : public UnitTest
 
 private slots:
     void _stopFromIdleIsNoop();
+    void _statusMessageNamesStateWithoutDetail();
     void _transportFactory();
     void _stopCancelsDeferredSettings_data();
     void _stopCancelsDeferredSettings();
@@ -45,15 +46,20 @@ private slots:
     void _retiredTransportErrorCannotAffectNewSession();
     void _retryPolicy_data();
     void _retryPolicy();
-    void _sourceTableRetriedOnlyAfterCorrections();
+    void _unusableMountpointRetriedOnlyAfterCorrections_data();
+    void _unusableMountpointRetriedOnlyAfterCorrections();
     void _httpRetryAfterReachesManager();
-    void _redirectWaitsForUser();
+    void _unrepeatableAnswerWaitsForUser_data();
+    void _unrepeatableAnswerWaitsForUser();
     void _retryPublicationSuperseded();
     void _missingMountpointDoesNotStartTransport();
     void _correctionIngressKeepsSessionAndIdentity();
     void _ggaSettingsUseInjectedProviders();
+    void _connectedWithoutPositionSaysSo_data();
+    void _connectedWithoutPositionSaysSo();
     void _mountpointChangeReconnects();
     void _transportDiagnosticsReachManager();
     void _statusCallbackStopsTransition();
+    void _connectedCallbackStopsTransition_data();
     void _connectedCallbackStopsTransition();
 };

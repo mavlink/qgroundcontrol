@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <array>
 #include <string_view>
+#include <variant>
 
 #include <QtCore/QByteArrayView>
 #include <QtCore/QString>
@@ -438,10 +439,11 @@ GPSReceiveUpdates Protocol::_decodeSurveyIn(std::span<const uint8_t> payload, GP
 {
     const auto svin = Wire::decode<UBX::NavSvin>(payload);
     _surveyStopped = svin.active == 0 && svin.valid == 0;
-    if (!_mode.navigation) {
+    // A fixed base runs no survey-in, so what NAV-SVIN reports is not its status.
+    if (!_mode.navigation || std::holds_alternative<GPSBaseStationConfig::Fixed>(_base.mode)) {
         return GPSReceiveUpdate::Activity;
     }
-    GPSSurveyReport status{};
+    GPSBaseStatus status{};
     status.position = GPSProtocolMath::fromEcef({
         .x = (static_cast<double>(svin.meanX) + static_cast<double>(svin.meanXHP) * 0.01) * 0.01,
         .y = (static_cast<double>(svin.meanY) + static_cast<double>(svin.meanYHP) * 0.01) * 0.01,
@@ -449,9 +451,10 @@ GPSReceiveUpdates Protocol::_decodeSurveyIn(std::span<const uint8_t> payload, GP
     });
     status.duration = std::chrono::seconds(svin.dur);
     status.meanAccuracyMeters = svin.meanAcc * 1e-4;
-    status.valid = (svin.valid & 1) != 0;
-    status.active = (svin.active & 1) != 0;
-    context.publishSurvey(status);
+    status.state = (svin.active & 1) != 0  ? GPSBaseState::Active
+                   : (svin.valid & 1) != 0 ? GPSBaseState::Valid
+                                           : GPSBaseState::Inactive;
+    context.publishBaseStatus(status);
     if (svin.valid == 1 && svin.active == 0) {
         _requests.rtcmActivation = true;
     }

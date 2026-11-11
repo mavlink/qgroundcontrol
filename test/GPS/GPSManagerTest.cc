@@ -238,19 +238,21 @@ void GPSManagerTest::_vehicleEstimateTracking()
     QVERIFY(!estimate());
 }
 
-void GPSManagerTest::_groundStationGgaNeedsMeanSeaLevel_data()
+void GPSManagerTest::_groundStationGgaReportsAnyAltitudeDatum_data()
 {
+    // The datum of the device position differs by platform; a caster needs its latitude and longitude. The GGA
+    // altitude is above mean sea level, so a height in another datum is left out.
     QTest::addColumn<GPSAltitudeDatum>("datum");
-    QTest::addColumn<bool>("sent");
-    QTest::newRow("mean-sea-level") << GPSAltitudeDatum::MeanSeaLevel << true;
-    QTest::newRow("ellipsoid") << GPSAltitudeDatum::Ellipsoid << false;
-    QTest::newRow("unknown") << GPSAltitudeDatum::Unknown << false;
+    QTest::addColumn<QByteArray>("altitude");
+    QTest::newRow("mean-sea-level") << GPSAltitudeDatum::MeanSeaLevel << QByteArray(",450.0,M,");
+    QTest::newRow("ellipsoid") << GPSAltitudeDatum::Ellipsoid << QByteArray(",,M,");
+    QTest::newRow("unknown") << GPSAltitudeDatum::Unknown << QByteArray(",,M,");
 }
 
-void GPSManagerTest::_groundStationGgaNeedsMeanSeaLevel()
+void GPSManagerTest::_groundStationGgaReportsAnyAltitudeDatum()
 {
     QFETCH(GPSAltitudeDatum, datum);
-    QFETCH(bool, sent);
+    QFETCH(QByteArray, altitude);
     GPSTest::PositionSource source;
     GPSManager manager;
     PositionManager* const groundStation = manager.positionManager();
@@ -269,7 +271,8 @@ void GPSManagerTest::_groundStationGgaNeedsMeanSeaLevel()
     auto* transport = GPSTest::injectMockTransport(*ntrip, true);
     ntrip->init();
     QCOMPARE(ntrip->connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
-    QCOMPARE(transport->sentNmea.size(), sent ? 1 : 0);
+    QCOMPARE(transport->sentNmea.size(), 1);
+    QVERIFY(transport->sentNmea.first().contains(altitude));
 }
 
 void GPSManagerTest::_qmlServicesAvailableBeforeInit()

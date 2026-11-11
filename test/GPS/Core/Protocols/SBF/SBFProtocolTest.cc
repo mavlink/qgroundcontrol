@@ -155,6 +155,7 @@ void invalidCoordinates(GPSTestClock& clock)
         const auto reports = sbf.reports<GPSDecodedPosition>();
         QCOMPARE(reports.size(), previous + 1);
         QCOMPARE(reports.back().navigation.fixType, GPSPositionReport::FixType::NoFix);
+        QVERIFY(!reports.back().velocityValid);
     };
 
     struct InvalidCoordinate
@@ -374,13 +375,47 @@ void datumRejection(GPSTestClock& clock)
         QCOMPARE(sbf->error(), GPSProtocolError::Protocol);
         QVERIFY(sbf->errorDetail().contains("datum"));
         QVERIFY(!sbf->receiverReady());
-        const auto surveys = sbf.reports<GPSSurveyReport>();
+        const auto surveys = sbf.reports<GPSBaseStatus>();
         QVERIFY(surveys.size() == 1 && surveyFlags(surveys.back()) == 0);
         QVERIFY(std::isnan(surveys.back().position.latitudeDegrees));
         QCOMPARE(log.warnings(),
                  QStringList{QStringLiteral("Unsupported Septentrio position datum: %1").arg(unsigned(datum))});
         QVERIFY(log.categories().contains(QStringLiteral("GPS.Protocols.SBF")));
     }
+}
+
+void noSolutionEpoch(GPSTestClock& clock)
+{
+    // Without a solution every field after Error has its do-not-use value, the datum included (PVTGeodetic in the
+    // SBF Reference Guide).
+    auto unavailable = bytes({.latitude = -2e10,
+                              .longitude = -2e10,
+                              .height = -2e10,
+                              .cog = -2e10f,
+                              .nrSV = UINT8_MAX,
+                              .hAccuracy = UINT16_MAX});
+    unavailable[1] = 1;  // Not enough measurements.
+    for (const size_t offset : {26u, 30u, 34u, 38u}) {
+        QVERIFY(LittleEndian::write(unavailable, offset, -2e10f));
+    }
+    unavailable[59] = UINT8_MAX;
+    QVERIFY(LittleEndian::write<uint16_t>(unavailable, 78, UINT16_MAX));
+
+    Receiver peer(clock);
+    LoggedRuntime sbf(SBF::FAMILY, peer.io());
+    unsigned baud = 115200;
+    QVERIFY(sbf->configure(fixedBase(47, 8, 500), baud));
+    (void) sbf->consume(sbfBlock(SBF::BlockId::PVT_GEODETIC, unavailable, 1000));
+    QCOMPARE(sbf->error(), GPSProtocolError::None);
+    QVERIFY(sbf->receiverReady());
+    QCOMPARE(sbf.position.navigation.fixType, GPSPositionReport::FixType::NoFix);
+    QVERIFY(!sbf.position.velocityValid);
+    QCOMPARE(surveyFlags(sbf.reports<GPSBaseStatus>().back()), 0);
+
+    // The base is valid again with the next solution.
+    const auto solution = bytes({.mode = 3, .latitude = 0.5, .longitude = 1, .height = 500});
+    (void) sbf->consume(sbfBlock(SBF::BlockId::PVT_GEODETIC, solution, 2000));
+    QCOMPARE(surveyFlags(sbf.reports<GPSBaseStatus>().back()), 1);
 }
 
 void datumWithoutBase(GPSTestClock& clock)
@@ -436,7 +471,7 @@ void surveyEvidence(GPSTestClock& clock)
     unsigned baudRate = 115200;
     uint32_t tow = 0;
     auto payload = bytes({.latitude = 0.5, .longitude = 1, .height = 500});
-    std::vector<GPSSurveyReport> surveys;
+    std::vector<GPSBaseStatus> surveys;
     // Publishes one epoch and checks the single survey report and accuracies it carries.
     auto publish = [&](uint8_t mode, uint8_t flags, uint16_t horizontal = 200, uint16_t vertical = 200) {
         clock.advanceBy(1000000);
@@ -446,7 +481,7 @@ void surveyEvidence(GPSTestClock& clock)
         (void) LittleEndian::write<uint16_t>(payload, 78, vertical);
         sbf.events.clear();
         (void) sbf->consume(sbfBlock(SBF::BlockId::PVT_GEODETIC, payload, tow));
-        surveys = sbf.reports<GPSSurveyReport>();
+        surveys = sbf.reports<GPSBaseStatus>();
         QCOMPARE(surveys.size(), 1);
         QCOMPARE(surveyFlags(surveys.back()), flags);
         QVERIFY(!surveys.back().meanAccuracyMeters.has_value());
@@ -538,6 +573,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"confirmation-policy", confirmationPolicy},
     {"selected-port-and-precision", selectedPortAndPrecision},
     {"datum-rejection", datumRejection},
+    {"no-solution-epoch", noSolutionEpoch},
     {"datum-without-base", datumWithoutBase},
     {"frame-ownership", frameOwnership},
     {"survey-evidence", surveyEvidence},

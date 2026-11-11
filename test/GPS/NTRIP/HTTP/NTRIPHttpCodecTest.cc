@@ -317,8 +317,12 @@ void NTRIPHttpCodecTest::_errorDiagnostics_data()
     QTest::newRow("truncated-length") << denied + "Content-Length: 1000\r\n\r\n" + html << rejected << preview << 0;
     QTest::newRow("bad-request") << QByteArray("HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\n\r\n") << rejected
                                  << QStringLiteral("HTTP 400") << 0;
-    QTest::newRow("not-found") << QByteArray("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n") << http
-                               << QStringLiteral("HTTP 404") << 0;
+    // The caster does not have the mountpoint, which is retried only once it has served corrections.
+    const int mountpoint = static_cast<int>(NTRIPError::InvalidMountpoint);
+    QTest::newRow("not-found") << QByteArray("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n") << mountpoint
+                               << QStringLiteral("no such mountpoint (HTTP 404)") << 0;
+    QTest::newRow("gone") << QByteArray("HTTP/1.1 410 Gone\r\nContent-Length: 0\r\n\r\n") << mountpoint
+                          << QStringLiteral("no such mountpoint (HTTP 410)") << 0;
     const QByteArray chunks =
         unavailable + "Transfer-Encoding: chunked\r\n\r\n" + QByteArray::number(html.size(), 16) + "\r\n" + html;
     QTest::newRow("chunked") << chunks + "\r\n0\r\n\r\n" << http << preview << 120000;
@@ -386,6 +390,20 @@ void NTRIPHttpCodecTest::_errorDiagnostics()
             QVERIFY(failure->detail.size() - separator - 3 <= NTRIPHttpDecoder::MAX_ERROR_PREVIEW_CHARS);
         }
     }
+}
+
+void NTRIPHttpCodecTest::_sourceTableNotFound()
+{
+    // The request for the source table names no mountpoint, so 404 does not say the caster lacks one.
+    NTRIPHttpDecoder decoder(NTRIPHttpPurpose::SourceTable);
+    auto result = decoder.feed("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n", QDateTime::currentDateTimeUtc());
+    if (!result.failure) {
+        result = decoder.finish();
+    }
+    QVERIFY(result.failure);
+    QCOMPARE(result.failure->code, NTRIPError::HttpError);
+    QVERIFY2(result.failure->detail.contains(QStringLiteral("HTTP 404: Not Found")),
+             qPrintable(result.failure->detail));
 }
 
 void NTRIPHttpCodecTest::_errorDetailBounds()

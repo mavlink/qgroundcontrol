@@ -19,7 +19,7 @@ QGCGroupBox {
     property bool showWhenDisconnected: false
     property string disconnectedText: qsTr("No GNSS receiver connected.")
 
-    readonly property bool _connected: root.facts.telemetryAvailable
+    readonly property bool _connected: root.receiver.state === GPSReceiver.Connected
     readonly property gpsReceiverPresentation _presentation: root.receiver.activePresentation
     readonly property bool _surveyConnected: root.receiver.activeBaseMode === BaseModeDefinition.BaseSurveyIn
     // A finished survey is the moment to keep its position, so the next connection can start as a fixed base.
@@ -43,7 +43,7 @@ QGCGroupBox {
     }
 
     heading: qsTr("GNSS Receiver Status")
-    visible: root._connected || root.receiver.hasReceiver || root.receiver.reconnecting || root.showWhenDisconnected
+    visible: root.receiver.state !== GPSReceiver.Disconnected || root.showWhenDisconnected
 
     /// A status Fact, labelled with its description.
     component FactRow: LabelledLabel {
@@ -79,7 +79,7 @@ QGCGroupBox {
 
     LabelledLabel {
         objectName: "rtkDetectedReceiver"
-        visible: root.receiver.hasReceiver && root.receiver.detectedReceiver.length > 0
+        visible: root.receiver.detectedReceiver.length > 0
         label: qsTr("Detected")
         labelText: root.receiver.detectedReceiver
         labelTextFormat: Text.PlainText
@@ -94,7 +94,7 @@ QGCGroupBox {
 
     WrappingRow {
         objectName: "rtkReceiverEndpoint"
-        visible: root.receiver.hasReceiver && root.receiver.activeEndpoint.length > 0
+        visible: root.receiver.activeEndpoint.length > 0
         label: qsTr("Connection")
         labelText: root.receiver.activeEndpoint
     }

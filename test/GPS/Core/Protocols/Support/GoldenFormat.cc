@@ -371,8 +371,8 @@ QString formatEvent(const Event& event)
             } else if constexpr (std::is_same_v<Report, Survey>) {
                 const auto& survey = report.survey;
                 return QStringList{
-                    QStringLiteral("survey active=") + flag(survey.active),
-                    QStringLiteral("valid=") + flag(survey.valid),
+                    QStringLiteral("survey active=") + flag(survey.state == GPSBaseState::Active),
+                    QStringLiteral("valid=") + flag(survey.state == GPSBaseState::Valid),
                     QStringLiteral("duration=%1s").arg(survey.duration.count()),
                     QStringLiteral("accuracy=") +
                         (survey.meanAccuracyMeters ? decimal(*survey.meanAccuracyMeters, 4) : QStringLiteral("-")),

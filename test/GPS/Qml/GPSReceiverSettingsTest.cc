@@ -229,8 +229,8 @@ void GPSReceiverSettingsTest::_surveySaveNeedsApplicationReceiver()
 
     // GPSManager saves the position of the application's receiver, so a panel that shows another receiver's finished
     // survey offers no save.
-    harness.workers.current()->survey(
-        {.position = kSurveyedPosition, .meanAccuracyMeters = 0.75, .valid = true, .active = false});
+    harness.workers.current()->baseStatus(
+        {.state = GPSBaseState::Valid, .position = kSurveyedPosition, .meanAccuracyMeters = 0.75});
     QVERIFY(receiver.facts()->canSaveCurrentBasePosition());
     QVERIFY(accuracy->property("visible").toBool());
     QVERIFY(!prompt->property("visible").toBool());
@@ -400,6 +400,18 @@ void GPSReceiverSettingsTest::_reconnectingOffersDisconnect()
     auto* device = panel.find("rtkSerialDevice");
     QVERIFY(connect && device);
     GPSReceiver& receiver = panel.receiver.gps;
+    // The status panel, which a page without a receiver hides.
+    GPSTest::QmlWindowFixture window;
+    GPSTest::QmlEngine engine;
+    auto status = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
+                                {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
+                                 {QStringLiteral("receiver"), QVariant::fromValue(&receiver)},
+                                 {QStringLiteral("facts"), QVariant::fromValue(receiver.facts())}});
+    QVERIFY2(status, qPrintable(engine.lastError()));
+    auto* statusItem = qobject_cast<QQuickItem*>(status.get());
+    auto* statusText = status->findChild<QObject*>(QStringLiteral("rtkReceiverStatus"));
+    QVERIFY(statusItem && statusText);
+    QVERIFY(!statusItem->isVisible());
     // Only Connect automatically reconnects a lost receiver.
     panel.settings.autoConnect->setRawValue(true);
     QVERIFY(receiver.connectReceiver());
@@ -407,14 +419,18 @@ void GPSReceiverSettingsTest::_reconnectingOffersDisconnect()
     expectLogMessage("GPS.Receiver.GPSReceiver", QtWarningMsg, QRegularExpression(QStringLiteral("session ended")));
     panel.receiver.worker()->fail(GPSConnectionError::DeviceError);
     verifyExpectedLogMessage();
-    QVERIFY(receiver.reconnecting());
-    QVERIFY(!receiver.hasReceiver());
+    // Both panels follow the receiver's state: the form offers to stop the reconnecting, and the status stays to say
+    // what the receiver is doing.
+    QCOMPARE(receiver.state(), GPSReceiver::State::Reconnecting);
     QCOMPARE(connect->property("text").toString(),
              QCoreApplication::translate("GPSReceiverConnectControls", "Disconnect"));
     QVERIFY(connect->isEnabled());
     QVERIFY(!device->isEnabled());
+    QVERIFY(statusItem->isVisible());
+    QCOMPARE(statusText->property("text").toString(), receiver.statusText());
     QVERIFY(QMetaObject::invokeMethod(connect, "clicked"));
-    QVERIFY(!receiver.reconnecting());
+    QCOMPARE(receiver.state(), GPSReceiver::State::Disconnected);
+    QVERIFY(!statusItem->isVisible());
     QVERIFY(device->isEnabled());
     QCOMPARE(connect->property("text").toString(),
              QCoreApplication::translate("GPSReceiverConnectControls", "Connect"));

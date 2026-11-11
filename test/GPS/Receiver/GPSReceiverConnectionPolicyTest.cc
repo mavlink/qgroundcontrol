@@ -449,11 +449,11 @@ void GPSReceiverConnectionPolicyTest::_observerActsOnReport()
     QVERIFY(receiver.connectReceiver());
     harness.worker()->ready();
     GPSPositionReport position = locatedFix(GPSFixQuality::Fix3D);
-    GPSSurveyReport surveyed{.position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
-                             .meanAccuracyMeters = 1.0,
-                             .active = true};
+    GPSBaseStatus surveyed{.state = GPSBaseState::Active,
+                           .position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
+                           .meanAccuracyMeters = 1.0};
     if (survey) {
-        harness.worker()->survey(surveyed);
+        harness.worker()->baseStatus(surveyed);
     } else {
         harness.worker()->position(position);
         QVERIFY(receiver.acceptedPositionObservation(GPSObservation::PositionUse::GroundStation));
@@ -471,9 +471,8 @@ void GPSReceiverConnectionPolicyTest::_observerActsOnReport()
     });
 
     if (survey) {
-        surveyed.valid = true;
-        surveyed.active = false;
-        harness.worker()->survey(surveyed);
+        surveyed.state = GPSBaseState::Valid;
+        harness.worker()->baseStatus(surveyed);
     } else {
         position.navigation.fixType = GPSFixQuality::RTKFixed;
         position.integrity.jamming.state = GPSIntegrityReport::JammingState::Warning;

@@ -50,6 +50,9 @@ public:
     /// Whether any source is begun.
     bool hasSources() const;
 
+    /// Whether the configured routing selects from @a source.
+    bool routes(GPSCorrectionSettings::CorrectionSource source) const;
+
     /// The selected fresh stream, if any.
     std::optional<GPSCorrectionStream> selectedStream(qint64 now) const;
 

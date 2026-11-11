@@ -211,10 +211,9 @@ struct GPSSatelliteReport
     bool operator==(const GPSSatelliteReport&) const = default;
 };
 
-/// The active and valid flags of a GPSSurveyReport as the one state a family publishes; the two never hold together.
-enum class GPSSurveyState
+enum class GPSBaseState
 {
-    /// No base position: none is being determined, or determining it failed.
+    /// No base position: none is being determined, determining it failed, or it was lost.
     Inactive,
     /// A survey or the receiver's own averaging is determining the base position.
     Active,
@@ -222,13 +221,16 @@ enum class GPSSurveyState
     Valid,
 };
 
-struct GPSSurveyReport
+/// What a configured base station reports about its position, in every base mode.
+struct GPSBaseStatus
 {
     /// Receipt of this status; a status a family buffered keeps its original receipt.
     uint64_t timestampUs = 0;
+    GPSBaseState state = GPSBaseState::Inactive;
+    /// The base position once the receiver reports it; its coordinates are NaN until then.
     GPSEllipsoidPosition position{};
+    /// The accuracy a survey measured; empty for a fixed position and where the receiver reports none.
     std::optional<double> meanAccuracyMeters = std::nullopt;
+    /// How long a survey has run or ran; zero for a fixed position.
     std::chrono::seconds duration{0};
-    bool valid = false;
-    bool active = false;
 };

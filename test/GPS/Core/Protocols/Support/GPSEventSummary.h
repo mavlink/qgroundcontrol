@@ -75,7 +75,7 @@ inline QString summary(const GPSDecodedSatelliteUsage& report)
     return QStringLiteral("usage t=%1 used=%2").arg(report.timestampUs).arg(summaryOptional(report.usedCount));
 }
 
-inline QString summary(const GPSSurveyReport& survey)
+inline QString summary(const GPSBaseStatus& survey)
 {
     return QStringLiteral("survey t=%1 lat=%2 lon=%3 alt=%4 acc=%5 duration=%6 valid=%7 active=%8")
         .arg(survey.timestampUs)
@@ -83,8 +83,8 @@ inline QString summary(const GPSSurveyReport& survey)
              summaryNumber(survey.position.altitudeMeters),
              survey.meanAccuracyMeters ? summaryNumber(*survey.meanAccuracyMeters) : QStringLiteral("-"))
         .arg(survey.duration.count())
-        .arg(int(survey.valid))
-        .arg(int(survey.active));
+        .arg(int(survey.state == GPSBaseState::Valid))
+        .arg(int(survey.state == GPSBaseState::Active));
 }
 
 inline QString summary(const GPSRTCMFrame& frame)

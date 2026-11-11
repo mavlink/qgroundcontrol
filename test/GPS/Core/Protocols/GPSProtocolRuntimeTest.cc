@@ -59,12 +59,12 @@ public:
 
     void flush(GPSDecodeContext& context) override
     {
-        GPSSurveyReport buffered{};
+        GPSBaseStatus buffered{};
         buffered.timestampUs = 42;
-        buffered.active = true;
+        buffered.state = GPSBaseState::Active;
         context.publishAsReceived(buffered);
-        GPSSurveyReport stamped{};
-        context.publishSurvey(stamped);
+        GPSBaseStatus stamped{};
+        context.publishBaseStatus(stamped);
     }
 };
 
@@ -175,9 +175,9 @@ void GPSProtocolRuntimeTest::_publishAsReceivedKeepsReceipt()
     const auto batch = runtime.decode({});
     QCOMPARE(batch.updates, GPSReceiveUpdates{});
     QCOMPARE(batch.events.size(), size_t{2});
-    QCOMPARE(std::get<GPSSurveyReport>(batch.events[0]).timestampUs, uint64_t{42});
-    QVERIFY(std::get<GPSSurveyReport>(batch.events[0]).active);
-    QCOMPARE(std::get<GPSSurveyReport>(batch.events[1]).timestampUs, uint64_t{99});
+    QCOMPARE(std::get<GPSBaseStatus>(batch.events[0]).timestampUs, uint64_t{42});
+    QCOMPARE(std::get<GPSBaseStatus>(batch.events[0]).state, GPSBaseState::Active);
+    QCOMPARE(std::get<GPSBaseStatus>(batch.events[1]).timestampUs, uint64_t{99});
 }
 
 void GPSProtocolRuntimeTest::_deadlineRemaining_data()

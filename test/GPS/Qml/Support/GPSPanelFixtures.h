@@ -89,11 +89,12 @@ public:
 
     void disconnect() { _receiver->disconnectReceiver(); }
 
-    /// Reports a valid survey at kSurveyedPosition; an unknown accuracy is unavailable.
+    /// Reports a survey at kSurveyedPosition, finished unless @a active; an unknown accuracy is unavailable.
     void survey(std::optional<double> accuracy, bool active = false)
     {
-        _workers.current()->survey(
-            {.position = kSurveyedPosition, .meanAccuracyMeters = accuracy, .valid = true, .active = active});
+        _workers.current()->baseStatus({.state = active ? GPSBaseState::Active : GPSBaseState::Valid,
+                                        .position = kSurveyedPosition,
+                                        .meanAccuracyMeters = accuracy});
     }
 
 private:

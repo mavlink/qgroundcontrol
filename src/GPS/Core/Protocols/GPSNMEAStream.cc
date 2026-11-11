@@ -66,9 +66,7 @@ void GPSNMEAStream::reset(GPSStreamDemux& stream)
 
 GPSReceiveUpdates GPSNMEAStream::_decodeRTCM(const GPSFrame& frame, GPSDecodeContext& context)
 {
-    if (_rtcmEnabled) {
-        context.publishRTCM(frame.bytes);
-    }
+    context.publishRTCM(frame.bytes);
     return {};
 }
 

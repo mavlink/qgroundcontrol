@@ -112,8 +112,7 @@ SavedBase savedBase(const Fields& reply, const GPSBaseStationConfig::Mode& reque
 /// Decodes LG290P output: standard NMEA epochs, RTCM3, PQTM replies for the pending command, the PQTMVER boot banner
 /// and PQTMSVINSTATUS survey status. Survey status counts only once a restart has been verified: from the boot banner
 /// it is held, and it is published once configuration starts monitoring. Status older than STATUS_MAX_AGE, a mismatch
-/// with the requested base, an unexpected boot banner or a failed configuration revoke it. Corrections flow only while
-/// a configured base reports a valid survey.
+/// with the requested base, an unexpected boot banner or a failed configuration revoke it.
 class Protocol final : public GPSNMEAFamilyProtocol
 {
 public:
@@ -156,7 +155,7 @@ private:
         Monitoring,
     };
 
-    /// Ends readiness: no survey, no corrections.
+    /// Ends readiness and revokes the survey.
     void _stop(GPSDecodeContext& context);
     /// The base the survey status must describe.
     void _setBase(const GPSBaseStationConfig::Mode& mode);
@@ -176,7 +175,7 @@ private:
 
     /// Publishes survey status from now on, starting with any status held since the verified restart.
     void _monitorSurvey(GPSDecodeContext& context);
-    /// The configuration succeeded: corrections flow while the survey is valid.
+    /// The configuration succeeded: the receiver is ready, and a survey status that went stale meanwhile is revoked.
     void _finishAttempt(GPSDecodeContext& context);
     /// Revokes survey status that is stale or belongs to a failed configuration.
     void _expireSurvey(GPSDecodeContext& context);
@@ -190,7 +189,7 @@ private:
     /// The firmware PQTMVERNO reported; the boot banner must name it.
     QByteArray _firmware;
     std::optional<unsigned> _lastTow;
-    std::optional<GPSSurveyReport> _survey;
+    std::optional<GPSBaseStatus> _survey;
     SurveyPhase _phase = SurveyPhase::Off;
     /// A boot banner is expected; otherwise one ends readiness.
     bool _expectingBoot = false;
@@ -583,7 +582,6 @@ void Protocol::_finishAttempt(GPSDecodeContext& context)
 {
     _ready = true;
     _expireSurvey(context);
-    _nmea.setRTCMEnabled(_survey && _survey->valid);
 }
 
 void Protocol::_expire(GPSDecodeContext& context)
@@ -620,8 +618,8 @@ GPSReceiveUpdates Protocol::_decodeLine(std::string_view line, GPSDecodeContext&
             } else if (!_expectingBoot && (_ready || _phase != SurveyPhase::Off)) {
                 _ready = false;
                 _phase = SurveyPhase::Off;
-                _revokeSurvey(context);
-                context.failControl(QStringLiteral("LG290P restarted; its base configuration is no longer verified"));
+                _survey.reset();
+                context.loseBase(QStringLiteral("LG290P restarted; its base configuration is no longer verified"));
             }
             return GPSReceiveUpdate::Activity;
         }
@@ -631,10 +629,9 @@ GPSReceiveUpdates Protocol::_decodeLine(std::string_view line, GPSDecodeContext&
 
 void Protocol::_revokeSurvey(GPSDecodeContext& context)
 {
-    _nmea.setRTCMEnabled(false);
     if (_survey) {
         _survey.reset();
-        context.publishSurvey(GPSSurveyState::Inactive, {});
+        context.publishBaseStatus(GPSBaseState::Inactive, {});
     }
 }
 
@@ -652,7 +649,6 @@ void Protocol::_publishSurvey(GPSDecodeContext& context)
     if (_phase == SurveyPhase::Monitoring && _survey) {
         // A status buffered during boot verification keeps its original receipt time.
         context.publishAsReceived(*_survey);
-        _nmea.setRTCMEnabled(_ready && _survey->valid);
     }
 }
 
@@ -704,15 +700,14 @@ bool Protocol::_handleSurvey(std::string_view body, GPSDecodeContext& context)
     // BOOT + identity + saved-role/base readback establish this survey's session.
     // A one-observation survey can finish before any progress notification is sent.
     const bool valid = validity == 2 && (fixed || observations >= configuredCount);
-    GPSSurveyReport report{};
+    GPSBaseStatus report{};
     // Fixed mode's MeanAcc=0 describes supplied coordinates, not measured position uncertainty.
     if (!fixed && validity != 0 && observations != 0 && coordinatesKnown) {
         report.meanAccuracyMeters = GPSProtocolMath::roundedToMillimeters(accuracy);
     }
     // Base positioning is fixed at 1 Hz. Gaps do not count as accepted observation seconds.
     report.duration = std::chrono::seconds(observations);
-    report.valid = valid;
-    report.active = validity == 1 && !valid;
+    report.state = valid ? GPSBaseState::Valid : validity == 1 ? GPSBaseState::Active : GPSBaseState::Inactive;
     if (coordinatesKnown && validity != 0) {
         report.position = GPSProtocolMath::fromEcef(ecef);
     }

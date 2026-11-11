@@ -19,6 +19,7 @@ private slots:
     void _framing();
     void _errorDiagnostics_data();
     void _errorDiagnostics();
+    void _sourceTableNotFound();
     void _errorDetailBounds();
     void _retryAfter_data();
     void _retryAfter();

@@ -30,6 +30,7 @@ private slots:
     void _messageFilter_data();
     void _messageFilter();
     void _messageFilterGovernsRouting();
+    void _messageFilterLeavesNoStream();
     void _logsRoutedStream();
     void _logThatCannotStart_data();
     void _logThatCannotStart();

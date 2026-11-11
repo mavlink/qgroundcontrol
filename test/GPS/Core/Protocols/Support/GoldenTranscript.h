@@ -15,6 +15,8 @@
 //   GPSType::Automatic first detects the family (GPSReceiverDetector) at the configured or fixed rate, else at every
 //   candidate rate, then fits the request to it and configures it from the detected rate. The mismatch hint GPSDriver
 //   appends to a configured type's error is a diagnostic, not part of the transcript.
+// - Record every RTCM frame the family decodes. GPSDriver forwards those of a base only while its status is valid,
+//   which GPSProtocolFamilyContractTest covers and the transcript does not show.
 // - Drive all I/O through Link::receiver on Link::clock. Time never passes except through a read, which ends at
 //   its deadline when no data arrives, or through Link::wait. Real sleeps are not allowed.
 // - Record, in order, every transport write call (bytes and result), every baud change (rate and status), every
@@ -144,7 +146,7 @@ struct SatelliteUsage
 struct Survey
 {
     uint64_t timestampUs = 0;
-    GPSSurveyReport survey{};
+    GPSBaseStatus survey{};
 };
 
 struct RTCM

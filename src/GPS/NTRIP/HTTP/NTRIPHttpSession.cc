@@ -131,6 +131,11 @@ void NTRIPHttpSession::_establish()
                                  << "-> peer" << _socket->peerAddress().toString() << ":" << _socket->peerPort();
     // Qt ignores socket options set before the native socket exists.
     _socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
+    // A stream that waits for a position carries no traffic and has no stall timeout, and the system's default is to
+    // probe after two hours: find a dead link after about a minute instead.
+    _socket->setSocketOption(QAbstractSocket::KeepAliveIdleOption, 30);
+    _socket->setSocketOption(QAbstractSocket::KeepAliveIntervalOption, 10);
+    _socket->setSocketOption(QAbstractSocket::KeepAliveCountOption, 3);
     _socket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
     if (const QString pin = std::exchange(_newPin, {}); !pin.isEmpty()) {
         const QPointer<NTRIPHttpSession> self(this);

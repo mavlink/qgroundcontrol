@@ -65,7 +65,7 @@ GPSReadResult GPSRecordingTransport::read(std::span<uint8_t> buffer, std::chrono
         return {GPSReadStatus::Closed};
     }
     GPSReadResult result = _transport->read(buffer, timeout);
-    if (result.status == GPSReadStatus::Data && result.bytesRead > 0 &&
+    if (recording() && result.status == GPSReadStatus::Data && result.bytesRead > 0 &&
         static_cast<size_t>(result.bytesRead) <= buffer.size()) {
         _record(RECEIVED,
                 QByteArray::fromRawData(reinterpret_cast<const char*>(buffer.data()), result.bytesRead).toHex());
@@ -96,7 +96,7 @@ GPSWriteResult GPSRecordingTransport::writeData(QByteArrayView bytes, QDeadlineT
     }
     GPSWriteResult result = _transport->write(bytes, deadline);
     const QByteArrayView accepted = bytes.first(std::clamp<qsizetype>(result.acceptedBytes, 0, bytes.size()));
-    if (!accepted.isEmpty()) {
+    if (recording() && !accepted.isEmpty()) {
         _record(SENT, accepted.toByteArray().toHex());
     }
     _flushIfDue();
@@ -110,7 +110,8 @@ void GPSRecordingTransport::_start()
         _fail(QStringLiteral("Cannot create the folder %1").arg(directory));
         return;
     }
-    if (!_file.open(QIODevice::WriteOnly)) {
+    // Never over an earlier recording: session names differ by their start time alone.
+    if (!_file.open(QIODevice::WriteOnly | QIODevice::NewOnly)) {
         _fail(_file.errorString());
         return;
     }

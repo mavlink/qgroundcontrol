@@ -103,7 +103,7 @@ private:
     explicit GPSReceiverFactGroup(QObject* parent);
 
     // Written by GPSReceiver.
-    void _setSurvey(const GPSSurveyReport& report);
+    void _setSurvey(const GPSBaseStatus& report);
     void _setSatellites(const GPSSatelliteReport& report);
     void _setSolution(GPSFixQuality fixType, const GPSIntegrityReport& integrity);
     /// Clears the fix, satellites, and integrity of a receiver that stopped reporting position.

@@ -109,24 +109,30 @@ public:
         _batch.updates |= GPSReceiveUpdate::Activity;
     }
 
-    /// Stamps @a status with the receipt time and publishes a copy. Survey progress is not an update flag.
-    void publishSurvey(GPSSurveyReport& status)
+    /// Stamps @a status with the receipt time and publishes a copy. Base status is not an update flag.
+    void publishBaseStatus(GPSBaseStatus& status)
     {
         status.timestampUs = nowUs();
         _batch.events.emplace_back(status);
     }
 
     /// Publishes the base position's @a state; unknown coordinates remain NaN.
-    void publishSurvey(GPSSurveyState state, std::chrono::seconds duration, const GPSEllipsoidPosition& position = {})
+    void publishBaseStatus(GPSBaseState state, std::chrono::seconds duration, const GPSEllipsoidPosition& position = {})
     {
-        GPSSurveyReport status{};
-        status.position = position;
-        status.duration = duration;
-        status.valid = state == GPSSurveyState::Valid;
-        status.active = state == GPSSurveyState::Active;
-        publishSurvey(status);
+        GPSBaseStatus status{.state = state, .position = position, .duration = duration};
+        publishBaseStatus(status);
     }
 
+    /// The base position no longer holds: publishes that, which ends the forwarding of its corrections, and records
+    /// @a reason as the failure unless one is already recorded. The family ends its own readiness.
+    void loseBase(const QString& reason)
+    {
+        publishBaseStatus(GPSBaseState::Inactive, {});
+        failControl(reason);
+    }
+
+    /// Publishes one RTCM3 frame. Families publish every frame they decode; GPSDriver forwards those of a base whose
+    /// status is Valid.
     void publishRTCM(std::span<const uint8_t> frame)
     {
         _batch.events.emplace_back(GPSRTCMFrame{QByteArrayView(frame).toByteArray()});

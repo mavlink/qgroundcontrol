@@ -10,6 +10,7 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
+#include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QStringList>
@@ -268,6 +269,7 @@ void GPSRecordingTransportTest::_fileErrorKeepsLink_data()
     QTest::addColumn<QString>("failure");
     QTest::newRow("unwritable-directory") << QStringLiteral("unwritable-directory");
     QTest::newRow("write-error") << QStringLiteral("write-error");
+    QTest::newRow("existing-file") << QStringLiteral("existing-file");
 }
 
 void GPSRecordingTransportTest::_fileErrorKeepsLink()
@@ -278,6 +280,8 @@ void GPSRecordingTransportTest::_fileErrorKeepsLink()
     if (failure == QStringLiteral("unwritable-directory")) {
         // A regular file where the recording folder should be.
         file = directory.createFile(QStringLiteral("GPSReceiver"), "not a folder") + QStringLiteral("/session.log");
+    } else if (failure == QStringLiteral("existing-file")) {
+        file = directory.createFile(QStringLiteral("session.log"), "an earlier recording");
     } else {
         if (!QFileInfo::exists(QStringLiteral("/dev/full"))) {
             QSKIP("Needs /dev/full to fail file writes");
@@ -303,6 +307,11 @@ void GPSRecordingTransportTest::_fileErrorKeepsLink()
     QCOMPARE(writeBytes(recorder, QByteArrayLiteral("$PQTMVERNO*58\r\n")).status, GPSWriteStatus::Completed);
     QCOMPARE(link->written(), QByteArrayLiteral("$PQTMVERNO*58\r\n"));
     QVERIFY(!recorder.fatalError());
+    if (failure == QStringLiteral("existing-file")) {
+        QFile earlier(file);
+        QVERIFY(earlier.open(QIODevice::ReadOnly));
+        QCOMPARE(earlier.readAll(), QByteArrayLiteral("an earlier recording"));
+    }
 }
 
 void GPSRecordingTransportTest::_fileStopsAtSizeCap()

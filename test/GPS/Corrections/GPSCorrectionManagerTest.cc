@@ -371,7 +371,6 @@ void GPSCorrectionManagerTest::_messageFilterGovernsRouting()
     GPSCorrectionManager corrections(nullptr, &scheduler);
     QList<QByteArray> sent;
     captureVehicleFrames(corrections, sent);
-    QSignalSpy errorChanges(&corrections, &GPSCorrectionManager::messageFilterChanged);
     GPSSettingsBindings::bindCorrections(settings, &corrections);
     const QByteArray taken = GPSTest::rtcmMessage(1005, 20);
     const QByteArray dropped = GPSTest::rtcmMessage(1077, 30);
@@ -401,6 +400,7 @@ void GPSCorrectionManagerTest::_messageFilterGovernsRouting()
 
     // An entry that is not a message ID stops routing instead of sending every message, and is reported.
     const auto ntrip = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
+    QSignalSpy errorChanges(&corrections, &GPSCorrectionManager::messageFilterChanged);
     expectLogMessage("GPS.Corrections.GPSCorrectionManager", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Invalid RTCM message filter entry")));
     settings->ntripWhitelist()->setRawValue(QStringLiteral("1005;1077"));
@@ -415,8 +415,8 @@ void GPSCorrectionManagerTest::_messageFilterGovernsRouting()
     settings->ntripWhitelist()->setRawValue(QStringLiteral("1077"));
     QVERIFY(corrections.messageFilterError().isEmpty());
     QCOMPARE(errorChanges.size(), 2);
-    QVERIFY(submit(ntrip, taken));
     QVERIFY(submit(ntrip, dropped));
+    QVERIFY(submit(ntrip, taken));
     settings->ntripWhitelist()->setRawValue(QString());
     QVERIFY(submit(ntrip, taken));
     QCOMPARE(errorChanges.size(), 2);
@@ -431,6 +431,58 @@ void GPSCorrectionManagerTest::_messageFilterGovernsRouting()
         }
     }
     QCOMPARE(forwarded, routed);
+}
+
+void GPSCorrectionManagerTest::_messageFilterLeavesNoStream()
+{
+    using State = GPSCorrectionManager::State;
+    using Configuration = GPSCorrectionManager::Configuration;
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler);
+    QList<QByteArray> sent;
+    captureVehicleFrames(corrections, sent);
+    const auto submit = [&scheduler](const auto& source, uint16_t messageId) {
+        source->submit(GPSTest::rtcmMessage(messageId, 20), scheduler.nowMs());
+        return advanceDiagnostics(scheduler);
+    };
+    // A filter saved for an NTRIP stream, and a local base station that sends none of its messages.
+    const Configuration automatic{.udpInput = {}, .udpOutput = {}, .messageFilter = QStringLiteral("1005,1077")};
+    corrections.setConfiguration(automatic);
+    const auto local = corrections.openSource(GPSCorrectionSettings::LocalReceiver, {});
+    for (const uint16_t messageId : {1084, 1230, 1074, 1084}) {
+        QVERIFY(submit(local, messageId));
+    }
+    QCOMPARE(corrections.state(), State::Waiting);
+    QVERIFY(sent.isEmpty());
+    // The message names what arrives, so the filter can be completed.
+    QVERIFY2(corrections.messageFilterError().contains(QStringLiteral("(1074, 1084, 1230)")),
+             qPrintable(corrections.messageFilterError()));
+
+    // A stream the filter takes messages of is routed, so nothing is wrong.
+    auto ntrip = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
+    QVERIFY(submit(ntrip, 1005));
+    QCOMPARE(corrections.state(), State::Fresh);
+    QVERIFY(corrections.messageFilterError().isEmpty());
+    QVERIFY(submit(local, 1074));
+    QVERIFY(corrections.messageFilterError().isEmpty());
+
+    // The messages of a source the routing does not select from are not what keeps corrections from vehicles.
+    Configuration ntripOnly = automatic;
+    ntripOnly.source = GPSCorrectionSettings::Ntrip;
+    corrections.setConfiguration(ntripOnly);
+    ntrip.reset();
+    QVERIFY(advanceDiagnostics(scheduler));
+    QCOMPARE(corrections.state(), State::Waiting);
+    QVERIFY(submit(local, 1074));
+    QVERIFY(corrections.messageFilterError().isEmpty());
+
+    // Once such messages stop arriving, the filter is no longer what stands in the way.
+    corrections.setConfiguration(automatic);
+    QVERIFY(submit(local, 1074));
+    QVERIFY(corrections.messageFilterError().contains(QStringLiteral("(1074)")));
+    // The state is refreshed every second.
+    QVERIFY(scheduler.advanceBy(GPSCorrectionSelector::FRESHNESS_TIMEOUT + std::chrono::seconds(1)));
+    QVERIFY(corrections.messageFilterError().isEmpty());
 }
 
 void GPSCorrectionManagerTest::_logsRoutedStream()
