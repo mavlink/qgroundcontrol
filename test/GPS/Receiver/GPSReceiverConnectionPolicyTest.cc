@@ -390,10 +390,10 @@ void GPSReceiverConnectionPolicyTest::_observerActsOnLostSession()
     GPSReceiver& receiver = harness.receiver;
     QVERIFY(receiver.connectReceiver());
     harness.worker()->ready();
-    // The status text is the first signal to report the lost receiver.
+    // The status Facts reset in the middle of the handler, before any of the receiver's signals reports the loss.
     QObject observer;
     bool acted = false;
-    connect(&receiver, &GPSReceiver::statusTextChanged, &observer, [&] {
+    connect(receiver.facts(), &FactGroup::telemetryAvailableChanged, &observer, [&] {
         if (receiver.hasReceiver() || std::exchange(acted, true)) {
             return;
         }
@@ -427,8 +427,8 @@ void GPSReceiverConnectionPolicyTest::_observerActsOnLostSession()
 
 void GPSReceiverConnectionPolicyTest::_observerActsOnReport_data()
 {
-    // A passive receiver's label is its fix and a base's its survey state, the first signal of a report that changes
-    // it.
+    // The fix is the last status Fact a position report writes and the survey state the last a survey report writes,
+    // each notified in the middle of the handler.
     QTest::addColumn<bool>("survey");
     QTest::addColumn<bool>("reconnects");
     QTest::newRow("position-reconnects") << false << true;
@@ -460,7 +460,7 @@ void GPSReceiverConnectionPolicyTest::_observerActsOnReport()
     }
     QObject observer;
     bool acted = false;
-    connect(&receiver, &GPSReceiver::summaryLabelChanged, &observer, [&] {
+    connect(survey ? facts.active() : facts.fixType(), &Fact::rawValueChanged, &observer, [&] {
         if (!receiver.hasReceiver() || std::exchange(acted, true)) {
             return;
         }
@@ -498,10 +498,10 @@ void GPSReceiverConnectionPolicyTest::_observerReplacesReadyReceiver()
     GPSReceiver& receiver = scripted.receiver;
     receiver.setConfiguration(tcpConfiguration());
     QVERIFY(receiver.connectReceiver());
-    // The status text is the first signal to report that the receiver is ready.
+    // The status Facts report that the receiver is ready in the middle of the handler.
     QObject observer;
     bool acted = false;
-    connect(&receiver, &GPSReceiver::statusTextChanged, &observer, [&] {
+    connect(receiver.facts(), &FactGroup::telemetryAvailableChanged, &observer, [&] {
         if (!receiver.facts()->telemetryAvailable() || std::exchange(acted, true)) {
             return;
         }
@@ -592,7 +592,7 @@ void GPSReceiverConnectionPolicyTest::_observerActsOnShutdown()
     GPSReceiver& receiver = harness.receiver;
     QVERIFY(receiver.connectReceiver());
     harness.worker()->ready();
-    // The status text is the first signal to report that the receiver is gone.
+    // The status text reports that the receiver is gone before shutdown() returns.
     QObject observer;
     bool acted = false;
     connect(&receiver, &GPSReceiver::statusTextChanged, &observer, [&] {
@@ -614,6 +614,33 @@ void GPSReceiverConnectionPolicyTest::_observerActsOnShutdown()
     QVERIFY(!harness.worker());
     QVERIFY(receiver.errorMessage().isEmpty());
     QVERIFY(!receiver.reconnecting());
+}
+
+void GPSReceiverConnectionPolicyTest::_labelsFollowLostSessionOnce()
+{
+    PolicyHarness harness(tcpConfiguration());
+    GPSReceiver& receiver = harness.receiver;
+    QVERIFY(receiver.connectReceiver());
+    harness.worker()->ready();
+    harness.worker()->position(fixReport(GPSFixQuality::Fix3D));
+    QStringList labels;
+    QObject observer;
+    const auto observe = [&](const QString& label) {
+        // The status Facts reset one by one; a label is notified once they all have, with the receiver gone and its
+        // reconnect pending.
+        QVERIFY(!receiver.hasReceiver());
+        QVERIFY(receiver.reconnecting());
+        QVERIFY(!receiver.facts()->telemetryAvailable());
+        labels.append(label);
+    };
+    connect(&receiver, &GPSReceiver::statusTextChanged, &observer, [&] { observe(receiver.statusText()); });
+    connect(&receiver, &GPSReceiver::summaryLabelChanged, &observer, [&] { observe(receiver.summaryLabel()); });
+
+    expectLogMessage(kReceiverLog, QtWarningMsg, QRegularExpression(QStringLiteral("session ended")));
+    harness.worker()->fail(GPSConnectionError::DeviceError);
+    verifyExpectedLogMessage();
+    labels.sort();
+    QCOMPARE(labels, (QStringList{QString(), GPSReceiver::tr("Connecting automatically...")}));
 }
 
 void GPSReceiverConnectionPolicyTest::_sessionEndMessages_data()

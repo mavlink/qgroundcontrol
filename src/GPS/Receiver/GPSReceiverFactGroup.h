@@ -32,9 +32,9 @@ public:
     bool operator==(const GPSConstellationSatellites&) const = default;
 };
 
-/// The local receiver's status as Facts, which its GPSReceiver writes as the receiver reports. Raw values notify when
-/// written; the values QML shows notify at most once a second. telemetryAvailable follows whether the receiver finished
-/// configuration.
+/// The local receiver's status as Facts, which its GPSReceiver writes as the receiver reports; a value anything else
+/// writes does not notify the receiver's labels. Raw values notify when written; the values QML shows notify at most
+/// once a second. telemetryAvailable follows whether the receiver finished configuration.
 class GPSReceiverFactGroup : public FactGroup
 {
     Q_OBJECT
