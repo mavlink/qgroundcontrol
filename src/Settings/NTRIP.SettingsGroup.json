@@ -41,7 +41,7 @@
         {
             "name": "ntripMountpoint",
             "shortDesc": "Mount Point",
-            "longDesc": "NTRIP mount point. Leave blank for RTCM over TCP",
+            "longDesc": "Name of the caster's mountpoint to receive corrections from. NTRIP does not connect without one.",
             "type": "string",
             "default": "",
             "label": "Mount Point"
@@ -58,7 +58,7 @@
         {
             "name": "ntripUseTls",
             "shortDesc": "Use TLS encryption",
-            "longDesc": "Connect using TLS/SSL encryption (required for some SPARTN casters on port 2102)",
+            "longDesc": "Connect to the caster with TLS 1.2 or later. The caster must offer TLS on the server port.",
             "type": "bool",
             "default": false,
             "label": "Use TLS encryption"

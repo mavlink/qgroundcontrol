@@ -26,10 +26,14 @@ Shows the NTRIP connection state with message and byte counters, the age of the 
 
 ## NTRIP Mountpoint
 
-- **Mount Point** — the NTRIP mountpoint to connect to
+- **Mount Point** — the NTRIP mountpoint to connect to. It is required: without one, NTRIP reports an error instead of connecting
 - **Browse** — fetch available mountpoints from the server and display them in a list with format, navigation system, country, bitrate, and distance information
 
+QGroundControl receives RTCM 3 corrections only: a mountpoint that sends another format, such as SPARTN, is disconnected after 30 seconds without a valid RTCM message, and the connection is tried again.
+
 A caster answers with its source table when it does not have the requested mountpoint. Before any corrections have arrived, QGroundControl reports that and does not retry, because some public casters temporarily ban clients that keep requesting a missing mountpoint. Once the mountpoint has delivered corrections, the same answer means it went offline, and QGroundControl keeps reconnecting.
+
+A caster that answers with an HTTP redirect is not followed. QGroundControl reports the address the caster names, when it names one, and waits for you to change the server settings and connect again.
 
 ## GGA Position Reporting
 

@@ -657,6 +657,36 @@ void NTRIPManagerTest::_httpRetryAfterReachesManager()
     QCOMPARE(retry->startCount, 1);
 }
 
+void NTRIPManagerTest::_redirectWaitsForUser()
+{
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    auto configuration = mockCasterConfiguration();
+    configuration.connection = caster.connectionConfig();
+    manager.setConfiguration(configuration);
+    manager._start();
+    auto* connection = caster.waitForConnection(TestTimeout::shortMs());
+    QVERIFY(connection && connection->peer);
+    QVERIFY(connection->waitForRequest(TestTimeout::shortMs()).startsWith("GET /TEST HTTP/1.1"));
+    expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("NTRIP error:.*301")));
+    const QByteArray response =
+        "HTTP/1.1 301 Moved Permanently\r\nLocation: https://caster.example:2102/TEST\r\nContent-Length: 0\r\n\r\n";
+    QCOMPARE(connection->write(response), response.size());
+    // The request is not repeated: the caster would answer it the same way every time.
+    QTRY_VERIFY_WITH_TIMEOUT(manager.connectionStatus() != NTRIPManager::ConnectionStatus::Connecting,
+                             TestTimeout::shortMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
+    QVERIFY2(
+        manager.statusMessage().contains(QStringLiteral("redirected the request to https://caster.example:2102/TEST")),
+        qPrintable(manager.statusMessage()));
+    auto* retry = injectMockTransport(manager);
+    QVERIFY(scheduler.advanceBy(NTRIPFailure::MAX_RETRY_AFTER));
+    QCOMPARE(retry->startCount, 0);
+}
+
 void NTRIPManagerTest::_retryPublicationSuperseded()
 {
     ManualScheduler scheduler;

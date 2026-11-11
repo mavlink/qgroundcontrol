@@ -136,6 +136,20 @@ void NTRIPHttpDecoder::_finishError(Result& result)
     result.complete = false;
 }
 
+QString NTRIPHttpDecoder::_redirectDetail(int status, const QHttpHeaders& headers)
+{
+    const QString target = errorPreview(QString::fromLatin1(headers.value(QHttpHeaders::WellKnownHeader::Location)));
+    if (target.isEmpty()) {
+        return tr("The caster redirected the request (HTTP %1) without naming a target. Redirects are not followed.")
+            .arg(status);
+    }
+    // One arg() pass: a second would take a "%1" in the target for a place marker.
+    //: %1 is the address the caster names, %2 the HTTP status code
+    return tr("The caster redirected the request to %1 (HTTP %2). Redirects are not followed: change the NTRIP "
+              "settings to connect there.")
+        .arg(target, QString::number(status));
+}
+
 void NTRIPHttpDecoder::_beginIcyBody(Result& result)
 {
     _beginBody(result);
@@ -268,16 +282,19 @@ void NTRIPHttpDecoder::_lineReceived(Result& result, const QDateTime& utcNow)
         }
         if (_status.code >= 300) {
             const int status = _status.code;
-            const auto code = status == 401                    ? NTRIPError::AuthFailed
-                              : status == 400 || status == 403 ? NTRIPError::RequestRejected
-                                                               : NTRIPError::HttpError;
+            // Redirects are not followed, so the caster would answer a repeated request the same way.
+            const bool redirect = status < 400;
+            const auto code = status == 401                                ? NTRIPError::AuthFailed
+                              : redirect || status == 400 || status == 403 ? NTRIPError::RequestRejected
+                                                                           : NTRIPError::HttpError;
             const QString detail = status == 401 ? tr("Authentication failed (401): check username and password")
+                                   : redirect    ? _redirectDetail(status, _headers)
                                                  : tr("HTTP %1: %2").arg(status).arg(errorPreview(_status.reason));
             _pendingFailure = NTRIPFailure{code, detail};
             if (_headers.values(QHttpHeaders::WellKnownHeader::RetryAfter).size() == 1) {
                 _pendingFailure->retryAfter = retryAfter(_headers, utcNow);
             }
-            if (code == NTRIPError::AuthFailed) {
+            if (code == NTRIPError::AuthFailed || redirect) {
                 _finishError(result);
                 return;
             }

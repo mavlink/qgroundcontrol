@@ -328,6 +328,18 @@ void NTRIPHttpCodecTest::_errorDiagnostics_data()
                                         << QStringLiteral("Access denied Retry later") << 0;
     const QByteArray markupReason = "HTTP/1.1 503 <b>Busy</b>\tretry  later\r\nContent-Length: 0\r\n\r\n";
     QTest::newRow("markup-in-reason") << markupReason << http << QStringLiteral("HTTP 503: Busy retry later") << 0;
+    // Redirects are not followed, so repeating the request cannot succeed; the target is caster text like the rest.
+    const QByteArray moved = "HTTP/1.1 301 Moved Permanently\r\n";
+    QTest::newRow("redirect") << moved + "Location: https://caster.example:2102/MOUNT\r\nContent-Length: 0\r\n\r\n"
+                              << rejected
+                              << QStringLiteral(
+                                     "redirected the request to https://caster.example:2102/MOUNT (HTTP 301)")
+                              << 0;
+    QTest::newRow("redirect-without-target") << QByteArray("HTTP/1.1 302 Found\r\nContent-Length: 0\r\n\r\n")
+                                             << rejected << QStringLiteral("redirected the request (HTTP 302)") << 0;
+    QTest::newRow("redirect-markup-in-target")
+        << moved + "Location: <b>/NEW%20MOUNT</b>\t%1\r\n\r\n<html>Moved</html>" << rejected
+        << QStringLiteral("redirected the request to /NEW%20MOUNT %1 (HTTP 301)") << 0;
     QTest::newRow("compressed-authentication")
         << QByteArray("HTTP/1.1 401 Unauthorized\r\nContent-Encoding: gzip\r\nContent-Length: 20\r\n\r\n") +
                QByteArray::fromHex("1f8b080000000000000303000000000000000000")
@@ -395,6 +407,12 @@ void NTRIPHttpCodecTest::_errorDetailBounds()
              QStringLiteral("HTTP 403: ") + QString(NTRIPHttpDecoder::MAX_ERROR_PREVIEW_CHARS, QLatin1Char('r')) +
                  QStringLiteral(" \u2014 ") + QString(NTRIPHttpDecoder::MAX_ERROR_PREVIEW_CHARS, QLatin1Char('x')));
     QVERIFY(!decoder.feed("must not be appended", {}).failure);
+
+    const QByteArray target(NTRIPHttpDecoder::MAX_ERROR_PREVIEW_CHARS + 1, 't');
+    result = NTRIPHttpDecoder().feed("HTTP/1.1 302 Found\r\nLocation: " + target + "\r\n\r\n", {});
+    QVERIFY(result.failure);
+    QVERIFY(result.failure->detail.contains(QString::fromLatin1(target.chopped(1))));
+    QVERIFY(!result.failure->detail.contains(QString::fromLatin1(target)));
 }
 
 void NTRIPHttpCodecTest::_retryAfter_data()
