@@ -24,6 +24,7 @@ class QFile;
 /// - Optional auto-decompression of .gz/.xz/.zst/.bz2 files
 /// - Optional SHA-256 hash verification
 /// - Streaming to file (memory-efficient)
+/// - Content handed over in memory, with a size limit and no file left behind (startToMemory)
 /// - QML-compatible properties and signals
 ///
 /// Example C++ usage:
@@ -106,6 +107,11 @@ public:
     };
     Q_ENUM(State)
 
+    /// Largest content that startToMemory() hands over unless told otherwise. It is the limit QGCCompression
+    /// applies to data decompressed in memory; the largest content QGC downloads this way, the ArduPilot firmware
+    /// manifest, takes about a third of it.
+    static constexpr qint64 kDefaultMaxMemoryBytes = 256LL * 1024 * 1024;
+
     explicit QGCFileDownload(QObject *parent = nullptr);
     ~QGCFileDownload() override;
 
@@ -152,6 +158,15 @@ public slots:
     /// @return true if download started successfully
     bool start(const QString &remoteUrl, const QGCNetworkHelper::RequestConfig &config);
 
+    /// Start downloading content that is handed over in memory instead of in a file
+    /// The download runs as start(remoteUrl) runs it, with the same redirect, TLS and error handling, hash
+    /// verification and decompression, into a temporary file of its own (outputPath is not used). That file is
+    /// removed before finishedToMemory() reports the result. finished() is not emitted.
+    /// @param remoteUrl URL or file path to download
+    /// @param maxBytes Fail if the content, decompressed when autoDecompress applies, has more bytes than this
+    /// @return true if download started successfully
+    bool startToMemory(const QString& remoteUrl, qint64 maxBytes = kDefaultMaxMemoryBytes);
+
     /// Cancel current download
     void cancel();
 
@@ -197,6 +212,12 @@ signals:
     /// @param errorMessage Error message (empty on success)
     void finished(bool success, const QString &localPath, const QString &errorMessage);
 
+    /// Emitted when a download that startToMemory() started completes (success or failure)
+    /// @param success true if download succeeded
+    /// @param data Downloaded content, empty on failure
+    /// @param errorMessage Error message (empty on success)
+    void finishedToMemory(bool success, const QByteArray& data, const QString& errorMessage);
+
     /// Emitted during download with byte counts
     void downloadProgress(qint64 bytesReceived, qint64 totalBytes);
 
@@ -215,9 +236,17 @@ private:
     void _setProgress(qreal progress);
     void _setErrorString(const QString &error);
     void _cleanup();
-    void _emitFinished(bool success, const QString &localPath, const QString &errorMessage);
+    QGCNetworkHelper::RequestConfig _defaultRequestConfig() const;
+    bool _start(const QString& remoteUrl, const QGCNetworkHelper::RequestConfig& config, bool toMemory,
+                qint64 maxMemoryBytes);
+    void _finishSuccess();
+    void _emitFinished(bool success, const QString& localPath, const QString& errorMessage,
+                       const QByteArray& data = {});
+    bool _readOutput(QByteArray& data, QString& error) const;
+    QString _memoryLimitError() const;
     bool _writeReplyData(const QByteArray &data);
     bool _failForWriteError(const QString &context);
+    void _failDownload(const QString& error);
     void _removeOutput();
     void _removeDownloadDir();
     QString _generateOutputPath(const QString& remoteUrl);
@@ -240,10 +269,12 @@ private:
     qreal _progress = 0.0;
     qint64 _totalBytes = -1;
     qint64 _bytesReceived = 0;
+    qint64 _maxMemoryBytes = 0;  ///< Limit of the current download when it is one to memory
     int _timeoutMs = QGCNetworkHelper::kDefaultTimeoutMs;
 
     State _state = State::Idle;
     bool _autoDecompress = false;
     bool _finishEmitted = false;
     bool _lastResultFromCache = false;
+    bool _toMemory = false;  ///< The current download was started by startToMemory()
 };

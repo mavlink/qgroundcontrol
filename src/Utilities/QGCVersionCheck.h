@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QByteArray>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QObject>
 #include <QtCore/QString>
@@ -35,7 +36,7 @@ signals:
     void newStableVersionChanged();
 
 private:
-    void _downloadComplete(bool success, const QString& localFile, const QString& errorMsg);
+    void _downloadComplete(bool success, const QByteArray& versionFile, const QString& errorMsg);
 
     QString _newStableVersion;
 };

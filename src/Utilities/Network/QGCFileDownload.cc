@@ -83,13 +83,29 @@ void QGCFileDownload::setTimeout(int timeoutMs)
 
 bool QGCFileDownload::start(const QString &remoteUrl)
 {
+    return start(remoteUrl, _defaultRequestConfig());
+}
+
+bool QGCFileDownload::start(const QString& remoteUrl, const QGCNetworkHelper::RequestConfig& config)
+{
+    return _start(remoteUrl, config, false, 0);
+}
+
+bool QGCFileDownload::startToMemory(const QString& remoteUrl, qint64 maxBytes)
+{
+    return _start(remoteUrl, _defaultRequestConfig(), true, maxBytes);
+}
+
+QGCNetworkHelper::RequestConfig QGCFileDownload::_defaultRequestConfig() const
+{
     QGCNetworkHelper::RequestConfig config;
     config.timeoutMs = _timeoutMs;
     config.allowRedirects = true;
-    return start(remoteUrl, config);
+    return config;
 }
 
-bool QGCFileDownload::start(const QString &remoteUrl, const QGCNetworkHelper::RequestConfig &config)
+bool QGCFileDownload::_start(const QString& remoteUrl, const QGCNetworkHelper::RequestConfig& config, bool toMemory,
+                             qint64 maxMemoryBytes)
 {
     if (isRunning()) {
         qCWarning(QGCFileDownloadLog) << "Download already in progress";
@@ -131,6 +147,8 @@ bool QGCFileDownload::start(const QString &remoteUrl, const QGCNetworkHelper::Re
     _setErrorString(QString());
     _finishEmitted = false;
     _lastResultFromCache = false;
+    _toMemory = toMemory;
+    _maxMemoryBytes = maxMemoryBytes;
 
     // Determine output path
     _localPath = _generateOutputPath(remoteUrl);
@@ -240,6 +258,11 @@ void QGCFileDownload::_onReadyRead()
 
     // Stream data directly to file (memory-efficient)
     const QByteArray data = _currentReply->readAll();
+    if (_toMemory && ((_outputFile->pos() + data.size()) > _maxMemoryBytes)) {
+        // Nothing this large is handed over, so the transfer stops here instead of filling the disk
+        _failDownload(_memoryLimitError());
+        return;
+    }
     if (!_writeReplyData(data)) {
         _failForWriteError(QStringLiteral("readyRead"));
     }
@@ -321,9 +344,7 @@ void QGCFileDownload::_onDownloadFinished()
         return;
     }
 
-    // Success!
-    _setState(State::Completed);
-    _emitFinished(true, _localPath, QString());
+    _finishSuccess();
 }
 
 void QGCFileDownload::_onDownloadError(QNetworkReply::NetworkError code)
@@ -386,8 +407,7 @@ void QGCFileDownload::_onDecompressionFinished(bool success)
         _localPath = decompressedPath;
         emit localPathChanged(_localPath);
 
-        _setState(State::Completed);
-        _emitFinished(true, _localPath, QString());
+        _finishSuccess();
     } else {
         const QString error = tr("Decompression failed: %1").arg(_decompressionJob->errorString());
         qCWarning(QGCFileDownloadLog) << error;
@@ -451,12 +471,38 @@ void QGCFileDownload::_cleanup()
     }
 }
 
-void QGCFileDownload::_emitFinished(bool success, const QString &localPath, const QString &errorMessage)
+void QGCFileDownload::_finishSuccess()
+{
+    QByteArray data;
+    if (_toMemory) {
+        QString error;
+        if (!_readOutput(data, error)) {
+            qCWarning(QGCFileDownloadLog) << error;
+            _setErrorString(error);
+            _setState(State::Failed);
+            _emitFinished(false, QString(), error);
+            return;
+        }
+    }
+
+    _setState(State::Completed);
+    _emitFinished(true, _localPath, QString(), data);
+}
+
+void QGCFileDownload::_emitFinished(bool success, const QString& localPath, const QString& errorMessage,
+                                    const QByteArray& data)
 {
     if (_finishEmitted) {
         return;
     }
     _finishEmitted = true;
+
+    if (_toMemory) {
+        // The file only carried the content here
+        _removeOutput();
+        emit finishedToMemory(success, data, errorMessage);
+        return;
+    }
 
     // A failure that hands no file to the receiver must not leave the partial one behind
     if (!success && localPath.isEmpty()) {
@@ -499,10 +545,43 @@ bool QGCFileDownload::_writeReplyData(const QByteArray &data)
     return _outputFile->write(data) == data.size();
 }
 
+bool QGCFileDownload::_readOutput(QByteArray& data, QString& error) const
+{
+    QFile file(_localPath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        error = tr("Cannot read downloaded file: %1").arg(file.errorString());
+        return false;
+    }
+
+    const qint64 size = file.size();
+    if (size > _maxMemoryBytes) {
+        error = _memoryLimitError();
+        return false;
+    }
+
+    data = file.readAll();
+    if (data.size() != size) {
+        error = tr("Cannot read downloaded file: %1").arg(file.errorString());
+        return false;
+    }
+
+    return true;
+}
+
+QString QGCFileDownload::_memoryLimitError() const
+{
+    return tr("Download is larger than the limit of %1 bytes").arg(_maxMemoryBytes);
+}
+
 bool QGCFileDownload::_failForWriteError(const QString &context)
 {
-    const QString error = tr("Failed to write downloaded file (%1): %2")
-                              .arg(context, _outputFile != nullptr ? _outputFile->errorString() : QString());
+    _failDownload(tr("Failed to write downloaded file (%1): %2")
+                      .arg(context, _outputFile != nullptr ? _outputFile->errorString() : QString()));
+    return false;
+}
+
+void QGCFileDownload::_failDownload(const QString& error)
+{
     qCWarning(QGCFileDownloadLog) << error;
     _setErrorString(error);
     _setState(State::Failed);
@@ -514,15 +593,14 @@ bool QGCFileDownload::_failForWriteError(const QString &context)
 
     _cleanup();
     _emitFinished(false, QString(), error);
-    return false;
 }
 
 QString QGCFileDownload::_generateOutputPath(const QString& remoteUrl)
 {
     _downloadDir.clear();
 
-    // Use custom output path if set
-    if (!_outputPath.isEmpty()) {
+    // Use custom output path if set. A download to memory removes its file, so it never uses that path
+    if (!_outputPath.isEmpty() && !_toMemory) {
         return _outputPath;
     }
 
@@ -606,5 +684,8 @@ void QGCFileDownload::_startDecompression()
                 this, &QGCFileDownload::_onDecompressionFinished);
     }
 
-    _decompressionJob->decompressFile(_localPath, decompressedPath);
+    // 0 would tell the job that there is no limit
+    const qint64 maxDecompressedBytes =
+        _toMemory ? qMax<qint64>(_maxMemoryBytes, 1) : QGCCompression::kDefaultMaxDecompressedFileBytes;
+    _decompressionJob->decompressFile(_localPath, decompressedPath, maxDecompressedBytes);
 }

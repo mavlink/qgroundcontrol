@@ -1,11 +1,9 @@
 #include "QGCVersionCheckTest.h"
 
 #include <QtCore/QCoreApplication>
-#include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QString>
-#include <QtCore/QTemporaryDir>
 #include <QtTest/QSignalSpy>
 
 #include "AppSettings.h"
@@ -99,14 +97,6 @@ void QGCVersionCheckTest::_downloadedVersionFile()
         lastNotifiedFact->setRawValue(originalLastNotified);
     });
 
-    QTemporaryDir tempDir;
-    QVERIFY(tempDir.isValid());
-    const QString versionFilePath = tempDir.filePath(QStringLiteral("QGC.version.txt"));
-    QFile file(versionFilePath);
-    QVERIFY(file.open(QIODevice::WriteOnly));
-    QCOMPARE(file.write(versionFile), versionFile.size());
-    file.close();
-
     QGCVersionCheck versionCheck;
     QSignalSpy changedSpy(&versionCheck, &QGCVersionCheck::newStableVersionChanged);
 
@@ -115,9 +105,9 @@ void QGCVersionCheckTest::_downloadedVersionFile()
         expectAppMessage(QRegularExpression(QStringLiteral("There is a newer version of")));
     }
     if (downloaded) {
-        versionCheck._downloadComplete(true, versionFilePath, QString());
+        versionCheck._downloadComplete(true, versionFile, QString());
     } else {
-        versionCheck._downloadComplete(false, QString(), QStringLiteral("simulated download error"));
+        versionCheck._downloadComplete(false, QByteArray(), QStringLiteral("simulated download error"));
     }
     if (announced) {
         verifyExpectedLogMessage();
