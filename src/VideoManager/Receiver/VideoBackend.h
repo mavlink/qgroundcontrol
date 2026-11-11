@@ -30,6 +30,9 @@ public:
 
     virtual ~VideoBackend() = default;
 
+    VideoBackend(const VideoBackend&) = delete;
+    VideoBackend& operator=(const VideoBackend&) = delete;
+
     static VideoBackend& instance();
 
     /// True when the backend is skipped under unit tests (opt back in with QGC_TEST_ENABLE_GSTREAMER).
@@ -97,4 +100,7 @@ public:
     virtual void setAndroidJniState([[maybe_unused]] void* javaVm, [[maybe_unused]] void* appContext,
                                     [[maybe_unused]] void* classLoader)
     {}
+
+protected:
+    VideoBackend() = default;
 };

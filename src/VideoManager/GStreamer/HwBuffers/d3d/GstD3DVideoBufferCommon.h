@@ -89,6 +89,10 @@ struct PlaneResourceGuard
     std::array<HandleT*, kMaxPlanes> handles{};
     int owned = 0;
 
+    PlaneResourceGuard() = default;
+    PlaneResourceGuard(const PlaneResourceGuard&) = delete;
+    PlaneResourceGuard& operator=(const PlaneResourceGuard&) = delete;
+
     ~PlaneResourceGuard()
     {
         for (int j = 0; j < owned; ++j) {

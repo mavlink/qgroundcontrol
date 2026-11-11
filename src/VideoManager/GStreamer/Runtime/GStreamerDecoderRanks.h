@@ -47,6 +47,9 @@ class DecoderRankApplier
 public:
     static DecoderRankApplier& instance();
 
+    DecoderRankApplier(const DecoderRankApplier&) = delete;
+    DecoderRankApplier& operator=(const DecoderRankApplier&) = delete;
+
     /// Restores the original ranks, then applies @p option's plan for the installed decoders and currentRankTraits().
     void apply(VideoDecoderOptions option);
     /// Restores the original ranks.

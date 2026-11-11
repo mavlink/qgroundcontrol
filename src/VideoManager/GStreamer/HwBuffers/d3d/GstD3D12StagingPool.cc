@@ -37,8 +37,6 @@ void releaseEntryResources(const StagingEntry& e)
 class StagingEntryRef
 {
 public:
-    StagingEntryRef() = default;
-
     explicit StagingEntryRef(const StagingEntry& e)
         : _entry(e)
     {}
@@ -54,15 +52,7 @@ public:
         other._entry = {};
     }
 
-    StagingEntryRef& operator=(StagingEntryRef&& other) noexcept
-    {
-        if (this != &other) {
-            releaseEntryResources(_entry);
-            _entry = other._entry;
-            other._entry = {};
-        }
-        return *this;
-    }
+    StagingEntryRef& operator=(StagingEntryRef&&) = delete;
 
     bool valid() const noexcept { return _entry.resource && _entry.allocator && _entry.list; }
 
