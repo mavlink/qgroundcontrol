@@ -152,7 +152,14 @@ int convertGeoToUTM(const QGeoCoordinate &coord, double &easting, double &northi
     try {
         int zone;
         bool northp;
-        GeographicLib::UTMUPS::Forward(coord.latitude(), coord.longitude(), zone, northp, easting, northing);
+        double x, y;
+        GeographicLib::UTMUPS::Forward(coord.latitude(), coord.longitude(), zone, northp, x, y);
+        // Near the poles the result is in UPS (zone 0); NaN input gives a negative zone
+        if (zone < GeographicLib::UTMUPS::MINUTMZONE || zone > GeographicLib::UTMUPS::MAXUTMZONE) {
+            return 0;
+        }
+        easting = x;
+        northing = y;
         return zone;
     } catch (const GeographicLib::GeographicErr &e) {
         qCDebug(QGCGeoLog) << e.what();
@@ -214,6 +221,12 @@ bool convertMGRSToGeo(const QString &mgrs, QGeoCoordinate &coord)
 
         double lat, lon;
         GeographicLib::UTMUPS::Reverse(zone, northp, x, y, lat, lon);
+
+        // GeographicLib returns NaN instead of throwing for strings that start with "INV"
+        if (!QGeoCoordinate(lat, lon).isValid()) {
+            qCDebug(QGCGeoLog) << "Invalid MGRS string" << mgrs;
+            return false;
+        }
 
         coord.setLatitude(lat);
         coord.setLongitude(lon);

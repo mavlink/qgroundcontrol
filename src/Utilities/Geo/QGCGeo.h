@@ -99,9 +99,9 @@ QVector3D convertEnuToEcef(const QVector3D &enu, const QGeoCoordinate &ref);
 
 /// Convert geodetic coordinate to UTM.
 /// @param coord Geodetic coordinate to convert.
-/// @param[out] easting UTM easting in meters.
-/// @param[out] northing UTM northing in meters.
-/// @return UTM zone (1-60), or 0 on failure.
+/// @param[out] easting UTM easting in meters (unchanged on failure).
+/// @param[out] northing UTM northing in meters (unchanged on failure).
+/// @return UTM zone (1-60), or 0 on failure. The polar regions, which UTM does not cover, are a failure.
 int convertGeoToUTM(const QGeoCoordinate &coord, double &easting, double &northing);
 
 /// Convert UTM to geodetic coordinate.
