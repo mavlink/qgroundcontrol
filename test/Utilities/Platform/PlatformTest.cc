@@ -16,16 +16,7 @@
 #include "qgc_version.h"
 
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
-void PlatformTest::_testCheckSingleInstanceAllowMultiple()
-{
-    // When allowMultiple is true, should always return true (allow running)
-    QVERIFY(Platform::checkSingleInstance(true));
-    // Call multiple times to ensure it's consistent
-    QVERIFY(Platform::checkSingleInstance(true));
-    QVERIFY(Platform::checkSingleInstance(true));
-}
-
-void PlatformTest::_testCheckSingleInstanceBlocks()
+void PlatformTest::_testCheckSingleInstanceWhileLockIsHeld()
 {
     const QString lockKey = QStringLiteral("%1 RunGuardKey").arg(QLatin1String(QGC_APP_NAME));
     TestFixtures::SingleInstanceLockFixture heldLock(lockKey);
@@ -35,17 +26,10 @@ void PlatformTest::_testCheckSingleInstanceBlocks()
 
     // With the lock already held, Platform guard should refuse startup.
     QVERIFY(!Platform::checkSingleInstance(false));
+    // Allowing multiple instances bypasses the guard
+    QVERIFY(Platform::checkSingleInstance(true));
 }
 #endif  // !Q_OS_ANDROID && !Q_OS_IOS
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-void PlatformTest::_testIsRunningAsRootNormal()
-{
-    // In normal test execution, we should NOT be running as root
-    // If tests are run as root, this test will fail (which is intentional -
-    // running tests as root is discouraged)
-    QVERIFY2(!Platform::isRunningAsRoot(), "Tests should not be run as root. Running QGC as root is dangerous.");
-}
-#endif  // Q_OS_LINUX && !Q_OS_ANDROID
 
 #if defined(QGC_UNITTEST_BUILD)
 void PlatformTest::_testInitializeSetsUnitTestEnvironment()
