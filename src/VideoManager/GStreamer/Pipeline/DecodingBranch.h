@@ -19,8 +19,9 @@ struct PathStats;
 ///
 /// Takes the receiver's video sink, inserts decodebin3 once the source streams and links its pad to the sink, asking
 /// upstream for a keyframe so the picture starts soon. Decoding is reported from the first frame that reaches the sink.
-/// A failing or stalled decoder is replaced without touching the rest of the pipeline. The sink outlives the session:
-/// the branch holds a ref and takes it out of the pipeline again.
+/// A failing or stalled decoder is replaced without touching the rest of the pipeline; one that keeps failing, or that
+/// can't be inserted at all, is reported to the listener. The sink outlives the session: the branch holds a ref and
+/// takes it out of the pipeline again.
 ///
 /// The queue drops the oldest frame when the decoder falls behind, so the tee (and with it the recording) never waits
 /// for the decoder. A decoder can't recover a dropped compressed frame, so after a drop the branch also drops delta
@@ -36,7 +37,8 @@ public:
     public:
         virtual void onDecodingChanged(bool decoding) = 0;
         virtual void onDecoderNameChanged(const QString& name) = 0;
-        /// The decoder kept failing: kMaxDecoderRestarts replacements in a row produced no frame.
+        /// The decoder kept failing: kMaxDecoderRestarts replacements in a row produced no frame, or one couldn't be
+        /// inserted, which leaves the stream without a picture until it is set up anew.
         virtual void onDecoderFailing() = 0;
 
     protected:
@@ -97,12 +99,17 @@ public:
     /// Not const: displayPath compares the sink's counts with the previous sample's.
     StatsSample sampleStats();
 
+    /// The factory of the decoder decodebin3 plugged last; empty while no decoder is inserted or it has plugged none.
     const QString& decoderName() const { return _decoderName; }
 
+    /// Whether decoderName() is a hardware decoder.
     bool hardwareDecoder() const { return _hardwareDecoder; }
 
 private:
+    /// Inserts the decoder and the video sink, or reports onDecoderFailing() when that fails.
     void _insertDecoder();
+    /// False, logged, with neither the decoder nor the video sink left in the pipeline.
+    [[nodiscard]] bool _tryInsertDecoder();
     /// Closes the valve and takes the video sink and the decoder out of the pipeline; keeps the sink.
     void _removeDecoder();
     void _linkDecoderPad(GstPad* pad);

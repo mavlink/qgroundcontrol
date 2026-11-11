@@ -233,10 +233,19 @@ void DecodingBranch::_retireSinkCounts()
 
 void DecodingBranch::_insertDecoder()
 {
+    if (_tryInsertDecoder()) {
+        return;
+    }
+    // Without a decoder no frame is due at the sink, so neither the watchdog nor a bus error would ever report this.
+    _context.post([this]() { _listener.onDecoderFailing(); });
+}
+
+bool DecodingBranch::_tryInsertDecoder()
+{
     setSinkSync(_sink.get(), !_lowLatency);
     if (!gst_bin_add(GST_BIN(_context.pipeline), _sink.get())) {
         qCWarning(GstVideoReceiverLog) << "Failed to add the video sink" << _context.redactedUri;
-        return;
+        return false;
     }
     // PAUSED (not READY) negotiates downstream caps before the decoder pushes; PLAYING once linked.
     (void) gst_element_set_state(_sink.get(), GST_STATE_PAUSED);
@@ -245,7 +254,7 @@ void DecodingBranch::_insertDecoder()
     if (!_decoder) {
         qCWarning(GstVideoReceiverLog) << "gst_element_factory_make('decodebin3') failed";
         GStreamer::disposeChild(_sink.get());
-        return;
+        return false;
     }
     GStreamer::markBranch(_decoder.get(), GStreamer::PipelineBranch::Decoding);
     (void) _decoderElementAdded.connect(_decoder.get(), "deep-element-added", G_CALLBACK(_onDecoderElementAdded), this);
@@ -255,7 +264,7 @@ void DecodingBranch::_insertDecoder()
         !gst_element_sync_state_with_parent(_decoder.get()) || !gst_element_link(_head.valve(), _decoder.get())) {
         qCWarning(GstVideoReceiverLog) << "Unable to insert the decoder" << _context.redactedUri;
         _removeDecoder();
-        return;
+        return false;
     }
     _context.dotDumper->dump(_context.pipeline, "pipeline-with-decoder");
 
@@ -266,6 +275,7 @@ void DecodingBranch::_insertDecoder()
     _head.open();
 
     qCDebug(GstVideoReceiverLog) << "Decoder inserted" << _context.redactedUri;
+    return true;
 }
 
 void DecodingBranch::_removeDecoder()
@@ -280,6 +290,8 @@ void DecodingBranch::_removeDecoder()
         _decoderElementAdded.disconnect();
         GStreamer::disposeChild(_decoder.get());
         _decoder.reset();
+        _hardwareDecoder = false;
+        _setDecoderName(QString());
         _context.dotDumper->dump(_context.pipeline, "pipeline-decoding-stopped");
     }
 }
@@ -377,8 +389,7 @@ void DecodingBranch::_onDecoderPadAdded(GstElement* decoder, GstPad* pad, gpoint
         }));
 }
 
-void DecodingBranch::_onDecoderElementAdded(GstBin* /*decodebin*/, GstBin* /*subBin*/, GstElement* element,
-                                            gpointer data)
+void DecodingBranch::_onDecoderElementAdded(GstBin* decodebin, GstBin* /*subBin*/, GstElement* element, gpointer data)
 {
     // A message can outlive the decoder that held its source, which leaves nothing to blame it on but its own mark.
     GStreamer::markBranch(element, GStreamer::PipelineBranch::Decoding);
@@ -400,7 +411,11 @@ void DecodingBranch::_onDecoderElementAdded(GstBin* /*decodebin*/, GstBin* /*sub
     const bool hardware = GStreamer::isHardwareDecoderFactory(factory);
 
     auto* const self = static_cast<DecodingBranch*>(data);
-    self->_context.post([self, name, hardware]() {
+    self->_context.post([self, name, hardware, decoder = GStreamer::shareObject(GST_ELEMENT(decodebin))]() {
+        // A decodebin3 taken out meanwhile has no decoder left to name.
+        if (decoder.get() != self->_decoder.get()) {
+            return;
+        }
         self->_hardwareDecoder = hardware;
         self->_setDecoderName(name);
     });

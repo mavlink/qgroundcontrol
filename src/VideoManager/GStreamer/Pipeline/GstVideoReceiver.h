@@ -36,7 +36,8 @@ public:
     /// Finalizes a recording and stops the pipeline, waiting at most a few seconds for the worker.
     ~GstVideoReceiver() override;
 
-    /// Factory name of the decoder decodebin3 plugged last, empty before the first one.
+    /// Factory name of the decoder decodebin3 plugged last; empty while the stream has no decoder: before it streams,
+    /// without a video output, and while a decoder is being replaced.
     QString decoderName() const { return _decoderName; }
 
     /// Writes PipelineDotDumper::snapshot() under @p tag; callable from QML.

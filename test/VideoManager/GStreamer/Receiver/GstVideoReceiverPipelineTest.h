@@ -17,6 +17,8 @@ private slots:
     void _testOutputDetachKeepsPipeline();
     void _testRestartRebuildsVideoSink();
     void _testDecoderQosDisabled();
+    void _testDecoderInsertionFailureStopsStream_data();
+    void _testDecoderInsertionFailureStopsStream();
     void _testScreenshotSavesDisplayedFrame();
     void _testDeactivateReleasesDisplayedFrame();
     void _testDecodesH265Stream();

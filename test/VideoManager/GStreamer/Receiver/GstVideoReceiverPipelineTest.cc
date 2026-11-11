@@ -162,11 +162,13 @@ void GstVideoReceiverPipelineTest::_testOutputDetachKeepsPipeline()
     Receiver stream;
     QVERIFY(stream.startStreaming());
     QVERIFY(stream.display());
+    QVERIFY_TRUE_WAIT(!stream.receiver->decoderName().isEmpty(), TestTimeout::mediumMs());
     const GStreamer::GstElementPtr pipeline = stream.pipeline();
     stream.stateSpy.clear();
 
     stream.receiver->setVideoOutput(nullptr);
     QVERIFY_TRUE_WAIT(!stream.receiver->decoding(), TestTimeout::mediumMs());
+    QVERIFY2(stream.receiver->decoderName().isEmpty(), "The decoder that was taken out is still named");
 
     // A destroyed output detaches too; a new one shows the stream again.
     auto* const replacement = new QQuickVideoOutput(stream.window.contentItem());
@@ -179,6 +181,7 @@ void GstVideoReceiverPipelineTest::_testOutputDetachKeepsPipeline()
     QVERIFY_TRUE_WAIT(!stream.receiver->decoding(), TestTimeout::mediumMs());
 
     QVERIFY(stream.display());
+    QVERIFY_TRUE_WAIT(!stream.receiver->decoderName().isEmpty(), TestTimeout::mediumMs());
     QCOMPARE(stream.pipeline().get(), pipeline.get());
     QVERIFY2(stream.stateSpy.isEmpty(), "Changing the output restarted the stream");
 }
@@ -227,6 +230,60 @@ void GstVideoReceiverPipelineTest::_testDecoderQosDisabled()
     }));
     QVERIFY(decoders > 0);
     QVERIFY2(qosEnabled.isEmpty(), qPrintable(qosEnabled.join(u',')));
+}
+
+void GstVideoReceiverPipelineTest::_testDecoderInsertionFailureStopsStream_data()
+{
+    QTest::addColumn<bool>("sinkTaken");
+    QTest::addColumn<QString>("warning");
+
+    QTest::newRow("video sink held by another bin") << true << QStringLiteral("^Failed to add the video sink");
+    QTest::newRow("display valve already linked") << false << QStringLiteral("^Unable to insert the decoder");
+}
+
+void GstVideoReceiverPipelineTest::_testDecoderInsertionFailureStopsStream()
+{
+    QFETCH(bool, sinkTaken);
+    QFETCH(QString, warning);
+
+    // Before the receiver, which they outlive: what keeps its decoder out of the pipeline.
+    const GStreamer::GstElementPtr otherBin =
+        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_bin_new(nullptr))));
+    const GStreamer::GstPadPtr otherPad =
+        GStreamer::adoptPad(GST_PAD(gst_object_ref_sink(gst_pad_new("other", GST_PAD_SINK))));
+
+    Receiver stream;
+    stream.window.show();
+    stream.receiver->setVideoOutput(stream.output);
+    if (sinkTaken) {
+        QVERIFY(gst_bin_add(GST_BIN(otherBin.get()), displaySink(stream.receiver.get())));
+    }
+    stream.receiver->setActive(true);
+    QVERIFY(stream.waitForState(State::Connecting));
+    if (!sinkTaken) {
+        bool linked = false;
+        QVERIFY(runOnPipeline(stream.receiver.get(), [&linked, &otherPad](GstElement* pipeline) {
+            // The display branch's only unlinked source pad is its valve's, where the decoder goes.
+            for (const GStreamer::GstElementPtr& element : GstTest::childElements(GST_BIN(pipeline))) {
+                const GStreamer::GstPadPtr src = GStreamer::adoptPad(gst_element_get_static_pad(element.get(), "src"));
+                if (src && !gst_pad_is_linked(src.get()) &&
+                    (GStreamer::branchOf(GST_OBJECT(element.get())) == GStreamer::PipelineBranch::Decoding)) {
+                    linked = (gst_pad_link(src.get(), otherPad.get()) == GST_PAD_LINK_OK);
+                }
+            }
+        }));
+        QVERIFY(linked);
+    }
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg, QRegularExpression(warning));
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Video stream stopped:")));
+
+    // A stream that can't be shown fails like one whose decoder keeps failing, instead of running without a picture.
+    QVERIFY(stream.sender.start(stream.udpPort()));
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QVERIFY(stream.waitForState(State::Stopped));
 }
 
 void GstVideoReceiverPipelineTest::_testScreenshotSavesDisplayedFrame()
