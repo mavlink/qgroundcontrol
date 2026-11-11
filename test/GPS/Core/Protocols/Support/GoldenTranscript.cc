@@ -9,6 +9,7 @@
 #include "GPSProtocolRuntime.h"
 #include "GPSReceiverDetector.h"
 #include "GPSReceiverFamilies.h"
+#include "Protocols/Support/GPSModelViolations.h"
 #include "Protocols/Support/GPSProtocolTestBase.h"
 #include "Protocols/Support/GPSTestClock.h"
 #include "Protocols/Support/ReceiverBench.h"
@@ -70,8 +71,8 @@ Event eventOf(const GPSProtocolEvent& decoded)
 }
 
 /// GPSDriver for a scenario on its Link, and the record of what it does. It is the driver's transport, which forwards
-/// to Link::receiver and records each write and baud change, and it observes the driver's commands and decoded events.
-/// While offline, transport services fail and are only counted.
+/// to Link::receiver and records each write and baud change, and it observes the driver's commands, decoded events and
+/// RTCM sink. While offline, transport services fail and are only counted.
 class Session final : public GPSTransport
 {
 public:
@@ -79,7 +80,7 @@ public:
         : GPSTransport(link.receiver.cancelToken())
         , _link(link)
         , _run(run)
-        , _driver(scenario.type, *this, scenario.config, {}, _clock(), _observer())
+        , _driver(scenario.type, *this, scenario.config, _sinks(), _clock(), _observer())
     {
         // Transport reads wait on the link's clock: one that finds no data ends at its deadline.
         link.receiver.setClock(&link.clock);
@@ -158,6 +159,13 @@ protected:
     }
 
 private:
+    GPSDriverSinks _sinks()
+    {
+        GPSDriverSinks sinks;
+        sinks.onRTCM = [this](const QByteArray& frame) { _forwarded(frame); };
+        return sinks;
+    }
+
     GPSClock _clock()
     {
         return {.nowUs = [this] { return _link.clock.nowUs(); },
@@ -181,15 +189,7 @@ private:
         observer.commandFinished = [this](const GPSConfigurationEvidence& command) {
             _run.records.push_back({phase, command});
         };
-        observer.decoded = [this](const GPSEventBatch& batch) {
-            for (const auto& event : batch.events) {
-                if (events) {
-                    events->push_back(eventOf(event));
-                } else {
-                    _run.records.push_back({phase, eventOf(event)});
-                }
-            }
-        };
+        observer.decoded = [this](const GPSEventBatch& batch) { _decoded(batch); };
         observer.detected = [this](const GPSReceiverDetection& detection, unsigned baud) {
             _run.requestedBaud = baud;
             _run.detectionRecords = _run.records.size();
@@ -211,9 +211,47 @@ private:
         return observer;
     }
 
+    void _decoded(const GPSEventBatch& batch)
+    {
+        _unforwarded.clear();
+        for (const auto& decoded : batch.events) {
+            Event event = eventOf(decoded);
+            if (auto* rtcm = std::get_if<RTCM>(&event)) {
+                rtcm->forwarded = false;
+                _unforwarded.push_back(events ? events->size() : _run.records.size());
+            }
+            if (events) {
+                events->push_back(std::move(event));
+            } else {
+                _run.records.push_back({phase, std::move(event)});
+            }
+        }
+    }
+
+    /// The driver publishes a batch in order after the observer saw it, so @a frame, which shares its buffer with the
+    /// batch's, is the first frame of the batch the driver has not passed over.
+    void _forwarded(const QByteArray& frame)
+    {
+        const auto found = std::ranges::find_if(
+            _unforwarded, [this, &frame](size_t index) { return _rtcm(index).frame.constData() == frame.constData(); });
+        if (found == _unforwarded.end()) {
+            ModelViolations::record("GPSDriver forwarded an RTCM frame that is not of the batch it publishes");
+            return;
+        }
+        _rtcm(*found).forwarded = true;
+        _unforwarded.erase(_unforwarded.begin(), found + 1);
+    }
+
+    RTCM& _rtcm(size_t index)
+    {
+        return std::get<RTCM>(events ? (*events)[index] : std::get<Event>(_run.records[index].value));
+    }
+
     const Link& _link;
     Run& _run;
     GPSProtocolRuntime* _runtime = nullptr;
+    /// Where the RTCM frames of the latest batch were recorded, without those the driver forwarded or passed over.
+    std::vector<size_t> _unforwarded;
     GPSDriver _driver;
 };
 

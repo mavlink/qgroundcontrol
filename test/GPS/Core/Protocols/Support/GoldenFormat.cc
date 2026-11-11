@@ -131,7 +131,8 @@ QString checkInventory(const QString& root, const QString& pattern, const QSet<Q
 //   `baud <rate> configured|unsupported`, as the link accepted or refused the rate
 //   `write <command label|-> <bytes> [<outcome> required|optional]`, then the bytes as text when printable, else hex
 //   `evidence <command label> <outcome> required|optional accepted=<n> written=<n>` for a command that wrote nothing
-//   decoded events; host timestamps appear only as receipt=0/1
+//   decoded events; host timestamps appear only as receipt=0/1, and an RTCM frame ends with `forwarded=0|1`, whether
+//   GPSDriver passed it to its RTCM sink
 // A decode golden lists, per data file, the events of each chunking (1, 7, whole) and those after the freshness
 // horizon, marked `expired`; chunkings with identical results share one block.
 
@@ -384,10 +385,11 @@ QString formatEvent(const Event& event)
                 const int message = frame.size() >= 5
                                         ? (static_cast<uint8_t>(frame[3]) << 4) | (static_cast<uint8_t>(frame[4]) >> 4)
                                         : -1;
-                return QStringLiteral("rtcm type=%1 size=%2 fnv=%3")
+                return QStringLiteral("rtcm type=%1 size=%2 fnv=%3%4")
                     .arg(message)
                     .arg(frame.size())
-                    .arg(fnv1a(frame), 8, 16, QChar(u'0'));
+                    .arg(fnv1a(frame), 8, 16, QChar(u'0'))
+                    .arg(report.forwarded ? QStringLiteral(" forwarded=") + flag(*report.forwarded) : QString());
             }
         },
         event);

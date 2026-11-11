@@ -6,13 +6,13 @@ file corpus/ubx-version.bin bytes=78
 file corpus/ubx-warning.bin bytes=19
     integrity receipt=1 jamming=unknown/0 spoofing=unknown/0 antenna=unknown/0 output-overflow=1
 file fixtures/mixed.gps bytes=1227
-    rtcm type=1005 size=25 fnv=10f31c27
-    rtcm type=4072 size=68 fnv=7e7e465c
-    rtcm type=1077 size=275 fnv=cd768728
-    rtcm type=1087 size=201 fnv=8e7a608a
-    rtcm type=1097 size=151 fnv=b3c8e5d2
-    rtcm type=1127 size=275 fnv=bd1fa343
-    rtcm type=1230 size=10 fnv=204e816a
+    rtcm type=1005 size=25 fnv=10f31c27 forwarded=1
+    rtcm type=4072 size=68 fnv=7e7e465c forwarded=1
+    rtcm type=1077 size=275 fnv=cd768728 forwarded=1
+    rtcm type=1087 size=201 fnv=8e7a608a forwarded=1
+    rtcm type=1097 size=151 fnv=b3c8e5d2 forwarded=1
+    rtcm type=1127 size=275 fnv=bd1fa343 forwarded=1
+    rtcm type=1230 size=10 fnv=204e816a forwarded=1
     expired position fix=3d lat=32.06583250 lon=34.77381900 msl=54.6420 ellipsoid=72.1340 hacc=0.6850 vacc=0.4840 hdop=nan vdop=nan speed=0.0000 course=5.063867 used=31 utc=1644309719000360 velocity=1 receipt=1
 file fixtures/nav-hpposllh.ubx bytes=44
 file fixtures/navigation.ubx bytes=2900

@@ -19,13 +19,13 @@ file fixtures/gga.nmea bytes=73
     position fix=3d lat=53.45065700 lon=-2.24041033 msl=56.0000 ellipsoid=104.5000 hacc=nan vacc=nan hdop=5.880 vdop=nan speed=nan course=nan used=6 utc=0 velocity=0 receipt=1
 file fixtures/mixed.gps bytes=1227
     input type=passive
-    rtcm type=1005 size=25 fnv=10f31c27
-    rtcm type=4072 size=68 fnv=7e7e465c
-    rtcm type=1077 size=275 fnv=cd768728
-    rtcm type=1087 size=201 fnv=8e7a608a
-    rtcm type=1097 size=151 fnv=b3c8e5d2
-    rtcm type=1127 size=275 fnv=bd1fa343
-    rtcm type=1230 size=10 fnv=204e816a
+    rtcm type=1005 size=25 fnv=10f31c27 forwarded=1
+    rtcm type=4072 size=68 fnv=7e7e465c forwarded=1
+    rtcm type=1077 size=275 fnv=cd768728 forwarded=1
+    rtcm type=1087 size=201 fnv=8e7a608a forwarded=1
+    rtcm type=1097 size=151 fnv=b3c8e5d2 forwarded=1
+    rtcm type=1127 size=275 fnv=bd1fa343 forwarded=1
+    rtcm type=1230 size=10 fnv=204e816a forwarded=1
     expired input type=ublox
     expired position fix=3d lat=32.06583250 lon=34.77381900 msl=54.6420 ellipsoid=72.1340 hacc=0.6850 vacc=0.4840 hdop=nan vdop=nan speed=0.0000 course=5.063867 used=31 utc=1644309719000360 velocity=1 receipt=1
 file fixtures/synthetic-gga.nmea bytes=398

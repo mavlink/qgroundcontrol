@@ -57,4 +57,4 @@ stream failure=none ready=1
   integrity receipt=1 jamming=critical/1 spoofing=unknown/0 antenna=ok/1 output-overflow=0
   integrity receipt=1 jamming=critical/1 spoofing=indicated/1 antenna=ok/1 output-overflow=0
   position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=1.5000 vacc=2.5000 hdop=nan vdop=nan speed=0.2240 course=1.107150 used=12 utc=1704164647000000 velocity=1 receipt=1
-  rtcm type=1005 size=25 fnv=f8e3bb62
+  rtcm type=1005 size=25 fnv=f8e3bb62 forwarded=1

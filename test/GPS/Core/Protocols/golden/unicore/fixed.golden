@@ -49,13 +49,13 @@ stream failure=none ready=1
   survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1
   survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1
   survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1
-  rtcm type=1005 size=25 fnv=f8e3bb62
-  rtcm type=1077 size=14 fnv=61b86922
+  rtcm type=1005 size=25 fnv=f8e3bb62 forwarded=1
+  rtcm type=1077 size=14 fnv=61b86922 forwarded=1
   survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1
   survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1
   survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1
   survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1
   survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1
-  rtcm type=1005 size=25 fnv=f8e3bb62
+  rtcm type=1005 size=25 fnv=f8e3bb62 forwarded=1
   survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1
   survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1

@@ -91,7 +91,7 @@ stream failure=none ready=1
   survey active=0 valid=1 duration=10s accuracy=1.2500 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
   usage used=8 receipt=1
   position fix=3d lat=48.11730000 lon=11.51666667 msl=545.4000 ellipsoid=592.3000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan used=8 utc=0 velocity=0 receipt=1
-  rtcm type=1005 size=25 fnv=f8e3bb62
+  rtcm type=1005 size=25 fnv=f8e3bb62 forwarded=1
   survey active=0 valid=1 duration=10s accuracy=1.2500 lat=0.00000000 lon=90.00000000 alt=100.0000 receipt=1
   usage used=8 receipt=1
   position fix=3d lat=48.11730000 lon=11.51666667 msl=545.4000 ellipsoid=592.3000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan used=8 utc=0 velocity=0 receipt=1

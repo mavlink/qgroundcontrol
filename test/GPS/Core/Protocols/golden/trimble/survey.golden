@@ -56,4 +56,4 @@ stream failure=none ready=1
   position fix=rtk-float lat=47.00000000 lon=8.00000000 msl=nan ellipsoid=500.0000 hacc=0.6403 vacc=0.9000 hdop=1.000 vdop=1.000 speed=5.1444 course=1.570796 used=12 utc=1325072701000000 velocity=1 receipt=1
   survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
   survey active=0 valid=1 duration=1s accuracy=- lat=55.70863080 lon=37.65492499 alt=nan receipt=1
-  rtcm type=1005 size=25 fnv=f8e3bb62
+  rtcm type=1005 size=25 fnv=f8e3bb62 forwarded=1

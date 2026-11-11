@@ -12,8 +12,8 @@
 //   therefore records the driver's request validation, baud selection (the configured rate, else the transport's fixed
 //   rate, else the family's automatic rate), receiver detection for GPSType::Automatic and error text. A request the
 //   driver refuses performs no I/O and reports only `error`.
-// - Record every RTCM frame the family decodes. GPSDriver forwards those of a base only while its status is valid,
-//   which GPSProtocolFamilyContractTest covers and the transcript does not show.
+// - Record every RTCM frame the family decodes, and whether GPSDriver forwarded it to its RTCM sink: none while it
+//   configures, and afterwards those of a base only while its status is valid.
 // - Drive all I/O through Link::receiver on Link::clock. Time never passes except through a read, which ends at
 //   its deadline when no data arrives, or through Link::wait. Real sleeps are not allowed.
 // - Record, in order, every write that reaches the link (bytes and result), every baud change (rate and whether the
@@ -151,6 +151,8 @@ struct Survey
 struct RTCM
 {
     QByteArray frame;
+    /// Whether GPSDriver forwarded the frame to its RTCM sink; empty when no driver decoded it.
+    std::optional<bool> forwarded = std::nullopt;
 };
 
 using Event = std::variant<Position, GPSIntegrityReport, Satellites, SatelliteUsage, Survey, RTCM, GPSInputProtocol>;
