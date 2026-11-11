@@ -423,7 +423,7 @@ QList<int> GPSReceiver::serialBaudRates()
 #ifndef QGC_NO_SERIAL_LINK
     for (const QString& text : SerialPortManager::supportedBaudRates()) {
         const uint32_t rate = text.toUInt();
-        if (gpsValidBaudRate(rate, true) && !rates.contains(static_cast<int>(rate))) {
+        if (gpsValidExplicitBaudRate(rate) && !rates.contains(static_cast<int>(rate))) {
             rates.append(static_cast<int>(rate));
         }
     }

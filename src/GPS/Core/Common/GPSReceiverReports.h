@@ -211,6 +211,17 @@ struct GPSSatelliteReport
     bool operator==(const GPSSatelliteReport&) const = default;
 };
 
+/// The active and valid flags of a GPSSurveyReport as the one state a family publishes; the two never hold together.
+enum class GPSSurveyState
+{
+    /// No base position: none is being determined, or determining it failed.
+    Inactive,
+    /// A survey or the receiver's own averaging is determining the base position.
+    Active,
+    /// The base position holds: a survey finished, or the receiver uses the fixed position.
+    Valid,
+};
+
 struct GPSSurveyReport
 {
     /// Receipt of this status; a status a family buffered keeps its original receipt.

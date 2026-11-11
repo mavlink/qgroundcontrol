@@ -159,7 +159,7 @@ private:
     bool _handleVersion(std::string_view body, GPSDecodeContext& context);
     bool _handleMode(std::string_view body, GPSDecodeContext& context);
     bool _handlePosition(std::string_view body, GPSDecodeContext& context);
-    void _publishBase(GPSDecodeContext& context, bool active, bool valid);
+    void _publishBase(GPSDecodeContext& context, GPSSurveyState state);
     /// Ends readiness; @a reason becomes the error detail unless a failure is already recorded.
     void _invalidateBase(GPSDecodeContext& context, const QString& reason);
 
@@ -247,7 +247,7 @@ void Protocol::_startAttempt(GPSStreamDemux& stream, GPSDecodeContext& context)
     _model.clear();
     _firmware.clear();
     _rejection.clear();
-    _publishBase(context, false, false);
+    _publishBase(context, GPSSurveyState::Inactive);
 }
 
 void Protocol::_setBase(const GPSBaseStationConfig::Mode& mode)
@@ -330,13 +330,13 @@ GPSCommandOutcome Protocol::_match(const Plan::Command& command, std::string_vie
 void Protocol::_monitorBaseStatus(GPSDecodeContext& context)
 {
     _monitorBase = true;
-    _publishBase(context, _averaging, false);
+    _publishBase(context, _averaging ? GPSSurveyState::Active : GPSSurveyState::Inactive);
 }
 
 bool Protocol::_failAttempt(GPSCommandChannel& channel)
 {
     if (_monitorBase) {
-        _publishBase(channel.context(), false, false);
+        _publishBase(channel.context(), GPSSurveyState::Inactive);
     }
     _ready = false;
     _monitorBase = false;
@@ -470,14 +470,17 @@ bool Protocol::_handlePosition(std::string_view body, GPSDecodeContext& context)
         _baseECEF = coordinates;
     }
     _nmea.setRTCMEnabled(_ready && _baseValid);
-    _publishBase(context, _averaging && !_baseValid, _baseValid);
+    _publishBase(context, _baseValid   ? GPSSurveyState::Valid
+                          : _averaging ? GPSSurveyState::Active
+                                       : GPSSurveyState::Inactive);
     return true;
 }
 
-void Protocol::_publishBase(GPSDecodeContext& context, bool active, bool valid)
+void Protocol::_publishBase(GPSDecodeContext& context, GPSSurveyState state)
 {
     // BESTNAV's instantaneous sigmas and BASEPOS monitoring are not averaging accuracy or elapsed time.
-    context.publishSurvey(active, valid, {}, valid ? GPSProtocolMath::fromEcef(_baseECEF) : GPSEllipsoidPosition{});
+    context.publishSurvey(
+        state, {}, state == GPSSurveyState::Valid ? GPSProtocolMath::fromEcef(_baseECEF) : GPSEllipsoidPosition{});
 }
 
 void Protocol::_invalidateBase(GPSDecodeContext& context, const QString& reason)
@@ -486,7 +489,7 @@ void Protocol::_invalidateBase(GPSDecodeContext& context, const QString& reason)
     _monitorBase = false;
     _ready = false;
     _nmea.setRTCMEnabled(false);
-    _publishBase(context, false, false);
+    _publishBase(context, GPSSurveyState::Inactive);
     context.failControl(reason);
 }
 

@@ -648,7 +648,7 @@ void Protocol::_revokeSurvey(GPSDecodeContext& context)
     _nmea.setRTCMEnabled(false);
     if (_survey) {
         _survey.reset();
-        context.publishSurvey(false, false, {});
+        context.publishSurvey(GPSSurveyState::Inactive, {});
     }
 }
 
