@@ -1051,16 +1051,24 @@ QByteArray readFile(const QString& filePath, QString* errorString, qint64 maxByt
 
     // Read in chunks so that a stream expanding beyond the limit is given up on before it is all in memory
     QByteArray data;
+    QByteArray chunk(static_cast<qsizetype>(QGCFileHelper::kBufferSizeMax), Qt::Uninitialized);
     while (maxBytes <= 0 || data.size() < maxBytes) {
-        qint64 chunkSize = QGCFileHelper::kBufferSizeMax;
+        qint64 chunkSize = chunk.size();
         if (maxBytes > 0) {
             chunkSize = qMin(chunkSize, maxBytes - data.size());
         }
-        const QByteArray chunk = decompressor.read(chunkSize);
-        if (chunk.isEmpty()) {
+        // The count tells a damaged stream (-1) from one that has ended (0)
+        const qint64 bytesRead = decompressor.read(chunk.data(), chunkSize);
+        if (bytesRead < 0) {
+            if (errorString != nullptr) {
+                *errorString = QObject::tr("Failed to decompress %1: %2").arg(filePath, decompressor.errorString());
+            }
+            return {};
+        }
+        if (bytesRead == 0) {
             break;
         }
-        if (maxDecompressedBytes > 0 && (data.size() + chunk.size()) > maxDecompressedBytes) {
+        if (maxDecompressedBytes > 0 && (data.size() + bytesRead) > maxDecompressedBytes) {
             if (errorString != nullptr) {
                 *errorString = QObject::tr("Decompressed size of %1 exceeds the limit of %2 bytes")
                                    .arg(filePath)
@@ -1068,7 +1076,7 @@ QByteArray readFile(const QString& filePath, QString* errorString, qint64 maxByt
             }
             return {};
         }
-        data.append(chunk);
+        data.append(chunk.constData(), static_cast<qsizetype>(bytesRead));
     }
     decompressor.close();
     return data;
@@ -1092,18 +1100,19 @@ QString computeFileHash(const QString &filePath, QCryptographicHash::Algorithm a
     }
 
     QCryptographicHash hash(algorithm);
-    constexpr qint64 chunkSize = 65536;
+    QByteArray buffer(65536, Qt::Uninitialized);
     while (true) {
-        const QByteArray buffer = decompressor.read(chunkSize);
-        if (buffer.isEmpty()) {
-            if (decompressor.atEnd()) {
-                break;
-            }
+        // atEnd() is also true after a read error: the count is what tells one (-1) from the end (0)
+        const qint64 bytesRead = decompressor.read(buffer.data(), buffer.size());
+        if (bytesRead < 0) {
             qCWarning(QGCCompressionLog) << "computeFileHash: read error";
             decompressor.close();
             return {};
         }
-        hash.addData(buffer);
+        if (bytesRead == 0) {
+            break;
+        }
+        hash.addData(QByteArrayView(buffer.constData(), static_cast<qsizetype>(bytesRead)));
     }
 
     decompressor.close();

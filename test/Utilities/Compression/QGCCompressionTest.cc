@@ -1323,7 +1323,7 @@ void QGCCompressionTest::_testTruncatedStream_data()
     QTest::addColumn<QString>("api");
 
     for (const char* api : {"decompressFile", "decompressData", "decompressFromDevice-file",
-                            "decompressFromDevice-memory", "QGCDecompressDevice"}) {
+                            "decompressFromDevice-memory", "QGCDecompressDevice", "readFile", "computeFileHash"}) {
         QTest::newRow(api) << QString::fromLatin1(api);
     }
 }
@@ -1366,6 +1366,18 @@ void QGCCompressionTest::_testTruncatedStream()
         QVERIFY(QGCCompression::decompressFromDevice(&device).isEmpty());
         verifyExpectedLogMessage();
         QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::IoError);
+    } else if (api == "readFile") {
+        QString errorString;
+        expectLogMessage("Utilities.QGCArchiveDeviceBase", QtWarningMsg, memoryFailure);
+        QVERIFY(QGCCompression::readFile(inputPath, &errorString).isEmpty());
+        verifyExpectedLogMessage();
+        QVERIFY2(errorString.contains("truncated"), qPrintable(errorString));
+    } else if (api == "computeFileHash") {
+        expectLogMessage("Utilities.QGCArchiveDeviceBase", QtWarningMsg, memoryFailure);
+        expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("read error"));
+        QVERIFY(QGCCompression::computeFileHash(inputPath).isEmpty());
+        verifyExpectedLogMessage();
+        verifyExpectedLogMessage();
     } else {
         QGCDecompressDevice decompressor(&device);
         QVERIFY(decompressor.open(QIODevice::ReadOnly));

@@ -362,6 +362,7 @@ bool isDataCompressed(const QByteArray &data);
 int lastCompressionRatio();
 
 /// Read file contents, transparently decompressing .gz/.xz/.zst/.bz2/.lz4 files.
+/// A compressed file that is truncated or corrupt yields nothing, not the part that could be read.
 /// @param maxBytes Read at most this many bytes of the (decompressed) content (0 = all of it)
 /// @param maxDecompressedBytes Fail, returning nothing, if a compressed file expands beyond this
 ///        many bytes before maxBytes is reached (0 = unlimited)
@@ -369,6 +370,7 @@ QByteArray readFile(const QString& filePath, QString* errorString = nullptr, qin
                     qint64 maxDecompressedBytes = kDefaultMaxDecompressedMemoryBytes);
 
 /// Hash file contents post-decompression.
+/// @return Hex digest, or an empty string if the file cannot be read to its end
 QString computeFileHash(const QString &filePath,
                         QCryptographicHash::Algorithm algorithm = QCryptographicHash::Sha256);
 
