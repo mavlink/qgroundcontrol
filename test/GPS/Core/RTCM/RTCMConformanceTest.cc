@@ -1,5 +1,7 @@
 #include "RTCMConformanceTest.h"
 
+#include <cmath>
+#include <limits>
 #include <optional>
 #include <span>
 
@@ -11,9 +13,12 @@
 #include <QtTest/QSignalSpy>
 
 #include "Checksums.h"
+#include "Protocols/Support/GPSProtocolTestBase.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
+#include "Protocols/fixtures/GPSFixtureExpectations.h"
 #include "RTCMFramer.h"
 #include "RTCMMessageCountModel.h"
+#include "RTCMStationPosition.h"
 
 namespace {
 // Fixed CRCs keep expectations independent of the framing implementation.
@@ -29,6 +34,47 @@ QByteArray maximumFrame()
         frame.append(static_cast<char>(i & 0xff));
     }
     return frame + QByteArray::fromHex("eebabe");
+}
+
+/// An RTCM 1005 frame, or 1006 with @a antennaHeight, whose ECEF coordinates and antenna height count 0.1 mm. Every
+/// other field has all its bits set, so a coordinate read one bit off is wrong.
+QByteArray stationFrame(uint16_t messageId, int64_t x, int64_t y, int64_t z,
+                        std::optional<uint16_t> antennaHeight = std::nullopt)
+{
+    QByteArray payload;
+    int size = 0;
+    const auto put = [&payload, &size](uint64_t value, int width) {
+        for (int bit = width - 1; bit >= 0; --bit, ++size) {
+            if (size % 8 == 0) {
+                payload.append('\0');
+            }
+            payload.back() = static_cast<char>(payload.back() | (((value >> bit) & 1) << (7 - size % 8)));
+        }
+    };
+    put(messageId, 12);
+    put(0xfff, 12);  // station ID
+    put(0x3f, 6);    // ITRF realization year
+    put(0xf, 4);     // GPS, GLONASS, Galileo and reference-station indicators
+    put(static_cast<uint64_t>(x), 38);
+    put(0x3, 2);     // single receiver oscillator indicator and a reserved bit
+    put(static_cast<uint64_t>(y), 38);
+    put(0x3, 2);     // quarter cycle indicator
+    put(static_cast<uint64_t>(z), 38);
+    if (antennaHeight) {
+        put(*antennaHeight, 16);
+    }
+    return GPSTest::rtcmBytes(payload);
+}
+
+/// The 1005 frame of the recording fixtures/mixed.gps, which a u-blox base station sent; empty when unreadable.
+QByteArray recordedStationFrame()
+{
+    const auto recording = GPSTest::fixtureBytes("mixed.gps");
+    const auto& slice = GPSFixture::corrections[0];
+    if (!recording || slice.id != 1005 || recording->size() < slice.offset + slice.size) {
+        return {};
+    }
+    return GPSTest::toByteArray(std::span<const uint8_t>(*recording).subspan(slice.offset, slice.size));
 }
 }  // namespace
 
@@ -412,6 +458,68 @@ void RTCMConformanceTest::_messageCountsChangeInPlace()
     QCOMPARE(resets.size(), 1);
     model.clear();
     QCOMPARE(resets.size(), 1);
+}
+
+void RTCMConformanceTest::_stationPosition_data()
+{
+    QTest::addColumn<QByteArray>("frame");
+    QTest::addColumn<bool>("decoded");
+    QTest::addColumn<double>("latitude");
+    QTest::addColumn<double>("longitude");
+    QTest::addColumn<double>("height");
+    QTest::addColumn<double>("antennaHeight");
+
+    // The geodetic positions and their ECEF coordinates come from the WGS84 closed-form conversion, worked outside
+    // QGC; between them the coordinates cover both signs of each axis.
+    constexpr double NONE = std::numeric_limits<double>::quiet_NaN();
+    const auto valid = [](const char* name, const QByteArray& frame, double latitude, double longitude, double height,
+                          double antennaHeight) {
+        QTest::newRow(name) << frame << true << latitude << longitude << height << antennaHeight;
+    };
+    valid("1005", stationFrame(1005, 42775513130, 6427646826, 46721688253), 47.3977419, 8.5455938, 488.2, NONE);
+    valid("1005-negative-y-z", stationFrame(1005, 17635692337, -50273165025, -34959199469), -33.4488897, -70.6692655,
+          570.0, NONE);
+    valid("1006-negative-x-z", stationFrame(1006, -46460925734, 25532295142, -35344068039, 0x8001), -33.8688197,
+          151.2092955, 58.5, 3.2769);
+    valid("recorded-1005", recordedStationFrame(), 32.0658325449, 34.7738190354, 72.1342, NONE);
+
+    const auto invalid = [](const char* name, const QByteArray& frame) {
+        QTest::newRow(name) << frame << false << 0.0 << 0.0 << 0.0 << 0.0;
+    };
+    invalid("other-message", stationFrame(1007, 42775513130, 6427646826, 46721688253));
+    invalid("1005-of-1006-length", stationFrame(1005, 42775513130, 6427646826, 46721688253, 0));
+    invalid("1006-of-1005-length", stationFrame(1006, 42775513130, 6427646826, 46721688253));
+    QByteArray badCrc = stationFrame(1005, 42775513130, 6427646826, 46721688253);
+    badCrc.back() = static_cast<char>(badCrc.back() ^ 1);
+    invalid("bad-crc", badCrc);
+    invalid("unset-base", stationFrame(1005, 0, 0, 0));
+    invalid("empty", {});
+}
+
+void RTCMConformanceTest::_stationPosition()
+{
+    QFETCH(QByteArray, frame);
+    QFETCH(bool, decoded);
+    QFETCH(double, latitude);
+    QFETCH(double, longitude);
+    QFETCH(double, height);
+    QFETCH(double, antennaHeight);
+    const auto station = RTCMStationPosition::fromFrame(frame);
+    QCOMPARE(station.has_value(), decoded);
+    if (!decoded) {
+        return;
+    }
+    // The coordinates are in 0.1 mm, which is below 1e-8 degrees.
+    QVERIFY2(GPSTest::matches(station->position.latitudeDegrees, latitude, 1e-8),
+             qPrintable(QString::number(station->position.latitudeDegrees, 'f', 10)));
+    QVERIFY2(GPSTest::matches(station->position.longitudeDegrees, longitude, 1e-8),
+             qPrintable(QString::number(station->position.longitudeDegrees, 'f', 10)));
+    QVERIFY2(GPSTest::matches(station->position.altitudeMeters, height, 1e-3),
+             qPrintable(QString::number(station->position.altitudeMeters, 'f', 5)));
+    QCOMPARE(station->antennaHeightMeters.has_value(), !std::isnan(antennaHeight));
+    if (station->antennaHeightMeters) {
+        QCOMPARE(*station->antennaHeightMeters, antennaHeight);
+    }
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(RTCMConformanceTest, TestLabel::Unit)
