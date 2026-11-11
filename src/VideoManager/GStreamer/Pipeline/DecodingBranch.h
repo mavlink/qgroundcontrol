@@ -52,8 +52,9 @@ public:
     {
         /// Since the branch was built: frames the video sink delivered that no newer frame replaced before display.
         quint64 framesDisplayed = 0;
-        /// Since the branch was built: frames the queue and its keyframe gate dropped, and frames the video sink
-        /// delivered that a newer frame replaced before display.
+        /// Since the branch was built: frames the queue and its keyframe gate dropped, frames the video sink dropped
+        /// because they came too late for their time, and frames it delivered that a newer frame replaced before
+        /// display.
         quint64 framesDropped = 0;
         /// The path most frames took to the display since the previous sample, as GstHw::toString() names it; the
         /// previous one when no frame arrived, empty before the first frame.
@@ -119,6 +120,8 @@ private:
     /// Adds the frames the current video sink delivered since setVideoSink() to the branch's totals, before the sink
     /// is replaced: its counters don't restart, and the next sink's count from their own baseline.
     void _retireSinkCounts();
+    /// Adds the frames the video sink dropped as late since the previous call to the branch's total.
+    void _countLateFrames();
 
     static void _onQueueOverrun(GstElement* queue, gpointer data);
     static GstPadProbeReturn _gateProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data);
@@ -144,6 +147,10 @@ private:
     quint64 _retiredFramesDisplayed = 0;
     quint64 _retiredFramesSuperseded = 0;
     quint64 _retiredGpuFallbacks = 0;
+    // Frames the video sinks dropped as late since the branch was built, and the current sink's own count of them
+    // when they were last added.
+    quint64 _lateFramesDropped = 0;
+    quint64 _sinkLateFramesSeen = 0;
     QString _displayPath;
     GStreamer::PadProbe _sinkFrameProbe;
     GStreamer::PadProbe _keyframeGate;

@@ -39,6 +39,46 @@ void setSinkSync(GstElement* sink, bool sync)
     gst_iterator_free(sinks);
 }
 
+/// The frames the base sink @p element dropped because they came too late for their time, from its "stats"
+/// (GStreamer 1.18); 0 without them.
+guint64 lateFramesDroppedBy(GstElement* element)
+{
+    GParamSpec* const spec = g_object_class_find_property(G_OBJECT_GET_CLASS(element), "stats");
+    if (!spec || (G_PARAM_SPEC_VALUE_TYPE(spec) != GST_TYPE_STRUCTURE)) {
+        return 0;
+    }
+    GstStructure* rawStats = nullptr;
+    g_object_get(element, "stats", &rawStats, nullptr);
+    const GStreamer::GstStructurePtr stats = GStreamer::adoptStructure(rawStats);
+    guint64 dropped = 0;
+    if (stats) {
+        (void) gst_structure_get_uint64(stats.get(), "dropped", &dropped);
+    }
+    return dropped;
+}
+
+/// The frames @p sink, or the sinks inside it when it is a bin, dropped as late. A sink starts its count over when it
+/// flushes or leaves PLAYING.
+quint64 sinkLateFramesDropped(GstElement* sink)
+{
+    if (!sink) {
+        return 0;
+    }
+    if (!GST_IS_BIN(sink)) {
+        return lateFramesDroppedBy(sink);
+    }
+    guint64 dropped = 0;
+    GstIterator* const sinks = gst_bin_iterate_sinks(GST_BIN(sink));
+    (void) gst_iterator_foreach(
+        sinks,
+        [](const GValue* item, gpointer data) {
+            *static_cast<guint64*>(data) += lateFramesDroppedBy(GST_ELEMENT(g_value_get_object(item)));
+        },
+        &dropped);
+    gst_iterator_free(sinks);
+    return dropped;
+}
+
 bool isInside(GstObject* object, GstElement* element)
 {
     return element && object && gst_object_has_as_ancestor(object, GST_OBJECT_CAST(element));
@@ -208,11 +248,12 @@ DecodingBranch::StatsSample DecodingBranch::sampleStats()
         }
         _pathFramesAtSample[i] = frames;
     }
+    _countLateFrames();
 
     return {
         .framesDisplayed = _retiredFramesDisplayed + sinkCounts.displayed,
-        .framesDropped =
-            _framesDropped.load(std::memory_order_relaxed) + _retiredFramesSuperseded + sinkCounts.superseded,
+        .framesDropped = _framesDropped.load(std::memory_order_relaxed) + _retiredFramesSuperseded +
+                         sinkCounts.superseded + _lateFramesDropped,
         .displayPath = _displayPath,
         .gpuFallbacks = _retiredGpuFallbacks + sinkCounts.gpuFallbacks,
         .decoderRestarts = _decoderRestarts,
@@ -229,6 +270,14 @@ void DecodingBranch::_retireSinkCounts()
     _retiredFramesDisplayed += counts.displayed;
     _retiredFramesSuperseded += counts.superseded;
     _retiredGpuFallbacks += counts.gpuFallbacks;
+}
+
+void DecodingBranch::_countLateFrames()
+{
+    const quint64 dropped = sinkLateFramesDropped(_sink.get());
+    // A count below the last one started over.
+    _lateFramesDropped += (dropped >= _sinkLateFramesSeen) ? (dropped - _sinkLateFramesSeen) : dropped;
+    _sinkLateFramesSeen = dropped;
 }
 
 void DecodingBranch::_insertDecoder()
@@ -283,7 +332,10 @@ void DecodingBranch::_removeDecoder()
     _head.close();
     // The sink first: going NULL releases a decoder thread waiting inside it, so the decoder can stop.
     if (_sink) {
+        // Leaving PLAYING starts the sink's count of late frames over.
+        _countLateFrames();
         GStreamer::disposeChild(_sink.get());
+        _sinkLateFramesSeen = 0;
     }
     if (_decoder) {
         _decoderPadAdded.disconnect();
@@ -307,6 +359,9 @@ void DecodingBranch::_linkDecoderPad(GstPad* pad)
         return;
     }
     (void) gst_element_sync_state_with_parent(_sink.get());
+    // The sink posted LATENCY when it was added, with nothing linked to it yet, so that recalculation failed. Without
+    // this one it would take its first frames for late ones, until another element posted LATENCY.
+    (void) gst_bin_recalculate_latency(GST_BIN(_context.pipeline));
     _context.dotDumper->dump(_context.pipeline, "pipeline-with-videosink");
 }
 

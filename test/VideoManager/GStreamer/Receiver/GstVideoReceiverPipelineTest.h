@@ -17,6 +17,7 @@ private slots:
     void _testOutputDetachKeepsPipeline();
     void _testRestartRebuildsVideoSink();
     void _testDecoderQosDisabled();
+    void _testDisplaySinkHasLatencyOnceLinked();
     void _testDecoderInsertionFailureStopsStream_data();
     void _testDecoderInsertionFailureStopsStream();
     void _testScreenshotSavesDisplayedFrame();

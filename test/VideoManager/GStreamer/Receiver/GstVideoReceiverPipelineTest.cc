@@ -2,6 +2,8 @@
 
 #ifdef QGC_GST_STREAMING
 
+#include <gst/base/gstbasesink.h>
+
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtGui/QImage>
@@ -22,6 +24,86 @@ using GstReceiverTest::loopbackUri;
 using GstReceiverTest::Receiver;
 using GstReceiverTest::State;
 using GstReceiverTest::udpListenUri;
+
+constexpr const char* kStubDecoderName = "qgcreceiverstubh264dec";
+
+/// An H.264 "hardware" decoder that takes the stream and gives nothing back: no frame, and no message either.
+struct ReceiverStubDecoder
+{
+    GstElement parent;
+};
+
+struct ReceiverStubDecoderClass
+{
+    GstElementClass parentClass;
+};
+
+GstStaticPadTemplate s_receiverStubDecoderSink =
+    GST_STATIC_PAD_TEMPLATE("sink", GST_PAD_SINK, GST_PAD_ALWAYS, GST_STATIC_CAPS("video/x-h264"));
+GstStaticPadTemplate s_receiverStubDecoderSrc =
+    GST_STATIC_PAD_TEMPLATE("src", GST_PAD_SRC, GST_PAD_ALWAYS, GST_STATIC_CAPS("video/x-raw"));
+
+G_DEFINE_TYPE(ReceiverStubDecoder, receiver_stub_decoder, GST_TYPE_ELEMENT)
+
+GstFlowReturn receiverStubDecoderChain(GstPad* /*pad*/, GstObject* /*parent*/, GstBuffer* buffer)
+{
+    gst_buffer_unref(buffer);
+    return GST_FLOW_OK;
+}
+
+gboolean receiverStubDecoderEvent(GstPad* pad, GstObject* parent, GstEvent* event)
+{
+    // Takes the stream's caps without passing them on: nothing ever leaves the decoder.
+    if (GST_EVENT_TYPE(event) == GST_EVENT_CAPS) {
+        gst_event_unref(event);
+        return TRUE;
+    }
+    return gst_pad_event_default(pad, parent, event);
+}
+
+void receiver_stub_decoder_class_init(ReceiverStubDecoderClass* klass)
+{
+    GstElementClass* const elementClass = GST_ELEMENT_CLASS(klass);
+    gst_element_class_add_static_pad_template(elementClass, &s_receiverStubDecoderSink);
+    gst_element_class_add_static_pad_template(elementClass, &s_receiverStubDecoderSrc);
+    gst_element_class_set_static_metadata(elementClass, "QGC receiver test decoder", "Codec/Decoder/Video/Hardware",
+                                          "Decodes nothing", "QGroundControl");
+}
+
+void receiver_stub_decoder_init(ReceiverStubDecoder* self)
+{
+    GstPad* const sink = gst_pad_new_from_static_template(&s_receiverStubDecoderSink, "sink");
+    gst_pad_set_chain_function(sink, receiverStubDecoderChain);
+    gst_pad_set_event_function(sink, receiverStubDecoderEvent);
+    (void) gst_element_add_pad(GST_ELEMENT(self), sink);
+    (void) gst_element_add_pad(GST_ELEMENT(self), gst_pad_new_from_static_template(&s_receiverStubDecoderSrc, "src"));
+}
+
+/// Has decodebin3 plug the stub decoder before any other, until destroyed. The factory stays registered, unranked:
+/// the element class points at it for good. Ranked through the rank applier, so that NONE is the rank a later decoder
+/// option restores.
+class StubDecoderRegistration
+{
+public:
+    StubDecoderRegistration()
+        : _registered(
+              gst_element_register(nullptr, kStubDecoderName, GST_RANK_NONE, receiver_stub_decoder_get_type()) &&
+              GStreamer::changeFeatureRank(gst_registry_get(), kStubDecoderName, GST_RANK_PRIMARY + 100))
+    {}
+
+    ~StubDecoderRegistration()
+    {
+        (void) GStreamer::changeFeatureRank(gst_registry_get(), kStubDecoderName, GST_RANK_NONE);
+    }
+
+    StubDecoderRegistration(const StubDecoderRegistration&) = delete;
+    StubDecoderRegistration& operator=(const StubDecoderRegistration&) = delete;
+
+    bool registered() const { return _registered; }
+
+private:
+    const bool _registered;
+};
 
 }  // namespace
 
@@ -230,6 +312,34 @@ void GstVideoReceiverPipelineTest::_testDecoderQosDisabled()
     }));
     QVERIFY(decoders > 0);
     QVERIFY2(qosEnabled.isEmpty(), qPrintable(qosEnabled.join(u',')));
+}
+
+void GstVideoReceiverPipelineTest::_testDisplaySinkHasLatencyOnceLinked()
+{
+    // No LATENCY message follows the link: the stub decoder posts none, and the sink gets no frame to post one for.
+    const StubDecoderRegistration stubDecoder;
+    QVERIFY(stubDecoder.registered());
+
+    // Nor does the watchdog replace the decoder that shows nothing, which would link the sink anew.
+    Receiver stream(udpListenUri(), /*autoReconnect=*/false, std::chrono::minutes{1});
+    stream.window.show();
+    stream.receiver->setVideoOutput(stream.output);
+    QVERIFY(stream.startStreaming());
+    QVERIFY_TRUE_WAIT(stream.receiver->decoderName() == QLatin1StringView(kStubDecoderName), TestTimeout::mediumMs());
+
+    // Synced to the clock, the sink shows a frame its latency after the frame's time. With none it would take the
+    // first frames, which the jitter buffer alone held for its latency, for late ones and drop them.
+    const auto sinkLatencyMs = [&stream] {
+        guint64 latencyMs = 0;
+        (void) runOnPipeline(stream.receiver.get(), [&latencyMs](GstElement* pipeline) {
+            if (const GStreamer::GstElementPtr sink = GstTest::findByFactory(pipeline, "qgcqvideosink")) {
+                latencyMs = GST_TIME_AS_MSECONDS(gst_base_sink_get_latency(GST_BASE_SINK(sink.get())));
+            }
+        });
+        return latencyMs;
+    };
+    QVERIFY_TRUE_WAIT(sinkLatencyMs() >= static_cast<guint64>(stream.receiver->config().rtpJitterLatencyMs),
+                      TestTimeout::mediumMs());
 }
 
 void GstVideoReceiverPipelineTest::_testDecoderInsertionFailureStopsStream_data()
