@@ -201,7 +201,7 @@ private:
     std::shared_ptr<void> _keepAlive;
 };
 
-void resetCachedState() noexcept
+void resetCachedState()
 {
     GstD3D12StagingPool::clear();
     s_diag.reset();

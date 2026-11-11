@@ -44,7 +44,7 @@ GpuBinPreference parseGpuBinPreference(QByteArrayView value)
 #endif
 }
 
-GpuBinPreference gpuBinPreference() noexcept
+GpuBinPreference gpuBinPreference()
 {
 #ifdef QGC_UNITTEST_BUILD
     if (const std::optional<SinkEnvironment> environment = sinkEnvironmentForTest()) {

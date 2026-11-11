@@ -43,7 +43,7 @@ void forEachCompiledPath(Fn&& fn)
 }  // namespace
 #endif
 
-void onPipelineError(const GError* error, const gchar* debug) noexcept
+void onPipelineError(const GError* error, const gchar* debug)
 {
     // Only a real device loss should drop every GPU cache; ordinary stream errors must not. There is no structured
     // device-lost event, so classify by the D3D/DXGI device-removed/reset text surfaced in the error/debug strings.
@@ -71,7 +71,7 @@ GstBusSyncReply onBusSyncMessage(GstMessage* msg) noexcept
     return GST_BUS_PASS;
 }
 
-void onPipelineRestart() noexcept
+void onPipelineRestart()
 {
 #if defined(QGC_HAS_ANY_GPU_PATH)
     for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
@@ -82,7 +82,7 @@ void onPipelineRestart() noexcept
 #endif
 }
 
-void resetCachedGpuResources() noexcept
+void resetCachedGpuResources()
 {
 #if defined(QGC_HAS_ANY_GPU_PATH)
     const auto paths = GstHwPathRegistry::paths();
@@ -99,7 +99,7 @@ void resetCachedGpuResources() noexcept
 #endif
 }
 
-void configureQtGraphics([[maybe_unused]] bool softwareRendering) noexcept
+void configureQtGraphics([[maybe_unused]] bool softwareRendering)
 {
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && \
     (defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH))
@@ -121,7 +121,7 @@ void configureQtGraphics([[maybe_unused]] bool softwareRendering) noexcept
 #endif
 }
 
-void connectMainWindow(QQuickWindow* window) noexcept
+void connectMainWindow(QQuickWindow* window)
 {
 #if defined(QGC_HAS_ANY_GPU_PATH)
     QGCRhiCapture::connectWindow(window);
@@ -204,7 +204,7 @@ bool proposeDeviceBoundPool(GstQuery* query, GstCaps* caps, const GstVideoInfo* 
     return false;
 }
 
-QString extraPathStatsSince(const GstHwPathTelemetry::Snapshot& baseline) noexcept
+QString extraPathStatsSince(const GstHwPathTelemetry::Snapshot& baseline)
 {
     QString out;
 #if defined(QGC_HAS_ANY_GPU_PATH)

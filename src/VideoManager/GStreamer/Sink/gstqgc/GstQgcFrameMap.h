@@ -45,4 +45,4 @@ struct MappedFrame
 MappedFrame mapSampleToFrame(GstBuffer* buffer, GstCaps* caps, const GstVideoInfo& info,
                              const QVideoFrameFormat& format, const HwVideoBufferContext& hwContext,
                              const CpuVideoFramePool::PinnedFrameCounter& pinnedCpuFrames,
-                             HwResolvedPathCache* pathCache = nullptr) noexcept;
+                             HwResolvedPathCache* pathCache = nullptr);

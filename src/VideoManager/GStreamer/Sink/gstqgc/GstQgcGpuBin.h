@@ -31,7 +31,7 @@ struct GpuBinPreference
 GpuBinPreference parseGpuBinPreference(QByteArrayView value);
 
 /// parseGpuBinPreference() of QGC_GST_GPU_BIN, read and logged on the first call.
-GpuBinPreference gpuBinPreference() noexcept;
+GpuBinPreference gpuBinPreference();
 
 /// The bin for @p preference under @p target. glupload hands GLMemory to Qt through the GL share group, so it needs Qt
 /// on OpenGL that gst-gl shares (EGL or GLX); direct DMABuf hands EGLImages to Qt, so it needs OpenGL on EGL. A

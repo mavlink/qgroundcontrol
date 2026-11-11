@@ -22,7 +22,7 @@ QOpenGLContext* bindRhiContext(QRhi& rhi);
 
 /// EGLDisplay Qt renders @p qtCtx on, else @p fallback. EGLImages from one display can't be sampled by a context on
 /// another, so prefer this over a display captured elsewhere.
-EGLDisplay renderDisplay(QOpenGLContext* qtCtx, EGLDisplay fallback) noexcept;
+EGLDisplay renderDisplay(QOpenGLContext* qtCtx, EGLDisplay fallback);
 
 /// True iff @p extension is in @p display's EGL_EXTENSIONS; does NOT eglInitialize, cached per (display, extension),
 /// thread-safe.

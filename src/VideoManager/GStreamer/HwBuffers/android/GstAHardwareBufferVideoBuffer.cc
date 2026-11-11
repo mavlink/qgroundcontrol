@@ -187,7 +187,7 @@ bool GstAHardwareBufferVideoBuffer::validatePlaneHandles() const
 }
 
 // Callable from any thread: entries whose context is not current here are destroyed on its render thread later.
-void GstAHardwareBufferVideoBuffer::resetImageCache() noexcept
+void GstAHardwareBufferVideoBuffer::resetImageCache()
 {
     const QMutexLocker lock(&s_imageCacheMutex);
     s_imageCache.clear();

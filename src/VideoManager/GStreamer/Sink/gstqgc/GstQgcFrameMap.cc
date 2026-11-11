@@ -222,7 +222,7 @@ QVideoFrameFormat applyCropMeta(QVideoFrameFormat format, GstBuffer* buffer)
 MappedFrame mapSampleToFrame(GstBuffer* buffer, GstCaps* caps, const GstVideoInfo& info,
                              const QVideoFrameFormat& format, [[maybe_unused]] const HwVideoBufferContext& hwContext,
                              const CpuVideoFramePool::PinnedFrameCounter& pinnedCpuFrames,
-                             [[maybe_unused]] HwResolvedPathCache* pathCache) noexcept
+                             [[maybe_unused]] HwResolvedPathCache* pathCache)
 {
     MappedFrame out;
 #if defined(QGC_HAS_ANY_GPU_PATH)

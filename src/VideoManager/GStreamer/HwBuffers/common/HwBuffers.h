@@ -17,30 +17,33 @@ class QQuickWindow;
 
 namespace HwBuffers {
 
+// noexcept marks what GStreamer's C callbacks call straight into (a bus sync handler, qgcqvideosink's vfuncs): no
+// exception may unwind through those, so one thrown here, such as a failed allocation, ends the process on purpose.
+
 /// For a receiver's bus sync handler: the context bridges answer NEED_CONTEXT. GST_BUS_DROP means @p msg was consumed
 /// (and unreffed); always GST_BUS_PASS when no GPU path is compiled.
 GstBusSyncReply onBusSyncMessage(GstMessage* msg) noexcept;
 
 /// For a receiver's pipeline ERROR (@p error and @p debug as gst_message_parse_error() returns them): drops cached GPU
 /// devices when it reports a device loss. No-op when no GPU paths compiled.
-void onPipelineError(const GError* error, const gchar* debug) noexcept;
+void onPipelineError(const GError* error, const gchar* debug);
 
 /// Pipeline-restart hook; clears exhausted prime-retry latches (GL, Vulkan) so a restart can prime on the next
 /// NEED_CONTEXT. Never drops shared GPU objects: other streams may still be using them.
-void onPipelineRestart() noexcept;
+void onPipelineRestart();
 
 /// Drop process-wide native GPU handles tied to the current Qt scene-graph device/context. Affects every running
 /// stream, so only for scene-graph teardown, window swaps and device loss.
-void resetCachedGpuResources() noexcept;
+void resetCachedGpuResources();
 
 /// Qt graphics setup the GPU paths need, which Qt reads at startup: call before the QGuiApplication exists. On
 /// desktop Linux it pins the scene graph to OpenGL, unless @p softwareRendering (--swrast) or QSG_RHI_BACKEND chose
 /// one, and Qt's xcb platform to EGL; with the GL or DMABuf path it shares Qt's OpenGL contexts. No-op otherwise.
-void configureQtGraphics(bool softwareRendering) noexcept;
+void configureQtGraphics(bool softwareRendering);
 
 /// Wire the main QQuickWindow into the RHI-capture path so snapshots, and the EGLDisplay Qt renders with, follow its
 /// QRhi. GUI thread; no-op without GPU.
-void connectMainWindow(QQuickWindow* window) noexcept;
+void connectMainWindow(QQuickWindow* window);
 
 /// Populate the per-pipeline HwVideoBufferContext (gpu-enabled flag, AHardwareBuffer EGL display) the factory needs;
 /// the sink adds dmaBufImportDisplay() per frame. GPU stays disabled in builds without a GPU path. Safe off the GUI
@@ -64,6 +67,6 @@ bool proposeDeviceBoundPool(GstQuery* query, GstCaps* caps, const GstVideoInfo* 
 /// Process-wide render-time counters no sink can attribute (map failures, texture reuse, producer waits, fallback
 /// reasons, ...) accumulated since @p baseline, each printed only when nonzero. Reading never resets them, so every
 /// receiver can report its own window.
-QString extraPathStatsSince(const GstHwPathTelemetry::Snapshot& baseline) noexcept;
+QString extraPathStatsSince(const GstHwPathTelemetry::Snapshot& baseline);
 
 }  // namespace HwBuffers

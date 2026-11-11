@@ -45,7 +45,7 @@ public:
     void releaseFrame();
 
 private:
-    void _releaseElementBinding() noexcept;
+    void _releaseElementBinding();
     void _clearVideoSinkFrame();
     void _applyWindowVisibility();
 

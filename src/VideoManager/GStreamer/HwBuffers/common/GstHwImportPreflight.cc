@@ -42,7 +42,7 @@ void forgetRhi(QRhi* rhi)
 
 namespace GstHwImportPreflight {
 
-bool canImportTexture(QRhi* rhi, QRhiTexture::Format fmt, const QSize& size, QRhiTexture::Flags flags) noexcept
+bool canImportTexture(QRhi* rhi, QRhiTexture::Format fmt, const QSize& size, QRhiTexture::Flags flags)
 {
     if (!rhi) {
         return true;
@@ -60,8 +60,7 @@ bool canImportTexture(QRhi* rhi, QRhiTexture::Format fmt, const QSize& size, QRh
     return true;
 }
 
-bool canImportPlanes(QRhi* rhi, QVideoFrameFormat::PixelFormat pixelFormat, const QSize& size,
-                     QRhiTexture::Flags flags) noexcept
+bool canImportPlanes(QRhi* rhi, QVideoFrameFormat::PixelFormat pixelFormat, const QSize& size, QRhiTexture::Flags flags)
 {
     if (!rhi) {
         return true;
@@ -83,7 +82,7 @@ bool canImportPlanes(QRhi* rhi, QVideoFrameFormat::PixelFormat pixelFormat, cons
 }
 
 bool preflightOrRecord(QRhi* rhi, HwVideoBufferPath path, QVideoFrameFormat::PixelFormat pixelFormat, const QSize& size,
-                       QRhiTexture::Flags flags) noexcept
+                       QRhiTexture::Flags flags)
 {
     bool ok = false;
     {

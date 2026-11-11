@@ -19,7 +19,7 @@ namespace GstEglHelpers {
 namespace {
 
 /// EGLDisplay bound to @p qtCtx (else current-thread display, else EGL_NO_DISPLAY); does NOT initialize it.
-EGLDisplay resolveEglDisplay(QOpenGLContext* qtCtx) noexcept
+EGLDisplay resolveEglDisplay(QOpenGLContext* qtCtx)
 {
     if (qtCtx) {
         if (auto* egl = qtCtx->nativeInterface<QNativeInterface::QEGLContext>()) {
@@ -40,7 +40,7 @@ QOpenGLContext* bindRhiContext(QRhi& rhi)
     return handles ? handles->context : nullptr;
 }
 
-EGLDisplay renderDisplay(QOpenGLContext* qtCtx, EGLDisplay fallback) noexcept
+EGLDisplay renderDisplay(QOpenGLContext* qtCtx, EGLDisplay fallback)
 {
     const EGLDisplay display = resolveEglDisplay(qtCtx);
     return display != EGL_NO_DISPLAY ? display : fallback;

@@ -67,7 +67,7 @@ RenderBackend fromRhiImplementation(int implementation) noexcept
 
 }  // namespace
 
-RenderTarget currentRenderTarget() noexcept
+RenderTarget currentRenderTarget()
 {
 #ifdef QGC_UNITTEST_BUILD
     if (const std::optional<SinkEnvironment> environment = sinkEnvironmentForTest()) {

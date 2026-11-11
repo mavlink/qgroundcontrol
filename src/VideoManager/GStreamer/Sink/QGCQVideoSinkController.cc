@@ -103,7 +103,7 @@ void QGCQVideoSinkController::releaseFrame()
     }
 }
 
-void QGCQVideoSinkController::_releaseElementBinding() noexcept
+void QGCQVideoSinkController::_releaseElementBinding()
 {
     if (!_element || _bindingReleased)
         return;

@@ -185,7 +185,7 @@ DeviceSnapshot& deviceSnapshot() noexcept
     return s_snapshot;
 }
 
-void* qtEglDisplay() noexcept
+void* qtEglDisplay()
 {
     void* display = s_qtEglDisplay.load(std::memory_order_acquire);
 #if defined(QGC_RHI_CAPTURE_PROBES_EGL)

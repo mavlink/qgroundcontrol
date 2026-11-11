@@ -23,7 +23,7 @@ static_assert(GstQtDmaBufImport::kImplicitModifier == QtMultimediaPrivate::DmaBu
 
 namespace GstQtDmaBufImport {
 
-PlaneFourccs planeFourccs(QVideoFrameFormat::PixelFormat pixelFormat) noexcept
+PlaneFourccs planeFourccs(QVideoFrameFormat::PixelFormat pixelFormat)
 {
     PlaneFourccs out;
     switch (pixelFormat) {
@@ -50,7 +50,7 @@ PlaneFourccs planeFourccs(QVideoFrameFormat::PixelFormat pixelFormat) noexcept
     return out;
 }
 
-EGLDisplay importDisplay(QRhi& rhi) noexcept
+EGLDisplay importDisplay(QRhi& rhi)
 {
     if (rhi.backend() != QRhi::OpenGLES2) {
         return EGL_NO_DISPLAY;

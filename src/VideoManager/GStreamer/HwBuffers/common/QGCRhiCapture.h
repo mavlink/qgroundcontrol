@@ -40,6 +40,6 @@ void connectWindow(QQuickWindow* window);
 /// The EGLDisplay (as void*) Qt's OpenGL renders with; null when Qt's OpenGL doesn't run on EGL (GLX, WGL, CGL, no
 /// OpenGL) or that isn't known yet. Taken from Qt's global share context, else from the platform integration (asked on
 /// the GUI thread only), else from the scene graph's OpenGL context once it runs. Any thread.
-void* qtEglDisplay() noexcept;
+void* qtEglDisplay();
 
 }  // namespace QGCRhiCapture
