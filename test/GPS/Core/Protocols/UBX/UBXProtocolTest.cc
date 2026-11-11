@@ -1686,6 +1686,17 @@ void reconfigureDoesNotReuseStopConfirmation(GPSTestClock& clock)
     f.timeout();
 }
 
+/// A configuration that finds no receiver reports no identity, whatever an earlier one on the same runtime found.
+void reconfigureForgetsIdentity(GPSTestClock& clock)
+{
+    Fixture f(clock);
+    QVERIFY(f.configure());
+    QCOMPARE(f.driver.identity(), QStringLiteral("ZED-F9P HPG 1.32"));
+    f.receiver.model.corruptIdentity = true;
+    QVERIFY(!f.configure());
+    QCOMPARE(f.driver.identity(), QString());
+}
+
 constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"isolated-frame-control", isolatedFrameAndControl},
     {"late-readback-replies", lateReadbackReplies},
@@ -1711,6 +1722,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"transactional-frames", transactionalFrames},
     {"reentrant-payload", reentrantPayload},
     {"reconfigure-does-not-reuse-stop-confirmation", reconfigureDoesNotReuseStopConfirmation},
+    {"reconfigure-forgets-identity", reconfigureForgetsIdentity},
     {"survey-stop-poll-failures", surveyStopPollFailures},
     {"receivers-without-base", receiversWithoutBase},
     {"fixture-sequences", independentSequences},

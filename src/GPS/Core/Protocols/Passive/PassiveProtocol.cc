@@ -92,13 +92,22 @@ class PassiveProtocol final : public GPSFamilyProtocol
 public:
     static constexpr std::chrono::milliseconds SOURCE_TIMEOUT{3000};
 
-    PassiveProtocol() { _reset(); }
+    PassiveProtocol()
+    {
+        for (size_t index = 0; index < INPUTS.size(); ++index) {
+            GPSRuntimeIO io;
+            io.clock.nowUs = [this] { return _context ? _context->nowUs() : 0; };
+            GPSRuntimeObserver observer;
+            observer.decoded = [this, index](const GPSEventBatch& batch) { _received(index, batch); };
+            _inputs[index] = {.runtime = std::make_unique<GPSProtocolRuntime>(*INPUTS[index].family, std::move(io),
+                                                                              std::move(observer)),
+                              .lastPositionUs = 0};
+            _inputs[index].runtime->armNavigationDecode();
+        }
+    }
 
     bool configure(GPSCommandChannel& channel, GPSConfig, unsigned& baud) override
     {
-        _ready = false;
-        _reset();
-        channel.stream().reset();
         if (!channel.setBaudRate(baud)) {
             channel.failControl(QStringLiteral("The link cannot run at %1 baud").arg(baud));
             return false;
@@ -157,21 +166,6 @@ private:
             }
         }
         return std::nullopt;
-    }
-
-    void _reset()
-    {
-        _followed.reset();
-        for (size_t index = 0; index < INPUTS.size(); ++index) {
-            GPSRuntimeIO io;
-            io.clock.nowUs = [this] { return _context ? _context->nowUs() : 0; };
-            GPSRuntimeObserver observer;
-            observer.decoded = [this, index](const GPSEventBatch& batch) { _received(index, batch); };
-            _inputs[index] = {.runtime = std::make_unique<GPSProtocolRuntime>(*INPUTS[index].family, std::move(io),
-                                                                              std::move(observer)),
-                              .lastPositionUs = 0};
-            _inputs[index].runtime->armNavigationDecode();
-        }
     }
 
     void _received(size_t index, const GPSEventBatch& batch)

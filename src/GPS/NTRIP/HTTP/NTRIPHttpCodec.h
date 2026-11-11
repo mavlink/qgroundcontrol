@@ -89,6 +89,8 @@ private:
     void _beginBody(Result& result);
     void _beginIcyBody(Result& result);
     void _finishError(Result& result);
+    /// What a 3xx answer means for the user, naming the Location target when the caster gave one.
+    static QString _redirectDetail(int status, const QHttpHeaders& headers);
     void _fail(Result& result, const QString& detail, NTRIPError code = NTRIPError::InvalidHttpResponse);
 
     QHttpHeaders _headers;

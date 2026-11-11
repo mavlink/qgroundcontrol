@@ -18,7 +18,7 @@ enum class NTRIPError
     ServerDisconnected,
     InvalidHttpResponse,
     HttpError,
-    /// HTTP 400 or 403: the caster refuses the request as sent, so repeating it cannot succeed.
+    /// HTTP 3xx, 400 or 403: the caster does not serve the request as sent, so repeating it cannot succeed.
     RequestRejected,
     HeaderTooLarge,
     InvalidMountpoint,

@@ -47,8 +47,6 @@ public:
 
     void sendNMEA(const QByteArray& nmea) override { sentNmea.append(nmea); }
 
-    void setRtcmWhitelist(const QVector<int>& messageIds) override { lastWhitelist = messageIds; }
-
     // --- Test control ---
 
     void simulateConnect()
@@ -62,14 +60,13 @@ public:
         emit error(NTRIPFailure{code, detail, retryAfter});
     }
 
-    /// Like NTRIPHttpTransport, a stream reports connected() before its first frame, and emits only valid frames of
-    /// whitelisted messages.
+    /// Like NTRIPHttpTransport, a stream reports connected() before its first frame, and emits only valid frames.
     void simulateRtcmData(const QByteArray& data, int messageId = 0, qint64 receivedAtMs = GPSTest::nowMs())
     {
         if (!_connected) {
             simulateConnect();
         }
-        if (!RTCMFramer::isValidFrame(data) || (!lastWhitelist.isEmpty() && !lastWhitelist.contains(messageId))) {
+        if (!RTCMFramer::isValidFrame(data)) {
             return;
         }
         emit correctionFrameReceived(
@@ -81,7 +78,6 @@ public:
     int stopCount = 0;
     std::function<void()> onStop;
     QVector<QByteArray> sentNmea;
-    QVector<int> lastWhitelist;
 
 private:
     bool _connected = false;

@@ -299,6 +299,8 @@ GPSStreamDemux::GPSStreamDemux(const GPSStreamConfig& config)
 }
 
 GPSStreamDemux::~GPSStreamDemux() = default;
+GPSStreamDemux::GPSStreamDemux(GPSStreamDemux&&) noexcept = default;
+GPSStreamDemux& GPSStreamDemux::operator=(GPSStreamDemux&&) noexcept = default;
 
 void GPSStreamDemux::push(uint8_t byte, Handler& handler)
 {

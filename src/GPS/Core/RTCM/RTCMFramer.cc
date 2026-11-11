@@ -142,7 +142,6 @@ RTCMDecodedFrame RTCMFrameDecoder::_result() const
         (_nextReceiptIndex + _receiptTimes.size() - _framer.bufferedSize()) % _receiptTimes.size();
     RTCMDecodedFrame result{QByteArrayView(frame).toByteArray(), _framer.messageId(), _receiptTimes[firstReceiptIndex]};
     result.valid = _framer.valid();
-    result.filtered = result.valid && !_whitelist.isEmpty() && !_whitelist.contains(result.messageId);
     return result;
 }
 

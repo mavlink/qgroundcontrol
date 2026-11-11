@@ -127,6 +127,47 @@ void RTCMMAVLinkVehicleTest::_replayExcludedFromLiveAdmissions()
     QCOMPARE(sender.totalBytesSubmitted(), quint64(2 * payload.size()));
 }
 
+void RTCMMAVLinkVehicleTest::_highLatencyLinkExcluded()
+{
+    // High-latency links cannot fetch component metadata.
+    ignoreLogMessage("ComponentInformation.RequestMetaDataTypeStateMachine", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("failed to load metadata")));
+    const auto satellite = createMockLink(QStringLiteral("Satellite"), true);
+    QVERIFY(satellite);
+    auto* satelliteLink = qobject_cast<MockLink*>(satellite.get());
+    QVERIFY(satelliteLink);
+    auto* satelliteVehicle = waitForVehicleConnect();
+    QVERIFY(satelliteVehicle);
+    QTRY_VERIFY_WITH_TIMEOUT(satelliteVehicle->isInitialConnectComplete(), TestTimeout::longMs());
+    QVERIFY(satellite->isConnected());
+    QCOMPARE(satelliteVehicle->vehicleLinkManager()->primaryLink().lock(), satellite);
+
+    const auto output = RTCMMAVLink::vehicleLinkOutputs();
+    RTCMMAVLink sender;
+    sender.setOutputProvider(output);
+    const QByteArray payload(RTCMMAVLinkPacket::kFragmentLen, 'R');
+    QVERIFY(output().isEmpty());
+    QVERIFY(RTCMMAVLink::vehicleLinkOutputs(GPSCorrectionSettings::ActiveVehicle)().isEmpty());
+    QCOMPARE(sender.submitToOutputs(payload), 0ULL);
+
+    expectAppMessage(QRegularExpression(QStringLiteral("Connected to Vehicle [0-9]+")));
+    const auto radio = createMockLink(QStringLiteral("Radio"));
+    QVERIFY(radio);
+    auto* radioLink = qobject_cast<MockLink*>(radio.get());
+    QVERIFY(radioLink);
+    auto* vehicles = MultiVehicleManager::instance();
+    QTRY_VERIFY_WITH_TIMEOUT(vehicles->getVehicleById(radioLink->vehicleId()), TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    auto* radioVehicle = vehicles->getVehicleById(radioLink->vehicleId());
+    QTRY_VERIFY_WITH_TIMEOUT(radioVehicle->isInitialConnectComplete(), TestTimeout::mediumMs());
+
+    QCOMPARE(output().size(), 1);
+    QCOMPARE(sender.submitToOutputs(payload), quint64(payload.size()));
+    QTRY_COMPARE_WITH_TIMEOUT(radioLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_GPS_RTCM_DATA), 1,
+                              TestTimeout::mediumMs());
+    QCOMPARE(satelliteLink->receivedMavlinkMessageCount(MAVLINK_MSG_ID_GPS_RTCM_DATA), 0);
+}
+
 void RTCMMAVLinkVehicleTest::_settingSelectsVehicles()
 {
     // The first vehicle to connect is the active one.

@@ -147,8 +147,6 @@ private:
         }
     };
 
-    /// Starts a configuration attempt: forgets the base setup, metadata and survey, and resets the stream.
-    void _reset(GPSStreamDemux& stream);
     /// Asks for the port the receiver is connected to, up to @a attempts times. @return whether it answered.
     bool _queryPort(GPSCommandChannel& channel, unsigned attempts);
     void _setUpBase(GPSCommandChannel& channel);
@@ -199,7 +197,6 @@ private:
 
 bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned& baud)
 {
-    _reset(channel.stream());
     _base = config.base;
     const auto detection = channel.detectBaud(Plan::BAUD_RATES, baud, [this, &channel]() -> GPSBaudProbe {
         const bool answered = _queryPort(channel, Plan::PORT_QUERY_ATTEMPTS);
@@ -335,28 +332,6 @@ GPSCommandOutcome Protocol::_boardReply(std::string_view reply)
     const std::string_view board = reply.substr(PREFIX.size());
     _board = QString::fromLatin1(board.substr(0, board.find_first_of(",*")));
     return GPSCommandOutcome::Acknowledged;
-}
-
-void Protocol::_reset(GPSStreamDemux& stream)
-{
-    _base = {};
-    _board.clear();
-    _ready = false;
-    _baseSetupDone = false;
-    _baseSetupPending = false;
-    _rtcmActivationPending = false;
-    _awaitingSurveyReceipt = false;
-    _surveyClock = {};
-    _receiverPositions = false;
-    _positionOutputAtUs = 0;
-    _utcReceivedUs = 0;
-    _utcReference = 0;
-    _positionEpoch = {};
-    _accuracyReceipt = {};
-    _accuracy = {};
-    _requestSurveyReceipts(false);
-    _nmea.setRTCMEnabled(false);
-    _nmea.reset(stream);
 }
 
 GPSReceiveUpdates Protocol::_decodeLine(std::string_view line, GPSDecodeContext& context)

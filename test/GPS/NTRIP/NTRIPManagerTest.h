@@ -47,12 +47,12 @@ private slots:
     void _retryPolicy();
     void _sourceTableRetriedOnlyAfterCorrections();
     void _httpRetryAfterReachesManager();
+    void _redirectWaitsForUser();
     void _retryPublicationSuperseded();
     void _missingMountpointDoesNotStartTransport();
     void _correctionIngressKeepsSessionAndIdentity();
     void _ggaSettingsUseInjectedProviders();
-    void _factChangesReconfigureTransport_data();
-    void _factChangesReconfigureTransport();
+    void _mountpointChangeReconnects();
     void _transportDiagnosticsReachManager();
     void _statusCallbackStopsTransition();
     void _connectedCallbackStopsTransition();

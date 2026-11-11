@@ -47,18 +47,21 @@ struct GPSRuntimeObserver
 class GPSProtocolRuntime final : private GPSStreamDemux::Handler
 {
 public:
-    /// Creates the family's protocol with its factory.
+    /// Creates the family's protocol with its factory, and again for each configure().
     GPSProtocolRuntime(const GPSReceiverFamily& family, GPSRuntimeIO io, GPSRuntimeObserver observer = {});
-    /// Hosts @a protocol, for families configured by the caller such as test doubles.
+    /// Hosts @a protocol, for families configured by the caller such as test doubles. configure() keeps it and its
+    /// stream as they are.
     GPSProtocolRuntime(const GPSReceiverFamily& family, std::unique_ptr<GPSFamilyProtocol> protocol, GPSRuntimeIO io,
                        GPSRuntimeObserver observer = {});
     ~GPSProtocolRuntime();
 
     Q_DISABLE_COPY_MOVE(GPSProtocolRuntime)
 
-    /// Configures the receiver after clearing any sticky failure. A zero @a baud requests detection and returns the
-    /// detected rate. A command still pending at the end is retired as Written, and a successful configuration flushes
-    /// once more so a fixed-base or survey-start event is delivered without another read.
+    /// Configures the receiver after clearing any sticky failure, on a new protocol from the family's factory and a
+    /// stream as the family describes it, so nothing an earlier attempt or decode left reaches this one. A zero @a baud
+    /// requests detection and returns the detected rate. A command still pending at the end is retired as Written, and
+    /// a successful configuration flushes once more so a fixed-base or survey-start event is delivered without another
+    /// read.
     /// @return true when the receiver is ready; otherwise error() reports the failure, Protocol unless the link,
     /// a stop or a needed consent ended it, and errorDetail() describes it.
     [[nodiscard]] bool configure(const GPSConfig& config, unsigned& baud);
@@ -124,6 +127,8 @@ private:
     GPSRuntimeObserver _observer;
     GPSStreamDemux _demux;
     std::unique_ptr<GPSFamilyProtocol> _protocol;
+    /// Whether configure() replaces the protocol and stream; false for a protocol the caller supplied.
+    bool _renewsProtocol = false;
     GPSCommandChannel _channel;
     GPSDecodeContext _context;
 };

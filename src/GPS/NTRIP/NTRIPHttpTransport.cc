@@ -10,20 +10,14 @@
 
 QGC_LOGGING_CATEGORY(NTRIPHttpTransportLog, "GPS.NTRIPHttpTransport")
 
-NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPConnectionConfig& config, const QVector<int>& rtcmWhitelist,
-                                       QObject* parent, RuntimeScheduler* scheduler)
+NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPConnectionConfig& config, QObject* parent,
+                                       RuntimeScheduler* scheduler)
     : NTRIPTransport(parent)
     , _config(config)
     , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
     , _connectTimeoutTask(_scheduler, this)
     , _dataWatchdogTask(_scheduler, this)
-{
-    _rtcmDecoder.setWhitelist(rtcmWhitelist);
-    qCDebug(NTRIPHttpTransportLog) << "RTCM message filter:" << rtcmWhitelist;
-    if (rtcmWhitelist.empty()) {
-        qCDebug(NTRIPHttpTransportLog) << "Message filter empty; all RTCM message IDs will be forwarded.";
-    }
-}
+{}
 
 NTRIPHttpTransport::~NTRIPHttpTransport()
 {
@@ -168,13 +162,8 @@ void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer, qint64 receivedAtM
             qCWarning(NTRIPHttpTransportLog) << "Invalid RTCM frame, dropping message id" << frame.messageId;
             return true;
         }
-        // Whitelisting is a routing policy, not evidence of a broken caster stream.
         _lastValidFrameMs = _nowMs();
         _dataSinceValidFrame = false;
-        if (frame.filtered) {
-            qCDebug(NTRIPHttpTransportLog) << "Ignoring RTCM" << frame.messageId;
-            return true;
-        }
         qCDebug(NTRIPHttpTransportLog) << "RTCM packet id" << frame.messageId << "len" << frame.data.size();
         emit correctionFrameReceived(frame);
         return _isCurrent(session);

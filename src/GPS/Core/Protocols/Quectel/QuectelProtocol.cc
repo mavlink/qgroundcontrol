@@ -158,8 +158,6 @@ private:
 
     /// Ends readiness: no survey, no corrections.
     void _stop(GPSDecodeContext& context);
-    /// Starts a configuration attempt after _stop(): forgets the firmware and survey history, restarts the stream.
-    void _startAttempt(GPSStreamDemux& stream);
     /// The base the survey status must describe.
     void _setBase(const GPSBaseStationConfig::Mode& mode);
     /// A restart is about to be requested: the survey is revoked until the restart is verified.
@@ -254,9 +252,6 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
 
 bool Protocol::Attempt::run(GPSConfig config, unsigned& baud)
 {
-    _protocol._stop(_channel.context());
-    (void) _channel.flush();
-    _protocol._startAttempt(_channel.stream());
     const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&config.base.mode);
     if (!supportedBase(config.base.mode)) {
         return _fail(
@@ -554,16 +549,6 @@ void Protocol::_stop(GPSDecodeContext& context)
     _ready = false;
     _phase = SurveyPhase::Off;
     _revokeSurvey(context);
-}
-
-void Protocol::_startAttempt(GPSStreamDemux& stream)
-{
-    _lastTow.reset();
-    _survey.reset();
-    _phase = SurveyPhase::Off;
-    _firmware.clear();
-    _nmea.reset(stream);
-    _nmea.setRTCMEnabled(false);
 }
 
 void Protocol::_setBase(const GPSBaseStationConfig::Mode& mode)

@@ -238,7 +238,6 @@ void RTCMConformanceTest::_sharedCorpus()
             for (auto decoded = decoder.addByte(byte, 1000 + chunkIndex * chunkIntervalMs); decoded;
                  decoded = decoder.nextFrame()) {
                 QVERIFY(++resultCount <= RTCMFramer::MAX_FRAME_SIZE);
-                QVERIFY(!decoded->filtered);
                 if (decoded->valid) {
                     decodedFrames.append(decoded->data);
                     decodedIds.append(decoded->messageId);
@@ -333,13 +332,12 @@ void RTCMConformanceTest::_frameFields()
     QVERIFY(!framer.valid());
 }
 
-void RTCMConformanceTest::_fragmentReceiptAndFiltering()
+void RTCMConformanceTest::_fragmentReceipt()
 {
     RTCMFrameDecoder decoder;
-    decoder.setWhitelist({1077, 1077});
     QVERIFY(!decoder.addByte(RTCMFramer::PREAMBLE, 500));
     const auto rejected = decoder.addByte(0x04, 500);
-    QVERIFY(rejected && !rejected->valid && !rejected->filtered);
+    QVERIFY(rejected && !rejected->valid);
     QVERIFY(!decoder.nextFrame());
     for (const char byte : SHORT_FRAME.first(4)) {
         QVERIFY(!decoder.addByte(static_cast<uint8_t>(byte), 1000));
@@ -348,27 +346,21 @@ void RTCMConformanceTest::_fragmentReceiptAndFiltering()
     for (const char byte : SHORT_FRAME.sliced(4)) {
         decoded = decoder.addByte(static_cast<uint8_t>(byte), 8000);
     }
-    QVERIFY(decoded && decoded->valid && decoded->filtered);
+    QVERIFY(decoded && decoded->valid);
     QCOMPARE(decoded->messageId, 1005);
     QCOMPARE(decoded->receivedAtMs, qint64(1000));
     QCOMPARE(decoded->data, SHORT_FRAME);
     for (const char byte : LONG_FRAME) {
         decoded = decoder.addByte(static_cast<uint8_t>(byte), 8500);
     }
-    QVERIFY(decoded && decoded->valid && !decoded->filtered);
+    QVERIFY(decoded && decoded->valid);
     QCOMPARE(decoded->messageId, 1077);
     decoder.reset();
     for (const char byte : SHORT_FRAME) {
         decoded = decoder.addByte(static_cast<uint8_t>(byte), 9000);
     }
-    QVERIFY(decoded && decoded->valid && decoded->filtered);
+    QVERIFY(decoded && decoded->valid);
     QCOMPARE(decoded->receivedAtMs, qint64(9000));
-    decoder.setWhitelist({});
-    for (const char byte : SHORT_FRAME) {
-        decoded = decoder.addByte(static_cast<uint8_t>(byte), 10000);
-    }
-    QVERIFY(decoded && decoded->valid && !decoded->filtered);
-    QCOMPARE(decoded->receivedAtMs, qint64(10000));
 }
 
 void RTCMConformanceTest::_repeatedMalformedPreambles()
@@ -381,7 +373,6 @@ void RTCMConformanceTest::_repeatedMalformedPreambles()
         } else {
             QVERIFY(result);
             QVERIFY(!result->valid);
-            QVERIFY(!result->filtered);
             QCOMPARE(result->data, QByteArray::fromHex("d3d3"));
             QCOMPARE(result->receivedAtMs, index + 999);
         }
@@ -403,7 +394,7 @@ void RTCMConformanceTest::_queuedResultDelivery()
     connect(
         this, &RTCMConformanceTest::decoded, &receiver,
         [&received](const RTCMDecodedFrame& result) { received = result; }, Qt::QueuedConnection);
-    emit decoded({SHORT_FRAME, 1005, 1234, true, true});
+    emit decoded({SHORT_FRAME, 1005, 1234, true});
     QVERIFY(!received);
     QCoreApplication::sendPostedEvents(&receiver, QEvent::MetaCall);
     QVERIFY(received);
@@ -411,7 +402,6 @@ void RTCMConformanceTest::_queuedResultDelivery()
     QCOMPARE(received->messageId, 1005);
     QCOMPARE(received->receivedAtMs, qint64(1234));
     QVERIFY(received->valid);
-    QVERIFY(received->filtered);
 }
 
 void RTCMConformanceTest::_messageCountsChangeInPlace()

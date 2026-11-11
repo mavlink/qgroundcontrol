@@ -18,7 +18,7 @@ private slots:
     void _strictValidation();
     void _frameFields_data();
     void _frameFields();
-    void _fragmentReceiptAndFiltering();
+    void _fragmentReceipt();
     void _repeatedMalformedPreambles();
     void _queuedResultDelivery();
     void _messageCountsChangeInPlace();
