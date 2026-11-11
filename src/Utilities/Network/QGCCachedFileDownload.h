@@ -228,6 +228,7 @@ private:
     bool _running = false;
     bool _fromCache = false;
     bool _networkAttemptFailed = false;
+    QString _networkErrorMessage;  ///< Error of the network attempt that led to the cache fallback
     bool _forceNetwork = false;
     bool _cancelRequested = false;
 };

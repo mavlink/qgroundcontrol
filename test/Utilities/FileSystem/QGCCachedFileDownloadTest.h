@@ -15,6 +15,9 @@ private slots:
     void _testCachedFileDownloadDownload();
     void _testCachedFileDownloadSyntheticCacheHit();
     void _testCachedFileDownloadCacheHitKeepsTimestamp();
+    void _testCachedFileDownloadExpiredFallsBackToCache();
+    void _testCachedFileDownloadNoCacheDoesNotFallBack();
+    void _testCachedFileDownloadFailedFallbackReportsNetworkError();
     void _testCachedFileDownloadCachedPath();
     void _testCachedFileDownloadPreferCache();
     void _testCachedFileDownloadNoCache();
