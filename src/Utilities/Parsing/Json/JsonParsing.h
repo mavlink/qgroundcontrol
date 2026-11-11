@@ -14,11 +14,12 @@ namespace JsonParsing {
 constexpr const char *jsonVersionKey = "version";
 constexpr const char *jsonFileTypeKey = "fileType";
 
-
 /// Determines whether a file path contains parseable JSON content.
+/// @param errorString Why it does not; empty when it does
 bool isJsonFile(const QString& fileName, QJsonDocument& jsonDoc, QString& errorString);
 
 /// Determines whether an in-memory byte buffer contains parseable JSON content.
+/// @param errorString Why it does not; empty when it does
 bool isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QString& errorString);
 
 /// Returns NaN if the value is null, or the value converted to double otherwise.
