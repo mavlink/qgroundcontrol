@@ -184,6 +184,34 @@ void GPSReceiverSettingsTest::_surveyCompletePrompt()
     QVERIFY(otherSave->property("visible").toBool());
 }
 
+void GPSReceiverSettingsTest::_surveySaveNeedsApplicationReceiver()
+{
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::ublox));
+    ScriptedGPSReceiver harness;
+    GPSReceiver& receiver = harness.receiver;
+    receiver.facts()->setLiveUpdates(true);
+    QVERIFY(connectOverTcp(receiver));
+    harness.workers.current()->ready();
+    GPSTest::QmlEngine engine;
+    auto status = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
+                                {{QStringLiteral("receiver"), QVariant::fromValue(&receiver)},
+                                 {QStringLiteral("facts"), QVariant::fromValue(receiver.facts())}});
+    QVERIFY2(status, qPrintable(engine.lastError()));
+    auto* prompt = status->findChild<QObject*>(QStringLiteral("rtkSurveyCompletePrompt"));
+    auto* save = status->findChild<QObject*>(QStringLiteral("rtkSurveySaveButton"));
+    auto* accuracy = status->findChild<QObject*>(QStringLiteral("rtkSurveyAccuracy"));
+    QVERIFY(prompt && save && accuracy);
+
+    // GPSManager saves the position of the application's receiver, so a panel that shows another receiver's finished
+    // survey offers no save.
+    harness.workers.current()->survey(
+        {.position = kSurveyedPosition, .meanAccuracyMeters = 0.75, .valid = true, .active = false});
+    QVERIFY(receiver.facts()->canSaveCurrentBasePosition());
+    QVERIFY(accuracy->property("visible").toBool());
+    QVERIFY(!prompt->property("visible").toBool());
+    QVERIFY(!save->property("visible").toBool());
+}
+
 void GPSReceiverSettingsTest::_statusListsConstellations()
 {
     ScriptedGPSReceiver harness;

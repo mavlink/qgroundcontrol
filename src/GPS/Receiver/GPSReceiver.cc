@@ -25,6 +25,7 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QDeadlineTimer>
+#include <QtCore/QScopedValueRollback>
 #include <QtCore/QSet>
 
 QGC_LOGGING_CATEGORY(GPSReceiverLog, "GPS.Receiver.GPSReceiver")
@@ -261,10 +262,12 @@ void GPSReceiver::_onGPSConnect()
 {
     _setError();
     _connection->receiverReady();
+    GPSReceiverSession* const session = _session;
     _facts->_setConfigured(true);
     _setPersistentChangesAllowed(false);
-    if (_session) {
-        _session->registerPosition(_positionManager, _positionHealth);
+    // The status text follows that Fact, and an observer of it may have replaced the session that is ready.
+    if (session && session == _session) {
+        session->registerPosition(_positionManager, _positionHealth);
     }
     _emitChanges();
 #ifndef QGC_NO_SERIAL_LINK
@@ -289,7 +292,7 @@ void GPSReceiver::_endSession(GPSConnectionError error, const QString& detail, G
 {
     // The family an Automatic session detected, else the selected one.
     const auto* family = _session ? gpsReceiverDescriptorForManufacturer(_session->manufacturer()) : nullptr;
-    _retireSession();
+    GPSReceiverSession* const ended = _detachSession();
     _setPersistentChangesAllowed(false);
     const GPSReceiverSessionOutcome outcome = _connection->sessionEnded(end);
     const bool portRemoved = end == GPSReceiverSessionEnd::Unplugged;
@@ -309,7 +312,9 @@ void GPSReceiver::_endSession(GPSConnectionError error, const QString& detail, G
         }
         _setError(GPSReceiverMessages::sessionEnded(outcome, error, detail, end));
     }
-    // Last, because the status Facts notify as they reset and an observer may connect or disconnect from there.
+    // Last, because the session's registrations notify as they end and the status Facts as they reset, and an
+    // observer may connect or disconnect from there.
+    _retire(ended);
     _resetStatus();
 }
 
@@ -568,7 +573,7 @@ void GPSReceiver::_scanSerialPorts()
 
 bool GPSReceiver::connectReceiver()
 {
-    if (_destroying) {
+    if (_destroying || _shuttingDown) {
         return false;
     }
     _scanSerialPorts();
@@ -687,13 +692,26 @@ bool GPSReceiver::_connectReceiver(GPSType type, GPSReceiverWorker::TransportFac
 
 void GPSReceiver::_retireSession()
 {
-    if (auto* const retired = std::exchange(_session, nullptr)) {
+    _retire(_detachSession());
+}
+
+GPSReceiverSession* GPSReceiver::_detachSession()
+{
+    GPSReceiverSession* const detached = std::exchange(_session, nullptr);
+    if (detached) {
         _retiredWorkers.removeIf([](const QPointer<GPSReceiverWorker>& worker) { return worker.isNull(); });
-        if (QPointer<GPSReceiverWorker> worker = retired->worker()) {
+        if (QPointer<GPSReceiverWorker> worker = detached->worker()) {
             _retiredWorkers.append(std::move(worker));
         }
-        retired->deleteLater();
-        retired->retire();
+        detached->deleteLater();
+    }
+    return detached;
+}
+
+void GPSReceiver::_retire(GPSReceiverSession* session)
+{
+    if (session) {
+        session->retire();
     }
     _positionHealth->reset();
 }
@@ -703,6 +721,8 @@ void GPSReceiver::shutdown()
     if (_destroying) {
         return;
     }
+    // Ending the connection notifies observers; a session one of them started would outlive the shutdown.
+    const QScopedValueRollback shuttingDown(_shuttingDown, true);
     _pollTask.cancel();
     _connection->reset();
     endConnection(ShownError::Keep);
@@ -752,11 +772,13 @@ void GPSReceiver::_onPositionUpdated(const GPSPositionReport& report)
     if (gpsFixQualityFromValue(_facts->fixType()->rawValue().toInt()) != report.navigation.fixType) {
         qCDebug(GPSReceiverLog) << "Receiver fix changed:" << report.navigation.fixType;
     }
+    GPSReceiverSession* const session = _session;
+    _updateOutputOverflow(report.integrity.outputOverflowUs);
     // Drivers project integrity to Unknown once it is older than its freshness window.
     _facts->_setSolution(report.navigation.fixType, report.integrity);
-    _updateOutputOverflow(report.integrity.outputOverflowUs);
-    if (_session) {
-        _positionHealth->updateObservation(_session->observation(report, _scheduler->nowUs()));
+    // The labels follow the fix, and an observer of them may have ended or replaced the session that reported.
+    if (session && session == _session) {
+        _positionHealth->updateObservation(session->observation(report, _scheduler->nowUs()));
     }
     _emitChanges();
 }

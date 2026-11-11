@@ -18,6 +18,13 @@ private slots:
     void _unconnectableConfigurationIsNotRetried();
     void _observerActsOnLostSession_data();
     void _observerActsOnLostSession();
+    void _observerActsOnReport_data();
+    void _observerActsOnReport();
+    void _observerReplacesReadyReceiver();
+    void _observerActsOnPositionRelease_data();
+    void _observerActsOnPositionRelease();
+    void _observerActsOnShutdown_data();
+    void _observerActsOnShutdown();
     void _sessionEndMessages_data();
     void _sessionEndMessages();
     void _pollingTicksReceiver();

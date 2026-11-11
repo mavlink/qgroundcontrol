@@ -70,6 +70,8 @@ public:
 
     void reset();
     std::optional<NavigationUpdate> ingest(const Sentence& sentence, uint64_t receivedAtUs);
+    /// Drops the current epoch's VDOP once it is older than METADATA_MAX_AGE. @return the epoch without it, unless a
+    /// fix loss hides that epoch.
     std::optional<NavigationEpoch> expireUntimedMetadata(uint64_t nowUs);
 
 private:
