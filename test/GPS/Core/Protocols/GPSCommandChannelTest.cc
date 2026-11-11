@@ -749,6 +749,44 @@ void GPSCommandChannelTest::_sequenceEndsOnWriteFailure()
     QCOMPARE(run.error, GPSProtocolError::Transport);
 }
 
+void GPSCommandChannelTest::_invalidRawReply_data()
+{
+    QTest::addColumn<QByteArray>("accepted");
+    QTest::addColumn<QByteArray>("rejected");
+    const QByteArray overlong(GPSRawAckMatcher::WINDOW_SIZE + 1, 'A');
+    QTest::newRow("no-accepted-pattern") << QByteArray() << QByteArray("ERR");
+    QTest::newRow("accepted-beyond-window") << overlong << QByteArray("ERR");
+    QTest::newRow("rejected-beyond-window") << QByteArray("OK!") << overlong;
+}
+
+void GPSCommandChannelTest::_invalidRawReply()
+{
+    QFETCH(QByteArray, accepted);
+    QFETCH(QByteArray, rejected);
+    const Run run = runChannel(
+        {.setup = [](LatencyModel& model) { model.script("A\r\n", {{"OK!"}, {"OK!"}, {"OK!"}}); },
+         .channel = [&](GPSCommandChannel& c, ChannelHarness&, unsigned&, QStringList& notes) -> bool {
+             const GPSCommandSequence sequence{{
+                 GPSCommandSequence::Command{.step = {"A", 100ms},
+                                             .wire = "A\r\n",
+                                             .reply = GPSCommandSequence::RawReply{accepted, rejected},
+                                             .attempts = 3},
+                 GPSCommandSequence::Command{.step = {"B", 100ms}, .wire = "B\r\n", .reply = GPSTextMatcher(lineReply)},
+             }};
+             notes += note(c.runSequence(sequence));
+             return false;
+         }});
+    // No reply could resolve the command, so it fails as a driver error before any I/O instead of timing out.
+    QCOMPARE(run.writes, QByteArrayList{});
+    QCOMPARE(run.clockUs, GPSTestClock::START_US);
+    QCOMPARE(run.error, GPSProtocolError::InvalidArgument);
+    QCOMPARE(run.detail, QStringLiteral("Invalid reply pattern for the 'A' command"));
+    QCOMPARE(
+        run.notes,
+        QStringList{QStringLiteral("sequence step=0 label=A outcome=%1").arg(int(GPSCommandOutcome::TransportError))});
+    QCOMPARE(run.evidence, QStringList{command("A", TransportError, GPSTestClock::START_US, 0)});
+}
+
 void GPSCommandChannelTest::_writeResults_data()
 {
     QTest::addColumn<GPSWriteResult>("result");

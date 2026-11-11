@@ -376,6 +376,14 @@ GPSConfigurationEvidence GPSCommandChannel::transact(const GPSCommandSequence::C
 {
     if (const auto* raw = std::get_if<GPSCommandSequence::RawReply>(&command.reply)) {
         GPSRawAckMatcher matcher(raw->accepted, raw->rejected);
+        if (!failed() && !matcher.valid()) {
+            // No reply could resolve the command: writing it would only wait out its timeout on every attempt.
+            beginCommand(command.step);
+            _error = GPSProtocolError::InvalidArgument;
+            _errorDetail = QStringLiteral("Invalid reply pattern for the '%1' command")
+                               .arg(QString::fromUtf8(command.step.command));
+            return completeCommand(failureOutcome());
+        }
         return _transact(command.step, command.wire, &matcher);
     }
     return transact(command.step, command.wire, std::get<GPSTextMatcher>(command.reply));

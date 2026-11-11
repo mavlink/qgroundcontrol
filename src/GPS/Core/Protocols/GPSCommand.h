@@ -25,7 +25,7 @@ enum class GPSProtocolError : uint8_t
     Cancelled,        ///< A stop was requested; not a receiver or link fault.
     Transport,        ///< The link could not read, write, or change its baud rate.
     Protocol,         ///< The receiver violated or rejected the control protocol.
-    InvalidArgument,  ///< The driver requested an invalid write, or received before configuring.
+    InvalidArgument,  ///< The driver requested an invalid write or reply pattern, or received before configuring.
     ConsentRequired,  ///< Configuration needs a persistent receiver change the caller did not allow.
 };
 
@@ -76,14 +76,18 @@ using GPSReplyPoll = std::function<GPSCommandOutcome()>;
 class GPSRawAckMatcher
 {
 public:
+    /// The latest received bytes kept for matching; the longest pattern that can match.
+    static constexpr size_t WINDOW_SIZE = 256;
+
     GPSRawAckMatcher(QByteArrayView accepted, QByteArrayView rejected)
         : _accepted(accepted)
         , _rejected(rejected)
     {}
 
+    /// Whether a reply can resolve the command: there is an accepted pattern and neither pattern exceeds WINDOW_SIZE.
     bool valid() const
     {
-        return !_accepted.empty() && _accepted.size() <= _window.size() && _rejected.size() <= _window.size();
+        return !_accepted.empty() && _accepted.size() <= WINDOW_SIZE && _rejected.size() <= WINDOW_SIZE;
     }
 
     void append(std::span<const uint8_t> bytes)
@@ -111,7 +115,7 @@ public:
 private:
     std::string_view _accepted;
     std::string_view _rejected;
-    std::array<char, 256> _window{};
+    std::array<char, WINDOW_SIZE> _window{};
     size_t _size = 0;
     GPSCommandOutcome _outcome = GPSCommandOutcome::Pending;
 };
@@ -120,7 +124,8 @@ private:
 /// transact(), so its bytes, deadline and evidence are those of a hand-written transact().
 struct GPSCommandSequence
 {
-    /// Matched in the raw received bytes, for replies that need not be complete frames (see GPSRawAckMatcher).
+    /// Matched in the raw received bytes, for replies that need not be complete frames (see GPSRawAckMatcher). A
+    /// command whose patterns are not valid for the matcher fails as an invalid argument without being written.
     struct RawReply
     {
         QByteArray accepted{};

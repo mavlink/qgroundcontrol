@@ -188,7 +188,8 @@ public:
     }
 
     /// As above, for one command of a sequence: its step, bytes and text reply, or its raw reply matched in the
-    /// received bytes.
+    /// received bytes. A raw reply no received bytes could match (GPSRawAckMatcher::valid()) is an invalid argument:
+    /// the attempt fails without being written, and the failure is sticky.
     GPSConfigurationEvidence transact(const GPSCommandSequence::Command& command);
 
     /// Runs @a sequence in order until a required step fails or I/O fails; failed attempts retry up to their count.
