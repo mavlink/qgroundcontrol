@@ -173,6 +173,8 @@ signals:
 
 private:
     void _updateSerialPorts();
+    /// If the configuration's serial port is in use, a message is displayed to the user and true is returned.
+    bool _serialPortInUseMsg(const LinkConfiguration& config);
     std::unique_ptr<SerialAutoConnect> _serialAutoConnect;
     QStringList _commPortList;
     QStringList _commPortDisplayList;

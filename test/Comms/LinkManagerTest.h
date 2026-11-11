@@ -13,6 +13,7 @@ private slots:
 #ifndef QGC_NO_SERIAL_LINK
     void _testOccupiedSerialAutoConnectRecovers();
     void _testReservedSerialPortNotOpened();
+    void _testManualConnectToSerialPortInUseSaysWhy();
     void _testSerialReservationFollowsLink();
 #endif
     void _testReconnectsDroppedAutoConnectLink();
@@ -34,5 +35,11 @@ private:
     void _reconnect();
     void _expectUdpBindFailureLogs();
     void _verifyUdpBindFailureLogs();
+#ifndef QGC_NO_SERIAL_LINK
+    SharedLinkConfigurationPtr _addSerialConfig(const QString& name, const QString& port);
+    /// Connects a link on the serial port holderPort. Then verifies that a link whose port is secondPort, a name
+    /// of the same port, is refused with a message that names the first link.
+    void _verifyOpenPortRefusesSecondLink(const QString& holderPort, const QString& secondPort);
+#endif
     QList<SharedLinkConfigurationPtr> _configsNamed(const char* name);
 };

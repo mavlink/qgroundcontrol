@@ -15,6 +15,8 @@
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #include <fcntl.h>
 #include <unistd.h>
+
+#include "Transport/Support/PseudoTerminal.h"
 #endif
 
 SharedLinkConfigurationPtr LinkManagerTest::_addMockConfig(const QString &name, bool dynamic, bool autoConnect)
@@ -404,6 +406,59 @@ void LinkManagerTest::_testReservedSerialPortNotOpened()
     QVERIFY(!linkManager()->createConnectedLink(sharedConfig));
     QVERIFY(!config->link());
     QVERIFY(SerialPortManager::instance()->isPortReserved(port));
+}
+
+SharedLinkConfigurationPtr LinkManagerTest::_addSerialConfig(const QString& name, const QString& port)
+{
+    auto* const serialConfig = new SerialConfiguration(name);
+    serialConfig->setPortName(port);
+    return linkManager()->addConfiguration(serialConfig);
+}
+
+void LinkManagerTest::_verifyOpenPortRefusesSecondLink(const QString& holderPort, const QString& secondPort)
+{
+    SharedLinkConfigurationPtr holder = _addSerialConfig(QStringLiteral("Holder"), holderPort);
+    const SharedLinkConfigurationPtr second = _addSerialConfig(QStringLiteral("Second link"), secondPort);
+    const auto removeLinks = qScopeGuard([this, &holder, &second] {
+        if (holder->link()) {
+            linkManager()->disconnectLink(holder->link());
+            (void) QTest::qWaitFor([&holder] { return !holder->link(); }, TestTimeout::shortMs());
+        }
+        linkManager()->_removeConfiguration(second.get());
+        linkManager()->_removeConfiguration(holder.get());
+    });
+    QVERIFY(linkManager()->createConnectedLink(holder));
+    QTRY_VERIFY_WITH_TIMEOUT(holder->link() && holder->link()->isConnected(), TestTimeout::shortMs());
+
+    expectAppMessage(QRegularExpression(
+        QStringLiteral("Cannot connect 'Second link': its serial port is already open as the link 'Holder'")));
+    linkManager()->createConnectedLink(second.get());
+    verifyExpectedLogMessage();
+    QVERIFY(!second->link());
+
+    linkManager()->disconnectLink(holder->link());
+    QTRY_VERIFY_WITH_TIMEOUT(!holder->link(), TestTimeout::shortMs());
+}
+
+void LinkManagerTest::_testManualConnectToSerialPortInUseSaysWhy()
+{
+    // Not every port in use has a link: the GPS reserves its port too.
+    const QString reservedPort = QStringLiteral("/test/in-use");
+    const auto reservation = SerialPortManager::instance()->reservePort(reservedPort);
+    QVERIFY(reservation);
+    const SharedLinkConfigurationPtr config = _addSerialConfig(QStringLiteral("Manual link"), reservedPort);
+    const auto removeConfig = qScopeGuard([this, &config] { linkManager()->_removeConfiguration(config.get()); });
+
+    expectAppMessage(QRegularExpression(QStringLiteral("Cannot connect 'Manual link': the serial port is in use")));
+    linkManager()->createConnectedLink(config.get());
+    verifyExpectedLogMessage();
+    QVERIFY(!config->link());
+
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    GPSTest::PseudoTerminal terminal;
+    QVERIFY(terminal.isValid());
+    _verifyOpenPortRefusesSecondLink(terminal.slavePath(), terminal.slavePath());
+#endif
 }
 
 void LinkManagerTest::_testOccupiedSerialAutoConnectRecovers()
