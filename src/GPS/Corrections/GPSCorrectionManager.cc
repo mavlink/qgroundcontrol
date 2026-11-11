@@ -4,6 +4,7 @@
 #include <chrono>
 #include <utility>
 
+#include <QtCore/QDateTime>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QNetworkInterface>
 
@@ -57,13 +58,16 @@ void GPSCorrectionSourceHandle::submit(const QByteArray& data, qint64 receivedAt
     }
 }
 
-GPSCorrectionManager::GPSCorrectionManager(QObject* parent, RuntimeScheduler* scheduler)
+GPSCorrectionManager::GPSCorrectionManager(QObject* parent, RuntimeScheduler* scheduler,
+                                           const Dependencies& dependencies)
     : QObject(parent)
     , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
     , _refreshTask(_scheduler, this)
     , _tickTask(_scheduler, this)
     , _selectedRate([scheduler = _scheduler]() { return scheduler->nowUs(); })
     , _udpInput(this, _scheduler)
+    , _logDirectory(dependencies.logDirectory)
+    , _log(dependencies.maxLogFileBytes)
 {
     qCDebug(GPSCorrectionManagerLog) << this;
     connect(&_udpInput, &RTCMUdpInput::frameReceived, this,
@@ -76,6 +80,9 @@ GPSCorrectionManager::GPSCorrectionManager(QObject* parent, RuntimeScheduler* sc
         _retryUdpInput();
         _selectedRate.refresh();
         _refresh();
+        if (_log.isOpen() && !_log.flush()) {
+            emit logChanged();
+        }
     });
     _refresh();
 }
@@ -236,6 +243,9 @@ void GPSCorrectionManager::_submit(GPSCorrectionSettings::CorrectionSource sourc
             emit vehicleBytesSubmittedChanged();
         }
         _forwardToUdpOutput(data);
+        if (_log.isOpen() && !_log.write(data)) {
+            emit logChanged();
+        }
     }
     _scheduleRefresh();
 }
@@ -283,6 +293,25 @@ void GPSCorrectionManager::_forwardToUdpOutput(const QByteArray& data)
     if (std::exchange(_udpOutputError, error) != error) {
         emit udpOutputChanged();
     }
+}
+
+void GPSCorrectionManager::setLogToFile(bool log)
+{
+    if (_shutdown || log == _log.isOpen()) {
+        return;
+    }
+    if (log) {
+        const QString directory = _logDirectory ? _logDirectory() : QString();
+        if (directory.isEmpty()) {
+            qCWarning(GPSCorrectionManagerLog) << "No folder to log the corrections to";
+        } else {
+            _log.open(RTCMLogFile::fileName(directory, QDateTime::currentDateTimeUtc()));
+        }
+    } else {
+        _log.close();
+    }
+    // Also for a log that could not start, so that a switch bound to the property goes back to off.
+    emit logChanged();
 }
 
 QString GPSCorrectionManager::sourceName(int source)
@@ -346,6 +375,7 @@ void GPSCorrectionManager::shutdown()
     _refreshTask.cancel();
     _rtcmMavlink.setOutputProvider({});
     _udpOutput.stop();
+    _log.close();
     _udpSource.reset();
     _selector.shutdown();
     _udpInput.stop();

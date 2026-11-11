@@ -14,6 +14,7 @@ private slots:
     void _correctionsStatusShowsMessageRates();
     void _correctionsStatusShowsBaseStation();
     void _correctionsStatusShowsMessageFilterError();
+    void _correctionsLogSwitch();
     void _ntripErrorActionRetries();
     void _ntripConnectionActionIsIdempotent_data();
     void _ntripConnectionActionIsIdempotent();

@@ -101,7 +101,7 @@
         {
             "heading": "Correction Routing",
             "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible",
-            "keywords": ["corrections", "rtcm", "source", "stream", "routing", "automatic", "priority", "active vehicle", "whitelist", "message filter"],
+            "keywords": ["corrections", "rtcm", "source", "stream", "routing", "automatic", "priority", "active vehicle", "whitelist", "message filter", "log"],
             "controls": [
                 {
                     "setting": "gpsCorrectionSettings.correctionSource"
@@ -112,6 +112,10 @@
                 {
                     "setting": "gpsCorrectionSettings.ntripWhitelist",
                     "placeholder": "e.g. 1005,1077,1087"
+                },
+                {
+                    "control": "component",
+                    "component": "CorrectionsLogSwitch"
                 }
             ]
         }
