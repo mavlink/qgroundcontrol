@@ -466,6 +466,12 @@ void ShapeTest::_testLoadShapes_data()
         << kWgs84Prj << ShapeType::Polygon << QStringList{counterClockwiseRing} << filtered << QStringList{openRing};
     QTest::newRow("shp polygon, dense") << kWgs84Prj << ShapeType::Polygon << QStringList{denseRing} << filtered
                                         << QStringList{"8,47 8,47.001 8.001,47.001 8.001,47 8.00001,47"};
+    QTest::newRow("shp polygon, dense, unfiltered")
+        << kWgs84Prj << ShapeType::Polygon << QStringList{denseRing} << unfiltered
+        << QStringList{"8,47 8,47.00001 8,47.00002 8,47.001 8.001,47.001 8.001,47 8.00001,47"};
+    QTest::newRow("shp polygon, filter keeps three vertices")
+        << kWgs84Prj << ShapeType::Polygon << QStringList{"8,47 8,47.00001 8.001,47 8,47"} << filtered
+        << QStringList{"8,47 8,47.00001 8.001,47"};
     QTest::newRow("shp polygon with a hole")
         << kWgs84Prj << ShapeType::Polygon << QStringList{ring + " | " + hole} << filtered << QStringList{openRing};
     QTest::newRow("shp two polygons") << kWgs84Prj << ShapeType::Polygon << QStringList{ring, hole} << filtered

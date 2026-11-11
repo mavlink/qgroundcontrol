@@ -366,16 +366,16 @@ bool SHPFileHelper::loadPolygonsFromFile(const QString &shpFile, QList<QList<QGe
             continue;
         }
 
+        // Shapefile rings repeat their first vertex as the last one; QGC polygons close implicitly. The repeat goes
+        // before filtering so that it does not count towards the three vertices the filter must leave. Only a
+        // vertex within 0.01 m of the first is that repeat: a distinct vertex near the start stays.
+        constexpr double kClosureThreshold = 0.01;
+        if (vertices.count() > 3 && vertices.last().distanceTo(vertices.first()) < kClosureThreshold) {
+            vertices.removeLast();
+        }
+
         // Filter nearby vertices if enabled
         if (filterMeters > 0) {
-            const QGeoCoordinate firstVertex = vertices.first();
-
-            // Detect explicit closure vertex (shapefile rings often repeat first vertex as last).
-            // Use a very small threshold (0.01m) so we only treat truly identical points as closure.
-            constexpr double kClosureThreshold = 0.01;
-            const bool hadExplicitClosure = vertices.last().distanceTo(firstVertex) < kClosureThreshold;
-
-            // Filter consecutive vertices that are too close together
             int i = 0;
             while (i < (vertices.count() - 1)) {
                 if ((vertices.count() > 3) && (vertices[i].distanceTo(vertices[i + 1]) < filterMeters)) {
@@ -383,14 +383,6 @@ bool SHPFileHelper::loadPolygonsFromFile(const QString &shpFile, QList<QList<QGe
                 } else {
                     i++;
                 }
-            }
-
-            // If the original polygon had an explicit closure vertex, remove a single trailing
-            // duplicate after filtering, but do not strip distinct vertices that merely happen
-            // to be within filterMeters of the first.
-            if (hadExplicitClosure && vertices.count() > 3 &&
-                vertices.last().distanceTo(firstVertex) < kClosureThreshold) {
-                vertices.removeLast();
             }
         }
 
