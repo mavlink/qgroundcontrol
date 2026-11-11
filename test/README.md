@@ -384,7 +384,9 @@ ctest --test-dir build --build-config Debug --output-on-failure -L Portable
 
 Use `PortableTest` and `QGC_REGISTER_PORTABLE_TEST` for these suites. Full application
 builds use the existing UnitTest harness; standalone executables use Qt Test with warnings
-failing tests. Keep application-dependent fixtures in the full harness.
+failing tests. For a warning the code under test is meant to log, both harnesses provide
+`expectLogMessage(...)` and `verifyExpectedLogMessage()`; the standalone one expects a single
+message at a time. Keep application-dependent fixtures in the full harness.
 
 ## GPS Protocol Golden Transcripts
 
