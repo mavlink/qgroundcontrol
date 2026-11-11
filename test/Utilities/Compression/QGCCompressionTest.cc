@@ -1,5 +1,10 @@
 #include "QGCCompressionTest.h"
 
+#include <algorithm>
+#include <atomic>
+#include <initializer_list>
+#include <vector>
+
 #include <QtConcurrent/QtConcurrent>
 #include <QtCore/QBuffer>
 #include <QtCore/QCollator>
@@ -15,11 +20,6 @@
 #include <QtCore/QTimer>
 #include <QtCore/QWaitCondition>
 #include <QtTest/QSignalSpy>
-
-#include <algorithm>
-#include <atomic>
-#include <initializer_list>
-#include <vector>
 
 #include "QGCCompression.h"
 #include "QGCCompressionJob.h"

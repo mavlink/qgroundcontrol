@@ -4,7 +4,7 @@
 /// @brief Private implementation details for QGCCompression
 /// @note This is an internal header - use QGCCompression.h for public API
 
-#include "QGCCompressionTypes.h"
+#include <archive.h>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QFile>
@@ -12,7 +12,7 @@
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 
-#include <archive.h>
+#include "QGCCompressionTypes.h"
 
 namespace QGClibarchive {
 
