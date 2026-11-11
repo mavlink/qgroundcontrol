@@ -1,0 +1,11 @@
+#pragma once
+
+#include "UnitTest.h"
+
+class SharedVideoFrameTest : public UnitTest
+{
+    Q_OBJECT
+
+private slots:
+    void _testOwnMetadataLeavesFrameAlone();
+};

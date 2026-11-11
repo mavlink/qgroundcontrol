@@ -29,8 +29,6 @@ target_sources(
         UVC/UVCCameraController.h
         UVC/UVCDevices.cc
         UVC/UVCDevices.h
-        UVC/UVCFrameRelay.cc
-        UVC/UVCFrameRelay.h
         UVC/UVCStreamMonitor.cc
         UVC/UVCStreamMonitor.h
 )

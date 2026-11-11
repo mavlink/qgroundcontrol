@@ -5,7 +5,9 @@
 #include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
 #include <QtGui/QImage>
+#include <QtGui/QTransform>
 #include <QtMultimedia/QVideoFrame>
+#include <QtMultimedia/private/qmultimediautils_p.h>
 
 #include "ExifUtility.h"
 #include "VideoScreenshot.h"
@@ -88,6 +90,48 @@ void VideoScreenshotTest::_testPositionWithoutAltitude()
     QVERIFY(qAbs(gpsValue(data, EXIF_TAG_GPS_LATITUDE) - 33.8688) < 1e-4);
     QVERIFY(!exif_content_get_entry(data->ifd[EXIF_IFD_GPS], static_cast<ExifTag>(EXIF_TAG_GPS_ALTITUDE)));
     QVERIFY(!exif_content_get_entry(data->ifd[EXIF_IFD_EXIF], EXIF_TAG_DATE_TIME_ORIGINAL));
+}
+
+void VideoScreenshotTest::_testDisplayedImageAsQtPresentsIt()
+{
+    // Every pixel differs, so any turn or flip changes the picture.
+    QImage image(QSize(4, 2), QImage::Format_RGBA8888);
+    for (int y = 0; y < image.height(); ++y) {
+        for (int x = 0; x < image.width(); ++x) {
+            image.setPixelColor(x, y, QColor(x * 60, y * 120, 255 - (x * 60), 255));
+        }
+    }
+
+    // A screenshot must show what the VideoOutput does: the frame's rotation and mirroring (a phone camera's sensor,
+    // a stream's orientation tag) with the output's on top (a USB camera's rotation and mirror settings, the rotation a
+    // camera reports for its stream), composed as Qt composes them to present the frame.
+    constexpr QtVideo::Rotation kRotations[] = {QtVideo::Rotation::None, QtVideo::Rotation::Clockwise90,
+                                                QtVideo::Rotation::Clockwise180, QtVideo::Rotation::Clockwise270};
+    for (const QtVideo::Rotation frameRotation : kRotations) {
+        for (const bool frameMirrored : {false, true}) {
+            QVideoFrame frame(image);
+            frame.setRotation(frameRotation);
+            frame.setMirrored(frameMirrored);
+            for (const QtVideo::Rotation outputRotation : kRotations) {
+                for (const bool outputMirrored : {false, true}) {
+                    const VideoTransformation presented =
+                        qNormalizedFrameTransformation(frame, VideoTransformation{outputRotation, outputMirrored});
+                    QImage expected = image.transformed(QTransform().rotate(static_cast<int>(presented.rotation)));
+                    if (presented.mirroredHorizontallyAfterRotation) {
+                        expected = expected.flipped(Qt::Horizontal);
+                    }
+                    const QImage displayed = VideoScreenshot::displayedImage(frame, outputRotation, outputMirrored);
+                    QVERIFY2(displayed.convertToFormat(QImage::Format_ARGB32) ==
+                                 expected.convertToFormat(QImage::Format_ARGB32),
+                             qPrintable(QStringLiteral("frame %1%2, output %3%4")
+                                            .arg(static_cast<int>(frameRotation))
+                                            .arg(frameMirrored ? QStringLiteral(" mirrored") : QString())
+                                            .arg(static_cast<int>(outputRotation))
+                                            .arg(outputMirrored ? QStringLiteral(" mirrored") : QString())));
+                }
+            }
+        }
+    }
 }
 
 void VideoScreenshotTest::_testNoExifWithoutValues()

@@ -17,6 +17,8 @@ Item {
     /// object with the camera properties the view reads will do, as the tests' stand-ins.
     property var camera: root._activeVehicle && root._activeVehicle.cameraManager
                          ? root._activeVehicle.cameraManager.currentCameraInstance : null
+    /// The manager whose video the view shows.
+    property VideoManager videoManager: QGroundControl.videoManager
 
     /// Size of the video fitted to the view: larger than the view where the fit mode crops, smaller where it doesn't.
     readonly property real videoWidth: {
@@ -50,27 +52,25 @@ Item {
         return root.height
     }
 
-    readonly property VideoManager _videoManager: QGroundControl.videoManager
     readonly property VideoSettings _videoSettings: QGroundControl.settingsManager.videoSettings
     readonly property Vehicle _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-    readonly property VideoStreamController _primaryStream: root._videoManager.primaryStream
+    readonly property VideoStreamController _primaryStream: root.videoManager.primaryStream
     // A lost stream's last frame stays up, under a notice, while it reconnects.
     readonly property bool _streamLost: root._primaryStream.reconnecting
-    readonly property bool _showStreamLoader: root._videoManager.decoding || root._streamLost
-    readonly property bool _showUvcLoader: root._videoManager.isUvc
+    readonly property bool _showStreamLoader: root.videoManager.decoding || root._streamLost
+    readonly property bool _showUvcLoader: root.videoManager.isUvc
     // A UVC camera's ratio is known once its first frame sets the output's implicit size; until then the video fills the
     // view.
     readonly property real _ar: root._showUvcLoader
                                 ? ((cameraLoader.status === Loader.Ready && cameraLoader.item.implicitHeight > 0)
                                    ? cameraLoader.item.implicitWidth / cameraLoader.item.implicitHeight : 0)
-                                : root._videoManager.aspectRatio
+                                : root.videoManager.aspectRatio
     readonly property int _fitMode: root._videoSettings.videoFit.rawValue
     readonly property bool _isModeFitWidth: root._fitMode === VideoSettings.VideoFitWidth
     readonly property bool _isModeFitHeight: root._fitMode === VideoSettings.VideoFitHeight
     readonly property bool _isModeFill: root._fitMode === VideoSettings.VideoFitFill
     readonly property bool _isModeNoCrop: root._fitMode === VideoSettings.VideoFitNoCrop
-    // The outputs fill the view and crop the video to it where the fitted video is larger, so that Qt draws the
-    // telemetry subtitle in the part on screen.
+    // The outputs fill the view, and crop the video to it where the fitted video is larger.
     readonly property real _viewAr: root.width / root.height
     readonly property bool _cropsVideo: root._isModeFill
                                         || ((root._ar > 0)
@@ -85,6 +85,7 @@ Item {
     NoVideoPlaceholder {
         anchors.fill:   parent
         useSmallFont:   root.useSmallFont
+        videoManager:   root.videoManager
         visible:        !root._showStreamLoader && !root._showUvcLoader
     }
 
@@ -103,9 +104,8 @@ Item {
             id: videoOutputComponent
 
             VideoStreamOutput {
-                stream:                 root._primaryStream
-                fillMode:               root._outputFillMode
-                videoSink.subtitleText: root._videoManager.telemetryOverlayText
+                stream:     root._primaryStream
+                fillMode:   root._outputFillMode
             }
         }
 
@@ -122,8 +122,8 @@ Item {
             id: uvcVideoOutputComponent
 
             UVCVideoOutput {
-                fillMode:               root._outputFillMode
-                videoSink.subtitleText: root._videoManager.telemetryOverlayText
+                camera:     root.videoManager.uvcCamera
+                fillMode:   root._outputFillMode
             }
         }
 
@@ -135,7 +135,20 @@ Item {
 
             VideoGridLines {
                 anchors.fill:   parent
-                visible:        root._videoSettings.gridLines.rawValue && !root._videoManager.fullScreen
+                visible:        root._videoSettings.gridLines.rawValue && !root.videoManager.fullScreen
+            }
+        }
+
+        // The part of the fitted video that is on screen.
+        Item {
+            width:              Math.min(root.videoWidth, root.width)
+            height:             Math.min(root.videoHeight, root.height)
+            anchors.centerIn:   parent
+
+            TelemetryOverlayText {
+                objectName:     "videoTelemetryOverlay"
+                text:           root.videoManager.telemetryOverlayText
+                useSmallFont:   root.useSmallFont
             }
         }
 
@@ -152,6 +165,7 @@ Item {
             objectName:     "videoViewThermal"
             camera:         root.camera
             pipTopInset:    root.thermalPipTopInset
+            videoManager:   root.videoManager
         }
 
         CameraPinchZoom {

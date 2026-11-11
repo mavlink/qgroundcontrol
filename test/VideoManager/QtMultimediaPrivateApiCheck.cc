@@ -9,7 +9,7 @@
 //   for Qt's BGRA fourcc.
 // - qvideoframe_p.h with qhwvideobuffer_p.h: src/VideoManager/Receiver/SharedVideoFrame.cc, whose frames share another
 //   frame's buffer (QVideoFramePrivate::createFrame(), hwBuffer(), and each QHwVideoBuffer virtual it forwards).
-// - qvideoframeconverter_p.h, qquickvideooutput_p.h, qcameradevice_p.h: tests only.
+// - qvideoframeconverter_p.h, qquickvideooutput_p.h, qcameradevice_p.h, qmultimediautils_p.h: tests only.
 
 #include <QtCore/qtversionchecks.h>
 

@@ -8,7 +8,7 @@ class UVCCameraControllerTest : public UnitTest
 
 private slots:
     void _testScreenshotFromVideoOutput();
-    void _testFramesFollowTransform();
+    void _testOutputFollowsTransform();
     void _testPhotoFollowsTransform();
     void _testPhotoWithoutCameraIsScreenshot();
     void _testMissingCameraNeverRuns();

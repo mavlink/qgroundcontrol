@@ -20,6 +20,7 @@
 #include "VideoManager.h"
 #include "VideoSettings.h"
 #include "VideoStreamController.h"
+#include "VideoTelemetryOverlay.h"
 #include "VideoTestHelpers.h"
 
 using VideoTestHelpers::createVideoOutput;
@@ -1049,6 +1050,45 @@ void VideoManagerTest::_testVideoViewFitsVideo()
     QCOMPARE(view->property("videoWidth").toReal(), widthFromHeight ? (400 * aspectRatio) : 400);
     QCOMPARE(view->property("videoHeight").toReal(), heightFromWidth ? (400 / aspectRatio) : 400);
     QCOMPARE(view->property("_cropsVideo").toBool(), crops);
+}
+
+void VideoManagerTest::_testTelemetryOverlayFollowsTelemetry()
+{
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kVideoViewQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/VideoView.qml")));
+    const std::unique_ptr<QQuickItem> view(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
+        {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}})));
+    QVERIFY2(view, qPrintable(component.errorString()));
+    // Items outside a scene are never visible.
+    QQuickWindow window;
+    view->setParentItem(window.contentItem());
+    auto* const overlay = view->findChild<QQuickItem*>(QStringLiteral("videoTelemetryOverlay"));
+    QVERIFY(overlay);
+    const auto setTelemetry = [this](const QString& text) {
+        _videoManager->_telemetryOverlay->_text = text;
+        emit _videoManager->_telemetryOverlay->textChanged();
+    };
+
+    _primary->setState(VideoReceiver::State::Streaming);
+    _primary->setDecoding(true);
+    QVERIFY(!overlay->isVisible());
+
+    // The overlay is an item over the video: it shows the telemetry without waiting for a frame.
+    setTelemetry(QStringLiteral("Alt: 10 m"));
+    QVERIFY(overlay->isVisible());
+    QVERIFY(showsText(view.get(), QStringLiteral("Alt: 10 m")));
+
+    // The stream is lost: its last frame stays up, and the telemetry over it goes on.
+    _primary->setDecoding(false);
+    QVERIFY(_videoManager->primaryStream()->reconnecting());
+    setTelemetry(QStringLiteral("Alt: 12 m"));
+    QVERIFY(showsText(view.get(), QStringLiteral("Alt: 12 m")));
+    QVERIFY(showsText(view.get(), QStringLiteral("VIDEO LOST - RECONNECTING")));
+
+    setTelemetry(QString());
+    QVERIFY(!overlay->isVisible());
 }
 
 void VideoManagerTest::_testCameraPinchZoomSteps()

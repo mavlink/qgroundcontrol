@@ -25,7 +25,6 @@ class QQuickItem;
 class QTimer;
 class QVideoFrame;
 class QVideoSink;
-class UVCFrameRelay;
 class UVCStreamMonitor;
 
 /// The USB (UVC) camera VideoManager selected: owns its QCamera and capture session, measures its frames, takes its
@@ -35,7 +34,8 @@ class UVCStreamMonitor;
 /// attached; the controller then runs that one. After an error the camera is recreated up to kMaxRetries times.
 ///
 /// The camera runs while one is selected and a QML VideoOutput is registered: registerVideoOutput() once it is created,
-/// unregisterVideoOutput() when it is destroyed (see UVCVideoOutput.qml).
+/// unregisterVideoOutput() when it is destroyed (see UVCVideoOutput.qml). The output turns and mirrors the picture as
+/// rotation and mirrored say, with its orientation and mirrored properties.
 class UVCCameraController : public QObject
 {
     Q_OBJECT
@@ -51,6 +51,8 @@ class UVCCameraController : public QObject
     Q_PROPERTY(qreal maximumZoom READ maximumZoom NOTIFY controlsChanged)
     Q_PROPERTY(bool exposureAdjustable READ exposureAdjustable NOTIFY controlsChanged)
     Q_PROPERTY(bool focusAdjustable READ focusAdjustable NOTIFY controlsChanged)
+    Q_PROPERTY(int rotation READ rotation NOTIFY transformChanged)
+    Q_PROPERTY(bool mirrored READ mirrored NOTIFY transformChanged)
 
     friend class UVCCameraControllerTest;
 
@@ -116,14 +118,20 @@ public:
     Q_INVOKABLE void unregisterVideoOutput(QQuickItem* videoOutput);
 
     /// Turns the camera's picture clockwise by @p rotation and then mirrors it when @p mirrored, on display, in
-    /// screenshots and in photos; recordings keep the camera's own picture. The frames themselves are turned, not the
-    /// VideoOutput, so what Qt draws over them (the telemetry overlay) stays upright.
+    /// screenshots and in photos; recordings keep the camera's own picture. On display the VideoOutput does it, on top
+    /// of the frames' own rotation and mirroring: see rotation() and mirrored().
     void setTransform(QtVideo::Rotation rotation, bool mirrored);
+
+    /// The clockwise rotation, in degrees, and the mirroring after it, that a VideoOutput showing the camera applies
+    /// as its orientation and mirrored properties.
+    int rotation() const { return static_cast<int>(_rotation); }
+
+    bool mirrored() const { return _mirrored; }
 
     /// True while the camera runs into a registered VideoOutput.
     bool canTakeScreenshot() const;
-    /// Saves the frame on display to @p file, as displayed, with @p exif for a JPEG. False, with a warning logged,
-    /// without a VideoOutput.
+    /// Saves the frame on display to @p file, turned and mirrored as setTransform() says, with @p exif for a JPEG.
+    /// False, with a warning logged, without a VideoOutput.
     bool takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif = {}) const;
 
     /// Takes a photo into @p file, turned and mirrored as setTransform() says and saved off the GUI thread: a still
@@ -165,6 +173,7 @@ signals:
     void formatsChanged();
     /// The camera's adjustable controls, or its zoom range, changed.
     void controlsChanged();
+    void transformChanged();
     void recordingChanged(bool recording);
     void recordingStarted(const QString& file);
     /// @p error is empty for a recording that finished normally.
@@ -191,22 +200,22 @@ private:
 
     /// Saves the frame on display as _savePhoto() does; tells the user when there is no VideoOutput.
     void _savePhotoOnDisplay(const QString& file, const VideoScreenshot::Exif& exif);
-    /// Saves @p frame, turned by @p rotation and mirrored by @p mirrored, to @p photo's file off the GUI thread, and
-    /// tells the user when that fails.
-    void _savePhoto(const QVideoFrame& frame, const PendingPhoto& photo, QtVideo::Rotation rotation, bool mirrored);
+    /// Saves @p frame, turned and mirrored as setTransform() says, to @p photo's file off the GUI thread, and tells
+    /// the user when that fails.
+    void _savePhoto(const QVideoFrame& frame, const PendingPhoto& photo);
     /// Whether the camera in use is attached; without one, whether a camera of the selected name is.
     bool _cameraAttached() const;
     QVideoSink* _videoSink() const;
 
     UVCStreamMonitor* const _monitor;
-    /// Between the capture session and the registered VideoOutput.
-    UVCFrameRelay* const _frameRelay;
     QMediaDevices* const _mediaDevices;
     QTimer* const _retryTimer;
     /// Outlives the capture sessions, like _recorder.
     QImageCapture* const _imageCapture;
     QtVideoRecorder* const _recorder;
     QCamera* _camera = nullptr;
+    QtVideo::Rotation _rotation = QtVideo::Rotation::None;
+    bool _mirrored = false;
     Controls _controls;
     QMediaCaptureSession* _captureSession = nullptr;
     QPointer<QQuickItem> _videoOutput;

@@ -10,6 +10,7 @@ private slots:
     void init() override;
     void _testJpegCarriesExif();
     void _testPositionWithoutAltitude();
+    void _testDisplayedImageAsQtPresentsIt();
     void _testNoExifWithoutValues();
     void _testOtherFormatsWithoutExif();
 };

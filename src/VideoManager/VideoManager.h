@@ -44,7 +44,7 @@ class VideoManager : public QObject
     Q_PROPERTY(double aspectRatio READ aspectRatio NOTIFY aspectRatioChanged)
     Q_PROPERTY(double thermalAspectRatio READ thermalAspectRatio NOTIFY aspectRatioChanged)
     Q_PROPERTY(QString uvcVideoSourceID READ uvcVideoSourceID NOTIFY uvcVideoSourceIDChanged)
-    /// The telemetry the primary stream's and the USB camera's outputs show as their subtitle: empty while
+    /// The telemetry VideoView shows over the primary stream or the USB camera: empty while
     /// VideoSettings::showTelemetryOverlay is off.
     Q_PROPERTY(QString telemetryOverlayText READ telemetryOverlayText NOTIFY telemetryOverlayTextChanged)
 

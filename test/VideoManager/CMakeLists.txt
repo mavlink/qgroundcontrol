@@ -14,6 +14,8 @@ target_sources(
         QtVideoRecorderTest.h
         RecordingPlanTest.cc
         RecordingPlanTest.h
+        SharedVideoFrameTest.cc
+        SharedVideoFrameTest.h
         StreamSupervisorTest.cc
         StreamSupervisorTest.h
         SubtitleWriterTest.cc
@@ -22,8 +24,6 @@ target_sources(
         UVCCameraControllerTest.h
         UVCDevicesTest.cc
         UVCDevicesTest.h
-        UVCFrameRelayTest.cc
-        UVCFrameRelayTest.h
         UVCStreamMonitorTest.cc
         UVCStreamMonitorTest.h
         VideoManagerInitTest.cc
@@ -46,11 +46,11 @@ target_sources(
 add_qgc_test(QtMultimediaVideoReceiverTest LABELS Integration TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
 add_qgc_test(QtVideoRecorderTest LABELS Integration)
 add_qgc_test(RecordingPlanTest LABELS Unit)
+add_qgc_test(SharedVideoFrameTest LABELS Unit)
 add_qgc_test(StreamSupervisorTest LABELS Unit)
 add_qgc_test(SubtitleWriterTest LABELS Integration Vehicle)
 add_qgc_test(UVCCameraControllerTest LABELS Unit)
 add_qgc_test(UVCDevicesTest LABELS Unit)
-add_qgc_test(UVCFrameRelayTest LABELS Unit)
 add_qgc_test(UVCStreamMonitorTest LABELS Unit)
 add_qgc_test(VideoManagerInitTest LABELS Unit)
 add_qgc_test(VideoManagerTest LABELS Unit)

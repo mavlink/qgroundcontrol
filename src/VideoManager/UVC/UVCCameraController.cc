@@ -16,7 +16,6 @@
 #include "AppMessages.h"
 #include "QGCLoggingCategory.h"
 #include "UVCDevices.h"
-#include "UVCFrameRelay.h"
 #include "UVCStreamMonitor.h"
 #include "VideoScreenshot.h"
 
@@ -51,7 +50,6 @@ constexpr QCamera::WhiteBalanceMode kWhiteBalancePresets[] = {
 UVCCameraController::UVCCameraController(QObject* parent)
     : QObject(parent)
     , _monitor(new UVCStreamMonitor(this))
-    , _frameRelay(new UVCFrameRelay(this))
     , _mediaDevices(new QMediaDevices(this))
     , _retryTimer(new QTimer(this))
     , _imageCapture(new QImageCapture(this))
@@ -163,13 +161,17 @@ bool UVCCameraController::takeScreenshot(const QString& file, const VideoScreens
         qCWarning(UVCCameraControllerLog) << "No video output to take a screenshot from";
         return false;
     }
-    // The frame on display carries the transform already (UVCFrameRelay).
-    return VideoScreenshot::save(videoSink->videoFrame(), file, exif);
+    return VideoScreenshot::save(videoSink->videoFrame(), file, exif, _rotation, _mirrored);
 }
 
 void UVCCameraController::setTransform(QtVideo::Rotation rotation, bool mirrored)
 {
-    _frameRelay->setTransform(rotation, mirrored);
+    if ((rotation == _rotation) && (mirrored == _mirrored)) {
+        return;
+    }
+    _rotation = rotation;
+    _mirrored = mirrored;
+    emit transformChanged();
 }
 
 void UVCCameraController::setControls(const Controls& controls)
@@ -245,7 +247,7 @@ void UVCCameraController::_onImageAvailable(int id, const QVideoFrame& frame)
     if (photo.file.isEmpty()) {
         return;
     }
-    _savePhoto(frame, photo, _frameRelay->rotation(), _frameRelay->mirrored());
+    _savePhoto(frame, photo);
 }
 
 void UVCCameraController::_onImageCaptureError(int id, const QString& errorString)
@@ -265,15 +267,13 @@ void UVCCameraController::_savePhotoOnDisplay(const QString& file, const VideoSc
         QGC::showAppMessage(tr("Unable to take a photo: no video is on display."));
         return;
     }
-    // The frame on display carries the transform already (UVCFrameRelay).
-    _savePhoto(videoSink->videoFrame(), {file, exif}, QtVideo::Rotation::None, false);
+    _savePhoto(videoSink->videoFrame(), {file, exif});
 }
 
-void UVCCameraController::_savePhoto(const QVideoFrame& frame, const PendingPhoto& photo, QtVideo::Rotation rotation,
-                                     bool mirrored)
+void UVCCameraController::_savePhoto(const QVideoFrame& frame, const PendingPhoto& photo)
 {
     // Converting and encoding a full-resolution photo would stall the UI.
-    (void) QtConcurrent::run([frame, photo, rotation, mirrored] {
+    (void) QtConcurrent::run([frame, photo, rotation = _rotation, mirrored = _mirrored] {
         return VideoScreenshot::save(frame, photo.file, photo.exif, rotation, mirrored);
     }).then(this, [file = photo.file](bool saved) {
         if (!saved) {
@@ -354,9 +354,8 @@ void UVCCameraController::_recreateCamera()
 void UVCCameraController::_connectVideoOutput()
 {
     QVideoSink* const videoSink = _videoSink();
-    _frameRelay->setOutput(videoSink);
     if (_captureSession) {
-        _captureSession->setVideoSink(videoSink ? _frameRelay->input() : nullptr);
+        _captureSession->setVideoSink(videoSink);
     }
     if (_camera && videoSink) {
         _monitor->attach(_camera, videoSink);

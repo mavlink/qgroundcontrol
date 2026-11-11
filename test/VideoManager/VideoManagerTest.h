@@ -51,6 +51,7 @@ private slots:
     void _testStreamFormatText();
     void _testVideoViewFitsVideo_data();
     void _testVideoViewFitsVideo();
+    void _testTelemetryOverlayFollowsTelemetry();
     void _testCameraPinchZoomSteps();
     void _testVideoViewPlacesThermalPip();
     void _testThermalDecodesOnlyWhileShown();
