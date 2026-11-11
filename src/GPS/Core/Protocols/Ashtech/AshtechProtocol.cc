@@ -129,8 +129,9 @@ protected:
     /// A rejected sentence does not advance the survey-in duration.
     GPSReceiveUpdates _decodeLine(std::string_view line, GPSDecodeContext& context) override;
 
-    /// Expires stale metadata.
-    void _expire(GPSDecodeContext& context) override { _expireMetadata(context.nowUs()); }
+    /// Expires stale metadata, and fails a ready receiver whose base setup still waits for a position when no
+    /// $PASHR,POS has arrived for STATUS_MAX_AGE.
+    void _expire(GPSDecodeContext& context) override;
 
 private:
     /// The UTC time of day a sentence names and when it arrived.
@@ -184,6 +185,8 @@ private:
     GPSSurveyClock _surveyClock;
     /// After a $PASHR,POS, GGA no longer carries positions.
     bool _receiverPositions = false;
+    /// When the receiver became ready or last sent a $PASHR,POS, with or without a fix.
+    uint64_t _positionOutputAtUs = 0;
     uint64_t _utcReceivedUs = 0;
     uint64_t _utcReference = 0;
     EpochReceipt _positionEpoch;
@@ -240,6 +243,7 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
 
     _nmea.setRTCMEnabled(true);
     channel.context().publishSurvey(true, false, {});
+    _positionOutputAtUs = channel.context().nowUs();
     _ready = true;
     return !channel.failed();
 }
@@ -344,6 +348,7 @@ void Protocol::_reset(GPSStreamDemux& stream)
     _awaitingSurveyReceipt = false;
     _surveyClock = {};
     _receiverPositions = false;
+    _positionOutputAtUs = 0;
     _utcReceivedUs = 0;
     _utcReference = 0;
     _positionEpoch = {};
@@ -385,8 +390,12 @@ std::optional<GPSReceiveUpdates> Protocol::_decodeVendor(std::string_view messag
     if (type == "GGA" && commas == 14 && !_receiverPositions) {
         return _handleGGA(*sentence, now);
     }
-    if (message.starts_with("$PASHR,POS,") && commas == 18) {
-        return _handlePosition(*sentence, now);
+    if (message.starts_with("$PASHR,POS,")) {
+        // Any position sentence shows the output is on, including one whose fields are rejected.
+        _positionOutputAtUs = now;
+        if (commas == 18) {
+            return _handlePosition(*sentence, now);
+        }
     }
     if (type == "GST" && commas == 8) {
         return _handleAccuracy(*sentence, now);
@@ -648,6 +657,22 @@ std::optional<GPSReceiveUpdates> Protocol::_handleSurveyReceipt(const NMEA::Sent
         }
     }
     return GPSReceiveUpdates{};
+}
+
+void Protocol::_expire(GPSDecodeContext& context)
+{
+    const uint64_t now = context.nowUs();
+    _expireMetadata(now);
+    // The position output is optional to enable and its first position starts the base setup, so a receiver that
+    // refused it, as one without the output-rate option may, would otherwise wait as a surveying base for ever.
+    if (_ready && !_baseSetupDone && !context.failed() &&
+        !MonotonicClock::withinAge(_positionOutputAtUs, now, STATUS_MAX_AGE)) {
+        _ready = false;
+        _nmea.setRTCMEnabled(false);
+        context.publishSurvey(false, false, {});
+        context.failControl(
+            QStringLiteral("Trimble receiver sent no $PASHR,POS position output, which the base setup needs"));
+    }
 }
 
 void Protocol::_expireMetadata(uint64_t nowUs)
