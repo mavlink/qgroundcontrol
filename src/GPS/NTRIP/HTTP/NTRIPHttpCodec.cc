@@ -184,190 +184,240 @@ NTRIPHttpDecoder::Result NTRIPHttpDecoder::feed(QByteArrayView bytes, const QDat
                 continue;
             }
         }
+        // A failure ends the loop.
         if (_state == State::Identity || _state == State::ChunkData) {
-            const bool bounded = _state == State::ChunkData || _contentLength.has_value();
-            const auto count =
-                bounded ? static_cast<qsizetype>((std::min<quint64>) (bytes.size(), _remaining)) : bytes.size();
-            if (_pendingFailure) {
-                _errorBody.append(bytes.data(), (std::min) (count, MAX_ERROR_BODY_BYTES - _errorBody.size()));
-            } else {
-                result.body.append(bytes.data(), count);
-            }
-            bytes = bytes.sliced(count);
-            if (bounded && (_remaining -= count) == 0) {
-                _state = _state == State::ChunkData ? State::ChunkEnd : State::Complete;
-                result.complete = _state == State::Complete;
-            }
-            if (_pendingFailure && (_state == State::Complete || _errorBody.size() == MAX_ERROR_BODY_BYTES)) {
-                _finishError(result);
-            }
-            continue;
-        }
-        if (_state == State::ChunkEnd) {
-            if (bytes.front() != (_chunkEndBytes == 0 ? '\r' : '\n')) {
-                _fail(result, tr("Invalid HTTP chunk terminator"));
-                break;
-            }
+            bytes = bytes.sliced(_bodyReceived(bytes, result));
+        } else if (_state == State::ChunkEnd) {
+            _chunkEndReceived(bytes.front(), result);
             bytes = bytes.sliced(1);
-            if (++_chunkEndBytes == 2) {
-                _chunkEndBytes = 0;
-                _state = State::ChunkSize;
-            }
-            continue;
-        }
-        const char ch = bytes.front();
-        bytes = bytes.sliced(1);
-        if ((ch == '\n' && !_line.endsWith('\r')) || (_line.endsWith('\r') && ch != '\n')) {
-            _fail(result, tr("Invalid HTTP line ending"));
-            break;
-        }
-        _line.append(ch);
-        if ((_state != State::ChunkSize && ++_headerBytes > MAX_HEADER_BYTES) || _line.size() > MAX_LINE_BYTES) {
-            _fail(result, tr("HTTP response header too large"), NTRIPError::HeaderTooLarge);
-            break;
-        }
-        if (ch == '\n') {
-            _line.chop(2);
-            _lineReceived(result, utcNow);
-            _line.clear();
+        } else {
+            _lineByteReceived(bytes.front(), result, utcNow);
+            bytes = bytes.sliced(1);
         }
     }
     return result;
 }
 
+qsizetype NTRIPHttpDecoder::_bodyReceived(QByteArrayView bytes, Result& result)
+{
+    const bool bounded = _state == State::ChunkData || _contentLength.has_value();
+    const auto count = bounded ? static_cast<qsizetype>((std::min<quint64>) (bytes.size(), _remaining)) : bytes.size();
+    if (_pendingFailure) {
+        _errorBody.append(bytes.data(), (std::min) (count, MAX_ERROR_BODY_BYTES - _errorBody.size()));
+    } else {
+        result.body.append(bytes.data(), count);
+    }
+    if (bounded && (_remaining -= count) == 0) {
+        _state = _state == State::ChunkData ? State::ChunkEnd : State::Complete;
+        result.complete = _state == State::Complete;
+    }
+    if (_pendingFailure && (_state == State::Complete || _errorBody.size() == MAX_ERROR_BODY_BYTES)) {
+        _finishError(result);
+    }
+    return count;
+}
+
+void NTRIPHttpDecoder::_chunkEndReceived(char ch, Result& result)
+{
+    if (ch != (_chunkEndBytes == 0 ? '\r' : '\n')) {
+        _fail(result, tr("Invalid HTTP chunk terminator"));
+    } else if (++_chunkEndBytes == 2) {
+        _chunkEndBytes = 0;
+        _state = State::ChunkSize;
+    }
+}
+
+void NTRIPHttpDecoder::_lineByteReceived(char ch, Result& result, const QDateTime& utcNow)
+{
+    if ((ch == '\n' && !_line.endsWith('\r')) || (_line.endsWith('\r') && ch != '\n')) {
+        _fail(result, tr("Invalid HTTP line ending"));
+        return;
+    }
+    _line.append(ch);
+    if ((_state != State::ChunkSize && ++_headerBytes > MAX_HEADER_BYTES) || _line.size() > MAX_LINE_BYTES) {
+        _fail(result, tr("HTTP response header too large"), NTRIPError::HeaderTooLarge);
+        return;
+    }
+    if (ch == '\n') {
+        _line.chop(2);
+        _lineReceived(result, utcNow);
+        _line.clear();
+    }
+}
+
 void NTRIPHttpDecoder::_lineReceived(Result& result, const QDateTime& utcNow)
 {
     if (_state == State::Status) {
-        _status = parseStatusLine(_line);
-        if (!_status.valid) {
-            _fail(result, tr("Invalid HTTP status line"));
-        } else if (_line.left(11).compare("SOURCETABLE", Qt::CaseInsensitive) == 0) {
-            if (_purpose == NTRIPHttpPurpose::SourceTable && _status.code == 200) {
-                _state = State::IcyHeaders;
-                result.connected = true;
-            } else {
-                _fail(result, tr("Caster returned a source table; select a valid mountpoint"),
-                      NTRIPError::InvalidMountpoint);
-            }
-        } else if (_line.first(3).compare("ICY", Qt::CaseInsensitive) == 0 && _status.code == 200) {
+        _statusLineReceived(result);
+    } else if (_state == State::ChunkSize) {
+        _chunkSizeReceived(result);
+    } else if (!_line.isEmpty()) {
+        _fieldReceived(result);
+    } else if (_state == State::Trailers) {
+        _trailersEnded(result);
+    } else {
+        _headersEnded(result, utcNow);
+    }
+}
+
+void NTRIPHttpDecoder::_statusLineReceived(Result& result)
+{
+    _status = parseStatusLine(_line);
+    if (!_status.valid) {
+        _fail(result, tr("Invalid HTTP status line"));
+    } else if (_line.left(11).compare("SOURCETABLE", Qt::CaseInsensitive) == 0) {
+        if (_purpose == NTRIPHttpPurpose::SourceTable && _status.code == 200) {
             _state = State::IcyHeaders;
             result.connected = true;
         } else {
-            _http10 = _line.startsWith("HTTP/1.0");
-            _state = State::Headers;
+            _fail(result, tr("Caster returned a source table; select a valid mountpoint"),
+                  NTRIPError::InvalidMountpoint);
         }
+    } else if (_line.first(3).compare("ICY", Qt::CaseInsensitive) == 0 && _status.code == 200) {
+        _state = State::IcyHeaders;
+        result.connected = true;
+    } else {
+        _http10 = _line.startsWith("HTTP/1.0");
+        _state = State::Headers;
+    }
+}
+
+void NTRIPHttpDecoder::_chunkSizeReceived(Result& result)
+{
+    // NTRIP uses no chunk extensions, so everything after ';' (and the whitespace before it) is ignored.
+    QByteArrayView size(_line);
+    if (const qsizetype separator = size.indexOf(';'); separator >= 0) {
+        size = size.first(separator);
+        while (size.endsWith(' ') || size.endsWith('\t')) {
+            size.chop(1);
+        }
+    }
+    const auto length = unsignedNumber(size, 16);
+    if (!length || *length > MAX_CHUNK_BYTES) {
+        _fail(result, tr("Invalid or oversized HTTP chunk"));
+    } else {
+        _remaining = *length;
+        _state = _remaining == 0 ? State::Trailers : State::ChunkData;
+    }
+}
+
+void NTRIPHttpDecoder::_trailersEnded(Result& result)
+{
+    if (_pendingFailure) {
+        _finishError(result);
+    } else {
+        _state = State::Complete;
+        result.complete = true;
+    }
+}
+
+void NTRIPHttpDecoder::_headersEnded(Result& result, const QDateTime& utcNow)
+{
+    if (_status.code >= 300) {
+        _pendingFailure = _statusFailure(utcNow);
+        if (_pendingFailure->code == NTRIPError::AuthFailed || _status.code < 400) {
+            _finishError(result);
+            return;
+        }
+    }
+    if (!_readFraming(result)) {
         return;
     }
-    if (_state == State::ChunkSize) {
-        // NTRIP uses no chunk extensions, so everything after ';' (and the whitespace before it) is ignored.
-        QByteArrayView size(_line);
-        if (const qsizetype separator = size.indexOf(';'); separator >= 0) {
-            size = size.first(separator);
-            while (size.endsWith(' ') || size.endsWith('\t')) {
-                size.chop(1);
-            }
-        }
-        const auto length = unsignedNumber(size, 16);
-        if (!length || *length > MAX_CHUNK_BYTES) {
-            _fail(result, tr("Invalid or oversized HTTP chunk"));
+    if (_status.code >= 100 && _status.code < 200) {
+        if (_status.code == 101 || _contentLength || _chunked ||
+            ++_informationalResponses > MAX_INFORMATIONAL_RESPONSES) {
+            _fail(result, tr("Unsupported HTTP informational response"));
         } else {
-            _remaining = *length;
-            _state = _remaining == 0 ? State::Trailers : State::ChunkData;
+            _headers.clear();
+            _state = State::Status;
         }
         return;
     }
-    if (_line.isEmpty()) {
-        if (_state == State::Trailers) {
-            if (_pendingFailure) {
-                _finishError(result);
-            } else {
-                _state = State::Complete;
-                result.complete = true;
-            }
-            return;
-        }
-        if (_status.code >= 300) {
-            const int status = _status.code;
-            // Redirects are not followed, so the caster would answer a repeated request the same way.
-            const bool redirect = status < 400;
-            // Only the request for corrections names a mountpoint.
-            const bool noMountpoint = _purpose == NTRIPHttpPurpose::Corrections && (status == 404 || status == 410);
-            const auto code = status == 401                                ? NTRIPError::AuthFailed
-                              : noMountpoint                               ? NTRIPError::InvalidMountpoint
-                              : redirect || status == 400 || status == 403 ? NTRIPError::RequestRejected
-                                                                           : NTRIPError::HttpError;
-            const QString detail =
-                status == 401  ? tr("Authentication failed (401): check username and password")
-                : noMountpoint ? tr("Caster has no such mountpoint (HTTP %1); select a valid mountpoint").arg(status)
-                : redirect     ? _redirectDetail(status, _headers)
-                               : tr("HTTP %1: %2").arg(status).arg(errorPreview(_status.reason));
-            _pendingFailure = NTRIPFailure{code, detail};
-            if (_headers.values(QHttpHeaders::WellKnownHeader::RetryAfter).size() == 1) {
-                _pendingFailure->retryAfter = retryAfter(_headers, utcNow);
-            }
-            if (code == NTRIPError::AuthFailed || redirect) {
-                _finishError(result);
-                return;
-            }
-        }
-        const auto lengths = _headers.values(QHttpHeaders::WellKnownHeader::ContentLength);
-        for (const auto& field : lengths) {
-            for (const auto& value : field.split(',')) {
-                const auto length = unsignedNumber(QByteArrayView(value).trimmed());
-                if (!length || (_contentLength && *_contentLength != *length)) {
-                    _fail(result, tr("Invalid or conflicting HTTP content length"));
-                    return;
-                }
-                _contentLength = *length;
-            }
-        }
-        const auto transfers = _headers.values(QHttpHeaders::WellKnownHeader::TransferEncoding);
-        _chunked = !transfers.isEmpty();
-        if (_chunked && (_http10 || transfers.size() != 1 ||
-                         transfers.first().compare("chunked", Qt::CaseInsensitive) != 0 || _contentLength)) {
-            _fail(result, tr("Unsupported or conflicting HTTP transfer encoding"));
-            return;
-        }
-        if (_status.code >= 100 && _status.code < 200) {
-            if (_status.code == 101 || _contentLength || _chunked ||
-                ++_informationalResponses > MAX_INFORMATIONAL_RESPONSES) {
-                _fail(result, tr("Unsupported HTTP informational response"));
-            } else {
-                _headers.clear();
-                _state = State::Status;
-            }
-            return;
-        }
-        const auto encodings = _headers.values(QHttpHeaders::WellKnownHeader::ContentEncoding);
-        if (!encodings.isEmpty() &&
-            (encodings.size() != 1 || encodings.first().compare("identity", Qt::CaseInsensitive) != 0)) {
-            _fail(result, tr("Unsupported HTTP content encoding"));
-            return;
-        }
-        if (_pendingFailure) {
-            _beginBody(result);
-            return;
-        }
-        for (const auto& value : _headers.values(QHttpHeaders::WellKnownHeader::ContentType)) {
-            if (_purpose == NTRIPHttpPurpose::Corrections &&
-                value.split(';').first().trimmed().compare("gnss/sourcetable", Qt::CaseInsensitive) == 0) {
-                _fail(result, tr("Caster returned a source table; select a valid mountpoint"),
-                      NTRIPError::InvalidMountpoint);
-                return;
-            }
-        }
-        if (_status.code == 204 || _status.code == 205) {
-            if (_chunked || (_contentLength && *_contentLength != 0)) {
-                _fail(result, tr("Unexpected framing for an empty HTTP response"));
-                return;
-            }
-            _contentLength = 0;
-        }
-        result.connected = result.connected || _state != State::IcyHeaders;
+    const auto encodings = _headers.values(QHttpHeaders::WellKnownHeader::ContentEncoding);
+    if (!encodings.isEmpty() &&
+        (encodings.size() != 1 || encodings.first().compare("identity", Qt::CaseInsensitive) != 0)) {
+        _fail(result, tr("Unsupported HTTP content encoding"));
+        return;
+    }
+    if (_pendingFailure) {
         _beginBody(result);
         return;
     }
+    if (!_acceptContent(result)) {
+        return;
+    }
+    result.connected = result.connected || _state != State::IcyHeaders;
+    _beginBody(result);
+}
 
+NTRIPFailure NTRIPHttpDecoder::_statusFailure(const QDateTime& utcNow) const
+{
+    const int status = _status.code;
+    // Redirects are not followed, so the caster would answer a repeated request the same way.
+    const bool redirect = status < 400;
+    // Only the request for corrections names a mountpoint.
+    const bool noMountpoint = _purpose == NTRIPHttpPurpose::Corrections && (status == 404 || status == 410);
+    const auto code = status == 401                                ? NTRIPError::AuthFailed
+                      : noMountpoint                               ? NTRIPError::InvalidMountpoint
+                      : redirect || status == 400 || status == 403 ? NTRIPError::RequestRejected
+                                                                   : NTRIPError::HttpError;
+    const QString detail = status == 401 ? tr("Authentication failed (401): check username and password")
+                           : noMountpoint
+                               ? tr("Caster has no such mountpoint (HTTP %1); select a valid mountpoint").arg(status)
+                           : redirect ? _redirectDetail(status, _headers)
+                                      : tr("HTTP %1: %2").arg(status).arg(errorPreview(_status.reason));
+    NTRIPFailure failure{code, detail};
+    if (_headers.values(QHttpHeaders::WellKnownHeader::RetryAfter).size() == 1) {
+        failure.retryAfter = retryAfter(_headers, utcNow);
+    }
+    return failure;
+}
+
+bool NTRIPHttpDecoder::_readFraming(Result& result)
+{
+    const auto lengths = _headers.values(QHttpHeaders::WellKnownHeader::ContentLength);
+    for (const auto& field : lengths) {
+        for (const auto& value : field.split(',')) {
+            const auto length = unsignedNumber(QByteArrayView(value).trimmed());
+            if (!length || (_contentLength && *_contentLength != *length)) {
+                _fail(result, tr("Invalid or conflicting HTTP content length"));
+                return false;
+            }
+            _contentLength = *length;
+        }
+    }
+    const auto transfers = _headers.values(QHttpHeaders::WellKnownHeader::TransferEncoding);
+    _chunked = !transfers.isEmpty();
+    if (_chunked && (_http10 || transfers.size() != 1 ||
+                     transfers.first().compare("chunked", Qt::CaseInsensitive) != 0 || _contentLength)) {
+        _fail(result, tr("Unsupported or conflicting HTTP transfer encoding"));
+        return false;
+    }
+    return true;
+}
+
+bool NTRIPHttpDecoder::_acceptContent(Result& result)
+{
+    for (const auto& value : _headers.values(QHttpHeaders::WellKnownHeader::ContentType)) {
+        if (_purpose == NTRIPHttpPurpose::Corrections &&
+            value.split(';').first().trimmed().compare("gnss/sourcetable", Qt::CaseInsensitive) == 0) {
+            _fail(result, tr("Caster returned a source table; select a valid mountpoint"),
+                  NTRIPError::InvalidMountpoint);
+            return false;
+        }
+    }
+    if (_status.code == 204 || _status.code == 205) {
+        if (_chunked || (_contentLength && *_contentLength != 0)) {
+            _fail(result, tr("Unexpected framing for an empty HTTP response"));
+            return false;
+        }
+        _contentLength = 0;
+    }
+    return true;
+}
+
+void NTRIPHttpDecoder::_fieldReceived(Result& result)
+{
     const qsizetype colon = _line.indexOf(':');
     const QByteArrayView line(_line);
     if (colon <= 0 || !std::all_of(line.begin(), line.begin() + colon, isToken) ||

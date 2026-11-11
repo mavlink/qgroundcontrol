@@ -95,7 +95,27 @@ private:
         Failed,
     };
 
+    /// Takes the body bytes at the front of @a bytes, up to the end of a delimited body or chunk; returns their count.
+    qsizetype _bodyReceived(QByteArrayView bytes, Result& result);
+    /// A byte of the CRLF that ends a chunk.
+    void _chunkEndReceived(char ch, Result& result);
+    /// A byte of a line, which ends with CRLF.
+    void _lineByteReceived(char ch, Result& result, const QDateTime& utcNow);
+    /// A complete line: the status line, a header or trailer field, or a chunk size, as the state has it.
     void _lineReceived(Result& result, const QDateTime& utcNow);
+    void _statusLineReceived(Result& result);
+    void _chunkSizeReceived(Result& result);
+    /// A header or trailer field, or the start of a legacy stream where its optional headers could be.
+    void _fieldReceived(Result& result);
+    void _trailersEnded(Result& result);
+    void _headersEnded(Result& result, const QDateTime& utcNow);
+    /// What the error status of the response means, with the caster's Retry-After hint.
+    NTRIPFailure _statusFailure(const QDateTime& utcNow) const;
+    /// Reads how the body is delimited; false once conflicting or unsupported framing has failed the response.
+    bool _readFraming(Result& result);
+    /// False once the headers of a successful response have failed it: a source table sent in place of corrections,
+    /// or a body where the status allows none.
+    bool _acceptContent(Result& result);
     void _beginBody(Result& result);
     void _beginIcyBody(Result& result);
     void _finishError(Result& result);
