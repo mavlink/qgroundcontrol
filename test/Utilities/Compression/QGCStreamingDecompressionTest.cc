@@ -1,5 +1,7 @@
 #include "QGCStreamingDecompressionTest.h"
 
+#include <memory>
+
 #include <QtCore/QBuffer>
 #include <QtCore/QFile>
 #include <QtCore/QJsonDocument>
@@ -306,6 +308,44 @@ void QGCStreamingDecompressionTest::_testMultipleOpens()
     const QByteArray data2 = device.readAll();
     device.close();
     QCOMPARE(data1, data2);
+}
+
+void QGCStreamingDecompressionTest::_testErrorString_data()
+{
+    QTest::addColumn<bool>("archive");
+
+    QTest::newRow("QGCDecompressDevice") << false;
+    QTest::newRow("QGCArchiveFile") << true;
+}
+
+void QGCStreamingDecompressionTest::_testErrorString()
+{
+    QFETCH(bool, archive);
+
+    QFile resource(archive ? ":/unittest/manifest.json.zip" : ":/unittest/manifest.json.gz");
+    QVERIFY(resource.open(QIODevice::ReadOnly));
+    QBuffer source;
+    source.setData(resource.readAll());
+    std::unique_ptr<QGCArchiveDeviceBase> device;
+    if (archive) {
+        device = std::make_unique<QGCArchiveFile>(&source, QStringLiteral("manifest.json"));
+    } else {
+        device = std::make_unique<QGCDecompressDevice>(&source);
+    }
+    // QIODevice::errorString() is not virtual: this is what a caller holding a QIODevice sees
+    const QIODevice& asDevice = *device;
+
+    // The source is not open yet
+    QVERIFY(!device->open(QIODevice::ReadOnly));
+    QCOMPARE(device->errorString(), QStringLiteral("Source device is not ready"));
+    QCOMPARE(asDevice.errorString(), device->errorString());
+
+    // The failure is forgotten when the device opens, and a stream read to its end leaves no error
+    QVERIFY(source.open(QIODevice::ReadOnly));
+    QVERIFY(device->open(QIODevice::ReadOnly));
+    QVERIFY2(device->errorString().isEmpty(), qPrintable(device->errorString()));
+    QVERIFY(device->readAll().contains("\"name\""));
+    QVERIFY2(device->errorString().isEmpty(), qPrintable(device->errorString()));
 }
 
 UT_REGISTER_TEST(QGCStreamingDecompressionTest, TestLabel::Unit, TestLabel::Utilities)

@@ -28,8 +28,10 @@ QGCDecompressDevice::QGCDecompressDevice(const QString &filePath, QObject *paren
 
 bool QGCDecompressDevice::open(OpenMode mode)
 {
+    _errorString.clear();
+
     if (mode != ReadOnly) {
-        _errorString = QStringLiteral("QGCDecompressDevice only supports ReadOnly mode");
+        setError(QStringLiteral("QGCDecompressDevice only supports ReadOnly mode"));
         return false;
     }
 
@@ -59,7 +61,7 @@ bool QGCDecompressDevice::initArchive()
 {
     if (_sourceDevice && _sourceDevice->isReadable() &&
         !QGClibarchive::canDecodeStream(_sourceDevice->peek(QGClibarchive::kStreamSignatureSize))) {
-        _errorString = QStringLiteral("Compression format is not supported by this build");
+        setError(QStringLiteral("Compression format is not supported by this build"));
         return false;
     }
 
@@ -74,7 +76,7 @@ bool QGCDecompressDevice::prepareForReading()
     // Read the first (and only) entry header for raw format
     struct archive_entry *entry = nullptr;
     if (archive_read_next_header(_reader->handle(), &entry) != ARCHIVE_OK) {
-        _errorString = QString::fromUtf8(archive_error_string(_reader->handle()));
+        setError(QString::fromUtf8(archive_error_string(_reader->handle())));
         _reader.reset();
         return false;
     }

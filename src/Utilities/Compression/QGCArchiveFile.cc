@@ -30,13 +30,15 @@ QGCArchiveFile::QGCArchiveFile(QIODevice *source, const QString &entryName, QObj
 
 bool QGCArchiveFile::open(OpenMode mode)
 {
+    _errorString.clear();
+
     if (mode != ReadOnly) {
-        _errorString = QStringLiteral("QGCArchiveFile only supports ReadOnly mode");
+        setError(QStringLiteral("QGCArchiveFile only supports ReadOnly mode"));
         return false;
     }
 
     if (_entryName.isEmpty()) {
-        _errorString = QStringLiteral("Entry name cannot be empty");
+        setError(QStringLiteral("Entry name cannot be empty"));
         return false;
     }
 
@@ -125,9 +127,9 @@ bool QGCArchiveFile::seekToEntry()
     }
 
     if (walk == QGClibarchive::EntryWalk::Failed) {
-        _errorString = QString::fromUtf8(archive_error_string(_reader->handle()));
+        setError(QString::fromUtf8(archive_error_string(_reader->handle())));
     } else {
-        _errorString = QStringLiteral("Entry not found in archive: ") + _entryName;
+        setError(QStringLiteral("Entry not found in archive: ") + _entryName);
     }
     return false;
 }

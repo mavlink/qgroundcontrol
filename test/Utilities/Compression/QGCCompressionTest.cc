@@ -1415,8 +1415,9 @@ void QGCCompressionTest::_testTruncatedStream_data()
 {
     QTest::addColumn<QString>("api");
 
-    for (const char* api : {"decompressFile", "decompressData", "decompressFromDevice-file",
-                            "decompressFromDevice-memory", "QGCDecompressDevice", "readFile", "computeFileHash"}) {
+    for (const char* api :
+         {"decompressFile", "decompressData", "decompressFromDevice-file", "decompressFromDevice-memory",
+          "QGCDecompressDevice", "QGCDecompressDevice-readAll", "readFile", "computeFileHash"}) {
         QTest::newRow(api) << QString::fromLatin1(api);
     }
 }
@@ -1471,6 +1472,21 @@ void QGCCompressionTest::_testTruncatedStream()
         QVERIFY(QGCCompression::computeFileHash(inputPath).isEmpty());
         verifyExpectedLogMessage();
         verifyExpectedLogMessage();
+    } else if (api == "QGCDecompressDevice-readAll") {
+        QGCDecompressDevice decompressor(&device);
+        QVERIFY(decompressor.open(QIODevice::ReadOnly));
+        expectLogMessage("Utilities.QGCArchiveDeviceBase", QtWarningMsg, memoryFailure);
+        const QByteArray readable = decompressor.readAll();
+        verifyExpectedLogMessage();
+        // readAll() cannot fail: it returns the members before the cut, and the device tells of the error
+        QVERIFY(!readable.isEmpty());
+        QVERIFY(readable.size() < 4 * 64 * 1024);
+        // QIODevice::errorString() is not virtual: this is what a caller holding a QIODevice sees
+        const QIODevice& asDevice = decompressor;
+        QVERIFY2(asDevice.errorString().contains("truncated"), qPrintable(asDevice.errorString()));
+        QVERIFY2(decompressor.errorString().contains("truncated"), qPrintable(decompressor.errorString()));
+        char byte = 0;
+        QCOMPARE(decompressor.read(&byte, 1), -1);
     } else {
         QGCDecompressDevice decompressor(&device);
         QVERIFY(decompressor.open(QIODevice::ReadOnly));

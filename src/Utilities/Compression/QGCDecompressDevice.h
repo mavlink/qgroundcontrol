@@ -9,6 +9,7 @@
 ///
 /// Supports .gz, .xz, .zst, .bz2, .lz4 compressed data
 /// Read-only, sequential access only
+/// A truncated or corrupt stream reads as far as it can be decompressed: errorString() tells of it
 ///
 /// Example usage:
 /// @code

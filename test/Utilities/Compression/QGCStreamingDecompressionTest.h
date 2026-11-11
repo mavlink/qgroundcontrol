@@ -33,4 +33,6 @@ private slots:
     // Edge cases
     void _testPartialReads();
     void _testMultipleOpens();
+    void _testErrorString_data();
+    void _testErrorString();
 };

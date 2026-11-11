@@ -11,6 +11,7 @@
 ///
 /// Supports ZIP, TAR, 7z, and other libarchive-supported formats
 /// Read-only, sequential access only
+/// A truncated or corrupt entry reads as far as it can be decompressed: errorString() tells of it
 ///
 /// Example usage:
 /// @code

@@ -30,8 +30,12 @@ public:
     bool isSequential() const override { return true; }
     qint64 bytesAvailable() const override;
 
-    /// Get error description
-    /// @return Error string if error occurred, empty otherwise
+    /// Why open() or a read failed
+    /// The reason is also set as QIODevice's error string, for a caller that holds the device as a QIODevice:
+    /// QIODevice::errorString() is not virtual, and returns "Unknown error" while nothing has failed.
+    /// readAll() cannot fail. Of a truncated or corrupt stream it returns the part that could be decompressed,
+    /// so check for an error after it. read() returns -1 once that part has been handed out.
+    /// @return Reason of the failure, empty if nothing has failed since open() was last called
     QString errorString() const;
 
     /// Get detected archive format name (available after open)
@@ -91,6 +95,9 @@ protected:
 
     /// Capture format info from the archive after first header read
     void captureFormatInfo();
+
+    /// Record why open() or a read failed, for errorString() and QIODevice::errorString()
+    void setError(const QString& reason);
 
     /// Reset all state (called by close())
     virtual void resetState();
