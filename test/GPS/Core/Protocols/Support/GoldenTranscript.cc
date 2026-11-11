@@ -1,19 +1,17 @@
 #include "GoldenTranscript.h"
 
 #include <algorithm>
-#include <memory>
 #include <span>
 #include <type_traits>
 #include <utility>
 
-#include <QtCore/QMetaEnum>
-
+#include "GPSDriver.h"
 #include "GPSProtocolRuntime.h"
-#include "GPSReceiverDescriptor.h"
 #include "GPSReceiverDetector.h"
 #include "GPSReceiverFamilies.h"
 #include "Protocols/Support/GPSProtocolTestBase.h"
 #include "Protocols/Support/GPSTestClock.h"
+#include "Protocols/Support/ReceiverBench.h"
 #include "Protocols/Support/ScriptedReceiver.h"
 
 using namespace GPSTest;
@@ -71,192 +69,160 @@ Event eventOf(const GPSProtocolEvent& decoded)
         decoded);
 }
 
-/// Records every protocol service call. While offline, transport services fail and are only counted.
-class Session
+/// GPSDriver for a scenario on its Link, and the record of what it does. It is the driver's transport, which forwards
+/// to Link::receiver and records each write and baud change, and it observes the driver's commands and decoded events.
+/// While offline, transport services fail and are only counted.
+class Session final : public GPSTransport
 {
 public:
-    Session(const Link& link, std::vector<Record>& records)
-        : _link(link)
-        , _records(&records)
-    {}
+    Session(const Scenario& scenario, const Link& link, Run& run)
+        : GPSTransport(link.receiver.cancelToken())
+        , _link(link)
+        , _run(run)
+        , _driver(scenario.type, *this, scenario.config, {}, _clock(), _observer())
+    {
+        // Transport reads wait on the link's clock: one that finds no data ends at its deadline.
+        link.receiver.setClock(&link.clock);
+    }
 
     Phase phase = Phase::Configure;
     bool offline = false;
     int transportCalls = 0;
+    /// Decoded events go here instead of the records.
     std::vector<Event>* events = nullptr;
 
-    GPSRuntimeObserver observer()
+    /// GPSDriver::configure(), whose outcome the observer records.
+    bool configure()
     {
-        GPSRuntimeObserver result;
-        result.commandFinished = [this](const GPSConfigurationEvidence& command) {
-            _records->push_back({phase, command});
+        _run.startedAtUs = _link.clock.nowUs();
+        _run.configured = _driver.configure();
+        _run.configuredAtUs = _link.clock.nowUs();
+        _run.error = _driver.configurationError();
+        if (!_run.configured) {
+            _runtime = nullptr;
+        }
+        return _run.configured;
+    }
+
+    GPSReceiveResult receive() { return _driver.receiveOutcome(RECEIVE_TIMEOUT); }
+
+    /// The driver's runtime after a successful configure(), else null.
+    GPSProtocolRuntime* runtime() { return _runtime; }
+
+    GPSOpenResult open() override { return _link.receiver.open(); }
+
+    bool fatalError() const override { return _link.receiver.fatalError(); }
+
+    unsigned fixedBaudRate() const override { return _link.receiver.fixedBaudRate(); }
+
+    std::chrono::milliseconds configurationWriteTimeout() const override
+    {
+        return _link.receiver.configurationWriteTimeout();
+    }
+
+    bool setBaudRate(unsigned rate) override
+    {
+        if (offline) {
+            ++transportCalls;
+            return false;
+        }
+        const bool accepted = _link.receiver.setBaudRate(rate);
+        _run.records.push_back({phase, Baud{rate, accepted}});
+        return accepted;
+    }
+
+    GPSReadResult read(std::span<uint8_t> bytes, std::chrono::milliseconds timeout) override
+    {
+        if (offline) {
+            ++transportCalls;
+            return {GPSReadStatus::Error};
+        }
+        return _link.receiver.read(bytes, timeout);
+    }
+
+protected:
+    GPSWriteResult writeData(QByteArrayView bytes, QDeadlineTimer deadline) override
+    {
+        if (offline) {
+            ++transportCalls;
+            return {GPSWriteStatus::Error};
+        }
+        const size_t index = _run.records.size();
+        _run.records.push_back({phase, Write{bytes.toByteArray()}});
+        const auto result = _link.receiver.write(bytes, deadline);
+        auto& recorded = std::get<Write>(_run.records[index].value);
+        recorded.status = result.status;
+        recorded.acceptedBytes = result.acceptedBytes;
+        recorded.writtenBytes = result.writtenBytes;
+        return result;
+    }
+
+private:
+    GPSClock _clock()
+    {
+        return {.nowUs = [this] { return _link.clock.nowUs(); },
+                .wait =
+                    [this](std::chrono::microseconds duration) {
+                        if (offline) {
+                            ++transportCalls;
+                            return true;
+                        }
+                        if (_link.wait) {
+                            return _link.wait(duration);
+                        }
+                        _link.clock.advanceBy(duration);
+                        return true;
+                    }};
+    }
+
+    GPSDriverObserver _observer()
+    {
+        GPSDriverObserver observer;
+        observer.commandFinished = [this](const GPSConfigurationEvidence& command) {
+            _run.records.push_back({phase, command});
         };
-        result.decoded = [this](const GPSEventBatch& batch) {
+        observer.decoded = [this](const GPSEventBatch& batch) {
             for (const auto& event : batch.events) {
                 if (events) {
                     events->push_back(eventOf(event));
                 } else {
-                    _records->push_back({phase, eventOf(event)});
+                    _run.records.push_back({phase, eventOf(event)});
                 }
             }
         };
-        return result;
+        observer.detected = [this](const GPSReceiverDetection& detection, unsigned baud) {
+            _run.requestedBaud = baud;
+            _run.detectionRecords = _run.records.size();
+            _run.failure = failureOf(detection.error);
+            if (detection.found()) {
+                _run.detected = detection.family->type;
+                _run.detectedBaud = detection.baud;
+                _run.detectedEvidence = detection.evidence;
+            }
+        };
+        observer.configured = [this](GPSProtocolRuntime& runtime, unsigned requestedBaud, unsigned baud) {
+            _runtime = &runtime;
+            _run.requestedBaud = requestedBaud;
+            _run.baud = baud;
+            _run.failure = failureOf(runtime.error());
+            _run.ready = runtime.receiverReady();
+            _run.identity = runtime.identity();
+        };
+        return observer;
     }
 
-    GPSRuntimeIO io()
-    {
-        const auto transport = _link.receiver.makeIO({});
-        GPSRuntimeIO services;
-        services.clock.nowUs = [this] { return _link.clock.nowUs(); };
-        services.clock.wait = [this](std::chrono::microseconds duration) {
-            if (offline) {
-                ++transportCalls;
-                return true;
-            }
-            if (_link.wait) {
-                return _link.wait(duration);
-            }
-            _link.clock.advanceBy(static_cast<uint64_t>(duration.count()));
-            return true;
-        };
-        services.read = [this, read = transport.read](std::span<uint8_t> bytes, GPSDeadline deadline) {
-            if (offline) {
-                ++transportCalls;
-                return GPSReadResult{GPSReadStatus::Error};
-            }
-            const auto result = read(bytes, deadline);
-            // A blocking read that times out has consumed its whole deadline.
-            if (result.status == GPSReadStatus::TimedOut && _link.clock.nowUs() < deadline.untilUs) {
-                _link.clock.advanceTo(deadline.untilUs);
-            }
-            return result;
-        };
-        services.write = [this, write = transport.write](std::span<const uint8_t> bytes, GPSDeadline deadline) {
-            if (offline) {
-                ++transportCalls;
-                return GPSWriteResult{GPSWriteStatus::Error};
-            }
-            const size_t index = _records->size();
-            _records->push_back({phase, Write{QByteArray(reinterpret_cast<const char*>(bytes.data()),
-                                                         static_cast<qsizetype>(bytes.size()))}});
-            const auto result = write(bytes, deadline);
-            auto& recorded = std::get<Write>((*_records)[index].value);
-            recorded.status = result.status;
-            recorded.acceptedBytes = result.acceptedBytes;
-            recorded.writtenBytes = result.writtenBytes;
-            return result;
-        };
-        services.setBaudRate = [this, setBaudRate = transport.setBaudRate](unsigned rate) {
-            if (offline) {
-                ++transportCalls;
-                return GPSBaudStatus::Error;
-            }
-            const auto status = setBaudRate(rate);
-            _records->push_back({phase, Baud{rate, status}});
-            return status;
-        };
-        return services;
-    }
-
-private:
     const Link& _link;
-    std::vector<Record>* _records;
+    Run& _run;
+    GPSProtocolRuntime* _runtime = nullptr;
+    GPSDriver _driver;
 };
 
-/// Configures @a family as GPSDriver::_configureFamily() does; @a detected prefixes its error.
-std::unique_ptr<GPSProtocolRuntime> configureFamily(const GPSReceiverFamily& family, const GPSConfig& config,
-                                                    unsigned baud, const QString& detected, const Link& link,
-                                                    Session& session, Run& run)
+/// Decodes @a bytes in chunks through @a runtime into Decode::events, then nothing after FRESHNESS_HORIZON into
+/// Decode::expired. @a target is the list the runtime's observer records into.
+void decodeOffline(GPSProtocolRuntime& runtime, const Link& link, QByteArrayView bytes, qsizetype chunk,
+                   std::vector<Event>*& target, Decode& result)
 {
-    auto runtime = std::make_unique<GPSProtocolRuntime>(family, session.io(), session.observer());
-    run.requestedBaud = baud;
-    run.configured = runtime->configure(config, baud);
-    run.configuredAtUs = link.clock.nowUs();
-    run.baud = baud;
-    run.failure = failureOf(runtime->error());
-    run.ready = runtime->receiverReady();
-    run.identity = runtime->identity();
-    if (!run.configured) {
-        run.error = runtime->errorDetail();
-        if (run.error.isEmpty()) {
-            run.error = QStringLiteral("Receiver configuration failed");
-        }
-        if (!detected.isEmpty()) {
-            run.error = QStringLiteral("%1: %2").arg(detected, run.error);
-        }
-    }
-    return runtime;
-}
-
-/// GPSDriver::_configureDetected() on the virtual clock.
-std::unique_ptr<GPSProtocolRuntime> configureDetected(const Scenario& scenario, unsigned baud, const Link& link,
-                                                      Session& session, Run& run)
-{
-    run.requestedBaud = baud;
-    const auto detection =
-        GPSReceiverDetector(gpsReceiverFamilies(), session.io(), session.observer().commandFinished).detect(baud);
-    run.configuredAtUs = link.clock.nowUs();
-    run.detectionRecords = run.records.size();
-    if (!detection.found()) {
-        run.failure = failureOf(detection.error);
-        run.error = !detection.errorDetail.isEmpty() ? detection.errorDetail
-                    : detection.error == GPSProtocolError::Cancelled
-                        ? QStringLiteral("Receiver detection cancelled")
-                        : QStringLiteral("No supported receiver was identified");
-        return {};
-    }
-    const GPSType type = detection.family->type;
-    run.detected = type;
-    run.detectedBaud = detection.baud;
-    run.detectedEvidence = detection.evidence;
-    const GPSReceiverConfig config = gpsReceiverConfigForDetected(type, scenario.config);
-    if (const QString error = gpsDetectedReceiverConfigError(type, config); !error.isEmpty()) {
-        run.error = error;
-        return {};
-    }
-    return configureFamily(
-        *detection.family,
-        {.base = config.base, .allowPersistentChanges = config.allowPersistentChanges, .detectedBaud = detection.baud},
-        baud, QStringLiteral("Detected %1 receiver at %2 baud").arg(gpsReceiverName(type)).arg(detection.baud), link,
-        session, run);
-}
-
-/// GPSDriver::configure() on the virtual clock, through the same family table and runtime, for a request the driver
-/// accepts (GPSDriverTest covers refused requests).
-std::unique_ptr<GPSProtocolRuntime> configure(const Scenario& scenario, const Link& link, Session& session, Run& run)
-{
-    run.startedAtUs = link.clock.nowUs();
-    run.configuredAtUs = run.startedAtUs;
-    unsigned baud = scenario.config.baudRate ? scenario.config.baudRate : link.receiver.fixedBaudRate();
-    if (scenario.type == GPSType::Automatic) {
-        return configureDetected(scenario, baud, link, session, run);
-    }
-    const GPSReceiverFamily* family = gpsReceiverFamily(scenario.type);
-    if (!family) {
-        run.error =
-            QStringLiteral("Unsupported GPS type: %1")
-                .arg(QLatin1StringView(QMetaEnum::fromType<GPSType>().valueToKey(static_cast<int>(scenario.type))));
-        return {};
-    }
-    if (family->autoBaudRate && !baud) {
-        baud = family->autoBaudRate;
-    }
-    return configureFamily(
-        *family, {.base = scenario.config.base, .allowPersistentChanges = scenario.config.allowPersistentChanges}, baud,
-        {}, link, session, run);
-}
-
-bool terminal(const GPSProtocolRuntime& runtime, const ScriptedReceiver& receiver)
-{
-    return runtime.error() != GPSProtocolError::None || receiver.isCancelled() || receiver.fatalError();
-}
-
-/// Decodes @a bytes in chunks with the receiver unreachable, then nothing after FRESHNESS_HORIZON.
-void decodeOffline(GPSProtocolRuntime& runtime, Session& session, const Link& link, QByteArrayView bytes,
-                   qsizetype chunk, Decode& result)
-{
-    session.offline = true;
-    session.events = &result.events;
+    target = &result.events;
     const auto* data = reinterpret_cast<const uint8_t*>(bytes.data());
     for (qsizetype offset = 0; offset < bytes.size();) {
         const qsizetype count = chunk > 0 ? std::min(chunk, bytes.size() - offset) : bytes.size() - offset;
@@ -264,9 +230,8 @@ void decodeOffline(GPSProtocolRuntime& runtime, Session& session, const Link& li
         offset += count;
     }
     link.clock.advanceBy(static_cast<uint64_t>(FRESHNESS_HORIZON.count()));
-    session.events = &result.expired;
+    target = &result.expired;
     (void) runtime.consume({});
-    result.transportCalls = session.transportCalls;
 }
 
 }  // namespace
@@ -276,12 +241,12 @@ Run runGolden(const Scenario& scenario, const Link& link)
     // Diagnostics are not transcribed; failure scenarios warn by design.
     const GPSProtocolLogCapture diagnostics;
     Run run;
-    Session session(link, run.records);
-    const auto runtime = configure(scenario, link, session, run);
-    if (!runtime || !run.configured) {
+    Session session(scenario, link, run);
+    if (!session.configure()) {
         return run;
     }
     session.phase = Phase::Stream;
+    GPSReceiveResult outcome;
     for (const auto& step : scenario.stream) {
         if (!step.bytes.isEmpty()) {
             link.receiver.queueReply(step.bytes);
@@ -290,16 +255,16 @@ Run runGolden(const Scenario& scenario, const Link& link)
             link.clock.nowUs() +
             static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(step.duration).count());
         do {
-            (void) runtime->receive(RECEIVE_TIMEOUT);
+            outcome = session.receive();
             ++run.receiveCalls;
-        } while (!terminal(*runtime, link.receiver) && link.clock.nowUs() < until &&
+        } while (outcome.error == GPSProtocolError::None && link.clock.nowUs() < until &&
                  run.receiveCalls < MAX_RECEIVE_CALLS);
-        if (terminal(*runtime, link.receiver) || run.receiveCalls >= MAX_RECEIVE_CALLS) {
+        if (outcome.error != GPSProtocolError::None || run.receiveCalls >= MAX_RECEIVE_CALLS) {
             break;
         }
     }
-    run.streamFailure = failureOf(runtime->error());
-    run.streamReady = runtime->receiverReady();
+    run.streamFailure = failureOf(outcome.error);
+    run.streamReady = session.runtime()->receiverReady();
     return run;
 }
 
@@ -308,11 +273,12 @@ Decode decodeGolden(const Scenario& setup, const Link& link, QByteArrayView byte
     const GPSProtocolLogCapture diagnostics;
     Decode result;
     Run run;
-    Session session(link, run.records);
-    const auto runtime = configure(setup, link, session, run);
-    result.configured = run.configured;
-    if (runtime) {
-        decodeOffline(*runtime, session, link, bytes, chunk, result);
+    Session session(setup, link, run);
+    result.configured = session.configure();
+    if (result.configured) {
+        session.offline = true;
+        decodeOffline(*session.runtime(), link, bytes, chunk, session.events, result);
+        result.transportCalls = session.transportCalls;
     }
     return result;
 }
@@ -325,14 +291,19 @@ Decode armedDecodeGolden(const Scenario& setup, const Link& link, QByteArrayView
     if (!family) {
         return result;
     }
-    std::vector<Record> records;
-    Session session(link, records);
-    session.offline = true;
-    GPSProtocolRuntime runtime(*family, session.io(), session.observer());
+    std::vector<Event>* target = nullptr;
+    GPSRuntimeObserver observer;
+    observer.decoded = [&target](const GPSEventBatch& batch) {
+        for (const auto& event : batch.events) {
+            target->push_back(eventOf(event));
+        }
+    };
+    // Touching the device is a model violation, which fails the test.
+    GPSProtocolRuntime runtime(*family, makeDecoderOnlyIO(link.clock), std::move(observer));
     result.configured = runtime.armDecodeOnly(
         {.base = setup.config.base, .allowPersistentChanges = setup.config.allowPersistentChanges});
     if (result.configured) {
-        decodeOffline(runtime, session, link, bytes, chunk, result);
+        decodeOffline(runtime, link, bytes, chunk, target, result);
     }
     return result;
 }

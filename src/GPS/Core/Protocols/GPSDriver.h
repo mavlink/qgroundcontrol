@@ -16,8 +16,10 @@
 #include "GPSReceiverReports.h"
 #include "GPSType.h"
 
+class GPSProtocolRuntime;
 class GPSTransport;
 struct GPSConfig;
+struct GPSReceiverDetection;
 struct GPSReceiverFamily;
 struct GPSRuntimeIO;
 struct GPSRuntimeObserver;
@@ -38,6 +40,23 @@ struct GPSDriverSinks
     /// decodes, or GPSType::Passive for standard NMEA. A change first withdraws the satellite counts of the protocol
     /// left behind, with an empty onSatelliteInfo report.
     std::function<void(GPSType)> onReceiverDetected;
+};
+
+/// Observers of what a driver's detection and runtime produce, before the driver adapts and filters it for the sinks:
+/// for tests and tools that record a session. Invoked on the caller thread from within configure()/receiveOutcome();
+/// they must not call back into the driver.
+struct GPSDriverObserver
+{
+    /// Every completed command: detection, configuration and streaming alike.
+    std::function<void(const GPSConfigurationEvidence&)> commandFinished;
+    /// Every decoded batch, before the sinks receive what the driver publishes of it.
+    std::function<void(const GPSEventBatch&)> decoded;
+    /// The detection a GPSType::Automatic driver ran from @a baud, whether or not it identified a family.
+    std::function<void(const GPSReceiverDetection&, unsigned baud)> detected;
+    /// The runtime after it configured its family from @a requestedBaud and ended at @a baud, before a failed one is
+    /// discarded. After a success it stays the driver's until the next configure(), and input decoded through it
+    /// (GPSProtocolRuntime::consume()) reaches the sinks as received input does.
+    std::function<void(GPSProtocolRuntime&, unsigned requestedBaud, unsigned baud)> configured;
 };
 
 /// What one receive cycle heard from the receiver.
@@ -74,7 +93,7 @@ class GPSDriver
 public:
     /// Deadlines, report times and satellite freshness run on @a clock; the default is the steady clock.
     GPSDriver(GPSType type, GPSTransport& transport, const GPSReceiverConfig& config, GPSDriverSinks sinks,
-              GPSClock clock = {});
+              GPSClock clock = {}, GPSDriverObserver observer = {});
     ~GPSDriver();
 
     Q_DISABLE_COPY(GPSDriver)
@@ -120,6 +139,7 @@ private:
     GPSReceiverConfig _config;
     GPSDriverSinks _sinks;
     GPSClock _clock;
+    GPSDriverObserver _observer;
 
     struct State;
     std::unique_ptr<State> _state;

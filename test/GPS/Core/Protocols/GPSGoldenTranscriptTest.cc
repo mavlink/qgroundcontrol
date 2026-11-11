@@ -6,6 +6,7 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QSet>
 #include <QtCore/QStringList>
 
@@ -183,6 +184,13 @@ GPSTest::Golden::Decode navigationEvents(GPSTest::Golden::Decode decode)
 }
 
 }  // namespace
+
+void GPSGoldenTranscriptTest::init()
+{
+    GPSProtocolTestBase::init();
+    // GPSDriver warns with the error each transcript records.
+    ignoreLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression());
+}
 
 void GPSGoldenTranscriptTest::_scenario_data()
 {

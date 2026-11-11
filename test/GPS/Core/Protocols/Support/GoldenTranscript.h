@@ -8,30 +8,29 @@
 // implementation; a re-architecture re-implements that file, and must reproduce every golden byte for byte.
 //
 // Contract of an implementation:
-// - Configure exactly as GPSDriver::configure() does: gpsReceiverConfigError() validation first, then the baud
-//   selection (the configured rate, else the transport's fixed rate, else the family's automatic rate), then
-//   configuration, then completion of any outstanding write-only command, then an empty decode that flushes events
-//   published by the final command. A validation or fixed-baud failure performs no I/O and reports only `error`.
-//   GPSType::Automatic first detects the family (GPSReceiverDetector) at the configured or fixed rate, else at every
-//   candidate rate, then fits the request to it and configures it from the detected rate. The mismatch hint GPSDriver
-//   appends to a configured type's error is a diagnostic, not part of the transcript.
+// - Run GPSDriver itself, as GPSReceiverWorker does: configure(), then receiveOutcome() for the stream. The transcript
+//   therefore records the driver's request validation, baud selection (the configured rate, else the transport's fixed
+//   rate, else the family's automatic rate), receiver detection for GPSType::Automatic and error text. A request the
+//   driver refuses performs no I/O and reports only `error`.
 // - Record every RTCM frame the family decodes. GPSDriver forwards those of a base only while its status is valid,
 //   which GPSProtocolFamilyContractTest covers and the transcript does not show.
 // - Drive all I/O through Link::receiver on Link::clock. Time never passes except through a read, which ends at
 //   its deadline when no data arrives, or through Link::wait. Real sleeps are not allowed.
-// - Record, in order, every transport write call (bytes and result), every baud change (rate and status), every
-//   completed configuration command (GPSConfigurationEvidence), and every decoded event. Write-call boundaries are
-//   not significant: the transcript merges the contiguous writes that one command's evidence accounts for.
+// - Record, in order, every write that reaches the link (bytes and result), every baud change (rate and whether the
+//   link accepted it), every completed configuration command (GPSConfigurationEvidence), and every decoded event.
+//   Write-call boundaries are not significant: the transcript merges the contiguous writes that one command's evidence
+//   accounts for.
 // - Host timestamps only matter as differences (evidence and configuration durations, rounded to milliseconds)
 //   and as zero versus nonzero receipts.
-// - After a successful configuration, run each StreamStep: queue its bytes on the receiver, then call the receive
-//   loop with RECEIVE_TIMEOUT slices until `duration` of virtual time has passed, a terminal I/O failure occurs, or
-//   MAX_RECEIVE_CALLS slices were used.
-// - Never let protocol diagnostics reach the test log: failure scenarios emit warnings by design, and the
-//   transcripts pin wire behaviour, not diagnostic text.
-// - decodeGolden() configures Link as above (without stream steps), then decodes the bytes in chunks with the
-//   receiver unreachable (any attempted I/O is counted and fails), then decodes nothing after FRESHNESS_HORIZON.
-//   armedDecodeGolden() decodes the same way after arming a fresh decoder for the request, with no I/O at all.
+// - After a successful configuration, run each StreamStep: queue its bytes on the receiver, then call
+//   GPSDriver::receiveOutcome() with RECEIVE_TIMEOUT slices until `duration` of virtual time has passed, the driver
+//   reports a failure, or MAX_RECEIVE_CALLS slices were used.
+// - Never let diagnostics reach the test log: failure scenarios emit warnings by design, and the transcripts pin wire
+//   behaviour, not diagnostic text. GPSGoldenTranscriptTest accepts the warnings of GPSDriver itself.
+// - decodeGolden() configures Link as above (without stream steps), then decodes the bytes in chunks through the
+//   driver's runtime with the receiver unreachable (any attempted I/O is counted and fails), then decodes nothing
+//   after FRESHNESS_HORIZON. A failed configuration decodes nothing. armedDecodeGolden() decodes the same way after
+//   arming a fresh decoder for the request, without a driver and with no I/O at all.
 
 #include <chrono>
 #include <cstdint>
@@ -113,7 +112,7 @@ struct Write
 struct Baud
 {
     unsigned rate = 0;
-    GPSBaudStatus status = GPSBaudStatus::Configured;
+    bool accepted = true;
 };
 
 struct Position

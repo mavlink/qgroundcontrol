@@ -128,7 +128,7 @@ QString checkInventory(const QString& root, const QString& pattern, const QSet<Q
 // Transcript format. A scenario golden describes the scenario and its request, then a `configure` and (after
 // success) a `stream` phase. Each phase line has its outcome: requested->final baud, sticky failure, readiness and,
 // for configure, the virtual duration. Under it:
-//   `baud <rate> <status>`
+//   `baud <rate> configured|unsupported`, as the link accepted or refused the rate
 //   `write <command label|-> <bytes> [<outcome> required|optional]`, then the bytes as text when printable, else hex
 //   `evidence <command label> <outcome> required|optional accepted=<n> written=<n>` for a command that wrote nothing
 //   decoded events; host timestamps appear only as receipt=0/1
@@ -243,11 +243,6 @@ QString nameOf(GPSCommandOutcome outcome)
 QString nameOf(GPSWriteStatus status)
 {
     return nameOf(status, {"completed", "timed-out", "cancelled", "error", "unsupported"});
-}
-
-QString nameOf(GPSBaudStatus status)
-{
-    return nameOf(status, {"configured", "unsupported", "cancelled", "error"});
 }
 
 QString nameOf(Failure failure)
@@ -500,7 +495,9 @@ QStringList phaseLines(const Run& run, Phase phase, const std::vector<std::optio
             }
         } else if (const auto* baud = std::get_if<Baud>(&record.value)) {
             flush();
-            lines << QStringLiteral("  baud %1 %2").arg(baud->rate).arg(nameOf(baud->status));
+            lines << QStringLiteral("  baud %1 %2")
+                         .arg(baud->rate)
+                         .arg(baud->accepted ? QStringLiteral("configured") : QStringLiteral("unsupported"));
         } else if (const auto* evidence = std::get_if<GPSConfigurationEvidence>(&record.value)) {
             flush();
             QString outcome =

@@ -388,8 +388,8 @@ failing tests. Keep application-dependent fixtures in the full harness.
 
 ## GPS Protocol Golden Transcripts
 
-`GPSGoldenTranscriptTest` pins the native GPS receiver protocols on a virtual clock. For each
-scenario it records host-to-receiver bytes, baud changes, configuration evidence, identity and
+`GPSGoldenTranscriptTest` pins the native GPS receiver protocols, as `GPSDriver` runs them, on a virtual
+clock. For each scenario it records host-to-receiver bytes, baud changes, configuration evidence, identity and
 decoded events. It also records the events decoded from every file in `test/GPS/Core/Protocols/corpus/`
 and `test/GPS/Core/Protocols/fixtures/` at several chunk sizes. The expected transcripts live in
 `test/GPS/Core/Protocols/golden/`, and `test/GPS/Core/Protocols/Support/GoldenTranscript.h` documents the driver

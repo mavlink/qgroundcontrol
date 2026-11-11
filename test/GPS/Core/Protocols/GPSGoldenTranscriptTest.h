@@ -7,6 +7,9 @@ class GPSGoldenTranscriptTest : public GPSProtocolTestBase
 {
     Q_OBJECT
 
+protected slots:
+    void init() override;
+
 private slots:
     void _scenario_data();
     void _scenario();
