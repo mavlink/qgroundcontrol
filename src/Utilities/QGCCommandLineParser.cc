@@ -120,6 +120,11 @@ CommandLineParseResult parseCommandLine()
     QCoreApplication::setApplicationName(QLatin1String(QGC_APP_NAME));
     QCoreApplication::setApplicationVersion(QLatin1String(QGC_APP_VERSION_STR));
 
+    return parseArguments(QCoreApplication::arguments());
+}
+
+CommandLineParseResult parseArguments(const QStringList& arguments)
+{
     CommandLineParseResult out{};
     out.parser = std::make_unique<QCommandLineParser>();
 
@@ -237,7 +242,7 @@ CommandLineParseResult parseCommandLine()
 #endif
 
     // --- Parse arguments ---
-    const QStringList normalizedArgs = normalizeArgs(QCoreApplication::arguments());
+    const QStringList normalizedArgs = normalizeArgs(arguments);
     parser.process(normalizedArgs);
 
     // --- Validate unknown options ---
