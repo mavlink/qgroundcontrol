@@ -250,6 +250,17 @@ void ashtechMetadata(GPSTestClock& clock)
         hasPosition(driver->consume(nmeaPacket("PASHR,POS,2,12,172814.0,3723.4,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,"))));
     QCOMPARE_EQ(driver.position.navigation.altitudeEllipsoidMeters, 18.9);
     QVERIFY(std::isnan(driver.position.navigation.altitudeMslMeters));
+    QVERIFY(driver.position.velocityValid);
+    QCOMPARE(driver.position.navigation.speedMetersPerSecond, 5.144444f);
+    QCOMPARE(driver.position.navigation.courseRadians, 1.570796f);
+    // A fix whose track or speed is missing or out of range has no velocity.
+    for (const std::string_view velocity : {",10", "90,", "360.5,10", "-1,10", "90,-0.1"}) {
+        const std::string body =
+            "PASHR,POS,2,12,172814.0,3723.4,N,12202.2,W,18.9,0," + std::string(velocity) + ",0,1,1,1,1,";
+        QVERIFY(hasPosition(driver->consume(nmeaPacket(body))));
+        QCOMPARE_EQ(driver.position.navigation.altitudeEllipsoidMeters, 18.9);
+        QVERIFY(!driver.position.velocityValid);
+    }
     for (const std::string_view missingCoordinate : {
              "PASHR,POS,2,12,172814.0,,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,",
              "PASHR,POS,2,12,172814.0,3723.4,N,,W,18.9,0,90,10,0,1,1,1,1,",
@@ -257,6 +268,7 @@ void ashtechMetadata(GPSTestClock& clock)
          }) {
         QVERIFY(hasPosition(driver->consume(nmeaPacket(missingCoordinate))));
         QCOMPARE(driver.position.navigation.fixType, GPSPositionReport::FixType::NoFix);
+        QVERIFY(!driver.position.velocityValid);
     }
     QVERIFY(!hasSatellites(driver->consume(nmeaPacket("GPGSV,1,1,01,01,,,"))));
     clock.advanceBy(NMEA::SatelliteAssembler::IDLE_TIMEOUT);

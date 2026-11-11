@@ -460,13 +460,12 @@ std::optional<GPSReceiveUpdates> Protocol::_handlePosition(const NMEA::Sentence&
     const auto latitude = numberOr(fields[5], 0.0);
     const auto longitude = numberOr(fields[7], 0.0);
     const auto altitude = numberOr(fields[9], 0.0);
-    const auto trackDegrees = numberOr(fields[11], 0.0);
-    const auto groundSpeedKnots = numberOr(fields[12], 0.0);
     const auto horizontalDop = numberOr(fields[15], 99.9);
     const auto verticalDop = numberOr(fields[16], 99.9);
-    // Time, differential age, vertical velocity, PDOP and TDOP are validated but not reported.
-    for (const size_t unused : {4, 10, 13, 14, 17}) {
-        if (!numberOr(fields[unused], 0.0)) {
+    // Track and speed are range-checked with the velocity below. Time, differential age, vertical velocity, PDOP and
+    // TDOP are validated but not reported.
+    for (const size_t validated : {4, 10, 11, 12, 13, 14, 17}) {
+        if (!numberOr(fields[validated], 0.0)) {
             return std::nullopt;
         }
     }
@@ -474,8 +473,8 @@ std::optional<GPSReceiveUpdates> Protocol::_handlePosition(const NMEA::Sentence&
     const std::string_view eastWest = fields[8];
     if (!quality || *quality < 0 || *quality > 23 || !satellites || *satellites < 0 || *satellites > 255 || !latitude ||
         *latitude < 0 || *latitude > 9000 || !longitude || *longitude < 0 || *longitude > 18000 || !altitude ||
-        !trackDegrees || !groundSpeedKnots || !horizontalDop || !verticalDop ||
-        (northSouth != "N" && northSouth != "S") || (eastWest != "E" && eastWest != "W")) {
+        !horizontalDop || !verticalDop || (northSouth != "N" && northSouth != "S") ||
+        (eastWest != "E" && eastWest != "W")) {
         return std::nullopt;
     }
     const bool coordinatesFound = !fields[5].empty() && !fields[7].empty() && !fields[9].empty();
@@ -516,10 +515,14 @@ std::optional<GPSReceiveUpdates> Protocol::_handlePosition(const NMEA::Sentence&
     _applyMetadata(NMEA::utcMilliseconds(sentence.fields[4]), nowUs);
     navigation.satellitesUsed = gpsSatellitesUsed(static_cast<unsigned>(*satellites));
 
-    navigation.speedMetersPerSecond = static_cast<float>(*groundSpeedKnots) / 1.9438445f;
+    // Velocity needs a fix, and a track and a speed that are both present and in range.
+    const auto courseDegrees = NMEA::courseDegrees(fields[11]);
+    const auto speed = NMEA::speedMetersPerSecond(fields[12], NMEA::KNOTS_TO_METERS_PER_SECOND);
+    const bool velocityValid = coordinatesFound && courseDegrees && speed;
+    navigation.speedMetersPerSecond = velocityValid ? static_cast<float>(*speed) : NAN;
     // Course over ground (the direction of movement, not the heading).
-    navigation.courseRadians = static_cast<float>(*trackDegrees * GPSProtocolMath::DEG_TO_RAD);
-    _nmea.position().velocityValid = true;
+    navigation.courseRadians = velocityValid ? static_cast<float>(*courseDegrees * GPSProtocolMath::DEG_TO_RAD) : NAN;
+    _nmea.position().velocityValid = velocityValid;
     return GPSReceiveUpdate::Position;
 }
 

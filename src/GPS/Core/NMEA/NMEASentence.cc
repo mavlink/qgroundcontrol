@@ -19,7 +19,6 @@ constexpr unsigned HOURS_PER_DAY = 24;
 constexpr unsigned MINUTES_PER_HOUR = 60;
 constexpr unsigned SECONDS_PER_MINUTE = 60;
 constexpr size_t FIRST_MILLISECOND_DIGIT_WEIGHT = 100;
-constexpr double KNOTS_TO_METERS_PER_SECOND = 0.5144444444444445;
 constexpr double KILOMETERS_PER_HOUR_TO_METERS_PER_SECOND = 1.0 / 3.6;
 
 std::optional<NMEA::UtcDate> dateFromParts(unsigned day, unsigned month, int year)
@@ -28,18 +27,6 @@ std::optional<NMEA::UtcDate> dateFromParts(unsigned day, unsigned month, int yea
         return {};
     }
     return NMEA::UtcDate{year, month, day};
-}
-
-std::optional<double> nonnegativeDegrees(std::string_view field)
-{
-    const auto value = NMEA::number<double>(field);
-    return value && *value >= 0.0 && *value <= 360.0 ? value : std::nullopt;
-}
-
-std::optional<double> nonnegativeSpeed(std::string_view field, double scale)
-{
-    const auto value = NMEA::number<double>(field);
-    return value && *value >= 0.0 ? std::optional<double>(*value * scale) : std::nullopt;
 }
 
 constexpr int MIN_REPAIRABLE_SENTENCE_LENGTH = 5;
@@ -233,6 +220,18 @@ std::optional<int> utcMilliseconds(std::string_view field)
     return static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(wholeSeconds).count()) + milliseconds;
 }
 
+std::optional<double> courseDegrees(std::string_view field)
+{
+    const auto value = number<double>(field);
+    return value && *value >= 0.0 && *value <= 360.0 ? value : std::nullopt;
+}
+
+std::optional<double> speedMetersPerSecond(std::string_view field, double scale)
+{
+    const auto value = number<double>(field);
+    return value && *value >= 0.0 ? std::optional<double>(*value * scale) : std::nullopt;
+}
+
 std::optional<UtcDate> rmcDate(std::string_view field)
 {
     if (field.size() != 6) {
@@ -267,8 +266,9 @@ std::optional<RMC> rmc(const Sentence& input)
     result.latitude = *latitude;
     result.longitude = *longitude;
     result.utcMilliseconds = utcMilliseconds(f[Field::UTC_TIME]);
-    result.speedMetersPerSecond = nonnegativeSpeed(f[Field::RMC_SPEED_KNOTS], KNOTS_TO_METERS_PER_SECOND).value_or(NAN);
-    result.courseDegrees = nonnegativeDegrees(f[Field::RMC_COURSE]).value_or(NAN);
+    result.speedMetersPerSecond =
+        speedMetersPerSecond(f[Field::RMC_SPEED_KNOTS], KNOTS_TO_METERS_PER_SECOND).value_or(NAN);
+    result.courseDegrees = courseDegrees(f[Field::RMC_COURSE]).value_or(NAN);
     return result;
 }
 
@@ -292,10 +292,10 @@ std::optional<VTG> vtg(const Sentence& input)
         return {};
     }
     VTG result;
-    result.courseDegrees = nonnegativeDegrees(input.fields[Field::VTG_TRUE_COURSE]).value_or(NAN);
+    result.courseDegrees = courseDegrees(input.fields[Field::VTG_TRUE_COURSE]).value_or(NAN);
     const auto speedKmh =
-        nonnegativeSpeed(input.fields[Field::VTG_SPEED_KMH], KILOMETERS_PER_HOUR_TO_METERS_PER_SECOND);
-    const auto speedKnots = nonnegativeSpeed(input.fields[Field::VTG_SPEED_KNOTS], KNOTS_TO_METERS_PER_SECOND);
+        speedMetersPerSecond(input.fields[Field::VTG_SPEED_KMH], KILOMETERS_PER_HOUR_TO_METERS_PER_SECOND);
+    const auto speedKnots = speedMetersPerSecond(input.fields[Field::VTG_SPEED_KNOTS], KNOTS_TO_METERS_PER_SECOND);
     result.speedMetersPerSecond = speedKmh.value_or(speedKnots.value_or(NAN));
     return result;
 }
