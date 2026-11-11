@@ -1,4 +1,4 @@
-# Correction routing: stream selection, MAVLink packing for vehicles, and UDP input and output.
+# Correction routing: stream selection, MAVLink packing for vehicles, UDP input and output, and the stream's log.
 target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE
@@ -6,6 +6,8 @@ target_sources(
         GPSCorrectionManager.h
         GPSCorrectionSelector.cc
         GPSCorrectionSelector.h
+        RTCMLogFile.cc
+        RTCMLogFile.h
         RTCMMAVLink.cc
         RTCMMAVLink.h
         RTCMMAVLinkPacket.cc

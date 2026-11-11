@@ -16,6 +16,7 @@ qt_add_qml_module(
     DEPENDENCIES
         QtPositioning
     QML_FILES
+        CorrectionsLogSwitch.qml
         CorrectionsStatus.qml
         GcsPositionStatus.qml
         GPSFactComboField.qml

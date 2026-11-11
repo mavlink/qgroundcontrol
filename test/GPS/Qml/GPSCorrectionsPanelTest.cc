@@ -298,6 +298,45 @@ void GPSCorrectionsPanelTest::_correctionsStatusShowsMessageFilterError()
     QVERIFY(!error->property("visible").toBool());
 }
 
+void GPSCorrectionsPanelTest::_correctionsLogSwitch()
+{
+    TestFixtures::TempDirFixture directory;
+    QString folder = directory.path();
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler, {.logDirectory = [&folder] { return folder; }});
+    GPSTest::QmlEngine engine;
+    std::unique_ptr<QObject> log =
+        engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsLogSwitch.qml")),
+                      {{QStringLiteral("corrections"), QVariant::fromValue(&corrections)}});
+    QVERIFY2(log, qPrintable(engine.lastError()));
+    auto* toggle = log->findChild<QObject*>(QStringLiteral("correctionsLogSwitch"));
+    auto* file = log->findChild<QObject*>(QStringLiteral("correctionsLogFile"));
+    QVERIFY(toggle && file);
+    QVERIFY(!toggle->property("checked").toBool());
+    QVERIFY(!file->property("visible").toBool());
+
+    QVERIFY(QMetaObject::invokeMethod(toggle, "click"));
+    QVERIFY(corrections.logToFile());
+    QVERIFY(corrections.logFile().startsWith(folder));
+    QVERIFY(file->property("visible").toBool());
+    QCOMPARE(file->property("text").toString(),
+             QCoreApplication::translate("CorrectionsLogSwitch", "Log file: %1").arg(corrections.logFile()));
+
+    // The switch follows the log: one that ends, as at its size limit, turns it off and is no longer named.
+    corrections.setLogToFile(false);
+    QVERIFY(!toggle->property("checked").toBool());
+    QVERIFY(!file->property("visible").toBool());
+
+    // A log that cannot start, here for a regular file where its folder should be, leaves the switch off.
+    folder = directory.createFile(QStringLiteral("GPSCorrections"), "not a folder");
+    expectLogMessage("GPS.Corrections.RTCMLogFile", QtWarningMsg, QRegularExpression(QStringLiteral("file error")));
+    QVERIFY(QMetaObject::invokeMethod(toggle, "click"));
+    verifyExpectedLogMessage();
+    QVERIFY(!corrections.logToFile());
+    QVERIFY(!toggle->property("checked").toBool());
+    QVERIFY(!file->property("visible").toBool());
+}
+
 void GPSCorrectionsPanelTest::_ntripErrorActionRetries()
 {
     const auto fail = [this](MockNTRIPTransport* transport) {
