@@ -65,6 +65,9 @@ bool canDecodeStream(const QByteArray& signature);
 
 /// \brief RAII wrapper for libarchive reader with automatic cleanup
 ///
+/// Every libarchive reader is set up by one of the open functions: created, given the filters and
+/// formats of its mode by configureReader() and, in RawFormat mode, refused by canDecodeStream()
+/// if this build cannot decode the stream.
 class ArchiveReader {
 public:
     ArchiveReader() = default;
@@ -86,8 +89,23 @@ public:
     /// @note The device must remain valid and open until the reader is closed
     bool open(QIODevice *device, ReaderMode mode = ReaderMode::AllFormats);
 
+    /// Open archive for reading from a QIODevice, for a caller that reports the failure itself
+    /// @param device QIODevice to read from (must be open and readable)
+    /// @param mode Format support mode (AllFormats or RawFormat)
+    /// @param errorString Receives the reason if the device cannot be read or libarchive cannot open it,
+    ///        and that reason is then not logged
+    /// @return true on success
+    /// @note The device must remain valid and open until the reader is closed
+    bool open(QIODevice* device, ReaderMode mode, QString& errorString);
+
+    /// Open archive for reading from memory
+    /// @param data Archive or compressed stream (shared with the reader, not copied)
+    /// @param mode Format support mode (AllFormats or RawFormat)
+    /// @return true on success
+    bool openMemory(const QByteArray& data, ReaderMode mode);
+
     /// Close the archive. The reader can be opened again.
-    void close() { _archive.reset(); }
+    void close();
 
     /// Get the underlying archive handle
     struct archive* handle() const { return _archive.get(); }
@@ -99,7 +117,7 @@ public:
     bool isOpen() const { return _archive != nullptr; }
 
     /// Get the total data size (for progress reporting)
-    /// @return Size in bytes: resource data size, file size, or device size (0 if unknown)
+    /// @return Size in bytes: size of the data in memory, file size, or device size (0 if unknown)
     qint64 dataSize() const;
 
     /// Get the detected archive format name (after reading first header)
@@ -116,9 +134,14 @@ private:
         void operator()(struct archive* reader) const { archive_read_free(reader); }
     };
 
+    /// Close the archive and create the reader for the next one
+    /// @param signature Start of the input (see canDecodeStream()), looked at in RawFormat mode
+    /// @return false, after logging a warning, if the reader was not created
+    bool _create(ReaderMode mode, const QByteArray& signature);
+
     std::unique_ptr<struct archive, Deleter> _archive;
     QString _filePath;  // Stored path for size queries
-    QByteArray _resourceData;  // Holds data for Qt resources
+    QByteArray _memoryData;        // Data read from memory: a Qt resource, or the bytes given to openMemory()
     QIODevice *_device = nullptr;  // Device for streaming reads
 };
 

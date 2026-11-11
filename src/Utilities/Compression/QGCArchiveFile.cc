@@ -69,12 +69,6 @@ qint64 QGCArchiveFile::size() const
 
 bool QGCArchiveFile::initArchive()
 {
-    _archive = archive_read_new();
-    if (!_archive) {
-        _errorString = QStringLiteral("Failed to create archive reader");
-        return false;
-    }
-
     // All formats for archives
     configureArchiveFormats(true);
 
@@ -104,7 +98,7 @@ bool QGCArchiveFile::seekToEntry()
     _entryFound = false;
 
     QGClibarchive::NextEntry next;
-    while ((next = QGClibarchive::readNextEntry(_archive, &entry)) == QGClibarchive::NextEntry::Found) {
+    while ((next = QGClibarchive::readNextEntry(_reader->handle(), &entry)) == QGClibarchive::NextEntry::Found) {
         // Capture format info on first header
         if (_formatName.isEmpty()) {
             captureFormatInfo();
@@ -129,7 +123,7 @@ bool QGCArchiveFile::seekToEntry()
     }
 
     if (next == QGClibarchive::NextEntry::Error) {
-        _errorString = QString::fromUtf8(archive_error_string(_archive));
+        _errorString = QString::fromUtf8(archive_error_string(_reader->handle()));
     } else {
         _errorString = QStringLiteral("Entry not found in archive: ") + _entryName;
     }

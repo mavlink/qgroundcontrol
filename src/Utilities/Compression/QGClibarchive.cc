@@ -680,8 +680,8 @@ namespace QGClibarchive {
 
 qint64 ArchiveReader::dataSize() const
 {
-    if (!_resourceData.isEmpty()) {
-        return _resourceData.size();
+    if (!_memoryData.isEmpty()) {
+        return _memoryData.size();
     }
     if (_device) {
         return _device->size() > 0 ? _device->size() : 0;
@@ -718,17 +718,20 @@ QString ArchiveReader::filterName() const
     return name ? QString::fromUtf8(name) : QStringLiteral("none");
 }
 
-bool ArchiveReader::open(const QString& path, ReaderMode mode)
+void ArchiveReader::close()
+{
+    _archive.reset();
+    _filePath.clear();
+    _memoryData.clear();
+    _device = nullptr;
+}
+
+bool ArchiveReader::_create(ReaderMode mode, const QByteArray& signature)
 {
     close();
-    _device = nullptr;
-    _filePath = path;
 
-    if (mode == ReaderMode::RawFormat) {
-        QFile file(path);
-        if (file.open(QIODevice::ReadOnly) && !canDecodeStream(file.read(kStreamSignatureSize))) {
-            return false;
-        }
+    if (mode == ReaderMode::RawFormat && !canDecodeStream(signature)) {
+        return false;
     }
 
     _archive.reset(archive_read_new());
@@ -738,8 +741,25 @@ bool ArchiveReader::open(const QString& path, ReaderMode mode)
     }
 
     configureReader(_archive.get(), mode);
+    return true;
+}
 
-    if (!openArchiveForReading(_archive.get(), path, _resourceData)) {
+bool ArchiveReader::open(const QString& path, ReaderMode mode)
+{
+    QByteArray signature;
+    if (mode == ReaderMode::RawFormat) {
+        QFile file(path);
+        if (file.open(QIODevice::ReadOnly)) {
+            signature = file.read(kStreamSignatureSize);
+        }
+    }
+
+    if (!_create(mode, signature)) {
+        return false;
+    }
+    _filePath = path;
+
+    if (!openArchiveForReading(_archive.get(), path, _memoryData)) {
         close();
         return false;
     }
@@ -754,21 +774,29 @@ bool ArchiveReader::open(QIODevice* device, ReaderMode mode)
         return false;
     }
 
-    if (mode == ReaderMode::RawFormat && !canDecodeStream(device->peek(kStreamSignatureSize))) {
+    QString errorString;
+    if (!open(device, mode, errorString)) {
+        if (!errorString.isEmpty()) {
+            qCWarning(QGClibarchiveLog).noquote() << "Failed to open device:" << errorString;
+        }
         return false;
     }
 
-    close();
+    return true;
+}
+
+bool ArchiveReader::open(QIODevice* device, ReaderMode mode, QString& errorString)
+{
+    if (!device || !device->isOpen() || !device->isReadable()) {
+        errorString = QStringLiteral("Device is null, not open, or not readable");
+        return false;
+    }
+
+    const QByteArray signature = (mode == ReaderMode::RawFormat) ? device->peek(kStreamSignatureSize) : QByteArray();
+    if (!_create(mode, signature)) {
+        return false;
+    }
     _device = device;
-    _resourceData.clear();
-
-    _archive.reset(archive_read_new());
-    if (!_archive) {
-        qCWarning(QGClibarchiveLog) << "Failed to create archive reader";
-        return false;
-    }
-
-    configureReader(_archive.get(), mode);
 
     // Enable seek callback for random-access devices (improves ZIP performance)
     // Must be set before opening the archive
@@ -781,9 +809,29 @@ bool ArchiveReader::open(QIODevice* device, ReaderMode mode)
                                           deviceReadCallback, deviceSkipCallback, deviceCloseCallback);
 
     if (result != ARCHIVE_OK) {
-        qCWarning(QGClibarchiveLog) << "Failed to open device:" << archive_error_string(_archive.get());
+        errorString = QString::fromUtf8(archive_error_string(_archive.get()));
+        if (errorString.isEmpty()) {
+            errorString = QStringLiteral("Unknown error");
+        }
         close();
-        _device = nullptr;
+        return false;
+    }
+
+    return true;
+}
+
+bool ArchiveReader::openMemory(const QByteArray& data, ReaderMode mode)
+{
+    if (!_create(mode, data)) {
+        return false;
+    }
+    // A shared copy keeps the bytes libarchive reads from alive as long as the reader
+    _memoryData = data;
+
+    if (archive_read_open_memory(_archive.get(), _memoryData.constData(), static_cast<size_t>(_memoryData.size())) !=
+        ARCHIVE_OK) {
+        qCWarning(QGClibarchiveLog) << "Failed to open compressed data:" << archive_error_string(_archive.get());
+        close();
         return false;
     }
 
@@ -1467,35 +1515,20 @@ QByteArray decompressDataFromMemory(const QByteArray& data, qint64 maxBytes)
         return {};
     }
 
-    if (!canDecodeStream(data)) {
-        return {};
-    }
-
-    struct archive* a = archive_read_new();
-    if (!a) {
-        qCWarning(QGClibarchiveLog) << "Failed to create archive reader";
-        return {};
-    }
-
-    configureReader(a, ReaderMode::RawFormat);
-
-    if (archive_read_open_memory(a, data.constData(), static_cast<size_t>(data.size())) != ARCHIVE_OK) {
-        qCWarning(QGClibarchiveLog) << "Failed to open compressed data:" << archive_error_string(a);
-        archive_read_free(a);
+    ArchiveReader reader;
+    if (!reader.openMemory(data, ReaderMode::RawFormat)) {
         return {};
     }
 
     struct archive_entry* entry;
-    if (archive_read_next_header(a, &entry) != ARCHIVE_OK) {
-        qCWarning(QGClibarchiveLog) << "Failed to read header:" << archive_error_string(a);
-        archive_read_free(a);
+    if (archive_read_next_header(reader.handle(), &entry) != ARCHIVE_OK) {
+        qCWarning(QGClibarchiveLog) << "Failed to read header:" << archive_error_string(reader.handle());
         return {};
     }
 
-    updateFormatState(a);
+    updateFormatState(reader.handle());
 
-    QByteArray result = readArchiveToMemory(a, 0, maxBytes);
-    archive_read_free(a);
+    QByteArray result = readArchiveToMemory(reader.handle(), 0, maxBytes);
     qCDebug(QGClibarchiveLog) << "Decompressed" << data.size() << "bytes to" << result.size() << "bytes";
     return result;
 }

@@ -63,12 +63,6 @@ bool QGCDecompressDevice::initArchive()
         return false;
     }
 
-    _archive = archive_read_new();
-    if (!_archive) {
-        _errorString = QStringLiteral("Failed to create archive reader");
-        return false;
-    }
-
     // Raw format for single-file decompression
     configureArchiveFormats(false);
 
@@ -79,10 +73,9 @@ bool QGCDecompressDevice::prepareForReading()
 {
     // Read the first (and only) entry header for raw format
     struct archive_entry *entry = nullptr;
-    if (archive_read_next_header(_archive, &entry) != ARCHIVE_OK) {
-        _errorString = QString::fromUtf8(archive_error_string(_archive));
-        archive_read_free(_archive);
-        _archive = nullptr;
+    if (archive_read_next_header(_reader->handle(), &entry) != ARCHIVE_OK) {
+        _errorString = QString::fromUtf8(archive_error_string(_reader->handle()));
+        _reader.reset();
         return false;
     }
 

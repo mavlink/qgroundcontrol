@@ -9,7 +9,9 @@
 
 #include <memory>
 
-struct archive;
+namespace QGClibarchive {
+class ArchiveReader;
+}
 
 /// \brief Base class for QIODevice wrappers that use libarchive for decompression
 ///
@@ -75,11 +77,11 @@ protected:
     /// @return true if archive is initialized and ready
     virtual bool isReadyToRead() const = 0;
 
-    /// Configure libarchive format support (called during initArchive)
+    /// Choose the formats openArchive() reads (called during initArchive)
     /// @param allFormats true for the archive formats (ZIP, TAR, 7z), false for raw (single-file) format
     void configureArchiveFormats(bool allFormats);
 
-    /// Open the configured archive for reading
+    /// Open the source device as an archive of the configured formats
     /// @return true on success, sets _errorString on failure
     bool openArchive();
 
@@ -100,7 +102,8 @@ protected:
     std::unique_ptr<QIODevice> _ownedSource;
 
     // libarchive state
-    struct archive *_archive = nullptr;
+    std::unique_ptr<QGClibarchive::ArchiveReader> _reader;  // Null unless the archive is open
+    bool _allFormats = false;
     QByteArray _resourceData;  // For Qt resources (must outlive archive)
     bool _eof = false;
 

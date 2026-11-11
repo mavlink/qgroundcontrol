@@ -39,10 +39,7 @@ QGCArchiveDeviceBase::~QGCArchiveDeviceBase()
 
 void QGCArchiveDeviceBase::close()
 {
-    if (_archive) {
-        archive_read_free(_archive);
-        _archive = nullptr;
-    }
+    _reader.reset();
 
     resetState();
 
@@ -153,12 +150,7 @@ bool QGCArchiveDeviceBase::initSourceFromPath()
 
 void QGCArchiveDeviceBase::configureArchiveFormats(bool allFormats)
 {
-    if (!_archive) {
-        return;
-    }
-
-    QGClibarchive::configureReader(
-        _archive, allFormats ? QGClibarchive::ReaderMode::AllFormats : QGClibarchive::ReaderMode::RawFormat);
+    _allFormats = allFormats;
 }
 
 bool QGCArchiveDeviceBase::openArchive()
@@ -168,21 +160,11 @@ bool QGCArchiveDeviceBase::openArchive()
         return false;
     }
 
-    // Enable seek callback for random-access devices (improves ZIP performance)
-    if (!_sourceDevice->isSequential()) {
-        archive_read_set_seek_callback(_archive, QGClibarchive::deviceSeekCallback);
-    }
-
-    const int result = archive_read_open2(_archive, _sourceDevice,
-                                          nullptr,  // open callback
-                                          QGClibarchive::deviceReadCallback,
-                                          QGClibarchive::deviceSkipCallback,
-                                          QGClibarchive::deviceCloseCallback);
-
-    if (result != ARCHIVE_OK) {
-        _errorString = QString::fromUtf8(archive_error_string(_archive));
-        archive_read_free(_archive);
-        _archive = nullptr;
+    _reader = std::make_unique<QGClibarchive::ArchiveReader>();
+    const QGClibarchive::ReaderMode mode =
+        _allFormats ? QGClibarchive::ReaderMode::AllFormats : QGClibarchive::ReaderMode::RawFormat;
+    if (!_reader->open(_sourceDevice, mode, _errorString)) {
+        _reader.reset();
         return false;
     }
 
@@ -191,15 +173,15 @@ bool QGCArchiveDeviceBase::openArchive()
 
 bool QGCArchiveDeviceBase::fillBuffer()
 {
-    if (_eof || !_archive) {
+    if (_eof || !_reader) {
         return false;
     }
 
     char readBuffer[QGCFileHelper::kBufferSizeMax];
-    const la_ssize_t bytesRead = archive_read_data(_archive, readBuffer, sizeof(readBuffer));
+    const la_ssize_t bytesRead = archive_read_data(_reader->handle(), readBuffer, sizeof(readBuffer));
 
     if (bytesRead < 0) {
-        _errorString = QString::fromUtf8(archive_error_string(_archive));
+        _errorString = QString::fromUtf8(archive_error_string(_reader->handle()));
         qCWarning(QGCArchiveDeviceBaseLog) << "Read error:" << _errorString;
         return false;
     }
@@ -215,14 +197,14 @@ bool QGCArchiveDeviceBase::fillBuffer()
 
 void QGCArchiveDeviceBase::captureFormatInfo()
 {
-    if (!_archive) {
+    if (!_reader) {
         return;
     }
 
-    const char *fmt = archive_format_name(_archive);
+    const char* fmt = archive_format_name(_reader->handle());
     _formatName = fmt ? QString::fromUtf8(fmt) : QString();
 
-    const char *flt = archive_filter_name(_archive, 0);
+    const char* flt = archive_filter_name(_reader->handle(), 0);
     _filterName = flt ? QString::fromUtf8(flt) : QStringLiteral("none");
 }
 
