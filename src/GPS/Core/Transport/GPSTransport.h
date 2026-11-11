@@ -16,7 +16,7 @@ enum class GPSOpenStatus
     TimedOut,
     Cancelled,
     Error,
-    Unsupported
+    Unsupported,
 };
 
 enum class GPSReadStatus
@@ -26,7 +26,7 @@ enum class GPSReadStatus
     Cancelled,
     Closed,
     Error,
-    Overflow
+    Overflow,
 };
 
 enum class GPSWriteStatus
@@ -35,7 +35,7 @@ enum class GPSWriteStatus
     TimedOut,
     Cancelled,
     Error,
-    Unsupported
+    Unsupported,
 };
 
 struct [[nodiscard]] GPSOpenResult
@@ -77,6 +77,7 @@ class GPSTransport
 public:
     explicit GPSTransport(GPSCancelToken cancelToken);
     virtual ~GPSTransport();
+    Q_DISABLE_COPY_MOVE(GPSTransport)
 
     virtual GPSOpenResult open() = 0;
     virtual bool fatalError() const = 0;
@@ -118,4 +119,6 @@ protected:
 
 private:
     GPSCancelToken _cancelToken;
+
+    static constexpr std::chrono::milliseconds DEFAULT_WRITE_TIMEOUT{500};
 };

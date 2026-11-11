@@ -97,12 +97,14 @@ QGCGroupBox {
         label:     qsTr("Last correction")
         //: %1 is the time in seconds since the last correction was received
         labelText: qsTr("%1 s ago").arg(root._stats.correctionAgeSec.toFixed(1))
+        labelTextFormat: Text.PlainText
         visible:   root._connected && root._stats.correctionAgeSec >= 0
     }
 
     LabelledLabel {
         label:     qsTr("Messages")
         labelText: root._stats.messagesReceived
+        labelTextFormat: Text.PlainText
         visible:   root._connected && root._stats.messagesReceived > 0
     }
 
@@ -130,6 +132,7 @@ QGCGroupBox {
         //: %1 is the total data size, %2 the data size received per second
         labelText: qsTr("%1 (%2/s)").arg(QGroundControl.bigSizeToString(root._stats.bytesReceived))
                                     .arg(QGroundControl.bigSizeToString(root._stats.dataRateBytesPerSec))
+        labelTextFormat: Text.PlainText
         visible:   root._connected && root._stats.bytesReceived > 0
     }
 
@@ -142,6 +145,7 @@ QGCGroupBox {
     LabelledLabel {
         label:     qsTr("Queued to vehicle links (any source)")
         labelText: QGroundControl.bigSizeToString(root.corrections.vehicleBytesSubmitted)
+        labelTextFormat: Text.PlainText
         visible:   root._connected && root.corrections.vehicleBytesSubmitted > 0
     }
 

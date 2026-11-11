@@ -47,8 +47,10 @@ struct NTRIPManagerDependencies
 /// state machine. All connection state changes flow through `_dispatch()` and
 /// the transition table in NTRIPManager.cc — there is no second, internal
 /// state enum. Entry actions own per-state side effects: each Connecting entry
-/// opens a new transport and registers it as the NTRIP correction source,
-/// teardown retires both, and the manager schedules reconnects.
+/// registers the stream as the NTRIP correction source, in place of the previous
+/// registration, and opens a new transport; Reconnecting, Error and Disconnected
+/// retire the transport; only Disconnected releases the registration; and the
+/// manager schedules reconnects.
 class NTRIPManager : public QObject
 {
     Q_OBJECT
@@ -74,7 +76,7 @@ public:
         Connecting = 1,
         Connected = 2,
         Reconnecting = 3,
-        Error = 4
+        Error = 4,
     };
     Q_ENUM(ConnectionStatus)
 
@@ -191,10 +193,11 @@ private:
     /// Default user-visible message for a state. Callers may override via detail.
     static QString _defaultMessageFor(ConnectionStatus state);
 
-    /// Stops the previous stream, validates the configuration, then opens a new transport and registers it as the
-    /// NTRIP correction source.
+    /// Stops the previous stream, registers the new one as the NTRIP correction source in place of the previous
+    /// registration, then validates the configuration and opens a new transport.
     void _openSession();
-    /// Ends the correction source, retires the transport, and stops GGA and statistics.
+    /// Retires the transport and stops GGA and statistics. The correction source stays registered; it is selected
+    /// only while its corrections are fresh.
     void _stopStreaming();
 
     // The single-shot reconnect timer fires ReconnectDue; a failure after the attempt ceiling fires ReconnectGaveUp.
@@ -232,7 +235,8 @@ private:
 
     TransportFactory _transportFactory;
     QPointer<NTRIPTransport> _transport;
-    /// The stream's registration as the NTRIP correction source.
+    /// The stream's registration as the NTRIP correction source, from _openSession() until the next one or the
+    /// Disconnected state.
     std::unique_ptr<GPSCorrectionSourceHandle> _correctionSource;
 
     const QPointer<GPSCorrectionManager> _correctionManager;
@@ -248,6 +252,9 @@ private:
     ExponentialBackoff _reconnectBackoff{std::chrono::seconds(1), 2, std::chrono::seconds(30),
                                          NTRIPFailure::MAX_RETRY_AFTER};
     QString _lastFailureDetail;  ///< The latest transport failure, for the give-up message.
+    /// Corrections have arrived over the current connection settings since they were last started, so a source
+    /// table in place of the stream means the mountpoint went offline, not that it is wrong.
+    bool _streamServed = false;
     bool _waitingForNetwork = false;
     bool _initialized = false;
     bool _shutdown = false;

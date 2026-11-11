@@ -8,7 +8,7 @@
 #include "QGCLoggingCategory.h"
 #include "RuntimeScheduler.h"
 
-QGC_LOGGING_CATEGORY(GPSSourceHealthLog, "GPS.Core.GPSSourceHealth")
+QGC_LOGGING_CATEGORY(GPSSourceHealthLog, "GPS.Positioning.GPSSourceHealth")
 
 GPSSourceHealth::GPSSourceHealth(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
@@ -72,7 +72,13 @@ void GPSSourceHealth::_schedulePositionExpiry()
     if (remaining == std::chrono::microseconds::zero()) {
         return;
     }
-    _positionTask.schedule(remaining, [this]() { _setState(State::Stale); });
+    _positionTask.schedule(remaining, [this]() {
+        // acceptedObservation() reads freshness from the clock, so a timer that fires early waits for the remainder.
+        _schedulePositionExpiry();
+        if (!_positionTask.active()) {
+            _setState(State::Stale);
+        }
+    });
 }
 
 void GPSSourceHealth::_logStateChange(State previous) const

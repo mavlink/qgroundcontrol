@@ -124,12 +124,12 @@ void GPSSourceHealthTest::_logsOnlyHealthTransitions()
     ManualScheduler scheduler;
     GPSSourceHealth health(nullptr, &scheduler);
     QSignalSpy changed(&health, &GPSSourceHealth::positionChanged);
-    const QString category = QStringLiteral("GPS.Core.GPSSourceHealth");
+    const QString category = QStringLiteral("GPS.Positioning.GPSSourceHealth");
     const TestFixtures::LoggingCategoryFixture logging(category);
     const auto logCount = [&] { return GPSTest::debugMessages(category).size(); };
     const auto initialCount = logCount();
 
-    expectLogMessage("GPS.Core.GPSSourceHealth", QtDebugMsg,
+    expectLogMessage("GPS.Positioning.GPSSourceHealth", QtDebugMsg,
                      QRegularExpression(QStringLiteral("Position health changed:.*NoData.*Usable")));
     health.updateObservation(observation(position(), scheduler, 60));
     verifyExpectedLogMessage();
@@ -143,23 +143,23 @@ void GPSSourceHealthTest::_logsOnlyHealthTransitions()
     QCOMPARE(changed.size(), 4);
     QCOMPARE(health._observation().position.coordinate().latitude(), 49.123456);
 
-    expectLogMessage("GPS.Core.GPSSourceHealth", QtDebugMsg,
+    expectLogMessage("GPS.Positioning.GPSSourceHealth", QtDebugMsg,
                      QRegularExpression(QStringLiteral("Position health changed:.*Usable.*Stale")));
     health.setFreshnessTimeout(50ms);
     verifyExpectedLogMessage();
     QCOMPARE(health.state(), GPSSourceHealth::State::Stale);
     QCOMPARE(logCount(), initialCount + 2);
-    expectLogMessage("GPS.Core.GPSSourceHealth", QtDebugMsg,
+    expectLogMessage("GPS.Positioning.GPSSourceHealth", QtDebugMsg,
                      QRegularExpression(QStringLiteral("Position health changed:.*Stale.*Usable")));
     health.updateObservation(observation(position(), scheduler));
     verifyExpectedLogMessage();
     QCOMPARE(logCount(), initialCount + 3);
-    expectLogMessage("GPS.Core.GPSSourceHealth", QtDebugMsg,
+    expectLogMessage("GPS.Positioning.GPSSourceHealth", QtDebugMsg,
                      QRegularExpression(QStringLiteral("Position health changed:.*Usable.*Invalid")));
     health.invalidatePosition();
     verifyExpectedLogMessage();
     QCOMPARE(logCount(), initialCount + 4);
-    expectLogMessage("GPS.Core.GPSSourceHealth", QtDebugMsg,
+    expectLogMessage("GPS.Positioning.GPSSourceHealth", QtDebugMsg,
                      QRegularExpression(QStringLiteral("Position health changed:.*Invalid.*NoData")));
     health.reset();
     verifyExpectedLogMessage();

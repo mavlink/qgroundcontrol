@@ -138,20 +138,22 @@ bool GPSObservation::hasNavigationSolution() const
 
 bool GPSObservation::usable() const
 {
+    constexpr double MAXIMUM_HORIZONTAL_ACCURACY_METERS = 100.0;
     const double accuracy = position.attribute(QGeoPositionInfo::HorizontalAccuracy);
     return hasNavigationSolution() && position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy) &&
-           qIsFinite(accuracy) && accuracy > 0 && accuracy <= 100;
+           qIsFinite(accuracy) && accuracy > 0 && accuracy <= MAXIMUM_HORIZONTAL_ACCURACY_METERS;
 }
 
 QGeoCoordinate GPSObservation::coordinate() const
 {
+    constexpr double MAXIMUM_VERTICAL_ACCURACY_METERS = 10.0;
     if (!usable()) {
         return {};
     }
     QGeoCoordinate coordinate(position.coordinate().latitude(), position.coordinate().longitude());
     const double accuracy = position.attribute(QGeoPositionInfo::VerticalAccuracy);
     if (position.hasAttribute(QGeoPositionInfo::VerticalAccuracy) && qIsFinite(accuracy) && accuracy > 0 &&
-        accuracy <= 10 && qIsFinite(position.coordinate().altitude())) {
+        accuracy <= MAXIMUM_VERTICAL_ACCURACY_METERS && qIsFinite(position.coordinate().altitude())) {
         coordinate.setAltitude(position.coordinate().altitude());
     }
     return coordinate;
@@ -168,15 +170,18 @@ std::optional<double> GPSObservation::altitudeMslMeters() const
 
 double GPSObservation::heading() const
 {
+    constexpr double MAXIMUM_DIRECTION_ACCURACY_DEGREES = 30.0;
+    constexpr double MINIMUM_GROUND_SPEED_METERS_PER_SECOND = 0.5;
     const double direction = position.attribute(QGeoPositionInfo::Direction);
     const double speed = position.attribute(QGeoPositionInfo::GroundSpeed);
     const double accuracy = position.attribute(QGeoPositionInfo::DirectionAccuracy);
-    const bool accuracyAcceptable = !position.hasAttribute(QGeoPositionInfo::DirectionAccuracy) ||
-                                    (qIsFinite(accuracy) && accuracy >= 0 && accuracy <= 30);
+    const bool accuracyAcceptable =
+        !position.hasAttribute(QGeoPositionInfo::DirectionAccuracy) ||
+        (qIsFinite(accuracy) && accuracy >= 0 && accuracy <= MAXIMUM_DIRECTION_ACCURACY_DEGREES);
     // Course over ground is unreliable when nearly stationary.
     if (!usable() || !position.hasAttribute(QGeoPositionInfo::Direction) || !qIsFinite(direction) || direction < 0 ||
-        direction > 360 || !position.hasAttribute(QGeoPositionInfo::GroundSpeed) || !qIsFinite(speed) || speed < 0.5 ||
-        !accuracyAcceptable) {
+        direction > 360 || !position.hasAttribute(QGeoPositionInfo::GroundSpeed) || !qIsFinite(speed) ||
+        speed < MINIMUM_GROUND_SPEED_METERS_PER_SECOND || !accuracyAcceptable) {
         return qQNaN();
     }
     return direction == 360 ? 0 : direction;

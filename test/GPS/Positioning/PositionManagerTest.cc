@@ -22,7 +22,28 @@ using Status = PositionManager::SourceStatus;
 
 using GPSTest::PositionSource;
 
-GPSObservation fix(ManualScheduler& scheduler, double latitude = 47, quint64 session = 0)
+/// A scheduler whose clock reads @a lag behind the one its timers run on, so each task runs that much early.
+class EarlyTimerScheduler final : public RuntimeScheduler
+{
+public:
+    quint64 nowUs() const override { return _timers.nowUs() - static_cast<quint64>(lag.count()); }
+
+    TaskId schedule(QObject* context, std::chrono::microseconds delay, Callback callback) override
+    {
+        return _timers.schedule(context, delay, std::move(callback));
+    }
+
+    void cancel(TaskId task) override { _timers.cancel(task); }
+
+    bool advanceBy(std::chrono::microseconds duration) { return _timers.advanceBy(duration); }
+
+    std::chrono::microseconds lag{0};
+
+private:
+    ManualScheduler _timers;
+};
+
+GPSObservation fix(const RuntimeScheduler& scheduler, double latitude = 47, quint64 session = 0)
 {
     GPSObservation observation;
     observation.sessionId = session;
@@ -246,6 +267,30 @@ void PositionManagerTest::_registrationReplacementAndSessions()
     QVERIFY(!service.gcsPosition().isValid());
 }
 
+void PositionManagerTest::_registrationDuringNotification()
+{
+    ManualScheduler scheduler;
+    PositionManager service(nullptr, &scheduler);
+    GPSSourceHealth first(nullptr, &scheduler);
+    GPSSourceHealth second(nullptr, &scheduler);
+    GPSPositionSourceRegistration newer;
+    bool replaced = false;
+    // An observer replaces the receiver while the manager is still announcing it.
+    connect(&service, &PositionManager::selectionChanged, &service, [&]() {
+        if (!std::exchange(replaced, true)) {
+            newer = service.registerReceiver(&second);
+        }
+    });
+    auto older = service.registerReceiver(&first);
+    QVERIFY(newer);
+    older.reset();
+    second.updateObservation(fix(scheduler));
+    QCOMPARE(service.selectedSource(), Kind::Receiver);
+    QVERIFY(service.gcsPosition().isValid());
+    newer.reset();
+    QCOMPARE(service.selectedSource(), Kind::None);
+}
+
 void PositionManagerTest::_automaticFailoverAndRecovery()
 {
     ManualScheduler scheduler;
@@ -302,6 +347,25 @@ void PositionManagerTest::_sourceAndHealthLifetime()
     QCOMPARE(service.selectedSource(), Kind::None);
     QVERIFY(!service.gcsPosition().isValid());
     QVERIFY(!service.acceptedObservation());
+}
+
+void PositionManagerTest::_earlyExpiryTimerKeepsPublication()
+{
+    EarlyTimerScheduler scheduler;
+    GPSSourceHealth health(nullptr, &scheduler);
+    PositionManager service(nullptr, &scheduler);
+    auto registration = service.registerReceiver(&health);
+    health.updateObservation(fix(scheduler));
+    QCOMPARE(service.sourceStatus(), Status::Active);
+
+    // The expiry timer fires a microsecond before the clock ends the observation's lifetime.
+    scheduler.lag = 1us;
+    QVERIFY(scheduler.advanceBy(GPSSourceHealth::FRESHNESS_TIMEOUT));
+    QCOMPARE(service.sourceStatus(), Status::Active);
+    QVERIFY(service.gcsPosition().isValid());
+    QVERIFY(scheduler.advanceBy(1us));
+    QCOMPARE(service.sourceStatus(), Status::Stale);
+    QVERIFY(!service.gcsPosition().isValid());
 }
 
 void PositionManagerTest::_standbyReportsDoNotRepublish()

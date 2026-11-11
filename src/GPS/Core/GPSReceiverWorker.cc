@@ -10,7 +10,7 @@
 #include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
 
-QGC_LOGGING_CATEGORY(GPSReceiverWorkerLog, "GPS.Receiver.GPSProvider")
+QGC_LOGGING_CATEGORY(GPSReceiverWorkerLog, "GPS.Core.GPSReceiverWorker")
 
 GPSReceiverWorker::GPSReceiverWorker(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
                                      QObject* parent, GPSClock clock)
@@ -123,7 +123,7 @@ void GPSReceiverWorker::_runSession()
     GPSReceiveResult failure{GPSProtocolError::Transport};
     while (!cancelToken.isCancelled() && !transport->fatalError() &&
            (!_endsWhenIdle || inactiveFor() > std::chrono::milliseconds::zero())) {
-        const auto timeout = _endsWhenIdle ? std::min(RECEIVE_TIMEOUT, inactiveFor()) : RECEIVE_TIMEOUT;
+        const auto timeout = _endsWhenIdle ? (std::min) (RECEIVE_TIMEOUT, inactiveFor()) : RECEIVE_TIMEOUT;
         auto result = driver.receiveOutcome(timeout);
         if (result.liveness == GPSReceiveLiveness::Data) {
             usefulDataReceived();

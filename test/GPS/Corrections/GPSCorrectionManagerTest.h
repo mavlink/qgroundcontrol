@@ -16,6 +16,7 @@ class GPSCorrectionManagerTest : public UnitTest
 private slots:
     void _sourcesShareForwarder();
     void _udpOutputForwardsSelectedStream();
+    void _udpOutputReportsSendFailure();
     void _udpOutputSkipsOwnInput();
     void _udpOutputSkipsHostTargets_data();
     void _udpOutputSkipsHostTargets();

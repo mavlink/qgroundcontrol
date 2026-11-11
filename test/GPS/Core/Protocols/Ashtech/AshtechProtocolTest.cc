@@ -224,6 +224,34 @@ void ashtechFailedSurvey(GPSTestClock& clock)
     }
 }
 
+/// The base setup waits for the first position, so a ready receiver that sends no $PASHR,POS at all fails the
+/// session; one that sends them without a fix keeps waiting.
+void ashtechNoPositionOutput(GPSTestClock& clock)
+{
+    for (const bool positionOutput : {false, true}) {
+        clock.reset(GPSTestClock::START_US);
+        Base receiver(clock);
+        QVERIFY(receiver.configure());
+        for (int second = 0; second < 6; ++second) {
+            clock.advanceBy(1000000);
+            (void) receiver.driver.consume(nmeaPacket("GPZDA,172809.456,12,07,2026,00,00"));
+            if (positionOutput) {
+                (void) receiver.driver.consume(
+                    nmeaPacket("PASHR,POS,2,12,172814.0,,N,12202.2,W,18.9,0,90,10,0,1,1,1,1,"));
+            }
+        }
+        QCOMPARE(receiver.driver.receiverReady(), positionOutput);
+        if (positionOutput) {
+            QCOMPARE(receiver.driver.error(), GPSProtocolError::None);
+            continue;
+        }
+        QCOMPARE(receiver.driver.error(), GPSProtocolError::Protocol);
+        QCOMPARE(receiver.driver.errorDetail(),
+                 QStringLiteral("Trimble receiver sent no $PASHR,POS position output, which the base setup needs"));
+        QVERIFY(!receiver.surveys().empty() && surveyFlags(receiver.surveys().back()) == 0);
+    }
+}
+
 void ashtechMetadata(GPSTestClock& clock)
 {
     LoggedRuntime driver(Ashtech::FAMILY, makeDecoderOnlyIO(clock));
@@ -286,6 +314,11 @@ void ashtechMetadata(GPSTestClock& clock)
     (void) driver->consume(positionPacket);
     QCOMPARE_EQ(driver.position.navigation.horizontalAccuracyMeters, 0.5f);
     QCOMPARE(driver.position.navigation.utcTimeUs % 60000000, 10000000);
+    // A date past the plausibility ceiling leaves the positions undated, as it does from the other families.
+    (void) driver->consume(nmeaPacket("GPZDA,172809.456,12,07,2500,00,00"));
+    (void) driver->consume(positionPacket);
+    QCOMPARE(driver.position.navigation.utcTimeUs, 0);
+    (void) driver->consume(nmeaPacket("GPZDA,172809.456,12,07,2026,00,00"));
     clock.advanceBy(6000000);
     (void) driver->consume(positionPacket);
     QVERIFY(std::isnan(driver.position.navigation.horizontalAccuracyMeters) &&
@@ -409,6 +442,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"framing", ashtechFraming},
     {"survey-receipts", ashtechSurveyReceipts},
     {"failed-survey", ashtechFailedSurvey},
+    {"no-position-output", ashtechNoPositionOutput},
     {"other-board-is-not-a-base", ashtechOtherBoardIsNotABase},
     {"port-reply-needs-one-letter", ashtechPortReplyNeedsOneLetter},
 };
