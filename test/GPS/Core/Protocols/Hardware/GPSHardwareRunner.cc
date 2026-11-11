@@ -76,7 +76,7 @@ struct Options
     QString recordDirectory;
     QString replayPath;
     unsigned replayBaud = 0;
-    GPSType family = GPSType::ublox;
+    GPSType family = GPSType::UBlox;
     /// The requested role: passive input rather than an RTK base.
     bool passive = false;
     GPSReceiverConfig config;
@@ -210,20 +210,20 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
         return "--replay-baud requires --replay";
     }
     if (family == "trimble") {
-        options.family = GPSType::trimble;
+        options.family = GPSType::Trimble;
     } else if (family == "septentrio") {
-        options.family = GPSType::septentrio;
+        options.family = GPSType::Septentrio;
     } else if (family == "femto") {
-        options.family = GPSType::femto;
+        options.family = GPSType::Femto;
     } else if (family == "unicore") {
-        options.family = GPSType::unicore;
+        options.family = GPSType::Unicore;
     } else if (family == "quectel") {
-        options.family = GPSType::quectel;
+        options.family = GPSType::Quectel;
     } else if (family == "passive") {
-        options.family = GPSType::passive;
+        options.family = GPSType::Passive;
     }
     options.passive = role == "passive";
-    if (options.transport == "scripted" && options.family != GPSType::ublox) {
+    if (options.transport == "scripted" && options.family != GPSType::UBlox) {
         return "The scripted peer supports UBX only";
     }
     if (options.fault.startsWith("rtcm-nak") && role != "base") {
@@ -248,7 +248,7 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     options.cancelSlackMs = integer("cancel-slack-ms", 1, 60000);
     options.timeoutMs = integer("timeout-ms", 100, 120000);
     options.replayBaud = static_cast<unsigned>(integer("replay-baud", 0, 4000000));
-    if (options.family == GPSType::quectel && !parser.isSet("timeout-ms")) {
+    if (options.family == GPSType::Quectel && !parser.isSet("timeout-ms")) {
         // Role and base changes can require multiple receiver restarts within the driver's 45-second budget.
         options.timeoutMs = 60000;
     }
@@ -303,7 +303,7 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     // A replay configures nothing; its role and base options only prepare the decoder.
     // The role a family supports is its own: passive input for the passive family, a base for the others.
     if (!valid || (options.transport != "replay" &&
-                   (options.passive != (options.family == GPSType::passive) ||
+                   (options.passive != (options.family == GPSType::Passive) ||
                     gpsValidateReceiverConfig(options.family, options.config) != GPSReceiverConfigError::None))) {
         return "Invalid receiver configuration or numeric option";
     }
@@ -785,7 +785,7 @@ int run(const Options& options)
             stage.insert("correction_messages", messages);
             stage.insert("survey_observations", surveys);
             stage.insert("wire_evidence", evidence.evidence());
-            if (options.family == GPSType::ublox) {
+            if (options.family == GPSType::UBlox) {
                 stage.insert("requested_setting_observations", evidence.requestedSettings(config, options.passive));
             }
             stage.insert("checks", checks);

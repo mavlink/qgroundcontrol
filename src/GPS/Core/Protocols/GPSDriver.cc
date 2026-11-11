@@ -101,7 +101,7 @@ bool GPSDriver::configure()
         qCWarning(GPSDriverLog) << error;
         return false;
     }
-    if (_type != GPSType::passive) {
+    if (_type != GPSType::Passive) {
         const auto& mode = _config.base.mode;
         if (std::holds_alternative<GPSBaseStationConfig::Fixed>(mode)) {
             qCDebug(GPSDriverLog) << "Fixed base configured";
@@ -159,7 +159,7 @@ bool GPSDriver::configure()
         qCWarning(GPSDriverLog) << _state->configurationError;
         return false;
     }
-    if (_type == GPSType::automatic) {
+    if (_type == GPSType::Automatic) {
         return _configureDetected(std::move(io), std::move(observer), baudrate);
     }
     const GPSReceiverFamily* family = gpsReceiverFamily(_type);
@@ -174,7 +174,7 @@ bool GPSDriver::configure()
     if (family->autoBaudRate && !baudrate) {
         baudrate = family->autoBaudRate;
     }
-    if (_type != GPSType::passive) {
+    if (_type != GPSType::Passive) {
         _state->signatures = std::make_unique<GPSReceiverSignatures>(gpsReceiverFamilies());
     }
     return _configureFamily(*family, std::move(io), std::move(observer),

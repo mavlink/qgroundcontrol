@@ -5,7 +5,7 @@ namespace GPSTest::GoldenScenario {
 
 void addTrimble(Table& table)
 {
-    constexpr GPSType type = GPSType::trimble;
+    constexpr GPSType type = GPSType::Trimble;
     const auto survey = surveyIn(1, 100);
     const auto fixed = fixedBase(47, 8, 500, 1);
     const auto stream = ashtechStream();

@@ -760,7 +760,7 @@ bool Protocol::probe(GPSCommandChannel& channel)
 namespace Quectel {
 
 const GPSReceiverFamily FAMILY{
-    .type = GPSType::quectel,
+    .type = GPSType::Quectel,
     .logCategory = &QuectelProtocolLog,
     .stream = GPSNMEAStream::STREAM,
     .baudCandidates = Plan::BAUD_RATES,

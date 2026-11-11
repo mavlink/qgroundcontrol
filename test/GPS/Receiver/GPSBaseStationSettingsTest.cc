@@ -16,10 +16,10 @@ namespace {
 using Error = GPSReceiverConfigError;
 
 constexpr double NAN_DOUBLE = std::numeric_limits<double>::quiet_NaN();
-constexpr std::pair<const char*, GPSType> SETTINGS_RECEIVERS[] = {{"ublox", GPSType::ublox},
-                                                                  {"unicore", GPSType::unicore},
-                                                                  {"quectel", GPSType::quectel},
-                                                                  {"passive", GPSType::passive}};
+constexpr std::pair<const char*, GPSType> SETTINGS_RECEIVERS[] = {{"ublox", GPSType::UBlox},
+                                                                  {"unicore", GPSType::Unicore},
+                                                                  {"quectel", GPSType::Quectel},
+                                                                  {"passive", GPSType::Passive}};
 constexpr GPSEllipsoidPosition SAVED_FIXED_POSITION{
     .latitudeDegrees = 47.5, .longitudeDegrees = 8.25, .altitudeMeters = 512.0f};
 
@@ -49,8 +49,8 @@ void GPSBaseStationSettingsTest::_configForSettings_data()
     QTest::addColumn<bool>("accepted");
     for (const auto& [name, type] : SETTINGS_RECEIVERS) {
         for (const int mode : {0, 1, 2}) {
-            const bool accepted = type == GPSType::passive || mode == 1 ||
-                                  (mode == 2 ? type == GPSType::unicore : type != GPSType::unicore);
+            const bool accepted = type == GPSType::Passive || mode == 1 ||
+                                  (mode == 2 ? type == GPSType::Unicore : type != GPSType::Unicore);
             QTest::addRow("%s-mode-%d", name, mode) << type << mode << accepted;
         }
     }
@@ -66,7 +66,7 @@ void GPSBaseStationSettingsTest::_configForSettings()
     QCOMPARE(error.isEmpty(), accepted);
     QCOMPARE(config.baudRate, uint32_t(230400));
     QVERIFY(!config.allowPersistentChanges);
-    if (type == GPSType::passive) {
+    if (type == GPSType::Passive) {
         QCOMPARE(config.base, GPSBaseStationConfig{});
         return;
     }
@@ -88,15 +88,15 @@ void GPSBaseStationSettingsTest::_settingsDiagnostics_data()
     QTest::addColumn<QString>("diagnostic");
     const QString unsupportedMode = gpsReceiverConfigErrorText(Error::UnsupportedBaseMode);
     const QString invalidAveraging = gpsReceiverConfigErrorText(Error::InvalidReceiverAveraging);
-    QTest::newRow("unicore-needs-explicit-mode") << GPSType::unicore << 0 << 60U << 115200U << unsupportedMode;
-    QTest::newRow("quectel-rejects-averaging") << GPSType::quectel << 2 << 60U << 115200U << unsupportedMode;
-    QTest::newRow("zero-averaging") << GPSType::unicore << 2 << 0U << 115200U << invalidAveraging;
-    QTest::newRow("excess-averaging") << GPSType::unicore << 2 << 3601U << 115200U << invalidAveraging;
-    QTest::newRow("minimum-averaging") << GPSType::unicore << 2 << 1U << 115200U << QString();
-    QTest::newRow("maximum-averaging") << GPSType::unicore << 2 << 3600U << 115200U << QString();
-    QTest::newRow("passive-needs-baud") << GPSType::passive << 0 << 60U << 0U
+    QTest::newRow("unicore-needs-explicit-mode") << GPSType::Unicore << 0 << 60U << 115200U << unsupportedMode;
+    QTest::newRow("quectel-rejects-averaging") << GPSType::Quectel << 2 << 60U << 115200U << unsupportedMode;
+    QTest::newRow("zero-averaging") << GPSType::Unicore << 2 << 0U << 115200U << invalidAveraging;
+    QTest::newRow("excess-averaging") << GPSType::Unicore << 2 << 3601U << 115200U << invalidAveraging;
+    QTest::newRow("minimum-averaging") << GPSType::Unicore << 2 << 1U << 115200U << QString();
+    QTest::newRow("maximum-averaging") << GPSType::Unicore << 2 << 3600U << 115200U << QString();
+    QTest::newRow("passive-needs-baud") << GPSType::Passive << 0 << 60U << 0U
                                         << gpsReceiverConfigErrorText(Error::InvalidBaudRate);
-    QTest::newRow("passive-ignores-base-settings") << GPSType::passive << 2 << 0U << 115200U << QString();
+    QTest::newRow("passive-ignores-base-settings") << GPSType::Passive << 2 << 0U << 115200U << QString();
 }
 
 void GPSBaseStationSettingsTest::_settingsDiagnostics()
@@ -122,11 +122,11 @@ void GPSBaseStationSettingsTest::_compactObservationsFollowSupport()
     for (const bool compact : {false, true}) {
         settings.compactObservations = compact;
         QString error;
-        QCOMPARE(gpsReceiverConfigFor(settings, GPSType::ublox, 115200, false, &error).base.compactObservations,
+        QCOMPARE(gpsReceiverConfigFor(settings, GPSType::UBlox, 115200, false, &error).base.compactObservations,
                  compact);
         QVERIFY(error.isEmpty());
         // Receivers without MSM4 support ignore the hidden option instead of failing to connect.
-        QVERIFY(!gpsReceiverConfigFor(settings, GPSType::septentrio, 115200, false, &error).base.compactObservations);
+        QVERIFY(!gpsReceiverConfigFor(settings, GPSType::Septentrio, 115200, false, &error).base.compactObservations);
         QVERIFY(error.isEmpty());
     }
 }
@@ -148,7 +148,7 @@ void GPSBaseStationSettingsTest::_persistentConsent()
     QFETCH(bool, allowPersistentChanges);
     QString error;
     const auto config = gpsReceiverConfigFor(savedSettings(1), type, 115200, allowPersistentChanges, &error);
-    QCOMPARE(error.isEmpty(), !allowPersistentChanges || type == GPSType::quectel);
+    QCOMPARE(error.isEmpty(), !allowPersistentChanges || type == GPSType::Quectel);
     QCOMPARE(config.allowPersistentChanges, allowPersistentChanges);
 }
 
@@ -158,24 +158,24 @@ void GPSBaseStationSettingsTest::_baseStationState()
     const auto stateFor = [](int mode, GPSType type) {
         return gpsBaseStationStateFor(type, gpsReceiverConfigFor(savedSettings(mode), type, 0, false, nullptr));
     };
-    const auto passive = gpsBaseStationStateFor(GPSType::passive, {.baudRate = 115200});
+    const auto passive = gpsBaseStationStateFor(GPSType::Passive, {.baudRate = 115200});
     QVERIFY(!passive.mode);
     QVERIFY(!passive.position);
     QVERIFY(!passive.surveyAccuracyLimitMeters);
 
-    const auto fixed = stateFor(1, GPSType::ublox);
+    const auto fixed = stateFor(1, GPSType::UBlox);
     QCOMPARE(fixed.mode, std::optional(Mode::BaseFixed));
     QVERIFY(fixed.position);
     QCOMPARE(fixed.position->first, SAVED_FIXED_POSITION);
     QCOMPARE(fixed.position->second, 1.5);
     QVERIFY(!fixed.surveyAccuracyLimitMeters);
 
-    const auto survey = stateFor(0, GPSType::ublox);
+    const auto survey = stateFor(0, GPSType::UBlox);
     QCOMPARE(survey.mode, std::optional(Mode::BaseSurveyIn));
     QVERIFY(!survey.position);
     QCOMPARE(survey.surveyAccuracyLimitMeters, std::optional(1.75));
 
-    const auto averaging = stateFor(2, GPSType::unicore);
+    const auto averaging = stateFor(2, GPSType::Unicore);
     QCOMPARE(averaging.mode, std::optional(Mode::BaseReceiverAveraging));
     QVERIFY(!averaging.position);
     QVERIFY(!averaging.surveyAccuracyLimitMeters);
@@ -206,9 +206,9 @@ void GPSBaseStationSettingsTest::_surveyUpdatesBasePosition()
     QFETCH(double, latitude);
     QFETCH(double, meanAccuracy);
     QFETCH(double, expectedAccuracy);
-    const GPSType type = mode == 2 ? GPSType::unicore : GPSType::ublox;
+    const GPSType type = mode == 2 ? GPSType::Unicore : GPSType::UBlox;
     auto state = mode < 0
-                     ? gpsBaseStationStateFor(GPSType::passive, {.baudRate = 115200})
+                     ? gpsBaseStationStateFor(GPSType::Passive, {.baudRate = 115200})
                      : gpsBaseStationStateFor(type, gpsReceiverConfigFor(savedSettings(mode), type, 0, false, nullptr));
     GPSSurveyReport report;
     report.valid = true;

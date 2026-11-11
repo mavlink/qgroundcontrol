@@ -137,7 +137,8 @@ QString checkInventory(const QString& root, const QString& pattern, const QSet<Q
 
 QString typeName(GPSType type)
 {
-    return QString::fromLatin1(QMetaEnum::fromType<GPSType>().valueToKey(static_cast<int>(type)));
+    // Lower case, as the golden folders and transcripts name the families.
+    return QString::fromLatin1(QMetaEnum::fromType<GPSType>().valueToKey(static_cast<int>(type))).toLower();
 }
 
 namespace {
@@ -301,7 +302,7 @@ QString describeRequest(GPSType type, const GPSReceiverConfig& config)
         },
         config.base.mode);
     return QStringLiteral("type=%1 role=%2 mode=%3 compact=%4 persistent=%5 baud=%6")
-        .arg(typeName(type), type == GPSType::passive ? QStringLiteral("passive") : QStringLiteral("rtk-base"), mode,
+        .arg(typeName(type), type == GPSType::Passive ? QStringLiteral("passive") : QStringLiteral("rtk-base"), mode,
              flag(config.base.compactObservations), flag(config.allowPersistentChanges))
         .arg(config.baudRate);
 }
@@ -551,7 +552,7 @@ QString formatRun(const char* about, const Scenario& setup, bool detectionOnly, 
     if (!run.identity.isEmpty()) {
         lines << QStringLiteral("  identity ") + quotedText(run.identity);
     }
-    if (setup.type == GPSType::automatic) {
+    if (setup.type == GPSType::Automatic) {
         lines << QStringLiteral("  detected ") + (run.detected ? QStringLiteral("type=%1 baud=%2 evidence=%3")
                                                                      .arg(typeName(*run.detected))
                                                                      .arg(run.detectedBaud)

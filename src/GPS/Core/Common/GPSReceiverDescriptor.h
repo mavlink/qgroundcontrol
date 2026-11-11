@@ -21,7 +21,7 @@ struct GPSReceiverCapabilities
     bool compactObservations = false;
 };
 
-/// The persisted manufacturer that detects the receiver family on every connect (GPSType::automatic). Its settings view
+/// The persisted manufacturer that detects the receiver family on every connect (GPSType::Automatic). Its settings view
 /// combines the editable fields of every family.
 inline constexpr int GPS_AUTOMATIC_MANUFACTURER = 0;
 
@@ -61,7 +61,7 @@ struct GPSReceiverDescriptor
 [[nodiscard]] const GPSReceiverDescriptor* gpsReceiverDescriptor(GPSType type);
 [[nodiscard]] const GPSReceiverDescriptor* gpsReceiverDescriptorForManufacturer(int manufacturer);
 
-/// The family a persisted manufacturer selects, GPSType::automatic for GPS_AUTOMATIC_MANUFACTURER; empty when unknown.
+/// The family a persisted manufacturer selects, GPSType::Automatic for GPS_AUTOMATIC_MANUFACTURER; empty when unknown.
 [[nodiscard]] std::optional<GPSType> gpsReceiverTypeForManufacturer(int manufacturer);
 /// The persisted manufacturer of @a type, or GPS_AUTOMATIC_MANUFACTURER when it has none.
 [[nodiscard]] int gpsReceiverManufacturerForType(GPSType type);
@@ -73,7 +73,7 @@ struct GPSReceiverDescriptor
 [[nodiscard]] QString gpsReceiverName(GPSType type);
 
 /// How the protocol a passive input decodes is shown to users: the family and its protocol, such as "u-blox (UBX)", or
-/// "NMEA" for GPSType::passive; empty for a family without a protocol of its own.
+/// "NMEA" for GPSType::Passive; empty for a family without a protocol of its own.
 [[nodiscard]] QString gpsInputProtocolName(GPSType type);
 
 /// What the receiver settings and status views offer for one receiver family. The combined view of Automatic

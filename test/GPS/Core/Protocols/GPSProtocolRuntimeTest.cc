@@ -69,7 +69,7 @@ public:
 };
 
 constexpr GPSReceiverFamily UBX_STREAM_FAMILY{
-    .type = GPSType::ublox,
+    .type = GPSType::UBlox,
     .stream = {.framers = GPSFrameKind::UBX | GPSFrameKind::RTCM3, .enabled = GPSFrameKind::UBX | GPSFrameKind::RTCM3}};
 
 }  // namespace

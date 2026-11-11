@@ -711,7 +711,7 @@ QLatin1StringView signature(const GPSFrame& frame)
 namespace Ashtech {
 
 const GPSReceiverFamily FAMILY{
-    .type = GPSType::trimble,
+    .type = GPSType::Trimble,
     .logCategory = &AshtechProtocolLog,
     .stream = GPSNMEAStream::STREAM,
     .baudCandidates = Plan::BAUD_RATES,

@@ -67,7 +67,7 @@ signals:
     void surveyInStatusUpdated(const GPSSurveyReport& report);
     /// @a detail is the transport's or the protocol's diagnostic, or empty when it gave none.
     void connectionError(GPSConnectionError error, const QString& detail = {});
-    /// The family a GPSType::automatic session detected, before it configures the receiver, or the protocol a passive
+    /// The family a GPSType::Automatic session detected, before it configures the receiver, or the protocol a passive
     /// session's input carries (GPSDriverSinks::onReceiverDetected).
     void receiverDetected(GPSType type);
     /// Why a session that does not end when idle has delivered no position for USEFUL_DATA_TIMEOUT; None once positions

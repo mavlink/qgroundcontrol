@@ -38,7 +38,7 @@ private:
 };
 
 const GPSReceiverFamily NMEA_FAMILY{
-    .type = GPSType::passive,
+    .type = GPSType::Passive,
     .logCategory = &PassiveProtocolLog,
     .stream = {.framers = GPSFrameKind::ASCIILine, .enabled = GPSFrameKind::ASCIILine},
     .create = &gpsCreateProtocol<NMEAProtocol>,
@@ -211,7 +211,7 @@ private:
 namespace Passive {
 
 const GPSReceiverFamily FAMILY{
-    .type = GPSType::passive,
+    .type = GPSType::Passive,
     .logCategory = &PassiveProtocolLog,
     .stream = {.framers = inputFrames(), .enabled = inputFrames(), .shareSBFSync = true},
     .create = &gpsCreateProtocol<PassiveProtocol>,

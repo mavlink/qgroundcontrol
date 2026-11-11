@@ -6,7 +6,7 @@ namespace GPSTest::GoldenScenario {
 void addQuectel(Table& table)
 {
     using Fault = GPSTest::QuectelReceiverModel::Fault;
-    constexpr GPSType type = GPSType::quectel;
+    constexpr GPSType type = GPSType::Quectel;
     constexpr const char* SURVEY_BASE = "1,10,15.0,0.0000,0.0000,0.0000,0.0";
     constexpr const char* FIXED_BASE = "2,0,0,0.0000,6378237.0000,0.0000,0";
     constexpr const char* NO_BASE = "0,0,0,0,0,0,0";

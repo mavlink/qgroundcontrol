@@ -29,7 +29,7 @@ BenchFactory automatic(GPSTest::Dialect dialect, std::function<void(ModelReceive
 void addAutomatic(Table& table)
 {
     using GPSTest::Dialect;
-    constexpr GPSType type = GPSType::automatic;
+    constexpr GPSType type = GPSType::Automatic;
     const auto quectelRover = [](QuectelBench& b) {
         b.model.role = 1;
         b.model.base = "1,10,15.0,0.0000,0.0000,0.0000,0.0";

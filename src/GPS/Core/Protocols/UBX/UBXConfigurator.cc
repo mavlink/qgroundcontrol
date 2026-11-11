@@ -733,7 +733,7 @@ bool Protocol::probe(GPSCommandChannel& channel)
 }
 
 const GPSReceiverFamily FAMILY{
-    .type = GPSType::ublox,
+    .type = GPSType::UBlox,
     .logCategory = &UBXProtocolLog,
     .stream = {.framers = GPSFrameKind::UBX | GPSFrameKind::RTCM3, .enabled = GPSFrameKind::UBX},
     .baudCandidates = Plan::BAUD_RATES,

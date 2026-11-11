@@ -33,13 +33,13 @@ struct ProtocolFamily
 };
 
 const std::array<ProtocolFamily, 7> kFamilies{{
-    {"UBX", GPSType::ublox, "GPS.Protocols.UBX", true},
-    {"SBF", GPSType::septentrio, "GPS.Protocols.SBF", true},
-    {"Unicore", GPSType::unicore, "GPS.Protocols.Unicore"},
-    {"Quectel", GPSType::quectel, "GPS.Protocols.Quectel"},
-    {"Ashtech", GPSType::trimble, "GPS.Protocols.Ashtech", true},
-    {"Femto", GPSType::femto, "GPS.Protocols.Femto", true},
-    {"Passive NMEA", GPSType::passive, "GPS.Protocols.Passive"},
+    {"UBX", GPSType::UBlox, "GPS.Protocols.UBX", true},
+    {"SBF", GPSType::Septentrio, "GPS.Protocols.SBF", true},
+    {"Unicore", GPSType::Unicore, "GPS.Protocols.Unicore"},
+    {"Quectel", GPSType::Quectel, "GPS.Protocols.Quectel"},
+    {"Ashtech", GPSType::Trimble, "GPS.Protocols.Ashtech", true},
+    {"Femto", GPSType::Femto, "GPS.Protocols.Femto", true},
+    {"Passive NMEA", GPSType::Passive, "GPS.Protocols.Passive"},
 }};
 
 /// What the family's descriptor says it supports.
@@ -117,7 +117,7 @@ GPSConfig validConfig(const ProtocolFamily& family)
     if (capabilities(family).receiverAveraging) {
         return {.base = {.mode = GPSBaseStationConfig::ReceiverAveraging{.maximumDuration = 60s}}};
     }
-    if (family.type == GPSType::quectel) {
+    if (family.type == GPSType::Quectel) {
         return {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 15, .duration = 60s}}};
     }
     return {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .duration = 60s}}};
@@ -151,7 +151,7 @@ void GPSProtocolFamilyContractTest::_familyTable()
         QVERIFY(gpsReceiverDescriptor(family->type));
         QCOMPARE(gpsReceiverFamily(family->type), family);
     }
-    QCOMPARE(families.back()->type, GPSType::passive);
+    QCOMPARE(families.back()->type, GPSType::Passive);
     QVERIFY(families.back()->baudCandidates.empty());
     for (const auto& family : kFamilies) {
         const auto* descriptor = gpsReceiverFamily(family.type);

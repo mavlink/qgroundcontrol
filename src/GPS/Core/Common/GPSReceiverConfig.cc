@@ -78,7 +78,7 @@ GPSReceiverConfigError gpsValidateReceiverConfig(GPSType type, const GPSReceiver
     if (!capabilities.recognized) {
         return GPSReceiverConfigError::UnknownReceiver;
     }
-    return validateOptions(config, capabilities, type == GPSType::passive);
+    return validateOptions(config, capabilities, type == GPSType::Passive);
 }
 
 QString gpsReceiverConfigErrorText(GPSReceiverConfigError error)

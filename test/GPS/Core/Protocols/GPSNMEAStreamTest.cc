@@ -44,7 +44,7 @@ private:
     GPSNMEAStream _nmea;
 };
 
-constexpr GPSReceiverFamily NMEA_FAMILY{.type = GPSType::passive, .stream = GPSNMEAStream::STREAM};
+constexpr GPSReceiverFamily NMEA_FAMILY{.type = GPSType::Passive, .stream = GPSNMEAStream::STREAM};
 
 QByteArray rtcm(uint16_t message, int size)
 {

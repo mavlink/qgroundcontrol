@@ -7,16 +7,16 @@ Q_NAMESPACE
 
 enum class GPSType
 {
-    ublox = 0,
-    trimble = 1,
-    septentrio = 2,
-    femto = 3,
-    unicore = 4,
-    quectel = 5,
-    passive = 6,
+    UBlox = 0,
+    Trimble = 1,
+    Septentrio = 2,
+    Femto = 3,
+    Unicore = 4,
+    Quectel = 5,
+    Passive = 6,
     /// No receiver's own type: a configured base whose family is detected on every connect. Stays last: every value
     /// before it needs a receiver descriptor (GPSReceiverDescriptor.cc checks this).
-    automatic = 7,
+    Automatic = 7,
 };
 Q_ENUM_NS(GPSType)
 

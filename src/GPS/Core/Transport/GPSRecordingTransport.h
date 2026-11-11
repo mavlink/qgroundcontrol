@@ -49,8 +49,8 @@ public:
     ~GPSRecordingTransport() override;
 
     /// The recording in @a directory of a session of @a type that starts at @a startedAt:
-    /// <yyyyMMdd>T<HHmmss.zzz>Z-<type>.log, in UTC. The milliseconds keep sessions that follow each other at once in
-    /// files of their own.
+    /// <yyyyMMdd>T<HHmmss.zzz>Z-<type>.log, in UTC and with the type in lower case. The milliseconds keep sessions
+    /// that follow each other at once in files of their own.
     [[nodiscard]] static QString sessionFile(const QString& directory, GPSType type, const QDateTime& startedAt);
 
     GPSOpenResult open() override;

@@ -165,7 +165,7 @@ QStringList decodedEvents(GPSTransport& transport, size_t bufferBytes, AfterRead
             lines.append(std::visit([](const auto& report) { return summary(report); }, event));
         }
     };
-    GPSProtocolRuntime runtime(*gpsReceiverFamily(GPSType::passive), makeDecoderOnlyIO(clock), std::move(observer));
+    GPSProtocolRuntime runtime(*gpsReceiverFamily(GPSType::Passive), makeDecoderOnlyIO(clock), std::move(observer));
     runtime.stream().setEnabled(GPSFrameKind::RTCM3, true);
     (void) runtime.armNavigationDecode({.corrections = true});
     QByteArray buffer(static_cast<qsizetype>(bufferBytes), Qt::Uninitialized);
@@ -190,7 +190,7 @@ void GPSRecordingTransportTest::_recordsLinkTrafficInOrder()
     TestFixtures::TempDirFixture directory;
     // Named in UTC whatever the zone of the start time, in a folder that does not exist yet.
     const QString file = GPSRecordingTransport::sessionFile(
-        QDir(directory.path()).filePath(QStringLiteral("GPSReceiver")), GPSType::ublox,
+        QDir(directory.path()).filePath(QStringLiteral("GPSReceiver")), GPSType::UBlox,
         QDateTime(QDate(2026, 1, 2), QTime(5, 4, 5, 6), QTimeZone::fromSecondsAheadOfUtc(2 * 60 * 60)));
     QCOMPARE(file, QDir(directory.path()).filePath(QStringLiteral("GPSReceiver/20260102T030405.006Z-ublox.log")));
 

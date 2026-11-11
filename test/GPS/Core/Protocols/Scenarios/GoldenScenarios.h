@@ -210,7 +210,7 @@ struct ScenarioDef
     /// A scenario of the same type whose golden this one's transcript must match, beyond its about and request lines;
     /// it has no golden of its own.
     const char* sameAs = nullptr;
-    /// GPSType::automatic: only detection and the result are recorded, as the family's own goldens pin its
+    /// GPSType::Automatic: only detection and the result are recorded, as the family's own goldens pin its
     /// configuration.
     bool detectionOnly = false;
 };

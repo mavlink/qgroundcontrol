@@ -519,7 +519,7 @@ QLatin1StringView signature(const GPSFrame& frame)
 namespace Unicore {
 
 const GPSReceiverFamily FAMILY{
-    .type = GPSType::unicore,
+    .type = GPSType::Unicore,
     .logCategory = &UnicoreProtocolLog,
     .stream = GPSNMEAStream::STREAM,
     .baudCandidates = Plan::BAUD_RATES,

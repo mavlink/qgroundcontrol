@@ -11,7 +11,7 @@ const QByteArray SBF_NAK = "$R? rejected\n";
 
 void addSeptentrio(Table& table)
 {
-    constexpr GPSType type = GPSType::septentrio;
+    constexpr GPSType type = GPSType::Septentrio;
     const auto survey = surveyIn(1, 60);
     const auto fixed = fixedBase(47, 8, 500, 1);
     const auto stream = sbfStream();

@@ -16,7 +16,7 @@ BenchFactory ubxProfile(UBXReceiverModel::Receiver receiver, std::function<void(
 void addUblox(Table& table)
 {
     using Receiver = UBXReceiverModel::Receiver;
-    constexpr GPSType type = GPSType::ublox;
+    constexpr GPSType type = GPSType::UBlox;
     const auto survey = surveyIn(2.0, 180);
     const auto fixed = fixedBase(47, 8, 500, 1);
     const auto stream = ubxStream();

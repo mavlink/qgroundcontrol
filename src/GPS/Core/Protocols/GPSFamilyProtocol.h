@@ -54,7 +54,7 @@ struct GPSConfig
 /// GPSReceiverDescriptor.
 struct GPSReceiverFamily
 {
-    GPSType type = GPSType::passive;
+    GPSType type = GPSType::Passive;
     GPSLogCategory logCategory = nullptr;
     GPSStreamConfig stream{};
     /// Baud rates receiver detection probes the family at (GPSFamilyProtocol::probe()), in probing order; empty for a

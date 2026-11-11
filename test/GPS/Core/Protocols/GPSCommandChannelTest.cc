@@ -109,7 +109,7 @@ private:
     GPSNMEAStream _nmea;
 };
 
-constexpr GPSReceiverFamily HARNESS_FAMILY{.type = GPSType::passive, .stream = GPSNMEAStream::STREAM};
+constexpr GPSReceiverFamily HARNESS_FAMILY{.type = GPSType::Passive, .stream = GPSNMEAStream::STREAM};
 
 /// A receiver on a virtual clock. Each command write schedules its scripted replies after their latency, unsolicited
 /// output arrives at scheduled times, and time only passes while a read waits for data.

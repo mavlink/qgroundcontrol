@@ -124,7 +124,7 @@ void GPSReceiverTest::_outputOverflowWarning_data()
     QTest::addColumn<int>("manufacturer");
     QTest::addColumn<bool>("compact");
     QTest::addColumn<QString>("warning");
-    const int ublox = gpsReceiverManufacturerForType(GPSType::ublox);
+    const int ublox = gpsReceiverManufacturerForType(GPSType::UBlox);
     QTest::newRow("base") << ublox << false
                           << QStringLiteral(
                                  "The receiver produces more output than the connection carries, so corrections are "
@@ -223,7 +223,7 @@ void GPSReceiverTest::_automaticConnection()
     QVERIFY(receiver.connectReceiver());
     auto* worker = harness.workers.current();
     QVERIFY(worker);
-    QCOMPARE(worker->type(), GPSType::automatic);
+    QCOMPARE(worker->type(), GPSType::Automatic);
     QVERIFY(worker->capturedConfig().allowPersistentChanges);
     QVERIFY(std::holds_alternative<GPSBaseStationConfig::ReceiverAveraging>(worker->capturedConfig().base.mode));
     QCOMPARE(receiver._activeManufacturer(), GPS_AUTOMATIC_MANUFACTURER);
@@ -231,10 +231,10 @@ void GPSReceiverTest::_automaticConnection()
     QVERIFY(receiver.detectedReceiver().isEmpty());
 
     QSignalSpy changed(&receiver, &GPSReceiver::receiverChanged);
-    worker->detected(GPSType::unicore);
+    worker->detected(GPSType::Unicore);
     QCOMPARE(changed.size(), 1);
     QCOMPARE(receiver.detectedReceiver(), QStringLiteral("Unicore"));
-    QCOMPARE(receiver._activeManufacturer(), gpsReceiverManufacturerForType(GPSType::unicore));
+    QCOMPARE(receiver._activeManufacturer(), gpsReceiverManufacturerForType(GPSType::Unicore));
     QVERIFY(receiver.activePresentation().receiverAveraging);
     worker->ready(QStringLiteral("UM982 R4.10Build15434"));
     QVERIFY(receiver.facts()->telemetryAvailable());
@@ -245,11 +245,11 @@ void GPSReceiverTest::_automaticConnection()
     receiver.disconnectReceiver();
     QVERIFY(receiver.detectedReceiver().isEmpty());
     // A specific family ignores detections and does not replace the saved manufacturer either.
-    const int ublox = gpsReceiverManufacturerForType(GPSType::ublox);
+    const int ublox = gpsReceiverManufacturerForType(GPSType::UBlox);
     settings.baseReceiverManufacturer()->setRawValue(ublox);
     settings.baseMode()->setRawValue(static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn));
     QVERIFY(receiver.connectReceiver());
-    harness.workers.current()->detected(GPSType::septentrio);
+    harness.workers.current()->detected(GPSType::Septentrio);
     QVERIFY(receiver.detectedReceiver().isEmpty());
     QCOMPARE(receiver._activeManufacturer(), ublox);
     QCOMPARE(settings.baseReceiverManufacturer()->rawValue().toInt(), ublox);
@@ -281,7 +281,7 @@ void GPSReceiverTest::_notificationsFollowCompletedConnection()
     const auto observe = [&](const QString& notification) {
         // Each notification arrives once, after the connection is installed.
         QVERIFY(receiver.hasReceiver());
-        QCOMPARE(receiver._activeManufacturer(), gpsReceiverManufacturerForType(GPSType::ublox));
+        QCOMPARE(receiver._activeManufacturer(), gpsReceiverManufacturerForType(GPSType::UBlox));
         QVERIFY(receiver.errorMessage().isEmpty());
         notifications.append(notification);
     };
@@ -708,17 +708,17 @@ void GPSReceiverTest::_passiveInputStatus_data()
     QTest::newRow("not-gnss") << GPSInputProblem::NotGNSS << none << true << QString()
                               << QStringLiteral(
                                      "Receiving data that isn't GNSS output. Check the device and baud rate.");
-    QTest::newRow("ubx") << GPSInputProblem::NoPositions << static_cast<int>(GPSType::ublox) << true
+    QTest::newRow("ubx") << GPSInputProblem::NoPositions << static_cast<int>(GPSType::UBlox) << true
                          << QStringLiteral("u-blox (UBX)")
                          << QStringLiteral(
                                 "Receiving u-blox UBX data without position messages. Enable NAV-PVT or "
                                 "NMEA output.");
-    QTest::newRow("sbf") << GPSInputProblem::NoPositions << static_cast<int>(GPSType::septentrio) << true
+    QTest::newRow("sbf") << GPSInputProblem::NoPositions << static_cast<int>(GPSType::Septentrio) << true
                          << QStringLiteral("Septentrio (SBF)")
                          << QStringLiteral(
                                 "Receiving Septentrio SBF data without position messages. Enable "
                                 "PVTGeodetic or NMEA output.");
-    QTest::newRow("nmea") << GPSInputProblem::NoPositions << static_cast<int>(GPSType::passive) << true
+    QTest::newRow("nmea") << GPSInputProblem::NoPositions << static_cast<int>(GPSType::Passive) << true
                           << QStringLiteral("NMEA")
                           << QStringLiteral("Receiving NMEA data without position messages. Enable GGA output.");
     QTest::newRow("corrections-forwarded")
@@ -961,7 +961,7 @@ void GPSReceiverTest::_serialReservationSurvivesDelayedStop()
     receiver._serialTransportFactory = [factory = gate.factory()](const QString&, GPSCancelToken cancelToken) {
         return factory(std::move(cancelToken));
     };
-    QVERIFY(receiver.connectSerial(QStringLiteral("/test/selected"), GPSType::passive, 115200, false,
+    QVERIFY(receiver.connectSerial(QStringLiteral("/test/selected"), GPSType::Passive, 115200, false,
                                    serial.manager.reservePort(QStringLiteral("/test/selected"))));
     QTRY_VERIFY_WITH_TIMEOUT(gate.entered(), TestTimeout::mediumMs());
     QPointer<GPSReceiverWorker> worker = receiver.findChild<GPSReceiverWorker*>();

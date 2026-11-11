@@ -167,7 +167,7 @@ void GPSReceiverSettingsBindingTest::_configurationDiagnosticRetained()
     const bool reconnecting = session == QStringLiteral("reconnecting");
     ScriptedGPSReceiver harness;
     auto& receiver = harness.receiver;
-    auto configuration = receiverConfiguration(gpsReceiverManufacturerForType(GPSType::quectel));
+    auto configuration = receiverConfiguration(gpsReceiverManufacturerForType(GPSType::Quectel));
     useTcp(configuration);
     receiver.setConfiguration(configuration);
     receiver.setPersistentChangesAllowed(true);
@@ -225,8 +225,8 @@ void GPSReceiverSettingsBindingTest::_receiverSettingsBinding()
     ScriptedReceiverWorkerFactory workers;
     receiver.setWorkerFactory(workers.workerFactory());
     QVERIFY(receiver.connectReceiver());
-    workers.current()->detected(GPSType::ublox);
-    QCOMPARE(receiver._activeManufacturer(), gpsReceiverManufacturerForType(GPSType::ublox));
+    workers.current()->detected(GPSType::UBlox);
+    QCOMPARE(receiver._activeManufacturer(), gpsReceiverManufacturerForType(GPSType::UBlox));
     QCOMPARE(settings.baseReceiverManufacturer()->rawValue().toInt(), GPS_AUTOMATIC_MANUFACTURER);
 }
 
@@ -249,7 +249,7 @@ void GPSReceiverSettingsBindingTest::_persistentConsentScope()
     QFETCH(bool, keepsConsent);
     ScriptedGPSReceiver harness;
     GPSReceiver& receiver = harness.receiver;
-    auto configuration = receiverConfiguration(gpsReceiverManufacturerForType(GPSType::quectel));
+    auto configuration = receiverConfiguration(gpsReceiverManufacturerForType(GPSType::Quectel));
     receiver.setConfiguration(configuration);
     QSignalSpy changed(&receiver, &GPSReceiver::persistentChangesAllowedChanged);
     receiver.setPersistentChangesAllowed(true);
@@ -263,7 +263,7 @@ void GPSReceiverSettingsBindingTest::_persistentConsentScope()
     } else if (setting == QStringLiteral("base-mode")) {
         configuration.base.mode = GPSBaseStationConfig::Fixed{};
     } else if (setting == QStringLiteral("manufacturer")) {
-        configuration.baseReceiverManufacturer = gpsReceiverManufacturerForType(GPSType::ublox);
+        configuration.baseReceiverManufacturer = gpsReceiverManufacturerForType(GPSType::UBlox);
     } else if (setting == QStringLiteral("role")) {
         configuration.receiverRole = RTKSettings::Passive;
     } else if (setting == QStringLiteral("connection-type")) {
@@ -289,8 +289,8 @@ void GPSReceiverSettingsBindingTest::_persistentConsentIsSpentOnConnect_data()
     QTest::addColumn<int>("manufacturer");
     QTest::addColumn<bool>("granted");
     QTest::addColumn<bool>("expected");
-    const int quectel = gpsReceiverManufacturerForType(GPSType::quectel);
-    const int ublox = gpsReceiverManufacturerForType(GPSType::ublox);
+    const int quectel = gpsReceiverManufacturerForType(GPSType::Quectel);
+    const int ublox = gpsReceiverManufacturerForType(GPSType::UBlox);
     QTest::newRow("quectel-granted") << quectel << true << true;
     QTest::newRow("quectel-withheld") << quectel << false << false;
     // Families that cannot save settings never receive the permission.

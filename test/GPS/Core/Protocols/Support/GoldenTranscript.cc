@@ -228,7 +228,7 @@ std::unique_ptr<GPSProtocolRuntime> configure(const Scenario& scenario, const Li
     run.startedAtUs = link.clock.nowUs();
     run.configuredAtUs = run.startedAtUs;
     unsigned baud = scenario.config.baudRate ? scenario.config.baudRate : link.receiver.fixedBaudrate();
-    if (scenario.type == GPSType::automatic) {
+    if (scenario.type == GPSType::Automatic) {
         return configureDetected(scenario, baud, link, session, run);
     }
     const GPSReceiverFamily* family = gpsReceiverFamily(scenario.type);

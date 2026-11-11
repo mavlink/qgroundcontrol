@@ -300,7 +300,7 @@ void protocolSwitch(GPSTestClock& clock)
     receiver.feed(nmeaSentence("GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,"));
     receiver.consume(ubxNavigationEpoch(ubxFix3D(), 1000));
     // NMEA, recognised first, supplies the positions while it delivers them.
-    QCOMPARE(receiver.inputs(), std::vector<GPSType>{GPSType::passive});
+    QCOMPARE(receiver.inputs(), std::vector<GPSType>{GPSType::Passive});
     QCOMPARE(receiver.reports<GPSDecodedPosition>().size(), 1);
     QVERIFY(std::isnan(receiver.position.navigation.horizontalAccuracyMeters));
     receiver.events.clear();
@@ -310,7 +310,7 @@ void protocolSwitch(GPSTestClock& clock)
     // Silent for three seconds, it gives way to UBX, whose positions then win.
     receiver.clock.advanceBy(1);
     receiver.consume(ubxNavigationEpoch(ubxFix3D(), 3000));
-    QCOMPARE(receiver.inputs(), std::vector<GPSType>{GPSType::ublox});
+    QCOMPARE(receiver.inputs(), std::vector<GPSType>{GPSType::UBlox});
     QCOMPARE(receiver.reports<GPSDecodedPosition>().size(), 1);
     QCOMPARE(receiver.position.navigation.horizontalAccuracyMeters, 0.0f);
     receiver.events.clear();

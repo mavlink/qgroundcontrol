@@ -34,7 +34,7 @@ QString GPSRecordingTransport::sessionFile(const QString& directory, GPSType typ
     const char* const name = QMetaEnum::fromType<GPSType>().valueToKey(static_cast<int>(type));
     return QDir(directory).filePath(QStringLiteral("%1-%2.log")
                                         .arg(startedAt.toUTC().toString(QStringLiteral("yyyyMMdd'T'HHmmss.zzz'Z'")),
-                                             name ? QLatin1StringView(name) : QLatin1StringView("gnss")));
+                                             name ? QString::fromLatin1(name).toLower() : QStringLiteral("gnss")));
 }
 
 GPSOpenResult GPSRecordingTransport::open()

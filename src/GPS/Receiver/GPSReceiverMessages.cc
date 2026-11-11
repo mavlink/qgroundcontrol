@@ -104,20 +104,20 @@ QString inputProblem(GPSInputProblem problem, std::optional<GPSType> detected, c
         case GPSInputProblem::NotGNSS:
             return GPSReceiver::tr("Receiving data that isn't GNSS output. Check the device and baud rate.");
         case GPSInputProblem::NoPositions:
-            switch (detected.value_or(GPSType::passive)) {
-                case GPSType::ublox:
+            switch (detected.value_or(GPSType::Passive)) {
+                case GPSType::UBlox:
                     return GPSReceiver::tr(
                         "Receiving u-blox UBX data without position messages. Enable NAV-PVT or NMEA output.");
-                case GPSType::septentrio:
+                case GPSType::Septentrio:
                     return GPSReceiver::tr(
                         "Receiving Septentrio SBF data without position messages. Enable PVTGeodetic or NMEA "
                         "output.");
-                case GPSType::trimble:
-                case GPSType::femto:
-                case GPSType::unicore:
-                case GPSType::quectel:
-                case GPSType::passive:
-                case GPSType::automatic:
+                case GPSType::Trimble:
+                case GPSType::Femto:
+                case GPSType::Unicore:
+                case GPSType::Quectel:
+                case GPSType::Passive:
+                case GPSType::Automatic:
                     return GPSReceiver::tr("Receiving NMEA data without position messages. Enable GGA output.");
             }
             break;

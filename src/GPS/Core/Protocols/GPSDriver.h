@@ -31,9 +31,9 @@ struct GPSDriverSinks
     /// One complete frame; copying it shares the receiver's buffer.
     std::function<void(const QByteArray&)> onRTCM;
     std::function<void(const GPSSurveyReport&)> onSurveyIn;
-    /// The family a GPSType::automatic driver detected, before it configures the receiver. A passive driver reports
+    /// The family a GPSType::Automatic driver detected, before it configures the receiver. A passive driver reports
     /// the protocol its input carries once identified and whenever it changes: the family whose native protocol it
-    /// decodes, or GPSType::passive for standard NMEA. A change first withdraws the satellite counts of the protocol
+    /// decodes, or GPSType::Passive for standard NMEA. A change first withdraws the satellite counts of the protocol
     /// left behind, with an empty onSatelliteInfo report.
     std::function<void(GPSType)> onReceiverDetected;
 };
@@ -63,7 +63,7 @@ struct [[nodiscard]] GPSReceiveResult
     }
 };
 
-/// Hosts a native receiver family and adapts its decoded events to public reports. GPSType::automatic detects the
+/// Hosts a native receiver family and adapts its decoded events to public reports. GPSType::Automatic detects the
 /// family (GPSReceiverDetector) on every configure(), then fits the request to it: consent to persistent changes lapses
 /// where the family has none, a compact-observation request lapses with a warning where the family has no compact
 /// option, and an unsupported base mode fails, naming the family.

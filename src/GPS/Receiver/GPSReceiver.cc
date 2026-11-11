@@ -434,7 +434,7 @@ QList<int> GPSReceiver::serialBaudRates()
 GPSReceiverPresentation GPSReceiver::capabilitiesFor(int role, int manufacturer) const
 {
     return gpsReceiverPresentation(
-        role == RTKSettings::ConfiguredBase ? manufacturer : gpsReceiverManufacturerForType(GPSType::passive));
+        role == RTKSettings::ConfiguredBase ? manufacturer : gpsReceiverManufacturerForType(GPSType::Passive));
 }
 
 bool GPSReceiver::hasReceiver() const
@@ -577,7 +577,7 @@ bool GPSReceiver::_connectReceiver(GPSType type, GPSReceiverWorker::TransportFac
     _setError();
     transportFactory = _recorded(std::move(transportFactory), type);
     const RTKSettings::ReceiverRole role =
-        type == GPSType::passive ? RTKSettings::Passive : RTKSettings::ConfiguredBase;
+        type == GPSType::Passive ? RTKSettings::Passive : RTKSettings::ConfiguredBase;
     auto* const session = new GPSReceiverSession(
         ++_sessionCount,
         {.type = type,

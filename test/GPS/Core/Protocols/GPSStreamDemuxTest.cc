@@ -285,7 +285,7 @@ public:
 };
 
 constexpr GPSReceiverFamily MIXED_FAMILY{
-    .type = GPSType::passive,
+    .type = GPSType::Passive,
     .stream = {.framers = GPSFrameKind::RTCM3 | GPSFrameKind::UBX | GPSFrameKind::SBF | GPSFrameKind::ASCIILine,
                .enabled = GPSFrameKind::RTCM3 | GPSFrameKind::UBX | GPSFrameKind::SBF | GPSFrameKind::ASCIILine,
                .shareSBFSync = true}};

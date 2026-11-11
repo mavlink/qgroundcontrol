@@ -120,7 +120,7 @@ QStringList siteNames(const RTKSettings* settings)
 void GPSReceiverSettingsTest::_surveySaveWorkflow()
 {
     // How each family maps the saved base settings is GPSReceiverSettingsBindingTest's; this is the panel's workflow.
-    Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* connect = panel.find("rtkConnectButton");
     auto* fixed = panel.find("rtkFixedMode");
@@ -161,7 +161,7 @@ void GPSReceiverSettingsTest::_surveySaveWorkflow()
 
 void GPSReceiverSettingsTest::_surveyCompletePrompt()
 {
-    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::ublox));
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::UBlox));
     AppReceiver base;
     QVERIFY(base.connect());
     QCOMPARE(GPSManager::instance()->receiver()->activeBaseMode(), int(BaseModeDefinition::Mode::BaseSurveyIn));
@@ -208,7 +208,7 @@ void GPSReceiverSettingsTest::_surveyCompletePrompt()
 
 void GPSReceiverSettingsTest::_surveySaveNeedsApplicationReceiver()
 {
-    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::ublox));
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::UBlox));
     ScriptedGPSReceiver harness;
     GPSReceiver& receiver = harness.receiver;
     receiver.facts()->setLiveUpdates(true);
@@ -236,7 +236,7 @@ void GPSReceiverSettingsTest::_surveySaveNeedsApplicationReceiver()
 
 void GPSReceiverSettingsTest::_surveySavedAsSite()
 {
-    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::ublox));
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::UBlox));
     RTKSettings* const rtk = settings.settings;
     settings.saved.setFactValue(rtk->savedBaseSites(), QString());
     AppReceiver base;
@@ -281,7 +281,7 @@ void GPSReceiverSettingsTest::_surveySavedAsSite()
 
 void GPSReceiverSettingsTest::_baseSitePicker()
 {
-    Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
     RTKSettings* const settings = panel.settings.settings;
     TestFixtures::SettingsFixture& saved = panel.settings.saved;
     saved.setFactValue(settings->savedBaseSites(), QString());
@@ -391,7 +391,7 @@ void GPSReceiverSettingsTest::_statusListsConstellations()
 
 void GPSReceiverSettingsTest::_reconnectingOffersDisconnect()
 {
-    Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* connect = panel.find("rtkConnectButton");
     auto* device = panel.find("rtkSerialDevice");
@@ -418,7 +418,7 @@ void GPSReceiverSettingsTest::_reconnectingOffersDisconnect()
 
 void GPSReceiverSettingsTest::_tcpConnectionFields()
 {
-    Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* host = panel.find("rtkTcpHost");
     auto* port = panel.find("rtkTcpPort");
@@ -435,7 +435,7 @@ void GPSReceiverSettingsTest::_tcpConnectionFields()
     settings->connectionType()->setRawValue(RTKSettings::Tcp);
     QVERIFY(host->isVisible() && port->isVisible());
     QVERIFY(!device->isVisible());
-    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::quectel));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::Quectel));
     QVERIFY(consent->property("visible").toBool());
     // Which settings withdraw the permission is GPSReceiverSettingsBindingTest's; the checkbox follows the receiver.
     QVERIFY(QMetaObject::invokeMethod(consent, "click"));
@@ -450,7 +450,7 @@ void GPSReceiverSettingsTest::_tcpConnectionFields()
 
 void GPSReceiverSettingsTest::_roleSelectsFields()
 {
-    Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* role = panel.find("rtkReceiverRole");
     auto* manufacturer = panel.find("rtkManufacturer");
@@ -483,7 +483,7 @@ void GPSReceiverSettingsTest::_roleSelectsFields()
     QVERIFY(connect->isEnabled());
     QVERIFY(QMetaObject::invokeMethod(connect, "clicked"));
     QVERIFY(receiver.hasReceiver());
-    QCOMPARE(panel.receiver.worker()->type(), GPSType::passive);
+    QCOMPARE(panel.receiver.worker()->type(), GPSType::Passive);
     QCOMPARE(receiver.activeRole(), RTKSettings::Passive);
     QVERIFY(!receiver.forwardingCorrections());
     receiver.disconnectReceiver();
@@ -515,13 +515,13 @@ void GPSReceiverSettingsTest::_automaticManufacturer()
     // Until a receiver is identified, the base modes of every family are offered.
     settings->baseMode()->setRawValue(2);
     QVERIFY(connect->property("enabled").toBool());
-    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::ublox));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY(!explanation->isVisible());
     QVERIFY(!connect->property("enabled").toBool());
     settings->baseReceiverManufacturer()->setRawValue(GPS_AUTOMATIC_MANUFACTURER);
     QVERIFY(QMetaObject::invokeMethod(connect, "clicked"));
     QVERIFY(receiver.hasReceiver());
-    QCOMPARE(panel.receiver.worker()->type(), GPSType::automatic);
+    QCOMPARE(panel.receiver.worker()->type(), GPSType::Automatic);
 
     GPSReceiverFactGroup& facts = *receiver.facts();
     facts.setLiveUpdates(true);
@@ -534,7 +534,7 @@ void GPSReceiverSettingsTest::_automaticManufacturer()
     QVERIFY(text && detected);
     QCOMPARE(text->property("text").toString(), QStringLiteral("Identifying receiver..."));
     QVERIFY(!detected->isVisible());
-    panel.receiver.worker()->detected(GPSType::unicore);
+    panel.receiver.worker()->detected(GPSType::Unicore);
     QVERIFY(detected->isVisible());
     QCOMPARE(detected->property("labelText").toString(), QStringLiteral("Unicore"));
     QCOMPARE(text->property("text").toString(), QStringLiteral("Connecting to receiver..."));
@@ -566,23 +566,23 @@ void GPSReceiverSettingsTest::_automaticOffersQuectelConsent()
     QVERIFY(QMetaObject::invokeMethod(consent, "click"));
     QVERIFY(QMetaObject::invokeMethod(connect, "click"));
     QCOMPARE(panel.receiver.workers.count(), 1);
-    QCOMPARE(panel.receiver.worker()->type(), GPSType::automatic);
+    QCOMPARE(panel.receiver.worker()->type(), GPSType::Automatic);
     QVERIFY(panel.receiver.worker()->capturedConfig().allowPersistentChanges);
     QVERIFY(!consent->property("checked").toBool());
     panel.receiver.gps.disconnectReceiver();
 
     RTKSettings* const settings = panel.settings.settings;
-    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::ublox));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY(!consent->isVisible());
     QVERIFY(!restartNote->isVisible());
-    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::quectel));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::Quectel));
     QVERIFY(consent->isVisible());
     QCOMPARE(consent->property("text").toString(), QStringLiteral("Allow flash save and restart"));
 }
 
 void GPSReceiverSettingsTest::_compactCorrectionsToggle()
 {
-    Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* toggle = panel.find("rtkCompactRtcm");
     QVERIFY(toggle);
@@ -592,9 +592,9 @@ void GPSReceiverSettingsTest::_compactCorrectionsToggle()
     QVERIFY(QMetaObject::invokeMethod(toggle, "click"));
     QVERIFY(settings->compactRtcmCorrections()->rawValue().toBool());
     // Which families send compact corrections is the receiver presentation's; the toggle follows it.
-    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::septentrio));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::Septentrio));
     QVERIFY(!toggle->isVisible());
-    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::ublox));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY(toggle->isVisible());
     QVERIFY(panel.receiver.gps.connectReceiver());
     QVERIFY(panel.receiver.worker()->capturedConfig().base.compactObservations);
@@ -603,7 +603,7 @@ void GPSReceiverSettingsTest::_compactCorrectionsToggle()
 
 void GPSReceiverSettingsTest::_recordingSwitch()
 {
-    Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* toggle = panel.find("rtkRecordReceiverData");
     auto* file = panel.find("rtkRecordingFile");
@@ -639,7 +639,7 @@ void GPSReceiverSettingsTest::_recordingSwitch()
 
 void GPSReceiverSettingsTest::_consentIsOneUse()
 {
-    Panel panel(gpsReceiverManufacturerForType(GPSType::quectel));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::Quectel));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* consent = panel.find<QObject>("rtkPersistentChangesCheckBox");
     auto* connect = panel.find<QObject>("rtkConnectButton");
@@ -674,9 +674,9 @@ void GPSReceiverSettingsTest::_consentIsOneUse()
     QVERIFY(consent->property("checked").toBool());
     settings->serialDevice()->setRawValue(QStringLiteral("/test/other"));
     QVERIFY(!consent->property("checked").toBool());
-    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::unicore));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::Unicore));
     QVERIFY(!consent->property("visible").toBool());
-    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::quectel));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::Quectel));
     QVERIFY(QMetaObject::invokeMethod(consent, "click"));
     QVERIFY(receiver.gps.connectReceiver());
     QVERIFY(!consent->property("checked").toBool());
@@ -706,7 +706,7 @@ void GPSReceiverSettingsTest::_warningWidth()
     QFETCH(int, width);
     QFETCH(bool, longText);
     GPSTest::QmlWindowFixture window(width, 800);
-    Panel panel(gpsReceiverManufacturerForType(GPSType::quectel));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::Quectel));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* item = qobject_cast<QQuickItem*>(panel.item.get());
     QVERIFY(item);
@@ -742,7 +742,7 @@ void GPSReceiverSettingsTest::_serialSelectionTracksFacts()
 #ifdef QGC_NO_SERIAL_LINK
     QSKIP("Serial selection requires serial link support");
 #endif
-    Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* device = panel.find<QObject>("rtkSerialDevice");
     auto* baud = panel.find<QObject>("rtkSerialBaudRate");
@@ -801,7 +801,7 @@ void GPSReceiverSettingsTest::_serialSelectionSurvivesChoiceChanges()
 #ifdef QGC_NO_SERIAL_LINK
     QSKIP("Serial selection requires serial link support");
 #endif
-    Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* device = panel.find<QObject>("rtkSerialDevice");
     auto* baud = panel.find<QObject>("rtkSerialBaudRate");

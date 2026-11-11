@@ -32,7 +32,7 @@ GPSReceiverConnectability GPSReceiverConnectionPolicy::connectability(const GPSR
     const auto connection = configuration.effectiveConnectionType();
     GPSReceiverConnectability result;
     result.type = configuredBase ? gpsReceiverTypeForManufacturer(configuration.baseReceiverManufacturer)
-                                 : std::optional(GPSType::passive);
+                                 : std::optional(GPSType::Passive);
     const GPSReceiverCapabilities family =
         result.type ? gpsReceiverCapabilities(*result.type) : GPSReceiverCapabilities{};
     const auto supportsMode = [&family]<typename Mode>(const Mode&) {

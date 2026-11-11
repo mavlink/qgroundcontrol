@@ -97,30 +97,30 @@ std::unique_ptr<Bench> bench(std::optional<GPSType> type, unsigned baud)
 {
     auto result = std::make_unique<Bench>();
     Bench& b = *result;
-    switch (type.value_or(GPSType::passive)) {
-        case GPSType::ublox: {
+    switch (type.value_or(GPSType::Passive)) {
+        case GPSType::UBlox: {
             auto& receiver = detecting<UBXReceiverModel>(b, Dialect::UBX, baud);
             receiver.model.receiverBaud = baud;
             receiver.atRate = [&model = receiver.model] { return model.hostBaud == model.receiverBaud; };
             break;
         }
-        case GPSType::trimble:
+        case GPSType::Trimble:
             detecting<AshtechReceiverModel>(b, Dialect::Ashtech, baud);
             break;
-        case GPSType::septentrio:
+        case GPSType::Septentrio:
             detecting<SBFReceiverModel>(b, Dialect::SBF, baud);
             break;
-        case GPSType::femto:
+        case GPSType::Femto:
             detecting<FemtoReceiverModel>(b, Dialect::Femto, baud);
             break;
-        case GPSType::unicore:
+        case GPSType::Unicore:
             detecting<UnicoreReceiverModel>(b, Dialect::Unicore, baud).model.availableBaud = baud;
             break;
-        case GPSType::quectel:
+        case GPSType::Quectel:
             detecting<QuectelReceiverModel>(b, Dialect::Quectel, baud);
             break;
-        case GPSType::passive:
-        case GPSType::automatic:
+        case GPSType::Passive:
+        case GPSType::Automatic:
             detecting<FemtoReceiverModel>(b, Dialect::SBF, baud).atRate = [] { return false; };
             break;
     }
@@ -158,21 +158,21 @@ void GPSReceiverDetectorTest::_signatureDetection_data()
         "\"OM7CR0707RN0000\",\"OEM7FPGA-0\",\"2022/Jan/01\",\"12:00:00\"",
         true));
 
-    QTest::newRow("ublox-38400") << GPSType::ublox << 38400U << navPvt << QStringLiteral("UBX frames");
-    QTest::newRow("ublox-9600") << GPSType::ublox << 9600U << navPvt << QStringLiteral("UBX frames");
-    QTest::newRow("septentrio-115200") << GPSType::septentrio << 115200U << pvtGeodetic << QStringLiteral("SBF blocks");
-    QTest::newRow("septentrio-460800") << GPSType::septentrio << 460800U << pvtGeodetic << QStringLiteral("SBF blocks");
-    QTest::newRow("trimble-115200") << GPSType::trimble << 115200U << position << QStringLiteral("$PASHR sentences");
-    QTest::newRow("trimble-57600") << GPSType::trimble << 57600U << position << QStringLiteral("$PASHR sentences");
-    QTest::newRow("quectel-460800") << GPSType::quectel << 460800U << survey << QStringLiteral("$PQTM sentences");
-    QTest::newRow("quectel-921600") << GPSType::quectel << 921600U << survey << QStringLiteral("$PQTM sentences");
-    QTest::newRow("unicore-115200") << GPSType::unicore << 115200U << unicoreLog
+    QTest::newRow("ublox-38400") << GPSType::UBlox << 38400U << navPvt << QStringLiteral("UBX frames");
+    QTest::newRow("ublox-9600") << GPSType::UBlox << 9600U << navPvt << QStringLiteral("UBX frames");
+    QTest::newRow("septentrio-115200") << GPSType::Septentrio << 115200U << pvtGeodetic << QStringLiteral("SBF blocks");
+    QTest::newRow("septentrio-460800") << GPSType::Septentrio << 460800U << pvtGeodetic << QStringLiteral("SBF blocks");
+    QTest::newRow("trimble-115200") << GPSType::Trimble << 115200U << position << QStringLiteral("$PASHR sentences");
+    QTest::newRow("trimble-57600") << GPSType::Trimble << 57600U << position << QStringLiteral("$PASHR sentences");
+    QTest::newRow("quectel-460800") << GPSType::Quectel << 460800U << survey << QStringLiteral("$PQTM sentences");
+    QTest::newRow("quectel-921600") << GPSType::Quectel << 921600U << survey << QStringLiteral("$PQTM sentences");
+    QTest::newRow("unicore-115200") << GPSType::Unicore << 115200U << unicoreLog
                                     << QStringLiteral("Unicore ASCII logs");
-    QTest::newRow("unicore-230400") << GPSType::unicore << 230400U << unicoreLog
+    QTest::newRow("unicore-230400") << GPSType::Unicore << 230400U << unicoreLog
                                     << QStringLiteral("Unicore ASCII logs");
-    QTest::newRow("femto-115200") << GPSType::femto << 115200U << novatelLog
+    QTest::newRow("femto-115200") << GPSType::Femto << 115200U << novatelLog
                                   << QStringLiteral("NovAtel-format ASCII logs");
-    QTest::newRow("femto-9600") << GPSType::femto << 9600U << novatelLog << QStringLiteral("NovAtel-format ASCII logs");
+    QTest::newRow("femto-9600") << GPSType::Femto << 9600U << novatelLog << QStringLiteral("NovAtel-format ASCII logs");
 }
 
 void GPSReceiverDetectorTest::_signatureDetection()
@@ -205,17 +205,17 @@ void GPSReceiverDetectorTest::_probeDetection_data()
 
     const QString query = QStringLiteral("identity query");
     // A factory u-blox sends only NMEA, which the MON-VER poll answers.
-    QTest::newRow("ublox-factory-38400") << GPSType::ublox << 38400U << query;
-    QTest::newRow("ublox-factory-9600") << GPSType::ublox << 9600U << query;
-    QTest::newRow("trimble-115200") << GPSType::trimble << 115200U << query;
-    QTest::newRow("trimble-38400") << GPSType::trimble << 38400U << query;
-    QTest::newRow("septentrio-115200") << GPSType::septentrio << 115200U << query;
+    QTest::newRow("ublox-factory-38400") << GPSType::UBlox << 38400U << query;
+    QTest::newRow("ublox-factory-9600") << GPSType::UBlox << 9600U << query;
+    QTest::newRow("trimble-115200") << GPSType::Trimble << 115200U << query;
+    QTest::newRow("trimble-38400") << GPSType::Trimble << 38400U << query;
+    QTest::newRow("septentrio-115200") << GPSType::Septentrio << 115200U << query;
     // Unicore answers the Femtomes query, sent before its own, in its own words.
-    QTest::newRow("femto-115200") << GPSType::femto << 115200U << query;
-    QTest::newRow("unicore-115200") << GPSType::unicore << 115200U << QStringLiteral("Unicore command replies");
-    QTest::newRow("unicore-230400") << GPSType::unicore << 230400U << query;
-    QTest::newRow("quectel-460800") << GPSType::quectel << 460800U << query;
-    QTest::newRow("quectel-115200") << GPSType::quectel << 115200U << query;
+    QTest::newRow("femto-115200") << GPSType::Femto << 115200U << query;
+    QTest::newRow("unicore-115200") << GPSType::Unicore << 115200U << QStringLiteral("Unicore command replies");
+    QTest::newRow("unicore-230400") << GPSType::Unicore << 230400U << query;
+    QTest::newRow("quectel-460800") << GPSType::Quectel << 460800U << query;
+    QTest::newRow("quectel-115200") << GPSType::Quectel << 115200U << query;
 }
 
 void GPSReceiverDetectorTest::_probeDetection()
@@ -224,7 +224,7 @@ void GPSReceiverDetectorTest::_probeDetection()
     QFETCH(unsigned, baud);
     QFETCH(QString, evidence);
     auto b = bench(type, baud);
-    if (type == GPSType::ublox) {
+    if (type == GPSType::UBlox) {
         b->detection->stream = FACTORY_NMEA;
     }
 
@@ -238,7 +238,7 @@ void GPSReceiverDetectorTest::_probeDetection()
     for (const auto& write : b->detection->writes) {
         QVERIFY2(identityQueries().contains(write), write.toHex().constData());
     }
-    if (type == GPSType::ublox) {
+    if (type == GPSType::UBlox) {
         const auto& model = static_cast<const UBXReceiverModel&>(*b->model);
         QCOMPARE(model.configurationWrites, 0U);
         QVERIFY(!model.identityBauds.empty());
@@ -249,7 +249,7 @@ void GPSReceiverDetectorTest::_probeDetection()
 void GPSReceiverDetectorTest::_standardNMEAEndsSearch()
 {
     // Femtomes receivers answer only at 115200, so this one's NMEA at 38400 shows its rate but nothing answers there.
-    auto b = bench(GPSType::femto, 38400);
+    auto b = bench(GPSType::Femto, 38400);
     b->detection->stream = FACTORY_NMEA;
     const auto detection = b->detect();
     QVERIFY(!detection.found());

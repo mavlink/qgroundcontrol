@@ -182,7 +182,7 @@ bool Protocol::probe(GPSCommandChannel& channel)
 namespace Femto {
 
 const GPSReceiverFamily FAMILY{
-    .type = GPSType::femto,
+    .type = GPSType::Femto,
     .logCategory = &FemtoProtocolLog,
     // RTCM3 is framed once the receiver answered (see Protocol::configure()).
     .stream = {.framers = GPSFrameKind::NMEASentence | GPSFrameKind::RTCM3, .enabled = GPSFrameKind::NMEASentence},

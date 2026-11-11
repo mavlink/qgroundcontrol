@@ -71,7 +71,7 @@ std::vector<StreamStep> ubxWithoutPositionInput()
 
 void addPassive(Table& table)
 {
-    constexpr GPSType type = GPSType::passive;
+    constexpr GPSType type = GPSType::Passive;
     const auto stream = passiveStream();
     table.add(type, "baud-115200", "NMEA and RTCM input at 115200", passive(), passiveInput(115200), stream);
     table.add(type, "baud-9600", "NMEA and RTCM input at 9600", passive(), passiveInput(9600));

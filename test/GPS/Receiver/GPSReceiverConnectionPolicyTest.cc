@@ -39,7 +39,7 @@ GPSPositionReport locatedFix(GPSFixQuality fixType)
 /// A configured base without a saved device, which Connect automatically discovers on USB.
 GPSReceiver::Configuration discoveryConfiguration()
 {
-    return GPSTest::serialConfiguration(gpsReceiverManufacturerForType(GPSType::ublox), {}, 115200);
+    return GPSTest::serialConfiguration(gpsReceiverManufacturerForType(GPSType::UBlox), {}, 115200);
 }
 
 GPSReceiver::Configuration savedSerialConfiguration(bool autoConnect = true)
@@ -120,7 +120,7 @@ void GPSReceiverConnectionPolicyTest::_lostConnectionRetriesWithBackoff()
     QVERIFY(receiver.connectReceiver());
     QCOMPARE(harness.attempts(), 1);
     QCOMPARE(receiver.activeEndpoint(), QStringLiteral("rtk.test:2101"));
-    QCOMPARE(harness.worker()->type(), GPSType::passive);
+    QCOMPARE(harness.worker()->type(), GPSType::Passive);
     QCOMPARE(harness.worker()->capturedConfig().baudRate, GPSTransport::BRIDGE_BAUDRATE);
     harness.worker()->ready();
     QVERIFY(receiver.facts()->telemetryAvailable());
@@ -218,7 +218,7 @@ void GPSReceiverConnectionPolicyTest::_connectConfiguredValidationErrors()
 #else
     QList<SerialPortManager::Port> inventory{rtkPort()};
     if (reason.startsWith(QStringLiteral("serial-")) || reason == QStringLiteral("invalid-baud")) {
-        configuration = GPSTest::serialConfiguration(gpsReceiverManufacturerForType(GPSType::ublox),
+        configuration = GPSTest::serialConfiguration(gpsReceiverManufacturerForType(GPSType::UBlox),
                                                      QStringLiteral("/test/rtk"), 115200);
         configuration.autoConnect = false;
     }
@@ -784,7 +784,7 @@ void GPSReceiverConnectionPolicyTest::_savedReceiverReplacesDiscovery()
     QFETCH(QString, device);
     QFETCH(QString, endpoint);
     // Quectel receivers often sit behind generic USB serial adapters; the saved base mode is one it supports.
-    auto configuration = GPSTest::serialConfiguration(gpsReceiverManufacturerForType(GPSType::quectel), device, 115200);
+    auto configuration = GPSTest::serialConfiguration(gpsReceiverManufacturerForType(GPSType::Quectel), device, 115200);
     configuration.connectionType = static_cast<RTKSettings::ConnectionType>(connection);
     configuration.tcpHost = QStringLiteral("rtk.test");
     configuration.tcpPort = 2101;
@@ -797,7 +797,7 @@ void GPSReceiverConnectionPolicyTest::_savedReceiverReplacesDiscovery()
     QVERIFY2(harness.receiver.errorMessage().isEmpty(), qPrintable(harness.receiver.errorMessage()));
     QCOMPARE(harness.attempts(), 1);
     QCOMPARE(harness.receiver.activeEndpoint(), endpoint);
-    QCOMPARE(harness.worker()->type(), GPSType::quectel);
+    QCOMPARE(harness.worker()->type(), GPSType::Quectel);
     for (const auto& port : inventory) {
         QCOMPARE(harness.ports.canReservePort(port.systemLocation), port.systemLocation != endpoint);
     }
@@ -1012,7 +1012,7 @@ void GPSReceiverConnectionPolicyTest::_savedSerialWaitsForReturningPort()
     QCOMPARE(receiver.activeEndpoint(), device);
     QVERIFY(harness.ports.isPortReserved(device));
     QVERIFY(!harness.ports.isPortReserved(QStringLiteral("/test/other")));
-    QCOMPARE(harness.worker()->type(), GPSType::passive);
+    QCOMPARE(harness.worker()->type(), GPSType::Passive);
     QCOMPARE(harness.worker()->capturedConfig().baudRate, 4800U);
     QVERIFY(!harness.worker()->capturedConfig().allowPersistentChanges);
     harness.worker()->ready();
@@ -1079,16 +1079,16 @@ void GPSReceiverConnectionPolicyTest::_discoveryUsesSavedManufacturer_data()
     QTest::addColumn<bool>("consentRefused");
     // The USB identity only admits the port; its name never chooses or replaces the saved family.
     QTest::newRow("automatic-generic-name") << GPS_AUTOMATIC_MANUFACTURER << QStringLiteral("CP2102 USB to UART")
-                                            << static_cast<int>(GPSType::automatic) << true;
+                                            << static_cast<int>(GPSType::Automatic) << true;
     QTest::newRow("automatic-named") << GPS_AUTOMATIC_MANUFACTURER << QStringLiteral("u-blox GNSS receiver")
-                                     << static_cast<int>(GPSType::automatic) << true;
+                                     << static_cast<int>(GPSType::Automatic) << true;
     // Quectel saved, a u-blox receiver attached: the identity check fails, and flash consent would not help.
-    QTest::newRow("quectel-on-ublox") << gpsReceiverManufacturerForType(GPSType::quectel)
-                                      << QStringLiteral("u-blox GNSS receiver") << static_cast<int>(GPSType::quectel)
+    QTest::newRow("quectel-on-ublox") << gpsReceiverManufacturerForType(GPSType::Quectel)
+                                      << QStringLiteral("u-blox GNSS receiver") << static_cast<int>(GPSType::Quectel)
                                       << false;
     QTest::newRow("quectel-generic-name")
-        << gpsReceiverManufacturerForType(GPSType::quectel) << QStringLiteral("CP2102 USB to UART")
-        << static_cast<int>(GPSType::quectel) << true;
+        << gpsReceiverManufacturerForType(GPSType::Quectel) << QStringLiteral("CP2102 USB to UART")
+        << static_cast<int>(GPSType::Quectel) << true;
 }
 
 void GPSReceiverConnectionPolicyTest::_discoveryUsesSavedManufacturer()
@@ -1112,7 +1112,7 @@ void GPSReceiverConnectionPolicyTest::_discoveryUsesSavedManufacturer()
     QVERIFY(!worker->capturedConfig().allowPersistentChanges);
     QCOMPARE(receiver.activeEndpoint(), QStringLiteral("/test/rtk"));
     if (manufacturer == GPS_AUTOMATIC_MANUFACTURER) {
-        worker->detected(GPSType::quectel);
+        worker->detected(GPSType::Quectel);
         QCOMPARE(receiver.detectedReceiver(), QStringLiteral("Quectel"));
     }
 

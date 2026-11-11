@@ -357,7 +357,7 @@ bool Protocol::probe(GPSCommandChannel& channel)
 namespace SBF {
 
 const GPSReceiverFamily FAMILY{
-    .type = GPSType::septentrio,
+    .type = GPSType::Septentrio,
     .logCategory = &SBFProtocolLog,
     .stream = {.framers = GPSFrameKind::SBF | GPSFrameKind::RTCM3, .enabled = GPSFrameKind::SBF},
     .baudCandidates = Plan::BAUD_RATES,

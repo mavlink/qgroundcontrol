@@ -110,7 +110,7 @@ void GPSReceiverWorkerTest::_transportLifetimeStaysOnWorker()
             return std::make_unique<TestTransport>(std::move(cancelToken), trace, stopWorker, openResult,
                                                    cancel == QStringLiteral("in-open"));
         },
-        GPSType::ublox, GPSReceiverConfig{});
+        GPSType::UBlox, GPSReceiverConfig{});
     stopWorker = [&worker]() { worker.stop(); };
     QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
     if (cancel == QStringLiteral("before-start")) {
@@ -152,7 +152,7 @@ void GPSReceiverWorkerTest::_missingTransportReportsOpenFailure()
     if (hasFactory) {
         factory = [](GPSCancelToken) { return std::unique_ptr<GPSTransport>{}; };
     }
-    GPSReceiverWorker worker(std::move(factory), GPSType::ublox, GPSReceiverConfig{});
+    GPSReceiverWorker worker(std::move(factory), GPSType::UBlox, GPSReceiverConfig{});
     QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
     worker.start();
     QVERIFY(worker.wait(TestTimeout::shortDuration()));
@@ -174,7 +174,7 @@ void GPSReceiverWorkerTest::_workerLifecycle()
             tokenStopped = stopped.tryAcquire(1, TestTimeout::mediumMs()) && cancelToken.isCancelled();
             return std::unique_ptr<GPSTransport>{};
         },
-        GPSType::ublox, GPSReceiverConfig{});
+        GPSType::UBlox, GPSReceiverConfig{});
     QVERIFY(worker->wait(0ms));
     QVERIFY(!worker->_thread);
     QSignalSpy finished(worker.get(), &GPSReceiverWorker::finished);
@@ -325,7 +325,7 @@ void GPSReceiverWorkerTest::_positionFixTransitions()
     for (int session = 0; session < 2; ++session) {
         GPSReceiverWorker worker(
             [](GPSCancelToken cancelToken) { return std::make_unique<FixSequenceTransport>(std::move(cancelToken)); },
-            GPSType::passive, {.baudRate = 115200});
+            GPSType::Passive, {.baudRate = 115200});
         QSignalSpy positions(&worker, &GPSReceiverWorker::positionUpdated);
         worker.start();
         const bool finished = worker.wait(TestTimeout::shortDuration());
@@ -357,7 +357,7 @@ void GPSReceiverWorkerTest::_satelliteExpiryDoesNotRenewLiveness()
         [&](GPSCancelToken cancelToken) {
             return std::make_unique<ExpiringSatelliteTransport>(std::move(cancelToken), clock, lastPositionAtUs);
         },
-        GPSType::passive, {.baudRate = 115200}, nullptr, clock.source());
+        GPSType::Passive, {.baudRate = 115200}, nullptr, clock.source());
     std::atomic_bool freshView = false;
     std::atomic_bool expiredView = false;
     connect(
@@ -400,7 +400,7 @@ void GPSReceiverWorkerTest::_passiveInputProblems_data()
     QTest::newRow("silent") << QByteArray() << GPSInputProblem::NoData << -1;
     QTest::newRow("not-gnss") << QByteArray("AT+OK\r\nhello\r\n") << GPSInputProblem::NotGNSS << -1;
     QTest::newRow("ubx-without-position") << ubxBytes(0x3501, QByteArray::fromHex("e803000001000000"))
-                                          << GPSInputProblem::NoPositions << static_cast<int>(GPSType::ublox);
+                                          << GPSInputProblem::NoPositions << static_cast<int>(GPSType::UBlox);
     QTest::newRow("rtcm-only") << rtcmMessage(1005) << GPSInputProblem::CorrectionsOnly << -1;
 }
 
@@ -415,7 +415,7 @@ void GPSReceiverWorkerTest::_passiveInputProblems()
         [&clock, &positions, input](GPSCancelToken cancelToken) {
             return std::make_unique<PassiveInputTransport>(std::move(cancelToken), clock, input, positions);
         },
-        GPSType::passive, {.baudRate = 115200}, nullptr, clock.source());
+        GPSType::Passive, {.baudRate = 115200}, nullptr, clock.source());
     worker.setEndsWhenIdle(false);
     uint64_t readyAtUs = 0;
     std::vector<GPSType> detected;
@@ -453,7 +453,7 @@ void GPSReceiverWorkerTest::_passiveInputProblems()
     QVERIFY(silentUs >= durationUs(GPSReceiverWorker::USEFUL_DATA_TIMEOUT));
     QVERIFY(silentUs <= durationUs(GPSReceiverWorker::USEFUL_DATA_TIMEOUT + GPSReceiverWorker::RECEIVE_TIMEOUT));
     QVERIFY(!detected.empty());
-    QCOMPARE(detected.front(), protocol < 0 ? GPSType::passive : static_cast<GPSType>(protocol));
+    QCOMPARE(detected.front(), protocol < 0 ? GPSType::Passive : static_cast<GPSType>(protocol));
 }
 
 void GPSReceiverWorkerTest::_ancillaryTraffic_data()
@@ -478,7 +478,7 @@ void GPSReceiverWorkerTest::_ancillaryTraffic()
             transport->setClock(&clock);
             return transport;
         },
-        GPSType::septentrio,
+        GPSType::Septentrio,
         {.base = {.mode =
                       GPSBaseStationConfig::Fixed{
                           .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}},
@@ -544,7 +544,7 @@ void GPSReceiverWorkerTest::_configuredReceiverReportsReadyThenLoss()
             transport->model.failIdleReads = true;
             return transport;
         },
-        GPSType::femto, GPSReceiverConfig{.base = config}, nullptr, clock.source());
+        GPSType::Femto, GPSReceiverConfig{.base = config}, nullptr, clock.source());
     QSignalSpy ready(&worker, &GPSReceiverWorker::receiverReady);
     QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
     QSignalSpy surveys(&worker, &GPSReceiverWorker::surveyInStatusUpdated);
@@ -603,7 +603,7 @@ void GPSReceiverWorkerTest::_quectelConsentRefusal()
         [&clock, role, base = base.toStdString(), identity = identity.toStdString()](GPSCancelToken cancelToken) {
             return quectelTransport(std::move(cancelToken), clock, role, base, identity);
         },
-        GPSType::quectel,
+        GPSType::Quectel,
         GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 15, .duration = 60s}}},
         nullptr, clock.source());
     QSignalSpy ready(&worker, &GPSReceiverWorker::receiverReady);
@@ -664,7 +664,7 @@ void GPSReceiverWorkerTest::_finishedReceiverReleasesReservation()
     QVERIFY(reservation);
     GPSReceiverWorker worker(
         [reservation = std::move(reservation)](GPSCancelToken) { return std::unique_ptr<GPSTransport>{}; },
-        GPSType::ublox, GPSReceiverConfig{});
+        GPSType::UBlox, GPSReceiverConfig{});
     if (cancelled) {
         worker.stop();
     }

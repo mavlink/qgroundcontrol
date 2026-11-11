@@ -26,7 +26,7 @@ struct RTKSettingsFixture
 
     explicit RTKSettingsFixture(int manufacturer)
     {
-        const bool passive = manufacturer == gpsReceiverManufacturerForType(GPSType::passive);
+        const bool passive = manufacturer == gpsReceiverManufacturerForType(GPSType::Passive);
         saved.setFactValue(autoConnect, false);
         saved.setFactValue(settings->receiverRole(), passive ? RTKSettings::Passive : RTKSettings::ConfiguredBase);
         saved.setFactValue(settings->forwardReceiverRtcm(), true);

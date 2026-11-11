@@ -12,7 +12,7 @@
 //   selection (the configured rate, else the transport's fixed rate, else the family's automatic rate), then
 //   configuration, then completion of any outstanding write-only command, then an empty decode that flushes events
 //   published by the final command. A validation or fixed-baud failure performs no I/O and reports only `error`.
-//   GPSType::automatic first detects the family (GPSReceiverDetector) at the configured or fixed rate, else at every
+//   GPSType::Automatic first detects the family (GPSReceiverDetector) at the configured or fixed rate, else at every
 //   candidate rate, then fits the request to it and configures it from the detected rate. The mismatch hint GPSDriver
 //   appends to a configured type's error is a diagnostic, not part of the transcript.
 // - Drive all I/O through Link::receiver on Link::clock. Time never passes except through a read, which ends at
@@ -79,7 +79,7 @@ struct StreamStep
 
 struct Scenario
 {
-    GPSType type = GPSType::ublox;
+    GPSType type = GPSType::UBlox;
     GPSReceiverConfig config{};
     std::vector<StreamStep> stream{};
 };
@@ -171,11 +171,11 @@ struct Run
     bool ready = false;
     /// Trimmed model and firmware, also after a failed configuration.
     QString identity;
-    /// GPSType::automatic: the family detection found, its rate and what identified it.
+    /// GPSType::Automatic: the family detection found, its rate and what identified it.
     std::optional<GPSType> detected;
     unsigned detectedBaud = 0;
     QString detectedEvidence;
-    /// GPSType::automatic: records before this index are detection; the detected family's configuration follows.
+    /// GPSType::Automatic: records before this index are detection; the detected family's configuration follows.
     size_t detectionRecords = 0;
     uint64_t startedAtUs = 0;
     uint64_t configuredAtUs = 0;
