@@ -23,11 +23,12 @@ in [cmake/README.md](../../cmake/README.md#conventions).
 
 ## CMake, Ninja, and Qt in CI
 
-- **CMake and Ninja**: every CI build job runs the `build.cmake_version` and `build.ninja_version`
-  that `build-setup` installs with `lukka/get-cmake`, after `setup-python` so they precede any CMake
-  in `tools/.venv`; `install-dependencies` installs neither, nor the distro ccache and mold
-  (`CI_PROVIDED_TOOLS` in `install_dependencies_helper.py`; `cache` installs pinned ccache and
-  mold). get-cmake resolves versions from the catalog bundled in its release, so the CMake pin
+- **CMake and Ninja**: every CI application build job runs the `build.cmake_version` and
+  `build.ninja_version` that `build-setup` installs with `lukka/get-cmake`, after `setup-python` so
+  they precede any CMake in `tools/.venv`; `install-dependencies` installs neither, nor the distro
+  ccache and mold (`CI_PROVIDED_TOOLS` in `install_dependencies_helper.py`; `cache` installs pinned
+  ccache and mold). `gps-standalone.yml`, whose small test project builds without `build-setup`,
+  uses the `build` group's CMake and Ninja. get-cmake resolves versions from the catalog bundled in its release, so the CMake pin
   cannot exceed the action's version, the comment after its commit SHA;
   `test_build_tools_contract.py::test_pinned_cmake_is_in_the_get_cmake_catalog_and_meets_the_minimum`
   fails when it does.
@@ -42,8 +43,9 @@ in [cmake/README.md](../../cmake/README.md#conventions).
 - **Qt installer**: `qt-install` runs `install_qt.py`, which installs Qt with QGC's installer
   (`tools/setup/qt_installer`, standard library plus `cmake -E tar`); aqtinstall stays as the
   fallback through `QGC_QT_INSTALLER`. Every job reaching `qt-install` has CMake: `build-setup`
-  installs it first, `pre-commit.yml` syncs the `dev` group, and `lupdate.yml` uses the
-  GitHub-hosted image's ([tools/README.md](../../tools/README.md#qt-installer)).
+  installs it first, `pre-commit.yml` syncs the `dev` group, `gps-standalone.yml` the `build`
+  group, and `lupdate.yml` uses the GitHub-hosted image's
+  ([tools/README.md](../../tools/README.md#qt-installer)).
 
 ## Python Groups in CI
 

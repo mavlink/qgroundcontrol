@@ -258,6 +258,27 @@ How CI runs, retries, and reports the application tests is described in
   diagnostics are uploaded separately. The workflow runs only on pull requests: nothing reads
   uploaded fuzzer builds, so there is no continuous build. The base image's own Python serves
   OSS-Fuzz's tooling; QGC's two scripts run on the pinned Python, which uv installs in the image.
+- **GPS standalone** (`gps-standalone.yml`): `test/GPS/Standalone` builds `QGCGPSCore` and
+  `QGCNTRIPHttp` without the application, with the receiver qualification runner, the NTRIP decoder
+  smoke test and the libFuzzer harnesses. It is its own path-filtered workflow, not a Linux leg or
+  a required check: pull requests and `master`/`Stable*` pushes run it when `src/GPS`, the utility
+  libraries and CMake modules the project adds, `test/GPS`, `build-config.json` or the workflow
+  change (`test_gps_standalone_workflow.py` keeps the source directories in step with the project),
+  and it can be dispatched. One GitHub-hosted job configures the project with the runner image's
+  Clang, `-DQGC_GPS_LIBFUZZER=ON` (ASan and UBSan) and `RelWithDebInfo`: unoptimized,
+  `GPSProtocolFuzzSmoke` takes about six times as long. It skips `build-setup`, whose caches and
+  full Qt serve the application build: `setup-python` syncs the `build` group for CMake and Ninja,
+  `qt-install` installs only `qtbase`, `icu` and `qtserialport`, CPM clones GeographicLib, and the
+  build's three CPU-minutes need no compiler cache. `cmake-build` and `run-unit-tests` (label
+  `GPS`) report as in the platform jobs. Each harness (`QGCGPSProtocolFuzz`,
+  `ntrip_http_decoder_fuzzer`) then fuzzes its seeds for 60 s with a new random seed.
+  `UBSAN_OPTIONS=halt_on_error=1` makes a UBSan report fail the tests and the fuzzers, which
+  otherwise print it and continue, and `-timeout=25` reports a hang. A crash, leak, hang or
+  sanitizer report fails the job, and the input libFuzzer saved is uploaded as
+  `gps-fuzzing-diagnostics` for seven days; passing runs upload nothing. The harnesses are not
+  ClusterFuzzLite targets: they link Qt (`qt.minimum_version`), which its base image lacks, and its
+  toolchain compiles against libc++, which cannot link Qt's prebuilt libstdc++ binaries, so every
+  run would have to build Qt from source.
 
 ## Docker
 
