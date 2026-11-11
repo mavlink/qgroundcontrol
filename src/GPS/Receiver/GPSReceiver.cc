@@ -247,10 +247,12 @@ void GPSReceiver::_onGPSConnect()
 {
     _setError();
     _connection->receiverReady();
+    GPSReceiverSession* const session = _session;
     _facts->_setConfigured(true);
     _setPersistentChangesAllowed(false);
-    if (_session) {
-        _session->registerPosition(_positionManager, _positionHealth);
+    // The status text follows that Fact, and an observer of it may have replaced the session that is ready.
+    if (session && session == _session) {
+        session->registerPosition(_positionManager, _positionHealth);
     }
     _emitChanges();
 }
@@ -670,11 +672,13 @@ void GPSReceiver::_onPositionUpdated(const GPSPositionReport& report)
     if (gpsFixQualityFromValue(_facts->fixType()->rawValue().toInt()) != report.navigation.fixType) {
         qCDebug(GPSReceiverLog) << "Receiver fix changed:" << report.navigation.fixType;
     }
+    GPSReceiverSession* const session = _session;
+    _updateOutputOverflow(report.integrity.outputOverflowUs);
     // Drivers project integrity to Unknown once it is older than its freshness window.
     _facts->_setSolution(report.navigation.fixType, report.integrity);
-    _updateOutputOverflow(report.integrity.outputOverflowUs);
-    if (_session) {
-        _positionHealth->updateObservation(_session->observation(report, _scheduler->nowUs()));
+    // The labels follow the fix, and an observer of them may have ended or replaced the session that reported.
+    if (session && session == _session) {
+        _positionHealth->updateObservation(session->observation(report, _scheduler->nowUs()));
     }
     _emitChanges();
 }

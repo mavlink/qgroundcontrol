@@ -8,6 +8,7 @@
 #include "GPSReceiverConnectionPolicy.h"
 #include "GPSTransport.h"
 #include "ManualScheduler.h"
+#include "PositionManager.h"
 #include "Receiver/Support/GPSReceiverTestSupport.h"
 #include "Receiver/Support/ScriptedReceiverWorker.h"
 
@@ -22,6 +23,16 @@ GPSReceiver::Configuration tcpConfiguration(bool autoConnect = true)
     useTcp(configuration);
     configuration.autoConnect = autoConnect;
     return configuration;
+}
+
+/// A position the position manager accepts.
+GPSPositionReport locatedFix(GPSFixQuality fixType)
+{
+    GPSPositionReport report = fixReport(fixType);
+    report.navigation.latitudeDegrees = 47.25;
+    report.navigation.longitudeDegrees = 8.5;
+    report.navigation.horizontalAccuracyMeters = 1.0f;
+    return report;
 }
 
 #ifndef QGC_NO_SERIAL_LINK
@@ -412,6 +423,104 @@ void GPSReceiverConnectionPolicyTest::_observerActsOnLostSession()
         loseConnection();
         QVERIFY(receiver.reconnecting());
     }
+}
+
+void GPSReceiverConnectionPolicyTest::_observerActsOnReport_data()
+{
+    // A passive receiver's label is its fix and a base's its survey state, the first signal of a report that changes
+    // it.
+    QTest::addColumn<bool>("survey");
+    QTest::addColumn<bool>("reconnects");
+    QTest::newRow("position-reconnects") << false << true;
+    QTest::newRow("position-disconnects") << false << false;
+    QTest::newRow("survey-reconnects") << true << true;
+    QTest::newRow("survey-disconnects") << true << false;
+}
+
+void GPSReceiverConnectionPolicyTest::_observerActsOnReport()
+{
+    QFETCH(bool, survey);
+    QFETCH(bool, reconnects);
+    auto configuration = survey ? receiverConfiguration() : tcpConfiguration();
+    useTcp(configuration);
+    PolicyHarness harness(configuration);
+    GPSReceiver& receiver = harness.receiver;
+    GPSReceiverFactGroup& facts = *receiver.facts();
+    QVERIFY(receiver.connectReceiver());
+    harness.worker()->ready();
+    GPSPositionReport position = locatedFix(GPSFixQuality::Fix3D);
+    GPSSurveyReport surveyed{.position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
+                             .meanAccuracyMeters = 1.0,
+                             .active = true};
+    if (survey) {
+        harness.worker()->survey(surveyed);
+    } else {
+        harness.worker()->position(position);
+        QVERIFY(receiver.acceptedPositionObservation(GPSObservation::PositionUse::GroundStation));
+    }
+    QObject observer;
+    bool acted = false;
+    connect(&receiver, &GPSReceiver::summaryLabelChanged, &observer, [&] {
+        if (!receiver.hasReceiver() || std::exchange(acted, true)) {
+            return;
+        }
+        receiver.disconnectReceiver();
+        if (reconnects) {
+            (void) receiver.connectReceiver();
+        }
+    });
+
+    if (survey) {
+        surveyed.valid = true;
+        surveyed.active = false;
+        harness.worker()->survey(surveyed);
+    } else {
+        position.navigation.fixType = GPSFixQuality::RTKFixed;
+        position.integrity.jamming.state = GPSIntegrityReport::JammingState::Warning;
+        position.integrity.outputOverflowUs = 100;
+        harness.worker()->position(position);
+    }
+    QVERIFY(acted);
+    // The report was the ended receiver's: none of it is left with what the observer asked for.
+    QCOMPARE(receiver.hasReceiver(), reconnects);
+    QCOMPARE(harness.attempts(), reconnects ? 2 : 1);
+    QCOMPARE(solution(facts), Solution{});
+    QVERIFY(!facts.canSaveCurrentBasePosition());
+    QVERIFY(receiver.errorMessage().isEmpty());
+    QVERIFY(!receiver.acceptedPositionObservation(GPSObservation::PositionUse::GroundStation));
+}
+
+void GPSReceiverConnectionPolicyTest::_observerReplacesReadyReceiver()
+{
+    ManualScheduler scheduler;
+    PositionManager positions;
+    ScriptedGPSReceiver scripted(&scheduler, {.positions = &positions});
+    GPSReceiver& receiver = scripted.receiver;
+    receiver.setConfiguration(tcpConfiguration());
+    QVERIFY(receiver.connectReceiver());
+    // The status text is the first signal to report that the receiver is ready.
+    QObject observer;
+    bool acted = false;
+    connect(&receiver, &GPSReceiver::statusTextChanged, &observer, [&] {
+        if (!receiver.facts()->telemetryAvailable() || std::exchange(acted, true)) {
+            return;
+        }
+        receiver.disconnectReceiver();
+        (void) receiver.connectReceiver();
+    });
+
+    scripted.workers.current()->ready();
+    QVERIFY(acted);
+    QCOMPARE(scripted.workers.count(), 2);
+    QVERIFY(!receiver.facts()->telemetryAvailable());
+    // The replacement is not ready, so it is not the position source yet.
+    scripted.workers.current()->position(locatedFix(GPSFixQuality::Fix3D));
+    QCOMPARE(positions.selectedSource(), PositionManager::SelectedSource::None);
+    scripted.workers.current()->ready();
+    scripted.workers.current()->position(locatedFix(GPSFixQuality::Fix3D));
+    QCOMPARE(positions.selectedSource(), PositionManager::SelectedSource::Receiver);
+    receiver.shutdown();
+    scripted.workers.finishRetired();
 }
 
 void GPSReceiverConnectionPolicyTest::_sessionEndMessages_data()
