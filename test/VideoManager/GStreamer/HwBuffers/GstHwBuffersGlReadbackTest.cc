@@ -41,7 +41,9 @@
 
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) && defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #define QGC_TEST_GLMEMORY_READBACK 1
+#include <atomic>
 #include <gst/app/gstappsink.h>
+#include <gst/gl/gl.h>
 
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
@@ -469,6 +471,68 @@ void GstHwBuffersGlReadbackTest::_testVaDecodedFrameReadBack()
 #endif
 }
 
+void GstHwBuffersGlReadbackTest::_testDmaBufBufferReturnsAfterGpuReads()
+{
+#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+    QSKIP("DMABuf GPU path not compiled in this build");
+#else
+    QRhi* rhi = _glRhi();
+    if (!rhi) {
+        QSKIP(qPrintable(_rhiUnavailable));
+    }
+    if (!QGCRhiCapture::qtEglDisplay() || (GstQtDmaBufImport::importDisplay(*rhi) == EGL_NO_DISPLAY)) {
+        QSKIP("Qt's GL context can't bind EGLImages");
+    }
+    GstDmaBufVideoBuffer::resetCachedState();
+
+    constexpr int kSide = 16;
+    GstAllocator* allocator = gst_dmabuf_allocator_new();
+    const auto allocatorGuard = qScopeGuard([allocator] { gst_object_unref(allocator); });
+    GstBuffer* buffer = gst_buffer_new();
+    const auto bufferGuard = qScopeGuard([buffer] { gst_buffer_unref(buffer); });
+    bool realDmaBuf = false;
+    GstMemory* memory = wrapDmaBuf(allocator, QByteArray(kSide * kSide * 4, char(0x7f)), realDmaBuf);
+    QVERIFY(memory);
+    gst_buffer_append_memory(buffer, memory);
+    if (!realDmaBuf && !rhi->driverInfo().deviceName.contains("llvmpipe")) {
+        QSKIP("No /dev/udmabuf access, and only Mesa's software rasterizer imports a plain memfd");
+    }
+    QVERIFY(gst_buffer_add_video_meta(buffer, GST_VIDEO_FRAME_FLAG_NONE, GST_VIDEO_FORMAT_RGBA, kSide, kSide));
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_from_string(
+        qPrintable(QStringLiteral("video/x-raw(memory:DMABuf),format=RGBA,width=%1,height=%1").arg(kSide))));
+    QVERIFY(caps);
+    GstVideoInfo info;
+    QVERIFY(GstHw::dmaDrmAwareVideoInfo(caps.get(), &info));
+    GstSample* sample = gst_sample_new(buffer, caps.get(), nullptr, nullptr);
+    GstDmaBufVideoBuffer frame(sample, info, QVideoFrameFormat(QSize(kSide, kSide), QVideoFrameFormat::Format_RGBA8888),
+                               static_cast<EGLDisplay>(QGCRhiCapture::qtEglDisplay()));
+    gst_sample_unref(sample);
+
+    // A pipe the test writes to stands in for the fence of the GPU's work.
+    int fence[2] = {-1, -1};
+    QCOMPARE(::pipe(fence), 0);
+    const auto fenceGuard = qScopeGuard([&fence] {
+        GstDmaBufVideoBuffer::setGpuFenceForTest(-1);
+        ::close(fence[0]);
+        ::close(fence[1]);
+    });
+    GstDmaBufVideoBuffer::setGpuFenceForTest(fence[0]);
+
+    const int idleRefs = GST_MINI_OBJECT_REFCOUNT_VALUE(buffer);
+    QVideoFrameTexturesUPtr none;
+    QVideoFrameTexturesUPtr textures = frame.mapTextures(*rhi, none);
+    QVERIFY2(textures, "Qt's DMABuf importer rejected the frame");
+    QCOMPARE(GST_MINI_OBJECT_REFCOUNT_VALUE(buffer), idleRefs + 1);
+
+    // Qt deletes the textures while the GPU still draws with them: the decoder doesn't get its buffer back yet.
+    textures.reset();
+    QCOMPARE(GST_MINI_OBJECT_REFCOUNT_VALUE(buffer), idleRefs + 1);
+
+    QCOMPARE(::write(fence[1], "", 1), ssize_t(1));
+    QVERIFY_TRUE_WAIT(GST_MINI_OBJECT_REFCOUNT_VALUE(buffer) == idleRefs, TestTimeout::shortMs());
+#endif
+}
+
 void GstHwBuffersGlReadbackTest::_testGlMemoryFrameReadsBack()
 {
 #if !defined(QGC_TEST_GLMEMORY_READBACK)
@@ -626,6 +690,72 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameToImage()
                                 .copy(QRect(QPoint(0, 0), capsSize));
     const QString mismatch = GstTest::firstImageMismatch(actual, expected, /*tolerance=*/2);
     QVERIFY2(mismatch.isEmpty(), qPrintable(mismatch));
+#endif
+}
+
+#if defined(QGC_TEST_GLMEMORY_READBACK)
+namespace {
+
+/// Sync points set in the frame's own sync meta in _testGlMemoryMapLeavesFrameSyncMeta.
+std::atomic<int> s_frameSyncPointsSet{0};
+
+}  // namespace
+#endif
+
+void GstHwBuffersGlReadbackTest::_testGlMemoryMapLeavesFrameSyncMeta()
+{
+#if !defined(QGC_TEST_GLMEMORY_READBACK)
+    QSKIP("GLMemory GPU path on EGL not compiled in this build");
+#else
+    QRhi* rhi = _glRhi();
+    if (!rhi) {
+        QSKIP(qPrintable(_rhiUnavailable));
+    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc", "glupload", "appsink");
+
+    GstTest::TestPipeline pipeline;
+    QVERIFY2(pipeline.launch(QStringLiteral("videotestsrc num-buffers=1 ! "
+                                            "video/x-raw,format=RGBA,width=64,height=48,framerate=30/1 ! glupload ! "
+                                            "video/x-raw(memory:GLMemory),format=RGBA ! appsink name=gpu sync=false")),
+             qPrintable(pipeline.error()));
+    const GStreamer::GstBusPtr bus = GStreamer::adoptBus(gst_element_get_bus(pipeline.get()));
+    gst_bus_set_sync_handler(
+        bus.get(),
+        [](GstBus*, GstMessage* message, gpointer) {
+            return GstGlContextBridge::instance().handleSyncMessage(message);
+        },
+        nullptr, nullptr);
+    QVERIFY(pipeline.play());
+    GstSample* const sample = gst_app_sink_try_pull_sample(GST_APP_SINK(pipeline.element("gpu").get()),
+                                                           GstTest::clockTime(TestTimeout::mediumDuration()));
+    QVERIFY2(sample, "the pipeline produced no frame");
+    const auto unrefSample = qScopeGuard([sample] { gst_sample_unref(sample); });
+
+    // The sync meta a producer attaches for the consumers of its buffer, which glupload does for the buffers it
+    // uploads into. The buffer is shared with them, so the meta's fence is theirs to wait on.
+    GstBuffer* const buffer = gst_sample_get_buffer(sample);
+    GstGLSyncMeta* frameSync = gst_buffer_get_gl_sync_meta(buffer);
+    if (!frameSync) {
+        frameSync =
+            gst_buffer_add_gl_sync_meta(GST_GL_BASE_MEMORY_CAST(gst_buffer_peek_memory(buffer, 0))->context, buffer);
+    }
+    QVERIFY(frameSync);
+    frameSync->set_sync = [](GstGLSyncMeta*, GstGLContext*) { ++s_frameSyncPointsSet; };
+    s_frameSyncPointsSet = 0;
+
+    GstVideoInfo info;
+    QVERIFY(gst_video_info_from_caps(&info, gst_sample_get_caps(sample)));
+    HwVideoBufferContext hwContext;
+    hwContext.gpuEnabled = true;
+    HwVideoBufferPath path = HwVideoBufferPath::None;
+    const std::unique_ptr<QHwVideoBuffer> frame =
+        makeHwVideoBuffer(buffer, gst_sample_get_caps(sample), info,
+                          QVideoFrameFormat(QSize(64, 48), QVideoFrameFormat::Format_RGBA8888), hwContext, path);
+    QVERIFY2(frame, "the GLMemory sample did not create a hardware video buffer");
+    QVideoFrameTexturesUPtr none;
+    QVERIFY2(frame->mapTextures(*rhi, none), "GstGlVideoBuffer did not map into the GL QRhi");
+
+    QCOMPARE(s_frameSyncPointsSet.load(), 0);
 #endif
 }
 

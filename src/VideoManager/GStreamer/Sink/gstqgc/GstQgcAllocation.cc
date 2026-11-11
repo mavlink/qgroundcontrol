@@ -42,9 +42,8 @@ void addConsumedAllocationMetas(GstQuery* query, bool cropMeta = true)
     gst_query_add_allocation_meta(query, GST_VIDEO_ORIENTATION_META_API_TYPE, NULL);
 #endif
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
-    // Let the producer attach a sync meta and set its fence on the producing context; GstGlVideoBuffer
-    // waits on it at import time. Without this it synthesizes a same-context fence after the fact, which
-    // doesn't synchronize against the real producer — a cross-context tearing hazard on the Qt render thread.
+    // As upstream's Qt sink asks: glcolorconvert then ends each frame it renders with a sync point, which flushes its
+    // context. GstGlVideoBuffer doesn't wait on that fence: it sets one of its own once the frame is mapped.
     gst_query_add_allocation_meta(query, GST_GL_SYNC_META_API_TYPE, NULL);
 #endif
 }

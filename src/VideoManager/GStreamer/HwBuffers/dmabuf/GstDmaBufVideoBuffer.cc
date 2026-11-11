@@ -20,6 +20,8 @@
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
 #include <QtGui/QGuiApplication>
+#include <QtGui/QOpenGLContext>
+#include <QtGui/QOpenGLFunctions>
 
 #include "QGCLoggingCategory.h"
 #if GST_CHECK_VERSION(1, 24, 0)
@@ -325,6 +327,85 @@ void waitForProducer(EGLDisplay eglDpy, GstBuffer* buffer)
     }
 }
 
+// Bounded so a GPU that hangs can't keep a decoder's buffer for good.
+constexpr int kGpuReadsTimeoutMs = 1000;
+
+#ifdef QGC_UNITTEST_BUILD
+std::atomic<int> s_gpuFenceForTest{-1};
+#endif
+
+/// A sync file that signals once the GPU has run everything the context current on this thread has issued so far; -1
+/// when none is current or EGL can't export its fences (EGL_ANDROID_native_fence_sync).
+int exportGpuFence(EGLDisplay eglDpy)
+{
+#ifdef QGC_UNITTEST_BUILD
+    if (const int fd = s_gpuFenceForTest.load(std::memory_order_relaxed); fd >= 0) {
+        return ::dup(fd);
+    }
+#endif
+    QOpenGLContext* const context = QOpenGLContext::currentContext();
+    if (!context || !GstEglHelpers::displaySupportsExtension(eglDpy, kNativeFenceExt)) {
+        return -1;
+    }
+    using DupNativeFenceFd = EGLint(EGLAPIENTRY*)(EGLDisplay, EGLSyncKHR);
+    static const auto createSyncKHR = reinterpret_cast<PFNEGLCREATESYNCKHRPROC>(eglGetProcAddress("eglCreateSyncKHR"));
+    static const auto destroySyncKHR =
+        reinterpret_cast<PFNEGLDESTROYSYNCKHRPROC>(eglGetProcAddress("eglDestroySyncKHR"));
+    static const auto dupNativeFenceFd =
+        reinterpret_cast<DupNativeFenceFd>(eglGetProcAddress("eglDupNativeFenceFDANDROID"));
+    if (!createSyncKHR || !destroySyncKHR || !dupNativeFenceFd) {
+        return -1;
+    }
+    const EGLint attribs[] = {EGL_SYNC_NATIVE_FENCE_FD_ANDROID, EGL_NO_NATIVE_FENCE_FD_ANDROID, EGL_NONE};
+    const EGLSyncKHR sync = createSyncKHR(eglDpy, EGL_SYNC_NATIVE_FENCE_ANDROID, attribs);
+    if (sync == EGL_NO_SYNC_KHR) {
+        return -1;
+    }
+    // The sync gets its fence when the commands before it are flushed.
+    context->functions()->glFlush();
+    const int fence = dupNativeFenceFd(eglDpy, sync);
+    destroySyncKHR(eglDpy, sync);
+    return fence;
+}
+
+/// A decoder's buffer and the fence of the GPU work that sampled it.
+struct PendingGpuReads
+{
+    int fence = -1;
+    GstBuffer* buffer = nullptr;
+};
+
+/// GFunc of the pool below: waits for the fence of the PendingGpuReads @p data, then lets go of its buffer.
+void waitForGpuReads(gpointer data, gpointer /*userData*/)
+{
+    const std::unique_ptr<PendingGpuReads> pending(static_cast<PendingGpuReads*>(data));
+    pollfd pfd = {pending->fence, POLLIN, 0};
+    int ret = 0;
+    do {
+        ret = ::poll(&pfd, 1, kGpuReadsTimeoutMs);
+    } while (ret < 0 && (errno == EINTR || errno == EAGAIN));
+    ::close(pending->fence);
+    gst_buffer_unref(pending->buffer);
+}
+
+/// Lets go of @p buffer, whose textures Qt has just deleted, once the GPU has run the draws that sampled them: a
+/// decoder that doesn't wait for a dma-buf's readers, as V4L2's don't, would otherwise write its next picture under
+/// them. Qt deletes the textures on the render thread with their context current. Another thread waits, so neither
+/// the render thread nor the decoder depends on a later frame for it; without a fence the buffer goes back at once.
+void unrefAfterGpuReads(EGLDisplay eglDpy, GstBuffer* buffer)
+{
+    // GLib's threads, as many as there are buffers waiting: the decoder needs these buffers back, and QGC's long jobs
+    // can keep every thread of Qt's global pool busy.
+    static GThreadPool* const waiters = g_thread_pool_new(&waitForGpuReads, nullptr, -1, FALSE, nullptr);
+    const int fence = waiters ? exportGpuFence(eglDpy) : -1;
+    if (fence < 0) {
+        gst_buffer_unref(buffer);
+        return;
+    }
+    // A false return only says no thread could be started now: the wait stays queued.
+    (void) g_thread_pool_push(waiters, new PendingGpuReads{.fence = fence, .buffer = buffer}, nullptr);
+}
+
 /// Each plane's fd and byte offset inside that dma-buf, located as GStreamer's own frame map and gst-gl's DMABuf upload
 /// do: the meta offset counts across the buffer's memories. False when a plane isn't inside one dma-buf memory or its
 /// layout doesn't fit EGL's attributes.
@@ -511,6 +592,11 @@ bool GstDmaBufVideoBuffer::waitForProducerWritesForTest(GstBuffer* buffer)
 {
     return waitForProducerWrites(buffer);
 }
+
+void GstDmaBufVideoBuffer::setGpuFenceForTest(int fd)
+{
+    s_gpuFenceForTest.store(fd, std::memory_order_relaxed);
+}
 #endif
 
 bool GstDmaBufVideoBuffer::validatePlaneHandles() const
@@ -646,9 +732,10 @@ QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importGl(QRhi& rhi, GstBuffer* buf
 
     waitForProducer(eglDpy, buffer);
 
-    // The textures sample the dma-bufs directly: keep the decoder from recycling them until Qt drops the textures.
+    // The textures sample the dma-bufs directly: keep the decoder from recycling them until Qt has dropped the
+    // textures and the GPU has drawn with them.
     std::shared_ptr<void> keepAlive(gst_buffer_ref(buffer),
-                                    [](void* ref) { gst_buffer_unref(static_cast<GstBuffer*>(ref)); });
+                                    [eglDpy](void* ref) { unrefAfterGpuReads(eglDpy, static_cast<GstBuffer*>(ref)); });
     GstQtDmaBufImport::ImportResult imported =
         GstQtDmaBufImport::importTextures(rhi, std::span(planes.data(), std::size_t(fourccs.count)), pixelFormat,
                                           _format.frameSize(), std::move(keepAlive));

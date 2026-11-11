@@ -12,7 +12,8 @@ class QRhi;
 
 /// \brief Zero-copy QVideoFrame backing for GStreamer DMABuf samples. mapTextures() (render thread) waits for the
 /// producer's writes, then hands the planes to Qt's DMABuf importer under a GL QRhi, or imports them as VkImages under
-/// a Vulkan QRhi (GstDmaBufVulkanImport).
+/// a Vulkan QRhi (GstDmaBufVulkanImport). The buffer stays referenced until the textures are gone and the GPU has
+/// drawn with them.
 class GstDmaBufVideoBuffer final : public GstHwVideoBuffer
 {
 public:
@@ -57,6 +58,9 @@ public:
     void noteImportOutcomeForTest(ImportOutcome outcome) const;
     /// The wait on the producer's writes mapTextures() runs before importing @p buffer; true once they completed.
     static bool waitForProducerWritesForTest(GstBuffer* buffer);
+    /// Stands in for the fence of the GPU's work when a GL import's textures are deleted: @p fd turns readable once
+    /// the test lets the GPU be done. -1 restores EGL's fence.
+    static void setGpuFenceForTest(int fd);
 #endif
 
 private:

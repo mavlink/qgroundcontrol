@@ -149,9 +149,11 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   (`videoconvert ! videoscale` before GStreamer 1.22). It scales non-square pixels to square ones, converts formats the
   sink doesn't take (such as a software decoder's `Y444`), and passes GPU memory through.
 - **Allocation proposal** — the sink asks the decoder for at least five buffers (`kMaxPinnedFrames` + 1), covering the
-  frames Qt may still hold, and keeps the video, crop and GL sync metas it reads. D3D11Memory gets no crop meta: the
+  frames Qt may still hold, and keeps the video and crop metas it reads. D3D11Memory gets no crop meta: the
   d3d11 decoders then crop a picture that starts off their texture's origin themselves, where the D3D11 path would
-  copy it from the origin.
+  copy it from the origin. It asks for GL sync metas as upstream's Qt sink does, which has glcolorconvert end each
+  frame with a sync point. The GL path leaves a frame's sync meta alone, since other consumers share the buffer: it
+  sets a sync point of its own, in a buffer its texture bundles hand on, and waits for it in Qt's context.
   `QGC_GST_PROPOSE_ALLOCATION_MIN_BUFFERS` overrides the count, as Qt's `QT_GSTREAMER_PROPOSE_ALLOCATION_MIN_BUFFERS`
   does, e.g. to save CMA memory with 4K decoders on i.MX or Raspberry Pi.
 - **`QGCQVideoSinkController`** — GUI-thread companion that binds the sink to a `QVideoSink`, lets it deliver only
@@ -375,7 +377,8 @@ misbehaves; video then reaches Qt as GLMemory that glupload uploads, without DMA
 The direct DMABuf path hands each plane to Qt Multimedia's DMABuf importer as its own EGLImage, with the DMA_DRM
 modifier when the caps carry one. QGC adds what Qt's importer lacks: it waits for the decoder's writes first (on the
 GPU through the dma-buf's exported fence, else with a bounded `poll()`), and it keeps the buffer alive as long as the
-textures.
+textures, and then until the GPU has finished drawing with them where EGL exports its fences
+(`EGL_ANDROID_native_fence_sync`): a V4L2 decoder doesn't wait for a buffer's readers before it decodes into it again.
 
 - It needs Qt to render with EGL: Wayland, eglfs, or xcb with `QT_XCB_GL_INTEGRATION=xcb_egl`. Under GLX, Qt's xcb
   default, the sink offers no DMABuf caps. Nor does it until Qt's EGLDisplay is known (`QGCRhiCapture::qtEglDisplay`:
