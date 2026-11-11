@@ -877,30 +877,55 @@ void QGCCompressionTest::_testDecompressIfNeededDefaultOutput()
 // ============================================================================
 // Progress Callback Tests
 // ============================================================================
+void QGCCompressionTest::_testProgressCallbackExtract_data()
+{
+    QTest::addColumn<QString>("api");
+
+    for (const char* api : {"extractArchive", "extractFromDevice", "extractArchiveFiltered"}) {
+        QTest::newRow(api) << QString::fromLatin1(api);
+    }
+}
+
 void QGCCompressionTest::_testProgressCallbackExtract()
 {
+    QFETCH(QString, api);
+
     QTemporaryDir tempDir;
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
-    const QString outputPath = tempDir.path() + "/progress_extract";
-    const qint64 archiveSize = QFileInfo(zipResource).size();
+    const QString archivePath = tempDir.filePath("compressible.zip");
+    const QString outputPath = tempDir.filePath("output");
+    // Each entry is many times larger than the archive
+    QVERIFY(_writeFile(archivePath, _makeStreamedZip({{.name = "first.txt", .data = QByteArray(64 * 1024, 'a')},
+                                                      {.name = "second.txt", .data = QByteArray(64 * 1024, 'b')}},
+                                                     true)));
+    const qint64 archiveSize = QFileInfo(archivePath).size();
+    QFile device(archivePath);
+    QVERIFY(device.open(QIODevice::ReadOnly));
+
     qint64 lastProgress = 0;
     int callCount = 0;
     bool progressValid = true;
-    bool success = QGCCompression::extractArchive(
-        zipResource, outputPath, QGCCompression::Format::ZIP, [&](qint64 bytesProcessed, qint64 totalBytes) -> bool {
-            // Both count bytes of the archive, not of its entries
-            if ((bytesProcessed < lastProgress) || (bytesProcessed <= 0) || (bytesProcessed > totalBytes) ||
-                (totalBytes != archiveSize)) {
-                progressValid = false;
-            }
-            lastProgress = bytesProcessed;
-            callCount++;
-            return true;  // Continue
-        });
-    QVERIFY2(success, "Archive extraction with progress callback failed");
+    const QGCCompression::ProgressCallback progress = [&](qint64 bytesProcessed, qint64 totalBytes) -> bool {
+        // Both count bytes of the archive, not of its entries
+        if ((bytesProcessed < lastProgress) || (bytesProcessed <= 0) || (bytesProcessed > totalBytes) ||
+            (totalBytes != archiveSize)) {
+            progressValid = false;
+        }
+        lastProgress = bytesProcessed;
+        callCount++;
+        return true;  // Continue
+    };
+
+    if (api == "extractArchive") {
+        QVERIFY(QGCCompression::extractArchive(archivePath, outputPath, QGCCompression::Format::ZIP, progress));
+    } else if (api == "extractFromDevice") {
+        QVERIFY(QGCCompression::extractFromDevice(&device, outputPath, progress));
+    } else {
+        QVERIFY(QGCCompression::extractArchiveFiltered(
+            archivePath, outputPath, [](const QGCCompression::ArchiveEntry&) { return true; }, progress));
+    }
     QVERIFY2(progressValid, "Progress values were invalid");
     QVERIFY(callCount > 0);
-    QVERIFY(QFile::exists(outputPath + "/manifest.json"));
+    QCOMPARE(_entriesBelow(outputPath), (QStringList{QStringLiteral("first.txt"), QStringLiteral("second.txt")}));
 }
 
 // ============================================================================
@@ -2067,6 +2092,10 @@ void QGCCompressionTest::_testExtractionStopsCleanly_data()
     // Filtered extraction keeps the entries it wrote before it was stopped
     QTest::newRow("extractArchiveFiltered-limit")
         << "extractArchiveFiltered" << true << false << QStringList{QStringLiteral("first.txt")};
+    // The entry that is being written when the callback cancels is not kept, its directory is
+    QTest::newRow("extractArchiveFiltered-cancel")
+        << "extractArchiveFiltered" << true << true
+        << QStringList{QStringLiteral("first.txt"), QStringLiteral("nested")};
     // The limit is on what is written, whatever the archive says or leaves out about the sizes
     QTest::newRow("extractArchive-limit-undeclared") << "extractArchive" << false << false << nothing;
     QTest::newRow("extractArchiveFiltered-limit-undeclared") << "extractArchiveFiltered" << false << false << nothing;

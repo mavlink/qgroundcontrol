@@ -1476,9 +1476,7 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
     }
 
     const QString canonicalOutputDir = canonicalDirectoryPath(outputDirectoryPath);
-    const qint64 totalSize = reader.dataSize();
-    DataTransfer transfer{.maxBytes = maxBytes};
-    qint64 bytesProcessed = 0;
+    DataTransfer transfer{.maxBytes = maxBytes, .progress = progress, .totalSize = reader.dataSize()};
     qint64 bytesExtracted = 0;
     int extractedCount = 0;
     int skippedCount = 0;
@@ -1518,15 +1516,6 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
 
         bytesExtracted += info.size;
         extractedCount++;
-
-        // Progress callback
-        if (progress) {
-            bytesProcessed += info.size;
-            if (!progress(bytesProcessed, totalSize)) {
-                qCDebug(QGClibarchiveLog) << "Extraction cancelled by user";
-                return false;
-            }
-        }
         return true;
     });
 

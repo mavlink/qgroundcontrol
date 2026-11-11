@@ -44,6 +44,7 @@ private slots:
     void _testDecompressIfNeededDefaultOutput();
 
     // Progress callbacks
+    void _testProgressCallbackExtract_data();
     void _testProgressCallbackExtract();
 
     // Format reported for the last operation

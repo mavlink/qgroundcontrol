@@ -15,8 +15,8 @@ namespace QGCCompression {
 // ============================================================================
 
 /// Progress callback for long-running operations
-/// @param bytesProcessed Bytes processed so far
-/// @param totalBytes Total bytes to process (0 if unknown)
+/// @param bytesProcessed Bytes of the archive or compressed file read so far
+/// @param totalBytes Size of the archive or compressed file (0 if unknown)
 /// @return true to continue, false to cancel operation
 using ProgressCallback = std::function<bool(qint64 bytesProcessed, qint64 totalBytes)>;
 
