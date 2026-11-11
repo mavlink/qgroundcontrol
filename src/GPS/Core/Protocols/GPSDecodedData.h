@@ -17,7 +17,8 @@ GPSPositionReport position(const GPSDecodedPosition& source, const GPSIntegrityR
 /// the counts it carries, and never with an older receipt. The used count sums the constellations in view, and is zero
 /// when none has satellites in view. Only while that sum is unknown, before any view is known or while a constellation
 /// with satellites in view lacks a used count, does the latest count-only report stand in, under the same timeout from
-/// its own receipt.
+/// its own receipt. The report also lists each constellation with satellites in view, with the counts the totals sum;
+/// a count-only report never stands in for a constellation's used count.
 class SatelliteCounts
 {
 public:

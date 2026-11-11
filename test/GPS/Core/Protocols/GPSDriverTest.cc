@@ -95,12 +95,23 @@ void GPSDriverTest::_ashtechSatelliteSnapshots()
     QCOMPARE(snapshots.back().inView, std::optional<int>{2});
     QCOMPARE(feed("GPGSV,1,1,02,01,10,20,30,33,15,25,35").liveness, GPSReceiveLiveness::Data);
     QCOMPARE(snapshots.back().inView, std::optional<int>{3});
+    // Each satellite counts for its constellation, satellite 33 for SBAS; without GSA none says which are used.
+    using Constellation = GPSSatelliteReport::Constellation;
+    auto constellations = snapshots.back().constellationsInView();
+    QCOMPARE(constellations.size(), size_t(3));
+    QCOMPARE(constellations[0], (Constellation{GPSConstellation::GPS, 1, std::nullopt}));
+    QCOMPARE(constellations[1], (Constellation{GPSConstellation::GLONASS, 1, std::nullopt}));
+    QCOMPARE(constellations[2], (Constellation{GPSConstellation::SBAS, 1, std::nullopt}));
     QCOMPARE(feed("GLGSV,1,1,00").liveness, GPSReceiveLiveness::Data);
     QCOMPARE(snapshots.back().inView, std::optional<int>{2});
+    constellations = snapshots.back().constellationsInView();
+    QCOMPARE(constellations.size(), size_t(2));
+    QCOMPARE(constellations[1].constellation, GPSConstellation::SBAS);
     QCOMPARE(feed("GPGSV,1,1,00").liveness, GPSReceiveLiveness::Data);
     QCOMPARE(snapshots.size(), size_t(2));
     QCOMPARE(snapshots[0].inView, std::optional<int>{1});
     QCOMPARE(snapshots[1].inView, std::optional<int>{0});
+    QVERIFY(snapshots[1].constellationsInView().empty());
 }
 
 void GPSDriverTest::_nativeIntegrityProvenance()
@@ -656,6 +667,7 @@ void GPSDriverTest::_satelliteExpiry()
     QCOMPARE(driver.receiveOutcome(0ms).liveness, GPSReceiveLiveness::Data);
     QCOMPARE(latest.inView, std::optional<int>{1});
     QVERIFY(latest.timestampUs != 0);
+    QCOMPARE(latest.constellationsInView().size(), size_t(1));
     QCOMPARE(unavailableReports, 0);
 
     // The view lasts the shared freshness window, whether or not positions keep arriving.
@@ -673,6 +685,7 @@ void GPSDriverTest::_satelliteExpiry()
     QCOMPARE(unavailableReports, 1);
     QCOMPARE(latest.timestampUs, uint64_t{0});
     QVERIFY(!latest.inView);
+    QVERIFY(latest.constellationsInView().empty());
     // The count the positions carry lapses with them.
     QCOMPARE(latest.used, positionTraffic ? std::optional<int>{8} : std::nullopt);
     QCOMPARE(result.liveness, traffic);
@@ -697,8 +710,12 @@ void GPSDriverTest::_satelliteUsageSources()
     GPSTestClock clock(GPSTestClock::START_US);
     ModelReceiver<ScriptedReceiver::Model> link(clock);
     std::vector<std::optional<int>> used;
+    GPSSatelliteReport latest;
     GPSDriverSinks sinks;
-    sinks.onSatelliteInfo = [&](const GPSSatelliteReport& report) { used.push_back(report.used); };
+    sinks.onSatelliteInfo = [&](const GPSSatelliteReport& report) {
+        used.push_back(report.used);
+        latest = report;
+    };
     GPSDriver driver(GPSType::passive, link, {.baudRate = 115200}, std::move(sinks), clock.source());
     QVERIFY(driver.configure());
     // Each epoch's GGA counts twelve satellites used, while its GSA lists three.
@@ -715,6 +732,9 @@ void GPSDriverTest::_satelliteUsageSources()
     }
     // The GGA count stands in until the first satellite epoch closes; the published count then stays on the GSA sum.
     QCOMPARE(used, (std::vector<std::optional<int>>{12, 3, 3, 3}));
+    // The constellation's own counts are the GSV and GSA ones, never the GGA count.
+    QCOMPARE(latest.constellationsInView().size(), size_t(1));
+    QCOMPARE(latest.constellationsInView().front(), (GPSSatelliteReport::Constellation{GPSConstellation::GPS, 4, 3}));
 }
 
 void GPSDriverTest::_inputProtocolSwitch()

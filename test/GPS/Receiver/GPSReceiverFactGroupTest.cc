@@ -64,6 +64,58 @@ void GPSReceiverFactGroupTest::_satelliteCounts()
     QCOMPARE(solution(facts), Solution{});
 }
 
+void GPSReceiverFactGroupTest::_constellationCounts()
+{
+    ScriptedGPSReceiver harness;
+    GPSReceiver& receiver = harness.receiver;
+    QVERIFY(connectOverTcp(receiver));
+    ScriptedReceiverWorker* const worker = harness.workers.current();
+    QSignalSpy changes(&receiver, &GPSReceiver::constellationsChanged);
+    GPSSatelliteReport report;
+    report.timestampUs = 1;
+    report.inView = 18;
+    report.addConstellation({GPSConstellation::Unknown, 1, 1});
+    report.addConstellation({GPSConstellation::GPS, 10, 8});
+    report.addConstellation({GPSConstellation::Galileo, 7, std::nullopt});
+    worker->satellites(report);
+    // An unknown used count is -1, as the satellite Facts have it.
+    QCOMPARE(receiver.constellations(), (QList<GPSConstellationSatellites>{{GPSConstellation::Unknown, 1, 1},
+                                                                           {GPSConstellation::GPS, 8, 10},
+                                                                           {GPSConstellation::Galileo, -1, 7}}));
+    QStringList names;
+    for (const GPSConstellationSatellites& constellation : receiver.constellations()) {
+        names.append(constellation.name());
+    }
+    QCOMPARE(names, (QStringList{QStringLiteral("Other"), QStringLiteral("GPS"), QStringLiteral("Galileo")}));
+    QCOMPARE(changes.size(), 1);
+
+    // A later view with the same counts is no change; a changed count is.
+    report.timestampUs = 2;
+    worker->satellites(report);
+    QCOMPARE(changes.size(), 1);
+    report.constellations[2].used = 6;
+    worker->satellites(report);
+    QCOMPARE(changes.size(), 2);
+    QCOMPARE(receiver.constellations().last().used, 6);
+
+    // A receiver that identifies no constellation has none to list: its one entry would repeat the totals.
+    GPSSatelliteReport unidentified;
+    unidentified.timestampUs = 3;
+    unidentified.inView = 9;
+    unidentified.used = 7;
+    unidentified.addConstellation({GPSConstellation::Unknown, 9, 7});
+    worker->satellites(unidentified);
+    QVERIFY(receiver.constellations().isEmpty());
+    QCOMPARE(solution(*receiver.facts()), (Solution{.inView = 9, .used = 7}));
+    QCOMPARE(changes.size(), 3);
+
+    worker->satellites(report);
+    QCOMPARE(receiver.constellations().size(), 3);
+    receiver.disconnectReceiver();
+    QVERIFY(receiver.constellations().isEmpty());
+    QCOMPARE(changes.size(), 5);
+}
+
 void GPSReceiverFactGroupTest::_currentBaseSaveValidity_data()
 {
     QTest::addColumn<QString>("field");
@@ -167,7 +219,10 @@ void GPSReceiverFactGroupTest::_silentReceiverClearsSolution()
     GPSSatelliteReport satellites;
     satellites.inView = 12;
     satellites.used = 9;
+    satellites.addConstellation({GPSConstellation::GPS, 12, 9});
     worker->satellites(satellites);
+    QSignalSpy constellations(&harness.receiver, &GPSReceiver::constellationsChanged);
+    QCOMPARE(harness.receiver.constellations().size(), 1);
     auto report = fixReport(GPSFixQuality::Fix3D);
     report.integrity.jamming.state = GPSIntegrityReport::JammingState::Warning;
     report.integrity.antenna.state = GPSIntegrityReport::AntennaState::Open;
@@ -181,6 +236,8 @@ void GPSReceiverFactGroupTest::_silentReceiverClearsSolution()
     // Passive and position-only links stay connected while silent; their last solution must not linger.
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(6)));
     QCOMPARE(solution(facts), Solution{});
+    QVERIFY(harness.receiver.constellations().isEmpty());
+    QCOMPARE(constellations.size(), 1);
 }
 
 void GPSReceiverFactGroupTest::_summaryLabel()

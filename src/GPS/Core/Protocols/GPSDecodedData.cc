@@ -102,11 +102,13 @@ GPSSatelliteReport SatelliteCounts::_report() const
         if (visible == 0) {
             continue;
         }
-        if (counts.used.receivedAtUs && counts.used.value) {
-            used += *counts.used.value;
+        const std::optional<int> constellationUsed = counts.used.receivedAtUs ? counts.used.value : std::nullopt;
+        if (constellationUsed) {
+            used += *constellationUsed;
         } else {
             usedKnown = false;
         }
+        report.addConstellation({.constellation = constellation, .inView = visible, .used = constellationUsed});
     }
     std::optional<int> viewUsed;
     if (report.timestampUs) {

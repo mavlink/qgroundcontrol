@@ -192,6 +192,10 @@ void GPSReceiver::_emitChanges()
     if (std::exchange(_notified.errorMessage, error) != error) {
         emit errorMessageChanged();
     }
+    const QList<GPSConstellationSatellites> satellites = constellations();
+    if (std::exchange(_notifiedConstellations, satellites) != satellites) {
+        emit constellationsChanged();
+    }
     const ReceiverState receiver = _receiverState();
     if (std::exchange(_notified.receiver, receiver) != receiver) {
         emit receiverChanged();
@@ -219,6 +223,11 @@ void GPSReceiver::_clearStaleSolution()
 QString GPSReceiver::errorMessage() const
 {
     return _errorMessage.isEmpty() ? _outputOverflowWarning : _errorMessage;
+}
+
+QList<GPSConstellationSatellites> GPSReceiver::constellations() const
+{
+    return _facts->constellations();
 }
 
 void GPSReceiver::_updateOutputOverflow(uint64_t receiptUs)
@@ -652,7 +661,7 @@ void GPSReceiver::_onSatelliteInfoUpdated(const GPSSatelliteReport& msg)
     qCDebug(GPSReceiverLog) << QStringLiteral("%1 in view, %2 used")
                                    .arg(inView)
                                    .arg(msg.used ? QString::number(used) : QStringLiteral("unknown"));
-    _facts->_setSatellites(inView, used);
+    _facts->_setSatellites(msg);
     _emitChanges();
 }
 
