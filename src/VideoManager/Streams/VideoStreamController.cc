@@ -94,14 +94,21 @@ void VideoStreamController::setReceiver(VideoReceiver* receiver)
     const VideoStreamStats oldStats = stats();
 
     // Detach the old receiver first: what it emits while being destroyed must not reach a half-destroyed object.
-    VideoReceiver* const oldReceiver = std::exchange(_receiver, receiver);
-    if (oldReceiver) {
+    // No receiver is set while it goes: one that finishes a recording runs the event loop in its destructor, from
+    // where this function may be called again.
+    _decoded = false;
+    if (VideoReceiver* const oldReceiver = std::exchange(_receiver, nullptr)) {
         (void) disconnect(oldReceiver, nullptr, this, nullptr);
         delete oldReceiver;
     }
-    _decoded = false;
 
     if (_receiver) {
+        // Set by such a call, which came after this one: its receiver stays.
+        if (receiver != _receiver) {
+            delete receiver;
+        }
+    } else if (receiver) {
+        _receiver = receiver;
         _receiver->setParent(this);
         _receiver->setName(name());
         (void) connect(_receiver, &VideoReceiver::streamingChanged, this, &VideoStreamController::streamingChanged);

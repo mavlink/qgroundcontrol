@@ -3,6 +3,7 @@
 #include <array>
 #include <functional>
 
+#include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtGui/QImage>
@@ -821,6 +822,25 @@ void VideoManagerTest::_testSourceErrorsReachUser()
         verifyExpectedLogMessage();
         verifyExpectedLogMessage();
     }
+}
+
+void VideoManagerTest::_testReceiverSetWhileOldOneGoes()
+{
+    VideoStreamController* const stream = _videoManager->primaryStream();
+    const QPointer<FakeVideoReceiver> requested = new FakeVideoReceiver;
+    auto* const later = new FakeVideoReceiver;
+    // A receiver that finishes a recording runs the event loop in its destructor, where a change of the video backend
+    // sets the stream another receiver.
+    (void) connect(_primary, &QObject::destroyed, this, [stream, later] { stream->setReceiver(later); });
+    _primary = nullptr;
+
+    stream->setReceiver(requested);
+    QCOMPARE(stream->receiver(), later);
+    QVERIFY(!requested);
+
+    QSignalSpy videoSizeSpy(stream, &VideoStreamController::videoSizeChanged);
+    later->setVideoSize(QSize(1280, 720));
+    QCOMPARE(videoSizeSpy.count(), 1);
 }
 
 void VideoManagerTest::_testReconnectingFollowsLostStream()

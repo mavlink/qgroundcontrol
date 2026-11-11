@@ -42,6 +42,7 @@ private slots:
     void _testAdvertisedRotationTurnsVideo_data();
     void _testAdvertisedRotationTurnsVideo();
     void _testSourceErrorsReachUser();
+    void _testReceiverSetWhileOldOneGoes();
     void _testReconnectingFollowsLostStream();
     void _testLinkRegainedReconnectsStreams();
     void _testUvcCameraFormatReachesCamera();
