@@ -203,6 +203,14 @@
             "type": "bool",
             "default": false,
             "label": "Compact RTCM corrections (MSM4)"
+        },
+        {
+            "name": "savedBaseSites",
+            "shortDesc": "Base positions saved under a name",
+            "longDesc": "JSON array of the saved base sites. Each entry holds name, latitude and longitude in degrees, altitude in meters above the WGS84 ellipsoid, and accuracy in meters.",
+            "type": "string",
+            "default": "",
+            "label": "Saved base sites"
         }
     ]
 }
