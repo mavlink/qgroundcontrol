@@ -64,6 +64,14 @@ The files in `../corpus/` are hand-built frames written for QGC's tests (the Uni
 base-status seeds follow Unicore N4 EN R1.6 §7.3.27 and Quectel LG290P Protocol V1.1 §2.3.23 with
 an invented ECEF position of `(0, 6378237, 0)`); none is a device recording.
 
+## u-blox configuration keys
+
+`UBXConfigKeyDatabase.h` lists the name, id, type and value size of every configuration key in the
+`UBX_CONFIG_DATABASE` of the pinned pyubx2, which follows the u-blox interface descriptions;
+`pyubx2-LICENSE` covers it. `generate_config_keys.py` writes it, or compares it with `--check`, in
+the environment described below. `UBXConfigKeyTest` checks the keys the u-blox driver uses against
+it: the scripted receiver of the other tests reads the driver's own key constants.
+
 ## Regeneration
 
 Optional; normal builds and tests use only the checked-in bytes and header. The network is needed
@@ -73,6 +81,7 @@ only for installation.
 python3 -m venv build/gps-fixture-oracle
 build/gps-fixture-oracle/bin/pip install -r test/GPS/Core/Protocols/fixtures/requirements.txt
 build/gps-fixture-oracle/bin/python test/GPS/Core/Protocols/fixtures/generate_expectations.py --check
+build/gps-fixture-oracle/bin/python test/GPS/Core/Protocols/fixtures/generate_config_keys.py --check
 ```
 
 Omit `--check` to rewrite the synthetic fixtures and the expectations headers. The script verifies

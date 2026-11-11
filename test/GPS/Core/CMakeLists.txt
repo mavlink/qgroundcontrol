@@ -44,6 +44,7 @@ set(_qgc_gps_core_suites
     Protocols/Passive/PassiveProtocolTest
     Protocols/Quectel/QuectelProtocolTest
     Protocols/SBF/SBFProtocolTest
+    Protocols/UBX/UBXConfigKeyTest
     Protocols/UBX/UBXProtocolTest
     Protocols/Unicore/UnicoreProtocolTest
 )
