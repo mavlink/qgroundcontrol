@@ -15,6 +15,10 @@ private slots:
     void _testLoadPolylinesFromSHP();
     void _testLoadPolygonsFromKML();
     void _testLoadPolylinesFromKML();
+    void _testLoadShapes_data();
+    void _testLoadShapes();
+    void _testLoadFailures_data();
+    void _testLoadFailures();
     void _testGetEntityCount();
     void _testDetermineShapeType();
     void _testUnsupportedProjectionError();
