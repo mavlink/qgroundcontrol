@@ -105,6 +105,11 @@ void LinkManager::createConnectedLink(const LinkConfiguration *config)
         if (sharedConfig.get() == config) {
             sharedConfig->setAutoConnectStarted(true);
             sharedConfig->resetReconnectBackoff();
+#ifndef QGC_NO_SERIAL_LINK
+            if (_serialPortInUseMsg(*sharedConfig)) {
+                continue;
+            }
+#endif
             createConnectedLink(sharedConfig);
         }
     }
@@ -123,6 +128,45 @@ void LinkManager::disconnectLink(LinkInterface *link)
 
     link->disconnect();
 }
+
+#ifndef QGC_NO_SERIAL_LINK
+bool LinkManager::_serialPortInUseMsg(const LinkConfiguration& config)
+{
+    const auto* serialConfig = qobject_cast<const SerialConfiguration*>(&config);
+    const QString port = serialConfig ? serialConfig->portName().trimmed() : QString();
+    if (port.isEmpty() || SerialPortManager::instance()->canReservePort(port)) {
+        return false;
+    }
+
+    // Either the port itself is in use, or another one is where only one serial port can be open at a time. A
+    // link that has it can be named for the user to disconnect. What else reserves a port, as the GPS does, cannot.
+    const bool portReserved = SerialPortManager::instance()->isPortReserved(port);
+    const QList<SharedLinkInterfacePtr> currentLinks = links();
+    for (const SharedLinkInterfacePtr& link : currentLinks) {
+        const SharedLinkConfigurationPtr linkConfig = link->linkConfiguration();
+        const auto* linkSerialConfig = qobject_cast<const SerialConfiguration*>(linkConfig.get());
+        if (!linkSerialConfig) {
+            continue;
+        }
+        if (linkSerialConfig->portName().trimmed() == port) {
+            // Said in so many words: a link that was connected automatically is named after what QGC takes the
+            // device for, which the user may not know it by.
+            QGC::showAppMessage(
+                tr("Cannot connect '%1': its serial port is already open as the link '%2'. Disconnect that link first.")
+                    .arg(config.name(), linkConfig->name()));
+            return true;
+        }
+        if (!portReserved) {
+            QGC::showAppMessage(tr("Cannot connect '%1' while '%2' is connected. Disconnect it first.")
+                                    .arg(config.name(), linkConfig->name()));
+            return true;
+        }
+    }
+
+    QGC::showAppMessage(tr("Cannot connect '%1': the serial port is in use.").arg(config.name()));
+    return true;
+}
+#endif
 
 void LinkManager::disconnectLinkConfiguration(LinkConfiguration *config)
 {
