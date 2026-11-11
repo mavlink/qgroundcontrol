@@ -145,7 +145,7 @@ bool Protocol::_setUpPort(GPSCommandChannel& channel, unsigned detectedBaud, uns
         }
     } else {
         const auto ports = Plan::legacyPorts(desiredBaud);
-        if (!_send(channel, Msg::CFG_PRT, ports, {{}, Plan::CONFIG_TIMEOUT, false})) {
+        if (!_send(channel, Msg::CFG_PRT, ports, {.command = {}, .timeout = Plan::CONFIG_TIMEOUT, .required = false})) {
             return false;
         }
     }
@@ -510,7 +510,7 @@ GPSConfigurationEvidence Protocol::_waitForAck(GPSCommandChannel& channel, UBX::
         return _verifyValset(channel,
                              {"UBX-CFG-VALSET readback", commandDeadline.remaining(channel.nowUs()), command.required});
     }
-    const auto result = channel.awaitReply([&controller] { return controller.acknowledgement(); });
+    auto result = channel.awaitReply([&controller] { return controller.acknowledgement(); });
     controller.finishAcknowledgement();
     if (valset && result.outcome == GPSCommandOutcome::TimedOut) {
         _valsetAckAmbiguous = true;
@@ -640,7 +640,8 @@ GPSConfigurationEvidence Protocol::_awaitValsetAck(GPSCommandChannel& channel)
     // receiver answers in order: the readback reply follows any late reply to this batch, so a late ACK and matching
     // values accept it, a late NAK, other values or a NAK of the readback reject it, and either way nothing of it is
     // left to arrive. Required batches still fail on the timeout.
-    result = _verifyValset(channel, {"UBX-CFG-VALSET readback", Plan::CONFIG_TIMEOUT, false});
+    result = _verifyValset(channel,
+                           {.command = "UBX-CFG-VALSET readback", .timeout = Plan::CONFIG_TIMEOUT, .required = false});
     if (result.outcome == GPSCommandOutcome::ReadbackVerified || result.outcome == GPSCommandOutcome::Rejected) {
         _valsetAckAmbiguous = false;
     }
@@ -662,7 +663,8 @@ GPSConfigurationEvidence Protocol::_verifyValset(GPSCommandChannel& channel, GPS
             const auto entry = cursor.next();
             if (!entry) {
                 channel.beginCommand(step);
-                return channel.completeCommand(GPSCommandOutcome::Rejected);
+                result = channel.completeCommand(GPSCommandOutcome::Rejected);
+                return result;
             }
             (void) LittleEndian::write(request, UBX::CONFIGURATION_HEADER_SIZE + expected.count * sizeof(uint32_t),
                                        entry->key);
@@ -673,7 +675,8 @@ GPSConfigurationEvidence Protocol::_verifyValset(GPSCommandChannel& channel, GPS
         const size_t requestSize = UBX::CONFIGURATION_HEADER_SIZE + expected.count * sizeof(uint32_t);
         if (!_send(channel, Msg::CFG_VALGET, std::span(request).first(requestSize), step)) {
             controller.finishReadback();
-            return channel.completeCommand(GPSCommandOutcome::TransportError);
+            result = channel.completeCommand(GPSCommandOutcome::TransportError);
+            return result;
         }
         result = channel.awaitReply([&controller, &expected] {
             if (controller.lateRejection() || controller.readbackRejected()) {
