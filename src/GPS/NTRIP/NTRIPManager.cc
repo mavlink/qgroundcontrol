@@ -19,6 +19,7 @@ namespace {
 
 bool isRetryable(NTRIPError error)
 {
+    // No default, so a new code is reported (-Wswitch) until it is classified.
     switch (error) {
         case NTRIPError::AuthFailed:
         case NTRIPError::InvalidConfig:
@@ -26,9 +27,18 @@ bool isRetryable(NTRIPError error)
         // TLS failures recur the same way until the user changes the TLS settings.
         case NTRIPError::SslError:
             return false;
-        default:
+        case NTRIPError::ConnectionTimeout:
+        case NTRIPError::DataWatchdog:
+        case NTRIPError::SocketError:
+        case NTRIPError::ServerDisconnected:
+        case NTRIPError::InvalidHttpResponse:
+        case NTRIPError::HttpError:
+        case NTRIPError::HeaderTooLarge:
+        case NTRIPError::InvalidMountpoint:
+        case NTRIPError::Unknown:
             return true;
     }
+    return true;
 }
 
 QString correctionSourceInstance(const NTRIPConnectionConfig& connection)
