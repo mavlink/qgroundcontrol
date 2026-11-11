@@ -381,3 +381,13 @@ void GstReceiverWorker::onRecordingFailed(const QString& file, const QString& er
         emit errorOccurred(message);
     }
 }
+
+void GstReceiverWorker::onRecordingNeedsNewFile(const QString& file)
+{
+    if (!_session || !_recording || (file != _recording->currentFile())) {
+        return;
+    }
+    _recording->nextPart();
+    qCDebug(GstVideoReceiverLog) << "Recording continues in" << _recording->currentFile();
+    _session->setRecording(_recordingRequest());
+}

@@ -91,6 +91,7 @@ private:
     void onRecordingFileOpened(const QString& file) override;
     void onRecordingFileClosed(const QString& file, const QString& error) override;
     void onRecordingFailed(const QString& file, const QString& error, bool fileOpened) override;
+    void onRecordingNeedsNewFile(const QString& file) override;
 
     QTimer* const _watchdogTimer;
     StreamSupervisor* const _supervisor;

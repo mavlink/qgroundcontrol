@@ -12,6 +12,13 @@ private slots:
     void _testDecoderFailureKeepsRecording();
     void _testReconnectResumesRecordingInNextPart();
     void _testLongRecordingContinuesInNextPart();
+    void _testFileSwitchRequestsOneKeyframe();
+    void _testFramesArrivingTogetherStartNoNewPart();
+    void _testRecordingLeavesFileBeforeHeaderSpaceRunsOut();
+    void _testRecordingStartsAtKeyframeWithParameterSets();
+    void _testRecordingFailsWithoutKeyframeWithParameterSets();
+    void _testFormatChangeContinuesRecordingInNextPart_data();
+    void _testFormatChangeContinuesRecordingInNextPart();
     void _testSlowRecordingDoesNotStallDisplay();
     void _testDeactivateFinishesRecording();
     void _testRecordingPlayableWhileInProgress_data();

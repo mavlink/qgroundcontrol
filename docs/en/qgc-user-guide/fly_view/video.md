@@ -136,8 +136,12 @@ Video stored on the camera may be of much higher quality, but it is likely that 
 
 Video stream recording is controlled on the [video stream instrument page](camera_tools.md#video_instrument_page).
 Press the red circle to start recording a new video (a new video file is created each time the circle is pressed); the circle will change into a red square while recording is in progress.
+The file starts with the stream's next keyframe that comes with the stream's parameter sets, as the keyframes of most cameras do.
+If the camera sends keyframes but none that a file can start with, QGroundControl reports five seconds later that the recording failed, rather than record nothing.
 If the stream drops out while recording, the recording continues once the stream is back, in a new file named after the first with `_part2`, `_part3` and so on added (for example `2026-10-24_10.15.00_part2.mp4`).
 A recording that runs for longer than an hour continues in a new part the same way, without losing a frame between the parts.
+An MP4 or MOV part ends sooner when the space the file sets aside for its index is about to run out, which a very high frame rate can cause.
+A new part also starts when the camera changes its resolution or encoding profile during a recording, so that each file holds video of one kind.
 With the Qt Multimedia [video backend](../settings_view/video.md#settings) a stream is recorded as a USB camera is (below),
 from the video on display: it continues in the same file once the stream is back.
 Recordings carry the time they started and, as their comment, the _QGroundControl_ version that recorded them.

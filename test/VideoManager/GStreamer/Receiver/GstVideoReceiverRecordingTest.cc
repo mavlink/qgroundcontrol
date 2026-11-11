@@ -3,6 +3,7 @@
 #ifdef QGC_GST_STREAMING
 
 #include <atomic>
+#include <gst/video/video-event.h>
 #include <memory>
 
 #include <QtCore/QElapsedTimer>
@@ -58,6 +59,152 @@ GStreamer::GstElementPtr branchHead(GstElement* pipeline, GStreamer::PipelineBra
         }
     }
     return nullptr;
+}
+
+GstPadProbeReturn countRecordingKeyframeRequests([[maybe_unused]] GstPad* pad, GstPadProbeInfo* info, gpointer data)
+{
+    GstEvent* const event = GST_PAD_PROBE_INFO_EVENT(info);
+    if (event && gst_video_event_is_force_key_unit(event)) {
+        static_cast<std::atomic<int>*>(data)->fetch_add(1, std::memory_order_relaxed);
+    }
+    return GST_PAD_PROBE_OK;
+}
+
+/// Keeps the stream's keyframes from the recorder while held, as a camera that sends none for a while.
+struct KeyframeHold
+{
+    std::atomic<bool> held{false};
+    std::atomic<int> dropped{0};
+};
+
+GstPadProbeReturn dropHeldKeyframes([[maybe_unused]] GstPad* pad, GstPadProbeInfo* info, gpointer data)
+{
+    auto* const hold = static_cast<KeyframeHold*>(data);
+    const GstBuffer* const buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    if (buffer && !GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT) &&
+        hold->held.load(std::memory_order_relaxed)) {
+        hold->dropped.fetch_add(1, std::memory_order_relaxed);
+        return GST_PAD_PROBE_DROP;
+    }
+    return GST_PAD_PROBE_OK;
+}
+
+/// Takes the parameter sets out of the stream, as a camera sends it that tells its parameter sets once, when the
+/// stream starts: until the next @c keyframes keyframes have passed, or for good when that is negative. Out of the
+/// delta frames in between too: upstream gives the parameter sets of a keyframe whose slices were lost on the way,
+/// as on a loaded host, to the frame after it.
+struct ParameterSetStrip
+{
+    std::atomic<int> keyframes{0};
+    std::atomic<int> stripped{0};
+};
+
+/// A copy of the H.264 access unit @p buffer (Annex B) without its SPS and PPS.
+GstBuffer* withoutParameterSets(GstBuffer* buffer)
+{
+    constexpr QByteArrayView kStartCode("\x00\x00\x01", 3);
+    constexpr int kNalSps = 7;
+    constexpr int kNalPps = 8;
+
+    GstMapInfo map;
+    if (!gst_buffer_map(buffer, &map, GST_MAP_READ)) {
+        return gst_buffer_ref(buffer);
+    }
+    const QByteArrayView unit(reinterpret_cast<const char*>(map.data), static_cast<qsizetype>(map.size));
+    QByteArray kept;
+    for (qsizetype nal = unit.indexOf(kStartCode); (nal >= 0) && ((nal + 3) < unit.size());) {
+        const qsizetype next = unit.indexOf(kStartCode, nal + 3);
+        const int type = unit.at(nal + 3) & 0x1F;
+        if ((type != kNalSps) && (type != kNalPps)) {
+            kept.append(unit.sliced(nal, ((next < 0) ? unit.size() : next) - nal));
+        }
+        nal = next;
+    }
+    gst_buffer_unmap(buffer, &map);
+
+    GstBuffer* const stripped = gst_buffer_new_memdup(kept.constData(), static_cast<gsize>(kept.size()));
+    (void) gst_buffer_copy_into(stripped, buffer,
+                                static_cast<GstBufferCopyFlags>(GST_BUFFER_COPY_FLAGS | GST_BUFFER_COPY_TIMESTAMPS), 0,
+                                static_cast<gsize>(-1));
+    return stripped;
+}
+
+GstPadProbeReturn stripParameterSets([[maybe_unused]] GstPad* pad, GstPadProbeInfo* info, gpointer data)
+{
+    auto* const strip = static_cast<ParameterSetStrip*>(data);
+    GstBuffer* const buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    const int keyframes = strip->keyframes.load(std::memory_order_relaxed);
+    if (!buffer || (keyframes == 0)) {
+        return GST_PAD_PROBE_OK;
+    }
+    const bool keyframe = !GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT);
+    GST_PAD_PROBE_INFO_DATA(info) = withoutParameterSets(buffer);
+    gst_buffer_unref(buffer);
+    if (keyframe) {
+        if (keyframes > 0) {
+            strip->keyframes.store(keyframes - 1, std::memory_order_relaxed);
+        }
+        strip->stripped.fetch_add(1, std::memory_order_relaxed);
+    }
+    return GST_PAD_PROBE_OK;
+}
+
+/// Strips the parameter sets (@p strip) from what the valve of @p receiver's recording branch lets into a recorder.
+bool stripRecorderInput(GstVideoReceiver* receiver, GStreamer::PadProbe& probe, ParameterSetStrip& strip)
+{
+    bool added = false;
+    (void) GstVideoReceiverTestBase::runOnPipeline(receiver, [&](GstElement* pipeline) {
+        const GStreamer::GstElementPtr valve = branchHead(pipeline, GStreamer::PipelineBranch::Recording, "valve");
+        const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(valve.get(), "src"));
+        added = probe.add(valveSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, stripParameterSets, &strip);
+    });
+    return added;
+}
+
+/// What a demuxer reads from a recording: its samples and the timestamp of the first.
+struct DemuxedSamples
+{
+    std::atomic<int> count{0};
+    std::atomic<guint64> firstPts{GST_CLOCK_TIME_NONE};
+};
+
+GstPadProbeReturn noteDemuxedSample([[maybe_unused]] GstPad* pad, GstPadProbeInfo* info, gpointer data)
+{
+    auto* const samples = static_cast<DemuxedSamples*>(data);
+    const GstBuffer* const buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+    if (buffer && (samples->count.fetch_add(1, std::memory_order_relaxed) == 0)) {
+        samples->firstPts.store(GST_BUFFER_PTS(buffer), std::memory_order_relaxed);
+    }
+    return GST_PAD_PROBE_OK;
+}
+
+/// Demuxes the Matroska recording at @p path to EOS. Returns the number of video samples, with the first one's
+/// timestamp in @p firstPts, or -1 with @p failure set when the file can't be played to the end.
+int countMatroskaFrames(const QString& path, QString& failure, GstClockTime* firstPts = nullptr)
+{
+    DemuxedSamples samples;
+    GstTest::TestPipeline pipeline;
+    if (!pipeline.launch(QStringLiteral("filesrc name=src ! matroskademux ! fakesink name=sink sync=false"))) {
+        failure = pipeline.error();
+        return -1;
+    }
+    g_object_set(pipeline.element("src").get(), "location", QFile::encodeName(path).constData(), nullptr);
+    const GStreamer::GstPadPtr sinkPad =
+        GStreamer::adoptPad(gst_element_get_static_pad(pipeline.element("sink").get(), "sink"));
+    GStreamer::PadProbe probe;
+    if (!probe.add(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, noteDemuxedSample, &samples) || !pipeline.play()) {
+        failure = QStringLiteral("%1: demux pipeline failed to start").arg(path);
+        return -1;
+    }
+    const QString error = pipeline.runToEos();
+    if (!error.isEmpty()) {
+        failure = QStringLiteral("%1: %2").arg(path, error);
+        return -1;
+    }
+    if (firstPts) {
+        *firstPts = samples.firstPts.load(std::memory_order_relaxed);
+    }
+    return samples.count.load(std::memory_order_relaxed);
 }
 
 }  // namespace
@@ -177,6 +324,270 @@ void GstVideoReceiverRecordingTest::_testLongRecordingContinuesInNextPart()
         const int frames = GstTest::countPlayableFrames(part, failure);
         QVERIFY2(frames >= kMinRecordedFrames, qPrintable(failure));
         QVERIFY2((frames % kFramesPerGop) == 0, qPrintable(QStringLiteral("%1: %2 frames").arg(part).arg(frames)));
+    }
+}
+
+void GstVideoReceiverRecordingTest::_testFileSwitchRequestsOneKeyframe()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+
+    std::atomic<int> requests{0};
+    KeyframeHold keyframes;
+    GStreamer::PadProbe requestProbe;
+    GStreamer::PadProbe keyframeProbe;
+    QVERIFY(runOnPipeline(stream.receiver.get(), [&](GstElement* pipeline) {
+        // Where the recording branch's requests leave it, and where the stream enters its recorder.
+        const GStreamer::GstElementPtr queue = branchHead(pipeline, GStreamer::PipelineBranch::Recording, "queue");
+        const GStreamer::GstPadPtr queueSink = GStreamer::adoptPad(gst_element_get_static_pad(queue.get(), "sink"));
+        (void) requestProbe.add(queueSink.get(), GST_PAD_PROBE_TYPE_EVENT_UPSTREAM, countRecordingKeyframeRequests,
+                                &requests);
+        const GStreamer::GstElementPtr valve = branchHead(pipeline, GStreamer::PipelineBranch::Recording, "valve");
+        const GStreamer::GstPadPtr valveSink = GStreamer::adoptPad(gst_element_get_static_pad(valve.get(), "sink"));
+        (void) keyframeProbe.add(valveSink.get(), GST_PAD_PROBE_TYPE_BUFFER, dropHeldKeyframes, &keyframes);
+    }));
+
+    QVERIFY(stream.record(tempDir.filePath(QStringLiteral("first.mp4"))));
+    QCOMPARE(requests.load(), 1);
+
+    // No keyframe is on its way to the recorder any more once one was dropped.
+    keyframes.held.store(true);
+    QVERIFY_TRUE_WAIT(keyframes.dropped.load() > 0, TestTimeout::mediumMs());
+
+    // The next file starts with a keyframe, which is asked for rather than waited for.
+    const QString second = tempDir.filePath(QStringLiteral("second.mp4"));
+    stream.receiver->startRecording(second, FileFormat::Mp4);
+    QVERIFY_TRUE_WAIT(requests.load() == 2, TestTimeout::mediumMs());
+    QCOMPARE(stream.recordingStartedSpy.count(), 1);
+
+    // That keyframe starts the file, which asks for no other.
+    keyframes.held.store(false);
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingStartedSpy, 2, TestTimeout::mediumMs());
+    QCOMPARE(stream.recordingStartedSpy.constLast().constFirst().toString(), second);
+    QCOMPARE(requests.load(), 2);
+}
+
+void GstVideoReceiverRecordingTest::_testFramesArrivingTogetherStartNoNewPart()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+
+    // The frame after the one a file starts with gets a time half a millisecond later, as two frames have that arrive
+    // together without a jitter buffer. From the first frame alone, the muxer takes its header to last for seconds.
+    struct Burst
+    {
+        GstClockTime first = GST_CLOCK_TIME_NONE;
+        bool done = false;
+    } burst;  // Touched only on the streaming thread
+
+    GStreamer::PadProbe burstProbe;
+    QVERIFY(runOnPipeline(stream.receiver.get(), [&burst, &burstProbe](GstElement* pipeline) {
+        const GStreamer::GstElementPtr valve = branchHead(pipeline, GStreamer::PipelineBranch::Recording, "valve");
+        const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(valve.get(), "src"));
+        (void) burstProbe.add(
+            valveSrc.get(), GST_PAD_PROBE_TYPE_BUFFER,
+            [](GstPad*, GstPadProbeInfo* info, gpointer data) -> GstPadProbeReturn {
+                auto* const frames = static_cast<Burst*>(data);
+                GstBuffer* buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+                if (!buffer || frames->done) {
+                    return GST_PAD_PROBE_OK;
+                }
+                if (!GST_CLOCK_TIME_IS_VALID(frames->first)) {
+                    if (!GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT)) {
+                        frames->first = GST_BUFFER_PTS(buffer);
+                    }
+                    return GST_PAD_PROBE_OK;
+                }
+                buffer = gst_buffer_make_writable(buffer);
+                GST_BUFFER_PTS(buffer) = frames->first + (GST_MSECOND / 2);
+                if (GST_BUFFER_DTS_IS_VALID(buffer)) {
+                    GST_BUFFER_DTS(buffer) = GST_BUFFER_PTS(buffer);
+                }
+                GST_PAD_PROBE_INFO_DATA(info) = buffer;
+                frames->done = true;
+                return GST_PAD_PROBE_OK;
+            },
+            &burst);
+    }));
+
+    // Recorded for longer than the muxer's estimate takes to be looked at: the recording stays in its file.
+    const QString path = tempDir.filePath(QStringLiteral("burst.mp4"));
+    QVERIFY(stream.record(path));
+    QVERIFY(stream.framesSent(2 * kFrameRate));
+    stream.receiver->stopRecording();
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 0), path);
+    QCOMPARE(stream.recordingStartedSpy.count(), 1);
+}
+
+void GstVideoReceiverRecordingTest::_testRecordingLeavesFileBeforeHeaderSpaceRunsOut()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+
+    // The stream waits in front of the recorder until its muxer is set up.
+    GStreamer::PadProbe streamHold;
+    QVERIFY(runOnPipeline(stream.receiver.get(), [&streamHold](GstElement* pipeline) {
+        const GStreamer::GstElementPtr valve = branchHead(pipeline, GStreamer::PipelineBranch::Recording, "valve");
+        const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(valve.get(), "src"));
+        (void) streamHold.add(
+            valveSrc.get(), static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BLOCK | GST_PAD_PROBE_TYPE_BUFFER),
+            [](GstPad*, GstPadProbeInfo*, gpointer) { return GST_PAD_PROBE_OK; }, nullptr);
+    }));
+    const QString path = tempDir.filePath(QStringLiteral("header.mp4"));
+    stream.receiver->startRecording(path, FileFormat::Mp4);
+
+    // A file whose header has room for less than the recording wants ahead of it, as one that recorded for long at a
+    // high frame rate: well under RecordingBranch::kHeaderSpaceMargin, whatever the muxer makes of the frames it gets.
+    const auto reserveLittleHeaderSpace = [&stream] {
+        bool reserved = false;
+        (void) runOnPipeline(stream.receiver.get(), [&reserved](GstElement* pipeline) {
+            if (const GStreamer::GstElementPtr muxer = GstTest::findByFactory(pipeline, "mp4mux")) {
+                g_object_set(muxer.get(), "reserved-max-duration", G_GUINT64_CONSTANT(10) * GST_SECOND, nullptr);
+                reserved = true;
+            }
+        });
+        return reserved;
+    };
+    QVERIFY_TRUE_WAIT(reserveLittleHeaderSpace(), TestTimeout::mediumMs());
+    streamHold.remove();
+
+    // Once the muxer's estimate counts, the recording goes on in the next part, whose header has the regular room, and
+    // the file is closed in good order.
+    const QString part2 = tempDir.filePath(QStringLiteral("header_part2.mp4"));
+    const int estimateDelayMs =
+        static_cast<int>(std::chrono::milliseconds(RecordingBranch::kHeaderEstimateDelay).count());
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingStartedSpy, 2, estimateDelayMs + TestTimeout::mediumMs());
+    QCOMPARE(stream.recordingStartedSpy.at(0).constFirst().toString(), path);
+    QCOMPARE(stream.recordingStartedSpy.at(1).constFirst().toString(), part2);
+    QCOMPARE(stream.recordingFinishedSpy.count(), 1);
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 0), path);
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 1), QString());
+    QVERIFY(stream.receiver->recording());
+
+    QVERIFY(stream.framesSent(kRecordFrames));
+    stream.receiver->stopRecording();
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, 2, TestTimeout::mediumMs());
+    QCOMPARE(stream.recordingStartedSpy.count(), 2);
+    QVERIFY(stream.errorSpy.isEmpty());
+    for (const QString& file : {path, part2}) {
+        const QString problem = recordingProblem(file);
+        QVERIFY2(problem.isEmpty(), qPrintable(problem));
+    }
+}
+
+void GstVideoReceiverRecordingTest::_testRecordingStartsAtKeyframeWithParameterSets()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("matroskamux", "matroskademux");
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+
+    // A recorder's parser can't pass on the first keyframes it is given.
+    constexpr int kStrippedKeyframes = 3;
+    ParameterSetStrip strip;
+    strip.keyframes.store(kStrippedKeyframes);
+    GStreamer::PadProbe stripProbe;
+    QVERIFY(stripRecorderInput(stream.receiver.get(), stripProbe, strip));
+
+    const QString path = tempDir.filePath(QStringLiteral("late-start.mkv"));
+    QVERIFY(stream.record(path, FileFormat::Mkv));
+    stream.receiver->stopRecording();
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 1), QString());
+    QCOMPARE(strip.stripped.load(), kStrippedKeyframes);
+
+    // The file starts with the first frame it holds, not with a keyframe that never reached it.
+    QString failure;
+    GstClockTime firstPts = GST_CLOCK_TIME_NONE;
+    const int frames = countMatroskaFrames(path, failure, &firstPts);
+    QVERIFY2(frames >= kMinRecordedFrames, qPrintable(failure));
+    QCOMPARE(firstPts, GstClockTime{0});
+}
+
+void GstVideoReceiverRecordingTest::_testRecordingFailsWithoutKeyframeWithParameterSets()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+
+    ParameterSetStrip strip;
+    strip.keyframes.store(-1);
+    GStreamer::PadProbe stripProbe;
+    QVERIFY(stripRecorderInput(stream.receiver.get(), stripProbe, strip));
+
+    // Nothing such a stream sends can start a file: the recording says so rather than go on recording nothing.
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^No keyframe to start the recording with")));
+    const QString path = tempDir.filePath(QStringLiteral("no-start.mp4"));
+    stream.receiver->startRecording(path, FileFormat::Mp4);
+    const int startTimeoutMs = static_cast<int>(std::chrono::milliseconds(RecordingBranch::kStartTimeout).count());
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, startTimeoutMs + TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QVERIFY(strip.stripped.load() > 0);
+    QVERIFY_TRUE_WAIT(!stream.receiver->recording(), TestTimeout::shortMs());
+    QVERIFY(stream.recordingStartedSpy.isEmpty());
+    QVERIFY(stream.recordingFinishedSpy.isEmpty());
+    QVERIFY(!QFile::exists(path));
+    QCOMPARE(stream.receiver->state(), State::Streaming);
+}
+
+void GstVideoReceiverRecordingTest::_testFormatChangeContinuesRecordingInNextPart_data()
+{
+    QTest::addColumn<int>("format");
+    QTest::addColumn<QString>("suffix");
+
+    // matroskamux fails on other caps in a file it has begun; mp4mux would go on in the file at another resolution.
+    QTest::newRow("mkv") << int(FileFormat::Mkv) << QStringLiteral("mkv");
+    QTest::newRow("mp4") << int(FileFormat::Mp4) << QStringLiteral("mp4");
+}
+
+void GstVideoReceiverRecordingTest::_testFormatChangeContinuesRecordingInNextPart()
+{
+    QFETCH(int, format);
+    QFETCH(QString, suffix);
+    GSTTEST_SKIP_UNLESS_FACTORIES("matroskamux", "matroskademux");
+    const auto fileFormat = static_cast<FileFormat>(format);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+    const QString path = tempDir.filePath(QStringLiteral("resized.") + suffix);
+    const QString part2 = tempDir.filePath(QStringLiteral("resized_part2.") + suffix);
+    QVERIFY(stream.record(path, fileFormat));
+
+    // The camera goes on at another resolution.
+    QVERIFY2(stream.sender.switchTo(QString::fromLatin1(GstTest::kH264SmallStream)), qPrintable(stream.sender.error()));
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingStartedSpy, 2, TestTimeout::mediumMs());
+    QCOMPARE(stream.recordingStartedSpy.constLast().constFirst().toString(), part2);
+    QCOMPARE(stream.recordingFinishedSpy.count(), 1);
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 0), path);
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 1), QString());
+    QVERIFY(stream.receiver->recording());
+
+    QVERIFY(stream.framesSent(kRecordFrames));
+    stream.receiver->stopRecording();
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, 2, TestTimeout::mediumMs());
+    QCOMPARE(Receiver::lastFinished(stream.recordingFinishedSpy, 1), QString());
+    QVERIFY(stream.errorSpy.isEmpty());
+    QCOMPARE(stream.receiver->state(), State::Streaming);
+    QCOMPARE(stream.receiver->stats().reconnects, 0);
+    for (const QString& file : {path, part2}) {
+        QString failure;
+        const int frames = (fileFormat == FileFormat::Mkv) ? countMatroskaFrames(file, failure)
+                                                           : GstTest::countPlayableFrames(file, failure);
+        QVERIFY2(frames >= kMinRecordedFrames,
+                 qPrintable(QStringLiteral("%1: %2 frames recorded %3").arg(file).arg(frames).arg(failure)));
     }
 }
 
