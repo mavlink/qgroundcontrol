@@ -148,7 +148,7 @@ void VideoRecordingService::startRecording(const QString& baseName)
             streams.append(stream);
         }
     }
-    const bool recordUvc = _uvcCamera->canRecord() && !_uvcCamera->recording();
+    const bool recordUvc = _uvcCamera->canRecord() && !_uvcCamera->recordingActive();
     if (streams.isEmpty() && !recordUvc) {
         QGC::showAppMessage(tr("Unable to record video: no video stream is active."));
         return;

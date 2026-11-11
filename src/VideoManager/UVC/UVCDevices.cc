@@ -1,6 +1,7 @@
 #include "UVCDevices.h"
 
 #include <algorithm>
+#include <utility>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QPermissions>
@@ -85,15 +86,19 @@ QCameraFormat UVCDevices::format(const QCameraDevice& device, const QString& nam
     return (format != formats.cend()) ? *format : QCameraFormat();
 }
 
-void UVCDevices::requestPermission()
+void UVCDevices::requestPermission(QObject* context, std::function<void()> granted)
 {
     const QCameraPermission cameraPermission;
     if (qApp->checkPermission(cameraPermission) != Qt::PermissionStatus::Undetermined) {
         return;
     }
-    qApp->requestPermission(cameraPermission, qApp, [](const QPermission& permission) {
+    qApp->requestPermission(cameraPermission, context, [granted = std::move(granted)](const QPermission& permission) {
         if (permission.status() != Qt::PermissionStatus::Granted) {
             QGC::showAppMessage(QCoreApplication::translate("UVCDevices", "Failed to get camera permission"));
+            return;
+        }
+        if (granted) {
+            granted();
         }
     });
 }

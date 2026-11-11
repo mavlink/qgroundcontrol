@@ -132,7 +132,7 @@ void UVCCameraController::unregisterVideoOutput(QQuickItem* videoOutput)
 void UVCCameraController::startRecording(const QString& file, QMediaFormat::FileFormat container,
                                          QMediaFormat::VideoCodec codec, QMediaRecorder::Quality quality)
 {
-    if (_recorder->active() || !_captureSession || !canRecord()) {
+    if (recordingActive() || !_captureSession || !canRecord()) {
         qCWarning(UVCCameraControllerLog) << "Can't record the camera now:" << file;
         emit recordingFinished(file, tr("The USB camera isn't running"));
         return;
@@ -290,7 +290,9 @@ void UVCCameraController::_createCamera()
         return;
     }
 
-    UVCDevices::requestPermission();
+    // Until the user grants the permission, Qt's Android and Apple cameras refuse to start, without an error: the
+    // camera starts once it is granted.
+    UVCDevices::requestPermission(this, [this] { _connectVideoOutput(); });
     _cameraId = device.id();
     _camera = new QCamera(device, this);
     if (const QCameraFormat format = UVCDevices::format(device, _formatName); !format.isNull()) {

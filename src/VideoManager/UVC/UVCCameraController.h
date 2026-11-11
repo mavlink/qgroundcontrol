@@ -136,6 +136,10 @@ public:
 
     bool recording() const { return _recorder->recording(); }
 
+    /// Recording, or about to: from an accepted startRecording() until the recorder stops. recording() only follows
+    /// the first encoded frame.
+    bool recordingActive() const { return _recorder->active(); }
+
     /// Records the camera's video to @p file as QtVideoRecorder::start() does. Recreating the camera (another device or
     /// format, an unplug, a retry) ends the recording; Qt finishes writing the file.
     void startRecording(const QString& file, QMediaFormat::FileFormat container,
