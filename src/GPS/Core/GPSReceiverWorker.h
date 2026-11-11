@@ -49,15 +49,20 @@ public:
     /// Waits for the worker to exit; returns true at once when the session never started.
     bool wait(QDeadlineTimer deadline = QDeadlineTimer(QDeadlineTimer::Forever));
 
-    /// Configured receivers must keep producing data; passive links stay open while the receiver is silent. Ignored
-    /// once the session started, as its worker reads the setting.
+    /// Configured receivers must keep producing data, and their session ends after IDLE_SESSION_TIMEOUT without any;
+    /// passive links stay open while the receiver is silent. Ignored once the session started, as its worker reads
+    /// the setting.
     void setEndsWhenIdle(bool endsWhenIdle);
 
     /// Longest wait for one read before the session re-checks cancellation.
     static constexpr std::chrono::milliseconds RECEIVE_TIMEOUT{1200};
-    /// A receiver that ends when idle ends after this long without useful data; one that stays connected reports
-    /// inputProblem() after this long without a position.
+    /// inputProblem() is reported after this long without useful data from a receiver that ends when idle, or without
+    /// a position from one that stays connected.
     static constexpr std::chrono::milliseconds USEFUL_DATA_TIMEOUT = 3 * RECEIVE_TIMEOUT;
+    /// A receiver that ends when idle ends after this long without useful data. The connection that follows
+    /// configures the receiver again, which makes a base survey its position again, so a link gets this long to
+    /// recover first.
+    static constexpr std::chrono::milliseconds IDLE_SESSION_TIMEOUT{30000};
 
 signals:
     void satelliteInfoUpdated(const GPSSatelliteReport& message);
@@ -70,8 +75,9 @@ signals:
     /// The family a GPSType::Automatic session detected, before it configures the receiver, or the protocol a passive
     /// session's input carries (GPSDriverSinks::onReceiverDetected).
     void receiverDetected(GPSType type);
-    /// Why a session that does not end when idle has delivered no position for USEFUL_DATA_TIMEOUT; None once positions
-    /// arrive. The session keeps running.
+    /// Why a session that does not end when idle has delivered no position for USEFUL_DATA_TIMEOUT, or NoData when
+    /// one that ends when idle has delivered no useful data for that long; None once they arrive. The session keeps
+    /// running.
     void inputProblem(GPSInputProblem problem);
     /// identity is the receiver model and firmware, or empty when the family does not report them.
     void receiverReady(const QString& identity = {});

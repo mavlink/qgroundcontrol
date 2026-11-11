@@ -389,7 +389,7 @@ void GPSReceiverWorkerTest::_satelliteExpiryDoesNotRenewLiveness()
     QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);
     QCOMPARE(lastPositionAtUs.load(), GPSTestClock::START_US + durationUs(ExpiringSatelliteTransport::POSITION_AT));
     // The session ends one inactivity window after the last position; an expiry credited as traffic would extend it.
-    QCOMPARE(endedAtUs.load(), lastPositionAtUs.load() + durationUs(GPSReceiverWorker::USEFUL_DATA_TIMEOUT));
+    QCOMPARE(endedAtUs.load(), lastPositionAtUs.load() + durationUs(GPSReceiverWorker::IDLE_SESSION_TIMEOUT));
 }
 
 void GPSReceiverWorkerTest::_passiveInputProblems_data()
@@ -516,9 +516,60 @@ void GPSReceiverWorkerTest::_ancillaryTraffic()
     } else {
         // Blocks without useful data are activity, which never extends the inactivity window.
         QVERIFY(peer->streamReads > 1);
-        QCOMPARE(endedAtUs.load(), readyAtUs.load() + durationUs(GPSReceiverWorker::USEFUL_DATA_TIMEOUT));
+        QCOMPARE(endedAtUs.load(), readyAtUs.load() + durationUs(GPSReceiverWorker::IDLE_SESSION_TIMEOUT));
         QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);
     }
+}
+
+void GPSReceiverWorkerTest::_configuredReceiverRidesOutSilence()
+{
+    // Ending the session would reconnect and configure the receiver again, which makes a base survey its position
+    // again: a silence shorter than the idle limit is reported and the session goes on.
+    GPSTestClock clock(GPSTestClock::START_US);
+    auto model = std::make_shared<SBFReceiverModel>(clock);
+    SBFReceiverModel* peer = model.get();
+    GPSReceiverWorker worker(
+        [model, &clock](GPSCancelToken cancelToken) {
+            model->sendUsage = true;
+            auto transport = std::make_unique<ScriptedReceiver>(std::move(cancelToken), model.get());
+            transport->setClock(&clock);
+            return transport;
+        },
+        GPSType::Septentrio,
+        {.base = {.mode =
+                      GPSBaseStationConfig::Fixed{
+                          .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}},
+        nullptr, clock.source());
+    uint64_t readyAtUs = 0;
+    std::vector<std::pair<GPSInputProblem, uint64_t>> reports;
+    connect(
+        &worker, &GPSReceiverWorker::receiverReady, &worker, [&] { readyAtUs = clock.nowUs(); }, Qt::DirectConnection);
+    connect(
+        &worker, &GPSReceiverWorker::inputProblem, &worker,
+        [&](GPSInputProblem reported) {
+            reports.emplace_back(reported, clock.nowUs());
+            if (reported == GPSInputProblem::None) {
+                worker.stop();
+            }
+            // The receiver's output returns.
+            peer->streaming = true;
+        },
+        Qt::DirectConnection);
+    QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
+    worker.start();
+    const bool finished = worker.wait(TestTimeout::mediumDuration());
+    if (!finished) {
+        worker.stop();
+        QVERIFY(worker.wait(TestTimeout::longDuration()));
+    }
+    QVERIFY(finished);
+    QCOMPARE(errors.size(), 0);
+    QCOMPARE(reports.size(), 2);
+    QCOMPARE(reports[0].first, GPSInputProblem::NoData);
+    QCOMPARE(reports[1].first, GPSInputProblem::None);
+    const uint64_t silentUs = reports[0].second - readyAtUs;
+    QVERIFY(silentUs >= durationUs(GPSReceiverWorker::USEFUL_DATA_TIMEOUT));
+    QVERIFY(silentUs <= durationUs(GPSReceiverWorker::USEFUL_DATA_TIMEOUT + GPSReceiverWorker::RECEIVE_TIMEOUT));
 }
 
 void GPSReceiverWorkerTest::_configuredReceiverReportsReadyThenLoss_data()

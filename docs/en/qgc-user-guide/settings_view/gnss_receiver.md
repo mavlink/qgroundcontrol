@@ -75,6 +75,10 @@ Its corrections are sent while the receiver reports a valid base position: once 
 A Septentrio receiver is the exception: its corrections are sent as soon as it is configured.
 The corrections pass the [RTCM message filter](ntrip_rtk.md#correction-routing) before they reach vehicles.
 
+Connecting configures the receiver again, which restarts a survey.
+So when a configured base stops sending, QGroundControl reports after a few seconds that no data arrives and keeps the connection for 30 seconds.
+Only if the receiver stays silent that long does the connection end and, with **Connect automatically**, get made again.
+
 ::: info
 The _Survey-In_ process is a startup procedure required by RTK GPS systems to get an accurate estimate of the base station position.
 The process takes measurements over time, leading to increasing position accuracy.
