@@ -6,6 +6,7 @@
 #include <atomic>
 #include <cstring>
 #include <gst/gst.h>
+#include <gst/video/gstvideoaffinetransformationmeta.h>
 #include <gst/video/gstvideometa.h>
 #include <memory>
 #include <thread>
@@ -719,6 +720,125 @@ void GstQgcSinkTest::_testQgcQVideoSinkAppliesCropMeta()
     const QVideoFrameFormat format = videoSink.videoFrame().surfaceFormat();
     QCOMPARE(format.viewport(), QRect(1, 1, 2, 3));
     QCOMPARE(format.frameSize(), QSize(GstQgcTest::SinkHarness::kWidth, GstQgcTest::SinkHarness::kHeight));
+}
+
+void GstQgcSinkTest::_testQgcQVideoSinkShowsPictureOfLargerBuffer()
+{
+    QVideoSink videoSink;
+    GstQgcTest::SinkHarness harness(&videoSink);
+    QVERIFY(harness.isReady());
+
+    // As gst-va sends a stream cropped on its left or top: the GstVideoMeta has the uncropped size, larger than the
+    // caps, and the crop meta the picture in it.
+    constexpr int kBufferWidth = GstQgcTest::SinkHarness::kWidth + 2;
+    constexpr int kBufferHeight = GstQgcTest::SinkHarness::kHeight + 2;
+    QByteArray pixels(kBufferWidth * kBufferHeight * 4, Qt::Uninitialized);
+    for (qsizetype i = 0; i < pixels.size(); ++i) {
+        pixels[i] = static_cast<char>(i);
+    }
+    GstBuffer* const buffer = GstQgcTest::SinkHarness::makeFrame(GST_SECOND, static_cast<gsize>(pixels.size()));
+    gst_buffer_fill(buffer, 0, pixels.constData(), static_cast<gsize>(pixels.size()));
+    gst_buffer_add_video_meta(buffer, GST_VIDEO_FRAME_FLAG_NONE, GST_VIDEO_FORMAT_BGRA, kBufferWidth, kBufferHeight);
+    GstVideoCropMeta* const crop = gst_buffer_add_video_crop_meta(buffer);
+    crop->x = 1;
+    crop->y = 2;
+    crop->width = GstQgcTest::SinkHarness::kWidth;
+    crop->height = GstQgcTest::SinkHarness::kHeight;
+    QCOMPARE(harness.pushBuffer(buffer), GST_FLOW_OK);
+    QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
+
+    // Qt takes the viewport as a part of the frame, so the frame is the whole buffer.
+    QVideoFrame frame = videoSink.videoFrame();
+    QCOMPARE(frame.size(), QSize(kBufferWidth, kBufferHeight));
+    QCOMPARE(frame.surfaceFormat().viewport(),
+             QRect(1, 2, GstQgcTest::SinkHarness::kWidth, GstQgcTest::SinkHarness::kHeight));
+    QVERIFY(frame.map(QVideoFrame::ReadOnly));
+    const auto unmap = qScopeGuard([&frame] { frame.unmap(); });
+    QCOMPARE(QByteArray(reinterpret_cast<const char*>(frame.bits(0)), frame.mappedBytes(0)), pixels);
+}
+
+void GstQgcSinkTest::_testQgcQVideoSinkAppliesAffineTransformationMeta_data()
+{
+    // SurfaceTexture's transform, which amcvideodec turns into the meta: the texture coordinate of the picture's
+    // point (s, t), t upwards, is (xScale * s + xOffset, yScale * t + yOffset). turned: a quarter turn instead.
+    QTest::addColumn<float>("xScale");
+    QTest::addColumn<float>("xOffset");
+    QTest::addColumn<float>("yScale");
+    QTest::addColumn<float>("yOffset");
+    QTest::addColumn<bool>("turned");
+    QTest::addColumn<QString>("tag");
+    QTest::addColumn<QRect>("viewport");
+    QTest::addColumn<int>("rotation");
+    QTest::addColumn<bool>("mirrored");
+
+    const QRect whole(0, 0, GstQgcTest::SinkHarness::kWidth, GstQgcTest::SinkHarness::kHeight);
+    const int none = int(QtVideo::Rotation::None);
+    // The texture holds the picture top row first, which GL addresses from the bottom.
+    QTest::newRow("upright") << 1.0F << 0.0F << -1.0F << 1.0F << false << QString() << whole << none << false;
+    // The decoder's buffer is larger than the picture: its middle two columns and top three rows of four.
+    QTest::newRow("cropped") << 0.5F << 0.25F << -0.75F << 0.75F << false << QString() << QRect(1, 0, 2, 3) << none
+                             << false;
+    QTest::newRow("mirrored") << -1.0F << 1.0F << -1.0F << 1.0F << false << QString() << whole << none << true;
+    QTest::newRow("upside-down") << 1.0F << 0.0F << 1.0F << 0.0F << false << QString() << whole
+                                 << int(QtVideo::Rotation::Clockwise180) << true;
+    // The flip comes before the stream's own orientation: top to bottom, then a quarter turn clockwise.
+    QTest::newRow("upside-down, stream rotated") << 1.0F << 0.0F << 1.0F << 0.0F << false << QStringLiteral("rotate-90")
+                                                 << whole << int(QtVideo::Rotation::Clockwise90) << true;
+    // No viewport shows a turned texture: the frame is left as it came.
+    QTest::newRow("turned") << 1.0F << 0.0F << -1.0F << 1.0F << true << QString() << whole << none << false;
+}
+
+void GstQgcSinkTest::_testQgcQVideoSinkAppliesAffineTransformationMeta()
+{
+    QFETCH(float, xScale);
+    QFETCH(float, xOffset);
+    QFETCH(float, yScale);
+    QFETCH(float, yOffset);
+    QFETCH(bool, turned);
+    QFETCH(QString, tag);
+    QFETCH(QRect, viewport);
+    QFETCH(int, rotation);
+    QFETCH(bool, mirrored);
+
+    QVideoSink videoSink;
+    GstQgcTest::SinkHarness harness(&videoSink);
+    QVERIFY(harness.isReady());
+    if (!tag.isEmpty()) {
+        QVERIFY(harness.pushEvent(
+            gst_event_new_tag(gst_tag_list_new(GST_TAG_IMAGE_ORIENTATION, qPrintable(tag), nullptr))));
+    }
+
+    // As amcvideodec composes it: the inverse of the texture transform, then a flip of the y axis.
+    GstBuffer* const buffer = GstQgcTest::SinkHarness::makeFrame(GST_SECOND);
+    GstVideoAffineTransformationMeta* const meta = gst_buffer_add_video_affine_transformation_meta(buffer);
+    const gfloat inverse[16] = {1.0F / xScale, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F / yScale,     0.0F,
+                                0.0F,          0.0F, 0.0F, 1.0F, 0.0F, -xOffset / xScale, -yOffset / yScale,
+                                0.0F,          1.0F};
+    const gfloat quarterTurn[16] = {0.0F, 1.0F, 0.0F, 0.0F, -1.0F, 0.0F, 0.0F, 0.0F,
+                                    0.0F, 0.0F, 1.0F, 0.0F, 1.0F,  0.0F, 0.0F, 1.0F};
+    const gfloat yFlip[16] = {1.0F, 0.0F, 0.0F, 0.0F, 0.0F, -1.0F, 0.0F, 0.0F,
+                              0.0F, 0.0F, 1.0F, 0.0F, 0.0F, 1.0F,  0.0F, 1.0F};
+    gst_video_affine_transformation_meta_apply_matrix(meta, turned ? quarterTurn : inverse);
+    gst_video_affine_transformation_meta_apply_matrix(meta, yFlip);
+    if (turned) {
+        // Once per process.
+        ignoreLogMessage("Video.GStreamer.FrameMap", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("GstVideoAffineTransformationMeta")));
+    }
+    QCOMPARE(harness.pushBuffer(buffer), GST_FLOW_OK);
+    QCoreApplication::sendPostedEvents(&videoSink, QEvent::MetaCall);
+
+    const QVideoFrame frame = videoSink.videoFrame();
+    QVERIFY(frame.isValid());
+    QCOMPARE(frame.surfaceFormat().viewport(), viewport);
+    QCOMPARE(int(frame.rotation()), rotation);
+    QCOMPARE(frame.mirrored(), mirrored);
+    // What the viewport leaves out is the padding squeezed into the texture with the picture, which keeps its size.
+    gint pictureWidth = 0;
+    gint pictureHeight = 0;
+    g_object_get(harness.element(), "picture-width", &pictureWidth, "picture-height", &pictureHeight, nullptr);
+    QCOMPARE(QSize(pictureWidth, pictureHeight),
+             QSize(GstQgcTest::SinkHarness::kWidth, GstQgcTest::SinkHarness::kHeight));
 }
 
 void GstQgcSinkTest::_testQgcQVideoSinkAppliesOrientationTag_data()

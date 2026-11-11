@@ -107,6 +107,17 @@ void QGCQVideoSinkController::releaseFrame()
     }
 }
 
+QSize QGCQVideoSinkController::pictureSize() const
+{
+    if (!_element) {
+        return {};
+    }
+    gint width = 0;
+    gint height = 0;
+    g_object_get(_element.get(), "picture-width", &width, "picture-height", &height, nullptr);
+    return ((width > 0) && (height > 0)) ? QSize(width, height) : QSize();
+}
+
 void QGCQVideoSinkController::_releaseElementBinding()
 {
     if (!_element || _bindingReleased)

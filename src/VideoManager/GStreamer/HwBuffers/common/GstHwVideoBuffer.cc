@@ -24,7 +24,7 @@ GstHwVideoBuffer::GstHwVideoBuffer(QVideoFrame::HandleType handleType, GstSample
     , _format(std::move(format))
     , _memoryPixelFormat(_format.pixelFormat())
 {
-    // Crop is applied by the renderer via QVideoFrameFormat::viewport(); see applyCropMeta (GstQgcFrameMap).
+    // Crop is applied by the renderer via QVideoFrameFormat::viewport(); see frameGeometry (GstQgcFrameMap).
 }
 
 GstHwVideoBuffer::~GstHwVideoBuffer()

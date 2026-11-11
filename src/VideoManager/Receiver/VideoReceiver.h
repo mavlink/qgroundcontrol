@@ -104,8 +104,9 @@ public:
     static QString recordingComment();
     static bool isValidFileFormat(int format);
     /// The size @p frame is presented at: its format's viewport (the picture without decoder padding or crop), else the
-    /// whole frame, turned by the rotation Qt presents it with. Invalid for an invalid frame.
-    static QSize presentedSize(const QVideoFrame& frame);
+    /// whole frame, turned by the rotation Qt presents it with. Invalid for an invalid frame. A valid @p pictureSize
+    /// stands in for the viewport's, which is smaller where it leaves out the padding of a squeezed texture.
+    static QSize presentedSize(const QVideoFrame& frame, QSize pictureSize = {});
 
     QString name() const { return _name; }
 

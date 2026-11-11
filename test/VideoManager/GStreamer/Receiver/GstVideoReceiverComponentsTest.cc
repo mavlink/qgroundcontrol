@@ -246,18 +246,25 @@ void GstVideoReceiverComponentsTest::_testPresentedSize_data()
     QTest::addColumn<QRect>("viewport");   // null: the format's default, the whole frame
     QTest::addColumn<int>("frameRotation");
     QTest::addColumn<int>("formatRotation");
+    QTest::addColumn<QSize>("pictureSize");  // invalid: the viewport's
     QTest::addColumn<QSize>("presented");
 
     // A decoder's buffer padded to its alignment, with crop meta: the viewport holds the 1080-row picture.
     const QSize padded(1920, 1088);
     const QRect picture(0, 0, 1920, 1080);
-    QTest::newRow("whole frame") << QSize(320, 240) << QRect() << 0 << 0 << QSize(320, 240);
-    QTest::newRow("padded buffer") << padded << picture << 0 << 0 << QSize(1920, 1080);
-    QTest::newRow("cropped, upside down") << QSize(640, 480) << QRect(8, 8, 600, 400) << 180 << 0 << QSize(600, 400);
-    QTest::newRow("padded, frame turned 90") << padded << picture << 90 << 0 << QSize(1080, 1920);
-    QTest::newRow("padded, format turned 270") << padded << picture << 0 << 270 << QSize(1080, 1920);
-    QTest::newRow("turns adding up to 180") << padded << picture << 90 << 90 << QSize(1920, 1080);
-    QTest::newRow("no frame") << QSize() << QRect() << 0 << 0 << QSize();
+    // That buffer squeezed into a texture of the picture's size: the viewport leaves its padding out.
+    const QSize squeezed(1920, 1080);
+    const QRect unpadded(0, 0, 1920, 1072);
+    QTest::newRow("whole frame") << QSize(320, 240) << QRect() << 0 << 0 << QSize() << QSize(320, 240);
+    QTest::newRow("padded buffer") << padded << picture << 0 << 0 << QSize() << QSize(1920, 1080);
+    QTest::newRow("cropped, upside down")
+        << QSize(640, 480) << QRect(8, 8, 600, 400) << 180 << 0 << QSize() << QSize(600, 400);
+    QTest::newRow("padded, frame turned 90") << padded << picture << 90 << 0 << QSize() << QSize(1080, 1920);
+    QTest::newRow("padded, format turned 270") << padded << picture << 0 << 270 << QSize() << QSize(1080, 1920);
+    QTest::newRow("turns adding up to 180") << padded << picture << 90 << 90 << QSize() << QSize(1920, 1080);
+    QTest::newRow("squeezed texture") << squeezed << unpadded << 0 << 0 << squeezed << QSize(1920, 1080);
+    QTest::newRow("squeezed, frame turned 90") << squeezed << unpadded << 90 << 0 << squeezed << QSize(1080, 1920);
+    QTest::newRow("no frame") << QSize() << QRect() << 0 << 0 << QSize(1920, 1080) << QSize();
 }
 
 void GstVideoReceiverComponentsTest::_testPresentedSize()
@@ -266,6 +273,7 @@ void GstVideoReceiverComponentsTest::_testPresentedSize()
     QFETCH(QRect, viewport);
     QFETCH(int, frameRotation);
     QFETCH(int, formatRotation);
+    QFETCH(QSize, pictureSize);
     QFETCH(QSize, presented);
 
     QVideoFrame frame;
@@ -279,7 +287,7 @@ void GstVideoReceiverComponentsTest::_testPresentedSize()
         frame.setRotation(static_cast<QtVideo::Rotation>(frameRotation));
     }
 
-    QCOMPARE(VideoReceiver::presentedSize(frame), presented);
+    QCOMPARE(VideoReceiver::presentedSize(frame, pictureSize), presented);
 }
 
 namespace {

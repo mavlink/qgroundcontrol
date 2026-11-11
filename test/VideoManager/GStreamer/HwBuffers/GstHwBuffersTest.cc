@@ -2,6 +2,7 @@
 
 #ifdef QGC_GST_STREAMING
 
+#include <cstring>
 #include <gst/gst.h>
 #include <gst/video/gstvideometa.h>
 #include <memory>
@@ -400,6 +401,76 @@ void GstHwBuffersTest::_testCpuCopyOddDimensions()
     }
 }
 
+void GstHwBuffersTest::_testCpuCopyOfPaddedBuffer_data()
+{
+    QTest::addColumn<int>("metaWidth");
+    QTest::addColumn<QSize>("frameSize");
+
+    // A v4l2 stateless decoder's 1080p frame: 1080 rows in the caps, 1088 in the buffer's GstVideoMeta.
+    QTest::newRow("taller") << 32 << QSize(32, 1080);
+    // Padded columns as well, so the source's strides and plane offsets differ from the destination's.
+    QTest::newRow("taller-and-wider") << 48 << QSize(32, 1080);
+    // The buffer's whole frame, as the sink asks for it (frameGeometry()).
+    QTest::newRow("whole-frame") << 48 << QSize(48, 1088);
+}
+
+void GstHwBuffersTest::_testCpuCopyOfPaddedBuffer()
+{
+    QFETCH(int, metaWidth);
+    QFETCH(QSize, frameSize);
+    constexpr int kMetaRows = 1088;
+
+    GstVideoInfo capsInfo;
+    GstVideoInfo metaInfo;
+    GstVideoInfo frameInfo;
+    QVERIFY(gst_video_info_set_format(&capsInfo, GST_VIDEO_FORMAT_NV12, 32, 1080));
+    QVERIFY(gst_video_info_set_format(&metaInfo, GST_VIDEO_FORMAT_NV12, metaWidth, kMetaRows));
+    QVERIFY(gst_video_info_set_format(&frameInfo, GST_VIDEO_FORMAT_NV12, frameSize.width(), frameSize.height()));
+    GstBuffer* const buffer = gst_buffer_new_allocate(nullptr, GST_VIDEO_INFO_SIZE(&metaInfo), nullptr);
+    QVERIFY(buffer);
+    const auto bufferGuard = qScopeGuard([&] { gst_buffer_unref(buffer); });
+    gst_buffer_add_video_meta_full(buffer, GST_VIDEO_FRAME_FLAG_NONE, GST_VIDEO_FORMAT_NV12, metaWidth, kMetaRows,
+                                   GST_VIDEO_INFO_N_PLANES(&metaInfo), metaInfo.offset, metaInfo.stride);
+    GstMapInfo source;
+    QVERIFY(gst_buffer_map(buffer, &source, GST_MAP_READWRITE));
+    const auto sourceGuard = qScopeGuard([&] { gst_buffer_unmap(buffer, &source); });
+    for (gsize i = 0; i < source.size; ++i) {
+        source.data[i] = static_cast<guint8>(i % 251);
+    }
+
+    // The copy's destination comes from the pool: hand the pool one with guard bytes behind the frame, which a copy of
+    // the meta's rows would overwrite.
+    const QVideoFrameFormat format(frameSize, QVideoFrameFormat::Format_NV12);
+    constexpr char kGuardByte = char(0xA5);
+    constexpr qsizetype guardBytes = 1024;
+    const auto frameBytes = static_cast<qsizetype>(GST_VIDEO_INFO_SIZE(&frameInfo));
+    QByteArray backing;
+    backing.reserve(frameBytes + 1 + guardBytes);
+    backing.resize(frameBytes);
+    char* const guard = backing.data() + frameBytes + 1;
+    std::memset(guard, kGuardByte, static_cast<std::size_t>(guardBytes));
+    CpuVideoFramePool::instance().releaseBacking(format.frameSize(), format.pixelFormat(), std::move(backing));
+
+    QVideoFrame frame = CpuVideoFramePool::copyFromBuffer(buffer, capsInfo, format);
+    QVERIFY(frame.isValid());
+    QVERIFY(frame.map(QVideoFrame::ReadOnly));
+    const auto frameGuard = qScopeGuard([&] { frame.unmap(); });
+    QCOMPARE(reinterpret_cast<const char*>(frame.bits(0)), guard - frameBytes - 1);
+    QCOMPARE(frame.planeCount(), 2);
+    for (int plane = 0; plane < frame.planeCount(); ++plane) {
+        // NV12: both planes hold a byte per column in a row, the chroma plane half the rows.
+        const int rows = (plane == 0) ? frameSize.height() : (frameSize.height() / 2);
+        QCOMPARE(frame.mappedBytes(plane), rows * frame.bytesPerLine(plane));
+        const auto* const src = reinterpret_cast<const char*>(source.data + metaInfo.offset[plane]);
+        const auto* const dst = reinterpret_cast<const char*>(frame.bits(plane));
+        for (int row = 0; row < rows; ++row) {
+            QCOMPARE(QByteArray(dst + (row * frame.bytesPerLine(plane)), frameSize.width()),
+                     QByteArray(src + (row * metaInfo.stride[plane]), frameSize.width()));
+        }
+    }
+    QCOMPARE(QByteArray(guard, guardBytes), QByteArray(guardBytes, kGuardByte));
+}
+
 namespace {
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
@@ -663,26 +734,58 @@ void GstHwBuffersTest::_testTexturePadsPicture()
 #endif
 }
 
-void GstHwBuffersTest::_testHwBufferCropMatrixFromVideoCropMeta()
+void GstHwBuffersTest::_testFrameGeometryFollowsBufferMetas_data()
 {
-    // GstVideoCropMeta reaches the frame as QVideoFrameFormat::viewport() (applyCropMeta), not through
+    QTest::addColumn<QSize>("metaSize");  // invalid: no GstVideoMeta
+    QTest::addColumn<QRect>("crop");      // null: no GstVideoCropMeta
+    QTest::addColumn<QSize>("frameSize");
+    QTest::addColumn<QRect>("viewport");
+
+    // Under 400x200 caps.
+    const QSize capsSize(400, 200);
+    const QRect capsRect(QPoint(0, 0), capsSize);
+    QTest::newRow("no-metas") << QSize() << QRect() << capsSize << capsRect;
+    QTest::newRow("meta-of-caps-size") << capsSize << QRect() << capsSize << capsRect;
+    // v4l2 stateless decoders: the meta has the coded size, and the picture is its top-left part.
+    QTest::newRow("padded") << QSize(400, 208) << QRect() << QSize(400, 208) << capsRect;
+    // gst-va with a left or top crop: the meta has the uncropped size, and the crop meta the picture in it.
+    QTest::newRow("padded-and-cropped") << QSize(416, 208) << QRect(8, 4, 400, 200) << QSize(416, 208)
+                                        << QRect(8, 4, 400, 200);
+    QTest::newRow("cropped") << QSize() << QRect(100, 50, 200, 100) << capsSize << QRect(100, 50, 200, 100);
+    // No frame gst_video_frame_map() would map.
+    QTest::newRow("meta-smaller-than-caps") << QSize(400, 192) << QRect() << capsSize << capsRect;
+}
+
+void GstHwBuffersTest::_testFrameGeometryFollowsBufferMetas()
+{
+    QFETCH(QSize, metaSize);
+    QFETCH(QRect, crop);
+    QFETCH(QSize, frameSize);
+    QFETCH(QRect, viewport);
+
+    // The geometry reaches the frame as QVideoFrameFormat's frame size and viewport, not through
     // externalTextureMatrix.
     GstVideoInfo info;
-    GstSample* sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 400, 200, &info);
+    GstSample* const sample = GstTest::makeVideoSample(GST_VIDEO_FORMAT_NV12, 400, 200, &info);
     QVERIFY(sample);
-    GstBuffer* buf = gst_sample_get_buffer(sample);
-    GstVideoCropMeta* crop = gst_buffer_add_video_crop_meta(buf);
-    crop->x = 100;
-    crop->y = 50;
-    crop->width = 200;
-    crop->height = 100;
+    const auto sampleGuard = qScopeGuard([sample] { gst_sample_unref(sample); });
+    GstBuffer* const buffer = gst_sample_get_buffer(sample);
+    if (metaSize.isValid()) {
+        gst_buffer_add_video_meta(buffer, GST_VIDEO_FRAME_FLAG_NONE, GST_VIDEO_FORMAT_NV12,
+                                  static_cast<guint>(metaSize.width()), static_cast<guint>(metaSize.height()));
+    }
+    if (!crop.isNull()) {
+        GstVideoCropMeta* const cropMeta = gst_buffer_add_video_crop_meta(buffer);
+        cropMeta->x = static_cast<guint>(crop.x());
+        cropMeta->y = static_cast<guint>(crop.y());
+        cropMeta->width = static_cast<guint>(crop.width());
+        cropMeta->height = static_cast<guint>(crop.height());
+    }
 
-    QVideoFrameFormat in(QSize(400, 200), QVideoFrameFormat::Format_NV12);
-    QVideoFrameFormat out = applyCropMeta(in, buf);
-    QCOMPARE(out.viewport(), QRect(100, 50, 200, 100));
-    QCOMPARE(out.frameSize(), QSize(400, 200));  // unchanged
-
-    gst_sample_unref(sample);
+    const QVideoFrameFormat format = withFrameGeometry(
+        QVideoFrameFormat(QSize(400, 200), QVideoFrameFormat::Format_NV12), frameGeometry(buffer, info));
+    QCOMPARE(format.frameSize(), frameSize);
+    QCOMPARE(format.viewport(), viewport);
 }
 
 void GstHwBuffersTest::_testTelemetryMapDurationEwma()

@@ -7,6 +7,7 @@
 #include <new>
 #include <utility>
 
+#include <QtCore/QRect>
 #include <QtCore/QSize>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
@@ -52,6 +53,13 @@ struct PrivState
     std::atomic<bool> caps_valid{false};
     GstVideoInfo video_info = {};
     QVideoFrameFormat format;
+    // The geometry of the last buffer and format for frames of it. Buffers of one stream share theirs, so show_frame
+    // rebuilds the format only when a buffer's differs; set_caps starts from the caps' own.
+    FrameGeometry frame_geometry;
+    QVideoFrameFormat frame_format;
+    // frame_geometry's pictureSize, for the "picture-width" and "picture-height" properties.
+    std::atomic<int> picture_width{0};
+    std::atomic<int> picture_height{0};
     // Written by start() under GST_OBJECT_LOCK and snapshotted by show_frame, which adds the current DMABuf display.
     HwVideoBufferContext hw_context = {};
     // Whether the negotiated caps carry a GPU memory feature. Without one, show_frame skips path selection for frames
@@ -211,6 +219,8 @@ enum
     PROP_FRAMES_DROPPED,
     PROP_FRAMES_DELIVERED,
     PROP_FRAME_STATS,
+    PROP_PICTURE_WIDTH,
+    PROP_PICTURE_HEIGHT,
 };
 
 G_DEFINE_FINAL_TYPE(GstQgcQVideoSink, gst_qgc_q_video_sink, GST_TYPE_VIDEO_SINK)
@@ -295,6 +305,12 @@ static void gst_qgc_q_video_sink_get_property(GObject* obj, guint id, GValue* va
         case PROP_FRAME_STATS:
             g_value_take_boxed(val, priv_of(self)->counters.frameStats());
             break;
+        case PROP_PICTURE_WIDTH:
+            g_value_set_int(val, priv_of(self)->picture_width.load(std::memory_order_relaxed));
+            break;
+        case PROP_PICTURE_HEIGHT:
+            g_value_set_int(val, priv_of(self)->picture_height.load(std::memory_order_relaxed));
+            break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(obj, id, pspec);
             break;
@@ -348,6 +364,10 @@ static gboolean gst_qgc_q_video_sink_set_caps(GstBaseSink* bsink, GstCaps* caps)
 
     p->video_info = parsedInfo;
     p->format = std::move(fmt);
+    p->frame_geometry = {.frameSize = QSize(w, h), .picture = QRect(0, 0, w, h), .pictureSize = QSize(w, h)};
+    p->picture_width.store(w, std::memory_order_relaxed);
+    p->picture_height.store(h, std::memory_order_relaxed);
+    p->frame_format = p->format;
     gst_clear_caps(&p->cached_caps);
     // Hold the negotiated caps verbatim: rebuilding from video_info drops DRM modifiers and other
     // negotiated fields the downstream frame mapping relies on.
@@ -389,14 +409,13 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
     // video/x-raw (vtdec's CoreVideo/IOSurface buffers, V4L2 dmabuf export), so frames in other memory still try it.
     hwCtx.gpuEnabled = hwCtx.gpuEnabled && (p->gpu_caps || !nothing_to_import(buf));
 
-    // Build a cropped format copy only when crop meta is present (rare); otherwise pass
-    // p->format by reference to avoid a per-frame QVideoFrameFormat refcount bump.
-    QVideoFrameFormat croppedFmt;
-    const bool hasCrop = (gst_buffer_get_video_crop_meta(buf) != nullptr);
-    if (hasCrop) {
-        croppedFmt = applyCropMeta(p->format, buf);
+    if (const FrameGeometry geometry = frameGeometry(buf, p->video_info); geometry != p->frame_geometry) {
+        p->frame_geometry = geometry;
+        p->frame_format = withFrameGeometry(p->format, geometry);
+        p->picture_width.store(geometry.pictureSize.width(), std::memory_order_relaxed);
+        p->picture_height.store(geometry.pictureSize.height(), std::memory_order_relaxed);
     }
-    MappedFrame mapped = mapSampleToFrame(buf, p->cached_caps, p->video_info, hasCrop ? croppedFmt : p->format, hwCtx,
+    MappedFrame mapped = mapSampleToFrame(buf, p->cached_caps, p->video_info, p->frame_format, hwCtx,
                                           p->pinned_cpu_frames, p->path_session.pathCache());
     if (!mapped.frame.isValid()) {
         p->counters.noteDropped();
@@ -414,6 +433,7 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
     p->path_session.onMapped();
 
     applyOrientationAndTiming(mapped.frame, buf, p->stream_orientation.load(std::memory_order_relaxed));
+    applyFlips(mapped.frame, p->frame_geometry);
 
     const QSize frameSize = mapped.frame.size();
     const GstQgc::FrameDelivery::Result delivery = p->delivery.deliver(std::move(mapped.frame));
@@ -592,6 +612,18 @@ static void gst_qgc_q_video_sink_class_init(GstQgcQVideoSinkClass* klass)
                            "imported and the CPU can't read) and superseded-frames (delivered frames a newer one "
                            "replaced before the QVideoSink took them).",
                            GST_TYPE_STRUCTURE, (GParamFlags) (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS)));
+
+    // A frame's viewport is smaller where a transformation meta leaves out the padding of a squeezed texture.
+    g_object_class_install_property(
+        gobject_class, PROP_PICTURE_WIDTH,
+        g_param_spec_int("picture-width", "Picture width",
+                         "Width of the picture in the last buffer, before its orientation: the crop meta's, else the "
+                         "caps'. 0 before caps.",
+                         0, G_MAXINT, 0, (GParamFlags) (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS)));
+    g_object_class_install_property(
+        gobject_class, PROP_PICTURE_HEIGHT,
+        g_param_spec_int("picture-height", "Picture height", "Height of that picture.", 0, G_MAXINT, 0,
+                         (GParamFlags) (G_PARAM_READABLE | G_PARAM_STATIC_STRINGS)));
 
     gst_element_class_set_static_metadata(element_class, "QGC QVideoSink", "Sink/Video",
                                           "Pushes decoded GstVideoFrames into a Qt QVideoSink",

@@ -50,6 +50,8 @@ private slots:
     void _testCpuLayoutSizesPlanesByComponent();
     void _testCpuCopyOddDimensions_data();
     void _testCpuCopyOddDimensions();
+    void _testCpuCopyOfPaddedBuffer_data();
+    void _testCpuCopyOfPaddedBuffer();
     void _testQGCRhiCaptureCacheLifecycle();
     void _testPreflightVerdictsDroppedWithRhi();
     void _testGpuBinPreferenceParse_data();
@@ -59,7 +61,8 @@ private slots:
     void _testHwBufferCropMatrixIdentityWithoutMeta();
     void _testTexturePadsPicture_data();
     void _testTexturePadsPicture();
-    void _testHwBufferCropMatrixFromVideoCropMeta();
+    void _testFrameGeometryFollowsBufferMetas_data();
+    void _testFrameGeometryFollowsBufferMetas();
     void _testHwVideoBufferCpuMapFallback();
     void _testHwVideoBufferCpuMapRefusesForeignLayout_data();
     void _testHwVideoBufferCpuMapRefusesForeignLayout();

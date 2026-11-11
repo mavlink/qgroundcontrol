@@ -205,10 +205,14 @@ void GstVideoReceiver::_bindVideoSink(QVideoSink* videoSink)
     _sinkController->followWindowVisibility(videoOutput());
     // Per frame, not on QVideoSink::videoSizeChanged: that follows the frame size, which for a decoder's buffer cropped
     // by crop meta is larger than the picture, and misses a viewport that changes on its own. Frames reach the sink on
-    // this thread.
+    // this thread. The picture's size is the display sink's: a viewport that leaves out the padding of a squeezed
+    // texture is smaller.
+    const auto sizeOf = [this](const QVideoFrame& frame) {
+        return presentedSize(frame, _sinkController ? _sinkController->pictureSize() : QSize());
+    };
     _videoSizeConnection = connect(videoSink, &QVideoSink::videoFrameChanged, this,
-                                   [this](const QVideoFrame& frame) { setVideoSize(presentedSize(frame)); });
-    if (const QSize size = presentedSize(videoSink->videoFrame()); size.isValid()) {
+                                   [this, sizeOf](const QVideoFrame& frame) { setVideoSize(sizeOf(frame)); });
+    if (const QSize size = sizeOf(videoSink->videoFrame()); size.isValid()) {
         setVideoSize(size);
     }
 }

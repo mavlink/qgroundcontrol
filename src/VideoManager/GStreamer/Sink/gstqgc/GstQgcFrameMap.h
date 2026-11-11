@@ -4,6 +4,8 @@
 #include <gst/video/video-info.h>
 #include <gst/video/video.h>
 
+#include <QtCore/QRect>
+#include <QtCore/QSize>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoFrameFormat>
 
@@ -28,8 +30,33 @@ void applyOrientationAndTiming(QVideoFrame& frame, GstBuffer* buffer, int stream
 /// infers BT.601/709 from height when caps omit it.
 void applyColorimetry(QVideoFrameFormat& format, const GstVideoInfo& info, GstCaps* caps);
 
-/// Apply video crop meta to @p format's viewport. Pass-through when no crop meta present.
-QVideoFrameFormat applyCropMeta(QVideoFrameFormat format, GstBuffer* buffer);
+/// The frame a buffer holds and the picture in it, as upstream's sinks read them (glimagesink, waylandsink): the frame
+/// is as large as the buffer's GstVideoMeta, which a decoder pads beyond the caps (1088 rows for 1080) or leaves
+/// uncropped, and the picture is its GstVideoCropMeta, else the caps' size at the frame's origin. A
+/// GstVideoAffineTransformationMeta of scales, translations and flips, as Android's amcvideodec attaches for its
+/// SurfaceTexture's crop and orientation, narrows the picture to the part it shows and tells which way to flip it.
+/// That part is the whole picture, squeezed with the decoder's padding into a texture of the caps' size (1080 rows
+/// and 8 of padding into 1080, of which 1072 show), so the picture keeps the size it had: pictureSize.
+struct FrameGeometry
+{
+    QSize frameSize;
+    QRect picture;
+    QSize pictureSize;
+    bool flipHorizontally = false;
+    bool flipVertically = false;
+
+    friend bool operator==(const FrameGeometry&, const FrameGeometry&) = default;
+};
+
+/// @p buffer's geometry under caps of @p capsInfo; the caps' own without any of those metas. An affine meta that also
+/// turns, shears or projects is left out.
+FrameGeometry frameGeometry(GstBuffer* buffer, const GstVideoInfo& capsInfo);
+
+/// Flips @p frame's picture as @p geometry tells, ahead of the rotation and mirroring the frame already has.
+void applyFlips(QVideoFrame& frame, const FrameGeometry& geometry);
+
+/// @p format for frames of @p geometry: its frame size, with the picture as the viewport.
+QVideoFrameFormat withFrameGeometry(QVideoFrameFormat format, const FrameGeometry& geometry);
 
 /// Sample-to-frame result (GPU wins when it can, CPU fallback). mapSampleToFrame() does NOT take the caller's refs on
 /// @p buffer/@p caps: a GPU frame holds its own GstSample, a zero-copy CPU frame its own buffer ref. A frame no GPU

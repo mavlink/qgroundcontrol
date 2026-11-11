@@ -34,4 +34,8 @@ PlaneLayout planeLayout(const GstVideoInfo& info, const GstVideoMeta* vmeta, int
 /// any component stored in the plane.
 int planeRowBytes(const GstVideoInfo& info, int plane);
 
+/// Gives @p info the size @p width x @p height, with gst-video's default plane layout for it; format, colorimetry and
+/// frame rate stay. False, with @p info unchanged, when the format has no layout of that size.
+bool setFrameSize(GstVideoInfo& info, int width, int height);
+
 }  // namespace GstHw

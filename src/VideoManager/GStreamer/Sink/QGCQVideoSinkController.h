@@ -5,6 +5,7 @@
 #include <QtCore/QMetaObject>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
+#include <QtCore/QSize>
 #include <QtQuick/QQuickItem>
 
 #include "GstScoped.h"
@@ -45,6 +46,10 @@ public:
     /// Clear the bound QVideoSink's current frame, and the GstSample/decoder buffer it pins, but keep the binding for
     /// the next stream.
     void releaseFrame();
+
+    /// The size of the picture in the element's last buffer, before its orientation; invalid before the first caps.
+    /// A frame's viewport is smaller where a transformation meta leaves out the padding of a squeezed texture.
+    QSize pictureSize() const;
 
 private:
     void _releaseElementBinding();

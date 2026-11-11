@@ -42,14 +42,14 @@ bool VideoReceiver::isValidFileFormat(int format)
     return (format >= static_cast<int>(FileFormat::Mkv)) && (format <= static_cast<int>(FileFormat::Mp4));
 }
 
-QSize VideoReceiver::presentedSize(const QVideoFrame& frame)
+QSize VideoReceiver::presentedSize(const QVideoFrame& frame, QSize pictureSize)
 {
     if (!frame.isValid()) {
         return {};
     }
     const QVideoFrameFormat format = frame.surfaceFormat();
     const QRect viewport = format.viewport();
-    const QSize size = viewport.isValid() ? viewport.size() : frame.size();
+    const QSize size = pictureSize.isValid() ? pictureSize : (viewport.isValid() ? viewport.size() : frame.size());
     // As Qt's qRotatedFramePresentationSize(): the frame's and the format's rotation add up; mirroring keeps the size.
     const int degrees = static_cast<int>(frame.rotation()) + static_cast<int>(format.rotation());
     return ((degrees % 180) != 0) ? size.transposed() : size;

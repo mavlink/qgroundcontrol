@@ -22,6 +22,7 @@
 #include "GStreamer.h"
 #include "GStreamerTestHelpers.h"
 #include "GstHwVideoInfo.h"
+#include "GstQgcFrameMap.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
@@ -275,6 +276,8 @@ void GstHwBuffersGlReadbackTest::_testNv12PlanesReadBack_data()
     const QString legacy = QStringLiteral("video/x-raw(memory:DMABuf),format=NV12,width=%1,height=%2");
     QTest::newRow("one dma-buf, implicit modifier") << false << legacy.arg(kWidth).arg(kHeight);
     QTest::newRow("dma-buf per plane, implicit modifier") << true << legacy.arg(kWidth).arg(kHeight);
+    // The buffer's GstVideoMeta keeps the padded size: the import takes the whole frame, and the viewport the picture.
+    QTest::newRow("one dma-buf, padded beyond the caps") << false << legacy.arg(kWidth).arg(kHeight - 8);
 #if GST_CHECK_VERSION(1, 24, 0)
     const QString linearDrm =
         QStringLiteral("video/x-raw(memory:DMABuf),format=DMA_DRM,drm-format=NV12,width=%1,height=%2");
@@ -334,10 +337,15 @@ void GstHwBuffersGlReadbackTest::_testNv12PlanesReadBack()
     GstVideoInfo info;
     QVERIFY(GstHw::dmaDrmAwareVideoInfo(sampleCaps.get(), &info));
     GstSample* sample = gst_sample_new(buffer, sampleCaps.get(), nullptr, nullptr);
-    GstDmaBufVideoBuffer frame(sample, info, QVideoFrameFormat(QSize(kWidth, kHeight), QVideoFrameFormat::Format_NV12),
-                               static_cast<EGLDisplay>(QGCRhiCapture::qtEglDisplay()));
+    // The format the sink gives the frame.
+    const QSize capsSize(GST_VIDEO_INFO_WIDTH(&info), GST_VIDEO_INFO_HEIGHT(&info));
+    GstDmaBufVideoBuffer frame(
+        sample, info,
+        withFrameGeometry(QVideoFrameFormat(capsSize, QVideoFrameFormat::Format_NV12), frameGeometry(buffer, info)),
+        static_cast<EGLDisplay>(QGCRhiCapture::qtEglDisplay()));
     gst_sample_unref(sample);
     QVERIFY(frame.validatePlaneHandles());
+    QCOMPARE(frame.format().viewport(), QRect(QPoint(0, 0), capsSize));
 
     QVideoFrameTexturesUPtr none;
     const QVideoFrameTexturesUPtr textures = frame.mapTextures(*rhi, none);
@@ -537,11 +545,21 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameReadsBack()
 #endif
 }
 
+void GstHwBuffersGlReadbackTest::_testGlMemoryFrameToImage_data()
+{
+    QTest::addColumn<int>("capsHeight");
+
+    QTest::newRow("caps of the texture's size") << 48;
+    // As glupload hands on a dma-buf padded beyond the caps: the texture and its GstVideoMeta keep the padded size.
+    QTest::newRow("texture padded beyond the caps") << 40;
+}
+
 void GstHwBuffersGlReadbackTest::_testGlMemoryFrameToImage()
 {
 #if !defined(QGC_TEST_GLMEMORY_READBACK)
     QSKIP("GLMemory GPU path on EGL not compiled in this build");
 #else
+    QFETCH(int, capsHeight);
     QRhi* rhi = _glRhi();
     if (!rhi) {
         QSKIP(qPrintable(_rhiUnavailable));
@@ -584,16 +602,28 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameToImage()
     QVERIFY(gst_video_info_from_caps(&info, gst_sample_get_caps(cpuSample)));
     const QVideoFrameFormat format(QSize(GST_VIDEO_INFO_WIDTH(&info), GST_VIDEO_INFO_HEIGHT(&info)),
                                    QVideoFrameFormat::Format_RGBA8888);
+    // The frame as the sink makes it under caps of capsHeight rows.
+    GstVideoInfo capsInfo = info;
+    QVERIFY(GstHw::setFrameSize(capsInfo, GST_VIDEO_INFO_WIDTH(&info), capsHeight));
+    const QSize capsSize(GST_VIDEO_INFO_WIDTH(&capsInfo), capsHeight);
+    const QVideoFrameFormat gpuFormat =
+        withFrameGeometry(QVideoFrameFormat(capsSize, QVideoFrameFormat::Format_RGBA8888),
+                          frameGeometry(gst_sample_get_buffer(gpuSample), capsInfo));
     HwVideoBufferContext context;
     context.gpuEnabled = true;
     HwVideoBufferPath path = HwVideoBufferPath::None;
     std::unique_ptr<QHwVideoBuffer> buffer = makeHwVideoBuffer(
-        gst_sample_get_buffer(gpuSample), gst_sample_get_caps(gpuSample), info, format, context, path);
+        gst_sample_get_buffer(gpuSample), gst_sample_get_caps(gpuSample), capsInfo, gpuFormat, context, path);
     QVERIFY2(buffer, "the GLMemory sample did not create a hardware video buffer");
     QCOMPARE(path, HwVideoBufferPath::GlMemory);
 
-    const QImage actual = QVideoFrame(std::make_unique<GstTest::RhiBoundVideoBuffer>(std::move(buffer), rhi)).toImage();
-    const QImage expected = CpuVideoFramePool::copyFromBuffer(gst_sample_get_buffer(cpuSample), info, format).toImage();
+    // toImage() converts the whole frame; the viewport is the picture.
+    const QImage actual = QVideoFrame(std::make_unique<GstTest::RhiBoundVideoBuffer>(std::move(buffer), rhi))
+                              .toImage()
+                              .copy(gpuFormat.viewport());
+    const QImage expected = CpuVideoFramePool::copyFromBuffer(gst_sample_get_buffer(cpuSample), info, format)
+                                .toImage()
+                                .copy(QRect(QPoint(0, 0), capsSize));
     const QString mismatch = GstTest::firstImageMismatch(actual, expected, /*tolerance=*/2);
     QVERIFY2(mismatch.isEmpty(), qPrintable(mismatch));
 #endif
