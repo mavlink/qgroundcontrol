@@ -33,9 +33,30 @@ using QGCCompression::kDefaultFilePermissions;
 
 /// Mode for ArchiveReader format support
 enum class ReaderMode {
-    AllFormats,  ///< Support all archive formats (ZIP, TAR, 7z, etc.)
+    AllFormats,  ///< Support the archive formats QGC reads (ZIP, TAR, 7z)
     RawFormat    ///< Raw format for single-file decompression (.gz, .xz, etc.)
 };
+
+// ============================================================================
+// Reader Set-up
+// ============================================================================
+
+/// Register the filters and formats QGC reads on a new libarchive reader
+/// Only decoders built into libarchive are registered. Its reader for a filter whose
+/// library is not compiled in runs an external program (e.g. "bzip2 -d") on the input.
+/// @param a Reader created by archive_read_new(), not yet opened
+/// @param mode Format support mode (AllFormats or RawFormat)
+void configureReader(struct archive* a, ReaderMode mode);
+
+/// Size of the stream signature canDecodeStream() looks at
+constexpr qsizetype kStreamSignatureSize = 4;
+
+/// Check that this build can decode a single compressed stream
+/// With RawFormat libarchive hands data through unchanged when no registered filter
+/// recognizes it, so bzip2 and LZ4 streams have to be refused when their decoder is missing.
+/// @param signature At least the first kStreamSignatureSize bytes of the stream
+/// @return false (after logging a warning) for a bzip2 or LZ4 stream that cannot be decoded
+bool canDecodeStream(const QByteArray& signature);
 
 // ============================================================================
 // RAII Archive Reader
@@ -142,7 +163,7 @@ ArchiveEntry toArchiveEntry(struct archive_entry *entry);
 bool openArchiveForReading(struct archive *a, const QString &filePath, QByteArray &resourceData);
 
 /// Extract any supported archive format using libarchive's auto-detection
-/// Supports: ZIP, 7z, TAR (all variants), cpio, ar, xar, etc.
+/// Supports: ZIP, 7z, TAR (plain or compressed)
 /// @param archivePath Path to the archive file (or Qt resource path)
 /// @param outputDirectoryPath Path where files will be extracted
 /// @param progress Optional progress callback (return false to cancel)

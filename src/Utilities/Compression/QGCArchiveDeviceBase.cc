@@ -157,13 +157,8 @@ void QGCArchiveDeviceBase::configureArchiveFormats(bool allFormats)
         return;
     }
 
-    archive_read_support_filter_all(_archive);
-
-    if (allFormats) {
-        archive_read_support_format_all(_archive);
-    } else {
-        archive_read_support_format_raw(_archive);
-    }
+    QGClibarchive::configureReader(
+        _archive, allFormats ? QGClibarchive::ReaderMode::AllFormats : QGClibarchive::ReaderMode::RawFormat);
 }
 
 bool QGCArchiveDeviceBase::openArchive()

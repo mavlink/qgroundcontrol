@@ -49,6 +49,7 @@ private slots:
     // Edge cases and error handling
     void _testCorruptArchive();
     void _testNonExistentInput();
+    void _testNoExternalDecompressors();
 
     // QIODevice-based operations
     void _testDecompressFromDevice();

@@ -1,8 +1,10 @@
 #include "QGCDecompressDevice.h"
-#include "QGCLoggingCategory.h"
 
 #include <archive.h>
 #include <archive_entry.h>
+
+#include "QGCLoggingCategory.h"
+#include "QGClibarchive.h"
 
 QGC_LOGGING_CATEGORY(QGCDecompressDeviceLog, "Utilities.QGCDecompressDevice")
 
@@ -55,6 +57,12 @@ bool QGCDecompressDevice::open(OpenMode mode)
 
 bool QGCDecompressDevice::initArchive()
 {
+    if (_sourceDevice && _sourceDevice->isReadable() &&
+        !QGClibarchive::canDecodeStream(_sourceDevice->peek(QGClibarchive::kStreamSignatureSize))) {
+        _errorString = QStringLiteral("Compression format is not supported by this build");
+        return false;
+    }
+
     _archive = archive_read_new();
     if (!_archive) {
         _errorString = QStringLiteral("Failed to create archive reader");

@@ -76,7 +76,7 @@ protected:
     virtual bool isReadyToRead() const = 0;
 
     /// Configure libarchive format support (called during initArchive)
-    /// @param allFormats true for all archive formats, false for raw (single-file) format
+    /// @param allFormats true for the archive formats (ZIP, TAR, 7z), false for raw (single-file) format
     void configureArchiveFormats(bool allFormats);
 
     /// Open the configured archive for reading

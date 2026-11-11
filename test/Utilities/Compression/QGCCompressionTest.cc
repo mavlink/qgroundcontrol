@@ -860,6 +860,54 @@ void QGCCompressionTest::_testNonExistentInput()
     verifyExpectedLogMessage();
 }
 
+void QGCCompressionTest::_testNoExternalDecompressors()
+{
+#ifndef Q_OS_UNIX
+    QSKIP("Needs a POSIX shell to stand in for the external decompressors");
+#else
+    QTemporaryDir tempDir;
+    const QString markerPath = tempDir.filePath("spawned");
+    const QString binPath = tempDir.filePath("bin");
+    QVERIFY(QDir().mkpath(binPath));
+    // Stand-ins for the programs libarchive runs when it has no built-in decoder for a filter
+    for (const char* program : {"bzip2", "lz4", "lrzip"}) {
+        QFile script(binPath + QLatin1Char('/') + QLatin1String(program));
+        QVERIFY(script.open(QIODevice::WriteOnly));
+        script.write("#!/bin/sh\n: > '" + QFile::encodeName(markerPath) + "'\nwhile read -r _; do :; done\n");
+        script.close();
+        QVERIFY(script.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner));
+    }
+    const QByteArray originalPath = qgetenv("PATH");
+    qputenv("PATH", QFile::encodeName(binPath));
+    const auto restorePath = qScopeGuard([&originalPath]() { qputenv("PATH", originalPath); });
+
+    const QByteArray padding(32, '\0');
+
+    // lrzip is always decoded by an external program
+    const QString lrzipTar = tempDir.filePath("lrzip.tar");
+    QFile lrzipFile(lrzipTar);
+    QVERIFY(lrzipFile.open(QIODevice::WriteOnly));
+    lrzipFile.write(QByteArray("LRZI\x00\x06", 6) + padding);
+    lrzipFile.close();
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Unrecognized archive format"));
+    QVERIFY(QGCCompression::listArchive(lrzipTar).isEmpty());
+    verifyExpectedLogMessage();
+
+#ifndef QGC_ENABLE_BZIP2
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("bzip2.*not supported"));
+    QVERIFY(QGCCompression::decompressData(QByteArray("BZh91AY&SY") + padding).isEmpty());
+    verifyExpectedLogMessage();
+#endif
+#ifndef QGC_ENABLE_LZ4
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("LZ4.*not supported"));
+    QVERIFY(QGCCompression::decompressData(QByteArray("\x04\x22\x4D\x18\x64\x40\xA7", 7) + padding).isEmpty());
+    verifyExpectedLogMessage();
+#endif
+
+    QVERIFY2(!QFile::exists(markerPath), "An external decompression program was run");
+#endif
+}
+
 // ============================================================================
 // QIODevice-based Operation Tests
 // ============================================================================

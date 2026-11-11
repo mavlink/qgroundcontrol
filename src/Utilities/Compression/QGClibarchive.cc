@@ -622,22 +622,20 @@ bool ArchiveReader::open(const QString& path, ReaderMode mode)
     _device = nullptr;
     _filePath = path;
 
+    if (mode == ReaderMode::RawFormat) {
+        QFile file(path);
+        if (file.open(QIODevice::ReadOnly) && !canDecodeStream(file.read(kStreamSignatureSize))) {
+            return false;
+        }
+    }
+
     _archive = archive_read_new();
     if (!_archive) {
         qCWarning(QGClibarchiveLog) << "Failed to create archive reader";
         return false;
     }
 
-    archive_read_support_filter_all(_archive);
-
-    switch (mode) {
-        case ReaderMode::AllFormats:
-            archive_read_support_format_all(_archive);
-            break;
-        case ReaderMode::RawFormat:
-            archive_read_support_format_raw(_archive);
-            break;
-    }
+    configureReader(_archive, mode);
 
     if (!openArchiveForReading(_archive, path, _resourceData)) {
         archive_read_free(_archive);
@@ -655,6 +653,10 @@ bool ArchiveReader::open(QIODevice* device, ReaderMode mode)
         return false;
     }
 
+    if (mode == ReaderMode::RawFormat && !canDecodeStream(device->peek(kStreamSignatureSize))) {
+        return false;
+    }
+
     if (_archive) {
         archive_read_free(_archive);
         _archive = nullptr;
@@ -668,16 +670,7 @@ bool ArchiveReader::open(QIODevice* device, ReaderMode mode)
         return false;
     }
 
-    archive_read_support_filter_all(_archive);
-
-    switch (mode) {
-        case ReaderMode::AllFormats:
-            archive_read_support_format_all(_archive);
-            break;
-        case ReaderMode::RawFormat:
-            archive_read_support_format_raw(_archive);
-            break;
-    }
+    configureReader(_archive, mode);
 
     // Enable seek callback for random-access devices (improves ZIP performance)
     // Must be set before opening the archive
@@ -703,6 +696,70 @@ bool ArchiveReader::open(QIODevice* device, ReaderMode mode)
 // ----------------------------------------------------------------------------
 // Helper Functions
 // ----------------------------------------------------------------------------
+
+static bool bzip2DecoderAvailable()
+{
+#ifdef QGC_ENABLE_BZIP2
+    return archive_bzlib_version() != nullptr;
+#else
+    return false;
+#endif
+}
+
+static bool lz4DecoderAvailable()
+{
+#ifdef QGC_ENABLE_LZ4
+    return archive_liblz4_version() != nullptr;
+#else
+    return false;
+#endif
+}
+
+void configureReader(struct archive* a, ReaderMode mode)
+{
+    // archive_read_support_filter_all() and _format_all() are deliberately not used: the input is
+    // untrusted, and a filter without its library compiled in is decoded by an external program.
+    if (archive_zlib_version() != nullptr) {
+        archive_read_support_filter_gzip(a);
+    }
+    if (archive_liblzma_version() != nullptr) {
+        archive_read_support_filter_xz(a);
+        archive_read_support_filter_lzma(a);
+    }
+    if (archive_libzstd_version() != nullptr) {
+        archive_read_support_filter_zstd(a);
+    }
+    if (bzip2DecoderAvailable()) {
+        archive_read_support_filter_bzip2(a);
+    }
+    if (lz4DecoderAvailable()) {
+        archive_read_support_filter_lz4(a);
+    }
+
+    switch (mode) {
+        case ReaderMode::AllFormats:
+            archive_read_support_format_zip(a);
+            archive_read_support_format_tar(a);
+            archive_read_support_format_7zip(a);
+            break;
+        case ReaderMode::RawFormat:
+            archive_read_support_format_raw(a);
+            break;
+    }
+}
+
+bool canDecodeStream(const QByteArray& signature)
+{
+    if (!bzip2DecoderAvailable() && signature.startsWith("BZh")) {
+        qCWarning(QGClibarchiveLog) << "bzip2 decompression is not supported by this build";
+        return false;
+    }
+    if (!lz4DecoderAvailable() && signature.startsWith(QByteArrayView("\x04\x22\x4D\x18", 4))) {
+        qCWarning(QGClibarchiveLog) << "LZ4 decompression is not supported by this build";
+        return false;
+    }
+    return true;
+}
 
 bool openArchiveForReading(struct archive* a, const QString& filePath, QByteArray& resourceData)
 {
@@ -1295,14 +1352,17 @@ QByteArray decompressDataFromMemory(const QByteArray& data, qint64 maxBytes)
         return {};
     }
 
+    if (!canDecodeStream(data)) {
+        return {};
+    }
+
     struct archive* a = archive_read_new();
     if (!a) {
         qCWarning(QGClibarchiveLog) << "Failed to create archive reader";
         return {};
     }
 
-    archive_read_support_filter_all(a);
-    archive_read_support_format_raw(a);
+    configureReader(a, ReaderMode::RawFormat);
 
     if (archive_read_open_memory(a, data.constData(), static_cast<size_t>(data.size())) != ARCHIVE_OK) {
         qCWarning(QGClibarchiveLog) << "Failed to open compressed data:" << archive_error_string(a);
