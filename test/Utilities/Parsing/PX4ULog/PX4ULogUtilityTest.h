@@ -30,4 +30,6 @@ private slots:
     void _testIterateMessagesAcrossChunks();
     void _testIterateMessagesUnknownMessage();
     void _testIterateMessagesFatalError();
+    void _testIterateMessagesTruncated_data();
+    void _testIterateMessagesTruncated();
 };

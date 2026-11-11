@@ -30,6 +30,7 @@ private slots:
     // Header validation tests
     void _testIsValidHeader();
     void _testIsValidHeaderInvalid();
+    void _testFindNextHeader_data();
     void _testFindNextHeader();
 
     // FMT message parsing tests
@@ -42,10 +43,13 @@ private slots:
     void _testParseMessage();
     void _testParseMessageTruncated_data();
     void _testParseMessageTruncated();
+    void _testParseMessageWithoutPayload();
     void _testParseMessageUnsupportedFormat_data();
     void _testParseMessageUnsupportedFormat();
 
     // Message iteration tests
     void _testIterateMessages();
     void _testIterateMessagesProgress();
+    void _testTruncatedLog_data();
+    void _testTruncatedLog();
 };

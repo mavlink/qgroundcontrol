@@ -6,6 +6,34 @@
 
 #include "APMDataFlashUtility.h"
 
+namespace {
+
+/// A record of a DataFlash log: the three header bytes and the payload
+QByteArray dataFlashTestRecord(uint8_t type, const QByteArray& payload)
+{
+    QByteArray record;
+    record.append(static_cast<char>(APMDataFlashUtility::kHeaderByte1));
+    record.append(static_cast<char>(APMDataFlashUtility::kHeaderByte2));
+    record.append(static_cast<char>(type));
+    record.append(payload);
+    return record;
+}
+
+/// The FMT record that declares a message type
+QByteArray dataFlashTestFmtRecord(uint8_t type, uint8_t length, const char* name, const char* format,
+                                  const char* columns)
+{
+    QByteArray payload(APMDataFlashUtility::kFmtPayloadSize, '\0');
+    payload[0] = static_cast<char>(type);
+    payload[1] = static_cast<char>(length);
+    payload.replace(2, qstrlen(name), name);
+    payload.replace(6, qstrlen(format), format);
+    payload.replace(22, qstrlen(columns), columns);
+    return dataFlashTestRecord(APMDataFlashUtility::kFmtMessageType, payload);
+}
+
+}  // namespace
+
 // ============================================================================
 // Format Character Size Tests
 // ============================================================================
@@ -227,23 +255,39 @@ void APMDataFlashUtilityTest::_testIsValidHeaderInvalid()
     QVERIFY(!APMDataFlashUtility::isValidHeader(nullptr, 0));
 }
 
+void APMDataFlashUtilityTest::_testFindNextHeader_data()
+{
+    QTest::addColumn<int>("size");
+    QTest::addColumn<qint64>("offset");
+    QTest::addColumn<qint64>("expected");
+
+    // The data has a header at 0 and at 10
+    QTest::newRow("at-offset") << 20 << qint64(0) << qint64(0);
+    QTest::newRow("after-offset") << 20 << qint64(1) << qint64(10);
+    QTest::newRow("none-left") << 20 << qint64(11) << qint64(-1);
+    QTest::newRow("offset-at-end") << 20 << qint64(20) << qint64(-1);
+    QTest::newRow("offset-past-end") << 20 << qint64(21) << qint64(-1);
+    QTest::newRow("header-without-type-at-end") << 12 << qint64(1) << qint64(-1);
+    QTest::newRow("header-with-type-at-end") << 13 << qint64(1) << qint64(10);
+    QTest::newRow("empty") << 0 << qint64(0) << qint64(-1);
+}
+
 void APMDataFlashUtilityTest::_testFindNextHeader()
 {
-    // Create test data with embedded headers
+    QFETCH(int, size);
+    QFETCH(qint64, offset);
+    QFETCH(qint64, expected);
+
     char data[20];
     memset(data, 0, sizeof(data));
-    // Header at offset 0
     data[0] = static_cast<char>(0xA3);
     data[1] = static_cast<char>(0x95);
     data[2] = 1;  // message type
-    // Header at offset 10
     data[10] = static_cast<char>(0xA3);
     data[11] = static_cast<char>(0x95);
     data[12] = 2;  // message type
 
-    QCOMPARE(APMDataFlashUtility::findNextHeader(data, sizeof(data), 0), 0LL);
-    QCOMPARE(APMDataFlashUtility::findNextHeader(data, sizeof(data), 1), 10LL);
-    QCOMPARE(APMDataFlashUtility::findNextHeader(data, sizeof(data), 11), -1LL);
+    QCOMPARE(APMDataFlashUtility::findNextHeader(data, size, offset), expected);
 }
 
 // ============================================================================
@@ -396,6 +440,7 @@ void APMDataFlashUtilityTest::_testParseMessage()
 void APMDataFlashUtilityTest::_testParseMessageTruncated_data()
 {
     QTest::addColumn<int>("size");
+    QTest::newRow("empty") << 0;
     QTest::newRow("missing-timestamp") << 7;
     QTest::newRow("missing-second-field") << 8;
     QTest::newRow("missing-last-field") << 9;
@@ -411,6 +456,19 @@ void APMDataFlashUtilityTest::_testParseMessageTruncated()
     expectLogMessage("Utilities.APMDataFlashUtility", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^Missing or truncated DataFlash value for format:")));
     QVERIFY(APMDataFlashUtility::parseMessage(payload.constData(), size, fmt).isEmpty());
+    verifyExpectedLogMessage();
+}
+
+void APMDataFlashUtilityTest::_testParseMessageWithoutPayload()
+{
+    // A message without fields has no payload
+    const APMDataFlashUtility::MessageFormat fmt;
+    const QByteArray empty("");
+    QVERIFY(APMDataFlashUtility::parseMessage(empty.constData(), empty.size(), fmt).isEmpty());
+
+    expectLogMessage("Utilities.APMDataFlashUtility", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Invalid DataFlash message payload")));
+    QVERIFY(APMDataFlashUtility::parseMessage(nullptr, 0, fmt).isEmpty());
     verifyExpectedLogMessage();
 }
 
@@ -568,6 +626,76 @@ void APMDataFlashUtilityTest::_testIterateMessagesProgress()
     for (int i = 1; i < progressValues.size(); ++i) {
         QVERIFY(progressValues[i] >= progressValues[i - 1]);
     }
+}
+
+void APMDataFlashUtilityTest::_testTruncatedLog_data()
+{
+    QTest::addColumn<int>("size");
+    QTest::addColumn<QList<int>>("formatTypes");
+    QTest::addColumn<QString>("instanceColumn");
+    QTest::addColumn<int>("messageCount");
+
+    const QList<int> none;
+    const QList<int> test{200};
+    const QList<int> both{177, 200};
+    const QString instance = QStringLiteral("I");
+
+    // FMT of TEST at 0, FMT of FMTU at 89, FMTU record at 178, TEST records at 222 and 234
+    QTest::newRow("empty") << 0 << none << QString() << 0;
+    QTest::newRow("header-cut") << 2 << none << QString() << 0;
+    QTest::newRow("first-FMT-without-payload") << 3 << none << QString() << 0;
+    QTest::newRow("first-FMT-cut") << 88 << none << QString() << 0;
+    QTest::newRow("first-FMT") << 89 << test << QString() << 0;
+    QTest::newRow("second-FMT-cut") << 177 << test << QString() << 0;
+    QTest::newRow("second-FMT") << 178 << both << QString() << 0;
+    QTest::newRow("FMTU-without-payload") << 181 << both << QString() << 0;
+    QTest::newRow("FMTU-cut") << 221 << both << QString() << 0;
+    QTest::newRow("FMTU") << 222 << both << instance << 1;
+    QTest::newRow("first-record-without-payload") << 225 << both << instance << 1;
+    QTest::newRow("first-record-cut") << 233 << both << instance << 1;
+    QTest::newRow("first-record") << 234 << both << instance << 2;
+    QTest::newRow("second-record-header-cut") << 236 << both << instance << 2;
+    QTest::newRow("second-record-cut") << 245 << both << instance << 2;
+    QTest::newRow("whole-log") << 246 << both << instance << 3;
+}
+
+void APMDataFlashUtilityTest::_testTruncatedLog()
+{
+    QFETCH(int, size);
+    QFETCH(QList<int>, formatTypes);
+    QFETCH(QString, instanceColumn);
+    QFETCH(int, messageCount);
+
+    QByteArray fmtuPayload(41, '\0');
+    fmtuPayload[8] = static_cast<char>(200);
+    fmtuPayload.replace(9, 2, "s#");
+    const QByteArray log = dataFlashTestFmtRecord(200, 12, "TEST", "QB", "TimeUS,I") +
+                           dataFlashTestFmtRecord(177, 44, "FMTU", "QBNN", "TimeUS,FmtType,UnitIds,MultIds") +
+                           dataFlashTestRecord(177, fmtuPayload) +
+                           dataFlashTestRecord(200, QByteArray::fromHex("010000000000000011")) +
+                           dataFlashTestRecord(200, QByteArray::fromHex("020000000000000022"));
+    QCOMPARE(log.size(), 246);
+
+    // The bytes behind the cut are still those of the whole log, so that reading past it changes the result
+    QMap<uint8_t, APMDataFlashUtility::MessageFormat> formats;
+    QCOMPARE(APMDataFlashUtility::parseFmtMessages(log.constData(), size, formats), !formatTypes.isEmpty());
+    QList<int> parsedTypes;
+    for (auto it = formats.cbegin(); it != formats.cend(); ++it) {
+        parsedTypes.append(it.key());
+    }
+    QCOMPARE(parsedTypes, formatTypes);
+    QCOMPARE(formats.value(200).instanceColumn, instanceColumn);
+
+    QList<QByteArray> payloads;
+    const int count = APMDataFlashUtility::iterateMessages(
+        log.constData(), size, formats,
+        [&payloads](uint8_t, const char* payload, int payloadSize, const APMDataFlashUtility::MessageFormat&) {
+            payloads.append(QByteArray(payload, payloadSize));
+            return true;
+        });
+    QCOMPARE(count, messageCount);
+    const QList<QByteArray> allPayloads{log.mid(181, 41), log.mid(225, 9), log.mid(237, 9)};
+    QCOMPARE(payloads, allPayloads.first(messageCount));
 }
 
 UT_REGISTER_TEST(APMDataFlashUtilityTest, TestLabel::Unit, TestLabel::Utilities)

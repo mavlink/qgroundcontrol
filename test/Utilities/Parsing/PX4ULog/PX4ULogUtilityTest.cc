@@ -325,4 +325,47 @@ void PX4ULogUtilityTest::_testIterateMessagesFatalError()
     QCOMPARE(callCount, 0);
 }
 
+void PX4ULogUtilityTest::_testIterateMessagesTruncated_data()
+{
+    QTest::addColumn<int>("size");
+    QTest::addColumn<bool>("parsed");
+    QTest::addColumn<int>("messageCount");
+
+    // The definitions end with the 14 byte message that subscribes test_msg; each record after it takes 17 bytes
+    const int definitions = static_cast<int>(buildTestULog(0).size());
+    const int whole = definitions + 3 * 17;
+    QTest::newRow("inside-file-header") << 8 << false << 0;
+    QTest::newRow("file-header-only") << 16 << false << 0;
+    QTest::newRow("without-subscription") << definitions - 14 << false << 0;
+    QTest::newRow("subscription-cut") << definitions - 1 << false << 0;
+    QTest::newRow("without-records") << definitions << true << 0;
+    QTest::newRow("first-record-cut") << definitions + 16 << true << 0;
+    QTest::newRow("last-record-missing") << whole - 17 << true << 2;
+    QTest::newRow("last-record-cut") << whole - 1 << true << 2;
+    QTest::newRow("whole-log") << whole << true << 3;
+}
+
+void PX4ULogUtilityTest::_testIterateMessagesTruncated()
+{
+    QFETCH(int, size);
+    QFETCH(bool, parsed);
+    QFETCH(int, messageCount);
+
+    const QByteArray ulog = buildTestULog(3);
+    QVERIFY(size <= ulog.size());
+
+    int callCount = 0;
+    QString error;
+    QCOMPARE(PX4ULogUtility::iterateMessages(
+                 ulog.constData(), size, "test_msg",
+                 [&callCount](const ulog_cpp::TypedDataView&) {
+                     ++callCount;
+                     return true;
+                 },
+                 error),
+             parsed);
+    QCOMPARE(error.isEmpty(), parsed);
+    QCOMPARE(callCount, messageCount);
+}
+
 UT_REGISTER_TEST(PX4ULogUtilityTest, TestLabel::Unit, TestLabel::Utilities)
