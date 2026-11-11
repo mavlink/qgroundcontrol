@@ -42,6 +42,8 @@ public:
         QByteArray sdp;
         /// RTSP interleaved over its TCP connection, rather than over UDP with FFmpeg's fallback to TCP.
         bool rtspOverTcp = false;
+        /// An SDP names the streams, this one's or the RTSP server's: FFmpeg needn't read the stream to find them.
+        bool streamsDescribed = false;
     };
 
     explicit QtMultimediaVideoReceiver(QObject* parent = nullptr);

@@ -30,6 +30,20 @@ constexpr qint64 kMinFrameStepUs = 1000;
 /// A larger step in the stream's times is a jump, as after a reconnect.
 constexpr qint64 kMaxStreamStepUs = 1000000;
 
+/// The most FFmpeg reads of a stream whose SDP names its streams, before it plays it. By default it reads until a
+/// keyframe has told it the picture size, and with the low-latency intent it drops what it read, so that the first
+/// picture is the keyframe after that one. A short read costs nothing here: the decoder takes the size from the
+/// keyframe it starts on. FFmpeg needs 2048 bytes to tell a format.
+/// Not for MPEG-TS, whose streams FFmpeg finds by reading it: a read too short to meet the video plays none.
+constexpr int kDescribedStreamProbeBytes = 8192;
+/// Android keeps FFmpeg's default, untried: its MediaCodec decoders are given the picture size as they are created,
+/// which is before a short read has met it.
+#ifdef Q_OS_ANDROID
+constexpr bool kShortProbe = false;
+#else
+constexpr bool kShortProbe = true;
+#endif
+
 constexpr const char* kRtspTransportEnv = "QT_FFMPEG_RTSP_TRANSPORT";
 
 /// Qt's FFmpeg player takes the RTSP transport from the environment alone, as it loads a source (seen in Qt 6.12.0:
@@ -40,12 +54,15 @@ constexpr const char* kRtspTransportEnv = "QT_FFMPEG_RTSP_TRANSPORT";
 void setRtspTransport(bool overTcp)
 {
     static const QByteArray userTransport = qgetenv(kRtspTransportEnv);
-    if (overTcp) {
-        (void) qputenv(kRtspTransportEnv, QByteArrayLiteral("tcp"));
-    } else if (userTransport.isNull()) {
+    const QByteArray transport = overTcp ? QByteArrayLiteral("tcp") : userTransport;
+    // Written only to change it: a write races with any thread that reads the environment.
+    if (qgetenv(kRtspTransportEnv) == transport) {
+        return;
+    }
+    if (transport.isNull()) {
         (void) qunsetenv(kRtspTransportEnv);
     } else {
-        (void) qputenv(kRtspTransportEnv, userTransport);
+        (void) qputenv(kRtspTransportEnv, transport);
     }
 }
 
@@ -109,7 +126,9 @@ std::optional<QtMultimediaVideoReceiver::Source> QtMultimediaVideoReceiver::play
             return std::nullopt;
         }
         const QByteArrayView encoding = (transport == Transport::RtpUdpH265) ? "H265" : "H264";
-        return Source{QUrl(QStringLiteral("stream.sdp")), rtpSdp(url.host(), url.port(), encoding)};
+        return Source{.url = QUrl(QStringLiteral("stream.sdp")),
+                      .sdp = rtpSdp(url.host(), url.port(), encoding),
+                      .streamsDescribed = true};
     }
     if (transport == Transport::MpegTsUdp) {
         QUrl udp(url);
@@ -119,9 +138,9 @@ std::optional<QtMultimediaVideoReceiver::Source> QtMultimediaVideoReceiver::play
     if ((transport == Transport::Rtsp) && (url.scheme().compare(QStringLiteral("rtspt"), Qt::CaseInsensitive) == 0)) {
         QUrl rtsp(url);
         rtsp.setScheme(QStringLiteral("rtsp"));
-        return Source{rtsp, {}, true};
+        return Source{.url = rtsp, .sdp = {}, .rtspOverTcp = true, .streamsDescribed = true};
     }
-    return Source{url, {}};
+    return Source{.url = url, .sdp = {}, .streamsDescribed = (transport == Transport::Rtsp)};
 }
 
 void QtMultimediaVideoReceiver::onConfigChanged()
@@ -234,6 +253,9 @@ void QtMultimediaVideoReceiver::_open()
     options.setNetworkTimeout(config().timeout);
     if (config().lowLatency) {
         options.setPlaybackIntent(QPlaybackOptions::PlaybackIntent::LowLatencyStreaming);
+    }
+    if (kShortProbe && source->streamsDescribed) {
+        options.setProbeSize(kDescribedStreamProbeBytes);
     }
     _player->setPlaybackOptions(options);
     (void) connect(_player, &QMediaPlayer::mediaStatusChanged, this, &QtMultimediaVideoReceiver::_onMediaStatusChanged);

@@ -111,21 +111,23 @@ void QtMultimediaVideoReceiverTest::_testPlayerSource_data()
     QTest::addColumn<QString>("url");
     QTest::addColumn<QString>("sdpEncoding");
     QTest::addColumn<bool>("rtspOverTcp");
+    QTest::addColumn<bool>("streamsDescribed");
 
     QTest::newRow("rtsp") << QStringLiteral("rtsp://192.168.42.1:554/live")
-                          << QStringLiteral("rtsp://192.168.42.1:554/live") << QString() << false;
+                          << QStringLiteral("rtsp://192.168.42.1:554/live") << QString() << false << true;
     QTest::newRow("rtspt") << QStringLiteral("rtspt://192.168.42.1:554/live")
-                           << QStringLiteral("rtsp://192.168.42.1:554/live") << QString() << true;
+                           << QStringLiteral("rtsp://192.168.42.1:554/live") << QString() << true << true;
     QTest::newRow("rtsps") << QStringLiteral("rtsps://cam/live") << QStringLiteral("rtsps://cam/live") << QString()
-                           << false;
+                           << false << true;
+    // MPEG-TS, over TCP or UDP, tells its streams only as it plays.
     QTest::newRow("tcp") << QStringLiteral("tcp://192.168.143.200:3001") << QStringLiteral("tcp://192.168.143.200:3001")
-                         << QString() << false;
+                         << QString() << false << false;
     QTest::newRow("mpegts") << QStringLiteral("mpegts://0.0.0.0:5600") << QStringLiteral("udp://0.0.0.0:5600")
-                            << QString() << false;
+                            << QString() << false << false;
     QTest::newRow("udp h264") << QStringLiteral("udp://0.0.0.0:5600") << QStringLiteral("stream.sdp")
-                              << QStringLiteral("H264") << false;
+                              << QStringLiteral("H264") << false << true;
     QTest::newRow("udp h265") << QStringLiteral("udp265://0.0.0.0:5601") << QStringLiteral("stream.sdp")
-                              << QStringLiteral("H265") << false;
+                              << QStringLiteral("H265") << false << true;
 }
 
 void QtMultimediaVideoReceiverTest::_testPlayerSource()
@@ -134,11 +136,13 @@ void QtMultimediaVideoReceiverTest::_testPlayerSource()
     QFETCH(QString, url);
     QFETCH(QString, sdpEncoding);
     QFETCH(bool, rtspOverTcp);
+    QFETCH(bool, streamsDescribed);
 
     const std::optional<QtMultimediaVideoReceiver::Source> source = QtMultimediaVideoReceiver::playerSource(uri);
     QVERIFY(source);
     QCOMPARE(source->url, QUrl(url));
     QCOMPARE(source->rtspOverTcp, rtspOverTcp);
+    QCOMPARE(source->streamsDescribed, streamsDescribed);
     if (sdpEncoding.isEmpty()) {
         QVERIFY(source->sdp.isEmpty());
         return;
