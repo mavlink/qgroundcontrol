@@ -18,7 +18,7 @@ std::optional<double> nonnegativeNumber(std::string_view field)
 
 void markReceipt(NMEA::NavigationEpoch& epoch, uint64_t receivedAtUs)
 {
-    epoch.receivedAtUs = epoch.receivedAtUs == 0 ? receivedAtUs : std::min(epoch.receivedAtUs, receivedAtUs);
+    epoch.receivedAtUs = epoch.receivedAtUs == 0 ? receivedAtUs : (std::min) (epoch.receivedAtUs, receivedAtUs);
 }
 }  // namespace
 

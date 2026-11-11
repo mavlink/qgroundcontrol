@@ -11,15 +11,19 @@ namespace {
 constexpr double DEGREE_MINUTE_SCALE = 100.0;
 constexpr double MAX_LATITUDE_DEGREES = 90.0;
 constexpr double MAX_LONGITUDE_DEGREES = 180.0;
-constexpr unsigned MAX_GGA_SATELLITES = std::numeric_limits<uint8_t>::max();
+constexpr unsigned MAX_GGA_SATELLITES = (std::numeric_limits<uint8_t>::max)();
 constexpr size_t UTC_COMPONENT_DIGITS = 2;
 constexpr size_t UTC_INTEGER_DIGITS = 3 * UTC_COMPONENT_DIGITS;
 constexpr size_t UTC_FRACTION_OFFSET = UTC_INTEGER_DIGITS + 1;
+constexpr size_t RMC_DATE_DIGITS = 3 * UTC_COMPONENT_DIGITS;
+// RMC carries the last two digits of the year.
+constexpr int RMC_DATE_CENTURY = 2000;
 constexpr unsigned HOURS_PER_DAY = 24;
 constexpr unsigned MINUTES_PER_HOUR = 60;
 constexpr unsigned SECONDS_PER_MINUTE = 60;
 constexpr size_t FIRST_MILLISECOND_DIGIT_WEIGHT = 100;
 constexpr double KILOMETERS_PER_HOUR_TO_METERS_PER_SECOND = 1.0 / 3.6;
+constexpr double FULL_CIRCLE_DEGREES = 360.0;
 
 constexpr unsigned MAX_DAY_OF_MONTH = 31;
 constexpr unsigned MONTHS_PER_YEAR = 12;
@@ -42,6 +46,8 @@ std::optional<NMEA::UtcDate> dateFromParts(unsigned day, unsigned month, int yea
 
 constexpr int MIN_REPAIRABLE_SENTENCE_LENGTH = 5;
 constexpr int MINUTE_DECIMAL_PLACES = 4;
+// Minutes below this take a leading zero to fill their two integer digits.
+constexpr double TWO_DIGIT_MINUTES = 10.0;
 constexpr double MINUTE_FRACTION_SCALE = 10000.0;
 constexpr int LATITUDE_DEGREE_DIGITS = 2;
 constexpr int LONGITUDE_DEGREE_DIGITS = 3;
@@ -244,7 +250,7 @@ std::optional<int> utcMilliseconds(std::string_view field)
 std::optional<double> courseDegrees(std::string_view field)
 {
     const auto value = number<double>(field);
-    return value && *value >= 0.0 && *value <= 360.0 ? value : std::nullopt;
+    return value && *value >= 0.0 && *value <= FULL_CIRCLE_DEGREES ? value : std::nullopt;
 }
 
 std::optional<double> speedMetersPerSecond(std::string_view field, double scale)
@@ -255,7 +261,7 @@ std::optional<double> speedMetersPerSecond(std::string_view field, double scale)
 
 std::optional<UtcDate> rmcDate(std::string_view field)
 {
-    if (field.size() != 6) {
+    if (field.size() != RMC_DATE_DIGITS) {
         return {};
     }
     for (const char digit : field) {
@@ -263,13 +269,13 @@ std::optional<UtcDate> rmcDate(std::string_view field)
             return {};
         }
     }
-    const auto day = number<unsigned>(field.substr(0, 2));
-    const auto month = number<unsigned>(field.substr(2, 2));
-    const auto year = number<unsigned>(field.substr(4, 2));
+    const auto day = number<unsigned>(field.substr(0, UTC_COMPONENT_DIGITS));
+    const auto month = number<unsigned>(field.substr(UTC_COMPONENT_DIGITS, UTC_COMPONENT_DIGITS));
+    const auto year = number<unsigned>(field.substr(2 * UTC_COMPONENT_DIGITS, UTC_COMPONENT_DIGITS));
     if (!day || !month || !year) {
         return {};
     }
-    return dateFromParts(*day, *month, 2000 + static_cast<int>(*year));
+    return dateFromParts(*day, *month, RMC_DATE_CENTURY + static_cast<int>(*year));
 }
 
 std::optional<RMC> rmc(const Sentence& input)
@@ -434,8 +440,8 @@ QByteArray repairChecksum(const QByteArray& sentence)
 
 QByteArray makeGGA(const NMEA::GGA& fix, const QTime& utc)
 {
-    if (!utc.isValid() || !std::isfinite(fix.latitude) || fix.latitude < -90.0 || fix.latitude > 90.0 ||
-        !std::isfinite(fix.longitude) || fix.longitude < -180.0 || fix.longitude > 180.0 || std::isinf(fix.altitude) ||
+    if (!utc.isValid() || !std::isfinite(fix.latitude) || std::abs(fix.latitude) > MAX_LATITUDE_DEGREES ||
+        !std::isfinite(fix.longitude) || std::abs(fix.longitude) > MAX_LONGITUDE_DEGREES || std::isinf(fix.altitude) ||
         std::isinf(fix.geoidSeparation) || std::isinf(fix.hdop) || fix.hdop < 0.0 ||
         fix.quality > NMEA::GgaQuality::MAX_VALUE) {
         return {};
@@ -455,7 +461,7 @@ QByteArray makeGGA(const NMEA::GGA& fix, const QTime& utc)
         }
 
         QByteArray mm = QByteArray::number(mRounded, 'f', MINUTE_DECIMAL_PLACES);
-        if (mRounded < NMEA::DECIMAL_BASE) {
+        if (mRounded < TWO_DIGIT_MINUTES) {
             mm.prepend('0');
         }
 

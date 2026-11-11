@@ -57,9 +57,12 @@ inline constexpr int SBAS_FIRST_PRN = 120;
             return wireId >= Id::SBAS_FIRST_NMEA_ID && wireId <= Id::SBAS_LAST_NMEA_ID
                        ? wireId - Id::SBAS_FIRST_NMEA_ID + Id::SBAS_FIRST_PRN
                        : wireId;
-        default:
-            return wireId;
+        case GPSConstellation::Unknown:
+        case GPSConstellation::GPS:
+        case GPSConstellation::NavIC:
+            break;
     }
+    return wireId;
 }
 
 [[nodiscard]] GPSConstellation satelliteConstellation(std::string_view talker, std::optional<int> systemId,

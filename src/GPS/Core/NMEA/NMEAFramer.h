@@ -23,7 +23,7 @@ public:
 
     size_t addByte(uint8_t byte)
     {
-        if (_buffer.size() < 6) {
+        if (_buffer.size() < MIN_BUFFER_SIZE) {
             return 0;
         }
         switch (_state) {
@@ -45,7 +45,7 @@ public:
                     _checksum ^= byte;
                 }
                 // Preserve the receiver framers' original payload limit and checksum headroom.
-                if (_size >= _buffer.size() - 5) {
+                if (_size >= _buffer.size() - CHECKSUM_HEADROOM) {
                     reset();
                 } else {
                     _buffer[_size++] = byte;
@@ -76,6 +76,11 @@ public:
     }
 
 private:
+    /// Bytes the body leaves free at the end of the buffer; the checksum digits are written into them.
+    static constexpr size_t CHECKSUM_HEADROOM = 5;
+    /// A smaller buffer cannot hold the '$' beside the headroom.
+    static constexpr size_t MIN_BUFFER_SIZE = CHECKSUM_HEADROOM + 1;
+
     static constexpr char _hexDigit(unsigned value) { return "0123456789ABCDEF"[value & 0xf]; }
 
     enum class State
@@ -83,7 +88,7 @@ private:
         Waiting,
         Body,
         ChecksumHigh,
-        ChecksumLow
+        ChecksumLow,
     };
     std::span<uint8_t> _buffer;
     size_t _size = 0;

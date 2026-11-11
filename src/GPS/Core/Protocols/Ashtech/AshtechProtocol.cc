@@ -125,6 +125,13 @@ public:
     /// The port query configure() probes each rate with.
     bool probe(GPSCommandChannel& channel) override { return _queryPort(channel, Plan::PORT_QUERY_ATTEMPTS); }
 
+protected:
+    /// A rejected sentence does not advance the survey-in duration.
+    GPSReceiveUpdates _decodeLine(std::string_view line, GPSDecodeContext& context) override;
+
+    /// Expires stale metadata.
+    void _expire(GPSDecodeContext& context) override { _expireMetadata(context.nowUs()); }
+
 private:
     /// The UTC time of day a sentence names and when it arrived.
     struct EpochReceipt
@@ -143,12 +150,6 @@ private:
     void _reset(GPSStreamDemux& stream);
     /// Asks for the port the receiver is connected to, up to @a attempts times. @return whether it answered.
     bool _queryPort(GPSCommandChannel& channel, unsigned attempts);
-    /// A rejected sentence does not advance the survey-in duration.
-    GPSReceiveUpdates _decodeLine(std::string_view line, GPSDecodeContext& context) override;
-
-    /// Expires stale metadata.
-    void _expire(GPSDecodeContext& context) override { _expireMetadata(context.nowUs()); }
-
     void _setUpBase(GPSCommandChannel& channel);
     void _activateRTCMOutput(GPSCommandChannel& channel);
     GPSCommandOutcome _portReply(std::string_view reply);
@@ -475,10 +476,22 @@ std::optional<GPSReceiveUpdates> Protocol::_handlePosition(const NMEA::Sentence&
     }
     const std::string_view northSouth = fields[6];
     const std::string_view eastWest = fields[8];
-    if (!quality || *quality < 0 || *quality > 23 || !satellites || *satellites < 0 || *satellites > 255 || !latitude ||
-        *latitude < 0 || *latitude > 9000 || !longitude || *longitude < 0 || *longitude > 18000 || !altitude ||
-        !horizontalDop || !verticalDop || (northSouth != "N" && northSouth != "S") ||
-        (eastWest != "E" && eastWest != "W")) {
+    // Position modes (d1) outside the 0 to 5 that follow GPSFixQuality's order.
+    constexpr int SBAS_DIFFERENTIAL = 9;
+    constexpr int BEIDOU_DIFFERENTIAL = 10;
+    constexpr int RTK_FLOAT = 12;
+    constexpr int RTK_FIXED = 13;
+    constexpr int RTK_FLOAT_DITHERED = 22;
+    constexpr int RTK_FIXED_DITHERED = 23;
+    constexpr int MAX_POSITION_MODE = RTK_FIXED_DITHERED;
+    constexpr int MAX_SATELLITES = 255;
+    // 90 and 180 degrees as ddmm.mmmm and dddmm.mmmm.
+    constexpr double MAX_LATITUDE = 9000;
+    constexpr double MAX_LONGITUDE = 18000;
+    if (!quality || *quality < 0 || *quality > MAX_POSITION_MODE || !satellites || *satellites < 0 ||
+        *satellites > MAX_SATELLITES || !latitude || *latitude < 0 || *latitude > MAX_LATITUDE || !longitude ||
+        *longitude < 0 || *longitude > MAX_LONGITUDE || !altitude || !horizontalDop || !verticalDop ||
+        (northSouth != "N" && northSouth != "S") || (eastWest != "E" && eastWest != "W")) {
         return std::nullopt;
     }
     const bool coordinatesFound = !fields[5].empty() && !fields[7].empty() && !fields[9].empty();
@@ -495,17 +508,19 @@ std::optional<GPSReceiveUpdates> Protocol::_handlePosition(const NMEA::Sentence&
         navigation.fixType = GPSPositionReport::FixType::NoFix;
 
     } else {
-        if (*quality == 9 || *quality == 10) {  // SBAS differential or BeiDou differential
+        if (*quality == SBAS_DIFFERENTIAL || *quality == BEIDOU_DIFFERENTIAL) {
             navigation.fixType = GPSPositionReport::FixType::Differential;
 
-        } else if (*quality == 12 || *quality == 22) {  // RTK float or RTK float dithered
+        } else if (*quality == RTK_FLOAT || *quality == RTK_FLOAT_DITHERED) {
             navigation.fixType = GPSPositionReport::FixType::RTKFloat;
 
-        } else if (*quality == 13 || *quality == 23) {  // RTK fixed or RTK fixed dithered
+        } else if (*quality == RTK_FIXED || *quality == RTK_FIXED_DITHERED) {
             navigation.fixType = GPSPositionReport::FixType::RTKFixed;
 
         } else {
-            navigation.fixType = gpsFixQualityFromValue(3 + *quality);
+            // Modes 0 to 3 and 5 are standalone, differential, RTK float, RTK fixed and dead reckoning: GPSFixQuality
+            // from Fix3D on.
+            navigation.fixType = gpsFixQualityFromValue(static_cast<int>(GPSPositionReport::FixType::Fix3D) + *quality);
         }
 
         _receiverPositions = true;
