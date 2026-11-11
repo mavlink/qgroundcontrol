@@ -25,6 +25,7 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QDeadlineTimer>
+#include <QtCore/QScopedValueRollback>
 #include <QtCore/QSet>
 
 QGC_LOGGING_CATEGORY(GPSReceiverLog, "GPS.Receiver.GPSReceiver")
@@ -505,7 +506,7 @@ void GPSReceiver::_scanSerialPorts()
 
 bool GPSReceiver::connectReceiver()
 {
-    if (_destroying) {
+    if (_destroying || _shuttingDown) {
         return false;
     }
     _scanSerialPorts();
@@ -638,6 +639,8 @@ void GPSReceiver::shutdown()
     if (_destroying) {
         return;
     }
+    // Ending the connection notifies observers; a session one of them started would outlive the shutdown.
+    const QScopedValueRollback shuttingDown(_shuttingDown, true);
     _pollTask.cancel();
     _connection->reset();
     endConnection(ShownError::Keep);

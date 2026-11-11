@@ -578,6 +578,44 @@ void GPSReceiverConnectionPolicyTest::_observerActsOnPositionRelease()
     scripted.workers.finishRetired();
 }
 
+void GPSReceiverConnectionPolicyTest::_observerActsOnShutdown_data()
+{
+    QTest::addColumn<bool>("connects");
+    QTest::newRow("connects") << true;
+    QTest::newRow("disconnects") << false;
+}
+
+void GPSReceiverConnectionPolicyTest::_observerActsOnShutdown()
+{
+    QFETCH(bool, connects);
+    PolicyHarness harness(tcpConfiguration());
+    GPSReceiver& receiver = harness.receiver;
+    QVERIFY(receiver.connectReceiver());
+    harness.worker()->ready();
+    // The status text is the first signal to report that the receiver is gone.
+    QObject observer;
+    bool acted = false;
+    connect(&receiver, &GPSReceiver::statusTextChanged, &observer, [&] {
+        if (receiver.hasReceiver() || std::exchange(acted, true)) {
+            return;
+        }
+        if (connects) {
+            (void) receiver.connectReceiver();
+        } else {
+            receiver.disconnectReceiver();
+        }
+    });
+
+    receiver.shutdown();
+    QVERIFY(acted);
+    // Shutdown leaves no receiver, whatever an observer asks for meanwhile, and has joined and deleted its worker.
+    QVERIFY(!receiver.hasReceiver());
+    QCOMPARE(harness.attempts(), 1);
+    QVERIFY(!harness.worker());
+    QVERIFY(receiver.errorMessage().isEmpty());
+    QVERIFY(!receiver.reconnecting());
+}
+
 void GPSReceiverConnectionPolicyTest::_sessionEndMessages_data()
 {
     QTest::addColumn<GPSConnectionError>("error");

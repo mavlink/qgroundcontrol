@@ -161,7 +161,8 @@ public:
     /// One step of automatic connection: connections due, reconnections, and USB discovery.
     void tick();
     /// Stops polling and disconnects, then waits up to SHUTDOWN_TIMEOUT for the workers of retired sessions, which
-    /// otherwise finish on their own once the event loop delivers their exit.
+    /// otherwise finish on their own once the event loop delivers their exit. An observer's connectReceiver() from a
+    /// signal emitted meanwhile is refused.
     void shutdown();
 
     /// The receiver's reported state; with no receiver, every Fact is at its metadata default.
@@ -367,6 +368,8 @@ private:
 #endif
     /// The constellations last notified, as the values in Notified are.
     QList<GPSConstellationSatellites> _notifiedConstellations;
+    /// shutdown() is running.
+    bool _shuttingDown = false;
     const std::function<QString()> _recordingDirectory;
     /// The recording of the latest session.
     QString _recordingFile;
