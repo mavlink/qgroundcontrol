@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <optional>
 
@@ -11,6 +12,7 @@
 
 #include "DataRateTracker.h"
 #include "GPSCorrectionSelector.h"
+#include "RTCMLogFile.h"
 #include "RTCMMAVLink.h"
 #include "RTCMMessageCountModel.h"
 #include "RTCMUdpInput.h"
@@ -19,6 +21,16 @@
 
 class GPSCorrectionManager;
 class RuntimeScheduler;
+
+/// What a GPSCorrectionManager is given for the log of the routed stream.
+struct GPSCorrectionManagerDependencies
+{
+    /// The folder a log goes to, asked as each log starts. Without it, or while it returns an empty path, the stream
+    /// is not logged.
+    std::function<QString()> logDirectory = nullptr;
+    /// A log keeps the frames that fit in this many bytes and then ends.
+    qint64 maxLogFileBytes = RTCMLogFile::MAX_FILE_BYTES;
+};
 
 /// A begun correction source and the stream it delivers; destroying it ends the source.
 class GPSCorrectionSourceHandle
@@ -58,6 +70,11 @@ class GPSCorrectionManager : public QObject
     Q_PROPERTY(QString udpInputError READ udpInputError NOTIFY udpInputChanged FINAL)
     Q_PROPERTY(QString udpOutputError READ udpOutputError NOTIFY udpOutputChanged FINAL)
     Q_PROPERTY(QString messageFilterError READ messageFilterError NOTIFY messageFilterChanged FINAL)
+    /// Logs the frames routed from now on to a new file. Off at startup and never saved, and off again once the log
+    /// ended after a file error or at its size limit.
+    Q_PROPERTY(bool logToFile READ logToFile WRITE setLogToFile NOTIFY logChanged FINAL)
+    /// The file the routed stream is logged to; empty while it is not logged.
+    Q_PROPERTY(QString logFile READ logFile NOTIFY logChanged FINAL)
     Q_PROPERTY(RTCMMessageCountModel* messageCounts READ messageCounts CONSTANT FINAL)
     Q_PROPERTY(QGeoCoordinate basePosition READ basePosition NOTIFY basePositionChanged FINAL)
 
@@ -112,7 +129,10 @@ public:
     /// RTCM message numbers are 12 bits.
     static constexpr int MAX_MESSAGE_ID = 4095;
 
-    explicit GPSCorrectionManager(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
+    using Dependencies = GPSCorrectionManagerDependencies;
+
+    explicit GPSCorrectionManager(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr,
+                                  const Dependencies& dependencies = {});
     ~GPSCorrectionManager() override;
 
     void shutdown();
@@ -149,6 +169,14 @@ public:
     /// Names the message filter's first entry that is not a message ID; empty for a valid filter.
     QString messageFilterError() const { return _messageFilterError; }
 
+    bool logToFile() const { return _log.isOpen(); }
+
+    /// Starts or ends the log: an RTCMLogFile in the Dependencies' log folder, named with the UTC time it starts at,
+    /// of the frames as they go to vehicles and UDP forwarding. The log never affects the routing.
+    void setLogToFile(bool log);
+
+    QString logFile() const { return _log.file(); }
+
     /// The selected stream's frames per RTCM message ID, and how often each arrives. They start again when another
     /// stream is selected, and are empty while none is.
     RTCMMessageCountModel* messageCounts() { return &_messageCounts; }
@@ -166,6 +194,7 @@ signals:
     void udpInputChanged();
     void udpOutputChanged();
     void messageFilterChanged();
+    void logChanged();
     void basePositionChanged();
 
 private:
@@ -205,6 +234,8 @@ private:
     RTCMUdpInput _udpInput;
     std::unique_ptr<GPSCorrectionSourceHandle> _udpSource;
     UdpForwarder _udpOutput{this};
+    const std::function<QString()> _logDirectory;
+    RTCMLogFile _log;
     std::optional<Configuration> _configuration;
     State _state = State::Inactive;
     GPSCorrectionStream _selected;

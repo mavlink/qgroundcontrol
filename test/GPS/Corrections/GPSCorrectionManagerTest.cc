@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include <QtCore/QDir>
+#include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
 #include <QtNetwork/QNetworkDatagram>
 #include <QtNetwork/QNetworkInterface>
@@ -17,6 +19,7 @@
 #include "NTRIP/Support/MockNTRIPTransport.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
+#include "Protocols/Support/GPSProtocolTestData.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "RTCMFramer.h"
 #include "RTCMMessageCountModel.h"
@@ -428,6 +431,158 @@ void GPSCorrectionManagerTest::_messageFilterGovernsRouting()
         }
     }
     QCOMPARE(forwarded, routed);
+}
+
+void GPSCorrectionManagerTest::_logsRoutedStream()
+{
+    TestFixtures::TempDirFixture directory;
+    QVERIFY(directory.isValid());
+    QString folder = QDir(directory.path()).filePath(QStringLiteral("first"));
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler, {.logDirectory = [&folder] { return folder; }});
+    corrections.setConfiguration({.udpInput = {}, .udpOutput = {}, .messageFilter = QStringLiteral("1005,1077")});
+    QList<QByteArray> sent;
+    captureVehicleFrames(corrections, sent);
+    QSignalSpy changes(&corrections, &GPSCorrectionManager::logChanged);
+    const auto local = corrections.openSource(GPSCorrectionSettings::LocalReceiver, {});
+    const auto ntrip = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
+    const auto submit = [&scheduler](const auto& source, uint16_t messageId) {
+        source->submit(GPSTest::rtcmMessage(messageId, messageId % 50), scheduler.nowMs());
+    };
+
+    // Off unless turned on.
+    QVERIFY(!corrections.logToFile());
+    QVERIFY(corrections.logFile().isEmpty());
+    submit(local, 1005);
+    QCOMPARE(sent.size(), 1);
+
+    corrections.setLogToFile(true);
+    QVERIFY(corrections.logToFile());
+    QCOMPARE(changes.size(), 1);
+    const QString file = corrections.logFile();
+    QCOMPARE(QFileInfo(file).absolutePath(), folder);
+    QVERIFY2(QRegularExpression(QStringLiteral("^\\d{8}T\\d{6}\\.\\d{3}Z\\.rtcm3$"))
+                 .match(QFileInfo(file).fileName())
+                 .hasMatch(),
+             qPrintable(file));
+
+    // The log is the stream as vehicles receive it from then on: the frames of the selected source that the message
+    // filter takes, byte for byte.
+    sent.clear();
+    submit(local, 1077);
+    submit(ntrip, 1005);
+    submit(local, 1087);
+    submit(local, 1005);
+    QCOMPARE(sent.size(), 2);
+    // Each tick writes the buffered frames out, so the file can be read while the log goes on.
+    QVERIFY(advanceTick(scheduler));
+    const QByteArray logged = sent.join();
+    QCOMPARE(readFile(file), logged);
+
+    corrections.setLogToFile(false);
+    QVERIFY(!corrections.logToFile());
+    QVERIFY(corrections.logFile().isEmpty());
+    QCOMPARE(changes.size(), 2);
+    submit(local, 1005);
+    QCOMPARE(readFile(file), logged);
+
+    // The next log is a file of its own, in the folder as it is by then, and shutting down closes it.
+    folder = QDir(directory.path()).filePath(QStringLiteral("second"));
+    corrections.setLogToFile(true);
+    const QString next = corrections.logFile();
+    QCOMPARE(QFileInfo(next).absolutePath(), folder);
+    sent.clear();
+    submit(local, 1077);
+    corrections.shutdown();
+    QCOMPARE(readFile(next), sent.join());
+    QCOMPARE(readFile(file), logged);
+}
+
+void GPSCorrectionManagerTest::_logThatCannotStart_data()
+{
+    QTest::addColumn<bool>("folderKnown");
+    QTest::addColumn<QString>("category");
+    QTest::addColumn<QString>("warning");
+    QTest::newRow("no-folder") << false << QStringLiteral("GPS.Corrections.GPSCorrectionManager")
+                               << QStringLiteral("No folder");
+    // A regular file is where the folder should be.
+    QTest::newRow("folder-unavailable") << true << QStringLiteral("GPS.Corrections.RTCMLogFile")
+                                        << QStringLiteral("file error");
+}
+
+void GPSCorrectionManagerTest::_logThatCannotStart()
+{
+    QFETCH(bool, folderKnown);
+    QFETCH(QString, category);
+    QFETCH(QString, warning);
+    TestFixtures::TempDirFixture directory;
+    const QString folder =
+        folderKnown ? directory.createFile(QStringLiteral("GPSCorrections"), "not a folder") : QString();
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler, {.logDirectory = [&folder] { return folder; }});
+    QList<QByteArray> sent;
+    captureVehicleFrames(corrections, sent);
+    QSignalSpy changes(&corrections, &GPSCorrectionManager::logChanged);
+
+    expectLogMessage(category.toLatin1().constData(), QtWarningMsg, QRegularExpression(warning));
+    corrections.setLogToFile(true);
+    verifyExpectedLogMessage();
+    QVERIFY(!corrections.logToFile());
+    QVERIFY(corrections.logFile().isEmpty());
+    // Notified although nothing changed, so that a switch bound to the property goes back to off.
+    QCOMPARE(changes.size(), 1);
+
+    // The corrections are routed all the same.
+    const auto source = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
+    const QByteArray frame = GPSTest::rtcmMessage(1005, 20);
+    source->submit(frame, scheduler.nowMs());
+    QCOMPARE(sent, QList<QByteArray>{frame});
+}
+
+void GPSCorrectionManagerTest::_logKeepsExistingFile()
+{
+    // Two logs can be named alike: started within one millisecond, or after the clock was set back.
+    TestFixtures::TempDirFixture directory;
+    const QString earlier = directory.createFile(QStringLiteral("20260102T030405.006Z.rtcm3"), "earlier log");
+    RTCMLogFile log;
+    expectLogMessage("GPS.Corrections.RTCMLogFile", QtWarningMsg, QRegularExpression(QStringLiteral("file error")));
+    QVERIFY(!log.open(earlier));
+    verifyExpectedLogMessage();
+    QVERIFY(log.file().isEmpty());
+    QCOMPARE(readFile(earlier), QByteArray("earlier log"));
+}
+
+void GPSCorrectionManagerTest::_logEndsAtSizeLimit()
+{
+    TestFixtures::TempDirFixture directory;
+    const QByteArray frame = GPSTest::rtcmMessage(1077, 100);
+    ManualScheduler scheduler;
+    // Room for two frames and part of a third.
+    GPSCorrectionManager corrections(
+        nullptr, &scheduler,
+        {.logDirectory = [&directory] { return directory.path(); }, .maxLogFileBytes = 2 * frame.size() + 10});
+    QList<QByteArray> sent;
+    captureVehicleFrames(corrections, sent);
+    corrections.setLogToFile(true);
+    const QString file = corrections.logFile();
+    QVERIFY(!file.isEmpty());
+    QSignalSpy changes(&corrections, &GPSCorrectionManager::logChanged);
+    const auto source = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
+
+    source->submit(frame, scheduler.nowMs());
+    source->submit(frame, scheduler.nowMs());
+    QVERIFY(corrections.logToFile());
+    expectLogMessage("GPS.Corrections.RTCMLogFile", QtWarningMsg, QRegularExpression(QStringLiteral("size limit")));
+    source->submit(frame, scheduler.nowMs());
+    verifyExpectedLogMessage();
+
+    // The log ended and no longer names its file; it holds whole frames, and the routing went on.
+    QVERIFY(!corrections.logToFile());
+    QVERIFY(corrections.logFile().isEmpty());
+    QCOMPARE(changes.size(), 1);
+    source->submit(frame, scheduler.nowMs());
+    QCOMPARE(sent.size(), 4);
+    QCOMPARE(readFile(file), frame + frame);
 }
 
 void GPSCorrectionManagerTest::_udpOutputForwardsSelectedStream()

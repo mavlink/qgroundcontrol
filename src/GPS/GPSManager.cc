@@ -44,12 +44,19 @@ GPSReceiver::Dependencies receiverDependencies(GPSCorrectionManager* corrections
     return dependencies;
 }
 
+/// Beside the receiver recordings; see receiverDependencies().
+QString correctionLogDirectory()
+{
+    const QString savePath = SettingsManager::instance()->appSettings()->savePath()->rawValue().toString();
+    return savePath.isEmpty() ? QString() : QDir(savePath).filePath(QStringLiteral("GPSCorrections"));
+}
+
 }  // namespace
 
 GPSManager::GPSManager(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
     , _scheduler(RuntimeScheduler::orDefault(scheduler, nullptr))
-    , _corrections(new GPSCorrectionManager(this, _scheduler))
+    , _corrections(new GPSCorrectionManager(this, _scheduler, {.logDirectory = correctionLogDirectory}))
     , _positionManager(new PositionManager(this, _scheduler))
     , _receiver(new GPSReceiver(this, _scheduler, receiverDependencies(_corrections, _positionManager)))
     , _ntripManager(new NTRIPManager(this, _scheduler,

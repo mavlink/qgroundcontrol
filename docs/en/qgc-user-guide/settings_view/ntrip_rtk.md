@@ -65,3 +65,10 @@ An entry that is not a message ID stops all corrections until it is corrected, a
 A vehicle receives no corrections while it is connected through a link marked **High Latency** in its [link settings](comm_links.md), such as a satellite modem: a correction stream is far more data than such a link carries. Corrections reach the vehicle again once a regular link takes over.
 
 Vehicles and UDP forwarding always receive the same stream, and UDP forwarding continues whichever vehicles are chosen.
+
+**Log corrections to a file** writes the corrections to a file as they are sent, to send with a problem report or to post-process the base station's observations.
+It is off each time QGroundControl starts. Each time it is turned on it starts a new file in the `GPSCorrections` folder of the [Application Load/Save Path](general.md#load_save_path), named with the UTC time it started, such as `20260102T030405.006Z.rtcm3`.
+The file's path is shown below the switch while the log is written.
+The file holds the RTCM 3 messages exactly as vehicles and UDP forwarding receive them, one after the other, which is the raw RTCM 3 format other tools read: only the stream selected for vehicles, without the messages the RTCM message filter leaves out.
+It therefore includes the base station location, so share it only where that is acceptable.
+A log stops when its file reaches 256 MB or cannot be written: the switch turns off, the application log reports it and the path is no longer shown. The corrections continue either way.

@@ -1451,6 +1451,8 @@ class TestRealPageDefinitions:
         # The generated NTRIP groups hide with the NTRIP settings group, as its hand-written panels do.
         assert qml.count("(QGroundControl.settingsManager.ntripSettings.userVisible)") == 2
         assert "NTRIPPasswordField" in qml
+        # The log switch is a setting of the routing, not part of the status the toolbar drop-down shows.
+        assert "CorrectionsLogSwitch" in qml
         assert "correctionSourceInstance" not in qml
         assert "injectLocalReceiver" not in qml
 
