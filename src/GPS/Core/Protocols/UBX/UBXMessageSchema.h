@@ -85,6 +85,7 @@ struct NavSvin
 
 struct NavSat
 {
+    uint8_t version;
     uint8_t numSvs;
 };
 
@@ -122,15 +123,18 @@ struct MonRfBlock
 struct MonRf
 {
     static constexpr MessageId ID = Msg::MON_RF;
+    uint8_t version;
+    uint8_t nBlocks;
     MonRfBlock block;
 };
 
-/// SEC-SIG header: v2 and v3 flags, or v1 jamFlags; the per-band groups that follow are not read.
+/// SEC-SIG header: v2 and v3 flags and their count of per-band groups, or v1 jamFlags; the groups are not read.
 struct SecSig
 {
     static constexpr MessageId ID = Msg::SEC_SIG;
     uint8_t version;
     uint8_t flags;
+    uint8_t jamNumCentFreqs;
     uint8_t jamFlags;
 };
 
@@ -262,7 +266,7 @@ struct Layout<UBX::NavSat>
 {
     using T = UBX::NavSat;
     static constexpr size_t SIZE = 8;
-    static constexpr auto FIELDS = std::tuple{Field<&T::numSvs, 5>{}};
+    static constexpr auto FIELDS = std::tuple{Field<&T::version, 4>{}, Field<&T::numSvs, 5>{}};
 };
 
 template <>
@@ -310,7 +314,7 @@ struct Layout<UBX::MonRf>
 {
     using T = UBX::MonRf;
     static constexpr size_t SIZE = 28;
-    static constexpr auto FIELDS = std::tuple{Field<&T::block, 4>{}};
+    static constexpr auto FIELDS = std::tuple{Field<&T::version, 0>{}, Field<&T::nBlocks, 1>{}, Field<&T::block, 4>{}};
 };
 
 template <>
@@ -318,7 +322,8 @@ struct Layout<UBX::SecSig>
 {
     using T = UBX::SecSig;
     static constexpr size_t SIZE = 5;
-    static constexpr auto FIELDS = std::tuple{Field<&T::version, 0>{}, Field<&T::flags, 1>{}, Field<&T::jamFlags, 4>{}};
+    static constexpr auto FIELDS = std::tuple{Field<&T::version, 0>{}, Field<&T::flags, 1>{},
+                                              Field<&T::jamNumCentFreqs, 3>{}, Field<&T::jamFlags, 4>{}};
 };
 
 template <>
@@ -406,6 +411,13 @@ inline constexpr size_t WIRE_SIZE = Wire::SIZE<T>;
 
 inline constexpr size_t MAX_CONTROL_PAYLOAD_SIZE = 328;
 inline constexpr float DOP_PER_UNIT = 0.01f;
+/// NAV-PVT of u-blox 7, which ends before headVeh.
+inline constexpr size_t NAV_PVT_U7_SIZE = 84;
+/// The MON-VER extensions that fit the longest payload decoded.
+inline constexpr size_t MON_VER_MAX_EXTENSIONS = (MAX_PAYLOAD_SIZE - WIRE_SIZE<MonVer>) / WIRE_SIZE<MonVerExtension>;
+/// SEC-SIG versions 2 and 3: the bytes before the per-band groups, and the size of a group.
+inline constexpr size_t SEC_SIG_HEADER_SIZE = 4;
+inline constexpr size_t SEC_SIG_BAND_SIZE = 4;
 
 /// Converts a 1e-7 degree coordinate; values beyond +/-@a limitDegrees come from a corrupt or
 /// uninitialised solution and are reported as unavailable (NaN).
@@ -450,7 +462,7 @@ template <typename Header, typename Block>
 }
 
 inline constexpr std::array MESSAGE_SCHEMAS = {
-    MessageSchema{Msg::NAV_PVT.value(), 84, WIRE_SIZE<NavPvt>, 8, 0},
+    MessageSchema{Msg::NAV_PVT.value(), NAV_PVT_U7_SIZE, WIRE_SIZE<NavPvt>, WIRE_SIZE<NavPvt> - NAV_PVT_U7_SIZE, 0},
     fixedSchema<NavHpposllh>(4),
     fixedSchema<NavStatus>(),
     fixedSchema<NavDop>(0),
@@ -458,10 +470,10 @@ inline constexpr std::array MESSAGE_SCHEMAS = {
     MessageSchema{Msg::NAV_EOE.value(), 4, 4, 1, 0},
     repeatedSchema<NavSat, NavSatSatellite>(Msg::NAV_SAT, 255),
     repeatedSchema<NavSvinfo, NavSvinfoChannel>(Msg::NAV_SVINFO, 255),
-    MessageSchema{Msg::MON_VER.value(), WIRE_SIZE<MonVer>, 4090, WIRE_SIZE<MonVerExtension>, -1},
+    repeatedSchema<MonVer, MonVerExtension>(Msg::MON_VER, MON_VER_MAX_EXTENSIONS),
     fixedSchema<MonHw>(),
     repeatedSchema<MonRf, MonRfBlock>(Msg::MON_RF, 254),
-    MessageSchema{Msg::SEC_SIG.value(), 4, 4096, 1, -1},
+    MessageSchema{Msg::SEC_SIG.value(), SEC_SIG_HEADER_SIZE, MAX_PAYLOAD_SIZE, 1, -1},
     fixedSchema<Ack>(),
     MessageSchema{Msg::ACK_NAK.value(), WIRE_SIZE<Ack>, WIRE_SIZE<Ack>, 1, -1},
     MessageSchema{Msg::CFG_VALGET.value(), 4, MAX_CONTROL_PAYLOAD_SIZE, 1, -1},
@@ -490,17 +502,24 @@ inline constexpr std::array MESSAGE_SCHEMAS = {
         return false;
     }
     switch (message) {
-        case Msg::NAV_SAT.value():
-            return payload.size() == schema->minimum + schema->stride * size_t(payload[5]) && payload[4] == 1;
+        case Msg::NAV_SAT.value(): {
+            const auto header = Wire::decode<NavSat>(payload);
+            return payload.size() == schema->minimum + schema->stride * size_t(header.numSvs) && header.version == 1;
+        }
         case Msg::NAV_SVINFO.value():
-            return payload.size() == schema->minimum + schema->stride * size_t(payload[4]);
-        case Msg::MON_RF.value():
-            return payload[0] == 0 && payload[1] > 0 &&
-                   payload.size() == schema->minimum + schema->stride * (size_t(payload[1]) - 1);
-        case Msg::SEC_SIG.value():
-            return payload[0] == 1
-                       ? payload.size() >= 5
-                       : (payload[0] == 2 || payload[0] == 3) && payload.size() == 4 + 4 * size_t(payload[3]);
+            return payload.size() == schema->minimum + schema->stride * size_t(Wire::decode<NavSvinfo>(payload).numCh);
+        case Msg::MON_RF.value(): {
+            const auto header = Wire::decode<MonRf>(payload);
+            return header.version == 0 && header.nBlocks > 0 &&
+                   payload.size() == schema->minimum + schema->stride * (size_t(header.nBlocks) - 1);
+        }
+        case Msg::SEC_SIG.value(): {
+            const auto header = Wire::decode<SecSig>(payload);
+            return header.version == 1
+                       ? payload.size() >= WIRE_SIZE<SecSig>
+                       : (header.version == 2 || header.version == 3) &&
+                             payload.size() == SEC_SIG_HEADER_SIZE + SEC_SIG_BAND_SIZE * size_t(header.jamNumCentFreqs);
+        }
         default:
             return true;
     }

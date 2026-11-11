@@ -214,6 +214,9 @@ struct ConfigurationValue
     bool operator==(const ConfigurationValue&) const = default;
 };
 
+/// The header bytes before the key/value entries of a CFG-VALSET, a CFG-VALGET poll and its response.
+inline constexpr size_t CONFIGURATION_HEADER_SIZE = 4;
+
 /// Reads only key/value entries; VALSET and VALGET validate their different headers separately.
 class ConfigurationValueCursor
 {
@@ -265,11 +268,11 @@ struct ConfigurationValues
 /// Decodes a CFG-VALGET response (version 1, RAM layer) of at most ConfigurationValues::MAX_KEYS values.
 [[nodiscard]] inline std::optional<ConfigurationValues> decodeConfigurationValues(std::span<const uint8_t> payload)
 {
-    if (payload.size() < 4 || payload[0] != 1 || payload[1] || payload[2] || payload[3]) {
+    if (payload.size() < CONFIGURATION_HEADER_SIZE || payload[0] != 1 || payload[1] || payload[2] || payload[3]) {
         return std::nullopt;
     }
     ConfigurationValues result;
-    ConfigurationValueCursor cursor(payload.subspan(4));
+    ConfigurationValueCursor cursor(payload.subspan(CONFIGURATION_HEADER_SIZE));
     while (!cursor.empty()) {
         const auto entry = cursor.next();
         if (!entry || result.count == result.values.size()) {
@@ -285,18 +288,22 @@ struct ConfigurationValues
 template <size_t Capacity>
 struct CheckedValsetBatch
 {
-    static_assert(Capacity >= 4);
+    static_assert(Capacity >= CONFIGURATION_HEADER_SIZE);
     std::array<uint8_t, Capacity> bytes{0, 1};  // RAM layer; no persistent writes.
-    size_t size = 4;
+    size_t size = CONFIGURATION_HEADER_SIZE;
     bool valid = true;
 
     std::span<const uint8_t> payload() const
     {
-        return valid && size > 4 ? std::span<const uint8_t>(bytes).first(size) : std::span<const uint8_t>{};
+        return valid && size > CONFIGURATION_HEADER_SIZE ? std::span<const uint8_t>(bytes).first(size)
+                                                         : std::span<const uint8_t>{};
     }
 
     /// The appended key/value entries, without the header.
-    std::span<const uint8_t> entries() const { return std::span<const uint8_t>(bytes).subspan(4, size - 4); }
+    std::span<const uint8_t> entries() const
+    {
+        return std::span<const uint8_t>(bytes).subspan(CONFIGURATION_HEADER_SIZE, size - CONFIGURATION_HEADER_SIZE);
+    }
 
     bool append(uint32_t key, uint32_t value)
     {

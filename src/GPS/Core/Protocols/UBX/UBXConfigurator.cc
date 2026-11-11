@@ -656,19 +656,22 @@ GPSConfigurationEvidence Protocol::_verifyValset(GPSCommandChannel& channel, GPS
     while (!cursor.empty()) {
         UBX::ConfigurationValues expected;
         std::array<uint32_t, UBX::ConfigurationValues::MAX_KEYS> keys{};
-        std::array<uint8_t, 4 + UBX::ConfigurationValues::MAX_KEYS * sizeof(uint32_t)> request{};
+        std::array<uint8_t, UBX::CONFIGURATION_HEADER_SIZE + UBX::ConfigurationValues::MAX_KEYS * sizeof(uint32_t)>
+            request{};
         while (!cursor.empty() && expected.count < expected.values.size()) {
             const auto entry = cursor.next();
             if (!entry) {
                 channel.beginCommand(step);
                 return channel.completeCommand(GPSCommandOutcome::Rejected);
             }
-            (void) LittleEndian::write(request, 4 + expected.count * sizeof(uint32_t), entry->key);
+            (void) LittleEndian::write(request, UBX::CONFIGURATION_HEADER_SIZE + expected.count * sizeof(uint32_t),
+                                       entry->key);
             keys[expected.count] = entry->key;
             expected.values[expected.count++] = *entry;
         }
         controller.beginReadback(std::span(keys).first(expected.count));
-        if (!_send(channel, Msg::CFG_VALGET, std::span(request).first(4 + expected.count * sizeof(uint32_t)), step)) {
+        const size_t requestSize = UBX::CONFIGURATION_HEADER_SIZE + expected.count * sizeof(uint32_t);
+        if (!_send(channel, Msg::CFG_VALGET, std::span(request).first(requestSize), step)) {
             controller.finishReadback();
             return channel.completeCommand(GPSCommandOutcome::TransportError);
         }

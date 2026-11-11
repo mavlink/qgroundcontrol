@@ -29,6 +29,30 @@ constexpr uint8_t PVT_VALID_TIME = 0x02;
 constexpr uint8_t PVT_FULLY_RESOLVED = 0x04;
 constexpr uint8_t FIX_OK = 0x01;
 constexpr uint8_t DIFFERENTIAL_SOLUTION = 0x02;
+/// NAV-PVT flags: carrSoln in bits 7..6.
+constexpr unsigned CARRIER_SOLUTION_SHIFT = 6;
+constexpr uint8_t CARRIER_SOLUTION_FLOAT = 1;
+constexpr uint8_t CARRIER_SOLUTION_FIXED = 2;
+/// NAV-PVT fixType.
+constexpr uint8_t PVT_FIX_NONE = 0;
+constexpr uint8_t PVT_FIX_DEAD_RECKONING = 1;
+constexpr uint8_t PVT_FIX_2D = 2;
+constexpr uint8_t PVT_FIX_3D = 3;
+constexpr uint8_t PVT_FIX_GNSS_DEAD_RECKONING = 4;
+constexpr uint8_t PVT_FIX_TIME_ONLY = 5;
+/// MON-RF antStatus and MON-HW aStatus.
+constexpr uint8_t ANTENNA_OK = 2;
+constexpr uint8_t ANTENNA_SHORT = 3;
+constexpr uint8_t ANTENNA_OPEN = 4;
+/// The two-bit spoofing and jamming states, and their place in the flags of the messages that report them.
+constexpr uint8_t MONITOR_STATE_MASK = 0x03;
+constexpr unsigned NAV_STATUS_SPOOFING_SHIFT = 3;
+constexpr unsigned MON_HW_JAMMING_SHIFT = 2;
+constexpr unsigned SEC_SIG_JAMMING_SHIFT = 1;
+constexpr uint8_t SEC_SIG_JAMMING_ENABLED = 0x01;
+/// svUsed in the flags of a NAV-SAT satellite and of a NAV-SVINFO channel.
+constexpr uint32_t NAV_SAT_USED = 0x08;
+constexpr uint8_t NAV_SVINFO_USED = 0x01;
 
 GPSPositionReport::FixType navigationFix(uint8_t wireFix, uint8_t flags)
 {
@@ -37,27 +61,27 @@ GPSPositionReport::FixType navigationFix(uint8_t wireFix, uint8_t flags)
         return Fix::NoFix;
     }
     switch (wireFix) {
-        case 0:
+        case PVT_FIX_NONE:
             return Fix::NoFix;
-        case 5:
-            // Time only: a receiver in time mode, such as a base station, holds its surveyed or fixed position.
+        case PVT_FIX_TIME_ONLY:
+            // A receiver in time mode, such as a base station, holds its surveyed or fixed position.
             return Fix::Fix3D;
-        case 1:
+        case PVT_FIX_DEAD_RECKONING:
             return Fix::Extrapolated;
-        case 2:
+        case PVT_FIX_2D:
             // Correction flags cannot establish a three-dimensional navigation solution.
             return Fix::Fix2D;
-        case 3:
-        case 4:
+        case PVT_FIX_3D:
+        case PVT_FIX_GNSS_DEAD_RECKONING:
             break;
         default:
             return Fix::Unknown;
     }
-    const uint8_t carrier = flags >> 6;
-    if (carrier == 1) {
+    const uint8_t carrier = flags >> CARRIER_SOLUTION_SHIFT;
+    if (carrier == CARRIER_SOLUTION_FLOAT) {
         return Fix::RTKFloat;
     }
-    if (carrier == 2) {
+    if (carrier == CARRIER_SOLUTION_FIXED) {
         return Fix::RTKFixed;
     }
     return flags & DIFFERENTIAL_SOLUTION ? Fix::Differential : Fix::Fix3D;
@@ -82,11 +106,11 @@ QByteArrayView cString(const uint8_t (&field)[N])
 GPSIntegrityReport::AntennaState antennaState(uint8_t status)
 {
     switch (status) {
-        case 2:
+        case ANTENNA_OK:
             return GPSIntegrityReport::AntennaState::Ok;
-        case 3:
+        case ANTENNA_SHORT:
             return GPSIntegrityReport::AntennaState::Short;
-        case 4:
+        case ANTENNA_OPEN:
             return GPSIntegrityReport::AntennaState::Open;
         default:
             return GPSIntegrityReport::AntennaState::Unknown;
@@ -310,7 +334,8 @@ GPSReceiveUpdates Protocol::_decodeHandled(uint16_t message, std::span<const uin
             return _decodeSurveyIn(payload, context);
         case Msg::NAV_STATUS.value(): {
             const auto status = Wire::decode<UBX::NavStatus>(payload);
-            _integrity.spoofing.state = GPSIntegrityReport::spoofingStateFromValue((status.flags2 >> 3) & 0x03);
+            _integrity.spoofing.state = GPSIntegrityReport::spoofingStateFromValue(
+                (status.flags2 >> NAV_STATUS_SPOOFING_SHIFT) & MONITOR_STATE_MASK);
             _integrity.spoofing.timestampUs = now;
             break;
         }
@@ -319,7 +344,8 @@ GPSReceiveUpdates Protocol::_decodeHandled(uint16_t message, std::span<const uin
             _integrity.antenna = {.timestampUs = now, .state = antennaState(hardware.aStatus)};
             if (!_secSigSeen) {
                 _integrity.jamming = {.timestampUs = now,
-                                      .state = GPSIntegrityReport::jammingStateFromValue((hardware.flags >> 2) & 0x03)};
+                                      .state = GPSIntegrityReport::jammingStateFromValue(
+                                          (hardware.flags >> MON_HW_JAMMING_SHIFT) & MONITOR_STATE_MASK)};
             }
             break;
         }
@@ -331,7 +357,8 @@ GPSReceiveUpdates Protocol::_decodeHandled(uint16_t message, std::span<const uin
             for (size_t offset = UBX::WIRE_SIZE<UBX::MonRf> - UBX::WIRE_SIZE<UBX::MonRfBlock>; offset < payload.size();
                  offset += UBX::WIRE_SIZE<UBX::MonRfBlock>) {
                 const auto block = Wire::decode<UBX::MonRfBlock>(payload, offset);
-                jamming = (std::max) (jamming, GPSIntegrityReport::jammingStateFromValue(block.flags & 0x03));
+                jamming =
+                    (std::max) (jamming, GPSIntegrityReport::jammingStateFromValue(block.flags & MONITOR_STATE_MASK));
                 antenna = (std::max) (antenna, antennaState(block.antStatus));
             }
             if (!_secSigSeen) {
@@ -346,8 +373,10 @@ GPSReceiveUpdates Protocol::_decodeHandled(uint16_t message, std::span<const uin
             // from NAV-STATUS.
             const uint8_t flags = signal.version == 1 ? signal.jamFlags : signal.flags;
             // jamDetEnabled in bit 0, then the jamming state as MON-RF reports it.
-            _integrity.jamming.state = (flags & 0x01) ? GPSIntegrityReport::jammingStateFromValue((flags >> 1) & 0x03)
-                                                      : GPSIntegrityReport::JammingState::Unknown;
+            _integrity.jamming.state =
+                (flags & SEC_SIG_JAMMING_ENABLED)
+                    ? GPSIntegrityReport::jammingStateFromValue((flags >> SEC_SIG_JAMMING_SHIFT) & MONITOR_STATE_MASK)
+                    : GPSIntegrityReport::JammingState::Unknown;
             _integrity.jamming.timestampUs = now;
             _secSigSeen = true;
             break;
@@ -505,14 +534,14 @@ void Protocol::_decodeSatellites(uint16_t message, std::span<const uint8_t> payl
             [&SYSTEMS](auto& report, const auto& satellite) {
                 report.addSatellite(
                     satellite.gnssId < std::size(SYSTEMS) ? SYSTEMS[satellite.gnssId] : GPSConstellation::Unknown,
-                    (satellite.flags & 8) != 0);
+                    (satellite.flags & NAV_SAT_USED) != 0);
             });
         return;
     }
     decodeSatelliteBlocks<UBX::NavSvinfo, UBX::NavSvinfoChannel>(
         payload, _satellites, [](const auto& header) { return header.numCh; },
         [](auto& report, const auto& channel) {
-            report.addSatellite(GPSConstellation::Unknown, (channel.flags & 1) != 0);
+            report.addSatellite(GPSConstellation::Unknown, (channel.flags & NAV_SVINFO_USED) != 0);
         });
 }
 

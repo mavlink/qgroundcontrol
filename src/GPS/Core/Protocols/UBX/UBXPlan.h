@@ -235,6 +235,8 @@ inline constexpr CfgRate LEGACY_SURVEY_RATE{.measRate = 200, .navRate = 1, .time
 inline constexpr CfgRate LEGACY_BASE_RATE{.measRate = BASE_MEASUREMENT_PERIOD_MS, .navRate = 1, .timeRef = 0};
 /// Updates only the dynamic model and the fix mode (3D only).
 inline constexpr CfgNav5 LEGACY_NAVIGATION{.mask = 0x0005, .dynModel = STATIONARY_DYNAMIC_MODEL, .fixMode = 2};
+/// NAV-SVINFO once a second of the 5 Hz survey.
+inline constexpr uint8_t LEGACY_SURVEY_SATELLITE_RATE = 5;
 /// NAV-PVT, status, satellite and MON-HW (antenna and jamming) rates during the survey.
 [[nodiscard]] std::array<MessageRate, 5> legacyMessageOutput();
 inline constexpr MessageRate LEGACY_SURVEY_STATUS{Msg::NAV_SVIN, SURVEY_STATUS_RATE};
