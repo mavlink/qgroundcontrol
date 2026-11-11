@@ -51,6 +51,7 @@ private slots:
     void _testVideoViewFitsVideo();
     void _testCameraPinchZoomSteps();
     void _testVideoViewPlacesThermalPip();
+    void _testThermalDecodesOnlyWhileShown();
     void _testStreamUriAndTransport_data();
     void _testStreamUriAndTransport();
 

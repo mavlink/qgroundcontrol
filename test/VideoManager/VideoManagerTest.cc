@@ -128,6 +128,31 @@ CameraPinchZoom {
 }
 )QML";
 
+// A view holding a ThermalVideoOverlay that follows a stand-in camera, whose thermal mode the test changes.
+constexpr const char* kThermalOverlayQml = R"QML(
+import QtQuick
+import QGroundControl
+import QGroundControl.VideoManager
+
+Item {
+    id: root
+
+    property alias videoManager: overlay.videoManager
+    property QtObject camera: QtObject {
+        property int thermalMode: MavlinkCameraControlInterface.THERMAL_PIP
+        property real thermalOpacity: 100
+    }
+
+    width: 400
+    height: 400
+
+    ThermalVideoOverlay {
+        id: overlay
+        camera: root.camera
+    }
+}
+)QML";
+
 // A VideoView following a stand-in camera, whose thermal mode the test changes.
 constexpr const char* kThermalVideoViewQml = R"QML(
 import QtQuick
@@ -835,6 +860,9 @@ void VideoManagerTest::_testStreamStatsReachQml()
     QCOMPARE(statsSpy.count(), 1);
     QVERIFY(stream->stats() == stats);
     QVERIFY(group->isVisible());
+    // A stream that isn't decoded, as the thermal stream while its view is off, shows no frames to count.
+    QVERIFY(!showsText(group.get(), QStringLiteral("29.5 fps")));
+    _primary->setDecoding(true);
     QVERIFY(showsText(group.get(), QStringLiteral("29.5 fps")));
     QVERIFY(showsText(group.get(), QStringLiteral("avdec_h264 (software)")));
     // A stream without RTP counters hides the rows that need them.
@@ -1023,6 +1051,41 @@ void VideoManagerTest::_testVideoViewPlacesThermalPip()
     (void) camera->setProperty("thermalMode", MavlinkCameraControlInterface::THERMAL_PIP);
     QCOMPARE(thermal->x(), view->property("pipX").toReal());
     QCOMPARE(thermal->y(), view->property("pipY").toReal());
+}
+
+void VideoManagerTest::_testThermalDecodesOnlyWhileShown()
+{
+    const auto thermalInfo =
+        makeStreamInfo(VIDEO_STREAM_TYPE_RTSP, "rtsp://10.0.0.1/thermal", VIDEO_STREAM_ENCODING_H264, true);
+    _videoManager->thermalStream()->setStreamInfo(thermalInfo.get());
+    QVERIFY(_videoManager->hasThermal());
+
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kThermalOverlayQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/ThermalOverlay.qml")));
+    const std::unique_ptr<QQuickItem> view(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
+        {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}})));
+    QVERIFY2(view, qPrintable(component.errorString()));
+    auto* const camera = view->property("camera").value<QObject*>();
+    QVERIFY(camera);
+
+    // The receiver decodes while it has an output: the overlay gives it one only while the thermal mode shows it.
+    QVERIFY(_thermal->videoOutput());
+    (void) camera->setProperty("thermalMode", MavlinkCameraControlInterface::THERMAL_OFF);
+    QCOMPARE(_thermal->videoOutput(), nullptr);
+    (void) camera->setProperty("thermalMode", MavlinkCameraControlInterface::THERMAL_BLEND);
+    QVERIFY(_thermal->videoOutput());
+
+    // Hidden with the view it is in, it keeps its output: the stream decodes on.
+    QQuickWindow window;
+    view->setParentItem(window.contentItem());
+    view->setVisible(false);
+    QVERIFY(_thermal->videoOutput());
+
+    _videoManager->thermalStream()->setStreamInfo(nullptr);
+    QVERIFY(!_videoManager->hasThermal());
+    QCOMPARE(_thermal->videoOutput(), nullptr);
 }
 
 void VideoManagerTest::_testStreamUriAndTransport_data()

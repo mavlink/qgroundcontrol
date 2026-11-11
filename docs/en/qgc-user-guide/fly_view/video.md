@@ -55,7 +55,10 @@ dropdown shows, about once a second:
 - **Recording**: while recording, how long and how much has been written.
 
 For a MAVLink camera, its advertised frame rate, bitrate and resolution follow the measured ones in brackets.
-When a camera also sends a thermal stream, its statistics appear below.
+When a camera also sends a thermal stream, its statistics appear below. The thermal stream is decoded only while the
+camera's thermal view is on. With the view off it is still received, and GStreamer still records it with the video (the
+Qt Multimedia backend records only video on display), but it shows no frame rate, and turning the view on shows it from
+its next keyframe.
 
 For a USB camera, the indicator shows the frame rate and the resolution (for example `1080p`), and its dropdown shows
 under **USB Camera**:

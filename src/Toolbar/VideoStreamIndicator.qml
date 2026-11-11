@@ -27,8 +27,10 @@ Item {
                                       || _statsDegraded(_thermal.stats, _streamCameraFps(_thermal))
                                       || _statsDegraded(_uvc.stats, _uvc.cameraFrameRate)
 
+    // The frame rate the stream's camera advertises; none for a stream that isn't decoded, as the thermal stream while
+    // its view is off, which shows no frames to compare with it.
     function _streamCameraFps(stream) {
-        return stream.streamInfo ? stream.streamInfo.framerate : 0
+        return stream.decoding && stream.streamInfo ? stream.streamInfo.framerate : 0
     }
 
     // Losing packets or dropping frames now, or showing under three quarters of the frame rate the camera advertises.

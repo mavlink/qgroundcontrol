@@ -53,10 +53,12 @@ QGCGroupBox {
         visible:    labelText !== ""
     }
 
+    // Frames shown: none for a stream that isn't decoded, as the thermal stream while its view is off.
     LabelledLabel {
         label:      qsTr("Frame rate")
         labelText:  root._withCamera(qsTr("%1 fps").arg(root._stats.fps.toFixed(1)),
                                      root._cameraFps > 0 ? qsTr("%1 fps").arg(root._cameraFps.toFixed(0)) : "")
+        visible:    root.stream.decoding
     }
 
     LabelledLabel {

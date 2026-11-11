@@ -14,9 +14,14 @@ Item {
     property var camera: null
     /// Height covered at the top of the view, which the picture-in-picture stays below.
     property real pipTopInset: 0
+    /// The manager whose thermal stream is shown.
+    property VideoManager videoManager: QGroundControl.videoManager
 
-    readonly property VideoManager _videoManager: QGroundControl.videoManager
-    readonly property real _aspectRatio: root._videoManager.thermalAspectRatio
+    // Whether the thermal mode shows the overlay. Not the item's visibility, which also goes with the view it is in:
+    // behind another view the stream keeps decoding, so that coming back doesn't wait for a keyframe.
+    readonly property bool _shown: root.videoManager.hasThermal && !!root.camera
+                                   && root.camera.thermalMode !== MavlinkCameraControlInterface.THERMAL_OFF
+    readonly property real _aspectRatio: root.videoManager.thermalAspectRatio
     // Size of the thermal video blended over the main one, relative to the view.
     readonly property real _blendSizeFactor: 0.85
     // The view the overlay is placed in: none while it is created, and again while it is destroyed.
@@ -52,8 +57,7 @@ Item {
 
     width:      Math.min(root._boxWidth, root._boxHeight * root._aspectRatio)
     height:     root.width / root._aspectRatio
-    visible:    root._videoManager.hasThermal && !!root.camera
-                && root.camera.thermalMode !== MavlinkCameraControlInterface.THERMAL_OFF
+    visible:    root._shown
 
     anchors {
         horizontalCenter:   root.parent ? root.parent.horizontalCenter : undefined
@@ -63,8 +67,10 @@ Item {
         leftMargin:         ScreenTools.defaultFontPixelWidth * 12
     }
 
+    // The stream decodes while it has an output: none while the overlay isn't shown.
     Loader {
         anchors.fill:       parent
+        active:             root._shown
         opacity:            !root.camera ? 0
                             : (root.camera.thermalMode === MavlinkCameraControlInterface.THERMAL_BLEND
                                ? root.camera.thermalOpacity / 100 : 1.0)
@@ -74,7 +80,7 @@ Item {
             id: thermalOutputComponent
 
             VideoStreamOutput {
-                stream: root._videoManager.thermalStream
+                stream: root.videoManager.thermalStream
             }
         }
     }
