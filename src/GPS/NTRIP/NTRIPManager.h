@@ -252,6 +252,9 @@ private:
     ExponentialBackoff _reconnectBackoff{std::chrono::seconds(1), 2, std::chrono::seconds(30),
                                          NTRIPFailure::MAX_RETRY_AFTER};
     QString _lastFailureDetail;  ///< The latest transport failure, for the give-up message.
+    /// Corrections have arrived over the current connection settings since they were last started, so a source
+    /// table in place of the stream means the mountpoint went offline, not that it is wrong.
+    bool _streamServed = false;
     bool _waitingForNetwork = false;
     bool _initialized = false;
     bool _shutdown = false;

@@ -45,6 +45,7 @@ private slots:
     void _retiredTransportErrorCannotAffectNewSession();
     void _retryPolicy_data();
     void _retryPolicy();
+    void _sourceTableRetriedOnlyAfterCorrections();
     void _httpRetryAfterReachesManager();
     void _retryPublicationSuperseded();
     void _missingMountpointDoesNotStartTransport();

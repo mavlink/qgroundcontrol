@@ -25,6 +25,8 @@ Shows the NTRIP connection state with message and byte counters, the age of the 
 - **Mount Point** — the NTRIP mountpoint to connect to
 - **Browse** — fetch available mountpoints from the server and display them in a list with format, navigation system, country, bitrate, and distance information
 
+A caster answers with its source table when it does not have the requested mountpoint. Before any corrections have arrived, QGroundControl reports that and does not retry, because some public casters temporarily ban clients that keep requesting a missing mountpoint. Once the mountpoint has delivered corrections, the same answer means it went offline, and QGroundControl keeps reconnecting.
+
 ## GGA Position Reporting
 
 Network RTK (VRS) casters need the rover position. Select the position QGC reports and how often.
