@@ -364,9 +364,6 @@ bool SHPFileHelper::loadPolygonsFromFile(const QString &shpFile, QList<QList<QGe
         }
         auto shpObjectCleanup = qScopeGuard([shpObject]() { SHPDestroyObject(shpObject); });
 
-        // Ensure clockwise winding for outer rings (QGC requirement)
-        SHPRewindObject(shpHandle, shpObject);
-
         // For multi-part polygons (e.g., polygons with holes), we extract only the outer ring.
         // In shapefiles, the first part is conventionally the outer boundary, and subsequent
         // parts are holes (inner rings). For QGC's use cases (survey areas, geofences), the
@@ -377,17 +374,31 @@ bool SHPFileHelper::loadPolygonsFromFile(const QString &shpFile, QList<QList<QGe
                                       << "parts; using outer ring only (" << firstPartEnd << "vertices)";
         }
 
-        QList<QGeoCoordinate> vertices;
-        for (int i = 0; i < firstPartEnd; i++) {
-            QGeoCoordinate coord;
-            if (_vertexCoordinate(shpObject, i, utmZone, utmSouthernHemisphere, hasAltitude, coord)) {
-                vertices.append(coord);
+        const auto readVertices = [&]() {
+            QList<QGeoCoordinate> ring;
+            for (int i = 0; i < firstPartEnd; i++) {
+                QGeoCoordinate coord;
+                if (_vertexCoordinate(shpObject, i, utmZone, utmSouthernHemisphere, hasAltitude, coord)) {
+                    ring.append(coord);
+                }
             }
-        }
+            return ring;
+        };
+
+        // The vertices are checked before the ring is wound: a warning then names a vertex by its place in the
+        // file, and shapelib, which winds a ring on its numbers as they stand, never sees one that is left out.
+        QList<QGeoCoordinate> vertices = readVertices();
 
         if (vertices.count() < 3) {
             qCWarning(SHPFileHelperLog) << "Skipping polygon entity" << entityIdx << "with less than 3 vertices";
             continue;
+        }
+
+        // Ensure clockwise winding for outer rings (QGC requirement)
+        if (vertices.count() < firstPartEnd) {
+            ShapeVertices::makeClockwise(vertices);
+        } else if (SHPRewindObject(shpHandle, shpObject) > 0) {
+            vertices = readVertices();
         }
 
         // The repeated first vertex goes before filtering, so that it does not count towards the three vertices

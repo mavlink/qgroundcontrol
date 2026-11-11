@@ -920,6 +920,14 @@ void ShapeTest::_testSHPCoordinateValidation_data()
         << QStringList{"424000,5205000 424000,15205000 424100,5205100 424100,5205000 424000,5205000"}
         << "UTM conversion failed for entity 0 vertex 1"
         << QStringList{"8.000441856,46.99416047 8.001740103,46.99507168 8.00175686,46.99417194"};
+    // The polygon winds clockwise without the vertex that is left out, whichever way the ring ran with it, and
+    // the warning names that vertex by its place in the file.
+    QTest::newRow("clockwise ring that an out of range vertex makes counter-clockwise")
+        << kWgs84Prj << ShapeType::Polygon << QStringList{"8,47 8,47.001 8.001,47.001 8.001,47 8.0005,147 8,47"}
+        << "out of range for entity 0 vertex 4" << QStringList{"8,47 8,47.001 8.001,47.001 8.001,47"};
+    QTest::newRow("counter-clockwise ring with a vertex that is not a number")
+        << kWgs84Prj << ShapeType::Polygon << QStringList{"8,47 8.001,47 nan,47.0005 8.001,47.001 8,47.001 8,47"}
+        << "out of range for entity 0 vertex 2" << QStringList{"8,47 8,47.001 8.001,47.001 8.001,47"};
 }
 
 void ShapeTest::_testSHPCoordinateValidation()
