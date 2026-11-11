@@ -277,6 +277,25 @@ QString UrlFactory::providerTypeFromHash(int hash)
     return QString("");
 }
 
+QMap<int, int> UrlFactory::legacyMapIds()
+{
+    // Version 1 numbered the providers of its list from 1. The list was the providers 1 to 41 in the order of their
+    // ids, without the 5 Google providers on a build that lacks them. Stated here and not derived from _providers, so
+    // that changing that list cannot change how an old cache is read.
+#ifdef QGC_NO_GOOGLE_MAPS
+    constexpr int firstMapId = 6;
+#else
+    constexpr int firstMapId = 1;
+#endif
+    constexpr int lastMapId = 41;
+
+    QMap<int, int> ids;
+    for (int mapId = firstMapId; mapId <= lastMapId; mapId++) {
+        ids.insert(mapId - firstMapId + 1, mapId);
+    }
+    return ids;
+}
+
 int UrlFactory::hashFromProviderType(QStringView type)
 {
     for (const SharedMapProvider& provider : _providers) {

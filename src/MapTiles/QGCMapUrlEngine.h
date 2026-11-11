@@ -4,6 +4,7 @@
 
 #include <QtCore/QByteArrayView>
 #include <QtCore/QList>
+#include <QtCore/QMap>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 #include <QtCore/QStringView>
@@ -42,6 +43,10 @@ public:
     static std::shared_ptr<const MapProvider> getMapProviderFromMapId(int mapId);
     static std::shared_ptr<const MapProvider> getMapProviderFromProviderType(QStringView type);
     static QString providerTypeFromHash(int hash);
+
+    /// The ids the providers had in schema version 1 of the tile cache on this build, each with the provider's id.
+    /// Version 1 numbered the providers by their position in the provider list of the build.
+    static QMap<int, int> legacyMapIds();
 
     static int hashFromProviderType(QStringView type);
     static QString tileHashToType(QStringView tileHash);

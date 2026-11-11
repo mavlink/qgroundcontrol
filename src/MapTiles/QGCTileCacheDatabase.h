@@ -5,6 +5,7 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QList>
+#include <QtCore/QMap>
 #include <QtCore/QString>
 
 #include "QGCTile.h"
@@ -17,7 +18,8 @@ class QGCTileCacheDatabase
 {
 public:
     static constexpr quint64 kInvalidTileSet = UINT64_MAX;
-    static constexpr int kSchemaVersion = 1;
+    /// 2: provider ids are the permanent ones (version 1 had the position in the provider list of the build)
+    static constexpr int kSchemaVersion = 2;
 
     explicit QGCTileCacheDatabase(const QString& databasePath);
     ~QGCTileCacheDatabase();
@@ -25,6 +27,10 @@ public:
     bool init();
     bool connectDB();
     void disconnectDB();
+
+    /// Replaces the provider ids a version-1 cache is renumbered from (UrlFactory::legacyMapIds()). Call before init().
+    /// For unit tests: on the platforms they run on, version 1 had the permanent ids already.
+    void setLegacyMapIds(const QMap<int, int>& legacyMapIds) { _legacyMapIds = legacyMapIds; }
 
     bool isValid() const { return _valid; }
 
@@ -73,6 +79,8 @@ private:
     bool _ensureConnected() const;
     QSqlDatabase _database() const;
     bool _checkSchemaVersion();
+    bool _migrate(QSqlDatabase db, int version);
+    static bool _renumberMapIds(QSqlDatabase db, const QMap<int, int>& legacyMapIds);
     bool _createDB(QSqlDatabase db, bool createDefault = true);
     quint64 _getDefaultTileSet();
     bool _deleteTilesByIDs(const QList<quint64>& ids);
@@ -83,6 +91,7 @@ private:
 
     QString _databasePath;
     QString _connectionName;
+    QMap<int, int> _legacyMapIds;
     quint64 _defaultSet = kInvalidTileSet;
     bool _connected = false;
     bool _valid = false;

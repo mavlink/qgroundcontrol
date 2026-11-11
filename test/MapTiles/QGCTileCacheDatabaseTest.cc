@@ -1,19 +1,140 @@
 #include "QGCTileCacheDatabaseTest.h"
 
+#include <utility>
+
 #include <QtCore/QDateTime>
+#include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QSettings>
 #include <QtCore/QTemporaryDir>
 #include <QtSql/QSqlDatabase>
+#include <QtSql/QSqlError>
 #include <QtSql/QSqlQuery>
+#include <QtSql/QSqlRecord>
 
 #include "QGCCacheTile.h"
 #include "QGCMapUrlEngine.h"
+#include "QGCSqlHelper.h"
 #include "QGCTile.h"
 #include "QGCTileCacheDatabase.h"
 
 static const QString kFixedProviderType = QStringLiteral("Bing Road");
+
+namespace {
+
+QString tileCacheHash(int mapId, int x, int y, int z)
+{
+    return QString::asprintf("%010d%08d%08d%03d", mapId, x, y, z);
+}
+
+/// The rows of a query, the values of a row joined with '|'
+QStringList tileCacheRows(const QString& path, const QString& sql)
+{
+    QStringList rows;
+    const QGCSqlHelper::ScopedConnection connection(path, /*readOnly=*/true, QStringLiteral("TileCacheTestRows"));
+    QSqlQuery query(connection.database());
+    if (!query.exec(sql)) {
+        return {query.lastError().text()};
+    }
+    while (query.next()) {
+        QStringList values;
+        for (int i = 0; i < query.record().count(); i++) {
+            values.append(query.value(i).toString());
+        }
+        rows.append(values.join(QLatin1Char('|')));
+    }
+    return rows;
+}
+
+const QString kTileCacheTilesSql = QStringLiteral("SELECT tileID, hash, type, hex(tile) FROM Tiles ORDER BY tileID");
+const QString kTileCacheSetsSql = QStringLiteral("SELECT setID, name, type FROM TileSets ORDER BY setID");
+const QString kTileCacheSetTilesSql = QStringLiteral("SELECT setID, tileID FROM SetTiles ORDER BY setID, tileID");
+const QString kTileCacheDownloadsSql =
+    QStringLiteral("SELECT setID, hash, type, x, y, z, state FROM TilesDownload ORDER BY rowid");
+const QString kTileCacheVersionSql = QStringLiteral("PRAGMA user_version");
+
+/// Creates a cache file as schema version 1 wrote it, with the default set, and runs \a rowStatements on it.
+/// Returns the error, if any.
+QString createVersion1TileCache(const QString& path, const QStringList& rowStatements)
+{
+    QStringList statements = {
+        QStringLiteral("CREATE TABLE Tiles (tileID INTEGER PRIMARY KEY NOT NULL, hash TEXT NOT NULL UNIQUE, "
+                       "format TEXT NOT NULL, tile BLOB NULL, size INTEGER, type INTEGER, date INTEGER DEFAULT 0)"),
+        QStringLiteral("CREATE TABLE TileSets (setID INTEGER PRIMARY KEY NOT NULL, name TEXT NOT NULL UNIQUE, "
+                       "typeStr TEXT, topleftLat REAL DEFAULT 0.0, topleftLon REAL DEFAULT 0.0, "
+                       "bottomRightLat REAL DEFAULT 0.0, bottomRightLon REAL DEFAULT 0.0, minZoom INTEGER DEFAULT 3, "
+                       "maxZoom INTEGER DEFAULT 3, type INTEGER DEFAULT -1, numTiles INTEGER DEFAULT 0, "
+                       "defaultSet INTEGER DEFAULT 0, date INTEGER DEFAULT 0)"),
+        QStringLiteral("CREATE TABLE SetTiles (setID INTEGER NOT NULL REFERENCES TileSets(setID) ON DELETE CASCADE, "
+                       "tileID INTEGER NOT NULL REFERENCES Tiles(tileID) ON DELETE CASCADE)"),
+        QStringLiteral("CREATE TABLE TilesDownload (setID INTEGER NOT NULL REFERENCES TileSets(setID) ON DELETE "
+                       "CASCADE, hash TEXT NOT NULL, type INTEGER, x INTEGER, y INTEGER, z INTEGER, "
+                       "state INTEGER DEFAULT 0)"),
+        QStringLiteral("CREATE UNIQUE INDEX idx_settiles_unique ON SetTiles(tileID, setID)"),
+        QStringLiteral("CREATE INDEX idx_settiles_setid ON SetTiles(setID)"),
+        QStringLiteral("CREATE INDEX idx_settiles_tileid ON SetTiles(tileID)"),
+        QStringLiteral("CREATE UNIQUE INDEX idx_tilesdownload_setid_hash ON TilesDownload(setID, hash)"),
+        QStringLiteral("CREATE INDEX idx_tilesdownload_setid_state ON TilesDownload(setID, state)"),
+        QStringLiteral("CREATE INDEX idx_tiles_date ON Tiles(date)"),
+        QStringLiteral("INSERT INTO TileSets(setID, name, defaultSet) VALUES(1, 'Default Tile Set', 1)"),
+        QStringLiteral("PRAGMA user_version = 1"),
+    };
+    statements.append(rowStatements);
+
+    const QGCSqlHelper::ScopedConnection connection(path, /*readOnly=*/false, QStringLiteral("TileCacheTestCreate"));
+    QSqlQuery query(connection.database());
+    for (const QString& statement : std::as_const(statements)) {
+        if (!query.exec(statement)) {
+            return statement + QStringLiteral(": ") + query.lastError().text();
+        }
+    }
+    return QString();
+}
+
+/// Tiles, sets and downloads of the providers 1, 6 and 36. Tiles 1 and 2 are the same x/y/z of the providers 1 and
+/// 6, as are the two downloads of set 2: renumbered with shiftedLegacyMapIds(), the row of provider 1 has the key
+/// the row of provider 6 had.
+QStringList version1Rows()
+{
+    const QString tile = QStringLiteral(
+        "INSERT INTO Tiles(tileID, hash, format, tile, size, type) "
+        "VALUES(%1, '%2', 'png', X'%3', 1, %4)");
+    const QString download = QStringLiteral(
+        "INSERT INTO TilesDownload(setID, hash, type, x, y, z, state) VALUES(2, '%1', %2, 11, 21, 5, %3)");
+    return {
+        tile.arg(1).arg(tileCacheHash(1, 10, 20, 5), QStringLiteral("A1")).arg(1),
+        tile.arg(2).arg(tileCacheHash(6, 10, 20, 5), QStringLiteral("B6")).arg(6),
+        tile.arg(3).arg(tileCacheHash(36, 3, 4, 2), QStringLiteral("C3")).arg(36),
+        QStringLiteral("INSERT INTO TileSets(setID, name, type) VALUES(2, 'Set of 1', 1)"),
+        QStringLiteral("INSERT INTO TileSets(setID, name, type) VALUES(3, 'Set of 6', 6)"),
+        QStringLiteral("INSERT INTO SetTiles(setID, tileID) VALUES(1, 1), (1, 2), (1, 3), (2, 1), (3, 2)"),
+        download.arg(tileCacheHash(1, 11, 21, 5)).arg(1).arg(0),
+        download.arg(tileCacheHash(6, 11, 21, 5)).arg(6).arg(2),
+    };
+}
+
+/// The provider ids of a version-1 cache from a build whose provider list lacked the first 5 providers
+QMap<int, int> shiftedLegacyMapIds()
+{
+    QMap<int, int> ids;
+    for (int legacyId = 1; legacyId <= 36; legacyId++) {
+        ids.insert(legacyId, legacyId + 5);
+    }
+    return ids;
+}
+
+/// The tiles of version1Rows() once renumbered with shiftedLegacyMapIds()
+QStringList renumberedTileRows()
+{
+    return {
+        QStringLiteral("1|%1|6|A1").arg(tileCacheHash(6, 10, 20, 5)),
+        QStringLiteral("2|%1|11|B6").arg(tileCacheHash(11, 10, 20, 5)),
+        QStringLiteral("3|%1|41|C3").arg(tileCacheHash(41, 3, 4, 2)),
+    };
+}
+
+}  // namespace
 
 std::unique_ptr<QGCTileCacheDatabase> QGCTileCacheDatabaseTest::_createInitializedDB(QTemporaryDir& tempDir)
 {
@@ -359,6 +480,8 @@ void QGCTileCacheDatabaseTest::_testExportImportReplace()
     const DatabaseResult exportResult = db->exportSets({defaultRec}, exportPath, progressCb);
     QVERIFY(exportResult.success);
     QVERIFY(lastProgress > 0);
+    QCOMPARE(tileCacheRows(exportPath, kTileCacheVersionSql),
+             QStringList{QString::number(QGCTileCacheDatabase::kSchemaVersion)});
 
     db.reset();
 
@@ -950,6 +1073,149 @@ void QGCTileCacheDatabaseTest::_testSchemaVersionResetsLegacyDB()
     const auto sets = db.getTileSets();
     QCOMPARE(sets.size(), 1);
     QVERIFY(sets[0].defaultSet);
+}
+
+void QGCTileCacheDatabaseTest::_testMigrateVersion1RenumbersProviders()
+{
+    QTemporaryDir tempDir;
+    const QString path = tempDir.filePath("version1.db");
+    QCOMPARE(createVersion1TileCache(path, version1Rows()), QString());
+    const QStringList setTiles = tileCacheRows(path, kTileCacheSetTilesSql);
+    QCOMPARE(setTiles.size(), 5);
+
+    QGCTileCacheDatabase db(path);
+    db.setLegacyMapIds(shiftedLegacyMapIds());
+    QVERIFY(db.init());
+
+    QCOMPARE(tileCacheRows(path, kTileCacheVersionSql),
+             QStringList{QString::number(QGCTileCacheDatabase::kSchemaVersion)});
+    QCOMPARE(tileCacheRows(path, kTileCacheTilesSql), renumberedTileRows());
+    QCOMPARE(tileCacheRows(path, kTileCacheSetsSql),
+             (QStringList{QStringLiteral("1|Default Tile Set|-1"), QStringLiteral("2|Set of 1|6"),
+                          QStringLiteral("3|Set of 6|11")}));
+    QCOMPARE(tileCacheRows(path, kTileCacheSetTilesSql), setTiles);
+    QCOMPARE(tileCacheRows(path, kTileCacheDownloadsSql),
+             (QStringList{QStringLiteral("2|%1|6|11|21|5|0").arg(tileCacheHash(6, 11, 21, 5)),
+                          QStringLiteral("2|%1|11|11|21|5|2").arg(tileCacheHash(11, 11, 21, 5))}));
+}
+
+void QGCTileCacheDatabaseTest::_testMigrateVersion1KeepsPermanentIds()
+{
+    // Where version 1 had the permanent ids already, as it did on this platform, a cache is left as it is
+    QTemporaryDir tempDir;
+    const QString path = tempDir.filePath("version1.db");
+    QCOMPARE(createVersion1TileCache(path, version1Rows()), QString());
+    const QStringList queries = {kTileCacheTilesSql, kTileCacheSetsSql, kTileCacheSetTilesSql, kTileCacheDownloadsSql};
+    QList<QStringList> rows;
+    for (const QString& sql : queries) {
+        rows.append(tileCacheRows(path, sql));
+        QVERIFY(!rows.last().isEmpty());
+    }
+
+    QGCTileCacheDatabase db(path);
+    QVERIFY(db.init());
+
+    QCOMPARE(tileCacheRows(path, kTileCacheVersionSql),
+             QStringList{QString::number(QGCTileCacheDatabase::kSchemaVersion)});
+    for (qsizetype i = 0; i < queries.size(); i++) {
+        QCOMPARE(tileCacheRows(path, queries[i]), rows[i]);
+    }
+}
+
+void QGCTileCacheDatabaseTest::_testMigrateFailureResetsCache()
+{
+    // Renumbered, the tile of provider 1 has the key of a tile that stays where it is
+    QTemporaryDir tempDir;
+    const QString path = tempDir.filePath("version1.db");
+    QCOMPARE(createVersion1TileCache(path, version1Rows()), QString());
+
+    QGCTileCacheDatabase db(path);
+    db.setLegacyMapIds({{1, 6}});
+    expectLogMessage("MapTiles.QGCTileCacheDatabase", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Failed to renumber provider 1 to 6")));
+    expectLogMessage("MapTiles.QGCTileCacheDatabase", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Failed to migrate schema version 1 .* Resetting cache")));
+    QVERIFY(db.init());
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+
+    QCOMPARE(tileCacheRows(path, kTileCacheVersionSql),
+             QStringList{QString::number(QGCTileCacheDatabase::kSchemaVersion)});
+    QCOMPARE(tileCacheRows(path, kTileCacheTilesSql), QStringList());
+    QCOMPARE(tileCacheRows(path, kTileCacheSetsSql), QStringList{QStringLiteral("1|Default Tile Set|-1")});
+}
+
+void QGCTileCacheDatabaseTest::_testImportVersion1_data()
+{
+    QTest::addColumn<bool>("replace");
+    QTest::newRow("replace") << true;
+    QTest::newRow("merge") << false;
+}
+
+void QGCTileCacheDatabaseTest::_testImportVersion1()
+{
+    QFETCH(bool, replace);
+
+    QTemporaryDir tempDir;
+    const QString importPath = tempDir.filePath("version1.db");
+    QCOMPARE(createVersion1TileCache(importPath, version1Rows()), QString());
+    const QStringList importedTiles = tileCacheRows(importPath, kTileCacheTilesSql);
+
+    const QString path = tempDir.filePath("tiles.db");
+    QGCTileCacheDatabase db(path);
+    db.setLegacyMapIds(shiftedLegacyMapIds());
+    QVERIFY(db.init());
+    QVERIFY(db.connectDB());
+
+    const DatabaseResult result =
+        replace ? db.importSetsReplace(importPath, nullptr) : db.importSetsMerge(importPath, nullptr);
+    QVERIFY2(result.success, qPrintable(result.errorString));
+    db.disconnectDB();
+
+    QCOMPARE(tileCacheRows(path, kTileCacheVersionSql),
+             QStringList{QString::number(QGCTileCacheDatabase::kSchemaVersion)});
+    QCOMPARE(tileCacheRows(path, kTileCacheTilesSql), renumberedTileRows());
+    QCOMPARE(tileCacheRows(path, QStringLiteral("SELECT S.name, S.type, T.hash FROM TileSets S JOIN SetTiles L ON "
+                                                "L.setID = S.setID JOIN Tiles T ON T.tileID = L.tileID WHERE "
+                                                "S.defaultSet = 0 ORDER BY S.name")),
+             (QStringList{QStringLiteral("Set of 1|6|%1").arg(tileCacheHash(6, 10, 20, 5)),
+                          QStringLiteral("Set of 6|11|%1").arg(tileCacheHash(11, 10, 20, 5))}));
+
+    // The file to import is not migrated itself, and nothing is left of the copy that was
+    QCOMPARE(tileCacheRows(importPath, kTileCacheVersionSql), QStringList{QStringLiteral("1")});
+    QCOMPARE(tileCacheRows(importPath, kTileCacheTilesSql), importedTiles);
+    QCOMPARE(QDir(tempDir.path()).entryList({QStringLiteral("*.import*")}), QStringList());
+}
+
+void QGCTileCacheDatabaseTest::_testImportMergeRefusesVersion0()
+{
+    QTemporaryDir tempDir;
+    const QString importPath = tempDir.filePath("version0.db");
+    const QString version0 = QStringLiteral("PRAGMA user_version = 0");
+    QCOMPARE(createVersion1TileCache(importPath, version1Rows() + QStringList{version0}), QString());
+
+    auto db = _createInitializedDB(tempDir);
+    const DatabaseResult result = db->importSetsMerge(importPath, nullptr);
+    QVERIFY(!result.success);
+    QVERIFY2(result.errorString.contains(QStringLiteral("too old")), qPrintable(result.errorString));
+    QCOMPARE(db->computeTotals().totalCount, 0U);
+    // Refused before the file is copied to be migrated
+    QCOMPARE(QDir(tempDir.path()).entryList({QStringLiteral("*.import*")}), QStringList());
+}
+
+void QGCTileCacheDatabaseTest::_testImportMergeRefusesNewerVersion()
+{
+    QTemporaryDir tempDir;
+    const QString importPath = tempDir.filePath("newer.db");
+    const QString newerVersion =
+        QStringLiteral("PRAGMA user_version = %1").arg(QGCTileCacheDatabase::kSchemaVersion + 1);
+    QCOMPARE(createVersion1TileCache(importPath, version1Rows() + QStringList{newerVersion}), QString());
+
+    auto db = _createInitializedDB(tempDir);
+    const DatabaseResult result = db->importSetsMerge(importPath, nullptr);
+    QVERIFY(!result.success);
+    QVERIFY2(result.errorString.contains(QStringLiteral("newer version")), qPrintable(result.errorString));
+    QCOMPARE(db->computeTotals().totalCount, 0U);
 }
 
 void QGCTileCacheDatabaseTest::_testSaveTileTypeStoredAsInteger()

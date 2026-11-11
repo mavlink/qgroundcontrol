@@ -45,6 +45,13 @@ private slots:
     void _testPruneCacheMultipleBatches();
     void _testSchemaVersionSetOnFreshDB();
     void _testSchemaVersionResetsLegacyDB();
+    void _testMigrateVersion1RenumbersProviders();
+    void _testMigrateVersion1KeepsPermanentIds();
+    void _testMigrateFailureResetsCache();
+    void _testImportVersion1_data();
+    void _testImportVersion1();
+    void _testImportMergeRefusesVersion0();
+    void _testImportMergeRefusesNewerVersion();
     void _testSaveTileTypeStoredAsInteger();
     void _testCreateTileSetTypeStoredAsInteger();
     void _testTablesExist();

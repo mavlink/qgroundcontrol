@@ -6,6 +6,7 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QSettings>
 #include <QtCore/QUuid>
 #include <QtSql/QSqlDatabase>
@@ -23,9 +24,21 @@ QGC_LOGGING_CATEGORY(QGCTileCacheDatabaseLog, "MapTiles.QGCTileCacheDatabase")
 
 static std::atomic<quint64> s_connectionCounter{0};
 
+static bool execBound(QSqlQuery& query, const QString& sql, const QVariantList& values)
+{
+    if (!query.prepare(sql)) {
+        return false;
+    }
+    for (const QVariant& value : values) {
+        query.addBindValue(value);
+    }
+    return query.exec();
+}
+
 QGCTileCacheDatabase::QGCTileCacheDatabase(const QString& databasePath)
     : _databasePath(databasePath)
     , _connectionName(QStringLiteral("QGCTileCache_%1").arg(s_connectionCounter.fetch_add(1)))
+    , _legacyMapIds(UrlFactory::legacyMapIds())
 {}
 
 QGCTileCacheDatabase::~QGCTileCacheDatabase()
@@ -84,14 +97,76 @@ bool QGCTileCacheDatabase::_checkSchemaVersion()
         return true;
     }
 
-    // Future: handle incremental migrations here (version < kSchemaVersion).
-    qCWarning(QGCTileCacheDatabaseLog) << "Unknown schema version" << version << "(expected" << kSchemaVersion
-                                       << "). Resetting cache.";
+    if ((version > 0) && (version < kSchemaVersion)) {
+        if (_migrate(db, version)) {
+            return true;
+        }
+        qCWarning(QGCTileCacheDatabaseLog)
+            << "Failed to migrate schema version" << version << "to" << kSchemaVersion << ". Resetting cache.";
+    } else {
+        qCWarning(QGCTileCacheDatabaseLog)
+            << "Unknown schema version" << version << "(expected" << kSchemaVersion << "). Resetting cache.";
+    }
     _defaultSet = kInvalidTileSet;
     query.exec("DROP TABLE IF EXISTS TilesDownload");
     query.exec("DROP TABLE IF EXISTS SetTiles");
     query.exec("DROP TABLE IF EXISTS Tiles");
     query.exec("DROP TABLE IF EXISTS TileSets");
+    return true;
+}
+
+bool QGCTileCacheDatabase::_migrate(QSqlDatabase db, int version)
+{
+    QGCSqlHelper::Transaction txn(db);
+    if (!txn.ok()) {
+        return false;
+    }
+
+    if ((version < 2) && !_renumberMapIds(db, _legacyMapIds)) {
+        return false;
+    }
+
+    // Within the transaction, so that a migration that fails leaves the version it started from
+    if (!QGCSqlHelper::setUserVersion(db, kSchemaVersion)) {
+        return false;
+    }
+
+    return txn.commit();
+}
+
+bool QGCTileCacheDatabase::_renumberMapIds(QSqlDatabase db, const QMap<int, int>& legacyMapIds)
+{
+    QSqlQuery query(db);
+
+    // From the highest id down: an id only grows, so a renumbered row is never renumbered again as the row of a lower
+    // id, and its key is never one a row that is still to be renumbered has, which UNIQUE(hash) would reject
+    const QList<int> legacyIds = legacyMapIds.keys();
+    for (auto legacyId = legacyIds.crbegin(); legacyId != legacyIds.crend(); ++legacyId) {
+        const int mapId = legacyMapIds.value(*legacyId);
+        if (mapId == *legacyId) {
+            continue;
+        }
+        if (mapId < *legacyId) {
+            qCWarning(QGCTileCacheDatabaseLog) << "Cannot renumber provider" << *legacyId << "to the lower id" << mapId;
+            return false;
+        }
+
+        // The hash starts with the id as 10 digits. Rows are selected by hash because that uses its index: type has
+        // none, and reading it reads the tile image stored before it.
+        const QVariantList hashValues = {QString::asprintf("%010d", mapId), mapId,
+                                         QString::asprintf("%010d", *legacyId),
+                                         QString::asprintf("%010d", *legacyId + 1)};
+        static const QString hashSql =
+            QStringLiteral("UPDATE %1 SET hash = ? || substr(hash, 11), type = ? WHERE hash >= ? AND hash < ?");
+        if (!execBound(query, hashSql.arg(QStringLiteral("Tiles")), hashValues) ||
+            !execBound(query, hashSql.arg(QStringLiteral("TilesDownload")), hashValues) ||
+            !execBound(query, QStringLiteral("UPDATE TileSets SET type = ? WHERE type = ?"), {mapId, *legacyId})) {
+            qCWarning(QGCTileCacheDatabaseLog)
+                << "Failed to renumber provider" << *legacyId << "to" << mapId << ":" << query.lastError().text();
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -971,7 +1046,55 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString& path, Progre
         return result;
     }
 
-    QGCSqlHelper::ScopedConnection importDB(path, /*readOnly=*/true, QStringLiteral("QGeoTileImportSession"));
+    std::optional<int> importVersion;
+    {
+        QGCSqlHelper::ScopedConnection versionDB(path, /*readOnly=*/true, QStringLiteral("QGeoTileImportSession"));
+        if (versionDB.isValid()) {
+            QSqlDatabase db = versionDB.database();
+            importVersion = QGCSqlHelper::userVersion(db);
+        }
+    }
+    if (!importVersion) {
+        result.errorString = "Error opening import database";
+        return result;
+    }
+    // Version 0 cannot be migrated: see _checkSchemaVersion(), which discards a cache of that version
+    if (*importVersion < 1) {
+        result.errorString = "Import database was written by a version of QGroundControl that is too old";
+        return result;
+    }
+    if (*importVersion > kSchemaVersion) {
+        result.errorString = "Import database was written by a newer version of QGroundControl";
+        return result;
+    }
+
+    // An older file is migrated in a copy next to the cache: the file to import stays as it is
+    QString importPath = path;
+    const QString migratedPath = _databasePath + QStringLiteral(".import");
+    const auto removeMigrated = qScopeGuard([&migratedPath] {
+        for (const char* suffix : {"", "-wal", "-shm"}) {
+            (void) QFile::remove(migratedPath + QLatin1String(suffix));
+        }
+    });
+    if (*importVersion < kSchemaVersion) {
+        (void) QFile::remove(migratedPath);
+        if (!QFile::copy(path, migratedPath)) {
+            result.errorString = "Failed to copy import database";
+            return result;
+        }
+        // The copy has the permissions of the file, which can be read-only
+        (void) QFile::setPermissions(migratedPath, QFile::ReadOwner | QFile::WriteOwner);
+
+        QGCTileCacheDatabase migrated(migratedPath);
+        migrated.setLegacyMapIds(_legacyMapIds);
+        if (!migrated.init()) {
+            result.errorString = "Failed to migrate import database";
+            return result;
+        }
+        importPath = migratedPath;
+    }
+
+    QGCSqlHelper::ScopedConnection importDB(importPath, /*readOnly=*/true, QStringLiteral("QGeoTileImportSession"));
     if (!importDB.isValid()) {
         result.errorString = "Error opening import database";
         return result;
