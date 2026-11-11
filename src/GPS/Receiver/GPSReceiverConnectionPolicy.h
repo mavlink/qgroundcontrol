@@ -8,10 +8,8 @@
 
 #include "ExponentialBackoff.h"
 #include "GPSReceiverConnector.h"
-#ifndef QGC_NO_SERIAL_LINK
-#include "SerialPortManager.h"
-#endif
 
+class GPSReceiverSerialPorts;
 class RuntimeScheduler;
 
 /// How a receiver session ended.
@@ -56,15 +54,17 @@ class GPSReceiverConnectionPolicy
 
 public:
     /// Drives @a receiver as @a configuration, the receiver's, selects. @a connectability is the receiver's check of
-    /// that configuration, renewed before configurationChanged(). All four must outlive the policy, and @a scheduler
-    /// times the retries.
+    /// that configuration, renewed before configurationChanged(), and @a serial the receiver's serial devices. All
+    /// five must outlive the policy, and @a scheduler times the retries.
     GPSReceiverConnectionPolicy(GPSReceiverConnector& receiver, const GPSReceiverConfiguration& configuration,
-                                const GPSReceiverConnectability& connectability, RuntimeScheduler* scheduler);
+                                const GPSReceiverConnectability& connectability, GPSReceiverSerialPorts& serial,
+                                RuntimeScheduler* scheduler);
 
     /// The one place that checks whether @a configuration can connect and builds the request its connection sends,
-    /// for Connect, automatic connection and the settings view. Only the user's Connect passes
-    /// @a allowPersistentChanges, the flash-save consent.
+    /// for Connect, automatic connection and the settings view. Without @a serialLinks, a serial selection connects
+    /// over TCP. Only the user's Connect passes @a allowPersistentChanges, the flash-save consent.
     [[nodiscard]] static GPSReceiverConnectability connectability(const GPSReceiverConfiguration& configuration,
+                                                                  bool serialLinks,
                                                                   bool allowPersistentChanges = false);
 
     /// The receiver's configuration changed from @a previous.
@@ -102,18 +102,16 @@ private:
     void _cancelRetries();
     /// Shows why the configuration cannot connect and stops connecting it automatically.
     void _rejectConfiguration(const QString& error);
-    bool _serialDeviceAvailable(const QString& device) const;
     void _updateDiscovery();
-#ifndef QGC_NO_SERIAL_LINK
     /// Connects a discovered receiver; while another connection holds its port, a later update tries again without
     /// advancing the backoff.
     void _connectDiscovered(const QString& device);
-#endif
 
     GPSReceiverConnector& _receiver;
     const GPSReceiverConfiguration& _configuration;
     /// The check of _configuration, without flash-save consent.
     const GPSReceiverConnectability& _connectability;
+    GPSReceiverSerialPorts& _serial;
     RuntimeScheduler* const _scheduler;
     Owner _owner = Owner::None;
     /// Connect the saved receiver at the next update: set at startup and when the setting is turned on.
@@ -126,9 +124,6 @@ private:
     bool _unconnectable = false;
     bool _waitingForPort = false;
     QString _autoPort;
-#ifndef QGC_NO_SERIAL_LINK
-    SerialPortSettleTracker _waitingPorts;
-#endif
     std::optional<quint64> _retryDeadlineUs;
     ExponentialBackoff _retryBackoff{std::chrono::seconds(1), 2, std::chrono::seconds(30)};
 };

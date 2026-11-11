@@ -1,5 +1,11 @@
 #include "GPSReceiver.h"
 
+#include <utility>
+
+#include <QtCore/QDateTime>
+#include <QtCore/QDeadlineTimer>
+#include <QtCore/QScopedValueRollback>
+
 #include "GPSCorrectionManager.h"
 #include "GPSReceiverConfig.h"
 #include "GPSReceiverConnectionPolicy.h"
@@ -14,19 +20,6 @@
 #include "RuntimeScheduler.h"
 #include "TCPGPSTransport.h"
 #include "UDPGPSTransport.h"
-
-#ifndef QGC_NO_SERIAL_LINK
-#include "SerialGPSTransport.h"
-#include "SerialPortManager.h"
-#endif
-
-#include <algorithm>
-#include <utility>
-
-#include <QtCore/QDateTime>
-#include <QtCore/QDeadlineTimer>
-#include <QtCore/QScopedValueRollback>
-#include <QtCore/QSet>
 
 QGC_LOGGING_CATEGORY(GPSReceiverLog, "GPS.Receiver.GPSReceiver")
 
@@ -57,16 +50,15 @@ void logConnectionError(GPSConnectionError error, const QString& detail)
 
 GPSReceiver::GPSReceiver(QObject* parent, RuntimeScheduler* scheduler, const Dependencies& dependencies)
     : QObject(parent)
-    , _connectability(GPSReceiverConnectionPolicy::connectability(_configuration))
+    , _serial(dependencies.serialLinks ? GPSReceiverSerialPorts::create(dependencies.serialPorts, this)
+                                       : new GPSReceiverSerialPorts(this))
+    , _connectability(GPSReceiverConnectionPolicy::connectability(_configuration, _serial->supported()))
     , _correctionManager(dependencies.corrections)
     , _positionManager(dependencies.positions)
     , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
     , _positionHealth(new GPSSourceHealth(this, _scheduler))
     , _outputOverflowTask(_scheduler, this)
     , _pollTask(_scheduler, this)
-#ifndef QGC_NO_SERIAL_LINK
-    , _serialPorts(dependencies.serialPorts)
-#endif
     , _recordingDirectory(dependencies.recordingDirectory)
 {
     qCDebug(GPSReceiverLog) << this;
@@ -77,17 +69,15 @@ GPSReceiver::GPSReceiver(QObject* parent, RuntimeScheduler* scheduler, const Dep
         }
     });
     _connection = std::make_unique<GPSReceiverConnectionPolicy>(static_cast<GPSReceiverConnector&>(*this),
-                                                                _configuration, _connectability, _scheduler);
+                                                                _configuration, _connectability, *_serial, _scheduler);
     _facts = new GPSReceiverFactGroup(this);
     _notified.receiver = _receiverState();
-#ifndef QGC_NO_SERIAL_LINK
-    _serialTransportFactory = [](const QString& device, GPSCancelToken cancelToken) {
-        return std::make_unique<SerialGPSTransport>(device, std::move(cancelToken));
-    };
-    if (_serialPorts) {
-        connect(_serialPorts, &SerialPortManager::portsEnumerated, this, &GPSReceiver::_onSerialPortsEnumerated);
-    }
-#endif
+    connect(_serial, &GPSReceiverSerialPorts::scanned, this, &GPSReceiver::_onSerialPortsScanned);
+    connect(_serial, &GPSReceiverSerialPorts::entriesChanged, this, [this]() {
+        if (!_destroying) {
+            emit serialPortEntriesChanged();
+        }
+    });
 }
 
 void GPSReceiver::setConfiguration(const Configuration& configuration)
@@ -99,7 +89,7 @@ void GPSReceiver::setConfiguration(const Configuration& configuration)
         _setPersistentChangesAllowed(false);
     }
     const Configuration previous = std::exchange(_configuration, configuration);
-    _connectability = GPSReceiverConnectionPolicy::connectability(_configuration);
+    _connectability = GPSReceiverConnectionPolicy::connectability(_configuration, _serial->supported());
     _connection->configurationChanged(previous);
     ++_configurationRevision;
     _emitChanges();
@@ -297,8 +287,7 @@ void GPSReceiver::_onBaseStatusUpdated(const GPSBaseStatus& status)
     _emitChanges();
 }
 
-#ifndef QGC_NO_SERIAL_LINK
-void GPSReceiver::_onSerialPortsEnumerated(const QStringList& devices)
+void GPSReceiver::_onSerialPortsScanned(const QStringList& devices)
 {
     if (_destroying) {
         return;
@@ -307,83 +296,18 @@ void GPSReceiver::_onSerialPortsEnumerated(const QStringList& devices)
         _endSession(GPSConnectionError::DeviceError, {}, GPSReceiverSessionEnd::Unplugged);
         _emitChanges();
     }
-    _updateSerialPortEntries();
-}
-
-bool GPSReceiver::serialPortAvailable(const QString& device) const
-{
-    if (device.isEmpty() || !_serialPorts) {
-        return false;
-    }
-    const QList<SerialPortManager::Port> ports = _serialPorts->availablePorts();
-    return std::any_of(ports.cbegin(), ports.cend(),
-                       [&device](const auto& port) { return port.systemLocation == device && !port.bootloader; });
-}
-
-QStringList GPSReceiver::rtkReceiverPorts() const
-{
-    QStringList receivers;
-    if (!_serialPorts) {
-        return receivers;
-    }
-    QSet<QString> seenDevices;
-    for (const auto& port : _serialPorts->availablePorts()) {
-        if (port.boardType != QGCSerialPortInfo::BoardTypeRTKGPS || port.bootloader) {
-            continue;
-        }
-        // A labelled NMEA interface remains a receiver candidate on composite GPS devices.
-        const bool primary = SerialPortManager::isPrimaryInterface(port, seenDevices);
-        if ((primary || port.description.contains(QStringLiteral("NMEA"))) &&
-            _serialPorts->canReservePort(port.systemLocation)) {
-            receivers.append(port.systemLocation);
-        }
-    }
-    return receivers;
-}
-
-GPSSerialClaim GPSReceiver::claimSerialPort(const QString& device)
-{
-    GPSSerialClaim claim = _serialPorts ? _serialPorts->reservePort(device) : nullptr;
-    if (claim) {
-        _serialClaims.insert(device, claim);
-    }
-    return claim;
-}
-
-void GPSReceiver::_updateSerialPortEntries()
-{
-    // Just after a scan the manager returns that inventory without scanning again.
-    const QList<SerialPortManager::Port> available = _serialPorts->availablePorts();
-    QList<GPSSerialPortEntry> entries;
-    entries.reserve(available.size());
-    for (const auto& port : available) {
-        // The USB product string, else the name of a known board.
-        const QString name = port.description.trimmed().isEmpty() ? port.boardName : port.description.trimmed();
-        //: %1 is a serial device's name, such as u-blox GNSS receiver; %2 its path, such as /dev/ttyACM0 or COM3
-        QString label = name.isEmpty() ? port.systemLocation : tr("%1 – %2").arg(name, port.systemLocation);
-        if (_serialPorts->isPortReserved(port.systemLocation) && _serialClaims.value(port.systemLocation).expired()) {
-            //: %1 is a serial device that another QGroundControl connection, such as a vehicle link, uses
-            label = tr("%1 (in use)").arg(label);
-        }
-        entries.append({.value = port.systemLocation, .label = label});
-    }
-    if (entries != _serialPortEntries) {
-        _serialPortEntries = std::move(entries);
-        emit serialPortEntriesChanged();
-    }
 }
 
 bool GPSReceiver::connectSerial(const QString& device, GPSType type, GPSReceiverConfig request, GPSSerialClaim claim)
 {
     const QString endpoint = device.trimmed();
-    return _connectReceiver(
-        type,
-        [endpoint, claim = std::move(claim), factory = _serialTransportFactory](GPSCancelToken cancelToken) {
-            return factory(endpoint, std::move(cancelToken));
-        },
-        QStringLiteral("serial:%1").arg(endpoint), std::move(request), endpoint, endpoint);
+    GPSReceiverWorker::TransportFactory transportFactory = _serial->transportFactory(endpoint, std::move(claim));
+    if (!transportFactory) {
+        return false;
+    }
+    return _connectReceiver(type, std::move(transportFactory), QStringLiteral("serial:%1").arg(endpoint),
+                            std::move(request), endpoint, endpoint);
 }
-#endif
 
 bool GPSReceiver::connectTcp(const QString& host, quint16 port, GPSType type, GPSReceiverConfig request)
 {
@@ -405,20 +329,6 @@ bool GPSReceiver::connectUdp(quint16 port, GPSType type, GPSReceiverConfig reque
         type,
         [port](GPSCancelToken cancelToken) { return std::make_unique<UDPGPSTransport>(port, std::move(cancelToken)); },
         QStringLiteral("udp:%1").arg(port), std::move(request), {}, endpoint);
-}
-
-QList<int> GPSReceiver::serialBaudRates()
-{
-    QList<int> rates;
-#ifndef QGC_NO_SERIAL_LINK
-    for (const QString& text : SerialPortManager::supportedBaudRates()) {
-        const uint32_t rate = text.toUInt();
-        if (gpsValidExplicitBaudRate(rate) && !rates.contains(static_cast<int>(rate))) {
-            rates.append(static_cast<int>(rate));
-        }
-    }
-#endif
-    return rates;
 }
 
 GPSReceiverPresentation GPSReceiver::configuredPresentation() const
@@ -498,14 +408,12 @@ GPSReceiverPresentation GPSReceiver::activePresentation() const
 
 void GPSReceiver::_scanSerialPorts()
 {
-#ifndef QGC_NO_SERIAL_LINK
     // The policy asks for the serial ports only without a receiver, and a scan that is due notifies observers, who
     // may connect, disconnect or change the configuration. Scanned first, they act before the policy decides, and
     // its questions reuse the scan.
-    if (_serialPorts && !hasReceiver()) {
-        (void) _serialPorts->availablePorts();
+    if (!hasReceiver()) {
+        _serial->scanIfDue();
     }
-#endif
 }
 
 bool GPSReceiver::connectReceiver()

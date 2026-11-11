@@ -5,15 +5,12 @@
 #include <optional>
 
 #include <QtCore/QString>
-#include <QtCore/QStringList>
 
 #include "GPSReceiverConfig.h"
 #include "GPSReceiverDescriptor.h"
+#include "GPSReceiverSerialPorts.h"
 #include "GPSReceiverWorker.h"
 #include "RTKSettings.h"
-#ifndef QGC_NO_SERIAL_LINK
-#include "SerialPortManager.h"
-#endif
 
 /// The receiver configuration the application's settings binding supplies as values.
 struct GPSReceiverConfiguration
@@ -35,17 +32,6 @@ struct GPSReceiverConfiguration
     bool autoConnect = true;
     bool operator==(const GPSReceiverConfiguration&) const = default;
 
-    /// The connection this configuration uses; builds without serial links connect a serial selection over TCP.
-    [[nodiscard]] RTKSettings::ConnectionType effectiveConnectionType() const
-    {
-#ifdef QGC_NO_SERIAL_LINK
-        return connectionType == RTKSettings::Udp ? RTKSettings::Udp : RTKSettings::Tcp;
-#else
-        return connectionType == RTKSettings::Tcp || connectionType == RTKSettings::Udp ? connectionType
-                                                                                        : RTKSettings::Serial;
-#endif
-    }
-
     /// Selects the same receiver, connection, and base mode, which a pending retry and the flash-save
     /// permission were made for.
     [[nodiscard]] bool sameConnection(const GPSReceiverConfiguration& other) const
@@ -61,6 +47,8 @@ struct GPSReceiverConfiguration
 /// connection sends. GPSReceiverConnectionPolicy::connectability() builds it.
 struct GPSReceiverConnectability
 {
+    /// The connection the configuration uses: without serial links, a serial selection connects over TCP.
+    RTKSettings::ConnectionType connection = RTKSettings::Serial;
     /// The receiver family to connect; empty when no receiver type is selected.
     std::optional<GPSType> type;
     /// The family supports the selected base mode; a passive receiver has none to support.
@@ -81,11 +69,6 @@ struct GPSReceiverConnectability
 using GPSReceiverWorkerFactory =
     std::function<GPSReceiverWorker*(GPSReceiverWorker::TransportFactory, GPSType, const GPSReceiverConfig&, QObject*)>;
 
-#ifndef QGC_NO_SERIAL_LINK
-/// Holds a serial device for one receiver session until the last copy is released.
-using GPSSerialClaim = SerialPortManager::ReservationPtr;
-#endif
-
 /// The receiver operations GPSReceiverConnectionPolicy drives. They change state without emitting; the receiver emits
 /// once its public method or report handler returns. A connection sends the request of the policy's
 /// GPSReceiverConnectability as it is given.
@@ -104,17 +87,9 @@ public:
     virtual void endConnection(ShownError error) = 0;
     virtual bool connectTcp(const QString& host, quint16 port, GPSType type, GPSReceiverConfig request) = 0;
     virtual bool connectUdp(quint16 port, GPSType type, GPSReceiverConfig request) = 0;
-#ifndef QGC_NO_SERIAL_LINK
+    /// @a claim is the policy's claim of @a device from the receiver's GPSReceiverSerialPorts.
     virtual bool connectSerial(const QString& device, GPSType type, GPSReceiverConfig request,
                                GPSSerialClaim claim) = 0;
-    /// The device is plugged in and not in its bootloader.
-    virtual bool serialPortAvailable(const QString& device) const = 0;
-    /// Free devices whose USB identity is a known RTK receiver adapter, one per physical device, which discovery may
-    /// connect with the saved manufacturer.
-    virtual QStringList rtkReceiverPorts() const = 0;
-    /// Claims the device until the last copy is released; empty when it is in use.
-    virtual GPSSerialClaim claimSerialPort(const QString& device) = 0;
-#endif
 
 protected:
     ~GPSReceiverConnector() = default;

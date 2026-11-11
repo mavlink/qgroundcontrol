@@ -1,6 +1,15 @@
 #pragma once
 
+#include <functional>
+#include <memory>
+
+#include <QtCore/QString>
+
+#include "GPSCancellation.h"
 #include "UnitTest.h"
+
+class GPSReceiver;
+class GPSTransport;
 
 class GPSReceiverTest : public UnitTest
 {
@@ -34,10 +43,16 @@ private slots:
     void _outputOverflowWarning();
     void _recordsSessionsStartedWhileOn();
     void _recordingFileClearsWhenRecordingFails();
+    void _withoutSerialLinksSerialSelectionUsesTcp();
 #ifndef QGC_NO_SERIAL_LINK
     void _serialPortEntries();
     void _serialReservationSurvivesDelayedStop();
     void _manualPassiveBaudPreserved_data();
     void _manualPassiveBaudPreserved();
+
+private:
+    /// Opens the serial devices of @a receiver with @a open instead of the system's.
+    static void _openSerialDevicesWith(
+        GPSReceiver& receiver, std::function<std::unique_ptr<GPSTransport>(const QString&, GPSCancelToken)> open);
 #endif
 };

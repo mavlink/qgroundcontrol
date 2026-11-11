@@ -15,6 +15,7 @@ private slots:
     void _baseSitePicker();
     void _statusListsConstellations();
     void _connectionRowFollowsReceiver();
+    void _tcpConnectionFields_data();
     void _tcpConnectionFields();
     void _roleSelectsFields();
     void _automaticManufacturer();

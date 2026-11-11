@@ -327,6 +327,7 @@ void GPSReceiverSettingsBindingTest::_persistentConsentIsSpentOnConnect()
 
 void GPSReceiverSettingsBindingTest::_effectiveConnection_data()
 {
+    QTest::addColumn<bool>("serialLinks");
     QTest::addColumn<int>("role");
     QTest::addColumn<int>("saved");
     QTest::addColumn<int>("effective");
@@ -336,22 +337,30 @@ void GPSReceiverSettingsBindingTest::_effectiveConnection_data()
 #else
     const int serial = RTKSettings::Serial;
 #endif
-    QTest::newRow("base-serial") << int(RTKSettings::ConfiguredBase) << int(RTKSettings::Serial) << serial << true;
-    QTest::newRow("base-tcp") << int(RTKSettings::ConfiguredBase) << int(RTKSettings::Tcp) << int(RTKSettings::Tcp)
-                              << true;
-    QTest::newRow("base-udp") << int(RTKSettings::ConfiguredBase) << int(RTKSettings::Udp) << int(RTKSettings::Udp)
-                              << false;
-    QTest::newRow("passive-udp") << int(RTKSettings::Passive) << int(RTKSettings::Udp) << int(RTKSettings::Udp) << true;
-    QTest::newRow("unknown-type") << int(RTKSettings::ConfiguredBase) << 7 << serial << true;
+    const auto row = [](const char* name, bool serialLinks, RTKSettings::ReceiverRole role, int saved, int effective,
+                        bool supported) {
+        QTest::newRow(name) << serialLinks << int(role) << saved << effective << supported;
+    };
+    row("base-serial", true, RTKSettings::ConfiguredBase, RTKSettings::Serial, serial, true);
+    row("base-tcp", true, RTKSettings::ConfiguredBase, RTKSettings::Tcp, RTKSettings::Tcp, true);
+    row("base-udp", true, RTKSettings::ConfiguredBase, RTKSettings::Udp, RTKSettings::Udp, false);
+    row("passive-udp", true, RTKSettings::Passive, RTKSettings::Udp, RTKSettings::Udp, true);
+    row("unknown-type", true, RTKSettings::ConfiguredBase, 7, serial, true);
+    // A receiver without serial links, as every receiver of a build without them is, connects a serial selection over
+    // TCP.
+    row("no-serial-links-base-serial", false, RTKSettings::ConfiguredBase, RTKSettings::Serial, RTKSettings::Tcp, true);
+    row("no-serial-links-passive-udp", false, RTKSettings::Passive, RTKSettings::Udp, RTKSettings::Udp, true);
+    row("no-serial-links-unknown-type", false, RTKSettings::ConfiguredBase, 7, RTKSettings::Tcp, true);
 }
 
 void GPSReceiverSettingsBindingTest::_effectiveConnection()
 {
+    QFETCH(bool, serialLinks);
     QFETCH(int, role);
     QFETCH(int, saved);
     QFETCH(int, effective);
     QFETCH(bool, supported);
-    ScriptedGPSReceiver harness;
+    ScriptedGPSReceiver harness(nullptr, {.serialLinks = serialLinks});
     GPSReceiver& receiver = harness.receiver;
     QSignalSpy changed(&receiver, &GPSReceiver::configurationChanged);
     auto configuration = receiverConfiguration();

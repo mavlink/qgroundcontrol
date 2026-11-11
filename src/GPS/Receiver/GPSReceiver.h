@@ -6,7 +6,6 @@
 #include <memory>
 #include <optional>
 
-#include <QtCore/QHash>
 #include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
@@ -18,6 +17,7 @@
 #include "GPSReceiverDescriptor.h"
 #include "GPSReceiverPresentation.h"
 #include "GPSReceiverReports.h"
+#include "GPSReceiverSerialPorts.h"
 #include "ScheduledTask.h"
 
 struct GPSConstellationSatellites;
@@ -38,32 +38,16 @@ struct GPSReceiverDependencies
     GPSCorrectionManager* corrections = nullptr;
     /// Ready receivers publish their solution here as the GCS "RTK receiver" position source.
     PositionManager* positions = nullptr;
-#ifndef QGC_NO_SERIAL_LINK
     /// The serial devices a receiver may connect or discover, and their claims; without it none is available. A
     /// session holds its claim until its worker has stopped, and ends unplugged when a scan no longer lists its device.
+    /// Builds without serial links have no such devices and leave it empty.
     SerialPortManager* serialPorts = nullptr;
-#endif
+    /// Off gives the receiver the serial side of a build without serial links, GPSReceiverSerialPorts itself, whatever
+    /// the build: tests run that build's behaviour with it.
+    bool serialLinks = true;
     /// The folder a recorded session's file goes to, asked as each session starts. Without it, or while it returns
     /// an empty path, sessions are not recorded.
     std::function<QString()> recordingDirectory = nullptr;
-};
-
-/// A serial device the receiver settings offer.
-struct GPSSerialPortEntry
-{
-    Q_GADGET
-    QML_VALUE_TYPE(gpsSerialPortEntry)
-    QML_STRUCTURED_VALUE
-    Q_PROPERTY(QString value MEMBER value FINAL)
-    Q_PROPERTY(QString label MEMBER label FINAL)
-
-public:
-    /// The system location, which the device setting stores.
-    QString value;
-    /// What the picker shows.
-    QString label;
-
-    bool operator==(const GPSSerialPortEntry&) const = default;
 };
 
 /// Runs the local GPS receiver session and publishes its status Facts, corrections, and position.
@@ -159,12 +143,11 @@ public:
 
     const Configuration& configuration() const { return _configuration; }
 
-    /// The serial device picker's entries from the last scan: "value" is the system location, "label" the device's
-    /// description and path, marked when another QGroundControl connection, such as a vehicle link, holds the port.
-    QList<GPSSerialPortEntry> serialPortEntries() const { return _serialPortEntries; }
+    /// GPSReceiverSerialPorts::entries(): the serial device picker's entries from the last scan.
+    QList<GPSSerialPortEntry> serialPortEntries() const { return _serial->entries(); }
 
     /// The application's serial rates that a receiver accepts as an explicit rate; empty without serial links.
-    static QList<int> serialBaudRates();
+    QList<int> serialBaudRates() const { return _serial->baudRates(); }
 
     /// Latest receiver solution that passes the consumer's gates; empty without a fresh fix.
     std::optional<GPSObservation> acceptedPositionObservation(GPSObservation::PositionUse use) const;
@@ -191,14 +174,8 @@ public:
 
     bool hasReceiver() const override;
 
-    bool serialSupported() const
-    {
-#ifdef QGC_NO_SERIAL_LINK
-        return false;
-#else
-        return true;
-#endif
-    }
+    /// Receivers connect over serial devices; without serial links a serial selection connects over TCP.
+    bool serialSupported() const { return _serial->supported(); }
 
     /// The connection or input problem, else a recent report that the receiver dropped output.
     QString errorMessage() const;
@@ -238,7 +215,7 @@ public:
     /// Granting permission only lasts until the configuration changes, a session starts or ends, or it is used.
     void setPersistentChangesAllowed(bool allowed);
 
-    RTKSettings::ConnectionType effectiveConnectionType() const { return _configuration.effectiveConnectionType(); }
+    RTKSettings::ConnectionType effectiveConnectionType() const { return _connectability.connection; }
 
     /// UDP only receives, so a receiver QGroundControl configures needs serial or TCP.
     bool connectionSupported() const { return _connectability.connectionSupported; }
@@ -314,15 +291,9 @@ private:
     void endConnection(ShownError error) override;
     bool connectTcp(const QString& host, quint16 port, GPSType type, GPSReceiverConfig request) override;
     bool connectUdp(quint16 port, GPSType type, GPSReceiverConfig request) override;
-#ifndef QGC_NO_SERIAL_LINK
     bool connectSerial(const QString& device, GPSType type, GPSReceiverConfig request, GPSSerialClaim claim) override;
-    bool serialPortAvailable(const QString& device) const override;
-    QStringList rtkReceiverPorts() const override;
-    GPSSerialClaim claimSerialPort(const QString& device) override;
-    /// Ends a serial session whose device the scan no longer lists, then updates the picker entries.
-    void _onSerialPortsEnumerated(const QStringList& devices);
-    void _updateSerialPortEntries();
-#endif
+    /// Ends a serial session whose device the scan no longer lists.
+    void _onSerialPortsScanned(const QStringList& devices);
     /// Scans the serial ports, when a scan is due, before the connection policy asks for them.
     void _scanSerialPorts();
 
@@ -357,6 +328,8 @@ private:
     /// Emits each signal whose value changed since it was last notified.
     void _emitChanges();
 
+    /// The receiver's serial side: the devices it may connect or discover, their claims and their transport.
+    GPSReceiverSerialPorts* const _serial;
     Configuration _configuration;
     /// The check of _configuration, renewed with it, which the connection policy and the properties read.
     GPSReceiverConnectability _connectability;
@@ -380,14 +353,6 @@ private:
     Notified _notified;
     bool _destroying = false;
     bool _persistentChangesAllowed = false;
-    QList<GPSSerialPortEntry> _serialPortEntries;
-#ifndef QGC_NO_SERIAL_LINK
-    const QPointer<SerialPortManager> _serialPorts;
-    /// The claims this receiver made, which never mark their port as in use, even while a retired session's worker
-    /// still holds one.
-    QHash<QString, std::weak_ptr<const SerialPortManager::Reservation>> _serialClaims;
-    std::function<std::unique_ptr<GPSTransport>(const QString&, GPSCancelToken)> _serialTransportFactory;
-#endif
     /// The constellations last notified, as the values in Notified are.
     QList<GPSConstellationSatellites> _notifiedConstellations;
     /// shutdown() is running.

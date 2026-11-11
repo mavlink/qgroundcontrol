@@ -1,0 +1,126 @@
+#include "GPSReceiverSystemSerialPorts.h"
+
+#include <algorithm>
+#include <utility>
+
+#include <QtCore/QSet>
+
+#include "GPSReceiver.h"
+#include "GPSReceiverConfig.h"
+#include "SerialGPSTransport.h"
+
+GPSReceiverSystemSerialPorts::GPSReceiverSystemSerialPorts(SerialPortManager* manager, QObject* parent)
+    : GPSReceiverSerialPorts(parent)
+    , _manager(manager)
+    , _openDevice([](const QString& device, GPSCancelToken cancelToken) {
+        return std::make_unique<SerialGPSTransport>(device, std::move(cancelToken));
+    })
+{
+    if (_manager) {
+        connect(_manager, &SerialPortManager::portsEnumerated, this, [this](const QStringList& devices) {
+            emit scanned(devices);
+            _updateEntries();
+        });
+    }
+}
+
+QList<int> GPSReceiverSystemSerialPorts::baudRates() const
+{
+    QList<int> rates;
+    for (const QString& text : SerialPortManager::supportedBaudRates()) {
+        const uint32_t rate = text.toUInt();
+        if (gpsValidExplicitBaudRate(rate) && !rates.contains(static_cast<int>(rate))) {
+            rates.append(static_cast<int>(rate));
+        }
+    }
+    return rates;
+}
+
+void GPSReceiverSystemSerialPorts::scanIfDue()
+{
+    if (_manager) {
+        (void) _manager->availablePorts();
+    }
+}
+
+bool GPSReceiverSystemSerialPorts::available(const QString& device) const
+{
+    if (device.isEmpty() || !_manager) {
+        return false;
+    }
+    const QList<SerialPortManager::Port> ports = _manager->availablePorts();
+    return std::any_of(ports.cbegin(), ports.cend(),
+                       [&device](const auto& port) { return port.systemLocation == device && !port.bootloader; });
+}
+
+QStringList GPSReceiverSystemSerialPorts::_freeRtkReceivers() const
+{
+    QStringList receivers;
+    if (!_manager) {
+        return receivers;
+    }
+    QSet<QString> seenDevices;
+    for (const auto& port : _manager->availablePorts()) {
+        if (port.boardType != QGCSerialPortInfo::BoardTypeRTKGPS || port.bootloader) {
+            continue;
+        }
+        // A labelled NMEA interface remains a receiver candidate on composite GPS devices.
+        const bool primary = SerialPortManager::isPrimaryInterface(port, seenDevices);
+        if ((primary || port.description.contains(QStringLiteral("NMEA"))) &&
+            _manager->canReservePort(port.systemLocation)) {
+            receivers.append(port.systemLocation);
+        }
+    }
+    return receivers;
+}
+
+QString GPSReceiverSystemSerialPorts::settledRtkReceiver(quint64 nowUs)
+{
+    const QStringList receivers = _freeRtkReceivers();
+    _rtkReceivers.removeIf([&receivers](const QString& device) { return !receivers.contains(device); });
+    for (const QString& device : receivers) {
+        if (_rtkReceivers.settled(device, nowUs)) {
+            return device;
+        }
+    }
+    return {};
+}
+
+GPSSerialClaim GPSReceiverSystemSerialPorts::claim(const QString& device)
+{
+    SerialPortManager::ReservationPtr reservation = _manager ? _manager->reservePort(device) : nullptr;
+    if (reservation) {
+        _claims.insert(device, reservation);
+    }
+    return reservation;
+}
+
+GPSReceiverWorker::TransportFactory GPSReceiverSystemSerialPorts::transportFactory(const QString& device,
+                                                                                   GPSSerialClaim claim) const
+{
+    // The session's worker keeps the factory, and with it the claim, until it has stopped.
+    return [device, claim = std::move(claim), open = _openDevice](GPSCancelToken cancelToken) {
+        return open(device, std::move(cancelToken));
+    };
+}
+
+void GPSReceiverSystemSerialPorts::_updateEntries()
+{
+    // Just after a scan the manager returns that inventory without scanning again.
+    const QList<SerialPortManager::Port> available = _manager->availablePorts();
+    QList<GPSSerialPortEntry> entries;
+    entries.reserve(available.size());
+    for (const auto& port : available) {
+        // The USB product string, else the name of a known board.
+        const QString name = port.description.trimmed().isEmpty() ? port.boardName : port.description.trimmed();
+        //: %1 is a serial device's name, such as u-blox GNSS receiver; %2 its path, such as /dev/ttyACM0 or COM3
+        QString label =
+            name.isEmpty() ? port.systemLocation : GPSReceiver::tr("%1 – %2").arg(name, port.systemLocation);
+        if (_manager->isPortReserved(port.systemLocation) && _claims.value(port.systemLocation).expired()) {
+            //: %1 is a serial device that another QGroundControl connection, such as a vehicle link, uses
+            label = GPSReceiver::tr("%1 (in use)").arg(label);
+        }
+        entries.append({.value = port.systemLocation, .label = label});
+    }
+    setEntries(std::move(entries));
+}

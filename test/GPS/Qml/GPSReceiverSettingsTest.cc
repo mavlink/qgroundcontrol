@@ -30,25 +30,36 @@
 using namespace GPSTest;
 
 namespace {
-/// A receiver session that follows the settings; scripted workers stand in for the receiver hardware.
+/// A receiver session that follows the settings; scripted workers stand in for the receiver hardware. Without
+/// @a serialLinks the receiver has the serial side of a build without serial links.
 struct SettingsReceiver
 {
-    explicit SettingsReceiver(RTKSettings* settings) { GPSSettingsBindings::bindReceiver(settings, &gps); }
+    SettingsReceiver(RTKSettings* settings, bool serialLinks)
+        : scripted(nullptr, dependencies(serialLinks))
+    {
+        GPSSettingsBindings::bindReceiver(settings, &gps);
+    }
 
     ScriptedReceiverWorker* worker() const { return workers.current(); }
 
     // Scripted workers open no link, so a recorded session names a file here and never creates it.
     static QString recordingDirectory() { return QStringLiteral("/test/recordings"); }
 
+    GPSReceiver::Dependencies dependencies(bool serialLinks)
+    {
+        GPSReceiver::Dependencies dependencies{.serialLinks = serialLinks, .recordingDirectory = recordingDirectory};
+#ifndef QGC_NO_SERIAL_LINK
+        dependencies.serialPorts = &serial.manager;
+#endif
+        return dependencies;
+    }
+
 #ifndef QGC_NO_SERIAL_LINK
     // Every device the tests select; the panel's own port list decides which ones it shows as available.
     TestSerialPorts serial{{serialPort(QStringLiteral("/test/receiver")), serialPort(QStringLiteral("/test/other")),
                             serialPort(QStringLiteral("/test/missing"))}};
-    GPSTest::ScriptedGPSReceiver scripted{nullptr,
-                                          {.serialPorts = &serial.manager, .recordingDirectory = recordingDirectory}};
-#else
-    GPSTest::ScriptedGPSReceiver scripted{nullptr, {.recordingDirectory = recordingDirectory}};
 #endif
+    GPSTest::ScriptedGPSReceiver scripted;
     GPSReceiver& gps = scripted.receiver;
     ScriptedReceiverWorkerFactory& workers = scripted.workers;
 };
@@ -73,9 +84,9 @@ QVariant portEntries(const QStringList& paths)
 /// receiver status, which has Connect, as the settings page and the indicator's drop-down show them together.
 struct Panel
 {
-    explicit Panel(int manufacturer)
+    explicit Panel(int manufacturer, bool serialLinks = true)
         : settings(manufacturer)
-        , receiver(settings.settings)
+        , receiver(settings.settings, serialLinks)
     {}
 
     /// Creates the panel and the status; false on failure, with the reason in the engine's lastError().
@@ -470,25 +481,40 @@ void GPSReceiverSettingsTest::_connectionRowFollowsReceiver()
     verifyRow(palette.colorRed(), disconnected, "Connect");
 }
 
+void GPSReceiverSettingsTest::_tcpConnectionFields_data()
+{
+    QTest::addColumn<bool>("serialLinks");
+    QTest::newRow("build") << true;
+    // The form of a build without serial links, on any build.
+    QTest::newRow("no-serial-links") << false;
+}
+
 void GPSReceiverSettingsTest::_tcpConnectionFields()
 {
-    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
+    QFETCH(bool, serialLinks);
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox), serialLinks);
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* host = panel.find("rtkTcpHost");
     auto* port = panel.find("rtkTcpPort");
     auto* device = panel.find("rtkSerialDevice");
     auto* connectionType = panel.find("rtkConnectionType");
+    auto* tcpOnly = panel.find("rtkTcpOnly");
     auto* consent = panel.find<QObject>("rtkPersistentChangesCheckBox");
-    QVERIFY(host && port && device && connectionType && consent);
+    QVERIFY(host && port && device && connectionType && tcpOnly && consent);
     RTKSettings* const settings = panel.settings.settings;
     GPSReceiver& receiver = panel.receiver.gps;
     QVERIFY(connectionType->isVisible());
     const bool serial = receiver.serialSupported();
+    QVERIFY(serialLinks || !serial);
+    // Without serial links the saved serial selection shows the TCP address it connects, and says why.
+    QCOMPARE(settings->connectionType()->rawValue().toInt(), int(RTKSettings::Serial));
     QCOMPARE(device->isVisible(), serial);
     QCOMPARE(host->isVisible() && port->isVisible(), !serial);
+    QCOMPARE(tcpOnly->isVisible(), !serial);
     settings->connectionType()->setRawValue(RTKSettings::Tcp);
     QVERIFY(host->isVisible() && port->isVisible());
     QVERIFY(!device->isVisible());
+    QVERIFY(!tcpOnly->isVisible());
     settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::Quectel));
     QVERIFY(consent->property("visible").toBool());
     // Which settings withdraw the permission is GPSReceiverSettingsBindingTest's; the checkbox follows the receiver.

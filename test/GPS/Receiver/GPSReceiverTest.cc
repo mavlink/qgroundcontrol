@@ -22,7 +22,11 @@
 #include "GPSCancellation.h"
 #include "GPSCorrectionManager.h"
 #include "GPSReceiver.h"
+#include "GPSReceiverConnectionPolicy.h"
 #include "GPSReceiverFactGroup.h"
+#ifndef QGC_NO_SERIAL_LINK
+#include "GPSReceiverSystemSerialPorts.h"
+#endif
 #include "GPSReceiverWorker.h"
 #include "GPSRecordingTransport.h"
 #include "GPSSettingsBindings.h"
@@ -1057,7 +1061,59 @@ void GPSReceiverTest::_recordingFileClearsWhenRecordingFails()
     receiver.shutdown();
 }
 
+void GPSReceiverTest::_withoutSerialLinksSerialSelectionUsesTcp()
+{
+    // The serial side of a build without serial links, on any build.
+    ManualScheduler scheduler;
+    ScriptedGPSReceiver harness(&scheduler, {.serialLinks = false});
+    GPSReceiver& receiver = harness.receiver;
+    QVERIFY(!receiver.serialSupported());
+    QVERIFY(receiver.serialBaudRates().isEmpty());
+    QVERIFY(receiver.serialPortEntries().isEmpty());
+    // No device is available, discovered or claimed.
+    const QString device = QStringLiteral("/dev/ttyACM0");
+    QVERIFY(!receiver._serial->available(device));
+    QVERIFY(receiver._serial->settledRtkReceiver(0).isEmpty());
+    QVERIFY(!receiver._serial->claim(device));
+
+    // The default selection, a base on any USB device, has nothing to discover and no address to connect.
+    auto configuration = receiverConfiguration();
+    QCOMPARE(configuration.connectionType, RTKSettings::Serial);
+    QVERIFY(configuration.autoConnect && configuration.serialDevice.isEmpty());
+    receiver.setConfiguration(configuration);
+    QCOMPARE(receiver.effectiveConnectionType(), RTKSettings::Tcp);
+    QVERIFY(receiver.connectionSupported() && receiver.canConnect());
+    receiver.tick();
+    QVERIFY(scheduler.advanceBy(10s));
+    receiver.tick();
+    QCOMPARE(harness.workers.count(), 0);
+    QCOMPARE(receiver.state(), GPSReceiver::State::Disconnected);
+    QVERIFY(receiver.errorMessage().isEmpty());
+    QVERIFY(!receiver.connectReceiver());
+    QCOMPARE(receiver.errorMessage(), GPSReceiverConnectionPolicy::tr("Enter the receiver's TCP host and port."));
+
+    // With an address, the serial selection is that TCP receiver, at the rate of a network connection: the saved
+    // serial device and rate are not used.
+    configuration.serialDevice = QStringLiteral("/test/saved");
+    configuration.serialBaudRate = 57600;
+    configuration.tcpHost = QStringLiteral("rtk.test");
+    configuration.tcpPort = 2101;
+    receiver.setConfiguration(configuration);
+    QVERIFY(receiver.connectReceiver());
+    QVERIFY(receiver.errorMessage().isEmpty());
+    QCOMPARE(receiver.activeEndpoint(), QStringLiteral("rtk.test:2101"));
+    QCOMPARE(harness.workers.current()->capturedConfig().baudRate, GPSTransport::BRIDGE_BAUD_RATE);
+    receiver.shutdown();
+    harness.workers.finishRetired();
+}
+
 #ifndef QGC_NO_SERIAL_LINK
+
+void GPSReceiverTest::_openSerialDevicesWith(
+    GPSReceiver& receiver, std::function<std::unique_ptr<GPSTransport>(const QString&, GPSCancelToken)> open)
+{
+    static_cast<GPSReceiverSystemSerialPorts*>(receiver._serial)->_openDevice = std::move(open);
+}
 
 void GPSReceiverTest::_serialPortEntries()
 {
@@ -1131,9 +1187,9 @@ void GPSReceiverTest::_serialReservationSurvivesDelayedStop()
     GPSReceiver receiver;
     BlockedTransportGate gate;
     receiver.setConfiguration(receiverConfiguration(kPassiveManufacturer));
-    receiver._serialTransportFactory = [factory = gate.factory()](const QString&, GPSCancelToken cancelToken) {
+    _openSerialDevicesWith(receiver, [factory = gate.factory()](const QString&, GPSCancelToken cancelToken) {
         return factory(std::move(cancelToken));
-    };
+    });
     QVERIFY(receiver.connectSerial(QStringLiteral("/test/selected"), GPSType::Passive, {.baudRate = 115200},
                                    serial.manager.reservePort(QStringLiteral("/test/selected"))));
     QTRY_VERIFY_WITH_TIMEOUT(gate.entered(), TestTimeout::mediumMs());
@@ -1204,9 +1260,9 @@ void GPSReceiverTest::_manualPassiveBaudPreserved()
     auto configuration = serialConfiguration(kPassiveManufacturer, QStringLiteral("/test/passive"), baud);
     configuration.autoConnect = false;
     receiver.setConfiguration(configuration);
-    receiver._serialTransportFactory = [state](const QString&, GPSCancelToken cancelToken) {
+    _openSerialDevicesWith(receiver, [state](const QString&, GPSCancelToken cancelToken) {
         return makePassiveTestTransport(std::move(cancelToken), state);
-    };
+    });
     const auto releaseWorker = qScopeGuard([&] { state->releaseRead.release(); });
     // The user's Connect claims the port through the application's serial ports.
     QVERIFY(receiver.connectReceiver());

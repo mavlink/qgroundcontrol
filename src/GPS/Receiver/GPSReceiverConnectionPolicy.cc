@@ -5,35 +5,37 @@
 #include <utility>
 #include <variant>
 
-#include <QtCore/QStringList>
-
 #include "GPSReceiverConfig.h"
+#include "GPSReceiverSerialPorts.h"
 #include "GPSReceiverSession.h"
 #include "GPSTransport.h"
 #include "QGCLoggingCategory.h"
 #include "RuntimeScheduler.h"
-#ifndef QGC_NO_SERIAL_LINK
-#include "SerialPortManager.h"
-#endif
 
 QGC_LOGGING_CATEGORY(GPSReceiverConnectionPolicyLog, "GPS.Receiver.GPSReceiverConnectionPolicy")
 
 GPSReceiverConnectionPolicy::GPSReceiverConnectionPolicy(GPSReceiverConnector& receiver,
                                                          const GPSReceiverConfiguration& configuration,
                                                          const GPSReceiverConnectability& connectability,
-                                                         RuntimeScheduler* scheduler)
+                                                         GPSReceiverSerialPorts& serial, RuntimeScheduler* scheduler)
     : _receiver(receiver)
     , _configuration(configuration)
     , _connectability(connectability)
+    , _serial(serial)
     , _scheduler(scheduler)
 {}
 
 GPSReceiverConnectability GPSReceiverConnectionPolicy::connectability(const GPSReceiverConfiguration& configuration,
-                                                                      bool allowPersistentChanges)
+                                                                      bool serialLinks, bool allowPersistentChanges)
 {
     const bool configuredBase = configuration.receiverRole == RTKSettings::ConfiguredBase;
-    const auto connection = configuration.effectiveConnectionType();
+    const bool network =
+        configuration.connectionType == RTKSettings::Tcp || configuration.connectionType == RTKSettings::Udp;
+    const auto connection = network       ? configuration.connectionType
+                            : serialLinks ? RTKSettings::Serial
+                                          : RTKSettings::Tcp;
     GPSReceiverConnectability result;
+    result.connection = connection;
     result.type = configuredBase ? gpsReceiverTypeForManufacturer(configuration.baseReceiverManufacturer)
                                  : std::optional(GPSType::Passive);
     const GPSReceiverCapabilities family =
@@ -119,9 +121,7 @@ void GPSReceiverConnectionPolicy::_cancelRetries()
     _keepConnected = false;
     _waitingForPort = false;
     _autoPort.clear();
-#ifndef QGC_NO_SERIAL_LINK
-    _waitingPorts.clear();
-#endif
+    _serial.forgetRtkReceivers();
     _retryDeadlineUs.reset();
     _retryBackoff.reset();
 }
@@ -232,14 +232,10 @@ bool GPSReceiverConnectionPolicy::_hasSavedReceiver() const
 
 bool GPSReceiverConnectionPolicy::_discoveryEnabled() const
 {
-#ifdef QGC_NO_SERIAL_LINK
-    return false;
-#else
-    // Discovery configures known base receivers, so it never replaces a saved, network or passive receiver.
+    // Discovery configures known base receivers, so it never replaces a saved, network or passive receiver. Without
+    // serial links every connection is a network one.
     return _configuration.autoConnect && !_paused && _configuration.receiverRole == RTKSettings::ConfiguredBase &&
-           _configuration.effectiveConnectionType() == RTKSettings::Serial &&
-           _configuration.serialDevice.trimmed().isEmpty();
-#endif
+           _connectability.connection == RTKSettings::Serial && _configuration.serialDevice.trimmed().isEmpty();
 }
 
 void GPSReceiverConnectionPolicy::_updateSaved()
@@ -249,8 +245,8 @@ void GPSReceiverConnectionPolicy::_updateSaved()
         _rejectConfiguration(_connectability.error);
         return;
     }
-    if (_configuration.effectiveConnectionType() == RTKSettings::Serial) {
-        if (!_serialDeviceAvailable(_configuration.serialDevice.trimmed())) {
+    if (_connectability.connection == RTKSettings::Serial) {
+        if (!_serial.available(_configuration.serialDevice.trimmed())) {
             if (!std::exchange(_waitingForPort, true)) {
                 //: %1 is a serial device, such as /dev/ttyACM0 or COM3
                 _receiver.setConnectionError(
@@ -278,56 +274,41 @@ void GPSReceiverConnectionPolicy::_attemptSaved()
     }
 }
 
-bool GPSReceiverConnectionPolicy::_serialDeviceAvailable([[maybe_unused]] const QString& device) const
-{
-#ifdef QGC_NO_SERIAL_LINK
-    return false;
-#else
-    return _receiver.serialPortAvailable(device);
-#endif
-}
-
 bool GPSReceiverConnectionPolicy::_connectConfigured(bool allowPersistentChanges)
 {
     // The consent is part of the request, so the request with it is built and checked for this attempt.
     const GPSReceiverConnectability check =
-        allowPersistentChanges ? connectability(_configuration, true) : _connectability;
+        allowPersistentChanges ? connectability(_configuration, _serial.supported(), true) : _connectability;
     if (!check.type || !check.error.isEmpty()) {
         _receiver.setConnectionError(check.error);
         return false;
     }
     const GPSType type = *check.type;
-    const auto connection = _configuration.effectiveConnectionType();
-    if (connection == RTKSettings::Tcp) {
+    if (check.connection == RTKSettings::Tcp) {
         return _receiver.connectTcp(_configuration.tcpHost.trimmed(), static_cast<quint16>(_configuration.tcpPort),
                                     type, check.request);
     }
-    if (connection == RTKSettings::Udp) {
+    if (check.connection == RTKSettings::Udp) {
         return _receiver.connectUdp(static_cast<quint16>(_configuration.udpPort), type, check.request);
     }
-#ifndef QGC_NO_SERIAL_LINK
     // What follows depends on the devices present, so automatic connection retries it.
     const QString device = _configuration.serialDevice.trimmed();
-    if (!_serialDeviceAvailable(device)) {
+    if (!_serial.available(device)) {
         _receiver.setConnectionError(tr("Select an available serial device that is not a bootloader."));
         return false;
     }
-    auto claim = _receiver.claimSerialPort(device);
+    GPSSerialClaim claim = _serial.claim(device);
     if (!claim) {
         _receiver.setConnectionError(tr("The selected serial device is already in use."));
         return false;
     }
     return _receiver.connectSerial(device, type, check.request, std::move(claim));
-#else
-    return false;
-#endif
 }
 
 void GPSReceiverConnectionPolicy::_updateDiscovery()
 {
-#ifndef QGC_NO_SERIAL_LINK
     if (_owner == Owner::Discovered) {
-        if (_serialDeviceAvailable(_autoPort)) {
+        if (_serial.available(_autoPort)) {
             if (!_retryDeadlineUs || _scheduler->nowUs() >= *_retryDeadlineUs) {
                 _connectDiscovered(_autoPort);
             }
@@ -337,19 +318,11 @@ void GPSReceiverConnectionPolicy::_updateDiscovery()
         _owner = Owner::None;
         _cancelRetries();
     }
-    const QStringList receivers = _receiver.rtkReceiverPorts();
-    _waitingPorts.removeIf([&receivers](const QString& device) { return !receivers.contains(device); });
-    const quint64 nowUs = _scheduler->nowUs();
-    for (const QString& device : receivers) {
-        if (_waitingPorts.settled(device, nowUs)) {
-            _connectDiscovered(device);
-            return;
-        }
+    if (const QString device = _serial.settledRtkReceiver(_scheduler->nowUs()); !device.isEmpty()) {
+        _connectDiscovered(device);
     }
-#endif
 }
 
-#ifndef QGC_NO_SERIAL_LINK
 void GPSReceiverConnectionPolicy::_connectDiscovered(const QString& device)
 {
     // The USB identity only chose the port; the saved manufacturer chooses the family, detecting it when Automatic,
@@ -357,21 +330,20 @@ void GPSReceiverConnectionPolicy::_connectDiscovered(const QString& device)
     GPSReceiverConfiguration discovered = _configuration;
     discovered.serialDevice = device;
     discovered.serialBaudRate = 0;
-    const GPSReceiverConnectability check = connectability(discovered);
+    const GPSReceiverConnectability check = connectability(discovered, _serial.supported());
     if (!check.type || !check.error.isEmpty()) {
         _rejectConfiguration(check.error);
         return;
     }
-    auto claim = _receiver.claimSerialPort(device);
+    GPSSerialClaim claim = _serial.claim(device);
     if (!claim) {
         return;
     }
     _owner = Owner::Discovered;
     _autoPort = device;
-    _waitingPorts.clear();
+    _serial.forgetRtkReceivers();
     _retryDeadlineUs.reset();
     if (!_receiver.connectSerial(device, *check.type, check.request, std::move(claim))) {
         _scheduleRetry();
     }
 }
-#endif
