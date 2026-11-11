@@ -119,6 +119,28 @@ void VideoManagerInitTest::_testBackendInitFailure()
     QCOMPARE(receiverCount, 4);
 }
 
+void VideoManagerInitTest::_testNothingStartsAfterCleanup()
+{
+    Fact* const backend = SettingsManager::instance()->videoSettings()->videoBackend();
+    VideoTestHelpers::FactRestorer restorer;
+    restorer.set(backend, VideoSettings::VideoBackendGStreamer);
+
+    VideoManager videoManager;
+    int receiverCount = 0;
+    videoManager._receiverFactory = countingFactory(receiverCount);
+    videoManager._initState = VideoManager::InitState::Pending;
+    videoManager._onMainWindowReady();
+
+    // The application exits while the backend still initializes: neither its completion nor a setting that replaces
+    // the receivers creates one afterwards.
+    videoManager.cleanup();
+    videoManager._onBackendInitComplete(true);
+    QCOMPARE(receiverCount, 0);
+    restorer.set(backend, VideoSettings::VideoBackendQtMultimedia);
+    QCOMPARE(receiverCount, 0);
+    QVERIFY(!videoManager.primaryStream()->receiver());
+}
+
 void VideoManagerInitTest::_testWaitForBackendReady()
 {
     // Unit tests run without the video backend's global init.

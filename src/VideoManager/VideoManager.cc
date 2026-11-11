@@ -303,6 +303,9 @@ void VideoManager::_onMainWindowReady()
 
 void VideoManager::_createVideoReceivers()
 {
+    if (_cleanedUp) {
+        return;
+    }
     for (VideoStreamController* stream : {_primaryStream, _thermalStream}) {
         if (stream->receiver()) {
             continue;
@@ -318,6 +321,9 @@ void VideoManager::_createVideoReceivers()
 
 void VideoManager::cleanup()
 {
+    // Latched first: the waits below run the event loop, and what it delivers (the backend's init finishing, a setting
+    // or a camera changing) must not bring back what this takes down.
+    _cleanedUp = true;
     // Receivers must die here, not in ~VideoManager: that runs inside ~QCoreApplication, where queued events are no
     // longer delivered, so a receiver's worker thread never gets its quit task and the destructor waits forever.
     _primaryStream->setReceiver(nullptr);
@@ -434,6 +440,9 @@ void VideoManager::setFullScreen(bool on)
 
 void VideoManager::_updateState()
 {
+    if (_cleanedUp) {
+        return;
+    }
     if (!_videoSettings->disableWhenDisarmed()->rawValue().toBool()) {
         _disabledWhileDisarmed = false;
     }

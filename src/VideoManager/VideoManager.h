@@ -72,7 +72,8 @@ public:
     void startVideoBackendInit();
     /// Blocks until the backend init finishes, starting it if needed. True when the backend is ready.
     bool waitForVideoBackendReady();
-    /// Deletes the receivers. Call before the QML engine and the application go away.
+    /// Deletes the receivers and stops the USB camera, for good: nothing starts again afterwards. Call before the QML
+    /// engine and the application go away.
     void cleanup();
 
     VideoStreamController* primaryStream() const { return _primaryStream; }
@@ -159,6 +160,7 @@ private:
     QFuture<bool> _backendInitFuture;
 
     bool _hasMainWindow = false;
+    bool _cleanedUp = false;
     bool _fullScreen = false;
     bool _videoStopped = false;
     bool _disabledWhileDisarmed = false;
