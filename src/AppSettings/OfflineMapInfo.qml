@@ -19,6 +19,7 @@ RowLayout {
     QGCLabel {
         Layout.fillWidth:   true
         text:               tileSet.name
+        elide:              Text.ElideRight
     }
 
     QGCLabel {
