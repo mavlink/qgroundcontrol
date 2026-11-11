@@ -405,6 +405,13 @@ void GPSReceiverSettingsBindingTest::_ntripSettingsBinding()
     QCOMPARE(configuration, expected);
     settings->ntripServerConnectEnabled()->setRawValue(true);
     QVERIFY(manager.configuration().enabled);
+
+    // A stored source that names none would report no position at all.
+    expectLogMessage("GPS.GPSSettingsBindings", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Invalid GGA position source")));
+    settings->ntripGgaPositionSource()->setRawValue(9);
+    verifyExpectedLogMessage();
+    QCOMPARE(manager.configuration().gga.source, NTRIPGgaReporter::PositionSource::Auto);
 }
 
 void GPSReceiverSettingsBindingTest::_ntripActionsFollowConnectionSetting()

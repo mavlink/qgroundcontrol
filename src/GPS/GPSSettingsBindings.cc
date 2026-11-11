@@ -2,6 +2,7 @@
 
 #include <chrono>
 
+#include <QtCore/QMetaEnum>
 #include <QtCore/QSet>
 
 #include "Fact.h"
@@ -69,8 +70,12 @@ NTRIPConfig ntripFromSettings(NTRIPSettings* settings, FactReader& read)
     connection.useTls = read(settings->ntripUseTls()).toBool();
     connection.allowSelfSignedCerts = read(settings->ntripAllowSelfSignedCerts()).toBool();
     connection.pinnedCertificate = read(settings->ntripPinnedCertificate()).toString();
-    configuration.gga.source =
-        static_cast<NTRIPGgaReporter::PositionSource>(read(settings->ntripGgaPositionSource()).toInt());
+    const int ggaSource = read(settings->ntripGgaPositionSource()).toInt();
+    if (QMetaEnum::fromType<NTRIPGgaReporter::PositionSource>().valueToKey(ggaSource)) {
+        configuration.gga.source = static_cast<NTRIPGgaReporter::PositionSource>(ggaSource);
+    } else {
+        qCWarning(GPSSettingsBindingsLog) << "Invalid GGA position source; using automatic selection";
+    }
     configuration.gga.interval = std::chrono::seconds(read(settings->ntripGgaIntervalSec()).toUInt());
     return configuration;
 }
