@@ -576,6 +576,9 @@ bool decompressFile(const QString& inputPath, const QString& outputPath, Format 
         QString ext = formatExtension(format);
         if (inputPath.endsWith(ext, Qt::CaseInsensitive)) {
             actualOutput = inputPath.left(inputPath.size() - ext.size());
+        } else if (isCompressionFormat(format) && (detectFormatFromExtension(inputPath) == format)) {
+            // Another extension of the format (.gzip, .lzma, .zstd, .bzip2), which strippedPath() removes too
+            actualOutput = inputPath.left(inputPath.lastIndexOf(QLatin1Char('.')));
         } else {
             actualOutput = inputPath + ".decompressed";
         }

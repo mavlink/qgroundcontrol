@@ -891,6 +891,13 @@ void QGCCompressionTest::_testDecompressIfNeededDefaultOutput()
     QVERIFY(output.readAll().contains("\"name\""));
     QVERIFY(input.open(QIODevice::ReadOnly));
     QCOMPARE(input.readAll(), compressed);
+    output.close();
+
+    // decompressFile() without an output path writes to the same place
+    const QStringList inputAndOutput = _entriesBelow(tempDir.path());
+    QVERIFY(output.remove());
+    QVERIFY(QGCCompression::decompressFile(inputPath));
+    QCOMPARE(_entriesBelow(tempDir.path()), inputAndOutput);
 }
 
 // ============================================================================
