@@ -167,6 +167,7 @@ ToolIndicatorPage {
                 objectName: "gpsIndicatorCorrections"
                 Layout.minimumWidth: 0
                 showWhenInactive: false
+                showCoordinates: false
             }
 
             NTRIPConnectionStatus {
