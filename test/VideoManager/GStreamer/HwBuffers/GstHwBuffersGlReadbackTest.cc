@@ -596,6 +596,48 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameToImage()
 #endif
 }
 
+void GstHwBuffersGlReadbackTest::_testUnsharedGlMemoryTakesCpuPath()
+{
+#if !defined(QGC_TEST_GLMEMORY_READBACK)
+    QSKIP("GLMemory GPU path on EGL not compiled in this build");
+#else
+    if (!_glRhi()) {
+        QSKIP(qPrintable(_rhiUnavailable));
+    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc", "glupload", "appsink");
+
+    // Nothing answers this pipeline's context requests, so glupload uploads in a GL context of gst-gl's own.
+    GstTest::TestPipeline pipeline;
+    QVERIFY2(pipeline.launch(QStringLiteral("videotestsrc num-buffers=1 ! "
+                                            "video/x-raw,format=RGBA,width=64,height=48,framerate=30/1 ! glupload ! "
+                                            "video/x-raw(memory:GLMemory),format=RGBA ! appsink name=gpu sync=false")),
+             qPrintable(pipeline.error()));
+    if (!pipeline.play()) {
+        QSKIP("gst-gl can't create a GL context of its own here");
+    }
+    GstSample* const sample = gst_app_sink_try_pull_sample(GST_APP_SINK(pipeline.element("gpu").get()),
+                                                           GstTest::clockTime(TestTimeout::mediumDuration()));
+    if (!sample) {
+        QSKIP("gst-gl can't create a GL context of its own here");
+    }
+    const auto unref = qScopeGuard([sample] { gst_sample_unref(sample); });
+
+    GstVideoInfo info;
+    QVERIFY(gst_video_info_from_caps(&info, gst_sample_get_caps(sample)));
+    HwVideoBufferContext context;
+    context.gpuEnabled = true;
+    HwVideoBufferPath path = HwVideoBufferPath::GlMemory;
+    // Warned once per process.
+    ignoreLogMessage("Video.GStreamer.HwBuffers.GstGlBuf", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("doesn't share with Qt's")));
+    const std::unique_ptr<QHwVideoBuffer> buffer =
+        makeHwVideoBuffer(gst_sample_get_buffer(sample), gst_sample_get_caps(sample), info,
+                          QVideoFrameFormat(QSize(64, 48), QVideoFrameFormat::Format_RGBA8888), context, path);
+    QVERIFY2(!buffer, "Qt's context can't sample a texture of a GL context outside its share group");
+    QCOMPARE(path, HwVideoBufferPath::None);
+#endif
+}
+
 #endif  // QGC_GST_STREAMING
 
 UT_REGISTER_TEST(GstHwBuffersGlReadbackTest, TestLabel::Integration)

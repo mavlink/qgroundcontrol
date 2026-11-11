@@ -81,16 +81,21 @@ void waitInQtContext(GstGLSyncMeta* syncMeta, GstGLContext* glCtx)
 
 // mapTextures() binds GLMemory only under Qt's OpenGL(ES2) QRhi, but the glupload bin still emits GLMemory under a
 // non-GL RHI (forced Vulkan): those frames take the CPU path. Streaming thread, so read the published backend rather
-// than the render-thread-owned QRhi. Records each rejected frame.
-bool admitGlMemory(GstMemory*, const HwVideoBufferContext&)
+// than the render-thread-owned QRhi. So do frames from a GL context outside Qt's share group, which gst-gl creates
+// when no element got the bridge's: their texture names mean nothing in Qt's context, which would sample another
+// texture or black. Records each rejected frame.
+bool admitGlMemory(GstMemory* mem, const HwVideoBufferContext&)
 {
     const int backend = QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire);
-    if ((backend < 0) || (backend == static_cast<int>(QRhi::OpenGLES2))) {
+    if ((backend >= 0) && (backend != static_cast<int>(QRhi::OpenGLES2))) {
+        static std::atomic<bool> s_warned{false};
+        QGC_HW_WARN_ONCE(GstGlBufLog, s_warned, "GLMemory frame but QRhi backend is not OpenGL — routing to CPU pool");
+    } else if (!GstGlContextBridge::sharesQtContext(GST_GL_BASE_MEMORY_CAST(mem)->context)) {
+        static std::atomic<bool> s_warnedUnshared{false};
+        QGC_HW_WARN_ONCE(GstGlBufLog, s_warnedUnshared,
+                         "GLMemory from a GL context that doesn't share with Qt's — routing to CPU pool");
+    } else {
         return true;
-    }
-    static std::atomic<bool> s_warned{false};
-    if (!s_warned.exchange(true, std::memory_order_relaxed)) {
-        qCWarning(GstGlBufLog) << "GLMemory frame but QRhi backend is not OpenGL — routing to CPU pool";
     }
     GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::GlMemory,
                                              GstHwPathTelemetry::HwFallbackReason::ImportUnsupported);

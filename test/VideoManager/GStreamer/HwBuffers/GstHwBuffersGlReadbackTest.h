@@ -30,6 +30,7 @@ private slots:
     void _testVaDecodedFrameReadBack();
     void _testGlMemoryFrameReadsBack();
     void _testGlMemoryFrameToImage();
+    void _testUnsharedGlMemoryTakesCpuPath();
 #endif
 
 private:

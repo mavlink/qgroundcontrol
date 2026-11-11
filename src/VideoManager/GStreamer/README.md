@@ -130,7 +130,8 @@ Per-platform import of decoded GPU frames without a copy. Most paths wrap their 
   context queries, restarts and resets.
 - **`GstContextBridgeBase`**: GL, Vulkan, D3D11 and D3D12 bridges hand Qt's GPU device to GStreamer elements through
   `NEED_CONTEXT` and context queries. That is the main window's device: a VideoOutput popped out into its own window
-  renders on that window's device, so on Direct3D11 its frames take the CPU path.
+  renders on that window's device, so on Direct3D11 its frames take the CPU path. So do GLMemory frames from a GL
+  context outside Qt's share group, which gst-gl creates for itself when no element was handed the GL bridge's.
 - **D3D11 decoder padding**: decoders pad their textures to their alignment (16 rows for H.264, 128 for HEVC/AV1)
   without crop meta. The picture is copied out on the render thread, as a texture-array slice is, so frames keep the
   picture's size and a CPU layout for that fallback and for screenshots.

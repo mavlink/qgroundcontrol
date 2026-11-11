@@ -3,8 +3,10 @@
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
 
 #include <gst/gl/gl.h>
+#include <utility>
 
 #include <QtCore/QLoggingCategory>
+#include <QtCore/QMutexLocker>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QOpenGLContext>
 #include <QtGui/QSurfaceFormat>
@@ -86,6 +88,8 @@ public:
         : GstContextBridgeBase("GL", kContextTypes, &GstGlBridgeLog)
     {}
 
+    bool shares(GstGLContext* context);
+
 private:
     bool primeLocked() override;
     GstObject* refObject(const char* contextType) override;
@@ -94,6 +98,9 @@ private:
 
     GstGLDisplay* _display = nullptr;
     GstGLContext* _context = nullptr;
+    // The wrap the last reset() dropped. The contexts gst-gl created from it still share with Qt's context, which
+    // outlives every scene graph, so a running stream's textures stay importable.
+    GstGLContext* _retiredContext = nullptr;
 };
 
 constinit GlContextBridge s_bridge;
@@ -167,9 +174,11 @@ bool GlContextBridge::primeLocked()
 #if defined(QGC_GST_BRIDGE_HAS_GLX)
         // Qt's QGLXContext exposes the X11 Display* + GLXContext we need to wrap.
         auto* glx = qtCtx->nativeInterface<QNativeInterface::QGLXContext>();
+        // What Qt's context is can't change while the application runs, so these stay off rather than retry (and
+        // warn) on every context request.
         if (!glx) {
             qCWarning(GstGlBridgeLog) << "Qt GL context exposes neither EGL nor GLX; GL bridge disabled";
-            return retryLater();
+            return false;
         }
         Display* xdisp = nullptr;
         if (auto* x11 = qGuiApp->nativeInterface<QNativeInterface::QX11Application>()) {
@@ -177,7 +186,7 @@ bool GlContextBridge::primeLocked()
         }
         if (!xdisp) {
             qCWarning(GstGlBridgeLog) << "X11 Display unresolvable; GL bridge disabled";
-            return retryLater();
+            return false;
         }
         GstGLDisplayX11* displayX11 = gst_gl_display_x11_new_with_display(xdisp);
         if (!displayX11) {
@@ -194,8 +203,9 @@ bool GlContextBridge::primeLocked()
         }
         qCInfo(GstGlBridgeLog) << "GL bridge primed (GLX)";
 #else
+        // Permanent for the application: Qt's context won't turn into an EGL one.
         qCWarning(GstGlBridgeLog) << "Qt EGLContext unresolvable and GLX bridge not built; GL bridge disabled";
-        return retryLater();
+        return false;
 #endif
     }
 
@@ -234,8 +244,20 @@ GstContext* GlContextBridge::buildContext(const char* contextType, GstObject* ob
 
 void GlContextBridge::clearLocked()
 {
-    gst_clear_object(&_context);
+    if (_context) {
+        gst_clear_object(&_retiredContext);
+        _retiredContext = std::exchange(_context, nullptr);
+    }
     gst_clear_object(&_display);
+}
+
+bool GlContextBridge::shares(GstGLContext* context)
+{
+    const QMutexLocker lock(&_mutex);
+    const auto sharesWith = [context](GstGLContext* wrapped) {
+        return wrapped && ((wrapped == context) || gst_gl_context_can_share(wrapped, context));
+    };
+    return context && (sharesWith(_context) || sharesWith(_retiredContext));
 }
 
 }  // namespace
@@ -243,6 +265,11 @@ void GlContextBridge::clearLocked()
 GstContextBridgeBase& GstGlContextBridge::instance()
 {
     return s_bridge;
+}
+
+bool GstGlContextBridge::sharesQtContext(GstGLContext* context)
+{
+    return s_bridge.shares(context);
 }
 
 #endif  // QGC_HAS_GST_GLMEMORY_GPU_PATH
