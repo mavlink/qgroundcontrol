@@ -462,12 +462,12 @@ void QGCFileHelperTest::_testComputeFileHash()
     QVERIFY(!resourceHash.isEmpty());
     QCOMPARE(resourceHash.length(), 64);  // SHA-256 = 32 bytes = 64 hex chars
     // Non-existent file should return empty
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("computeFileHash: failed to open"));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("^failed to open file:"));
     const QString noFileHash = QGCFileHelper::computeFileHash("/nonexistent/file.txt");
     QVERIFY(noFileHash.isEmpty());
     verifyExpectedLogMessage();
     // Empty path should return empty
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("computeFileHash: empty file path"));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("^empty file path$"));
     QVERIFY(QGCFileHelper::computeFileHash(QString()).isEmpty());
     verifyExpectedLogMessage();
 }
@@ -510,15 +510,15 @@ void QGCFileHelperTest::_testVerifyFileHash()
     // Case insensitive
     QVERIFY(QGCFileHelper::verifyFileHash(filePath, correctHash.toUpper()));
     // Wrong hash should fail
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("verifyFileHash: hash mismatch"));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("^hash mismatch for"));
     QVERIFY(!QGCFileHelper::verifyFileHash(filePath, wrongHash));
     verifyExpectedLogMessage();
     // Empty expected hash should fail
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("verifyFileHash: empty expected hash"));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("^empty expected hash$"));
     QVERIFY(!QGCFileHelper::verifyFileHash(filePath, QString()));
     verifyExpectedLogMessage();
     // Non-existent file should fail
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("computeFileHash: failed to open"));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("^failed to open file:"));
     QVERIFY(!QGCFileHelper::verifyFileHash("/nonexistent/file.txt", correctHash));
     verifyExpectedLogMessage();
 }
@@ -617,12 +617,12 @@ void QGCFileHelperTest::_testCreateTempCopy()
     QVERIFY(copy2 != nullptr);
     QVERIFY(copy2->fileName().contains("backup"));
     // Non-existent source should return nullptr
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("createTempCopy: failed to open source"));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("^failed to open source:"));
     auto noCopy = QGCFileHelper::createTempCopy("/nonexistent/file.txt");
     QVERIFY(noCopy == nullptr);
     verifyExpectedLogMessage();
     // Empty path should return nullptr
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("createTempCopy: source path is empty"));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("^source path is empty$"));
     auto emptyCopy = QGCFileHelper::createTempCopy(QString());
     QVERIFY(emptyCopy == nullptr);
     verifyExpectedLogMessage();
@@ -740,13 +740,13 @@ void QGCFileHelperTest::_testMoveFileOrCopyDirectory()
 void QGCFileHelperTest::_testReplaceFileFromTempInvalidArgs()
 {
     QTemporaryDir tempDir;
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("replaceFileFromTemp: temp file is null or not open"));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("^temp file is null or not open$"));
     QVERIFY(!QGCFileHelper::replaceFileFromTemp(nullptr, tempDir.filePath("out.txt")));
     verifyExpectedLogMessage();
 
     auto temp = QGCFileHelper::createTempFile(QByteArrayLiteral("data"));
     QVERIFY(temp != nullptr);
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("replaceFileFromTemp: target path is empty"));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("^target path is empty$"));
     QVERIFY(!QGCFileHelper::replaceFileFromTemp(temp.get(), QString()));
     verifyExpectedLogMessage();
 }
