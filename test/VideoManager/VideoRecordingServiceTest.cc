@@ -5,6 +5,7 @@
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
+#include <QtCore/QThreadPool>
 #include <QtTest/QSignalSpy>
 
 #include "AppSettings.h"
@@ -189,6 +190,60 @@ void VideoRecordingServiceTest::_testPruneStorage()
     QCOMPARE(removed, (QStringList{dir + QStringLiteral("/a.ass"), dir + QStringLiteral("/a.mp4")}));
     QVERIFY(QFile::exists(dir + QStringLiteral("/b.mkv")));
     QVERIFY(QFile::exists(dir + QStringLiteral("/notes.txt")));
+}
+
+void VideoRecordingServiceTest::_testPruneStorageLeavesFilesBeingWritten()
+{
+    const QString dir = _saveDir->path();
+    const QDateTime now = QDateTime::currentDateTime();
+    writeFile(dir + QStringLiteral("/flight.mkv"), 400, now.addSecs(-500));
+    writeFile(dir + QStringLiteral("/flight.ass"), 100, now.addSecs(-400));
+    writeFile(dir + QStringLiteral("/earlier.mkv"), 400, now.addSecs(-300));
+    // A part its recording has yet to report: all that tells it is being written is how new it is.
+    writeFile(dir + QStringLiteral("/flight_part2.mkv"), 400, now);
+
+    // Far over the limit, and still only the file nobody writes goes, though it isn't the oldest.
+    const QStringList removed = VideoRecordingService::pruneStorage(
+        dir, 100, {dir + QStringLiteral("/flight.mkv"), dir + QStringLiteral("/flight.ass")});
+    QCOMPARE(removed, QStringList{dir + QStringLiteral("/earlier.mkv")});
+    QCOMPARE(QDir(dir).entryList(QDir::Files).size(), 3);
+}
+
+void VideoRecordingServiceTest::_testStorageLimitAppliesWhileRecording()
+{
+    VideoSettings* const videoSettings = SettingsManager::instance()->videoSettings();
+    _facts->set(videoSettings->enableStorageLimit(), true);
+    _facts->set(videoSettings->maxVideoSize(), 0);
+    const QDateTime old = QDateTime::currentDateTime().addSecs(-500);
+    const QString earlier = _videoDir + QStringLiteral("/earlier.mkv");
+    const QString part1 = _videoDir + QStringLiteral("/flight.mkv");
+    const QString part2 = _videoDir + QStringLiteral("/flight_part2.mkv");
+    writeFile(earlier, 10, old);
+    writeFile(part1, 10, old);
+    // What the timer does once a minute while recording, and waits for the thread pool to have done it.
+    const auto applyLimit = [this] {
+        _service->_applyStorageLimit();
+        return QThreadPool::globalInstance()->waitForDone(TestTimeout::mediumMs());
+    };
+
+    emit _primary->recordingStarted(part1);
+    _primary->setRecording(true);
+    QVERIFY(_service->_storageLimitTimer.isActive());
+    QVERIFY(applyLimit());
+    QVERIFY(!QFile::exists(earlier));
+    QVERIFY(QFile::exists(part1));
+
+    // A long recording's closed part makes room for the one it continues in.
+    emit _primary->recordingFinished(part1, QString());
+    writeFile(part2, 10, old);
+    emit _primary->recordingStarted(part2);
+    QVERIFY(applyLimit());
+    QVERIFY(!QFile::exists(part1));
+    QVERIFY(QFile::exists(part2));
+
+    emit _primary->recordingFinished(part2, QString());
+    _primary->setRecording(false);
+    QVERIFY(!_service->_storageLimitTimer.isActive());
 }
 
 UT_REGISTER_TEST(VideoRecordingServiceTest, TestLabel::Unit)

@@ -27,6 +27,8 @@ private slots:
     void _testSubtitlesFollowEachFile();
     void _testRecordingFailureReachesUser();
     void _testPruneStorage();
+    void _testPruneStorageLeavesFilesBeingWritten();
+    void _testStorageLimitAppliesWhileRecording();
 
 private:
     void _activate(VideoStreamController* stream);

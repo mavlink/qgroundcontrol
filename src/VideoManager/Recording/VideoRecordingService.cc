@@ -19,6 +19,20 @@
 
 QGC_LOGGING_CATEGORY(VideoRecordingServiceLog, "Video.VideoRecordingService")
 
+namespace {
+
+constexpr std::chrono::minutes kStorageLimitInterval{1};
+// A file written this recently may be a recording's that has yet to report its first frame.
+constexpr std::chrono::minutes kBeingWritten{1};
+
+QString subtitlePathFor(const QString& videoFile)
+{
+    const QFileInfo info(videoFile);
+    return QStringLiteral("%1/%2.ass").arg(info.path(), info.completeBaseName());
+}
+
+}  // namespace
+
 VideoRecordingService::VideoRecordingService(VideoStreamController* primaryStream, VideoStreamController* thermalStream,
                                              UVCCameraController* uvcCamera, QObject* parent)
     : QObject(parent)
@@ -33,6 +47,9 @@ VideoRecordingService::VideoRecordingService(VideoStreamController* primaryStrea
 
     _connectSubtitles(_primaryStream, [this] { return _primaryStream->videoSize(); });
     _connectSubtitles(_uvcCamera, [this] { return _uvcCamera->monitor()->videoSize(); });
+
+    _storageLimitTimer.setInterval(kStorageLimitInterval);
+    (void) connect(&_storageLimitTimer, &QTimer::timeout, this, &VideoRecordingService::_applyStorageLimit);
 }
 
 VideoRecordingService::~VideoRecordingService() = default;
@@ -60,9 +77,12 @@ template <class Source>
 void VideoRecordingService::_connectRecordings(Source* source)
 {
     (void) connect(source, &Source::recordingChanged, this, &VideoRecordingService::_updateRecording);
-    (void) connect(source, &Source::recordingStarted, this,
-                   [](const QString& file) { qCDebug(VideoRecordingServiceLog) << "Recording to" << file; });
-    (void) connect(source, &Source::recordingFinished, this, [](const QString& file, const QString& error) {
+    (void) connect(source, &Source::recordingStarted, this, [this](const QString& file) {
+        qCDebug(VideoRecordingServiceLog) << "Recording to" << file;
+        _recordingFiles.insert(file);
+    });
+    (void) connect(source, &Source::recordingFinished, this, [this](const QString& file, const QString& error) {
+        _recordingFiles.remove(file);
         if (error.isEmpty()) {
             qCDebug(VideoRecordingServiceLog) << "Recorded" << file;
             return;
@@ -77,8 +97,33 @@ void VideoRecordingService::_updateRecording()
     const bool recording = _primaryStream->recording() || _thermalStream->recording() || _uvcCamera->recording();
     if (recording != _recording) {
         _recording = recording;
+        if (_recording) {
+            _storageLimitTimer.start();
+        } else {
+            _storageLimitTimer.stop();
+        }
         emit recordingChanged(_recording);
     }
+}
+
+void VideoRecordingService::_applyStorageLimit()
+{
+    VideoSettings* const videoSettings = SettingsManager::instance()->videoSettings();
+    const QString directory = SettingsManager::instance()->appSettings()->videoSavePath();
+    if (directory.isEmpty() || !videoSettings->enableStorageLimit()->rawValue().toBool()) {
+        return;
+    }
+    const quint64 maxBytes = videoSettings->maxVideoSize()->rawValue().toULongLong() * 1024 * 1024;
+    (void) QtConcurrent::run(&VideoRecordingService::pruneStorage, directory, maxBytes, _openFiles());
+}
+
+QStringList VideoRecordingService::_openFiles() const
+{
+    QStringList files;
+    for (const QString& file : _recordingFiles) {
+        files << file << subtitlePathFor(file);
+    }
+    return files;
 }
 
 void VideoRecordingService::startRecording(const QString& baseName)
@@ -109,10 +154,7 @@ void VideoRecordingService::startRecording(const QString& baseName)
         return;
     }
 
-    if (videoSettings->enableStorageLimit()->rawValue().toBool()) {
-        const quint64 maxBytes = videoSettings->maxVideoSize()->rawValue().toULongLong() * 1024 * 1024;
-        (void) QtConcurrent::run(&VideoRecordingService::pruneStorage, directory, maxBytes);
-    }
+    _applyStorageLimit();
 
     const QString name = baseName.isEmpty() ? uniqueBaseName(directory, QDateTime::currentDateTime()) : baseName;
     for (VideoStreamController* stream : std::as_const(streams)) {
@@ -151,8 +193,15 @@ QString VideoRecordingService::uniqueBaseName(const QString& directory, const QD
     return baseName;
 }
 
-QStringList VideoRecordingService::pruneStorage(const QString& directory, quint64 maxBytes)
+QStringList VideoRecordingService::pruneStorage(const QString& directory, quint64 maxBytes,
+                                                const QStringList& openFiles)
 {
+    QSet<QString> open;
+    for (const QString& file : openFiles) {
+        open.insert(QFileInfo(file).absoluteFilePath());
+    }
+    const QDateTime beingWrittenSince = QDateTime::currentDateTime().addDuration(-kBeingWritten);
+
     QStringList nameFilters{QStringLiteral("*.ass")};
     for (const VideoReceiver::FileFormat format :
          {VideoReceiver::FileFormat::Mkv, VideoReceiver::FileFormat::Mov, VideoReceiver::FileFormat::Mp4}) {
@@ -172,6 +221,9 @@ QStringList VideoRecordingService::pruneStorage(const QString& directory, quint6
     for (const QFileInfo& file : files) {
         if (total < maxBytes) {
             break;
+        }
+        if (open.contains(file.absoluteFilePath()) || (file.lastModified() > beingWrittenSince)) {
+            continue;
         }
         total -= static_cast<quint64>(file.size());
         const QString path = file.filePath();
