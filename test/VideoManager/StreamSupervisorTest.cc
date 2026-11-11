@@ -10,8 +10,8 @@ using namespace std::chrono_literals;
 
 qint64 failSec(StreamSupervisor& supervisor)
 {
-    const StreamSupervisor::FailureOutcome outcome =
-        supervisor.sessionFailed(QStringLiteral("failed"), /*permanent=*/false, /*autoReconnect=*/true);
+    const StreamSupervisor::FailureOutcome outcome = supervisor.sessionFailed(
+        QStringLiteral("failed"), StreamSupervisor::Failure::Transient, /*autoReconnect=*/true);
     return outcome.halted ? -1 : std::chrono::duration_cast<std::chrono::seconds>(outcome.reconnectDelay).count();
 }
 
@@ -83,8 +83,9 @@ void StreamSupervisorTest::_testHaltsWithoutAutoReconnect()
 
     StreamSupervisor supervisor;
     supervisor.sessionStarted();
-    const StreamSupervisor::FailureOutcome outcome =
-        supervisor.sessionFailed(QStringLiteral("gone"), permanent, autoReconnect);
+    const StreamSupervisor::FailureOutcome outcome = supervisor.sessionFailed(
+        QStringLiteral("gone"), permanent ? StreamSupervisor::Failure::Permanent : StreamSupervisor::Failure::Transient,
+        autoReconnect);
     QCOMPARE(outcome.halted, halted);
     QCOMPARE(supervisor.halted(), halted);
     QCOMPARE(supervisor.reconnectPending(), !halted);
@@ -110,7 +111,8 @@ void StreamSupervisorTest::_testAutoReconnectChange()
     QVERIFY(!supervisor.halted());
 
     // A permanent failure stays halted.
-    (void) supervisor.sessionFailed(QStringLiteral("unsupported"), /*permanent=*/true, /*autoReconnect=*/true);
+    (void) supervisor.sessionFailed(QStringLiteral("unsupported"), StreamSupervisor::Failure::Permanent,
+                                    /*autoReconnect=*/true);
     QCOMPARE(supervisor.autoReconnectChanged(true), StreamSupervisor::AutoReconnectChange::None);
     QVERIFY(supervisor.halted());
 }
@@ -129,7 +131,8 @@ void StreamSupervisorTest::_testStates()
     supervisor.sessionStarted();
     supervisor.stop();
     // Halting after a stop doesn't change what is reported.
-    (void) supervisor.sessionFailed(QStringLiteral("gone"), /*permanent=*/false, /*autoReconnect=*/false);
+    (void) supervisor.sessionFailed(QStringLiteral("gone"), StreamSupervisor::Failure::Transient,
+                                    /*autoReconnect=*/false);
 
     QList<VideoReceiver::State> reported;
     for (const QList<QVariant>& args : std::as_const(states)) {
@@ -146,14 +149,15 @@ void StreamSupervisorTest::_testReconnectDue()
     StreamSupervisor supervisor(nullptr, ExponentialBackoff{10ms, 2, 40ms});
     QSignalSpy due(&supervisor, &StreamSupervisor::reconnectDue);
 
-    const StreamSupervisor::FailureOutcome outcome =
-        supervisor.sessionFailed(QStringLiteral("failed"), /*permanent=*/false, /*autoReconnect=*/true);
+    const StreamSupervisor::FailureOutcome outcome = supervisor.sessionFailed(
+        QStringLiteral("failed"), StreamSupervisor::Failure::Transient, /*autoReconnect=*/true);
     QCOMPARE(outcome.reconnectDelay, 10ms);
     QVERIFY(due.wait(TestTimeout::shortMs()));
     QCOMPARE(due.count(), 1);
 
     // Stopping drops a pending reconnect.
-    (void) supervisor.sessionFailed(QStringLiteral("failed"), /*permanent=*/false, /*autoReconnect=*/true);
+    (void) supervisor.sessionFailed(QStringLiteral("failed"), StreamSupervisor::Failure::Transient,
+                                    /*autoReconnect=*/true);
     supervisor.stop();
     QVERIFY(!due.wait(100));
 }
@@ -179,7 +183,8 @@ void StreamSupervisorTest::_testReconnectNow()
     QCOMPARE(failSec(supervisor), qint64(1));
 
     // A stream that gave up stays stopped.
-    (void) supervisor.sessionFailed(QStringLiteral("gone"), /*permanent=*/false, /*autoReconnect=*/false);
+    (void) supervisor.sessionFailed(QStringLiteral("gone"), StreamSupervisor::Failure::Transient,
+                                    /*autoReconnect=*/false);
     supervisor.reconnectNow();
     QCOMPARE(due.count(), 1);
     QVERIFY(supervisor.halted());

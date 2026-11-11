@@ -15,6 +15,16 @@ const char* elementFactoryName(GstElement* element)
     return factory ? gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)) : nullptr;
 }
 
+// NAL unit types (ITU-T H.264 and H.265, table 7-1). Slices are the types up to the last one named here.
+constexpr guint kH264NalSliceFirst = 1;
+constexpr guint kH264NalSliceIdr = 5;
+constexpr guint kH264NalSps = 7;
+constexpr guint kH264NalPps = 8;
+constexpr guint kH265NalSliceLast = 31;
+constexpr guint kH265NalVps = 32;
+constexpr guint kH265NalSps = 33;
+constexpr guint kH265NalPps = 34;
+
 bool isH26xRtpDepayloader(const char* factoryName)
 {
     return (g_strcmp0(factoryName, "rtph264depay") == 0) || (g_strcmp0(factoryName, "rtph265depay") == 0);
@@ -47,15 +57,15 @@ NalSummary summarizeNals(GstBuffer* buffer, bool h265)
         const guint8 header = data[i + 3];
         if (h265) {
             const guint nalType = (header >> 1) & 0x3FU;
-            summary.vps |= (nalType == 32U);
-            summary.sps |= (nalType == 33U);
-            summary.pps |= (nalType == 34U);
-            summary.slice |= (nalType <= 31U);
+            summary.vps |= (nalType == kH265NalVps);
+            summary.sps |= (nalType == kH265NalSps);
+            summary.pps |= (nalType == kH265NalPps);
+            summary.slice |= (nalType <= kH265NalSliceLast);
         } else {
             const guint nalType = header & 0x1FU;
-            summary.sps |= (nalType == 7U);
-            summary.pps |= (nalType == 8U);
-            summary.slice |= ((nalType >= 1U) && (nalType <= 5U));
+            summary.sps |= (nalType == kH264NalSps);
+            summary.pps |= (nalType == kH264NalPps);
+            summary.slice |= ((nalType >= kH264NalSliceFirst) && (nalType <= kH264NalSliceIdr));
         }
         i += 2;
     }

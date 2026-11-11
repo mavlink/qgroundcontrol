@@ -75,9 +75,10 @@ void StreamSupervisor::sessionStreaming()
     _setPhase(Phase::Streaming);
 }
 
-StreamSupervisor::FailureOutcome StreamSupervisor::sessionFailed(const QString& message, bool permanent,
+StreamSupervisor::FailureOutcome StreamSupervisor::sessionFailed(const QString& message, Failure failure,
                                                                  bool autoReconnect)
 {
+    const bool permanent = (failure == Failure::Permanent);
     _lastFailure = message;
     if (_sessionStreamed) {
         _backoff.reset();

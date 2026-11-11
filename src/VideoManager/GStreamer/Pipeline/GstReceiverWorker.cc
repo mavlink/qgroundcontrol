@@ -226,8 +226,10 @@ void GstReceiverWorker::_stopSession()
 
 void GstReceiverWorker::_recover(const PipelineSession::Failure& failure)
 {
-    const StreamSupervisor::FailureOutcome outcome =
-        _supervisor->sessionFailed(failure.message, failure.permanent, _requested.config.autoReconnect);
+    const StreamSupervisor::FailureOutcome outcome = _supervisor->sessionFailed(
+        failure.message,
+        failure.permanent ? StreamSupervisor::Failure::Permanent : StreamSupervisor::Failure::Transient,
+        _requested.config.autoReconnect);
     if (outcome.halted) {
         _onHalted(failure.message);
         return;

@@ -302,7 +302,7 @@ void QtMultimediaVideoReceiver::_fail(const QString& reason)
     }
     _stopSession();
     const StreamSupervisor::FailureOutcome outcome =
-        _supervisor->sessionFailed(reason, /*permanent=*/false, config().autoReconnect);
+        _supervisor->sessionFailed(reason, StreamSupervisor::Failure::Transient, config().autoReconnect);
     if (outcome.halted) {
         qCDebug(QtMultimediaVideoReceiverLog) << name() << "failed:" << reason;
         emit errorOccurred(tr("Video stream failed: %1").arg(reason));

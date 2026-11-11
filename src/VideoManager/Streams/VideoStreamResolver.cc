@@ -13,9 +13,6 @@
 
 namespace {
 
-// Stall timeout of every stream but RTSP, whose timeout is a setting.
-constexpr std::chrono::seconds kNonRtspStreamTimeout{3};
-
 QString addressWithScheme(QLatin1StringView scheme, const QString& address)
 {
     return address.isEmpty() ? QString() : (scheme + address);
@@ -157,9 +154,10 @@ std::optional<VideoReceiver::Config> VideoStreamResolver::resolve(const Settings
 
     VideoReceiver::Config config;
     config.uri = uri;
-    config.timeout = (VideoStreamUri::transportFor(QUrl(uri)) == VideoStreamUri::Transport::Rtsp)
-                         ? std::chrono::seconds(settings.rtspTimeoutSec)
-                         : kNonRtspStreamTimeout;
+    // Only RTSP's stall timeout is a setting: the other streams keep the receiver's default.
+    if (VideoStreamUri::transportFor(QUrl(uri)) == VideoStreamUri::Transport::Rtsp) {
+        config.timeout = std::chrono::seconds(settings.rtspTimeoutSec);
+    }
     config.lowLatency = settings.lowLatency;
     config.rtpJitterLatencyMs = settings.rtpJitterLatencyMs;
     config.autoReconnect = settings.autoReconnect;
