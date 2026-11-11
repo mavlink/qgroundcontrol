@@ -11,11 +11,7 @@ import QGroundControl.VideoManager
 // frame rate and resolution of the USB camera, orange while a stream degrades. The drawer shows each stream's statistics, and expands to the video settings that change a running
 // stream.
 Item {
-    id:             control
-    objectName:     "toolbar_videoStreamIndicator"
-    width:          indicatorRow.width
-    anchors.top:    parent.top
-    anchors.bottom: parent.bottom
+    id: root
 
     property bool showIndicator: _stats.valid
 
@@ -26,7 +22,7 @@ Item {
     readonly property bool _uvcMeasured: _uvc.stats.valid && !_primary.stats.valid && !_thermal.stats.valid
     // The thermal stream's figures only while it is the one measured.
     readonly property VideoStreamController _measuredStream: _primary.stats.valid ? _primary : _thermal
-    readonly property var _stats: _uvcMeasured ? _uvc.stats : _measuredStream.stats
+    readonly property videoStreamStats _stats: _uvcMeasured ? _uvc.stats : _measuredStream.stats
     readonly property bool _degraded: _statsDegraded(_primary.stats, _streamCameraFps(_primary))
                                       || _statsDegraded(_thermal.stats, _streamCameraFps(_thermal))
                                       || _statsDegraded(_uvc.stats, _uvc.cameraFrameRate)
@@ -40,6 +36,11 @@ Item {
         return stats.valid && (stats.lossPercent > 0 || stats.droppedFps > 0
                                || (cameraFps > 0 && stats.fps < cameraFps * 0.75))
     }
+
+    objectName:     "toolbar_videoStreamIndicator"
+    width:          indicatorRow.width
+    anchors.top:    parent.top
+    anchors.bottom: parent.bottom
 
     QGCPalette { id: qgcPal }
 
@@ -57,7 +58,7 @@ Item {
             source:             "/InstrumentValueIcons/video-camera.svg"
             fillMode:           Image.PreserveAspectFit
             sourceSize.height:  height
-            color:              control._degraded ? qgcPal.colorOrange : qgcPal.textPrimary
+            color:              root._degraded ? qgcPal.colorOrange : qgcPal.textPrimary
         }
 
         Column {
@@ -66,22 +67,22 @@ Item {
 
             QGCLabel {
                 objectName: "videoStreamFrameRate"
-                text:       qsTr("%1 fps").arg(control._stats.fps.toFixed(0))
+                text:       qsTr("%1 fps").arg(root._stats.fps.toFixed(0))
             }
 
             QGCLabel {
                 objectName: "videoStreamDetail"
-                text:       control._uvcMeasured ? qsTr("%1p").arg(control._uvc.videoSize.height)
-                                                 : (control._stats.bitrateKbps >= 0
-                                                    ? VideoStreamFormat.bitrateText(control._stats.bitrateKbps)
-                                                    : qsTr("%1p").arg(control._measuredStream.videoSize.height))
+                text:       root._uvcMeasured ? qsTr("%1p").arg(root._uvc.videoSize.height)
+                                                 : (root._stats.bitrateKbps >= 0
+                                                    ? VideoStreamFormat.bitrateText(root._stats.bitrateKbps)
+                                                    : qsTr("%1p").arg(root._measuredStream.videoSize.height))
             }
         }
     }
 
     MouseArea {
         anchors.fill:   parent
-        onClicked:      mainWindow.showIndicatorDrawer(videoStreamPage, control)
+        onClicked:      mainWindow.showIndicatorDrawer(videoStreamPage, root)
     }
 
     Component {
@@ -96,21 +97,21 @@ Item {
 
                     VideoStreamStatsGroup {
                         heading:    qsTr("Video")
-                        stream:     control._primary
+                        stream:     root._primary
                     }
 
                     VideoStreamStatsGroup {
                         heading:    qsTr("Thermal")
-                        stream:     control._thermal
+                        stream:     root._thermal
                     }
 
                     UVCStatsGroup {
-                        monitor: control._uvc
+                        monitor: root._uvc
                     }
 
                     QGCLabel {
                         text:       qsTr("No video stream")
-                        visible:    !control._stats.valid
+                        visible:    !root._stats.valid
                     }
                 }
             }
@@ -130,8 +131,8 @@ Item {
 
                         QGCButton {
                             text:       qsTr("Restart Video")
-                            visible:    !control._videoManager.isUvc
-                            onClicked:  control._videoManager.startVideo()
+                            visible:    !root._videoManager.isUvc
+                            onClicked:  root._videoManager.startVideo()
                         }
 
                         QGCButton {

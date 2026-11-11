@@ -12,7 +12,7 @@ QGCGroupBox {
 
     required property VideoStreamController stream
 
-    readonly property var    _stats:        stream.stats
+    readonly property videoStreamStats _stats: stream.stats
     readonly property size   _videoSize:    stream.videoSize
     readonly property var    _info:         stream.streamInfo
     readonly property real   _cameraFps:    _info ? _info.framerate : 0

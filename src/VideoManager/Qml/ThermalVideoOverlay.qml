@@ -19,6 +19,9 @@ Item {
     readonly property real _aspectRatio: root._videoManager.thermalAspectRatio
     // Size of the thermal video blended over the main one, relative to the view.
     readonly property real _blendSizeFactor: 0.85
+    // The view the overlay is placed in: none while it is created, and again while it is destroyed.
+    readonly property real _viewWidth: root.parent ? root.parent.width : 0
+    readonly property real _viewHeight: root.parent ? root.parent.height : 0
     // The box the thermal video fits in, as the thermal mode asks.
     readonly property real _boxWidth: {
         if (!root.camera) {
@@ -26,11 +29,11 @@ Item {
         }
         switch (root.camera.thermalMode) {
         case MavlinkCameraControlInterface.THERMAL_FULL:
-            return parent.width
+            return root._viewWidth
         case MavlinkCameraControlInterface.THERMAL_PIP:
-            return Math.max(0, parent.width - root.anchors.leftMargin)
+            return Math.max(0, root._viewWidth - root.anchors.leftMargin)
         default:
-            return parent.width * root._blendSizeFactor
+            return root._viewWidth * root._blendSizeFactor
         }
     }
     readonly property real _boxHeight: {
@@ -39,11 +42,11 @@ Item {
         }
         switch (root.camera.thermalMode) {
         case MavlinkCameraControlInterface.THERMAL_FULL:
-            return parent.height
+            return root._viewHeight
         case MavlinkCameraControlInterface.THERMAL_PIP:
             return ScreenTools.defaultFontPixelHeight * 12
         default:
-            return parent.height * root._blendSizeFactor
+            return root._viewHeight * root._blendSizeFactor
         }
     }
 
@@ -53,29 +56,12 @@ Item {
                 && root.camera.thermalMode !== MavlinkCameraControlInterface.THERMAL_OFF
 
     anchors {
-        horizontalCenter:   parent.horizontalCenter
-        verticalCenter:     parent.verticalCenter
+        horizontalCenter:   root.parent ? root.parent.horizontalCenter : undefined
+        verticalCenter:     root.parent ? root.parent.verticalCenter : undefined
         // Apply only in the pip state, which anchors the top left corner instead.
         topMargin:          root.pipTopInset + (ScreenTools.defaultFontPixelHeight * 0.5)
         leftMargin:         ScreenTools.defaultFontPixelWidth * 12
     }
-
-    states: [
-        State {
-            name:   "pip"
-            when:   !!root.camera && root.camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP
-
-            AnchorChanges {
-                target: root
-                anchors {
-                    horizontalCenter:   undefined
-                    verticalCenter:     undefined
-                    top:                root.parent.top
-                    left:               root.parent.left
-                }
-            }
-        }
-    ]
 
     Loader {
         anchors.fill:       parent
@@ -91,5 +77,26 @@ Item {
                 stream: root._videoManager.thermalStream
             }
         }
+    }
+
+    // In a group of its own: an item's states are a list, which a user of this type would add to, not replace.
+    StateGroup {
+        states: [
+            State {
+                name:   "pip"
+                when:   !!root.parent && !!root.camera
+                        && root.camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP
+
+                AnchorChanges {
+                    target: root
+                    anchors {
+                        horizontalCenter:   undefined
+                        verticalCenter:     undefined
+                        top:                root.parent.top
+                        left:               root.parent.left
+                    }
+                }
+            }
+        ]
     }
 }

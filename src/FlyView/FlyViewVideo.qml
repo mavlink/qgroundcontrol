@@ -5,7 +5,7 @@ import QGroundControl.Controls
 import QGroundControl.VideoManager
 
 Item {
-    id: _root
+    id: root
 
     property Item pipView
     /// Height the Fly View toolbar covers at the top of the full-size video.
@@ -14,11 +14,11 @@ Item {
 
     PipState {
         id:         videoPipState
-        pipView:    _root.pipView
+        pipView:    root.pipView
         isDark:     true
 
         onStateChanged: {
-            if (pipState.state !== pipState.fullState) {
+            if (videoPipState.state !== videoPipState.fullState) {
                 QGroundControl.videoManager.fullScreen = false
             }
         }
@@ -28,8 +28,8 @@ Item {
     VideoView {
         id:                 videoStreaming
         anchors.fill:       parent
-        useSmallFont:       _root.pipState.state !== _root.pipState.fullState
-        thermalPipTopInset: _root.pipState.state === _root.pipState.fullState ? _root.topInset : 0
+        useSmallFont:       root.pipState.state !== root.pipState.fullState
+        thermalPipTopInset: root.pipState.state === root.pipState.fullState ? root.topInset : 0
         visible:        QGroundControl.videoManager.isStreamSource || QGroundControl.videoManager.isUvc
     }
 
@@ -70,8 +70,6 @@ Item {
 
     MouseArea {
         id:                         flyViewVideoMouseArea
-        anchors.fill:               parent
-        enabled:                    pipState.state === pipState.fullState
 
         property real _pressX:      0
         property real _pressY:      0
@@ -79,15 +77,19 @@ Item {
         property bool _doubleClicked: false
         readonly property real _dragThreshold: 10
 
+        anchors.fill:               parent
+        enabled:                    root.pipState.state === root.pipState.fullState
+
         // Defer single-click handling so a double-click (fullscreen toggle) doesn't also
         // fire an unintended gimbal click-to-point/tracking command on its first click.
         Timer {
             id:         singleClickTimer
-            interval:   Qt.styleHints.mouseDoubleClickInterval
-            repeat:     false
 
             property real clickX: 0
             property real clickY: 0
+
+            interval:   Qt.styleHints.mouseDoubleClickInterval
+            repeat:     false
 
             onTriggered: {
                 onScreenGimbalController.mouseClicked(clickX, clickY)
@@ -147,6 +149,6 @@ Item {
 
     ObstacleDistanceOverlayVideo {
         id: obstacleDistance
-        showText: pipState.state === pipState.fullState
+        showText: root.pipState.state === root.pipState.fullState
     }
 }
