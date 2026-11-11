@@ -196,9 +196,9 @@ public:
     /// receiver's output carries, such as "u-blox (UBX)" or "NMEA"; empty until detected.
     QString detectedReceiver() const;
 
-    QString summaryLabel() const { return _summaryLabel; }
+    QString summaryLabel() const;
 
-    QString statusText() const { return _statusText; }
+    QString statusText() const;
 
     /// The saved receiver is being connected automatically, at startup or after its connection was lost.
     bool reconnecting() const;
@@ -279,6 +279,8 @@ private:
         bool persistentChangesAllowed = false;
         QString errorMessage;
         ReceiverState receiver;
+        QString statusText;
+        QString summaryLabel;
     };
 
     /// The connected receiver's manufacturer; GPS_AUTOMATIC_MANUFACTURER without one.
@@ -328,7 +330,6 @@ private:
     void _updateOutputOverflow(uint64_t receiptUs);
     void _setPersistentChangesAllowed(bool allowed);
     void _resetStatus();
-    void _updateLabels();
     /// Clears the receiver's fix, satellites, and integrity once it stops reporting position.
     void _clearStaleSolution();
     ReceiverState _receiverState() const;
@@ -347,8 +348,6 @@ private:
     ScheduledTask _pollTask;
     quint64 _sessionCount = 0;
     QString _errorMessage;
-    QString _summaryLabel;
-    QString _statusText;
     QString _outputOverflowWarning;
     uint64_t _outputOverflowUs = 0;
     std::unique_ptr<GPSReceiverConnectionPolicy> _connection;

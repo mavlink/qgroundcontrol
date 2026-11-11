@@ -459,10 +459,13 @@ void GPSIndicatorTest::_showsReceiverWithoutVehicleGPS()
     QCOMPARE(rtkLabel->property("visible").toBool(), correctionState != int(GPSCorrectionManager::State::Inactive));
     QVERIFY(!satellites->property("visible").toBool());
 
-    workers.current()->ready();
-    facts.fixType()->setRawValue(fixType);
-    facts.numSatellitesUsed()->setRawValue(9);
-    facts.active()->setRawValue(surveying);
+    ScriptedReceiverWorker* const worker = workers.current();
+    worker->ready();
+    worker->position(fixReport(gpsFixQualityFromValue(fixType)));
+    GPSSatelliteReport used;
+    used.used = 9;
+    worker->satellites(used);
+    worker->survey({.active = surveying});
     QVERIFY(rtkLabel->property("visible").toBool());
     QCOMPARE(rtkLabel->property("text").toString(), label);
     QVERIFY(satellites->property("visible").toBool());

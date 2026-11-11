@@ -244,21 +244,25 @@ void GPSReceiverFactGroupTest::_summaryLabel()
 {
     ScriptedGPSReceiver harness;
     GPSReceiver& receiver = harness.receiver;
-    GPSReceiverFactGroup& facts = *receiver.facts();
     QSignalSpy changed(&receiver, &GPSReceiver::summaryLabelChanged);
     QVERIFY(receiver.summaryLabel().isEmpty());
-    facts.fixType()->setRawValue(static_cast<int>(GPSFixQuality::RTKFixed));
+    // A passive receiver reports its fix.
+    QVERIFY(connectOverTcp(receiver, receiverConfiguration(kPassiveManufacturer)));
+    harness.workers.current()->position(fixReport(GPSFixQuality::RTKFixed));
     QCOMPARE(receiver.summaryLabel(), GPSReceiver::tr("Fixed", "RTK fixed fix"));
-    facts.fixType()->setRawValue(static_cast<int>(GPSFixQuality::NoFix));
+    harness.workers.current()->position(fixReport(GPSFixQuality::NoFix));
     QCOMPARE(receiver.property("summaryLabel").toString(), GPSReceiver::tr("No fix"));
     QCOMPARE(changed.size(), 2);
+    receiver.disconnectReceiver();
+    QVERIFY(receiver.summaryLabel().isEmpty());
 
     // A configured base reports its survey state instead of its fix.
     QVERIFY(connectOverTcp(receiver));
     QCOMPARE(receiver.activeRole(), RTKSettings::ConfiguredBase);
     QCOMPARE(receiver.summaryLabel(), GPSReceiver::tr("Base"));
-    facts.active()->setRawValue(true);
+    harness.workers.current()->survey({.active = true});
     QCOMPARE(receiver.summaryLabel(), GPSReceiver::tr("Survey", "Base survey-in in progress"));
+    QCOMPARE(changed.size(), 5);
 }
 
 UT_REGISTER_TEST(GPSReceiverFactGroupTest, TestLabel::Unit)

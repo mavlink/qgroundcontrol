@@ -65,8 +65,7 @@ void GPSReceiverFactGroup::_setSurvey(const GPSSurveyReport& report)
         }
     }
     _setCurrentBasePosition(base);
-    // Last: the receiver's labels follow it, and an observer of their signals may end the session, which resets
-    // this status.
+    // Last: an observer of the survey state may end the session, which resets this status.
     _update(_activeFact, report.active);
 }
 
@@ -94,7 +93,7 @@ void GPSReceiverFactGroup::_setSolution(GPSFixQuality fixType, const GPSIntegrit
     _update(_jammingStateFact, static_cast<int>(integrity.jamming.state));
     _update(_spoofingStateFact, static_cast<int>(integrity.spoofing.state));
     _update(_antennaStateFact, static_cast<int>(integrity.antenna.state));
-    // Last, as the survey state is: the receiver's labels follow the fix.
+    // Last, as the survey state is, for an observer of the fix.
     _update(_fixTypeFact, static_cast<int>(fixType));
 }
 

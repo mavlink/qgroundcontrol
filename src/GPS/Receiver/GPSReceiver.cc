@@ -78,12 +78,6 @@ GPSReceiver::GPSReceiver(QObject* parent, RuntimeScheduler* scheduler, const Dep
     _connection = std::make_unique<GPSReceiverConnectionPolicy>(static_cast<GPSReceiverConnector&>(*this),
                                                                 _configuration, _scheduler);
     _facts = new GPSReceiverFactGroup(this);
-    for (Fact* fact : {_facts->fixType(), _facts->active()}) {
-        connect(fact, &Fact::rawValueChanged, this, &GPSReceiver::_updateLabels);
-    }
-    connect(_facts, &FactGroup::telemetryAvailableChanged, this, &GPSReceiver::_updateLabels);
-    connect(this, &GPSReceiver::receiverChanged, this, &GPSReceiver::_updateLabels);
-    _updateLabels();
     _notified.receiver = _receiverState();
 #ifndef QGC_NO_SERIAL_LINK
     _serialTransportFactory = [](const QString& device, GPSCancelToken cancelToken) {
@@ -201,6 +195,14 @@ void GPSReceiver::_emitChanges()
     if (std::exchange(_notified.receiver, receiver) != receiver) {
         emit receiverChanged();
     }
+    const QString status = statusText();
+    if (std::exchange(_notified.statusText, status) != status) {
+        emit statusTextChanged();
+    }
+    const QString label = summaryLabel();
+    if (std::exchange(_notified.summaryLabel, label) != label) {
+        emit summaryLabelChanged();
+    }
     const QString recording = recordingFile();
     if (std::exchange(_notifiedRecordingFile, recording) != recording) {
         emit recordingFileChanged();
@@ -251,7 +253,7 @@ void GPSReceiver::_onGPSConnect()
     GPSReceiverSession* const session = _session;
     _facts->_setConfigured(true);
     _setPersistentChangesAllowed(false);
-    // The status text follows that Fact, and an observer of it may have replaced the session that is ready.
+    // Marking the status configured notifies its observers, one of which may have replaced the session that is ready.
     if (session && session == _session) {
         session->registerPosition(_positionManager, _positionHealth);
     }
@@ -694,37 +696,32 @@ void GPSReceiver::_onPositionUpdated(const GPSPositionReport& report)
     _updateOutputOverflow(report.integrity.outputOverflowUs);
     // Drivers project integrity to Unknown once it is older than its freshness window.
     _facts->_setSolution(report.navigation.fixType, report.integrity);
-    // The labels follow the fix, and an observer of them may have ended or replaced the session that reported.
+    // The status Facts notify as they are written, and an observer of one may have ended or replaced the session that
+    // reported.
     if (session && session == _session) {
         _positionHealth->updateObservation(session->observation(report, _scheduler->nowUs()));
     }
     _emitChanges();
 }
 
-void GPSReceiver::_updateLabels()
+QString GPSReceiver::statusText() const
 {
-    const QString status =
-        GPSReceiverMessages::receiverStatus({.configured = _facts->telemetryAvailable(),
-                                             .hasReceiver = hasReceiver(),
-                                             .identifying = hasReceiver() && activePresentation().automatic,
-                                             .reconnecting = reconnecting(),
-                                             .role = activeRole(),
-                                             .forwardingCorrections = forwardingCorrections(),
-                                             .baseMode = _activeBaseMode(),
-                                             .surveyActive = _facts->active()->rawValue().toBool()});
-    if (std::exchange(_statusText, status) != status) {
-        emit statusTextChanged();
-    }
+    return GPSReceiverMessages::receiverStatus({.configured = _facts->telemetryAvailable(),
+                                                .hasReceiver = hasReceiver(),
+                                                .identifying = hasReceiver() && activePresentation().automatic,
+                                                .reconnecting = reconnecting(),
+                                                .role = activeRole(),
+                                                .forwardingCorrections = forwardingCorrections(),
+                                                .baseMode = _activeBaseMode(),
+                                                .surveyActive = _facts->active()->rawValue().toBool()});
+}
 
-    QString label;
+QString GPSReceiver::summaryLabel() const
+{
     if (hasReceiver() && activeRole() == RTKSettings::ConfiguredBase) {
-        label = _facts->active()->rawValue().toBool() ? tr("Survey", "Base survey-in in progress") : tr("Base");
-    } else {
-        label = GPSReceiverMessages::fixLabel(gpsFixQualityFromValue(_facts->fixType()->rawValue().toInt()));
+        return _facts->active()->rawValue().toBool() ? tr("Survey", "Base survey-in in progress") : tr("Base");
     }
-    if (std::exchange(_summaryLabel, label) != label) {
-        emit summaryLabelChanged();
-    }
+    return GPSReceiverMessages::fixLabel(gpsFixQualityFromValue(_facts->fixType()->rawValue().toInt()));
 }
 
 void GPSReceiver::setRecordSessions(bool record)

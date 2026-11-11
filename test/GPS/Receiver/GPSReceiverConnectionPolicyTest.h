@@ -25,6 +25,7 @@ private slots:
     void _observerActsOnPositionRelease();
     void _observerActsOnShutdown_data();
     void _observerActsOnShutdown();
+    void _labelsFollowLostSessionOnce();
     void _sessionEndMessages_data();
     void _sessionEndMessages();
     void _pollingTicksReceiver();
