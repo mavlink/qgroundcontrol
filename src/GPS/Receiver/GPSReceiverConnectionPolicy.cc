@@ -159,7 +159,7 @@ void GPSReceiverConnectionPolicy::disconnectConfigured()
 {
     reset();
     _paused = true;
-    _receiver.endConnection(true);
+    _receiver.endConnection(GPSReceiverConnector::ShownError::Clear);
 }
 
 void GPSReceiverConnectionPolicy::receiverReady()
@@ -172,8 +172,9 @@ void GPSReceiverConnectionPolicy::receiverReady()
     _retryBackoff.reset();
 }
 
-GPSReceiverSessionOutcome GPSReceiverConnectionPolicy::sessionEnded(bool portRemoved)
+GPSReceiverSessionOutcome GPSReceiverConnectionPolicy::sessionEnded(GPSReceiverSessionEnd end)
 {
+    const bool portRemoved = end == GPSReceiverSessionEnd::Unplugged;
     if (_owner == Owner::Discovered && _discoveryEnabled()) {
         if (portRemoved) {
             // Discovery connects the receiver again when it returns.

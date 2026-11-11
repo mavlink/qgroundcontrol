@@ -16,7 +16,7 @@ namespace GPSReceiverMessages {
 /// The error a session leaves when it ends with @a error and the transport's or protocol's @a detail, after the
 /// connection policy chose @a outcome.
 [[nodiscard]] QString sessionEnded(GPSReceiverSessionOutcome outcome, GPSConnectionError error, const QString& detail,
-                                   bool portRemoved);
+                                   GPSReceiverSessionEnd end);
 
 /// The error of an automatic connection that the @a family receiver refused for lack of flash-save consent.
 [[nodiscard]] QString consentRefused(const QString& detail, GPSType family);
@@ -43,7 +43,8 @@ struct ReceiverStatus
     bool reconnecting = false;
     RTKSettings::ReceiverRole role = RTKSettings::ConfiguredBase;
     bool forwardingCorrections = false;
-    int baseMode = -1;
+    /// Base mode of a configured base; empty for a passive receiver or without one.
+    std::optional<BaseModeDefinition::Mode> baseMode;
     bool surveyActive = false;
 };
 

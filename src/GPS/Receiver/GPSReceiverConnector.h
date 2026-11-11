@@ -70,9 +70,16 @@ using GPSSerialClaim = SerialPortManager::ReservationPtr;
 class GPSReceiverConnector
 {
 public:
+    /// What ending the connection does with the connection error on display.
+    enum class ShownError
+    {
+        Keep,
+        Clear,
+    };
+
     virtual bool hasReceiver() const = 0;
     virtual void setConnectionError(const QString& message) = 0;
-    virtual void endConnection(bool clearError) = 0;
+    virtual void endConnection(ShownError error) = 0;
     virtual bool connectTcp(const QString& host, quint16 port, GPSType type, bool allowPersistentChanges) = 0;
     virtual bool connectUdp(quint16 port, GPSType type) = 0;
 #ifndef QGC_NO_SERIAL_LINK

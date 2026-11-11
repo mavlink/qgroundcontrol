@@ -22,6 +22,7 @@ class GPSCorrectionManager;
 class GPSReceiverConnectionPolicy;
 class GPSReceiverFactGroup;
 class GPSReceiverSession;
+enum class GPSReceiverSessionEnd;
 class GPSSourceHealth;
 class PositionManager;
 class RuntimeScheduler;
@@ -166,6 +167,7 @@ public:
     /// The connection or input problem, else a recent report that the receiver dropped output.
     QString errorMessage() const;
 
+    /// BaseModeDefinition::Mode of the connected configured base, or -1 for a passive receiver or without one.
     int activeBaseMode() const;
 
     /// Serial device or TCP host:port of the active receiver.
@@ -187,7 +189,7 @@ public:
     /// Editable settings for a role; configured bases also depend on the manufacturer.
     Q_INVOKABLE GPSReceiverPresentation capabilitiesFor(int role, int manufacturer) const;
 
-    /// Presentation capabilities of the connected receiver family.
+    /// Presentation capabilities of the connected receiver family; those of Automatic without a receiver.
     GPSReceiverPresentation activePresentation() const;
 
     RTKSettings::ReceiverRole activeRole() const;
@@ -230,7 +232,7 @@ private:
     struct ReceiverState
     {
         bool hasReceiver = false;
-        int baseMode = -1;
+        std::optional<BaseModeDefinition::Mode> baseMode;
         QString endpoint;
         QString identity;
         QString detected;
@@ -250,11 +252,14 @@ private:
         ReceiverState receiver;
     };
 
+    /// The connected receiver's manufacturer; GPS_AUTOMATIC_MANUFACTURER without one.
     int _activeManufacturer() const;
+    /// Base mode of the connected configured base; empty for a passive receiver or without one.
+    std::optional<BaseModeDefinition::Mode> _activeBaseMode() const;
 
     void setConnectionError(const QString& message) override { _setError(message); }
 
-    void endConnection(bool clearError) override;
+    void endConnection(ShownError error) override;
     bool connectTcp(const QString& host, quint16 port, GPSType type, bool allowPersistentChanges) override;
     bool connectUdp(quint16 port, GPSType type) override;
 #ifndef QGC_NO_SERIAL_LINK
@@ -273,7 +278,7 @@ private:
     bool _connectReceiver(GPSType type, GPSReceiverWorker::TransportFactory transportFactory,
                           const QString& sourceInstance, uint32_t baudRate, bool allowPersistentChanges,
                           const QString& serialDevice = {}, const QString& endpoint = {});
-    void _endSession(GPSConnectionError error, const QString& detail, bool portRemoved);
+    void _endSession(GPSConnectionError error, const QString& detail, GPSReceiverSessionEnd end);
     /// The retired session is deleted later, so it may be retired from inside its own signals.
     void _retireSession();
     /// Waits for the workers of retired sessions and deletes those that have exited.

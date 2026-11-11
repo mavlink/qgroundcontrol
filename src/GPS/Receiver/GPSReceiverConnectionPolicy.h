@@ -14,6 +14,15 @@
 
 class RuntimeScheduler;
 
+/// How a receiver session ended.
+enum class GPSReceiverSessionEnd
+{
+    /// The session reported its error or its worker's exit.
+    Reported,
+    /// A scan no longer lists the session's serial device.
+    Unplugged,
+};
+
 /// What the policy does after a receiver session ends; the receiver words the message for it.
 enum class GPSReceiverSessionOutcome
 {
@@ -87,7 +96,7 @@ public:
     bool reconnecting() const { return _keepConnected && !_receiver.hasReceiver(); }
 
     void receiverReady();
-    [[nodiscard]] GPSReceiverSessionOutcome sessionEnded(bool portRemoved);
+    [[nodiscard]] GPSReceiverSessionOutcome sessionEnded(GPSReceiverSessionEnd end);
 
 private:
     enum class Owner
