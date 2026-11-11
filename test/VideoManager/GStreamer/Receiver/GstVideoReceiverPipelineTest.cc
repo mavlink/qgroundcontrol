@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <atomic>
 #include <gst/base/gstbasesink.h>
+#include <gst/pbutils/missing-plugins.h>
 #include <memory>
 #include <utility>
 
@@ -763,6 +764,39 @@ void GstVideoReceiverPipelineTest::_testResolutionChangeUpdatesVideoSize()
     QCOMPARE(stream.stateSpy.count(), stateChanges);
     QCOMPARE(stream.receiver->state(), State::Streaming);
     QVERIFY(stream.errorSpy.isEmpty());
+}
+
+void GstVideoReceiverPipelineTest::_testMissingDecoderIsNamed()
+{
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+    QVERIFY(stream.display());
+
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Missing GStreamer plugin: .*H\\.265")));
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Decoder error from ")));
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Video stream stopped:")));
+    // What decodebin3 posts for a stream no installed decoder takes: which one is missing, then that one is.
+    QVERIFY(runOnPipeline(stream.receiver.get(), [](GstElement* pipeline) {
+        const GStreamer::GstElementPtr decoder = GstTest::findByFactory(pipeline, "decodebin3");
+        const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_new_empty_simple("video/x-h265"));
+        (void) gst_element_post_message(decoder.get(), gst_missing_decoder_message_new(decoder.get(), caps.get()));
+        GError* const error = g_error_new_literal(GST_CORE_ERROR, GST_CORE_ERROR_MISSING_PLUGIN,
+                                                  "Your GStreamer installation is missing a plug-in.");
+        (void) gst_element_post_message(decoder.get(),
+                                        gst_message_new_error(GST_OBJECT(decoder.get()), error, nullptr));
+        g_error_free(error);
+    }));
+
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    const QString message = stream.errorSpy.constFirst().constFirst().toString();
+    QVERIFY2(message.contains(QLatin1String("H.265")), qPrintable(message));
+    QVERIFY(stream.waitForState(State::Stopped));
 }
 
 #endif

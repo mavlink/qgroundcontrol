@@ -31,5 +31,6 @@ private slots:
     void _testDeactivateReleasesDisplayedFrame();
     void _testDecodesH265Stream();
     void _testResolutionChangeUpdatesVideoSize();
+    void _testMissingDecoderIsNamed();
 #endif
 };

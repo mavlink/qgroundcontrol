@@ -9,7 +9,16 @@ endif()
 # Debug-only (see Comms/MockLink/CMakeLists.txt) — so only request it in Debug to keep the
 # rtsp-server lib out of release builds. It is also optional: a define is emitted below only
 # when the SDK actually ships it.
-set(_qgc_gst_components Base Gl GlPrototypes Video App Rtsp)
+# Pbutils (gstreamer-pbutils-1.0) names the plugin a stream is missing (PipelineSession).
+set(_qgc_gst_components
+    Base
+    Gl
+    GlPrototypes
+    Video
+    App
+    Rtsp
+    Pbutils
+)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     list(APPEND _qgc_gst_components RtspServer)
 endif()
@@ -67,6 +76,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND GStreamer_RtspServer_FOUND)
             gst_rtsp_server_set_service
         )
     endif()
+endif()
+
+if(ANDROID OR IOS)
+    # The app links only GStreamer::mobile, so keep the pbutils functions PipelineSession calls in it.
+    qgc_gst_mobile_keep_symbols(gst_is_missing_plugin_message gst_missing_plugin_message_get_description)
 endif()
 
 if(LINUX AND GStreamer_VERSION VERSION_LESS "1.28.0")

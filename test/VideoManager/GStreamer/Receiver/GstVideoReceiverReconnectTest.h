@@ -18,5 +18,7 @@ private slots:
     void _testUnresponsiveRtspServer();
     void _testRtspUnauthorizedStops();
     void _testRtspWithoutVideoStreamReconnects();
+    void _testFailureMessageNamesCause_data();
+    void _testFailureMessageNamesCause();
 #endif
 };

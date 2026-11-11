@@ -109,6 +109,8 @@ private:
     void _handleMessage(GstMessage* message);
     void _onBusError(GstMessage* message);
     QString _takeStartError();
+    /// Keeps what a missing-plugin message names, for the MISSING_PLUGIN error its branch posts next.
+    void _noteMissingPlugin(GstMessage* message);
 
     void _linkSourcePad(GstPad* pad);
     void _onFirstFrame();
@@ -152,5 +154,8 @@ private:
     Phase _phase = Phase::Running;
     Failure _failure;
     bool _streaming = false;
+    /// The plugin last reported missing, as GStreamer describes it ("H.265 decoder"), and where.
+    QString _missingPlugin;
+    GStreamer::PipelineBranch _missingPluginBranch = GStreamer::PipelineBranch::None;
     PipelineStatsProbe _statsProbe;
 };

@@ -1,6 +1,7 @@
 #include "PipelineSession.h"
 
 #include <gst/gst.h>
+#include <gst/pbutils/missing-plugins.h>
 #include <utility>
 
 #include <QtCore/QDeadlineTimer>
@@ -33,6 +34,30 @@ void logBusWarning(GstMessage* message)
     const GStreamer::GCharPtr debug = GStreamer::adoptGChar(rawDebug);
     qCWarning(GstVideoReceiverLog) << "GStreamer warning:" << (error ? error->message : "(no message)")
                                    << "debug:" << (debug ? debug.get() : "(none)");
+}
+
+/// rtspsrc reports the steps of its connection (open, connect, request, close) as progress messages, and a stream
+/// whose sender went quiet as a "GstRTSPSrcTimeout" element message: neither is an error, so only the log shows them.
+void logSourceProgress(GstMessage* message)
+{
+    if (GST_MESSAGE_TYPE(message) == GST_MESSAGE_ELEMENT) {
+        if (gst_message_has_name(message, "GstRTSPSrcTimeout")) {
+            gint stream = -1;
+            (void) gst_structure_get_int(gst_message_get_structure(message), "stream-number", &stream);
+            qCDebug(GstVideoReceiverLog) << "The sender of RTSP stream" << stream << "timed out";
+        }
+        return;
+    }
+    GstProgressType type = GST_PROGRESS_TYPE_START;
+    gchar* rawCode = nullptr;
+    gchar* rawText = nullptr;
+    gst_message_parse_progress(message, &type, &rawCode, &rawText);
+    const GStreamer::GCharPtr code = GStreamer::adoptGChar(rawCode);
+    const GStreamer::GCharPtr text = GStreamer::adoptGChar(rawText);
+    // The connect step's text is "Connecting to <address>", and the log shows that address redacted.
+    const bool connect = (g_strcmp0(code.get(), "connect") == 0);
+    qCDebug(GstVideoReceiverLog) << "Source progress:" << (code ? code.get() : "(none)")
+                                 << (connect ? "Connecting" : (text ? text.get() : ""));
 }
 
 /// Selecting only video keeps decodebin3 from instantiating audio decoder branches. Done synchronously so the
@@ -98,6 +123,46 @@ bool isPermanentError(GstMessage* message, const GError* error)
         return !postedByRtspSrc(message);
     }
     return g_error_matches(error, GST_CORE_ERROR, GST_CORE_ERROR_MISSING_PLUGIN) || isUnauthorizedError(error);
+}
+
+/// What the element added, in the debug string, to the text of its error's code: all there is to tell a refused
+/// connection from a missing file in "Could not open resource for reading.", the only text network elements post.
+/// GStreamer puts "file(line): function (): /element/path:\n" in front of it. Empty when the element added nothing.
+QString debugCause(const gchar* debug)
+{
+    const gchar* const separator = debug ? g_strstr_len(debug, -1, ":\n") : nullptr;
+    return separator ? QString::fromUtf8(separator + 2).simplified() : QString();
+}
+
+/// The status of the response an rtspsrc error is about, which its details carry: "RTSP 404 Not Found". Empty for
+/// other errors.
+QString rtspStatus(GstMessage* message)
+{
+    const GstStructure* details = nullptr;
+    gst_message_parse_error_details(message, &details);
+    guint code = 0;
+    if (!details || !gst_structure_get_uint(details, "rtsp-status-code", &code)) {
+        return {};
+    }
+    const gchar* const reason = gst_structure_get_string(details, "rtsp-status-reason");
+    return QStringLiteral("RTSP %1 %2").arg(QString::number(code), QString::fromUtf8(reason ? reason : "")).trimmed();
+}
+
+/// @p text, the text of an error's code, followed by what is known of the cause: @p missingPlugin when given, else the
+/// RTSP status the error is about, else what the element added in @p debug.
+QString describeError(GstMessage* message, const QString& text, const gchar* debug,
+                      const QString& missingPlugin = QString())
+{
+    QString cause = missingPlugin;
+    if (cause.isEmpty()) {
+        cause = rtspStatus(message);
+    }
+    if (cause.isEmpty()) {
+        cause = debugCause(debug);
+    }
+    // The cause can quote the far end (a server's reason phrase), and the message is shown where markup is rendered.
+    cause.remove(QLatin1Char('<'));
+    return cause.isEmpty() ? text : QStringLiteral("%1 (%2)").arg(text, cause);
 }
 
 bool pipelineEnteredPlaying(GstMessage* message)
@@ -362,8 +427,13 @@ void PipelineSession::_handleMessage(GstMessage* message)
             }
             break;
         case GST_MESSAGE_ELEMENT:
+            _noteMissingPlugin(message);
             PipelineStatsProbe::noteElementMessage(message);
             _recording->onBusElement(message);
+            logSourceProgress(message);
+            break;
+        case GST_MESSAGE_PROGRESS:
+            logSourceProgress(message);
             break;
         case GST_MESSAGE_STATE_CHANGED:
             if (!_tearingDown() && pipelineEnteredPlaying(message)) {
@@ -401,24 +471,28 @@ void PipelineSession::_onBusError(GstMessage* message)
         return;
     }
 
-    if (debug) {
-        qCDebug(GstVideoReceiverLog) << "GStreamer debug:" << debug.get();
-    }
+    const char* const debugText = debug ? debug.get() : "(none)";
     if (_phase != Phase::Running) {
-        qCDebug(GstVideoReceiverLog) << "Ignoring an error after the stream ended:" << text;
+        qCDebug(GstVideoReceiverLog) << "Ignoring an error after the stream ended:" << text << "debug:" << debugText;
         return;
     }
+    const bool namesMissingPlugin =
+        g_error_matches(error.get(), GST_CORE_ERROR, GST_CORE_ERROR_MISSING_PLUGIN) && (branch == _missingPluginBranch);
+    const QString description =
+        describeError(message, text, debug.get(), namesMissingPlugin ? _missingPlugin : QString());
 
     if (branch == GStreamer::PipelineBranch::Decoding) {
         if (!_decoding->isCurrent(GST_MESSAGE_SRC(message))) {
-            qCDebug(GstVideoReceiverLog) << "Ignoring an error from a replaced decoder:" << text;
+            qCDebug(GstVideoReceiverLog) << "Ignoring an error from a replaced decoder:" << text
+                                         << "debug:" << debugText;
             return;
         }
-        qCWarning(GstVideoReceiverLog) << "Decoder error from" << messageSourcePath(message) << ":" << text;
+        qCWarning(GstVideoReceiverLog) << "Decoder error from" << messageSourcePath(message) << ":" << text
+                                       << "debug:" << debugText;
         HwBuffers::onPipelineError(error.get(), debug.get());
         if (isPermanentError(message, error.get())) {
             _fail({.reason = QStringLiteral("decoder error"),
-                   .message = tr("Unable to decode the video: %1").arg(text),
+                   .message = tr("Unable to decode the video: %1").arg(description),
                    .permanent = true});
         } else {
             _decoding->restartDecoder("decoder error");
@@ -426,13 +500,14 @@ void PipelineSession::_onBusError(GstMessage* message)
         return;
     }
 
-    qCWarning(GstVideoReceiverLog) << "GStreamer error from" << messageSourcePath(message) << ":" << text;
+    qCWarning(GstVideoReceiverLog) << "GStreamer error from" << messageSourcePath(message) << ":" << text
+                                   << "debug:" << debugText;
     HwBuffers::onPipelineError(error.get(), debug.get());
     _dotDumper.snapshot(_pipeline.get(), QStringLiteral("pipeline-error"));
     const QString userMessage =
         isUnauthorizedError(error.get())
             ? tr("The video stream refused the connection: its user name or password is missing or wrong.")
-            : tr("Video stream error: %1").arg(text);
+            : tr("Video stream error: %1").arg(description);
     _fail({.reason = QStringLiteral("pipeline error"),
            .message = userMessage,
            .permanent = isPermanentError(message, error.get())});
@@ -447,11 +522,26 @@ QString PipelineSession::_takeStartError()
         return tr("unknown error");
     }
     GError* rawError = nullptr;
-    gst_message_parse_error(message.get(), &rawError, nullptr);
+    gchar* rawDebug = nullptr;
+    gst_message_parse_error(message.get(), &rawError, &rawDebug);
     const GStreamer::GErrorPtr error = GStreamer::adoptError(rawError);
+    const GStreamer::GCharPtr debug = GStreamer::adoptGChar(rawDebug);
     const QString text = QString::fromUtf8(error ? error->message : "(no message)");
-    qCWarning(GstVideoReceiverLog) << "GStreamer error from" << messageSourcePath(message.get()) << ":" << text;
-    return text;
+    qCWarning(GstVideoReceiverLog) << "GStreamer error from" << messageSourcePath(message.get()) << ":" << text
+                                   << "debug:" << (debug ? debug.get() : "(none)");
+    return describeError(message.get(), text, debug.get());
+}
+
+void PipelineSession::_noteMissingPlugin(GstMessage* message)
+{
+    if (!gst_is_missing_plugin_message(message)) {
+        return;
+    }
+    const GStreamer::GCharPtr description = GStreamer::adoptGChar(gst_missing_plugin_message_get_description(message));
+    _missingPlugin = QString::fromUtf8(description ? description.get() : "");
+    _missingPluginBranch = GStreamer::branchOf(GST_MESSAGE_SRC(message));
+    qCWarning(GstVideoReceiverLog) << "Missing GStreamer plugin:" << _missingPlugin << "for"
+                                   << messageSourcePath(message);
 }
 
 void PipelineSession::_linkSourcePad(GstPad* pad)

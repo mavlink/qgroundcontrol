@@ -264,6 +264,46 @@ void GstVideoReceiverReconnectTest::_testRtspWithoutVideoStreamReconnects()
     QVERIFY(stream.errorSpy.isEmpty());
 }
 
+void GstVideoReceiverReconnectTest::_testFailureMessageNamesCause_data()
+{
+    QTest::addColumn<bool>("rtsp");
+    QTest::addColumn<QString>("debug");
+    QTest::addColumn<QString>("cause");
+
+    // The element's error text alone is "Could not get/set settings from/on resource." and "Not found".
+    QTest::newRow("udp port in use") << false << QStringLiteral("bind failed") << QStringLiteral("bind failed");
+    QTest::newRow("rtsp path not found") << true << QStringLiteral("Not Found \\(404\\)")
+                                         << QStringLiteral("RTSP 404 Not Found");
+}
+
+void GstVideoReceiverReconnectTest::_testFailureMessageNamesCause()
+{
+    QFETCH(bool, rtsp);
+    QFETCH(QString, debug);
+    QFETCH(QString, cause);
+
+    if (rtsp) {
+        GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+    }
+    QUdpSocket portBlocker;
+    QVERIFY(portBlocker.bind(QHostAddress::LocalHost, 0, QAbstractSocket::DontShareAddress));
+    RefusingRtspServer server(QByteArrayLiteral("404 Not Found"));
+    QVERIFY(server.listen());
+
+    // The log has the element's whole debug string, which spans lines; the user what it says of the cause.
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("(?s)^GStreamer error from .* debug: .*%1").arg(debug)));
+    ignoreLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Failed to start|^Video stream stopped:")));
+    Receiver stream(rtsp ? server.uri() : loopbackUri(QLatin1StringView("udp265"), portBlocker.localPort()),
+                    /*autoReconnect=*/false);
+    stream.receiver->setActive(true);
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    const QString message = stream.errorSpy.constFirst().constFirst().toString();
+    QVERIFY2(message.contains(cause), qPrintable(message));
+}
+
 #endif
 
 UT_REGISTER_TEST(GstVideoReceiverReconnectTest, TestLabel::Integration)

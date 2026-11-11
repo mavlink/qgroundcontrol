@@ -54,6 +54,7 @@ function(_qgc_write_fake_sdk root version)
         "gstreamer-base-1.0|gstbase-1.0"
         "gstreamer-gl-1.0|gstgl-1.0"
         "gstreamer-gl-prototypes-1.0|gstgl-1.0"
+        "gstreamer-pbutils-1.0|gstpbutils-1.0"
         "gstreamer-rtsp-1.0|gstrtsp-1.0"
         "gstreamer-video-1.0|gstvideo-1.0"
         "gstreamer-app-1.0|gstapp-1.0"
