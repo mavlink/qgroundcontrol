@@ -150,6 +150,7 @@ namespace SHPFileHelper
 
     /// @param utmZone[out] Zone for UTM shape, 0 for lat/lon shape
     /// @param utmSouthernHemisphere[out] true/false for UTM hemisphere
+    /// @return nullptr on failure, with @a errorString set
     SHPHandle _loadShape(const QString &shpFile, int *utmZone, bool *utmSouthernHemisphere, QString &errorString);
 
     /// Converts vertex @a index of @a shpObject to a coordinate, from UTM when @a utmZone is not 0.
@@ -200,6 +201,7 @@ bool SHPFileHelper::_validateSHPFiles(const QString &shpFile, int *utmZone, bool
 
         if (*utmZone == 0) {
             errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHP", "UTM projection is not in supported format. Must be PROJCS[\"WGS_1984_UTM_Zone_##N/S"));
+            return false;
         }
     } else {
         // Extract projection name from WKT for error reporting
@@ -219,9 +221,10 @@ bool SHPFileHelper::_validateSHPFiles(const QString &shpFile, int *utmZone, bool
             errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(
                 QCoreApplication::translate("SHP", "Unable to parse projection from PRJ file. Supported projections are: WGS84 (GEOGCS[\"GCS_WGS_1984\"]) and UTM (PROJCS[\"WGS_1984_UTM_Zone_##N/S\"])."));
         }
+        return false;
     }
 
-    return errorString.isEmpty();
+    return true;
 }
 
 SHPHandle SHPFileHelper::_loadShape(const QString &shpFile, int *utmZone, bool *utmSouthernHemisphere, QString &errorString)
@@ -282,28 +285,28 @@ ShapeFileHelper::ShapeType SHPFileHelper::determineShapeType(const QString &shpF
     int utmZone;
     bool utmSouthernHemisphere;
     SHPHandle shpHandle = SHPFileHelper::_loadShape(shpFile, &utmZone, &utmSouthernHemisphere, errorString);
-    if (errorString.isEmpty()) {
-        Q_CHECK_PTR(shpHandle);
-
-        int cEntities, type;
-        SHPGetInfo(shpHandle, &cEntities, &type, nullptr, nullptr);
-        qCDebug(SHPFileHelperLog) << "SHPGetInfo" << shpHandle << cEntities << type;
-        if (cEntities < 1) {
-            errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHP", "No entities found."));
-        } else if (type == SHPT_POLYGON || type == SHPT_POLYGONZ) {
-            shapeType = ShapeType::Polygon;
-        } else if (type == SHPT_ARC || type == SHPT_ARCZ) {
-            shapeType = ShapeType::Polyline;
-        } else if (type == SHPT_POINT || type == SHPT_POINTZ) {
-            shapeType = ShapeType::Point;
-        } else {
-            errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix).arg(QCoreApplication::translate("SHP", "No supported types found."));
-        }
+    if (!shpHandle) {
+        return ShapeType::Error;
     }
 
-    if (shpHandle) {
-        SHPClose(shpHandle);
+    int cEntities, type;
+    SHPGetInfo(shpHandle, &cEntities, &type, nullptr, nullptr);
+    qCDebug(SHPFileHelperLog) << "SHPGetInfo" << shpHandle << cEntities << type;
+    if (cEntities < 1) {
+        errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix)
+                          .arg(QCoreApplication::translate("SHP", "No entities found."));
+    } else if (type == SHPT_POLYGON || type == SHPT_POLYGONZ) {
+        shapeType = ShapeType::Polygon;
+    } else if (type == SHPT_ARC || type == SHPT_ARCZ) {
+        shapeType = ShapeType::Polyline;
+    } else if (type == SHPT_POINT || type == SHPT_POINTZ) {
+        shapeType = ShapeType::Point;
+    } else {
+        errorString = QCoreApplication::translate("SHPFileHelper", _errorPrefix)
+                          .arg(QCoreApplication::translate("SHP", "No supported types found."));
     }
+
+    SHPClose(shpHandle);
 
     return shapeType;
 }
@@ -340,10 +343,9 @@ bool SHPFileHelper::loadPolygonsFromFile(const QString &shpFile, QList<QList<QGe
     });
 
     shpHandle = SHPFileHelper::_loadShape(shpFile, &utmZone, &utmSouthernHemisphere, errorString);
-    if (!errorString.isEmpty()) {
+    if (!shpHandle) {
         return false;
     }
-    Q_CHECK_PTR(shpHandle);
 
     int cEntities, shapeType;
     SHPGetInfo(shpHandle, &cEntities, &shapeType, nullptr, nullptr);
@@ -418,10 +420,9 @@ bool SHPFileHelper::loadPolylinesFromFile(const QString &shpFile, QList<QList<QG
     });
 
     shpHandle = SHPFileHelper::_loadShape(shpFile, &utmZone, &utmSouthernHemisphere, errorString);
-    if (!errorString.isEmpty()) {
+    if (!shpHandle) {
         return false;
     }
-    Q_CHECK_PTR(shpHandle);
 
     int cEntities, shapeType;
     SHPGetInfo(shpHandle, &cEntities, &shapeType, nullptr, nullptr);
@@ -489,10 +490,9 @@ bool SHPFileHelper::loadPointsFromFile(const QString &shpFile, QList<QGeoCoordin
     });
 
     shpHandle = SHPFileHelper::_loadShape(shpFile, &utmZone, &utmSouthernHemisphere, errorString);
-    if (!errorString.isEmpty()) {
+    if (!shpHandle) {
         return false;
     }
-    Q_CHECK_PTR(shpHandle);
 
     int cEntities, shapeType;
     SHPGetInfo(shpHandle, &cEntities, &shapeType, nullptr, nullptr);

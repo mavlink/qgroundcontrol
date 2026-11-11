@@ -18,7 +18,7 @@ QGC_LOGGING_CATEGORY(GeoJsonHelperLog, "Utilities.GeoJsonHelper")
 
 namespace GeoJsonHelper
 {
-QJsonDocument _loadFile(const QString& filePath, QString& errorString);
+bool _loadFile(const QString& filePath, QJsonDocument& jsonDoc, QString& errorString);
 QVariantList _extractShapeValues(const QVariantList& values);
 void _extractShapeValuesRecursive(const QVariant& value, QVariantList& shapes, int depth = 0);
 
@@ -58,7 +58,7 @@ QVariantList GeoJsonHelper::_extractShapeValues(const QVariantList &values)
     return shapes;
 }
 
-QJsonDocument GeoJsonHelper::_loadFile(const QString &filePath, QString &errorString)
+bool GeoJsonHelper::_loadFile(const QString& filePath, QJsonDocument& jsonDoc, QString& errorString)
 {
     errorString.clear();
 
@@ -66,31 +66,31 @@ QJsonDocument GeoJsonHelper::_loadFile(const QString &filePath, QString &errorSt
     if (!file.exists()) {
         errorString = QCoreApplication::translate("GeoJsonHelper", _errorPrefix).arg(
             QCoreApplication::translate("GeoJson", "File not found: %1").arg(filePath));
-        return QJsonDocument();
+        return false;
     }
 
     if (!file.open(QIODevice::ReadOnly)) {
         errorString = QCoreApplication::translate("GeoJsonHelper", _errorPrefix).arg(
             QCoreApplication::translate("GeoJson", "Unable to open file: %1 error: %2")
                 .arg(filePath, file.errorString()));
-        return QJsonDocument();
+        return false;
     }
 
-    QJsonDocument jsonDoc;
     const QByteArray bytes = file.readAll();
     if (!JsonParsing::isJsonFile(bytes, jsonDoc, errorString)) {
         errorString = QCoreApplication::translate("GeoJsonHelper", _errorPrefix).arg(errorString);
+        return false;
     }
 
-    return jsonDoc;
+    return true;
 }
 
 ShapeFileHelper::ShapeType GeoJsonHelper::determineShapeType(const QString &filePath, QString &errorString)
 {
     using ShapeType = ShapeFileHelper::ShapeType;
 
-    const QJsonDocument jsonDoc = GeoJsonHelper::_loadFile(filePath, errorString);
-    if (!errorString.isEmpty()) {
+    QJsonDocument jsonDoc;
+    if (!_loadFile(filePath, jsonDoc, errorString)) {
         return ShapeType::Error;
     }
 
@@ -131,8 +131,8 @@ bool GeoJsonHelper::loadPolygonFromFile(const QString& filePath, QList<QGeoCoord
     errorString.clear();
     vertices.clear();
 
-    const QJsonDocument jsonDoc = GeoJsonHelper::_loadFile(filePath, errorString);
-    if (!errorString.isEmpty()) {
+    QJsonDocument jsonDoc;
+    if (!_loadFile(filePath, jsonDoc, errorString)) {
         return false;
     }
 
@@ -177,8 +177,8 @@ bool GeoJsonHelper::loadPolylineFromFile(const QString& filePath, QList<QGeoCoor
     errorString.clear();
     coords.clear();
 
-    const QJsonDocument jsonDoc = GeoJsonHelper::_loadFile(filePath, errorString);
-    if (!errorString.isEmpty()) {
+    QJsonDocument jsonDoc;
+    if (!_loadFile(filePath, jsonDoc, errorString)) {
         return false;
     }
 

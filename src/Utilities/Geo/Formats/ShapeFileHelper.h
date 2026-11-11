@@ -7,6 +7,8 @@
 
 /// \brief Routines for loading polygons or polylines from KML or SHP files.
 ///
+/// A load function that fails returns false with errorString set and loads nothing. One that returns true has
+/// loaded at least one shape and leaves errorString empty.
 class ShapeFileHelper : public QObject
 {
     Q_OBJECT

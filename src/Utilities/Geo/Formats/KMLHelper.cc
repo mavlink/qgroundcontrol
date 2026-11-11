@@ -12,36 +12,35 @@ QGC_LOGGING_CATEGORY(KMLHelperLog, "Utilities.KMLHelper")
 
 namespace KMLHelper
 {
-QDomDocument _loadFile(const QString& kmlFile, QString& errorString);
+bool _loadFile(const QString& kmlFile, QDomDocument& doc, QString& errorString);
 bool _parseCoordinateString(const QString& coordinatesString, QList<QGeoCoordinate>& coords, QString& errorString);
 void _checkAltitudeMode(const QDomNode& geometryNode, const QString& geometryType, int index);
 
 constexpr const char* _errorPrefix = QT_TRANSLATE_NOOP("KMLHelper", "KML file load failed. %1");
 }
 
-QDomDocument KMLHelper::_loadFile(const QString &kmlFile, QString &errorString)
+bool KMLHelper::_loadFile(const QString& kmlFile, QDomDocument& doc, QString& errorString)
 {
     errorString.clear();
 
     QFile file(kmlFile);
     if (!file.exists()) {
         errorString = QCoreApplication::translate("KMLHelper", _errorPrefix).arg(QCoreApplication::translate("KML", "File not found: %1").arg(kmlFile));
-        return QDomDocument();
+        return false;
     }
 
     if (!file.open(QIODevice::ReadOnly)) {
         errorString = QCoreApplication::translate("KMLHelper", _errorPrefix).arg(QCoreApplication::translate("KML", "Unable to open file: %1 error: %2").arg(kmlFile, file.errorString()));
-        return QDomDocument();
+        return false;
     }
 
-    QDomDocument doc;
     const QDomDocument::ParseResult result = doc.setContent(&file, QDomDocument::ParseOption::Default);
     if (!result) {
         errorString = QCoreApplication::translate("KMLHelper", _errorPrefix).arg(QCoreApplication::translate("KML", "Unable to parse KML file: %1 error: %2 line: %3").arg(kmlFile).arg(result.errorMessage).arg(result.errorLine));
-        return QDomDocument();
+        return false;
     }
 
-    return doc;
+    return true;
 }
 
 bool KMLHelper::_parseCoordinateString(const QString &coordinatesString, QList<QGeoCoordinate> &coords, QString &errorString)
@@ -118,8 +117,8 @@ ShapeFileHelper::ShapeType KMLHelper::determineShapeType(const QString &kmlFile,
 {
     using ShapeType = ShapeFileHelper::ShapeType;
 
-    const QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
-    if (!errorString.isEmpty()) {
+    QDomDocument domDocument;
+    if (!_loadFile(kmlFile, domDocument, errorString)) {
         return ShapeType::Error;
     }
 
@@ -144,8 +143,8 @@ ShapeFileHelper::ShapeType KMLHelper::determineShapeType(const QString &kmlFile,
 
 int KMLHelper::getEntityCount(const QString &kmlFile, QString &errorString)
 {
-    const QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
-    if (!errorString.isEmpty()) {
+    QDomDocument domDocument;
+    if (!_loadFile(kmlFile, domDocument, errorString)) {
         return 0;
     }
 
@@ -161,8 +160,8 @@ bool KMLHelper::loadPolygonsFromFile(const QString &kmlFile, QList<QList<QGeoCoo
     errorString.clear();
     polygons.clear();
 
-    const QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
-    if (!errorString.isEmpty()) {
+    QDomDocument domDocument;
+    if (!_loadFile(kmlFile, domDocument, errorString)) {
         return false;
     }
 
@@ -216,8 +215,8 @@ bool KMLHelper::loadPolylinesFromFile(const QString &kmlFile, QList<QList<QGeoCo
     errorString.clear();
     polylines.clear();
 
-    const QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
-    if (!errorString.isEmpty()) {
+    QDomDocument domDocument;
+    if (!_loadFile(kmlFile, domDocument, errorString)) {
         return false;
     }
 
@@ -269,8 +268,8 @@ bool KMLHelper::loadPointsFromFile(const QString &kmlFile, QList<QGeoCoordinate>
     errorString.clear();
     points.clear();
 
-    const QDomDocument domDocument = KMLHelper::_loadFile(kmlFile, errorString);
-    if (!errorString.isEmpty()) {
+    QDomDocument domDocument;
+    if (!_loadFile(kmlFile, domDocument, errorString)) {
         return false;
     }
 
