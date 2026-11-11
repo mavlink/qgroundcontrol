@@ -235,8 +235,8 @@ jobs:
         timeout-minutes: 15
         uses: ./.github/actions/debug-runner
 
-  # The only Windows run of the GStreamer and video test classes: a Debug build with tests, which
-  # packages nothing.
+  # The only Windows run of the GStreamer and video test classes and of the GPS suites: a Debug build
+  # with tests, which packages nothing.
   gstreamer-tests:
     name: GStreamer tests win64_msvc2022_64 Debug
     needs: changes
@@ -325,6 +325,18 @@ jobs:
           ctest-output: gstreamer-output.txt
           report-name: GStreamer tests (windows)
           artifact-name: test-results-gstreamer-windows
+
+      # The receiver protocols, NTRIP, corrections and their panels: none needs GStreamer, but the test
+      # executable links the SDK, so it starts only with the environment above.
+      - name: Run GPS tests
+        if: ${{ !cancelled() && steps.gst-env.outcome == 'success' }}
+        uses: ./.github/actions/run-unit-tests
+        with:
+          include-labels: GPS
+          junit-output: junit-gps.xml
+          ctest-output: gps-output.txt
+          report-name: GPS tests (windows)
+          artifact-name: test-results-gps-windows
 
       - name: Debug failed runner
         if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}

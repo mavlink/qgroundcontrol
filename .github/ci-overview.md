@@ -583,7 +583,8 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   (`videotestsrc`, `mpegtsmux`, `x264`, `x265`). `QSG_RHI_PREFER_SOFTWARE_RENDERER=1` makes the
   D3D11/D3D12 pixel tests create their QRhi on WARP, as the runners have no GPU; the job is
   required like the build legs, since WARP renders deterministically and a test whose device or
-  element is missing skips.
+  element is missing skips. The same job then runs the GPS suites (CTest label `GPS`), the only
+  Windows run of the receiver protocols, NTRIP and corrections tests.
 
 ### Platform notes
 

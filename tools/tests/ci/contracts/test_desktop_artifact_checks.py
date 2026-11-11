@@ -66,6 +66,20 @@ def test_windows_runs_the_gstreamer_test_classes_on_warp() -> None:
     assert "gstreamer-tests" in gate["needs"]
 
 
+def test_windows_runs_the_gps_suites_in_its_only_build_with_tests() -> None:
+    steps = load_workflow("windows.yml")["jobs"]["gstreamer-tests"]["steps"]
+    video = get_step(steps, "Run GStreamer tests")
+    gps = get_step(steps, "Run GPS tests")
+    assert gps["uses"] == "./.github/actions/run-unit-tests"
+    # The test executable links the GStreamer SDK, so it starts only with the environment the video tests use.
+    assert gps["if"] == video["if"]
+    assert gps["with"]["include-labels"] == "GPS"
+    assert "tests-regex" not in gps["with"]
+    # Each run keeps its own results; the second must not overwrite the first.
+    for output in ("junit-output", "ctest-output", "report-name", "artifact-name"):
+        assert gps["with"][output] != video["with"][output]
+
+
 def test_linux_boots_the_appimage_in_clean_distribution_containers() -> None:
     workflow = load_workflow("linux.yml")
     job = workflow["jobs"]["appimage-distros"]
