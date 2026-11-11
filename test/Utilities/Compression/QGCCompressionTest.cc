@@ -2443,6 +2443,52 @@ void QGCCompressionTest::_testExtractionStopsCleanly()
     QCOMPARE(_entriesBelow(outputDir), remaining);
 }
 
+void QGCCompressionTest::_testExtractArchiveKeepsEntriesBeforeDamage_data()
+{
+    QTest::addColumn<bool>("fromDevice");
+
+    QTest::newRow("extractArchive") << false;
+    QTest::newRow("extractFromDevice") << true;
+}
+
+void QGCCompressionTest::_testExtractArchiveKeepsEntriesBeforeDamage()
+{
+    QFETCH(bool, fromDevice);
+
+    const QByteArray tar = _makeTar({{.name = "first.txt", .data = QByteArray(600, 'a')},
+                                     {.name = "nested/second.txt", .data = QByteArray(600, 'b')},
+                                     {.name = "third.txt", .data = QByteArray(600, 'c')}});
+    QTemporaryDir tempDir;
+    const QString archivePath = tempDir.filePath("cut.tar");
+    const QString outputDir = tempDir.filePath("output");
+    // first.txt takes three 512-byte blocks: the cut is 100 bytes into the data of the second entry
+    QVERIFY(_writeFile(archivePath, tar.left(4 * 512 + 100)));
+    QFile device(archivePath);
+    QVERIFY(device.open(QIODevice::ReadOnly));
+
+    if (!fromDevice) {
+        // The size pre-check reads the headers and finds the archive cut where the third one should be
+        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Failed to read archive entry"));
+    }
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Failed to read data"));
+    if (fromDevice) {
+        QVERIFY(!QGCCompression::extractFromDevice(&device, outputDir));
+    } else {
+        QVERIFY(!QGCCompression::extractArchive(archivePath, outputDir));
+        verifyExpectedLogMessage();
+    }
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::IoError);
+
+    // Unlike a size limit or a cancellation, damage does not undo the extraction. The entries before it stay,
+    // and so does the damaged one: what could be read of it, filled up with zeros to the size it declares
+    const QStringList written{QStringLiteral("first.txt"), QStringLiteral("nested"),
+                              QStringLiteral("nested/second.txt")};
+    QCOMPARE(_entriesBelow(outputDir), written);
+    QCOMPARE(_readFile(outputDir + "/first.txt"), QByteArray(600, 'a'));
+    QCOMPARE(_readFile(outputDir + "/nested/second.txt"), QByteArray(100, 'b') + QByteArray(500, '\0'));
+}
+
 void QGCCompressionTest::_testMaxEntriesArchive()
 {
     // Test listing an archive with many entries

@@ -175,6 +175,11 @@ QByteArray decompressData(const QByteArray &data, Format format = Format::Auto,
 /// Extract an archive to a directory
 /// Nothing is written outside the output directory: entries whose path leaves it, hard links, and
 /// symbolic links with an absolute target or ".." in it are skipped with a warning.
+/// A failed extraction is undone only if it stopped at the size limit or was cancelled: the files and
+/// directories it created are then removed again. If the archive turns out to be truncated or corrupt, or an
+/// entry cannot be written, they stay: the entries before the failure, and the one it happened in, which
+/// holds what could be read of it and can be filled up with zeros to the size the archive declares for it.
+/// extractArchiveAtomic() leaves nothing behind.
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param outputDirectoryPath Output directory path
 /// @param format Archive format (Auto = detect from archivePath)
@@ -203,6 +208,8 @@ bool extractArchiveAtomic(const QString &archivePath, const QString &outputDirec
 /// Extract an archive with per-entry filtering
 /// Only regular files are written, with the directories they are in. Hard and symbolic links are skipped with
 /// a warning, where extractArchive() creates the symbolic links that stay inside the output directory.
+/// A failed extraction keeps the files it wrote before the failure, whatever stopped it, and nothing of the
+/// file it was writing.
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param outputDirectoryPath Output directory path
 /// @param filter Callback to decide which entries to extract (return true to extract)
@@ -317,6 +324,7 @@ bool decompressFromDevice(QIODevice *device, const QString &outputPath,
 QByteArray decompressFromDevice(QIODevice *device, qint64 maxDecompressedBytes = 0);
 
 /// Extract archive from QIODevice to directory
+/// What is written, and what a failed extraction leaves behind, is as for extractArchive().
 /// @param device QIODevice to read from (must be open and readable)
 /// @param outputDirectoryPath Output directory path
 /// @param progress Optional progress callback

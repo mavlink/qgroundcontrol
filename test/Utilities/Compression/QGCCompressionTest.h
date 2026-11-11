@@ -97,6 +97,8 @@ private slots:
     void _testDecompressToMemorySizeLimit();
     void _testExtractionStopsCleanly_data();
     void _testExtractionStopsCleanly();
+    void _testExtractArchiveKeepsEntriesBeforeDamage_data();
+    void _testExtractArchiveKeepsEntriesBeforeDamage();
     void _testMaxEntriesArchive();
     void _testOverstatedEntrySize();
     void _testExtractFileDataSizeLimit_data();
