@@ -12,6 +12,8 @@ class QGCVersionCheck : public QObject
 {
     Q_OBJECT
 
+    friend class QGCVersionCheckTest;  // Unit test
+
 public:
     explicit QGCVersionCheck(QObject* parent = nullptr);
 

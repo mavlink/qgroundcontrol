@@ -11,4 +11,6 @@ private slots:
     void _newerVersionDetected();
     void _notifyOncePerVersion_data();
     void _notifyOncePerVersion();
+    void _downloadedVersionFile_data();
+    void _downloadedVersionFile();
 };
