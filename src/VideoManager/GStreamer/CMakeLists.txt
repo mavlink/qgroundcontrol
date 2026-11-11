@@ -154,8 +154,6 @@ target_sources(
         Pipeline/PipelineStatsProbe.h
         Pipeline/RecordingBranch.cc
         Pipeline/RecordingBranch.h
-        Pipeline/RecordingFinalizer.cc
-        Pipeline/RecordingFinalizer.h
         Pipeline/StreamWatchdog.cc
         Pipeline/StreamWatchdog.h
         Pipeline/TeeBranchHead.cc

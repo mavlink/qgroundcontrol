@@ -9,7 +9,6 @@
 
 #include "BranchContext.h"
 #include "GstScoped.h"
-#include "RecordingFinalizer.h"
 #include "TeeBranchHead.h"
 #include "VideoReceiver.h"
 
@@ -84,9 +83,10 @@ public:
     /// Closes a file whose finalization is still outstanding by flushing the recorder, and reports it.
     void completeTeardown();
 
-    /// A bus ERROR from the recording branch (GStreamer::PipelineBranch::Recording).
+    /// A bus ERROR from the recording branch (GStreamer::PipelineBranch::Recording): the current recorder's fails the
+    /// recording.
     void onBusError(GstMessage* message, const QString& text, const char* debug);
-    /// A bus ELEMENT message: the recorder's EOS, as the pipeline forwards it, means its file is closed.
+    /// A bus ELEMENT message: the current recorder's EOS, as the pipeline forwards it, means its file is closed.
     void onBusElement(GstMessage* message);
 
     GstElement* valve() const { return _head.valve(); }
@@ -104,8 +104,12 @@ private:
     /// Finishes the current recording: drains its file through EOS, or drops it without a frame. @p failure ends the
     /// request with that error once the file is closed.
     void _end(const QString& failure = QString());
-    /// Takes the recorder out, reports the file and goes idle. @p error: why the file may be incomplete.
-    void _finish(const QString& error);
+    /// Takes the recorder out, reports the file and goes idle. @p error: why the file may be incomplete. @p fileClosed:
+    /// the recorder's EOS told that it closed the file, so none of its streaming threads is left inside it.
+    void _finish(const QString& error, bool fileClosed = false);
+    /// Whether @p source is, or is inside, the current recording's file sink. A message about an earlier recording
+    /// can still be queued when the next one runs, and must not end it.
+    bool _fromRecorder(GstObject* source) const;
     void _onFileOpened(quint64 recording);
     void _onOverrun(quint64 recording);
     void _reportOpened();
@@ -125,8 +129,8 @@ private:
     Request _current;
     /// Identifies _current, so reports from an earlier recording's probes are ignored.
     std::atomic<quint64> _recording = 0;
+    /// The current recording's sink bin, from its start until _finish().
     GStreamer::GstElementPtr _fileSink;
-    RecordingFinalizer _finalizer;
     GStreamer::PadProbe _keyframeWatch;
     /// Set by the keyframe probe once the file got its first frame.
     std::atomic<bool> _fileStarted = false;

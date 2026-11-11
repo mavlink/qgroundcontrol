@@ -237,7 +237,6 @@ void RecordingBranch::reset()
         GStreamer::flushAndDisposeChild(_fileSink.get());
         _fileSink.reset();
     }
-    (void) _finalizer.disarm();
     _state = State::Idle;
     _head.reset();
 }
@@ -296,8 +295,6 @@ void RecordingBranch::_start(const Request& request)
         _finish(QString());
         return;
     }
-    // Before the sink can post, so its ERROR (such as a file that can't be opened) settles this recording.
-    _finalizer.arm(_fileSink.get());
 
     gst_util_set_object_arg(G_OBJECT(_head.queue()), "leaky", "no");
     if (!gst_bin_add(GST_BIN(_context.pipeline), _fileSink.get()) ||
@@ -362,17 +359,16 @@ void RecordingBranch::_end(const QString& failure)
     _finalizeTimer.start();
 }
 
-void RecordingBranch::_finish(const QString& error)
+void RecordingBranch::_finish(const QString& error, bool fileClosed)
 {
     _finalizeTimer.stop();
     _keyframeWatch.remove();
     _head.close();
 
-    const RecordingFinalizer::Outcome outcome = _finalizer.disarm();
     if (_fileSink) {
         // Removed before going NULL, so nothing it posts while stopping reaches the bus. Flushed unless it closed its
         // file: going NULL would otherwise wait for a streaming thread stuck inside it.
-        if (outcome == RecordingFinalizer::Outcome::Closed) {
+        if (fileClosed) {
             GStreamer::disposeChild(_fileSink.get());
         } else {
             GStreamer::flushAndDisposeChild(_fileSink.get());
@@ -412,12 +408,6 @@ bool RecordingBranch::beginTeardown()
         return finalizing();
     }
 
-    // Its recorder is done already, so there is nothing left to drain.
-    if (_finalizer.outcome() != RecordingFinalizer::Outcome::Pending) {
-        _finish(QString());
-        return false;
-    }
-
     if (!_fileStarted.load(std::memory_order_acquire)) {
         _end();
         return finalizing();
@@ -437,25 +427,23 @@ void RecordingBranch::completeTeardown()
         return;
     }
 
-    if (_finalizer.outcome() == RecordingFinalizer::Outcome::Pending) {
-        // Before the flush, which a recorder stuck in the kernel can hold up.
-        warnNotFinalized();
-        // Not serialized, so it doesn't wait for the stream lock: wakes the tee's thread if the full queue holds it,
-        // and has the queue stop pushing into the recorder.
-        const GStreamer::GstPadPtr queueSink = GStreamer::adoptPad(gst_element_get_static_pad(_head.queue(), "sink"));
-        (void) gst_pad_send_event(queueSink.get(), gst_event_new_flush_start());
-        _finish(notFinalizedError());
-        return;
-    }
-    _finish(QString());
+    // Before the flush, which a recorder stuck in the kernel can hold up.
+    warnNotFinalized();
+    // Not serialized, so it doesn't wait for the stream lock: wakes the tee's thread if the full queue holds it, and
+    // has the queue stop pushing into the recorder.
+    const GStreamer::GstPadPtr queueSink = GStreamer::adoptPad(gst_element_get_static_pad(_head.queue(), "sink"));
+    (void) gst_pad_send_event(queueSink.get(), gst_event_new_flush_start());
+    _finish(notFinalizedError());
+}
+
+bool RecordingBranch::_fromRecorder(GstObject* source) const
+{
+    return _fileSink && source && gst_object_has_as_ancestor(source, GST_OBJECT_CAST(_fileSink.get()));
 }
 
 void RecordingBranch::onBusError(GstMessage* message, const QString& text, const char* debug)
 {
-    bool fromRecorder = false;
-    const bool settled =
-        _finalizer.settleFrom(GST_MESSAGE_SRC(message), RecordingFinalizer::Outcome::Failed, &fromRecorder);
-    if (!fromRecorder) {
+    if (!_fromRecorder(GST_MESSAGE_SRC(message))) {
         qCDebug(GstVideoReceiverLog) << "Ignoring an error from an earlier recording:" << text;
         return;
     }
@@ -466,11 +454,6 @@ void RecordingBranch::onBusError(GstMessage* message, const QString& text, const
     } else {
         qCWarning(GstVideoReceiverLog) << "Recording error:" << text;
     }
-    // An error after the file closed doesn't fail it; a recording still running ends either way.
-    if (!settled && (_state != State::Recording)) {
-        return;
-    }
-
     _failure = text;
     // The bus handler closed the valve already: a failing recorder ends the recording, not the stream.
     _finish(QString());
@@ -490,7 +473,7 @@ void RecordingBranch::onBusElement(GstMessage* message)
     if (!forwarded || (GST_MESSAGE_TYPE(forwarded.get()) != GST_MESSAGE_EOS)) {
         return;
     }
-    if (!_finalizer.settleFrom(GST_MESSAGE_SRC(forwarded.get()), RecordingFinalizer::Outcome::Closed)) {
+    if (!_fromRecorder(GST_MESSAGE_SRC(forwarded.get()))) {
         return;
     }
     if (_state == State::Recording) {
@@ -499,7 +482,7 @@ void RecordingBranch::onBusElement(GstMessage* message)
         _streaming = false;
     }
     qCDebug(GstVideoReceiverLog) << "Recording finalized" << _current.file;
-    _finish(QString());
+    _finish(QString(), /*fileClosed=*/true);
 }
 
 void RecordingBranch::_onFileOpened(quint64 recording)

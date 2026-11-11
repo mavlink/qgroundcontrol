@@ -18,7 +18,6 @@
 #include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
 #include "PipelineStatsProbe.h"
-#include "RecordingFinalizer.h"
 #include "StreamWatchdog.h"
 #include "VideoStreamStats.h"
 
@@ -27,11 +26,6 @@ namespace {
 // Any monotonic time well clear of 0, which the watchdog reads as "no frame yet".
 constexpr qint64 kNowMs = 100000;
 constexpr qint64 kNoFrame = -1;
-
-GStreamer::GstElementPtr ownedBin(const char* name)
-{
-    return GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_bin_new(name))));
-}
 
 }  // namespace
 
@@ -135,70 +129,6 @@ void GstVideoReceiverComponentsTest::_testSourceTimeoutStartsAtFirstCheck()
     const StreamWatchdog::Result result = watchdog.check(kNowMs + 1001, false);
     QCOMPARE(result.stall, StreamWatchdog::Stall::Source);
     QCOMPARE(result.silentMs, qint64(1001));
-}
-
-void GstVideoReceiverComponentsTest::_testFinalizerSettlesOnlyFromArmedRecording_data()
-{
-    QTest::addColumn<QString>("source");
-    QTest::addColumn<bool>("settles");
-
-    QTest::newRow("armed file sink") << QStringLiteral("sinkbin") << true;
-    QTest::newRow("element inside the file sink") << QStringLiteral("muxer") << true;
-    QTest::newRow("element outside the file sink") << QStringLiteral("videosink") << false;
-    QTest::newRow("previous recording's file sink") << QStringLiteral("oldsinkbin") << false;
-}
-
-void GstVideoReceiverComponentsTest::_testFinalizerSettlesOnlyFromArmedRecording()
-{
-    QFETCH(QString, source);
-    QFETCH(bool, settles);
-
-    GSTTEST_REQUIRE_GSTREAMER();
-
-    const GStreamer::GstElementPtr oldSinkBin = ownedBin("oldsinkbin");
-    const GStreamer::GstElementPtr sinkBin = ownedBin("sinkbin");
-    GstElement* const muxer = gst_bin_new("muxer");
-    (void) gst_bin_add(GST_BIN(sinkBin.get()), muxer);
-    const GStreamer::GstElementPtr videoSink = ownedBin("videosink");
-
-    RecordingFinalizer finalizer;
-    finalizer.arm(oldSinkBin.get());
-    (void) finalizer.disarm();
-    finalizer.arm(sinkBin.get());
-
-    GstElement* const sources[] = {oldSinkBin.get(), sinkBin.get(), muxer, videoSink.get()};
-    GstElement* sourceElement = nullptr;
-    for (GstElement* element : sources) {
-        if (source == QString::fromUtf8(GST_OBJECT_NAME(element))) {
-            sourceElement = element;
-        }
-    }
-    QVERIFY(sourceElement);
-
-    bool belongs = !settles;
-    QCOMPARE(finalizer.settleFrom(GST_OBJECT(sourceElement), RecordingFinalizer::Outcome::Failed, &belongs), settles);
-    QCOMPARE(belongs, settles);
-    QCOMPARE(finalizer.outcome(), settles ? RecordingFinalizer::Outcome::Failed : RecordingFinalizer::Outcome::Pending);
-}
-
-void GstVideoReceiverComponentsTest::_testFinalizerKeepsFirstOutcome()
-{
-    GSTTEST_REQUIRE_GSTREAMER();
-
-    const GStreamer::GstElementPtr sinkBin = ownedBin("sinkbin");
-
-    // The file closed, then its muxer failed on the way down: the stop still succeeded.
-    RecordingFinalizer finalizer;
-    finalizer.arm(sinkBin.get());
-    QVERIFY(finalizer.settle(RecordingFinalizer::Outcome::Closed));
-    bool belongs = false;
-    QVERIFY(!finalizer.settleFrom(GST_OBJECT(sinkBin.get()), RecordingFinalizer::Outcome::Failed, &belongs));
-    QVERIFY(belongs);
-    QCOMPARE(finalizer.disarm(), RecordingFinalizer::Outcome::Closed);
-
-    // Nothing is armed until the next recording.
-    QVERIFY(!finalizer.settle(RecordingFinalizer::Outcome::Closed));
-    QCOMPARE(finalizer.outcome(), RecordingFinalizer::Outcome::Pending);
 }
 
 void GstVideoReceiverComponentsTest::_testPipelineDotStaysInDirectory_data()
