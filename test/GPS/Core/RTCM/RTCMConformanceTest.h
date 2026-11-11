@@ -3,7 +3,8 @@
 #include "RTCMFramer.h"
 #include "UnitTest.h"
 
-/// RTCM3 framing against fixed CRC vectors and a corpus that the frame decoder and framer must agree on.
+/// RTCM3 framing against fixed CRC vectors and a corpus that the frame decoder and framer must agree on, and the
+/// per-message counts of a stream.
 class RTCMConformanceTest : public UnitTest
 {
     Q_OBJECT
@@ -20,6 +21,7 @@ private slots:
     void _fragmentReceiptAndFiltering();
     void _repeatedMalformedPreambles();
     void _queuedResultDelivery();
+    void _messageCountsChangeInPlace();
 
 signals:
     void decoded(RTCMDecodedFrame result);

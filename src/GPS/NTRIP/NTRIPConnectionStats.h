@@ -2,12 +2,10 @@
 
 #include <chrono>
 
-#include <QtCore/QHash>
 #include <QtCore/QObject>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "DataRateTracker.h"
-#include "RTCMMessageCount.h"
 #include "ScheduledTask.h"
 
 class RuntimeScheduler;
@@ -26,9 +24,6 @@ class NTRIPConnectionStats : public QObject
     Q_PROPERTY(bool dataStale READ dataStale NOTIFY statsChanged FINAL)
     /// More than DATA_USAGE_WARNING_BYTES received, which may cost money on metered connections.
     Q_PROPERTY(bool dataUsageHigh READ dataUsageHigh NOTIFY statsChanged FINAL)
-    /// Per-RTCM-message-ID counts since the current connection started, ascending by ID so the QML chips need no
-    /// sorting.
-    Q_PROPERTY(QList<RTCMMessageCount> messageCountsById READ messageCountsById NOTIFY statsChanged FINAL)
 
 public:
     static constexpr quint64 DATA_USAGE_WARNING_BYTES = 50 * 1024 * 1024;
@@ -40,7 +35,7 @@ public:
     void start();
     void stop();
     /// Count every message; health uses the newest valid receipt on the scheduler's clock.
-    void recordMessage(int bytes, int messageId, qint64 receivedAtMs);
+    void recordMessage(int bytes, qint64 receivedAtMs);
     void reset();
 
     quint64 bytesReceived() const { return _rateTracker.totalBytes(); }
@@ -54,8 +49,6 @@ public:
     bool dataStale() const { return _dataStale; }
 
     bool dataUsageHigh() const { return bytesReceived() > DATA_USAGE_WARNING_BYTES; }
-
-    QList<RTCMMessageCount> messageCountsById() const;
 
 signals:
     void statsChanged();
@@ -74,5 +67,4 @@ private:
     /// Receipt times on the scheduler's clock; zero when unset.
     std::chrono::milliseconds _lastReceivedAt{0};
     std::chrono::milliseconds _startedAt{0};
-    QHash<int, quint32> _messageCountsById;
 };

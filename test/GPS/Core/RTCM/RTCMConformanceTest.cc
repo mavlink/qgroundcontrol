@@ -6,10 +6,14 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QEvent>
 #include <QtCore/QList>
+#include <QtCore/QPair>
+#include <QtTest/QAbstractItemModelTester>
+#include <QtTest/QSignalSpy>
 
 #include "Checksums.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "RTCMFramer.h"
+#include "RTCMMessageCountModel.h"
 
 namespace {
 // Fixed CRCs keep expectations independent of the framing implementation.
@@ -362,6 +366,52 @@ void RTCMConformanceTest::_queuedResultDelivery()
     QCOMPARE(received->receivedAtMs, qint64(1234));
     QVERIFY(received->valid);
     QVERIFY(received->filtered);
+}
+
+void RTCMConformanceTest::_messageCountsChangeInPlace()
+{
+    using Rows = QList<QPair<int, quint64>>;
+    RTCMMessageCountModel model;
+    QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
+    QSignalSpy inserted(&model, &QAbstractItemModel::rowsInserted);
+    QSignalSpy changed(&model, &QAbstractItemModel::dataChanged);
+    QSignalSpy resets(&model, &QAbstractItemModel::modelReset);
+    const auto rows = [&model]() {
+        Rows result;
+        for (int row = 0; row < model.rowCount(); ++row) {
+            const QModelIndex index = model.index(row);
+            result.append({index.data(RTCMMessageCountModel::MessageIdRole).toInt(),
+                           index.data(RTCMMessageCountModel::CountRole).toULongLong()});
+        }
+        return result;
+    };
+
+    // Each new ID inserts one row at its ascending position; ID 0 counts unidentified frames.
+    QList<int> insertedAt;
+    for (const int messageId : {1077, 1005, 1230, 0}) {
+        model.record(messageId);
+        insertedAt.append(inserted.last().at(1).toInt());
+    }
+    QCOMPARE(insertedAt, QList<int>({0, 0, 2, 0}));
+    QCOMPARE(rows(), Rows({{0, 1}, {1005, 1}, {1077, 1}, {1230, 1}}));
+    QVERIFY(changed.isEmpty());
+
+    // A repeated ID changes only the count of its row.
+    model.record(1077);
+    model.record(1077);
+    QCOMPARE(rows(), Rows({{0, 1}, {1005, 1}, {1077, 3}, {1230, 1}}));
+    QCOMPARE(inserted.size(), 4);
+    QCOMPARE(changed.size(), 2);
+    QCOMPARE(changed.last().at(0).toModelIndex(), model.index(2));
+    QCOMPARE(changed.last().at(1).toModelIndex(), model.index(2));
+    QCOMPARE(changed.last().at(2).value<QList<int>>(), QList<int>{RTCMMessageCountModel::CountRole});
+    QVERIFY(resets.isEmpty());
+
+    model.clear();
+    QCOMPARE(model.rowCount(), 0);
+    QCOMPARE(resets.size(), 1);
+    model.clear();
+    QCOMPARE(resets.size(), 1);
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(RTCMConformanceTest, TestLabel::Unit)

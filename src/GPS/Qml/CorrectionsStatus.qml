@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
@@ -22,6 +23,8 @@ QGCGroupBox {
 
     heading: qsTr("Corrections Status")
     visible: root.showWhenInactive || root._active || root._udpInputError !== "" || root._udpOutputError !== ""
+
+    QGCPalette { id: qgcPal }
 
     LabelledLabel {
         objectName: "correctionsSelectedSource"
@@ -47,6 +50,28 @@ QGCGroupBox {
         //: %1 is a data size, such as 2.1KB; the label is a data rate per second
         labelText: qsTr("%1/s").arg(QGroundControl.bigSizeToString(root.corrections.selectedBytesPerSecond))
         labelTextFormat: Text.PlainText
+    }
+
+    ColumnLayout {
+        objectName: "correctionsMessageTypes"
+        Layout.fillWidth: true
+        spacing: ScreenTools.defaultFontPixelHeight / 4
+        visible: root._fresh && messageChips.count > 0
+
+        QGCLabel {
+            text: qsTr("Message Types")
+            font.pointSize: ScreenTools.smallFontPointSize
+            color: qgcPal.colorGrey
+        }
+
+        RTCMMessageChips {
+            id: messageChips
+
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            Layout.preferredWidth: 0
+            messageCounts: root.corrections.messageCounts
+        }
     }
 
     // Why the UDP RTCM input cannot listen, such as a port another program uses; the input keeps retrying.

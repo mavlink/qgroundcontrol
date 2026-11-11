@@ -58,6 +58,12 @@ public:
         return bytes.size() >= HEADER_SIZE + 2 && bytes[0] == PREAMBLE ? (bytes[3] << 4) | (bytes[4] >> 4) : 0;
     }
 
+    [[nodiscard]] static uint16_t frameMessageId(QByteArrayView bytes)
+    {
+        return frameMessageId(std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(bytes.data()),
+                                                       static_cast<size_t>(bytes.size())));
+    }
+
     bool valid() const { return _valid; }
 
     [[nodiscard]] static bool isValidFrame(std::span<const uint8_t> bytes)

@@ -8,6 +8,7 @@ target_sources(
     PRIVATE
         RTCMFramer.cc
         RTCMFramer.h
-        RTCMMessageCount.h
+        RTCMMessageCountModel.cc
+        RTCMMessageCountModel.h
 )
 target_include_directories(QGCGPSCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

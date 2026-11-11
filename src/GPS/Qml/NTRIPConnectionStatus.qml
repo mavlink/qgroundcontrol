@@ -108,25 +108,6 @@ QGCGroupBox {
         visible:   root._connected && root._stats.messagesReceived > 0
     }
 
-    ColumnLayout {
-        Layout.fillWidth: true
-        spacing: ScreenTools.defaultFontPixelHeight / 4
-        visible: root._connected && root._stats.messageCountsById.length > 0
-
-        QGCLabel {
-            text: qsTr("Message Types")
-            font.pointSize: ScreenTools.smallFontPointSize
-            color: qgcPal.colorGrey
-        }
-
-        RTCMMessageChips {
-            Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            Layout.preferredWidth: 0
-            messageCounts:    root._stats.messageCountsById
-        }
-    }
-
     LabelledLabel {
         label:     qsTr("Data Received")
         //: %1 is the total data size, %2 the data size received per second

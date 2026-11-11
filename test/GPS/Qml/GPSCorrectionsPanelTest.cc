@@ -90,6 +90,66 @@ void GPSCorrectionsPanelTest::_correctionsStatusShowsSelectedStream()
     QCOMPARE(source->property("labelText").toString(), QStringLiteral("None"));
 }
 
+void GPSCorrectionsPanelTest::_correctionsStatusCountsMessageTypes()
+{
+    using namespace std::chrono_literals;
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler);
+    GPSTest::QmlEngine engine;
+    std::unique_ptr<QObject> status =
+        engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsStatus.qml")),
+                      {{QStringLiteral("corrections"), QVariant::fromValue(&corrections)}});
+    QVERIFY2(status, qPrintable(engine.lastError()));
+    auto* types = status->findChild<QQuickItem*>(QStringLiteral("correctionsMessageTypes"));
+    QVERIFY(types);
+    QVERIFY(!types->property("visible").toBool());
+    const auto chips = [types]() {
+        return GPSTest::findItems(types, [](QQuickItem* item) { return item->property("messageId").isValid(); });
+    };
+    const auto chipTexts = [&chips]() {
+        QStringList texts;
+        for (const QQuickItem* chip : chips()) {
+            texts.append(chip->childItems().constFirst()->property("text").toString());
+        }
+        return texts;
+    };
+    const auto submit = [&scheduler](const std::unique_ptr<GPSCorrectionSourceHandle>& source, uint16_t messageId) {
+        source->submit(GPSTest::rtcmMessage(messageId, 20), scheduler.nowMs());
+    };
+
+    // Every source is counted, not only NTRIP.
+    const auto udp = corrections.openSource(GPSCorrectionSettings::Udp, QStringLiteral("192.0.2.1"));
+    for (const uint16_t messageId : {1077, 1005, 1077}) {
+        submit(udp, messageId);
+    }
+    QVERIFY(scheduler.advanceBy(100ms));
+    QVERIFY(types->property("visible").toBool());
+    QCOMPARE(chipTexts(), QStringList({QStringLiteral(u"1005 \u00d7 1"), QStringLiteral(u"1077 \u00d7 2")}));
+
+    // Another frame changes the count on its chip. A rebuilt list would show new chips while the old ones await
+    // deletion.
+    const QList<QQuickItem*> shown = chips();
+    submit(udp, 1077);
+    QCOMPARE(chips(), shown);
+    QCOMPARE(chipTexts(), QStringList({QStringLiteral(u"1005 \u00d7 1"), QStringLiteral(u"1077 \u00d7 3")}));
+
+    // A stream that is not selected is not counted; once it is, the counts are its own.
+    const auto ntrip = corrections.openSource(GPSCorrectionSettings::Ntrip, QStringLiteral("caster/MOUNT"));
+    submit(ntrip, 1087);
+    QCOMPARE(chips(), shown);
+    QVERIFY(scheduler.advanceBy(GPSCorrectionSelector::SWITCH_HOLD_DOWN));
+    submit(ntrip, 1087);
+    QCOMPARE(chipTexts(), QStringList({QStringLiteral(u"1087 \u00d7 1")}));
+
+    // A stream that goes stale is no longer selected, so its counts do not outlive it.
+    QVERIFY(scheduler.advanceBy(GPSCorrectionSelector::FRESHNESS_TIMEOUT + 1s));
+    QCOMPARE(corrections.state(), GPSCorrectionManager::State::Waiting);
+    QVERIFY(!types->property("visible").toBool());
+    QVERIFY(chips().isEmpty());
+    submit(ntrip, 1087);
+    QCOMPARE(chipTexts(), QStringList({QStringLiteral(u"1087 \u00d7 1")}));
+}
+
 void GPSCorrectionsPanelTest::_ntripErrorActionRetries()
 {
     const auto fail = [this](MockNTRIPTransport* transport) {

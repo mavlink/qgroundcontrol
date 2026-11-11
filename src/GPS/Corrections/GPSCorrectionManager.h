@@ -10,6 +10,7 @@
 #include "DataRateTracker.h"
 #include "GPSCorrectionSelector.h"
 #include "RTCMMAVLink.h"
+#include "RTCMMessageCountModel.h"
 #include "RTCMUdpInput.h"
 #include "ScheduledTask.h"
 #include "UdpForwarder.h"
@@ -53,6 +54,7 @@ class GPSCorrectionManager : public QObject
     Q_PROPERTY(quint64 vehicleBytesSubmitted READ vehicleBytesSubmitted NOTIFY vehicleBytesSubmittedChanged FINAL)
     Q_PROPERTY(QString udpInputError READ udpInputError NOTIFY udpInputChanged FINAL)
     Q_PROPERTY(QString udpOutputError READ udpOutputError NOTIFY udpOutputChanged FINAL)
+    Q_PROPERTY(RTCMMessageCountModel* messageCounts READ messageCounts CONSTANT FINAL)
 
     friend class GPSCorrectionSourceHandle;
 
@@ -132,6 +134,10 @@ public:
     /// Why the enabled UDP output does not forward; empty while it forwards or is disabled.
     QString udpOutputError() const { return _udpOutputError; }
 
+    /// The selected stream's frames per RTCM message ID. They start again when another stream is selected, and are
+    /// empty while none is.
+    RTCMMessageCountModel* messageCounts() { return &_messageCounts; }
+
     Q_INVOKABLE static QString sourceName(int source);
 
 signals:
@@ -150,6 +156,10 @@ private:
                  qint64 receivedAtMs);
     /// Forwards @a data to the enabled UDP output and publishes whether it was sent; a repeated outcome is silent.
     void _forwardToUdpOutput(const QByteArray& data);
+    /// Records what the frame @a data tells about the selected stream @a stream.
+    void _recordSelected(const GPSCorrectionStream& stream, const QByteArray& data);
+    /// Forgets what the selected stream's frames told once it is no longer the selected one.
+    void _forgetSelected();
 
     /// Each returns whether the input's state or the output's error changed.
     [[nodiscard]] bool _applyUdpInput();
@@ -177,5 +187,8 @@ private:
     quint64 _selectedBytesPerSecond = 0;
     QString _udpInputError;
     QString _udpOutputError;
+    RTCMMessageCountModel _messageCounts{this};
+    /// The stream _messageCounts describes. _selected follows it only at the next refresh.
+    GPSCorrectionStream _recordedStream;
     bool _shutdown = false;
 };

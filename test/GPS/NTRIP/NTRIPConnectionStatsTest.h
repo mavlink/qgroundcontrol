@@ -14,7 +14,6 @@ private slots:
     void _correctionAgeAfterMessage();
     void _invalidReceiptTimestamp_data();
     void _invalidReceiptTimestamp();
-    void _messageCountsByIdSortedAndReset();
     void _dataStaleAfterNoRecentMessages();
     void _statisticsExpireDuringSilence();
 };

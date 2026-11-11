@@ -4,7 +4,8 @@ Configure where RTK corrections come from and how they reach vehicles: the built
 
 ## Corrections Status
 
-Shows the correction stream currently sent to vehicles and its data rate.
+Shows the correction stream currently sent to vehicles and its data rate, whether it comes from NTRIP, the local base station, or UDP.
+**Message Types** lists the RTCM message types of that stream and how many messages of each have arrived. The counts start again when vehicles receive another stream, or when the stream resumes after it stopped for more than 5 seconds.
 The toolbar GNSS indicator also offers **Connect** once an NTRIP server is configured.
 
 ## NTRIP Connection

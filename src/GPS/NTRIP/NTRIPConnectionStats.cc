@@ -55,14 +55,13 @@ bool NTRIPConnectionStats::_updateDataStale(std::chrono::milliseconds now)
     return std::exchange(_dataStale, stale) != stale;
 }
 
-void NTRIPConnectionStats::recordMessage(int bytes, int messageId, qint64 receivedAtMs)
+void NTRIPConnectionStats::recordMessage(int bytes, qint64 receivedAtMs)
 {
     if (bytes <= 0) {
         return;
     }
     _rateTracker.recordBytes(bytes);
     _messagesReceived++;
-    ++_messageCountsById[messageId];
     const auto now = _now();
     const std::chrono::milliseconds receivedAt(receivedAtMs);
     if (receivedAt <= std::chrono::milliseconds::zero() || receivedAt > now) {
@@ -82,18 +81,6 @@ void NTRIPConnectionStats::reset()
     _messagesReceived = 0;
     _lastReceivedAt = std::chrono::milliseconds::zero();
     _startedAt = std::chrono::milliseconds::zero();
-    _messageCountsById.clear();
     _dataStale = false;
     emit statsChanged();
-}
-
-QList<RTCMMessageCount> NTRIPConnectionStats::messageCountsById() const
-{
-    QList<RTCMMessageCount> counts;
-    counts.reserve(_messageCountsById.size());
-    for (auto it = _messageCountsById.cbegin(); it != _messageCountsById.cend(); ++it) {
-        counts.append({it.key(), it.value()});
-    }
-    std::ranges::sort(counts, {}, &RTCMMessageCount::messageId);
-    return counts;
 }
