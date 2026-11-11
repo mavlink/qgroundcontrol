@@ -104,21 +104,10 @@ QString NTRIPManager::securityWarning() const
                                                             : QString();
 }
 
-QString NTRIPManager::connectionStatusText() const
+QString NTRIPManager::statusMessage() const
 {
-    switch (_connectionStatus) {
-        case ConnectionStatus::Disconnected:
-            return tr("Disconnected");
-        case ConnectionStatus::Connecting:
-            return tr("Connecting");
-        case ConnectionStatus::Connected:
-            return tr("Connected");
-        case ConnectionStatus::Reconnecting:
-            return tr("Reconnecting");
-        case ConnectionStatus::Error:
-            break;
-    }
-    return tr("Error");
+    // No state has been entered before the first connection.
+    return _statusMessage.isEmpty() ? _defaultMessageFor(_connectionStatus) : _statusMessage;
 }
 
 void NTRIPManager::init()
@@ -172,14 +161,24 @@ void NTRIPManager::setGgaPositionProvider(NTRIPGgaReporter::PositionSource sourc
 // Public control surface
 // -----------------------------------------------------------------------------
 
-void NTRIPManager::retryNTRIP()
+void NTRIPManager::connectCaster()
 {
-    if (_shutdown || _connectionStatus != ConnectionStatus::Error) {
+    if (_shutdown) {
         return;
     }
-    _configuration.enabled = true;
-    _start();
-    emit enableRequested();
+    // After an error the setting is still on, and storing it again would start nothing.
+    if (_connectionStatus == ConnectionStatus::Error) {
+        _configuration.enabled = true;
+        _start();
+    }
+    emit enabledRequested(true);
+}
+
+void NTRIPManager::disconnectCaster()
+{
+    if (!_shutdown) {
+        emit enabledRequested(false);
+    }
 }
 
 void NTRIPManager::shutdown()
@@ -327,9 +326,9 @@ QString NTRIPManager::_defaultMessageFor(ConnectionStatus state)
         case ConnectionStatus::Reconnecting:
             return tr("Reconnecting...");
         case ConnectionStatus::Error:
-            return {};  // Error always carries a detail from the caller.
+            break;
     }
-    return {};
+    return tr("Error");
 }
 
 void NTRIPManager::_onEnterState(ConnectionStatus to, std::chrono::milliseconds retryAfter)

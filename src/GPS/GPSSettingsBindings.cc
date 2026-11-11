@@ -212,11 +212,12 @@ void GPSSettingsBindings::bindNtrip(NTRIPSettings* settings, NTRIPManager* ntrip
     if (!settings || !ntrip) {
         return;
     }
-    // Queued: the manager emits these inside its own operation (retrying, trusting a certificate), and storing the
+    // Queued: the manager emits these inside its own operation (connecting, trusting a certificate), and storing the
     // Fact applies a new configuration to it, which must wait until that returns.
     QObject::connect(
-        ntrip, &NTRIPManager::enableRequested, ntrip,
-        [settings]() { settings->ntripServerConnectEnabled()->setRawValue(true); }, Qt::QueuedConnection);
+        ntrip, &NTRIPManager::enabledRequested, ntrip,
+        [settings](bool enabled) { settings->ntripServerConnectEnabled()->setRawValue(enabled); },
+        Qt::QueuedConnection);
     QObject::connect(
         ntrip, &NTRIPManager::certificatePinChanged, ntrip,
         [settings](const QString& pin) { settings->ntripPinnedCertificate()->setRawValue(pin); }, Qt::QueuedConnection);

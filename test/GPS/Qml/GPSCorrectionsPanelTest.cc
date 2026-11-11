@@ -43,13 +43,20 @@ struct ScriptedNTRIP
 
 /// The NTRIP connection panel for @a manager inside @a window; null on failure, with the reason in lastError().
 std::unique_ptr<QObject> createConnectionPanel(GPSTest::QmlEngine& engine, const GPSTest::QmlWindowFixture& window,
-                                               NTRIPManager& manager, Fact& enabled)
+                                               NTRIPManager& manager)
 {
     return engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/NTRIPConnectionStatus.qml")),
                          {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
                           {QStringLiteral("visible"), true},
-                          {QStringLiteral("ntripManager"), QVariant::fromValue(&manager)},
-                          {QStringLiteral("enabledFact"), QVariant::fromValue(&enabled)}});
+                          {QStringLiteral("ntripManager"), QVariant::fromValue(&manager)}});
+}
+
+/// Whether a label of @a panel shows @a text.
+bool showsText(QObject* panel, const QString& text)
+{
+    return !GPSTest::findItems(qobject_cast<QQuickItem*>(panel), [&text](QQuickItem* item) {
+                return item->property("lineCount").isValid() && item->property("text").toString() == text;
+            }).isEmpty();
 }
 }  // namespace
 
@@ -353,12 +360,12 @@ void GPSCorrectionsPanelTest::_ntripErrorActionRetries()
     fail(first);
     QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
     QPointer<MockNTRIPTransport> retry = ntrip.nextTransport();
+    // What the panel's actions ask the connection setting to be.
+    QSignalSpy requests(&ntrip.manager, &NTRIPManager::enabledRequested);
 
     GPSTest::QmlWindowFixture window(640, 400);
     GPSTest::QmlEngine engine;
-    Fact enabled(0, QStringLiteral("enabled"), FactMetaData::valueTypeBool);
-    enabled.setRawValue(true);
-    std::unique_ptr<QObject> panel = createConnectionPanel(engine, window, ntrip.manager, enabled);
+    std::unique_ptr<QObject> panel = createConnectionPanel(engine, window, ntrip.manager);
     QVERIFY2(panel, qPrintable(engine.lastError()));
     QVERIFY(window.show());
     auto* button = panel->findChild<QObject*>(QStringLiteral("ntripConnectButton"));
@@ -373,33 +380,33 @@ void GPSCorrectionsPanelTest::_ntripErrorActionRetries()
     // Retrying starts a new transport; the failed one is never restarted.
     QVERIFY(!first || first->startCount == 1);
     QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
-    QVERIFY(enabled.rawValue().toBool());
+    QCOMPARE(requests.size(), 1);
+    QVERIFY(requests.constLast().constFirst().toBool());
     QVERIFY(!button->property("enabled").toBool());
     QTRY_VERIFY_WITH_TIMEOUT(!disconnect->property("visible").toBool(), TestTimeout::shortMs());
     fail(retry);
     QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
     QTRY_VERIFY_WITH_TIMEOUT(disconnect->property("visible").toBool(), TestTimeout::shortMs());
     QVERIFY(QMetaObject::invokeMethod(disconnect, "click"));
-    QVERIFY(!enabled.rawValue().toBool());
+    QCOMPARE(requests.size(), 2);
+    QVERIFY(!requests.constLast().constFirst().toBool());
     QCOMPARE(retry->startCount, 1);
 }
 
 void GPSCorrectionsPanelTest::_ntripConnectionActionIsIdempotent_data()
 {
     QTest::addColumn<int>("status");
-    QTest::addColumn<bool>("enabledBefore");
-    QTest::addColumn<bool>("enabledAfter");
-    QTest::newRow("disconnect") << static_cast<int>(NTRIPManager::ConnectionStatus::Connected) << true << false;
-    QTest::newRow("cancel-reconnect") << static_cast<int>(NTRIPManager::ConnectionStatus::Reconnecting) << true
-                                      << false;
-    QTest::newRow("connect") << static_cast<int>(NTRIPManager::ConnectionStatus::Disconnected) << false << true;
+    // What the action asks the connection setting to be.
+    QTest::addColumn<bool>("requested");
+    QTest::newRow("disconnect") << static_cast<int>(NTRIPManager::ConnectionStatus::Connected) << false;
+    QTest::newRow("cancel-reconnect") << static_cast<int>(NTRIPManager::ConnectionStatus::Reconnecting) << false;
+    QTest::newRow("connect") << static_cast<int>(NTRIPManager::ConnectionStatus::Disconnected) << true;
 }
 
 void GPSCorrectionsPanelTest::_ntripConnectionActionIsIdempotent()
 {
     QFETCH(int, status);
-    QFETCH(bool, enabledBefore);
-    QFETCH(bool, enabledAfter);
+    QFETCH(bool, requested);
     ScriptedNTRIP ntrip;
     if (status != static_cast<int>(NTRIPManager::ConnectionStatus::Disconnected)) {
         MockNTRIPTransport* transport = ntrip.nextTransport(true);
@@ -417,20 +424,23 @@ void GPSCorrectionsPanelTest::_ntripConnectionActionIsIdempotent()
     QPointer<MockNTRIPTransport> unexpected = ntrip.nextTransport();
     GPSTest::QmlWindowFixture window(640, 400);
     GPSTest::QmlEngine engine;
-    Fact enabled(0, QStringLiteral("enabled"), FactMetaData::valueTypeBool);
-    enabled.setRawValue(enabledBefore);
     TestFixtures::SettingsFixture saved;
     saved.setFactValue(SettingsManager::instance()->ntripSettings()->ntripServerHostAddress(),
                        QStringLiteral("caster.example.com"));
-    std::unique_ptr<QObject> panel = createConnectionPanel(engine, window, ntrip.manager, enabled);
+    std::unique_ptr<QObject> panel = createConnectionPanel(engine, window, ntrip.manager);
     QVERIFY2(panel, qPrintable(engine.lastError()));
     auto* button = panel->findChild<QObject*>(QStringLiteral("ntripConnectButton"));
     QVERIFY(button);
     QVERIFY(button->property("enabled").toBool());
+    // The row shows the manager's message alone, which names a state that has no more to say.
+    QVERIFY(!ntrip.manager.statusMessage().isEmpty());
+    QVERIFY(showsText(panel.get(), ntrip.manager.statusMessage()));
+    QSignalSpy requests(&ntrip.manager, &NTRIPManager::enabledRequested);
     // The manager applies the setting after a debounce, so its status still reflects the first click.
     for (int click = 0; click < 2; ++click) {
         QVERIFY(QMetaObject::invokeMethod(button, "click"));
-        QCOMPARE(enabled.rawValue().toBool(), enabledAfter);
+        QCOMPARE(requests.size(), click + 1);
+        QCOMPARE(requests.constLast().constFirst().toBool(), requested);
     }
     QCOMPARE(static_cast<int>(ntrip.manager.connectionStatus()), status);
     QVERIFY(unexpected);
@@ -472,9 +482,7 @@ void GPSCorrectionsPanelTest::_ntripLongStatusWrapsWithinPanel()
     QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
     GPSTest::QmlWindowFixture window(640, 400);
     GPSTest::QmlEngine engine;
-    Fact enabled(0, QStringLiteral("enabled"), FactMetaData::valueTypeBool);
-    enabled.setRawValue(true);
-    std::unique_ptr<QObject> panel = createConnectionPanel(engine, window, ntrip.manager, enabled);
+    std::unique_ptr<QObject> panel = createConnectionPanel(engine, window, ntrip.manager);
     QVERIFY2(panel, qPrintable(engine.lastError()));
     auto* panelItem = qobject_cast<QQuickItem*>(panel.get());
     QVERIFY(panelItem);
@@ -484,7 +492,7 @@ void GPSCorrectionsPanelTest::_ntripLongStatusWrapsWithinPanel()
 
     const QString longMessage = QStringLiteral("certificate rejected ").repeated(20);
     MockNTRIPTransport* retry = ntrip.nextTransport();
-    ntrip.manager.retryNTRIP();
+    ntrip.manager.connectCaster();
     fail(retry, longMessage);
     QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
     QCOMPARE(ntrip.manager.statusMessage(), longMessage);

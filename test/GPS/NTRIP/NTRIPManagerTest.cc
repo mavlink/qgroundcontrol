@@ -56,10 +56,23 @@ void NTRIPManagerTest::_stopFromIdleIsNoop()
 {
     NTRIPManager manager;
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
-    QCOMPARE(manager.connectionStatusText(), NTRIPManager::tr("Disconnected"));
-    QCOMPARE(manager.property("connectionStatusText").toString(), NTRIPManager::tr("Disconnected"));
     manager._stop();
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
+}
+
+void NTRIPManagerTest::_statusMessageNamesStateWithoutDetail()
+{
+    // The panel shows the message alone, so it is never empty: not before the first connection, and not after a
+    // failure that gives no reason.
+    NTRIPManager manager;
+    QCOMPARE(manager.property("statusMessage").toString(), NTRIPManager::tr("Disconnected"));
+    auto* transport = injectMockTransport(manager);
+    initialize(manager);
+    QSignalSpy messages(&manager, &NTRIPManager::statusMessageChanged);
+    _fail(transport, QString(), NTRIPError::AuthFailed);
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
+    QCOMPARE(manager.statusMessage(), NTRIPManager::tr("Error"));
+    QCOMPARE(messages.size(), 1);
 }
 
 void NTRIPManagerTest::_transportFactory()
@@ -172,10 +185,11 @@ void NTRIPManagerTest::_newSessionRetryBudget()
         QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
         manager.setConfiguration(mockCasterConfiguration(false));
         transport = injectMockTransport(manager);
-        QVERIFY(manager.metaObject()->indexOfMethod("retryNTRIP()") >= 0);
-        QSignalSpy enableRequested(&manager, &NTRIPManager::enableRequested);
-        manager.retryNTRIP();
-        QCOMPARE(enableRequested.count(), 1);
+        QVERIFY(manager.metaObject()->indexOfMethod("connectCaster()") >= 0);
+        QSignalSpy enabledRequested(&manager, &NTRIPManager::enabledRequested);
+        manager.connectCaster();
+        QCOMPARE(enabledRequested.count(), 1);
+        QVERIFY(enabledRequested.constFirst().constFirst().toBool());
     }
     QCOMPARE(transport->startCount, 1);
     QVERIFY(manager.configuration().enabled);
@@ -599,7 +613,7 @@ void NTRIPManagerTest::_sourceTableRetriedOnlyAfterCorrections()
 
     // A mountpoint that has served corrections has only gone offline.
     transport = injectMockTransport(manager, true);
-    manager.retryNTRIP();
+    manager.connectCaster();
     transport->simulateRtcmData(GPSTest::rtcmMessage(1005), 1005, scheduler.nowMs());
     deliverQueuedCalls();
     _fail(transport, sourceTable, NTRIPError::InvalidMountpoint);

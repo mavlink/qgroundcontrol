@@ -3,7 +3,8 @@
 #include "UnitTest.h"
 
 /// The settings bindings: the receiver's configuration from its settings (mapping, roles, manufacturer capabilities,
-/// consent and the effective connection), the NTRIP configuration, redacted logging and that every setting is bound.
+/// consent and the effective connection), the NTRIP configuration and its connection setting, redacted logging and
+/// that every setting is bound.
 class GPSReceiverSettingsBindingTest : public UnitTest
 {
     Q_OBJECT
@@ -24,6 +25,7 @@ private slots:
     void _effectiveConnection();
     void _runtimeSettingsDoNotRequireAppRestart();
     void _ntripSettingsBinding();
+    void _ntripActionsFollowConnectionSetting();
     void _settingsLogRedactsSecrets_data();
     void _settingsLogRedactsSecrets();
     void _settingsBindingsCoverEveryFact_data();

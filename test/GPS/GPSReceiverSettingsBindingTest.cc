@@ -13,6 +13,8 @@
 #include "GPSReceiverFactGroup.h"
 #include "GPSSettingsBindings.h"
 #include "GPSTransport.h"
+#include "ManualScheduler.h"
+#include "NTRIP/Support/MockNTRIPTransport.h"
 #include "NTRIPManager.h"
 #include "NTRIPSettings.h"
 #include "RTKSettings.h"
@@ -403,6 +405,63 @@ void GPSReceiverSettingsBindingTest::_ntripSettingsBinding()
     QCOMPARE(configuration, expected);
     settings->ntripServerConnectEnabled()->setRawValue(true);
     QVERIFY(manager.configuration().enabled);
+}
+
+void GPSReceiverSettingsBindingTest::_ntripActionsFollowConnectionSetting()
+{
+    using Status = NTRIPManager::ConnectionStatus;
+    TestFixtures::SettingsFixture saved;
+    auto* settings = SettingsManager::instance()->ntripSettings();
+    Fact* const enabled = settings->ntripServerConnectEnabled();
+    saved.setFactValue(enabled, false);
+    saved.setFactValue(settings->ntripServerHostAddress(), QStringLiteral("caster.example.com"));
+    saved.setFactValue(settings->ntripServerPort(), 2101);
+    saved.setFactValue(settings->ntripMountpoint(), QStringLiteral("TEST"));
+    saved.setFactValue(settings->ntripUseTls(), false);
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    GPSSettingsBindings::bindNtrip(settings, &manager);
+    MockNTRIPTransport* transport = injectMockTransport(manager, true);
+    manager.init();
+    QCOMPARE(manager.connectionStatus(), Status::Disconnected);
+    // The binding stores a request once the manager's operation has returned, and the manager applies the stored
+    // setting after its debounce.
+    const auto settle = [&scheduler] {
+        deliverQueuedCalls();
+        return scheduler.advanceBy(1s);
+    };
+
+    // Connect and Disconnect change the setting, and the manager follows the setting as for any other change of it.
+    manager.connectCaster();
+    QVERIFY(settle());
+    QVERIFY(enabled->rawValue().toBool());
+    QCOMPARE(manager.connectionStatus(), Status::Connected);
+    manager.disconnectCaster();
+    QVERIFY(settle());
+    QVERIFY(!enabled->rawValue().toBool());
+    QCOMPARE(manager.connectionStatus(), Status::Disconnected);
+    transport = injectMockTransport(manager);
+    enabled->setRawValue(true);
+    QVERIFY(settle());
+    QCOMPARE(manager.connectionStatus(), Status::Connecting);
+    QCOMPARE(transport->startCount, 1);
+
+    // After an error the setting is still on, so Connect cannot act by changing it: it starts the new attempt itself.
+    expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("NTRIP error:")));
+    transport->simulateError(NTRIPError::AuthFailed, QStringLiteral("rejected"));
+    deliverQueuedCalls();
+    verifyExpectedLogMessage();
+    QCOMPARE(manager.connectionStatus(), Status::Error);
+    QVERIFY(enabled->rawValue().toBool());
+    transport = injectMockTransport(manager);
+    manager.connectCaster();
+    QCOMPARE(transport->startCount, 1);
+    QVERIFY(settle());
+    QVERIFY(enabled->rawValue().toBool());
+    QCOMPARE(manager.connectionStatus(), Status::Connecting);
+    enabled->setRawValue(false);
+    QVERIFY(settle());
+    QCOMPARE(manager.connectionStatus(), Status::Disconnected);
 }
 
 void GPSReceiverSettingsBindingTest::_settingsLogRedactsSecrets_data()
