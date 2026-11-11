@@ -92,6 +92,7 @@ qt_add_qml_module(
         GeoMapPolygon.qml
         GeoMapRallyPoint.qml
         GeoMapSegmentArrow.qml
+        GeoMapTrack.qml
         GeoMapVehicleItem.qml
         GeoMapView.qml
         GeoMapVTOLLandingPatternVisual.qml

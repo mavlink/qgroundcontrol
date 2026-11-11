@@ -145,6 +145,10 @@ and the 2D↔3D mode animation.
 `GeoMapControls` (2D/3D toggle, compass) and a map scale. The Plan View embeds them; the Fly View
 places them itself, because it also positions the occluders and the picture-in-picture swap.
 
+A view that shows a place of its own, such as the Log Viewer's map, turns `sharedView` off: it
+sets its own `center` and `zoomLevel` and leaves the shared view alone. With `terrain` and
+`allowRotation` off as well, the map behaves like a QtLocation one: flat, top-down and north-up.
+
 ## Overlays: putting things on the map
 
 `GeoMapItem` is the counterpart of QtLocation's `MapQuickItem`: it anchors QML
@@ -159,6 +163,8 @@ with the 2D content during mode transitions. Built on it:
 - **`GeoMapFlightPath.qml`** — the flown-trail ribbon (`FlightPathGeometry`, a
   shader-billboarded strip with constant on-screen width), flattening back to the
   classic 2D trail as `terrainScale` animates to 0.
+- **`GeoMapTrack.qml`** — the same ribbon for a path known up front, such as a log's
+  track.
 
 Vehicle-related items apply a **home terrain bias** — the difference between the
 elevation dataset's height at the home position and the vehicle's reported home

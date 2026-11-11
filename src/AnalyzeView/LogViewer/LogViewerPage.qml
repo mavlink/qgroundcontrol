@@ -7,6 +7,7 @@ import QtPositioning
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
+import QGroundControl.GeoMap
 import QGroundControl.LogViewer
 
 AnalyzePage {
@@ -14,6 +15,16 @@ AnalyzePage {
     pageComponent: pageComponent
     pageDescription: qsTr("Open and inspect DataFlash (.bin), PX4 ULog (.ulg), and telemetry (.tlog) logs in a unified workflow.")
     allowPopout: true
+
+    // Where the cursor of the charts is along the path
+    component PositionDot: Rectangle {
+        width: ScreenTools.defaultFontPixelHeight * 1.2
+        height: width
+        radius: width / 2
+        color: QGroundControl.globalPalette.colorYellow
+        border.color: "white"
+        border.width: 2
+    }
 
     Component {
         id: pageComponent
@@ -111,6 +122,7 @@ AnalyzePage {
                 spacing: ScreenTools.defaultFontPixelWidth
 
                 QGCButton {
+                    objectName: "logViewer_openBinButton"
                     text: qsTr("Open .bin")
                     visible: QGroundControl.apmFirmwareSupported
                     onClicked: {
@@ -324,6 +336,7 @@ AnalyzePage {
 
                 QGCGroupBoxTab {
                     title: qsTr("Map")
+                    buttonObjectName: "logViewer_mapTabButton"
                     Layout.fillHeight: true
 
                     Item {
@@ -342,6 +355,9 @@ AnalyzePage {
                         // Shared cursor state (driven by altitude chart, displayed on map)
                         property bool _markerVisible: false
                         property var _markerCoord: ({})
+                        readonly property bool _markerShown: _markerVisible && _hasPath && _markerCoord && _markerCoord.latitude !== undefined
+                        readonly property var _markerCoordinate: _markerShown ? QtPositioning.coordinate(_markerCoord.latitude, _markerCoord.longitude)
+                                                                              : QtPositioning.coordinate(0, 0)
 
                         // Collapsed state for the altitude chart, so the map can use the full tab height
                         property bool _altChartCollapsed: false
@@ -350,6 +366,22 @@ AnalyzePage {
                         property real _sharedCursorT: NaN
                         property real _sharedZoomMinX: NaN
                         property real _sharedZoomMaxX: NaN
+
+                        // Smallest rectangle around the path
+                        function _pathRegion() {
+                            const p = _gpsPath
+                            var minLat = p[0].latitude, maxLat = minLat
+                            var minLon = p[0].longitude, maxLon = minLon
+                            for (var i = 1; i < p.length; i++) {
+                                var c = p[i]
+                                if (c.latitude  < minLat) minLat = c.latitude
+                                if (c.latitude  > maxLat) maxLat = c.latitude
+                                if (c.longitude < minLon) minLon = c.longitude
+                                if (c.longitude > maxLon) maxLon = c.longitude
+                            }
+                            return QtPositioning.rectangle(QtPositioning.coordinate(maxLat, minLon),
+                                                           QtPositioning.coordinate(minLat, maxLon))
+                        }
 
                         function _setSharedZoom(minX, maxX) {
                             _sharedZoomMinX = minX
@@ -370,69 +402,136 @@ AnalyzePage {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
 
-                                FlightMap {
-                                    id: _flightMap
+                                // Engine choice is snapshotted at creation (the setting is qgcRebootRequired)
+                                Loader {
                                     anchors.fill: parent
-                                    mapName: "LogViewerMap"
-                                    allowGCSLocationCenter: true
+                                    Component.onCompleted: sourceComponent = QGroundControl.settingsManager.flyViewSettings.useGeoMapEngine.rawValue ? _geoMapComponent : _flightMapComponent
+                                }
 
-                                    readonly property var _path: _mapTab._gpsPath
+                                Component {
+                                    id: _flightMapComponent
 
-                                    function _fitPath() {
-                                        const p = _mapTab._gpsPath
-                                        if (!_mapTab._hasPath) return
-                                        var minLat = p[0].latitude, maxLat = minLat
-                                        var minLon = p[0].longitude, maxLon = minLon
-                                        for (var i = 1; i < p.length; i++) {
-                                            var c = p[i]
-                                            if (c.latitude  < minLat) minLat = c.latitude
-                                            if (c.latitude  > maxLat) maxLat = c.latitude
-                                            if (c.longitude < minLon) minLon = c.longitude
-                                            if (c.longitude > maxLon) maxLon = c.longitude
+                                    FlightMap {
+                                        id: _flightMap
+                                        objectName: "logViewer_flightMap"
+                                        mapName: "LogViewerMap"
+                                        allowGCSLocationCenter: true
+
+                                        function _fitPath() {
+                                            if (_mapTab._hasPath) {
+                                                setVisibleRegion(_mapTab._pathRegion())
+                                            }
                                         }
-                                        setVisibleRegion(QtPositioning.rectangle(
-                                            QtPositioning.coordinate(maxLat, minLon),
-                                            QtPositioning.coordinate(minLat, maxLon)))
-                                    }
 
-                                    Connections {
-                                        target: logParser
-                                        function onParseCompleteChanged() {
-                                            if (logParser.parseComplete) Qt.callLater(_flightMap._fitPath)
+                                        Connections {
+                                            target: logParser
+                                            function onParseCompleteChanged() {
+                                                if (logParser.parseComplete) Qt.callLater(_flightMap._fitPath)
+                                            }
                                         }
-                                    }
 
-                                    MapPolyline {
-                                        line.width: 3
-                                        line.color: QGroundControl.globalPalette.colorRed
-                                        path: _flightMap._path
-                                    }
+                                        MapPolyline {
+                                            line.width: 3
+                                            line.color: QGroundControl.globalPalette.colorRed
+                                            path: _mapTab._gpsPath
+                                        }
 
-                                    // Position dot driven by altitude chart cursor
-                                    MapQuickItem {
-                                        readonly property var _coord: _mapTab._markerCoord
-                                        visible: _mapTab._markerVisible && _mapTab._hasPath
-                                                      && _coord && _coord.latitude !== undefined
-                                        coordinate: (_coord && _coord.latitude !== undefined)
-                                                      ? QtPositioning.coordinate(_coord.latitude, _coord.longitude)
-                                                      : QtPositioning.coordinate(0, 0)
-                                        anchorPoint: Qt.point(_posDot.width / 2, _posDot.height / 2)
-                                        sourceItem: Rectangle {
-                                            id: _posDot
-                                            width: ScreenTools.defaultFontPixelHeight * 1.2
-                                            height: width
-                                            radius: width / 2
-                                            color: QGroundControl.globalPalette.colorYellow
-                                            border.color: "white"
-                                            border.width: 2
+                                        // Position dot driven by altitude chart cursor
+                                        MapQuickItem {
+                                            objectName: "logViewer_positionDot"
+                                            visible: _mapTab._markerShown
+                                            coordinate: _mapTab._markerCoordinate
+                                            anchorPoint: Qt.point(sourceItem.width / 2, sourceItem.height / 2)
+                                            sourceItem: PositionDot { }
+                                        }
+
+                                        MapScale {
+                                            anchors.margins: ScreenTools.defaultFontPixelWidth
+                                            anchors.left: parent.left
+                                            anchors.bottom: parent.bottom
+                                            mapControl: _flightMap
                                         }
                                     }
+                                }
 
-                                    MapScale {
-                                        anchors.margins: ScreenTools.defaultFontPixelWidth
-                                        anchors.left: parent.left
-                                        anchors.bottom: parent.bottom
-                                        mapControl: _flightMap
+                                Component {
+                                    id: _geoMapComponent
+
+                                    // Top-down and north-up like the QtLocation map: the log's path has no altitude to show in 3D
+                                    GeoMapView {
+                                        id: _geoMap
+
+                                        // A hidden tab has no size to fit the path to: it is fitted once the map is shown
+                                        property bool _fitPending: false
+
+                                        function _fitPath() {
+                                            _fitPending = true
+                                            _fitPendingPath()
+                                        }
+
+                                        function _fitPendingPath() {
+                                            if (!_fitPending || !visible || width <= 0 || height <= 0) {
+                                                return
+                                            }
+                                            _fitPending = false
+                                            if (_mapTab._hasPath) {
+                                                setVisibleRegion(_mapTab._pathRegion())
+                                            }
+                                        }
+
+                                        objectName: "logViewer_geoMap"
+                                        sharedView: false
+                                        terrain: false
+                                        allowRotation: false
+                                        allowGCSLocationCenter: true
+                                        followOffscreenVehicle: false
+
+                                        onVisibleChanged: Qt.callLater(_fitPendingPath)
+                                        onWidthChanged: Qt.callLater(_fitPendingPath)
+                                        onHeightChanged: Qt.callLater(_fitPendingPath)
+
+                                        GeoMapTrack {
+                                            objectName: "logViewer_geoMapTrack"
+                                            scene: _geoMap.scene
+                                            surfaceModel: _geoMap.surfaceModel
+                                            lineColor: QGroundControl.globalPalette.colorRed
+                                            path: _mapTab._gpsPath.map((point) => QtPositioning.coordinate(point.latitude, point.longitude))
+                                        }
+
+                                        // Position dot driven by altitude chart cursor
+                                        GeoMapItem {
+                                            objectName: "logViewer_positionDot"
+                                            scene: _geoMap.scene
+                                            surfaceModel: _geoMap.surfaceModel
+                                            visible: _mapTab._markerShown
+                                            coordinate: _mapTab._markerCoordinate
+                                            width: _geoMapPositionDot.width
+                                            height: _geoMapPositionDot.height
+                                            anchorPoint: Qt.point(width / 2, height / 2)
+
+                                            PositionDot {
+                                                id: _geoMapPositionDot
+                                            }
+                                        }
+
+                                        MapScale {
+                                            anchors.margins: ScreenTools.defaultFontPixelWidth
+                                            anchors.left: parent.left
+                                            anchors.bottom: parent.bottom
+                                            mapControl: _geoMap
+                                        }
+
+                                        Connections {
+                                            target: logParser
+                                            function onParseCompleteChanged() {
+                                                if (logParser.parseComplete) Qt.callLater(_geoMap._fitPath)
+                                            }
+                                        }
+
+                                        Component.onCompleted: {
+                                            center = QGroundControl.flightMapPosition
+                                            zoomLevel = QGroundControl.flightMapZoom
+                                        }
                                     }
                                 }
 

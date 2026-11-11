@@ -23,6 +23,10 @@ The [Plan View](../plan_view/plan_view.md) map can use the GeoMap engine too. Go
 
 In this preview the Plan View displays the plan on the GeoMap: mission items and path, the planned home position, and the geofence and rally points. Clicking the map sets the home position and inserts waypoints, ROIs and rally points as usual, and clicking a mission item marker selects that item. Drag the marker of the selected waypoint to move it. Dragging other items, editing fence polygons and circles, and editing patterns directly on the map are not supported yet, use the Plan panel instead.
 
+### Log Viewer
+
+With the Fly View setting on, the map of the [Log Viewer](../analyze_view/log_viewer.md) uses the GeoMap engine too. It stays in 2D, top-down and north-up, because the path of a log is drawn without its altitude.
+
 ## View Controls
 
 Camera gestures follow Google Earth semantics: the ground point under the cursor when a gesture starts stays pinned under the cursor throughout the gesture.

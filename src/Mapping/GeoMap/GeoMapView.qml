@@ -8,14 +8,19 @@ import QGroundControl.GeoMap
 
 /// GeoMap that speaks the interface of the QtLocation FlightMap, so the views and controls written against
 /// FlightMap (center, zoomLevel, toCoordinate/fromCoordinate, setVisibleRegion, isSatelliteMap, ...) work unchanged.
-/// It also keeps the map view shared with the other views (QGroundControl.flightMapPosition/flightMapZoom) and can
-/// show the camera controls and map scale itself. Views add their own content on top.
+/// It also keeps the map view shared with the other views (QGroundControl.flightMapPosition/flightMapZoom), unless
+/// sharedView is off, and can show the camera controls and map scale itself. Views add their own content on top.
 GeoMap {
     id: root
 
     // Writable like FlightMap's: assignments move the camera, camera moves are echoed back
     property var center
     property real zoomLevel: 0
+
+    /// false: the map has a view of its own, which its owner sets through center and zoomLevel. Nothing is restored
+    /// from the shared view or saved to it. For a map that shows another place than the vehicle's, such as a log's
+    /// track or the area of an offline map set.
+    property bool sharedView: true
 
     /// false: the zoom is neither restored from nor saved to the shared view, and survives resizes untouched.
     /// For a map that has its own zoom, such as a small picture-in-picture one.
@@ -81,6 +86,9 @@ GeoMap {
     }
 
     function _restoreSharedView() {
+        if (!sharedView) {
+            return
+        }
         root.camera.center = QGroundControl.flightMapPosition
         if (sharedZoom) {
             zoomLevel = QGroundControl.flightMapZoom
@@ -119,14 +127,14 @@ GeoMap {
         function onCenterChanged() {
             root._echoCameraCenter()
             // Hidden: don't overwrite the position another view is sharing
-            if (root.visible) {
+            if (root.visible && root.sharedView) {
                 QGroundControl.flightMapPosition = root.camera.center
             }
         }
 
         function onDistanceChanged() {
             root._echoCameraZoom()
-            if (root.visible && root.sharedZoom && root._viewportValid()) {
+            if (root.visible && root.sharedView && root.sharedZoom && root._viewportValid()) {
                 QGroundControl.flightMapZoom = root.zoomLevel
             }
         }

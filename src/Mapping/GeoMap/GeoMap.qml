@@ -33,6 +33,13 @@ Item {
     // thumbs are down (issue #13450)
     property bool pinchZoomDisabledByVirtualJoysticks: false
 
+    /// false: the surface is flat and no elevation is fetched, for a map that stays in 2D
+    property alias terrain: patchModel.terrain
+
+    /// false: the map stays north-up, as a QtLocation map does: the orbit, look and twist gestures are off.
+    /// For a map whose view stands for a rectangle of ground, such as the area of an offline map set.
+    property bool allowRotation: true
+
     // Same contract as FlightMap: plain left-click/tap (no drag, no modifier)
     // in viewport coordinates; consumers convert via surfaceCoordinateAt
     signal mapClicked(var position)
@@ -397,6 +404,7 @@ Item {
         DragHandler {
             id: orbitHandler
             target: null
+            enabled: root.allowRotation
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             acceptedButtons: Qt.RightButton | Qt.MiddleButton
             // Unmodified only: macOS synthesizes Ctrl+left-click as a right-click
@@ -435,6 +443,7 @@ Item {
         DragHandler {
             id: shiftOrbitHandler
             target: null
+            enabled: root.allowRotation
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             acceptedButtons: Qt.LeftButton
             acceptedModifiers: Qt.ShiftModifier
@@ -459,6 +468,7 @@ Item {
         DragHandler {
             id: lookHandler
             target: null
+            enabled: root.allowRotation
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             acceptedButtons: Qt.LeftButton
             acceptedModifiers: Qt.ControlModifier
@@ -485,7 +495,7 @@ Item {
         DragHandler {
             id: metaLookHandler
             target: null
-            enabled: Qt.platform.os === "osx"
+            enabled: root.allowRotation && Qt.platform.os === "osx"
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             acceptedModifiers: Qt.MetaModifier
@@ -517,7 +527,11 @@ Item {
                 }
             }
             onScaleChanged: (delta) => geoCamera.zoomBy(1 / delta, centroid.position)
-            onRotationChanged: (delta) => geoCamera.rotateBy(delta, centroid.position)
+            onRotationChanged: (delta) => {
+                if (root.allowRotation) {
+                    geoCamera.rotateBy(delta, centroid.position)
+                }
+            }
         }
 
         // Plain click/tap: the default DragThreshold gesture policy means any
