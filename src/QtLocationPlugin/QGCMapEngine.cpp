@@ -1,19 +1,110 @@
 #include "QGCMapEngine.h"
 
 #include <QtCore/QApplicationStatic>
+#include <QtCore/QCoreApplication>
+#include <QtCore/QDir>
+#include <QtCore/QStandardPaths>
 
-#include "QGCCachedTileSet.h"
+#include "AppMessages.h"
+#include "AppSettings.h"
+#include "MapsSettings.h"
 #include "QGCCacheTile.h"
+#include "QGCCachedTileSet.h"
+#include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapTasks.h"
 #include "QGCTile.h"
 #include "QGCTileCacheWorker.h"
 #include "QGCTileSet.h"
-#include "QGeoFileTileCacheQGC.h"
+#include "SettingsManager.h"
 
 QGC_LOGGING_CATEGORY(QGCMapEngineLog, "QtLocationPlugin.QGCMapEngine")
 
 Q_APPLICATION_STATIC(QGCMapEngine, _mapEngine);
+
+namespace {
+
+bool wipeCacheDirectory(const QString& dirPath, bool& cacheWasReset)
+{
+    bool result = true;
+
+    const QDir dir(dirPath);
+    if (dir.exists(dirPath)) {
+        cacheWasReset = true;
+
+        const QFileInfoList fileList = dir.entryInfoList(
+            QDir::NoDotAndDotDot | QDir::System | QDir::Hidden | QDir::AllDirs | QDir::Files, QDir::DirsFirst);
+        for (const QFileInfo& info : fileList) {
+            if (info.isDir()) {
+                result = wipeCacheDirectory(info.absoluteFilePath(), cacheWasReset);
+            } else {
+                result = QFile::remove(info.absoluteFilePath());
+            }
+
+            if (!result) {
+                return result;
+            }
+        }
+        result = dir.rmdir(dirPath);
+    }
+
+    return result;
+}
+
+/// Removes the caches of earlier database versions. Returns true when one existed.
+bool wipeOldCaches()
+{
+    bool cacheWasReset = false;
+    const QStringList oldCaches = {"/QGCMapCache55", "/QGCMapCache100", "/QGCMapCache300"};
+    for (const QString& cache : oldCaches) {
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+        QString oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+#else
+        QString oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation);
+#endif
+        oldCacheDir += cache;
+        (void) wipeCacheDirectory(oldCacheDir, cacheWasReset);
+    }
+    return cacheWasReset;
+}
+
+QString createCacheDirectory()
+{
+    const bool cacheWasReset = wipeOldCaches();
+
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+#else
+    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+#endif
+    cacheDir += QStringLiteral("/QGCMapCache");
+    if (!QGCFileHelper::ensureDirectoryExists(cacheDir)) {
+        qCWarning(QGCMapEngineLog) << "Could not create mapping disk cache directory:" << cacheDir;
+
+        cacheDir = QDir::homePath() + QStringLiteral("/.qgcmapscache/");
+        if (!QGCFileHelper::ensureDirectoryExists(cacheDir)) {
+            qCWarning(QGCMapEngineLog) << "Could not create mapping disk cache directory:" << cacheDir;
+            cacheDir.clear();
+        }
+    }
+
+    if (cacheDir.isEmpty()) {
+        qCCritical(QGCMapEngineLog) << "Could not find suitable map cache directory.";
+    } else {
+        qCDebug(QGCMapEngineLog) << "Map Cache in:" << cacheDir;
+    }
+
+    if (cacheWasReset) {
+        // The context is the class this message moved from, so its existing translations still apply
+        QGC::showAppMessage(QCoreApplication::translate("QGeoFileTileCacheQGC",
+                                                        "The Offline Map Cache database has been upgraded. "
+                                                        "Your old map cache sets have been reset."));
+    }
+
+    return cacheDir;
+}
+
+}  // namespace
 
 QGCMapEngine *getQGCMapEngine()
 {
@@ -101,8 +192,32 @@ void QGCMapEngine::ensureInitialized()
         return;
     }
 
-    QGeoFileTileCacheQGC::ensureInitialized();
-    init(QGeoFileTileCacheQGC::getDatabaseFilePath());
+    init(databaseFilePath());
+}
+
+QString QGCMapEngine::cachePath()
+{
+    static const QString path = createCacheDirectory();
+    return path;
+}
+
+QString QGCMapEngine::databaseFilePath()
+{
+    const QString path = cachePath();
+    return path.isEmpty() ? QString() : (path + QStringLiteral("/qgcMapCache.db"));
+}
+
+void QGCMapEngine::cacheTile(const QString& type, const QString& hash, const QByteArray& image, const QString& format,
+                             quint64 tileSet)
+{
+    if (SettingsManager::instance()->appSettings()->disableAllPersistence()->rawValue().toBool()) {
+        return;
+    }
+
+    QGCSaveTileTask* const task = new QGCSaveTileTask(new QGCCacheTile(hash, image, format, type, tileSet));
+    if (!addTask(task)) {
+        task->deleteLater();
+    }
 }
 
 bool QGCMapEngine::addTask(QGCMapTask *task)
@@ -123,7 +238,8 @@ void QGCMapEngine::_updateTotals(quint32 totaltiles, quint64 totalsize, quint32 
 {
     emit updateTotals(totaltiles, totalsize, defaulttiles, defaultsize);
 
-    const quint64 maxSize = static_cast<quint64>(QGeoFileTileCacheQGC::getMaxDiskCacheSetting()) * qPow(1024, 2);
+    const quint32 maxDiskCacheMB = SettingsManager::instance()->mapsSettings()->maxCacheDiskSize()->rawValue().toUInt();
+    const quint64 maxSize = static_cast<quint64>(maxDiskCacheMB) * qPow(1024, 2);
     if (!m_pruning && (defaultsize > maxSize)) {
         m_pruning = true;
 

@@ -18,6 +18,8 @@ target_sources(
         QGCCacheWorkerTest.h
         QGCTileCacheDatabaseTest.cc
         QGCTileCacheDatabaseTest.h
+        QGCTileReplyTest.cc
+        QGCTileReplyTest.h
         QGCTileSetTest.cc
         QGCTileSetTest.h
         UrlFactoryTest.cc
@@ -32,5 +34,6 @@ add_qgc_test(QGCCacheWorkerTest LABELS Unit)
 add_qgc_test(QGCCachedTileSetTest LABELS Unit)
 add_qgc_test(QGCMapEngineManagerArchiveTest LABELS Unit RESOURCE_LOCK TempFiles)
 add_qgc_test(QGCTileCacheDatabaseTest LABELS Unit)
+add_qgc_test(QGCTileReplyTest LABELS Unit)
 add_qgc_test(QGCTileSetTest LABELS Unit)
 add_qgc_test(UrlFactoryTest LABELS Unit)

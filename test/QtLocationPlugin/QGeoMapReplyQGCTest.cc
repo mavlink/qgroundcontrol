@@ -1,65 +1,82 @@
 #include "QGeoMapReplyQGCTest.h"
 
-#include <QtCore/QCoreApplication>
-#include <QtCore/QEvent>
-#include <QtCore/QPointer>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtLocation/private/qgeotilespec_p.h>
 #include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkReply>
+#include <QtTest/QSignalSpy>
 
+#include "QGCMapUrlEngine.h"
 #include "QGeoMapReplyQGC.h"
+#include "UnitTestTileGenerator.h"
 
-class AbortFinishingNetworkReply final : public QNetworkReply
+namespace {
+
+/// A tile of the first map provider. Under unit tests a cache miss is served by UnitTestTileGenerator unless a miss
+/// is forced.
+QGeoTileSpec mapReplyTileSpec(int x)
 {
-public:
-    explicit AbortFinishingNetworkReply(QObject* parent = nullptr) : QNetworkReply(parent)
-    {
-        open(QIODevice::ReadOnly);
+    const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
+    for (const QString& type : UrlFactory::getProviderTypes()) {
+        if (!elevationTypes.contains(type)) {
+            return QGeoTileSpec(QStringLiteral("QGroundControl"), UrlFactory::getQtMapIdFromProviderType(type), 13, x,
+                                2867);
+        }
     }
-
-    void abort() final
-    {
-        _abortCalled = true;
-        emit finished();
-    }
-
-    bool abortCalled() const { return _abortCalled; }
-
-protected:
-    qint64 readData(char*, qint64) final { return -1; }
-
-private:
-    bool _abortCalled = false;
-};
-
-void QGeoMapReplyQGCTest::_testDestructorWithActiveReply()
-{
-    QPointer<AbortFinishingNetworkReply> guardedReply;
-
-    {
-        QGeoTiledMapReplyQGC mapReply(nullptr, QNetworkRequest(), QGeoTileSpec());
-        auto* const reply = new AbortFinishingNetworkReply(this);
-        guardedReply = reply;
-        mapReply._networkReply = reply;
-        (void) connect(reply, &QNetworkReply::finished, &mapReply, &QGeoTiledMapReplyQGC::_networkReplyFinished);
-    }
-
-    QVERIFY(guardedReply);
-    QVERIFY(guardedReply->abortCalled());
-    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
-    QVERIFY(guardedReply.isNull());
+    return QGeoTileSpec();
 }
 
-void QGeoMapReplyQGCTest::_testDestroyedNetworkObjects()
-{
-    auto* manager = new QNetworkAccessManager;
-    QGeoTiledMapReplyQGC mapReply(manager, QNetworkRequest(), QGeoTileSpec());
-    mapReply._networkReply = new AbortFinishingNetworkReply(manager);
-    delete manager;
+}  // namespace
 
-    mapReply._cacheError(QGCMapTask::TaskType::taskFetchTile, QStringView());
+void QGeoMapReplyQGCTest::_testTileDelivered()
+{
+    QNetworkAccessManager networkManager;
+    QGeoTiledMapReplyQGC mapReply(&networkManager, mapReplyTileSpec(4400));
+    QSignalSpy finishedSpy(&mapReply, &QGeoTiledMapReply::finished);
+
+    QVERIFY(mapReply.init());
+    QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(mapReply.error(), QGeoTiledMapReply::NoError);
+    QVERIFY(!mapReply.mapImageData().isEmpty());
+    QCOMPARE(mapReply.mapImageFormat(), QStringLiteral("png"));
+    QVERIFY(mapReply.isCached());
+}
+
+void QGeoMapReplyQGCTest::_testErrorReported()
+{
+    UnitTestTileGenerator::setForcedMissCount(1);
+    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+
+    // Without a network manager the cache miss cannot be fetched
+    QGeoTiledMapReplyQGC mapReply(nullptr, mapReplyTileSpec(4401));
+    QSignalSpy finishedSpy(&mapReply, &QGeoTiledMapReply::finished);
+
+    expectLogMessage("QtLocationPlugin.QGeoTiledMapReplyQGC", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("NetworkError")));
+    QVERIFY(mapReply.init());
+    QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
     QCOMPARE(mapReply.error(), QGeoTiledMapReply::CommunicationError);
-    QCOMPARE(mapReply.errorString(), QStringLiteral("Network Manager Not Available"));
+    QVERIFY(!mapReply.errorString().isEmpty());
+}
+
+void QGeoMapReplyQGCTest::_testAbortFinishesOnce()
+{
+    QNetworkAccessManager networkManager;
+    QGeoTiledMapReplyQGC aborted(&networkManager, mapReplyTileSpec(4402));
+    QSignalSpy abortedSpy(&aborted, &QGeoTiledMapReply::finished);
+    QVERIFY(aborted.init());
+    aborted.abort();
+    QCOMPARE(abortedSpy.count(), 1);
+
+    // The cache worker runs lookups in order: once this one is answered, the aborted reply's tile has arrived too
+    QGeoTiledMapReplyQGC sentinel(&networkManager, mapReplyTileSpec(4403));
+    QSignalSpy sentinelSpy(&sentinel, &QGeoTiledMapReply::finished);
+    QVERIFY(sentinel.init());
+    QVERIFY_SIGNAL_COUNT_WAIT(sentinelSpy, 1, TestTimeout::mediumMs());
+
+    QCOMPARE(abortedSpy.count(), 1);
+    QVERIFY(aborted.mapImageData().isEmpty());
 }
 
 UT_REGISTER_TEST(QGeoMapReplyQGCTest, TestLabel::Unit)

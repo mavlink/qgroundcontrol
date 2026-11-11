@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QByteArray>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 
@@ -20,6 +21,15 @@ public:
     /// than QtLocation's (GeoMap) call this, since only a QtLocation map initializes the engine on its own.
     void ensureInitialized();
     bool addTask(QGCMapTask *task);
+
+    /// Stores a tile in the cache database, in \a tileSet or else in the default set. Does nothing while persistence
+    /// is disabled.
+    void cacheTile(const QString& type, const QString& hash, const QByteArray& image, const QString& format,
+                   quint64 tileSet = UINT64_MAX);
+
+    /// Directory of the tile cache, created on first use. Empty when no directory could be created.
+    static QString cachePath();
+    static QString databaseFilePath();
 
     /// Stops the cache worker thread and closes the database. Call before
     /// QCoreApplication teardown when the engine was initialized outside the

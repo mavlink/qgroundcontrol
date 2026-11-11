@@ -1,7 +1,5 @@
 #include "QGeoTiledMappingManagerEngineQGC.h"
 
-#include <mutex>
-
 #include <QtCore/QDir>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkDiskCache>
@@ -71,14 +69,9 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     setSupportedMapTypes(mapList);
 
     setCacheHint(QAbstractGeoTileCache::CacheArea::AllCaches);
-    QGeoFileTileCacheQGC *fileTileCache = new QGeoFileTileCacheQGC(parameters, this);
-    setTileCache(fileTileCache);
+    setTileCache(new QGeoFileTileCacheQGC(parameters, this));
 
-    // MapEngine must be init after fileTileCache
-    static std::once_flag mapEngineInit;
-    std::call_once(mapEngineInit, [fileTileCache]() {
-        getQGCMapEngine()->init(fileTileCache->getDatabaseFilePath());
-    });
+    getQGCMapEngine()->ensureInitialized();
 
     m_prefetchStyle = QGCNetworkHelper::isInternetAvailable() ? QGeoTiledMap::PrefetchTwoNeighbourLayers : QGeoTiledMap::NoPrefetching;
     (void) connect(QNetworkInformation::instance(), &QNetworkInformation::reachabilityChanged, this, [this](QNetworkInformation::Reachability newReachability) {
@@ -89,7 +82,6 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
         }
     });
 
-    Q_ASSERT(m_networkManager);
     QGeoTileFetcherQGC *tileFetcher = new QGeoTileFetcherQGC(m_networkManager, parameters, this);
 
     *error = QGeoServiceProvider::NoError;

@@ -44,6 +44,8 @@ qt_add_plugin(
     QGCTileCacheTypes.h
     QGCTileCacheWorker.cpp
     QGCTileCacheWorker.h
+    QGCTileReply.cc
+    QGCTileReply.h
     QGCTileSet.h
     QGeoFileTileCacheQGC.cpp
     QGeoFileTileCacheQGC.h

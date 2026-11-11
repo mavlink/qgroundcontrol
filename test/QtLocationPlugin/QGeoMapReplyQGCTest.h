@@ -7,6 +7,7 @@ class QGeoMapReplyQGCTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void _testDestructorWithActiveReply();
-    void _testDestroyedNetworkObjects();
+    void _testTileDelivered();
+    void _testErrorReported();
+    void _testAbortFinishesOnce();
 };
