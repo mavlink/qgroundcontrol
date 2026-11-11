@@ -369,6 +369,60 @@ void QGCCompressionTest::_testFormatHelpers()
     QVERIFY(!QGCCompression::formatName(QGCCompression::Format::GZIP).isEmpty());
 }
 
+void QGCCompressionTest::_testFormatParameter()
+{
+    using QGCCompression::Error;
+    using QGCCompression::Format;
+
+    QTemporaryDir tempDir;
+    const QString zip = QStringLiteral(":/unittest/manifest.json.zip");
+    const QString sevenZip = QStringLiteral(":/unittest/manifest.json.7z");
+    const QByteArray gzData = _readFile(QStringLiteral(":/unittest/manifest.json.gz"));
+    const QByteArray xzData = _readFile(QStringLiteral(":/unittest/manifest.json.xz"));
+    const QStringList manifestOnly{QStringLiteral("manifest.json")};
+
+    // The format does not choose the decoder: one of the right kind that is not the input's reads it all the same
+    QVERIFY(QGCCompression::extractArchive(sevenZip, tempDir.filePath("mismatched"), Format::ZIP));
+    QVERIFY2(QGCCompression::detectedFormatName().startsWith("7-Zip"),
+             qPrintable(QGCCompression::detectedFormatName()));
+    QCOMPARE(_entriesBelow(tempDir.filePath("mismatched")), manifestOnly);
+    QCOMPARE(QGCCompression::listArchive(zip, Format::TAR_XZ), manifestOnly);
+    const QByteArray manifest = QGCCompression::decompressData(gzData);
+    QVERIFY(!manifest.isEmpty());
+    QCOMPARE(QGCCompression::decompressData(xzData, Format::GZIP), manifest);
+    QCOMPARE(QGCCompression::detectedFilterName(), QStringLiteral("xz"));
+
+    // It tells the kind of the input, and each function refuses the kind it does not handle
+    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("Not an archive format"));
+    QVERIFY(!QGCCompression::extractArchive(zip, tempDir.filePath("stream_kind"), Format::GZIP));
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), Error::UnsupportedFormat);
+    QVERIFY(!QFileInfo::exists(tempDir.filePath("stream_kind")));
+
+    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("Invalid decompression format"));
+    QVERIFY(QGCCompression::decompressData(gzData, Format::ZIP).isEmpty());
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), Error::UnsupportedFormat);
+
+    // Auto detects the kind from the name and then the content. Neither tells that this gzip stream holds a
+    // TAR archive, so only the format says that it is to be extracted
+    const QString unnamedArchive = tempDir.filePath("bundle");
+    QVERIFY(_writeFile(unnamedArchive, _gzipMember(_makeTar({{.name = "good.txt", .data = "good"}}))));
+    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("Not an archive format"));
+    QVERIFY(!QGCCompression::extractArchive(unnamedArchive, tempDir.filePath("detected")));
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), Error::UnsupportedFormat);
+    QVERIFY(QGCCompression::extractArchive(unnamedArchive, tempDir.filePath("told"), Format::TAR_GZ));
+    QCOMPARE(_readFile(tempDir.filePath("told/good.txt")), QByteArray("good"));
+
+    // For decompressFile() it also decides between extracting and decompressing, and names the default output:
+    // GZIP takes the gzip layer off a .tar.gz file and leaves the archive
+    const QString tarGz = tempDir.filePath("bundle.tar.gz");
+    QVERIFY(QFile::copy(unnamedArchive, tarGz));
+    QVERIFY(QGCCompression::decompressFile(tarGz, QString(), Format::GZIP));
+    QCOMPARE(QGCCompression::listArchive(tempDir.filePath("bundle.tar")), QStringList{QStringLiteral("good.txt")});
+}
+
 // ============================================================================
 // Archive Extraction Tests (from Qt resources)
 // ============================================================================

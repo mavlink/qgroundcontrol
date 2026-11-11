@@ -17,6 +17,7 @@ private slots:
     void _testDetectFormatFromMagicBytes();
     void _testFormatDetectionFromContent();
     void _testFormatHelpers();
+    void _testFormatParameter();
 
     // Archive extraction from Qt resources
     void _testZipFromResource();
