@@ -12,6 +12,7 @@ private slots:
     void _deviceAltitudeDatum_data();
     void _deviceAltitudeDatum();
     void _registrationReplacementAndSessions();
+    void _registrationDuringNotification();
     void _producerLoss_data();
     void _producerLoss();
     void _selectionStatusMatchesPublication_data();

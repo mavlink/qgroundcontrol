@@ -246,6 +246,30 @@ void PositionManagerTest::_registrationReplacementAndSessions()
     QVERIFY(!service.gcsPosition().isValid());
 }
 
+void PositionManagerTest::_registrationDuringNotification()
+{
+    ManualScheduler scheduler;
+    PositionManager service(nullptr, &scheduler);
+    GPSSourceHealth first(nullptr, &scheduler);
+    GPSSourceHealth second(nullptr, &scheduler);
+    GPSPositionSourceRegistration newer;
+    bool replaced = false;
+    // An observer replaces the receiver while the manager is still announcing it.
+    connect(&service, &PositionManager::selectionChanged, &service, [&]() {
+        if (!std::exchange(replaced, true)) {
+            newer = service.registerReceiver(&second);
+        }
+    });
+    auto older = service.registerReceiver(&first);
+    QVERIFY(newer);
+    older.reset();
+    second.updateObservation(fix(scheduler));
+    QCOMPARE(service.selectedSource(), Kind::Receiver);
+    QVERIFY(service.gcsPosition().isValid());
+    newer.reset();
+    QCOMPARE(service.selectedSource(), Kind::None);
+}
+
 void PositionManagerTest::_automaticFailoverAndRecovery()
 {
     ManualScheduler scheduler;

@@ -143,7 +143,8 @@ private:
     void _setInternalPositionStatus(SourceStatus status);
     /// Health of the source bound for @a kind, or null when none is.
     GPSSourceHealth* _sourceHealth(SelectedSource kind) const;
-    void _setReceiver(GPSSourceHealth* producer, quint64 sessionId);
+    /// Returns the token of this binding; the observers it notifies may already have replaced it.
+    quint64 _setReceiver(GPSSourceHealth* producer, quint64 sessionId);
     void _retireReceiver(quint64 token);
     void _releaseDevice();
     void _setDeviceActive(bool active);

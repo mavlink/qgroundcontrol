@@ -165,29 +165,29 @@ GPSPositionSourceRegistration PositionManager::registerReceiver(GPSSourceHealth*
     if (!producer) {
         return {};
     }
-    _setReceiver(producer, sessionId);
+    const quint64 token = _setReceiver(producer, sessionId);
     // The handle points at this manager only so that it tests true; releasing it retires this binding alone.
-    return GPSPositionSourceRegistration(
-        this, [manager = QPointer<PositionManager>(this), token = _receiverToken](const void*) {
-            if (manager) {
-                manager->_retireReceiver(token);
-            }
-        });
+    return GPSPositionSourceRegistration(this, [manager = QPointer<PositionManager>(this), token](const void*) {
+        if (manager) {
+            manager->_retireReceiver(token);
+        }
+    });
 }
 
-void PositionManager::_setReceiver(GPSSourceHealth* producer, quint64 sessionId)
+quint64 PositionManager::_setReceiver(GPSSourceHealth* producer, quint64 sessionId)
 {
     if (_receiver) {
         _receiver->disconnect(this);
     }
     _receiver = producer;
     _receiverSession = sessionId;
-    ++_receiverToken;
+    const quint64 token = ++_receiverToken;
     if (producer) {
         connect(producer, &GPSSourceHealth::positionChanged, this, [this]() { _update(SelectedSource::Receiver); });
         connect(producer, &QObject::destroyed, this, [this]() { _setReceiver(nullptr, 0); });
     }
     _bindingChanged(SelectedSource::Receiver);
+    return token;
 }
 
 void PositionManager::_retireReceiver(quint64 token)
