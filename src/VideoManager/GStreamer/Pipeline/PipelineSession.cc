@@ -266,7 +266,8 @@ void PipelineSession::shutdown()
     _phase = Phase::TearingDown;
 
     if (_recording && _pipeline && _recording->beginTeardown()) {
-        // Handles the recorder's messages until it is finalized.
+        // Handles the recorder's messages until it is finalized. The pump discards every other type, which
+        // _handleMessage() ignores anyway while tearing down.
         _bus.pumpUntil(
             static_cast<GstMessageType>(GST_MESSAGE_ERROR | GST_MESSAGE_ELEMENT),
             [this]() { return !_recording->finalizing(); }, QDeadlineTimer(RecordingBranch::kFinalizeTimeout));
@@ -416,7 +417,8 @@ void PipelineSession::_onBusError(GstMessage* message)
 
 QString PipelineSession::_takeStartError()
 {
-    // The state change posted why it failed; nothing else in the queue matters for a pipeline that never ran.
+    // The state change posted why it failed; nothing else in the queue matters for a pipeline that never ran: pop()
+    // discards what was queued before the error, and shutdown() flushes the rest.
     const GStreamer::GstMessagePtr message = _bus.pop(GST_MESSAGE_ERROR);
     if (!message) {
         return tr("unknown error");
