@@ -34,6 +34,7 @@ public:
     static ShapeType determineShapeType(const QString &file, QString &errorString);
 
     /// Get the number of geometry entities in the file
+    /// @return -1 if the file cannot be read
     static int getEntityCount(const QString &file, QString &errorString);
 
     /// Load all polygon entities

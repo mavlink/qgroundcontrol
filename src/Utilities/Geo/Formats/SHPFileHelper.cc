@@ -319,7 +319,7 @@ int SHPFileHelper::getEntityCount(const QString &shpFile, QString &errorString)
     bool utmSouthernHemisphere;
     SHPHandle shpHandle = SHPFileHelper::_loadShape(shpFile, &utmZone, &utmSouthernHemisphere, errorString);
     if (!shpHandle) {
-        return 0;
+        return -1;
     }
 
     int cEntities, type;

@@ -54,7 +54,7 @@ int ShapeFileHelper::getEntityCount(const QString &file, QString &errorString)
         return SHPFileHelper::getEntityCount(file, errorString);
     case ShapeFileType::None:
     default:
-        return 0;
+        return -1;
     }
 }
 

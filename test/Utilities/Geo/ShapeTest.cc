@@ -680,7 +680,7 @@ void ShapeTest::_testLoadFailures()
         QVERIFY2(errorPattern.match(errorString).hasMatch(), qPrintable(errorString));
 
         expectWarnings();
-        QCOMPARE(ShapeFileHelper::getEntityCount(file, errorString), 0);
+        QCOMPARE(ShapeFileHelper::getEntityCount(file, errorString), -1);
         verifyWarnings();
         QVERIFY2(errorPattern.match(errorString).hasMatch(), qPrintable(errorString));
     }

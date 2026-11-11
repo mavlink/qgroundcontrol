@@ -145,7 +145,7 @@ int KMLHelper::getEntityCount(const QString &kmlFile, QString &errorString)
 {
     QDomDocument domDocument;
     if (!_loadFile(kmlFile, domDocument, errorString)) {
-        return 0;
+        return -1;
     }
 
     int count = 0;

@@ -10,6 +10,7 @@ namespace KMLHelper
     ShapeFileHelper::ShapeType determineShapeType(const QString &file, QString &errorString);
 
     /// Get the number of geometry entities in the KML file
+    /// @return -1 if the file cannot be read
     int getEntityCount(const QString &kmlFile, QString &errorString);
 
     /// Load all polygon entities
