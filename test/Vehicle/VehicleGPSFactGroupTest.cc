@@ -234,8 +234,8 @@ void VehicleGPSFactGroupTest::_resilienceSummary_data()
     QTest::newRow("not-reported") << NONE << NONE << NONE << 0 << 0;
     QTest::newRow("unknown") << 0 << 0 << int(Auth::Unknown) << 0 << 0;
     QTest::newRow("worse-of-two") << 2 << 3 << int(Auth::Disabled) << 3 << 1;
-    QTest::newRow("spoofing-only") << 1 << NONE << int(Auth::Initializing) << 1 << 2;
-    QTest::newRow("authentication-ok") << NONE << 1 << int(Auth::Ok) << 1 << 3;
+    QTest::newRow("spoofing-only") << 1 << NONE << int(Auth::Initializing) << 1 << 3;
+    QTest::newRow("authentication-ok") << NONE << 1 << int(Auth::Ok) << 1 << 2;
     QTest::newRow("authentication-error") << NONE << NONE << int(Auth::Error) << 0 << 4;
 }
 
