@@ -122,6 +122,7 @@ public:
         /// Comma-separated RTCM message IDs, from 1 to MAX_MESSAGE_ID: the only messages taken from any source. The
         /// others count as not received, so they are not routed, not counted and no sign of a fresh stream. Empty
         /// takes every message. With an entry that is not a message ID, none is taken until the filter is corrected.
+        /// messageFilterError() reports that, and a filter that leaves no stream to route.
         QString messageFilter{};
         bool operator==(const Configuration&) const = default;
     };
@@ -166,7 +167,8 @@ public:
     /// Why the enabled UDP output does not forward; empty while it forwards or is disabled.
     QString udpOutputError() const { return _udpOutputError; }
 
-    /// Names the message filter's first entry that is not a message ID; empty for a valid filter.
+    /// Why the message filter lets no corrections through: it names the first entry that is not a message ID, or the
+    /// messages that arrive while the filter takes none of them and no stream is selected. Empty otherwise.
     QString messageFilterError() const { return _messageFilterError; }
 
     bool logToFile() const { return _log.isOpen(); }
@@ -213,16 +215,22 @@ private:
     void _forgetSelected();
     void _setBasePosition(const QGeoCoordinate& position);
 
-    /// Each returns whether the input's state, the output's error or the filter's error changed.
+    /// Each returns whether the input's state or the output's error changed.
     [[nodiscard]] bool _applyUdpInput();
     [[nodiscard]] bool _applyUdpOutput();
-    [[nodiscard]] bool _applyMessageFilter();
+    /// Takes the configured message filter; the next refresh publishes its error.
+    void _applyMessageFilter();
+    /// Publishes why the filter lets no corrections through, given whether a stream is selected at @a now.
+    void _refreshMessageFilterError(bool streamSelected, qint64 now);
     bool _udpInputEnabled() const;
     void _startUdpInput();
     void _retryUdpInput();
 
     void _scheduleRefresh();
     void _refresh();
+
+    /// messageFilterError() names at most this many of the messages the filter left out.
+    static constexpr qsizetype MAX_LEFT_OUT_NAMED = 12;
 
     RuntimeScheduler* const _scheduler;
     ScheduledTask _refreshTask;
@@ -244,6 +252,12 @@ private:
     QString _udpOutputError;
     /// The message IDs of a valid filter; empty takes every message.
     QSet<int> _messageFilter;
+    /// Names the filter's entry that is not a message ID.
+    QString _messageFilterInvalid;
+    /// The messages a valid filter left out of the sources the routing selects from while no stream was selected, and
+    /// when the latest arrived.
+    QSet<int> _leftOutMessages;
+    qint64 _leftOutAtMs = 0;
     QString _messageFilterError;
     RTCMMessageCountModel _messageCounts{this};
     QGeoCoordinate _basePosition;

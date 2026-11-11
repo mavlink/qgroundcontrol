@@ -60,6 +60,7 @@ When forwarded data cannot be sent, **Corrections Status** names the destination
 - **RTCM Message Filter** — comma-separated RTCM message IDs (1 to 4095), such as `1005,1077,1087`. Only these messages of the selected stream are used, whichever source it comes from: NTRIP, the local base station or UDP. Empty uses every message.
 
 Messages the filter leaves out are not sent to vehicles, not forwarded over UDP and not counted under **Message Types**. A stream of which the filter leaves nothing counts as delivering no corrections, so with _Highest priority_ the next source is used instead.
+While that leaves no stream to send, **Corrections Status** says so and lists the message IDs that arrive, for example when a filter written for an NTRIP stream meets a local base station that sends other messages.
 An entry that is not a message ID stops all corrections until it is corrected, and **Corrections Status** names the entry: a mistyped filter never sends every message.
 
 A vehicle receives no corrections while it is connected through a link marked **High Latency** in its [link settings](comm_links.md), such as a satellite modem: a correction stream is far more data than such a link carries. Corrections reach the vehicle again once a regular link takes over.

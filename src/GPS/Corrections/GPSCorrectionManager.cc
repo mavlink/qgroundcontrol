@@ -5,9 +5,11 @@
 #include <utility>
 
 #include <QtCore/QDateTime>
+#include <QtCore/QStringList>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QNetworkInterface>
 
+#include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
 #include "RTCMFramer.h"
 #include "RTCMStationPosition.h"
@@ -112,8 +114,9 @@ void GPSCorrectionManager::setConfiguration(const Configuration& configuration)
     const bool inputNotified = inputChanged && (_applyUdpInput() || enabledChanged);
     // The output also depends on the input port, which it must not feed back into.
     const bool outputNotified = (inputChanged || previous->udpOutput != configuration.udpOutput) && _applyUdpOutput();
-    const bool filterNotified =
-        (!previous || previous->messageFilter != configuration.messageFilter) && _applyMessageFilter();
+    if (!previous || previous->messageFilter != configuration.messageFilter) {
+        _applyMessageFilter();
+    }
     _refresh();
     if (inputNotified) {
         emit udpInputChanged();
@@ -121,14 +124,12 @@ void GPSCorrectionManager::setConfiguration(const Configuration& configuration)
     if (outputNotified) {
         emit udpOutputChanged();
     }
-    if (filterNotified) {
-        emit messageFilterChanged();
-    }
 }
 
-bool GPSCorrectionManager::_applyMessageFilter()
+void GPSCorrectionManager::_applyMessageFilter()
 {
     _messageFilter.clear();
+    _leftOutMessages.clear();
     QString error;
     for (const auto& token : _configuration->messageFilter.split(QLatin1Char(','), Qt::SkipEmptyParts)) {
         const QString entry = token.trimmed();
@@ -148,7 +149,33 @@ bool GPSCorrectionManager::_applyMessageFilter()
         }
         _messageFilter.insert(id);
     }
-    return std::exchange(_messageFilterError, error) != error;
+    _messageFilterInvalid = error;
+}
+
+void GPSCorrectionManager::_refreshMessageFilterError(bool streamSelected, qint64 now)
+{
+    const auto age = MonotonicClock::age(std::chrono::milliseconds(_leftOutAtMs), std::chrono::milliseconds(now));
+    if (streamSelected || !age || *age >= GPSCorrectionSelector::FRESHNESS_TIMEOUT) {
+        _leftOutMessages.clear();
+    }
+    QString error = _messageFilterInvalid;
+    if (error.isEmpty() && !_leftOutMessages.isEmpty()) {
+        QList<int> ids(_leftOutMessages.cbegin(), _leftOutMessages.cend());
+        std::ranges::sort(ids);
+        QStringList names;
+        for (const int id : ids.first((std::min) (ids.size(), MAX_LEFT_OUT_NAMED))) {
+            names.append(QString::number(id));
+        }
+        if (ids.size() > MAX_LEFT_OUT_NAMED) {
+            names.append(QStringLiteral("…"));
+        }
+        //: %1 is a list of RTCM message IDs, such as 1074, 1084, 1230
+        error = tr("No corrections are sent: the RTCM message filter takes none of the messages that arrive (%1).")
+                    .arg(names.join(QStringLiteral(", ")));
+    }
+    if (std::exchange(_messageFilterError, error) != error) {
+        emit messageFilterChanged();
+    }
 }
 
 bool GPSCorrectionManager::_applyUdpOutput()
@@ -234,9 +261,16 @@ void GPSCorrectionManager::_endSource(GPSCorrectionSettings::CorrectionSource so
 void GPSCorrectionManager::_submit(GPSCorrectionSettings::CorrectionSource source, const QString& instance,
                                    const QByteArray& data, qint64 receivedAtMs)
 {
-    const bool taken = _messageFilterError.isEmpty() &&
-                       (_messageFilter.isEmpty() || _messageFilter.contains(RTCMFramer::frameMessageId(data)));
-    if (taken && _selector.submit(source, instance, receivedAtMs, _scheduler->nowMs())) {
+    const bool filterValid = _messageFilterInvalid.isEmpty();
+    const int messageId = _messageFilter.isEmpty() ? 0 : RTCMFramer::frameMessageId(data);
+    const bool taken = filterValid && (_messageFilter.isEmpty() || _messageFilter.contains(messageId));
+    if (!taken) {
+        // Named to the user should the filter leave the routing no stream to select.
+        if (filterValid && _state != State::Fresh && _selector.routes(source)) {
+            _leftOutMessages.insert(messageId);
+            _leftOutAtMs = _scheduler->nowMs();
+        }
+    } else if (_selector.submit(source, instance, receivedAtMs, _scheduler->nowMs())) {
         _recordSelected({.source = static_cast<int>(source), .instanceId = instance}, data, receivedAtMs);
         _selectedRate.recordBytes(data.size());
         if (_rtcmMavlink.submitToOutputs(data) > 0) {
@@ -356,6 +390,7 @@ void GPSCorrectionManager::_refresh()
     if (rateChanged) {
         emit selectedBytesPerSecondChanged();
     }
+    _refreshMessageFilterError(selected.has_value(), now);
 }
 
 void GPSCorrectionManager::_scheduleRefresh()
