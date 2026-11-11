@@ -38,6 +38,9 @@ A stream its camera reports as rotated (by 90, 180 or 270 degrees) is shown turn
 the photos taken of it; recordings keep the stream as it arrives. The rotation adds to any orientation the stream itself
 carries, so a camera should report only one of the two.
 
+GStreamer shows interlaced video (576i or 1080i, as some analog video encoders send) as it is decoded, without
+deinterlacing it, so moving edges look like a comb. Set such an encoder to progressive video where it can send that.
+
 ## Connection
 
 Connection settings vary by source type:

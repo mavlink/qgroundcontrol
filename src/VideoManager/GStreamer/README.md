@@ -148,6 +148,14 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   override, else `imxvideoconvert_g2d` or `nvvidconv` when present, else `videoconvertscale`
   (`videoconvert ! videoscale` before GStreamer 1.22). It scales non-square pixels to square ones, converts formats the
   sink doesn't take (such as a software decoder's `Y444`), and passes GPU memory through.
+
+  The bin doesn't deinterlace: an interlaced stream (576i or 1080i, as analogue-to-IP encoders send) is shown woven,
+  both fields in each frame, so motion combs. Upstream's playsink plugs gst-plugins-good's `deinterlace` for that.
+  Here it would reach only software-decoded frames, the bundles don't ship its plugin (the `gstreamer.plugins` lists
+  of `.github/build-config.json`), and on an interlaced stream it holds back a field or more (20 ms at 50 fields a
+  second with its default method) and doubles the frame rate. A stream in `interlace-mode=alternate` doesn't
+  negotiate at all, as the sink doesn't offer the `format:Interlaced` caps feature; decoders that can send both
+  send interleaved frames.
 - **Allocation proposal** — the sink asks the decoder for at least five buffers (`kMaxPinnedFrames` + 1), covering the
   frames Qt may still hold, also of a producer that asks for no pool, and keeps the video and crop metas it reads. D3D11Memory gets no crop meta: the
   d3d11 decoders then crop a picture that starts off their texture's origin themselves, where the D3D11 path would
