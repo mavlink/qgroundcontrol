@@ -1730,4 +1730,50 @@ void UBXProtocolTest::_replyFaults()
     }
 }
 
+void UBXProtocolTest::_timeOfWeekSteps_data()
+{
+    constexpr quint32 WEEK = GPSTime::WEEK_MS;
+    constexpr quint32 WINDOW = UBX::EpochAssembler::REORDER_WINDOW_MS;
+    // Each time of week is one epoch, a NAV-PVT and its NAV-EOE, numbered from 1 in order of arrival.
+    QTest::addColumn<QList<quint32>>("tows");
+    // The epoch whose NAV-EOE is withheld, so it is still being assembled when the next one arrives; 0 for none.
+    QTest::addColumn<int>("partial");
+    QTest::addColumn<QList<int>>("published");
+    QTest::newRow("advance") << QList<quint32>{1000, 1200, 1400} << 0 << QList{1, 2, 3};
+    QTest::newRow("week-rollover") << QList<quint32>{WEEK - 200, 0, 200} << 0 << QList{1, 2, 3};
+    // An epoch at or behind the last published one, within the reordering window, was already published.
+    QTest::newRow("late-epoch") << QList<quint32>{1000, 1200, 1000, 1400} << 0 << QList{1, 2, 4};
+    QTest::newRow("late-epoch-at-the-window") << QList<quint32>{WINDOW + 1000, 1000, WINDOW + 1200} << 0 << QList{1, 3};
+    QTest::newRow("late-epoch-across-the-rollover") << QList<quint32>{0, WEEK - 200, 200} << 0 << QList{1, 3};
+    // Any other time of week is a new time base, which the following epochs continue.
+    QTest::newRow("backward-step-past-the-window") << QList<quint32>{WINDOW + 1001, 1000, 1200} << 0 << QList{1, 2, 3};
+    QTest::newRow("backward-step") << QList<quint32>{500000000, 400000000, 400000200} << 0 << QList{1, 2, 3};
+    QTest::newRow("forward-step-of-half-a-week")
+        << QList<quint32>{1000, WEEK / 2 + 1000, WEEK / 2 + 1200} << 0 << QList{1, 2, 3};
+    QTest::newRow("step-ends-a-partial-epoch")
+        << QList<quint32>{500000000, 500000200, 400000000, 400000200} << 2 << QList{1, 2, 3, 4};
+}
+
+void UBXProtocolTest::_timeOfWeekSteps()
+{
+    QFETCH(QList<quint32>, tows);
+    QFETCH(int, partial);
+    QFETCH(QList<int>, published);
+    GPSTestClock clock;
+    NavigationDecoder decoder(clock);
+    auto pvt = ubxFix3D();
+    QList<int> actual;
+    for (qsizetype index = 0; index < tows.size(); ++index) {
+        pvt[23] = static_cast<uint8_t>(index + 1);
+        auto frames = ubxNavigationEpoch(pvt, tows[index]);
+        if (index + 1 == partial) {
+            frames.resize(UBX::FRAME_OVERHEAD + pvt.size());
+        }
+        for (const auto& event : decoder->decode(frames).events) {
+            actual.append(std::get<GPSDecodedPosition>(event).navigation.satellitesUsed.value_or(0));
+        }
+    }
+    QCOMPARE(actual, published);
+}
+
 UT_REGISTER_TEST_LIGHTWEIGHT(UBXProtocolTest, TestLabel::Unit)
