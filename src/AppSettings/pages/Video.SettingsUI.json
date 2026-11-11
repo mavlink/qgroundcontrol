@@ -8,6 +8,7 @@
         "sourceDisabled": "videoSource === QGroundControl.settingsManager.videoSettings.disabledVideoSource && !autoStreamConfig",
         "isStreamSource": "QGroundControl.videoManager.isStreamSource",
         "tilesShown": "QGroundControl.settingsManager.videoSettings.maxVideoTiles.rawValue > 0",
+        "usbCamera": "QGroundControl.videoManager.hasUvcCamera",
         "rtpLatencyVisible": "!QGroundControl.settingsManager.videoSettings.lowLatencyMode.rawValue",
         "gstreamer": "QGroundControl.settingsManager.videoSettings.videoBackend.rawValue === 0",
         "recordingEncoded": "QGroundControl.videoManager.isUvc || (isStreamSource && QGroundControl.videoManager.primaryStream.encodesRecordings)"
@@ -31,26 +32,26 @@
                 {
                     "control": "component",
                     "component": "UVCCameraFormatComboBox",
-                    "showWhen": "QGroundControl.videoManager.isUvc"
+                    "showWhen": "usbCamera"
                 },
                 {
                     "setting": "videoSettings.uvcCameraRotation",
                     "control": "combobox",
-                    "showWhen": "QGroundControl.videoManager.isUvc"
+                    "showWhen": "usbCamera"
                 },
                 {
                     "setting": "videoSettings.uvcCameraMirror",
-                    "showWhen": "QGroundControl.videoManager.isUvc"
+                    "showWhen": "usbCamera"
                 },
                 {
                     "setting": "videoSettings.uvcWhiteBalance",
                     "control": "combobox",
-                    "showWhen": "QGroundControl.videoManager.isUvc && QGroundControl.videoManager.uvcCamera.whiteBalanceAdjustable"
+                    "showWhen": "usbCamera && QGroundControl.videoManager.uvcCamera.whiteBalanceAdjustable"
                 },
                 {
                     "control": "component",
                     "component": "UVCControlSlider",
-                    "showWhen": "QGroundControl.videoManager.isUvc && (QGroundControl.videoManager.uvcCamera.maximumZoom > QGroundControl.videoManager.uvcCamera.minimumZoom)",
+                    "showWhen": "usbCamera && (QGroundControl.videoManager.uvcCamera.maximumZoom > QGroundControl.videoManager.uvcCamera.minimumZoom)",
                     "properties": {
                         "setting": "QGroundControl.settingsManager.videoSettings.uvcZoom",
                         "from": "QGroundControl.videoManager.uvcCamera.minimumZoom",
@@ -61,7 +62,7 @@
                 {
                     "control": "component",
                     "component": "UVCControlSlider",
-                    "showWhen": "QGroundControl.videoManager.isUvc && QGroundControl.videoManager.uvcCamera.exposureAdjustable",
+                    "showWhen": "usbCamera && QGroundControl.videoManager.uvcCamera.exposureAdjustable",
                     "properties": {
                         "setting": "QGroundControl.settingsManager.videoSettings.uvcExposureCompensation",
                         "stepSize": 0.5
@@ -70,7 +71,7 @@
                 {
                     "setting": "videoSettings.uvcFocusMode",
                     "control": "combobox",
-                    "showWhen": "QGroundControl.videoManager.isUvc && QGroundControl.videoManager.uvcCamera.focusAdjustable"
+                    "showWhen": "usbCamera && QGroundControl.videoManager.uvcCamera.focusAdjustable"
                 }
             ]
         },

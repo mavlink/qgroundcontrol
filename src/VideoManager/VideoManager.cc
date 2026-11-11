@@ -79,6 +79,7 @@ constexpr VideoSettingReactionEntry kVideoSettingReactions[] = {
     // Which sources there are, and what the camera source plays.
     {&VideoSettings::maxVideoTiles, VideoSettingReaction::Reconfigure},
     {&VideoSettings::uvcTileCamera, VideoSettingReaction::Reconfigure},
+    {&VideoSettings::uvcTileCameraAsMainPicture, VideoSettingReaction::Reconfigure},
     {&VideoSettings::videoConversionElement, VideoSettingReaction::RebuildSink},
     {&VideoSettings::disablePixelAspectRatio, VideoSettingReaction::RebuildSink},
     {&VideoSettings::forceCpuVideoPath, VideoSettingReaction::RebuildSink},
@@ -185,6 +186,11 @@ void VideoManager::_connectSource(VideoStreamController* source)
 
 void VideoManager::_connectSettings()
 {
+    // The choice of the camera as the main picture was of the camera the tile had: another one starts in the tile.
+    // Connected before the reactions, which then find both settings as they are to be.
+    (void) connect(_videoSettings->uvcTileCamera(), &Fact::rawValueChanged, this,
+                   [this] { _videoSettings->uvcTileCameraAsMainPicture()->setRawValue(false); });
+
     for (const VideoSettingReactionEntry& entry : kVideoSettingReactions) {
         Fact* const fact = (_videoSettings->*entry.fact)();
         switch (entry.reaction) {
@@ -544,14 +550,12 @@ void VideoManager::selectSource(VideoStreamController* source)
     }
     qCDebug(VideoManagerLog) << "select" << source->name();
 
+    // A stream takes the main picture back from the camera. The sources follow the setting as it changes.
+    _videoSettings->uvcTileCameraAsMainPicture()->setRawValue(source == _cameraSource);
     if (source == _cameraSource) {
-        _cameraTileOnMain = true;
-        _updateState();
         return;
     }
 
-    // A stream takes the main picture back from the camera.
-    _cameraTileOnMain = false;
     const auto stream =
         std::find_if(_otherStreams.cbegin(), _otherStreams.cend(), [source](const AdvertisedStream& other) {
             return other.streamInfo && (other.streamInfo == source->streamInfo());
@@ -614,28 +618,31 @@ void VideoManager::_updateStateNow()
         _uvcCamera->watchCameras();
     }
     const QString camera = (cameraWanted && _cameraAttached(cameraName)) ? cameraName : QString();
-    // A camera selected in its tile stays the main picture for as long as it plays beside the stream.
-    _cameraTileOnMain = _cameraTileOnMain && isStreamSource && !camera.isEmpty();
-    const bool cameraTile = isStreamSource && !camera.isEmpty() && !_cameraTileOnMain;
+    const bool hasUvcCamera = !camera.isEmpty();
+    // A camera selected in its tile is the main picture whenever it plays beside the stream: the setting outlasts a
+    // camera that is unplugged, and a restart.
+    const bool cameraOnMain =
+        isStreamSource && !camera.isEmpty() && _videoSettings->uvcTileCameraAsMainPicture()->rawValue().toBool();
+    const bool cameraTile = isStreamSource && !camera.isEmpty() && !cameraOnMain;
     const QString uvcVideoSourceID = cameraTile ? QString() : camera;
     const bool hasVideo = streamWanted && (_primaryStream->configured() || !uvcVideoSourceID.isEmpty());
     const QGCVideoStreamInfo* const thermalStreamInfo = _thermalStream->streamInfo();
     // The thermal stream goes with the primary stream's picture.
-    const bool hasThermal = thermalStreamInfo && thermalStreamInfo->isThermal() && !_cameraTileOnMain;
+    const bool hasThermal = thermalStreamInfo && thermalStreamInfo->isThermal() && !cameraOnMain;
 
     _cameraSource->setCamera(camera);
     _cameraSource->setDisplayName(camera);
     _cameraSource->setTile(cameraTile);
-    _primaryStream->setTile(_cameraTileOnMain);
+    _primaryStream->setTile(cameraOnMain);
     if (!autoStreamConfigured) {
         _primaryStream->setDisplayName(_videoSettings->videoSource()->enumStringValue());
     }
     // Without video there is no view to show tiles in. The camera, or the stream it took the main picture from, has
     // one of them.
-    _updateTileStreams(hasVideo ? (maxTiles - ((cameraTile || _cameraTileOnMain) ? 1 : 0)) : 0);
+    _updateTileStreams(hasVideo ? (maxTiles - ((cameraTile || cameraOnMain) ? 1 : 0)) : 0);
 
     for (VideoStreamController* source : std::as_const(_sources)) {
-        source->setEnabled(streamWanted && !_videoStopped && ((source != _thermalStream) || !_cameraTileOnMain));
+        source->setEnabled(streamWanted && !_videoStopped && ((source != _thermalStream) || !cameraOnMain));
     }
 
     if (autoStreamConfigured != _autoStreamConfigured) {
@@ -663,6 +670,10 @@ void VideoManager::_updateStateNow()
     if (hasThermal != _hasThermal) {
         _hasThermal = hasThermal;
         emit hasThermalChanged();
+    }
+    if (hasUvcCamera != _hasUvcCamera) {
+        _hasUvcCamera = hasUvcCamera;
+        emit hasUvcCameraChanged();
     }
     if (noVideoReason != _noVideoReason) {
         _noVideoReason = noVideoReason;

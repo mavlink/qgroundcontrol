@@ -48,6 +48,8 @@ public:
     DEFINE_SETTINGFACT(maxVideoTiles)
     /// The USB camera to show in a tile while the video source is a stream; empty for none.
     DEFINE_SETTINGFACT(uvcTileCamera)
+    /// The tile's USB camera is the main picture, and the stream is in its tile: what a tap on the camera's tile chose.
+    DEFINE_SETTINGFACT(uvcTileCameraAsMainPicture)
     DEFINE_SETTINGFACT(uvcCameraFormat)
     DEFINE_SETTINGFACT(uvcCameraRotation)
     DEFINE_SETTINGFACT(uvcCameraMirror)

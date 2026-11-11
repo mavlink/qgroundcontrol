@@ -296,6 +296,7 @@ void VideoManagerTest::init()
     _facts->set(_videoSettings->rtpJitterLatencyMs(), 80);
     _facts->set(_videoSettings->rtspAutoReconnect(), true);
     _facts->set(_videoSettings->rtspTimeout(), 8);
+    _facts->set(_videoSettings->uvcTileCameraAsMainPicture(), false);
 
     _videoManager = std::make_unique<VideoManager>();
     _videoManager->_receiverFactory = [](QObject* parent) { return new FakeVideoReceiver(parent); };
@@ -827,6 +828,7 @@ void VideoManagerTest::_testCameraSourcePlaysVideoSourceOrTileCamera()
         QCOMPARE(_videoManager->_cameraSource->displayName(), camera);
     }
     QCOMPARE(_videoManager->_cameraSource->tile(), tile);
+    QCOMPARE(_videoManager->hasUvcCamera(), !camera.isEmpty());
     // isUvc says that the camera is the main picture, which it isn't from a tile.
     const bool mainPicture = !camera.isEmpty() && !tile;
     QCOMPARE(_videoManager->isUvc(), mainPicture);
@@ -870,6 +872,7 @@ void VideoManagerTest::_testSelectedCameraTileTakesMainPicture()
     _settle();
     QCOMPARE(isUvcSpy.count(), 1);
     QVERIFY(_videoManager->isUvc());
+    QVERIFY(_videoSettings->uvcTileCameraAsMainPicture()->rawValue().toBool());
     QCOMPARE(_videoManager->uvcVideoSourceID(), camera);
     QVERIFY(!cameraSource->tile());
     QVERIFY(primaryStream->tile());
@@ -886,13 +889,14 @@ void VideoManagerTest::_testSelectedCameraTileTakesMainPicture()
     _videoManager->selectSource(primaryStream);
     _settle();
     QVERIFY(!_videoManager->isUvc());
+    QVERIFY(!_videoSettings->uvcTileCameraAsMainPicture()->rawValue().toBool());
     QVERIFY(cameraSource->tile());
     QVERIFY(!primaryStream->tile());
     QCOMPARE(_primary->activeChanges, 0);
     QVERIFY(_videoManager->hasThermal());
     QVERIFY(_thermal->active());
 
-    // The camera leaves the main picture when it is unplugged, too.
+    // The camera leaves the main picture while it is unplugged, too.
     _videoManager->selectSource(cameraSource);
     QVERIFY(_videoManager->isUvc());
     _videoManager->_cameraAttached = [](const QString&) { return false; };
@@ -903,6 +907,26 @@ void VideoManagerTest::_testSelectedCameraTileTakesMainPicture()
     QVERIFY(!_videoManager->uvcCamera()->active());
     // With no camera to show, both tiles are streams'.
     QCOMPARE(_videoManager->_sources.size(), 5);
+
+    // The choice is kept, as it is from one run to the next: plugged in again, the camera is the main picture again.
+    _videoManager->_cameraAttached = [camera](const QString& name) { return name == camera; };
+    expectLogMessage("Video.UVCCameraController", QtWarningMsg, QRegularExpression(QStringLiteral("No camera named")));
+    emit _videoManager->uvcCamera()->camerasChanged();
+    _settle();
+    verifyExpectedLogMessage();
+    QVERIFY(_videoManager->isUvc());
+    QVERIFY(primaryStream->tile());
+    QCOMPARE(_videoManager->_sources.size(), 4);
+
+    // It was of that camera: another one chosen for the tile plays in the tile.
+    _videoManager->_cameraAttached = [](const QString&) { return true; };
+    expectLogMessage("Video.UVCCameraController", QtWarningMsg, QRegularExpression(QStringLiteral("No camera named")));
+    _facts->set(_videoSettings->uvcTileCamera(), QStringLiteral("QGC Other Test Camera"));
+    _settle();
+    verifyExpectedLogMessage();
+    QVERIFY(!_videoManager->isUvc());
+    QVERIFY(cameraSource->tile());
+    QVERIFY(!primaryStream->tile());
 }
 
 void VideoManagerTest::_testDisableWhenDisarmed_data()

@@ -50,7 +50,8 @@ Tap a tile to make it the main picture:
   that camera's and that stream's. The stream that was the main picture takes the tile. Both streams keep playing: they
   aren't connected to again.
 - The USB camera becomes the main picture, and the stream takes the camera's tile. Tap the stream's tile to change them
-  back. This choice isn't saved: the stream is the main picture again the next time _QGroundControl_ starts.
+  back. This choice is saved: the camera is the main picture again the next time _QGroundControl_ starts, and each time
+  it is plugged back in, until you tap the stream's tile or choose another **USB Camera Tile**.
 
 A tile says **WAITING FOR VIDEO** until its video arrives and **VIDEO LOST - RECONNECTING** while its stream is lost, as
 the main picture does. The tiles are not shown in the video switcher window, and their streams aren't decoded while the

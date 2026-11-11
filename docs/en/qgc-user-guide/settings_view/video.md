@@ -10,7 +10,8 @@ Configure video streaming and recording settings.
   plugged back in.
 - **USB Camera Tile** (while the source is a stream, unless **Video Tiles** is 0) — **None**, or an attached USB camera
   to show in a [tile](../fly_view/video.md#video-tiles) beside the stream. It lists the cameras as **Source** does, and
-  a selected camera likewise stays selected while it is unplugged.
+  a selected camera likewise stays selected while it is unplugged. A camera chosen here starts in the tile, also when
+  the one before it was made the main picture with a tap on its tile.
 - **USB Camera Format** (USB cameras only) — the resolution, frame rate and pixel format the camera runs in, from the
   ones it offers, best first. **Auto** lets Qt choose: the highest resolution at 30 fps or more, often an MJPEG format,
   which costs CPU time to decode. YUYV and NV12 formats need no decoding but more USB bandwidth.
@@ -25,8 +26,8 @@ Configure video streaming and recording settings.
   or darken the automatic exposure, in EV, and focus automatically, at the hyperfocal distance or at infinity. Qt's
   Linux camera support can't set these.
 
-The camera takes these settings each time it starts. The USB camera settings show while a USB camera is the main
-picture: to change them for the camera in a tile, tap its tile first.
+The camera takes these settings each time it starts. The USB camera settings show while a USB camera plays, as the
+main picture or in a tile.
 
 When a MAVLink camera advertises its video stream, QGC plays that stream (and any thermal stream it advertises)
 instead of the configured source. Your source and connection settings are left unchanged and apply again once no

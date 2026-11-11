@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
@@ -10,6 +11,7 @@
 #include "QtMultimediaVideoReceiver.h"
 #include "ScreenToolsController.h"
 #include "SettingsManager.h"
+#include "UVCDevices.h"
 #include "VideoManager.h"
 #include "VideoSettings.h"
 #include "VideoStreamController.h"
@@ -545,6 +547,47 @@ void TopLevelViewsTest::_testRecordingEncodingSettingsVisible()
     stream->setReceiver(nullptr);
     QTRY_VERIFY(!codec->isVisible());
     QTRY_VERIFY(!quality->isVisible());
+
+    stopUI();
+}
+
+void TopLevelViewsTest::_testUsbCameraSettingsShowForTileCamera()
+{
+    // A stream source: a USB camera plays beside it in a tile, not as the main picture.
+    const auto restoreVideoSource = setVideoSourceWithRestore(VideoSettings::videoSourceRTSP);
+    VideoSettings* const videoSettings = SettingsManager::instance()->videoSettings();
+    VideoManager* const videoManager = VideoManager::instance();
+    const auto restoreCamera =
+        qScopeGuard([videoSettings, videoManager, tileCamera = videoSettings->uvcTileCamera()->rawValue()] {
+            videoManager->_cameraAttached = &UVCDevices::deviceExists;
+            videoSettings->uvcTileCamera()->setRawValue(tileCamera);
+        });
+
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QVERIFY(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewSettings")));
+    if (!_clickSettingsButton(QStringLiteral("Video"))) {
+        return;
+    }
+
+    QQuickItem* const videoPage = findVisibleItem(_rootItem, QStringLiteral("settingsPage_Video"));
+    QVERIFY(videoPage);
+    QQuickItem* const rotation = findLabelledControl(videoPage, videoSettings->uvcCameraRotation()->label());
+    QVERIFY(rotation);
+    QVERIFY(!rotation->isVisible());
+
+    // The camera the test attaches isn't one Qt knows.
+    ignoreLogMessage("Video.UVCCameraController", QtWarningMsg, QRegularExpression(QStringLiteral("No camera named")));
+    videoManager->_cameraAttached = [](const QString&) { return true; };
+    videoSettings->uvcTileCamera()->setRawValue(QStringLiteral("QGC Test Camera"));
+    QTRY_VERIFY(rotation->isVisible());
+    QVERIFY(!videoManager->isUvc());
+
+    videoSettings->uvcTileCamera()->setRawValue(QString());
+    QTRY_VERIFY(!rotation->isVisible());
 
     stopUI();
 }

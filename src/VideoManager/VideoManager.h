@@ -55,6 +55,8 @@ class VideoManager : public QObject
     Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged FINAL)
     Q_PROPERTY(bool fullScreen READ fullScreen WRITE setFullScreen NOTIFY fullScreenChanged FINAL)
     Q_PROPERTY(bool hasThermal READ hasThermal NOTIFY hasThermalChanged FINAL)
+    /// A USB camera plays, as the main picture (isUvc) or in a tile.
+    Q_PROPERTY(bool hasUvcCamera READ hasUvcCamera NOTIFY hasUvcCameraChanged FINAL)
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged FINAL)
     Q_PROPERTY(bool isStreamSource READ isStreamSource NOTIFY isStreamSourceChanged FINAL)
     Q_PROPERTY(bool isUvc READ isUvc NOTIFY isUvcChanged FINAL)
@@ -70,6 +72,7 @@ class VideoManager : public QObject
     /// VideoSettings::showTelemetryOverlay is off.
     Q_PROPERTY(QString telemetryOverlayText READ telemetryOverlayText NOTIFY telemetryOverlayTextChanged FINAL)
 
+    friend class TopLevelViewsTest;
     friend class VideoManagerInitTest;
     friend class VideoManagerTest;
     friend class VideoManagerVehicleTest;
@@ -103,7 +106,8 @@ public:
     Q_INVOKABLE void stopVideo();
     /// Makes @p source, one shown in a tile, the main picture. A stream of a vehicle's camera becomes that camera's
     /// current stream, and its camera the current camera, as the camera panel selects them. The USB camera takes
-    /// the main picture from the stream, which takes its tile, until a stream is selected again: nothing is stored.
+    /// the main picture from the stream, which takes its tile, until a stream is selected again or another camera is
+    /// chosen for the tile: VideoSettings::uvcTileCameraAsMainPicture stores it.
     Q_INVOKABLE void selectSource(VideoStreamController* source);
 
     void init(QQuickWindow* mainWindow);
@@ -130,6 +134,8 @@ public:
     bool fullScreen() const { return _fullScreen; }
 
     bool hasThermal() const { return _hasThermal; }
+
+    bool hasUvcCamera() const { return _hasUvcCamera; }
 
     bool hasVideo() const { return _hasVideo; }
 
@@ -163,6 +169,7 @@ signals:
     void decodingChanged();
     void fullScreenChanged();
     void hasThermalChanged();
+    void hasUvcCameraChanged();
     void hasVideoChanged();
     void isStreamSourceChanged();
     void isUvcChanged();
@@ -257,14 +264,13 @@ private:
     bool _updateStatePending = false;
     bool _fullScreen = false;
     bool _videoStopped = false;
-    /// The camera in a tile was selected: it is the main picture, and the primary stream is in a tile.
-    bool _cameraTileOnMain = false;
     /// How many tile sources there have been, which names the next one.
     int _tileStreamSerial = 0;
     int _tileRoom = -1;
     bool _disabledWhileDisarmed = false;
     bool _autoStreamConfigured = false;
     bool _hasThermal = false;
+    bool _hasUvcCamera = false;
     bool _hasVideo = false;
     bool _isStreamSource = false;
     NoVideoReason _noVideoReason = NoVideoReason::Waiting;

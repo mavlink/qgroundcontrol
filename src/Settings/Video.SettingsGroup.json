@@ -236,6 +236,14 @@
             "keywords": "usb camera,uvc,webcam,tile,second camera,multi-camera"
         },
         {
+            "name": "uvcTileCameraAsMainPicture",
+            "shortDesc": "Show the tile's USB camera as the main picture, with the video stream in its tile.",
+            "longDesc": "Set by a tap on the USB camera's tile, and cleared by a tap on the stream's tile or when another USB camera is chosen for the tile. While it is set, the camera is the main picture whenever it plays beside the stream, also after a restart or after the camera was unplugged.",
+            "type": "bool",
+            "default": false,
+            "label": "USB Camera Tile As Main Picture"
+        },
+        {
             "name": "uvcCameraFormat",
             "shortDesc": "Resolution, frame rate and pixel format the USB camera runs in.",
             "longDesc": "One of the formats the USB camera offers, such as \"1920x1080 30 fps MJPEG\". Empty (Auto), or a format the camera doesn't offer, lets Qt choose: the highest resolution at 30 fps or more. MJPEG formats cost CPU time to decode; YUYV and NV12 formats don't, but need more USB bandwidth.",
