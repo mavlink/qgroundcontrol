@@ -161,19 +161,39 @@ QGCGroupBox {
 
     GPSNoteLabel {
         objectName: "rtkSurveyCompletePrompt"
-        visible: root._surveyComplete
+        visible: surveySave.offered
         text: root._surveySaved
               ? qsTr("Survey position saved. Select Fixed position to start from it next time.")
               : qsTr("Survey complete. Save this position to start the base from it next time.")
     }
 
-    QGCButton {
-        objectName: "rtkSurveySaveButton"
-        Layout.fillWidth: true
+    ColumnLayout {
+        id: surveySave
+
+        // GPSManager saves the position of the application's receiver, so only a panel that shows it offers the save.
+        readonly property bool offered: root._surveyComplete && root.receiver === QGroundControl.gpsManager.receiver
+                                        && root.facts === root.receiver.facts
+        property bool failed: false
+
         Layout.minimumWidth: 0
-        wrapMode: Text.Wrap
-        visible: root._surveyComplete && !root._surveySaved
-        text: qsTr("Save Survey Position")
-        onClicked: QGroundControl.gpsManager.saveCurrentBasePosition()
+        spacing: ScreenTools.defaultFontPixelHeight / 4
+        visible: offered && !root._surveySaved
+        onVisibleChanged: failed = false
+
+        QGCButton {
+            objectName: "rtkSurveySaveButton"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            wrapMode: Text.Wrap
+            text: qsTr("Save Survey Position")
+            onClicked: surveySave.failed = !QGroundControl.gpsManager.saveCurrentBasePosition()
+        }
+
+        GPSNoteLabel {
+            objectName: "rtkSurveySaveFailed"
+            visible: surveySave.failed
+            warning: true
+            text: qsTr("The survey position could not be saved.")
+        }
     }
 }
