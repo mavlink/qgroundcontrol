@@ -161,13 +161,6 @@ private:
 
 bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned& baud)
 {
-    // A new configuration stops reporting the base, forgets survey progress and accepts any receiver time.
-    _ready = false;
-    _surveyClock.reset();
-    _surveyActive = false;
-    _lastEpoch.reset();
-    channel.stream().setEnabled(GPSFrameKind::RTCM3, false);
-    channel.stream().reset(GPSFrameKind::SBF);
     // The link keeps the rate selected or detected; otherwise it runs at Plan::BAUD_RATE.
     baud = config.linkBaud(baud, SBF::Plan::BAUD_RATE);
     if (!_configureBase(channel, config.base, baud)) {

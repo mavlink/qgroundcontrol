@@ -79,6 +79,8 @@ public:
 
     explicit GPSStreamDemux(const GPSStreamConfig& config);
     ~GPSStreamDemux();
+    GPSStreamDemux(GPSStreamDemux&&) noexcept;
+    GPSStreamDemux& operator=(GPSStreamDemux&&) noexcept;
 
     Q_DISABLE_COPY(GPSStreamDemux)
 

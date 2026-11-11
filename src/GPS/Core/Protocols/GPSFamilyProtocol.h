@@ -62,6 +62,7 @@ struct GPSReceiverFamily
     std::span<const unsigned> baudCandidates{};
     /// Rate passed to configure() when none is selected; zero requests detection.
     unsigned autoBaudRate = 0;
+    /// Makes the family's protocol; the runtime calls it for each configuration attempt.
     std::unique_ptr<GPSFamilyProtocol> (*create)() = nullptr;
     /// Receiver detection (GPSReceiverDetector) recognises the family's traffic with this, and its mismatch hints name
     /// the family; null when its traffic has no signature.
@@ -184,7 +185,8 @@ struct GPSNavigationDecode
 };
 
 /// One receiver family's protocol: its decoding, configuration and streaming services. The runtime owns the I/O,
-/// framing, deadlines, command evidence and sticky failure, so implementations hold only receiver state.
+/// framing, deadlines, command evidence and sticky failure, so implementations hold only receiver state. An object
+/// serves one configuration attempt: the runtime makes a new one for the next, so its members never need resetting.
 class GPSFamilyProtocol
 {
 public:
@@ -192,10 +194,10 @@ public:
 
     Q_DISABLE_COPY(GPSFamilyProtocol)
 
-    /// Configures the receiver. A zero @a baud requests detection; set it to the rate the link ends at. Any sticky
-    /// failure has been cleared before this starts. A failed configuration records its reason with
-    /// GPSCommandChannel::failControl(), failSequence() or failNoAnswer() and returns false; GPSDriver logs it, so the
-    /// family does not. @return true when the receiver is ready.
+    /// Configures the receiver, once per object: its members and the stream are as constructed, and any sticky failure
+    /// has been cleared. A zero @a baud requests detection; set it to the rate the link ends at. A failed configuration
+    /// records its reason with GPSCommandChannel::failControl(), failSequence() or failNoAnswer() and returns false;
+    /// GPSDriver logs it, so the family does not. @return true when the receiver is ready.
     [[nodiscard]] virtual bool configure(GPSCommandChannel& channel, GPSConfig config, unsigned& baud) = 0;
 
     /// Receiver detection's read-only identity query at the link's current rate (GPSReceiverDetector): sends it and
@@ -215,8 +217,8 @@ public:
     /// Publishes time-driven output before each decode, such as expired epochs.
     virtual void flush(GPSDecodeContext& context) { Q_UNUSED(context) }
 
-    /// Whether the receiver runs as the latest configure() set it up, such as a base sending corrections; false before
-    /// and while configuring. The runtime reports a receiver with a sticky failure as not ready.
+    /// Whether the receiver runs as configure() set it up, such as a base sending corrections; false before and while
+    /// configuring. The runtime reports a receiver with a sticky failure as not ready.
     [[nodiscard]] virtual bool receiverReady() const { return true; }
 
     /// Model and firmware reported during configuration; empty when unknown.
