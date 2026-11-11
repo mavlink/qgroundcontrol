@@ -182,6 +182,33 @@ void invalidCoordinates(GPSTestClock& clock)
     }
 }
 
+void invalidVelocity(GPSTestClock& clock)
+{
+    LoggedRuntime sbf(SBF::FAMILY, makeDecoderOnlyIO(clock));
+    PVTBody fix{};
+    fix.mode = 1;
+    fix.latitude = 0.5;
+    fix.longitude = 1;
+    fix.height = 10;
+    uint32_t tow = 1000;
+    // Publishes a usable position whose velocity component at @a offset is @a value.
+    auto check = [&](size_t offset, float value, bool valid) {
+        auto payload = bytes(fix);
+        QVERIFY(LittleEndian::write(payload, offset, value));
+        QVERIFY(sbf->consume(sbfBlock(SBF::BlockId::PVT_GEODETIC, payload, tow)).testFlag(GPSReceiveUpdate::Position));
+        tow += 1000;
+        QCOMPARE(sbf.position.navigation.fixType, GPSPositionReport::FixType::Fix3D);
+        QCOMPARE(sbf.position.velocityValid, valid);
+    };
+    // Vn, Ve and Vu.
+    for (const size_t offset : {30u, 34u, 38u}) {
+        check(offset, 600.0f, true);
+        for (const float invalid : {NAN, INFINITY, 600.1f, -2e10f}) {
+            check(offset, invalid, false);
+        }
+    }
+}
+
 // Captured and synthetic fixtures
 
 void independentValidity(GPSTestClock& clock)
@@ -505,6 +532,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"malformed-messages", malformedMessages},
     {"epoch-metadata", epochMetadata},
     {"invalid-coordinates", invalidCoordinates},
+    {"invalid-velocity", invalidVelocity},
     {"independent-validity", independentValidity},
     {"captured-blocks", capturedBlocks},
     {"confirmation-policy", confirmationPolicy},

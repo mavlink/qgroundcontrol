@@ -36,6 +36,17 @@ using QuectelCodec::number;
 using QuectelCodec::readback;
 using QuectelCodec::rejected;
 
+/// Whether the LG290P can run the base @a mode: fixed coordinates, or a survey-in within the plan's observation count
+/// and accuracy limits. It has no receiver-managed averaging.
+bool supportedBase(const GPSBaseStationConfig::Mode& mode)
+{
+    if (const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&mode)) {
+        return survey->duration <= Plan::MAXIMUM_SURVEY_DURATION &&
+               survey->accuracyMeters <= Plan::MAXIMUM_SURVEY_ACCURACY_METERS;
+    }
+    return std::holds_alternative<GPSBaseStationConfig::Fixed>(mode);
+}
+
 /// Configures an LG290P(03) as an RTK base: finds it at one of Plan::BAUD_RATES, or at the rate configure() gets when
 /// nonzero, which then reports the rate found. The receiver must run the requested role and base from its saved
 /// settings, verified after a restart; with consent to persistent changes, what differs is written, saved and
@@ -60,7 +71,7 @@ public:
 
     bool armDecodeOnly(const GPSConfig& config, GPSDecodeContext& context) override
     {
-        if (std::holds_alternative<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode)) {
+        if (!supportedBase(config.base.mode)) {
             return false;
         }
         _setBase(config.base.mode);
@@ -181,9 +192,7 @@ bool Protocol::Attempt::run(GPSConfig config, unsigned& baud)
     (void) _channel.flush();
     _protocol._startAttempt(_channel.stream());
     const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&config.base.mode);
-    if (std::holds_alternative<GPSBaseStationConfig::ReceiverAveraging>(config.base.mode) ||
-        (survey && (survey->duration > Plan::MAXIMUM_SURVEY_DURATION ||
-                    survey->accuracyMeters > Plan::MAXIMUM_SURVEY_ACCURACY_METERS))) {
+    if (!supportedBase(config.base.mode)) {
         return _fail(
             QStringLiteral("Unsupported LG290P configuration: use native 1 Hz observation count (maximum 86400) and "
                            "3D position accuracy threshold (maximum 1000 m), not receiver-managed survey"));

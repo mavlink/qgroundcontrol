@@ -257,8 +257,9 @@ bool Protocol::_applyPVTGeodetic(const SBF::PVTGeodetic& pvt, GPSDecodedPosition
     }
 
     // Any value beyond the specified maximum is invalid, not only the do-not-use value (-2*10^10).
+    const auto usable = [](float component) { return std::isfinite(component) && std::abs(component) <= 600.0f; };
     position.velocityValid = position.navigation.fixType > GPSPositionReport::FixType::NoFix && pvt.error == 0 &&
-                             !(fabsf(pvt.vn) > 600.0f || fabsf(pvt.ve) > 600.0f || fabsf(pvt.vu) > 600.0f);
+                             usable(pvt.vn) && usable(pvt.ve) && usable(pvt.vu);
 
     const bool coordinatesValid = std::isfinite(pvt.latitude) && std::abs(pvt.latitude) <= std::numbers::pi / 2 &&
                                   std::isfinite(pvt.longitude) && std::abs(pvt.longitude) <= std::numbers::pi &&
