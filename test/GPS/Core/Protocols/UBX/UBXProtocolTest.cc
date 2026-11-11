@@ -968,6 +968,9 @@ void legacyRTCMActivation(GPSTestClock& clock)
                               .accuracyMeters = 1}};
                 QCOMPARE(f.configure(), scenario.active);
                 QCOMPARE(f.driver.receiverReady(), scenario.active);
+                // The failure names the missing output, whichever command was the last one.
+                QCOMPARE(f.driver.errorDetail(),
+                         (scenario.active ? QString() : QStringLiteral("u-blox receiver did not start RTCM output")));
             } else {
                 QVERIFY(f.configure());
                 f.log.clear();
@@ -989,6 +992,44 @@ void legacyRTCMActivation(GPSTestClock& clock)
             QCOMPARE(f.receiver.model.messageRates.contains(Msg::RTCM3_1077.value()),
                      (std::ranges::find(scenario.unsupported, Msg::RTCM3_1077.value()) == scenario.unsupported.end()));
         }
+    }
+}
+
+/// A receiver moved to another baud rate is identified again. One that then reports another board or protocol
+/// generation, or rejects the change late, ends the configuration with that reason and gets no more commands.
+void baudChangeVerification(GPSTestClock& clock)
+{
+    const QString identityChanged = QStringLiteral("u-blox receiver reported a different identity at 115200 baud");
+
+    const struct
+    {
+        std::function<void(UBXReceiver&)> atNewBaud;
+        QString detail;
+    } cases[] = {
+        {[](UBXReceiver& receiver) { receiver.model.hardware = "000B0000"; }, identityChanged},
+        {[](UBXReceiver& receiver) { receiver.model.protocol = "20.30"; }, identityChanged},
+        {[](UBXReceiver& receiver) { receiver.queueReply(ubxBytes(Msg::ACK_NAK.value(), {0x06, 0x8a})); },
+         QStringLiteral("u-blox receiver rejected the change to 115200 baud")},
+    };
+
+    for (const auto& scenario : cases) {
+        clock.reset(GPSTestClock::START_US);
+        UBXReceiver receiver(clock);
+        receiver.model.receiverBaud = 9600;
+        receiver.model.protocol = "27.31";
+        receiver.model.loseBaudAck = true;
+        receiver.setBaudrateHandler([&](unsigned baud) -> std::optional<bool> {
+            if (baud == UBX::Plan::BASE_BAUD) {
+                scenario.atNewBaud(receiver);
+            }
+            return std::nullopt;
+        });
+        GPSProtocolRuntime driver(UBX::FAMILY, ubxLink(receiver), receiver.observer());
+        unsigned baud = 0;
+        QVERIFY(!driver.configure({}, baud));
+        QCOMPARE(driver.error(), GPSProtocolError::Protocol);
+        QCOMPARE(driver.errorDetail(), scenario.detail);
+        QCOMPARE(receiver.log.commands.back().command, UBX::messageName(Msg::MON_VER));
     }
 }
 
@@ -1584,6 +1625,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"checked-wire-codecs", checkedWireCodecs},
     {"optional-command-write-evidence", optionalCommandWriteEvidence},
     {"legacy-rtcm-activation", legacyRTCMActivation},
+    {"baud-change-verification", baudChangeVerification},
     {"late-optional-valset-reply", lateOptionalValsetReply},
     {"acknowledged-and-rejected-in-one-read", acknowledgedAndRejectedInOneRead},
     {"rejected-optional-batch", rejectedOptionalBatch},

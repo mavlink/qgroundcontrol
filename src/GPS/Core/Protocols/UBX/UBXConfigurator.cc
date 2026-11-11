@@ -23,6 +23,13 @@ using Plan::NakPolicy;
 
 namespace UBX {
 
+namespace {
+
+/// A base whose RTCM activation failed; the streaming service adds what the activation followed.
+constexpr QLatin1StringView RTCM_ACTIVATION_FAILURE("u-blox receiver did not start RTCM output");
+
+}  // namespace
+
 bool Protocol::_baseStationUnsupported() const
 {
     const auto& identity = _identity;
@@ -159,7 +166,13 @@ bool Protocol::_setUpPort(GPSCommandChannel& channel, unsigned detectedBaud, uns
     if (!_identify(channel)) {
         return false;
     }
-    if (_identity.board != identifiedBoard || _identity.protocol27 != modern || _controller.lateRejection()) {
+    if (_controller.lateRejection()) {
+        channel.failControl(QStringLiteral("u-blox receiver rejected the change to %1 baud").arg(desiredBaud));
+        return false;
+    }
+    if (_identity.board != identifiedBoard || _identity.protocol27 != modern) {
+        channel.failControl(
+            QStringLiteral("u-blox receiver reported a different identity at %1 baud").arg(desiredBaud));
         return false;
     }
     if (modern && !acknowledged) {
@@ -258,7 +271,12 @@ bool Protocol::_restartLegacySurveyIn(GPSCommandChannel& channel)
         if (!_sendAcknowledged(channel, Msg::CFG_TMODE3, timeMode)) {
             return false;
         }
-        return _activateRTCMOutput(channel) == RTCMActivation::Active;
+        // The legacy activation fails on the outputs it confirmed, so its last command need not have failed.
+        const auto activation = _activateRTCMOutput(channel);
+        if (activation == RTCMActivation::Failed) {
+            channel.failControl(QString(RTCM_ACTIVATION_FAILURE));
+        }
+        return activation == RTCMActivation::Active;
     }
     const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&_base.mode);
     if (!survey) {
@@ -415,7 +433,7 @@ void Protocol::serviceStreaming(GPSCommandChannel& channel)
         // decoded meanwhile do not request another.
         requests.rtcmActivation = activation == RTCMActivation::Unanswered;
         if (activation == RTCMActivation::Failed) {
-            channel.failControl(QStringLiteral("u-blox receiver did not start RTCM output after the survey-in"));
+            channel.failControl(QStringLiteral("%1 after the survey-in").arg(RTCM_ACTIVATION_FAILURE));
         }
     }
     if (const uint16_t message = std::exchange(requests.disableMessage, 0)) {
