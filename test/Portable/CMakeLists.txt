@@ -50,6 +50,9 @@ target_sources(
 target_include_directories(QGCCommandLineParserTest PRIVATE ${PROJECT_SOURCE_DIR}/src/Utilities)
 target_link_libraries(QGCCommandLineParserTest PRIVATE QGCLoggingCategory)
 
+qgc_add_portable_test(QGCFormatTest ../Utilities/Format/QGCFormatTest)
+target_link_libraries(QGCFormatTest PRIVATE QGCFormat)
+
 qgc_add_portable_test(QGCMathTest ../Utilities/QGCMathTest)
 target_link_libraries(QGCMathTest PRIVATE QGCMath)
 
