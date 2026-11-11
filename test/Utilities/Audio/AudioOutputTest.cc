@@ -2,6 +2,15 @@
 
 #include "AudioOutput.h"
 
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#include <QtCore/QDir>
+#include <QtCore/QFile>
+#include <QtCore/QScopeGuard>
+#include <QtCore/QTemporaryDir>
+
+#include "PiperTtsEngine.h"
+#endif
+
 void AudioOutputTest::_testSpokenReplacements()
 {
     QString result = AudioOutput::_fixTextMessageForAudio(QStringLiteral("-10.5m, -10.5m. -10.5 m"));
@@ -57,6 +66,50 @@ void AudioOutputTest::_abbreviationsReplacedAtTokenBoundaries()
     QFETCH(QString, expected);
 
     QCOMPARE(AudioOutput::_replaceAbbreviations(input), expected);
+}
+
+void AudioOutputTest::_piperAvailabilityRunsNoCandidate()
+{
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    // A candidate that records being run, and a voice, so that Piper counts as installed.
+    const QString marker = dir.filePath(QStringLiteral("ran"));
+    QFile candidate(dir.filePath(QStringLiteral("piper-tts")));
+    QVERIFY(candidate.open(QIODevice::WriteOnly));
+    (void) candidate.write("#!/bin/sh\ntouch \"" + marker.toUtf8() + "\"\necho --model\n");
+    candidate.close();
+    QVERIFY(candidate.setPermissions(candidate.permissions() | QFileDevice::ExeOwner));
+
+    QVERIFY(QDir(dir.path()).mkdir(QStringLiteral("piper-voices")));
+    QFile model(dir.filePath(QStringLiteral("piper-voices/test.onnx")));
+    QVERIFY(model.open(QIODevice::WriteOnly));
+    model.close();
+    QFile config(model.fileName() + QStringLiteral(".json"));
+    QVERIFY(config.open(QIODevice::WriteOnly));
+    (void) config.write(R"({"language": {"code": "en_US"}})");
+    config.close();
+
+    const QByteArray path = qgetenv("PATH");
+    const bool dataDirsSet = qEnvironmentVariableIsSet("XDG_DATA_DIRS");
+    const QByteArray dataDirs = qgetenv("XDG_DATA_DIRS");
+    const auto restoreEnvironment = qScopeGuard([&]() {
+        (void) qputenv("PATH", path);
+        if (dataDirsSet) {
+            (void) qputenv("XDG_DATA_DIRS", dataDirs);
+        } else {
+            (void) qunsetenv("XDG_DATA_DIRS");
+        }
+    });
+    QVERIFY(qputenv("PATH", dir.path().toUtf8() + ':' + path));
+    QVERIFY(qputenv("XDG_DATA_DIRS", dir.path().toUtf8()));
+
+    QVERIFY(PiperTtsEngine::isAvailable());
+    QVERIFY2(!QFile::exists(marker), "Checking for Piper while the application starts must not run it");
+#else
+    QSKIP("Piper text-to-speech is only built on Linux");
+#endif
 }
 
 #include "UnitTest.h"

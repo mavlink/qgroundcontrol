@@ -1,7 +1,11 @@
 #pragma once
 
+#include <chrono>
+
+#include <QtCore/QByteArray>
 #include <QtCore/QList>
 #include <QtCore/QString>
+#include <QtCore/QStringList>
 #include <QtCore/QTemporaryDir>
 #include <QtTextToSpeech/QTextToSpeechEngine>
 #include <QtTextToSpeech/QVoice>
@@ -20,7 +24,8 @@ public:
     explicit PiperTtsEngine(QObject* parent = nullptr);
     ~PiperTtsEngine() override;
 
-    /// True if a Piper executable and at least one voice model are installed.
+    /// True if an executable that may be Piper and at least one voice model are installed. The engine reports an
+    /// error after it is created if none of the executables turns out to be Piper.
     [[nodiscard]] static bool isAvailable();
 
     QTextToSpeech::Capabilities capabilities() const override;
@@ -48,11 +53,13 @@ public:
     QString errorString() const override;
 
 private:
-    static QString _findExecutable();
-    static QString _searchExecutable();
-    static bool _isPiperTts(const QString& path);
+    static QStringList _findCandidates();
     static QList<QVoice> _findVoices();
+    static QList<QVoice> _searchVoices();
 
+    /// Runs the next candidate with --help, without blocking, to tell Piper from other programs with its name.
+    void _verifyNextCandidate();
+    void _candidateVerified(const QString& path, bool isPiperTts);
     void _startProcess();
     void _stopProcess();
     void _readProcessOutput();
@@ -61,13 +68,18 @@ private:
     void _setState(QTextToSpeech::State state);
     void _setError(QTextToSpeech::ErrorReason reason, const QString& errorString);
 
+    static constexpr std::chrono::seconds kVerifyTimeout{5};
+
+    QStringList _candidates;
     QString _executable;
     QList<QVoice> _voices;
     QVoice _voice;
     QTemporaryDir _outputDir;
+    QProcess* _probe = nullptr;
     QProcess* _process = nullptr;
     QSoundEffect* _player = nullptr;
     QString _playingFile;
+    QByteArray _unsentInput;
     int _pendingCount = 0;
     int _discardCount = 0;
     double _volume = 1.0;
