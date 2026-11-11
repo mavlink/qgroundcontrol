@@ -37,7 +37,7 @@ QVideoFrameFormat applyCropMeta(QVideoFrameFormat format, GstBuffer* buffer);
 struct MappedFrame
 {
     QVideoFrame frame;
-    HwVideoBufferPath gpuPath = HwVideoBufferPath::None;  ///< None for a CPU frame
+    HwVideoBufferPath gpuPath = HwVideoBufferPath::None;  ///< None for a CPU frame, and for one that failed to map
     bool demoted = false;      ///< A GPU path was requested for this stream but this frame fell back to CPU.
     bool noCpuLayout = false;  ///< Dropped instead of read as linear rows, which would show it scrambled.
 };

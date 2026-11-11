@@ -1060,10 +1060,37 @@ void GstQgcSinkTest::_testQgcQVideoSinkForwardsTimestamps()
     QCOMPARE(frame.endTime(), qint64(-1));
 }
 
+void GstQgcSinkTest::_testQgcQVideoSinkMapFailuresPostElementError_data()
+{
+    QTest::addColumn<QString>("memoryFeature");  // empty: a sink without gpu-zerocopy, on system memory caps
+    QTest::addColumn<int>("backend");
+    QTest::addColumn<QString>("stage");
+
+    QTest::newRow("cpu") << QString() << int(GstQgc::RenderBackend::OpenGL) << QStringLiteral("CPU path");
+    // The frames a GPU path was asked for end up on the CPU too, which the error must not pass off as the CPU path.
+#if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+    QTest::newRow("gpu caps") << QStringLiteral("memory:DMABuf") << int(GstQgc::RenderBackend::OpenGL)
+                              << QStringLiteral("CPU fallback from a GPU path");
+#elif defined(QGC_HAS_GST_D3D11_GPU_PATH)
+    QTest::newRow("gpu caps") << QStringLiteral("memory:D3D11Memory") << int(GstQgc::RenderBackend::Direct3D11)
+                              << QStringLiteral("CPU fallback from a GPU path");
+#endif
+}
+
 void GstQgcSinkTest::_testQgcQVideoSinkMapFailuresPostElementError()
 {
+    QFETCH(QString, memoryFeature);
+    QFETCH(int, backend);
+    QFETCH(QString, stage);
+
+    // A render target that imports the row's GPU memory, so the sink accepts its caps.
+    const GstQgc::ScopedSinkEnvironmentForTest environment(
+        {.target = {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = true},
+         .dmaBufDisplay = kFakeQtEglDisplay});
     QVideoSink videoSink;
-    GstQgcTest::SinkHarness harness(&videoSink);
+    const QByteArray feature = memoryFeature.toUtf8();
+    GstQgcTest::SinkHarness harness(&videoSink, /*gpuZeroCopy=*/!feature.isEmpty(),
+                                    feature.isEmpty() ? nullptr : feature.constData());
     QVERIFY(harness.isReady());
 
     // Periodic per-failure warnings are rate-limited by process-global counters, so their count is not fixed.
@@ -1092,7 +1119,8 @@ void GstQgcSinkTest::_testQgcQVideoSinkMapFailuresPostElementError()
     const GStreamer::GCharPtr debug = GStreamer::adoptGChar(rawDebug);
     QVERIFY(g_error_matches(error.get(), GST_STREAM_ERROR, GST_STREAM_ERROR_FAILED));
     const QString details = QString::fromUtf8(debug ? debug.get() : "");
-    QVERIFY2(details.contains(QStringLiteral("consecutive map failures")), qPrintable(details));
+    QVERIFY2(details.contains(QStringLiteral("consecutive map failures (%1, format BGRA)").arg(stage)),
+             qPrintable(details));
 }
 
 void GstQgcSinkTest::_testFrameDeliveryKeepsTheLatestFrame()

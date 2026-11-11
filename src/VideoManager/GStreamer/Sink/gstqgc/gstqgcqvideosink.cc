@@ -186,6 +186,15 @@ bool nothing_to_import(GstBuffer* buf)
     return mem && gst_memory_is_type(mem, GST_ALLOCATOR_SYSMEM);
 }
 
+/// Where @p mapped, which has no frame, ended up; for the element error. Its gpuPath is None whatever was tried.
+const char* map_failure_stage(const MappedFrame& mapped)
+{
+    if (mapped.noCpuLayout) {
+        return "tiled layout that no GPU path imported";
+    }
+    return mapped.demoted ? "CPU fallback from a GPU path" : "CPU path";
+}
+
 }  // namespace
 
 /// get_caps narrows this to the formats and memory the sink takes for its render target.
@@ -395,10 +404,9 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
             const quint64 failures = p->path_session.consecutiveMapFailures();
             const char* const format = gst_video_format_to_string(GST_VIDEO_INFO_FORMAT(&p->video_info));
             // Without an element error upstream reports only a generic "Internal data stream error".
-            GST_ELEMENT_ERROR(
-                self, STREAM, FAILED, ("Video frames could not be mapped for display"),
-                ("%" G_GUINT64_FORMAT " consecutive map failures (path %s, format %s)", static_cast<guint64>(failures),
-                 GstHw::toString(mapped.gpuPath), format ? format : "unknown"));
+            GST_ELEMENT_ERROR(self, STREAM, FAILED, ("Video frames could not be mapped for display"),
+                              ("%" G_GUINT64_FORMAT " consecutive map failures (%s, format %s)",
+                               static_cast<guint64>(failures), map_failure_stage(mapped), format ? format : "unknown"));
             return GST_FLOW_ERROR;
         }
         return GST_FLOW_OK;  // drop transient failure, keep the stream alive

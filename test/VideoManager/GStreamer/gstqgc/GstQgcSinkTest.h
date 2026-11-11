@@ -35,6 +35,7 @@ private slots:
     void _testQgcQVideoSinkDropsUndeliveredFrame_data();
     void _testQgcQVideoSinkDropsUndeliveredFrame();
     void _testQgcQVideoSinkForwardsTimestamps();
+    void _testQgcQVideoSinkMapFailuresPostElementError_data();
     void _testQgcQVideoSinkMapFailuresPostElementError();
     void _testQgcVideoSinkBinQVideoSinkAccessor();
     void _testCpuZeroCopyFrameRejectsWritableMap();
