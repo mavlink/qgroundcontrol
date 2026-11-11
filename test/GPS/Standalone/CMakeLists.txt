@@ -14,8 +14,9 @@ file(READ "${QGC_SOURCE_ROOT}/.github/build-config.json" _qgc_build_config)
 string(JSON _qgc_qt_minimum_version GET "${_qgc_build_config}" qt minimum_version)
 
 option(QGC_NO_SERIAL_LINK "Build without serial receiver support" OFF)
-option(QGC_GPS_LIBFUZZER
-       "Build the libFuzzer harnesses, with the GPS libraries and their consumers under ASan and UBSan" OFF
+option(
+    QGC_GPS_LIBFUZZER "Build the libFuzzer harnesses, with the GPS libraries and their consumers under ASan and UBSan"
+    OFF
 )
 set(_qgc_qt_components Core Network)
 if(NOT QGC_NO_SERIAL_LINK)
@@ -52,7 +53,11 @@ if(QGC_GPS_LIBFUZZER)
         message(FATAL_ERROR "QGC_GPS_LIBFUZZER requires a Clang driver with libFuzzer and sanitizer runtimes")
     endif()
     foreach(target QGCGPSCore QGCNTRIPHttp)
-        target_compile_options(${target} PUBLIC -fsanitize=fuzzer-no-link,address,undefined -fno-omit-frame-pointer)
+        target_compile_options(
+            ${target} PUBLIC
+            -fsanitize=fuzzer-no-link,address,undefined
+            -fno-omit-frame-pointer
+        )
         target_link_options(${target} INTERFACE -fsanitize=address,undefined)
     endforeach()
 endif()

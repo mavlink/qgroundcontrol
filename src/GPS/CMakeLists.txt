@@ -7,9 +7,21 @@
 
 add_subdirectory(Core)
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE GPSManager.cc GPSManager.h GPSSettingsBindings.cc GPSSettingsBindings.h)
+target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE
+        GPSManager.cc
+        GPSManager.h
+        GPSSettingsBindings.cc
+        GPSSettingsBindings.h
+)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSCore GPSModule)
+target_link_libraries(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE
+        QGCGPSCore
+        GPSModule
+)
 
 add_subdirectory(Corrections)
 add_subdirectory(NTRIP)

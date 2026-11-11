@@ -6,8 +6,7 @@
 # ============================================================================
 
 qt_add_library(
-    QGCNTRIPHttp
-    STATIC
+    QGCNTRIPHttp STATIC
     NTRIPConfiguration.cc
     NTRIPConfiguration.h
     NTRIPError.h
@@ -18,11 +17,20 @@ qt_add_library(
     NTRIPTlsPolicy_p.h
 )
 add_library(QGC::NTRIPHttp ALIAS QGCNTRIPHttp)
-set_target_properties(QGCNTRIPHttp PROPERTIES AUTOMOC ON)
+set_target_properties(
+    QGCNTRIPHttp
+    PROPERTIES
+        AUTOMOC ON
+)
 target_compile_features(QGCNTRIPHttp PUBLIC cxx_std_20)
 target_include_directories(QGCNTRIPHttp PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(
     QGCNTRIPHttp
-    PUBLIC Qt6::Core Qt6::Network QGCTiming
-    PRIVATE QGCLoggingCategory QGCNetworkClient
+    PUBLIC
+        Qt6::Core
+        Qt6::Network
+        QGCTiming
+    PRIVATE
+        QGCLoggingCategory
+        QGCNetworkClient
 )
