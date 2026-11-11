@@ -44,9 +44,9 @@ target_include_directories(
     QGCLocation
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/..
-        ${CMAKE_CURRENT_SOURCE_DIR}/../FactSystem
-        ${CMAKE_CURRENT_SOURCE_DIR}/../Settings
+        ${CMAKE_CURRENT_SOURCE_DIR}/../..
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../FactSystem
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../Settings
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCLocation)

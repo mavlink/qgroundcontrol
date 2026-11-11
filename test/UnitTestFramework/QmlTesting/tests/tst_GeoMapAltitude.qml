@@ -1,7 +1,7 @@
 import QtQuick
 import QtTest
 
-import "../../../../src/GeoMap/GeoMapAltitude.js" as GeoMapAltitude
+import "../../../../src/Mapping/GeoMap/GeoMapAltitude.js" as GeoMapAltitude
 
 /// Tests where GeoMap draws a mission item while its terrain query is pending, and where a dragged marker lands.
 TestCase {

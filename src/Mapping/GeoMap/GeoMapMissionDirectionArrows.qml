@@ -17,7 +17,7 @@ import QGroundControl.Controls
 /// entry in MissionController.directionArrows (added to the second flight
 /// path segment and every 5 segments thereafter, regardless of simple vs
 /// complex item — see MissionController::_recalcFlightPathSegments),
-/// mirroring the MapLineArrow Repeater in src/FlightMap/MapItems/PlanMapItems.qml.
+/// mirroring the MapLineArrow Repeater in src/Mapping/FlightMap/MapItems/PlanMapItems.qml.
 Item {
     id: root
 

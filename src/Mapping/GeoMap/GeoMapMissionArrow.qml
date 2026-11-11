@@ -12,7 +12,7 @@ import QtQuick
 /// Direction-indicator chevron for complex item visuals, positioned and
 /// rotated in screen space (not anchored via GeoMapItem): GeoMap's 2D camera
 /// heading is user-rotatable, so a geographic azimuth (as used by
-/// src/FlightMap/MapItems/MapLineArrow.qml) would point the wrong way on
+/// src/Mapping/FlightMap/MapItems/MapLineArrow.qml) would point the wrong way on
 /// screen once the map is rotated. Callers derive screenPoint/heading from
 /// already-projected GeoMapProjectedPath.screenPoints (see
 /// GeoMapSegmentArrow.qml), avoiding a second projector per arrow.

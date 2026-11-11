@@ -47,8 +47,6 @@ add_subdirectory(Comms)
 add_subdirectory(FactSystem)
 add_subdirectory(FirmwarePlugin)
 add_subdirectory(FlyView)
-add_subdirectory(FlightMap)
-add_subdirectory(GeoMap)
 add_subdirectory(FollowMe)
 add_subdirectory(Gimbal)
 add_subdirectory(GPS)
@@ -56,25 +54,20 @@ add_subdirectory(Utilities)
 # Must be added after Utilities — links QGCLogging/QGCFileSystem/QGCNetwork/QGCCompression.
 add_subdirectory(LogManager)
 add_subdirectory(Joystick)
-add_subdirectory(MapTiles)
 add_subdirectory(MAVLink)
 add_subdirectory(MissionManager)
 add_subdirectory(PlanView)
 add_subdirectory(QmlControls)
 add_subdirectory(Settings)
-add_subdirectory(Terrain)
 add_subdirectory(AppSettings)
 add_subdirectory(FirstRunPromptDialogs)
 add_subdirectory(Toolbar)
 add_subdirectory(Vehicle)
 add_subdirectory(VideoManager)
-add_subdirectory(Viewer3D)
+add_subdirectory(Mapping)
 
 # Platform-specific
 add_subdirectory(Android)
-
-# Qt plugins
-add_subdirectory(QtLocationPlugin)
 
 # ============================================================================
 # Main Application Sources

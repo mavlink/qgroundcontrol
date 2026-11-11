@@ -1,7 +1,7 @@
 # ============================================================================
 # Map Tiles Library
 # Map tile providers and the tile cache. Must not depend on QtLocation: it
-# stays when the QtLocation plugin (src/QtLocationPlugin) is removed.
+# stays when the QtLocation plugin (src/Mapping/QtLocationPlugin) is removed.
 # ============================================================================
 
 qt_add_library(
@@ -72,12 +72,12 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/Providers
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/../FactSystem
-        ${CMAKE_CURRENT_SOURCE_DIR}/../QmlControls
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../FactSystem
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../QmlControls
         ${CMAKE_CURRENT_SOURCE_DIR}/../Terrain
         ${CMAKE_CURRENT_SOURCE_DIR}/../Terrain/Providers
-        ${CMAKE_CURRENT_SOURCE_DIR}/../Settings
-        ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../Settings
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../Utilities
 )
 
 # Qt serves the headers of all its modules from one include root, so <QtLocation/...> resolves without

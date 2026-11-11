@@ -58,6 +58,7 @@ src/
 ├── MissionManager/   # Mission planning
 ├── MAVLink/          # Protocol handling
 ├── VideoManager/     # Video pipeline (GStreamer)
+├── Mapping/          # Map tiles, terrain data and the map views
 ├── FlyView/          # In-flight UI
 ├── PlanView/         # Mission planning UI
 ├── QmlControls/      # Reusable QML components
