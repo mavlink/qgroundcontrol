@@ -20,13 +20,16 @@ QGC_LOGGING_CATEGORY(GPSReceiverConnectionPolicyLog, "GPS.Receiver.GPSReceiverCo
 
 GPSReceiverConnectionPolicy::GPSReceiverConnectionPolicy(GPSReceiverConnector& receiver,
                                                          const GPSReceiverConfiguration& configuration,
+                                                         const GPSReceiverConnectability& connectability,
                                                          RuntimeScheduler* scheduler)
     : _receiver(receiver)
     , _configuration(configuration)
+    , _connectability(connectability)
     , _scheduler(scheduler)
 {}
 
-GPSReceiverConnectability GPSReceiverConnectionPolicy::connectability(const GPSReceiverConfiguration& configuration)
+GPSReceiverConnectability GPSReceiverConnectionPolicy::connectability(const GPSReceiverConfiguration& configuration,
+                                                                      bool allowPersistentChanges)
 {
     const bool configuredBase = configuration.receiverRole == RTKSettings::ConfiguredBase;
     const auto connection = configuration.effectiveConnectionType();
@@ -76,8 +79,9 @@ GPSReceiverConnectability GPSReceiverConnectionPolicy::connectability(const GPSR
     } else if (!result.baseModeSupported) {
         result.error = gpsReceiverConfigErrorText(GPSReceiverConfigError::UnsupportedBaseMode);
     } else {
-        // The request a connection sends, without the flash-save consent only the user's Connect may add.
-        (void) gpsReceiverConfigFor(configuration.base, *result.type, baudRate, false, &result.error);
+        // A UDP connection only receives, so it never carries the consent.
+        result.request = gpsReceiverConfigFor(configuration.base, *result.type, baudRate,
+                                              allowPersistentChanges && connection != RTKSettings::Udp, &result.error);
     }
     return result;
 }
@@ -223,7 +227,7 @@ void GPSReceiverConnectionPolicy::update()
 
 bool GPSReceiverConnectionPolicy::_hasSavedReceiver() const
 {
-    return connectability(_configuration).hasEndpoint;
+    return _connectability.hasEndpoint;
 }
 
 bool GPSReceiverConnectionPolicy::_discoveryEnabled() const
@@ -241,8 +245,8 @@ bool GPSReceiverConnectionPolicy::_discoveryEnabled() const
 void GPSReceiverConnectionPolicy::_updateSaved()
 {
     // Neither its port nor a retry is waited for when the configuration cannot connect.
-    if (const QString error = connectability(_configuration).error; !error.isEmpty()) {
-        _rejectConfiguration(error);
+    if (!_connectability.error.isEmpty()) {
+        _rejectConfiguration(_connectability.error);
         return;
     }
     if (_configuration.effectiveConnectionType() == RTKSettings::Serial) {
@@ -285,7 +289,9 @@ bool GPSReceiverConnectionPolicy::_serialDeviceAvailable([[maybe_unused]] const 
 
 bool GPSReceiverConnectionPolicy::_connectConfigured(bool allowPersistentChanges)
 {
-    const GPSReceiverConnectability check = connectability(_configuration);
+    // The consent is part of the request, so the request with it is built and checked for this attempt.
+    const GPSReceiverConnectability check =
+        allowPersistentChanges ? connectability(_configuration, true) : _connectability;
     if (!check.type || !check.error.isEmpty()) {
         _receiver.setConnectionError(check.error);
         return false;
@@ -294,10 +300,10 @@ bool GPSReceiverConnectionPolicy::_connectConfigured(bool allowPersistentChanges
     const auto connection = _configuration.effectiveConnectionType();
     if (connection == RTKSettings::Tcp) {
         return _receiver.connectTcp(_configuration.tcpHost.trimmed(), static_cast<quint16>(_configuration.tcpPort),
-                                    type, allowPersistentChanges);
+                                    type, check.request);
     }
     if (connection == RTKSettings::Udp) {
-        return _receiver.connectUdp(static_cast<quint16>(_configuration.udpPort), type);
+        return _receiver.connectUdp(static_cast<quint16>(_configuration.udpPort), type, check.request);
     }
 #ifndef QGC_NO_SERIAL_LINK
     // What follows depends on the devices present, so automatic connection retries it.
@@ -311,9 +317,7 @@ bool GPSReceiverConnectionPolicy::_connectConfigured(bool allowPersistentChanges
         _receiver.setConnectionError(tr("The selected serial device is already in use."));
         return false;
     }
-    // Zero asks configurable receivers to detect the rate.
-    return _receiver.connectSerial(device, type, _configuration.serialBaudRate, allowPersistentChanges,
-                                   std::move(claim));
+    return _receiver.connectSerial(device, type, check.request, std::move(claim));
 #else
     return false;
 #endif
@@ -366,7 +370,7 @@ void GPSReceiverConnectionPolicy::_connectDiscovered(const QString& device)
     _autoPort = device;
     _waitingPorts.clear();
     _retryDeadlineUs.reset();
-    if (!_receiver.connectSerial(device, *check.type, discovered.serialBaudRate, false, std::move(claim))) {
+    if (!_receiver.connectSerial(device, *check.type, check.request, std::move(claim))) {
         _scheduleRetry();
     }
 }

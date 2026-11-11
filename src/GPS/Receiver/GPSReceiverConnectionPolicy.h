@@ -38,22 +38,6 @@ enum class GPSReceiverSessionOutcome
     Retrying,
 };
 
-/// Whether a receiver configuration can connect, whatever devices are plugged in or reachable.
-struct GPSReceiverConnectability
-{
-    /// The receiver family to connect; empty when no receiver type is selected.
-    std::optional<GPSType> type;
-    /// The family supports the selected base mode; a passive receiver has none to support.
-    bool baseModeSupported = false;
-    /// UDP only receives, so a receiver QGroundControl configures needs serial or TCP.
-    bool connectionSupported = false;
-    /// The serial device, TCP address or UDP port to connect is entered, so a receiver is saved.
-    bool hasEndpoint = false;
-    /// Why the configuration cannot connect, as shown to the user; empty when it can. Never empty without a type, a
-    /// supported base mode, a supported connection and an endpoint.
-    QString error;
-};
-
 /// Decides when the receiver connects. With Configuration::autoConnect on, it keeps the saved receiver connected: it
 /// connects it at startup and when the setting is turned on, reconnects it with backoff after a lost connection, and
 /// reconnects an unplugged serial receiver as soon as its port returns. A connection the user starts is kept once it
@@ -71,14 +55,17 @@ class GPSReceiverConnectionPolicy
     friend class GPSReceiverConnectionPolicyTest;
 
 public:
-    /// Drives @a receiver as @a configuration, the receiver's, selects; all three must outlive the policy, and
-    /// @a scheduler times the retries.
+    /// Drives @a receiver as @a configuration, the receiver's, selects. @a connectability is the receiver's check of
+    /// that configuration, renewed before configurationChanged(). All four must outlive the policy, and @a scheduler
+    /// times the retries.
     GPSReceiverConnectionPolicy(GPSReceiverConnector& receiver, const GPSReceiverConfiguration& configuration,
-                                RuntimeScheduler* scheduler);
+                                const GPSReceiverConnectability& connectability, RuntimeScheduler* scheduler);
 
-    /// The one check of whether @a configuration can connect, which Connect, automatic connection and the settings
-    /// view share.
-    [[nodiscard]] static GPSReceiverConnectability connectability(const GPSReceiverConfiguration& configuration);
+    /// The one place that checks whether @a configuration can connect and builds the request its connection sends,
+    /// for Connect, automatic connection and the settings view. Only the user's Connect passes
+    /// @a allowPersistentChanges, the flash-save consent.
+    [[nodiscard]] static GPSReceiverConnectability connectability(const GPSReceiverConfiguration& configuration,
+                                                                  bool allowPersistentChanges = false);
 
     /// The receiver's configuration changed from @a previous.
     void configurationChanged(const GPSReceiverConfiguration& previous);
@@ -125,6 +112,8 @@ private:
 
     GPSReceiverConnector& _receiver;
     const GPSReceiverConfiguration& _configuration;
+    /// The check of _configuration, without flash-save consent.
+    const GPSReceiverConnectability& _connectability;
     RuntimeScheduler* const _scheduler;
     Owner _owner = Owner::None;
     /// Connect the saved receiver at the next update: set at startup and when the setting is turned on.

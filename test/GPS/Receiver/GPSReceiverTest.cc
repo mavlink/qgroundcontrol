@@ -1134,7 +1134,7 @@ void GPSReceiverTest::_serialReservationSurvivesDelayedStop()
     receiver._serialTransportFactory = [factory = gate.factory()](const QString&, GPSCancelToken cancelToken) {
         return factory(std::move(cancelToken));
     };
-    QVERIFY(receiver.connectSerial(QStringLiteral("/test/selected"), GPSType::Passive, 115200, false,
+    QVERIFY(receiver.connectSerial(QStringLiteral("/test/selected"), GPSType::Passive, {.baudRate = 115200},
                                    serial.manager.reservePort(QStringLiteral("/test/selected"))));
     QTRY_VERIFY_WITH_TIMEOUT(gate.entered(), TestTimeout::mediumMs());
     QPointer<GPSReceiverWorker> worker = receiver.findChild<GPSReceiverWorker*>();

@@ -57,6 +57,7 @@ void logConnectionError(GPSConnectionError error, const QString& detail)
 
 GPSReceiver::GPSReceiver(QObject* parent, RuntimeScheduler* scheduler, const Dependencies& dependencies)
     : QObject(parent)
+    , _connectability(GPSReceiverConnectionPolicy::connectability(_configuration))
     , _correctionManager(dependencies.corrections)
     , _positionManager(dependencies.positions)
     , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
@@ -76,7 +77,7 @@ GPSReceiver::GPSReceiver(QObject* parent, RuntimeScheduler* scheduler, const Dep
         }
     });
     _connection = std::make_unique<GPSReceiverConnectionPolicy>(static_cast<GPSReceiverConnector&>(*this),
-                                                                _configuration, _scheduler);
+                                                                _configuration, _connectability, _scheduler);
     _facts = new GPSReceiverFactGroup(this);
     _notified.receiver = _receiverState();
 #ifndef QGC_NO_SERIAL_LINK
@@ -98,6 +99,7 @@ void GPSReceiver::setConfiguration(const Configuration& configuration)
         _setPersistentChangesAllowed(false);
     }
     const Configuration previous = std::exchange(_configuration, configuration);
+    _connectability = GPSReceiverConnectionPolicy::connectability(_configuration);
     _connection->configurationChanged(previous);
     ++_configurationRevision;
     _emitChanges();
@@ -116,21 +118,10 @@ void GPSReceiver::_setPersistentChangesAllowed(bool allowed)
     }
 }
 
-bool GPSReceiver::connectionSupported() const
-{
-    return GPSReceiverConnectionPolicy::connectability(_configuration).connectionSupported;
-}
-
-bool GPSReceiver::baseModeSupported() const
-{
-    return GPSReceiverConnectionPolicy::connectability(_configuration).baseModeSupported;
-}
-
 bool GPSReceiver::canConnect() const
 {
     // Connect stays available for what it reports when pressed, such as a missing address or device.
-    const GPSReceiverConnectability check = GPSReceiverConnectionPolicy::connectability(_configuration);
-    return check.type && check.baseModeSupported && check.connectionSupported;
+    return _connectability.type && _connectability.baseModeSupported && _connectability.connectionSupported;
 }
 
 void GPSReceiver::setWorkerFactory(WorkerFactory factory)
@@ -382,8 +373,7 @@ void GPSReceiver::_updateSerialPortEntries()
     }
 }
 
-bool GPSReceiver::connectSerial(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges,
-                                GPSSerialClaim claim)
+bool GPSReceiver::connectSerial(const QString& device, GPSType type, GPSReceiverConfig request, GPSSerialClaim claim)
 {
     const QString endpoint = device.trimmed();
     return _connectReceiver(
@@ -391,11 +381,11 @@ bool GPSReceiver::connectSerial(const QString& device, GPSType type, uint32_t ba
         [endpoint, claim = std::move(claim), factory = _serialTransportFactory](GPSCancelToken cancelToken) {
             return factory(endpoint, std::move(cancelToken));
         },
-        QStringLiteral("serial:%1").arg(endpoint), baudRate, allowPersistentChanges, endpoint, endpoint);
+        QStringLiteral("serial:%1").arg(endpoint), std::move(request), endpoint, endpoint);
 }
 #endif
 
-bool GPSReceiver::connectTcp(const QString& host, quint16 port, GPSType type, bool allowPersistentChanges)
+bool GPSReceiver::connectTcp(const QString& host, quint16 port, GPSType type, GPSReceiverConfig request)
 {
     // One pass, so the host's text is not searched for place markers: an IPv6 zone reads like one.
     const QString endpoint = QStringLiteral("%1:%2").arg(host, QString::number(port));
@@ -404,17 +394,17 @@ bool GPSReceiver::connectTcp(const QString& host, quint16 port, GPSType type, bo
         [host, port](GPSCancelToken cancelToken) {
             return std::make_unique<TCPGPSTransport>(host, port, std::move(cancelToken));
         },
-        QStringLiteral("tcp:%1").arg(endpoint), GPSTransport::BRIDGE_BAUD_RATE, allowPersistentChanges, {}, endpoint);
+        QStringLiteral("tcp:%1").arg(endpoint), std::move(request), {}, endpoint);
 }
 
-bool GPSReceiver::connectUdp(quint16 port, GPSType type)
+bool GPSReceiver::connectUdp(quint16 port, GPSType type, GPSReceiverConfig request)
 {
     //: %1 is the local UDP port the receiver's data arrives on
     const QString endpoint = tr("UDP port %1").arg(port);
     return _connectReceiver(
         type,
         [port](GPSCancelToken cancelToken) { return std::make_unique<UDPGPSTransport>(port, std::move(cancelToken)); },
-        QStringLiteral("udp:%1").arg(port), GPSTransport::BRIDGE_BAUD_RATE, false, {}, endpoint);
+        QStringLiteral("udp:%1").arg(port), std::move(request), {}, endpoint);
 }
 
 QList<int> GPSReceiver::serialBaudRates()
@@ -575,16 +565,9 @@ std::optional<GPSObservation> GPSReceiver::acceptedPositionObservation(GPSObserv
 }
 
 bool GPSReceiver::_connectReceiver(GPSType type, GPSReceiverWorker::TransportFactory transportFactory,
-                                   const QString& sourceInstance, uint32_t baudRate, bool allowPersistentChanges,
+                                   const QString& sourceInstance, GPSReceiverConfig request,
                                    const QString& serialDevice, const QString& endpoint)
 {
-    QString configError;
-    GPSReceiverConfig config =
-        gpsReceiverConfigFor(_configuration.base, type, baudRate, allowPersistentChanges, &configError);
-    if (!configError.isEmpty()) {
-        _setError(configError);
-        return false;
-    }
     _retireSession();
     _resetStatus();
     _setError();
@@ -596,7 +579,7 @@ bool GPSReceiver::_connectReceiver(GPSType type, GPSReceiverWorker::TransportFac
         {.type = type,
          .role = role,
          .forwardsCorrections = role == RTKSettings::ConfiguredBase || _configuration.forwardReceiverRtcm,
-         .config = std::move(config),
+         .config = std::move(request),
          .serialDevice = serialDevice,
          .endpoint = endpoint},
         this);

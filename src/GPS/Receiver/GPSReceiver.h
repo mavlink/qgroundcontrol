@@ -235,9 +235,9 @@ public:
     RTKSettings::ConnectionType effectiveConnectionType() const { return _configuration.effectiveConnectionType(); }
 
     /// UDP only receives, so a receiver QGroundControl configures needs serial or TCP.
-    bool connectionSupported() const;
+    bool connectionSupported() const { return _connectability.connectionSupported; }
 
-    bool baseModeSupported() const;
+    bool baseModeSupported() const { return _connectability.baseModeSupported; }
 
     bool canConnect() const;
 
@@ -304,11 +304,10 @@ private:
     void setConnectionError(const QString& message) override { _setError(message); }
 
     void endConnection(ShownError error) override;
-    bool connectTcp(const QString& host, quint16 port, GPSType type, bool allowPersistentChanges) override;
-    bool connectUdp(quint16 port, GPSType type) override;
+    bool connectTcp(const QString& host, quint16 port, GPSType type, GPSReceiverConfig request) override;
+    bool connectUdp(quint16 port, GPSType type, GPSReceiverConfig request) override;
 #ifndef QGC_NO_SERIAL_LINK
-    bool connectSerial(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges,
-                       GPSSerialClaim claim) override;
+    bool connectSerial(const QString& device, GPSType type, GPSReceiverConfig request, GPSSerialClaim claim) override;
     bool serialPortAvailable(const QString& device) const override;
     QStringList rtkReceiverPorts() const override;
     GPSSerialClaim claimSerialPort(const QString& device) override;
@@ -319,9 +318,10 @@ private:
     /// Scans the serial ports, when a scan is due, before the connection policy asks for them.
     void _scanSerialPorts();
 
+    /// Starts a session that sends @a request, which the connection policy has validated.
     bool _connectReceiver(GPSType type, GPSReceiverWorker::TransportFactory transportFactory,
-                          const QString& sourceInstance, uint32_t baudRate, bool allowPersistentChanges,
-                          const QString& serialDevice = {}, const QString& endpoint = {});
+                          const QString& sourceInstance, GPSReceiverConfig request, const QString& serialDevice = {},
+                          const QString& endpoint = {});
     /// Names the new session's recording and returns @a transportFactory wrapped to record the link it opens, or
     /// unchanged when sessions are not recorded.
     GPSReceiverWorker::TransportFactory _recorded(GPSReceiverWorker::TransportFactory transportFactory, GPSType type);
@@ -350,6 +350,8 @@ private:
     void _emitChanges();
 
     Configuration _configuration;
+    /// The check of _configuration, renewed with it, which the connection policy and the properties read.
+    GPSReceiverConnectability _connectability;
     GPSReceiverSession* _session = nullptr;
     /// Workers of retired sessions whose workers may still be running.
     QList<QPointer<GPSReceiverWorker>> _retiredWorkers;

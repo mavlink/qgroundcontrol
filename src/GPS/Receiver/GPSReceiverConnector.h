@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <optional>
 
 #include <QtCore/QString>
 #include <QtCore/QStringList>
@@ -56,6 +57,26 @@ struct GPSReceiverConfiguration
     }
 };
 
+/// Whether a receiver configuration can connect, whatever devices are plugged in or reachable, and the request its
+/// connection sends. GPSReceiverConnectionPolicy::connectability() builds it.
+struct GPSReceiverConnectability
+{
+    /// The receiver family to connect; empty when no receiver type is selected.
+    std::optional<GPSType> type;
+    /// The family supports the selected base mode; a passive receiver has none to support.
+    bool baseModeSupported = false;
+    /// UDP only receives, so a receiver QGroundControl configures needs serial or TCP.
+    bool connectionSupported = false;
+    /// The serial device, TCP address or UDP port to connect is entered, so a receiver is saved.
+    bool hasEndpoint = false;
+    /// Why the configuration cannot connect, as shown to the user; empty when it can. Never empty without a type, a
+    /// supported base mode, a supported connection and an endpoint.
+    QString error;
+    /// What a connection asks of the receiver, which @a error has validated; built once the type, the base mode, the
+    /// connection and the endpoint are known.
+    GPSReceiverConfig request;
+};
+
 /// Creates a receiver session's worker; tests inject scripted workers.
 using GPSReceiverWorkerFactory =
     std::function<GPSReceiverWorker*(GPSReceiverWorker::TransportFactory, GPSType, const GPSReceiverConfig&, QObject*)>;
@@ -66,7 +87,8 @@ using GPSSerialClaim = SerialPortManager::ReservationPtr;
 #endif
 
 /// The receiver operations GPSReceiverConnectionPolicy drives. They change state without emitting; the receiver emits
-/// once its public method or report handler returns.
+/// once its public method or report handler returns. A connection sends the request of the policy's
+/// GPSReceiverConnectability as it is given.
 class GPSReceiverConnector
 {
 public:
@@ -80,10 +102,10 @@ public:
     virtual bool hasReceiver() const = 0;
     virtual void setConnectionError(const QString& message) = 0;
     virtual void endConnection(ShownError error) = 0;
-    virtual bool connectTcp(const QString& host, quint16 port, GPSType type, bool allowPersistentChanges) = 0;
-    virtual bool connectUdp(quint16 port, GPSType type) = 0;
+    virtual bool connectTcp(const QString& host, quint16 port, GPSType type, GPSReceiverConfig request) = 0;
+    virtual bool connectUdp(quint16 port, GPSType type, GPSReceiverConfig request) = 0;
 #ifndef QGC_NO_SERIAL_LINK
-    virtual bool connectSerial(const QString& device, GPSType type, uint32_t baudRate, bool allowPersistentChanges,
+    virtual bool connectSerial(const QString& device, GPSType type, GPSReceiverConfig request,
                                GPSSerialClaim claim) = 0;
     /// The device is plugged in and not in its bootloader.
     virtual bool serialPortAvailable(const QString& device) const = 0;
