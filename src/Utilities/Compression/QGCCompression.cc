@@ -631,10 +631,12 @@ QString decompressIfNeeded(const QString& filePath, const QString& outputPath, b
 
 QByteArray decompressData(const QByteArray& data, Format format, qint64 maxDecompressedBytes)
 {
+    clearError();
     clearFormatInfo();
 
     if (data.isEmpty()) {
         qCWarning(QGCCompressionLog) << "Cannot decompress empty data";
+        setError(Error::UnsupportedFormat, QStringLiteral("Cannot decompress empty data"));
         return {};
     }
 
@@ -642,6 +644,7 @@ QByteArray decompressData(const QByteArray& data, Format format, qint64 maxDecom
         format = detectFormatFromData(data);
         if (format == Format::Auto) {
             qCWarning(QGCCompressionLog) << "Could not detect format from data";
+            setError(Error::UnsupportedFormat, QStringLiteral("Could not detect format from data"));
             return {};
         }
     }
@@ -837,13 +840,16 @@ QByteArray extractFileData(const QString& archivePath, const QString& fileName, 
         return {};
     }
     qCDebug(QGCCompressionLog) << "Extracting" << fileName << "from" << archivePath << "to memory";
-    QByteArray result = QGClibarchive::extractFileToMemory(archivePath, fileName, maxDecompressedBytes);
-    if (result.isEmpty()) {
+    QGClibarchive::ReadResult read = QGClibarchive::ReadResult::Failed;
+    QByteArray result = QGClibarchive::extractFileToMemory(archivePath, fileName, maxDecompressedBytes, &read);
+    // The data does not tell a failure: an entry can have none
+    if (read != QGClibarchive::ReadResult::Completed) {
         if (QGClibarchive::takeSizeLimitExceeded()) {
             setError(Error::SizeLimitExceeded,
                      QStringLiteral("%1 in %2 exceeds the size limit").arg(fileName, archivePath));
         } else {
-            setError(Error::FileNotInArchive,
+            const bool notFound = (read == QGClibarchive::ReadResult::EntryNotFound);
+            setError(notFound ? Error::FileNotInArchive : Error::InvalidArchive,
                      QStringLiteral("Could not extract %1 from %2").arg(fileName, archivePath));
         }
     }
@@ -944,13 +950,17 @@ QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName,
         return {};
     }
     qCDebug(QGCCompressionLog) << "Extracting" << fileName << "from device to memory";
-    QByteArray result = QGClibarchive::extractFileDataFromDevice(device, fileName, maxDecompressedBytes);
+    QGClibarchive::ReadResult read = QGClibarchive::ReadResult::Failed;
+    QByteArray result = QGClibarchive::extractFileDataFromDevice(device, fileName, maxDecompressedBytes, &read);
     captureFormatInfo();
-    if (result.isEmpty()) {
+    // The data does not tell a failure: an entry can have none
+    if (read != QGClibarchive::ReadResult::Completed) {
         if (QGClibarchive::takeSizeLimitExceeded()) {
             setError(Error::SizeLimitExceeded, fileName + QStringLiteral(" exceeds the size limit"));
-        } else {
+        } else if (read == QGClibarchive::ReadResult::EntryNotFound) {
             setError(Error::FileNotInArchive, QStringLiteral("File not found: ") + fileName);
+        } else {
+            setError(Error::InvalidArchive, QStringLiteral("Could not extract ") + fileName);
         }
     }
     return result;

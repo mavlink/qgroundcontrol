@@ -34,6 +34,10 @@ enum class Error {
 };
 
 /// Get the error code from the last operation (thread-local)
+/// It tells why the last operation of the calling thread failed: read it on that thread, before the next
+/// operation. decompressData(), extractFileData() and the two functions that read a device to memory set it
+/// on every call, to Error::None on success, because their result alone does not tell a failure: an archive
+/// entry without data is returned as an empty QByteArray too.
 Error lastError();
 
 /// Get a human-readable error message from the last operation (thread-local)
@@ -160,7 +164,7 @@ QString decompressIfNeeded(const QString& filePath, const QString& outputPath = 
 /// @param data Compressed input data
 /// @param format Compression format (Auto = detect from magic bytes)
 /// @param maxDecompressedBytes Maximum decompressed size in bytes (0 = unlimited)
-/// @return Decompressed data, or empty on failure or if size limit exceeded
+/// @return Decompressed data, or empty on failure or if size limit exceeded: lastError() tells which
 QByteArray decompressData(const QByteArray &data, Format format = Format::Auto,
                           qint64 maxDecompressedBytes = 0);
 
@@ -257,7 +261,10 @@ bool extractFile(const QString &archivePath, const QString &fileName,
 /// @param fileName Name of file inside archive (as shown by listArchive)
 /// @param format Archive format (Auto = detect from archivePath)
 /// @param maxDecompressedBytes Fail, returning nothing, if the file is larger than this many bytes (0 = unlimited)
-/// @return File contents, or empty QByteArray if not found or extraction failed
+/// @return File contents. They are empty for a file without data, and also on failure. lastError() tells
+///         which: Error::None for the file without data, Error::FileNotInArchive if the archive was read to
+///         its end without the file, Error::SizeLimitExceeded, or Error::InvalidArchive if the archive cannot
+///         be read or is damaged
 QByteArray extractFileData(const QString& archivePath, const QString& fileName, Format format = Format::Auto,
                            qint64 maxDecompressedBytes = kDefaultMaxDecompressedMemoryBytes);
 
@@ -319,7 +326,8 @@ bool extractFromDevice(QIODevice *device, const QString &outputDirectoryPath,
 /// @param device QIODevice to read from (must be open and readable)
 /// @param fileName Name of file inside archive
 /// @param maxDecompressedBytes Fail, returning nothing, if the file is larger than this many bytes (0 = unlimited)
-/// @return File contents, or empty QByteArray if not found
+/// @return File contents. They are empty for a file without data, and also on failure: lastError() tells
+///         which, as for extractFileData()
 QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName,
                                      qint64 maxDecompressedBytes = kDefaultMaxDecompressedMemoryBytes);
 
@@ -368,6 +376,8 @@ int lastCompressionRatio();
 
 /// Read file contents, transparently decompressing .gz/.xz/.zst/.bz2/.lz4 files.
 /// A compressed file that is truncated or corrupt yields nothing, not the part that could be read.
+/// @param errorString Receives the reason if the file cannot be read, and is left as it is otherwise: pass an
+///        empty string to tell a file without content from a failure
 /// @param maxBytes Read at most this many bytes of the (decompressed) content (0 = all of it)
 /// @param maxDecompressedBytes Fail, returning nothing, if a compressed file expands beyond this
 ///        many bytes before maxBytes is reached (0 = unlimited)

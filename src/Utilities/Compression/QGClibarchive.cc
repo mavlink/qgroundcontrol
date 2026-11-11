@@ -306,8 +306,10 @@ CopyResult copyEntryData(struct archive* a, DataTransfer& transfer, const DataSi
 /// @param expectedSize Size the entry's header declares (0 if unknown). Memory is set aside for it up to
 ///        kMaxReservedBytes only: a damaged or hostile archive declares any size.
 /// @param maxBytes Maximum bytes to read (0 = unlimited)
+/// @param completed If not null, receives whether the data was read to its end: there may be none to read
 /// @return Data read, or empty QByteArray on error or size limit exceeded
-QByteArray readArchiveToMemory(struct archive* a, qint64 expectedSize = 0, qint64 maxBytes = 0)
+QByteArray readArchiveToMemory(struct archive* a, qint64 expectedSize = 0, qint64 maxBytes = 0,
+                               bool* completed = nullptr)
 {
     constexpr qint64 kMaxReservedBytes = 16 * 1024 * 1024;
 
@@ -337,6 +339,9 @@ QByteArray readArchiveToMemory(struct archive* a, qint64 expectedSize = 0, qint6
     if (copied == CopyResult::ReadFailed) {
         qCWarning(QGClibarchiveLog) << "Read error:" << archive_error_string(a);
     }
+    if (completed != nullptr) {
+        *completed = (copied == CopyResult::Completed);
+    }
 
     return (copied == CopyResult::Completed) ? result : QByteArray();
 }
@@ -345,15 +350,17 @@ QByteArray readArchiveToMemory(struct archive* a, qint64 expectedSize = 0, qint6
 /// An entry that says it does not fit in @a maxBytes is not started. One that says less than it holds, or
 /// nothing, is stopped at the limit while it is read.
 /// @param maxBytes Maximum size of the entry (0 = unlimited)
+/// @param completed Receives whether the entry was read to its end: it may have no data
 /// @return Data read, or empty QByteArray on error or size limit exceeded
-QByteArray readEntryToMemory(struct archive* a, struct archive_entry* entry, qint64 maxBytes)
+QByteArray readEntryToMemory(struct archive* a, struct archive_entry* entry, qint64 maxBytes, bool& completed)
 {
+    completed = false;
     const qint64 declaredSize = archive_entry_size(entry);
     if (maxBytes > 0 && declaredSize > maxBytes) {
         reportSizeLimitExceeded(maxBytes);
         return {};
     }
-    return readArchiveToMemory(a, declaredSize, maxBytes);
+    return readArchiveToMemory(a, declaredSize, maxBytes, &completed);
 }
 
 /// Write the data of the current archive entry to a file atomically
@@ -747,14 +754,40 @@ QGClibarchive::NextEntry findEntry(struct archive* a, const QString& fileName, s
 }
 
 /// As findEntry(), for a caller that reads the entry: a warning is logged if the archive does not have it
-/// @return true if the reader is on the entry
-bool findEntryToRead(struct archive* a, const QString& fileName, struct archive_entry** entry = nullptr)
+/// @return Found if the reader is on the entry
+QGClibarchive::NextEntry findEntryToRead(struct archive* a, const QString& fileName,
+                                         struct archive_entry** entry = nullptr)
 {
     const QGClibarchive::NextEntry found = findEntry(a, fileName, entry);
     if (found == QGClibarchive::NextEntry::End) {
         qCWarning(QGClibarchiveLog) << "File not found in archive:" << fileName;
     }
-    return found == QGClibarchive::NextEntry::Found;
+    return found;
+}
+
+/// Read the entry called @a fileName, which the reader has not passed yet, into a QByteArray
+/// @param maxBytes Maximum size of the entry (0 = unlimited)
+/// @param result Receives how the read ended
+/// @return Data of the entry, or empty QByteArray unless @a result is Completed
+QByteArray readNamedEntryToMemory(struct archive* a, const QString& fileName, qint64 maxBytes,
+                                  QGClibarchive::ReadResult& result)
+{
+    struct archive_entry* entry = nullptr;
+    switch (findEntryToRead(a, fileName, &entry)) {
+        case QGClibarchive::NextEntry::Found:
+            break;
+        case QGClibarchive::NextEntry::End:
+            result = QGClibarchive::ReadResult::EntryNotFound;
+            return {};
+        case QGClibarchive::NextEntry::Error:
+            result = QGClibarchive::ReadResult::Failed;
+            return {};
+    }
+
+    bool completed = false;
+    QByteArray data = readEntryToMemory(a, entry, maxBytes, completed);
+    result = completed ? QGClibarchive::ReadResult::Completed : QGClibarchive::ReadResult::Failed;
+    return data;
 }
 
 /// Read the header of the one entry that a single compressed stream is read as
@@ -1184,7 +1217,7 @@ bool extractSingleFile(const QString& archivePath, const QString& fileName, cons
         return false;
     }
 
-    if (!findEntryToRead(reader.handle(), fileName)) {
+    if (findEntryToRead(reader.handle(), fileName) != NextEntry::Found) {
         return false;
     }
 
@@ -1193,8 +1226,12 @@ bool extractSingleFile(const QString& archivePath, const QString& fileName, cons
     return writeArchiveEntryToFile(reader.handle(), outputPath, unlimited);
 }
 
-QByteArray extractFileToMemory(const QString& archivePath, const QString& fileName, qint64 maxBytes)
+QByteArray extractFileToMemory(const QString& archivePath, const QString& fileName, qint64 maxBytes, ReadResult* result)
 {
+    ReadResult unused = ReadResult::Failed;
+    ReadResult& outcome = (result != nullptr) ? *result : unused;
+    outcome = ReadResult::Failed;
+
     if (fileName.isEmpty()) {
         qCWarning(QGClibarchiveLog) << "Empty file name";
         return QByteArray();
@@ -1205,16 +1242,11 @@ QByteArray extractFileToMemory(const QString& archivePath, const QString& fileNa
         return QByteArray();
     }
 
-    struct archive_entry* entry = nullptr;
-    if (!findEntryToRead(reader.handle(), fileName, &entry)) {
-        return QByteArray();
+    QByteArray data = readNamedEntryToMemory(reader.handle(), fileName, maxBytes, outcome);
+    if (outcome == ReadResult::Completed) {
+        qCDebug(QGClibarchiveLog) << "Extracted" << fileName << "to memory:" << data.size() << "bytes";
     }
-
-    QByteArray result = readEntryToMemory(reader.handle(), entry, maxBytes);
-    if (!result.isEmpty()) {
-        qCDebug(QGClibarchiveLog) << "Extracted" << fileName << "to memory:" << result.size() << "bytes";
-    }
-    return result;
+    return data;
 }
 
 bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNames, const QString& outputDirectoryPath)
@@ -1616,8 +1648,12 @@ bool extractFromDevice(QIODevice* device, const QString& outputDirectoryPath, Pr
     return extractArchiveEntries(reader, outputDirectoryPath, progress, maxBytes);
 }
 
-QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName, qint64 maxBytes)
+QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName, qint64 maxBytes, ReadResult* result)
 {
+    ReadResult unused = ReadResult::Failed;
+    ReadResult& outcome = (result != nullptr) ? *result : unused;
+    outcome = ReadResult::Failed;
+
     if (fileName.isEmpty()) {
         qCWarning(QGClibarchiveLog) << "Empty file name";
         return {};
@@ -1628,16 +1664,11 @@ QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName,
         return {};
     }
 
-    struct archive_entry* entry = nullptr;
-    if (!findEntryToRead(reader.handle(), fileName, &entry)) {
-        return QByteArray();
+    QByteArray data = readNamedEntryToMemory(reader.handle(), fileName, maxBytes, outcome);
+    if (outcome == ReadResult::Completed) {
+        qCDebug(QGClibarchiveLog) << "Extracted" << fileName << "from device:" << data.size() << "bytes";
     }
-
-    QByteArray result = readEntryToMemory(reader.handle(), entry, maxBytes);
-    if (!result.isEmpty()) {
-        qCDebug(QGClibarchiveLog) << "Extracted" << fileName << "from device:" << result.size() << "bytes";
-    }
-    return result;
+    return data;
 }
 
 bool decompressFromDevice(QIODevice* device, const QString& outputPath, ProgressCallback progress, qint64 maxBytes)

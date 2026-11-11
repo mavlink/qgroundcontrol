@@ -1535,6 +1535,104 @@ void QGCCompressionTest::_testExtractStreamedZipEntry()
     QCOMPARE(extracted.readAll(), content);
 }
 
+void QGCCompressionTest::_testExtractFileDataErrors_data()
+{
+    QTest::addColumn<bool>("fromDevice");
+
+    QTest::newRow("file") << false;
+    QTest::newRow("device") << true;
+}
+
+void QGCCompressionTest::_testExtractFileDataErrors()
+{
+    QFETCH(bool, fromDevice);
+    using QGCCompression::Error;
+
+    const QByteArray tar = _makeTar(
+        {{.name = "empty.txt"}, {.name = "full.txt", .data = QByteArray(600, 'a')}, {.name = "last.txt", .data = "z"}});
+    QTemporaryDir tempDir;
+    const QString archivePath = tempDir.filePath("entries.tar");
+    QVERIFY(_writeFile(archivePath, tar));
+    // Cut inside the data of full.txt, which follows the headers of empty.txt and of full.txt itself
+    const QString damagedPath = tempDir.filePath("damaged.tar");
+    QVERIFY(_writeFile(damagedPath, tar.left(2 * 512 + 100)));
+
+    const auto extract = [fromDevice](const QString& path, const char* entryName, qint64 limit = 0) {
+        if (!fromDevice) {
+            return QGCCompression::extractFileData(path, entryName, QGCCompression::Format::Auto, limit);
+        }
+        QFile device(path);
+        if (!device.open(QIODevice::ReadOnly)) {
+            return QByteArray("could not open the archive");
+        }
+        return QGCCompression::extractFileDataFromDevice(&device, entryName, limit);
+    };
+
+    // An entry without data gives nothing either, so the error is what tells it from each kind of failure
+    QVERIFY(extract(archivePath, "empty.txt").isEmpty());
+    QCOMPARE(QGCCompression::lastError(), Error::None);
+
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("File not found in archive"));
+    QVERIFY(extract(archivePath, "absent.txt").isEmpty());
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), Error::FileNotInArchive);
+
+    // The search for the entry runs into the damage: the archive is not said to be without it
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Failed to read archive entry"));
+    QVERIFY(extract(damagedPath, "absent.txt").isEmpty());
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), Error::InvalidArchive);
+
+    // The entry is found, and its data is cut
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Read error"));
+    QVERIFY(extract(damagedPath, "full.txt").isEmpty());
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), Error::InvalidArchive);
+
+    // An entry before the damage is read as from a whole archive
+    QVERIFY(extract(damagedPath, "empty.txt").isEmpty());
+    QCOMPARE(QGCCompression::lastError(), Error::None);
+
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
+    QVERIFY(extract(archivePath, "full.txt", 100).isEmpty());
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), Error::SizeLimitExceeded);
+
+    // The error of a failure is gone after the next extraction
+    QCOMPARE(extract(archivePath, "last.txt"), QByteArray("z"));
+    QCOMPARE(QGCCompression::lastError(), Error::None);
+}
+
+void QGCCompressionTest::_testDecompressDataErrors()
+{
+    using QGCCompression::Error;
+
+    const QByteArray compressed = _readFile(QStringLiteral(":/unittest/manifest.json.gz"));
+    const auto leaveAnErrorBehind = [this]() {
+        expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
+        const bool exists = QGCCompression::fileExists(QStringLiteral("/nonexistent/archive.zip"), QStringLiteral("a"));
+        verifyExpectedLogMessage();
+        return !exists && (QGCCompression::lastError() == Error::FileNotFound);
+    };
+
+    // Decompressed data is never empty, but lastError() is only of use if each call sets it
+    QVERIFY(leaveAnErrorBehind());
+    QVERIFY(!QGCCompression::decompressData(compressed).isEmpty());
+    QCOMPARE(QGCCompression::lastError(), Error::None);
+
+    QVERIFY(leaveAnErrorBehind());
+    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("Cannot decompress empty data"));
+    QVERIFY(QGCCompression::decompressData(QByteArray()).isEmpty());
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), Error::UnsupportedFormat);
+
+    QVERIFY(leaveAnErrorBehind());
+    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("Could not detect format"));
+    QVERIFY(QGCCompression::decompressData(QByteArray("not a compressed stream")).isEmpty());
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), Error::UnsupportedFormat);
+}
+
 // ============================================================================
 // QIODevice-based Operation Tests
 // ============================================================================

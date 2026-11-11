@@ -62,6 +62,9 @@ private slots:
     void _testTruncatedStream_data();
     void _testTruncatedStream();
     void _testExtractStreamedZipEntry();
+    void _testExtractFileDataErrors_data();
+    void _testExtractFileDataErrors();
+    void _testDecompressDataErrors();
 
     // QIODevice-based operations
     void _testDecompressFromDevice();

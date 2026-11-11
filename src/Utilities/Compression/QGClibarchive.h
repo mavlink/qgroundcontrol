@@ -285,12 +285,23 @@ bool extractArchiveAtomic(const QString &archivePath, const QString &outputDirec
 bool extractSingleFile(const QString &archivePath, const QString &fileName,
                        const QString &outputPath);
 
+/// How an operation that returns the data of an archive entry ended
+/// An entry without data is returned as an empty QByteArray, which is also what a failure returns.
+enum class ReadResult
+{
+    Completed,      ///< The entry was read to its end
+    EntryNotFound,  ///< The archive was read to its end and has no entry of that name
+    Failed          ///< The archive cannot be read or is damaged, or the entry is larger than maxBytes
+};
+
 /// Extract a single file from any archive directly to memory
 /// @param archivePath Path to the archive file (or Qt resource path)
 /// @param fileName Name of file inside archive
 /// @param maxBytes Maximum size of the file (0 = unlimited)
+/// @param result If not null, receives how the extraction ended
 /// @return File contents, or empty QByteArray if not found, larger than maxBytes or extraction failed
-QByteArray extractFileToMemory(const QString& archivePath, const QString& fileName, qint64 maxBytes = 0);
+QByteArray extractFileToMemory(const QString& archivePath, const QString& fileName, qint64 maxBytes = 0,
+                               ReadResult* result = nullptr);
 
 /// Extract multiple files from any archive by name in one pass
 /// @param archivePath Path to the archive file (or Qt resource path)
@@ -396,8 +407,10 @@ bool extractFromDevice(QIODevice *device, const QString &outputDirectoryPath,
 /// @param device QIODevice to read from (must be open and readable)
 /// @param fileName Name of file inside archive
 /// @param maxBytes Maximum size of the file (0 = unlimited)
+/// @param result If not null, receives how the extraction ended
 /// @return File contents, or empty QByteArray if not found or larger than maxBytes
-QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName, qint64 maxBytes = 0);
+QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName, qint64 maxBytes = 0,
+                                     ReadResult* result = nullptr);
 
 /// Decompress single-file format from QIODevice to disk
 /// @param device QIODevice to read from (must be open and readable)
