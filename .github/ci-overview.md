@@ -691,8 +691,8 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   diagnostics are uploaded separately. The workflow runs only on pull requests: nothing reads
   uploaded fuzzer builds, so there is no continuous build.
 - **GPS standalone** (`gps-standalone.yml`): `test/GPS/Standalone` builds `QGCGPSCore` and
-  `QGCNTRIPHttp` without the application, with the receiver qualification runner, the NTRIP decoder
-  smoke test and the libFuzzer harnesses. It is its own path-filtered workflow, not a Linux leg or
+  `QGCNTRIPHttp` without the application, with the receiver qualification runner, the fuzzers'
+  smoke tests and the libFuzzer harnesses. It is its own path-filtered workflow, not a Linux leg or
   a required check: pull requests and `master`/`Stable*` pushes run it when `src/GPS`, the utility
   libraries and CMake modules the project adds, `test/GPS`, `build-config.json` or the workflow
   change (`test_gps_standalone_workflow.py` keeps the source directories in step with the project),
@@ -703,7 +703,7 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   `qt-install` installs only `qtbase`, `icu` and `qtserialport`, CPM clones GeographicLib, and the
   build's three CPU-minutes need no compiler cache. `cmake-build` and `run-unit-tests` (label
   `GPS`) report as in the platform jobs. Each harness (`QGCGPSProtocolFuzz`,
-  `ntrip_http_decoder_fuzzer`) then fuzzes its seeds for 60 s with a new random seed.
+  `QGCGPSReplyFuzz`, `ntrip_http_decoder_fuzzer`) then fuzzes its seeds for 60 s with a new random seed.
   `UBSAN_OPTIONS=halt_on_error=1` makes a UBSan report fail the tests and the fuzzers, which
   otherwise print it and continue, and `-timeout=25` reports a hang. A crash, leak, hang or
   sanitizer report fails the job, and the input libFuzzer saved is uploaded as

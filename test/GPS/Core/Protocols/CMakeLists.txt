@@ -2,7 +2,8 @@
 # GPS Protocol Tests
 # The golden scenarios and the protocol test helpers that need the unit test framework. The application-free helpers
 # are QGCGPSProtocolTestSupport (Support/), which test/GPS/Core links; the receiver qualification runner (Hardware/)
-# builds here or standalone, and the libFuzzer harness (Fuzz/) only standalone (test/GPS/Standalone).
+# and the reply fuzzer's smoke test (Fuzz/) build here or standalone, and the libFuzzer harnesses (Fuzz/) only
+# standalone (test/GPS/Standalone).
 # ============================================================================
 
 target_sources(
@@ -33,3 +34,4 @@ option(QGC_BUILD_GPS_HARDWARE_TESTS "Build the GPS receiver qualification runner
 if(QGC_BUILD_GPS_HARDWARE_TESTS)
     add_subdirectory(Hardware)
 endif()
+add_subdirectory(Fuzz)

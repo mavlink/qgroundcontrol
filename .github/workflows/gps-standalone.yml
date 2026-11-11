@@ -104,6 +104,18 @@ jobs:
           -create_missing_dirs=1 -artifact_prefix="${RUNNER_TEMP}/gps-fuzz-artifacts/protocol-"
           ProtocolFuzz/corpus ProtocolFuzz/fixture-seeds
 
+      # The smoke test writes the seeds: replies recorded from the receiver models, and every recording as output
+      # a receiver sends unasked.
+      - name: Fuzz the receiver replies
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 5
+        working-directory: ${{ runner.temp }}/build
+        run: |
+          ProtocolFuzz/QGCGPSReplyFuzzSmoke --write-corpus ProtocolFuzz/reply-corpus
+          ProtocolFuzz/QGCGPSReplyFuzz -max_total_time=60 -timeout=25 -max_len=8192 \
+            -create_missing_dirs=1 -artifact_prefix="${RUNNER_TEMP}/gps-fuzz-artifacts/reply-" \
+            ProtocolFuzz/reply-corpus
+
       - name: Fuzz the NTRIP HTTP decoder
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         timeout-minutes: 5

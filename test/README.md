@@ -408,9 +408,11 @@ QGC_GPS_GOLDEN_UPDATE=1 ctest --test-dir build -R GPSGoldenTranscriptTest
 ```
 
 `test/GPS/Standalone` builds `QGCGPSCore` and `QGCNTRIPHttp` without the application, with the receiver
-qualification runner and the NTRIP decoder smoke test. With Clang, `-DQGC_GPS_LIBFUZZER=ON` adds the protocol and
-NTRIP libFuzzer harnesses and builds both libraries with ASan and UBSan. Build them optimized: unoptimized,
-`GPSProtocolFuzzSmoke`'s 10000 runs take about six times as long:
+qualification runner and the smoke tests of the NTRIP decoder and receiver reply fuzzers. With Clang,
+`-DQGC_GPS_LIBFUZZER=ON` adds the libFuzzer harnesses and builds both libraries with ASan and UBSan:
+`QGCGPSProtocolFuzz` decodes its input, `QGCGPSReplyFuzz` feeds it to the driver as the replies of the receiver it
+configures or detects, on a virtual clock, and `ntrip_http_decoder_fuzzer` decodes it as a caster's response. Build
+them optimized: unoptimized, `GPSProtocolFuzzSmoke`'s 10000 runs take about six times as long:
 
 ```bash
 cmake -S test/GPS/Standalone -B build-gps -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_COMPILER=clang++ \
