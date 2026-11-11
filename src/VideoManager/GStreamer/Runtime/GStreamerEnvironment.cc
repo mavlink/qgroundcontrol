@@ -107,7 +107,7 @@ QString _firstExistingPath(const QStringList& paths)
 QString _stableInstallPath(const QString& installPath)
 {
     // Whatever an AppImage starts inherits APPIMAGE and APPDIR, so they only name an install inside the mount.
-    const QString appImage = qEnvironmentVariable("APPIMAGE");
+    QString appImage = qEnvironmentVariable("APPIMAGE");
     const QString mountDir = qEnvironmentVariable("APPDIR");
     if (!appImage.isEmpty() && !mountDir.isEmpty() &&
         installPath.startsWith(QDir::cleanPath(mountDir) + QLatin1Char('/'))) {
@@ -164,12 +164,11 @@ QString _usePrivateRegistry(const QString& cacheDir, const QString& installPath)
     gst_version(&major, &minor, &micro, &nano);
     const QByteArray installHash =
         QCryptographicHash::hash(_stableInstallPath(installPath).toUtf8(), QCryptographicHash::Sha256).toHex().left(8);
-    const QString registry =
-        _cleanJoin(cacheDir, QStringLiteral("gstreamer-%1.%2.%3-%4-%5.bin")
-                                 .arg(major)
-                                 .arg(minor)
-                                 .arg(micro)
-                                 .arg(QSysInfo::buildCpuArchitecture(), QLatin1String(installHash)));
+    QString registry = _cleanJoin(cacheDir, QStringLiteral("gstreamer-%1.%2.%3-%4-%5.bin")
+                                                .arg(major)
+                                                .arg(minor)
+                                                .arg(micro)
+                                                .arg(QSysInfo::buildCpuArchitecture(), QLatin1String(installHash)));
     _setGstEnv("GST_REGISTRY", registry);
     _pruneUnusedRegistries(registry);
     return registry;

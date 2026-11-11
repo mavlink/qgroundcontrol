@@ -12,7 +12,7 @@ Environment::ValidationResult Runtime::prepare()
     if (state() != State::Unprepared) {
         qCWarning(GStreamerRuntimeLog) << "Environment prepared again after GStreamer setup started";
     }
-    const Environment::ValidationResult result = prepareEnvironment();
+    Environment::ValidationResult result = prepareEnvironment();
     State expected = State::Unprepared;
     (void) _state.compare_exchange_strong(expected, State::Prepared, std::memory_order_acq_rel);
     return result;

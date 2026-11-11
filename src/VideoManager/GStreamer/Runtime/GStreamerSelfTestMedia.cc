@@ -210,7 +210,7 @@ QString readBack(const QString& file, const char* demuxer, std::chrono::millisec
     (void) gst_pad_add_probe(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, countBuffer, &buffers, nullptr);
     (void) g_signal_connect(demux, "pad-added", G_CALLBACK(linkNewSrcPad), sinkPad.get());
 
-    const QString failure = playToEos(pipeline.get(), nullptr, {}, timeout);
+    QString failure = playToEos(pipeline.get(), nullptr, {}, timeout);
     if (!failure.isEmpty()) {
         return failure;
     }
