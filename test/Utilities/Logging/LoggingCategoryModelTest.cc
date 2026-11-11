@@ -1,11 +1,12 @@
 #include "LoggingCategoryModelTest.h"
 
-#include <QtCore/QThread>
-#include <QtCore/QUuid>
-#include <QtTest/QSignalSpy>
-
 #include <atomic>
 #include <thread>
+
+#include <QtCore/QThread>
+#include <QtCore/QUuid>
+#include <QtTest/QAbstractItemModelTester>
+#include <QtTest/QSignalSpy>
 
 #include "LoggingCategoryModel.h"
 #include "QGCLoggingCategory.h"
@@ -221,6 +222,66 @@ void LoggingCategoryModelTest::_testTreeModelInsertNestedCreatesIntermediate()
     // parent() chain leads back to root via fooIdx.
     QCOMPARE(model.parent(barIdx), fooIdx);
     QCOMPARE(model.parent(fooIdx), QModelIndex());
+}
+
+void LoggingCategoryModelTest::_testTreeModelCategoryWithChildren_data()
+{
+    QTest::addColumn<QStringList>("registrationOrder");
+    QTest::addColumn<int>("rowUpdates");
+
+    QTest::newRow("category-first") << QStringList{QStringLiteral("A.B"), QStringLiteral("A.B.C")} << 0;
+    // The "B" row starts as the group "A.B." and views must be told when it becomes the category "A.B".
+    QTest::newRow("child-first") << QStringList{QStringLiteral("A.B.C"), QStringLiteral("A.B")} << 1;
+}
+
+void LoggingCategoryModelTest::_testTreeModelCategoryWithChildren()
+{
+    // "A.B" is a category and also the parent of "A.B.C". Whichever is registered first, each path
+    // segment gets one row and the "B" row carries the category itself.
+    QFETCH(QStringList, registrationOrder);
+    QFETCH(int, rowUpdates);
+
+    using Roles = LoggingCategoryTreeModel::Roles;
+    const int fullNameRole = static_cast<int>(Roles::FullNameRole);
+    const int enabledRole = static_cast<int>(Roles::EnabledRole);
+
+    LoggingCategoryTreeModel model;
+    const QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
+    QSignalSpy dataChangedSpy(&model, &QAbstractItemModel::dataChanged);
+
+    QHash<QString, QGCLoggingCategoryItem*> items;
+    for (const QString& fullName : registrationOrder) {
+        const QStringList segments = fullName.split(QLatin1Char('.'));
+        auto* item = new QGCLoggingCategoryItem(segments.last(), fullName, false, &model);
+        items.insert(fullName, item);
+        model.insertCategory(segments, item);
+    }
+
+    QCOMPARE(model.rowCount(), 1);
+    const QModelIndex aIdx = model.index(0, 0);
+    QCOMPARE(model.data(aIdx, fullNameRole).toString(), QStringLiteral("A."));
+
+    QCOMPARE(model.rowCount(aIdx), 1);
+    const QModelIndex bIdx = model.index(0, 0, aIdx);
+    QCOMPARE(model.data(bIdx, fullNameRole).toString(), QStringLiteral("A.B"));
+
+    QCOMPARE(model.rowCount(bIdx), 1);
+    const QModelIndex cIdx = model.index(0, 0, bIdx);
+    QCOMPARE(model.data(cIdx, fullNameRole).toString(), QStringLiteral("A.B.C"));
+    QVERIFY(!model.hasChildren(cIdx));
+
+    QCOMPARE(dataChangedSpy.count(), rowUpdates);
+    if (rowUpdates > 0) {
+        QCOMPARE(dataChangedSpy.first().at(0).toModelIndex(), bIdx);
+    }
+    dataChangedSpy.clear();
+
+    // Enabling the category updates its own row and leaves the child alone.
+    items.value(QStringLiteral("A.B"))->setEnabledFromManager(true);
+    QCOMPARE(dataChangedSpy.count(), 1);
+    QCOMPARE(dataChangedSpy.first().at(0).toModelIndex(), bIdx);
+    QVERIFY(model.data(bIdx, enabledRole).toBool());
+    QVERIFY(!model.data(cIdx, enabledRole).toBool());
 }
 
 void LoggingCategoryModelTest::_testTreeModelDataRoles()
