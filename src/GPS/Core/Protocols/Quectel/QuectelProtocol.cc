@@ -5,7 +5,6 @@
 #include <limits>
 #include <optional>
 #include <string_view>
-#include <utility>
 #include <variant>
 
 #include <QtCore/QByteArray>
@@ -145,8 +144,6 @@ protected:
     GPSReceiveUpdates _decodeLine(std::string_view line, GPSDecodeContext& context) override;
 
 private:
-    class Attempt;
-
     enum class SurveyPhase
     {
         Off,
@@ -155,23 +152,37 @@ private:
         Monitoring,
     };
 
+    /// Whether a saved setting read back must be the requested one. When not, any valid setting passes and the caller
+    /// compares what was read.
+    enum class Match
+    {
+        Required,
+        NotRequired,
+    };
+
     /// Ends readiness and revokes the survey.
     void _stop(GPSDecodeContext& context);
     /// The base the survey status must describe.
     void _setBase(const GPSBaseStationConfig::Mode& mode);
-    /// A restart is about to be requested: the survey is revoked until the restart is verified.
-    void _beginRestart(GPSDecodeContext& context);
-    /// The restart was requested: restarts the stream and watches for the boot banner or a PQTMSRR rejection.
-    void _watchBoot(GPSStreamDemux& stream);
 
-    /// The restart was verified or abandoned: a later boot banner ends readiness.
-    void _endBootWatch() { _expectingBoot = false; }
+    // The steps of configure(): each returns whether it succeeded.
 
-    /// Restarts the stream for an identity query at another rate.
-    void _restartStream(GPSStreamDemux& stream) { _nmea.reset(stream); }
-
-    /// Records the firmware PQTMVERNO reported.
-    void _setFirmware(std::string_view firmware) { _firmware = QByteArrayView(firmware).toByteArray(); }
+    /// Labels the command @a label, or its @a body when empty.
+    bool _acknowledge(GPSCommandChannel& channel, QByteArrayView body, std::string_view label = {});
+    bool _identify(GPSCommandChannel& channel, std::chrono::milliseconds timeout = Plan::COMMAND_TIMEOUT);
+    bool _verifyRole(GPSCommandChannel& channel, Match match = Match::Required);
+    bool _verifyBase(GPSCommandChannel& channel, Match match = Match::Required);
+    bool _changeRole(GPSCommandChannel& channel);
+    bool _changeBase(GPSCommandChannel& channel, QByteArrayView body, std::string_view label);
+    bool _save(GPSCommandChannel& channel);
+    /// Restarts the receiver and reads its saved role back.
+    bool _restart(GPSCommandChannel& channel, Match roleMatch = Match::Required);
+    bool _restartWithBase(GPSCommandChannel& channel);
+    bool _verifySaved(GPSCommandChannel& channel, bool restarted, bool baseVerified);
+    /// Records why configure() failed and returns false. @a failure is ConsentRequired when the request needs a
+    /// persistent change without consent.
+    bool _fail(GPSCommandChannel& channel, const QString& reason,
+               GPSProtocolError failure = GPSProtocolError::Protocol);
 
     /// Publishes survey status from now on, starting with any status held since the verified restart.
     void _monitorSurvey(GPSDecodeContext& context);
@@ -195,45 +206,10 @@ private:
     bool _expectingBoot = false;
     bool _sawBoot = false;
     bool _restartRejected = false;
-};
 
-/// One configuration attempt: what the readbacks reported and whether a flash save may have changed the receiver.
-class Protocol::Attempt
-{
-public:
-    Attempt(GPSCommandChannel& channel, Protocol& protocol)
-        : _channel(channel)
-        , _protocol(protocol)
-    {}
+    // What configure() read back, and whether a flash save may have changed the receiver. The runtime configures each
+    // protocol once, so these start from their defaults.
 
-    bool run(GPSConfig config, unsigned& baud);
-
-private:
-    /// Whether a saved setting read back must be the requested one. When not, any valid setting passes and the caller
-    /// compares what was read.
-    enum class Match
-    {
-        Required,
-        NotRequired,
-    };
-
-    /// Labels the command @a label, or its @a body when empty.
-    bool _acknowledge(QByteArrayView body, std::string_view label = {});
-    bool _identify(std::chrono::milliseconds timeout = Plan::COMMAND_TIMEOUT);
-    bool _verifyRole(Match match = Match::Required);
-    bool _verifyBase(Match match = Match::Required);
-    bool _changeRole();
-    bool _changeBase(QByteArrayView body, std::string_view label);
-    bool _save();
-    /// Restarts the receiver and reads its saved role back.
-    bool _restart(Match roleMatch = Match::Required);
-    bool _restartWithBase();
-    bool _verifySaved(bool restarted, bool baseVerified);
-    /// @a failure is ConsentRequired when the request needs a persistent change without consent.
-    bool _fail(const QString& reason, GPSProtocolError failure = GPSProtocolError::Protocol);
-
-    GPSCommandChannel& _channel;
-    Protocol& _protocol;
     /// Re-runs the unchanged survey READ_BASE reported.
     QByteArray _surveyRestart;
     unsigned _role = 0;
@@ -245,47 +221,44 @@ private:
 
 bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned& baud)
 {
-    Attempt attempt(channel, *this);
-    return attempt.run(std::move(config), baud);
-}
-
-bool Protocol::Attempt::run(GPSConfig config, unsigned& baud)
-{
     const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&config.base.mode);
     if (!supportedBase(config.base.mode)) {
         return _fail(
+            channel,
             QStringLiteral("Unsupported LG290P configuration: use native 1 Hz observation count (maximum 86400) and "
                            "3D position accuracy threshold (maximum 1000 m), not receiver-managed survey"));
     }
-    const auto scope = _channel.deadlineScope(Plan::CONFIGURATION_TIMEOUT);
-    _protocol._setBase(config.base.mode);
-    const auto detection = _channel.detectBaud(Plan::BAUD_RATES, baud, [this]() -> GPSBaudProbe {
-        _protocol._restartStream(_channel.stream());
-        if (_identify()) {
+    const auto scope = channel.deadlineScope(Plan::CONFIGURATION_TIMEOUT);
+    _setBase(config.base.mode);
+    const auto detection = channel.detectBaud(Plan::BAUD_RATES, baud, [this, &channel]() -> GPSBaudProbe {
+        _nmea.reset(channel.stream());
+        if (_identify(channel)) {
             return GPSBaudProbe::Found;
         }
         // Firmware that answered but is not an LG290P(03) answers the same at every rate.
-        return _protocol._firmware.isEmpty() ? GPSBaudProbe::TryNext : GPSBaudProbe::Stop;
+        return _firmware.isEmpty() ? GPSBaudProbe::TryNext : GPSBaudProbe::Stop;
     });
     if (!detection.found) {
-        if (_protocol._firmware.isEmpty()) {
-            _channel.failNoAnswer(detection.probed);
-            return _fail({});
+        if (_firmware.isEmpty()) {
+            channel.failNoAnswer(detection.probed);
+            return _fail(channel, {});
         }
-        return _fail(QStringLiteral("No verified LG290P(03) identity; receiver configuration was not changed"));
+        return _fail(channel,
+                     QStringLiteral("No verified LG290P(03) identity; receiver configuration was not changed"));
     }
     baud = detection.baud;
-    qCDebug(QuectelProtocolLog).noquote() << "Quectel receiver firmware:" << _protocol._firmware;
-    if (!_verifyRole(Match::NotRequired)) {
-        return _fail(QStringLiteral("LG290P receiver role query failed; no role change was attempted"));
+    qCDebug(QuectelProtocolLog).noquote() << "Quectel receiver firmware:" << _firmware;
+    if (!_verifyRole(channel, Match::NotRequired)) {
+        return _fail(channel, QStringLiteral("LG290P receiver role query failed; no role change was attempted"));
     }
 
     bool restarted = false;
     if (config.allowPersistentChanges) {
         // Work from saved settings, not another client's uncommitted changes. A role
         // readback alone cannot distinguish a pending role from the active one.
-        if (!_restart(Match::NotRequired)) {
+        if (!_restart(channel, Match::NotRequired)) {
             return _fail(
+                channel,
                 QStringLiteral("LG290P saved role query after restart failed; no persistent change was attempted"));
         }
         restarted = true;
@@ -293,43 +266,45 @@ bool Protocol::Attempt::run(GPSConfig config, unsigned& baud)
     if (_role != Plan::BASE_ROLE) {
         if (!config.allowPersistentChanges) {
             return _fail(
+                channel,
                 QStringLiteral("LG290P role mismatch: save the requested base role externally, reboot and reconnect. "
                                "Alternatively, explicitly allow persistent changes for this connection"),
                 GPSProtocolError::ConsentRequired);
         }
-        if (!_changeRole()) {
-            return _fail(QStringLiteral("LG290P role change was rejected or its readback did not match"));
+        if (!_changeRole(channel)) {
+            return _fail(channel, QStringLiteral("LG290P role change was rejected or its readback did not match"));
         }
-        if (!_save()) {
-            return _fail(QStringLiteral("LG290P role save failed; receiver activation is not verified"));
+        if (!_save(channel)) {
+            return _fail(channel, QStringLiteral("LG290P role save failed; receiver activation is not verified"));
         }
-        if (!_restart()) {
-            return _fail(QStringLiteral("LG290P saved role could not be verified after restart"));
+        if (!_restart(channel)) {
+            return _fail(channel, QStringLiteral("LG290P saved role could not be verified after restart"));
         }
         restarted = true;
     }
 
     bool baseChanged = false;
-    if (!_verifyBase(Match::NotRequired)) {
-        return _fail(QStringLiteral("LG290P base settings query failed; no base change was attempted"));
+    if (!_verifyBase(channel, Match::NotRequired)) {
+        return _fail(channel, QStringLiteral("LG290P base settings query failed; no base change was attempted"));
     }
     if (!_baseMatches && !config.allowPersistentChanges) {
         return _fail(
+            channel,
             QStringLiteral("LG290P base settings mismatch: provision/save the requested ECEF coordinates or survey "
                            "observation count/accuracy externally, or explicitly allow persistent changes for this "
                            "connection"),
             GPSProtocolError::ConsentRequired);
     }
     if (!_baseMatches) {
-        const QByteArray base = Plan::writeBase(config.base.mode, _protocol._fixedECEF, _baseHasDistance);
-        if (!_changeBase(base, survey ? std::string_view{} : Plan::FIXED_BASE_LABEL)) {
-            return _fail(QStringLiteral("LG290P base change was rejected or its readback did not match"));
+        const QByteArray base = Plan::writeBase(config.base.mode, _fixedECEF, _baseHasDistance);
+        if (!_changeBase(channel, base, survey ? std::string_view{} : Plan::FIXED_BASE_LABEL)) {
+            return _fail(channel, QStringLiteral("LG290P base change was rejected or its readback did not match"));
         }
-        if (!_save()) {
-            return _fail(QStringLiteral("LG290P base save failed; receiver activation is not verified"));
+        if (!_save(channel)) {
+            return _fail(channel, QStringLiteral("LG290P base save failed; receiver activation is not verified"));
         }
-        if (!_restartWithBase()) {
-            return _fail(QStringLiteral("LG290P saved base settings could not be verified after restart"));
+        if (!_restartWithBase(channel)) {
+            return _fail(channel, QStringLiteral("LG290P saved base settings could not be verified after restart"));
         }
         baseChanged = true;
     }
@@ -337,42 +312,43 @@ bool Protocol::Attempt::run(GPSConfig config, unsigned& baud)
         qCDebug(QuectelProtocolLog)
             << "LG290P survey uses accepted 1 Hz observations, not wall time; accuracy filters individual 3D fixes. "
                "The receiver itself stores converged coordinates";
-        if (!_acknowledge(_surveyRestart, Plan::RESTART_SURVEY_LABEL)) {
-            return _fail(QStringLiteral("LG290P rejected restarting the unchanged, externally saved survey"));
+        if (!_acknowledge(channel, _surveyRestart, Plan::RESTART_SURVEY_LABEL)) {
+            return _fail(channel, QStringLiteral("LG290P rejected restarting the unchanged, externally saved survey"));
         }
         restarted = false;
     }
-    if (!_verifySaved(restarted, baseChanged)) {
+    if (!_verifySaved(channel, restarted, baseChanged)) {
         return _fail(
+            channel,
             QStringLiteral("LG290P restart/readback failed; saved role or base settings do not match the request"));
     }
 
-    _protocol._monitorSurvey(_channel.context());
+    _monitorSurvey(channel.context());
     const auto baseOutput = Plan::messageRates(Plan::BASE_OUTPUT);
-    if (!_channel.runSequence(baseOutput).succeeded()) {
-        return _fail(QStringLiteral("LG290P base message output configuration/readback failed"));
+    if (!channel.runSequence(baseOutput).succeeded()) {
+        return _fail(channel, QStringLiteral("LG290P base message output configuration/readback failed"));
     }
     const auto nmeaOutput = Plan::messageRates(Plan::NMEA_OUTPUT);
-    if (!_channel.runSequence(nmeaOutput).succeeded()) {
-        return _fail(QStringLiteral("LG290P NMEA output configuration/readback failed"));
+    if (!channel.runSequence(nmeaOutput).succeeded()) {
+        return _fail(channel, QStringLiteral("LG290P NMEA output configuration/readback failed"));
     }
-    _protocol._finishAttempt(_channel.context());
+    _finishAttempt(channel.context());
     return true;
 }
 
-bool Protocol::Attempt::_acknowledge(QByteArrayView body, std::string_view label)
+bool Protocol::_acknowledge(GPSCommandChannel& channel, QByteArrayView body, std::string_view label)
 {
     auto command = Plan::command(body, Plan::acknowledgement(body));
     if (!label.empty()) {
         command.step.command = QByteArrayView(label).toByteArray();
     }
-    const auto result = _channel.transact(command);
+    const auto result = channel.transact(command);
     return result.outcome == GPSCommandOutcome::Acknowledged;
 }
 
-bool Protocol::Attempt::_identify(std::chrono::milliseconds timeout)
+bool Protocol::_identify(GPSCommandChannel& channel, std::chrono::milliseconds timeout)
 {
-    const auto result = _channel.transact(Plan::command(
+    const auto result = channel.transact(Plan::command(
         Plan::IDENTIFY,
         [this](std::string_view body) {
             const Fields reply(body);
@@ -383,7 +359,7 @@ bool Protocol::Attempt::_identify(std::chrono::milliseconds timeout)
                 return GPSCommandOutcome::Pending;
             }
             const std::string_view firmware = reply[1];
-            _protocol._setFirmware(firmware);
+            _firmware = QByteArrayView(firmware).toByteArray();
             return firmware.starts_with(Plan::QUALIFIED_FIRMWARE) && firmware.size() > Plan::QUALIFIED_FIRMWARE.size()
                        ? GPSCommandOutcome::ReadbackVerified
                        : GPSCommandOutcome::Rejected;
@@ -392,9 +368,9 @@ bool Protocol::Attempt::_identify(std::chrono::milliseconds timeout)
     return result.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
-bool Protocol::Attempt::_verifyRole(Match match)
+bool Protocol::_verifyRole(GPSCommandChannel& channel, Match match)
 {
-    const auto result = _channel.transact(Plan::command(Plan::READ_ROLE, [this, match](std::string_view body) {
+    const auto result = channel.transact(Plan::command(Plan::READ_ROLE, [this, match](std::string_view body) {
         const Fields reply(body);
         unsigned role = 0;
         const bool valid = reply.size() == 3 && reply[0] == "PQTMCFGRCVRMODE" && reply[1] == "OK" &&
@@ -407,10 +383,10 @@ bool Protocol::Attempt::_verifyRole(Match match)
     return result.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
-bool Protocol::Attempt::_verifyBase(Match match)
+bool Protocol::_verifyBase(GPSCommandChannel& channel, Match match)
 {
     _baseMatches = false;
-    const auto rate = _channel.transact(Plan::command(Plan::READ_FIX_RATE, [](std::string_view body) {
+    const auto rate = channel.transact(Plan::command(Plan::READ_FIX_RATE, [](std::string_view body) {
         const Fields reply(body);
         unsigned interval = 0;
         return readback(reply, "PQTMCFGFIXRATE",
@@ -421,9 +397,9 @@ bool Protocol::Attempt::_verifyBase(Match match)
     }
     // Every line is offered until one completes the command, so the last reading is that of the reply, if any.
     SavedBase saved;
-    const auto base = _channel.transact(Plan::command(Plan::READ_BASE, [this, match, &saved](std::string_view body) {
+    const auto base = channel.transact(Plan::command(Plan::READ_BASE, [this, match, &saved](std::string_view body) {
         const Fields reply(body);
-        saved = savedBase(reply, _protocol._baseMode, _protocol._fixedECEF);
+        saved = savedBase(reply, _baseMode, _fixedECEF);
         return readback(reply, "PQTMCFGSVIN", match == Match::Required ? saved.matches : saved.valid);
     }));
     _baseMatches = saved.matches;
@@ -436,49 +412,49 @@ bool Protocol::Attempt::_verifyBase(Match match)
     return base.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
-bool Protocol::Attempt::_changeRole()
+bool Protocol::_changeRole(GPSCommandChannel& channel)
 {
-    if (!_acknowledge(QByteArrayView(Plan::WRITE_BASE_ROLE))) {
+    if (!_acknowledge(channel, QByteArrayView(Plan::WRITE_BASE_ROLE))) {
         return false;
     }
-    return _verifyRole();
+    return _verifyRole(channel);
 }
 
-bool Protocol::Attempt::_changeBase(QByteArrayView body, std::string_view label)
+bool Protocol::_changeBase(GPSCommandChannel& channel, QByteArrayView body, std::string_view label)
 {
-    if (!_acknowledge(body, label)) {
+    if (!_acknowledge(channel, body, label)) {
         return false;
     }
-    return _verifyBase();
+    return _verifyBase(channel);
 }
 
-bool Protocol::Attempt::_restartWithBase()
+bool Protocol::_restartWithBase(GPSCommandChannel& channel)
 {
-    if (!_restart()) {
+    if (!_restart(channel)) {
         return false;
     }
-    return _verifyBase();
+    return _verifyBase(channel);
 }
 
-bool Protocol::Attempt::_verifySaved(bool restarted, bool baseVerified)
+bool Protocol::_verifySaved(GPSCommandChannel& channel, bool restarted, bool baseVerified)
 {
     // A role readback can reflect an unsaved, not-yet-active change. Reboot and read back
     // the saved role before claiming that the receiver actually operates in that role.
     if (!restarted) {
-        if (!_restart()) {
+        if (!_restart(channel)) {
             return false;
         }
     }
     if (baseVerified) {
         return true;
     }
-    return _verifyBase();
+    return _verifyBase(channel);
 }
 
-bool Protocol::Attempt::_save()
+bool Protocol::_save(GPSCommandChannel& channel)
 {
     const auto result =
-        _channel.transact(Plan::command(Plan::SAVE, Plan::acknowledgement(Plan::SAVE), Plan::SAVE_TIMEOUT));
+        channel.transact(Plan::command(Plan::SAVE, Plan::acknowledgement(Plan::SAVE), Plan::SAVE_TIMEOUT));
     const bool saved = result.outcome == GPSCommandOutcome::Acknowledged;
     if (saved) {
         _saveAcknowledged = true;
@@ -490,55 +466,62 @@ bool Protocol::Attempt::_save()
     return saved;
 }
 
-bool Protocol::Attempt::_restart(Match roleMatch)
+bool Protocol::_restart(GPSCommandChannel& channel, Match roleMatch)
 {
-    _protocol._beginRestart(_channel.context());
+    // The survey is revoked until the restart is verified.
+    _revokeSurvey(channel.context());
+    _phase = SurveyPhase::AwaitingBoot;
     qCDebug(QuectelProtocolLog) << "Restarting LG290P and verifying its saved configuration";
-    const auto scope = _channel.deadlineScope(Plan::RESTART_TIMEOUT);
+    const auto scope = channel.deadlineScope(Plan::RESTART_TIMEOUT);
     const QByteArray restart = NMEAUtils::frame(Plan::RESTART);
-    if (!_channel.writeCommand({QByteArrayView(Plan::RESTART).toByteArray(), Plan::RESTART_TIMEOUT}, restart)) {
+    if (!channel.writeCommand({QByteArrayView(Plan::RESTART).toByteArray(), Plan::RESTART_TIMEOUT}, restart)) {
         return false;
     }
     // PQTMSRR has no documented ACK. Do not inflate successful transport completion to acknowledgment.
-    _channel.finishCommand(GPSCommandOutcome::Written);
-    _protocol._watchBoot(_channel.stream());
+    channel.finishCommand(GPSCommandOutcome::Written);
+    // Restart the stream and watch for the boot banner or a PQTMSRR rejection.
+    _nmea.reset(channel.stream());
+    _expectingBoot = true;
+    _sawBoot = false;
+    _restartRejected = false;
     do {
-        _channel.wait(Plan::RESTART_POLL);
-        if (_channel.failed()) {
+        channel.wait(Plan::RESTART_POLL);
+        if (channel.failed()) {
             break;
         }
-        const bool identified = _identify(Plan::RESTART_IDENTIFY_TIMEOUT);
-        if (_protocol._restartRejected) {
-            _channel.setErrorDetail(QStringLiteral("LG290P rejected PQTMSRR."));
+        const bool identified = _identify(channel, Plan::RESTART_IDENTIFY_TIMEOUT);
+        if (_restartRejected) {
+            channel.setErrorDetail(QStringLiteral("LG290P rejected PQTMSRR."));
             break;
         }
-        if (identified && _protocol._sawBoot) {
-            _protocol._endBootWatch();
-            return _verifyRole(roleMatch);
+        if (identified && _sawBoot) {
+            _expectingBoot = false;
+            return _verifyRole(channel, roleMatch);
         }
-    } while (!_channel.failed() && _channel.nowUs() < _channel.operationDeadline().untilUs);
-    _protocol._endBootWatch();
+    } while (!channel.failed() && channel.nowUs() < channel.operationDeadline().untilUs);
+    // The restart was abandoned: a boot banner from now on ends readiness.
+    _expectingBoot = false;
     return false;
 }
 
-bool Protocol::Attempt::_fail(const QString& reason, GPSProtocolError failure)
+bool Protocol::_fail(GPSCommandChannel& channel, const QString& reason, GPSProtocolError failure)
 {
-    _protocol._stop(_channel.context());
-    (void) _channel.flush();
+    _stop(channel.context());
+    (void) channel.flush();
     QString detail = reason;
-    if (!_channel.errorDetail().isEmpty()) {
-        detail += (detail.isEmpty() ? QString() : QStringLiteral(" ")) + _channel.errorDetail();
+    if (!channel.errorDetail().isEmpty()) {
+        detail += (detail.isEmpty() ? QString() : QStringLiteral(" ")) + channel.errorDetail();
     }
-    _channel.failControl(failure);
+    channel.failControl(failure);
     if (_saveAcknowledged || _saveUncertain) {
         const QString persistence =
             _saveAcknowledged ? QStringLiteral("An LG290P flash save was acknowledged. ") : QString();
         const QString uncertain =
             _saveUncertain ? QStringLiteral("The latest flash save may have taken effect. ") : QString();
-        _channel.setErrorDetail(persistence + uncertain + detail +
-                                QStringLiteral(" Receiver settings may have changed; no rollback was attempted."));
-    } else if (_channel.error() != GPSProtocolError::Cancelled) {
-        _channel.setErrorDetail(detail);
+        channel.setErrorDetail(persistence + uncertain + detail +
+                               QStringLiteral(" Receiver settings may have changed; no rollback was attempted."));
+    } else if (channel.error() != GPSProtocolError::Cancelled) {
+        channel.setErrorDetail(detail);
     }
     return false;
 }
@@ -556,20 +539,6 @@ void Protocol::_setBase(const GPSBaseStationConfig::Mode& mode)
     if (const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&mode)) {
         _fixedECEF = GPSProtocolMath::toEcef(fixed->position);
     }
-}
-
-void Protocol::_beginRestart(GPSDecodeContext& context)
-{
-    _revokeSurvey(context);
-    _phase = SurveyPhase::AwaitingBoot;
-}
-
-void Protocol::_watchBoot(GPSStreamDemux& stream)
-{
-    _nmea.reset(stream);
-    _expectingBoot = true;
-    _sawBoot = false;
-    _restartRejected = false;
 }
 
 void Protocol::_monitorSurvey(GPSDecodeContext& context)
