@@ -11,11 +11,14 @@ import QGroundControl.GPS
 QGCGroupBox {
     id: root
 
+    /// The NTRIP connection setting; the mountpoint is locked while it is on.
+    property Fact enabledFact: root._ntrip.ntripServerConnectEnabled
+
     readonly property NTRIPSettings _ntrip: QGroundControl.settingsManager.ntripSettings
     readonly property NTRIPManager _ntripMgr: QGroundControl.gpsManager.ntrip
     readonly property NTRIPSourceTableController _sourceTable: root._ntripMgr.sourceTableController
     readonly property Vehicle _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-    property bool _isActive: root._ntrip.ntripServerConnectEnabled.rawValue
+    readonly property bool _isActive: root.enabledFact.rawValue
     readonly property bool _hasHost: root._ntrip.ntripServerHostAddress.rawValue !== ""
     readonly property bool _fetching: root._sourceTable.fetchStatus === NTRIPSourceTableController.InProgress
 
