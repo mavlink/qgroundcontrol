@@ -342,8 +342,12 @@ void GPSDriver::_handle(const GPSRTCMFrame& report)
 
 void GPSDriver::_handle(const GPSInputProtocol& report)
 {
-    // Satellite counts come from one protocol, as positions do.
+    // Satellite counts come from one protocol, as positions do. The counts of the protocol left behind would otherwise
+    // stay with the consumer, since nothing remains here to expire.
     _state->satellites = {};
+    if (_state->lastSatellites) {
+        _publishSatellites({});
+    }
     if (_sinks.onReceiverDetected) {
         _sinks.onReceiverDetected(report.family);
     }

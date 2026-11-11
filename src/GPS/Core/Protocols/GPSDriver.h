@@ -33,7 +33,8 @@ struct GPSDriverSinks
     std::function<void(const GPSSurveyReport&)> onSurveyIn;
     /// The family a GPSType::automatic driver detected, before it configures the receiver. A passive driver reports
     /// the protocol its input carries once identified and whenever it changes: the family whose native protocol it
-    /// decodes, or GPSType::passive for standard NMEA.
+    /// decodes, or GPSType::passive for standard NMEA. A change first withdraws the satellite counts of the protocol
+    /// left behind, with an empty onSatelliteInfo report.
     std::function<void(GPSType)> onReceiverDetected;
 };
 

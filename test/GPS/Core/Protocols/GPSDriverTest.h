@@ -33,4 +33,5 @@ private slots:
     void _satelliteExpiry_data();
     void _satelliteExpiry();
     void _satelliteUsageSources();
+    void _inputProtocolSwitch();
 };

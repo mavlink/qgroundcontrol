@@ -717,4 +717,34 @@ void GPSDriverTest::_satelliteUsageSources()
     QCOMPARE(used, (std::vector<std::optional<int>>{12, 3, 3, 3}));
 }
 
+void GPSDriverTest::_inputProtocolSwitch()
+{
+    GPSTestClock clock(GPSTestClock::START_US);
+    ModelReceiver<ScriptedReceiver::Model> link(clock);
+    std::vector<GPSSatelliteReport> satellites;
+    std::vector<GPSType> protocols;
+    GPSDriverSinks sinks;
+    sinks.onSatelliteInfo = [&](const GPSSatelliteReport& report) { satellites.push_back(report); };
+    sinks.onReceiverDetected = [&](GPSType protocol) { protocols.push_back(protocol); };
+    GPSDriver driver(GPSType::passive, link, {.baudRate = 115200}, std::move(sinks), clock.source());
+    QVERIFY(driver.configure());
+    send(link, nmeaBytes("GPGSV,1,1,01,01,10,20,30") +
+                   nmeaBytes("GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,"));
+    QCOMPARE(driver.receiveOutcome(0ms).liveness, GPSReceiveLiveness::Data);
+    QCOMPARE(protocols, std::vector<GPSType>{GPSType::passive});
+    // Identifying the first protocol withdraws nothing: only the NMEA counts were published.
+    QCOMPARE(satellites.size(), size_t(2));
+    QCOMPARE(satellites.back().inView, std::optional<int>{1});
+    QCOMPARE(satellites.back().used, std::optional<int>{8});
+
+    // NMEA falls silent and UBX positions, which carry no satellite counts, take over.
+    clock.advanceBy(3000000);
+    const auto epoch = ubxNavigationEpoch(ubxFix3D(), 1000);
+    send(link, QByteArray(reinterpret_cast<const char*>(epoch.data()), static_cast<qsizetype>(epoch.size())));
+    QCOMPARE(driver.receiveOutcome(0ms).liveness, GPSReceiveLiveness::Data);
+    QCOMPARE(protocols.back(), GPSType::ublox);
+    QCOMPARE(satellites.size(), size_t(3));
+    QCOMPARE(satellites.back(), GPSSatelliteReport{});
+}
+
 UT_REGISTER_TEST_LIGHTWEIGHT(GPSDriverTest, TestLabel::Unit)
