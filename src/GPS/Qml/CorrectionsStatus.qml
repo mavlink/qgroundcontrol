@@ -29,6 +29,7 @@ QGCGroupBox {
         labelText: root._fresh ? root.corrections.sourceName(root._selected.source)
                    //: No fresh correction stream is available yet
                    : root._active ? qsTr("Waiting") : qsTr("None")
+        labelTextFormat: Text.PlainText
     }
 
     // Stream endpoints can be long URLs, so they wrap anywhere.
@@ -45,6 +46,7 @@ QGCGroupBox {
         label: qsTr("Data rate")
         //: %1 is a data size, such as 2.1KB; the label is a data rate per second
         labelText: qsTr("%1/s").arg(QGroundControl.bigSizeToString(root.corrections.selectedBytesPerSecond))
+        labelTextFormat: Text.PlainText
     }
 
     // Why the UDP RTCM input cannot listen, such as a port another program uses; the input keeps retrying.

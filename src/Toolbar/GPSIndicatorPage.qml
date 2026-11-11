@@ -10,7 +10,6 @@ import QGroundControl.GPS
 // Drawer of the GPS indicator: vehicle GPS, GNSS receiver, corrections, and GCS position.
 ToolIndicatorPage {
     id: root
-    showExpand: true
 
     readonly property GPSReceiver _receiver: QGroundControl.gpsManager.receiver
     readonly property NTRIPSettings _ntripSettings: QGroundControl.settingsManager.ntripSettings
@@ -31,6 +30,8 @@ ToolIndicatorPage {
         Math.min(root._preferredSettingsWidth,
                  root.availableWidth - (root._compact ? 0 : root._preferredStatusWidth) - root.spacing * 2 - 1))
 
+    showExpand: true
+
     // A vehicle GPS value, labelled with its description, shown while the vehicle reports it.
     component MeasurementLabel: LabelledLabel {
         property Fact fact: null
@@ -39,6 +40,7 @@ ToolIndicatorPage {
         visible: !!fact && Number.isFinite(fact.value) && (!nonNegative || fact.value >= 0)
         label: fact ? fact.shortDescription : ""
         labelText: fact ? fact.valueString + (fact.units ? " " + fact.units : "") : ""
+        labelTextFormat: Text.PlainText
     }
 
     // A resilience state, shown while the receiver reports it.

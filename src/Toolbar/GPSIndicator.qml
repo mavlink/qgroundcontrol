@@ -8,10 +8,6 @@ import QGroundControl.Controls
 // Vehicle GPS status, or the GNSS receiver's while the vehicle reports no GPS, plus correction and resilience state.
 Item {
     id:             control
-    objectName:     "toolbar_gpsIndicator"
-    width:          gpsIndicatorRow.width
-    anchors.top:    parent.top
-    anchors.bottom: parent.bottom
 
     property bool   showIndicator:  true
     property Vehicle _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
@@ -20,7 +16,7 @@ Item {
     readonly property bool _vehicleGps: !!_gps && _gps.telemetryAvailable
     property GPSReceiver _receiver: QGroundControl.gpsManager.receiver
     readonly property GPSReceiverFactGroup _receiverFacts: _receiver.facts
-    property bool   _receiverConnected: _receiverFacts.telemetryAvailable
+    readonly property bool _receiverConnected: _receiverFacts.telemetryAvailable
     readonly property bool _receiverWarning: _receiverConnected && _receiverFacts.receiverWarning
     readonly property int _receiverSatellites: _receiverFacts.numSatellitesUsed.rawValue
     readonly property string _receiverDetail: _receiver.summaryLabel
@@ -31,11 +27,8 @@ Item {
         _gps2 && (!_gps || _gps2.authenticationSeverity > _gps.authenticationSeverity) ? _gps2 : _gps
     readonly property int _authenticationState: _authenticationSource && _authenticationSource.authenticationReported
                                                 ? _authenticationSource.authenticationState.value : 0
-    readonly property int _interferenceState: {
-        const first = control._gps ? control._gps.interferenceState : 0
-        const second = control._gps2 ? control._gps2.interferenceState : 0
-        return control._interferenceSeverity(second) > control._interferenceSeverity(first) ? second : first
-    }
+    readonly property int _interferenceState: Math.max(control._gps ? control._gps.interferenceState : 0,
+                                                       control._gps2 ? control._gps2.interferenceState : 0)
     readonly property color _authenticationColor: {
         switch (_authenticationState) {
         case VehicleGPSFactGroup.AuthenticationState.Initializing: return qgcPal.colorYellow
@@ -52,14 +45,10 @@ Item {
         }
     }
 
-    function _interferenceSeverity(state) {
-        switch (state) {
-        case VehicleGPSFactGroup.InterferenceState.NotDetected: return 1
-        case VehicleGPSFactGroup.InterferenceState.Mitigated: return 2
-        case VehicleGPSFactGroup.InterferenceState.Detected: return 3
-        default: return 0
-        }
-    }
+    objectName:     "toolbar_gpsIndicator"
+    width:          gpsIndicatorRow.width
+    anchors.top:    parent.top
+    anchors.bottom: parent.bottom
 
     QGCPalette { id: qgcPal }
 
@@ -75,10 +64,10 @@ Item {
             spacing:        -ScreenTools.defaultFontPixelWidth / 2
 
             QGCLabel {
-                id:                     gpsLabel
                 objectName:             "gpsCorrectionsLabel"
                 rotation:               90
                 text:                   control._showRtk ? qsTr("RTK") : qsTr("GNSS")
+                textFormat:             Text.PlainText
                 color:                  control._receiverWarning || control._correctionState === GPSCorrectionManager.Waiting
                                         ? qgcPal.colorOrange : qgcPal.textPrimary
                 anchors.verticalCenter: parent.verticalCenter
@@ -86,7 +75,6 @@ Item {
             }
 
             QGCColoredImage {
-                id:                 gpsIcon
                 width:              height
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
@@ -101,7 +89,6 @@ Item {
 
         // Satellites and HDOP from the vehicle; satellites used and fix from the receiver without vehicle GPS.
         Column {
-            id:                     gpsValuesColumn
             anchors.verticalCenter: parent.verticalCenter
             visible:                control._vehicleGps ? !isNaN(control._gps.hdop.value) : control._receiverConnected
             spacing:                0
@@ -112,6 +99,7 @@ Item {
                 color:                      qgcPal.textPrimary
                 text:                       control._vehicleGps ? control._gps.count.valueString
                                             : control._receiverSatellites >= 0 ? String(control._receiverSatellites) : "–"
+                textFormat:                 Text.PlainText
             }
 
             QGCLabel {
@@ -119,6 +107,7 @@ Item {
                 objectName: "gpsDetail"
                 color:      qgcPal.textPrimary
                 text:       control._vehicleGps ? control._gps.hdop.valueString : control._receiverDetail
+                textFormat: Text.PlainText
             }
         }
 

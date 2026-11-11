@@ -345,6 +345,8 @@ void GPSIndicatorTest::_resilienceIcon_data()
                                  << QByteArrayLiteral("colorRed");
     QTest::newRow("worse-second") << 1 << 2 << int(Auth::Ok) << int(Auth::Error) << QByteArrayLiteral("colorOrange")
                                   << QByteArrayLiteral("colorRed");
+    // A value above those MAVLink defines today counts as worse, as VehicleGPSFactGroup ranks within one receiver.
+    QTest::newRow("undefined-interference") << 4 << 1 << NONE << NONE << QByteArrayLiteral("colorRed") << QByteArray();
 }
 
 void GPSIndicatorTest::_resilienceIcon()
