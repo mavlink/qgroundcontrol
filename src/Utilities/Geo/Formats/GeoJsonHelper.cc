@@ -18,12 +18,12 @@ QGC_LOGGING_CATEGORY(GeoJsonHelperLog, "Utilities.GeoJsonHelper")
 
 namespace GeoJsonHelper
 {
-    QJsonDocument _loadFile(const QString &filePath, QString &errorString);
-    QVariantList _extractShapeValues(const QVariantList &values);
-    void _extractShapeValuesRecursive(const QVariant &value, QVariantList &shapes, int depth = 0);
+QJsonDocument _loadFile(const QString& filePath, QString& errorString);
+QVariantList _extractShapeValues(const QVariantList& values);
+void _extractShapeValuesRecursive(const QVariant& value, QVariantList& shapes, int depth = 0);
 
-    constexpr int _maxRecursionDepth = 32;
-    constexpr const char *_errorPrefix = QT_TRANSLATE_NOOP("GeoJsonHelper", "GeoJson file load failed. %1");
+constexpr int _maxRecursionDepth = 32;
+constexpr const char* _errorPrefix = QT_TRANSLATE_NOOP("GeoJsonHelper", "GeoJson file load failed. %1");
 }
 
 void GeoJsonHelper::_extractShapeValuesRecursive(const QVariant &value, QVariantList &shapes, int depth)

@@ -12,11 +12,11 @@ QGC_LOGGING_CATEGORY(KMLHelperLog, "Utilities.KMLHelper")
 
 namespace KMLHelper
 {
-    QDomDocument _loadFile(const QString &kmlFile, QString &errorString);
-    bool _parseCoordinateString(const QString &coordinatesString, QList<QGeoCoordinate> &coords, QString &errorString);
-    void _checkAltitudeMode(const QDomNode &geometryNode, const QString &geometryType, int index);
+QDomDocument _loadFile(const QString& kmlFile, QString& errorString);
+bool _parseCoordinateString(const QString& coordinatesString, QList<QGeoCoordinate>& coords, QString& errorString);
+void _checkAltitudeMode(const QDomNode& geometryNode, const QString& geometryType, int index);
 
-    constexpr const char *_errorPrefix = QT_TRANSLATE_NOOP("KMLHelper", "KML file load failed. %1");
+constexpr const char* _errorPrefix = QT_TRANSLATE_NOOP("KMLHelper", "KML file load failed. %1");
 }
 
 QDomDocument KMLHelper::_loadFile(const QString &kmlFile, QString &errorString)
