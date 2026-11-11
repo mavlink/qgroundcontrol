@@ -236,7 +236,7 @@ private:
         Header,
         Payload,
         Checksum1,
-        Checksum2
+        Checksum2,
     };
 
     void _add(uint8_t byte)

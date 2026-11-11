@@ -439,7 +439,7 @@ void Protocol::_decodeMonVer(std::span<const uint8_t> payload)
     const QByteArrayView hardware = cString(version.hwVersion);
     identity.hardware = hardware.toByteArray();
     identity.board = UBX::boardFromHardwareVersion(hardware);
-    if (identity.board == UBX::Board::unknown) {
+    if (identity.board == UBX::Board::Unknown) {
         qCWarning(UBXProtocolLog).noquote() << QStringLiteral("unknown board hw: %1").arg(QString::fromUtf8(hardware));
     }
     identity.protocol27 = UBX::receiverProfile(identity.board).protocol27;
@@ -455,8 +455,8 @@ void Protocol::_decodeMonVer(std::span<const uint8_t> payload)
             }
             identity.firmware = field.sliced(6).toByteArray();
             qCDebug(UBXProtocolLog) << "u-blox firmware version:" << identity.firmware;
-            if (identity.board == UBX::Board::u_blox9 && field.contains("HPGL1L5")) {
-                identity.board = UBX::Board::u_blox9_F9P_L1L5;
+            if (identity.board == UBX::Board::UBlox9 && field.contains("HPGL1L5")) {
+                identity.board = UBX::Board::UBlox9F9PL1L5;
             }
         }
         // PROTVER: supported protocol version.
@@ -467,7 +467,7 @@ void Protocol::_decodeMonVer(std::span<const uint8_t> payload)
             const std::string_view protocol(text.data(), size_t(text.size()));
             const auto major = NMEA::number<unsigned>(protocol.substr(0, protocol.find('.')));
             if (!major || *major == 0) {
-                identity.board = UBX::Board::unknown;
+                identity.board = UBX::Board::Unknown;
                 return;
             }
             identity.protocol27 = *major >= 27;
@@ -483,10 +483,10 @@ void Protocol::_decodeMonVer(std::span<const uint8_t> payload)
             }
             identity.model = field.sliced(4).toByteArray();
             identity.isM8p = field.contains("M8P");
-            if (identity.board == UBX::Board::u_blox9 && field.contains("F9P")) {
-                identity.board = UBX::Board::u_blox9_F9P_L1L2;
-            } else if (identity.board == UBX::Board::u_blox10 && field.contains("DAN-F10N")) {
-                identity.board = UBX::Board::u_blox10_L1L5;
+            if (identity.board == UBX::Board::UBlox9 && field.contains("F9P")) {
+                identity.board = UBX::Board::UBlox9F9PL1L2;
+            } else if (identity.board == UBX::Board::UBlox10 && field.contains("DAN-F10N")) {
+                identity.board = UBX::Board::UBlox10L1L5;
             }
             qCDebug(UBXProtocolLog) << "u-blox module:" << identity.model;
         }

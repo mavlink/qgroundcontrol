@@ -37,7 +37,7 @@ bool Protocol::_baseStationUnsupported() const
     if (identity.timeModeUnsupported) {
         return true;
     }
-    if (identity.board == UBX::Board::u_blox8) {
+    if (identity.board == UBX::Board::UBlox8) {
         return !identity.isM8p && !identity.model.isEmpty();
     }
     const auto profile = UBX::receiverProfile(identity.board);
@@ -71,7 +71,7 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
         channel.failNoAnswer(detection.probed);
         return false;
     }
-    if (identity.board == UBX::Board::unknown) {
+    if (identity.board == UBX::Board::Unknown) {
         QString detail = QStringLiteral("Unsupported u-blox receiver: hardware version %1")
                              .arg(QString::fromLatin1(identity.hardware));
         if (!identity.protocolVersion.isEmpty()) {
@@ -113,7 +113,7 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
 bool Protocol::_identify(GPSCommandChannel& channel)
 {
     const auto scope = channel.deadlineScope(Plan::IDENTITY_TIMEOUT);
-    _identity.board = UBX::Board::unknown;
+    _identity.board = UBX::Board::Unknown;
     if (!_send(channel, Msg::MON_VER, {}, {{}, Plan::IDENTITY_TIMEOUT})) {
         return false;
     }

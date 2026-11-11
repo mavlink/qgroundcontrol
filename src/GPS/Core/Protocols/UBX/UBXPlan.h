@@ -15,24 +15,24 @@
 namespace UBX {
 enum class Board : uint8_t
 {
-    unknown = 0,
-    u_blox5 = 5,
-    u_blox6 = 6,
-    u_blox7 = 7,
-    u_blox8 = 8,
-    u_blox9 = 9,
-    u_blox9_F9P_L1L2 = 10,
-    u_blox10 = 11,
-    u_blox9_F9P_L1L5 = 12,
-    u_blox10_L1L5 = 13,
-    u_blox_X20 = 14
+    Unknown = 0,
+    UBlox5 = 5,
+    UBlox6 = 6,
+    UBlox7 = 7,
+    UBlox8 = 8,
+    UBlox9 = 9,
+    UBlox9F9PL1L2 = 10,
+    UBlox10 = 11,
+    UBlox9F9PL1L5 = 12,
+    UBlox10L1L5 = 13,
+    UBloxX20 = 14,
 };
 
 /// What configuration may rely on for a board. The MON-VER hardware version selects a generation; the firmware and
 /// module strings then refine u-blox 9 to F9P and u-blox 10 to DAN-F10N.
 struct ReceiverProfile
 {
-    Board board = Board::unknown;
+    Board board = Board::Unknown;
     /// MON-VER hwVersion of a generation; refined boards have none.
     std::string_view hardwareVersion{};
     /// RTCM3 base output (F9P and X20); only these receivers are configured as a base.
@@ -51,27 +51,27 @@ struct ReceiverProfile
 inline constexpr std::array RECEIVER_PROFILES = {
     ReceiverProfile{},
     // Generations before u-blox 8 cannot output RTCM, so they are never configured as a base.
-    ReceiverProfile{.board = Board::u_blox5, .hardwareVersion = "00040005", .baseCapabilityKnown = true},
-    ReceiverProfile{.board = Board::u_blox6, .hardwareVersion = "00040007", .baseCapabilityKnown = true},
-    ReceiverProfile{.board = Board::u_blox7, .hardwareVersion = "00070000", .baseCapabilityKnown = true},
-    ReceiverProfile{.board = Board::u_blox8, .hardwareVersion = "00080000"},
+    ReceiverProfile{.board = Board::UBlox5, .hardwareVersion = "00040005", .baseCapabilityKnown = true},
+    ReceiverProfile{.board = Board::UBlox6, .hardwareVersion = "00040007", .baseCapabilityKnown = true},
+    ReceiverProfile{.board = Board::UBlox7, .hardwareVersion = "00070000", .baseCapabilityKnown = true},
+    ReceiverProfile{.board = Board::UBlox8, .hardwareVersion = "00080000"},
     ReceiverProfile{
-        .board = Board::u_blox9, .hardwareVersion = "00190000", .baseCapabilityKnown = true, .protocol27 = true},
-    ReceiverProfile{.board = Board::u_blox9_F9P_L1L2,
+        .board = Board::UBlox9, .hardwareVersion = "00190000", .baseCapabilityKnown = true, .protocol27 = true},
+    ReceiverProfile{.board = Board::UBlox9F9PL1L2,
                     .rtcmOutput = true,
                     .baseCapabilityKnown = true,
                     .measurementPeriodMs = 200,
                     .protocol27 = true},
     ReceiverProfile{
-        .board = Board::u_blox10, .hardwareVersion = "000A0000", .baseCapabilityKnown = true, .protocol27 = true},
-    ReceiverProfile{.board = Board::u_blox9_F9P_L1L5,
+        .board = Board::UBlox10, .hardwareVersion = "000A0000", .baseCapabilityKnown = true, .protocol27 = true},
+    ReceiverProfile{.board = Board::UBlox9F9PL1L5,
                     .rtcmOutput = true,
                     .baseCapabilityKnown = true,
                     .l5HealthOverride = true,
                     .measurementPeriodMs = 200,
                     .protocol27 = true},
-    ReceiverProfile{.board = Board::u_blox10_L1L5, .baseCapabilityKnown = true, .protocol27 = true},
-    ReceiverProfile{.board = Board::u_blox_X20,
+    ReceiverProfile{.board = Board::UBlox10L1L5, .baseCapabilityKnown = true, .protocol27 = true},
+    ReceiverProfile{.board = Board::UBloxX20,
                     .hardwareVersion = "000B0000",
                     .rtcmOutput = true,
                     .baseCapabilityKnown = true,
@@ -97,7 +97,7 @@ inline constexpr std::array RECEIVER_PROFILES = {
             return profile.board;
         }
     }
-    return Board::unknown;
+    return Board::Unknown;
 }
 }  // namespace UBX
 

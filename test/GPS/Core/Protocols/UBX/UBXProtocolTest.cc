@@ -1634,8 +1634,8 @@ void independentSequences(GPSTestClock& clock)
 /// The recorded NAV-PVT and NAV-SAT, and the receiver profile and schema tables they rely on.
 void recordedNavigation(GPSTestClock& clock)
 {
-    QVERIFY(!UBX::receiverProfile(UBX::Board::u_blox9).rtcmOutput);
-    QVERIFY(UBX::receiverProfile(UBX::Board::u_blox9_F9P_L1L2).rtcmOutput);
+    QVERIFY(!UBX::receiverProfile(UBX::Board::UBlox9).rtcmOutput);
+    QVERIFY(UBX::receiverProfile(UBX::Board::UBlox9F9PL1L2).rtcmOutput);
     QCOMPARE(UBX::configurationValueBytes(0x50000001), 0);
     QCOMPARE(UBX::configurationValueBytes(0x30000001), 2);
     for (const auto& schema : UBX::MESSAGE_SCHEMAS) {

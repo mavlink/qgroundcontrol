@@ -31,7 +31,7 @@ namespace UBX {
 /// Receiver identity from MON-VER.
 struct Identity
 {
-    Board board = Board::unknown;
+    Board board = Board::Unknown;
     bool isM8p = false;
     bool protocol27 = false;
     bool timeModeUnsupported = false;
