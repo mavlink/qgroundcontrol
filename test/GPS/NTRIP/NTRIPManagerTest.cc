@@ -55,9 +55,13 @@ void NTRIPManagerTest::_fail(MockNTRIPTransport* transport, const QString& detai
 void NTRIPManagerTest::_stopFromIdleIsNoop()
 {
     NTRIPManager manager;
+    QSignalSpy transitions(&manager, &NTRIPManager::connectionStatusChanged);
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
-    manager._stop();
+    // A connection that is off has nothing to stop, when it is applied or at shutdown.
+    manager.init();
+    manager.shutdown();
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
+    QVERIFY(transitions.isEmpty());
 }
 
 void NTRIPManagerTest::_statusMessageNamesStateWithoutDetail()
@@ -121,7 +125,7 @@ void NTRIPManagerTest::_transportFactory()
 void NTRIPManagerTest::_stopCancelsDeferredSettings_data()
 {
     QTest::addColumn<bool>("shutdown");
-    QTest::newRow("restartable-stop") << false;
+    QTest::newRow("connection-turned-off") << false;
     QTest::newRow("permanent-shutdown") << true;
 }
 
@@ -140,26 +144,26 @@ void NTRIPManagerTest::_stopCancelsDeferredSettings()
     auto* replacement = injectMockTransport(manager, true);
     if (shutdown) {
         manager.shutdown();
+        QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
     } else {
-        manager._stop();
-    }
-    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
-    QVERIFY(scheduler.advanceBy(SettingsDebounce));
-    QCOMPARE(replacement->startCount, 0);
-    if (shutdown) {
-        changed.connection.mountpoint = QStringLiteral("AFTER_SHUTDOWN");
+        // Turned off before the changed mountpoint was applied.
+        changed.enabled = false;
         manager.setConfiguration(changed);
-        QVERIFY(scheduler.advanceBy(SettingsDebounce));
-        QCOMPARE(replacement->startCount, 0);
     }
-    manager._start();
+    QVERIFY(scheduler.advanceBy(SettingsDebounce));
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
+    QCOMPARE(replacement->startCount, 0);
+    // Only a manager that was not shut down connects again.
+    changed.enabled = true;
+    changed.connection.mountpoint = QStringLiteral("AFTER_STOP");
+    manager.setConfiguration(changed);
+    QVERIFY(scheduler.advanceBy(SettingsDebounce));
     QCOMPARE(replacement->startCount, shutdown ? 0 : 1);
 }
 
 void NTRIPManagerTest::_newSessionRetryBudget_data()
 {
     QTest::addColumn<int>("action");
-    QTest::newRow("stop-start") << 0;
     QTest::newRow("disable-enable") << 1;
     QTest::newRow("automatic-reconnect") << 2;
     QTest::newRow("qml-retry-enables-connection") << 3;
@@ -191,11 +195,7 @@ void NTRIPManagerTest::_newSessionRetryBudget()
     // Spend part of the budget; only an automatic reconnect keeps backing off from here.
     failWithExpectedDelay(std::chrono::seconds(1));
     failWithExpectedDelay(std::chrono::seconds(2));
-    if (action == 0) {
-        manager._stop();
-        transport = injectMockTransport(manager);
-        manager._start();
-    } else if (action == 1) {
+    if (action == 1) {
         manager.setConfiguration(mockCasterConfiguration(false));
         QVERIFY(scheduler.advanceBy(SettingsDebounce));
         transport = injectMockTransport(manager);
@@ -236,10 +236,10 @@ void NTRIPManagerTest::_statusCallbackStopsTransition()
     connect(&manager, &NTRIPManager::connectionStatusChanged, this, [&]() {
         observed.append(manager.connectionStatus());
         if (manager.connectionStatus() == NTRIPManager::ConnectionStatus::Connecting) {
-            manager._stop();
+            manager.shutdown();
         }
     });
-    manager._start();
+    manager.init();
     // Observers see the settled state after the transport has started, never a half-entered state.
     QCOMPARE(observed, (QList<NTRIPManager::ConnectionStatus>{NTRIPManager::ConnectionStatus::Connecting,
                                                               NTRIPManager::ConnectionStatus::Disconnected}));
@@ -268,7 +268,7 @@ void NTRIPManagerTest::_connectedCallbackStopsTransition()
     initialize(manager);
     connect(&manager, &NTRIPManager::connectionStatusChanged, this, [&]() {
         if (manager.connectionStatus() == NTRIPManager::ConnectionStatus::Connected) {
-            manager._stop();
+            manager.shutdown();
         }
     });
     transport->simulateConnect();
@@ -303,7 +303,7 @@ void NTRIPManagerTest::_plaintextCredentialWarningIsVisibleState()
     QCOMPARE(warningSpy.count(), tls ? 0 : 1);
     QCOMPARE(mgr.securityWarning().contains(QStringLiteral("without TLS")), !tls);
 
-    mgr._stop();
+    mgr.shutdown();
     QCOMPARE(warningSpy.count(), tls ? 0 : 2);
     QVERIFY(mgr.securityWarning().isEmpty());
 }
@@ -334,7 +334,7 @@ void NTRIPManagerTest::_certificatePinWriteBackKeepsConnection()
     QCOMPARE(transport->stopCount, 0);
     QCOMPARE(replacement->startCount, 0);
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
-    manager._stop();
+    manager.shutdown();
 }
 
 void NTRIPManagerTest::_optingOutForgetsCertificatePin_data()
@@ -394,7 +394,9 @@ void NTRIPManagerTest::_reconnectCancelStopsTimer()
     initialize(mgr);
     _fail(transport, QStringLiteral("cancel"));
     auto* retry = injectMockTransport(mgr);
-    mgr._stop();
+    // The setting is applied after its debounce, which is shorter than the first reconnect delay.
+    mgr.setConfiguration(mockCasterConfiguration(false));
+    QVERIFY(scheduler.advanceBy(SettingsDebounce));
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
     QCOMPARE(retry->startCount, 0);
@@ -518,7 +520,7 @@ void NTRIPManagerTest::_waitingStatusObserverCanStopManager()
     connect(&manager, &NTRIPManager::statusMessageChanged, this, [&]() {
         if (manager.statusMessage() == QStringLiteral("Waiting for network")) {
             stoppedFromStatus = true;
-            manager._stop();
+            manager.shutdown();
         }
     });
 
@@ -558,9 +560,12 @@ void NTRIPManagerTest::_retiredTransportErrorCannotAffectNewSession()
     auto* first = injectMockTransport(mgr);
     initialize(mgr);
     first->simulateError(NTRIPError::HttpError, QStringLiteral("retired failure"), std::chrono::seconds{300});
-    mgr._stop();
+    // A changed mountpoint replaces the transport before its queued failure is delivered.
     auto* second = injectMockTransport(mgr);
-    mgr._start();
+    auto changed = mgr.configuration();
+    changed.connection.mountpoint = QStringLiteral("OTHER");
+    mgr.setConfiguration(changed);
+    QVERIFY(scheduler.advanceBy(SettingsDebounce));
     deliverQueuedCalls();
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
     QCOMPARE(second->startCount, 1);
@@ -603,9 +608,12 @@ void NTRIPManagerTest::_retryPolicy()
     QFETCH(int, expectedDelayMs);
     ManualScheduler scheduler;
     NTRIPManager manager(nullptr, &scheduler);
-    manager.setConfiguration(mockCasterConfiguration(enabled));
     auto* transport = injectMockTransport(manager);
-    manager._start();
+    initialize(manager);
+    if (!enabled) {
+        // Turned off while the attempt runs: the setting applies after its debounce, and the failure comes first.
+        manager.setConfiguration(mockCasterConfiguration(false));
+    }
 
     for (int attempt = 0; attempt < attempts; ++attempt) {
         const auto warmupDelay = std::chrono::milliseconds(1000 * (1 << attempt));
@@ -626,10 +634,13 @@ void NTRIPManagerTest::_retryPolicy()
         QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
         QCOMPARE(retry->startCount, 1);
     }
-    manager._stop();
-    manager.setConfiguration(mockCasterConfiguration(true));
+    // Turning the connection off and on starts over with the shortest delay.
+    manager.setConfiguration(mockCasterConfiguration(false));
+    QVERIFY(scheduler.advanceBy(SettingsDebounce));
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Disconnected);
     auto* replacement = injectMockTransport(manager, true);
-    manager._start();
+    manager.setConfiguration(mockCasterConfiguration(true));
+    QVERIFY(scheduler.advanceBy(SettingsDebounce));
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
     _fail(replacement, QStringLiteral("fresh failure"));
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting);
@@ -691,8 +702,7 @@ void NTRIPManagerTest::_httpRetryAfterReachesManager()
     NTRIPManager manager(nullptr, &scheduler);
     auto configuration = mockCasterConfiguration();
     configuration.connection = caster.connectionConfig();
-    manager.setConfiguration(configuration);
-    manager._start();
+    initialize(manager, configuration);
     auto* connection = caster.waitForConnection(TestTimeout::shortMs());
     QVERIFY(connection && connection->peer);
     QVERIFY(connection->waitForRequest(TestTimeout::shortMs()).startsWith("GET /TEST HTTP/1.1"));
@@ -735,8 +745,7 @@ void NTRIPManagerTest::_unrepeatableAnswerWaitsForUser()
     NTRIPManager manager(nullptr, &scheduler);
     auto configuration = mockCasterConfiguration();
     configuration.connection = caster.connectionConfig();
-    manager.setConfiguration(configuration);
-    manager._start();
+    initialize(manager, configuration);
     auto* connection = caster.waitForConnection(TestTimeout::shortMs());
     QVERIFY(connection && connection->peer);
     QVERIFY(connection->waitForRequest(TestTimeout::shortMs()).startsWith("GET /TEST HTTP/1.1"));
@@ -811,20 +820,22 @@ void NTRIPManagerTest::_retryPublicationSuperseded()
 {
     ManualScheduler scheduler;
     NTRIPManager manager(nullptr, &scheduler);
-    manager.setConfiguration(mockCasterConfiguration());
     auto* first = injectMockTransport(manager, true);
-    manager._start();
+    initialize(manager);
     auto* replacement = injectMockTransport(manager);
     bool replaced = false;
-    // An observer of the Reconnecting status restarts the manager; the retry already scheduled must not fire.
+    // Changed settings take effect while the Reconnecting status is announced, which connects anew at once; the
+    // retry already scheduled must not fire.
     connect(&manager, &NTRIPManager::connectionStatusChanged, this, [&]() {
         if (manager.connectionStatus() != NTRIPManager::ConnectionStatus::Reconnecting ||
             std::exchange(replaced, true)) {
             return;
         }
-        manager._stop();
         injectNextTransport(manager, replacement);
-        manager._start();
+        auto changed = manager.configuration();
+        changed.connection.mountpoint = QStringLiteral("OTHER");
+        manager.setConfiguration(changed);
+        QVERIFY(scheduler.advanceBy(SettingsDebounce));
     });
     _fail(first, QStringLiteral("superseded"), NTRIPError::HttpError, std::chrono::seconds(300));
     QVERIFY(replaced);
@@ -843,7 +854,7 @@ void NTRIPManagerTest::_missingMountpointDoesNotStartTransport()
     mgr.setConfiguration(configuration);
     auto* transport = injectMockTransport(mgr, true);
     expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("Select a mountpoint")));
-    mgr._start();
+    mgr.init();
     QCOMPARE(mgr.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
     QCOMPARE(transport->startCount, 0);
     QVERIFY(mgr.statusMessage().contains(QStringLiteral("mountpoint")));
@@ -890,6 +901,8 @@ void NTRIPManagerTest::_correctionIngressKeepsSessionAndIdentity()
     QCOMPARE(corrections.selectedStream().source, static_cast<int>(GPSCorrectionSettings::Ntrip));
 
     first->simulateRtcmData(frame, 1005);
+    // On the wall clock this test runs on, every public restart waits in the event loop, which would deliver the
+    // queued frame to the session that sent it.
     mgr._stop();
     auto* second = injectMockTransport(mgr);
     mgr._start();
@@ -949,7 +962,7 @@ void NTRIPManagerTest::_ggaSettingsUseInjectedProviders()
     QCOMPARE(transport->startCount, 1);
     QCOMPARE(transport->stopCount, 0);
     QVERIFY(transitions.isEmpty());
-    manager._stop();
+    manager.shutdown();
 }
 
 void NTRIPManagerTest::_connectedWithoutPositionSaysSo_data()
@@ -986,7 +999,7 @@ void NTRIPManagerTest::_connectedWithoutPositionSaysSo()
     }
     QCOMPARE(manager.statusMessage(), NTRIPManager::tr("Connected"));
     QCOMPARE(messages.size(), 1);
-    manager._stop();
+    manager.shutdown();
 }
 
 void NTRIPManagerTest::_mountpointChangeReconnects()
@@ -1045,7 +1058,7 @@ void NTRIPManagerTest::_transportDiagnosticsReachManager()
     corrections.setConfiguration({.udpInput = {}, .udpOutput = {}, .messageFilter = QStringLiteral("1005")});
     QList<QByteArray> routed;
     captureVehicleFrames(corrections, routed);
-    mgr._start();
+    mgr.init();
     auto* connection = caster.waitForConnection(TestTimeout::shortMs());
     QVERIFY(connection && connection->peer);
     QVERIFY(connection->waitForRequest(TestTimeout::shortMs()).startsWith("GET /TEST HTTP/1.1"));
@@ -1063,7 +1076,7 @@ void NTRIPManagerTest::_transportDiagnosticsReachManager()
     QCOMPARE(mgr.connectionStats()->bytesReceived(), quint64(accepted.size() + filtered.size()));
     // Only the valid frame the filter takes reaches vehicles; the filtered and the corrupt one do not.
     QCOMPARE(routed, QList<QByteArray>{accepted});
-    mgr._stop();
+    mgr.shutdown();
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(NTRIPManagerTest, TestLabel::Unit)
