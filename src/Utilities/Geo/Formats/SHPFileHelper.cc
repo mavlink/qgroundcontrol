@@ -154,7 +154,7 @@ namespace SHPFileHelper
 
     /// Converts vertex @a index of @a shpObject to a coordinate, from UTM when @a utmZone is not 0.
     /// @param hasAltitude true when the shape type of the file carries Z values
-    /// @return false when the vertex cannot be converted; a warning has been logged
+    /// @return false when the vertex is outside the range of the projection; a warning has been logged
     bool _vertexCoordinate(const SHPObject* shpObject, int index, int utmZone, bool utmSouthernHemisphere,
                            bool hasAltitude, QGeoCoordinate& coord);
 }
@@ -255,8 +255,13 @@ bool SHPFileHelper::_vertexCoordinate(const SHPObject* shpObject, int index, int
             return false;
         }
     } else {
-        coord.setLatitude(shpObject->padfY[index]);
-        coord.setLongitude(shpObject->padfX[index]);
+        coord = QGeoCoordinate(shpObject->padfY[index], shpObject->padfX[index]);
+        if (!coord.isValid()) {
+            qCWarning(SHPFileHelperLog) << "Latitude or longitude out of range for entity" << shpObject->nShapeId
+                                        << "vertex" << index << ":" << shpObject->padfY[index]
+                                        << shpObject->padfX[index];
+            return false;
+        }
     }
 
     if (hasAltitude && shpObject->padfZ) {
