@@ -273,11 +273,27 @@ void NTRIPSourceTableControllerTest::_sourceTableSuccessAndCache()
     QCOMPARE(distanceAt(1), -1.0);
 
     auto invalid = configuration;
-    invalid.mountpoint = QStringLiteral("invalid\r\nmount");
+    invalid.username = QStringLiteral("invalid:user");
     controller.fetch(invalid);
     QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
     QVERIFY(!controller._cacheStoredAtUs.has_value());
     QCOMPARE(controller.mountpointModel()->rowCount(), 0);
+}
+
+void NTRIPSourceTableControllerTest::_mountpointSettingDoesNotBlockFetch()
+{
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    NTRIPSourceTableController controller;
+    // The request does not name the mountpoint, and a mistyped one is a reason to browse.
+    controller.fetch(caster.connectionConfig(QStringLiteral("MIS TYPED")));
+    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::InProgress);
+    QVERIFY(controller.fetchError().isEmpty());
+    QVERIFY(caster.serveSourceTable(kValidTable));
+    QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                              TestTimeout::mediumMs());
+    QCOMPARE(caster.requestLines(), QList<QByteArray>{"GET / HTTP/1.1"});
+    QCOMPARE(controller.mountpointModel()->rowCount(), 1);
 }
 
 void NTRIPSourceTableControllerTest::_tableWithoutMountpoints_data()

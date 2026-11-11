@@ -47,10 +47,11 @@ QAbstractItemModel* NTRIPSourceTableController::mountpointModel() const
 
 void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, const QGeoCoordinate& sortCoord)
 {
+    // The request does not name the mountpoint, so the one being replaced need not be valid.
     auto casterConfig = config;
     casterConfig.mountpoint.clear();
     const bool sameCaster = casterConfig == _lastFetchConfig;
-    const QString error = config.validationError();
+    const QString error = casterConfig.validationError();
 
     if (error.isEmpty() && _attempt && sameCaster) {
         _sortCoord = sortCoord;

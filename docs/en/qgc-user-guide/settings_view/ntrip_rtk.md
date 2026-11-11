@@ -30,7 +30,7 @@ QGroundControl asks a caster in the form NTRIP version 2 defines. A caster that 
 ## NTRIP Mountpoint
 
 - **Mount Point** — the NTRIP mountpoint to connect to. It is required: without one, NTRIP reports an error instead of connecting
-- **Browse** — fetch available mountpoints from the server and display them in a list with the caster's description, format, navigation system, country, bitrate, and distance, as far as the caster gives them. A mountpoint is listed when the caster names it, even without any of these. When the caster's list names no mountpoint, QGroundControl says so.
+- **Browse** — fetch available mountpoints from the server and display them in a list with the caster's description, format, navigation system, country, bitrate, and distance, as far as the caster gives them. A mountpoint is listed when the caster names it, even without any of these. **Browse** does not use the **Mount Point** field, so it also works while that field holds a name the caster does not have. When the caster's list names no mountpoint, QGroundControl says so.
 
 QGroundControl receives RTCM 3 corrections only. A mountpoint that sends another format, such as SPARTN, is disconnected after 30 seconds of data without a valid RTCM message. Before any corrections have arrived, QGroundControl reports that and does not retry. Once the mountpoint has delivered corrections, it keeps reconnecting.
 
