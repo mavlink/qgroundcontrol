@@ -118,13 +118,14 @@
         },
         {
             "name": "rtspTimeout",
-            "shortDesc": "RTSP Video Timeout",
-            "longDesc": "How long to wait before assuming RTSP link is gone.",
+            "shortDesc": "How long an RTSP video stream may deliver nothing before it counts as lost.",
+            "longDesc": "An RTSP stream that delivers nothing for this long counts as lost; the first data of a connection may take 5 s longer. Auto-reconnect on stream loss decides whether the stream then reconnects or stops. Only RTSP streams use this setting, including those a camera announces. UDP, TCP and MPEG-TS streams count as lost after 3 s, and a UDP stream that hasn't started yet is awaited without limit.",
             "type": "uint32",
             "min": 1,
             "units": "s",
             "default": 8,
-            "label": "RTSP Video Timeout"
+            "label": "RTSP Video Timeout",
+            "keywords": "rtsp,timeout,stream loss,stall"
         },
         {
             "name": "streamEnabled",
@@ -166,12 +167,12 @@
         },
         {
             "name": "rtspAutoReconnect",
-            "shortDesc": "Automatically restart the pipeline on watchdog timeout or pipeline error.",
-            "longDesc": "When enabled, the receiver reconnects with exponential backoff (1s → 30s) after a stream timeout or a fatal pipeline error. Disable to fall back to the legacy behaviour of giving up after one failure.",
+            "shortDesc": "Reconnects a lost or failed video stream of any transport: RTSP, UDP, TCP or MPEG-TS.",
+            "longDesc": "Applies to every network video stream, whatever its transport, whether it is the configured source or one a camera announces. When enabled, a stream that is lost or fails reconnects after 1 s, then after waits that double up to 30 s. When disabled, the stream stops after its first failure. USB cameras don't use this setting.",
             "type": "bool",
             "default": true,
             "label": "Auto-reconnect on stream loss",
-            "keywords": "rtsp,reconnect,watchdog,recovery,advanced"
+            "keywords": "reconnect,stream loss,timeout,recovery,rtsp,udp,tcp,mpegts"
         },
         {
             "name": "videoBackend",

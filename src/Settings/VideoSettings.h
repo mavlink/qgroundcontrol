@@ -31,11 +31,13 @@ public:
     DEFINE_SETTINGFACT(recordingFormat)
     DEFINE_SETTINGFACT(maxVideoSize)
     DEFINE_SETTINGFACT(enableStorageLimit)
+    /// For RTSP streams only: the others keep VideoReceiver::Config's timeout.
     DEFINE_SETTINGFACT(rtspTimeout)
     DEFINE_SETTINGFACT(streamEnabled)
     DEFINE_SETTINGFACT(disableWhenDisarmed)
     DEFINE_SETTINGFACT(lowLatencyMode)
     DEFINE_SETTINGFACT(rtpJitterLatencyMs)
+    /// For streams of every transport, despite its name, which is the one settings are stored under.
     DEFINE_SETTINGFACT(rtspAutoReconnect)
     DEFINE_SETTINGFACT(videoBackend)
     DEFINE_SETTINGFACT(forceVideoDecoder)
@@ -95,6 +97,8 @@ public:
     static constexpr const char* videoSourceUDPH265           = QT_TRANSLATE_NOOP("VideoSettings", "UDP h.265 Video Stream");
     static constexpr const char* videoSourceTCP               = QT_TRANSLATE_NOOP("VideoSettings", "TCP-MPEG2 Video Stream");
     static constexpr const char* videoSourceMPEGTS            = QT_TRANSLATE_NOOP("VideoSettings", "MPEG-TS Video Stream");
+    // A Solo sends video only after a handshake, which APMFirmwarePlugin::initializeVehicle() makes as the vehicle
+    // connects: selected later, the source plays nothing until the next connection. The text is also the stored value.
     static constexpr const char* videoSource3DRSolo           = QT_TRANSLATE_NOOP("VideoSettings", "3DR Solo (requires restart)");
     static constexpr const char* videoSourceParrotDiscovery   = QT_TRANSLATE_NOOP("VideoSettings", "Parrot Discovery");
     static constexpr const char* videoSourceYuneecMantisG     = QT_TRANSLATE_NOOP("VideoSettings", "Yuneec Mantis G");

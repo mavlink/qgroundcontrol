@@ -59,9 +59,13 @@ Connection settings vary by source type:
   A lower value shortens the video delay; a higher one leaves more time to reorder packets and to recover lost ones by
   retransmission, which values below about 40 ms prevent. Not used, and hidden, in **Low Latency Mode**.
 - **Auto-reconnect on stream loss** — reconnect a stream that times out or fails, waiting 1 s before the first attempt
-  and up to 30 s between later ones (default: on). A stream waiting to reconnect does so at once when a vehicle
-  connects or its link returns. When off, the stream stops after the first failure. A UDP source that has received
-  nothing yet hasn't failed: with either setting QGC keeps listening until the stream starts.
+  and up to 30 s between later ones (default: on). It applies to every stream, whatever its transport (RTSP, UDP, TCP or
+  MPEG-TS) and whether it is the configured source or one a camera advertises; USB cameras don't use it. A stream
+  waiting to reconnect does so at once when a vehicle connects or its link returns. When off, the stream stops after the
+  first failure. A UDP source that has received nothing yet hasn't failed: with either setting QGC keeps listening until
+  the stream starts. A stream times out when nothing arrives for 3 s, or for 8 s if it is an RTSP stream. Only the RTSP
+  time can be changed, with the `rtspTimeout` setting (in seconds, at least 1), which has no control on this page: a
+  [settings override file](../../qgc-dev-guide/file_formats/settings_override.md) or a custom build sets it.
 - **Force CPU video path** — disable hardware-accelerated rendering (use if video displays incorrectly). Changing it
   restarts the video stream.
 - **Force video decoder priority** — override the automatic decoder selection: Default / Software / Hardware / NVIDIA / VA-API / Direct3D / VideoToolbox / Intel / Vulkan. Only the families of the installed decoders are listed, and Vulkan only in builds with the Vulkan GPU path (`QGC_GST_ENABLE_VULKAN`). Changing it restarts the video stream.
