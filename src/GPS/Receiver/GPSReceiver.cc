@@ -712,7 +712,12 @@ QString GPSReceiver::statusText() const
 QString GPSReceiver::summaryLabel() const
 {
     if (hasReceiver() && activeRole() == RTKSettings::ConfiguredBase) {
-        return _activeBaseState() == GPSBaseState::Active ? tr("Survey", "Base survey-in in progress") : tr("Base");
+        if (_activeBaseState() == GPSBaseState::Active) {
+            return tr("Survey", "Base survey-in in progress");
+        }
+        return _session->correctionsWithheld()
+                   ? tr("Waiting", "Base without a valid position, which sends no corrections")
+                   : tr("Base");
     }
     return GPSReceiverMessages::fixLabel(gpsFixQualityFromValue(_facts->fixType()->rawValue().toInt()));
 }

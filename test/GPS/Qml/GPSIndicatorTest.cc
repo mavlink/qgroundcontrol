@@ -413,25 +413,28 @@ void GPSIndicatorTest::_showsReceiverWithoutVehicleGPS_data()
     using State = GPSCorrectionManager::State;
     QTest::addColumn<int>("role");
     QTest::addColumn<int>("fixType");
-    QTest::addColumn<bool>("surveying");
+    QTest::addColumn<GPSBaseState>("baseState");
     QTest::addColumn<int>("correctionState");
     QTest::addColumn<QString>("label");
     QTest::addColumn<QString>("detail");
-    QTest::newRow("passive-position-only") << int(RTKSettings::Passive) << 3 << false << int(State::Inactive) << "GNSS"
-                                           << "3D";
-    QTest::newRow("passive-float") << int(RTKSettings::Passive) << 5 << false << int(State::Waiting) << "RTK"
-                                   << "Float";
-    QTest::newRow("base-surveying") << int(RTKSettings::ConfiguredBase) << 0 << true << int(State::Waiting) << "RTK"
-                                    << "Survey";
-    QTest::newRow("base-fixed") << int(RTKSettings::ConfiguredBase) << 0 << false << int(State::Fresh) << "RTK"
-                                << "Base";
+    const auto row = [](const char* name, RTKSettings::ReceiverRole role, int fixType, GPSBaseState baseState,
+                        State corrections, const char* label, const char* detail) {
+        QTest::newRow(name) << int(role) << fixType << baseState << int(corrections) << label << detail;
+    };
+    row("passive-position-only", RTKSettings::Passive, 3, GPSBaseState::Inactive, State::Inactive, "GNSS", "3D");
+    row("passive-float", RTKSettings::Passive, 5, GPSBaseState::Inactive, State::Waiting, "RTK", "Float");
+    row("base-surveying", RTKSettings::ConfiguredBase, 0, GPSBaseState::Active, State::Waiting, "RTK", "Survey");
+    row("base-valid", RTKSettings::ConfiguredBase, 0, GPSBaseState::Valid, State::Fresh, "RTK", "Base");
+    // A base without a valid position sends no corrections, so it does not read as a base.
+    row("base-without-position", RTKSettings::ConfiguredBase, 0, GPSBaseState::Inactive, State::Waiting, "RTK",
+        "Waiting");
 }
 
 void GPSIndicatorTest::_showsReceiverWithoutVehicleGPS()
 {
     QFETCH(int, role);
     QFETCH(int, fixType);
-    QFETCH(bool, surveying);
+    QFETCH(GPSBaseState, baseState);
     QFETCH(int, correctionState);
     QFETCH(QString, label);
     QFETCH(QString, detail);
@@ -466,7 +469,7 @@ void GPSIndicatorTest::_showsReceiverWithoutVehicleGPS()
     GPSSatelliteReport used;
     used.used = 9;
     worker->satellites(used);
-    worker->baseStatus({.state = surveying ? GPSBaseState::Active : GPSBaseState::Inactive});
+    worker->baseStatus({.state = baseState});
     QVERIFY(rtkLabel->property("visible").toBool());
     QCOMPARE(rtkLabel->property("text").toString(), label);
     QVERIFY(satellites->property("visible").toBool());

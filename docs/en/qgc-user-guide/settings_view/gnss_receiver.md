@@ -12,6 +12,7 @@ While a survey or the receiver's own averaging runs, it sends none until that co
 Otherwise the status reads _Waiting for a valid base position; the base sends no corrections until then_, as before the receiver confirms a fixed position or after it loses its position.
 [Corrections are sent](#base_station) once the base position is valid.
 A Septentrio base is the exception: its corrections do not wait for the base position, so its status does not say this.
+While the vehicle reports no GPS, the toolbar GNSS indicator shows the receiver, and a configured base in a word: _Survey_ while it determines its position, _Waiting_ while it has no valid base position and sends no corrections, and _Base_ otherwise.
 An identified receiver family or output protocol is shown as _Detected_.
 **Constellations** lists the satellites of each satellite system in view as used/in view, such as _GPS 8/10, Galileo 6/7_; a dash replaces the used count when the receiver does not report which satellites it uses.
 The row is not shown when the receiver does not report which system its satellites belong to.

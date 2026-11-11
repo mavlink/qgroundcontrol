@@ -303,13 +303,27 @@ void GPSReceiverFactGroupTest::_summaryLabel()
     receiver.disconnectReceiver();
     QVERIFY(receiver.summaryLabel().isEmpty());
 
-    // A configured base reports its survey state instead of its fix.
+    // A configured base reports the state of its base position instead of its fix. It is a base only once that
+    // position is valid: until then, and after losing it, its corrections are withheld.
+    const QString waiting = GPSReceiver::tr("Waiting", "Base without a valid position, which sends no corrections");
     QVERIFY(connectOverTcp(receiver));
     QCOMPARE(receiver.activeRole(), RTKSettings::ConfiguredBase);
-    QCOMPARE(receiver.summaryLabel(), GPSReceiver::tr("Base"));
-    harness.workers.current()->baseStatus({.state = GPSBaseState::Active});
+    ScriptedReceiverWorker* const worker = harness.workers.current();
+    worker->ready();
+    QCOMPARE(receiver.summaryLabel(), waiting);
+    worker->baseStatus({.state = GPSBaseState::Active});
     QCOMPARE(receiver.summaryLabel(), GPSReceiver::tr("Survey", "Base survey-in in progress"));
-    QCOMPARE(changed.size(), 5);
+    worker->baseStatus({.state = GPSBaseState::Valid});
+    QCOMPARE(receiver.summaryLabel(), GPSReceiver::tr("Base"));
+    worker->baseStatus({.state = GPSBaseState::Inactive});
+    QCOMPARE(receiver.summaryLabel(), waiting);
+    QCOMPARE(changed.size(), 7);
+    receiver.disconnectReceiver();
+
+    // A Septentrio base's corrections do not wait for its base position.
+    QVERIFY(connectOverTcp(receiver, receiverConfiguration(gpsReceiverManufacturerForType(GPSType::Septentrio))));
+    harness.workers.current()->ready();
+    QCOMPARE(receiver.summaryLabel(), GPSReceiver::tr("Base"));
 }
 
 UT_REGISTER_TEST(GPSReceiverFactGroupTest, TestLabel::Unit)

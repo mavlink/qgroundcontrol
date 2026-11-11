@@ -97,7 +97,8 @@ class GPSReceiver : public QObject, private GPSReceiverConnector
     Q_PROPERTY(RTKSettings::ConnectionType effectiveConnectionType READ effectiveConnectionType NOTIFY
                    configurationChanged FINAL)
     Q_PROPERTY(bool connectionSupported READ connectionSupported NOTIFY configurationChanged FINAL)
-    /// Short state for compact views: whether a configured base is determining its position, otherwise the fix type.
+    /// Short state for compact views: whether a configured base is determining its position or waits for a valid one
+    /// with its corrections withheld, otherwise the fix type.
     Q_PROPERTY(QString summaryLabel READ summaryLabel NOTIFY summaryLabelChanged FINAL)
     /// What the receiver is doing, as a sentence; empty when no receiver is connected or being connected.
     Q_PROPERTY(QString statusText READ statusText NOTIFY statusTextChanged FINAL)
