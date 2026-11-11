@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <d3d12.h>
 #include <gst/d3d12/gstd3d12.h>
+#include <rhi/qrhi_platform.h>
 #include <utility>
 
 #include "GstD3D12ContextBridge.h"
@@ -21,10 +22,27 @@ QGC_LOGGING_CATEGORY(GstD3D12Log, "Video.GStreamer.HwBuffers.GstD3D12Buf")
 namespace {
 
 using GstD3DVideoBufferCommon::kMaxPlanes;
-using GstD3DVideoBufferCommon::MapDiagnostics;
 
-MapDiagnostics s_diag;
-std::atomic<bool> s_loggedMultiPlane{false};
+/// Every once-only log latch of the path, so resetCachedState() re-arms them as one.
+struct D3D12Diagnostics : GstD3DVideoBufferCommon::MapDiagnostics
+{
+    std::atomic<bool> loggedMultiPlane{false};
+    std::atomic<bool> loggedForeignDevice{false};
+
+    void reset() noexcept
+    {
+        GstD3DVideoBufferCommon::MapDiagnostics::reset();
+        for (std::atomic<bool>* flag : {&loggedMultiPlane, &loggedForeignDevice}) {
+            flag->store(false, std::memory_order_relaxed);
+        }
+    }
+};
+
+static_assert(sizeof(D3D12Diagnostics) ==
+                  sizeof(GstD3DVideoBufferCommon::MapDiagnostics) + (2 * sizeof(std::atomic<bool>)),
+              "D3D12Diagnostics::reset() must list every flag");
+
+D3D12Diagnostics s_diag;
 
 using PlaneLeases = std::array<std::shared_ptr<GstD3D12StagingPool::SlotLease>, kMaxPlanes>;
 
@@ -162,6 +180,24 @@ private:
     bool _waited = false;
 };
 
+/// True when @p resource lives on the device behind @p qrhiDevice (QRhiD3D12NativeHandles::dev). The two are compared
+/// as COM identities: Qt holds another interface of the device than a resource reports.
+bool onDevice(ID3D12Resource* resource, void* qrhiDevice)
+{
+    IUnknown* owner = nullptr;
+    IUnknown* device = nullptr;
+    const bool same = qrhiDevice && SUCCEEDED(resource->GetDevice(IID_PPV_ARGS(&owner))) &&
+                      SUCCEEDED(static_cast<IUnknown*>(qrhiDevice)->QueryInterface(IID_PPV_ARGS(&device))) &&
+                      (owner == device);
+    if (owner) {
+        owner->Release();
+    }
+    if (device) {
+        device->Release();
+    }
+    return same;
+}
+
 /// Wraps a D3D12Memory-backed GstSample as a QHwVideoBuffer. The device guard, decoder sync and slice copies run in the
 /// constructor, on the streaming thread (blocking there is harmless: the decoder is async), so mapTextures() on the
 /// render thread only imports resolved resources. D3D11 has its own buffer: it shares QRhi's immediate context, so it
@@ -176,7 +212,7 @@ public:
         // D3D12Convert bin negotiates single-plane formats only; anything else takes the CPU path.
         if (const auto* description = QVideoTextureHelper::textureDescription(format.pixelFormat());
             !description || (description->nplanes != 1)) {
-            QGC_HW_WARN_ONCE(GstD3D12Log, s_loggedMultiPlane,
+            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedMultiPlane,
                              "resolve: multi-plane D3D12Memory" << format.pixelFormat() << "can't be sampled by QRhi");
             return;
         }
@@ -189,8 +225,15 @@ public:
 
     QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& old) override
     {
-        // The device bridge must be primed: resources on another device import fine but render corrupt.
         if (!beginMap(rhi, QRhi::D3D12)) {
+            return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
+        }
+        // Also catches an unprimed bridge, which skips resolvePlanes()'s device guard: a resource of another device
+        // imports fine but renders corrupt.
+        const auto* native = static_cast<const QRhiD3D12NativeHandles*>(rhi.nativeHandles());
+        if (!native || !onDevice(_handles[0], native->dev)) {
+            QGC_HW_WARN_ONCE(GstD3D12Log, s_diag.loggedForeignDevice,
+                             "mapTextures: decoder resource is not on QRhi's device — CPU fallback");
             return GstHwPathTelemetry::fail(HwVideoBufferPath::D3D12);
         }
         return finishMap(rhi, old, _handles, _keepAlive);

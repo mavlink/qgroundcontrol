@@ -55,19 +55,19 @@ struct MapDiagnostics : GstHw::MapDiagnostics
     // the bridge lost.
     std::atomic<bool> loggedDeviceMismatch{false};
 
-    /// Re-arm every log-once flag so device-loss recovery surfaces warnings again.
+    /// Re-arm every log-once flag so device-loss recovery surfaces warnings again. A deriving struct's reset() calls
+    /// this and re-arms its own.
     void reset() noexcept
     {
-        loggedFirstSuccess.store(false, std::memory_order_release);
-        loggedNullSample.store(false, std::memory_order_release);
-        loggedBadBackend.store(false, std::memory_order_release);
-        loggedNullBuffer.store(false, std::memory_order_release);
-        loggedTextureCreateFail.store(false, std::memory_order_release);
-        loggedNonD3DMemory.store(false, std::memory_order_release);
-        loggedNullResource.store(false, std::memory_order_release);
-        loggedDeviceMismatch.store(false, std::memory_order_release);
+        GstHw::MapDiagnostics::reset();
+        for (std::atomic<bool>* flag : {&loggedNonD3DMemory, &loggedNullResource, &loggedDeviceMismatch}) {
+            flag->store(false, std::memory_order_relaxed);
+        }
     }
 };
+
+static_assert(sizeof(MapDiagnostics) == sizeof(GstHw::MapDiagnostics) + (3 * sizeof(std::atomic<bool>)),
+              "MapDiagnostics::reset() must list every flag");
 
 /// Pool key: a staging resource is reusable only for an identical (size, format, plane) layout. width is UINT64 to hold
 /// D3D12_RESOURCE_DESC::Width; D3D11's UINT widens losslessly.

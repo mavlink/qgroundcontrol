@@ -132,12 +132,19 @@ them as VkImages itself (`dmabuf/GstDmaBufVulkanImport`):
   context queries, restarts and resets.
 - **`GstContextBridgeBase`**: GL, D3D11 and D3D12 bridges hand Qt's GPU device to GStreamer elements through
   `NEED_CONTEXT` and context queries (the Vulkan bridge can't: see the opt-in paths below). That is the main window's
-  device: a VideoOutput popped out into its own window
-  renders on that window's device, so on Direct3D11 its frames take the CPU path. So do GLMemory frames from a GL
-  context outside Qt's share group, which gst-gl creates for itself when no element was handed the GL bridge's.
+  device: a VideoOutput popped out into its own window renders on that window's device, so on Direct3D11 its frames
+  take the CPU path. So do Direct3D frames a decoder allocated on another device before the bridge was primed, and
+  GLMemory frames from a GL context outside Qt's share group, which gst-gl creates for itself when no element was
+  handed the GL bridge's.
 - **D3D11 decoder padding**: decoders pad their textures to their alignment (16 rows for H.264, 128 for HEVC/AV1)
   without crop meta. The picture is copied out on the render thread, as a texture-array slice is, so frames keep the
   picture's size and a CPU layout for that fallback and for screenshots.
+- **D3D12 resource states (not verified)**: the import hands every resource to QRhi as
+  `D3D12_RESOURCE_STATE_COMMON`, and the staging copies of array slices assume that state as well. Qt transitions a
+  texture it samples to a shader-resource state and never back (`QD3D12ResourceBarrierGenerator`, Qt 6.12), so the
+  second use of a staging slot, or of a resource the converter's pool recycles, starts from another state than the
+  one declared. This is read from the sources only: a run under the D3D12 debug layer (`QSG_RHI_DEBUG_LAYER=1`) would
+  tell whether it is reported and needs a transition back.
 - **`GstHwPathTelemetry`** tracks process-wide render-time counters (map failures, reuse hits, sync waits) for fallback
   diagnostics. A receiver's `GPU path live` and `GPU path stats` debug lines pair its own sink's `frame-stats` with
   them, both counted from when its session took the sink. Reading never resets the counters: each reader reports the
