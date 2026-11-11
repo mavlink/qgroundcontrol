@@ -1464,6 +1464,70 @@ void QGCCompressionTest::_testLargeFileDecompression()
     QCOMPARE(unlimitedDecompressed.size(), fullSize);
 }
 
+void QGCCompressionTest::_testDecompressToFileSizeLimit()
+{
+    QTemporaryDir tempDir;
+    const QString inputPath = tempDir.filePath("zeros.gz");
+    const QString outputPath = tempDir.filePath("zeros.bin");
+    QVERIFY(_writeGzipOfZeros(inputPath, 1));
+    constexpr qint64 limit = 1024;
+    const QStringList inputOnly{QStringLiteral("zeros.gz")};
+
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
+    QVERIFY(!QGCCompression::decompressFile(inputPath, outputPath, QGCCompression::Format::Auto, nullptr, limit));
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
+    QCOMPARE(QDir(tempDir.path()).entryList(QDir::Files | QDir::Hidden), inputOnly);
+
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
+    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("Decompression failed"));
+    QVERIFY(QGCCompression::decompressIfNeeded(inputPath, outputPath, false, limit).isEmpty());
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
+    QCOMPARE(QDir(tempDir.path()).entryList(QDir::Files | QDir::Hidden), inputOnly);
+
+    QGCCompressionJob job;
+    QSignalSpy finishedSpy(&job, &QGCCompressionJob::finished);
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
+    job.decompressFile(inputPath, outputPath, limit);
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QVERIFY(!finishedSpy.first().first().toBool());
+    QVERIFY2(job.errorString().contains("size limit exceeded"), qPrintable(job.errorString()));
+    QCOMPARE(QDir(tempDir.path()).entryList(QDir::Files | QDir::Hidden), inputOnly);
+}
+
+void QGCCompressionTest::_testDecompressToMemorySizeLimit()
+{
+    QFile resourceFile(":/unittest/manifest.json.gz");
+    QVERIFY(resourceFile.open(QIODevice::ReadOnly));
+    const QByteArray compressed = resourceFile.readAll();
+    constexpr qint64 limit = 10;
+
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
+    QVERIFY(QGCCompression::decompressData(compressed, QGCCompression::Format::Auto, limit).isEmpty());
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
+
+    QJsonParseError parseError;
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded"));
+    QVERIFY(QGCCompression::parseCompressedJson(compressed, &parseError, limit).isNull());
+    verifyExpectedLogMessage();
+    QVERIFY(parseError.error != QJsonParseError::NoError);
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
+    QVERIFY(QGCCompression::parseCompressedJson(compressed, &parseError).isObject());
+
+    const QString gzResource = QStringLiteral(":/unittest/manifest.json.gz");
+    QString errorString;
+    QVERIFY(QGCCompression::readFile(gzResource, &errorString, 0, limit).isEmpty());
+    QVERIFY2(errorString.contains("exceeds the limit"), qPrintable(errorString));
+    // A read that stops within the limit is not an error
+    errorString.clear();
+    QCOMPARE(QGCCompression::readFile(gzResource, &errorString, limit, limit).size(), limit);
+    QVERIFY2(errorString.isEmpty(), qPrintable(errorString));
+}
+
 void QGCCompressionTest::_testMaxEntriesArchive()
 {
     // Test listing an archive with many entries

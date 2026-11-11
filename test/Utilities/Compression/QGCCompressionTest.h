@@ -76,6 +76,8 @@ private slots:
     void _testEmptyArchive();
     void _testSingleByteFile();
     void _testLargeFileDecompression();
+    void _testDecompressToFileSizeLimit();
+    void _testDecompressToMemorySizeLimit();
     void _testMaxEntriesArchive();
 
     // Cross-platform path handling

@@ -123,9 +123,8 @@ public:
     /// @param outputPath Path for decompressed output (empty = auto-detect)
     /// @param maxBytes Maximum decompressed size (0 = unlimited)
     /// @return QFuture<bool> with progress reporting (0-100)
-    static QFuture<bool> decompressFileAsync(const QString &inputPath,
-                                              const QString &outputPath = QString(),
-                                              qint64 maxBytes = 0);
+    static QFuture<bool> decompressFileAsync(const QString& inputPath, const QString& outputPath = QString(),
+                                             qint64 maxBytes = QGCCompression::kDefaultMaxDecompressedFileBytes);
 
 public slots:
     /// Extract archive to directory (non-atomic, faster)
@@ -146,8 +145,8 @@ public slots:
     /// @param inputPath Path to compressed file
     /// @param outputPath Path for decompressed output (empty = auto-detect)
     /// @param maxBytes Maximum decompressed size (0 = unlimited)
-    void decompressFile(const QString &inputPath, const QString &outputPath = QString(),
-                        qint64 maxBytes = 0);
+    void decompressFile(const QString& inputPath, const QString& outputPath = QString(),
+                        qint64 maxBytes = QGCCompression::kDefaultMaxDecompressedFileBytes);
 
     /// Extract single file from archive
     /// @param archivePath Path to archive file

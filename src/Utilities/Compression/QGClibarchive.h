@@ -325,4 +325,8 @@ QString lastDetectedFormatName();
 /// @return Filter name like "gzip", "xz", "zstd", "none", or empty
 QString lastDetectedFilterName();
 
+/// Tell whether an operation on this thread stopped at its maxBytes limit since the last call
+/// (thread-local). Resets the flag, so call it once for each failed operation that takes a limit.
+bool takeSizeLimitExceeded();
+
 } // namespace QGClibarchive

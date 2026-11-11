@@ -129,6 +129,12 @@ QString detectedFilterName();
 // Single-File Decompression
 // ============================================================================
 
+/// Default limit for decompressed data that is held in memory (256 MiB)
+constexpr qint64 kDefaultMaxDecompressedMemoryBytes = 256LL * 1024 * 1024;
+
+/// Default limit for a compressed file that is decompressed to another file (1 GiB)
+constexpr qint64 kDefaultMaxDecompressedFileBytes = 1024LL * 1024 * 1024;
+
 /// Decompress a single file
 /// @param inputPath Path to compressed file (or Qt resource path :/)
 /// @param outputPath Path for decompressed output (if empty, strips compression extension)
@@ -145,10 +151,10 @@ bool decompressFile(const QString &inputPath, const QString &outputPath = QStrin
 /// @param filePath Input file (may or may not be compressed)
 /// @param outputPath Output path (if empty, uses strippedPath)
 /// @param removeOriginal Remove compressed file after successful decompression (default: false)
-/// @return Path to result file (decompressed or original), empty string on failure
-QString decompressIfNeeded(const QString &filePath,
-                           const QString &outputPath = QString(),
-                           bool removeOriginal = false);
+/// @param maxDecompressedBytes Maximum decompressed size in bytes (0 = unlimited)
+/// @return Path to result file (decompressed or original), empty string on failure or if size limit exceeded
+QString decompressIfNeeded(const QString& filePath, const QString& outputPath = QString(), bool removeOriginal = false,
+                           qint64 maxDecompressedBytes = kDefaultMaxDecompressedFileBytes);
 
 /// Decompress data in memory
 /// @param data Compressed input data
@@ -354,8 +360,11 @@ bool isDataCompressed(const QByteArray &data);
 int lastCompressionRatio();
 
 /// Read file contents, transparently decompressing .gz/.xz/.zst/.bz2/.lz4 files.
-QByteArray readFile(const QString &filePath, QString *errorString = nullptr,
-                    qint64 maxBytes = 0);
+/// @param maxBytes Read at most this many bytes of the (decompressed) content (0 = all of it)
+/// @param maxDecompressedBytes Fail, returning nothing, if a compressed file expands beyond this
+///        many bytes before maxBytes is reached (0 = unlimited)
+QByteArray readFile(const QString& filePath, QString* errorString = nullptr, qint64 maxBytes = 0,
+                    qint64 maxDecompressedBytes = kDefaultMaxDecompressedMemoryBytes);
 
 /// Hash file contents post-decompression.
 QString computeFileHash(const QString &filePath,
@@ -370,6 +379,8 @@ QString computeFileHash(const QString &filePath,
 bool looksLikeCompressedData(const QByteArray &data);
 
 /// Parse JSON from data that may be compressed. Auto-detects gzip/xz/zstd/bzip2/lz4.
-QJsonDocument parseCompressedJson(const QByteArray &data, QJsonParseError *error = nullptr);
+/// @param maxDecompressedBytes Maximum decompressed size in bytes (0 = unlimited)
+QJsonDocument parseCompressedJson(const QByteArray& data, QJsonParseError* error = nullptr,
+                                  qint64 maxDecompressedBytes = kDefaultMaxDecompressedMemoryBytes);
 
 } // namespace QGCCompression

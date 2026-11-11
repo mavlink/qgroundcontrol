@@ -28,6 +28,14 @@ struct FormatState
 
 thread_local FormatState t_formatState;
 
+thread_local bool t_sizeLimitExceeded = false;
+
+void reportSizeLimitExceeded(qint64 maxBytes)
+{
+    qCWarning(QGClibarchiveLog) << "Size limit exceeded:" << maxBytes << "bytes";
+    t_sizeLimitExceeded = true;
+}
+
 void updateFormatState(struct archive* a)
 {
     if (!a) {
@@ -62,6 +70,13 @@ QString lastDetectedFormatName()
 QString lastDetectedFilterName()
 {
     return t_formatState.filterName;
+}
+
+bool takeSizeLimitExceeded()
+{
+    const bool exceeded = t_sizeLimitExceeded;
+    t_sizeLimitExceeded = false;
+    return exceeded;
 }
 
 }  // namespace QGClibarchive
@@ -191,7 +206,7 @@ QByteArray readArchiveToMemory(struct archive* a, qint64 expectedSize = 0, qint6
     la_ssize_t size;
     while ((size = archive_read_data(a, buffer, sizeof(buffer))) > 0) {
         if (maxBytes > 0 && (result.size() + size) > maxBytes) {
-            qCWarning(QGClibarchiveLog) << "Size limit exceeded:" << maxBytes << "bytes";
+            reportSizeLimitExceeded(maxBytes);
             return {};
         }
         result.append(buffer, static_cast<qsizetype>(size));
@@ -275,7 +290,7 @@ bool decompressStreamToFile(struct archive* a, const QString& outputPath,
 
     while ((size = archive_read_data(a, buffer, sizeof(buffer))) > 0) {
         if (maxBytes > 0 && (totalBytesWritten + size) > maxBytes) {
-            qCWarning(QGClibarchiveLog) << "Size limit exceeded:" << maxBytes << "bytes";
+            reportSizeLimitExceeded(maxBytes);
             outFile.cancelWriting();
             return false;
         }
@@ -498,7 +513,7 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
             while ((r = archive_read_data_block(a, &buff, &size, &offset)) == ARCHIVE_OK) {
                 // Check size limit before writing
                 if (maxBytes > 0 && (totalBytesWritten + static_cast<qint64>(size)) > maxBytes) {
-                    qCWarning(QGClibarchiveLog) << "Size limit exceeded:" << maxBytes << "bytes";
+                    reportSizeLimitExceeded(maxBytes);
                     sizeLimitExceeded = true;
                     success = false;
                     break;
@@ -1293,7 +1308,7 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
 
         // Check size limit before extraction
         if (maxBytes > 0 && (bytesExtracted + info.size) > maxBytes) {
-            qCWarning(QGClibarchiveLog) << "Size limit exceeded:" << maxBytes << "bytes";
+            reportSizeLimitExceeded(maxBytes);
             return false;
         }
 
