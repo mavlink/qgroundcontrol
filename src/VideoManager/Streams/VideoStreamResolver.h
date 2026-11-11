@@ -14,17 +14,18 @@
 class QGCVideoStreamInfo;
 class VideoSettings;
 
-/// Maps the video settings and a camera's advertised stream to what a video source's VideoReceiver plays.
+/// Maps the video settings and a camera's advertised stream to what a stream source's VideoReceiver plays.
 namespace VideoStreamResolver {
 Q_NAMESPACE
 QML_NAMED_ELEMENT(VideoSourceRole)
 
-/// The video sources, each with a VideoStreamController. VideoSourceRole.Primary, ... in QML.
+/// What a video source, each with a VideoStreamController, is. VideoSourceRole.Primary, ... in QML.
 enum class Role : uint8_t
 {
-    Primary,  ///< The stream on display: the one a vehicle's camera advertises, else the one the settings configure.
-    Thermal,  ///< The thermal stream a vehicle's camera advertises.
-    Camera,   ///< The local camera the video source setting names.
+    Primary,  ///< The stream to display: a vehicle's current camera's current one, else the one the settings configure.
+    Thermal,  ///< The thermal stream a vehicle's current camera advertises.
+    Camera,   ///< The local camera: the one the video source setting names or, beside a stream, the one for a tile.
+    Tile,     ///< Another stream a vehicle's cameras advertise, shown in a tile.
 };
 Q_ENUM_NS(Role)
 
@@ -32,8 +33,6 @@ Q_ENUM_NS(Role)
 struct Settings
 {
     QString videoSource;
-    /// videoSource names a local camera that is attached.
-    bool cameraAttached = false;
     QString udpUrl;
     QString tcpUrl;
     QString rtspUrl;
@@ -49,9 +48,9 @@ struct Settings
 
 Settings snapshot(VideoSettings* videoSettings);
 
-/// What the source of @p role plays. A stream role: the stream @p streamInfo advertises, or else, for the primary role
-/// only, the manually configured one. The camera role: the attached camera the video source names, as the URI.
-/// nullopt when there is none. Reads only its arguments: a camera's stream never changes the user's settings.
+/// What the source of @p role plays: the stream @p streamInfo advertises, or else, for the primary role only, the
+/// manually configured one. nullopt when there is none, as for the camera role, which plays no stream. Reads only its
+/// arguments: a camera's stream never changes the user's settings.
 std::optional<VideoReceiver::Config> resolve(const Settings& settings, const QGCVideoStreamInfo* streamInfo, Role role);
 
 /// The display sink settings: GPU zero-copy unless the CPU path or a software decoder is forced.

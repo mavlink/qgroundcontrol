@@ -13,9 +13,10 @@ class QDateTime;
 class SubtitleWriter;
 class VideoStreamController;
 
-/// Records the video sources: names the files, keeps the recordings within the storage limit as one starts and while
-/// it runs, writes the telemetry subtitles of the video on display (the primary stream or the USB camera) and reports
-/// recording failures to the user.
+/// Records the video sources of the main picture: the primary stream or the USB camera, and the thermal stream. Names
+/// the files, keeps the recordings within the storage limit as one starts and while it runs, writes the telemetry
+/// subtitles of the video on display (the primary stream or the USB camera) and reports recording failures to the
+/// user. The sources in tiles aren't recorded; a recording goes on for a source that moves to a tile meanwhile.
 class VideoRecordingService : public QObject
 {
     Q_OBJECT
@@ -26,11 +27,14 @@ public:
     explicit VideoRecordingService(const QList<VideoStreamController*>& sources, QObject* parent = nullptr);
     ~VideoRecordingService() override;
 
+    /// Follows @p source as well, for as long as it exists.
+    void addSource(VideoStreamController* source);
+
     /// True while any source records.
     bool recording() const { return _recording; }
 
-    /// Records every active source into the video save directory as "<baseName>.<ext>", the thermal stream as
-    /// "<baseName>.thermalVideo.<ext>". An empty @p baseName picks an unused timestamped name.
+    /// Records every active source that isn't in a tile into the video save directory as "<baseName>.<ext>", the
+    /// thermal stream as "<baseName>.thermalVideo.<ext>". An empty @p baseName picks an unused timestamped name.
     void startRecording(const QString& baseName = QString());
     void stopRecording();
 
@@ -57,7 +61,7 @@ private:
     /// The files being recorded, each with the subtitle file that may go with it.
     QStringList _openFiles() const;
 
-    const QList<VideoStreamController*> _sources;
+    QList<VideoStreamController*> _sources;
     SubtitleWriter* const _subtitleWriter;
     bool _recording = false;
     QSet<QString> _recordingFiles;

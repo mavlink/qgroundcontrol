@@ -5,6 +5,7 @@
 
 #include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QFileInfo>
+#include <QtCore/QPointer>
 #include <QtCore/QTimer>
 #include <QtMultimedia/QCamera>
 #include <QtMultimedia/QCameraDevice>
@@ -152,9 +153,18 @@ void UVCCameraController::registerVideoOutput(QQuickItem* videoOutput)
 
 void UVCCameraController::unregisterVideoOutput(QQuickItem* videoOutput)
 {
-    if (videoOutput && (videoOutput == this->videoOutput())) {
-        setVideoOutput(nullptr);
+    if (!videoOutput || (videoOutput != this->videoOutput())) {
+        return;
     }
+    // Queued: the output that takes this one's place, in the main picture or in a tile, registers in the same pass.
+    (void) QMetaObject::invokeMethod(
+        this,
+        [this, output = QPointer<QQuickItem>(videoOutput)] {
+            if (output == this->videoOutput()) {
+                setVideoOutput(nullptr);
+            }
+        },
+        Qt::QueuedConnection);
 }
 
 void UVCCameraController::onVideoOutputChanged()

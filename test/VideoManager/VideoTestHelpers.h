@@ -47,6 +47,7 @@ public:
     int videoOutputChanges = 0;
     QList<Recording> recordings;
     int recordingStops = 0;
+    int screenshots = 0;
 
 protected:
     void onConfigChanged() override { ++configChanges; }
@@ -62,6 +63,12 @@ protected:
     void onStartRecording(const QString& file, FileFormat format) override { recordings.append({file, format}); }
 
     void onStopRecording() override { ++recordingStops; }
+
+    bool onTakeScreenshot(const QString& file, const VideoScreenshot::Exif& exif) override
+    {
+        ++screenshots;
+        return VideoReceiver::onTakeScreenshot(file, exif);
+    }
 };
 
 namespace VideoTestHelpers {

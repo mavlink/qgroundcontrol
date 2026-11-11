@@ -73,42 +73,49 @@ void VideoSettings::_updateVideoSources()
 #endif
     };
 
-    FactMetaData* const metaData = _nameToMetaDataMap.value(videoSourceName);
-    if (!metaData) {
-        return;
-    }
-
-    QVariantList sources;
-    QStringList labels;
-    for (const char* const source : fixedSources) {
-        sources.append(QString::fromLatin1(source));
-        labels.append(tr(source));
-    }
-    // A settings override file or a custom build that replaced the sources, as the Fact was created, keeps its list.
-    const QVariantList listed = metaData->enumValues();
-    if (!listed.isEmpty() && (listed.mid(0, sources.size()) != sources)) {
-        return;
-    }
-
     const QStringList cameras = _cameraNames ? _cameraNames() : UVCDevices::deviceNames();
+
+    if (FactMetaData* const metaData = _nameToMetaDataMap.value(videoSourceName)) {
+        QVariantList sources;
+        QStringList labels;
+        for (const char* const source : fixedSources) {
+            sources.append(QString::fromLatin1(source));
+            labels.append(tr(source));
+        }
+        // A settings override file or a custom build that replaced the sources, as the Fact was created, keeps its
+        // list.
+        const QVariantList listed = metaData->enumValues();
+        if (listed.isEmpty() || (listed.mid(0, sources.size()) == sources)) {
+            _offerCameras(metaData, _videoSourceFact, sources, labels, cameras);
+        }
+    }
+
+    if (FactMetaData* const metaData = _nameToMetaDataMap.value(uvcTileCameraName)) {
+        _offerCameras(metaData, _uvcTileCameraFact, {QString()}, {tr("None")}, cameras);
+    }
+}
+
+void VideoSettings::_offerCameras(FactMetaData* metaData, Fact* fact, QVariantList values, QStringList labels,
+                                  const QStringList& cameras)
+{
     for (const QString& camera : cameras) {
-        sources.append(camera);
+        values.append(camera);
         labels.append(camera);
     }
-    const QString selected = _videoSourceFact ? _videoSourceFact->rawValue().toString() : QString();
-    if (!selected.isEmpty() && !sources.contains(selected)) {
-        sources.append(selected);
+    const QString selected = fact ? fact->rawValue().toString() : QString();
+    if (!selected.isEmpty() && !values.contains(selected)) {
+        values.append(selected);
         labels.append(tr("%1 (not connected)").arg(selected));
     }
 
-    if ((sources == listed) && (labels == metaData->enumStrings())) {
+    if ((values == metaData->enumValues()) && (labels == metaData->enumStrings())) {
         return;
     }
-    if (_videoSourceFact) {
+    if (fact) {
         // Tells the settings page's combo box as well.
-        _videoSourceFact->setEnumInfo(labels, sources);
+        fact->setEnumInfo(labels, values);
     } else {
-        metaData->setEnumInfo(labels, sources);
+        metaData->setEnumInfo(labels, values);
     }
 }
 
@@ -124,6 +131,7 @@ DECLARE_SETTINGSFACT(VideoSettings, disableWhenDisarmed)
 DECLARE_SETTINGSFACT(VideoSettings, udpUrl)
 DECLARE_SETTINGSFACT(VideoSettings, rtspUrl)
 DECLARE_SETTINGSFACT(VideoSettings, tcpUrl)
+DECLARE_SETTINGSFACT(VideoSettings, maxVideoTiles)
 DECLARE_SETTINGSFACT(VideoSettings, uvcCameraFormat)
 DECLARE_SETTINGSFACT(VideoSettings, uvcCameraRotation)
 DECLARE_SETTINGSFACT(VideoSettings, uvcCameraMirror)
@@ -146,6 +154,18 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
                        Qt::QueuedConnection);
     }
     return _videoSourceFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, uvcTileCamera)
+{
+    if (!_uvcTileCameraFact) {
+        _uvcTileCameraFact = _createSettingsFact(uvcTileCameraName);
+        // As for videoSource: the stored camera may not be attached, and the list changes only after the click.
+        _updateVideoSources();
+        (void) connect(_uvcTileCameraFact, &Fact::rawValueChanged, this, &VideoSettings::_updateVideoSources,
+                       Qt::QueuedConnection);
+    }
+    return _uvcTileCameraFact;
 }
 
 // Only a GStreamer build offers a choice: without GStreamer, Qt Multimedia plays the streams.

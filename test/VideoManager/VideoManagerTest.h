@@ -7,6 +7,7 @@
 class FakeVideoReceiver;
 class VideoManager;
 class VideoSettings;
+class VideoStreamController;
 
 namespace VideoTestHelpers {
 class FactRestorer;
@@ -30,6 +31,12 @@ private slots:
     void _testStopVideoCancelsEverything();
     void _testAutoStreamLeavesSettingsAlone();
     void _testThermalOnlyChangeReconfiguresThermal();
+    UT_PARAMETERIZED_TEST(_testOtherStreamsPlayInTiles);
+    void _testStateChangeWhileTileGoesIsTakenUp();
+    void _testStreamInTileBecomesPrimaryAsItIs();
+    void _testTilesStopAndStartWithTheVideo();
+    UT_PARAMETERIZED_TEST(_testCameraSourcePlaysVideoSourceOrTileCamera);
+    void _testSelectedCameraTileTakesMainPicture();
     void _testDisableWhenDisarmed_data();
     void _testDisableWhenDisarmed();
     void _testPlaceholderTellsWhyThereIsNoVideo_data();
@@ -64,6 +71,8 @@ private:
     /// Runs the queued stream updates.
     static void _settle();
     void _resetCounters();
+    /// The receiver of @p source, which the test's factory made.
+    static FakeVideoReceiver* _receiverOf(const VideoStreamController* source);
 
     VideoSettings* _videoSettings = nullptr;
     std::unique_ptr<VideoTestHelpers::FactRestorer> _facts;

@@ -155,6 +155,38 @@ void VideoRecordingServiceTest::_testCameraRecordsAsTheVideo()
     QVERIFY(!_service->_subtitleWriter->capturing());
 }
 
+void VideoRecordingServiceTest::_testTilesAreNotRecorded()
+{
+    _activate(_primaryStream);
+    const auto tileInfo = VideoTestHelpers::makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5602");
+    auto* const tileStream = new VideoStreamController(VideoStreamController::Role::Tile,
+                                                       SettingsManager::instance()->videoSettings(), _owner.get());
+    auto* const tile = new FakeVideoReceiver();
+    tileStream->setReceiver(tile);
+    tileStream->setStreamInfo(tileInfo.get());
+    tileStream->setTile(true);
+    _service->addSource(tileStream);
+    _activate(tileStream);
+
+    _service->startRecording(QStringLiteral("flight"));
+    QCOMPARE(_primary->recordings.size(), 1);
+    QVERIFY(tile->recordings.isEmpty());
+
+    // A source that moved to a tile while it records goes on recording, until the recording is stopped.
+    _primary->setRecording(true);
+    _primaryStream->setTile(true);
+    QVERIFY(_service->recording());
+    _service->stopRecording();
+    QCOMPARE(_primary->recordingStops, 1);
+
+    // A source that goes away takes its recording with it.
+    tile->setRecording(true);
+    _primary->setRecording(false);
+    QVERIFY(_service->recording());
+    delete tileStream;
+    QVERIFY(!_service->recording());
+}
+
 void VideoRecordingServiceTest::_testNothingToRecord()
 {
     expectAppMessage(QRegularExpression(QStringLiteral("no video stream is active")));

@@ -256,12 +256,19 @@ void VideoManagerTest::_settle()
 
 void VideoManagerTest::_resetCounters()
 {
-    for (FakeVideoReceiver* receiver : {_primary, _thermal}) {
-        receiver->configChanges = 0;
-        receiver->activeChanges = 0;
-        receiver->restarts = 0;
-        receiver->videoOutputChanges = 0;
+    for (const VideoStreamController* source : std::as_const(_videoManager->_sources)) {
+        if (FakeVideoReceiver* const receiver = _receiverOf(source)) {
+            receiver->configChanges = 0;
+            receiver->activeChanges = 0;
+            receiver->restarts = 0;
+            receiver->videoOutputChanges = 0;
+        }
     }
+}
+
+FakeVideoReceiver* VideoManagerTest::_receiverOf(const VideoStreamController* source)
+{
+    return qobject_cast<FakeVideoReceiver*>(source->receiver());
 }
 
 void VideoManagerTest::_testSettingReachesReceiver_data()
@@ -491,6 +498,337 @@ void VideoManagerTest::_testThermalOnlyChangeReconfiguresThermal()
     QCOMPARE(_videoSettings->rtspUrl()->rawValue().toString(), QStringLiteral("rtsp://cam.local/manual"));
 }
 
+void VideoManagerTest::_testOtherStreamsPlayInTiles_data()
+{
+    QTest::addColumn<int>("maxTiles");
+    QTest::addColumn<QStringList>("tileUris");
+
+    const QString second = QStringLiteral("udp://0.0.0.0:5602");
+    const QString wide = QStringLiteral("rtsp://10.0.0.2/wide");
+    const QString fourth = QStringLiteral("udp://0.0.0.0:5604");
+    QTest::newRow("no tiles") << 0 << QStringList();
+    QTest::newRow("one tile") << 1 << QStringList({second});
+    QTest::newRow("three tiles") << 3 << QStringList({second, wide, fourth});
+    QTest::newRow("as many tiles as streams") << 4 << QStringList({second, wide, fourth});
+}
+
+void VideoManagerTest::_testOtherStreamsPlayInTiles()
+{
+    QFETCH(int, maxTiles);
+    QFETCH(QStringList, tileUris);
+
+    _facts->set(_videoSettings->maxVideoTiles(), maxTiles);
+    const auto current = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
+    const auto second = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5602");
+    // A camera sends the streams it advertises at one address one at a time: the stream on display has that port,
+    // whatever the stream to listen for there.
+    const auto sameAddress =
+        makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "udp://127.0.0.1:5601", VIDEO_STREAM_ENCODING_H265);
+    const auto wide = makeStreamInfo(VIDEO_STREAM_TYPE_RTSP, "rtsp://10.0.0.2/wide");
+    const auto fourth = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5604");
+    QSignalSpy sourcesSpy(_videoManager.get(), &VideoManager::sourcesChanged);
+    _videoManager->_setAdvertisedStreams({current.get(), nullptr, QStringLiteral("Main")}, nullptr,
+                                         {{second.get(), nullptr, QStringLiteral("Second")},
+                                          {sameAddress.get(), nullptr, QStringLiteral("Same address")},
+                                          {wide.get(), nullptr, QStringLiteral("Gimbal: Wide")},
+                                          {fourth.get(), nullptr, QStringLiteral("Fourth")}});
+    _settle();
+
+    // The tiles' sources follow the three there always are, in the order the streams were given.
+    const QList<VideoStreamController*> sources = _videoManager->_sources;
+    QCOMPARE(sources.mid(0, 3),
+             QList<VideoStreamController*>(
+                 {_videoManager->primaryStream(), _videoManager->thermalStream(), _videoManager->_cameraSource}));
+    QCOMPARE(sourcesSpy.count(), tileUris.isEmpty() ? 0 : 1);
+    QStringList uris;
+    QList<QPointer<VideoReceiver>> receivers;
+    for (const VideoStreamController* tile : sources.mid(3)) {
+        QCOMPARE(tile->role(), VideoStreamController::Role::Tile);
+        QVERIFY(tile->tile());
+        // Each plays its stream with a receiver of its own.
+        const FakeVideoReceiver* const receiver = _receiverOf(tile);
+        QVERIFY(receiver);
+        QVERIFY(receiver->active());
+        uris.append(receiver->config().uri);
+        receivers.append(tile->receiver());
+    }
+    QCOMPARE(uris, tileUris);
+    if (!tileUris.isEmpty()) {
+        QCOMPARE(sources.at(3)->displayName(), QStringLiteral("Second"));
+    }
+    QCOMPARE(_primary->config().uri, QStringLiteral("udp://0.0.0.0:5601"));
+    QVERIFY(!_videoManager->primaryStream()->tile());
+    QCOMPARE(_videoManager->primaryStream()->displayName(), QStringLiteral("Main"));
+
+    // The settings every stream is played with are a tile's too.
+    _facts->set(_videoSettings->lowLatencyMode(), true);
+    _settle();
+    for (const VideoStreamController* tile : sources.mid(3)) {
+        QVERIFY(_receiverOf(tile)->config().lowLatency);
+    }
+
+    // Once the streams are gone, so are the tiles, their sources and their receivers.
+    sourcesSpy.clear();
+    _videoManager->_setAdvertisedStreams({}, nullptr, {});
+    QCOMPARE(_videoManager->_sources, sources.mid(0, 3));
+    QCOMPARE(sourcesSpy.count(), tileUris.isEmpty() ? 0 : 1);
+    for (const QPointer<VideoReceiver>& receiver : std::as_const(receivers)) {
+        QVERIFY(receiver.isNull());
+    }
+}
+
+void VideoManagerTest::_testStateChangeWhileTileGoesIsTakenUp()
+{
+    _facts->set(_videoSettings->disableWhenDisarmed(), true);
+    const auto current = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
+    const auto other = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5602");
+    const VideoManager::AdvertisedStream currentStream{current.get(), nullptr, QStringLiteral("Main")};
+    _videoManager->_setAdvertisedStreams(currentStream, nullptr, {{other.get(), nullptr, QStringLiteral("Other")}});
+    _settle();
+    QCOMPARE(_videoManager->_sources.size(), 4);
+    QVERIFY(_videoManager->hasVideo());
+
+    // A receiver that is recording runs the event loop as it goes, here the tile's as its stream leaves. The vehicle
+    // disarms in there, which turns the video off: that must hold once the tile is gone.
+    (void) connect(_receiverOf(_videoManager->_sources.at(3)), &QObject::destroyed, this,
+                   [this] { _videoManager->_onArmedChanged(false); });
+    _videoManager->_setAdvertisedStreams(currentStream, nullptr, {});
+    _settle();
+    QCOMPARE(_videoManager->_sources.size(), 3);
+    QVERIFY(!_videoManager->hasVideo());
+    QVERIFY(!_primary->active());
+
+    _videoManager->_setAdvertisedStreams({}, nullptr, {});
+}
+
+void VideoManagerTest::_testStreamInTileBecomesPrimaryAsItIs()
+{
+    const auto first = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
+    const auto second = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5602");
+    const auto third = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5603");
+    const VideoManager::AdvertisedStream firstStream{first.get(), nullptr, QStringLiteral("First")};
+    const VideoManager::AdvertisedStream secondStream{second.get(), nullptr, QStringLiteral("Second")};
+    const VideoManager::AdvertisedStream thirdStream{third.get(), nullptr, QStringLiteral("Third")};
+    _videoManager->_setAdvertisedStreams(firstStream, nullptr, {secondStream, thirdStream});
+    _settle();
+    VideoStreamController* const firstSource = _videoManager->primaryStream();
+    QCOMPARE(_videoManager->_sources.size(), 5);
+    VideoStreamController* const secondSource = _videoManager->_sources.at(3);
+    VideoStreamController* const thirdSource = _videoManager->_sources.at(4);
+    const QList<FakeVideoReceiver*> receivers{_primary, _receiverOf(secondSource), _receiverOf(thirdSource)};
+    _resetCounters();
+
+    // The vehicle's current stream becomes the second one, as when its tile is selected: its source becomes the
+    // primary stream and the first stream's takes its tile.
+    QSignalSpy primarySpy(_videoManager.get(), &VideoManager::primaryStreamChanged);
+    _videoManager->_setAdvertisedStreams(secondStream, nullptr, {firstStream, thirdStream});
+    _settle();
+    QCOMPARE(primarySpy.count(), 1);
+    QCOMPARE(_videoManager->primaryStream(), secondSource);
+    QCOMPARE(secondSource->role(), VideoStreamController::Role::Primary);
+    QVERIFY(!secondSource->tile());
+    QCOMPARE(firstSource->role(), VideoStreamController::Role::Tile);
+    QVERIFY(firstSource->tile());
+    QCOMPARE(_videoManager->_sources,
+             QList<VideoStreamController*>({secondSource, _videoManager->thermalStream(), _videoManager->_cameraSource,
+                                            firstSource, thirdSource}));
+    // Every stream plays on as it was.
+    for (const FakeVideoReceiver* receiver : receivers) {
+        QVERIFY(receiver->active());
+        QCOMPARE(receiver->configChanges, 0);
+        QCOMPARE(receiver->activeChanges, 0);
+        QCOMPARE(receiver->restarts, 0);
+    }
+    QCOMPARE(_receiverOf(secondSource)->config().uri, QStringLiteral("udp://0.0.0.0:5602"));
+
+    // The manager's video is the new primary stream's.
+    QSignalSpy decodingSpy(_videoManager.get(), &VideoManager::decodingChanged);
+    _primary->setDecoding(true);
+    QVERIFY(!_videoManager->decoding());
+    _receiverOf(secondSource)->setDecoding(true);
+    QVERIFY(_videoManager->decoding());
+    QCOMPARE(decodingSpy.count(), 1);
+
+    // A stream that plays in no tile has no source to take over: the primary stream connects to it, as it does
+    // without tiles.
+    _facts->set(_videoSettings->maxVideoTiles(), 0);
+    _settle();
+    _resetCounters();
+    _videoManager->_setAdvertisedStreams(thirdStream, nullptr, {firstStream, secondStream});
+    _settle();
+    QCOMPARE(primarySpy.count(), 1);
+    QCOMPARE(_receiverOf(secondSource)->configChanges, 1);
+    QCOMPARE(_receiverOf(secondSource)->config().uri, QStringLiteral("udp://0.0.0.0:5603"));
+}
+
+void VideoManagerTest::_testTilesStopAndStartWithTheVideo()
+{
+    const auto current = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
+    const auto second = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5602");
+    _videoManager->_setAdvertisedStreams({current.get(), nullptr, QStringLiteral("Main")}, nullptr,
+                                         {{second.get(), nullptr, QStringLiteral("Second")}});
+    _settle();
+    QCOMPARE(_videoManager->_sources.size(), 4);
+    const FakeVideoReceiver* tile = _receiverOf(_videoManager->_sources.last());
+    QVERIFY(tile->active());
+
+    // Stopped with the video, and started again with it.
+    _videoManager->stopVideo();
+    QVERIFY(!tile->active());
+    _videoManager->startVideo();
+    _settle();
+    QVERIFY(tile->active());
+
+    // A stream back on its link is asked to connect now, in a tile as well.
+    _videoManager->_communicationLostChanged(false);
+    QCOMPARE(tile->reconnects, 1);
+
+    // Video that is off while the vehicle is disarmed has no view to show tiles in: their streams go, and come back
+    // with the video.
+    _facts->set(_videoSettings->disableWhenDisarmed(), true);
+    _videoManager->_onArmedChanged(false);
+    QVERIFY(!_videoManager->hasVideo());
+    QCOMPARE(_videoManager->_sources.size(), 3);
+    _videoManager->_onArmedChanged(true);
+    _settle();
+    QCOMPARE(_videoManager->_sources.size(), 4);
+    tile = _receiverOf(_videoManager->_sources.last());
+    QVERIFY(tile);
+    QVERIFY(tile->active());
+}
+
+void VideoManagerTest::_testCameraSourcePlaysVideoSourceOrTileCamera_data()
+{
+    QTest::addColumn<QString>("videoSource");
+    QTest::addColumn<QString>("tileCamera");
+    QTest::addColumn<int>("maxTiles");
+    QTest::addColumn<QString>("camera");  ///< The camera that plays; empty for none
+    QTest::addColumn<bool>("tile");
+
+    const QString udp = VideoSettings::videoSourceUDPH264;
+    const QString attached = QStringLiteral("QGC Test Camera");
+    const QString other = QStringLiteral("QGC Other Test Camera");
+    const QString missing = QStringLiteral("QGC Test Missing Camera");
+    QTest::newRow("the video source") << attached << QString() << 3 << attached << false;
+    QTest::newRow("the video source, not the tile's camera") << attached << other << 3 << attached << false;
+    QTest::newRow("the video source without tiles") << attached << QString() << 0 << attached << false;
+    QTest::newRow("in a tile beside a stream") << udp << attached << 3 << attached << true;
+    QTest::newRow("no tile's camera") << udp << QString() << 3 << QString() << false;
+    QTest::newRow("no tiles") << udp << attached << 0 << QString() << false;
+    QTest::newRow("no stream to play beside")
+        << QString(VideoSettings::videoDisabled) << attached << 3 << QString() << false;
+    QTest::newRow("the tile's camera isn't attached") << udp << missing << 3 << QString() << false;
+}
+
+void VideoManagerTest::_testCameraSourcePlaysVideoSourceOrTileCamera()
+{
+    QFETCH(QString, videoSource);
+    QFETCH(QString, tileCamera);
+    QFETCH(int, maxTiles);
+    QFETCH(QString, camera);
+    QFETCH(bool, tile);
+
+    _videoManager->_cameraAttached = [](const QString& name) {
+        return name.startsWith(QLatin1String("QGC ")) && !name.contains(QLatin1String("Missing"));
+    };
+    _facts->set(_videoSettings->maxVideoTiles(), maxTiles);
+    _facts->set(_videoSettings->uvcTileCamera(), tileCamera);
+    _facts->set(_videoSettings->videoSource(), videoSource);
+    if (!camera.isEmpty()) {
+        // The camera the test attached isn't one Qt knows.
+        expectLogMessage("Video.UVCCameraController", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("No camera named")));
+    }
+    _settle();
+    if (!camera.isEmpty()) {
+        verifyExpectedLogMessage();
+    }
+
+    const UVCCameraController* const uvcCamera = _videoManager->uvcCamera();
+    QCOMPARE(uvcCamera->active(), !camera.isEmpty());
+    if (!camera.isEmpty()) {
+        QCOMPARE(uvcCamera->device(), camera);
+        QCOMPARE(_videoManager->_cameraSource->displayName(), camera);
+    }
+    QCOMPARE(_videoManager->_cameraSource->tile(), tile);
+    // isUvc says that the camera is the main picture, which it isn't from a tile.
+    const bool mainPicture = !camera.isEmpty() && !tile;
+    QCOMPARE(_videoManager->isUvc(), mainPicture);
+    QCOMPARE(_videoManager->uvcVideoSourceID(), mainPicture ? camera : QString());
+    QCOMPARE(_videoManager->isStreamSource(), videoSource == QString(VideoSettings::videoSourceUDPH264));
+}
+
+void VideoManagerTest::_testSelectedCameraTileTakesMainPicture()
+{
+    const QString camera = QStringLiteral("QGC Test Camera");
+    _videoManager->_cameraAttached = [&camera](const QString& name) { return name == camera; };
+    const auto current = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
+    const auto thermalInfo =
+        makeStreamInfo(VIDEO_STREAM_TYPE_RTSP, "rtsp://10.0.0.1/thermal", VIDEO_STREAM_ENCODING_H264, true);
+    const auto second = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5602");
+    const auto third = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5603");
+    _facts->set(_videoSettings->maxVideoTiles(), 2);
+    _facts->set(_videoSettings->uvcTileCamera(), camera);
+    _videoManager->_setAdvertisedStreams(
+        {current.get(), nullptr, QStringLiteral("Main")}, thermalInfo.get(),
+        {{second.get(), nullptr, QStringLiteral("Second")}, {third.get(), nullptr, QStringLiteral("Third")}});
+    // The camera the test attached isn't one Qt knows.
+    expectLogMessage("Video.UVCCameraController", QtWarningMsg, QRegularExpression(QStringLiteral("No camera named")));
+    _settle();
+    verifyExpectedLogMessage();
+    VideoStreamController* const cameraSource = _videoManager->_cameraSource;
+    VideoStreamController* const primaryStream = _videoManager->primaryStream();
+
+    // The camera has the first of the two tiles, a stream the other.
+    QVERIFY(cameraSource->tile());
+    QVERIFY(!_videoManager->isUvc());
+    QCOMPARE(_videoManager->_sources.size(), 4);
+    QVERIFY(_videoManager->hasThermal());
+    QVERIFY(_thermal->active());
+    _resetCounters();
+
+    // Selected, the camera is the main picture: the primary stream plays on in the camera's tile, and its thermal
+    // stream stops.
+    QSignalSpy isUvcSpy(_videoManager.get(), &VideoManager::isUvcChanged);
+    _videoManager->selectSource(cameraSource);
+    _settle();
+    QCOMPARE(isUvcSpy.count(), 1);
+    QVERIFY(_videoManager->isUvc());
+    QCOMPARE(_videoManager->uvcVideoSourceID(), camera);
+    QVERIFY(!cameraSource->tile());
+    QVERIFY(primaryStream->tile());
+    QCOMPARE(_videoManager->primaryStream(), primaryStream);
+    QVERIFY(_primary->active());
+    QCOMPARE(_primary->activeChanges, 0);
+    QCOMPARE(_primary->configChanges, 0);
+    QCOMPARE(_videoManager->_sources.size(), 4);
+    QVERIFY(!_videoManager->hasThermal());
+    QVERIFY(!_thermal->active());
+    QVERIFY(_videoManager->uvcCamera()->active());
+
+    // The stream is selected in its turn: it is the main picture again, and the camera is back in its tile.
+    _videoManager->selectSource(primaryStream);
+    _settle();
+    QVERIFY(!_videoManager->isUvc());
+    QVERIFY(cameraSource->tile());
+    QVERIFY(!primaryStream->tile());
+    QCOMPARE(_primary->activeChanges, 0);
+    QVERIFY(_videoManager->hasThermal());
+    QVERIFY(_thermal->active());
+
+    // The camera leaves the main picture when it is unplugged, too.
+    _videoManager->selectSource(cameraSource);
+    QVERIFY(_videoManager->isUvc());
+    _videoManager->_cameraAttached = [](const QString&) { return false; };
+    emit _videoManager->uvcCamera()->camerasChanged();
+    _settle();
+    QVERIFY(!_videoManager->isUvc());
+    QVERIFY(!primaryStream->tile());
+    QVERIFY(!_videoManager->uvcCamera()->active());
+    // With no camera to show, both tiles are streams'.
+    QCOMPARE(_videoManager->_sources.size(), 5);
+}
+
 void VideoManagerTest::_testDisableWhenDisarmed_data()
 {
     QTest::addColumn<int>("lift");
@@ -604,7 +942,21 @@ void VideoManagerTest::_testVideoOutputRegistration()
     QCOMPARE(receiver->videoOutput(), &second);
     stream->unregisterVideoOutput(&first);
     QCOMPARE(receiver->videoOutput(), &second);
+
+    // An output that leaves as another one registers hands the stream over: the receiver, which decodes only into an
+    // output, is never without one.
+    receiver->videoOutputChanges = 0;
     stream->unregisterVideoOutput(&second);
+    QCOMPARE(stream->videoOutput(), nullptr);
+    stream->registerVideoOutput(&first);
+    _settle();
+    QCOMPARE(receiver->videoOutput(), &first);
+    QCOMPARE(receiver->videoOutputChanges, 1);
+
+    // With no other output by the next pass, the receiver loses its own.
+    stream->unregisterVideoOutput(&first);
+    QCOMPARE(receiver->videoOutput(), &first);
+    _settle();
     QCOMPARE(receiver->videoOutput(), nullptr);
 
     {
@@ -643,9 +995,18 @@ void VideoManagerTest::_testQmlVideoOutputRegistersItself()
     QCOMPARE(_primary->videoOutputChanges, 3);
     QCOMPARE(_primary->videoOutput(), output);
 
+    // The output follows a change of the stream to show, as the main picture's when a stream in a tile takes its
+    // place. The stream it leaves is without an output on the next pass, no other output having taken it over.
+    QVERIFY(root->setProperty("stream", QVariant::fromValue(_videoManager->thermalStream())));
+    QCOMPARE(_videoManager->thermalStream()->videoOutput(), output);
+    QCOMPARE(_thermal->videoOutput(), output);
+    QCOMPARE(_videoManager->primaryStream()->videoOutput(), nullptr);
+    _settle();
+    QCOMPARE(_primary->videoOutput(), nullptr);
+
     holder->setParentItem(root.get());
     root.reset();
-    QCOMPARE(_primary->videoOutput(), nullptr);
+    QCOMPARE(_thermal->videoOutput(), nullptr);
 }
 
 void VideoManagerTest::_testScreenshotsComeFromStreamsOnDisplay()
@@ -676,12 +1037,28 @@ void VideoManagerTest::_testScreenshotsComeFromStreamsOnDisplay()
     QTRY_COMPARE_WITH_TIMEOUT(QImage(shot).size(), frame.size(), TestTimeout::mediumMs());
     QVERIFY(!QFile::exists(tempDir.filePath(QStringLiteral("shot.thermalVideo.png"))));
 
+    // A stream in a tile is on display too, but a photo is of the main picture and its thermal stream.
+    const auto current = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
+    const auto other = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5602");
+    _videoManager->_setAdvertisedStreams({current.get(), nullptr, QString()}, nullptr,
+                                         {{other.get(), nullptr, QString()}});
+    QCOMPARE(_videoManager->_sources.size(), 4);
+    VideoStreamController* const tile = _videoManager->_sources.last();
+    const std::unique_ptr<QQuickItem> tileOutput = createVideoOutput(engine);
+    tile->registerVideoOutput(tileOutput.get());
+    showFrame(tileOutput.get(), frame);
+    _receiverOf(tile)->setState(VideoReceiver::State::Streaming);
+    QVERIFY(tile->canTakeScreenshot());
+
     _thermal->setState(VideoReceiver::State::Streaming);
     const QString second = tempDir.filePath(QStringLiteral("second.png"));
     _videoManager->grabImage(second);
     QTRY_COMPARE_WITH_TIMEOUT(QImage(second).size(), frame.size(), TestTimeout::mediumMs());
     QTRY_COMPARE_WITH_TIMEOUT(QImage(tempDir.filePath(QStringLiteral("second.thermalVideo.png"))).size(), frame.size(),
                               TestTimeout::mediumMs());
+    QCOMPARE(_primary->screenshots, 2);
+    QCOMPARE(_thermal->screenshots, 1);
+    QCOMPARE(_receiverOf(tile)->screenshots, 0);
 }
 
 void VideoManagerTest::_testScreenshotFailuresReachUser_data()
@@ -1091,6 +1468,10 @@ void VideoManagerTest::_testIndicatorReportsMeasuredSource()
     _primary->setStats(primaryStats);
     QVERIFY(showsText(indicator, QStringLiteral("30 fps")));
     QVERIFY(icon->property("color") != steadyColor);
+    // With the primary stream in a tile, the figures are those of the camera that took the main picture from it.
+    _videoManager->primaryStream()->setTile(true);
+    QVERIFY(showsText(indicator, QStringLiteral("25 fps")));
+    _videoManager->primaryStream()->setTile(false);
     camera->setStats({});
     QCOMPARE(icon->property("color"), steadyColor);
 }
@@ -1142,6 +1523,22 @@ void VideoManagerTest::_testSourceStatsShowMeasuredSources()
         setStats.at(shown)({});
     }
     QVERIFY(showsText(sourceStats.get(), QStringLiteral("No video stream")));
+
+    // A stream in a tile gets a group too, under its name.
+    const auto current = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
+    const auto other = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5602");
+    _videoManager->_setAdvertisedStreams({current.get(), nullptr, QStringLiteral("Main")}, nullptr,
+                                         {{other.get(), nullptr, QStringLiteral("Gimbal: Wide")}});
+    loaders.clear();
+    for (QQuickItem* const child : sourceStats->childItems()) {
+        if (child->property("sourceComponent").isValid()) {
+            loaders.append(child);
+        }
+    }
+    QCOMPARE(loaders.size(), 4);
+    QCOMPARE(group(3)->property("stream").value<VideoStreamController*>(), _videoManager->_sources.last());
+    QCOMPARE(group(3)->property("heading").toString(), QStringLiteral("Gimbal: Wide"));
+    QCOMPARE(group(0)->property("heading").toString(), QStringLiteral("Video"));
 }
 
 void VideoManagerTest::_testStreamFormatText()
@@ -1322,9 +1719,11 @@ void VideoManagerTest::_testThermalDecodesOnlyWhileShown()
     auto* const camera = view->property("camera").value<QObject*>();
     QVERIFY(camera);
 
-    // The receiver decodes while it has an output: the overlay gives it one only while the thermal mode shows it.
+    // The receiver decodes while it has an output: the overlay gives it one only while the thermal mode shows it. An
+    // output that goes is the receiver's until the next pass.
     QVERIFY(_thermal->videoOutput());
     (void) camera->setProperty("thermalMode", MavlinkCameraControlInterface::THERMAL_OFF);
+    _settle();
     QCOMPARE(_thermal->videoOutput(), nullptr);
     (void) camera->setProperty("thermalMode", MavlinkCameraControlInterface::THERMAL_BLEND);
     QVERIFY(_thermal->videoOutput());
@@ -1337,6 +1736,7 @@ void VideoManagerTest::_testThermalDecodesOnlyWhileShown()
 
     _videoManager->thermalStream()->setStreamInfo(nullptr);
     QVERIFY(!_videoManager->hasThermal());
+    _settle();
     QCOMPARE(_thermal->videoOutput(), nullptr);
 }
 

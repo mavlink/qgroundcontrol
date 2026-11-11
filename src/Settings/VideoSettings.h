@@ -3,6 +3,7 @@
 #include <functional>
 
 #include <QtCore/QStringList>
+#include <QtCore/QVariantList>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "SettingsGroup.h"
@@ -43,6 +44,10 @@ public:
     DEFINE_SETTINGFACT(forceCpuVideoPath)
     DEFINE_SETTINGFACT(videoConversionElement)
     DEFINE_SETTINGFACT(disablePixelAspectRatio)
+    /// How many other video sources the video view shows in tiles beside the main video; 0 for none.
+    DEFINE_SETTINGFACT(maxVideoTiles)
+    /// The USB camera to show in a tile while the video source is a stream; empty for none.
+    DEFINE_SETTINGFACT(uvcTileCamera)
     DEFINE_SETTINGFACT(uvcCameraFormat)
     DEFINE_SETTINGFACT(uvcCameraRotation)
     DEFINE_SETTINGFACT(uvcCameraMirror)
@@ -109,8 +114,12 @@ private:
     void _setForceVideoDecodeList();
     /// Lists what videoSource offers: no video, the stream sources, the attached cameras and, when it is none of those,
     /// the selected source. That one is a camera that isn't attached: it stays selected, so that it plays once it is
-    /// plugged in.
+    /// plugged in. Lists what uvcTileCamera offers the same way: no camera, then the cameras.
     void _updateVideoSources();
+    /// Gives @p fact, or its @p metaData until it exists, the choices @p values labelled @p labels, then the attached
+    /// @p cameras, then the selected value when it is none of those.
+    void _offerCameras(FactMetaData* metaData, Fact* fact, QVariantList values, QStringList labels,
+                       const QStringList& cameras);
 
     /// Stands in for UVCDevices::deviceNames() in tests.
     std::function<QStringList()> _cameraNames;

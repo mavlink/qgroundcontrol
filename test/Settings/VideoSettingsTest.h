@@ -9,6 +9,6 @@ class VideoSettingsTest : public UnitTest
 private slots:
     void _videoFitEnumMatchesMetaData();
     void _videoSourcesFollowCameras();
-    void _absentStoredCameraStaysSelected();
+    UT_PARAMETERIZED_TEST(_absentStoredCameraStaysSelected);
     void _overriddenVideoSourcesAreKept();
 };

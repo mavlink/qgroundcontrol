@@ -30,6 +30,8 @@ target_sources(
         VideoManagerInitTest.h
         VideoManagerTest.cc
         VideoManagerTest.h
+        VideoManagerVehicleTest.cc
+        VideoManagerVehicleTest.h
         VideoRecordingServiceTest.cc
         VideoRecordingServiceTest.h
         VideoScreenshotTest.cc
@@ -54,6 +56,7 @@ add_qgc_test(UVCDevicesTest LABELS Unit)
 add_qgc_test(UVCStreamMonitorTest LABELS Unit)
 add_qgc_test(VideoManagerInitTest LABELS Unit)
 add_qgc_test(VideoManagerTest LABELS Unit)
+add_qgc_test(VideoManagerVehicleTest LABELS Integration Vehicle)
 add_qgc_test(VideoRecordingServiceTest LABELS Unit)
 add_qgc_test(VideoScreenshotTest LABELS Unit)
 add_qgc_test(VideoStreamResolverTest LABELS Unit)

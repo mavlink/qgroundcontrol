@@ -43,7 +43,10 @@ ColumnLayout {
                 id: streamGroupComponent
 
                 VideoStreamStatsGroup {
-                    heading:    groupLoader.modelData.role === VideoSourceRole.Thermal ? qsTr("Thermal") : qsTr("Video")
+                    // A stream in a tile goes by its name.
+                    heading:    groupLoader.modelData.tile ? groupLoader.modelData.displayName
+                                : (groupLoader.modelData.role === VideoSourceRole.Thermal ? qsTr("Thermal")
+                                                                                          : qsTr("Video"))
                     stream:     groupLoader.modelData
                 }
             }

@@ -55,9 +55,12 @@ Item {
     readonly property VideoSettings _videoSettings: QGroundControl.settingsManager.videoSettings
     readonly property Vehicle _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     readonly property VideoStreamController _primaryStream: root.videoManager.primaryStream
+    // The primary stream is in a tile while the USB camera, selected in its own, is the main picture.
+    readonly property bool _streamIsMainPicture: !root._primaryStream.tile
     // A lost stream's last frame stays up, under a notice, while it reconnects.
-    readonly property bool _streamLost: root._primaryStream.reconnecting
-    readonly property bool _showStreamLoader: root.videoManager.decoding || root._streamLost
+    readonly property bool _streamLost: root._streamIsMainPicture && root._primaryStream.reconnecting
+    readonly property bool _showStreamLoader: root._streamIsMainPicture
+                                              && (root.videoManager.decoding || root._streamLost)
     readonly property bool _showUvcLoader: root.videoManager.isUvc
     // A UVC camera's ratio is known once its first frame sets the output's implicit size; until then the video fills the
     // view.
@@ -97,6 +100,7 @@ Item {
         Loader {
             anchors.fill:       parent
             visible:            root._showStreamLoader
+            active:             root._streamIsMainPicture
             sourceComponent:    videoOutputComponent
         }
 

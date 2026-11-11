@@ -84,7 +84,16 @@ void UVCCameraControllerTest::_testScreenshotFromVideoOutput()
     controller.unregisterVideoOutput(otherOutput.get());
     QCOMPARE(controller.videoOutput(), output.get());
 
+    // An output that leaves as another one registers hands the camera over, which never stops for it.
     controller.unregisterVideoOutput(output.get());
+    QCOMPARE(controller.videoOutput(), output.get());
+    controller.registerVideoOutput(otherOutput.get());
+    QCoreApplication::sendPostedEvents(&controller, QEvent::MetaCall);
+    QCOMPARE(controller.videoOutput(), otherOutput.get());
+
+    // With no other output by the next pass, the camera has none.
+    controller.unregisterVideoOutput(otherOutput.get());
+    QCoreApplication::sendPostedEvents(&controller, QEvent::MetaCall);
     expectLogMessage("Video.VideoReceiver", QtWarningMsg, noOutput);
     QVERIFY(!controller.takeScreenshot(shot));
     verifyExpectedLogMessage();
@@ -189,6 +198,7 @@ void UVCCameraControllerTest::_testPhotoWithoutCameraIsScreenshot()
 
     // So is a failed capture once there is no output to take the photo from instead.
     controller.unregisterVideoOutput(output.get());
+    QCoreApplication::sendPostedEvents(&controller, QEvent::MetaCall);
     controller._photoFiles.insert(11, {tempDir.filePath(QStringLiteral("none.png")), {}});
     expectLogMessage("Video.UVCCameraController", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Photo capture failed")));

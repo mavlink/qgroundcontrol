@@ -34,15 +34,10 @@ QString subtitlePathFor(const QString& videoFile)
 
 VideoRecordingService::VideoRecordingService(const QList<VideoStreamController*>& sources, QObject* parent)
     : QObject(parent)
-    , _sources(sources)
     , _subtitleWriter(new SubtitleWriter(this))
 {
-    for (VideoStreamController* source : _sources) {
-        _connectRecordings(source);
-        // The telemetry goes with the video on display: the primary stream, or the camera in its place.
-        if (source->role() != VideoStreamController::Role::Thermal) {
-            _connectSubtitles(source);
-        }
+    for (VideoStreamController* source : sources) {
+        addSource(source);
     }
 
     _storageLimitTimer.setInterval(kStorageLimitInterval);
@@ -50,6 +45,20 @@ VideoRecordingService::VideoRecordingService(const QList<VideoStreamController*>
 }
 
 VideoRecordingService::~VideoRecordingService() = default;
+
+void VideoRecordingService::addSource(VideoStreamController* source)
+{
+    _sources.append(source);
+    _connectRecordings(source);
+    // The telemetry goes with the video on display: the primary stream, or the camera in its place.
+    if (source->role() != VideoStreamController::Role::Thermal) {
+        _connectSubtitles(source);
+    }
+    (void) connect(source, &QObject::destroyed, this, [this, source] {
+        (void) _sources.removeOne(source);
+        _updateRecording();
+    });
+}
 
 void VideoRecordingService::_connectSubtitles(VideoStreamController* source)
 {
@@ -142,8 +151,8 @@ void VideoRecordingService::startRecording(const QString& baseName)
     }
 
     QList<VideoStreamController*> sources;
-    for (VideoStreamController* source : _sources) {
-        if (source->active()) {
+    for (VideoStreamController* source : std::as_const(_sources)) {
+        if (source->active() && !source->tile()) {
             sources.append(source);
         }
     }
@@ -162,7 +171,7 @@ void VideoRecordingService::startRecording(const QString& baseName)
 
 void VideoRecordingService::stopRecording()
 {
-    for (VideoStreamController* source : _sources) {
+    for (VideoStreamController* source : std::as_const(_sources)) {
         source->stopRecording();
     }
 }

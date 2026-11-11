@@ -10,7 +10,6 @@ private slots:
     void _testResolve_data();
     void _testResolve();
     void _testStreamSettingsPassThrough();
-    void _testCameraRole();
     void _testDisplayConfig_data();
     void _testDisplayConfig();
     void _testNetworkSources_data();

@@ -15,6 +15,21 @@ QGC_LOGGING_CATEGORY(VideoStreamControllerLog, "Video.VideoStreamController")
 
 namespace {
 
+QString nameForRole(VideoStreamResolver::Role role)
+{
+    switch (role) {
+        case VideoStreamResolver::Role::Primary:
+            break;
+        case VideoStreamResolver::Role::Thermal:
+            return QStringLiteral("thermalVideo");
+        case VideoStreamResolver::Role::Camera:
+            return QStringLiteral("uvcCamera");
+        case VideoStreamResolver::Role::Tile:
+            return QStringLiteral("videoTile");
+    }
+    return QStringLiteral("videoContent");
+}
+
 /// The rotation @p streamInfo reports, when it is one a VideoOutput can show: a multiple of 90 degrees. 0 otherwise.
 int shownRotation(const QGCVideoStreamInfo* streamInfo)
 {
@@ -35,12 +50,12 @@ VideoStreamController::VideoStreamController(Role role, VideoSettings* videoSett
                                              VideoReceiver* ownReceiver)
     : QObject(parent)
     , _role(role)
+    , _name(nameForRole(role))
     , _videoSettings(videoSettings)
 {
-    if (_role == Role::Primary) {
-        (void) connect(_videoSettings->aspectRatio(), &Fact::rawValueChanged, this,
-                       &VideoStreamController::aspectRatioChanged);
-    }
+    // The setting stands in for the primary stream's ratio, which a stream in a tile may become.
+    (void) connect(_videoSettings->aspectRatio(), &Fact::rawValueChanged, this,
+                   &VideoStreamController::aspectRatioChanged);
     if (ownReceiver) {
         setReceiver(ownReceiver);
         _hasOwnReceiver = true;
@@ -49,17 +64,31 @@ VideoStreamController::VideoStreamController(Role role, VideoSettings* videoSett
 
 VideoStreamController::~VideoStreamController() = default;
 
-QString VideoStreamController::name() const
+void VideoStreamController::setRole(Role role)
 {
-    switch (_role) {
-        case Role::Primary:
-            break;
-        case Role::Thermal:
-            return QStringLiteral("thermalVideo");
-        case Role::Camera:
-            return QStringLiteral("uvcCamera");
+    if (role == _role) {
+        return;
     }
-    return QStringLiteral("videoContent");
+    _role = role;
+    emit roleChanged();
+    emit aspectRatioChanged();
+    scheduleApply();
+}
+
+void VideoStreamController::setTile(bool tile)
+{
+    if (tile != _tile) {
+        _tile = tile;
+        emit tileChanged();
+    }
+}
+
+void VideoStreamController::setDisplayName(const QString& displayName)
+{
+    if (displayName != _displayName) {
+        _displayName = displayName;
+        emit displayNameChanged();
+    }
 }
 
 QString VideoStreamController::taggedFile(const QString& file) const
@@ -192,6 +221,14 @@ void VideoStreamController::_onStreamInfoChanged()
     scheduleApply();
 }
 
+void VideoStreamController::setCamera(const QString& camera)
+{
+    if (camera != _camera) {
+        _camera = camera;
+        scheduleApply();
+    }
+}
+
 void VideoStreamController::setEnabled(bool enabled)
 {
     if (enabled != _enabled) {
@@ -202,6 +239,14 @@ void VideoStreamController::setEnabled(bool enabled)
 
 std::optional<VideoReceiver::Config> VideoStreamController::_resolvedConfig() const
 {
+    if (_role == Role::Camera) {
+        if (_camera.isEmpty()) {
+            return std::nullopt;
+        }
+        VideoReceiver::Config config;
+        config.uri = _camera;
+        return config;
+    }
     return VideoStreamResolver::resolve(VideoStreamResolver::snapshot(_videoSettings), _streamInfo, _role);
 }
 
@@ -326,7 +371,13 @@ void VideoStreamController::unregisterVideoOutput(QQuickItem* videoOutput)
 
     qCDebug(VideoStreamControllerLog) << name() << "video output removed" << videoOutput;
     _videoOutput = nullptr;
-    if (_receiver) {
+    // Queued: the output that takes this one's place, in the main picture or in a tile, registers in the same pass.
+    (void) QMetaObject::invokeMethod(this, &VideoStreamController::_detachVideoOutput, Qt::QueuedConnection);
+}
+
+void VideoStreamController::_detachVideoOutput()
+{
+    if (!_videoOutput && _receiver) {
         _receiver->setVideoOutput(nullptr);
     }
 }

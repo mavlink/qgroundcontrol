@@ -18,15 +18,21 @@ Item {
     property VideoManager videoManager: QGroundControl.videoManager
 
     // The first source that is measured, which puts the primary stream before the thermal stream; the USB camera runs
-    // in the primary stream's place.
+    // in the primary stream's place. A source in a tile comes after those of the main picture.
     readonly property VideoStreamController _measuredSource: {
         const sources = root.videoManager.sources
+        let inTile = null
         for (let i = 0; i < sources.length; i++) {
             if (sources[i].stats.valid) {
-                return sources[i]
+                if (!sources[i].tile) {
+                    return sources[i]
+                }
+                if (!inTile) {
+                    inTile = sources[i]
+                }
             }
         }
-        return sources[0]
+        return inTile ? inTile : sources[0]
     }
     readonly property videoStreamStats _stats: _measuredSource.stats
     readonly property bool _degraded: {

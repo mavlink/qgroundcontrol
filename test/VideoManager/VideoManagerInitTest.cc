@@ -190,13 +190,26 @@ void VideoManagerInitTest::_testBackendSettingReplacesReceivers()
     const QPointer<VideoReceiver> primary = videoManager.primaryStream()->receiver();
     const QPointer<VideoReceiver> thermal = videoManager.thermalStream()->receiver();
 
+    // A stream shown in a tile, once the others have their receivers, gets one as well.
+    const auto current = VideoTestHelpers::makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
+    const auto other = VideoTestHelpers::makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5602");
+    videoManager._setAdvertisedStreams({current.get(), nullptr, QString()}, nullptr,
+                                       {{other.get(), nullptr, QString()}});
+    QCOMPARE(videoManager._sources.size(), 4);
+    QCOMPARE(receiverCount, 3);
+    const VideoStreamController* const tileStream = videoManager._sources.last();
+    const QPointer<VideoReceiver> tile = tileStream->receiver();
+    QVERIFY(tile);
+
     // Another backend: each stream gets a new receiver.
     restorer.set(backend, VideoSettings::VideoBackendQtMultimedia);
-    QCOMPARE(receiverCount, 4);
+    QCOMPARE(receiverCount, 6);
     QVERIFY(primary.isNull());
     QVERIFY(thermal.isNull());
+    QVERIFY(tile.isNull());
     QVERIFY(videoManager.primaryStream()->receiver());
     QVERIFY(videoManager.thermalStream()->receiver());
+    QVERIFY(tileStream->receiver());
     // The USB camera's receiver is no backend's: it stays.
     QCOMPARE(videoManager._cameraSource->receiver(), videoManager.uvcCamera());
 }

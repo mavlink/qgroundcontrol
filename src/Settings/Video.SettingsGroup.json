@@ -216,6 +216,26 @@
             "keywords": "pixel aspect ratio,v4l2,workaround,advanced"
         },
         {
+            "name": "maxVideoTiles",
+            "shortDesc": "How many other video sources are shown in tiles beside the main video. 0 shows none.",
+            "longDesc": "Besides the main video, the video view shows the other streams of the vehicle's cameras, and the USB camera chosen for a tile, each in a small tile: at most this many, 0 for none. Each tile takes a network connection and a video decoder, of which tablets have few.",
+            "type": "uint32",
+            "min": 0,
+            "max": 4,
+            "default": 3,
+            "label": "Video Tiles",
+            "keywords": "tile,tiles,multiple cameras,multi-camera,second stream,other streams"
+        },
+        {
+            "name": "uvcTileCamera",
+            "shortDesc": "USB camera shown in a tile beside the video stream.",
+            "longDesc": "While the video source is a stream, this USB camera plays in a tile beside it. Empty for none. A camera that isn't attached stays selected and plays once it is plugged in.",
+            "type": "string",
+            "default": "",
+            "label": "USB Camera Tile",
+            "keywords": "usb camera,uvc,webcam,tile,second camera,multi-camera"
+        },
+        {
             "name": "uvcCameraFormat",
             "shortDesc": "Resolution, frame rate and pixel format the USB camera runs in.",
             "longDesc": "One of the formats the USB camera offers, such as \"1920x1080 30 fps MJPEG\". Empty (Auto), or a format the camera doesn't offer, lets Qt choose: the highest resolution at 30 fps or more. MJPEG formats cost CPU time to decode; YUYV and NV12 formats don't, but need more USB bandwidth.",

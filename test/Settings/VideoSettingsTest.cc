@@ -83,38 +83,53 @@ void VideoSettingsTest::_videoSourcesFollowCameras()
     QCOMPARE(enumsSpy.count(), 0);
 }
 
+void VideoSettingsTest::_absentStoredCameraStaysSelected_data()
+{
+    QTest::addColumn<QString>("setting");
+    QTest::addColumn<QString>("noCamera");  ///< The setting's first choice, which selects no camera
+
+    QTest::newRow("video source") << QString::fromLatin1(VideoSettings::videoSourceName)
+                                  << QString::fromLatin1(VideoSettings::videoDisabled);
+    QTest::newRow("tile camera") << QString::fromLatin1(VideoSettings::uvcTileCameraName) << QString();
+}
+
 void VideoSettingsTest::_absentStoredCameraStaysSelected()
 {
+    QFETCH(QString, setting);
+    QFETCH(QString, noCamera);
+
     const QString notConnected = QStringLiteral("QGC Test Camera (not connected)");
 
     QStringList cameras;
     VideoSettings videoSettings;
     videoSettings._cameraNames = [&cameras] { return cameras; };
-    // SettingsFacts ignore QSettings under unit tests, so the default stands in for the stored source.
-    videoSettings._nameToMetaDataMap[VideoSettings::videoSourceName]->setRawDefaultValue(kTestCamera);
-    Fact* const videoSource = videoSettings.videoSource();
+    // SettingsFacts ignore QSettings under unit tests, so the default stands in for the stored camera.
+    videoSettings._nameToMetaDataMap[setting]->setRawDefaultValue(kTestCamera);
+    Fact* const fact = videoSettings.property(setting.toLatin1().constData()).value<Fact*>();
+    QVERIFY(fact);
 
     // A stored camera that isn't attached at startup stays selected, and listed as such.
-    QCOMPARE(videoSource->rawValue().toString(), kTestCamera);
-    QCOMPARE(videoSource->enumValues().last().toString(), kTestCamera);
-    QCOMPARE(videoSource->enumStringValue(), notConnected);
+    QCOMPARE(fact->rawValue().toString(), kTestCamera);
+    QCOMPARE(fact->enumValues().first().toString(), noCamera);
+    QCOMPARE(fact->enumValues().last().toString(), kTestCamera);
+    QCOMPARE(fact->enumStringValue(), notConnected);
 
     // Plugged in, it is one of the cameras.
-    cameras = {kTestCamera};
+    cameras = {kOtherTestCamera, kTestCamera};
     videoSettings._updateVideoSources();
-    QCOMPARE(videoSource->enumValues().count(kTestCamera), 1);
-    QCOMPARE(videoSource->enumStringValue(), kTestCamera);
+    QCOMPARE(fact->enumValues().mid(fact->enumValues().size() - 2), QVariantList({kOtherTestCamera, kTestCamera}));
+    QCOMPARE(fact->enumStringValue(), kTestCamera);
 
     // Unplugged while selected, it stays selected.
     cameras.clear();
     videoSettings._updateVideoSources();
-    QCOMPARE(videoSource->rawValue().toString(), kTestCamera);
-    QCOMPARE(videoSource->enumStringValue(), notConnected);
+    QCOMPARE(fact->rawValue().toString(), kTestCamera);
+    QCOMPARE(fact->enumStringValue(), notConnected);
 
-    // Once another source is selected, it is no longer offered.
-    videoSource->setRawValue(QString::fromLatin1(VideoSettings::videoDisabled));
-    QTRY_VERIFY_WITH_TIMEOUT(!videoSource->enumValues().contains(kTestCamera), TestTimeout::shortMs());
-    QCOMPARE(videoSource->rawValue().toString(), QString::fromLatin1(VideoSettings::videoDisabled));
+    // Once no camera is selected, it is no longer offered.
+    fact->setRawValue(noCamera);
+    QTRY_VERIFY_WITH_TIMEOUT(!fact->enumValues().contains(kTestCamera), TestTimeout::shortMs());
+    QCOMPARE(fact->rawValue().toString(), noCamera);
 }
 
 void VideoSettingsTest::_overriddenVideoSourcesAreKept()

@@ -1,9 +1,14 @@
 #include "VideoManager.h"
 
+#include <algorithm>
+#include <optional>
+
 #include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QApplicationStatic>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDateTime>
+#include <QtCore/QScopedValueRollback>
+#include <QtCore/QUrl>
 
 #include "AppMessages.h"
 #include "AppSettings.h"
@@ -14,10 +19,12 @@
 #include "QGCCorePlugin.h"
 #include "QGCLoggingCategory.h"
 #include "QGCVideoStreamInfo.h"
+#include "QmlObjectListModel.h"
 #include "QtMultimediaVideoReceiver.h"
 #include "QtVideoRecorder.h"
 #include "SettingsManager.h"
 #include "UVCCameraController.h"
+#include "UVCDevices.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 #include "VideoBackend.h"
@@ -26,6 +33,7 @@
 #include "VideoSettings.h"
 #include "VideoStreamController.h"
 #include "VideoStreamResolver.h"
+#include "VideoStreamUri.h"
 #include "VideoTelemetryOverlay.h"
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "Video.VideoManager")
@@ -68,12 +76,39 @@ constexpr VideoSettingReactionEntry kVideoSettingReactions[] = {
     {&VideoSettings::rtpJitterLatencyMs, VideoSettingReaction::Reconfigure},
     {&VideoSettings::rtspAutoReconnect, VideoSettingReaction::Reconfigure},
     {&VideoSettings::disableWhenDisarmed, VideoSettingReaction::Reconfigure},
+    // Which sources there are, and what the camera source plays.
+    {&VideoSettings::maxVideoTiles, VideoSettingReaction::Reconfigure},
+    {&VideoSettings::uvcTileCamera, VideoSettingReaction::Reconfigure},
     {&VideoSettings::videoConversionElement, VideoSettingReaction::RebuildSink},
     {&VideoSettings::disablePixelAspectRatio, VideoSettingReaction::RebuildSink},
     {&VideoSettings::forceCpuVideoPath, VideoSettingReaction::RebuildSink},
     {&VideoSettings::forceVideoDecoder, VideoSettingReaction::RerankDecoders},
     {&VideoSettings::videoBackend, VideoSettingReaction::RecreateReceivers},
 };
+
+// What VideoSettings::maxVideoTiles allows: as many tiles as fit beside the main picture.
+constexpr uint kMaxVideoTiles = 4;
+
+/// What only one stream at a time can be played at: the local port of a stream that is listened for, else its URI.
+QString streamAddress(const QString& uri)
+{
+    const QUrl url(uri);
+    const std::optional<VideoStreamUri::Transport> transport = VideoStreamUri::transportFor(url);
+    return (transport && VideoStreamUri::listens(*transport)) ? QStringLiteral("udp:%1").arg(url.port()) : uri;
+}
+
+/// The cameras of @p cameraManager.
+QList<MavlinkCameraControlInterface*> vehicleCameras(QGCCameraManager* cameraManager)
+{
+    QList<MavlinkCameraControlInterface*> cameras;
+    QmlObjectListModel* const model = cameraManager->cameras();
+    for (int i = 0; i < model->count(); ++i) {
+        if (auto* const camera = qobject_cast<MavlinkCameraControlInterface*>(model->get(i))) {
+            cameras.append(camera);
+        }
+    }
+    return cameras;
+}
 
 }  // namespace
 
@@ -95,17 +130,12 @@ VideoManager::VideoManager(QObject* parent)
         }
         return QGCCorePlugin::instance()->createVideoReceiver(owner);
     })
+    , _cameraAttached(&UVCDevices::deviceExists)
 {
     qCDebug(VideoManagerLog) << this;
 
-    (void) connect(_primaryStream, &VideoStreamController::decodingChanged, this, &VideoManager::decodingChanged);
-    for (VideoStreamController* source : _sources) {
-        (void) connect(source, &VideoStreamController::aspectRatioChanged, this, &VideoManager::aspectRatioChanged);
-        (void) connect(source, &VideoStreamController::streamInfoChanged, this, &VideoManager::_updateState);
-        (void) connect(source, &VideoStreamController::errorOccurred, this, [source](const QString& message) {
-            qCWarning(VideoManagerLog) << source->name() << message;
-            QGC::showAppMessage(message);
-        });
+    for (VideoStreamController* source : std::as_const(_sources)) {
+        _connectSource(source);
     }
     (void) connect(_recordingService, &VideoRecordingService::recordingChanged, this, &VideoManager::recordingChanged);
     // A camera plugged in or unplugged changes whether the camera source has one to run.
@@ -130,6 +160,21 @@ VideoManager* VideoManager::instance()
     return _videoManagerInstance();
 }
 
+void VideoManager::_connectSource(VideoStreamController* source)
+{
+    (void) connect(source, &VideoStreamController::decodingChanged, this, [this, source] {
+        if (source == _primaryStream) {
+            emit decodingChanged();
+        }
+    });
+    (void) connect(source, &VideoStreamController::aspectRatioChanged, this, &VideoManager::aspectRatioChanged);
+    (void) connect(source, &VideoStreamController::streamInfoChanged, this, &VideoManager::_updateState);
+    (void) connect(source, &VideoStreamController::errorOccurred, this, [source](const QString& message) {
+        qCWarning(VideoManagerLog) << source->name() << message;
+        QGC::showAppMessage(message);
+    });
+}
+
 void VideoManager::_connectSettings()
 {
     for (const VideoSettingReactionEntry& entry : kVideoSettingReactions) {
@@ -138,7 +183,7 @@ void VideoManager::_connectSettings()
             case VideoSettingReaction::Reconfigure:
                 (void) connect(fact, &Fact::rawValueChanged, this, [this] {
                     _updateState();
-                    for (VideoStreamController* source : _sources) {
+                    for (VideoStreamController* source : std::as_const(_sources)) {
                         source->scheduleApply();
                     }
                 });
@@ -148,11 +193,19 @@ void VideoManager::_connectSettings()
                 break;
             case VideoSettingReaction::RecreateReceivers:
                 (void) connect(fact, &Fact::rawValueChanged, this, [this] {
-                    for (VideoStreamController* source : _sources) {
-                        source->setReceiver(nullptr);
+                    {
+                        // A receiver that is recording runs the event loop as it goes: the sources stay as they are
+                        // until each has let go of its own.
+                        const QScopedValueRollback<bool> sourcesHeld(_updatingState, true);
+                        for (VideoStreamController* source : std::as_const(_sources)) {
+                            source->setReceiver(nullptr);
+                        }
                     }
                     if (_backendInitFinished() && _hasMainWindow) {
                         _createVideoReceivers();
+                    }
+                    if (!_updatingState && _updateStatePending) {
+                        _updateState();
                     }
                 });
                 break;
@@ -318,7 +371,7 @@ void VideoManager::_createVideoReceivers()
     if (_cleanedUp) {
         return;
     }
-    for (VideoStreamController* source : _sources) {
+    for (VideoStreamController* source : std::as_const(_sources)) {
         // The camera source has its own.
         if (source->receiver()) {
             continue;
@@ -334,7 +387,7 @@ void VideoManager::_createVideoReceivers()
 
 void VideoManager::_restartSources()
 {
-    for (VideoStreamController* source : _sources) {
+    for (VideoStreamController* source : std::as_const(_sources)) {
         source->restart();
     }
 }
@@ -347,7 +400,7 @@ void VideoManager::cleanup()
     // Receivers must die here, not in ~VideoManager: that runs inside ~QCoreApplication, where queued events are no
     // longer delivered, so a receiver's worker thread never gets its quit task and the destructor waits forever. The
     // camera stops here too: Qt Multimedia's backend goes away with the application, before ~VideoManager.
-    for (VideoStreamController* source : _sources) {
+    for (VideoStreamController* source : std::as_const(_sources)) {
         source->shutDown();
     }
 }
@@ -368,7 +421,7 @@ void VideoManager::stopVideo()
 
     _videoStopped = true;
     _updateState();
-    for (VideoStreamController* source : _sources) {
+    for (VideoStreamController* source : std::as_const(_sources)) {
         source->stop();
     }
 }
@@ -404,8 +457,9 @@ void VideoManager::grabImage(const QString& imageFile)
     }
 
     bool taken = false;
-    for (VideoStreamController* source : _sources) {
-        if (source->canTakeScreenshot()) {
+    for (VideoStreamController* source : std::as_const(_sources)) {
+        // The main picture and the thermal stream with it: not the tiles.
+        if (!source->tile() && source->canTakeScreenshot()) {
             taken = source->takeScreenshot(source->taggedFile(file), exif) || taken;
         }
     }
@@ -464,7 +518,53 @@ void VideoManager::setFullScreen(bool on)
     }
 }
 
+void VideoManager::selectSource(VideoStreamController* source)
+{
+    if (!source || !source->tile()) {
+        return;
+    }
+    qCDebug(VideoManagerLog) << "select" << source->name();
+
+    if (source == _cameraSource) {
+        _cameraTileOnMain = true;
+        _updateState();
+        return;
+    }
+
+    // A stream takes the main picture back from the camera.
+    _cameraTileOnMain = false;
+    const auto stream =
+        std::find_if(_otherStreams.cbegin(), _otherStreams.cend(), [source](const AdvertisedStream& other) {
+            return other.streamInfo && (other.streamInfo == source->streamInfo());
+        });
+    QGCCameraManager* const cameraManager = _activeVehicle ? _activeVehicle->cameraManager() : nullptr;
+    if ((source != _primaryStream) && (stream != _otherStreams.cend()) && stream->camera && cameraManager) {
+        // Copied: the camera manager tells of each change at once, which replaces the streams.
+        MavlinkCameraControlInterface* const camera = stream->camera;
+        const int streamIndex = camera->streamLabels().indexOf(stream->streamInfo->name());
+        // The stream first: the camera then becomes the current one with the stream to show.
+        if (streamIndex >= 0) {
+            camera->setCurrentStream(streamIndex);
+        }
+        cameraManager->setCurrentCamera(cameraManager->cameras()->indexOf(camera));
+    }
+    _updateState();
+}
+
 void VideoManager::_updateState()
+{
+    if (_updatingState) {
+        _updateStatePending = true;
+        return;
+    }
+    const QScopedValueRollback<bool> updating(_updatingState, true);
+    do {
+        _updateStatePending = false;
+        _updateStateNow();
+    } while (_updateStatePending);
+}
+
+void VideoManager::_updateStateNow()
 {
     if (_cleanedUp) {
         return;
@@ -481,19 +581,41 @@ void VideoManager::_updateState()
                                                                  : NoVideoReason::Waiting;
     const bool autoStreamConfigured = VideoStreamResolver::isAutoStream(_primaryStream->streamInfo());
     const bool isStreamSource = VideoStreamResolver::isNetworkSource(videoSource) || autoStreamConfigured;
-    // A stream to play takes the place of the camera.
-    const bool cameraWanted = streamWanted && !isStreamSource;
+    const int maxTiles =
+        static_cast<int>(std::min(_videoSettings->maxVideoTiles()->rawValue().toUInt(), kMaxVideoTiles));
+    // A stream to play takes the place of the camera the video source names: the camera source then plays the camera
+    // to show in a tile.
+    const QString cameraName =
+        !isStreamSource ? videoSource
+                        : ((maxTiles > 0) ? _videoSettings->uvcTileCamera()->rawValue().toString() : QString());
+    const bool cameraWanted = streamWanted && !cameraName.isEmpty();
     if (cameraWanted) {
-        // A camera plugged in or unplugged changes uvcVideoSourceID.
+        // A camera plugged in or unplugged changes whether the camera source has one to play.
         _uvcCamera->watchCameras();
     }
-    const QString uvcVideoSourceID = (cameraWanted && _cameraSource->configured()) ? videoSource : QString();
+    const QString camera = (cameraWanted && _cameraAttached(cameraName)) ? cameraName : QString();
+    // A camera selected in its tile stays the main picture for as long as it plays beside the stream.
+    _cameraTileOnMain = _cameraTileOnMain && isStreamSource && !camera.isEmpty();
+    const bool cameraTile = isStreamSource && !camera.isEmpty() && !_cameraTileOnMain;
+    const QString uvcVideoSourceID = cameraTile ? QString() : camera;
     const bool hasVideo = streamWanted && (_primaryStream->configured() || !uvcVideoSourceID.isEmpty());
     const QGCVideoStreamInfo* const thermalStreamInfo = _thermalStream->streamInfo();
-    const bool hasThermal = thermalStreamInfo && thermalStreamInfo->isThermal();
+    // The thermal stream goes with the primary stream's picture.
+    const bool hasThermal = thermalStreamInfo && thermalStreamInfo->isThermal() && !_cameraTileOnMain;
 
-    for (VideoStreamController* source : _sources) {
-        source->setEnabled(streamWanted && !_videoStopped && ((source != _cameraSource) || cameraWanted));
+    _cameraSource->setCamera(camera);
+    _cameraSource->setDisplayName(camera);
+    _cameraSource->setTile(cameraTile);
+    _primaryStream->setTile(_cameraTileOnMain);
+    if (!autoStreamConfigured) {
+        _primaryStream->setDisplayName(_videoSettings->videoSource()->enumStringValue());
+    }
+    // Without video there is no view to show tiles in. The camera, or the stream it took the main picture from, has
+    // one of them.
+    _updateTileStreams(hasVideo ? (maxTiles - ((cameraTile || _cameraTileOnMain) ? 1 : 0)) : 0);
+
+    for (VideoStreamController* source : std::as_const(_sources)) {
+        source->setEnabled(streamWanted && !_videoStopped && ((source != _thermalStream) || !_cameraTileOnMain));
     }
 
     if (autoStreamConfigured != _autoStreamConfigured) {
@@ -528,6 +650,94 @@ void VideoManager::_updateState()
     }
 }
 
+VideoStreamController* VideoManager::_tileStream(const QGCVideoStreamInfo* streamInfo) const
+{
+    const auto tile =
+        std::find_if(_tileStreams.cbegin(), _tileStreams.cend(),
+                     [streamInfo](const VideoStreamController* source) { return source->streamInfo() == streamInfo; });
+    return (streamInfo && (tile != _tileStreams.cend())) ? *tile : nullptr;
+}
+
+void VideoManager::_updateTileStreams(int count)
+{
+    const VideoStreamResolver::Settings settings = VideoStreamResolver::snapshot(_videoSettings);
+    QStringList shownAddresses;
+    for (const VideoStreamController* source : {_primaryStream, _thermalStream}) {
+        if (const auto config = VideoStreamResolver::resolve(settings, source->streamInfo(), source->role())) {
+            shownAddresses.append(streamAddress(config->uri));
+        }
+    }
+
+    QList<VideoStreamController*> tiles;
+    for (const AdvertisedStream& stream : std::as_const(_otherStreams)) {
+        if (tiles.size() >= count) {
+            break;
+        }
+        const auto config =
+            VideoStreamResolver::resolve(settings, stream.streamInfo, VideoStreamController::Role::Tile);
+        if (!config || shownAddresses.contains(streamAddress(config->uri))) {
+            continue;
+        }
+        shownAddresses.append(streamAddress(config->uri));
+
+        VideoStreamController* tile = _tileStream(stream.streamInfo);
+        if (!tile) {
+            tile = new VideoStreamController(VideoStreamController::Role::Tile, _videoSettings, this);
+            tile->setName(QStringLiteral("videoTile%1").arg(++_tileStreamSerial));
+            tile->setStreamInfo(stream.streamInfo);
+            _connectSource(tile);
+            _recordingService->addSource(tile);
+        }
+        tile->setDisplayName(stream.name);
+        tile->setTile(true);
+        tiles.append(tile);
+    }
+
+    QList<VideoStreamController*> removed;
+    for (VideoStreamController* const tile : std::as_const(_tileStreams)) {
+        if (!tiles.contains(tile)) {
+            removed.append(tile);
+        }
+    }
+    _tileStreams = tiles;
+
+    const QList<VideoStreamController*> sources =
+        QList<VideoStreamController*>{_primaryStream, _thermalStream, _cameraSource} + _tileStreams;
+    if (sources != _sources) {
+        _sources = sources;
+        emit sourcesChanged();
+    }
+    // Once QML has let go of them.
+    for (VideoStreamController* const tile : std::as_const(removed)) {
+        qCDebug(VideoManagerLog) << "tile removed" << tile->name();
+        tile->shutDown();
+        tile->deleteLater();
+    }
+    // The streams have their receivers: so do the new ones.
+    if (_thermalStream->receiver()) {
+        _createVideoReceivers();
+    }
+    _nameExtraStreams();
+}
+
+void VideoManager::_nameExtraStreams()
+{
+    QGCCameraManager* const cameraManager = _activeVehicle ? _activeVehicle->cameraManager() : nullptr;
+    if (!cameraManager) {
+        return;
+    }
+    const QList<MavlinkCameraControlInterface*> cameras = vehicleCameras(cameraManager);
+    for (MavlinkCameraControlInterface* const camera : cameras) {
+        QList<quint8> streamIds;
+        for (const AdvertisedStream& stream : std::as_const(_otherStreams)) {
+            if ((stream.camera == camera) && _tileStream(stream.streamInfo)) {
+                streamIds.append(stream.streamInfo->streamID());
+            }
+        }
+        camera->setExtraStreams(streamIds);
+    }
+}
+
 void VideoManager::_setActiveVehicle(Vehicle* vehicle)
 {
     qCDebug(VideoManagerLog) << "new vehicle" << vehicle << "old active vehicle" << _activeVehicle;
@@ -538,6 +748,11 @@ void VideoManager::_setActiveVehicle(Vehicle* vehicle)
         QGCCameraManager* const cameraManager = _activeVehicle->cameraManager();
         if (cameraManager) {
             (void) disconnect(cameraManager, nullptr, this, nullptr);
+            // The streams in tiles leave the display first, the current stream after them.
+            const QList<MavlinkCameraControlInterface*> cameras = vehicleCameras(cameraManager);
+            for (MavlinkCameraControlInterface* const camera : cameras) {
+                camera->setExtraStreams({});
+            }
             MavlinkCameraControlInterface* const camera = cameraManager->currentCameraInstance();
             if (camera) {
                 camera->stopStream();
@@ -571,8 +786,67 @@ void VideoManager::_setActiveVehicle(Vehicle* vehicle)
 void VideoManager::_updateStreamInfo()
 {
     QGCCameraManager* const cameraManager = _activeVehicle ? _activeVehicle->cameraManager() : nullptr;
-    _primaryStream->setStreamInfo(cameraManager ? cameraManager->currentStreamInstance() : nullptr);
-    _thermalStream->setStreamInfo(cameraManager ? cameraManager->thermalStreamInstance() : nullptr);
+    if (!cameraManager) {
+        _setAdvertisedStreams({}, nullptr, {});
+        return;
+    }
+
+    // The current camera's streams come first, then the other cameras', in the cameras' order.
+    QList<MavlinkCameraControlInterface*> cameras = vehicleCameras(cameraManager);
+    MavlinkCameraControlInterface* const currentCamera = cameraManager->currentCameraInstance();
+    if (cameras.removeOne(currentCamera)) {
+        cameras.prepend(currentCamera);
+    }
+    QGCVideoStreamInfo* const currentStreamInfo = cameraManager->currentStreamInstance();
+    AdvertisedStream current;
+    QList<AdvertisedStream> others;
+    for (MavlinkCameraControlInterface* const camera : std::as_const(cameras)) {
+        QmlObjectListModel* const streams = camera->streams();
+        for (int i = 0; streams && (i < streams->count()); ++i) {
+            auto* const streamInfo = qobject_cast<QGCVideoStreamInfo*>(streams->get(i));
+            if (!streamInfo || streamInfo->isThermal()) {
+                continue;
+            }
+            const QString name = (cameras.size() > 1)
+                                     ? QStringLiteral("%1: %2").arg(camera->modelName(), streamInfo->name())
+                                     : streamInfo->name();
+            if (streamInfo == currentStreamInfo) {
+                current = {streamInfo, camera, name};
+            } else {
+                others.append({streamInfo, camera, name});
+            }
+        }
+    }
+    _setAdvertisedStreams(current, cameraManager->thermalStreamInstance(), others);
+}
+
+void VideoManager::_setAdvertisedStreams(const AdvertisedStream& current, QGCVideoStreamInfo* thermal,
+                                         const QList<AdvertisedStream>& others)
+{
+    if (_cleanedUp) {
+        return;
+    }
+    _otherStreams = others;
+
+    if (VideoStreamController* const playing = _tileStream(current.streamInfo)) {
+        // The stream to display plays in a tile: its source becomes the primary stream as it is, and the former
+        // primary stream, which plays on, gets a tile if its stream is still one to show.
+        VideoStreamController* const former = _primaryStream;
+        _tileStreams.replace(_tileStreams.indexOf(playing), former);
+        _primaryStream = playing;
+        playing->setTile(former->tile());
+        former->setRole(VideoStreamController::Role::Tile);
+        playing->setRole(VideoStreamController::Role::Primary);
+        emit primaryStreamChanged();
+        emit decodingChanged();
+        emit aspectRatioChanged();
+    } else {
+        _primaryStream->setStreamInfo(current.streamInfo);
+    }
+    if (current.streamInfo) {
+        _primaryStream->setDisplayName(current.name);
+    }
+    _thermalStream->setStreamInfo(thermal);
     _updateState();
 }
 
@@ -597,7 +871,7 @@ void VideoManager::_communicationLostChanged(bool communicationLost)
 
 void VideoManager::_reconnectStreams()
 {
-    for (VideoStreamController* source : _sources) {
+    for (VideoStreamController* source : std::as_const(_sources)) {
         source->reconnectNow();
     }
 }

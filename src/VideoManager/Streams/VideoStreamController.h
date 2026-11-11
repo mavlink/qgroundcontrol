@@ -15,22 +15,31 @@ class QGCVideoStreamInfo;
 class QQuickItem;
 class VideoSettings;
 
-/// One video source: the primary stream, the thermal stream or the local camera. Resolves the source's config from the
-/// video settings and the vehicle camera's advertised stream, drives the source's VideoReceiver, and connects the
-/// receiver to the QML VideoOutput that displays it.
+/// One video source: the primary stream, the thermal stream, the local camera or a stream shown in a tile. Resolves the
+/// source's config from the video settings and the vehicle camera's advertised stream, drives the source's
+/// VideoReceiver, and connects the receiver to the QML VideoOutput that displays it.
 ///
 /// A stream's receiver comes from the video backend, and goes when the backend changes: setReceiver(). The local
 /// camera's is the source's for good, given to its constructor.
 ///
+/// VideoManager says where the source is shown. The primary stream and a stream in a tile change places, role for
+/// role, when the tile's stream becomes the one to display: each goes on playing what it plays.
+///
 /// The VideoOutput registers itself: registerVideoOutput() once it is created and again after it moved to another
 /// window, unregisterVideoOutput() when it is destroyed (see VideoStreamOutput.qml). The registration
 /// outlives receivers, so an output registered before the video backend is ready is attached once a receiver exists.
+/// An output that registers as another one leaves takes the stream over from it: the receiver, which decodes only
+/// into an output, is never without one in between.
 class VideoStreamController : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
-    Q_PROPERTY(VideoStreamResolver::Role role READ role CONSTANT FINAL)
+    Q_PROPERTY(VideoStreamResolver::Role role READ role NOTIFY roleChanged FINAL)
+    /// The source is shown in a tile of the video view, rather than as the main picture or with it.
+    Q_PROPERTY(bool tile READ tile NOTIFY tileChanged FINAL)
+    /// What the user knows the source by: the camera's and the stream's names, the video source, or the local camera.
+    Q_PROPERTY(QString displayName READ displayName NOTIFY displayNameChanged FINAL)
     Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged FINAL)
     Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged FINAL)
     Q_PROPERTY(bool reconnecting READ reconnecting NOTIFY reconnectingChanged FINAL)
@@ -54,8 +63,24 @@ public:
 
     Role role() const { return _role; }
 
-    /// "videoContent", "thermalVideo" or "uvcCamera": names the receiver, and tags the thermal stream's files.
-    QString name() const;
+    /// Makes a stream in a tile the primary stream, or the reverse. What the source plays stays.
+    void setRole(Role role);
+
+    bool tile() const { return _tile; }
+
+    void setTile(bool tile);
+
+    QString displayName() const { return _displayName; }
+
+    void setDisplayName(const QString& displayName);
+
+    /// "videoContent", "thermalVideo", "uvcCamera" or the name given to a tile's stream: names the receiver, and tags
+    /// the thermal stream's files. The source keeps the name it started with when its role changes.
+    QString name() const { return _name; }
+
+    /// Names a source that has no receiver yet.
+    void setName(const QString& name) { _name = name; }
+
     /// @p file for this source: the thermal stream's name goes before the extension, "<base>.thermalVideo.<ext>".
     QString taggedFile(const QString& file) const;
 
@@ -71,6 +96,10 @@ public:
     QGCVideoStreamInfo* streamInfo() const;
     /// The stream the camera advertises for this role, which takes precedence over the manual settings.
     void setStreamInfo(QGCVideoStreamInfo* streamInfo);
+
+    /// The attached local camera the camera source plays, by its description, which is its config's URI; empty for
+    /// none. The stream settings aren't a camera's: its config changes with the camera alone.
+    void setCamera(const QString& camera);
 
     /// The stream plays while it is enabled and configured().
     void setEnabled(bool enabled);
@@ -92,7 +121,8 @@ public:
     /// Displays the stream in @p videoOutput, a QML VideoOutput, replacing any other. Registering the current output
     /// again re-attaches it: a VideoOutput that moved to another window must do this.
     Q_INVOKABLE void registerVideoOutput(QQuickItem* videoOutput);
-    /// Stops displaying in @p videoOutput, if it is the registered output.
+    /// Stops displaying in @p videoOutput, if it is the registered output. The receiver is told on the next event
+    /// loop pass, unless another output registered by then.
     Q_INVOKABLE void unregisterVideoOutput(QQuickItem* videoOutput);
 
     /// True when the receiver is active, accepting startRecording().
@@ -133,6 +163,9 @@ public:
     QString transport() const;
 
 signals:
+    void roleChanged();
+    void tileChanged();
+    void displayNameChanged();
     void streamingChanged();
     void decodingChanged();
     void reconnectingChanged();
@@ -153,16 +186,22 @@ private:
     VideoReceiver::DisplayConfig _resolvedDisplayConfig() const;
     void _apply();
     void _onStreamInfoChanged();
+    /// Takes the receiver's output away once no output is registered.
+    void _detachVideoOutput();
     void _onReceiverStateChanged(VideoReceiver::State state);
     /// Forgets that the stream was decoded: what follows is a new stream, not a reconnect.
     void _forgetDecoded();
     void _updateReconnecting();
 
-    const Role _role;
+    Role _role;
+    QString _name;
+    QString _displayName;
+    bool _tile = false;
     VideoSettings* const _videoSettings;
     VideoReceiver* _receiver = nullptr;
     bool _hasOwnReceiver = false;
     QPointer<QGCVideoStreamInfo> _streamInfo;
+    QString _camera;
     QPointer<QQuickItem> _videoOutput;
     /// The URI the receiver was last configured with.
     QString _uri;

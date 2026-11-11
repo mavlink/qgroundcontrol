@@ -40,6 +40,7 @@ void VideoStreamResolverTest::_testResolve_data()
     const QString rtsp = VideoSettings::videoSourceRTSP;
     const int primary = static_cast<int>(Role::Primary);
     const int thermal = static_cast<int>(Role::Thermal);
+    const int tile = static_cast<int>(Role::Tile);
     const int h264 = VIDEO_STREAM_ENCODING_H264;
     const int h265 = VIDEO_STREAM_ENCODING_H265;
     const int timeout = 3;
@@ -61,6 +62,7 @@ void VideoStreamResolverTest::_testResolve_data()
     QTest::newRow("Herelink AirUnit") << QString(VideoSettings::videoSourceHerelinkAirUnit) << QString() << kNoStreamInfo << h264 << QString() << primary << QStringLiteral("rtsp://192.168.0.10:8554/H264Video") << rtspTimeout;
     QTest::newRow("Herelink Hotspot") << QString(VideoSettings::videoSourceHerelinkHotspot) << QString() << kNoStreamInfo << h264 << QString() << primary << QStringLiteral("rtsp://192.168.43.1:8554/fpv_stream") << rtspTimeout;
     QTest::newRow("thermal ignores the manual source") << rtsp << QString() << kNoStreamInfo << h264 << QString() << thermal << QString() << 0;
+    QTest::newRow("tile ignores the manual source") << rtsp << QString() << kNoStreamInfo << h264 << QString() << tile << QString() << 0;
 
     // A camera-advertised stream wins over the manual source, including a manual UDP address.
     QTest::newRow("auto RTSP over manual UDP") << udp264 << QString() << int(VIDEO_STREAM_TYPE_RTSP) << h264 << QStringLiteral("rtsp://10.0.0.1/main") << primary << QStringLiteral("rtsp://10.0.0.1/main") << rtspTimeout;
@@ -85,6 +87,8 @@ void VideoStreamResolverTest::_testResolve_data()
     QTest::newRow("auto thermal RTSP") << rtsp << QString() << int(VIDEO_STREAM_TYPE_RTSP) << h264 << QStringLiteral("rtsp://10.0.0.1/thermal") << thermal << QStringLiteral("rtsp://10.0.0.1/thermal") << rtspTimeout;
     QTest::newRow("auto thermal UDP port") << rtsp << QString() << int(VIDEO_STREAM_TYPE_RTPUDP) << h264 << QStringLiteral("5610") << thermal << QStringLiteral("udp://0.0.0.0:5610") << timeout;
     QTest::newRow("auto thermal without URI") << rtsp << QString() << int(VIDEO_STREAM_TYPE_RTSP) << h264 << QString() << thermal << QString() << 0;
+    QTest::newRow("auto tile RTSP") << rtsp << QString() << int(VIDEO_STREAM_TYPE_RTSP) << h264 << QStringLiteral("rtsp://10.0.0.1/wide") << tile << QStringLiteral("rtsp://10.0.0.1/wide") << rtspTimeout;
+    QTest::newRow("auto tile UDP h.265 port") << rtsp << QString() << int(VIDEO_STREAM_TYPE_RTPUDP) << h265 << QStringLiteral("5611") << tile << QStringLiteral("udp265://0.0.0.0:5611") << timeout;
     // clang-format on
 }
 
@@ -132,33 +136,15 @@ void VideoStreamResolverTest::_testStreamSettingsPassThrough()
     settings.autoReconnect = false;
     const auto streamInfo = VideoTestHelpers::makeStreamInfo(VIDEO_STREAM_TYPE_RTSP, "rtsp://10.0.0.1/thermal");
 
-    for (const auto& [info, role] : {std::pair{static_cast<QGCVideoStreamInfo*>(nullptr), Role::Primary},
-                                     std::pair{streamInfo.get(), Role::Thermal}}) {
+    for (const auto& [info, role] :
+         {std::pair{static_cast<QGCVideoStreamInfo*>(nullptr), Role::Primary},
+          std::pair{streamInfo.get(), Role::Thermal}, std::pair{streamInfo.get(), Role::Tile}}) {
         const std::optional<VideoReceiver::Config> config = VideoStreamResolver::resolve(settings, info, role);
         QVERIFY(config.has_value());
         QVERIFY(config->lowLatency);
         QCOMPARE(config->rtpJitterLatencyMs, 250);
         QVERIFY(!config->autoReconnect);
     }
-}
-
-void VideoStreamResolverTest::_testCameraRole()
-{
-    VideoStreamResolver::Settings settings = manualSettings(QStringLiteral("Integrated Camera"));
-    QVERIFY(!VideoStreamResolver::resolve(settings, nullptr, Role::Camera).has_value());
-
-    // The camera the video source names, once it is attached.
-    settings.cameraAttached = true;
-    const std::optional<VideoReceiver::Config> config = VideoStreamResolver::resolve(settings, nullptr, Role::Camera);
-    QVERIFY(config.has_value());
-    QCOMPARE(config->uri, QStringLiteral("Integrated Camera"));
-    QVERIFY(!VideoStreamResolver::resolve(settings, nullptr, Role::Primary).has_value());
-
-    // The stream settings leave its config alone: changing one doesn't restart the camera.
-    settings.lowLatency = true;
-    settings.rtpJitterLatencyMs = 250;
-    settings.autoReconnect = false;
-    QVERIFY(VideoStreamResolver::resolve(settings, nullptr, Role::Camera) == config);
 }
 
 void VideoStreamResolverTest::_testDisplayConfig_data()

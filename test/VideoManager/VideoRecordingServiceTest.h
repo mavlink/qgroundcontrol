@@ -24,6 +24,7 @@ private slots:
     void _testUniqueBaseName();
     void _testRecordsActiveStreams();
     void _testCameraRecordsAsTheVideo();
+    void _testTilesAreNotRecorded();
     void _testNothingToRecord();
     void _testSubtitlesFollowEachFile();
     void _testRecordingFailureReachesUser();

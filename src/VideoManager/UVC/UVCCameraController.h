@@ -111,7 +111,8 @@ public:
     bool focusAdjustable() const;
 
     /// For QML: setVideoOutput(), with @p videoOutput to display the camera in it, replacing any other, and with none
-    /// to stop displaying in @p videoOutput if it is the output set.
+    /// to stop displaying in @p videoOutput if it is the output set. That one happens on the next event loop pass,
+    /// unless another output registered by then: it takes the camera over without the camera stopping.
     Q_INVOKABLE void registerVideoOutput(QQuickItem* videoOutput);
     Q_INVOKABLE void unregisterVideoOutput(QQuickItem* videoOutput);
 
