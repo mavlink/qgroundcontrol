@@ -20,6 +20,7 @@ private slots:
     void _automaticRejectionMatchesPublication_data();
     void _automaticRejectionMatchesPublication();
     void _automaticFailoverAndRecovery();
+    void _earlyExpiryTimerKeepsPublication();
     void _standbyReportsDoNotRepublish();
     void _consumerMaximumAge();
     void _policySelectionGates();
