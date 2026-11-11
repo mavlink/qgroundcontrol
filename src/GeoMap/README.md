@@ -63,10 +63,10 @@ displacement and LOD offline).
 ## Imagery: where the map picture comes from
 
 Patch imagery is the same provider tiles QGC uses everywhere else (Google Satellite,
-OpenStreetMap, ...). `TileImageSource` exists because QGC's normal tile fetching is
-buried inside a QtLocation plugin that can only feed a QtLocation `Map`; GeoMap
-needs raw `QImage`s to upload as Quick 3D textures. It reuses the shared pieces
-(cache database, provider/URL registry) with the same cache-first policy.
+OpenStreetMap, ...). `TileImageSource` turns them into the raw `QImage`s that are
+uploaded as Quick 3D textures. It fetches each tile with `QGCTileReply`, the
+cache-first tile request that the QtLocation map and the terrain queries use too,
+and accepts only a tile that decodes as an image.
 
 While a patch's own image is loading, `SurfacePatchModel` composites a stand-in from
 whatever is available — the patch's four child tiles when present (sharper), else a

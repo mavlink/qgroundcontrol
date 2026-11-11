@@ -1,6 +1,8 @@
 #pragma once
 
+#include <functional>
 #include <memory>
+#include <utility>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QObject>
@@ -31,11 +33,18 @@ public:
     };
     Q_ENUM(Error)
 
+    /// Returns false for a tile the caller cannot use
+    using Validator = std::function<bool(const QByteArray& data)>;
+
     QGCTileReply(QNetworkAccessManager* networkManager, int mapId, int x, int y, int zoom, QObject* parent = nullptr);
     ~QGCTileReply() override;
 
     /// Asks the server only while the system reports internet access. Off by default: the server is always tried.
     void setRequiresInternet(bool requiresInternet) { _requiresInternet = requiresInternet; }
+
+    /// A cached tile the validator rejects is fetched from the server again. A tile from the server it rejects is a
+    /// DataError and is not stored in the cache.
+    void setValidator(Validator validator) { _validator = std::move(validator); }
 
     /// Returns false when the request could not be started; finished() is then not emitted.
     [[nodiscard]] bool start();
@@ -90,6 +99,7 @@ private:
     const int _y;
     const int _zoom;
     bool _requiresInternet = false;
+    Validator _validator;
 
     State _state = State::Idle;
     std::shared_ptr<const MapProvider> _provider;

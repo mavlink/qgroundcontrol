@@ -17,7 +17,8 @@
 
 #include "ElevationMapProvider.h"
 #include "HeightField.h"
-#include "QGeoFileTileCacheQGC.h"
+#include "QGCMapEngine.h"
+#include "QGCMapUrlEngine.h"
 #include "TerrariumTileFetcher.h"
 #include "TileMath.h"
 #include "UnitTestTileGenerator.h"
@@ -459,8 +460,9 @@ void TerrariumTileFetcherTest::_cachedUnusableTileFallsBackToNetwork()
     // shared per-process cache DB
     const TileMath::TileKey key{centerKey.x + 2, centerKey.y, zoom};
     // The cache worker runs tasks in order: the store lands before the lookup
-    QGeoFileTileCacheQGC::cacheTile(QString::fromLatin1(TerrariumElevationProvider::kProviderKey), key.x, key.y,
-                                    key.zoom, QByteArrayLiteral("garbage"), QStringLiteral("png"));
+    const QString type = QString::fromLatin1(TerrariumElevationProvider::kProviderKey);
+    getQGCMapEngine()->cacheTile(type, UrlFactory::getTileHash(type, key.x, key.y, key.zoom),
+                                 QByteArrayLiteral("garbage"), QStringLiteral("png"));
 
     MockNam nam;
     nam.body = UnitTestTileGenerator::syntheticTerrariumTileData(key.x, key.y, key.zoom);

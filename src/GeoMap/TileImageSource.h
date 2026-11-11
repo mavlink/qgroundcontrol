@@ -12,14 +12,13 @@
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QHash>
 #include <QtCore/QObject>
-#include <QtCore/QSet>
 #include <QtCore/QString>
 #include <QtGui/QImage>
 
 #include "TileMath.h"
 
+class QGCTileReply;
 class QNetworkAccessManager;
-class QNetworkReply;
 
 /// Async cache-first source of map tile images for draping onto surface patches.
 ///
@@ -60,11 +59,7 @@ signals:
     void tileImageFailed(int requestId);
 
 private:
-    void _fetchFromNetwork(int requestId, const TileMath::TileKey& key);
     void _failAsync(int requestId);
-    void _deliver(int requestId, const TileMath::TileKey& key, const QByteArray& data);
-    void _finishSucceeded(int requestId, const QImage& image);
-    void _finishFailed(int requestId);
     void _warnFailure(const TileMath::TileKey& key, const QString& reason);
 
     static constexpr int kFailureWarnIntervalMs = 10000;  ///< throttle for fetch-failure warnings
@@ -73,7 +68,7 @@ private:
     const int _mapId;
     QNetworkAccessManager* _networkManager = nullptr;
     int _requestIdCounter = 0;
-    QSet<int> _pending;                         ///< ids that have not finished or been cancelled
-    QHash<int, QNetworkReply*> _activeReplies;  ///< in-flight network fetches by request id
-    QElapsedTimer _failureWarnTimer;            ///< restarted on each emitted failure warning
+    /// Requests that have not finished or been cancelled, with their fetch (null while a failure is being delivered)
+    QHash<int, QGCTileReply*> _pending;
+    QElapsedTimer _failureWarnTimer;  ///< restarted on each emitted failure warning
 };

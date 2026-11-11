@@ -18,9 +18,9 @@
 #include "HeightSource.h"
 
 class HeightField;
+class QGCTileReply;
 class QImage;
 class QNetworkAccessManager;
-class QNetworkReply;
 
 /// Fetcher over the AWS Open Data Terrain Tiles (terrarium encoding): real
 /// elevations at every patch zoom from one slippy PNG tile per patch, cache-first
@@ -93,7 +93,6 @@ private:
     void _failAsync(int requestId);
     bool _fetchInFlight(const TileMath::TileKey& fetchKey) const;
     bool _startFetch(const TileMath::TileKey& fetchKey);
-    void _fetchFromNetwork(const TileMath::TileKey& fetchKey);
     void _deliverAll(const TileMath::TileKey& fetchKey, const QImage& image);
     void _failAll(const TileMath::TileKey& fetchKey, const QString& reason);
     void _deliver(int requestId, const QImage& image);
@@ -108,7 +107,7 @@ private:
     QHash<TileMath::TileKey, QList<int>> _waiters;            ///< request ids sharing the in-flight fetch of a tile
     QSet<TileMath::TileKey> _fieldRequests;                   ///< tiles awaiting delivery into the field
     QHash<TileMath::TileKey, HeldTile> _held;                 ///< delivered finer tiles waiting on their anchors
-    QHash<TileMath::TileKey, QNetworkReply*> _activeReplies;  ///< in-flight network fetches by tile
+    QHash<TileMath::TileKey, QGCTileReply*> _fetches;         ///< in-flight fetches by tile
     TileMath::TileKey _lastFetchKey;
     QElapsedTimer _failureWarnTimer;                          ///< restarted on each emitted failure warning
 };

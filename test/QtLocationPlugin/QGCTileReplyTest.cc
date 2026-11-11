@@ -238,6 +238,46 @@ void QGCTileReplyTest::_serverFailure()
     QCOMPARE(nam.requestCount, 2);
 }
 
+void QGCTileReplyTest::_validatorRejectsCachedAndServerTiles()
+{
+    const QByteArray png = tileReplyPngBody();
+    const auto acceptPng = [png](const QByteArray& data) { return data == png; };
+
+    TileReplyMockNam nam;
+    nam.body = png;
+
+    // The tile UnitTestTileGenerator serves as the cached one is not the accepted tile: the server is asked
+    QGCTileReply refetched(&nam, tileReplyMapId(), kTileX + 20, kTileY, kTileZoom);
+    refetched.setValidator(acceptPng);
+    QSignalSpy refetchedSpy(&refetched, &QGCTileReply::finished);
+    QVERIFY(refetched.start());
+    QVERIFY_SIGNAL_COUNT_WAIT(refetchedSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(refetched.error(), QGCTileReply::Error::NoError);
+    QVERIFY(!refetched.isCached());
+    QCOMPARE(refetched.data(), png);
+    QCOMPARE(nam.requestCount, 1);
+
+    // A rejected server tile fails and is not stored: a request accepting any tile still has to ask the server
+    UnitTestTileGenerator::setForcedMissCount(2);
+    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    nam.body = QByteArrayLiteral("not the accepted tile");
+    QGCTileReply rejected(&nam, tileReplyMapId(), kTileX + 21, kTileY, kTileZoom);
+    rejected.setValidator(acceptPng);
+    QSignalSpy rejectedSpy(&rejected, &QGCTileReply::finished);
+    QVERIFY(rejected.start());
+    QVERIFY_SIGNAL_COUNT_WAIT(rejectedSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(rejected.error(), QGCTileReply::Error::DataError);
+    QCOMPARE(nam.requestCount, 2);
+
+    QGCTileReply unvalidated(&nam, tileReplyMapId(), kTileX + 21, kTileY, kTileZoom);
+    QSignalSpy unvalidatedSpy(&unvalidated, &QGCTileReply::finished);
+    QVERIFY(unvalidated.start());
+    QVERIFY_SIGNAL_COUNT_WAIT(unvalidatedSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(unvalidated.error(), QGCTileReply::Error::NoError);
+    QVERIFY(!unvalidated.isCached());
+    QCOMPARE(nam.requestCount, 3);
+}
+
 void QGCTileReplyTest::_abortedReplyStaysSilent()
 {
     TileReplyMockNam nam;

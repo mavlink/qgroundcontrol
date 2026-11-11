@@ -1,5 +1,7 @@
 #include "TileImageSourceTest.h"
 
+#include <cstring>
+
 #include <QtCore/QBuffer>
 #include <QtCore/QFile>
 #include <QtCore/QScopeGuard>
@@ -9,10 +11,8 @@
 #include <QtNetwork/QNetworkReply>
 #include <QtTest/QSignalSpy>
 
-#include <cstring>
-
+#include "QGCMapEngine.h"
 #include "QGCMapUrlEngine.h"
-#include "QGeoFileTileCacheQGC.h"
 #include "TileImageSource.h"
 #include "TileMath.h"
 #include "UnitTestTileGenerator.h"
@@ -305,7 +305,7 @@ void TileImageSourceTest::_networkGarbageBodyFailsAndNotCached()
     UnitTestTileGenerator::setForcedMissCount(2);
     const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
 
-    expectLogMessage("GeoMap.TileImageSource", QtWarningMsg, QRegularExpression(QStringLiteral("failed to decode")));
+    expectLogMessage("GeoMap.TileImageSource", QtWarningMsg, QRegularExpression(QStringLiteral("not a usable tile")));
     source.requestTileImage(key);
     QTRY_COMPARE_WITH_TIMEOUT(failedSpy.count(), 1, 5000);
     verifyExpectedLogMessage();
@@ -356,7 +356,8 @@ void TileImageSourceTest::_cachedUnusableTileFallsBackToNetwork()
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
     const TileMath::TileKey key{kKey.x + 15, kKey.y, kKey.zoom};
     // The cache worker runs tasks in order: the store lands before the lookup
-    QGeoFileTileCacheQGC::cacheTile(type, key.x, key.y, key.zoom, QByteArrayLiteral("garbage"), QStringLiteral("png"));
+    getQGCMapEngine()->cacheTile(type, UrlFactory::getTileHash(type, key.x, key.y, key.zoom),
+                                 QByteArrayLiteral("garbage"), QStringLiteral("png"));
 
     MockNam nam;
     nam.body = pngBody();

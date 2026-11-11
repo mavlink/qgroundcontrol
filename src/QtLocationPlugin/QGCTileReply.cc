@@ -227,6 +227,11 @@ void QGCTileReply::_networkReplyFinished()
         }
     }
 
+    if (_validator && !_validator(data)) {
+        _finish(Error::DataError, QStringLiteral("network body is not a usable tile, %1 bytes").arg(data.size()));
+        return;
+    }
+
     const QString format = _provider->getImageFormat(data);
     if (format.isEmpty()) {
         _finish(Error::DataError, QStringLiteral("network body has an unknown tile format"));
@@ -250,7 +255,7 @@ void QGCTileReply::_finish(Error error, const QString& errorString)
 
 bool QGCTileReply::_isUsable(const QByteArray& data) const
 {
-    return !data.isEmpty() && !_isNoTilePlaceholder(data);
+    return !data.isEmpty() && !_isNoTilePlaceholder(data) && (!_validator || _validator(data));
 }
 
 bool QGCTileReply::_isNoTilePlaceholder(const QByteArray& data) const
