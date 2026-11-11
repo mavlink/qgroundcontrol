@@ -1,5 +1,4 @@
 #include "QGCTileCacheWorker.h"
-#include "QGCTileCacheDatabase.h"
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QSettings>
@@ -9,6 +8,7 @@
 #include "QGCLoggingCategory.h"
 #include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
+#include "QGCTileCacheDatabase.h"
 
 #ifdef QGC_UNITTEST_BUILD
 #include "AppMessages.h"
@@ -19,13 +19,13 @@ QGC_LOGGING_CATEGORY(QGCTileCacheWorkerLog, "QtLocationPlugin.QGCTileCacheWorker
 #ifdef QGC_UNITTEST_BUILD
 std::function<QGCCacheTile*(const QString&)> QGCCacheWorker::_unitTestTileGenerator;
 
-void QGCCacheWorker::setUnitTestTileGenerator(std::function<QGCCacheTile*(const QString &hash)> generator)
+void QGCCacheWorker::setUnitTestTileGenerator(std::function<QGCCacheTile*(const QString& hash)> generator)
 {
     _unitTestTileGenerator = std::move(generator);
 }
 #endif
 
-QGCCacheWorker::QGCCacheWorker(QObject *parent)
+QGCCacheWorker::QGCCacheWorker(QObject* parent)
     : QThread(parent)
 {
     qCDebug(QGCTileCacheWorkerLog) << this;
@@ -51,7 +51,7 @@ void QGCCacheWorker::stop()
     }
 }
 
-bool QGCCacheWorker::enqueueTask(QGCMapTask *task)
+bool QGCCacheWorker::enqueueTask(QGCMapTask* task)
 {
     if (!_dbValid && !isRunning() && (task->type() != QGCMapTask::TaskType::taskInit)) {
         task->setError(tr("Database Not Initialized"));
@@ -83,7 +83,7 @@ void QGCCacheWorker::run()
         _database.reset();
 
         QMutexLocker lock(&_taskQueueMutex);
-        for (QGCMapTask *orphan : _taskQueue) {
+        for (QGCMapTask* orphan : _taskQueue) {
             orphan->setError(tr("Database Init Failed"));
             orphan->deleteLater();
         }
@@ -129,7 +129,7 @@ void QGCCacheWorker::run()
         }
     }
 
-    for (QGCMapTask *orphan : _taskQueue) {
+    for (QGCMapTask* orphan : _taskQueue) {
         orphan->setError(tr("Worker shutting down"));
         orphan->deleteLater();
     }
@@ -143,54 +143,54 @@ void QGCCacheWorker::run()
     }
 }
 
-void QGCCacheWorker::_runTask(QGCMapTask *task)
+void QGCCacheWorker::_runTask(QGCMapTask* task)
 {
     switch (task->type()) {
-    case QGCMapTask::TaskType::taskInit:
-        break;
-    case QGCMapTask::TaskType::taskCacheTile:
-        _saveTile(task);
-        break;
-    case QGCMapTask::TaskType::taskFetchTile:
-        _getTile(task);
-        break;
-    case QGCMapTask::TaskType::taskFetchTileSets:
-        _getTileSets(task);
-        break;
-    case QGCMapTask::TaskType::taskCreateTileSet:
-        _createTileSet(task);
-        break;
-    case QGCMapTask::TaskType::taskGetTileDownloadList:
-        _getTileDownloadList(task);
-        break;
-    case QGCMapTask::TaskType::taskUpdateTileDownloadState:
-        _updateTileDownloadState(task);
-        break;
-    case QGCMapTask::TaskType::taskDeleteTileSet:
-        _deleteTileSet(task);
-        break;
-    case QGCMapTask::TaskType::taskRenameTileSet:
-        _renameTileSet(task);
-        break;
-    case QGCMapTask::TaskType::taskPruneCache:
-        _pruneCache(task);
-        break;
-    case QGCMapTask::TaskType::taskReset:
-        _resetCacheDatabase(task);
-        break;
-    case QGCMapTask::TaskType::taskExport:
-        _exportSets(task);
-        break;
-    case QGCMapTask::TaskType::taskImport:
-        _importSets(task);
-        break;
-    default:
-        qCWarning(QGCTileCacheWorkerLog) << "given unhandled task type" << task->type();
-        break;
+        case QGCMapTask::TaskType::taskInit:
+            break;
+        case QGCMapTask::TaskType::taskCacheTile:
+            _saveTile(task);
+            break;
+        case QGCMapTask::TaskType::taskFetchTile:
+            _getTile(task);
+            break;
+        case QGCMapTask::TaskType::taskFetchTileSets:
+            _getTileSets(task);
+            break;
+        case QGCMapTask::TaskType::taskCreateTileSet:
+            _createTileSet(task);
+            break;
+        case QGCMapTask::TaskType::taskGetTileDownloadList:
+            _getTileDownloadList(task);
+            break;
+        case QGCMapTask::TaskType::taskUpdateTileDownloadState:
+            _updateTileDownloadState(task);
+            break;
+        case QGCMapTask::TaskType::taskDeleteTileSet:
+            _deleteTileSet(task);
+            break;
+        case QGCMapTask::TaskType::taskRenameTileSet:
+            _renameTileSet(task);
+            break;
+        case QGCMapTask::TaskType::taskPruneCache:
+            _pruneCache(task);
+            break;
+        case QGCMapTask::TaskType::taskReset:
+            _resetCacheDatabase(task);
+            break;
+        case QGCMapTask::TaskType::taskExport:
+            _exportSets(task);
+            break;
+        case QGCMapTask::TaskType::taskImport:
+            _importSets(task);
+            break;
+        default:
+            qCWarning(QGCTileCacheWorkerLog) << "given unhandled task type" << task->type();
+            break;
     }
 }
 
-bool QGCCacheWorker::_testTask(QGCMapTask *mtask)
+bool QGCCacheWorker::_testTask(QGCMapTask* mtask)
 {
     if (!_database || !_database->isValid()) {
         mtask->setError("No Cache Database");
@@ -207,26 +207,26 @@ void QGCCacheWorker::_emitTotals()
     _updateTimer.restart();
 }
 
-void QGCCacheWorker::_saveTile(QGCMapTask *mtask)
+void QGCCacheWorker::_saveTile(QGCMapTask* mtask)
 {
     if (!_testTask(mtask)) {
         return;
     }
 
-    QGCSaveTileTask *task = static_cast<QGCSaveTileTask*>(mtask);
-    if (!_database->saveTile(task->tile()->hash, task->tile()->format,
-                             task->tile()->img, task->tile()->type, task->tile()->tileSet)) {
+    QGCSaveTileTask* task = static_cast<QGCSaveTileTask*>(mtask);
+    if (!_database->saveTile(task->tile()->hash, task->tile()->format, task->tile()->img, task->tile()->type,
+                             task->tile()->tileSet)) {
         mtask->setError("Error saving tile to cache");
     }
 }
 
-void QGCCacheWorker::_getTile(QGCMapTask *mtask)
+void QGCCacheWorker::_getTile(QGCMapTask* mtask)
 {
     if (!_testTask(mtask)) {
         return;
     }
 
-    QGCFetchTileTask *task = static_cast<QGCFetchTileTask*>(mtask);
+    QGCFetchTileTask* task = static_cast<QGCFetchTileTask*>(mtask);
     const auto tile = _database->getTile(task->hash());
     if (tile) {
         task->setTileFetched(*tile);
@@ -249,17 +249,17 @@ void QGCCacheWorker::_getTile(QGCMapTask *mtask)
     task->setError("Tile not in cache database");
 }
 
-void QGCCacheWorker::_getTileSets(QGCMapTask *mtask)
+void QGCCacheWorker::_getTileSets(QGCMapTask* mtask)
 {
     if (!_testTask(mtask)) {
         return;
     }
 
-    QGCFetchTileSetTask *task = static_cast<QGCFetchTileSetTask*>(mtask);
+    QGCFetchTileSetTask* task = static_cast<QGCFetchTileSetTask*>(mtask);
     const QList<TileSetRecord> records = _database->getTileSets();
 
-    for (const auto &rec : records) {
-        QGCCachedTileSet *set = new QGCCachedTileSet(rec.name);
+    for (const auto& rec : records) {
+        QGCCachedTileSet* set = new QGCCachedTileSet(rec.name);
         set->blockSignals(true);
 
         set->setId(rec.setID);
@@ -275,7 +275,8 @@ void QGCCacheWorker::_getTileSets(QGCMapTask *mtask)
         set->setDefaultSet(rec.defaultSet);
         set->setCreationDate(QDateTime::fromSecsSinceEpoch(rec.date));
 
-        const SetTotalsResult totals = _database->computeSetTotals(rec.setID, rec.defaultSet, rec.numTiles, set->type());
+        const SetTotalsResult totals =
+            _database->computeSetTotals(rec.setID, rec.defaultSet, rec.numTiles, set->type());
         set->setTotalTileCount(totals.totalTileCount);
         set->setSavedTileCount(totals.savedTileCount);
         set->setSavedTileSize(totals.savedTileSize);
@@ -289,19 +290,18 @@ void QGCCacheWorker::_getTileSets(QGCMapTask *mtask)
     }
 }
 
-void QGCCacheWorker::_createTileSet(QGCMapTask *mtask)
+void QGCCacheWorker::_createTileSet(QGCMapTask* mtask)
 {
     if (!_testTask(mtask)) {
         return;
     }
 
-    QGCCreateTileSetTask *task = static_cast<QGCCreateTileSetTask*>(mtask);
-    const auto setID = _database->createTileSet(
-        task->tileSet()->name(), task->tileSet()->mapTypeStr(),
-        task->tileSet()->topleftLat(), task->tileSet()->topleftLon(),
-        task->tileSet()->bottomRightLat(), task->tileSet()->bottomRightLon(),
-        task->tileSet()->minZoom(), task->tileSet()->maxZoom(),
-        task->tileSet()->type(), task->tileSet()->totalTileCount());
+    QGCCreateTileSetTask* task = static_cast<QGCCreateTileSetTask*>(mtask);
+    const auto setID = _database->createTileSet(task->tileSet()->name(), task->tileSet()->mapTypeStr(),
+                                                task->tileSet()->topleftLat(), task->tileSet()->topleftLon(),
+                                                task->tileSet()->bottomRightLat(), task->tileSet()->bottomRightLon(),
+                                                task->tileSet()->minZoom(), task->tileSet()->maxZoom(),
+                                                task->tileSet()->type(), task->tileSet()->totalTileCount());
 
     if (!setID.has_value()) {
         mtask->setError("Error saving tile set");
@@ -312,8 +312,7 @@ void QGCCacheWorker::_createTileSet(QGCMapTask *mtask)
     task->tileSet()->setId(setID.value());
 
     const SetTotalsResult totals = _database->computeSetTotals(
-        setID.value(), task->tileSet()->defaultSet(),
-        task->tileSet()->totalTileCount(), task->tileSet()->type());
+        setID.value(), task->tileSet()->defaultSet(), task->tileSet()->totalTileCount(), task->tileSet()->type());
     task->tileSet()->setSavedTileCount(totals.savedTileCount);
     task->tileSet()->setSavedTileSize(totals.savedTileSize);
     task->tileSet()->setTotalTileSize(totals.totalTileSize);
@@ -324,28 +323,28 @@ void QGCCacheWorker::_createTileSet(QGCMapTask *mtask)
     task->setTileSetSaved();
 }
 
-void QGCCacheWorker::_getTileDownloadList(QGCMapTask *mtask)
+void QGCCacheWorker::_getTileDownloadList(QGCMapTask* mtask)
 {
     if (!_testTask(mtask)) {
         return;
     }
 
-    QGCGetTileDownloadListTask *task = static_cast<QGCGetTileDownloadListTask*>(mtask);
+    QGCGetTileDownloadListTask* task = static_cast<QGCGetTileDownloadListTask*>(mtask);
     const QList<QGCTile> tileValues = _database->getTileDownloadList(task->setID(), task->count());
     QQueue<QGCTile*> tiles;
-    for (const auto &t : tileValues) {
+    for (const auto& t : tileValues) {
         tiles.enqueue(new QGCTile(t));
     }
     task->setTileListFetched(tiles);
 }
 
-void QGCCacheWorker::_updateTileDownloadState(QGCMapTask *mtask)
+void QGCCacheWorker::_updateTileDownloadState(QGCMapTask* mtask)
 {
     if (!_testTask(mtask)) {
         return;
     }
 
-    QGCUpdateTileDownloadStateTask *task = static_cast<QGCUpdateTileDownloadStateTask*>(mtask);
+    QGCUpdateTileDownloadStateTask* task = static_cast<QGCUpdateTileDownloadStateTask*>(mtask);
     bool ok;
     if (task->hash() == QStringLiteral("*")) {
         ok = _database->updateAllTileDownloadStates(task->setID(), static_cast<int>(task->state()));
@@ -357,13 +356,13 @@ void QGCCacheWorker::_updateTileDownloadState(QGCMapTask *mtask)
     }
 }
 
-void QGCCacheWorker::_pruneCache(QGCMapTask *mtask)
+void QGCCacheWorker::_pruneCache(QGCMapTask* mtask)
 {
     if (!_testTask(mtask)) {
         return;
     }
 
-    QGCPruneCacheTask *task = static_cast<QGCPruneCacheTask*>(mtask);
+    QGCPruneCacheTask* task = static_cast<QGCPruneCacheTask*>(mtask);
     if (!_database->pruneCache(task->amount())) {
         mtask->setError("Error pruning cache");
         return;
@@ -371,13 +370,13 @@ void QGCCacheWorker::_pruneCache(QGCMapTask *mtask)
     task->setPruned();
 }
 
-void QGCCacheWorker::_deleteTileSet(QGCMapTask *mtask)
+void QGCCacheWorker::_deleteTileSet(QGCMapTask* mtask)
 {
     if (!_testTask(mtask)) {
         return;
     }
 
-    QGCDeleteTileSetTask *task = static_cast<QGCDeleteTileSetTask*>(mtask);
+    QGCDeleteTileSetTask* task = static_cast<QGCDeleteTileSetTask*>(mtask);
     if (!_database->deleteTileSet(task->setID())) {
         mtask->setError("Error deleting tile set");
         return;
@@ -386,25 +385,25 @@ void QGCCacheWorker::_deleteTileSet(QGCMapTask *mtask)
     task->setTileSetDeleted();
 }
 
-void QGCCacheWorker::_renameTileSet(QGCMapTask *mtask)
+void QGCCacheWorker::_renameTileSet(QGCMapTask* mtask)
 {
     if (!_testTask(mtask)) {
         return;
     }
 
-    QGCRenameTileSetTask *task = static_cast<QGCRenameTileSetTask*>(mtask);
+    QGCRenameTileSetTask* task = static_cast<QGCRenameTileSetTask*>(mtask);
     if (!_database->renameTileSet(task->setID(), task->newName())) {
         task->setError("Error renaming tile set");
     }
 }
 
-void QGCCacheWorker::_resetCacheDatabase(QGCMapTask *mtask)
+void QGCCacheWorker::_resetCacheDatabase(QGCMapTask* mtask)
 {
     if (!_testTask(mtask)) {
         return;
     }
 
-    QGCResetTask *task = static_cast<QGCResetTask*>(mtask);
+    QGCResetTask* task = static_cast<QGCResetTask*>(mtask);
     if (!_database->resetDatabase()) {
         mtask->setError("Error resetting cache database");
         return;
@@ -413,13 +412,13 @@ void QGCCacheWorker::_resetCacheDatabase(QGCMapTask *mtask)
     task->setResetCompleted();
 }
 
-void QGCCacheWorker::_importSets(QGCMapTask *mtask)
+void QGCCacheWorker::_importSets(QGCMapTask* mtask)
 {
     if (!_testTask(mtask)) {
         return;
     }
 
-    QGCImportTileTask *task = static_cast<QGCImportTileTask*>(mtask);
+    QGCImportTileTask* task = static_cast<QGCImportTileTask*>(mtask);
     auto progress = [task](int pct) { task->setProgress(pct); };
 
     DatabaseResult result;
@@ -445,13 +444,13 @@ void QGCCacheWorker::_importSets(QGCMapTask *mtask)
     task->setImportCompleted();
 }
 
-void QGCCacheWorker::_exportSets(QGCMapTask *mtask)
+void QGCCacheWorker::_exportSets(QGCMapTask* mtask)
 {
     if (!_testTask(mtask)) {
         return;
     }
 
-    QGCExportTileTask *task = static_cast<QGCExportTileTask*>(mtask);
+    QGCExportTileTask* task = static_cast<QGCExportTileTask*>(mtask);
 
     auto progress = [task](int pct) { task->setProgress(pct); };
     DatabaseResult result = _database->exportSets(task->sets(), task->path(), progress);

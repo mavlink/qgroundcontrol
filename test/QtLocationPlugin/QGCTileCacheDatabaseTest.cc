@@ -4,6 +4,7 @@
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QSettings>
+#include <QtCore/QTemporaryDir>
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlQuery>
 
@@ -11,11 +12,10 @@
 #include "QGCMapUrlEngine.h"
 #include "QGCTile.h"
 #include "QGCTileCacheDatabase.h"
-#include <QtCore/QTemporaryDir>
 
 static const QString kFixedProviderType = QStringLiteral("Bing Road");
 
-std::unique_ptr<QGCTileCacheDatabase> QGCTileCacheDatabaseTest::_createInitializedDB(QTemporaryDir &tempDir)
+std::unique_ptr<QGCTileCacheDatabase> QGCTileCacheDatabaseTest::_createInitializedDB(QTemporaryDir& tempDir)
 {
     auto db = std::make_unique<QGCTileCacheDatabase>(tempDir.filePath("tiles.db"));
     if (!db->init() || !db->connectDB()) {
@@ -65,7 +65,8 @@ void QGCTileCacheDatabaseTest::_testInitWithValidPath()
 void QGCTileCacheDatabaseTest::_testInitWithEmptyPath()
 {
     // Expected: critical about missing cache directory
-    expectLogMessage("QtLocationPlugin.QGCTileCacheDatabase", QtCriticalMsg, QRegularExpression("Could not find suitable cache directory"));
+    expectLogMessage("QtLocationPlugin.QGCTileCacheDatabase", QtCriticalMsg,
+                     QRegularExpression("Could not find suitable cache directory"));
 
     const QString emptyPath;
     QGCTileCacheDatabase db(emptyPath);
@@ -530,7 +531,7 @@ void QGCTileCacheDatabaseTest::_testOperationsAfterDisconnect()
     auto db = _createInitializedDB(tempDir);
     db->disconnectDB();
 
-    const char *categoryPattern = "QtLocationPlugin.QGCTileCacheDatabase";
+    const char* categoryPattern = "QtLocationPlugin.QGCTileCacheDatabase";
     const QRegularExpression disconnectedPattern(QStringLiteral("Database not connected"));
 
     expectLogMessage(categoryPattern, QtWarningMsg, disconnectedPattern);
@@ -1330,15 +1331,14 @@ void QGCTileCacheDatabaseTest::_testForeignKeyCascadeDelete()
     QVERIFY(UrlFactory::getQtMapIdFromProviderType(kFixedProviderType) != -1);
 
     const QString hash = QStringLiteral("fk_cascade_hash");
-    QVERIFY(
-        db->saveTile(hash, QStringLiteral("png"), QByteArray("data"), kFixedProviderType,
-                     QGCTileCacheDatabase::kInvalidTileSet));
+    QVERIFY(db->saveTile(hash, QStringLiteral("png"), QByteArray("data"), kFixedProviderType,
+                         QGCTileCacheDatabase::kInvalidTileSet));
 
     const auto tileID = db->findTile(hash);
     QVERIFY(tileID.has_value());
 
-    const auto setID = db->createTileSet(QStringLiteral("CascadeTestSet"), kFixedProviderType, 10.0, 20.0, 30.0,
-                                         40.0, 5, 5, kFixedProviderType, 1);
+    const auto setID = db->createTileSet(QStringLiteral("CascadeTestSet"), kFixedProviderType, 10.0, 20.0, 30.0, 40.0,
+                                         5, 5, kFixedProviderType, 1);
     QVERIFY(setID.has_value());
 
     _linkTileToSet(db.get(), tileID.value(), setID.value());

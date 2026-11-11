@@ -56,7 +56,7 @@ private slots:
     void _testForeignKeyCascadeDelete();
 
 private:
-    std::unique_ptr<QGCTileCacheDatabase> _createInitializedDB(QTemporaryDir &tempDir);
+    std::unique_ptr<QGCTileCacheDatabase> _createInitializedDB(QTemporaryDir& tempDir);
     void _insertTileSet(QGCTileCacheDatabase* db, const QString& name, quint64& outSetID);
     void _insertDownloadRecord(QGCTileCacheDatabase* db, quint64 setID, const QString& hash, int state = 0);
     void _linkTileToSet(QGCTileCacheDatabase* db, quint64 tileID, quint64 setID);

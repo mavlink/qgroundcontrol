@@ -1,11 +1,11 @@
 #include "QGCMapEngineManagerArchiveTest.h"
 
 #include <QtCore/QFile>
+#include <QtCore/QTemporaryDir>
 #include <QtTest/QSignalSpy>
 
 #include "QGCMapEngineManager.h"
 #include "UnitTest.h"
-#include <QtCore/QTemporaryDir>
 
 void QGCMapEngineManagerArchiveTest::_importArchiveRejectsInvalidInput()
 {

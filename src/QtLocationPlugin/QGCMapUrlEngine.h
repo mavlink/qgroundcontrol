@@ -1,13 +1,13 @@
 #pragma once
 
+#include <memory>
+
 #include <QtCore/QByteArrayView>
 #include <QtCore/QList>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 #include <QtCore/QStringView>
 #include <QtCore/QUrl>
-
-#include <memory>
 
 #include "QGCTileSet.h"
 
@@ -30,11 +30,11 @@ public:
     static int long2tileX(QStringView mapType, double lon, int z);
     static int lat2tileY(QStringView mapType, double lat, int z);
 
-    static QGCTileSet getTileCount(int zoom, double topleftLon, double topleftLat,
-                            double bottomRightLon, double bottomRightLat,
-                            QStringView mapType);
+    static QGCTileSet getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon,
+                                   double bottomRightLat, QStringView mapType);
 
     static const QList<std::shared_ptr<const MapProvider>>& getProviders() { return _providers; }
+
     static QStringList getElevationProviderTypes();
     static QStringList getProviderTypes();
     static int getQtMapIdFromProviderType(QStringView type);

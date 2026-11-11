@@ -26,7 +26,7 @@ void queueDownloadState(quint64 setId, const QString& hash, QGCTile::TileState s
 
 }  // namespace
 
-QGCCachedTileSet::QGCCachedTileSet(const QString &name, QObject *parent)
+QGCCachedTileSet::QGCCachedTileSet(const QString& name, QObject* parent)
     : QObject(parent)
     , _name(name)
 {
@@ -70,7 +70,7 @@ void QGCCachedTileSet::createDownloadTask()
         _noMoreTiles = false;
     }
 
-    QGCGetTileDownloadListTask *task = new QGCGetTileDownloadListTask(_id, kTileBatchSize);
+    QGCGetTileDownloadListTask* task = new QGCGetTileDownloadListTask(_id, kTileBatchSize);
     (void) connect(task, &QGCGetTileDownloadListTask::tileListFetched, this, &QGCCachedTileSet::_tileListFetched);
     if (_manager) {
         (void) connect(task, &QGCMapTask::error, _manager, &QGCMapEngineManager::taskError);
@@ -89,7 +89,7 @@ void QGCCachedTileSet::resumeDownloadTask()
 {
     _cancelPending = false;
 
-    QGCUpdateTileDownloadStateTask *task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StatePending, "*");
+    QGCUpdateTileDownloadStateTask* task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StatePending, "*");
     if (!getQGCMapEngine()->addTask(task)) {
         task->deleteLater();
     }
@@ -102,7 +102,7 @@ void QGCCachedTileSet::cancelDownloadTask()
     _cancelPending = true;
 }
 
-void QGCCachedTileSet::_tileListFetched(const QQueue<QGCTile*> &tiles)
+void QGCCachedTileSet::_tileListFetched(const QQueue<QGCTile*>& tiles)
 {
     _batchRequested = false;
     if (tiles.size() < kTileBatchSize) {

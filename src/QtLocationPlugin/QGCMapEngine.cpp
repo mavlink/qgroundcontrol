@@ -106,12 +106,12 @@ QString createCacheDirectory()
 
 }  // namespace
 
-QGCMapEngine *getQGCMapEngine()
+QGCMapEngine* getQGCMapEngine()
 {
     return QGCMapEngine::instance();
 }
 
-QGCMapEngine::QGCMapEngine(QObject *parent)
+QGCMapEngine::QGCMapEngine(QObject* parent)
     : QObject(parent)
 {
     qCDebug(QGCMapEngineLog) << this;
@@ -161,12 +161,12 @@ void QGCMapEngine::closeInstance()
     }
 }
 
-QGCMapEngine *QGCMapEngine::instance()
+QGCMapEngine* QGCMapEngine::instance()
 {
     return _mapEngine();
 }
 
-void QGCMapEngine::init(const QString &databasePath)
+void QGCMapEngine::init(const QString& databasePath)
 {
     if (m_initialized || m_closed) {
         return;
@@ -178,7 +178,7 @@ void QGCMapEngine::init(const QString &databasePath)
     m_worker->setDatabaseFile(databasePath);
     (void) connect(m_worker, &QGCCacheWorker::updateTotals, this, &QGCMapEngine::_updateTotals);
 
-    QGCMapTask *task = new QGCMapTask(QGCMapTask::TaskType::taskInit);
+    QGCMapTask* task = new QGCMapTask(QGCMapTask::TaskType::taskInit);
     if (!addTask(task)) {
         task->deleteLater();
         m_initialized = false;
@@ -219,7 +219,7 @@ void QGCMapEngine::cacheTile(const QString& type, const QString& hash, const QBy
     }
 }
 
-bool QGCMapEngine::addTask(QGCMapTask *task)
+bool QGCMapEngine::addTask(QGCMapTask* task)
 {
     if (!m_worker) {
         return false;
@@ -229,7 +229,8 @@ bool QGCMapEngine::addTask(QGCMapTask *task)
     // an event loop), so queued connections would never be delivered. The queue
     // is mutex-protected in enqueueTask, so calling from the main thread is safe.
     bool result = false;
-    (void) QMetaObject::invokeMethod(m_worker, &QGCCacheWorker::enqueueTask, Qt::DirectConnection, qReturnArg(result), task);
+    (void) QMetaObject::invokeMethod(m_worker, &QGCCacheWorker::enqueueTask, Qt::DirectConnection, qReturnArg(result),
+                                     task);
     return result;
 }
 
@@ -243,7 +244,7 @@ void QGCMapEngine::_updateTotals(quint32 totaltiles, quint64 totalsize, quint32 
         m_pruning = true;
 
         const quint64 amountToPrune = defaultsize - maxSize;
-        QGCPruneCacheTask *task = new QGCPruneCacheTask(amountToPrune);
+        QGCPruneCacheTask* task = new QGCPruneCacheTask(amountToPrune);
         (void) connect(task, &QGCPruneCacheTask::pruned, this, &QGCMapEngine::_pruned);
         if (!addTask(task)) {
             task->deleteLater();

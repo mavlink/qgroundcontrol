@@ -1,10 +1,11 @@
 #pragma once
 
-#include <QtCore/QString>
-
 #include <functional>
 
-struct TileSetRecord {
+#include <QtCore/QString>
+
+struct TileSetRecord
+{
     quint64 setID = 0;
     QString name;
     QString mapTypeStr;
@@ -20,14 +21,16 @@ struct TileSetRecord {
     quint64 date = 0;
 };
 
-struct TotalsResult {
+struct TotalsResult
+{
     quint32 totalCount = 0;
     quint64 totalSize = 0;
     quint32 defaultCount = 0;
     quint64 defaultSize = 0;
 };
 
-struct SetTotalsResult {
+struct SetTotalsResult
+{
     /// The tiles of the set: those it has saved once nothing is left for it to download
     quint32 totalTileCount = 0;
     quint32 savedTileCount = 0;
@@ -37,7 +40,8 @@ struct SetTotalsResult {
     quint64 uniqueTileSize = 0;
 };
 
-struct DatabaseResult {
+struct DatabaseResult
+{
     bool success = false;
     QString errorString;
 };

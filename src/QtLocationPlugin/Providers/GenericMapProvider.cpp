@@ -1,6 +1,7 @@
 #include "GenericMapProvider.h"
-#include "SettingsManager.h"
+
 #include "AppSettings.h"
+#include "SettingsManager.h"
 
 QString CustomURLMapProvider::_getURL(int x, int y, int zoom) const
 {

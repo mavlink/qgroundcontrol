@@ -1,22 +1,18 @@
 #include "MapProvider.h"
+
 #include <QGCLoggingCategory.h>
-
-#include "QGCTileSet.h"
-
 #include <QtCore/QLocale>
 #include <QtCore/QUrl>
+
+#include "QGCTileSet.h"
 
 QGC_LOGGING_CATEGORY(MapProviderLog, "QtLocationPlugin.MapProvider")
 
 // QtLocation expects MapIds to start at 1 and be sequential.
 int MapProvider::_mapIdIndex = 1;
 
-MapProvider::MapProvider(
-    const QString &mapName,
-    const QString &referrer,
-    const QString &imageFormat,
-    quint32 averageSize,
-    MapStyle mapStyle)
+MapProvider::MapProvider(const QString& mapName, const QString& referrer, const QString& imageFormat,
+                         quint32 averageSize, MapStyle mapStyle)
     : _mapName(mapName)
     , _referrer(referrer)
     , _imageFormat(imageFormat)
@@ -94,7 +90,8 @@ int MapProvider::long2tileX(double lon, int z) const
 
 int MapProvider::lat2tileY(double lat, int z) const
 {
-    return static_cast<int>(floor((1.0 - log(tan(lat * M_PI / 180.0) + 1.0 / cos(lat * M_PI / 180.0)) / M_PI) / 2.0 * pow(2.0, z)));
+    return static_cast<int>(
+        floor((1.0 - log(tan(lat * M_PI / 180.0) + 1.0 / cos(lat * M_PI / 180.0)) / M_PI) / 2.0 * pow(2.0, z)));
 }
 
 double MapProvider::tileX2long(int x, int z) const
@@ -108,8 +105,7 @@ double MapProvider::tileY2lat(int y, int z) const
     return qRadiansToDegrees(std::atan(std::sinh(n)));
 }
 
-QGCTileSet MapProvider::getTileCount(int zoom, double topleftLon,
-                                     double topleftLat, double bottomRightLon,
+QGCTileSet MapProvider::getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon,
                                      double bottomRightLat) const
 {
     QGCTileSet set;
@@ -118,10 +114,8 @@ QGCTileSet MapProvider::getTileCount(int zoom, double topleftLon,
     set.tileX1 = long2tileX(bottomRightLon, zoom);
     set.tileY1 = lat2tileY(bottomRightLat, zoom);
 
-    set.tileCount = (static_cast<quint64>(set.tileX1) -
-                     static_cast<quint64>(set.tileX0) + 1) *
-                    (static_cast<quint64>(set.tileY1) -
-                     static_cast<quint64>(set.tileY0) + 1);
+    set.tileCount = (static_cast<quint64>(set.tileX1) - static_cast<quint64>(set.tileX0) + 1) *
+                    (static_cast<quint64>(set.tileY1) - static_cast<quint64>(set.tileY0) + 1);
 
     set.tileSize = getAverageSize() * set.tileCount;
     return set;

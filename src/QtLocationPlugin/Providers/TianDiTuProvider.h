@@ -5,15 +5,16 @@
 #include "MapProvider.h"
 
 static constexpr const quint32 AVERAGE_TIANDITU_STREET_MAP = 1297;
-static constexpr const quint32 AVERAGE_TIANDITU_SAT_MAP    = 19597;
+static constexpr const quint32 AVERAGE_TIANDITU_SAT_MAP = 19597;
 
 class TianDiTuProvider : public MapProvider
 {
 protected:
-    TianDiTuProvider(const QString &mapName, const QString &mapTypeCode, const QString &imageFormat, quint32 averageSize,
-                    MapProvider::MapStyle mapType)
+    TianDiTuProvider(const QString& mapName, const QString& mapTypeCode, const QString& imageFormat,
+                     quint32 averageSize, MapProvider::MapStyle mapType)
         : MapProvider(mapName, QStringLiteral("https://map.tianditu.gov.cn/"), imageFormat, averageSize, mapType)
-        , _mapType(mapTypeCode) {}
+        , _mapType(mapTypeCode)
+    {}
 
 private:
     QString _getURL(int x, int y, int zoom) const final;
@@ -26,22 +27,16 @@ class TianDiTuRoadProvider : public TianDiTuProvider
 {
 public:
     TianDiTuRoadProvider()
-        : TianDiTuProvider(
-            QObject::tr("TianDiTu Road"),
-            QStringLiteral("cia_w"),
-            QStringLiteral("png"),
-            AVERAGE_TIANDITU_STREET_MAP,
-            MapProvider::StreetMap) {}
+        : TianDiTuProvider(QObject::tr("TianDiTu Road"), QStringLiteral("cia_w"), QStringLiteral("png"),
+                           AVERAGE_TIANDITU_STREET_MAP, MapProvider::StreetMap)
+    {}
 };
 
 class TianDiTuSatelliteProvider : public TianDiTuProvider
 {
 public:
     TianDiTuSatelliteProvider()
-        : TianDiTuProvider(
-            QObject::tr("TianDiTu Satellite"),
-            QStringLiteral("img_w"),
-            QStringLiteral("jpg"),
-            AVERAGE_TIANDITU_SAT_MAP,
-            MapProvider::SatelliteMapDay) {}
+        : TianDiTuProvider(QObject::tr("TianDiTu Satellite"), QStringLiteral("img_w"), QStringLiteral("jpg"),
+                           AVERAGE_TIANDITU_SAT_MAP, MapProvider::SatelliteMapDay)
+    {}
 };

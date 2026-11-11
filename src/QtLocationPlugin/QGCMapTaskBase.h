@@ -8,7 +8,8 @@ class QGCMapTask : public QObject
     Q_OBJECT
 
 public:
-    enum class TaskType {
+    enum class TaskType
+    {
         taskInit,
         taskCacheTile,
         taskFetchTile,
@@ -25,21 +26,19 @@ public:
     };
     Q_ENUM(TaskType);
 
-    explicit QGCMapTask(TaskType type, QObject *parent = nullptr)
+    explicit QGCMapTask(TaskType type, QObject* parent = nullptr)
         : QObject(parent)
         , m_type(type)
     {}
+
     ~QGCMapTask() override = default;
 
     TaskType type() const { return m_type; }
 
-    void setError(const QString &errorString = QString())
-    {
-        emit error(m_type, errorString);
-    }
+    void setError(const QString& errorString = QString()) { emit error(m_type, errorString); }
 
 signals:
-    void error(QGCMapTask::TaskType type, const QString &errorString);
+    void error(QGCMapTask::TaskType type, const QString& errorString);
 
 private:
     const TaskType m_type = TaskType::taskInit;

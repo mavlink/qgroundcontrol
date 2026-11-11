@@ -1,7 +1,7 @@
 #include "QGCMapTasks.h"
 
-#include "QGCCachedTileSet.h"
 #include "QGCCacheTile.h"
+#include "QGCCachedTileSet.h"
 
 QGCCreateTileSetTask::~QGCCreateTileSetTask()
 {

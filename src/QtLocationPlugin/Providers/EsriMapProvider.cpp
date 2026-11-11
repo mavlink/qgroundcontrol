@@ -1,6 +1,7 @@
 #include "EsriMapProvider.h"
-#include "SettingsManager.h"
+
 #include "AppSettings.h"
+#include "SettingsManager.h"
 
 QByteArray EsriMapProvider::getToken() const
 {

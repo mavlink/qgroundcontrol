@@ -1,9 +1,7 @@
 #include "QGCMapUrlEngine.h"
 
-#include "QGCTileSet.h"
-
-#include <QtCore/QtMinMax>
 #include <QtCore/QUrl>
+#include <QtCore/QtMinMax>
 
 #include "BingMapProvider.h"
 #include "ElevationMapProvider.h"
@@ -11,8 +9,9 @@
 #include "GenericMapProvider.h"
 #include "GoogleMapProvider.h"
 #include "MapboxMapProvider.h"
-#include "TianDiTuProvider.h"
 #include "QGCLoggingCategory.h"
+#include "QGCTileSet.h"
+#include "TianDiTuProvider.h"
 
 QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "QtLocationPlugin.QGCMapUrlEngine")
 
@@ -153,11 +152,13 @@ int UrlFactory::lat2tileY(QStringView mapType, double lat, int z)
     return 0;
 }
 
-QGCTileSet UrlFactory::getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon, double bottomRightLat, QStringView mapType)
+QGCTileSet UrlFactory::getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon,
+                                    double bottomRightLat, QStringView mapType)
 {
     const SharedMapProvider provider = getMapProviderFromProviderType(mapType);
     if (provider) {
-        // TODO: zoom = qBound(QGeoCameraCapabilities.minimumZoomLevel(), zoom, QGeoCameraCapabilities.maximumZoomLevel());
+        // TODO: zoom = qBound(QGeoCameraCapabilities.minimumZoomLevel(), zoom,
+        // QGeoCameraCapabilities.maximumZoomLevel());
         zoom = qBound(1, zoom, QGC_MAX_MAP_ZOOM);
         return provider->getTileCount(zoom, topleftLon, topleftLat, bottomRightLon, bottomRightLat);
     }
@@ -171,7 +172,7 @@ QString UrlFactory::getProviderTypeFromQtMapId(int qtMapId)
         return QString();
     }
 
-    for (const SharedMapProvider &provider : _providers) {
+    for (const SharedMapProvider& provider : _providers) {
         if (provider->getMapId() == qtMapId) {
             return provider->getMapName();
         }
@@ -187,7 +188,7 @@ SharedMapProvider UrlFactory::getMapProviderFromQtMapId(int qtMapId)
         return nullptr;
     }
 
-    for (const SharedMapProvider &provider : _providers) {
+    for (const SharedMapProvider& provider : _providers) {
         if (provider->getMapId() == qtMapId) {
             return provider;
         }
@@ -203,7 +204,7 @@ SharedMapProvider UrlFactory::getMapProviderFromProviderType(QStringView type)
         return nullptr;
     }
 
-    for (const SharedMapProvider &provider : _providers) {
+    for (const SharedMapProvider& provider : _providers) {
         if (provider->getMapName() == type) {
             return provider;
         }
@@ -219,7 +220,7 @@ int UrlFactory::getQtMapIdFromProviderType(QStringView type)
         return -1;
     }
 
-    for (const SharedMapProvider &provider : _providers) {
+    for (const SharedMapProvider& provider : _providers) {
         if (provider->getMapName() == type) {
             return provider->getMapId();
         }
@@ -232,7 +233,7 @@ int UrlFactory::getQtMapIdFromProviderType(QStringView type)
 QStringList UrlFactory::getElevationProviderTypes()
 {
     QStringList types;
-    for (const SharedMapProvider &provider : _providers) {
+    for (const SharedMapProvider& provider : _providers) {
         if (provider->isElevationProvider()) {
             types.append(provider->getMapName());
         }
@@ -244,7 +245,7 @@ QStringList UrlFactory::getElevationProviderTypes()
 QStringList UrlFactory::getProviderTypes()
 {
     QStringList types;
-    for (const SharedMapProvider &provider : _providers) {
+    for (const SharedMapProvider& provider : _providers) {
         types.append(provider->getMapName());
     }
 
@@ -253,7 +254,7 @@ QStringList UrlFactory::getProviderTypes()
 
 QString UrlFactory::providerTypeFromHash(int hash)
 {
-    for (const SharedMapProvider &provider : _providers) {
+    for (const SharedMapProvider& provider : _providers) {
         const QString mapName = provider->getMapName();
         if (hashFromProviderType(mapName) == hash) {
             return mapName;
@@ -266,7 +267,7 @@ QString UrlFactory::providerTypeFromHash(int hash)
 
 int UrlFactory::hashFromProviderType(QStringView type)
 {
-    for (const SharedMapProvider &provider : _providers) {
+    for (const SharedMapProvider& provider : _providers) {
         if (provider->getMapName() == type) {
             return provider->getMapId();
         }
@@ -278,7 +279,7 @@ int UrlFactory::hashFromProviderType(QStringView type)
 
 QString UrlFactory::tileHashToType(QStringView tileHash)
 {
-    const int providerHash = tileHash.mid(0,10).toInt();
+    const int providerHash = tileHash.mid(0, 10).toInt();
     return providerTypeFromHash(providerHash);
 }
 

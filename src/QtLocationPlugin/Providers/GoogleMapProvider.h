@@ -16,23 +16,19 @@
 // size: 256x256
 // maxZoom: 20
 
-static constexpr const quint32 AVERAGE_GOOGLE_STREET_MAP  = 4913;
-static constexpr const quint32 AVERAGE_GOOGLE_SAT_MAP     = 56887;
+static constexpr const quint32 AVERAGE_GOOGLE_STREET_MAP = 4913;
+static constexpr const quint32 AVERAGE_GOOGLE_SAT_MAP = 56887;
 static constexpr const quint32 AVERAGE_GOOGLE_TERRAIN_MAP = 19391;
 
 class GoogleMapProvider : public MapProvider
 {
 protected:
-    GoogleMapProvider(const QString &mapName, const QString &versionRequest, const QString &version, const QString &imageFormat, quint32 averageSize,
-                      MapProvider::MapStyle mapType)
-        : MapProvider(
-            mapName,
-            QStringLiteral("https://www.google.com/maps/preview"),
-            imageFormat,
-            averageSize,
-            mapType)
+    GoogleMapProvider(const QString& mapName, const QString& versionRequest, const QString& version,
+                      const QString& imageFormat, quint32 averageSize, MapProvider::MapStyle mapType)
+        : MapProvider(mapName, QStringLiteral("https://www.google.com/maps/preview"), imageFormat, averageSize, mapType)
         , _versionRequest(versionRequest)
-        , _version(version) {}
+        , _version(version)
+    {}
 
 private:
     void _getSecGoogleWords(int x, int y, QString& sec1, QString& sec2) const;
@@ -49,63 +45,43 @@ class GoogleStreetMapProvider : public GoogleMapProvider
 {
 public:
     GoogleStreetMapProvider()
-        : GoogleMapProvider(
-            QStringLiteral("Google Street Map"),
-            QStringLiteral("lyrs"),
-            QStringLiteral("m"),
-            QStringLiteral("png"),
-            AVERAGE_GOOGLE_STREET_MAP,
-            MapProvider::StreetMap) {}
+        : GoogleMapProvider(QStringLiteral("Google Street Map"), QStringLiteral("lyrs"), QStringLiteral("m"),
+                            QStringLiteral("png"), AVERAGE_GOOGLE_STREET_MAP, MapProvider::StreetMap)
+    {}
 };
 
 class GoogleSatelliteMapProvider : public GoogleMapProvider
 {
 public:
     GoogleSatelliteMapProvider()
-        : GoogleMapProvider(
-            QStringLiteral("Google Satellite"),
-            QStringLiteral("lyrs"),
-            QStringLiteral("s"),
-            QStringLiteral("jpg"),
-            AVERAGE_GOOGLE_SAT_MAP,
-            MapProvider::SatelliteMapDay) {}
+        : GoogleMapProvider(QStringLiteral("Google Satellite"), QStringLiteral("lyrs"), QStringLiteral("s"),
+                            QStringLiteral("jpg"), AVERAGE_GOOGLE_SAT_MAP, MapProvider::SatelliteMapDay)
+    {}
 };
 
 class GoogleLabelsMapProvider : public GoogleMapProvider
 {
 public:
     GoogleLabelsMapProvider()
-        : GoogleMapProvider(
-            QStringLiteral("Google Labels"),
-            QStringLiteral("lyrs"),
-            QStringLiteral("h"),
-            QStringLiteral("png"),
-            QGC_AVERAGE_TILE_SIZE,
-            MapProvider::CustomMap) {}
+        : GoogleMapProvider(QStringLiteral("Google Labels"), QStringLiteral("lyrs"), QStringLiteral("h"),
+                            QStringLiteral("png"), QGC_AVERAGE_TILE_SIZE, MapProvider::CustomMap)
+    {}
 };
 
 class GoogleTerrainMapProvider : public GoogleMapProvider
 {
 public:
     GoogleTerrainMapProvider()
-        : GoogleMapProvider(
-            QStringLiteral("Google Terrain"),
-            QStringLiteral("v"),
-            QStringLiteral("t,r"),
-            QStringLiteral("png"),
-            AVERAGE_GOOGLE_TERRAIN_MAP,
-            MapProvider::TerrainMap) {}
+        : GoogleMapProvider(QStringLiteral("Google Terrain"), QStringLiteral("v"), QStringLiteral("t,r"),
+                            QStringLiteral("png"), AVERAGE_GOOGLE_TERRAIN_MAP, MapProvider::TerrainMap)
+    {}
 };
 
 class GoogleHybridMapProvider : public GoogleMapProvider
 {
 public:
     GoogleHybridMapProvider()
-        : GoogleMapProvider(
-            QStringLiteral("Google Hybrid"),
-            QStringLiteral("lyrs"),
-            QStringLiteral("y"),
-            QStringLiteral("png"),
-            AVERAGE_GOOGLE_SAT_MAP,
-            MapProvider::HybridMap) {}
+        : GoogleMapProvider(QStringLiteral("Google Hybrid"), QStringLiteral("lyrs"), QStringLiteral("y"),
+                            QStringLiteral("png"), AVERAGE_GOOGLE_SAT_MAP, MapProvider::HybridMap)
+    {}
 };

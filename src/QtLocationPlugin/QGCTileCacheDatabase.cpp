@@ -1,5 +1,7 @@
 #include "QGCTileCacheDatabase.h"
 
+#include <atomic>
+
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDateTime>
 #include <QtCore/QFile>
@@ -9,8 +11,6 @@
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlError>
 #include <QtSql/QSqlQuery>
-
-#include <atomic>
 
 #include "QGCCacheTile.h"
 #include "QGCLoggingCategory.h"
@@ -23,11 +23,10 @@ QGC_LOGGING_CATEGORY(QGCTileCacheDatabaseLog, "QtLocationPlugin.QGCTileCacheData
 
 static std::atomic<quint64> s_connectionCounter{0};
 
-QGCTileCacheDatabase::QGCTileCacheDatabase(const QString &databasePath)
+QGCTileCacheDatabase::QGCTileCacheDatabase(const QString& databasePath)
     : _databasePath(databasePath)
     , _connectionName(QStringLiteral("QGCTileCache_%1").arg(s_connectionCounter.fetch_add(1)))
-{
-}
+{}
 
 QGCTileCacheDatabase::~QGCTileCacheDatabase()
 {
@@ -74,7 +73,8 @@ bool QGCTileCacheDatabase::_checkSchemaVersion()
         // Check for existing data — if Tiles table exists with rows, it's legacy.
         // Legacy DBs stored map type as text; migration is not supported so the cache is rebuilt.
         if (query.exec("SELECT COUNT(*) FROM Tiles") && query.next() && query.value(0).toInt() > 0) {
-            qCWarning(QGCTileCacheDatabaseLog) << "Legacy database detected (no schema version). Discarding cached tiles and rebuilding.";
+            qCWarning(QGCTileCacheDatabaseLog)
+                << "Legacy database detected (no schema version). Discarding cached tiles and rebuilding.";
             _defaultSet = kInvalidTileSet;
             query.exec("DROP TABLE IF EXISTS TilesDownload");
             query.exec("DROP TABLE IF EXISTS SetTiles");
@@ -85,7 +85,8 @@ bool QGCTileCacheDatabase::_checkSchemaVersion()
     }
 
     // Future: handle incremental migrations here (version < kSchemaVersion).
-    qCWarning(QGCTileCacheDatabaseLog) << "Unknown schema version" << version << "(expected" << kSchemaVersion << "). Resetting cache.";
+    qCWarning(QGCTileCacheDatabaseLog) << "Unknown schema version" << version << "(expected" << kSchemaVersion
+                                       << "). Resetting cache.";
     _defaultSet = kInvalidTileSet;
     query.exec("DROP TABLE IF EXISTS TilesDownload");
     query.exec("DROP TABLE IF EXISTS SetTiles");
@@ -161,7 +162,8 @@ void QGCTileCacheDatabase::disconnectDB()
     QSqlDatabase::removeDatabase(_connectionName);
 }
 
-bool QGCTileCacheDatabase::saveTile(const QString &hash, const QString &format, const QByteArray &img, const QString &type, quint64 tileSet)
+bool QGCTileCacheDatabase::saveTile(const QString& hash, const QString& format, const QByteArray& img,
+                                    const QString& type, quint64 tileSet)
 {
     if (!_ensureConnected()) {
         return false;
@@ -212,7 +214,8 @@ bool QGCTileCacheDatabase::saveTile(const QString &hash, const QString &format, 
     query.addBindValue(tileID);
     query.addBindValue(setID);
     if (!query.exec()) {
-        qCWarning(QGCTileCacheDatabaseLog) << "Map Cache SQL error (add tile into SetTiles):" << query.lastError().text();
+        qCWarning(QGCTileCacheDatabaseLog)
+            << "Map Cache SQL error (add tile into SetTiles):" << query.lastError().text();
         return false;
     }
 
@@ -225,7 +228,7 @@ bool QGCTileCacheDatabase::saveTile(const QString &hash, const QString &format, 
     return true;
 }
 
-std::unique_ptr<QGCCacheTile> QGCTileCacheDatabase::getTile(const QString &hash)
+std::unique_ptr<QGCCacheTile> QGCTileCacheDatabase::getTile(const QString& hash)
 {
     if (!_ensureConnected()) {
         return nullptr;
@@ -248,7 +251,7 @@ std::unique_ptr<QGCCacheTile> QGCTileCacheDatabase::getTile(const QString &hash)
     return nullptr;
 }
 
-std::optional<quint64> QGCTileCacheDatabase::findTile(const QString &hash)
+std::optional<quint64> QGCTileCacheDatabase::findTile(const QString& hash)
 {
     if (!_ensureConnected()) {
         return std::nullopt;
@@ -276,8 +279,8 @@ QList<TileSetRecord> QGCTileCacheDatabase::getTileSets()
     QSqlQuery query(_database());
     query.setForwardOnly(true);
     if (!query.exec("SELECT setID, name, typeStr, topleftLat, topleftLon, bottomRightLat, bottomRightLon, "
-                     "minZoom, maxZoom, type, numTiles, defaultSet, date "
-                     "FROM TileSets ORDER BY defaultSet DESC, name ASC")) {
+                    "minZoom, maxZoom, type, numTiles, defaultSet, date "
+                    "FROM TileSets ORDER BY defaultSet DESC, name ASC")) {
         return records;
     }
 
@@ -302,10 +305,10 @@ QList<TileSetRecord> QGCTileCacheDatabase::getTileSets()
     return records;
 }
 
-std::optional<quint64> QGCTileCacheDatabase::createTileSet(const QString &name, const QString &mapTypeStr,
-                                                            double topleftLat, double topleftLon,
-                                                            double bottomRightLat, double bottomRightLon,
-                                                            int minZoom, int maxZoom, const QString &type, quint32 numTiles)
+std::optional<quint64> QGCTileCacheDatabase::createTileSet(const QString& name, const QString& mapTypeStr,
+                                                           double topleftLat, double topleftLon, double bottomRightLat,
+                                                           double bottomRightLon, int minZoom, int maxZoom,
+                                                           const QString& type, quint32 numTiles)
 {
     if (!_ensureConnected()) {
         return std::nullopt;
@@ -319,9 +322,11 @@ std::optional<quint64> QGCTileCacheDatabase::createTileSet(const QString &name, 
 
     QSqlQuery query(_database());
     if (!query.prepare("INSERT INTO TileSets("
-        "name, typeStr, topleftLat, topleftLon, bottomRightLat, bottomRightLon, minZoom, maxZoom, type, numTiles, date"
-        ") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
-        qCWarning(QGCTileCacheDatabaseLog) << "Map Cache SQL error (prepare createTileSet):" << query.lastError().text();
+                       "name, typeStr, topleftLat, topleftLon, bottomRightLat, bottomRightLon, minZoom, maxZoom, type, "
+                       "numTiles, date"
+                       ") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+        qCWarning(QGCTileCacheDatabaseLog)
+            << "Map Cache SQL error (prepare createTileSet):" << query.lastError().text();
         return std::nullopt;
     }
     query.addBindValue(name);
@@ -336,7 +341,8 @@ std::optional<quint64> QGCTileCacheDatabase::createTileSet(const QString &name, 
     query.addBindValue(numTiles);
     query.addBindValue(QDateTime::currentSecsSinceEpoch());
     if (!query.exec()) {
-        qCWarning(QGCTileCacheDatabaseLog) << "Map Cache SQL error (add tileSet into TileSets):" << query.lastError().text();
+        qCWarning(QGCTileCacheDatabaseLog)
+            << "Map Cache SQL error (add tileSet into TileSets):" << query.lastError().text();
         return std::nullopt;
     }
 
@@ -346,14 +352,19 @@ std::optional<quint64> QGCTileCacheDatabase::createTileSet(const QString &name, 
     constexpr int kHashBatchSize = 500;
     const int mapTypeId = UrlFactory::getQtMapIdFromProviderType(type);
 
-    struct TileCoord { int x, y; QString hash; };
+    struct TileCoord
+    {
+        int x, y;
+        QString hash;
+    };
 
-    auto processBatch = [&](const QList<TileCoord> &tiles, int z) -> bool {
+    auto processBatch = [&](const QList<TileCoord>& tiles, int z) -> bool {
         QHash<QString, quint64> existingTiles;
         QSqlQuery lookup(_database());
         lookup.setForwardOnly(true);
-        if (lookup.prepare(QStringLiteral("SELECT hash, tileID FROM Tiles WHERE hash IN (%1)").arg(QGCSqlHelper::placeholders(tiles.size())))) {
-            for (const auto &tc : tiles) {
+        if (lookup.prepare(QStringLiteral("SELECT hash, tileID FROM Tiles WHERE hash IN (%1)")
+                               .arg(QGCSqlHelper::placeholders(tiles.size())))) {
+            for (const auto& tc : tiles) {
                 lookup.addBindValue(tc.hash);
             }
             if (lookup.exec()) {
@@ -363,7 +374,7 @@ std::optional<quint64> QGCTileCacheDatabase::createTileSet(const QString &name, 
             }
         }
 
-        for (const auto &tc : tiles) {
+        for (const auto& tc : tiles) {
             auto it = existingTiles.find(tc.hash);
             if (it != existingTiles.end()) {
                 if (!query.prepare("INSERT OR IGNORE INTO SetTiles(tileID, setID) VALUES(?, ?)")) {
@@ -372,11 +383,13 @@ std::optional<quint64> QGCTileCacheDatabase::createTileSet(const QString &name, 
                 query.addBindValue(it.value());
                 query.addBindValue(setID);
                 if (!query.exec()) {
-                    qCWarning(QGCTileCacheDatabaseLog) << "Map Cache SQL error (add tile into SetTiles):" << query.lastError().text();
+                    qCWarning(QGCTileCacheDatabaseLog)
+                        << "Map Cache SQL error (add tile into SetTiles):" << query.lastError().text();
                     return false;
                 }
             } else {
-                if (!query.prepare("INSERT OR IGNORE INTO TilesDownload(setID, hash, type, x, y, z, state) VALUES(?, ?, ?, ?, ?, ?, ?)")) {
+                if (!query.prepare("INSERT OR IGNORE INTO TilesDownload(setID, hash, type, x, y, z, state) VALUES(?, "
+                                   "?, ?, ?, ?, ?, ?)")) {
                     return false;
                 }
                 query.addBindValue(setID);
@@ -387,7 +400,8 @@ std::optional<quint64> QGCTileCacheDatabase::createTileSet(const QString &name, 
                 query.addBindValue(z);
                 query.addBindValue(static_cast<int>(QGCTile::StatePending));
                 if (!query.exec()) {
-                    qCWarning(QGCTileCacheDatabaseLog) << "Map Cache SQL error (add tile into TilesDownload):" << query.lastError().text();
+                    qCWarning(QGCTileCacheDatabaseLog)
+                        << "Map Cache SQL error (add tile into TilesDownload):" << query.lastError().text();
                     return false;
                 }
             }
@@ -396,7 +410,8 @@ std::optional<quint64> QGCTileCacheDatabase::createTileSet(const QString &name, 
     };
 
     for (int z = minZoom; z <= maxZoom; z++) {
-        const QGCTileSet set = UrlFactory::getTileCount(z, topleftLon, topleftLat, bottomRightLon, bottomRightLat, type);
+        const QGCTileSet set =
+            UrlFactory::getTileCount(z, topleftLon, topleftLat, bottomRightLon, bottomRightLat, type);
 
         QList<TileCoord> batch;
         batch.reserve(kHashBatchSize);
@@ -406,14 +421,16 @@ std::optional<quint64> QGCTileCacheDatabase::createTileSet(const QString &name, 
                 batch.append({x, y, UrlFactory::getTileHash(type, x, y, z)});
 
                 if (batch.size() >= kHashBatchSize) {
-                    if (!processBatch(batch, z)) return std::nullopt;
+                    if (!processBatch(batch, z))
+                        return std::nullopt;
                     batch.clear();
                 }
             }
         }
 
         if (!batch.isEmpty()) {
-            if (!processBatch(batch, z)) return std::nullopt;
+            if (!processBatch(batch, z))
+                return std::nullopt;
         }
     }
 
@@ -473,7 +490,8 @@ bool QGCTileCacheDatabase::deleteTileSet(quint64 id)
 
     // Delete unique tiles (no longer referenced by any set)
     if (!uniqueTileIDs.isEmpty()) {
-        if (query.prepare(QStringLiteral("DELETE FROM Tiles WHERE tileID IN (%1)").arg(QGCSqlHelper::placeholders(uniqueTileIDs.size())))) {
+        if (query.prepare(QStringLiteral("DELETE FROM Tiles WHERE tileID IN (%1)")
+                              .arg(QGCSqlHelper::placeholders(uniqueTileIDs.size())))) {
             for (const quint64 tileID : uniqueTileIDs) {
                 query.addBindValue(tileID);
             }
@@ -501,7 +519,7 @@ bool QGCTileCacheDatabase::deleteTileSet(quint64 id)
     return txn.commit();
 }
 
-bool QGCTileCacheDatabase::renameTileSet(quint64 setID, const QString &newName)
+bool QGCTileCacheDatabase::renameTileSet(quint64 setID, const QString& newName)
 {
     if (!_ensureConnected()) {
         return false;
@@ -516,7 +534,7 @@ bool QGCTileCacheDatabase::renameTileSet(quint64 setID, const QString &newName)
     return query.exec();
 }
 
-std::optional<quint64> QGCTileCacheDatabase::findTileSetID(const QString &name)
+std::optional<quint64> QGCTileCacheDatabase::findTileSetID(const QString& name)
 {
     if (!_ensureConnected()) {
         return std::nullopt;
@@ -548,10 +566,8 @@ bool QGCTileCacheDatabase::resetDatabase()
         return false;
     }
     QSqlQuery query(_database());
-    if (!query.exec("DROP TABLE IF EXISTS TilesDownload") ||
-        !query.exec("DROP TABLE IF EXISTS SetTiles") ||
-        !query.exec("DROP TABLE IF EXISTS Tiles") ||
-        !query.exec("DROP TABLE IF EXISTS TileSets")) {
+    if (!query.exec("DROP TABLE IF EXISTS TilesDownload") || !query.exec("DROP TABLE IF EXISTS SetTiles") ||
+        !query.exec("DROP TABLE IF EXISTS Tiles") || !query.exec("DROP TABLE IF EXISTS TileSets")) {
         qCWarning(QGCTileCacheDatabaseLog) << "Failed to drop tables:" << query.lastError().text();
         return false;
     }
@@ -599,14 +615,16 @@ QList<QGCTile> QGCTileCacheDatabase::getTileDownloadList(quint64 setID, int coun
     }
 
     if (!tiles.isEmpty()) {
-        if (query.prepare(QStringLiteral("UPDATE TilesDownload SET state = ? WHERE setID = ? AND hash IN (%1)").arg(QGCSqlHelper::placeholders(tiles.size())))) {
+        if (query.prepare(QStringLiteral("UPDATE TilesDownload SET state = ? WHERE setID = ? AND hash IN (%1)")
+                              .arg(QGCSqlHelper::placeholders(tiles.size())))) {
             query.addBindValue(static_cast<int>(QGCTile::StateDownloading));
             query.addBindValue(setID);
             for (qsizetype i = 0; i < tiles.size(); i++) {
                 query.addBindValue(tiles[i].hash);
             }
             if (!query.exec()) {
-                qCWarning(QGCTileCacheDatabaseLog) << "Map Cache SQL error (batch set TilesDownload state):" << query.lastError().text();
+                qCWarning(QGCTileCacheDatabaseLog)
+                    << "Map Cache SQL error (batch set TilesDownload state):" << query.lastError().text();
                 tiles.clear();
                 return tiles;
             }
@@ -621,7 +639,7 @@ QList<QGCTile> QGCTileCacheDatabase::getTileDownloadList(quint64 setID, int coun
     return tiles;
 }
 
-bool QGCTileCacheDatabase::updateTileDownloadState(quint64 setID, int state, const QString &hash)
+bool QGCTileCacheDatabase::updateTileDownloadState(quint64 setID, int state, const QString& hash)
 {
     if (!_ensureConnected()) {
         return false;
@@ -682,7 +700,9 @@ bool QGCTileCacheDatabase::pruneCache(quint64 amount)
     while (remaining > 0) {
         QSqlQuery query(_database());
         query.setForwardOnly(true);
-        if (!query.prepare(QStringLiteral("SELECT tileID, size, hash FROM Tiles WHERE tileID IN (%1) ORDER BY date ASC LIMIT ?").arg(kUniqueTilesSubquery))) {
+        if (!query.prepare(
+                QStringLiteral("SELECT tileID, size, hash FROM Tiles WHERE tileID IN (%1) ORDER BY date ASC LIMIT ?")
+                    .arg(kUniqueTilesSubquery))) {
             qCWarning(QGCTileCacheDatabaseLog) << "Failed to prepare prune query:" << query.lastError().text();
             return false;
         }
@@ -799,7 +819,8 @@ TotalsResult QGCTileCacheDatabase::computeTotals()
         result.totalSize = query.value(1).toULongLong();
     }
 
-    if (!query.prepare(QStringLiteral("SELECT COUNT(size), SUM(size) FROM Tiles WHERE tileID IN (%1)").arg(kUniqueTilesSubquery))) {
+    if (!query.prepare(QStringLiteral("SELECT COUNT(size), SUM(size) FROM Tiles WHERE tileID IN (%1)")
+                           .arg(kUniqueTilesSubquery))) {
         return result;
     }
     query.addBindValue(_getDefaultTileSet());
@@ -811,7 +832,8 @@ TotalsResult QGCTileCacheDatabase::computeTotals()
     return result;
 }
 
-SetTotalsResult QGCTileCacheDatabase::computeSetTotals(quint64 setID, bool isDefault, quint32 totalTileCount, const QString &type)
+SetTotalsResult QGCTileCacheDatabase::computeSetTotals(quint64 setID, bool isDefault, quint32 totalTileCount,
+                                                       const QString& type)
 {
     SetTotalsResult result;
     result.totalTileCount = totalTileCount;
@@ -831,7 +853,8 @@ SetTotalsResult QGCTileCacheDatabase::computeSetTotals(quint64 setID, bool isDef
     }
 
     QSqlQuery subquery(_database());
-    if (!subquery.prepare("SELECT COUNT(size), SUM(size) FROM Tiles A INNER JOIN SetTiles B ON A.tileID = B.tileID WHERE B.setID = ?")) {
+    if (!subquery.prepare("SELECT COUNT(size), SUM(size) FROM Tiles A INNER JOIN SetTiles B ON A.tileID = B.tileID "
+                          "WHERE B.setID = ?")) {
         return result;
     }
     subquery.addBindValue(setID);
@@ -868,7 +891,8 @@ SetTotalsResult QGCTileCacheDatabase::computeSetTotals(quint64 setID, bool isDef
 
     quint32 dbUniqueCount = 0;
     quint64 dbUniqueSize = 0;
-    if (subquery.prepare(QStringLiteral("SELECT COUNT(size), SUM(size) FROM Tiles WHERE tileID IN (%1)").arg(kUniqueTilesSubquery))) {
+    if (subquery.prepare(QStringLiteral("SELECT COUNT(size), SUM(size) FROM Tiles WHERE tileID IN (%1)")
+                             .arg(kUniqueTilesSubquery))) {
         subquery.addBindValue(setID);
         if (subquery.exec() && subquery.next()) {
             dbUniqueCount = subquery.value(0).toUInt();
@@ -882,7 +906,8 @@ SetTotalsResult QGCTileCacheDatabase::computeSetTotals(quint64 setID, bool isDef
         result.uniqueTileCount = dbUniqueCount;
         result.uniqueTileSize = dbUniqueSize;
     } else {
-        const quint32 estimatedCount = (totalTileCount > result.savedTileCount) ? (totalTileCount - result.savedTileCount) : 0;
+        const quint32 estimatedCount =
+            (totalTileCount > result.savedTileCount) ? (totalTileCount - result.savedTileCount) : 0;
         result.uniqueTileCount = estimatedCount;
         result.uniqueTileSize = estimatedCount * avg;
     }
@@ -890,7 +915,7 @@ SetTotalsResult QGCTileCacheDatabase::computeSetTotals(quint64 setID, bool isDef
     return result;
 }
 
-DatabaseResult QGCTileCacheDatabase::importSetsReplace(const QString &path, ProgressCallback progressCb)
+DatabaseResult QGCTileCacheDatabase::importSetsReplace(const QString& path, ProgressCallback progressCb)
 {
     DatabaseResult result;
     if (QFileInfo(path).canonicalFilePath() == QFileInfo(_databasePath).canonicalFilePath()) {
@@ -915,23 +940,26 @@ DatabaseResult QGCTileCacheDatabase::importSetsReplace(const QString &path, Prog
         return result;
     }
     (void) QFile::remove(backupPath);
-    if (progressCb) progressCb(25);
+    if (progressCb)
+        progressCb(25);
     init();
     if (!_valid) {
         result.errorString = QStringLiteral("Failed to initialize tile cache database after import");
     } else {
-        if (progressCb) progressCb(50);
+        if (progressCb)
+            progressCb(50);
         connectDB();
         if (!_valid) {
             result.errorString = QStringLiteral("Failed to connect to tile cache database after import");
         }
     }
-    if (progressCb) progressCb(100);
+    if (progressCb)
+        progressCb(100);
     result.success = _valid;
     return result;
 }
 
-DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString &path, ProgressCallback progressCb)
+DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString& path, ProgressCallback progressCb)
 {
     DatabaseResult result;
     if (QFileInfo(path).canonicalFilePath() == QFileInfo(_databasePath).canonicalFilePath()) {
@@ -943,8 +971,7 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString &path, Progre
         return result;
     }
 
-    QGCSqlHelper::ScopedConnection importDB(path, /*readOnly=*/true,
-                                            QStringLiteral("QGeoTileImportSession"));
+    QGCSqlHelper::ScopedConnection importDB(path, /*readOnly=*/true, QStringLiteral("QGeoTileImportSession"));
     if (!importDB.isValid()) {
         result.errorString = "Error opening import database";
         return result;
@@ -988,8 +1015,9 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString &path, Progre
                     name = _deduplicateSetName(name);
                     QSqlQuery cQuery(_database());
                     if (!cQuery.prepare("INSERT INTO TileSets("
-                        "name, typeStr, topleftLat, topleftLon, bottomRightLat, bottomRightLon, minZoom, maxZoom, type, numTiles, defaultSet, date"
-                        ") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                                        "name, typeStr, topleftLat, topleftLon, bottomRightLat, bottomRightLon, "
+                                        "minZoom, maxZoom, type, numTiles, defaultSet, date"
+                                        ") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                         result.errorString = "Error preparing tile set insert";
                         break;
                     }
@@ -1013,14 +1041,13 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString &path, Progre
                 }
 
                 quint64 tilesIterated = 0;
-                const quint64 tilesSaved = _copyTilesForSet(importDB.database(), setID, insertSetID,
-                                                             currentCount, tileCount,
-                                                             lastProgress, progressCb,
-                                                             &tilesIterated, false);
+                const quint64 tilesSaved = _copyTilesForSet(importDB.database(), setID, insertSetID, currentCount,
+                                                            tileCount, lastProgress, progressCb, &tilesIterated, false);
                 if (tilesSaved > 0) {
                     tilesImported = true;
                     QSqlQuery cQuery(_database());
-                    if (cQuery.prepare("SELECT COUNT(size) FROM Tiles A INNER JOIN SetTiles B ON A.tileID = B.tileID WHERE B.setID = ?")) {
+                    if (cQuery.prepare("SELECT COUNT(size) FROM Tiles A INNER JOIN SetTiles B ON A.tileID = B.tileID "
+                                       "WHERE B.setID = ?")) {
                         cQuery.addBindValue(insertSetID);
                         if (cQuery.exec() && cQuery.next()) {
                             const quint64 count = cQuery.value(0).toULongLong();
@@ -1060,7 +1087,8 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString &path, Progre
     return result;
 }
 
-DatabaseResult QGCTileCacheDatabase::exportSets(const QList<TileSetRecord> &sets, const QString &path, ProgressCallback progressCb)
+DatabaseResult QGCTileCacheDatabase::exportSets(const QList<TileSetRecord>& sets, const QString& path,
+                                                ProgressCallback progressCb)
 {
     DatabaseResult result;
     if (!_ensureConnected()) {
@@ -1073,10 +1101,10 @@ DatabaseResult QGCTileCacheDatabase::exportSets(const QList<TileSetRecord> &sets
     }
 
     (void) QFile::remove(path);
-    QGCSqlHelper::ScopedConnection exportDB(path, /*readOnly=*/false,
-                                            QStringLiteral("QGeoTileExportSession"));
+    QGCSqlHelper::ScopedConnection exportDB(path, /*readOnly=*/false, QStringLiteral("QGeoTileExportSession"));
     if (!exportDB.isValid()) {
-        qCCritical(QGCTileCacheDatabaseLog) << "Map Cache SQL error (create export database):" << exportDB.database().lastError();
+        qCCritical(QGCTileCacheDatabaseLog)
+            << "Map Cache SQL error (create export database):" << exportDB.database().lastError();
         result.errorString = "Error opening export database";
         return result;
     }
@@ -1089,10 +1117,11 @@ DatabaseResult QGCTileCacheDatabase::exportSets(const QList<TileSetRecord> &sets
     quint64 tileCount = 0;
     quint64 currentCount = 0;
     int lastProgress = -1;
-    for (const auto &set : sets) {
+    for (const auto& set : sets) {
         QSqlQuery countQuery(_database());
         quint64 actualCount = 0;
-        if (countQuery.prepare("SELECT COUNT(*) FROM Tiles T INNER JOIN SetTiles S ON T.tileID = S.tileID WHERE S.setID = ?")) {
+        if (countQuery.prepare(
+                "SELECT COUNT(*) FROM Tiles T INNER JOIN SetTiles S ON T.tileID = S.tileID WHERE S.setID = ?")) {
             countQuery.addBindValue(set.setID);
             if (countQuery.exec() && countQuery.next()) {
                 actualCount = countQuery.value(0).toULongLong();
@@ -1105,7 +1134,7 @@ DatabaseResult QGCTileCacheDatabase::exportSets(const QList<TileSetRecord> &sets
         tileCount = 1;
     }
 
-    for (const auto &set : sets) {
+    for (const auto& set : sets) {
         QSqlQuery query(_database());
         query.setForwardOnly(true);
         if (!query.prepare("SELECT T.hash, T.format, T.tile, T.type, T.date FROM Tiles T "
@@ -1128,8 +1157,9 @@ DatabaseResult QGCTileCacheDatabase::exportSets(const QList<TileSetRecord> &sets
 
         QSqlQuery exportQuery(exportDB.database());
         if (!exportQuery.prepare("INSERT INTO TileSets("
-            "name, typeStr, topleftLat, topleftLon, bottomRightLat, bottomRightLon, minZoom, maxZoom, type, numTiles, defaultSet, date"
-            ") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                                 "name, typeStr, topleftLat, topleftLon, bottomRightLat, bottomRightLon, minZoom, "
+                                 "maxZoom, type, numTiles, defaultSet, date"
+                                 ") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
             result.errorString = "Error preparing tile set insert for export";
             break;
         }
@@ -1161,8 +1191,10 @@ DatabaseResult QGCTileCacheDatabase::exportSets(const QList<TileSetRecord> &sets
             const quint64 tileDate = query.value(4).toULongLong();
 
             quint64 exportTileID = 0;
-            if (!exportQuery.prepare("INSERT INTO Tiles(hash, format, tile, size, type, date) VALUES(?, ?, ?, ?, ?, ?)")) {
-                qCWarning(QGCTileCacheDatabaseLog) << "Failed to prepare tile INSERT for export:" << exportQuery.lastError().text();
+            if (!exportQuery.prepare(
+                    "INSERT INTO Tiles(hash, format, tile, size, type, date) VALUES(?, ?, ?, ?, ?, ?)")) {
+                qCWarning(QGCTileCacheDatabaseLog)
+                    << "Failed to prepare tile INSERT for export:" << exportQuery.lastError().text();
                 skippedTiles++;
                 continue;
             }
@@ -1189,7 +1221,8 @@ DatabaseResult QGCTileCacheDatabase::exportSets(const QList<TileSetRecord> &sets
                     exportQuery.addBindValue(exportTileID);
                     exportQuery.addBindValue(exportSetID);
                     if (!exportQuery.exec()) {
-                        qCWarning(QGCTileCacheDatabaseLog) << "Failed to link tile to set in export:" << exportQuery.lastError().text();
+                        qCWarning(QGCTileCacheDatabaseLog)
+                            << "Failed to link tile to set in export:" << exportQuery.lastError().text();
                     }
                 }
             } else {
@@ -1197,7 +1230,9 @@ DatabaseResult QGCTileCacheDatabase::exportSets(const QList<TileSetRecord> &sets
             }
             currentCount++;
             if (progressCb) {
-                const int progress = qMin(100, static_cast<int>((static_cast<double>(currentCount) / static_cast<double>(tileCount)) * 100.0));
+                const int progress = qMin(
+                    100,
+                    static_cast<int>((static_cast<double>(currentCount) / static_cast<double>(tileCount)) * 100.0));
                 if (lastProgress != progress) {
                     lastProgress = progress;
                     progressCb(progress);
@@ -1222,64 +1257,57 @@ bool QGCTileCacheDatabase::_createDB(QSqlDatabase db, bool createDefault)
     // enabled foreign_keys; nothing to redo here.
     QSqlQuery query(db);
 
-    if (!query.exec(
-        "CREATE TABLE IF NOT EXISTS Tiles ("
-        "tileID INTEGER PRIMARY KEY NOT NULL, "
-        "hash TEXT NOT NULL UNIQUE, "
-        "format TEXT NOT NULL, "
-        "tile BLOB NULL, "
-        "size INTEGER, "
-        "type INTEGER, "
-        "date INTEGER DEFAULT 0)"))
-    {
+    if (!query.exec("CREATE TABLE IF NOT EXISTS Tiles ("
+                    "tileID INTEGER PRIMARY KEY NOT NULL, "
+                    "hash TEXT NOT NULL UNIQUE, "
+                    "format TEXT NOT NULL, "
+                    "tile BLOB NULL, "
+                    "size INTEGER, "
+                    "type INTEGER, "
+                    "date INTEGER DEFAULT 0)")) {
         qCWarning(QGCTileCacheDatabaseLog) << "Map Cache SQL error (create Tiles db):" << query.lastError().text();
         return false;
     }
 
-    if (!query.exec(
-        "CREATE TABLE IF NOT EXISTS TileSets ("
-        "setID INTEGER PRIMARY KEY NOT NULL, "
-        "name TEXT NOT NULL UNIQUE, "
-        "typeStr TEXT, "
-        "topleftLat REAL DEFAULT 0.0, "
-        "topleftLon REAL DEFAULT 0.0, "
-        "bottomRightLat REAL DEFAULT 0.0, "
-        "bottomRightLon REAL DEFAULT 0.0, "
-        "minZoom INTEGER DEFAULT 3, "
-        "maxZoom INTEGER DEFAULT 3, "
-        "type INTEGER DEFAULT -1, "
-        "numTiles INTEGER DEFAULT 0, "
-        "defaultSet INTEGER DEFAULT 0, "
-        "date INTEGER DEFAULT 0)"))
-    {
+    if (!query.exec("CREATE TABLE IF NOT EXISTS TileSets ("
+                    "setID INTEGER PRIMARY KEY NOT NULL, "
+                    "name TEXT NOT NULL UNIQUE, "
+                    "typeStr TEXT, "
+                    "topleftLat REAL DEFAULT 0.0, "
+                    "topleftLon REAL DEFAULT 0.0, "
+                    "bottomRightLat REAL DEFAULT 0.0, "
+                    "bottomRightLon REAL DEFAULT 0.0, "
+                    "minZoom INTEGER DEFAULT 3, "
+                    "maxZoom INTEGER DEFAULT 3, "
+                    "type INTEGER DEFAULT -1, "
+                    "numTiles INTEGER DEFAULT 0, "
+                    "defaultSet INTEGER DEFAULT 0, "
+                    "date INTEGER DEFAULT 0)")) {
         qCWarning(QGCTileCacheDatabaseLog) << "Map Cache SQL error (create TileSets db):" << query.lastError().text();
         return false;
     }
 
-    if (!query.exec(
-        "CREATE TABLE IF NOT EXISTS SetTiles ("
-        "setID INTEGER NOT NULL REFERENCES TileSets(setID) ON DELETE CASCADE, "
-        "tileID INTEGER NOT NULL REFERENCES Tiles(tileID) ON DELETE CASCADE)"))
-    {
+    if (!query.exec("CREATE TABLE IF NOT EXISTS SetTiles ("
+                    "setID INTEGER NOT NULL REFERENCES TileSets(setID) ON DELETE CASCADE, "
+                    "tileID INTEGER NOT NULL REFERENCES Tiles(tileID) ON DELETE CASCADE)")) {
         qCWarning(QGCTileCacheDatabaseLog) << "Map Cache SQL error (create SetTiles db):" << query.lastError().text();
         return false;
     }
 
-    if (!query.exec(
-        "CREATE TABLE IF NOT EXISTS TilesDownload ("
-        "setID INTEGER NOT NULL REFERENCES TileSets(setID) ON DELETE CASCADE, "
-        "hash TEXT NOT NULL, "
-        "type INTEGER, "
-        "x INTEGER, "
-        "y INTEGER, "
-        "z INTEGER, "
-        "state INTEGER DEFAULT 0)"))
-    {
-        qCWarning(QGCTileCacheDatabaseLog) << "Map Cache SQL error (create TilesDownload db):" << query.lastError().text();
+    if (!query.exec("CREATE TABLE IF NOT EXISTS TilesDownload ("
+                    "setID INTEGER NOT NULL REFERENCES TileSets(setID) ON DELETE CASCADE, "
+                    "hash TEXT NOT NULL, "
+                    "type INTEGER, "
+                    "x INTEGER, "
+                    "y INTEGER, "
+                    "z INTEGER, "
+                    "state INTEGER DEFAULT 0)")) {
+        qCWarning(QGCTileCacheDatabaseLog)
+            << "Map Cache SQL error (create TilesDownload db):" << query.lastError().text();
         return false;
     }
 
-    static const char *indexStatements[] = {
+    static const char* indexStatements[] = {
         "CREATE UNIQUE INDEX IF NOT EXISTS idx_settiles_unique ON SetTiles(tileID, setID)",
         "CREATE INDEX IF NOT EXISTS idx_settiles_setid ON SetTiles(setID)",
         "CREATE INDEX IF NOT EXISTS idx_settiles_tileid ON SetTiles(tileID)",
@@ -1287,7 +1315,7 @@ bool QGCTileCacheDatabase::_createDB(QSqlDatabase db, bool createDefault)
         "CREATE INDEX IF NOT EXISTS idx_tilesdownload_setid_state ON TilesDownload(setID, state)",
         "CREATE INDEX IF NOT EXISTS idx_tiles_date ON Tiles(date)",
     };
-    for (const char *sql : indexStatements) {
+    for (const char* sql : indexStatements) {
         if (!query.exec(QLatin1String(sql))) {
             qCWarning(QGCTileCacheDatabaseLog) << "Failed to create index:" << sql << query.lastError().text();
         }
@@ -1349,14 +1377,15 @@ quint64 QGCTileCacheDatabase::_getDefaultTileSet()
     return kInvalidTileSet;
 }
 
-bool QGCTileCacheDatabase::_deleteTilesByIDs(const QList<quint64> &ids)
+bool QGCTileCacheDatabase::_deleteTilesByIDs(const QList<quint64>& ids)
 {
     if (ids.isEmpty()) {
         return true;
     }
 
     QSqlQuery query(_database());
-    if (!query.prepare(QStringLiteral("DELETE FROM Tiles WHERE tileID IN (%1)").arg(QGCSqlHelper::placeholders(ids.size())))) {
+    if (!query.prepare(
+            QStringLiteral("DELETE FROM Tiles WHERE tileID IN (%1)").arg(QGCSqlHelper::placeholders(ids.size())))) {
         return false;
     }
     for (const quint64 id : ids) {
@@ -1365,7 +1394,7 @@ bool QGCTileCacheDatabase::_deleteTilesByIDs(const QList<quint64> &ids)
     return query.exec();
 }
 
-QString QGCTileCacheDatabase::_deduplicateSetName(const QString &name)
+QString QGCTileCacheDatabase::_deduplicateSetName(const QString& name)
 {
     if (!findTileSetID(name).has_value()) {
         return name;
@@ -1398,20 +1427,22 @@ QString QGCTileCacheDatabase::_deduplicateSetName(const QString &name)
 }
 
 quint64 QGCTileCacheDatabase::_copyTilesForSet(QSqlDatabase srcDB, quint64 srcSetID, quint64 dstSetID,
-                                                 quint64 &currentCount, quint64 tileCount,
-                                                 int &lastProgress, ProgressCallback progressCb,
-                                                 quint64 *tilesIteratedOut, bool useTransaction)
+                                               quint64& currentCount, quint64 tileCount, int& lastProgress,
+                                               ProgressCallback progressCb, quint64* tilesIteratedOut,
+                                               bool useTransaction)
 {
     QSqlQuery subQuery(srcDB);
     subQuery.setForwardOnly(true);
     if (!subQuery.prepare("SELECT T.hash, T.format, T.tile, T.type, T.date FROM Tiles T "
                           "INNER JOIN SetTiles S ON T.tileID = S.tileID WHERE S.setID = ?")) {
-        if (tilesIteratedOut) *tilesIteratedOut = 0;
+        if (tilesIteratedOut)
+            *tilesIteratedOut = 0;
         return 0;
     }
     subQuery.addBindValue(srcSetID);
     if (!subQuery.exec()) {
-        if (tilesIteratedOut) *tilesIteratedOut = 0;
+        if (tilesIteratedOut)
+            *tilesIteratedOut = 0;
         return 0;
     }
 
@@ -1423,7 +1454,8 @@ quint64 QGCTileCacheDatabase::_copyTilesForSet(QSqlDatabase srcDB, quint64 srcSe
         txn = std::make_unique<QGCSqlHelper::Transaction>(_database());
         if (!txn->ok()) {
             qCWarning(QGCTileCacheDatabaseLog) << "Failed to start transaction for merge import";
-            if (tilesIteratedOut) *tilesIteratedOut = 0;
+            if (tilesIteratedOut)
+                *tilesIteratedOut = 0;
             return 0;
         }
     }
@@ -1469,7 +1501,8 @@ quint64 QGCTileCacheDatabase::_copyTilesForSet(QSqlDatabase srcDB, quint64 srcSe
 
         currentCount++;
         if (tileCount > 0 && progressCb) {
-            const int progress = qMin(100, static_cast<int>((static_cast<double>(currentCount) / static_cast<double>(tileCount)) * 100.0));
+            const int progress = qMin(
+                100, static_cast<int>((static_cast<double>(currentCount) / static_cast<double>(tileCount)) * 100.0));
             if (lastProgress != progress) {
                 lastProgress = progress;
                 progressCb(progress);
@@ -1479,10 +1512,12 @@ quint64 QGCTileCacheDatabase::_copyTilesForSet(QSqlDatabase srcDB, quint64 srcSe
 
     if (txn && !txn->commit()) {
         qCWarning(QGCTileCacheDatabaseLog) << "Failed to commit merge import transaction";
-        if (tilesIteratedOut) *tilesIteratedOut = tilesFound;
+        if (tilesIteratedOut)
+            *tilesIteratedOut = tilesFound;
         return 0;
     }
 
-    if (tilesIteratedOut) *tilesIteratedOut = tilesFound;
+    if (tilesIteratedOut)
+        *tilesIteratedOut = tilesFound;
     return tilesLinked;
 }

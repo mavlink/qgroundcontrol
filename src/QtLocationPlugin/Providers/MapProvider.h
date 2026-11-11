@@ -14,7 +14,8 @@ class MapProvider
 public:
     // Mirrors QGeoMapType::MapStyle so that this class does not need QtLocation.
     // QGeoTiledMappingManagerEngineQGC.cpp converts the values and asserts that they match.
-    enum MapStyle {
+    enum MapStyle
+    {
         NoMap = 0,
         StreetMap,
         SatelliteMapDay,
@@ -29,8 +30,8 @@ public:
         CustomMap = 100
     };
 
-    MapProvider(const QString &mapName, const QString &referrer, const QString &imageFormat, quint32 averageSize = QGC_AVERAGE_TILE_SIZE,
-                MapStyle mapStyle = CustomMap);
+    MapProvider(const QString& mapName, const QString& referrer, const QString& imageFormat,
+                quint32 averageSize = QGC_AVERAGE_TILE_SIZE, MapStyle mapStyle = CustomMap);
     virtual ~MapProvider();
 
     QUrl getTileURL(int x, int y, int zoom) const;
@@ -41,9 +42,13 @@ public:
     quint32 getAverageSize() const { return _averageSize; }
 
     MapStyle getMapStyle() const { return _mapStyle; }
+
     const QString& getMapName() const { return _mapName; }
+
     int getMapId() const { return _mapId; }
+
     const QString& getReferrer() const { return _referrer; }
+
     virtual QByteArray getToken() const { return QByteArray(); }
 
     virtual int long2tileX(double lon, int z) const;
@@ -52,13 +57,13 @@ public:
     virtual double tileY2lat(int y, int z) const;
 
     virtual bool isElevationProvider() const { return false; }
+
     virtual bool isBingProvider() const { return false; }
 
     /// False hides the provider from user-facing provider selection lists
     virtual bool isUserSelectable() const { return true; }
 
-    virtual QGCTileSet getTileCount(int zoom, double topleftLon,
-                                    double topleftLat, double bottomRightLon,
+    virtual QGCTileSet getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon,
                                     double bottomRightLat) const;
 
 protected:

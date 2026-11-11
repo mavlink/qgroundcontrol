@@ -12,15 +12,15 @@ class QGCMapEngine : public QObject
     Q_OBJECT
 
 public:
-    explicit QGCMapEngine(QObject *parent = nullptr);
+    explicit QGCMapEngine(QObject* parent = nullptr);
     ~QGCMapEngine();
 
-    void init(const QString &databasePath);
+    void init(const QString& databasePath);
 
     /// Initializes the engine with the application's tile cache database unless that already happened. Maps other
     /// than QtLocation's (GeoMap) call this, since only a QtLocation map initializes the engine on its own.
     void ensureInitialized();
-    bool addTask(QGCMapTask *task);
+    bool addTask(QGCMapTask* task);
 
     /// Stores a tile in the cache database, in \a tileSet or else in the default set. Does nothing while persistence
     /// is disabled.
@@ -43,20 +43,21 @@ public:
     /// close() on the application's engine, if one was created.
     static void closeInstance();
 
-    static QGCMapEngine *instance();
+    static QGCMapEngine* instance();
 
 signals:
     void updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
 
 private slots:
     void _updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
+
     void _pruned() { m_pruning = false; }
 
 private:
-    QGCCacheWorker *m_worker = nullptr;
+    QGCCacheWorker* m_worker = nullptr;
     bool m_pruning = false;
     std::atomic<bool> m_initialized = false;
     std::atomic<bool> m_closed = false;
 };
 
-extern QGCMapEngine *getQGCMapEngine();
+extern QGCMapEngine* getQGCMapEngine();

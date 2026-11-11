@@ -101,60 +101,50 @@ void QGCCachedTileSetTest::_testSetZoomAndMetadata()
 void QGCCachedTileSetTest::_testSetTotalTileCountEmitsSignal()
 {
     QGCCachedTileSet ts(QStringLiteral("test"));
-    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::totalTileCountChanged,
-                         &QGCCachedTileSet::setTotalTileCount,
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::totalTileCountChanged, &QGCCachedTileSet::setTotalTileCount,
                          &QGCCachedTileSet::totalTileCount, 100u);
 }
 
 void QGCCachedTileSetTest::_testSetTotalTileSizeEmitsSignal()
 {
     QGCCachedTileSet ts(QStringLiteral("test"));
-    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::totalTilesSizeChanged,
-                         &QGCCachedTileSet::setTotalTileSize,
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::totalTilesSizeChanged, &QGCCachedTileSet::setTotalTileSize,
                          &QGCCachedTileSet::totalTilesSize, quint64(1024 * 1024));
 }
 
 void QGCCachedTileSetTest::_testSetSavedCountAndSizeEmitSignals()
 {
     QGCCachedTileSet ts(QStringLiteral("test"));
-    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::savedTileCountChanged,
-                         &QGCCachedTileSet::setSavedTileCount,
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::savedTileCountChanged, &QGCCachedTileSet::setSavedTileCount,
                          &QGCCachedTileSet::savedTileCount, 50u);
-    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::savedTileSizeChanged,
-                         &QGCCachedTileSet::setSavedTileSize,
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::savedTileSizeChanged, &QGCCachedTileSet::setSavedTileSize,
                          &QGCCachedTileSet::savedTileSize, quint64(2048));
 }
 
 void QGCCachedTileSetTest::_testSetUniqueCountAndSizeEmitSignals()
 {
     QGCCachedTileSet ts(QStringLiteral("test"));
-    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::uniqueTileCountChanged,
-                         &QGCCachedTileSet::setUniqueTileCount,
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::uniqueTileCountChanged, &QGCCachedTileSet::setUniqueTileCount,
                          &QGCCachedTileSet::uniqueTileCount, 25u);
-    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::uniqueTileSizeChanged,
-                         &QGCCachedTileSet::setUniqueTileSize,
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::uniqueTileSizeChanged, &QGCCachedTileSet::setUniqueTileSize,
                          &QGCCachedTileSet::uniqueTileSize, quint64(4096));
 }
 
 void QGCCachedTileSetTest::_testSetNameEmitsSignal()
 {
     QGCCachedTileSet ts(QStringLiteral("original"));
-    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::nameChanged,
-                         &QGCCachedTileSet::setName,
-                         &QGCCachedTileSet::name, QStringLiteral("renamed"));
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::nameChanged, &QGCCachedTileSet::setName, &QGCCachedTileSet::name,
+                         QStringLiteral("renamed"));
 }
 
 void QGCCachedTileSetTest::_testSetStateEmitsSignals()
 {
     QGCCachedTileSet ts(QStringLiteral("test"));
-    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::deletingChanged,
-                         &QGCCachedTileSet::setDeleting,
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::deletingChanged, &QGCCachedTileSet::setDeleting,
                          &QGCCachedTileSet::deleting, true);
-    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::downloadingChanged,
-                         &QGCCachedTileSet::setDownloading,
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::downloadingChanged, &QGCCachedTileSet::setDownloading,
                          &QGCCachedTileSet::downloading, true);
-    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::errorCountChanged,
-                         &QGCCachedTileSet::setErrorCount,
+    QVERIFY_PROPERTY_SET(&ts, &QGCCachedTileSet::errorCountChanged, &QGCCachedTileSet::setErrorCount,
                          &QGCCachedTileSet::errorCount, 3u);
 }
 

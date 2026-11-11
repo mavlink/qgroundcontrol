@@ -1,9 +1,9 @@
 #include "MapProviderTest.h"
 
-#include <QtCore/QtMath>
-
 #include <array>
 #include <memory>
+
+#include <QtCore/QtMath>
 
 #include "GenericMapProvider.h"
 #include "MapProvider.h"
@@ -16,17 +16,13 @@ public:
                                  const QString& imageFormat = QStringLiteral("png"),
                                  quint32 avgSize = QGC_AVERAGE_TILE_SIZE)
         : MapProvider(name, QString(), imageFormat, avgSize, MapProvider::CustomMap)
-    {
-    }
+    {}
 
     using MapProvider::_getServerNum;
     using MapProvider::_tileXYToQuadKey;
 
 private:
-    QString _getURL(int, int, int) const override
-    {
-        return {};
-    }
+    QString _getURL(int, int, int) const override { return {}; }
 };
 
 // --- Image format detection ---

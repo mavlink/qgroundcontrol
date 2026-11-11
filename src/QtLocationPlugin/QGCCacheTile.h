@@ -6,14 +6,16 @@
 
 struct QGCCacheTile
 {
-    QGCCacheTile(const QString &hash_, const QByteArray &img_, const QString &format_, const QString &type_, quint64 tileSet_ = UINT64_MAX)
+    QGCCacheTile(const QString& hash_, const QByteArray& img_, const QString& format_, const QString& type_,
+                 quint64 tileSet_ = UINT64_MAX)
         : tileSet(tileSet_)
         , hash(hash_)
         , img(img_)
         , format(format_)
         , type(type_)
     {}
-    QGCCacheTile(const QString &hash_, quint64 tileSet_)
+
+    QGCCacheTile(const QString& hash_, quint64 tileSet_)
         : tileSet(tileSet_)
         , hash(hash_)
     {}

@@ -1,13 +1,13 @@
 #pragma once
 
+#include <memory>
+
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QMutex>
 #include <QtCore/QQueue>
 #include <QtCore/QString>
 #include <QtCore/QThread>
 #include <QtCore/QWaitCondition>
-
-#include <memory>
 
 #ifdef QGC_UNITTEST_BUILD
 #include <functional>
@@ -25,10 +25,16 @@ class QGCCacheWorker : public QThread
     Q_OBJECT
 
 public:
-    explicit QGCCacheWorker(QObject *parent = nullptr);
+    explicit QGCCacheWorker(QObject* parent = nullptr);
     ~QGCCacheWorker();
 
-    void setDatabaseFile(const QString &path) { if (isRunning()) { return; } _databasePath = path; }
+    void setDatabaseFile(const QString& path)
+    {
+        if (isRunning()) {
+            return;
+        }
+        _databasePath = path;
+    }
 
 #ifdef QGC_UNITTEST_BUILD
     /// Unit-test hook: consulted on tile cache miss to synthesize a tile instead of
@@ -39,11 +45,11 @@ public:
     /// synchronization. It must be installed once, before any QGCCacheWorker thread
     /// has started, and never changed afterward (see UnitTestTileGenerator::install,
     /// called at test-run startup). The generator itself must be thread-safe.
-    static void setUnitTestTileGenerator(std::function<QGCCacheTile*(const QString &hash)> generator);
+    static void setUnitTestTileGenerator(std::function<QGCCacheTile*(const QString& hash)> generator);
 #endif
 
 public slots:
-    bool enqueueTask(QGCMapTask *task);
+    bool enqueueTask(QGCMapTask* task);
     void stop();
 
 signals:
@@ -53,21 +59,21 @@ protected:
     void run() final;
 
 private:
-    void _runTask(QGCMapTask *task);
+    void _runTask(QGCMapTask* task);
 
-    void _saveTile(QGCMapTask *task);
-    void _getTile(QGCMapTask *task);
-    void _getTileSets(QGCMapTask *task);
-    void _createTileSet(QGCMapTask *task);
-    void _getTileDownloadList(QGCMapTask *task);
-    void _updateTileDownloadState(QGCMapTask *task);
-    void _pruneCache(QGCMapTask *task);
-    void _deleteTileSet(QGCMapTask *task);
-    void _renameTileSet(QGCMapTask *task);
-    void _resetCacheDatabase(QGCMapTask *task);
-    void _importSets(QGCMapTask *task);
-    void _exportSets(QGCMapTask *task);
-    bool _testTask(QGCMapTask *task);
+    void _saveTile(QGCMapTask* task);
+    void _getTile(QGCMapTask* task);
+    void _getTileSets(QGCMapTask* task);
+    void _createTileSet(QGCMapTask* task);
+    void _getTileDownloadList(QGCMapTask* task);
+    void _updateTileDownloadState(QGCMapTask* task);
+    void _pruneCache(QGCMapTask* task);
+    void _deleteTileSet(QGCMapTask* task);
+    void _renameTileSet(QGCMapTask* task);
+    void _resetCacheDatabase(QGCMapTask* task);
+    void _importSets(QGCMapTask* task);
+    void _exportSets(QGCMapTask* task);
+    bool _testTask(QGCMapTask* task);
     void _emitTotals();
 
     std::unique_ptr<QGCTileCacheDatabase> _database;
