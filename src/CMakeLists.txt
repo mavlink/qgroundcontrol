@@ -56,6 +56,7 @@ add_subdirectory(Utilities)
 # Must be added after Utilities — links QGCLogging/QGCFileSystem/QGCNetwork/QGCCompression.
 add_subdirectory(LogManager)
 add_subdirectory(Joystick)
+add_subdirectory(MapTiles)
 add_subdirectory(MAVLink)
 add_subdirectory(MissionManager)
 add_subdirectory(PlanView)

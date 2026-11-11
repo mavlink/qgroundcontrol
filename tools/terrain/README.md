@@ -33,7 +33,7 @@ URL; see [Required QGC Client Changes](#required-qgc-client-changes).
 ## Required QGC Client Changes
 
 None of these exist yet: QGC still reads Tilezen (`TerrariumElevationProvider::kProviderURL` in
-`src/QtLocationPlugin/Providers/ElevationMapProvider.h`). They must ship together with the URL
+`src/MapTiles/Providers/ElevationMapProvider.h`). They must ship together with the URL
 switch, otherwise fixes published here never reach users.
 
 1. **URL and zoom.** Point the provider at
