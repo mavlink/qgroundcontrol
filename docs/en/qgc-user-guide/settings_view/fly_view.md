@@ -10,7 +10,7 @@ Settings that control the behavior and appearance of the [Fly View](../fly_view/
 - **Keep Map Centered On Vehicle** — prevent the map from drifting away from the vehicle position
 - **Show Telemetry Log Replay Status Bar** — display the replay control bar when playing back telemetry logs
 - **Show simple camera controls (DIGICAM_CONTROL)** — show basic camera trigger controls for autopilot-connected cameras
-- **Update return to home position based on device location** — send the GCS position as the vehicle's home/RTL point
+- **Update return to home position based on device location** — send the GCS position as the vehicle's home/RTL point. Home takes the ground station's altitude only when that is known to be above mean sea level, and otherwise keeps its own (see [GCS Position](gnss_receiver.md#gcs_position)).
 - **Enable automatic mission start/resume popups** — show mission start and resume prompts automatically
 - **Allow Force Arm** — show a **Force Arm** button in the [Flight Status](../fly_view/fly_view_toolbar.md#flight-status) dropdown. Force arming bypasses pre-arm checks, use with caution.
 
