@@ -12,6 +12,7 @@ private slots:
     void _testAddToBin();
     void _testAddToBinRejects();
     void _testDisposeChild();
+    void _testDisposeChildOutlastsBinStateChange();
     void _testFlushAndDisposeChildFlushes();
     void _testTeeBranchHead();
     void _testRequestKeyframe();

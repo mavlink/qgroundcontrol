@@ -46,6 +46,7 @@ private slots:
     void _testSourceFactoryRtspDepayloaderRequestsKeyframes();
     void _testSourceFactoryRtspPlugsCodec_data();
     void _testSourceFactoryRtspPlugsCodec();
+    void _testSourceFactoryRtspPadAddedLeavesBinStateLock();
     void _testSourceFactoryRtspPushesAccessUnitsAtOnce_data();
     void _testSourceFactoryRtspPushesAccessUnitsAtOnce();
     void _testSourceFactoryRtspFollowsStreamToNewPad_data();

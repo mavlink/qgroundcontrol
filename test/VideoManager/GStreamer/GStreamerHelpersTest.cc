@@ -5,6 +5,8 @@
 #include <atomic>
 #include <gst/gst.h>
 #include <gst/video/video-event.h>
+#include <thread>
+#include <vector>
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QStringList>
@@ -42,6 +44,10 @@ GstElement* parentOf(GstElement* element)
 {
     return GST_ELEMENT(GST_OBJECT_PARENT(element));
 }
+
+// Enough children disposed of for some to meet a state change of their bin at the wrong moment: without the bin's
+// state lock at least four in a thousand did.
+constexpr int kDisposalsDuringStateChanges = 2000;
 
 }  // namespace
 
@@ -105,6 +111,46 @@ void GStreamerHelpersTest::_testDisposeChild()
     GStreamer::disposeChild(identity.get());
     GStreamer::disposeChild(nullptr);
     QCOMPARE(QString::fromUtf8(GST_OBJECT_NAME(identity.get())), QStringLiteral("id"));
+}
+
+void GStreamerHelpersTest::_testDisposeChildOutlastsBinStateChange()
+{
+    GstTest::TestPipeline pipeline(gst_pipeline_new("helpers"));
+    QVERIFY(pipeline.get());
+    // Nobody reads the state changes this posts.
+    const GStreamer::GstBusPtr bus = GStreamer::adoptBus(gst_element_get_bus(pipeline.get()));
+    gst_bus_set_flushing(bus.get(), TRUE);
+    QVERIFY(pipeline.play());
+
+    // The bin changing state on another thread, as its continuation does on GStreamer's thread pool once an async
+    // sink was taken out: it must not set a child it still holds to its own state after disposeChild() returned.
+    std::atomic<bool> stop{false};
+    std::thread stateChanges([&pipeline, &stop] {
+        while (!stop.load()) {
+            (void) gst_element_set_state(pipeline.get(), GST_STATE_PAUSED);
+            (void) gst_element_set_state(pipeline.get(), GST_STATE_PLAYING);
+        }
+    });
+    std::vector<GStreamer::GstElementPtr> children;
+    children.reserve(kDisposalsDuringStateChanges);
+    for (int i = 0; i < kDisposalsDuringStateChanges; ++i) {
+        GStreamer::GstElementPtr child = GStreamer::makeElement("identity");
+        (void) gst_bin_add(pipeline.bin(), child.get());
+        (void) gst_element_sync_state_with_parent(child.get());
+        GStreamer::disposeChild(child.get());
+        children.push_back(std::move(child));
+    }
+    stop.store(true);
+    stateChanges.join();
+
+    int broughtBackUp = 0;
+    for (const GStreamer::GstElementPtr& child : children) {
+        if (GST_STATE(child.get()) != GST_STATE_NULL) {
+            ++broughtBackUp;
+            (void) gst_element_set_state(child.get(), GST_STATE_NULL);
+        }
+    }
+    QCOMPARE(broughtBackUp, 0);
 }
 
 void GStreamerHelpersTest::_testFlushAndDisposeChildFlushes()

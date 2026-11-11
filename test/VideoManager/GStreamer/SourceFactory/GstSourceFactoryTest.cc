@@ -6,6 +6,7 @@
 #include <gst/gst.h>
 #include <gst/sdp/gstsdpmessage.h>
 #include <gst/video/video.h>
+#include <thread>
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
@@ -822,8 +823,8 @@ void GstSourceFactoryTest::_testSourceFactoryDynamicRtpLinkFailureCleansJitterBu
 
     QVERIFY2(!gst_pad_is_linked(source.parserSink.get()),
              "a failed dynamic RTP pad link must leave parsebin available for the next valid pad");
-    QVERIFY2(!GstTest::findByFactory(source.bin.get(), "rtpjitterbuffer"),
-             "a failed dynamic RTP pad link must remove its temporary jitterbuffer");
+    // A failed dynamic RTP pad link removes its temporary jitterbuffer, from GStreamer's thread pool.
+    QVERIFY_TRUE_WAIT(!GstTest::findByFactory(source.bin.get(), "rtpjitterbuffer"), TestTimeout::shortMs());
 }
 
 void GstSourceFactoryTest::_testSourceFactoryDynamicLinkSkipsNonVideoRtp()
@@ -930,17 +931,17 @@ void GstSourceFactoryTest::_testSourceFactoryRtspPlugsCodec()
     QVERIFY(pad && gst_pad_is_linked(pad));
     const GStreamer::GstPadPtr peer = GStreamer::adoptPad(gst_pad_get_peer(pad));
     const GStreamer::GstElementPtr linkedTo = GStreamer::adoptElement(gst_pad_get_parent_element(peer.get()));
-    const GStreamer::GstElementPtr parsebin = GstTest::findByFactory(rtsp.bin.get(), "parsebin");
     if (parser.isEmpty()) {
         // As before the bin knew of encodings: parsebin plugs the depayloader once the stream's caps arrive.
-        QCOMPARE(linkedTo.get(), parsebin.get());
+        QCOMPARE(linkedTo.get(), GstTest::findByFactory(rtsp.bin.get(), "parsebin").get());
         QVERIFY(RtspSource::pushAccessUnit(pad, 1111, {}));
         QVERIFY(GstTest::findByFactory(rtsp.bin.get(), depayloader.constData()));
         return;
     }
 
     // As for RTP over UDP: the codec's depayloader, its parser, and whole access units in byte-stream between them.
-    QVERIFY2(!parsebin, "the codec's depayloader and parser take parsebin's place");
+    // They take parsebin's place, which leaves the bin from GStreamer's thread pool.
+    QVERIFY_TRUE_WAIT(!GstTest::findByFactory(rtsp.bin.get(), "parsebin"), TestTimeout::shortMs());
     QCOMPARE(linkedTo.get(), GstTest::findByFactory(rtsp.bin.get(), depayloader.constData()).get());
     const GStreamer::GstPadPtr depayloaderSrc = GStreamer::adoptPad(gst_element_get_static_pad(linkedTo.get(), "src"));
     const GStreamer::GstCapsPtr allowed = GStreamer::adoptCaps(gst_pad_get_allowed_caps(depayloaderSrc.get()));
@@ -961,6 +962,28 @@ void GstSourceFactoryTest::_testSourceFactoryRtspPlugsCodec()
         g_object_get(linkedTo.get(), "request-keyframe", &requestKeyframe, nullptr);
         QCOMPARE(requestKeyframe, TRUE);
     }
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspPadAddedLeavesBinStateLock()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+
+    const RtspSource rtsp;
+    QVERIFY(rtsp.started);
+
+    // rtspsrc adds its pads on a streaming thread, and a state change of the bin waits for that thread to stop with
+    // the bin's state lock held: a pad-added that takes the lock, as to dispose of parsebin at once, never returns.
+    std::atomic<bool> added = false;
+    GST_STATE_LOCK(rtsp.bin.get());
+    std::thread streaming([&rtsp, &added]() {
+        (void) rtsp.addPad("recv_rtp_src_0_1111_96", "H264");
+        added.store(true);
+    });
+    const bool addedUnderLock = QTest::qWaitFor([&added]() { return added.load(); }, TestTimeout::shortMs());
+    GST_STATE_UNLOCK(rtsp.bin.get());
+    streaming.join();
+    QVERIFY(addedUnderLock);
+    QVERIFY_TRUE_WAIT(!GstTest::findByFactory(rtsp.bin.get(), "parsebin"), TestTimeout::shortMs());
 }
 
 void GstSourceFactoryTest::_testSourceFactoryRtspPushesAccessUnitsAtOnce_data()

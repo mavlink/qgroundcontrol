@@ -12,14 +12,19 @@ class QString;
 
 namespace GStreamer {
 
-/// Takes @p element out of its parent bin, then sets it to NULL. Removed first, so the bin can't bring it back up and
-/// nothing it posts while stopping reaches the bin's bus. No-op when @p element has no parent. The caller's refs on
-/// @p element, if any, stay valid.
+/// Takes @p element out of its parent bin, then sets it to NULL. Removed first, so nothing it posts while stopping
+/// reaches the bin's bus, and with the bin's state lock held, so a state change of the bin can't bring it back up.
+/// No-op when @p element has no parent. The caller's refs on @p element, if any, stay valid.
 void disposeChild(GstElement* element);
 
 /// As disposeChild(), but sends a FLUSH_START into @p element's sink pads before setting it to NULL. The flush wakes
 /// streaming threads parked inside @p element, which going NULL would otherwise wait on.
 void flushAndDisposeChild(GstElement* element);
+
+/// disposeChild() from GStreamer's thread pool, for a streaming thread: a state change of the bin holds the state
+/// lock that disposeChild() takes while it waits for the streaming threads to stop. @p element is kept alive until
+/// then.
+void disposeChildAsync(GstElement* element);
 
 /// Adds @p element, which must not be floating (see makeElement()), to @p bin, which takes its own ref; ours is
 /// dropped. Returns the borrowed (bin-owned) element, or null if the bin rejected it; @p what names it in the warning.

@@ -237,7 +237,7 @@ GstElement* insertDynamicJitterBuffer(const DynamicLinkContext* ctx)
 
     if (!gst_element_sync_state_with_parent(buffer) || !gst_element_link(buffer, ctx->binParser)) {
         qCWarning(GstSourceFactoryLog) << "dynamic rtpjitterbuffer link/sync failed; linking pad straight to parser";
-        disposeChild(buffer);
+        disposeChildAsync(buffer);
         return nullptr;
     }
 
@@ -283,6 +283,8 @@ bool continuesRtspStream(GstPad* pad, GstPad* linkedPad)
            (rtpEncodingOfPad(linkedPad) == encoding);
 }
 
+// The source's "pad-added", on the streaming thread that brings the pad's data. A state change of the bin waits for
+// that thread with the bin's state lock held, so what is taken out of the bin here goes through disposeChildAsync().
 void linkPad(GstElement* element, GstPad* pad, gpointer data)
 {
     auto* const ctx = static_cast<DynamicLinkContext*>(data);
@@ -346,7 +348,9 @@ void linkPad(GstElement* element, GstPad* pad, gpointer data)
     if (!name || !gst_element_link_pads(element, name.get(), downstream, "sink")) {
         qCWarning(GstSourceFactoryLog) << "gst_element_link_pads() failed for" << (name ? name.get() : "(unnamed pad)");
         if (dynamicBuffer) {
-            disposeChild(dynamicBuffer);
+            // Unlinked at once: until the jitterbuffer is gone, the parser must not look taken to the next pad.
+            gst_element_unlink(dynamicBuffer, ctx->binParser);
+            disposeChildAsync(dynamicBuffer);
         }
     }
 }
@@ -587,15 +591,15 @@ void plugRtspCodec(DynamicLinkContext* ctx, const QByteArray& encoding)
         qCWarning(GstSourceFactoryLog) << "Unable to plug" << codec->depayloader << "and" << codec->parser
                                        << "for the RTSP stream; leaving it to parsebin";
         if (depay) {
-            disposeChild(depay);
+            disposeChildAsync(depay);
         }
         if (parser) {
-            disposeChild(parser);
+            disposeChildAsync(parser);
         }
         return;
     }
 
-    disposeChild(ctx->binParser);
+    disposeChildAsync(ctx->binParser);
     ctx->binParser = depay;
     ctx->rtspCodec = codec;
 }
