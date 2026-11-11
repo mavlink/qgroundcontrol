@@ -97,6 +97,203 @@ std::optional<uint64_t> receiptUtc(std::string_view date, std::string_view time)
     return utcUs(calendar, *milliseconds);
 }
 
+/// $PASHR,POS position modes (d1) outside the 0 to 5 that follow GPSFixQuality's order.
+namespace PositionMode {
+constexpr int SBAS_DIFFERENTIAL = 9;
+constexpr int BEIDOU_DIFFERENTIAL = 10;
+constexpr int RTK_FLOAT = 12;
+constexpr int RTK_FIXED = 13;
+constexpr int RTK_FLOAT_DITHERED = 22;
+constexpr int RTK_FIXED_DITHERED = 23;
+constexpr int MAXIMUM = RTK_FIXED_DITHERED;
+}  // namespace PositionMode
+
+/// What a $PASHR,POS sentence reports.
+struct PositionFix
+{
+    int mode = 0;
+    unsigned satellites = 0;
+    double latitudeDegrees = 0;
+    double longitudeDegrees = 0;
+    double altitudeEllipsoidMeters = 0;
+    float horizontalDop = 0;
+    float verticalDop = 0;
+    /// Ashtech reports an empty coordinate (latitude, longitude or altitude) until it has a fix.
+    bool coordinatesFound = false;
+    std::optional<int> utcMilliseconds = std::nullopt;
+    /// Track and speed over ground: nothing when absent or out of range.
+    std::optional<double> courseDegrees = std::nullopt;
+    std::optional<double> speedMetersPerSecond = std::nullopt;
+};
+
+/// Reads a $PASHR,POS sentence, or nothing when a field is malformed or out of range.
+std::optional<PositionFix> positionFix(const NMEA::Sentence& sentence)
+{
+    /*
+    Example
+    $PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0,0.007,-0.001,2.0,1.0,1.7,1.0,*34
+
+        $PASHR,POS,d1,d2,m3,m4,c5,m6,c7,f8,f9,f10,f11,f12,f13,f14,f15,f16,s17*cc
+        Parameter Description Range
+          d1 Position mode 0: standalone
+                           1: differential
+                           2: RTK float
+                           3: RTK fixed
+                           5: Dead reckoning
+                           9: SBAS (see NPT setting)
+          d2 Number of satellite used in position fix 0-99
+          m3 Current UTC time of position fix (hhmmss.ss) 000000.00-235959.99
+          m4 Latitude of position (ddmm.mmmmmm) 0-90 degrees 00-59.9999999 minutes
+          c5 Latitude sector N, S
+          m6 Longitude of position (dddmm.mmmmmm) 0-180 degrees 00-59.9999999 minutes
+          c7 Longitude sector E,W
+          f8 Altitude above ellipsoid +9999.000
+          f9 Differential age (data link age), seconds 0.0-600.0
+          f10 True track/course over ground in degrees 0.0-359.9
+          f11 Speed over ground in knots 0.0-999.9
+          f12 Vertical velocity in decimeters per second +999.9
+          f13 PDOP 0-99.9
+          f14 HDOP 0-99.9
+          f15 VDOP 0-99.9
+          f16 TDOP 0-99.9
+          s17 Reserved no data
+          *cc Checksum
+        */
+    // d1 is the third field, after $PASHR and POS. An empty field keeps its default; a malformed one rejects the
+    // sentence. Ashtech reports an empty coordinate (latitude, longitude or altitude) until it has a fix.
+    const auto& fields = sentence.fields;
+    const auto quality = numberOr(fields[2], 0);
+    const auto satellites = numberOr(fields[3], 0);
+    const auto latitude = numberOr(fields[5], 0.0);
+    const auto longitude = numberOr(fields[7], 0.0);
+    const auto altitude = numberOr(fields[9], 0.0);
+    const auto horizontalDop = numberOr(fields[15], 99.9);
+    const auto verticalDop = numberOr(fields[16], 99.9);
+    // Track and speed are range-checked where they are read below. Time, differential age, vertical velocity, PDOP
+    // and TDOP are validated but not reported.
+    for (const size_t validated : {4, 10, 11, 12, 13, 14, 17}) {
+        if (!numberOr(fields[validated], 0.0)) {
+            return std::nullopt;
+        }
+    }
+    const std::string_view northSouth = fields[6];
+    const std::string_view eastWest = fields[8];
+    constexpr int MAX_SATELLITES = 255;
+    // 90 and 180 degrees as ddmm.mmmm and dddmm.mmmm.
+    constexpr double MAX_LATITUDE = 9000;
+    constexpr double MAX_LONGITUDE = 18000;
+    if (!quality || *quality < 0 || *quality > PositionMode::MAXIMUM || !satellites || *satellites < 0 ||
+        *satellites > MAX_SATELLITES || !latitude || *latitude < 0 || *latitude > MAX_LATITUDE || !longitude ||
+        *longitude < 0 || *longitude > MAX_LONGITUDE || !altitude || !horizontalDop || !verticalDop ||
+        (northSouth != "N" && northSouth != "S") || (eastWest != "E" && eastWest != "W")) {
+        return std::nullopt;
+    }
+    return PositionFix{
+        .mode = *quality,
+        .satellites = static_cast<unsigned>(*satellites),
+        .latitudeDegrees = (northSouth == "S" ? -1 : 1) * NMEA::degreesFromDegreesMinutes(*latitude),
+        .longitudeDegrees = (eastWest == "W" ? -1 : 1) * NMEA::degreesFromDegreesMinutes(*longitude),
+        .altitudeEllipsoidMeters = *altitude,
+        .horizontalDop = static_cast<float>(*horizontalDop),
+        .verticalDop = static_cast<float>(*verticalDop),
+        .coordinatesFound = !fields[5].empty() && !fields[7].empty() && !fields[9].empty(),
+        .utcMilliseconds = NMEA::utcMilliseconds(fields[4]),
+        .courseDegrees = NMEA::courseDegrees(fields[11]),
+        .speedMetersPerSecond = NMEA::speedMetersPerSecond(fields[12], NMEA::KNOTS_TO_METERS_PER_SECOND),
+    };
+}
+
+/// The fix a position @a mode (d1) names, for a receiver that reports coordinates.
+GPSFixQuality positionFixType(int mode)
+{
+    if (mode == PositionMode::SBAS_DIFFERENTIAL || mode == PositionMode::BEIDOU_DIFFERENTIAL) {
+        return GPSFixQuality::Differential;
+    }
+    if (mode == PositionMode::RTK_FLOAT || mode == PositionMode::RTK_FLOAT_DITHERED) {
+        return GPSFixQuality::RTKFloat;
+    }
+    if (mode == PositionMode::RTK_FIXED || mode == PositionMode::RTK_FIXED_DITHERED) {
+        return GPSFixQuality::RTKFixed;
+    }
+    // Modes 0 to 3 and 5 are standalone, differential, RTK float, RTK fixed and dead reckoning: GPSFixQuality from
+    // Fix3D on.
+    return gpsFixQualityFromValue(static_cast<int>(GPSFixQuality::Fix3D) + mode);
+}
+
+/// A $PASHR,RECEIPT,POS,AVG receipt of position averaging.
+struct SurveyReceipt
+{
+    enum class Stage
+    {
+        Started,
+        Finished,
+        Failed,
+    };
+
+    Stage stage = Stage::Started;
+    /// The averaging interval, in seconds.
+    uint32_t interval = 0;
+    /// When the receiver issued the receipt.
+    uint64_t utcUs = 0;
+    /// The averaged position of a Finished receipt, in degrees.
+    double latitude = NAN;
+    double longitude = NAN;
+};
+
+/// Reads the receipt that averaging started, such as
+/// "$PASHR,RECEIPT,POS,AVG,STARTED,INTERVAL,100,114502.56,28.12.2011".
+std::optional<SurveyReceipt> surveyStartReceipt(const NMEA::Sentence& sentence)
+{
+    const auto& fields = sentence.fields;
+    const auto interval = NMEA::number<uint32_t>(fields[6]);
+    const auto receiptTime = receiptUtc(fields[8], fields[7]);
+    if (sentence.count != 9 || fields[5] != "INTERVAL" || !interval || *interval == 0 || !receiptTime) {
+        return std::nullopt;
+    }
+    return SurveyReceipt{.stage = SurveyReceipt::Stage::Started, .interval = *interval, .utcUs = *receiptTime};
+}
+
+/// Reads the receipt that averaging finished: "$PASHR,RECEIPT,POS,AVG,100,FINISHED,114642.81,28.12.2011," and then
+/// "ERR" when it failed, or else the averaged position as in
+/// "5542.5178481,N,03739.2954994,E,176.334,OK,CONTINUOUS,100.20".
+std::optional<SurveyReceipt> surveyFinishReceipt(const NMEA::Sentence& sentence)
+{
+    const auto& fields = sentence.fields;
+    const bool failed = fields[8] == "ERR";
+    const auto interval = NMEA::number<uint32_t>(fields[4]);
+    const auto receiptTime = receiptUtc(fields[7], fields[6]);
+    if (!interval || *interval == 0 || fields[5] != "FINISHED" || !receiptTime || sentence.count != (failed ? 9 : 16)) {
+        return std::nullopt;
+    }
+    SurveyReceipt receipt{.stage = failed ? SurveyReceipt::Stage::Failed : SurveyReceipt::Stage::Finished,
+                          .interval = *interval,
+                          .utcUs = *receiptTime};
+    if (!failed) {
+        const auto lat = NMEA::coordinate(fields[8], fields[9], NMEA::Coordinate::Latitude);
+        const auto lon = NMEA::coordinate(fields[10], fields[11], NMEA::Coordinate::Longitude);
+        const auto alt = NMEA::number<float>(fields[12]);
+        const auto duration = NMEA::number<double>(fields[15]);
+        if (!lat || !lon || !alt || fields[13] != "OK" || fields[14].empty() || !duration || *duration < 0) {
+            return std::nullopt;
+        }
+        receipt.latitude = *lat;
+        receipt.longitude = *lon;
+    }
+    return receipt;
+}
+
+std::optional<SurveyReceipt> surveyReceipt(const NMEA::Sentence& sentence)
+{
+    if (sentence.count < 9) {
+        return std::nullopt;
+    }
+    const auto& fields = sentence.fields;
+    if (fields[2] != "POS" || fields[3] != "AVG") {
+        return std::nullopt;
+    }
+    return fields[4] == "STARTED" ? surveyStartReceipt(sentence) : surveyFinishReceipt(sentence);
+}
+
 /// Configures an Ashtech receiver from Ashtech::Plan: finds its port and rate, moves the link to 115200 baud,
 /// identifies the board, which must be an MB-Two, and selects the navigation output. The receiver becomes a base
 /// station once it reports a position: the streaming services start the survey-in or set the fixed position, and start
@@ -162,6 +359,10 @@ private:
     std::optional<GPSReceiveUpdates> _handlePosition(const NMEA::Sentence& sentence, uint64_t nowUs);
     std::optional<GPSReceiveUpdates> _handleAccuracy(const NMEA::Sentence& sentence, uint64_t nowUs);
     std::optional<GPSReceiveUpdates> _handleSurveyReceipt(const NMEA::Sentence& sentence, GPSDecodeContext& context);
+    /// Whether @a receipt is the one the survey expects next: the start the pending command awaits, at the receiver's
+    /// current time, or the finish that follows the start, a completed one no sooner than the interval. Keeps the
+    /// start's time; a finish ends the request for receipts.
+    bool _acceptSurveyReceipt(const SurveyReceipt& receipt, bool awaitingReceipt, uint64_t nowUs);
     void _expireMetadata(uint64_t nowUs);
     void _applyMetadata(std::optional<int> time, uint64_t nowUs);
 
@@ -413,102 +614,21 @@ std::optional<GPSReceiveUpdates> Protocol::_handleGGA(const NMEA::Sentence& sent
 
 std::optional<GPSReceiveUpdates> Protocol::_handlePosition(const NMEA::Sentence& sentence, uint64_t nowUs)
 {
-    /*
-    Example
-    $PASHR,POS,2,10,125410.00,5525.8138702,N,03833.9587380,E,131.555,1.0,0.0,0.007,-0.001,2.0,1.0,1.7,1.0,*34
-
-        $PASHR,POS,d1,d2,m3,m4,c5,m6,c7,f8,f9,f10,f11,f12,f13,f14,f15,f16,s17*cc
-        Parameter Description Range
-          d1 Position mode 0: standalone
-                           1: differential
-                           2: RTK float
-                           3: RTK fixed
-                           5: Dead reckoning
-                           9: SBAS (see NPT setting)
-          d2 Number of satellite used in position fix 0-99
-          m3 Current UTC time of position fix (hhmmss.ss) 000000.00-235959.99
-          m4 Latitude of position (ddmm.mmmmmm) 0-90 degrees 00-59.9999999 minutes
-          c5 Latitude sector N, S
-          m6 Longitude of position (dddmm.mmmmmm) 0-180 degrees 00-59.9999999 minutes
-          c7 Longitude sector E,W
-          f8 Altitude above ellipsoid +9999.000
-          f9 Differential age (data link age), seconds 0.0-600.0
-          f10 True track/course over ground in degrees 0.0-359.9
-          f11 Speed over ground in knots 0.0-999.9
-          f12 Vertical velocity in decimeters per second +999.9
-          f13 PDOP 0-99.9
-          f14 HDOP 0-99.9
-          f15 VDOP 0-99.9
-          f16 TDOP 0-99.9
-          s17 Reserved no data
-          *cc Checksum
-        */
-    // d1 is the third field, after $PASHR and POS. An empty field keeps its default; a malformed one rejects the
-    // sentence. Ashtech reports an empty coordinate (latitude, longitude or altitude) until it has a fix.
-    const auto& fields = sentence.fields;
-    const auto quality = numberOr(fields[2], 0);
-    const auto satellites = numberOr(fields[3], 0);
-    const auto latitude = numberOr(fields[5], 0.0);
-    const auto longitude = numberOr(fields[7], 0.0);
-    const auto altitude = numberOr(fields[9], 0.0);
-    const auto horizontalDop = numberOr(fields[15], 99.9);
-    const auto verticalDop = numberOr(fields[16], 99.9);
-    // Track and speed are range-checked with the velocity below. Time, differential age, vertical velocity, PDOP and
-    // TDOP are validated but not reported.
-    for (const size_t validated : {4, 10, 11, 12, 13, 14, 17}) {
-        if (!numberOr(fields[validated], 0.0)) {
-            return std::nullopt;
-        }
-    }
-    const std::string_view northSouth = fields[6];
-    const std::string_view eastWest = fields[8];
-    // Position modes (d1) outside the 0 to 5 that follow GPSFixQuality's order.
-    constexpr int SBAS_DIFFERENTIAL = 9;
-    constexpr int BEIDOU_DIFFERENTIAL = 10;
-    constexpr int RTK_FLOAT = 12;
-    constexpr int RTK_FIXED = 13;
-    constexpr int RTK_FLOAT_DITHERED = 22;
-    constexpr int RTK_FIXED_DITHERED = 23;
-    constexpr int MAX_POSITION_MODE = RTK_FIXED_DITHERED;
-    constexpr int MAX_SATELLITES = 255;
-    // 90 and 180 degrees as ddmm.mmmm and dddmm.mmmm.
-    constexpr double MAX_LATITUDE = 9000;
-    constexpr double MAX_LONGITUDE = 18000;
-    if (!quality || *quality < 0 || *quality > MAX_POSITION_MODE || !satellites || *satellites < 0 ||
-        *satellites > MAX_SATELLITES || !latitude || *latitude < 0 || *latitude > MAX_LATITUDE || !longitude ||
-        *longitude < 0 || *longitude > MAX_LONGITUDE || !altitude || !horizontalDop || !verticalDop ||
-        (northSouth != "N" && northSouth != "S") || (eastWest != "E" && eastWest != "W")) {
+    const auto fix = positionFix(sentence);
+    if (!fix) {
         return std::nullopt;
     }
-    const bool coordinatesFound = !fields[5].empty() && !fields[7].empty() && !fields[9].empty();
 
     auto& navigation = _nmea.position().navigation;
-    navigation.latitudeDegrees = (northSouth == "S" ? -1 : 1) * NMEA::degreesFromDegreesMinutes(*latitude);
-    navigation.longitudeDegrees = (eastWest == "W" ? -1 : 1) * NMEA::degreesFromDegreesMinutes(*longitude);
-    navigation.altitudeEllipsoidMeters = *altitude;
+    navigation.latitudeDegrees = fix->latitudeDegrees;
+    navigation.longitudeDegrees = fix->longitudeDegrees;
+    navigation.altitudeEllipsoidMeters = fix->altitudeEllipsoidMeters;
     navigation.altitudeMslMeters = NAN;
-    navigation.horizontalDop = static_cast<float>(*horizontalDop);
-    navigation.verticalDop = static_cast<float>(*verticalDop);
+    navigation.horizontalDop = fix->horizontalDop;
+    navigation.verticalDop = fix->verticalDop;
+    navigation.fixType = fix->coordinatesFound ? positionFixType(fix->mode) : GPSPositionReport::FixType::NoFix;
 
-    if (!coordinatesFound) {
-        navigation.fixType = GPSPositionReport::FixType::NoFix;
-
-    } else {
-        if (*quality == SBAS_DIFFERENTIAL || *quality == BEIDOU_DIFFERENTIAL) {
-            navigation.fixType = GPSPositionReport::FixType::Differential;
-
-        } else if (*quality == RTK_FLOAT || *quality == RTK_FLOAT_DITHERED) {
-            navigation.fixType = GPSPositionReport::FixType::RTKFloat;
-
-        } else if (*quality == RTK_FIXED || *quality == RTK_FIXED_DITHERED) {
-            navigation.fixType = GPSPositionReport::FixType::RTKFixed;
-
-        } else {
-            // Modes 0 to 3 and 5 are standalone, differential, RTK float, RTK fixed and dead reckoning: GPSFixQuality
-            // from Fix3D on.
-            navigation.fixType = gpsFixQualityFromValue(static_cast<int>(GPSPositionReport::FixType::Fix3D) + *quality);
-        }
-
+    if (fix->coordinatesFound) {
         _receiverPositions = true;
         // The first valid position sets up the configured receiver as a base station.
         if (_ready && !_baseSetupDone) {
@@ -517,16 +637,15 @@ std::optional<GPSReceiveUpdates> Protocol::_handlePosition(const NMEA::Sentence&
     }
 
     navigation.timestampUs = nowUs;
-    _applyMetadata(NMEA::utcMilliseconds(sentence.fields[4]), nowUs);
-    navigation.satellitesUsed = gpsSatellitesUsed(static_cast<unsigned>(*satellites));
+    _applyMetadata(fix->utcMilliseconds, nowUs);
+    navigation.satellitesUsed = gpsSatellitesUsed(fix->satellites);
 
     // Velocity needs a fix, and a track and a speed that are both present and in range.
-    const auto courseDegrees = NMEA::courseDegrees(fields[11]);
-    const auto speed = NMEA::speedMetersPerSecond(fields[12], NMEA::KNOTS_TO_METERS_PER_SECOND);
-    const bool velocityValid = coordinatesFound && courseDegrees && speed;
-    navigation.speedMetersPerSecond = velocityValid ? static_cast<float>(*speed) : NAN;
+    const bool velocityValid = fix->coordinatesFound && fix->courseDegrees && fix->speedMetersPerSecond;
+    navigation.speedMetersPerSecond = velocityValid ? static_cast<float>(*fix->speedMetersPerSecond) : NAN;
     // Course over ground (the direction of movement, not the heading).
-    navigation.courseRadians = velocityValid ? static_cast<float>(*courseDegrees * GPSProtocolMath::DEG_TO_RAD) : NAN;
+    navigation.courseRadians =
+        velocityValid ? static_cast<float>(*fix->courseDegrees * GPSProtocolMath::DEG_TO_RAD) : NAN;
     _nmea.position().velocityValid = velocityValid;
     return GPSReceiveUpdate::Position;
 }
@@ -551,72 +670,23 @@ std::optional<GPSReceiveUpdates> Protocol::_handleAccuracy(const NMEA::Sentence&
 std::optional<GPSReceiveUpdates> Protocol::_handleSurveyReceipt(const NMEA::Sentence& sentence,
                                                                 GPSDecodeContext& context)
 {
-    if (sentence.count < 9) {
+    const auto receipt = surveyReceipt(sentence);
+    if (!receipt) {
         return std::nullopt;
     }
-    const auto& fields = sentence.fields;
-    if (fields[2] != "POS" || fields[3] != "AVG") {
-        return std::nullopt;
-    }
-    const bool started = fields[4] == "STARTED";
-    const bool failed = !started && fields[8] == "ERR";
-    double latitude = NAN;
-    double longitude = NAN;
-    std::optional<uint64_t> receiptTime;
-    std::optional<uint32_t> interval;
-
-    if (started) {
-        interval = NMEA::number<uint32_t>(fields[6]);
-        receiptTime = receiptUtc(fields[8], fields[7]);
-        if (sentence.count != 9 || fields[5] != "INTERVAL" || !interval || *interval == 0 || !receiptTime) {
-            return std::nullopt;
-        }
-    } else {
-        interval = NMEA::number<uint32_t>(fields[4]);
-        receiptTime = receiptUtc(fields[7], fields[6]);
-        if (!interval || *interval == 0 || fields[5] != "FINISHED" || !receiptTime ||
-            sentence.count != (failed ? 9 : 16)) {
-            return std::nullopt;
-        }
-        if (!failed) {
-            const auto lat = NMEA::coordinate(fields[8], fields[9], NMEA::Coordinate::Latitude);
-            const auto lon = NMEA::coordinate(fields[10], fields[11], NMEA::Coordinate::Longitude);
-            const auto alt = NMEA::number<float>(fields[12]);
-            const auto duration = NMEA::number<double>(fields[15]);
-            if (!lat || !lon || !alt || fields[13] != "OK" || fields[14].empty() || !duration || *duration < 0) {
-                return std::nullopt;
-            }
-            latitude = *lat;
-            longitude = *lon;
-        }
-    }
-
     const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&_base.mode);
     if (!_ready || !survey || !_surveyReceiptRequested) {
         return std::nullopt;
     }
-    if (*interval != survey->duration.count()) {
+    if (receipt->interval != survey->duration.count()) {
         return std::nullopt;
     }
     const uint64_t now = context.nowUs();
     const bool awaitingReceipt = _awaitingSurveyReceipt && context.replyPending();
-    if (started) {
-        if (!awaitingReceipt || _surveyReceiptStartUtc) {
-            return std::nullopt;
-        }
-        if (_utcReference && MonotonicClock::withinAge(_utcReceivedUs, now, STATUS_MAX_AGE) &&
-            (*receiptTime < _utcReference ||
-             std::chrono::microseconds(*receiptTime - _utcReference) > STATUS_MAX_AGE)) {
-            return std::nullopt;
-        }
-        _surveyReceiptStartUtc = receiptTime;
-    } else {
-        if (!_surveyReceiptStartUtc || *receiptTime < *_surveyReceiptStartUtc ||
-            (!failed && *receiptTime - *_surveyReceiptStartUtc < uint64_t(*interval) * 1000000)) {
-            return std::nullopt;
-        }
-        _requestSurveyReceipts(false);
+    if (!_acceptSurveyReceipt(*receipt, awaitingReceipt, now)) {
+        return std::nullopt;
     }
+    const bool failed = receipt->stage == SurveyReceipt::Stage::Failed;
     if (awaitingReceipt) {
         context.resolveReply(failed ? GPSCommandOutcome::Rejected : GPSCommandOutcome::Acknowledged);
     }
@@ -625,12 +695,36 @@ std::optional<GPSReceiveUpdates> Protocol::_handleSurveyReceipt(const NMEA::Sent
         _surveyClock.reset();
         _ready = false;
         context.loseBase(QStringLiteral("Trimble receiver reported that position averaging failed"));
-    } else if (!started) {
+    } else if (receipt->stage == SurveyReceipt::Stage::Finished) {
         // The survey receipt's height is validated but not reported.
-        _surveyClock.finish(context, GPSBaseState::Valid, {.latitudeDegrees = latitude, .longitudeDegrees = longitude});
+        _surveyClock.finish(context, GPSBaseState::Valid,
+                            {.latitudeDegrees = receipt->latitude, .longitudeDegrees = receipt->longitude});
         _rtcmActivationPending = true;
     }
     return GPSReceiveUpdates{};
+}
+
+bool Protocol::_acceptSurveyReceipt(const SurveyReceipt& receipt, bool awaitingReceipt, uint64_t nowUs)
+{
+    if (receipt.stage == SurveyReceipt::Stage::Started) {
+        if (!awaitingReceipt || _surveyReceiptStartUtc) {
+            return false;
+        }
+        if (_utcReference && MonotonicClock::withinAge(_utcReceivedUs, nowUs, STATUS_MAX_AGE) &&
+            (receipt.utcUs < _utcReference ||
+             std::chrono::microseconds(receipt.utcUs - _utcReference) > STATUS_MAX_AGE)) {
+            return false;
+        }
+        _surveyReceiptStartUtc = receipt.utcUs;
+        return true;
+    }
+    const bool failed = receipt.stage == SurveyReceipt::Stage::Failed;
+    if (!_surveyReceiptStartUtc || receipt.utcUs < *_surveyReceiptStartUtc ||
+        (!failed && receipt.utcUs - *_surveyReceiptStartUtc < uint64_t(receipt.interval) * 1000000)) {
+        return false;
+    }
+    _requestSurveyReceipts(false);
+    return true;
 }
 
 void Protocol::_expire(GPSDecodeContext& context)
