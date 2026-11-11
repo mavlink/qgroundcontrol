@@ -4,10 +4,7 @@
 # receiver. Part of the QGC test build on Linux, and of test/GPS/Standalone without the application.
 # ============================================================================
 
-add_executable(
-    QGCGPSHardwareRunner GPSHardwareRunner.cc GPSEvidenceTransport.cc GPSEvidenceTransport.h ReplayGPSTransport.cc
-                         ReplayGPSTransport.h
-)
+add_executable(QGCGPSHardwareRunner GPSHardwareRunner.cc GPSEvidenceTransport.cc GPSEvidenceTransport.h)
 target_compile_features(QGCGPSHardwareRunner PRIVATE cxx_std_20)
 target_link_libraries(
     QGCGPSHardwareRunner

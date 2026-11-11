@@ -32,13 +32,17 @@ struct SettingsReceiver
 
     ScriptedReceiverWorker* worker() const { return workers.current(); }
 
+    // Scripted workers open no link, so a recorded session names a file here and never creates it.
+    static QString recordingDirectory() { return QStringLiteral("/test/recordings"); }
+
 #ifndef QGC_NO_SERIAL_LINK
     // Every device the tests select; the panel's own port list decides which ones it shows as available.
     TestSerialPorts serial{{serialPort(QStringLiteral("/test/receiver")), serialPort(QStringLiteral("/test/other")),
                             serialPort(QStringLiteral("/test/missing"))}};
-    GPSTest::ScriptedGPSReceiver scripted{nullptr, {.serialPorts = &serial.manager}};
+    GPSTest::ScriptedGPSReceiver scripted{nullptr,
+                                          {.serialPorts = &serial.manager, .recordingDirectory = recordingDirectory}};
 #else
-    GPSTest::ScriptedGPSReceiver scripted;
+    GPSTest::ScriptedGPSReceiver scripted{nullptr, {.recordingDirectory = recordingDirectory}};
 #endif
     GPSReceiver& gps = scripted.receiver;
     ScriptedReceiverWorkerFactory& workers = scripted.workers;
@@ -390,6 +394,42 @@ void GPSReceiverSettingsTest::_compactCorrectionsToggle()
     QVERIFY(panel.receiver.gps.connectReceiver());
     QVERIFY(panel.receiver.worker()->capturedConfig().base.compactObservations);
     QVERIFY(!toggle->isEnabled());
+}
+
+void GPSReceiverSettingsTest::_recordingSwitch()
+{
+    Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));
+    QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
+    auto* toggle = panel.find("rtkRecordReceiverData");
+    auto* file = panel.find("rtkRecordingFile");
+    QVERIFY(toggle && file);
+    GPSReceiver& receiver = panel.receiver.gps;
+    QVERIFY(!toggle->property("checked").toBool());
+    QVERIFY(!file->isVisible());
+
+    // The session that already runs is not recorded, and the note says when recording starts.
+    QVERIFY(receiver.connectReceiver());
+    QVERIFY(QMetaObject::invokeMethod(toggle, "click"));
+    QVERIFY(receiver.recordSessions());
+    QVERIFY(file->isVisible());
+    QCOMPARE(file->property("text").toString(),
+             QCoreApplication::translate("GPSReceiverRecording", "Recording starts with the next connection."));
+
+    receiver.disconnectReceiver();
+    // The retired worker holds the serial port until it finishes.
+    panel.receiver.workers.finishRetired();
+    QVERIFY(receiver.connectReceiver());
+    const QString recording = receiver.recordingFile();
+    QVERIFY(recording.startsWith(SettingsReceiver::recordingDirectory()));
+    QCOMPARE(file->property("text").toString(),
+             QCoreApplication::translate("GPSReceiverRecording", "Recording file: %1").arg(recording));
+
+    // The switch follows the receiver, and the session that started recorded stays so until it ends.
+    receiver.setRecordSessions(false);
+    QVERIFY(!toggle->property("checked").toBool());
+    QVERIFY(file->property("text").toString().endsWith(recording));
+    receiver.disconnectReceiver();
+    QVERIFY(!file->isVisible());
 }
 
 void GPSReceiverSettingsTest::_consentIsOneUse()

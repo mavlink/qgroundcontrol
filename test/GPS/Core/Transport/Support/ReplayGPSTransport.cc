@@ -1,9 +1,13 @@
 #include "ReplayGPSTransport.h"
 
 #include <algorithm>
+#include <cstring>
 #include <thread>
 #include <utility>
 
+#include <QtCore/QList>
+
+#include "GPSRecordingTransport.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(ReplayGPSTransportLog, "Test.GPS.Transport.ReplayGPSTransport")
@@ -16,6 +20,14 @@ constexpr qint64 BITS_PER_BYTE = 10;
 constexpr qint64 MICROSECONDS_PER_SECOND = 1'000'000;
 /// Waits sleep in slices this long so a stop request ends them promptly.
 constexpr std::chrono::milliseconds SLEEP_SLICE{20};
+
+/// The bytes of a recording line that is a received record; empty for every other line.
+QByteArray receivedBytes(const QByteArray& line)
+{
+    const QList<QByteArray> fields = line.trimmed().split(' ');
+    return fields.size() == 3 && fields[1] == GPSRecordingTransport::RECEIVED ? QByteArray::fromHex(fields[2])
+                                                                              : QByteArray();
+}
 }  // namespace
 
 ReplayGPSTransport::ReplayGPSTransport(QString path, GPSCancelToken cancelToken, unsigned baudrate, int chunkBytes)
@@ -43,13 +55,21 @@ GPSOpenResult ReplayGPSTransport::open()
     if (!_file.open(QIODevice::ReadOnly)) {
         return {GPSOpenStatus::Error, _file.errorString()};
     }
-    _size = _file.size();
+    // A recording starts with its header line, whichever line ending it has; anything else is raw receiver output.
+    const QByteArray start = _file.peek(sizeof(GPSRecordingTransport::FILE_HEADER) + 1);
+    const qsizetype lineEnd = start.indexOf('\n');
+    _recording = lineEnd >= 0 && start.first(lineEnd).trimmed() == GPSRecordingTransport::FILE_HEADER;
+    if (_recording) {
+        (void) _file.skip(lineEnd + 1);
+    }
+    _pending.clear();
     _delivered = 0;
     _failed = false;
-    _finished = _size == 0;
+    _finished = false;
+    _load();
     _clock.start();
-    qCDebug(ReplayGPSTransportLog) << "Replaying" << _size << "bytes from" << _file.fileName() << "at baud"
-                                   << _baudrate;
+    qCDebug(ReplayGPSTransportLog) << "Replaying" << (_recording ? "recording" : "raw capture") << _file.fileName()
+                                   << "at baud" << _baudrate;
     return {GPSOpenStatus::Opened};
 }
 
@@ -86,18 +106,12 @@ GPSReadResult ReplayGPSTransport::read(std::span<uint8_t> buffer, std::chrono::m
             return {GPSReadStatus::TimedOut};
         }
     }
-    const qint64 taken = _file.read(reinterpret_cast<char*>(buffer.data()), count);
-    if (taken < 0) {
-        _failed = true;
-        qCWarning(ReplayGPSTransportLog) << "Cannot read receiver recording" << _file.fileName() << _file.errorString();
-        return {GPSReadStatus::Error, 0, _file.errorString()};
-    }
-    _delivered += taken;
-    _finished = taken == 0 || _delivered >= _size;
-    if (taken == 0) {
-        return {GPSReadStatus::TimedOut};
-    }
-    return {GPSReadStatus::Data, static_cast<int>(taken)};
+    std::memcpy(buffer.data(), _pending.constData(), static_cast<size_t>(count));
+    _pending.remove(0, count);
+    _delivered += count;
+    // Loaded now, so that finished() is true as soon as the last byte was delivered.
+    _load();
+    return {GPSReadStatus::Data, static_cast<int>(count)};
 }
 
 bool ReplayGPSTransport::setBaudrate(unsigned)
@@ -111,12 +125,24 @@ GPSWriteResult ReplayGPSTransport::writeData(QByteArrayView bytes, QDeadlineTime
     return {GPSWriteStatus::Completed, length, length};
 }
 
+void ReplayGPSTransport::_load()
+{
+    while (_pending.isEmpty() && !_file.atEnd()) {
+        _pending = _recording ? receivedBytes(_file.readLine()) : _file.read(_chunkBytes);
+        if (_file.error() != QFileDevice::NoError) {
+            qCWarning(ReplayGPSTransportLog)
+                << "Cannot read receiver recording" << _file.fileName() << _file.errorString();
+            _pending.clear();
+            _failed = true;
+            return;
+        }
+    }
+    _finished = _pending.isEmpty();
+}
+
 qint64 ReplayGPSTransport::_available(qint64 length) const
 {
-    if (_finished) {
-        return 0;
-    }
-    qint64 available = std::min({length, static_cast<qint64>(_chunkBytes), _size - _delivered});
+    qint64 available = std::min({length, static_cast<qint64>(_chunkBytes), static_cast<qint64>(_pending.size())});
     if (_baudrate > 0) {
         const qint64 elapsedUs = _clock.nsecsElapsed() / 1000;
         const qint64 due = elapsedUs * _baudrate / (BITS_PER_BYTE * MICROSECONDS_PER_SECOND);

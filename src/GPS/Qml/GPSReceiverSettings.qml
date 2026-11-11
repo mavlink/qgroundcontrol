@@ -312,6 +312,8 @@ QGCGroupBox {
         toggle.objectName: "rtkAutoConnect"
     }
 
+    GPSReceiverRecording { receiver: root.receiver }
+
     QGCButton {
         objectName: "rtkConnectButton"
         Layout.fillWidth: true

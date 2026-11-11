@@ -7,6 +7,7 @@
 #include "GPSReceiverFactGroup.h"
 #include "GPSReceiverMessages.h"
 #include "GPSReceiverSession.h"
+#include "GPSRecordingTransport.h"
 #include "GPSSourceHealth.h"
 #include "PositionManager.h"
 #include "QGCLoggingCategory.h"
@@ -22,6 +23,7 @@
 #include <algorithm>
 #include <utility>
 
+#include <QtCore/QDateTime>
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QSet>
 
@@ -63,6 +65,7 @@ GPSReceiver::GPSReceiver(QObject* parent, RuntimeScheduler* scheduler, const Dep
 #ifndef QGC_NO_SERIAL_LINK
     , _serialPorts(dependencies.serialPorts)
 #endif
+    , _recordingDirectory(dependencies.recordingDirectory)
 {
     qCDebug(GPSReceiverLog) << this;
     // A silent receiver stays connected, so its last solution must not remain on display.
@@ -192,6 +195,10 @@ void GPSReceiver::_emitChanges()
     const ReceiverState receiver = _receiverState();
     if (std::exchange(_notified.receiver, receiver) != receiver) {
         emit receiverChanged();
+    }
+    const QString recording = recordingFile();
+    if (std::exchange(_notifiedRecordingFile, recording) != recording) {
+        emit recordingFileChanged();
     }
 }
 
@@ -554,6 +561,7 @@ bool GPSReceiver::_connectReceiver(GPSType type, GPSReceiverWorker::TransportFac
     _retireSession();
     _resetStatus();
     _setError();
+    transportFactory = _recorded(std::move(transportFactory), type);
     const RTKSettings::ReceiverRole role =
         type == GPSType::passive ? RTKSettings::Passive : RTKSettings::ConfiguredBase;
     auto* const session = new GPSReceiverSession(
@@ -686,4 +694,44 @@ void GPSReceiver::_updateLabels()
     if (std::exchange(_summaryLabel, label) != label) {
         emit summaryLabelChanged();
     }
+}
+
+void GPSReceiver::setRecordSessions(bool record)
+{
+    if (_recordSessions != record) {
+        _recordSessions = record;
+        emit recordSessionsChanged();
+    }
+}
+
+QString GPSReceiver::recordingFile() const
+{
+    const bool stopped = _recordingStopped && _recordingStopped->load();
+    return _session && !stopped ? _recordingFile : QString();
+}
+
+GPSReceiverWorker::TransportFactory GPSReceiver::_recorded(GPSReceiverWorker::TransportFactory transportFactory,
+                                                           GPSType type)
+{
+    _recordingFile.clear();
+    _recordingStopped.reset();
+    if (!_recordSessions) {
+        return transportFactory;
+    }
+    const QString directory = _recordingDirectory ? _recordingDirectory() : QString();
+    if (directory.isEmpty()) {
+        qCWarning(GPSReceiverLog) << "No folder to record the receiver session to";
+        return transportFactory;
+    }
+    _recordingFile = GPSRecordingTransport::sessionFile(directory, type, QDateTime::currentDateTimeUtc());
+    _recordingStopped = std::make_shared<std::atomic_bool>(false);
+    return [factory = std::move(transportFactory), file = _recordingFile,
+            stopped = _recordingStopped](GPSCancelToken cancelToken) -> std::unique_ptr<GPSTransport> {
+        std::unique_ptr<GPSTransport> transport = factory(std::move(cancelToken));
+        if (!transport) {
+            return transport;
+        }
+        return std::make_unique<GPSRecordingTransport>(
+            std::move(transport), file, GPSRecordingTransport::MAX_FILE_BYTES, [stopped]() { stopped->store(true); });
+    };
 }

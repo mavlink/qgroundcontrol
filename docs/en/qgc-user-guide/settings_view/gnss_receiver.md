@@ -42,6 +42,14 @@ The settings are:
   **Disconnect** pauses automatic connection until you select **Connect** again or turn the setting back on.
   When off, the receiver connects only when you select **Connect**, and a lost connection is only reported.
   Automatic connections never save settings to the receiver's flash.
+- **Record receiver data:** Records every connection that starts while it is on, to send with a problem report.
+  It is off each time QGroundControl starts, and a receiver that is already connected is recorded from its next connection.
+  Each connection gets a file in the `GPSReceiver` folder of the [Application Load/Save Path](general.md#load_save_path), named with the UTC time it started and the receiver type, such as `20260102T030405.006Z-ublox.log`.
+  The file's path is shown below the switch while the connection lasts.
+  The file holds the raw receiver input and output: every byte the receiver sent and every byte QGroundControl sent to it, with the baud rate changes.
+  It therefore includes the receiver's positions and the base station location, so share it only where that is acceptable.
+  It is a text file: after a heading line, each line is the time in microseconds since the recording started, then `RX` and the bytes received in hexadecimal, `TX` and the bytes sent, or `BAUD` and the new baud rate.
+  A recording stops when its file reaches 256 MB or cannot be written: the application log reports it and the path is no longer shown. The connection continues either way.
 - **Connect** / **Disconnect** (button): Connects the receiver with these settings, or disconnects it.
 
 A message below the settings, also shown in the GNSS indicator's drop-down, explains a failed or lost connection.

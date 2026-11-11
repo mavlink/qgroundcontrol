@@ -27,6 +27,8 @@ private slots:
     void _openFailureNamesCause();
     void _outputOverflowWarning_data();
     void _outputOverflowWarning();
+    void _recordsSessionsStartedWhileOn();
+    void _recordingFileClearsWhenRecordingFails();
 #ifndef QGC_NO_SERIAL_LINK
     void _serialPortEntries();
     void _serialReservationSurvivesDelayedStop();

@@ -20,6 +20,7 @@ qt_add_qml_module(
         GcsPositionStatus.qml
         GPSField.qml
         GPSNoteLabel.qml
+        GPSReceiverRecording.qml
         GPSReceiverSerialPort.qml
         GPSReceiverSettings.qml
         GPSReceiverStatus.qml

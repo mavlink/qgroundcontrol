@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -40,6 +41,9 @@ struct GPSReceiverDependencies
     /// session holds its claim until its worker has stopped, and ends unplugged when a scan no longer lists its device.
     SerialPortManager* serialPorts = nullptr;
 #endif
+    /// The folder a recorded session's file goes to, asked as each session starts. Without it, or while it returns
+    /// an empty path, sessions are not recorded.
+    std::function<QString()> recordingDirectory = nullptr;
 };
 
 /// A serial device the receiver settings offer.
@@ -100,6 +104,12 @@ class GPSReceiver : public QObject, private GPSReceiverConnector
     Q_PROPERTY(bool baseModeSupported READ baseModeSupported NOTIFY configurationChanged FINAL)
     /// Connect may start the configured receiver: a selected receiver type, base mode and connection it supports.
     Q_PROPERTY(bool canConnect READ canConnect NOTIFY configurationChanged FINAL)
+    /// Records the receiver's raw input and output of every session that starts while this is on. Off at startup and
+    /// never saved.
+    Q_PROPERTY(bool recordSessions READ recordSessions WRITE setRecordSessions NOTIFY recordSessionsChanged FINAL)
+    /// The file the current session is recorded to; empty when it is not recorded, and from the receiver's next
+    /// report on once the recording stopped after a file error or at its size limit.
+    Q_PROPERTY(QString recordingFile READ recordingFile NOTIFY recordingFileChanged FINAL)
 
     friend class GPSReceiverTest;
     friend class GPSReceiverSettingsBindingTest;
@@ -210,6 +220,15 @@ public:
 
     bool canConnect() const;
 
+    bool recordSessions() const { return _recordSessions; }
+
+    /// Applies to the sessions that start from now on; the current session stays as it started.
+    void setRecordSessions(bool record);
+
+    /// The recording is a GPSRecordingTransport file in the Dependencies' recording folder, named with the UTC time
+    /// the session started at and the receiver type.
+    QString recordingFile() const;
+
 signals:
     void receiverChanged();
     void errorMessageChanged();
@@ -218,6 +237,8 @@ signals:
     void serialPortEntriesChanged();
     void summaryLabelChanged();
     void statusTextChanged();
+    void recordSessionsChanged();
+    void recordingFileChanged();
 
 private slots:
     void _onSatelliteInfoUpdated(const GPSSatelliteReport& msg);
@@ -278,6 +299,9 @@ private:
     bool _connectReceiver(GPSType type, GPSReceiverWorker::TransportFactory transportFactory,
                           const QString& sourceInstance, uint32_t baudRate, bool allowPersistentChanges,
                           const QString& serialDevice = {}, const QString& endpoint = {});
+    /// Names the new session's recording and returns @a transportFactory wrapped to record the link it opens, or
+    /// unchanged when sessions are not recorded.
+    GPSReceiverWorker::TransportFactory _recorded(GPSReceiverWorker::TransportFactory transportFactory, GPSType type);
     void _endSession(GPSConnectionError error, const QString& detail, GPSReceiverSessionEnd end);
     /// The retired session is deleted later, so it may be retired from inside its own signals.
     void _retireSession();
@@ -328,4 +352,11 @@ private:
     QHash<QString, std::weak_ptr<const SerialPortManager::Reservation>> _serialClaims;
     std::function<std::unique_ptr<GPSTransport>(const QString&, GPSCancelToken)> _serialTransportFactory;
 #endif
+    const std::function<QString()> _recordingDirectory;
+    /// The recording of the latest session.
+    QString _recordingFile;
+    /// Set on the worker thread when that recording stopped before its session.
+    std::shared_ptr<std::atomic_bool> _recordingStopped;
+    QString _notifiedRecordingFile;
+    bool _recordSessions = false;
 };

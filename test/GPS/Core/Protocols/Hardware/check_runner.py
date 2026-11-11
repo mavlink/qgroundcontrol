@@ -71,18 +71,25 @@ def check_record_and_replay(binary: str) -> None:
             3,
         )
         assert len(report["recordings"]) == 1, report
-        received = Path(report["recordings"][0]["received"])
-        sent = Path(report["recordings"][0]["sent"])
-        assert re.fullmatch(r"gps-ublox-\d{8}-\d{6}-rx\.ubx", received.name), received
-        assert sent.name == received.name.replace("-rx.ubx", "-tx.bin"), sent
-        assert b"\xb5\x62" in received.read_bytes() and sent.read_bytes().startswith(b"\xb5\x62")
+        recording = Path(report["recordings"][0])
+        assert re.fullmatch(r"\d{8}T\d{6}\.\d{3}Z-ublox\.log", recording.name), recording
+        header, *lines = recording.read_text().splitlines()
+        assert header == "QGC GPS receiver recording 1", header
+        # Each record is its time in microseconds, its kind, and bytes in hexadecimal or a baud rate.
+        records = [line.split(" ") for line in lines]
+        times = [int(time) for time, _, _ in records]
+        assert times == sorted(times), times
+        assert {kind for _, kind, _ in records} == {"RX", "TX", "BAUD"}, lines
+        received = b"".join(bytes.fromhex(value) for _, kind, value in records if kind == "RX")
+        sent = b"".join(bytes.fromhex(value) for _, kind, value in records if kind == "TX")
+        assert b"\xb5\x62" in received and sent.startswith(b"\xb5\x62")
         # The passive decoder reads the recorded UBX fix and survey status too.
-        report = run(binary, ["--replay", str(received), *passive], 0)
+        report = run(binary, ["--replay", str(recording), *passive], 0)
         assert report["outcome"] == "replayed" and report["replay"]["complete"], report
-        assert report["replay"]["bytes"] == received.stat().st_size
+        assert report["replay"]["bytes"] == len(received)
         assert report["positions"]["fix_types"]["3d"] > 0, report
         assert report["survey"]["messages"] > 0, report
-        report = run(binary, ["--replay", str(received), *replay, "--family", "ublox"], 0)
+        report = run(binary, ["--replay", str(recording), *replay, "--family", "ublox"], 0)
         assert report["outcome"] == "replayed" and report["replay"]["decode_only"], report
         assert report["positions"]["fix_types"]["3d"] > 0, report
         assert report["survey"]["messages"] > 0 and "active" in report["survey"], report

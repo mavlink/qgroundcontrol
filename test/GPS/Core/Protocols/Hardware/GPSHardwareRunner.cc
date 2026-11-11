@@ -32,14 +32,14 @@
 #include "GPSProtocolRuntime.h"
 #include "GPSReceiverDescriptor.h"
 #include "GPSReceiverFamilies.h"
+#include "GPSRecordingTransport.h"
 #include "MonotonicClock.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "Protocols/Support/ScriptedReceiver.h"
 #include "Protocols/Support/UBXReceiverModel.h"
 #include "RTCMFramer.h"
-#include "ReplayGPSTransport.h"
 #include "TCPGPSTransport.h"
-#include "Transport/Support/GPSRecordingTransport.h"
+#include "Transport/Support/ReplayGPSTransport.h"
 
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialGPSTransport.h"
@@ -649,16 +649,16 @@ int run(const Options& options)
         watchdog.join();
     });
     QJsonArray recordings;
-    // Each physical session gets its own pair of files; the scripted peer keeps one session across stages.
+    // Each physical session gets its own file; the scripted peer keeps one session across stages.
     const auto recorded = [&](std::unique_ptr<GPSTransport> transport) -> std::unique_ptr<GPSTransport> {
         if (options.recordDirectory.isEmpty() || !transport) {
             return transport;
         }
-        const auto files =
-            GPSRecordingTransport::sessionFiles(options.recordDirectory, options.family, QDateTime::currentDateTime());
-        recordings.append(QJsonObject{{"received", files.received}, {"sent", files.sent}});
+        const QString file = GPSRecordingTransport::sessionFile(options.recordDirectory, options.family,
+                                                                QDateTime::currentDateTimeUtc());
+        recordings.append(file);
         report.insert("recordings", recordings);
-        return std::make_unique<GPSRecordingTransport>(std::move(transport), files);
+        return std::make_unique<GPSRecordingTransport>(std::move(transport), file);
     };
     GPSTestClock scriptedClock;
     std::unique_ptr<UBXReceiverModel> receiver;
@@ -954,10 +954,11 @@ int main(int argc, char* argv[])
         {"allow-save", "Explicitly permit LG290P settings to be saved to flash and the receiver restarted"},
         {"compact-rtcm", "Request compact MSM4 instead of MSM7 RTCM observations from a supporting base"},
         {"output", "New JSON evidence path (atomic progress snapshots; never overwrites a previous run)", "path"},
-        {"record", "Record each receiver session's raw received and sent bytes into this directory", "directory"},
+        {"record", "Record each receiver session's received and sent bytes and baud changes into this directory",
+         "directory"},
         {"replay",
-         "Decode a recorded receiver stream with --family, as configured for --role and the base options, instead of "
-         "a live transport; nothing is configured or written",
+         "Decode a session recording, or a file of raw receiver output, with --family, as configured for --role and "
+         "the base options, instead of a live transport; nothing is configured or written",
          "file"},
         {"replay-baud", "Replay pacing: 0 reads the recording as fast as possible, otherwise at this line rate", "baud",
          "0"},

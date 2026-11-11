@@ -7,10 +7,14 @@
 #include <utility>
 #include <variant>
 
+#include <QtCore/QDir>
+#include <QtCore/QFileInfo>
 #include <QtCore/QPointer>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QSemaphore>
 #include <QtCore/QTimer>
+#include <QtNetwork/QTcpServer>
+#include <QtNetwork/QTcpSocket>
 #include <QtNetwork/QUdpSocket>
 #include <QtTest/QSignalSpy>
 
@@ -20,11 +24,13 @@
 #include "GPSReceiver.h"
 #include "GPSReceiverFactGroup.h"
 #include "GPSReceiverWorker.h"
+#include "GPSRecordingTransport.h"
 #include "GPSSettingsBindings.h"
 #include "GPSTransport.h"
 #include "ManualScheduler.h"
 #include "NMEASentence.h"
 #include "PositionManager.h"
+#include "Protocols/Support/GPSProtocolTestData.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "Protocols/Support/ScriptedReceiver.h"
 #include "RTKSettings.h"
@@ -776,6 +782,106 @@ void GPSReceiverTest::_openFailureNamesCause()
     QVERIFY(!receiver.hasReceiver());
     QVERIFY(!receiver.facts()->telemetryAvailable());
     QVERIFY(connected.isEmpty());
+}
+
+void GPSReceiverTest::_recordsSessionsStartedWhileOn()
+{
+    TestFixtures::TempDirFixture directory;
+    QTcpServer peer;
+    QVERIFY(peer.listen(QHostAddress::LocalHost));
+    GPSReceiver receiver(nullptr, nullptr, {.recordingDirectory = [&directory] { return directory.path(); }});
+    auto configuration = receiverConfiguration(kPassiveManufacturer);
+    configuration.autoConnect = false;
+    configuration.connectionType = RTKSettings::Tcp;
+    configuration.tcpHost = QStringLiteral("127.0.0.1");
+    configuration.tcpPort = peer.serverPort();
+    receiver.setConfiguration(configuration);
+    QSignalSpy fileChanges(&receiver, &GPSReceiver::recordingFileChanged);
+    // Connects the receiver and returns the peer's end of its link once the session is ready, which a disconnect
+    // then ends without a configuration failure.
+    const auto connectSession = [&]() -> QTcpSocket* {
+        const auto ready = [&receiver] { return receiver.facts()->telemetryAvailable(); };
+        if (!receiver.connectReceiver() ||
+            (!peer.hasPendingConnections() && !peer.waitForNewConnection(TestTimeout::mediumMs())) ||
+            !UnitTest::waitForCondition(ready, TestTimeout::mediumMs(), QStringLiteral("receiver ready"))) {
+            return nullptr;
+        }
+        return peer.nextPendingConnection();
+    };
+
+    // Off unless turned on, and turning it on leaves the session that already runs alone.
+    QVERIFY(!receiver.recordSessions());
+    QVERIFY(connectSession());
+    QVERIFY(receiver.recordingFile().isEmpty());
+    QSignalSpy recordChanges(&receiver, &GPSReceiver::recordSessionsChanged);
+    receiver.setRecordSessions(true);
+    QCOMPARE(recordChanges.size(), 1);
+    QVERIFY(receiver.recordingFile().isEmpty());
+    receiver.disconnectReceiver();
+    QVERIFY(fileChanges.isEmpty());
+
+    QTcpSocket* const link = connectSession();
+    QVERIFY(link);
+    const QString file = receiver.recordingFile();
+    QCOMPARE(fileChanges.size(), 1);
+    QCOMPARE(QFileInfo(file).absolutePath(), directory.path());
+    QVERIFY2(QRegularExpression(QStringLiteral("^\\d{8}T\\d{6}\\.\\d{3}Z-passive\\.log$"))
+                 .match(QFileInfo(file).fileName())
+                 .hasMatch(),
+             qPrintable(file));
+    QByteArray stream;
+    for (const QByteArray& body : {QByteArray("$GPRMC,092750.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A"),
+                                   QByteArray("$GPGST,092750.000,1,1,1,0,1,1,2"),
+                                   QByteArray("$GPGGA,092750.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,")}) {
+        stream += NMEAUtils::repairChecksum(body);
+    }
+    QCOMPARE(link->write(stream), stream.size());
+    QTRY_VERIFY_WITH_TIMEOUT(receiver.acceptedPositionObservation(GPSObservation::PositionUse::GroundStation),
+                             TestTimeout::mediumMs());
+
+    // The worker closes the recording as it exits, and the file is the session's only while it runs.
+    receiver.shutdown();
+    QVERIFY(receiver.recordingFile().isEmpty());
+    QCOMPARE(fileChanges.size(), 2);
+    QCOMPARE(QDir(directory.path()).entryList(QDir::Files), QStringList{QFileInfo(file).fileName()});
+    QByteArrayList lines = readFile(file).value_or(QByteArray()).split('\n');
+    QCOMPARE(lines.takeFirst(), QByteArray(GPSRecordingTransport::FILE_HEADER));
+    QByteArray received;
+    for (const QByteArray& line : std::as_const(lines)) {
+        const QByteArrayList fields = line.split(' ');
+        if (fields.size() == 3 && fields[1] == GPSRecordingTransport::RECEIVED) {
+            received += QByteArray::fromHex(fields[2]);
+        }
+    }
+    QCOMPARE(received, stream);
+}
+
+void GPSReceiverTest::_recordingFileClearsWhenRecordingFails()
+{
+    TestFixtures::TempDirFixture directory;
+    // A regular file where the recording folder should be.
+    const QString folder = directory.createFile(QStringLiteral("GPSReceiver"), "not a folder");
+    QTcpServer peer;
+    QVERIFY(peer.listen(QHostAddress::LocalHost));
+    GPSReceiver receiver(nullptr, nullptr, {.recordingDirectory = [&folder] { return folder; }});
+    auto configuration = receiverConfiguration(kPassiveManufacturer);
+    configuration.autoConnect = false;
+    configuration.connectionType = RTKSettings::Tcp;
+    configuration.tcpHost = QStringLiteral("127.0.0.1");
+    configuration.tcpPort = peer.serverPort();
+    receiver.setConfiguration(configuration);
+    receiver.setRecordSessions(true);
+    QSignalSpy fileChanges(&receiver, &GPSReceiver::recordingFileChanged);
+
+    // The link opens although its recording cannot, and the receiver withdraws the file it named.
+    expectLogMessage("GPS.Transport.GPSRecordingTransport", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("file error")));
+    QVERIFY(receiver.connectReceiver());
+    QTRY_VERIFY_WITH_TIMEOUT(receiver.facts()->telemetryAvailable(), TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QVERIFY(receiver.recordingFile().isEmpty());
+    QCOMPARE(fileChanges.size() % 2, 0);
+    receiver.shutdown();
 }
 
 #ifndef QGC_NO_SERIAL_LINK
