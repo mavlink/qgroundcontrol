@@ -69,7 +69,6 @@ public:
         Waiting,                ///< Nothing keeps the video from playing: it is awaited.
         Stopped,                ///< stopVideo(), until startVideo().
         DisabledWhileDisarmed,  ///< VideoSettings::disableWhenDisarmed, until the vehicle arms.
-        Disabled,               ///< VideoSettings::streamEnabled is off.
     };
     Q_ENUM(NoVideoReason)
 

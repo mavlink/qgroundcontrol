@@ -4,11 +4,8 @@
 #include <QtCore/QVariantList>
 #include <QtMultimedia/QMediaDevices>
 
-#include "QGCLoggingCategory.h"
 #include "UVCDevices.h"
 #include "VideoBackend.h"
-
-QGC_LOGGING_CATEGORY(VideoSettingsLog, "Settings.VideoSettings")
 
 namespace {
 
@@ -44,17 +41,6 @@ DECLARE_SETTINGGROUP(Video, "Video")
                 forceCpuVideoPath()->setRawValue(!gpuZeroCopy);
             }
             settings.remove(QStringLiteral("gpuZeroCopyEnabled"));
-        }
-        settings.endGroup();
-    }
-
-    // Drop a stored streamEnabled=false: it has no UI, so it is a stale "disable when disarmed" state.
-    {
-        QSettings settings;
-        settings.beginGroup(settingsGroup);
-        if (!settings.value(streamEnabledName, true).toBool()) {
-            qCDebug(VideoSettingsLog) << "Clearing a stored streamEnabled=false";
-            settings.remove(streamEnabledName);
         }
         settings.endGroup();
     }
@@ -134,7 +120,6 @@ DECLARE_SETTINGSFACT(VideoSettings, showRecControl)
 DECLARE_SETTINGSFACT(VideoSettings, recordingFormat)
 DECLARE_SETTINGSFACT(VideoSettings, maxVideoSize)
 DECLARE_SETTINGSFACT(VideoSettings, enableStorageLimit)
-DECLARE_SETTINGSFACT(VideoSettings, streamEnabled)
 DECLARE_SETTINGSFACT(VideoSettings, disableWhenDisarmed)
 DECLARE_SETTINGSFACT(VideoSettings, udpUrl)
 DECLARE_SETTINGSFACT(VideoSettings, rtspUrl)

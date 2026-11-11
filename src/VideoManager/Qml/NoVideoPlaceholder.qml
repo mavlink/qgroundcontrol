@@ -14,8 +14,6 @@ Image {
 
     readonly property string _reasonText: {
         switch (root.videoManager.noVideoReason) {
-        case VideoManager.NoVideoReason.Disabled:
-            return qsTr("VIDEO DISABLED")
         case VideoManager.NoVideoReason.DisabledWhileDisarmed:
             return qsTr("VIDEO DISABLED WHILE DISARMED")
         case VideoManager.NoVideoReason.Stopped:

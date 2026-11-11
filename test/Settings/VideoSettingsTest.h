@@ -7,8 +7,6 @@ class VideoSettingsTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void _streamEnabledMigration_data();
-    void _streamEnabledMigration();
     void _videoFitEnumMatchesMetaData();
     void _videoSourcesFollowCameras();
     void _absentStoredCameraStaysSelected();

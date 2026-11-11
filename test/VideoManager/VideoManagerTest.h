@@ -27,7 +27,6 @@ private slots:
     void _testRestartingSettingsRestartStreams();
     void _testDecodingSettingsGroupRestartsStreams();
     void _testStreamSettingsGroupFollowsLowLatency();
-    void _testStreamEnabledControlsVideo();
     void _testStopVideoCancelsEverything();
     void _testAutoStreamLeavesSettingsAlone();
     void _testThermalOnlyChangeReconfiguresThermal();

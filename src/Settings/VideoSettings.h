@@ -33,7 +33,6 @@ public:
     DEFINE_SETTINGFACT(enableStorageLimit)
     /// For RTSP streams only: the others keep VideoReceiver::Config's timeout.
     DEFINE_SETTINGFACT(rtspTimeout)
-    DEFINE_SETTINGFACT(streamEnabled)
     DEFINE_SETTINGFACT(disableWhenDisarmed)
     DEFINE_SETTINGFACT(lowLatencyMode)
     DEFINE_SETTINGFACT(rtpJitterLatencyMs)

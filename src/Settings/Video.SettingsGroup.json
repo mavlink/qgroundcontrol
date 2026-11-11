@@ -128,14 +128,6 @@
             "keywords": "rtsp,timeout,stream loss,stall"
         },
         {
-            "name": "streamEnabled",
-            "shortDesc": "Video Stream Enabled",
-            "longDesc": "Start/Stop Video Stream.",
-            "type": "bool",
-            "default": true,
-            "label": "Video Stream Enabled"
-        },
-        {
             "name": "disableWhenDisarmed",
             "shortDesc": "Disables the video stream when the vehicle is disarmed to save bandwidth.",
             "longDesc": "Disables the video stream when the vehicle is disarmed. Any active recording is also stopped.",

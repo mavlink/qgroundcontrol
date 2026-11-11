@@ -220,7 +220,6 @@ void VideoManagerTest::init()
     _facts->set(_videoSettings->videoSource(), QString(VideoSettings::videoSourceUDPH264));
     _facts->set(_videoSettings->udpUrl(), QStringLiteral("0.0.0.0:5600"));
     _facts->set(_videoSettings->rtspUrl(), QStringLiteral("rtsp://cam.local/manual"));
-    _facts->set(_videoSettings->streamEnabled(), true);
     _facts->set(_videoSettings->disableWhenDisarmed(), false);
     _facts->set(_videoSettings->lowLatencyMode(), false);
     _facts->set(_videoSettings->rtpJitterLatencyMs(), 80);
@@ -416,24 +415,6 @@ void VideoManagerTest::_testStreamSettingsGroupFollowsLowLatency()
     QVERIFY(!jitterControl->property("visible").toBool());
 }
 
-void VideoManagerTest::_testStreamEnabledControlsVideo()
-{
-    QVERIFY(_videoManager->hasVideo());
-    QSignalSpy hasVideoSpy(_videoManager.get(), &VideoManager::hasVideoChanged);
-
-    _facts->set(_videoSettings->streamEnabled(), false);
-    QCOMPARE(hasVideoSpy.count(), 1);
-    QVERIFY(!_videoManager->hasVideo());
-    _settle();
-    QVERIFY(!_primary->active());
-
-    _videoSettings->streamEnabled()->setRawValue(true);
-    QCOMPARE(hasVideoSpy.count(), 2);
-    QVERIFY(_videoManager->hasVideo());
-    _settle();
-    QVERIFY(_primary->active());
-}
-
 void VideoManagerTest::_testStopVideoCancelsEverything()
 {
     QVERIFY(_primary->active());
@@ -537,7 +518,6 @@ void VideoManagerTest::_testDisableWhenDisarmed()
     QVERIFY(!_videoManager->fullScreen());
     _settle();
     QVERIFY(!_primary->active());
-    QVERIFY(_videoSettings->streamEnabled()->rawValue().toBool());
 
     switch (lift) {
         case 0:
@@ -565,7 +545,6 @@ void VideoManagerTest::_testPlaceholderTellsWhyThereIsNoVideo_data()
     QTest::newRow("disarmed") << int(VideoManager::NoVideoReason::DisabledWhileDisarmed)
                               << "VIDEO DISABLED WHILE DISARMED";
     QTest::newRow("stopped and disarmed") << int(VideoManager::NoVideoReason::Stopped) << "VIDEO STOPPED";
-    QTest::newRow("setting off") << int(VideoManager::NoVideoReason::Disabled) << "VIDEO DISABLED";
 }
 
 void VideoManagerTest::_testPlaceholderTellsWhyThereIsNoVideo()
@@ -593,17 +572,11 @@ void VideoManagerTest::_testPlaceholderTellsWhyThereIsNoVideo()
     if (row.contains(QLatin1String("stopped"))) {
         _videoManager->stopVideo();
     }
-    if (row == QLatin1String("setting off")) {
-        _facts->set(_videoSettings->streamEnabled(), false);
-    }
     QCOMPARE(int(_videoManager->noVideoReason()), reason);
     QVERIFY(showsText(placeholder.get(), text));
 
-    // startVideo() lifts all but the setting.
     _videoManager->startVideo();
-    QCOMPARE(_videoManager->noVideoReason(), (row == QLatin1String("setting off"))
-                                                 ? VideoManager::NoVideoReason::Disabled
-                                                 : VideoManager::NoVideoReason::Waiting);
+    QCOMPARE(_videoManager->noVideoReason(), VideoManager::NoVideoReason::Waiting);
 }
 
 void VideoManagerTest::_testVideoOutputRegistration()
