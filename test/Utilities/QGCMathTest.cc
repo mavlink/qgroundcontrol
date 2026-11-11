@@ -61,6 +61,8 @@ void QGCMathTest::_fuzzyCompareDoubleInf_test()
     QVERIFY(QGC::fuzzyCompare(inf, inf));
     QVERIFY(QGC::fuzzyCompare(-inf, -inf));
     QVERIFY(!QGC::fuzzyCompare(inf, 1.0));
+    QVERIFY(!QGC::fuzzyCompare(inf, -inf));
+    QVERIFY(!QGC::fuzzyCompare(-inf, inf));
 }
 
 void QGCMathTest::_fuzzyCompareFloat_test()
@@ -72,6 +74,10 @@ void QGCMathTest::_fuzzyCompareFloat_test()
     QVERIFY(QGC::fuzzyCompare(nan, nan));
     QVERIFY(!QGC::fuzzyCompare(nan, 0.0f));
     QVERIFY(!QGC::fuzzyCompare(0.0f, nan));
+
+    const float inf = std::numeric_limits<float>::infinity();
+    QVERIFY(QGC::fuzzyCompare(inf, inf));
+    QVERIFY(!QGC::fuzzyCompare(inf, -inf));
 }
 
 void QGCMathTest::_fuzzyCompareCustomTolerance_test()
@@ -84,6 +90,12 @@ void QGCMathTest::_fuzzyCompareCustomTolerance_test()
     const double nan = std::numeric_limits<double>::quiet_NaN();
     QVERIFY(QGC::fuzzyCompare(nan, nan, 0.1));
     QVERIFY(!QGC::fuzzyCompare(nan, 0.0, 0.1));
+
+    const double inf = std::numeric_limits<double>::infinity();
+    QVERIFY(QGC::fuzzyCompare(inf, inf, 0.1));
+    QVERIFY(QGC::fuzzyCompare(-inf, -inf, 0.1));
+    QVERIFY(!QGC::fuzzyCompare(inf, -inf, 0.1));
+    QVERIFY(!QGC::fuzzyCompare(inf, 1.0, 0.1));
 }
 
 void QGCMathTest::_fuzzyCompareFloatCustomTolerance_test()
@@ -94,6 +106,10 @@ void QGCMathTest::_fuzzyCompareFloatCustomTolerance_test()
     const float nan = std::numeric_limits<float>::quiet_NaN();
     QVERIFY(QGC::fuzzyCompare(nan, nan, 0.1f));
     QVERIFY(!QGC::fuzzyCompare(nan, 0.0f, 0.1f));
+
+    const float inf = std::numeric_limits<float>::infinity();
+    QVERIFY(QGC::fuzzyCompare(inf, inf, 0.1f));
+    QVERIFY(!QGC::fuzzyCompare(inf, -inf, 0.1f));
 }
 
 void QGCMathTest::_limitAngleToPMPIfZero_test()

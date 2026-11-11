@@ -76,6 +76,8 @@ bool fuzzyCompare(double value1, double value2)
         return false;
     } else if (value1 == value2) {
         return true;
+    } else if (qIsInf(value1) || qIsInf(value2)) {
+        return false;
     } else {
         return qFuzzyCompare(value1, value2);
     }
@@ -87,6 +89,8 @@ bool fuzzyCompare(double value1, double value2, double tolerance)
         return true;
     } else if (qIsNaN(value1) || qIsNaN(value2)) {
         return false;
+    } else if (qIsInf(value1) || qIsInf(value2)) {
+        return value1 == value2;
     } else {
         return fabs(value1 - value2) <= tolerance;
     }
@@ -100,6 +104,8 @@ bool fuzzyCompare(float value1, float value2)
         return false;
     } else if (value1 == value2) {
         return true;
+    } else if (qIsInf(value1) || qIsInf(value2)) {
+        return false;
     } else {
         return qFuzzyCompare(value1, value2);
     }
@@ -111,6 +117,8 @@ bool fuzzyCompare(float value1, float value2, float tolerance)
         return true;
     } else if (qIsNaN(value1) || qIsNaN(value2)) {
         return false;
+    } else if (qIsInf(value1) || qIsInf(value2)) {
+        return value1 == value2;
     } else {
         return fabsf(value1 - value2) <= tolerance;
     }
