@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import QtPositioning
 
 import QGroundControl
 import QGroundControl.Controls
@@ -14,10 +15,14 @@ QGCGroupBox {
     property GPSCorrectionManager corrections: QGroundControl.gpsManager.corrections
     /// Keep the group visible while no correction source is configured.
     property bool showWhenInactive: true
+    /// Where the distance to the base station is measured from.
+    property geoCoordinate gcsPosition: QGroundControl.positionManager.gcsPosition
 
     readonly property gpsCorrectionStream _selected: root.corrections.selectedStream
     readonly property bool _active: root.corrections.state !== GPSCorrectionManager.Inactive
     readonly property bool _fresh: root.corrections.state === GPSCorrectionManager.Fresh
+    readonly property geoCoordinate _basePosition: root.corrections.basePosition
+    readonly property bool _baseKnown: root._fresh && root._basePosition.isValid
     readonly property string _udpInputError: root.corrections.udpInputError
     readonly property string _udpOutputError: root.corrections.udpOutputError
 
@@ -72,6 +77,25 @@ QGCGroupBox {
             Layout.preferredWidth: 0
             messageCounts: root.corrections.messageCounts
         }
+    }
+
+    LabelledLabel {
+        objectName: "correctionsBasePosition"
+        visible: root._baseKnown
+        label: qsTr("Base position")
+        //: %1 is a latitude and %2 a longitude, in degrees
+        labelText: qsTr("%1, %2").arg(root._basePosition.latitude.toFixed(7))
+                                 .arg(root._basePosition.longitude.toFixed(7))
+        labelTextFormat: Text.PlainText
+    }
+
+    LabelledLabel {
+        objectName: "correctionsBaseDistance"
+        visible: root._baseKnown && root.gcsPosition.isValid
+        label: qsTr("Base distance from GCS")
+        labelText: QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnitsString(
+                       root._basePosition.distanceTo(root.gcsPosition), 0)
+        labelTextFormat: Text.PlainText
     }
 
     // Why the UDP RTCM input cannot listen, such as a port another program uses; the input keeps retrying.

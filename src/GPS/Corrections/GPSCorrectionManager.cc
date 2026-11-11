@@ -9,6 +9,7 @@
 
 #include "QGCLoggingCategory.h"
 #include "RTCMFramer.h"
+#include "RTCMStationPosition.h"
 #include "RuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(GPSCorrectionManagerLog, "GPS.Corrections.GPSCorrectionManager")
@@ -214,12 +215,24 @@ void GPSCorrectionManager::_recordSelected(const GPSCorrectionStream& stream, co
         _recordedStream = stream;
     }
     _messageCounts.record(RTCMFramer::frameMessageId(data));
+    if (const auto station = RTCMStationPosition::fromFrame(data)) {
+        const GPSEllipsoidPosition& position = station->position;
+        _setBasePosition(QGeoCoordinate(position.latitudeDegrees, position.longitudeDegrees, position.altitudeMeters));
+    }
 }
 
 void GPSCorrectionManager::_forgetSelected()
 {
     _recordedStream = {};
     _messageCounts.clear();
+    _setBasePosition(QGeoCoordinate());
+}
+
+void GPSCorrectionManager::_setBasePosition(const QGeoCoordinate& position)
+{
+    if (std::exchange(_basePosition, position) != position) {
+        emit basePositionChanged();
+    }
 }
 
 void GPSCorrectionManager::_forwardToUdpOutput(const QByteArray& data)
