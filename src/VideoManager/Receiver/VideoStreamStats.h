@@ -46,6 +46,13 @@ struct VideoStreamStats
 public:
     bool hasRtpStats() const { return packetsLost >= 0; }
 
+    /// The stream is measured and falls short: it loses packets or drops frames now, or shows under three quarters of
+    /// @p cameraFps, the frame rate its camera is set up for; 0 when that isn't known.
+    bool degraded(double cameraFps) const
+    {
+        return valid && ((lossPercent > 0) || (droppedFps > 0) || ((cameraFps > 0) && (fps < (cameraFps * 0.75))));
+    }
+
     bool operator==(const VideoStreamStats&) const = default;
 
     /// Measured at least once for the current stream; the other fields mean nothing while false.

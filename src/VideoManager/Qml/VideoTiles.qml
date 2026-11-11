@@ -21,16 +21,7 @@ Row {
     /// The least width of a tile: a smaller picture shows nothing.
     readonly property real minimumTileWidth: ScreenTools.defaultFontPixelHeight * 4 * root._tileAspectRatio
 
-    readonly property int _tileCount: {
-        const sources = root.videoManager.sources
-        let count = 0
-        for (let i = 0; i < sources.length; i++) {
-            if (sources[i].tile) {
-                count++
-            }
-        }
-        return count
-    }
+    readonly property int _tileCount: root.videoManager.tileCount
     // Wide-screen tiles, small enough to leave the main picture in view, and smaller where the row has less room.
     readonly property real _tileAspectRatio: 16 / 9
     readonly property int _room: Math.max(0, Math.floor((root.maximumWidth + root.spacing)

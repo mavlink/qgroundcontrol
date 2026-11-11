@@ -13,16 +13,6 @@ ColumnLayout {
     /// The manager whose sources are shown.
     property VideoManager videoManager: QGroundControl.videoManager
 
-    readonly property bool _anyMeasured: {
-        const sources = root.videoManager.sources
-        for (let i = 0; i < sources.length; i++) {
-            if (sources[i].stats.valid) {
-                return true
-            }
-        }
-        return false
-    }
-
     spacing: ScreenTools.defaultFontPixelHeight / 4
 
     Repeater {
@@ -63,6 +53,6 @@ ColumnLayout {
 
     QGCLabel {
         text:       qsTr("No video stream")
-        visible:    !root._anyMeasured
+        visible:    !root.videoManager.measuredSource.stats.valid
     }
 }

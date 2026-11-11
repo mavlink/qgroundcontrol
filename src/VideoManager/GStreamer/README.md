@@ -211,7 +211,9 @@ them as VkImages itself (`dmabuf/GstDmaBufVulkanImport`):
 ### Stream statistics
 
 `VideoReceiver::stats` (`VideoStreamStats`, a QML value type that `VideoStreamController` forwards) tells how healthy a
-stream is; the Fly View toolbar's video indicator shows it. While the stream is `Streaming`, `GstReceiverWorker` samples
+stream is. The Fly View toolbar's video indicator shows those of `VideoManager::measuredSource`, and turns orange while
+`VideoManager::degraded` tells that a source falls short (`VideoStreamStats::degraded()`). While the stream is
+`Streaming`, `GstReceiverWorker` samples
 its `PipelineSession` on each watchdog tick (once a second) through `VideoStreamStatsSampler`
 (`../Receiver/VideoStreamStatsSampler.h`, shared with the Qt Multimedia receiver): its `VideoStreamStatsMeter`, a pure
 class with an injectable clock, turns the cumulative counters into rates, and it adds the session's fields below. The first sample is the rates'

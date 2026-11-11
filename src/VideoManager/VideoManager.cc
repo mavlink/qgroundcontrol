@@ -25,6 +25,7 @@
 #include "SettingsManager.h"
 #include "UVCCameraController.h"
 #include "UVCDevices.h"
+#include "UVCStreamMonitor.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 #include "VideoBackend.h"
@@ -131,6 +132,7 @@ VideoManager::VideoManager(QObject* parent)
     , _thermalStream(new VideoStreamController(VideoStreamController::Role::Thermal, _videoSettings, this))
     , _cameraSource(new VideoStreamController(VideoStreamController::Role::Camera, _videoSettings, this, _uvcCamera))
     , _sources{_primaryStream, _thermalStream, _cameraSource}
+    , _measuredSource(_primaryStream)
     , _recordingService(new VideoRecordingService(_sources, this))
     , _telemetryOverlay(new VideoTelemetryOverlay(_videoSettings->showTelemetryOverlay(), this))
     , _receiverFactory([this](QObject* owner) -> VideoReceiver* {
@@ -152,6 +154,8 @@ VideoManager::VideoManager(QObject* parent)
         _updateState();
         _cameraSource->scheduleApply();
     });
+    // The frame rate the camera is set up for may change without its figures.
+    (void) connect(_uvcCamera->monitor(), &UVCStreamMonitor::statsChanged, this, &VideoManager::_updateSourceSummary);
     (void) connect(_telemetryOverlay, &VideoTelemetryOverlay::textChanged, this,
                    &VideoManager::telemetryOverlayTextChanged);
 
@@ -178,10 +182,56 @@ void VideoManager::_connectSource(VideoStreamController* source)
     });
     (void) connect(source, &VideoStreamController::aspectRatioChanged, this, &VideoManager::aspectRatioChanged);
     (void) connect(source, &VideoStreamController::streamInfoChanged, this, &VideoManager::_updateState);
+    for (const auto changed : {&VideoStreamController::statsChanged, &VideoStreamController::decodingChanged,
+                               &VideoStreamController::streamInfoChanged, &VideoStreamController::tileChanged}) {
+        (void) connect(source, changed, this, &VideoManager::_updateSourceSummary);
+    }
     (void) connect(source, &VideoStreamController::errorOccurred, this, [source](const QString& message) {
         qCWarning(VideoManagerLog) << source->name() << message;
         QGC::showAppMessage(message);
     });
+}
+
+void VideoManager::_updateSourceSummary()
+{
+    int tileCount = 0;
+    VideoStreamController* measured = nullptr;
+    VideoStreamController* measuredInTile = nullptr;
+    bool degraded = false;
+    for (VideoStreamController* source : std::as_const(_sources)) {
+        const VideoStreamStats stats = source->stats();
+        if (source->tile()) {
+            ++tileCount;
+        }
+        if (stats.valid) {
+            VideoStreamController*& first = source->tile() ? measuredInTile : measured;
+            if (!first) {
+                first = source;
+            }
+        }
+        // A stream that isn't decoded, as the thermal stream while its view is off, shows no frames to compare with
+        // the frame rate its camera advertises.
+        const QGCVideoStreamInfo* const streamInfo = source->decoding() ? source->streamInfo() : nullptr;
+        const double cameraFps = (source == _cameraSource) ? _uvcCamera->monitor()->cameraFrameRate()
+                                                           : (streamInfo ? streamInfo->framerate() : 0.0);
+        degraded = degraded || stats.degraded(cameraFps);
+    }
+    if (!measured) {
+        measured = measuredInTile ? measuredInTile : _primaryStream;
+    }
+
+    if (tileCount != _tileCount) {
+        _tileCount = tileCount;
+        emit tileCountChanged();
+    }
+    if (measured != _measuredSource) {
+        _measuredSource = measured;
+        emit measuredSourceChanged();
+    }
+    if (degraded != _degraded) {
+        _degraded = degraded;
+        emit degradedChanged();
+    }
 }
 
 void VideoManager::_connectSettings()
@@ -738,6 +788,8 @@ void VideoManager::_updateTileStreams(int count)
         QList<VideoStreamController*>{_primaryStream, _thermalStream, _cameraSource} + _tileStreams;
     if (sources != _sources) {
         _sources = sources;
+        // Before the sources that left are deleted: none of them is the measured one from here on.
+        _updateSourceSummary();
         emit sourcesChanged();
     }
     // Once QML has let go of them.

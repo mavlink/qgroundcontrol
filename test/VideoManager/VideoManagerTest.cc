@@ -630,6 +630,7 @@ void VideoManagerTest::_testOtherStreamsPlayInTiles()
         receivers.append(tile->receiver());
     }
     QCOMPARE(uris, tileUris);
+    QCOMPARE(_videoManager->tileCount(), static_cast<int>(tileUris.size()));
     if (!tileUris.isEmpty()) {
         QCOMPARE(sources.at(3)->displayName(), QStringLiteral("Second"));
     }
@@ -859,6 +860,7 @@ void VideoManagerTest::_testSelectedCameraTileTakesMainPicture()
 
     // The camera has the first of the two tiles, a stream the other.
     QVERIFY(cameraSource->tile());
+    QCOMPARE(_videoManager->tileCount(), 2);
     QVERIFY(!_videoManager->isUvc());
     QCOMPARE(_videoManager->_sources.size(), 4);
     QVERIFY(_videoManager->hasThermal());
@@ -1634,6 +1636,79 @@ void VideoManagerTest::_testIndicatorReportsMeasuredSource()
     _videoManager->primaryStream()->setTile(false);
     camera->setStats({});
     QCOMPARE(icon->property("color"), steadyColor);
+}
+
+void VideoManagerTest::_testSourceFallingShortDegradesVideo_data()
+{
+    QTest::addColumn<bool>("usbCamera");  ///< The source is the USB camera, else the primary stream
+    QTest::addColumn<bool>("measured");
+    QTest::addColumn<double>("lossPercent");
+    QTest::addColumn<double>("droppedFps");
+    QTest::addColumn<double>("fps");
+    QTest::addColumn<double>("cameraFps");  ///< What the stream's camera advertises, or the USB camera's own; 0: none
+    QTest::addColumn<bool>("decoding");
+    QTest::addColumn<bool>("degraded");
+
+    constexpr double kNoRtp = -1.0;
+    QTest::newRow("steady") << false << true << kNoRtp << 0.0 << 30.0 << 30.0 << true << false;
+    QTest::newRow("losing packets") << false << true << 1.5 << 0.0 << 30.0 << 30.0 << true << true;
+    QTest::newRow("dropping frames") << false << true << kNoRtp << 2.0 << 30.0 << 30.0 << true << true;
+    QTest::newRow("under three quarters of the advertised frame rate")
+        << false << true << kNoRtp << 0.0 << 22.0 << 30.0 << true << true;
+    QTest::newRow("three quarters of the advertised frame rate")
+        << false << true << kNoRtp << 0.0 << 22.5 << 30.0 << true << false;
+    QTest::newRow("no advertised frame rate") << false << true << kNoRtp << 0.0 << 5.0 << 0.0 << true << false;
+    QTest::newRow("not decoded, as the thermal stream with its view off")
+        << false << true << kNoRtp << 0.0 << 0.0 << 30.0 << false << false;
+    QTest::newRow("not measured") << false << false << 1.5 << 2.0 << 0.0 << 30.0 << true << false;
+    QTest::newRow("USB camera under three quarters of its frame rate")
+        << true << true << kNoRtp << 0.0 << 20.0 << 30.0 << true << true;
+    QTest::newRow("USB camera at its frame rate") << true << true << kNoRtp << 0.0 << 30.0 << 30.0 << true << false;
+}
+
+void VideoManagerTest::_testSourceFallingShortDegradesVideo()
+{
+    QFETCH(bool, usbCamera);
+    QFETCH(bool, measured);
+    QFETCH(double, lossPercent);
+    QFETCH(double, droppedFps);
+    QFETCH(double, fps);
+    QFETCH(double, cameraFps);
+    QFETCH(bool, decoding);
+    QFETCH(bool, degraded);
+
+    VideoStreamStats stats;
+    stats.valid = measured;
+    stats.lossPercent = lossPercent;
+    stats.droppedFps = droppedFps;
+    stats.fps = fps;
+    mavlink_video_stream_information_t info{};
+    info.type = VIDEO_STREAM_TYPE_RTPUDP;
+    info.encoding = VIDEO_STREAM_ENCODING_H264;
+    info.framerate = static_cast<float>(cameraFps);
+    (void) qstrncpy(info.uri, "5601", sizeof(info.uri));
+    QGCVideoStreamInfo cameraStream(info);
+    UVCStreamMonitor* const cameraMonitor = _videoManager->uvcCamera()->monitor();
+    QSignalSpy degradedSpy(_videoManager.get(), &VideoManager::degradedChanged);
+
+    if (usbCamera) {
+        cameraMonitor->_publish(stats, QSize(1280, 720), cameraFps);
+    } else {
+        if (cameraFps > 0) {
+            _videoManager->primaryStream()->setStreamInfo(&cameraStream);
+        }
+        _primary->setDecoding(decoding);
+        _primary->setStats(stats);
+    }
+    QCOMPARE(_videoManager->degraded(), degraded);
+    QCOMPARE(degradedSpy.count(), degraded ? 1 : 0);
+
+    // A source that is no longer measured doesn't fall short.
+    cameraMonitor->_publish({}, QSize(), 0.0);
+    _primary->setStats({});
+    QVERIFY(!_videoManager->degraded());
+    _videoManager->primaryStream()->setStreamInfo(nullptr);
+    _settle();
 }
 
 void VideoManagerTest::_testSourceStatsShowMeasuredSources()

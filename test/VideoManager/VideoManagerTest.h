@@ -57,6 +57,8 @@ private slots:
     void _testRecordingEncodingReachesEverySource();
     void _testStreamStatsReachQml();
     void _testIndicatorReportsMeasuredSource();
+    void _testSourceFallingShortDegradesVideo_data();
+    void _testSourceFallingShortDegradesVideo();
     void _testSourceStatsShowMeasuredSources();
     void _testStreamFormatText();
     void _testVideoViewFitsVideo_data();

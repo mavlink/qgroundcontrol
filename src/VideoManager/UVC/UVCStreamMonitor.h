@@ -37,6 +37,7 @@ class UVCStreamMonitor : public QObject
     Q_PROPERTY(QString cameraName READ cameraName NOTIFY cameraNameChanged FINAL)
 
     friend class UVCStreamMonitorTest;
+    friend class VideoManagerTest;
 
 public:
     /// @p clock defaults to the steady clock.

@@ -53,6 +53,9 @@ class VideoManager : public QObject
     Q_PROPERTY(UVCCameraController* uvcCamera READ uvcCamera CONSTANT FINAL)
     Q_PROPERTY(bool autoStreamConfigured READ autoStreamConfigured NOTIFY autoStreamConfiguredChanged FINAL)
     Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged FINAL)
+    /// A source falls short (VideoStreamStats::degraded()) of the frame rate its camera is set up for: the one a
+    /// stream's camera advertises, while the stream is decoded, or the USB camera's own.
+    Q_PROPERTY(bool degraded READ degraded NOTIFY degradedChanged FINAL)
     Q_PROPERTY(bool fullScreen READ fullScreen WRITE setFullScreen NOTIFY fullScreenChanged FINAL)
     Q_PROPERTY(bool hasThermal READ hasThermal NOTIFY hasThermalChanged FINAL)
     /// A USB camera plays, as the main picture (isUvc) or in a tile.
@@ -60,8 +63,14 @@ class VideoManager : public QObject
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged FINAL)
     Q_PROPERTY(bool isStreamSource READ isStreamSource NOTIFY isStreamSourceChanged FINAL)
     Q_PROPERTY(bool isUvc READ isUvc NOTIFY isUvcChanged FINAL)
+    /// The source whose figures stand for the video's: the first one that is measured, those of the main picture before
+    /// those in tiles, which puts the primary stream before the thermal stream; the USB camera runs in the primary
+    /// stream's place. The primary stream while none is measured. Never null.
+    Q_PROPERTY(VideoStreamController* measuredSource READ measuredSource NOTIFY measuredSourceChanged FINAL)
     Q_PROPERTY(NoVideoReason noVideoReason READ noVideoReason NOTIFY noVideoReasonChanged FINAL)
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged FINAL)
+    /// How many sources are shown in tiles.
+    Q_PROPERTY(int tileCount READ tileCount NOTIFY tileCountChanged FINAL)
     /// How many tiles the row of tiles has room for, which it tells while it is shown: no more sources than that play
     /// in tiles, whatever VideoSettings::maxVideoTiles allows. -1 until a row tells.
     Q_PROPERTY(int tileRoom READ tileRoom WRITE setTileRoom NOTIFY tileRoomChanged FINAL)
@@ -131,6 +140,8 @@ public:
 
     bool decoding() const;
 
+    bool degraded() const { return _degraded; }
+
     bool fullScreen() const { return _fullScreen; }
 
     bool hasThermal() const { return _hasThermal; }
@@ -143,9 +154,13 @@ public:
 
     bool isUvc() const { return !_uvcVideoSourceID.isEmpty(); }
 
+    VideoStreamController* measuredSource() const { return _measuredSource; }
+
     NoVideoReason noVideoReason() const { return _noVideoReason; }
 
     bool recording() const;
+
+    int tileCount() const { return _tileCount; }
 
     int tileRoom() const { return _tileRoom; }
 
@@ -167,15 +182,18 @@ signals:
     void aspectRatioChanged();
     void autoStreamConfiguredChanged();
     void decodingChanged();
+    void degradedChanged();
     void fullScreenChanged();
     void hasThermalChanged();
     void hasUvcCameraChanged();
     void hasVideoChanged();
     void isStreamSourceChanged();
     void isUvcChanged();
+    void measuredSourceChanged();
     void noVideoReasonChanged();
     void recordingChanged(bool recording);
     void telemetryOverlayTextChanged();
+    void tileCountChanged();
     void tileRoomChanged();
     void uvcVideoSourceIDChanged();
 
@@ -230,6 +248,8 @@ private:
     /// Tells each camera of the active vehicle which of its streams play in tiles.
     void _nameExtraStreams();
     void _connectSource(VideoStreamController* source);
+    /// Recomputes what the sources amount to together: tileCount, measuredSource and degraded.
+    void _updateSourceSummary();
     void _onArmedChanged(bool armed);
     void _communicationLostChanged(bool communicationLost);
     /// The streams' sources are likely back, with a vehicle that connected or whose link returned: a stream waiting
@@ -245,6 +265,7 @@ private:
     /// The sources of the streams in tiles, in the tiles' order.
     QList<VideoStreamController*> _tileStreams;
     QList<VideoStreamController*> _sources;
+    VideoStreamController* _measuredSource;
     VideoRecordingService* const _recordingService;
     VideoTelemetryOverlay* const _telemetryOverlay;
     std::function<VideoReceiver*(QObject* parent)> _receiverFactory;
@@ -266,9 +287,11 @@ private:
     bool _videoStopped = false;
     /// How many tile sources there have been, which names the next one.
     int _tileStreamSerial = 0;
+    int _tileCount = 0;
     int _tileRoom = -1;
     bool _disabledWhileDisarmed = false;
     bool _autoStreamConfigured = false;
+    bool _degraded = false;
     bool _hasThermal = false;
     bool _hasUvcCamera = false;
     bool _hasVideo = false;
