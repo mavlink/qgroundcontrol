@@ -65,8 +65,12 @@ struct Ecef
     return std::hypot(left.x - right.x, left.y - right.y, left.z - right.z);
 }
 
-/// Whether @a position lies 6000 to 7000 km from the Earth's centre, as a receiver's coordinates do; false for the
-/// zero or unknown coordinates of an unset base.
+/// The distances from the Earth's centre, in metres, between which nearEarthSurface() holds.
+inline constexpr double EARTH_SURFACE_MIN_RADIUS_METERS = 6000000;
+inline constexpr double EARTH_SURFACE_MAX_RADIUS_METERS = 7000000;
+
+/// Whether @a position lies in that band, as a receiver's coordinates do; false for the zero or unknown coordinates
+/// of an unset base.
 [[nodiscard]] bool nearEarthSurface(const Ecef& position);
 
 /// Microseconds since the Unix epoch of a receiver's UTC calendar fields plus @a nsec, which may be negative. Fields

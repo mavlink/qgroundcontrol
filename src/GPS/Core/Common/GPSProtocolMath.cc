@@ -32,7 +32,7 @@ GPSEllipsoidPosition fromEcef(const Ecef& position)
 bool nearEarthSurface(const Ecef& position)
 {
     const double radius = std::hypot(position.x, position.y, position.z);
-    return radius >= 6000000 && radius <= 7000000;
+    return radius >= EARTH_SURFACE_MIN_RADIUS_METERS && radius <= EARTH_SURFACE_MAX_RADIUS_METERS;
 }
 
 uint64_t utcMicroseconds(int year, int month, int day, int hour, int minute, int second, int32_t nsec)
