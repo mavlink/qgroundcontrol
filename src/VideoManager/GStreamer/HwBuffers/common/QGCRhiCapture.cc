@@ -1,6 +1,7 @@
 #include "QGCRhiCapture.h"
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
+#include "GstContextBridgeBase.h"
 #include "GstHwPathRegistry.h"
 #include "HwBuffers.h"
 #endif
@@ -175,6 +176,15 @@ void populateSnapshot(QRhi* rhi)
         s_snapshot.vkPipelineCacheUuid[i].store(vkPipelineCacheUuid[i], std::memory_order_release);
     }
     s_snapshot.backend.store(backend, std::memory_order_release);
+
+#if defined(QGC_HAS_ANY_GPU_PATH)
+    // A pipeline that asked a bridge for this device before it was published has it from now on.
+    for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
+        if (path->bridge) {
+            path->bridge().serveWaitingPipelines();
+        }
+    }
+#endif
 }
 
 /// Publishes @p window's QRhi and its native device handles. Render thread, where rhi() is valid.

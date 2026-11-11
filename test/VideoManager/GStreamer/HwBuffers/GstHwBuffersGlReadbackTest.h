@@ -35,6 +35,7 @@ private slots:
     void _testTenBitPlanarFrameToImage();
     void _testGlMemoryMapLeavesFrameSyncMeta();
     void _testUnsharedGlMemoryTakesCpuPath();
+    void _testGlBridgeKeepsGstGlInQtsApi();
 #endif
 
 private:

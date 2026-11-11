@@ -47,20 +47,26 @@ public:
         : GstContextBridgeBase("Test", contextTypes, &TestContextBridgeLog)
     {}
 
-    /// Unprimed, with zeroed counters.
+    /// Unprimed, with zeroed counters and its device known.
     void restart()
     {
         reset();
         primes = 0;
         clears = 0;
+        deviceKnown = true;
     }
 
     int primes = 0;
     int clears = 0;
+    /// False while Qt's device isn't published yet: the bridge can't prime, and tries again when asked.
+    bool deviceKnown = true;
 
 private:
     bool primeLocked() override
     {
+        if (!deviceKnown) {
+            return retryLater();
+        }
         ++primes;
         _object = GST_OBJECT(gst_object_ref_sink(gst_element_factory_make("identity", nullptr)));
         return _object != nullptr;
@@ -113,6 +119,21 @@ const HwPathDescriptor kTestBridgePathB = {
     .matches = [](GstMemory*) { return false; },
     .bridge = []() -> GstContextBridgeBase& { return testBridgeB(); },
 };
+
+/// True when @p element holds a context of bridge A's type that a TestContextBridge built.
+bool holdsTestBridgeContext(GstElement* element)
+{
+    const GStreamer::GstContextPtr context =
+        GStreamer::adoptContext(gst_element_get_context(element, kTestContextTypeA[0]));
+    return context && gst_structure_has_field(gst_context_get_structure(context.get()), "object");
+}
+
+/// A new identity element in @p bin, which owns it; null when it couldn't be added.
+GstElement* addIdentityTo(GstElement* bin)
+{
+    GstElement* const element = gst_element_factory_make("identity", nullptr);
+    return (element && gst_bin_add(GST_BIN(bin), element)) ? element : nullptr;
+}
 
 }  // namespace
 #endif
@@ -167,6 +188,76 @@ void GstHwBuffersTest::_testContextBridgeRegistry()
     GstQuery* unknownQuery = gst_query_new_context("qgc.test.context-unknown");
     QVERIFY(!HwBuffers::answerSinkBinContextQuery(unknownQuery));
     gst_query_unref(unknownQuery);
+#endif
+}
+
+void GstHwBuffersTest::_testContextBridgeAnswersWholePipeline()
+{
+#if !defined(QGC_HAS_ANY_GPU_PATH)
+    QSKIP("No GPU path compiled in this build");
+#else
+    testBridgeA().restart();
+    const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
+    const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA});
+
+    const GStreamer::GstElementPtr pipeline =
+        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new(nullptr))));
+    GstElement* const bin = gst_bin_new(nullptr);
+    QVERIFY(gst_bin_add(GST_BIN(pipeline.get()), bin));
+    GstElement* const asking = addIdentityTo(bin);
+    GstElement* const sibling = addIdentityTo(pipeline.get());
+    QVERIFY(asking && sibling);
+
+    QCOMPARE(HwBuffers::onBusSyncMessage(gst_message_new_need_context(GST_OBJECT(asking), kTestContextTypeA[0])),
+             GST_BUS_DROP);
+    QVERIFY(holdsTestBridgeContext(asking));
+    QVERIFY(holdsTestBridgeContext(sibling));
+
+    // An element the pipeline is given later takes its device from the pipeline, without asking the bridge.
+    GstElement* const later = addIdentityTo(pipeline.get());
+    QVERIFY(later);
+    QVERIFY(holdsTestBridgeContext(later));
+#endif
+}
+
+void GstHwBuffersTest::_testContextBridgeServesPipelineOnceDeviceIsKnown()
+{
+#if !defined(QGC_HAS_ANY_GPU_PATH)
+    QSKIP("No GPU path compiled in this build");
+#else
+    testBridgeA().restart();
+    testBridgeA().deviceKnown = false;
+    const auto bridgeGuard = qScopeGuard([] { testBridgeA().restart(); });
+    const GstHwPathRegistry::ScopedPathsForTest paths({&kTestBridgePathA});
+
+    const GStreamer::GstElementPtr pipeline =
+        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_pipeline_new(nullptr))));
+    GstElement* const asking = addIdentityTo(pipeline.get());
+    QVERIFY(asking);
+
+    // Left without an answer, an element makes a device of its own and posts it, which its pipeline keeps for the
+    // elements it is given later.
+    GstMessage* const unanswered = gst_message_new_need_context(GST_OBJECT(asking), kTestContextTypeA[0]);
+    QCOMPARE(HwBuffers::onBusSyncMessage(unanswered), GST_BUS_PASS);
+    gst_message_unref(unanswered);
+    GstContext* const ownDevice = gst_context_new(kTestContextTypeA[0], TRUE);
+    gst_element_set_context(asking, ownDevice);
+    QVERIFY(gst_element_post_message(asking, gst_message_new_have_context(GST_OBJECT(asking), ownDevice)));
+    const GStreamer::GstContextPtr kept =
+        GStreamer::adoptContext(gst_element_get_context(pipeline.get(), kTestContextTypeA[0]));
+    QVERIFY2(kept && !holdsTestBridgeContext(pipeline.get()), "the pipeline did not keep the element's own device");
+
+    // Qt's device becomes known, as when the scene graph starts.
+    const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
+    QVERIFY(rhi);
+    testBridgeA().deviceKnown = true;
+    const auto withdraw = qScopeGuard([] { QGCRhiCapture::publishDeviceSnapshotForTest(nullptr); });
+    QGCRhiCapture::publishDeviceSnapshotForTest(rhi.get());
+    QCOMPARE(testBridgeA().primes, 1);
+
+    GstElement* const later = addIdentityTo(pipeline.get());
+    QVERIFY(later);
+    QVERIFY2(holdsTestBridgeContext(later), "an element added after the bridge primed got the device of another");
 #endif
 }
 

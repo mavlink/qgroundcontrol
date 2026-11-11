@@ -853,6 +853,52 @@ void GstHwBuffersGlReadbackTest::_testUnsharedGlMemoryTakesCpuPath()
 #endif
 }
 
+void GstHwBuffersGlReadbackTest::_testGlBridgeKeepsGstGlInQtsApi()
+{
+#if !defined(QGC_TEST_GLMEMORY_READBACK)
+    QSKIP("GLMemory GPU path on EGL not compiled in this build");
+#else
+    if (!_glRhi()) {
+        QSKIP(qPrintable(_rhiUnavailable));
+    }
+
+    // The display and the wrap of Qt's context, as an element asking the bridge gets them.
+    GstQuery* const displayQuery = gst_query_new_context(GST_GL_DISPLAY_CONTEXT_TYPE);
+    const auto unrefDisplayQuery = qScopeGuard([displayQuery] { gst_query_unref(displayQuery); });
+    QVERIFY(GstGlContextBridge::instance().answerContextQuery(displayQuery));
+    GstContext* displayContext = nullptr;
+    gst_query_parse_context(displayQuery, &displayContext);
+    GstGLDisplay* display = nullptr;
+    QVERIFY(gst_context_get_gl_display(displayContext, &display));
+    const auto unrefDisplay = qScopeGuard([display] { gst_object_unref(display); });
+
+    GstQuery* const wrapQuery = gst_query_new_context("gst.gl.app_context");
+    const auto unrefWrapQuery = qScopeGuard([wrapQuery] { gst_query_unref(wrapQuery); });
+    QVERIFY(GstGlContextBridge::instance().answerContextQuery(wrapQuery));
+    GstContext* wrapContext = nullptr;
+    gst_query_parse_context(wrapQuery, &wrapContext);
+    GstGLContext* qtContext = nullptr;
+    QVERIFY(
+        gst_structure_get(gst_context_get_structure(wrapContext), "context", GST_TYPE_GL_CONTEXT, &qtContext, nullptr));
+    const auto unrefQtContext = qScopeGuard([qtContext] { gst_object_unref(qtContext); });
+
+    // gst-gl creates its contexts in an API of the display's, whatever the context it is told to share with.
+    const GstGLAPI qtApi = gst_gl_context_get_gl_api(qtContext);
+    QCOMPARE(gst_gl_display_get_gl_api(display), qtApi);
+
+    GstGLContext* created = nullptr;
+    GError* error = nullptr;
+    const bool ensured = gst_gl_display_ensure_context(display, qtContext, &created, &error);
+    const GStreamer::GErrorPtr errorGuard = GStreamer::adoptError(error);
+    QVERIFY2(ensured, error ? error->message : "gst-gl created no context sharing with Qt's");
+    const auto unrefCreated = qScopeGuard([created] { gst_object_unref(created); });
+    const GStreamer::GCharPtr createdApi =
+        GStreamer::adoptGChar(gst_gl_api_to_string(gst_gl_context_get_gl_api(created)));
+    QVERIFY2(gst_gl_context_get_gl_api(created) & qtApi, createdApi.get());
+    QVERIFY(GstGlContextBridge::sharesQtContext(created));
+#endif
+}
+
 #endif  // QGC_GST_STREAMING
 
 UT_REGISTER_TEST(GstHwBuffersGlReadbackTest, TestLabel::Integration)

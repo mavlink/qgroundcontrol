@@ -184,7 +184,13 @@ them as VkImages itself (`dmabuf/GstDmaBufVulkanImport`):
   device: a VideoOutput popped out into its own window renders on that window's device, so on Direct3D11 its frames
   take the CPU path. So do Direct3D frames a decoder allocated on another device before the bridge was primed, and
   GLMemory frames from a GL context outside Qt's share group, which gst-gl creates for itself when no element was
-  handed the GL bridge's.
+  handed the GL bridge's. The GL bridge limits gst-gl to the OpenGL API of Qt's context, desktop OpenGL or OpenGL ES:
+  gst-gl would otherwise create OpenGL ES contexts wherever EGL offers them, and EGL shares only within one API.
+  A bridge sets the context it answers a `NEED_CONTEXT` with on the pipeline of the element that asked, and the
+  pipeline hands it to the elements it is given later. An element that asked before Qt's device was known made a
+  device of its own, which its pipeline would hand on instead without asking again: when the scene graph publishes
+  Qt's device, the bridges give those pipelines their contexts. Elements built from then on use Qt's device; the one
+  that made its own keeps it until it is rebuilt.
 - **D3D11 decoder padding**: decoders pad their textures to their alignment (16 rows for H.264, 128 for HEVC/AV1)
   without crop meta. The picture is copied out on the render thread, as a texture-array slice is, so frames keep the
   picture's size and a CPU layout for that fallback and for screenshots.
@@ -212,7 +218,10 @@ them as VkImages itself (`dmabuf/GstDmaBufVulkanImport`):
     sample an image of another device. `GstVulkanVideoBuffer` therefore imports no frame, and the Vulkan bridge only
     puts GStreamer's device on the physical device Qt renders on. A VulkanImage frame that did reach the sink would
     not be shown: gst-vulkan's pools allocate device-local memory, which it doesn't map on the CPU either. In a build
-    with the path, `GstHwBuffersVulkanReadbackTest` checks the bridge's device and the refused import.
+    with the path, `GstHwBuffersVulkanReadbackTest` checks the bridge's device and the refused import. gst-vulkan
+    looks for a device on its pads only, so an element that isn't linked to the sink when it opens its device gets
+    the bridge's only from gst-vulkan 1.26, through the instance's `create-device` signal; before, it opens the first
+    physical device.
   - **CUDA** (`cuda/`, gst-cuda's CUDAMemory): never run on NVIDIA hardware, only compiled, against a stub `cuda.h`.
     The path wraps the fd of `gst_cuda_memory_export()` as a dma-buf for the DMABuf path. gst-cuda exports only memory
     of a `GST_CUDA_MEMORY_ALLOC_MMAP` pool, which nothing in QGC proposes to a decoder, so a decoder's frames aren't

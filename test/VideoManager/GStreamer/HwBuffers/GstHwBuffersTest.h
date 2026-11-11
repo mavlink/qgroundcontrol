@@ -18,6 +18,8 @@ private slots:
     void _testDmaBufMapTexturesRejectsForeignRhi();
     void _testVulkanOwnedFrameTexturesReleaseOnDestroy();
     void _testContextBridgeRegistry();
+    void _testContextBridgeAnswersWholePipeline();
+    void _testContextBridgeServesPipelineOnceDeviceIsKnown();
     void _testHwBufferLifecycleResetsNativeCaches();
     void _testHwFrameTexturesRejectsForeignOldTextures();
     void _testHwFrameTexturesZeroHandleInvalidatesBundle_data();

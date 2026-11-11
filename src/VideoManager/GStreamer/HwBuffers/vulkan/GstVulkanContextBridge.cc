@@ -98,6 +98,13 @@ gboolean takeGraphicsQueue(GstVulkanDevice* device, GstVulkanQueue* queue, gpoin
     return FALSE;
 }
 
+/// GstVulkanInstance::create-device handler: the bridge's device, @p bridgeDevice, for an element of the bridge's
+/// instance that found no device on its pads.
+GstVulkanDevice* provideBridgeDevice(GstVulkanInstance* /*instance*/, guint /*deviceIndex*/, gpointer bridgeDevice)
+{
+    return GST_VULKAN_DEVICE(gst_object_ref(bridgeDevice));
+}
+
 constexpr const char* kContextTypes[] = {
     GST_VULKAN_INSTANCE_CONTEXT_TYPE_STR,
     GST_VULKAN_DEVICE_CONTEXT_TYPE_STR,
@@ -120,6 +127,8 @@ private:
     GstVulkanInstance* _instance = nullptr;
     GstVulkanDevice* _device = nullptr;
     GstVulkanQueue* _queue = nullptr;
+    /// provideBridgeDevice() on _instance; 0 where gst-vulkan has no create-device signal.
+    gulong _createDeviceHandler = 0;
 };
 
 constinit VulkanContextBridge s_bridge;
@@ -163,6 +172,16 @@ bool VulkanContextBridge::primeLocked()
         return disable("GStreamer's Vulkan device has no graphics queue");
     }
 
+    // gst-vulkan asks for an instance on the bus, but for a device on its pads only: an element that isn't linked to
+    // the sink yet opens one of its own, on the first physical device. From 1.26 its instance's create-device signal
+    // makes that device instead. Looked up by name, so this builds against older releases too. The handler holds
+    // the device, which holds the instance: clearLocked() disconnects it.
+    if (g_signal_lookup("create-device", GST_TYPE_VULKAN_INSTANCE) != 0) {
+        _createDeviceHandler = g_signal_connect_data(
+            _instance, "create-device", G_CALLBACK(&provideBridgeDevice), gst_object_ref(_device),
+            +[](gpointer device, GClosure*) { gst_object_unref(device); }, GConnectFlags(0));
+    }
+
     qCInfo(GstVulkanBridgeLog) << "Vulkan bridge primed on Qt's physical device" << phys->properties.deviceName
                                << "with a VkDevice of GStreamer's own: gst-vulkan can't wrap Qt's, so QRhi can't "
                                   "sample VulkanImage frames";
@@ -199,6 +218,10 @@ GstContext* VulkanContextBridge::buildContext(const char* contextType, GstObject
 
 void VulkanContextBridge::clearLocked()
 {
+    if (_createDeviceHandler != 0) {
+        g_signal_handler_disconnect(_instance, _createDeviceHandler);
+        _createDeviceHandler = 0;
+    }
     gst_clear_object(&_queue);
     gst_clear_object(&_device);
     gst_clear_object(&_instance);

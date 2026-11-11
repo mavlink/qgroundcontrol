@@ -67,8 +67,7 @@ EGLContext qtEglContext(QOpenGLContext* qtCtx)
     return EGL_NO_CONTEXT;
 }
 
-// The API of the context being wrapped, as Qt's own sink passes it: claiming both makes gst-gl try a desktop-GL share
-// of an eglfs GLES context first.
+// The API of Qt's context: what the wrap is declared as, and all primeLocked() lets gst-gl create contexts in.
 GstGLAPI wrappedGlApi(const QOpenGLContext& qtCtx)
 {
     if (qtCtx.isOpenGLES()) {
@@ -79,7 +78,9 @@ GstGLAPI wrappedGlApi(const QOpenGLContext& qtCtx)
 #endif
 
 constexpr char kGlAppContextType[] = "gst.gl.app_context";
-constexpr const char* kContextTypes[] = {GST_GL_DISPLAY_CONTEXT_TYPE, kGlAppContextType};
+// A pipeline is given these in this order: a gst-gl element creates its GL context as soon as it is handed another
+// display, sharing with the app context it holds by then.
+constexpr const char* kContextTypes[] = {kGlAppContextType, GST_GL_DISPLAY_CONTEXT_TYPE};
 
 class GlContextBridge final : public GstContextBridgeBase
 {
@@ -209,8 +210,14 @@ bool GlContextBridge::primeLocked()
 #endif
     }
 
-    // Don't call gst_gl_context_fill_info(): a freshly wrapped context has no active thread yet, and GStreamer fills
-    // info lazily on first activation.
+    // gst-gl takes the API of a context it creates from the display, not from the context it shares with, and would
+    // pick OpenGL ES or desktop OpenGL by its own order of preference. EGL defines sharing within one client API only.
+    gst_gl_display_filter_gl_api(_display, gst_gl_context_get_gl_api(_context));
+
+    // No gst_gl_context_fill_info(): it reads the context current on the calling thread, and Qt's global share context
+    // is never current on any; nothing fills a wrap later either. gst-gl only shares with the wrap (handle, platform
+    // and API, all set above) and runs no GL through it. Unfilled, it carries no EGLConfig for gst-gl to copy, so
+    // gst-gl chooses the config of its own contexts, one that fits the surface it creates for them.
     qCDebug(GstGlBridgeLog) << "GL bridge primed: display=" << _display << "context=" << _context;
     return true;
 #else
