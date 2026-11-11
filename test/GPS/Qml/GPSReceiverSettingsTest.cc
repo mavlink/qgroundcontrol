@@ -564,6 +564,8 @@ void GPSReceiverSettingsTest::_automaticManufacturer()
     QCOMPARE(detected->property("labelText").toString(), QStringLiteral("Unicore"));
     QCOMPARE(text->property("text").toString(), QStringLiteral("Connecting to receiver..."));
     panel.receiver.worker()->ready();
+    // The status names the base mode once the receiver reports that it determines its position.
+    panel.receiver.worker()->baseStatus({.state = GPSBaseState::Active});
     QVERIFY(text->property("text").toString().contains(QStringLiteral("averaging")));
     QVERIFY(detected->isVisible());
     receiver.disconnectReceiver();

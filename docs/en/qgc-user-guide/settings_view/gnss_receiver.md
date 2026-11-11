@@ -7,6 +7,11 @@ Corrections from NTRIP casters and UDP are configured in [RTK Corrections](ntrip
 ## GNSS Receiver Status {#status}
 
 The receiver status shows the connection, the receiver's fix and satellites, and any jamming or spoofing it reports.
+The status of a configured base says when the base sends no corrections.
+While a survey or the receiver's own averaging runs, it sends none until that completes.
+Otherwise the status reads _Waiting for a valid base position; the base sends no corrections until then_, as before the receiver confirms a fixed position or after it loses its position.
+[Corrections are sent](#base_station) once the base position is valid.
+A Septentrio base is the exception: its corrections do not wait for the base position, so its status does not say this.
 An identified receiver family or output protocol is shown as _Detected_.
 **Constellations** lists the satellites of each satellite system in view as used/in view, such as _GPS 8/10, Galileo 6/7_; a dash replaces the used count when the receiver does not report which satellites it uses.
 The row is not shown when the receiver does not report which system its satellites belong to.
@@ -72,6 +77,7 @@ When a u-blox receiver reports that it produces more output than its connection 
 
 A configured base can survey its own position, or start from a known position for the base station.
 Its corrections are sent while the receiver reports a valid base position: once the survey completes, or once the receiver uses the fixed position.
+Until then, and whenever the receiver stops reporting it, the [receiver status](#status) says that the base sends no corrections.
 A Septentrio receiver is the exception: its corrections are sent as soon as it is configured.
 The corrections pass the [RTCM message filter](ntrip_rtk.md#correction-routing) before they reach vehicles.
 

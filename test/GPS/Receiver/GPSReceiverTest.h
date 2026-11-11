@@ -21,6 +21,8 @@ private slots:
     void _automaticConnection();
     void _statusTextFollowsState_data();
     void _statusTextFollowsState();
+    void _statusTextSaysWhenNoCorrectionsAreSent_data();
+    void _statusTextSaysWhenNoCorrectionsAreSent();
     void _udpPositionOnlyReceiver();
     void _passiveForwardingRegistersCorrections_data();
     void _passiveForwardingRegistersCorrections();

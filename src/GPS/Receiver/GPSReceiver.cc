@@ -722,7 +722,8 @@ QString GPSReceiver::statusText() const
                                                 .role = activeRole(),
                                                 .forwardingCorrections = forwardingCorrections(),
                                                 .baseMode = _activeBaseMode(),
-                                                .baseState = _activeBaseState()});
+                                                .baseState = _activeBaseState(),
+                                                .correctionsWithheld = _session && _session->correctionsWithheld()});
 }
 
 QString GPSReceiver::summaryLabel() const

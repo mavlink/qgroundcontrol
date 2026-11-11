@@ -36,15 +36,6 @@ QString mismatchHint(const GPSReceiverSignatures& signatures, GPSType configured
         .arg(evidence, gpsReceiverName(match->family->type));
 }
 
-/// Whether @a family's RTCM3 is forwarded whatever base status it publishes. Passive input comes from a receiver that
-/// was not configured here, so it reports no base. A Septentrio receiver starts its corrections with its configuration
-/// and reports its base in PVTGeodetic blocks half a second apart, and no recording of a base confirms how those read,
-/// so its corrections do not wait for them.
-bool forwardsCorrectionsWithoutBase(GPSType family)
-{
-    return family == GPSType::Passive || family == GPSType::Septentrio;
-}
-
 }  // namespace
 
 struct GPSDriver::State

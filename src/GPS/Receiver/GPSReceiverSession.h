@@ -11,6 +11,7 @@
 #include "GPSObservation.h"
 #include "GPSReceiverConfig.h"
 #include "GPSReceiverConnector.h"
+#include "GPSReceiverDescriptor.h"
 #include "GPSReceiverReports.h"
 #include "GPSReceiverWorker.h"
 #include "PositionManager.h"
@@ -92,11 +93,7 @@ public:
     bool compactObservations() const { return _connection.config.base.compactObservations; }
 
     /// The detected family's once an Automatic session detected it; a passive receiver's stays passive.
-    int manufacturer() const
-    {
-        return gpsReceiverManufacturerForType(
-            _connection.type == GPSType::Automatic ? _detectedType.value_or(GPSType::Automatic) : _connection.type);
-    }
+    int manufacturer() const { return gpsReceiverManufacturerForType(_family()); }
 
     /// The family an Automatic session detected, or the protocol a passive receiver's output carries: the family
     /// whose native protocol it is, or GPSType::Passive for standard NMEA. Empty until then and for a selected family.
@@ -108,6 +105,13 @@ public:
     /// What a configured base last reported of its base position; Inactive until it reports, and for a passive
     /// receiver.
     GPSBaseState baseState() const { return _base.state; }
+
+    /// The receiver's corrections wait for a valid base position, which it does not report, so none are forwarded.
+    /// Never for the families whose corrections do not wait for it (forwardsCorrectionsWithoutBase()).
+    bool correctionsWithheld() const
+    {
+        return _base.state != GPSBaseState::Valid && !forwardsCorrectionsWithoutBase(_family());
+    }
 
     const QString& serialDevice() const { return _connection.serialDevice; }
 
@@ -132,6 +136,12 @@ signals:
     void ended(GPSConnectionError error, const QString& detail);
 
 private:
+    /// The selected family, or the detected one once an Automatic session detected it.
+    GPSType _family() const
+    {
+        return _connection.type == GPSType::Automatic ? _detectedType.value_or(GPSType::Automatic) : _connection.type;
+    }
+
     void _onBaseStatus(const GPSBaseStatus& report);
     void _onReady(const QString& identity);
     void _onDetected(GPSType type);

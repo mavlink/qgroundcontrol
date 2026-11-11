@@ -213,14 +213,24 @@ QString receiverStatus(const ReceiverStatus& status)
         return status.forwardingCorrections ? GPSReceiver::tr("Passive receiver connected; forwarding its RTCM")
                                             : GPSReceiver::tr("Passive receiver connected; position only");
     }
+    const bool determining = status.baseState == GPSBaseState::Active;
+    if (status.correctionsWithheld) {
+        if (determining && status.baseMode == Mode::BaseSurveyIn) {
+            return GPSReceiver::tr("Survey-In active; the base sends no corrections until it completes");
+        }
+        if (determining && status.baseMode == Mode::BaseReceiverAveraging) {
+            return GPSReceiver::tr(
+                "Receiver-managed averaging active; the base sends no corrections until it completes");
+        }
+        return GPSReceiver::tr("Waiting for a valid base position; the base sends no corrections until then");
+    }
     if (status.baseMode == Mode::BaseReceiverAveraging) {
         return GPSReceiver::tr("Receiver-managed averaging — no accuracy guarantee");
     }
     if (status.baseMode == Mode::BaseFixed) {
         return GPSReceiver::tr("Fixed position");
     }
-    return status.baseState == GPSBaseState::Active ? GPSReceiver::tr("Survey-In active")
-                                                    : GPSReceiver::tr("Receiver connected");
+    return determining ? GPSReceiver::tr("Survey-In active") : GPSReceiver::tr("Receiver connected");
 }
 
 }  // namespace GPSReceiverMessages

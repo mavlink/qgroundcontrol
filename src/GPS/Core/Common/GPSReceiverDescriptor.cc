@@ -144,6 +144,14 @@ int gpsReceiverManufacturerForType(GPSType type)
     return descriptor ? descriptor->manufacturerId : GPS_AUTOMATIC_MANUFACTURER;
 }
 
+bool forwardsCorrectionsWithoutBase(GPSType family)
+{
+    // Passive input comes from a receiver that was not configured here, so it reports no base. A Septentrio receiver
+    // starts its corrections with its configuration and reports its base in PVTGeodetic blocks half a second apart,
+    // and no recording of a base confirms how those read, so its corrections do not wait for them.
+    return family == GPSType::Passive || family == GPSType::Septentrio;
+}
+
 GPSReceiverCapabilities gpsReceiverCapabilities(GPSType type)
 {
     if (type == GPSType::Automatic) {

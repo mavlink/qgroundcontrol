@@ -69,6 +69,9 @@ struct GPSReceiverDescriptor
 /// What @a type supports, for either role; unknown receiver families support nothing.
 [[nodiscard]] GPSReceiverCapabilities gpsReceiverCapabilities(GPSType type);
 
+/// Whether @a family's RTCM3 is forwarded whatever base status it publishes, instead of only while that is Valid.
+[[nodiscard]] bool forwardsCorrectionsWithoutBase(GPSType family);
+
 /// The name of @a type's receiver family as shown to users; empty when no descriptor exists.
 [[nodiscard]] QString gpsReceiverName(GPSType type);
 
