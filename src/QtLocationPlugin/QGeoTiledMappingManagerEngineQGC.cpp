@@ -68,6 +68,10 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     QList<QGeoMapType> mapList;
     const QList<SharedMapProvider> providers = UrlFactory::getProviders();
     for (const SharedMapProvider &provider : providers) {
+        // Not a map to show: QtLocation would request map tiles from an elevation provider
+        if (provider->isElevationProvider()) {
+            continue;
+        }
         const QGeoMapType map = QGeoMapType(
             static_cast<QGeoMapType::MapStyle>(provider->getMapStyle()),
             provider->getMapName(),

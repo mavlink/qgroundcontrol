@@ -10,6 +10,8 @@ target_sources(
         MapProviderTest.h
         QGeoMapReplyQGCTest.cc
         QGeoMapReplyQGCTest.h
+        QGeoTiledMappingManagerEngineQGCTest.cc
+        QGeoTiledMappingManagerEngineQGCTest.h
         QGCMapEngineManagerArchiveTest.cc
         QGCMapEngineManagerArchiveTest.h
         QGCMapEngineManagerTest.cc
@@ -33,6 +35,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 
 add_qgc_test(MapProviderTest LABELS Unit)
 add_qgc_test(QGeoMapReplyQGCTest LABELS Unit)
+add_qgc_test(QGeoTiledMappingManagerEngineQGCTest LABELS Unit)
 add_qgc_test(QGCCacheWorkerTest LABELS Unit)
 add_qgc_test(QGCCachedTileSetTest LABELS Unit)
 add_qgc_test(QGCMapEngineManagerArchiveTest LABELS Unit RESOURCE_LOCK TempFiles)
