@@ -20,6 +20,20 @@ std::optional<double> egm96Separation(const QGeoCoordinate& coordinate)
     return qIsFinite(separation) ? std::optional<double>(separation) : std::nullopt;
 }
 
+/// The altitude of @a observation when its datum is @a datum.
+std::optional<double> altitudeIn(const GPSObservation& observation, GPSAltitudeDatum datum)
+{
+    const double altitude = observation.position.coordinate().altitude();
+    return observation.altitudeDatum == datum && qIsFinite(altitude) ? std::optional<double>(altitude) : std::nullopt;
+}
+
+/// The height above the ellipsoid that @a observation has without a conversion.
+std::optional<double> reportedEllipsoidHeight(const GPSObservation& observation)
+{
+    const std::optional<double> height = observation.altitudeEllipsoidMeters;
+    return height && qIsFinite(*height) ? height : altitudeIn(observation, GPSAltitudeDatum::Ellipsoid);
+}
+
 }  // namespace
 
 GPSObservation GPSObservation::fromNavigation(const GPSNavigationValues& navigation, quint64 receivedAtUs)
@@ -134,9 +148,9 @@ std::optional<GPSObservation> GPSObservation::projected(PositionUse use) const
             break;
         }
         case PositionUse::RemoteID:
-            if (altitudeEllipsoidMeters && qIsFinite(*altitudeEllipsoidMeters)) {
+            if (const auto ellipsoidHeight = ellipsoidHeightMeters()) {
                 auto ellipsoidCoordinate = accepted.position.coordinate();
-                ellipsoidCoordinate.setAltitude(*altitudeEllipsoidMeters);
+                ellipsoidCoordinate.setAltitude(*ellipsoidHeight);
                 accepted.position.setCoordinate(ellipsoidCoordinate);
                 accepted.altitudeDatum = GPSAltitudeDatum::Ellipsoid;
             } else if (!qIsFinite(accepted.position.coordinate().altitude())) {
@@ -146,7 +160,7 @@ std::optional<GPSObservation> GPSObservation::projected(PositionUse use) const
                 accepted.position.removeAttribute(QGeoPositionInfo::VerticalAccuracy);
                 accepted.altitudeDatum = GPSAltitudeDatum::Unknown;
             }
-            // Otherwise the altitude keeps its datum, which the consumer checks before calling it geodetic.
+            // Otherwise the altitude is of unknown datum, which the consumer checks before calling it geodetic.
             break;
     }
     if (use == PositionUse::Motion) {
@@ -191,19 +205,22 @@ QGeoCoordinate GPSObservation::coordinate() const
 
 std::optional<double> GPSObservation::altitudeMslMeters() const
 {
-    const QGeoCoordinate coordinate = position.coordinate();
-    const bool hasAltitude = qIsFinite(coordinate.altitude());
-    if (hasAltitude && altitudeDatum == GPSAltitudeDatum::MeanSeaLevel) {
-        return coordinate.altitude();
+    if (const auto altitude = altitudeIn(*this, GPSAltitudeDatum::MeanSeaLevel)) {
+        return altitude;
     }
-    const std::optional<double> ellipsoid = hasAltitude && altitudeDatum == GPSAltitudeDatum::Ellipsoid
-                                                ? std::optional<double>(coordinate.altitude())
-                                                : altitudeEllipsoidMeters;
-    const std::optional<double> separation = egm96Separation(coordinate);
-    if (!ellipsoid || !qIsFinite(*ellipsoid) || !separation) {
-        return std::nullopt;
+    const std::optional<double> ellipsoidHeight = reportedEllipsoidHeight(*this);
+    const std::optional<double> separation = egm96Separation(position.coordinate());
+    return ellipsoidHeight && separation ? std::optional<double>(*ellipsoidHeight - *separation) : std::nullopt;
+}
+
+std::optional<double> GPSObservation::ellipsoidHeightMeters() const
+{
+    if (const auto ellipsoidHeight = reportedEllipsoidHeight(*this)) {
+        return ellipsoidHeight;
     }
-    return *ellipsoid - *separation;
+    const std::optional<double> altitude = altitudeIn(*this, GPSAltitudeDatum::MeanSeaLevel);
+    const std::optional<double> separation = egm96Separation(position.coordinate());
+    return altitude && separation ? std::optional<double>(*altitude + *separation) : std::nullopt;
 }
 
 double GPSObservation::heading() const

@@ -267,9 +267,10 @@ void RemoteIDManagerTest::_gpsAltitudePolicy_data()
     QTest::addColumn<GPSAltitudeDatum>("datum");
     // How each datum becomes a Remote ID altitude is GPSSourceHealthTest's; these rows cover the region rules.
     QTest::newRow("fixed") << true << true << 500.0 << qQNaN() << qQNaN() << true << GPSAltitudeDatum::Ellipsoid;
-    // Without an ellipsoid height, the altitude of another datum is sent, with a warning.
-    QTest::newRow("msl-without-geoid") << false << true << 500.0 << 1.0 << qQNaN() << true
-                                       << GPSAltitudeDatum::MeanSeaLevel;
+    // Without an ellipsoid height, the geoid converts an altitude above mean sea level.
+    QTest::newRow("msl-converted") << false << true << 500.0 << 1.0 << qQNaN() << true
+                                   << GPSAltitudeDatum::MeanSeaLevel;
+    // An altitude of unknown datum is sent as it is, with a warning.
     QTest::newRow("unknown-datum") << false << true << 500.0 << 1.0 << qQNaN() << true << GPSAltitudeDatum::Unknown;
     QTest::newRow("msl-with-ellipsoid") << false << true << 500.0 << 1.0 << 550.0 << true
                                         << GPSAltitudeDatum::MeanSeaLevel;
@@ -298,7 +299,7 @@ void RemoteIDManagerTest::_gpsAltitudePolicy()
     QFETCH(bool, usable);
     QFETCH(GPSAltitudeDatum, datum);
     const bool notGeodetic =
-        !fixed && datum != GPSAltitudeDatum::Ellipsoid && qIsFinite(altitude) && !qIsFinite(ellipsoid);
+        !fixed && datum == GPSAltitudeDatum::Unknown && qIsFinite(altitude) && !qIsFinite(ellipsoid);
     auto* settings = SettingsManager::instance()->remoteIDSettings();
     auto* manager = vehicle()->remoteIDManager();
     auto* positioning = GPSManager::instance()->positionManager();
@@ -359,7 +360,9 @@ void RemoteIDManagerTest::_gpsAltitudePolicy()
     }
     // The warning is given once, not on every message.
     QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
-    const double acceptedAltitude = qIsFinite(ellipsoid) ? ellipsoid : altitude;
+    const bool converted = !fixed && datum == GPSAltitudeDatum::MeanSeaLevel && !qIsFinite(ellipsoid);
+    const double acceptedAltitude =
+        qIsFinite(ellipsoid) ? ellipsoid : altitude + (converted ? QGCGeo::geoidSeparation(47, 8) : 0.0);
     const float expectedAltitude = usable && qIsFinite(acceptedAltitude) ? float(acceptedAltitude) : -1000.0f;
     QTRY_VERIFY_WITH_TIMEOUT(
         ([&]() {

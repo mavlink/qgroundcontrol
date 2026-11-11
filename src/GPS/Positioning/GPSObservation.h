@@ -59,4 +59,7 @@ struct GPSObservation
     /// altitudeEllipsoidMeters may be, is converted with the EGM96 geoid. Empty when the position has no height or
     /// only an altitude of unknown datum.
     [[nodiscard]] std::optional<double> altitudeMslMeters() const;
+    /// The position's height above the WGS84 ellipsoid: altitudeEllipsoidMeters or an altitude in that datum, else
+    /// an altitude above mean sea level converted with the EGM96 geoid. Empty as for altitudeMslMeters().
+    [[nodiscard]] std::optional<double> ellipsoidHeightMeters() const;
 };

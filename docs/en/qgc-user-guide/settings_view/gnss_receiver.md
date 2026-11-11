@@ -144,6 +144,9 @@ The converted altitude is within 1 m of the model almost everywhere, and up to 4
 An altitude of unknown reference or a position without an altitude is not sent. The vehicle's own home altitude is sent instead: home moves only horizontally, and a followed target is taken to be at home altitude.
 The home position also keeps the vehicle's altitude when the ground station's is not accurate to 10 m.
 
+[Remote ID](remote_id.md) reports the operator's height above the WGS84 ellipsoid instead.
+It sends the ellipsoid height of a GNSS receiver or an Android device as it is, and converts an altitude above mean sea level, which is all macOS and iOS devices report, with the same geoid model.
+
 A connected GNSS receiver can provide the ground station position instead; use the [Passive](#passive) role for a receiver that only does that.
 The settings are:
 

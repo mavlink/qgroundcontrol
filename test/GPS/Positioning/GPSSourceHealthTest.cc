@@ -420,10 +420,11 @@ void GPSSourceHealthTest::_remoteIdDatum_data()
     QTest::addColumn<double>("ellipsoid");
     QTest::addColumn<double>("expected");
     QTest::addColumn<GPSAltitudeDatum>("expectedDatum");
-    // Without an ellipsoid height the altitude keeps its datum, which Remote ID checks.
+    // An altitude of unknown datum stays that, which Remote ID checks.
     QTest::newRow("unknown") << GPSAltitudeDatum::Unknown << 500.0 << qQNaN() << 500.0 << GPSAltitudeDatum::Unknown;
-    QTest::newRow("msl-without-geoid") << GPSAltitudeDatum::MeanSeaLevel << 500.0 << qQNaN() << 500.0
-                                       << GPSAltitudeDatum::MeanSeaLevel;
+    // The geoid, about 48 m above the ellipsoid here, converts an altitude above mean sea level.
+    QTest::newRow("msl-converted") << GPSAltitudeDatum::MeanSeaLevel << 500.0 << qQNaN()
+                                   << 500.0 + QGCGeo::geoidSeparation(47, 8) << GPSAltitudeDatum::Ellipsoid;
     QTest::newRow("msl-with-ellipsoid") << GPSAltitudeDatum::MeanSeaLevel << 500.0 << 550.0 << 550.0
                                         << GPSAltitudeDatum::Ellipsoid;
     QTest::newRow("ellipsoid-coordinate")

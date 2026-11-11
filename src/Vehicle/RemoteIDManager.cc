@@ -304,7 +304,7 @@ void RemoteIDManager::_sendSystem()
                                                                       GPSSourceHealth::FRESHNESS_TIMEOUT);
         if (observation) {
             gcsPosition = observation->position.coordinate();
-            // An altitude of another or an unknown datum is still the best available operator altitude.
+            // An altitude of unknown datum is still the best available operator altitude.
             const bool notGeodetic =
                 observation->altitudeDatum != GPSAltitudeDatum::Ellipsoid && qIsFinite(gcsPosition.altitude());
             if (notGeodetic && !std::exchange(_gcsAltitudeNotGeodeticReported, true)) {
