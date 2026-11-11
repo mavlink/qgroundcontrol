@@ -6,6 +6,15 @@
 
 qt_add_library(
     QGCMapTiles STATIC
+    Cache/QGCCacheTile.h
+    Cache/QGCMapTaskBase.h
+    Cache/QGCMapTasks.cpp
+    Cache/QGCMapTasks.h
+    Cache/QGCTileCacheDatabase.cpp
+    Cache/QGCTileCacheDatabase.h
+    Cache/QGCTileCacheTypes.h
+    Cache/QGCTileCacheWorker.cpp
+    Cache/QGCTileCacheWorker.h
     Providers/BingMapProvider.cpp
     Providers/BingMapProvider.h
     Providers/ElevationMapProvider.cpp
@@ -24,22 +33,13 @@ qt_add_library(
     Providers/TianDiTuProvider.h
     QGCCachedTileSet.cpp
     QGCCachedTileSet.h
-    QGCCacheTile.h
     QGCMapEngine.cpp
     QGCMapEngine.h
     QGCMapEngineManager.cc
     QGCMapEngineManager.h
-    QGCMapTaskBase.h
-    QGCMapTasks.cpp
-    QGCMapTasks.h
     QGCMapUrlEngine.cpp
     QGCMapUrlEngine.h
     QGCTile.h
-    QGCTileCacheDatabase.cpp
-    QGCTileCacheDatabase.h
-    QGCTileCacheTypes.h
-    QGCTileCacheWorker.cpp
-    QGCTileCacheWorker.h
     QGCTileReply.cc
     QGCTileReply.h
     QGCTileSet.h
@@ -70,6 +70,7 @@ target_include_directories(
     QGCMapTiles
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/Cache
         ${CMAKE_CURRENT_SOURCE_DIR}/Providers
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../../FactSystem
