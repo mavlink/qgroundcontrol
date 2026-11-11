@@ -90,12 +90,6 @@ QGCTileReply::~QGCTileReply()
     abort();
 }
 
-QNetworkRequest QGCTileReply::networkRequest(int mapId, int x, int y, int zoom)
-{
-    const SharedMapProvider provider = UrlFactory::getMapProviderFromQtMapId(mapId);
-    return provider ? tileRequest(*provider, x, y, zoom) : QNetworkRequest();
-}
-
 bool QGCTileReply::start()
 {
     if (_state != State::Idle) {

@@ -7,8 +7,6 @@
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
-#include "QGCMapTasks.h"
-#include "QGCMapUrlEngine.h"
 #include "SettingsManager.h"
 
 QGC_LOGGING_CATEGORY(QGeoFileTileCacheQGCLog, "QtLocationPlugin.QGeoFileTileCacheQGC")
@@ -66,24 +64,6 @@ uint32_t QGeoFileTileCacheQGC::_getMemLimit(const QVariantMap &parameters)
 quint32 QGeoFileTileCacheQGC::_getMaxMemCacheSetting()
 {
     return SettingsManager::instance()->mapsSettings()->maxCacheMemorySize()->rawValue().toUInt();
-}
-
-void QGeoFileTileCacheQGC::cacheTile(const QString &type, int x, int y, int z, const QByteArray &image, const QString &format, qulonglong set)
-{
-    const QString hash = UrlFactory::getTileHash(type, x, y, z);
-    cacheTile(type, hash, image, format, set);
-}
-
-void QGeoFileTileCacheQGC::cacheTile(const QString &type, const QString &hash, const QByteArray &image, const QString &format, qulonglong set)
-{
-    getQGCMapEngine()->cacheTile(type, hash, image, format, set);
-}
-
-QGCFetchTileTask* QGeoFileTileCacheQGC::createFetchTileTask(const QString &type, int x, int y, int z)
-{
-    const QString hash = UrlFactory::getTileHash(type, x, y, z);
-    QGCFetchTileTask *task = new QGCFetchTileTask(hash);
-    return task;
 }
 
 QString QGeoFileTileCacheQGC::_getCachePath(const QVariantMap &parameters)

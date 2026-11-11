@@ -2,12 +2,10 @@
 
 #include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
 #include <QtLocation/private/qgeotilespec_p.h>
-#include <QtNetwork/QNetworkRequest>
 
 #include "MapProvider.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapUrlEngine.h"
-#include "QGCTileReply.h"
 #include "QGeoMapReplyQGC.h"
 #include "QGeoTiledMappingManagerEngineQGC.h"
 
@@ -86,9 +84,4 @@ void QGeoTileFetcherQGC::handleReply(QGeoTiledMapReply* reply, const QGeoTileSpe
     } else {
         emit tileError(spec, reply->errorString());
     }
-}
-
-QNetworkRequest QGeoTileFetcherQGC::getNetworkRequest(int mapId, int x, int y, int zoom)
-{
-    return QGCTileReply::networkRequest(mapId, x, y, zoom);
 }

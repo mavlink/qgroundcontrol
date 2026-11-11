@@ -2,8 +2,6 @@
 
 #include <QtLocation/private/qgeofiletilecache_p.h>
 
-class QGCFetchTileTask;
-
 class QGeoFileTileCacheQGC : public QGeoFileTileCache
 {
     Q_OBJECT
@@ -11,10 +9,6 @@ class QGeoFileTileCacheQGC : public QGeoFileTileCache
 public:
     explicit QGeoFileTileCacheQGC(const QVariantMap &parameters, QObject *parent = nullptr);
     ~QGeoFileTileCacheQGC();
-
-    static void cacheTile(const QString &type, int x, int y, int z, const QByteArray &image, const QString &format, qulonglong set = UINT64_MAX);
-    static void cacheTile(const QString &type, const QString &hash, const QByteArray &image, const QString &format, qulonglong set = UINT64_MAX);
-    static QGCFetchTileTask *createFetchTileTask(const QString &type, int x, int y, int z);
 
 private:
     // QString tileSpecToFilename(const QGeoTileSpec &spec, const QString &format, const QString &directory) const final;

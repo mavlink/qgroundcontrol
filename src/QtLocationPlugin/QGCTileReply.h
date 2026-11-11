@@ -12,7 +12,6 @@
 class MapProvider;
 class QNetworkAccessManager;
 class QNetworkReply;
-class QNetworkRequest;
 struct QGCCacheTile;
 
 /// A request for one map or elevation tile. The tile comes from the shared tile cache or, on a miss, from the
@@ -71,9 +70,6 @@ public:
 
     /// Key of the tile in the cache; empty until start()
     QString hash() const { return _hash; }
-
-    /// The request for a tile on its provider's server. Its URL is empty when \a mapId names no provider.
-    static QNetworkRequest networkRequest(int mapId, int x, int y, int zoom);
 
 signals:
     /// Emitted once, after start() returned
