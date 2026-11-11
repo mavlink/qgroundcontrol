@@ -24,7 +24,6 @@ qt_add_qml_module(
         GPSFactSwitchField.qml
         GPSFactTextField.qml
         GPSField.qml
-        GPSNoteLabel.qml
         GPSReceiverBaseSites.qml
         GPSReceiverBaseStation.qml
         GPSReceiverConnectControls.qml

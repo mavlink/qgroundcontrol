@@ -184,7 +184,7 @@ ToolIndicatorPage {
                 showCoordinates: false
             }
 
-            GPSNoteLabel {
+            QGCNoteLabel {
                 visible: root._receiver.errorMessage.length > 0
                 text: root._receiver.errorMessage
             }
@@ -192,7 +192,7 @@ ToolIndicatorPage {
     }
 
     // The indicator's loader sizes the panel from its implicit width. A layout would compute it from its contents, and
-    // GPSNoteLabel's zero preferred width keeps the notes from adding any, so a plain item supplies the width.
+    // QGCNoteLabel's zero preferred width keeps the notes from adding any, so a plain item supplies the width.
     expandedComponent: Component {
         Item {
             implicitWidth: root._settingsWidth

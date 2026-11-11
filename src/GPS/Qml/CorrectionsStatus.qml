@@ -43,7 +43,7 @@ QGCGroupBox {
     }
 
     // Stream endpoints can be long URLs, so they wrap anywhere.
-    GPSNoteLabel {
+    QGCNoteLabel {
         objectName: "correctionsSelectedStream"
         visible: root._fresh && root._selected.instanceId.length > 0
         text: root._selected.instanceId
@@ -102,7 +102,7 @@ QGCGroupBox {
 
     // Why no stream is routed: the message filter has an entry that is not a message ID, or takes none of the
     // messages that arrive.
-    GPSNoteLabel {
+    QGCNoteLabel {
         objectName: "correctionsMessageFilterError"
         visible: text !== ""
         text: root.corrections.messageFilterError
@@ -110,7 +110,7 @@ QGCGroupBox {
     }
 
     // Why the UDP RTCM input cannot listen, such as a port another program uses; the input keeps retrying.
-    GPSNoteLabel {
+    QGCNoteLabel {
         objectName: "correctionsUdpInputError"
         visible: root._udpInputError !== ""
         text: root._udpInputError
@@ -118,7 +118,7 @@ QGCGroupBox {
     }
 
     // Why the enabled UDP output forwards nothing, such as an invalid address or a loop into the UDP input.
-    GPSNoteLabel {
+    QGCNoteLabel {
         objectName: "correctionsUdpOutputError"
         visible: root._udpOutputError !== ""
         text: root._udpOutputError

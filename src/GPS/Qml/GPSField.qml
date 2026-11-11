@@ -19,7 +19,7 @@ ColumnLayout {
     Layout.minimumWidth: 0
     spacing: ScreenTools.defaultFontPixelHeight / 4
 
-    GPSNoteLabel { text: root.label }
+    QGCNoteLabel { text: root.label }
 
     ColumnLayout {
         id: control
@@ -27,7 +27,7 @@ ColumnLayout {
         spacing: root.spacing
     }
 
-    GPSNoteLabel {
+    QGCNoteLabel {
         visible: text !== ""
         text: root.note
     }

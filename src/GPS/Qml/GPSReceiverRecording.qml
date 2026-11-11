@@ -18,7 +18,7 @@ GPSField {
         onClicked: root.receiver.recordSessions = checked
     }
 
-    GPSNoteLabel {
+    QGCNoteLabel {
         objectName: "rtkRecordingFile"
         visible: text !== ""
         text: root.receiver.recordingFile !== ""

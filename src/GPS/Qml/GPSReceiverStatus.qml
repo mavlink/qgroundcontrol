@@ -66,14 +66,14 @@ QGCGroupBox {
             id: rowLabel
             textFormat: Text.PlainText
         }
-        GPSNoteLabel {
+        QGCNoteLabel {
             id: rowValue
             horizontalAlignment: Text.AlignRight
             wrapMode: Text.WrapAnywhere
         }
     }
 
-    GPSNoteLabel {
+    QGCNoteLabel {
         objectName: "rtkReceiverStatus"
         text: root.receiver.statusText || root.disconnectedText
     }
@@ -161,7 +161,7 @@ QGCGroupBox {
         visible: root._connected && root._surveyConnected && root.facts.currentAccuracy.value > 0
     }
 
-    GPSNoteLabel {
+    QGCNoteLabel {
         objectName: "rtkSurveyCompletePrompt"
         visible: surveySave.offered
         text: root._surveySaved
@@ -200,7 +200,7 @@ QGCGroupBox {
             onClicked: surveySave.failed = !QGroundControl.gpsManager.saveCurrentBasePosition(surveySiteName.text)
         }
 
-        GPSNoteLabel {
+        QGCNoteLabel {
             objectName: "rtkSurveySaveFailed"
             visible: surveySave.failed
             warning: true

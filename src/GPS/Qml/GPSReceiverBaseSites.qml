@@ -91,7 +91,7 @@ GPSReceiverSettingsGroup {
                 }
             }
 
-            GPSNoteLabel {
+            QGCNoteLabel {
                 objectName: "rtkBaseSiteSaveFailed"
                 visible: baseSiteSave.failed
                 warning: true

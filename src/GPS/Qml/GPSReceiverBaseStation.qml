@@ -25,13 +25,13 @@ GPSReceiverSettingsGroup {
         wrapMode: Text.Wrap
     }
 
-    GPSNoteLabel {
+    QGCNoteLabel {
         objectName: "rtkPersistentConfigurationWarning"
         visible: root.presentation.restartOnConnect
         text: root._quectelOnly + qsTr("Without permission to save, Quectel role and base settings must already match settings saved externally. The receiver restarts on connection. Survey-In counts accepted 1 Hz observations; its accuracy limit filters each observation and does not guarantee final position accuracy.")
     }
 
-    GPSNoteLabel {
+    QGCNoteLabel {
         objectName: "rtkSurveySavesPosition"
         visible: root.presentation.surveyMaySavePosition && root.baseMode === BaseModeDefinition.BaseSurveyIn
         text: root._quectelOnly + qsTr("The Quectel receiver may automatically store the completed survey position in its own memory.")
@@ -63,7 +63,7 @@ GPSReceiverSettingsGroup {
         }
     }
 
-    GPSNoteLabel {
+    QGCNoteLabel {
         visible: !root.receiver.baseModeSupported
         text: qsTr("The selected base mode is not supported by this receiver. Choose a supported mode explicitly.")
     }

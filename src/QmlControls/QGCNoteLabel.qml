@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-/// Wrapping plain-text note of the GPS panels; it takes the width its layout gives it instead of widening the layout.
+/// Wrapping plain-text note; it takes the width its layout gives it instead of widening the layout.
 QGCLabel {
     id: control
 

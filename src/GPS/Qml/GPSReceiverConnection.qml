@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 
 import QGroundControl
+import QGroundControl.Controls
 import QGroundControl.GPS
 
 /// Which receiver to connect and how to reach it: its role, family, connection and device.
@@ -44,7 +45,7 @@ GPSReceiverSettingsGroup {
         comboBox.objectName: "rtkManufacturer"
         comboBox.enabled: root._editable
 
-        GPSNoteLabel {
+        QGCNoteLabel {
             objectName: "rtkAutomaticExplanation"
             visible: root.presentation.automatic
             text: root.settings.baseReceiverManufacturer.shortDescription
@@ -56,7 +57,7 @@ GPSReceiverSettingsGroup {
         comboBox.objectName: "rtkConnectionType"
         comboBox.enabled: root._editable
 
-        GPSNoteLabel {
+        QGCNoteLabel {
             objectName: "rtkTcpOnly"
             visible: !root.receiver.serialSupported && root._connection === RTKSettings.Serial
             text: qsTr("Serial receivers are not supported on this platform, so the receiver connects over TCP.")
@@ -84,7 +85,7 @@ GPSReceiverSettingsGroup {
         enabled: root._editable
         shown: root._udp
 
-        GPSNoteLabel {
+        QGCNoteLabel {
             objectName: "rtkUdpExplanation"
             warning: !root._connectionSupported
             text: root._connectionSupported ? root.settings.udpPort.shortDescription
@@ -104,7 +105,7 @@ GPSReceiverSettingsGroup {
         editable: root._editable
     }
 
-    GPSNoteLabel {
+    QGCNoteLabel {
         visible: root._editable && root.configuredBase
         text: root.presentation.automatic
               ? qsTr("If the identified receiver does not support the selected base mode, connecting fails and names the receiver. Auto baud tries every rate the supported receivers use.")

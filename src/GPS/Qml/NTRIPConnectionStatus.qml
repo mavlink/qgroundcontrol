@@ -73,7 +73,7 @@ QGCGroupBox {
         onClicked:  root.ntripManager.disconnectCaster()
     }
 
-    GPSNoteLabel {
+    QGCNoteLabel {
         text:           qsTr("Connected but no data received recently")
         warning:        true
         visible:        root._stats.dataStale && root._connected
@@ -111,7 +111,7 @@ QGCGroupBox {
         visible:   root._connected && root._stats.bytesReceived > 0
     }
 
-    GPSNoteLabel {
+    QGCNoteLabel {
         text:           qsTr("Warning: Data usage: %1 — consider connection costs").arg(QGroundControl.bigSizeToString(root._stats.bytesReceived))
         warning:        true
         visible:        root._connected && root._stats.dataUsageHigh
@@ -131,7 +131,7 @@ QGCGroupBox {
         visible:         root._connected && root._ggaSource !== ""
     }
 
-    GPSNoteLabel {
+    QGCNoteLabel {
         objectName:     "ntripNoGgaPosition"
         text:           qsTr("No position is available to send to the caster. Network (VRS) mountpoints send corrections only after receiving a position; check the GGA position source.")
         warning:        true
@@ -139,7 +139,7 @@ QGCGroupBox {
                         && (root._stats.dataStale || root._stats.messagesReceived === 0)
     }
 
-    GPSNoteLabel {
+    QGCNoteLabel {
         text:           root._securityWarning
         warning:        true
         visible:        root._connected && root._securityWarning !== ""

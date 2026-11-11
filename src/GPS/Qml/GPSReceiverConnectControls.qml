@@ -42,7 +42,7 @@ GPSReceiverSettingsGroup {
             onClicked: root.receiver.persistentChangesAllowed = checked
         }
 
-        GPSNoteLabel {
+        QGCNoteLabel {
             objectName: "rtkPersistentConsentWarning"
             text: root._quectelOnly + qsTr("For this connection only, allow QGroundControl to write requested base role or base-setting changes to receiver flash and restart it. Changes may remain saved even if reconnecting fails. No factory reset is performed. Permission is cleared after each attempt and is never used by automatic connections. To use the receiver as a rover again, restore its role with Quectel QGNSS or $PQTMCFGRCVRMODE,W,1 followed by $PQTMSAVEPAR.")
         }
@@ -73,7 +73,7 @@ GPSReceiverSettingsGroup {
         }
     }
 
-    GPSNoteLabel {
+    QGCNoteLabel {
         objectName: "rtkErrorMessage"
         visible: root.showErrorMessage && text.length > 0
         text: root.receiver.errorMessage

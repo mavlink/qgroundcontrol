@@ -47,19 +47,19 @@ QGCGroupBox {
         }
     }
 
-    GPSNoteLabel {
+    QGCNoteLabel {
         visible:            root._fetching
         text:               qsTr("Fetching mountpoints…")
     }
 
-    GPSNoteLabel {
+    QGCNoteLabel {
         objectName:         "ntripSourceTableSecurityWarning"
         visible:            text !== ""
         text:               root._sourceTable.securityWarning
         warning:            true
     }
 
-    GPSNoteLabel {
+    QGCNoteLabel {
         visible:            root._sourceTable.fetchStatus === NTRIPSourceTableController.Error
         text:               root._sourceTable.fetchError
         warning:            true

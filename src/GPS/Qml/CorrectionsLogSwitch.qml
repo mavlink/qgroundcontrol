@@ -25,7 +25,7 @@ ColumnLayout {
         onClicked: root.corrections.logToFile = checked
     }
 
-    GPSNoteLabel {
+    QGCNoteLabel {
         objectName: "correctionsLogFile"
         visible: text !== ""
         text: root.corrections.logFile !== "" ? qsTr("Log file: %1").arg(root.corrections.logFile) : ""

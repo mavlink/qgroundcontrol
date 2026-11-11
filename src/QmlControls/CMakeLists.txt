@@ -176,6 +176,7 @@ qt_add_qml_module(
         QGCMenuSeparator.qml
         QGCMouseArea.qml
         QGCMovableItem.qml
+        QGCNoteLabel.qml
         QGCOptionsComboBox.qml
         QGCPageIndicator.qml
         QGCPopupDialog.qml
