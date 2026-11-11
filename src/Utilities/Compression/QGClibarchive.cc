@@ -187,8 +187,14 @@ NextEntry readNextEntry(struct archive* a, struct archive_entry** entry)
 EntryWalk forEachEntry(struct archive* a, const EntryVisitor& visitor)
 {
     struct archive_entry* entry = nullptr;
+    bool formatKnown = false;
     NextEntry next;
     while ((next = readNextEntry(a, &entry)) == NextEntry::Found) {
+        // libarchive knows the format once it has read the first header
+        if (!formatKnown) {
+            updateFormatState(a);
+            formatKnown = true;
+        }
         if (!visitor(entry)) {
             return EntryWalk::Stopped;
         }
@@ -601,14 +607,7 @@ bool extractArchiveEntries(const QGClibarchive::ArchiveReader& reader, const QSt
     const QString canonicalOutputDir = canonicalDirectoryPath(outputDirectoryPath);
     existingDirs.insert(canonicalOutputDir);
 
-    bool formatLogged = false;
     const QGClibarchive::EntryWalk walk = QGClibarchive::forEachEntry(a, [&](struct archive_entry* entry) {
-        // Log detected format after first header read
-        if (!formatLogged) {
-            updateFormatState(a);
-            formatLogged = true;
-        }
-
         const QString outputPath = diskEntryPath(entry, canonicalOutputDir);
         if (outputPath.isEmpty()) {
             return true;

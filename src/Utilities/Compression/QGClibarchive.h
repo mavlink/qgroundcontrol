@@ -209,7 +209,8 @@ using EntryVisitor = std::function<bool(struct archive_entry* entry)>;
 
 /// Visit the entries of an archive in order
 /// Every loop over archive entries is this one. Only Completed says that the archive was read to
-/// its end, so a caller cannot take a read error for the end of the archive.
+/// its end, so a caller cannot take a read error for the end of the archive. The first entry
+/// also sets what lastDetectedFormatName() and lastDetectedFilterName() return.
 /// @param a Archive reader
 /// @param visitor Called with each entry header, when the data of that entry can be read from @a a
 EntryWalk forEachEntry(struct archive* a, const EntryVisitor& visitor);

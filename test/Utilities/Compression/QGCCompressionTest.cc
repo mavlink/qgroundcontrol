@@ -951,6 +951,8 @@ void QGCCompressionTest::_testDetectedFormat_data()
     QTest::newRow("extractArchive") << "extractArchive" << zip << "^ZIP" << "none";
     QTest::newRow("extractArchiveAtomic") << "extractArchiveAtomic" << sevenZip << "^7-Zip" << "none";
     QTest::newRow("extractFromDevice") << "extractFromDevice" << zip << "^ZIP" << "none";
+    QTest::newRow("extractArchiveFiltered") << "extractArchiveFiltered" << zip << "^ZIP" << "none";
+    QTest::newRow("extractFileDataFromDevice") << "extractFileDataFromDevice" << sevenZip << "^7-Zip" << "none";
 }
 
 void QGCCompressionTest::_testDetectedFormat()
@@ -992,6 +994,11 @@ void QGCCompressionTest::_testDetectedFormat()
         QVERIFY(QGCCompression::extractArchiveAtomic(resource, outputPath));
     } else if (api == "extractFromDevice") {
         QVERIFY(QGCCompression::extractFromDevice(&device, outputPath));
+    } else if (api == "extractArchiveFiltered") {
+        QVERIFY(QGCCompression::extractArchiveFiltered(resource, outputPath,
+                                                       [](const QGCCompression::ArchiveEntry&) { return true; }));
+    } else if (api == "extractFileDataFromDevice") {
+        QVERIFY(!QGCCompression::extractFileDataFromDevice(&device, QStringLiteral("manifest.json")).isEmpty());
     } else {
         QFAIL("Unknown row");
     }
