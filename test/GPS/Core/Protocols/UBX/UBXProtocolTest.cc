@@ -838,6 +838,34 @@ void isolatedFrameAndControl(GPSTestClock& clock)
     QVERIFY(!UBX::decodeConfigurationValues(Bytes{1, 0, 0, 0, 1}));
 }
 
+/// Readbacks that time out leave one reply each to come, in order. With two outstanding and a third readback pending,
+/// as after the readbacks of consecutive optional batches, the late replies answer the first two.
+void lateReadbackReplies(GPSTestClock&)
+{
+    UBX::ReceiverController controller;
+    for (const uint32_t key : {Cfg::ODO_USE_ODO.id, Cfg::NAVHPG_DGNSSMODE.id}) {
+        controller.beginReadback(std::array{key});
+        controller.finishReadback();
+    }
+    const auto values = [](uint32_t key) {
+        UBX::ConfigurationValues reply;
+        reply.count = 1;
+        reply.values[0] = {.key = key, .value = 0};
+        return reply;
+    };
+    const std::array pending{Cfg::SEC_JAMDET_SENSITIVITY_HI.id};
+    controller.beginReadback(pending);
+    // The first key's values, then the NAK of a receiver without the second key.
+    controller.accept(values(Cfg::ODO_USE_ODO.id));
+    controller.accept(UBX::Acknowledgement{Msg::CFG_VALGET.value(), false});
+    QVERIFY(!controller.readbackRejected() && !controller.readbackReady());
+    QVERIFY(!controller.readbackReplyOutstanding());
+    controller.accept(values(pending[0]));
+    QVERIFY(controller.readbackReady());
+    controller.finishReadback();
+    QVERIFY(!controller.readbackReplyOutstanding());
+}
+
 void checkedWireCodecs(GPSTestClock&)
 {
     const auto fixed = []<typename T>() {
@@ -1626,6 +1654,7 @@ void reconfigureDoesNotReuseStopConfirmation(GPSTestClock& clock)
 
 constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"isolated-frame-control", isolatedFrameAndControl},
+    {"late-readback-replies", lateReadbackReplies},
     {"checked-wire-codecs", checkedWireCodecs},
     {"optional-command-write-evidence", optionalCommandWriteEvidence},
     {"legacy-rtcm-activation", legacyRTCMActivation},

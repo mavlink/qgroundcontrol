@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <optional>
 #include <span>
-#include <utility>
 
 #include "GPSCommand.h"
 #include "UBX/UBXConfigKeys.h"
@@ -99,7 +98,7 @@ public:
     {
         // A readback settled by an earlier reply, or by its timeout, still has its own reply to come.
         if (_readbackPending && !_readbackReplied) {
-            _readbackReplyOutstanding = true;
+            ++_readbackRepliesOutstanding;
         }
         _readbackPending = false;
     }
@@ -107,7 +106,7 @@ public:
     bool readbackPending() const { return _readbackPending; }
 
     /// A reply to a readback settled without it can still arrive.
-    bool readbackReplyOutstanding() const { return _readbackReplyOutstanding; }
+    bool readbackReplyOutstanding() const { return _readbackRepliesOutstanding > 0; }
 
     bool readbackReady() const { return _readbackReady; }
 
@@ -181,11 +180,15 @@ private:
         bool acknowledged = false;
     };
 
-    /// Takes one readback reply, a response or a NAK. @return whether it answers the pending readback rather than
-    /// one settled without its reply.
+    /// Takes one readback reply, a response or a NAK. Replies arrive in order, so it answers the oldest readback
+    /// settled without its reply, if any. @return whether it answers the pending readback instead.
     bool _takeReadbackReply()
     {
-        if (std::exchange(_readbackReplyOutstanding, false) || !_readbackPending) {
+        if (_readbackRepliesOutstanding > 0) {
+            --_readbackRepliesOutstanding;
+            return false;
+        }
+        if (!_readbackPending) {
             return false;
         }
         _readbackReplied = true;
@@ -202,7 +205,8 @@ private:
     bool _readbackReady = false;
     bool _readbackRejected = false;
     bool _readbackReplied = false;
-    bool _readbackReplyOutstanding = false;
+    /// Readbacks settled without their reply, each of which can still arrive.
+    unsigned _readbackRepliesOutstanding = 0;
     std::optional<RatePoll> _ratePoll;
 };
 
