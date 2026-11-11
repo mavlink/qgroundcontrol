@@ -16,7 +16,7 @@ GPSPositionReport position(const GPSDecodedPosition& source, const GPSIntegrityR
 /// own receipt, until FRESHNESS_TIMEOUT has passed. A full snapshot replaces every constellation; a delta replaces only
 /// the counts it carries, and never with an older receipt. The used count sums the constellations in view, and is zero
 /// when none has satellites in view; while one with satellites in view lacks a used count, the latest count-only
-/// report stands in.
+/// report stands in, under the same timeout from its own receipt.
 class SatelliteCounts
 {
 public:
@@ -48,6 +48,6 @@ private:
     GPSSatelliteReport _report(bool countOnlyUsed) const;
 
     std::map<GPSConstellation, Constellation> _constellations;
-    std::optional<int> _countOnlyUsed = std::nullopt;
+    Count _countOnlyUsed;
 };
 }  // namespace GPSDecodedData

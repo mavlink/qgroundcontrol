@@ -47,7 +47,7 @@ GPSSatelliteReport SatelliteCounts::update(const GPSDecodedSatellites& source, u
 
 GPSSatelliteReport SatelliteCounts::update(const GPSDecodedSatelliteUsage& source, uint64_t nowUs)
 {
-    _countOnlyUsed = source.usedCount;
+    _accept(_countOnlyUsed, source.timestampUs, source.usedCount, nowUs);
     (void) _expire(nowUs);
     return _report(true);
 }
@@ -71,15 +71,18 @@ void SatelliteCounts::_accept(Count& count, uint64_t receivedAtUs, std::optional
 bool SatelliteCounts::_expire(uint64_t nowUs)
 {
     bool expired = false;
-    for (auto& [constellation, counts] : _constellations) {
-        for (Count* count : {&counts.inView, &counts.used}) {
-            if (count->receivedAtUs &&
-                !MonotonicClock::fresh(count->receivedAtUs, nowUs, SatelliteCounts::FRESHNESS_TIMEOUT)) {
-                *count = {};
-                expired = true;
-            }
+    const auto retire = [&expired, nowUs](Count& count) {
+        if (count.receivedAtUs &&
+            !MonotonicClock::fresh(count.receivedAtUs, nowUs, SatelliteCounts::FRESHNESS_TIMEOUT)) {
+            count = {};
+            expired = true;
         }
+    };
+    for (auto& [constellation, counts] : _constellations) {
+        retire(counts.inView);
+        retire(counts.used);
     }
+    retire(_countOnlyUsed);
     return expired;
 }
 
@@ -114,7 +117,7 @@ GPSSatelliteReport SatelliteCounts::_report(bool countOnlyUsed) const
             viewUsed = used;
         }
     }
-    report.used = countOnlyUsed || !viewUsed ? _countOnlyUsed : viewUsed;
+    report.used = countOnlyUsed || !viewUsed ? _countOnlyUsed.value : viewUsed;
     return report;
 }
 }  // namespace GPSDecodedData

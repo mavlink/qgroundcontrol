@@ -673,6 +673,8 @@ void GPSDriverTest::_satelliteExpiry()
     QCOMPARE(unavailableReports, 1);
     QCOMPARE(latest.timestampUs, uint64_t{0});
     QVERIFY(!latest.inView);
+    // The count the positions carry lapses with them.
+    QCOMPARE(latest.used, positionTraffic ? std::optional<int>{8} : std::nullopt);
     QCOMPARE(result.liveness, traffic);
     if (!positionTraffic) {
         QCOMPARE(result.updates, GPSReceiveUpdates{});
