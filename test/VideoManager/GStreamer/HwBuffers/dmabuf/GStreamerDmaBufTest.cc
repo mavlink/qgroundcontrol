@@ -67,6 +67,14 @@ GstSample* makeMemfdDmaBufSample(GstVideoFormat format, GstVideoInfo& info, cons
     return sample;
 }
 
+/// What _testDmaBufImportFailureLatch imports between a stream's failed imports.
+enum class ImportedBetween
+{
+    Nothing,
+    OtherStream,
+    SameStream,
+};
+
 }  // namespace
 #endif
 
@@ -352,13 +360,18 @@ void GstHwBuffersTest::_testDmaBufMapTexturesRejectsForeignRhi()
     const quint64 failuresBefore =
         GstHwPathTelemetry::peek(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures);
 
-    // Warned once per process.
-    ignoreLogMessage("Video.GStreamer.HwBuffers.GstDmaBuf", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("QRhi backend is")));
+    // Warned once, and once more after each reset: a recreated scene graph reports its failures again.
     QVideoFrameTexturesUPtr none;
-    QVERIFY2(!frame.mapTextures(*rhi, none), "Only a GL or Vulkan QRhi can import a DMABuf frame");
+    for (int sceneGraph = 0; sceneGraph < 2; ++sceneGraph) {
+        GstDmaBufVideoBuffer::resetCachedState();
+        expectLogMessage("Video.GStreamer.HwBuffers.GstDmaBuf", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("QRhi backend is")));
+        QVERIFY2(!frame.mapTextures(*rhi, none), "Only a GL or Vulkan QRhi can import a DMABuf frame");
+        verifyExpectedLogMessage();
+        QVERIFY(!frame.mapTextures(*rhi, none));
+    }
     QCOMPARE(GstHwPathTelemetry::peek(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::Counter::MapFailures),
-             failuresBefore + 1);
+             failuresBefore + 4);
 #endif
 }
 
@@ -488,14 +501,33 @@ void GstHwBuffersTest::_testDmaBufTiledFrameDroppedWithoutImport()
 
 void GstHwBuffersTest::_testDmaBufImportFailureLatch_data()
 {
-    QTest::addColumn<bool>("unrecoverable");
+    QTest::addColumn<int>("outcome");
+    QTest::addColumn<bool>("tiled");
+    QTest::addColumn<int>("importedBetween");
     QTest::addColumn<int>("failuresToDisable");
     QTest::addColumn<QString>("warning");
 
-    QTest::newRow("EGL_BAD_MATCH disables at once") << true << 1 << QStringLiteral("EGL_BAD_MATCH");
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+    using Outcome = GstDmaBufVideoBuffer::ImportOutcome;
+    const int limit = GstDmaBufVideoBuffer::kMaxConsecutiveImportFailures;
+    const int never = 0;
+    const QString failed = QStringLiteral("Every recent DMABuf import of a stream failed");
+    QTest::newRow("EGL_BAD_MATCH disables at once")
+        << int(Outcome::Unrecoverable) << false << int(ImportedBetween::Nothing) << 1
+        << QStringLiteral("EGL_BAD_MATCH");
     QTest::newRow("a run of rejected imports disables")
-        << false << GstDmaBufVideoBuffer::kMaxConsecutiveImportFailures << QStringLiteral("rejected every recent");
+        << int(Outcome::Rejected) << false << int(ImportedBetween::Nothing) << limit << failed;
+    // Two streams import in turn on the render thread.
+    QTest::newRow("another stream's imports don't end the run")
+        << int(Outcome::Rejected) << false << int(ImportedBetween::OtherStream) << limit << failed;
+    QTest::newRow("the stream's own import ends the run")
+        << int(Outcome::Rejected) << false << int(ImportedBetween::SameStream) << never << QString();
+    QTest::newRow("a LINEAR frame the QRhi can't import is left to the CPU map")
+        << int(Outcome::NotImportable) << false << int(ImportedBetween::Nothing) << never << QString();
+#if GST_CHECK_VERSION(1, 24, 0)
+    QTest::newRow("a tiled frame the QRhi can't import has no other way out")
+        << int(Outcome::NotImportable) << true << int(ImportedBetween::Nothing) << limit << failed;
+#endif
 #endif
 }
 
@@ -504,31 +536,99 @@ void GstHwBuffersTest::_testDmaBufImportFailureLatch()
 #if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QSKIP("DMABuf GPU path not compiled in this build");
 #else
-    QFETCH(bool, unrecoverable);
+    QFETCH(int, outcome);
+    QFETCH(bool, tiled);
+    QFETCH(int, importedBetween);
     QFETCH(int, failuresToDisable);
     QFETCH(QString, warning);
+    using Outcome = GstDmaBufVideoBuffer::ImportOutcome;
 
     GstDmaBufVideoBuffer::resetCachedState();
     const auto resetGuard = qScopeGuard([] { GstDmaBufVideoBuffer::resetCachedState(); });
 
     GstVideoInfo info;
-    GstSample* sample = makeMemfdDmaBufSample(GST_VIDEO_FORMAT_NV12, info);
+    GstSample* sample = makeMemfdDmaBufSample(
+        GST_VIDEO_FORMAT_NV12, info,
+        tiled ? "video/x-raw(memory:DMABuf),format=DMA_DRM,drm-format=NV12:0x0100000000000002,width=64,height=64"
+              : nullptr);
     QVERIFY(sample);
-    GstDmaBufVideoBuffer frame(sample, info, QVideoFrameFormat(QSize(64, 64), QVideoFrameFormat::Format_NV12),
-                               EGL_NO_DISPLAY);
+    const GstDmaBufVideoBuffer frame(sample, info, QVideoFrameFormat(QSize(64, 64), QVideoFrameFormat::Format_NV12),
+                                     EGL_NO_DISPLAY);
     gst_sample_unref(sample);
-    QVERIFY(frame.validatePlaneHandles());
+    GstVideoInfo otherInfo;
+    GstSample* otherSample = makeMemfdDmaBufSample(GST_VIDEO_FORMAT_RGBA, otherInfo);
+    QVERIFY(otherSample);
+    const GstDmaBufVideoBuffer otherStream(
+        otherSample, otherInfo, QVideoFrameFormat(QSize(64, 64), QVideoFrameFormat::Format_RGBA8888), EGL_NO_DISPLAY);
+    gst_sample_unref(otherSample);
 
-    for (int i = 1; i < failuresToDisable; ++i) {
-        GstDmaBufVideoBuffer::recordImportFailureForTest(unrecoverable);
+    const int attempts =
+        (failuresToDisable > 0) ? failuresToDisable : (2 * GstDmaBufVideoBuffer::kMaxConsecutiveImportFailures);
+    for (int attempt = 1; attempt <= attempts; ++attempt) {
+        const bool disables = (attempt == failuresToDisable);
+        if (disables) {
+            expectLogMessage("Video.GStreamer.HwBuffers.GstDmaBuf", QtWarningMsg, QRegularExpression(warning));
+        }
+        frame.noteImportOutcomeForTest(static_cast<Outcome>(outcome));
+        if (disables) {
+            verifyExpectedLogMessage();
+        }
+        QCOMPARE(GstDmaBufVideoBuffer::importDisabled(), disables);
+        if (importedBetween == int(ImportedBetween::OtherStream)) {
+            otherStream.noteImportOutcomeForTest(Outcome::Imported);
+        } else if (importedBetween == int(ImportedBetween::SameStream)) {
+            frame.noteImportOutcomeForTest(Outcome::Imported);
+        }
     }
-    QVERIFY(frame.validatePlaneHandles());
+    if (failuresToDisable > 0) {
+        QVERIFY2(!frame.validatePlaneHandles(), "A disabled importer must send frames to the CPU path");
+    }
+#endif
+}
 
-    expectLogMessage("Video.GStreamer.HwBuffers.GstDmaBuf", QtWarningMsg, QRegularExpression(warning));
-    GstDmaBufVideoBuffer::recordImportFailureForTest(unrecoverable);
-    verifyExpectedLogMessage();
-    QVERIFY(GstDmaBufVideoBuffer::importDisabled());
-    QVERIFY2(!frame.validatePlaneHandles(), "A disabled importer must send frames to the CPU path");
+void GstHwBuffersTest::_testDmaBufProducerWaitNeedsSignalledFences_data()
+{
+    QTest::addColumn<bool>("hungUp");
+
+    QTest::newRow("readable fd") << false;
+    // poll() returns for it too, with POLLHUP instead of POLLIN.
+    QTest::newRow("hung-up fd") << true;
+}
+
+void GstHwBuffersTest::_testDmaBufProducerWaitNeedsSignalledFences()
+{
+#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+    QSKIP("DMABuf GPU path not compiled in this build");
+#else
+    QFETCH(bool, hungUp);
+
+    // What poll() reports for a dma-buf whose write fences signalled, and for one in error: a memfd is always
+    // readable, the read end of a pipe without a writer only hangs up.
+    int fd = -1;
+    if (hungUp) {
+        int ends[2] = {-1, -1};
+        QCOMPARE(::pipe(ends), 0);
+        ::close(ends[1]);
+        fd = ends[0];
+    } else {
+        fd = GstTest::makeMemfd(QByteArray(4096, '\0'));
+    }
+    QVERIFY(fd >= 0);
+    GstAllocator* const allocator = gst_dmabuf_allocator_new();
+    GstBuffer* const buffer = gst_buffer_new();
+    gst_buffer_append_memory(buffer, gst_dmabuf_allocator_alloc(allocator, fd, 4096));
+    gst_object_unref(allocator);
+    const auto bufferGuard = qScopeGuard([buffer] { gst_buffer_unref(buffer); });
+
+    GstDmaBufVideoBuffer::resetCachedState();
+    if (hungUp) {
+        expectLogMessage("Video.GStreamer.HwBuffers.GstDmaBuf", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("producer fence wait failed")));
+    }
+    QCOMPARE(GstDmaBufVideoBuffer::waitForProducerWritesForTest(buffer), !hungUp);
+    if (hungUp) {
+        verifyExpectedLogMessage();
+    }
 #endif
 }
 

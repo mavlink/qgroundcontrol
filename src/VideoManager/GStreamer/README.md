@@ -273,9 +273,11 @@ textures.
   that modifier. Plain vendor tilings (Intel X/Y/4, AMD without DCC) qualify; compressed layouts and those with
   auxiliary planes (Intel CCS, AMD DCC, Arm AFBC, Qualcomm UBWC) don't. Buffers negotiated with plain
   `memory:DMABuf` caps import without a modifier, leaving the layout to the driver.
-- `EGL_BAD_MATCH` (a broken EGL/driver pairing, QTBUG-112312), or 30 failed imports in a row, turn the path off until
-  the scene graph is recreated: the sink stops offering DMABuf and DMA_DRM caps and asks upstream to renegotiate.
-  Until upstream has, LINEAR frames take the CPU path.
+- `EGL_BAD_MATCH` (a broken EGL/driver pairing, QTBUG-112312), or 30 failed imports in a row of one layout (modifier,
+  format and size, so that another stream's imports don't end the run), turn the path off until the scene graph is
+  recreated: the sink stops offering DMABuf and DMA_DRM caps and asks upstream to renegotiate. Until upstream has,
+  LINEAR frames take the CPU path. An import the driver refused counts, and so does any failed import of a tiled
+  frame, which nothing else can show.
 - A tiled frame (a DMA_DRM modifier other than LINEAR) has no CPU layout: when no import takes it, it is dropped rather
   than shown scrambled, and counted in the sink's `tiled-drops` frame stat.
 - The `Video.GStreamer.HwBuffers.GstDmaBuf` and `Video.GStreamer.HwBuffers.GstDmaDrmCaps` debug categories log the

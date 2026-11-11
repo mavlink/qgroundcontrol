@@ -40,6 +40,8 @@ private slots:
     void _testDmaBufTiledFrameDroppedWithoutImport();
     void _testDmaBufImportFailureLatch_data();
     void _testDmaBufImportFailureLatch();
+    void _testDmaBufProducerWaitNeedsSignalledFences_data();
+    void _testDmaBufProducerWaitNeedsSignalledFences();
     void _testDmaBufVulkanImportRejectsMultiPlanar_data();
     void _testDmaBufVulkanImportRejectsMultiPlanar();
     void _testCpuLayoutSizesPlanesByComponent();

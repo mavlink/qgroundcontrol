@@ -25,23 +25,41 @@ public:
     QVideoFrameTexturesUPtr mapTextures(QRhi& rhi, QVideoFrameTexturesUPtr& oldTextures) override;
     bool validatePlaneHandles() const override;
 
-    /// Failed imports in a row that disable the path: Qt's importer warns on every one.
+    /// Failed imports of one layout in a row that disable the path: Qt's importer warns on every one.
     static constexpr int kMaxConsecutiveImportFailures = 30;
+
+    /// How mapTextures() ended, for the disable latch.
+    enum class ImportOutcome
+    {
+        Imported,
+        NotImportable,  ///< Stopped before the driver was asked: by the QRhi mapping it, or by the frame's layout.
+        Rejected,       ///< The driver refused the frame.
+        Unrecoverable,  ///< The driver refused it in a way no later frame avoids (EGL_BAD_MATCH).
+    };
 
     /// True once an import failed in a way later frames can't avoid; cleared by resetCachedState().
     static bool importDisabled() noexcept;
     static void resetCachedState() noexcept;
 
 #ifdef QGC_UNITTEST_BUILD
-    /// Feeds one failed import into the disable latch, as mapTextures() does.
-    static void recordImportFailureForTest(bool unrecoverable) noexcept;
+    /// Feeds one import the driver refused, of no particular frame, into the disable latch.
+    static void recordImportFailureForTest(bool unrecoverable);
+    /// Feeds the outcome of one import of this frame into the disable latch, as mapTextures() does.
+    void noteImportOutcomeForTest(ImportOutcome outcome) const;
+    /// The wait on the producer's writes mapTextures() runs before importing @p buffer; true once they completed.
+    static bool waitForProducerWritesForTest(GstBuffer* buffer);
 #endif
 
 private:
+    /// The import itself; without textures, @p failure tells why when the driver refused.
+    QVideoFrameTexturesUPtr importFrame(QRhi& rhi, QVideoFrameTexturesUPtr& old, ImportOutcome& failure);
 #if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
     QVideoFrameTexturesUPtr importVulkan(QRhi& rhi, QVideoFrameTexturesUPtr& old);
 #endif
-    QVideoFrameTexturesUPtr importGl(QRhi& rhi, GstBuffer* buffer);
+    QVideoFrameTexturesUPtr importGl(QRhi& rhi, GstBuffer* buffer, ImportOutcome& failure);
+    /// Counts @p outcome in the run of failed imports of this frame's layout, which disables the path at
+    /// kMaxConsecutiveImportFailures: a refusal by the driver, and any failure of a tiled frame.
+    void noteImportOutcome(ImportOutcome outcome) const;
     /// A vendor tiling from DMA_DRM caps: the memory has no CPU-readable layout.
     bool isTiled() const noexcept;
 
