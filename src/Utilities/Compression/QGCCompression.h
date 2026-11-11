@@ -236,7 +236,9 @@ bool validateArchive(const QString &archivePath, Format format = Format::Auto);
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param fileName Name of file to check for (as shown by listArchive)
 /// @param format Archive format (Auto = detect from archivePath)
-/// @return true if file exists in archive
+/// @return true if file exists in archive. false also if the archive could not be searched: lastError() is
+///         then Error::InvalidArchive for an archive that cannot be read or is damaged before the entry, and
+///         Error::FileNotInArchive only for one that was read to its end
 bool fileExists(const QString &archivePath, const QString &fileName,
                 Format format = Format::Auto);
 

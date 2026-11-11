@@ -792,11 +792,17 @@ bool fileExists(const QString& archivePath, const QString& fileName, Format form
     if (!validateArchiveInput(archivePath, format)) {
         return false;
     }
-    const bool exists = QGClibarchive::fileExistsInArchive(archivePath, fileName);
-    if (!exists) {
-        setError(Error::FileNotInArchive, QStringLiteral("File not found in archive: ") + fileName);
+    switch (QGClibarchive::findEntryInArchive(archivePath, fileName)) {
+        case QGClibarchive::NextEntry::Found:
+            return true;
+        case QGClibarchive::NextEntry::End:
+            setError(Error::FileNotInArchive, QStringLiteral("File not found in archive: ") + fileName);
+            return false;
+        case QGClibarchive::NextEntry::Error:
+            break;
     }
-    return exists;
+    setError(Error::InvalidArchive, QStringLiteral("Invalid or corrupt archive: ") + archivePath);
+    return false;
 }
 
 bool extractFile(const QString& archivePath, const QString& fileName, const QString& outputPath, Format format)

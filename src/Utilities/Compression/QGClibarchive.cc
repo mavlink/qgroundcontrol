@@ -1388,12 +1388,17 @@ bool fileExistsInArchive(const QString& archivePath, const QString& fileName)
         return false;
     }
 
+    return findEntryInArchive(archivePath, fileName) == NextEntry::Found;
+}
+
+NextEntry findEntryInArchive(const QString& archivePath, const QString& fileName)
+{
     ArchiveReader reader;
     if (!reader.open(archivePath, ReaderMode::AllFormats)) {
-        return false;
+        return NextEntry::Error;
     }
 
-    return findEntry(reader.handle(), fileName) == NextEntry::Found;
+    return findEntry(reader.handle(), fileName);
 }
 
 QStringList listArchiveEntries(const QString& archivePath)

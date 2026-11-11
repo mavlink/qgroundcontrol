@@ -579,6 +579,15 @@ void QGCCompressionTest::_testFileExists()
     expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
     QVERIFY(!QGCCompression::fileExists("/nonexistent/path/file.zip", "test.txt"));
     verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::FileNotFound);
+    // A file that is not an archive cannot be said to be without the entry
+    QTemporaryDir tempDir;
+    const QString notAnArchive = tempDir.filePath("not_an_archive.zip");
+    QVERIFY(_writeFile(notAnArchive, "This is not a valid ZIP file"));
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Unrecognized archive format"));
+    QVERIFY(!QGCCompression::fileExists(notAnArchive, "manifest.json"));
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
 }
 
 void QGCCompressionTest::_testExtractArchiveFiltered()
@@ -1355,9 +1364,18 @@ void QGCCompressionTest::_testTruncatedArchive()
     }
     QVERIFY(!QFileInfo::exists(absentOutput));
 
+    // fileExists() answers no for two reasons, and the error is all that tells them apart
+    expectReadFailure();
+    QVERIFY(!QGCCompression::fileExists(archivePath, absent));
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
+
     if (cutEntry.isEmpty()) {
         return;
     }
+
+    // An entry whose header comes before the damage is there
+    QVERIFY(QGCCompression::fileExists(archivePath, cutEntry));
 
     // An entry whose data is cut is found, and fails while it is copied: no part of it is kept
     const auto expectDataFailure = [this]() {
