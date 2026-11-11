@@ -19,6 +19,8 @@ private slots:
     void _loadPolylineFromNestedGeometryCollection_test();
     void _loadPolygonFromPolylineFails_test();
     void _loadPolylineFromPolygonFails_test();
+    void _loadShapeCleanUp_test_data();
+    void _loadShapeCleanUp_test();
     void _loadTooFewVertices_test_data();
     void _loadTooFewVertices_test();
     void _loadSaveGeoJsonCoordinate_test();

@@ -11,8 +11,17 @@ class QJsonValue;
 namespace GeoJsonHelper
 {
     ShapeFileHelper::ShapeType determineShapeType(const QString &filePath, QString &errorString);
-    bool loadPolygonFromFile(const QString &filePath, QList<QGeoCoordinate> &vertices, QString &errorString);
-    bool loadPolylineFromFile(const QString &filePath, QList<QGeoCoordinate> &coords, QString &errorString);
+
+    /// Loads the first polygon of the file as the KML and SHP loaders return polygons: at least three vertices,
+    /// without the closing vertex, clockwise.
+    /// @param filterMeters Filter vertices closer than this distance (0 to disable)
+    bool loadPolygonFromFile(const QString& filePath, QList<QGeoCoordinate>& vertices, QString& errorString,
+                             double filterMeters = ShapeFileHelper::kDefaultVertexFilterMeters);
+
+    /// Loads the first polyline of the file: at least two vertices.
+    /// @param filterMeters Filter vertices closer than this distance (0 to disable)
+    bool loadPolylineFromFile(const QString& filePath, QList<QGeoCoordinate>& coords, QString& errorString,
+                              double filterMeters = ShapeFileHelper::kDefaultVertexFilterMeters);
 
     /// Loads a QGeoCoordinate
     ///     Stored as array [ lon, lat, alt ]

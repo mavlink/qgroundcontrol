@@ -12,6 +12,7 @@
 
 #include "JsonParsing.h"
 #include "QGCLoggingCategory.h"
+#include "ShapeVertices.h"
 
 QGC_LOGGING_CATEGORY(GeoJsonHelperLog, "Utilities.GeoJsonHelper")
 
@@ -124,7 +125,8 @@ ShapeFileHelper::ShapeType GeoJsonHelper::determineShapeType(const QString &file
     return ShapeType::Error;
 }
 
-bool GeoJsonHelper::loadPolygonFromFile(const QString &filePath, QList<QGeoCoordinate> &vertices, QString &errorString)
+bool GeoJsonHelper::loadPolygonFromFile(const QString& filePath, QList<QGeoCoordinate>& vertices, QString& errorString,
+                                        double filterMeters)
 {
     errorString.clear();
     vertices.clear();
@@ -158,6 +160,9 @@ bool GeoJsonHelper::loadPolygonFromFile(const QString &filePath, QList<QGeoCoord
         }
 
         vertices = poly.perimeter();
+        ShapeVertices::removeClosingVertex(vertices);
+        ShapeVertices::makeClockwise(vertices);
+        ShapeVertices::filterNearby(vertices, filterMeters, 3);
         return true;
     }
 
@@ -166,7 +171,8 @@ bool GeoJsonHelper::loadPolygonFromFile(const QString &filePath, QList<QGeoCoord
     return false;
 }
 
-bool GeoJsonHelper::loadPolylineFromFile(const QString &filePath, QList<QGeoCoordinate> &coords, QString &errorString)
+bool GeoJsonHelper::loadPolylineFromFile(const QString& filePath, QList<QGeoCoordinate>& coords, QString& errorString,
+                                         double filterMeters)
 {
     errorString.clear();
     coords.clear();
@@ -200,6 +206,7 @@ bool GeoJsonHelper::loadPolylineFromFile(const QString &filePath, QList<QGeoCoor
         }
 
         coords = path.path();
+        ShapeVertices::filterNearby(coords, filterMeters, 2);
         return true;
     }
 

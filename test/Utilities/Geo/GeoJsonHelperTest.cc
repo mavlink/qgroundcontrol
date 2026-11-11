@@ -223,9 +223,8 @@ void GeoJsonHelperTest::_loadPolygonFromFile_test()
     const bool loaded = GeoJsonHelper::loadPolygonFromFile(filePath, vertices, error);
     QVERIFY(loaded);
     QVERIFY(error.isEmpty());
-    QVERIFY(vertices.size() >= 4);
-    QCOMPARE(vertices.first().latitude(), 47.0);
-    QCOMPARE(vertices.first().longitude(), 8.0);
+    // The ring is counter-clockwise, as GeoJSON prescribes: it comes back clockwise, without its closing vertex.
+    QCOMPARE(vertices, (QList<QGeoCoordinate>{{47.1, 8.1}, {47.0, 8.1}, {47.0, 8.0}}));
 }
 
 void GeoJsonHelperTest::_loadPolylineFromFile_test()
@@ -255,9 +254,7 @@ void GeoJsonHelperTest::_loadPolygonFromNestedGeometryCollection_test()
     const bool loaded = GeoJsonHelper::loadPolygonFromFile(filePath, vertices, error);
     QVERIFY(loaded);
     QVERIFY(error.isEmpty());
-    QVERIFY(vertices.size() >= 4);
-    QCOMPARE(vertices.first().latitude(), 47.2);
-    QCOMPARE(vertices.first().longitude(), 8.2);
+    QCOMPARE(vertices, (QList<QGeoCoordinate>{{47.3, 8.3}, {47.2, 8.3}, {47.2, 8.2}}));
 }
 
 void GeoJsonHelperTest::_loadPolylineFromNestedGeometryCollection_test()
@@ -303,6 +300,76 @@ void GeoJsonHelperTest::_loadPolylineFromPolygonFails_test()
     QVERIFY(coords.isEmpty());
     QVERIFY(!error.isEmpty());
     QVERIFY(error.contains("No polyline"));
+}
+
+void GeoJsonHelperTest::_loadShapeCleanUp_test_data()
+{
+    QTest::addColumn<QByteArray>("geometry");
+    QTest::addColumn<double>("filterMeters");
+    QTest::addColumn<QList<QGeoCoordinate>>("expected");
+
+    const double filtered = ShapeFileHelper::kDefaultVertexFilterMeters;
+    const double unfiltered = 0.0;
+    const auto polygon = [](const char* ring) {
+        return QByteArray(R"({"type": "Polygon", "coordinates": [[)") + ring + "]]}";
+    };
+    const auto lineString = [](const char* positions) {
+        return QByteArray(R"({"type": "LineString", "coordinates": [)") + positions + "]}";
+    };
+
+    // The rings and lines of ShapeTest::_testLoadShapes, which the KML and SHP loaders return the same way.
+    const QList<QGeoCoordinate> square{{47.0, 8.0}, {47.001, 8.0}, {47.001, 8.001}, {47.0, 8.001}};
+    const char* denseRing =
+        "[8, 47], [8, 47.00001], [8, 47.00002], [8, 47.001], [8.001, 47.001], [8.001, 47], "
+        "[8.00001, 47], [8, 47]";
+    const char* denseLine = "[8, 47], [8, 47.00001], [8, 47.001], [8.001, 47.001]";
+
+    QTest::newRow("polygon, closing vertex")
+        << polygon("[8, 47], [8, 47.001], [8.001, 47.001], [8.001, 47], [8, 47]") << filtered << square;
+    QTest::newRow("polygon, closed to within a centimetre")
+        << polygon("[8, 47], [8, 47.001], [8.001, 47.001], [8.001, 47], [8.00000001, 47]") << filtered << square;
+    QTest::newRow("polygon, counter-clockwise")
+        << polygon("[8, 47], [8.001, 47], [8.001, 47.001], [8, 47.001], [8, 47]") << filtered
+        << QList<QGeoCoordinate>{{47.001, 8.0}, {47.001, 8.001}, {47.0, 8.001}, {47.0, 8.0}};
+    QTest::newRow("polygon with altitude")
+        << polygon("[8, 47, 10], [8, 47.001, 20], [8.001, 47.001, 30], [8.001, 47, 40], [8, 47, 10]") << filtered
+        << QList<QGeoCoordinate>{{47.0, 8.0, 10.0}, {47.001, 8.0, 20.0}, {47.001, 8.001, 30.0}, {47.0, 8.001, 40.0}};
+    QTest::newRow("polygon, dense") << polygon(denseRing) << filtered
+                                    << (square + QList<QGeoCoordinate>{{47.0, 8.00001}});
+    QTest::newRow("polygon, dense, unfiltered")
+        << polygon(denseRing) << unfiltered
+        << QList<QGeoCoordinate>{{47.0, 8.0},     {47.00001, 8.0}, {47.00002, 8.0}, {47.001, 8.0},
+                                 {47.001, 8.001}, {47.0, 8.001},   {47.0, 8.00001}};
+    QTest::newRow("polygon, filter keeps three vertices")
+        << polygon("[8, 47], [8, 47.00001], [8.001, 47], [8, 47]") << filtered
+        << QList<QGeoCoordinate>{{47.0, 8.0}, {47.00001, 8.0}, {47.0, 8.001}};
+    QTest::newRow("polyline, dense") << lineString(denseLine) << filtered
+                                     << QList<QGeoCoordinate>{{47.0, 8.0}, {47.001, 8.0}, {47.001, 8.001}};
+    QTest::newRow("polyline, dense, unfiltered")
+        << lineString(denseLine) << unfiltered
+        << QList<QGeoCoordinate>{{47.0, 8.0}, {47.00001, 8.0}, {47.001, 8.0}, {47.001, 8.001}};
+    QTest::newRow("polyline, filter keeps two vertices")
+        << lineString("[8, 47], [8, 47.00001]") << filtered << QList<QGeoCoordinate>{{47.0, 8.0}, {47.00001, 8.0}};
+}
+
+void GeoJsonHelperTest::_loadShapeCleanUp_test()
+{
+    QFETCH(QByteArray, geometry);
+    QFETCH(double, filterMeters);
+    QFETCH(QList<QGeoCoordinate>, expected);
+
+    QTemporaryDir tempDir;
+    const QString filePath = _writeGeoJsonFile(tempDir.path(), "shape.geojson", geometry);
+    QList<QGeoCoordinate> vertices;
+    QString error;
+
+    if (geometry.contains("Polygon")) {
+        QVERIFY2(GeoJsonHelper::loadPolygonFromFile(filePath, vertices, error, filterMeters), qPrintable(error));
+    } else {
+        QVERIFY2(GeoJsonHelper::loadPolylineFromFile(filePath, vertices, error, filterMeters), qPrintable(error));
+    }
+    QVERIFY(error.isEmpty());
+    QCOMPARE(vertices, expected);
 }
 
 void GeoJsonHelperTest::_loadTooFewVertices_test_data()
