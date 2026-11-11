@@ -1,10 +1,11 @@
 #include "SDLTest.h"
 
+#include <QtCore/QRegularExpression>
+
 #include "JoystickSDL.h"
 #include "SDLJoystick.h"
 #include "SDLPlatform.h"
-
-#include <QtCore/QRegularExpression>
+#include <SDL3/SDL.h>
 
 void SDLTest::initTestCase()
 {
@@ -273,6 +274,21 @@ void SDLTest::_eventControlTest()
     // Test update functions - should not crash
     SDLJoystick::updateJoysticks();
     SDLJoystick::updateGamepads();
+}
+
+void SDLTest::_pumpEventsEmptiesEventQueueTest()
+{
+    const int instanceId = SDLJoystick::createVirtualJoystick(QStringLiteral("Event Queue Test Joystick"), 2, 2, 0);
+    QVERIFY(instanceId > 0);
+
+    // Attaching the joystick queued the events that announce it
+    const int queuedBeforePump = SDL_PeepEvents(nullptr, 0, SDL_PEEKEVENT, SDL_EVENT_FIRST, SDL_EVENT_LAST);
+    SDLJoystick::pumpEvents();
+    const int queuedAfterPump = SDL_PeepEvents(nullptr, 0, SDL_PEEKEVENT, SDL_EVENT_FIRST, SDL_EVENT_LAST);
+    QVERIFY(SDLJoystick::destroyVirtualJoystick(instanceId));
+
+    QVERIFY(queuedBeforePump > 0);
+    QCOMPARE(queuedAfterPump, 0);
 }
 
 //-----------------------------------------------------------------------------

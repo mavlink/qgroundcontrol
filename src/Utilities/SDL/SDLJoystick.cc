@@ -137,6 +137,9 @@ void pumpEvents()
 {
     SDL_PumpEvents();
     SDL_UpdateJoysticks();
+    // Events are handled by event watches when they are generated. Nothing reads them from SDL's queue, which
+    // would otherwise fill up and stay full.
+    SDL_FlushEvents(SDL_EVENT_FIRST, SDL_EVENT_LAST);
 }
 
 void setJoystickEventsEnabled(bool enabled)
