@@ -16,9 +16,11 @@
 #include <QtTest/QSignalSpy>
 
 #include "ElevationMapProvider.h"
+#include "GeoMapCamera.h"
 #include "HeightField.h"
 #include "QGCMapEngine.h"
 #include "QGCMapUrlEngine.h"
+#include "SurfaceModel.h"
 #include "TerrariumTileFetcher.h"
 #include "TileMath.h"
 #include "UnitTestTileGenerator.h"
@@ -843,6 +845,105 @@ void TerrariumTileFetcherTest::_fineTileHeldUntilAnchorsArrive()
     QVERIFY(field.hasTile(anchor));
     QCOMPARE(regionSpy.count(), anchorCount + 1);
     QCOMPARE(regionSpy.last()[0].toRectF().width(), TileMath::tileSpanAtZoom(kFineZoom));
+}
+
+void TerrariumTileFetcherTest::_failedAnchorFetchedAgain()
+{
+    // Its own longitude offset, see _fineTileHeldUntilAnchorsArrive
+    const QGeoCoordinate coord(flat10Region().center().latitude(), flat10Region().center().longitude() + 5.0);
+    const TileMath::TileKey anchor = keyOver(coord, TerrariumTileFetcher::kAnchorZoom);
+    const int shift = kFineZoom - TerrariumTileFetcher::kAnchorZoom;
+    const TileMath::TileKey key{(anchor.x << shift) + 8, (anchor.y << shift) + 8, kFineZoom};  // inside its anchor
+
+    MockNam nam;
+    nam.body = UnitTestTileGenerator::syntheticTerrariumTileData(key.x, key.y, key.zoom);
+    nam.holdReplies = true;
+    HeightField field;
+    TerrariumTileFetcher source(nullptr, &nam);
+    source.setHeightField(&field);
+    QSignalSpy failedSpy(&source, &HeightSource::tileFailed);
+
+    UnitTestTileGenerator::setForcedMissCount(2);
+    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+
+    QVERIFY(source.requestTile(key));
+    QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, 2, TestTimeout::mediumMs());
+    const QString finePath = QStringLiteral("/%1/%2/%3.png").arg(key.zoom).arg(key.x).arg(key.y);
+    const bool fineFirst = nam.replies.at(0)->request().url().path().endsWith(finePath);
+    CannedReply* const fineReply = nam.replies.at(fineFirst ? 0 : 1);
+    CannedReply* const anchorReply = nam.replies.at(fineFirst ? 1 : 0);
+
+    // The anchor fails: that is reported, and the fine tile is not held back
+    expectLogMessage("GeoMap.TerrariumTileFetcher", QtWarningMsg, QRegularExpression(QStringLiteral("failed")));
+    anchorReply->finishAsAborted();
+    QTRY_COMPARE_WITH_TIMEOUT(failedSpy.count(), 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(failedSpy.first().at(0).value<TileMath::TileKey>(), anchor);
+    fineReply->finishNormally();
+    QTRY_VERIFY_WITH_TIMEOUT(field.hasTile(key), TestTimeout::mediumMs());
+    QVERIFY(!field.hasTile(anchor));
+
+    // Asking again for the tile the field already holds fetches its anchor again (the cache serves it now)
+    QVERIFY(source.requestTile(key));
+    QTRY_VERIFY_WITH_TIMEOUT(field.hasTile(anchor), TestTimeout::mediumMs());
+    // The late anchor backs the rest of its region and leaves the finer data in place
+    QCOMPARE(field.backingKeyFor(key), key);
+    QCOMPARE(field.backingKeyFor(TileMath::TileKey{key.x + 1, key.y, key.zoom}), anchor);
+
+    // With the anchor in the field the same request fetches nothing. The cache answers in request order,
+    // so a fetch started by it would land before the barrier tile.
+    QSignalSpy regionSpy(&field, &HeightField::regionChanged);
+    QVERIFY(source.requestTile(key));
+    const TileMath::TileKey barrier{anchor.x + 2, anchor.y, anchor.zoom};
+    QVERIFY(source.requestTile(barrier));
+    QTRY_VERIFY_WITH_TIMEOUT(field.hasTile(barrier), TestTimeout::mediumMs());
+    QCOMPARE(regionSpy.count(), 1);
+}
+
+void TerrariumTileFetcherTest::_residentPatchTileArrivesAfterOutage()
+{
+    // Its own longitude offset: no other test leaves tiles in the shared cache there
+    const QGeoCoordinate coord(flat10Region().center().latitude(), flat10Region().center().longitude() + 7.0);
+
+    MockNam nam;  // empty body: canned network error
+    GeoMapCamera camera;
+    HeightField field;
+    TerrariumTileFetcher source(nullptr, &nam);
+    source.setHeightField(&field);
+    SurfaceModel model(&camera, &source, &field);
+    QSignalSpy failedSpy(&source, &HeightSource::tileFailed);
+
+    // Outage: the cache misses and the server cannot be reached
+    UnitTestTileGenerator::setForcedMissCount(10000);
+    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    expectLogMessage("GeoMap.TerrariumTileFetcher", QtWarningMsg, QRegularExpression(QStringLiteral("failed")));
+    camera.setViewportSize(QSizeF(800, 600));
+    camera.lookAt(coord, 0, 0, 2000);
+    model.drainUpdates();
+
+    // Tile of the patch under the camera
+    const QPointF world = TileMath::geoToWorld(coord);
+    int zoom = -1;
+    for (const SurfaceModel::Patch& patch : model.patches()) {
+        if (patch.key == TileMath::tileForWorld(world, patch.key.zoom)) {
+            zoom = qMax(zoom, patch.key.zoom);
+        }
+    }
+    QCOMPARE_GE(zoom, 0);
+    const TileMath::TileKey key = keyOver(coord, qMin(zoom, TerrariumTileFetcher::kMaxTileZoom));
+    const auto failed = [&failedSpy, &key] {
+        return std::any_of(failedSpy.cbegin(), failedSpy.cend(), [&key](const QList<QVariant>& arguments) {
+            return arguments.at(0).value<TileMath::TileKey>() == key;
+        });
+    };
+    QTRY_VERIFY_WITH_TIMEOUT(failed(), TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QVERIFY(!field.hasTile(key));
+
+    // The outage ends with the camera at rest: nothing but the paced retry asks for the tile again
+    const int retryIntervalMs = model.tileRetryIntervalMs();
+    UnitTestTileGenerator::setForcedMissCount(0);
+    QTRY_VERIFY_WITH_TIMEOUT(field.hasTile(key), retryIntervalMs + TestTimeout::mediumMs());
 }
 
 UT_REGISTER_TEST(TerrariumTileFetcherTest, TestLabel::Integration, TestLabel::Terrain)

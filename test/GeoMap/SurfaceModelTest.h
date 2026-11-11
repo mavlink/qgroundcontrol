@@ -12,6 +12,7 @@ private slots:
     void _reMeshOnDataArrival();
     void _reMeshScopeGate();
     void _requestsTileCoverage();
+    void _failedTilesRequestedAgainForResidentPatches();
     void _noViewportNoPatches();
     void _unpositionedCameraNoPatches();
     void _coarseWhenFar();

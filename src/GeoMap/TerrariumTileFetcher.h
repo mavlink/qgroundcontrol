@@ -29,7 +29,7 @@ class QNetworkAccessManager;
 ///
 /// requestTile delivers whole decoded tiles into an attached HeightField, which
 /// notifies consumers via regionChanged. A failed fetch inserts nothing: the
-/// field keeps serving its current best estimate.
+/// field keeps serving its current best estimate, and tileFailed reports it.
 ///
 /// A tile at z/x/y maps to the terrarium tile at the same z/x/y, so fetch cost
 /// is constant across the LOD range — no flat floor or blend band like the fixed

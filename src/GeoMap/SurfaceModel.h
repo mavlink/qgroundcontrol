@@ -18,6 +18,7 @@
 #include <QtCore/QPointF>
 #include <QtCore/QRectF>
 #include <QtCore/QSet>
+#include <QtCore/QTimer>
 #include <QtCore/QVarLengthArray>
 
 #include "TileMath.h"
@@ -40,6 +41,10 @@ class HeightSource;
 /// touching the changed region. A patch being replaced across LOD changes may
 /// only be removed once the replacements covering it are resident, so LOD
 /// churn and panning never open holes in the surface.
+///
+/// A patch asks for its tile once, when it is added. After a fetch failed, the
+/// tiles of the resident patches are therefore requested again on a paced
+/// timer (see tileRetryIntervalMs).
 ///
 /// The visible ground region is estimated by sampling screen points through the
 /// camera and capping horizon misses at a distance-scaled range, so far-horizon
@@ -133,6 +138,10 @@ public:
     /// overlay bindings until the downstream plumbing is removed (step 8).
     int pendingCount() const { return 0; }
 
+    /// Delay before tiles whose fetch failed are requested again: it doubles after every round of requests
+    /// and goes back to the first delay when a tile arrives (test observability)
+    int tileRetryIntervalMs() const { return _tileRetryIntervalMs; }
+
 #ifdef QGC_UNITTEST_BUILD
     /// Test hook: runs capped update passes synchronously to completion.
     /// The caps guarantee every pass makes progress, so this terminates.
@@ -159,6 +168,8 @@ signals:
 
 private slots:
     void _fieldRegionChanged(const QRectF& worldRect);
+    void _tileFailed(const TileMath::TileKey& key);
+    void _retryFailedTiles();
 
 private:
     struct PatchData
@@ -174,6 +185,8 @@ private:
     /// Cliff monitor threshold: in-patch edge steps steeper than this rise over one
     /// cell's run (~27°) are logged; gentler ones read as slopes, not cliffs
     static constexpr double kCliffLogSlope = 0.5;
+    static constexpr int kTileRetryMs = 3000;      ///< first pacing for requesting failed elevation tiles again
+    static constexpr int kTileRetryMaxMs = 30000;  ///< longest pacing, while tiles keep failing
 
     void _samplePatch(const TileMath::TileKey& key, PatchData& data);
 
@@ -208,4 +221,6 @@ private:
     bool _removalsDeferred = false;  ///< the last pass hit the removal cap; a follow-up pass is queued
     double _culledTerrainZ = 0.0;    ///< terrain-top height assumed by the last cull (scene units)
     QElapsedTimer _cliffClock;
+    QTimer _tileRetryTimer;          ///< single shot, running only after a tile failed
+    int _tileRetryIntervalMs = kTileRetryMs;
 };

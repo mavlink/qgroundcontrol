@@ -210,14 +210,14 @@ bool TerrariumTileFetcher::requestTile(const TileMath::TileKey& key)
     }
 
     const TileMath::TileKey fetchKey = fetchKeyFor(key);
-    if (_heightField->hasTile(fetchKey) || _fieldRequests.contains(fetchKey) || _held.contains(fetchKey)) {
-        return true;
-    }
-
     // Anchors first: their fetches queue ahead, and _insertIntoField holds this tile until they land.
     // An anchor that fails to start stops blocking, as a failed fetch does in _failAll.
+    // Also for a tile that is already here: an anchor that failed did not hold it back, and is fetched again.
     for (const TileMath::TileKey& anchor : anchorKeysFor(fetchKey)) {
         (void) requestTile(anchor);
+    }
+    if (_heightField->hasTile(fetchKey) || _fieldRequests.contains(fetchKey) || _held.contains(fetchKey)) {
+        return true;
     }
 
     const bool inFlight = _fetchInFlight(fetchKey);
@@ -334,7 +334,7 @@ void TerrariumTileFetcher::_failAll(const TileMath::TileKey& fetchKey, const QSt
 {
     // A failed tile inserts nothing: the field keeps its current estimate, and
     // clearing the in-flight key lets a later request retry
-    _fieldRequests.remove(fetchKey);
+    const bool forField = _fieldRequests.remove(fetchKey);
     // Better fine data with a cliff risk than none at all
     const int released = _releaseHeld(fetchKey);
     if (released > 0) {
@@ -354,6 +354,9 @@ void TerrariumTileFetcher::_failAll(const TileMath::TileKey& fetchKey, const QSt
         if (_pending.contains(requestId)) {
             _finishFailed(requestId);
         }
+    }
+    if (forField) {
+        emit tileFailed(fetchKey);
     }
 }
 

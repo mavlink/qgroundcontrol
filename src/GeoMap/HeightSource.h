@@ -55,6 +55,9 @@ signals:
     /// heights has (gridSize+1)^2 entries, row-major from the north-west corner
     void patchHeightsReady(int requestId, const QList<float>& heights);
     void patchHeightsFailed(int requestId);
+    /// A tile wanted by requestTile could not be fetched (\a key is the tile fetched, which can be an ancestor
+    /// of the one requested). The field does not get it until requestTile asks again.
+    void tileFailed(const TileMath::TileKey& key);
 
 protected:
     int _nextRequestId();

@@ -37,7 +37,9 @@ miss, and stores fetched tiles back into the cache. Every tile finer than z10 al
 fetches the z10 ancestors of itself and its neighbors, and is held back until they
 are in the field, so fine data doesn't land next to a region with no data at all
 (which would render at 0 m and draw a cliff). A failed anchor stops holding it back:
-fine data with a cliff risk beats no fine data.
+fine data with a cliff risk beats no fine data. A tile whose fetch failed is requested
+again by `SurfaceModel` while a patch that needs it is on screen: after 3 s, then at
+doubling intervals up to 30 s until a tile arrives.
 
 Decoded tiles land in the `HeightField`, which presents **one continuous
 heightfield**: it can answer "how high is the ground here?" for *any* position —

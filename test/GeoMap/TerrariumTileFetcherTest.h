@@ -34,4 +34,6 @@ private slots:
     void _tileRequestGuards();
     void _fineTileHeldUntilAnchorsArrive_data();
     void _fineTileHeldUntilAnchorsArrive();
+    void _failedAnchorFetchedAgain();
+    void _residentPatchTileArrivesAfterOutage();
 };

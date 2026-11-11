@@ -85,6 +85,22 @@ public:
     QList<TileMath::TileKey> requested;
 };
 
+/// Source whose tile fetches all fail: records the requests and reports each failure through the event loop
+class FailingTileSource : public FlatHeightSource
+{
+public:
+    using FlatHeightSource::FlatHeightSource;
+
+    bool requestTile(const TileMath::TileKey& key) override
+    {
+        requested.append(key);
+        QMetaObject::invokeMethod(this, [this, key] { emit tileFailed(key); }, Qt::QueuedConnection);
+        return true;
+    }
+
+    QList<TileMath::TileKey> requested;
+};
+
 /// Multi-octave analytic terrain rough at every patch scale, so any
 /// unconstrained LOD edge shows a real height mismatch
 class RoughHeightSource : public ProceduralHeightSource
@@ -371,6 +387,42 @@ void SurfaceModelTest::_requestsTileCoverage()
     for (const SurfaceModel::Patch& patch : model.patches()) {
         QVERIFY2(source.requested.contains(patch.key), "no tile coverage requested for resident patch");
     }
+}
+
+void SurfaceModelTest::_failedTilesRequestedAgainForResidentPatches()
+{
+    GeoMapCamera camera;
+    FailingTileSource source;
+    HeightField field;
+    SurfaceModel model(&camera, &source, &field);
+
+    camera.setViewportSize(kViewport);
+    camera.lookAt(kCenter, 0, 0, 2000);
+    model.drainUpdates();
+    const QSet<TileMath::TileKey> firstView(source.requested.cbegin(), source.requested.cend());
+    QVERIFY(!firstView.isEmpty());
+
+    // Other side of the planet: the patches of the tiles that failed so far are gone
+    camera.setCenter(QGeoCoordinate(-33.8688, 151.2093));
+    model.drainUpdates();
+    QSet<TileMath::TileKey> resident;
+    for (const SurfaceModel::Patch& patch : model.patches()) {
+        resident.insert(patch.key);
+    }
+    QVERIFY(!resident.isEmpty());
+    QVERIFY(!resident.intersects(firstView));
+    source.requested.clear();
+
+    // With the camera at rest, a paced round asks again for the tiles of the resident patches and of no other.
+    // They fail again, so the next round is put off for longer.
+    const int firstRetryMs = model.tileRetryIntervalMs();
+    QTRY_COMPARE_WITH_TIMEOUT(model.tileRetryIntervalMs(), 2 * firstRetryMs, firstRetryMs + TestTimeout::mediumMs());
+    QCOMPARE(source.requested.count(), resident.count());
+    QCOMPARE(QSet<TileMath::TileKey>(source.requested.cbegin(), source.requested.cend()), resident);
+
+    // A tile that arrives ends the spacing out
+    QVERIFY(field.insertTile(TileMath::TileKey{0, 0, 0}, constantGrid(100.0f)));
+    QCOMPARE(model.tileRetryIntervalMs(), firstRetryMs);
 }
 
 void SurfaceModelTest::_noViewportNoPatches()
