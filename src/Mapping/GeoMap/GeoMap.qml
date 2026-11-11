@@ -704,13 +704,24 @@ Item {
         }
     }
 
-    // A map can be destroyed with the view it is part of, as the offline map editor's is. Its View3D would then
-    // leave the window before it is destroyed, and Qt Quick 3D releases such a scene only in a later frame of
-    // another View3D: it warns when the window closes before one. Handed to the window here, the View3D is
-    // destroyed in it.
+    // Qt Quick 3D releases the scene of a View3D destroyed outside a window only in a later frame of another
+    // View3D, and warns when the window closes before one. A map leaves its window before it is destroyed when
+    // a Loader unloads its view, as the tool drawer does: the View3D is handed, hidden, to the window the map was
+    // last in, and is destroyed there.
+    property Item _lastWindowContentItem: null
+
+    function _rememberWindow() {
+        if (Window.contentItem) {
+            _lastWindowContentItem = Window.contentItem
+        }
+    }
+
+    Window.onWindowChanged: _rememberWindow()
+    Component.onCompleted: _rememberWindow()
     Component.onDestruction: {
-        if (root.Window.contentItem) {
-            viewport.parent = root.Window.contentItem
+        if (_lastWindowContentItem) {
+            viewport.visible = false
+            viewport.parent = _lastWindowContentItem
         }
     }
 }

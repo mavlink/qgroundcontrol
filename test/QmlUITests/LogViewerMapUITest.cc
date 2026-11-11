@@ -3,6 +3,7 @@
 #include <cstring>
 
 #include <QtCore/QFile>
+#include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
@@ -154,6 +155,12 @@ void LogViewerMapUITest::_showsLogPath()
     // The log's place stays the log viewer's: Fly View and Plan View keep theirs
     QCOMPARE(QGroundControlQmlGlobal::flightMapPosition(), sharedPosition);
     QCOMPARE(QGroundControlQmlGlobal::flightMapZoom(), sharedZoom);
+
+    // Leaving the Analyze view unloads the page and its map while the window stays. A GeoMap must take its 3D
+    // scene along: Qt warns of one left behind when the window closes, which fails the test.
+    const QPointer<QQuickItem> unloadedMap(map);
+    QVERIFY(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewFly")));
+    QTRY_VERIFY_WITH_TIMEOUT(unloadedMap.isNull(), TestTimeout::shortMs());
 
     stopUI();
 }
