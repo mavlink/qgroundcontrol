@@ -10,10 +10,68 @@
 /// PQTM reply fields and the acknowledgement and readback rules every command shares.
 namespace QuectelCodec {
 
+/// Where a reply carries its fields. A setting answers "<name>,OK[,<values>]" or "<name>,ERROR,<code>".
+namespace Field {
+inline constexpr size_t NAME = 0;
+inline constexpr size_t STATUS = 1;
+inline constexpr size_t REJECTION_CODE = 2;
+inline constexpr size_t ACKNOWLEDGEMENT_FIELDS = STATUS + 1;
+inline constexpr size_t REJECTION_FIELDS = REJECTION_CODE + 1;
+/// "PQTMVERNO,<firmware>,<date>,<time>"
+inline constexpr size_t IDENTITY_FIRMWARE = 1;
+inline constexpr size_t IDENTITY_FIELDS = 4;
+/// The boot banner "PQTMVER,<version>,MODULE,<firmware>,<date>,<time>"
+inline constexpr size_t BOOT_VERSION = 1;
+inline constexpr size_t BOOT_TYPE = 2;
+inline constexpr size_t BOOT_FIRMWARE = 3;
+inline constexpr size_t BOOT_FIELDS = 6;
+/// "PQTMCFGRCVRMODE,OK,<role>"
+inline constexpr size_t ROLE = 2;
+inline constexpr size_t ROLE_FIELDS = ROLE + 1;
+/// "PQTMCFGFIXRATE,OK,<milliseconds>"
+inline constexpr size_t FIX_INTERVAL = 2;
+inline constexpr size_t FIX_RATE_FIELDS = FIX_INTERVAL + 1;
+/// "PQTMCFGMSGRATE,OK,<message>,<rate>[,<version>]"
+inline constexpr size_t RATE_MESSAGE = 2;
+inline constexpr size_t RATE_VALUE = 3;
+inline constexpr size_t RATE_VERSION = 4;
+inline constexpr size_t RATE_MIN_FIELDS = RATE_VALUE + 1;
+inline constexpr size_t RATE_MAX_FIELDS = RATE_VERSION + 1;
+/// "PQTMCFGSVIN,OK,<mode>,<observations>,<accuracy>,<x>,<y>,<z>[,<distance>]"
+inline constexpr size_t BASE_MODE = 2;
+inline constexpr size_t BASE_OBSERVATIONS = 3;
+inline constexpr size_t BASE_ACCURACY = 4;
+inline constexpr size_t BASE_X = 5;
+inline constexpr size_t BASE_Y = 6;
+inline constexpr size_t BASE_Z = 7;
+inline constexpr size_t BASE_DISTANCE = 8;
+inline constexpr size_t BASE_MIN_FIELDS = BASE_Z + 1;
+inline constexpr size_t BASE_MAX_FIELDS = BASE_DISTANCE + 1;
+/// "PQTMSVINSTATUS,<version>,<time of week>,<validity>,<reserved>,<unread>,<observations>,<configured
+/// observations>,<x>,<y>,<z>,<accuracy>"
+inline constexpr size_t SURVEY_VERSION = 1;
+inline constexpr size_t SURVEY_TIME_OF_WEEK = 2;
+inline constexpr size_t SURVEY_VALIDITY = 3;
+inline constexpr size_t SURVEY_RESERVED = 4;
+inline constexpr size_t SURVEY_OBSERVATIONS = 6;
+inline constexpr size_t SURVEY_CONFIGURED_OBSERVATIONS = 7;
+inline constexpr size_t SURVEY_X = 8;
+inline constexpr size_t SURVEY_Y = 9;
+inline constexpr size_t SURVEY_Z = 10;
+inline constexpr size_t SURVEY_ACCURACY = 11;
+inline constexpr size_t SURVEY_FIELDS = SURVEY_ACCURACY + 1;
+}  // namespace Field
+
+inline constexpr std::string_view REPLY_OK = "OK";
+inline constexpr std::string_view REPLY_ERROR = "ERROR";
+
 /// Borrowed fields for the largest supported PQTM reply, including empty trailing fields.
 class Fields
 {
 public:
+    /// The survey status is the longest reply read.
+    static constexpr size_t MAX_FIELDS = Field::SURVEY_FIELDS;
+
     explicit Fields(std::string_view body)
         : _count(NMEA::splitFields(body, _fields))
         , _overflowed(_count == 0)
@@ -35,7 +93,7 @@ public:
     }
 
 private:
-    std::array<std::string_view, 12> _fields{};
+    std::array<std::string_view, MAX_FIELDS> _fields{};
     size_t _count;
     bool _overflowed;
 };
@@ -64,13 +122,15 @@ bool number(std::string_view text, T& result)
 [[nodiscard]] inline bool rejected(const Fields& reply, std::string_view command)
 {
     unsigned error = 0;
-    return reply.size() == 3 && reply[0] == command && reply[1] == "ERROR" && number(reply[2], error);
+    return reply.size() == Field::REJECTION_FIELDS && reply[Field::NAME] == command &&
+           reply[Field::STATUS] == REPLY_ERROR && number(reply[Field::REJECTION_CODE], error);
 }
 
 /// "<command>,OK" acknowledges and "<command>,ERROR,<code>" rejects a setting.
 [[nodiscard]] inline GPSCommandOutcome acknowledgement(const Fields& reply, std::string_view command)
 {
-    if (reply.size() == 2 && reply[0] == command && reply[1] == "OK") {
+    if (reply.size() == Field::ACKNOWLEDGEMENT_FIELDS && reply[Field::NAME] == command &&
+        reply[Field::STATUS] == REPLY_OK) {
         return GPSCommandOutcome::Acknowledged;
     }
     return rejected(reply, command) ? GPSCommandOutcome::Rejected : GPSCommandOutcome::Pending;
@@ -82,7 +142,8 @@ bool number(std::string_view text, T& result)
         return GPSCommandOutcome::Rejected;
     }
     // Overflow retains the header, but can never verify a truncated readback.
-    if ((reply.size() > 2 || reply.overflowed()) && reply[0] == command && reply[1] == "OK") {
+    if ((reply.size() > Field::ACKNOWLEDGEMENT_FIELDS || reply.overflowed()) && reply[Field::NAME] == command &&
+        reply[Field::STATUS] == REPLY_OK) {
         return !reply.overflowed() && matches ? GPSCommandOutcome::ReadbackVerified : GPSCommandOutcome::Rejected;
     }
     return GPSCommandOutcome::Pending;

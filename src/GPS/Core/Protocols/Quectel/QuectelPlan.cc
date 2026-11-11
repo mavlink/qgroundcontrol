@@ -11,20 +11,22 @@ namespace Quectel::Plan {
 namespace {
 
 using QuectelCodec::Fields;
+namespace Field = QuectelCodec::Field;
 
 GPSTextMatcher rateReadback(const MessageRate& rate)
 {
     return [message = rate.message, value = rate.rate, version = rate.version](std::string_view body) {
         Fields reply(body);
         // V1.0 documents an empty optional version after standard NMEA rates.
-        if (version.empty() && reply.size() == 5 && reply.back().empty()) {
+        if (version.empty() && reply.size() == Field::RATE_MAX_FIELDS && reply.back().empty()) {
             reply.pop_back();
         }
         unsigned read = 0;
-        return QuectelCodec::readback(reply, "PQTMCFGMSGRATE",
-                                      reply.size() == (version.empty() ? 4 : 5) && reply[2] == message &&
-                                          QuectelCodec::number(reply[3], read) && read == value &&
-                                          (version.empty() || reply[4] == version));
+        return QuectelCodec::readback(
+            reply, "PQTMCFGMSGRATE",
+            reply.size() == (version.empty() ? Field::RATE_MIN_FIELDS : Field::RATE_MAX_FIELDS) &&
+                reply[Field::RATE_MESSAGE] == message && QuectelCodec::number(reply[Field::RATE_VALUE], read) &&
+                read == value && (version.empty() || reply[Field::RATE_VERSION] == version));
     };
 }
 
@@ -34,10 +36,11 @@ QByteArray writeBase(const GPSBaseStationConfig::Mode& mode, const GPSProtocolMa
 {
     QByteArray body = "PQTMCFGSVIN,W,";
     if (std::holds_alternative<GPSBaseStationConfig::Fixed>(mode)) {
-        body += "2,0,0," + gpsFixedDecimal(position.x, ECEF_DECIMALS) + ',' +
+        body += QByteArray::number(BaseMode::FIXED) + ",0,0," + gpsFixedDecimal(position.x, ECEF_DECIMALS) + ',' +
                 gpsFixedDecimal(position.y, ECEF_DECIMALS) + ',' + gpsFixedDecimal(position.z, ECEF_DECIMALS);
     } else if (const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&mode)) {
-        body += "1," + QByteArray::number(static_cast<qint64>(survey->duration.count())) + ',' +
+        body += QByteArray::number(BaseMode::SURVEY_IN) + ',' +
+                QByteArray::number(static_cast<qint64>(survey->duration.count())) + ',' +
                 gpsFixedDecimal(survey->accuracyMeters, SURVEY_ACCURACY_DECIMALS) + ",0,0,0";
     }
     if (distanceField) {

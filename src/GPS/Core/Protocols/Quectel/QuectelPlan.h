@@ -37,6 +37,8 @@ inline constexpr std::string_view QUALIFIED_FIRMWARE = "LG290P03";
 /// Receiver role: "PQTMCFGRCVRMODE,OK,<role>", where 2 is the base station.
 inline constexpr std::string_view READ_ROLE = "PQTMCFGRCVRMODE,R";
 inline constexpr unsigned BASE_ROLE = 2;
+/// The highest <role> the receiver reports.
+inline constexpr unsigned MAXIMUM_ROLE = BASE_ROLE;
 inline constexpr std::string_view WRITE_BASE_ROLE = "PQTMCFGRCVRMODE,W,2";
 
 /// Base positioning runs at 1 Hz: "PQTMCFGFIXRATE,OK,1000".
@@ -46,6 +48,14 @@ inline constexpr unsigned FIX_INTERVAL_MS = 1000;
 /// Base mode: "PQTMCFGSVIN,OK,<mode>,<observations>,<accuracy>,<x>,<y>,<z>[,<distance>]", with mode 1 survey-in and 2
 /// fixed ECEF coordinates. Survey-in counts accepted 1 Hz fixes; its accuracy threshold filters each 3D fix.
 inline constexpr std::string_view READ_BASE = "PQTMCFGSVIN,R";
+
+/// <mode> of READ_BASE and writeBase().
+namespace BaseMode {
+inline constexpr unsigned SURVEY_IN = 1;
+inline constexpr unsigned FIXED = 2;
+/// The highest mode the receiver reports.
+inline constexpr unsigned MAXIMUM = FIXED;
+}  // namespace BaseMode
 inline constexpr std::chrono::hours MAXIMUM_SURVEY_DURATION{24};
 inline constexpr double MAXIMUM_SURVEY_ACCURACY_METERS = 1000;
 /// The largest <distance> a READ_BASE reply may report.
@@ -78,6 +88,9 @@ inline constexpr std::string_view RESTART = "PQTMSRR";
 inline constexpr std::chrono::milliseconds RESTART_TIMEOUT{8000};
 inline constexpr std::chrono::milliseconds RESTART_POLL{200};
 inline constexpr std::chrono::milliseconds RESTART_IDENTIFY_TIMEOUT{700};
+/// The <version> and the type the boot banner names.
+inline constexpr std::string_view BOOT_BANNER_VERSION = "1";
+inline constexpr std::string_view BOOT_BANNER_MODULE = "MODULE";
 
 struct MessageRate
 {
@@ -93,6 +106,15 @@ inline constexpr std::array BASE_OUTPUT{
     MessageRate{.message = "RTCM3-1005"},
     MessageRate{.message = "RTCM3-107X", .version = "0"},
 };
+/// The PQTMSVINSTATUS version BASE_OUTPUT asks for.
+inline constexpr unsigned SURVEY_STATUS_VERSION = 1;
+
+/// <validity> of PQTMSVINSTATUS.
+namespace SurveyValidity {
+inline constexpr unsigned INVALID = 0;
+inline constexpr unsigned IN_PROGRESS = 1;
+inline constexpr unsigned VALID = 2;
+}  // namespace SurveyValidity
 
 /// NMEA output: position, position accuracy, satellites used and satellites in view, every second.
 inline constexpr std::array NMEA_OUTPUT{

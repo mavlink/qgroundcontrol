@@ -40,6 +40,40 @@ namespace {
 /// A command reply is "$command,<text>,response: <status>*hh", echoing the command's text.
 constexpr std::string_view REPLY_PREFIX = "$command,";
 constexpr std::string_view REPLY_STATUS_PREFIX = ",response: ";
+constexpr std::string_view REPLY_STATUS_OK = "OK";
+
+/// Where a log carries its fields. A log is "#<header>;<body>*<checksum>", with the header
+/// "<name>,<CPU idle>,<time system>,<time status>,<week>,<milliseconds of week>,..." of HEADER_FIELDS fields.
+namespace Field {
+constexpr size_t HEADER_TIME_SYSTEM = 2;
+constexpr size_t HEADER_TIME_STATUS = 3;
+constexpr size_t HEADER_WEEK = 4;
+constexpr size_t HEADER_WEEK_MILLISECONDS = 5;
+constexpr size_t HEADER_FIELDS = 10;
+constexpr size_t VERSIONA_MODEL = 0;
+constexpr size_t VERSIONA_FIRMWARE = 1;
+constexpr size_t VERSIONA_FIELDS = 6;
+constexpr size_t BESTNAVXYZA_SOLUTION_STATUS = 0;
+constexpr size_t BESTNAVXYZA_POSITION_TYPE = 1;
+constexpr size_t BESTNAVXYZA_X = 2;
+constexpr size_t BESTNAVXYZA_Y = 3;
+constexpr size_t BESTNAVXYZA_Z = 4;
+constexpr size_t BESTNAVXYZA_FIELDS = 28;
+}  // namespace Field
+
+/// The time a BESTNAVXYZA epoch must carry to count as base status.
+constexpr std::string_view TIME_SYSTEM_GPS = "GPS";
+constexpr std::string_view TIME_STATUS_FINE = "FINE";
+/// What BESTNAVXYZA reports for a base at its fixed position.
+constexpr std::string_view SOLUTION_COMPUTED = "SOL_COMPUTED";
+constexpr std::string_view POSITION_TYPE_FIXED = "FIXEDPOS";
+/// The longest model or firmware name accepted from VERSIONA.
+constexpr size_t MAX_IDENTITY_LENGTH = 32;
+
+/// N4 R1.6 section 3.6 explicitly gives these minimum builds for the rover modes.
+constexpr std::string_view FIRMWARE_BUILD_PREFIX = "R4.10Build";
+constexpr unsigned UM980_MINIMUM_BUILD = 7923;
+constexpr unsigned UM982_MINIMUM_BUILD = 7650;
 
 std::string_view unquote(std::string_view field)
 {
@@ -53,13 +87,12 @@ std::string_view unquote(std::string_view field)
 
 bool supportedFirmware(std::string_view model, std::string_view firmware)
 {
-    constexpr std::string_view PREFIX = "R4.10Build";
-    if (!firmware.starts_with(PREFIX)) {
+    if (!firmware.starts_with(FIRMWARE_BUILD_PREFIX)) {
         return false;
     }
-    const auto build = NMEA::number<unsigned>(firmware.substr(PREFIX.size()));
-    // N4 R1.6 section 3.6 explicitly gives these minimum builds for the rover modes.
-    return build && ((model == "UM980" && *build >= 7923) || (model == "UM982" && *build >= 7650));
+    const auto build = NMEA::number<unsigned>(firmware.substr(FIRMWARE_BUILD_PREFIX.size()));
+    return build &&
+           ((model == "UM980" && *build >= UM980_MINIMUM_BUILD) || (model == "UM982" && *build >= UM982_MINIMUM_BUILD));
 }
 
 /// Whether @a line ends in the XOR checksum of everything before its '*', including the leading '$' or '#', as
@@ -67,14 +100,13 @@ bool supportedFirmware(std::string_view model, std::string_view firmware)
 bool validXorChecksum(std::string_view line)
 {
     const auto star = line.rfind('*');
-    return star != std::string_view::npos && star + 3 == line.size() &&
+    return star != std::string_view::npos && star + 1 + NMEA::CHECKSUM_DIGITS == line.size() &&
            NMEA::hexNumber(line.substr(star + 1)) == NMEA::checksum(line.substr(0, star));
 }
 
 bool samePosition(const GPSProtocolMath::Ecef& left, const GPSProtocolMath::Ecef& right)
 {
-    // ECEF command/readback values have four decimal places; this is not survey accuracy.
-    return GPSProtocolMath::distance(left, right) < 0.02;
+    return GPSProtocolMath::distance(left, right) < Plan::SAME_POSITION_TOLERANCE_METERS;
 }
 
 /// The coordinates of a MODE log's "MODE BASE <x> <y> <z>".
@@ -296,7 +328,7 @@ GPSCommandOutcome Protocol::_match(const Plan::Command& command, std::string_vie
         }
         _acknowledgementMatched = true;
         const auto status = response + REPLY_STATUS_PREFIX.size();
-        if (line.substr(status, line.rfind('*') - status) != "OK") {
+        if (line.substr(status, line.rfind('*') - status) != REPLY_STATUS_OK) {
             return GPSCommandOutcome::Rejected;
         }
         return command.reply == Plan::Reply::Acknowledgement ? GPSCommandOutcome::Acknowledged
@@ -312,10 +344,11 @@ GPSCommandOutcome Protocol::_match(const Plan::Command& command, std::string_vie
             if (supportedFirmware(_model.toStdString(), _firmware.toStdString())) {
                 return GPSCommandOutcome::ReadbackVerified;
             }
-            _rejection = QStringLiteral(
-                             "Unsupported Unicore receiver '%1' firmware '%2'; requires UM980 R4.10Build7923+ "
-                             "or UM982 R4.10Build7650+")
-                             .arg(QString::fromUtf8(_model), QString::fromUtf8(_firmware));
+            _rejection =
+                QStringLiteral("Unsupported Unicore receiver '%1' firmware '%2'; requires UM980 %3%4+ or UM982 %3%5+")
+                    .arg(QString::fromUtf8(_model), QString::fromUtf8(_firmware),
+                         QLatin1StringView(FIRMWARE_BUILD_PREFIX), QString::number(UM980_MINIMUM_BUILD),
+                         QString::number(UM982_MINIMUM_BUILD));
             return GPSCommandOutcome::Rejected;
         case Plan::Reply::RoverMode:
         case Plan::Reply::AveragingMode:
@@ -381,7 +414,7 @@ GPSReceiveUpdates Protocol::_decodeLine(std::string_view line, GPSDecodeContext&
     if (semicolon == std::string_view::npos || semicolon >= star) {
         return {};
     }
-    std::array<std::string_view, 10> header{};
+    std::array<std::string_view, Field::HEADER_FIELDS> header{};
     if (NMEA::splitFields(line.substr(1, semicolon - 1), header) != header.size()) {
         return {};
     }
@@ -395,9 +428,11 @@ GPSReceiveUpdates Protocol::_decodeLine(std::string_view line, GPSDecodeContext&
         if (!_monitorBase) {
             return GPSReceiveUpdate::Activity;
         }
-        const auto week = NMEA::number<uint16_t>(header[4]);
-        const auto milliseconds = NMEA::number<uint32_t>(header[5]);
-        if (header[2] != "GPS" || header[3] != "FINE" || !week || !milliseconds || *milliseconds >= GPSTime::WEEK_MS) {
+        const auto week = NMEA::number<uint16_t>(header[Field::HEADER_WEEK]);
+        const auto milliseconds = NMEA::number<uint32_t>(header[Field::HEADER_WEEK_MILLISECONDS]);
+        if (header[Field::HEADER_TIME_SYSTEM] != TIME_SYSTEM_GPS ||
+            header[Field::HEADER_TIME_STATUS] != TIME_STATUS_FINE || !week || !milliseconds ||
+            *milliseconds >= GPSTime::WEEK_MS) {
             return {};
         }
         const uint64_t epoch = GPSTime::epochMs(*week, *milliseconds);
@@ -420,13 +455,14 @@ GPSReceiveUpdates Protocol::_decodeLine(std::string_view line, GPSDecodeContext&
 
 bool Protocol::_handleVersion(std::string_view body, GPSDecodeContext& context)
 {
-    std::array<std::string_view, 6> fields{};
+    std::array<std::string_view, Field::VERSIONA_FIELDS> fields{};
     if (NMEA::splitFields(body, fields) != fields.size()) {
         return false;
     }
-    const auto model = unquote(fields[0]);
-    const auto firmware = unquote(fields[1]);
-    if (model.empty() || model.size() > 32 || firmware.empty() || firmware.size() > 32) {
+    const auto model = unquote(fields[Field::VERSIONA_MODEL]);
+    const auto firmware = unquote(fields[Field::VERSIONA_FIRMWARE]);
+    if (model.empty() || model.size() > MAX_IDENTITY_LENGTH || firmware.empty() ||
+        firmware.size() > MAX_IDENTITY_LENGTH) {
         return false;
     }
     if (context.replyPending()) {
@@ -452,19 +488,20 @@ bool Protocol::_handleMode(std::string_view body, GPSDecodeContext& context)
 
 bool Protocol::_handlePosition(std::string_view body, GPSDecodeContext& context)
 {
-    std::array<std::string_view, 28> fields{};
+    std::array<std::string_view, Field::BESTNAVXYZA_FIELDS> fields{};
     if (NMEA::splitFields(body, fields) != fields.size()) {
         return false;
     }
-    const auto x = NMEA::number<double>(fields[2]);
-    const auto y = NMEA::number<double>(fields[3]);
-    const auto z = NMEA::number<double>(fields[4]);
+    const auto x = NMEA::number<double>(fields[Field::BESTNAVXYZA_X]);
+    const auto y = NMEA::number<double>(fields[Field::BESTNAVXYZA_Y]);
+    const auto z = NMEA::number<double>(fields[Field::BESTNAVXYZA_Z]);
     if (!x || !y || !z) {
         return false;
     }
     const GPSProtocolMath::Ecef coordinates{*x, *y, *z};
-    const bool fixed =
-        fields[0] == "SOL_COMPUTED" && fields[1] == "FIXEDPOS" && GPSProtocolMath::nearEarthSurface(coordinates);
+    const bool fixed = fields[Field::BESTNAVXYZA_SOLUTION_STATUS] == SOLUTION_COMPUTED &&
+                       fields[Field::BESTNAVXYZA_POSITION_TYPE] == POSITION_TYPE_FIXED &&
+                       GPSProtocolMath::nearEarthSurface(coordinates);
     _reportedPosition = coordinates;
     _reportedFixed = fixed;
     const bool matches = _averaging || samePosition(coordinates, _fixedECEF);

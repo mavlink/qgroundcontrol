@@ -48,8 +48,9 @@ BaseStation averagingBase(std::chrono::seconds maximum)
 
 BaseStation fixedBase(const GPSProtocolMath::Ecef& position)
 {
-    const QByteArray mode = "MODE BASE " + gpsFixedDecimal(position.x, 4) + ' ' + gpsFixedDecimal(position.y, 4) + ' ' +
-                            gpsFixedDecimal(position.z, 4);
+    const QByteArray mode = "MODE BASE " + gpsFixedDecimal(position.x, ECEF_DECIMALS) + ' ' +
+                            gpsFixedDecimal(position.y, ECEF_DECIMALS) + ' ' +
+                            gpsFixedDecimal(position.z, ECEF_DECIMALS);
     // Read back before subscribing, so queued periodic output cannot satisfy the query.
     QList<Command> commands{{"BESTNAVXYZA", Reply::FixedPosition}};
     commands += output();

@@ -134,9 +134,9 @@ void rejectBeforeMutation(GPSTestClock& clock)
         QVERIFY(!driver.receiverReady());
         QCOMPARE(receiver.commands(), QByteArrayList{"VERSIONA\r\n"});
         if (std::string_view(body).find("R5.00") != std::string_view::npos) {
-            QVERIFY(driver.errorDetail().contains("Unsupported Unicore receiver"));
-            QVERIFY(driver.errorDetail().contains("R5.00Build20000"));
-            QVERIFY(driver.errorDetail().contains("R4.10Build7650"));
+            QCOMPARE(driver.errorDetail(),
+                     QStringLiteral("Unsupported Unicore receiver 'UM982' firmware 'R5.00Build20000'; requires UM980 "
+                                    "R4.10Build7923+ or UM982 R4.10Build7650+"));
         }
     }
     // Unicore receivers have no accuracy-controlled survey-in.

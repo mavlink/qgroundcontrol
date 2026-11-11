@@ -57,6 +57,12 @@ struct BaseStation
 /// Receiver-managed averaging for at most @a maximum.
 [[nodiscard]] BaseStation averagingBase(std::chrono::seconds maximum);
 
+/// Decimals of the ECEF coordinates fixedBase() sends and the receiver reads back: 0.1 mm.
+inline constexpr int ECEF_DECIMALS = 4;
+/// How far a position the receiver reports may lie from the commanded one and still be the same. It allows for the
+/// rounding to ECEF_DECIMALS with a wide margin; it is not survey accuracy.
+inline constexpr double SAME_POSITION_TOLERANCE_METERS = 0.02;
+
 /// A fixed base at @a position, in ECEF metres.
 [[nodiscard]] BaseStation fixedBase(const GPSProtocolMath::Ecef& position);
 
