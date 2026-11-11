@@ -35,6 +35,17 @@ static bool execBound(QSqlQuery& query, const QString& sql, const QVariantList& 
     return query.exec();
 }
 
+/// The file itself gets smaller only when its write-ahead log is checkpointed, which SQLite otherwise leaves until
+/// about 1000 pages have changed or the cache is closed. Passive: a connection that reads the cache is not waited
+/// for, and a later checkpoint does what this one could not.
+static void checkpointWriteAheadLog(QSqlQuery& query)
+{
+    if (!query.exec(QStringLiteral("PRAGMA wal_checkpoint(PASSIVE)"))) {
+        qCWarning(QGCTileCacheDatabaseLog) << "Failed to checkpoint the write-ahead log:" << query.lastError().text();
+    }
+    query.finish();
+}
+
 QGCTileCacheDatabase::QGCTileCacheDatabase(const QString& databasePath)
     : _databasePath(databasePath)
     , _connectionName(QStringLiteral("QGCTileCache_%1").arg(s_connectionCounter.fetch_add(1)))
@@ -236,6 +247,10 @@ bool QGCTileCacheDatabase::connectDB()
     db.setDatabaseName(_databasePath);
     _valid = db.open();
     if (_valid) {
+        // The mode in which a file gives back the space of deleted tiles: see releaseFreePages(). A new file gets
+        // it from this, which has to precede its first table and its WAL mode. An existing file without the mode
+        // stays as it is until resetDatabase() rebuilds it.
+        (void) QSqlQuery(db).exec(QStringLiteral("PRAGMA auto_vacuum = INCREMENTAL"));
         QGCSqlHelper::applySqlitePragmas(db);
         _connected = true;
     } else {
@@ -679,7 +694,13 @@ bool QGCTileCacheDatabase::resetDatabase()
         qCWarning(QGCTileCacheDatabaseLog) << "Failed to commit table drops in resetDatabase";
         return false;
     }
+    // Rebuilding the emptied file costs little. It releases the space of the dropped tables, and gives a file from
+    // before auto-vacuum that mode, which takes a rebuild.
+    if (!query.exec("PRAGMA auto_vacuum = INCREMENTAL") || !query.exec("VACUUM")) {
+        qCWarning(QGCTileCacheDatabaseLog) << "Failed to rebuild the reset database:" << query.lastError().text();
+    }
     _valid = _createDB(_database());
+    checkpointWriteAheadLog(query);
     return _valid;
 }
 
@@ -843,6 +864,47 @@ bool QGCTileCacheDatabase::pruneCache(quint64 amount)
     }
 
     return true;
+}
+
+qint64 QGCTileCacheDatabase::releaseFreePages(int maxPages)
+{
+    if (!_ensureConnected()) {
+        return 0;
+    }
+
+    QSqlQuery query(_database());
+    const auto freePageCount = [&query]() -> qint64 {
+        return (query.exec(QStringLiteral("PRAGMA freelist_count")) && query.next()) ? query.value(0).toLongLong() : 0;
+    };
+
+    // Mode 2 is incremental auto-vacuum
+    if (!query.exec(QStringLiteral("PRAGMA auto_vacuum")) || !query.next() || (query.value(0).toInt() != 2)) {
+        return 0;
+    }
+    const qint64 freePages = freePageCount();
+    if (freePages <= 0) {
+        return 0;
+    }
+
+    // One transaction for the batch: it took a third less time than a transaction for every page
+    QGCSqlHelper::Transaction txn(_database());
+    // SQLite releases one page for each step of the pragma, and Qt steps a statement without result columns once
+    bool released = txn.ok() && query.prepare(QStringLiteral("PRAGMA incremental_vacuum(1)"));
+    for (qint64 pages = qMin<qint64>(maxPages, freePages); released && (pages > 0); pages--) {
+        released = query.exec();
+    }
+    // The statement is still in its first step, and a transaction cannot commit with a statement in progress
+    query.finish();
+    if (!released || !txn.commit()) {
+        qCWarning(QGCTileCacheDatabaseLog) << "Failed to release unused pages:" << query.lastError().text();
+        return 0;
+    }
+
+    const qint64 pagesLeft = freePageCount();
+    if (pagesLeft == 0) {
+        checkpointWriteAheadLog(query);
+    }
+    return pagesLeft;
 }
 
 void QGCTileCacheDatabase::deleteBingNoTileTiles()

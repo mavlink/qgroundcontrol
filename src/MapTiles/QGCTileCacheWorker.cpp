@@ -99,6 +99,8 @@ void QGCCacheWorker::run()
     }
 
     _dbValid = _database->isValid();
+    // An earlier run can have quit with pages left to release, and init() can have reset the cache
+    _releasePending = true;
 
     _updateTimer.start();
 
@@ -125,6 +127,12 @@ void QGCCacheWorker::run()
                     lock.relock();
                 }
             }
+        } else if (_releasePending) {
+            // While there is nothing else to do, and a batch at a time: a task queued meanwhile waits for one batch
+            lock.unlock();
+            _releasePending =
+                _database && _database->isValid() && (_database->releaseFreePages(kReleaseBatchPages) > 0);
+            lock.relock();
         } else {
             (void) _waitc.wait(lock.mutex(), 5000);
         }
@@ -368,6 +376,7 @@ void QGCCacheWorker::_pruneCache(QGCMapTask* mtask)
         mtask->setError("Error pruning cache");
         return;
     }
+    _releasePending = true;
     task->setPruned();
 }
 
@@ -382,6 +391,7 @@ void QGCCacheWorker::_deleteTileSet(QGCMapTask* mtask)
         mtask->setError("Error deleting tile set");
         return;
     }
+    _releasePending = true;
     _emitTotals();
     task->setTileSetDeleted();
 }
@@ -432,6 +442,8 @@ void QGCCacheWorker::_importSets(QGCMapTask* mtask)
     }
 
     _dbValid = _database->isValid();
+    // A merge deletes the sets it has no tile to add to, and a file that replaces the cache can have unused pages
+    _releasePending = true;
 
     if (!result.success) {
         task->setError(result.errorString);

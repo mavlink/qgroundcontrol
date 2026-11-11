@@ -5,6 +5,7 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
+#include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QSettings>
 #include <QtCore/QTemporaryDir>
@@ -54,6 +55,7 @@ const QString kTileCacheSetTilesSql = QStringLiteral("SELECT setID, tileID FROM 
 const QString kTileCacheDownloadsSql =
     QStringLiteral("SELECT setID, hash, type, x, y, z, state FROM TilesDownload ORDER BY rowid");
 const QString kTileCacheVersionSql = QStringLiteral("PRAGMA user_version");
+const QString kTileCacheAutoVacuumSql = QStringLiteral("PRAGMA auto_vacuum");
 
 /// Creates a cache file as schema version 1 wrote it, with the default set, and runs \a rowStatements on it.
 /// Returns the error, if any.
@@ -123,6 +125,38 @@ QMap<int, int> shiftedLegacyMapIds()
         ids.insert(legacyId, legacyId + 5);
     }
     return ids;
+}
+
+qint64 tileCacheFreePages(const QString& path)
+{
+    return tileCacheRows(path, QStringLiteral("PRAGMA freelist_count")).value(0).toLongLong();
+}
+
+constexpr int kLargeTileCount = 20;
+constexpr int kLargeTileSize = 64 * 1024;
+constexpr qint64 kLargeTilesSize = static_cast<qint64>(kLargeTileCount) * kLargeTileSize;
+
+/// Saves tiles that take hundreds of pages together, in the default set when \a setID is not a set
+bool saveLargeTiles(QGCTileCacheDatabase& db, quint64 setID)
+{
+    const QByteArray image(kLargeTileSize, 'T');
+    for (int i = 0; i < kLargeTileCount; i++) {
+        if (!db.saveTile(QStringLiteral("large_%1").arg(i), QStringLiteral("png"), image, kFixedProviderType, setID)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/// The size of the file once all that was written is in the file itself, and not in its write-ahead log
+qint64 checkpointedFileSize(const QGCTileCacheDatabase& db, const QString& path)
+{
+    QSqlQuery query(db.database());
+    if (!query.exec(QStringLiteral("PRAGMA wal_checkpoint(TRUNCATE)"))) {
+        return -1;
+    }
+    query.finish();
+    return QFileInfo(path).size();
 }
 
 /// The tiles of version1Rows() once renumbered with shiftedLegacyMapIds()
@@ -1345,6 +1379,141 @@ void QGCTileCacheDatabaseTest::_testCreateTileSetKeysTilesByCacheVariant()
     QVERIFY(setA.has_value());
     QCOMPARE(tilesOfSet(*setA), 1U);
     QVERIFY(db->getTileDownloadList(*setA, 10).isEmpty());
+}
+
+void QGCTileCacheDatabaseTest::_testNewFileHasIncrementalAutoVacuum()
+{
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
+    QVERIFY(db);
+    db.reset();
+
+    QCOMPARE(tileCacheRows(tempDir.filePath("tiles.db"), kTileCacheAutoVacuumSql), QStringList{QStringLiteral("2")});
+}
+
+void QGCTileCacheDatabaseTest::_testFreePagesReleasedInBatches_data()
+{
+    QTest::addColumn<QString>("how");
+    QTest::newRow("tile set deleted") << QStringLiteral("delete set");
+    QTest::newRow("cache pruned") << QStringLiteral("prune");
+    QTest::newRow("cache of unknown version reset") << QStringLiteral("unknown version");
+}
+
+void QGCTileCacheDatabaseTest::_testFreePagesReleasedInBatches()
+{
+    QFETCH(QString, how);
+
+    QTemporaryDir tempDir;
+    const QString path = tempDir.filePath("tiles.db");
+    auto db = std::make_unique<QGCTileCacheDatabase>(path);
+    QVERIFY(db->init());
+    QVERIFY(db->connectDB());
+
+    // A tile set deleted takes its tiles with it. The default set is pruned of tiles no other set has.
+    quint64 setID = QGCTileCacheDatabase::kInvalidTileSet;
+    if (how == QStringLiteral("delete set")) {
+        _insertTileSet(db.get(), QStringLiteral("Large Set"), setID);
+    }
+    QVERIFY(saveLargeTiles(*db, setID));
+    const qint64 filledSize = checkpointedFileSize(*db, path);
+    QVERIFY(filledSize > kLargeTilesSize);
+
+    if (how == QStringLiteral("delete set")) {
+        QVERIFY(db->deleteTileSet(setID));
+    } else if (how == QStringLiteral("prune")) {
+        QVERIFY(db->pruneCache(kLargeTilesSize));
+    } else {
+        {
+            QSqlQuery query(db->database());
+            QVERIFY(
+                query.exec(QStringLiteral("PRAGMA user_version = %1").arg(QGCTileCacheDatabase::kSchemaVersion + 1)));
+        }
+        db = std::make_unique<QGCTileCacheDatabase>(path);
+        expectLogMessage("MapTiles.QGCTileCacheDatabase", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Unknown schema version")));
+        QVERIFY(db->init());
+        verifyExpectedLogMessage();
+        QVERIFY(db->connectDB());
+    }
+    QCOMPARE(db->computeTotals().totalCount, 0U);
+
+    // What deleted the tiles left their pages in the file: they are released a batch at a time
+    constexpr int batchPages = 100;
+    qint64 freePages = tileCacheFreePages(path);
+    QVERIFY2(freePages > 2 * batchPages, qPrintable(QString::number(freePages)));
+    while (freePages > 0) {
+        const qint64 pagesLeft = db->releaseFreePages(batchPages);
+        QCOMPARE(pagesLeft, tileCacheFreePages(path));
+        QVERIFY2((pagesLeft < freePages) && (pagesLeft >= freePages - batchPages),
+                 qPrintable(QStringLiteral("%1 pages left of %2").arg(pagesLeft).arg(freePages)));
+        freePages = pagesLeft;
+    }
+
+    // Without a checkpoint here: the user gets the space back when the last page is released, not when the cache is
+    // closed
+    const qint64 releasedSize = QFileInfo(path).size();
+    QVERIFY2(releasedSize < filledSize - kLargeTilesSize,
+             qPrintable(QStringLiteral("%1 bytes of %2 left").arg(releasedSize).arg(filledSize)));
+}
+
+void QGCTileCacheDatabaseTest::_testFreePagesKeptWithoutAutoVacuum()
+{
+    // A file from before auto-vacuum cannot give pages back. Its unused pages are for new rows, and there is
+    // nothing left to do about them.
+    QTemporaryDir tempDir;
+    const QString path = tempDir.filePath("version1.db");
+    QCOMPARE(createVersion1TileCache(path, version1Rows()), QString());
+
+    QGCTileCacheDatabase db(path);
+    QVERIFY(db.init());
+    QVERIFY(db.connectDB());
+    quint64 setID = 0;
+    _insertTileSet(&db, QStringLiteral("Large Set"), setID);
+    QVERIFY(saveLargeTiles(db, setID));
+    QVERIFY(db.deleteTileSet(setID));
+    const qint64 freePages = tileCacheFreePages(path);
+    QVERIFY(freePages > 0);
+
+    QCOMPARE(db.releaseFreePages(100), 0);
+    QCOMPARE(tileCacheFreePages(path), freePages);
+}
+
+void QGCTileCacheDatabaseTest::_testResetGivesSpaceBack()
+{
+    QTemporaryDir tempDir;
+    const QString path = tempDir.filePath("tiles.db");
+    QGCTileCacheDatabase db(path);
+    QVERIFY(db.init());
+    QVERIFY(db.connectDB());
+    QVERIFY(saveLargeTiles(db, QGCTileCacheDatabase::kInvalidTileSet));
+    const qint64 filledSize = checkpointedFileSize(db, path);
+
+    QVERIFY(db.resetDatabase());
+
+    QCOMPARE(tileCacheFreePages(path), 0);
+    // Without a checkpoint here: the user gets the space back with the reset, not when the cache is closed
+    const qint64 resetSize = QFileInfo(path).size();
+    QVERIFY2(resetSize < filledSize - kLargeTilesSize,
+             qPrintable(QStringLiteral("%1 bytes of %2 left").arg(resetSize).arg(filledSize)));
+}
+
+void QGCTileCacheDatabaseTest::_testResetGivesOldFileAutoVacuum()
+{
+    // A file from before auto-vacuum: the mode cannot be set once a file has tables
+    QTemporaryDir tempDir;
+    const QString path = tempDir.filePath("version1.db");
+    QCOMPARE(createVersion1TileCache(path, version1Rows()), QString());
+    QCOMPARE(tileCacheRows(path, kTileCacheAutoVacuumSql), QStringList{QStringLiteral("0")});
+
+    // Opening and migrating the file does not rebuild it, which a large cache would take long for
+    QGCTileCacheDatabase db(path);
+    QVERIFY(db.init());
+    QCOMPARE(tileCacheRows(path, kTileCacheAutoVacuumSql), QStringList{QStringLiteral("0")});
+
+    QVERIFY(db.connectDB());
+    QVERIFY(db.resetDatabase());
+    db.disconnectDB();
+    QCOMPARE(tileCacheRows(path, kTileCacheAutoVacuumSql), QStringList{QStringLiteral("2")});
 }
 
 void QGCTileCacheDatabaseTest::_testSaveTileTypeStoredAsInteger()

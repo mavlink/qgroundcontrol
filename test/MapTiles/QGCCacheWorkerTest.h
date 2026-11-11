@@ -30,6 +30,9 @@ private slots:
     void _testCreateTileSetKeepsSourceOfItsCreation();
     void _testImportGivesOldTilesTheConfiguredSource();
     void _testMapEngineGivesOldTilesTheConfiguredSource();
+    void _testFreePagesReleasedWhenIdle_data();
+    void _testFreePagesReleasedWhenIdle();
+    void _testTileFetchedBeforeFreePagesReleased();
 
 private:
     bool _startWorker(QGCCacheWorker& worker, int timeoutMs = TestTimeout::mediumMs());

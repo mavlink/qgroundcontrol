@@ -56,6 +56,12 @@ private slots:
     void _testVersion2TilesGetCacheVariant();
     void _testVersion1TilesGetCacheVariantOfPermanentId();
     void _testCreateTileSetKeysTilesByCacheVariant();
+    void _testNewFileHasIncrementalAutoVacuum();
+    void _testFreePagesReleasedInBatches_data();
+    void _testFreePagesReleasedInBatches();
+    void _testFreePagesKeptWithoutAutoVacuum();
+    void _testResetGivesSpaceBack();
+    void _testResetGivesOldFileAutoVacuum();
     void _testSaveTileTypeStoredAsInteger();
     void _testCreateTileSetTypeStoredAsInteger();
     void _testTablesExist();

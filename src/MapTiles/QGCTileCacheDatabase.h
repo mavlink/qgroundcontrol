@@ -68,6 +68,10 @@ public:
 
     // Cache
     bool pruneCache(quint64 amount);
+    /// Gives back to the file system at most \a maxPages of the pages that deleted rows left unused, and returns how
+    /// many are left. Only a file with incremental auto-vacuum can: any other file keeps its unused pages for new
+    /// rows, and 0 is returned.
+    qint64 releaseFreePages(int maxPages);
     void deleteBingNoTileTiles();
 
     // Stats

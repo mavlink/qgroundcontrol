@@ -1,5 +1,6 @@
 #include "QGCCacheWorkerTest.h"
 
+#include <atomic>
 #include <cmath>
 #include <memory>
 #include <optional>
@@ -18,6 +19,7 @@
 #include "QGCMapEngine.h"
 #include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
+#include "QGCSqlHelper.h"
 #include "QGCTileCacheDatabase.h"
 #include "QGCTileCacheWorker.h"
 #include "QGCTileSet.h"
@@ -46,6 +48,50 @@ bool createVersion2CacheWithCustomUrlTile(const QString& path, int x, int y, int
     }
     QSqlQuery query(db.database());
     return query.exec(QStringLiteral("PRAGMA user_version = 2"));
+}
+
+constexpr int kCacheWorkerLargeTileSize = 64 * 1024;
+
+/// Adds a tile set with tiles that take hundreds of pages together to the cache at \a path. Its tiles go to the
+/// default set instead when \a setID is null. With \a deleteSet the set is deleted again, which leaves its pages
+/// unused in the file.
+bool addLargeTileSet(const QString& path, const QString& name, int tileCount, quint64* setID, bool deleteSet = false)
+{
+    QGCTileCacheDatabase db(path);
+    if (!db.init() || !db.connectDB()) {
+        return false;
+    }
+
+    quint64 id = QGCTileCacheDatabase::kInvalidTileSet;
+    if (setID) {
+        QSqlQuery query(db.database());
+        if (!query.prepare(QStringLiteral("INSERT INTO TileSets(name) VALUES(?)"))) {
+            return false;
+        }
+        query.addBindValue(name);
+        if (!query.exec()) {
+            return false;
+        }
+        id = query.lastInsertId().toULongLong();
+        *setID = id;
+    }
+
+    const QByteArray image(kCacheWorkerLargeTileSize, 'T');
+    for (int i = 0; i < tileCount; i++) {
+        if (!db.saveTile(QStringLiteral("%1_%2").arg(name).arg(i), QStringLiteral("png"), image, kTestProviderType,
+                         id)) {
+            return false;
+        }
+    }
+    return !deleteSet || db.deleteTileSet(id);
+}
+
+/// The unused pages of the cache file, read as another process would. -1 when they cannot be read.
+qint64 cacheWorkerFreePages(const QString& path)
+{
+    const QGCSqlHelper::ScopedConnection connection(path, /*readOnly=*/true, QStringLiteral("CacheWorkerTestPages"));
+    QSqlQuery query(connection.database());
+    return (query.exec(QStringLiteral("PRAGMA freelist_count")) && query.next()) ? query.value(0).toLongLong() : -1;
 }
 
 }  // namespace
@@ -635,6 +681,112 @@ void QGCCacheWorkerTest::_testMapEngineGivesOldTilesTheConfiguredSource()
     QCOMPARE(_fetchTileImage(addTask, UrlFactory::getTileHash(kCacheWorkerCustomUrlType, 1, 2, 3)), image);
 
     engine.close();
+}
+
+void QGCCacheWorkerTest::_testFreePagesReleasedWhenIdle_data()
+{
+    QTest::addColumn<QString>("task");
+    QTest::newRow("tile set deleted") << QStringLiteral("delete set");
+    QTest::newRow("cache pruned") << QStringLiteral("prune");
+    QTest::newRow("file imported") << QStringLiteral("import");
+}
+
+void QGCCacheWorkerTest::_testFreePagesReleasedWhenIdle()
+{
+    QFETCH(QString, task);
+
+    // A cache with unused pages, as an earlier run leaves it that quit before it had released them
+    constexpr int tileCount = 20;
+    QTemporaryDir tempDir;
+    const QString path = tempDir.filePath("tiles.db");
+    quint64 deletedSetID = 0;
+    quint64 setID = 0;
+    QVERIFY(addLargeTileSet(path, QStringLiteral("set"), tileCount, &setID));
+    QVERIFY(addLargeTileSet(path, QStringLiteral("default"), tileCount, nullptr));
+    QVERIFY(addLargeTileSet(path, QStringLiteral("deleted"), tileCount, &deletedSetID, true));
+    QVERIFY(cacheWorkerFreePages(path) > 0);
+
+    // The unused pages at the time the task reports that it is done, read on the worker thread: the task does not
+    // wait for their release. Declared before the worker, which uses them until it is destroyed.
+    std::atomic<qint64> pagesWhenDone = -1;
+    const auto readPages = [&pagesWhenDone, &path] { pagesWhenDone = cacheWorkerFreePages(path); };
+
+    // The worker releases the pages once it has started, without a task to make it. From here on it has nothing
+    // left to release until a task frees pages.
+    QGCCacheWorker worker;
+    worker.setDatabaseFile(path);
+    QVERIFY(_startWorker(worker));
+    QTRY_COMPARE_WITH_TIMEOUT(cacheWorkerFreePages(path), 0, TestTimeout::mediumMs());
+
+    QGCMapTask* mapTask = nullptr;
+    if (task == QStringLiteral("delete set")) {
+        auto* const deleteTask = new QGCDeleteTileSetTask(setID);
+        connect(deleteTask, &QGCDeleteTileSetTask::tileSetDeleted, this, readPages, Qt::DirectConnection);
+        mapTask = deleteTask;
+    } else if (task == QStringLiteral("prune")) {
+        auto* const pruneTask = new QGCPruneCacheTask(static_cast<quint64>(tileCount) * kCacheWorkerLargeTileSize);
+        connect(pruneTask, &QGCPruneCacheTask::pruned, this, readPages, Qt::DirectConnection);
+        mapTask = pruneTask;
+    } else {
+        // The file that replaces the cache has unused pages of its own
+        const QString importPath = tempDir.filePath("import.db");
+        quint64 importSetID = 0;
+        QVERIFY(addLargeTileSet(importPath, QStringLiteral("deleted"), tileCount, &importSetID, true));
+        auto* const importTask = new QGCImportTileTask(importPath, true);
+        connect(importTask, &QGCImportTileTask::actionCompleted, this, readPages, Qt::DirectConnection);
+        mapTask = importTask;
+    }
+    QVERIFY(worker.enqueueTask(mapTask));
+    QTRY_VERIFY_WITH_TIMEOUT(pagesWhenDone >= 0, TestTimeout::mediumMs());
+    QVERIFY(pagesWhenDone > 0);
+
+    QTRY_COMPARE_WITH_TIMEOUT(cacheWorkerFreePages(path), 0, TestTimeout::mediumMs());
+
+    worker.stop();
+    worker.wait(TestTimeout::mediumMs());
+}
+
+void QGCCacheWorkerTest::_testTileFetchedBeforeFreePagesReleased()
+{
+    // A set that takes several batches to release, and a tile that stays in the cache
+    QTemporaryDir tempDir;
+    const QString path = tempDir.filePath("tiles.db");
+    quint64 setID = 0;
+    QVERIFY(addLargeTileSet(path, QStringLiteral("set"), 64, &setID));
+    QVERIFY(addLargeTileSet(path, QStringLiteral("default"), 1, nullptr));
+
+    // Written on the worker thread, so declared before the worker, which uses them until it is destroyed
+    std::atomic<qint64> pagesWhenFetched = -1;
+    QByteArray image;
+
+    QGCCacheWorker worker;
+    worker.setDatabaseFile(path);
+    QVERIFY(_startWorker(worker));
+
+    // The tile is asked for as soon as the set is deleted, on the worker thread, so that the request is queued
+    // before the worker looks for something to do. The unused pages are read there when the tile arrives.
+    auto* const fetchTask = new QGCFetchTileTask(QStringLiteral("default_0"));
+    connect(
+        fetchTask, &QGCFetchTileTask::tileFetched, this,
+        [&](const QGCCacheTile& tile) {
+            image = tile.img;
+            pagesWhenFetched = cacheWorkerFreePages(path);
+        },
+        Qt::DirectConnection);
+    auto* const deleteTask = new QGCDeleteTileSetTask(setID);
+    connect(
+        deleteTask, &QGCDeleteTileSetTask::tileSetDeleted, this,
+        [&worker, fetchTask] { (void) worker.enqueueTask(fetchTask); }, Qt::DirectConnection);
+    QVERIFY(worker.enqueueTask(deleteTask));
+
+    // The tile does not wait for the pages of the set, which are released afterwards
+    QTRY_VERIFY_WITH_TIMEOUT(pagesWhenFetched >= 0, TestTimeout::mediumMs());
+    QCOMPARE(image, QByteArray(kCacheWorkerLargeTileSize, 'T'));
+    QVERIFY(pagesWhenFetched > 0);
+    QTRY_COMPARE_WITH_TIMEOUT(cacheWorkerFreePages(path), 0, TestTimeout::mediumMs());
+
+    worker.stop();
+    worker.wait(TestTimeout::mediumMs());
 }
 
 UT_REGISTER_TEST(QGCCacheWorkerTest, TestLabel::Unit)
