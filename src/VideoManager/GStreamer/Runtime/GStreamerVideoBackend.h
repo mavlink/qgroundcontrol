@@ -13,6 +13,7 @@ public:
     void configureQtGraphics(bool softwareRendering) override;
     EnvPrepResult prepareEnvironment() override;
     bool initialize(const InitParams& params) override;
+    QString initFailureMessage() const override;
     bool selfTest() override;
     void applyDecoderPriorities(int rawOption) override;
     QList<VideoDecoder::Options> availableDecoderFamilies() override;

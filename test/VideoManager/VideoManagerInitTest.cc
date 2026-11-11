@@ -71,22 +71,52 @@ void VideoManagerInitTest::_testReceiversNeedBackendAndWindow()
     QCOMPARE(receiverCount, 2);
 }
 
+void VideoManagerInitTest::_testBackendInitFailure_data()
+{
+    QTest::addColumn<bool>("windowFirst");
+
+    QTest::newRow("window first") << true;
+    QTest::newRow("backend first") << false;
+}
+
 void VideoManagerInitTest::_testBackendInitFailure()
 {
+    QFETCH(bool, windowFirst);
+
+    Fact* const backend = SettingsManager::instance()->videoSettings()->videoBackend();
+    VideoTestHelpers::FactRestorer restorer;
+    restorer.set(backend, VideoSettings::VideoBackendGStreamer);
+
     VideoManager videoManager;
     int receiverCount = 0;
     videoManager._receiverFactory = countingFactory(receiverCount);
     videoManager._initState = VideoManager::InitState::Pending;
-    videoManager._onMainWindowReady();
+    if (windowFirst) {
+        videoManager._onMainWindowReady();
+    }
 
     expectLogMessage("Video.VideoManager", QtCriticalMsg,
                      QRegularExpression(QStringLiteral("video initialization failed")));
+    expectAppMessage(QRegularExpression(QStringLiteral("failed to initialize")));
     videoManager._onBackendInitComplete(false);
+    verifyExpectedLogMessage();
     verifyExpectedLogMessage();
 
     QCOMPARE(videoManager._initState, VideoManager::InitState::Failed);
     QVERIFY(!videoManager.waitForVideoBackendReady());
-    QCOMPARE(receiverCount, 0);
+
+    // The streams still get receivers, which the backend makes without its initialization.
+    if (!windowFirst) {
+        QCOMPARE(receiverCount, 0);
+        videoManager._onMainWindowReady();
+    }
+    QCOMPARE(receiverCount, 2);
+    QVERIFY(videoManager.primaryStream()->receiver());
+    QVERIFY(videoManager.thermalStream()->receiver());
+
+    // So does a change of the backend setting.
+    restorer.set(backend, VideoSettings::VideoBackendQtMultimedia);
+    QCOMPARE(receiverCount, 4);
 }
 
 void VideoManagerInitTest::_testWaitForBackendReady()

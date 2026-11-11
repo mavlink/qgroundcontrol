@@ -19,7 +19,7 @@ The backend is split into focused components, by folder:
 
 The backend-neutral `VideoReceiver`, `VideoBackend` and `VideoStreamStats` are in `../Receiver/`. `../QtMultimedia/`
 holds the other `VideoReceiver`, `QtMultimediaVideoReceiver`, which plays streams through `QMediaPlayer` (FFmpeg): in
-builds without GStreamer, and where `VideoSettings::videoBackend` picks it.
+builds without GStreamer, where `VideoSettings::videoBackend` picks it, and when GStreamer failed to initialize.
 
 | Component | Role |
 | --- | --- |
@@ -49,7 +49,7 @@ builds without GStreamer, and where `VideoSettings::videoBackend` picks it.
 | `GStreamerUdpSrcWorkaround` | Serializes `udpsrc`'s `unlock()`/`unlock_stop()` on gst-plugins-good before 1.24.10, whose race corrupts the heap when a UDP stream stops right after it starts; `completeInit()` applies it. |
 | `GstScoped` | RAII owners for transfer-full GStreamer returns so refs can't leak on early return, `makeElement()` (never floating), `PadProbe` and `ScopedSignal`. |
 | `GStreamerRuntime` | GStreamer's process lifecycle as states (unprepared, prepared, initialized, failed): the environment first, initialization once (a failed or repeated one isn't retried, as `gst_init()` can't be undone), the self-test only once initialized. |
-| `GStreamerVideoBackend` | The `VideoBackend` implementation: the only way the app reaches GStreamer's lifecycle, through its `GStreamerRuntime` (environment, init, self-test), and its tuning (decoder priorities, debug level, Android JNI state). Settings reach the backend as values: `VideoReceiver::Config`, `VideoReceiver::DisplayConfig` and the persisted debug level. |
+| `GStreamerVideoBackend` | The `VideoBackend` implementation: the only way the app reaches GStreamer's lifecycle, through its `GStreamerRuntime` (environment, init, self-test), and its tuning (decoder priorities, debug level, Android JNI state). Settings reach the backend as values: `VideoReceiver::Config`, `VideoReceiver::DisplayConfig` and the persisted debug level. Once GStreamer has failed to initialize, its receivers are `QtMultimediaVideoReceiver`s, and `VideoManager` shows its `initFailureMessage()`. |
 
 MockLink's `MockVideoStreamServer` (`src/Comms/MockLink`, Debug builds only) serves a synthetic `videotestsrc` stream (RTP H.264 or H.265 over UDP, RTSP, MPEG-TS over UDP or TCP) that MockLink advertises, so the receiver runs without a vehicle; builds without GStreamer compile a null server instead.
 
@@ -243,7 +243,7 @@ QGC configures GStreamer runtime paths before `gst_init()`:
 - **TLS certificates**: GStreamer's TLS users (RTSP over TLS, HTTPS sources) verify against GIO's default TLS database. On macOS and Windows, the bundled `gioopenssl` fills it from the system trust store (the Keychain's trust settings, the Windows `ROOT` and `CA` certificate stores), so roots an administrator or user added keep working; QGC leaves it alone and installs no CA bundle there. On Android and iOS, `gioopenssl` only knows OpenSSL's compiled-in certificate paths, which don't exist on the device, so the static plugin init makes the bundled `ca-certificates.crt` (`CA_CERTIFICATES`) the default database. On Linux, `libgiognutls` reads GnuTLS's system trust store.
 - **Decoder ranks**: QGC's decoder rank changes (the video decoder setting, the zero-copy preferences) skip the features named in `GST_PLUGIN_FEATURE_RANK`, which keep the user's rank.
 - **Validation**: A macOS app that ships `GStreamer.framework` without its plugin directory fails initialization with a clear error.
-- **Plugin checks**: After `gst_init()`, `GStreamer::completeInit()` checks the elements each feature needs, as Qt's `qGstErrorMessageIfElementsNotAvailable` does. Only the display core is required: the `qgc` sink elements, `decodebin3`, `tee`, `queue`, `valve`, `capsfilter`, a video converter, and the RTP/UDP source with its H.264/H.265 depayloaders and parsers. Without it, video is disabled. A missing optional element logs one warning naming the feature it disables: RTSP (`rtspsrc`), MPEG-TS (`tsdemux`), TCP (`tcpclientsrc`), MKV recording (`matroskamux`) or MP4/MOV recording (`mp4mux`, `qtmux`).
+- **Plugin checks**: After `gst_init()`, `GStreamer::completeInit()` checks the elements each feature needs, as Qt's `qGstErrorMessageIfElementsNotAvailable` does. Only the display core is required: the `qgc` sink elements, `decodebin3`, `tee`, `queue`, `valve`, `capsfilter`, a video converter, and the RTP/UDP source with its H.264/H.265 depayloaders and parsers. Without it, initialization fails: QGC says so in a message, and plays the streams through Qt Multimedia instead. A missing optional element logs one warning naming the feature it disables: RTSP (`rtspsrc`), MPEG-TS (`tsdemux`), TCP (`tcpclientsrc`), MKV recording (`matroskamux`) or MP4/MOV recording (`mp4mux`, `qtmux`).
 
 ## Platform Setup
 
@@ -417,7 +417,7 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 | --- | --- | --- |
 | `GStreamerEnvironmentTest` | Unit | The environment `prepareEnvironment()` sets for a fake bundled desktop install (plugin path and scanner, which still forks and is reused) and for the running app, and the bundled runtime's private plugin registry: named per install, also across AppImage mounts and macOS translocation, pruned of registries unused for 30 days, and replaced by a user-set `GST_REGISTRY` or `GST_REGISTRY_1_0`; a system GStreamer keeps the default registry. |
 | `GStreamerInitTest` | Unit | Init policy: how GLib's and GStreamer's logs reach Qt logging, which missing elements disable video and which only a feature, and the decoder ranks the decoder setting applies, except those set with `GST_PLUGIN_FEATURE_RANK`; the boot self-test's verdict on a failing plugin scanner and on a bundle's blacklisted, foreign, stale or unloaded plugins. |
-| `GStreamerTest` | Unit | The `GStreamer` facade: URI checks, decoder classification and the decoder rank warnings and log, init, the `VideoBackend` that forwards to it, and the recording sink's accepted streams. |
+| `GStreamerTest` | Unit | The `GStreamer` facade: URI checks, decoder classification and the decoder rank warnings and log, init, the `VideoBackend` that forwards to it, the lifecycle states (GStreamer isn't initialized twice, or self-tested before it runs) and the Qt Multimedia receivers after a failed initialization, and the recording sink's accepted streams. |
 | `GstQgcSinkTest` | Unit | `qgcqvideosink` and `qgcvideosinkbin` as elements: construction, caps, allocation, CPU zero-copy frames, and frames pushed straight into the sink (latest frame only, with the superseded ones counted consistently with the delivered ones, flushes, orientation tags, crop, renegotiation), and the render target it reads. |
 | `GstQgcSinkControllerTest` | Unit | `QGCQVideoSinkController` binding `qgcqvideosink` to a `QVideoSink`: inactive without a window, and unbound when its owner or the `QVideoSink` goes away or the sink is released. |
 | `GstQgcVideoFormatsTest` | Unit | The sink's format tables: GStreamer formats, colorimetry and orientations mapped to Qt's, and the formats the sink advertises. |

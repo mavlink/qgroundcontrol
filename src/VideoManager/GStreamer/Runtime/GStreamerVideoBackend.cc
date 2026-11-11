@@ -1,8 +1,11 @@
 #include "GStreamerVideoBackend.h"
 
+#include <QtCore/QCoreApplication>
+
 #include "GStreamer.h"
 #include "GStreamerDecoderRanks.h"
 #include "HwBuffers/common/HwBuffers.h"
+#include "QtMultimediaVideoReceiver.h"
 
 #ifdef Q_OS_ANDROID
 #include <jni.h>
@@ -29,6 +32,10 @@ VideoBackend::Capabilities GStreamerVideoBackend::capabilities() const
 
 VideoReceiver* GStreamerVideoBackend::createReceiver(QObject* parent)
 {
+    // GStreamer's setup isn't retried, so nothing plays through it in this process any more.
+    if (_runtime.state() == GStreamer::Runtime::State::Failed) {
+        return new QtMultimediaVideoReceiver(parent);
+    }
     return GStreamer::createVideoReceiver(parent);
 }
 
@@ -41,6 +48,13 @@ VideoBackend::EnvPrepResult GStreamerVideoBackend::prepareEnvironment()
 bool GStreamerVideoBackend::initialize(const InitParams& params)
 {
     return _runtime.initialize(params.arguments, {params.environment.ok, params.environment.error}, params.debugLevel);
+}
+
+QString GStreamerVideoBackend::initFailureMessage() const
+{
+    return QCoreApplication::translate("GStreamerVideoBackend",
+                                       "GStreamer failed to initialize, so video streams are played by Qt Multimedia "
+                                       "instead. The application log has the details.");
 }
 
 bool GStreamerVideoBackend::selfTest()

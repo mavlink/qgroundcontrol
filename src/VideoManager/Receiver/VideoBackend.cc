@@ -1,5 +1,6 @@
 #include "VideoBackend.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QSettings>
 
 #include "AppMessages.h"
@@ -38,6 +39,11 @@ VideoBackend& VideoBackend::instance()
 bool VideoBackend::disabledForUnitTests()
 {
     return qgcApp() && QGC::runningUnitTests() && !qEnvironmentVariableIsSet("QGC_TEST_ENABLE_GSTREAMER");
+}
+
+QString VideoBackend::initFailureMessage() const
+{
+    return QCoreApplication::translate("VideoBackend", "Video streaming failed to initialize.");
 }
 
 std::optional<int> VideoBackend::persistedDebugLevel()

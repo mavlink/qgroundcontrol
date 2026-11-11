@@ -16,7 +16,8 @@ class VideoReceiver;
 
 /// The network video backend this build has, behind which callers (VideoManager, VideoSettings, QGCCorePlugin, the
 /// platform startup code) never name a concrete one: GStreamer, or, without it, Qt Multimedia's player
-/// (QtMultimediaVideoReceiver), which a GStreamer build also offers through VideoSettings::videoBackend.
+/// (QtMultimediaVideoReceiver), which a GStreamer build also offers through VideoSettings::videoBackend and falls back
+/// to when GStreamer fails to initialize.
 class VideoBackend
 {
 public:
@@ -70,6 +71,7 @@ public:
 
     virtual Capabilities capabilities() const = 0;
 
+    /// A receiver that can play: once initialize() has failed, one that needs no initialization.
     virtual VideoReceiver* createReceiver(QObject* parent) = 0;
 
     // The rest is setup and tuning a backend that needs none leaves alone.
@@ -82,6 +84,9 @@ public:
     virtual EnvPrepResult prepareEnvironment() { return {}; }
 
     virtual bool initialize([[maybe_unused]] const InitParams& params) { return true; }
+
+    /// What to tell the user once initialize() has failed: what failed, and what plays the streams instead.
+    virtual QString initFailureMessage() const;
 
     /// The boot test's check that the initialized backend decodes and records.
     virtual bool selfTest() { return true; }

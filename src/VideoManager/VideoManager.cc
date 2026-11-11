@@ -147,7 +147,7 @@ void VideoManager::_connectSettings()
                 (void) connect(fact, &Fact::rawValueChanged, this, [this] {
                     _primaryStream->setReceiver(nullptr);
                     _thermalStream->setReceiver(nullptr);
-                    if ((_initState == InitState::Ready) && _hasMainWindow) {
+                    if (_backendInitFinished() && _hasMainWindow) {
                         _createVideoReceivers();
                     }
                 });
@@ -249,6 +249,11 @@ void VideoManager::_onBackendInitComplete(bool success)
     if (!success) {
         _initState = InitState::Failed;
         qCCritical(VideoManagerLog) << "video initialization failed";
+        QGC::showAppMessage(VideoBackend::instance().initFailureMessage());
+        // The backend then makes the receivers that need no initialization.
+        if (_hasMainWindow) {
+            _createVideoReceivers();
+        }
         return;
     }
 
@@ -290,7 +295,7 @@ void VideoManager::_onMainWindowReady()
     _hasMainWindow = true;
     // The receivers need the backend and nothing from QML: the VideoOutputs register themselves whenever they exist.
     startVideoBackendInit();
-    if (_initState == InitState::Ready) {
+    if (_backendInitFinished()) {
         _createVideoReceivers();
     }
 }

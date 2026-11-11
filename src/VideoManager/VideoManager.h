@@ -130,6 +130,10 @@ private:
     void _onMainWindowReady();
     void _watchBackendInit(const QFuture<bool>& future);
     void _onBackendInitComplete(bool success);
+
+    /// Ready or failed: either way the backend makes receivers, after a failure the ones that need no initialization.
+    bool _backendInitFinished() const { return (_initState == InitState::Ready) || (_initState == InitState::Failed); }
+
     void _createVideoReceivers();
     /// Recomputes the derived state and what each stream should do, after any input changed.
     void _updateState();
