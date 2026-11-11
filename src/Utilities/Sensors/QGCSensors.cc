@@ -66,7 +66,8 @@ bool QGCAmbientTemperature::init()
         // qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Output Ranges:" << outputRanges;
         // _ambientTemperature->setOutputRange(outputRanges.first().first);
         const int outputRangeIndex = _ambientTemperature->outputRange();
-        if (outputRangeIndex < outputRanges.size()) {
+        // The index is -1 unless an output range was selected
+        if ((outputRangeIndex >= 0) && (outputRangeIndex < outputRanges.size())) {
             const qoutputrange outputRange = outputRanges.at(_ambientTemperature->outputRange());
             qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Selected Output Range:" << outputRange.minimum << outputRange.maximum << outputRange.accuracy;
         }
@@ -179,7 +180,8 @@ bool QGCPressure::init()
         // qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Output Ranges:" << outputRanges;
         // _pressure->setOutputRange(outputRanges.first().first);
         const int outputRangeIndex = _pressure->outputRange();
-        if (outputRangeIndex < outputRanges.size()) {
+        // The index is -1 unless an output range was selected
+        if ((outputRangeIndex >= 0) && (outputRangeIndex < outputRanges.size())) {
             const qoutputrange outputRange = outputRanges.at(_pressure->outputRange());
             qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Selected Output Range:" << outputRange.minimum << outputRange.maximum << outputRange.accuracy;
         }
@@ -295,7 +297,8 @@ bool QGCCompass::init()
         // qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Output Ranges:" << outputRanges;
         // _compass->setOutputRange(outputRanges.first().first);
         const int outputRangeIndex = _compass->outputRange();
-        if (outputRangeIndex < outputRanges.size()) {
+        // The index is -1 unless an output range was selected
+        if ((outputRangeIndex >= 0) && (outputRangeIndex < outputRanges.size())) {
             const qoutputrange outputRange = outputRanges.at(_compass->outputRange());
             qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Selected Output Range:" << outputRange.minimum << outputRange.maximum << outputRange.accuracy;
         }

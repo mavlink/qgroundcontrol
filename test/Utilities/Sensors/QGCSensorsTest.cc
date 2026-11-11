@@ -29,6 +29,7 @@ public:
     {
         (void) setReading<Reading>(&_reading);
         addDataRate(1, 50);
+        addOutputRange(0.0, 100.0, 0.5);
     }
 
     void start() override
@@ -391,6 +392,7 @@ void QGCSensorsTest::_checkSensorLogsBackend()
     expectLogMessage(kSensorsLogCategory, QtDebugMsg,
                      messageEnding(QStringLiteral("Available Data Rates: QList(std::pair(1, 50))")));
     expectLogMessage(kSensorsLogCategory, QtDebugMsg, messageEnding(QStringLiteral("Selected Data Rate: 0")));
+    // The backend offers an output range, but none is selected, so none is logged.
     const Sensor sensor;
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
