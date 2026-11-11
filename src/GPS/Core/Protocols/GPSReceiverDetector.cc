@@ -71,7 +71,7 @@ GPSReceiverDetector::GPSReceiverDetector(std::span<const GPSReceiverFamily* cons
 {
     // Every byte read while detecting, probe replies included, is checked for signatures.
     _io.read = [this, read = std::move(_io.read)](std::span<uint8_t> buffer, GPSDeadline deadline) {
-        const GPSReadResult result = read ? read(buffer, deadline) : GPSReadResult{GPSReadStatus::Error};
+        GPSReadResult result = read ? read(buffer, deadline) : GPSReadResult{GPSReadStatus::Error};
         if (result.status == GPSReadStatus::Data && result.bytesRead > 0 &&
             static_cast<size_t>(result.bytesRead) <= buffer.size()) {
             _signatures.push(buffer.first(static_cast<size_t>(result.bytesRead)));
@@ -191,7 +191,7 @@ GPSReceiverDetection GPSReceiverDetector::detect(unsigned baud)
 GPSReceiverDetector::Listen GPSReceiverDetector::_listen(unsigned baud, uint64_t untilUs, GPSReceiverDetection& result)
 {
     qCDebug(GPSReceiverDetectorLog) << "Listening at" << baud << "baud";
-    const uint64_t listenUntilUs = std::min(untilUs, GPSDeadline::after(_io.clock.nowUs(), LISTEN_WINDOW).untilUs);
+    const uint64_t listenUntilUs = (std::min) (untilUs, GPSDeadline::after(_io.clock.nowUs(), LISTEN_WINDOW).untilUs);
     std::array<uint8_t, GPSCommandChannel::READ_CHUNK_SIZE> buffer{};
     Listen outcome = Listen::Quiet;
     while (outcome == Listen::Quiet && !_signatures.match() && _io.clock.nowUs() < listenUntilUs) {
@@ -208,7 +208,9 @@ GPSReceiverDetector::Listen GPSReceiverDetector::_listen(unsigned baud, uint64_t
                 result.error = GPSProtocolError::Cancelled;
                 outcome = Listen::Failed;
                 break;
-            default:
+            case GPSReadStatus::Closed:
+            case GPSReadStatus::Error:
+            case GPSReadStatus::Overflow:
                 result.error = GPSProtocolError::Transport;
                 result.errorDetail = read.detail;
                 outcome = Listen::Failed;

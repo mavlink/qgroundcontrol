@@ -15,24 +15,24 @@
 namespace UBX {
 enum class Board : uint8_t
 {
-    unknown = 0,
-    u_blox5 = 5,
-    u_blox6 = 6,
-    u_blox7 = 7,
-    u_blox8 = 8,
-    u_blox9 = 9,
-    u_blox9_F9P_L1L2 = 10,
-    u_blox10 = 11,
-    u_blox9_F9P_L1L5 = 12,
-    u_blox10_L1L5 = 13,
-    u_blox_X20 = 14
+    Unknown = 0,
+    UBlox5 = 5,
+    UBlox6 = 6,
+    UBlox7 = 7,
+    UBlox8 = 8,
+    UBlox9 = 9,
+    UBlox9F9PL1L2 = 10,
+    UBlox10 = 11,
+    UBlox9F9PL1L5 = 12,
+    UBlox10L1L5 = 13,
+    UBloxX20 = 14,
 };
 
 /// What configuration may rely on for a board. The MON-VER hardware version selects a generation; the firmware and
 /// module strings then refine u-blox 9 to F9P and u-blox 10 to DAN-F10N.
 struct ReceiverProfile
 {
-    Board board = Board::unknown;
+    Board board = Board::Unknown;
     /// MON-VER hwVersion of a generation; refined boards have none.
     std::string_view hardwareVersion{};
     /// RTCM3 base output (F9P and X20); only these receivers are configured as a base.
@@ -51,27 +51,27 @@ struct ReceiverProfile
 inline constexpr std::array RECEIVER_PROFILES = {
     ReceiverProfile{},
     // Generations before u-blox 8 cannot output RTCM, so they are never configured as a base.
-    ReceiverProfile{.board = Board::u_blox5, .hardwareVersion = "00040005", .baseCapabilityKnown = true},
-    ReceiverProfile{.board = Board::u_blox6, .hardwareVersion = "00040007", .baseCapabilityKnown = true},
-    ReceiverProfile{.board = Board::u_blox7, .hardwareVersion = "00070000", .baseCapabilityKnown = true},
-    ReceiverProfile{.board = Board::u_blox8, .hardwareVersion = "00080000"},
+    ReceiverProfile{.board = Board::UBlox5, .hardwareVersion = "00040005", .baseCapabilityKnown = true},
+    ReceiverProfile{.board = Board::UBlox6, .hardwareVersion = "00040007", .baseCapabilityKnown = true},
+    ReceiverProfile{.board = Board::UBlox7, .hardwareVersion = "00070000", .baseCapabilityKnown = true},
+    ReceiverProfile{.board = Board::UBlox8, .hardwareVersion = "00080000"},
     ReceiverProfile{
-        .board = Board::u_blox9, .hardwareVersion = "00190000", .baseCapabilityKnown = true, .protocol27 = true},
-    ReceiverProfile{.board = Board::u_blox9_F9P_L1L2,
+        .board = Board::UBlox9, .hardwareVersion = "00190000", .baseCapabilityKnown = true, .protocol27 = true},
+    ReceiverProfile{.board = Board::UBlox9F9PL1L2,
                     .rtcmOutput = true,
                     .baseCapabilityKnown = true,
                     .measurementPeriodMs = 200,
                     .protocol27 = true},
     ReceiverProfile{
-        .board = Board::u_blox10, .hardwareVersion = "000A0000", .baseCapabilityKnown = true, .protocol27 = true},
-    ReceiverProfile{.board = Board::u_blox9_F9P_L1L5,
+        .board = Board::UBlox10, .hardwareVersion = "000A0000", .baseCapabilityKnown = true, .protocol27 = true},
+    ReceiverProfile{.board = Board::UBlox9F9PL1L5,
                     .rtcmOutput = true,
                     .baseCapabilityKnown = true,
                     .l5HealthOverride = true,
                     .measurementPeriodMs = 200,
                     .protocol27 = true},
-    ReceiverProfile{.board = Board::u_blox10_L1L5, .baseCapabilityKnown = true, .protocol27 = true},
-    ReceiverProfile{.board = Board::u_blox_X20,
+    ReceiverProfile{.board = Board::UBlox10L1L5, .baseCapabilityKnown = true, .protocol27 = true},
+    ReceiverProfile{.board = Board::UBloxX20,
                     .hardwareVersion = "000B0000",
                     .rtcmOutput = true,
                     .baseCapabilityKnown = true,
@@ -97,7 +97,7 @@ inline constexpr std::array RECEIVER_PROFILES = {
             return profile.board;
         }
     }
-    return Board::unknown;
+    return Board::Unknown;
 }
 }  // namespace UBX
 
@@ -145,24 +145,21 @@ inline constexpr uint16_t BASE_MEASUREMENT_PERIOD_MS = 1000;
 struct ValsetItem
 {
     template <typename T>
-    constexpr ValsetItem(CfgKey<T> setting, std::type_identity_t<T> setValue, bool when = true)
+    constexpr ValsetItem(CfgKey<T> setting, std::type_identity_t<T> setValue)
         : key(setting.id)
         , value(static_cast<uint32_t>(static_cast<std::make_unsigned_t<T>>(setValue)))
-        , included(when)
     {}
 
-    constexpr ValsetItem(MsgOutKey output, uint8_t rate, bool when = true)
+    constexpr ValsetItem(MsgOutKey output, uint8_t rate)
         : key(output.i2c.id)
         , value(rate)
         , msgOut(true)
-        , included(when)
     {}
 
     /// The key, or the I2C key of a CFG-MSGOUT family.
     uint32_t key;
     uint32_t value;
     bool msgOut = false;
-    bool included = true;
 };
 
 /// What a batch that is rejected, unanswered or not written means for configuration.
@@ -238,6 +235,8 @@ inline constexpr CfgRate LEGACY_SURVEY_RATE{.measRate = 200, .navRate = 1, .time
 inline constexpr CfgRate LEGACY_BASE_RATE{.measRate = BASE_MEASUREMENT_PERIOD_MS, .navRate = 1, .timeRef = 0};
 /// Updates only the dynamic model and the fix mode (3D only).
 inline constexpr CfgNav5 LEGACY_NAVIGATION{.mask = 0x0005, .dynModel = STATIONARY_DYNAMIC_MODEL, .fixMode = 2};
+/// NAV-SVINFO once a second of the 5 Hz survey.
+inline constexpr uint8_t LEGACY_SURVEY_SATELLITE_RATE = 5;
 /// NAV-PVT, status, satellite and MON-HW (antenna and jamming) rates during the survey.
 [[nodiscard]] std::array<MessageRate, 5> legacyMessageOutput();
 inline constexpr MessageRate LEGACY_SURVEY_STATUS{Msg::NAV_SVIN, SURVEY_STATUS_RATE};
@@ -245,6 +244,9 @@ inline constexpr MessageRate LEGACY_SURVEY_STATUS{Msg::NAV_SVIN, SURVEY_STATUS_R
 [[nodiscard]] std::array<MessageRate, 10> legacyDisableRTCMOutput();
 /// Survey status and satellite rates for the 1 Hz base; rejections are ignored.
 [[nodiscard]] std::array<MessageRate, 2> legacyBaseStatus();
+/// Streaming services in a row that may resume the RTCM activation without settling another output. A slow receiver
+/// settles some in each; one that stops answering gets about five times the u-blox 8 reply time before it fails.
+inline constexpr unsigned LEGACY_RTCM_ACTIVATION_ATTEMPTS = 5;
 
 /// What a legacy RTCM output gives a rover. A base needs the station position and the observations of at least one
 /// constellation; M8P firmware versions differ in the RTCM messages they support, so the others may be rejected.

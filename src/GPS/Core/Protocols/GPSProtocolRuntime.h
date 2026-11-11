@@ -54,7 +54,7 @@ public:
                        GPSRuntimeObserver observer = {});
     ~GPSProtocolRuntime();
 
-    Q_DISABLE_COPY(GPSProtocolRuntime)
+    Q_DISABLE_COPY_MOVE(GPSProtocolRuntime)
 
     /// Configures the receiver after clearing any sticky failure. A zero @a baud requests detection and returns the
     /// detected rate. A command still pending at the end is retired as Written, and a successful configuration flushes

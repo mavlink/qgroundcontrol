@@ -13,6 +13,8 @@ private slots:
     void _sequenceAttempts_data();
     void _sequenceAttempts();
     void _sequenceEndsOnWriteFailure();
+    void _invalidRawReply_data();
+    void _invalidRawReply();
     void _writeResults_data();
     void _writeResults();
     void _invalidReadResults_data();

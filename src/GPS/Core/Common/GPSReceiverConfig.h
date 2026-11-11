@@ -38,6 +38,10 @@ struct GPSBaseStationConfig
 
     struct ReceiverAveraging
     {
+        /// The limits of maximumDuration.
+        static constexpr std::chrono::seconds MIN_DURATION{1};
+        static constexpr std::chrono::seconds MAX_DURATION = std::chrono::hours{1};
+
         /// Maximum receiver-managed time, not a minimum duration or an accuracy guarantee.
         std::chrono::seconds maximumDuration{60};
         bool operator==(const ReceiverAveraging&) const = default;
@@ -75,11 +79,15 @@ enum class GPSReceiverConfigError
     UnsupportedCompactObservations,
 };
 
+/// The range of explicit serial rates a receiver connection accepts.
+inline constexpr uint32_t GPS_MIN_BAUD_RATE = 1200;
+inline constexpr uint32_t GPS_MAX_BAUD_RATE = 4000000;
+
 /// An explicit serial rate within the receivers' range, or zero for a configurable receiver to detect the rate.
 /// A passive receiver is never configured, so it needs its existing rate.
 [[nodiscard]] constexpr bool gpsValidBaudRate(uint32_t baudRate, bool passive)
 {
-    return baudRate == 0 ? !passive : baudRate >= 1200 && baudRate <= 4000000;
+    return baudRate == 0 ? !passive : baudRate >= GPS_MIN_BAUD_RATE && baudRate <= GPS_MAX_BAUD_RATE;
 }
 
 /// Check the selected base mode against the existing receiver wire-unit limits.

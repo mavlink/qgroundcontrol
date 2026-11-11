@@ -35,11 +35,13 @@ GPSProtocolRuntime::GPSProtocolRuntime(const GPSReceiverFamily& family, std::uni
     }
     if (!_io.clock.wait) {
         _io.clock.wait = [token = _io.cancelToken](std::chrono::microseconds duration) {
+            // The longest sleep between checks for a cancelled wait.
+            constexpr std::chrono::milliseconds CANCEL_POLL = 20ms;
             const auto stopped = [&token] { return token.isCancelled(); };
             const auto until = std::chrono::steady_clock::now() + duration;
             while (!stopped() && std::chrono::steady_clock::now() < until) {
-                std::this_thread::sleep_for(
-                    std::min<std::chrono::steady_clock::duration>(until - std::chrono::steady_clock::now(), 20ms));
+                std::this_thread::sleep_for(std::min<std::chrono::steady_clock::duration>(
+                    until - std::chrono::steady_clock::now(), CANCEL_POLL));
             }
             return !stopped();
         };

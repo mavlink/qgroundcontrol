@@ -496,24 +496,32 @@ void GPSDecodedDataTest::_satelliteUsageCombination()
     QCOMPARE(report.inView, std::optional<int>{4});
     QCOMPARE(report.used, std::optional<int>{2});
 
+    // A count-only report that disagrees with the known constellation sum does not replace it.
     countOnly = counts.update(GPSDecodedSatelliteUsage{.timestampUs = 400, .usedCount = 7}, 400);
     QCOMPARE(countOnly.inView, std::optional<int>{4});
-    QCOMPARE(countOnly.used, std::optional<int>{7});
+    QCOMPARE(countOnly.used, std::optional<int>{2});
 
-    countOnly = counts.update(GPSDecodedSatelliteUsage{.timestampUs = 500}, 500);
+    // It stands in again once the constellation in view lacks its used count.
+    gps->inViewTimestampUs = 500;
+    gps->inUseTimestampUs = 500;
+    gps->inUse.reset();
+    report = counts.update(view, 500);
+    QCOMPARE(report.inView, std::optional<int>{4});
+    QCOMPARE(report.used, std::optional<int>{7});
+
+    countOnly = counts.update(GPSDecodedSatelliteUsage{.timestampUs = 600}, 600);
     QCOMPARE(countOnly.inView, std::optional<int>{4});
     QVERIFY(!countOnly.used);
 
-    gps->inViewTimestampUs = 600;
+    gps->inViewTimestampUs = 700;
     gps->inView = 0;
     gps->inUseTimestampUs = 0;
-    gps->inUse.reset();
-    report = counts.update(view, 600);
+    report = counts.update(view, 700);
     QCOMPARE(report.inView, std::optional<int>{0});
     QCOMPARE(report.used, std::optional<int>{0});
 }
 
-void GPSDecodedDataTest::_satelliteUsageExpiryFallback()
+void GPSDecodedDataTest::_satelliteUsageExpiry()
 {
     GPSDecodedData::SatelliteCounts counts;
     auto countOnly = counts.update(GPSDecodedSatelliteUsage{.timestampUs = 500'000, .usedCount = 9}, 500'000);
@@ -529,11 +537,26 @@ void GPSDecodedDataTest::_satelliteUsageExpiryFallback()
     QCOMPARE(report.inView, std::optional<int>{3});
     QCOMPARE(report.used, std::optional<int>{9});
 
-    QVERIFY(!counts.expire(5'999'999));
-    const auto expired = counts.expire(6'000'000);
+    // The count-only count lapses on its own receipt, ahead of the view it stood in for.
+    QVERIFY(!counts.expire(5'499'999));
+    auto expired = counts.expire(5'500'000);
     QVERIFY(expired);
-    QVERIFY(!expired->inView);
-    QCOMPARE(expired->used, std::optional<int>{9});
+    QCOMPARE(expired->inView, std::optional<int>{3});
+    QVERIFY(!expired->used);
+    QVERIFY(!counts.expire(5'999'999));
+    expired = counts.expire(6'000'000);
+    QVERIFY(expired);
+    QCOMPARE(*expired, GPSSatelliteReport{});
+
+    // A receiver that reports nothing else retires the count too, once, counted from its latest receipt.
+    GPSDecodedData::SatelliteCounts usageOnly;
+    (void) usageOnly.update(GPSDecodedSatelliteUsage{.timestampUs = 1'000'000, .usedCount = 7}, 1'000'000);
+    (void) usageOnly.update(GPSDecodedSatelliteUsage{.timestampUs = 3'000'000, .usedCount = 7}, 3'000'000);
+    QVERIFY(!usageOnly.expire(7'999'999));
+    expired = usageOnly.expire(8'000'000);
+    QVERIFY(expired);
+    QCOMPARE(*expired, GPSSatelliteReport{});
+    QVERIFY(!usageOnly.expire(9'000'000));
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(GPSDecodedDataTest, TestLabel::Unit)

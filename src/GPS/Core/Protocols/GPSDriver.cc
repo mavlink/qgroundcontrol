@@ -117,7 +117,7 @@ bool GPSDriver::configure()
     GPSRuntimeIO io;
     io.clock = _clock;
     io.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) {
-        const auto result = _transport.read(bytes, deadline.remaining(_clock.nowUs()));
+        auto result = _transport.read(bytes, deadline.remaining(_clock.nowUs()));
         const bool data = result.status == GPSReadStatus::Data && result.bytesRead > 0 &&
                           static_cast<size_t>(result.bytesRead) <= bytes.size();
         _state->cycle.activity |= data;
@@ -342,8 +342,12 @@ void GPSDriver::_handle(const GPSRTCMFrame& report)
 
 void GPSDriver::_handle(const GPSInputProtocol& report)
 {
-    // Satellite counts come from one protocol, as positions do.
+    // Satellite counts come from one protocol, as positions do. The counts of the protocol left behind would otherwise
+    // stay with the consumer, since nothing remains here to expire.
     _state->satellites = {};
+    if (_state->lastSatellites) {
+        _publishSatellites({});
+    }
     if (_sinks.onReceiverDetected) {
         _sinks.onReceiverDetected(report.family);
     }
