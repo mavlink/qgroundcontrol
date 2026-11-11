@@ -144,6 +144,18 @@ private:
         qint64 sparseFileSize = 0;             ///< For 'S': size of the file with its holes
     };
 
+    /// Entry of a hand-built ZIP archive
+    struct ZipEntry
+    {
+        QByteArray name = {};
+        QByteArray data = {};
+    };
+
+    /// Builds a ZIP archive as it is written to a stream: the sizes of an entry follow its data instead of being
+    /// in its local header. Without @a endRecord the central directory cannot be found, so that a reader which
+    /// can seek does not learn the sizes from there either.
+    static QByteArray _makeStreamedZip(const QList<ZipEntry>& entries, bool endRecord);
+
     /// Header block of a tar entry whose data is @a dataSize bytes long
     static QByteArray _tarHeader(const TarEntry& entry, qint64 dataSize);
 

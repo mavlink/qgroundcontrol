@@ -107,6 +107,45 @@ bool QGCCompressionTest::_writeGzipOfZeros(const QString& path, int memberCount,
     return true;
 }
 
+QByteArray QGCCompressionTest::_makeStreamedZip(const QList<ZipEntry>& entries, bool endRecord)
+{
+    constexpr quint16 lengthAtEnd = 0x0008;
+    constexpr quint16 deflate = 8;
+
+    QByteArray zip;
+    QDataStream out(&zip, QIODevice::WriteOnly);
+    out.setByteOrder(QDataStream::LittleEndian);
+    QByteArray centralDirectory;
+    QDataStream directory(&centralDirectory, QIODevice::WriteOnly);
+    directory.setByteOrder(QDataStream::LittleEndian);
+
+    for (const ZipEntry& entry : entries) {
+        const QByteArray zlibStream = qCompress(entry.data);
+        const QByteArray deflated = zlibStream.mid(6, zlibStream.size() - 10);
+        const quint32 localHeaderOffset = zip.size();
+        // Local file header, data, data descriptor
+        out << quint32(0x04034B50) << quint16(20) << lengthAtEnd << deflate << quint32(0) << quint32(0) << quint32(0)
+            << quint32(0) << quint16(entry.name.size()) << quint16(0);
+        out.writeRawData(entry.name.constData(), entry.name.size());
+        out.writeRawData(deflated.constData(), deflated.size());
+        out << quint32(0x08074B50) << _crc32(entry.data) << quint32(deflated.size()) << quint32(entry.data.size());
+        // Central directory header
+        directory << quint32(0x02014B50) << quint16(20) << quint16(20) << lengthAtEnd << deflate << quint32(0)
+                  << _crc32(entry.data) << quint32(deflated.size()) << quint32(entry.data.size())
+                  << quint16(entry.name.size()) << quint16(0) << quint16(0) << quint16(0) << quint16(0) << quint32(0)
+                  << localHeaderOffset;
+        directory.writeRawData(entry.name.constData(), entry.name.size());
+    }
+
+    const quint32 centralDirectoryOffset = zip.size();
+    out.writeRawData(centralDirectory.constData(), centralDirectory.size());
+    if (endRecord) {
+        out << quint32(0x06054B50) << quint16(0) << quint16(0) << quint16(entries.size()) << quint16(entries.size())
+            << quint32(centralDirectory.size()) << centralDirectoryOffset << quint16(0);
+    }
+    return zip;
+}
+
 QByteArray QGCCompressionTest::_tarHeader(const TarEntry& entry, qint64 dataSize)
 {
     QByteArray header(512, '\0');
@@ -1335,36 +1374,11 @@ private:
 
 void QGCCompressionTest::_testExtractStreamedZipEntry()
 {
-    // A ZIP written to a stream sets the "length at end" flag and leaves the sizes out of the
-    // local header, so a reader that cannot seek to the central directory does not know them
+    // A reader that cannot seek to the central directory does not know the size of a streamed entry
     const QByteArray name("streamed.txt");
     const QByteArray content("content of an entry whose size is only known after its data\n");
-    const QByteArray zlibStream = qCompress(content);
-    const QByteArray deflated = zlibStream.mid(6, zlibStream.size() - 10);
-    constexpr quint16 lengthAtEnd = 0x0008;
-    constexpr quint16 deflate = 8;
 
-    QByteArray zip;
-    QDataStream out(&zip, QIODevice::WriteOnly);
-    out.setByteOrder(QDataStream::LittleEndian);
-    // Local file header, data, data descriptor
-    out << quint32(0x04034B50) << quint16(20) << lengthAtEnd << deflate << quint32(0) << quint32(0) << quint32(0)
-        << quint32(0) << quint16(name.size()) << quint16(0);
-    out.writeRawData(name.constData(), name.size());
-    out.writeRawData(deflated.constData(), deflated.size());
-    out << quint32(0x08074B50) << _crc32(content) << quint32(deflated.size()) << quint32(content.size());
-    // Central directory header
-    const quint32 centralDirectoryOffset = zip.size();
-    out << quint32(0x02014B50) << quint16(20) << quint16(20) << lengthAtEnd << deflate << quint32(0) << _crc32(content)
-        << quint32(deflated.size()) << quint32(content.size()) << quint16(name.size()) << quint16(0) << quint16(0)
-        << quint16(0) << quint16(0) << quint32(0) << quint32(0);
-    out.writeRawData(name.constData(), name.size());
-    // End of central directory
-    const quint32 centralDirectorySize = zip.size() - centralDirectoryOffset;
-    out << quint32(0x06054B50) << quint16(0) << quint16(0) << quint16(1) << quint16(1) << centralDirectorySize
-        << centralDirectoryOffset << quint16(0);
-
-    QGCCompressionTestSequentialDevice device(zip);
+    QGCCompressionTestSequentialDevice device(_makeStreamedZip({{.name = name, .data = content}}, true));
     QVERIFY(device.open(QIODevice::ReadOnly));
     QTemporaryDir tempDir;
     QVERIFY(QGCCompression::extractFromDevice(&device, tempDir.path()));
@@ -2041,35 +2055,49 @@ void QGCCompressionTest::_testDecompressToMemorySizeLimit()
 void QGCCompressionTest::_testExtractionStopsCleanly_data()
 {
     QTest::addColumn<QString>("api");
-    QTest::addColumn<bool>("cancel");  // Otherwise the size limit stops the extraction
+    QTest::addColumn<bool>("declaredSizes");  // Whether the archive tells the size of an entry before its data
+    QTest::addColumn<bool>("cancel");         // Otherwise the size limit stops the extraction
     QTest::addColumn<QStringList>("remaining");
 
     const QStringList nothing;
-    QTest::newRow("extractArchive-limit") << "extractArchive" << false << nothing;
-    QTest::newRow("extractArchive-cancel") << "extractArchive" << true << nothing;
-    QTest::newRow("extractFromDevice-limit") << "extractFromDevice" << false << nothing;
-    QTest::newRow("extractFromDevice-cancel") << "extractFromDevice" << true << nothing;
+    QTest::newRow("extractArchive-limit") << "extractArchive" << true << false << nothing;
+    QTest::newRow("extractArchive-cancel") << "extractArchive" << true << true << nothing;
+    QTest::newRow("extractFromDevice-limit") << "extractFromDevice" << true << false << nothing;
+    QTest::newRow("extractFromDevice-cancel") << "extractFromDevice" << true << true << nothing;
     // Filtered extraction keeps the entries it wrote before it was stopped
     QTest::newRow("extractArchiveFiltered-limit")
-        << "extractArchiveFiltered" << false << QStringList{QStringLiteral("first.txt")};
+        << "extractArchiveFiltered" << true << false << QStringList{QStringLiteral("first.txt")};
+    // The limit is on what is written, whatever the archive says or leaves out about the sizes
+    QTest::newRow("extractArchive-limit-undeclared") << "extractArchive" << false << false << nothing;
+    QTest::newRow("extractArchiveFiltered-limit-undeclared") << "extractArchiveFiltered" << false << false << nothing;
 }
 
 void QGCCompressionTest::_testExtractionStopsCleanly()
 {
     QFETCH(QString, api);
+    QFETCH(bool, declaredSizes);
     QFETCH(bool, cancel);
     QFETCH(QStringList, remaining);
 
     QTemporaryDir tempDir;
-    const QString archivePath = tempDir.filePath("three.tar");
+    const QString archivePath = tempDir.filePath(declaredSizes ? "three.tar" : "streamed.zip");
     const QString outputDir = tempDir.filePath("output");
-    QVERIFY(_writeFile(archivePath, _makeTar({{.name = "first.txt", .data = QByteArray(600, 'a')},
-                                              {.name = "nested/second.txt", .data = QByteArray(600, 'b')},
-                                              {.name = "third.txt", .data = QByteArray(600, 'c')}})));
+    if (declaredSizes) {
+        QVERIFY(_writeFile(archivePath, _makeTar({{.name = "first.txt", .data = QByteArray(600, 'a')},
+                                                  {.name = "nested/second.txt", .data = QByteArray(600, 'b')},
+                                                  {.name = "third.txt", .data = QByteArray(600, 'c')}})));
+    } else {
+        // Already the first entry is larger than the limit
+        QVERIFY(_writeFile(archivePath,
+                           _makeStreamedZip({{.name = "first.txt", .data = QByteArray(64 * 1024, 'a')},
+                                             {.name = "nested/second.txt", .data = QByteArray(64 * 1024, 'b')}},
+                                            false)));
+    }
     QFile device(archivePath);
     QVERIFY(device.open(QIODevice::ReadOnly));
 
-    // The second entry is the one that does not fit, and the one during which the extraction is cancelled
+    // In the TAR archive the second entry is the one that does not fit, and the one during which the
+    // extraction is cancelled
     const qint64 limit = cancel ? 0 : 1000;
     int progressCalls = 0;
     QGCCompression::ProgressCallback progress;

@@ -1477,7 +1477,7 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
 
     const QString canonicalOutputDir = canonicalDirectoryPath(outputDirectoryPath);
     const qint64 totalSize = reader.dataSize();
-    DataTransfer unlimited;
+    DataTransfer transfer{.maxBytes = maxBytes};
     qint64 bytesProcessed = 0;
     qint64 bytesExtracted = 0;
     int extractedCount = 0;
@@ -1498,7 +1498,8 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
             return true;
         }
 
-        // Check size limit before extraction
+        // An entry that says it does not fit is not started. One that says less than it holds, or
+        // nothing, is stopped at the limit while it is written.
         if (maxBytes > 0 && (bytesExtracted + info.size) > maxBytes) {
             reportSizeLimitExceeded(maxBytes);
             return false;
@@ -1511,7 +1512,7 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
         }
         QGCFileHelper::ensureParentExists(outputPath);
 
-        if (!writeArchiveEntryToFile(reader.handle(), outputPath, unlimited)) {
+        if (!writeArchiveEntryToFile(reader.handle(), outputPath, transfer)) {
             return false;
         }
 
