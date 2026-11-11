@@ -5,8 +5,6 @@
 #include <gst/app/gstappsrc.h>
 #include <mutex>
 
-#include <QtCore/QFile>
-
 #include "GStreamerDecoderRanks.h"
 #include "GStreamerHelpers.h"
 #include "GstScoped.h"
@@ -198,7 +196,7 @@ QString readBack(const QString& file, const char* demuxer, std::chrono::millisec
     if (!pipeline || !sourceOwner || !demuxerOwner || !sinkOwner) {
         return QStringLiteral("cannot create filesrc, %1 or fakesink").arg(demuxer);
     }
-    g_object_set(sourceOwner.get(), "location", QFile::encodeName(file).constData(), nullptr);
+    g_object_set(sourceOwner.get(), "location", glibFileName(file).constData(), nullptr);
     g_object_set(sinkOwner.get(), "sync", FALSE, nullptr);
 
     GstElement* const source = addToBin(pipeline.get(), std::move(sourceOwner), "filesrc");

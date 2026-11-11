@@ -4,6 +4,7 @@
 #include <gst/video/video-event.h>
 
 #include <QtCore/QByteArray>
+#include <QtCore/QFile>
 #include <QtCore/QLatin1String>
 #include <QtCore/QString>
 
@@ -67,6 +68,15 @@ GstElement* addToBin(GstElement* bin, GstElementPtr element, const char* what)
         return nullptr;
     }
     return added;
+}
+
+QByteArray glibFileName(const QString& file)
+{
+#ifdef Q_OS_WIN
+    return file.toUtf8();
+#else
+    return QFile::encodeName(file);
+#endif
 }
 
 void requestKeyframe(GstPad* sinkPad)

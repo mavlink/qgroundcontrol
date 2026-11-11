@@ -4,7 +4,11 @@
 #include <glib.h>
 #include <gst/gst.h>
 
+#include <QtCore/QByteArray>
+
 #include "GstScoped.h"
+
+class QString;
 
 namespace GStreamer {
 
@@ -20,6 +24,10 @@ void flushAndDisposeChild(GstElement* element);
 /// Adds @p element, which must not be floating (see makeElement()), to @p bin, which takes its own ref; ours is
 /// dropped. Returns the borrowed (bin-owned) element, or null if the bin rejected it; @p what names it in the warning.
 GstElement* addToBin(GstElement* bin, GstElementPtr element, const char* what);
+
+/// @p file as GLib's file functions name it, for the "location" of a file source or sink: UTF-8 on Windows, where
+/// QFile::encodeName() gives the bytes of the ANSI code page instead, and the file system's encoding elsewhere.
+QByteArray glibFileName(const QString& file);
 
 /// Asks the encoder upstream of @p sinkPad for a keyframe with its parameter sets (on RTSP, rtpbin turns this into an
 /// RTCP PLI/FIR). Doesn't block: the event is not serialized.

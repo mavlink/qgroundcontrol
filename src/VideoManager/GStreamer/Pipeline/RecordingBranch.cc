@@ -142,7 +142,7 @@ GStreamer::GstElementPtr RecordingBranch::makeFileSink(const QString& file, Vide
                      "reserved-moov-update-period", kRecordingMoovUpdatePeriodNs, nullptr);
     }
     // Not async: a sink that waits to preroll would take the live pipeline out of PLAYING until the first keyframe.
-    g_object_set(fileSinkOwner.get(), "location", QFile::encodeName(file).constData(), "async", FALSE, nullptr);
+    g_object_set(fileSinkOwner.get(), "location", GStreamer::glibFileName(file).constData(), "async", FALSE, nullptr);
 
     GstElement* const muxer = GStreamer::addToBin(bin.get(), std::move(muxerOwner), "muxer");
     GstElement* const fileSink = GStreamer::addToBin(bin.get(), std::move(fileSinkOwner), "filesink");
