@@ -276,6 +276,7 @@ void QGCCacheWorker::_getTileSets(QGCMapTask *mtask)
         set->setCreationDate(QDateTime::fromSecsSinceEpoch(rec.date));
 
         const SetTotalsResult totals = _database->computeSetTotals(rec.setID, rec.defaultSet, rec.numTiles, set->type());
+        set->setTotalTileCount(totals.totalTileCount);
         set->setSavedTileCount(totals.savedTileCount);
         set->setSavedTileSize(totals.savedTileSize);
         set->setTotalTileSize(totals.totalTileSize);

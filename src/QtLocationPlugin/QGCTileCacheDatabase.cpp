@@ -814,6 +814,7 @@ TotalsResult QGCTileCacheDatabase::computeTotals()
 SetTotalsResult QGCTileCacheDatabase::computeSetTotals(quint64 setID, bool isDefault, quint32 totalTileCount, const QString &type)
 {
     SetTotalsResult result;
+    result.totalTileCount = totalTileCount;
 
     if (isDefault) {
         TotalsResult totals = computeTotals();
@@ -840,6 +841,17 @@ SetTotalsResult QGCTileCacheDatabase::computeSetTotals(quint64 setID, bool isDef
 
     result.savedTileCount = subquery.value(0).toUInt();
     result.savedTileSize = subquery.value(1).toULongLong();
+
+    // A provider does not have every tile of a region. A set is complete with the tiles it saved once it has
+    // tried them all, or it would look unfinished for good.
+    if ((totalTileCount > result.savedTileCount) &&
+        subquery.prepare("SELECT COUNT(*) FROM TilesDownload WHERE setID = ?")) {
+        subquery.addBindValue(setID);
+        if (subquery.exec() && subquery.next() && (subquery.value(0).toUInt() == 0)) {
+            totalTileCount = result.savedTileCount;
+            result.totalTileCount = totalTileCount;
+        }
+    }
 
     quint64 avg = UrlFactory::averageSizeForType(type);
     if (avg == 0) {

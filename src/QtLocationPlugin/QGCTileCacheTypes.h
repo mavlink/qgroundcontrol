@@ -28,6 +28,8 @@ struct TotalsResult {
 };
 
 struct SetTotalsResult {
+    /// The tiles of the set: those it has saved once nothing is left for it to download
+    quint32 totalTileCount = 0;
     quint32 savedTileCount = 0;
     quint64 savedTileSize = 0;
     quint64 totalTileSize = 0;

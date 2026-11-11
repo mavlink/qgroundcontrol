@@ -347,12 +347,10 @@ void QGCCachedTileSetTest::_testDownload()
     if (!expectedWarning.isEmpty()) {
         verifyExpectedLogMessage();
     }
-    if (!stored) {
-        return;
-    }
 
-    // The database holds the tiles in this set, not only in the default one. Its worker runs tasks in order: the
-    // sets are all reported once the task queued after them is.
+    // The set as the database has it, which is what a restart loads: its tiles are stored in it, not only in the
+    // default set, and it is complete unless a tile is left to download. The database worker runs tasks in order,
+    // so the sets are all reported once the task queued after them is.
     QList<QGCCachedTileSet*> databaseSets;
     const auto deleteSets = qScopeGuard([&databaseSets] { qDeleteAll(databaseSets); });
     QGCFetchTileSetTask* const fetchSetsTask = new QGCFetchTileSetTask();
@@ -369,7 +367,8 @@ void QGCCachedTileSetTest::_testDownload()
         std::find_if(databaseSets.cbegin(), databaseSets.cend(),
                      [&name](const QGCCachedTileSet* candidate) { return candidate->name() == name; });
     QVERIFY(databaseSet != databaseSets.cend());
-    QCOMPARE((*databaseSet)->savedTileCount(), tileCount);
+    QCOMPARE((*databaseSet)->savedTileCount(), stored ? tileCount : 0U);
+    QCOMPARE((*databaseSet)->complete(), !failed);
 }
 
 UT_REGISTER_TEST(QGCCachedTileSetTest, TestLabel::Unit)

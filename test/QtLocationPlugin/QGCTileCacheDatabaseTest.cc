@@ -490,9 +490,19 @@ void QGCTileCacheDatabaseTest::_testComputeSetTotalsNonDefault()
     _linkTileToSet(db.get(), tile1.value(), customSetID);
     _linkTileToSet(db.get(), tile2.value(), customSetID);
 
+    // With a tile left to download, the set still counts the tiles it was created for
+    _insertDownloadRecord(db.get(), customSetID, QStringLiteral("st3"), QGCTile::StateError);
     const SetTotalsResult result = db->computeSetTotals(customSetID, false, 5, kFixedProviderType);
+    QCOMPARE(result.totalTileCount, static_cast<quint32>(5));
     QCOMPARE(result.savedTileCount, static_cast<quint32>(2));
     QCOMPARE(result.savedTileSize, static_cast<quint64>(50));
+
+    // With nothing left to download, it is complete with the tiles it has
+    QVERIFY(db->updateTileDownloadState(customSetID, QGCTile::StateComplete, QStringLiteral("st3")));
+    const SetTotalsResult doneResult = db->computeSetTotals(customSetID, false, 5, kFixedProviderType);
+    QCOMPARE(doneResult.totalTileCount, static_cast<quint32>(2));
+    QCOMPARE(doneResult.savedTileCount, static_cast<quint32>(2));
+    QCOMPARE(doneResult.totalTileSize, static_cast<quint64>(50));
 }
 
 void QGCTileCacheDatabaseTest::_testSaveDuplicateTile()
