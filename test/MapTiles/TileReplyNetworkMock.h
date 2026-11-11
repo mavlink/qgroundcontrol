@@ -5,6 +5,7 @@
 #include <QtCore/QBuffer>
 #include <QtCore/QFile>
 #include <QtCore/QTimer>
+#include <QtGui/QColor>
 #include <QtGui/QImage>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
@@ -92,10 +93,10 @@ protected:
     }
 };
 
-inline QByteArray tileReplyPngBody()
+inline QByteArray tileReplyPngBody(const QColor& color = Qt::darkGreen)
 {
     QImage image(32, 32, QImage::Format_RGB32);
-    image.fill(Qt::darkGreen);
+    image.fill(color);
     QByteArray data;
     QBuffer buffer(&data);
     if (!buffer.open(QIODevice::WriteOnly) || !image.save(&buffer, "PNG")) {

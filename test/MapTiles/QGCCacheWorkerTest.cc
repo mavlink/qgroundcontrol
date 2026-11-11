@@ -9,6 +9,7 @@
 #include <QtCore/QTemporaryDir>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtSql/QSqlQuery>
+#include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
 #include "AppSettings.h"
@@ -681,6 +682,35 @@ void QGCCacheWorkerTest::_testMapEngineGivesOldTilesTheConfiguredSource()
     QCOMPARE(_fetchTileImage(addTask, UrlFactory::getTileHash(kCacheWorkerCustomUrlType, 1, 2, 3)), image);
 
     engine.close();
+}
+
+void QGCCacheWorkerTest::_testMapEngineReportsSourceChange_data()
+{
+    QTest::addColumn<QString>("settingName");
+    QTest::addColumn<QString>("providerType");
+    QTest::newRow("Custom URL") << QStringLiteral("customURL") << kCacheWorkerCustomUrlType;
+    QTest::newRow("Mapbox Custom account") << QStringLiteral("mapboxAccount") << QStringLiteral("Mapbox Custom");
+    QTest::newRow("Mapbox Custom style") << QStringLiteral("mapboxStyle") << QStringLiteral("Mapbox Custom");
+}
+
+void QGCCacheWorkerTest::_testMapEngineReportsSourceChange()
+{
+    QFETCH(QString, settingName);
+    QFETCH(QString, providerType);
+
+    Fact* const setting = SettingsManager::instance()->appSettings()->property(qPrintable(settingName)).value<Fact*>();
+    QVERIFY(setting);
+    const QVariant saved = setting->rawValue();
+    const auto restore = qScopeGuard([setting, saved] { setting->setRawValue(saved); });
+    setting->setRawValue(QStringLiteral("source A"));
+
+    // A map that is open holds tiles of the source that was configured, so it has to hear of another one
+    QGCMapEngine engine;
+    QSignalSpy sourceSpy(&engine, &QGCMapEngine::tileSourceChanged);
+    setting->setRawValue(QStringLiteral("source B"));
+
+    QCOMPARE(sourceSpy.count(), 1);
+    QCOMPARE(sourceSpy.first().first().toInt(), UrlFactory::getMapIdFromProviderType(providerType));
 }
 
 void QGCCacheWorkerTest::_testFreePagesReleasedWhenIdle_data()

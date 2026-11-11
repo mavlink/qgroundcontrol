@@ -57,6 +57,9 @@ public:
 signals:
     void tileImageReady(int requestId, const QImage& image);
     void tileImageFailed(int requestId);
+    /// The user configured another source for the provider (QGCMapEngine::tileSourceChanged): the images delivered
+    /// so far are of the previous source, and those of the requests still pending can be.
+    void sourceChanged();
 
 private:
     void _failAsync(int requestId);

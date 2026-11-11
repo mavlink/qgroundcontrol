@@ -126,6 +126,7 @@ void SurfacePatchModel::setMapType(const QString& mapType)
         _tileSource = new TileImageSource(_mapType, this, _tileImageNetworkManager);
         connect(_tileSource, &TileImageSource::tileImageReady, this, &SurfacePatchModel::_tileImageReady);
         connect(_tileSource, &TileImageSource::tileImageFailed, this, &SurfacePatchModel::_tileImageFailed);
+        connect(_tileSource, &TileImageSource::sourceChanged, this, &SurfacePatchModel::_reloadImagery);
         for (const TileMath::TileKey& key : std::as_const(_keys)) {
             _requestTileImage(key);
         }
@@ -154,6 +155,14 @@ void SurfacePatchModel::_resetImagery()
         if (!_keys.isEmpty()) {
             emit dataChanged(index(0), index(_keys.count() - 1), {TileImageRole, HasTileImageRole});
         }
+    }
+}
+
+void SurfacePatchModel::_reloadImagery()
+{
+    _resetImagery();
+    for (const TileMath::TileKey& key : std::as_const(_keys)) {
+        _requestTileImage(key);
     }
 }
 

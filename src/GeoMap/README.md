@@ -76,6 +76,10 @@ cropped piece of the nearest ancestor tile — so the ground never flashes blank
 Images from removed patches are retired rather than dropped, keeping them available
 as stand-in sources across LOD changes.
 
+When the user sets another source for the provider (the Custom URL, or the account
+or style of Mapbox Custom), `TileImageSource` reports it and the model drops its
+images, stand-ins included, and requests them again.
+
 ## The surface: turning data into a mesh
 
 `SurfaceModel` decides *which* patches exist. On every camera change it estimates

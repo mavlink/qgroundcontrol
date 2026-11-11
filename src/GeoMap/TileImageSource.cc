@@ -14,6 +14,7 @@
 #include <QtNetwork/QNetworkAccessManager>
 
 #include "QGCLoggingCategory.h"
+#include "QGCMapEngine.h"
 #include "QGCMapUrlEngine.h"
 #include "QGCTileReply.h"
 
@@ -29,6 +30,11 @@ TileImageSource::TileImageSource(const QString& mapType, QObject* parent, QNetwo
     if (_mapId < 0) {
         qCWarning(GeoMapTileImageSourceLog) << "unknown map type" << _mapType << "- all tile requests will fail";
     }
+    connect(getQGCMapEngine(), &QGCMapEngine::tileSourceChanged, this, [this](int mapId) {
+        if (mapId == _mapId) {
+            emit sourceChanged();
+        }
+    });
 }
 
 int TileImageSource::requestTileImage(const TileMath::TileKey& key)

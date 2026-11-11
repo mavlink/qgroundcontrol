@@ -1,11 +1,15 @@
 #include "QGeoTiledMappingManagerEngineQGCTest.h"
 
+#include <QtCore/QScopeGuard>
 #include <QtLocation/private/qgeomaptype_p.h>
 #include <QtNetwork/QNetworkAccessManager>
+#include <QtTest/QSignalSpy>
 
+#include "AppSettings.h"
 #include "QGCMapUrlEngine.h"
 #include "QGeoMapIdQGC.h"
 #include "QGeoTiledMappingManagerEngineQGC.h"
+#include "SettingsManager.h"
 
 void QGeoTiledMappingManagerEngineQGCTest::_testElevationProvidersAreNotMapTypes()
 {
@@ -58,6 +62,29 @@ void QGeoTiledMappingManagerEngineQGCTest::_testMapIdTranslationWithGaps()
     QCOMPARE(QGeoMapIdQGC::toProviderId(0, providerIds), -1);
     QCOMPARE(QGeoMapIdQGC::toProviderId(5, providerIds), -1);
     QCOMPARE(QGeoMapIdQGC::fromProviderId(8, providerIds), -1);
+}
+
+void QGeoTiledMappingManagerEngineQGCTest::_testSourceChangeGivesTilesNewVersion()
+{
+    Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
+    const QVariant savedUrl = customUrl->rawValue();
+    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
+    customUrl->setRawValue(QStringLiteral("https://a.example/{z}/{x}/{y}.png"));
+
+    QNetworkAccessManager networkManager;
+    QGeoServiceProvider::Error error = QGeoServiceProvider::NotSupportedError;
+    QString errorString;
+    QGeoTiledMappingManagerEngineQGC engine({}, &error, &errorString, &networkManager);
+    QCOMPARE(error, QGeoServiceProvider::NoError);
+    const int tileVersion = engine.tileVersion();
+    QSignalSpy versionSpy(&engine, &QGeoTiledMappingManagerEngine::tileVersionChanged);
+
+    // The maps and QtLocation's tile cache hold tiles of the source that was configured. On a new tile version
+    // QtLocation's maps request their tiles again, and drop those of the old version.
+    customUrl->setRawValue(QStringLiteral("https://b.example/{z}/{x}/{y}.png"));
+
+    QCOMPARE(versionSpy.count(), 1);
+    QCOMPARE_NE(engine.tileVersion(), tileVersion);
 }
 
 UT_REGISTER_TEST(QGeoTiledMappingManagerEngineQGCTest, TestLabel::Unit)

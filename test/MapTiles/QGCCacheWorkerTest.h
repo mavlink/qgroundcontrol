@@ -30,6 +30,8 @@ private slots:
     void _testCreateTileSetKeepsSourceOfItsCreation();
     void _testImportGivesOldTilesTheConfiguredSource();
     void _testMapEngineGivesOldTilesTheConfiguredSource();
+    void _testMapEngineReportsSourceChange_data();
+    void _testMapEngineReportsSourceChange();
     void _testFreePagesReleasedWhenIdle_data();
     void _testFreePagesReleasedWhenIdle();
     void _testTileFetchedBeforeFreePagesReleased();

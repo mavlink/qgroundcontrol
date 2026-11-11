@@ -10,4 +10,5 @@ private slots:
     void _testElevationProvidersAreNotMapTypes();
     void _testMapTypeIdsAreSequential();
     void _testMapIdTranslationWithGaps();
+    void _testSourceChangeGivesTilesNewVersion();
 };

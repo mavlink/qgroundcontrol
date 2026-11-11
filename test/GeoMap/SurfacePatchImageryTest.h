@@ -10,6 +10,7 @@ private slots:
     void _imagesArriveForAllPatches();
     void _emptyMapTypeDisablesImagery();
     void _mapTypeSwitchRefetches();
+    void _sourceChangeRefetches();
     void _fallbackCoversLodChanges();
     void _imagesRecoverAfterGestureChurn();
     void _imagesRecoverAfterTransientOutage();

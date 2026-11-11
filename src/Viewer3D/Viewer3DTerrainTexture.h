@@ -68,6 +68,7 @@ private:
     void _updateTexture();
     void _setTextureLoaded(bool loaded) { _textureLoaded = loaded; emit textureLoadedChanged(); }
     void _onMapTypeChanged();
+    void _onTileSourceChanged(int mapId);
     static std::pair<QGeoCoordinate, QGeoCoordinate> _fallbackBoundingBox(const QGeoCoordinate &center);
 
     Viewer3DTileQuery *_terrainTileLoader = nullptr;

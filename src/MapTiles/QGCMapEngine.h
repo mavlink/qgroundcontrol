@@ -48,6 +48,10 @@ public:
 signals:
     void updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
 
+    /// The user configured another source for the provider \a mapId (MapProvider::sourceSettings()). The tiles of
+    /// that provider which a map holds, and those it gets for a request it made before, are of the previous source.
+    void tileSourceChanged(int mapId);
+
 private slots:
     void _updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
 

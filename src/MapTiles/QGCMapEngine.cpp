@@ -7,6 +7,8 @@
 
 #include "AppMessages.h"
 #include "AppSettings.h"
+#include "Fact.h"
+#include "MapProvider.h"
 #include "MapsSettings.h"
 #include "QGCCacheTile.h"
 #include "QGCCachedTileSet.h"
@@ -124,6 +126,13 @@ QGCMapEngine::QGCMapEngine(QObject* parent)
     (void) qRegisterMetaType<QGCTileSet>("QGCTileSet");
     (void) qRegisterMetaType<QGCTileSet*>("QGCTileSet*");
     (void) qRegisterMetaType<QGCCacheTile>("QGCCacheTile");
+
+    for (const SharedMapProvider& provider : UrlFactory::getProviders()) {
+        const int mapId = provider->getMapId();
+        for (const Fact* const setting : provider->sourceSettings()) {
+            (void) connect(setting, &Fact::rawValueChanged, this, [this, mapId] { emit tileSourceChanged(mapId); });
+        }
+    }
 }
 
 QGCMapEngine::~QGCMapEngine()

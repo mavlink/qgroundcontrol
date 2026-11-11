@@ -19,4 +19,5 @@ private slots:
     void _testFallbackBoundingBox();
     void _testInvalidFallbackCenterNoLoad();
     void _testFallbackCenterTriggersLoad();
+    void _testSourceChangeReloadsTexture();
 };

@@ -214,6 +214,7 @@ private:
     void _rebuildSurfaceModel();
     double _surfaceHeightAt(const QPointF& world) const;
     void _resetImagery();
+    void _reloadImagery();
     void _requestTileImage(const TileMath::TileKey& key);
     void _retryFailedImages();
     void _notifyTileImageChanged(const TileMath::TileKey& key);

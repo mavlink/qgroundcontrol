@@ -20,6 +20,7 @@ Viewer3DTerrainTexture::Viewer3DTerrainTexture()
     _onMapTypeChanged();
 
     connect(_flightMapSettings->mapType(), &Fact::rawValueChanged, this, &Viewer3DTerrainTexture::_onMapTypeChanged);
+    connect(getQGCMapEngine(), &QGCMapEngine::tileSourceChanged, this, &Viewer3DTerrainTexture::_onTileSourceChanged);
 }
 
 void Viewer3DTerrainTexture::loadTexture()
@@ -122,6 +123,22 @@ void Viewer3DTerrainTexture::_onMapTypeChanged()
 
     qCDebug(Viewer3DTerrainTextureLog) << "Map type changed:" << _mapType << "mapId:" << mapId;
     _mapId = mapId;
+    loadTexture();
+}
+
+void Viewer3DTerrainTexture::_onTileSourceChanged(int mapId)
+{
+    if (mapId != _mapId) {
+        return;
+    }
+
+    // The texture is made of tiles of the source the provider had, and so is one that is being loaded: start over.
+    // Disconnect first: the loader stays alive until the deferred delete runs and could still emit.
+    if (_terrainTileLoader) {
+        disconnect(_terrainTileLoader, nullptr, this, nullptr);
+        _terrainTileLoader->deleteLater();
+        _terrainTileLoader = nullptr;
+    }
     loadTexture();
 }
 
