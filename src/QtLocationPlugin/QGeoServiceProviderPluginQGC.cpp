@@ -36,15 +36,24 @@ QGeoCodingManagerEngine *QGeoServiceProviderFactoryQGC::createGeocodingManagerEn
 QGeoMappingManagerEngine *QGeoServiceProviderFactoryQGC::createMappingManagerEngine(
    const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
 {
+    // The mapping engine fetches its tiles with the network access manager of the QML engine, on that engine's thread
+    if (!m_engine || (m_engine->thread() != QThread::currentThread())) {
+        qCWarning(QGeoServiceProviderFactoryQGCLog) << "No QML engine on this thread for the mapping manager engine";
+        if (error) {
+            *error = QGeoServiceProvider::LoaderError;
+        }
+        if (errorString) {
+            *errorString = QStringLiteral("QML engine not available");
+        }
+        return nullptr;
+    }
+
     if (error) {
         *error = QGeoServiceProvider::NoError;
     }
     if (errorString) {
         *errorString = "";
     }
-
-    Q_ASSERT(m_engine);
-    Q_ASSERT(m_engine->thread() == QThread::currentThread());
 
     QNetworkAccessManager *networkManager = m_engine->networkAccessManager();
 

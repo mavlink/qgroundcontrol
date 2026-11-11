@@ -1,5 +1,6 @@
 #include "QGeoTiledMappingManagerEngineQGCTest.h"
 
+#include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtLocation/private/qgeomaptype_p.h>
 #include <QtNetwork/QNetworkAccessManager>
@@ -8,6 +9,7 @@
 #include "AppSettings.h"
 #include "QGCMapUrlEngine.h"
 #include "QGeoMapIdQGC.h"
+#include "QGeoServiceProviderPluginQGC.h"
 #include "QGeoTiledMappingManagerEngineQGC.h"
 #include "SettingsManager.h"
 
@@ -85,6 +87,22 @@ void QGeoTiledMappingManagerEngineQGCTest::_testSourceChangeGivesTilesNewVersion
 
     QCOMPARE(versionSpy.count(), 1);
     QCOMPARE_NE(engine.tileVersion(), tileVersion);
+}
+
+void QGeoTiledMappingManagerEngineQGCTest::_testFactoryNeedsQmlEngine()
+{
+    // QtLocation gives the factory the QML engine before it asks for a mapping engine, which fetches its tiles with
+    // the network access manager of that engine
+    const QGeoServiceProviderFactoryQGC factory;
+    QGeoServiceProvider::Error error = QGeoServiceProvider::NoError;
+    QString errorString;
+
+    expectLogMessage("QtLocationPlugin.QGeoServiceProviderFactoryQGC", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("QML engine")));
+    QCOMPARE(factory.createMappingManagerEngine({}, &error, &errorString), nullptr);
+    verifyExpectedLogMessage();
+    QCOMPARE_NE(error, QGeoServiceProvider::NoError);
+    QVERIFY(!errorString.isEmpty());
 }
 
 UT_REGISTER_TEST(QGeoTiledMappingManagerEngineQGCTest, TestLabel::Unit)

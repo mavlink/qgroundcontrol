@@ -11,4 +11,5 @@ private slots:
     void _testMapTypeIdsAreSequential();
     void _testMapIdTranslationWithGaps();
     void _testSourceChangeGivesTilesNewVersion();
+    void _testFactoryNeedsQmlEngine();
 };
