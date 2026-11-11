@@ -1,0 +1,28 @@
+SOURCETABLE 200 OK
+Server: NTRIP AdVCaster V1.071b/1.0
+Date: Fri, 15 Dec 2017 23:17:26 Koordinierte Weltzeit
+Content-Type: text/plain
+Connection: close
+Content-Length: 2364
+
+CAS;www.sapos.geonord.de;2101;SAPOS-HH-SH;LVA-Schleswig-Holstein;1;DEU;53.55;10.00;www.sapos-ni-ntrip.de;2101;
+CAS;www.sapos.geonord.de;2101;SAPOS-HH-SH;LVA-Hamburg;1;DEU;53.55;10.00;www.sapos-ni-ntrip.de;2101;
+CAS;www.sapos-ni-ntrip.de;2101;SAPOS-NI;LVA-Niedersachsen;1;DEU;52.40;9.75;www.sapos-ni-ntrip.de;2101;
+CAS;www.saposnrw-ntrip.de;2101;SAPOS-NW;LVA-Nordrhein-Westfalen;1;DEU;51.35;7.48;www.sapos-ni-ntrip.de;2101;
+CAS;www.sapos-he-ntrip.de;2101;SAPOS-HE;LVA-Hessen;1;DEU;50.10;8.06;www.sapos-ni-ntrip.de;2101;
+CAS;www.sapos-ntrip.rlp.de;2101;SAPOS-RP;LVA-Rheinland-Pfalz;1;DEU;50.28;7.57;www.sapos-ni-ntrip.de;2101;
+CAS;www.sapos-bw-ntrip.de;2101;SAPOS-BW;LVA-Baden-Wuerttemberg;1;DEU;48.79;9.18;www.sapos-ni-ntrip.de;2101;
+CAS;www.sapos-by-ntrip.de;2101;SAPOS-BY;LVA-Bayern;1;DEU;48.50;11.50;www.sapos-ni-ntrip.de;2101;
+CAS;www.sapos-sl-ntrip.de;2101;SAPOS-SL;LVA-Saarland;1;DEU;49.25;6.99;www.sapos-ni-ntrip.de;2101;
+CAS;www.sapos-be-ntrip.de;2101;SAPOS-BE;SenStadtUm_Berlin;1;DEU;52.48;13.30;www.sapos-ni-ntrip.de;2101;
+CAS;www.sapos-bb-ntrip.de;2101;SAPOS-BB;LVA-Brandenburg;1;DEU;52.41;12.00;www.sapos-ni-ntrip.de;2101;
+CAS;www.sapos-mv-ntrip.de;2101;SAPOS-MV;LVA-Mecklenburg-Vorpommern;1;DEU;53.65;11.39;www.sapos-ni-ntrip.de;2101;
+CAS;www.ntrip.sachsen.de;2101;SAPOS-SN;LVA-Sachsen;1;DEU;51.04;13.45;www.sapos-ni-ntrip.de;2101;
+CAS;www.sapos-lsa-ntrip.de;2101;SAPOS-LSA;LVA-Sachsen-Anhalt;1;DEU;52.13;11.64;www.sapos-ni-ntrip.de;2101;
+CAS;www.sapos-th-ntrip.de;2101;SAPOS-TH;LVA-Thueringen;1;DEU;51.01;11.03;www.sapos-ni-ntrip.de;2101;
+NET;SAPOS-AdV;SAPOS-AdV;B;Y;www.sapos.de;www.sapos-ntrip.de:2101;www.sapos.de;
+STR;VRS_3_2G;SAPOS_VRS_3;RTCM3.1;1004(1), 1005/1006, 1007/1008, 1012(1), 1021, 1023, 1025, 1030, 1031, 1032, 1033;2;GPS+GLO;SAPOS-AdV;DEU;52.48;13.30;1;1;SAPOS;none;B;Y;2000;
+STR;MAC_3_2G;SAPOS_MAC_3;RTCM3.1;1004(1), 1005/1006, 1007/1008, 1012(1), 1014(10), 1015/1016/1017(10), 1021, 1023, 1025, 1030, 1031, 1033, 1037/1038/1039(10);2;GPS+GLO;SAPOS-AdV;DEU;52.48;13.30;1;1;SAPOS;none;B;Y;2000;
+STR;FKP_3_2G;SAPOS_FKP_3;RTCM3.1;1004(1), 1005/1006, 1007/1008, 1012(1), 1021, 1023, 1025, 1030, 1031, 1033, 1034(10), 1035(10);2;GPS+GLO;SAPOS-AdV;DEU;52.48;13.30;1;1;SAPOS;none;B;Y;2000;
+STR;EPS;SAPOS-EPS;RTCM2.3;1(1), 3, 14, 16, 31(1), 23;0;GPS+GLO;SAPOS-AdV;DEU;52.48;13.30;1;1;SAPOS;none;B;Y;2000;
+ENDSOURCETABLE

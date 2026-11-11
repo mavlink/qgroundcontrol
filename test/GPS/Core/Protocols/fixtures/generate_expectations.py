@@ -10,6 +10,7 @@ import math
 from importlib.metadata import distribution
 from pathlib import Path
 
+import capture_expectations
 from pynmeagps import NMEAReader
 from pyrtcm import RTCMReader
 from pysbf2 import SBFReader
@@ -273,6 +274,11 @@ def main() -> None:
     parser.add_argument(
         "--check", action="store_true", help="fail if fixtures or expectations differ"
     )
+    parser.add_argument(
+        "--upstream",
+        type=Path,
+        help="directory with gpsd, pyubx2 and pyrtcm checkouts at the commits in SOURCES.md, to check or rewrite the captures",
+    )
     args = parser.parse_args()
     verify_pins()
     for filename, data in synthetic_fixtures().items():
@@ -282,6 +288,7 @@ def main() -> None:
                 raise SystemExit(f"{path} differs; regenerate with the pinned tools")
         else:
             path.write_bytes(data)
+    capture_expectations.generate(args.check, args.upstream, PINS)
     output = ROOT / "GPSFixtureExpectations.h"
     expected = generate()
     if args.check:

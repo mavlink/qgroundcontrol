@@ -24,6 +24,7 @@ file(
     COPY "${CMAKE_CURRENT_SOURCE_DIR}/../fixtures/"
     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/fixture-seeds"
     FILES_MATCHING
+    PATTERN "*.cap"
     PATTERN "*.gps"
     PATTERN "*.nmea"
     PATTERN "*.sbf"

@@ -50,6 +50,7 @@ set(_qgc_gps_suites
     NTRIP/HTTP/NTRIPConfigurationTest
     NTRIP/HTTP/NTRIPHttpCodecTest
     NTRIP/HTTP/NTRIPHttpSessionTest
+    NTRIP/NTRIPCaptureTest
     NTRIP/NTRIPConnectionStatsTest
     NTRIP/NTRIPGgaReporterTest
     NTRIP/NTRIPHttpTransportTest

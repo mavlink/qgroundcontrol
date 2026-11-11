@@ -29,6 +29,7 @@ set(_qgc_gps_core_suites
     Transport/GPSTransportContractTest
     Transport/TCPGPSTransportTest
     Transport/UDPGPSTransportTest
+    Protocols/GPSCaptureDecodeTest
     Protocols/GPSCommandChannelTest
     Protocols/GPSDecodedDataTest
     Protocols/GPSDriverTest

@@ -79,12 +79,12 @@ repos:
       # syrupy snapshots (*.ambr) keep generated whitespace byte-for-byte.
       - id: trailing-whitespace
         args: ['--markdown-linebreak-ext=md']
-        exclude: ^(translations/|src/MAVLink/.*\.patch$|.*\.ambr$|test/GPS/Core/Protocols/(corpus|fixtures)/.*\.(bin|gps|nmea|sbf|ubx)$)
+        exclude: ^(translations/|src/MAVLink/.*\.patch$|.*\.ambr$|test/GPS/Core/Protocols/(corpus|fixtures)/.*\.(bin|cap|gps|nmea|sbf|ubx)$|test/GPS/NTRIP/fixtures/.*\.cap$)
       - id: end-of-file-fixer
-        exclude: ^(src/MAVLink/.*\.patch$|translations/.*\.ts|.*\.(ambr|png|jpg|jpeg|gif|svg|ico|bin|dat)|test/GPS/Core/Protocols/(corpus|fixtures)/.*\.(gps|nmea|sbf|ubx))$
+        exclude: ^(src/MAVLink/.*\.patch$|translations/.*\.ts|.*\.(ambr|png|jpg|jpeg|gif|svg|ico|bin|cap|dat)|test/GPS/Core/Protocols/(corpus|fixtures)/.*\.(gps|nmea|sbf|ubx))$
       - id: mixed-line-ending
         args: ['--fix=lf']
-        exclude: (\.(ambr|bat|ps1)$|^test/GPS/Core/Protocols/(corpus|fixtures)/.*\.(bin|gps|nmea|sbf|ubx)$)
+        exclude: (\.(ambr|bat|ps1)$|^test/GPS/Core/Protocols/(corpus|fixtures)/.*\.(bin|cap|gps|nmea|sbf|ubx)$|^test/GPS/NTRIP/fixtures/.*\.cap$)
 
   # Enforces .editorconfig. tools/configs/editorconfig-checker.json skips binary, generated, and
   # legacy files that predate the hook, and disables indent_size (continuation lines align to their
