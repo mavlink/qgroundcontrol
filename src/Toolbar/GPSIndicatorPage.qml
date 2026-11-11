@@ -28,9 +28,11 @@ ToolIndicatorPage {
     // Settings stay usable, rather than collapsing, on windows narrower than the reserved margins.
     readonly property real _settingsWidth: Math.max(ScreenTools.defaultFontPixelWidth * 30,
         Math.min(root._preferredSettingsWidth,
-                 root.availableWidth - (root._compact ? 0 : root._preferredStatusWidth) - root.spacing * 2 - 1))
+                 root.availableWidth - (root._compact ? 0 : root._preferredStatusWidth + root.spacing * 2 + 1)))
 
     showExpand: true
+    // On narrow screens the expanded view replaces status instead of requiring horizontal scrolling.
+    contentVisible: !root.expanded || !root._compact
 
     // A vehicle GPS value, labelled with its description, shown while the vehicle reports it.
     component MeasurementLabel: LabelledLabel {
@@ -83,11 +85,7 @@ ToolIndicatorPage {
 
     contentComponent: Component {
         ColumnLayout {
-            // On narrow screens the expanded view replaces status instead of requiring horizontal scrolling. The
-            // page's loader keeps the size of a hidden column, so the column gives up both dimensions.
-            width: root.expanded && root._compact ? 0 : Math.min(root._preferredStatusWidth, root.availableWidth)
-            height: root.expanded && root._compact ? 0 : implicitHeight
-            visible: !root.expanded || !root._compact
+            width: Math.min(root._preferredStatusWidth, root.availableWidth)
             spacing: ScreenTools.defaultFontPixelHeight / 2
 
             QGCGroupBox {
