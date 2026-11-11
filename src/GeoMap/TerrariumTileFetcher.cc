@@ -251,15 +251,14 @@ bool TerrariumTileFetcher::_startFetch(const TileMath::TileKey& fetchKey)
     const QString providerType = terrariumProviderType();
     QGCFetchTileTask* const task =
         QGeoFileTileCacheQGC::createFetchTileTask(providerType, fetchKey.x, fetchKey.y, fetchKey.zoom);
-    connect(task, &QGCFetchTileTask::tileFetched, this, [this, fetchKey](QGCCacheTile* tile) {
-        const std::unique_ptr<QGCCacheTile> guard(tile);  // caller-owned per task contract
+    connect(task, &QGCFetchTileTask::tileFetched, this, [this, fetchKey](const QGCCacheTile& tile) {
         if (!_fetchInFlight(fetchKey)) {
-            return;                                       // all interest cancelled while the lookup was in flight
+            return;  // all interest cancelled while the lookup was in flight
         }
         // An unusable cached body (empty or corrupt) is a miss, not a
         // failure: failing here would re-read the same bytes on every retry,
         // blocking the network fallback until cache eviction
-        const QImage image = tile ? decodeTile(tile->img) : QImage();
+        const QImage image = decodeTile(tile.img);
         if (image.isNull()) {
             qCDebug(GeoMapTerrariumTileFetcherLog)
                 << "tile" << fetchKey << "cached entry unusable, fetching from network";

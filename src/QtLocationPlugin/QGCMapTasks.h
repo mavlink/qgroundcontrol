@@ -4,11 +4,11 @@
 #include <QtCore/QQueue>
 #include <QtCore/QString>
 
+#include "QGCCacheTile.h"
 #include "QGCMapTaskBase.h"
-#include "QGCTileCacheTypes.h"
 #include "QGCTile.h"
+#include "QGCTileCacheTypes.h"
 
-struct QGCCacheTile;
 class QGCCachedTileSet;
 
 //-----------------------------------------------------------------------------
@@ -75,15 +75,13 @@ public:
     {}
     ~QGCFetchTileTask() = default;
 
-    void setTileFetched(QGCCacheTile *tile)
-    {
-        emit tileFetched(tile);
-    }
+    void setTileFetched(const QGCCacheTile& tile) { emit tileFetched(tile); }
 
     QString hash() const { return m_hash; }
 
 signals:
-    void tileFetched(QGCCacheTile *tile);
+    /// By value, so that a tile queued for a receiver that is deleted meanwhile is not leaked
+    void tileFetched(const QGCCacheTile& tile);
 
 private:
     const QString m_hash;

@@ -33,7 +33,7 @@ private:
     void _onRequestFinished();
     void _onRequestError();
     void _onTimeout();
-    void _onCacheHit(QGCCacheTile *tile);
+    void _onCacheHit(const QGCCacheTile& tile);
     void _onCacheMiss();
     void _disconnectReply();
     bool _isBingEmptyTile() const;

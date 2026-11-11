@@ -227,9 +227,9 @@ void QGCCacheWorker::_getTile(QGCMapTask *mtask)
     }
 
     QGCFetchTileTask *task = static_cast<QGCFetchTileTask*>(mtask);
-    auto tile = _database->getTile(task->hash());
+    const auto tile = _database->getTile(task->hash());
     if (tile) {
-        task->setTileFetched(tile.release());
+        task->setTileFetched(*tile);
         return;
     }
 
@@ -238,9 +238,9 @@ void QGCCacheWorker::_getTile(QGCMapTask *mtask)
     // replies race UI teardown and crash). See UnitTestTileGenerator.
 #ifdef QGC_UNITTEST_BUILD
     if (QGC::runningUnitTests() && _unitTestTileGenerator) {
-        QGCCacheTile* const generated = _unitTestTileGenerator(task->hash());
+        const std::unique_ptr<QGCCacheTile> generated(_unitTestTileGenerator(task->hash()));
         if (generated) {
-            task->setTileFetched(generated);
+            task->setTileFetched(*generated);
             return;
         }
     }

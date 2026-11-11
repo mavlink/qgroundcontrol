@@ -1,6 +1,7 @@
 #include "QGCCacheWorkerTest.h"
 
 #include <cmath>
+#include <optional>
 
 #include <QtCore/QTemporaryDir>
 #include <QtPositioning/QGeoCoordinate>
@@ -112,10 +113,11 @@ void QGCCacheWorkerTest::_testSaveAndFetchTile()
 
     // Fetch — FIFO guarantees save completes first
     auto* fetchTask = new QGCFetchTileTask(QStringLiteral("h1"));
-    QGCCacheTile* fetched = nullptr;
+    std::optional<QGCCacheTile> fetched;
     bool fetchError = false;
     connect(
-        fetchTask, &QGCFetchTileTask::tileFetched, this, [&](QGCCacheTile* t) { fetched = t; }, Qt::QueuedConnection);
+        fetchTask, &QGCFetchTileTask::tileFetched, this, [&](const QGCCacheTile& t) { fetched = t; },
+        Qt::QueuedConnection);
     connect(
         fetchTask, &QGCMapTask::error, this, [&](QGCMapTask::TaskType, const QString&) { fetchError = true; },
         Qt::QueuedConnection);
@@ -123,12 +125,11 @@ void QGCCacheWorkerTest::_testSaveAndFetchTile()
     QVERIFY(worker.enqueueTask(fetchTask));
     QTRY_VERIFY_WITH_TIMEOUT(fetched || fetchError, TestTimeout::mediumMs());
 
-    QVERIFY2(fetched != nullptr, "Expected tile to be fetched");
+    QVERIFY2(fetched.has_value(), "Expected tile to be fetched");
     QVERIFY(!fetchError);
     QCOMPARE(fetched->hash, QStringLiteral("h1"));
     QCOMPARE(fetched->img, QByteArray("tile_data"));
     QCOMPARE(fetched->format, QStringLiteral("png"));
-    delete fetched;
 
     worker.stop();
     worker.wait(TestTimeout::mediumMs());
@@ -142,10 +143,11 @@ void QGCCacheWorkerTest::_testFetchTileNotFound()
     QVERIFY(_startWorker(worker));
 
     auto* fetchTask = new QGCFetchTileTask(QStringLiteral("nonexistent"));
-    QGCCacheTile* fetched = nullptr;
+    std::optional<QGCCacheTile> fetched;
     bool fetchError = false;
     connect(
-        fetchTask, &QGCFetchTileTask::tileFetched, this, [&](QGCCacheTile* t) { fetched = t; }, Qt::QueuedConnection);
+        fetchTask, &QGCFetchTileTask::tileFetched, this, [&](const QGCCacheTile& t) { fetched = t; },
+        Qt::QueuedConnection);
     connect(
         fetchTask, &QGCMapTask::error, this, [&](QGCMapTask::TaskType, const QString&) { fetchError = true; },
         Qt::QueuedConnection);
@@ -153,7 +155,7 @@ void QGCCacheWorkerTest::_testFetchTileNotFound()
     QVERIFY(worker.enqueueTask(fetchTask));
     QTRY_VERIFY_WITH_TIMEOUT(fetched || fetchError, TestTimeout::mediumMs());
 
-    QVERIFY(fetched == nullptr);
+    QVERIFY(!fetched.has_value());
     QVERIFY(fetchError);
 
     worker.stop();
@@ -172,10 +174,11 @@ void QGCCacheWorkerTest::_testFetchMapTileMissServesFakeTile()
     // real network fetches.
     const QString hash = UrlFactory::getTileHash(kTestProviderType, 1, 2, 3);
     auto* fetchTask = new QGCFetchTileTask(hash);
-    QGCCacheTile* fetched = nullptr;
+    std::optional<QGCCacheTile> fetched;
     bool fetchError = false;
     connect(
-        fetchTask, &QGCFetchTileTask::tileFetched, this, [&](QGCCacheTile* t) { fetched = t; }, Qt::QueuedConnection);
+        fetchTask, &QGCFetchTileTask::tileFetched, this, [&](const QGCCacheTile& t) { fetched = t; },
+        Qt::QueuedConnection);
     connect(
         fetchTask, &QGCMapTask::error, this, [&](QGCMapTask::TaskType, const QString&) { fetchError = true; },
         Qt::QueuedConnection);
@@ -183,13 +186,12 @@ void QGCCacheWorkerTest::_testFetchMapTileMissServesFakeTile()
     QVERIFY(worker.enqueueTask(fetchTask));
     QTRY_VERIFY_WITH_TIMEOUT(fetched || fetchError, TestTimeout::mediumMs());
 
-    QVERIFY2(fetched != nullptr, "Expected fake tile on map tile cache miss under unit tests");
+    QVERIFY2(fetched.has_value(), "Expected fake tile on map tile cache miss under unit tests");
     QVERIFY(!fetchError);
     QCOMPARE(fetched->hash, hash);
     QCOMPARE(fetched->type, kTestProviderType);
     QVERIFY(!fetched->img.isEmpty());
     QCOMPARE(fetched->format, QStringLiteral("png"));
-    delete fetched;
 
     worker.stop();
     worker.wait(TestTimeout::mediumMs());
@@ -213,10 +215,11 @@ void QGCCacheWorkerTest::_testFetchElevationTileMissServesSyntheticTerrain()
     const QString hash = UrlFactory::getTileHash(elevationType, x, y, 1);
 
     auto* fetchTask = new QGCFetchTileTask(hash);
-    QGCCacheTile* fetched = nullptr;
+    std::optional<QGCCacheTile> fetched;
     bool fetchError = false;
     connect(
-        fetchTask, &QGCFetchTileTask::tileFetched, this, [&](QGCCacheTile* t) { fetched = t; }, Qt::QueuedConnection);
+        fetchTask, &QGCFetchTileTask::tileFetched, this, [&](const QGCCacheTile& t) { fetched = t; },
+        Qt::QueuedConnection);
     connect(
         fetchTask, &QGCMapTask::error, this, [&](QGCMapTask::TaskType, const QString&) { fetchError = true; },
         Qt::QueuedConnection);
@@ -224,7 +227,7 @@ void QGCCacheWorkerTest::_testFetchElevationTileMissServesSyntheticTerrain()
     QVERIFY(worker.enqueueTask(fetchTask));
     QTRY_VERIFY_WITH_TIMEOUT(fetched || fetchError, TestTimeout::mediumMs());
 
-    QVERIFY2(fetched != nullptr, "Expected synthetic terrain tile on elevation cache miss under unit tests");
+    QVERIFY2(fetched.has_value(), "Expected synthetic terrain tile on elevation cache miss under unit tests");
     QVERIFY(!fetchError);
     QCOMPARE(fetched->hash, hash);
     QCOMPARE(fetched->type, elevationType);
@@ -233,7 +236,6 @@ void QGCCacheWorkerTest::_testFetchElevationTileMissServesSyntheticTerrain()
     const TerrainTile tile(fetched->img);
     QVERIFY(tile.isValid());
     QCOMPARE(tile.elevation(flatCenter), UnitTestTerrainData::Flat10Region::amslElevation);
-    delete fetched;
 
     // A tile far away from the test regions serves 0 heights
     const QGeoCoordinate elsewhere(0.005, 0.005);
@@ -242,22 +244,22 @@ void QGCCacheWorkerTest::_testFetchElevationTileMissServesSyntheticTerrain()
     const int farY =
         static_cast<int>(std::floor((elsewhere.latitude() + 90.0) / TerrainTileCopernicus::kTileSizeDegrees));
     auto* farTask = new QGCFetchTileTask(UrlFactory::getTileHash(elevationType, farX, farY, 1));
-    QGCCacheTile* farFetched = nullptr;
+    std::optional<QGCCacheTile> farFetched;
     bool farError = false;
     connect(
-        farTask, &QGCFetchTileTask::tileFetched, this, [&](QGCCacheTile* t) { farFetched = t; }, Qt::QueuedConnection);
+        farTask, &QGCFetchTileTask::tileFetched, this, [&](const QGCCacheTile& t) { farFetched = t; },
+        Qt::QueuedConnection);
     connect(
         farTask, &QGCMapTask::error, this, [&](QGCMapTask::TaskType, const QString&) { farError = true; },
         Qt::QueuedConnection);
     QVERIFY(worker.enqueueTask(farTask));
     QTRY_VERIFY_WITH_TIMEOUT(farFetched || farError, TestTimeout::mediumMs());
-    QVERIFY2(farFetched != nullptr, "Expected synthetic terrain tile for coordinate outside test regions");
+    QVERIFY2(farFetched.has_value(), "Expected synthetic terrain tile for coordinate outside test regions");
     QVERIFY(!farError);
 
     const TerrainTile farTile(farFetched->img);
     QVERIFY(farTile.isValid());
     QCOMPARE(farTile.elevation(elsewhere), 0.0);
-    delete farFetched;
 
     worker.stop();
     worker.wait(TestTimeout::mediumMs());

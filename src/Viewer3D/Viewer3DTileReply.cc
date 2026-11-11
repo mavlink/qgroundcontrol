@@ -69,15 +69,9 @@ void Viewer3DTileReply::_prepareDownload()
     connect(_reply, &QNetworkReply::errorOccurred, this, &Viewer3DTileReply::_onRequestError);
 }
 
-void Viewer3DTileReply::_onCacheHit(QGCCacheTile *tile)
+void Viewer3DTileReply::_onCacheHit(const QGCCacheTile& tile)
 {
-    if (!tile) {
-        _onCacheMiss();
-        return;
-    }
-
-    _tile.data = tile->img;
-    delete tile;
+    _tile.data = tile.img;
 
     if (_isBingEmptyTile()) {
         _tile.data.clear();

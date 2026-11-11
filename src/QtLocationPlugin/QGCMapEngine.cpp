@@ -123,7 +123,6 @@ QGCMapEngine::QGCMapEngine(QObject *parent)
     (void) qRegisterMetaType<QGCTileSet>("QGCTileSet");
     (void) qRegisterMetaType<QGCTileSet*>("QGCTileSet*");
     (void) qRegisterMetaType<QGCCacheTile>("QGCCacheTile");
-    (void) qRegisterMetaType<QGCCacheTile*>("QGCCacheTile*");
 }
 
 QGCMapEngine::~QGCMapEngine()

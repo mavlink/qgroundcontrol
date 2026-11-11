@@ -262,6 +262,22 @@ void QGCTileReplyTest::_abortedReplyStaysSilent()
     QTRY_VERIFY_WITH_TIMEOUT(networkReply.isNull(), TestTimeout::mediumMs());
 }
 
+void QGCTileReplyTest::_deletedDuringCacheLookup()
+{
+    TileReplyMockNam nam;
+    {
+        QGCTileReply deleted(&nam, tileReplyMapId(), kTileX + 3, kTileY, kTileZoom);
+        QVERIFY(deleted.start());
+    }
+
+    // The cache worker runs lookups in order: once this one is answered, the deleted reply's result has arrived too
+    QGCTileReply sentinel(&nam, tileReplyMapId(), kTileX + 4, kTileY, kTileZoom);
+    QSignalSpy sentinelSpy(&sentinel, &QGCTileReply::finished);
+    QVERIFY(sentinel.start());
+    QVERIFY_SIGNAL_COUNT_WAIT(sentinelSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(sentinel.error(), QGCTileReply::Error::NoError);
+}
+
 void QGCTileReplyTest::_networkManagerDestroyedFirst()
 {
     UnitTestTileGenerator::setForcedMissCount(2);

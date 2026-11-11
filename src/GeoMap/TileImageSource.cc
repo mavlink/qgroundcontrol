@@ -73,17 +73,16 @@ int TileImageSource::requestTileImage(const TileMath::TileKey& key)
     qCDebug(GeoMapTileImageSourceVerboseLog) << "requestTileImage: key" << key << "requestId" << requestId;
 
     QGCFetchTileTask* const task = QGeoFileTileCacheQGC::createFetchTileTask(_mapType, key.x, key.y, key.zoom);
-    connect(task, &QGCFetchTileTask::tileFetched, this, [this, requestId, key](QGCCacheTile* tile) {
-        const std::unique_ptr<QGCCacheTile> guard(tile);  // caller-owned per task contract
+    connect(task, &QGCFetchTileTask::tileFetched, this, [this, requestId, key](const QGCCacheTile& tile) {
         if (!_pending.contains(requestId)) {
-            return;                                       // cancelled while the lookup was in flight
+            return;  // cancelled while the lookup was in flight
         }
-        if (!tile || tile->img.isEmpty()) {
+        if (tile.img.isEmpty()) {
             qCDebug(GeoMapTileImageSourceLog) << "tile" << key << "cache returned empty tile, fetching from network";
             _fetchFromNetwork(requestId, key);
             return;
         }
-        _deliver(requestId, key, tile->img);
+        _deliver(requestId, key, tile.img);
     });
     connect(task, &QGCMapTask::error, this, [this, requestId, key](QGCMapTask::TaskType, const QString&) {
         if (!_pending.contains(requestId)) {

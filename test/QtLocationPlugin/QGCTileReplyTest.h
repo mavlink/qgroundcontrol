@@ -12,5 +12,6 @@ private slots:
     void _serverFailure_data();
     void _serverFailure();
     void _abortedReplyStaysSilent();
+    void _deletedDuringCacheLookup();
     void _networkManagerDestroyedFirst();
 };

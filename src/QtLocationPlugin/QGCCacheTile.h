@@ -25,4 +25,3 @@ struct QGCCacheTile
     QString type;
 };
 Q_DECLARE_METATYPE(QGCCacheTile)
-Q_DECLARE_METATYPE(QGCCacheTile*)

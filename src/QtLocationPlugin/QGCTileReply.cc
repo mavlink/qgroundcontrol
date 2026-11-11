@@ -113,10 +113,8 @@ bool QGCTileReply::start()
     engine->ensureInitialized();
 
     QGCFetchTileTask* const task = new QGCFetchTileTask(_hash);
-    (void) connect(task, &QGCFetchTileTask::tileFetched, this, [this](QGCCacheTile* tile) {
-        const std::unique_ptr<QGCCacheTile> owned(tile);  // the receiver owns the tile
-        _cacheLookupFinished(owned.get());
-    });
+    (void) connect(task, &QGCFetchTileTask::tileFetched, this,
+                   [this](const QGCCacheTile& tile) { _cacheLookupFinished(&tile); });
     (void) connect(task, &QGCMapTask::error, this, [this] { _cacheLookupFinished(nullptr); });
 
     // A lookup that cannot be queued reports its error from within addTask(), which Starting ignores
