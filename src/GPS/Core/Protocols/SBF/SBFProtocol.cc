@@ -234,7 +234,7 @@ GPSReceiveUpdates Protocol::_decodeBlock(const GPSFrame& frame, GPSDecodeContext
         context.failControl(QStringLiteral("Septentrio position datum is not WGS84/ITRS"));
         _ready = false;
         context.stream().setEnabled(GPSFrameKind::RTCM3, false);
-        context.publishSurvey(GPSSurveyState::Inactive, {});
+        context.publishBaseStatus(GPSBaseState::Inactive, {});
     } else {
         const bool coordinatesValid = _applyPVTGeodetic(pvt, position, context);
         if (_ready) {
@@ -315,10 +315,8 @@ void Protocol::_publishSurveyStatus(const SBF::PVTGeodetic& pvt, const GPSDecode
                           .longitudeDegrees = position.navigation.longitudeDegrees,
                           .altitudeMeters = position.navigation.altitudeEllipsoidMeters};
     }
-    const GPSSurveyState state = valid    ? GPSSurveyState::Valid
-                                 : active ? GPSSurveyState::Active
-                                          : GPSSurveyState::Inactive;
-    context.publishSurvey(state, _surveyClock.duration(), surveyPosition);
+    const GPSBaseState state = valid ? GPSBaseState::Valid : active ? GPSBaseState::Active : GPSBaseState::Inactive;
+    context.publishBaseStatus(state, _surveyClock.duration(), surveyPosition);
 }
 
 QLatin1StringView signature(const GPSFrame& frame)

@@ -300,7 +300,7 @@ void GPSReceiver::_endSession(GPSConnectionError error, const QString& detail, G
     _resetStatus();
 }
 
-void GPSReceiver::_onGPSSurveyReport(const GPSSurveyReport& status)
+void GPSReceiver::_onGPSSurveyReport(const GPSBaseStatus& status)
 {
     _facts->_setSurvey(status);
     _emitChanges();

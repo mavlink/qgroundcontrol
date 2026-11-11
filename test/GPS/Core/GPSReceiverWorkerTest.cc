@@ -558,14 +558,13 @@ void GPSReceiverWorkerTest::_configuredReceiverReportsReadyThenLoss()
     QCOMPARE(errors.first().at(1).toString(), QStringLiteral("Scripted receiver connection lost"));
     if (const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&config.mode)) {
         QCOMPARE(surveys.size(), 1);
-        const auto status = qvariant_cast<GPSSurveyReport>(surveys.first().first());
+        const auto status = qvariant_cast<GPSBaseStatus>(surveys.first().first());
         QCOMPARE(status.position.latitudeDegrees, fixed->position.latitudeDegrees);
         QCOMPARE(status.position.longitudeDegrees, fixed->position.longitudeDegrees);
         QCOMPARE(status.position.altitudeMeters, fixed->position.altitudeMeters);
         QVERIFY(!status.meanAccuracyMeters.has_value());
         QCOMPARE(status.duration.count(), 0);
-        QVERIFY(status.valid);
-        QVERIFY(!status.active);
+        QCOMPARE(status.state, GPSBaseState::Valid);
     }
 }
 

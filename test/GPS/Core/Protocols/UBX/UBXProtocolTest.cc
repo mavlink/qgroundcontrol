@@ -172,7 +172,7 @@ struct Fixture
         QCOMPARE(receiver.model.startSettings.at(Cfg::TMODE_SVIN_ACC_LIMIT.id), 12500);
         QCOMPARE(receiver.model.startSettings.at(Cfg::MSGOUT_UBX_NAV_SVIN.port(UBX::MsgOutPort::UART1).id), 5);
         QCOMPARE(receiver.model.startSettings.at(Cfg::MSGOUT_UBX_NAV_SVIN.port(UBX::MsgOutPort::USB).id), 5);
-        QCOMPARE(receiver.log.count<GPSSurveyReport>(), 0);
+        QCOMPARE(receiver.log.count<GPSBaseStatus>(), 0);
         QCOMPARE(receiver.model.rtcmEnables, 0);
     }
 
@@ -185,7 +185,7 @@ struct Fixture
         QVERIFY(receiver.model.surveyPolls > 1 && receiver.model.surveyPolls <= 31);
         QCOMPARE_GE(receiver.clock.nowUs() - receiver.model.disabledAt, 3000000);
         QVERIFY(receiver.clock.nowUs() - receiver.model.disabledAt < 3300000);
-        QCOMPARE(receiver.log.count<GPSSurveyReport>(), 0);
+        QCOMPARE(receiver.log.count<GPSBaseStatus>(), 0);
         QCOMPARE(receiver.model.rtcmEnables, 0);
     }
 };

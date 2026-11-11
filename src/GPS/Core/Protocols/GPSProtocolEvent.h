@@ -101,7 +101,7 @@ struct GPSInputProtocol
 };
 
 using GPSProtocolEvent = std::variant<GPSDecodedPosition, GPSIntegrityReport, GPSDecodedSatellites,
-                                      GPSDecodedSatelliteUsage, GPSSurveyReport, GPSRTCMFrame, GPSInputProtocol>;
+                                      GPSDecodedSatelliteUsage, GPSBaseStatus, GPSRTCMFrame, GPSInputProtocol>;
 
 /// Events decoded from one span of received bytes, in publication order.
 struct GPSEventBatch

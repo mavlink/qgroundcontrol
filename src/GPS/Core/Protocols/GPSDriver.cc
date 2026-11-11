@@ -324,11 +324,11 @@ void GPSDriver::_handleSatellites(const GPSSatelliteReport& report)
     _publishSatellites(report);
 }
 
-void GPSDriver::_handle(const GPSSurveyReport& report)
+void GPSDriver::_handle(const GPSBaseStatus& report)
 {
     _state->cycle.usefulData = true;
-    if (_sinks.onSurveyIn) {
-        _sinks.onSurveyIn(report);
+    if (_sinks.onBaseStatus) {
+        _sinks.onBaseStatus(report);
     }
 }
 

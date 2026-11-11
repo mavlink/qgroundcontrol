@@ -175,7 +175,7 @@ GPSTest::Golden::Decode navigationEvents(GPSTest::Golden::Decode decode)
     const auto familySpecific = [](const GPSTest::Golden::Event& event) {
         const auto* survey = std::get_if<GPSTest::Golden::Survey>(&event);
         return std::holds_alternative<GPSInputProtocol>(event) ||
-               (survey && !survey->survey.valid && !survey->survey.active);
+               (survey && survey->survey.state == GPSBaseState::Inactive);
     };
     std::erase_if(decode.events, familySpecific);
     std::erase_if(decode.expired, familySpecific);
@@ -328,7 +328,7 @@ void GPSGoldenTranscriptTest::_decodeOnlyArming()
         // A base the configuration verified, which a recording does not carry, is revoked when it expires.
         const auto revocation = [](const GPSTest::Golden::Event& event) {
             const auto* survey = std::get_if<GPSTest::Golden::Survey>(&event);
-            return survey && !survey->survey.valid && !survey->survey.active;
+            return survey && survey->survey.state == GPSBaseState::Inactive;
         };
         GPSTest::Golden::Decode expected = configured;
         GPSTest::Golden::Decode actual = armed;

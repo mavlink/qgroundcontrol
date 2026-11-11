@@ -139,12 +139,12 @@ void GPSReceiverFactGroupTest::_currentBaseSaveValidity()
     QVERIFY(connectOverTcp(harness.receiver));
     ScriptedReceiverWorker* const worker = harness.workers.current();
     GPSReceiverFactGroup& facts = *harness.receiver.facts();
-    GPSSurveyReport survey{.position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
-                           .meanAccuracyMeters = 1.0};
-    worker->survey(survey);
+    GPSBaseStatus survey{.position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
+                         .meanAccuracyMeters = 1.0};
+    worker->baseStatus(survey);
     QVERIFY(!facts.canSaveCurrentBasePosition());
-    survey.valid = true;
-    worker->survey(survey);
+    survey.state = GPSBaseState::Valid;
+    worker->baseStatus(survey);
     QVERIFY(facts.canSaveCurrentBasePosition());
     QCOMPARE(facts.currentBasePosition(),
              std::optional(GPSBaseStationConfig::Fixed{.position = survey.position, .accuracyMeters = 1.0f}));
@@ -154,13 +154,13 @@ void GPSReceiverFactGroupTest::_currentBaseSaveValidity()
     } else {
         survey.position.altitudeMeters = static_cast<float>(value);
     }
-    worker->survey(survey);
+    worker->baseStatus(survey);
     // Notified only when the result changes.
     QCOMPARE(changes.size(), expected ? 0 : 1);
     QCOMPARE(facts.canSaveCurrentBasePosition(), expected);
     QCOMPARE(facts.property("canSaveCurrentBasePosition").toBool(), expected);
-    survey.valid = false;
-    worker->survey(survey);
+    survey.state = GPSBaseState::Inactive;
+    worker->baseStatus(survey);
     QVERIFY(!facts.canSaveCurrentBasePosition());
 }
 
@@ -260,7 +260,7 @@ void GPSReceiverFactGroupTest::_summaryLabel()
     QVERIFY(connectOverTcp(receiver));
     QCOMPARE(receiver.activeRole(), RTKSettings::ConfiguredBase);
     QCOMPARE(receiver.summaryLabel(), GPSReceiver::tr("Base"));
-    harness.workers.current()->survey({.active = true});
+    harness.workers.current()->baseStatus({.state = GPSBaseState::Active});
     QCOMPARE(receiver.summaryLabel(), GPSReceiver::tr("Survey", "Base survey-in in progress"));
     QCOMPARE(changed.size(), 5);
 }

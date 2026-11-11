@@ -59,9 +59,9 @@ struct Base
         return driver.error() == GPSProtocolError::None;
     }
 
-    std::vector<GPSSurveyReport> surveys() const { return peer.log.reports<GPSSurveyReport>(); }
+    std::vector<GPSBaseStatus> surveys() const { return peer.log.reports<GPSBaseStatus>(); }
 
-    void clearSurveys() { peer.log.clear<GPSSurveyReport>(); }
+    void clearSurveys() { peer.log.clear<GPSBaseStatus>(); }
 
     ModelReceiver<AshtechReceiverModel> peer;
     GPSProtocolRuntime driver;

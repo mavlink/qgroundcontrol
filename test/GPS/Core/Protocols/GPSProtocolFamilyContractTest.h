@@ -2,8 +2,8 @@
 
 #include "Protocols/Support/GPSProtocolTestBase.h"
 
-/// Contracts every receiver family in the family table meets: pure decoding, validation, link failures and its own log
-/// category. The goldens configure every family.
+/// Contracts every receiver family in the family table meets: pure decoding, validation, link failures, its own log
+/// category and, behind GPSDriver, the base status of a base it configures. The goldens configure every family.
 class GPSProtocolFamilyContractTest : public GPSProtocolTestBase
 {
     Q_OBJECT
@@ -18,4 +18,6 @@ private slots:
     void _logCategory();
     void _linkFailure_data();
     void _linkFailure();
+    void _fixedBaseReportsValid_data();
+    void _fixedBaseReportsValid();
 };

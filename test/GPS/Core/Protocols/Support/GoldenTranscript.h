@@ -144,7 +144,7 @@ struct SatelliteUsage
 struct Survey
 {
     uint64_t timestampUs = 0;
-    GPSSurveyReport survey{};
+    GPSBaseStatus survey{};
 };
 
 struct RTCM

@@ -267,7 +267,7 @@ private slots:
     void _onGPSConnect();
     void _onReceiverDetected();
     void _onInputProblem(GPSInputProblem problem);
-    void _onGPSSurveyReport(const GPSSurveyReport& status);
+    void _onGPSSurveyReport(const GPSBaseStatus& status);
 
 private:
     /// The values behind receiverChanged.

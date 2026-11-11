@@ -412,6 +412,11 @@ void GPSReceiverTest::_fixedBasePositionIsGcsPosition()
     auto* worker = harness.workers.current();
     QVERIFY(worker);
     worker->ready();
+    // The configured position is not the ground station's until the receiver reports that it uses it.
+    worker->position(fixReport(GPSFixQuality::NoFix));
+    QVERIFY(!positions.gcsPosition().isValid());
+    worker->baseStatus({.state = GPSBaseState::Valid,
+                        .position = {.latitudeDegrees = 47.5, .longitudeDegrees = 8.25, .altitudeMeters = 480.0f}});
     // Fixed-mode receivers report only a time fix.
     worker->position(fixReport(GPSFixQuality::NoFix));
     QCOMPARE(positions.selectedSource(), PositionManager::SelectedSource::Receiver);
@@ -449,24 +454,22 @@ void GPSReceiverTest::_surveyedBasePositionIsGcsPosition()
     deliver(navigating);
     QCOMPARE(positions.gcsPosition().latitude(), 10.0);
 
-    GPSSurveyReport survey;
-    survey.active = false;
-    survey.valid = true;
+    GPSBaseStatus survey;
+    survey.state = GPSBaseState::Valid;
     survey.position = {.latitudeDegrees = 11, .longitudeDegrees = 21, .altitudeMeters = 400};
     survey.meanAccuracyMeters = 1.5;
-    worker->survey(survey);
+    worker->baseStatus(survey);
     deliver(fixReport(GPSFixQuality::NoFix));
     QCOMPARE(positions.gcsPosition(), QGeoCoordinate(11, 21));
     QCOMPARE(positions.gcsPositionHorizontalAccuracy(), 1.5);
 
     survey.meanAccuracyMeters.reset();
-    worker->survey(survey);
+    worker->baseStatus(survey);
     deliver(fixReport(GPSFixQuality::NoFix));
     QCOMPARE(positions.gcsPositionHorizontalAccuracy(), 2.0);
 
-    survey.valid = false;
-    survey.active = true;
-    worker->survey(survey);
+    survey.state = GPSBaseState::Active;
+    worker->baseStatus(survey);
     deliver(fixReport(GPSFixQuality::NoFix));
     QVERIFY(!positions.gcsPosition().isValid());
 }
@@ -492,9 +495,8 @@ void GPSReceiverTest::_retiredWorkerCannotUpdateReplacement()
     GPSReceiverFactGroup& facts = *receiver.facts();
     QVERIFY(!receiver.facts()->telemetryAvailable());
     emit first->receiverReady();
-    GPSSurveyReport survey{};
-    survey.valid = true;
-    survey.active = true;
+    GPSBaseStatus survey{};
+    survey.state = GPSBaseState::Valid;
     survey.position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500};
     survey.duration = std::chrono::seconds(4294967295LL);
     survey.meanAccuracyMeters = 1.5;

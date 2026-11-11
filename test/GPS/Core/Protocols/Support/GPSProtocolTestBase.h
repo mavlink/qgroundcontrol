@@ -107,13 +107,13 @@ inline bool matches(double actual, double expected, double tolerance = 1e-6)
     return std::isnan(expected) ? std::isnan(actual) : std::abs(actual - expected) < tolerance;
 }
 
-/// Survey state as bits: 1 when valid, 2 when active.
-inline int surveyFlags(const GPSSurveyReport& report)
+/// Base state as a number: 0 inactive, 1 valid, 2 active.
+inline int surveyFlags(const GPSBaseStatus& report)
 {
-    return (report.valid ? 1 : 0) | (report.active ? 2 : 0);
+    return report.state == GPSBaseState::Valid ? 1 : report.state == GPSBaseState::Active ? 2 : 0;
 }
 
-inline uint32_t surveyDuration(const GPSSurveyReport& report)
+inline uint32_t surveyDuration(const GPSBaseStatus& report)
 {
     return static_cast<uint32_t>(report.duration.count());
 }

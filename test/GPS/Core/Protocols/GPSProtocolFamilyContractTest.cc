@@ -4,17 +4,22 @@
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include <numbers>
 #include <span>
 #include <utility>
 #include <vector>
 
 #include <QtCore/QSet>
 
+#include "GPSDriver.h"
 #include "GPSProtocolRuntime.h"
 #include "GPSReceiverDescriptor.h"
 #include "GPSReceiverFamilies.h"
+#include "LittleEndian.h"
+#include "Protocols/Scenarios/GoldenScenarios.h"
 #include "Protocols/Support/GPSModelViolations.h"
 #include "Protocols/Support/GPSProtocolTestBase.h"
+#include "Protocols/Support/QuectelReceiverModel.h"
 #include "Protocols/Support/ReceiverBench.h"
 
 using namespace std::chrono_literals;
@@ -135,6 +140,116 @@ void addFamilyRows()
         QTest::newRow(kFamilies[static_cast<size_t>(i)].name) << static_cast<int>(i);
     }
 }
+
+/// The fixed base every family is asked for: latitude 0, longitude 90 degrees, 100 m, which is ECEF (0, 6378237, 0).
+const GPSReceiverConfig kFixedBase = GoldenScenario::fixedBase(0, 90, 100, 1);
+
+/// A Septentrio PVTGeodetic block of solution @a mode at the fixed base's position, in the WGS84 datum.
+QByteArray pvtGeodetic(uint8_t mode, uint32_t tow)
+{
+    std::vector<uint8_t> body(80);
+    body[0] = mode;
+    (void) LittleEndian::write<double>(body, 10, std::numbers::pi / 2);
+    (void) LittleEndian::write<double>(body, 18, 100.0);
+    return toByteArray(sbfBlock(4007, body, tow));
+}
+
+/// A family whose receivers QGC configures as a base, on the receiver model the goldens drive.
+struct BaseFamily
+{
+    const char* name;
+    GPSType type;
+    GoldenScenario::BenchFactory bench;
+    /// What the receiver of a fixed base sends once configured, when that matters to its status.
+    QByteArray fixedOutput = {};
+};
+
+const std::vector<BaseFamily>& baseFamilies()
+{
+    using namespace GoldenScenario;
+    static const std::vector<BaseFamily> families{
+        // NAV-SVIN reports no survey-in, which says nothing about a fixed base.
+        {"UBX", GPSType::UBlox, ubxWire(), navSvin(1000, 0, false, false)},
+        // PVTGeodetic reports a fixed location, three-dimensional and without error.
+        {"SBF", GPSType::Septentrio, sbf(), pvtGeodetic(3, 1000)},
+        {"Unicore", GPSType::Unicore, unicore()},
+        {"Quectel", GPSType::Quectel, quectel([](QuectelBench& b) {
+             b.model.role = 2;
+             b.model.base = "2,0,0,0.0000,6378237.0000,0.0000,0";
+         })},
+        // The first position starts the base setup, which sets the fixed position.
+        {"Ashtech", GPSType::Trimble, ashtech(),
+         nmea("PASHR,POS,2,12,114501.00,0000.00000,N,09000.00000,E,100.000,0,90,10,0,1,1,1,1,")},
+        {"Femto", GPSType::Femto, femto()},
+    };
+    return families;
+}
+
+void addBaseFamilyRows()
+{
+    QTest::addColumn<int>("baseIndex");
+    for (qsizetype i = 0; i < std::ssize(baseFamilies()); ++i) {
+        QTest::newRow(baseFamilies()[static_cast<size_t>(i)].name) << static_cast<int>(i);
+    }
+}
+
+/// A GPSDriver that configures a family's receiver model as a base, and what it delivered to its sinks.
+class DrivenBase
+{
+public:
+    DrivenBase(const BaseFamily& family, const GPSReceiverConfig& config)
+        : _bench(family.bench(_clock))
+        , _driver(family.type, *_bench, config, _sinks(), _driverClock())
+    {
+        _bench->startSession();
+    }
+
+    [[nodiscard]] bool configure() { return _driver.configure(); }
+
+    /// The receiver sends @a output, and the driver receives until it has read it and @a duration has passed.
+    void receive(const QByteArray& output, std::chrono::milliseconds duration = 0ms)
+    {
+        if (!output.isEmpty()) {
+            _bench->queueReply(output);
+        }
+        const uint64_t until = _clock.nowUs() + static_cast<uint64_t>(std::chrono::microseconds(duration).count());
+        for (int calls = 0; calls < MAX_RECEIVE_CALLS; ++calls) {
+            if (_driver.receiveOutcome(RECEIVE_SLICE).terminal() ||
+                (!_bench->hasQueuedReadData() && _clock.nowUs() >= until)) {
+                return;
+            }
+        }
+    }
+
+    std::vector<GPSBaseStatus> statuses;
+    int corrections = 0;
+
+private:
+    static constexpr std::chrono::milliseconds RECEIVE_SLICE{100};
+    static constexpr int MAX_RECEIVE_CALLS = 500;
+
+    GPSDriverSinks _sinks()
+    {
+        GPSDriverSinks sinks;
+        sinks.onRTCM = [this](const QByteArray&) { ++corrections; };
+        sinks.onBaseStatus = [this](const GPSBaseStatus& status) { statuses.push_back(status); };
+        return sinks;
+    }
+
+    /// The driver's waits run the events of a receiver model that has them.
+    GPSClock _driverClock()
+    {
+        GPSClock clock = _clock.source();
+        if (_bench->wait) {
+            clock.wait = _bench->wait;
+        }
+        return clock;
+    }
+
+    GPSTestClock _clock{GPSTestClock::START_US};
+    std::unique_ptr<ReceiverBench> _bench;
+    GPSDriver _driver;
+};
 }  // namespace
 
 void GPSProtocolFamilyContractTest::_familyTable()
@@ -294,6 +409,27 @@ void GPSProtocolFamilyContractTest::_linkFailure()
         QVERIFY(!receiver->errorDetail().isEmpty());
     }
     QCOMPARE(log.warnings(), warnings);
+}
+
+void GPSProtocolFamilyContractTest::_fixedBaseReportsValid_data()
+{
+    addBaseFamilyRows();
+}
+
+void GPSProtocolFamilyContractTest::_fixedBaseReportsValid()
+{
+    QFETCH(int, baseIndex);
+    const auto& family = baseFamilies()[static_cast<size_t>(baseIndex)];
+    DrivenBase base(family, kFixedBase);
+    QVERIFY(base.configure());
+    base.receive(family.fixedOutput, 2s);
+    // Every family reports the fixed position it runs on, whichever of its messages says so.
+    QVERIFY(!base.statuses.empty());
+    const GPSBaseStatus& status = base.statuses.back();
+    QCOMPARE(status.state, GPSBaseState::Valid);
+    QVERIFY(matches(status.position.latitudeDegrees, 0));
+    QVERIFY(matches(status.position.longitudeDegrees, 90));
+    QVERIFY(!status.meanAccuracyMeters);
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(GPSProtocolFamilyContractTest, TestLabel::Unit)

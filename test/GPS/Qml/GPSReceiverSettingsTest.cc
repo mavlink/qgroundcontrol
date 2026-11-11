@@ -229,8 +229,8 @@ void GPSReceiverSettingsTest::_surveySaveNeedsApplicationReceiver()
 
     // GPSManager saves the position of the application's receiver, so a panel that shows another receiver's finished
     // survey offers no save.
-    harness.workers.current()->survey(
-        {.position = kSurveyedPosition, .meanAccuracyMeters = 0.75, .valid = true, .active = false});
+    harness.workers.current()->baseStatus(
+        {.state = GPSBaseState::Valid, .position = kSurveyedPosition, .meanAccuracyMeters = 0.75});
     QVERIFY(receiver.facts()->canSaveCurrentBasePosition());
     QVERIFY(accuracy->property("visible").toBool());
     QVERIFY(!prompt->property("visible").toBool());

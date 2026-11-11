@@ -374,7 +374,7 @@ void datumRejection(GPSTestClock& clock)
         QCOMPARE(sbf->error(), GPSProtocolError::Protocol);
         QVERIFY(sbf->errorDetail().contains("datum"));
         QVERIFY(!sbf->receiverReady());
-        const auto surveys = sbf.reports<GPSSurveyReport>();
+        const auto surveys = sbf.reports<GPSBaseStatus>();
         QVERIFY(surveys.size() == 1 && surveyFlags(surveys.back()) == 0);
         QVERIFY(std::isnan(surveys.back().position.latitudeDegrees));
         QCOMPARE(log.warnings(),
@@ -436,7 +436,7 @@ void surveyEvidence(GPSTestClock& clock)
     unsigned baudRate = 115200;
     uint32_t tow = 0;
     auto payload = bytes({.latitude = 0.5, .longitude = 1, .height = 500});
-    std::vector<GPSSurveyReport> surveys;
+    std::vector<GPSBaseStatus> surveys;
     // Publishes one epoch and checks the single survey report and accuracies it carries.
     auto publish = [&](uint8_t mode, uint8_t flags, uint16_t horizontal = 200, uint16_t vertical = 200) {
         clock.advanceBy(1000000);
@@ -446,7 +446,7 @@ void surveyEvidence(GPSTestClock& clock)
         (void) LittleEndian::write<uint16_t>(payload, 78, vertical);
         sbf.events.clear();
         (void) sbf->consume(sbfBlock(SBF::BlockId::PVT_GEODETIC, payload, tow));
-        surveys = sbf.reports<GPSSurveyReport>();
+        surveys = sbf.reports<GPSBaseStatus>();
         QCOMPARE(surveys.size(), 1);
         QCOMPARE(surveyFlags(surveys.back()), flags);
         QVERIFY(!surveys.back().meanAccuracyMeters.has_value());

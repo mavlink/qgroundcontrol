@@ -161,14 +161,14 @@ void fixedBaseAndTransition(GPSTestClock& clock)
     QVERIFY(driver.receiverReady());
     QVERIFY(receiver.sent("MODE BASE 4315616."));
     QVERIFY(receiver.sent("BESTNAVXYZA") && receiver.sent("RTCM1005 1") && receiver.sent("RTCM1124 1"));
-    QVERIFY(receiver.log.count<GPSSurveyReport>());
-    QCOMPARE(surveyFlags(receiver.log.latest<GPSSurveyReport>()), 1);
-    QVERIFY(!receiver.log.latest<GPSSurveyReport>().meanAccuracyMeters.has_value());
-    QCOMPARE(surveyDuration(receiver.log.latest<GPSSurveyReport>()), 0);
-    QVERIFY(!std::isnan(receiver.log.latest<GPSSurveyReport>().position.altitudeMeters));
-    QVERIFY(std::abs(receiver.log.latest<GPSSurveyReport>().position.latitudeDegrees - 47) < 1e-7);
-    QVERIFY(std::abs(receiver.log.latest<GPSSurveyReport>().position.longitudeDegrees - 8) < 1e-7);
-    QVERIFY(std::abs(receiver.log.latest<GPSSurveyReport>().position.altitudeMeters - 500) < 0.01);
+    QVERIFY(receiver.log.count<GPSBaseStatus>());
+    QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 1);
+    QVERIFY(!receiver.log.latest<GPSBaseStatus>().meanAccuracyMeters.has_value());
+    QCOMPARE(surveyDuration(receiver.log.latest<GPSBaseStatus>()), 0);
+    QVERIFY(!std::isnan(receiver.log.latest<GPSBaseStatus>().position.altitudeMeters));
+    QVERIFY(std::abs(receiver.log.latest<GPSBaseStatus>().position.latitudeDegrees - 47) < 1e-7);
+    QVERIFY(std::abs(receiver.log.latest<GPSBaseStatus>().position.longitudeDegrees - 8) < 1e-7);
+    QVERIFY(std::abs(receiver.log.latest<GPSBaseStatus>().position.altitudeMeters - 500) < 0.01);
     QVERIFY(std::any_of(receiver.log.commands.begin(), receiver.log.commands.end(), [](const auto& result) {
         return result.command == "BESTNAVXYZA" && result.outcome == GPSCommandOutcome::ReadbackVerified;
     }));
@@ -197,19 +197,19 @@ void averagingEvidenceAndRestart(GPSTestClock& clock)
     unsigned rate = 115200;
     QVERIFY(driver.configure(baseConfig(false), rate));
     QVERIFY(receiver.sent("MODE BASE TIME 60 0"));
-    QCOMPARE(surveyFlags(receiver.log.latest<GPSSurveyReport>()), 2);
-    QVERIFY(std::isnan(receiver.log.latest<GPSSurveyReport>().position.latitudeDegrees));
-    QVERIFY(std::isnan(receiver.log.latest<GPSSurveyReport>().position.longitudeDegrees));
-    QVERIFY(std::isnan(receiver.log.latest<GPSSurveyReport>().position.altitudeMeters));
-    QVERIFY(!receiver.log.latest<GPSSurveyReport>().meanAccuracyMeters.has_value() &&
-            surveyDuration(receiver.log.latest<GPSSurveyReport>()) == 0);
+    QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 2);
+    QVERIFY(std::isnan(receiver.log.latest<GPSBaseStatus>().position.latitudeDegrees));
+    QVERIFY(std::isnan(receiver.log.latest<GPSBaseStatus>().position.longitudeDegrees));
+    QVERIFY(std::isnan(receiver.log.latest<GPSBaseStatus>().position.altitudeMeters));
+    QVERIFY(!receiver.log.latest<GPSBaseStatus>().meanAccuracyMeters.has_value() &&
+            surveyDuration(receiver.log.latest<GPSBaseStatus>()) == 0);
     clock.advanceBy(7200000000ULL);
     driver.consume(correction());
     QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 0);
-    QCOMPARE(surveyFlags(receiver.log.latest<GPSSurveyReport>()), 2);
+    QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 2);
     driver.consume(correction(position("FIXEDPOS", receiver.model.coordinates)));
     QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 0);
-    QCOMPARE(surveyFlags(receiver.log.latest<GPSSurveyReport>()), 2);
+    QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 2);
 
     // BASEPOS is a real-time monitoring solution, not evidence of a frozen average.
     consume(driver, native("BASEPOSA", "SOL_COMPUTED,SINGLE,47,8,450,50,WGS84,0.001,0.001,0.001"));
@@ -218,24 +218,24 @@ void averagingEvidenceAndRestart(GPSTestClock& clock)
     const auto calls = transportCalls(receiver);
     consume(driver, position("FIXEDPOS", receiver.model.coordinates));
     QCOMPARE(transportCalls(receiver), calls);
-    QCOMPARE(surveyFlags(receiver.log.latest<GPSSurveyReport>()), 1);
-    QVERIFY(!receiver.log.latest<GPSSurveyReport>().meanAccuracyMeters.has_value() &&
-            surveyDuration(receiver.log.latest<GPSSurveyReport>()) == 0);
+    QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 1);
+    QVERIFY(!receiver.log.latest<GPSBaseStatus>().meanAccuracyMeters.has_value() &&
+            surveyDuration(receiver.log.latest<GPSBaseStatus>()) == 0);
     driver.consume(correction());
     QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
 
     // Loss of the receiver's fixed solution cannot silently resume with a previous average.
     consume(driver, position("SINGLE", receiver.model.coordinates, 378239000));
     QVERIFY(!driver.receiverReady());
-    QCOMPARE(surveyFlags(receiver.log.latest<GPSSurveyReport>()), 0);
-    QVERIFY(std::isnan(receiver.log.latest<GPSSurveyReport>().position.latitudeDegrees));
-    QVERIFY(std::isnan(receiver.log.latest<GPSSurveyReport>().position.longitudeDegrees));
-    QVERIFY(std::isnan(receiver.log.latest<GPSSurveyReport>().position.altitudeMeters));
+    QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 0);
+    QVERIFY(std::isnan(receiver.log.latest<GPSBaseStatus>().position.latitudeDegrees));
+    QVERIFY(std::isnan(receiver.log.latest<GPSBaseStatus>().position.longitudeDegrees));
+    QVERIFY(std::isnan(receiver.log.latest<GPSBaseStatus>().position.altitudeMeters));
     consume(driver, position("FIXEDPOS", receiver.model.coordinates));
     driver.consume(correction());
     QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
     QVERIFY(driver.configure(baseConfig(false), rate));
-    QCOMPARE(surveyFlags(receiver.log.latest<GPSSurveyReport>()), 2);
+    QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 2);
     QCOMPARE(receiver.commands().count("MODE BASE TIME 60 0\r\n"), 2);
     driver.consume(correction());
     QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
@@ -303,7 +303,7 @@ void corruptStatusAndExpiry(GPSTestClock& clock)
         driver.consume(correction());
         QCOMPARE(transportCalls(receiver), calls);
         QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 0);
-        QCOMPARE(surveyFlags(receiver.log.latest<GPSSurveyReport>()), 2);
+        QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 2);
         consume(driver, position("FIXEDPOS", receiver.model.coordinates, 378239000));
         driver.consume(correction());
         QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
@@ -311,7 +311,7 @@ void corruptStatusAndExpiry(GPSTestClock& clock)
         driver.consume(correction());
         QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
         QVERIFY(!driver.receiverReady());
-        QCOMPARE(surveyFlags(receiver.log.latest<GPSSurveyReport>()), 0);
+        QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 0);
     }
 }
 
@@ -345,7 +345,7 @@ void restartAndReadErrors(GPSTestClock& clock)
         QVERIFY(!driver.receiverReady());
         driver.consume(correction());
         QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 0);
-        QCOMPARE(surveyFlags(receiver.log.latest<GPSSurveyReport>()), 0);
+        QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 0);
     }
     QVERIFY(!log.warnings().isEmpty());
 }
@@ -360,20 +360,20 @@ void measurementFreshnessAndRollover(GPSTestClock& clock)
         QVERIFY(driver.configure(baseConfig(false), baud));
         const auto complete = GPSTest::unicorePosition("FIXEDPOS", receiver.model.coordinates, 604799000, 2326);
         consume(driver, complete, 1);
-        QCOMPARE(surveyFlags(receiver.log.latest<GPSSurveyReport>()), 1);
-        QVERIFY(!receiver.log.latest<GPSSurveyReport>().meanAccuracyMeters.has_value());
-        QCOMPARE(surveyDuration(receiver.log.latest<GPSSurveyReport>()), 0);
-        const auto reports = receiver.log.count<GPSSurveyReport>();
-        const auto receipt = receiver.log.latest<GPSSurveyReport>().timestampUs;
+        QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 1);
+        QVERIFY(!receiver.log.latest<GPSBaseStatus>().meanAccuracyMeters.has_value());
+        QCOMPARE(surveyDuration(receiver.log.latest<GPSBaseStatus>()), 0);
+        const auto reports = receiver.log.count<GPSBaseStatus>();
+        const auto receipt = receiver.log.latest<GPSBaseStatus>().timestampUs;
         clock.advanceBy(4000000);
         consume(driver, complete);
-        QCOMPARE(receiver.log.count<GPSSurveyReport>(), reports);
-        QCOMPARE(receiver.log.latest<GPSSurveyReport>().timestampUs, receipt);
+        QCOMPARE(receiver.log.count<GPSBaseStatus>(), reports);
+        QCOMPARE(receiver.log.latest<GPSBaseStatus>().timestampUs, receipt);
         if (rollover) {
             consume(driver, GPSTest::unicorePosition("FIXEDPOS", receiver.model.coordinates, 0, 2327));
             QVERIFY(driver.receiverReady());
-            QCOMPARE(surveyFlags(receiver.log.latest<GPSSurveyReport>()), 1);
-            QVERIFY(receiver.log.latest<GPSSurveyReport>().timestampUs > receipt);
+            QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 1);
+            QVERIFY(receiver.log.latest<GPSBaseStatus>().timestampUs > receipt);
             driver.consume(correction());
             QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
             consume(driver, complete);  // Previous week cannot revive/replace the new week's evidence.
@@ -382,12 +382,12 @@ void measurementFreshnessAndRollover(GPSTestClock& clock)
             driver.consume({});
         }
         QVERIFY(!driver.receiverReady());
-        QCOMPARE(surveyFlags(receiver.log.latest<GPSSurveyReport>()), 0);
-        QVERIFY(!receiver.log.latest<GPSSurveyReport>().meanAccuracyMeters.has_value());
-        QCOMPARE(surveyDuration(receiver.log.latest<GPSSurveyReport>()), 0);
-        QVERIFY(std::isnan(receiver.log.latest<GPSSurveyReport>().position.latitudeDegrees));
-        QVERIFY(std::isnan(receiver.log.latest<GPSSurveyReport>().position.longitudeDegrees));
-        QVERIFY(std::isnan(receiver.log.latest<GPSSurveyReport>().position.altitudeMeters));
+        QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 0);
+        QVERIFY(!receiver.log.latest<GPSBaseStatus>().meanAccuracyMeters.has_value());
+        QCOMPARE(surveyDuration(receiver.log.latest<GPSBaseStatus>()), 0);
+        QVERIFY(std::isnan(receiver.log.latest<GPSBaseStatus>().position.latitudeDegrees));
+        QVERIFY(std::isnan(receiver.log.latest<GPSBaseStatus>().position.longitudeDegrees));
+        QVERIFY(std::isnan(receiver.log.latest<GPSBaseStatus>().position.altitudeMeters));
         consume(driver, complete);
         const auto count = receiver.log.count<GPSRTCMFrame>();
         driver.consume(correction());
@@ -413,9 +413,9 @@ void scheduledAveragingAndBoot(GPSTestClock& clock)
             driver.receive(1000ms);
             QVERIFY(driver.receiverReady());
         }
-        QCOMPARE(surveyFlags(receiver.log.latest<GPSSurveyReport>()), 1);
-        QCOMPARE(surveyDuration(receiver.log.latest<GPSSurveyReport>()), 0);
-        QVERIFY(!receiver.log.latest<GPSSurveyReport>().meanAccuracyMeters.has_value());
+        QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 1);
+        QCOMPARE(surveyDuration(receiver.log.latest<GPSBaseStatus>()), 0);
+        QVERIFY(!receiver.log.latest<GPSBaseStatus>().meanAccuracyMeters.has_value());
         QCOMPARE(receiver.commands().size(), commands);
         driver.consume(correction());
         QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
@@ -424,8 +424,8 @@ void scheduledAveragingAndBoot(GPSTestClock& clock)
             QVERIFY(slices < 100);
             driver.receive(1000ms);
         }
-        QCOMPARE(surveyFlags(receiver.log.latest<GPSSurveyReport>()), 0);
-        QVERIFY(std::isnan(receiver.log.latest<GPSSurveyReport>().position.altitudeMeters));
+        QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 0);
+        QVERIFY(std::isnan(receiver.log.latest<GPSBaseStatus>().position.altitudeMeters));
         driver.consume(correction());
         QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
     }

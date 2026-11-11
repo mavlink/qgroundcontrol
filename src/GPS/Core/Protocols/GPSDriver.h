@@ -30,7 +30,8 @@ struct GPSDriverSinks
     std::function<void(const GPSSatelliteReport&)> onSatelliteInfo;
     /// One complete frame; copying it shares the receiver's buffer.
     std::function<void(const QByteArray&)> onRTCM;
-    std::function<void(const GPSSurveyReport&)> onSurveyIn;
+    /// Also delivered while configure() runs.
+    std::function<void(const GPSBaseStatus&)> onBaseStatus;
     /// The family a GPSType::Automatic driver detected, before it configures the receiver. A passive driver reports
     /// the protocol its input carries once identified and whenever it changes: the family whose native protocol it
     /// decodes, or GPSType::Passive for standard NMEA. A change first withdraws the satellite counts of the protocol
@@ -106,7 +107,7 @@ private:
     void _handle(const GPSDecodedPosition& report);
     void _handle(const GPSDecodedSatellites& report);
     void _handle(const GPSDecodedSatelliteUsage& report);
-    void _handle(const GPSSurveyReport& report);
+    void _handle(const GPSBaseStatus& report);
     void _handle(const GPSRTCMFrame& report);
     void _handle(const GPSInputProtocol& report);
     void _handleSatellites(const GPSSatelliteReport& report);

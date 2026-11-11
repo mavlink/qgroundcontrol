@@ -16,6 +16,6 @@ private slots:
     void _persistentConsent_data();
     void _persistentConsent();
     void _baseStationState();
-    void _surveyUpdatesBasePosition_data();
-    void _surveyUpdatesBasePosition();
+    void _baseStatusUpdatesBasePosition_data();
+    void _baseStatusUpdatesBasePosition();
 };
