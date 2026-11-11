@@ -7,8 +7,6 @@ namespace GStreamer {
 
 namespace {
 
-using enum VideoDecoder::Options;
-
 // What forcing a decoder class or family gives it. GStreamer already ranks some decoders PRIMARY + 1 (the d3d11 and va
 // ones), so a forced family goes above the highest other decoder (see prioritizeFamily).
 constexpr uint16_t kPrioritizedRank = GST_RANK_PRIMARY + 1;
@@ -41,14 +39,14 @@ public:
         (void) this->rank([prefix](const DecoderInfo& decoder) { return decoder.name.startsWith(prefix); }, rank);
     }
 
-    void rankFamily(VideoDecoder::Options family, uint16_t rank)
+    void rankFamily(VideoDecoderOption family, uint16_t rank)
     {
         (void) this->rank([family](const DecoderInfo& decoder) { return decoder.family == family; }, rank);
     }
 
     // @p family's decoders, at least kPrioritizedRank, above every other decoder; those stay as fallbacks for the
     // codecs the family can't decode.
-    void prioritizeFamily(VideoDecoder::Options family)
+    void prioritizeFamily(VideoDecoderOption family)
     {
         unsigned highestOtherRank = GST_RANK_NONE;
         for (const DecoderInfo& decoder : _decoders) {
@@ -94,36 +92,36 @@ private:
 
 }  // namespace
 
-RankPlan planRanks(VideoDecoder::Options option, const QList<DecoderInfo>& decoders, const RankTraits& traits)
+RankPlan planRanks(VideoDecoderOption option, const QList<DecoderInfo>& decoders, const RankTraits& traits)
 {
     RankPlan plan;
     Planner planner(decoders);
 
     switch (option) {
-        case ForceVideoDecoderDefault:
+        case VideoDecoderOption::Default:
             if (traits.preferZeroCopyDecoders) {
                 planner.rankPrefix("vaapi", GST_RANK_NONE);
-                planner.rankFamily(ForceVideoDecoderVAAPI, kZeroCopyRank);
+                planner.rankFamily(VideoDecoderOption::VAAPI, kZeroCopyRank);
                 planner.rankPrefix("v4l2sl", kZeroCopyRank);
             }
             break;
-        case ForceVideoDecoderSoftware:
+        case VideoDecoderOption::Software:
             planner.prioritizeClass(false, plan.warnings);
             break;
-        case ForceVideoDecoderHardware:
+        case VideoDecoderOption::Hardware:
             planner.prioritizeClass(true, plan.warnings);
             break;
-        case ForceVideoDecoderVulkan:
+        case VideoDecoderOption::Vulkan:
             // gst-vulkan decodes on its own VkDevice, which fails the GPU path's device-match guard: CPU copy.
             plan.warnings.append(
                 QStringLiteral("Forcing Vulkan video decoders: zero-copy import is dormant "
                                "(foreign VkDevice → CPU fallback), so decode will not be zero-copy."));
             [[fallthrough]];
-        case ForceVideoDecoderVAAPI:
-        case ForceVideoDecoderNVIDIA:
-        case ForceVideoDecoderDirectX3D:
-        case ForceVideoDecoderVideoToolbox:
-        case ForceVideoDecoderIntel:
+        case VideoDecoderOption::VAAPI:
+        case VideoDecoderOption::NVIDIA:
+        case VideoDecoderOption::DirectX3D:
+        case VideoDecoderOption::VideoToolbox:
+        case VideoDecoderOption::Intel:
             planner.prioritizeFamily(option);
             break;
     }
@@ -131,7 +129,7 @@ RankPlan planRanks(VideoDecoder::Options option, const QList<DecoderInfo>& decod
     if (traits.rhiD3DApi) {
         const bool d3d12 = (*traits.rhiD3DApi == D3DApi::D3D12);
         // Forcing the D3D family already ranks it above every other decoder, so only the other API is demoted then.
-        if ((option == ForceVideoDecoderDefault) || (option == ForceVideoDecoderHardware)) {
+        if ((option == VideoDecoderOption::Default) || (option == VideoDecoderOption::Hardware)) {
             planner.rankPrefix(d3d12 ? "d3d12" : "d3d11", kZeroCopyRank);
         }
         planner.rankPrefix(d3d12 ? "d3d11" : "d3d12", GST_RANK_NONE);

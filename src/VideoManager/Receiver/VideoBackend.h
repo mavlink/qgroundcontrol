@@ -91,10 +91,10 @@ public:
     /// The boot test's check that the initialized backend decodes and records.
     virtual bool selfTest() { return true; }
 
-    virtual void applyDecoderPriorities([[maybe_unused]] int rawOption) {}
+    virtual void applyDecoderPriorities([[maybe_unused]] VideoDecoderOption option) {}
 
     /// The hardware decoder families present, as forceVideoDecoder values (never Default or Software).
-    virtual QList<VideoDecoder::Options> availableDecoderFamilies() { return {}; }
+    virtual QList<VideoDecoderOption> availableDecoderFamilies() { return {}; }
 
     virtual void setDebugLevel([[maybe_unused]] int level) {}
 

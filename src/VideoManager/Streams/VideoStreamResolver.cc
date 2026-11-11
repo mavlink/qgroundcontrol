@@ -125,7 +125,7 @@ VideoStreamResolver::Settings VideoStreamResolver::snapshot(VideoSettings* video
     settings.conversionElement = videoSettings->videoConversionElement()->rawValue().toString().toUtf8();
     settings.disablePixelAspectRatio = videoSettings->disablePixelAspectRatio()->rawValue().toBool();
     settings.forceCpuVideoPath = videoSettings->forceCpuVideoPath()->rawValue().toBool();
-    settings.forceVideoDecoder = videoSettings->forceVideoDecoder()->rawValue().toInt();
+    settings.forceVideoDecoder = videoDecoderOptionFromSetting(videoSettings->forceVideoDecoder()->rawValue().toInt());
     return settings;
 }
 
@@ -134,8 +134,7 @@ VideoReceiver::DisplayConfig VideoStreamResolver::displayConfig(const Settings& 
     return {
         .conversionElement = settings.conversionElement,
         .disablePixelAspectRatio = settings.disablePixelAspectRatio,
-        .gpuZeroCopy =
-            !settings.forceCpuVideoPath && (settings.forceVideoDecoder != VideoDecoder::ForceVideoDecoderSoftware),
+        .gpuZeroCopy = !settings.forceCpuVideoPath && (settings.forceVideoDecoder != VideoDecoderOption::Software),
     };
 }
 

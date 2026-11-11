@@ -149,10 +149,10 @@ void VideoStreamResolverTest::_testDisplayConfig_data()
     QTest::addColumn<int>("forceVideoDecoder");
     QTest::addColumn<bool>("gpuZeroCopy");
 
-    QTest::newRow("default") << false << int(VideoDecoder::ForceVideoDecoderDefault) << true;
-    QTest::newRow("hardware decoder") << false << int(VideoDecoder::ForceVideoDecoderHardware) << true;
-    QTest::newRow("CPU path forced") << true << int(VideoDecoder::ForceVideoDecoderDefault) << false;
-    QTest::newRow("software decoder forced") << false << int(VideoDecoder::ForceVideoDecoderSoftware) << false;
+    QTest::newRow("default") << false << int(VideoDecoderOption::Default) << true;
+    QTest::newRow("hardware decoder") << false << int(VideoDecoderOption::Hardware) << true;
+    QTest::newRow("CPU path forced") << true << int(VideoDecoderOption::Default) << false;
+    QTest::newRow("software decoder forced") << false << int(VideoDecoderOption::Software) << false;
 }
 
 void VideoStreamResolverTest::_testDisplayConfig()
@@ -165,7 +165,7 @@ void VideoStreamResolverTest::_testDisplayConfig()
     settings.conversionElement = QByteArrayLiteral("videoconvert");
     settings.disablePixelAspectRatio = true;
     settings.forceCpuVideoPath = forceCpuVideoPath;
-    settings.forceVideoDecoder = forceVideoDecoder;
+    settings.forceVideoDecoder = static_cast<VideoDecoderOption>(forceVideoDecoder);
 
     const VideoReceiver::DisplayConfig display = VideoStreamResolver::displayConfig(settings);
     QCOMPARE(display.conversionElement, QByteArrayLiteral("videoconvert"));

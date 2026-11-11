@@ -6,6 +6,7 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QString>
 
+#include "VideoDecoderOptions.h"
 #include "VideoReceiver.h"
 
 class QGCVideoStreamInfo;
@@ -34,7 +35,7 @@ struct Settings
     QByteArray conversionElement;
     bool disablePixelAspectRatio = false;
     bool forceCpuVideoPath = false;
-    int forceVideoDecoder = 0;  ///< A VideoDecoder::Options value.
+    VideoDecoderOption forceVideoDecoder = VideoDecoderOption::Default;
 };
 
 Settings snapshot(VideoSettings* videoSettings);

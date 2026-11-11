@@ -256,7 +256,7 @@ void VideoManagerTest::_testRestartingSettingsRestartStreams_data()
     QTest::newRow("disablePixelAspectRatio") << "disablePixelAspectRatio" << QVariant(true);
     QTest::newRow("forceCpuVideoPath") << "forceCpuVideoPath" << QVariant(true);
     QTest::newRow("forceVideoDecoder") << "forceVideoDecoder"
-                                       << QVariant(static_cast<int>(VideoDecoder::ForceVideoDecoderSoftware));
+                                       << QVariant(static_cast<int>(VideoDecoderOption::Software));
 }
 
 void VideoManagerTest::_testRestartingSettingsRestartStreams()
@@ -280,7 +280,7 @@ void VideoManagerTest::_testDecodingSettingsGroupRestartsStreams()
 {
     Fact* const decoderFact = _videoSettings->forceVideoDecoder();
     Fact* const cpuPathFact = _videoSettings->forceCpuVideoPath();
-    _facts->set(decoderFact, static_cast<int>(VideoDecoder::ForceVideoDecoderDefault));
+    _facts->set(decoderFact, static_cast<int>(VideoDecoderOption::Default));
     _facts->set(cpuPathFact, false);
     _settle();
     _resetCounters();
@@ -310,11 +310,11 @@ void VideoManagerTest::_testDecodingSettingsGroupRestartsStreams()
     QObject* const comboBox = decoderControl->property("comboBox").value<QObject*>();
     QVERIFY(comboBox);
     const int softwareIndex =
-        decoderFact->enumValues().indexOf(QVariant(static_cast<int>(VideoDecoder::ForceVideoDecoderSoftware)));
+        decoderFact->enumValues().indexOf(QVariant(static_cast<int>(VideoDecoderOption::Software)));
     QVERIFY(softwareIndex >= 0);
     QVERIFY(QMetaObject::invokeMethod(comboBox, "activated", Q_ARG(int, softwareIndex)));
     _settle();
-    QCOMPARE(decoderFact->rawValue().toInt(), static_cast<int>(VideoDecoder::ForceVideoDecoderSoftware));
+    QCOMPARE(decoderFact->rawValue().toInt(), static_cast<int>(VideoDecoderOption::Software));
     QCOMPARE(_primary->restarts, 2);
     QCOMPARE(_primary->configChanges, 0);
 }

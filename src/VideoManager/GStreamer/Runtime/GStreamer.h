@@ -7,7 +7,6 @@
 #include <QtCore/QStringList>
 
 #include "GStreamerEnvironment.h"
-#include "VideoDecoderOptions.h"
 
 typedef struct _GstElement GstElement;
 
@@ -18,9 +17,6 @@ class QVideoSink;
 class VideoReceiver;
 
 namespace GStreamer {
-
-using VideoDecoderOptions = VideoDecoder::Options;
-using enum VideoDecoder::Options;
 
 /// Construct-only tunables for the qgcvideosinkbin; GstVideoReceiver fills them from its VideoReceiver::DisplayConfig.
 struct VideoSinkConfig

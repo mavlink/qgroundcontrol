@@ -156,7 +156,7 @@ void VideoManager::_connectSettings()
                 (void) connect(fact, &Fact::rawValueChanged, this, [this](const QVariant& value) {
                     // Until then, _onBackendInitComplete() applies the setting.
                     if (_initState == InitState::Ready) {
-                        VideoBackend::instance().applyDecoderPriorities(value.toInt());
+                        VideoBackend::instance().applyDecoderPriorities(videoDecoderOptionFromSetting(value.toInt()));
                     }
                     _primaryStream->restart();
                     _thermalStream->restart();
@@ -258,7 +258,8 @@ void VideoManager::_onBackendInitComplete(bool success)
     }
 
     _videoSettings->pruneUnavailableDecoders();
-    VideoBackend::instance().applyDecoderPriorities(_videoSettings->forceVideoDecoder()->rawValue().toInt());
+    VideoBackend::instance().applyDecoderPriorities(
+        videoDecoderOptionFromSetting(_videoSettings->forceVideoDecoder()->rawValue().toInt()));
 
     _initState = InitState::Ready;
     qCDebug(VideoManagerLog) << "video backend ready";

@@ -96,7 +96,7 @@ void GstVideoReceiverPipelineTest::_testDecodesMockLinkStreams()
     // The rows cover the stream paths, not decoder choice. CI's macOS VMs can't hardware-decode H.265, and
     // decodebin3 doesn't fall back from a hardware decoder that fails to start. Outlives the receiver.
     const GstTest::DecoderRankSnapshot decoderRanks;
-    GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderSoftware);
+    GStreamer::setCodecPriorities(VideoDecoderOption::Software);
 
     // Servers listen on a free port; for UDP the receiver does, and the server sends to it.
     MockVideoStreamServer server;
@@ -271,7 +271,7 @@ void GstVideoReceiverPipelineTest::_testDecodesH265Stream()
     GSTTEST_SKIP_UNLESS_FACTORIES("avdec_h265");
     // The stream path, not decoder choice, is under test; a hardware decoder that fails to start isn't replaced.
     const GstTest::DecoderRankSnapshot decoderRanks;
-    GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderSoftware);
+    GStreamer::setCodecPriorities(VideoDecoderOption::Software);
 
     Receiver stream(loopbackUri(QLatin1StringView("udp265"), 0), /*autoReconnect=*/false, kWatchdogTimeout,
                     QString::fromLatin1(GstTest::kH265Stream));

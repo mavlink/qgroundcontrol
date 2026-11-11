@@ -237,30 +237,29 @@ void VideoSettings::_setForceVideoDecodeList()
     if (!hasPipelineSettings()) {
         return;
     }
-    static const QList<VideoDecoder::Options> removeForceVideoDecodeList{
+    static const QList<VideoDecoderOption> removeForceVideoDecodeList{
 #if defined(Q_OS_ANDROID)
-        VideoDecoder::ForceVideoDecoderDirectX3D, VideoDecoder::ForceVideoDecoderVideoToolbox,
-        VideoDecoder::ForceVideoDecoderVAAPI,     VideoDecoder::ForceVideoDecoderNVIDIA,
-        VideoDecoder::ForceVideoDecoderIntel,
+        VideoDecoderOption::DirectX3D, VideoDecoderOption::VideoToolbox, VideoDecoderOption::VAAPI,
+        VideoDecoderOption::NVIDIA,    VideoDecoderOption::Intel,
 #elif defined(Q_OS_LINUX)
-        VideoDecoder::ForceVideoDecoderDirectX3D,
-        VideoDecoder::ForceVideoDecoderVideoToolbox,
+        VideoDecoderOption::DirectX3D,
+        VideoDecoderOption::VideoToolbox,
 #elif defined(Q_OS_WIN)
-        VideoDecoder::ForceVideoDecoderVideoToolbox,
-        VideoDecoder::ForceVideoDecoderVulkan,
+        VideoDecoderOption::VideoToolbox,
+        VideoDecoderOption::Vulkan,
 #elif defined(Q_OS_MACOS)
-        VideoDecoder::ForceVideoDecoderDirectX3D,
-        VideoDecoder::ForceVideoDecoderVAAPI,
+        VideoDecoderOption::DirectX3D,
+        VideoDecoderOption::VAAPI,
 #elif defined(Q_OS_IOS)
-        VideoDecoder::ForceVideoDecoderDirectX3D,
-        VideoDecoder::ForceVideoDecoderVAAPI,
-        VideoDecoder::ForceVideoDecoderNVIDIA,
-        VideoDecoder::ForceVideoDecoderIntel,
+        VideoDecoderOption::DirectX3D,
+        VideoDecoderOption::VAAPI,
+        VideoDecoderOption::NVIDIA,
+        VideoDecoderOption::Intel,
 #endif
     };
 
-    for (const auto& value : removeForceVideoDecodeList) {
-        _nameToMetaDataMap[forceVideoDecoderName]->removeEnumInfo(value);
+    for (const VideoDecoderOption option : removeForceVideoDecodeList) {
+        _nameToMetaDataMap[forceVideoDecoderName]->removeEnumInfo(static_cast<int>(option));
     }
 }
 
@@ -269,13 +268,12 @@ void VideoSettings::pruneUnavailableDecoders()
     if (!hasPipelineSettings()) {
         return;
     }
-    static const QList<VideoDecoder::Options> hardwareFamilies{
-        VideoDecoder::ForceVideoDecoderNVIDIA,    VideoDecoder::ForceVideoDecoderVAAPI,
-        VideoDecoder::ForceVideoDecoderDirectX3D, VideoDecoder::ForceVideoDecoderVideoToolbox,
-        VideoDecoder::ForceVideoDecoderIntel,     VideoDecoder::ForceVideoDecoderVulkan,
+    static const QList<VideoDecoderOption> hardwareFamilies{
+        VideoDecoderOption::NVIDIA,       VideoDecoderOption::VAAPI, VideoDecoderOption::DirectX3D,
+        VideoDecoderOption::VideoToolbox, VideoDecoderOption::Intel, VideoDecoderOption::Vulkan,
     };
 
-    const QList<VideoDecoder::Options> available = VideoBackend::instance().availableDecoderFamilies();
+    const QList<VideoDecoderOption> available = VideoBackend::instance().availableDecoderFamilies();
     const auto metaIt = _nameToMetaDataMap.constFind(forceVideoDecoderName);
     if (metaIt == _nameToMetaDataMap.constEnd() || !metaIt.value()) {
         return;
@@ -298,6 +296,6 @@ void VideoSettings::pruneUnavailableDecoders()
         emit fact->enumsChanged();
     }
     if (!metaData->enumValues().contains(fact->rawValue())) {
-        fact->setRawValue(VideoDecoder::ForceVideoDecoderDefault);
+        fact->setRawValue(static_cast<int>(VideoDecoderOption::Default));
     }
 }

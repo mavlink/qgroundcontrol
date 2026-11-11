@@ -19,7 +19,7 @@ struct DecoderInfo
     QByteArray name;
     unsigned rank = 0;  ///< The rank before QGC changed it.
     bool hardware = false;
-    VideoDecoder::Options family = VideoDecoder::ForceVideoDecoderDefault;
+    VideoDecoderOption family = VideoDecoderOption::Default;
 };
 
 /// The D3D decoder API a Windows QRhi backend samples zero-copy.
@@ -57,6 +57,6 @@ struct RankPlan
 };
 
 /// The rank changes @p option makes to @p decoders, from their original ranks, on a platform with @p traits.
-RankPlan planRanks(VideoDecoder::Options option, const QList<DecoderInfo>& decoders, const RankTraits& traits);
+RankPlan planRanks(VideoDecoderOption option, const QList<DecoderInfo>& decoders, const RankTraits& traits);
 
 }  // namespace GStreamer

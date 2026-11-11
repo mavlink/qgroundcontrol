@@ -65,19 +65,19 @@ void GStreamerTest::_testDecoderFamilyForFactory_data()
     QTest::addColumn<QString>("factoryName");
     QTest::addColumn<int>("expectedFamily");
 
-    QTest::newRow("nvidia") << QStringLiteral("nvh264dec") << int(GStreamer::ForceVideoDecoderNVIDIA);
-    QTest::newRow("va") << QStringLiteral("vah265dec") << int(GStreamer::ForceVideoDecoderVAAPI);
+    QTest::newRow("nvidia") << QStringLiteral("nvh264dec") << int(VideoDecoderOption::NVIDIA);
+    QTest::newRow("va") << QStringLiteral("vah265dec") << int(VideoDecoderOption::VAAPI);
     // Legacy gstreamer-vaapi is demoted and never bumped by the VAAPI option.
-    QTest::newRow("legacy-vaapi") << QStringLiteral("vaapih264dec") << int(GStreamer::ForceVideoDecoderDefault);
-    QTest::newRow("qsv") << QStringLiteral("qsvh265dec") << int(GStreamer::ForceVideoDecoderIntel);
-    QTest::newRow("msdk") << QStringLiteral("msdkh264dec") << int(GStreamer::ForceVideoDecoderIntel);
-    QTest::newRow("d3d11") << QStringLiteral("d3d11h264dec") << int(GStreamer::ForceVideoDecoderDirectX3D);
-    QTest::newRow("d3d12") << QStringLiteral("d3d12h265dec") << int(GStreamer::ForceVideoDecoderDirectX3D);
-    QTest::newRow("videotoolbox") << QStringLiteral("vtdec_hw") << int(GStreamer::ForceVideoDecoderVideoToolbox);
-    QTest::newRow("vulkan") << QStringLiteral("vulkanh264dec") << int(GStreamer::ForceVideoDecoderVulkan);
-    QTest::newRow("software-with-nv") << QStringLiteral("avdec_wnv1") << int(GStreamer::ForceVideoDecoderDefault);
+    QTest::newRow("legacy-vaapi") << QStringLiteral("vaapih264dec") << int(VideoDecoderOption::Default);
+    QTest::newRow("qsv") << QStringLiteral("qsvh265dec") << int(VideoDecoderOption::Intel);
+    QTest::newRow("msdk") << QStringLiteral("msdkh264dec") << int(VideoDecoderOption::Intel);
+    QTest::newRow("d3d11") << QStringLiteral("d3d11h264dec") << int(VideoDecoderOption::DirectX3D);
+    QTest::newRow("d3d12") << QStringLiteral("d3d12h265dec") << int(VideoDecoderOption::DirectX3D);
+    QTest::newRow("videotoolbox") << QStringLiteral("vtdec_hw") << int(VideoDecoderOption::VideoToolbox);
+    QTest::newRow("vulkan") << QStringLiteral("vulkanh264dec") << int(VideoDecoderOption::Vulkan);
+    QTest::newRow("software-with-nv") << QStringLiteral("avdec_wnv1") << int(VideoDecoderOption::Default);
     QTest::newRow("android-mediacodec") << QStringLiteral("amcviddec-c2qtiavcdecoder")
-                                        << int(GStreamer::ForceVideoDecoderDefault);
+                                        << int(VideoDecoderOption::Default);
 }
 
 void GStreamerTest::_testDecoderFamilyForFactory()
@@ -90,39 +90,50 @@ void GStreamerTest::_testDecoderFamilyForFactory()
 
 void GStreamerTest::_testAvailableDecoderFamilies()
 {
-    QList<GStreamer::VideoDecoderOptions> installed;
+    QList<VideoDecoderOption> installed;
     GStreamer::forEachVideoDecoderFactory(GST_RANK_NONE, [&installed](GstElementFactory* factory) {
         const auto family =
             GStreamer::decoderFamilyForFactory(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
-        if ((family != GStreamer::ForceVideoDecoderDefault) && !installed.contains(family)) {
+        if ((family != VideoDecoderOption::Default) && !installed.contains(family)) {
             installed.append(family);
         }
     });
 #ifndef QGC_HAS_GST_VULKAN_GPU_PATH
     // Without the Vulkan GPU path, forcing Vulkan decoders would only add a CPU copy of every frame.
-    installed.removeAll(GStreamer::ForceVideoDecoderVulkan);
+    installed.removeAll(VideoDecoderOption::Vulkan);
 #endif
     QCOMPARE(GStreamer::availableDecoderFamilies(), installed);
 }
 
+void GStreamerTest::_testStoredDecoderOption_data()
+{
+    QTest::addColumn<int>("stored");
+    QTest::addColumn<int>("option");
+
+    QTest::newRow("first") << 0 << int(VideoDecoderOption::Default);
+    QTest::newRow("software") << 1 << int(VideoDecoderOption::Software);
+    QTest::newRow("last") << 8 << int(VideoDecoderOption::Hardware);
+    // A stored value that names no option is the default.
+    QTest::newRow("negative") << -1 << int(VideoDecoderOption::Default);
+    QTest::newRow("past the last") << 9 << int(VideoDecoderOption::Default);
+}
+
+void GStreamerTest::_testStoredDecoderOption()
+{
+    QFETCH(int, stored);
+    QFETCH(int, option);
+
+    QCOMPARE(int(videoDecoderOptionFromSetting(stored)), option);
+}
+
 void GStreamerTest::_testDecoderPriorityWarnings()
 {
-    const auto restoreRanks = qScopeGuard([] { GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderDefault); });
-
-    // A stored value outside the options changes nothing.
-    expectLogMessage("Video.GStreamer.DecoderRanks", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("^Ignoring invalid decode option: 99$")));
-    GStreamer::setCodecPriorities(99);
-    verifyExpectedLogMessage();
-    expectLogMessage("Video.GStreamer.DecoderRanks", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("^Ignoring invalid decode option: -1$")));
-    GStreamer::setCodecPriorities(-1);
-    verifyExpectedLogMessage();
+    const auto restoreRanks = qScopeGuard([] { GStreamer::setCodecPriorities(VideoDecoderOption::Default); });
 
     // Vulkan decoders are ranked first, though their frames are copied through the CPU.
     expectLogMessage("Video.GStreamer.DecoderRanks", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^Forcing Vulkan video decoders")));
-    GStreamer::setCodecPriorities(static_cast<int>(GStreamer::ForceVideoDecoderVulkan));
+    GStreamer::setCodecPriorities(VideoDecoderOption::Vulkan);
     verifyExpectedLogMessage();
 }
 
@@ -209,7 +220,7 @@ void GStreamerTest::_testVideoBackendForwards()
     const GstDebugLevel threshold = gst_debug_get_default_threshold();
     backend.setDebugLevel(static_cast<int>(threshold));
     QCOMPARE(gst_debug_get_default_threshold(), threshold);
-    backend.applyDecoderPriorities(GStreamer::ForceVideoDecoderDefault);
+    backend.applyDecoderPriorities(VideoDecoderOption::Default);
 }
 
 void GStreamerTest::_testVideoBackendFallsBackWhenInitFails()

@@ -45,7 +45,7 @@ void GstVideoReceiverStatsTest::_testStatsMeasureStream()
     const QByteArray softwareDecoder = decoderFactory.toLatin1();
     GSTTEST_SKIP_UNLESS_FACTORIES(softwareDecoder.constData());
     const GstTest::DecoderRankSnapshot decoderRanks;
-    GStreamer::setCodecPriorities(GStreamer::ForceVideoDecoderSoftware);
+    GStreamer::setCodecPriorities(VideoDecoderOption::Software);
 
     Receiver receiving(uri, /*autoReconnect=*/false, kWatchdogTimeout, stream);
     QVERIFY2(receiving.sender.error().isEmpty(), qPrintable(receiving.sender.error()));

@@ -33,29 +33,29 @@ namespace {
 struct DecoderFamilyPrefix
 {
     const char* prefix;
-    VideoDecoderOptions family;  // ForceVideoDecoderDefault: not a user-selectable family
+    VideoDecoderOption family;  // VideoDecoderOption::Default: not a user-selectable family
     bool isHardware;
 };
 
-// Single name-based decoder classification for the hardware/software split, the ForceVideoDecoder*
+// Single name-based decoder classification for the hardware/software split, the forceVideoDecoder
 // rank overrides and availableDecoderFamilies(). Prefix (not substring) matching, so e.g. avdec_wnv1
 // isn't taken for an NVIDIA decoder. The first match wins: specific prefixes precede general ones.
 constexpr DecoderFamilyPrefix kDecoderFamilyPrefixes[] = {
     // Android MediaCodec: Google/Codec2 software wrappers; every other amcviddec is a hardware codec.
-    {"amcviddec-omxgoogle", ForceVideoDecoderDefault, false},
-    {"amcviddec-c2android", ForceVideoDecoderDefault, false},
-    {"amcviddec-", ForceVideoDecoderDefault, true},
-    // Legacy gstreamer-vaapi is demoted on Linux and never bumped by ForceVideoDecoderVAAPI (modern va* only).
-    {"vaapi", ForceVideoDecoderDefault, true},
-    {"va", ForceVideoDecoderVAAPI, true},
-    {"nv", ForceVideoDecoderNVIDIA, true},
-    {"d3d11", ForceVideoDecoderDirectX3D, true},
-    {"d3d12", ForceVideoDecoderDirectX3D, true},
-    {"dxva", ForceVideoDecoderDirectX3D, true},
-    {"vtdec", ForceVideoDecoderVideoToolbox, true},
-    {"qsv", ForceVideoDecoderIntel, true},
-    {"msdk", ForceVideoDecoderIntel, true},
-    {"vulkan", ForceVideoDecoderVulkan, true},
+    {"amcviddec-omxgoogle", VideoDecoderOption::Default, false},
+    {"amcviddec-c2android", VideoDecoderOption::Default, false},
+    {"amcviddec-", VideoDecoderOption::Default, true},
+    // Legacy gstreamer-vaapi is demoted on Linux and never bumped by VideoDecoderOption::VAAPI (modern va* only).
+    {"vaapi", VideoDecoderOption::Default, true},
+    {"va", VideoDecoderOption::VAAPI, true},
+    {"nv", VideoDecoderOption::NVIDIA, true},
+    {"d3d11", VideoDecoderOption::DirectX3D, true},
+    {"d3d12", VideoDecoderOption::DirectX3D, true},
+    {"dxva", VideoDecoderOption::DirectX3D, true},
+    {"vtdec", VideoDecoderOption::VideoToolbox, true},
+    {"qsv", VideoDecoderOption::Intel, true},
+    {"msdk", VideoDecoderOption::Intel, true},
+    {"vulkan", VideoDecoderOption::Vulkan, true},
 };
 
 const DecoderFamilyPrefix* findDecoderFamilyPrefix(const char* factoryName)
@@ -71,14 +71,14 @@ const DecoderFamilyPrefix* findDecoderFamilyPrefix(const char* factoryName)
 
 }  // namespace
 
-VideoDecoderOptions decoderFamilyForFactory(const char* factoryName)
+VideoDecoderOption decoderFamilyForFactory(const char* factoryName)
 {
     if (!factoryName) {
-        return ForceVideoDecoderDefault;
+        return VideoDecoderOption::Default;
     }
 
     const DecoderFamilyPrefix* entry = findDecoderFamilyPrefix(factoryName);
-    return entry ? entry->family : ForceVideoDecoderDefault;
+    return entry ? entry->family : VideoDecoderOption::Default;
 }
 
 bool isHardwareDecoderFactory(GstElementFactory* factory)
@@ -177,7 +177,7 @@ DecoderRankApplier& DecoderRankApplier::instance()
     return applier;
 }
 
-void DecoderRankApplier::apply(VideoDecoderOptions option)
+void DecoderRankApplier::apply(VideoDecoderOption option)
 {
     GstRegistry* const registry = _registry();
     if (!registry) {
@@ -251,7 +251,7 @@ void DecoderRankApplier::_restore(GstRegistry* registry)
     _applied.reset();
 }
 
-ScopedDecoderOption::ScopedDecoderOption(VideoDecoderOptions option)
+ScopedDecoderOption::ScopedDecoderOption(VideoDecoderOption option)
     : _previous(DecoderRankApplier::instance().applied())
 {
     DecoderRankApplier::instance().apply(option);
@@ -271,34 +271,24 @@ bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t 
     return DecoderRankApplier::instance().setRank(registry, featureName, rank);
 }
 
-void setCodecPriorities(int rawOption)
-{
-    // Validate the raw setting here so the planner's enum switch stays default-free (-Wswitch).
-    if ((rawOption < ForceVideoDecoderDefault) || (rawOption > ForceVideoDecoderHardware)) {
-        qCWarning(GStreamerDecoderRanksLog) << "Ignoring invalid decode option:" << rawOption;
-        return;
-    }
-    setCodecPriorities(static_cast<VideoDecoderOptions>(rawOption));
-}
-
-void setCodecPriorities(VideoDecoderOptions option)
+void setCodecPriorities(VideoDecoderOption option)
 {
     DecoderRankApplier::instance().apply(option);
 }
 
-QList<VideoDecoderOptions> availableDecoderFamilies()
+QList<VideoDecoderOption> availableDecoderFamilies()
 {
-    QList<VideoDecoderOptions> families;
+    QList<VideoDecoderOption> families;
     forEachVideoDecoderFactory(GST_RANK_NONE, [&families](GstElementFactory* factory) {
-        const VideoDecoderOptions family =
+        const VideoDecoderOption family =
             decoderFamilyForFactory(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
 #ifndef QGC_HAS_GST_VULKAN_GPU_PATH
         // Without the opt-in Vulkan GPU path, forcing Vulkan decoders only adds a CPU copy of every frame.
-        if (family == ForceVideoDecoderVulkan) {
+        if (family == VideoDecoderOption::Vulkan) {
             return;
         }
 #endif
-        if ((family != ForceVideoDecoderDefault) && !families.contains(family)) {
+        if ((family != VideoDecoderOption::Default) && !families.contains(family)) {
             families.append(family);
         }
     });

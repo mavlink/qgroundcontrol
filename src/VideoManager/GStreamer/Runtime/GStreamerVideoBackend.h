@@ -15,8 +15,8 @@ public:
     bool initialize(const InitParams& params) override;
     QString initFailureMessage() const override;
     bool selfTest() override;
-    void applyDecoderPriorities(int rawOption) override;
-    QList<VideoDecoder::Options> availableDecoderFamilies() override;
+    void applyDecoderPriorities(VideoDecoderOption option) override;
+    QList<VideoDecoderOption> availableDecoderFamilies() override;
     void setDebugLevel(int level) override;
     void onMainWindowReady(QQuickWindow* window) override;
     void setAndroidJniState(void* javaVm, void* appContext, void* classLoader) override;

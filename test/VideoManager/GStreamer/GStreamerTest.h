@@ -14,6 +14,8 @@ private slots:
     void _testDecoderFamilyForFactory_data();
     void _testDecoderFamilyForFactory();
     void _testAvailableDecoderFamilies();
+    void _testStoredDecoderOption_data();
+    void _testStoredDecoderOption();
     void _testDecoderPriorityWarnings();
     void _testLogDecoderRanks();
     void _testPipelineDotOmitsElementProperties();

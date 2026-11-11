@@ -62,12 +62,12 @@ bool GStreamerVideoBackend::selfTest()
     return _runtime.selfTest();
 }
 
-void GStreamerVideoBackend::applyDecoderPriorities(int rawOption)
+void GStreamerVideoBackend::applyDecoderPriorities(VideoDecoderOption option)
 {
-    GStreamer::setCodecPriorities(rawOption);
+    GStreamer::setCodecPriorities(option);
 }
 
-QList<VideoDecoder::Options> GStreamerVideoBackend::availableDecoderFamilies()
+QList<VideoDecoderOption> GStreamerVideoBackend::availableDecoderFamilies()
 {
     return GStreamer::availableDecoderFamilies();
 }
