@@ -9,4 +9,5 @@ class EdgeTriggeredCounterTest : public UnitTest
 private slots:
     void _testFiresOnceWhenThresholdIsReached();
     void _testResetStartsNewBurst();
+    void _testLongBurstSaturatesCount();
 };
