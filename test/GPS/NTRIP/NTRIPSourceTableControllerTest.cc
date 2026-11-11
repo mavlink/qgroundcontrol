@@ -113,10 +113,14 @@ void NTRIPSourceTableControllerTest::_fetchErrorInvalidatesCache()
                               TestTimeout::mediumMs());
     QCOMPARE(ctrl.mountpointModel()->rowCount(), 1);
 
-    // A failed refresh discards the cached table, so the next fetch asks the caster again.
+    // A failed refresh discards the cached table, so the next fetch asks the caster again. The caster answers
+    // neither the request nor its repeat in NTRIP version 1 form.
     QVERIFY(scheduler.advanceBy(NTRIPSourceTableController::CACHE_TTL + std::chrono::milliseconds(1)));
+    expectLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg, repeatedInVersion1());
     ctrl.fetch(config);
     QVERIFY(caster.dropNextRequest());
+    QVERIFY(caster.dropNextRequest());
+    verifyExpectedLogMessage();
     QTRY_COMPARE_WITH_TIMEOUT(ctrl.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error,
                               TestTimeout::mediumMs());
     QCOMPARE(ctrl.mountpointModel()->rowCount(), 0);
@@ -376,6 +380,30 @@ void NTRIPSourceTableControllerTest::_v1SourceTable()
         QCOMPARE(requests, 1);
         QVERIFY(!activeSession(controller));
     }
+}
+
+void NTRIPSourceTableControllerTest::_version1OnlyCaster()
+{
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    NTRIPSourceTableController controller;
+    expectLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg, repeatedInVersion1());
+    controller.fetch(caster.connectionConfig(QString()));
+    auto* connection = caster.waitForVersion1Request();
+    QVERIFY(connection && connection->peer);
+    verifyExpectedLogMessage();
+    QCOMPARE(caster.requestLines(), (QList<QByteArray>{"GET / HTTP/1.1", "GET / HTTP/1.0"}));
+    // The answer of RTKLIB's caster.
+    const QByteArray table = "STR;MP;Id;RTCM 3.2;;2;GPS;NET;USA;40;-74;0;1;gen;none;B;N;4800\r\nENDSOURCETABLE\r\n";
+    const QByteArray response =
+        "SOURCETABLE 200 OK\r\nServer: RTKLIB 2.4.3 b33\r\nDate: 2026/11/11 21:00:00 UTC\r\n"
+        "Connection: close\r\nContent-Type: text/plain\r\nContent-Length: " +
+        QByteArray::number(table.size()) + "\r\n\r\n" + table;
+    QCOMPARE(connection->write(response), response.size());
+    connection->disconnectFromHost();
+    QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                              TestTimeout::mediumMs());
+    QCOMPARE(controller.mountpointModel()->rowCount(), 1);
 }
 
 void NTRIPSourceTableControllerTest::_sourceTableIdentity_data()

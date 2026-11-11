@@ -25,11 +25,13 @@ struct NTRIPSourceTableController::FetchAttempt
     QByteArray body;
 };
 
-NTRIPSourceTableController::NTRIPSourceTableController(QObject* parent, RuntimeScheduler* scheduler)
+NTRIPSourceTableController::NTRIPSourceTableController(QObject* parent, RuntimeScheduler* scheduler,
+                                                       std::shared_ptr<NTRIPCasterVersions> casterVersions)
     : QObject(parent)
     , _model(new NTRIPSourceTableModel(this))
     , _sortedModel(new NTRIPSourceTableSortModel(_model, this))
     , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
+    , _casterVersions(std::move(casterVersions))
 {}
 
 NTRIPSourceTableController::~NTRIPSourceTableController()
@@ -106,7 +108,7 @@ void NTRIPSourceTableController::_startFetch()
     connect(session, &NTRIPHttpSession::finished, this,
             [this]() { _finishFetch(tr("Response does not contain a valid source table")); });
     _armFetchTimeout();
-    if (const QString openError = session->open(_lastFetchConfig); !openError.isEmpty()) {
+    if (const QString openError = session->open(_lastFetchConfig, _casterVersions); !openError.isEmpty()) {
         _finishFetch(openError);
     }
 }

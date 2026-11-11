@@ -12,6 +12,7 @@ private slots:
     void _selfSignedClassification();
     void _certificatePolicy_data();
     void _certificatePolicy();
+    void _unansweredRequestIsRepeated();
     void _sourceTablePolicyChanges_data();
     void _sourceTablePolicyChanges();
     void _retireAttempt_data();

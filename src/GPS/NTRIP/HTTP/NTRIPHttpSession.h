@@ -1,23 +1,37 @@
 #pragma once
 
 #include <chrono>
+#include <memory>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QByteArrayView>
 #include <QtCore/QDateTime>
 #include <QtCore/QList>
 #include <QtCore/QObject>
+#include <QtCore/QSet>
 #include <QtCore/QString>
 
+#include "NTRIPConfiguration.h"
 #include "NTRIPError.h"
 #include "NTRIPHttpCodec.h"
 #include "ScheduledTask.h"
 
-struct NTRIPConnectionConfig;
 class QSslError;
 class QSslSocket;
 class QTcpSocket;
 class RuntimeScheduler;
+
+/// The casters found to take only NTRIP version 1 requests, by host, port and TLS. The sessions that share one ask
+/// such a caster in that form at once, instead of finding it out again on every connection.
+class NTRIPCasterVersions
+{
+public:
+    [[nodiscard]] NTRIPVersion versionFor(const NTRIPConnectionConfig& caster) const;
+    void setVersion(const NTRIPConnectionConfig& caster, NTRIPVersion version);
+
+private:
+    QSet<QString> _version1Casters;
+};
 
 /// One HTTP exchange with a caster over TCP or TLS, shared by the correction stream and source-table fetches: it sends
 /// the request once connected and decodes the response. responseStarted() precedes the body, which arrives through
@@ -28,6 +42,10 @@ class RuntimeScheduler;
 ///
 /// With the self-signed opt-in, the first self-signed certificate accepted from a host:port is pinned; later
 /// connections accept a self-signed certificate only if it matches the configured pin.
+///
+/// A caster that speaks only NTRIP version 1 closes a version 2 request without answering it. The session then sends
+/// the request once more, in version 1 form over a new connection, as part of the same exchange: nothing is reported
+/// for the unanswered request, and the owner's timeout covers both. A caster that sent anything is not asked again.
 class NTRIPHttpSession : public QObject
 {
     Q_OBJECT
@@ -44,7 +62,9 @@ public:
 
     /// Connects once and sends the request of the session's purpose when connected; later calls are ignored. Returns
     /// why @a config cannot build a request, without connecting, or empty.
-    QString open(const NTRIPConnectionConfig& config);
+    /// With @a casterVersions, a caster that accepted a version 1 request is asked in that form first, until it
+    /// closes such a request without answering.
+    QString open(const NTRIPConnectionConfig& config, std::shared_ptr<NTRIPCasterVersions> casterVersions = {});
     /// False unless the socket accepted every byte; the owner decides how to report it.
     bool write(const QByteArray& bytes);
     bool isConnected() const;
@@ -71,11 +91,16 @@ signals:
     void finished();
 
 private:
+    /// Opens a connection to the caster, which sends _request once established.
+    void _connect();
     /// Also the test seam for sockets created elsewhere.
     void _attach(QTcpSocket* socket);
     void _verifyCertificate(QSslSocket* socket, const QList<QSslError>& errors);
     void _establish();
     void _read();
+    /// The caster closed the connection: repeats a version 2 request it left unanswered, else ends the response.
+    void _closed();
+    void _repeatInVersion1();
     /// Decodes bytes that arrived at @a receivedAtMs; also the test seam for responses without a socket.
     void _receive(QByteArrayView bytes, qint64 receivedAtMs, const QDateTime& utcNow = QDateTime::currentDateTimeUtc());
     /// Emits what @a result decoded; a failure or a complete response ends the exchange.
@@ -89,12 +114,17 @@ private:
     const NTRIPHttpPurpose _purpose;
     ScheduledTask _errorBodyTask;
     NTRIPHttpDecoder _decoder;
+    NTRIPConnectionConfig _config;
+    std::shared_ptr<NTRIPCasterVersions> _casterVersions;
+    /// The form of _request.
+    NTRIPVersion _version = NTRIPVersion::Version2;
     QByteArray _request;
     QTcpSocket* _socket = nullptr;
     QString _endpoint;
-    QString _pinnedCertificate;
     QString _newPin;
-    bool _allowSelfSignedCerts = false;
+    bool _requestSent = false;
+    /// The caster sent something in answer to _request.
+    bool _answered = false;
     bool _reading = false;
     bool _ended = false;
 };

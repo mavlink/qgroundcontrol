@@ -51,6 +51,7 @@ private slots:
     void _httpRetryAfterReachesManager();
     void _unrepeatableAnswerWaitsForUser_data();
     void _unrepeatableAnswerWaitsForUser();
+    void _version1CasterIsRemembered();
     void _retryPublicationSuperseded();
     void _missingMountpointDoesNotStartTransport();
     void _correctionIngressKeepsSessionAndIdentity();

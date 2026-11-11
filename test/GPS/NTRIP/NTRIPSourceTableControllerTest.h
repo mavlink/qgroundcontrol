@@ -21,6 +21,7 @@ private slots:
     void _sourceTablePublishesSortedRowsOnce();
     void _v1SourceTable_data();
     void _v1SourceTable();
+    void _version1OnlyCaster();
     void _sourceTableIdentity_data();
     void _sourceTableIdentity();
     void _abortCallbackSupersedesReplacement();

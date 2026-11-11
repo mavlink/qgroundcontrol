@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <memory>
 
 #include <QtCore/QPointer>
 #include <QtCore/QString>
@@ -10,6 +11,7 @@
 #include "RTCMFramer.h"
 #include "ScheduledTask.h"
 
+class NTRIPCasterVersions;
 class NTRIPHttpSession;
 class RuntimeScheduler;
 
@@ -22,8 +24,11 @@ public:
     static constexpr std::chrono::milliseconds CONNECT_TIMEOUT{10000};
     static constexpr std::chrono::milliseconds DATA_WATCHDOG{30000};
 
+    /// @a casterVersions is shared by the attempts and source-table fetches of one caster, so that each asks the
+    /// caster in the form it answered before.
     explicit NTRIPHttpTransport(const NTRIPConnectionConfig& config, QObject* parent = nullptr,
-                                RuntimeScheduler* scheduler = nullptr);
+                                RuntimeScheduler* scheduler = nullptr,
+                                std::shared_ptr<NTRIPCasterVersions> casterVersions = {});
     ~NTRIPHttpTransport() override;
 
     void start() override;
@@ -48,6 +53,7 @@ private:
     void _parseRtcm(const QByteArray& buffer, qint64 receivedAtMs);
 
     NTRIPConnectionConfig _config;
+    const std::shared_ptr<NTRIPCasterVersions> _casterVersions;
 
     QPointer<NTRIPHttpSession> _session;
     RuntimeScheduler* const _scheduler;

@@ -11,9 +11,10 @@
 QGC_LOGGING_CATEGORY(NTRIPHttpTransportLog, "GPS.NTRIPHttpTransport")
 
 NTRIPHttpTransport::NTRIPHttpTransport(const NTRIPConnectionConfig& config, QObject* parent,
-                                       RuntimeScheduler* scheduler)
+                                       RuntimeScheduler* scheduler, std::shared_ptr<NTRIPCasterVersions> casterVersions)
     : NTRIPTransport(parent)
     , _config(config)
+    , _casterVersions(std::move(casterVersions))
     , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
     , _connectTimeoutTask(_scheduler, this)
     , _dataWatchdogTask(_scheduler, this)
@@ -30,7 +31,7 @@ void NTRIPHttpTransport::start()
     _retireSession();
     _stopped = false;
     NTRIPHttpSession* const session = _attachSession(new NTRIPHttpSession(this, _scheduler));
-    if (const QString error = session->open(_config); !error.isEmpty()) {
+    if (const QString error = session->open(_config, _casterVersions); !error.isEmpty()) {
         _retireSession();
         _fail({NTRIPError::InvalidConfig, error});
         return;

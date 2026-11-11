@@ -225,13 +225,17 @@ void NTRIPHttpTransportTest::_connectionWaitsForHttpResponse()
 void NTRIPHttpTransportTest::_legacyCaster_data()
 {
     QTest::addColumn<bool>("authenticated");
-    QTest::newRow("anonymous") << false;
-    QTest::newRow("authenticated") << true;
+    QTest::addColumn<bool>("version1Only");
+    QTest::newRow("anonymous") << false << false;
+    QTest::newRow("authenticated") << true << false;
+    // RTKLIB's caster up to 2.4.3 b33 closes a request that is not HTTP/1.0 without answering it.
+    QTest::newRow("version-1-only") << false << true;
 }
 
 void NTRIPHttpTransportTest::_legacyCaster()
 {
     QFETCH(bool, authenticated);
+    QFETCH(bool, version1Only);
     ScriptedNTRIPCaster caster;
     QVERIFY(caster.isListening());
     auto configuration = caster.connectionConfig();
@@ -241,15 +245,19 @@ void NTRIPHttpTransportTest::_legacyCaster()
         expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg,
                          QRegularExpression(QStringLiteral("Sending credentials without TLS")));
     }
+    if (version1Only) {
+        expectLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg, repeatedInVersion1());
+    }
     NTRIPHttpTransport transport(configuration);
     MultiSignalSpy spy;
     QVERIFY(spy.init(&transport));
     transport.start();
-    auto* connection = caster.waitForConnection();
+    auto* connection = version1Only ? caster.waitForVersion1Request() : caster.waitForConnection();
     QVERIFY(connection && connection->peer);
     const QByteArray request = connection->waitForRequest();
     const bool accepted =
-        request.startsWith("GET /TEST HTTP/1.1\r\n") && request.contains("\r\nUser-Agent: NTRIP ") &&
+        request.startsWith(version1Only ? "GET /TEST HTTP/1.0\r\n" : "GET /TEST HTTP/1.1\r\n") &&
+        request.contains("\r\nUser-Agent: NTRIP ") &&
         (!authenticated ||
          request.contains("\r\nAuthorization: Basic " + QByteArray("test-user:test-password").toBase64() + "\r\n"));
     const auto frame = GPSTest::rtcmMessage(1005);
@@ -260,12 +268,16 @@ void NTRIPHttpTransportTest::_legacyCaster()
         connection->disconnectFromHost();
     }
     QTRY_VERIFY_WITH_TIMEOUT(spy.emitted("correctionFrameReceived") || spy.emitted("error"), TestTimeout::mediumMs());
+    // The request the caster did not answer is no failure of the attempt.
     QVERIFY_NO_SIGNAL(spy, "error");
     QCOMPARE(spy.count("connected"), 1);
     QCOMPARE(spy.count("correctionFrameReceived"), 1);
     QCOMPARE(spy.argument<RTCMDecodedFrame>("correctionFrameReceived").data, frame);
     transport.stop();
     if (authenticated) {
+        verifyExpectedLogMessage();
+    }
+    if (version1Only) {
         verifyExpectedLogMessage();
     }
 }
@@ -300,15 +312,34 @@ void NTRIPHttpTransportTest::_writeAdmissionFailure()
     QCOMPARE(failureAt(errors).code, NTRIPError::SocketError);
 }
 
+void NTRIPHttpTransportTest::_handshakeTimeoutClosesSocket_data()
+{
+    QTest::addColumn<bool>("repeated");
+    QTest::newRow("first-request") << false;
+    // The request repeated in NTRIP version 1 form belongs to the same attempt, and gets no deadline of its own.
+    QTest::newRow("repeated-request") << true;
+}
+
 void NTRIPHttpTransportTest::_handshakeTimeoutClosesSocket()
 {
+    QFETCH(bool, repeated);
     CasterSession session;
     auto* connection = session.start();
     QVERIFY(connection);
     QVERIFY(connection->waitForRequest().startsWith("GET /TEST HTTP/1.1\r\n"));
+    if (repeated) {
+        expectLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg, repeatedInVersion1());
+        QVERIFY(session.scheduler.advanceBy(NTRIPHttpTransport::CONNECT_TIMEOUT / 2));
+        connection->disconnectFromHost();
+        connection = session.caster.waitForVersion1Request();
+        QVERIFY(connection && connection->peer);
+        verifyExpectedLogMessage();
+        QVERIFY(session.scheduler.advanceBy(NTRIPHttpTransport::CONNECT_TIMEOUT / 2 - std::chrono::milliseconds(1)));
+        QVERIFY_NO_SIGNAL(session.spy, "error");
+    }
     QVERIFY_NO_SIGNAL(session.spy, "connected");
     expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, QRegularExpression(QStringLiteral("Connection timeout")));
-    QVERIFY(session.scheduler.advanceBy(NTRIPHttpTransport::CONNECT_TIMEOUT));
+    QVERIFY(session.scheduler.advanceBy(repeated ? std::chrono::milliseconds(1) : NTRIPHttpTransport::CONNECT_TIMEOUT));
     QCOMPARE(session.spy.count("error"), 1);
     QCOMPARE(failureAt(session.signal("error")).code, NTRIPError::ConnectionTimeout);
     QTRY_COMPARE_WITH_TIMEOUT(connection->peer->state(), QAbstractSocket::UnconnectedState, TestTimeout::mediumMs());
@@ -321,8 +352,14 @@ void NTRIPHttpTransportTest::_remoteCloseEmitsSingleError()
 {
     CasterSession session;
     const QSignalSpy& errors = session.signal("error");
-    auto* connection = session.start();
-    QVERIFY(connection);
+    QVERIFY(session.caster.isListening());
+    // The caster closes the request, and its repeat in NTRIP version 1 form, without an answer: one failed attempt.
+    expectLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg, repeatedInVersion1());
+    session.transport.start();
+    auto* connection = session.caster.waitForVersion1Request();
+    QVERIFY(connection && connection->peer);
+    verifyExpectedLogMessage();
+    QVERIFY(errors.isEmpty());
     connection->disconnectFromHost();
     QTRY_COMPARE_WITH_TIMEOUT(errors.size(), 1, TestTimeout::mediumMs());
     deliverQueuedCalls();

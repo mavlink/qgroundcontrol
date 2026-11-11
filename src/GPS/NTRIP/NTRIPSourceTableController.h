@@ -12,6 +12,7 @@
 
 #include "NTRIPConfiguration.h"
 
+class NTRIPCasterVersions;
 class NTRIPSourceTableModel;
 class NTRIPSourceTableSortModel;
 class RuntimeScheduler;
@@ -42,7 +43,10 @@ public:
     static constexpr std::chrono::milliseconds FETCH_TIMEOUT{10000};
     static constexpr qint64 MAX_SOURCE_TABLE_BYTES = 8 * 1024 * 1024;
 
-    explicit NTRIPSourceTableController(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
+    /// @a casterVersions is shared with the correction stream, so that each asks a caster in the form it answered
+    /// before.
+    explicit NTRIPSourceTableController(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr,
+                                        std::shared_ptr<NTRIPCasterVersions> casterVersions = {});
     ~NTRIPSourceTableController() override;
 
     FetchStatus fetchStatus() const { return _fetchStatus; }
@@ -83,6 +87,7 @@ private:
     /// The fetch in progress; null otherwise.
     std::unique_ptr<FetchAttempt> _attempt;
     RuntimeScheduler* const _scheduler;
+    const std::shared_ptr<NTRIPCasterVersions> _casterVersions;
     QGeoCoordinate _sortCoord;
     FetchStatus _fetchStatus = FetchStatus::Idle;
     QString _fetchError;

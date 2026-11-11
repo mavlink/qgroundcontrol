@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtNetwork/QTcpSocket>
@@ -12,6 +13,7 @@
 #include "NTRIP/Support/NTRIPTestHelpers.h"
 #include "NTRIP/Support/ScriptedNTRIPCaster.h"
 #include "NTRIPHttpSession.h"
+#include "QGCNetworkClient.h"
 #include "Support/GPSTestHelpers.h"
 
 using namespace GPSTest;
@@ -20,6 +22,11 @@ namespace {
 QByteArray requestFor(const NTRIPConnectionConfig& config)
 {
     return NTRIPHttpRequest::build(config).bytes;
+}
+
+QString disconnectedBeforeResponse()
+{
+    return QCoreApplication::translate("NTRIPHttpTransport", "Caster disconnected before completing the HTTP response");
 }
 }  // namespace
 
@@ -90,6 +97,98 @@ void NTRIPHttpSessionTest::_refusedConnectionFailsOnce()
     const auto failure = spy.argument<NTRIPFailure>("failed");
     QCOMPARE(failure.code, NTRIPError::SocketError);
     QVERIFY(!failure.detail.isEmpty());
+    deliverQueuedCalls();
+    QVERIFY_ONLY_SIGNAL(spy, "failed");
+}
+
+void NTRIPHttpSessionTest::_unansweredRequestIsRepeatedInVersion1_data()
+{
+    QTest::addColumn<bool>("credentials");
+    QTest::newRow("anonymous") << false;
+    QTest::newRow("with-credentials") << true;
+}
+
+void NTRIPHttpSessionTest::_unansweredRequestIsRepeatedInVersion1()
+{
+    QFETCH(bool, credentials);
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    auto config = caster.connectionConfig();
+    if (credentials) {
+        config.username = QStringLiteral("user");
+        config.password = QStringLiteral("pass");
+    }
+    NTRIPHttpSession session;
+    MultiSignalSpy spy;
+    QVERIFY(spy.init(&session));
+    QByteArray received;
+    connect(&session, &NTRIPHttpSession::bodyReceived, this, [&](const QByteArray& bytes) { received += bytes; });
+    expectLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg, repeatedInVersion1());
+    QVERIFY(session.open(config).isEmpty());
+
+    auto* connection = caster.waitForVersion1Request();
+    QVERIFY(connection && connection->peer);
+    verifyExpectedLogMessage();
+    QCOMPARE(caster.requestLines(), (QList<QByteArray>{"GET /TEST HTTP/1.1", "GET /TEST HTTP/1.0"}));
+    // The request of RTKLIB's client (reqntrip_c in src/stream.c), which sends neither Host nor Ntrip-Version.
+    QCOMPARE(connection->request,
+             "GET /TEST HTTP/1.0\r\nUser-Agent: NTRIP " + QGCNetworkHelper::defaultUserAgent().toLatin1() + "\r\n" +
+                 (credentials ? QByteArray("Authorization: Basic dXNlcjpwYXNz\r\n") : QByteArray()) + "\r\n");
+
+    // Binary, as a stream is: printable text after the status line could still be a header.
+    const QByteArray body(64, '\xd3');
+    const QByteArray response = "ICY 200 OK\r\n" + body;
+    QCOMPARE(connection->write(response), response.size());
+    QTRY_COMPARE_WITH_TIMEOUT(received, body, TestTimeout::mediumMs());
+    // The owner sees one exchange: the unanswered request reports nothing.
+    QCOMPARE(spy.count("responseStarted"), 1);
+    QVERIFY_NO_SIGNAL(spy, "failed");
+    session.abort();
+}
+
+void NTRIPHttpSessionTest::_requestIsRepeatedOnlyOnce()
+{
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    NTRIPHttpSession session;
+    MultiSignalSpy spy;
+    QVERIFY(spy.init(&session));
+    // A second repeat would log again, which fails the test.
+    expectLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg, repeatedInVersion1());
+    QVERIFY(session.open(caster.connectionConfig()).isEmpty());
+    auto* connection = caster.waitForVersion1Request();
+    QVERIFY(connection && connection->peer);
+    verifyExpectedLogMessage();
+    connection->disconnectFromHost();
+    QVERIFY_WAIT_SIGNAL(spy, "failed", TestTimeout::mediumMs());
+    const auto failure = spy.argument<NTRIPFailure>("failed");
+    QCOMPARE(failure.code, NTRIPError::InvalidHttpResponse);
+    QCOMPARE(failure.detail, disconnectedBeforeResponse());
+    deliverQueuedCalls();
+    QVERIFY_ONLY_SIGNAL(spy, "failed");
+    QCOMPARE(caster.requestLines().size(), 2);
+}
+
+void NTRIPHttpSessionTest::_answeredRequestIsNotRepeated()
+{
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    NTRIPHttpSession session;
+    MultiSignalSpy spy;
+    QVERIFY(spy.init(&session));
+    QVERIFY(session.open(caster.connectionConfig()).isEmpty());
+    auto* connection = caster.waitForConnection();
+    QVERIFY(connection && connection->peer);
+    QCOMPARE(connection->waitForRequest(), requestFor(caster.connectionConfig()));
+    // One byte of an answer is enough: the caster read the request, so another form of it is not tried. A repeat
+    // would be refused, and would log.
+    caster.close();
+    QCOMPARE(connection->write("H"), 1);
+    connection->disconnectFromHost();
+    QVERIFY_WAIT_SIGNAL(spy, "failed", TestTimeout::mediumMs());
+    const auto failure = spy.argument<NTRIPFailure>("failed");
+    QCOMPARE(failure.code, NTRIPError::InvalidHttpResponse);
+    QCOMPARE(failure.detail, disconnectedBeforeResponse());
     deliverQueuedCalls();
     QVERIFY_ONLY_SIGNAL(spy, "failed");
 }

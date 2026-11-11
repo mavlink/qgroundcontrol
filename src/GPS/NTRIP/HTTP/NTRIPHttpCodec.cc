@@ -67,7 +67,8 @@ QString errorPreview(QString text)
 }
 }  // namespace
 
-NTRIPHttpRequest NTRIPHttpRequest::build(const NTRIPConnectionConfig& config, NTRIPHttpPurpose purpose)
+NTRIPHttpRequest NTRIPHttpRequest::build(const NTRIPConnectionConfig& config, NTRIPHttpPurpose purpose,
+                                         NTRIPVersion version)
 {
     NTRIPHttpRequest result;
     result.error = purpose == NTRIPHttpPurpose::Corrections ? config.streamValidationError() : config.validationError();
@@ -83,10 +84,15 @@ NTRIPHttpRequest NTRIPHttpRequest::build(const NTRIPConnectionConfig& config, NT
 
     // Some legacy casters match these header spellings case-sensitively. The fully encoded URL parts and the
     // Base64 credentials are always valid field values.
-    result.bytes = "GET " + url.path(QUrl::FullyEncoded).toLatin1() + " HTTP/1.1\r\n" +
-                   "Host: " + url.authority(QUrl::FullyEncoded).toLatin1() + "\r\n" +
-                   "Ntrip-Version: Ntrip/2.0\r\nUser-Agent: NTRIP " + QGCNetworkHelper::defaultUserAgent().toLatin1() +
-                   "\r\n";
+    result.bytes = "GET " + url.path(QUrl::FullyEncoded).toLatin1();
+    if (version == NTRIPVersion::Version1) {
+        // The request of RTKLIB's client (reqntrip_c): its caster up to 2.4.3 b33 takes no other request line.
+        result.bytes += " HTTP/1.0\r\n";
+    } else {
+        result.bytes +=
+            " HTTP/1.1\r\nHost: " + url.authority(QUrl::FullyEncoded).toLatin1() + "\r\nNtrip-Version: Ntrip/2.0\r\n";
+    }
+    result.bytes += "User-Agent: NTRIP " + QGCNetworkHelper::defaultUserAgent().toLatin1() + "\r\n";
     if (!config.username.isEmpty() || !config.password.isEmpty()) {
         result.bytes += "Authorization: Basic " +
                         QGCNetworkHelper::createBasicAuthCredentials(config.username, config.password).toLatin1() +

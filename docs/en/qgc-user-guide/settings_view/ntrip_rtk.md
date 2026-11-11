@@ -25,6 +25,8 @@ The counters count everything the caster sends, including messages the [RTCM mes
 - **Use TLS encryption** — connect with TLS 1.2 or later
 - **Accept self-signed TLS certificates** — accept a caster whose certificate is self-signed. The first successful connection records that certificate; a later connection that presents a different one fails, reporting that the caster's certificate changed. Turning the option off forgets the recorded certificate. Certificates signed by a trusted authority are never recorded.
 
+QGroundControl asks a caster in the form NTRIP version 2 defines. A caster that speaks only version 1, such as RTKLIB's `str2str` up to 2.4.3 b33, closes such a request without answering it. QGroundControl then repeats the request once in the version 1 form, for the corrections and for the mountpoint list, with or without TLS. Once the caster has accepted that form, QGroundControl uses it first for that caster until it is restarted, or until the caster leaves such a request unanswered.
+
 ## NTRIP Mountpoint
 
 - **Mount Point** — the NTRIP mountpoint to connect to. It is required: without one, NTRIP reports an error instead of connecting

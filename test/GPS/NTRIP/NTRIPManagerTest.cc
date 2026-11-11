@@ -730,6 +730,60 @@ void NTRIPManagerTest::_unrepeatableAnswerWaitsForUser()
     QCOMPARE(retry->startCount, 0);
 }
 
+void NTRIPManagerTest::_version1CasterIsRemembered()
+{
+    using Status = NTRIPManager::ConnectionStatus;
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    auto configuration = mockCasterConfiguration();
+    configuration.connection = caster.connectionConfig();
+    QList<Status> observed;
+    connect(&manager, &NTRIPManager::connectionStatusChanged, this,
+            [&]() { observed.append(manager.connectionStatus()); });
+    const QRegularExpression failure(QStringLiteral("NTRIP error:"));
+
+    // The caster closes the request and serves its repeat in NTRIP version 1 form: one attempt, and not a failed one.
+    expectLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg, repeatedInVersion1());
+    initialize(manager, configuration);
+    auto* connection = caster.waitForVersion1Request(TestTimeout::shortMs());
+    QVERIFY(connection && connection->peer);
+    verifyExpectedLogMessage();
+    const QByteArray stream = "ICY 200 OK\r\n" + GPSTest::rtcmMessage(1005);
+    QCOMPARE(connection->write(stream), stream.size());
+    QTRY_COMPARE_WITH_TIMEOUT(manager.connectionStats()->messagesReceived(), quint32(1), TestTimeout::shortMs());
+    QCOMPARE(observed, (QList<Status>{Status::Connecting, Status::Connected}));
+
+    // The mountpoint browser now asks this caster in version 1 form at once.
+    manager.fetchMountpoints();
+    auto* fetch = caster.waitForConnection(TestTimeout::shortMs());
+    QVERIFY(fetch && fetch->peer);
+    QVERIFY(fetch->waitForRequest(TestTimeout::shortMs()).startsWith("GET / HTTP/1.0\r\n"));
+    manager.sourceTableController()->cancel();
+
+    // So does a reconnect.
+    expectLogMessage("GPS.NTRIPManager", QtWarningMsg, failure);
+    connection->disconnectFromHost();
+    QTRY_COMPARE_WITH_TIMEOUT(manager.connectionStatus(), Status::Reconnecting, TestTimeout::shortMs());
+    verifyExpectedLogMessage();
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
+    connection = caster.waitForConnection(TestTimeout::shortMs());
+    QVERIFY(connection && connection->peer);
+    QVERIFY(connection->waitForRequest(TestTimeout::shortMs()).startsWith("GET /TEST HTTP/1.0\r\n"));
+
+    // A version 1 request the caster closes without an answer is not repeated, and the next attempt starts over.
+    expectLogMessage("GPS.NTRIPManager", QtWarningMsg, failure);
+    connection->disconnectFromHost();
+    QTRY_COMPARE_WITH_TIMEOUT(manager.connectionStatus(), Status::Reconnecting, TestTimeout::shortMs());
+    verifyExpectedLogMessage();
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(2)));
+    connection = caster.waitForConnection(TestTimeout::shortMs());
+    QVERIFY(connection && connection->peer);
+    QVERIFY(connection->waitForRequest(TestTimeout::shortMs()).startsWith("GET /TEST HTTP/1.1\r\n"));
+    manager.shutdown();
+}
+
 void NTRIPManagerTest::_retryPublicationSuperseded()
 {
     ManualScheduler scheduler;

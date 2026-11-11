@@ -8,6 +8,7 @@
 
 #include "GPSCorrectionManager.h"
 #include "NTRIPError.h"
+#include "NTRIPHttpSession.h"
 #include "NTRIPHttpTransport.h"
 #include "QGCLoggingCategory.h"
 #include "QGCNetworkAvailabilityMonitor.h"
@@ -71,7 +72,8 @@ NTRIPManager::NTRIPManager(QObject* parent, RuntimeScheduler* scheduler, const D
     , _stats(GPSCorrectionSelector::FRESHNESS_TIMEOUT, this, _scheduler)
     , _correctionManager(dependencies.corrections)
     , _networkMonitor(dependencies.network)
-    , _sourceTableController(this, _scheduler)
+    , _casterVersions(std::make_shared<NTRIPCasterVersions>())
+    , _sourceTableController(this, _scheduler, _casterVersions)
 {
     qCDebug(NTRIPManagerLog) << this;
 
@@ -482,7 +484,7 @@ void NTRIPManager::_openSession()
 
     NTRIPTransport* transport = _transportFactory ? _transportFactory(_configuration, this) : nullptr;
     if (!transport) {
-        transport = new NTRIPHttpTransport(connection, this, _scheduler);
+        transport = new NTRIPHttpTransport(connection, this, _scheduler, _casterVersions);
     }
     _transport = transport;
 

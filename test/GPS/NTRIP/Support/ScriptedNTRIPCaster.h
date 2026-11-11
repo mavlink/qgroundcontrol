@@ -1,8 +1,11 @@
 #pragma once
 
+#include <algorithm>
 #include <memory>
 #include <vector>
 
+#include <QtCore/QByteArray>
+#include <QtCore/QList>
 #include <QtCore/QPointer>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QSslCertificate>
@@ -140,6 +143,32 @@ public:
         }
         connection->disconnectFromHost();
         return true;
+    }
+
+    /// Takes requests as a caster that speaks only NTRIP version 1 does, such as RTKLIB's up to 2.4.3 b33: it closes
+    /// a request that is not "GET <path> HTTP/1.0" with a User-Agent without an answer.
+    /// @return the connection of the next version 1 request, for the test to answer, or null when none arrives.
+    Connection* waitForVersion1Request(int timeoutMs = TestTimeout::mediumMs())
+    {
+        while (Connection* connection = waitForConnection(timeoutMs)) {
+            const QByteArray request = connection->waitForRequest(timeoutMs);
+            if (request.startsWith("GET ") && request.first(request.indexOf("\r\n") + 2).endsWith(" HTTP/1.0\r\n") &&
+                request.contains("\r\nUser-Agent:")) {
+                return connection;
+            }
+            connection->disconnectFromHost();
+        }
+        return nullptr;
+    }
+
+    /// The request line of every connection accepted so far, in order; empty for one whose request was not read.
+    QList<QByteArray> requestLines() const
+    {
+        QList<QByteArray> lines;
+        for (const auto& connection : _connections) {
+            lines.append(connection->request.first((std::max) (qsizetype(0), connection->request.indexOf("\r\n"))));
+        }
+        return lines;
     }
 
     void close()

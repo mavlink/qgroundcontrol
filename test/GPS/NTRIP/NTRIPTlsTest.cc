@@ -218,6 +218,35 @@ void NTRIPTlsTest::_certificatePolicy()
     QVERIFY(spy.notEmitted("error"));
 }
 
+void NTRIPTlsTest::_unansweredRequestIsRepeated()
+{
+    ScriptedNTRIPCaster caster(ScriptedNTRIPCaster::Transport::Tls);
+    QVERIFY(caster.isListening());
+    auto configuration = caster.connectionConfig();
+    configuration.allowSelfSignedCerts = true;
+    NTRIPHttpTransport transport(configuration);
+    MultiSignalSpy spy;
+    QVERIFY(spy.init(&transport));
+    // The first handshake trusts the self-signed certificate; the repeat's handshake finds it pinned.
+    _expectTlsWarnings(true, false);
+    expectLogMessage("GPS.NTRIP.NTRIPHttpSession", QtWarningMsg, repeatedInVersion1());
+    _expectSelfSignedWarning();
+    transport.start();
+    auto* connection = caster.waitForVersion1Request();
+    QVERIFY(connection && connection->peer);
+    QCOMPARE(caster.requestLines(), (QList<QByteArray>{"GET /TEST HTTP/1.1", "GET /TEST HTTP/1.0"}));
+    _verifyTlsWarnings();
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    const QByteArray response = "ICY 200 OK\r\n" + GPSTest::rtcmMessage(1005);
+    QCOMPARE(connection->write(response), response.size());
+    QTRY_COMPARE_WITH_TIMEOUT(spy.count("correctionFrameReceived"), 1, TestTimeout::mediumMs());
+    QCOMPARE(spy.count("connected"), 1);
+    QCOMPARE(spy.count("certificatePinned"), 1);
+    QVERIFY(spy.notEmitted("error"));
+    transport.stop();
+}
+
 void NTRIPTlsTest::_sourceTablePolicyChanges_data()
 {
     QTest::addColumn<bool>("duringFetch");

@@ -19,13 +19,23 @@ enum class NTRIPHttpPurpose
     SourceTable,
 };
 
+/// The NTRIP version whose form a request takes. The decoder reads the answers of both versions to either form.
+enum class NTRIPVersion
+{
+    /// An HTTP/1.1 request with the Ntrip-Version header.
+    Version2,
+    /// The HTTP/1.0 request, for casters that close a version 2 request without answering it.
+    Version1,
+};
+
 struct NTRIPHttpRequest
 {
     QByteArray bytes;
     QString error;
 
     [[nodiscard]] static NTRIPHttpRequest build(const NTRIPConnectionConfig& config,
-                                                NTRIPHttpPurpose purpose = NTRIPHttpPurpose::Corrections);
+                                                NTRIPHttpPurpose purpose = NTRIPHttpPurpose::Corrections,
+                                                NTRIPVersion version = NTRIPVersion::Version2);
 };
 
 /// Private transport parser; buffers framing, never correction payloads.

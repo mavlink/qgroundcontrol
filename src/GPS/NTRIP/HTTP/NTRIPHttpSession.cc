@@ -15,6 +15,21 @@
 
 QGC_LOGGING_CATEGORY(NTRIPHttpSessionLog, "GPS.NTRIP.NTRIPHttpSession")
 
+NTRIPVersion NTRIPCasterVersions::versionFor(const NTRIPConnectionConfig& caster) const
+{
+    return _version1Casters.contains(caster.url(false).toString()) ? NTRIPVersion::Version1 : NTRIPVersion::Version2;
+}
+
+void NTRIPCasterVersions::setVersion(const NTRIPConnectionConfig& caster, NTRIPVersion version)
+{
+    const QString endpoint = caster.url(false).toString();
+    if (version == NTRIPVersion::Version1) {
+        _version1Casters.insert(endpoint);
+    } else {
+        _version1Casters.remove(endpoint);
+    }
+}
+
 NTRIPHttpSession::NTRIPHttpSession(QObject* parent, RuntimeScheduler* scheduler, NTRIPHttpPurpose purpose)
     : QObject(parent)
     , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
@@ -23,33 +38,40 @@ NTRIPHttpSession::NTRIPHttpSession(QObject* parent, RuntimeScheduler* scheduler,
     , _decoder(purpose)
 {}
 
-QString NTRIPHttpSession::open(const NTRIPConnectionConfig& config)
+QString NTRIPHttpSession::open(const NTRIPConnectionConfig& config, std::shared_ptr<NTRIPCasterVersions> casterVersions)
 {
     if (_socket || _ended) {
         return {};
     }
-    NTRIPHttpRequest request = NTRIPHttpRequest::build(config, _purpose);
+    const NTRIPVersion version = casterVersions ? casterVersions->versionFor(config) : NTRIPVersion::Version2;
+    NTRIPHttpRequest request = NTRIPHttpRequest::build(config, _purpose, version);
     if (!request.error.isEmpty()) {
         return request.error;
     }
     _request = std::move(request.bytes);
-    const auto port = static_cast<quint16>(config.port);
-    _endpoint = QStringLiteral("%1:%2").arg(config.host).arg(port);
-    _pinnedCertificate = config.pinnedCertificate;
-    _allowSelfSignedCerts = config.allowSelfSignedCerts;
-    qCDebug(NTRIPHttpSessionLog) << "connectToHost" << config.host << ":" << config.port << "TLS" << config.useTls;
-    if (!config.useTls) {
+    _version = version;
+    _config = config;
+    _casterVersions = std::move(casterVersions);
+    _endpoint = QStringLiteral("%1:%2").arg(config.host).arg(static_cast<quint16>(config.port));
+    _connect();
+    return {};
+}
+
+void NTRIPHttpSession::_connect()
+{
+    const auto port = static_cast<quint16>(_config.port);
+    qCDebug(NTRIPHttpSessionLog) << "connectToHost" << _config.host << ":" << _config.port << "TLS" << _config.useTls;
+    if (!_config.useTls) {
         auto* socket = new QTcpSocket(this);
         _attach(socket);
-        socket->connectToHost(config.host, port);
-        return {};
+        socket->connectToHost(_config.host, port);
+        return;
     }
     auto* socket = new QSslSocket(this);
     // No ALPN: NTRIP 1.0 casters do not speak HTTP/1.1, and a strict ALPN server may reject an unknown protocol.
     socket->setSslConfiguration(QGCNetworkHelper::createSslConfig());
     _attach(socket);
-    socket->connectToHostEncrypted(config.host, port, config.host);
-    return {};
+    socket->connectToHostEncrypted(_config.host, port, _config.host);
 }
 
 void NTRIPHttpSession::_attach(QTcpSocket* socket)
@@ -97,7 +119,7 @@ void NTRIPHttpSession::_verifyCertificate(QSslSocket* socket, const QList<QSslEr
         _fail(NTRIPError::SslError, messages.join(QStringLiteral("; ")));
         return;
     }
-    if (!_allowSelfSignedCerts) {
+    if (!_config.allowSelfSignedCerts) {
         qCWarning(NTRIPHttpSessionLog)
             << "Rejecting self-signed certificate (enable 'Accept self-signed certificates' to allow)";
         _fail(NTRIPError::SslError, tr("Self-signed certificate rejected. Enable 'Accept self-signed "
@@ -105,9 +127,9 @@ void NTRIPHttpSession::_verifyCertificate(QSslSocket* socket, const QList<QSslEr
         return;
     }
     const QString pin = NTRIPTlsPolicy::certificatePin(_endpoint, certificate);
-    if (pin == _pinnedCertificate) {
+    if (pin == _config.pinnedCertificate) {
         qCDebug(NTRIPHttpSessionLog) << "Accepting the pinned self-signed certificate";
-    } else if (_pinnedCertificate.startsWith(_endpoint + QLatin1Char('|'))) {
+    } else if (_config.pinnedCertificate.startsWith(_endpoint + QLatin1Char('|'))) {
         qCWarning(NTRIPHttpSessionLog) << "Rejecting self-signed certificate that differs from the pinned one";
         _fail(NTRIPError::SslError,
               tr("The caster's certificate changed since it was first trusted. If the change is expected, turn "
@@ -138,6 +160,8 @@ void NTRIPHttpSession::_establish()
     _socket->setSocketOption(QAbstractSocket::KeepAliveCountOption, 3);
     _socket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
     if (const QString pin = std::exchange(_newPin, {}); !pin.isEmpty()) {
+        // A repeated request finds the certificate pinned.
+        _config.pinnedCertificate = pin;
         const QPointer<NTRIPHttpSession> self(this);
         emit certificatePinned(pin);
         if (!self || _ended || !_socket) {
@@ -148,6 +172,7 @@ void NTRIPHttpSession::_establish()
         _fail(NTRIPError::SocketError, tr("Socket did not accept the complete NTRIP write"));
         return;
     }
+    _requestSent = true;
     qCDebug(NTRIPHttpSessionLog) << "HTTP request sent to" << _endpoint;
 }
 
@@ -188,13 +213,44 @@ void NTRIPHttpSession::_read()
     }
     _reading = false;
     if (current && socket->state() == QAbstractSocket::UnconnectedState) {
-        _finishResponse();
+        _closed();
     }
+}
+
+void NTRIPHttpSession::_closed()
+{
+    // A close and a reset arrive alike. A caster that sent anything has read the request, so asking again in another
+    // form would only count against the client.
+    const bool unanswered = _requestSent && !_answered;
+    if (unanswered && _version == NTRIPVersion::Version2) {
+        _repeatInVersion1();
+        return;
+    }
+    if (unanswered && _casterVersions) {
+        _casterVersions->setVersion(_config, NTRIPVersion::Version2);
+    }
+    _finishResponse();
+}
+
+void NTRIPHttpSession::_repeatInVersion1()
+{
+    qCWarning(NTRIPHttpSessionLog) << "Caster closed the connection without answering: "
+                                      "repeating the request in NTRIP version 1 form";
+    _version = NTRIPVersion::Version1;
+    // The configuration built the first request, so it builds this one.
+    _request = NTRIPHttpRequest::build(_config, _purpose, _version).bytes;
+    _requestSent = false;
+    if (QTcpSocket* const closed = std::exchange(_socket, nullptr)) {
+        closed->disconnect(this);
+        closed->deleteLater();
+    }
+    _connect();
 }
 
 void NTRIPHttpSession::_receive(QByteArrayView bytes, qint64 receivedAtMs, const QDateTime& utcNow)
 {
     if (!_ended) {
+        _answered = true;
         _publish(_decoder.feed(bytes, utcNow), receivedAtMs);
     }
 }
@@ -204,6 +260,9 @@ void NTRIPHttpSession::_publish(const NTRIPHttpDecoder::Result& result, qint64 r
     // Observers may abort or retire this session from each signal.
     const QPointer<NTRIPHttpSession> self(this);
     if (result.connected) {
+        if (_casterVersions && _version == NTRIPVersion::Version1) {
+            _casterVersions->setVersion(_config, NTRIPVersion::Version1);
+        }
         emit responseStarted();
         if (!self || _ended) {
             return;

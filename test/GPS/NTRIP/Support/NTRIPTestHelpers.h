@@ -49,6 +49,13 @@ inline RTCMDecodedFrame frameAt(const QSignalSpy& frames, qsizetype emission = 0
     return qvariant_cast<RTCMDecodedFrame>(frames.at(emission).at(0));
 }
 
+/// The warning of a session that repeats a request the caster closed without an answer, for expectLogMessage() with
+/// the category "GPS.NTRIP.NTRIPHttpSession".
+inline QRegularExpression repeatedInVersion1()
+{
+    return QRegularExpression(QStringLiteral("repeating the request in NTRIP version 1 form"));
+}
+
 /// A pattern matching exactly @a message, for expectLogMessage().
 inline QRegularExpression exactMessage(const QString& message)
 {

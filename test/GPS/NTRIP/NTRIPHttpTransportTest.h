@@ -32,6 +32,7 @@ private slots:
     void _legacyCaster();
     void _writeAdmissionFailure_data();
     void _writeAdmissionFailure();
+    void _handshakeTimeoutClosesSocket_data();
     void _handshakeTimeoutClosesSocket();
     void _remoteCloseEmitsSingleError();
     void _socketTermination_data();

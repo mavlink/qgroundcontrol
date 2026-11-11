@@ -20,6 +20,7 @@
 
 class GPSCorrectionManager;
 class GPSCorrectionSourceHandle;
+class NTRIPCasterVersions;
 class QGCNetworkAvailabilityMonitor;
 class RuntimeScheduler;
 
@@ -240,6 +241,8 @@ private:
     Configuration _configuration;
     Configuration _running;
 
+    /// The request form each caster takes, which the stream and the mountpoint browser find out for each other.
+    const std::shared_ptr<NTRIPCasterVersions> _casterVersions;
     NTRIPSourceTableController _sourceTableController;
 
     static constexpr std::chrono::milliseconds SETTINGS_DEBOUNCE{250};
