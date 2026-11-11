@@ -154,14 +154,14 @@ QList<MissingPluginFeature> missingPluginFeatures(const std::function<bool(const
     return missing;
 }
 
-Environment::ValidationResult prepareEnvironment()
+VideoBackend::EnvPrepResult prepareEnvironment()
 {
     return Environment::prepareEnvironment();
 }
 
 namespace {
 
-bool _initGstRuntime(const QStringList& args, const Environment::ValidationResult& env)
+bool _initGstRuntime(const QStringList& args, const VideoBackend::EnvPrepResult& env)
 {
     if (!env.ok) {
         qCCritical(GStreamerLog) << "Invalid GStreamer environment configuration:" << env.error;
@@ -235,8 +235,7 @@ bool completeInit(std::optional<int> debugLevel)
     return true;
 }
 
-bool initialize(const QStringList& arguments, const Environment::ValidationResult& envResult,
-                std::optional<int> debugLevel)
+bool initialize(const VideoBackend::InitParams& params)
 {
     GStreamer::resetExternalPluginLoaderFailed();
     GStreamer::redirectGLibLogging();
@@ -247,7 +246,7 @@ bool initialize(const QStringList& arguments, const Environment::ValidationResul
         gst_debug_remove_log_function(gst_debug_log_default);
     }
 
-    if (!_initGstRuntime(arguments, envResult)) {
+    if (!_initGstRuntime(params.arguments, params.environment)) {
         return false;
     }
 
@@ -256,7 +255,7 @@ bool initialize(const QStringList& arguments, const Environment::ValidationResul
         qAddPostRoutine(_deinitGStreamer);
     }
 
-    return completeInit(debugLevel);
+    return completeInit(params.debugLevel);
 }
 
 // Video sink refcount protocol: createVideoSink returns one owned, non-floating ref, which the caller

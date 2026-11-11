@@ -21,8 +21,9 @@ class VideoReceiver;
 class VideoBackend
 {
 public:
-    /// Outcome of prepareEnvironment(), threaded into initialize() so backend setup validity is passed as a value
-    /// rather than stashed in process-global state.
+    /// Outcome of prepareEnvironment(): whether the backend's runtime paths validated, with an error to log when they
+    /// didn't. Threaded into initialize() so backend setup validity is passed as a value rather than stashed in
+    /// process-global state.
     struct EnvPrepResult
     {
         bool ok = true;

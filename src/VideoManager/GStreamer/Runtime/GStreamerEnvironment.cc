@@ -37,7 +37,6 @@ namespace {
 using GStreamer::Environment::BundledRuntime;
 using GStreamer::Environment::BundleLayout;
 using GStreamer::Environment::DesktopInstall;
-using GStreamer::Environment::ValidationResult;
 
 // Single source of truth for the managed plugin-path/scanner vars: keeps _clearManagedGstEnvVars
 // and logDiagnostics from drifting. Each site layers its own extras (GIO/PTP, registry) on top.
@@ -360,9 +359,9 @@ bool _applyBundleLayout(const QString& platformLabel, const BundleLayout& layout
 
 #endif  // !Q_OS_ANDROID && !Q_OS_IOS && !QGC_GST_SYSTEM_PLUGINS
 
-ValidationResult _setGstEnvVars(const QString& appDir)
+VideoBackend::EnvPrepResult _setGstEnvVars(const QString& appDir)
 {
-    ValidationResult result;
+    VideoBackend::EnvPrepResult result;
     s_bundledRuntime = {};
 
     qCDebug(GStreamerEnvLog) << "App directory:" << appDir;
@@ -533,7 +532,7 @@ BundleLayout bundleLayout(DesktopInstall install, const QString& appDir)
     return {};
 }
 
-ValidationResult prepareEnvironment(const QString& appDir)
+VideoBackend::EnvPrepResult prepareEnvironment(const QString& appDir)
 {
     // qputenv is not thread-safe against concurrent getenv; this must run on the GUI thread before
     // the QtConcurrent init worker spawns. Warn loudly rather than corrupt the environment silently.

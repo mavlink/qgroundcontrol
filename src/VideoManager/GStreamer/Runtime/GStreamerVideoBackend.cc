@@ -5,7 +5,10 @@
 #include "GStreamer.h"
 #include "GStreamerDecoderRanks.h"
 #include "HwBuffers/common/HwBuffers.h"
+#include "QGCLoggingCategory.h"
 #include "QtMultimediaVideoReceiver.h"
+
+QGC_LOGGING_CATEGORY(GStreamerVideoBackendLog, "Video.GStreamer.VideoBackend")
 
 #ifdef Q_OS_ANDROID
 #include <jni.h>
@@ -33,7 +36,7 @@ VideoBackend::Capabilities GStreamerVideoBackend::capabilities() const
 VideoReceiver* GStreamerVideoBackend::createReceiver(QObject* parent)
 {
     // GStreamer's setup isn't retried, so nothing plays through it in this process any more.
-    if (_runtime.state() == GStreamer::Runtime::State::Failed) {
+    if (state() == State::Failed) {
         return new QtMultimediaVideoReceiver(parent);
     }
     return GStreamer::createVideoReceiver(parent);
@@ -41,13 +44,31 @@ VideoReceiver* GStreamerVideoBackend::createReceiver(QObject* parent)
 
 VideoBackend::EnvPrepResult GStreamerVideoBackend::prepareEnvironment()
 {
-    const GStreamer::Environment::ValidationResult result = _runtime.prepare();
-    return {result.ok, result.error};
+    if (state() != State::Unprepared) {
+        qCWarning(GStreamerVideoBackendLog) << "Environment prepared again after GStreamer setup started";
+    }
+    EnvPrepResult result = GStreamer::prepareEnvironment();
+    State expected = State::Unprepared;
+    (void) _state.compare_exchange_strong(expected, State::Prepared, std::memory_order_acq_rel);
+    return result;
 }
 
 bool GStreamerVideoBackend::initialize(const InitParams& params)
 {
-    return _runtime.initialize(params.arguments, {params.environment.ok, params.environment.error}, params.debugLevel);
+    switch (state()) {
+        case State::Initialized:
+            return true;
+        case State::Failed:
+            return false;
+        case State::Unprepared:
+            qCWarning(GStreamerVideoBackendLog) << "Initializing GStreamer without preparing its environment";
+            break;
+        case State::Prepared:
+            break;
+    }
+    const bool initialized = GStreamer::initialize(params);
+    _state.store(initialized ? State::Initialized : State::Failed, std::memory_order_release);
+    return initialized;
 }
 
 QString GStreamerVideoBackend::initFailureMessage() const
@@ -59,7 +80,11 @@ QString GStreamerVideoBackend::initFailureMessage() const
 
 bool GStreamerVideoBackend::selfTest()
 {
-    return _runtime.selfTest();
+    if (state() != State::Initialized) {
+        qCWarning(GStreamerVideoBackendLog) << "GStreamer self-test skipped: GStreamer isn't initialized";
+        return false;
+    }
+    return GStreamer::selfTest();
 }
 
 void GStreamerVideoBackend::applyDecoderPriorities(VideoDecoderOption option)

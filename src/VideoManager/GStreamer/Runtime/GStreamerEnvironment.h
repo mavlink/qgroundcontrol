@@ -4,17 +4,11 @@
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 
+#include "VideoBackend.h"
+
 /// Process-wide GStreamer environment setup: plugin-path discovery, GIO compat override,
 /// env var management, APK asset extraction, mobile CA file.
 namespace GStreamer::Environment {
-
-/// Outcome of environment preparation: whether the discovered plugin/scanner
-/// paths validated, plus a human-readable error when they did not.
-struct ValidationResult
-{
-    bool ok = true;
-    QString error;
-};
 
 /// The desktop GStreamer runtime bundled with the app that prepareEnvironment() pointed GStreamer at.
 struct BundledRuntime
@@ -54,7 +48,7 @@ BundleLayout bundleLayout(DesktopInstall install, const QString& appDir);
 /// the values an earlier one set for the user's. Returns the validation outcome by value (threaded explicitly to
 /// initialize(), not a cross-thread global).
 /// Not thread-safe: call it on the GUI thread, before gst_init() and any thread that reads the environment.
-ValidationResult prepareEnvironment(const QString& appDir = QString());
+VideoBackend::EnvPrepResult prepareEnvironment(const QString& appDir = QString());
 
 /// Point GST_REGISTRY at gstreamer-<runtime version>-<arch>-<install hash>.bin in @p cacheDir, creating the directory,
 /// unless the user set GST_REGISTRY or GST_REGISTRY_1_0 or @p cacheDir is empty. The hash names the install at

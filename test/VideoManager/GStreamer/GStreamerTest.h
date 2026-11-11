@@ -22,8 +22,7 @@ private slots:
     void _testCompleteInit();
     void _testCreateVideoReceiver();
     void _testVideoBackendForwards();
-    void _testVideoBackendFallsBackWhenInitFails();
-    void _testRuntimeRunsInOrder();
+    void _testVideoBackendRunsInOrder();
     void _testRecordingSinkAcceptsElementaryStreams_data();
     void _testRecordingSinkAcceptsElementaryStreams();
     void _testBindDebugLevelFactRejectsNullContext();

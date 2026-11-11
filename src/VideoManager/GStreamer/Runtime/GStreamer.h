@@ -6,7 +6,7 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QStringList>
 
-#include "GStreamerEnvironment.h"
+#include "VideoBackend.h"
 
 typedef struct _GstElement GstElement;
 
@@ -51,9 +51,8 @@ VideoReceiver* createVideoReceiver(QObject* parent = nullptr);
 QGCQVideoSinkController* setupQVideoSinkElement(GstElement* sinkBin, QVideoSink* videoSink, QObject* controllerParent);
 
 // Process/runtime lifecycle, reached through GStreamerVideoBackend.
-Environment::ValidationResult prepareEnvironment();
-bool initialize(const QStringList& arguments, const Environment::ValidationResult& envResult,
-                std::optional<int> debugLevel = std::nullopt);
+VideoBackend::EnvPrepResult prepareEnvironment();
+bool initialize(const VideoBackend::InitParams& params);
 /// Proves, for the boot test, that the runtime initialize() set up works: decoding, recording, the bundled plugins
 /// and GIO (GStreamerSelfTest.h). Logs each failure under Video.GStreamer.SelfTest; GUI thread, after initialize().
 bool selfTest();

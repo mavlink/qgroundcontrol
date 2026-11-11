@@ -18,7 +18,6 @@ QGC_LOGGING_CATEGORY(GStreamerTestLog, "Video.GStreamer.GStreamerTest")
 #include "GStreamer.h"
 #include "GStreamerDecoderRanks.h"
 #include "GStreamerHelpers.h"
-#include "GStreamerRuntime.h"
 #include "GStreamerTestHelpers.h"
 #include "GStreamerVideoBackend.h"
 #include "GstVideoReceiver.h"
@@ -225,51 +224,39 @@ void GStreamerTest::_testVideoBackendForwards()
     backend.applyDecoderPriorities(VideoDecoderOption::Default);
 }
 
-void GStreamerTest::_testVideoBackendFallsBackWhenInitFails()
+void GStreamerTest::_testVideoBackendRunsInOrder()
 {
     GStreamerVideoBackend backend;
-    expectLogMessage("Video.GStreamer.Runtime", QtWarningMsg,
-                     QRegularExpression(QStringLiteral("^Initializing GStreamer without preparing")));
-    expectLogMessage("Video.GStreamer.GStreamer", QtCriticalMsg,
-                     QRegularExpression(QStringLiteral("^Invalid GStreamer environment configuration")));
-    VideoBackend::InitParams params;
-    params.environment = {.ok = false, .error = QStringLiteral("test")};
-    QVERIFY(!backend.initialize(params));
-    verifyExpectedLogMessage();
-    verifyExpectedLogMessage();
-
-    // GStreamer's setup isn't retried, so the streams go to the receiver that needs none.
-    const std::unique_ptr<VideoReceiver> receiver(backend.createReceiver(nullptr));
-    QVERIFY(qobject_cast<QtMultimediaVideoReceiver*>(receiver.get()));
-}
-
-void GStreamerTest::_testRuntimeRunsInOrder()
-{
-    GStreamer::Runtime runtime;
-    QCOMPARE(runtime.state(), GStreamer::Runtime::State::Unprepared);
+    QCOMPARE(backend.state(), GStreamerVideoBackend::State::Unprepared);
 
     // Nothing to self-test before GStreamer runs.
-    expectLogMessage("Video.GStreamer.Runtime", QtWarningMsg,
+    expectLogMessage("Video.GStreamer.VideoBackend", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^GStreamer self-test")));
-    QVERIFY(!runtime.selfTest());
+    QVERIFY(!backend.selfTest());
     verifyExpectedLogMessage();
 
     // A setup that fails isn't retried: gst_init() can't be undone.
-    expectLogMessage("Video.GStreamer.Runtime", QtWarningMsg,
+    VideoBackend::InitParams params;
+    params.environment = {.ok = false, .error = QStringLiteral("test")};
+    expectLogMessage("Video.GStreamer.VideoBackend", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^Initializing GStreamer without preparing")));
     expectLogMessage("Video.GStreamer.GStreamer", QtCriticalMsg,
                      QRegularExpression(QStringLiteral("^Invalid GStreamer environment configuration")));
-    QVERIFY(!runtime.initialize({}, {.ok = false, .error = QStringLiteral("test")}, std::nullopt));
+    QVERIFY(!backend.initialize(params));
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
-    QCOMPARE(runtime.state(), GStreamer::Runtime::State::Failed);
-    QVERIFY(!runtime.initialize({}, {}, std::nullopt));
-    QCOMPARE(runtime.state(), GStreamer::Runtime::State::Failed);
+    QCOMPARE(backend.state(), GStreamerVideoBackend::State::Failed);
+    QVERIFY(!backend.initialize(VideoBackend::InitParams()));
+    QCOMPARE(backend.state(), GStreamerVideoBackend::State::Failed);
 
-    expectLogMessage("Video.GStreamer.Runtime", QtWarningMsg,
+    expectLogMessage("Video.GStreamer.VideoBackend", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^GStreamer self-test")));
-    QVERIFY(!runtime.selfTest());
+    QVERIFY(!backend.selfTest());
     verifyExpectedLogMessage();
+
+    // The streams then go to the receiver that needs no setup.
+    const std::unique_ptr<VideoReceiver> receiver(backend.createReceiver(nullptr));
+    QVERIFY(qobject_cast<QtMultimediaVideoReceiver*>(receiver.get()));
 }
 
 void GStreamerTest::_testRecordingSinkAcceptsElementaryStreams_data()
