@@ -286,6 +286,11 @@ void ashtechMetadata(GPSTestClock& clock)
     (void) driver->consume(positionPacket);
     QCOMPARE_EQ(driver.position.navigation.horizontalAccuracyMeters, 0.5f);
     QCOMPARE(driver.position.navigation.utcTimeUs % 60000000, 10000000);
+    // A date past the plausibility ceiling leaves the positions undated, as it does from the other families.
+    (void) driver->consume(nmeaPacket("GPZDA,172809.456,12,07,2500,00,00"));
+    (void) driver->consume(positionPacket);
+    QCOMPARE(driver.position.navigation.utcTimeUs, 0);
+    (void) driver->consume(nmeaPacket("GPZDA,172809.456,12,07,2026,00,00"));
     clock.advanceBy(6000000);
     (void) driver->consume(positionPacket);
     QVERIFY(std::isnan(driver.position.navigation.horizontalAccuracyMeters) &&

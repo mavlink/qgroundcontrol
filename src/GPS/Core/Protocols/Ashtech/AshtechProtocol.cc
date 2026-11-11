@@ -408,7 +408,9 @@ std::optional<GPSReceiveUpdates> Protocol::_handleTime(const NMEA::Sentence& sen
     const std::chrono::year_month_day calendar{std::chrono::year{date.year}, std::chrono::month{date.month},
                                                std::chrono::day{date.day}};
     const uint64_t utc = utcUs(calendar, *zda->utcMilliseconds);
-    _utcReference = utc / 1000000 > static_cast<uint64_t>(GPSProtocolMath::UTC_PLAUSIBILITY_FLOOR_SECS) ? utc : 0;
+    const bool plausible = utc / 1000000 > static_cast<uint64_t>(GPSProtocolMath::UTC_PLAUSIBILITY_FLOOR_SECS) &&
+                           date.year <= GPSProtocolMath::UTC_PLAUSIBILITY_CEILING_YEAR;
+    _utcReference = plausible ? utc : 0;
     _nmea.position().navigation.utcTimeUs = _utcReference;
     _utcReceivedUs = nowUs;
     return GPSReceiveUpdates{};
