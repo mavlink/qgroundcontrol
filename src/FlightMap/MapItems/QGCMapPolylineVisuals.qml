@@ -176,7 +176,7 @@ Item {
         id: splitHandleComponent
 
         MapQuickItem {
-            id:             mapQuickItem
+            id:             splitHandle
             anchorPoint.x:  sourceItem.width / 2
             anchorPoint.y:  sourceItem.height / 2
             z:              _zorderSplitHandle
@@ -186,7 +186,7 @@ Item {
             property int vertexIndex
 
             sourceItem: SplitIndicator {
-                onClicked:  mapPolyline.splitSegment(mapQuickItem.vertexIndex)
+                onClicked:  mapPolyline.splitSegment(splitHandle.vertexIndex)
             }
         }
     }
@@ -329,7 +329,6 @@ Item {
         id: dragHandleComponent
 
         MapQuickItem {
-            id:             mapQuickItem
             anchorPoint.x:  dragHandle.width / 2
             anchorPoint.y:  dragHandle.height / 2
             z:              _zorderDragHandle

@@ -284,7 +284,6 @@ Item {
         id: edgeLengthHandleComponent
 
         MapQuickItem {
-            id:             mapQuickItem
             anchorPoint.x:  sourceItem.width / 2
             anchorPoint.y:  sourceItem.height / 2
             visible:        !_circleMode
@@ -348,7 +347,7 @@ Item {
         id: splitHandleComponent
 
         MapQuickItem {
-            id:             mapQuickItem
+            id:             splitHandle
             anchorPoint.x:  sourceItem.width / 2
             anchorPoint.y:  sourceItem.height / 2
             visible:        !_circleMode && !_isVertexBeingDragged && !mapPolygon.centerDrag
@@ -357,7 +356,7 @@ Item {
 
             sourceItem: SplitIndicator {
                 z:          _zorderSplitHandle
-                onClicked:  if(_root.interactive) mapPolygon.splitPolygonSegment(mapQuickItem.vertexIndex)
+                onClicked:  if(_root.interactive) mapPolygon.splitPolygonSegment(splitHandle.vertexIndex)
             }
         }
     }
@@ -430,13 +429,12 @@ Item {
     Component {
         id: centerDragHandle
         MapQuickItem {
-            id:             mapQuickItem
-            anchorPoint.x:  dragHandle.width  * 0.5
-            anchorPoint.y:  dragHandle.height * 0.5
+            anchorPoint.x:  centerHandle.width  * 0.5
+            anchorPoint.y:  centerHandle.height * 0.5
             z:              _zorderDragHandle
             visible:        !_isVertexBeingDragged
             sourceItem: Rectangle {
-                id:             dragHandle
+                id:             centerHandle
                 width:          ScreenTools.defaultFontPixelHeight * 1.5
                 height:         width
                 radius:         width * 0.5
@@ -461,7 +459,6 @@ Item {
         id: dragHandleComponent
 
         MapQuickItem {
-            id:             mapQuickItem
             anchorPoint.x:  dragHandle.width  / 2
             anchorPoint.y:  dragHandle.height / 2
             z:              _zorderDragHandle
@@ -708,14 +705,13 @@ Item {
         id: radiusDragHandleComponent
 
         MapQuickItem {
-            id:             mapQuickItem
-            anchorPoint.x:  dragHandle.width / 2
-            anchorPoint.y:  dragHandle.height / 2
+            anchorPoint.x:  radiusHandle.width / 2
+            anchorPoint.y:  radiusHandle.height / 2
             z:              QGroundControl.zOrderMapItems + 2
             visible:        !mapPolygon.centerDrag
 
             sourceItem: Rectangle {
-                id:         dragHandle
+                id:         radiusHandle
                 width:      ScreenTools.defaultFontPixelHeight * 1.5
                 height:     width
                 radius:     width / 2
