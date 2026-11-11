@@ -18,6 +18,9 @@ inline constexpr double DEG_TO_RAD = std::numbers::pi / 180.0;
 inline constexpr double RAD_TO_DEG = 180.0 / std::numbers::pi;
 /// Receiver dates before this instant (2009-02-13) are implausible and reported as unknown.
 inline constexpr time_t UTC_PLAUSIBILITY_FLOOR_SECS = static_cast<time_t>(1234567890ULL);
+/// Receiver dates after this year are implausible and reported as unknown. Up to it, the calendar sum stays within
+/// the range std::chrono::hours and minutes are guaranteed to count, which a 16-bit receiver year exceeds.
+inline constexpr int UTC_PLAUSIBILITY_CEILING_YEAR = 2200;
 
 /// Degrees of a coordinate in 1e-7 degree units, as u-blox and MAVLink send them.
 [[nodiscard]] constexpr double degreesFromE7(int32_t value)

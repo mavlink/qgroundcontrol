@@ -40,7 +40,7 @@ uint64_t utcMicroseconds(int year, int month, int day, int hour, int minute, int
     using namespace std::chrono;
     const int64_t monthIndex = static_cast<int64_t>(year) * 12 + (month - 1);
     const int64_t normalizedYear = monthIndex / 12 - (monthIndex % 12 < 0 ? 1 : 0);
-    if (normalizedYear < int(std::chrono::year::min()) || normalizedYear > int(std::chrono::year::max())) {
+    if (normalizedYear < int(std::chrono::year::min()) || normalizedYear > UTC_PLAUSIBILITY_CEILING_YEAR) {
         return 0;
     }
     const auto normalizedMonth = static_cast<unsigned>((monthIndex % 12 + 12) % 12 + 1);
@@ -49,7 +49,7 @@ uint64_t utcMicroseconds(int year, int month, int day, int hour, int minute, int
         days(day - 1) + hours(hour) + minutes(minute) + seconds(second);
     const auto date = floor<days>(instant);
     if (date < sys_days(std::chrono::year::min() / January / 1) ||
-        date > sys_days(std::chrono::year::max() / December / 31)) {
+        date > sys_days(std::chrono::year(UTC_PLAUSIBILITY_CEILING_YEAR) / December / 31)) {
         return 0;
     }
     const int64_t epoch = instant.time_since_epoch().count();

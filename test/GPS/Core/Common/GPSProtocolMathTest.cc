@@ -77,6 +77,9 @@ void GPSProtocolMathTest::_utcMicroseconds_data()
     row("signed-32-bit-overflow", {2038, 1, 19, 3, 14, 8}, 0, 2147483648LL);
     row("signed-32-bit-next-day", {2038, 1, 20, 0, 0, 0}, 0, 2147558400LL);
     row("year-out-of-range", {65535, 12, 31, 0, 0, 0}, 0, 0);
+    row("plausibility-ceiling", {2200, 12, 31, 23, 59, 59}, 0, 7289654399LL);
+    row("carry-past-plausibility-ceiling", {2200, 12, 31, 23, 59, 60}, 0, 0);
+    row("far-future-year", {30000, 1, 1, 0, 0, 0}, 0, 0);
 }
 
 void GPSProtocolMathTest::_utcMicroseconds()
