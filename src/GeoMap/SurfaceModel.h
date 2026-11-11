@@ -86,7 +86,7 @@ public:
         /// Always true: patches mesh immediately from the field's estimate.
         /// Kept until the downstream covered/ready plumbing is removed (step 8).
         bool ready = true;
-        bool covered = false;  ///< always false (see ready)
+        bool covered = false;    ///< always false (see ready)
         float edgeStep = 0.0f;   ///< cliff monitor: largest in-patch edge step (m); 0 while off
         QPointF edgeStepAt;      ///< world position of edgeStep
         bool edgeCliff = false;  ///< cliff monitor: edgeStep is steep enough to log as a cliff

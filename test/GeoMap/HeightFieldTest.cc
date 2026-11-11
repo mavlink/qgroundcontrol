@@ -1,10 +1,10 @@
 #include "HeightFieldTest.h"
 
-#include <QtCore/QRegularExpression>
-#include <QtTest/QSignalSpy>
-
 #include <algorithm>
 #include <cmath>
+
+#include <QtCore/QRegularExpression>
+#include <QtTest/QSignalSpy>
 
 #include "Benchmarking.h"
 #include "HeightField.h"

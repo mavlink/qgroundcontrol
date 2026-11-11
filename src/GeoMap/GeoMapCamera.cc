@@ -105,7 +105,9 @@ std::optional<QPointF> projectToScreen(const QPointF& centerWorld, qreal heading
 
 }  // namespace
 
-GeoMapCamera::GeoMapCamera(QObject* parent) : QObject(parent) {}
+GeoMapCamera::GeoMapCamera(QObject* parent)
+    : QObject(parent)
+{}
 
 QGeoCoordinate GeoMapCamera::center() const
 {
@@ -300,8 +302,8 @@ std::optional<QPointF> GeoMapCamera::screenToGround(const QPointF& screenPos, do
         return std::nullopt;
     }
 
-    const Ray ray =
-        pickRay(_centerWorld, _heading, _tilt, _distance, _centerElevation, _viewportSize, verticalFieldOfView(), screenPos);
+    const Ray ray = pickRay(_centerWorld, _heading, _tilt, _distance, _centerElevation, _viewportSize,
+                            verticalFieldOfView(), screenPos);
     if (ray.dir.z >= 0.0) {
         return std::nullopt;  // at or above the horizon
     }
@@ -328,8 +330,8 @@ std::optional<QPointF> GeoMapCamera::groundPointCapped(const QPointF& screenPos,
         return std::nullopt;
     }
 
-    const Ray ray =
-        pickRay(_centerWorld, _heading, _tilt, _distance, _centerElevation, _viewportSize, verticalFieldOfView(), screenPos);
+    const Ray ray = pickRay(_centerWorld, _heading, _tilt, _distance, _centerElevation, _viewportSize,
+                            verticalFieldOfView(), screenPos);
     const QPointF cameraGround(ray.origin.x, ray.origin.y);
 
     if (ray.dir.z < 0.0) {
@@ -411,8 +413,8 @@ QGeoCoordinate GeoMapCamera::centerForCoordinateAtScreenPoint(const QGeoCoordina
     // ground plane instead would center the coordinate's ground footprint, leaving
     // an elevated point (e.g. a flying vehicle) high on screen under a tilted camera.
     const double pivotElevation = std::isfinite(centerElevation) ? centerElevation : _centerElevation;
-    const Ray ray =
-        pickRay(_centerWorld, _heading, _tilt, _distance, pivotElevation, _viewportSize, verticalFieldOfView(), screenPos);
+    const Ray ray = pickRay(_centerWorld, _heading, _tilt, _distance, pivotElevation, _viewportSize,
+                            verticalFieldOfView(), screenPos);
     if (ray.dir.z >= 0.0) {
         return center();  // at or above the horizon
     }

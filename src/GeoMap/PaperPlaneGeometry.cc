@@ -9,13 +9,13 @@
 
 #include "PaperPlaneGeometry.h"
 
+#include <cmath>
+
 #include <QtCore/QByteArray>
 #include <QtCore/QList>
 #include <QtCore/QtGlobal>
 #include <QtGui/QVector3D>
 #include <QtGui/QVector4D>
-
-#include <cmath>
 
 namespace {
 
@@ -39,7 +39,8 @@ QVector4D linearColor(float r, float g, float b)
 
 }  // namespace
 
-PaperPlaneGeometry::PaperPlaneGeometry(QQuick3DObject* parent) : QQuick3DGeometry(parent)
+PaperPlaneGeometry::PaperPlaneGeometry(QQuick3DObject* parent)
+    : QQuick3DGeometry(parent)
 {
     // Wing reds from vehicleArrowOpaque.svg; paper-white keel fin as the
     // fuselage, visible in tilted 3D views

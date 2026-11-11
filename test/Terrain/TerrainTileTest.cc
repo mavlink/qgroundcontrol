@@ -41,7 +41,8 @@ void TerrainTileTest::_testValidTile()
 void TerrainTileTest::_testEmptyData()
 {
     const QByteArray emptyData;
-    expectLogMessage("Terrain.terraintile", QtWarningMsg, QRegularExpression("Terrain tile binary data too small for TileInfo_t header"));
+    expectLogMessage("Terrain.terraintile", QtWarningMsg,
+                     QRegularExpression("Terrain tile binary data too small for TileInfo_t header"));
     TerrainTile tile(emptyData);
     verifyExpectedLogMessage();
     QVERIFY(!tile.isValid());
@@ -50,7 +51,8 @@ void TerrainTileTest::_testEmptyData()
 void TerrainTileTest::_testDataTooSmallForHeader()
 {
     const QByteArray smallData(10, '\0');
-    expectLogMessage("Terrain.terraintile", QtWarningMsg, QRegularExpression("Terrain tile binary data too small for TileInfo_t header"));
+    expectLogMessage("Terrain.terraintile", QtWarningMsg,
+                     QRegularExpression("Terrain tile binary data too small for TileInfo_t header"));
     TerrainTile tile(smallData);
     verifyExpectedLogMessage();
     QVERIFY(!tile.isValid());
@@ -151,7 +153,8 @@ void TerrainTileTest::_testDataTooSmallForElevation()
     header->avgElevation = 55.0;
     header->gridSizeLat = 100;
     header->gridSizeLon = 100;
-    expectLogMessage("Terrain.terraintile", QtWarningMsg, QRegularExpression("Terrain tile binary data too small for tile data"));
+    expectLogMessage("Terrain.terraintile", QtWarningMsg,
+                     QRegularExpression("Terrain tile binary data too small for tile data"));
     TerrainTile tile(tileData);
     verifyExpectedLogMessage();
     QVERIFY(!tile.isValid());
@@ -172,12 +175,14 @@ void TerrainTileTest::_testElevationOutsideBounds()
 void TerrainTileTest::_testInvalidTileElevation()
 {
     const QByteArray emptyData;
-    expectLogMessage("Terrain.terraintile", QtWarningMsg, QRegularExpression("Terrain tile binary data too small for TileInfo_t header"));
+    expectLogMessage("Terrain.terraintile", QtWarningMsg,
+                     QRegularExpression("Terrain tile binary data too small for TileInfo_t header"));
     TerrainTile tile(emptyData);
     verifyExpectedLogMessage();
     QVERIFY(!tile.isValid());
     const QGeoCoordinate coord(-48.875, -123.395);
-    expectLogMessage("Terrain.terraintile", QtWarningMsg, QRegularExpression("Request for elevation, but tile is invalid"));
+    expectLogMessage("Terrain.terraintile", QtWarningMsg,
+                     QRegularExpression("Request for elevation, but tile is invalid"));
     const double elev = tile.elevation(coord);
     verifyExpectedLogMessage();
     QVERIFY(qIsNaN(elev));

@@ -10,7 +10,8 @@
 
 QGC_LOGGING_CATEGORY(TerrainTileCopernicusLog, "Terrain.TerrainTileCopernicus");
 
-TerrainTileCopernicus::TerrainTileCopernicus(const QByteArray& byteArray) : TerrainTile(byteArray)
+TerrainTileCopernicus::TerrainTileCopernicus(const QByteArray& byteArray)
+    : TerrainTile(byteArray)
 {
     qCDebug(TerrainTileCopernicusLog) << this;
 }
@@ -25,8 +26,7 @@ QJsonValue TerrainTileCopernicus::getJsonFromData(const QByteArray& input)
     QJsonParseError parseError;
     const QJsonDocument document = QGCCompression::parseCompressedJson(input, &parseError);
     if (parseError.error != QJsonParseError::NoError) {
-        qCWarning(TerrainTileCopernicusLog)
-            << "Terrain tile json doc parse error" << parseError.errorString();
+        qCWarning(TerrainTileCopernicusLog) << "Terrain tile json doc parse error" << parseError.errorString();
         return QJsonValue();
     }
 

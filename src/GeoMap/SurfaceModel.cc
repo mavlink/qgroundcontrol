@@ -70,7 +70,10 @@ QString boundaryLabel(int row, int col, int gridSize)
 }  // namespace
 
 SurfaceModel::SurfaceModel(GeoMapCamera* camera, HeightSource* heightSource, HeightField* field, QObject* parent)
-    : QObject(parent), _camera(camera), _heightSource(heightSource), _field(field)
+    : QObject(parent)
+    , _camera(camera)
+    , _heightSource(heightSource)
+    , _field(field)
 {
     qRegisterMetaType<TileMath::TileKey>();
     _cliffClock.start();
@@ -487,8 +490,8 @@ double SurfaceModel::_projectedPixels(const TileMath::TileKey& key, const QPoint
     const double dy = std::max({rect.top() - cameraGround.y(), cameraGround.y() - rect.bottom(), 0.0});
     const double distance = std::hypot(std::hypot(dx, dy), cameraHeight);
 
-    const double metersPerPixel =
-        (2.0 * distance * std::tan(qDegreesToRadians(_camera->verticalFieldOfView()) / 2.0)) / _camera->viewportSize().height();
+    const double metersPerPixel = (2.0 * distance * std::tan(qDegreesToRadians(_camera->verticalFieldOfView()) / 2.0)) /
+                                  _camera->viewportSize().height();
     return span / metersPerPixel;
 }
 

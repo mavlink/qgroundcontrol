@@ -16,7 +16,7 @@ void Viewer3DGeoCoordinateType::_gpsToLocal()
     }
 }
 
-void Viewer3DGeoCoordinateType::setGpsRef(const QGeoCoordinate &newGpsRef)
+void Viewer3DGeoCoordinateType::setGpsRef(const QGeoCoordinate& newGpsRef)
 {
     if (_gpsRef == newGpsRef) {
         return;
@@ -27,7 +27,7 @@ void Viewer3DGeoCoordinateType::setGpsRef(const QGeoCoordinate &newGpsRef)
     emit gpsRefChanged();
 }
 
-void Viewer3DGeoCoordinateType::setCoordinate(const QGeoCoordinate &newCoordinate)
+void Viewer3DGeoCoordinateType::setCoordinate(const QGeoCoordinate& newCoordinate)
 {
     if (_coordinate == newCoordinate) {
         return;

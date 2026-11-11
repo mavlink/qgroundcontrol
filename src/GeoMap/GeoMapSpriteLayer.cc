@@ -9,12 +9,12 @@
 
 #include "GeoMapSpriteLayer.h"
 
+#include <cmath>
+
 #include <QtCore/QAbstractItemModel>
 #include <QtQuick/QSGGeometryNode>
 #include <QtQuick/QSGTextureMaterial>
 #include <QtQuick/QSGTextureProvider>
-
-#include <cmath>
 
 #include "GeoMapCamera.h"
 #include "GeoScene.h"
@@ -24,7 +24,8 @@
 
 QGC_LOGGING_CATEGORY(GeoMapSpriteLayerLog, "GeoMap.GeoMapSpriteLayer")
 
-GeoMapSpriteLayer::GeoMapSpriteLayer(QQuickItem* parent) : QQuickItem(parent)
+GeoMapSpriteLayer::GeoMapSpriteLayer(QQuickItem* parent)
+    : QQuickItem(parent)
 {
     setFlag(ItemHasContents);
     _terrainResampleTimer.setSingleShot(true);

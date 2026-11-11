@@ -1,12 +1,13 @@
 #include "TerrainTile.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QtNumeric>
 #include <QtPositioning/QGeoCoordinate>
 
+#include "QGCLoggingCategory.h"
+
 QGC_LOGGING_CATEGORY(TerrainTileLog, "Terrain.terraintile");
 
-TerrainTile::TerrainTile(const QByteArray &byteArray)
+TerrainTile::TerrainTile(const QByteArray& byteArray)
 {
     qCDebug(TerrainTileLog) << this;
 
@@ -27,7 +28,8 @@ TerrainTile::TerrainTile(const QByteArray &byteArray)
 
     constexpr int16_t kMaxGridSize = 10000;
     if (_tileInfo.gridSizeLat > kMaxGridSize || _tileInfo.gridSizeLon > kMaxGridSize) {
-        qCWarning(TerrainTileLog) << "Grid dimensions exceed safety limits:" << _tileInfo.gridSizeLat << _tileInfo.gridSizeLon;
+        qCWarning(TerrainTileLog) << "Grid dimensions exceed safety limits:" << _tileInfo.gridSizeLat
+                                  << _tileInfo.gridSizeLon;
         return;
     }
 
@@ -47,8 +49,10 @@ TerrainTile::TerrainTile(const QByteArray &byteArray)
 
     qCDebug(TerrainTileLog) << this << "TileInfo: south west:" << _tileInfo.swLat << _tileInfo.swLon;
     qCDebug(TerrainTileLog) << this << "TileInfo: north east:" << _tileInfo.neLat << _tileInfo.neLon;
-    qCDebug(TerrainTileLog) << this << "TileInfo: dimensions:" << _tileInfo.gridSizeLat << "by" << _tileInfo.gridSizeLon;
-    qCDebug(TerrainTileLog) << this << "TileInfo: min, max, avg:" << _tileInfo.minElevation << _tileInfo.maxElevation << _tileInfo.avgElevation;
+    qCDebug(TerrainTileLog) << this << "TileInfo: dimensions:" << _tileInfo.gridSizeLat << "by"
+                            << _tileInfo.gridSizeLon;
+    qCDebug(TerrainTileLog) << this << "TileInfo: min, max, avg:" << _tileInfo.minElevation << _tileInfo.maxElevation
+                            << _tileInfo.avgElevation;
     qCDebug(TerrainTileLog) << this << "TileInfo: cell size:" << _cellSizeLat << _cellSizeLon;
 
     _elevationData.resize(_tileInfo.gridSizeLat);
@@ -57,7 +61,8 @@ TerrainTile::TerrainTile(const QByteArray &byteArray)
     }
 
     int valueIndex = 0;
-    const int16_t* const pTileData = reinterpret_cast<const int16_t*>(&reinterpret_cast<const uint8_t*>(byteArray.constData())[cTileHeaderBytes]);
+    const int16_t* const pTileData =
+        reinterpret_cast<const int16_t*>(&reinterpret_cast<const uint8_t*>(byteArray.constData())[cTileHeaderBytes]);
     for (int i = 0; i < _tileInfo.gridSizeLat; i++) {
         for (int j = 0; j < _tileInfo.gridSizeLon; j++) {
             _elevationData[i][j] = pTileData[valueIndex++];
@@ -72,7 +77,7 @@ TerrainTile::~TerrainTile()
     qCDebug(TerrainTileLog) << this;
 }
 
-double TerrainTile::elevation(const QGeoCoordinate &coordinate) const
+double TerrainTile::elevation(const QGeoCoordinate& coordinate) const
 {
     if (!_isValid) {
         qCWarning(TerrainTileLog) << this << "Request for elevation, but tile is invalid.";
@@ -94,17 +99,21 @@ double TerrainTile::elevation(const QGeoCoordinate &coordinate) const
     }
 
     if ((latIndex >= _elevationData.size()) || (lonIndex >= _elevationData[latIndex].size())) {
-        qCWarning(TerrainTileLog).noquote() << this << "Internal error: _elevationData size inconsistent _tileInfo << coordinate" << coordinate
-            << "\n\t_tileInfo.gridSizeLat:" << _tileInfo.gridSizeLat << "_tileInfo.gridSizeLon:" << _tileInfo.gridSizeLon
-            << "\n\t_data.size():" << _elevationData.size() << "_elevationData[latIndex].size():" << _elevationData[latIndex].size();
+        qCWarning(TerrainTileLog).noquote()
+            << this << "Internal error: _elevationData size inconsistent _tileInfo << coordinate" << coordinate
+            << "\n\t_tileInfo.gridSizeLat:" << _tileInfo.gridSizeLat
+            << "_tileInfo.gridSizeLon:" << _tileInfo.gridSizeLon << "\n\t_data.size():" << _elevationData.size()
+            << "_elevationData[latIndex].size():" << _elevationData[latIndex].size();
         return qQNaN();
     }
 
     const int16_t elevation = _elevationData[latIndex][lonIndex];
     if (elevation < _tileInfo.minElevation) {
-        qCWarning(TerrainTileLog) << this << "Warning: elevation read is below min elevation in tile:" << elevation << "<" << _tileInfo.minElevation;
+        qCWarning(TerrainTileLog) << this << "Warning: elevation read is below min elevation in tile:" << elevation
+                                  << "<" << _tileInfo.minElevation;
     } else if (elevation > _tileInfo.maxElevation) {
-        qCWarning(TerrainTileLog) << this << "Warning: elevation read is above max elevation in tile:" << elevation << ">" << _tileInfo.maxElevation;
+        qCWarning(TerrainTileLog) << this << "Warning: elevation read is above max elevation in tile:" << elevation
+                                  << ">" << _tileInfo.maxElevation;
     }
 
     qCDebug(TerrainTileLog) << this << "latIndex, lonIndex:" << latIndex << lonIndex << "elevation:" << elevation;

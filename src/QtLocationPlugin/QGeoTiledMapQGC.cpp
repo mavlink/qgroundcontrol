@@ -5,7 +5,7 @@
 
 QGC_LOGGING_CATEGORY(QGeoTiledMapQGCLog, "QtLocationPlugin.QGeoTiledMapQGC")
 
-QGeoTiledMapQGC::QGeoTiledMapQGC(QGeoTiledMappingManagerEngineQGC *engine, QObject *parent)
+QGeoTiledMapQGC::QGeoTiledMapQGC(QGeoTiledMappingManagerEngineQGC* engine, QObject* parent)
     : QGeoTiledMap(engine, parent)
 {
     qCDebug(QGeoTiledMapQGCLog) << this;
@@ -18,9 +18,7 @@ QGeoTiledMapQGC::~QGeoTiledMapQGC()
 
 QGeoMap::Capabilities QGeoTiledMapQGC::capabilities() const
 {
-    return Capabilities(SupportsVisibleRegion
-                        | SupportsAnchoringCoordinate
-                        | SupportsVisibleArea);
+    return Capabilities(SupportsVisibleRegion | SupportsAnchoringCoordinate | SupportsVisibleArea);
 }
 
 /*void QGeoTiledMapQGC::evaluateCopyrights(const QSet<QGeoTileSpec> &visibleTiles)

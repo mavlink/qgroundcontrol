@@ -9,11 +9,11 @@
 
 #include "FenceWallGeometry.h"
 
+#include <cmath>
+
 #include <QtCore/QPointF>
 #include <QtCore/qminmax.h>
 #include <QtCore/qnumeric.h>
-
-#include <cmath>
 
 #include "GeoScene.h"
 #include "SurfacePatchModel.h"
@@ -25,7 +25,8 @@ constexpr int kMaxSubdivisionsPerEdge = 64;
 constexpr int kFloatsPerVertex = 3;
 }  // namespace
 
-FenceWallGeometry::FenceWallGeometry(QQuick3DObject* parent) : QQuick3DGeometry(parent)
+FenceWallGeometry::FenceWallGeometry(QQuick3DObject* parent)
+    : QQuick3DGeometry(parent)
 {
     _rebuild();
 }

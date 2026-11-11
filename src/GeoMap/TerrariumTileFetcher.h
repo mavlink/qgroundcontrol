@@ -104,10 +104,10 @@ private:
     QNetworkAccessManager* _networkManager = nullptr;
     const int _mapId;
     QHash<int, PendingRequest> _pending;
-    QHash<TileMath::TileKey, QList<int>> _waiters;            ///< request ids sharing the in-flight fetch of a tile
-    QSet<TileMath::TileKey> _fieldRequests;                   ///< tiles awaiting delivery into the field
-    QHash<TileMath::TileKey, HeldTile> _held;                 ///< delivered finer tiles waiting on their anchors
-    QHash<TileMath::TileKey, QGCTileReply*> _fetches;         ///< in-flight fetches by tile
+    QHash<TileMath::TileKey, QList<int>> _waiters;     ///< request ids sharing the in-flight fetch of a tile
+    QSet<TileMath::TileKey> _fieldRequests;            ///< tiles awaiting delivery into the field
+    QHash<TileMath::TileKey, HeldTile> _held;          ///< delivered finer tiles waiting on their anchors
+    QHash<TileMath::TileKey, QGCTileReply*> _fetches;  ///< in-flight fetches by tile
     TileMath::TileKey _lastFetchKey;
-    QElapsedTimer _failureWarnTimer;                          ///< restarted on each emitted failure warning
+    QElapsedTimer _failureWarnTimer;                   ///< restarted on each emitted failure warning
 };

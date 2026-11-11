@@ -9,12 +9,12 @@
 
 #pragma once
 
+#include <utility>
+
 #include <QtCore/QHash>
 #include <QtCore/QList>
 #include <QtCore/QRectF>
 #include <QtCore/QSet>
-
-#include <utility>
 
 #include "TileMath.h"
 

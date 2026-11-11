@@ -4,10 +4,9 @@
 
 QGC_LOGGING_CATEGORY(Viewer3DInstancingLog, "Viewer3d.Viewer3DInstancing")
 
-Viewer3DInstancing::Viewer3DInstancing(QQuick3DObject *parent)
+Viewer3DInstancing::Viewer3DInstancing(QQuick3DObject* parent)
     : QQuick3DInstancing(parent)
-{
-}
+{}
 
 void Viewer3DInstancing::clear()
 {
@@ -18,10 +17,8 @@ void Viewer3DInstancing::clear()
     emit countChanged();
 }
 
-void Viewer3DInstancing::addEntry(const QVector3D &position,
-                                  const QVector3D &scale,
-                                  const QQuaternion &rotation,
-                                  const QColor &color)
+void Viewer3DInstancing::addEntry(const QVector3D& position, const QVector3D& scale, const QQuaternion& rotation,
+                                  const QColor& color)
 {
     _entries.append({position, scale, rotation, color});
     _dirty = true;
@@ -29,10 +26,7 @@ void Viewer3DInstancing::addEntry(const QVector3D &position,
     emit countChanged();
 }
 
-void Viewer3DInstancing::addLineSegment(const QVector3D &p1,
-                                        const QVector3D &p2,
-                                        float lineWidth,
-                                        const QColor &color)
+void Viewer3DInstancing::addLineSegment(const QVector3D& p1, const QVector3D& p2, float lineWidth, const QColor& color)
 {
     const QVector3D delta = p2 - p1;
     const float distance = delta.length();
@@ -67,22 +61,23 @@ int Viewer3DInstancing::selectedIndex() const
 
 void Viewer3DInstancing::setSelectedIndex(int index)
 {
-    if (_selectedIndex == index) return;
+    if (_selectedIndex == index)
+        return;
     _selectedIndex = index;
     _dirty = true;
     markDirty();
     emit selectedIndexChanged();
 }
 
-QByteArray Viewer3DInstancing::getInstanceBuffer(int *instanceCount)
+QByteArray Viewer3DInstancing::getInstanceBuffer(int* instanceCount)
 {
     if (_dirty) {
         _instanceData.clear();
         for (int i = 0; i < _entries.size(); ++i) {
-            const auto &entry = _entries[i];
+            const auto& entry = _entries[i];
             const QColor color = (i == _selectedIndex) ? kHighlightColor : entry.color;
             auto tableEntry = calculateTableEntry(entry.position, entry.scale, entry.rotation.toEulerAngles(), color);
-            _instanceData.append(reinterpret_cast<const char *>(&tableEntry), sizeof(tableEntry));
+            _instanceData.append(reinterpret_cast<const char*>(&tableEntry), sizeof(tableEntry));
         }
         _dirty = false;
     }

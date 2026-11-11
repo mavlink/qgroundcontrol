@@ -15,7 +15,9 @@ class Viewer3DMapProvider : public QObject
     Q_PROPERTY(bool mapLoaded READ mapLoaded NOTIFY mapChanged)
 
 public:
-    explicit Viewer3DMapProvider(QObject *parent = nullptr) : QObject(parent) {}
+    explicit Viewer3DMapProvider(QObject* parent = nullptr)
+        : QObject(parent)
+    {}
 
     virtual bool mapLoaded() const = 0;
     virtual QGeoCoordinate gpsRef() const = 0;

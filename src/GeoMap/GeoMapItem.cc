@@ -9,11 +9,11 @@
 
 #include "GeoMapItem.h"
 
-#include <QtQml/QQmlComponent>
-#include <QtQuick3D/QQuick3DObject>
-
 #include <algorithm>
 #include <cmath>
+
+#include <QtQml/QQmlComponent>
+#include <QtQuick3D/QQuick3DObject>
 
 #include "GeoMapCamera.h"
 #include "GeoScene.h"
@@ -26,7 +26,8 @@ QGC_LOGGING_CATEGORY(GeoMapItemLog, "GeoMap.GeoMapItem")
 // Far enough off-screen for any plausible viewport
 static constexpr QPointF kParkedPosition{-1e6, -1e6};
 
-GeoMapItem::GeoMapItem(QQuickItem* parent) : QQuickItem(parent)
+GeoMapItem::GeoMapItem(QQuickItem* parent)
+    : QQuickItem(parent)
 {
     connect(this, &QQuickItem::visibleChanged, this, &GeoMapItem::_updateNode3DVisibility);
 }

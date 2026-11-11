@@ -143,8 +143,7 @@ TerrariumTileFetcher::TerrariumTileFetcher(QObject* parent, QNetworkAccessManage
     : HeightSource(parent)
     , _networkManager(networkManager ? networkManager : new QNetworkAccessManager(this))
     , _mapId(UrlFactory::getMapIdFromProviderType(terrariumProviderType()))
-{
-}
+{}
 
 int TerrariumTileFetcher::requestPatchHeights(const TileMath::TileKey& key, int gridSize)
 {

@@ -11,7 +11,7 @@
 
 QGC_LOGGING_CATEGORY(QGeoFileTileCacheQGCLog, "QtLocationPlugin.QGeoFileTileCacheQGC")
 
-QGeoFileTileCacheQGC::QGeoFileTileCacheQGC(const QVariantMap &parameters, QObject *parent)
+QGeoFileTileCacheQGC::QGeoFileTileCacheQGC(const QVariantMap& parameters, QObject* parent)
     : QGeoFileTileCache(baseCacheDirectory(), parent)
 {
     qCDebug(QGeoFileTileCacheQGCLog) << this;
@@ -36,7 +36,7 @@ QGeoFileTileCacheQGC::~QGeoFileTileCacheQGC()
     qCDebug(QGeoFileTileCacheQGCLog) << this;
 }
 
-uint32_t QGeoFileTileCacheQGC::_getMemLimit(const QVariantMap &parameters)
+uint32_t QGeoFileTileCacheQGC::_getMemLimit(const QVariantMap& parameters)
 {
     uint32_t memLimit = 0;
     if (parameters.contains(QStringLiteral("mapping.cache.memory.size"))) {
@@ -66,7 +66,7 @@ quint32 QGeoFileTileCacheQGC::_getMaxMemCacheSetting()
     return SettingsManager::instance()->mapsSettings()->maxCacheMemorySize()->rawValue().toUInt();
 }
 
-QString QGeoFileTileCacheQGC::_getCachePath(const QVariantMap &parameters)
+QString QGeoFileTileCacheQGC::_getCachePath(const QVariantMap& parameters)
 {
     QString cacheDir;
     if (parameters.contains(QStringLiteral("mapping.cache.directory"))) {

@@ -1,11 +1,11 @@
 #include "Viewer3DInstancingTest.h"
 
+#include <cmath>
+
 #include <QtGui/QQuaternion>
 #include <QtGui/QVector3D>
 #include <QtQuick3D/QQuick3DInstancing>
 #include <QtTest/QSignalSpy>
-
-#include <cmath>
 
 #include "Viewer3DInstancing.h"
 

@@ -1,15 +1,15 @@
 #include "FenceWallGeometryTest.h"
 
+#include <array>
+#include <cmath>
+#include <cstring>
+
 #include <QtCore/QByteArray>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QList>
 #include <QtCore/QVariant>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QSignalSpy>
-
-#include <array>
-#include <cmath>
-#include <cstring>
 
 #include "FenceWallGeometry.h"
 #include "GeoScene.h"

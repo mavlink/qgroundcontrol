@@ -17,19 +17,21 @@ class CityMapGeometry : public QQuick3DGeometry
 
     friend class CityMapGeometryTest;
 
-    Q_PROPERTY(QString              modelName   READ modelName   WRITE setModelName   NOTIFY modelNameChanged)
-    Q_PROPERTY(Viewer3DMapProvider *mapProvider  READ mapProvider WRITE setMapProvider NOTIFY mapProviderChanged)
+    Q_PROPERTY(QString modelName READ modelName WRITE setModelName NOTIFY modelNameChanged)
+    Q_PROPERTY(Viewer3DMapProvider* mapProvider READ mapProvider WRITE setMapProvider NOTIFY mapProviderChanged)
 
 public:
     CityMapGeometry();
 
     QString modelName() const { return _modelName; }
-    void setModelName(const QString &modelName);
+
+    void setModelName(const QString& modelName);
 
     QString osmFilePath() const { return _osmFilePath; }
 
-    Viewer3DMapProvider *mapProvider() const { return _mapProvider; }
-    void setMapProvider(Viewer3DMapProvider *newMapProvider);
+    Viewer3DMapProvider* mapProvider() const { return _mapProvider; }
+
+    void setMapProvider(Viewer3DMapProvider* newMapProvider);
 
 signals:
     void modelNameChanged();
@@ -37,13 +39,13 @@ signals:
     void mapProviderChanged();
 
 private:
-    void _setOsmFilePath(const QVariant &value);
+    void _setOsmFilePath(const QVariant& value);
     void _updateViewer();
     void _clearViewer();
     bool _loadOsmMap();
 
-    Viewer3DMapProvider *_mapProvider = nullptr;
-    OsmParser *_osmParser = nullptr;
+    Viewer3DMapProvider* _mapProvider = nullptr;
+    OsmParser* _osmParser = nullptr;
 
     QString _modelName;
     QString _osmFilePath;

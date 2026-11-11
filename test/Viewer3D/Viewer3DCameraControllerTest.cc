@@ -9,10 +9,11 @@
 
 #include "Viewer3DCameraControllerTest.h"
 
+#include <cmath>
+
 #include <QtCore/QtMath>
 #include <QtGui/QVector3D>
 #include <QtTest/QSignalSpy>
-#include <cmath>
 
 #include "Viewer3DCameraController.h"
 

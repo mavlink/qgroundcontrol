@@ -1,14 +1,14 @@
 #include "Viewer3DTerrainGeometry.h"
 
+#include <cmath>
+
+#include <QtCore/QByteArray>
+
 #include "Fact.h"
 #include "QGCGeo.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
 #include "Viewer3DSettings.h"
-
-#include <QtCore/QByteArray>
-
-#include <cmath>
 
 QGC_LOGGING_CATEGORY(Viewer3DTerrainGeometryLog, "Viewer3d.Viewer3DTerrainGeometry")
 
@@ -16,7 +16,7 @@ static constexpr double kMaxLatitude = 85.05112878;
 
 Viewer3DTerrainGeometry::Viewer3DTerrainGeometry()
 {
-    auto *viewer3DSettings = SettingsManager::instance()->viewer3DSettings();
+    auto* viewer3DSettings = SettingsManager::instance()->viewer3DSettings();
     connect(viewer3DSettings->osmFilePath(), &Fact::rawValueChanged, this, &Viewer3DTerrainGeometry::_clearScene);
     connect(this, &Viewer3DTerrainGeometry::refCoordinateChanged, this, &Viewer3DTerrainGeometry::updateEarthData);
 }
@@ -24,9 +24,8 @@ Viewer3DTerrainGeometry::Viewer3DTerrainGeometry()
 void Viewer3DTerrainGeometry::updateEarthData()
 {
     clear();
-    const int stride = 3 * sizeof(float)
-                     + 3 * sizeof(float)   // normals
-                     + 2 * sizeof(float);  // UV
+    const int stride = 3 * sizeof(float) + 3 * sizeof(float)  // normals
+                       + 2 * sizeof(float);                   // UV
 
     if (!_buildTerrain(roiMin(), roiMax(), refCoordinate(), true)) {
         qCDebug(Viewer3DTerrainGeometryLog) << "buildTerrain returned false (sector/stack count likely 0)";
@@ -35,7 +34,7 @@ void Viewer3DTerrainGeometry::updateEarthData()
 
     QByteArray vertexData;
     vertexData.resize(_vertices.size() * stride);
-    float *p = reinterpret_cast<float *>(vertexData.data());
+    float* p = reinterpret_cast<float*>(vertexData.data());
 
     for (size_t i = 0; i < _vertices.size(); ++i) {
         *p++ = _vertices[i].x();
@@ -50,26 +49,22 @@ void Viewer3DTerrainGeometry::updateEarthData()
         *p++ = _texCoords[i].y();
     }
 
-    qCDebug(Viewer3DTerrainGeometryLog) << "Terrain built:" << _vertices.size() << "vertices," << _sectorCount << "sectors," << _stackCount << "stacks";
+    qCDebug(Viewer3DTerrainGeometryLog) << "Terrain built:" << _vertices.size() << "vertices," << _sectorCount
+                                        << "sectors," << _stackCount << "stacks";
 
     setVertexData(vertexData);
     setStride(stride);
 
     setPrimitiveType(QQuick3DGeometry::PrimitiveType::Triangles);
-    addAttribute(QQuick3DGeometry::Attribute::PositionSemantic,
-                 0,
-                 QQuick3DGeometry::Attribute::F32Type);
-    addAttribute(QQuick3DGeometry::Attribute::NormalSemantic,
-                 3 * sizeof(float),
-                 QQuick3DGeometry::Attribute::F32Type);
-    addAttribute(QQuick3DGeometry::Attribute::TexCoordSemantic,
-                 6 * sizeof(float),
+    addAttribute(QQuick3DGeometry::Attribute::PositionSemantic, 0, QQuick3DGeometry::Attribute::F32Type);
+    addAttribute(QQuick3DGeometry::Attribute::NormalSemantic, 3 * sizeof(float), QQuick3DGeometry::Attribute::F32Type);
+    addAttribute(QQuick3DGeometry::Attribute::TexCoordSemantic, 6 * sizeof(float),
                  QQuick3DGeometry::Attribute::F32Type);
 
     update();
 }
 
-QVector3D Viewer3DTerrainGeometry::_computeFaceNormal(const QVector3D &x1, const QVector3D &x2, const QVector3D &x3)
+QVector3D Viewer3DTerrainGeometry::_computeFaceNormal(const QVector3D& x1, const QVector3D& x2, const QVector3D& x3)
 {
     constexpr float EPSILON = 0.000001f;
 
@@ -126,7 +121,9 @@ void Viewer3DTerrainGeometry::setStackCount(int newStackCount)
     emit stackCountChanged();
 }
 
-bool Viewer3DTerrainGeometry::_buildTerrain(const QGeoCoordinate &roiMinCoordinate, const QGeoCoordinate &roiMaxCoordinate, const QGeoCoordinate &refCoordinate, bool scale)
+bool Viewer3DTerrainGeometry::_buildTerrain(const QGeoCoordinate& roiMinCoordinate,
+                                            const QGeoCoordinate& roiMaxCoordinate, const QGeoCoordinate& refCoordinate,
+                                            bool scale)
 {
     if (_sectorCount == 0 || _stackCount == 0) {
         return false;
@@ -137,9 +134,11 @@ bool Viewer3DTerrainGeometry::_buildTerrain(const QGeoCoordinate &roiMinCoordina
     const float stackRef = roiMaxCoordinate.latitude();
     const float sectorRef = roiMinCoordinate.longitude();
 
-    struct Vertex {
+    struct Vertex
+    {
         float x, y, z, s, t;
     };
+
     std::vector<Vertex> tmpVertices;
 
     float minT = 10;
@@ -159,7 +158,8 @@ bool Viewer3DTerrainGeometry::_buildTerrain(const QGeoCoordinate &roiMinCoordina
             sectorAngle = sectorRef + j * sectorStep;
 
             Vertex vertex;
-            const QVector3D localPoint = QGCGeo::convertGpsToEnu(QGeoCoordinate(stackAngle, sectorAngle, 0), refCoordinate);
+            const QVector3D localPoint =
+                QGCGeo::convertGpsToEnu(QGeoCoordinate(stackAngle, sectorAngle, 0), refCoordinate);
             vertex.x = localPoint.x();
             vertex.y = localPoint.y();
             vertex.z = 0;
@@ -222,9 +222,8 @@ bool Viewer3DTerrainGeometry::_buildTerrain(const QGeoCoordinate &roiMinCoordina
                 _texCoords.push_back(QVector2D(v2.s, v2.t));
                 _texCoords.push_back(QVector2D(v3.s, v3.t));
 
-                n = _computeFaceNormal(QVector3D(v1.x, v1.y, v1.z),
-                                      QVector3D(v2.x, v2.y, v2.z),
-                                      QVector3D(v3.x, v3.y, v3.z));
+                n = _computeFaceNormal(QVector3D(v1.x, v1.y, v1.z), QVector3D(v2.x, v2.y, v2.z),
+                                       QVector3D(v3.x, v3.y, v3.z));
 
                 for (int k = 0; k < 3; ++k) {
                     _normals.push_back(n);
@@ -240,9 +239,8 @@ bool Viewer3DTerrainGeometry::_buildTerrain(const QGeoCoordinate &roiMinCoordina
                 _texCoords.push_back(QVector2D(v2.s, v2.t));
                 _texCoords.push_back(QVector2D(v4.s, v4.t));
 
-                n = _computeFaceNormal(QVector3D(v3.x, v3.y, v3.z),
-                                      QVector3D(v2.x, v2.y, v2.z),
-                                      QVector3D(v4.x, v4.y, v4.z));
+                n = _computeFaceNormal(QVector3D(v3.x, v3.y, v3.z), QVector3D(v2.x, v2.y, v2.z),
+                                       QVector3D(v4.x, v4.y, v4.z));
 
                 for (int k = 0; k < 3; ++k) {
                     _normals.push_back(n);
@@ -254,7 +252,7 @@ bool Viewer3DTerrainGeometry::_buildTerrain(const QGeoCoordinate &roiMinCoordina
     return true;
 }
 
-void Viewer3DTerrainGeometry::setRoiMin(const QGeoCoordinate &newRoiMin)
+void Viewer3DTerrainGeometry::setRoiMin(const QGeoCoordinate& newRoiMin)
 {
     if (_roiMin == newRoiMin) {
         return;
@@ -263,7 +261,7 @@ void Viewer3DTerrainGeometry::setRoiMin(const QGeoCoordinate &newRoiMin)
     emit roiMinChanged();
 }
 
-void Viewer3DTerrainGeometry::setRoiMax(const QGeoCoordinate &newRoiMax)
+void Viewer3DTerrainGeometry::setRoiMax(const QGeoCoordinate& newRoiMax)
 {
     if (_roiMax == newRoiMax) {
         return;
@@ -272,7 +270,7 @@ void Viewer3DTerrainGeometry::setRoiMax(const QGeoCoordinate &newRoiMax)
     emit roiMaxChanged();
 }
 
-void Viewer3DTerrainGeometry::setRefCoordinate(const QGeoCoordinate &newRefCoordinate)
+void Viewer3DTerrainGeometry::setRefCoordinate(const QGeoCoordinate& newRefCoordinate)
 {
     if (_refCoordinate == newRefCoordinate) {
         return;

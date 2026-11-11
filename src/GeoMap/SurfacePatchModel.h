@@ -255,7 +255,7 @@ private:
     QSet<TileMath::TileKey> _failedImageKeys;          ///< resident patches awaiting an image retry
     QTimer* _imageRetryTimer = nullptr;
     int _imageRetryIntervalMs = kImageRetryMs;
-    QList<TileMath::TileKey> _keys;                    ///< row order; data fetched from SurfaceModel by key
+    QList<TileMath::TileKey> _keys;  ///< row order; data fetched from SurfaceModel by key
 
     // Perf counters sampled by _statsTick (see setStatsEnabled)
     QTimer* _statsTimer = nullptr;

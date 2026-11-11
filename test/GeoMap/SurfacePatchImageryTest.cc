@@ -80,7 +80,8 @@ int rowsReportingImage(const SurfacePatchModel& model)
 class FailingReply : public QNetworkReply
 {
 public:
-    explicit FailingReply(const QNetworkRequest& request, QObject* parent) : QNetworkReply(parent)
+    explicit FailingReply(const QNetworkRequest& request, QObject* parent)
+        : QNetworkReply(parent)
     {
         setRequest(request);
         setOperation(QNetworkAccessManager::GetOperation);

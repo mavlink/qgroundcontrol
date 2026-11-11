@@ -1,25 +1,24 @@
 #include "Viewer3DTileQuery.h"
 
-#include "QGCLoggingCategory.h"
-#include "MapProvider.h"
-#include "QGCMapUrlEngine.h"
-#include "Viewer3DTileReply.h"
+#include <cmath>
 
 #include <QtGui/QPainter>
 #include <QtGui/QPixmap>
 #include <QtNetwork/QNetworkAccessManager>
 
-#include <cmath>
+#include "MapProvider.h"
+#include "QGCLoggingCategory.h"
+#include "QGCMapUrlEngine.h"
+#include "Viewer3DTileReply.h"
 
 QGC_LOGGING_CATEGORY(Viewer3DTileQueryLog, "Viewer3d.Viewer3DTileQuery")
 
 static constexpr int kMaxTileCounts = 200;
-static constexpr int kMaxZoomLevel  = 23;
+static constexpr int kMaxZoomLevel = 23;
 
-Viewer3DTileQuery::Viewer3DTileQuery(QObject *parent)
+Viewer3DTileQuery::Viewer3DTileQuery(QObject* parent)
     : QObject{parent}
-{
-}
+{}
 
 void Viewer3DTileQuery::MapTileContainer_t::init()
 {
@@ -43,7 +42,7 @@ void Viewer3DTileQuery::MapTileContainer_t::setMapTile()
 
 QByteArray Viewer3DTileQuery::MapTileContainer_t::mapData() const
 {
-    return QByteArray(reinterpret_cast<const char *>(mapTextureImage.constBits()), mapTextureImage.sizeInBytes());
+    return QByteArray(reinterpret_cast<const char*>(mapTextureImage.constBits()), mapTextureImage.sizeInBytes());
 }
 
 void Viewer3DTileQuery::MapTileContainer_t::clear()
@@ -76,12 +75,14 @@ void Viewer3DTileQuery::_loadMapTiles(int zoomLevel, QPoint tileMinIndex, QPoint
     }
 
     _totalTilesCount = _mapToBeLoaded.tileList.size();
-    qCDebug(Viewer3DTileQueryLog) << "Requesting" << _totalTilesCount << "tiles at zoom" << zoomLevel
-                                  << "x:[" << tileMinIndex.x() << ".." << tileMaxIndex.x() << "]"
+    qCDebug(Viewer3DTileQueryLog) << "Requesting" << _totalTilesCount << "tiles at zoom" << zoomLevel << "x:["
+                                  << tileMinIndex.x() << ".." << tileMaxIndex.x() << "]"
                                   << "y:[" << tileMinIndex.y() << ".." << tileMaxIndex.y() << "]";
 }
 
-Viewer3DTileQuery::TileStatistics_t Viewer3DTileQuery::_findAndLoadMapTiles(int zoomLevel, const QGeoCoordinate &coordinateMin, const QGeoCoordinate &coordinateMax)
+Viewer3DTileQuery::TileStatistics_t Viewer3DTileQuery::_findAndLoadMapTiles(int zoomLevel,
+                                                                            const QGeoCoordinate& coordinateMin,
+                                                                            const QGeoCoordinate& coordinateMax)
 {
     const SharedMapProvider provider = UrlFactory::getMapProviderFromMapId(_mapId);
     if (!provider) {
@@ -101,8 +102,8 @@ Viewer3DTileQuery::TileStatistics_t Viewer3DTileQuery::_findAndLoadMapTiles(int 
     const QPoint minTile(minTileX, minTileY);
     const QPoint maxTile(maxTileX, maxTileY);
 
-    const QGeoCoordinate nwCoord(provider->tileY2lat(minTileY, zoomLevel),
-                                 provider->tileX2long(minTileX, zoomLevel), 0);
+    const QGeoCoordinate nwCoord(provider->tileY2lat(minTileY, zoomLevel), provider->tileX2long(minTileX, zoomLevel),
+                                 0);
     const QGeoCoordinate seCoord(provider->tileY2lat(maxTileY + 1, zoomLevel),
                                  provider->tileX2long(maxTileX + 1, zoomLevel), 0);
 
@@ -136,7 +137,8 @@ void Viewer3DTileQuery::adaptiveMapTilesLoader(int mapId, const QGeoCoordinate& 
     emit textureGeometryReady(_findAndLoadMapTiles(_zoomLevel, coordinateMin, coordinateMax));
 }
 
-int Viewer3DTileQuery::maxTileCount(int zoomLevel, const QGeoCoordinate &coordinateMin, const QGeoCoordinate &coordinateMax)
+int Viewer3DTileQuery::maxTileCount(int zoomLevel, const QGeoCoordinate& coordinateMin,
+                                    const QGeoCoordinate& coordinateMax)
 {
     const SharedMapProvider provider = UrlFactory::getMapProviderFromMapId(_mapId);
     if (!provider) {
@@ -156,7 +158,7 @@ int Viewer3DTileQuery::maxTileCount(int zoomLevel, const QGeoCoordinate &coordin
     return (maxTileX - minTileX + 1) * (maxTileY - minTileY + 1);
 }
 
-void Viewer3DTileQuery::_cleanupReply(Viewer3DTileReply *reply)
+void Viewer3DTileQuery::_cleanupReply(Viewer3DTileReply* reply)
 {
     disconnect(reply, &Viewer3DTileReply::tileDone, this, &Viewer3DTileQuery::_tileDone);
     disconnect(reply, &Viewer3DTileReply::tileGiveUp, this, &Viewer3DTileQuery::_tileGiveUp);
@@ -166,7 +168,7 @@ void Viewer3DTileQuery::_cleanupReply(Viewer3DTileReply *reply)
 
 void Viewer3DTileQuery::_tileDone(Viewer3DTileInfo tileData)
 {
-    auto *reply = qobject_cast<Viewer3DTileReply *>(QObject::sender());
+    auto* reply = qobject_cast<Viewer3DTileReply*>(QObject::sender());
 
     const QString key = _tileKey(tileData.mapId, tileData.x, tileData.y, tileData.zoomLevel);
     const qsizetype itemRemoved = _mapToBeLoaded.tileList.removeAll(key);
@@ -187,7 +189,7 @@ void Viewer3DTileQuery::_tileDone(Viewer3DTileInfo tileData)
 
 void Viewer3DTileQuery::_tileGiveUp(Viewer3DTileInfo tileData)
 {
-    auto *reply = qobject_cast<Viewer3DTileReply *>(QObject::sender());
+    auto* reply = qobject_cast<Viewer3DTileReply*>(QObject::sender());
     _cleanupReply(reply);
 
     const QString key = _tileKey(tileData.mapId, tileData.x, tileData.y, tileData.zoomLevel);
@@ -200,7 +202,7 @@ void Viewer3DTileQuery::_tileGiveUp(Viewer3DTileInfo tileData)
 
 void Viewer3DTileQuery::_tileEmpty(Viewer3DTileInfo tileData)
 {
-    auto *reply = qobject_cast<Viewer3DTileReply *>(QObject::sender());
+    auto* reply = qobject_cast<Viewer3DTileReply*>(QObject::sender());
     _cleanupReply(reply);
 
     if (tileData.zoomLevel > 0 && tileData.zoomLevel == _zoomLevel) {

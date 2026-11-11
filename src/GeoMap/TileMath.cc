@@ -1,10 +1,10 @@
 #include "TileMath.h"
 
-#include <QtCore/QDebug>
-#include <QtCore/QtMath>
-
 #include <algorithm>
 #include <cmath>
+
+#include <QtCore/QDebug>
+#include <QtCore/QtMath>
 
 namespace TileMath {
 

@@ -1,10 +1,10 @@
 #include "PaperPlaneGeometryTest.h"
 
-#include <QtGui/QVector3D>
-
 #include <array>
 #include <cmath>
 #include <cstring>
+
+#include <QtGui/QVector3D>
 
 #include "PaperPlaneGeometry.h"
 

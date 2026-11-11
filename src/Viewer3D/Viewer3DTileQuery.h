@@ -24,11 +24,13 @@ class Viewer3DTileQuery : public QObject
 public:
     using TileStatistics_t = Viewer3DTileStatistics;
 
-    explicit Viewer3DTileQuery(QObject *parent = nullptr);
+    explicit Viewer3DTileQuery(QObject* parent = nullptr);
 
     void adaptiveMapTilesLoader(int mapId, const QGeoCoordinate& coordinateMin, const QGeoCoordinate& coordinateMax);
-    int maxTileCount(int zoomLevel, const QGeoCoordinate &coordinateMin, const QGeoCoordinate &coordinateMax);
+    int maxTileCount(int zoomLevel, const QGeoCoordinate& coordinateMin, const QGeoCoordinate& coordinateMax);
+
     QByteArray mapData() const { return _mapToBeLoaded.mapData(); }
+
     QSize mapSize() const { return QSize(_mapToBeLoaded.mapWidth, _mapToBeLoaded.mapHeight); }
 
 signals:
@@ -37,11 +39,12 @@ signals:
 
 private:
     void _loadMapTiles(int zoomLevel, QPoint tileMinIndex, QPoint tileMaxIndex);
-    TileStatistics_t _findAndLoadMapTiles(int zoomLevel, const QGeoCoordinate &coordinateMin, const QGeoCoordinate &coordinateMax);
+    TileStatistics_t _findAndLoadMapTiles(int zoomLevel, const QGeoCoordinate& coordinateMin,
+                                          const QGeoCoordinate& coordinateMax);
     void _tileDone(Viewer3DTileInfo tileData);
     void _tileGiveUp(Viewer3DTileInfo tileData);
     void _tileEmpty(Viewer3DTileInfo tileData);
-    void _cleanupReply(Viewer3DTileReply *reply);
+    void _cleanupReply(Viewer3DTileReply* reply);
     static QString _tileKey(int mapId, int x, int y, int zoomLevel);
 
     struct MapTileContainer_t
@@ -65,7 +68,7 @@ private:
         void clear();
     };
 
-    QNetworkAccessManager *_networkManager = nullptr;
+    QNetworkAccessManager* _networkManager = nullptr;
     MapTileContainer_t _mapToBeLoaded;
     QGeoCoordinate _textureCoordinateMin;
     QGeoCoordinate _textureCoordinateMax;

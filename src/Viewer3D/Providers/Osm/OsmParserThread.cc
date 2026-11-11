@@ -1,21 +1,20 @@
 #include "OsmParserThread.h"
 
-#include "QGCGeo.h"
-#include "QGCLoggingCategory.h"
+#include <cmath>
+#include <exception>
+#include <limits>
+#include <osmium/handler.hpp>
+#include <osmium/io/reader.hpp>
+#include <osmium/io/xml_input.hpp>
+#include <osmium/visitor.hpp>
+#include <utility>
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QThread>
 
-#include <osmium/handler.hpp>
-#include <osmium/io/reader.hpp>
-#include <osmium/io/xml_input.hpp>
-#include <osmium/visitor.hpp>
-
-#include <cmath>
-#include <exception>
-#include <limits>
-#include <utility>
+#include "QGCGeo.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(OsmParserThreadLog, "Viewer3d.OsmParserThread")
 
@@ -26,15 +25,14 @@ QGC_LOGGING_CATEGORY(OsmParserThreadLog, "Viewer3d.OsmParserThread")
 class OsmBuildingHandler : public osmium::handler::Handler
 {
 public:
-    OsmBuildingHandler(const QGeoCoordinate &gpsRef,
-                       const QStringList &singleStorey,
-                       const QStringList &doubleStoreyLeisure)
+    OsmBuildingHandler(const QGeoCoordinate& gpsRef, const QStringList& singleStorey,
+                       const QStringList& doubleStoreyLeisure)
         : _gpsRef(gpsRef)
         , _singleStorey(singleStorey)
         , _doubleStoreyLeisure(doubleStoreyLeisure)
     {}
 
-    void node(const osmium::Node &node)
+    void node(const osmium::Node& node)
     {
         const int64_t nodeId = node.id();
         if (nodeId <= 0) {
@@ -49,7 +47,7 @@ public:
         nodes.insert(static_cast<uint64_t>(nodeId), coord);
     }
 
-    void way(const osmium::Way &way)
+    void way(const osmium::Way& way)
     {
         const int64_t wayId = way.id();
         if (wayId == 0) {
@@ -64,7 +62,7 @@ public:
         double xMax = -1e10, xMin = 1e10;
         double yMax = -1e10, yMin = 1e10;
 
-        for (const auto &nr : way.nodes()) {
+        for (const auto& nr : way.nodes()) {
             const int64_t refId = nr.ref();
             if (refId <= 0) {
                 continue;
@@ -75,7 +73,7 @@ public:
                 continue;
             }
 
-            const QGeoCoordinate &gpsCoord = it.value();
+            const QGeoCoordinate& gpsCoord = it.value();
             gpsPoints.push_back(gpsCoord);
             const QVector3D localPt = QGCGeo::convertGpsToEnu(gpsCoord, _gpsRef);
             localPoints.push_back(QVector2D(localPt.x(), localPt.y()));
@@ -91,7 +89,7 @@ public:
             latMin = std::fmin(latMin, gpsCoord.latitude());
         }
 
-        for (const auto &tag : way.tags()) {
+        for (const auto& tag : way.tags()) {
             const QString key = QString::fromUtf8(tag.key());
             if (key == QStringLiteral("building:levels")) {
                 building.levels = QString::fromUtf8(tag.value()).toFloat();
@@ -127,7 +125,7 @@ public:
         }
     }
 
-    void relation(const osmium::Relation &relation)
+    void relation(const osmium::Relation& relation)
     {
         const int64_t relationId = relation.id();
         if (relationId == 0) {
@@ -139,7 +137,7 @@ public:
         bool isBuilding = false;
         bool isMultipolygon = false;
 
-        for (const auto &member : relation.members()) {
+        for (const auto& member : relation.members()) {
             if (member.type() == osmium::item_type::way) {
                 const int64_t refId = member.ref();
                 const QString role = QString::fromUtf8(member.role());
@@ -159,7 +157,7 @@ public:
             }
         }
 
-        for (const auto &tag : relation.tags()) {
+        for (const auto& tag : relation.tags()) {
             const QString key = QString::fromUtf8(tag.key());
             if (key == QStringLiteral("type")) {
                 if (QString::fromUtf8(tag.value()) == QStringLiteral("multipolygon")) {
@@ -190,24 +188,24 @@ public:
     QGeoCoordinate coordMax;
 
 private:
-    const QGeoCoordinate &_gpsRef;
-    const QStringList &_singleStorey;
-    const QStringList &_doubleStoreyLeisure;
+    const QGeoCoordinate& _gpsRef;
+    const QStringList& _singleStorey;
+    const QStringList& _doubleStoreyLeisure;
 };
 
 // ============================================================================
 // BuildingType_t helpers
 // ============================================================================
 
-void OsmParserThread::BuildingType_t::append(const std::vector<QGeoCoordinate> &newPoints, bool isInner)
+void OsmParserThread::BuildingType_t::append(const std::vector<QGeoCoordinate>& newPoints, bool isInner)
 {
-    auto &target = isInner ? points_gps_inner : points_gps;
+    auto& target = isInner ? points_gps_inner : points_gps;
     target.insert(target.end(), newPoints.begin(), newPoints.end());
 }
 
-void OsmParserThread::BuildingType_t::append(const std::vector<QVector2D> &newPoints, bool isInner)
+void OsmParserThread::BuildingType_t::append(const std::vector<QVector2D>& newPoints, bool isInner)
 {
-    auto &target = isInner ? points_local_inner : points_local;
+    auto& target = isInner ? points_local_inner : points_local;
     target.insert(target.end(), newPoints.begin(), newPoints.end());
 }
 
@@ -215,7 +213,7 @@ void OsmParserThread::BuildingType_t::append(const std::vector<QVector2D> &newPo
 // OsmParserThread
 // ============================================================================
 
-OsmParserThread::OsmParserThread(QObject * /*parent*/)
+OsmParserThread::OsmParserThread(QObject* /*parent*/)
     : QObject{nullptr}
     , _workerThread(new QThread())
 {
@@ -232,12 +230,12 @@ OsmParserThread::~OsmParserThread()
     delete _workerThread;
 }
 
-void OsmParserThread::start(const QString &filePath)
+void OsmParserThread::start(const QString& filePath)
 {
     emit startThread(filePath);
 }
 
-void OsmParserThread::_parseOsmFile(const QString &filePath)
+void OsmParserThread::_parseOsmFile(const QString& filePath)
 {
     _mapNodes.clear();
     _mapBuildings.clear();
@@ -278,15 +276,14 @@ void OsmParserThread::_parseOsmFile(const QString &filePath)
         osmium::io::File inputFile{resolvedPath.toStdString()};
         osmium::io::Reader reader{inputFile, osmium::osm_entity_bits::all};
 
-        const auto &header = reader.header();
+        const auto& header = reader.header();
         bool hasHeaderBounds = !header.boxes().empty();
         if (hasHeaderBounds) {
-            const auto &box = header.boxes().front();
+            const auto& box = header.boxes().front();
             _coordinateMin = QGeoCoordinate(box.bottom_left().lat(), box.bottom_left().lon(), 0);
             _coordinateMax = QGeoCoordinate(box.top_right().lat(), box.top_right().lon(), 0);
-            _gpsRefPoint = QGeoCoordinate(
-                0.5 * (_coordinateMin.latitude() + _coordinateMax.latitude()),
-                0.5 * (_coordinateMin.longitude() + _coordinateMax.longitude()), 0);
+            _gpsRefPoint = QGeoCoordinate(0.5 * (_coordinateMin.latitude() + _coordinateMax.latitude()),
+                                          0.5 * (_coordinateMin.longitude() + _coordinateMax.longitude()), 0);
         }
 
         OsmBuildingHandler handler(_gpsRefPoint, _singleStoreyBuildings, _doubleStoreyLeisure);
@@ -323,14 +320,14 @@ void OsmParserThread::_parseOsmFile(const QString &filePath)
             // Building local coordinates were computed before fallback bounds were known.
             // Recompute with the finalized reference point for consistent geometry.
             for (auto it = _mapBuildings.begin(); it != _mapBuildings.end(); ++it) {
-                BuildingType_t &building = it.value();
+                BuildingType_t& building = it.value();
                 building.points_local.clear();
                 building.points_local_inner.clear();
 
                 building.bb_max = QVector2D(std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
                 building.bb_min = QVector2D(std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
 
-                for (const QGeoCoordinate &gpsCoord : building.points_gps) {
+                for (const QGeoCoordinate& gpsCoord : building.points_gps) {
                     const QVector3D localPt = QGCGeo::convertGpsToEnu(gpsCoord, _gpsRefPoint);
                     const QVector2D local2D(localPt.x(), localPt.y());
                     building.points_local.push_back(local2D);
@@ -341,7 +338,7 @@ void OsmParserThread::_parseOsmFile(const QString &filePath)
                     building.bb_min[1] = std::fmin(building.bb_min[1], local2D.y());
                 }
 
-                for (const QGeoCoordinate &gpsCoord : building.points_gps_inner) {
+                for (const QGeoCoordinate& gpsCoord : building.points_gps_inner) {
                     const QVector3D localPt = QGCGeo::convertGpsToEnu(gpsCoord, _gpsRefPoint);
                     const QVector2D local2D(localPt.x(), localPt.y());
                     building.points_local_inner.push_back(local2D);
@@ -359,7 +356,7 @@ void OsmParserThread::_parseOsmFile(const QString &filePath)
 
         _mapLoadedFlag = true;
         emit fileParsed(true);
-    } catch (const std::exception &e) {
+    } catch (const std::exception& e) {
         qCDebug(OsmParserThreadLog) << "OSM parse error:" << e.what();
         emit fileParsed(false);
     }

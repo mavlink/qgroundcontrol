@@ -1,14 +1,14 @@
 #include "FlightPathGeometryTest.h"
 
+#include <array>
+#include <cmath>
+#include <cstring>
+
 #include <QtCore/QByteArray>
 #include <QtCore/QList>
 #include <QtCore/QVariant>
 #include <QtGui/QVector3D>
 #include <QtPositioning/QGeoCoordinate>
-
-#include <array>
-#include <cmath>
-#include <cstring>
 
 #include "FlightPathGeometry.h"
 #include "GeoScene.h"

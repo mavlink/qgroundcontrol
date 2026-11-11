@@ -1,13 +1,13 @@
 #pragma once
 
+#include <vector>
+
 #include <QtCore/QMap>
 #include <QtCore/QObject>
 #include <QtCore/QStringList>
 #include <QtGui/QVector2D>
 #include <QtGui/QVector3D>
 #include <QtPositioning/QGeoCoordinate>
-
-#include <vector>
 
 class QThread;
 
@@ -29,27 +29,31 @@ public:
         float height = 0;
         float levels = 0;
 
-        void append(const std::vector<QGeoCoordinate> &newPoints, bool isInner);
-        void append(const std::vector<QVector2D> &newPoints, bool isInner);
+        void append(const std::vector<QGeoCoordinate>& newPoints, bool isInner);
+        void append(const std::vector<QVector2D>& newPoints, bool isInner);
     };
 
-    explicit OsmParserThread(QObject *parent = nullptr);
+    explicit OsmParserThread(QObject* parent = nullptr);
     ~OsmParserThread();
 
-    void start(const QString &filePath);
+    void start(const QString& filePath);
 
     const QGeoCoordinate& gpsRefPoint() const { return _gpsRefPoint; }
+
     const QMap<uint64_t, QGeoCoordinate>& mapNodes() const { return _mapNodes; }
+
     const QMap<uint64_t, BuildingType_t>& mapBuildings() const { return _mapBuildings; }
+
     const QGeoCoordinate& coordinateMin() const { return _coordinateMin; }
+
     const QGeoCoordinate& coordinateMax() const { return _coordinateMax; }
 
 signals:
     void fileParsed(bool isValid);
-    void startThread(const QString &filePath);
+    void startThread(const QString& filePath);
 
 private:
-    void _parseOsmFile(const QString &filePath);
+    void _parseOsmFile(const QString& filePath);
 
     QGeoCoordinate _gpsRefPoint;
     QMap<uint64_t, QGeoCoordinate> _mapNodes;
@@ -57,19 +61,12 @@ private:
     QGeoCoordinate _coordinateMin;
     QGeoCoordinate _coordinateMax;
 
-    QThread *_workerThread = nullptr;
+    QThread* _workerThread = nullptr;
 
-    const QStringList _singleStoreyBuildings = {
-        QStringLiteral("bungalow"),
-        QStringLiteral("shed"),
-        QStringLiteral("kiosk"),
-        QStringLiteral("cabin")
-    };
-    const QStringList _doubleStoreyLeisure = {
-        QStringLiteral("stadium"),
-        QStringLiteral("sports_hall"),
-        QStringLiteral("sauna")
-    };
+    const QStringList _singleStoreyBuildings = {QStringLiteral("bungalow"), QStringLiteral("shed"),
+                                                QStringLiteral("kiosk"), QStringLiteral("cabin")};
+    const QStringList _doubleStoreyLeisure = {QStringLiteral("stadium"), QStringLiteral("sports_hall"),
+                                              QStringLiteral("sauna")};
 
     bool _mapLoadedFlag = false;
 };

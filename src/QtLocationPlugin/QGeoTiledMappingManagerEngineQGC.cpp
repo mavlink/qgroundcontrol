@@ -38,16 +38,19 @@ static_assert(static_cast<int>(MapProvider::CarNavigationMap) == static_cast<int
 static_assert(static_cast<int>(MapProvider::CycleMap) == static_cast<int>(QGeoMapType::CycleMap));
 static_assert(static_cast<int>(MapProvider::CustomMap) == static_cast<int>(QGeoMapType::CustomMap));
 
-QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString, QNetworkAccessManager *networkManager, QObject *parent)
+QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVariantMap& parameters,
+                                                                   QGeoServiceProvider::Error* error,
+                                                                   QString* errorString,
+                                                                   QNetworkAccessManager* networkManager,
+                                                                   QObject* parent)
     : QGeoTiledMappingManagerEngine(parent)
     , m_networkManager(networkManager)
 {
     qCDebug(QGeoTiledMappingManagerEngineQGCLog) << this;
 
     setLocale(qgcApp()->getCurrentLanguage());
-    (void) connect(qgcApp(), &QGCApplication::languageChanged, this, [this](const QLocale &locale) {
-        setLocale(locale);
-    });
+    (void) connect(qgcApp(), &QGCApplication::languageChanged, this,
+                   [this](const QLocale& locale) { setLocale(locale); });
 
     QGeoCameraCapabilities cameraCaps{};
     cameraCaps.setTileSize(256);
@@ -90,20 +93,22 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
 
     getQGCMapEngine()->ensureInitialized();
 
-    m_prefetchStyle = QGCNetworkHelper::isInternetAvailable() ? QGeoTiledMap::PrefetchTwoNeighbourLayers : QGeoTiledMap::NoPrefetching;
-    (void) connect(QNetworkInformation::instance(), &QNetworkInformation::reachabilityChanged, this, [this](QNetworkInformation::Reachability newReachability) {
-        if (newReachability == QNetworkInformation::Reachability::Online) {
-            m_prefetchStyle = QGeoTiledMap::PrefetchTwoNeighbourLayers;
-        } else {
-            m_prefetchStyle = QGeoTiledMap::NoPrefetching;
-        }
-    });
+    m_prefetchStyle = QGCNetworkHelper::isInternetAvailable() ? QGeoTiledMap::PrefetchTwoNeighbourLayers
+                                                              : QGeoTiledMap::NoPrefetching;
+    (void) connect(QNetworkInformation::instance(), &QNetworkInformation::reachabilityChanged, this,
+                   [this](QNetworkInformation::Reachability newReachability) {
+                       if (newReachability == QNetworkInformation::Reachability::Online) {
+                           m_prefetchStyle = QGeoTiledMap::PrefetchTwoNeighbourLayers;
+                       } else {
+                           m_prefetchStyle = QGeoTiledMap::NoPrefetching;
+                       }
+                   });
 
-    QGeoTileFetcherQGC *tileFetcher = new QGeoTileFetcherQGC(m_networkManager, parameters, this);
+    QGeoTileFetcherQGC* tileFetcher = new QGeoTileFetcherQGC(m_networkManager, parameters, this);
 
     *error = QGeoServiceProvider::NoError;
     errorString->clear();
-    setTileFetcher(tileFetcher); // Calls engineInitialized()
+    setTileFetcher(tileFetcher);  // Calls engineInitialized()
 }
 
 QGeoTiledMappingManagerEngineQGC::~QGeoTiledMappingManagerEngineQGC()
@@ -111,9 +116,9 @@ QGeoTiledMappingManagerEngineQGC::~QGeoTiledMappingManagerEngineQGC()
     qCDebug(QGeoTiledMappingManagerEngineQGCLog) << this;
 }
 
-QGeoMap *QGeoTiledMappingManagerEngineQGC::createMap()
+QGeoMap* QGeoTiledMappingManagerEngineQGC::createMap()
 {
-    QGeoTiledMapQGC *map = new QGeoTiledMapQGC(this, this);
+    QGeoTiledMapQGC* map = new QGeoTiledMapQGC(this, this);
     map->setPrefetchStyle(m_prefetchStyle);
     return map;
 }

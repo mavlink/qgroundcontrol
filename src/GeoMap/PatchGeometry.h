@@ -9,10 +9,10 @@
 
 #pragma once
 
+#include <array>
+
 #include <QtCore/QList>
 #include <QtQuick3D/QQuick3DGeometry>
-
-#include <array>
 
 #include "TileMath.h"
 

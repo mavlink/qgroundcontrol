@@ -3,7 +3,8 @@
 # Provides terrain elevation data and queries using Copernicus data
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         Providers/TerrainQueryCopernicus.cc
         Providers/TerrainQueryCopernicus.h
@@ -19,7 +20,8 @@ target_sources(${CMAKE_PROJECT_NAME}
         TerrainTileManager.h
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME}
+target_include_directories(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/Providers

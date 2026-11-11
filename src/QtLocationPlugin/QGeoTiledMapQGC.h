@@ -9,7 +9,7 @@ class QGeoTiledMapQGC : public QGeoTiledMap
     Q_OBJECT
 
 public:
-    explicit QGeoTiledMapQGC(QGeoTiledMappingManagerEngineQGC *engine, QObject *parent = nullptr);
+    explicit QGeoTiledMapQGC(QGeoTiledMappingManagerEngineQGC* engine, QObject* parent = nullptr);
     ~QGeoTiledMapQGC();
 
     QGeoMap::Capabilities capabilities() const final;

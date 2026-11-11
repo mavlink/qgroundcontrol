@@ -1,11 +1,11 @@
 #include "OsmParserThreadTest.h"
 
 #include <QtCore/QFile>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QTemporaryFile>
 #include <QtTest/QSignalSpy>
 
 #include "OsmParserThread.h"
-#include <QtCore/QTemporaryDir>
 
 void OsmParserThreadTest::_testParseValidOsmFile()
 {
@@ -141,9 +141,8 @@ static QString _writeResourceToTempFile(const QString& tempDirectoryPath, const 
 void OsmParserThreadTest::_testParseMultipleBuildings()
 {
     QTemporaryDir tempDir;
-    const QString absolutePath =
-        _writeResourceToTempFile(tempDir.path(), QStringLiteral(":/unittest/test_buildings.osm"),
-                                 QStringLiteral("multi_XXXXXX.osm"));
+    const QString absolutePath = _writeResourceToTempFile(
+        tempDir.path(), QStringLiteral(":/unittest/test_buildings.osm"), QStringLiteral("multi_XXXXXX.osm"));
     QVERIFY(!absolutePath.isEmpty());
     OsmParserThread thread;
     QSignalSpy spy(&thread, &OsmParserThread::fileParsed);
@@ -180,9 +179,8 @@ void OsmParserThreadTest::_testParseMultipleBuildings()
 void OsmParserThreadTest::_testParseMultipolygonRelation()
 {
     QTemporaryDir tempDir;
-    const QString absolutePath =
-        _writeResourceToTempFile(tempDir.path(), QStringLiteral(":/unittest/test_buildings.osm"),
-                                 QStringLiteral("mpoly_XXXXXX.osm"));
+    const QString absolutePath = _writeResourceToTempFile(
+        tempDir.path(), QStringLiteral(":/unittest/test_buildings.osm"), QStringLiteral("mpoly_XXXXXX.osm"));
     QVERIFY(!absolutePath.isEmpty());
     OsmParserThread thread;
     QSignalSpy spy(&thread, &OsmParserThread::fileParsed);
@@ -215,8 +213,8 @@ void OsmParserThreadTest::_testParseMultipolygonRelation()
 void OsmParserThreadTest::_benchmarkParseOsmFile()
 {
     QTemporaryDir tempDir;
-    const QString absolutePath = _writeResourceToTempFile(tempDir.path(), QStringLiteral(":/unittest/map_sim_small.osm"),
-                                                          QStringLiteral("bench_XXXXXX.osm"));
+    const QString absolutePath = _writeResourceToTempFile(
+        tempDir.path(), QStringLiteral(":/unittest/map_sim_small.osm"), QStringLiteral("bench_XXXXXX.osm"));
     QVERIFY(!absolutePath.isEmpty());
     QBENCHMARK
     {

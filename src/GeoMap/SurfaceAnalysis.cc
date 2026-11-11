@@ -1,10 +1,10 @@
 #include "SurfaceAnalysis.h"
 
-#include <QtCore/QHash>
-
 #include <algorithm>
 #include <cmath>
 #include <optional>
+
+#include <QtCore/QHash>
 
 namespace SurfaceAnalysis {
 

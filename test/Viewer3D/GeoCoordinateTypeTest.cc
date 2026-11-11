@@ -1,8 +1,8 @@
 #include "GeoCoordinateTypeTest.h"
-#include "UnitTestCoords.h"
+
 #include <QtTest/QSignalSpy>
 
-
+#include "UnitTestCoords.h"
 #include "Viewer3DGeoCoordinateType.h"
 
 void GeoCoordinateTypeTest::_testGpsToLocal()

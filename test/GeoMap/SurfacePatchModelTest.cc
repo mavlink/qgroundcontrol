@@ -430,7 +430,7 @@ void SurfacePatchModelTest::_segmentBelowTerrain_data()
     QTest::addColumn<double>("ignoreStartMeters");
     QTest::addColumn<double>("ignoreEndMeters");
     QTest::addColumn<double>("legMeters");
-    QTest::addColumn<int>("hillZoom");  // 300 m tile on the leg, 0 = none
+    QTest::addColumn<int>("hillZoom");             // 300 m tile on the leg, 0 = none
     QTest::addColumn<double>("hillOffsetMeters");  // hill position past the leg midpoint
     QTest::addColumn<bool>("belowTerrain");
 

@@ -1,12 +1,12 @@
 #include "GeoMapItemTest.h"
 
+#include <cmath>
+
 #include <QtCore/QPointer>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QSignalSpy>
-
-#include <cmath>
 
 #include "GeoMapCamera.h"
 #include "GeoMapItem.h"

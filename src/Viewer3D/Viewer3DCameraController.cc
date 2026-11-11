@@ -9,10 +9,11 @@
 
 #include "Viewer3DCameraController.h"
 
-#include <QtCore/QtMath>
-#include <QtGui/QQuaternion>
 #include <algorithm>
 #include <cmath>
+
+#include <QtCore/QtMath>
+#include <QtGui/QQuaternion>
 
 namespace {
 
@@ -31,7 +32,9 @@ QVector3D centerToCameraDirection(qreal tilt, qreal heading)
 
 }  // namespace
 
-Viewer3DCameraController::Viewer3DCameraController(QObject* parent) : QObject(parent) {}
+Viewer3DCameraController::Viewer3DCameraController(QObject* parent)
+    : QObject(parent)
+{}
 
 void Viewer3DCameraController::setOrbitCenter(const QVector3D& center)
 {

@@ -1,13 +1,15 @@
 #include "HeightSource.h"
 
-#include <QtCore/QTimer>
-
 #include <cmath>
 #include <utility>
 
+#include <QtCore/QTimer>
+
 #include "HeightField.h"
 
-HeightSource::HeightSource(QObject* parent) : QObject(parent) {}
+HeightSource::HeightSource(QObject* parent)
+    : QObject(parent)
+{}
 
 int HeightSource::_nextRequestId()
 {

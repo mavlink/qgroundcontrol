@@ -9,18 +9,19 @@
 
 #include "FlightPathGeometry.h"
 
+#include <cmath>
+
 #include <QtCore/QByteArray>
 #include <QtCore/QPointF>
 #include <QtCore/qminmax.h>
 #include <QtCore/qnumeric.h>
 #include <QtGui/QVector3D>
 
-#include <cmath>
-
 #include "GeoScene.h"
 #include "TileMath.h"
 
-FlightPathGeometry::FlightPathGeometry(QQuick3DObject* parent) : QQuick3DGeometry(parent)
+FlightPathGeometry::FlightPathGeometry(QQuick3DObject* parent)
+    : QQuick3DGeometry(parent)
 {
     _rebuild();
 }

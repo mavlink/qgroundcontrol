@@ -32,7 +32,9 @@
 QGC_LOGGING_CATEGORY(GeoMapSurfacePatchModelLog, "GeoMap.SurfacePatchModel")
 QGC_LOGGING_CATEGORY(GeoMapSurfacePatchModelVerboseLog, "GeoMap.SurfacePatchModel.Verbose")
 
-SurfacePatchModel::SurfacePatchModel(QObject* parent) : QAbstractListModel(parent) {}
+SurfacePatchModel::SurfacePatchModel(QObject* parent)
+    : QAbstractListModel(parent)
+{}
 
 SurfacePatchModel::~SurfacePatchModel() = default;
 

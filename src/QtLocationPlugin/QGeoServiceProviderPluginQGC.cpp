@@ -8,7 +8,7 @@
 
 QGC_LOGGING_CATEGORY(QGeoServiceProviderFactoryQGCLog, "QtLocationPlugin.QGeoServiceProviderFactoryQGC")
 
-QGeoServiceProviderFactoryQGC::QGeoServiceProviderFactoryQGC(QObject *parent)
+QGeoServiceProviderFactoryQGC::QGeoServiceProviderFactoryQGC(QObject* parent)
     : QObject(parent)
 {
     qCDebug(QGeoServiceProviderFactoryQGCLog) << this;
@@ -19,8 +19,9 @@ QGeoServiceProviderFactoryQGC::~QGeoServiceProviderFactoryQGC()
     qCDebug(QGeoServiceProviderFactoryQGCLog) << this;
 }
 
-QGeoCodingManagerEngine *QGeoServiceProviderFactoryQGC::createGeocodingManagerEngine(
-   const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
+QGeoCodingManagerEngine* QGeoServiceProviderFactoryQGC::createGeocodingManagerEngine(const QVariantMap& parameters,
+                                                                                     QGeoServiceProvider::Error* error,
+                                                                                     QString* errorString) const
 {
     Q_UNUSED(parameters);
     if (error) {
@@ -33,8 +34,9 @@ QGeoCodingManagerEngine *QGeoServiceProviderFactoryQGC::createGeocodingManagerEn
     return nullptr;
 }
 
-QGeoMappingManagerEngine *QGeoServiceProviderFactoryQGC::createMappingManagerEngine(
-   const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
+QGeoMappingManagerEngine* QGeoServiceProviderFactoryQGC::createMappingManagerEngine(const QVariantMap& parameters,
+                                                                                    QGeoServiceProvider::Error* error,
+                                                                                    QString* errorString) const
 {
     // The mapping engine fetches its tiles with the network access manager of the QML engine, on that engine's thread
     if (!m_engine || (m_engine->thread() != QThread::currentThread())) {
@@ -55,13 +57,14 @@ QGeoMappingManagerEngine *QGeoServiceProviderFactoryQGC::createMappingManagerEng
         *errorString = "";
     }
 
-    QNetworkAccessManager *networkManager = m_engine->networkAccessManager();
+    QNetworkAccessManager* networkManager = m_engine->networkAccessManager();
 
     return new QGeoTiledMappingManagerEngineQGC(parameters, error, errorString, networkManager, nullptr);
 }
 
-QGeoRoutingManagerEngine *QGeoServiceProviderFactoryQGC::createRoutingManagerEngine(
-   const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
+QGeoRoutingManagerEngine* QGeoServiceProviderFactoryQGC::createRoutingManagerEngine(const QVariantMap& parameters,
+                                                                                    QGeoServiceProvider::Error* error,
+                                                                                    QString* errorString) const
 {
     Q_UNUSED(parameters);
     if (error) {
@@ -74,8 +77,9 @@ QGeoRoutingManagerEngine *QGeoServiceProviderFactoryQGC::createRoutingManagerEng
     return nullptr;
 }
 
-QPlaceManagerEngine *QGeoServiceProviderFactoryQGC::createPlaceManagerEngine(
-   const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const
+QPlaceManagerEngine* QGeoServiceProviderFactoryQGC::createPlaceManagerEngine(const QVariantMap& parameters,
+                                                                             QGeoServiceProvider::Error* error,
+                                                                             QString* errorString) const
 {
     Q_UNUSED(parameters);
     if (error) {

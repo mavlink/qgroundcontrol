@@ -18,7 +18,7 @@ CityMapGeometry::CityMapGeometry()
     connect(viewer3DSettings->osmFilePath(), &Fact::rawValueChanged, this, &CityMapGeometry::_setOsmFilePath);
 }
 
-void CityMapGeometry::setModelName(const QString &modelName)
+void CityMapGeometry::setModelName(const QString& modelName)
 {
     if (_modelName == modelName) {
         return;
@@ -27,7 +27,7 @@ void CityMapGeometry::setModelName(const QString &modelName)
     emit modelNameChanged();
 }
 
-void CityMapGeometry::_setOsmFilePath(const QVariant &value)
+void CityMapGeometry::_setOsmFilePath(const QVariant& value)
 {
     _clearViewer();
     _osmFilePath = value.toString();
@@ -36,7 +36,7 @@ void CityMapGeometry::_setOsmFilePath(const QVariant &value)
     _loadOsmMap();
 }
 
-void CityMapGeometry::setMapProvider(Viewer3DMapProvider *newMapProvider)
+void CityMapGeometry::setMapProvider(Viewer3DMapProvider* newMapProvider)
 {
     if (_mapProvider == newMapProvider) {
         return;
@@ -91,9 +91,7 @@ void CityMapGeometry::_updateViewer()
             setVertexData(_vertexData);
             setStride(stride);
             setPrimitiveType(QQuick3DGeometry::PrimitiveType::Triangles);
-            addAttribute(QQuick3DGeometry::Attribute::PositionSemantic,
-                         0,
-                         QQuick3DGeometry::Attribute::F32Type);
+            addAttribute(QQuick3DGeometry::Attribute::PositionSemantic, 0, QQuick3DGeometry::Attribute::F32Type);
         }
         update();
     }

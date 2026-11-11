@@ -17,7 +17,9 @@
 
 QGC_LOGGING_CATEGORY(GeoMapGeoSceneLog, "GeoMap.GeoScene")
 
-GeoScene::GeoScene(QObject* parent) : QObject(parent) {}
+GeoScene::GeoScene(QObject* parent)
+    : QObject(parent)
+{}
 
 void GeoScene::setCamera(GeoMapCamera* camera)
 {

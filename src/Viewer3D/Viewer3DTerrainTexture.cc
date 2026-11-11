@@ -46,13 +46,15 @@ void Viewer3DTerrainTexture::loadTexture()
         _terrainTileLoader = new Viewer3DTileQuery(this);
     }
 
-    connect(_terrainTileLoader, &Viewer3DTileQuery::loadingMapCompleted, this, &Viewer3DTerrainTexture::_updateTexture, Qt::UniqueConnection);
-    connect(_terrainTileLoader, &Viewer3DTileQuery::textureGeometryReady, this, &Viewer3DTerrainTexture::setTextureGeometry, Qt::UniqueConnection);
+    connect(_terrainTileLoader, &Viewer3DTileQuery::loadingMapCompleted, this, &Viewer3DTerrainTexture::_updateTexture,
+            Qt::UniqueConnection);
+    connect(_terrainTileLoader, &Viewer3DTileQuery::textureGeometryReady, this,
+            &Viewer3DTerrainTexture::setTextureGeometry, Qt::UniqueConnection);
 
     _terrainTileLoader->adaptiveMapTilesLoader(_mapId, bbMin, bbMax);
 }
 
-std::pair<QGeoCoordinate, QGeoCoordinate> Viewer3DTerrainTexture::_fallbackBoundingBox(const QGeoCoordinate &center)
+std::pair<QGeoCoordinate, QGeoCoordinate> Viewer3DTerrainTexture::_fallbackBoundingBox(const QGeoCoordinate& center)
 {
     constexpr double fallbackRadiusMeters = 500.0;
     const QGeoCoordinate south = center.atDistanceAndAzimuth(fallbackRadiusMeters, 180);
@@ -63,7 +65,7 @@ std::pair<QGeoCoordinate, QGeoCoordinate> Viewer3DTerrainTexture::_fallbackBound
             QGeoCoordinate(north.latitude(), east.longitude(), 0)};
 }
 
-void Viewer3DTerrainTexture::setFallbackCenter(const QGeoCoordinate &newFallbackCenter)
+void Viewer3DTerrainTexture::setFallbackCenter(const QGeoCoordinate& newFallbackCenter)
 {
     if (_fallbackCenter == newFallbackCenter) {
         return;
@@ -103,7 +105,8 @@ void Viewer3DTerrainTexture::_updateTexture()
     setTextureData(_terrainTileLoader->mapData());
     _setTextureLoaded(true);
     setTextureGeometryDone(true);
-    disconnect(_terrainTileLoader, &Viewer3DTileQuery::loadingMapCompleted, this, &Viewer3DTerrainTexture::_updateTexture);
+    disconnect(_terrainTileLoader, &Viewer3DTileQuery::loadingMapCompleted, this,
+               &Viewer3DTerrainTexture::_updateTexture);
 
     _terrainTileLoader->deleteLater();
     _terrainTileLoader = nullptr;
@@ -111,9 +114,8 @@ void Viewer3DTerrainTexture::_updateTexture()
 
 void Viewer3DTerrainTexture::_onMapTypeChanged()
 {
-    _mapType = _flightMapSettings->mapProvider()->rawValue().toString()
-             + QStringLiteral(" ")
-             + _flightMapSettings->mapType()->rawValue().toString();
+    _mapType = _flightMapSettings->mapProvider()->rawValue().toString() + QStringLiteral(" ") +
+               _flightMapSettings->mapType()->rawValue().toString();
 
     const int mapId = UrlFactory::getMapIdFromProviderType(_mapType);
 
@@ -142,7 +144,7 @@ void Viewer3DTerrainTexture::_onTileSourceChanged(int mapId)
     loadTexture();
 }
 
-void Viewer3DTerrainTexture::setRoiMinCoordinate(const QGeoCoordinate &newRoiMinCoordinate)
+void Viewer3DTerrainTexture::setRoiMinCoordinate(const QGeoCoordinate& newRoiMinCoordinate)
 {
     if (_roiMinCoordinate == newRoiMinCoordinate) {
         return;
@@ -151,7 +153,7 @@ void Viewer3DTerrainTexture::setRoiMinCoordinate(const QGeoCoordinate &newRoiMin
     emit roiMinCoordinateChanged();
 }
 
-void Viewer3DTerrainTexture::setRoiMaxCoordinate(const QGeoCoordinate &newRoiMaxCoordinate)
+void Viewer3DTerrainTexture::setRoiMaxCoordinate(const QGeoCoordinate& newRoiMaxCoordinate)
 {
     if (_roiMaxCoordinate == newRoiMaxCoordinate) {
         return;
@@ -160,7 +162,7 @@ void Viewer3DTerrainTexture::setRoiMaxCoordinate(const QGeoCoordinate &newRoiMax
     emit roiMaxCoordinateChanged();
 }
 
-void Viewer3DTerrainTexture::setMapProvider(Viewer3DMapProvider *newMapProvider)
+void Viewer3DTerrainTexture::setMapProvider(Viewer3DMapProvider* newMapProvider)
 {
     if (_mapProvider == newMapProvider) {
         return;
@@ -181,7 +183,7 @@ void Viewer3DTerrainTexture::setMapProvider(Viewer3DMapProvider *newMapProvider)
     emit mapProviderChanged();
 }
 
-void Viewer3DTerrainTexture::setTileCount(const QSize &newTileCount)
+void Viewer3DTerrainTexture::setTileCount(const QSize& newTileCount)
 {
     if (_tileCount == newTileCount) {
         return;
@@ -199,7 +201,7 @@ void Viewer3DTerrainTexture::setTextureGeometryDone(bool newTextureGeometryDone)
     emit textureGeometryDoneChanged();
 }
 
-void Viewer3DTerrainTexture::setTextureGeometry(const Viewer3DTileStatistics &tileInfo)
+void Viewer3DTerrainTexture::setTextureGeometry(const Viewer3DTileStatistics& tileInfo)
 {
     setRoiMinCoordinate(tileInfo.coordinateMin);
     setRoiMaxCoordinate(tileInfo.coordinateMax);

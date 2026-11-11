@@ -1,20 +1,19 @@
 #include "OsmParser.h"
 
+#include <array>
+#include <mapbox/earcut.hpp>
+
+#include <QtCore/QThread>
+
 #include "Fact.h"
 #include "OsmParserThread.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
 #include "Viewer3DSettings.h"
 
-#include <QtCore/QThread>
-
-#include <mapbox/earcut.hpp>
-
-#include <array>
-
 QGC_LOGGING_CATEGORY(OsmParserLog, "Viewer3d.OsmParser")
 
-OsmParser::OsmParser(QObject *parent)
+OsmParser::OsmParser(QObject* parent)
     : Viewer3DMapProvider{parent}
     , _osmParserWorker(new OsmParserThread(this))
 {
@@ -34,7 +33,7 @@ OsmParser::~OsmParser()
     delete _osmParserWorker;
 }
 
-void OsmParser::setGpsRef(const QGeoCoordinate &gpsRef)
+void OsmParser::setGpsRef(const QGeoCoordinate& gpsRef)
 {
     _gpsRefPoint = gpsRef;
     _gpsRefSet = true;
@@ -48,7 +47,7 @@ void OsmParser::resetGpsRef()
     emit gpsRefChanged(_gpsRefPoint, _gpsRefSet);
 }
 
-void OsmParser::_setBuildingLevelHeight(const QVariant &value)
+void OsmParser::_setBuildingLevelHeight(const QVariant& value)
 {
     _buildingLevelHeight = value.toFloat();
     emit buildingLevelHeightChanged();
@@ -69,7 +68,7 @@ void OsmParser::_onOsmParserFinished(bool isValid)
     }
 }
 
-void OsmParser::parseOsmFile(const QString &filePath)
+void OsmParser::parseOsmFile(const QString& filePath)
 {
     _gpsRefSet = false;
     if (_mapLoadedFlag) {
@@ -84,11 +83,11 @@ void OsmParser::parseOsmFile(const QString &filePath)
 QByteArray OsmParser::buildingToMesh()
 {
     QByteArray vertexData;
-    const auto &buildings = _osmParserWorker->mapBuildings();
+    const auto& buildings = _osmParserWorker->mapBuildings();
     vertexData.reserve(static_cast<qsizetype>(buildings.size()) * 1000);
 
     for (auto it = buildings.begin(), end = buildings.end(); it != end; ++it) {
-        const auto &building = it.value();
+        const auto& building = it.value();
         float buildingHeight = 0;
 
         std::vector<std::array<float, 2>> allPoints;
@@ -104,14 +103,14 @@ QByteArray OsmParser::buildingToMesh()
             continue;
         }
 
-        for (const auto &pt : building.points_local) {
+        for (const auto& pt : building.points_local) {
             ringPoints.push_back({pt.x(), pt.y()});
             allPoints.push_back({pt.x(), pt.y()});
         }
         polygon.push_back(ringPoints);
 
         ringPoints.clear();
-        for (const auto &pt : building.points_local_inner) {
+        for (const auto& pt : building.points_local_inner) {
             ringPoints.push_back({pt.x(), pt.y()});
             allPoints.push_back({pt.x(), pt.y()});
         }
@@ -146,9 +145,9 @@ QByteArray OsmParser::buildingToMesh()
         }
 
         QByteArray buildingData(mesh.size() * 3 * sizeof(float), Qt::Initialization::Uninitialized);
-        float *p = reinterpret_cast<float *>(buildingData.data());
+        float* p = reinterpret_cast<float*>(buildingData.data());
 
-        for (const auto &vertex : mesh) {
+        for (const auto& vertex : mesh) {
             *p++ = vertex.x();
             *p++ = vertex.y();
             *p++ = vertex.z();
@@ -159,7 +158,8 @@ QByteArray OsmParser::buildingToMesh()
     return vertexData;
 }
 
-void OsmParser::_triangulateWallsExtrudedPolygon(std::vector<QVector3D> &triangulatedMesh, const std::vector<QVector2D> &verticesCcw, float h, bool inverseOrder)
+void OsmParser::_triangulateWallsExtrudedPolygon(std::vector<QVector3D>& triangulatedMesh,
+                                                 const std::vector<QVector2D>& verticesCcw, float h, bool inverseOrder)
 {
     std::vector<QVector3D> quad(4);
     const size_t verticesSize = verticesCcw.size();
@@ -187,7 +187,8 @@ void OsmParser::_triangulateWallsExtrudedPolygon(std::vector<QVector3D> &triangu
     }
 }
 
-void OsmParser::_triangulateRectangle(std::vector<QVector3D> &triangulatedMesh, const std::vector<QVector3D> &verticesCcw, bool invertNormal)
+void OsmParser::_triangulateRectangle(std::vector<QVector3D>& triangulatedMesh,
+                                      const std::vector<QVector3D>& verticesCcw, bool invertNormal)
 {
     using Vec3i = std::array<unsigned int, 3>;
     std::array<Vec3i, 2> meshIndices;
@@ -200,7 +201,7 @@ void OsmParser::_triangulateRectangle(std::vector<QVector3D> &triangulatedMesh, 
         meshIndices[1] = {1, 2, 3};
     }
 
-    for (const auto &tri : meshIndices) {
+    for (const auto& tri : meshIndices) {
         for (unsigned int vi : tri) {
             triangulatedMesh.push_back(verticesCcw[vi]);
         }

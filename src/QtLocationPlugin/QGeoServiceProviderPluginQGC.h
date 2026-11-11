@@ -4,23 +4,30 @@
 #include <QtCore/QtPlugin>
 #include <QtLocation/QGeoServiceProviderFactory>
 
-class QGeoServiceProviderFactoryQGC: public QObject, public QGeoServiceProviderFactory
+class QGeoServiceProviderFactoryQGC : public QObject, public QGeoServiceProviderFactory
 {
     Q_OBJECT
     Q_INTERFACES(QGeoServiceProviderFactory)
     Q_PLUGIN_METADATA(IID "org.qt-project.qt.geoservice.serviceproviderfactory/6.0" FILE "qgc_maps_plugin.json")
 
 public:
-    QGeoServiceProviderFactoryQGC(QObject *parent = nullptr);
+    QGeoServiceProviderFactoryQGC(QObject* parent = nullptr);
     ~QGeoServiceProviderFactoryQGC();
 
-    QGeoCodingManagerEngine* createGeocodingManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const final;
-    QGeoMappingManagerEngine* createMappingManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const final;
-    QGeoRoutingManagerEngine* createRoutingManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const final;
-    QPlaceManagerEngine* createPlaceManagerEngine(const QVariantMap &parameters, QGeoServiceProvider::Error *error, QString *errorString) const final;
+    QGeoCodingManagerEngine* createGeocodingManagerEngine(const QVariantMap& parameters,
+                                                          QGeoServiceProvider::Error* error,
+                                                          QString* errorString) const final;
+    QGeoMappingManagerEngine* createMappingManagerEngine(const QVariantMap& parameters,
+                                                         QGeoServiceProvider::Error* error,
+                                                         QString* errorString) const final;
+    QGeoRoutingManagerEngine* createRoutingManagerEngine(const QVariantMap& parameters,
+                                                         QGeoServiceProvider::Error* error,
+                                                         QString* errorString) const final;
+    QPlaceManagerEngine* createPlaceManagerEngine(const QVariantMap& parameters, QGeoServiceProvider::Error* error,
+                                                  QString* errorString) const final;
 
     void setQmlEngine(QQmlEngine* engine) final { m_engine = engine; }
 
 private:
-    QQmlEngine *m_engine = nullptr;
+    QQmlEngine* m_engine = nullptr;
 };

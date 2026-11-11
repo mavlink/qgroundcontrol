@@ -16,7 +16,9 @@
 #include "SurfacePatchModel.h"
 #include "TileMath.h"
 
-GeoMapProjectedPath::GeoMapProjectedPath(QObject* parent) : QObject(parent) {}
+GeoMapProjectedPath::GeoMapProjectedPath(QObject* parent)
+    : QObject(parent)
+{}
 
 void GeoMapProjectedPath::setCoordinates(const QVariantList& coordinates)
 {

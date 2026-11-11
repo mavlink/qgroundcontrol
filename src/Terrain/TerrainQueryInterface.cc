@@ -1,15 +1,15 @@
 #include "TerrainQueryInterface.h"
-#include "TerrainTileManager.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtPositioning/QGeoCoordinate>
 
+#include "QGCLoggingCategory.h"
 #include "QGCNetworkHelper.h"
+#include "TerrainTileManager.h"
 
 QGC_LOGGING_CATEGORY(TerrainQueryInterfaceLog, "Terrain.TerrainQueryInterface")
 
-TerrainQueryInterface::TerrainQueryInterface(QObject *parent)
+TerrainQueryInterface::TerrainQueryInterface(QObject* parent)
     : QObject(parent)
 {
     qCDebug(TerrainQueryInterfaceLog) << this;
@@ -20,20 +20,21 @@ TerrainQueryInterface::~TerrainQueryInterface()
     qCDebug(TerrainQueryInterfaceLog) << this;
 }
 
-void TerrainQueryInterface::requestCoordinateHeights(const QList<QGeoCoordinate> &coordinates)
+void TerrainQueryInterface::requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates)
 {
     Q_UNUSED(coordinates);
     qCWarning(TerrainQueryInterfaceLog) << "Not Supported";
 }
 
-void TerrainQueryInterface::requestPathHeights(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord)
+void TerrainQueryInterface::requestPathHeights(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord)
 {
     Q_UNUSED(fromCoord);
     Q_UNUSED(toCoord);
     qCWarning(TerrainQueryInterfaceLog) << "Not Supported";
 }
 
-void TerrainQueryInterface::requestCarpetHeights(const QGeoCoordinate &swCoord, const QGeoCoordinate &neCoord, bool statsOnly)
+void TerrainQueryInterface::requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord,
+                                                 bool statsOnly)
 {
     Q_UNUSED(swCoord);
     Q_UNUSED(neCoord);
@@ -41,17 +42,19 @@ void TerrainQueryInterface::requestCarpetHeights(const QGeoCoordinate &swCoord, 
     qCWarning(TerrainQueryInterfaceLog) << "Not Supported";
 }
 
-void TerrainQueryInterface::signalCoordinateHeights(bool success, const QList<double> &heights)
+void TerrainQueryInterface::signalCoordinateHeights(bool success, const QList<double>& heights)
 {
     emit coordinateHeightsReceived(success, heights);
 }
 
-void TerrainQueryInterface::signalPathHeights(bool success, double distanceBetween, double finalDistanceBetween, const QList<double> &heights)
+void TerrainQueryInterface::signalPathHeights(bool success, double distanceBetween, double finalDistanceBetween,
+                                              const QList<double>& heights)
 {
     emit pathHeightsReceived(success, distanceBetween, finalDistanceBetween, heights);
 }
 
-void TerrainQueryInterface::signalCarpetHeights(bool success, double minHeight, double maxHeight, const QList<QList<double>> &carpet)
+void TerrainQueryInterface::signalCarpetHeights(bool success, double minHeight, double maxHeight,
+                                                const QList<QList<double>>& carpet)
 {
     emit carpetHeightsReceived(success, minHeight, maxHeight, carpet);
 }
@@ -59,24 +62,24 @@ void TerrainQueryInterface::signalCarpetHeights(bool success, double minHeight, 
 void TerrainQueryInterface::_requestFailed()
 {
     switch (_queryMode) {
-    case TerrainQuery::QueryModeCoordinates:
-        emit coordinateHeightsReceived(false, QList<double>());
-        break;
-    case TerrainQuery::QueryModePath:
-        emit pathHeightsReceived(false, qQNaN(), qQNaN(), QList<double>());
-        break;
-    case TerrainQuery::QueryModeCarpet:
-        emit carpetHeightsReceived(false, qQNaN(), qQNaN(), QList<QList<double>>());
-        break;
-    default:
-        qCWarning(TerrainQueryInterfaceLog) << "Query Mode Not Supported";
-        break;
+        case TerrainQuery::QueryModeCoordinates:
+            emit coordinateHeightsReceived(false, QList<double>());
+            break;
+        case TerrainQuery::QueryModePath:
+            emit pathHeightsReceived(false, qQNaN(), qQNaN(), QList<double>());
+            break;
+        case TerrainQuery::QueryModeCarpet:
+            emit carpetHeightsReceived(false, qQNaN(), qQNaN(), QList<QList<double>>());
+            break;
+        default:
+            qCWarning(TerrainQueryInterfaceLog) << "Query Mode Not Supported";
+            break;
     }
 }
 
 /*===========================================================================*/
 
-TerrainOfflineQuery::TerrainOfflineQuery(QObject *parent)
+TerrainOfflineQuery::TerrainOfflineQuery(QObject* parent)
     : TerrainQueryInterface(parent)
 {
     qCDebug(TerrainQueryInterfaceLog) << this;
@@ -87,7 +90,7 @@ TerrainOfflineQuery::~TerrainOfflineQuery()
     qCDebug(TerrainQueryInterfaceLog) << this;
 }
 
-void TerrainOfflineQuery::requestCoordinateHeights(const QList<QGeoCoordinate> &coordinates)
+void TerrainOfflineQuery::requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates)
 {
     if (coordinates.isEmpty()) {
         return;
@@ -97,13 +100,14 @@ void TerrainOfflineQuery::requestCoordinateHeights(const QList<QGeoCoordinate> &
     TerrainTileManager::instance()->addCoordinateQuery(this, coordinates);
 }
 
-void TerrainOfflineQuery::requestPathHeights(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord)
+void TerrainOfflineQuery::requestPathHeights(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord)
 {
     _queryMode = TerrainQuery::QueryModePath;
     TerrainTileManager::instance()->addPathQuery(this, fromCoord, toCoord);
 }
 
-void TerrainOfflineQuery::requestCarpetHeights(const QGeoCoordinate &swCoord, const QGeoCoordinate &neCoord, bool statsOnly)
+void TerrainOfflineQuery::requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord,
+                                               bool statsOnly)
 {
     _queryMode = TerrainQuery::QueryModeCarpet;
     TerrainTileManager::instance()->addCarpetQuery(this, swCoord, neCoord, statsOnly);
@@ -111,13 +115,14 @@ void TerrainOfflineQuery::requestCarpetHeights(const QGeoCoordinate &swCoord, co
 
 /*===========================================================================*/
 
-TerrainOnlineQuery::TerrainOnlineQuery(QObject *parent)
+TerrainOnlineQuery::TerrainOnlineQuery(QObject* parent)
     : TerrainQueryInterface(parent)
     , _networkManager(new QNetworkAccessManager(this))
 {
     qCDebug(TerrainQueryInterfaceLog) << this;
 
-    qCDebug(TerrainQueryInterfaceLog) << "supportsSsl" << QSslSocket::supportsSsl() << "sslLibraryBuildVersionString" << QSslSocket::sslLibraryBuildVersionString();
+    qCDebug(TerrainQueryInterfaceLog) << "supportsSsl" << QSslSocket::supportsSsl() << "sslLibraryBuildVersionString"
+                                      << QSslSocket::sslLibraryBuildVersionString();
 
     QGCNetworkHelper::configureProxy(_networkManager);
 }
@@ -159,12 +164,12 @@ void TerrainOnlineQuery::_requestError(QNetworkReply::NetworkError code)
     }
 }
 
-void TerrainOnlineQuery::_sslErrors(const QList<QSslError> &errors)
+void TerrainOnlineQuery::_sslErrors(const QList<QSslError>& errors)
 {
-    for (const QSslError &error : errors) {
+    for (const QSslError& error : errors) {
         qCWarning(TerrainQueryInterfaceLog) << "SSL error:" << error.errorString();
 
-        const QSslCertificate &certificate = error.certificate();
+        const QSslCertificate& certificate = error.certificate();
         if (!certificate.isNull()) {
             qCWarning(TerrainQueryInterfaceLog) << "SSL Certificate problem:" << certificate.toText();
         }

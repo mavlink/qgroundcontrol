@@ -9,7 +9,9 @@
 
 #include "PatchTextureData.h"
 
-PatchTextureData::PatchTextureData(QQuick3DObject* parent) : QQuick3DTextureData(parent) {}
+PatchTextureData::PatchTextureData(QQuick3DObject* parent)
+    : QQuick3DTextureData(parent)
+{}
 
 void PatchTextureData::setImage(const QImage& image)
 {

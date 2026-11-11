@@ -11,14 +11,15 @@
 
 class QTimer;
 
-// IMPORTANT NOTE: The terrain query objects below must continue to live until the the terrain system signals data back through them.
-// Because of that it makes object lifetime tricky. Normally you would use autoDelete = true such they delete themselves when they
-// complete. The case for using autoDelete=false is where the query has not been "newed" as a standalone object.
+// IMPORTANT NOTE: The terrain query objects below must continue to live until the the terrain system signals data back
+// through them. Because of that it makes object lifetime tricky. Normally you would use autoDelete = true such they
+// delete themselves when they complete. The case for using autoDelete=false is where the query has not been "newed" as
+// a standalone object.
 //
-// Another typical use case is to query some terrain data and while you are waiting for it to come back the underlying reason
-// for that query changes and you end up needed to query again for a new set of data. In this case you are no longer interested
-// in the results of the previous query. The way to do that is to disconnect the data received signal on the old stale query
-// when you create the new query.
+// Another typical use case is to query some terrain data and while you are waiting for it to come back the underlying
+// reason for that query changes and you end up needed to query again for a new set of data. In this case you are no
+// longer interested in the results of the previous query. The way to do that is to disconnect the data received signal
+// on the old stale query when you create the new query.
 
 /*===========================================================================*/
 
@@ -29,24 +30,26 @@ class TerrainAtCoordinateBatchManager : public QObject
     Q_OBJECT
 
 public:
-    explicit TerrainAtCoordinateBatchManager(QObject *parent = nullptr);
+    explicit TerrainAtCoordinateBatchManager(QObject* parent = nullptr);
     ~TerrainAtCoordinateBatchManager();
 
-    static TerrainAtCoordinateBatchManager *instance();
+    static TerrainAtCoordinateBatchManager* instance();
 
-    void addQuery(TerrainAtCoordinateQuery *terrainAtCoordinateQuery, const QList<QGeoCoordinate> &coordinates);
+    void addQuery(TerrainAtCoordinateQuery* terrainAtCoordinateQuery, const QList<QGeoCoordinate>& coordinates);
 
 private slots:
     void _sendNextBatch();
-    void _coordinateHeights(bool success, const QList<double> &heights);
+    void _coordinateHeights(bool success, const QList<double>& heights);
 
 private:
-    struct QueuedRequestInfo_t {
+    struct QueuedRequestInfo_t
+    {
         QPointer<TerrainAtCoordinateQuery> terrainAtCoordinateQuery;
         QList<QGeoCoordinate> coordinates;
     };
 
-    struct SentRequestInfo_t {
+    struct SentRequestInfo_t
+    {
         QPointer<TerrainAtCoordinateQuery> terrainAtCoordinateQuery;
         qsizetype cCoord;
     };
@@ -57,14 +60,15 @@ private:
     QQueue<QueuedRequestInfo_t> _requestQueue;
     QList<SentRequestInfo_t> _sentRequests;
     TerrainQuery::State _state = TerrainQuery::State::Idle;
-    QTimer *_batchTimer = nullptr;
-    TerrainQueryInterface *_terrainQuery = nullptr;
+    QTimer* _batchTimer = nullptr;
+    TerrainQueryInterface* _terrainQuery = nullptr;
     static constexpr int _batchTimeout = 500;
 };
 
 /*===========================================================================*/
 
-/// \brief NOTE: TerrainAtCoordinateQuery is not thread safe. All instances/calls to ElevationProvider must be on main thread.
+/// \brief NOTE: TerrainAtCoordinateQuery is not thread safe. All instances/calls to ElevationProvider must be on main
+/// thread.
 ///
 class TerrainAtCoordinateQuery : public QObject
 {
@@ -72,23 +76,24 @@ class TerrainAtCoordinateQuery : public QObject
 
 public:
     /// @param autoDelete true: object will delete itself after it signals results
-    explicit TerrainAtCoordinateQuery(bool autoDelete, QObject *parent = nullptr);
+    explicit TerrainAtCoordinateQuery(bool autoDelete, QObject* parent = nullptr);
     ~TerrainAtCoordinateQuery();
 
     /// Async terrain query for a list of lon,lat coordinates. When the query is done, the terrainData() signal
     /// is emitted.
     ///     @param coordinates to query
-    void requestData(const QList<QGeoCoordinate> &coordinates);
+    void requestData(const QList<QGeoCoordinate>& coordinates);
 
     /// Either returns altitudes from cache or queues database request
     ///     @param[out] error true: altitude not returned due to error, false: altitudes returned
     /// @return true: altitude returned (check error as well), false: database query queued (altitudes not returned)
-    static bool getAltitudesForCoordinates(const QList<QGeoCoordinate> &coordinates, QList<double> &altitudes, bool &error);
+    static bool getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes,
+                                           bool& error);
 
-    void signalTerrainData(bool success, const QList<double> &heights);
+    void signalTerrainData(bool success, const QList<double>& heights);
 
 signals:
-    void terrainDataReceived(bool success, const QList<double> &heights);
+    void terrainDataReceived(bool success, const QList<double>& heights);
 
 private:
     bool _autoDelete = false;
@@ -102,26 +107,26 @@ class TerrainPathQuery : public QObject
 
 public:
     /// @param autoDelete true: object will delete itself after it signals results
-    explicit TerrainPathQuery(bool autoDelete, QObject *parent = nullptr);
+    explicit TerrainPathQuery(bool autoDelete, QObject* parent = nullptr);
     ~TerrainPathQuery();
 
-    /// Async terrain query for terrain heights between two lat/lon coordinates. When the query is done, the terrainData() signal
-    /// is emitted.
+    /// Async terrain query for terrain heights between two lat/lon coordinates. When the query is done, the
+    /// terrainData() signal is emitted.
     ///     @param coordinates to query
-    void requestData(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord);
+    void requestData(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord);
 
     using PathHeightInfo_t = TerrainPathHeightInfo;
 
 signals:
     /// Signalled when terrain data comes back from server
-    void terrainDataReceived(bool success, const TerrainPathQuery::PathHeightInfo_t &pathHeightInfo);
+    void terrainDataReceived(bool success, const TerrainPathQuery::PathHeightInfo_t& pathHeightInfo);
 
 private slots:
-    void _pathHeights(bool success, double distanceBetween, double finalDistanceBetween, const QList<double> &heights);
+    void _pathHeights(bool success, double distanceBetween, double finalDistanceBetween, const QList<double>& heights);
 
 private:
     bool _autoDelete = false;
-    TerrainQueryInterface *_terrainQuery = nullptr;
+    TerrainQueryInterface* _terrainQuery = nullptr;
 };
 
 /*===========================================================================*/
@@ -132,30 +137,31 @@ class TerrainAreaQuery : public QObject
 
 public:
     /// @param autoDelete true: object will delete itself after it signals results
-    explicit TerrainAreaQuery(bool autoDelete, QObject *parent = nullptr);
+    explicit TerrainAreaQuery(bool autoDelete, QObject* parent = nullptr);
     ~TerrainAreaQuery();
 
     /// Async terrain query for terrain heights for the rectangular area specified.
     /// When the query is done, the terrainDataReceived() signal is emitted.
     ///     @param swCoord South-West bound of rectangular area to query
     ///     @param neCoord North-East bound of rectangular area to query
-    void requestData(const QGeoCoordinate &swCoord, const QGeoCoordinate &neCoord);
+    void requestData(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord);
 
-    struct CarpetHeightInfo_t {
+    struct CarpetHeightInfo_t
+    {
         double minHeight;
         double maxHeight;
         QList<QList<double>> carpet;
     };
 
 signals:
-    void terrainDataReceived(bool success, const TerrainAreaQuery::CarpetHeightInfo_t &carpetHeightInfo);
+    void terrainDataReceived(bool success, const TerrainAreaQuery::CarpetHeightInfo_t& carpetHeightInfo);
 
 private slots:
-    void _carpetHeights(bool success, double minHeight, double maxHeight, const QList<QList<double>> &carpet);
+    void _carpetHeights(bool success, double minHeight, double maxHeight, const QList<QList<double>>& carpet);
 
 private:
     bool _autoDelete = false;
-    TerrainQueryInterface *_terrainQuery = nullptr;
+    TerrainQueryInterface* _terrainQuery = nullptr;
 };
 Q_DECLARE_METATYPE(TerrainAreaQuery::CarpetHeightInfo_t)
 
@@ -167,26 +173,26 @@ class TerrainPolyPathQuery : public QObject
 
 public:
     ///     @param autoDelete true: object will delete itself after it signals results
-    explicit TerrainPolyPathQuery(bool autoDelete, QObject *parent = nullptr);
+    explicit TerrainPolyPathQuery(bool autoDelete, QObject* parent = nullptr);
     ~TerrainPolyPathQuery();
 
     /// Async terrain query for terrain heights for the paths between each specified QGeoCoordinate.
     /// When the query is done, the terrainData() signal is emitted.
     ///     @param polyPath List of QGeoCoordinate
-    void requestData(const QVariantList &polyPath);
-    void requestData(const QList<QGeoCoordinate> &polyPath);
+    void requestData(const QVariantList& polyPath);
+    void requestData(const QList<QGeoCoordinate>& polyPath);
 
 signals:
     /// Signalled when terrain data comes back from server
-    void terrainDataReceived(bool success, const QList<TerrainPathQuery::PathHeightInfo_t> &rgPathHeightInfo);
+    void terrainDataReceived(bool success, const QList<TerrainPathQuery::PathHeightInfo_t>& rgPathHeightInfo);
 
 private slots:
-    void _terrainDataReceived(bool success, const TerrainPathQuery::PathHeightInfo_t &pathHeightInfo);
+    void _terrainDataReceived(bool success, const TerrainPathQuery::PathHeightInfo_t& pathHeightInfo);
 
 private:
     bool _autoDelete = false;
     int _curIndex = 0;
     QList<QGeoCoordinate> _rgCoords;
     QList<TerrainPathQuery::PathHeightInfo_t> _rgPathHeightInfo;
-    TerrainPathQuery *_pathQuery = nullptr;
+    TerrainPathQuery* _pathQuery = nullptr;
 };

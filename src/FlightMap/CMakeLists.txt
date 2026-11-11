@@ -5,7 +5,8 @@
 
 qt_add_library(FlightMapModule STATIC)
 
-qt_add_qml_module(FlightMapModule
+qt_add_qml_module(
+    FlightMapModule
     URI QGroundControl.FlightMap
     VERSION 1.0
     RESOURCE_PREFIX /qml
@@ -45,7 +46,8 @@ qt_add_qml_module(FlightMapModule
     NO_PLUGIN
 )
 
-qt_add_resources(${CMAKE_PROJECT_NAME} flightmap_resources
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} flightmap_resources
     PREFIX "/res"
     BASE "${CMAKE_SOURCE_DIR}/resources"
     FILES
@@ -53,10 +55,14 @@ qt_add_resources(${CMAKE_PROJECT_NAME} flightmap_resources
 )
 
 # subVehicleArrowOpaque.png alias for ArduSub firmware plugin (file lives here).
-set_source_files_properties("${CMAKE_SOURCE_DIR}/src/FlightMap/Images/sub.png"
-    PROPERTIES QT_RESOURCE_ALIAS "subVehicleArrowOpaque.png")
+set_source_files_properties(
+    "${CMAKE_SOURCE_DIR}/src/FlightMap/Images/sub.png"
+    PROPERTIES
+        QT_RESOURCE_ALIAS "subVehicleArrowOpaque.png"
+)
 
-qt_add_resources(${CMAKE_PROJECT_NAME} flightmap_qmlimages
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} flightmap_qmlimages
     PREFIX "/qmlimages"
     BASE "${CMAKE_SOURCE_DIR}/src/FlightMap/Images"
     FILES

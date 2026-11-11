@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include <QtCore/QtMinMax>
-
 #include <cmath>
+
+#include <QtCore/QtMinMax>
 
 /// Bilinear sample at a unit-UV position within a w x h sample grid (origin
 /// NW corner), sample-center convention, clamped at grid edges. `at(x, y)`

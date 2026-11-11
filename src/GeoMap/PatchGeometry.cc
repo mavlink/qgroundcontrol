@@ -11,7 +11,8 @@
 
 QGC_LOGGING_CATEGORY(GeoMapPatchGeometryLog, "GeoMap.PatchGeometry")
 
-PatchGeometry::PatchGeometry(QQuick3DObject* parent) : QQuick3DGeometry(parent)
+PatchGeometry::PatchGeometry(QQuick3DObject* parent)
+    : QQuick3DGeometry(parent)
 {
     _rebuild();
 }

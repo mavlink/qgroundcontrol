@@ -19,17 +19,17 @@
 QGC_LOGGING_CATEGORY(TerrainTileManagerLog, "Terrain.TerrainTileManager")
 
 namespace {
-    constexpr int kMaxCarpetGridSize = 10000;
+constexpr int kMaxCarpetGridSize = 10000;
 }
 
 Q_GLOBAL_STATIC(TerrainTileManager, _terrainTileManager)
 
-TerrainTileManager *TerrainTileManager::instance()
+TerrainTileManager* TerrainTileManager::instance()
 {
     return _terrainTileManager();
 }
 
-TerrainTileManager::TerrainTileManager(QObject *parent)
+TerrainTileManager::TerrainTileManager(QObject* parent)
     : QObject(parent)
     , _networkManager(new QNetworkAccessManager(this))
 {
@@ -45,19 +45,18 @@ TerrainTileManager::~TerrainTileManager()
     qCDebug(TerrainTileManagerLog) << this;
 }
 
-bool TerrainTileManager::getAltitudesForCoordinates(const QList<QGeoCoordinate> &coordinates, QList<double> &altitudes, bool &error)
+bool TerrainTileManager::getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes,
+                                                    bool& error)
 {
     error = false;
 
-    const QString elevationProviderName = SettingsManager::instance()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
+    const QString elevationProviderName =
+        SettingsManager::instance()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
     const SharedMapProvider provider = UrlFactory::getMapProviderFromProviderType(elevationProviderName);
-    for (const QGeoCoordinate &coordinate: coordinates) {
-        const QString tileHash = UrlFactory::getTileHash(
-            provider->getMapName(),
-            provider->long2tileX(coordinate.longitude(), 1),
-            provider->lat2tileY(coordinate.latitude(), 1),
-            1
-        );
+    for (const QGeoCoordinate& coordinate : coordinates) {
+        const QString tileHash =
+            UrlFactory::getTileHash(provider->getMapName(), provider->long2tileX(coordinate.longitude(), 1),
+                                    provider->lat2tileY(coordinate.latitude(), 1), 1);
         qCDebug(TerrainTileManagerLog) << "hash:coordinate" << tileHash << coordinate;
 
         TerrainTile* const tile = _getCachedTile(tileHash);
@@ -94,7 +93,8 @@ bool TerrainTileManager::getAltitudesForCoordinates(const QList<QGeoCoordinate> 
     return true;
 }
 
-void TerrainTileManager::addCoordinateQuery(TerrainQueryInterface *terrainQueryInterface, const QList<QGeoCoordinate> &coordinates)
+void TerrainTileManager::addCoordinateQuery(TerrainQueryInterface* terrainQueryInterface,
+                                            const QList<QGeoCoordinate>& coordinates)
 {
     qCDebug(TerrainTileManagerLog) << "count" << coordinates.count();
 
@@ -107,15 +107,7 @@ void TerrainTileManager::addCoordinateQuery(TerrainQueryInterface *terrainQueryI
     if (!getAltitudesForCoordinates(coordinates, altitudes, error)) {
         qCDebug(TerrainTileManagerLog) << "queue count" << _requestQueue.count();
         const QueuedRequestInfo_t queuedRequestInfo = {
-            terrainQueryInterface,
-            TerrainQuery::QueryMode::QueryModeCoordinates,
-            0,
-            0,
-            coordinates,
-            false,
-            0,
-            0
-        };
+            terrainQueryInterface, TerrainQuery::QueryMode::QueryModeCoordinates, 0, 0, coordinates, false, 0, 0};
         _requestQueue.enqueue(queuedRequestInfo);
         return;
     }
@@ -131,26 +123,26 @@ void TerrainTileManager::addCoordinateQuery(TerrainQueryInterface *terrainQueryI
     terrainQueryInterface->signalCoordinateHeights((coordinates.count() == altitudes.count()), altitudes);
 }
 
-void TerrainTileManager::addPathQuery(TerrainQueryInterface *terrainQueryInterface, const QGeoCoordinate &startPoint, const QGeoCoordinate &endPoint)
+void TerrainTileManager::addPathQuery(TerrainQueryInterface* terrainQueryInterface, const QGeoCoordinate& startPoint,
+                                      const QGeoCoordinate& endPoint)
 {
     double distanceBetween;
     double finalDistanceBetween;
-    const QList<QGeoCoordinate> coordinates = _pathQueryToCoords(startPoint, endPoint, distanceBetween, finalDistanceBetween);
+    const QList<QGeoCoordinate> coordinates =
+        _pathQueryToCoords(startPoint, endPoint, distanceBetween, finalDistanceBetween);
 
     bool error;
     QList<double> altitudes;
     if (!getAltitudesForCoordinates(coordinates, altitudes, error)) {
         qCDebug(TerrainTileManagerLog) << "queue count" << _requestQueue.count();
-        const QueuedRequestInfo_t queuedRequestInfo = {
-            terrainQueryInterface,
-            TerrainQuery::QueryMode::QueryModePath,
-            distanceBetween,
-            finalDistanceBetween,
-            coordinates,
-            false,
-            0,
-            0
-        };
+        const QueuedRequestInfo_t queuedRequestInfo = {terrainQueryInterface,
+                                                       TerrainQuery::QueryMode::QueryModePath,
+                                                       distanceBetween,
+                                                       finalDistanceBetween,
+                                                       coordinates,
+                                                       false,
+                                                       0,
+                                                       0};
         _requestQueue.enqueue(queuedRequestInfo);
         return;
     }
@@ -163,10 +155,12 @@ void TerrainTileManager::addPathQuery(TerrainQueryInterface *terrainQueryInterfa
     }
 
     qCDebug(TerrainTileManagerLog) << "all altitudes taken from cached data";
-    terrainQueryInterface->signalPathHeights((coordinates.count() == altitudes.count()), distanceBetween, finalDistanceBetween, altitudes);
+    terrainQueryInterface->signalPathHeights((coordinates.count() == altitudes.count()), distanceBetween,
+                                             finalDistanceBetween, altitudes);
 }
 
-void TerrainTileManager::addCarpetQuery(TerrainQueryInterface *terrainQueryInterface, const QGeoCoordinate &swCoord, const QGeoCoordinate &neCoord, bool statsOnly)
+void TerrainTileManager::addCarpetQuery(TerrainQueryInterface* terrainQueryInterface, const QGeoCoordinate& swCoord,
+                                        const QGeoCoordinate& neCoord, bool statsOnly)
 {
     if (swCoord.longitude() > neCoord.longitude() || swCoord.latitude() > neCoord.latitude()) {
         qCWarning(TerrainTileManagerLog) << "Invalid carpet bounds: SW must be south-west of NE";
@@ -174,8 +168,10 @@ void TerrainTileManager::addCarpetQuery(TerrainQueryInterface *terrainQueryInter
         return;
     }
 
-    const int gridSizeLat = qCeil((neCoord.latitude() - swCoord.latitude()) / TerrainTileCopernicus::kTileValueSpacingDegrees);
-    const int gridSizeLon = qCeil((neCoord.longitude() - swCoord.longitude()) / TerrainTileCopernicus::kTileValueSpacingDegrees);
+    const int gridSizeLat =
+        qCeil((neCoord.latitude() - swCoord.latitude()) / TerrainTileCopernicus::kTileValueSpacingDegrees);
+    const int gridSizeLon =
+        qCeil((neCoord.longitude() - swCoord.longitude()) / TerrainTileCopernicus::kTileValueSpacingDegrees);
 
     if (gridSizeLat <= 0 || gridSizeLon <= 0) {
         qCWarning(TerrainTileManagerLog) << "Carpet area too small";
@@ -185,8 +181,7 @@ void TerrainTileManager::addCarpetQuery(TerrainQueryInterface *terrainQueryInter
 
     if (gridSizeLat > kMaxCarpetGridSize || gridSizeLon > kMaxCarpetGridSize) {
         qCWarning(TerrainTileManagerLog) << "Carpet area too large"
-                                         << "gridSizeLat:" << gridSizeLat
-                                         << "gridSizeLon:" << gridSizeLon
+                                         << "gridSizeLat:" << gridSizeLat << "gridSizeLon:" << gridSizeLon
                                          << "maxGridSize:" << kMaxCarpetGridSize;
         terrainQueryInterface->signalCarpetHeights(false, qQNaN(), qQNaN(), QList<QList<double>>());
         return;
@@ -205,16 +200,14 @@ void TerrainTileManager::addCarpetQuery(TerrainQueryInterface *terrainQueryInter
     QList<double> altitudes;
     if (!getAltitudesForCoordinates(coordinates, altitudes, error)) {
         qCDebug(TerrainTileManagerLog) << "carpet query queued, count" << _requestQueue.count();
-        const QueuedRequestInfo_t queuedRequestInfo = {
-            terrainQueryInterface,
-            TerrainQuery::QueryMode::QueryModeCarpet,
-            0,
-            0,
-            coordinates,
-            statsOnly,
-            gridSizeLat + 1,
-            gridSizeLon + 1
-        };
+        const QueuedRequestInfo_t queuedRequestInfo = {terrainQueryInterface,
+                                                       TerrainQuery::QueryMode::QueryModeCarpet,
+                                                       0,
+                                                       0,
+                                                       coordinates,
+                                                       statsOnly,
+                                                       gridSizeLat + 1,
+                                                       gridSizeLon + 1};
         _requestQueue.enqueue(queuedRequestInfo);
         return;
     }
@@ -233,7 +226,9 @@ void TerrainTileManager::addCarpetQuery(TerrainQueryInterface *terrainQueryInter
     terrainQueryInterface->signalCarpetHeights(true, minHeight, maxHeight, carpet);
 }
 
-QList<QGeoCoordinate> TerrainTileManager::_pathQueryToCoords(const QGeoCoordinate &fromCoord, const QGeoCoordinate &toCoord, double &distanceBetween, double &finalDistanceBetween)
+QList<QGeoCoordinate> TerrainTileManager::_pathQueryToCoords(const QGeoCoordinate& fromCoord,
+                                                             const QGeoCoordinate& toCoord, double& distanceBetween,
+                                                             double& finalDistanceBetween)
 {
     const double totalDistance = QGCGeo::geodesicDistance(fromCoord, toCoord);
     // TODO: get spacing from terrainQueryInterface
@@ -248,8 +243,8 @@ QList<QGeoCoordinate> TerrainTileManager::_pathQueryToCoords(const QGeoCoordinat
         distanceBetween = finalDistanceBetween = totalDistance;
     }
 
-    qCDebug(TerrainTileManagerLog) << "fromCoord:toCoord:distanceBetween:finalDistanceBetween:coordCount"
-                                   << fromCoord << toCoord << distanceBetween << finalDistanceBetween << coordinates.count();
+    qCDebug(TerrainTileManagerLog) << "fromCoord:toCoord:distanceBetween:finalDistanceBetween:coordCount" << fromCoord
+                                   << toCoord << distanceBetween << finalDistanceBetween << coordinates.count();
 
     return coordinates;
 }
@@ -258,22 +253,23 @@ void TerrainTileManager::_tileFailed()
 {
     QList<double> noAltitudes;
 
-    for (const QueuedRequestInfo_t &requestInfo: _requestQueue) {
+    for (const QueuedRequestInfo_t& requestInfo : _requestQueue) {
         if (requestInfo.terrainQueryInterface.isNull()) {
             continue;
         }
         switch (requestInfo.queryMode) {
-        case TerrainQuery::QueryMode::QueryModeCoordinates:
-            requestInfo.terrainQueryInterface->signalCoordinateHeights(false, noAltitudes);
-            break;
-        case TerrainQuery::QueryMode::QueryModePath:
-            requestInfo.terrainQueryInterface->signalPathHeights(false, requestInfo.distanceBetween, requestInfo.finalDistanceBetween, noAltitudes);
-            break;
-        case TerrainQuery::QueryMode::QueryModeCarpet:
-            requestInfo.terrainQueryInterface->signalCarpetHeights(false, qQNaN(), qQNaN(), QList<QList<double>>());
-            break;
-        default:
-            continue;
+            case TerrainQuery::QueryMode::QueryModeCoordinates:
+                requestInfo.terrainQueryInterface->signalCoordinateHeights(false, noAltitudes);
+                break;
+            case TerrainQuery::QueryMode::QueryModePath:
+                requestInfo.terrainQueryInterface->signalPathHeights(false, requestInfo.distanceBetween,
+                                                                     requestInfo.finalDistanceBetween, noAltitudes);
+                break;
+            case TerrainQuery::QueryMode::QueryModeCarpet:
+                requestInfo.terrainQueryInterface->signalCarpetHeights(false, qQNaN(), qQNaN(), QList<QList<double>>());
+                break;
+            default:
+                continue;
         }
     }
 
@@ -299,7 +295,8 @@ void TerrainTileManager::_terrainDone()
         if (firstFailure) {
             qCWarning(TerrainTileManagerLog) << "Elevation tile fetching returned error:" << reply->errorString();
         } else {
-            qCDebug(TerrainTileManagerLog) << "Elevation tile fetching returned error (suppressed):" << reply->errorString();
+            qCDebug(TerrainTileManagerLog)
+                << "Elevation tile fetching returned error (suppressed):" << reply->errorString();
         }
         _tileFailed();
         return;
@@ -325,7 +322,7 @@ void TerrainTileManager::_terrainDone()
     for (qsizetype i = _requestQueue.count() - 1; i >= 0; i--) {
         bool error;
         QList<double> altitudes;
-        QueuedRequestInfo_t &requestInfo = _requestQueue[i];
+        QueuedRequestInfo_t& requestInfo = _requestQueue[i];
 
         if (requestInfo.terrainQueryInterface.isNull()) {
             _requestQueue.removeAt(i);
@@ -337,49 +334,55 @@ void TerrainTileManager::_terrainDone()
         }
 
         switch (requestInfo.queryMode) {
-        case TerrainQuery::QueryMode::QueryModeCoordinates:
-            if (error) {
-                qCWarning(TerrainTileManagerLog) << "signalling failure due to internal error";
-                QList<double> noAltitudes;
-                requestInfo.terrainQueryInterface->signalCoordinateHeights(false, noAltitudes);
-            } else {
-                qCDebug(TerrainTileManagerLog) << "All altitudes taken from cached data";
-                requestInfo.terrainQueryInterface->signalCoordinateHeights(requestInfo.coordinates.count() == altitudes.count(), altitudes);
-            }
-            break;
-        case TerrainQuery::QueryMode::QueryModePath:
-            if (error) {
-                qCWarning(TerrainTileManagerLog) << "signalling failure due to internal error";
-                QList<double> noAltitudes;
-                requestInfo.terrainQueryInterface->signalPathHeights(false, requestInfo.distanceBetween, requestInfo.finalDistanceBetween, noAltitudes);
-            } else {
-                qCDebug(TerrainTileManagerLog) << "All altitudes taken from cached data";
-                requestInfo.terrainQueryInterface->signalPathHeights(requestInfo.coordinates.count() == altitudes.count(), requestInfo.distanceBetween, requestInfo.finalDistanceBetween, altitudes);
-            }
-            break;
-        case TerrainQuery::QueryMode::QueryModeCarpet:
-            if (error) {
-                qCWarning(TerrainTileManagerLog) << "signalling carpet failure due to internal error";
-                requestInfo.terrainQueryInterface->signalCarpetHeights(false, qQNaN(), qQNaN(), QList<QList<double>>());
-            } else {
-                double minHeight, maxHeight;
-                QList<QList<double>> carpet;
-                _processCarpetResults(altitudes, requestInfo.carpetGridSizeLat, requestInfo.carpetGridSizeLon,
-                                      requestInfo.carpetStatsOnly, minHeight, maxHeight, carpet);
+            case TerrainQuery::QueryMode::QueryModeCoordinates:
+                if (error) {
+                    qCWarning(TerrainTileManagerLog) << "signalling failure due to internal error";
+                    QList<double> noAltitudes;
+                    requestInfo.terrainQueryInterface->signalCoordinateHeights(false, noAltitudes);
+                } else {
+                    qCDebug(TerrainTileManagerLog) << "All altitudes taken from cached data";
+                    requestInfo.terrainQueryInterface->signalCoordinateHeights(
+                        requestInfo.coordinates.count() == altitudes.count(), altitudes);
+                }
+                break;
+            case TerrainQuery::QueryMode::QueryModePath:
+                if (error) {
+                    qCWarning(TerrainTileManagerLog) << "signalling failure due to internal error";
+                    QList<double> noAltitudes;
+                    requestInfo.terrainQueryInterface->signalPathHeights(false, requestInfo.distanceBetween,
+                                                                         requestInfo.finalDistanceBetween, noAltitudes);
+                } else {
+                    qCDebug(TerrainTileManagerLog) << "All altitudes taken from cached data";
+                    requestInfo.terrainQueryInterface->signalPathHeights(
+                        requestInfo.coordinates.count() == altitudes.count(), requestInfo.distanceBetween,
+                        requestInfo.finalDistanceBetween, altitudes);
+                }
+                break;
+            case TerrainQuery::QueryMode::QueryModeCarpet:
+                if (error) {
+                    qCWarning(TerrainTileManagerLog) << "signalling carpet failure due to internal error";
+                    requestInfo.terrainQueryInterface->signalCarpetHeights(false, qQNaN(), qQNaN(),
+                                                                           QList<QList<double>>());
+                } else {
+                    double minHeight, maxHeight;
+                    QList<QList<double>> carpet;
+                    _processCarpetResults(altitudes, requestInfo.carpetGridSizeLat, requestInfo.carpetGridSizeLon,
+                                          requestInfo.carpetStatsOnly, minHeight, maxHeight, carpet);
 
-                qCDebug(TerrainTileManagerLog) << "carpet altitudes from cached data, min:" << minHeight << "max:" << maxHeight;
-                requestInfo.terrainQueryInterface->signalCarpetHeights(true, minHeight, maxHeight, carpet);
-            }
-            break;
-        default:
-            break;
+                    qCDebug(TerrainTileManagerLog)
+                        << "carpet altitudes from cached data, min:" << minHeight << "max:" << maxHeight;
+                    requestInfo.terrainQueryInterface->signalCarpetHeights(true, minHeight, maxHeight, carpet);
+                }
+                break;
+            default:
+                break;
         }
 
         _requestQueue.removeAt(i);
     }
 }
 
-void TerrainTileManager::_cacheTile(const QByteArray &data, const QString &hash)
+void TerrainTileManager::_cacheTile(const QByteArray& data, const QString& hash)
 {
     TerrainTile* const terrainTile = new TerrainTile(data);
     if (!terrainTile->isValid()) {
@@ -396,7 +399,7 @@ void TerrainTileManager::_cacheTile(const QByteArray &data, const QString &hash)
     }
 }
 
-TerrainTile *TerrainTileManager::_getCachedTile(const QString &hash)
+TerrainTile* TerrainTileManager::_getCachedTile(const QString& hash)
 {
     QMutexLocker locker(&_tilesMutex);
 
@@ -412,7 +415,7 @@ TerrainTile *TerrainTileManager::_getCachedTile(const QString &hash)
     return tile;
 }
 
-bool TerrainTileManager::_isFailedTile(const QString &hash)
+bool TerrainTileManager::_isFailedTile(const QString& hash)
 {
     QMutexLocker locker(&_tilesMutex);
 
@@ -427,7 +430,7 @@ bool TerrainTileManager::_isFailedTile(const QString &hash)
     return false;
 }
 
-bool TerrainTileManager::_recordFailedTile(const QString &hash)
+bool TerrainTileManager::_recordFailedTile(const QString& hash)
 {
     QMutexLocker locker(&_tilesMutex);
 
@@ -453,15 +456,16 @@ bool TerrainTileManager::_recordFailedTile(const QString &hash)
     return firstFailure;
 }
 
-void TerrainTileManager::_clearFailedTile(const QString &hash)
+void TerrainTileManager::_clearFailedTile(const QString& hash)
 {
     QMutexLocker locker(&_tilesMutex);
 
     _failedTiles.remove(hash);
 }
 
-void TerrainTileManager::_processCarpetResults(const QList<double> &altitudes, int gridSizeLat, int gridSizeLon,
-                                               bool statsOnly, double &minHeight, double &maxHeight, QList<QList<double>> &carpet)
+void TerrainTileManager::_processCarpetResults(const QList<double>& altitudes, int gridSizeLat, int gridSizeLon,
+                                               bool statsOnly, double& minHeight, double& maxHeight,
+                                               QList<QList<double>>& carpet)
 {
     minHeight = std::numeric_limits<double>::max();
     maxHeight = std::numeric_limits<double>::lowest();

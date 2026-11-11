@@ -1,11 +1,11 @@
 #include "GeoSceneTest.h"
 
+#include <cmath>
+
 #include <QtCore/QPointF>
 #include <QtCore/QVariant>
 #include <QtCore/qnumeric.h>
 #include <QtTest/QSignalSpy>
-
-#include <cmath>
 
 #include "GeoMapCamera.h"
 #include "GeoScene.h"

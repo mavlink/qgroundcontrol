@@ -2,14 +2,16 @@
 # OSM Provider
 # ============================================================================
 
-qt_add_library(Osm3D STATIC
+qt_add_library(
+    Osm3D STATIC
     OsmParserThread.cc
     OsmParserThread.h
 )
 
 target_include_directories(Osm3D PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(Osm3D
+target_link_libraries(
+    Osm3D
     PUBLIC
         Qt6::Core
         Qt6::Gui
@@ -22,7 +24,8 @@ target_link_libraries(Osm3D
 # libosmium pulls <windows.h> via std::filesystem; without these the
 # min/max macros and missing M_PI break MSVC compilation of OsmParserThread.cc.
 if(WIN32)
-    target_compile_definitions(Osm3D
+    target_compile_definitions(
+        Osm3D
         PRIVATE
             _USE_MATH_DEFINES
             NOMINMAX
@@ -85,8 +88,8 @@ CPMAddPackage(
     DOWNLOAD_ONLY YES
 )
 
-target_include_directories(Osm3D
-    SYSTEM
+target_include_directories(
+    Osm3D SYSTEM
     PRIVATE
         ${protozero_SOURCE_DIR}/include
         ${libosmium_SOURCE_DIR}/include
@@ -98,7 +101,8 @@ target_include_directories(Osm3D
 # on ${CMAKE_PROJECT_NAME}. They use Osm3D via the link below.
 # ============================================================================
 
-target_sources(${CMAKE_PROJECT_NAME}
+target_sources(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         CityMapGeometry.cc
         CityMapGeometry.h
@@ -126,7 +130,8 @@ CPMAddPackage(
     SYSTEM YES
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME}
+target_link_libraries(
+    ${CMAKE_PROJECT_NAME}
     PRIVATE
         Osm3D
         earcut_hpp::earcut_hpp

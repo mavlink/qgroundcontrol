@@ -1,9 +1,9 @@
 #include "GeoMapProjectedPathTest.h"
 
+#include <cmath>
+
 #include <QtPositioning/QGeoCoordinate>
 #include <QtTest/QSignalSpy>
-
-#include <cmath>
 
 #include "GeoMapCamera.h"
 #include "GeoMapProjectedPath.h"

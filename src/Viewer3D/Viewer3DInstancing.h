@@ -18,17 +18,12 @@ class Viewer3DInstancing : public QQuick3DInstancing
     friend class Viewer3DInstancingTest;
 
 public:
-    explicit Viewer3DInstancing(QQuick3DObject *parent = nullptr);
+    explicit Viewer3DInstancing(QQuick3DObject* parent = nullptr);
 
     Q_INVOKABLE void clear();
-    Q_INVOKABLE void addEntry(const QVector3D &position,
-                              const QVector3D &scale,
-                              const QQuaternion &rotation,
-                              const QColor &color);
-    Q_INVOKABLE void addLineSegment(const QVector3D &p1,
-                                    const QVector3D &p2,
-                                    float lineWidth,
-                                    const QColor &color);
+    Q_INVOKABLE void addEntry(const QVector3D& position, const QVector3D& scale, const QQuaternion& rotation,
+                              const QColor& color);
+    Q_INVOKABLE void addLineSegment(const QVector3D& p1, const QVector3D& p2, float lineWidth, const QColor& color);
     int count() const;
 
     int selectedIndex() const;
@@ -39,10 +34,11 @@ signals:
     void selectedIndexChanged();
 
 protected:
-    QByteArray getInstanceBuffer(int *instanceCount) override;
+    QByteArray getInstanceBuffer(int* instanceCount) override;
 
 private:
-    struct InstanceEntry {
+    struct InstanceEntry
+    {
         QVector3D position;
         QVector3D scale;
         QQuaternion rotation;

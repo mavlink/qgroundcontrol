@@ -1,12 +1,12 @@
 #pragma once
 
+#include <utility>
+
 #include <QtCore/QSize>
 #include <QtCore/QString>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 #include <QtQuick3D/QQuick3DTextureData>
-
-#include <utility>
 
 class FlightMapSettings;
 class Viewer3DMapProvider;
@@ -21,39 +21,47 @@ class Viewer3DTerrainTexture : public QQuick3DTextureData
 
     friend class Viewer3DTerrainTextureTest;
 
-    Q_PROPERTY(Viewer3DMapProvider *mapProvider              READ mapProvider              WRITE setMapProvider              NOTIFY mapProviderChanged)
-    Q_PROPERTY(QGeoCoordinate       fallbackCenter           READ fallbackCenter           WRITE setFallbackCenter           NOTIFY fallbackCenterChanged)
-    Q_PROPERTY(QGeoCoordinate       roiMinCoordinate         READ roiMinCoordinate         WRITE setRoiMinCoordinate         NOTIFY roiMinCoordinateChanged)
-    Q_PROPERTY(QGeoCoordinate       roiMaxCoordinate         READ roiMaxCoordinate         WRITE setRoiMaxCoordinate         NOTIFY roiMaxCoordinateChanged)
-    Q_PROPERTY(QSize                tileCount                READ tileCount                                                  NOTIFY tileCountChanged)
-    Q_PROPERTY(bool                 textureLoaded            READ textureLoaded                                              NOTIFY textureLoadedChanged)
-    Q_PROPERTY(bool                 textureGeometryDone      READ textureGeometryDone                                        NOTIFY textureGeometryDoneChanged)
+    Q_PROPERTY(Viewer3DMapProvider* mapProvider READ mapProvider WRITE setMapProvider NOTIFY mapProviderChanged)
+    Q_PROPERTY(QGeoCoordinate fallbackCenter READ fallbackCenter WRITE setFallbackCenter NOTIFY fallbackCenterChanged)
+    Q_PROPERTY(
+        QGeoCoordinate roiMinCoordinate READ roiMinCoordinate WRITE setRoiMinCoordinate NOTIFY roiMinCoordinateChanged)
+    Q_PROPERTY(
+        QGeoCoordinate roiMaxCoordinate READ roiMaxCoordinate WRITE setRoiMaxCoordinate NOTIFY roiMaxCoordinateChanged)
+    Q_PROPERTY(QSize tileCount READ tileCount NOTIFY tileCountChanged)
+    Q_PROPERTY(bool textureLoaded READ textureLoaded NOTIFY textureLoadedChanged)
+    Q_PROPERTY(bool textureGeometryDone READ textureGeometryDone NOTIFY textureGeometryDoneChanged)
 
 public:
     explicit Viewer3DTerrainTexture();
 
     Q_INVOKABLE void loadTexture();
 
-    Viewer3DMapProvider *mapProvider() const { return _mapProvider; }
-    void setMapProvider(Viewer3DMapProvider *newMapProvider);
+    Viewer3DMapProvider* mapProvider() const { return _mapProvider; }
+
+    void setMapProvider(Viewer3DMapProvider* newMapProvider);
 
     QGeoCoordinate fallbackCenter() const { return _fallbackCenter; }
-    void setFallbackCenter(const QGeoCoordinate &newFallbackCenter);
+
+    void setFallbackCenter(const QGeoCoordinate& newFallbackCenter);
 
     QGeoCoordinate roiMinCoordinate() const { return _roiMinCoordinate; }
-    void setRoiMinCoordinate(const QGeoCoordinate &newRoiMinCoordinate);
+
+    void setRoiMinCoordinate(const QGeoCoordinate& newRoiMinCoordinate);
 
     QGeoCoordinate roiMaxCoordinate() const { return _roiMaxCoordinate; }
-    void setRoiMaxCoordinate(const QGeoCoordinate &newRoiMaxCoordinate);
+
+    void setRoiMaxCoordinate(const QGeoCoordinate& newRoiMaxCoordinate);
 
     QSize tileCount() const { return _tileCount; }
-    void setTileCount(const QSize &newTileCount);
+
+    void setTileCount(const QSize& newTileCount);
 
     bool textureLoaded() const { return _textureLoaded; }
+
     bool textureGeometryDone() const { return _textureGeometryDone; }
 
     void setTextureGeometryDone(bool newTextureGeometryDone);
-    void setTextureGeometry(const Viewer3DTileStatistics &tileInfo);
+    void setTextureGeometry(const Viewer3DTileStatistics& tileInfo);
 
 signals:
     void mapProviderChanged();
@@ -66,14 +74,20 @@ signals:
 
 private:
     void _updateTexture();
-    void _setTextureLoaded(bool loaded) { _textureLoaded = loaded; emit textureLoadedChanged(); }
+
+    void _setTextureLoaded(bool loaded)
+    {
+        _textureLoaded = loaded;
+        emit textureLoadedChanged();
+    }
+
     void _onMapTypeChanged();
     void _onTileSourceChanged(int mapId);
-    static std::pair<QGeoCoordinate, QGeoCoordinate> _fallbackBoundingBox(const QGeoCoordinate &center);
+    static std::pair<QGeoCoordinate, QGeoCoordinate> _fallbackBoundingBox(const QGeoCoordinate& center);
 
-    Viewer3DTileQuery *_terrainTileLoader = nullptr;
-    FlightMapSettings *_flightMapSettings = nullptr;
-    Viewer3DMapProvider *_mapProvider = nullptr;
+    Viewer3DTileQuery* _terrainTileLoader = nullptr;
+    FlightMapSettings* _flightMapSettings = nullptr;
+    Viewer3DMapProvider* _mapProvider = nullptr;
 
     QGeoCoordinate _fallbackCenter;
     QGeoCoordinate _roiMinCoordinate;

@@ -46,7 +46,8 @@ class CannedReply : public QNetworkReply
 {
 public:
     CannedReply(const QNetworkRequest& request, const QByteArray& body, QObject* parent, bool hold = false)
-        : QNetworkReply(parent), _body(body)
+        : QNetworkReply(parent)
+        , _body(body)
     {
         setRequest(request);
         setOperation(QNetworkAccessManager::GetOperation);

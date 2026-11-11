@@ -44,7 +44,8 @@ class GeoMapCamera : public QObject
     Q_PROPERTY(QSizeF viewportSize READ viewportSize WRITE setViewportSize NOTIFY viewportSizeChanged)
     Q_PROPERTY(qreal fieldOfView READ fieldOfView WRITE setFieldOfView NOTIFY fieldOfViewChanged)
     Q_PROPERTY(qreal verticalFieldOfView READ verticalFieldOfView NOTIFY verticalFieldOfViewChanged)
-    Q_PROPERTY(qreal unitsPerPixelAtUnitDistance READ unitsPerPixelAtUnitDistance NOTIFY unitsPerPixelAtUnitDistanceChanged)
+    Q_PROPERTY(
+        qreal unitsPerPixelAtUnitDistance READ unitsPerPixelAtUnitDistance NOTIFY unitsPerPixelAtUnitDistanceChanged)
     Q_PROPERTY(bool isTopDown READ isTopDown NOTIFY tiltChanged)
     Q_PROPERTY(Mode mode READ mode WRITE setMode NOTIFY modeChanged)
     Q_PROPERTY(qreal default3DTilt READ default3DTilt CONSTANT)

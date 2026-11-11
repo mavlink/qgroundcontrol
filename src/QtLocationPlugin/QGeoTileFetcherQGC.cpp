@@ -14,7 +14,8 @@ QGC_LOGGING_CATEGORY(QGeoTileFetcherQGCLog, "QtLocationPlugin.QGeoTileFetcherQGC
 
 QGeoTileFetcherQGC::QGeoTileFetcherQGC(QNetworkAccessManager* networkManager, const QVariantMap& parameters,
                                        QGeoTiledMappingManagerEngineQGC* parent)
-    : QGeoTileFetcher(parent), m_networkManager(networkManager)
+    : QGeoTileFetcher(parent)
+    , m_networkManager(networkManager)
 {
     qCDebug(QGeoTileFetcherQGCLog) << this;
 

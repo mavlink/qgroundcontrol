@@ -9,18 +9,22 @@ class Viewer3DGeoCoordinateType : public QObject
 {
     Q_OBJECT
     QML_ELEMENT
-    Q_PROPERTY(QGeoCoordinate gpsRef          READ gpsRef          WRITE setGpsRef      NOTIFY gpsRefChanged)
-    Q_PROPERTY(QGeoCoordinate coordinate      READ coordinate      WRITE setCoordinate  NOTIFY coordinateChanged)
-    Q_PROPERTY(QVector3D      localCoordinate READ localCoordinate                      NOTIFY localCoordinateChanged)
+    Q_PROPERTY(QGeoCoordinate gpsRef READ gpsRef WRITE setGpsRef NOTIFY gpsRefChanged)
+    Q_PROPERTY(QGeoCoordinate coordinate READ coordinate WRITE setCoordinate NOTIFY coordinateChanged)
+    Q_PROPERTY(QVector3D localCoordinate READ localCoordinate NOTIFY localCoordinateChanged)
 
 public:
-    explicit Viewer3DGeoCoordinateType(QObject *parent = nullptr) : QObject(parent) {}
+    explicit Viewer3DGeoCoordinateType(QObject* parent = nullptr)
+        : QObject(parent)
+    {}
 
     QGeoCoordinate gpsRef() const { return _gpsRef; }
-    void setGpsRef(const QGeoCoordinate &newGpsRef);
+
+    void setGpsRef(const QGeoCoordinate& newGpsRef);
 
     QGeoCoordinate coordinate() const { return _coordinate; }
-    void setCoordinate(const QGeoCoordinate &newCoordinate);
+
+    void setCoordinate(const QGeoCoordinate& newCoordinate);
 
     QVector3D localCoordinate() const { return _localCoordinate; }
 
