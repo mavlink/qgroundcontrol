@@ -146,6 +146,7 @@ void SurfacePatchModel::_resetImagery()
     if (_imageRetryTimer) {
         _imageRetryTimer->stop();
     }
+    _imageRetryIntervalMs = kImageRetryMs;
     _retiredOrder.clear();
     _fallbackCache.clear();
     if (!_tileImages.isEmpty()) {
@@ -175,6 +176,7 @@ void SurfacePatchModel::_tileImageReady(int requestId, const QImage& image)
     const TileMath::TileKey key = it.value();
     _imageRequestKey.erase(it);
     _imageRequestByKey.remove(key);
+    _imageRetryIntervalMs = kImageRetryMs;
 
     const int row = _keys.indexOf(key);
     if (row < 0) {
@@ -253,17 +255,17 @@ void SurfacePatchModel::_tileImageFailed(int requestId)
     if (!_imageRetryTimer) {
         _imageRetryTimer = new QTimer(this);
         _imageRetryTimer->setSingleShot(true);
-        _imageRetryTimer->setInterval(kImageRetryMs);
         connect(_imageRetryTimer, &QTimer::timeout, this, &SurfacePatchModel::_retryFailedImages);
     }
     if (!_imageRetryTimer->isActive()) {
-        _imageRetryTimer->start();
+        _imageRetryTimer->start(_imageRetryIntervalMs);
     }
 }
 
 void SurfacePatchModel::_retryFailedImages()
 {
     const QSet<TileMath::TileKey> failed = std::exchange(_failedImageKeys, {});
+    bool retried = false;
     for (const TileMath::TileKey& key : failed) {
         // Re-check residency and in-flight state: churn may have re-requested
         // or removed the patch since the failure
@@ -271,6 +273,11 @@ void SurfacePatchModel::_retryFailedImages()
             continue;
         }
         _requestTileImage(key);
+        retried = true;
+    }
+    if (retried) {
+        // An outage, or a tile its provider does not have, fails again and again: ask less and less often
+        _imageRetryIntervalMs = qMin(_imageRetryIntervalMs * 2, kImageRetryMaxMs);
     }
 }
 

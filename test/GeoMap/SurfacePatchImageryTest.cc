@@ -289,12 +289,17 @@ void SurfacePatchImageryTest::_imagesRecoverAfterTransientOutage()
     QCOMPARE_GT(nam.requestCount, 0);
     QCOMPARE_LT(rowsWithImage(model), model.rowCount());             // the outage left imageless patches
     verifyExpectedLogMessage();
+    // The images are requested again, and with the outage lasting the next retry is put off for longer
+    const int firstRetryIntervalMs = model.imageRetryIntervalMs();
+    QTRY_COMPARE_WITH_TIMEOUT(model.imageRetryIntervalMs(), 2 * firstRetryIntervalMs, 10000);
+    QTRY_COMPARE_WITH_TIMEOUT(model.pendingImageCount(), 0, 10000);
     // Outage ends with the camera at rest: every resident patch must still
     // end up imaged. A row stuck without image (or fallback) renders the dark
     // loading fallback forever - the visible "hole" from the field report.
     UnitTestTileGenerator::setForcedMissCount(0);
-    QTRY_COMPARE_WITH_TIMEOUT(rowsReportingImage(model), model.rowCount(), 10000);
-    QTRY_COMPARE_WITH_TIMEOUT(rowsWithImage(model), model.rowCount(), 10000);
+    QTRY_COMPARE_WITH_TIMEOUT(rowsReportingImage(model), model.rowCount(), 15000);
+    QTRY_COMPARE_WITH_TIMEOUT(rowsWithImage(model), model.rowCount(), 15000);
+    QCOMPARE(model.imageRetryIntervalMs(), firstRetryIntervalMs);  // an arriving image ends the spacing out
 }
 
 UT_REGISTER_TEST(SurfacePatchImageryTest, TestLabel::Integration)

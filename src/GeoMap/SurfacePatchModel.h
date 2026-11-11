@@ -144,6 +144,10 @@ public:
     /// Tile image requests awaiting delivery or failure
     int pendingImageCount() const { return _imageRequestKey.count(); }
 
+    /// Delay before the tile images that failed are requested again. It doubles, up to a limit, each time they are,
+    /// and starts over when an image arrives.
+    int imageRetryIntervalMs() const { return _imageRetryIntervalMs; }
+
     /// Network manager for tile imagery fetches, applied at the next
     /// setMapType (test injection seam)
     void setTileImageNetworkManager(QNetworkAccessManager* networkManager)
@@ -225,7 +229,8 @@ private:
 
     static constexpr int kMaxRetiredImages = 128;         ///< tiles kept after patch removal (fallback source)
     static constexpr int kMaxAncestorFallbackLevels = 8;  ///< how far up the quadtree fallback looks
-    static constexpr int kImageRetryMs = 3000;            ///< pacing for re-requesting failed tile images
+    static constexpr int kImageRetryMs = 3000;            ///< first pacing for re-requesting failed tile images
+    static constexpr int kImageRetryMaxMs = 30000;        ///< longest pacing, while the same images keep failing
     static constexpr double kSegmentSampleSpacingMeters = 30.0;
     static constexpr int kMaxSegmentSamples = 2000;       ///< full spacing up to GeoMapMissionPath's 50 km pieces
 
@@ -248,6 +253,7 @@ private:
     QHash<TileMath::TileKey, int> _imageRequestByKey;  ///< reverse map for cancellation
     QSet<TileMath::TileKey> _failedImageKeys;          ///< resident patches awaiting an image retry
     QTimer* _imageRetryTimer = nullptr;
+    int _imageRetryIntervalMs = kImageRetryMs;
     QList<TileMath::TileKey> _keys;                    ///< row order; data fetched from SurfaceModel by key
 
     // Perf counters sampled by _statsTick (see setStatsEnabled)
