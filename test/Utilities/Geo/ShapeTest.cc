@@ -403,6 +403,8 @@ void ShapeTest::_testLoadShapes_data()
     // A clockwise square of about 111 m by 76 m, as "lon,lat" tuples.
     const QString ring = QStringLiteral("8,47 8,47.001 8.001,47.001 8.001,47 8,47");
     const QString openRing = QStringLiteral("8,47 8,47.001 8.001,47.001 8.001,47");
+    // The square ending a millimetre from its first vertex.
+    const QString nearlyClosedRing = QStringLiteral("8,47 8,47.001 8.001,47.001 8.001,47 8.00000001,47");
     const QString counterClockwiseRing = QStringLiteral("8,47 8.001,47 8.001,47.001 8,47.001 8,47");
     const QString ringWithAltitude = QStringLiteral("8,47,10 8,47.001,20 8.001,47.001,30 8.001,47,40 8,47,10");
     const QString hole = QStringLiteral("8.0002,47.0002 8.0008,47.0002 8.0008,47.0008 8.0002,47.0008 8.0002,47.0002");
@@ -441,6 +443,9 @@ void ShapeTest::_testLoadShapes_data()
     QTest::newRow("kml polygon, filter keeps three vertices")
         << kml << ShapeType::Polygon << QStringList{"8,47 8,47.00001 8.001,47 8,47"} << filtered
         << QStringList{"8,47,0 8,47.00001,0 8.001,47,0"};
+    QTest::newRow("kml polygon, closed to within a centimetre")
+        << kml << ShapeType::Polygon << QStringList{nearlyClosedRing} << filtered
+        << QStringList{"8,47,0 8,47.001,0 8.001,47.001,0 8.001,47,0"};
     QTest::newRow("kml two polygons") << kml << ShapeType::Polygon << QStringList{ring, hole} << filtered
                                       << QStringList{"8,47,0 8,47.001,0 8.001,47.001,0 8.001,47,0",
                                                      "8.0002,47.0008,0 8.0008,47.0008,0 8.0008,47.0002,0 "
@@ -472,6 +477,8 @@ void ShapeTest::_testLoadShapes_data()
     QTest::newRow("shp polygon, filter keeps three vertices")
         << kWgs84Prj << ShapeType::Polygon << QStringList{"8,47 8,47.00001 8.001,47 8,47"} << filtered
         << QStringList{"8,47 8,47.00001 8.001,47"};
+    QTest::newRow("shp polygon, closed to within a centimetre")
+        << kWgs84Prj << ShapeType::Polygon << QStringList{nearlyClosedRing} << filtered << QStringList{openRing};
     QTest::newRow("shp polygon with a hole")
         << kWgs84Prj << ShapeType::Polygon << QStringList{ring + " | " + hole} << filtered << QStringList{openRing};
     QTest::newRow("shp two polygons") << kWgs84Prj << ShapeType::Polygon << QStringList{ring, hole} << filtered

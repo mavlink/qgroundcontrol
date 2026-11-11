@@ -214,9 +214,10 @@ bool KMLHelper::loadPolygonsFromFile(const QString &kmlFile, QList<QList<QGeoCoo
             continue;
         }
 
-        // Remove duplicate closing vertex (KML polygons repeat first vertex at end)
-        if (rgCoords.count() > 3 && rgCoords.first().latitude() == rgCoords.last().latitude() &&
-            rgCoords.first().longitude() == rgCoords.last().longitude()) {
+        // KML rings repeat their first vertex as the last one; QGC polygons close implicitly. Only a vertex within
+        // 0.01 m of the first is that repeat: a distinct vertex near the start stays.
+        constexpr double kClosureThreshold = 0.01;
+        if (rgCoords.count() > 3 && rgCoords.last().distanceTo(rgCoords.first()) < kClosureThreshold) {
             rgCoords.removeLast();
         }
 
