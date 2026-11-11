@@ -870,8 +870,10 @@ void checkedWireCodecs(GPSTestClock&)
     QVERIFY(!validPayload(Msg::SEC_SIG.value(), Bytes{2, 7, 0, 1}));
     QCOMPARE(Wire::decode<UBX::Ack>(Bytes{6, 0x24}).msg, Msg::CFG_NAV5.value());
 
-    for (const auto [key, value] : std::array<UBX::ConfigurationValue, 5>{
-             {{0x50000001, 0}, {0x10000001, 2}, {0x20000001, 256}, {0x30000001, 65536}, {0x00000001, 0}}}) {
+    // The reserved top bit of the last key leaves it a one-bit value.
+    constexpr UBX::ConfigurationValue unwritable[] = {{0x50000001, 0},     {0x10000001, 2}, {0x20000001, 256},
+                                                      {0x30000001, 65536}, {0x00000001, 0}, {0x90000001, 2}};
+    for (const auto [key, value] : unwritable) {
         UBX::CheckedValsetBatch<32> batch;
         QVERIFY(batch.append(0x20000001, 1));
         const auto previousSize = batch.size;
@@ -900,6 +902,8 @@ void checkedWireCodecs(GPSTestClock&)
         }
     }
     values[8] = 2;
+    QVERIFY(!UBX::decodeConfigurationValues(values));
+    values[7] |= 0x80;
     QVERIFY(!UBX::decodeConfigurationValues(values));
     QVERIFY(!batch.append(0x20000005, 0));
     QVERIFY(batch.payload().empty());

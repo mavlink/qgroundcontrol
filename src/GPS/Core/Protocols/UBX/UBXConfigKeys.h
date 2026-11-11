@@ -12,10 +12,22 @@
 
 namespace UBX {
 
-/// Value size in bytes from bits 28-30 of a configuration key id, or 0 for a reserved size.
+/// The size code of a configuration key id, in bits 28-30.
+[[nodiscard]] constexpr unsigned cfgKeySizeCode(uint32_t keyId)
+{
+    return (keyId >> 28) & 0x7;
+}
+
+/// Whether @a keyId has a one-bit (L) value, which is 0 or 1.
+[[nodiscard]] constexpr bool cfgKeyIsBoolean(uint32_t keyId)
+{
+    return cfgKeySizeCode(keyId) == 1;
+}
+
+/// Value size in bytes of a configuration key id, or 0 for a reserved size.
 [[nodiscard]] constexpr size_t cfgKeyValueBytes(uint32_t keyId)
 {
-    switch ((keyId >> 28) & 0x7) {
+    switch (cfgKeySizeCode(keyId)) {
         case 1:  // A one-bit value still occupies a byte.
         case 2:
             return 1;
@@ -227,7 +239,7 @@ public:
         for (unsigned byte = 0; byte < width; ++byte) {
             value |= uint32_t(_remaining[sizeof(uint32_t) + byte]) << (8 * byte);
         }
-        if ((*key >> 28) == 1 && value > 1) {
+        if (cfgKeyIsBoolean(*key) && value > 1) {
             _valid = false;
             return std::nullopt;
         }
@@ -289,7 +301,7 @@ struct CheckedValsetBatch
     bool append(uint32_t key, uint32_t value)
     {
         const unsigned width = configurationValueBytes(key);
-        if (!valid || !width || (width < 4 && value >= (1u << (width * 8))) || ((key >> 28) == 1 && value > 1) ||
+        if (!valid || !width || (width < 4 && value >= (1u << (width * 8))) || (cfgKeyIsBoolean(key) && value > 1) ||
             sizeof(key) + width > bytes.size() - size) {
             valid = false;
             return false;
