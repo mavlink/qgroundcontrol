@@ -120,7 +120,10 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   warning per epoch) and fails the stream after 120 frames in a row fail to map.
 - **Sink caps** — `qgcqvideosink` answers caps queries itself (`GstQgc::buildSinkCaps`), with the formats Qt renders
   (`kVideoFormatTable`):
-  - System memory always, with `pixel-aspect-ratio=1/1` unless the bin's `disable-par` is set.
+  - System memory always.
+  - Every entry asks for `pixel-aspect-ratio=1/1` unless the bin's `disable-par` is set. The converter scales system
+    memory to square pixels; nothing in the bin scales GPU memory (d3d12convert aside), so a decoder whose pixels
+    aren't square negotiates system memory.
   - With `gpu-zerocopy`, ahead of it, only the GPU memory the renderer Qt Quick uses can import. Under OpenGL: DMA_DRM
     and DMABuf on EGL while the DMABuf import works (see
     [DMABuf zero-copy diagnostics](#dmabuf-zero-copy-diagnostics)), AHardwareBuffer on EGL (Android), and GLMemory,
@@ -146,7 +149,9 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   (`videoconvert ! videoscale` before GStreamer 1.22). It scales non-square pixels to square ones, converts formats the
   sink doesn't take (such as a software decoder's `Y444`), and passes GPU memory through.
 - **Allocation proposal** — the sink asks the decoder for at least five buffers (`kMaxPinnedFrames` + 1), covering the
-  frames Qt may still hold, and keeps the video, crop and GL sync metas it reads.
+  frames Qt may still hold, and keeps the video, crop and GL sync metas it reads. D3D11Memory gets no crop meta: the
+  d3d11 decoders then crop a picture that starts off their texture's origin themselves, where the D3D11 path would
+  copy it from the origin.
   `QGC_GST_PROPOSE_ALLOCATION_MIN_BUFFERS` overrides the count, as Qt's `QT_GSTREAMER_PROPOSE_ALLOCATION_MIN_BUFFERS`
   does, e.g. to save CMA memory with 4K decoders on i.MX or Raspberry Pi.
 - **`QGCQVideoSinkController`** — GUI-thread companion that binds the sink to a `QVideoSink`, lets it deliver only

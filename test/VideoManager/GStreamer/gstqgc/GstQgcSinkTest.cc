@@ -181,6 +181,21 @@ QStringList capsMemoryFeatures(const GstCaps* caps)
     return features;
 }
 
+/// @p caps' first structure that doesn't ask for square pixels, as text; empty when all do.
+QString firstStructureWithoutSquarePixels(const GstCaps* caps)
+{
+    for (guint i = 0; i < gst_caps_get_size(caps); ++i) {
+        const GstStructure* const structure = gst_caps_get_structure(caps, i);
+        gint parN = 0;
+        gint parD = 0;
+        if (!gst_structure_get_fraction(structure, "pixel-aspect-ratio", &parN, &parD) || (parN != parD)) {
+            const GStreamer::GCharPtr text = GStreamer::adoptGChar(gst_structure_to_string(structure));
+            return QString::fromUtf8(text.get());
+        }
+    }
+    return {};
+}
+
 }  // namespace
 
 void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant_data()
@@ -255,6 +270,8 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant()
     const GStreamer::GstCapsPtr caps = sinkPadCaps(qvideosink.get());
     QVERIFY2(caps, "qgcqvideosink returned no caps");
     QCOMPARE(capsMemoryFeatures(caps.get()), memoryFeatures);
+    // No element of the bin scales GPU memory, and the VideoOutput shows a frame's pixels as square.
+    QCOMPARE(firstStructureWithoutSquarePixels(caps.get()), QString());
 
     if (!singlePlaneRgb2D) {
         return;
@@ -434,6 +451,35 @@ void GstQgcSinkTest::_testAllocationQueryHwMemoryPoolHint()
              "VideoMeta not advertised on GPU path");
     // No frame path reads it, and a producer that attaches it may skip uploading.
     QVERIFY(!gst_query_find_allocation_meta(query.get(), GST_VIDEO_GL_TEXTURE_UPLOAD_META_API_TYPE, nullptr));
+}
+
+void GstQgcSinkTest::_testAllocationQueryOffersCropMeta_data()
+{
+    QTest::addColumn<QString>("memoryFeature");
+    QTest::addColumn<bool>("offered");
+
+    // gst-va then sends a stream cropped on its left or top without a copy.
+    QTest::newRow("DMABuf") << QStringLiteral("memory:DMABuf") << true;
+    // The D3D11 path copies the picture from the texture's origin, so the decoder is left to crop one that starts
+    // elsewhere.
+    QTest::newRow("D3D11Memory") << QStringLiteral("memory:D3D11Memory") << false;
+}
+
+void GstQgcSinkTest::_testAllocationQueryOffersCropMeta()
+{
+    QFETCH(QString, memoryFeature);
+    QFETCH(bool, offered);
+
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_caps_from_string(
+        qPrintable(QStringLiteral("video/x-raw(%1), format=(string)NV12, width=(int)64, height=(int)64, "
+                                  "framerate=(fraction)30/1")
+                       .arg(memoryFeature))));
+    QVERIFY2(caps, "HW caps did not parse");
+    const GStreamer::GstQueryPtr query = GStreamer::adoptQuery(gst_query_new_allocation(caps.get(), TRUE));
+    GstQgc::populateAllocationQuery(query.get());
+
+    QCOMPARE(bool(gst_query_find_allocation_meta(query.get(), GST_VIDEO_CROP_META_API_TYPE, nullptr)), offered);
+    QVERIFY(gst_query_find_allocation_meta(query.get(), GST_VIDEO_META_API_TYPE, nullptr));
 }
 
 void GstQgcSinkTest::_testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta()
@@ -1062,6 +1108,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkCapsFollowRenderTarget()
     const GStreamer::GstCapsPtr caps = sinkPadCaps(sink.get());
     QVERIFY(caps);
     QCOMPARE(capsMemoryFeatures(caps.get()), memoryFeatures);
+    QCOMPARE(firstStructureWithoutSquarePixels(caps.get()), QString());
     // The GL path samples only GL_TEXTURE_2D; amcvideodec's external-OES textures would show black.
     for (guint i = 0; i < gst_caps_get_size(caps.get()); ++i) {
         const GstCapsFeatures* const features = gst_caps_get_features(caps.get(), i);

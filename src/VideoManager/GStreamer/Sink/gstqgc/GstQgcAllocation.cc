@@ -32,10 +32,12 @@ guint proposedMinBuffers()
 
 // Advertise every meta API qgcqvideosink/GstQgcFrameMap consume so upstream keeps them;
 // else gst-vaapi/v4l2 strip crop/orientation metas and mapSampleToFrame does a full copy/rotate.
-void addConsumedAllocationMetas(GstQuery* query)
+void addConsumedAllocationMetas(GstQuery* query, bool cropMeta = true)
 {
     gst_query_add_allocation_meta(query, GST_VIDEO_META_API_TYPE, NULL);
-    gst_query_add_allocation_meta(query, GST_VIDEO_CROP_META_API_TYPE, NULL);
+    if (cropMeta) {
+        gst_query_add_allocation_meta(query, GST_VIDEO_CROP_META_API_TYPE, NULL);
+    }
 #if defined(QGC_HAS_GST_VIDEO_ORIENTATION_META)
     gst_query_add_allocation_meta(query, GST_VIDEO_ORIENTATION_META_API_TYPE, NULL);
 #endif
@@ -92,7 +94,10 @@ void populateAllocationQuery(GstQuery* query)
         if (!HwBuffers::proposeDeviceBoundPool(query, caps, &vinfo, size, minBuffers)) {
             gst_query_add_allocation_pool(query, NULL, size, minBuffers, 0);
         }
-        addConsumedAllocationMetas(query);
+        // A d3d11 decoder offered crop meta hands over its whole texture when the picture starts off the texture's
+        // origin, with the meta saying where; the D3D11 path copies the picture from the origin. Without the offer the
+        // decoder crops such a picture itself.
+        addConsumedAllocationMetas(query, !gst_caps_features_contains(features, "memory:D3D11Memory"));
         return;
     }
 

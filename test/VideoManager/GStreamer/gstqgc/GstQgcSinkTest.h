@@ -45,6 +45,8 @@ private slots:
     void _testCpuZeroCopyPinnedFramesCappedPerSink();
     void _testAllocationQueryHwMemoryPoolHint_data();
     void _testAllocationQueryHwMemoryPoolHint();
+    void _testAllocationQueryOffersCropMeta_data();
+    void _testAllocationQueryOffersCropMeta();
     void _testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta();
     void _testQgcQVideoSinkSystemMemoryAllocation_data();
     void _testQgcQVideoSinkSystemMemoryAllocation();

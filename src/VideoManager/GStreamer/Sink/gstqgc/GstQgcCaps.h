@@ -20,7 +20,7 @@ struct SinkCapsPolicy
     /// What the DMABuf path imports with now (HwBuffers::dmaBufImportDisplay()): Qt's EGLDisplay, or its Vulkan
     /// device. Null while it can't import.
     void* dmaBufDisplay = nullptr;
-    /// Ask for square pixels in system memory, which the bin's converter scales to.
+    /// Ask for square pixels, in every kind of memory. The bin's converter scales system memory to them.
     bool squarePixels = true;
 
     friend bool operator==(const SinkCapsPolicy&, const SinkCapsPolicy&) = default;
@@ -32,8 +32,8 @@ struct SinkCapsPolicy
 /// OpenGL over EGL while the DMABuf import works; GLMemory, unless the direct DMABuf variant, wherever gst-gl shares
 /// Qt's OpenGL context (EGL or GLX); AHardwareBuffer on OpenGL over EGL (Android); D3D11Memory on Direct3D11; the
 /// DMA_DRM layouts Qt's device imports on Vulkan; none elsewhere. GLMemory always carries texture-target=2D, the only
-/// target the GL path samples. System memory always closes the list. DMABuf builds query EGL for importable DMA_DRM
-/// modifiers.
+/// target the GL path samples. System memory always closes the list. Every entry asks for square pixels when
+/// @p policy does. DMABuf builds query EGL for importable DMA_DRM modifiers.
 std::string buildSinkCaps(const SinkCapsPolicy& policy);
 
 #ifdef QGC_UNITTEST_BUILD

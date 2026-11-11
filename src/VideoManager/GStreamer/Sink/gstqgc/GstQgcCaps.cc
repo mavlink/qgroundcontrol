@@ -9,6 +9,7 @@
 #endif
 
 #include "GstQgcVideoFormats.h"
+#include "GstScoped.h"
 #include "HwBuffers/dmabuf/GstDmaDrmCaps.h"
 
 namespace GstQgc {
@@ -99,29 +100,40 @@ std::string gpuMemoryCaps(const SinkCapsPolicy& policy, const std::string& forma
     return caps;
 }
 
-}  // namespace
-
-std::string buildSinkCaps(const SinkCapsPolicy& policy)
+/// The memory and formats the sink takes under @p policy, whatever their pixels' shape.
+std::string sinkMemoryCaps(const SinkCapsPolicy& policy)
 {
     if (policy.gpuZeroCopy && (policy.gpuBin == GpuBinMode::GlUpload)) {
         return std::string(kGlMemory2D) + ", format=" + advertisedFormatList(kOfferGlUpload);
     }
     if (policy.gpuZeroCopy && (policy.gpuBin == GpuBinMode::D3D12Convert)) {
-        // d3d12convert scales as well, so it gives square pixels on the GPU.
-        std::string caps = std::string(kD3D12MemoryRgb) + ", format=" + kD3D12ConvertFormats;
-        if (policy.squarePixels) {
-            caps += ", pixel-aspect-ratio=(fraction)1/1";
-        }
+        return std::string(kD3D12MemoryRgb) + ", format=" + kD3D12ConvertFormats;
+    }
+    const std::string formats = advertisedFormatList();
+    return (policy.gpuZeroCopy ? gpuMemoryCaps(policy, formats) : std::string()) + "video/x-raw, format=" + formats;
+}
+
+/// @p caps asking for pixel-aspect-ratio=1/1 in every structure.
+std::string sinkCapsWithSquarePixels(const std::string& caps)
+{
+    const GStreamer::GstCapsPtr parsed = GStreamer::adoptCaps(gst_caps_from_string(caps.c_str()));
+    if (!parsed) {
         return caps;
     }
+    gst_caps_set_simple(parsed.get(), "pixel-aspect-ratio", GST_TYPE_FRACTION, 1, 1, nullptr);
+    const GStreamer::GCharPtr text = GStreamer::adoptGChar(gst_caps_to_string(parsed.get()));
+    return text ? std::string(text.get()) : caps;
+}
 
-    const std::string formats = advertisedFormatList();
-    std::string caps = policy.gpuZeroCopy ? gpuMemoryCaps(policy, formats) : std::string();
-    caps += "video/x-raw, format=" + formats;
-    if (policy.squarePixels) {
-        caps += ", pixel-aspect-ratio=(fraction)1/1";
-    }
-    return caps;
+}  // namespace
+
+std::string buildSinkCaps(const SinkCapsPolicy& policy)
+{
+    // Square pixels in GPU memory as well as in system memory: the frame's size is all the VideoOutput has to go by.
+    // Only system memory is scaled to them, by the bin's converter (and D3D12Memory by d3d12convert), so a decoder
+    // with other pixels negotiates system memory.
+    const std::string caps = sinkMemoryCaps(policy);
+    return policy.squarePixels ? sinkCapsWithSquarePixels(caps) : caps;
 }
 
 #ifdef QGC_UNITTEST_BUILD
