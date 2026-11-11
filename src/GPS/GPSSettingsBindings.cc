@@ -44,6 +44,9 @@ CorrectionsConfig correctionsFromSettings(GPSCorrectionSettings* settings, FactR
     } else {
         qCWarning(GPSSettingsBindingsLog) << "Invalid correction source; using automatic selection";
     }
+    if (read(settings->correctionVehicles()).toInt() == GPSCorrectionSettings::ActiveVehicle) {
+        configuration.vehicles = GPSCorrectionSettings::ActiveVehicle;
+    }
     configuration.udpInput.enabled = read(settings->rtcmUdpInputEnabled()).toBool();
     configuration.udpInput.port = read(settings->rtcmUdpInputPort()).value<quint16>();
     configuration.udpOutput.enabled = read(settings->rtcmUdpOutputEnabled()).toBool();

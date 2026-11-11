@@ -12,6 +12,15 @@
             "label": "Vehicle correction source"
         },
         {
+            "name": "correctionVehicles",
+            "shortDesc": "All vehicles sends the selected stream to every connected vehicle. Active vehicle only sends it to the active vehicle, and to none while no vehicle is active.",
+            "type": "uint8",
+            "enumStrings": "All vehicles,Active vehicle only",
+            "enumValues": "0,1",
+            "default": 0,
+            "label": "Send corrections to"
+        },
+        {
             "name": "rtcmUdpInputEnabled",
             "shortDesc": "Receive RTCM corrections from another application over UDP.",
             "longDesc": "Listen on a UDP port for incoming RTCM3 correction data and forward it to connected vehicles via MAVLink GPS_RTCM_DATA.",

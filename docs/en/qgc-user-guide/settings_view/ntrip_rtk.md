@@ -51,5 +51,6 @@ When forwarded data cannot be sent, **Corrections Status** names the destination
 ## Correction Routing
 
 - **Vehicle correction source** — _Highest priority_ sends one fresh stream to vehicles, preferring the local base station, then NTRIP, then UDP, and switches when the preferred stream stops. Selecting a source category uses only that category, without falling back to another. When several UDP senders deliver, QGC stays on the first fresh one.
+- **Send corrections to** — _All vehicles_ (the default) sends the selected stream to every connected vehicle. _Active vehicle only_ sends it to the active vehicle alone: the corrections follow a change of the active vehicle, and no vehicle receives them while none is active. Corrections go out on the active vehicle's link, so vehicles that share that link, such as several on one telemetry radio, receive them as well.
 
-Vehicles and UDP forwarding always receive the same stream.
+Vehicles and UDP forwarding always receive the same stream, and UDP forwarding continues whichever vehicles are chosen.
