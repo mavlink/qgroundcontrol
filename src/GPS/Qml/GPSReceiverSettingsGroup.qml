@@ -17,7 +17,7 @@ QGCGroupBox {
     readonly property int baseMode: settings.baseMode.rawValue
     readonly property gpsReceiverPresentation presentation: receiver.capabilitiesFor(role, manufacturer)
     // A pending automatic reconnect keeps the saved connection; stop it before editing.
-    readonly property bool _active: receiver.hasReceiver || receiver.reconnecting
+    readonly property bool _active: receiver.state !== GPSReceiver.Disconnected
     readonly property bool _editable: !_active
     // Automatic detection words the Quectel notes for a receiver that may not be one.
     readonly property string _quectelOnly: presentation.automatic

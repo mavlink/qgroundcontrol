@@ -19,6 +19,8 @@ private slots:
     void _receiverFramesAreValidated();
     void _logsFixTransitionsWithoutCoordinates();
     void _automaticConnection();
+    void _statusTextFollowsState_data();
+    void _statusTextFollowsState();
     void _udpPositionOnlyReceiver();
     void _passiveForwardingRegistersCorrections_data();
     void _passiveForwardingRegistersCorrections();

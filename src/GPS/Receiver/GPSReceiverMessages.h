@@ -5,6 +5,7 @@
 #include <QtCore/QString>
 
 #include "GPSConnectionErrors.h"
+#include "GPSReceiver.h"
 #include "GPSReceiverConnectionPolicy.h"
 #include "GPSReceiverReports.h"
 #include "GPSType.h"
@@ -38,12 +39,9 @@ namespace GPSReceiverMessages {
 /// What the receiver status sentence describes.
 struct ReceiverStatus
 {
-    /// The receiver finished configuration.
-    bool configured = false;
-    bool hasReceiver = false;
-    /// An Automatic connection that has not identified the receiver yet.
+    GPSReceiver::State state = GPSReceiver::State::Disconnected;
+    /// A connecting receiver is one an Automatic connection has not identified yet.
     bool identifying = false;
-    bool reconnecting = false;
     RTKSettings::ReceiverRole role = RTKSettings::ConfiguredBase;
     bool forwardingCorrections = false;
     /// Base mode of a configured base; empty for a passive receiver or without one.

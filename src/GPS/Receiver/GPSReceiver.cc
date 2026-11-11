@@ -157,15 +157,12 @@ GPSReceiver::~GPSReceiver()
 
 GPSReceiver::ReceiverState GPSReceiver::_receiverState() const
 {
-    return {.hasReceiver = hasReceiver(),
+    return {.state = state(),
             .baseMode = _activeBaseMode(),
             .endpoint = activeEndpoint(),
             .identity = receiverIdentity(),
             .detected = detectedReceiver(),
-            .reconnecting = reconnecting(),
-            .presentation = activePresentation(),
-            .role = activeRole(),
-            .forwardingCorrections = forwardingCorrections()};
+            .presentation = activePresentation()};
 }
 
 void GPSReceiver::_emitChanges()
@@ -174,7 +171,7 @@ void GPSReceiver::_emitChanges()
         return;
     }
     // Starting or stopping to reconnect the saved receiver is a session change.
-    if (reconnecting() != _notified.receiver.reconnecting) {
+    if (reconnecting() != (_notified.receiver.state == State::Reconnecting)) {
         _setPersistentChangesAllowed(false);
     }
     if (std::exchange(_notified.configurationRevision, _configurationRevision) != _configurationRevision) {
@@ -437,6 +434,14 @@ GPSReceiverPresentation GPSReceiver::capabilitiesFor(int role, int manufacturer)
 {
     return gpsReceiverPresentation(
         role == RTKSettings::ConfiguredBase ? manufacturer : gpsReceiverManufacturerForType(GPSType::Passive));
+}
+
+GPSReceiver::State GPSReceiver::state() const
+{
+    if (!hasReceiver()) {
+        return reconnecting() ? State::Reconnecting : State::Disconnected;
+    }
+    return _facts->telemetryAvailable() ? State::Connected : State::Connecting;
 }
 
 bool GPSReceiver::hasReceiver() const
@@ -706,10 +711,8 @@ void GPSReceiver::_onPositionUpdated(const GPSPositionReport& report)
 
 QString GPSReceiver::statusText() const
 {
-    return GPSReceiverMessages::receiverStatus({.configured = _facts->telemetryAvailable(),
-                                                .hasReceiver = hasReceiver(),
-                                                .identifying = hasReceiver() && activePresentation().automatic,
-                                                .reconnecting = reconnecting(),
+    return GPSReceiverMessages::receiverStatus({.state = state(),
+                                                .identifying = activePresentation().automatic,
                                                 .role = activeRole(),
                                                 .forwardingCorrections = forwardingCorrections(),
                                                 .baseMode = _activeBaseMode(),

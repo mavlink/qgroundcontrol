@@ -16,7 +16,7 @@ Item {
     readonly property bool _vehicleGps: !!_gps && _gps.telemetryAvailable
     property GPSReceiver _receiver: QGroundControl.gpsManager.receiver
     readonly property GPSReceiverFactGroup _receiverFacts: _receiver.facts
-    readonly property bool _receiverConnected: _receiverFacts.telemetryAvailable
+    readonly property bool _receiverConnected: _receiver.state === GPSReceiver.Connected
     readonly property bool _receiverWarning: _receiverConnected && _receiverFacts.receiverWarning
     readonly property int _receiverSatellites: _receiverFacts.numSatellitesUsed.rawValue
     readonly property string _receiverDetail: _receiver.summaryLabel

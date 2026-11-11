@@ -256,6 +256,79 @@ void GPSReceiverTest::_automaticConnection()
     receiver.disconnectReceiver();
 }
 
+void GPSReceiverTest::_statusTextFollowsState_data()
+{
+    using State = GPSReceiver::State;
+    QTest::addColumn<int>("manufacturer");
+    QTest::addColumn<bool>("forward");
+    // How far the connection gets: "opened", "ready", or "lost" for a ready receiver whose connection fails.
+    QTest::addColumn<QString>("reached");
+    QTest::addColumn<QList<GPSReceiver::State>>("states");
+    QTest::addColumn<QString>("text");
+    const int ublox = gpsReceiverManufacturerForType(GPSType::UBlox);
+    QTest::newRow("never-connected") << ublox << true << QString() << QList<State>{} << QString();
+    QTest::newRow("connecting") << ublox << true << QStringLiteral("opened") << QList{State::Connecting}
+                                << GPSReceiver::tr("Connecting to receiver...");
+    QTest::newRow("identifying") << GPS_AUTOMATIC_MANUFACTURER << true << QStringLiteral("opened")
+                                 << QList{State::Connecting} << GPSReceiver::tr("Identifying receiver...");
+    // A passive receiver's sentences do not depend on a base station's survey.
+    QTest::newRow("forwarding") << kPassiveManufacturer << true << QStringLiteral("ready")
+                                << QList{State::Connecting, State::Connected}
+                                << GPSReceiver::tr("Passive receiver connected; forwarding its RTCM");
+    QTest::newRow("position-only") << kPassiveManufacturer << false << QStringLiteral("ready")
+                                   << QList{State::Connecting, State::Connected}
+                                   << GPSReceiver::tr("Passive receiver connected; position only");
+    QTest::newRow("lost") << kPassiveManufacturer << true << QStringLiteral("lost")
+                          << QList{State::Connecting, State::Connected, State::Reconnecting}
+                          << GPSReceiver::tr("Connecting automatically...");
+}
+
+void GPSReceiverTest::_statusTextFollowsState()
+{
+    QFETCH(int, manufacturer);
+    QFETCH(bool, forward);
+    QFETCH(QString, reached);
+    QFETCH(QList<GPSReceiver::State>, states);
+    QFETCH(QString, text);
+    const bool lost = reached == QStringLiteral("lost");
+    ScriptedGPSReceiver harness;
+    GPSReceiver& receiver = harness.receiver;
+    auto configuration = receiverConfiguration(manufacturer);
+    configuration.forwardReceiverRtcm = forward;
+    useTcp(configuration);
+    // Only a receiver that connects automatically reconnects after its connection was lost.
+    configuration.autoConnect = lost;
+    receiver.setConfiguration(configuration);
+    // The settings and status panels follow the state, so each one has to be notified, as it is reached.
+    QList<GPSReceiver::State> notified;
+    QObject observer;
+    connect(&receiver, &GPSReceiver::receiverChanged, &observer, [&] {
+        if (notified.isEmpty() || notified.constLast() != receiver.state()) {
+            notified.append(receiver.state());
+        }
+    });
+
+    if (!reached.isEmpty()) {
+        QVERIFY(receiver.connectReceiver());
+    }
+    if (reached == QStringLiteral("ready") || lost) {
+        harness.workers.current()->ready();
+    }
+    if (lost) {
+        expectLogMessage("GPS.Receiver.GPSReceiver", QtWarningMsg, QRegularExpression(QStringLiteral("session ended")));
+        harness.workers.current()->fail(GPSConnectionError::DeviceError);
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(notified, states);
+    QCOMPARE(receiver.state(), states.isEmpty() ? GPSReceiver::State::Disconnected : states.constLast());
+    QCOMPARE(receiver.statusText(), text);
+
+    // Without a receiver, and none about to be connected, there is nothing to say.
+    receiver.disconnectReceiver();
+    QCOMPARE(receiver.state(), GPSReceiver::State::Disconnected);
+    QVERIFY(receiver.statusText().isEmpty());
+}
+
 void GPSReceiverTest::_notificationsFollowCompletedConnection()
 {
     BlockedTransportGate gate;
