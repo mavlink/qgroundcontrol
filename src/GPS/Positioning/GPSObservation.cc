@@ -157,6 +157,15 @@ QGeoCoordinate GPSObservation::coordinate() const
     return coordinate;
 }
 
+std::optional<double> GPSObservation::altitudeMslMeters() const
+{
+    const double altitude = position.coordinate().altitude();
+    if (altitudeDatum != GPSAltitudeDatum::MeanSeaLevel || !qIsFinite(altitude)) {
+        return std::nullopt;
+    }
+    return altitude;
+}
+
 double GPSObservation::heading() const
 {
     const double direction = position.attribute(QGeoPositionInfo::Direction);

@@ -120,7 +120,7 @@ void FollowMe::_sendGCSMotionReport()
 
     motionReport.lat_int = static_cast<int>(gcsCoordinate.latitude() * 1e7);
     motionReport.lon_int = static_cast<int>(gcsCoordinate.longitude() * 1e7);
-    motionReport.altMetersAMSL = gcsCoordinate.altitude();
+    motionReport.altMetersAMSL = observation->altitudeMslMeters().value_or(qQNaN());
     estimationCapabilities |= (1 << POS);
 
     if (geoPositionInfo.hasAttribute(QGeoPositionInfo::Direction)) {

@@ -55,4 +55,6 @@ struct GPSObservation
     [[nodiscard]] bool usable() const;
     [[nodiscard]] QGeoCoordinate coordinate() const;
     [[nodiscard]] double heading() const;
+    /// The position's altitude above mean sea level; empty when it has none or its datum is not known to be that.
+    [[nodiscard]] std::optional<double> altitudeMslMeters() const;
 };

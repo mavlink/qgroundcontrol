@@ -18,6 +18,7 @@ public:
 
 private slots:
     void _setHomeHereSendsCommandInt();
+    void _gcsPositionUpdateSendsCommandInt_data();
     void _gcsPositionUpdateSendsCommandInt();
 
 private:

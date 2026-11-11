@@ -467,9 +467,15 @@ int FirmwarePlugin::versionCompare(const Vehicle *vehicle, const QString &compar
 
 void FirmwarePlugin::sendGCSMotionReport(Vehicle *vehicle, const FollowMe::GCSMotionReport &motionReport, uint8_t estimationCapabilities) const
 {
-    const float altitude = static_cast<float>(motionReport.altMetersAMSL);
-    if (!vehicle || !qIsFinite(altitude)) {
-        qCDebug(FirmwarePluginLog) << "Follow target requires a vehicle and finite altitude";
+    if (!vehicle) {
+        return;
+    }
+    // FOLLOW_TARGET takes an altitude above mean sea level. When the ground station's is not known to be that, as for
+    // an ellipsoid height, the target is given the vehicle's home altitude, as ArduPilot is.
+    const float altitude = static_cast<float>(
+        qIsFinite(motionReport.altMetersAMSL) ? motionReport.altMetersAMSL : vehicle->homePosition().altitude());
+    if (!qIsFinite(altitude)) {
+        qCDebug(FirmwarePluginLog) << "Follow target requires the ground station's or the vehicle's home altitude";
         return;
     }
     SharedLinkInterfacePtr sharedLink = vehicle->vehicleLinkManager()->primaryLink().lock();

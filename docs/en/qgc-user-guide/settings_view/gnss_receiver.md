@@ -84,6 +84,9 @@ In that case the RTK base station stays the receiver; select the NMEA device aga
 _QGroundControl_ will automatically use an internal GPS to display its own location on the map with a purple `Q` icon (if the GPS provides a heading, this will be also indicated by the icon).
 It may also use the GPS as a location source for _Follow Me Mode_ - currently supported on [PX4 Multicopters only](https://docs.px4.io/en/flight_modes/follow_me.html).
 
+Vehicles take the altitudes they are sent as above mean sea level, so _Follow Me_ and [Update return to home position based on device location](fly_view.md) send the ground station's altitude only when it is known to be that, as a GNSS receiver and macOS and iOS devices report it.
+An ellipsoid height, as Android devices report, an altitude of unknown reference, or a position without an altitude is not sent. The vehicle's own home altitude is sent instead: home moves only horizontally, and a followed target is taken to be at home altitude.
+
 A connected GNSS receiver can provide the ground station position instead; use the [Passive](#passive) role for a receiver that only does that.
 The settings are:
 
