@@ -1,13 +1,15 @@
 #include "QGCStateMachineTest.h"
 
-#include "MultiSignalSpy.h"
-#include "QGCStateMachine.h"
-#include "WaitStateBase.h"
-
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QTimer>
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
+
+#include "Fixtures/RAIIFixtures.h"
+#include "MultiSignalSpy.h"
+#include "QGCStateMachine.h"
+#include "WaitStateBase.h"
 
 namespace {
 float _spyFloatArg(const QSignalSpy& spy, int index)
@@ -684,6 +686,64 @@ void QGCStateMachineTest::_testRuntimeDiagnosticsHelpers()
     QVERIFY(!machine.historyRecordingEnabled());
     QVERIFY(!machine.profilingEnabled());
     QVERIFY(!machine.structuredLoggingEnabled());
+}
+
+void QGCStateMachineTest::_testEnvironmentDiagnostics_data()
+{
+    QTest::addColumn<QByteArray>("variable");
+    QTest::addColumn<bool>("stopMachine");
+    QTest::addColumn<QString>("expectedLog");
+
+    const QByteArray history = QByteArrayLiteral("QGC_STATEMACHINE_HISTORY");
+    const QByteArray profile = QByteArrayLiteral("QGC_STATEMACHINE_PROFILE");
+    const QByteArray log = QByteArrayLiteral("QGC_STATEMACHINE_LOG");
+    const QString historyEntry = QStringLiteral("ENTER Working");
+    const QString profileWithState = QStringLiteral("State Machine Profile: EnvironmentDiagnostics[\\s\\S]*Working");
+
+    QTest::newRow("history, machine finished") << history << false << historyEntry;
+    QTest::newRow("history, machine stopped") << history << true << historyEntry;
+    QTest::newRow("profile, machine finished") << profile << false << profileWithState;
+    QTest::newRow("profile, machine stopped") << profile << true << profileWithState;
+    QTest::newRow("profile, runtime of a finished machine")
+        << profile << false << QStringLiteral("Profiler: Machine stopped - \"EnvironmentDiagnostics\" total runtime");
+    QTest::newRow("log, state entered") << log << false << QStringLiteral("Entered Working");
+    QTest::newRow("log, machine finished") << log << false << QStringLiteral("Machine stopped: EnvironmentDiagnostics");
+}
+
+void QGCStateMachineTest::_testEnvironmentDiagnostics()
+{
+    QFETCH(QByteArray, variable);
+    QFETCH(bool, stopMachine);
+    QFETCH(QString, expectedLog);
+
+    qputenv(variable.constData(), "1");
+    const auto restoreEnvironment = qScopeGuard([variable] { qunsetenv(variable.constData()); });
+    // The diagnostics go to the machine's debug category, together with its regular debug output
+    const TestFixtures::LoggingCategoryFixture machineLog(QStringLiteral("Utilities.QGCStateMachine"));
+    ignoreLogMessage("Utilities.QGCStateMachine", QtDebugMsg, QRegularExpression(QString()));
+
+    QGCStateMachine machine(QStringLiteral("EnvironmentDiagnostics"), nullptr);
+    auto* workingState = new QGCState(QStringLiteral("Working"), &machine);
+    auto* finalState = machine.addFinalState();
+
+    machine.addEventTransition(workingState, QStringLiteral("finish"), finalState);
+    machine.setInitialState(workingState);
+
+    QSignalSpy enteredSpy(workingState, &QState::entered);
+    QSignalSpy stoppedSpy(&machine, &QStateMachine::stopped);
+    QSignalSpy finishedSpy(&machine, &QStateMachine::finished);
+    expectLogMessage("Utilities.QGCStateMachine", QtDebugMsg, QRegularExpression(expectedLog));
+
+    machine.start();
+    QVERIFY(spyTriggered(enteredSpy));
+    if (stopMachine) {
+        machine.stop();
+        QVERIFY(spyTriggered(stoppedSpy));
+    } else {
+        machine.postEvent(QStringLiteral("finish"));
+        QVERIFY(spyTriggered(finishedSpy));
+    }
+    verifyExpectedLogMessage();
 }
 
 // -----------------------------------------------------------------------------

@@ -11,6 +11,7 @@ StateMachineProfiler::StateMachineProfiler(QGCStateMachine* machine)
 {
     connect(_machine, &QStateMachine::started, this, &StateMachineProfiler::_onMachineStarted);
     connect(_machine, &QStateMachine::stopped, this, &StateMachineProfiler::_onMachineStopped);
+    connect(_machine, &QStateMachine::finished, this, &StateMachineProfiler::_onMachineStopped);
 }
 
 void StateMachineProfiler::setEnabled(bool enabled)
