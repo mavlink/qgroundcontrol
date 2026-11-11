@@ -56,11 +56,6 @@ std::chrono::milliseconds retryAfter(const QHttpHeaders& headers, const QDateTim
     return std::chrono::milliseconds{std::clamp(utcNow.msecsTo(*deadline), qint64(0), maxMs)};
 }
 
-QString tr(const char* text)
-{
-    return QCoreApplication::translate("NTRIPHttpTransport", text);
-}
-
 /// Caster-supplied text for an error detail: without markup or control characters, on one line, and capped.
 QString errorPreview(QString text)
 {

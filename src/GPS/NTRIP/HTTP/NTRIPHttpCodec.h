@@ -4,6 +4,7 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QByteArrayView>
+#include <QtCore/QCoreApplication>
 #include <QtCore/QDateTime>
 #include <QtCore/QString>
 #include <QtNetwork/QHttpHeaders>
@@ -30,6 +31,9 @@ struct NTRIPHttpRequest
 /// Private transport parser; buffers framing, never correction payloads.
 class NTRIPHttpDecoder
 {
+    // The messages are translated in NTRIPHttpTransport's context, where the translation files hold them.
+    Q_DECLARE_TR_FUNCTIONS(NTRIPHttpTransport)
+
 public:
     explicit NTRIPHttpDecoder(NTRIPHttpPurpose purpose = NTRIPHttpPurpose::Corrections)
         : _purpose(purpose)
