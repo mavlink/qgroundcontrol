@@ -9,13 +9,11 @@
 #define QGC_MAX_MAP_ZOOM 23
 static constexpr const quint32 QGC_AVERAGE_TILE_SIZE = 13652;
 
-// TODO: Inherit from QGeoMapType
 class MapProvider
 {
 public:
-    // Mirror of QGeoMapType::MapStyle (kept in sync manually so this header
-    // doesn't need to pull QtLocation/private/qgeomaptype_p.h). Converted at
-    // the boundary in QGeoTiledMappingManagerEngineQGC.cpp.
+    // Mirrors QGeoMapType::MapStyle so that this class does not need QtLocation.
+    // QGeoTiledMappingManagerEngineQGC.cpp converts the values and asserts that they match.
     enum MapStyle {
         NoMap = 0,
         StreetMap,
