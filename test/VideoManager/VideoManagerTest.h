@@ -40,6 +40,8 @@ private slots:
     void _testScreenshotsComeFromStreamsOnDisplay();
     void _testScreenshotFailuresReachUser_data();
     void _testScreenshotFailuresReachUser();
+    void _testAdvertisedRotationTurnsVideo_data();
+    void _testAdvertisedRotationTurnsVideo();
     void _testStreamErrorsReachUser();
     void _testReconnectingFollowsLostStream();
     void _testLinkRegainedReconnectsStreams();

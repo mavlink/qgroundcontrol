@@ -77,7 +77,8 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   (`GstQgcFrameDelivery`) keeps only the latest frame, so a stalled GUI thread never holds more than one undelivered
   frame (or the decoder buffer behind it).
   Frames carry the rotation and mirroring of the stream's `image-orientation` tag, as a camera mounted sideways sends
-  it, unless a buffer has its own orientation meta. Its construct-only `gpu-zerocopy` property (passed down by the bin) enables zero-copy import of GPU memory, and its
+  it, unless a buffer has its own orientation meta. The `VideoOutput` showing them adds the rotation a MAVLink camera
+  reports for the stream (`VideoStreamController::rotation`) on top, as its `orientation`. Its construct-only `gpu-zerocopy` property (passed down by the bin) enables zero-copy import of GPU memory, and its
   `frame-stats` property reports that sink's own frame counts per delivery path, GPU fallbacks, dropped tiled frames
   (`GstQgc::formatSinkStats` in `GstQgcSinkStats.h` formats them) and delivered frames a newer one replaced before the `QVideoSink` took them
   (`superseded-frames`), all counted by its `GstQgcSinkCounters`; GstBaseSink's standard `stats` property is left as is.

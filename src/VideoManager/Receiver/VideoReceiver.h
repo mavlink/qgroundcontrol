@@ -114,6 +114,7 @@ public:
 
     bool recording() const { return _recording; }
 
+    /// The size of the frames as they are presented, before the orientation the VideoOutput adds.
     QSize videoSize() const { return _videoSize; }
 
     /// The stream's health, measured about once a second while it streams; invalid while it doesn't.
@@ -146,10 +147,10 @@ public:
     void startRecording(const QString& file, FileFormat format);
     void stopRecording();
 
-    /// Saves the frame on display to @p file as shown: cropped to its format's viewport, rotated and mirrored, with
-    /// @p exif for a JPEG. The frame is converted here; it is encoded and written on the thread pool. Returns false,
-    /// with a warning logged, when there is no output or no frame. A file that can't be written is reported later,
-    /// through errorOccurred().
+    /// Saves the frame on display to @p file as shown: cropped to its format's viewport, rotated and mirrored as the
+    /// frame and then the VideoOutput (its orientation and mirrored properties) say, with @p exif for a JPEG. The frame
+    /// is converted here; it is encoded and written on the thread pool. Returns false, with a warning logged, when
+    /// there is no output or no frame. A file that can't be written is reported later, through errorOccurred().
     bool takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif = {});
 
 signals:

@@ -25,6 +25,10 @@ When a MAVLink camera advertises its video stream, QGC plays that stream (and an
 instead of the configured source. Your source and connection settings are left unchanged and apply again once no
 camera advertises a stream.
 
+A stream its camera reports as rotated (by 90, 180 or 270 degrees) is shown turned clockwise by that angle, and so are
+the photos taken of it; recordings keep the stream as it arrives. The rotation adds to any orientation the stream itself
+carries, so a camera should report only one of the two.
+
 ## Connection
 
 Connection settings vary by source type:

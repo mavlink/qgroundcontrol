@@ -733,6 +733,75 @@ void VideoManagerTest::_testScreenshotFailuresReachUser()
     verifyExpectedLogMessage();
 }
 
+void VideoManagerTest::_testAdvertisedRotationTurnsVideo_data()
+{
+    // What a camera advertises for a stream of 64 × 48 frames whose top-left quadrant is red.
+    QTest::addColumn<int>("advertised");
+    QTest::addColumn<int>("rotation");
+    QTest::addColumn<QSize>("videoSize");
+    QTest::addColumn<int>("redCorner");
+
+    QTest::newRow("upright") << 0 << 0 << QSize(64, 48) << int(Qt::TopLeftCorner);
+    QTest::newRow("90") << 90 << 90 << QSize(48, 64) << int(Qt::TopRightCorner);
+    QTest::newRow("180") << 180 << 180 << QSize(64, 48) << int(Qt::BottomRightCorner);
+    QTest::newRow("270") << 270 << 270 << QSize(48, 64) << int(Qt::BottomLeftCorner);
+    QTest::newRow("more than a turn") << 450 << 90 << QSize(48, 64) << int(Qt::TopRightCorner);
+    // Only right angles can be shown.
+    QTest::newRow("45") << 45 << 0 << QSize(64, 48) << int(Qt::TopLeftCorner);
+}
+
+void VideoManagerTest::_testAdvertisedRotationTurnsVideo()
+{
+    QFETCH(int, advertised);
+    QFETCH(int, rotation);
+    QFETCH(QSize, videoSize);
+    QFETCH(int, redCorner);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    VideoStreamController* const stream = _videoManager->primaryStream();
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kStreamOutputQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/StreamOutput.qml")));
+    const std::unique_ptr<QQuickItem> root(qobject_cast<QQuickItem*>(
+        component.createWithInitialProperties({{QStringLiteral("stream"), QVariant::fromValue(stream)}})));
+    QVERIFY2(root, qPrintable(component.errorString()));
+    auto* const output = root->findChild<QQuickItem*>(QStringLiteral("output"));
+    QVERIFY(output);
+
+    const auto info = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601", VIDEO_STREAM_ENCODING_H264, false,
+                                     static_cast<quint16>(advertised));
+    QSignalSpy rotationSpy(stream, &VideoStreamController::rotationChanged);
+    stream->setStreamInfo(info.get());
+    QCOMPARE(stream->rotation(), rotation);
+    QCOMPARE(rotationSpy.count(), (rotation == 0) ? 0 : 1);
+    // The output turns the frames, on top of any rotation of their own.
+    QCOMPARE(output->property("orientation").toInt(), rotation);
+
+    // Until frames arrive, the advertised resolution (1280 × 720) gives the ratio of the video as shown.
+    const bool sideways = (rotation % 180) != 0;
+    QCOMPARE(stream->aspectRatio(), sideways ? (720.0 / 1280.0) : (1280.0 / 720.0));
+    _primary->setVideoSize(QSize(64, 48));
+    QCOMPARE(stream->videoSize(), videoSize);
+    QCOMPARE(_videoManager->aspectRatio(), static_cast<double>(videoSize.width()) / videoSize.height());
+
+    // A screenshot shows the video as the output does.
+    showFrame(output, VideoTestHelpers::redTopLeftQuadrant());
+    _primary->setState(VideoReceiver::State::Streaming);
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
+    const QString shot = tempDir.filePath(QStringLiteral("shot.png"));
+    _videoManager->grabImage(shot);
+    QTRY_COMPARE_WITH_TIMEOUT(QImage(shot).size(), videoSize, TestTimeout::mediumMs());
+    QCOMPARE(VideoTestHelpers::redCorner(QImage(shot)), std::optional<Qt::Corner>(static_cast<Qt::Corner>(redCorner)));
+
+    // Without the camera's stream the video is upright again.
+    stream->setStreamInfo(nullptr);
+    QCOMPARE(stream->rotation(), 0);
+    QCOMPARE(output->property("orientation").toInt(), 0);
+    QCOMPARE(stream->videoSize(), QSize(64, 48));
+}
+
 void VideoManagerTest::_testStreamErrorsReachUser()
 {
     const QRegularExpression message(QStringLiteral("stream failed"));

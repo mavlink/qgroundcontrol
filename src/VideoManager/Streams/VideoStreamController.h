@@ -32,6 +32,7 @@ class VideoStreamController : public QObject
     Q_PROPERTY(bool reconnecting READ reconnecting NOTIFY reconnectingChanged)
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
     Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged)
+    Q_PROPERTY(int rotation READ rotation NOTIFY rotationChanged)
     Q_PROPERTY(double aspectRatio READ aspectRatio NOTIFY aspectRatioChanged)
     Q_PROPERTY(VideoStreamStats stats READ stats NOTIFY statsChanged)
     Q_PROPERTY(QGCVideoStreamInfo* streamInfo READ streamInfo NOTIFY streamInfoChanged)
@@ -99,8 +100,16 @@ public:
     bool reconnecting() const { return _reconnecting; }
 
     bool recording() const;
+
+    /// The clockwise rotation, in degrees, the camera reports for the stream (VIDEO_STREAM_INFORMATION.rotation), which
+    /// the outputs showing it add to the frames' own: 0, 90, 180 or 270, and 0 for any other angle or without a
+    /// camera's stream.
+    int rotation() const { return _rotation; }
+
+    /// The size the stream is shown at: the receiver's video size, turned by rotation().
     QSize videoSize() const;
-    /// From the decoded frames, else the camera's advertised resolution, else the aspect ratio setting (primary) or 1.
+    /// Of the stream as shown: from the decoded frames, else the camera's advertised resolution, else the aspect ratio
+    /// setting (primary) or 1.
     double aspectRatio() const;
     /// The receiver's VideoReceiver::stats(); invalid without a receiver.
     VideoStreamStats stats() const;
@@ -115,6 +124,7 @@ signals:
     void reconnectingChanged();
     void recordingChanged(bool recording);
     void videoSizeChanged();
+    void rotationChanged();
     void aspectRatioChanged();
     void statsChanged();
     void streamInfoChanged();
@@ -145,4 +155,5 @@ private:
     bool _applyPending = false;
     bool _decoded = false;
     bool _reconnecting = false;
+    int _rotation = 0;
 };

@@ -147,8 +147,12 @@ bool VideoReceiver::takeScreenshot(const QString& file, const VideoScreenshot::E
         return false;
     }
 
+    // VideoOutput takes only multiples of 90 degrees, which are QtVideo::Rotation's values once within a turn.
+    const int orientation = _videoOutput->property("orientation").toInt() % 360;
+    const auto outputRotation = static_cast<QtVideo::Rotation>((orientation < 0) ? (orientation + 360) : orientation);
+    const bool outputMirrored = _videoOutput->property("mirrored").toBool();
     // Converted on this thread, which a frame in GPU memory requires; encoding and writing would stall the UI.
-    const QImage image = VideoScreenshot::displayedImage(sink->videoFrame());
+    const QImage image = VideoScreenshot::displayedImage(sink->videoFrame(), outputRotation, outputMirrored);
     if (image.isNull()) {
         qCWarning(VideoReceiverLog) << "No video frame to take a screenshot from" << _name;
         return false;

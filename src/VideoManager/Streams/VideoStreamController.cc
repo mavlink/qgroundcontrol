@@ -13,6 +13,24 @@
 
 QGC_LOGGING_CATEGORY(VideoStreamControllerLog, "Video.VideoStreamController")
 
+namespace {
+
+/// The rotation @p streamInfo reports, when it is one a VideoOutput can show: a multiple of 90 degrees. 0 otherwise.
+int shownRotation(const QGCVideoStreamInfo* streamInfo)
+{
+    if (!streamInfo) {
+        return 0;
+    }
+    const int degrees = streamInfo->rotation() % 360;
+    if ((degrees % 90) != 0) {
+        qCDebug(VideoStreamControllerLog) << "Ignoring the stream's rotation of" << degrees << "degrees";
+        return 0;
+    }
+    return degrees;
+}
+
+}  // namespace
+
 VideoStreamController::VideoStreamController(Role role, VideoSettings* videoSettings, QObject* parent)
     : QObject(parent)
     , _role(role)
@@ -133,6 +151,12 @@ void VideoStreamController::setStreamInfo(QGCVideoStreamInfo* streamInfo)
 void VideoStreamController::_onStreamInfoChanged()
 {
     emit streamInfoChanged();
+    if (const int rotation = shownRotation(_streamInfo); rotation != _rotation) {
+        qCDebug(VideoStreamControllerLog) << name() << "rotation" << rotation;
+        _rotation = rotation;
+        emit rotationChanged();
+        emit videoSizeChanged();
+    }
     emit aspectRatioChanged();
     scheduleApply();
 }
@@ -323,7 +347,8 @@ bool VideoStreamController::recording() const
 
 QSize VideoStreamController::videoSize() const
 {
-    return _receiver ? _receiver->videoSize() : QSize();
+    const QSize size = _receiver ? _receiver->videoSize() : QSize();
+    return ((_rotation % 180) != 0) ? size.transposed() : size;
 }
 
 double VideoStreamController::aspectRatio() const
@@ -333,7 +358,8 @@ double VideoStreamController::aspectRatio() const
         return static_cast<double>(size.width()) / size.height();
     }
     if (_streamInfo) {
-        return _streamInfo->aspectRatio();
+        const double advertised = _streamInfo->aspectRatio();
+        return (((_rotation % 180) != 0) && (advertised > 0.0)) ? (1.0 / advertised) : advertised;
     }
     return (_role == Role::Primary) ? _videoSettings->aspectRatio()->rawValue().toDouble() : 1.0;
 }

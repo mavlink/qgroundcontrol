@@ -2,11 +2,13 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 
 #include <QtCore/QHash>
 #include <QtCore/QList>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
+#include <QtGui/QColor>
 #include <QtGui/QImage>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
@@ -94,11 +96,12 @@ private:
 /// A camera's VIDEO_STREAM_INFORMATION.
 inline std::unique_ptr<QGCVideoStreamInfo> makeStreamInfo(VIDEO_STREAM_TYPE type, const char* uri,
                                                           VIDEO_STREAM_ENCODING encoding = VIDEO_STREAM_ENCODING_H264,
-                                                          bool thermal = false)
+                                                          bool thermal = false, quint16 rotation = 0)
 {
     mavlink_video_stream_information_t info{};
     info.type = type;
     info.encoding = encoding;
+    info.rotation = rotation;
     info.flags = thermal ? VIDEO_STREAM_STATUS_FLAGS_THERMAL : 0;
     info.resolution_h = 1280;
     info.resolution_v = 720;
@@ -123,6 +126,39 @@ VideoOutput {
                       QUrl(QStringLiteral("qrc:/VideoTestHelpers/VideoOutput.qml")));
     std::unique_ptr<QObject> object(component.create());
     return std::unique_ptr<QQuickItem>(qobject_cast<QQuickItem*>(object.release()));
+}
+
+/// 64 × 48, red in the top-left quadrant only.
+inline QImage redTopLeftQuadrant()
+{
+    QImage image(QSize(64, 48), QImage::Format_RGBA8888);
+    image.fill(Qt::blue);
+    for (int y = 0; y < 24; ++y) {
+        for (int x = 0; x < 32; ++x) {
+            image.setPixelColor(x, y, Qt::red);
+        }
+    }
+    return image;
+}
+
+/// The corner of @p image whose quadrant is the red one; nullopt unless exactly one is.
+inline std::optional<Qt::Corner> redCorner(const QImage& image)
+{
+    std::optional<Qt::Corner> corner;
+    for (const Qt::Corner candidate :
+         {Qt::TopLeftCorner, Qt::TopRightCorner, Qt::BottomLeftCorner, Qt::BottomRightCorner}) {
+        const bool right = (candidate == Qt::TopRightCorner) || (candidate == Qt::BottomRightCorner);
+        const bool bottom = (candidate == Qt::BottomLeftCorner) || (candidate == Qt::BottomRightCorner);
+        const QColor color =
+            image.pixelColor(image.width() * (right ? 3 : 1) / 4, image.height() * (bottom ? 3 : 1) / 4);
+        if ((color.red() > 200) && (color.blue() < 50)) {
+            if (corner) {
+                return std::nullopt;
+            }
+            corner = candidate;
+        }
+    }
+    return corner;
 }
 
 /// Hands @p videoOutput's sink @p image as its next frame.

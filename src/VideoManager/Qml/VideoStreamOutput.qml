@@ -16,10 +16,10 @@ VideoOutput {
     // A lost stream's last frame stays up while it reconnects; a stopped or replaced stream's is cleared.
     readonly property bool _keepsFrame: root.stream.decoding || root.stream.reconnecting
 
-    // Do NOT set `orientation` here — VideoOutput composes orientation on top of the
-    // QVideoFrame's own rotation()/mirrored() metadata that qgcqvideosink forwards from
-    // GstVideoOrientationMeta. Setting it would double-rotate any stream with orientation tags.
-
+    // The rotation the camera reports for the stream (VIDEO_STREAM_INFORMATION.rotation). VideoOutput applies its
+    // orientation on top of each frame's own rotation and mirroring, which qgcqvideosink takes from the stream's
+    // orientation tag: a stream that carries a tag and also reports a rotation is turned by both.
+    orientation: root.stream.rotation
     endOfStreamPolicy: VideoOutput.KeepLastFrame
     opacity: root.stream.decoding ? 1 : 0.5
 

@@ -45,7 +45,11 @@ VideoRecordingService::VideoRecordingService(VideoStreamController* primaryStrea
     _connectRecordings(_thermalStream);
     _connectRecordings(_uvcCamera);
 
-    _connectSubtitles(_primaryStream, [this] { return _primaryStream->videoSize(); });
+    // The recording holds the stream as it arrives, without the rotation its outputs add.
+    _connectSubtitles(_primaryStream, [this] {
+        const VideoReceiver* const receiver = _primaryStream->receiver();
+        return receiver ? receiver->videoSize() : QSize();
+    });
     _connectSubtitles(_uvcCamera, [this] { return _uvcCamera->monitor()->videoSize(); });
 
     _storageLimitTimer.setInterval(kStorageLimitInterval);

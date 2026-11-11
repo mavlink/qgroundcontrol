@@ -19,37 +19,18 @@
 #include "VideoTestHelpers.h"
 
 using VideoTestHelpers::createVideoOutput;
+using VideoTestHelpers::redTopLeftQuadrant;
 using VideoTestHelpers::showFrame;
 
 namespace {
 
 constexpr const char* kMissingCamera = "QGC Test Missing Camera";
 
-/// 64 × 48, red in the top-left quadrant only.
-QImage redTopLeftQuadrant()
-{
-    QImage image(QSize(64, 48), QImage::Format_RGBA8888);
-    image.fill(Qt::blue);
-    for (int y = 0; y < 24; ++y) {
-        for (int x = 0; x < 32; ++x) {
-            image.setPixelColor(x, y, Qt::red);
-        }
-    }
-    return image;
-}
-
 /// Whether @p image is redTopLeftQuadrant() turned clockwise, which puts the red quadrant top right, and mirrored,
 /// which brings it back to the top left.
 bool showsTurnedMirroredQuadrant(const QImage& image)
 {
-    if (image.size() != QSize(48, 64)) {
-        return false;
-    }
-    const auto isRed = [&image](int x, int y) {
-        const QColor color = image.pixelColor(x, y);
-        return (color.red() > 200) && (color.blue() < 50);
-    };
-    return isRed(10, 10) && !isRed(40, 10) && !isRed(10, 50) && !isRed(40, 50);
+    return (image.size() == QSize(48, 64)) && (VideoTestHelpers::redCorner(image) == Qt::TopLeftCorner);
 }
 
 }  // namespace
