@@ -238,6 +238,43 @@ void NMEASentenceTest::_navigationFixLoss()
     QCOMPARE(update->epoch.satellitesUsed, satellitesUsed < 0 ? std::nullopt : std::optional<unsigned>(satellitesUsed));
 }
 
+void NMEASentenceTest::_expiredMetadataEpoch_data()
+{
+    QTest::addColumn<bool>("fixLost");
+    QTest::newRow("fix") << false;
+    QTest::newRow("fix-lost") << true;
+}
+
+void NMEASentenceTest::_expiredMetadataEpoch()
+{
+    QFETCH(bool, fixLost);
+    const auto gga =
+        ownedSentence(NMEAUtils::repairChecksum("$GPGGA,092750.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,"));
+    const auto gsa = ownedSentence(NMEAUtils::repairChecksum("$GPGSA,A,3,02,,,,,,,,,,,,1.0,1.03,0.6"));
+    const auto loss = ownedSentence(NMEAUtils::repairChecksum("$GPGGA,092751.000,,,,,0,0,,,,,,,"));
+    QVERIFY(gga && gsa && loss);
+    constexpr quint64 receivedAtUs = 1'000'000;
+    constexpr quint64 maxAgeUs = NMEA::NavigationEpochAssembler::METADATA_MAX_AGE.count();
+    NMEA::NavigationEpochAssembler assembler;
+    QVERIFY(assembler.ingest(gga->sentence(), receivedAtUs));
+    const auto metadata = assembler.ingest(gsa->sentence(), receivedAtUs);
+    QVERIFY(metadata && metadata->epoch.verticalDop);
+    if (fixLost) {
+        const auto update = assembler.ingest(loss->sentence(), receivedAtUs + 1);
+        QVERIFY(update && update->type == NMEA::NavigationUpdate::Type::FixLoss);
+    }
+    QVERIFY(!assembler.expireUntimedMetadata(receivedAtUs + maxAgeUs));
+
+    // The epoch returns without its expired VDOP, unless a fix loss hides it as it does later metadata.
+    const auto expired = assembler.expireUntimedMetadata(receivedAtUs + maxAgeUs + 1);
+    QCOMPARE(expired.has_value(), !fixLost);
+    if (expired) {
+        QVERIFY(!expired->verticalDop);
+        QCOMPARE(expired->latitude, metadata->epoch.latitude);
+    }
+    QVERIFY(!assembler.expireUntimedMetadata(receivedAtUs + 2 * maxAgeUs));
+}
+
 void NMEASentenceTest::_utcMilliseconds_data()
 {
     QTest::addColumn<QByteArray>("text");

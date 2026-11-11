@@ -26,6 +26,8 @@ private slots:
     void _navigationFreshnessBoundaries();
     void _navigationFixLoss_data();
     void _navigationFixLoss();
+    void _expiredMetadataEpoch_data();
+    void _expiredMetadataEpoch();
     void _fixQuality_data();
     void _fixQuality();
     void _ggaHdopValidation_data();

@@ -164,7 +164,8 @@ public:
     /// One step of automatic connection: connections due, reconnections, and USB discovery.
     void tick();
     /// Stops polling and disconnects, then waits up to SHUTDOWN_TIMEOUT for the workers of retired sessions, which
-    /// otherwise finish on their own once the event loop delivers their exit.
+    /// otherwise finish on their own once the event loop delivers their exit. An observer's connectReceiver() from a
+    /// signal emitted meanwhile is refused.
     void shutdown();
 
     /// The receiver's reported state; with no receiver, every Fact is at its metadata default.
@@ -327,6 +328,12 @@ private:
     void _endSession(GPSConnectionError error, const QString& detail, GPSReceiverSessionEnd end);
     /// The retired session is deleted later, so it may be retired from inside its own signals.
     void _retireSession();
+    /// The first half of _retireSession(), which notifies nobody: the receiver has no session from here on.
+    /// @return the session to _retire() once the caller's own state is settled; null without one.
+    [[nodiscard]] GPSReceiverSession* _detachSession();
+    /// The second half: ends @a session's registrations and the position it published, whose observers may connect
+    /// or disconnect as they are notified.
+    void _retire(GPSReceiverSession* session);
     /// Waits for the workers of retired sessions and deletes those that have exited.
     void _joinRetiredWorkers();
 
@@ -376,6 +383,8 @@ private:
 #endif
     /// The constellations last notified, as the values in Notified are.
     QList<GPSConstellationSatellites> _notifiedConstellations;
+    /// shutdown() is running.
+    bool _shuttingDown = false;
     const std::function<QString()> _recordingDirectory;
     /// The recording of the latest session.
     QString _recordingFile;
