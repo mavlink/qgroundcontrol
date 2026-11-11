@@ -8,6 +8,7 @@
 
 #include "QGCGeo.h"
 #include "QGCLoggingCategory.h"
+#include "ShapeVertices.h"
 #include "shapefil.h"
 
 QGC_LOGGING_CATEGORY(SHPFileHelperLog, "Utilities.SHPFileHelper")
@@ -150,6 +151,12 @@ namespace SHPFileHelper
     /// @param utmZone[out] Zone for UTM shape, 0 for lat/lon shape
     /// @param utmSouthernHemisphere[out] true/false for UTM hemisphere
     SHPHandle _loadShape(const QString &shpFile, int *utmZone, bool *utmSouthernHemisphere, QString &errorString);
+
+    /// Converts vertex @a index of @a shpObject to a coordinate, from UTM when @a utmZone is not 0.
+    /// @param hasAltitude true when the shape type of the file carries Z values
+    /// @return false when the vertex cannot be converted; a warning has been logged
+    bool _vertexCoordinate(const SHPObject* shpObject, int index, int utmZone, bool utmSouthernHemisphere,
+                           bool hasAltitude, QGeoCoordinate& coord);
 }
 
 bool SHPFileHelper::_validateSHPFiles(const QString &shpFile, int *utmZone, bool *utmSouthernHemisphere, QString &errorString)
@@ -235,6 +242,28 @@ SHPHandle SHPFileHelper::_loadShape(const QString &shpFile, int *utmZone, bool *
     }
 
     return shpHandle;
+}
+
+bool SHPFileHelper::_vertexCoordinate(const SHPObject* shpObject, int index, int utmZone, bool utmSouthernHemisphere,
+                                      bool hasAltitude, QGeoCoordinate& coord)
+{
+    if (utmZone) {
+        if (!QGCGeo::convertUTMToGeo(shpObject->padfX[index], shpObject->padfY[index], utmZone, utmSouthernHemisphere,
+                                     coord)) {
+            qCWarning(SHPFileHelperLog) << "UTM conversion failed for entity" << shpObject->nShapeId << "vertex"
+                                        << index;
+            return false;
+        }
+    } else {
+        coord.setLatitude(shpObject->padfY[index]);
+        coord.setLongitude(shpObject->padfX[index]);
+    }
+
+    if (hasAltitude && shpObject->padfZ) {
+        coord.setAltitude(shpObject->padfZ[index]);
+    }
+
+    return true;
 }
 
 ShapeFileHelper::ShapeType SHPFileHelper::determineShapeType(const QString &shpFile, QString &errorString)
@@ -342,23 +371,11 @@ bool SHPFileHelper::loadPolygonsFromFile(const QString &shpFile, QList<QList<QGe
         }
 
         QList<QGeoCoordinate> vertices;
-        const bool entityHasAltitude = hasAltitude && shpObject->padfZ;
-
         for (int i = 0; i < firstPartEnd; i++) {
             QGeoCoordinate coord;
-            if (utmZone) {
-                if (!QGCGeo::convertUTMToGeo(shpObject->padfX[i], shpObject->padfY[i], utmZone, utmSouthernHemisphere, coord)) {
-                    qCWarning(SHPFileHelperLog) << "UTM conversion failed for entity" << entityIdx << "vertex" << i;
-                    continue;
-                }
-            } else {
-                coord.setLatitude(shpObject->padfY[i]);
-                coord.setLongitude(shpObject->padfX[i]);
+            if (_vertexCoordinate(shpObject, i, utmZone, utmSouthernHemisphere, hasAltitude, coord)) {
+                vertices.append(coord);
             }
-            if (entityHasAltitude) {
-                coord.setAltitude(shpObject->padfZ[i]);
-            }
-            vertices.append(coord);
         }
 
         if (vertices.count() < 3) {
@@ -366,25 +383,10 @@ bool SHPFileHelper::loadPolygonsFromFile(const QString &shpFile, QList<QList<QGe
             continue;
         }
 
-        // Shapefile rings repeat their first vertex as the last one; QGC polygons close implicitly. The repeat goes
-        // before filtering so that it does not count towards the three vertices the filter must leave. Only a
-        // vertex within 0.01 m of the first is that repeat: a distinct vertex near the start stays.
-        constexpr double kClosureThreshold = 0.01;
-        if (vertices.count() > 3 && vertices.last().distanceTo(vertices.first()) < kClosureThreshold) {
-            vertices.removeLast();
-        }
-
-        // Filter nearby vertices if enabled
-        if (filterMeters > 0) {
-            int i = 0;
-            while (i < (vertices.count() - 1)) {
-                if ((vertices.count() > 3) && (vertices[i].distanceTo(vertices[i + 1]) < filterMeters)) {
-                    vertices.removeAt(i + 1);
-                } else {
-                    i++;
-                }
-            }
-        }
+        // The repeated first vertex goes before filtering, so that it does not count towards the three vertices
+        // the filter must leave.
+        ShapeVertices::removeClosingVertex(vertices);
+        ShapeVertices::filterNearby(vertices, filterMeters, 3);
 
         polygons.append(vertices);
     }
@@ -443,23 +445,11 @@ bool SHPFileHelper::loadPolylinesFromFile(const QString &shpFile, QList<QList<QG
         }
 
         QList<QGeoCoordinate> vertices;
-        const bool entityHasAltitude = hasAltitude && shpObject->padfZ;
-
         for (int i = 0; i < firstPartEnd; i++) {
             QGeoCoordinate coord;
-            if (utmZone) {
-                if (!QGCGeo::convertUTMToGeo(shpObject->padfX[i], shpObject->padfY[i], utmZone, utmSouthernHemisphere, coord)) {
-                    qCWarning(SHPFileHelperLog) << "UTM conversion failed for entity" << entityIdx << "vertex" << i;
-                    continue;
-                }
-            } else {
-                coord.setLatitude(shpObject->padfY[i]);
-                coord.setLongitude(shpObject->padfX[i]);
+            if (_vertexCoordinate(shpObject, i, utmZone, utmSouthernHemisphere, hasAltitude, coord)) {
+                vertices.append(coord);
             }
-            if (entityHasAltitude) {
-                coord.setAltitude(shpObject->padfZ[i]);
-            }
-            vertices.append(coord);
         }
 
         if (vertices.count() < 2) {
@@ -467,17 +457,7 @@ bool SHPFileHelper::loadPolylinesFromFile(const QString &shpFile, QList<QList<QG
             continue;
         }
 
-        // Filter nearby vertices if enabled
-        if (filterMeters > 0) {
-            int i = 0;
-            while (i < (vertices.count() - 1)) {
-                if ((vertices.count() > 2) && (vertices[i].distanceTo(vertices[i+1]) < filterMeters)) {
-                    vertices.removeAt(i+1);
-                } else {
-                    i++;
-                }
-            }
-        }
+        ShapeVertices::filterNearby(vertices, filterMeters, 2);
 
         polylines.append(vertices);
     }
@@ -533,21 +513,9 @@ bool SHPFileHelper::loadPointsFromFile(const QString &shpFile, QList<QGeoCoordin
         }
 
         QGeoCoordinate coord;
-        if (utmZone) {
-            if (!QGCGeo::convertUTMToGeo(shpObject->padfX[0], shpObject->padfY[0], utmZone, utmSouthernHemisphere, coord)) {
-                qCWarning(SHPFileHelperLog) << "UTM conversion failed for point entity" << entityIdx;
-                continue;
-            }
-        } else {
-            coord.setLatitude(shpObject->padfY[0]);
-            coord.setLongitude(shpObject->padfX[0]);
+        if (_vertexCoordinate(shpObject, 0, utmZone, utmSouthernHemisphere, hasAltitude, coord)) {
+            points.append(coord);
         }
-
-        if (hasAltitude && shpObject->padfZ) {
-            coord.setAltitude(shpObject->padfZ[0]);
-        }
-
-        points.append(coord);
     }
 
     if (points.isEmpty()) {

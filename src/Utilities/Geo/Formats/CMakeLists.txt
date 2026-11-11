@@ -10,6 +10,8 @@ qt_add_library(
     KMLSchemaValidator.h
     ShapeFileHelper.cc
     ShapeFileHelper.h
+    ShapeVertices.cc
+    ShapeVertices.h
     SHPFileHelper.cc
     SHPFileHelper.h
 )

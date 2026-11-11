@@ -8,6 +8,7 @@
 
 #include "KMLSchemaValidator.h"
 #include "QGCLoggingCategory.h"
+#include "ShapeVertices.h"
 
 QGC_LOGGING_CATEGORY(KMLHelperLog, "Utilities.KMLHelper")
 
@@ -15,7 +16,6 @@ namespace KMLHelper
 {
     QDomDocument _loadFile(const QString &kmlFile, QString &errorString);
     bool _parseCoordinateString(const QString &coordinatesString, QList<QGeoCoordinate> &coords, QString &errorString);
-    void _filterVertices(QList<QGeoCoordinate> &vertices, double filterMeters, int minVertices);
     void _checkAltitudeMode(const QDomNode &geometryNode, const QString &geometryType, int index);
 
     constexpr const char *_errorPrefix = QT_TRANSLATE_NOOP("KMLHelper", "KML file load failed. %1");
@@ -92,22 +92,6 @@ bool KMLHelper::_parseCoordinateString(const QString &coordinatesString, QList<Q
         return false;
     }
     return true;
-}
-
-void KMLHelper::_filterVertices(QList<QGeoCoordinate> &vertices, double filterMeters, int minVertices)
-{
-    if (filterMeters <= 0 || vertices.count() <= minVertices) {
-        return;
-    }
-
-    int i = 0;
-    while (i < (vertices.count() - 1)) {
-        if ((vertices.count() > minVertices) && (vertices[i].distanceTo(vertices[i + 1]) < filterMeters)) {
-            vertices.removeAt(i + 1);
-        } else {
-            i++;
-        }
-    }
 }
 
 void KMLHelper::_checkAltitudeMode(const QDomNode &geometryNode, const QString &geometryType, int index)
@@ -215,12 +199,7 @@ bool KMLHelper::loadPolygonsFromFile(const QString &kmlFile, QList<QList<QGeoCoo
             continue;
         }
 
-        // KML rings repeat their first vertex as the last one; QGC polygons close implicitly. Only a vertex within
-        // 0.01 m of the first is that repeat: a distinct vertex near the start stays.
-        constexpr double kClosureThreshold = 0.01;
-        if (rgCoords.count() > 3 && rgCoords.last().distanceTo(rgCoords.first()) < kClosureThreshold) {
-            rgCoords.removeLast();
-        }
+        ShapeVertices::removeClosingVertex(rgCoords);
 
         // Determine winding, reverse if needed. QGC wants clockwise winding
         double sum = 0;
@@ -233,7 +212,7 @@ bool KMLHelper::loadPolygonsFromFile(const QString &kmlFile, QList<QList<QGeoCoo
             std::reverse(rgCoords.begin(), rgCoords.end());
         }
 
-        _filterVertices(rgCoords, filterMeters, 3);
+        ShapeVertices::filterNearby(rgCoords, filterMeters, 3);
         polygons.append(rgCoords);
     }
 
@@ -286,7 +265,7 @@ bool KMLHelper::loadPolylinesFromFile(const QString &kmlFile, QList<QList<QGeoCo
             continue;
         }
 
-        _filterVertices(rgCoords, filterMeters, 2);
+        ShapeVertices::filterNearby(rgCoords, filterMeters, 2);
         polylines.append(rgCoords);
     }
 
