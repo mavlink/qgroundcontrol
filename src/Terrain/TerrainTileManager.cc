@@ -79,7 +79,6 @@ bool TerrainTileManager::getAltitudesForCoordinates(const QList<QGeoCoordinate> 
             QGCTileReply* const reply =
                 new QGCTileReply(_networkManager, provider->getMapId(), provider->long2tileX(coordinate.longitude(), 1),
                                  provider->lat2tileY(coordinate.latitude(), 1), 1, this);
-            reply->setRequiresInternet(true);
             (void) connect(reply, &QGCTileReply::finished, this, &TerrainTileManager::_terrainDone);
             if (reply->start()) {
                 _state = TerrainQuery::State::Downloading;

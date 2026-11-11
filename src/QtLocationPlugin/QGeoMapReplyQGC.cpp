@@ -14,7 +14,6 @@ QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager* networkManager
 {
     qCDebug(QGeoTiledMapReplyQGCLog) << this;
 
-    _tileReply->setRequiresInternet(true);
     (void) connect(_tileReply, &QGCTileReply::finished, this, &QGeoTiledMapReplyQGC::_tileReplyFinished);
     (void) connect(this, &QGeoTiledMapReplyQGC::aborted, _tileReply, &QGCTileReply::abort);
 }

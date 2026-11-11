@@ -171,11 +171,6 @@ void QGCTileReply::_fetchFromServer()
         return;
     }
 
-    if (_requiresInternet && !QGCNetworkHelper::isInternetAvailable()) {
-        _finish(Error::NetworkError, QStringLiteral("network not available"));
-        return;
-    }
-
     QNetworkRequest request = tileRequest(*_provider, _x, _y, _zoom);
     if (request.url().isEmpty()) {
         _finish(Error::NetworkError, QStringLiteral("provider has no URL for the tile"));

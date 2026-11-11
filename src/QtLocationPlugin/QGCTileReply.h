@@ -38,9 +38,6 @@ public:
     QGCTileReply(QNetworkAccessManager* networkManager, int mapId, int x, int y, int zoom, QObject* parent = nullptr);
     ~QGCTileReply() override;
 
-    /// Asks the server only while the system reports internet access. Off by default: the server is always tried.
-    void setRequiresInternet(bool requiresInternet) { _requiresInternet = requiresInternet; }
-
     /// A cached tile the validator rejects is fetched from the server again. A tile from the server it rejects is a
     /// DataError and is not stored in the cache.
     void setValidator(Validator validator) { _validator = std::move(validator); }
@@ -98,7 +95,6 @@ private:
     const int _x;
     const int _y;
     const int _zoom;
-    bool _requiresInternet = false;
     Validator _validator;
     quint64 _tileSet = UINT64_MAX;
 
