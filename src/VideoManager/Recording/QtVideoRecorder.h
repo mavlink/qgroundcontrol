@@ -13,9 +13,10 @@
 /// a stream's decoded frames fed in through a QVideoFrameInput (QtMultimediaVideoReceiver). The capture session records
 /// with mediaRecorder(), which outlives it: a session going away mid-recording makes it finish the file and report it.
 ///
-/// start() records to "<file without suffix>.<suffix of the format used>", trying recordingFormats() in turn until one
-/// encodes. recordingStarted() follows once the first frame is encoded, or recordingFinished() with an error; a failed
-/// attempt leaves no file behind. Recordings carry their start time and VideoReceiver::recordingComment().
+/// start() records to "<file without suffix>.<suffix of the format used>", at the quality asked for, trying
+/// recordingFormats() in turn until one encodes. recordingStarted() follows once the first frame is encoded, or
+/// recordingFinished() with an error; a failed attempt leaves no file behind. Recordings carry their start time and
+/// VideoReceiver::recordingComment().
 class QtVideoRecorder : public QObject
 {
     Q_OBJECT
@@ -35,9 +36,11 @@ public:
     bool active() const { return _recorder->recorderState() != QMediaRecorder::StoppedState; }
 
     /// Records the capture session mediaRecorder() is set on to @p file, in @p container and @p codec where Qt can
-    /// encode them: see recordingFormats(). Reports recordingFinished() with an error when no format encodes.
+    /// encode them: see recordingFormats(). @p quality sets how large the file gets: Qt encodes for a constant
+    /// quality. Reports recordingFinished() with an error when no format encodes.
     void start(const QString& file, QMediaFormat::FileFormat container,
-               QMediaFormat::VideoCodec codec = QMediaFormat::VideoCodec::Unspecified);
+               QMediaFormat::VideoCodec codec = QMediaFormat::VideoCodec::Unspecified,
+               QMediaRecorder::Quality quality = QMediaRecorder::HighQuality);
     void stop();
     /// Stops recording and waits up to @p timeoutMs for the file to be finished: Qt writes it on its own thread, which
     /// the application's exit would cut short.
@@ -58,6 +61,8 @@ public:
     static QString recordingCodecName(const QString& key);
     /// The container of @p format.
     static QMediaFormat::FileFormat container(VideoReceiver::FileFormat format);
+    /// The quality of value @p value, one of VideoSettings::uvcRecordingQuality's; HighQuality for any other.
+    static QMediaRecorder::Quality recordingQuality(int value);
 
 signals:
     void recordingChanged(bool recording);
@@ -77,6 +82,7 @@ private:
 
     QMediaRecorder* const _recorder;
     QList<QMediaFormat> _pendingFormats;
+    QMediaRecorder::Quality _quality = QMediaRecorder::HighQuality;
     /// The file being recorded, without its suffix.
     QString _recordingBase;
     QString _recordingFile;

@@ -306,6 +306,17 @@
             "default": "",
             "label": "USB Camera Recording Codec",
             "keywords": "usb camera,uvc,webcam,record,codec,encoder,h264,h265,av1,vp9"
+        },
+        {
+            "name": "uvcRecordingQuality",
+            "shortDesc": "Quality a USB camera recording is encoded at.",
+            "longDesc": "How much detail a USB camera recording keeps, which sets how large its file gets: Qt's encoders aim at a constant quality rather than a bit rate.",
+            "type": "uint32",
+            "enumStrings": "Very Low,Low,Normal,High,Very High",
+            "enumValues": "0,1,2,3,4",
+            "default": 3,
+            "label": "USB Camera Recording Quality",
+            "keywords": "usb camera,uvc,webcam,record,quality,file size,bit rate"
         }
     ]
 }

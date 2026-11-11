@@ -165,7 +165,14 @@ QMediaFormat::FileFormat QtVideoRecorder::container(VideoReceiver::FileFormat fo
     return QMediaFormat::MPEG4;
 }
 
-void QtVideoRecorder::start(const QString& file, QMediaFormat::FileFormat container, QMediaFormat::VideoCodec codec)
+QMediaRecorder::Quality QtVideoRecorder::recordingQuality(int value)
+{
+    const bool valid = (value >= QMediaRecorder::VeryLowQuality) && (value <= QMediaRecorder::VeryHighQuality);
+    return valid ? static_cast<QMediaRecorder::Quality>(value) : QMediaRecorder::HighQuality;
+}
+
+void QtVideoRecorder::start(const QString& file, QMediaFormat::FileFormat container, QMediaFormat::VideoCodec codec,
+                            QMediaRecorder::Quality quality)
 {
     _pendingFormats = recordingFormats(container, codec);
     if (_pendingFormats.isEmpty()) {
@@ -175,6 +182,7 @@ void QtVideoRecorder::start(const QString& file, QMediaFormat::FileFormat contai
     }
     const QFileInfo info(file);
     _recordingBase = QStringLiteral("%1/%2").arg(info.path(), info.completeBaseName());
+    _quality = quality;
     _stopRequested = false;
     _recordNextFormat();
 }
@@ -186,7 +194,7 @@ void QtVideoRecorder::_recordNextFormat()
     _recordingError.clear();
     qCDebug(QtVideoRecorderLog) << "record" << _recordingFile << format.fileFormat() << format.videoCodec();
     _recorder->setMediaFormat(format);
-    _recorder->setQuality(QMediaRecorder::HighQuality);
+    _recorder->setQuality(_quality);
     // Tagged with the time it starts and the application, as GStreamer's recordings are (RecordingBranch).
     QMediaMetaData metaData;
     metaData.insert(QMediaMetaData::Date, QDateTime::currentDateTimeUtc());

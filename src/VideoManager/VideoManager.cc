@@ -54,9 +54,10 @@ struct VideoSettingReactionEntry
 };
 
 // Not listed: aspectRatio, read by VideoStreamController::aspectRatio(); videoFit, gridLines and showRecControl, read
-// by QML; showTelemetryOverlay, read by VideoTelemetryOverlay; recordingFormat, enableStorageLimit, maxVideoSize and
-// uvcRecordingCodec, read when a recording starts; uvcCameraFormat, uvcCameraRotation, uvcCameraMirror,
-// uvcWhiteBalance, uvcZoom, uvcExposureCompensation and uvcFocusMode, which go to the USB camera (_connectSettings()).
+// by QML; showTelemetryOverlay, read by VideoTelemetryOverlay; recordingFormat, enableStorageLimit, maxVideoSize,
+// uvcRecordingCodec and uvcRecordingQuality, read when a recording starts; uvcCameraFormat, uvcCameraRotation,
+// uvcCameraMirror, uvcWhiteBalance, uvcZoom, uvcExposureCompensation and uvcFocusMode, which go to the USB camera
+// (_connectSettings()).
 constexpr VideoSettingReactionEntry kVideoSettingReactions[] = {
     {&VideoSettings::videoSource, VideoSettingReaction::Reconfigure},
     {&VideoSettings::udpUrl, VideoSettingReaction::Reconfigure},

@@ -130,14 +130,14 @@ void UVCCameraController::unregisterVideoOutput(QQuickItem* videoOutput)
 }
 
 void UVCCameraController::startRecording(const QString& file, QMediaFormat::FileFormat container,
-                                         QMediaFormat::VideoCodec codec)
+                                         QMediaFormat::VideoCodec codec, QMediaRecorder::Quality quality)
 {
     if (_recorder->active() || !_captureSession || !canRecord()) {
         qCWarning(UVCCameraControllerLog) << "Can't record the camera now:" << file;
         emit recordingFinished(file, tr("The USB camera isn't running"));
         return;
     }
-    _recorder->start(file, container, codec);
+    _recorder->start(file, container, codec, quality);
 }
 
 void UVCCameraController::stopRecording()

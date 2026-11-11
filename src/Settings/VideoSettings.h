@@ -44,6 +44,7 @@ public:
     DEFINE_SETTINGFACT(uvcExposureCompensation)
     DEFINE_SETTINGFACT(uvcFocusMode)
     DEFINE_SETTINGFACT(uvcRecordingCodec)
+    DEFINE_SETTINGFACT(uvcRecordingQuality)
 
     /// videoFit's values (Video.SettingsGroup.json).
     enum VideoFit

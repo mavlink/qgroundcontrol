@@ -124,6 +124,7 @@ DECLARE_SETTINGSFACT(VideoSettings, uvcZoom)
 DECLARE_SETTINGSFACT(VideoSettings, uvcExposureCompensation)
 DECLARE_SETTINGSFACT(VideoSettings, uvcFocusMode)
 DECLARE_SETTINGSFACT(VideoSettings, uvcRecordingCodec)
+DECLARE_SETTINGSFACT(VideoSettings, uvcRecordingQuality)
 
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
 {

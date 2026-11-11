@@ -128,7 +128,7 @@
         },
         {
             "heading": "Local Video Storage",
-            "keywords": ["record", "recording format", "mp4", "mkv", "storage limit", "video file", "codec"],
+            "keywords": ["record", "recording format", "mp4", "mkv", "storage limit", "video file", "codec", "quality"],
             "showWhen": "!sourceDisabled",
             "controls": [
                 {
@@ -137,6 +137,11 @@
                 {
                     "control": "component",
                     "component": "UVCRecordingCodecComboBox",
+                    "showWhen": "QGroundControl.videoManager.isUvc"
+                },
+                {
+                    "setting": "videoSettings.uvcRecordingQuality",
+                    "control": "combobox",
                     "showWhen": "QGroundControl.videoManager.isUvc"
                 },
                 {

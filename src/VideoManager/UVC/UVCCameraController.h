@@ -138,7 +138,8 @@ public:
     /// Records the camera's video to @p file as QtVideoRecorder::start() does. Recreating the camera (another device or
     /// format, an unplug, a retry) ends the recording; Qt finishes writing the file.
     void startRecording(const QString& file, QMediaFormat::FileFormat container,
-                        QMediaFormat::VideoCodec codec = QMediaFormat::VideoCodec::Unspecified);
+                        QMediaFormat::VideoCodec codec = QMediaFormat::VideoCodec::Unspecified,
+                        QMediaRecorder::Quality quality = QMediaRecorder::HighQuality);
     void stopRecording();
     /// Stops recording and waits up to @p timeoutMs for the file to be finished: Qt writes it on its own thread, which
     /// the application's exit would cut short.

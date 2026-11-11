@@ -164,7 +164,8 @@ void VideoRecordingService::startRecording(const QString& baseName)
         _uvcCamera->startRecording(
             QStringLiteral("%1/%2.%3").arg(directory, name, VideoReceiver::fileExtension(format)),
             QtVideoRecorder::container(format),
-            QtVideoRecorder::recordingCodec(videoSettings->uvcRecordingCodec()->rawValue().toString()));
+            QtVideoRecorder::recordingCodec(videoSettings->uvcRecordingCodec()->rawValue().toString()),
+            QtVideoRecorder::recordingQuality(videoSettings->uvcRecordingQuality()->rawValue().toInt()));
     }
 }
 

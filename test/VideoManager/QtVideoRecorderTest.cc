@@ -128,9 +128,13 @@ void QtVideoRecorderTest::_testRecordsFrameInput()
     QSignalSpy startedSpy(&recorder, &QtVideoRecorder::recordingStarted);
     QSignalSpy finishedSpy(&recorder, &QtVideoRecorder::recordingFinished);
 
-    recorder.start(tempDir.filePath(QStringLiteral("frames.mkv")), QMediaFormat::Matroska);
+    recorder.start(tempDir.filePath(QStringLiteral("frames.mkv")), QMediaFormat::Matroska,
+                   QMediaFormat::VideoCodec::Unspecified, QtVideoRecorder::recordingQuality(1));
     QVERIFY(recorder.active());
     QVERIFY(!recorder.recording());
+    QCOMPARE(recorder.mediaRecorder()->quality(), QMediaRecorder::LowQuality);
+    // A stored value that is no quality records as before there was a choice.
+    QCOMPARE(QtVideoRecorder::recordingQuality(7), QMediaRecorder::HighQuality);
 
     // 30 fps frames, as a live stream sends them, until a second after the recording started: the encoders this
     // platform lacks fail on the first frames, and the recorder moves on to the next format.
