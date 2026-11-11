@@ -466,21 +466,25 @@ void GPSReceiverSettingsBindingTest::_settingsBindingsCoverEveryFact_data()
 {
     QTest::addColumn<SettingsGroup*>("group");
     QTest::addColumn<QList<Fact*>>("bound");
+    QTest::addColumn<QList<Fact*>>("unbound");
 
-    // A new setting must be bound.
+    // A new setting must be bound, unless no service reads it: RTKSettings itself keeps the saved base sites.
     SettingsManager* const settings = SettingsManager::instance();
     QTest::newRow("RTK") << static_cast<SettingsGroup*>(settings->rtkSettings())
-                         << GPSSettingsBindings::_boundFacts(settings->rtkSettings());
+                         << GPSSettingsBindings::_boundFacts(settings->rtkSettings())
+                         << QList<Fact*>{settings->rtkSettings()->savedBaseSites()};
     QTest::newRow("NTRIP") << static_cast<SettingsGroup*>(settings->ntripSettings())
-                           << GPSSettingsBindings::_boundFacts(settings->ntripSettings());
+                           << GPSSettingsBindings::_boundFacts(settings->ntripSettings()) << QList<Fact*>{};
     QTest::newRow("GPSCorrection") << static_cast<SettingsGroup*>(settings->gpsCorrectionSettings())
-                                   << GPSSettingsBindings::_boundFacts(settings->gpsCorrectionSettings());
+                                   << GPSSettingsBindings::_boundFacts(settings->gpsCorrectionSettings())
+                                   << QList<Fact*>{};
 }
 
 void GPSReceiverSettingsBindingTest::_settingsBindingsCoverEveryFact()
 {
     QFETCH(SettingsGroup*, group);
     QFETCH(QList<Fact*>, bound);
+    QFETCH(QList<Fact*>, unbound);
 
     const QMetaObject* const metaObject = group->metaObject();
     for (int i = SettingsGroup::staticMetaObject.propertyCount(); i < metaObject->propertyCount(); ++i) {
@@ -488,7 +492,8 @@ void GPSReceiverSettingsBindingTest::_settingsBindingsCoverEveryFact()
         if (property.metaType() != QMetaType::fromType<Fact*>()) {
             continue;
         }
-        QVERIFY2(bound.count(property.read(group).value<Fact*>()) == 1,
+        Fact* const fact = property.read(group).value<Fact*>();
+        QVERIFY2(bound.count(fact) == (unbound.contains(fact) ? 0 : 1),
                  qPrintable(QStringLiteral("%1 must be bound once").arg(QString::fromLatin1(property.name()))));
     }
 }

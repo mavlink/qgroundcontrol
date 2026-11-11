@@ -1,8 +1,19 @@
 #include "RTKSettings.h"
 
+#include <algorithm>
+#include <cmath>
+#include <optional>
+#include <utility>
+
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
 #include <QtCore/QSettings>
 
 #include "AutoConnectSettings.h"
+#include "QGCLoggingCategory.h"
+
+QGC_LOGGING_CATEGORY(RTKSettingsLog, "GPS.Settings.RTKSettings")
 
 namespace {
 // Values persisted before receivers had roles.
@@ -94,11 +105,149 @@ void migrateLegacySettings()
     settings.endGroup();
 }
 
+// The keys of a saved base site.
+constexpr QLatin1StringView kSiteName("name");
+constexpr QLatin1StringView kSiteLatitude("latitude");
+constexpr QLatin1StringView kSiteLongitude("longitude");
+constexpr QLatin1StringView kSiteAltitude("altitude");
+constexpr QLatin1StringView kSiteAccuracy("accuracy");
+
+bool validBaseSite(const RTKBaseSite& site)
+{
+    return !site.name.isEmpty() && site.name.size() <= RTKSettings::MaxBaseSiteNameLength &&
+           std::isfinite(site.latitude) && std::abs(site.latitude) <= 90. && std::isfinite(site.longitude) &&
+           std::abs(site.longitude) <= 180. && std::isfinite(site.altitude) && std::isfinite(site.accuracy);
+}
+
+/// The site a saved entry holds; empty for an entry that is not a valid site.
+std::optional<RTKBaseSite> baseSiteFromJson(const QJsonValue& entry)
+{
+    const QJsonObject object = entry.toObject();
+    const QJsonValue name = object.value(kSiteName);
+    const QJsonValue latitude = object.value(kSiteLatitude);
+    const QJsonValue longitude = object.value(kSiteLongitude);
+    const QJsonValue altitude = object.value(kSiteAltitude);
+    const QJsonValue accuracy = object.value(kSiteAccuracy);
+    if (!name.isString() || !latitude.isDouble() || !longitude.isDouble() || !altitude.isDouble() ||
+        !accuracy.isDouble()) {
+        return std::nullopt;
+    }
+    const RTKBaseSite site{.name = name.toString().trimmed(),
+                           .latitude = latitude.toDouble(),
+                           .longitude = longitude.toDouble(),
+                           .altitude = altitude.toDouble(),
+                           .accuracy = accuracy.toDouble()};
+    return validBaseSite(site) ? std::optional(site) : std::nullopt;
+}
+
+QJsonObject baseSiteToJson(const RTKBaseSite& site)
+{
+    return {{kSiteName, site.name},
+            {kSiteLatitude, site.latitude},
+            {kSiteLongitude, site.longitude},
+            {kSiteAltitude, site.altitude},
+            {kSiteAccuracy, site.accuracy}};
+}
+
 }  // namespace
 
 DECLARE_SETTINGGROUP(RTK, "RTK")
 {
     migrateLegacySettings();
+    (void) connect(savedBaseSites(), &Fact::rawValueChanged, this, &RTKSettings::_loadBaseSites);
+    _loadBaseSites();
+}
+
+bool RTKSettings::saveBaseSite(const RTKBaseSite& site)
+{
+    RTKBaseSite saved = site;
+    saved.name = site.name.trimmed();
+    if (!validBaseSite(saved)) {
+        return false;
+    }
+    QList<RTKBaseSite> sites = _baseSites;
+    const auto existing = std::ranges::find(sites, saved.name, &RTKBaseSite::name);
+    if (existing != sites.end()) {
+        *existing = saved;
+    } else if (sites.size() < MaxBaseSites) {
+        sites.append(saved);
+    } else {
+        return false;
+    }
+    _storeBaseSites(sites);
+    return true;
+}
+
+bool RTKSettings::saveFixedBasePositionAsSite(const QString& siteName)
+{
+    return saveBaseSite({.name = siteName,
+                         .latitude = fixedBasePositionLatitude()->rawValue().toDouble(),
+                         .longitude = fixedBasePositionLongitude()->rawValue().toDouble(),
+                         .altitude = fixedBasePositionAltitude()->rawValue().toDouble(),
+                         .accuracy = fixedBasePositionAccuracy()->rawValue().toDouble()});
+}
+
+bool RTKSettings::useBaseSite(const QString& siteName)
+{
+    const auto saved = std::ranges::find(std::as_const(_baseSites), siteName, &RTKBaseSite::name);
+    if (saved == _baseSites.cend()) {
+        return false;
+    }
+    // A copy: an observer of the position Facts may change the sites.
+    const RTKBaseSite site = *saved;
+    fixedBasePositionLatitude()->setRawValue(site.latitude);
+    fixedBasePositionLongitude()->setRawValue(site.longitude);
+    fixedBasePositionAltitude()->setRawValue(site.altitude);
+    fixedBasePositionAccuracy()->setRawValue(site.accuracy);
+    return true;
+}
+
+bool RTKSettings::removeBaseSite(const QString& siteName)
+{
+    QList<RTKBaseSite> sites = _baseSites;
+    if (sites.removeIf([&siteName](const RTKBaseSite& site) { return site.name == siteName; }) == 0) {
+        return false;
+    }
+    _storeBaseSites(sites);
+    return true;
+}
+
+void RTKSettings::_loadBaseSites()
+{
+    const QString saved = savedBaseSites()->rawValue().toString();
+    const QJsonDocument document = QJsonDocument::fromJson(saved.toUtf8());
+    const QJsonArray entries = document.array();
+    QList<RTKBaseSite> sites;
+    for (const QJsonValue& entry : entries) {
+        const std::optional<RTKBaseSite> site = baseSiteFromJson(entry);
+        if (site && sites.size() < MaxBaseSites &&
+            std::ranges::find(sites, site->name, &RTKBaseSite::name) == sites.cend()) {
+            sites.append(*site);
+        }
+    }
+    // The entries hold the base station's location, so the log only counts them.
+    if (!saved.isEmpty() && !document.isArray()) {
+        qCWarning(RTKSettingsLog) << "The saved base sites are not a JSON array; none are used";
+    } else if (sites.size() != entries.size()) {
+        qCWarning(RTKSettingsLog) << "Dropped" << entries.size() - sites.size() << "of" << entries.size()
+                                  << "saved base sites: not a valid site, a repeated name, or more than"
+                                  << static_cast<int>(MaxBaseSites);
+    }
+    if (sites != _baseSites) {
+        _baseSites = sites;
+        emit baseSitesChanged();
+    }
+}
+
+void RTKSettings::_storeBaseSites(const QList<RTKBaseSite>& sites)
+{
+    QJsonArray entries;
+    for (const RTKBaseSite& site : sites) {
+        entries.append(baseSiteToJson(site));
+    }
+    // The Fact's change loads the sites back.
+    savedBaseSites()->setRawValue(
+        sites.isEmpty() ? QString() : QString::fromUtf8(QJsonDocument(entries).toJson(QJsonDocument::Compact)));
 }
 
 DECLARE_SETTINGSFACT(RTKSettings, receiverRole)
@@ -121,3 +270,4 @@ DECLARE_SETTINGSFACT(RTKSettings, fixedBasePositionLongitude)
 DECLARE_SETTINGSFACT(RTKSettings, fixedBasePositionAltitude)
 DECLARE_SETTINGSFACT(RTKSettings, fixedBasePositionAccuracy)
 DECLARE_SETTINGSFACT(RTKSettings, compactRtcmCorrections)
+DECLARE_SETTINGSFACT(RTKSettings, savedBaseSites)

@@ -164,7 +164,7 @@ QGCGroupBox {
         visible: surveySave.offered
         text: root._surveySaved
               ? qsTr("Survey position saved. Select Fixed position to start from it next time.")
-              : qsTr("Survey complete. Save this position to start the base from it next time.")
+              : qsTr("Survey complete. Save this position to start the base from it next time. A site name also keeps it as a saved base site.")
     }
 
     ColumnLayout {
@@ -180,20 +180,34 @@ QGCGroupBox {
         visible: offered && !root._surveySaved
         onVisibleChanged: failed = false
 
+        QGCTextField {
+            id: surveySiteName
+            objectName: "rtkSurveySiteName"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 0
+            maximumLength: RTKSettings.MaxBaseSiteNameLength
+            placeholderText: qsTr("Site name (optional)")
+        }
+
         QGCButton {
             objectName: "rtkSurveySaveButton"
             Layout.fillWidth: true
             Layout.minimumWidth: 0
             wrapMode: Text.Wrap
             text: qsTr("Save Survey Position")
-            onClicked: surveySave.failed = !QGroundControl.gpsManager.saveCurrentBasePosition()
+            onClicked: surveySave.failed = !QGroundControl.gpsManager.saveCurrentBasePosition(surveySiteName.text)
         }
 
         GPSNoteLabel {
             objectName: "rtkSurveySaveFailed"
             visible: surveySave.failed
             warning: true
-            text: qsTr("The survey position could not be saved.")
+            text: qsTr("The survey position was not saved. The list of saved base sites is full: delete a site in the receiver settings, or save without a site name.")
+        }
+
+        Connections {
+            target: QGroundControl.settingsManager.rtkSettings
+            function onBaseSitesChanged() { surveySave.failed = false }
         }
     }
 }

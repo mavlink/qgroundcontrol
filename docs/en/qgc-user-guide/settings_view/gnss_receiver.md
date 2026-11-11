@@ -35,6 +35,7 @@ The settings are:
     **Survey-In accuracy** (u-blox) is the position accuracy the survey must reach, and **Min observation time** how long it lasts at least.
     A Quectel receiver shows **Observation accuracy limit**, which filters each 1 Hz observation, and **Accepted observation time**, which counts the accepted observations.
   - **Fixed position:** The base starts from a known position: **Base Position Latitude**, **Base Position Longitude**, **Base Position Alt (WGS84)** and, for u-blox, **Base Position Accuracy**.
+    [Saved base sites](#base_sites) keep several such positions under a name.
   - **Receiver-managed averaging:** The receiver averages its position for up to **Maximum averaging time**, without an accuracy guarantee (Unicore).
 - **Compact RTCM corrections (MSM4)** (u-blox): Sends MSM4 instead of MSM7 observations, about a third less correction bandwidth for slow telemetry links.
 - **Allow flash save and restart** (Quectel): For the next connection only, lets QGroundControl save base settings to the receiver's flash and restart it.
@@ -73,6 +74,21 @@ Survey-In is time consuming, so save its result: when a survey completes, the re
 Select **Fixed position** to start the base from the saved position next time.
 The values persist across QGC reboots until they are changed.
 :::
+
+#### Saved Base Sites {#base_sites}
+
+The fixed position settings hold one base position, which **Save Survey Position** replaces.
+To work from several places, keep each position as a named site:
+
+- When a survey completes, enter a **Site name** before you select **Save Survey Position**.
+  The surveyed position becomes the fixed base position and is also kept under that name.
+- With **Fixed position** selected, enter a name under **Save base position as site** and select **Save Site** to keep the base position the settings show.
+- Under **Saved base sites**, select a site and **Use Site** to make it the fixed base position, or **Delete Site** to remove it.
+  Selecting a site changes nothing until you use it.
+  A connected base keeps the position it started from, so disconnect the receiver to use a site.
+
+Saving under a name that is already saved replaces that site.
+Up to 50 sites are kept; when the list is full, delete a site before you save another, or save a survey without a site name.
 
 ### Passive Receiver {#passive}
 

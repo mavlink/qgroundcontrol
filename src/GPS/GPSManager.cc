@@ -76,15 +76,22 @@ GPSManager* GPSManager::instance()
     return _gpsManager();
 }
 
-bool GPSManager::saveCurrentBasePosition()
+bool GPSManager::saveCurrentBasePosition(const QString& siteName)
 {
     // A copy: a settings observer may reconfigure the receiver, which rewrites the receiver Facts.
     const std::optional<GPSBaseStationConfig::Fixed> base = _receiver->facts()->currentBasePosition();
     if (!base) {
         return false;
     }
-    _receiver->facts()->_setCurrentBasePositionSaved(true);
     RTKSettings* settings = SettingsManager::instance()->rtkSettings();
+    if (!siteName.trimmed().isEmpty() && !settings->saveBaseSite({.name = siteName,
+                                                                  .latitude = base->position.latitudeDegrees,
+                                                                  .longitude = base->position.longitudeDegrees,
+                                                                  .altitude = base->position.altitudeMeters,
+                                                                  .accuracy = base->accuracyMeters})) {
+        return false;
+    }
+    _receiver->facts()->_setCurrentBasePositionSaved(true);
     settings->fixedBasePositionLatitude()->setRawValue(base->position.latitudeDegrees);
     settings->fixedBasePositionLongitude()->setRawValue(base->position.longitudeDegrees);
     settings->fixedBasePositionAltitude()->setRawValue(base->position.altitudeMeters);

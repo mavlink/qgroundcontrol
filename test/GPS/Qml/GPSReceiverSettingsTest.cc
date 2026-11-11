@@ -95,6 +95,26 @@ struct Panel
     GPSTest::QmlEngine engine;
     std::unique_ptr<QObject> item;
 };
+
+QStringList siteNames(const RTKSettings* settings)
+{
+    QStringList names;
+    for (const RTKBaseSite& site : settings->baseSites()) {
+        names.append(site.name);
+    }
+    return names;
+}
+
+/// Saves sites until the list is full; false when one is refused.
+[[nodiscard]] bool fillBaseSites(RTKSettings* settings)
+{
+    for (qsizetype i = settings->baseSites().size(); i < RTKSettings::MaxBaseSites; ++i) {
+        if (!settings->saveBaseSite({.name = QStringLiteral("Site %1").arg(i), .latitude = 1., .longitude = 2.})) {
+            return false;
+        }
+    }
+    return true;
+}
 }  // namespace
 
 void GPSReceiverSettingsTest::_surveySaveWorkflow()
@@ -171,6 +191,8 @@ void GPSReceiverSettingsTest::_surveyCompletePrompt()
     QCOMPARE(settings.settings->fixedBasePositionAccuracy()->rawValue().toDouble(), 0.75);
     QVERIFY(!save->property("visible").toBool());
     QVERIFY(prompt->property("text").toString().contains(QStringLiteral("saved")));
+    // Without a site name only the fixed base position is kept.
+    QVERIFY(settings.settings->baseSites().isEmpty());
 
     // Another view of the receiver knows the position is saved; a new survey offers saving its result again.
     auto other = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")));
@@ -210,6 +232,116 @@ void GPSReceiverSettingsTest::_surveySaveNeedsApplicationReceiver()
     QVERIFY(accuracy->property("visible").toBool());
     QVERIFY(!prompt->property("visible").toBool());
     QVERIFY(!save->property("visible").toBool());
+}
+
+void GPSReceiverSettingsTest::_surveySavedAsSite()
+{
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::ublox));
+    RTKSettings* const rtk = settings.settings;
+    settings.saved.setFactValue(rtk->savedBaseSites(), QString());
+    AppReceiver base;
+    QVERIFY(base.connect());
+    GPSTest::QmlEngine engine;
+    auto status = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")));
+    QVERIFY2(status, qPrintable(engine.lastError()));
+    auto* name = status->findChild<QObject*>(QStringLiteral("rtkSurveySiteName"));
+    auto* save = status->findChild<QObject*>(QStringLiteral("rtkSurveySaveButton"));
+    auto* failed = status->findChild<QObject*>(QStringLiteral("rtkSurveySaveFailed"));
+    QVERIFY(name && save && failed);
+    QCOMPARE(name->property("maximumLength").toInt(), static_cast<int>(RTKSettings::MaxBaseSiteNameLength));
+    QVERIFY(!name->property("visible").toBool());
+    base.survey(0.75);
+    QVERIFY(name->property("visible").toBool());
+    QVERIFY(!failed->property("visible").toBool());
+
+    // A full list cannot keep another site: nothing is saved, and the panel says why.
+    QVERIFY(fillBaseSites(rtk));
+    const QString site = QStringLiteral("North field");
+    QVERIFY(name->setProperty("text", QStringLiteral(" North field ")));
+    QVERIFY(QMetaObject::invokeMethod(save, "clicked"));
+    QVERIFY(failed->property("visible").toBool());
+    QVERIFY(save->property("visible").toBool());
+    QVERIFY(!base.facts()->currentBasePositionSaved());
+    QCOMPARE(rtk->fixedBasePositionLatitude()->rawValue().toDouble(), 0.0);
+    QVERIFY(!siteNames(rtk).contains(site));
+
+    // With room for it, the survey becomes the fixed base position and a site of that name.
+    QVERIFY(rtk->removeBaseSite(QStringLiteral("Site 0")));
+    QVERIFY(!failed->property("visible").toBool());
+    QVERIFY(QMetaObject::invokeMethod(save, "clicked"));
+    QVERIFY(!save->property("visible").toBool());
+    QCOMPARE(rtk->fixedBasePositionLatitude()->rawValue().toDouble(), kSurveyedPosition.latitudeDegrees);
+    const RTKBaseSite surveyed{.name = site,
+                               .latitude = kSurveyedPosition.latitudeDegrees,
+                               .longitude = kSurveyedPosition.longitudeDegrees,
+                               .altitude = kSurveyedPosition.altitudeMeters,
+                               .accuracy = 0.75};
+    QCOMPARE(rtk->baseSites().last(), surveyed);
+}
+
+void GPSReceiverSettingsTest::_baseSitePicker()
+{
+    Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));
+    RTKSettings* const settings = panel.settings.settings;
+    TestFixtures::SettingsFixture& saved = panel.settings.saved;
+    saved.setFactValue(settings->savedBaseSites(), QString());
+    saved.setFactValue(settings->useFixedBasePosition(), static_cast<int>(BaseModeDefinition::Mode::BaseFixed));
+    saved.setFactValue(settings->fixedBasePositionLatitude(), 47.5);
+    saved.setFactValue(settings->fixedBasePositionLongitude(), 8.25);
+    saved.setFactValue(settings->fixedBasePositionAltitude(), 512.5);
+    saved.setFactValue(settings->fixedBasePositionAccuracy(), 0.75);
+    QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
+    auto* picker = panel.find("rtkBaseSitePicker");
+    auto* use = panel.find("rtkBaseSiteUse");
+    auto* remove = panel.find("rtkBaseSiteDelete");
+    auto* name = panel.find("rtkBaseSiteName");
+    auto* save = panel.find("rtkBaseSiteSave");
+    auto* failed = panel.find("rtkBaseSiteSaveFailed");
+    QVERIFY(picker && use && remove && name && save && failed);
+    // Without a saved site there is nothing to pick, and a site needs a name, which the settings limit.
+    QVERIFY(!picker->isVisible());
+    QVERIFY(name->isVisible());
+    QVERIFY(!save->isEnabled());
+    QCOMPARE(name->property("maximumLength").toInt(), static_cast<int>(RTKSettings::MaxBaseSiteNameLength));
+
+    const QString north = QStringLiteral("North field");
+    const QString south = QStringLiteral("South field");
+    QVERIFY(name->setProperty("text", north));
+    QVERIFY(QMetaObject::invokeMethod(save, "clicked"));
+    settings->fixedBasePositionLatitude()->setRawValue(-33.5);
+    QVERIFY(name->setProperty("text", south));
+    QVERIFY(QMetaObject::invokeMethod(save, "clicked"));
+    QCOMPARE(siteNames(settings), (QStringList{north, south}));
+    // The picker shows the site just saved, not the first one a new list selects.
+    QVERIFY(picker->isVisible());
+    QCOMPARE(picker->property("currentText").toString(), south);
+
+    // Picking a site changes nothing until it is used, which makes it the fixed base position the receiver starts from.
+    QVERIFY(picker->setProperty("currentIndex", 0));
+    QCOMPARE(settings->fixedBasePositionLatitude()->rawValue().toDouble(), -33.5);
+    QVERIFY(QMetaObject::invokeMethod(use, "clicked"));
+    QCOMPARE(settings->fixedBasePositionLatitude()->rawValue().toDouble(), 47.5);
+    QVERIFY(panel.receiver.gps.connectReceiver());
+    const GPSBaseStationConfig::Mode northPosition = GPSBaseStationConfig::Fixed{
+        .position = {.latitudeDegrees = 47.5, .longitudeDegrees = 8.25, .altitudeMeters = 512.5},
+        .accuracyMeters = 0.75f};
+    QVERIFY(panel.receiver.worker()->capturedConfig().base.mode == northPosition);
+    // A connected receiver keeps its position, which can still be saved as a site.
+    QVERIFY(!use->isEnabled());
+    QVERIFY(save->isEnabled() && remove->isEnabled());
+    panel.receiver.gps.disconnectReceiver();
+
+    // A full list refuses another name and says so until there is room.
+    QVERIFY(fillBaseSites(settings));
+    QVERIFY(name->setProperty("text", QStringLiteral("One too many")));
+    QVERIFY(QMetaObject::invokeMethod(save, "clicked"));
+    QVERIFY(failed->isVisible());
+    QCOMPARE(settings->baseSites().size(), RTKSettings::MaxBaseSites);
+    QVERIFY(picker->setProperty("currentIndex", 1));
+    QVERIFY(QMetaObject::invokeMethod(remove, "clicked"));
+    QVERIFY(!failed->isVisible());
+    QVERIFY(!siteNames(settings).contains(south));
+    QCOMPARE(siteNames(settings).first(), north);
 }
 
 void GPSReceiverSettingsTest::_statusListsConstellations()

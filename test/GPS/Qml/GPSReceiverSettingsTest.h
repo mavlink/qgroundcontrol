@@ -11,6 +11,8 @@ private slots:
     void _surveySaveWorkflow();
     void _surveyCompletePrompt();
     void _surveySaveNeedsApplicationReceiver();
+    void _surveySavedAsSite();
+    void _baseSitePicker();
     void _statusListsConstellations();
     void _reconnectingOffersDisconnect();
     void _tcpConnectionFields();

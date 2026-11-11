@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class GPSCorrectionManager;
@@ -55,9 +56,10 @@ public:
 
     PositionManager* positionManager() const { return _positionManager; }
 
-    /// Stores the receiver's current position and accuracy as the fixed base position for a later connection.
-    /// Returns false, leaving the settings unchanged, when the receiver's facts cannot save the current position.
-    Q_INVOKABLE bool saveCurrentBasePosition();
+    /// Stores the receiver's current position and accuracy as the fixed base position for a later connection, and as
+    /// the saved base site @a siteName when a name is given. Returns false, leaving the settings unchanged, when the
+    /// receiver's facts cannot save the current position or the settings cannot save the site.
+    Q_INVOKABLE bool saveCurrentBasePosition(const QString& siteName = {});
 
 private:
     /// Supplies NTRIP's GGA positions from the active vehicle, the local receiver and the ground station. Must precede

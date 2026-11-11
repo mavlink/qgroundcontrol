@@ -14,7 +14,7 @@
         {
             "component": "GPSReceiverSettings",
             "sectionName": "GNSS Receiver",
-            "keywords": ["rtk", "gnss", "gps", "nmea", "external gps", "base station", "receiver", "role", "passive", "position only", "survey-in", "fixed position", "u-blox", "septentrio", "automatic", "detection", "serial", "tcp", "udp", "startup", "auto connect"]
+            "keywords": ["rtk", "gnss", "gps", "nmea", "external gps", "base station", "receiver", "role", "passive", "position only", "survey-in", "fixed position", "saved base sites", "u-blox", "septentrio", "automatic", "detection", "serial", "tcp", "udp", "startup", "auto connect"]
         },
         {
             "component": "GcsPositionStatus",
