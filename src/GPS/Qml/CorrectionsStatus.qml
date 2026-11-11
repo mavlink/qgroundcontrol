@@ -15,6 +15,8 @@ QGCGroupBox {
     property GPSCorrectionManager corrections: QGroundControl.gpsManager.corrections
     /// Keep the group visible while no correction source is configured.
     property bool showWhenInactive: true
+    /// Show the base station's coordinates; its distance from the ground station shows either way.
+    property bool showCoordinates: true
     /// Where the distance to the base station is measured from.
     property geoCoordinate gcsPosition: QGroundControl.positionManager.gcsPosition
 
@@ -81,7 +83,7 @@ QGCGroupBox {
 
     LabelledLabel {
         objectName: "correctionsBasePosition"
-        visible: root._baseKnown
+        visible: root.showCoordinates && root._baseKnown
         label: qsTr("Base position")
         //: %1 is a latitude and %2 a longitude, in degrees
         labelText: qsTr("%1, %2").arg(root._basePosition.latitude.toFixed(7))
