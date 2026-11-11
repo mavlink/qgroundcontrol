@@ -47,8 +47,10 @@ struct NTRIPManagerDependencies
 /// state machine. All connection state changes flow through `_dispatch()` and
 /// the transition table in NTRIPManager.cc — there is no second, internal
 /// state enum. Entry actions own per-state side effects: each Connecting entry
-/// opens a new transport and registers it as the NTRIP correction source,
-/// teardown retires both, and the manager schedules reconnects.
+/// registers the stream as the NTRIP correction source, in place of the previous
+/// registration, and opens a new transport; Reconnecting, Error and Disconnected
+/// retire the transport; only Disconnected releases the registration; and the
+/// manager schedules reconnects.
 class NTRIPManager : public QObject
 {
     Q_OBJECT
@@ -191,10 +193,11 @@ private:
     /// Default user-visible message for a state. Callers may override via detail.
     static QString _defaultMessageFor(ConnectionStatus state);
 
-    /// Stops the previous stream, validates the configuration, then opens a new transport and registers it as the
-    /// NTRIP correction source.
+    /// Stops the previous stream, registers the new one as the NTRIP correction source in place of the previous
+    /// registration, then validates the configuration and opens a new transport.
     void _openSession();
-    /// Ends the correction source, retires the transport, and stops GGA and statistics.
+    /// Retires the transport and stops GGA and statistics. The correction source stays registered; it is selected
+    /// only while its corrections are fresh.
     void _stopStreaming();
 
     // The single-shot reconnect timer fires ReconnectDue; a failure after the attempt ceiling fires ReconnectGaveUp.
@@ -232,7 +235,8 @@ private:
 
     TransportFactory _transportFactory;
     QPointer<NTRIPTransport> _transport;
-    /// The stream's registration as the NTRIP correction source.
+    /// The stream's registration as the NTRIP correction source, from _openSession() until the next one or the
+    /// Disconnected state.
     std::unique_ptr<GPSCorrectionSourceHandle> _correctionSource;
 
     const QPointer<GPSCorrectionManager> _correctionManager;
