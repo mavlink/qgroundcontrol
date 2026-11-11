@@ -523,6 +523,61 @@ void GPSReceiverConnectionPolicyTest::_observerReplacesReadyReceiver()
     scripted.workers.finishRetired();
 }
 
+void GPSReceiverConnectionPolicyTest::_observerActsOnPositionRelease_data()
+{
+    QTest::addColumn<bool>("reconnects");
+    QTest::newRow("reconnects") << true;
+    QTest::newRow("disconnects") << false;
+}
+
+void GPSReceiverConnectionPolicyTest::_observerActsOnPositionRelease()
+{
+    QFETCH(bool, reconnects);
+    ManualScheduler scheduler;
+    PositionManager positions;
+    ScriptedGPSReceiver scripted(&scheduler, {.positions = &positions});
+    GPSReceiver& receiver = scripted.receiver;
+    receiver.setConfiguration(tcpConfiguration());
+    QVERIFY(receiver.connectReceiver());
+    scripted.workers.current()->ready();
+    scripted.workers.current()->position(locatedFix(GPSFixQuality::Fix3D));
+    QCOMPARE(positions.selectedSource(), PositionManager::SelectedSource::Receiver);
+    // A lost receiver stops being the position source before anything else reports it.
+    QObject observer;
+    bool acted = false;
+    connect(&positions, &PositionManager::selectionChanged, &observer, [&] {
+        if (receiver.hasReceiver() || std::exchange(acted, true)) {
+            return;
+        }
+        if (reconnects) {
+            (void) receiver.connectReceiver();
+        } else {
+            receiver.disconnectReceiver();
+        }
+    });
+    const auto loseConnection = [&] {
+        expectLogMessage(kReceiverLog, QtWarningMsg, QRegularExpression(QStringLiteral("session ended")));
+        scripted.workers.current()->fail(GPSConnectionError::DeviceError);
+        verifyExpectedLogMessage();
+    };
+
+    loseConnection();
+    QVERIFY(acted);
+    // As for an observer of the receiver's own signals, its request is the last word.
+    QCOMPARE(receiver.hasReceiver(), reconnects);
+    QCOMPARE(scripted.workers.count(), reconnects ? 2 : 1);
+    QVERIFY(receiver.errorMessage().isEmpty());
+    QVERIFY(!receiver.reconnecting());
+    QVERIFY(!_retryPending(receiver));
+    if (reconnects) {
+        scripted.workers.current()->ready();
+        loseConnection();
+        QVERIFY(receiver.reconnecting());
+    }
+    receiver.shutdown();
+    scripted.workers.finishRetired();
+}
+
 void GPSReceiverConnectionPolicyTest::_sessionEndMessages_data()
 {
     QTest::addColumn<GPSConnectionError>("error");

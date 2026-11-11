@@ -312,6 +312,12 @@ private:
     void _endSession(GPSConnectionError error, const QString& detail, GPSReceiverSessionEnd end);
     /// The retired session is deleted later, so it may be retired from inside its own signals.
     void _retireSession();
+    /// The first half of _retireSession(), which notifies nobody: the receiver has no session from here on.
+    /// @return the session to _retire() once the caller's own state is settled; null without one.
+    [[nodiscard]] GPSReceiverSession* _detachSession();
+    /// The second half: ends @a session's registrations and the position it published, whose observers may connect
+    /// or disconnect as they are notified.
+    void _retire(GPSReceiverSession* session);
     /// Waits for the workers of retired sessions and deletes those that have exited.
     void _joinRetiredWorkers();
 

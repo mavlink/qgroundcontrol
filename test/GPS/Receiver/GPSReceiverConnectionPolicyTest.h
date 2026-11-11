@@ -21,6 +21,8 @@ private slots:
     void _observerActsOnReport_data();
     void _observerActsOnReport();
     void _observerReplacesReadyReceiver();
+    void _observerActsOnPositionRelease_data();
+    void _observerActsOnPositionRelease();
     void _sessionEndMessages_data();
     void _sessionEndMessages();
     void _pollingTicksReceiver();

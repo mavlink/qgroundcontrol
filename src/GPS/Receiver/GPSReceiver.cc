@@ -274,7 +274,7 @@ void GPSReceiver::_endSession(GPSConnectionError error, const QString& detail, G
 {
     // The family an Automatic session detected, else the selected one.
     const auto* family = _session ? gpsReceiverDescriptorForManufacturer(_session->manufacturer()) : nullptr;
-    _retireSession();
+    GPSReceiverSession* const ended = _detachSession();
     _setPersistentChangesAllowed(false);
     const GPSReceiverSessionOutcome outcome = _connection->sessionEnded(end);
     const bool portRemoved = end == GPSReceiverSessionEnd::Unplugged;
@@ -294,7 +294,9 @@ void GPSReceiver::_endSession(GPSConnectionError error, const QString& detail, G
         }
         _setError(GPSReceiverMessages::sessionEnded(outcome, error, detail, end));
     }
-    // Last, because the status Facts notify as they reset and an observer may connect or disconnect from there.
+    // Last, because the session's registrations notify as they end and the status Facts as they reset, and an
+    // observer may connect or disconnect from there.
+    _retire(ended);
     _resetStatus();
 }
 
@@ -607,13 +609,26 @@ bool GPSReceiver::_connectReceiver(GPSType type, GPSReceiverWorker::TransportFac
 
 void GPSReceiver::_retireSession()
 {
-    if (auto* const retired = std::exchange(_session, nullptr)) {
+    _retire(_detachSession());
+}
+
+GPSReceiverSession* GPSReceiver::_detachSession()
+{
+    GPSReceiverSession* const detached = std::exchange(_session, nullptr);
+    if (detached) {
         _retiredWorkers.removeIf([](const QPointer<GPSReceiverWorker>& worker) { return worker.isNull(); });
-        if (QPointer<GPSReceiverWorker> worker = retired->worker()) {
+        if (QPointer<GPSReceiverWorker> worker = detached->worker()) {
             _retiredWorkers.append(std::move(worker));
         }
-        retired->deleteLater();
-        retired->retire();
+        detached->deleteLater();
+    }
+    return detached;
+}
+
+void GPSReceiver::_retire(GPSReceiverSession* session)
+{
+    if (session) {
+        session->retire();
     }
     _positionHealth->reset();
 }
