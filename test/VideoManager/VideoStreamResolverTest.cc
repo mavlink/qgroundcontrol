@@ -68,6 +68,18 @@ void VideoStreamResolverTest::_testResolve_data()
     QTest::newRow("auto UDP port over manual UDP") << udp264 << QString() << int(VIDEO_STREAM_TYPE_RTPUDP) << h264 << QStringLiteral("5601") << primary << QStringLiteral("udp://0.0.0.0:5601") << timeout;
     QTest::newRow("auto UDP h.265 port") << QString(VideoSettings::videoDisabled) << QString() << int(VIDEO_STREAM_TYPE_RTPUDP) << h265 << QStringLiteral("5602") << primary << QStringLiteral("udp265://0.0.0.0:5602") << timeout;
     QTest::newRow("auto UDP URI") << udp264 << QString() << int(VIDEO_STREAM_TYPE_RTPUDP) << h264 << QStringLiteral("udp://1.2.3.4:5600") << primary << QStringLiteral("udp://1.2.3.4:5600") << timeout;
+    // A camera names any UDP stream udp://: the stream's type and encoding pick QGC's scheme.
+    QTest::newRow("auto UDP h.265 URI") << udp264 << QString() << int(VIDEO_STREAM_TYPE_RTPUDP) << h265 << QStringLiteral("udp://1.2.3.4:5602") << primary << QStringLiteral("udp265://1.2.3.4:5602") << timeout;
+    QTest::newRow("auto MPEG-TS URI") << udp264 << QString() << int(VIDEO_STREAM_TYPE_MPEG_TS) << h264 << QStringLiteral("udp://1.2.3.4:5603") << primary << QStringLiteral("mpegts://1.2.3.4:5603") << timeout;
+    QTest::newRow("auto UDP h.265 URI in QGC's scheme") << udp264 << QString() << int(VIDEO_STREAM_TYPE_RTPUDP) << h265 << QStringLiteral("udp265://1.2.3.4:5602") << primary << QStringLiteral("udp265://1.2.3.4:5602") << timeout;
+    // mavlink-camera-manager sends no encoding and names an H.265 stream udp265://; the encoding wins when it is sent.
+    QTest::newRow("auto UDP h.265 URI in QGC's scheme, no encoding") << udp264 << QString() << int(VIDEO_STREAM_TYPE_RTPUDP) << int(VIDEO_STREAM_ENCODING_UNKNOWN) << QStringLiteral("udp265://1.2.3.4:5602") << primary << QStringLiteral("udp265://1.2.3.4:5602") << timeout;
+    QTest::newRow("auto UDP URI, no encoding") << udp264 << QString() << int(VIDEO_STREAM_TYPE_RTPUDP) << int(VIDEO_STREAM_ENCODING_UNKNOWN) << QStringLiteral("udp://1.2.3.4:5600") << primary << QStringLiteral("udp://1.2.3.4:5600") << timeout;
+    QTest::newRow("auto UDP h.264 URI named udp265") << udp264 << QString() << int(VIDEO_STREAM_TYPE_RTPUDP) << h264 << QStringLiteral("udp265://1.2.3.4:5600") << primary << QStringLiteral("udp://1.2.3.4:5600") << timeout;
+    QTest::newRow("auto UDP URI without host") << udp264 << QString() << int(VIDEO_STREAM_TYPE_RTPUDP) << h264 << QStringLiteral("udp://:5604") << primary << QStringLiteral("udp://0.0.0.0:5604") << timeout;
+    // Neither a port nor a UDP URI: left as it is, which no receiver plays, rather than made into another address.
+    QTest::newRow("auto UDP port out of range") << udp264 << QString() << int(VIDEO_STREAM_TYPE_RTPUDP) << h264 << QStringLiteral("70000") << primary << QStringLiteral("70000") << timeout;
+    QTest::newRow("auto UDP h.265 address without scheme") << udp264 << QString() << int(VIDEO_STREAM_TYPE_RTPUDP) << h265 << QStringLiteral("1.2.3.4:5602") << primary << QStringLiteral("1.2.3.4:5602") << timeout;
     QTest::newRow("auto MPEG-TS port") << udp264 << QString() << int(VIDEO_STREAM_TYPE_MPEG_TS) << h264 << QStringLiteral("5603") << primary << QStringLiteral("mpegts://0.0.0.0:5603") << timeout;
     QTest::newRow("auto TCP over manual TCP") << QString(VideoSettings::videoSourceTCP) << QString() << int(VIDEO_STREAM_TYPE_TCP_MPEG) << h264 << QStringLiteral("tcp://10.0.0.1:5000") << primary << QStringLiteral("tcp://10.0.0.1:5000") << timeout;
     QTest::newRow("auto without URI falls back to manual") << udp264 << QString() << int(VIDEO_STREAM_TYPE_RTSP) << h264 << QString() << primary << QStringLiteral("udp://0.0.0.0:5600") << timeout;

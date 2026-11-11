@@ -21,10 +21,37 @@ QString addressWithScheme(QLatin1StringView scheme, const QString& address)
     return address.isEmpty() ? QString() : (scheme + address);
 }
 
-/// A camera advertises a UDP or MPEG-TS stream as either a URI or just the port to listen on.
-QString listenUriWithScheme(QLatin1StringView scheme, const QString& uriOrPort)
+/// The URI, of @p scheme, for a UDP or MPEG-TS stream a camera advertises as the port to listen on or as a URI, which
+/// names the stream udp:// or by one of QGC's own schemes. A value that is neither is returned as it is, for the
+/// receiver to turn down and report.
+QString listenUri(QLatin1StringView scheme, const QString& advertised)
 {
-    return uriOrPort.contains(scheme) ? uriOrPort : (scheme + QStringLiteral("0.0.0.0:") + uriOrPort);
+    bool isNumber = false;
+    const int port = advertised.toInt(&isNumber);
+    if (isNumber) {
+        return VideoStreamUri::isValidPort(port) ? QStringLiteral("%1://0.0.0.0:%2").arg(scheme).arg(port) : advertised;
+    }
+
+    QUrl url(advertised);
+    const std::optional<VideoStreamUri::Transport> transport = VideoStreamUri::transportFor(url);
+    if (!transport || !VideoStreamUri::listens(*transport) || !VideoStreamUri::isValidPort(url.port())) {
+        return advertised;
+    }
+    url.setScheme(scheme);
+    if (url.host().isEmpty()) {
+        url.setHost(QStringLiteral("0.0.0.0"));
+    }
+    return url.toString();
+}
+
+/// QGC's scheme for an RTP stream over UDP. The encoding is an extension field that a camera with an older dialect
+/// doesn't send: mavlink-camera-manager names an H.265 stream udp265:// instead.
+QLatin1StringView rtpUdpScheme(const QGCVideoStreamInfo& streamInfo)
+{
+    const bool namedH265 = (streamInfo.encoding() == VIDEO_STREAM_ENCODING_UNKNOWN) &&
+                           streamInfo.uri().startsWith(QLatin1StringView("udp265://"), Qt::CaseInsensitive);
+    return ((streamInfo.encoding() == VIDEO_STREAM_ENCODING_H265) || namedH265) ? QLatin1StringView("udp265")
+                                                                                : QLatin1StringView("udp");
 }
 
 QString autoStreamUri(const QGCVideoStreamInfo& streamInfo)
@@ -32,11 +59,9 @@ QString autoStreamUri(const QGCVideoStreamInfo& streamInfo)
     const QString uri = streamInfo.uri();
     switch (streamInfo.type()) {
         case VIDEO_STREAM_TYPE_RTPUDP:
-            return (streamInfo.encoding() == VIDEO_STREAM_ENCODING_H265)
-                       ? listenUriWithScheme(QLatin1StringView("udp265://"), uri)
-                       : listenUriWithScheme(QLatin1StringView("udp://"), uri);
+            return listenUri(rtpUdpScheme(streamInfo), uri);
         case VIDEO_STREAM_TYPE_MPEG_TS:
-            return listenUriWithScheme(QLatin1StringView("mpegts://"), uri);
+            return listenUri(QLatin1StringView("mpegts"), uri);
         case VIDEO_STREAM_TYPE_RTSP:
         case VIDEO_STREAM_TYPE_TCP_MPEG:
         default:
