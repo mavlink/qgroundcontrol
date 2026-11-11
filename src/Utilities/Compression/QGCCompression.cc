@@ -273,6 +273,12 @@ static void setOperationError(const QString& message)
     }
 }
 
+/// Record that an archive cannot be read or is damaged
+static void setArchiveReadError(const QString& archivePath)
+{
+    setError(Error::InvalidArchive, QStringLiteral("Invalid or corrupt archive: ") + archivePath);
+}
+
 // ============================================================================
 // Format Detection
 // ============================================================================
@@ -736,7 +742,11 @@ QStringList listArchive(const QString& archivePath, Format format)
     if (!validateArchiveInput(archivePath, format)) {
         return {};
     }
-    QStringList entries = QGClibarchive::listArchiveEntries(archivePath);
+    bool listed = false;
+    QStringList entries = QGClibarchive::listArchiveEntries(archivePath, &listed);
+    if (!listed) {
+        setArchiveReadError(archivePath);
+    }
 
     // Natural sort: "file2.txt" before "file10.txt"
     // Use English locale for consistent cross-platform numeric collation
@@ -753,7 +763,11 @@ QList<ArchiveEntry> listArchiveDetailed(const QString& archivePath, Format forma
     if (!validateArchiveInput(archivePath, format)) {
         return {};
     }
-    QList<ArchiveEntry> entries = QGClibarchive::listArchiveEntriesDetailed(archivePath);
+    bool listed = false;
+    QList<ArchiveEntry> entries = QGClibarchive::listArchiveEntriesDetailed(archivePath, &listed);
+    if (!listed) {
+        setArchiveReadError(archivePath);
+    }
 
     // Natural sort by name: "file2.txt" before "file10.txt"
     // Use English locale for consistent cross-platform numeric collation
@@ -772,7 +786,12 @@ ArchiveStats getArchiveStats(const QString& archivePath, Format format)
     if (!validateArchiveInput(archivePath, format)) {
         return {};
     }
-    return QGClibarchive::getArchiveStats(archivePath);
+    bool counted = false;
+    const ArchiveStats stats = QGClibarchive::getArchiveStats(archivePath, &counted);
+    if (!counted) {
+        setArchiveReadError(archivePath);
+    }
+    return stats;
 }
 
 bool validateArchive(const QString& archivePath, Format format)
@@ -783,7 +802,7 @@ bool validateArchive(const QString& archivePath, Format format)
     qCDebug(QGCCompressionLog) << "Validating archive:" << archivePath;
     const bool valid = QGClibarchive::validateArchive(archivePath);
     if (!valid) {
-        setError(Error::InvalidArchive, QStringLiteral("Invalid or corrupt archive: ") + archivePath);
+        setArchiveReadError(archivePath);
     }
     return valid;
 }
@@ -807,7 +826,7 @@ bool fileExists(const QString& archivePath, const QString& fileName, Format form
         case QGClibarchive::NextEntry::Error:
             break;
     }
-    setError(Error::InvalidArchive, QStringLiteral("Invalid or corrupt archive: ") + archivePath);
+    setArchiveReadError(archivePath);
     return false;
 }
 

@@ -345,18 +345,24 @@ NextEntry findEntryInArchive(const QString& archivePath, const QString& fileName
 
 /// List all entries in an archive
 /// @param archivePath Path to the archive file (or Qt resource path)
+/// @param ok If not null, receives whether the archive was read to its end: one without entries lists as
+///        empty too
 /// @return List of entry names, empty on failure
-QStringList listArchiveEntries(const QString &archivePath);
+QStringList listArchiveEntries(const QString& archivePath, bool* ok = nullptr);
 
 /// List all entries in an archive with detailed metadata
 /// @param archivePath Path to the archive file (or Qt resource path)
+/// @param ok If not null, receives whether the archive was read to its end: one without entries lists as
+///        empty too
 /// @return List of ArchiveEntry structs, empty on failure
-QList<ArchiveEntry> listArchiveEntriesDetailed(const QString &archivePath);
+QList<ArchiveEntry> listArchiveEntriesDetailed(const QString& archivePath, bool* ok = nullptr);
 
 /// Get summary statistics for an archive
 /// @param archivePath Path to the archive file (or Qt resource path)
+/// @param ok If not null, receives whether the archive was read to its end: one without entries has all
+///        zeros too
 /// @return ArchiveStats struct (all zeros on failure)
-ArchiveStats getArchiveStats(const QString &archivePath);
+ArchiveStats getArchiveStats(const QString& archivePath, bool* ok = nullptr);
 
 /// Extract archive with per-entry filtering
 /// A hard or symbolic link the filter accepts is skipped with a warning.

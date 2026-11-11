@@ -35,9 +35,9 @@ enum class Error {
 
 /// Get the error code from the last operation (thread-local)
 /// It tells why the last operation of the calling thread failed: read it on that thread, before the next
-/// operation. decompressData(), extractFileData() and the two functions that read a device to memory set it
-/// on every call, to Error::None on success, because their result alone does not tell a failure: an archive
-/// entry without data is returned as an empty QByteArray too.
+/// operation. decompressData(), extractFileData(), the two functions that read a device to memory and the
+/// three that list an archive set it on every call, to Error::None on success, because their result alone
+/// does not tell a failure: an entry without data, and an archive without entries, are returned as empty too.
 Error lastError();
 
 /// Get a human-readable error message from the last operation (thread-local)
@@ -238,19 +238,23 @@ bool extractArchiveFiltered(const QString &archivePath, const QString &outputDir
 /// List contents of an archive without extracting
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
-/// @return List of file paths in archive, empty list on failure
+/// @return List of file paths in archive. It is empty for an archive without entries and on failure:
+///         lastError() is Error::None for the first, and Error::InvalidArchive if the archive cannot be read
+///         or is damaged
 QStringList listArchive(const QString &archivePath, Format format = Format::Auto);
 
 /// List contents of an archive with detailed metadata
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
-/// @return List of ArchiveEntry structs, empty list on failure
+/// @return List of ArchiveEntry structs. It is empty for an archive without entries and on failure:
+///         lastError() tells which, as for listArchive()
 QList<ArchiveEntry> listArchiveDetailed(const QString &archivePath, Format format = Format::Auto);
 
 /// Get summary statistics for an archive without extracting
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param format Kind of input, an archive format here: see Format (Auto = detect from archivePath)
-/// @return ArchiveStats struct (all zeros on failure)
+/// @return ArchiveStats struct, all zeros for an archive without entries and on failure: lastError() tells
+///         which, as for listArchive()
 ArchiveStats getArchiveStats(const QString &archivePath, Format format = Format::Auto);
 
 /// Validate an archive's integrity without extracting

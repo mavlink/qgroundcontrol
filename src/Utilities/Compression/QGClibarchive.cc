@@ -1466,8 +1466,12 @@ NextEntry findEntryInArchive(const QString& archivePath, const QString& fileName
     return findEntry(reader.handle(), fileName);
 }
 
-QStringList listArchiveEntries(const QString& archivePath)
+QStringList listArchiveEntries(const QString& archivePath, bool* ok)
 {
+    if (ok != nullptr) {
+        *ok = false;
+    }
+
     ArchiveReader reader;
     if (!reader.open(archivePath, ReaderMode::AllFormats)) {
         return {};
@@ -1481,13 +1485,20 @@ QStringList listArchiveEntries(const QString& archivePath)
     if (walk != EntryWalk::Completed) {
         return {};
     }
+    if (ok != nullptr) {
+        *ok = true;
+    }
 
     qCDebug(QGClibarchiveLog) << "Listed" << entries.size() << "entries in" << archivePath;
     return entries;
 }
 
-QList<ArchiveEntry> listArchiveEntriesDetailed(const QString& archivePath)
+QList<ArchiveEntry> listArchiveEntriesDetailed(const QString& archivePath, bool* ok)
 {
+    if (ok != nullptr) {
+        *ok = false;
+    }
+
     ArchiveReader reader;
     if (!reader.open(archivePath, ReaderMode::AllFormats)) {
         return {};
@@ -1501,13 +1512,20 @@ QList<ArchiveEntry> listArchiveEntriesDetailed(const QString& archivePath)
     if (walk != EntryWalk::Completed) {
         return {};
     }
+    if (ok != nullptr) {
+        *ok = true;
+    }
 
     qCDebug(QGClibarchiveLog) << "Listed" << entries.size() << "entries with metadata in" << archivePath;
     return entries;
 }
 
-ArchiveStats getArchiveStats(const QString& archivePath)
+ArchiveStats getArchiveStats(const QString& archivePath, bool* ok)
 {
+    if (ok != nullptr) {
+        *ok = false;
+    }
+
     ArchiveReader reader;
     if (!reader.open(archivePath, ReaderMode::AllFormats)) {
         return {};
@@ -1535,6 +1553,9 @@ ArchiveStats getArchiveStats(const QString& archivePath)
 
     if (walk != EntryWalk::Completed) {
         return {};
+    }
+    if (ok != nullptr) {
+        *ok = true;
     }
 
     qCDebug(QGClibarchiveLog) << "Archive stats:" << stats.fileCount << "files," << stats.directoryCount << "dirs,"

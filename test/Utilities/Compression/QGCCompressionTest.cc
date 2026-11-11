@@ -1201,6 +1201,7 @@ void QGCCompressionTest::_testCorruptArchive()
     QStringList entries = QGCCompression::listArchive(corruptZip);
     QVERIFY2(entries.isEmpty(), "Listing corrupt archive should return empty list");
     verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
     // Test corrupt compressed file with valid GZIP header but truncated data
     const QString corruptGz = tempDir.path() + "/corrupt.gz";
     QFile gzFile(corruptGz);
@@ -1363,17 +1364,21 @@ void QGCCompressionTest::_testTruncatedArchive()
     verifyExpectedLogMessage();
     QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
 
+    // An archive without entries lists as empty too: the error is what tells a damaged one
     expectReadFailure();
     QVERIFY(QGCCompression::listArchive(archivePath).isEmpty());
     verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
 
     expectReadFailure();
     QVERIFY(QGCCompression::listArchiveDetailed(archivePath).isEmpty());
     verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
 
     expectReadFailure();
     QCOMPARE(QGCCompression::getArchiveStats(archivePath).totalEntries, 0);
     verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
 
     // Once for the size pre-check and once for the extraction itself
     expectReadFailure();
@@ -2371,10 +2376,14 @@ void QGCCompressionTest::_testEmptyArchive()
     // List should return empty list (not error)
     const QStringList entries = QGCCompression::listArchive(emptyZip);
     QVERIFY(entries.isEmpty());
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::None);
+    QVERIFY(QGCCompression::listArchiveDetailed(emptyZip).isEmpty());
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::None);
     // Stats should show zero entries
     const QGCCompression::ArchiveStats stats = QGCCompression::getArchiveStats(emptyZip);
     QCOMPARE(stats.totalEntries, 0);
     QCOMPARE(stats.fileCount, 0);
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::None);
     // Extract should succeed (nothing to extract)
     const QString outputDir = tempDir.path() + "/empty_extract";
     QVERIFY(QGCCompression::extractArchive(emptyZip, outputDir));
