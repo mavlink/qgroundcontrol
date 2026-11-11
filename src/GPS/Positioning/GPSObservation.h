@@ -62,4 +62,7 @@ struct GPSObservation
     /// The position's height above the WGS84 ellipsoid: altitudeEllipsoidMeters or an altitude in that datum, else
     /// an altitude above mean sea level converted with the EGM96 geoid. Empty as for altitudeMslMeters().
     [[nodiscard]] std::optional<double> ellipsoidHeightMeters() const;
+    /// How far ellipsoidHeightMeters() is above altitudeMslMeters(): what a receiver that reports both heights has
+    /// between them, else the EGM96 geoid at the position. Empty for invalid coordinates.
+    [[nodiscard]] std::optional<double> geoidSeparationMeters() const;
 };

@@ -223,6 +223,16 @@ std::optional<double> GPSObservation::ellipsoidHeightMeters() const
     return altitude && separation ? std::optional<double>(*altitude + *separation) : std::nullopt;
 }
 
+std::optional<double> GPSObservation::geoidSeparationMeters() const
+{
+    const std::optional<double> altitude = altitudeIn(*this, GPSAltitudeDatum::MeanSeaLevel);
+    const std::optional<double> ellipsoidHeight = reportedEllipsoidHeight(*this);
+    if (altitude && ellipsoidHeight) {
+        return *ellipsoidHeight - *altitude;
+    }
+    return egm96Separation(position.coordinate());
+}
+
 double GPSObservation::heading() const
 {
     constexpr double MAXIMUM_DIRECTION_ACCURACY_DEGREES = 30.0;

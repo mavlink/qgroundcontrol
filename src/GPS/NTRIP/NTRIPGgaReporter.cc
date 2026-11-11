@@ -48,15 +48,22 @@ bool reportable(const std::optional<GPSObservation>& observation)
            observation->position.coordinate().isValid();
 }
 
-/// The height a GGA reports for @a observation. A caster places the rover by its latitude and longitude, so a height
-/// in another datum than mean sea level is reported as it is, and zero when none is known.
-double reportedAltitude(const GPSObservation& observation)
+struct GgaHeight
 {
-    if (const double altitude = observation.position.coordinate().altitude(); qIsFinite(altitude)) {
-        return altitude;
+    double altitude = 0.0;
+    double geoidSeparation = qQNaN();
+};
+
+/// The height above mean sea level a GGA reports for @a observation, with the geoid separation that makes it the
+/// height above the ellipsoid. A caster places the rover by its latitude and longitude, so an altitude of unknown
+/// datum is reported as it is, and zero when no height is known, both without a separation.
+GgaHeight reportedHeight(const GPSObservation& observation)
+{
+    if (const auto altitude = observation.altitudeMslMeters()) {
+        return {.altitude = *altitude, .geoidSeparation = observation.geoidSeparationMeters().value_or(qQNaN())};
     }
-    const std::optional<double> ellipsoid = observation.altitudeEllipsoidMeters;
-    return ellipsoid && qIsFinite(*ellipsoid) ? *ellipsoid : 0.0;
+    const double altitude = observation.position.coordinate().altitude();
+    return {.altitude = qIsFinite(altitude) ? altitude : 0.0};
 }
 }  // namespace
 
@@ -163,10 +170,12 @@ void NTRIPGgaReporter::_sendGGA()
 
     const GPSObservation& position = *selection.position;
     const QGeoCoordinate coordinate = position.position.coordinate();
+    const GgaHeight height = reportedHeight(position);
     const NMEA::GGA fix{
         .latitude = coordinate.latitude(),
         .longitude = coordinate.longitude(),
-        .altitude = reportedAltitude(position),
+        .altitude = height.altitude,
+        .geoidSeparation = height.geoidSeparation,
         .hdop = position.horizontalDop && qIsFinite(*position.horizontalDop) && *position.horizontalDop >= 0
                     ? *position.horizontalDop
                     : qQNaN(),

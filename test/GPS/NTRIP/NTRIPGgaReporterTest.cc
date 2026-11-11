@@ -14,6 +14,7 @@
 #include "NTRIP/Support/NTRIPTestHelpers.h"
 #include "NTRIPGgaReporter.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
+#include "QGCGeoid.h"
 #include "Support/GPSTestHelpers.h"
 
 using namespace GPSTest;
@@ -59,28 +60,42 @@ void NTRIPGgaReporterTest::_gcsObservation_data()
     QTest::addColumn<double>("ellipsoidHeight");
     QTest::addColumn<double>("horizontalAccuracy");
     QTest::addColumn<bool>("fixValid");
-    // The altitude field of the GGA sent; null when none is sent.
+    // The altitude and geoid separation fields of the GGA sent; a null altitude when none is sent.
     QTest::addColumn<QByteArray>("altitude");
+    QTest::addColumn<QByteArray>("separation");
     using Datum = GPSAltitudeDatum;
     const QGeoCoordinate position(47.3977, 8.5456, 450);
     const QGeoCoordinate horizontal(47.3977, 8.5456);
     const double none = qQNaN();
     const QByteArray known("450.0");
-    QTest::newRow("missing-vertical-accuracy") << position << Datum::MeanSeaLevel << none << 1.0 << true << known;
-    QTest::newRow("missing-all-accuracy") << position << Datum::MeanSeaLevel << none << none << true << known;
-    // A caster places the rover by latitude and longitude, so a height in another datum, or none, still reports:
-    // the device position on Android, Linux and Windows, and a base's fixed or surveyed position.
-    QTest::newRow("ellipsoid-altitude") << position << Datum::Ellipsoid << none << 1.0 << true << known;
-    QTest::newRow("unknown-datum") << position << Datum::Unknown << none << 1.0 << true << known;
+    const QByteArray unsent;
+    const auto meters = [](double value) { return QByteArray::number(value, 'f', 1); };
+    // The geoid is about 47.5 m above the ellipsoid at the position.
+    const double geoid = QGCGeo::geoidSeparation(position.latitude(), position.longitude());
+    QTest::newRow("missing-vertical-accuracy")
+        << position << Datum::MeanSeaLevel << none << 1.0 << true << known << meters(geoid);
+    QTest::newRow("missing-all-accuracy")
+        << position << Datum::MeanSeaLevel << none << none << true << known << meters(geoid);
+    // A receiver that reports both heights reports the separation between them.
+    QTest::newRow("both-heights") << position << Datum::MeanSeaLevel << 497.5 << 1.0 << true << known
+                                  << QByteArray("47.5");
+    // A height above the ellipsoid, as the device position on Android and a base's position have, is converted.
+    QTest::newRow("ellipsoid-altitude") << position << Datum::Ellipsoid << none << 1.0 << true << meters(450 - geoid)
+                                        << meters(geoid);
     QTest::newRow("ellipsoid-height-only")
-        << horizontal << Datum::Unknown << 495.5 << 1.0 << true << QByteArray("495.5");
-    QTest::newRow("unknown-altitude") << horizontal << Datum::Unknown << none << 1.0 << true << QByteArray("0.0");
+        << horizontal << Datum::Unknown << 495.5 << 1.0 << true << meters(495.5 - geoid) << meters(geoid);
+    // A caster places the rover by latitude and longitude, so an altitude of unknown datum, as the device position
+    // on Linux has, or none, still reports.
+    QTest::newRow("unknown-datum") << position << Datum::Unknown << none << 1.0 << true << known << unsent;
+    QTest::newRow("unknown-altitude") << horizontal << Datum::Unknown << none << 1.0 << true << QByteArray("0.0")
+                                      << unsent;
     QTest::newRow("infinite-altitude") << QGeoCoordinate(47.3977, 8.5456, qInf()) << Datum::MeanSeaLevel << none << 1.0
-                                       << true << QByteArray("0.0");
-    QTest::newRow("zero-island") << QGeoCoordinate(0, 0, 450) << Datum::MeanSeaLevel << none << 1.0 << true << known;
+                                       << true << QByteArray("0.0") << unsent;
+    QTest::newRow("zero-island") << QGeoCoordinate(0, 0, 450) << Datum::MeanSeaLevel << none << 1.0 << true << known
+                                 << meters(QGCGeo::geoidSeparation(0, 0));
     QTest::newRow("invalid-coordinate") << QGeoCoordinate() << Datum::MeanSeaLevel << none << 1.0 << true
-                                        << QByteArray();
-    QTest::newRow("no-fix") << position << Datum::MeanSeaLevel << none << 1.0 << false << QByteArray();
+                                        << QByteArray() << unsent;
+    QTest::newRow("no-fix") << position << Datum::MeanSeaLevel << none << 1.0 << false << QByteArray() << unsent;
 }
 
 void NTRIPGgaReporterTest::_gcsObservation()
@@ -91,6 +106,7 @@ void NTRIPGgaReporterTest::_gcsObservation()
     QFETCH(double, horizontalAccuracy);
     QFETCH(bool, fixValid);
     QFETCH(QByteArray, altitude);
+    QFETCH(QByteArray, separation);
     const bool accepted = !altitude.isNull();
     NTRIPGgaReporter provider;
     MockNTRIPTransport transport;
@@ -120,7 +136,7 @@ void NTRIPGgaReporterTest::_gcsObservation()
         QCOMPARE(fields.size(), 15);
         QCOMPARE(fields.at(NMEA::Field::GGA_ALTITUDE), altitude);
         QCOMPARE(fields.at(NMEA::Field::GGA_ALTITUDE_UNITS), QByteArray("M"));
-        QVERIFY(fields.at(NMEA::Field::GGA_GEOID_SEPARATION).isEmpty());
+        QCOMPARE(fields.at(NMEA::Field::GGA_GEOID_SEPARATION), separation);
         QCOMPARE(fields.at(NMEA::Field::GGA_GEOID_UNITS), QByteArray("M"));
         QVERIFY(checksumValid(transport.sentNmea.first()));
     }

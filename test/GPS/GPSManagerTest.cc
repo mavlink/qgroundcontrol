@@ -242,14 +242,17 @@ void GPSManagerTest::_groundStationGgaReportsAnyAltitudeDatum_data()
 {
     // The datum of the device position differs by platform; a caster needs its latitude and longitude.
     QTest::addColumn<GPSAltitudeDatum>("datum");
-    QTest::newRow("mean-sea-level") << GPSAltitudeDatum::MeanSeaLevel;
-    QTest::newRow("ellipsoid") << GPSAltitudeDatum::Ellipsoid;
-    QTest::newRow("unknown") << GPSAltitudeDatum::Unknown;
+    // The altitude and geoid separation fields for 450 m at 47N 8E, where the geoid is 48.4 m above the ellipsoid.
+    QTest::addColumn<QByteArray>("heights");
+    QTest::newRow("mean-sea-level") << GPSAltitudeDatum::MeanSeaLevel << QByteArray(",450.0,M,48.4,M,");
+    QTest::newRow("ellipsoid") << GPSAltitudeDatum::Ellipsoid << QByteArray(",401.6,M,48.4,M,");
+    QTest::newRow("unknown") << GPSAltitudeDatum::Unknown << QByteArray(",450.0,M,,M,");
 }
 
 void GPSManagerTest::_groundStationGgaReportsAnyAltitudeDatum()
 {
     QFETCH(GPSAltitudeDatum, datum);
+    QFETCH(QByteArray, heights);
     GPSTest::PositionSource source;
     GPSManager manager;
     PositionManager* const groundStation = manager.positionManager();
@@ -269,7 +272,7 @@ void GPSManagerTest::_groundStationGgaReportsAnyAltitudeDatum()
     ntrip->init();
     QCOMPARE(ntrip->connectionStatus(), NTRIPManager::ConnectionStatus::Connected);
     QCOMPARE(transport->sentNmea.size(), 1);
-    QVERIFY(transport->sentNmea.first().contains(",450.0,M,"));
+    QVERIFY2(transport->sentNmea.first().contains(heights), transport->sentNmea.first().constData());
 }
 
 void GPSManagerTest::_qmlServicesAvailableBeforeInit()
