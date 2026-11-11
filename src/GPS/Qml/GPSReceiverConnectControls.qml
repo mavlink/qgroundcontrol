@@ -7,12 +7,9 @@ import QGroundControl.Controls
 import QGroundControl.GPS
 
 /// How and when the receiver connects: the corrections format and the consent to save to its flash, automatic
-/// connection, recording, and the Connect button with the receiver's error.
+/// connection and recording. Connect itself is GPSReceiverConnectionRow's, with the receiver's state and problem.
 GPSReceiverSettingsGroup {
     id: root
-
-    /// Hosts that already show receiver errors elsewhere can hide the inline message.
-    property bool showErrorMessage: true
 
     heading: qsTr("Connect")
 
@@ -55,29 +52,6 @@ GPSReceiverSettingsGroup {
     }
 
     GPSReceiverRecording { receiver: root.receiver }
-
-    QGCButton {
-        objectName: "rtkConnectButton"
-        Layout.fillWidth: true
-        Layout.minimumWidth: 0
-        wrapMode: Text.Wrap
-        focusPolicy: Qt.StrongFocus
-        text: root._active ? qsTr("Disconnect") : qsTr("Connect")
-        enabled: root._active || root.receiver.canConnect
-        onClicked: {
-            if (root._active) {
-                root.receiver.disconnectReceiver()
-            } else {
-                root.receiver.connectReceiver()
-            }
-        }
-    }
-
-    QGCNoteLabel {
-        objectName: "rtkErrorMessage"
-        visible: root.showErrorMessage && text.length > 0
-        text: root.receiver.errorMessage
-    }
 
     // The permission is for the configuration shown here, so leaving the page withdraws it.
     Component.onDestruction: {

@@ -10,8 +10,8 @@ class GPSReceiverSettingsBindingTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void _capabilitiesFor_data();
-    void _capabilitiesFor();
+    void _configuredPresentation_data();
+    void _configuredPresentation();
     void _receiverSettingsMapping_data();
     void _receiverSettingsMapping();
     void _configurationDiagnosticRetained_data();

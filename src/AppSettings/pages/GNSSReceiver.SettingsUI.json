@@ -5,7 +5,7 @@
     "bindings": {
         "rtkSettings": "QGroundControl.settingsManager.rtkSettings",
         "gpsReceiver": "QGroundControl.gpsManager.receiver",
-        "canBeRtkBase": "gpsReceiver.capabilitiesFor(rtkSettings.receiverRole.rawValue, rtkSettings.baseReceiverManufacturer.rawValue).rtkBase",
+        "canBeRtkBase": "gpsReceiver.configuredPresentation.rtkBase",
         "fixedBaseMode": "rtkSettings.baseMode.rawValue === BaseModeDefinition.BaseFixed"
     },
     "groups": [
@@ -15,7 +15,7 @@
                 "showWhenDisconnected": true
             },
             "sectionName": "GNSS Receiver Status",
-            "keywords": ["rtk", "gnss", "gps", "base station", "receiver", "status", "fix", "satellites", "jamming", "spoofing"]
+            "keywords": ["rtk", "gnss", "gps", "base station", "receiver", "status", "connect", "disconnect", "fix", "satellites", "jamming", "spoofing"]
         },
         {
             "comment": "This group and the next three are the groups GPSReceiverSettings shows as one form.",

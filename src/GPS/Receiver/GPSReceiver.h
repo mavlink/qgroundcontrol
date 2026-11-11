@@ -91,6 +91,9 @@ class GPSReceiver : public QObject, private GPSReceiverConnector
     Q_PROPERTY(QString receiverIdentity READ receiverIdentity NOTIFY receiverChanged FINAL)
     Q_PROPERTY(QString detectedReceiver READ detectedReceiver NOTIFY receiverChanged FINAL)
     Q_PROPERTY(GPSReceiverPresentation activePresentation READ activePresentation NOTIFY receiverChanged FINAL)
+    /// What the settings views offer for the configured role and manufacturer.
+    Q_PROPERTY(
+        GPSReceiverPresentation configuredPresentation READ configuredPresentation NOTIFY configurationChanged FINAL)
     /// The one-use permission to write receiver flash, for the configuration currently selected.
     Q_PROPERTY(bool persistentChangesAllowed READ persistentChangesAllowed WRITE setPersistentChangesAllowed NOTIFY
                    persistentChangesAllowedChanged FINAL)
@@ -106,6 +109,8 @@ class GPSReceiver : public QObject, private GPSReceiverConnector
     Q_PROPERTY(bool baseModeSupported READ baseModeSupported NOTIFY configurationChanged FINAL)
     /// Connect may start the configured receiver: a selected receiver type, base mode and connection it supports.
     Q_PROPERTY(bool canConnect READ canConnect NOTIFY configurationChanged FINAL)
+    /// The settings name where the receiver is: a serial device, a TCP address or a UDP port.
+    Q_PROPERTY(bool hasEndpoint READ hasEndpoint NOTIFY configurationChanged FINAL)
     /// Records the receiver's raw input and output of every session that starts while this is on. Off at startup and
     /// never saved.
     Q_PROPERTY(bool recordSessions READ recordSessions WRITE setRecordSessions NOTIFY recordSessionsChanged FINAL)
@@ -217,8 +222,8 @@ public:
     /// The saved receiver is being connected automatically, at startup or after its connection was lost.
     bool reconnecting() const;
 
-    /// Editable settings for a role; configured bases also depend on the manufacturer.
-    Q_INVOKABLE GPSReceiverPresentation capabilitiesFor(int role, int manufacturer) const;
+    /// The editable settings of the configured role; those of a configured base also depend on its manufacturer.
+    GPSReceiverPresentation configuredPresentation() const;
 
     /// Presentation capabilities of the connected receiver family; those of Automatic without a receiver.
     GPSReceiverPresentation activePresentation() const;
@@ -241,6 +246,8 @@ public:
     bool baseModeSupported() const { return _connectability.baseModeSupported; }
 
     bool canConnect() const;
+
+    bool hasEndpoint() const { return _connectability.hasEndpoint; }
 
     bool recordSessions() const { return _recordSessions; }
 

@@ -7,6 +7,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
+#include <QtGui/QColor>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQml/QJSValue>
 #include <QtQuick/QQuickItem>
@@ -17,6 +18,7 @@
 #include "GPSReceiver.h"
 #include "GPSReceiverFactGroup.h"
 #include "GPSSettingsBindings.h"
+#include "QGCPalette.h"
 #include "Qml/Support/GPSPanelFixtures.h"
 #include "RTKSettings.h"
 #include "Receiver/Support/GPSReceiverTestSupport.h"
@@ -67,7 +69,8 @@ QVariant portEntries(const QStringList& paths)
     return QVariant::fromValue(entries);
 }
 
-/// The receiver settings panel over saved settings for a manufacturer, and a scripted receiver that follows them.
+/// The receiver settings panel over saved settings for a manufacturer, a scripted receiver that follows them, and the
+/// receiver status, which has Connect, as the settings page and the indicator's drop-down show them together.
 struct Panel
 {
     explicit Panel(int manufacturer)
@@ -75,7 +78,7 @@ struct Panel
         , receiver(settings.settings)
     {}
 
-    /// Creates the panel; false on failure, with the reason in the engine's lastError().
+    /// Creates the panel and the status; false on failure, with the reason in the engine's lastError().
     [[nodiscard]] bool create()
     {
         item = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverSettings.qml")),
@@ -84,19 +87,30 @@ struct Panel
                               {QStringLiteral("autoConnectFact"), QVariant::fromValue(settings.autoConnect)},
                               {QStringLiteral("serialPorts"), portEntries(QStringLiteral("/test/receiver"))},
                               {QStringLiteral("serialBaudRates"), QVariant::fromValue(QList<int>{115200, 230400})}});
-        return item != nullptr;
+        if (!item) {
+            return false;
+        }
+        status = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
+                               {{QStringLiteral("receiver"), QVariant::fromValue(&receiver.gps)},
+                                {QStringLiteral("facts"), QVariant::fromValue(receiver.gps.facts())},
+                                {QStringLiteral("showWhenDisconnected"), true}});
+        return status != nullptr;
     }
 
+    /// A control of the panel, else of the status.
     template <typename T = QQuickItem>
     T* find(const char* name) const
     {
-        return item->findChild<T*>(QString::fromLatin1(name));
+        const QString objectName = QString::fromLatin1(name);
+        T* const control = item->findChild<T*>(objectName);
+        return control ? control : status->findChild<T*>(objectName);
     }
 
     RTKSettingsFixture settings;
     SettingsReceiver receiver;
     GPSTest::QmlEngine engine;
     std::unique_ptr<QObject> item;
+    std::unique_ptr<QObject> status;
 };
 
 QStringList siteNames(const RTKSettings* settings)
@@ -396,49 +410,64 @@ void GPSReceiverSettingsTest::_statusListsConstellations()
     QVERIFY(!row->property("visible").toBool());
 }
 
-void GPSReceiverSettingsTest::_reconnectingOffersDisconnect()
+void GPSReceiverSettingsTest::_connectionRowFollowsReceiver()
 {
     Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* connect = panel.find("rtkConnectButton");
     auto* device = panel.find("rtkSerialDevice");
-    QVERIFY(connect && device);
+    auto* row = panel.find<QObject>("rtkReceiverStatus");
+    auto* problem = panel.find<QObject>("rtkErrorMessage");
+    QVERIFY(connect && device && row && problem);
     GPSReceiver& receiver = panel.receiver.gps;
-    // The status panel, which a page without a receiver hides.
-    GPSTest::QmlWindowFixture window;
-    GPSTest::QmlEngine engine;
-    auto status = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
-                                {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
-                                 {QStringLiteral("receiver"), QVariant::fromValue(&receiver)},
-                                 {QStringLiteral("facts"), QVariant::fromValue(receiver.facts())}});
-    QVERIFY2(status, qPrintable(engine.lastError()));
-    auto* statusItem = qobject_cast<QQuickItem*>(status.get());
-    auto* statusText = status->findChild<QObject*>(QStringLiteral("rtkReceiverStatus"));
-    QVERIFY(statusItem && statusText);
-    QVERIFY(!statusItem->isVisible());
+    const QGCPalette palette;
+    // The row's dot, line and button, and the receiver's problem below it.
+    const auto verifyRow = [&](const QColor& color, const QString& text, const char* button) {
+        QCOMPARE(row->property("statusColor").value<QColor>(), color);
+        QCOMPARE(row->property("statusText").toString(), text);
+        QCOMPARE(connect->property("text").toString(), QCoreApplication::translate("GPSReceiverConnectionRow", button));
+        QVERIFY(connect->isEnabled());
+        QCOMPARE(problem->property("text").toString(), receiver.errorMessage());
+        QCOMPARE(problem->property("visible").toBool(), !receiver.errorMessage().isEmpty());
+    };
+    const QString disconnected = row->property("statusText").toString();
+    QVERIFY(!disconnected.isEmpty());
+    verifyRow(palette.colorGrey(), disconnected, "Connect");
+
     // Only Connect automatically reconnects a lost receiver.
     panel.settings.autoConnect->setRawValue(true);
-    QVERIFY(receiver.connectReceiver());
+    QVERIFY(QMetaObject::invokeMethod(connect, "clicked"));
+    // A connection being opened can be stopped.
+    QCOMPARE(receiver.state(), GPSReceiver::State::Connecting);
+    verifyRow(palette.colorOrange(), receiver.statusText(), "Disconnect");
     panel.receiver.worker()->ready();
+    verifyRow(palette.colorGreen(), receiver.statusText(), "Disconnect");
     expectLogMessage("GPS.Receiver.GPSReceiver", QtWarningMsg, QRegularExpression(QStringLiteral("session ended")));
     panel.receiver.worker()->fail(GPSConnectionError::DeviceError);
     verifyExpectedLogMessage();
-    // Both panels follow the receiver's state: the form offers to stop the reconnecting, and the status stays to say
-    // what the receiver is doing.
+    // The row says what the receiver is doing and offers to stop the reconnecting, with the reason below it, while
+    // the form stays locked.
     QCOMPARE(receiver.state(), GPSReceiver::State::Reconnecting);
-    QCOMPARE(connect->property("text").toString(),
-             QCoreApplication::translate("GPSReceiverConnectControls", "Disconnect"));
-    QVERIFY(connect->isEnabled());
+    QVERIFY(!receiver.errorMessage().isEmpty());
+    verifyRow(palette.colorOrange(), receiver.statusText(), "Cancel reconnect");
     QVERIFY(!device->isEnabled());
-    QVERIFY(statusItem->isVisible());
-    QCOMPARE(statusText->property("text").toString(), receiver.statusText());
     QVERIFY(QMetaObject::invokeMethod(connect, "clicked"));
     QCOMPARE(receiver.state(), GPSReceiver::State::Disconnected);
-    QVERIFY(!statusItem->isVisible());
+    QVERIFY(receiver.errorMessage().isEmpty());
+    verifyRow(palette.colorGrey(), disconnected, "Connect");
     QVERIFY(device->isEnabled());
-    QCOMPARE(connect->property("text").toString(),
-             QCoreApplication::translate("GPSReceiverConnectControls", "Connect"));
     QCOMPARE(panel.receiver.workers.count(), 1);
+    panel.receiver.workers.finishRetired();
+
+    // A connection that fails leaves its reason below the row, which offers to connect again.
+    panel.settings.autoConnect->setRawValue(false);
+    QVERIFY(QMetaObject::invokeMethod(connect, "clicked"));
+    expectLogMessage("GPS.Receiver.GPSReceiver", QtWarningMsg, QRegularExpression(QStringLiteral("Failed to open")));
+    panel.receiver.worker()->fail(GPSConnectionError::OpenFailed);
+    verifyExpectedLogMessage();
+    QCOMPARE(receiver.state(), GPSReceiver::State::Disconnected);
+    QVERIFY(!receiver.errorMessage().isEmpty());
+    verifyRow(palette.colorRed(), disconnected, "Connect");
 }
 
 void GPSReceiverSettingsTest::_tcpConnectionFields()
@@ -548,25 +577,20 @@ void GPSReceiverSettingsTest::_automaticManufacturer()
     QVERIFY(receiver.hasReceiver());
     QCOMPARE(panel.receiver.worker()->type(), GPSType::Automatic);
 
-    GPSReceiverFactGroup& facts = *receiver.facts();
-    facts.setLiveUpdates(true);
-    auto status = panel.engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
-                                      {{QStringLiteral("receiver"), QVariant::fromValue(&receiver)},
-                                       {QStringLiteral("facts"), QVariant::fromValue(&facts)}});
-    QVERIFY2(status, qPrintable(panel.engine.lastError()));
-    auto* text = status->findChild<QObject*>(QStringLiteral("rtkReceiverStatus"));
-    auto* detected = status->findChild<QQuickItem*>(QStringLiteral("rtkDetectedReceiver"));
+    receiver.facts()->setLiveUpdates(true);
+    auto* text = panel.find<QObject>("rtkReceiverStatus");
+    auto* detected = panel.find("rtkDetectedReceiver");
     QVERIFY(text && detected);
-    QCOMPARE(text->property("text").toString(), QStringLiteral("Identifying receiver..."));
+    QCOMPARE(text->property("statusText").toString(), QStringLiteral("Identifying receiver..."));
     QVERIFY(!detected->isVisible());
     panel.receiver.worker()->detected(GPSType::Unicore);
     QVERIFY(detected->isVisible());
     QCOMPARE(detected->property("labelText").toString(), QStringLiteral("Unicore"));
-    QCOMPARE(text->property("text").toString(), QStringLiteral("Connecting to receiver..."));
+    QCOMPARE(text->property("statusText").toString(), QStringLiteral("Connecting to receiver..."));
     panel.receiver.worker()->ready();
     // The status names the base mode once the receiver reports that it determines its position.
     panel.receiver.worker()->baseStatus({.state = GPSBaseState::Active});
-    QVERIFY(text->property("text").toString().contains(QStringLiteral("averaging")));
+    QVERIFY(text->property("statusText").toString().contains(QStringLiteral("averaging")));
     QVERIFY(detected->isVisible());
     receiver.disconnectReceiver();
     QVERIFY(!detected->isVisible());
@@ -988,12 +1012,15 @@ void GPSReceiverSettingsTest::_settingsPageListsGroups()
         }
         return item && item->parentItem() ? item : nullptr;
     };
+    auto* status = group("rtkConnectButton");
     auto* connection = group("rtkReceiverRole");
     auto* baseStationGroup = group("rtkFixedMode");
     auto* baseSitesGroup = group("rtkBaseSiteName");
-    auto* connect = group("rtkConnectButton");
-    QVERIFY(connection && baseStationGroup && baseSitesGroup && connect);
-    QVERIFY(connection->isVisible() && connect->isVisible());
+    auto* connect = group("rtkAutoConnect");
+    QVERIFY(status && connection && baseStationGroup && baseSitesGroup && connect);
+    // Connect is in the status group, which the page always shows.
+    QCOMPARE(status, group("rtkReceiverStatus"));
+    QVERIFY(status->isVisible() && connection->isVisible() && connect->isVisible());
     QCOMPARE(baseStationGroup->isVisible(), baseStation);
     QCOMPARE(baseSitesGroup->isVisible(), baseSites);
     for (const auto& [file, shown] :

@@ -60,6 +60,22 @@ QColor colorOf(const QObject* item)
 {
     return item->property("color").value<QColor>();
 }
+
+/// The one shown item of that name under @a root; null when none or several are shown. The page has the receiver
+/// status, and so Connect, in both of its views.
+QQuickItem* shownItem(const QObject* root, const char* name)
+{
+    QQuickItem* shown = nullptr;
+    for (QQuickItem* const item : root->findChildren<QQuickItem*>(QString::fromLatin1(name))) {
+        if (item->isVisible()) {
+            if (shown) {
+                return nullptr;
+            }
+            shown = item;
+        }
+    }
+    return shown;
+}
 }  // namespace
 
 void GPSIndicatorTest::_pagePanelUsesApplicationReceiver()
@@ -116,23 +132,30 @@ void GPSIndicatorTest::_pageFitsWidth()
     auto* usage = page->findChild<QQuickItem*>(QStringLiteral("rtkSatellitesUsed"));
     QVERIFY(status && satellites && usage);
     QVERIFY(status->isVisible());
-    const QString disconnectedText = status->property("text").toString();
+    const QString disconnectedText = status->property("statusText").toString();
     QVERIFY(!disconnectedText.isEmpty());
     QVERIFY(!satellites->isVisible());
     QVERIFY(!usage->isVisible());
+    // The status row, with its Connect button, fits the page. TCP connections are available even without serial
+    // support, so the collapsed page offers Connect.
+    QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
     QVERIFY(status->mapRectToItem(item, status->boundingRect()).right() <= width + 1);
+    QQuickItem* connect = shownItem(page.get(), "rtkConnectButton");
+    QVERIFY(connect);
+    QVERIFY(connect->isEnabled());
+    QVERIFY(connect->mapRectToItem(item, connect->boundingRect()).right() <= width + 1);
 
     QVERIFY(base.connect());
     settings.saved.setFactValue(facts->numSatellites(), 12);
     settings.saved.setFactValue(facts->numSatellitesUsed(), 7);
     QVERIFY(satellites->isVisible() && usage->isVisible());
-    QVERIFY(status->property("text").toString() != disconnectedText);
+    QVERIFY(status->property("statusText").toString() != disconnectedText);
     base.disconnect();
     // Values left from the receiver are hidden while it is disconnected.
     facts->numSatellites()->setRawValue(12);
     facts->numSatellitesUsed()->setRawValue(7);
     QVERIFY(status->isVisible() && !satellites->isVisible() && !usage->isVisible());
-    QCOMPARE(status->property("text").toString(), disconnectedText);
+    QCOMPARE(status->property("statusText").toString(), disconnectedText);
     QVERIFY(item->height() > 0);
 
     // Expanded, the page shows the receiver settings within its width.
@@ -140,11 +163,6 @@ void GPSIndicatorTest::_pageFitsWidth()
     QTRY_VERIFY_WITH_TIMEOUT(page->findChild<QQuickItem*>(QStringLiteral("gpsReceiverSettings")),
                              TestTimeout::shortMs());
     auto* panel = page->findChild<QQuickItem*>(QStringLiteral("gpsReceiverSettings"));
-    auto* connect = page->findChild<QQuickItem*>(QStringLiteral("rtkConnectButton"));
-    QVERIFY(connect);
-    // TCP connections are available even without serial support.
-    QVERIFY(connect->isVisible());
-    QVERIFY(connect->isEnabled());
     QTRY_VERIFY_WITH_TIMEOUT(panel->width() > 0, TestTimeout::mediumMs());
     // Once laid out, the panel has the width the page reserves for it, not the much smaller width its wrapped notes
     // report.
@@ -153,12 +171,56 @@ void GPSIndicatorTest::_pageFitsWidth()
              qPrintable(QStringLiteral("panel width %1").arg(panel->width())));
     QTRY_VERIFY_WITH_TIMEOUT(item->width() <= width + 1, TestTimeout::mediumMs());
     QVERIFY(panel->mapRectToItem(item, panel->boundingRect()).right() <= width + 1);
+    // Beside the settings or, where the page is too narrow for both, above them, one Connect stays in reach.
+    connect = shownItem(page.get(), "rtkConnectButton");
+    QVERIFY(connect);
+    QVERIFY(connect->isEnabled());
+    QVERIFY(connect->mapRectToItem(item, connect->boundingRect()).right() <= width + 1);
+}
+
+void GPSIndicatorTest::_receiverBesideVehicleGps()
+{
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::UBlox));
+    AppReceiver base;
+    GPSReceiver* const receiver = GPSManager::instance()->receiver();
+    auto configuration = receiverConfiguration();
+    useTcp(configuration);
+    configuration.autoConnect = false;
+    configuration.tcpHost.clear();
+    receiver->setConfiguration(configuration);
+    QVERIFY(!receiver->hasEndpoint());
+    Vehicle vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
+    auto* gps = vehicle.gpsFactGroup();
+    QVERIFY(gps);
+    gps->setLiveUpdates(true);
+    gps->handleMessage(&vehicle, GPSTest::gpsRawMessage({.fixType = GPS_FIX_TYPE_3D_FIX, .satellitesVisible = 10}));
+
+    GPSTest::QmlWindowFixture window;
+    GPSTest::QmlEngine engine;
+    std::unique_ptr<QObject> page = createIndicatorPage(engine, window, &vehicle);
+    QVERIFY2(page, qPrintable(engine.lastError()));
+    QVERIFY(window.show());
+    QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
+    // A receiver that is not set up adds nothing to a vehicle's GPS status.
+    QVERIFY(!shownItem(page.get(), "rtkConnectButton"));
+
+    // While its settings are open it is shown, so they can be seen to take effect.
+    QVERIFY(page->setProperty("expanded", true));
+    QTRY_VERIFY_WITH_TIMEOUT(shownItem(page.get(), "rtkConnectButton"), TestTimeout::shortMs());
+    QVERIFY(page->setProperty("expanded", false));
+    QTRY_VERIFY_WITH_TIMEOUT(!shownItem(page.get(), "rtkConnectButton"), TestTimeout::shortMs());
+
+    // Once the settings name the receiver, the collapsed page offers Connect beside the vehicle's status.
+    configuration.tcpHost = QStringLiteral("rtk.test");
+    receiver->setConfiguration(configuration);
+    QTRY_VERIFY_WITH_TIMEOUT(shownItem(page.get(), "rtkConnectButton"), TestTimeout::shortMs());
+    QVERIFY(shownItem(page.get(), "rtkConnectButton")->isEnabled());
 }
 
 void GPSIndicatorTest::_compactExpandedPageHasSettingsSize()
 {
-    // Status of a vehicle GPS, a surveyed base and a caster, which is taller than the settings of a passive receiver.
-    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::Passive));
+    // Status of a vehicle GPS, a surveyed base and a caster, which is taller than the settings of that base.
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::UBlox));
     NTRIPSettings* const ntrip = SettingsManager::instance()->ntripSettings();
     settings.saved.setFactValue(ntrip->ntripServerConnectEnabled(), false);
     const GPSTest::CasterHost caster(GPSManager::instance()->ntrip(), QStringLiteral("caster.example"));
@@ -194,17 +256,26 @@ void GPSIndicatorTest::_compactExpandedPageHasSettingsSize()
     QVERIFY(window.show());
     QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
     const qreal statusHeight = item->implicitHeight();
+    // Beside a vehicle's GPS status too, the collapsed page has the receiver's button.
+    QVERIFY(shownItem(page.get(), "rtkConnectButton"));
 
     QVERIFY(page->setProperty("expanded", true));
     QTRY_VERIFY_WITH_TIMEOUT(page->findChild<QQuickItem*>(QStringLiteral("gpsReceiverSettings")),
                              TestTimeout::shortMs());
     auto* panel = page->findChild<QQuickItem*>(QStringLiteral("gpsReceiverSettings"));
+    auto* connection = page->findChild<QQuickItem*>(QStringLiteral("gpsCompactReceiverConnection"));
+    QVERIFY(connection);
     QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
-    const qreal settingsHeight = panel->height();
-    QVERIFY2(settingsHeight > 0 && statusHeight > settingsHeight,
+    // The settings replace the status column, so the receiver's connection row, which has Connect, is shown above
+    // them.
+    QVERIFY(connection->isVisible());
+    QCOMPARE(connection->mapToItem(item, QPointF()), QPointF());
+    QVERIFY(panel->height() > 0 && panel->y() > connection->height());
+    const qreal settingsHeight = panel->mapToItem(item, QPointF(0, panel->height())).y();
+    QVERIFY2(statusHeight > settingsHeight,
              qPrintable(QStringLiteral("status %1, settings %2").arg(statusHeight).arg(settingsHeight)));
-    // The drawer takes the page's implicit size, which the hidden status must not add to: neither its height, nor
-    // the spacing and the divider that separate it from the settings.
+    // The drawer takes the page's implicit size, which the hidden status column must not add to: neither its height,
+    // nor the spacing and the divider that separate it from the settings.
     QVERIFY2(qAbs(item->implicitHeight() - settingsHeight) <= 1,
              qPrintable(QStringLiteral("page %1, settings %2").arg(item->implicitHeight()).arg(settingsHeight)));
     QVERIFY2(qAbs(item->implicitWidth() - panel->width()) <= 1,
@@ -218,11 +289,14 @@ void GPSIndicatorTest::_compactExpandedPageHasSettingsSize()
     QVERIFY2(qAbs(panel->width() - narrowWidth) <= 1,
              qPrintable(QStringLiteral("settings %1, available %2").arg(panel->width()).arg(narrowWidth)));
 
-    // Widened to fit both, status and the divider return beside the settings.
+    // Widened to fit both, status and the divider return beside the settings, which no longer need a row of their
+    // own to connect.
     QVERIFY(page->setProperty("availableWidth", sideBySideWidth));
     QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
     QVERIFY2(qAbs(item->implicitWidth() - sideBySideWidth) <= 1,
              qPrintable(QStringLiteral("page %1, side by side %2").arg(item->implicitWidth()).arg(sideBySideWidth)));
+    QVERIFY(!connection->isVisible());
+    QCOMPARE(panel->y(), 0.0);
 }
 
 void GPSIndicatorTest::_pageOffersNtripConnect()

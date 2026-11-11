@@ -13,6 +13,7 @@ private slots:
     void _pageFitsWidth_data();
     void _pageFitsWidth();
     void _compactExpandedPageHasSettingsSize();
+    void _receiverBesideVehicleGps();
     void _pageOffersNtripConnect();
     void _pageVehicleMeasurements();
     void _pageResilienceGroups();

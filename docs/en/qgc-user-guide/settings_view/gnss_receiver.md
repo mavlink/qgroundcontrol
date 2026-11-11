@@ -6,7 +6,12 @@ Corrections from NTRIP casters and UDP are configured in [RTK Corrections](ntrip
 
 ## GNSS Receiver Status {#status}
 
-The receiver status shows the connection, the receiver's fix and satellites, and any jamming or spoofing it reports.
+The receiver status begins with the connection: a dot for its state, a line that says what the receiver is doing, and the button that connects or disconnects it.
+The dot is grey without a receiver, orange while a connection is opened or awaited, green once the receiver is connected, and red after a connection failed or was lost; it turns orange for a connected receiver that has a problem.
+The button reads **Connect**, then **Disconnect** from the moment a connection is being opened, and **Cancel reconnect** while QGroundControl waits to reconnect automatically.
+**Connect** uses the [settings](#receiver) as they are, and is unavailable while they select no receiver type, a base mode the receiver does not support, or UDP for a configured base.
+A message below that line explains a failed or lost connection.
+Below the connection, the status shows the receiver's fix and satellites, and any jamming or spoofing it reports.
 The status of a configured base says when the base sends no corrections.
 While a survey or the receiver's own averaging runs, it sends none until that completes.
 Otherwise the status reads _Waiting for a valid base position; the base sends no corrections until then_, as before the receiver confirms a fixed position or after it loses its position.
@@ -26,9 +31,11 @@ Each is a section of **GNSS Receiver** in the settings sidebar, and the settings
 - **GNSS Receiver:** The receiver role, manufacturer and connection.
 - **RTK Base Station** (_Configured base_ only): The base mode and its settings.
 - **Saved Base Sites** (_Fixed position_ only): The [saved base sites](#base_sites).
-- **Connect:** The remaining settings and the **Connect** button.
+- **Connect:** How and when the receiver connects: the remaining settings.
 
-The GNSS indicator's drop-down shows the same settings as one form.
+The **Connect** button is not among them: it is in the [receiver status](#status), the first group of the page.
+The GNSS indicator's drop-down shows the same settings as one form when expanded, and the receiver status with **Connect** once a receiver is set up, so a saved receiver connects without opening the settings. Beside a vehicle's GPS status, a receiver that is not set up is shown only while the settings are open.
+Where the drop-down is too narrow for both, the settings replace the status, and the connection line with its button and message is shown above them.
 
 The settings are:
 
@@ -69,9 +76,8 @@ The settings are:
   It therefore includes the receiver's positions and the base station location, so share it only where that is acceptable.
   It is a text file: after a heading line, each line is the time in microseconds since the recording started, then `RX` and the bytes received in hexadecimal, `TX` and the bytes sent, or `BAUD` and the new baud rate.
   A recording stops when its file reaches 256 MB or cannot be written: the application log reports it and the path is no longer shown. The connection continues either way.
-- **Connect** / **Disconnect** (button): Connects the receiver with these settings, or disconnects it.
 
-A message below the settings, also shown in the GNSS indicator's drop-down, explains a failed or lost connection.
+The message below the connection line of the [receiver status](#status) explains a failed or lost connection.
 When a u-blox receiver reports that it produces more output than its connection carries, the message warns until 30 seconds after the last report: use a higher baud rate or turn on **Compact RTCM corrections (MSM4)**.
 
 ### RTK Base Station {#base_station}
@@ -126,7 +132,7 @@ The _Passive_ role uses the receiver's existing output without configuring it or
 - Turn off **Forward receiver RTCM** to use the receiver only for the ground station position.
 - Select the connection (**Serial** with the receiver's existing baud rate, **TCP**, or **UDP** with the port QGC listens on).
 
-A passive receiver stays connected while it reports no position, and after a few seconds the message below the settings explains why: no data at all (wrong device, or another program uses it), data that isn't GNSS output (wrong device or baud rate), or a recognized protocol without position messages (enable NMEA GGA, u-blox NAV-PVT or Septentrio PVTGeodetic output).
+A passive receiver stays connected while it reports no position, and after a few seconds the [receiver status](#status) explains why: no data at all (wrong device, or another program uses it), data that isn't GNSS output (wrong device or baud rate), or a recognized protocol without position messages (enable NMEA GGA, u-blox NAV-PVT or Septentrio PVTGeodetic output).
 A u-blox receiver that QGC configured as a base station keeps its USB NMEA output, so it also works as a passive receiver afterwards.
 
 A separate _NMEA GPS Device_ from an earlier version becomes a passive receiver, unless RTK GPS auto-connect had been turned on explicitly or an RTK receiver's serial device was saved.

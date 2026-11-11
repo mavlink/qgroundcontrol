@@ -11,7 +11,6 @@ import QGroundControl.GPS
 ToolIndicatorPage {
     id: root
 
-    readonly property GPSReceiver _receiver: QGroundControl.gpsManager.receiver
     readonly property NTRIPSettings _ntripSettings: QGroundControl.settingsManager.ntripSettings
     // Connecting to a configured caster is the common field action, so it is offered without opening settings.
     readonly property bool _ntripConfigured: root._ntripSettings.userVisible
@@ -157,9 +156,14 @@ ToolIndicatorPage {
                 facts: root.activeVehicle?.gps2 ?? null
             }
 
+            // It has Connect, so beside a vehicle's GPS status it is shown once a receiver is set up, as the caster
+            // is, and while the settings that set it up are open.
             GPSReceiverStatus {
+                id: receiverStatus
+
                 Layout.minimumWidth: 0
-                showWhenDisconnected: !root._vehicleGps
+                showWhenDisconnected: !root._vehicleGps || root.expanded || receiverStatus.receiver.hasEndpoint
+                                      || receiverStatus.receiver.errorMessage !== ""
                 disconnectedText: qsTr("No GNSS receiver connected. Expand for settings.")
             }
 
@@ -183,11 +187,6 @@ ToolIndicatorPage {
                 sourceEditable: false
                 showCoordinates: false
             }
-
-            QGCNoteLabel {
-                visible: root._receiver.errorMessage.length > 0
-                text: root._receiver.errorMessage
-            }
         }
     }
 
@@ -196,14 +195,24 @@ ToolIndicatorPage {
     expandedComponent: Component {
         Item {
             implicitWidth: root._settingsWidth
-            implicitHeight: settingsPanel.implicitHeight
+            implicitHeight: expandedColumn.implicitHeight
 
-            GPSReceiverSettings {
-                id: settingsPanel
-                objectName: "gpsReceiverSettings"
+            ColumnLayout {
+                id: expandedColumn
                 width: parent.width
-                // The status column shows the error unless the compact layout hides it.
-                showErrorMessage: root._compact
+                spacing: ScreenTools.defaultFontPixelHeight / 2
+
+                // The compact layout shows the settings in place of the status column, so the receiver's connection,
+                // which has Connect and the receiver's problem, comes with them.
+                GPSReceiverConnectionRow {
+                    objectName: "gpsCompactReceiverConnection"
+                    visible: root._compact
+                }
+
+                GPSReceiverSettings {
+                    objectName: "gpsReceiverSettings"
+                    Layout.minimumWidth: 0
+                }
             }
         }
     }

@@ -34,6 +34,7 @@ RowLayout {
 
     QGCButton {
         objectName: root.buttonObjectName
+        focusPolicy: Qt.StrongFocus
         text:      root.buttonText
         enabled:   root.buttonEnabled
         visible:   root.buttonText !== ""

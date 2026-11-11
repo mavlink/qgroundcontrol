@@ -13,9 +13,8 @@ QGCGroupBox {
 
     readonly property int role: settings.receiverRole.rawValue
     readonly property bool configuredBase: role === RTKSettings.ConfiguredBase
-    readonly property int manufacturer: settings.baseReceiverManufacturer.rawValue
     readonly property int baseMode: settings.baseMode.rawValue
-    readonly property gpsReceiverPresentation presentation: receiver.capabilitiesFor(role, manufacturer)
+    readonly property gpsReceiverPresentation presentation: receiver.configuredPresentation
     // A pending automatic reconnect keeps the saved connection; stop it before editing.
     readonly property bool _active: receiver.state !== GPSReceiver.Disconnected
     readonly property bool _editable: !_active

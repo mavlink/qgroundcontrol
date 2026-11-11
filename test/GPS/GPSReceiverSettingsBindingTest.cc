@@ -25,7 +25,7 @@
 using namespace std::chrono_literals;
 using namespace GPSTest;
 
-void GPSReceiverSettingsBindingTest::_capabilitiesFor_data()
+void GPSReceiverSettingsBindingTest::_configuredPresentation_data()
 {
     QTest::addColumn<int>("manufacturer");
     QTest::addColumn<bool>("rtkBase");
@@ -43,7 +43,7 @@ void GPSReceiverSettingsBindingTest::_capabilitiesFor_data()
     QTest::newRow("invalid") << 99 << false << false << false;
 }
 
-void GPSReceiverSettingsBindingTest::_capabilitiesFor()
+void GPSReceiverSettingsBindingTest::_configuredPresentation()
 {
     QFETCH(int, manufacturer);
     QFETCH(bool, rtkBase);
@@ -52,8 +52,11 @@ void GPSReceiverSettingsBindingTest::_capabilitiesFor()
     GPSReceiver receiver;
     // The passive family is selected by role, so a passive receiver's manufacturer does not matter.
     const bool passive = manufacturer == kPassiveManufacturer;
-    const auto caps =
-        receiver.capabilitiesFor(passive ? RTKSettings::Passive : RTKSettings::ConfiguredBase, manufacturer);
+    GPSReceiver::Configuration configuration;
+    configuration.receiverRole = passive ? RTKSettings::Passive : RTKSettings::ConfiguredBase;
+    configuration.baseReceiverManufacturer = manufacturer;
+    receiver.setConfiguration(configuration);
+    const auto caps = receiver.property("configuredPresentation").value<GPSReceiverPresentation>();
     QCOMPARE(caps.passive, passive);
     QCOMPARE(caps.rtkBase, rtkBase);
     QCOMPARE(caps.receiverAveraging, receiverAveraging);

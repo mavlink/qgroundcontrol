@@ -8,16 +8,18 @@ import QGroundControl.Controls
 import QGroundControl.FactControls
 import QGroundControl.GPS
 
-/// Live GNSS receiver status, shared by the GPS indicator and the receiver settings page.
+/// The GNSS receiver's connection, with Connect and the receiver's problem, and its live status, shared by the GPS
+/// indicator and the receiver settings page.
 QGCGroupBox {
     id: root
 
     property GPSReceiver receiver: QGroundControl.gpsManager.receiver
     /// The receiver's status Facts.
     property GPSReceiverFactGroup facts: root.receiver.facts
-    /// Keep the group visible without a receiver, showing disconnectedText.
+    /// Keep the group, and so Connect, visible without a receiver.
     property bool showWhenDisconnected: false
-    property string disconnectedText: qsTr("No GNSS receiver connected.")
+    /// What the connection row says without a receiver.
+    property alias disconnectedText: connection.disconnectedText
 
     readonly property bool _connected: root.receiver.state === GPSReceiver.Connected
     readonly property gpsReceiverPresentation _presentation: root.receiver.activePresentation
@@ -73,9 +75,9 @@ QGCGroupBox {
         }
     }
 
-    QGCNoteLabel {
-        objectName: "rtkReceiverStatus"
-        text: root.receiver.statusText || root.disconnectedText
+    GPSReceiverConnectionRow {
+        id: connection
+        receiver: root.receiver
     }
 
     LabelledLabel {

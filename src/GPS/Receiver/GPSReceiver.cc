@@ -421,10 +421,11 @@ QList<int> GPSReceiver::serialBaudRates()
     return rates;
 }
 
-GPSReceiverPresentation GPSReceiver::capabilitiesFor(int role, int manufacturer) const
+GPSReceiverPresentation GPSReceiver::configuredPresentation() const
 {
-    return gpsReceiverPresentation(
-        role == RTKSettings::ConfiguredBase ? manufacturer : gpsReceiverManufacturerForType(GPSType::Passive));
+    return gpsReceiverPresentation(_configuration.receiverRole == RTKSettings::ConfiguredBase
+                                       ? _configuration.baseReceiverManufacturer
+                                       : gpsReceiverManufacturerForType(GPSType::Passive));
 }
 
 GPSReceiver::State GPSReceiver::state() const
@@ -513,9 +514,7 @@ bool GPSReceiver::connectReceiver()
         return false;
     }
     _scanSerialPorts();
-    const bool allowed =
-        _persistentChangesAllowed &&
-        capabilitiesFor(_configuration.receiverRole, _configuration.baseReceiverManufacturer).persistentConfiguration;
+    const bool allowed = _persistentChangesAllowed && configuredPresentation().persistentConfiguration;
     _setPersistentChangesAllowed(false);
     const bool connected = _connection->connectConfigured(allowed);
     _emitChanges();

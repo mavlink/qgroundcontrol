@@ -28,6 +28,7 @@ qt_add_qml_module(
         GPSReceiverBaseStation.qml
         GPSReceiverConnectControls.qml
         GPSReceiverConnection.qml
+        GPSReceiverConnectionRow.qml
         GPSReceiverRecording.qml
         GPSReceiverSerialPort.qml
         GPSReceiverSettings.qml

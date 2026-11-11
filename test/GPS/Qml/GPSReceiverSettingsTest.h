@@ -14,7 +14,7 @@ private slots:
     void _surveySavedAsSite();
     void _baseSitePicker();
     void _statusListsConstellations();
-    void _reconnectingOffersDisconnect();
+    void _connectionRowFollowsReceiver();
     void _tcpConnectionFields();
     void _roleSelectsFields();
     void _automaticManufacturer();

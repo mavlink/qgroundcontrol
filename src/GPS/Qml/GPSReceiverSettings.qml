@@ -10,7 +10,6 @@ GPSReceiverSettingsGroup {
 
     property alias serialPorts: connection.serialPorts
     property alias serialBaudRates: connection.serialBaudRates
-    property alias showErrorMessage: connectControls.showErrorMessage
 
     heading: qsTr("GNSS Receiver")
 
@@ -38,7 +37,6 @@ GPSReceiverSettingsGroup {
     }
 
     GPSReceiverConnectControls {
-        id: connectControls
         receiver: root.receiver
         settings: root.settings
         autoConnectFact: root.autoConnectFact
