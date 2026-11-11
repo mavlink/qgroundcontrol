@@ -281,7 +281,7 @@ bool extractArchiveAtomic(const QString &archivePath, const QString &outputDirec
 /// @param archivePath Path to the archive file (or Qt resource path)
 /// @param fileName Name of file inside archive
 /// @param outputPath Output file path
-/// @return true on success, false if not found or extraction failed
+/// @return true on success, false if not found, a hard or symbolic link, or extraction failed
 bool extractSingleFile(const QString &archivePath, const QString &fileName,
                        const QString &outputPath);
 
@@ -307,12 +307,13 @@ QByteArray extractFileToMemory(const QString& archivePath, const QString& fileNa
 /// @param archivePath Path to the archive file (or Qt resource path)
 /// @param fileNames Names of files inside archive
 /// @param outputDirectoryPath Output directory
-/// @return true if all files found and extracted
+/// @return true if all files found and extracted. A hard or symbolic link is not extracted.
 bool extractMultipleFiles(const QString &archivePath, const QStringList &fileNames,
                           const QString &outputDirectoryPath);
 
 /// Extract files matching glob patterns from archive (uses libarchive archive_match)
 /// Supports wildcards: * (any chars), ? (single char), [...] (char class)
+/// A hard or symbolic link that matches is skipped with a warning.
 /// @param archivePath Path to the archive file (or Qt resource path)
 /// @param patterns Glob patterns to match (e.g., "*.json", "dir/*", "file.txt")
 /// @param outputDirectoryPath Output directory
@@ -358,6 +359,7 @@ QList<ArchiveEntry> listArchiveEntriesDetailed(const QString &archivePath);
 ArchiveStats getArchiveStats(const QString &archivePath);
 
 /// Extract archive with per-entry filtering
+/// A hard or symbolic link the filter accepts is skipped with a warning.
 /// @param archivePath Path to the archive file (or Qt resource path)
 /// @param outputDirectoryPath Path where files will be extracted
 /// @param filter Callback to decide which entries to extract

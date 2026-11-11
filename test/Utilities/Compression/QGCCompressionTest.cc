@@ -2694,6 +2694,72 @@ void QGCCompressionTest::_testExtractRejectsEscapingLinks()
 #endif
 }
 
+void QGCCompressionTest::_testExtractLeavesOutLinks_data()
+{
+    QTest::addColumn<QString>("api");
+
+    for (const char* api : {"extractArchiveFiltered", "extractByPattern", "extractFiles", "extractFile"}) {
+        QTest::newRow(api) << QString::fromLatin1(api);
+    }
+}
+
+void QGCCompressionTest::_testExtractLeavesOutLinks()
+{
+    QFETCH(QString, api);
+
+    // Both links stay inside the output directory. These functions write the data of regular files and
+    // cannot make a link, and a link is not an empty file.
+    QTemporaryDir tempDir;
+    const QString archivePath = tempDir.filePath("links.tar");
+    const QString outputDir = tempDir.filePath("output");
+    QVERIFY(_writeFile(archivePath, _makeTar({{.name = "target.txt", .data = "target"},
+                                              {.name = "soft.txt", .type = '2', .linkName = "target.txt"},
+                                              {.name = "hard.txt", .type = '1', .linkName = "target.txt"}})));
+    const QStringList targetOnly{QStringLiteral("target.txt")};
+    const auto expectSkipped = [this](const char* kind, const char* name) {
+        expectLogMessage(
+            "Utilities.QGClibarchive", QtWarningMsg,
+            QRegularExpression(
+                QStringLiteral("Skipping %1.*%2 -> target.txt").arg(QLatin1String(kind), QLatin1String(name))));
+    };
+
+    if (api == "extractArchiveFiltered") {
+        expectSkipped("symlink", "soft.txt");
+        expectSkipped("hard link", "hard.txt");
+        QVERIFY(QGCCompression::extractArchiveFiltered(archivePath, outputDir,
+                                                       [](const QGCCompression::ArchiveEntry&) { return true; }));
+        verifyExpectedLogMessage();
+        verifyExpectedLogMessage();
+    } else if (api == "extractByPattern") {
+        QStringList extractedFiles;
+        expectSkipped("symlink", "soft.txt");
+        expectSkipped("hard link", "hard.txt");
+        QVERIFY(QGCCompression::extractByPattern(archivePath, {"*.txt"}, outputDir, &extractedFiles));
+        verifyExpectedLogMessage();
+        verifyExpectedLogMessage();
+        QCOMPARE(extractedFiles, targetOnly);
+    } else if (api == "extractFiles") {
+        // Asked for by name, so leaving the entry out fails the call
+        expectSkipped("symlink", "soft.txt");
+        QVERIFY(!QGCCompression::extractFiles(archivePath, {"target.txt", "soft.txt"}, outputDir));
+        verifyExpectedLogMessage();
+        expectSkipped("hard link", "hard.txt");
+        QVERIFY(!QGCCompression::extractFiles(archivePath, {"hard.txt"}, outputDir));
+        verifyExpectedLogMessage();
+    } else {
+        QVERIFY(QGCCompression::extractFile(archivePath, "target.txt", outputDir + "/target.txt"));
+        expectSkipped("symlink", "soft.txt");
+        QVERIFY(!QGCCompression::extractFile(archivePath, "soft.txt", outputDir + "/soft.txt"));
+        verifyExpectedLogMessage();
+        expectSkipped("hard link", "hard.txt");
+        QVERIFY(!QGCCompression::extractFile(archivePath, "hard.txt", outputDir + "/hard.txt"));
+        verifyExpectedLogMessage();
+    }
+
+    QCOMPARE(_entriesBelow(outputDir), targetOnly);
+    QCOMPARE(_readFile(outputDir + "/target.txt"), QByteArray("target"));
+}
+
 void QGCCompressionTest::_testSpecialCharactersInPath()
 {
     QTemporaryDir tempDir;

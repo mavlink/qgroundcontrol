@@ -108,6 +108,8 @@ private slots:
     void _testExtractRejectsEscapingNames_data();
     void _testExtractRejectsEscapingNames();
     void _testExtractRejectsEscapingLinks();
+    void _testExtractLeavesOutLinks_data();
+    void _testExtractLeavesOutLinks();
     void _testSpecialCharactersInPath();
     void _testUnicodePaths();
 

@@ -405,6 +405,25 @@ CopyResult copyEntryToFile(struct archive* a, const QString& outputPath, DataTra
     return CopyResult::Completed;
 }
 
+/// Whether an entry is a hard or symbolic link, which is then logged as skipped
+/// The functions that write an entry with writeArchiveEntryToFile() leave links out: QSaveFile makes regular
+/// files, so a link would become an empty one. extractArchiveEntries() creates the symbolic links that stay
+/// inside its output directory instead.
+bool skipLinkEntry(struct archive_entry* entry)
+{
+    if (archive_entry_hardlink(entry) != nullptr) {
+        qCWarning(QGClibarchiveLog) << "Skipping hard link:" << archive_entry_pathname(entry) << "->"
+                                    << archive_entry_hardlink(entry);
+        return true;
+    }
+    if (archive_entry_filetype(entry) == AE_IFLNK) {
+        qCWarning(QGClibarchiveLog) << "Skipping symlink:" << archive_entry_pathname(entry) << "->"
+                                    << archive_entry_symlink(entry);
+        return true;
+    }
+    return false;
+}
+
 /// Write current archive entry data to a file atomically
 /// @param a Archive handle (must have entry header already read)
 /// @param outputPath Output file path (parent directory must exist)
@@ -1217,7 +1236,11 @@ bool extractSingleFile(const QString& archivePath, const QString& fileName, cons
         return false;
     }
 
-    if (findEntryToRead(reader.handle(), fileName) != NextEntry::Found) {
+    struct archive_entry* entry = nullptr;
+    if (findEntryToRead(reader.handle(), fileName, &entry) != NextEntry::Found) {
+        return false;
+    }
+    if (skipLinkEntry(entry)) {
         return false;
     }
 
@@ -1276,6 +1299,12 @@ bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNam
 
         if (!targetFiles.contains(entryName)) {
             return true;
+        }
+
+        // Asked for by name, so an entry that is left out fails the extraction
+        if (skipLinkEntry(entry)) {
+            failed = true;
+            return false;
         }
 
         const QString outputPath = containedEntryPath(canonicalOutputDir, entryName);
@@ -1351,6 +1380,10 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
         }
 
         if (archive_entry_filetype(entry) == AE_IFDIR) {
+            return true;
+        }
+
+        if (skipLinkEntry(entry)) {
             return true;
         }
 
@@ -1552,6 +1585,10 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
 
         // Skip directories for extraction (they're created by ensureParentExists)
         if (info.isDirectory) {
+            return true;
+        }
+
+        if (skipLinkEntry(entry)) {
             return true;
         }
 

@@ -201,6 +201,8 @@ bool extractArchiveAtomic(const QString &archivePath, const QString &outputDirec
                           qint64 maxDecompressedBytes = 0);
 
 /// Extract an archive with per-entry filtering
+/// Only regular files are written, with the directories they are in. Hard and symbolic links are skipped with
+/// a warning, where extractArchive() creates the symbolic links that stay inside the output directory.
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param outputDirectoryPath Output directory path
 /// @param filter Callback to decide which entries to extract (return true to extract)
@@ -251,7 +253,7 @@ bool fileExists(const QString &archivePath, const QString &fileName,
 /// @param fileName Name of file inside archive (as shown by listArchive)
 /// @param outputPath Output file path (if empty, extracts to current directory)
 /// @param format Archive format (Auto = detect from archivePath)
-/// @return true on success, false if file not found or extraction failed
+/// @return true on success, false if file not found, is a hard or symbolic link, or extraction failed
 bool extractFile(const QString &archivePath, const QString &fileName,
                  const QString &outputPath = QString(),
                  Format format = Format::Auto);
@@ -273,13 +275,15 @@ QByteArray extractFileData(const QString& archivePath, const QString& fileName, 
 /// @param fileNames Names of files inside archive
 /// @param outputDirectoryPath Output directory (files extracted with their archive names)
 /// @param format Archive format (Auto = detect from archivePath)
-/// @return true if all files found and extracted, false otherwise
+/// @return true if all files found and extracted, false otherwise: also if one of them is a hard or symbolic
+///         link, which is not extracted
 bool extractFiles(const QString &archivePath, const QStringList &fileNames,
                   const QString &outputDirectoryPath,
                   Format format = Format::Auto);
 
 /// Extract files matching glob patterns from an archive
 /// Supports wildcards: * (any chars), ? (single char), [...] (char class)
+/// Only regular files are written: a hard or symbolic link that matches is skipped with a warning.
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param patterns Glob patterns to match (e.g., "*.json", "subdir/*", "file.txt")
 /// @param outputDirectoryPath Output directory (files extracted with their archive names)
