@@ -86,7 +86,8 @@ class QGCFileDownload : public QObject
     /// Whether to auto-decompress compressed files after download
     Q_PROPERTY(bool autoDecompress READ autoDecompress WRITE setAutoDecompress NOTIFY autoDecompressChanged FINAL)
 
-    /// Custom output path (empty = auto-generate in temp directory)
+    /// Custom output path (empty = the URL's file name, in a directory of its own under the temp directory,
+    /// which is removed when the application exits)
     Q_PROPERTY(QString outputPath READ outputPath WRITE setOutputPath NOTIFY outputPathChanged FINAL)
 
     /// Expected SHA-256 hash for verification (empty = skip verification)
@@ -190,7 +191,9 @@ signals:
 
     /// Emitted when download completes (success or failure)
     /// @param success true if download succeeded
-    /// @param localPath Path to downloaded file (empty on failure)
+    /// @param localPath Path to downloaded file, which stays on disk until the receiver removes it or, in the
+    ///                  default location, the application exits. Empty on failure, when the partial file has
+    ///                  been removed; a failed decompression reports the compressed file instead
     /// @param errorMessage Error message (empty on success)
     void finished(bool success, const QString &localPath, const QString &errorMessage);
 
@@ -215,7 +218,9 @@ private:
     void _emitFinished(bool success, const QString &localPath, const QString &errorMessage);
     bool _writeReplyData(const QByteArray &data);
     bool _failForWriteError(const QString &context);
-    QString _generateOutputPath(const QString &remoteUrl) const;
+    void _removeOutput();
+    void _removeDownloadDir();
+    QString _generateOutputPath(const QString& remoteUrl);
     bool _verifyHash();
     void _startDecompression();
 
@@ -230,6 +235,7 @@ private:
     QString _expectedHash;
     QString _errorString;
     QString _compressedFilePath;
+    QString _downloadDir;  ///< Directory made for the current download, empty with a custom output path
 
     qreal _progress = 0.0;
     qint64 _totalBytes = -1;

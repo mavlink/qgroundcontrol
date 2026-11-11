@@ -1,15 +1,30 @@
 #include "QGCFileDownload.h"
+
+#include <QtCore/QDir>
+#include <QtCore/QFile>
+#include <QtCore/QFileInfo>
+#include <QtCore/QStandardPaths>
+#include <QtCore/QTemporaryDir>
+#include <QtNetwork/QNetworkAccessManager>
+
 #include "QGCCompression.h"
 #include "QGCCompressionJob.h"
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QFile>
-#include <QtCore/QFileInfo>
-#include <QtCore/QStandardPaths>
-#include <QtNetwork/QNetworkAccessManager>
-
 QGC_LOGGING_CATEGORY(QGCFileDownloadLog, "Utilities.QGCFileDownload")
+
+namespace {
+
+/// Parent of the default download directories. It is removed with its contents when the application exits, so
+/// files that receivers leave behind do not pile up from one run to the next.
+QString runDownloadDir(const QString& parentDir)
+{
+    static const QTemporaryDir runDir(QGCFileHelper::joinPath(parentDir, QStringLiteral("QGCFileDownload-XXXXXX")));
+    return runDir.path();
+}
+
+}  // namespace
 
 QGCFileDownload::QGCFileDownload(QObject *parent)
     : QObject(parent)
@@ -137,6 +152,7 @@ bool QGCFileDownload::start(const QString &remoteUrl, const QGCNetworkHelper::Re
         _setErrorString(tr("Cannot open output file: %1").arg(_outputFile->errorString()));
         delete _outputFile;
         _outputFile = nullptr;
+        _removeDownloadDir();
         return false;
     }
 
@@ -152,9 +168,7 @@ bool QGCFileDownload::start(const QString &remoteUrl, const QGCNetworkHelper::Re
     if (_currentReply == nullptr) {
         qCWarning(QGCFileDownloadLog) << "QNetworkAccessManager::get failed";
         _setErrorString(tr("Failed to start download"));
-        _outputFile->close();
-        delete _outputFile;
-        _outputFile = nullptr;
+        _removeOutput();
         return false;
     }
 
@@ -443,7 +457,33 @@ void QGCFileDownload::_emitFinished(bool success, const QString &localPath, cons
         return;
     }
     _finishEmitted = true;
+
+    // A failure that hands no file to the receiver must not leave the partial one behind
+    if (!success && localPath.isEmpty()) {
+        _removeOutput();
+    }
+
     emit finished(success, localPath, errorMessage);
+}
+
+void QGCFileDownload::_removeOutput()
+{
+    if (_outputFile != nullptr) {
+        _outputFile->close();
+        delete _outputFile;
+        _outputFile = nullptr;
+    }
+
+    QFile::remove(_localPath);
+    _removeDownloadDir();
+}
+
+void QGCFileDownload::_removeDownloadDir()
+{
+    if (!_downloadDir.isEmpty()) {
+        QDir().rmdir(_downloadDir);
+        _downloadDir.clear();
+    }
 }
 
 bool QGCFileDownload::_writeReplyData(const QByteArray &data)
@@ -477,8 +517,10 @@ bool QGCFileDownload::_failForWriteError(const QString &context)
     return false;
 }
 
-QString QGCFileDownload::_generateOutputPath(const QString &remoteUrl) const
+QString QGCFileDownload::_generateOutputPath(const QString& remoteUrl)
 {
+    _downloadDir.clear();
+
     // Use custom output path if set
     if (!_outputPath.isEmpty()) {
         return _outputPath;
@@ -507,7 +549,24 @@ QString QGCFileDownload::_generateOutputPath(const QString &remoteUrl) const
         return QString();
     }
 
-    return QGCFileHelper::joinPath(downloadDir, fileName);
+    // A temp cleaner may have removed the directory during a long run
+    const QString runDir = runDownloadDir(downloadDir);
+    if (runDir.isEmpty() || !QDir().mkpath(runDir)) {
+        qCWarning(QGCFileDownloadLog) << "Cannot create download directory in" << downloadDir;
+        return QString();
+    }
+
+    // A directory per download keeps the file name, which receivers use to tell the file type, while sharing the
+    // path with neither another download nor a local source file
+    QTemporaryDir uniqueDir(QGCFileHelper::joinPath(runDir, QStringLiteral("XXXXXX")));
+    if (!uniqueDir.isValid()) {
+        qCWarning(QGCFileDownloadLog) << "Cannot create download directory:" << uniqueDir.errorString();
+        return QString();
+    }
+    uniqueDir.setAutoRemove(false);
+    _downloadDir = uniqueDir.path();
+
+    return QGCFileHelper::joinPath(_downloadDir, fileName);
 }
 
 bool QGCFileDownload::_verifyHash()

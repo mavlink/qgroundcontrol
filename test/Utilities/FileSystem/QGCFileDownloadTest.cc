@@ -1,17 +1,36 @@
 #include "QGCFileDownloadTest.h"
 
+#include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QStandardPaths>
+#include <QtCore/QTemporaryDir>
+#include <QtCore/QTemporaryFile>
 #include <QtTest/QSignalSpy>
 
+#include "LocalHttpTestServer.h"
 #include "QGCCompression.h"
 #include "QGCFileDownload.h"
 #include "QGCFileHelper.h"
-#include <QtCore/QTemporaryDir>
-#include <QtCore/QDir>
+
+namespace {
+
+bool writeDownloadTestFile(const QString& path, const QByteArray& data)
+{
+    QFile file(path);
+    return file.open(QIODevice::WriteOnly) && (file.write(data) == data.size());
+}
+
+QByteArray readDownloadTestFile(const QString& path)
+{
+    QFile file(path);
+    return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
+}
+
+}  // namespace
 
 void QGCFileDownloadTest::_testFileDownload()
 {
@@ -75,6 +94,7 @@ void QGCFileDownloadTest::_testFileDownloadHashVerificationFailure()
     QVERIFY(args.at(1).toString().isEmpty());  // localPath
     QVERIFY(args.at(2).toString().contains(QStringLiteral("Hash verification failed")));
     QVERIFY(!downloader.errorString().isEmpty());
+    QVERIFY(!QFile::exists(downloader.localPath()));
 }
 
 void QGCFileDownloadTest::_testFileDownloadHashVerificationSuccess()
@@ -170,6 +190,102 @@ void QGCFileDownloadTest::_testFileDownloadCancelSingleCompletion()
 
     const QList<QVariant> args = finishedSpy.first();
     QVERIFY(!args.at(0).toBool());
+    QVERIFY(!QFile::exists(downloader.localPath()));
+}
+
+void QGCFileDownloadTest::_testFileDownloadSameFileNameStaysSeparate()
+{
+    QTemporaryDir sourceDir;
+    const QString fileName = QStringLiteral("same-name.apj");
+    const QByteArray firstPayload("first source");
+    const QByteArray secondPayload("second source");
+    QVERIFY(QDir(sourceDir.path()).mkpath(QStringLiteral("first")));
+    QVERIFY(QDir(sourceDir.path()).mkpath(QStringLiteral("second")));
+    const QString firstSource = sourceDir.filePath(QStringLiteral("first/") + fileName);
+    const QString secondSource = sourceDir.filePath(QStringLiteral("second/") + fileName);
+    QVERIFY(writeDownloadTestFile(firstSource, firstPayload));
+    QVERIFY(writeDownloadTestFile(secondSource, secondPayload));
+
+    QGCFileDownload firstDownloader(this);
+    QGCFileDownload secondDownloader(this);
+    QSignalSpy firstFinishedSpy(&firstDownloader, &QGCFileDownload::finished);
+    QSignalSpy secondFinishedSpy(&secondDownloader, &QGCFileDownload::finished);
+
+    QVERIFY(firstDownloader.start(firstSource));
+    QVERIFY(secondDownloader.start(secondSource));
+    QVERIFY_SIGNAL_COUNT_WAIT(firstFinishedSpy, 1, TestTimeout::mediumMs());
+    QVERIFY_SIGNAL_COUNT_WAIT(secondFinishedSpy, 1, TestTimeout::mediumMs());
+    QVERIFY(firstFinishedSpy.first().at(0).toBool());
+    QVERIFY(secondFinishedSpy.first().at(0).toBool());
+
+    // Callers tell the file type from the name, so only the directory may differ
+    const QString firstPath = firstFinishedSpy.first().at(1).toString();
+    const QString secondPath = secondFinishedSpy.first().at(1).toString();
+    QCOMPARE(QFileInfo(firstPath).fileName(), fileName);
+    QCOMPARE(QFileInfo(secondPath).fileName(), fileName);
+    QCOMPARE(readDownloadTestFile(firstPath), firstPayload);
+    QCOMPARE(readDownloadTestFile(secondPath), secondPayload);
+
+    QFile::remove(firstPath);
+    QFile::remove(secondPath);
+}
+
+void QGCFileDownloadTest::_testFileDownloadLocalSourceInTempDirSurvives()
+{
+    const QByteArray payload("source in the temp directory");
+    QTemporaryFile source(QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation))
+                              .filePath(QStringLiteral("qgc_download_source_XXXXXX.bin")));
+    QVERIFY(source.open());
+    QCOMPARE(source.write(payload), payload.size());
+    source.close();
+
+    QGCFileDownload downloader(this);
+    QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
+    QVERIFY(downloader.start(source.fileName()));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    QVERIFY(finishedSpy.first().at(0).toBool());
+
+    const QString localPath = finishedSpy.first().at(1).toString();
+    QCOMPARE(readDownloadTestFile(source.fileName()), payload);
+    QCOMPARE(readDownloadTestFile(localPath), payload);
+
+    QFile::remove(localPath);
+}
+
+void QGCFileDownloadTest::_testFileDownloadFailureRemovesPartialFile_data()
+{
+    QTest::addColumn<bool>("customOutputPath");
+    QTest::newRow("default-path") << false;
+    QTest::newRow("custom-path") << true;
+}
+
+void QGCFileDownloadTest::_testFileDownloadFailureRemovesPartialFile()
+{
+    QFETCH(bool, customOutputPath);
+
+    // Announces more than it sends, so the download fails after part of the body was written
+    TestFixtures::LocalHttpTestServer server;
+    QVERIFY2(server.listen(), "Could not start local test HTTP server");
+    server.installRawResponder("HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 64\r\n\r\npartial body");
+
+    QTemporaryDir outputDir;
+    QGCFileDownload downloader(this);
+    if (customOutputPath) {
+        downloader.setOutputPath(outputDir.filePath(QStringLiteral("partial.bin")));
+    }
+    QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
+
+    expectLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression("Download error:"));
+    QVERIFY(downloader.start(server.url(QStringLiteral("/partial.bin"))));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QVERIFY(!finishedSpy.first().at(0).toBool());
+    QVERIFY(downloader.bytesReceived() > 0);
+
+    const QFileInfo output(downloader.localPath());
+    QVERIFY(!output.exists());
+    // Only a directory that was made for the download goes with it
+    QCOMPARE(output.dir().exists(), customOutputPath);
 }
 
 void QGCFileDownloadTest::_testAutoDecompressGzip()
