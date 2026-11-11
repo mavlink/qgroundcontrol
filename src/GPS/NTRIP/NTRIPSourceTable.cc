@@ -13,6 +13,7 @@ enum class StrField : qsizetype
 {
     Type = 0,
     Mountpoint = 1,
+    Identifier = 2,
     Format = 3,
     NavSystem = 6,
     Country = 8,
@@ -20,9 +21,6 @@ enum class StrField : qsizetype
     Longitude = 10,
     Bitrate = 17,
 };
-
-/// A record has to reach its last field in use.
-constexpr qsizetype MIN_STR_FIELDS = static_cast<qsizetype>(StrField::Bitrate) + 1;
 }  // namespace
 
 bool ntripSourceTableComplete(QByteArrayView body, qsizetype checkedSize)
@@ -45,13 +43,18 @@ std::optional<NTRIPMountpoint> NTRIPMountpoint::fromSourceTableLine(const QStrin
 {
     // split keeps empty fields, so a trailing ';' is harmless (the extra empty field parses as 0 / "" for its column).
     const QStringList fields = line.split(';');
-    const auto field = [&fields](StrField position) { return fields.at(static_cast<qsizetype>(position)).trimmed(); };
-    if (fields.size() < MIN_STR_FIELDS || field(StrField::Type).toUpper() != QStringLiteral("STR")) {
+    // Casters send shorter records too, such as RTKLIB's "STR;<mountpoint>;<text>": a field the record does not
+    // reach is empty, and only the name is needed to connect.
+    const auto field = [&fields](StrField position) {
+        return fields.value(static_cast<qsizetype>(position)).trimmed();
+    };
+    if (field(StrField::Type).toUpper() != QStringLiteral("STR") || field(StrField::Mountpoint).isEmpty()) {
         return std::nullopt;
     }
 
     NTRIPMountpoint mp;
     mp.mountpoint = field(StrField::Mountpoint);
+    mp.identifier = field(StrField::Identifier);
     mp.format = field(StrField::Format);
     mp.navSystem = field(StrField::NavSystem);
     mp.country = field(StrField::Country);
@@ -78,8 +81,10 @@ void NTRIPMountpoint::updateDistance(const QGeoCoordinate& from)
 
 QString NTRIPMountpoint::details() const
 {
+    // Many casters only repeat the mountpoint name as its identifier.
+    const bool described = identifier.compare(mountpoint, Qt::CaseInsensitive) != 0;
     QStringList parts;
-    for (const QString& part : {format, navSystem, country}) {
+    for (const QString& part : {described ? identifier : QString(), format, navSystem, country}) {
         if (!part.isEmpty()) {
             parts.append(part);
         }

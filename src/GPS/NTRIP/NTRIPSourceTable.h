@@ -16,7 +16,7 @@
 
 /// The parsed fields of an NTRIP source-table STR row that the mountpoint list shows or sorts by. All fields are
 /// immutable after parse except distanceKm, which is recomputed by updateDistances(). Each property is a model role of
-/// the same name.
+/// the same name. Only the mountpoint name is required: a field the row does not have is empty, zero or unknown.
 struct NTRIPMountpoint
 {
     Q_GADGET
@@ -26,11 +26,13 @@ struct NTRIPMountpoint
     Q_PROPERTY(QString country MEMBER country FINAL)
     Q_PROPERTY(int bitrate MEMBER bitrate FINAL)
     Q_PROPERTY(double distanceKm MEMBER distanceKm FINAL)
-    /// The format, navigation systems, country, bitrate and distance that are known, as one line.
+    /// The identifier, format, navigation systems, country, bitrate and distance that are known, as one line.
     Q_PROPERTY(QString details READ details FINAL)
 
 public:
     QString mountpoint;
+    /// The caster's description of the source, usually the nearest town.
+    QString identifier;
     QString format;
     QString navSystem;
     QString country;
@@ -39,7 +41,7 @@ public:
     double latitude = qQNaN();
     double longitude = qQNaN();
 
-    /// Parses one source-table line ("STR;..."); none unless it is a valid STR row.
+    /// Parses one source-table line ("STR;..."); none unless it is an STR row that names a mountpoint.
     static std::optional<NTRIPMountpoint> fromSourceTableLine(const QString& line);
 
     /// Recompute distanceKm, or mark it unknown for invalid reference/mountpoint coordinates.

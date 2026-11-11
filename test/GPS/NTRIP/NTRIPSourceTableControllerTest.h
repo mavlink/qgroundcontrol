@@ -18,6 +18,8 @@ private slots:
     void _cacheTtlPreventsFetch();
     void _invalidFetchRetiresPendingFetch();
     void _sourceTableSuccessAndCache();
+    void _tableWithoutMountpoints_data();
+    void _tableWithoutMountpoints();
     void _sourceTablePublishesSortedRowsOnce();
     void _v1SourceTable_data();
     void _v1SourceTable();

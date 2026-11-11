@@ -9,6 +9,8 @@ class NTRIPSourceTableTest : public UnitTest
 private slots:
     void _parseSTRLine();
     void _parseFullTable();
+    void _shortRow_data();
+    void _shortRow();
     void _updateDistancesAll();
     void _singleMountpointDistanceNotification();
     void _emptyTable();

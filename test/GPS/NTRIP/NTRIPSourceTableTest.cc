@@ -30,16 +30,55 @@ void NTRIPSourceTableTest::_parseFullTable()
         "SOURCETABLE 200 OK\r\n"
         "STR;MP1;Id1;RTCM 3.2;details;2;GPS;NET;USA;40.0;-74.0;0;1;gen;none;B;N;4800;misc\r\n"
         "STR;MP2;Id2;RTCM 3.3;details;0;GLO;NET;DEU;52.0;13.0;1;0;gen;none;N;Y;9600;misc\r\n"
-        "STR;SHORT;Too;Few;Fields\r\n"
         "CAS;caster.example.com;2101;desc;op;0;USA;0;0;0;0;0;0;misc\r\n"
+        "NET;NET;operator;B;N;https://example.com;https://example.com/streams;contact@example.com;none\r\n"
         "ENDSOURCETABLE\r\n";
 
     NTRIPSourceTableModel model;
     model.parseSourceTable(table);
 
-    // Short and non-STR lines are not mountpoints.
+    // Only STR records are mountpoints.
     QCOMPARE(model.count(), 2);
     QCOMPARE(model.rowCount(), 2);
+}
+
+void NTRIPSourceTableTest::_shortRow_data()
+{
+    QTest::addColumn<QString>("line");
+    QTest::addColumn<bool>("listed");
+    QTest::addColumn<QString>("details");
+    // RTKLIB's caster sends "STR;<mountpoint>;<text>", where the text is whatever its operator gave it.
+    QTest::newRow("rtklib-text") << QStringLiteral("STR;BASE;Rooftop antenna") << true
+                                 << QStringLiteral("Rooftop antenna");
+    QTest::newRow("rtklib-no-text") << QStringLiteral("STR;BASE;") << true << QString();
+    QTest::newRow("name-only") << QStringLiteral("STR;BASE") << true << QString();
+    QTest::newRow("through-format") << QStringLiteral("STR;BASE;Rooftop antenna;RTCM 3.2;1005(10),1077(1)") << true
+                                    << QStringLiteral("Rooftop antenna · RTCM 3.2");
+    QTest::newRow("through-country") << QStringLiteral("STR;BASE;;RTCM 3.2;;2;GPS+GLO;NET;DEU") << true
+                                     << QStringLiteral("RTCM 3.2 · GPS+GLO · DEU");
+    // A description that only repeats the name adds nothing.
+    QTest::newRow("named-twice") << QStringLiteral("STR;BASE;base;RTCM 3.2") << true << QStringLiteral("RTCM 3.2");
+    // Without a name there is nothing to connect to.
+    QTest::newRow("no-name") << QStringLiteral("STR;;Rooftop antenna;RTCM 3.2") << false << QString();
+    QTest::newRow("blank-name") << QStringLiteral("STR; ;Rooftop antenna") << false << QString();
+    QTest::newRow("type-only") << QStringLiteral("STR") << false << QString();
+}
+
+void NTRIPSourceTableTest::_shortRow()
+{
+    QFETCH(QString, line);
+    QFETCH(bool, listed);
+    QFETCH(QString, details);
+    NTRIPSourceTableModel model;
+    model.parseSourceTable(line + QStringLiteral("\r\nENDSOURCETABLE\r\n"), QGeoCoordinate(40, -74));
+    QCOMPARE(model.count(), listed ? 1 : 0);
+    if (listed) {
+        const auto index = model.index(0, 0);
+        QCOMPARE(model.data(index, NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("BASE"));
+        QCOMPARE(model.data(index, NTRIPSourceTableModel::DetailsRole).toString(), details);
+        // A row without coordinates has no distance.
+        QCOMPARE(model.data(index, NTRIPSourceTableModel::DistanceKmRole).toDouble(), -1.0);
+    }
 }
 
 void NTRIPSourceTableTest::_updateDistancesAll()
@@ -165,10 +204,10 @@ void NTRIPSourceTableTest::_rolesAreReadOnlyProperties()
     const auto index = model.index(0, 0);
     QCOMPARE(model.data(index, NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("MP1"));
     QCOMPARE(model.data(index, NTRIPSourceTableModel::DetailsRole).toString(),
-             QStringLiteral("RTCM 3.2 · GPS · DEU · 9600 bps"));
+             QStringLiteral("Id · RTCM 3.2 · GPS · DEU · 9600 bps"));
     model.updateDistances(QGeoCoordinate(52, 13));
     QCOMPARE(model.data(index, NTRIPSourceTableModel::DetailsRole).toString(),
-             QStringLiteral("RTCM 3.2 · GPS · DEU · 9600 bps · 0.0 km"));
+             QStringLiteral("Id · RTCM 3.2 · GPS · DEU · 9600 bps · 0.0 km"));
     QVERIFY(!(model.flags(index) & Qt::ItemIsEditable));
     QVERIFY(!model.setData(index, QStringLiteral("changed"), NTRIPSourceTableModel::MountpointRole));
     QCOMPARE(model.data(index, NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("MP1"));

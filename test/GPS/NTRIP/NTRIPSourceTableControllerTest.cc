@@ -280,6 +280,31 @@ void NTRIPSourceTableControllerTest::_sourceTableSuccessAndCache()
     QCOMPARE(controller.mountpointModel()->rowCount(), 0);
 }
 
+void NTRIPSourceTableControllerTest::_tableWithoutMountpoints_data()
+{
+    QTest::addColumn<QString>("table");
+    QTest::newRow("empty") << QStringLiteral("ENDSOURCETABLE\r\n");
+    QTest::newRow("no-stream-records") << QStringLiteral(
+        "CAS;caster.example.com;2101;desc;op;0;USA;0;0;0;0;0;0;misc\r\nENDSOURCETABLE\r\n");
+    QTest::newRow("unnamed-stream") << QStringLiteral("STR;;Rooftop antenna;RTCM 3.2\r\nENDSOURCETABLE\r\n");
+}
+
+void NTRIPSourceTableControllerTest::_tableWithoutMountpoints()
+{
+    QFETCH(QString, table);
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    NTRIPSourceTableController controller;
+    controller.fetch(caster.connectionConfig(QString()));
+    QVERIFY(caster.serveSourceTable(table));
+    QTRY_VERIFY_WITH_TIMEOUT(controller.fetchStatus() != NTRIPSourceTableController::FetchStatus::InProgress,
+                             TestTimeout::mediumMs());
+    // An empty list alone would look like a fetch that never happened.
+    QCOMPARE(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Error);
+    QCOMPARE(controller.fetchError(), NTRIPSourceTableController::tr("The caster's source table lists no mountpoints"));
+    QCOMPARE(controller.mountpointModel()->rowCount(), 0);
+}
+
 void NTRIPSourceTableControllerTest::_sourceTablePublishesSortedRowsOnce()
 {
     NTRIPSourceTableController controller;

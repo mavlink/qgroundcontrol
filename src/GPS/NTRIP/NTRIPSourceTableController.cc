@@ -156,6 +156,11 @@ void NTRIPSourceTableController::_finishFetch(const QString& error)
 void NTRIPSourceTableController::_onSourceTableReceived(const QString& table)
 {
     _model->parseSourceTable(table, _sortCoord);
+    if (_model->count() == 0) {
+        // An empty list alone would look as if nothing had been fetched.
+        _onFetchError(tr("The caster's source table lists no mountpoints"));
+        return;
+    }
     _cacheStoredAtUs = _scheduler->nowUs();
     _setFetchState(FetchStatus::Success, QString());
 }
