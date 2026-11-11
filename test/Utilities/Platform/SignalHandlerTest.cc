@@ -5,6 +5,51 @@
 #include "SignalHandler.h"
 #include "UnitTest.h"
 
+#ifdef Q_OS_UNIX
+#include <cerrno>
+#include <csignal>
+#include <cstdlib>
+#include <sys/wait.h>
+#include <unistd.h>
+
+namespace {
+
+/// Raises @a signum @a count times in a forked child and returns the child's wait status, or -1.
+/// The child inherits the installed handlers but runs no event loop, so only the handlers themselves can react.
+/// The bytes they write reach the parent's socket: destroy the SignalHandler before the event loop runs again.
+int raiseSignalInForkedChild(int signum, int count)
+{
+    const auto timeoutSecs = static_cast<unsigned int>(TestTimeout::mediumDuration().count() / 1000);
+
+    const pid_t pid = ::fork();
+    if (pid < 0) {
+        return -1;
+    }
+
+    if (pid == 0) {
+        // Forked from a multi-threaded process: async-signal-safe calls only.
+        // SIGALRM ends the child if a handler blocks.
+        (void) ::signal(SIGALRM, SIG_DFL);
+        (void) ::alarm(timeoutSecs);
+        errno = 0;
+        for (int i = 0; i < count; ++i) {
+            (void) ::raise(signum);
+        }
+        ::_exit((errno == 0) ? EXIT_SUCCESS : EXIT_FAILURE);
+    }
+
+    int status = 0;
+    pid_t waited = -1;
+    do {
+        waited = ::waitpid(pid, &status, 0);
+    } while ((waited == -1) && (errno == EINTR));
+
+    return (waited == pid) ? status : -1;
+}
+
+}  // namespace
+#endif
+
 void SignalHandlerTest::_testConstruction()
 {
     // Save the original handler (app may have one set up)
@@ -60,4 +105,36 @@ void SignalHandlerTest::_testCurrentUpdatesWithNewHandler()
     handler1.reset();
     QVERIFY(SignalHandler::current() == nullptr);
 }
+
+void SignalHandlerTest::_testSecondSigIntExitsFromHandler()
+{
+#ifdef Q_OS_UNIX
+    SignalHandler handler;
+    QCOMPARE(handler.setupSignalHandlers(), 0);
+
+    const int status = raiseSignalInForkedChild(SIGINT, 2);
+    QVERIFY(status != -1);
+    QVERIFY2(WIFEXITED(status), "The child was terminated by a signal");
+    QCOMPARE(WEXITSTATUS(status), 128 + SIGINT);
+#else
+    QSKIP("POSIX signals only");
+#endif
+}
+
+void SignalHandlerTest::_testRepeatedSigTermDoesNotBlockHandler()
+{
+#ifdef Q_OS_UNIX
+    SignalHandler handler;
+    QCOMPARE(handler.setupSignalHandlers(), 0);
+
+    // Far more signals than the socket to the event loop can hold while nothing reads it
+    const int status = raiseSignalInForkedChild(SIGTERM, 10000);
+    QVERIFY(status != -1);
+    QVERIFY2(WIFEXITED(status), "The signal handler blocked until the child was terminated");
+    QVERIFY2(WEXITSTATUS(status) == EXIT_SUCCESS, "The signal handler changed errno");
+#else
+    QSKIP("POSIX signals only");
+#endif
+}
+
 UT_REGISTER_TEST(SignalHandlerTest, TestLabel::Unit, TestLabel::Utilities)

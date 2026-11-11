@@ -16,4 +16,8 @@ private slots:
 
     // Multiple handlers
     void _testCurrentUpdatesWithNewHandler();
+
+    // Signal delivery (POSIX)
+    void _testSecondSigIntExitsFromHandler();
+    void _testRepeatedSigTermDoesNotBlockHandler();
 };
