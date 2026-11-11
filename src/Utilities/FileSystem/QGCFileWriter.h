@@ -35,8 +35,10 @@ public:
 
     void write(const QByteArray &data);
     void writeDeferred(FormatFunc formatter);
+    /// Waits until everything queued so far is flushed to the file. Returns false on timeout or error.
     bool flush(int timeoutMs = 5000);
     void close();
+    /// An error drops what is queued and stops the writer. Clearing it, or writing again, starts it anew.
     void clearError();
 
     void setMaxPendingBytes(qint64 max) { _maxPendingBytes = max; }
@@ -50,6 +52,8 @@ private:
     void _workerLoop();
     void _startLocked();
     void _stop();
+    void _setError(const QString& message);
+    void _clearErrorLocked();
 
     struct WorkItem {
         QByteArray data;
@@ -58,7 +62,11 @@ private:
 
     mutable QMutex _mutex;
     QWaitCondition _condition;
+    QWaitCondition _flushedCondition;
     QList<WorkItem> _queue;
+    // Item counts, guarded by _mutex. An item is "written" once it is flushed to the file or dropped on error.
+    quint64 _queuedCount = 0;
+    quint64 _writtenCount = 0;
 
     QString _filePath;
     QString _lastError;
@@ -69,7 +77,5 @@ private:
     std::atomic<bool> _quit{false};
     std::atomic<qint64> _fileSize{0};
     std::atomic<qint64> _pendingBytes{0};
-    std::atomic<quint64> _flushSeq{0};
-    std::atomic<quint64> _writeSeq{0};
     qint64 _maxPendingBytes = 50LL * 1024 * 1024;
 };
