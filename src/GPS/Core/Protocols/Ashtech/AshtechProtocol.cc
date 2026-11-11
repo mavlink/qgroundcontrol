@@ -578,8 +578,8 @@ std::optional<GPSReceiveUpdates> Protocol::_handleSurveyReceipt(const NMEA::Sent
             return std::nullopt;
         }
         if (!failed) {
-            const auto lat = NMEA::coordinate(fields[8], fields[9], true);
-            const auto lon = NMEA::coordinate(fields[10], fields[11], false);
+            const auto lat = NMEA::coordinate(fields[8], fields[9], NMEA::Coordinate::Latitude);
+            const auto lon = NMEA::coordinate(fields[10], fields[11], NMEA::Coordinate::Longitude);
             const auto alt = NMEA::number<float>(fields[12]);
             const auto duration = NMEA::number<double>(fields[15]);
             if (!lat || !lon || !alt || fields[13] != "OK" || fields[14].empty() || !duration || *duration < 0) {

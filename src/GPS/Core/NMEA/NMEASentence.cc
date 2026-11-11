@@ -142,8 +142,9 @@ double degreesFromDegreesMinutes(double ddmm)
     return std::abs(minutes) < MINUTES_PER_DEGREE ? degrees + minutes / MINUTES_PER_DEGREE : NAN;
 }
 
-std::optional<double> coordinate(std::string_view field, std::string_view hemisphere, bool latitude)
+std::optional<double> coordinate(std::string_view field, std::string_view hemisphere, Coordinate which)
 {
+    const bool latitude = which == Coordinate::Latitude;
     const auto value = number<double>(field);
     if (!value || *value < 0 || hemisphere.size() != 1) {
         return {};
@@ -174,8 +175,9 @@ std::optional<GGA> gga(const Sentence& input)
         return {};
     }
     const auto& f = input.fields;
-    const auto latitude = coordinate(f[Field::GGA_LATITUDE], f[Field::GGA_LATITUDE_HEMISPHERE], true);
-    const auto longitude = coordinate(f[Field::GGA_LONGITUDE], f[Field::GGA_LONGITUDE_HEMISPHERE], false);
+    const auto latitude = coordinate(f[Field::GGA_LATITUDE], f[Field::GGA_LATITUDE_HEMISPHERE], Coordinate::Latitude);
+    const auto longitude =
+        coordinate(f[Field::GGA_LONGITUDE], f[Field::GGA_LONGITUDE_HEMISPHERE], Coordinate::Longitude);
     const auto quality = number<unsigned>(f[Field::GGA_QUALITY]);
     const auto satellites = ggaSatellitesUsed(f[Field::GGA_SATELLITES_USED]);
     // A count beyond the range makes the sentence malformed; an empty or unreadable one is only unknown.
@@ -276,8 +278,9 @@ std::optional<RMC> rmc(const Sentence& input)
         return {};
     }
     const auto& f = input.fields;
-    const auto latitude = coordinate(f[Field::RMC_LATITUDE], f[Field::RMC_LATITUDE_HEMISPHERE], true);
-    const auto longitude = coordinate(f[Field::RMC_LONGITUDE], f[Field::RMC_LONGITUDE_HEMISPHERE], false);
+    const auto latitude = coordinate(f[Field::RMC_LATITUDE], f[Field::RMC_LATITUDE_HEMISPHERE], Coordinate::Latitude);
+    const auto longitude =
+        coordinate(f[Field::RMC_LONGITUDE], f[Field::RMC_LONGITUDE_HEMISPHERE], Coordinate::Longitude);
     if (!latitude || !longitude) {
         return {};
     }
@@ -297,8 +300,9 @@ std::optional<GLL> gll(const Sentence& input)
         return {};
     }
     const auto& f = input.fields;
-    const auto latitude = coordinate(f[Field::GLL_LATITUDE], f[Field::GLL_LATITUDE_HEMISPHERE], true);
-    const auto longitude = coordinate(f[Field::GLL_LONGITUDE], f[Field::GLL_LONGITUDE_HEMISPHERE], false);
+    const auto latitude = coordinate(f[Field::GLL_LATITUDE], f[Field::GLL_LATITUDE_HEMISPHERE], Coordinate::Latitude);
+    const auto longitude =
+        coordinate(f[Field::GLL_LONGITUDE], f[Field::GLL_LONGITUDE_HEMISPHERE], Coordinate::Longitude);
     if (!latitude || !longitude) {
         return {};
     }
@@ -438,7 +442,7 @@ QByteArray makeGGA(const NMEA::GGA& fix, const QTime& utc)
     }
     const QByteArray hhmmss = utc.toString(u"hhmmss").toLatin1();
 
-    auto dmm = [](double deg, bool lat) -> QByteArray {
+    auto dmm = [](double deg, NMEA::Coordinate which) -> QByteArray {
         const double a = qFabs(deg);
         int d = static_cast<int>(a);
         double m = (a - d) * NMEA::MINUTES_PER_DEGREE;
@@ -455,15 +459,15 @@ QByteArray makeGGA(const NMEA::GGA& fix, const QTime& utc)
             mm.prepend('0');
         }
 
-        const int dWidth = lat ? LATITUDE_DEGREE_DIGITS : LONGITUDE_DEGREE_DIGITS;
+        const int dWidth = which == NMEA::Coordinate::Latitude ? LATITUDE_DEGREE_DIGITS : LONGITUDE_DEGREE_DIGITS;
         return QByteArray::number(d).rightJustified(dWidth, '0') + mm;
     };
 
     const bool latNorth = fix.latitude >= 0.0;
     const bool lonEast = fix.longitude >= 0.0;
 
-    const QByteArray latField = dmm(fix.latitude, true);
-    const QByteArray lonField = dmm(fix.longitude, false);
+    const QByteArray latField = dmm(fix.latitude, NMEA::Coordinate::Latitude);
+    const QByteArray lonField = dmm(fix.longitude, NMEA::Coordinate::Longitude);
     const auto measurement = [](double value, int decimalPlaces) {
         return std::isnan(value) ? QByteArray() : QByteArray::number(value, 'f', decimalPlaces);
     };

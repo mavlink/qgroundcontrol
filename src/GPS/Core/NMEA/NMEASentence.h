@@ -192,7 +192,16 @@ struct Frame
 /// Convert a signed ddmm.mmmm (or dddmm.mmmm) value; invalid values return NaN.
 [[nodiscard]] double degreesFromDegreesMinutes(double ddmm);
 
-[[nodiscard]] std::optional<double> coordinate(std::string_view field, std::string_view hemisphere, bool latitude);
+/// Which coordinate a ddmm.mmmm field holds: it sets the degree limit and the hemisphere letters.
+enum class Coordinate
+{
+    Latitude,
+    Longitude,
+};
+
+/// Signed degrees of an unsigned ddmm.mmmm (or dddmm.mmmm) field and its hemisphere letter; nullopt when either is
+/// malformed or out of range.
+[[nodiscard]] std::optional<double> coordinate(std::string_view field, std::string_view hemisphere, Coordinate which);
 
 struct GGA
 {
