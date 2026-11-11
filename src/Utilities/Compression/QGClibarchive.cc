@@ -206,6 +206,20 @@ ArchiveEntry toArchiveEntry(struct archive_entry* entry)
 
 namespace {
 
+struct DiskWriterDeleter
+{
+    void operator()(struct archive* writer) const { archive_write_free(writer); }
+};
+
+using DiskWriterPtr = std::unique_ptr<struct archive, DiskWriterDeleter>;
+
+struct EntryMatchDeleter
+{
+    void operator()(struct archive* match) const { archive_match_free(match); }
+};
+
+using EntryMatchPtr = std::unique_ptr<struct archive, EntryMatchDeleter>;
+
 /// Read all data from archive into QByteArray
 /// @param a Archive handle (must have header already read)
 /// @param expectedSize Expected size for pre-allocation (0 if unknown)
@@ -436,16 +450,22 @@ QString containedEntryPath(const QString& canonicalOutputDir, const QString& ent
 }
 
 /// Extract entries from an open archive to a directory
-/// @param a Archive reader (already opened with format support configured)
+/// @param reader Archive reader (already opened with format support configured)
 /// @param outputDirectoryPath Directory to extract to (must exist)
 /// @param progress Optional progress callback
-/// @param totalSize Total archive size for progress (0 if unknown)
 /// @param maxBytes Maximum total decompressed bytes (0 = unlimited)
 /// @return true on success
-bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath,
-                           const QGClibarchive::ProgressCallback& progress, qint64 totalSize, qint64 maxBytes)
+bool extractArchiveEntries(const QGClibarchive::ArchiveReader& reader, const QString& outputDirectoryPath,
+                           const QGClibarchive::ProgressCallback& progress, qint64 maxBytes)
 {
-    struct archive* ext = archive_write_disk_new();
+    DiskWriterPtr writer(archive_write_disk_new());
+    if (!writer) {
+        qCWarning(QGClibarchiveLog) << "Failed to create disk writer";
+        return false;
+    }
+    struct archive* const a = reader.handle();
+    struct archive* const ext = writer.get();
+    const qint64 totalSize = reader.dataSize();
     // Security flags:
     // - ARCHIVE_EXTRACT_TIME: Restore file modification times
     // - ARCHIVE_EXTRACT_SECURE_NODOTDOT: Reject paths containing ".."
@@ -625,10 +645,8 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
         success = false;
     }
 
-    archive_read_close(a);
-    archive_read_free(a);
-    archive_write_close(ext);
-    archive_write_free(ext);
+    // Closes the file being written, which has to happen before it can be removed
+    writer.reset();
 
     // Clean up only created entries on cancellation or size limit exceeded
     if (cancelled || sizeLimitExceeded) {
@@ -636,6 +654,16 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
     }
 
     return success;
+}
+
+/// Extract all of an archive file to a directory. The archive is closed again on return, so the
+/// caller can move the directory even if the archive is inside it.
+bool extractArchiveFile(const QString& archivePath, const QString& outputDirectoryPath,
+                        const QGClibarchive::ProgressCallback& progress, qint64 maxBytes)
+{
+    QGClibarchive::ArchiveReader reader;
+    return reader.open(archivePath, QGClibarchive::ReaderMode::AllFormats) &&
+           extractArchiveEntries(reader, outputDirectoryPath, progress, maxBytes);
 }
 
 }  // namespace
@@ -649,13 +677,6 @@ namespace QGClibarchive {
 // ----------------------------------------------------------------------------
 // ArchiveReader
 // ----------------------------------------------------------------------------
-
-ArchiveReader::~ArchiveReader()
-{
-    if (_archive) {
-        archive_read_free(_archive);
-    }
-}
 
 qint64 ArchiveReader::dataSize() const
 {
@@ -676,7 +697,7 @@ QString ArchiveReader::formatName() const
     if (!_archive) {
         return {};
     }
-    const char* name = archive_format_name(_archive);
+    const char* name = archive_format_name(_archive.get());
     return name ? QString::fromUtf8(name) : QString();
 }
 
@@ -687,22 +708,19 @@ QString ArchiveReader::filterName() const
     }
     // Get the outermost compression filter (index 0 is the format, 1+ are filters)
     // archive_filter_count returns total filters including format at index 0
-    const int filterCount = archive_filter_count(_archive);
+    const int filterCount = archive_filter_count(_archive.get());
     if (filterCount <= 1) {
         return QStringLiteral("none");
     }
     // Index 0 is innermost (format), higher indices are outer filters
     // We want the first compression filter (index 1)
-    const char* name = archive_filter_name(_archive, 0);
+    const char* name = archive_filter_name(_archive.get(), 0);
     return name ? QString::fromUtf8(name) : QStringLiteral("none");
 }
 
 bool ArchiveReader::open(const QString& path, ReaderMode mode)
 {
-    if (_archive) {
-        archive_read_free(_archive);
-        _archive = nullptr;
-    }
+    close();
     _device = nullptr;
     _filePath = path;
 
@@ -713,17 +731,16 @@ bool ArchiveReader::open(const QString& path, ReaderMode mode)
         }
     }
 
-    _archive = archive_read_new();
+    _archive.reset(archive_read_new());
     if (!_archive) {
         qCWarning(QGClibarchiveLog) << "Failed to create archive reader";
         return false;
     }
 
-    configureReader(_archive, mode);
+    configureReader(_archive.get(), mode);
 
-    if (!openArchiveForReading(_archive, path, _resourceData)) {
-        archive_read_free(_archive);
-        _archive = nullptr;
+    if (!openArchiveForReading(_archive.get(), path, _resourceData)) {
+        close();
         return false;
     }
 
@@ -741,35 +758,31 @@ bool ArchiveReader::open(QIODevice* device, ReaderMode mode)
         return false;
     }
 
-    if (_archive) {
-        archive_read_free(_archive);
-        _archive = nullptr;
-    }
+    close();
     _device = device;
     _resourceData.clear();
 
-    _archive = archive_read_new();
+    _archive.reset(archive_read_new());
     if (!_archive) {
         qCWarning(QGClibarchiveLog) << "Failed to create archive reader";
         return false;
     }
 
-    configureReader(_archive, mode);
+    configureReader(_archive.get(), mode);
 
     // Enable seek callback for random-access devices (improves ZIP performance)
     // Must be set before opening the archive
     if (!device->isSequential()) {
-        archive_read_set_seek_callback(_archive, deviceSeekCallback);
+        archive_read_set_seek_callback(_archive.get(), deviceSeekCallback);
     }
 
-    const int result = archive_read_open2(_archive, device,
+    const int result = archive_read_open2(_archive.get(), device,
                                           nullptr,  // open callback (not needed)
                                           deviceReadCallback, deviceSkipCallback, deviceCloseCallback);
 
     if (result != ARCHIVE_OK) {
-        qCWarning(QGClibarchiveLog) << "Failed to open device:" << archive_error_string(_archive);
-        archive_read_free(_archive);
-        _archive = nullptr;
+        qCWarning(QGClibarchiveLog) << "Failed to open device:" << archive_error_string(_archive.get());
+        close();
         _device = nullptr;
         return false;
     }
@@ -900,13 +913,7 @@ bool extractAnyArchive(const QString& archivePath, const QString& outputDirector
         }
     }
 
-    ArchiveReader reader;
-    if (!reader.open(archivePath, ReaderMode::AllFormats)) {
-        return false;
-    }
-
-    const qint64 totalSize = reader.dataSize();
-    return extractArchiveEntries(reader.release(), outputDirectoryPath, progress, totalSize, maxBytes);
+    return extractArchiveFile(archivePath, outputDirectoryPath, progress, maxBytes);
 }
 
 bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirectoryPath, ProgressCallback progress,
@@ -957,14 +964,7 @@ bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirec
     qCDebug(QGClibarchiveLog) << "Atomic extraction: staging to" << stagingPath;
 
     // Extract to temporary directory
-    ArchiveReader reader;
-    if (!reader.open(archivePath, ReaderMode::AllFormats)) {
-        (void) QDir(stagingPath).removeRecursively();
-        return false;
-    }
-
-    const qint64 totalSize = reader.dataSize();
-    if (!extractArchiveEntries(reader.release(), stagingPath, progress, totalSize, maxBytes)) {
+    if (!extractArchiveFile(archivePath, stagingPath, progress, maxBytes)) {
         qCDebug(QGClibarchiveLog) << "Staged extraction failed, cleaning up";
         (void) QDir(stagingPath).removeRecursively();
         return false;
@@ -1154,23 +1154,21 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
         return false;
     }
 
-    struct archive* match = archive_match_new();
+    const EntryMatchPtr match(archive_match_new());
     if (!match) {
         qCWarning(QGClibarchiveLog) << "Failed to create archive_match";
         return false;
     }
 
     for (const QString& pattern : patterns) {
-        if (archive_match_include_pattern(match, pattern.toUtf8().constData()) != ARCHIVE_OK) {
+        if (archive_match_include_pattern(match.get(), pattern.toUtf8().constData()) != ARCHIVE_OK) {
             qCWarning(QGClibarchiveLog) << "Invalid pattern:" << pattern;
-            archive_match_free(match);
             return false;
         }
     }
 
     ArchiveReader reader;
     if (!reader.open(archivePath, ReaderMode::AllFormats)) {
-        archive_match_free(match);
         return false;
     }
 
@@ -1180,7 +1178,7 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
     NextEntry next;
 
     while ((next = readNextEntry(reader.handle(), &entry)) == NextEntry::Found) {
-        if (archive_match_excluded(match, entry)) {
+        if (archive_match_excluded(match.get(), entry)) {
             continue;
         }
 
@@ -1198,7 +1196,6 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
         QGCFileHelper::ensureParentExists(outputPath);
 
         if (!writeArchiveEntryToFile(reader.handle(), outputPath)) {
-            archive_match_free(match);
             return false;
         }
 
@@ -1209,18 +1206,15 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
     }
 
     if (next == NextEntry::Error) {
-        archive_match_free(match);
         return false;
     }
 
-    if (archive_match_path_unmatched_inclusions(match) > 0) {
+    if (archive_match_path_unmatched_inclusions(match.get()) > 0) {
         const char* unmatched;
-        while (archive_match_path_unmatched_inclusions_next(match, &unmatched) == ARCHIVE_OK) {
+        while (archive_match_path_unmatched_inclusions_next(match.get(), &unmatched) == ARCHIVE_OK) {
             qCDebug(QGClibarchiveLog) << "Pattern not matched:" << unmatched;
         }
     }
-
-    archive_match_free(match);
 
     qCDebug(QGClibarchiveLog) << "Extracted" << matchCount << "files matching patterns from" << archivePath;
     return matchCount > 0;
@@ -1522,9 +1516,7 @@ bool extractFromDevice(QIODevice* device, const QString& outputDirectoryPath, Pr
         return false;
     }
 
-    // For device-based reads, we don't know the total size upfront
-    const qint64 totalSize = device->size() > 0 ? device->size() : 0;
-    return extractArchiveEntries(reader.release(), outputDirectoryPath, progress, totalSize, maxBytes);
+    return extractArchiveEntries(reader, outputDirectoryPath, progress, maxBytes);
 }
 
 QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName)

@@ -5,6 +5,7 @@
 /// @note This is an internal header - use QGCCompression.h for public API
 
 #include <archive.h>
+#include <memory>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QFile>
@@ -67,7 +68,7 @@ bool canDecodeStream(const QByteArray& signature);
 class ArchiveReader {
 public:
     ArchiveReader() = default;
-    ~ArchiveReader();
+    ~ArchiveReader() = default;
 
     ArchiveReader(const ArchiveReader&) = delete;
     ArchiveReader& operator=(const ArchiveReader&) = delete;
@@ -85,11 +86,14 @@ public:
     /// @note The device must remain valid and open until the reader is closed
     bool open(QIODevice *device, ReaderMode mode = ReaderMode::AllFormats);
 
+    /// Close the archive. The reader can be opened again.
+    void close() { _archive.reset(); }
+
     /// Get the underlying archive handle
-    struct archive* handle() const { return _archive; }
+    struct archive* handle() const { return _archive.get(); }
 
     /// Release ownership of archive handle (caller must free)
-    struct archive* release() { auto *a = _archive; _archive = nullptr; return a; }
+    struct archive* release() { return _archive.release(); }
 
     /// Check if archive is open
     bool isOpen() const { return _archive != nullptr; }
@@ -107,7 +111,12 @@ public:
     QString filterName() const;
 
 private:
-    struct archive *_archive = nullptr;
+    struct Deleter
+    {
+        void operator()(struct archive* reader) const { archive_read_free(reader); }
+    };
+
+    std::unique_ptr<struct archive, Deleter> _archive;
     QString _filePath;  // Stored path for size queries
     QByteArray _resourceData;  // Holds data for Qt resources
     QIODevice *_device = nullptr;  // Device for streaming reads
