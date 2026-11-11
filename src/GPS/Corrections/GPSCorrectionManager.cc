@@ -97,6 +97,7 @@ void GPSCorrectionManager::setConfiguration(const Configuration& configuration)
     }
     const std::optional<Configuration> previous = std::exchange(_configuration, configuration);
     _selector.configure(configuration.source, _scheduler->nowMs());
+    _rtcmMavlink.setVehicles(configuration.vehicles);
     const bool inputChanged = !previous || previous->udpInput != configuration.udpInput;
     const bool enabledChanged = (previous && previous->udpInput.enabled) != configuration.udpInput.enabled;
     const bool inputNotified = inputChanged && (_applyUdpInput() || enabledChanged);

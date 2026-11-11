@@ -48,7 +48,7 @@ RTCMMAVLink::Output makeOutput(const std::shared_ptr<LinkInterface>& link)
 }  // namespace
 
 RTCMMAVLink::RTCMMAVLink()
-    : _outputProvider(vehicleLinkOutputs())
+    : _outputProvider([this]() { return vehicleLinkOutputs(_vehicles)(); })
 {
     qCDebug(RTCMMAVLinkLog) << this;
 }
@@ -58,19 +58,25 @@ RTCMMAVLink::~RTCMMAVLink()
     qCDebug(RTCMMAVLinkLog) << this;
 }
 
-RTCMMAVLink::OutputProvider RTCMMAVLink::vehicleLinkOutputs()
+RTCMMAVLink::OutputProvider RTCMMAVLink::vehicleLinkOutputs(GPSCorrectionSettings::CorrectionVehicles selection)
 {
-    return []() {
+    return [selection]() {
         QList<std::shared_ptr<LinkInterface>> links;
         QList<Output> outputs;
         auto* manager = MultiVehicleManager::instance();
         if (!manager) {
             return outputs;
         }
+        // Compared, never dereferenced: no vehicle matches while none is active, or while the active one is being
+        // removed and has already left the list.
+        const Vehicle* const activeVehicle = manager->activeVehicle();
         auto* vehicles = manager->vehicles();
         for (int index = 0; index < vehicles->count(); ++index) {
             auto* vehicle = vehicles->value<Vehicle*>(index);
             if (!vehicle || !vehicle->vehicleLinkManager()) {
+                continue;
+            }
+            if (selection == GPSCorrectionSettings::ActiveVehicle && vehicle != activeVehicle) {
                 continue;
             }
             auto link = vehicle->vehicleLinkManager()->primaryLink().lock();
