@@ -52,7 +52,7 @@ public:
     {
         QString reason;          ///< For the log.
         QString message;         ///< For the user.
-        bool permanent = false;  ///< Retrying can't help: unsupported URI, missing plugin.
+        bool permanent = false;  ///< Retrying can't help: unsupported URI, missing plugin, refused credentials.
     };
 
     /// Called on the worker. Only the failure reports (onSessionFailed(), onDecoderFailing()), which come from the

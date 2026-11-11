@@ -75,11 +75,29 @@ bool isRecoverableH265PaciError(GstMessage* msg, const GError* error, const gcha
     return factory && (g_strcmp0(GST_OBJECT_NAME(factory), "rtph265depay") == 0);
 }
 
-/// Errors that a reconnect can't fix.
-bool isPermanentError(const GError* error)
+bool postedByRtspSrc(GstMessage* message)
 {
-    return g_error_matches(error, GST_CORE_ERROR, GST_CORE_ERROR_MISSING_PLUGIN) ||
-           g_error_matches(error, GST_STREAM_ERROR, GST_STREAM_ERROR_CODEC_NOT_FOUND);
+    GstObject* const src = GST_MESSAGE_SRC(message);
+    GstElementFactory* const factory =
+        (src && GST_IS_ELEMENT(src)) ? gst_element_get_factory(GST_ELEMENT(src)) : nullptr;
+    return factory && (g_strcmp0(GST_OBJECT_NAME(factory), "rtspsrc") == 0);
+}
+
+/// The server refused the credentials (RTSP 401), or the stream needs some and has none.
+bool isUnauthorizedError(const GError* error)
+{
+    return g_error_matches(error, GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_NOT_AUTHORIZED);
+}
+
+/// Errors that a reconnect can't fix.
+bool isPermanentError(GstMessage* message, const GError* error)
+{
+    if (g_error_matches(error, GST_STREAM_ERROR, GST_STREAM_ERROR_CODEC_NOT_FOUND)) {
+        // rtspsrc's means it set up no stream at all, as when the server refused every transport: not a codec that
+        // is missing, and the next attempt may get one.
+        return !postedByRtspSrc(message);
+    }
+    return g_error_matches(error, GST_CORE_ERROR, GST_CORE_ERROR_MISSING_PLUGIN) || isUnauthorizedError(error);
 }
 
 bool pipelineEnteredPlaying(GstMessage* message)
@@ -398,7 +416,7 @@ void PipelineSession::_onBusError(GstMessage* message)
         }
         qCWarning(GstVideoReceiverLog) << "Decoder error from" << messageSourcePath(message) << ":" << text;
         HwBuffers::onPipelineError(error.get(), debug.get());
-        if (isPermanentError(error.get())) {
+        if (isPermanentError(message, error.get())) {
             _fail({.reason = QStringLiteral("decoder error"),
                    .message = tr("Unable to decode the video: %1").arg(text),
                    .permanent = true});
@@ -411,9 +429,13 @@ void PipelineSession::_onBusError(GstMessage* message)
     qCWarning(GstVideoReceiverLog) << "GStreamer error from" << messageSourcePath(message) << ":" << text;
     HwBuffers::onPipelineError(error.get(), debug.get());
     _dotDumper.snapshot(_pipeline.get(), QStringLiteral("pipeline-error"));
+    const QString userMessage =
+        isUnauthorizedError(error.get())
+            ? tr("The video stream refused the connection: its user name or password is missing or wrong.")
+            : tr("Video stream error: %1").arg(text);
     _fail({.reason = QStringLiteral("pipeline error"),
-           .message = tr("Video stream error: %1").arg(text),
-           .permanent = isPermanentError(error.get())});
+           .message = userMessage,
+           .permanent = isPermanentError(message, error.get())});
 }
 
 QString PipelineSession::_takeStartError()

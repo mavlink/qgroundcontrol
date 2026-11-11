@@ -11,6 +11,7 @@ class GstSourceFactoryStreamTest : public GStreamerTestBase
 private slots:
 #ifdef QGC_GST_STREAMING
     void _testSourceFactoryRtspSetsUpOnlyVideoStream();
+    void _testSourceFactoryRtspEndsSessionWithoutPause();
     void _testSourceFactoryDropsRtpUntilParameterSets();
     void _testStatsCountPacketsDroppedOnLatency();
     void _testUdpSourceRefusesPortInUse();

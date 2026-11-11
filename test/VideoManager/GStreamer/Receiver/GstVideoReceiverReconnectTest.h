@@ -16,5 +16,7 @@ private slots:
     void _testStreamLossRestartPolicy();
     void _testUnresponsiveRtspServer_data();
     void _testUnresponsiveRtspServer();
+    void _testRtspUnauthorizedStops();
+    void _testRtspWithoutVideoStreamReconnects();
 #endif
 };

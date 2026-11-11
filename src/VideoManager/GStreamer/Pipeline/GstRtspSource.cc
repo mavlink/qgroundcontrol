@@ -1,8 +1,11 @@
 #include "GstRtspSource.h"
 
 #include <chrono>
+#include <cstring>
+#include <gst/rtsp/gstrtspmessage.h>
 #include <gst/rtsp/gstrtsptransport.h>
 #include <gst/rtsp/gstrtspurl.h>
+#include <gst/sdp/gstsdpmessage.h>
 
 #include <QtCore/QUrl>
 
@@ -16,6 +19,11 @@ namespace {
 // whose TCP-interleaved data stops: there rtspsrc only sends a keep-alive when the time is up, and it is the
 // receiver's watchdog that notices the stall.
 constexpr guint64 kRtspTcpTimeoutUs = G_GUINT64_CONSTANT(5000000);
+
+// How long stopping waits for the TEARDOWN to be sent and answered, where rtspsrc's 100 ms cuts it short on a slow
+// link and leaves the camera streaming until the session times out. A camera that is gone holds each stop up for this
+// long, which has to stay well within the 2 s a receiver being destroyed gives its pipeline to stop.
+constexpr guint64 kRtspTeardownTimeoutNs = GST_SECOND;
 
 // Fixed rtx timing instead of the auto(-1) heuristic, which can stack retries and balloon playout
 // latency: bounded recovery latency over a lossy RF link.
@@ -55,6 +63,42 @@ gboolean selectVideoStream([[maybe_unused]] GstElement* rtspsrc, guint num, GstC
 
     qCDebug(GstSourceFactoryLog) << "Skipping non-video RTSP stream" << num;
     return FALSE;
+}
+
+// rtpbin sends a keyframe request (an RTCP PLI) only for a stream whose caps say the sender takes one, which they do
+// when its SDP has "a=rtcp-fb: nack pli". Few cameras' SDP has it, also among those that answer a PLI, and the others
+// ignore the packet. Without it the requests of the depayloader, the decoder and the recorder end in rtspsrc.
+void advertiseKeyframeRequests([[maybe_unused]] GstElement* rtspsrc, GstSDPMessage* sdp, [[maybe_unused]] gpointer data)
+{
+    const guint mediaCount = gst_sdp_message_medias_len(sdp);
+    for (guint i = 0; i < mediaCount; ++i) {
+        // The message is rtspsrc's to change here, though its accessor is for reading.
+        auto* const media = const_cast<GstSDPMedia*>(gst_sdp_message_get_media(sdp, i));
+        if (g_strcmp0(gst_sdp_media_get_media(media), "video") != 0) {
+            continue;
+        }
+        bool takesPli = false;
+        for (guint n = 0; !takesPli; ++n) {
+            const gchar* const feedback = gst_sdp_media_get_attribute_val_n(media, "rtcp-fb", n);
+            if (!feedback) {
+                break;
+            }
+            takesPli = std::strstr(feedback, "nack pli") != nullptr;
+        }
+        if (!takesPli) {
+            (void) gst_sdp_media_add_attribute(media, "rtcp-fb", "* nack pli");
+        }
+    }
+}
+
+// A pipeline passes through PAUSED on its way to NULL, where rtspsrc sends a PAUSE before the TEARDOWN that ends the
+// session anyway, and some live cameras answer a PAUSE with an error. The receiver never pauses a stream, so that is
+// the only PAUSE there would be.
+gboolean skipPauseRequest([[maybe_unused]] GstElement* rtspsrc, GstRTSPMessage* request, [[maybe_unused]] gpointer data)
+{
+    const bool pause =
+        (request->type == GST_RTSP_MESSAGE_REQUEST) && (request->type_data.request.method == GST_RTSP_PAUSE);
+    return pause ? FALSE : TRUE;
 }
 
 }  // namespace
@@ -134,6 +178,9 @@ GstElementPtr buildRtspSource(const QString& uri, const QUrl& sourceUrl, const C
     (void) g_signal_connect(source.get(), "new-manager", G_CALLBACK(connectRtspJitterBufferPolicy),
                             doRetransmission ? GINT_TO_POINTER(TRUE) : nullptr);
     (void) g_signal_connect(source.get(), "select-stream", G_CALLBACK(selectVideoStream), nullptr);
+    (void) g_signal_connect(source.get(), "on-sdp", G_CALLBACK(advertiseKeyframeRequests), nullptr);
+    (void) g_signal_connect(source.get(), "before-send", G_CALLBACK(skipPauseRequest), nullptr);
+    g_object_set(source.get(), "teardown-timeout", kRtspTeardownTimeoutNs, nullptr);
 
     const QString rtspUser = sourceUrl.userName(QUrl::FullyDecoded);
     const QString rtspPassword = sourceUrl.password(QUrl::FullyDecoded);

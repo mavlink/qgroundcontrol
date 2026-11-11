@@ -77,7 +77,9 @@ Connection settings vary by source type:
   MPEG-TS) and whether it is the configured source or one a camera advertises, in a tile or not; USB cameras don't use
   it. A stream
   waiting to reconnect does so at once when a vehicle connects or its link returns. When off, the stream stops after the
-  first failure. A UDP source that has received nothing yet hasn't failed: with either setting QGC keeps listening until
+  first failure. An RTSP stream whose camera refuses the user name or password in its URL stops with a message whatever
+  this setting, and is tried again once the URL changes or the video is restarted.
+  A UDP source that has received nothing yet hasn't failed: with either setting QGC keeps listening until
   the stream starts. A stream times out when nothing arrives for 3 s, or for 8 s if it is an RTSP stream. Only the RTSP
   time can be changed, with the `rtspTimeout` setting (in seconds, at least 1), which has no control on this page: a
   [settings override file](../../qgc-dev-guide/file_formats/settings_override.md) or a custom build sets it.

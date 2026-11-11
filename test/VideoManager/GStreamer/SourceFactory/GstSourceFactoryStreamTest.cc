@@ -4,8 +4,13 @@
 
 #include <atomic>
 #include <gst/gst.h>
+#include <thread>
 
 #include <QtCore/QByteArray>
+#include <QtCore/QHash>
+#include <QtCore/QList>
+#include <QtNetwork/QTcpServer>
+#include <QtNetwork/QTcpSocket>
 #include <QtNetwork/QUdpSocket>
 
 #include "GStreamerTestHelpers.h"
@@ -67,6 +72,83 @@ QByteArray makeH264RtpPacket(quint16 sequence, quint32 timestamp)
     return packet;
 }
 
+/// An RTSP server on a free loopback port that takes a client through to PLAY of one H.264 stream, interleaved in the
+/// RTSP connection, answers whatever it asks next, and records the methods it asked for. It sends no video.
+class PlayingRtspServer
+{
+public:
+    PlayingRtspServer()
+    {
+        QObject::connect(&_server, &QTcpServer::newConnection, &_server, [this] {
+            while (QTcpSocket* const socket = _server.nextPendingConnection()) {
+                QObject::connect(socket, &QTcpSocket::readyRead, socket, [this, socket] { _serve(socket); });
+            }
+        });
+    }
+
+    [[nodiscard]] bool listen() { return _server.listen(QHostAddress::LocalHost, 0); }
+
+    /// Over TCP only: no UDP ports to agree on.
+    QString uri() const { return QStringLiteral("rtspt://127.0.0.1:%1/test").arg(_server.serverPort()); }
+
+    const QList<QByteArray>& methods() const { return _methods; }
+
+private:
+    void _serve(QTcpSocket* socket)
+    {
+        QByteArray& pending = _pending[socket];
+        pending += socket->readAll();
+        while (!pending.isEmpty()) {
+            // The client's RTCP, interleaved: '$', the channel, and the length in two bytes.
+            if (pending.startsWith('$')) {
+                if (pending.size() < 4) {
+                    return;
+                }
+                const qsizetype length =
+                    4 + GST_READ_UINT16_BE(reinterpret_cast<const guint8*>(pending.constData()) + 2);
+                if (pending.size() < length) {
+                    return;
+                }
+                pending.remove(0, length);
+                continue;
+            }
+            const qsizetype end = pending.indexOf("\r\n\r\n");
+            if (end < 0) {
+                return;
+            }
+            const QList<QByteArray> lines = pending.left(end).split('\n');
+            pending.remove(0, end + 4);
+
+            const QByteArray method = lines.first().trimmed().split(' ').value(0);
+            _methods.append(method);
+            QByteArray reply = "RTSP/1.0 200 OK\r\n";
+            for (const QByteArray& line : lines) {
+                // The transport is the one the client proposes.
+                if (line.toLower().startsWith("cseq:") || line.toLower().startsWith("transport:")) {
+                    reply += line.trimmed() + "\r\n";
+                }
+            }
+            if (method == "OPTIONS") {
+                reply += "Public: OPTIONS, DESCRIBE, SETUP, PLAY, PAUSE, TEARDOWN\r\n\r\n";
+            } else if (method == "DESCRIBE") {
+                const QByteArray sdp =
+                    "v=0\r\no=- 0 0 IN IP4 127.0.0.1\r\ns=QGC\r\nc=IN IP4 127.0.0.1\r\nt=0 0\r\n"
+                    "m=video 0 RTP/AVP 96\r\na=rtpmap:96 H264/90000\r\na=control:trackID=1\r\n";
+                reply += "Content-Base: " + uri().toUtf8() +
+                         "/\r\nContent-Type: application/sdp\r\nContent-Length: " + QByteArray::number(sdp.size()) +
+                         "\r\n\r\n" + sdp;
+            } else {
+                reply += "Session: 12345678\r\n\r\n";
+            }
+            (void) socket->write(reply);
+        }
+    }
+
+    QTcpServer _server;
+    QHash<QTcpSocket*, QByteArray> _pending;
+    QList<QByteArray> _methods;
+};
+
 }  // namespace
 
 void GstSourceFactoryStreamTest::_testSourceFactoryRtspSetsUpOnlyVideoStream()
@@ -101,6 +183,67 @@ void GstSourceFactoryStreamTest::_testSourceFactoryRtspSetsUpOnlyVideoStream()
     QVERIFY2(server.setupUrls().first().endsWith("/trackID=1"),
              qPrintable(QStringLiteral("first SETUP must target the video track, got %1")
                             .arg(QString::fromUtf8(server.setupUrls().first()))));
+}
+
+void GstSourceFactoryStreamTest::_testSourceFactoryRtspEndsSessionWithoutPause()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+
+    PlayingRtspServer server;
+    QVERIFY(server.listen());
+
+    GstTest::TestPipeline pipeline(gst_pipeline_new("rtsp-teardown-test"));
+    const GStreamer::GstElementPtr bin = GstTest::createSource(server.uri(), GStreamer::SourceFactory::Config{});
+    QVERIFY(bin);
+    QVERIFY(gst_bin_add(pipeline.bin(), bin.get()));
+
+    // Long enough for a TEARDOWN to be answered over a slow link, where rtspsrc's 100 ms isn't, and well within the
+    // 2 s a receiver that is destroyed gives its pipeline to stop.
+    guint64 teardownTimeout = 0;
+    g_object_get(GstTest::findByFactory(bin.get(), "rtspsrc").get(), "teardown-timeout", &teardownTimeout, nullptr);
+    QVERIFY2((teardownTimeout >= 500 * GST_MSECOND) && (teardownTimeout <= GST_SECOND),
+             qPrintable(QString::number(teardownTimeout)));
+
+    // rtspsrc tells in a PROGRESS message when it is done with a PLAY or PAUSE request.
+    const GStreamer::GstBusPtr bus = GStreamer::adoptBus(gst_element_get_bus(pipeline.get()));
+    int completed = 0;
+    const auto requestsCompleted = [&bus, &completed]() {
+        while (const GStreamer::GstMessagePtr message =
+                   GStreamer::adoptMessage(gst_bus_pop_filtered(bus.get(), GST_MESSAGE_PROGRESS))) {
+            GstProgressType type = GST_PROGRESS_TYPE_START;
+            gchar* rawCode = nullptr;
+            gchar* rawText = nullptr;
+            gst_message_parse_progress(message.get(), &type, &rawCode, &rawText);
+            const GStreamer::GCharPtr code = GStreamer::adoptGChar(rawCode);
+            const GStreamer::GCharPtr text = GStreamer::adoptGChar(rawText);
+            if ((type == GST_PROGRESS_TYPE_COMPLETE) && (g_strcmp0(code.get(), "request") == 0)) {
+                ++completed;
+            }
+        }
+        return completed;
+    };
+    QVERIFY(gst_element_set_state(pipeline.get(), GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY_TRUE_WAIT(requestsCompleted() == 1, TestTimeout::mediumMs());
+    QVERIFY(server.methods().contains("PLAY"));
+
+    // A pipeline stops by way of PAUSED, where rtspsrc sends a PAUSE, which a live camera may answer with an error,
+    // unless the pipeline is on to READY before it gets to it. A receiver's pipeline takes longer than that; this one
+    // has only the source, and waits in PAUSED instead.
+    QVERIFY(gst_element_set_state(pipeline.get(), GST_STATE_PAUSED) != GST_STATE_CHANGE_FAILURE);
+    QVERIFY_TRUE_WAIT(requestsCompleted() == 2, TestTimeout::mediumMs());
+
+    // Stopped on another thread, as the receiver's worker stops it, while the server here goes on answering.
+    std::atomic<bool> stopped{false};
+    std::thread stopper([&pipeline, &stopped] {
+        (void) gst_element_set_state(pipeline.get(), GST_STATE_NULL);
+        stopped = true;
+    });
+    const bool stoppedInTime = QTest::qWaitFor([&stopped] { return stopped.load(); }, TestTimeout::mediumMs());
+    stopper.join();
+    QVERIFY(stoppedInTime);
+
+    QVERIFY_TRUE_WAIT(server.methods().contains("TEARDOWN"), TestTimeout::mediumMs());
+    QVERIFY2(!server.methods().contains("PAUSE"), server.methods().join(' ').constData());
 }
 
 void GstSourceFactoryStreamTest::_testSourceFactoryDropsRtpUntilParameterSets()

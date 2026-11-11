@@ -177,7 +177,8 @@ void configureH26xRtpDepayloader(GstElement* element, bool requestKeyframes)
     if (!isH26xRtpDepayloader(factoryName)) {
         return;
     }
-    // After packet loss, ask the camera for a keyframe rather than wait out the GOP (GStreamer 1.20+).
+    // After packet loss, ask the camera for a keyframe rather than wait out the GOP: rtph264depay can since GStreamer
+    // 1.20, rtph265depay since 1.26.
     if (requestKeyframes && g_object_class_find_property(G_OBJECT_GET_CLASS(element), "request-keyframe")) {
         g_object_set(element, "request-keyframe", TRUE, nullptr);
     }

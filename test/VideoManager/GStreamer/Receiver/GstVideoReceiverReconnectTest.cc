@@ -3,8 +3,11 @@
 #ifdef QGC_GST_STREAMING
 
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QHash>
 #include <QtCore/QRegularExpression>
 #include <QtNetwork/QHostAddress>
+#include <QtNetwork/QTcpServer>
+#include <QtNetwork/QTcpSocket>
 #include <QtNetwork/QUdpSocket>
 
 namespace {
@@ -21,6 +24,56 @@ using GstReceiverTest::udpListenUri;
 // Longer than the watchdog takes to give up on a source: the shortest timeout, counted from its first one-second tick
 // and checked at the next two.
 constexpr int kSilentSourceWindowMs = 3500;
+
+/// An RTSP server on a free loopback port that answers every request with @p status and the authentication it wants,
+/// as a camera does that refuses the request (401 for a wrong password, 404 for a wrong path).
+class RefusingRtspServer
+{
+public:
+    explicit RefusingRtspServer(const QByteArray& status)
+        : _status(status)
+    {
+        QObject::connect(&_server, &QTcpServer::newConnection, &_server, [this] {
+            while (QTcpSocket* const socket = _server.nextPendingConnection()) {
+                ++_connections;
+                QObject::connect(socket, &QTcpSocket::readyRead, socket, [this, socket] { _refuse(socket); });
+            }
+        });
+    }
+
+    [[nodiscard]] bool listen() { return _server.listen(QHostAddress::LocalHost, 0); }
+
+    /// @p userInfo: the "user:password@" of the URI, if any.
+    QString uri(const QString& userInfo = QString()) const
+    {
+        return QStringLiteral("rtsp://") + userInfo + QStringLiteral("127.0.0.1:%1/test").arg(_server.serverPort());
+    }
+
+    int connections() const { return _connections; }
+
+private:
+    void _refuse(QTcpSocket* socket)
+    {
+        QByteArray& pending = _pending[socket];
+        pending += socket->readAll();
+        for (qsizetype end = pending.indexOf("\r\n\r\n"); end >= 0; end = pending.indexOf("\r\n\r\n")) {
+            QByteArray cseq;
+            for (const QByteArray& line : pending.left(end).split('\n')) {
+                if (line.toLower().startsWith("cseq:")) {
+                    cseq = line.mid(5).trimmed();
+                }
+            }
+            pending.remove(0, end + 4);
+            (void) socket->write("RTSP/1.0 " + _status + "\r\nCSeq: " + cseq +
+                                 "\r\nWWW-Authenticate: Basic realm=\"QGC test\"\r\n\r\n");
+        }
+    }
+
+    const QByteArray _status;
+    QTcpServer _server;
+    QHash<QTcpSocket*, QByteArray> _pending;
+    int _connections = 0;
+};
 
 }  // namespace
 
@@ -160,6 +213,55 @@ void GstVideoReceiverReconnectTest::_testUnresponsiveRtspServer()
         QCOMPARE(server.connections(), 1);
     }
     QVERIFY(stream.streamingSpy.isEmpty());
+}
+
+void GstVideoReceiverReconnectTest::_testRtspUnauthorizedStops()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+    RefusingRtspServer server(QByteArrayLiteral("401 Unauthorized"));
+    QVERIFY(server.listen());
+
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^GStreamer error from ")));
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Video stream stopped:")));
+    Receiver stream(server.uri(QStringLiteral("user:wrong@")), /*autoReconnect=*/true);
+    stream.receiver->setActive(true);
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.errorSpy, 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QVERIFY2(stream.errorSpy.constFirst().constFirst().toString().contains(QLatin1String("user name or password")),
+             qPrintable(stream.errorSpy.constFirst().constFirst().toString()));
+    QVERIFY(stream.waitForState(State::Stopped));
+
+    // Not asked again, though autoReconnect is on: a camera may lock an account out over repeated wrong passwords.
+    stream.stateSpy.clear();
+    QVERIFY_NO_SIGNAL_WAIT(stream.stateSpy, kNoReconnectWindowMs);
+    QCOMPARE(server.connections(), 1);
+}
+
+void GstVideoReceiverReconnectTest::_testRtspWithoutVideoStreamReconnects()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+    // No stream the receiver sets up: rtspsrc reports that as a codec it can't find, which no codec would fix, while a
+    // camera that offers its video later would.
+    GstTest::FakeRtspServer server(
+        QByteArrayLiteral("v=0\r\n"
+                          "o=- 0 0 IN IP4 127.0.0.1\r\n"
+                          "s=QGC audio-only test\r\n"
+                          "c=IN IP4 127.0.0.1\r\n"
+                          "t=0 0\r\n"
+                          "m=audio 0 RTP/AVP 97\r\n"
+                          "a=rtpmap:97 OPUS/48000/2\r\n"
+                          "a=control:trackID=0\r\n"));
+    QVERIFY(server.listen());
+
+    ignoreLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^GStreamer error from ")));
+    Receiver stream(server.uri(), /*autoReconnect=*/true);
+    stream.receiver->setActive(true);
+    QVERIFY_TRUE_WAIT(server.connections() >= 2, TestTimeout::mediumMs());
+    QVERIFY(stream.errorSpy.isEmpty());
 }
 
 #endif

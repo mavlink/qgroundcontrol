@@ -21,6 +21,8 @@ private slots:
     void _testSourceFactoryRtspTimestampsTcpPackets();
     void _testSourceFactoryRtspSelectsOnlyVideoStreams_data();
     void _testSourceFactoryRtspSelectsOnlyVideoStreams();
+    void _testSourceFactoryRtspAdvertisesKeyframeRequests_data();
+    void _testSourceFactoryRtspAdvertisesKeyframeRequests();
     void _testSourceFactoryRtspCredentials();
     void _testSourceFactoryRejectsBadUri();
     void _testSourceFactoryTcpMpegTs();

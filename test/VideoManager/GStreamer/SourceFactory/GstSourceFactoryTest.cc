@@ -4,6 +4,7 @@
 
 #include <atomic>
 #include <gst/gst.h>
+#include <gst/sdp/gstsdpmessage.h>
 #include <gst/video/video.h>
 
 #include <QtCore/QRegularExpression>
@@ -367,6 +368,62 @@ void GstSourceFactoryTest::_testSourceFactoryRtspSelectsOnlyVideoStreams()
     gboolean selected = expectedSelected ? FALSE : TRUE;
     g_signal_emit_by_name(source.get(), "select-stream", 0u, caps.get(), &selected);
     QCOMPARE(selected, expectedSelected ? TRUE : FALSE);
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspAdvertisesKeyframeRequests_data()
+{
+    QTest::addColumn<QByteArray>("media");
+    QTest::addColumn<int>("payloadType");
+    QTest::addColumn<QByteArrayList>("feedback");
+    QTest::addColumn<bool>("requestsKeyframes");
+
+    const QByteArray video = "m=video 0 RTP/AVP 96\r\na=rtpmap:96 H264/90000\r\n";
+    QTest::newRow("video") << video << 96 << QByteArrayList{"* nack pli"} << true;
+    QTest::newRow("video that takes NACK") << video + "a=rtcp-fb:96 nack\r\n"
+                                           << 96 << QByteArrayList{"96 nack", "* nack pli"} << true;
+    QTest::newRow("video that takes PLI") << video + "a=rtcp-fb:96 nack pli\r\n"
+                                          << 96 << QByteArrayList{"96 nack pli"} << true;
+    QTest::newRow("audio") << QByteArray("m=audio 0 RTP/AVP 97\r\na=rtpmap:97 OPUS/48000/2\r\n") << 97
+                           << QByteArrayList{} << false;
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspAdvertisesKeyframeRequests()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+
+    QFETCH(QByteArray, media);
+    QFETCH(int, payloadType);
+    QFETCH(QByteArrayList, feedback);
+    QFETCH(bool, requestsKeyframes);
+
+    const GStreamer::GstElementPtr bin =
+        GstTest::createSource(QStringLiteral("rtsp://127.0.0.1:8554/test"), GStreamer::SourceFactory::Config{});
+    const GStreamer::GstElementPtr source = GstTest::findByFactory(bin.get(), "rtspsrc");
+    QVERIFY(source);
+
+    const QByteArray text = "v=0\r\no=- 0 0 IN IP4 127.0.0.1\r\ns=QGC\r\nc=IN IP4 127.0.0.1\r\nt=0 0\r\n" + media;
+    GstSDPMessage* sdp = nullptr;
+    QCOMPARE(gst_sdp_message_new(&sdp), GST_SDP_OK);
+    const auto freeSdp = qScopeGuard([sdp] { gst_sdp_message_free(sdp); });
+    QCOMPARE(gst_sdp_message_parse_buffer(reinterpret_cast<const guint8*>(text.constData()),
+                                          static_cast<guint>(text.size()), sdp),
+             GST_SDP_OK);
+    QCOMPARE(gst_sdp_message_medias_len(sdp), 1U);
+
+    // As rtspsrc does once it has the SDP, before it derives the streams' caps from it.
+    g_signal_emit_by_name(source.get(), "on-sdp", sdp);
+
+    const GstSDPMedia* const described = gst_sdp_message_get_media(sdp, 0);
+    QByteArrayList advertised;
+    for (guint i = 0; const gchar* const value = gst_sdp_media_get_attribute_val_n(described, "rtcp-fb", i); ++i) {
+        advertised.append(value);
+    }
+    QCOMPARE(advertised, feedback);
+    // rtpbin sends a PLI only for a payload type whose caps have this field.
+    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_sdp_media_get_caps_from_media(described, payloadType));
+    QVERIFY(caps);
+    QCOMPARE(bool(gst_structure_has_field(gst_caps_get_structure(caps.get(), 0), "rtcp-fb-nack-pli")),
+             requestsKeyframes);
 }
 
 void GstSourceFactoryTest::_testSourceFactoryRtspCredentials()
