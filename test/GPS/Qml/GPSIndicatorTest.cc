@@ -154,7 +154,7 @@ void GPSIndicatorTest::_pageFitsWidth()
     QVERIFY(panel->mapRectToItem(item, panel->boundingRect()).right() <= width + 1);
 }
 
-void GPSIndicatorTest::_compactExpandedPageHasSettingsHeight()
+void GPSIndicatorTest::_compactExpandedPageHasSettingsSize()
 {
     // Status of a vehicle GPS, a surveyed base and a caster, which is taller than the settings of a passive receiver.
     RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::passive));
@@ -188,7 +188,8 @@ void GPSIndicatorTest::_compactExpandedPageHasSettingsHeight()
     auto* item = qobject_cast<QQuickItem*>(page.get());
     QVERIFY(item);
     // The widest layout that still replaces status with the settings.
-    QVERIFY(page->setProperty("availableWidth", page->property("_sideBySideWidth").toReal() - 1));
+    const qreal sideBySideWidth = page->property("_sideBySideWidth").toReal();
+    QVERIFY(page->setProperty("availableWidth", sideBySideWidth - 1));
     QVERIFY(window.show());
     QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
     const qreal statusHeight = item->implicitHeight();
@@ -201,13 +202,26 @@ void GPSIndicatorTest::_compactExpandedPageHasSettingsHeight()
     const qreal settingsHeight = panel->height();
     QVERIFY2(settingsHeight > 0 && statusHeight > settingsHeight,
              qPrintable(QStringLiteral("status %1, settings %2").arg(statusHeight).arg(settingsHeight)));
-    // The drawer takes the page's implicit height, which the hidden status must not add to.
+    // The drawer takes the page's implicit size, which the hidden status must not add to: neither its height, nor
+    // the spacing and the divider that separate it from the settings.
     QVERIFY2(qAbs(item->implicitHeight() - settingsHeight) <= 1,
              qPrintable(QStringLiteral("page %1, settings %2").arg(item->implicitHeight()).arg(settingsHeight)));
+    QVERIFY2(qAbs(item->implicitWidth() - panel->width()) <= 1,
+             qPrintable(QStringLiteral("page %1, settings %2").arg(item->implicitWidth()).arg(panel->width())));
+    QCOMPARE(panel->mapToItem(item, QPointF()).x(), 0.0);
 
-    QVERIFY(page->setProperty("expanded", false));
+    // Narrower than the settings prefer, they take the whole width.
+    const qreal narrowWidth = page->property("_preferredSettingsWidth").toReal() * 0.75;
+    QVERIFY(page->setProperty("availableWidth", narrowWidth));
     QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
-    QVERIFY(item->implicitHeight() > settingsHeight);
+    QVERIFY2(qAbs(panel->width() - narrowWidth) <= 1,
+             qPrintable(QStringLiteral("settings %1, available %2").arg(panel->width()).arg(narrowWidth)));
+
+    // Widened to fit both, status and the divider return beside the settings.
+    QVERIFY(page->setProperty("availableWidth", sideBySideWidth));
+    QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
+    QVERIFY2(qAbs(item->implicitWidth() - sideBySideWidth) <= 1,
+             qPrintable(QStringLiteral("page %1, side by side %2").arg(item->implicitWidth()).arg(sideBySideWidth)));
 }
 
 void GPSIndicatorTest::_pageOffersNtripConnect()
