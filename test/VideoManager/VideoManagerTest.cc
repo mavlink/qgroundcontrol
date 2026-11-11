@@ -910,6 +910,8 @@ void VideoManagerTest::_testStreamUriAndTransport_data()
     // The URI is shown in the Fly View, so it loses credentials and query values.
     QTest::newRow("rtsp") << QString(VideoSettings::videoSourceRTSP) << "rtsp://pilot:secret@cam.local/live?token=abc"
                           << "rtsp://cam.local/live?token=REDACTED" << "RTSP";
+    QTest::newRow("rtsp over tcp") << QString(VideoSettings::videoSourceRTSP) << "rtspt://cam.local/live"
+                                   << "rtspt://cam.local/live" << "RTSP";
 }
 
 void VideoManagerTest::_testStreamUriAndTransport()

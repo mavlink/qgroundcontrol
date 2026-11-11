@@ -9,6 +9,7 @@
 #include "QGCVideoStreamInfo.h"
 #include "VideoDecoderOptions.h"
 #include "VideoSettings.h"
+#include "VideoStreamUri.h"
 
 namespace {
 
@@ -63,18 +64,6 @@ constexpr ManualSource kManualSources[] = {
     {VideoSettings::videoSourceYuneecMantisG, "rtsp://192.168.42.1:554/live", nullptr},
     {VideoSettings::videoSourceHerelinkAirUnit, "rtsp://192.168.0.10:8554/H264Video", nullptr},
     {VideoSettings::videoSourceHerelinkHotspot, "rtsp://192.168.43.1:8554/fpv_stream", nullptr},
-};
-
-struct TransportName
-{
-    const char* scheme;
-    const char* name;
-};
-
-/// Every URI scheme autoStreamUri() and kManualSources produce.
-constexpr TransportName kTransportNames[] = {
-    {"rtsp", "RTSP"},          {"rtsps", "RTSP"},      {"udp", "RTP/UDP (H.264)"}, {"udp265", "RTP/UDP (H.265)"},
-    {"mpegts", "MPEG-TS/UDP"}, {"tcp", "MPEG-TS/TCP"},
 };
 
 const ManualSource* findManualSource(const QString& videoSource)
@@ -143,7 +132,7 @@ std::optional<VideoReceiver::Config> VideoStreamResolver::resolve(const Settings
 
     VideoReceiver::Config config;
     config.uri = uri;
-    config.timeout = uri.startsWith(QLatin1StringView("rtsp"), Qt::CaseInsensitive)
+    config.timeout = (VideoStreamUri::transportFor(QUrl(uri)) == VideoStreamUri::Transport::Rtsp)
                          ? std::chrono::seconds(settings.rtspTimeoutSec)
                          : kNonRtspStreamTimeout;
     config.lowLatency = settings.lowLatency;
@@ -164,11 +153,24 @@ bool VideoStreamResolver::isNetworkSource(const QString& videoSource)
 
 QString VideoStreamResolver::transportName(const QString& uri)
 {
-    const QString scheme = QUrl(uri).scheme();
-    for (const TransportName& transport : kTransportNames) {
-        if (scheme.compare(QLatin1StringView(transport.scheme), Qt::CaseInsensitive) == 0) {
-            return QString::fromLatin1(transport.name);
-        }
+    using VideoStreamUri::Transport;
+
+    const QUrl url(uri);
+    const std::optional<Transport> transport = VideoStreamUri::transportFor(url);
+    if (!transport) {
+        return url.scheme().toUpper();
     }
-    return scheme.toUpper();
+    switch (*transport) {
+        case Transport::Rtsp:
+            return QStringLiteral("RTSP");
+        case Transport::RtpUdpH264:
+            return QStringLiteral("RTP/UDP (H.264)");
+        case Transport::RtpUdpH265:
+            return QStringLiteral("RTP/UDP (H.265)");
+        case Transport::MpegTsUdp:
+            return QStringLiteral("MPEG-TS/UDP");
+        case Transport::MpegTsTcp:
+            return QStringLiteral("MPEG-TS/TCP");
+    }
+    return QString();
 }

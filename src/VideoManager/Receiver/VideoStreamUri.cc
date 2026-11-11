@@ -1,8 +1,8 @@
-#include "GstSourceUri.h"
+#include "VideoStreamUri.h"
 
 #include <QtCore/QUrl>
 
-namespace GStreamer::SourceFactory {
+namespace VideoStreamUri {
 
 std::optional<Transport> transportFor(const QUrl& url)
 {
@@ -25,4 +25,4 @@ std::optional<Transport> transportFor(const QUrl& url)
     return std::nullopt;
 }
 
-}  // namespace GStreamer::SourceFactory
+}  // namespace VideoStreamUri

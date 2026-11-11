@@ -13,7 +13,7 @@
 #include "GstRtspSource.h"
 #include "GstScoped.h"
 #include "GstSourceFactory.h"
-#include "GstSourceUri.h"
+#include "VideoStreamUri.h"
 
 namespace {
 
@@ -618,7 +618,7 @@ void GstSourceFactoryTest::_testSourceFactoryRtspDepayloaderRequestsKeyframes()
 
 void GstSourceFactoryTest::_testTransportFor_data()
 {
-    using GStreamer::SourceFactory::Transport;
+    using VideoStreamUri::Transport;
     QTest::addColumn<QString>("uri");
     QTest::addColumn<int>("transport");  // -1: unsupported
 
@@ -638,10 +638,10 @@ void GstSourceFactoryTest::_testTransportFor()
     QFETCH(QString, uri);
     QFETCH(int, transport);
 
-    const std::optional<GStreamer::SourceFactory::Transport> actual = GStreamer::SourceFactory::transportFor(QUrl(uri));
+    const std::optional<VideoStreamUri::Transport> actual = VideoStreamUri::transportFor(QUrl(uri));
     QCOMPARE(actual ? int(*actual) : -1, transport);
     QCOMPARE(GStreamer::SourceFactory::connectGracePeriod(uri) > std::chrono::milliseconds{0},
-             transport == int(GStreamer::SourceFactory::Transport::Rtsp));
+             transport == int(VideoStreamUri::Transport::Rtsp));
 }
 
 #endif

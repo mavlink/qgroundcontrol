@@ -15,6 +15,7 @@
 #include "QtVideoRecorder.h"
 #include "SharedVideoFrame.h"
 #include "VideoStreamStats.h"
+#include "VideoStreamUri.h"
 
 QGC_LOGGING_CATEGORY(QtMultimediaVideoReceiverLog, "Video.QtMultimediaVideoReceiver")
 
@@ -99,20 +100,22 @@ std::optional<QtMultimediaVideoReceiver::Source> QtMultimediaVideoReceiver::play
     if (uri.isEmpty() || !url.isValid() || url.scheme().isEmpty()) {
         return std::nullopt;
     }
-    const QString scheme = url.scheme().toLower();
-    if ((scheme == QStringLiteral("udp")) || (scheme == QStringLiteral("udp265"))) {
+
+    using VideoStreamUri::Transport;
+    const std::optional<Transport> transport = VideoStreamUri::transportFor(url);
+    if ((transport == Transport::RtpUdpH264) || (transport == Transport::RtpUdpH265)) {
         if (url.port() <= 0) {
             return std::nullopt;
         }
-        const QByteArrayView encoding = (scheme == QStringLiteral("udp265")) ? "H265" : "H264";
+        const QByteArrayView encoding = (transport == Transport::RtpUdpH265) ? "H265" : "H264";
         return Source{QUrl(QStringLiteral("stream.sdp")), rtpSdp(url.host(), url.port(), encoding)};
     }
-    if (scheme == QStringLiteral("mpegts")) {
+    if (transport == Transport::MpegTsUdp) {
         QUrl udp(url);
         udp.setScheme(QStringLiteral("udp"));
         return Source{udp, {}};
     }
-    if (scheme == QStringLiteral("rtspt")) {
+    if ((transport == Transport::Rtsp) && (url.scheme().compare(QStringLiteral("rtspt"), Qt::CaseInsensitive) == 0)) {
         QUrl rtsp(url);
         rtsp.setScheme(QStringLiteral("rtsp"));
         return Source{rtsp, {}, true};

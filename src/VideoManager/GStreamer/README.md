@@ -34,8 +34,7 @@ builds without GStreamer, and where `VideoSettings::videoBackend` picks it.
 | `BranchContext` | What `PipelineSession` lends its branches: the pipeline, the tee, the watchdog, the dot dumper and a way to queue work on the worker. Also the branch marks (`GStreamer::markBranch()`, `GStreamer::branchOf()`) that blame a bus message on the branch it came from. |
 | `StreamWatchdog` | Notices stalled source or decoder output on a monotonic clock (allowing `rtspsrc` its UDP→TCP fallback before the first frame). |
 | `PipelineDotDumper` | Writes the pipeline's `.dot` graphs; see [Pipeline Observability](#pipeline-observability). |
-| `GstSourceFactory` | Constructs the source element from the stream URI and applies RTP jitter-buffer policy for `application/x-rtp` sources. |
-| `GstSourceUri` | The transport each video URI scheme selects (`rtsp*`, `udp`, `udp265`, `mpegts`, `tcp`), without GStreamer. |
+| `GstSourceFactory` | Constructs the source element from the stream URI, for the transport its scheme selects (`VideoStreamUri` in `src/VideoManager/Receiver`: `rtsp*`, `udp`, `udp265`, `mpegts`, `tcp`), and applies RTP jitter-buffer policy for `application/x-rtp` sources. |
 | `GstRtspSource` | The `rtspsrc` the source factory builds: the RTSP URI check, transports, timeouts, latency, retransmission timing and video-only stream selection. |
 | `GstH26xParameterSetGate` | H.264/H.265 setup for the depayloaders and parsers the source factory builds or `parsebin` plugs: parameter sets repeated at every IDR, keyframe requests after loss, and output held until a full parameter set arrives. |
 | `QGCQVideoSinkController` | GUI-thread companion of the display sink; see [`gstqgc`](#gstqgc--custom-gstreamer-plugin). |

@@ -146,8 +146,6 @@ target_sources(
         Pipeline/GstRtspSource.h
         Pipeline/GstSourceFactory.cc
         Pipeline/GstSourceFactory.h
-        Pipeline/GstSourceUri.cc
-        Pipeline/GstSourceUri.h
         Pipeline/GstVideoReceiver.cc
         Pipeline/GstVideoReceiver.h
         Pipeline/PipelineSession.cc

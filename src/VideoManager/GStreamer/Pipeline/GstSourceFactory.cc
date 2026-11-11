@@ -12,9 +12,9 @@
 #include "GstH26xParameterSetGate.h"
 #include "GstRtspSource.h"
 #include "GstScoped.h"
-#include "GstSourceUri.h"
 #include "QGCLoggingCategory.h"
 #include "QGCNetworkHelper.h"
+#include "VideoStreamUri.h"
 
 QGC_LOGGING_CATEGORY(GstSourceFactoryLog, "Video.GStreamer.GstSourceFactory")
 
@@ -135,6 +135,8 @@ bool isVideoRtp(const GstStructure* structure)
 namespace GStreamer::SourceFactory {
 
 namespace {
+
+using VideoStreamUri::Transport;
 
 enum class SourceElement : uint8_t
 {
@@ -278,7 +280,7 @@ void linkPad(GstElement* element, GstPad* pad, gpointer data)
 GstElementPtr buildTcpSource(const QUrl& sourceUrl)
 {
     const int port = sourceUrl.port();
-    if (!isValidPort(port)) {
+    if (!VideoStreamUri::isValidPort(port)) {
         qCWarning(GstSourceFactoryLog) << "Invalid TCP port" << port << "in"
                                        << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
@@ -304,7 +306,7 @@ GstElementPtr buildUdpSource(const QUrl& sourceUrl, const char* rtpEncoding)
 {
     // Port 0 binds a free port, which udpsrc then reports in its "port" property.
     const int port = sourceUrl.port();
-    if ((port != 0) && !isValidPort(port)) {
+    if ((port != 0) && !VideoStreamUri::isValidPort(port)) {
         qCWarning(GstSourceFactoryLog) << "Invalid UDP port" << port << "in"
                                        << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
         return nullptr;
@@ -511,7 +513,7 @@ GstElement* create(const QString& uri, const Config& config)
     const guint latencyMs = (config.latencyMs < 0) ? 0u : static_cast<guint>(config.latencyMs);
 
     const QUrl sourceUrl(uri);
-    const std::optional<Transport> transport = transportFor(sourceUrl);
+    const std::optional<Transport> transport = VideoStreamUri::transportFor(sourceUrl);
     if (!transport) {
         qCWarning(GstSourceFactoryLog) << "Unsupported URI scheme:" << sourceUrl.scheme() << "in"
                                        << QGCNetworkHelper::redactedUrlForLogging(sourceUrl);
@@ -590,7 +592,8 @@ GstElement* create(const QString& uri, const Config& config)
 
 std::chrono::milliseconds connectGracePeriod(const QString& uri)
 {
-    return (transportFor(QUrl(uri)) == Transport::Rtsp) ? kRtspUdpTimeout : std::chrono::milliseconds{0};
+    return (VideoStreamUri::transportFor(QUrl(uri)) == Transport::Rtsp) ? kRtspUdpTimeout
+                                                                        : std::chrono::milliseconds{0};
 }
 
 }  // namespace GStreamer::SourceFactory
