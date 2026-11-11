@@ -16,6 +16,9 @@ protected:
         , _mapType(mapTypeCode)
     {}
 
+public:
+    QString attribution() const final { return QStringLiteral("© Tianditu"); }
+
 private:
     QString _getURL(int x, int y, int zoom) const final;
 

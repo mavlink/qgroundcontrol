@@ -33,6 +33,8 @@ public:
 
     QByteArray serialize(const QByteArray& image) const final;
 
+    QString attribution() const final { return QString::fromUtf8(kProviderNotice); }
+
     static constexpr const char* kProviderKey = "Copernicus";
     static constexpr const char* kProviderNotice = "© Airbus Defence and Space GmbH";
     static constexpr const char* kProviderURL = "https://terrain-ce.suite.auterion.com";
@@ -47,9 +49,9 @@ private:
 /// \brief AWS Open Data Terrain Tiles (Mapzen/Tilezen terrarium encoding).
 /// Standard slippy z/x/y PNG tiles, zooms 0-15; height = (R*256 + G + B/256) - 32768 meters.
 /// GeoMap-only: not user selectable, so the shared terrain pipeline never sees it.
-/// Attribution (required when surfaced in UI): Terrain Tiles by Mapzen/Tilezen —
-/// SRTM (NASA), 3DEP (USGS), GMTED2010 (USGS), ETOPO1 (NOAA), and other sources.
 /// https://registry.opendata.aws/terrain-tiles/
+/// Its attribution names the sources in short: the user guide lists them all
+/// (docs/en/qgc-user-guide/fly_view/geoview.md).
 class TerrariumElevationProvider : public ElevationProvider
 {
 public:
@@ -61,6 +63,8 @@ public:
     QByteArray serialize(const QByteArray& image) const final { return image; }
 
     bool isUserSelectable() const final { return false; }
+
+    QString attribution() const final { return QStringLiteral("Terrain: Mapzen, USGS, NOAA and other sources"); }
 
     /// At the anchor zoom, the tiles of a region include the anchors beside it that GeoMap fetches for the neighbors
     /// of the region's tiles of the next zoom. The neighbors of finer tiles need no anchor beyond those.

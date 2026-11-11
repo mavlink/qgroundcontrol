@@ -14,6 +14,9 @@ protected:
         , _mapTypeId(mapTypeId)
     {}
 
+public:
+    QString attribution() const final;
+
 private:
     QString _getURL(int x, int y, int zoom) const final;
 

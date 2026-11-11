@@ -14,6 +14,8 @@ protected:
 public:
     QByteArray getToken() const final;
 
+    QString attribution() const final { return QStringLiteral("Powered by Esri"); }
+
 private:
     QString _getURL(int x, int y, int zoom) const final;
 

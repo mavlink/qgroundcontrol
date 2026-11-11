@@ -30,4 +30,5 @@ private slots:
     void _testGetServerNumBasic();
     void _testGetServerNumWrap();
     void _testGettersReturnConstructorValues();
+    void _testFixedSourcesHaveAttribution();
 };

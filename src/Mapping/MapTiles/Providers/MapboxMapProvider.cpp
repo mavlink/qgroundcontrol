@@ -9,6 +9,14 @@ QList<Fact*> MapboxCustomMapProvider::sourceSettings() const
     return {appSettings->mapboxAccount(), appSettings->mapboxStyle()};
 }
 
+QString MapboxMapProvider::attribution() const
+{
+    // Mapbox asks for Maxar's credit as well on its satellite styles
+    const bool satelliteStyle = (_mapStyle == SatelliteMapDay) || (_mapStyle == HybridMap);
+    return satelliteStyle ? QStringLiteral("© Mapbox © OpenStreetMap © Maxar")
+                          : QStringLiteral("© Mapbox © OpenStreetMap");
+}
+
 QString MapboxMapProvider::_getURL(int x, int y, int zoom) const
 {
     const QString mapBoxToken = SettingsManager::instance()->appSettings()->mapboxToken()->rawValue().toString();

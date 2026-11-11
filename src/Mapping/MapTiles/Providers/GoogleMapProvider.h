@@ -30,6 +30,9 @@ protected:
         , _version(version)
     {}
 
+public:
+    QString attribution() const final { return QStringLiteral("Google Maps"); }
+
 private:
     void _getSecGoogleWords(int x, int y, QString& sec1, QString& sec2) const;
     QString _getURL(int x, int y, int zoom) const final;

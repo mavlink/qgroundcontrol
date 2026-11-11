@@ -26,6 +26,9 @@ protected:
         , _mapTypeId(mapTypeId)
     {}
 
+public:
+    QString attribution() const final { return QStringLiteral("Source: Geospatial Information Authority of Japan"); }
+
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
@@ -83,6 +86,8 @@ public:
                       QStringLiteral("png"), QGC_AVERAGE_TILE_SIZE, MapProvider::SatelliteMapDay)
     {}
 
+    QString attribution() const final { return QStringLiteral("© LINZ CC BY 4.0 © Imagery Basemap contributors"); }
+
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
@@ -98,6 +103,8 @@ public:
                       QGC_AVERAGE_TILE_SIZE, MapProvider::CustomMap)
     {}
 
+    QString attribution() const final { return QStringLiteral("© openAIP (CC BY-NC 4.0)"); }
+
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
@@ -111,6 +118,8 @@ public:
         : MapProvider(QStringLiteral("Street Map"), QStringLiteral("https://www.openstreetmap.org"),
                       QStringLiteral("png"), QGC_AVERAGE_TILE_SIZE, MapProvider::StreetMap)
     {}
+
+    QString attribution() const final { return QStringLiteral("© OpenStreetMap contributors"); }
 
 private:
     QString _getURL(int x, int y, int zoom) const final;
@@ -126,6 +135,9 @@ protected:
                       MapProvider::StreetMap)
         , _mapTypeId(mapTypeId)
     {}
+
+public:
+    QString attribution() const final { return QStringLiteral("© Kartverket"); }
 
 private:
     QString _getURL(int x, int y, int zoom) const final;
@@ -159,6 +171,8 @@ public:
                       QGC_AVERAGE_TILE_SIZE, MapProvider::StreetMap)
     {}
 
+    QString attribution() const final { return QStringLiteral("© Norwegian Polar Institute"); }
+
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
@@ -175,6 +189,8 @@ public:
                       QGC_AVERAGE_TILE_SIZE, MapProvider::StreetMap)
     {}
 
+    QString attribution() const final { return QStringLiteral("© Eniro"); }
+
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
@@ -189,6 +205,9 @@ protected:
                       mapType)
         , _mapTypeId(mapTypeId)
     {}
+
+public:
+    QString attribution() const final { return QStringLiteral("© MapQuest"); }
 
 private:
     QString _getURL(int x, int y, int zoom) const final;
@@ -221,6 +240,9 @@ protected:
         : MapProvider(mapName, QStringLiteral("www.vworld.kr"), imageFormat, averageSize, mapStyle)
         , _mapTypeId(mapTypeId)
     {}
+
+public:
+    QString attribution() const final { return QStringLiteral("© VWorld"); }
 
 private:
     QString _getURL(int x, int y, int zoom) const final;

@@ -17,6 +17,8 @@ protected:
 public:
     bool isBingProvider() const final { return true; }
 
+    QString attribution() const final { return QStringLiteral("© Microsoft"); }
+
 private:
     QString _getURL(int x, int y, int zoom) const final;
 

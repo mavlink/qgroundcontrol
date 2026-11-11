@@ -205,6 +205,22 @@ QString QGCMapEngineManager::loadSetting(const QString& key, const QString& defa
     return settings.value(key, defaultValue).toString();
 }
 
+QString QGCMapEngineManager::mapAttribution(const QString& mapType)
+{
+    for (const SharedMapProvider& provider : UrlFactory::getProviders()) {
+        if (provider->getMapName() == mapType) {
+            return provider->attribution();
+        }
+    }
+
+    return QString();
+}
+
+QString QGCMapEngineManager::terrainAttribution()
+{
+    return mapAttribution(QString::fromLatin1(TerrariumElevationProvider::kProviderKey));
+}
+
 QStringList QGCMapEngineManager::mapTypeList(const QString& provider)
 {
     QStringList mapStringList = mapList();

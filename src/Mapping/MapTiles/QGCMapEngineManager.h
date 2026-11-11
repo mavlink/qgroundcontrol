@@ -28,6 +28,7 @@ class QGCMapEngineManager : public QObject
     Q_PROPERTY(QStringList mapList READ mapList CONSTANT)
     Q_PROPERTY(QStringList mapProviderList READ mapProviderList CONSTANT)
     Q_PROPERTY(QStringList elevationProviderList READ elevationProviderList CONSTANT)
+    Q_PROPERTY(QString terrainAttribution READ terrainAttribution CONSTANT)
     Q_PROPERTY(quint64 tileCount READ tileCount NOTIFY tileCountChanged)
     Q_PROPERTY(quint64 tileSize READ tileSize NOTIFY tileSizeChanged)
 
@@ -68,6 +69,9 @@ public:
                                           const QString& mapName);
 
     Q_INVOKABLE static QString loadSetting(const QString& key, const QString& defaultValue);
+    /// The credit of the provider \a mapType, named as mapList() names it. Empty for a name that is not in that
+    /// list, and for a provider without a credit.
+    Q_INVOKABLE static QString mapAttribution(const QString& mapType);
     Q_INVOKABLE static QStringList mapTypeList(const QString& provider);
     Q_INVOKABLE static void saveSetting(const QString& key, const QString& value);
 
@@ -115,6 +119,8 @@ public:
     static QStringList mapList();
     static QStringList mapProviderList();
     static QStringList elevationProviderList();
+    /// The credit of the terrain that the GeoMap engine shapes its surface with
+    static QString terrainAttribution();
 
 signals:
     void actionProgressChanged();

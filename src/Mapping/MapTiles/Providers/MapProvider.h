@@ -56,6 +56,9 @@ public:
 
     virtual QByteArray getToken() const { return QByteArray(); }
 
+    /// The credit that the provider's terms ask for where its tiles are shown. Empty for a source the user sets.
+    virtual QString attribution() const { return QString(); }
+
     /// The settings with which the user configures the source the provider fetches from. Empty for a provider with
     /// a fixed source. Main thread only, as their values are.
     virtual QList<Fact*> sourceSettings() const { return {}; }

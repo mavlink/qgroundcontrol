@@ -258,4 +258,33 @@ void QGCMapEngineManagerTest::_testTerrainSetServedFromCache()
     QCOMPARE(sets.networkManager.requestCount, kRequestCount);
 }
 
+void QGCMapEngineManagerTest::_testMapAttribution_data()
+{
+    QTest::addColumn<QString>("mapType");
+    QTest::addColumn<QString>("attribution");
+
+    // The wording that the terms of these providers prescribe
+    QTest::newRow("OpenStreetMap") << QStringLiteral("Street Map") << QStringLiteral("© OpenStreetMap contributors");
+    QTest::newRow("Mapbox") << QStringLiteral("Mapbox Streets") << QStringLiteral("© Mapbox © OpenStreetMap");
+    QTest::newRow("Mapbox satellite") << QStringLiteral("Mapbox Hybrid")
+                                      << QStringLiteral("© Mapbox © OpenStreetMap © Maxar");
+    QTest::newRow("Esri") << QStringLiteral("Esri World Satellite") << QStringLiteral("Powered by Esri");
+    QTest::newRow("Kartverket") << QStringLiteral("Statkart Topo") << QStringLiteral("© Kartverket");
+    QTest::newRow("Norwegian Polar Institute")
+        << QStringLiteral("Svalbard Topo") << QStringLiteral("© Norwegian Polar Institute");
+
+    QTest::newRow("GeoMap terrain") << QString::fromLatin1(TerrariumElevationProvider::kProviderKey)
+                                    << QGCMapEngineManager::terrainAttribution();
+    QTest::newRow("source that the user sets") << QStringLiteral("CustomURL Custom") << QString();
+    QTest::newRow("not a map") << QStringLiteral("No Such Map") << QString();
+}
+
+void QGCMapEngineManagerTest::_testMapAttribution()
+{
+    QFETCH(QString, mapType);
+    QFETCH(QString, attribution);
+
+    QCOMPARE(QGCMapEngineManager::mapAttribution(mapType), attribution);
+}
+
 UT_REGISTER_TEST(QGCMapEngineManagerTest, TestLabel::Unit)

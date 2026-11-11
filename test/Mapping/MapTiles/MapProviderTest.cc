@@ -7,6 +7,7 @@
 
 #include "GenericMapProvider.h"
 #include "MapProvider.h"
+#include "QGCMapUrlEngine.h"
 #include "QGCTileSet.h"
 
 class TestableMapProvider : public MapProvider
@@ -231,6 +232,18 @@ void MapProviderTest::_testGettersReturnConstructorValues()
     QCOMPARE(p.getMapStyle(), MapProvider::CustomMap);
     QVERIFY(!p.isElevationProvider());
     QVERIFY(!p.isBingProvider());
+}
+
+// --- Attribution ---
+
+void MapProviderTest::_testFixedSourcesHaveAttribution()
+{
+    // Only the map of the URL that the user sets has no one to credit
+    const QString userSource = CustomURLMapProvider().getMapName();
+    for (const SharedMapProvider& provider : UrlFactory::getProviders()) {
+        QVERIFY2(provider->attribution().isEmpty() == (provider->getMapName() == userSource),
+                 qPrintable(provider->getMapName()));
+    }
 }
 
 UT_REGISTER_TEST(MapProviderTest, TestLabel::Unit)
