@@ -51,18 +51,20 @@ void NMEASentenceTest::_fixQuality_data()
     QTest::addColumn<unsigned>("quality");
     QTest::addColumn<GPSFixQuality>("autonomous");
     QTest::addColumn<GPSFixQuality>("expected");
+    // Indexed by quality: 3 is the Precise Positioning Service, 8 simulation and 9 NovAtel's SBAS solution.
     const std::array qualities{
-        GPSFixQuality::NoFix,        GPSFixQuality::Unknown,  GPSFixQuality::Differential,
-        GPSFixQuality::Unknown,      GPSFixQuality::RTKFixed, GPSFixQuality::RTKFloat,
-        GPSFixQuality::Extrapolated, GPSFixQuality::Fix3D,    GPSFixQuality::Unknown,
+        GPSFixQuality::NoFix,    GPSFixQuality::Fix3D,        GPSFixQuality::Differential, GPSFixQuality::Fix3D,
+        GPSFixQuality::RTKFixed, GPSFixQuality::RTKFloat,     GPSFixQuality::Extrapolated, GPSFixQuality::Fix3D,
+        GPSFixQuality::Unknown,  GPSFixQuality::Differential,
     };
     for (unsigned quality = 0; quality < qualities.size(); ++quality) {
-        QTest::addRow("%u", quality) << quality << GPSFixQuality::Fix3D
-                                     << (quality == NMEA::GgaQuality::GPS ? GPSFixQuality::Fix3D : qualities[quality]);
+        QTest::addRow("%u", quality) << quality << GPSFixQuality::Fix3D << qualities[quality];
     }
     // Only an autonomous fix takes the dimension the receiver reports elsewhere.
     QTest::newRow("gps-2d") << unsigned(NMEA::GgaQuality::GPS) << GPSFixQuality::Fix2D << GPSFixQuality::Fix2D;
     QTest::newRow("gps-unknown") << unsigned(NMEA::GgaQuality::GPS) << GPSFixQuality::Unknown << GPSFixQuality::Unknown;
+    QTest::newRow("pps-2d") << 3u << GPSFixQuality::Fix2D << GPSFixQuality::Fix2D;
+    QTest::newRow("sbas-2d") << 9u << GPSFixQuality::Fix2D << GPSFixQuality::Differential;
     QTest::newRow("unsupported") << 255u << GPSFixQuality::Fix3D << GPSFixQuality::Unknown;
 }
 
@@ -399,8 +401,9 @@ void NMEASentenceTest::_makeGga_data()
     invalidField("infinite-geoid", &NMEA::GGA::geoidSeparation, -qInf());
     invalidField("infinite-hdop", &NMEA::GGA::hdop, qInf());
     invalidField("negative-hdop", &NMEA::GGA::hdop, -0.1);
+    // The writer keeps to the values NMEA 0183 defines, although the reader accepts NovAtel's SBAS value.
     auto invalidQuality = explicitFix;
-    invalidQuality.quality = NMEA::GgaQuality::MAX_VALUE + 1;
+    invalidQuality.quality = NMEA::GgaQuality::SBAS;
     QTest::newRow("invalid-quality") << invalidQuality << QTime(12, 0) << QByteArray();
 }
 
@@ -758,7 +761,8 @@ void NMEASentenceTest::_navigationStatus_data()
     QTest::addColumn<int>("epoch");
     QTest::newRow("gga-no-fix") << QByteArray("GPGGA,120001,,,,,0,0,,,,,,,") << 0 << 43201000;
     QTest::newRow("gga-declared-fix") << QByteArray("GPGGA,120001,,,,,1,0,,,,,,,") << 1 << 43201000;
-    QTest::newRow("gga-unknown-quality") << QByteArray("GPGGA,120001,,,,,9,0,,,,,,,") << -1 << -1;
+    QTest::newRow("gga-sbas-quality") << QByteArray("GPGGA,120001,,,,,9,0,,,,,,,") << 1 << 43201000;
+    QTest::newRow("gga-unknown-quality") << QByteArray("GPGGA,120001,,,,,10,0,,,,,,,") << -1 << -1;
     QTest::newRow("rmc-valid") << QByteArray("GPRMC,120001,A") << 1 << 43201000;
     QTest::newRow("rmc-invalid") << QByteArray("GPRMC,120001,V") << 0 << 43201000;
     QTest::newRow("rmc-invalid-time") << QByteArray("GPRMC,,V") << 0 << -1;

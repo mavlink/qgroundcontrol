@@ -76,12 +76,20 @@ namespace GgaQuality {
 constexpr unsigned INVALID = 0;
 constexpr unsigned GPS = 1;
 constexpr unsigned DIFFERENTIAL = 2;
+/// Precise Positioning Service: an autonomous fix from the encrypted signals.
+constexpr unsigned PPS = 3;
 constexpr unsigned RTK_FIXED = 4;
 constexpr unsigned RTK_FLOAT = 5;
 constexpr unsigned ESTIMATED = 6;
 /// Manual input: the position a base station was fixed at.
 constexpr unsigned MANUAL = 7;
-constexpr unsigned MAX_VALUE = 8;
+constexpr unsigned SIMULATION = 8;
+/// A solution with SBAS corrections as NovAtel receivers report it. Other receivers report it as DIFFERENTIAL.
+constexpr unsigned SBAS = 9;
+/// The last value NMEA 0183 defines, and the last one QGC writes.
+constexpr unsigned MAX_STANDARD = SIMULATION;
+/// The last value read from a receiver.
+constexpr unsigned MAX_RECEIVED = SBAS;
 }  // namespace GgaQuality
 
 namespace FixDimension {
@@ -89,7 +97,8 @@ constexpr unsigned NO_FIX = 1;
 constexpr unsigned THREE_D = 3;
 }  // namespace FixDimension
 
-/// Autonomous GGA does not distinguish 2D/3D; the caller supplies its independently resolved quality.
+/// Autonomous GGA does not distinguish 2D/3D; the caller supplies its independently resolved quality. Simulation and
+/// values beyond MAX_RECEIVED are Unknown, which is not a solution.
 [[nodiscard]] GPSFixQuality fixQuality(unsigned quality, GPSFixQuality autonomous);
 
 template <class T>
@@ -302,7 +311,7 @@ namespace NMEAUtils {
 /// Build GPGGA from explicit fix fields and UTC, truncated to whole seconds.
 /// NaN altitude/geoid separation/HDOP and absent satellite count produce empty fields, not defaults.
 /// Returns empty for invalid UTC, out-of-range/nonfinite coordinates, infinite measurements,
-/// negative HDOP, or quality above the protocol maximum. Altitude is MSL; geoid separation is signed.
+/// negative HDOP, or quality above GgaQuality::MAX_STANDARD. Altitude is MSL; geoid separation is signed.
 QByteArray makeGGA(const NMEA::GGA& fix, const QTime& utc);
 
 }  // namespace NMEAUtils

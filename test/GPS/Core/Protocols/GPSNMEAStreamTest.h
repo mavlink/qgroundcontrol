@@ -11,6 +11,8 @@ private slots:
     void _chunkingIndependence_data();
     void _chunkingIndependence();
     void _limitsReceiveToSatelliteDeadline();
+    void _ggaQuality_data();
+    void _ggaQuality();
     void _vdopEpoch_data();
     void _vdopEpoch();
     void _vdopReceiptIsNotRenewed();

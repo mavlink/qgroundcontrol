@@ -205,6 +205,30 @@ void GPSNMEAStreamTest::_limitsReceiveToSatelliteDeadline()
     QVERIFY(limited <= NMEA::SatelliteAssembler::BATCH_TIMEOUT);
 }
 
+void GPSNMEAStreamTest::_ggaQuality_data()
+{
+    QTest::addColumn<QByteArray>("quality");
+    QTest::addColumn<bool>("published");
+    QTest::addColumn<GPSFixQuality>("fixType");
+    QTest::newRow("precise-positioning-service") << QByteArray("3") << true << GPSFixQuality::Fix3D;
+    QTest::newRow("novatel-sbas") << QByteArray("9") << true << GPSFixQuality::Differential;
+    QTest::newRow("undefined") << QByteArray("10") << false << GPSFixQuality::Unknown;
+}
+
+void GPSNMEAStreamTest::_ggaQuality()
+{
+    QFETCH(QByteArray, quality);
+    QFETCH(bool, published);
+    QFETCH(GPSFixQuality, fixType);
+    NMEAReceiver receiver;
+    receiver.feed("GPGGA,123519,4807.038,N,01131.000,E," + quality + ",08,0.9,100.0,M,10.0,M,,");
+    QCOMPARE(receiver.published.has_value(), published);
+    if (published) {
+        QCOMPARE(receiver.published->navigation.fixType, fixType);
+        QVERIFY(GPSObservation::fromNavigation(receiver.published->navigation, receiver.now).hasNavigationSolution());
+    }
+}
+
 void GPSNMEAStreamTest::_vdopEpoch_data()
 {
     QTest::addColumn<QByteArray>("firstUtc");

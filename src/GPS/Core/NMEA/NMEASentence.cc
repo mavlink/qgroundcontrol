@@ -187,7 +187,7 @@ std::optional<GGA> gga(const Sentence& input)
     const auto satellites = ggaSatellitesUsed(f[Field::GGA_SATELLITES_USED]);
     // A count beyond the range makes the sentence malformed; an empty or unreadable one is only unknown.
     const bool satellitesOutOfRange = !satellites && number<unsigned>(f[Field::GGA_SATELLITES_USED]);
-    if (!quality || *quality > GgaQuality::MAX_VALUE || satellitesOutOfRange) {
+    if (!quality || *quality > GgaQuality::MAX_RECEIVED || satellitesOutOfRange) {
         return {};
     }
     const auto latitudeHemisphere = f[Field::GGA_LATITUDE_HEMISPHERE];
@@ -352,8 +352,10 @@ GPSFixQuality fixQuality(unsigned quality, GPSFixQuality autonomous)
         case GgaQuality::INVALID:
             return GPSFixQuality::NoFix;
         case GgaQuality::GPS:
+        case GgaQuality::PPS:
             return autonomous;
         case GgaQuality::DIFFERENTIAL:
+        case GgaQuality::SBAS:
             return GPSFixQuality::Differential;
         case GgaQuality::RTK_FIXED:
             return GPSFixQuality::RTKFixed;
@@ -374,7 +376,7 @@ std::optional<NavigationStatus> navigationStatus(const Sentence& input)
     const auto& fields = input.fields;
     if (type == "GGA" && input.count > Field::GGA_QUALITY) {
         const auto quality = number<unsigned>(fields[Field::GGA_QUALITY]);
-        if (quality && *quality <= GgaQuality::MAX_VALUE) {
+        if (quality && *quality <= GgaQuality::MAX_RECEIVED) {
             return NavigationStatus{*quality != GgaQuality::INVALID, utcMilliseconds(fields[Field::UTC_TIME])};
         }
     } else if (type == "GSA" && input.count > Field::GSA_DIMENSION) {
@@ -426,7 +428,7 @@ QByteArray makeGGA(const NMEA::GGA& fix, const QTime& utc)
     if (!utc.isValid() || !std::isfinite(fix.latitude) || std::abs(fix.latitude) > MAX_LATITUDE_DEGREES ||
         !std::isfinite(fix.longitude) || std::abs(fix.longitude) > MAX_LONGITUDE_DEGREES || std::isinf(fix.altitude) ||
         std::isinf(fix.geoidSeparation) || std::isinf(fix.hdop) || fix.hdop < 0.0 ||
-        fix.quality > NMEA::GgaQuality::MAX_VALUE) {
+        fix.quality > NMEA::GgaQuality::MAX_STANDARD) {
         return {};
     }
     const QByteArray hhmmss = utc.toString(u"hhmmss").toLatin1();
