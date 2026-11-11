@@ -12,6 +12,8 @@ target_sources(
         QGeoMapReplyQGCTest.h
         QGCMapEngineManagerArchiveTest.cc
         QGCMapEngineManagerArchiveTest.h
+        QGCMapEngineManagerTest.cc
+        QGCMapEngineManagerTest.h
         QGCCachedTileSetTest.cc
         QGCCachedTileSetTest.h
         QGCCacheWorkerTest.cc
@@ -34,6 +36,7 @@ add_qgc_test(QGeoMapReplyQGCTest LABELS Unit)
 add_qgc_test(QGCCacheWorkerTest LABELS Unit)
 add_qgc_test(QGCCachedTileSetTest LABELS Unit)
 add_qgc_test(QGCMapEngineManagerArchiveTest LABELS Unit RESOURCE_LOCK TempFiles)
+add_qgc_test(QGCMapEngineManagerTest LABELS Unit)
 add_qgc_test(QGCTileCacheDatabaseTest LABELS Unit)
 add_qgc_test(QGCTileReplyTest LABELS Unit)
 add_qgc_test(QGCTileSetTest LABELS Unit)

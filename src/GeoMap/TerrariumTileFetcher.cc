@@ -29,6 +29,9 @@ QGC_LOGGING_CATEGORY(GeoMapTerrariumTileFetcherVerboseLog, "GeoMap.TerrariumTile
 
 static_assert(TerrariumTileFetcher::kMaxGridSize == PatchGeometry::kMaxGridSize,
               "fetcher grid cap must match the patch mesh cap");
+static_assert((TerrariumTileFetcher::kMaxTileZoom == TerrariumElevationProvider::kMaxZoom) &&
+                  (TerrariumTileFetcher::kAnchorZoom == TerrariumElevationProvider::kAnchorZoom),
+              "offline map sets must download the zooms the fetcher requests");
 
 namespace {
 

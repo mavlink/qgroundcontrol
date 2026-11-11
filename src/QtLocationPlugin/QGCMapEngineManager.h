@@ -74,8 +74,10 @@ public:
     QString errorMessage() const { return _errorMessage; }
     QString tileCountStr() const;
     QString tileSizeStr() const;
-    quint64 tileCount() const { return (_imageSet.tileCount + _elevationSet.tileCount); }
-    quint64 tileSize() const { return (_imageSet.tileSize + _elevationSet.tileSize); }
+
+    quint64 tileCount() const { return (_imageSet.tileCount + _elevationSet.tileCount + _terrainSet.tileCount); }
+
+    quint64 tileSize() const { return (_imageSet.tileSize + _elevationSet.tileSize + _terrainSet.tileSize); }
 
     void setActionProgress(int percentage) { if (percentage != _actionProgress) { _actionProgress = percentage; emit actionProgressChanged(); } }
     void setErrorMessage(const QString &error) { if (error != _errorMessage) { _errorMessage = error; emit errorMessageChanged(); } }
@@ -118,6 +120,8 @@ private:
     QmlObjectListModel *_tileSets = nullptr;
     QGCTileSet _imageSet;
     QGCTileSet _elevationSet;
+    /// Terrarium tiles GeoMap renders its terrain from: empty unless elevation is fetched and GeoMap is enabled
+    QGCTileSet _terrainSet;
     ImportAction _importAction = ImportAction::ActionNone;
     double _topleftLat = 0.;
     double _topleftLon = 0.;
@@ -125,6 +129,8 @@ private:
     double _bottomRightLon = 0.;
     int _minZoom = 0;
     int _maxZoom = 0;
+    int _terrainMinZoom = 0;
+    int _terrainMaxZoom = 0;
     int _actionProgress = 0;
     quint64 _setID = UINT64_MAX;
     QString _errorMessage;

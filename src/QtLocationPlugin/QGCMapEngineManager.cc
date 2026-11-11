@@ -11,10 +11,12 @@
 
 #include "ElevationMapProvider.h"
 #include "FlightMapSettings.h"
+#include "FlyViewSettings.h"
+#include "PlanViewSettings.h"
 #include "QGCCachedTileSet.h"
-#include "QGCFormat.h"
 #include "QGCCompression.h"
 #include "QGCCompressionJob.h"
+#include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapTasks.h"
@@ -62,6 +64,7 @@ void QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double 
 
     _imageSet.clear();
     _elevationSet.clear();
+    _terrainSet.clear();
 
     for (int z = minZoom; z <= maxZoom; z++) {
         const QGCTileSet set = UrlFactory::getTileCount(z, lon0, lat0, lon1, lat1, mapName);
@@ -72,6 +75,19 @@ void QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double 
         const QString elevationProviderName = SettingsManager::instance()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
         const QGCTileSet set = UrlFactory::getTileCount(1, lon0, lat0, lon1, lat1, elevationProviderName);
         _elevationSet += set;
+
+        const SettingsManager* const settings = SettingsManager::instance();
+        if (settings->flyViewSettings()->useGeoMapEngine()->rawValue().toBool() ||
+            settings->planViewSettings()->useGeoMapEngine()->rawValue().toBool()) {
+            // GeoMap fetches the Terrarium tile of every imagery tile, at most as fine as Terrarium serves, and the
+            // anchor zoom tiles around every tile finer than those
+            _terrainMaxZoom = qMin(maxZoom, TerrariumElevationProvider::kMaxZoom);
+            _terrainMinZoom = qMin(minZoom, qMin(_terrainMaxZoom, TerrariumElevationProvider::kAnchorZoom));
+            const QString terrainProviderName = QString::fromLatin1(TerrariumElevationProvider::kProviderKey);
+            for (int z = _terrainMinZoom; z <= _terrainMaxZoom; z++) {
+                _terrainSet += UrlFactory::getTileCount(z, lon0, lat0, lon1, lat1, terrainProviderName);
+            }
+        }
     }
 
     emit tileCountChanged();
@@ -82,12 +98,12 @@ void QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double 
 
 QString QGCMapEngineManager::tileCountStr() const
 {
-    return QGC::numberToString(_imageSet.tileCount + _elevationSet.tileCount);
+    return QGC::numberToString(tileCount());
 }
 
 QString QGCMapEngineManager::tileSizeStr() const
 {
-    return QGC::bigSizeToString(_imageSet.tileSize + _elevationSet.tileSize);
+    return QGC::bigSizeToString(tileSize());
 }
 
 void QGCMapEngineManager::loadTileSets()
@@ -128,6 +144,11 @@ void QGCMapEngineManager::startDownload(const QString &name, const QString &mapT
     if (_fetchElevation && !UrlFactory::isElevation(mapid)) {
         const QString elevationProviderName = SettingsManager::instance()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
         _createTileSet(name + QStringLiteral(" Elevation"), elevationProviderName, 1, 1, _elevationSet);
+        if (_terrainSet.tileCount > 0) {
+            _createTileSet(name + QStringLiteral(" Terrain"),
+                           QString::fromLatin1(TerrariumElevationProvider::kProviderKey), _terrainMinZoom,
+                           _terrainMaxZoom, _terrainSet);
+        }
     } else {
         qCWarning(QGCMapEngineManagerLog) << "No Tiles to save";
     }

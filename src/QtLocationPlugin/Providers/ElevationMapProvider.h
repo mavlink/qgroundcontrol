@@ -73,6 +73,10 @@ public:
     static constexpr const char* kProviderKey = "Terrarium";
     static constexpr const char* kProviderURL = "https://s3.amazonaws.com/elevation-tiles-prod";
     static constexpr quint32 kAvgElevSize = 45000;
+    /// Finest zoom the dataset serves
+    static constexpr int kMaxZoom = 15;
+    /// GeoMap fetches the tiles of this zoom around every finer tile it shows
+    static constexpr int kAnchorZoom = 10;
 
 private:
     QString _getURL(int x, int y, int zoom) const final;

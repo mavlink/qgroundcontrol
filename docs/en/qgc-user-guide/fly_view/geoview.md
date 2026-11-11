@@ -63,3 +63,5 @@ The GeoMap engine drapes the same map imagery you have selected in **Application
 - Norway terrain data © Kartverket
 - United Kingdom terrain data © Environment Agency copyright and/or database right 2015. All rights reserved
 - United States 3DEP (formerly NED) and global GMTED2010 and SRTM terrain data courtesy of the U.S. Geological Survey
+
+To have this terrain without an internet connection, enable the GeoMap engine before you download an [offline map set](../settings_view/maps.md#offline-maps), and keep **Fetch elevation data** checked. The terrain of the area is then downloaded as a set of its own, named after the map set with "Terrain" appended.
