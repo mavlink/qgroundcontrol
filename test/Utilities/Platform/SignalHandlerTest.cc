@@ -106,6 +106,21 @@ void SignalHandlerTest::_testCurrentUpdatesWithNewHandler()
     QVERIFY(SignalHandler::current() == nullptr);
 }
 
+void SignalHandlerTest::_testFirstSigIntLeavesProcessRunning()
+{
+#ifdef Q_OS_UNIX
+    SignalHandler handler;
+    QCOMPARE(handler.setupSignalHandlers(), 0);
+
+    const int status = raiseSignalInForkedChild(SIGINT, 1);
+    QVERIFY(status != -1);
+    QVERIFY2(WIFEXITED(status), "The child was terminated by a signal");
+    QVERIFY2(WEXITSTATUS(status) == EXIT_SUCCESS, "The signal handler ended the child or changed errno");
+#else
+    QSKIP("POSIX signals only");
+#endif
+}
+
 void SignalHandlerTest::_testSecondSigIntExitsFromHandler()
 {
 #ifdef Q_OS_UNIX
@@ -116,6 +131,24 @@ void SignalHandlerTest::_testSecondSigIntExitsFromHandler()
     QVERIFY(status != -1);
     QVERIFY2(WIFEXITED(status), "The child was terminated by a signal");
     QCOMPARE(WEXITSTATUS(status), 128 + SIGINT);
+#else
+    QSKIP("POSIX signals only");
+#endif
+}
+
+void SignalHandlerTest::_testSigIntAfterDestructionTerminates()
+{
+#ifdef Q_OS_UNIX
+    {
+        SignalHandler handler;
+        QCOMPARE(handler.setupSignalHandlers(), 0);
+    }
+
+    // The application object owns the handler, so the rest of the process exit runs without it
+    const int status = raiseSignalInForkedChild(SIGINT, 1);
+    QVERIFY(status != -1);
+    QVERIFY2(WIFSIGNALED(status), "The signal was swallowed");
+    QCOMPARE(WTERMSIG(status), SIGINT);
 #else
     QSKIP("POSIX signals only");
 #endif
