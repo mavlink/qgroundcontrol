@@ -2,14 +2,13 @@
 
 #include <QtCore/QList>
 
-#include "GPSCorrectionManager.h"
-#include "GPSReceiver.h"
-#include "NTRIPManager.h"
-#include "PositionManager.h"
-
 class Fact;
+class GPSCorrectionManager;
 class GPSCorrectionSettings;
+class GPSReceiver;
+class NTRIPManager;
 class NTRIPSettings;
+class PositionManager;
 class RTKSettings;
 
 /// Translates the persisted GPS settings into the plain configurations the GPS services consume. Each is a value the

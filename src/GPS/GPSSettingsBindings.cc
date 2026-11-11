@@ -6,8 +6,12 @@
 #include <QtCore/QSet>
 
 #include "Fact.h"
+#include "GPSCorrectionManager.h"
 #include "GPSCorrectionSettings.h"
+#include "GPSReceiver.h"
+#include "NTRIPManager.h"
 #include "NTRIPSettings.h"
+#include "PositionManager.h"
 #include "QGCLoggingCategory.h"
 #include "RTKSettings.h"
 
