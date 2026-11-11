@@ -29,7 +29,7 @@ Q_DECLARE_LOGGING_CATEGORY(GstVideoReceiverLog)
 class GstVideoReceiver : public VideoReceiver
 {
     Q_OBJECT
-    Q_PROPERTY(QString decoderName READ decoderName NOTIFY decoderNameChanged)
+    Q_PROPERTY(QString decoderName READ decoderName NOTIFY decoderNameChanged FINAL)
 
 public:
     explicit GstVideoReceiver(QObject* parent = nullptr);

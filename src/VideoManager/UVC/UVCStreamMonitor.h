@@ -31,10 +31,10 @@ class UVCStreamMonitor : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("")
 
-    Q_PROPERTY(VideoStreamStats stats READ stats NOTIFY statsChanged)
-    Q_PROPERTY(QSize videoSize READ videoSize NOTIFY statsChanged)
-    Q_PROPERTY(double cameraFrameRate READ cameraFrameRate NOTIFY statsChanged)
-    Q_PROPERTY(QString cameraName READ cameraName NOTIFY cameraNameChanged)
+    Q_PROPERTY(VideoStreamStats stats READ stats NOTIFY statsChanged FINAL)
+    Q_PROPERTY(QSize videoSize READ videoSize NOTIFY statsChanged FINAL)
+    Q_PROPERTY(double cameraFrameRate READ cameraFrameRate NOTIFY statsChanged FINAL)
+    Q_PROPERTY(QString cameraName READ cameraName NOTIFY cameraNameChanged FINAL)
 
     friend class UVCStreamMonitorTest;
 

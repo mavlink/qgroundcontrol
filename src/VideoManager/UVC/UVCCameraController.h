@@ -42,16 +42,16 @@ class UVCCameraController : public VideoReceiver
     QML_UNCREATABLE("")
     Q_MOC_INCLUDE("UVCStreamMonitor.h")
 
-    Q_PROPERTY(UVCStreamMonitor* monitor READ monitor CONSTANT)
-    Q_PROPERTY(QStringList formats READ formats NOTIFY formatsChanged)
-    Q_PROPERTY(QStringList recordingCodecs READ recordingCodecs CONSTANT)
-    Q_PROPERTY(bool whiteBalanceAdjustable READ whiteBalanceAdjustable NOTIFY controlsChanged)
-    Q_PROPERTY(qreal minimumZoom READ minimumZoom NOTIFY controlsChanged)
-    Q_PROPERTY(qreal maximumZoom READ maximumZoom NOTIFY controlsChanged)
-    Q_PROPERTY(bool exposureAdjustable READ exposureAdjustable NOTIFY controlsChanged)
-    Q_PROPERTY(bool focusAdjustable READ focusAdjustable NOTIFY controlsChanged)
-    Q_PROPERTY(int rotation READ rotation NOTIFY transformChanged)
-    Q_PROPERTY(bool mirrored READ mirrored NOTIFY transformChanged)
+    Q_PROPERTY(UVCStreamMonitor* monitor READ monitor CONSTANT FINAL)
+    Q_PROPERTY(QStringList formats READ formats NOTIFY formatsChanged FINAL)
+    Q_PROPERTY(QStringList recordingCodecs READ recordingCodecs CONSTANT FINAL)
+    Q_PROPERTY(bool whiteBalanceAdjustable READ whiteBalanceAdjustable NOTIFY controlsChanged FINAL)
+    Q_PROPERTY(qreal minimumZoom READ minimumZoom NOTIFY controlsChanged FINAL)
+    Q_PROPERTY(qreal maximumZoom READ maximumZoom NOTIFY controlsChanged FINAL)
+    Q_PROPERTY(bool exposureAdjustable READ exposureAdjustable NOTIFY controlsChanged FINAL)
+    Q_PROPERTY(bool focusAdjustable READ focusAdjustable NOTIFY controlsChanged FINAL)
+    Q_PROPERTY(int rotation READ rotation NOTIFY transformChanged FINAL)
+    Q_PROPERTY(bool mirrored READ mirrored NOTIFY transformChanged FINAL)
 
     friend class UVCCameraControllerTest;
     friend class VideoManagerTest;

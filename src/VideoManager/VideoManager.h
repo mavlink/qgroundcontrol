@@ -34,25 +34,25 @@ class VideoManager : public QObject
     Q_MOC_INCLUDE("VideoStreamController.h")
 
     /// Every source, for what treats them alike: the primary stream, the thermal stream, then the USB camera.
-    Q_PROPERTY(QQmlListProperty<VideoStreamController> sources READ sources CONSTANT)
-    Q_PROPERTY(VideoStreamController* primaryStream READ primaryStream CONSTANT)
-    Q_PROPERTY(VideoStreamController* thermalStream READ thermalStream CONSTANT)
-    Q_PROPERTY(UVCCameraController* uvcCamera READ uvcCamera CONSTANT)
-    Q_PROPERTY(bool autoStreamConfigured READ autoStreamConfigured NOTIFY autoStreamConfiguredChanged)
-    Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged)
-    Q_PROPERTY(bool fullScreen READ fullScreen WRITE setFullScreen NOTIFY fullScreenChanged)
-    Q_PROPERTY(bool hasThermal READ hasThermal NOTIFY hasThermalChanged)
-    Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
-    Q_PROPERTY(bool isStreamSource READ isStreamSource NOTIFY isStreamSourceChanged)
-    Q_PROPERTY(bool isUvc READ isUvc NOTIFY isUvcChanged)
-    Q_PROPERTY(NoVideoReason noVideoReason READ noVideoReason NOTIFY noVideoReasonChanged)
-    Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
-    Q_PROPERTY(double aspectRatio READ aspectRatio NOTIFY aspectRatioChanged)
-    Q_PROPERTY(double thermalAspectRatio READ thermalAspectRatio NOTIFY aspectRatioChanged)
-    Q_PROPERTY(QString uvcVideoSourceID READ uvcVideoSourceID NOTIFY uvcVideoSourceIDChanged)
+    Q_PROPERTY(QQmlListProperty<VideoStreamController> sources READ sources CONSTANT FINAL)
+    Q_PROPERTY(VideoStreamController* primaryStream READ primaryStream CONSTANT FINAL)
+    Q_PROPERTY(VideoStreamController* thermalStream READ thermalStream CONSTANT FINAL)
+    Q_PROPERTY(UVCCameraController* uvcCamera READ uvcCamera CONSTANT FINAL)
+    Q_PROPERTY(bool autoStreamConfigured READ autoStreamConfigured NOTIFY autoStreamConfiguredChanged FINAL)
+    Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged FINAL)
+    Q_PROPERTY(bool fullScreen READ fullScreen WRITE setFullScreen NOTIFY fullScreenChanged FINAL)
+    Q_PROPERTY(bool hasThermal READ hasThermal NOTIFY hasThermalChanged FINAL)
+    Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged FINAL)
+    Q_PROPERTY(bool isStreamSource READ isStreamSource NOTIFY isStreamSourceChanged FINAL)
+    Q_PROPERTY(bool isUvc READ isUvc NOTIFY isUvcChanged FINAL)
+    Q_PROPERTY(NoVideoReason noVideoReason READ noVideoReason NOTIFY noVideoReasonChanged FINAL)
+    Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged FINAL)
+    Q_PROPERTY(double aspectRatio READ aspectRatio NOTIFY aspectRatioChanged FINAL)
+    Q_PROPERTY(double thermalAspectRatio READ thermalAspectRatio NOTIFY aspectRatioChanged FINAL)
+    Q_PROPERTY(QString uvcVideoSourceID READ uvcVideoSourceID NOTIFY uvcVideoSourceIDChanged FINAL)
     /// The telemetry VideoView shows over the primary stream or the USB camera: empty while
     /// VideoSettings::showTelemetryOverlay is off.
-    Q_PROPERTY(QString telemetryOverlayText READ telemetryOverlayText NOTIFY telemetryOverlayTextChanged)
+    Q_PROPERTY(QString telemetryOverlayText READ telemetryOverlayText NOTIFY telemetryOverlayTextChanged FINAL)
 
     friend class VideoManagerInitTest;
     friend class VideoManagerTest;

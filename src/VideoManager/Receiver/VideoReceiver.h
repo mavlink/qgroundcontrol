@@ -31,13 +31,13 @@ class VideoReceiver : public QObject
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
-    Q_PROPERTY(QString name READ name CONSTANT)
-    Q_PROPERTY(State state READ state NOTIFY stateChanged)
-    Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged)
-    Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged)
-    Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
-    Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged)
-    Q_PROPERTY(VideoStreamStats stats READ stats NOTIFY statsChanged)
+    Q_PROPERTY(QString name READ name CONSTANT FINAL)
+    Q_PROPERTY(State state READ state NOTIFY stateChanged FINAL)
+    Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged FINAL)
+    Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged FINAL)
+    Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged FINAL)
+    Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged FINAL)
+    Q_PROPERTY(VideoStreamStats stats READ stats NOTIFY statsChanged FINAL)
 
 public:
     enum class State : uint8_t
