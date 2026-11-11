@@ -7,6 +7,7 @@
 #include "MAVLinkSigning.h"
 #include "MAVLinkSigningKeys.h"
 #include "QGCLoggingCategory.h"
+#include "QGCMAVLink.h"
 #include "SecureMemory.h"
 
 QGC_LOGGING_CATEGORY(SigningControllerLog, "MAVLink.SigningController")
@@ -287,7 +288,7 @@ void SigningController::_handleFsmFrameLocked(const mavlink_message_t& message)
     if (message.msgid == MAVLINK_MSG_ID_STATUSTEXT) {
         mavlink_statustext_t st;
         mavlink_msg_statustext_decode(&message, &st);
-        const QString text = QString::fromLatin1(st.text, qstrnlen(st.text, sizeof(st.text)));
+        const QString text = QGCMAVLink::boundedStringField(st.text);
         const bool errorSeverity = (st.severity <= MAV_SEVERITY_ERROR);
         const bool mentionsSigning = text.contains(QLatin1String("signing"), Qt::CaseInsensitive);
         if (errorSeverity && mentionsSigning) {

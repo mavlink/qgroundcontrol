@@ -1,5 +1,7 @@
 #pragma once
 
+#include <span>
+
 #include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QString>
@@ -70,6 +72,10 @@ public:
     static int                      motorCount                  (MAV_TYPE mavType, uint8_t frameType = 0);
     static uint32_t                 highLatencyFailuresToMavSysStatus(mavlink_high_latency2_t& highLatency2);
     static QString                  compIdToString              (uint8_t compId);
+
+    /// Decodes UTF-8 up to the first NUL or the field boundary, preserving whitespace.
+    static QString boundedStringField(std::span<const char> raw);
+    static QString boundedStringField(std::span<const uint8_t> raw);
 
     enum CalibrationType {
         CalibrationNone,
