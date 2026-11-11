@@ -68,7 +68,7 @@ void Viewer3DTileQuery::_loadMapTiles(int zoomLevel, QPoint tileMinIndex, QPoint
         for (int y = tileMinIndex.y(); y <= tileMaxIndex.y(); y++) {
             _mapToBeLoaded.tileList.append(_tileKey(_mapId, x, y, zoomLevel));
 
-            auto *reply = new Viewer3DTileReply(zoomLevel, x, y, _mapId, _mapType, _networkManager, this);
+            auto* reply = new Viewer3DTileReply(zoomLevel, x, y, _mapId, _networkManager, this);
             connect(reply, &Viewer3DTileReply::tileDone, this, &Viewer3DTileQuery::_tileDone);
             connect(reply, &Viewer3DTileReply::tileGiveUp, this, &Viewer3DTileQuery::_tileGiveUp);
             connect(reply, &Viewer3DTileReply::tileEmpty, this, &Viewer3DTileQuery::_tileEmpty);
@@ -120,10 +120,10 @@ Viewer3DTileQuery::TileStatistics_t Viewer3DTileQuery::_findAndLoadMapTiles(int 
     return output;
 }
 
-void Viewer3DTileQuery::adaptiveMapTilesLoader(const QString &mapType, int mapId, const QGeoCoordinate &coordinateMin, const QGeoCoordinate &coordinateMax)
+void Viewer3DTileQuery::adaptiveMapTilesLoader(int mapId, const QGeoCoordinate& coordinateMin,
+                                               const QGeoCoordinate& coordinateMax)
 {
     _mapId = mapId;
-    _mapType = mapType;
 
     for (_zoomLevel = kMaxZoomLevel; _zoomLevel > 0; _zoomLevel--) {
         if (maxTileCount(_zoomLevel, coordinateMin, coordinateMax) < kMaxTileCounts) {

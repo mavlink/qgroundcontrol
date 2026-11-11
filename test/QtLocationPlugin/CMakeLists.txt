@@ -22,6 +22,7 @@ target_sources(
         QGCTileReplyTest.h
         QGCTileSetTest.cc
         QGCTileSetTest.h
+        TileReplyNetworkMock.h
         UrlFactoryTest.cc
         UrlFactoryTest.h
 )

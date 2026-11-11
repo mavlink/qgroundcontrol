@@ -48,7 +48,7 @@ void Viewer3DTerrainTexture::loadTexture()
     connect(_terrainTileLoader, &Viewer3DTileQuery::loadingMapCompleted, this, &Viewer3DTerrainTexture::_updateTexture, Qt::UniqueConnection);
     connect(_terrainTileLoader, &Viewer3DTileQuery::textureGeometryReady, this, &Viewer3DTerrainTexture::setTextureGeometry, Qt::UniqueConnection);
 
-    _terrainTileLoader->adaptiveMapTilesLoader(_mapType, _mapId, bbMin, bbMax);
+    _terrainTileLoader->adaptiveMapTilesLoader(_mapId, bbMin, bbMax);
 }
 
 std::pair<QGeoCoordinate, QGeoCoordinate> Viewer3DTerrainTexture::_fallbackBoundingBox(const QGeoCoordinate &center)
