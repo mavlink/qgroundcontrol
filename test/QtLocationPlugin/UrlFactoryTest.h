@@ -41,6 +41,8 @@ private slots:
     void _testTerrariumRegistered();
     void _testTerrariumTileURL();
     void _testTerrariumNotUserSelectable();
+    void _testTerrariumAnchorTiles_data();
+    void _testTerrariumAnchorTiles();
     void _testGetTileCountValid();
     void _testGetTileCountInvalidType();
     void _testGetTileCountZoomClamped();

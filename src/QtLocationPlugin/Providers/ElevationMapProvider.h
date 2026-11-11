@@ -70,12 +70,17 @@ public:
 
     bool isUserSelectable() const final { return false; }
 
+    /// At the anchor zoom, the tiles of a region include the anchors beside it that GeoMap fetches for the neighbors
+    /// of the region's tiles of the next zoom. The neighbors of finer tiles need no anchor beyond those.
+    QGCTileSet getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon,
+                            double bottomRightLat) const final;
+
     static constexpr const char* kProviderKey = "Terrarium";
     static constexpr const char* kProviderURL = "https://s3.amazonaws.com/elevation-tiles-prod";
     static constexpr quint32 kAvgElevSize = 45000;
     /// Finest zoom the dataset serves
     static constexpr int kMaxZoom = 15;
-    /// GeoMap fetches the tiles of this zoom around every finer tile it shows
+    /// GeoMap fetches the tiles of this zoom over every finer tile it shows and over the neighbors of that tile
     static constexpr int kAnchorZoom = 10;
 
 private:

@@ -4,31 +4,36 @@
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
-#include <QtTest/QSignalSpy>
 
 #include "ElevationMapProvider.h"
 #include "Fact.h"
 #include "FlightMapSettings.h"
 #include "FlyViewSettings.h"
+#include "HeightField.h"
 #include "PlanViewSettings.h"
 #include "QGCCachedTileSet.h"
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
 #include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
-#include "QGCTileReply.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
+#include "TerrariumTileFetcher.h"
+#include "TileMath.h"
 #include "TileReplyNetworkMock.h"
 #include "UnitTestTileGenerator.h"
 
 namespace {
 
 // A region within one tile of the elevation provider and of every map zoom up to 17, whatever its longitude below.
-// A set of it has no more tiles than a set downloads in parallel, so it asks for all of them at once.
+// Its Terrarium tiles are one of every zoom, and at the anchor zoom the three anchors next to that one as well.
 constexpr double kOfflineRegionTopLat = 47.3906;
 constexpr double kOfflineRegionBottomLat = 47.3902;
 constexpr double kOfflineRegionLonSpan = 0.0004;
+constexpr quint64 kOfflineRegionNeighborAnchorCount = 3;
+
+// A set asks for this many tiles at a time. It asks for no more while the network stand-in below holds its replies.
+constexpr quint64 kTilesRequestedAtOnce = 6;
 
 QGCTileSet offlineRegionTiles(const QString& type, double leftLon, int minZoom, int maxZoom)
 {
@@ -148,7 +153,9 @@ void QGCMapEngineManagerTest::_testTerrainSet()
     const QGCTileSet elevationTiles = fetchElevation ? offlineRegionTiles(elevationType, kLeftLon, 1, 1) : QGCTileSet();
     const QGCTileSet terrainTiles =
         terrainExpected ? offlineRegionTiles(terrainType, kLeftLon, terrainMinZoom, terrainMaxZoom) : QGCTileSet();
-    QCOMPARE(terrainTiles.tileCount, terrainExpected ? quint64(terrainMaxZoom - terrainMinZoom + 1) : quint64(0));
+    QCOMPARE(terrainTiles.tileCount,
+             terrainExpected ? quint64(terrainMaxZoom - terrainMinZoom + 1) + kOfflineRegionNeighborAnchorCount
+                             : quint64(0));
 
     OfflineSetsFixture sets;
     QVERIFY(sets.manager.setProperty("fetchElevation", fetchElevation));
@@ -186,9 +193,10 @@ void QGCMapEngineManagerTest::_testTerrainSet()
         QCOMPARE(terrainSet->totalTileCount(), static_cast<quint32>(terrainTiles.tileCount));
     }
 
+    const auto requestedAtOnce = [](const QGCTileSet& tiles) { return qMin(tiles.tileCount, kTilesRequestedAtOnce); };
     QTRY_COMPARE_WITH_TIMEOUT(
         sets.networkManager.requestCount,
-        static_cast<int>(imageTiles.tileCount + elevationTiles.tileCount + terrainTiles.tileCount),
+        static_cast<int>(requestedAtOnce(imageTiles) + requestedAtOnce(elevationTiles) + requestedAtOnce(terrainTiles)),
         TestTimeout::mediumMs());
 }
 
@@ -200,20 +208,22 @@ void QGCMapEngineManagerTest::_testTerrainSetServedFromCache()
 
     getQGCMapEngine()->ensureInitialized();
 
-    // A region of its own, as its Terrarium tiles end up in the cache
+    // A region of its own, as its Terrarium tiles end up in the cache. The zoom leaves the terrain set with as many
+    // tiles as a set asks for at a time.
     constexpr double kLeftLon = 9.4989;
-    constexpr int kMinZoom = 12;
-    constexpr int kMaxZoom = 13;
+    constexpr int kZoom = 12;
     constexpr int kTerrainMinZoom = TerrariumElevationProvider::kAnchorZoom;
-    constexpr int kTerrainTileCount = kMaxZoom - kTerrainMinZoom + 1;
-    constexpr int kRequestCount = (kMaxZoom - kMinZoom + 1) + 1 + kTerrainTileCount;
+    constexpr int kTerrainTileCount = (kZoom - kTerrainMinZoom + 1) + kOfflineRegionNeighborAnchorCount;
+    constexpr int kRequestCount = 1 + 1 + kTerrainTileCount;
     const QString mapType = QGCMapEngineManager::mapList().constFirst();
     const QString terrainType = QString::fromLatin1(TerrariumElevationProvider::kProviderKey);
+    QCOMPARE(offlineRegionTiles(terrainType, kLeftLon, kTerrainMinZoom, kZoom).tileCount, quint64(kTerrainTileCount));
+    QCOMPARE_LE(quint64(kTerrainTileCount), kTilesRequestedAtOnce);
 
     OfflineSetsFixture sets;
     sets.networkManager.body = UnitTestTileGenerator::syntheticTerrariumTileData(0, 0, 0);
     sets.manager.updateForCurrentView(kLeftLon, kOfflineRegionTopLat, kLeftLon + kOfflineRegionLonSpan,
-                                      kOfflineRegionBottomLat, kMinZoom, kMaxZoom, mapType);
+                                      kOfflineRegionBottomLat, kZoom, kZoom, mapType);
     const QString name = QStringLiteral("terrain download test");
     sets.manager.startDownload(name, mapType);
     QTRY_COMPARE_WITH_TIMEOUT(sets.networkManager.requestCount, kRequestCount, TestTimeout::mediumMs());
@@ -231,19 +241,19 @@ void QGCMapEngineManagerTest::_testTerrainSetServedFromCache()
                               TestTimeout::mediumMs());
     QCOMPARE(terrainSet->errorCount(), 0U);
 
-    // GeoMap asks for these tiles as below. A tile the cache lacks would be asked of the network, which holds its
+    // GeoMap fetches the tiles of the region, and with a tile finer than the anchor zoom the anchors of that tile and
+    // of its neighbors, which it waits for. A tile the cache lacks would be asked of the network, which holds its
     // replies, as the forced misses keep the tile generator of the tests from answering for the cache.
     UnitTestTileGenerator::setForcedMissCount(kTerrainTileCount);
     const auto resetForcedMisses = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
-    const int terrainMapId = UrlFactory::getQtMapIdFromProviderType(terrainType);
-    for (int zoom = kTerrainMinZoom; zoom <= kMaxZoom; zoom++) {
-        QGCTileReply reply(&sets.networkManager, terrainMapId, UrlFactory::long2tileX(terrainType, kLeftLon, zoom),
-                           UrlFactory::lat2tileY(terrainType, kOfflineRegionTopLat, zoom), zoom);
-        QSignalSpy finishedSpy(&reply, &QGCTileReply::finished);
-        QVERIFY(reply.start());
-        QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::mediumMs());
-        QCOMPARE(reply.error(), QGCTileReply::Error::NoError);
-        QVERIFY(reply.isCached());
+    HeightField heightField;
+    TerrariumTileFetcher fetcher(nullptr, &sets.networkManager);
+    fetcher.setHeightField(&heightField);
+    for (int zoom = kTerrainMinZoom; zoom <= kZoom; zoom++) {
+        const TileMath::TileKey key{UrlFactory::long2tileX(terrainType, kLeftLon, zoom),
+                                    UrlFactory::lat2tileY(terrainType, kOfflineRegionTopLat, zoom), zoom};
+        QVERIFY(fetcher.requestTile(key));
+        QTRY_VERIFY_WITH_TIMEOUT(heightField.hasTile(key), TestTimeout::mediumMs());
     }
     QCOMPARE(sets.networkManager.requestCount, kRequestCount);
 }

@@ -1,5 +1,11 @@
 #include "UrlFactoryTest.h"
 
+#include <cmath>
+#include <numbers>
+
+#include <QtCore/QRect>
+
+#include "ElevationMapProvider.h"
 #include "MapProvider.h"
 #include "QGCMapUrlEngine.h"
 #include "QGCTileSet.h"
@@ -304,6 +310,54 @@ void UrlFactoryTest::_testTerrariumNotUserSelectable()
     auto copernicus = UrlFactory::getMapProviderFromProviderType(kCopernicus);
     QVERIFY(copernicus != nullptr);
     QVERIFY(copernicus->isUserSelectable());
+}
+
+void UrlFactoryTest::_testTerrariumAnchorTiles_data()
+{
+    // A region given by its tiles of the zoom below the anchor zoom, where a tile is half an anchor tile wide
+    QTest::addColumn<QRect>("regionTiles");
+    QTest::addColumn<QRect>("anchorTiles");
+
+    // GeoMap fetches the anchor of a tile and of its neighbors: an anchor beside the region is needed where the
+    // region ends on an anchor boundary
+    QTest::newRow("no edge on an anchor boundary")
+        << QRect(QPoint(1067, 729), QPoint(1068, 730)) << QRect(QPoint(533, 364), QPoint(534, 365));
+    QTest::newRow("every edge on an anchor boundary")
+        << QRect(QPoint(1066, 728), QPoint(1069, 731)) << QRect(QPoint(532, 363), QPoint(535, 366));
+    QTest::newRow("west and south edge on an anchor boundary")
+        << QRect(QPoint(1072, 717), QPoint(1072, 717)) << QRect(QPoint(535, 358), QPoint(536, 359));
+    QTest::newRow("north west corner of the world")
+        << QRect(QPoint(0, 0), QPoint(0, 0)) << QRect(QPoint(0, 0), QPoint(0, 0));
+    QTest::newRow("south east corner of the world")
+        << QRect(QPoint(2047, 2047), QPoint(2047, 2047)) << QRect(QPoint(1023, 1023), QPoint(1023, 1023));
+}
+
+void UrlFactoryTest::_testTerrariumAnchorTiles()
+{
+    QFETCH(QRect, regionTiles);
+    QFETCH(QRect, anchorTiles);
+
+    constexpr int kAnchorZoom = TerrariumElevationProvider::kAnchorZoom;
+    constexpr int kRegionZoom = kAnchorZoom + 1;
+    const double tileCount = std::pow(2.0, kRegionZoom);
+    const auto tileCenterLon = [tileCount](int x) { return ((x + 0.5) / tileCount * 360.0) - 180.0; };
+    const auto tileCenterLat = [tileCount](int y) {
+        return std::atan(std::sinh(std::numbers::pi * (1.0 - (2.0 * (y + 0.5) / tileCount)))) * 180.0 /
+               std::numbers::pi;
+    };
+    const double leftLon = tileCenterLon(regionTiles.left());
+    const double topLat = tileCenterLat(regionTiles.top());
+    const double rightLon = tileCenterLon(regionTiles.right());
+    const double bottomLat = tileCenterLat(regionTiles.bottom());
+
+    const QGCTileSet region = UrlFactory::getTileCount(kRegionZoom, leftLon, topLat, rightLon, bottomLat, kTerrarium);
+    QCOMPARE(QRect(QPoint(region.tileX0, region.tileY0), QPoint(region.tileX1, region.tileY1)), regionTiles);
+
+    const QGCTileSet anchors = UrlFactory::getTileCount(kAnchorZoom, leftLon, topLat, rightLon, bottomLat, kTerrarium);
+    QCOMPARE(QRect(QPoint(anchors.tileX0, anchors.tileY0), QPoint(anchors.tileX1, anchors.tileY1)), anchorTiles);
+    const quint64 anchorCount = static_cast<quint64>(anchorTiles.width()) * static_cast<quint64>(anchorTiles.height());
+    QCOMPARE(anchors.tileCount, anchorCount);
+    QCOMPARE(anchors.tileSize, anchorCount * TerrariumElevationProvider::kAvgElevSize);
 }
 
 // --- getTileCount ---
