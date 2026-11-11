@@ -205,7 +205,7 @@ Item {
                     anchors.centerIn:       labelControl
 
                     color:                  "black"
-                    text:                   QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_radius).toFixed(0) +
+                    text:                   QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnits(_radius).toFixed(QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsDecimalPlaces()) +
                                             " " + QGroundControl.unitsConversion.appSettingsHorizontalDistanceUnitsString
                     verticalAlignment:      Text.AlignVCenter
                     visible:                labelControl.visible
