@@ -17,8 +17,10 @@ QGC_LOGGING_CATEGORY(NTRIPManagerLog, "GPS.NTRIPManager")
 
 namespace {
 
-bool isRetryable(NTRIPError error)
+/// @a streamServed: the running connection has delivered corrections since it was started.
+bool isRetryable(NTRIPError error, bool streamServed)
 {
+    // No default, so a new code is reported (-Wswitch) until it is classified.
     switch (error) {
         case NTRIPError::AuthFailed:
         case NTRIPError::InvalidConfig:
@@ -26,9 +28,22 @@ bool isRetryable(NTRIPError error)
         // TLS failures recur the same way until the user changes the TLS settings.
         case NTRIPError::SslError:
             return false;
-        default:
+        // A caster answers with its source table for a mountpoint it does not have. Before any corrections that is a
+        // wrong mountpoint, and casters count repeated requests for a missing one towards a ban. After them, the
+        // mountpoint has only gone offline.
+        case NTRIPError::InvalidMountpoint:
+            return streamServed;
+        case NTRIPError::ConnectionTimeout:
+        case NTRIPError::DataWatchdog:
+        case NTRIPError::SocketError:
+        case NTRIPError::ServerDisconnected:
+        case NTRIPError::InvalidHttpResponse:
+        case NTRIPError::HttpError:
+        case NTRIPError::HeaderTooLarge:
+        case NTRIPError::Unknown:
             return true;
     }
+    return true;
 }
 
 QString correctionSourceInstance(const NTRIPConnectionConfig& connection)
@@ -212,6 +227,8 @@ void NTRIPManager::_start()
     _settingsDebounceTask.cancel();
     _cancelReconnect();
     _reconnectBackoff.reset();
+    // Restarting the connection that served corrections, as after a filter change, keeps what it showed.
+    _streamServed = _streamServed && _configuration.connection == _running.connection;
     _dispatch(Event::StartRequested);
     _publish();
 }
@@ -522,7 +539,7 @@ void NTRIPManager::_onTransportError(const NTRIPFailure& failure)
     qCWarning(NTRIPManagerLog) << "NTRIP error:" << code << detail;
     _lastFailureDetail = detail;
 
-    if (_isEnabled() && isRetryable(code)) {
+    if (_isEnabled() && isRetryable(code, _streamServed)) {
         const auto backoffMs = _reconnectBackoff.peek(failure.retryAfter).count();
         qCDebug(NTRIPManagerLog) << "NTRIP reconnecting in" << backoffMs << "ms (attempt"
                                  << (_reconnectBackoff.attempts() + 1) << ")";
@@ -560,6 +577,7 @@ void NTRIPManager::_onCorrectionFrame(const RTCMDecodedFrame& frame)
 
     // Only corrections show the caster serves this stream; one that accepts and then drops must keep backing off.
     _reconnectBackoff.reset();
+    _streamServed = true;
 }
 
 void NTRIPManager::_applyConfiguration()
@@ -580,6 +598,7 @@ void NTRIPManager::_applyConfiguration()
         _start();
     } else if (newConfig.connection != _running.connection) {
         qCDebug(NTRIPManagerLog) << "NTRIP transport-affecting setting changed, reconnecting";
+        _streamServed = false;
         _dispatch(Event::HotReconfigure);
     } else {
         if (newConfig.filter != _running.filter && _transport) {

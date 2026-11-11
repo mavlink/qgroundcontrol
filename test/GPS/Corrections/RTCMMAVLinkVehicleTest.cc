@@ -28,7 +28,7 @@ void RTCMMAVLinkVehicleTest::_admissionFollowsLinkLifetime()
 
     const GPSRTCMPacket packet{0, QByteArray(RTCMMAVLinkPacket::kFragmentLen, 'R')};
     QVERIFY(destinations.first()(packet));
-    expectLogMessage("GPS.Corrections.RTCMMavlink", QtWarningMsg,
+    expectLogMessage("GPS.Corrections.RTCMMAVLink", QtWarningMsg,
                      QRegularExpression(QStringLiteral("RTCM packet exceeds MAVLink payload limit")));
     QVERIFY(!destinations.first()({0, packet.data + 'R'}));
     verifyExpectedLogMessage();

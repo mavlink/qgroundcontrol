@@ -584,6 +584,52 @@ void NTRIPManagerTest::_retryPolicy()
     QVERIFY(manager.statusMessage().contains(QStringLiteral("1s")));
 }
 
+void NTRIPManagerTest::_sourceTableRetriedOnlyAfterCorrections()
+{
+    const QString sourceTable = QStringLiteral("source table");
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    auto* transport = injectMockTransport(manager, true);
+    initialize(manager);
+
+    // Before any corrections the mountpoint is wrong, and asking again only counts against the client at the caster.
+    _fail(transport, sourceTable, NTRIPError::InvalidMountpoint);
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
+    QCOMPARE(manager.statusMessage(), sourceTable);
+
+    // A mountpoint that has served corrections has only gone offline.
+    transport = injectMockTransport(manager, true);
+    manager.retryNTRIP();
+    transport->simulateRtcmData(GPSTest::rtcmMessage(1005), 1005, scheduler.nowMs());
+    deliverQueuedCalls();
+    _fail(transport, sourceTable, NTRIPError::InvalidMountpoint);
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting);
+    transport = injectMockTransport(manager, true);
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
+    QCOMPARE(transport->startCount, 1);
+    _fail(transport, sourceTable, NTRIPError::InvalidMountpoint);
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting);
+
+    // A setting that keeps the mountpoint restarts the connection without forgetting that.
+    auto changed = manager.configuration();
+    changed.filter.whitelist = QStringLiteral("1005");
+    transport = injectMockTransport(manager, true);
+    manager.setConfiguration(changed);
+    QVERIFY(scheduler.advanceBy(SettingsDebounce));
+    QCOMPARE(transport->startCount, 1);
+    _fail(transport, sourceTable, NTRIPError::InvalidMountpoint);
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting);
+
+    // Another mountpoint has served nothing yet.
+    changed.connection.mountpoint = QStringLiteral("OTHER");
+    transport = injectMockTransport(manager, true);
+    manager.setConfiguration(changed);
+    QVERIFY(scheduler.advanceBy(SettingsDebounce));
+    QCOMPARE(transport->startCount, 1);
+    _fail(transport, sourceTable, NTRIPError::InvalidMountpoint);
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
+}
+
 void NTRIPManagerTest::_httpRetryAfterReachesManager()
 {
     // Compressed error bodies and authentication failures are NTRIPHttpCodecTest's and _retryPolicy's.

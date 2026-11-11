@@ -192,16 +192,22 @@ void GPSCorrectionsPanelTest::_ntripConnectionActionIsIdempotent()
 
 void GPSCorrectionsPanelTest::_ntripMountpointLockedWhileActive()
 {
+    // The application's setting would start its NTRIP connection.
+    Fact enabled(0, QStringLiteral("enabled"), FactMetaData::valueTypeBool);
+    enabled.setRawValue(true);
     GPSTest::QmlEngine engine;
     std::unique_ptr<QObject> panel =
         engine.create(QUrl(QStringLiteral("qrc:/qml/QGroundControl/GPS/NTRIPMountpointBrowser.qml")),
-                      {{QStringLiteral("_isActive"), true}});
+                      {{QStringLiteral("enabledFact"), QVariant::fromValue(&enabled)}});
     QVERIFY2(panel, qPrintable(engine.lastError()));
     auto* list = panel->findChild<QObject*>(QStringLiteral("ntripMountpointList"));
-    QVERIFY(list);
+    auto* field = panel->findChild<QObject*>(QStringLiteral("ntripMountpointField"));
+    QVERIFY(list && field);
     QVERIFY(!list->property("enabled").toBool());
-    QVERIFY(panel->setProperty("_isActive", false));
+    QVERIFY(!field->property("enabled").toBool());
+    enabled.setRawValue(false);
     QVERIFY(list->property("enabled").toBool());
+    QVERIFY(field->property("enabled").toBool());
 }
 
 void GPSCorrectionsPanelTest::_ntripLongStatusWrapsWithinPanel()

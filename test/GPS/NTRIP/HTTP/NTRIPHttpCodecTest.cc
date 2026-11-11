@@ -242,7 +242,8 @@ void NTRIPHttpCodecTest::_framing_data()
     QTest::newRow("switching-protocol") << QByteArray("HTTP/1.1 101 Switching Protocols\r\n\r\n") << QByteArray()
                                         << false << invalid;
     QTest::newRow("too-many-informationals")
-        << QByteArray("HTTP/1.1 100 Continue\r\n\r\n").repeated(5) << QByteArray() << false << invalid;
+        << QByteArray("HTTP/1.1 100 Continue\r\n\r\n").repeated(NTRIPHttpDecoder::MAX_INFORMATIONAL_RESPONSES + 1)
+        << QByteArray() << false << invalid;
     QTest::newRow("http10-chunked") << QByteArray("HTTP/1.0 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n")
                                     << QByteArray() << false << invalid;
     QTest::newRow("line-limit") << ok + "X: " + QByteArray(NTRIPHttpDecoder::MAX_LINE_BYTES - 5, 'x') + "\r\n\r\n"
@@ -256,10 +257,9 @@ void NTRIPHttpCodecTest::_framing_data()
                                   << QByteArray() << true << -1;
     QTest::newRow("oversized-header") << nearLimit + "X: " + QByteArray(remaining + 1, 'x') + "\r\n\r\n"
                                       << QByteArray() << false << oversized;
-    QTest::newRow("header-count-limit") << ok + QByteArray("X: y\r\n").repeated(128) + "\r\n"
-                                        << QByteArray() << true << -1;
-    QTest::newRow("too-many-headers") << ok + QByteArray("X: y\r\n").repeated(129) + "\r\n"
-                                      << QByteArray() << false << oversized;
+    const QByteArray maxHeaders = ok + QByteArray("X: y\r\n").repeated(NTRIPHttpDecoder::MAX_HEADER_COUNT);
+    QTest::newRow("header-count-limit") << maxHeaders + "\r\n" << QByteArray() << true << -1;
+    QTest::newRow("too-many-headers") << maxHeaders + "X: y\r\n\r\n" << QByteArray() << false << oversized;
 }
 
 void NTRIPHttpCodecTest::_framing()
@@ -326,6 +326,8 @@ void NTRIPHttpCodecTest::_errorDiagnostics_data()
     QTest::newRow("binary-error-body") << denied + "\r\n" + GPSTest::rtcmMessage(1005) << rejected << QString() << 0;
     QTest::newRow("control-characters") << denied + "\r\nAccess\x01 denied\nRetry later" << rejected
                                         << QStringLiteral("Access denied Retry later") << 0;
+    const QByteArray markupReason = "HTTP/1.1 503 <b>Busy</b>\tretry  later\r\nContent-Length: 0\r\n\r\n";
+    QTest::newRow("markup-in-reason") << markupReason << http << QStringLiteral("HTTP 503: Busy retry later") << 0;
     QTest::newRow("compressed-authentication")
         << QByteArray("HTTP/1.1 401 Unauthorized\r\nContent-Encoding: gzip\r\nContent-Length: 20\r\n\r\n") +
                QByteArray::fromHex("1f8b080000000000000303000000000000000000")
@@ -374,10 +376,12 @@ void NTRIPHttpCodecTest::_errorDiagnostics()
     }
 }
 
-void NTRIPHttpCodecTest::_errorBodyBounds()
+void NTRIPHttpCodecTest::_errorDetailBounds()
 {
     NTRIPHttpDecoder decoder;
-    auto result = decoder.feed("HTTP/1.1 403 Forbidden\r\nContent-Length: 1000000\r\n\r\n", {});
+    // The reason phrase and the body are both caster text, so each is capped.
+    const QByteArray reason(NTRIPHttpDecoder::MAX_ERROR_PREVIEW_CHARS + 1, 'r');
+    auto result = decoder.feed("HTTP/1.1 403 " + reason + "\r\nContent-Length: 1000000\r\n\r\n", {});
     QVERIFY(decoder.awaitingErrorBody());
     QVERIFY(!result.failure);
     result = decoder.feed(QByteArray(NTRIPHttpDecoder::MAX_ERROR_BODY_BYTES - 1, 'x'), {});
@@ -387,8 +391,9 @@ void NTRIPHttpCodecTest::_errorBodyBounds()
     QVERIFY(result.failure);
     QVERIFY(!decoder.awaitingErrorBody());
     QVERIFY(result.body.isEmpty());
-    QCOMPARE(result.failure->detail, QStringLiteral("HTTP 403: Forbidden \u2014 ") +
-                                         QString(NTRIPHttpDecoder::MAX_ERROR_PREVIEW_CHARS, QLatin1Char('x')));
+    QCOMPARE(result.failure->detail,
+             QStringLiteral("HTTP 403: ") + QString(NTRIPHttpDecoder::MAX_ERROR_PREVIEW_CHARS, QLatin1Char('r')) +
+                 QStringLiteral(" \u2014 ") + QString(NTRIPHttpDecoder::MAX_ERROR_PREVIEW_CHARS, QLatin1Char('x')));
     QVERIFY(!decoder.feed("must not be appended", {}).failure);
 }
 

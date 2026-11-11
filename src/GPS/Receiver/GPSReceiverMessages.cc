@@ -35,7 +35,7 @@ QString reconnectingMessage(GPSConnectionError error, const QString& detail)
 namespace GPSReceiverMessages {
 
 QString sessionEnded(GPSReceiverSessionOutcome outcome, GPSConnectionError error, const QString& detail,
-                     bool portRemoved)
+                     GPSReceiverSessionEnd end)
 {
     switch (outcome) {
         case GPSReceiverSessionOutcome::Unplugged:
@@ -48,7 +48,7 @@ QString sessionEnded(GPSReceiverSessionOutcome outcome, GPSConnectionError error
         case GPSReceiverSessionOutcome::None:
             break;
     }
-    if (portRemoved) {
+    if (end == GPSReceiverSessionEnd::Unplugged) {
         return GPSReceiver::tr("Receiver unplugged. Select a device and reconnect.");
     }
     switch (error) {
@@ -112,9 +112,15 @@ QString inputProblem(GPSInputProblem problem, std::optional<GPSType> detected, c
                     return GPSReceiver::tr(
                         "Receiving Septentrio SBF data without position messages. Enable PVTGeodetic or NMEA "
                         "output.");
-                default:
+                case GPSType::trimble:
+                case GPSType::femto:
+                case GPSType::unicore:
+                case GPSType::quectel:
+                case GPSType::passive:
+                case GPSType::automatic:
                     return GPSReceiver::tr("Receiving NMEA data without position messages. Enable GGA output.");
             }
+            break;
         case GPSInputProblem::CorrectionsOnly:
             // Forwarding them is all a corrections-only receiver needs to do.
             return forwardingCorrections ? QString()
@@ -180,10 +186,10 @@ QString receiverStatus(const ReceiverStatus& status)
         return status.forwardingCorrections ? GPSReceiver::tr("Passive receiver connected; forwarding its RTCM")
                                             : GPSReceiver::tr("Passive receiver connected; position only");
     }
-    if (status.baseMode == static_cast<int>(Mode::BaseReceiverAveraging)) {
+    if (status.baseMode == Mode::BaseReceiverAveraging) {
         return GPSReceiver::tr("Receiver-managed averaging — no accuracy guarantee");
     }
-    if (status.baseMode == static_cast<int>(Mode::BaseFixed)) {
+    if (status.baseMode == Mode::BaseFixed) {
         return GPSReceiver::tr("Fixed position");
     }
     return status.surveyActive ? GPSReceiver::tr("Survey-In active") : GPSReceiver::tr("Receiver connected");

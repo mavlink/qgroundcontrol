@@ -278,9 +278,17 @@ void SerialGPSTransportTest::_openRetriesUntilTimeout()
 #endif
 }
 
+void SerialGPSTransportTest::_openRetriesUntilReleased_data()
+{
+    QTest::addColumn<bool>("unbounded");
+    QTest::newRow("within-timeout") << false;
+    QTest::newRow("without-timeout") << true;
+}
+
 void SerialGPSTransportTest::_openRetriesUntilReleased()
 {
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+    QFETCH(bool, unbounded);
     if (::geteuid() == 0) {
         QSKIP("Root opens exclusive devices");
     }
@@ -298,8 +306,20 @@ void SerialGPSTransportTest::_openRetriesUntilReleased()
         ::close(holder);
         released = true;
     });
-    SerialGPSTransport transport(terminal.slavePath(), GPSCancelToken{}, TestTimeout::mediumDuration());
-    QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
+    GPSCancelSource stop;
+    SerialGPSTransport transport(terminal.slavePath(), stop.token(),
+                                 unbounded ? std::chrono::milliseconds::max() : TestTimeout::mediumDuration());
+    // Only a stop ends an open without a timeout, so a watchdog requests one if the release is never dispatched.
+    std::binary_semaphore finished{0};
+    std::thread watchdog([&] {
+        if (!finished.try_acquire_for(TestTimeout::mediumDuration())) {
+            stop.cancel();
+        }
+    });
+    const GPSOpenStatus status = transport.open().status;
+    finished.release();
+    watchdog.join();
+    QCOMPARE(status, GPSOpenStatus::Opened);
     QVERIFY(released);
     QVERIFY(!transport.fatalError());
 #else

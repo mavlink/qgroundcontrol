@@ -35,6 +35,7 @@ QGCGroupBox {
         required property Fact fact
         label: fact.shortDescription
         labelText: fact.enumOrValueString
+        labelTextFormat: Text.PlainText
     }
 
     /// A label and a value reported from outside, such as a long endpoint, which wraps instead of widening the panel.
@@ -44,7 +45,10 @@ QGCGroupBox {
 
         spacing: ScreenTools.defaultFontPixelWidth * 2
 
-        QGCLabel { id: rowLabel }
+        QGCLabel {
+            id: rowLabel
+            textFormat: Text.PlainText
+        }
         GPSNoteLabel {
             id: rowValue
             horizontalAlignment: Text.AlignRight

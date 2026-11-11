@@ -62,6 +62,7 @@ QGCListView {
                     QGCLabel {
                         visible:    entry.selected
                         text:       qsTr("(selected)")
+                        textFormat: Text.PlainText
                         font.pointSize: ScreenTools.smallFontPointSize
                         color:      qgcPal.accentText
                     }

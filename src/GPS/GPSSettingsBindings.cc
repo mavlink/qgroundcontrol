@@ -76,7 +76,14 @@ NTRIPConfig ntripFromSettings(NTRIPSettings* settings, FactReader& read)
 GPSBaseStationConfig baseStationFromSettings(RTKSettings* settings, FactReader& read)
 {
     using Mode = BaseModeDefinition::Mode;
-    const auto mode = static_cast<Mode>(read(settings->useFixedBasePosition()).toInt());
+    Mode mode = Mode::BaseSurveyIn;
+    const int persistedMode = read(settings->useFixedBasePosition()).toInt();
+    if (persistedMode >= static_cast<int>(Mode::BaseSurveyIn) &&
+        persistedMode <= static_cast<int>(Mode::BaseReceiverAveraging)) {
+        mode = static_cast<Mode>(persistedMode);
+    } else {
+        qCWarning(GPSSettingsBindingsLog) << "Invalid base mode; using survey-in";
+    }
     const GPSBaseStationConfig::Fixed fixed{
         .position = {.latitudeDegrees = read(settings->fixedBasePositionLatitude()).toDouble(),
                      .longitudeDegrees = read(settings->fixedBasePositionLongitude()).toDouble(),
@@ -97,10 +104,6 @@ GPSBaseStationConfig baseStationFromSettings(RTKSettings* settings, FactReader& 
             base.mode = averaging;
             break;
         case Mode::BaseSurveyIn:
-            base.mode = surveyIn;
-            break;
-        default:
-            qCWarning(GPSSettingsBindingsLog) << "Invalid base mode; using survey-in";
             base.mode = surveyIn;
             break;
     }

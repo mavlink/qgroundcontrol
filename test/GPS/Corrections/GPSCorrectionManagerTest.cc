@@ -334,6 +334,40 @@ void GPSCorrectionManagerTest::_udpOutputForwardsSelectedStream()
     QCOMPARE(receive(), marker);
 }
 
+void GPSCorrectionManagerTest::_udpOutputReportsSendFailure()
+{
+    QUdpSocket destination;
+    QVERIFY(destination.bind(QHostAddress::LocalHost, 0));
+    const quint16 port = destination.localPort();
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler);
+    corrections.setConfiguration(
+        {.udpInput = {}, .udpOutput = {.enabled = true, .address = QStringLiteral("127.0.0.1"), .port = port}});
+    QVERIFY(corrections.udpOutputError().isEmpty());
+    QSignalSpy changes(&corrections, &GPSCorrectionManager::udpOutputChanged);
+    const auto source = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
+
+    // No UDP datagram carries this much, so the socket refuses to send it.
+    const QByteArray oversized(70000, '\0');
+    expectLogMessage("Utilities.UdpForwarder", QtWarningMsg, QRegularExpression(QStringLiteral("UDP forward failed")));
+    source->submit(oversized, scheduler.nowMs());
+    verifyExpectedLogMessage();
+    // A repeated failure keeps its reason without warning or notifying again.
+    source->submit(oversized, scheduler.nowMs());
+    const QString reason = udpForwarding(corrections)->errorString();
+    QVERIFY(!reason.isEmpty());
+    const QString error = corrections.udpOutputError();
+    QVERIFY2(error.contains(QString::number(port)) && error.endsWith(reason), qPrintable(error));
+    QCOMPARE(changes.size(), 1);
+
+    const QByteArray frame = GPSTest::rtcmMessage(1005, 20);
+    source->submit(frame, scheduler.nowMs());
+    QVERIFY(corrections.udpOutputError().isEmpty());
+    QCOMPARE(changes.size(), 2);
+    QVERIFY(destination.waitForReadyRead(TestTimeout::mediumMs()));
+    QCOMPARE(destination.receiveDatagram().data(), frame);
+}
+
 void GPSCorrectionManagerTest::_udpOutputSkipsOwnInput()
 {
     TestFixtures::SettingsFixture saved;
@@ -396,6 +430,8 @@ void GPSCorrectionManagerTest::_udpOutputSkipsHostTargets_data()
     QTest::newRow("unspecified-ipv6") << QStringLiteral("::");
     QTest::newRow("multicast-ipv4") << QStringLiteral("239.255.0.1");
     QTest::newRow("multicast-ipv6") << QStringLiteral("ff02::1");
+    // A numeric zone ID looks like a place marker of the error message.
+    QTest::newRow("zoned-loopback") << QStringLiteral("::1%1");
 }
 
 void GPSCorrectionManagerTest::_udpOutputSkipsHostTargets()
@@ -416,7 +452,8 @@ void GPSCorrectionManagerTest::_udpOutputSkipsHostTargets()
     configureUdpOutput(saved, settings, target, port);
     verifyExpectedLogMessage();
     QVERIFY(!udpForwarding(corrections)->isEnabled());
-    QVERIFY(!corrections.udpOutputError().isEmpty());
+    const QString error = corrections.udpOutputError();
+    QVERIFY2(error.contains(target) && error.contains(QString::number(port)), qPrintable(error));
 }
 
 void GPSCorrectionManagerTest::_udpOutputEndpointChanges_data()

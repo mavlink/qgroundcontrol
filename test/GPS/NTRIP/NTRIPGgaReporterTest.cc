@@ -22,7 +22,7 @@ namespace {
 
 using Source = NTRIPGgaReporter::PositionSource;
 
-constexpr char kGgaProviderLog[] = "GPS.NTRIPGgaProvider";
+constexpr char kGgaReporterLog[] = "GPS.NTRIPGgaReporter";
 
 }  // namespace
 
@@ -156,7 +156,7 @@ void NTRIPGgaReporterTest::_ggaSourceSelection()
 
 void NTRIPGgaReporterTest::_ggaSelectionDiagnostics()
 {
-    const TestFixtures::LoggingCategoryFixture logging(kGgaProviderLog);
+    const TestFixtures::LoggingCategoryFixture logging(kGgaReporterLog);
     ManualScheduler scheduler;
     NTRIPGgaReporter provider(nullptr, &scheduler);
     MockNTRIPTransport transport;
@@ -175,72 +175,72 @@ void NTRIPGgaReporterTest::_ggaSelectionDiagnostics()
 
     provider.configure({Source::Auto, interval});
     QStringList expected{QStringLiteral("GGA source selection: requested=Auto no eligible source")};
-    expectLogMessage(kGgaProviderLog, QtDebugMsg, exactMessage(expected.last()));
+    expectLogMessage(kGgaReporterLog, QtDebugMsg, exactMessage(expected.last()));
     provider.start(&transport);
     verifyExpectedLogMessage();
     sendFastRetry();
-    QCOMPARE(debugMessages(kGgaProviderLog), expected);
+    QCOMPARE(debugMessages(kGgaReporterLog), expected);
     QVERIFY(transport.sentNmea.isEmpty());
 
     gcsAvailable = true;
     expected.append(QStringLiteral("GGA source selection: requested=Auto provider=GCSPosition fallback=yes"));
-    expectLogMessage(kGgaProviderLog, QtDebugMsg, exactMessage(expected.last()));
+    expectLogMessage(kGgaReporterLog, QtDebugMsg, exactMessage(expected.last()));
     sendFastRetry();
     verifyExpectedLogMessage();
-    QCOMPARE(debugMessages(kGgaProviderLog), expected);
+    QCOMPARE(debugMessages(kGgaReporterLog), expected);
     QCOMPARE(provider.currentSource(), NTRIPGgaReporter::tr("GCS Position"));
     QCOMPARE(transport.sentNmea.size(), 1);
     QVERIFY(checksumValid(transport.sentNmea.last()));
 
     gcsPosition.setLatitude(48.25);
     sendNormal();
-    QCOMPARE(debugMessages(kGgaProviderLog), expected);
+    QCOMPARE(debugMessages(kGgaReporterLog), expected);
     QCOMPARE(transport.sentNmea.size(), 2);
     QVERIFY(transport.sentNmea.first() != transport.sentNmea.last());
 
     vehicleAvailable = true;
     expected.append(QStringLiteral("GGA source selection: requested=Auto provider=VehicleGPS fallback=no"));
-    expectLogMessage(kGgaProviderLog, QtDebugMsg, exactMessage(expected.last()));
+    expectLogMessage(kGgaReporterLog, QtDebugMsg, exactMessage(expected.last()));
     sendNormal();
     verifyExpectedLogMessage();
-    QCOMPARE(debugMessages(kGgaProviderLog), expected);
+    QCOMPARE(debugMessages(kGgaReporterLog), expected);
     QCOMPARE(provider.currentSource(), NTRIPGgaReporter::tr("Vehicle GPS"));
 
     provider.configure({Source::GCSPosition, interval});
-    QCOMPARE(debugMessages(kGgaProviderLog), expected);
+    QCOMPARE(debugMessages(kGgaReporterLog), expected);
     expected.append(QStringLiteral("GGA source selection: requested=GCSPosition provider=GCSPosition fallback=no"));
-    expectLogMessage(kGgaProviderLog, QtDebugMsg, exactMessage(expected.last()));
+    expectLogMessage(kGgaReporterLog, QtDebugMsg, exactMessage(expected.last()));
     sendNormal();
     verifyExpectedLogMessage();
-    QCOMPARE(debugMessages(kGgaProviderLog), expected);
+    QCOMPARE(debugMessages(kGgaReporterLog), expected);
     QCOMPARE(provider.currentSource(), NTRIPGgaReporter::tr("GCS Position"));
     QCOMPARE(transport.sentNmea.size(), 4);
 
     provider.configure({Source::RTKReceiver, interval});
     expected.append(QStringLiteral("GGA source selection: requested=RTKReceiver no eligible source"));
-    expectLogMessage(kGgaProviderLog, QtDebugMsg, exactMessage(expected.last()));
+    expectLogMessage(kGgaReporterLog, QtDebugMsg, exactMessage(expected.last()));
     sendNormal();
     verifyExpectedLogMessage();
     sendFastRetry();
-    QCOMPARE(debugMessages(kGgaProviderLog), expected);
+    QCOMPARE(debugMessages(kGgaReporterLog), expected);
     QCOMPARE(transport.sentNmea.size(), 4);
 
     vehicleAvailable = false;
     gcsAvailable = false;
     provider.configure({Source::Auto, interval});
     expected.append(QStringLiteral("GGA source selection: requested=Auto no eligible source"));
-    expectLogMessage(kGgaProviderLog, QtDebugMsg, exactMessage(expected.last()));
+    expectLogMessage(kGgaReporterLog, QtDebugMsg, exactMessage(expected.last()));
     sendFastRetry();
     verifyExpectedLogMessage();
-    QCOMPARE(debugMessages(kGgaProviderLog), expected);
+    QCOMPARE(debugMessages(kGgaReporterLog), expected);
     provider.stop();
     sendFastRetry();
-    QCOMPARE(debugMessages(kGgaProviderLog), expected);
+    QCOMPARE(debugMessages(kGgaReporterLog), expected);
     expected.append(QStringLiteral("GGA source selection: requested=Auto no eligible source"));
-    expectLogMessage(kGgaProviderLog, QtDebugMsg, exactMessage(expected.last()));
+    expectLogMessage(kGgaReporterLog, QtDebugMsg, exactMessage(expected.last()));
     provider.start(&transport);
     verifyExpectedLogMessage();
-    QCOMPARE(debugMessages(kGgaProviderLog), expected);
+    QCOMPARE(debugMessages(kGgaReporterLog), expected);
     QCOMPARE(transport.sentNmea.size(), 4);
 }
 

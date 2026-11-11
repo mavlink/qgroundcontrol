@@ -332,7 +332,7 @@ QGCGroupBox {
     GPSNoteLabel {
         objectName: "rtkErrorMessage"
         visible: root.showErrorMessage && text.length > 0
-        text: root.receiver.errorMessage || ""
+        text: root.receiver.errorMessage
     }
 
     // The permission is for the configuration shown here, so leaving the page withdraws it.

@@ -20,9 +20,7 @@
 #endif
 
 #include <algorithm>
-#include <type_traits>
 #include <utility>
-#include <variant>
 
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QSet>
@@ -136,34 +134,19 @@ void GPSReceiver::_setPersistentChangesAllowed(bool allowed)
 
 bool GPSReceiver::connectionSupported() const
 {
-    return _configuration.receiverRole != RTKSettings::ConfiguredBase || effectiveConnectionType() != RTKSettings::Udp;
+    return GPSReceiverConnectionPolicy::connectability(_configuration).connectionSupported;
 }
 
 bool GPSReceiver::baseModeSupported() const
 {
-    const GPSReceiverPresentation presentation =
-        capabilitiesFor(_configuration.receiverRole, _configuration.baseReceiverManufacturer);
-    if (presentation.passive) {
-        return true;
-    }
-    return std::visit(
-        [&presentation]<typename Mode>(const Mode&) {
-            if constexpr (std::is_same_v<Mode, GPSBaseStationConfig::Fixed>) {
-                return presentation.rtkBase;
-            } else if constexpr (std::is_same_v<Mode, GPSBaseStationConfig::SurveyIn>) {
-                return presentation.surveyIn;
-            } else {
-                return presentation.receiverAveraging;
-            }
-        },
-        _configuration.base.mode);
+    return GPSReceiverConnectionPolicy::connectability(_configuration).baseModeSupported;
 }
 
 bool GPSReceiver::canConnect() const
 {
-    const GPSReceiverPresentation presentation =
-        capabilitiesFor(_configuration.receiverRole, _configuration.baseReceiverManufacturer);
-    return (presentation.specificReceiver || presentation.automatic) && baseModeSupported() && connectionSupported();
+    // Connect stays available for what it reports when pressed, such as a missing address or device.
+    const GPSReceiverConnectability check = GPSReceiverConnectionPolicy::connectability(_configuration);
+    return check.type && check.baseModeSupported && check.connectionSupported;
 }
 
 void GPSReceiver::setWorkerFactory(WorkerFactory factory)
@@ -191,7 +174,7 @@ GPSReceiver::~GPSReceiver()
 GPSReceiver::ReceiverState GPSReceiver::_receiverState() const
 {
     return {.hasReceiver = hasReceiver(),
-            .baseMode = activeBaseMode(),
+            .baseMode = _activeBaseMode(),
             .endpoint = activeEndpoint(),
             .identity = receiverIdentity(),
             .detected = detectedReceiver(),
@@ -286,14 +269,14 @@ void GPSReceiver::_onInputProblem(GPSInputProblem problem)
     _emitChanges();
 }
 
-void GPSReceiver::_endSession(GPSConnectionError error, const QString& detail, bool portRemoved)
+void GPSReceiver::_endSession(GPSConnectionError error, const QString& detail, GPSReceiverSessionEnd end)
 {
     // The family an Automatic session detected, else the selected one.
     const auto* family = _session ? gpsReceiverDescriptorForManufacturer(_session->manufacturer()) : nullptr;
     _retireSession();
-    _resetStatus();
     _setPersistentChangesAllowed(false);
-    const GPSReceiverSessionOutcome outcome = _connection->sessionEnded(portRemoved);
+    const GPSReceiverSessionOutcome outcome = _connection->sessionEnded(end);
+    const bool portRemoved = end == GPSReceiverSessionEnd::Unplugged;
     if (portRemoved) {
         qCDebug(GPSReceiverLog) << "Receiver serial device removed";
     }
@@ -302,14 +285,16 @@ void GPSReceiver::_endSession(GPSConnectionError error, const QString& detail, b
         !detail.isEmpty() && family) {
         qCWarning(GPSReceiverLog) << "GPS receiver did not accept configuration";
         _setError(GPSReceiverMessages::consentRefused(detail, family->type));
-        return;
+    } else {
+        if (outcome == GPSReceiverSessionOutcome::AutoRetrying || outcome == GPSReceiverSessionOutcome::Retrying) {
+            qCWarning(GPSReceiverLog) << "GPS receiver session ended:" << error << detail;
+        } else if (outcome == GPSReceiverSessionOutcome::None && !portRemoved) {
+            logConnectionError(error, detail);
+        }
+        _setError(GPSReceiverMessages::sessionEnded(outcome, error, detail, end));
     }
-    if (outcome == GPSReceiverSessionOutcome::AutoRetrying || outcome == GPSReceiverSessionOutcome::Retrying) {
-        qCWarning(GPSReceiverLog) << "GPS receiver session ended:" << error << detail;
-    } else if (outcome == GPSReceiverSessionOutcome::None && !portRemoved) {
-        logConnectionError(error, detail);
-    }
-    _setError(GPSReceiverMessages::sessionEnded(outcome, error, detail, portRemoved));
+    // Last, because the status Facts notify as they reset and an observer may connect or disconnect from there.
+    _resetStatus();
 }
 
 void GPSReceiver::_onGPSSurveyReport(const GPSSurveyReport& status)
@@ -325,7 +310,7 @@ void GPSReceiver::_onSerialPortsEnumerated(const QStringList& devices)
         return;
     }
     if (_session && !_session->serialDevice().isEmpty() && !devices.contains(_session->serialDevice())) {
-        _endSession(GPSConnectionError::DeviceError, {}, true);
+        _endSession(GPSConnectionError::DeviceError, {}, GPSReceiverSessionEnd::Unplugged);
         _emitChanges();
     }
     _updateSerialPortEntries();
@@ -505,12 +490,18 @@ bool GPSReceiver::hasReceiver() const
 
 int GPSReceiver::_activeManufacturer() const
 {
-    return _session ? _session->manufacturer() : 0;
+    return _session ? _session->manufacturer() : GPS_AUTOMATIC_MANUFACTURER;
+}
+
+std::optional<BaseModeDefinition::Mode> GPSReceiver::_activeBaseMode() const
+{
+    return _session ? _session->baseMode() : std::nullopt;
 }
 
 int GPSReceiver::activeBaseMode() const
 {
-    return _session ? _session->baseMode() : -1;
+    const std::optional<BaseModeDefinition::Mode> mode = _activeBaseMode();
+    return mode ? static_cast<int>(*mode) : -1;
 }
 
 QString GPSReceiver::activeEndpoint() const
@@ -547,11 +538,24 @@ GPSReceiverPresentation GPSReceiver::activePresentation() const
     return gpsReceiverPresentation(_activeManufacturer());
 }
 
+void GPSReceiver::_scanSerialPorts()
+{
+#ifndef QGC_NO_SERIAL_LINK
+    // The policy asks for the serial ports only without a receiver, and a scan that is due notifies observers, who
+    // may connect, disconnect or change the configuration. Scanned first, they act before the policy decides, and
+    // its questions reuse the scan.
+    if (_serialPorts && !hasReceiver()) {
+        (void) _serialPorts->availablePorts();
+    }
+#endif
+}
+
 bool GPSReceiver::connectReceiver()
 {
     if (_destroying) {
         return false;
     }
+    _scanSerialPorts();
     const bool allowed =
         _persistentChangesAllowed &&
         capabilitiesFor(_configuration.receiverRole, _configuration.baseReceiverManufacturer).persistentConfiguration;
@@ -603,6 +607,7 @@ void GPSReceiver::tick()
     if (_destroying) {
         return;
     }
+    _scanSerialPorts();
     _connection->update();
     _emitChanges();
 }
@@ -651,7 +656,7 @@ bool GPSReceiver::_connectReceiver(GPSType type, GPSReceiverWorker::TransportFac
     connect(session, &GPSReceiverSession::receiverDetected, this, &GPSReceiver::_onReceiverDetected);
     connect(session, &GPSReceiverSession::inputProblem, this, &GPSReceiver::_onInputProblem);
     connect(session, &GPSReceiverSession::ended, this, [this](GPSConnectionError error, const QString& detail) {
-        _endSession(error, detail, false);
+        _endSession(error, detail, GPSReceiverSessionEnd::Reported);
         _emitChanges();
     });
     if (!session->start(_workerFactory, std::move(transportFactory))) {
@@ -683,7 +688,7 @@ void GPSReceiver::shutdown()
     }
     _pollTask.cancel();
     _connection->reset();
-    endConnection(false);
+    endConnection(ShownError::Keep);
     _joinRetiredWorkers();
     _emitChanges();
 }
@@ -704,12 +709,12 @@ void GPSReceiver::_joinRetiredWorkers()
     }
 }
 
-void GPSReceiver::endConnection(bool clearError)
+void GPSReceiver::endConnection(ShownError error)
 {
     _retireSession();
     _resetStatus();
     _setPersistentChangesAllowed(false);
-    if (clearError) {
+    if (error == ShownError::Clear) {
         _setError();
     }
 }
@@ -741,14 +746,15 @@ void GPSReceiver::_onPositionUpdated(const GPSPositionReport& report)
 
 void GPSReceiver::_updateLabels()
 {
-    const QString status = GPSReceiverMessages::receiverStatus({.configured = _facts->telemetryAvailable(),
-                                                                .hasReceiver = hasReceiver(),
-                                                                .identifying = activePresentation().automatic,
-                                                                .reconnecting = reconnecting(),
-                                                                .role = activeRole(),
-                                                                .forwardingCorrections = forwardingCorrections(),
-                                                                .baseMode = activeBaseMode(),
-                                                                .surveyActive = _facts->active()->rawValue().toBool()});
+    const QString status =
+        GPSReceiverMessages::receiverStatus({.configured = _facts->telemetryAvailable(),
+                                             .hasReceiver = hasReceiver(),
+                                             .identifying = hasReceiver() && activePresentation().automatic,
+                                             .reconnecting = reconnecting(),
+                                             .role = activeRole(),
+                                             .forwardingCorrections = forwardingCorrections(),
+                                             .baseMode = _activeBaseMode(),
+                                             .surveyActive = _facts->active()->rawValue().toBool()});
     if (std::exchange(_statusText, status) != status) {
         emit statusTextChanged();
     }

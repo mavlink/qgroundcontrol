@@ -7,6 +7,24 @@
 #include <QtCore/QStringList>
 #include <QtCore/qnumeric.h>
 
+namespace {
+/// Positions of the STR record fields the mountpoint list uses.
+enum class StrField : qsizetype
+{
+    Type = 0,
+    Mountpoint = 1,
+    Format = 3,
+    NavSystem = 6,
+    Country = 8,
+    Latitude = 9,
+    Longitude = 10,
+    Bitrate = 17,
+};
+
+/// A record has to reach its last field in use.
+constexpr qsizetype MIN_STR_FIELDS = static_cast<qsizetype>(StrField::Bitrate) + 1;
+}  // namespace
+
 bool ntripSourceTableComplete(QByteArrayView body, qsizetype checkedSize)
 {
     static constexpr QByteArrayView terminator("ENDSOURCETABLE");
@@ -25,26 +43,26 @@ bool ntripSourceTableComplete(QByteArrayView body, qsizetype checkedSize)
 
 std::optional<NTRIPMountpoint> NTRIPMountpoint::fromSourceTableLine(const QString& line)
 {
-    // Need >= 18 fields; split keeps empty fields, so a trailing ';' is harmless
-    // (the extra empty field parses as 0 / "" for its column).
+    // split keeps empty fields, so a trailing ';' is harmless (the extra empty field parses as 0 / "" for its column).
     const QStringList fields = line.split(';');
-    if (fields.size() < 18 || fields.at(0).trimmed().toUpper() != QStringLiteral("STR")) {
+    const auto field = [&fields](StrField position) { return fields.at(static_cast<qsizetype>(position)).trimmed(); };
+    if (fields.size() < MIN_STR_FIELDS || field(StrField::Type).toUpper() != QStringLiteral("STR")) {
         return std::nullopt;
     }
 
     NTRIPMountpoint mp;
-    mp.mountpoint = fields.at(1).trimmed();
-    mp.format = fields.at(3).trimmed();
-    mp.navSystem = fields.at(6).trimmed();
-    mp.country = fields.at(8).trimmed();
+    mp.mountpoint = field(StrField::Mountpoint);
+    mp.format = field(StrField::Format);
+    mp.navSystem = field(StrField::NavSystem);
+    mp.country = field(StrField::Country);
     const auto parseCoord = [](const QString& s, double limit) -> double {
         bool ok = false;
         const double v = s.trimmed().toDouble(&ok);
         return (ok && qIsFinite(v) && qAbs(v) <= limit) ? v : qQNaN();
     };
-    mp.latitude = parseCoord(fields.at(9), 90.0);
-    mp.longitude = parseCoord(fields.at(10), 180.0);
-    mp.bitrate = fields.at(17).trimmed().toInt();
+    mp.latitude = parseCoord(field(StrField::Latitude), 90.0);
+    mp.longitude = parseCoord(field(StrField::Longitude), 180.0);
+    mp.bitrate = field(StrField::Bitrate).toInt();
     return mp;
 }
 

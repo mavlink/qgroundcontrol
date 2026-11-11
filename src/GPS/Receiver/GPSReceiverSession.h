@@ -99,8 +99,8 @@ public:
     /// whose native protocol it is, or GPSType::passive for standard NMEA. Empty until then and for a selected family.
     std::optional<GPSType> detectedType() const { return _detectedType; }
 
-    /// BaseModeDefinition::Mode of a configured base, or -1 for a passive receiver.
-    int baseMode() const { return _base.mode ? static_cast<int>(*_base.mode) : -1; }
+    /// Base mode of a configured base; empty for a passive receiver.
+    std::optional<BaseModeDefinition::Mode> baseMode() const { return _base.mode; }
 
     const QString& serialDevice() const { return _connection.serialDevice; }
 
