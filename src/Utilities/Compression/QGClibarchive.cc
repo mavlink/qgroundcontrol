@@ -299,14 +299,17 @@ CopyResult copyEntryData(struct archive* a, DataTransfer& transfer, const DataSi
 
 /// Read all data from archive into QByteArray
 /// @param a Archive handle (must have header already read)
-/// @param expectedSize Expected size for pre-allocation (0 if unknown)
+/// @param expectedSize Size the entry's header declares (0 if unknown). Memory is set aside for it up to
+///        kMaxReservedBytes only: a damaged or hostile archive declares any size.
 /// @param maxBytes Maximum bytes to read (0 = unlimited)
 /// @return Data read, or empty QByteArray on error or size limit exceeded
 QByteArray readArchiveToMemory(struct archive* a, qint64 expectedSize = 0, qint64 maxBytes = 0)
 {
+    constexpr qint64 kMaxReservedBytes = 16 * 1024 * 1024;
+
     QByteArray result;
     if (expectedSize > 0) {
-        result.reserve(static_cast<qsizetype>(expectedSize));
+        result.reserve(static_cast<qsizetype>(qMin(expectedSize, kMaxReservedBytes)));
     }
 
     DataTransfer transfer{.maxBytes = maxBytes};

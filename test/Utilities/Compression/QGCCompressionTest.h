@@ -92,6 +92,7 @@ private slots:
     void _testExtractionStopsCleanly_data();
     void _testExtractionStopsCleanly();
     void _testMaxEntriesArchive();
+    void _testOverstatedEntrySize();
 
     // Cross-platform path handling
     void _testWindowsPathSeparators();

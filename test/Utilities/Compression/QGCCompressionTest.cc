@@ -160,7 +160,17 @@ QByteArray QGCCompressionTest::_tarHeader(const TarEntry& entry, qint64 dataSize
     setField(100, "0000644");
     setField(108, "0000000");
     setField(116, "0000000");
-    setField(124, octal(dataSize));
+    if (dataSize < (Q_INT64_C(1) << 33)) {
+        setField(124, octal(dataSize));
+    } else {
+        // A size that does not fit in eleven octal digits is stored as a binary number below a set top bit
+        QByteArray binary(12, '\0');
+        binary[0] = static_cast<char>(0x80);
+        for (int i = 0; i < 8; ++i) {
+            binary[11 - i] = static_cast<char>((dataSize >> (8 * i)) & 0xFF);
+        }
+        setField(124, binary);
+    }
     setField(136, "00000000000");
     setField(148, "        ");
     header[156] = entry.type;
@@ -2183,6 +2193,28 @@ void QGCCompressionTest::_testMaxEntriesArchive()
     // Verify stats match entry count
     const QGCCompression::ArchiveStats stats = QGCCompression::getArchiveStats(zipResource);
     QCOMPARE(stats.totalEntries, static_cast<int>(entries.size()));
+}
+
+void QGCCompressionTest::_testOverstatedEntrySize()
+{
+    // The header of the entry tells of 2^50 bytes, and 512 follow it
+    const QString entryName = QStringLiteral("overstated.bin");
+    QTemporaryDir tempDir;
+    const QString archivePath = tempDir.filePath("overstated.tar");
+    QVERIFY(
+        _writeFile(archivePath, _tarHeader({.name = entryName.toLatin1()}, Q_INT64_C(1) << 50) + QByteArray(512, 'x')));
+    QFile device(archivePath);
+    QVERIFY(device.open(QIODevice::ReadOnly));
+
+    // No memory is set aside on the word of the header: the entry fails where its data runs out
+    const QRegularExpression dataRanOut("Read error.*Truncated");
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, dataRanOut);
+    QVERIFY(QGCCompression::extractFileData(archivePath, entryName).isEmpty());
+    verifyExpectedLogMessage();
+
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, dataRanOut);
+    QVERIFY(QGCCompression::extractFileDataFromDevice(&device, entryName).isEmpty());
+    verifyExpectedLogMessage();
 }
 
 // ============================================================================
