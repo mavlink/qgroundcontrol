@@ -49,7 +49,7 @@ void UrlFactoryTest::_testGetElevationProviderTypes()
 
 void UrlFactoryTest::_testMapIdFromProviderTypeValid()
 {
-    const int id = UrlFactory::getQtMapIdFromProviderType(kBingRoad);
+    const int id = UrlFactory::getMapIdFromProviderType(kBingRoad);
     QVERIFY(id > 0);
 }
 
@@ -57,30 +57,30 @@ void UrlFactoryTest::_testProviderTypeFromMapIdRoundtrip()
 {
     const QStringList types = UrlFactory::getProviderTypes();
     for (const auto& type : types) {
-        const int id = UrlFactory::getQtMapIdFromProviderType(type);
+        const int id = UrlFactory::getMapIdFromProviderType(type);
         QVERIFY2(id > 0, qPrintable(QStringLiteral("Bad id for type: %1").arg(type)));
-        const QString recovered = UrlFactory::getProviderTypeFromQtMapId(id);
+        const QString recovered = UrlFactory::getProviderTypeFromMapId(id);
         QCOMPARE(recovered, type);
     }
 }
 
 void UrlFactoryTest::_testMapIdFromEmptyType()
 {
-    QCOMPARE(UrlFactory::getQtMapIdFromProviderType(QString()), -1);
+    QCOMPARE(UrlFactory::getMapIdFromProviderType(QString()), -1);
 }
 
 void UrlFactoryTest::_testMapIdFromInvalidType()
 {
     expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("type not found:"));
-    QCOMPARE(UrlFactory::getQtMapIdFromProviderType(QStringLiteral("Nonexistent")), -1);
+    QCOMPARE(UrlFactory::getMapIdFromProviderType(QStringLiteral("Nonexistent")), -1);
     verifyExpectedLogMessage();
 }
 
 void UrlFactoryTest::_testProviderTypeFromInvalidId()
 {
-    QVERIFY(UrlFactory::getProviderTypeFromQtMapId(-1).isEmpty());
+    QVERIFY(UrlFactory::getProviderTypeFromMapId(-1).isEmpty());
     expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("map id not found:"));
-    QVERIFY(UrlFactory::getProviderTypeFromQtMapId(99999).isEmpty());
+    QVERIFY(UrlFactory::getProviderTypeFromMapId(99999).isEmpty());
     verifyExpectedLogMessage();
 }
 
@@ -132,7 +132,7 @@ void UrlFactoryTest::_testMapIdsArePermanent()
 void UrlFactoryTest::_testHashFromProviderTypeValid()
 {
     const int hash = UrlFactory::hashFromProviderType(kBingRoad);
-    const int id = UrlFactory::getQtMapIdFromProviderType(kBingRoad);
+    const int id = UrlFactory::getMapIdFromProviderType(kBingRoad);
     QCOMPARE(hash, id);
 }
 
@@ -200,7 +200,7 @@ void UrlFactoryTest::_testGetImageFormatByType()
 
 void UrlFactoryTest::_testGetImageFormatByMapId()
 {
-    const int id = UrlFactory::getQtMapIdFromProviderType(kBingRoad);
+    const int id = UrlFactory::getMapIdFromProviderType(kBingRoad);
     const QByteArray jpeg(
         "\xFF\xD8\xFF\xE0"
         "data",
@@ -225,7 +225,7 @@ void UrlFactoryTest::_testGetTileURLByType()
 
 void UrlFactoryTest::_testGetTileURLByMapId()
 {
-    const int id = UrlFactory::getQtMapIdFromProviderType(kBingRoad);
+    const int id = UrlFactory::getMapIdFromProviderType(kBingRoad);
     QVERIFY(id > 0);
     const QUrl url = UrlFactory::getTileURL(id, 301, 385, 10);
     QVERIFY(url.isValid());
@@ -259,13 +259,13 @@ void UrlFactoryTest::_testAverageSizeForInvalidType()
 
 void UrlFactoryTest::_testIsElevationTrue()
 {
-    const int id = UrlFactory::getQtMapIdFromProviderType(kCopernicus);
+    const int id = UrlFactory::getMapIdFromProviderType(kCopernicus);
     QVERIFY(UrlFactory::isElevation(id));
 }
 
 void UrlFactoryTest::_testIsElevationFalse()
 {
-    const int id = UrlFactory::getQtMapIdFromProviderType(kBingRoad);
+    const int id = UrlFactory::getMapIdFromProviderType(kBingRoad);
     QVERIFY(!UrlFactory::isElevation(id));
     QVERIFY(!UrlFactory::isElevation(-1));
 }
@@ -438,8 +438,8 @@ void UrlFactoryTest::_testGetTileCountZoomClamped()
 
 void UrlFactoryTest::_testGetMapProviderValid()
 {
-    const int id = UrlFactory::getQtMapIdFromProviderType(kBingRoad);
-    auto provider = UrlFactory::getMapProviderFromQtMapId(id);
+    const int id = UrlFactory::getMapIdFromProviderType(kBingRoad);
+    auto provider = UrlFactory::getMapProviderFromMapId(id);
     QVERIFY(provider != nullptr);
     QCOMPARE(provider->getMapName(), kBingRoad);
     QVERIFY(provider->isBingProvider());
@@ -451,7 +451,7 @@ void UrlFactoryTest::_testGetMapProviderValid()
 
 void UrlFactoryTest::_testGetMapProviderInvalid()
 {
-    QVERIFY(UrlFactory::getMapProviderFromQtMapId(-1) == nullptr);
+    QVERIFY(UrlFactory::getMapProviderFromMapId(-1) == nullptr);
     QVERIFY(UrlFactory::getMapProviderFromProviderType(QString()) == nullptr);
     expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("type not found:"));
     QVERIFY(UrlFactory::getMapProviderFromProviderType(QStringLiteral("Nonexistent")) == nullptr);

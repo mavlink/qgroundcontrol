@@ -23,7 +23,7 @@ static const QString kTestProviderType = QStringLiteral("Bing Road");
 void QGCCacheWorkerTest::initTestCase()
 {
     UnitTest::initTestCase();
-    QVERIFY2(UrlFactory::getQtMapIdFromProviderType(kTestProviderType) != -1,
+    QVERIFY2(UrlFactory::getMapIdFromProviderType(kTestProviderType) != -1,
              ("Provider type '" + kTestProviderType.toLatin1() + "' not available in this build").constData());
 }
 

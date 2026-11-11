@@ -45,7 +45,7 @@ QString _providerTypeFromHash(const QString& hash)
     }
 
     for (const QString& type : UrlFactory::getProviderTypes()) {
-        if (UrlFactory::getQtMapIdFromProviderType(type) == providerId) {
+        if (UrlFactory::getMapIdFromProviderType(type) == providerId) {
             return type;
         }
     }

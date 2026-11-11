@@ -144,7 +144,7 @@ void QGCMapEngineManager::startDownload(const QString& name, const QString& mapT
         qCWarning(QGCMapEngineManagerLog) << "No Tiles to save";
     }
 
-    const int mapid = UrlFactory::getQtMapIdFromProviderType(mapType);
+    const int mapid = UrlFactory::getMapIdFromProviderType(mapType);
     if (_fetchElevation && !UrlFactory::isElevation(mapid)) {
         const QString elevationProviderName =
             SettingsManager::instance()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
@@ -424,7 +424,7 @@ bool QGCMapEngineManager::exportSets(const QString& path)
             rec.bottomRightLon = set->bottomRightLon();
             rec.minZoom = set->minZoom();
             rec.maxZoom = set->maxZoom();
-            rec.type = UrlFactory::getQtMapIdFromProviderType(set->type());
+            rec.type = UrlFactory::getMapIdFromProviderType(set->type());
             rec.numTiles = set->totalTileCount();
             rec.defaultSet = set->defaultSet();
             rec.date = set->creationDate().toSecsSinceEpoch();

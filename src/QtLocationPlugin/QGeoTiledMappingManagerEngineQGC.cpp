@@ -69,7 +69,7 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     QList<QGeoMapType> mapList;
     const QList<int>& providerIds = QGeoMapIdQGC::mapTypeProviderIds();
     for (const int providerId : providerIds) {
-        const SharedMapProvider provider = UrlFactory::getMapProviderFromQtMapId(providerId);
+        const SharedMapProvider provider = UrlFactory::getMapProviderFromMapId(providerId);
         if (!provider) {
             continue;
         }

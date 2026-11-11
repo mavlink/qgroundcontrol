@@ -140,9 +140,9 @@ QVarLengthArray<TileMath::TileKey, 4> anchorKeysFor(const TileMath::TileKey& fet
 }  // namespace
 
 TerrariumTileFetcher::TerrariumTileFetcher(QObject* parent, QNetworkAccessManager* networkManager)
-    : HeightSource(parent),
-      _networkManager(networkManager ? networkManager : new QNetworkAccessManager(this)),
-      _mapId(UrlFactory::getQtMapIdFromProviderType(terrariumProviderType()))
+    : HeightSource(parent)
+    , _networkManager(networkManager ? networkManager : new QNetworkAccessManager(this))
+    , _mapId(UrlFactory::getMapIdFromProviderType(terrariumProviderType()))
 {
 }
 

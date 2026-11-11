@@ -31,7 +31,7 @@ QGeoTileFetcherQGC::~QGeoTileFetcherQGC()
 
 QGeoTiledMapReply* QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec& spec)
 {
-    const SharedMapProvider provider = UrlFactory::getMapProviderFromQtMapId(QGeoMapIdQGC::toProviderId(spec.mapId()));
+    const SharedMapProvider provider = UrlFactory::getMapProviderFromMapId(QGeoMapIdQGC::toProviderId(spec.mapId()));
     if (!provider) {
         return nullptr;
     }

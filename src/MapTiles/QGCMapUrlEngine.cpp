@@ -84,9 +84,9 @@ const QList<SharedMapProvider> UrlFactory::_providers = {
     _provider<CopernicusElevationProvider>(40),
     _provider<TerrariumElevationProvider>(41)};
 
-QString UrlFactory::getImageFormat(int qtMapId, QByteArrayView image)
+QString UrlFactory::getImageFormat(int mapId, QByteArrayView image)
 {
-    const SharedMapProvider provider = getMapProviderFromQtMapId(qtMapId);
+    const SharedMapProvider provider = getMapProviderFromMapId(mapId);
     if (provider) {
         return provider->getImageFormat(image);
     }
@@ -104,9 +104,9 @@ QString UrlFactory::getImageFormat(QStringView type, QByteArrayView image)
     return QString("");
 }
 
-QUrl UrlFactory::getTileURL(int qtMapId, int x, int y, int zoom)
+QUrl UrlFactory::getTileURL(int mapId, int x, int y, int zoom)
 {
-    const SharedMapProvider provider = getMapProviderFromQtMapId(qtMapId);
+    const SharedMapProvider provider = getMapProviderFromMapId(mapId);
     if (provider) {
         return provider->getTileURL(x, y, zoom);
     }
@@ -134,9 +134,9 @@ quint32 UrlFactory::averageSizeForType(QStringView type)
     return QGC_AVERAGE_TILE_SIZE;
 }
 
-bool UrlFactory::isElevation(int qtMapId)
+bool UrlFactory::isElevation(int mapId)
 {
-    const SharedMapProvider provider = getMapProviderFromQtMapId(qtMapId);
+    const SharedMapProvider provider = getMapProviderFromMapId(mapId);
     if (provider) {
         return provider->isElevationProvider();
     }
@@ -178,35 +178,35 @@ QGCTileSet UrlFactory::getTileCount(int zoom, double topleftLon, double topleftL
     return QGCTileSet();
 }
 
-QString UrlFactory::getProviderTypeFromQtMapId(int qtMapId)
+QString UrlFactory::getProviderTypeFromMapId(int mapId)
 {
-    if (qtMapId == -1) {
+    if (mapId == -1) {
         return QString();
     }
 
     for (const SharedMapProvider& provider : _providers) {
-        if (provider->getMapId() == qtMapId) {
+        if (provider->getMapId() == mapId) {
             return provider->getMapName();
         }
     }
 
-    qCWarning(QGCMapUrlEngineLog) << "map id not found:" << qtMapId;
+    qCWarning(QGCMapUrlEngineLog) << "map id not found:" << mapId;
     return QString();
 }
 
-SharedMapProvider UrlFactory::getMapProviderFromQtMapId(int qtMapId)
+SharedMapProvider UrlFactory::getMapProviderFromMapId(int mapId)
 {
-    if (qtMapId == -1) {
+    if (mapId == -1) {
         return nullptr;
     }
 
     for (const SharedMapProvider& provider : _providers) {
-        if (provider->getMapId() == qtMapId) {
+        if (provider->getMapId() == mapId) {
             return provider;
         }
     }
 
-    qCWarning(QGCMapUrlEngineLog) << "provider not found from id:" << qtMapId;
+    qCWarning(QGCMapUrlEngineLog) << "provider not found from id:" << mapId;
     return nullptr;
 }
 
@@ -226,7 +226,7 @@ SharedMapProvider UrlFactory::getMapProviderFromProviderType(QStringView type)
     return nullptr;
 }
 
-int UrlFactory::getQtMapIdFromProviderType(QStringView type)
+int UrlFactory::getMapIdFromProviderType(QStringView type)
 {
     if (type.isEmpty()) {
         return -1;

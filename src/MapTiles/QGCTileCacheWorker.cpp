@@ -270,7 +270,7 @@ void QGCCacheWorker::_getTileSets(QGCMapTask* mtask)
         set->setBottomRightLon(rec.bottomRightLon);
         set->setMinZoom(rec.minZoom);
         set->setMaxZoom(rec.maxZoom);
-        set->setType(UrlFactory::getProviderTypeFromQtMapId(rec.type));
+        set->setType(UrlFactory::getProviderTypeFromMapId(rec.type));
         set->setTotalTileCount(rec.numTiles);
         set->setDefaultSet(rec.defaultSet);
         set->setCreationDate(QDateTime::fromSecsSinceEpoch(rec.date));

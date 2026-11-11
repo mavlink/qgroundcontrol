@@ -18,7 +18,7 @@ int tileReplyMapId()
     const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
     for (const QString& type : UrlFactory::getProviderTypes()) {
         if (!elevationTypes.contains(type)) {
-            return UrlFactory::getQtMapIdFromProviderType(type);
+            return UrlFactory::getMapIdFromProviderType(type);
         }
     }
     return -1;
@@ -87,7 +87,7 @@ void QGCTileReplyTest::_serverFailure_data()
     QTest::addColumn<int>("httpStatus");
     QTest::addColumn<QGCTileReply::Error>("expectedError");
 
-    const QString mapType = UrlFactory::getProviderTypeFromQtMapId(tileReplyMapId());
+    const QString mapType = UrlFactory::getProviderTypeFromMapId(tileReplyMapId());
     QTest::newRow("network error") << mapType << (kTileX + 10) << QByteArray() << QNetworkReply::ContentNotFoundError
                                    << 404 << QGCTileReply::Error::NetworkError;
     QTest::newRow("http error status") << mapType << (kTileX + 11) << tileReplyPngBody() << QNetworkReply::NoError
@@ -107,7 +107,7 @@ void QGCTileReplyTest::_serverFailure()
     QFETCH(int, httpStatus);
     QFETCH(QGCTileReply::Error, expectedError);
 
-    const int mapId = UrlFactory::getQtMapIdFromProviderType(providerType);
+    const int mapId = UrlFactory::getMapIdFromProviderType(providerType);
 
     TileReplyMockNam nam;
     nam.body = body;

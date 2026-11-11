@@ -111,7 +111,7 @@ void QGCTileCacheDatabaseTest::_testSaveTileAndGetTile()
     const QString hash = QStringLiteral("test_hash_1234");
     const QString format = QStringLiteral("png");
     const QByteArray img("fake_tile_data_bytes");
-    QVERIFY(UrlFactory::getQtMapIdFromProviderType(kFixedProviderType) != -1);
+    QVERIFY(UrlFactory::getMapIdFromProviderType(kFixedProviderType) != -1);
 
     QVERIFY(db->saveTile(hash, format, img, kFixedProviderType, QGCTileCacheDatabase::kInvalidTileSet));
 
@@ -786,7 +786,7 @@ void QGCTileCacheDatabaseTest::_testCreateTileSet()
     QTemporaryDir tempDir;
     auto db = _createInitializedDB(tempDir);
 
-    QVERIFY(UrlFactory::getQtMapIdFromProviderType(kFixedProviderType) != -1);
+    QVERIFY(UrlFactory::getMapIdFromProviderType(kFixedProviderType) != -1);
 
     const auto setID = db->createTileSet(QStringLiteral("Test Set"), QStringLiteral("TestMap"), 37.0, -122.0, 36.0,
                                          -121.0, 5, 5, kFixedProviderType, 100);
@@ -957,7 +957,7 @@ void QGCTileCacheDatabaseTest::_testSaveTileTypeStoredAsInteger()
     QTemporaryDir tempDir;
     auto db = _createInitializedDB(tempDir);
 
-    const int expectedMapId = UrlFactory::getQtMapIdFromProviderType(kFixedProviderType);
+    const int expectedMapId = UrlFactory::getMapIdFromProviderType(kFixedProviderType);
     QVERIFY(expectedMapId != -1);
 
     const QString hash = QStringLiteral("type_int_test");
@@ -985,7 +985,7 @@ void QGCTileCacheDatabaseTest::_testCreateTileSetTypeStoredAsInteger()
     QTemporaryDir tempDir;
     auto db = _createInitializedDB(tempDir);
 
-    const int expectedMapId = UrlFactory::getQtMapIdFromProviderType(kFixedProviderType);
+    const int expectedMapId = UrlFactory::getMapIdFromProviderType(kFixedProviderType);
     QVERIFY(expectedMapId != -1);
 
     const auto setID = db->createTileSet(QStringLiteral("TypeInt Set"), QStringLiteral("TestMap"), 37.0, -122.0, 36.0,
@@ -1328,7 +1328,7 @@ void QGCTileCacheDatabaseTest::_testForeignKeyCascadeDelete()
     auto db = _createInitializedDB(tempDir);
     QVERIFY(db);
 
-    QVERIFY(UrlFactory::getQtMapIdFromProviderType(kFixedProviderType) != -1);
+    QVERIFY(UrlFactory::getMapIdFromProviderType(kFixedProviderType) != -1);
 
     const QString hash = QStringLiteral("fk_cascade_hash");
     QVERIFY(db->saveTile(hash, QStringLiteral("png"), QByteArray("data"), kFixedProviderType,

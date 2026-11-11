@@ -21,10 +21,10 @@ QGC_LOGGING_CATEGORY(GeoMapTileImageSourceLog, "GeoMap.TileImageSource")
 QGC_LOGGING_CATEGORY(GeoMapTileImageSourceVerboseLog, "GeoMap.TileImageSource.Verbose")
 
 TileImageSource::TileImageSource(const QString& mapType, QObject* parent, QNetworkAccessManager* networkManager)
-    : QObject(parent),
-      _mapType(mapType),
-      _mapId(UrlFactory::getQtMapIdFromProviderType(mapType)),
-      _networkManager(networkManager ? networkManager : new QNetworkAccessManager(this))
+    : QObject(parent)
+    , _mapType(mapType)
+    , _mapId(UrlFactory::getMapIdFromProviderType(mapType))
+    , _networkManager(networkManager ? networkManager : new QNetworkAccessManager(this))
 {
     if (_mapId < 0) {
         qCWarning(GeoMapTileImageSourceLog) << "unknown map type" << _mapType << "- all tile requests will fail";

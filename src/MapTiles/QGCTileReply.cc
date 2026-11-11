@@ -96,7 +96,7 @@ bool QGCTileReply::start()
         return false;
     }
 
-    _provider = UrlFactory::getMapProviderFromQtMapId(_mapId);
+    _provider = UrlFactory::getMapProviderFromMapId(_mapId);
     if (!_provider) {
         return false;
     }

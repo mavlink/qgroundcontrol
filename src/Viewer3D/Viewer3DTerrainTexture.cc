@@ -114,7 +114,7 @@ void Viewer3DTerrainTexture::_onMapTypeChanged()
              + QStringLiteral(" ")
              + _flightMapSettings->mapType()->rawValue().toString();
 
-    const int mapId = UrlFactory::getQtMapIdFromProviderType(_mapType);
+    const int mapId = UrlFactory::getMapIdFromProviderType(_mapType);
 
     if (mapId == _mapId) {
         return;

@@ -18,14 +18,14 @@ class UrlFactory
 {
 public:
     static QString getImageFormat(QStringView type, QByteArrayView image);
-    static QString getImageFormat(int qtMapId, QByteArrayView image);
+    static QString getImageFormat(int mapId, QByteArrayView image);
 
     static QUrl getTileURL(QStringView type, int x, int y, int zoom);
-    static QUrl getTileURL(int qtMapId, int x, int y, int zoom);
+    static QUrl getTileURL(int mapId, int x, int y, int zoom);
 
     static quint32 averageSizeForType(QStringView type);
 
-    static bool isElevation(int qtMapId);
+    static bool isElevation(int mapId);
 
     static int long2tileX(QStringView mapType, double lon, int z);
     static int lat2tileY(QStringView mapType, double lat, int z);
@@ -37,9 +37,9 @@ public:
 
     static QStringList getElevationProviderTypes();
     static QStringList getProviderTypes();
-    static int getQtMapIdFromProviderType(QStringView type);
-    static QString getProviderTypeFromQtMapId(int qtMapId);
-    static std::shared_ptr<const MapProvider> getMapProviderFromQtMapId(int qtMapId);
+    static int getMapIdFromProviderType(QStringView type);
+    static QString getProviderTypeFromMapId(int mapId);
+    static std::shared_ptr<const MapProvider> getMapProviderFromMapId(int mapId);
     static std::shared_ptr<const MapProvider> getMapProviderFromProviderType(QStringView type);
     static QString providerTypeFromHash(int hash);
 

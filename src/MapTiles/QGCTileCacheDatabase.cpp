@@ -184,7 +184,7 @@ bool QGCTileCacheDatabase::saveTile(const QString& hash, const QString& format, 
     query.addBindValue(format);
     query.addBindValue(img);
     query.addBindValue(img.size());
-    query.addBindValue(UrlFactory::getQtMapIdFromProviderType(type));
+    query.addBindValue(UrlFactory::getMapIdFromProviderType(type));
     query.addBindValue(QDateTime::currentSecsSinceEpoch());
     if (!query.exec()) {
         qCWarning(QGCTileCacheDatabaseLog) << "Map Cache SQL error (saveTile INSERT):" << query.lastError().text();
@@ -242,7 +242,7 @@ std::unique_ptr<QGCCacheTile> QGCTileCacheDatabase::getTile(const QString& hash)
     if (query.exec() && query.next()) {
         const QByteArray tileData = query.value(0).toByteArray();
         const QString format = query.value(1).toString();
-        const QString type = UrlFactory::getProviderTypeFromQtMapId(query.value(2).toInt());
+        const QString type = UrlFactory::getProviderTypeFromMapId(query.value(2).toInt());
         qCDebug(QGCTileCacheDatabaseLog) << "(Found in DB) HASH:" << hash;
         return std::make_unique<QGCCacheTile>(hash, tileData, format, type);
     }
@@ -337,7 +337,7 @@ std::optional<quint64> QGCTileCacheDatabase::createTileSet(const QString& name, 
     query.addBindValue(bottomRightLon);
     query.addBindValue(minZoom);
     query.addBindValue(maxZoom);
-    query.addBindValue(UrlFactory::getQtMapIdFromProviderType(type));
+    query.addBindValue(UrlFactory::getMapIdFromProviderType(type));
     query.addBindValue(numTiles);
     query.addBindValue(QDateTime::currentSecsSinceEpoch());
     if (!query.exec()) {
@@ -350,7 +350,7 @@ std::optional<quint64> QGCTileCacheDatabase::createTileSet(const QString& name, 
 
     // Process tiles in streaming batches to avoid holding all coordinates in memory
     constexpr int kHashBatchSize = 500;
-    const int mapTypeId = UrlFactory::getQtMapIdFromProviderType(type);
+    const int mapTypeId = UrlFactory::getMapIdFromProviderType(type);
 
     struct TileCoord
     {

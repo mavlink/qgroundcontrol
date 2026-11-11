@@ -39,7 +39,7 @@ void QGeoTiledMappingManagerEngineQGCTest::_testMapTypeIdsAreSequential()
     for (qsizetype i = 0; i < mapTypes.size(); i++) {
         QCOMPARE(mapTypes[i].mapId(), static_cast<int>(i) + 1);
         // A tile QtLocation requests for the map type is fetched from the provider the map type names
-        QCOMPARE(UrlFactory::getProviderTypeFromQtMapId(QGeoMapIdQGC::toProviderId(mapTypes[i].mapId())),
+        QCOMPARE(UrlFactory::getProviderTypeFromMapId(QGeoMapIdQGC::toProviderId(mapTypes[i].mapId())),
                  mapTypes[i].name());
     }
 }

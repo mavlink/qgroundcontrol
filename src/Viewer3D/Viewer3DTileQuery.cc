@@ -83,7 +83,7 @@ void Viewer3DTileQuery::_loadMapTiles(int zoomLevel, QPoint tileMinIndex, QPoint
 
 Viewer3DTileQuery::TileStatistics_t Viewer3DTileQuery::_findAndLoadMapTiles(int zoomLevel, const QGeoCoordinate &coordinateMin, const QGeoCoordinate &coordinateMax)
 {
-    const SharedMapProvider provider = UrlFactory::getMapProviderFromQtMapId(_mapId);
+    const SharedMapProvider provider = UrlFactory::getMapProviderFromMapId(_mapId);
     if (!provider) {
         return {};
     }
@@ -138,7 +138,7 @@ void Viewer3DTileQuery::adaptiveMapTilesLoader(int mapId, const QGeoCoordinate& 
 
 int Viewer3DTileQuery::maxTileCount(int zoomLevel, const QGeoCoordinate &coordinateMin, const QGeoCoordinate &coordinateMax)
 {
-    const SharedMapProvider provider = UrlFactory::getMapProviderFromQtMapId(_mapId);
+    const SharedMapProvider provider = UrlFactory::getMapProviderFromMapId(_mapId);
     if (!provider) {
         return 0;
     }

@@ -68,7 +68,7 @@ void Viewer3DTileReplyTest::_testOutcome()
                          QRegularExpression(QStringLiteral("Request error for tile")));
     }
 
-    Viewer3DTileReply tileReply(10, tileX, 2, UrlFactory::getQtMapIdFromProviderType(providerType), &nam);
+    Viewer3DTileReply tileReply(10, tileX, 2, UrlFactory::getMapIdFromProviderType(providerType), &nam);
     QStringList emitted;
     Viewer3DTileInfo tile;
     connect(&tileReply, &Viewer3DTileReply::tileDone, this, [&](const Viewer3DTileInfo& info) {
@@ -110,7 +110,7 @@ void Viewer3DTileReplyTest::_testDestructionOrderNoCrash()
     auto* networkManager = new TileReplyMockNam(parentObj);
     networkManager->holdReplies = true;
 
-    (void) new Viewer3DTileReply(10, 5, 2, UrlFactory::getQtMapIdFromProviderType(viewer3DMapType()), networkManager,
+    (void) new Viewer3DTileReply(10, 5, 2, UrlFactory::getMapIdFromProviderType(viewer3DMapType()), networkManager,
                                  parentObj);
     QTRY_COMPARE_WITH_TIMEOUT(networkManager->requestCount, 1, TestTimeout::mediumMs());
 
