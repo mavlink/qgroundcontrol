@@ -12,6 +12,8 @@ qt_add_plugin(
     QGCLocation_targets
     QGeoFileTileCacheQGC.cpp
     QGeoFileTileCacheQGC.h
+    QGeoMapIdQGC.cpp
+    QGeoMapIdQGC.h
     QGeoMapReplyQGC.cpp
     QGeoMapReplyQGC.h
     QGeoServiceProviderPluginQGC.cpp

@@ -15,62 +15,74 @@
 
 QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "MapTiles.QGCMapUrlEngine")
 
+template <typename Provider>
+SharedMapProvider UrlFactory::_provider(int mapId)
+{
+    const std::shared_ptr<Provider> provider = std::make_shared<Provider>();
+    provider->_mapId = mapId;
+    return provider;
+}
+
+// The number is the permanent id of the provider (MapProvider::getMapId()), a key of the tile cache:
+// - never change or reuse one
+// - a new provider takes the next unused number
+// - the number of a removed provider stays retired
 const QList<SharedMapProvider> UrlFactory::_providers = {
 #ifndef QGC_NO_GOOGLE_MAPS
-    std::make_shared<GoogleStreetMapProvider>(),
-    std::make_shared<GoogleSatelliteMapProvider>(),
-    std::make_shared<GoogleTerrainMapProvider>(),
-    std::make_shared<GoogleHybridMapProvider>(),
-    std::make_shared<GoogleLabelsMapProvider>(),
+    _provider<GoogleStreetMapProvider>(1),
+    _provider<GoogleSatelliteMapProvider>(2),
+    _provider<GoogleTerrainMapProvider>(3),
+    _provider<GoogleHybridMapProvider>(4),
+    _provider<GoogleLabelsMapProvider>(5),
 #endif
-    std::make_shared<BingRoadMapProvider>(),
-    std::make_shared<BingSatelliteMapProvider>(),
-    std::make_shared<BingHybridMapProvider>(),
+    _provider<BingRoadMapProvider>(6),
+    _provider<BingSatelliteMapProvider>(7),
+    _provider<BingHybridMapProvider>(8),
 
-    std::make_shared<TianDiTuRoadProvider>(),
-    std::make_shared<TianDiTuSatelliteProvider>(),
-    std::make_shared<StatkartTopoMapProvider>(),
-    std::make_shared<StatkartBaseMapProvider>(),
-    std::make_shared<SvalbardMapProvider>(),
+    _provider<TianDiTuRoadProvider>(9),
+    _provider<TianDiTuSatelliteProvider>(10),
+    _provider<StatkartTopoMapProvider>(11),
+    _provider<StatkartBaseMapProvider>(12),
+    _provider<SvalbardMapProvider>(13),
 
-    std::make_shared<EniroMapProvider>(),
+    _provider<EniroMapProvider>(14),
 
-    std::make_shared<EsriWorldStreetMapProvider>(),
-    std::make_shared<EsriWorldSatelliteMapProvider>(),
-    std::make_shared<EsriTerrainMapProvider>(),
+    _provider<EsriWorldStreetMapProvider>(15),
+    _provider<EsriWorldSatelliteMapProvider>(16),
+    _provider<EsriTerrainMapProvider>(17),
 
-    std::make_shared<MapboxStreetMapProvider>(),
-    std::make_shared<MapboxLightMapProvider>(),
-    std::make_shared<MapboxDarkMapProvider>(),
-    std::make_shared<MapboxSatelliteMapProvider>(),
-    std::make_shared<MapboxHybridMapProvider>(),
-    std::make_shared<MapboxStreetsBasicMapProvider>(),
-    std::make_shared<MapboxOutdoorsMapProvider>(),
-    std::make_shared<MapboxBrightMapProvider>(),
-    std::make_shared<MapboxCustomMapProvider>(),
+    _provider<MapboxStreetMapProvider>(18),
+    _provider<MapboxLightMapProvider>(19),
+    _provider<MapboxDarkMapProvider>(20),
+    _provider<MapboxSatelliteMapProvider>(21),
+    _provider<MapboxHybridMapProvider>(22),
+    _provider<MapboxStreetsBasicMapProvider>(23),
+    _provider<MapboxOutdoorsMapProvider>(24),
+    _provider<MapboxBrightMapProvider>(25),
+    _provider<MapboxCustomMapProvider>(26),
 
-    std::make_shared<MapQuestMapMapProvider>(),
-    std::make_shared<MapQuestSatMapProvider>(),
+    _provider<MapQuestMapMapProvider>(27),
+    _provider<MapQuestSatMapProvider>(28),
 
-    std::make_shared<VWorldStreetMapProvider>(),
-    std::make_shared<VWorldSatMapProvider>(),
+    _provider<VWorldStreetMapProvider>(29),
+    _provider<VWorldSatMapProvider>(30),
 
-    std::make_shared<JapanStdMapProvider>(),
-    std::make_shared<JapanSeamlessMapProvider>(),
-    std::make_shared<JapanAnaglyphMapProvider>(),
-    std::make_shared<JapanSlopeMapProvider>(),
-    std::make_shared<JapanReliefMapProvider>(),
+    _provider<JapanStdMapProvider>(31),
+    _provider<JapanSeamlessMapProvider>(32),
+    _provider<JapanAnaglyphMapProvider>(33),
+    _provider<JapanSlopeMapProvider>(34),
+    _provider<JapanReliefMapProvider>(35),
 
-    std::make_shared<LINZBasemapMapProvider>(),
+    _provider<LINZBasemapMapProvider>(36),
 
-    std::make_shared<OpenStreetMapProvider>(),
+    _provider<OpenStreetMapProvider>(37),
 
-    std::make_shared<OpenAIPMapProvider>(),
+    _provider<OpenAIPMapProvider>(38),
 
-    std::make_shared<CustomURLMapProvider>(),
+    _provider<CustomURLMapProvider>(39),
 
-    std::make_shared<CopernicusElevationProvider>(),
-    std::make_shared<TerrariumElevationProvider>()};
+    _provider<CopernicusElevationProvider>(40),
+    _provider<TerrariumElevationProvider>(41)};
 
 QString UrlFactory::getImageFormat(int qtMapId, QByteArrayView image)
 {

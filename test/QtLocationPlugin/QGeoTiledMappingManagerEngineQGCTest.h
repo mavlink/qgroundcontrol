@@ -8,4 +8,6 @@ class QGeoTiledMappingManagerEngineQGCTest : public UnitTest
 
 private slots:
     void _testElevationProvidersAreNotMapTypes();
+    void _testMapTypeIdsAreSequential();
+    void _testMapIdTranslationWithGaps();
 };

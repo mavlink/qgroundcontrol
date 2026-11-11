@@ -48,6 +48,9 @@ public:
     static QString getTileHash(QStringView type, int x, int y, int z);
 
 private:
+    template <typename Provider>
+    static std::shared_ptr<const MapProvider> _provider(int mapId);
+
     static const QList<std::shared_ptr<const MapProvider>> _providers;
 };
 

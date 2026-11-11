@@ -15,6 +15,7 @@ private slots:
     void _testMapIdFromEmptyType();
     void _testMapIdFromInvalidType();
     void _testProviderTypeFromInvalidId();
+    void _testMapIdsArePermanent();
     void _testHashFromProviderTypeValid();
     void _testProviderTypeFromHashRoundtrip();
     void _testHashFromInvalidType();

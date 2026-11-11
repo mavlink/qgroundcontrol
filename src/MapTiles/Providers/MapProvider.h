@@ -45,6 +45,8 @@ public:
 
     const QString& getMapName() const { return _mapName; }
 
+    /// Permanent id of the provider, assigned by the provider table in QGCMapUrlEngine.cpp. 0 for a provider that is
+    /// not in that table.
     int getMapId() const { return _mapId; }
 
     const QString& getReferrer() const { return _referrer; }
@@ -78,8 +80,9 @@ protected:
     const quint32 _averageSize;
     const MapStyle _mapStyle;
     const QString _language;
-    const int _mapId;
 
 private:
-    static int _mapIdIndex;
+    friend class UrlFactory;
+
+    int _mapId = 0;
 };

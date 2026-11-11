@@ -3,6 +3,7 @@
 #include <cmath>
 #include <numbers>
 
+#include <QtCore/QMap>
 #include <QtCore/QRect>
 
 #include "ElevationMapProvider.h"
@@ -81,6 +82,49 @@ void UrlFactoryTest::_testProviderTypeFromInvalidId()
     expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("map id not found:"));
     QVERIFY(UrlFactory::getProviderTypeFromQtMapId(99999).isEmpty());
     verifyExpectedLogMessage();
+}
+
+void UrlFactoryTest::_testMapIdsArePermanent()
+{
+    // The ids are keys of the tile cache. Add an entry for a new provider and remove none: a changed id relabels the
+    // tiles users have cached, and a reused one hands them to another provider.
+    const QMap<int, QString> permanentIds = {
+        {1, QStringLiteral("Google Street Map")},    {2, QStringLiteral("Google Satellite")},
+        {3, QStringLiteral("Google Terrain")},       {4, QStringLiteral("Google Hybrid")},
+        {5, QStringLiteral("Google Labels")},        {6, QStringLiteral("Bing Road")},
+        {7, QStringLiteral("Bing Satellite")},       {8, QStringLiteral("Bing Hybrid")},
+        {9, QStringLiteral("TianDiTu Road")},        {10, QStringLiteral("TianDiTu Satellite")},
+        {11, QStringLiteral("Statkart Topo")},       {12, QStringLiteral("Statkart Basemap")},
+        {13, QStringLiteral("Svalbard Topo")},       {14, QStringLiteral("Eniro Topo")},
+        {15, QStringLiteral("Esri World Street")},   {16, QStringLiteral("Esri World Satellite")},
+        {17, QStringLiteral("Esri Terrain")},        {18, QStringLiteral("Mapbox Streets")},
+        {19, QStringLiteral("Mapbox Light")},        {20, QStringLiteral("Mapbox Dark")},
+        {21, QStringLiteral("Mapbox Satellite")},    {22, QStringLiteral("Mapbox Hybrid")},
+        {23, QStringLiteral("Mapbox StreetsBasic")}, {24, QStringLiteral("Mapbox Outdoors")},
+        {25, QStringLiteral("Mapbox Bright")},       {26, QStringLiteral("Mapbox Custom")},
+        {27, QStringLiteral("MapQuest Map")},        {28, QStringLiteral("MapQuest Sat")},
+        {29, QStringLiteral("VWorld Street Map")},   {30, QStringLiteral("VWorld Satellite Map")},
+        {31, QStringLiteral("Japan-GSI Contour")},   {32, QStringLiteral("Japan-GSI Seamless")},
+        {33, QStringLiteral("Japan-GSI Anaglyph")},  {34, QStringLiteral("Japan-GSI Slope")},
+        {35, QStringLiteral("Japan-GSI Relief")},    {36, QStringLiteral("LINZ Basemap")},
+        {37, QStringLiteral("Street Map")},          {38, QStringLiteral("OpenAIP")},
+        {39, QStringLiteral("CustomURL Custom")},    {40, QStringLiteral("Copernicus")},
+        {41, QStringLiteral("Terrarium")},
+    };
+
+    QMap<int, QString> ids;
+    for (const SharedMapProvider& provider : UrlFactory::getProviders()) {
+        QVERIFY2(!ids.contains(provider->getMapId()),
+                 qPrintable(QStringLiteral("%1 and %2 share id %3")
+                                .arg(ids.value(provider->getMapId()), provider->getMapName())
+                                .arg(provider->getMapId())));
+        ids.insert(provider->getMapId(), provider->getMapName());
+    }
+
+    QCOMPARE(ids.size(), permanentIds.size());
+    for (auto it = permanentIds.cbegin(); it != permanentIds.cend(); ++it) {
+        QCOMPARE(ids.value(it.key()), it.value());
+    }
 }
 
 // --- Hash <-> ProviderType roundtrip ---

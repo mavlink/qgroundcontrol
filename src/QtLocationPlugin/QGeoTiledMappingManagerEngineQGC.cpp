@@ -1,25 +1,26 @@
 #include "QGeoTiledMappingManagerEngineQGC.h"
 
 #include <QtCore/QDir>
+#include <QtLocation/private/qgeocameracapabilities_p.h>
+#include <QtLocation/private/qgeofiletilecache_p.h>
+#include <QtLocation/private/qgeomaptype_p.h>
+#include <QtLocation/private/qgeotiledmap_p.h>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkDiskCache>
 #include <QtNetwork/QNetworkInformation>
 #include <QtNetwork/QNetworkProxy>
-#include <QtLocation/private/qgeocameracapabilities_p.h>
-#include <QtLocation/private/qgeomaptype_p.h>
-#include <QtLocation/private/qgeotiledmap_p.h>
-#include <QtLocation/private/qgeofiletilecache_p.h>
 
 #include "MapProvider.h"
-#include "QGCNetworkHelper.h"
 #include "QGCApplication.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
 #include "QGCMapUrlEngine.h"
+#include "QGCNetworkHelper.h"
 #include "QGeoFileTileCacheQGC.h"
-#include "QGeoTiledMapQGC.h"
+#include "QGeoMapIdQGC.h"
 #include "QGeoTileFetcherQGC.h"
+#include "QGeoTiledMapQGC.h"
 
 QGC_LOGGING_CATEGORY(QGeoTiledMappingManagerEngineQGCLog, "QtLocationPlugin.QGeoTiledMappingManagerEngineQGC")
 
@@ -66,22 +67,16 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     setTileSize(QSize(256, 256));
 
     QList<QGeoMapType> mapList;
-    const QList<SharedMapProvider> providers = UrlFactory::getProviders();
-    for (const SharedMapProvider &provider : providers) {
-        // Not a map to show: QtLocation would request map tiles from an elevation provider
-        if (provider->isElevationProvider()) {
+    const QList<int>& providerIds = QGeoMapIdQGC::mapTypeProviderIds();
+    for (const int providerId : providerIds) {
+        const SharedMapProvider provider = UrlFactory::getMapProviderFromQtMapId(providerId);
+        if (!provider) {
             continue;
         }
-        const QGeoMapType map = QGeoMapType(
-            static_cast<QGeoMapType::MapStyle>(provider->getMapStyle()),
-            provider->getMapName(),
-            provider->getMapName(),
-            false,
-            false,
-            provider->getMapId(),
-            QByteArrayLiteral("QGroundControl"),
-            cameraCapabilities()
-        );
+        const QGeoMapType map =
+            QGeoMapType(static_cast<QGeoMapType::MapStyle>(provider->getMapStyle()), provider->getMapName(),
+                        provider->getMapName(), false, false, QGeoMapIdQGC::fromProviderId(providerId, providerIds),
+                        QByteArrayLiteral("QGroundControl"), cameraCapabilities());
         mapList.append(map);
     }
     setSupportedMapTypes(mapList);

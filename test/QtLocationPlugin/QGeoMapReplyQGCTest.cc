@@ -6,24 +6,16 @@
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtTest/QSignalSpy>
 
-#include "QGCMapUrlEngine.h"
 #include "QGeoMapReplyQGC.h"
 #include "UnitTestTileGenerator.h"
 
 namespace {
 
-/// A tile of the first map provider. Under unit tests a cache miss is served by UnitTestTileGenerator unless a miss
-/// is forced.
+/// A tile of the plugin's first map type. Under unit tests a cache miss is served by UnitTestTileGenerator unless a
+/// miss is forced.
 QGeoTileSpec mapReplyTileSpec(int x)
 {
-    const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
-    for (const QString& type : UrlFactory::getProviderTypes()) {
-        if (!elevationTypes.contains(type)) {
-            return QGeoTileSpec(QStringLiteral("QGroundControl"), UrlFactory::getQtMapIdFromProviderType(type), 13, x,
-                                2867);
-        }
-    }
-    return QGeoTileSpec();
+    return QGeoTileSpec(QStringLiteral("QGroundControl"), 1, 13, x, 2867);
 }
 
 }  // namespace

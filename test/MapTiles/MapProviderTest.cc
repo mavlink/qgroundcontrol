@@ -231,7 +231,6 @@ void MapProviderTest::_testGettersReturnConstructorValues()
     QCOMPARE(p.getMapStyle(), MapProvider::CustomMap);
     QVERIFY(!p.isElevationProvider());
     QVERIFY(!p.isBingProvider());
-    QVERIFY(p.getMapId() > 0);
 }
 
 UT_REGISTER_TEST(MapProviderTest, TestLabel::Unit)

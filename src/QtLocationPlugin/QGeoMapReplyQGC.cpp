@@ -4,13 +4,15 @@
 
 #include "QGCLoggingCategory.h"
 #include "QGCTileReply.h"
+#include "QGeoMapIdQGC.h"
 
 QGC_LOGGING_CATEGORY(QGeoTiledMapReplyQGCLog, "QtLocationPlugin.QGeoTiledMapReplyQGC")
 
 QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager* networkManager, const QGeoTileSpec& spec,
                                            QObject* parent)
     : QGeoTiledMapReply(spec, parent)
-    , _tileReply(new QGCTileReply(networkManager, spec.mapId(), spec.x(), spec.y(), spec.zoom(), this))
+    , _tileReply(new QGCTileReply(networkManager, QGeoMapIdQGC::toProviderId(spec.mapId()), spec.x(), spec.y(),
+                                  spec.zoom(), this))
 {
     qCDebug(QGeoTiledMapReplyQGCLog) << this;
 

@@ -8,9 +8,6 @@
 
 QGC_LOGGING_CATEGORY(MapProviderLog, "MapTiles.MapProvider")
 
-// QtLocation expects MapIds to start at 1 and be sequential.
-int MapProvider::_mapIdIndex = 1;
-
 MapProvider::MapProvider(const QString& mapName, const QString& referrer, const QString& imageFormat,
                          quint32 averageSize, MapStyle mapStyle)
     : _mapName(mapName)
@@ -19,7 +16,6 @@ MapProvider::MapProvider(const QString& mapName, const QString& referrer, const 
     , _averageSize(averageSize)
     , _mapStyle(mapStyle)
     , _language(!QLocale::system().uiLanguages().isEmpty() ? QLocale::system().uiLanguages().constFirst() : "en")
-    , _mapId(_mapIdIndex++)
 {
     // qCDebug(MapProviderLog) << Q_FUNC_INFO << this << _mapId;
 }
