@@ -5,8 +5,10 @@
 
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtQuick/QQuickItem>
 #include <QtQuickTest/quicktest.h>
+#include <QtTest/QSignalSpy>
 
 #include "Fact.h"
 #include "Fixtures/RAIIFixtures.h"
@@ -22,6 +24,7 @@
 #include "SettingsManager.h"
 #include "Support/GPSQmlTestHelpers.h"
 #include "Support/GPSTestHelpers.h"
+#include "UnitsSettings.h"
 
 using namespace GPSTest;
 
@@ -148,6 +151,71 @@ void GPSCorrectionsPanelTest::_correctionsStatusCountsMessageTypes()
     QVERIFY(chips().isEmpty());
     submit(ntrip, 1087);
     QCOMPARE(chipTexts(), QStringList({QStringLiteral(u"1087 \u00d7 1")}));
+}
+
+void GPSCorrectionsPanelTest::_correctionsStatusShowsBaseStation()
+{
+    using namespace std::chrono_literals;
+    using State = GPSCorrectionManager::State;
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(SettingsManager::instance()->unitsSettings()->horizontalDistanceUnits(),
+                       UnitsSettings::HorizontalDistanceUnitsMeters);
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler);
+    QSignalSpy positionChanges(&corrections, &GPSCorrectionManager::basePositionChanged);
+    GPSTest::QmlEngine engine;
+    std::unique_ptr<QObject> status =
+        engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsStatus.qml")),
+                      {{QStringLiteral("corrections"), QVariant::fromValue(&corrections)},
+                       {QStringLiteral("gcsPosition"), QVariant::fromValue(QGeoCoordinate())}});
+    QVERIFY2(status, qPrintable(engine.lastError()));
+    auto* position = status->findChild<QObject*>(QStringLiteral("correctionsBasePosition"));
+    auto* distance = status->findChild<QObject*>(QStringLiteral("correctionsBaseDistance"));
+    QVERIFY(position && distance);
+    // The RTCM 1005 frame of the recording Core/Protocols/fixtures/mixed.gps.
+    const QByteArray stationFrame = QByteArray::fromHex("d300133ed000038a58d9493c872f34109d07d6af48205ad7f7");
+    const QByteArray observations = GPSTest::rtcmMessage(1077, 20);
+
+    // A stream shows no base station before it announces one.
+    const auto ntrip = corrections.openSource(GPSCorrectionSettings::Ntrip, QStringLiteral("caster/MOUNT"));
+    ntrip->submit(observations, scheduler.nowMs());
+    QVERIFY(scheduler.advanceBy(100ms));
+    QCOMPARE(corrections.state(), State::Fresh);
+    QVERIFY(!position->property("visible").toBool());
+
+    // A repeated announcement of the same position does not notify again.
+    ntrip->submit(stationFrame, scheduler.nowMs());
+    ntrip->submit(stationFrame, scheduler.nowMs());
+    QCOMPARE(positionChanges.size(), 1);
+    QVERIFY(position->property("visible").toBool());
+    QCOMPARE(position->property("labelText").toString(), QStringLiteral("32.0658325, 34.7738190"));
+    // The distance needs a ground station position.
+    QVERIFY(!distance->property("visible").toBool());
+    QVERIFY(status->setProperty("gcsPosition",
+                                QVariant::fromValue(corrections.basePosition().atDistanceAndAzimuth(2500, 90))));
+    QVERIFY(distance->property("visible").toBool());
+    QCOMPARE(distance->property("labelText").toString(), QStringLiteral("2500 m"));
+
+    // A stream that goes stale is no longer selected, and its base station is forgotten with it.
+    QVERIFY(scheduler.advanceBy(GPSCorrectionSelector::FRESHNESS_TIMEOUT + 1s));
+    QCOMPARE(corrections.state(), State::Waiting);
+    QVERIFY(!corrections.basePosition().isValid());
+    QVERIFY(!position->property("visible").toBool());
+    QVERIFY(!distance->property("visible").toBool());
+    ntrip->submit(stationFrame, scheduler.nowMs());
+    QVERIFY(scheduler.advanceBy(100ms));
+    QVERIFY(position->property("visible").toBool());
+
+    // The stream selected next has its own base station, which it has not announced.
+    const auto local = corrections.openSource(GPSCorrectionSettings::LocalReceiver, {});
+    local->submit(observations, scheduler.nowMs());
+    QVERIFY(corrections.basePosition().isValid());
+    QVERIFY(scheduler.advanceBy(GPSCorrectionSelector::SWITCH_HOLD_DOWN));
+    local->submit(observations, scheduler.nowMs());
+    QVERIFY(!corrections.basePosition().isValid());
+    QVERIFY(scheduler.advanceBy(100ms));
+    QCOMPARE(corrections.selectedStream().source, static_cast<int>(GPSCorrectionSettings::LocalReceiver));
+    QVERIFY(!position->property("visible").toBool());
 }
 
 void GPSCorrectionsPanelTest::_ntripErrorActionRetries()

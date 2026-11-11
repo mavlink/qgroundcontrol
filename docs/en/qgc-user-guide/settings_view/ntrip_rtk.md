@@ -6,6 +6,7 @@ Configure where RTK corrections come from and how they reach vehicles: the built
 
 Shows the correction stream currently sent to vehicles and its data rate, whether it comes from NTRIP, the local base station, or UDP.
 **Message Types** lists the RTCM message types of that stream and how many messages of each have arrived. The counts start again when vehicles receive another stream, or when the stream resumes after it stopped for more than 5 seconds.
+**Base position** shows the latitude and longitude of the stream's base station once the stream has sent them (RTCM message 1005 or 1006), and **Base distance from GCS** how far the base station is from the [ground station position](gnss_receiver.md#gcs_position) when that is known. Both disappear when vehicles receive another stream or the stream stops for more than 5 seconds.
 The toolbar GNSS indicator also offers **Connect** once an NTRIP server is configured.
 
 ## NTRIP Connection

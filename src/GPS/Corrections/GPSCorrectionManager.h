@@ -5,6 +5,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "DataRateTracker.h"
@@ -55,6 +56,7 @@ class GPSCorrectionManager : public QObject
     Q_PROPERTY(QString udpInputError READ udpInputError NOTIFY udpInputChanged FINAL)
     Q_PROPERTY(QString udpOutputError READ udpOutputError NOTIFY udpOutputChanged FINAL)
     Q_PROPERTY(RTCMMessageCountModel* messageCounts READ messageCounts CONSTANT FINAL)
+    Q_PROPERTY(QGeoCoordinate basePosition READ basePosition NOTIFY basePositionChanged FINAL)
 
     friend class GPSCorrectionSourceHandle;
 
@@ -138,6 +140,10 @@ public:
     /// empty while none is.
     RTCMMessageCountModel* messageCounts() { return &_messageCounts; }
 
+    /// Where the selected stream's base station is, as its RTCM message 1005 or 1006 says, with the ellipsoid height
+    /// as altitude. Invalid until the stream sends one, and once it is no longer the selected stream.
+    QGeoCoordinate basePosition() const { return _basePosition; }
+
     Q_INVOKABLE static QString sourceName(int source);
 
 signals:
@@ -146,6 +152,7 @@ signals:
     void vehicleBytesSubmittedChanged();
     void udpInputChanged();
     void udpOutputChanged();
+    void basePositionChanged();
 
 private:
     /// See GPSCorrectionSelector::beginSource(); each source calls _endSource() before it is replaced or stops.
@@ -160,6 +167,7 @@ private:
     void _recordSelected(const GPSCorrectionStream& stream, const QByteArray& data);
     /// Forgets what the selected stream's frames told once it is no longer the selected one.
     void _forgetSelected();
+    void _setBasePosition(const QGeoCoordinate& position);
 
     /// Each returns whether the input's state or the output's error changed.
     [[nodiscard]] bool _applyUdpInput();
@@ -188,7 +196,8 @@ private:
     QString _udpInputError;
     QString _udpOutputError;
     RTCMMessageCountModel _messageCounts{this};
-    /// The stream _messageCounts describes. _selected follows it only at the next refresh.
+    QGeoCoordinate _basePosition;
+    /// The stream _messageCounts and _basePosition describe. _selected follows it only at the next refresh.
     GPSCorrectionStream _recordedStream;
     bool _shutdown = false;
 };

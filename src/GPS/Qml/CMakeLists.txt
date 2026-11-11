@@ -1,7 +1,7 @@
 # ============================================================================
 # GPS QML Module
-# Shared GPS components, and the QML types of QGCGPSCore's value types, which build without QML. The GPS services
-# register their own types in the application module.
+# Shared GPS components, and the QML types of QGCGPSCore's value types and models, which build without QML. The GPS
+# services register their own types in the application module.
 # ============================================================================
 
 qt_add_library(GPSModule STATIC)
