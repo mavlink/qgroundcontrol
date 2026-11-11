@@ -12,6 +12,9 @@
 
 class QGCCachedTileSet;
 
+// A signal that passes the type needs it complete, for its meta-type
+Q_MOC_INCLUDE("QGCCachedTileSet.h")
+
 //-----------------------------------------------------------------------------
 
 class QGCFetchTileSetTask : public QGCMapTask
