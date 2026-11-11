@@ -13,12 +13,10 @@ QGCGroupBox {
     id: root
 
     property NTRIPManager ntripManager: QGroundControl.gpsManager.ntrip
-    property Fact enabledFact: root._ntripSettings.ntripServerConnectEnabled
     /// Supplies the bytes queued to vehicle links.
     property GPSCorrectionManager corrections: QGroundControl.gpsManager.corrections
 
     readonly property NTRIPSettings _ntripSettings: QGroundControl.settingsManager.ntripSettings
-    readonly property bool   _isActive:  root.enabledFact.rawValue
     readonly property bool   _hasHost:   root._ntripSettings.ntripServerHostAddress.rawValue !== ""
     readonly property int    _status:    root.ntripManager.connectionStatus
     readonly property NTRIPConnectionStats _stats: root.ntripManager.connectionStats
@@ -45,7 +43,7 @@ QGCGroupBox {
             default:                        return qgcPal.colorGrey
             }
         }
-        statusText: root.ntripManager.statusMessage || root.ntripManager.connectionStatusText
+        statusText: root.ntripManager.statusMessage
         buttonText: {
             switch (root._status) {
             case NTRIPManager.Connecting:   return qsTr("Connecting…")
@@ -55,19 +53,15 @@ QGCGroupBox {
             default:                        return qsTr("Connect")
             }
         }
-        buttonEnabled: root._status !== NTRIPManager.Connecting && (root._isActive || root._hasHost)
+        // Only Connect needs a caster to connect to.
+        buttonEnabled: root._status === NTRIPManager.Disconnected ? root._hasHost
+                                                                  : root._status !== NTRIPManager.Connecting
         // Explicit targets keep repeated clicks idempotent while the manager debounces the setting change.
         onClicked: {
-            switch (root._status) {
-            case NTRIPManager.Error:
-                root.ntripManager.retryNTRIP()
-                break
-            case NTRIPManager.Disconnected:
-                root.enabledFact.rawValue = true
-                break
-            default:
-                root.enabledFact.rawValue = false
-                break
+            if (root._status === NTRIPManager.Disconnected || root._status === NTRIPManager.Error) {
+                root.ntripManager.connectCaster()
+            } else {
+                root.ntripManager.disconnectCaster()
             }
         }
     }
@@ -75,8 +69,8 @@ QGCGroupBox {
     QGCButton {
         objectName: "ntripDisconnectButton"
         text:       qsTr("Disconnect")
-        visible:    root._isActive && root._status === NTRIPManager.Error
-        onClicked:  root.enabledFact.rawValue = false
+        visible:    root._status === NTRIPManager.Error
+        onClicked:  root.ntripManager.disconnectCaster()
     }
 
     GPSNoteLabel {

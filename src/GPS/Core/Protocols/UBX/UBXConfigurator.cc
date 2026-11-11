@@ -233,7 +233,7 @@ bool Protocol::_restartSurveyIn(GPSCommandChannel& channel)
         if (!_transactValset(channel, Plan::fixedBase(*fixed)).succeeded()) {
             return false;
         }
-        return _activateRTCMOutput(channel) == RTCMActivation::Active;
+        return _startFixedBase(channel, *fixed) == RTCMActivation::Active;
     }
     const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&_base.mode);
     if (!survey) {
@@ -264,7 +264,7 @@ bool Protocol::_restartLegacySurveyIn(GPSCommandChannel& channel)
             return false;
         }
         // The legacy activation fails on the outputs it confirmed, so its last command need not have failed.
-        const auto activation = _activateRTCMOutput(channel);
+        const auto activation = _startFixedBase(channel, *fixed);
         if (activation == RTCMActivation::Failed) {
             channel.failControl(QString(RTCM_ACTIVATION_FAILURE));
         }
@@ -336,6 +336,15 @@ bool Protocol::_waitForSurveyStop(GPSCommandChannel& channel)
     }
     channel.finishCommand(GPSCommandOutcome::ReadbackVerified);
     return true;
+}
+
+Protocol::RTCMActivation Protocol::_startFixedBase(GPSCommandChannel& channel, const GPSBaseStationConfig::Fixed& fixed)
+{
+    const auto activation = _activateRTCMOutput(channel);
+    if (activation == RTCMActivation::Active) {
+        channel.context().publishBaseStatus(GPSBaseState::Valid, {}, fixed.position);
+    }
+    return activation;
 }
 
 Protocol::RTCMActivation Protocol::_activateRTCMOutput(GPSCommandChannel& channel)

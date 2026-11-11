@@ -100,7 +100,8 @@ QGCGroupBox {
         labelTextFormat: Text.PlainText
     }
 
-    // Why no stream is routed: the message filter has an entry that is not a message ID.
+    // Why no stream is routed: the message filter has an entry that is not a message ID, or takes none of the
+    // messages that arrive.
     GPSNoteLabel {
         objectName: "correctionsMessageFilterError"
         visible: text !== ""

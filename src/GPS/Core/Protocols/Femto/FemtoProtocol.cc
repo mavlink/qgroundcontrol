@@ -75,7 +75,6 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
     GPSStreamDemux& stream = channel.stream();
     stream.reset(GPSFrameKind::NMEASentence);
     stream.setEnabled(GPSFrameKind::RTCM3, true);
-    _nmea.setRTCMEnabled(true);
     _setUpBase(channel);
     _ready = !channel.failed();
     return _ready;
@@ -105,7 +104,7 @@ void Protocol::_setUpBase(GPSCommandChannel& channel)
     }
     _activateRTCMOutput(channel);
     if (_rtcmOutputActive) {
-        context.publishSurvey(GPSSurveyState::Valid, {}, fixed->position);
+        context.publishBaseStatus(GPSBaseState::Valid, {}, fixed->position);
     }
 }
 
@@ -126,7 +125,7 @@ GPSReceiveUpdates Protocol::_decodeLine(std::string_view line, GPSDecodeContext&
         }
         // Only a survey started by this configuration may complete it; earlier GGA output is stale.
         if (!_rtcmOutputActive && _surveyClock.running() && fix->quality == Femto::Plan::AVERAGED_POSITION_QUALITY) {
-            _surveyClock.finish(context, GPSSurveyState::Valid,
+            _surveyClock.finish(context, GPSBaseState::Valid,
                                 {.latitudeDegrees = fix->latitude,
                                  .longitudeDegrees = fix->longitude,
                                  .altitudeMeters = fix->altitude + fix->geoidSeparation});

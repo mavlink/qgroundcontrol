@@ -63,13 +63,12 @@ void GPSReceiverConfigTest::_unknownDefaults()
     QVERIFY(!satellites.inView);
     QVERIFY(!satellites.used);
 
-    const GPSSurveyReport survey;
+    const GPSBaseStatus survey;
     QVERIFY(std::isnan(survey.position.latitudeDegrees));
     QVERIFY(std::isnan(survey.position.longitudeDegrees));
     QVERIFY(std::isnan(survey.position.altitudeMeters));
     QVERIFY(!survey.meanAccuracyMeters);
-    QVERIFY(!survey.valid);
-    QVERIFY(!survey.active);
+    QCOMPARE(survey.state, GPSBaseState::Inactive);
 }
 
 void GPSReceiverConfigTest::_baseValidation_data()

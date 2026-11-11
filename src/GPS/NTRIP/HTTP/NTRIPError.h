@@ -11,7 +11,11 @@ Q_NAMESPACE
 enum class NTRIPError
 {
     ConnectionTimeout,
+    /// Nothing arrived for the stall timeout after the stream was due to deliver.
     DataWatchdog,
+    /// Data arrived for the stall timeout without a valid RTCM 3 message: before any corrections, a mountpoint that
+    /// sends another format.
+    InvalidStream,
     AuthFailed,
     SocketError,
     SslError,
@@ -21,6 +25,7 @@ enum class NTRIPError
     /// HTTP 3xx, 400 or 403: the caster does not serve the request as sent, so repeating it cannot succeed.
     RequestRejected,
     HeaderTooLarge,
+    /// The caster does not have the mountpoint: it answered with its source table, or with HTTP 404 or 410.
     InvalidMountpoint,
     InvalidConfig,
     Unknown,

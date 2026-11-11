@@ -22,4 +22,3 @@ configure configured=0 baud=0->115200 failure=protocol ready=0 elapsed=1ms
     text "GPGSA 1\r\n"
   write "MODE BASE TIME 5 0" 20 rejected required
     text "MODE BASE TIME 5 0\r\n"
-  survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1

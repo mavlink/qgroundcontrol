@@ -198,12 +198,16 @@ QString constellationName(GPSConstellation constellation)
 QString receiverStatus(const ReceiverStatus& status)
 {
     using Mode = BaseModeDefinition::Mode;
-    if (!status.configured) {
-        if (status.hasReceiver) {
+    switch (status.state) {
+        case GPSReceiver::State::Disconnected:
+            return {};
+        case GPSReceiver::State::Reconnecting:
+            return GPSReceiver::tr("Connecting automatically...");
+        case GPSReceiver::State::Connecting:
             return status.identifying ? GPSReceiver::tr("Identifying receiver...")
                                       : GPSReceiver::tr("Connecting to receiver...");
-        }
-        return status.reconnecting ? GPSReceiver::tr("Connecting automatically...") : QString();
+        case GPSReceiver::State::Connected:
+            break;
     }
     if (status.role == RTKSettings::Passive) {
         return status.forwardingCorrections ? GPSReceiver::tr("Passive receiver connected; forwarding its RTCM")

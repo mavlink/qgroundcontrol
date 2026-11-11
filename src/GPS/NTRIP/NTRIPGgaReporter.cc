@@ -44,12 +44,8 @@ unsigned ggaQuality(GPSFixQuality quality)
 
 bool reportable(const std::optional<GPSObservation>& observation)
 {
-    if (!observation || observation->altitudeDatum != GPSAltitudeDatum::MeanSeaLevel ||
-        observation->fixQuality == GPSFixQuality::NoFix) {
-        return false;
-    }
-    const QGeoCoordinate coordinate = observation->position.coordinate();
-    return coordinate.isValid() && qIsFinite(coordinate.altitude());
+    return observation && observation->fixQuality != GPSFixQuality::NoFix &&
+           observation->position.coordinate().isValid();
 }
 }  // namespace
 
@@ -159,7 +155,7 @@ void NTRIPGgaReporter::_sendGGA()
     const NMEA::GGA fix{
         .latitude = coordinate.latitude(),
         .longitude = coordinate.longitude(),
-        .altitude = coordinate.altitude(),
+        .altitude = position.altitudeMslMeters().value_or(qQNaN()),
         .hdop = position.horizontalDop && qIsFinite(*position.horizontalDop) && *position.horizontalDop >= 0
                     ? *position.horizontalDop
                     : qQNaN(),

@@ -158,6 +158,9 @@ private:
     bool _restartLegacySurveyIn(GPSCommandChannel& channel);
     bool _disableTimeMode(GPSCommandChannel& channel);
     bool _waitForSurveyStop(GPSCommandChannel& channel);
+    /// Starts RTCM output for the fixed position the receiver accepted and, once it runs, reports the base valid: no
+    /// receiver message does, as NAV-SVIN describes a survey-in.
+    RTCMActivation _startFixedBase(GPSCommandChannel& channel, const GPSBaseStationConfig::Fixed& fixed);
     RTCMActivation _activateRTCMOutput(GPSCommandChannel& channel);
     RTCMActivation _activateLegacyRTCMOutput(GPSCommandChannel& channel);
     void _disableUnexpectedMessage(GPSCommandChannel& channel, uint16_t message);

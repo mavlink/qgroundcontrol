@@ -430,27 +430,46 @@ void NTRIPHttpTransportTest::_validFrameWatchdog()
         _feed(transport, "garbage", 123);
         QVERIFY(errors.isEmpty());
     } else {
+        // The first data starts the stall clock, and more of it does not restart it.
+        _feed(transport, data, 123);
         QVERIFY(scheduler.advanceBy(NTRIPHttpTransport::DATA_WATCHDOG / 2));
         _feed(transport, data, 123);
+        QVERIFY(errors.isEmpty());
     }
     QVERIFY(scheduler.advanceBy(NTRIPHttpTransport::DATA_WATCHDOG / 2));
     QCOMPARE(errors.size(), 1);
     const auto failure = failureAt(errors);
-    QCOMPARE(failure.code, NTRIPError::DataWatchdog);
+    QCOMPARE(failure.code, NTRIPError::InvalidStream);
     QVERIFY(failure.detail.contains(QStringLiteral("valid RTCM")));
     QCOMPARE(scheduler.pendingCount(), 0);
 }
 
+void NTRIPHttpTransportTest::_silentStreamWatchdog_data()
+{
+    QTest::addColumn<bool>("corrections");
+    QTest::newRow("after-corrections") << true;
+    // A network RTK (VRS) mountpoint sends nothing before it is told a position, however long that takes.
+    QTest::newRow("after-position-report") << false;
+}
+
 void NTRIPHttpTransportTest::_silentStreamWatchdog()
 {
+    QFETCH(bool, corrections);
     CasterSession session;
     const QSignalSpy& errors = session.signal("error");
     auto* connection = session.start();
     QVERIFY(connection);
     QVERIFY(connection->waitForRequest().endsWith("\r\n\r\n"));
-    const QByteArray response = "HTTP/1.1 200 OK\r\n\r\n" + GPSTest::rtcmMessage(1005);
+    const QByteArray response = "HTTP/1.1 200 OK\r\n\r\n" + (corrections ? GPSTest::rtcmMessage(1005) : QByteArray());
     QCOMPARE(connection->write(response), response.size());
-    QTRY_COMPARE_WITH_TIMEOUT(session.spy.count("correctionFrameReceived"), 1, TestTimeout::mediumMs());
+    if (corrections) {
+        QTRY_COMPARE_WITH_TIMEOUT(session.spy.count("correctionFrameReceived"), 1, TestTimeout::mediumMs());
+    } else {
+        QTRY_COMPARE_WITH_TIMEOUT(session.spy.count("connected"), 1, TestTimeout::mediumMs());
+        QVERIFY(session.scheduler.advanceBy(10 * NTRIPHttpTransport::DATA_WATCHDOG));
+        QVERIFY(errors.isEmpty());
+        session.transport.sendNMEA("$GPGGA,120000.00,4700.0000,N,00800.0000,E,1,12,1.0,500.0,M,0.0,M,,*65\r\n");
+    }
     QVERIFY(session.scheduler.advanceBy(NTRIPHttpTransport::DATA_WATCHDOG - std::chrono::milliseconds(1)));
     QVERIFY(errors.isEmpty());
     expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg,
@@ -589,8 +608,8 @@ void NTRIPHttpTransportTest::_pendingErrorRetiresAttempt()
         transport->start();
         _feed(*transport, "HTTP/1.1 200 OK\r\n\r\n", 456);
     }
-    // Only a restarted, connected attempt's data watchdog remains.
-    QCOMPARE(scheduler.pendingCount(), action == 2 ? 1 : 0);
+    // Nothing remains scheduled: a restarted, connected attempt's stall clock waits for data.
+    QCOMPARE(scheduler.pendingCount(), 0);
     QVERIFY(scheduler.advanceBy(NTRIPHttpSession::ERROR_BODY_TIMEOUT + std::chrono::milliseconds{50}));
     QVERIFY(errors.isEmpty());
 }

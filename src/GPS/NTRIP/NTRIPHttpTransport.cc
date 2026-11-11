@@ -52,6 +52,7 @@ void NTRIPHttpTransport::stop()
 NTRIPHttpSession* NTRIPHttpTransport::_attachSession(NTRIPHttpSession* session)
 {
     _rtcmDecoder.reset();
+    _dataSinceValidFrame = false;
     _session = session;
     // A retired session is disconnected, and a failed attempt sets _stopped, so these run only for the live attempt.
     connect(session, &NTRIPHttpSession::certificatePinned, this, [this](const QString& pin) {
@@ -62,6 +63,7 @@ NTRIPHttpSession* NTRIPHttpTransport::_attachSession(NTRIPHttpSession* session)
     connect(session, &NTRIPHttpSession::responseStarted, this, &NTRIPHttpTransport::_onResponseStarted);
     connect(session, &NTRIPHttpSession::bodyReceived, this, [this](const QByteArray& body, qint64 receivedAtMs) {
         _dataSinceValidFrame = true;
+        _expectData();
         _parseRtcm(body, receivedAtMs);
     });
     connect(session, &NTRIPHttpSession::failed, this, &NTRIPHttpTransport::_fail);
@@ -93,6 +95,15 @@ void NTRIPHttpTransport::_startConnectTimeout()
     });
 }
 
+void NTRIPHttpTransport::_expectData()
+{
+    if (_dataWatchdogTask.active()) {
+        return;
+    }
+    _lastValidFrameMs = _nowMs();
+    _startDataWatchdog(DATA_WATCHDOG);
+}
+
 void NTRIPHttpTransport::_startDataWatchdog(std::chrono::milliseconds delay)
 {
     // Valid frames only record their time; the single timer re-arms for the remainder when it expires early.
@@ -101,7 +112,7 @@ void NTRIPHttpTransport::_startDataWatchdog(std::chrono::milliseconds delay)
         if (idle < DATA_WATCHDOG) {
             _startDataWatchdog(DATA_WATCHDOG - idle);
         } else if (_dataSinceValidFrame) {
-            _fail({NTRIPError::DataWatchdog, tr("No valid RTCM corrections received")});
+            _fail({NTRIPError::InvalidStream, tr("No valid RTCM corrections received")});
         } else {
             const auto secs = std::chrono::duration_cast<std::chrono::seconds>(DATA_WATCHDOG).count();
             qCWarning(NTRIPHttpTransportLog) << "No data received for" << secs << "seconds";
@@ -139,16 +150,8 @@ void NTRIPHttpTransport::_fail(const NTRIPFailure& failure)
 
 void NTRIPHttpTransport::_onResponseStarted()
 {
-    // Observers of connected() may stop or restart this transport.
-    const NTRIPHttpSession* const session = _session;
     _connectTimeoutTask.cancel();
     emit connected();
-    if (!_isCurrent(session)) {
-        return;
-    }
-    _lastValidFrameMs = _nowMs();
-    _dataSinceValidFrame = false;
-    _startDataWatchdog(DATA_WATCHDOG);
 }
 
 void NTRIPHttpTransport::_parseRtcm(const QByteArray& buffer, qint64 receivedAtMs)
@@ -180,5 +183,6 @@ void NTRIPHttpTransport::sendNMEA(const QByteArray& nmea)
         _fail({NTRIPError::SocketError, tr("Socket did not accept the complete NTRIP write")});
         return;
     }
+    _expectData();
     qCDebug(NTRIPHttpTransportLog) << "Queued NMEA bytes:" << nmea.size();
 }

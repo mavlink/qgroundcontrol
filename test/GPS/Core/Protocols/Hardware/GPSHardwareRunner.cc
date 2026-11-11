@@ -469,7 +469,7 @@ int replayRecording(const Options& options, QJsonObject report)
     QMap<int, int> correctionMessages;
     QMap<int, qint64> correctionBytes;
     int surveys = 0;
-    std::optional<GPSSurveyReport> lastSurvey;
+    std::optional<GPSBaseStatus> lastSurvey;
     GPSIntegrityReport integrity;
     GPSDecodedData::SatelliteCounts satelliteCounts;
     std::chrono::microseconds clockOffset{0};
@@ -492,7 +492,7 @@ int replayRecording(const Options& options, QJsonObject report)
                         const GPSSatelliteReport satellite = satelliteCounts.update(decoded, nowUs());
                         maxInView = std::max(maxInView, satellite.inView.value_or(-1));
                         maxUsed = std::max(maxUsed, satellite.used.value_or(-1));
-                    } else if constexpr (std::is_same_v<Event, GPSSurveyReport>) {
+                    } else if constexpr (std::is_same_v<Event, GPSBaseStatus>) {
                         ++surveys;
                         lastSurvey = decoded;
                     } else if constexpr (std::is_same_v<Event, GPSRTCMFrame>) {
@@ -558,8 +558,8 @@ int replayRecording(const Options& options, QJsonObject report)
     if (surveyDecoded) {
         QJsonObject survey{{"messages", surveys}};
         if (lastSurvey) {
-            survey.insert("active", lastSurvey->active);
-            survey.insert("valid", lastSurvey->valid);
+            survey.insert("active", lastSurvey->state == GPSBaseState::Active);
+            survey.insert("valid", lastSurvey->state == GPSBaseState::Valid);
             survey.insert("duration_s", static_cast<qint64>(lastSurvey->duration.count()));
         }
         report.insert("survey", survey);
@@ -745,21 +745,23 @@ int run(const Options& options)
             ++correctionMessages[messageId];
             correctionBytes[messageId] += static_cast<qint64>(frame.size());
         };
-        sinks.onSurveyIn = [&](const GPSSurveyReport& survey) {
+        sinks.onBaseStatus = [&](const GPSBaseStatus& survey) {
             const bool prior = survey.duration.count() > elapsed.elapsed() / 1000 + 2;
+            const bool active = survey.state == GPSBaseState::Active;
+            const bool valid = survey.state == GPSBaseState::Valid;
             QString observation = "indeterminate";
             if (prior) {
                 observation = "retained_or_preexisting";
-            } else if (survey.active && !survey.valid) {
+            } else if (active) {
                 observation = "consistent_with_fresh";
-            } else if (survey.valid) {
+            } else if (valid) {
                 observation = "completed_origin_unknown";
             }
             if (surveys.size() < 64) {
                 surveys.append(
                     QJsonObject{{"duration_s", static_cast<qint64>(survey.duration.count())},
-                                {"active", survey.active},
-                                {"valid", survey.valid},
+                                {"active", active},
+                                {"valid", valid},
                                 {"mean_accuracy_m", survey.meanAccuracyMeters ? QJsonValue(*survey.meanAccuracyMeters)
                                                                               : QJsonValue(QJsonValue::Null)},
                                 {"observed_after_ms", elapsed.elapsed()},

@@ -35,8 +35,6 @@ public:
     /// Starts a new receiver session: clears every framer of @a stream, the epochs and the working reports.
     void reset(GPSStreamDemux& stream);
 
-    void setRTCMEnabled(bool enabled) { _rtcmEnabled = enabled; }
-
     /// The whole frame handling: publishes an RTCM3 frame, or decodes a line or sentence as standard NMEA, then with
     /// @a vendor, which takes the line and returns its updates, and publishes what the line completed.
     template <typename Vendor>
@@ -73,7 +71,7 @@ public:
     [[nodiscard]] GPSDecodedPosition& position() { return _position; }
 
 private:
-    /// Publishes a receiver RTCM3 frame while RTCM output is enabled.
+    /// Publishes a receiver RTCM3 frame.
     GPSReceiveUpdates _decodeRTCM(const GPSFrame& frame, GPSDecodeContext& context);
 
     /// Standard NMEA handling of one complete line, without CR/LF.
@@ -92,5 +90,4 @@ private:
     NMEA::SatelliteEpoch _pendingSatellites;
     NMEA::NavigationEpochAssembler _navigationAssembler;
     Navigation _navigation = Navigation::StandardNMEA;
-    bool _rtcmEnabled = true;
 };

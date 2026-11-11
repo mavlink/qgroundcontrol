@@ -64,15 +64,22 @@ struct EventLog
     std::vector<GPSConfigurationEvidence> commands;
     /// The latest position delivered.
     GPSDecodedPosition position;
+    /// The RTCM3 frames delivered while the base status delivered last was Valid: those GPSDriver forwards for a base
+    /// it configured.
+    int correctionsWhileValid = 0;
 
     /// Records into this log, which must outlive the runtime.
     GPSRuntimeObserver observer()
     {
         GPSRuntimeObserver result;
-        result.decoded = [this](const GPSEventBatch& batch) {
+        result.decoded = [this, baseValid = false](const GPSEventBatch& batch) mutable {
             for (const auto& event : batch.events) {
                 if (const auto* report = std::get_if<GPSDecodedPosition>(&event)) {
                     position = *report;
+                } else if (const auto* status = std::get_if<GPSBaseStatus>(&event)) {
+                    baseValid = status->state == GPSBaseState::Valid;
+                } else if (baseValid && std::holds_alternative<GPSRTCMFrame>(event)) {
+                    ++correctionsWhileValid;
                 }
             }
             events.insert(events.end(), batch.events.begin(), batch.events.end());

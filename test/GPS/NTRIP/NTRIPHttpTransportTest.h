@@ -40,6 +40,7 @@ private slots:
     void _errorBodyEnds();
     void _validFrameWatchdog_data();
     void _validFrameWatchdog();
+    void _silentStreamWatchdog_data();
     void _silentStreamWatchdog();
 
     // Observers that stop or restart the transport

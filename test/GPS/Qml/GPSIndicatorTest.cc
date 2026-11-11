@@ -465,7 +465,7 @@ void GPSIndicatorTest::_showsReceiverWithoutVehicleGPS()
     GPSSatelliteReport used;
     used.used = 9;
     worker->satellites(used);
-    worker->survey({.active = surveying});
+    worker->baseStatus({.state = surveying ? GPSBaseState::Active : GPSBaseState::Inactive});
     QVERIFY(rtkLabel->property("visible").toBool());
     QCOMPARE(rtkLabel->property("text").toString(), label);
     QVERIFY(satellites->property("visible").toBool());

@@ -23,6 +23,7 @@ private slots:
     void _missingTransportReportsOpenFailure_data();
     void _missingTransportReportsOpenFailure();
     void _workerLifecycle();
+    void _configuredReceiverRidesOutSilence();
     void _configuredReceiverReportsReadyThenLoss_data();
     void _configuredReceiverReportsReadyThenLoss();
     void _quectelConsentRefusal_data();

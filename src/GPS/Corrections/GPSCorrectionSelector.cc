@@ -19,10 +19,14 @@ bool GPSCorrectionSelector::_fresh(const Category& category, qint64 now) const
 
 bool GPSCorrectionSelector::_eligible(int index, qint64 now) const
 {
-    if (index <= 0 || !_fresh(_categories[index], now)) {
-        return false;
-    }
-    return _configuredSource == GPSCorrectionSettings::HighestPriority || index == static_cast<int>(_configuredSource);
+    return index > 0 && _fresh(_categories[index], now) &&
+           routes(static_cast<GPSCorrectionSettings::CorrectionSource>(index));
+}
+
+bool GPSCorrectionSelector::routes(GPSCorrectionSettings::CorrectionSource source) const
+{
+    return _index(source) > 0 &&
+           (_configuredSource == GPSCorrectionSettings::HighestPriority || source == _configuredSource);
 }
 
 void GPSCorrectionSelector::_select(qint64 now)

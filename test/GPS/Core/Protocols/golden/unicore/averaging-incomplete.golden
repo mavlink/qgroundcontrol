@@ -37,7 +37,6 @@ configure configured=1 baud=0->115200 failure=none ready=1 elapsed=2ms
     text "RTCM1094 1\r\n"
   write "RTCM1124 1" 12 acknowledged required
     text "RTCM1124 1\r\n"
-  survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
   survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
 stream failure=none ready=1
   usage used=12 receipt=1
@@ -47,10 +46,13 @@ stream failure=none ready=1
   survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
   survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
   survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+  rtcm type=1005 size=25 fnv=f8e3bb62
+  rtcm type=1077 size=14 fnv=61b86922
   survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
   survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
   survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
   survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
   survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+  rtcm type=1005 size=25 fnv=f8e3bb62
   survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
   survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1

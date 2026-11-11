@@ -34,3 +34,4 @@ stream failure=protocol ready=0
   write "$PASHS,RT3,1074,A,ON,1" 24 rejected required
     text "$PASHS,RT3,1074,A,ON,1\r\n"
   position fix=rtk-float lat=47.00000000 lon=8.00000000 msl=nan ellipsoid=500.0000 hacc=0.6403 vacc=0.9000 hdop=1.000 vdop=1.000 speed=5.1444 course=1.570796 used=12 utc=1325072701000000 velocity=1 receipt=1
+  survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1

@@ -55,31 +55,57 @@ void NTRIPGgaReporterTest::_sourceClearedOnStopAndFreshStart()
 void NTRIPGgaReporterTest::_gcsObservation_data()
 {
     QTest::addColumn<QGeoCoordinate>("coordinate");
+    QTest::addColumn<GPSAltitudeDatum>("datum");
+    QTest::addColumn<double>("ellipsoidHeight");
     QTest::addColumn<double>("horizontalAccuracy");
     QTest::addColumn<bool>("fixValid");
-    QTest::addColumn<bool>("accepted");
+    // The altitude field of the GGA sent, which is empty without an altitude above mean sea level; null when no GGA
+    // is sent.
+    QTest::addColumn<QByteArray>("altitude");
+    using Datum = GPSAltitudeDatum;
     const QGeoCoordinate position(47.3977, 8.5456, 450);
-    QTest::newRow("missing-vertical-accuracy") << position << 1.0 << true << true;
-    QTest::newRow("missing-all-accuracy") << position << qQNaN() << true << true;
-    QTest::newRow("unknown-altitude") << QGeoCoordinate(47.3977, 8.5456) << 1.0 << true << false;
-    QTest::newRow("infinite-altitude") << QGeoCoordinate(47.3977, 8.5456, qInf()) << 1.0 << true << false;
-    QTest::newRow("zero-island") << QGeoCoordinate(0, 0, 450) << 1.0 << true << true;
-    QTest::newRow("invalid-coordinate") << QGeoCoordinate() << 1.0 << true << false;
-    QTest::newRow("no-fix") << position << 1.0 << false << false;
+    const QGeoCoordinate horizontal(47.3977, 8.5456);
+    const double none = qQNaN();
+    const QByteArray known("450.0");
+    const QByteArray empty("");
+    QTest::newRow("missing-vertical-accuracy") << position << Datum::MeanSeaLevel << none << 1.0 << true << known;
+    QTest::newRow("missing-all-accuracy") << position << Datum::MeanSeaLevel << none << none << true << known;
+    // A caster places the rover by latitude and longitude, so a position whose height is in another datum, or
+    // missing, still reports: the device position on Android, Linux and Windows, and a base's fixed or surveyed
+    // position.
+    QTest::newRow("ellipsoid-altitude") << position << Datum::Ellipsoid << none << 1.0 << true << empty;
+    QTest::newRow("unknown-datum") << position << Datum::Unknown << none << 1.0 << true << empty;
+    QTest::newRow("ellipsoid-height-only") << horizontal << Datum::Unknown << 495.5 << 1.0 << true << empty;
+    QTest::newRow("unknown-altitude") << horizontal << Datum::Unknown << none << 1.0 << true << empty;
+    QTest::newRow("infinite-altitude") << QGeoCoordinate(47.3977, 8.5456, qInf()) << Datum::MeanSeaLevel << none << 1.0
+                                       << true << empty;
+    QTest::newRow("zero-island") << QGeoCoordinate(0, 0, 450) << Datum::MeanSeaLevel << none << 1.0 << true << known;
+    QTest::newRow("invalid-coordinate") << QGeoCoordinate() << Datum::MeanSeaLevel << none << 1.0 << true
+                                        << QByteArray();
+    QTest::newRow("no-fix") << position << Datum::MeanSeaLevel << none << 1.0 << false << QByteArray();
 }
 
 void NTRIPGgaReporterTest::_gcsObservation()
 {
     QFETCH(QGeoCoordinate, coordinate);
+    QFETCH(GPSAltitudeDatum, datum);
+    QFETCH(double, ellipsoidHeight);
     QFETCH(double, horizontalAccuracy);
     QFETCH(bool, fixValid);
-    QFETCH(bool, accepted);
+    QFETCH(QByteArray, altitude);
+    const bool accepted = !altitude.isNull();
     NTRIPGgaReporter provider;
     MockNTRIPTransport transport;
     provider.configure({Source::GCSPosition});
     provider.setPositionProvider(Source::GCSPosition, [&]() {
-        return ggaObservation(coordinate, fixValid ? GPSFixQuality::Fix3D : GPSFixQuality::NoFix, std::nullopt,
-                              qIsFinite(horizontalAccuracy) ? std::optional<double>(horizontalAccuracy) : std::nullopt);
+        auto observation =
+            ggaObservation(coordinate, fixValid ? GPSFixQuality::Fix3D : GPSFixQuality::NoFix, std::nullopt,
+                           qIsFinite(horizontalAccuracy) ? std::optional<double>(horizontalAccuracy) : std::nullopt);
+        observation->altitudeDatum = datum;
+        if (qIsFinite(ellipsoidHeight)) {
+            observation->altitudeEllipsoidMeters = ellipsoidHeight;
+        }
+        return observation;
     });
     provider.start(&transport);
     QCOMPARE(transport.sentNmea.size(), accepted ? 1 : 0);
@@ -94,7 +120,7 @@ void NTRIPGgaReporterTest::_gcsObservation()
         QVERIFY(qAbs(fix->longitude - coordinate.longitude()) < 1e-6);
         const auto fields = transport.sentNmea.first().split(',');
         QCOMPARE(fields.size(), 15);
-        QCOMPARE(fields.at(NMEA::Field::GGA_ALTITUDE), QByteArray("450.0"));
+        QCOMPARE(fields.at(NMEA::Field::GGA_ALTITUDE), altitude);
         QCOMPARE(fields.at(NMEA::Field::GGA_ALTITUDE_UNITS), QByteArray("M"));
         QVERIFY(fields.at(NMEA::Field::GGA_GEOID_SEPARATION).isEmpty());
         QCOMPARE(fields.at(NMEA::Field::GGA_GEOID_UNITS), QByteArray("M"));
@@ -169,7 +195,9 @@ void NTRIPGgaReporterTest::_ggaSelectionDiagnostics()
     provider.setPositionProvider(Source::VehicleGPS, [&]() {
         return vehicleAvailable ? ggaObservation(QGeoCoordinate(47.3977, 8.5456, 450)) : std::nullopt;
     });
-    provider.setPositionProvider(Source::RTKReceiver, []() { return ggaObservation(QGeoCoordinate(47, 8)); });
+    // A source without a fix is never eligible.
+    provider.setPositionProvider(Source::RTKReceiver,
+                                 []() { return ggaObservation(QGeoCoordinate(47, 8, 450), GPSFixQuality::NoFix); });
     provider.setPositionProvider(Source::GCSPosition,
                                  [&]() { return gcsAvailable ? ggaObservation(gcsPosition) : std::nullopt; });
 

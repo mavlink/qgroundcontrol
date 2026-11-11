@@ -157,7 +157,7 @@ void navigation(GPSTestClock& clock)
     receiver.events.clear();
     receiver.feed(std::string(10000, 'A') + "\n" + gga);
     QCOMPARE(receiver.reports<GPSDecodedPosition>().size(), 1);
-    QVERIFY(receiver.reports<GPSSurveyReport>().empty());
+    QVERIFY(receiver.reports<GPSBaseStatus>().empty());
     QVERIFY(receiver.writes == 0 && receiver.reads == 0 && receiver.baud == 0);
 
     for (const auto* body :

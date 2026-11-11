@@ -161,68 +161,70 @@ void GPSBaseStationSettingsTest::_baseStationState()
     const auto passive = gpsBaseStationStateFor(GPSType::Passive, {.baudRate = 115200});
     QVERIFY(!passive.mode);
     QVERIFY(!passive.position);
-    QVERIFY(!passive.surveyAccuracyLimitMeters);
+    QVERIFY(!passive.assumedAccuracyMeters);
 
+    // No base has a position before its receiver reports one, a fixed base included.
     const auto fixed = stateFor(1, GPSType::UBlox);
     QCOMPARE(fixed.mode, std::optional(Mode::BaseFixed));
-    QVERIFY(fixed.position);
-    QCOMPARE(fixed.position->first, SAVED_FIXED_POSITION);
-    QCOMPARE(fixed.position->second, 1.5);
-    QVERIFY(!fixed.surveyAccuracyLimitMeters);
+    QVERIFY(!fixed.position);
+    QCOMPARE(fixed.assumedAccuracyMeters, std::optional(1.5));
 
     const auto survey = stateFor(0, GPSType::UBlox);
     QCOMPARE(survey.mode, std::optional(Mode::BaseSurveyIn));
     QVERIFY(!survey.position);
-    QCOMPARE(survey.surveyAccuracyLimitMeters, std::optional(1.75));
+    QCOMPARE(survey.assumedAccuracyMeters, std::optional(1.75));
 
     const auto averaging = stateFor(2, GPSType::Unicore);
     QCOMPARE(averaging.mode, std::optional(Mode::BaseReceiverAveraging));
     QVERIFY(!averaging.position);
-    QVERIFY(!averaging.surveyAccuracyLimitMeters);
+    QVERIFY(!averaging.assumedAccuracyMeters);
 }
 
-void GPSBaseStationSettingsTest::_surveyUpdatesBasePosition_data()
+void GPSBaseStationSettingsTest::_baseStatusUpdatesBasePosition_data()
 {
     QTest::addColumn<int>("mode");
-    QTest::addColumn<bool>("valid");
+    QTest::addColumn<GPSBaseState>("state");
     QTest::addColumn<double>("latitude");
     QTest::addColumn<double>("meanAccuracy");
     QTest::addColumn<double>("expectedAccuracy");
     // A NaN mean accuracy is unreported; a NaN expected accuracy means no position. Mode -1 is a passive receiver.
-    QTest::newRow("survey-reported-accuracy") << 0 << true << 11.0 << 1.5 << 1.5;
-    QTest::newRow("survey-assumes-limit") << 0 << true << 11.0 << NAN_DOUBLE << 1.75;
-    QTest::newRow("survey-invalid") << 0 << false << 11.0 << 1.5 << NAN_DOUBLE;
-    QTest::newRow("survey-unlocated") << 0 << true << NAN_DOUBLE << 1.5 << NAN_DOUBLE;
-    QTest::newRow("averaging-reported-accuracy") << 2 << true << 11.0 << 0.5 << 0.5;
-    QTest::newRow("averaging-without-accuracy") << 2 << true << 11.0 << NAN_DOUBLE << NAN_DOUBLE;
-    QTest::newRow("fixed-keeps-saved-position") << 1 << true << 11.0 << 0.5 << 1.5;
-    QTest::newRow("passive-has-no-position") << -1 << true << 11.0 << 0.5 << NAN_DOUBLE;
+    QTest::newRow("survey-reported-accuracy") << 0 << GPSBaseState::Valid << 11.0 << 1.5 << 1.5;
+    QTest::newRow("survey-assumes-limit") << 0 << GPSBaseState::Valid << 11.0 << NAN_DOUBLE << 1.75;
+    QTest::newRow("survey-running") << 0 << GPSBaseState::Active << 11.0 << 1.5 << NAN_DOUBLE;
+    QTest::newRow("survey-lost") << 0 << GPSBaseState::Inactive << 11.0 << 1.5 << NAN_DOUBLE;
+    QTest::newRow("survey-unlocated") << 0 << GPSBaseState::Valid << NAN_DOUBLE << 1.5 << NAN_DOUBLE;
+    QTest::newRow("averaging-reported-accuracy") << 2 << GPSBaseState::Valid << 11.0 << 0.5 << 0.5;
+    QTest::newRow("averaging-without-accuracy") << 2 << GPSBaseState::Valid << 11.0 << NAN_DOUBLE << NAN_DOUBLE;
+    // A fixed base follows its receiver as a surveying one does: the reported position, at the configured accuracy.
+    QTest::newRow("fixed-assumes-configured-accuracy") << 1 << GPSBaseState::Valid << 11.0 << NAN_DOUBLE << 1.5;
+    QTest::newRow("fixed-lost") << 1 << GPSBaseState::Inactive << 11.0 << NAN_DOUBLE << NAN_DOUBLE;
+    QTest::newRow("passive-has-no-position") << -1 << GPSBaseState::Valid << 11.0 << 0.5 << NAN_DOUBLE;
 }
 
-void GPSBaseStationSettingsTest::_surveyUpdatesBasePosition()
+void GPSBaseStationSettingsTest::_baseStatusUpdatesBasePosition()
 {
     QFETCH(int, mode);
-    QFETCH(bool, valid);
+    QFETCH(GPSBaseState, state);
     QFETCH(double, latitude);
     QFETCH(double, meanAccuracy);
     QFETCH(double, expectedAccuracy);
     const GPSType type = mode == 2 ? GPSType::Unicore : GPSType::UBlox;
-    auto state = mode < 0
-                     ? gpsBaseStationStateFor(GPSType::Passive, {.baudRate = 115200})
-                     : gpsBaseStationStateFor(type, gpsReceiverConfigFor(savedSettings(mode), type, 0, false, nullptr));
-    GPSSurveyReport report;
-    report.valid = true;
+    auto base = mode < 0
+                    ? gpsBaseStationStateFor(GPSType::Passive, {.baudRate = 115200})
+                    : gpsBaseStationStateFor(type, gpsReceiverConfigFor(savedSettings(mode), type, 0, false, nullptr));
+    GPSBaseStatus report;
+    report.state = GPSBaseState::Valid;
     report.position = {.latitudeDegrees = 10.0, .longitudeDegrees = 20.0, .altitudeMeters = 400.0f};
     report.meanAccuracyMeters = 3.0;
-    state.applySurvey(report);
-    report.valid = valid;
+    base.applyStatus(report);
+    report.state = state;
     report.position.latitudeDegrees = latitude;
     report.meanAccuracyMeters = std::isnan(meanAccuracy) ? std::nullopt : std::optional(meanAccuracy);
-    state.applySurvey(report);
-    QCOMPARE(state.position.has_value(), !std::isnan(expectedAccuracy));
-    if (state.position) {
-        QCOMPARE(state.position->first, mode == 1 ? SAVED_FIXED_POSITION : report.position);
-        QCOMPARE(state.position->second, expectedAccuracy);
+    base.applyStatus(report);
+    QCOMPARE(base.position.has_value(), !std::isnan(expectedAccuracy));
+    if (base.position) {
+        QCOMPARE(base.position->first, report.position);
+        QCOMPARE(base.position->second, expectedAccuracy);
     }
 }
 

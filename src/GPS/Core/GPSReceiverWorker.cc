@@ -84,7 +84,7 @@ void GPSReceiverWorker::_runSession()
 
     GPSDeadline inactiveAt{0};
     const auto usefulDataReceived = [this, &inactiveAt] {
-        inactiveAt = GPSDeadline::after(_clock.nowUs(), USEFUL_DATA_TIMEOUT);
+        inactiveAt = GPSDeadline::after(_clock.nowUs(), IDLE_SESSION_TIMEOUT);
     };
     const auto inactiveFor = [this, &inactiveAt] { return inactiveAt.remaining(_clock.nowUs()); };
     GPSDriverSinks sinks;
@@ -95,7 +95,7 @@ void GPSReceiverWorker::_runSession()
     sinks.onRTCM = [this](const QByteArray& message) {
         emit rtcmDataReceived(message, static_cast<qint64>(MonotonicClock::nowUs() / 1000));
     };
-    sinks.onSurveyIn = [this](const GPSSurveyReport& report) { emit surveyInStatusUpdated(report); };
+    sinks.onBaseStatus = [this](const GPSBaseStatus& report) { emit surveyInStatusUpdated(report); };
     bool identified = false;
     sinks.onReceiverDetected = [this, &identified](GPSType type) {
         identified = true;
@@ -119,6 +119,7 @@ void GPSReceiverWorker::_runSession()
 
     usefulDataReceived();
     GPSInputMonitor inputMonitor(_clock.nowUs(), USEFUL_DATA_TIMEOUT);
+    bool silent = false;
     bool cancelled = false;
     GPSReceiveResult failure{GPSProtocolError::Transport};
     while (!cancelToken.isCancelled() && !transport->fatalError() &&
@@ -136,7 +137,13 @@ void GPSReceiverWorker::_runSession()
             cancelled = true;
             break;
         }
-        if (!_endsWhenIdle && inputMonitor.update(result, identified, _clock.nowUs())) {
+        if (_endsWhenIdle) {
+            // A configured receiver's output is known, so only its silence is reported.
+            const bool silentNow = inactiveFor() <= IDLE_SESSION_TIMEOUT - USEFUL_DATA_TIMEOUT;
+            if (std::exchange(silent, silentNow) != silentNow) {
+                emit inputProblem(silentNow ? GPSInputProblem::NoData : GPSInputProblem::None);
+            }
+        } else if (inputMonitor.update(result, identified, _clock.nowUs())) {
             emit inputProblem(inputMonitor.problem());
         }
     }

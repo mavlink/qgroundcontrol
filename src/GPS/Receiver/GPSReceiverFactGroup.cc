@@ -47,17 +47,19 @@ void GPSReceiverFactGroup::_restoreDefaults(std::initializer_list<Fact*> facts)
     }
 }
 
-void GPSReceiverFactGroup::_setSurvey(const GPSSurveyReport& report)
+void GPSReceiverFactGroup::_setSurvey(const GPSBaseStatus& report)
 {
     const double accuracy = report.meanAccuracyMeters.value_or(qQNaN());
     _update(_currentDurationFact, static_cast<qint64>(report.duration.count()));
     _update(_currentAccuracyFact, accuracy);
-    _update(_validFact, report.valid);
-    if (report.active) {
+    const bool valid = report.state == GPSBaseState::Valid;
+    const bool active = report.state == GPSBaseState::Active;
+    _update(_validFact, valid);
+    if (active) {
         _setCurrentBasePositionSaved(false);
     }
     std::optional<GPSBaseStationConfig::Fixed> base;
-    if (report.valid && std::isfinite(accuracy) && accuracy >= 0 && accuracy <= (std::numeric_limits<float>::max)()) {
+    if (valid && std::isfinite(accuracy) && accuracy >= 0 && accuracy <= (std::numeric_limits<float>::max)()) {
         const GPSBaseStationConfig::Fixed fixed{.position = report.position,
                                                 .accuracyMeters = static_cast<float>(accuracy)};
         if (gpsValidateBaseStationConfig({.mode = fixed}) == GPSReceiverConfigError::None) {
@@ -66,7 +68,7 @@ void GPSReceiverFactGroup::_setSurvey(const GPSSurveyReport& report)
     }
     _setCurrentBasePosition(base);
     // Last: an observer of the survey state may end the session, which resets this status.
-    _update(_activeFact, report.active);
+    _update(_activeFact, active);
 }
 
 void GPSReceiverFactGroup::_setSatellites(const GPSSatelliteReport& report)

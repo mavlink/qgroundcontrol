@@ -226,15 +226,16 @@ GPSReceiveUpdates Protocol::_decodeBlock(const GPSFrame& frame, GPSDecodeContext
 
     GPSDecodedPosition position;
     // A base reports in the WGS84/ITRS datum it was configured for. Other receivers report in theirs, such as a
-    // rover in its correction provider's datum (19), and are decoded as reported.
-    if (_ready && pvt.datum != SBF::DATUM_WGS84) {
+    // rover in its correction provider's datum (19), and are decoded as reported. An epoch without a solution names
+    // no datum: every field after Error then has its do-not-use value.
+    if (_ready && pvt.error == 0 && pvt.datum != SBF::DATUM_WGS84) {
         position.navigation.fixType = GPSPositionReport::FixType::NoFix;
         position.navigation.timestampUs = context.nowUs();
         qCWarning(SBFProtocolLog) << "Unsupported Septentrio position datum:" << unsigned(pvt.datum);
-        context.failControl(QStringLiteral("Septentrio position datum is not WGS84/ITRS"));
         _ready = false;
+        // GPSDriver forwards this family's corrections whatever its base status, so they stop here.
         context.stream().setEnabled(GPSFrameKind::RTCM3, false);
-        context.publishSurvey(GPSSurveyState::Inactive, {});
+        context.loseBase(QStringLiteral("Septentrio position datum is not WGS84/ITRS"));
     } else {
         const bool coordinatesValid = _applyPVTGeodetic(pvt, position, context);
         if (_ready) {
@@ -255,19 +256,19 @@ bool Protocol::_applyPVTGeodetic(const SBF::PVTGeodetic& pvt, GPSDecodedPosition
         position.navigation.fixType = GPSPositionReport::FixType::Fix2D;
     }
 
-    // Any value beyond the specified maximum is invalid, not only the do-not-use value (-2*10^10).
-    const auto usable = [](float component) {
-        return std::isfinite(component) && std::abs(component) <= MAXIMUM_VELOCITY_METERS_PER_SECOND;
-    };
-    position.velocityValid = position.navigation.fixType > GPSPositionReport::FixType::NoFix && pvt.error == 0 &&
-                             usable(pvt.vn) && usable(pvt.ve) && usable(pvt.vu);
-
     const bool coordinatesValid = std::isfinite(pvt.latitude) && std::abs(pvt.latitude) <= std::numbers::pi / 2 &&
                                   std::isfinite(pvt.longitude) && std::abs(pvt.longitude) <= std::numbers::pi &&
                                   std::isfinite(pvt.height) && std::abs(pvt.height) <= DNU;
     if (!coordinatesValid || !std::isfinite(pvt.undulation) || std::abs(pvt.undulation) > DNU) {
         position.navigation.fixType = GPSPositionReport::FixType::NoFix;
     }
+
+    // Any value beyond the specified maximum is invalid, not only the do-not-use value (-2*10^10).
+    const auto usable = [](float component) {
+        return std::isfinite(component) && std::abs(component) <= MAXIMUM_VELOCITY_METERS_PER_SECOND;
+    };
+    position.velocityValid = position.navigation.fixType > GPSPositionReport::FixType::NoFix && usable(pvt.vn) &&
+                             usable(pvt.ve) && usable(pvt.vu);
 
     const auto satellitesUsed = gpsSatellitesUsed(pvt.nrSV);  // 255 = do not use value
     position.navigation.satellitesUsed = satellitesUsed;
@@ -315,10 +316,8 @@ void Protocol::_publishSurveyStatus(const SBF::PVTGeodetic& pvt, const GPSDecode
                           .longitudeDegrees = position.navigation.longitudeDegrees,
                           .altitudeMeters = position.navigation.altitudeEllipsoidMeters};
     }
-    const GPSSurveyState state = valid    ? GPSSurveyState::Valid
-                                 : active ? GPSSurveyState::Active
-                                          : GPSSurveyState::Inactive;
-    context.publishSurvey(state, _surveyClock.duration(), surveyPosition);
+    const GPSBaseState state = valid ? GPSBaseState::Valid : active ? GPSBaseState::Active : GPSBaseState::Inactive;
+    context.publishBaseStatus(state, _surveyClock.duration(), surveyPosition);
 }
 
 QLatin1StringView signature(const GPSFrame& frame)

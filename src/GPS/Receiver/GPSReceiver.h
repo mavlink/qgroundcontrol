@@ -82,18 +82,14 @@ class GPSReceiver : public QObject, private GPSReceiverConnector
     Q_PROPERTY(QList<GPSConstellationSatellites> constellations READ constellations NOTIFY constellationsChanged FINAL)
     Q_PROPERTY(QList<GPSSerialPortEntry> serialPortEntries READ serialPortEntries NOTIFY serialPortEntriesChanged FINAL)
     Q_PROPERTY(QList<int> serialBaudRates READ serialBaudRates CONSTANT FINAL)
-    Q_PROPERTY(bool hasReceiver READ hasReceiver NOTIFY receiverChanged FINAL)
+    Q_PROPERTY(State state READ state NOTIFY receiverChanged FINAL)
     Q_PROPERTY(bool serialSupported READ serialSupported CONSTANT FINAL)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged FINAL)
     Q_PROPERTY(int activeBaseMode READ activeBaseMode NOTIFY receiverChanged FINAL)
     Q_PROPERTY(QString activeEndpoint READ activeEndpoint NOTIFY receiverChanged FINAL)
     Q_PROPERTY(QString receiverIdentity READ receiverIdentity NOTIFY receiverChanged FINAL)
     Q_PROPERTY(QString detectedReceiver READ detectedReceiver NOTIFY receiverChanged FINAL)
-    Q_PROPERTY(bool reconnecting READ reconnecting NOTIFY receiverChanged FINAL)
     Q_PROPERTY(GPSReceiverPresentation activePresentation READ activePresentation NOTIFY receiverChanged FINAL)
-    Q_PROPERTY(RTKSettings::ReceiverRole activeRole READ activeRole NOTIFY receiverChanged FINAL)
-    /// The active receiver's RTCM output is a correction source.
-    Q_PROPERTY(bool forwardingCorrections READ forwardingCorrections NOTIFY receiverChanged FINAL)
     /// The one-use permission to write receiver flash, for the configuration currently selected.
     Q_PROPERTY(bool persistentChangesAllowed READ persistentChangesAllowed WRITE setPersistentChangesAllowed NOTIFY
                    persistentChangesAllowedChanged FINAL)
@@ -131,6 +127,20 @@ public:
     static constexpr std::chrono::seconds SHUTDOWN_TIMEOUT{2};
 
     using Dependencies = GPSReceiverDependencies;
+
+    /// How far the connection to the receiver has got.
+    enum class State
+    {
+        /// No receiver is connected, and none is about to be.
+        Disconnected,
+        /// The saved receiver is waiting to be connected automatically, at startup or after its connection was lost.
+        Reconnecting,
+        /// A connection is being opened, and the receiver identified and configured.
+        Connecting,
+        /// The receiver finished configuration.
+        Connected,
+    };
+    Q_ENUM(State)
 
     explicit GPSReceiver(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr,
                          const Dependencies& dependencies = {});
@@ -173,7 +183,9 @@ public:
 
     QList<GPSConstellationSatellites> constellations() const;
 
-    bool hasReceiver() const override;
+    State state() const;
+
+    bool hasReceiver() const final;
 
     bool serialSupported() const
     {
@@ -214,6 +226,7 @@ public:
 
     RTKSettings::ReceiverRole activeRole() const;
 
+    /// The active receiver's RTCM output is a correction source.
     bool forwardingCorrections() const;
 
     bool persistentChangesAllowed() const { return _persistentChangesAllowed; }
@@ -260,21 +273,18 @@ private slots:
     void _onGPSConnect();
     void _onReceiverDetected();
     void _onInputProblem(GPSInputProblem problem);
-    void _onGPSSurveyReport(const GPSSurveyReport& status);
+    void _onGPSSurveyReport(const GPSBaseStatus& status);
 
 private:
     /// The values behind receiverChanged.
     struct ReceiverState
     {
-        bool hasReceiver = false;
+        State state = State::Disconnected;
         std::optional<BaseModeDefinition::Mode> baseMode;
         QString endpoint;
         QString identity;
         QString detected;
-        bool reconnecting = false;
         GPSReceiverPresentation presentation;
-        RTKSettings::ReceiverRole role = RTKSettings::ConfiguredBase;
-        bool forwardingCorrections = false;
         bool operator==(const ReceiverState&) const = default;
     };
 

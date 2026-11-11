@@ -238,8 +238,7 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
     }
     (void) channel.runSequence(Plan::sequence(Plan::OUTPUTS, _port));
 
-    _nmea.setRTCMEnabled(true);
-    channel.context().publishSurvey(GPSSurveyState::Active, {});
+    channel.context().publishBaseStatus(GPSBaseState::Active, {});
     _positionOutputAtUs = channel.context().nowUs();
     _ready = true;
     return !channel.failed();
@@ -277,11 +276,12 @@ void Protocol::_setUpBase(GPSCommandChannel& channel)
         if (!channel.runRequired({{Plan::fixedPositionCommand(fixed->position)}})) {
             return;
         }
+        // Reported before RTCM output starts, as the receiver sends corrections while the output commands still run.
+        context.publishBaseStatus(GPSBaseState::Valid, {}, fixed->position);
         _activateRTCMOutput(channel);
         if (channel.failed()) {
             return;
         }
-        context.publishSurvey(GPSSurveyState::Valid, {}, fixed->position);
     } else if (const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&_base.mode)) {
         // Decoding acknowledges the command from its start receipt; the matcher only sees a NAK.
         const GPSCommandSequence start{
@@ -620,17 +620,15 @@ std::optional<GPSReceiveUpdates> Protocol::_handleSurveyReceipt(const NMEA::Sent
     if (awaitingReceipt) {
         context.resolveReply(failed ? GPSCommandOutcome::Rejected : GPSCommandOutcome::Acknowledged);
     }
-    if (!started) {
+    if (failed) {
+        // No base position will follow, so the session ends instead of idling without corrections.
+        _surveyClock.reset();
+        _ready = false;
+        context.loseBase(QStringLiteral("Trimble receiver reported that position averaging failed"));
+    } else if (!started) {
         // The survey receipt's height is validated but not reported.
-        _surveyClock.finish(context, failed ? GPSSurveyState::Inactive : GPSSurveyState::Valid,
-                            {.latitudeDegrees = latitude, .longitudeDegrees = longitude});
-        _rtcmActivationPending = !failed;
-        if (failed) {
-            // No base position will follow, so the session ends instead of idling without corrections.
-            _ready = false;
-            _nmea.setRTCMEnabled(false);
-            context.failControl(QStringLiteral("Trimble receiver reported that position averaging failed"));
-        }
+        _surveyClock.finish(context, GPSBaseState::Valid, {.latitudeDegrees = latitude, .longitudeDegrees = longitude});
+        _rtcmActivationPending = true;
     }
     return GPSReceiveUpdates{};
 }
@@ -644,9 +642,7 @@ void Protocol::_expire(GPSDecodeContext& context)
     if (_ready && !_baseSetupDone && !context.failed() &&
         !MonotonicClock::withinAge(_positionOutputAtUs, now, STATUS_MAX_AGE)) {
         _ready = false;
-        _nmea.setRTCMEnabled(false);
-        context.publishSurvey(GPSSurveyState::Inactive, {});
-        context.failControl(
+        context.loseBase(
             QStringLiteral("Trimble receiver sent no $PASHR,POS position output, which the base setup needs"));
     }
 }

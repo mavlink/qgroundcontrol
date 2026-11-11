@@ -51,22 +51,22 @@ public:
     void start(GPSDecodeContext& context)
     {
         start(context.nowUs());
-        context.publishSurvey(GPSSurveyState::Active, duration());
+        context.publishBaseStatus(GPSBaseState::Active, duration());
     }
 
     /// Publishes the active survey when its whole-second duration advanced.
     void publishProgress(GPSDecodeContext& context)
     {
         if (update(context.nowUs())) {
-            context.publishSurvey(GPSSurveyState::Active, duration());
+            context.publishBaseStatus(GPSBaseState::Active, duration());
         }
     }
 
     /// Stops timing and publishes the finished survey: Valid at @a position, or Inactive when it failed.
-    void finish(GPSDecodeContext& context, GPSSurveyState state, const GPSEllipsoidPosition& position = {})
+    void finish(GPSDecodeContext& context, GPSBaseState state, const GPSEllipsoidPosition& position = {})
     {
         stop(context.nowUs());
-        context.publishSurvey(state, duration(), position);
+        context.publishBaseStatus(state, duration(), position);
     }
 
 private:

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <utility>
 
 #include <QtCore/QByteArray>
@@ -61,9 +62,9 @@ public:
         deliverQueuedCalls();
     }
 
-    void survey(const GPSSurveyReport& report)
+    void baseStatus(const GPSBaseStatus& status)
     {
-        emit surveyInStatusUpdated(report);
+        emit surveyInStatusUpdated(status);
         deliverQueuedCalls();
     }
 

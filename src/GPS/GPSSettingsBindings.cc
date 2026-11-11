@@ -2,6 +2,7 @@
 
 #include <chrono>
 
+#include <QtCore/QMetaEnum>
 #include <QtCore/QSet>
 
 #include "Fact.h"
@@ -69,8 +70,12 @@ NTRIPConfig ntripFromSettings(NTRIPSettings* settings, FactReader& read)
     connection.useTls = read(settings->ntripUseTls()).toBool();
     connection.allowSelfSignedCerts = read(settings->ntripAllowSelfSignedCerts()).toBool();
     connection.pinnedCertificate = read(settings->ntripPinnedCertificate()).toString();
-    configuration.gga.source =
-        static_cast<NTRIPGgaReporter::PositionSource>(read(settings->ntripGgaPositionSource()).toInt());
+    const int ggaSource = read(settings->ntripGgaPositionSource()).toInt();
+    if (QMetaEnum::fromType<NTRIPGgaReporter::PositionSource>().valueToKey(ggaSource)) {
+        configuration.gga.source = static_cast<NTRIPGgaReporter::PositionSource>(ggaSource);
+    } else {
+        qCWarning(GPSSettingsBindingsLog) << "Invalid GGA position source; using automatic selection";
+    }
     configuration.gga.interval = std::chrono::seconds(read(settings->ntripGgaIntervalSec()).toUInt());
     return configuration;
 }
@@ -212,11 +217,12 @@ void GPSSettingsBindings::bindNtrip(NTRIPSettings* settings, NTRIPManager* ntrip
     if (!settings || !ntrip) {
         return;
     }
-    // Queued: the manager emits these inside its own operation (retrying, trusting a certificate), and storing the
+    // Queued: the manager emits these inside its own operation (connecting, trusting a certificate), and storing the
     // Fact applies a new configuration to it, which must wait until that returns.
     QObject::connect(
-        ntrip, &NTRIPManager::enableRequested, ntrip,
-        [settings]() { settings->ntripServerConnectEnabled()->setRawValue(true); }, Qt::QueuedConnection);
+        ntrip, &NTRIPManager::enabledRequested, ntrip,
+        [settings](bool enabled) { settings->ntripServerConnectEnabled()->setRawValue(enabled); },
+        Qt::QueuedConnection);
     QObject::connect(
         ntrip, &NTRIPManager::certificatePinChanged, ntrip,
         [settings](const QString& pin) { settings->ntripPinnedCertificate()->setRawValue(pin); }, Qt::QueuedConnection);

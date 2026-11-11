@@ -60,7 +60,7 @@ Event eventOf(const GPSProtocolEvent& decoded)
                 return satellites;
             } else if constexpr (std::is_same_v<Report, GPSDecodedSatelliteUsage>) {
                 return SatelliteUsage{report.timestampUs, report.usedCount};
-            } else if constexpr (std::is_same_v<Report, GPSSurveyReport>) {
+            } else if constexpr (std::is_same_v<Report, GPSBaseStatus>) {
                 return Survey{report.timestampUs, report};
             } else if constexpr (std::is_same_v<Report, GPSRTCMFrame>) {
                 return RTCM{report.bytes};
