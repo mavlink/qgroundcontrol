@@ -62,6 +62,7 @@ constexpr QLatin1StringView kOptSwrast = QLatin1StringView("swrast");
 /// @brief Normalizes command-line arguments
 /// Converts colon-separated syntax (--option:value) to standard format (--option value)
 /// and handles special cases like --unittest without a value.
+/// Arguments already in the --option=value form are passed on unchanged.
 #ifdef QGC_UNITTEST_BUILD
 QStringList normalizeArgs(const QStringList &args)
 #else
@@ -84,9 +85,11 @@ static QStringList normalizeArgs(const QStringList &args)
         }
 #endif
 
-        // Convert --option:value to --option value
-        if (arg.startsWith(QLatin1String("--")) && arg.contains(QLatin1Char(':'))) {
-            const qsizetype idx = arg.indexOf(QLatin1Char(':'));
+        // Convert --option:value to --option value. The first colon ends the option name; a colon
+        // after '=' is part of the value of an --option=value argument (a Windows path, a URL).
+        const qsizetype idx = arg.indexOf(QLatin1Char(':'));
+        const qsizetype equalsIdx = arg.indexOf(QLatin1Char('='));
+        if (arg.startsWith(QLatin1String("--")) && (idx >= 0) && ((equalsIdx < 0) || (idx < equalsIdx))) {
             const QString opt = arg.left(idx);
             const QString val = arg.mid(idx + 1);
             out << opt;

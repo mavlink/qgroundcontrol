@@ -28,11 +28,8 @@ private slots:
     void _testHandleParseResult_OkReturnsNullopt();
     void _testHandleParseResult_HelpReturnsZero();
     void _testHandleParseResult_VersionReturnsZero();
-    void _testNormalizeArgs_UnittestSpaceSeparatedValue();
-    void _testNormalizeArgs_UnittestColonValue();
-    void _testNormalizeArgs_UnittestBare();
-    void _testNormalizeArgs_UnittestBareFollowedByOption();
-    void _testNormalizeArgs_ColonOptionValuePreserved();
+    void _testNormalizeArgs_data();
+    void _testNormalizeArgs();
     void _testParseSystemId_data();
     void _testParseSystemId();
     void _testParseUnitTestShard_data();

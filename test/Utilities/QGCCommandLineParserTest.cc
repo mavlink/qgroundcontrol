@@ -113,36 +113,54 @@ void QGCCommandLineParserTest::_testHandleParseResult_VersionReturnsZero()
     QCOMPARE(exitCode.value(), 0);
 }
 
-void QGCCommandLineParserTest::_testNormalizeArgs_UnittestSpaceSeparatedValue()
+void QGCCommandLineParserTest::_testNormalizeArgs_data()
 {
-    const QStringList out = QGCCommandLineParser::normalizeArgs(
-        {QStringLiteral("qgc"), QStringLiteral("--unittest"), QStringLiteral("FooTest")});
-    QCOMPARE(out, QStringList({QStringLiteral("qgc"), QStringLiteral("--unittest"), QStringLiteral("FooTest")}));
+    QTest::addColumn<QStringList>("args");
+    QTest::addColumn<QStringList>("expected");
+
+    const QString windowsPath = QStringLiteral("C:\\results.xml");
+
+    QTest::newRow("unittest-space-separated-value")
+        << QStringList{QStringLiteral("qgc"), QStringLiteral("--unittest"), QStringLiteral("FooTest")}
+        << QStringList{QStringLiteral("qgc"), QStringLiteral("--unittest"), QStringLiteral("FooTest")};
+    QTest::newRow("unittest-colon-value") << QStringList{QStringLiteral("--unittest:FooTest")}
+                                          << QStringList{QStringLiteral("--unittest"), QStringLiteral("FooTest")};
+    QTest::newRow("unittest-bare") << QStringList{QStringLiteral("--unittest")}
+                                   << QStringList{QStringLiteral("--unittest"), QString()};
+    QTest::newRow("unittest-bare-followed-by-option")
+        << QStringList{QStringLiteral("--unittest"), QStringLiteral("--allow-multiple")}
+        << QStringList{QStringLiteral("--unittest"), QString(), QStringLiteral("--allow-multiple")};
+    QTest::newRow("unittest-colon-without-value")
+        << QStringList{QStringLiteral("--unittest:")} << QStringList{QStringLiteral("--unittest"), QString()};
+    QTest::newRow("colon-value") << QStringList{QStringLiteral("--logging:Vehicle.FTPManager")}
+                                 << QStringList{QStringLiteral("--logging"), QStringLiteral("Vehicle.FTPManager")};
+
+    // In the --option:value form the first colon ends the option name; later colons and '=' belong to the value.
+    QTest::newRow("colon-value-with-colon") << QStringList{QStringLiteral("--unittest-output:") + windowsPath}
+                                            << QStringList{QStringLiteral("--unittest-output"), windowsPath};
+    QTest::newRow("colon-value-with-equals") << QStringList{QStringLiteral("--logging:a=b")}
+                                             << QStringList{QStringLiteral("--logging"), QStringLiteral("a=b")};
+
+    // --option=value is passed on unchanged whatever the value contains.
+    QTest::newRow("equals-value") << QStringList{QStringLiteral("--system-id=7")}
+                                  << QStringList{QStringLiteral("--system-id=7")};
+    QTest::newRow("equals-windows-path") << QStringList{QStringLiteral("--unittest-output=") + windowsPath}
+                                         << QStringList{QStringLiteral("--unittest-output=") + windowsPath};
+    QTest::newRow("equals-value-with-colon")
+        << QStringList{QStringLiteral("--logging=a:b")} << QStringList{QStringLiteral("--logging=a:b")};
+    QTest::newRow("equals-url-value") << QStringList{QStringLiteral("--opt=udp://host:14550")}
+                                      << QStringList{QStringLiteral("--opt=udp://host:14550")};
+
+    QTest::newRow("separate-value-with-colon") << QStringList{QStringLiteral("--unittest-output"), windowsPath}
+                                               << QStringList{QStringLiteral("--unittest-output"), windowsPath};
 }
 
-void QGCCommandLineParserTest::_testNormalizeArgs_UnittestColonValue()
+void QGCCommandLineParserTest::_testNormalizeArgs()
 {
-    const QStringList out = QGCCommandLineParser::normalizeArgs({QStringLiteral("--unittest:FooTest")});
-    QCOMPARE(out, QStringList({QStringLiteral("--unittest"), QStringLiteral("FooTest")}));
-}
+    QFETCH(QStringList, args);
+    QFETCH(QStringList, expected);
 
-void QGCCommandLineParserTest::_testNormalizeArgs_UnittestBare()
-{
-    const QStringList out = QGCCommandLineParser::normalizeArgs({QStringLiteral("--unittest")});
-    QCOMPARE(out, QStringList({QStringLiteral("--unittest"), QString()}));
-}
-
-void QGCCommandLineParserTest::_testNormalizeArgs_UnittestBareFollowedByOption()
-{
-    const QStringList out = QGCCommandLineParser::normalizeArgs(
-        {QStringLiteral("--unittest"), QStringLiteral("--allow-multiple")});
-    QCOMPARE(out, QStringList({QStringLiteral("--unittest"), QString(), QStringLiteral("--allow-multiple")}));
-}
-
-void QGCCommandLineParserTest::_testNormalizeArgs_ColonOptionValuePreserved()
-{
-    const QStringList out = QGCCommandLineParser::normalizeArgs({QStringLiteral("--logging:Vehicle.FTPManager")});
-    QCOMPARE(out, QStringList({QStringLiteral("--logging"), QStringLiteral("Vehicle.FTPManager")}));
+    QCOMPARE(QGCCommandLineParser::normalizeArgs(args), expected);
 }
 
 void QGCCommandLineParserTest::_testParseSystemId_data()
