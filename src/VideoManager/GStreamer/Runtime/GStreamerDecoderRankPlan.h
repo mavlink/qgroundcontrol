@@ -32,8 +32,9 @@ enum class D3DApi : uint8_t
 /// The platform rules planRanks() adds to an option.
 struct RankTraits
 {
-    /// Linux: for the default option, demote the legacy vaapi decoders, whose memory the GPU paths can't import, and
-    /// rank the va and v4l2sl decoders, which output DMABuf, above the software ones.
+    /// Linux: for the default and hardware options, rank the va and v4l2sl decoders, which output DMABuf, above every
+    /// other. The default option also demotes the legacy vaapi decoders, whose memory the GPU paths can't import; the
+    /// hardware option keeps them below as a fallback.
     bool preferZeroCopyDecoders = false;
     /// Windows: after any option, demote the D3D decoders of the other API, which the RHI can't sample zero-copy; for
     /// the default and hardware options, also rank this API's decoders above every other.

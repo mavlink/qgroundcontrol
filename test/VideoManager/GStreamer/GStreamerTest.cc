@@ -74,6 +74,8 @@ void GStreamerTest::_testDecoderFamilyForFactory_data()
     QTest::newRow("d3d11") << QStringLiteral("d3d11h264dec") << int(VideoDecoderOption::DirectX3D);
     QTest::newRow("d3d12") << QStringLiteral("d3d12h265dec") << int(VideoDecoderOption::DirectX3D);
     QTest::newRow("videotoolbox") << QStringLiteral("vtdec_hw") << int(VideoDecoderOption::VideoToolbox);
+    // GStreamer 1.30 has one VideoToolbox decoder per codec.
+    QTest::newRow("videotoolbox-per-codec") << QStringLiteral("vth264dec_hw") << int(VideoDecoderOption::VideoToolbox);
     QTest::newRow("vulkan") << QStringLiteral("vulkanh264dec") << int(VideoDecoderOption::Vulkan);
     QTest::newRow("software-with-nv") << QStringLiteral("avdec_wnv1") << int(VideoDecoderOption::Default);
     QTest::newRow("android-mediacodec") << QStringLiteral("amcviddec-c2qtiavcdecoder")
@@ -99,7 +101,7 @@ void GStreamerTest::_testAvailableDecoderFamilies()
         }
     });
 #ifndef QGC_HAS_GST_VULKAN_GPU_PATH
-    // Without the Vulkan GPU path, forcing Vulkan decoders would only add a CPU copy of every frame.
+    // Without the Vulkan GPU path no build has a use for Vulkan decoders: no sink takes their VulkanImage memory.
     installed.removeAll(VideoDecoderOption::Vulkan);
 #endif
     QCOMPARE(GStreamer::availableDecoderFamilies(), installed);
@@ -130,7 +132,7 @@ void GStreamerTest::_testDecoderPriorityWarnings()
 {
     const auto restoreRanks = qScopeGuard([] { GStreamer::setCodecPriorities(VideoDecoderOption::Default); });
 
-    // Vulkan decoders are ranked first, though their frames are copied through the CPU.
+    // Vulkan decoders are ranked first, though the video sink takes none of their frames.
     expectLogMessage("Video.GStreamer.DecoderRanks", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^Forcing Vulkan video decoders")));
     GStreamer::setCodecPriorities(VideoDecoderOption::Vulkan);

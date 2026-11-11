@@ -7,7 +7,7 @@ namespace GStreamer {
 
 namespace {
 
-// What forcing a decoder class or family gives it. GStreamer already ranks some decoders PRIMARY + 1 (the d3d11 and va
+// What forcing a decoder family gives it at least. GStreamer already ranks some decoders PRIMARY + 1 (the d3d11 and va
 // ones), so a forced family goes above the highest other decoder (see prioritizeFamily).
 constexpr uint16_t kPrioritizedRank = GST_RANK_PRIMARY + 1;
 // Above kPrioritizedRank, so the GPU-memory decoders the platform prefers win autoplug.
@@ -58,20 +58,28 @@ public:
         rankFamily(family, static_cast<uint16_t>(rank));
     }
 
-    // Every decoder of the class at kPrioritizedRank, and every autoplugged one of the other class out of autoplug.
-    void prioritizeClass(bool hardware, QStringList& warnings)
+    // Every autoplugged decoder of the other class out of autoplug. Those of the class keep GStreamer's ranks, so its
+    // order among them holds and one it ranks NONE (experimental, or unfit for the platform) stays out.
+    void demoteOtherClass(bool hardware, QStringList& warnings)
     {
-        const qsizetype matched =
-            rank([hardware](const DecoderInfo& decoder) { return decoder.hardware == hardware; }, kPrioritizedRank);
-        if (!_decoders.isEmpty() && (matched == 0)) {
-            warnings.append(QStringLiteral("No %1 video decoder factories found to reprioritize.")
+        const auto autoplugged = [](const DecoderInfo& decoder) { return decoder.rank >= GST_RANK_MARGINAL; };
+        const bool classAutoplugged = std::ranges::any_of(_decoders, [&](const DecoderInfo& decoder) {
+            return (decoder.hardware == hardware) && autoplugged(decoder);
+        });
+        if (!_decoders.isEmpty() && !classAutoplugged) {
+            warnings.append(QStringLiteral("No %1 video decoder that GStreamer autoplugs is installed: "
+                                           "video will not decode with this option.")
                                 .arg(hardware ? QStringLiteral("hardware") : QStringLiteral("software")));
         }
-        (void) rank(
-            [hardware](const DecoderInfo& decoder) {
-                return (decoder.hardware != hardware) && (decoder.rank >= GST_RANK_MARGINAL);
-            },
-            GST_RANK_NONE);
+        (void) rank([&](const DecoderInfo& decoder) { return (decoder.hardware != hardware) && autoplugged(decoder); },
+                    GST_RANK_NONE);
+    }
+
+    // The decoders whose DMABuf output the GPU paths import, above every other.
+    void prioritizeZeroCopy()
+    {
+        rankFamily(VideoDecoderOption::VAAPI, kZeroCopyRank);
+        rankPrefix("v4l2sl", kZeroCopyRank);
     }
 
     QList<RankChange> changes() const
@@ -101,21 +109,26 @@ RankPlan planRanks(VideoDecoderOption option, const QList<DecoderInfo>& decoders
         case VideoDecoderOption::Default:
             if (traits.preferZeroCopyDecoders) {
                 planner.rankPrefix("vaapi", GST_RANK_NONE);
-                planner.rankFamily(VideoDecoderOption::VAAPI, kZeroCopyRank);
-                planner.rankPrefix("v4l2sl", kZeroCopyRank);
+                planner.prioritizeZeroCopy();
             }
             break;
         case VideoDecoderOption::Software:
-            planner.prioritizeClass(false, plan.warnings);
+            planner.demoteOtherClass(false, plan.warnings);
             break;
         case VideoDecoderOption::Hardware:
-            planner.prioritizeClass(true, plan.warnings);
+            planner.demoteOtherClass(true, plan.warnings);
+            if (traits.preferZeroCopyDecoders) {
+                // Decoders of one rank autoplug in name order, the legacy vaapi ones before the va ones. The vaapi
+                // ones stay as the hardware fallback for a codec nothing else decodes.
+                planner.prioritizeZeroCopy();
+            }
             break;
         case VideoDecoderOption::Vulkan:
-            // gst-vulkan decodes on its own VkDevice, which fails the GPU path's device-match guard: CPU copy.
+            // gst-vulkan's decoders output VulkanImage memory only, which no sink bin offers: Qt can't sample the
+            // images of their VkDevice.
             plan.warnings.append(
-                QStringLiteral("Forcing Vulkan video decoders: zero-copy import is dormant "
-                               "(foreign VkDevice → CPU fallback), so decode will not be zero-copy."));
+                QStringLiteral("Forcing Vulkan video decoders: they output VulkanImage memory only, which the video "
+                               "sink does not take, so the streams they decode will not display."));
             [[fallthrough]];
         case VideoDecoderOption::VAAPI:
         case VideoDecoderOption::NVIDIA:
