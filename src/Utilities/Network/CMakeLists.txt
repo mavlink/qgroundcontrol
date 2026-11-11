@@ -2,8 +2,7 @@ add_subdirectory(IO)
 add_subdirectory(Client)
 
 qt_add_library(
-    QGCNetwork
-    STATIC
+    QGCNetwork STATIC
     QGCCachedFileDownload.cc
     QGCCachedFileDownload.h
     QGCFileDownload.cc
@@ -18,18 +17,25 @@ target_include_directories(QGCNetwork PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(
     QGCNetwork
-    PUBLIC QGCNetworkIO QGCNetworkClient Qt6::Core Qt6::Network
-    PRIVATE Qt6::HttpServer QGCCompression QGCLogging
+    PUBLIC
+        QGCNetworkIO
+        QGCNetworkClient
+        Qt6::Core
+        Qt6::Network
+    PRIVATE
+        Qt6::HttpServer
+        QGCCompression
+        QGCLogging
 )
 
 target_precompile_headers(
     QGCNetwork
     PRIVATE
-    <QtCore/QObject>
-    <QtCore/QString>
-    <QtCore/QByteArray>
-    <QtCore/QUrl>
-    <QtNetwork/QNetworkReply>
+        <QtCore/QObject>
+        <QtCore/QString>
+        <QtCore/QByteArray>
+        <QtCore/QUrl>
+        <QtNetwork/QNetworkReply>
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCNetwork)
