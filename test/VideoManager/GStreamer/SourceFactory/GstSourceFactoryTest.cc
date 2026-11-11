@@ -380,10 +380,14 @@ void GstSourceFactoryTest::_testSourceFactoryTcpMpegTs()
     QVERIFY2(src, "tcp:// must build a tcpclientsrc");
     gchar* rawHost = nullptr;
     gint port = 0;
-    g_object_get(src.get(), "host", &rawHost, "port", &port, nullptr);
+    guint timeoutSeconds = 0;
+    g_object_get(src.get(), "host", &rawHost, "port", &port, "timeout", &timeoutSeconds, nullptr);
     const GStreamer::GCharPtr host = GStreamer::adoptGChar(rawHost);
     QCOMPARE(QString::fromUtf8(host.get()), QStringLiteral("192.168.1.50"));
     QCOMPARE(port, 5600);
+    // It connects on the receiver's worker, which a receiver that is destroyed waits 5 s for.
+    QVERIFY2((timeoutSeconds > 0) && (timeoutSeconds < 5),
+             "tcpclientsrc must give up on a host that doesn't answer, while the worker can still be waited for");
 
     QVERIFY2(GstTest::findByFactory(bin.get(), "tsdemux"), "MPEG-TS over TCP must insert tsdemux explicitly");
     QVERIFY2(!GstTest::findByFactory(bin.get(), "rtpjitterbuffer"), "raw MPEG-TS is not RTP; no jitterbuffer");
@@ -460,6 +464,44 @@ void GstSourceFactoryTest::_testSourceFactoryUdpRtp()
     QCOMPARE(configInterval, -1);
 }
 
+void GstSourceFactoryTest::_testSourceFactoryUdpListener_data()
+{
+    QTest::addColumn<QString>("uri");
+    QTest::addColumn<QString>("address");
+    QTest::addColumn<bool>("sharesPort");
+
+    // On a unicast address a second listener would take packets from the first without either being told.
+    QTest::newRow("loopback") << QStringLiteral("udp://127.0.0.1:5600") << QStringLiteral("127.0.0.1") << false;
+    QTest::newRow("any address") << QStringLiteral("udp265://0.0.0.0:5600") << QStringLiteral("0.0.0.0") << false;
+    QTest::newRow("ipv6") << QStringLiteral("udp://[::1]:5600") << QStringLiteral("::1") << false;
+    // udpsrc would take a URI without a host for one it can't parse, and listen on its default port.
+    QTest::newRow("no host") << QStringLiteral("udp://:5600") << QStringLiteral("0.0.0.0") << false;
+    // Every member of a multicast group receives its packets.
+    QTest::newRow("multicast") << QStringLiteral("udp://239.255.12.42:5600") << QStringLiteral("239.255.12.42") << true;
+    QTest::newRow("ipv6 multicast") << QStringLiteral("udp265://[ff02::42]:5600") << QStringLiteral("ff02::42") << true;
+}
+
+void GstSourceFactoryTest::_testSourceFactoryUdpListener()
+{
+    QFETCH(QString, uri);
+    QFETCH(QString, address);
+    QFETCH(bool, sharesPort);
+
+    const GStreamer::GstElementPtr bin = GstTest::createSource(uri, GStreamer::SourceFactory::Config{});
+    QVERIFY(bin);
+    const GStreamer::GstElementPtr src = GstTest::findByFactory(bin.get(), "udpsrc");
+    QVERIFY(src);
+
+    gchar* rawAddress = nullptr;
+    gint port = 0;
+    gboolean reuse = sharesPort ? FALSE : TRUE;
+    g_object_get(src.get(), "address", &rawAddress, "port", &port, "reuse", &reuse, nullptr);
+    const GStreamer::GCharPtr listenAddress = GStreamer::adoptGChar(rawAddress);
+    QCOMPARE(QString::fromUtf8(listenAddress.get()), address);
+    QCOMPARE(port, 5600);
+    QCOMPARE(bool(reuse), sharesPort);
+}
+
 void GstSourceFactoryTest::_testParameterSetGateHoldsUntilCompleteSet()
 {
     const QByteArray aud = QByteArray::fromHex("0000000109f0");
@@ -519,6 +561,36 @@ void GstSourceFactoryTest::_testSourceFactoryUdpMpegTs()
 
     QVERIFY2(GstTest::findByFactory(bin.get(), "tsdemux"), "mpegts:// must insert tsdemux");
     QVERIFY2(!GstTest::findByFactory(bin.get(), "rtpjitterbuffer"), "raw MPEG-TS is not RTP; no jitterbuffer");
+}
+
+void GstSourceFactoryTest::_testSourceFactoryMpegTsLatency_data()
+{
+    QTest::addColumn<int>("latencyMs");
+    QTest::addColumn<int>("demuxLatencyMs");
+
+    // tsdemux's own default, 700 ms, is added to the latency of a live stream: every frame would be shown that late.
+    QTest::newRow("default") << GStreamer::SourceFactory::Config{}.latencyMs << 100;
+    QTest::newRow("less than a frame interval") << 0 << 100;
+    QTest::newRow("more than a frame interval") << 250 << 250;
+}
+
+void GstSourceFactoryTest::_testSourceFactoryMpegTsLatency()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("tsdemux");
+
+    QFETCH(int, latencyMs);
+    QFETCH(int, demuxLatencyMs);
+
+    GStreamer::SourceFactory::Config config;
+    config.latencyMs = latencyMs;
+    const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("mpegts://127.0.0.1:5600"), config);
+    QVERIFY(bin);
+    const GStreamer::GstElementPtr demux = GstTest::findByFactory(bin.get(), "tsdemux");
+    QVERIFY(demux);
+
+    gint latency = -1;
+    g_object_get(demux.get(), "latency", &latency, nullptr);
+    QCOMPARE(latency, demuxLatencyMs);
 }
 
 void GstSourceFactoryTest::_testSourceFactorySchemeCaseInsensitive()

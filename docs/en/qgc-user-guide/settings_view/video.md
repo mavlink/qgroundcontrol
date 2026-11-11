@@ -45,7 +45,9 @@ Connection settings vary by source type:
 - **RTSP URL** — full RTSP stream address. An `rtsp://` stream arrives over UDP, or over TCP when no UDP data arrives;
   enter `rtspt://` instead to receive it over TCP from the start, as through a firewall that blocks UDP.
 - **TCP URL** — TCP stream address
-- **UDP URL** — UDP stream address and port (default: `0.0.0.0:5600`)
+- **UDP URL** — the local address and port to listen on for a UDP stream (default: `0.0.0.0:5600`). `:5600` alone
+  listens on every IPv4 address. With GStreamer, the stream doesn't start while another program is listening on
+  the same port.
 
 ## Settings
 
@@ -68,7 +70,8 @@ Connection settings vary by source type:
 - **Low Latency Mode** — minimize video decode latency at the cost of some smoothness
 - **RTP jitter latency** — how long RTSP and UDP h.264/h.265 streams hold packets before showing them (default: 80 ms).
   A lower value shortens the video delay; a higher one leaves more time to reorder packets and to recover lost ones by
-  retransmission, which values below about 40 ms prevent. Not used, and hidden, in **Low Latency Mode**.
+  retransmission, which values below about 40 ms prevent. An MPEG-TS stream over UDP is delayed by this value too,
+  and by 100 ms at least. Not used, and hidden, in **Low Latency Mode**.
 - **Auto-reconnect on stream loss** — reconnect a stream that times out or fails, waiting 1 s before the first attempt
   and up to 30 s between later ones (default: on). It applies to every stream, whatever its transport (RTSP, UDP, TCP or
   MPEG-TS) and whether it is the configured source or one a camera advertises, in a tile or not; USB cameras don't use

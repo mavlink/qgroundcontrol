@@ -25,9 +25,13 @@ private slots:
     void _testSourceFactoryRejectsBadTcpUri();
     void _testSourceFactoryUdpRtp_data();
     void _testSourceFactoryUdpRtp();
+    void _testSourceFactoryUdpListener_data();
+    void _testSourceFactoryUdpListener();
     void _testParameterSetGateHoldsUntilCompleteSet();
     void _testParameterSetGatePassesLengthPrefixedOutput();
     void _testSourceFactoryUdpMpegTs();
+    void _testSourceFactoryMpegTsLatency_data();
+    void _testSourceFactoryMpegTsLatency();
     void _testSourceFactorySchemeCaseInsensitive();
     void _testTransportFor_data();
     void _testTransportFor();

@@ -122,6 +122,24 @@ void GstSourceFactoryStreamTest::_testSourceFactoryDropsRtpUntilParameterSets()
     QVERIFY2(output.firstUnitHasSps.load(), "the first unit reaching h264parse must carry the SPS");
 }
 
+void GstSourceFactoryStreamTest::_testUdpSourceRefusesPortInUse()
+{
+    const GStreamer::SourceFactory::Config config;
+    const GstTest::TestPipeline listener(GStreamer::SourceFactory::create(QStringLiteral("udp://127.0.0.1:0"), config));
+    QVERIFY(listener.get());
+    // udpsrc binds its socket on the way to READY.
+    QCOMPARE(gst_element_set_state(listener.get(), GST_STATE_READY), GST_STATE_CHANGE_SUCCESS);
+    gint port = 0;
+    g_object_get(GstTest::findByFactory(listener.get(), "udpsrc").get(), "port", &port, nullptr);
+    QVERIFY(port > 0);
+
+    // A second listener on the port would get some streams' packets, the first one the others', and neither an error.
+    const GstTest::TestPipeline second(
+        GStreamer::SourceFactory::create(QStringLiteral("udp://127.0.0.1:%1").arg(port), config));
+    QVERIFY(second.get());
+    QCOMPARE(gst_element_set_state(second.get(), GST_STATE_READY), GST_STATE_CHANGE_FAILURE);
+}
+
 void GstSourceFactoryStreamTest::_testUdpSourceStopsRightAfterPlaying()
 {
     // An unfixed udpsrc corrupts the heap in most runs of a few thousand cycles; each takes well under a millisecond.

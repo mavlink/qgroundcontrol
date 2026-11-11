@@ -33,7 +33,7 @@ struct Config
 /// Build a source bin for `uri`: `source` [+ `tsdemux`] [+ `rtpjitterbuffer`] + `parsebin`, or for RTP over UDP
 /// `udpsrc` [+ `rtpjitterbuffer`] + the codec's depayloader and parser. Supported schemes: rtsp/rtspt,
 /// tcp:// (MPEG-TS), udp:// (H.264 RTP), udp265:// (H.265 RTP), mpegts:// (MPEG-TS over UDP). A UDP URI with
-/// port 0 listens on a free port.
+/// port 0 listens on a free port, and one without a host on every IPv4 address.
 ///
 /// The RTP over UDP bin has its source pad from the start, and without a jitter buffer counts its RTP packets itself
 /// (GStreamer::rtpPacketCounts()). The others' ghost pads are wired lazily; for

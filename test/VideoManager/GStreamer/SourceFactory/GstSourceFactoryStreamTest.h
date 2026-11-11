@@ -12,6 +12,7 @@ private slots:
 #ifdef QGC_GST_STREAMING
     void _testSourceFactoryRtspSetsUpOnlyVideoStream();
     void _testSourceFactoryDropsRtpUntilParameterSets();
+    void _testUdpSourceRefusesPortInUse();
     void _testUdpSourceStopsRightAfterPlaying();
 #endif
 };

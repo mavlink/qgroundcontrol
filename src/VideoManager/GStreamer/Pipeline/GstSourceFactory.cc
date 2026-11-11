@@ -1,5 +1,6 @@
 #include "GstSourceFactory.h"
 
+#include <algorithm>
 #include <chrono>
 #include <gst/gst.h>
 #include <optional>
@@ -7,6 +8,7 @@
 
 #include <QtCore/QFile>
 #include <QtCore/QUrl>
+#include <QtNetwork/QHostAddress>
 
 #include "GStreamerHelpers.h"
 #include "GstH26xParameterSetGate.h"
@@ -24,6 +26,14 @@ namespace {
 using namespace GStreamer;
 
 constexpr int kUdpBufferSizeBytes = 8 * 1024 * 1024;
+// tcpclientsrc connects inside the state change, on the receiver's worker, and without a timeout waits as long as the
+// OS does (minutes for a host that drops the SYN). The same time bounds a read, which is how long the receiver waits
+// for a TCP stream that went silent anyway.
+constexpr guint kTcpTimeoutSeconds = 3;
+// The least latency an MPEG-TS stream is given. tsdemux pushes a video frame only once the next one starts (its PES
+// packet needn't tell its length), so a frame is a frame interval late however steady the network is: this covers
+// streams down to 10 fps.
+constexpr guint kTsDemuxMinLatencyMs = 100;
 // Of the RTP timestamps of video, H.264 (RFC 6184) and H.265 (RFC 7798) included.
 constexpr int kRtpVideoClockRate = 90000;
 
@@ -300,7 +310,8 @@ GstElementPtr buildTcpSource(const QUrl& sourceUrl)
         return nullptr;
     }
 
-    g_object_set(source.get(), "host", host.toUtf8().constData(), "port", static_cast<int>(port), nullptr);
+    g_object_set(source.get(), "host", host.toUtf8().constData(), "port", static_cast<int>(port), "timeout",
+                 kTcpTimeoutSeconds, nullptr);
     return source;
 }
 
@@ -324,7 +335,14 @@ GstElementPtr buildUdpSource(const QUrl& sourceUrl, const char* rtpEncoding)
     QUrl udpUrl(sourceUrl);
     udpUrl.setScheme(QStringLiteral("udp"));
     udpUrl.setUserInfo(QString());
+    // udpsrc doesn't report a URI without a host as the error it takes it for, and listens on its default port, 5004.
+    if (udpUrl.host().isEmpty()) {
+        udpUrl.setHost(QStringLiteral("0.0.0.0"));
+    }
     const QByteArray udpUri = udpUrl.toEncoded();
+    // udpsrc shares its port by default, and of two listeners on a unicast address only one gets a stream's packets,
+    // the other nothing and no error: a port in use has to fail to bind. The members of a multicast group do share it.
+    const gboolean sharePort = QHostAddress(udpUrl.host()).isMulticast() ? TRUE : FALSE;
 
     // SO_RCVBUF above net.core.rmem_max needs CAP_NET_ADMIN; without it gstudpsrc fails with EPERM
     // (scary warning) then clamps. Request the kernel-permitted max instead (Linux/Android only).
@@ -348,7 +366,7 @@ GstElementPtr buildUdpSource(const QUrl& sourceUrl, const char* rtpEncoding)
         udpBufferSize = s_rmemMax;
     }
 #endif
-    g_object_set(source.get(), "uri", udpUri.constData(), "buffer-size", udpBufferSize, nullptr);
+    g_object_set(source.get(), "uri", udpUri.constData(), "buffer-size", udpBufferSize, "reuse", sharePort, nullptr);
 
     if (rtpEncoding) {
         const GstCapsPtr caps = adoptCaps(gst_caps_new_simple("application/x-rtp", "media", G_TYPE_STRING, "video",
@@ -404,12 +422,18 @@ ParserStage buildParserStage(const TransportSpec& spec, bool isRtsp)
 
 // Android can't determine MPEG2-TS via parsebin, so MPEG-TS sources get an explicit tsdemux. Returns the bin-owned
 // demuxer linked after @p upstream, or nullptr (logged).
-GstElement* addTsDemux(GstElement* bin, GstElement* upstream)
+GstElement* addTsDemux(GstElement* bin, GstElement* upstream, guint latencyMs)
 {
     GstElementPtr tsdemux = makeElement("tsdemux");
     if (!tsdemux) {
         qCWarning(GstSourceFactoryLog) << "gst_element_factory_make('tsdemux') failed";
         return nullptr;
+    }
+
+    // tsdemux adds its "latency" to a live stream's: with its default, 700 ms, every frame of MPEG-TS over UDP is
+    // shown that much later.
+    if (g_object_class_find_property(G_OBJECT_GET_CLASS(tsdemux.get()), "latency")) {
+        g_object_set(tsdemux.get(), "latency", static_cast<gint>(std::max(latencyMs, kTsDemuxMinLatencyMs)), nullptr);
     }
 
     GstElement* const demux = addToBin(bin, std::move(tsdemux), "tsdemux");
@@ -550,7 +574,7 @@ GstElement* create(const QString& uri, const Config& config)
     }
 
     if (spec.demuxMpegTs) {
-        upstream = addTsDemux(bin.get(), upstream);
+        upstream = addTsDemux(bin.get(), upstream, latencyMs);
         if (!upstream) {
             return nullptr;
         }
