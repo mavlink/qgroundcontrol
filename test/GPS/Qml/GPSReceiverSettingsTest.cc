@@ -50,6 +50,16 @@ QVariant portEntries(const QString& path, const QString& label = {})
     return QVariant::fromValue(QList<GPSSerialPortEntry>{{.value = path, .label = label.isEmpty() ? path : label}});
 }
 
+/// Serial device picker entries labelled with their paths.
+QVariant portEntries(const QStringList& paths)
+{
+    QList<GPSSerialPortEntry> entries;
+    for (const QString& path : paths) {
+        entries.append({.value = path, .label = path});
+    }
+    return QVariant::fromValue(entries);
+}
+
 /// The receiver settings panel over saved settings for a manufacturer, and a scripted receiver that follows them.
 struct Panel
 {
@@ -539,6 +549,52 @@ void GPSReceiverSettingsTest::_serialSelectionTracksFacts()
     QVERIFY(!device->property("enabled").toBool());
     QVERIFY(!baud->property("enabled").toBool());
     QVERIFY(!custom->property("enabled").toBool());
+}
+
+void GPSReceiverSettingsTest::_serialSelectionSurvivesChoiceChanges()
+{
+#ifdef QGC_NO_SERIAL_LINK
+    QSKIP("Serial selection requires serial link support");
+#endif
+    Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));
+    QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
+    auto* device = panel.find<QObject>("rtkSerialDevice");
+    auto* baud = panel.find<QObject>("rtkSerialBaudRate");
+    QVERIFY(device && baud);
+    RTKSettings* const settings = panel.settings.settings;
+    const QString receiver = QStringLiteral("/test/receiver");
+    const QString other = QStringLiteral("/test/other");
+    const QString plugged = QStringLiteral("/test/plugged");
+    const auto selection = [](const QObject* combo) {
+        return QStringLiteral("%1: %2")
+            .arg(combo->property("currentIndex").toInt())
+            .arg(combo->property("currentText").toString());
+    };
+    // A combo box selects its first entry when its choices are replaced, so neither selection is the first one.
+    QVERIFY(panel.item->setProperty("serialPorts", portEntries({receiver, other})));
+    settings->serialDevice()->setRawValue(other);
+    settings->serialBaudRate()->setRawValue(230400);
+    QCOMPARE(selection(device), QStringLiteral("1: /test/other"));
+    QCOMPARE(selection(baud), QStringLiteral("2: 230400"));
+
+    // Plugging in a port lists it; unplugging the selected one keeps it, as unavailable.
+    QVERIFY(panel.item->setProperty("serialPorts", portEntries({receiver, other, plugged})));
+    QCOMPARE(selection(device), QStringLiteral("1: /test/other"));
+    QVERIFY(panel.item->setProperty("serialPorts", portEntries({receiver, plugged})));
+    QCOMPARE(selection(device), QStringLiteral("2: /test/other (unavailable)"));
+    // Connect automatically lists USB discovery above the ports.
+    panel.settings.autoConnect->setRawValue(true);
+    QCOMPARE(selection(device), QStringLiteral("3: /test/other (unavailable)"));
+
+    // A passive receiver is not offered Auto, and a receiver may list other rates.
+    settings->receiverRole()->setRawValue(RTKSettings::Passive);
+    QCOMPARE(selection(baud), QStringLiteral("1: 230400"));
+    settings->receiverRole()->setRawValue(RTKSettings::ConfiguredBase);
+    QCOMPARE(selection(baud), QStringLiteral("2: 230400"));
+    QVERIFY(panel.item->setProperty("serialBaudRates", QVariant::fromValue(QList<int>{57600, 115200, 230400})));
+    QCOMPARE(selection(baud), QStringLiteral("3: 230400"));
+    QCOMPARE(settings->serialDevice()->rawValue().toString(), other);
+    QCOMPARE(settings->serialBaudRate()->rawValue().toInt(), 230400);
 }
 
 void GPSReceiverSettingsTest::_horizontalAccuracyLabel()

@@ -37,6 +37,7 @@ ColumnLayout {
     readonly property list<int> _rates: root.allowAutoBaud ? [0, ...root.serialBaudRates] : root.serialBaudRates
     readonly property int _baudIndex: _rates.indexOf(Number(baudFact.rawValue))
     readonly property bool customBaud: _customRequested || _baudIndex < 0
+    readonly property int _baudComboIndex: customBaud ? _rates.length : _baudIndex
     property bool _customRequested: false
 
     spacing: ScreenTools.defaultFontPixelHeight / 4
@@ -75,7 +76,9 @@ ColumnLayout {
             Layout.minimumWidth: 0
             enabled: root.editable
             model: root._rates.map(rate => rate === 0 ? qsTr("Auto") : String(rate)).concat([qsTr("Custom")])
-            currentIndex: root.customBaud ? root._rates.length : root._baudIndex
+            currentIndex: root._baudComboIndex
+            // A new model resets the index to 0 without re-evaluating the binding, so restore it.
+            onModelChanged: currentIndex = Qt.binding(() => root._baudComboIndex)
             onActivated: index => {
                 root._customRequested = index === root._rates.length
                 if (index >= 0 && index < root._rates.length)

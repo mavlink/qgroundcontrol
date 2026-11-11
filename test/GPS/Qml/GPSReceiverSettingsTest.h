@@ -20,5 +20,6 @@ private slots:
     void _warningWidth_data();
     void _warningWidth();
     void _serialSelectionTracksFacts();
+    void _serialSelectionSurvivesChoiceChanges();
     void _horizontalAccuracyLabel();
 };

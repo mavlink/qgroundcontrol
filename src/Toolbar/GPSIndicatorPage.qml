@@ -81,8 +81,10 @@ ToolIndicatorPage {
 
     contentComponent: Component {
         ColumnLayout {
-            // On narrow screens the expanded view replaces status instead of requiring horizontal scrolling.
+            // On narrow screens the expanded view replaces status instead of requiring horizontal scrolling. The
+            // page's loader keeps the size of a hidden column, so the column gives up both dimensions.
             width: root.expanded && root._compact ? 0 : Math.min(root._preferredStatusWidth, root.availableWidth)
+            height: root.expanded && root._compact ? 0 : implicitHeight
             visible: !root.expanded || !root._compact
             spacing: ScreenTools.defaultFontPixelHeight / 2
 
