@@ -239,6 +239,51 @@ void PX4ULogUtilityTest::_testIterateMessagesMultiple()
     }
 }
 
+void PX4ULogUtilityTest::_testIterateMessagesStops()
+{
+    const QByteArray ulog = buildTestULog(5);
+
+    int callCount = 0;
+    QString error;
+    const bool ok = PX4ULogUtility::iterateMessages(
+        ulog.constData(), ulog.size(), "test_msg",
+        [&](const ulog_cpp::TypedDataView&) {
+            ++callCount;
+            return false;
+        },
+        error);
+
+    QVERIFY2(ok, qPrintable(error));
+    QCOMPARE(callCount, 1);
+}
+
+void PX4ULogUtilityTest::_testIterateMessagesAcrossChunks()
+{
+    // The reader is fed 64 KiB at a time; 17-byte records make messages straddle the chunk boundaries
+    constexpr int kCount = 10000;
+    const QByteArray ulog = buildTestULog(kCount, 0ULL, 0.0f);
+    QVERIFY(ulog.size() > 2 * 64 * 1024);
+
+    int callCount = 0;
+    int outOfOrder = 0;
+    QString error;
+    const bool ok = PX4ULogUtility::iterateMessages(
+        ulog.constData(), ulog.size(), "test_msg",
+        [&](const ulog_cpp::TypedDataView& sample) {
+            if (sample.at("timestamp").as<uint64_t>() != static_cast<uint64_t>(callCount) * 500000ULL) {
+                ++outOfOrder;
+            }
+            ++callCount;
+            return true;
+        },
+        error);
+
+    QVERIFY2(ok, qPrintable(error));
+    QVERIFY(error.isEmpty());
+    QCOMPARE(callCount, kCount);
+    QCOMPARE(outOfOrder, 0);
+}
+
 void PX4ULogUtilityTest::_testIterateMessagesUnknownMessage()
 {
     // Valid ULog, but we request a message type that isn't in it.

@@ -26,6 +26,8 @@ private slots:
     // Message iteration tests
     void _testIterateMessages();
     void _testIterateMessagesMultiple();
+    void _testIterateMessagesStops();
+    void _testIterateMessagesAcrossChunks();
     void _testIterateMessagesUnknownMessage();
     void _testIterateMessagesFatalError();
 };
