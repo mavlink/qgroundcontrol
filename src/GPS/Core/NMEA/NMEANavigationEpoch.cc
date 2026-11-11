@@ -1,6 +1,7 @@
 #include "NMEANavigationEpoch.h"
 
 #include <algorithm>
+#include <utility>
 
 #include "MonotonicClock.h"
 
@@ -53,34 +54,27 @@ std::optional<NavigationUpdate> NavigationEpochAssembler::ingest(const Sentence&
             if (sentence.type() == "GGA" && sentence.count > Field::GGA_SATELLITES_USED) {
                 loss.satellitesUsed = ggaSatellitesUsed(sentence.fields[Field::GGA_SATELLITES_USED]);
             }
-            return NavigationUpdate{
-                .type = NavigationUpdate::Type::FixLoss, .trigger = NavigationUpdate::Trigger::Position, .epoch = loss};
+            return NavigationUpdate{.type = NavigationUpdate::Type::FixLoss, .epoch = loss};
         }
         _navigationValid = true;
     }
 
-    if (auto update = _handlePositionSentence(sentence, receivedAtUs)) {
-        return update;
+    std::optional<NavigationEpoch> overdue;
+    auto* joined = _joinPosition(sentence, receivedAtUs, overdue);
+    if (!joined) {
+        joined = _joinAccuracy(sentence, receivedAtUs);
     }
-    if (auto update = _handleAccuracy(sentence, receivedAtUs)) {
-        return update;
+    if (!joined) {
+        joined = _joinUntimed(sentence, receivedAtUs);
     }
-    return _handleUntimedMetadata(sentence, receivedAtUs);
-}
-
-std::optional<NavigationEpoch> NavigationEpochAssembler::expireUntimedMetadata(uint64_t nowUs)
-{
-    auto* stored = _current();
-    if (!stored || !stored->epoch.verticalDopReceivedAtUs ||
-        MonotonicClock::withinAge(stored->epoch.verticalDopReceivedAtUs, nowUs, METADATA_MAX_AGE)) {
-        return std::nullopt;
+    if (joined && _complete(*joined)) {
+        joined->published = true;
+        return NavigationUpdate{.type = NavigationUpdate::Type::Epoch, .epoch = joined->epoch};
     }
-    stored->epoch.verticalDop.reset();
-    stored->epoch.verticalDopReceivedAtUs = 0;
-    if (_hiddenByFixLoss(stored->epoch)) {
-        return std::nullopt;
+    if (overdue) {
+        return NavigationUpdate{.type = NavigationUpdate::Type::Epoch, .epoch = *overdue};
     }
-    return stored->epoch;
+    return std::nullopt;
 }
 
 NavigationEpochAssembler::StoredEpoch& NavigationEpochAssembler::_find(std::optional<int> timeMs)
@@ -143,13 +137,31 @@ void NavigationEpochAssembler::_resetExpiredEpoch(StoredEpoch& stored, uint64_t 
     }
 }
 
-NavigationEpoch& NavigationEpochAssembler::_positionEpoch(std::optional<int> timeMs, uint64_t receivedAtUs)
+NavigationEpochAssembler::StoredEpoch& NavigationEpochAssembler::_positionEpoch(std::optional<int> timeMs,
+                                                                                uint64_t receivedAtUs, bool gga,
+                                                                                std::optional<NavigationEpoch>& overdue)
 {
+    auto* const current = _current();
     auto& stored = _find(timeMs);
+    // A GGA of the same time again is a new report from a receiver whose time does not advance.
+    if (current && (current != &stored || (gga && stored.epoch.ggaQuality))) {
+        overdue = _end(*current);
+    }
     _resetExpiredEpoch(stored, receivedAtUs);
     _currentKey = stored.key;
     _hasCurrent = true;
-    return stored.epoch;
+    return stored;
+}
+
+std::optional<NavigationEpoch> NavigationEpochAssembler::_end(StoredEpoch& stored)
+{
+    std::optional<NavigationEpoch> overdue;
+    if (!stored.published && stored.epoch.ggaQuality && !_hiddenByFixLoss(stored.epoch)) {
+        overdue = stored.epoch;
+    }
+    stored.published = true;
+    _earlierFollowers = std::exchange(_previousFollowers, stored.followers);
+    return overdue;
 }
 
 bool NavigationEpochAssembler::_hiddenByFixLoss(const NavigationEpoch& epoch) const
@@ -157,64 +169,95 @@ bool NavigationEpochAssembler::_hiddenByFixLoss(const NavigationEpoch& epoch) co
     return !_navigationValid || epoch.sequence <= _invalidThroughSequence;
 }
 
-std::optional<NavigationUpdate> NavigationEpochAssembler::_handlePositionSentence(const Sentence& sentence,
-                                                                                  uint64_t receivedAtUs)
+void NavigationEpochAssembler::_add(StoredEpoch& stored, Addition addition, uint64_t receivedAtUs) const
 {
-    // Position sentences reach here only with a receiver-declared valid fix; ingest() reports fix loss first.
-    NavigationEpoch* epoch = nullptr;
-    if (const auto rmcFix = rmc(sentence)) {
-        if (!rmcFix->utcMilliseconds) {
-            return std::nullopt;
-        }
-        epoch = &_positionEpoch(rmcFix->utcMilliseconds, receivedAtUs);
-        epoch->latitude = rmcFix->latitude;
-        epoch->longitude = rmcFix->longitude;
-        epoch->speedMetersPerSecond = finiteValue(rmcFix->speedMetersPerSecond);
-        epoch->courseDegrees = finiteValue(rmcFix->courseDegrees);
-    } else if (const auto ggaFix = gga(sentence)) {
-        epoch = &_positionEpoch(utcMilliseconds(sentence.fields[Field::UTC_TIME]), receivedAtUs);
-        epoch->ggaQuality = ggaFix->quality;
-        epoch->latitude = ggaFix->latitude;
-        epoch->longitude = ggaFix->longitude;
-        epoch->altitudeMslMeters = finiteValue(ggaFix->altitude);
-        epoch->geoidSeparationMeters = finiteValue(ggaFix->geoidSeparation);
-        epoch->satellitesUsed = ggaFix->satellitesUsed;
-        epoch->horizontalDop = finiteValue(ggaFix->hdop);
-        if (!epoch->accuracyReceivedAtUs ||
-            !MonotonicClock::withinAge(epoch->accuracyReceivedAtUs, receivedAtUs, METADATA_MAX_AGE)) {
-            epoch->horizontalAccuracyMeters.reset();
-            epoch->verticalAccuracyMeters.reset();
-            epoch->accuracyReceivedAtUs = 0;
-        }
-    } else if (const auto gllFix = gll(sentence)) {
-        if (!gllFix->utcMilliseconds) {
-            return std::nullopt;
-        }
-        epoch = &_positionEpoch(gllFix->utcMilliseconds, receivedAtUs);
-        epoch->latitude = gllFix->latitude;
-        epoch->longitude = gllFix->longitude;
-    } else {
-        return std::nullopt;
+    stored.additions |= addition;
+    // Later in the interval a sentence would hold the position for too long, and a GSA or VTG there may open the next
+    // epoch's burst.
+    const auto limit = _ggaInterval > std::chrono::microseconds::zero()
+                           ? (std::min) (METADATA_MAX_AGE, _ggaInterval / 2)
+                           : METADATA_MAX_AGE;
+    if (stored.epoch.ggaQuality && MonotonicClock::withinAge(stored.epoch.positionReceivedAtUs, receivedAtUs, limit)) {
+        stored.followers |= addition;
     }
-
-    epoch->fixQuality = fixQuality(epoch->ggaQuality.value_or(GgaQuality::GPS), GPSFixQuality::Fix3D);
-    markReceipt(*epoch, receivedAtUs);
-    epoch->positionReceivedAtUs = receivedAtUs;
-    epoch->sequence = _sequence;
-    return NavigationUpdate{
-        .type = NavigationUpdate::Type::Epoch, .trigger = NavigationUpdate::Trigger::Position, .epoch = *epoch};
 }
 
-std::optional<NavigationUpdate> NavigationEpochAssembler::_handleAccuracy(const Sentence& sentence,
-                                                                          uint64_t receivedAtUs)
+bool NavigationEpochAssembler::_complete(const StoredEpoch& stored) const
+{
+    // One epoch with a follower may be a slower sentence's turn; two in a row are the receiver's order.
+    const Additions awaited = _previousFollowers & _earlierFollowers;
+    return !stored.published && stored.epoch.ggaQuality && !_hiddenByFixLoss(stored.epoch) &&
+           (stored.additions & awaited) == awaited;
+}
+
+NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinPosition(const Sentence& sentence,
+                                                                               uint64_t receivedAtUs,
+                                                                               std::optional<NavigationEpoch>& overdue)
+{
+    // Position sentences reach here only with a receiver-declared valid fix; ingest() reports fix loss first.
+    if (const auto ggaFix = gga(sentence)) {
+        auto& stored = _positionEpoch(utcMilliseconds(sentence.fields[Field::UTC_TIME]), receivedAtUs, true, overdue);
+        auto& epoch = stored.epoch;
+        epoch.ggaQuality = ggaFix->quality;
+        epoch.fixQuality = fixQuality(ggaFix->quality, GPSFixQuality::Fix3D);
+        epoch.latitude = ggaFix->latitude;
+        epoch.longitude = ggaFix->longitude;
+        epoch.altitudeMslMeters = finiteValue(ggaFix->altitude);
+        epoch.geoidSeparationMeters = finiteValue(ggaFix->geoidSeparation);
+        epoch.satellitesUsed = ggaFix->satellitesUsed;
+        epoch.horizontalDop = finiteValue(ggaFix->hdop);
+        if (!epoch.accuracyReceivedAtUs ||
+            !MonotonicClock::withinAge(epoch.accuracyReceivedAtUs, receivedAtUs, METADATA_MAX_AGE)) {
+            epoch.horizontalAccuracyMeters.reset();
+            epoch.verticalAccuracyMeters.reset();
+            epoch.accuracyReceivedAtUs = 0;
+        }
+        epoch.positionReceivedAtUs = receivedAtUs;
+        epoch.sequence = _sequence;
+        markReceipt(epoch, receivedAtUs);
+        stored.published = false;
+        stored.followers = {};
+        _ggaInterval = MonotonicClock::age(_ggaReceivedAtUs, receivedAtUs).value_or(std::chrono::microseconds::zero());
+        _ggaReceivedAtUs = receivedAtUs;
+        return &stored;
+    }
+
+    const auto rmcFix = rmc(sentence);
+    std::optional<int> timeMs;
+    if (rmcFix) {
+        timeMs = rmcFix->utcMilliseconds;
+    } else if (const auto gllFix = gll(sentence)) {
+        timeMs = gllFix->utcMilliseconds;
+    }
+    if (!timeMs) {
+        return nullptr;
+    }
+    auto& stored = _positionEpoch(timeMs, receivedAtUs, false, overdue);
+    auto& epoch = stored.epoch;
+    if (!epoch.ggaQuality) {
+        // Only the GGA's position is published; until it arrives, GSA and VTG join the epoch from this receipt.
+        epoch.positionReceivedAtUs = receivedAtUs;
+        epoch.sequence = _sequence;
+    }
+    markReceipt(epoch, receivedAtUs);
+    if (rmcFix) {
+        epoch.speedMetersPerSecond = finiteValue(rmcFix->speedMetersPerSecond);
+        epoch.courseDegrees = finiteValue(rmcFix->courseDegrees);
+        _add(stored, Addition::RMC, receivedAtUs);
+    }
+    return &stored;
+}
+
+NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinAccuracy(const Sentence& sentence,
+                                                                               uint64_t receivedAtUs)
 {
     const auto accuracy = gst(sentence);
     if (!accuracy) {
-        return std::nullopt;
+        return nullptr;
     }
     const auto timeMs = utcMilliseconds(sentence.fields[Field::UTC_TIME]);
     if (!timeMs) {
-        return std::nullopt;
+        return nullptr;
     }
     auto& stored = _find(timeMs);
     _resetExpiredEpoch(stored, receivedAtUs);
@@ -223,44 +266,37 @@ std::optional<NavigationUpdate> NavigationEpochAssembler::_handleAccuracy(const 
     epoch.verticalAccuracyMeters = finiteValue(accuracy->verticalAccuracy);
     epoch.accuracyReceivedAtUs = receivedAtUs;
     markReceipt(epoch, receivedAtUs);
-    if (!_hasCurrent || _currentKey != stored.key || _hiddenByFixLoss(epoch)) {
-        return std::nullopt;
-    }
-    return NavigationUpdate{
-        .type = NavigationUpdate::Type::Epoch, .trigger = NavigationUpdate::Trigger::TimedMetadata, .epoch = epoch};
+    _add(stored, Addition::GST, receivedAtUs);
+    return &stored;
 }
 
-std::optional<NavigationUpdate> NavigationEpochAssembler::_handleUntimedMetadata(const Sentence& sentence,
-                                                                                 uint64_t receivedAtUs)
+NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinUntimed(const Sentence& sentence,
+                                                                              uint64_t receivedAtUs)
 {
     auto* stored = _current();
     if (!stored || !stored->epoch.positionReceivedAtUs ||
         !MonotonicClock::withinAge(stored->epoch.positionReceivedAtUs, receivedAtUs, METADATA_MAX_AGE)) {
-        return std::nullopt;
+        return nullptr;
     }
 
     auto& epoch = stored->epoch;
     if (sentence.type() == "GSA") {
         if (sentence.count < Field::GSA_MIN_FIELDS) {
-            return std::nullopt;
+            return nullptr;
         }
         if (!epoch.horizontalDop) {
             epoch.horizontalDop = nonnegativeNumber(sentence.fields[Field::GSA_HDOP]);
         }
-        const auto vdop = nonnegativeNumber(sentence.fields[Field::GSA_VDOP]);
-        epoch.verticalDop = vdop;
-        epoch.verticalDopReceivedAtUs = vdop ? receivedAtUs : 0;
+        epoch.verticalDop = nonnegativeNumber(sentence.fields[Field::GSA_VDOP]);
+        _add(*stored, Addition::GSA, receivedAtUs);
     } else if (const auto velocity = vtg(sentence)) {
         epoch.speedMetersPerSecond = finiteValue(velocity->speedMetersPerSecond);
         epoch.courseDegrees = finiteValue(velocity->courseDegrees);
+        _add(*stored, Addition::VTG, receivedAtUs);
     } else {
-        return std::nullopt;
+        return nullptr;
     }
-    if (_hiddenByFixLoss(epoch)) {
-        return std::nullopt;
-    }
-    return NavigationUpdate{
-        .type = NavigationUpdate::Type::Epoch, .trigger = NavigationUpdate::Trigger::UntimedMetadata, .epoch = epoch};
+    return stored;
 }
 
 }  // namespace NMEA

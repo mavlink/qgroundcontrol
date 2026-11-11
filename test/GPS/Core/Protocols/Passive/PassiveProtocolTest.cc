@@ -136,12 +136,10 @@ void navigation(GPSTestClock& clock)
     receiver.feed(nmeaSentence("GNGGA,123520,4807.038,N,01131.000,E,1,,0.9,1.0,M,2.0,M,,"));
     QVERIFY(std::isnan(receiver.reports<GPSDecodedPosition>().back().navigation.horizontalAccuracyMeters));
     QVERIFY(!receiver.reports<GPSDecodedSatelliteUsage>().back().usedCount);
-    const auto positionTime = receiver.position.navigation.timestampUs;
+    // An epoch is published once: accuracy that arrives after it is not another position.
     receiver.clock.advanceBy(1000);
     receiver.feed(nmeaSentence("GNGST,123520,0,0,0,0,0.6,0.8,1.0"));
-    QCOMPARE(receiver.reports<GPSDecodedPosition>().size(), 2);
-    QCOMPARE(receiver.position.navigation.timestampUs, positionTime);
-    QVERIFY(std::abs(receiver.position.navigation.horizontalAccuracyMeters - 1.0) < 1e-6);
+    QCOMPARE(receiver.reports<GPSDecodedPosition>().size(), 1);
     receiver.events.clear();
     auto corrupt = gga;
     corrupt[10] ^= 1;

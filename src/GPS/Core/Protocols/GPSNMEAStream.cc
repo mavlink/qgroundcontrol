@@ -96,14 +96,9 @@ GPSReceiveUpdates GPSNMEAStream::_decodeStandard(std::string_view line, GPSDecod
         _position.navigation.satellitesUsed = used;
         context.publishSatelliteUsage(used);
         updates |= GPSReceiveUpdate::Position;
-    } else if (update && update->type == NMEA::NavigationUpdate::Type::Epoch &&
-               update->trigger == NMEA::NavigationUpdate::Trigger::Position && sentence->type() == "GGA") {
+    } else if (update) {
         applyNavigationEpoch(_position, update->epoch);
         context.publishSatelliteUsage(gpsSatellitesUsed(update->epoch.satellitesUsed));
-        updates |= GPSReceiveUpdate::Position;
-    } else if (update && update->type == NMEA::NavigationUpdate::Type::Epoch &&
-               update->trigger == NMEA::NavigationUpdate::Trigger::TimedMetadata) {
-        applyNavigationEpoch(_position, update->epoch);
         updates |= GPSReceiveUpdate::Position;
     }
     return updates;
@@ -120,11 +115,7 @@ GPSReceiveUpdates GPSNMEAStream::_finishLine(GPSReceiveUpdates updates, GPSDecod
 
 void GPSNMEAStream::flush(GPSDecodeContext& context)
 {
-    const uint64_t now = context.nowUs();
-    if (const auto expired = _navigationAssembler.expireUntimedMetadata(now)) {
-        applyNavigationEpoch(_position, *expired);
-    }
-    _queueSatellites(_satelliteAssembler.flushDue(now));
+    _queueSatellites(_satelliteAssembler.flushDue(context.nowUs()));
     _publishSatellites(context);
 }
 

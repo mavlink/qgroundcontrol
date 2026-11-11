@@ -120,6 +120,8 @@ The _Passive_ role uses the receiver's existing output without configuring it or
 
 - The receiver may output standard NMEA, u-blox UBX or Septentrio SBF; QGC identifies the protocol from the data and shows it as _Detected_ in the receiver status.
   When a receiver sends both NMEA and a binary protocol, positions come from the one recognized first, until it stops reporting positions.
+- With NMEA, the position comes from the GGA sentence.
+  RMC or VTG add the speed and heading, and GST or GSA the accuracy.
 - Turn off **Forward receiver RTCM** to use the receiver only for the ground station position.
 - Select the connection (**Serial** with the receiver's existing baud rate, **TCP**, or **UDP** with the port QGC listens on).
 

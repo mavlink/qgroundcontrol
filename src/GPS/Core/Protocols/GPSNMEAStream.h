@@ -57,7 +57,7 @@ public:
         return onFrame(frame, context, [](std::string_view) { return GPSReceiveUpdates{}; });
     }
 
-    /// Expires untimed metadata and publishes satellite epochs that became due.
+    /// Publishes satellite epochs that became due.
     void flush(GPSDecodeContext& context);
 
     /// Shortens a receive @a timeout so a pending satellite epoch is published when it becomes due.
