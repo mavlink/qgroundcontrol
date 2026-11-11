@@ -42,14 +42,14 @@ GPSSatelliteReport SatelliteCounts::update(const GPSDecodedSatellites& source, u
                 native.inUse ? std::optional<int>(std::clamp(*native.inUse, 0, LIMIT)) : std::nullopt, nowUs);
     }
     (void) _expire(nowUs);
-    return _report(false);
+    return _report();
 }
 
 GPSSatelliteReport SatelliteCounts::update(const GPSDecodedSatelliteUsage& source, uint64_t nowUs)
 {
     _accept(_countOnlyUsed, source.timestampUs, source.usedCount, nowUs);
     (void) _expire(nowUs);
-    return _report(true);
+    return _report();
 }
 
 std::optional<GPSSatelliteReport> SatelliteCounts::expire(uint64_t nowUs)
@@ -57,7 +57,7 @@ std::optional<GPSSatelliteReport> SatelliteCounts::expire(uint64_t nowUs)
     if (!_expire(nowUs)) {
         return std::nullopt;
     }
-    return _report(false);
+    return _report();
 }
 
 void SatelliteCounts::_accept(Count& count, uint64_t receivedAtUs, std::optional<int> value, uint64_t nowUs)
@@ -86,7 +86,7 @@ bool SatelliteCounts::_expire(uint64_t nowUs)
     return expired;
 }
 
-GPSSatelliteReport SatelliteCounts::_report(bool countOnlyUsed) const
+GPSSatelliteReport SatelliteCounts::_report() const
 {
     GPSSatelliteReport report;
     int inView = 0;
@@ -117,7 +117,7 @@ GPSSatelliteReport SatelliteCounts::_report(bool countOnlyUsed) const
             viewUsed = used;
         }
     }
-    report.used = countOnlyUsed || !viewUsed ? _countOnlyUsed.value : viewUsed;
+    report.used = viewUsed ? viewUsed : _countOnlyUsed.value;
     return report;
 }
 }  // namespace GPSDecodedData

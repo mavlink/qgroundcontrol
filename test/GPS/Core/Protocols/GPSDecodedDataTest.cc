@@ -496,19 +496,27 @@ void GPSDecodedDataTest::_satelliteUsageCombination()
     QCOMPARE(report.inView, std::optional<int>{4});
     QCOMPARE(report.used, std::optional<int>{2});
 
+    // A count-only report that disagrees with the known constellation sum does not replace it.
     countOnly = counts.update(GPSDecodedSatelliteUsage{.timestampUs = 400, .usedCount = 7}, 400);
     QCOMPARE(countOnly.inView, std::optional<int>{4});
-    QCOMPARE(countOnly.used, std::optional<int>{7});
+    QCOMPARE(countOnly.used, std::optional<int>{2});
 
-    countOnly = counts.update(GPSDecodedSatelliteUsage{.timestampUs = 500}, 500);
+    // It stands in again once the constellation in view lacks its used count.
+    gps->inViewTimestampUs = 500;
+    gps->inUseTimestampUs = 500;
+    gps->inUse.reset();
+    report = counts.update(view, 500);
+    QCOMPARE(report.inView, std::optional<int>{4});
+    QCOMPARE(report.used, std::optional<int>{7});
+
+    countOnly = counts.update(GPSDecodedSatelliteUsage{.timestampUs = 600}, 600);
     QCOMPARE(countOnly.inView, std::optional<int>{4});
     QVERIFY(!countOnly.used);
 
-    gps->inViewTimestampUs = 600;
+    gps->inViewTimestampUs = 700;
     gps->inView = 0;
     gps->inUseTimestampUs = 0;
-    gps->inUse.reset();
-    report = counts.update(view, 600);
+    report = counts.update(view, 700);
     QCOMPARE(report.inView, std::optional<int>{0});
     QCOMPARE(report.used, std::optional<int>{0});
 }

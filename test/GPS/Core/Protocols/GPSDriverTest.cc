@@ -692,4 +692,29 @@ void GPSDriverTest::_satelliteExpiry()
     QCOMPARE(link.writes(), 0);
 }
 
+void GPSDriverTest::_satelliteUsageSources()
+{
+    GPSTestClock clock(GPSTestClock::START_US);
+    ModelReceiver<ScriptedReceiver::Model> link(clock);
+    std::vector<std::optional<int>> used;
+    GPSDriverSinks sinks;
+    sinks.onSatelliteInfo = [&](const GPSSatelliteReport& report) { used.push_back(report.used); };
+    GPSDriver driver(GPSType::passive, link, {.baudRate = 115200}, std::move(sinks), clock.source());
+    QVERIFY(driver.configure());
+    // Each epoch's GGA counts twelve satellites used, while its GSA lists three.
+    for (int epoch = 0; epoch < 4; ++epoch) {
+        const QByteArray time = QByteArray::number(123519 + epoch);
+        for (const QByteArray& sentence :
+             {"GPGGA," + time + ",4807.038,N,01131.000,E,1,12,0.9,545.4,M,46.9,M,,",
+              QByteArray("GPGSA,A,3,01,02,03,,,,,,,,,,1.0,0.8,0.6"),
+              QByteArray("GPGSV,1,1,04,01,10,20,30,02,20,30,40,03,30,40,50,04,40,50,60")}) {
+            send(link, nmeaBytes(sentence));
+            QCOMPARE(driver.receiveOutcome(20ms).error, GPSProtocolError::None);
+        }
+        clock.advanceBy(1000000);
+    }
+    // The GGA count stands in until the first satellite epoch closes; the published count then stays on the GSA sum.
+    QCOMPARE(used, (std::vector<std::optional<int>>{12, 3, 3, 3}));
+}
+
 UT_REGISTER_TEST_LIGHTWEIGHT(GPSDriverTest, TestLabel::Unit)

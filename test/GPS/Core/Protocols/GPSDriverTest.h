@@ -32,4 +32,5 @@ private slots:
     void _mismatchHint();
     void _satelliteExpiry_data();
     void _satelliteExpiry();
+    void _satelliteUsageSources();
 };
