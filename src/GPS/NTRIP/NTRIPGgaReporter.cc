@@ -11,7 +11,7 @@
 #include "QGCLoggingCategory.h"
 #include "RuntimeScheduler.h"
 
-QGC_LOGGING_CATEGORY(NTRIPGgaReporterLog, "GPS.NTRIPGgaProvider")
+QGC_LOGGING_CATEGORY(NTRIPGgaReporterLog, "GPS.NTRIPGgaReporter")
 
 namespace {
 QString sourceName(NTRIPGgaReporter::PositionSource source)

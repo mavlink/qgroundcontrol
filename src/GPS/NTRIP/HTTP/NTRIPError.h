@@ -23,7 +23,7 @@ enum class NTRIPError
     HeaderTooLarge,
     InvalidMountpoint,
     InvalidConfig,
-    Unknown
+    Unknown,
 };
 Q_ENUM_NS(NTRIPError)
 

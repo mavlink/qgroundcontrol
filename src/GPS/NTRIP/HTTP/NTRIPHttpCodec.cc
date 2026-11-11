@@ -301,7 +301,8 @@ void NTRIPHttpDecoder::_lineReceived(Result& result, const QDateTime& utcNow)
             return;
         }
         if (_status.code >= 100 && _status.code < 200) {
-            if (_status.code == 101 || _contentLength || _chunked || ++_informationalResponses > 4) {
+            if (_status.code == 101 || _contentLength || _chunked ||
+                ++_informationalResponses > MAX_INFORMATIONAL_RESPONSES) {
                 _fail(result, tr("Unsupported HTTP informational response"));
             } else {
                 _headers.clear();
@@ -351,7 +352,7 @@ void NTRIPHttpDecoder::_lineReceived(Result& result, const QDateTime& utcNow)
         _fail(result, tr("Invalid HTTP response header"));
         return;
     }
-    if (_headers.size() >= 128) {
+    if (_headers.size() >= MAX_HEADER_COUNT) {
         _fail(result, tr("Too many HTTP response headers"), NTRIPError::HeaderTooLarge);
         return;
     }

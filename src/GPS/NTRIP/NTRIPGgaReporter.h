@@ -27,7 +27,7 @@ public:
         VehicleGPS = 1,
         VehicleEKF = 2,
         RTKReceiver = 3,
-        GCSPosition = 4
+        GCSPosition = 4,
     };
     Q_ENUM(PositionSource)
 

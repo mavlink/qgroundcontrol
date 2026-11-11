@@ -242,7 +242,8 @@ void NTRIPHttpCodecTest::_framing_data()
     QTest::newRow("switching-protocol") << QByteArray("HTTP/1.1 101 Switching Protocols\r\n\r\n") << QByteArray()
                                         << false << invalid;
     QTest::newRow("too-many-informationals")
-        << QByteArray("HTTP/1.1 100 Continue\r\n\r\n").repeated(5) << QByteArray() << false << invalid;
+        << QByteArray("HTTP/1.1 100 Continue\r\n\r\n").repeated(NTRIPHttpDecoder::MAX_INFORMATIONAL_RESPONSES + 1)
+        << QByteArray() << false << invalid;
     QTest::newRow("http10-chunked") << QByteArray("HTTP/1.0 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n")
                                     << QByteArray() << false << invalid;
     QTest::newRow("line-limit") << ok + "X: " + QByteArray(NTRIPHttpDecoder::MAX_LINE_BYTES - 5, 'x') + "\r\n\r\n"
@@ -256,10 +257,9 @@ void NTRIPHttpCodecTest::_framing_data()
                                   << QByteArray() << true << -1;
     QTest::newRow("oversized-header") << nearLimit + "X: " + QByteArray(remaining + 1, 'x') + "\r\n\r\n"
                                       << QByteArray() << false << oversized;
-    QTest::newRow("header-count-limit") << ok + QByteArray("X: y\r\n").repeated(128) + "\r\n"
-                                        << QByteArray() << true << -1;
-    QTest::newRow("too-many-headers") << ok + QByteArray("X: y\r\n").repeated(129) + "\r\n"
-                                      << QByteArray() << false << oversized;
+    const QByteArray maxHeaders = ok + QByteArray("X: y\r\n").repeated(NTRIPHttpDecoder::MAX_HEADER_COUNT);
+    QTest::newRow("header-count-limit") << maxHeaders + "\r\n" << QByteArray() << true << -1;
+    QTest::newRow("too-many-headers") << maxHeaders + "X: y\r\n\r\n" << QByteArray() << false << oversized;
 }
 
 void NTRIPHttpCodecTest::_framing()

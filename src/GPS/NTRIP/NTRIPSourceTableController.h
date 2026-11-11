@@ -34,7 +34,7 @@ public:
         Idle,
         InProgress,
         Success,
-        Error
+        Error,
     };
     Q_ENUM(FetchStatus)
 

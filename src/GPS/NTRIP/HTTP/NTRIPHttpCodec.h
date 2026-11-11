@@ -41,6 +41,8 @@ public:
 
     static constexpr qsizetype MAX_HEADER_BYTES = 32768;
     static constexpr qsizetype MAX_LINE_BYTES = 8192;
+    static constexpr qsizetype MAX_HEADER_COUNT = 128;
+    static constexpr int MAX_INFORMATIONAL_RESPONSES = 4;
     static constexpr quint64 MAX_CHUNK_BYTES = 16 * 1024 * 1024;
     static constexpr qsizetype MAX_ERROR_BODY_BYTES = 500;
     static constexpr qsizetype MAX_ERROR_PREVIEW_CHARS = 200;
@@ -80,7 +82,7 @@ private:
         ChunkEnd,
         Trailers,
         Complete,
-        Failed
+        Failed,
     };
 
     void _lineReceived(Result& result, const QDateTime& utcNow);

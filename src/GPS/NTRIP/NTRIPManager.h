@@ -76,7 +76,7 @@ public:
         Connecting = 1,
         Connected = 2,
         Reconnecting = 3,
-        Error = 4
+        Error = 4,
     };
     Q_ENUM(ConnectionStatus)
 
