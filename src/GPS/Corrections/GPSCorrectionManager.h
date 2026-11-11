@@ -146,6 +146,8 @@ private:
     /// See GPSCorrectionSelector::submit(); a selected frame goes to vehicles and UDP forwarding.
     void _submit(GPSCorrectionSettings::CorrectionSource source, const QString& instance, const QByteArray& data,
                  qint64 receivedAtMs);
+    /// Forwards @a data to the enabled UDP output and publishes whether it was sent; a repeated outcome is silent.
+    void _forwardToUdpOutput(const QByteArray& data);
 
     /// Each returns whether the input's state or the output's error changed.
     [[nodiscard]] bool _applyUdpInput();

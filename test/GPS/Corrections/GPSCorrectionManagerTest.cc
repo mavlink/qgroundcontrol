@@ -334,6 +334,39 @@ void GPSCorrectionManagerTest::_udpOutputForwardsSelectedStream()
     QCOMPARE(receive(), marker);
 }
 
+void GPSCorrectionManagerTest::_udpOutputReportsSendFailure()
+{
+    QUdpSocket destination;
+    QVERIFY(destination.bind(QHostAddress::LocalHost, 0));
+    const quint16 port = destination.localPort();
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler);
+    corrections.setConfiguration(
+        {.udpInput = {}, .udpOutput = {.enabled = true, .address = QStringLiteral("127.0.0.1"), .port = port}});
+    QVERIFY(corrections.udpOutputError().isEmpty());
+    QSignalSpy changes(&corrections, &GPSCorrectionManager::udpOutputChanged);
+    const auto source = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
+
+    // No UDP datagram carries this much, so the socket refuses to send it.
+    const QByteArray oversized(70000, '\0');
+    for (int attempt = 0; attempt < 2; ++attempt) {
+        expectLogMessage("Utilities.UdpForwarder", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("UDP forward failed")));
+        source->submit(oversized, scheduler.nowMs());
+        verifyExpectedLogMessage();
+    }
+    // A repeated failure keeps its reason without notifying again.
+    QVERIFY(corrections.udpOutputError().contains(QString::number(port)));
+    QCOMPARE(changes.size(), 1);
+
+    const QByteArray frame = GPSTest::rtcmMessage(1005, 20);
+    source->submit(frame, scheduler.nowMs());
+    QVERIFY(corrections.udpOutputError().isEmpty());
+    QCOMPARE(changes.size(), 2);
+    QVERIFY(destination.waitForReadyRead(TestTimeout::mediumMs()));
+    QCOMPARE(destination.receiveDatagram().data(), frame);
+}
+
 void GPSCorrectionManagerTest::_udpOutputSkipsOwnInput()
 {
     TestFixtures::SettingsFixture saved;

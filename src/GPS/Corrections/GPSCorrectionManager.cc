@@ -199,9 +199,26 @@ void GPSCorrectionManager::_submit(GPSCorrectionSettings::CorrectionSource sourc
         if (_rtcmMavlink.submitToOutputs(data) > 0) {
             emit vehicleBytesSubmittedChanged();
         }
-        (void) _udpOutput.forward(data);
+        _forwardToUdpOutput(data);
     }
     _scheduleRefresh();
+}
+
+void GPSCorrectionManager::_forwardToUdpOutput(const QByteArray& data)
+{
+    if (!_udpOutput.isEnabled() || data.isEmpty()) {
+        return;
+    }
+    QString error;
+    // forward() returns the bytes sent and logs why a datagram was not.
+    if (_udpOutput.forward(data) <= 0) {
+        //: %1 is an IP address, %2 a UDP port
+        error = tr("Not forwarding to %1 port %2: the corrections could not be sent.")
+                    .arg(_udpOutput.address(), QString::number(_udpOutput.port()));
+    }
+    if (std::exchange(_udpOutputError, error) != error) {
+        emit udpOutputChanged();
+    }
 }
 
 QString GPSCorrectionManager::sourceName(int source)
