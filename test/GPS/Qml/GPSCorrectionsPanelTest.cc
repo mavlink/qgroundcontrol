@@ -272,6 +272,32 @@ void GPSCorrectionsPanelTest::_correctionsStatusShowsBaseStation()
     QVERIFY(!position->property("visible").toBool());
 }
 
+void GPSCorrectionsPanelTest::_correctionsStatusShowsMessageFilterError()
+{
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler);
+    GPSTest::QmlEngine engine;
+    std::unique_ptr<QObject> status =
+        engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsStatus.qml")),
+                      {{QStringLiteral("corrections"), QVariant::fromValue(&corrections)}});
+    QVERIFY2(status, qPrintable(engine.lastError()));
+    auto* error = status->findChild<QObject*>(QStringLiteral("correctionsMessageFilterError"));
+    QVERIFY(error);
+    QVERIFY(!error->property("visible").toBool());
+
+    // A filter that routes nothing says why, instead of only showing a stream that never becomes fresh.
+    expectLogMessage("GPS.Corrections.GPSCorrectionManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Invalid RTCM message filter entry")));
+    corrections.setConfiguration({.udpInput = {}, .udpOutput = {}, .messageFilter = QStringLiteral("1005 1077")});
+    verifyExpectedLogMessage();
+    QVERIFY(error->property("visible").toBool());
+    QCOMPARE(error->property("text").toString(), corrections.messageFilterError());
+    QVERIFY(error->property("text").toString().contains(QStringLiteral("\"1005 1077\"")));
+
+    corrections.setConfiguration({.udpInput = {}, .udpOutput = {}, .messageFilter = QStringLiteral("1005,1077")});
+    QVERIFY(!error->property("visible").toBool());
+}
+
 void GPSCorrectionsPanelTest::_ntripErrorActionRetries()
 {
     const auto fail = [this](MockNTRIPTransport* transport) {

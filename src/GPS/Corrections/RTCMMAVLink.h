@@ -20,8 +20,8 @@ public:
     ~RTCMMAVLink();
     Q_DISABLE_COPY_MOVE(RTCMMAVLink)
 
-    /// The distinct primary links of live vehicles, excluding log replay: of every vehicle, or of the active vehicle
-    /// alone, which is none while no vehicle is active. Outputs hold their link weakly.
+    /// The distinct primary links of live vehicles, excluding log replay and high-latency links: of every vehicle, or
+    /// of the active vehicle alone, which is none while no vehicle is active. Outputs hold their link weakly.
     [[nodiscard]] static OutputProvider vehicleLinkOutputs(
         GPSCorrectionSettings::CorrectionVehicles selection = GPSCorrectionSettings::AllVehicles);
 

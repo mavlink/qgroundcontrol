@@ -54,15 +54,6 @@ private:
 
 bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned& baud)
 {
-    _ready = false;
-    _rtcmOutputActive = false;
-    _rtcmActivationPending = false;
-    _surveyClock = {};
-    // Corrections are only framed from a receiver that answered.
-    GPSStreamDemux& stream = channel.stream();
-    stream.setEnabled(GPSFrameKind::RTCM3, false);
-    _nmea.setRTCMEnabled(false);
-    _nmea.reset(stream);
     _base = config.base;
     // No command depends on the rate, so the link keeps the one selected or detected; otherwise it runs at Plan::BAUD.
     baud = config.linkBaud(baud, Femto::Plan::BAUD);
@@ -80,6 +71,8 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
         return false;
     }
 
+    // Corrections are only framed from a receiver that answered.
+    GPSStreamDemux& stream = channel.stream();
     stream.reset(GPSFrameKind::NMEASentence);
     stream.setEnabled(GPSFrameKind::RTCM3, true);
     _nmea.setRTCMEnabled(true);

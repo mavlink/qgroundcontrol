@@ -4,6 +4,7 @@
 #include <memory>
 #include <utility>
 
+#include "LinkConfiguration.h"
 #include "LinkInterface.h"
 #include "MAVLinkLib.h"
 #include "MAVLinkProtocol.h"
@@ -80,7 +81,9 @@ RTCMMAVLink::OutputProvider RTCMMAVLink::vehicleLinkOutputs(GPSCorrectionSetting
                 continue;
             }
             auto link = vehicle->vehicleLinkManager()->primaryLink().lock();
-            if (!link || !link->isConnected() || link->isLogReplay() || links.contains(link)) {
+            // Corrections are kilobytes per second, which a high-latency link such as a satellite modem cannot carry.
+            if (!link || !link->isConnected() || link->isLogReplay() || link->linkConfiguration()->isHighLatency() ||
+                links.contains(link)) {
                 continue;
             }
             outputs.append(makeOutput(link));

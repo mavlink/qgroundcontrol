@@ -142,8 +142,6 @@ protected:
     void _expire(GPSDecodeContext& context) override;
 
 private:
-    /// Starts a configuration attempt: forgets the receiver and its stream, stops corrections and revokes the base.
-    void _startAttempt(GPSStreamDemux& stream, GPSDecodeContext& context);
     /// The base the receiver must run: its mode readback and, for a fixed base, its coordinates.
     void _setBase(const GPSBaseStationConfig::Mode& mode);
     /// Sends Plan::identify(). Clears _rejection.
@@ -187,7 +185,8 @@ private:
 
 bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned& baud)
 {
-    _startAttempt(channel.stream(), channel.context());
+    // Until this configuration proves a base, none is reported.
+    _publishBase(channel.context(), GPSSurveyState::Inactive);
     (void) channel.flush();
     const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&config.base.mode);
     const auto* averaging = std::get_if<GPSBaseStationConfig::ReceiverAveraging>(&config.base.mode);
@@ -234,20 +233,6 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
     _ready = true;
     _nmea.setRTCMEnabled(_baseValid);
     return true;
-}
-
-void Protocol::_startAttempt(GPSStreamDemux& stream, GPSDecodeContext& context)
-{
-    _ready = false;
-    _monitorBase = false;
-    _baseValid = false;
-    _lastBaseEpoch.reset();
-    _nmea.setRTCMEnabled(false);
-    _nmea.reset(stream);
-    _model.clear();
-    _firmware.clear();
-    _rejection.clear();
-    _publishBase(context, GPSSurveyState::Inactive);
 }
 
 void Protocol::_setBase(const GPSBaseStationConfig::Mode& mode)

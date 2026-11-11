@@ -47,13 +47,6 @@ bool Protocol::_baseStationUnsupported() const
 bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned& baud)
 {
     _base = config.base;
-    _valsetAckAmbiguous = false;
-    _legacyRTCM = {};
-    _ready = false;
-    _setMode({}, channel.stream());
-    _controller = {};
-    _requests = {};
-
     const unsigned requestedBaud = baud;
     const auto detection = channel.detectBaud(Plan::BAUD_RATES, requestedBaud, [this, &channel]() -> GPSBaudProbe {
         channel.stream().reset(GPSFrameKind::UBX);
@@ -191,7 +184,6 @@ bool Protocol::_configureDevice(GPSCommandChannel& channel)
     if (!_configureJammingDetection(channel)) {
         return false;
     }
-    _secSigSeen = false;
     const auto messageOutput = Plan::messageOutput(profile);
     return _runPlan(channel, messageOutput);
 }

@@ -57,6 +57,6 @@ protected:
     virtual void _expire(GPSDecodeContext& context) { Q_UNUSED(context) }
 
     GPSNMEAStream _nmea;
-    /// Whether the receiver runs as the latest configure() set it up.
+    /// Whether the receiver runs as configure() set it up.
     bool _ready = false;
 };

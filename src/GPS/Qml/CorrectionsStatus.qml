@@ -100,6 +100,14 @@ QGCGroupBox {
         labelTextFormat: Text.PlainText
     }
 
+    // Why no stream is routed: the message filter has an entry that is not a message ID.
+    GPSNoteLabel {
+        objectName: "correctionsMessageFilterError"
+        visible: text !== ""
+        text: root.corrections.messageFilterError
+        warning: true
+    }
+
     // Why the UDP RTCM input cannot listen, such as a port another program uses; the input keeps retrying.
     GPSNoteLabel {
         objectName: "correctionsUdpInputError"

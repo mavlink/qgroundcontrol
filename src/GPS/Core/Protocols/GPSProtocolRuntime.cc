@@ -12,7 +12,9 @@ using namespace std::chrono_literals;
 
 GPSProtocolRuntime::GPSProtocolRuntime(const GPSReceiverFamily& family, GPSRuntimeIO io, GPSRuntimeObserver observer)
     : GPSProtocolRuntime(family, family.create ? family.create() : nullptr, std::move(io), std::move(observer))
-{}
+{
+    _renewsProtocol = family.create != nullptr;
+}
 
 GPSProtocolRuntime::GPSProtocolRuntime(const GPSReceiverFamily& family, std::unique_ptr<GPSFamilyProtocol> protocol,
                                        GPSRuntimeIO io, GPSRuntimeObserver observer)
@@ -61,6 +63,10 @@ GPSLogCategory GPSProtocolRuntime::logCategory() const
 bool GPSProtocolRuntime::configure(const GPSConfig& config, unsigned& baud)
 {
     _channel._resetError();
+    if (_renewsProtocol) {
+        _protocol = _family.create();
+        _demux = GPSStreamDemux(_family.stream);
+    }
     if (!_protocol) {
         return false;
     }

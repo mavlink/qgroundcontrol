@@ -41,24 +41,15 @@
         {
             "name": "ntripMountpoint",
             "shortDesc": "Mount Point",
-            "longDesc": "NTRIP mount point. Leave blank for RTCM over TCP",
+            "longDesc": "Name of the caster's mountpoint to receive corrections from. NTRIP does not connect without one.",
             "type": "string",
             "default": "",
             "label": "Mount Point"
         },
         {
-            "name": "ntripWhitelist",
-            "shortDesc": "Comma-separated RTCM message IDs to forward. Leave blank for all messages.",
-            "longDesc": "Comma-separated RTCM message IDs to forward (e.g. 1005,1077,1087). Leave blank for all messages.",
-            "type": "string",
-            "default": "",
-            "label": "RTCM Message Filter",
-            "keywords": "whitelist,message filter"
-        },
-        {
             "name": "ntripUseTls",
             "shortDesc": "Use TLS encryption",
-            "longDesc": "Connect using TLS/SSL encryption (required for some SPARTN casters on port 2102)",
+            "longDesc": "Connect to the caster with TLS 1.2 or later. The caster must offer TLS on the server port.",
             "type": "bool",
             "default": false,
             "label": "Use TLS encryption"

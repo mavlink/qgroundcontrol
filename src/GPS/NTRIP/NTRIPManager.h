@@ -7,7 +7,6 @@
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QString>
-#include <QtCore/QVector>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -23,16 +22,6 @@ class GPSCorrectionManager;
 class GPSCorrectionSourceHandle;
 class QGCNetworkAvailabilityMonitor;
 class RuntimeScheduler;
-
-/// The RTCM message filter as the settings store it: comma-separated message IDs, empty for every message.
-struct NTRIPRTCMFilterConfig
-{
-    QString whitelist;
-    bool operator==(const NTRIPRTCMFilterConfig&) const = default;
-
-    /// The positive message IDs of the whitelist; entries that are not one are skipped.
-    [[nodiscard]] QVector<int> messageIds() const;
-};
 
 /// Services an NTRIPManager uses, which must outlive it.
 struct NTRIPManagerDependencies
@@ -86,7 +75,7 @@ public:
     {
         StartRequested,       ///< Settings enable went true, or the user retried an error.
         StopRequested,        ///< Settings enable went false, or the manager shut down.
-        ConfigInvalid,        ///< Connection configuration failed validation.
+        ConfigInvalid,        ///< The connection configuration failed validation.
         TransportConnected,   ///< NTRIPTransport emitted connected().
         TransportError,       ///< NTRIPTransport emitted a retryable error.
         TransportFatalError,  ///< NTRIPTransport emitted a non-retryable error.
@@ -101,7 +90,6 @@ public:
     {
         bool enabled = false;
         NTRIPConnectionConfig connection;
-        NTRIPRTCMFilterConfig filter;
         NTRIPGgaReporter::Configuration gga;
         bool operator==(const Configuration&) const = default;
     };
