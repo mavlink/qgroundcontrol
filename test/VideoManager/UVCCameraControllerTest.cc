@@ -12,6 +12,7 @@
 #include <QtQuick/QQuickItem>
 #include <QtTest/QSignalSpy>
 
+#include "LogManager.h"
 #include "UVCCameraController.h"
 #include "UVCFrameRelay.h"
 #include "UVCStreamMonitor.h"
@@ -174,11 +175,26 @@ void UVCCameraControllerTest::_testPhotoWithoutCameraIsScreenshot()
     verifyExpectedLogMessage();
     QTRY_COMPARE_WITH_TIMEOUT(QImage(failed).size(), QSize(64, 48), 5000);
 
-    // Without an output there is nothing to save.
+    // A photo that can't be saved is reported.
+    expectLogMessage("Video.VideoScreenshot", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Failed to save screenshot")));
+    expectAppMessage(QRegularExpression(QStringLiteral("Unable to save the photo unwritable\\.png")));
+    const auto appMessages = [] {
+        return LogManager::capturedMessages(QStringLiteral("API.QGCApplication.AppMessage")).size();
+    };
+    const qsizetype appMessagesBefore = appMessages();
+    controller.capturePhoto(tempDir.filePath(QStringLiteral("missing/unwritable.png")));
+    QTRY_COMPARE_WITH_TIMEOUT(appMessages(), appMessagesBefore + 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+
+    // So is one there is no output to take it from.
     controller.unregisterVideoOutput(output.get());
     expectLogMessage("Video.UVCCameraController", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^No video output to take a photo from")));
+    expectAppMessage(QRegularExpression(QStringLiteral("no video is on display")));
     controller.capturePhoto(tempDir.filePath(QStringLiteral("none.png")));
+    verifyExpectedLogMessage();
     verifyExpectedLogMessage();
 }
 

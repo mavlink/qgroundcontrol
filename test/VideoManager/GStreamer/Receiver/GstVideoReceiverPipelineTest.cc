@@ -305,7 +305,8 @@ void GstVideoReceiverPipelineTest::_testScreenshotSavesDisplayedFrame()
     // Qt Multimedia converts on the CPU when the platform (offscreen here) has no RHI, and says so.
     ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
     QVERIFY(stream.receiver->takeScreenshot(path));
-    QCOMPARE(QImage(path).size(), QSize(kFrameWidth, kFrameHeight));
+    // Written off the GUI thread.
+    QTRY_COMPARE_WITH_TIMEOUT(QImage(path).size(), QSize(kFrameWidth, kFrameHeight), TestTimeout::mediumMs());
 }
 
 void GstVideoReceiverPipelineTest::_testDeactivateReleasesDisplayedFrame()

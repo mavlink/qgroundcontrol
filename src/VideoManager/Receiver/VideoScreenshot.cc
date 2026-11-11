@@ -84,10 +84,8 @@ QImage VideoScreenshot::displayedImage(const QVideoFrame& frame, QtVideo::Rotati
     return image;
 }
 
-bool VideoScreenshot::save(const QVideoFrame& frame, const QString& file, const Exif& exif,
-                           QtVideo::Rotation outputRotation, bool outputMirrored)
+bool VideoScreenshot::saveImage(const QImage& image, const QString& file, const Exif& exif)
 {
-    const QImage image = displayedImage(frame, outputRotation, outputMirrored);
     if (image.isNull()) {
         qCWarning(VideoScreenshotLog) << "No video frame to take a screenshot from";
         return false;
@@ -121,4 +119,10 @@ bool VideoScreenshot::save(const QVideoFrame& frame, const QString& file, const 
 
     qCDebug(VideoScreenshotLog) << "Screenshot saved:" << file;
     return true;
+}
+
+bool VideoScreenshot::save(const QVideoFrame& frame, const QString& file, const Exif& exif,
+                           QtVideo::Rotation outputRotation, bool outputMirrored)
+{
+    return saveImage(displayedImage(frame, outputRotation, outputMirrored), file, exif);
 }

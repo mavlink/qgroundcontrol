@@ -56,7 +56,8 @@ public:
     static VideoManager* instance();
 
     /// Saves the frame on display to @p imageFile (default: a timestamped file in the photo directory), and the
-    /// thermal stream's frame, when it is streaming, to the same name tagged ".thermalVideo".
+    /// thermal stream's frame, when it is streaming, to the same name tagged ".thermalVideo". The files are written
+    /// off the GUI thread; the user is told when there is no video to save, or a file can't be written.
     Q_INVOKABLE void grabImage(const QString& imageFile = QString());
     /// See VideoRecordingService::startRecording().
     Q_INVOKABLE void startRecording(const QString& baseName = QString());

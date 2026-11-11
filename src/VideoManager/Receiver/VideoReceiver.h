@@ -147,9 +147,10 @@ public:
     void stopRecording();
 
     /// Saves the frame on display to @p file as shown: cropped to its format's viewport, rotated and mirrored, with
-    /// @p exif for a JPEG. Returns false, with a warning logged, when there is no output, no frame, or the file can't
-    /// be written.
-    bool takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif = {}) const;
+    /// @p exif for a JPEG. The frame is converted here; it is encoded and written on the thread pool. Returns false,
+    /// with a warning logged, when there is no output or no frame. A file that can't be written is reported later,
+    /// through errorOccurred().
+    bool takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif = {});
 
 signals:
     void stateChanged(VideoReceiver::State state);
@@ -162,8 +163,8 @@ signals:
     void recordingFinished(const QString& file, const QString& error);
     void videoSizeChanged(QSize size);
     void statsChanged(const VideoStreamStats& stats);
-    /// A failure worth telling the user about (stream error with autoReconnect off, recording error). Not emitted for
-    /// failures the receiver recovers from by reconnecting.
+    /// A failure worth telling the user about (stream error with autoReconnect off, recording error, a screenshot that
+    /// couldn't be saved). Not emitted for failures the receiver recovers from by reconnecting.
     void errorOccurred(const QString& message);
 
 protected:

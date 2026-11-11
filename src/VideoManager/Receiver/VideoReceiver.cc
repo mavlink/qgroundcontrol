@@ -1,6 +1,9 @@
 #include "VideoReceiver.h"
 
+#include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QCoreApplication>
+#include <QtCore/QFileInfo>
+#include <QtGui/QImage>
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 #include <QtQuick/QQuickItem>
@@ -136,7 +139,7 @@ void VideoReceiver::stopRecording()
     onStopRecording();
 }
 
-bool VideoReceiver::takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif) const
+bool VideoReceiver::takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif)
 {
     QVideoSink* const sink = videoSink();
     if (!sink) {
@@ -144,7 +147,20 @@ bool VideoReceiver::takeScreenshot(const QString& file, const VideoScreenshot::E
         return false;
     }
 
-    return VideoScreenshot::save(sink->videoFrame(), file, exif);
+    // Converted on this thread, which a frame in GPU memory requires; encoding and writing would stall the UI.
+    const QImage image = VideoScreenshot::displayedImage(sink->videoFrame());
+    if (image.isNull()) {
+        qCWarning(VideoReceiverLog) << "No video frame to take a screenshot from" << _name;
+        return false;
+    }
+    (void) QtConcurrent::run([image, file, exif] {
+        return VideoScreenshot::saveImage(image, file, exif);
+    }).then(this, [this, file](bool saved) {
+        if (!saved) {
+            emit errorOccurred(tr("Unable to save the photo %1.").arg(QFileInfo(file).fileName()));
+        }
+    });
+    return true;
 }
 
 QVideoSink* VideoReceiver::videoSink() const

@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include <QtConcurrent/QtConcurrentRun>
+#include <QtCore/QFileInfo>
 #include <QtCore/QTimer>
 #include <QtMultimedia/QCamera>
 #include <QtMultimedia/QCameraDevice>
@@ -244,12 +245,7 @@ void UVCCameraController::_onImageAvailable(int id, const QVideoFrame& frame)
     if (photo.file.isEmpty()) {
         return;
     }
-    const QtVideo::Rotation rotation = _frameRelay->rotation();
-    const bool mirrored = _frameRelay->mirrored();
-    // Converting and encoding a full-resolution photo would stall the UI.
-    (void) QtConcurrent::run([frame, photo, rotation, mirrored] {
-        (void) VideoScreenshot::save(frame, photo.file, photo.exif, rotation, mirrored);
-    });
+    _savePhoto(frame, photo, _frameRelay->rotation(), _frameRelay->mirrored());
 }
 
 void UVCCameraController::_onImageCaptureError(int id, const QString& errorString)
@@ -261,17 +257,29 @@ void UVCCameraController::_onImageCaptureError(int id, const QString& errorStrin
     }
 }
 
-void UVCCameraController::_savePhotoOnDisplay(const QString& file, const VideoScreenshot::Exif& exif) const
+void UVCCameraController::_savePhotoOnDisplay(const QString& file, const VideoScreenshot::Exif& exif)
 {
     QVideoSink* const videoSink = _videoSink();
     if (!videoSink) {
         qCWarning(UVCCameraControllerLog) << "No video output to take a photo from";
+        QGC::showAppMessage(tr("Unable to take a photo: no video is on display."));
         return;
     }
-    // Converting and encoding a full-resolution photo would stall the UI. The frame on display carries the transform
-    // already (UVCFrameRelay).
-    (void) QtConcurrent::run(
-        [frame = videoSink->videoFrame(), file, exif] { (void) VideoScreenshot::save(frame, file, exif); });
+    // The frame on display carries the transform already (UVCFrameRelay).
+    _savePhoto(videoSink->videoFrame(), {file, exif}, QtVideo::Rotation::None, false);
+}
+
+void UVCCameraController::_savePhoto(const QVideoFrame& frame, const PendingPhoto& photo, QtVideo::Rotation rotation,
+                                     bool mirrored)
+{
+    // Converting and encoding a full-resolution photo would stall the UI.
+    (void) QtConcurrent::run([frame, photo, rotation, mirrored] {
+        return VideoScreenshot::save(frame, photo.file, photo.exif, rotation, mirrored);
+    }).then(this, [file = photo.file](bool saved) {
+        if (!saved) {
+            QGC::showAppMessage(tr("Unable to save the photo %1.").arg(QFileInfo(file).fileName()));
+        }
+    });
 }
 
 void UVCCameraController::_createCamera()

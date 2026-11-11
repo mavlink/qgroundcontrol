@@ -360,29 +360,38 @@ void VideoManager::stopRecording()
 
 void VideoManager::grabImage(const QString& imageFile)
 {
+    // One reading of the clock names the file and dates its EXIF data.
+    const QDateTime now = QDateTime::currentDateTime();
     QString file = imageFile;
     if (file.isEmpty()) {
-        file = SettingsManager::instance()->appSettings()->photoSavePath() + QStringLiteral("/") +
-               QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd_hh.mm.ss.zzz")) +
-               QStringLiteral(".jpg");
+        const QString directory = SettingsManager::instance()->appSettings()->photoSavePath();
+        if (directory.isEmpty()) {
+            QGC::showAppMessage(tr("Unable to save the photo. The save path must be specified in Settings."));
+            return;
+        }
+        file = QStringLiteral("%1/%2.jpg").arg(directory, now.toString(QStringLiteral("yyyy-MM-dd_hh.mm.ss.zzz")));
     }
 
     VideoScreenshot::Exif exif;
-    exif.taken = QDateTime::currentDateTime();
+    exif.taken = now;
     if (_activeVehicle) {
         exif.position = _activeVehicle->coordinate();
     }
 
+    bool taken = false;
     if (_primaryStream->canTakeScreenshot()) {
-        (void) _primaryStream->takeScreenshot(file, exif);
+        taken = _primaryStream->takeScreenshot(file, exif);
     } else if (_uvcCamera->canTakeScreenshot()) {
         _uvcCamera->capturePhoto(file, exif);
-    } else {
-        qCDebug(VideoManagerLog) << "No video on display to take a screenshot from";
+        taken = true;
     }
-
     if (_thermalStream->canTakeScreenshot()) {
-        (void) _thermalStream->takeScreenshot(_thermalStream->taggedFile(file), exif);
+        taken = _thermalStream->takeScreenshot(_thermalStream->taggedFile(file), exif) || taken;
+    }
+    // What goes wrong from here on, the stream or the camera reports.
+    if (!taken) {
+        qCWarning(VideoManagerLog) << "No video on display to take a screenshot from";
+        QGC::showAppMessage(tr("Unable to take a photo: no video is on display."));
     }
 }
 

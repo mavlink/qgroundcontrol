@@ -11,6 +11,7 @@
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QSignalSpy>
 
+#include "AppSettings.h"
 #include "MavlinkCameraControlInterface.h"
 #include "SettingsManager.h"
 #include "UVCCameraController.h"
@@ -574,17 +575,76 @@ void VideoManagerTest::_testScreenshotsComeFromStreamsOnDisplay()
     // Qt Multimedia converts on the CPU when the platform (offscreen here) has no RHI, and says so.
     ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
 
-    // The thermal output holds a frame but isn't streaming: only the primary stream is saved.
+    // The thermal output holds a frame but isn't streaming: only the primary stream is saved. Files are written off
+    // the GUI thread.
     const QString shot = tempDir.filePath(QStringLiteral("shot.png"));
     _videoManager->grabImage(shot);
-    QCOMPARE(QImage(shot).size(), frame.size());
+    QTRY_COMPARE_WITH_TIMEOUT(QImage(shot).size(), frame.size(), TestTimeout::mediumMs());
     QVERIFY(!QFile::exists(tempDir.filePath(QStringLiteral("shot.thermalVideo.png"))));
 
     _thermal->setState(VideoReceiver::State::Streaming);
     const QString second = tempDir.filePath(QStringLiteral("second.png"));
     _videoManager->grabImage(second);
-    QVERIFY(QFile::exists(second));
-    QCOMPARE(QImage(tempDir.filePath(QStringLiteral("second.thermalVideo.png"))).size(), frame.size());
+    QTRY_COMPARE_WITH_TIMEOUT(QImage(second).size(), frame.size(), TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(QImage(tempDir.filePath(QStringLiteral("second.thermalVideo.png"))).size(), frame.size(),
+                              TestTimeout::mediumMs());
+}
+
+void VideoManagerTest::_testScreenshotFailuresReachUser_data()
+{
+    // The file is relative to the test's directory; none asks for the default, in the photo save path.
+    QTest::addColumn<bool>("onDisplay");
+    QTest::addColumn<QString>("file");
+    QTest::addColumn<QString>("message");
+
+    QTest::newRow("no video on display") << false << "shot.png" << "no video is on display";
+    QTest::newRow("file can't be written") << true << "missing/shot.png" << "Unable to save the photo shot\\.png";
+    QTest::newRow("no save path") << true << QString() << "save path must be specified";
+}
+
+void VideoManagerTest::_testScreenshotFailuresReachUser()
+{
+    QFETCH(bool, onDisplay);
+    QFETCH(QString, file);
+    QFETCH(QString, message);
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    _facts->set(SettingsManager::instance()->appSettings()->savePath(), QString());
+
+    QQmlEngine engine;
+    const std::unique_ptr<QQuickItem> output = createVideoOutput(engine);
+    QVERIFY(output);
+    if (onDisplay) {
+        _videoManager->primaryStream()->registerVideoOutput(output.get());
+        QImage frame(QSize(64, 48), QImage::Format_RGBA8888);
+        frame.fill(Qt::red);
+        showFrame(output.get(), frame);
+        _primary->setState(VideoReceiver::State::Streaming);
+    }
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("No RHI backend")));
+    QSignalSpy errorSpy(_videoManager->primaryStream(), &VideoStreamController::errorOccurred);
+
+    const bool written = onDisplay && !file.isEmpty();
+    if (written) {
+        expectLogMessage("Video.VideoScreenshot", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Failed to save screenshot")));
+    }
+    if (written || !onDisplay) {
+        expectLogMessage("Video.VideoManager", QtWarningMsg,
+                         QRegularExpression(written ? message : QStringLiteral("No video on display")));
+    }
+    expectAppMessage(QRegularExpression(message));
+    _videoManager->grabImage(file.isEmpty() ? QString() : tempDir.filePath(file));
+    if (written) {
+        // The file is written, or not, off the GUI thread.
+        QVERIFY_SIGNAL_COUNT_WAIT(errorSpy, 1, TestTimeout::mediumMs());
+        verifyExpectedLogMessage();
+    }
+    if (written || !onDisplay) {
+        verifyExpectedLogMessage();
+    }
+    verifyExpectedLogMessage();
 }
 
 void VideoManagerTest::_testStreamErrorsReachUser()

@@ -128,7 +128,8 @@ public:
 
     /// Takes a photo into @p file, turned and mirrored as setTransform() says and saved off the GUI thread: a still
     /// capture where Qt takes one (Android, Apple), else the frame on display. Saves the frame on display too while the
-    /// camera can't capture, or when a capture fails. A JPEG carries @p exif.
+    /// camera can't capture, or when a capture fails. A JPEG carries @p exif. The user is told when the photo can't be
+    /// saved.
     void capturePhoto(const QString& file, const VideoScreenshot::Exif& exif = {});
 
     /// True while the camera runs into a registered VideoOutput, so startRecording() can record it.
@@ -181,8 +182,18 @@ private:
     void _onImageAvailable(int id, const QVideoFrame& frame);
     void _onImageCaptureError(int id, const QString& errorString);
     void _applyControls();
-    /// Saves the frame on display to @p file off the GUI thread; logs a warning without a VideoOutput.
-    void _savePhotoOnDisplay(const QString& file, const VideoScreenshot::Exif& exif) const;
+
+    struct PendingPhoto
+    {
+        QString file;
+        VideoScreenshot::Exif exif;
+    };
+
+    /// Saves the frame on display as _savePhoto() does; tells the user when there is no VideoOutput.
+    void _savePhotoOnDisplay(const QString& file, const VideoScreenshot::Exif& exif);
+    /// Saves @p frame, turned by @p rotation and mirrored by @p mirrored, to @p photo's file off the GUI thread, and
+    /// tells the user when that fails.
+    void _savePhoto(const QVideoFrame& frame, const PendingPhoto& photo, QtVideo::Rotation rotation, bool mirrored);
     /// Whether the camera in use is attached; without one, whether a camera of the selected name is.
     bool _cameraAttached() const;
     QVideoSink* _videoSink() const;
@@ -204,12 +215,6 @@ private:
     QStringList _formats;
     QByteArray _cameraId;
     int _retries = 0;
-
-    struct PendingPhoto
-    {
-        QString file;
-        VideoScreenshot::Exif exif;
-    };
 
     /// The photos requested and not taken yet, by request id.
     QHash<int, PendingPhoto> _photoFiles;
