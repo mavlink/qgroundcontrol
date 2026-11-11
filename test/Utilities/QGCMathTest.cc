@@ -7,6 +7,28 @@
 #include "QGCMath.h"
 #include "UnitTestMath.h"
 
+namespace {
+
+/// Angles of 10 turns or more, where the wrap no longer steps one turn at a time
+void addLargeAngleRows()
+{
+    QTest::addColumn<double>("angle");
+    QTest::addColumn<double>("expected");
+
+    QTest::newRow("20pi") << 20.0 * M_PI << 0.0;
+    QTest::newRow("-20pi") << -20.0 * M_PI << 0.0;
+    QTest::newRow("21.5pi") << 21.5 * M_PI << -0.5 * M_PI;
+    QTest::newRow("-21.5pi") << -21.5 * M_PI << 0.5 * M_PI;
+    QTest::newRow("100pi") << 100.0 * M_PI << 0.0;
+    QTest::newRow("-1000.25pi") << -1000.25 * M_PI << -0.25 * M_PI;
+    QTest::newRow("below-21pi") << 21.0 * M_PI - 0.001 << M_PI - 0.001;
+    QTest::newRow("above-21pi") << 21.0 * M_PI + 0.001 << -M_PI + 0.001;
+    QTest::newRow("above-minus-21pi") << -21.0 * M_PI + 0.001 << -M_PI + 0.001;
+    QTest::newRow("below-minus-21pi") << -21.0 * M_PI - 0.001 << M_PI - 0.001;
+}
+
+}  // namespace
+
 void QGCMathTest::_fuzzyCompareDoubleEqual_test()
 {
     QVERIFY(QGC::fuzzyCompare(1.0, 1.0));
@@ -97,12 +119,16 @@ void QGCMathTest::_limitAngleToPMPIfWrap_test()
     QVERIFY(resultNeg <= static_cast<float>(M_PI) + 1e-4f);
 }
 
+void QGCMathTest::_limitAngleToPMPIfLargeAngle_test_data()
+{
+    addLargeAngleRows();
+}
+
 void QGCMathTest::_limitAngleToPMPIfLargeAngle_test()
 {
-    // For very large angles (> 20*pi), the function uses fmod approximation
-    const float result = QGC::limitAngleToPMPIf(100.0 * M_PI);
-    QVERIFY(result >= -static_cast<float>(M_PI) - 1e-4f);
-    QVERIFY(result <= static_cast<float>(M_PI) + 1e-4f);
+    QFETCH(double, angle);
+    QFETCH(double, expected);
+    QCOMPARE_FUZZY(static_cast<double>(QGC::limitAngleToPMPIf(angle)), expected, 1e-5);
 }
 
 void QGCMathTest::_limitAngleToPMPIdZero_test()
@@ -128,11 +154,16 @@ void QGCMathTest::_limitAngleToPMPIdWrap_test()
     QVERIFY(resultNeg <= M_PI + 1e-10);
 }
 
+void QGCMathTest::_limitAngleToPMPIdLargeAngle_test_data()
+{
+    addLargeAngleRows();
+}
+
 void QGCMathTest::_limitAngleToPMPIdLargeAngle_test()
 {
-    const double result = QGC::limitAngleToPMPId(100.0 * M_PI);
-    QVERIFY(result >= -M_PI - 1e-10);
-    QVERIFY(result <= M_PI + 1e-10);
+    QFETCH(double, angle);
+    QFETCH(double, expected);
+    QCOMPARE_FUZZY(QGC::limitAngleToPMPId(angle), expected, 1e-9);
 }
 
 void QGCMathTest::_crc32Empty_test()

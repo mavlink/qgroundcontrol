@@ -28,8 +28,8 @@ float limitAngleToPMPIf(double angle)
     }
     else
     {
-        // Approximate
-        angle = fmodf(angle, (float)M_PI);
+        // Too many turns for the loops above
+        angle = std::remainder(angle, 2.0 * M_PI);
     }
 
     return angle;
@@ -56,8 +56,8 @@ double limitAngleToPMPId(double angle)
     }
     else
     {
-        // Approximate
-        angle = fmod(angle, M_PI);
+        // Too many turns for the loops above
+        angle = std::remainder(angle, 2.0 * M_PI);
     }
 
     return angle;
