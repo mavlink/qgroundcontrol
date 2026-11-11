@@ -5,7 +5,9 @@
 
 add_subdirectory(Audio)
 add_subdirectory(Compression)
+add_subdirectory(Concurrency)
 add_subdirectory(Database)
+add_subdirectory(Diagnostics)
 add_subdirectory(FileSystem)
 add_subdirectory(Format)
 add_subdirectory(Geo)
