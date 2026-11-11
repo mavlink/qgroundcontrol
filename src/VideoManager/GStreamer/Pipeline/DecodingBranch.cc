@@ -212,6 +212,10 @@ void DecodingBranch::restartDecoder(const char* reason)
 
     qCDebug(GstVideoReceiverLog) << "Restarting the decoder after" << reason << _context.redactedUri;
     ++_decoderRestarts;
+    // The restart before this one brought no frame: with the same ranks decodebin3 would plug the same decoder again.
+    if (_restartsWithoutFrame > 1) {
+        _demoteFailedDecoder();
+    }
     _removeDecoder();
     _setDecoding(false);
     _insertDecoder();
@@ -342,6 +346,7 @@ void DecodingBranch::_removeDecoder()
         _decoderElementAdded.disconnect();
         GStreamer::disposeChild(_decoder.get());
         _decoder.reset();
+        _pluggedDecoder.reset();
         _hardwareDecoder = false;
         _setDecoderName(QString());
         _context.dotDumper->dump(_context.pipeline, "pipeline-decoding-stopped");
@@ -363,6 +368,21 @@ void DecodingBranch::_linkDecoderPad(GstPad* pad)
     // this one it would take its first frames for late ones, until another element posted LATENCY.
     (void) gst_bin_recalculate_latency(GST_BIN(_context.pipeline));
     _context.dotDumper->dump(_context.pipeline, "pipeline-with-videosink");
+}
+
+void DecodingBranch::_demoteFailedDecoder()
+{
+    if (!_hardwareDecoder || !_pluggedDecoder) {
+        return;
+    }
+    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(_pluggedDecoder.get(), "sink"));
+    const GStreamer::GstCapsPtr caps =
+        GStreamer::adoptCaps(sinkPad ? gst_pad_get_current_caps(sinkPad.get()) : nullptr);
+    if (caps && GStreamer::demoteFailedDecoder(_decoderName.toUtf8().constData(), caps.get())) {
+        qCWarning(GstVideoReceiverLog) << "The hardware decoder" << _decoderName
+                                       << "brought no frame after a restart: the next decoder takes over"
+                                       << _context.redactedUri;
+    }
 }
 
 void DecodingBranch::_onFirstFrame(quint64 insertion)
@@ -466,12 +486,14 @@ void DecodingBranch::_onDecoderElementAdded(GstBin* decodebin, GstBin* /*subBin*
     const bool hardware = GStreamer::isHardwareDecoderFactory(factory);
 
     auto* const self = static_cast<DecodingBranch*>(data);
-    self->_context.post([self, name, hardware, decoder = GStreamer::shareObject(GST_ELEMENT(decodebin))]() {
+    self->_context.post([self, name, hardware, decoder = GStreamer::shareObject(GST_ELEMENT(decodebin)),
+                         plugged = GStreamer::shareObject(element)]() {
         // A decodebin3 taken out meanwhile has no decoder left to name.
         if (decoder.get() != self->_decoder.get()) {
             return;
         }
         self->_hardwareDecoder = hardware;
+        self->_pluggedDecoder = plugged;
         self->_setDecoderName(name);
     });
 }

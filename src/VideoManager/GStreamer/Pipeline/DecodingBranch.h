@@ -3,6 +3,7 @@
 #include <array>
 #include <atomic>
 #include <gst/gst.h>
+#include <memory>
 
 #include <QtCore/QString>
 
@@ -20,8 +21,9 @@ struct PathStats;
 /// Takes the receiver's video sink, inserts decodebin3 once the source streams and links its pad to the sink, asking
 /// upstream for a keyframe so the picture starts soon. Decoding is reported from the first frame that reaches the sink.
 /// A failing or stalled decoder is replaced without touching the rest of the pipeline; one that keeps failing, or that
-/// can't be inserted at all, is reported to the listener. The sink outlives the session: the branch holds a ref and
-/// takes it out of the pipeline again.
+/// can't be inserted at all, is reported to the listener. A hardware decoder whose replacement brought no frame either
+/// is taken out of autoplug before the next one, so decodebin3 plugs the decoder ranked after it. The sink outlives
+/// the session: the branch holds a ref and takes it out of the pipeline again.
 ///
 /// The queue drops the oldest frame when the decoder falls behind, so the tee (and with it the recording) never waits
 /// for the decoder. A decoder can't recover a dropped compressed frame, so after a drop the branch also drops delta
@@ -114,6 +116,8 @@ private:
     /// Closes the valve and takes the video sink and the decoder out of the pipeline; keeps the sink.
     void _removeDecoder();
     void _linkDecoderPad(GstPad* pad);
+    /// Takes the hardware decoder decodebin3 plugged out of autoplug, when another decoder can take the stream.
+    void _demoteFailedDecoder();
     void _onFirstFrame(quint64 insertion);
     void _setDecoding(bool decoding);
     void _setDecoderName(const QString& name);
@@ -171,4 +175,6 @@ private:
     quint64 _decoderRestarts = 0;
     QString _decoderName;
     bool _hardwareDecoder = false;
+    // The decoder decodebin3 plugged last, of the factory _decoderName names.
+    std::shared_ptr<GstElement> _pluggedDecoder;
 };

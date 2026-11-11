@@ -189,6 +189,7 @@ void DecoderRankApplier::apply(VideoDecoderOption option)
     if (!registry) {
         return;
     }
+    const QMutexLocker locker(&_mutex);
     _restore(registry);
 
     const RankTraits traits = currentRankTraits();
@@ -199,7 +200,7 @@ void DecoderRankApplier::apply(VideoDecoderOption option)
         qCWarning(GStreamerDecoderRanksLog).noquote() << warning;
     }
     for (const RankChange& change : plan.changes) {
-        (void) setRank(registry, change.feature.constData(), change.rank);
+        (void) _setRank(registry, change.feature.constData(), change.rank);
     }
     _applied = option;
 }
@@ -207,11 +208,41 @@ void DecoderRankApplier::apply(VideoDecoderOption option)
 void DecoderRankApplier::restore()
 {
     if (GstRegistry* const registry = _registry()) {
+        const QMutexLocker locker(&_mutex);
         _restore(registry);
     }
 }
 
 bool DecoderRankApplier::setRank(GstRegistry* registry, const char* featureName, uint16_t rank)
+{
+    const QMutexLocker locker(&_mutex);
+    return _setRank(registry, featureName, rank);
+}
+
+bool DecoderRankApplier::demoteFailedDecoder(const char* featureName, const GstCaps* caps)
+{
+    GstRegistry* const registry = _registry();
+    if (!registry || !featureName || !caps || rankedByUser(featureName)) {
+        return false;
+    }
+    // decodebin3's candidates for the stream: the autoplugged decoders whose sink template covers its caps.
+    GList* const decoders = gst_element_factory_list_get_elements(GST_ELEMENT_FACTORY_TYPE_DECODER, GST_RANK_MARGINAL);
+    GList* const candidates = gst_element_factory_list_filter(decoders, caps, GST_PAD_SINK, TRUE);
+    gst_plugin_feature_list_free(decoders);
+    bool otherDecoder = false;
+    for (GList* node = candidates; node != nullptr; node = node->next) {
+        otherDecoder =
+            otherDecoder || (g_strcmp0(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(node->data)), featureName) != 0);
+    }
+    gst_plugin_feature_list_free(candidates);
+    if (!otherDecoder) {
+        return false;
+    }
+    const QMutexLocker locker(&_mutex);
+    return _setRank(registry, featureName, GST_RANK_NONE);
+}
+
+bool DecoderRankApplier::_setRank(GstRegistry* registry, const char* featureName, uint16_t rank)
 {
     if (!registry || !featureName) {
         return false;
@@ -280,6 +311,11 @@ bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t 
 void setCodecPriorities(VideoDecoderOption option)
 {
     DecoderRankApplier::instance().apply(option);
+}
+
+bool demoteFailedDecoder(const char* factoryName, const GstCaps* caps)
+{
+    return DecoderRankApplier::instance().demoteFailedDecoder(factoryName, caps);
 }
 
 QList<VideoDecoderOption> availableDecoderFamilies()

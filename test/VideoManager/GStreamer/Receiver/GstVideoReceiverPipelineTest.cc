@@ -2,6 +2,7 @@
 
 #ifdef QGC_GST_STREAMING
 
+#include <atomic>
 #include <gst/base/gstbasesink.h>
 
 #include <QtCore/QRegularExpression>
@@ -11,6 +12,7 @@
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QUdpSocket>
 
+#include "Fixtures/RAIIFixtures.h"
 #include "GStreamerDecoderRanks.h"
 #include "GstScoped.h"
 #include "MockVideoStreamServer.h"
@@ -27,7 +29,8 @@ using GstReceiverTest::udpListenUri;
 
 constexpr const char* kStubDecoderName = "qgcreceiverstubh264dec";
 
-/// An H.264 "hardware" decoder that takes the stream and gives nothing back: no frame, and no message either.
+/// An H.264 "hardware" decoder that takes the stream and gives nothing back: no frame, and no message either. When
+/// set to fail, it posts an error for the first frame instead, as a hardware decoder may in a VM.
 struct ReceiverStubDecoder
 {
     GstElement parent;
@@ -45,10 +48,16 @@ GstStaticPadTemplate s_receiverStubDecoderSrc =
 
 G_DEFINE_TYPE(ReceiverStubDecoder, receiver_stub_decoder, GST_TYPE_ELEMENT)
 
-GstFlowReturn receiverStubDecoderChain(GstPad* /*pad*/, GstObject* /*parent*/, GstBuffer* buffer)
+std::atomic<bool> s_receiverStubDecoderFails = false;
+
+GstFlowReturn receiverStubDecoderChain(GstPad* /*pad*/, GstObject* parent, GstBuffer* buffer)
 {
     gst_buffer_unref(buffer);
-    return GST_FLOW_OK;
+    if (!s_receiverStubDecoderFails.load()) {
+        return GST_FLOW_OK;
+    }
+    GST_ELEMENT_ERROR(GST_ELEMENT(parent), STREAM, DECODE, ("Simulated hardware decoder failure"), (nullptr));
+    return GST_FLOW_ERROR;
 }
 
 gboolean receiverStubDecoderEvent(GstPad* pad, GstObject* parent, GstEvent* event)
@@ -85,15 +94,18 @@ void receiver_stub_decoder_init(ReceiverStubDecoder* self)
 class StubDecoderRegistration
 {
 public:
-    StubDecoderRegistration()
+    explicit StubDecoderRegistration(bool fails = false)
         : _registered(
               gst_element_register(nullptr, kStubDecoderName, GST_RANK_NONE, receiver_stub_decoder_get_type()) &&
               GStreamer::changeFeatureRank(gst_registry_get(), kStubDecoderName, GST_RANK_PRIMARY + 100))
-    {}
+    {
+        s_receiverStubDecoderFails.store(fails);
+    }
 
     ~StubDecoderRegistration()
     {
         (void) GStreamer::changeFeatureRank(gst_registry_get(), kStubDecoderName, GST_RANK_NONE);
+        s_receiverStubDecoderFails.store(false);
     }
 
     StubDecoderRegistration(const StubDecoderRegistration&) = delete;
@@ -340,6 +352,69 @@ void GstVideoReceiverPipelineTest::_testDisplaySinkHasLatencyOnceLinked()
     };
     QVERIFY_TRUE_WAIT(sinkLatencyMs() >= static_cast<guint64>(stream.receiver->config().rtpJitterLatencyMs),
                       TestTimeout::mediumMs());
+}
+
+void GstVideoReceiverPipelineTest::_testFailingHardwareDecoderGivesWayToTheNext()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("avdec_h264");
+    // Without the host's hardware decoders, so the decoder ranked after the failing one is the same everywhere.
+    const GstTest::DecoderRankSnapshot decoderRanks;
+    GStreamer::setCodecPriorities(VideoDecoderOption::Software);
+    const StubDecoderRegistration failingDecoder(/*fails=*/true);
+    QVERIFY(failingDecoder.registered());
+
+    // The failure as GStreamer logs it and as the session reports it: for the first decoder and for its replacement.
+    ignoreLogMessage("Video.GStreamer.GStreamerAPI", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Simulated hardware decoder failure")));
+    ignoreLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Decoder error from .*Simulated hardware decoder failure")));
+    expectLogMessage("Video.GStreamer.GstVideoReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^The hardware decoder \"%1\" brought no frame after a restart")
+                                            .arg(QLatin1StringView(kStubDecoderName))));
+
+    Receiver stream;
+    QVERIFY(stream.startStreaming());
+    QVERIFY(stream.display());
+    verifyExpectedLogMessage();
+    QCOMPARE(stream.receiver->decoderName(), QStringLiteral("avdec_h264"));
+    QCOMPARE(stream.receiver->state(), State::Streaming);
+    QVERIFY(stream.errorSpy.isEmpty());
+}
+
+void GstVideoReceiverPipelineTest::_testFailedDecoderLeavesAutoplugOnlyForAnother_data()
+{
+    QTest::addColumn<QString>("caps");
+    QTest::addColumn<QByteArray>("userRanks");
+    QTest::addColumn<bool>("demoted");
+
+    const QString h264 = QStringLiteral("video/x-h264, stream-format=(string)byte-stream, alignment=(string)au");
+    QTest::newRow("another decoder takes the stream") << h264 << QByteArray() << true;
+    // Only the stub's template is wide enough for it. Without its decoder the stream would not decode at all.
+    QTest::newRow("no other decoder takes the stream")
+        << QStringLiteral("video/x-h264, stream-format=(string)qgc-test") << QByteArray() << false;
+    QTest::newRow("ranked by the user") << h264 << QByteArray(kStubDecoderName) + ":MAX" << false;
+}
+
+void GstVideoReceiverPipelineTest::_testFailedDecoderLeavesAutoplugOnlyForAnother()
+{
+    QFETCH(QString, caps);
+    QFETCH(QByteArray, userRanks);
+    QFETCH(bool, demoted);
+
+    GSTTEST_SKIP_UNLESS_FACTORIES("avdec_h264");
+    const StubDecoderRegistration stubDecoder;
+    QVERIFY(stubDecoder.registered());
+    const TestFixtures::EnvVarFixture userRankEnv("GST_PLUGIN_FEATURE_RANK");
+    qputenv("GST_PLUGIN_FEATURE_RANK", userRanks);
+
+    const GStreamer::GstCapsPtr streamCaps = GStreamer::adoptCaps(gst_caps_from_string(caps.toLatin1().constData()));
+    QVERIFY(streamCaps);
+    QCOMPARE(GStreamer::demoteFailedDecoder(kStubDecoderName, streamCaps.get()), demoted);
+
+    const GStreamer::GstFeaturePtr stub =
+        GStreamer::adoptFeature(gst_registry_lookup_feature(gst_registry_get(), kStubDecoderName));
+    QVERIFY(stub);
+    QCOMPARE(gst_plugin_feature_get_rank(stub.get()), guint(demoted ? GST_RANK_NONE : GST_RANK_PRIMARY + 100));
 }
 
 void GstVideoReceiverPipelineTest::_testDecoderInsertionFailureStopsStream_data()

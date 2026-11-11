@@ -8,6 +8,7 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QHash>
 #include <QtCore/QList>
+#include <QtCore/QMutex>
 #include <QtCore/QString>
 
 #include "GStreamerDecoderRankPlan.h"
@@ -40,7 +41,8 @@ RankTraits currentRankTraits();
 
 /// Applies decoder rank plans (planRanks()) to the default registry. It remembers the rank each feature had before QGC
 /// first changed it, so a new option starts over from those rather than adding to the previous one. A feature named in
-/// GST_PLUGIN_FEATURE_RANK keeps the user's rank. One per process, as the registry is. GUI thread.
+/// GST_PLUGIN_FEATURE_RANK keeps the user's rank. One per process, as the registry is. GUI thread, except
+/// demoteFailedDecoder().
 class DecoderRankApplier
 {
 public:
@@ -60,12 +62,22 @@ public:
     /// Sets @p featureName's rank in @p registry. False when the registry or name is null or the feature is absent.
     bool setRank(GstRegistry* registry, const char* featureName, uint16_t rank);
 
+    /// Takes the decoder @p featureName, which failed on a stream with @p caps, out of autoplug until the next apply()
+    /// or restore(), so that the next decodebin3 plugs the decoder ranked after it. False, changing nothing, when no
+    /// other autoplugged decoder takes @p caps or GST_PLUGIN_FEATURE_RANK names the decoder. Any thread.
+    bool demoteFailedDecoder(const char* featureName, const GstCaps* caps);
+
 private:
     DecoderRankApplier() = default;
 
     static GstRegistry* _registry();
+    /// setRank(), with _mutex held.
+    bool _setRank(GstRegistry* registry, const char* featureName, uint16_t rank);
+    /// With _mutex held.
     void _restore(GstRegistry* registry);
 
+    /// Guards _originalRanks, which a receiver's worker changes too (demoteFailedDecoder()).
+    QMutex _mutex;
     QHash<QByteArray, guint> _originalRanks;
     std::optional<VideoDecoderOption> _applied;
 };
@@ -90,6 +102,9 @@ bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t 
 
 /// DecoderRankApplier::apply() on the process's applier. GUI thread.
 void setCodecPriorities(VideoDecoderOption option);
+
+/// DecoderRankApplier::demoteFailedDecoder() on the process's applier. Any thread.
+bool demoteFailedDecoder(const char* factoryName, const GstCaps* caps);
 
 // Diagnostic dump of installed video-decoder factories, sorted by rank, with HW/SW classification, at debug level:
 // does nothing while the Video.GStreamer.DecoderRanks category is off.

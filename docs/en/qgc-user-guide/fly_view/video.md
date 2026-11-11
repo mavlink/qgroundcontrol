@@ -80,7 +80,9 @@ dropdown shows, about once a second:
 - **Keyframe interval**: the time between the last two keyframes. A long interval makes the picture take longer to
   recover from packet loss.
 - **Decoder**: the video decoder, and whether it decodes in hardware or software. **Decoder restarts** counts the times
-  the decoder was replaced after an error or a stall.
+  the decoder was replaced after an error or a stall. A hardware decoder that shows nothing after it was replaced is
+  left out from then on, and the next decoder takes over. It gets its turn again when the decoder setting changes or
+  QGroundControl restarts.
 - **Display path**: how decoded frames reach the screen: `CPU`, or the zero-copy GPU path (for example `DMABuf`, `GL`
   or `D3D11`). **GPU fallbacks** counts frames the GPU path couldn't import, which took the CPU path instead.
 - **Latency**: the delay the video pipeline adds on top of the network (mostly the RTP jitter buffer).
