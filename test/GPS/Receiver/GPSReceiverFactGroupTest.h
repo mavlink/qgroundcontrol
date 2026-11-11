@@ -11,6 +11,7 @@ private slots:
     void _defaultsWithoutReceiver();
     void _satelliteCounts_data();
     void _satelliteCounts();
+    void _constellationCounts();
     void _currentBaseSaveValidity_data();
     void _currentBaseSaveValidity();
     void _integrityFacts();

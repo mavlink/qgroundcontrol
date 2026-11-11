@@ -184,6 +184,51 @@ void GPSReceiverSettingsTest::_surveyCompletePrompt()
     QVERIFY(otherSave->property("visible").toBool());
 }
 
+void GPSReceiverSettingsTest::_statusListsConstellations()
+{
+    ScriptedGPSReceiver harness;
+    GPSReceiver& receiver = harness.receiver;
+    // The panel appears with the receiver, which an item without a parent cannot do.
+    GPSTest::QmlWindowFixture window;
+    GPSTest::QmlEngine engine;
+    auto status = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
+                                {{QStringLiteral("parent"), QVariant::fromValue(window.contentItem())},
+                                 {QStringLiteral("receiver"), QVariant::fromValue(&receiver)},
+                                 {QStringLiteral("facts"), QVariant::fromValue(receiver.facts())}});
+    QVERIFY2(status, qPrintable(engine.lastError()));
+    auto* item = qobject_cast<QQuickItem*>(status.get());
+    auto* row = status->findChild<QObject*>(QStringLiteral("rtkConstellations"));
+    QVERIFY(item && row);
+    QVERIFY(connectOverTcp(receiver));
+    ScriptedReceiverWorker* const worker = harness.workers.current();
+    worker->ready();
+    // A receiver that reports no satellites per constellation has no row.
+    QVERIFY(!row->property("visible").toBool());
+
+    GPSSatelliteReport report;
+    report.timestampUs = 1;
+    report.inView = 17;
+    report.addConstellation({GPSConstellation::GPS, 10, 8});
+    report.addConstellation({GPSConstellation::Galileo, 7, std::nullopt});
+    worker->satellites(report);
+    QVERIFY(row->property("visible").toBool());
+    // Used/in view, with a dash for a used count the receiver does not report.
+    QCOMPARE(row->property("labelText").toString(), QStringLiteral("GPS\u00A08/10, Galileo\u00A0–/7"));
+    const qreal width = item->implicitWidth();
+
+    // More constellations wrap inside the row instead of widening the panel.
+    for (const GPSConstellation constellation :
+         {GPSConstellation::BeiDou, GPSConstellation::QZSS, GPSConstellation::SBAS, GPSConstellation::NavIC}) {
+        report.addConstellation({constellation, 12, 11});
+    }
+    worker->satellites(report);
+    QVERIFY(row->property("labelText").toString().endsWith(QStringLiteral("NavIC\u00A011/12")));
+    QCOMPARE(item->implicitWidth(), width);
+
+    receiver.disconnectReceiver();
+    QVERIFY(!row->property("visible").toBool());
+}
+
 void GPSReceiverSettingsTest::_reconnectingOffersDisconnect()
 {
     Panel panel(gpsReceiverManufacturerForType(GPSType::ublox));

@@ -172,6 +172,29 @@ QString fixLabel(GPSFixQuality fixType)
     return {};
 }
 
+QString constellationName(GPSConstellation constellation)
+{
+    switch (constellation) {
+        case GPSConstellation::GPS:
+            return GPSReceiver::tr("GPS");
+        case GPSConstellation::GLONASS:
+            return GPSReceiver::tr("GLONASS");
+        case GPSConstellation::Galileo:
+            return GPSReceiver::tr("Galileo");
+        case GPSConstellation::BeiDou:
+            return GPSReceiver::tr("BeiDou");
+        case GPSConstellation::QZSS:
+            return GPSReceiver::tr("QZSS");
+        case GPSConstellation::SBAS:
+            return GPSReceiver::tr("SBAS");
+        case GPSConstellation::NavIC:
+            return GPSReceiver::tr("NavIC");
+        case GPSConstellation::Unknown:
+            break;
+    }
+    return GPSReceiver::tr("Other", "Satellites of a constellation the receiver does not identify");
+}
+
 QString receiverStatus(const ReceiverStatus& status)
 {
     using Mode = BaseModeDefinition::Mode;

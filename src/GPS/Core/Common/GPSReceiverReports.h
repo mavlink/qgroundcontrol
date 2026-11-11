@@ -1,9 +1,13 @@
 #pragma once
 
+#include <algorithm>
+#include <array>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <optional>
+#include <span>
 
 #include <QtCore/QObject>
 
@@ -167,10 +171,42 @@ struct GPSPositionReport
 
 struct GPSSatelliteReport
 {
+    /// A constellation with satellites in view.
+    struct Constellation
+    {
+        GPSConstellation constellation = GPSConstellation::Unknown;
+        int inView = 0;
+        /// Empty when the receiver does not report which of them it uses.
+        std::optional<int> used = std::nullopt;
+
+        bool operator==(const Constellation&) const = default;
+    };
+
+    /// One entry for each GPSConstellation value.
+    static constexpr size_t MAX_CONSTELLATIONS = 8;
+
+    /// The constellations with satellites in view, in GPSConstellation order. Their in-view counts sum to inView.
+    [[nodiscard]] std::span<const Constellation> constellationsInView() const
+    {
+        return std::span(constellations).first(std::min<size_t>(constellationCount, constellations.size()));
+    }
+
+    /// Appends to constellationsInView(); ignored once MAX_CONSTELLATIONS are listed.
+    void addConstellation(const Constellation& constellation)
+    {
+        if (constellationCount < constellations.size()) {
+            constellations[constellationCount++] = constellation;
+        }
+    }
+
     // Latest accepted view receipt. Zero plus absent inView means no view coverage.
     uint64_t timestampUs = 0;
     std::optional<int> inView = std::nullopt;
     std::optional<int> used = std::nullopt;
+    /// Backs constellationsInView() with its first constellationCount entries. The others stay default, so that
+    /// equal reports compare equal.
+    std::array<Constellation, MAX_CONSTELLATIONS> constellations{};
+    uint8_t constellationCount = 0;
 
     bool operator==(const GPSSatelliteReport&) const = default;
 };
