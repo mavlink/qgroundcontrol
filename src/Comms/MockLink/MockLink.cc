@@ -415,6 +415,11 @@ void MockLink::_stopVideoStreamServer()
     }
 }
 
+bool MockLink::cameraStreamTransmitted(uint8_t compId, uint8_t streamId) const
+{
+    return _mockLinkCamera && _mockLinkCamera->streamTransmitted(compId, streamId);
+}
+
 void MockLink::servedVideoStream(MockConfiguration::VideoStreamType &type, QString &uri) const
 {
     QMutexLocker locker(&_videoStreamMutex);

@@ -537,4 +537,98 @@ void VehicleCameraControlTest::_testZoomTriggersCameraSettingsRequest()
                               TestTimeout::longMs());
 }
 
+void VehicleCameraControlTest::_testExtraStreamsStartAndStop()
+{
+    auto* mockConfig = newMockConfiguration(QStringLiteral("CameraExtraStreamsTest"));
+    mockConfig->setEnableCamera(true);
+    mockConfig->setCameraHasVideoStream(true);
+
+    _connectVehicle(mockConfig);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QGCCameraManager* cameraManager = _vehicle->cameraManager();
+    QVERIFY(cameraManager);
+    QVERIFY_TRUE_WAIT(cameraManager->cameras()->count() >= 2, TestTimeout::longMs());
+    MavlinkCameraControlInterface* camera = nullptr;
+    for (int i = 0; i < cameraManager->cameras()->count(); i++) {
+        auto* cam = qobject_cast<MavlinkCameraControlInterface*>(cameraManager->cameras()->get(i));
+        if (cam && cam->compID() == MAV_COMP_ID_CAMERA) {
+            camera = cam;
+            break;
+        }
+    }
+    QVERIFY2(camera, "Camera 1 (MAV_COMP_ID_CAMERA) not found in camera list");
+    // The mock camera advertises its streams 1 and 2.
+    QVERIFY_TRUE_WAIT(camera->streamLabels().count() == 2, TestTimeout::longMs());
+    QCOMPARE(camera->currentStream(), 0);
+
+    const auto transmitted = [this](uint8_t streamId) {
+        return _mockLink->cameraStreamTransmitted(MAV_COMP_ID_CAMERA, streamId);
+    };
+    const auto started = [this] {
+        return _mockLink->receivedMavCommandCount(MAV_CMD_VIDEO_START_STREAMING, MAV_COMP_ID_CAMERA);
+    };
+    const auto stopped = [this] {
+        return _mockLink->receivedMavCommandCount(MAV_CMD_VIDEO_STOP_STREAMING, MAV_COMP_ID_CAMERA);
+    };
+    // QGC requests a stream's status with REQUEST_MESSAGE or the deprecated command, in turn.
+    const auto statusRequests = [this] {
+        return _mockLink->receivedRequestMessageCount(MAV_COMP_ID_CAMERA, MAVLINK_MSG_ID_VIDEO_STREAM_STATUS) +
+               _mockLink->receivedMavCommandCount(MAV_CMD_REQUEST_VIDEO_STREAM_STATUS, MAV_COMP_ID_CAMERA);
+    };
+
+    // A camera transmits its first stream, the current one, without being asked.
+    QCOMPARE(started(), 0);
+    QVERIFY(transmitted(1));
+    QVERIFY(!transmitted(2));
+
+    // A stream shown besides the current one is started.
+    camera->setExtraStreams({2});
+    QVERIFY_TRUE_WAIT(transmitted(2), TestTimeout::mediumMs());
+    QCOMPARE(started(), 1);
+    QCOMPARE(stopped(), 0);
+
+    // It becomes the current stream while the former one stays on display, as whoever displays the streams says when
+    // told of the change: the camera is asked to stop or start neither. The request for the new current stream's
+    // status follows any such command.
+    const QMetaObject::Connection display =
+        connect(cameraManager, &QGCCameraManager::streamChanged, camera, [camera] { camera->setExtraStreams({1}); });
+    const int statusRequestsBefore = statusRequests();
+    camera->setCurrentStream(1);
+    QVERIFY_TRUE_WAIT(statusRequests() > statusRequestsBefore, TestTimeout::mediumMs());
+    QVERIFY(disconnect(display));
+    QCOMPARE(started(), 1);
+    QCOMPARE(stopped(), 0);
+    QVERIFY(transmitted(1));
+    QVERIFY(transmitted(2));
+
+    // The former stream leaves the display: it is stopped.
+    camera->setExtraStreams({});
+    QVERIFY_TRUE_WAIT(!transmitted(1), TestTimeout::mediumMs());
+    QVERIFY(transmitted(2));
+    QCOMPARE(started(), 1);
+
+    // With no other stream on display, a change of the current stream stops the old one and starts the new one.
+    camera->setCurrentStream(0);
+    QVERIFY_TRUE_WAIT(transmitted(1) && !transmitted(2), TestTimeout::mediumMs());
+    QCOMPARE(started(), 2);
+    QCOMPARE(stopped(), 2);
+
+    // Leaving the vehicle stops the extra stream and then the current one, and coming back to it starts them again:
+    // each time two commands of one kind. The vehicle refuses a command while the camera has yet to answer the same
+    // one, so the second waits for the first's answer.
+    camera->setExtraStreams({2});
+    QVERIFY_TRUE_WAIT(transmitted(2), TestTimeout::mediumMs());
+    camera->setExtraStreams({});
+    camera->stopStream();
+    QVERIFY_TRUE_WAIT(!transmitted(1) && !transmitted(2), TestTimeout::mediumMs());
+    camera->resumeStream();
+    camera->setExtraStreams({2});
+    QVERIFY_TRUE_WAIT(transmitted(1) && transmitted(2), TestTimeout::mediumMs());
+    QCOMPARE(started(), 5);
+    QCOMPARE(stopped(), 4);
+}
+
 UT_REGISTER_TEST(VehicleCameraControlTest, TestLabel::Integration, TestLabel::Vehicle)

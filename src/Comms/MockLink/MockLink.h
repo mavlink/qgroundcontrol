@@ -287,6 +287,10 @@ public:
     /// VIDEO_STREAM_INFORMATION consistent with this snapshot.
     void servedVideoStream(MockConfiguration::VideoStreamType &type, QString &uri) const;
 
+    /// Whether the simulated camera @p compId transmits its stream @p streamId, as MAV_CMD_VIDEO_START_STREAMING and
+    /// MAV_CMD_VIDEO_STOP_STREAMING left it. False without a simulated camera.
+    bool cameraStreamTransmitted(uint8_t compId, uint8_t streamId) const;
+
     /// Video stream type the configuration requested (immutable after construction).
     MockConfiguration::VideoStreamType requestedVideoStreamType() const { return _requestedVideoStreamType; }
 
