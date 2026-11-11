@@ -77,6 +77,9 @@ std::optional<NavigationEpoch> NavigationEpochAssembler::expireUntimedMetadata(u
     }
     stored->epoch.verticalDop.reset();
     stored->epoch.verticalDopReceivedAtUs = 0;
+    if (_hiddenByFixLoss(stored->epoch)) {
+        return std::nullopt;
+    }
     return stored->epoch;
 }
 
