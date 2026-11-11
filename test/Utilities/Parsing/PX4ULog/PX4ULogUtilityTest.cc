@@ -67,12 +67,12 @@ void PX4ULogUtilityTest::_testIsValidHeaderQByteArray()
 
 void PX4ULogUtilityTest::_testGetVersion()
 {
-    // Version 1 ULog
-    char v1[8] = {'U', 'L', 'o', 'g', 0x01, 0x12, 0x00, 0x00};
+    // Version 1 ULog: the version byte follows the 7 magic bytes
+    char v1[8] = {'U', 'L', 'o', 'g', 0x01, 0x12, 0x35, 0x01};
     QCOMPARE(PX4ULogUtility::getVersion(v1, sizeof(v1)), 1);
 
     // Hypothetical version 2
-    char v2[8] = {'U', 'L', 'o', 'g', 0x02, 0x12, 0x00, 0x00};
+    char v2[8] = {'U', 'L', 'o', 'g', 0x01, 0x12, 0x35, 0x02};
     QCOMPARE(PX4ULogUtility::getVersion(v2, sizeof(v2)), 2);
 }
 
@@ -83,7 +83,7 @@ void PX4ULogUtilityTest::_testGetVersionInvalid()
     QCOMPARE(PX4ULogUtility::getVersion(invalid, sizeof(invalid)), -1);
 
     // Too short to contain version
-    char short_data[4] = {'U', 'L', 'o', 'g'};
+    char short_data[7] = {'U', 'L', 'o', 'g', 0x01, 0x12, 0x35};
     QCOMPARE(PX4ULogUtility::getVersion(short_data, sizeof(short_data)), -1);
 
     // Empty

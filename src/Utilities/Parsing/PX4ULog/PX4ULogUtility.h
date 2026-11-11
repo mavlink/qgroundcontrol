@@ -19,9 +19,10 @@ namespace PX4ULogUtility
 // Constants
 // ============================================================================
 
-/// ULog file magic bytes: "ULog" followed by 0x01 (version 1) followed by 0x12 (file compat)
+/// Start of the 7 ULog file magic bytes ("ULog" 0x01 0x12 0x35), which the version byte follows
 constexpr char kMagicBytes[] = {'U', 'L', 'o', 'g'};
 constexpr int kMagicSize = 4;
+constexpr int kVersionOffset = 7;
 constexpr int kHeaderSize = 16;  // Full header size
 
 // ============================================================================
@@ -35,7 +36,7 @@ constexpr int kHeaderSize = 16;  // Full header size
 bool isValidHeader(const char *data, qint64 size);
 
 /// Get the ULog format version from header
-/// @param data Pointer to data (must be at least 5 bytes)
+/// @param data Pointer to data (must be at least 8 bytes)
 /// @param size Size of available data
 /// @return Version number (typically 1), or -1 if invalid
 int getVersion(const char *data, qint64 size);
