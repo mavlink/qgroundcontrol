@@ -31,13 +31,19 @@
 /// Not thread-safe: confine to one thread or synchronize externally. This
 /// includes the const lookup methods — they mutate recency/instrumentation
 /// state, so even concurrent reads race.
-/// Bounded working set: least-recently-used tiles are evicted past kMaxTiles.
+/// Bounded working set: least-recently-used tiles are evicted past maxTiles.
 class ElevationTilePyramid
 {
 public:
-    /// Working-set cap: least-recently-used tiles are evicted at insert time
-    /// (256x256 float tiles ~256KB each, so the cap bounds memory at ~32MB)
-    static constexpr int kMaxTiles = 128;
+    /// Working-set cap when the owner gives none (256x256 float tiles ~256KB
+    /// each, so it bounds memory at ~32MB)
+    static constexpr int kDefaultMaxTiles = 128;
+
+    /// \a maxTiles is the working-set cap: least-recently-used tiles are
+    /// evicted at insert time
+    explicit ElevationTilePyramid(int maxTiles = kDefaultMaxTiles)
+        : _maxTiles(maxTiles)
+    {}
 
     /// Decoded elevation samples for one tile, row-major from the NW corner
     struct Grid
@@ -74,7 +80,7 @@ public:
     int tileCount() const { return static_cast<int>(_tiles.count()); }
 
     /// Tiles that must not be evicted (they back rendered patches or resolve
-    /// them as ancestors). kMaxTiles becomes a soft cap: when every resident
+    /// them as ancestors). maxTiles becomes a soft cap: when every resident
     /// tile is pinned, inserts grow past it rather than break a rendered mesh.
     void setPinnedKeys(QSet<TileMath::TileKey> keys) { _pinnedKeys = std::move(keys); }
 
@@ -89,6 +95,7 @@ public:
 private:
     TileMath::TileKey _evictLeastRecentlyUsed();
 
+    const int _maxTiles;
     QHash<TileMath::TileKey, Grid> _tiles;
     QHash<TileMath::TileKey, int> _descendantCounts;  ///< stored tiles strictly below each key
     QSet<TileMath::TileKey> _pinnedKeys;

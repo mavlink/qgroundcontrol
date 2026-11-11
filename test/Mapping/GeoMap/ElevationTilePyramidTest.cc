@@ -155,24 +155,24 @@ void ElevationTilePyramidTest::_insertReplacesTile()
 void ElevationTilePyramidTest::_lruEvictionAtCap()
 {
     ElevationTilePyramid pyramid;
-    for (int i = 0; i < ElevationTilePyramid::kMaxTiles; i++) {
+    for (int i = 0; i < ElevationTilePyramid::kDefaultMaxTiles; i++) {
         QVERIFY(pyramid.insertTile(TileMath::TileKey{i, 0, 8}, makeGrid(float(i))));
     }
-    QCOMPARE(pyramid.tileCount(), ElevationTilePyramid::kMaxTiles);
+    QCOMPARE(pyramid.tileCount(), ElevationTilePyramid::kDefaultMaxTiles);
 
     // Touch the oldest tile so it is no longer least-recently-used
     QVERIFY(pyramid.bestTileFor(TileMath::TileKey{0, 0, 8}).isValid());
 
     // Inserting past the cap evicts the least-recently-used tile ({1,0,8})
     QVERIFY(pyramid.insertTile(TileMath::TileKey{200, 0, 8}, makeGrid(1.0f)));
-    QCOMPARE(pyramid.tileCount(), ElevationTilePyramid::kMaxTiles);
+    QCOMPARE(pyramid.tileCount(), ElevationTilePyramid::kDefaultMaxTiles);
     QVERIFY(pyramid.hasTile(TileMath::TileKey{0, 0, 8}));
     QVERIFY(!pyramid.hasTile(TileMath::TileKey{1, 0, 8}));
     QVERIFY(pyramid.hasTile(TileMath::TileKey{200, 0, 8}));
 
     // Replacing an existing key stays at the cap without evicting others
     QVERIFY(pyramid.insertTile(TileMath::TileKey{200, 0, 8}, makeGrid(2.0f)));
-    QCOMPARE(pyramid.tileCount(), ElevationTilePyramid::kMaxTiles);
+    QCOMPARE(pyramid.tileCount(), ElevationTilePyramid::kDefaultMaxTiles);
     QVERIFY(pyramid.hasTile(TileMath::TileKey{2, 0, 8}));
 }
 
@@ -182,7 +182,7 @@ void ElevationTilePyramidTest::_pinnedTilesSurviveEviction()
     // evicting them yanks data out from under a visible mesh, so LRU pressure
     // must fall on unpinned tiles only — regardless of recency
     ElevationTilePyramid pyramid;
-    for (int i = 0; i < ElevationTilePyramid::kMaxTiles; i++) {
+    for (int i = 0; i < ElevationTilePyramid::kDefaultMaxTiles; i++) {
         QVERIFY(pyramid.insertTile(TileMath::TileKey{i, 0, 8}, makeGrid(float(i))));
     }
 
@@ -191,7 +191,7 @@ void ElevationTilePyramidTest::_pinnedTilesSurviveEviction()
 
     QVERIFY(pyramid.insertTile(TileMath::TileKey{200, 0, 8}, makeGrid(1.0f)));
     QVERIFY(pyramid.insertTile(TileMath::TileKey{201, 0, 8}, makeGrid(1.0f)));
-    QCOMPARE(pyramid.tileCount(), ElevationTilePyramid::kMaxTiles);
+    QCOMPARE(pyramid.tileCount(), ElevationTilePyramid::kDefaultMaxTiles);
     QVERIFY(pyramid.hasTile(TileMath::TileKey{0, 0, 8}));
     QVERIFY(pyramid.hasTile(TileMath::TileKey{1, 0, 8}));
     QVERIFY(!pyramid.hasTile(TileMath::TileKey{2, 0, 8}));
@@ -205,12 +205,12 @@ void ElevationTilePyramidTest::_pinnedTilesSurviveEviction()
 
 void ElevationTilePyramidTest::_allPinnedGrowsPastCap()
 {
-    // kMaxTiles is a soft cap: when every resident tile is pinned, inserts
+    // The cap is soft: when every resident tile is pinned, inserts
     // must still succeed (grow past the cap) rather than break a rendered
     // patch — the alternative is a cliff
     ElevationTilePyramid pyramid;
     QSet<TileMath::TileKey> pinned;
-    for (int i = 0; i < ElevationTilePyramid::kMaxTiles; i++) {
+    for (int i = 0; i < ElevationTilePyramid::kDefaultMaxTiles; i++) {
         const TileMath::TileKey key{i, 0, 8};
         QVERIFY(pyramid.insertTile(key, makeGrid(1.0f)));
         pinned.insert(key);
@@ -218,15 +218,15 @@ void ElevationTilePyramidTest::_allPinnedGrowsPastCap()
     pyramid.setPinnedKeys(pinned);
 
     QVERIFY(pyramid.insertTile(TileMath::TileKey{200, 0, 8}, makeGrid(1.0f)));
-    QCOMPARE(pyramid.tileCount(), ElevationTilePyramid::kMaxTiles + 1);
-    for (int i = 0; i < ElevationTilePyramid::kMaxTiles; i++) {
+    QCOMPARE(pyramid.tileCount(), ElevationTilePyramid::kDefaultMaxTiles + 1);
+    for (int i = 0; i < ElevationTilePyramid::kDefaultMaxTiles; i++) {
         QVERIFY(pyramid.hasTile(TileMath::TileKey{i, 0, 8}));
     }
 
     // Pressure releases once pins clear: the next insert trims back via LRU
     pyramid.setPinnedKeys({});
     QVERIFY(pyramid.insertTile(TileMath::TileKey{201, 0, 8}, makeGrid(1.0f)));
-    QCOMPARE_LE(pyramid.tileCount(), ElevationTilePyramid::kMaxTiles + 1);
+    QCOMPARE_LE(pyramid.tileCount(), ElevationTilePyramid::kDefaultMaxTiles + 1);
 }
 
 void ElevationTilePyramidTest::_descendantTracking()
@@ -248,10 +248,10 @@ void ElevationTilePyramidTest::_descendantTracking()
 
     // Evicting the whole {0,0,1} subtree clears its descendant marks: fill
     // the cap under {0,0,1}, then displace it all with the {1,1,1} subtree
-    for (int i = 0; i < ElevationTilePyramid::kMaxTiles; i++) {
+    for (int i = 0; i < ElevationTilePyramid::kDefaultMaxTiles; i++) {
         QVERIFY(pyramid.insertTile(TileMath::TileKey{i, 0, 8}, makeGrid(1.0f)));
     }
-    for (int i = 0; i < ElevationTilePyramid::kMaxTiles; i++) {
+    for (int i = 0; i < ElevationTilePyramid::kDefaultMaxTiles; i++) {
         QVERIFY(pyramid.insertTile(TileMath::TileKey{128 + i, 128, 8}, makeGrid(1.0f)));
     }
     QVERIFY(!pyramid.hasDescendant(TileMath::TileKey{0, 0, 1}));

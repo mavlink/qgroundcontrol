@@ -1079,7 +1079,7 @@ void SurfaceModelTest::_pinsPatchBackingTiles()
     const TileMath::TileKey backingKey =
         acrossEdge ? edgeAndEastNeighbor(model.patches()).second : model.patches().first().key;
     QVERIFY(field.insertTile(backingKey, constantGrid(123.0f)));
-    for (int i = 0; i < ElevationTilePyramid::kMaxTiles + 8; i++) {
+    for (int i = 0; i < ElevationTilePyramid::kDefaultMaxTiles + 8; i++) {
         QVERIFY(field.insertTile(TileMath::TileKey{i, 200, 9}, constantGrid(1.0f)));
     }
 

@@ -228,13 +228,15 @@ private:
     bool _fallbackAvailable(const TileMath::TileKey& key) const;
     GeoMapCamera* _camera() const;
 
-    static constexpr int kMaxRetiredImages = 128;         ///< tiles kept after patch removal (fallback source)
     static constexpr int kMaxAncestorFallbackLevels = 8;  ///< how far up the quadtree fallback looks
     static constexpr int kImageRetryMs = 3000;            ///< first pacing for re-requesting failed tile images
     static constexpr int kImageRetryMaxMs = 30000;        ///< longest pacing, while the same images keep failing
     static constexpr double kSegmentSampleSpacingMeters = 30.0;
     static constexpr int kMaxSegmentSamples = 2000;       ///< full spacing up to GeoMapMissionPath's 50 km pieces
 
+    /// Cap of each of the two in-memory stores sized from the memory cache setting: the images kept after patch
+    /// removal (fallback source) and the height field's decoded tiles. Images of the patches shown are not counted.
+    const int _memoryStoreTileLimit;
     GeoScene* _scene = nullptr;
     HeightSource* _heightSource = nullptr;
     HeightField* _heightField = nullptr;

@@ -3,12 +3,16 @@
 #include <cmath>
 
 #include <QtCore/QPointF>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QtNumeric>
 #include <QtTest/QSignalSpy>
 
 #include "GeoMapCamera.h"
 #include "GeoScene.h"
 #include "HeightField.h"
+#include "MapsSettings.h"
+#include "SettingsManager.h"
 #include "SurfaceModel.h"
 #include "SurfacePatchModel.h"
 #include "TileMath.h"
@@ -323,6 +327,42 @@ void SurfacePatchModelTest::_tileKeyAndHeightFieldExposedToDelegates()
                                      model.data(first, SurfacePatchModel::ZoomRole).toInt()};
     const auto heights = model.data(first, SurfacePatchModel::HeightsRole).value<QList<float>>();
     QCOMPARE(model.heightField()->samplePatch(firstKey, model.gridSize()), heights);
+}
+
+void SurfacePatchModelTest::_elevationStoreFollowsMemoryCacheSetting_data()
+{
+    QTest::addColumn<int>("megabytes");
+    QTest::addColumn<int>("expectedTiles");
+
+    // The store gets half of the setting, and a decoded tile takes about 256 KB
+    QTest::newRow("halfOfTheSetting") << 40 << 80;
+    QTest::newRow("minimum") << 1 << 32;
+}
+
+void SurfacePatchModelTest::_elevationStoreFollowsMemoryCacheSetting()
+{
+    QFETCH(int, megabytes);
+    QFETCH(int, expectedTiles);
+
+    Fact* const setting = SettingsManager::instance()->mapsSettings()->maxCacheMemorySize();
+    const QVariant savedValue = setting->rawValue();
+    const auto restoreValue = qScopeGuard([setting, savedValue] { setting->setRawValue(savedValue); });
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    setting->setRawValue(megabytes);
+
+    GeoMapCamera camera;
+    GeoScene scene;
+    SurfacePatchModel model;
+    setupCamera(camera);
+    attach(model, scene, camera);
+    QVERIFY(model.heightField() != nullptr);
+
+    // Tiles far from the camera, so no patch pins them against eviction
+    for (int i = 0; i < expectedTiles + 8; i++) {
+        QVERIFY(model.heightField()->insertTile(TileMath::TileKey{i, 200, 9}, uniformGrid(1.0f)));
+    }
+    QCOMPARE(model.heightField()->tileCount(), expectedTiles);
 }
 
 void SurfacePatchModelTest::_terrainHeightAt()

@@ -43,4 +43,4 @@ Configure a custom tile server using a URL template with `{x}`, `{y}`, and `{z}`
 ## Tile Cache
 
 - **Max disk cache** — maximum disk space for cached map tiles (default: 1024 MB, range: 1–262144 MB)
-- **Max memory cache** — maximum RAM for in-memory tile cache (default: 128 MB desktop / 16 MB mobile, range: 1–1024 MB). Changes require a restart.
+- **Max memory cache** — maximum RAM for in-memory tile cache (default: 128 MB desktop / 16 MB mobile, range: 1–1024 MB). Changes require a restart. The 3D-capable map counts only the tiles it keeps for ground that has left the screen, and keeps at least 16 MB of them.

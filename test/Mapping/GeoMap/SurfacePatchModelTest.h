@@ -17,6 +17,8 @@ private slots:
     void _rowsAlwaysMeshedDuringLodChurn();
     void _edgeLodDeltasRoleStitchesLodRings();
     void _tileKeyAndHeightFieldExposedToDelegates();
+    void _elevationStoreFollowsMemoryCacheSetting_data();
+    void _elevationStoreFollowsMemoryCacheSetting();
     void _terrainHeightAt();
     void _terrainDataChangedOnlyOnFieldChanges();
     void _segmentBelowTerrain_data();

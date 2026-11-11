@@ -18,7 +18,12 @@ QGC_LOGGING_CATEGORY(GeoMapHeightFieldLog, "GeoMap.HeightField")
 QGC_LOGGING_CATEGORY(GeoMapHeightFieldVerboseLog, "GeoMap.HeightField.Verbose")
 
 HeightField::HeightField(QObject* parent)
+    : HeightField(ElevationTilePyramid::kDefaultMaxTiles, parent)
+{}
+
+HeightField::HeightField(int maxTiles, QObject* parent)
     : QObject(parent)
+    , _pyramid(maxTiles)
 {}
 
 bool HeightField::insertTile(const TileMath::TileKey& key, ElevationTilePyramid::Grid grid)

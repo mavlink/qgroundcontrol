@@ -42,7 +42,7 @@ bool ElevationTilePyramid::insertTile(const TileMath::TileKey& key, Grid grid, T
         return false;
     }
     const bool replacing = _tiles.contains(key);
-    if (!replacing && (_tiles.count() >= kMaxTiles)) {
+    if (!replacing && (_tiles.count() >= _maxTiles)) {
         const TileMath::TileKey evicted = _evictLeastRecentlyUsed();
         if (TileMath::isValidKey(evicted) && evictedKey) {
             *evictedKey = evicted;
@@ -60,7 +60,7 @@ TileMath::TileKey ElevationTilePyramid::_evictLeastRecentlyUsed()
 {
     // Pinned tiles back rendered patches: never evict them. When everything
     // is pinned there is no victim and the working set grows past the cap.
-    // O(tileCount) victim scan: fine at kMaxTiles, revisit if the cap grows
+    // O(tileCount) victim scan: fine up to the 2048 tiles the largest memory cache setting gives
     TileMath::TileKey lruKey{0, 0, -1};
     qint64 lruTick = std::numeric_limits<qint64>::max();
     for (auto it = _lastUsed.cbegin(); it != _lastUsed.cend(); ++it) {

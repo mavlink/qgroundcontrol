@@ -157,7 +157,7 @@ void HeightFieldTest::_pinnedTilesSurviveInsertPressure()
     QVERIFY(field.insertTile(fineKey, uniformGrid(200.0f)));
     field.setPinnedKeys({fineKey});
 
-    for (int i = 0; i < ElevationTilePyramid::kMaxTiles + 8; i++) {
+    for (int i = 0; i < ElevationTilePyramid::kDefaultMaxTiles + 8; i++) {
         QVERIFY(field.insertTile(TileKey{i, 100, 8}, uniformGrid(50.0f)));
     }
 
@@ -174,16 +174,16 @@ void HeightFieldTest::_evictionEmitsRegionChanged()
     HeightField field;
     QVERIFY(field.insertTile(TileKey{0, 0, 0}, uniformGrid(100.0f)));
     const int fineZoom = 8;
-    for (int i = 0; i < ElevationTilePyramid::kMaxTiles - 1; i++) {
+    for (int i = 0; i < ElevationTilePyramid::kDefaultMaxTiles - 1; i++) {
         QVERIFY(field.insertTile(TileKey{i, 100, fineZoom}, uniformGrid(200.0f)));
     }
-    QCOMPARE(field.tileCount(), ElevationTilePyramid::kMaxTiles);
+    QCOMPARE(field.tileCount(), ElevationTilePyramid::kDefaultMaxTiles);
 
     // The next insert evicts the least-recently-used tile (the z0 root):
     // its region must be announced alongside the inserted tile's own
     QSignalSpy regionSpy(&field, &HeightField::regionChanged);
     QVERIFY(field.insertTile(TileKey{200, 100, fineZoom}, uniformGrid(200.0f)));
-    QCOMPARE(field.tileCount(), ElevationTilePyramid::kMaxTiles);
+    QCOMPARE(field.tileCount(), ElevationTilePyramid::kDefaultMaxTiles);
     bool evictedRegionAnnounced = false;
     const QPointF probe = vertexWorld(TileKey{50, 50, fineZoom}, 2, 1, 1);  // far from any fine tile
     for (const QList<QVariant>& args : regionSpy) {

@@ -10,6 +10,7 @@
 #include "AppSettings.h"
 #include "GeoMapCamera.h"
 #include "GeoScene.h"
+#include "MapsSettings.h"
 #include "QGCMapUrlEngine.h"
 #include "SettingsManager.h"
 #include "SurfacePatchModel.h"
@@ -248,6 +249,52 @@ void SurfacePatchImageryTest::_fallbackCoversLodChanges()
     QCOMPARE_GT(model.rowCount(), 0);
     QCOMPARE_GT(rowsReportingImage(model), 0);
     QCOMPARE(rowsWithImage(model), rowsReportingImage(model));
+}
+
+void SurfacePatchImageryTest::_retiredImagesFollowMemoryCacheSetting_data()
+{
+    QTest::addColumn<int>("megabytes");
+    QTest::addColumn<int>("expectedRetired");
+
+    // The store gets half of the setting, and a tile image takes about 256 KB
+    QTest::newRow("halfOfTheSetting") << 20 << 40;
+    QTest::newRow("minimum") << 1 << 32;
+}
+
+void SurfacePatchImageryTest::_retiredImagesFollowMemoryCacheSetting()
+{
+    QFETCH(int, megabytes);
+    QFETCH(int, expectedRetired);
+
+    const QString type = mapType();
+    QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
+
+    Fact* const setting = SettingsManager::instance()->mapsSettings()->maxCacheMemorySize();
+    const QVariant savedValue = setting->rawValue();
+    const auto restoreValue = qScopeGuard([setting, savedValue] { setting->setRawValue(savedValue); });
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    setting->setRawValue(megabytes);
+
+    GeoMapCamera camera;
+    GeoScene scene;
+    SurfacePatchModel model;
+    attach(model, scene, camera);
+    model.setMapType(type);
+    // A view towards the horizon shows more patches than either row keeps images for
+    camera.setTilt(GeoMapCamera::kMaxTilt);
+    model.drainUpdates();
+    const int imagedPatches = model.rowCount();
+    QCOMPARE_GT(imagedPatches, expectedRetired);
+    QTRY_COMPARE_WITH_TIMEOUT(rowsWithImage(model), imagedPatches, TestTimeout::mediumMs());
+
+    // Leaving retires every image. Coming back, only the patches whose image was dropped ask for it again
+    camera.setCenter(QGeoCoordinate(kCenter.latitude() + 5.0, kCenter.longitude() + 5.0));
+    model.drainUpdates();
+    camera.setCenter(kCenter);
+    model.drainUpdates();
+    QCOMPARE(model.rowCount(), imagedPatches);
+    QCOMPARE(model.pendingImageCount(), imagedPatches - expectedRetired);
 }
 
 void SurfacePatchImageryTest::_imagesRecoverAfterGestureChurn()

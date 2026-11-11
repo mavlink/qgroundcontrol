@@ -19,6 +19,7 @@
 #include "GeoMapCamera.h"
 #include "HeightField.h"
 #include "HeightSource.h"
+#include "MapsSettings.h"
 #include "PatchMesh.h"
 #include "QGCLoggingCategory.h"
 #include "SettingsManager.h"
@@ -296,6 +297,16 @@ void SurfaceModel::_repinAncestors()
         }
     }
     _field->setPinnedKeys(std::move(pinned));
+}
+
+int SurfaceModel::memoryStoreTileLimit()
+{
+    constexpr uint kMaxMegabytes = 1024;
+    constexpr uint kTilesPerMegabyte = 4;
+    constexpr int kMinTiles = 32;
+    const uint megabytes =
+        qMin(SettingsManager::instance()->mapsSettings()->maxCacheMemorySize()->rawValue().toUInt(), kMaxMegabytes);
+    return qMax(kMinTiles, static_cast<int>(megabytes * kTilesPerMegabyte / 2));
 }
 
 // GCOVR_EXCL_START — perf-stats instrumentation for the debug overlay/capture

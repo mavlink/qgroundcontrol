@@ -76,6 +76,11 @@ cropped piece of the nearest ancestor tile — so the ground never flashes blank
 Images from removed patches are retired rather than dropped, keeping them available
 as stand-in sources across LOD changes.
 
+The retired images and the pyramid's decoded tiles are the two in-memory stores that
+the **Max memory cache** setting sizes (`SurfaceModel::memoryStoreTileLimit`). Each
+gets half, at about 256 KB a tile, and never fewer than 32 tiles. The setting is read
+when the map is created. The images of the patches on screen are not counted.
+
 When the user sets another source for the provider (the Custom URL, or the account
 or style of Mapbox Custom), `TileImageSource` reports it and the model drops its
 images, stand-ins included, and requests them again.

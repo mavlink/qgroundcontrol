@@ -34,6 +34,7 @@ QGC_LOGGING_CATEGORY(GeoMapSurfacePatchModelVerboseLog, "GeoMap.SurfacePatchMode
 
 SurfacePatchModel::SurfacePatchModel(QObject* parent)
     : QAbstractListModel(parent)
+    , _memoryStoreTileLimit(SurfaceModel::memoryStoreTileLimit())
 {}
 
 SurfacePatchModel::~SurfacePatchModel() = default;
@@ -315,7 +316,7 @@ void SurfacePatchModel::_rebuildSurfaceModel()
         }
         qCDebug(GeoMapSurfacePatchModelLog) << "rebuilding surface model, height source:"
                                             << (_debugHills ? "debug hills" : (_terrain ? "terrain" : "flat"));
-        _heightField = new HeightField(this);
+        _heightField = new HeightField(_memoryStoreTileLimit, this);
         connect(_heightField, &HeightField::regionChanged, this, &SurfacePatchModel::terrainDataChanged);
         _heightSource->setHeightField(_heightField);
         _surfaceModel = new SurfaceModel(camera, _heightSource, _heightField, this);
@@ -920,7 +921,7 @@ void SurfacePatchModel::_patchRemoved(const TileMath::TileKey& key)
     // fallback for patches that replace this one across LOD changes
     if (_tileImages.contains(key)) {
         _retiredOrder.append(key);
-        while (_retiredOrder.count() > kMaxRetiredImages) {
+        while (_retiredOrder.count() > _memoryStoreTileLimit) {
             const TileMath::TileKey evicted = _retiredOrder.takeFirst();
             _tileImages.remove(evicted);
             _invalidateFallbacks(evicted);

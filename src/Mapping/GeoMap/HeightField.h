@@ -40,6 +40,8 @@ class HeightField : public QObject
 
 public:
     explicit HeightField(QObject* parent = nullptr);
+    /// \a maxTiles caps the backing pyramid (see ElevationTilePyramid)
+    HeightField(int maxTiles, QObject* parent);
 
     /// Sanity cap on patch density: rejects absurd sizes before allocation
     static constexpr int kMaxGridSize = 4096;
