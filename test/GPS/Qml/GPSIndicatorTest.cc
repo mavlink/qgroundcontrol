@@ -64,7 +64,7 @@ QColor colorOf(const QObject* item)
 void GPSIndicatorTest::_pagePanelUsesApplicationReceiver()
 {
     // GPSReceiverSettingsTest covers the panel; the drawer shows it for the application's receiver and settings.
-    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::quectel));
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::Quectel));
     GPSReceiver* const receiver = GPSManager::instance()->receiver();
     GPSTest::QmlWindowFixture window;
     GPSTest::QmlEngine engine;
@@ -93,7 +93,7 @@ void GPSIndicatorTest::_pageFitsWidth_data()
 void GPSIndicatorTest::_pageFitsWidth()
 {
     QFETCH(int, width);
-    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::quectel));
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::Quectel));
     QVERIFY(!GPSManager::instance()->receiver()->hasReceiver());
     AppReceiver base;
     GPSReceiverFactGroup* const facts = base.facts();
@@ -157,7 +157,7 @@ void GPSIndicatorTest::_pageFitsWidth()
 void GPSIndicatorTest::_compactExpandedPageHasSettingsSize()
 {
     // Status of a vehicle GPS, a surveyed base and a caster, which is taller than the settings of a passive receiver.
-    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::passive));
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::Passive));
     NTRIPSettings* const ntrip = SettingsManager::instance()->ntripSettings();
     settings.saved.setFactValue(ntrip->ntripServerConnectEnabled(), false);
     settings.saved.setFactValue(ntrip->ntripServerHostAddress(), QStringLiteral("caster.example"));

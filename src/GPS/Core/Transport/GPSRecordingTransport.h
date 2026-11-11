@@ -49,16 +49,16 @@ public:
     ~GPSRecordingTransport() override;
 
     /// The recording in @a directory of a session of @a type that starts at @a startedAt:
-    /// <yyyyMMdd>T<HHmmss.zzz>Z-<type>.log, in UTC. The milliseconds keep sessions that follow each other at once in
-    /// files of their own.
+    /// <yyyyMMdd>T<HHmmss.zzz>Z-<type>.log, in UTC and with the type in lower case. The milliseconds keep sessions
+    /// that follow each other at once in files of their own.
     [[nodiscard]] static QString sessionFile(const QString& directory, GPSType type, const QDateTime& startedAt);
 
     GPSOpenResult open() override;
     bool fatalError() const override;
-    unsigned fixedBaudrate() const override;
+    unsigned fixedBaudRate() const override;
     GPSReadResult read(std::span<uint8_t> buffer, std::chrono::milliseconds timeout) override;
     std::chrono::milliseconds configurationWriteTimeout() const override;
-    bool setBaudrate(unsigned baudrate) override;
+    bool setBaudRate(unsigned baudRate) override;
 
     /// The file is still being written.
     [[nodiscard]] bool recording() const { return _file.isOpen(); }

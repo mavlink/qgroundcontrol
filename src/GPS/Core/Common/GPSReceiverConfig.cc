@@ -64,7 +64,9 @@ GPSReceiverConfigError validateOptions(const GPSReceiverConfig& config, const GP
     if (passive && config.base != GPSBaseStationConfig{}) {
         return GPSReceiverConfigError::UnsupportedBaseMode;
     }
-    if (!gpsValidBaudRate(config.baudRate, passive)) {
+    // A passive receiver is never configured, so it cannot detect the rate and needs its existing one.
+    const bool detectsRate = config.baudRate == 0 && !passive;
+    if (!detectsRate && !gpsValidExplicitBaudRate(config.baudRate)) {
         return GPSReceiverConfigError::InvalidBaudRate;
     }
     return GPSReceiverConfigError::None;
@@ -78,7 +80,7 @@ GPSReceiverConfigError gpsValidateReceiverConfig(GPSType type, const GPSReceiver
     if (!capabilities.recognized) {
         return GPSReceiverConfigError::UnknownReceiver;
     }
-    return validateOptions(config, capabilities, type == GPSType::passive);
+    return validateOptions(config, capabilities, type == GPSType::Passive);
 }
 
 QString gpsReceiverConfigErrorText(GPSReceiverConfigError error)

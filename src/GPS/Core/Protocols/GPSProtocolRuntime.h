@@ -24,7 +24,7 @@ struct GPSRuntimeIO
 {
     std::function<GPSReadResult(std::span<uint8_t>, GPSDeadline)> read{};
     std::function<GPSWriteResult(std::span<const uint8_t>, GPSDeadline)> write{};
-    std::function<GPSBaudStatus(unsigned)> setBaudrate{};
+    std::function<GPSBaudStatus(unsigned)> setBaudRate{};
     /// Without a wait, the runtime sleeps in short slices until the duration elapses or @a cancelToken is cancelled.
     GPSClock clock{};
     /// Checked before each write and baud change; reads observe it in the transport.

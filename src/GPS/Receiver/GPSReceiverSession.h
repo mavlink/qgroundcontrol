@@ -52,7 +52,7 @@ class GPSReceiverSession : public QObject
 public:
     struct Connection
     {
-        GPSType type = GPSType::ublox;
+        GPSType type = GPSType::UBlox;
         RTKSettings::ReceiverRole role = RTKSettings::ConfiguredBase;
         /// The receiver's RTCM output is a correction source.
         bool forwardsCorrections = true;
@@ -92,11 +92,11 @@ public:
     int manufacturer() const
     {
         return gpsReceiverManufacturerForType(
-            _connection.type == GPSType::automatic ? _detectedType.value_or(GPSType::automatic) : _connection.type);
+            _connection.type == GPSType::Automatic ? _detectedType.value_or(GPSType::Automatic) : _connection.type);
     }
 
     /// The family an Automatic session detected, or the protocol a passive receiver's output carries: the family
-    /// whose native protocol it is, or GPSType::passive for standard NMEA. Empty until then and for a selected family.
+    /// whose native protocol it is, or GPSType::Passive for standard NMEA. Empty until then and for a selected family.
     std::optional<GPSType> detectedType() const { return _detectedType; }
 
     /// Base mode of a configured base; empty for a passive receiver.

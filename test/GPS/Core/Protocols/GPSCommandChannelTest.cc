@@ -109,7 +109,7 @@ private:
     GPSNMEAStream _nmea;
 };
 
-constexpr GPSReceiverFamily HARNESS_FAMILY{.type = GPSType::passive, .stream = GPSNMEAStream::STREAM};
+constexpr GPSReceiverFamily HARNESS_FAMILY{.type = GPSType::Passive, .stream = GPSNMEAStream::STREAM};
 
 /// A receiver on a virtual clock. Each command write schedules its scripted replies after their latency, unsolicited
 /// output arrives at scheduled times, and time only passes while a read waits for data.
@@ -167,14 +167,14 @@ private:
         return {GPSWriteStatus::Completed, static_cast<int>(command.size()), static_cast<int>(command.size())};
     }
 
-    std::optional<bool> handleBaudrate(ScriptedReceiver& receiver, unsigned baudrate) override
+    std::optional<bool> handleBaudRate(ScriptedReceiver& receiver, unsigned baudRate) override
     {
         Q_UNUSED(receiver)
-        bauds.append(baudrate);
-        if (unsupportedRates.contains(baudrate)) {
+        bauds.append(baudRate);
+        if (unsupportedRates.contains(baudRate)) {
             return false;
         }
-        baud = baudrate;
+        baud = baudRate;
         return true;
     }
 
@@ -430,7 +430,7 @@ QList<Scenario> scenarios()
              notes += summary(c.transact({"A", 100ms}, "A\r\n", GPSTextMatcher(lineReply)));
              notes += summary(c.transact({"B", 100ms}, "B\r\n", GPSTextMatcher(lineReply)));
              notes += summary(c.transact({"C", 100ms}, "C\r\n", GPSTextMatcher(lineReply)));
-             notes += QString::number(c.setBaudrate(9600));
+             notes += QString::number(c.setBaudRate(9600));
              c.wait(1s);
              std::array<uint8_t, 1> byte{};
              notes += QString::number(c.read(byte, 100ms));

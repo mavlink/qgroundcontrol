@@ -471,7 +471,7 @@ bool GPSReceiver::connectTcp(const QString& host, quint16 port, GPSType type, bo
         [host, port](GPSCancelToken cancelToken) {
             return std::make_unique<TCPGPSTransport>(host, port, std::move(cancelToken));
         },
-        QStringLiteral("tcp:%1").arg(endpoint), GPSTransport::BRIDGE_BAUDRATE, allowPersistentChanges, {}, endpoint);
+        QStringLiteral("tcp:%1").arg(endpoint), GPSTransport::BRIDGE_BAUD_RATE, allowPersistentChanges, {}, endpoint);
 }
 
 bool GPSReceiver::connectUdp(quint16 port, GPSType type)
@@ -481,7 +481,7 @@ bool GPSReceiver::connectUdp(quint16 port, GPSType type)
     return _connectReceiver(
         type,
         [port](GPSCancelToken cancelToken) { return std::make_unique<UDPGPSTransport>(port, std::move(cancelToken)); },
-        QStringLiteral("udp:%1").arg(port), GPSTransport::BRIDGE_BAUDRATE, false, {}, endpoint);
+        QStringLiteral("udp:%1").arg(port), GPSTransport::BRIDGE_BAUD_RATE, false, {}, endpoint);
 }
 
 QList<int> GPSReceiver::serialBaudRates()
@@ -490,7 +490,7 @@ QList<int> GPSReceiver::serialBaudRates()
 #ifndef QGC_NO_SERIAL_LINK
     for (const QString& text : SerialPortManager::supportedBaudRates()) {
         const uint32_t rate = text.toUInt();
-        if (gpsValidBaudRate(rate, true) && !rates.contains(static_cast<int>(rate))) {
+        if (gpsValidExplicitBaudRate(rate) && !rates.contains(static_cast<int>(rate))) {
             rates.append(static_cast<int>(rate));
         }
     }
@@ -501,7 +501,7 @@ QList<int> GPSReceiver::serialBaudRates()
 GPSReceiverPresentation GPSReceiver::capabilitiesFor(int role, int manufacturer) const
 {
     return gpsReceiverPresentation(
-        role == RTKSettings::ConfiguredBase ? manufacturer : gpsReceiverManufacturerForType(GPSType::passive));
+        role == RTKSettings::ConfiguredBase ? manufacturer : gpsReceiverManufacturerForType(GPSType::Passive));
 }
 
 bool GPSReceiver::hasReceiver() const
@@ -659,7 +659,7 @@ bool GPSReceiver::_connectReceiver(GPSType type, GPSReceiverWorker::TransportFac
     _setError();
     transportFactory = _recorded(std::move(transportFactory), type);
     const RTKSettings::ReceiverRole role =
-        type == GPSType::passive ? RTKSettings::Passive : RTKSettings::ConfiguredBase;
+        type == GPSType::Passive ? RTKSettings::Passive : RTKSettings::ConfiguredBase;
     auto* const session = new GPSReceiverSession(
         ++_sessionCount,
         {.type = type,

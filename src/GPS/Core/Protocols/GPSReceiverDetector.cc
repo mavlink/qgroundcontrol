@@ -115,7 +115,7 @@ GPSReceiverDetection GPSReceiverDetector::detect(unsigned baud)
         if (_io.clock.nowUs() >= untilUs) {
             break;
         }
-        const GPSBaudStatus status = _io.setBaudrate ? _io.setBaudrate(rate) : GPSBaudStatus::Unsupported;
+        const GPSBaudStatus status = _io.setBaudRate ? _io.setBaudRate(rate) : GPSBaudStatus::Unsupported;
         if (status == GPSBaudStatus::Unsupported) {
             qCDebug(GPSReceiverDetectorLog) << "Link cannot run at" << rate << "baud; skipped";
             continue;

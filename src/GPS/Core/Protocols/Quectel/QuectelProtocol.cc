@@ -28,9 +28,10 @@
 
 QGC_LOGGING_CATEGORY(QuectelProtocolLog, "GPS.Protocols.Quectel")
 
+namespace Quectel {
+
 namespace {
 
-namespace Plan = Quectel::Plan;
 using QuectelCodec::Fields;
 using QuectelCodec::number;
 using QuectelCodec::readback;
@@ -648,7 +649,7 @@ void Protocol::_revokeSurvey(GPSDecodeContext& context)
     _nmea.setRTCMEnabled(false);
     if (_survey) {
         _survey.reset();
-        context.publishSurvey(false, false, {});
+        context.publishSurvey(GPSSurveyState::Inactive, {});
     }
 }
 
@@ -757,10 +758,8 @@ bool Protocol::probe(GPSCommandChannel& channel)
 
 }  // namespace
 
-namespace Quectel {
-
 const GPSReceiverFamily FAMILY{
-    .type = GPSType::quectel,
+    .type = GPSType::Quectel,
     .logCategory = &QuectelProtocolLog,
     .stream = GPSNMEAStream::STREAM,
     .baudCandidates = Plan::BAUD_RATES,

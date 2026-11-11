@@ -215,7 +215,7 @@ void SerialGPSTransportTest::_consecutiveWrites()
 #endif
 }
 
-void SerialGPSTransportTest::_refusedBaudrateKeepsLink()
+void SerialGPSTransportTest::_refusedBaudRateKeepsLink()
 {
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
     PseudoTerminal terminal;
@@ -224,9 +224,9 @@ void SerialGPSTransportTest::_refusedBaudrateKeepsLink()
     SerialGPSTransport transport(terminal.slavePath(), stop.token());
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
     // QSerialPort refuses a rate it cannot represent without touching the device.
-    QVERIFY(!transport.setBaudrate(0));
+    QVERIFY(!transport.setBaudRate(0));
     QVERIFY(!transport.fatalError());
-    QVERIFY(transport.setBaudrate(115200));
+    QVERIFY(transport.setBaudRate(115200));
     const auto result = transport.write(QByteArrayLiteral("ok"), QDeadlineTimer(TestTimeout::shortMs()));
     QCOMPARE(result.status, GPSWriteStatus::Completed);
     QByteArray received;

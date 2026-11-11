@@ -26,7 +26,7 @@ class ReplayGPSTransport final : public GPSTransport
 public:
     static constexpr int DEFAULT_CHUNK_BYTES = 1024;
 
-    ReplayGPSTransport(QString path, GPSCancelToken cancelToken, unsigned baudrate = 0,
+    ReplayGPSTransport(QString path, GPSCancelToken cancelToken, unsigned baudRate = 0,
                        int chunkBytes = DEFAULT_CHUNK_BYTES);
     ~ReplayGPSTransport() override;
 
@@ -34,7 +34,7 @@ public:
     /// True before open(), after a file error, and once the whole capture was delivered.
     bool fatalError() const override;
     GPSReadResult read(std::span<uint8_t> buffer, std::chrono::milliseconds timeout) override;
-    bool setBaudrate(unsigned baudrate) override;
+    bool setBaudRate(unsigned baudRate) override;
 
     /// The whole capture was delivered.
     [[nodiscard]] bool finished() const { return _finished; }
@@ -55,7 +55,7 @@ private:
     void _sleepUntil(QDeadlineTimer deadline) const;
 
     QFile _file;
-    const unsigned _baudrate;
+    const unsigned _baudRate;
     const int _chunkBytes;
     QElapsedTimer _clock;
     /// Received bytes loaded from the capture and not delivered yet.

@@ -299,9 +299,6 @@ namespace NMEAUtils {
 /// @a body as one "$<body>*hh\r\n" sentence, with uppercase checksum digits.
 [[nodiscard]] QByteArray frame(QByteArrayView body);
 
-/// Rebuild a valid frame with its checksum and CRLF; short or malformed bodies are only terminated.
-[[nodiscard]] QByteArray repairChecksum(const QByteArray& sentence);
-
 /// Build GPGGA from explicit fix fields and UTC, truncated to whole seconds.
 /// NaN altitude/geoid separation/HDOP and absent satellite count produce empty fields, not defaults.
 /// Returns empty for invalid UTC, out-of-range/nonfinite coordinates, infinite measurements,

@@ -54,7 +54,7 @@ struct GPSConfig
 /// GPSReceiverDescriptor.
 struct GPSReceiverFamily
 {
-    GPSType type = GPSType::passive;
+    GPSType type = GPSType::Passive;
     GPSLogCategory logCategory = nullptr;
     GPSStreamConfig stream{};
     /// Baud rates receiver detection probes the family at (GPSFamilyProtocol::probe()), in probing order; empty for a
@@ -115,15 +115,14 @@ public:
         _batch.events.emplace_back(status);
     }
 
-    /// Publishes survey-in progress; unknown coordinates remain NaN.
-    void publishSurvey(bool active, bool valid, std::chrono::seconds duration,
-                       const GPSEllipsoidPosition& position = {})
+    /// Publishes the base position's @a state; unknown coordinates remain NaN.
+    void publishSurvey(GPSSurveyState state, std::chrono::seconds duration, const GPSEllipsoidPosition& position = {})
     {
         GPSSurveyReport status{};
         status.position = position;
         status.duration = duration;
-        status.valid = valid;
-        status.active = active;
+        status.valid = state == GPSSurveyState::Valid;
+        status.active = state == GPSSurveyState::Active;
         publishSurvey(status);
     }
 

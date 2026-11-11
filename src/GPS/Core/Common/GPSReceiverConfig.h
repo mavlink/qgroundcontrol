@@ -55,7 +55,7 @@ struct GPSBaseStationConfig
     bool operator==(const GPSBaseStationConfig&) const = default;
 };
 
-/// One connection's receiver request. GPSType::passive receives NMEA/RTCM without issuing receiver configuration
+/// One connection's receiver request. GPSType::Passive receives NMEA/RTCM without issuing receiver configuration
 /// commands; every other type configures an RTK base.
 struct GPSReceiverConfig
 {
@@ -83,11 +83,11 @@ enum class GPSReceiverConfigError
 inline constexpr uint32_t GPS_MIN_BAUD_RATE = 1200;
 inline constexpr uint32_t GPS_MAX_BAUD_RATE = 4000000;
 
-/// An explicit serial rate within the receivers' range, or zero for a configurable receiver to detect the rate.
-/// A passive receiver is never configured, so it needs its existing rate.
-[[nodiscard]] constexpr bool gpsValidBaudRate(uint32_t baudRate, bool passive)
+/// An explicit serial rate within the receivers' range. Zero, which asks a configurable receiver to detect the rate,
+/// is not one.
+[[nodiscard]] constexpr bool gpsValidExplicitBaudRate(uint32_t baudRate)
 {
-    return baudRate == 0 ? !passive : baudRate >= GPS_MIN_BAUD_RATE && baudRate <= GPS_MAX_BAUD_RATE;
+    return baudRate >= GPS_MIN_BAUD_RATE && baudRate <= GPS_MAX_BAUD_RATE;
 }
 
 /// Check the selected base mode against the existing receiver wire-unit limits.
@@ -101,7 +101,7 @@ inline constexpr uint32_t GPS_MAX_BAUD_RATE = 4000000;
 /// An empty diagnostic means the receiver supports the role and all supplied settings.
 [[nodiscard]] QString gpsReceiverConfigError(GPSType type, const GPSReceiverConfig& config);
 
-/// Fits a GPSType::automatic request to the family detection found. Consent to persistent changes is a permission, so
+/// Fits a GPSType::Automatic request to the family detection found. Consent to persistent changes is a permission, so
 /// it lapses where the family has no persistent configuration; a compact-observation request lapses where the family
 /// has no compact option, which then sends its standard observations, and @a compactFallback, when given, reports that.
 /// Any other option the family lacks is kept, for gpsDetectedReceiverConfigError() to report.

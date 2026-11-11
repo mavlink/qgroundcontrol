@@ -32,7 +32,7 @@ GPSReceiverConnectability GPSReceiverConnectionPolicy::connectability(const GPSR
     const auto connection = configuration.effectiveConnectionType();
     GPSReceiverConnectability result;
     result.type = configuredBase ? gpsReceiverTypeForManufacturer(configuration.baseReceiverManufacturer)
-                                 : std::optional(GPSType::passive);
+                                 : std::optional(GPSType::Passive);
     const GPSReceiverCapabilities family =
         result.type ? gpsReceiverCapabilities(*result.type) : GPSReceiverCapabilities{};
     const auto supportsMode = [&family]<typename Mode>(const Mode&) {
@@ -50,7 +50,7 @@ GPSReceiverConnectability GPSReceiverConnectionPolicy::connectability(const GPSR
     const auto validPort = [](uint32_t port) { return port != 0 && port <= (std::numeric_limits<quint16>::max)(); };
     QString endpointError;
     // A network connection runs at its bridge's rate, whatever serial rate is saved.
-    uint32_t baudRate = GPSTransport::BRIDGE_BAUDRATE;
+    uint32_t baudRate = GPSTransport::BRIDGE_BAUD_RATE;
     switch (connection) {
         case RTKSettings::Serial:
             result.hasEndpoint = !configuration.serialDevice.trimmed().isEmpty();
