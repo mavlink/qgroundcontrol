@@ -3,10 +3,10 @@
 
 #include "QGCMath.h"
 
-#include <QtCore/QtNumeric>
-
 #include <cmath>
 #include <float.h>
+
+#include <QtCore/QtNumeric>
 
 #include "CRC32.h"
 
@@ -14,20 +14,15 @@ namespace QGC {
 
 float limitAngleToPMPIf(double angle)
 {
-    if ((angle > (-20*M_PI)) && (angle < (20*M_PI)))
-    {
-        while (angle > ((float)M_PI+FLT_EPSILON))
-        {
+    if ((angle > (-20 * M_PI)) && (angle < (20 * M_PI))) {
+        while (angle > ((float) M_PI + FLT_EPSILON)) {
             angle -= 2.0f * (float)M_PI;
         }
 
-        while (angle <= -((float)M_PI+FLT_EPSILON))
-        {
+        while (angle <= -((float) M_PI + FLT_EPSILON)) {
             angle += 2.0f * (float)M_PI;
         }
-    }
-    else
-    {
+    } else {
         // Too many turns for the loops above
         angle = std::remainder(angle, 2.0 * M_PI);
     }
@@ -37,25 +32,17 @@ float limitAngleToPMPIf(double angle)
 
 double limitAngleToPMPId(double angle)
 {
-    if ((angle > (-20*M_PI)) && (angle < (20*M_PI)))
-    {
-        if (angle < -M_PI)
-        {
-            while (angle < -M_PI)
-            {
+    if ((angle > (-20 * M_PI)) && (angle < (20 * M_PI))) {
+        if (angle < -M_PI) {
+            while (angle < -M_PI) {
                 angle += 2.0f * M_PI;
             }
-        }
-        else if (angle > M_PI)
-        {
-            while (angle > M_PI)
-            {
+        } else if (angle > M_PI) {
+            while (angle > M_PI) {
                 angle -= 2.0f * M_PI;
             }
         }
-    }
-    else
-    {
+    } else {
         // Too many turns for the loops above
         angle = std::remainder(angle, 2.0 * M_PI);
     }
