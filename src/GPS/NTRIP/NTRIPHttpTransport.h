@@ -35,6 +35,9 @@ private:
     NTRIPHttpSession* _attachSession(NTRIPHttpSession* session);
     qint64 _nowMs() const;
     void _startConnectTimeout();
+    /// The stream is due to deliver from now on: starts the stall clock unless it runs. A network RTK (VRS) mountpoint
+    /// sends nothing before it is told a position, so the response alone does not start it.
+    void _expectData();
     void _startDataWatchdog(std::chrono::milliseconds delay);
     void _fail(const NTRIPFailure& failure);
     void _retireSession();

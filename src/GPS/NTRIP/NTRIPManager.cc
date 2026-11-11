@@ -32,6 +32,8 @@ bool isRetryable(NTRIPError error, bool streamServed)
         // corrections that is a wrong mountpoint, and casters count repeated requests for a missing one towards a ban.
         // After them, the mountpoint has only gone offline.
         case NTRIPError::InvalidMountpoint:
+        // Data without a valid RTCM message is, before any corrections, a mountpoint that sends another format.
+        case NTRIPError::InvalidStream:
             return streamServed;
         case NTRIPError::ConnectionTimeout:
         case NTRIPError::DataWatchdog:
@@ -73,7 +75,7 @@ NTRIPManager::NTRIPManager(QObject* parent, RuntimeScheduler* scheduler, const D
 {
     qCDebug(NTRIPManagerLog) << this;
 
-    connect(&_ggaReporter, &NTRIPGgaReporter::sourceChanged, this, &NTRIPManager::ggaSourceChanged);
+    connect(&_ggaReporter, &NTRIPGgaReporter::sourceChanged, this, &NTRIPManager::_onGgaSourceChanged);
 
     connect(&_sourceTableController, &NTRIPSourceTableController::certificatePinned, this,
             &NTRIPManager::_setPinnedCertificate);
@@ -331,6 +333,21 @@ QString NTRIPManager::_defaultMessageFor(ConnectionStatus state)
     return tr("Error");
 }
 
+QString NTRIPManager::_connectedMessage() const
+{
+    const bool waiting = _ggaReporter.currentSource().isEmpty() && _stats.messagesReceived() == 0;
+    return waiting ? tr("Connected, waiting for a position to report")
+                   : _defaultMessageFor(ConnectionStatus::Connected);
+}
+
+void NTRIPManager::_refreshConnectedMessage()
+{
+    if (_connectionStatus == ConnectionStatus::Connected) {
+        _statusMessage = _connectedMessage();
+        _publish();
+    }
+}
+
 void NTRIPManager::_onEnterState(ConnectionStatus to, std::chrono::milliseconds retryAfter)
 {
     switch (to) {
@@ -350,8 +367,10 @@ void NTRIPManager::_onEnterState(ConnectionStatus to, std::chrono::milliseconds 
             break;
 
         case ConnectionStatus::Connected:
-            _ggaReporter.start(_transport);
             _stats.start();
+            _statusMessage = _connectedMessage();
+            // Last, because a position reported at once publishes this state.
+            _ggaReporter.start(_transport);
             break;
 
         case ConnectionStatus::Reconnecting:
@@ -508,6 +527,12 @@ void NTRIPManager::_openSession()
 // Signal handlers
 // -----------------------------------------------------------------------------
 
+void NTRIPManager::_onGgaSourceChanged()
+{
+    emit ggaSourceChanged();
+    _refreshConnectedMessage();
+}
+
 void NTRIPManager::_onTransportConnected()
 {
     _dispatch(Event::TransportConnected);
@@ -558,7 +583,11 @@ void NTRIPManager::_onCorrectionFrame(const RTCMDecodedFrame& frame)
     if (_correctionSource) {
         _correctionSource->submit(frame.data, frame.receivedAtMs);
     }
+    const bool first = _stats.messagesReceived() == 0;
     _stats.recordMessage(frame.data.size(), frame.receivedAtMs);
+    if (first) {
+        _refreshConnectedMessage();
+    }
 
     // Only corrections show the caster serves this stream; one that accepts and then drops must keep backing off.
     _reconnectBackoff.reset();

@@ -180,6 +180,11 @@ private:
 
     /// Default user-visible message for a state. Callers may override via detail.
     static QString _defaultMessageFor(ConnectionStatus state);
+    /// The message of the Connected state. A network RTK (VRS) mountpoint sends nothing until it is told a position,
+    /// so the message says when none has been reported and no corrections have arrived.
+    QString _connectedMessage() const;
+    /// Publishes _connectedMessage() while connected; the other states publish their own message.
+    void _refreshConnectedMessage();
 
     /// Stops the previous stream, registers the new one as the NTRIP correction source in place of the previous
     /// registration, then validates the configuration and opens a new transport.
@@ -201,6 +206,7 @@ private:
 
     bool _reconnectExhausted() const { return _reconnectBackoff.attempts() >= MAX_RECONNECT_ATTEMPTS; }
 
+    void _onGgaSourceChanged();
     void _onTransportConnected();
     void _onTransportError(const NTRIPFailure& failure);
     void _onCertificatePinned(const QString& pin);

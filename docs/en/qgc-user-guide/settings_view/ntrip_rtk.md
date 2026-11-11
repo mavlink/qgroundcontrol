@@ -30,7 +30,7 @@ The counters count everything the caster sends, including messages the [RTCM mes
 - **Mount Point** — the NTRIP mountpoint to connect to. It is required: without one, NTRIP reports an error instead of connecting
 - **Browse** — fetch available mountpoints from the server and display them in a list with format, navigation system, country, bitrate, and distance information
 
-QGroundControl receives RTCM 3 corrections only: a mountpoint that sends another format, such as SPARTN, is disconnected after 30 seconds without a valid RTCM message, and the connection is tried again.
+QGroundControl receives RTCM 3 corrections only. A mountpoint that sends another format, such as SPARTN, is disconnected after 30 seconds of data without a valid RTCM message. Before any corrections have arrived, QGroundControl reports that and does not retry. Once the mountpoint has delivered corrections, it keeps reconnecting.
 
 A caster answers with its source table, or with HTTP status 404 or 410, when it does not have the requested mountpoint. Before any corrections have arrived, QGroundControl reports that and does not retry, because some public casters temporarily ban clients that keep requesting a missing mountpoint. Once the mountpoint has delivered corrections, the same answer means it went offline, and QGroundControl keeps reconnecting.
 
@@ -39,6 +39,8 @@ A caster that answers with an HTTP redirect is not followed. QGroundControl repo
 ## GGA Position Reporting
 
 Network RTK (VRS) casters need the rover position. Select the position QGC reports and how often.
+
+A network RTK mountpoint sends nothing until it has received a position. While none is available, for example before the vehicle has a GPS fix, QGroundControl stays connected and the connection status reads **Connected, waiting for a position to report**. The 30-second limit on a silent stream starts with the first position reported or the first data received.
 
 ## UDP RTCM Input
 

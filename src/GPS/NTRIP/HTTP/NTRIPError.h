@@ -11,7 +11,11 @@ Q_NAMESPACE
 enum class NTRIPError
 {
     ConnectionTimeout,
+    /// Nothing arrived for the stall timeout after the stream was due to deliver.
     DataWatchdog,
+    /// Data arrived for the stall timeout without a valid RTCM 3 message: before any corrections, a mountpoint that
+    /// sends another format.
+    InvalidStream,
     AuthFailed,
     SocketError,
     SslError,
