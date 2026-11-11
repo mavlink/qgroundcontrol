@@ -13,6 +13,19 @@
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QDir>
 
+namespace {
+
+void setCachedDownloadTimestamp(QNetworkDiskCache* cache, const QString& url, const QDateTime& timestamp)
+{
+    QNetworkCacheMetaData metadata = cache->metaData(QUrl::fromUserInput(url));
+    QNetworkCacheMetaData::AttributesMap attributes = metadata.attributes();
+    attributes.insert(QNetworkRequest::Attribute::User, timestamp);
+    metadata.setAttributes(attributes);
+    cache->updateMetaData(metadata);
+}
+
+}  // namespace
+
 // ============================================================================
 // QGCCachedFileDownload Tests
 // ============================================================================
@@ -153,6 +166,38 @@ void QGCCachedFileDownloadTest::_testCachedFileDownloadSyntheticCacheHit()
     QCOMPARE(file.readAll(), payload);
     file.close();
     QFile::remove(localPath);
+}
+
+void QGCCachedFileDownloadTest::_testCachedFileDownloadCacheHitKeepsTimestamp()
+{
+    QTemporaryDir tempDir;
+    QGCCachedFileDownload downloader(tempDir.path(), this);
+
+    TestFixtures::LocalHttpTestServer server;
+    QVERIFY2(server.listen(), "Could not start local test HTTP server");
+    const QString url = server.url(QStringLiteral("/cache-hit-timestamp.txt"));
+    server.installHttpResponder("cached-data", 200, "text/plain", 3600);
+
+    QSignalSpy finishedSpy(&downloader, &QGCCachedFileDownload::finished);
+    QVERIFY(downloader.download(url, 3600));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    QVERIFY(finishedSpy.first().at(0).toBool());
+    QVERIFY(!finishedSpy.first().at(3).toBool());
+    QFile::remove(finishedSpy.first().at(1).toString());
+    server.close();
+
+    // Old enough to tell from a fresh stamp, young enough for the next download to be a cache hit
+    constexpr int ageSec = 600;
+    setCachedDownloadTimestamp(downloader.diskCache(), url, QDateTime::currentDateTime().addSecs(-ageSec));
+
+    finishedSpy.clear();
+    QVERIFY(downloader.download(url, 3600));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    QVERIFY(finishedSpy.first().at(0).toBool());
+    QVERIFY(finishedSpy.first().at(3).toBool());
+    QFile::remove(finishedSpy.first().at(1).toString());
+
+    QVERIFY(downloader.cacheAge(url) >= ageSec);
 }
 
 void QGCCachedFileDownloadTest::_testCachedFileDownloadCachedPath()

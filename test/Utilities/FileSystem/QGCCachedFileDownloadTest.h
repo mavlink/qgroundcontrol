@@ -14,6 +14,7 @@ private slots:
     void _testCachedFileDownloadNoCacheDir();
     void _testCachedFileDownloadDownload();
     void _testCachedFileDownloadSyntheticCacheHit();
+    void _testCachedFileDownloadCacheHitKeepsTimestamp();
     void _testCachedFileDownloadCachedPath();
     void _testCachedFileDownloadPreferCache();
     void _testCachedFileDownloadNoCache();

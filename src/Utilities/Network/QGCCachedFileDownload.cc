@@ -314,8 +314,10 @@ void QGCCachedFileDownload::_onDownloadFinished(bool success,
                                        << "error:" << errorMessage;
 
     if (success) {
-        // Update cache timestamp
-        _updateCacheTimestamp(_pendingUrl);
+        // A cache hit must not renew the entry, or one read more often than its maximum age would never expire
+        if (!_fileDownload->lastResultFromCache()) {
+            _updateCacheTimestamp(_pendingUrl);
+        }
 
         _localPath = localPath;
         emit localPathChanged(_localPath);
