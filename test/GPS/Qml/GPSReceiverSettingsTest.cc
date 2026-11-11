@@ -2,10 +2,13 @@
 
 #include <memory>
 #include <optional>
+#include <utility>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQml/QJSValue>
 #include <QtQuick/QQuickItem>
 
 #include "Fact.h"
@@ -869,6 +872,114 @@ void GPSReceiverSettingsTest::_horizontalAccuracyLabel()
     // An unknown accuracy is not shown.
     QVERIFY(panel->setProperty("horizontalAccuracy", qInf()));
     QVERIFY(!accuracy->property("visible").toBool());
+}
+
+void GPSReceiverSettingsTest::_settingsPageListsGroups_data()
+{
+    QTest::addColumn<int>("role");
+    QTest::addColumn<int>("manufacturer");
+    QTest::addColumn<BaseModeDefinition::Mode>("baseMode");
+    QTest::addColumn<bool>("baseStation");
+    QTest::addColumn<bool>("baseSites");
+    const int ublox = gpsReceiverManufacturerForType(GPSType::UBlox);
+    using Mode = BaseModeDefinition::Mode;
+    QTest::newRow("survey-in base") << int(RTKSettings::ConfiguredBase) << ublox << Mode::BaseSurveyIn << true << false;
+    QTest::newRow("fixed base") << int(RTKSettings::ConfiguredBase) << ublox << Mode::BaseFixed << true << true;
+    // A passive receiver has no base settings, whatever base mode is saved.
+    QTest::newRow("passive") << int(RTKSettings::Passive) << ublox << Mode::BaseFixed << false << false;
+    // A manufacturer no receiver family has offers no base mode: the base station group only says that the saved one
+    // is not supported.
+    const int unknownManufacturer = 9999;
+    QTest::newRow("unknown manufacturer")
+        << int(RTKSettings::ConfiguredBase) << unknownManufacturer << Mode::BaseFixed << true << false;
+}
+
+void GPSReceiverSettingsTest::_settingsPageListsGroups()
+{
+    QFETCH(int, role);
+    QFETCH(int, manufacturer);
+    QFETCH(BaseModeDefinition::Mode, baseMode);
+    QFETCH(bool, baseStation);
+    QFETCH(bool, baseSites);
+    // The settings page shows the groups of the form one by one, so that its sidebar and search reach each of them.
+    // Its definition states when the two base groups are shown apart from the groups themselves, so the sidebar, the
+    // page and the groups have to agree.
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::UBlox));
+    settings.saved.setFactValue(settings.settings->receiverRole(), role);
+    settings.saved.setFactValue(settings.settings->baseReceiverManufacturer(), manufacturer);
+    settings.saved.setFactValue(settings.settings->baseMode(), static_cast<int>(baseMode));
+    // The page shows the application's receiver, which follows the saved settings only outside tests.
+    GPSReceiver* const receiver = GPSManager::instance()->receiver();
+    const GPSReceiver::Configuration unbound = receiver->configuration();
+    const auto restore = qScopeGuard([receiver, unbound]() { receiver->setConfiguration(unbound); });
+    GPSReceiver::Configuration selected = unbound;
+    selected.receiverRole = static_cast<RTKSettings::ReceiverRole>(role);
+    selected.baseReceiverManufacturer = manufacturer;
+    selected.autoConnect = false;
+    receiver->setConfiguration(selected);
+    GPSTest::QmlEngine engine;
+    auto page = engine.create(QByteArrayLiteral(R"(
+        import QtQuick
+        import QGroundControl
+        import QGroundControl.AppSettings
+
+        Item {
+            // The page's scroll area takes its palette from the window that shows the page.
+            QGCPalette { id: qgcPal }
+            GNSSReceiverSettings {}
+        }
+    )"));
+    QVERIFY2(page, qPrintable(engine.lastError()));
+    auto sidebar = engine.create(QByteArrayLiteral(R"(
+        import QGroundControl.AppSettings
+
+        SettingsPagesModel {
+            /// The sections the settings sidebar lists under the GNSS Receiver page.
+            function receiverSections() {
+                for (let i = 0; i < count; i++) {
+                    if (get(i).nameKey === "GNSS Receiver") {
+                        return get(i).sections().filter(section => section.visible).map(section => section.name)
+                    }
+                }
+                return []
+            }
+        }
+    )"));
+    QVERIFY2(sidebar, qPrintable(engine.lastError()));
+    QVariant listed;
+    QVERIFY(QMetaObject::invokeMethod(sidebar.get(), "receiverSections", Q_RETURN_ARG(QVariant, listed)));
+    QStringList sections{QStringLiteral("GNSS Receiver Status"), QStringLiteral("GNSS Receiver")};
+    if (baseStation) {
+        sections.append(QStringLiteral("RTK Base Station"));
+    }
+    if (baseSites) {
+        sections.append(QStringLiteral("Saved Base Sites"));
+    }
+    sections.append({QStringLiteral("Connect"), QStringLiteral("GCS Position")});
+    QCOMPARE(listed.value<QJSValue>().toVariant().toStringList(), sections);
+
+    // The page's group of a control: the child of the page layout that holds it.
+    const auto group = [&page](const char* control) -> QQuickItem* {
+        auto* item = page->findChild<QQuickItem*>(QString::fromLatin1(control));
+        while (item && item->parentItem() && item->parentItem()->objectName() != QLatin1String("settingsPageLayout")) {
+            item = item->parentItem();
+        }
+        return item && item->parentItem() ? item : nullptr;
+    };
+    auto* connection = group("rtkReceiverRole");
+    auto* baseStationGroup = group("rtkFixedMode");
+    auto* baseSitesGroup = group("rtkBaseSiteName");
+    auto* connect = group("rtkConnectButton");
+    QVERIFY(connection && baseStationGroup && baseSitesGroup && connect);
+    QVERIFY(connection->isVisible() && connect->isVisible());
+    QCOMPARE(baseStationGroup->isVisible(), baseStation);
+    QCOMPARE(baseSitesGroup->isVisible(), baseSites);
+    for (const auto& [file, shown] :
+         {std::pair{"GPSReceiverBaseStation.qml", baseStation}, std::pair{"GPSReceiverBaseSites.qml", baseSites}}) {
+        auto part = engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/") + QString::fromLatin1(file)));
+        QVERIFY2(part, qPrintable(engine.lastError()));
+        QVERIFY2(part->property("visible").toBool() == shown, file);
+    }
 }
 
 UT_REGISTER_TEST(GPSReceiverSettingsTest, TestLabel::Unit)

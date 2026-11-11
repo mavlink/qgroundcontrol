@@ -27,4 +27,6 @@ private slots:
     void _serialSelectionTracksFacts();
     void _serialSelectionSurvivesChoiceChanges();
     void _horizontalAccuracyLabel();
+    void _settingsPageListsGroups_data();
+    void _settingsPageListsGroups();
 };
