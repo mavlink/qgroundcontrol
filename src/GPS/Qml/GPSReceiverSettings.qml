@@ -21,8 +21,8 @@ QGCGroupBox {
 
     readonly property int role: settings.receiverRole.rawValue
     readonly property bool configuredBase: role === RTKSettings.ConfiguredBase
-    readonly property int manufacturer: settings.baseReceiverManufacturers.rawValue
-    readonly property int baseMode: settings.useFixedBasePosition.rawValue
+    readonly property int manufacturer: settings.baseReceiverManufacturer.rawValue
+    readonly property int baseMode: settings.baseMode.rawValue
     readonly property gpsReceiverPresentation presentation: receiver.capabilitiesFor(role, manufacturer)
     // A pending automatic reconnect keeps the saved connection; stop it before editing.
     readonly property bool _active: receiver.hasReceiver || receiver.reconnecting
@@ -32,7 +32,7 @@ QGCGroupBox {
     readonly property bool _tcp: receiver.effectiveConnectionType === RTKSettings.Tcp
     readonly property bool _serial: receiver.effectiveConnectionType === RTKSettings.Serial
     readonly property bool _connectionSupported: receiver.connectionSupported
-    readonly property list<string> _baseModeNames: settings.useFixedBasePosition.enumStrings
+    readonly property list<string> _baseModeNames: settings.baseMode.enumStrings
     // Automatic detection words the Quectel notes for a receiver that may not be one.
     readonly property string _quectelOnly: presentation.automatic
                                            ? qsTr("Applies only if a Quectel receiver is identified.") + " " : ""
@@ -105,7 +105,7 @@ QGCGroupBox {
     }
 
     ComboField {
-        fact: root.settings.baseReceiverManufacturers
+        fact: root.settings.baseReceiverManufacturer
         shown: root.configuredBase
         comboBox.objectName: "rtkManufacturer"
         comboBox.enabled: root._editable
@@ -113,7 +113,7 @@ QGCGroupBox {
         GPSNoteLabel {
             objectName: "rtkAutomaticExplanation"
             visible: root.presentation.automatic
-            text: root.settings.baseReceiverManufacturers.shortDescription
+            text: root.settings.baseReceiverManufacturer.shortDescription
         }
     }
 
@@ -200,19 +200,19 @@ QGCGroupBox {
             objectName: "rtkSurveyMode"
             text: root._baseModeNames[BaseModeDefinition.BaseSurveyIn]
             checked: root.baseMode === BaseModeDefinition.BaseSurveyIn
-            onClicked: root.settings.useFixedBasePosition.rawValue = BaseModeDefinition.BaseSurveyIn
+            onClicked: root.settings.baseMode.rawValue = BaseModeDefinition.BaseSurveyIn
             visible: root.presentation.surveyIn
         }
         ModeButton {
             objectName: "rtkFixedMode"
             text: root._baseModeNames[BaseModeDefinition.BaseFixed]
             checked: root.baseMode === BaseModeDefinition.BaseFixed
-            onClicked: root.settings.useFixedBasePosition.rawValue = BaseModeDefinition.BaseFixed
+            onClicked: root.settings.baseMode.rawValue = BaseModeDefinition.BaseFixed
         }
         ModeButton {
             text: root._baseModeNames[BaseModeDefinition.BaseReceiverAveraging]
             checked: root.baseMode === BaseModeDefinition.BaseReceiverAveraging
-            onClicked: root.settings.useFixedBasePosition.rawValue = BaseModeDefinition.BaseReceiverAveraging
+            onClicked: root.settings.baseMode.rawValue = BaseModeDefinition.BaseReceiverAveraging
             visible: root.presentation.receiverAveraging
         }
     }

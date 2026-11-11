@@ -29,7 +29,7 @@ void GPSReceiverSettingsBindingTest::_capabilitiesFor_data()
     QTest::addColumn<bool>("rtkBase");
     QTest::addColumn<bool>("receiverAveraging");
     QTest::addColumn<bool>("surveyIn");
-    // Saved baseReceiverManufacturers values.
+    // Saved baseReceiverManufacturer values.
     QTest::newRow("automatic") << 0 << true << true << true;
     QTest::newRow("trimble") << 1 << true << false << true;
     QTest::newRow("septentrio") << 2 << true << false << true;
@@ -80,12 +80,12 @@ void GPSReceiverSettingsBindingTest::_receiverSettingsMapping()
     RTKSettings settings;
     TestFixtures::SettingsFixture saved;
     saved.setFactValue(settings.receiverRole(), RTKSettings::ConfiguredBase);
-    saved.setFactValue(settings.baseReceiverManufacturers(), manufacturer);
+    saved.setFactValue(settings.baseReceiverManufacturer(), manufacturer);
     saved.setFactValue(settings.connectionType(), RTKSettings::Tcp);
     saved.setFactValue(settings.tcpHost(), QStringLiteral("rtk.test"));
     saved.setFactValue(settings.tcpPort(), 2101);
     saved.setFactValue(settings.autoConnect(), false);
-    saved.setFactValue(settings.useFixedBasePosition(), baseMode);
+    saved.setFactValue(settings.baseMode(), baseMode);
     saved.setFactValue(settings.fixedBasePositionLatitude(), 47.5);
     saved.setFactValue(settings.fixedBasePositionLongitude(), 8.25);
     saved.setFactValue(settings.fixedBasePositionAltitude(), 512.0);
@@ -201,7 +201,7 @@ void GPSReceiverSettingsBindingTest::_receiverSettingsBinding()
     settings.tcpPort()->setRawValue(2101);
     settings.serialDevice()->setRawValue(QStringLiteral("/test/receiver"));
     settings.serialBaudRate()->setRawValue(230400);
-    settings.useFixedBasePosition()->setRawValue(1);
+    settings.baseMode()->setRawValue(1);
     settings.fixedBasePositionLatitude()->setRawValue(47.5);
     settings.autoConnect()->setRawValue(true);
 
@@ -221,13 +221,13 @@ void GPSReceiverSettingsBindingTest::_receiverSettingsBinding()
     QVERIFY(settings.autoConnect()->rawValue().toBool());
 
     // Nothing writes the saved manufacturer, even when another family is detected.
-    settings.baseReceiverManufacturers()->setRawValue(GPS_AUTOMATIC_MANUFACTURER);
+    settings.baseReceiverManufacturer()->setRawValue(GPS_AUTOMATIC_MANUFACTURER);
     ScriptedReceiverWorkerFactory workers;
     receiver.setWorkerFactory(workers.workerFactory());
     QVERIFY(receiver.connectReceiver());
     workers.current()->detected(GPSType::ublox);
     QCOMPARE(receiver._activeManufacturer(), gpsReceiverManufacturerForType(GPSType::ublox));
-    QCOMPARE(settings.baseReceiverManufacturers()->rawValue().toInt(), GPS_AUTOMATIC_MANUFACTURER);
+    QCOMPARE(settings.baseReceiverManufacturer()->rawValue().toInt(), GPS_AUTOMATIC_MANUFACTURER);
 }
 
 void GPSReceiverSettingsBindingTest::_persistentConsentScope_data()
@@ -424,8 +424,7 @@ void GPSReceiverSettingsBindingTest::_settingsLogRedactsSecrets_data()
     QTest::newRow("base-longitude") << rtk->fixedBasePositionLongitude() << QVariant(98.7654321) << QVariant(98.1234)
                                     << true;
     QTest::newRow("base-altitude") << rtk->fixedBasePositionAltitude() << QVariant(543.21) << QVariant(432.1) << true;
-    QTest::newRow("base-mode") << rtk->useFixedBasePosition()
-                               << QVariant(static_cast<int>(BaseModeDefinition::Mode::BaseFixed))
+    QTest::newRow("base-mode") << rtk->baseMode() << QVariant(static_cast<int>(BaseModeDefinition::Mode::BaseFixed))
                                << QVariant(static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn)) << false;
 }
 

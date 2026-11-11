@@ -19,6 +19,9 @@ namespace {
 // Values persisted before receivers had roles.
 constexpr int kLegacyPassiveManufacturer = 7;
 constexpr QLatin1StringView kManufacturerMigrated("manufacturerMigrated");
+// Earlier names: a plural for the one manufacturer, and a flag's name for what became three base modes.
+constexpr QLatin1StringView kLegacyManufacturer("baseReceiverManufacturers");
+constexpr QLatin1StringView kLegacyBaseMode("useFixedBasePosition");
 
 enum LegacyNmeaSource
 {
@@ -37,20 +40,31 @@ LegacyNmeaSource legacyNmeaSourceFromPort(const QString& port)
     return port == QLatin1String("UDP Port") ? NmeaUdp : NmeaSerial;
 }
 
-/// Converts the keys of receivers without roles and of the separate NMEA GPS input.
+/// Moves the values of renamed keys, then converts the keys of receivers without roles and of the separate NMEA GPS
+/// input.
 void migrateLegacySettings()
 {
     QSettings settings;
     settings.beginGroup(RTKSettings::settingsGroup);
+    // A renamed setting keeps its saved value, which the conversions below read under the new name.
+    for (const auto& [legacy, current] : {std::pair{kLegacyManufacturer, RTKSettings::baseReceiverManufacturerName},
+                                          std::pair{kLegacyBaseMode, RTKSettings::baseModeName}}) {
+        if (settings.contains(legacy)) {
+            if (!settings.contains(current)) {
+                settings.setValue(current, settings.value(legacy));
+            }
+            settings.remove(legacy);
+        }
+    }
     // Before receivers had roles, the manufacturer only filtered the settings shown and auto-connect chose the family
     // by board name, so a saved value falls back to Detect automatically. Old and new values share the key, so a marker
     // keeps a manufacturer chosen later. Only the legacy passive choice stores a role; otherwise the default applies.
     if (!settings.contains(kManufacturerMigrated)) {
         if (!settings.contains(RTKSettings::receiverRoleName)) {
-            if (settings.value(RTKSettings::baseReceiverManufacturersName).toInt() == kLegacyPassiveManufacturer) {
+            if (settings.value(RTKSettings::baseReceiverManufacturerName).toInt() == kLegacyPassiveManufacturer) {
                 settings.setValue(RTKSettings::receiverRoleName, RTKSettings::Passive);
             }
-            settings.remove(RTKSettings::baseReceiverManufacturersName);
+            settings.remove(RTKSettings::baseReceiverManufacturerName);
         }
         settings.setValue(kManufacturerMigrated, true);
     }
@@ -252,7 +266,7 @@ void RTKSettings::_storeBaseSites(const QList<RTKBaseSite>& sites)
 
 DECLARE_SETTINGSFACT(RTKSettings, receiverRole)
 DECLARE_SETTINGSFACT(RTKSettings, forwardReceiverRtcm)
-DECLARE_SETTINGSFACT(RTKSettings, baseReceiverManufacturers)
+DECLARE_SETTINGSFACT(RTKSettings, baseReceiverManufacturer)
 DECLARE_SETTINGSFACT(RTKSettings, surveyInAccuracyLimit)
 DECLARE_SETTINGSFACT(RTKSettings, surveyInMinObservationDuration)
 DECLARE_SETTINGSFACT(RTKSettings, receiverAveragingDuration)
@@ -264,7 +278,7 @@ DECLARE_SETTINGSFACT(RTKSettings, autoConnect)
 DECLARE_SETTINGSFACT(RTKSettings, gcsPositionSource)
 DECLARE_SETTINGSFACT(RTKSettings, serialDevice)
 DECLARE_SETTINGSFACT(RTKSettings, serialBaudRate)
-DECLARE_SETTINGSFACT(RTKSettings, useFixedBasePosition)
+DECLARE_SETTINGSFACT(RTKSettings, baseMode)
 DECLARE_SETTINGSFACT(RTKSettings, fixedBasePositionLatitude)
 DECLARE_SETTINGSFACT(RTKSettings, fixedBasePositionLongitude)
 DECLARE_SETTINGSFACT(RTKSettings, fixedBasePositionAltitude)

@@ -13,6 +13,8 @@ private slots:
     void _nmeaInputBecomesPassiveReceiver_data();
     void _nmeaInputBecomesPassiveReceiver();
     void _configuredReceiverKeepsSettings();
+    void _renamedSettingsMigration_data();
+    void _renamedSettingsMigration();
     void _manufacturerMigration_data();
     void _manufacturerMigration();
     void _baseSitesLoad_data();

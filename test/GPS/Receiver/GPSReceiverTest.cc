@@ -212,11 +212,11 @@ void GPSReceiverTest::_automaticConnection()
     GPSReceiver& receiver = harness.receiver;
     GPSSettingsBindings::bindReceiver(&settings, &receiver);
     settings.receiverRole()->setRawValue(RTKSettings::ConfiguredBase);
-    settings.baseReceiverManufacturers()->setRawValue(GPS_AUTOMATIC_MANUFACTURER);
+    settings.baseReceiverManufacturer()->setRawValue(GPS_AUTOMATIC_MANUFACTURER);
     settings.connectionType()->setRawValue(RTKSettings::Tcp);
     settings.tcpHost()->setRawValue(QStringLiteral("rtk.example"));
     settings.tcpPort()->setRawValue(2101);
-    settings.useFixedBasePosition()->setRawValue(static_cast<int>(BaseModeDefinition::Mode::BaseReceiverAveraging));
+    settings.baseMode()->setRawValue(static_cast<int>(BaseModeDefinition::Mode::BaseReceiverAveraging));
 
     // Consent and receiver-managed averaging are checked against the detected family, on the worker.
     receiver.setPersistentChangesAllowed(true);
@@ -240,19 +240,19 @@ void GPSReceiverTest::_automaticConnection()
     QVERIFY(receiver.facts()->telemetryAvailable());
     QCOMPARE(receiver.detectedReceiver(), QStringLiteral("Unicore"));
     // Automatic stays selected whatever it detects.
-    QCOMPARE(settings.baseReceiverManufacturers()->rawValue().toInt(), GPS_AUTOMATIC_MANUFACTURER);
+    QCOMPARE(settings.baseReceiverManufacturer()->rawValue().toInt(), GPS_AUTOMATIC_MANUFACTURER);
 
     receiver.disconnectReceiver();
     QVERIFY(receiver.detectedReceiver().isEmpty());
     // A specific family ignores detections and does not replace the saved manufacturer either.
     const int ublox = gpsReceiverManufacturerForType(GPSType::ublox);
-    settings.baseReceiverManufacturers()->setRawValue(ublox);
-    settings.useFixedBasePosition()->setRawValue(static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn));
+    settings.baseReceiverManufacturer()->setRawValue(ublox);
+    settings.baseMode()->setRawValue(static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn));
     QVERIFY(receiver.connectReceiver());
     harness.workers.current()->detected(GPSType::septentrio);
     QVERIFY(receiver.detectedReceiver().isEmpty());
     QCOMPARE(receiver._activeManufacturer(), ublox);
-    QCOMPARE(settings.baseReceiverManufacturers()->rawValue().toInt(), ublox);
+    QCOMPARE(settings.baseReceiverManufacturer()->rawValue().toInt(), ublox);
     receiver.disconnectReceiver();
 }
 
