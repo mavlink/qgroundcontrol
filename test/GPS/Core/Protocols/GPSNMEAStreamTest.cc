@@ -325,7 +325,7 @@ void GPSNMEAStreamTest::_positionSourceEquivalence()
     };
     NMEAReceiver receiver;
     for (const auto& body : bodies) {
-        receiver.send(NMEAUtils::repairChecksum(body));
+        receiver.send(GPSTest::repairChecksum(body));
     }
     QVERIFY(receiver.published);
     const auto& navigation = receiver.published->navigation;

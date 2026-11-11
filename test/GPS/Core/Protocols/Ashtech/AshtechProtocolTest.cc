@@ -18,6 +18,7 @@
 #include "NMEASentence.h"
 #include "Protocols/Support/AshtechReceiverModel.h"
 #include "Protocols/Support/GPSProtocolTestBase.h"
+#include "Protocols/Support/ProtocolTestPackets.h"
 #include "Protocols/Support/ReceiverBench.h"
 
 using namespace std::chrono_literals;
@@ -371,7 +372,7 @@ void ashtechFixedPositionText(GPSTestClock&)
 void ashtechAcknowledgementReturnsImmediately(GPSTestClock& clock)
 {
     clock.reset(GPSTestClock::START_US);
-    std::string reply = NMEAUtils::repairChecksum("$PASHR,PRT,A,115200").toStdString();
+    std::string reply = GPSTest::repairChecksum("$PASHR,PRT,A,115200").toStdString();
     std::vector<std::string> writes;
     std::vector<GPSConfigurationEvidence> completions;
     int reads = 0;

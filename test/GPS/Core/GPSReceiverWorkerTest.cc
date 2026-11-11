@@ -311,8 +311,8 @@ public:
         const auto result = ScriptedReceiver::open();
         QByteArray pending;
         for (const int quality : {0, 0, 1, 1, 4, 4, 0}) {
-            pending += NMEAUtils::repairChecksum("$GPGGA,123519,4807.038,N,01131.000,E," + QByteArray::number(quality) +
-                                                 ",08,0.9,545.4,M,46.9,M,,");
+            pending += GPSTest::repairChecksum("$GPGGA,123519,4807.038,N,01131.000,E," + QByteArray::number(quality) +
+                                               ",08,0.9,545.4,M,46.9,M,,");
         }
         queueReply(pending);
         return result;

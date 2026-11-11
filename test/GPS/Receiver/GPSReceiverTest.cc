@@ -646,7 +646,7 @@ void GPSReceiverTest::_udpPositionOnlyReceiver()
     for (const QByteArray& body : {QByteArray("$GPRMC,092750.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A"),
                                    QByteArray("$GPGST,092750.000,1,1,1,0,1,1,2"),
                                    QByteArray("$GPGGA,092750.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,")}) {
-        stream += NMEAUtils::repairChecksum(body);
+        stream += GPSTest::repairChecksum(body);
     }
     stream += GPSTest::rtcmMessage(1005, 20);
     QUdpSocket sender;
@@ -833,7 +833,7 @@ void GPSReceiverTest::_recordsSessionsStartedWhileOn()
     for (const QByteArray& body : {QByteArray("$GPRMC,092750.000,A,5321.6802,N,00630.3372,W,0.02,31.66,280511,,,A"),
                                    QByteArray("$GPGST,092750.000,1,1,1,0,1,1,2"),
                                    QByteArray("$GPGGA,092750.000,5321.6802,N,00630.3372,W,1,8,1.03,61.7,M,55.2,M,,")}) {
-        stream += NMEAUtils::repairChecksum(body);
+        stream += GPSTest::repairChecksum(body);
     }
     QCOMPARE(link->write(stream), stream.size());
     QTRY_VERIFY_WITH_TIMEOUT(receiver.acceptedPositionObservation(GPSObservation::PositionUse::GroundStation),
