@@ -6,7 +6,9 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#include <QtCore/QHash>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QSaveFile>
 #include <QtCore/QStandardPaths>
 #include <QtCore/QStringList>
 #include <QtCore/QSysInfo>
@@ -46,6 +48,10 @@ constexpr const char* kManagedGstPathVars[] = {
 
 BundledRuntime s_bundledRuntime;
 
+// What this layer last set each variable to, so that preparing the environment again doesn't take its own values for
+// the user's.
+QHash<QByteArray, QString> s_managedEnvValues;
+
 QString _cleanJoin(const QString& base, const QString& relative)
 {
     return QDir::cleanPath(QDir(base).filePath(relative));
@@ -72,7 +78,17 @@ void _setGstEnv(const char* name, const QString& value)
 #else
     qputenv(name, value.toUtf8());
 #endif
+    s_managedEnvValues.insert(name, value);
     qCDebug(GStreamerEnvLog) << "  " << name << "=" << value;
+}
+
+bool _setByUser(const char* name)
+{
+    if (!qEnvironmentVariableIsSet(name)) {
+        return false;
+    }
+    const auto managed = s_managedEnvValues.constFind(name);
+    return (managed == s_managedEnvValues.constEnd()) || (qEnvironmentVariable(name) != managed.value());
 }
 
 QString _firstExistingPath(const QStringList& paths)
@@ -133,8 +149,7 @@ void _pruneUnusedRegistries(const QString& registry)
 // install hash keeps two installs of one version (stable and daily builds) from rescanning over each other's.
 QString _usePrivateRegistry(const QString& cacheDir, const QString& installPath)
 {
-    if (cacheDir.isEmpty() || qEnvironmentVariableIsSet("GST_REGISTRY_1_0") ||
-        qEnvironmentVariableIsSet("GST_REGISTRY")) {
+    if (cacheDir.isEmpty() || _setByUser("GST_REGISTRY_1_0") || _setByUser("GST_REGISTRY")) {
         return {};
     }
     if (!QDir().mkpath(cacheDir)) {
@@ -179,8 +194,7 @@ void _setCaBundleIfUnset(const QString& caBundle)
 #endif
 
 #ifdef Q_OS_ANDROID
-// Extract an APK asset to destPath; skip rewrite when sizes already match
-// (asset bytes are immutable per APK build, so size match ⇒ same content).
+// Extracts an APK asset to destPath, which outlives the APK: an updated app replaces what an earlier version left.
 bool _extractApkAsset(const char* assetPath, const QString& destPath)
 {
     QJniObject ctx = QNativeInterface::QAndroidApplication::context();
@@ -208,33 +222,13 @@ bool _extractApkAsset(const char* assetPath, const QString& destPath)
         return false;
     }
     const off_t assetLen = AAsset_getLength(asset);
-
-    const QFileInfo destInfo(destPath);
-    if (destInfo.exists() && destInfo.size() == assetLen) {
-        AAsset_close(asset);
-        return true;
-    }
-
-    QDir().mkpath(destInfo.absolutePath());
-    QFile out(destPath);
-    if (!out.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        qCWarning(GStreamerEnvLog) << "Cannot open" << destPath << "for write:" << out.errorString();
-        AAsset_close(asset);
-        return false;
-    }
-
-    const void* buf = AAsset_getBuffer(asset);
-    bool ok = false;
-    if (buf && assetLen > 0) {
-        ok = (out.write(static_cast<const char*>(buf), assetLen) == assetLen);
-    }
-    out.close();
-    // close() flushes; a flush failure surfaces via error() after close.
-    ok = ok && (out.error() == QFileDevice::NoError);
+    const void* const buf = AAsset_getBuffer(asset);
+    const bool ok = buf && (assetLen > 0) &&
+                    GStreamer::Environment::writeIfChanged(
+                        destPath, QByteArrayView(static_cast<const char*>(buf), static_cast<qsizetype>(assetLen)));
     AAsset_close(asset);
     if (!ok) {
         qCWarning(GStreamerEnvLog) << "Failed writing asset" << assetPath << "to" << destPath;
-        QFile::remove(destPath);
     }
     return ok;
 }
@@ -441,7 +435,7 @@ ValidationResult _setGstEnvVars(const QString& appDir)
 
 #elif defined(Q_OS_ANDROID)
     // Static plugins — no GST_PLUGIN_PATH; APK assets are read-only, so the CA bundle is extracted
-    // to filesDir on first launch (we run gst_init from C++, not Java's GStreamer.init).
+    // to filesDir, and again when an update changes it (we run gst_init from C++, not Java's GStreamer.init).
     {
         const QString filesDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
         const QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
@@ -472,12 +466,11 @@ ValidationResult _setGstEnvVars(const QString& appDir)
 
 #elif defined(Q_OS_LINUX) && !defined(QGC_GST_SYSTEM_PLUGINS)
     // An AppImage or other bundle ships its runtime under <prefix>/lib; a plugin path set by the user wins.
-    if (!qEnvironmentVariableIsSet("GST_PLUGIN_PATH_1_0") && !qEnvironmentVariableIsSet("GST_PLUGIN_PATH") &&
-        !qEnvironmentVariableIsSet("GST_PLUGIN_SYSTEM_PATH_1_0") &&
-        !qEnvironmentVariableIsSet("GST_PLUGIN_SYSTEM_PATH")) {
+    if (!_setByUser("GST_PLUGIN_PATH_1_0") && !_setByUser("GST_PLUGIN_PATH") &&
+        !_setByUser("GST_PLUGIN_SYSTEM_PATH_1_0") && !_setByUser("GST_PLUGIN_SYSTEM_PATH")) {
         const BundleLayout layout = GStreamer::Environment::bundleLayout(DesktopInstall::Linux, appDir);
         if (_applyBundleLayout(QStringLiteral("Linux"), layout)) {
-            _applyGioCompatOverride(layout.gioModuleDirs.constFirst());
+            _applyGioCompatOverride(s_bundledRuntime.gioModuleDir);
         }
     }
 #endif
@@ -554,6 +547,27 @@ ValidationResult prepareEnvironment(const QString& appDir)
 QString usePrivateRegistry(const QString& cacheDir, const QString& installPath)
 {
     return _usePrivateRegistry(cacheDir, installPath);
+}
+
+bool writeIfChanged(const QString& path, QByteArrayView content)
+{
+    QFile current(path);
+    if (current.open(QIODevice::ReadOnly) && (current.size() == content.size()) && (current.readAll() == content)) {
+        return true;
+    }
+    current.close();
+
+    if (!QDir().mkpath(QFileInfo(path).absolutePath())) {
+        qCWarning(GStreamerEnvLog) << "Cannot create the directory of" << path;
+        return false;
+    }
+    QSaveFile file(path);
+    if (!file.open(QIODevice::WriteOnly) || (file.write(content.data(), content.size()) != content.size()) ||
+        !file.commit()) {
+        qCWarning(GStreamerEnvLog) << "Cannot write" << path << ":" << file.errorString();
+        return false;
+    }
+    return true;
 }
 
 BundledRuntime bundledRuntime()

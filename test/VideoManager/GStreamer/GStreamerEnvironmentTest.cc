@@ -10,6 +10,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#include <QtCore/QProcessEnvironment>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QSysInfo>
 #include <QtCore/QTemporaryDir>
@@ -299,11 +300,21 @@ void GStreamerEnvironmentTest::_testMacOSFrameworkVersionDir()
     QCOMPARE(layout.pluginDirs.constFirst(), current + QStringLiteral("/lib/gstreamer-1.0"));
 }
 
+void GStreamerEnvironmentTest::_testBundledRuntime_data()
+{
+    QTest::addColumn<bool>("gioModules");
+
+    QTest::newRow("plugins only") << false;
+    QTest::newRow("plugins and GIO modules") << true;
+}
+
 void GStreamerEnvironmentTest::_testBundledRuntime()
 {
 #if defined(Q_OS_ANDROID) || defined(Q_OS_IOS) || defined(QGC_GST_SYSTEM_PLUGINS)
     QSKIP("This build never uses a bundled GStreamer runtime");
 #else
+    QFETCH(bool, gioModules);
+
     const ManagedEnvGuard guard;
     qputenv("PYTHONPATH", QByteArrayLiteral("/qgc-test/python"));
 
@@ -324,10 +335,25 @@ void GStreamerEnvironmentTest::_testBundledRuntime()
     QVERIFY(scannerFile.open(QIODevice::WriteOnly));
     scannerFile.close();
     QVERIFY(scannerFile.setPermissions(scannerFile.permissions() | QFileDevice::ExeOwner));
+    const QString gioModuleDir = gioModules ? root.filePath(QStringLiteral("lib/gio/modules")) : QString();
+    if (gioModules) {
+        QVERIFY(QDir().mkpath(gioModuleDir));
+    }
 
     QVERIFY(GStreamer::Environment::prepareEnvironment(appDir).ok);
 
     QCOMPARE(GStreamer::Environment::bundledRuntime().pluginDirs, QStringList{pluginDir});
+    // GIO loads the bundle's modules: on Linux with GLib 2.76+ in place of the system's, elsewhere besides them. A
+    // bundle without modules leaves GIO the system's.
+    QCOMPARE(GStreamer::Environment::bundledRuntime().gioModuleDir, gioModuleDir);
+#ifdef Q_OS_LINUX
+    const bool replacesSystemModules = gioModules && (glib_check_version(2, 76, 0) == nullptr);
+#else
+    const bool replacesSystemModules = false;
+#endif
+    QCOMPARE(qEnvironmentVariable("GIO_MODULE_DIR"), replacesSystemModules ? gioModuleDir : QString());
+    QCOMPARE(qEnvironmentVariable("GIO_USE_VFS"), replacesSystemModules ? QStringLiteral("local") : QString());
+    QCOMPARE(qEnvironmentVariable("GIO_EXTRA_MODULES"), replacesSystemModules ? QString() : gioModuleDir);
     QCOMPARE(qEnvironmentVariable("GST_PLUGIN_SYSTEM_PATH"), pluginDir);
     QCOMPARE(qEnvironmentVariable("GST_PLUGIN_SYSTEM_PATH_1_0"), pluginDir);
     QVERIFY(!qEnvironmentVariableIsSet("GST_PLUGIN_PATH"));
@@ -340,6 +366,12 @@ void GStreamerEnvironmentTest::_testBundledRuntime()
     QVERIFY(qEnvironmentVariableIsSet("GST_REGISTRY"));
     QCOMPARE(qEnvironmentVariable("PYTHONPATH"), QStringLiteral("/qgc-test/python"));
     QVERIFY(!qEnvironmentVariableIsSet("PYTHONNOUSERSITE"));
+
+    // Preparing again changes nothing: the paths the first call set aren't taken for the user's, which would win.
+    const QProcessEnvironment prepared = QProcessEnvironment::systemEnvironment();
+    QVERIFY(GStreamer::Environment::prepareEnvironment(appDir).ok);
+    QCOMPARE(GStreamer::Environment::bundledRuntime().pluginDirs, QStringList{pluginDir});
+    QVERIFY(QProcessEnvironment::systemEnvironment() == prepared);
 #endif
 }
 
@@ -363,6 +395,30 @@ void GStreamerEnvironmentTest::_testEnvironmentSetup()
                      qPrintable(QStringLiteral("%1 is not executable: %2").arg(QLatin1String(var), path)));
         }
     }
+}
+
+void GStreamerEnvironmentTest::_testWriteIfChanged()
+{
+    QTemporaryDir root;
+    QVERIFY(root.isValid());
+    const QString path = root.filePath(QStringLiteral("ssl/certs/ca-certificates.crt"));
+    const auto content = [&path] {
+        QFile file(path);
+        return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
+    };
+
+    QVERIFY(GStreamer::Environment::writeIfChanged(path, "first bundle"));
+    QCOMPARE(content(), QByteArrayLiteral("first bundle"));
+
+    // The same content isn't written again.
+    const QDateTime written = QDateTime::currentDateTimeUtc().addDays(-1);
+    QVERIFY(setModificationTime(path, written));
+    QVERIFY(GStreamer::Environment::writeIfChanged(path, "first bundle"));
+    QCOMPARE(QFileInfo(path).lastModified().toSecsSinceEpoch(), written.toSecsSinceEpoch());
+
+    // Other content of the same size is: an updated app's CA bundle replaces the one an earlier version extracted.
+    QVERIFY(GStreamer::Environment::writeIfChanged(path, "other bundle"));
+    QCOMPARE(content(), QByteArrayLiteral("other bundle"));
 }
 
 #else

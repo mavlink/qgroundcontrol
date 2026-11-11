@@ -19,8 +19,10 @@ private slots:
     void _testBundleLayouts_data();
     void _testBundleLayouts();
     void _testMacOSFrameworkVersionDir();
+    void _testBundledRuntime_data();
     void _testBundledRuntime();
     void _testEnvironmentSetup();
+    void _testWriteIfChanged();
 #else
     void _testGStreamerDisabled();
 #endif
