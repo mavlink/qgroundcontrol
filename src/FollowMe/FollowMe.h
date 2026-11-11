@@ -21,7 +21,7 @@ public:
     struct GCSMotionReport {
         int lat_int;            // X Position in WGS84 frame in 1e7 * meters
         int lon_int;            // Y Position in WGS84 frame in 1e7 * meters
-        double altMetersAMSL;   // Altitude in meters in AMSL altitude, not WGS84 if absolute or relative, above terrain if GLOBAL_TERRAIN_ALT_INT
+        double altMetersAMSL;   // Altitude above mean sea level in meters; NaN when the ground station's is not known
         double headingDegrees;  // Heading in degrees
         double vxMetersPerSec;  // X velocity in NED frame in meter / s
         double vyMetersPerSec;  // Y velocity in NED frame in meter / s
