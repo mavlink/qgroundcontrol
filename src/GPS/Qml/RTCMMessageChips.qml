@@ -49,28 +49,17 @@ Flow {
 
         model: root.messageCounts
 
-        delegate: Rectangle {
+        delegate: QGCChip {
             id: chip
 
             required property int messageId
             required property real count
             required property real interval
 
-            implicitWidth:  chipLabel.implicitWidth + ScreenTools.defaultFontPixelWidth * 1.2
-            implicitHeight: chipLabel.implicitHeight + ScreenTools.defaultFontPixelHeight * 0.3
-            radius:         implicitHeight / 2
+            text:           root._chipText(chip.messageId, chip.count, chip.interval)
+            textColor:      qgcPal.textPrimary
             color:          qgcPal.windowCard
             border.color:   qgcPal.borderSubtle
-            border.width:   1
-
-            QGCLabel {
-                id: chipLabel
-
-                anchors.centerIn: parent
-                text:             root._chipText(chip.messageId, chip.count, chip.interval)
-                textFormat:       Text.PlainText
-                font.pointSize:   ScreenTools.smallFontPointSize
-            }
         }
     }
 }
