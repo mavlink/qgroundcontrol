@@ -1,4 +1,5 @@
-# Correction routing: stream selection, MAVLink packing for vehicles, UDP input and output, and the stream's log.
+# Correction routing: stream selection, MAVLink packing for vehicles, UDP input and output, the stream's log and its
+# per-message counts.
 target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE
@@ -12,6 +13,8 @@ target_sources(
         RTCMMAVLink.h
         RTCMMAVLinkPacket.cc
         RTCMMAVLinkPacket.h
+        RTCMMessageCountModel.cc
+        RTCMMessageCountModel.h
         RTCMUdpInput.cc
         RTCMUdpInput.h
 )

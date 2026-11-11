@@ -45,6 +45,7 @@ set(_qgc_gps_suites
     Corrections/GPSCorrectionSelectorTest
     Corrections/RTCMMAVLinkPacketTest
     Corrections/RTCMMAVLinkTest
+    Corrections/RTCMMessageCountModelTest
     Corrections/RTCMUdpInputTest
     NTRIP/HTTP/NTRIPConfigurationTest
     NTRIP/HTTP/NTRIPHttpCodecTest

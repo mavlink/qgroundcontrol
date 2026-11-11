@@ -5,6 +5,7 @@
 #include <QtCore/QHash>
 #include <QtCore/QList>
 #include <QtCore/QVarLengthArray>
+#include <QtQmlIntegration/QtQmlIntegration>
 
 /// Frames received per RTCM message ID, ascending by ID, and how often each ID arrives; ID 0 counts unidentified
 /// frames. Rows change in place: a new ID inserts its row and a repeated one changes only that row's count and
@@ -12,6 +13,8 @@
 class RTCMMessageCountModel : public QAbstractListModel
 {
     Q_OBJECT
+    QML_ELEMENT
+    QML_UNCREATABLE("Provided by the correction manager")
 
 public:
     enum Roles
