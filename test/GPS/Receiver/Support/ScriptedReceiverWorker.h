@@ -64,7 +64,7 @@ public:
 
     void baseStatus(const GPSBaseStatus& status)
     {
-        emit surveyInStatusUpdated(status);
+        emit baseStatusUpdated(status);
         deliverQueuedCalls();
     }
 

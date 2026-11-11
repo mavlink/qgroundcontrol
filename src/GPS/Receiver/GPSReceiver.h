@@ -96,7 +96,7 @@ class GPSReceiver : public QObject, private GPSReceiverConnector
     Q_PROPERTY(RTKSettings::ConnectionType effectiveConnectionType READ effectiveConnectionType NOTIFY
                    configurationChanged FINAL)
     Q_PROPERTY(bool connectionSupported READ connectionSupported NOTIFY configurationChanged FINAL)
-    /// Short state for compact views: a configured base's survey state, otherwise the fix type.
+    /// Short state for compact views: whether a configured base is determining its position, otherwise the fix type.
     Q_PROPERTY(QString summaryLabel READ summaryLabel NOTIFY summaryLabelChanged FINAL)
     /// What the receiver is doing, as a sentence; empty when no receiver is connected or being connected.
     Q_PROPERTY(QString statusText READ statusText NOTIFY statusTextChanged FINAL)
@@ -267,7 +267,7 @@ private slots:
     void _onGPSConnect();
     void _onReceiverDetected();
     void _onInputProblem(GPSInputProblem problem);
-    void _onGPSSurveyReport(const GPSBaseStatus& status);
+    void _onBaseStatusUpdated(const GPSBaseStatus& status);
 
 private:
     /// The values behind receiverChanged.
@@ -297,6 +297,8 @@ private:
     int _activeManufacturer() const;
     /// Base mode of the connected configured base; empty for a passive receiver or without one.
     std::optional<BaseModeDefinition::Mode> _activeBaseMode() const;
+    /// What the connected configured base reports of its base position; Inactive for a passive receiver or without one.
+    GPSBaseState _activeBaseState() const;
 
     void setConnectionError(const QString& message) override { _setError(message); }
 

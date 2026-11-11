@@ -16,6 +16,7 @@ void GPSBaseStationState::applyStatus(const GPSBaseStatus& status)
     if (!mode) {
         return;
     }
+    state = status.state;
     const bool located =
         std::isfinite(status.position.latitudeDegrees) && std::isfinite(status.position.longitudeDegrees);
     const double accuracy =
@@ -121,7 +122,7 @@ bool GPSReceiverSession::start(const GPSReceiverWorkerFactory& factory,
     relay(&GPSReceiverWorker::rtcmDataReceived, &GPSReceiverSession::_forwardCorrection);
     relay(&GPSReceiverWorker::satelliteInfoUpdated, &GPSReceiverSession::satelliteInfoUpdated);
     relay(&GPSReceiverWorker::positionUpdated, &GPSReceiverSession::positionUpdated);
-    relay(&GPSReceiverWorker::surveyInStatusUpdated, &GPSReceiverSession::_onSurvey);
+    relay(&GPSReceiverWorker::baseStatusUpdated, &GPSReceiverSession::_onBaseStatus);
     relay(&GPSReceiverWorker::connectionError, &GPSReceiverSession::ended);
     relay(&GPSReceiverWorker::receiverReady, &GPSReceiverSession::_onReady);
     relay(&GPSReceiverWorker::receiverDetected, &GPSReceiverSession::_onDetected);
@@ -167,13 +168,13 @@ GPSObservation GPSReceiverSession::observation(const GPSPositionReport& report, 
     return observation;
 }
 
-void GPSReceiverSession::_onSurvey(const GPSBaseStatus& report)
+void GPSReceiverSession::_onBaseStatus(const GPSBaseStatus& report)
 {
     if (_connection.role != RTKSettings::ConfiguredBase) {
         return;
     }
     _base.applyStatus(report);
-    emit surveyInStatusUpdated(report);
+    emit baseStatusUpdated(report);
 }
 
 void GPSReceiverSession::_onReady(const QString& identity)

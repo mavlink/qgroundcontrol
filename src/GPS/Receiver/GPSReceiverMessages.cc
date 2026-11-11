@@ -219,7 +219,8 @@ QString receiverStatus(const ReceiverStatus& status)
     if (status.baseMode == Mode::BaseFixed) {
         return GPSReceiver::tr("Fixed position");
     }
-    return status.surveyActive ? GPSReceiver::tr("Survey-In active") : GPSReceiver::tr("Receiver connected");
+    return status.baseState == GPSBaseState::Active ? GPSReceiver::tr("Survey-In active")
+                                                    : GPSReceiver::tr("Receiver connected");
 }
 
 }  // namespace GPSReceiverMessages

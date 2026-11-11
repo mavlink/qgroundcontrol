@@ -19,18 +19,20 @@ class GPSCorrectionManager;
 class GPSCorrectionSourceHandle;
 class GPSSourceHealth;
 
-/// A receiver session's base-station mode and the antenna position it reports.
+/// A receiver session's base-station mode, and the state and antenna position its receiver reports.
 struct GPSBaseStationState
 {
     /// Base mode of a configured base; empty for a passive receiver.
     std::optional<BaseModeDefinition::Mode> mode;
+    /// What the receiver last reported of its base position; Inactive until it reports, and for a passive receiver.
+    GPSBaseState state = GPSBaseState::Inactive;
     /// Antenna position and its accuracy in meters while the receiver reports it valid; the receiver then reports only
     /// a time fix.
     std::optional<std::pair<GPSEllipsoidPosition, double>> position;
     /// Accuracy of a base position reported without one: the fixed position's, or the limit of a survey-in.
     std::optional<double> assumedAccuracyMeters;
 
-    /// A base in any mode adopts a valid, located position and otherwise has none.
+    /// A base in any mode takes the reported state, and adopts a valid, located position and otherwise has none.
     void applyStatus(const GPSBaseStatus& status);
 };
 
@@ -103,6 +105,10 @@ public:
     /// Base mode of a configured base; empty for a passive receiver.
     std::optional<BaseModeDefinition::Mode> baseMode() const { return _base.mode; }
 
+    /// What a configured base last reported of its base position; Inactive until it reports, and for a passive
+    /// receiver.
+    GPSBaseState baseState() const { return _base.state; }
+
     const QString& serialDevice() const { return _connection.serialDevice; }
 
     const QString& endpoint() const { return _connection.endpoint; }
@@ -116,7 +122,7 @@ signals:
     void satelliteInfoUpdated(const GPSSatelliteReport& report);
     void positionUpdated(const GPSPositionReport& report);
     /// The base position status of a configured base, in every base mode.
-    void surveyInStatusUpdated(const GPSBaseStatus& report);
+    void baseStatusUpdated(const GPSBaseStatus& report);
     void receiverReady(const QString& identity);
     /// The family an Automatic session detected, or the protocol a passive receiver's output carries.
     void receiverDetected(GPSType type);
@@ -126,7 +132,7 @@ signals:
     void ended(GPSConnectionError error, const QString& detail);
 
 private:
-    void _onSurvey(const GPSBaseStatus& report);
+    void _onBaseStatus(const GPSBaseStatus& report);
     void _onReady(const QString& identity);
     void _onDetected(GPSType type);
     void _forwardCorrection(const QByteArray& data, qint64 receivedAtMs);

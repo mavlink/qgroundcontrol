@@ -221,6 +221,7 @@ void GPSBaseStationSettingsTest::_baseStatusUpdatesBasePosition()
     report.position.latitudeDegrees = latitude;
     report.meanAccuracyMeters = std::isnan(meanAccuracy) ? std::nullopt : std::optional(meanAccuracy);
     base.applyStatus(report);
+    QCOMPARE(base.state, mode < 0 ? GPSBaseState::Inactive : state);
     QCOMPARE(base.position.has_value(), !std::isnan(expectedAccuracy));
     if (base.position) {
         QCOMPARE(base.position->first, report.position);

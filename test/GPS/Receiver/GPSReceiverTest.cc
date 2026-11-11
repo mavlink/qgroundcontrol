@@ -500,14 +500,14 @@ void GPSReceiverTest::_retiredWorkerCannotUpdateReplacement()
     survey.position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500};
     survey.duration = std::chrono::seconds(4294967295LL);
     survey.meanAccuracyMeters = 1.5;
-    emit first->surveyInStatusUpdated(survey);
+    emit first->baseStatusUpdated(survey);
     GPSSatelliteReport satellites;
     satellites.timestampUs = 1;
     satellites.inView = 2;
     satellites.used = 7;
     emit first->satelliteInfoUpdated(satellites);
     QTRY_VERIFY_WITH_TIMEOUT(receiver.facts()->telemetryAvailable(), TestTimeout::shortMs());
-    QVERIFY(facts.valid()->rawValue().toBool());
+    QCOMPARE(baseState(facts), GPSBaseState::Valid);
     QCOMPARE(facts.currentBasePosition(),
              std::optional(GPSBaseStationConfig::Fixed{.position = survey.position, .accuracyMeters = 1.5f}));
     QCOMPARE(facts.currentAccuracy()->rawValue().toDouble(), 1.5);
@@ -522,7 +522,7 @@ void GPSReceiverTest::_retiredWorkerCannotUpdateReplacement()
     // Retirement must reject callbacks already in the GUI queue.
     satellites.used = 12;
     emit first->rtcmDataReceived(frame, GPSTest::nowMs());
-    emit first->surveyInStatusUpdated(survey);
+    emit first->baseStatusUpdated(survey);
     emit first->satelliteInfoUpdated(satellites);
     emit first->positionUpdated(fixReport(GPSFixQuality::Unknown));
     emit first->receiverReady();
@@ -533,8 +533,7 @@ void GPSReceiverTest::_retiredWorkerCannotUpdateReplacement()
     receiver.disconnectReceiver();
     QVERIFY(connectOverTcp(receiver));
     QVERIFY(!receiver.facts()->telemetryAvailable());
-    QVERIFY(!facts.valid()->rawValue().toBool());
-    QVERIFY(!facts.active()->rawValue().toBool());
+    QCOMPARE(baseState(facts), GPSBaseState::Inactive);
     QVERIFY(!facts.currentBasePosition());
     QVERIFY(qIsNaN(facts.currentAccuracy()->rawValue().toDouble()));
     QCOMPARE(facts.currentDuration()->rawValue().toLongLong(), 0);
@@ -566,7 +565,7 @@ void GPSReceiverTest::_retiredWorkerCannotUpdateReplacement()
     emit second->connectionError(GPSConnectionError::DeviceError);
     emit second->rtcmDataReceived(frame, GPSTest::nowMs());
     emit second->receiverReady();
-    emit second->surveyInStatusUpdated(survey);
+    emit second->baseStatusUpdated(survey);
     emit second->satelliteInfoUpdated(satellites);
     deliverQueuedCalls();
     verifyExpectedLogMessage();
@@ -1130,8 +1129,7 @@ void GPSReceiverTest::_manualPassiveBaudPreserved()
     QCOMPARE(state->baud.load(), baud);
     QCOMPARE(state->baudChanges.load(), 1U);
     QCOMPARE(state->writes.load(), 0U);
-    QVERIFY(!receiver.facts()->active()->rawValue().toBool());
-    QVERIFY(!receiver.facts()->valid()->rawValue().toBool());
+    QCOMPARE(baseState(*receiver.facts()), GPSBaseState::Inactive);
     QVERIFY(serial.manager.isPortReserved(QStringLiteral("/test/passive")));
     state->releaseRead.release();
     receiver.disconnectReceiver();

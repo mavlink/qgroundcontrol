@@ -92,6 +92,12 @@ inline Solution solution(GPSReceiverFactGroup& facts)
             .antenna = facts.antennaState()->rawValue().toInt()};
 }
 
+/// The base state as the receiver's status Fact holds it.
+inline GPSBaseState baseState(GPSReceiverFactGroup& facts)
+{
+    return static_cast<GPSBaseState>(facts.baseState()->rawValue().toInt());
+}
+
 /// Found by QCOMPARE through argument-dependent lookup.
 inline char* toString(const Solution& solution)
 {

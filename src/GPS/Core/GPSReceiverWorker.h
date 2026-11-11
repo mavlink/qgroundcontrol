@@ -69,7 +69,7 @@ signals:
     void positionUpdated(const GPSPositionReport& report);
     /// RTCM output the receiver sent, stamped with the steady clock when it was read.
     void rtcmDataReceived(const QByteArray& message, qint64 receivedAtMs);
-    void surveyInStatusUpdated(const GPSBaseStatus& report);
+    void baseStatusUpdated(const GPSBaseStatus& report);
     /// @a detail is the transport's or the protocol's diagnostic, or empty when it gave none.
     void connectionError(GPSConnectionError error, const QString& detail = {});
     /// The family a GPSType::Automatic session detected, before it configures the receiver, or the protocol a passive

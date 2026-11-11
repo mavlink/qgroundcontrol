@@ -12,6 +12,7 @@ private slots:
     void _satelliteCounts_data();
     void _satelliteCounts();
     void _constellationCounts();
+    void _baseStatusFacts();
     void _currentBaseSaveValidity_data();
     void _currentBaseSaveValidity();
     void _integrityFacts();

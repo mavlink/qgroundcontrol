@@ -17,8 +17,10 @@ GPSReceiverFactGroup::GPSReceiverFactGroup(QObject* parent)
 {
     _addFact(&_currentDurationFact);
     _addFact(&_currentAccuracyFact);
-    _addFact(&_validFact);
-    _addFact(&_activeFact);
+    _addFact(&_baseStateFact);
+    _addFact(&_baseLatitudeFact);
+    _addFact(&_baseLongitudeFact);
+    _addFact(&_baseHeightFact);
     _addFact(&_numSatellitesFact);
     _addFact(&_numSatellitesUsedFact);
     _addFact(&_fixTypeFact);
@@ -47,14 +49,16 @@ void GPSReceiverFactGroup::_restoreDefaults(std::initializer_list<Fact*> facts)
     }
 }
 
-void GPSReceiverFactGroup::_setSurvey(const GPSBaseStatus& report)
+void GPSReceiverFactGroup::_setBaseStatus(const GPSBaseStatus& report)
 {
     const double accuracy = report.meanAccuracyMeters.value_or(qQNaN());
     _update(_currentDurationFact, static_cast<qint64>(report.duration.count()));
     _update(_currentAccuracyFact, accuracy);
+    _update(_baseLatitudeFact, report.position.latitudeDegrees);
+    _update(_baseLongitudeFact, report.position.longitudeDegrees);
+    _update(_baseHeightFact, report.position.altitudeMeters);
     const bool valid = report.state == GPSBaseState::Valid;
     const bool active = report.state == GPSBaseState::Active;
-    _update(_validFact, valid);
     if (active) {
         _setCurrentBasePositionSaved(false);
     }
@@ -67,8 +71,8 @@ void GPSReceiverFactGroup::_setSurvey(const GPSBaseStatus& report)
         }
     }
     _setCurrentBasePosition(base);
-    // Last: an observer of the survey state may end the session, which resets this status.
-    _update(_activeFact, active);
+    // Last: an observer of the base state may end the session, which resets this status.
+    _update(_baseStateFact, static_cast<int>(report.state));
 }
 
 void GPSReceiverFactGroup::_setSatellites(const GPSSatelliteReport& report)
@@ -95,7 +99,7 @@ void GPSReceiverFactGroup::_setSolution(GPSFixQuality fixType, const GPSIntegrit
     _update(_jammingStateFact, static_cast<int>(integrity.jamming.state));
     _update(_spoofingStateFact, static_cast<int>(integrity.spoofing.state));
     _update(_antennaStateFact, static_cast<int>(integrity.antenna.state));
-    // Last, as the survey state is, for an observer of the fix.
+    // Last, as the base state is, for an observer of the fix.
     _update(_fixTypeFact, static_cast<int>(fixType));
 }
 
@@ -108,9 +112,9 @@ void GPSReceiverFactGroup::_clearSolution()
 
 void GPSReceiverFactGroup::_reset()
 {
-    _restoreDefaults({&_currentDurationFact, &_currentAccuracyFact, &_validFact, &_activeFact, &_numSatellitesFact,
-                      &_numSatellitesUsedFact, &_fixTypeFact, &_jammingStateFact, &_spoofingStateFact,
-                      &_antennaStateFact});
+    _restoreDefaults({&_currentDurationFact, &_currentAccuracyFact, &_baseStateFact, &_baseLatitudeFact,
+                      &_baseLongitudeFact, &_baseHeightFact, &_numSatellitesFact, &_numSatellitesUsedFact,
+                      &_fixTypeFact, &_jammingStateFact, &_spoofingStateFact, &_antennaStateFact});
     _constellations.clear();
     _setCurrentBasePosition(std::nullopt);
     _setTelemetryAvailable(false);

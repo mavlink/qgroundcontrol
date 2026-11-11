@@ -300,9 +300,9 @@ void GPSReceiver::_endSession(GPSConnectionError error, const QString& detail, G
     _resetStatus();
 }
 
-void GPSReceiver::_onGPSSurveyReport(const GPSBaseStatus& status)
+void GPSReceiver::_onBaseStatusUpdated(const GPSBaseStatus& status)
 {
-    _facts->_setSurvey(status);
+    _facts->_setBaseStatus(status);
     _emitChanges();
 }
 
@@ -460,6 +460,11 @@ std::optional<BaseModeDefinition::Mode> GPSReceiver::_activeBaseMode() const
     return _session ? _session->baseMode() : std::nullopt;
 }
 
+GPSBaseState GPSReceiver::_activeBaseState() const
+{
+    return _session ? _session->baseState() : GPSBaseState::Inactive;
+}
+
 int GPSReceiver::activeBaseMode() const
 {
     const std::optional<BaseModeDefinition::Mode> mode = _activeBaseMode();
@@ -599,7 +604,7 @@ bool GPSReceiver::_connectReceiver(GPSType type, GPSReceiverWorker::TransportFac
     _session = session;
     connect(session, &GPSReceiverSession::satelliteInfoUpdated, this, &GPSReceiver::_onSatelliteInfoUpdated);
     connect(session, &GPSReceiverSession::positionUpdated, this, &GPSReceiver::_onPositionUpdated);
-    connect(session, &GPSReceiverSession::surveyInStatusUpdated, this, &GPSReceiver::_onGPSSurveyReport);
+    connect(session, &GPSReceiverSession::baseStatusUpdated, this, &GPSReceiver::_onBaseStatusUpdated);
     connect(session, &GPSReceiverSession::receiverReady, this, &GPSReceiver::_onGPSConnect);
     connect(session, &GPSReceiverSession::receiverDetected, this, &GPSReceiver::_onReceiverDetected);
     connect(session, &GPSReceiverSession::inputProblem, this, &GPSReceiver::_onInputProblem);
@@ -717,13 +722,13 @@ QString GPSReceiver::statusText() const
                                                 .role = activeRole(),
                                                 .forwardingCorrections = forwardingCorrections(),
                                                 .baseMode = _activeBaseMode(),
-                                                .surveyActive = _facts->active()->rawValue().toBool()});
+                                                .baseState = _activeBaseState()});
 }
 
 QString GPSReceiver::summaryLabel() const
 {
     if (hasReceiver() && activeRole() == RTKSettings::ConfiguredBase) {
-        return _facts->active()->rawValue().toBool() ? tr("Survey", "Base survey-in in progress") : tr("Base");
+        return _activeBaseState() == GPSBaseState::Active ? tr("Survey", "Base survey-in in progress") : tr("Base");
     }
     return GPSReceiverMessages::fixLabel(gpsFixQualityFromValue(_facts->fixType()->rawValue().toInt()));
 }

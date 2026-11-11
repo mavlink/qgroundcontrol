@@ -116,6 +116,53 @@ void GPSReceiverFactGroupTest::_constellationCounts()
     QCOMPARE(changes.size(), 5);
 }
 
+void GPSReceiverFactGroupTest::_baseStatusFacts()
+{
+    ScriptedGPSReceiver harness;
+    GPSReceiver& receiver = harness.receiver;
+    QVERIFY(connectOverTcp(receiver));
+    ScriptedReceiverWorker* const worker = harness.workers.current();
+    GPSReceiverFactGroup& facts = *receiver.facts();
+    const auto position = [&facts] {
+        return GPSEllipsoidPosition{.latitudeDegrees = facts.baseLatitude()->rawValue().toDouble(),
+                                    .longitudeDegrees = facts.baseLongitude()->rawValue().toDouble(),
+                                    .altitudeMeters = facts.baseHeight()->rawValue().toDouble()};
+    };
+    const auto unreported = [&position] {
+        const GPSEllipsoidPosition reported = position();
+        return std::isnan(reported.latitudeDegrees) && std::isnan(reported.longitudeDegrees) &&
+               std::isnan(reported.altitudeMeters);
+    };
+    QCOMPARE(baseState(facts), GPSBaseState::Inactive);
+    QVERIFY(unreported());
+
+    // A running survey reports its mean so far, which is not a base position yet.
+    GPSBaseStatus status{.state = GPSBaseState::Active,
+                         .position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0},
+                         .meanAccuracyMeters = 3.0};
+    worker->baseStatus(status);
+    QCOMPARE(baseState(facts), GPSBaseState::Active);
+    QCOMPARE(facts.baseState()->enumStringValue(), QStringLiteral("Determining"));
+    QCOMPARE(position(), status.position);
+    QVERIFY(!facts.canSaveCurrentBasePosition());
+
+    status.state = GPSBaseState::Valid;
+    worker->baseStatus(status);
+    QCOMPARE(baseState(facts), GPSBaseState::Valid);
+    QCOMPARE(facts.baseState()->enumStringValue(), QStringLiteral("Valid"));
+    QCOMPARE(position(), status.position);
+
+    // A base that lost its position reports none.
+    worker->baseStatus({});
+    QCOMPARE(baseState(facts), GPSBaseState::Inactive);
+    QVERIFY(unreported());
+
+    worker->baseStatus(status);
+    receiver.disconnectReceiver();
+    QCOMPARE(baseState(facts), GPSBaseState::Inactive);
+    QVERIFY(unreported());
+}
+
 void GPSReceiverFactGroupTest::_currentBaseSaveValidity_data()
 {
     QTest::addColumn<QString>("field");

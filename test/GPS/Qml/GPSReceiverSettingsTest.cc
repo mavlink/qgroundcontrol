@@ -174,10 +174,13 @@ void GPSReceiverSettingsTest::_surveyCompletePrompt()
     QVERIFY2(status, qPrintable(engine.lastError()));
     auto* prompt = status->findChild<QObject*>(QStringLiteral("rtkSurveyCompletePrompt"));
     auto* save = status->findChild<QObject*>(QStringLiteral("rtkSurveySaveButton"));
-    QVERIFY(prompt && save);
-    // Still surveying: nothing to keep yet.
+    auto* accuracy = status->findChild<QObject*>(QStringLiteral("rtkSurveyAccuracy"));
+    QVERIFY(prompt && save && accuracy);
+    // Still surveying: nothing to keep yet, and the accuracy is the survey's so far.
     base.survey(0.75, true);
     QVERIFY(!prompt->property("visible").toBool());
+    QCOMPARE(accuracy->property("label").toString(),
+             QCoreApplication::translate("GPSReceiverStatus", "Current Accuracy"));
 
     // A position without a known accuracy cannot start a fixed base.
     base.survey(std::nullopt);
@@ -189,6 +192,7 @@ void GPSReceiverSettingsTest::_surveyCompletePrompt()
     base.survey(0.75);
     QVERIFY(prompt->property("visible").toBool());
     QVERIFY(save->property("visible").toBool());
+    QCOMPARE(accuracy->property("label").toString(), QCoreApplication::translate("GPSReceiverStatus", "Accuracy"));
     QVERIFY(QMetaObject::invokeMethod(save, "clicked"));
     QCOMPARE(settings.settings->fixedBasePositionLatitude()->rawValue().toDouble(), kSurveyedPosition.latitudeDegrees);
     QCOMPARE(settings.settings->fixedBasePositionAccuracy()->rawValue().toDouble(), 0.75);

@@ -460,7 +460,7 @@ void GPSReceiverConnectionPolicyTest::_observerActsOnReport()
     }
     QObject observer;
     bool acted = false;
-    connect(survey ? facts.active() : facts.fixType(), &Fact::rawValueChanged, &observer, [&] {
+    connect(survey ? facts.baseState() : facts.fixType(), &Fact::rawValueChanged, &observer, [&] {
         if (!receiver.hasReceiver() || std::exchange(acted, true)) {
             return;
         }

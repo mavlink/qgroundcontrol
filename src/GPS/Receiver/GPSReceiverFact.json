@@ -21,16 +21,38 @@
     "default":          0
 },
 {
-    "name":             "valid",
-    "shortDesc": "Survey-In Valid",
-    "type":             "bool",
-    "default":          false
+    "name":             "baseState",
+    "shortDesc": "Base Position",
+    "longDesc": "What a configured base reports of its base position, in every base mode: none, one that a survey or the receiver's own averaging is determining, or a valid one, from a finished survey or a fixed position.",
+    "type":             "uint8",
+    "enumStrings":      "None,Determining,Valid",
+    "enumValues":       "0,1,2",
+    "default":          0
 },
 {
-    "name":             "active",
-    "shortDesc": "Survey-In Active",
-    "type":             "bool",
-    "default":          false
+    "name":             "baseLatitude",
+    "shortDesc": "Base Position Latitude",
+    "longDesc": "Latitude of the base position the receiver reports, valid or not, such as the mean of a running survey. Unavailable while it reports none.",
+    "type":             "double",
+    "decimalPlaces":    9,
+    "default":          null
+},
+{
+    "name":             "baseLongitude",
+    "shortDesc": "Base Position Longitude",
+    "longDesc": "Longitude of the base position the receiver reports, valid or not, such as the mean of a running survey. Unavailable while it reports none.",
+    "type":             "double",
+    "decimalPlaces":    9,
+    "default":          null
+},
+{
+    "name":             "baseHeight",
+    "shortDesc": "Base Position Alt (WGS84)",
+    "longDesc": "Height above the WGS84 ellipsoid of the base position the receiver reports, valid or not, such as the mean of a running survey. Unavailable while it reports none.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "vertical m",
+    "default":          null
 },
 {
     "name":             "numSatellites",

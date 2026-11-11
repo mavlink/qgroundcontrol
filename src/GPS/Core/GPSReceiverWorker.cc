@@ -95,7 +95,7 @@ void GPSReceiverWorker::_runSession()
     sinks.onRTCM = [this](const QByteArray& message) {
         emit rtcmDataReceived(message, static_cast<qint64>(MonotonicClock::nowUs() / 1000));
     };
-    sinks.onBaseStatus = [this](const GPSBaseStatus& report) { emit surveyInStatusUpdated(report); };
+    sinks.onBaseStatus = [this](const GPSBaseStatus& report) { emit baseStatusUpdated(report); };
     bool identified = false;
     sinks.onReceiverDetected = [this, &identified](GPSType type) {
         identified = true;

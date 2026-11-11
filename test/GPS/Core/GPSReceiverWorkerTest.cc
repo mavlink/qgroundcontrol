@@ -598,7 +598,7 @@ void GPSReceiverWorkerTest::_configuredReceiverReportsReadyThenLoss()
         GPSType::Femto, GPSReceiverConfig{.base = config}, nullptr, clock.source());
     QSignalSpy ready(&worker, &GPSReceiverWorker::receiverReady);
     QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
-    QSignalSpy surveys(&worker, &GPSReceiverWorker::surveyInStatusUpdated);
+    QSignalSpy baseStatuses(&worker, &GPSReceiverWorker::baseStatusUpdated);
     worker.start();
     QVERIFY(worker.wait(TestTimeout::mediumDuration()));
     verifyExpectedLogMessage();
@@ -608,8 +608,8 @@ void GPSReceiverWorkerTest::_configuredReceiverReportsReadyThenLoss()
     // The transport's diagnostic reaches the receiver's message.
     QCOMPARE(errors.first().at(1).toString(), QStringLiteral("Scripted receiver connection lost"));
     if (const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&config.mode)) {
-        QCOMPARE(surveys.size(), 1);
-        const auto status = qvariant_cast<GPSBaseStatus>(surveys.first().first());
+        QCOMPARE(baseStatuses.size(), 1);
+        const auto status = qvariant_cast<GPSBaseStatus>(baseStatuses.first().first());
         QCOMPARE(status.position.latitudeDegrees, fixed->position.latitudeDegrees);
         QCOMPARE(status.position.longitudeDegrees, fixed->position.longitudeDegrees);
         QCOMPARE(status.position.altitudeMeters, fixed->position.altitudeMeters);

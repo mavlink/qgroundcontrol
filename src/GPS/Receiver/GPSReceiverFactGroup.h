@@ -42,8 +42,10 @@ class GPSReceiverFactGroup : public FactGroup
     QML_UNCREATABLE("Provided by GPSReceiver")
     Q_PROPERTY(Fact* currentDuration READ currentDuration CONSTANT FINAL)
     Q_PROPERTY(Fact* currentAccuracy READ currentAccuracy CONSTANT FINAL)
-    Q_PROPERTY(Fact* valid READ valid CONSTANT FINAL)
-    Q_PROPERTY(Fact* active READ active CONSTANT FINAL)
+    Q_PROPERTY(Fact* baseState READ baseState CONSTANT FINAL)
+    Q_PROPERTY(Fact* baseLatitude READ baseLatitude CONSTANT FINAL)
+    Q_PROPERTY(Fact* baseLongitude READ baseLongitude CONSTANT FINAL)
+    Q_PROPERTY(Fact* baseHeight READ baseHeight CONSTANT FINAL)
     Q_PROPERTY(Fact* numSatellites READ numSatellites CONSTANT FINAL)
     Q_PROPERTY(Fact* numSatellitesUsed READ numSatellitesUsed CONSTANT FINAL)
     Q_PROPERTY(Fact* fixType READ fixType CONSTANT FINAL)
@@ -59,13 +61,29 @@ class GPSReceiverFactGroup : public FactGroup
     friend class GPSManager;
 
 public:
+    /// The values of the baseState Fact: GPSBaseState, which QGCGPSCore declares without QML.
+    enum class BaseState
+    {
+        Inactive = static_cast<int>(GPSBaseState::Inactive),
+        Active = static_cast<int>(GPSBaseState::Active),
+        Valid = static_cast<int>(GPSBaseState::Valid),
+    };
+    Q_ENUM(BaseState)
+
     Fact* currentDuration() { return &_currentDurationFact; }
 
     Fact* currentAccuracy() { return &_currentAccuracyFact; }
 
-    Fact* valid() { return &_validFact; }
+    /// What a configured base reports of its base position, in every base mode.
+    Fact* baseState() { return &_baseStateFact; }
 
-    Fact* active() { return &_activeFact; }
+    /// The base position as the receiver reports it, valid or not; NaN while it reports none.
+    Fact* baseLatitude() { return &_baseLatitudeFact; }
+
+    Fact* baseLongitude() { return &_baseLongitudeFact; }
+
+    /// Above the WGS84 ellipsoid.
+    Fact* baseHeight() { return &_baseHeightFact; }
 
     Fact* numSatellites() { return &_numSatellitesFact; }
 
@@ -103,7 +121,7 @@ private:
     explicit GPSReceiverFactGroup(QObject* parent);
 
     // Written by GPSReceiver.
-    void _setSurvey(const GPSBaseStatus& report);
+    void _setBaseStatus(const GPSBaseStatus& report);
     void _setSatellites(const GPSSatelliteReport& report);
     void _setSolution(GPSFixQuality fixType, const GPSIntegrityReport& integrity);
     /// Clears the fix, satellites, and integrity of a receiver that stopped reporting position.
@@ -126,8 +144,10 @@ private:
 
     Fact _currentDurationFact = Fact(0, QStringLiteral("currentDuration"), FactMetaData::valueTypeDouble);
     Fact _currentAccuracyFact = Fact(0, QStringLiteral("currentAccuracy"), FactMetaData::valueTypeDouble);
-    Fact _validFact = Fact(0, QStringLiteral("valid"), FactMetaData::valueTypeBool);
-    Fact _activeFact = Fact(0, QStringLiteral("active"), FactMetaData::valueTypeBool);
+    Fact _baseStateFact = Fact(0, QStringLiteral("baseState"), FactMetaData::valueTypeUint8);
+    Fact _baseLatitudeFact = Fact(0, QStringLiteral("baseLatitude"), FactMetaData::valueTypeDouble);
+    Fact _baseLongitudeFact = Fact(0, QStringLiteral("baseLongitude"), FactMetaData::valueTypeDouble);
+    Fact _baseHeightFact = Fact(0, QStringLiteral("baseHeight"), FactMetaData::valueTypeDouble);
     Fact _numSatellitesFact = Fact(0, QStringLiteral("numSatellites"), FactMetaData::valueTypeInt32);
     Fact _numSatellitesUsedFact = Fact(0, QStringLiteral("numSatellitesUsed"), FactMetaData::valueTypeInt32);
     Fact _fixTypeFact = Fact(0, QStringLiteral("fixType"), FactMetaData::valueTypeUint32);
