@@ -112,10 +112,13 @@
         {
             "heading": "Correction Routing",
             "showWhen": "QGroundControl.settingsManager.gpsCorrectionSettings.userVisible",
-            "keywords": ["corrections", "rtcm", "source", "stream", "routing", "automatic", "priority"],
+            "keywords": ["corrections", "rtcm", "source", "stream", "routing", "automatic", "priority", "active vehicle"],
             "controls": [
                 {
                     "setting": "gpsCorrectionSettings.correctionSource"
+                },
+                {
+                    "setting": "gpsCorrectionSettings.correctionVehicles"
                 }
             ]
         }

@@ -89,6 +89,8 @@ public:
     {
         /// The only source routed to vehicles, or HighestPriority to select automatically.
         GPSCorrectionSettings::CorrectionSource source = GPSCorrectionSettings::HighestPriority;
+        /// The vehicles the selected stream is sent to; UDP forwarding does not depend on it.
+        GPSCorrectionSettings::CorrectionVehicles vehicles = GPSCorrectionSettings::AllVehicles;
         /// Listens for RTCM on a UDP port as the Udp source. A port that cannot be bound is retried every second.
         UdpInputConfiguration udpInput;
         /// Forwards the selected stream to a UDP peer.
