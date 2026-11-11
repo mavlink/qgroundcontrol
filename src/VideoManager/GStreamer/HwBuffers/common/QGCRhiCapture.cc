@@ -1,6 +1,7 @@
 #include "QGCRhiCapture.h"
 
 #if defined(QGC_HAS_ANY_GPU_PATH)
+#include "GstHwPathRegistry.h"
 #include "HwBuffers.h"
 #endif
 
@@ -144,8 +145,16 @@ void populateSnapshot(QRhi* rhi)
     }
 #endif
 
-    // Publish device pointers before the backend tag so a consumer's acquire-load on backend != -1 is guaranteed to see
-    // populated handles.
+#if defined(QGC_HAS_ANY_GPU_PATH)
+    for (const HwPathDescriptor* path : GstHwPathRegistry::paths()) {
+        if (path->probeDevice) {
+            path->probeDevice(*rhi);
+        }
+    }
+#endif
+
+    // Publish device pointers, and what the paths learned of the device, before the backend tag so a consumer's
+    // acquire-load on backend != -1 is guaranteed to see them.
     s_snapshot.d3d11Device.store(d3d11, std::memory_order_release);
     s_snapshot.d3d12Device.store(d3d12, std::memory_order_release);
     s_snapshot.adapterLuid.store(luid, std::memory_order_release);

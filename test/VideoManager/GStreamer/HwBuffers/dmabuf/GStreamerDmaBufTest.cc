@@ -33,6 +33,7 @@
 #include "gstqgc/GstQgcVideoFormats.h"
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
 #include "GstDmaBufVideoBuffer.h"
+#include "GstDmaBufVulkanImport.h"
 #include "GstQtDmaBufImport.h"
 #endif
 #if defined(QGC_HAS_ANY_GPU_PATH)
@@ -299,8 +300,8 @@ void GstHwBuffersTest::_testDmaBufPathNeedsQtEglDisplay()
         QSKIP("Qt renders with EGL on this platform");
     }
     HwVideoBufferContext context = HwBuffers::makeAdapterContext(true);
-    context.dmaBufEglDisplay = HwBuffers::dmaBufImportDisplay();
-    QVERIFY(!context.dmaBufEglDisplay);
+    context.dmaBufImporter = HwBuffers::dmaBufImportDisplay();
+    QVERIFY(!context.dmaBufImporter);
 
     // Without Qt's EGLDisplay no import can succeed: DMABuf memory must take the CPU path before any import attempt.
     GstVideoInfo info;
@@ -339,7 +340,7 @@ void GstHwBuffersTest::_testDmaBufPathResumesOnceDisplayIsKnown()
     HwVideoBufferContext context;
     context.gpuEnabled = true;
     QCOMPARE(pathTaken(context), HwVideoBufferPath::None);
-    context.dmaBufEglDisplay = reinterpret_cast<EGLDisplay>(quintptr(1));
+    context.dmaBufImporter = reinterpret_cast<EGLDisplay>(quintptr(1));
     QCOMPARE(pathTaken(context), HwVideoBufferPath::DmaBuf);
 #endif
 }
@@ -393,7 +394,7 @@ void GstHwBuffersTest::_testHwBufferFactoryCacheRejectsMemoryTypeChange()
 
     HwVideoBufferContext context;
     context.gpuEnabled = true;
-    context.dmaBufEglDisplay = reinterpret_cast<EGLDisplay>(quintptr(1));
+    context.dmaBufImporter = reinterpret_cast<EGLDisplay>(quintptr(1));
 
     HwResolvedPathCache cache;
     cache.path = HwVideoBufferPath::DmaBuf;
@@ -488,7 +489,7 @@ void GstHwBuffersTest::_testDmaBufTiledFrameDroppedWithoutImport()
     HwVideoBufferContext context;
     context.gpuEnabled = true;
     // Never reaches EGL: the disabled importer refuses the frame first.
-    context.dmaBufEglDisplay = qtDisplay ? reinterpret_cast<EGLDisplay>(quintptr(1)) : EGL_NO_DISPLAY;
+    context.dmaBufImporter = qtDisplay ? reinterpret_cast<EGLDisplay>(quintptr(1)) : EGL_NO_DISPLAY;
     const MappedFrame mapped = mapSampleToFrame(gst_sample_get_buffer(sample), gst_sample_get_caps(sample), info,
                                                 QVideoFrameFormat(QSize(64, 64), QVideoFrameFormat::Format_NV12),
                                                 context, std::make_shared<std::atomic<int>>(0));
@@ -632,26 +633,21 @@ void GstHwBuffersTest::_testDmaBufProducerWaitNeedsSignalledFences()
 #endif
 }
 
-void GstHwBuffersTest::_testDmaBufVulkanImportRejectsMultiPlanar_data()
+void GstHwBuffersTest::_testDmaBufVulkanImportNeedsProbedDevice_data()
 {
-    QTest::addColumn<int>("format");
     QTest::addColumn<int>("rhiBackend");
     QTest::addColumn<bool>("expectAccepted");
 
-    QTest::newRow("NV12 under Vulkan") << int(GST_VIDEO_FORMAT_NV12) << int(QRhi::Vulkan) << false;
-    QTest::newRow("P010 under Vulkan") << int(GST_VIDEO_FORMAT_P010_10LE) << int(QRhi::Vulkan) << false;
-    QTest::newRow("I420 under Vulkan") << int(GST_VIDEO_FORMAT_I420) << int(QRhi::Vulkan) << false;
-    QTest::newRow("RGBA under Vulkan") << int(GST_VIDEO_FORMAT_RGBA) << int(QRhi::Vulkan) << true;
-    QTest::newRow("BGRA under Vulkan") << int(GST_VIDEO_FORMAT_BGRA) << int(QRhi::Vulkan) << true;
-    QTest::newRow("NV12 under OpenGL") << int(GST_VIDEO_FORMAT_NV12) << int(QRhi::OpenGLES2) << true;
+    // No Vulkan device was probed here, so nothing says what it would import.
+    QTest::newRow("Vulkan") << int(QRhi::Vulkan) << false;
+    QTest::newRow("OpenGL") << int(QRhi::OpenGLES2) << true;
 }
 
-void GstHwBuffersTest::_testDmaBufVulkanImportRejectsMultiPlanar()
+void GstHwBuffersTest::_testDmaBufVulkanImportNeedsProbedDevice()
 {
-#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH) || !defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    QSKIP("DMABuf->Vulkan import not compiled in this build");
+#if !defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+    QSKIP("DMABuf import under Vulkan not compiled in this build");
 #else
-    QFETCH(int, format);
     QFETCH(int, rhiBackend);
     QFETCH(bool, expectAccepted);
 
@@ -661,13 +657,62 @@ void GstHwBuffersTest::_testDmaBufVulkanImportRejectsMultiPlanar()
     snapshotBackend.store(rhiBackend);
 
     GstVideoInfo info;
-    GstSample* sample = makeMemfdDmaBufSample(static_cast<GstVideoFormat>(format), info);
+    GstSample* sample = makeMemfdDmaBufSample(GST_VIDEO_FORMAT_NV12, info);
     QVERIFY(sample);
     const GstDmaBufVideoBuffer frame(sample, info, QVideoFrameFormat(QSize(64, 64), QVideoFrameFormat::Format_NV12),
                                      EGL_NO_DISPLAY);
     gst_sample_unref(sample);
 
     QCOMPARE(frame.validatePlaneHandles(), expectAccepted);
+    if (rhiBackend == int(QRhi::Vulkan)) {
+        QVERIFY2(!HwBuffers::dmaBufImportDisplay(), "the sink must not offer DMABuf to a device that can't import it");
+    }
+#endif
+}
+
+void GstHwBuffersTest::_testDmaBufVulkanRequestsDeviceExtensions_data()
+{
+    QTest::addColumn<QByteArray>("before");
+    QTest::addColumn<QByteArray>("after");
+
+    const QByteArray required =
+        "VK_KHR_external_memory_fd;VK_EXT_external_memory_dma_buf;"
+        "VK_EXT_image_drm_format_modifier";
+    QTest::newRow("unset") << QByteArray() << required;
+    // The user's stay, and one of ours they already named isn't repeated.
+    QTest::newRow("set by the user") << QByteArray("VK_EXT_external_memory_dma_buf;VK_KHR_maintenance1")
+                                     << QByteArray(
+                                            "VK_EXT_external_memory_dma_buf;VK_KHR_maintenance1;"
+                                            "VK_KHR_external_memory_fd;VK_EXT_image_drm_format_modifier");
+}
+
+void GstHwBuffersTest::_testDmaBufVulkanRequestsDeviceExtensions()
+{
+#if !defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+    QSKIP("DMABuf import under Vulkan not compiled in this build");
+#else
+    QFETCH(QByteArray, before);
+    QFETCH(QByteArray, after);
+
+    // What QRhi reads when it creates a Vulkan device.
+    constexpr char kVariable[] = "QT_VULKAN_DEVICE_EXTENSIONS";
+    const bool wasSet = qEnvironmentVariableIsSet(kVariable);
+    const QByteArray previous = qgetenv(kVariable);
+    const auto restore = qScopeGuard([&] {
+        if (wasSet) {
+            qputenv(kVariable, previous);
+        } else {
+            qunsetenv(kVariable);
+        }
+    });
+    if (before.isEmpty()) {
+        qunsetenv(kVariable);
+    } else {
+        qputenv(kVariable, before);
+    }
+
+    GstDmaBufVulkan::requestDeviceExtensions();
+    QCOMPARE(qgetenv(kVariable), after);
 #endif
 }
 

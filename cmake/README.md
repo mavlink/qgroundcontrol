@@ -138,9 +138,10 @@ everything that decides a downloaded SDK tree, because CI keys its SDK cache on 
 [README](../src/VideoManager/GStreamer/README.md#build-configuration) describes its modules and configure
 options.
 
-Each HwBuffers zero-copy GPU path is switched by `QGC_GST_ENABLE_<PATH>`: DMABUF, GLMEMORY, IOSURFACE, D3D11 and
-D3D12 are ON by default; CUDA, AHARDWAREBUFFER and VULKAN, which no sink bin can reach at runtime, are OFF unless asked
-for. Configure prints which compiled paths the sink can't reach.
+Each HwBuffers zero-copy GPU path is switched by `QGC_GST_ENABLE_<PATH>`: DMABUF, DMABUF_VULKAN (the DMABuf path
+under a Vulkan Qt Quick), GLMEMORY, IOSURFACE, D3D11 and D3D12 are ON by default; CUDA, AHARDWAREBUFFER and VULKAN,
+which no sink bin can reach at runtime, are OFF unless asked for. Configure prints which compiled paths the sink can't
+reach.
 
 ## Presets
 

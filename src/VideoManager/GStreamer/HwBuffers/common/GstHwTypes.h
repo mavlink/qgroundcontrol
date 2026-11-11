@@ -16,13 +16,16 @@ enum class HwVideoBufferPath
     Count,
 };
 
-/// Inputs the factory needs to build a GPU buffer. The layout is the same in every build: EGL displays are stored as
-/// void* (EGLDisplay is a void* typedef, EGL_NO_DISPLAY is null), so no EGL header or QGC_HAS_* define is needed here.
+/// Inputs the factory needs to build a GPU buffer. The layout is the same in every build: native handles are stored
+/// as void* (EGLDisplay is a void* typedef, EGL_NO_DISPLAY is null), so no EGL or Vulkan header or QGC_HAS_* define is
+/// needed here.
 struct HwVideoBufferContext
 {
     bool gpuEnabled = false;
-    void* dmaBufEglDisplay = nullptr;  ///< EGLDisplay for the DMABuf path
-    void* ahbEglDisplay = nullptr;     ///< EGLDisplay for the AHardwareBuffer path
+    /// What the DMABuf path imports with now (HwBuffers::dmaBufImportDisplay()): Qt's EGLDisplay, or under Vulkan
+    /// its VkPhysicalDevice. Null while it can't import.
+    void* dmaBufImporter = nullptr;
+    void* ahbEglDisplay = nullptr;  ///< EGLDisplay for the AHardwareBuffer path
 };
 
 namespace GstHw {

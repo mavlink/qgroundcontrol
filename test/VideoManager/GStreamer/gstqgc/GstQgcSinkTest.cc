@@ -634,10 +634,14 @@ void GstQgcSinkTest::_testRenderBackendNames()
         QVERIFY(QString::fromLatin1(GstQgc::zeroCopyPathName(backend)).size() > 0);
     }
     QCOMPARE(names.size(), 7);
-    // No GPU import without a GPU API, nor through the dormant Vulkan import.
+    // No GPU import without a GPU API; under Vulkan, only DMABuf's, where it is compiled.
     QCOMPARE(QString::fromLatin1(GstQgc::zeroCopyPathName(RenderBackend::Unknown)), QStringLiteral("CPU"));
     QCOMPARE(QString::fromLatin1(GstQgc::zeroCopyPathName(RenderBackend::Null)), QStringLiteral("CPU"));
-    QVERIFY(QString::fromLatin1(GstQgc::zeroCopyPathName(RenderBackend::Vulkan)).startsWith(QStringLiteral("CPU")));
+#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+    QCOMPARE(QString::fromLatin1(GstQgc::zeroCopyPathName(RenderBackend::Vulkan)), QStringLiteral("DMABuf"));
+#else
+    QCOMPARE(QString::fromLatin1(GstQgc::zeroCopyPathName(RenderBackend::Vulkan)), QStringLiteral("CPU"));
+#endif
 }
 
 void GstQgcSinkTest::_testRenderTargetSharesGlContext()

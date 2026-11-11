@@ -176,6 +176,11 @@ if(ANDROID AND QGC_GST_ENABLE_VULKAN)
     set(_qgc_vulkan_loader_libs "${QGC_GST_VULKAN_LOADER_LIB}")
 endif()
 
+# The DMABuf import under Vulkan calls Vulkan through Qt and only needs the headers Qt found for its own Vulkan support.
+if(TARGET WrapVulkanHeaders::WrapVulkanHeaders)
+    set(QGC_VULKAN_HEADERS TRUE)
+endif()
+
 if(MACOS OR IOS)
     # TARGET_DIRECTORY: source-file props are dir-scoped; QGCGStreamer is created in the parent CMakeLists, so name it
     # explicitly here for SKIP_PRECOMPILE_HEADERS to bind to that target.
@@ -188,7 +193,7 @@ if(MACOS OR IOS)
     )
 endif()
 
-# ---- GPU path table (row order matters: CUDA builds on DMABuf) ----
+# ---- GPU path table (row order matters: DMABuf_Vulkan and CUDA build on DMABuf) ----
 # cmake-format: off
 # Linux DMABuf zero-copy (VA-API / V4L2 / Mesa) through Qt Multimedia's DMABuf importer. QGC_GST_HAS_DMABUF comes from
 # cmake/GStreamer/Orchestrator.cmake.
@@ -198,7 +203,14 @@ set(_qgc_gpu_row_DMABuf
     EGL REQUIRED
     DEFINE QGC_HAS_GST_DMABUF_GPU_PATH
     SOURCES dmabuf/GstDmaBufVideoBuffer.cc dmabuf/GstDmaBufVideoBuffer.h dmabuf/GstQtDmaBufImport.cc
-            dmabuf/GstQtDmaBufImport.h dmabuf/GstDmaBufVulkanImport.cc dmabuf/GstDmaBufVulkanImport.h)
+            dmabuf/GstQtDmaBufImport.h)
+# The DMABuf path under a Vulkan QRhi (QSG_RHI_BACKEND=vulkan): each plane imported as a VkImage on Qt's device. Needs
+# Qt's Vulkan support, not gst-vulkan.
+set(_qgc_gpu_row_DMABuf_Vulkan
+    PLATFORMS LINUX
+    REQUIRES _qgc_gpu_DMABuf QT_FEATURE_vulkan QGC_VULKAN_HEADERS
+    DEFINE QGC_HAS_GST_DMABUF_VULKAN_IMPORT
+    SOURCES dmabuf/GstDmaBufVulkanImport.cc dmabuf/GstDmaBufVulkanImport.h)
 # NVMM/CUDA: exports CUDA memory as a DMABuf fd and reuses the DMABuf EGLImage path; gst_cuda_memory_export is 1.24+.
 set(_qgc_gpu_row_CUDA
     PLATFORMS LINUX
@@ -262,6 +274,7 @@ set(_qgc_gpu_row_Vulkan
 set(_qgc_gpu_opt_in_rows CUDA AHardwareBuffer Vulkan)
 set(_qgc_gpu_rows
     DMABuf
+    DMABuf_Vulkan
     CUDA
     GLMemory
     IOSurface

@@ -58,7 +58,7 @@ int exportCudaMemoryToFd(GstMemory* mem)
 std::unique_ptr<GstHwVideoBuffer> exportSample(GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
                                                const HwVideoBufferContext& context)
 {
-    if (context.dmaBufEglDisplay == EGL_NO_DISPLAY) {
+    if (context.dmaBufImporter == EGL_NO_DISPLAY) {
         return nullptr;  // No EGLImage display to import the exported fd; fall back to CPU.
     }
 
@@ -117,7 +117,8 @@ std::unique_ptr<GstHwVideoBuffer> exportSample(GstSample* sample, const GstVideo
     }
 
     // GstHwVideoBuffer refs the sample; our local ref drops here.
-    auto buf = std::make_unique<GstDmaBufVideoBuffer>(dmaSample, info, format, context.dmaBufEglDisplay);
+    auto buf =
+        std::make_unique<GstDmaBufVideoBuffer>(dmaSample, info, format, GstDmaBufVideoBuffer::eglDisplayFor(context));
     gst_sample_unref(dmaSample);
     return buf;
 }

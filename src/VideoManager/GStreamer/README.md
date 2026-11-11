@@ -91,7 +91,8 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
     and DMABuf on EGL while the DMABuf import works (see
     [DMABuf zero-copy diagnostics](#dmabuf-zero-copy-diagnostics)), AHardwareBuffer on EGL (Android), and GLMemory,
     which reaches Qt through the GL share group, on EGL or GLX. Under Direct3D11: D3D11Memory. Under Direct3D12, the
-    d3d12convert variant (below). Vulkan, Metal and OpenGL on WGL or CGL get system memory only. vtdec's
+    d3d12convert variant (below). Under Vulkan: DMA_DRM in the layouts Qt's device imports (see
+    [DMABuf under Vulkan](#dmabuf-under-vulkan)). Metal and OpenGL on WGL or CGL get system memory only. vtdec's
     IOSurface-backed frames arrive as system memory.
   - GLMemory always carries `texture-target=2D`, the only target the GL path samples. It also makes glcolorconvert
     convert amcvideodec's external-OES textures, which Qt would otherwise sample black.
@@ -121,7 +122,8 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
 
 Per-platform import of decoded GPU frames without a copy. Most paths wrap their native textures in
 `GstHwFrameTexturesBase : QVideoFrameTextures`; the DMABuf path hands its planes to Qt Multimedia's DMABuf importer
-(`dmabuf/GstQtDmaBufImport`, the only code using that private Qt API):
+(`dmabuf/GstQtDmaBufImport`, the only code using that private Qt API), or, when Qt Quick renders with Vulkan, imports
+them as VkImages itself (`dmabuf/GstDmaBufVulkanImport`):
 
 - **Platforms**: `dmabuf` (Linux/VA-API), `gl` (Linux, Android), `vulkan`, `d3d` (D3D11/D3D12), `cuda`, `apple` (IOSurface), `android` (AHardwareBuffer).
 - **`HwPathDescriptor`**: each backend describes its path once (memory match, buffer construction, cache reset,
@@ -244,8 +246,9 @@ With `gpu-zerocopy`, `qgcvideosinkbin` picks one of four variants when it is bui
 `glupload` hands GLMemory to Qt through the GL share group, so it needs Qt Quick on OpenGL, over EGL or GLX. That
 holds for any OpenGL on Linux and Android, so the bin doesn't wait to learn which: it may be built before the scene
 graph runs, and Android can't tell EGL until then. `dmabuf` hands EGLImages to Qt's EGL display, so it needs OpenGL
-over EGL. Under any other renderer, such as Vulkan, the bin falls back to passthrough, which on Linux means system
-memory: gst-gl's GLMemory would otherwise be downloaded and uploaded again for every frame.
+over EGL. Under any other renderer, such as Vulkan, the bin falls back to passthrough, which on Linux means DMA_DRM
+frames under Vulkan (see [DMABuf under Vulkan](#dmabuf-under-vulkan)) and system memory otherwise: gst-gl's GLMemory
+would otherwise be downloaded and uploaded again for every frame.
 
 When both are compiled, `QGC_GST_GPU_BIN` (`glupload` or `dmabuf`, case-insensitive, read once per process) picks
 between them, and an explicit value is used even under a renderer the variant doesn't suit, with a warning. An unknown
@@ -286,6 +289,40 @@ textures.
 `GstHwBuffersGlReadbackTest` reads imported DMABuf planes back from a GL QRhi. CTest runs it on xcb with `xcb_egl` and
 skips it without an X display; a plain memfd stands in for a dma-buf under Mesa's software rasterizer, and a VA-API
 decoder's tiled output is compared with its system-memory output on real hardware.
+
+#### DMABuf under Vulkan
+
+Linux builds pin Qt Quick to OpenGL (`HwBuffers::configureQtGraphics()`); `QSG_RHI_BACKEND=vulkan` selects Vulkan
+instead. The DMABuf path then imports each plane of a frame as a single-plane VkImage on Qt's device, bound to the
+dma-buf through `VK_EXT_external_memory_dma_buf` with the frame's modifier (`VK_EXT_image_drm_format_modifier`), in
+the format Qt samples that plane as (R8, RG8, R16, RG16, RGBA8 or BGRA8). That is what Qt's EGL importer does with one
+EGLImage per plane, so NV12, P010 and I420 need no multi-planar image and no YCbCr sampler. Built with
+`QGC_GST_ENABLE_DMABUF_VULKAN` (on by default where Qt has Vulkan support and found the Vulkan headers); it needs
+neither gst-vulkan nor a link to the Vulkan loader.
+
+- Qt's device must have `VK_KHR_external_memory_fd`, `VK_EXT_external_memory_dma_buf` and
+  `VK_EXT_image_drm_format_modifier` enabled, so QGC adds them to `QT_VULKAN_DEVICE_EXTENSIONS` before Qt starts;
+  QRhi enables those the device has. When the scene graph starts, the device is asked once (`probeDevice()`) for the
+  modifiers it imports each plane format with as a sampled image with one memory plane. It imports nothing when it
+  lacks an extension or Vulkan 1.2: DMABuf frames then take the CPU path, and the
+  `Video.GStreamer.HwBuffers.GstDmaBufVulkan` debug category says why.
+- The sink offers DMA_DRM caps only, for the (format, modifier) pairs every plane of which the device imports. Vulkan
+  takes no implicit layout, so it offers no legacy `memory:DMABuf` caps; a dma-buf that arrives under plain
+  `video/x-raw` caps, as a V4L2 decoder exports it, is imported as LINEAR.
+- Vulkan doesn't wait on a dma-buf's implicit fences, and QRhi's submission can't be handed the producer's fence, so
+  the import first blocks, for at most 100 ms, until `poll()` reports the producer's writes complete, and takes the
+  CPU path when it doesn't. The frame's buffer stays referenced until the GPU has finished the last frame that sampled
+  its images, so the decoder can't write the next picture into it meanwhile.
+- The import gives QRhi the images in `VK_IMAGE_LAYOUT_GENERAL`, the layout that keeps a foreign producer's contents,
+  without the queue-family transfer from `VK_QUEUE_FAMILY_FOREIGN_EXT` the specification describes: QRhi issues the
+  barriers and has no hook for one.
+- Failed imports count towards the DMABuf path's disable latch as under OpenGL.
+
+`GstHwBuffersVulkanReadbackTest` imports VA-API frames (a decoder's NV12, and I420, P010, RGBA and BGRA from the
+postprocessor, in whichever of the offered layouts the driver picks) into a Vulkan QRhi and compares
+`QVideoFrame::toImage()` with the system-memory frame; it also plays a VA stream into `qgcvideosinkbin` under a
+Vulkan render target. CTest runs it on xcb; it skips without a Vulkan device that imports dma-bufs, as Mesa's lavapipe
+doesn't. Verified on Intel (Mesa ANV with the iHD VA driver, LINEAR and Tile4 layouts) only.
 
 ### macOS / Windows / iOS
 
@@ -362,6 +399,7 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 | `GstSelfTestPipelineTest` | Integration | The [boot self-test](#boot-self-test) against the GStreamer the tests run on, and its software retry after a hardware decoder fails mid-stream, which restores the decoder ranks. |
 | `GstHwBuffersPipelineTest` | Integration, GPU | Pipelines that upload into or decode to GPU memory (DMABuf, GLMemory, Vulkan, D3D11/D3D12, IOSurface) and the path each frame takes; D3D11/D3D12 and IOSurface frames are also converted with `QVideoFrame::toImage()` on a QRhi of that API and compared with the CPU frame; the D3D QRhi uses the WARP software adapter when `QSG_RHI_PREFER_SOFTWARE_RENDERER` is set or DXGI lists no hardware adapter. Software frames through the glupload bin and the Windows D3D11 sink. Skips without the device. |
 | `GstHwBuffersGlReadbackTest` | Integration, GPU | DMABuf planes and glupload's GLMemory frames imported into a GL QRhi that shares Qt's EGL context, read back pixel by pixel and converted with `QVideoFrame::toImage()` (xcb with `xcb_egl`). |
+| `GstHwBuffersVulkanReadbackTest` | Integration, GPU | VA-API DMABuf frames imported into a Vulkan QRhi and converted with `QVideoFrame::toImage()`, and a VA stream into the sink under a Vulkan render target (xcb). |
 | `GstVideoReceiverPipelineTest` | Integration | `GstVideoReceiver` end to end against the H.264 test stream it sends itself on loopback: states, display, restarts, config changes, a mid-stream resolution change, H.265, MockLink's streams, screenshots. Receivers and servers in every `GstVideoReceiver*Test` listen on port 0, so parallel runs never collide. |
 | `GstVideoReceiverReconnectTest` | Integration | Permanent failures, reconnect backoff after a failed start, the restart policy on stream loss, and an RTSP server that never answers. |
 | `GstVideoReceiverRecordingTest` | Integration | Recordings that stay playable: decoder-only recovery, across reconnects, slow and hung storage, recorder errors, stream end, deactivation and bounded teardown. |

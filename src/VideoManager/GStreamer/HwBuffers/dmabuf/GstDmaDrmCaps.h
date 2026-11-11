@@ -15,6 +15,11 @@ namespace GstHw {
 /// system catch-all.
 std::string buildSupportedDmaDrmCaps(std::span<const GstVideoFormat> formats, void* display);
 
+/// The same fragment for Qt Quick on Vulkan: the (format, modifier) pairs of @p formats every plane of which Qt's
+/// Vulkan device imports as an image of its own (GstDmaBufVulkan::probeDevice()). "" until that device is known, when
+/// it can't import, and in builds without the DMABuf import under Vulkan.
+std::string buildVulkanDmaDrmCaps(std::span<const GstVideoFormat> formats);
+
 #ifdef QGC_UNITTEST_BUILD
 /// True when @p modifier carries no compression or auxiliary plane, so its planes can be imported one by one.
 bool dmaDrmModifierImportableForTest(guint64 modifier) noexcept;

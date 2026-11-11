@@ -15,7 +15,10 @@
 #include "QGCRhiCapture.h"
 #endif
 #if defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+#include <rhi/qrhi.h>
+
 #include "GstDmaBufVideoBuffer.h"
+#include "GstDmaBufVulkanImport.h"
 #ifdef QGC_UNITTEST_BUILD
 #include "gstqgc/GstQgcCaps.h"
 #endif
@@ -103,9 +106,9 @@ void configureQtGraphics([[maybe_unused]] bool softwareRendering)
 {
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID) && \
     (defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH))
-    // GL is the only working desktop-Linux GStreamer zero-copy backend (GLMemory and DMABuf/EGLImage both import into a
-    // GL RHI; Vulkan import dormant); pin it unless the user chose a backend. GL is always present on Linux, so no
-    // QRhi::probe.
+    // GL takes every desktop-Linux zero-copy path (GLMemory and DMABuf/EGLImage both import into a GL RHI), Vulkan
+    // only DMABuf, in the layouts its device imports: pin GL unless the user chose a backend. GL is always present on
+    // Linux, so no QRhi::probe.
     if (!softwareRendering && !qEnvironmentVariableIsSet("QSG_RHI_BACKEND")) {
         QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
     }
@@ -118,6 +121,10 @@ void configureQtGraphics([[maybe_unused]] bool softwareRendering)
     // The GL and DMABuf paths both need QOpenGLContext::globalShareContext(), which this attribute enables.
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH) || defined(QGC_HAS_GST_DMABUF_GPU_PATH)
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+#endif
+    // Read only when Qt creates a Vulkan device, as it does with QSG_RHI_BACKEND=vulkan.
+#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+    GstDmaBufVulkan::requestDeviceExtensions();
 #endif
 }
 
@@ -165,6 +172,14 @@ void* dmaBufImportDisplay() noexcept
         return environment->dmaBufDisplay;
     }
 #endif
+    // Qt can have an EGLDisplay under Vulkan too (its global share context), which imports nothing for a Vulkan QRhi.
+    if (QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire) == static_cast<int>(QRhi::Vulkan)) {
+#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+        return GstDmaBufVulkan::importDevice();
+#else
+        return nullptr;
+#endif
+    }
     return QGCRhiCapture::qtEglDisplay();
 #else
     return nullptr;

@@ -1,36 +1,195 @@
 #include "GstDmaBufVulkanImport.h"
 
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && defined(QGC_HAS_GST_VULKAN_GPU_PATH)
+#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
 
 #include <algorithm>
 #include <atomic>
 #include <drm_fourcc.h>
 #include <fcntl.h>
-#include <gst/allocators/gstdmabuf.h>
-#include <gst/video/video.h>
 #include <limits>
+#include <private/qvideotexturehelper_p.h>
 #include <rhi/qrhi.h>
 #include <rhi/qrhi_platform.h>
 #include <unistd.h>
-#include <vector>
+#include <utility>
 
+#include <QtCore/QByteArray>
+#include <QtCore/QByteArrayList>
 #include <QtCore/QLoggingCategory>
-#include <QtCore/QScopeGuard>
+#include <QtCore/QMutex>
+#include <QtCore/QMutexLocker>
+#include <QtCore/QVersionNumber>
+#include <QtCore/QtEnvironmentVariables>
+#include <QtGui/QVulkanFunctions>
 #include <QtGui/QVulkanInstance>
 
-#include "GstDmaBufVideoBuffer.h"
-#include "GstHwImportPreflight.h"
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
-#include "GstHwVideoInfo.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GstDmaBufVulkanLog, "Video.GStreamer.HwBuffers.GstDmaBufVulkan")
 
 namespace {
 
+using GstHw::kMaxPlanes;
+
+constexpr char kDeviceExtensionsVariable[] = "QT_VULKAN_DEVICE_EXTENSIONS";
+
+// VK_EXT_image_drm_format_modifier also needs VK_KHR_image_format_list, which is core in the Vulkan 1.2 the import
+// requires.
+constexpr const char* kRequiredDeviceExtensions[] = {
+    VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME,
+    VK_EXT_EXTERNAL_MEMORY_DMA_BUF_EXTENSION_NAME,
+    VK_EXT_IMAGE_DRM_FORMAT_MODIFIER_EXTENSION_NAME,
+};
+
+/// The formats planes are imported in: the VkFormat of the QRhiTexture Qt samples a plane through, keyed by the DRM
+/// fourcc GstQtDmaBufImport::planeFourccs() names it with. Bytes are in memory order, which Qt's shaders swizzle.
+struct PlaneFormat
+{
+    quint32 drmFourcc;
+    QRhiTexture::Format rhiFormat;
+    VkFormat vkFormat;
+};
+
+constexpr PlaneFormat kPlaneFormats[] = {
+    {DRM_FORMAT_R8, QRhiTexture::R8, VK_FORMAT_R8_UNORM},
+    {DRM_FORMAT_GR88, QRhiTexture::RG8, VK_FORMAT_R8G8_UNORM},
+    {DRM_FORMAT_R16, QRhiTexture::R16, VK_FORMAT_R16_UNORM},
+    {DRM_FORMAT_GR1616, QRhiTexture::RG16, VK_FORMAT_R16G16_UNORM},
+    {DRM_FORMAT_ABGR8888, QRhiTexture::RGBA8, VK_FORMAT_R8G8B8A8_UNORM},
+    {DRM_FORMAT_ARGB8888, QRhiTexture::BGRA8, VK_FORMAT_B8G8R8A8_UNORM},
+};
+constexpr std::size_t kPlaneFormatCount = std::size(kPlaneFormats);
+
+/// Index into kPlaneFormats of the entry @p matches accepts; kPlaneFormatCount when there is none.
+template <class Matches>
+std::size_t planeFormatIndex(Matches&& matches)
+{
+    return static_cast<std::size_t>(std::find_if(std::begin(kPlaneFormats), std::end(kPlaneFormats), matches) -
+                                    std::begin(kPlaneFormats));
+}
+
+constexpr quint64 explicitModifier(quint64 modifier) noexcept
+{
+    return (modifier == DRM_FORMAT_MOD_INVALID) ? DRM_FORMAT_MOD_LINEAR : modifier;
+}
+
+/// What the QRhi probed last imports; empty lists when its device can't import at all.
+struct ImportDevice
+{
+    const QRhi* rhi = nullptr;
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    /// Per kPlaneFormats entry, the modifiers the device takes it with as a sampled, single-plane dma-buf image.
+    std::array<std::vector<quint64>, kPlaneFormatCount> modifiers;
+
+    bool imports() const
+    {
+        return std::any_of(modifiers.begin(), modifiers.end(), [](const auto& list) { return !list.empty(); });
+    }
+
+    bool imports(std::size_t planeFormat, quint64 modifier) const
+    {
+        const auto& list = modifiers[planeFormat];
+        return std::find(list.begin(), list.end(), modifier) != list.end();
+    }
+};
+
+QMutex s_deviceMutex;
+ImportDevice s_device;
+// s_device.physicalDevice while that device imports: the streaming threads' check, without the lock.
+std::atomic<void*> s_importDevice{nullptr};
+const char s_deviceCleanupKey = 0;
+
 GstHw::MapDiagnostics s_diag;
-std::atomic<bool> s_loggedVulkanUnimpl{false};
+std::atomic<bool> s_loggedImportFailed{false};
+
+/// True when @p physicalDevice has every extension of kRequiredDeviceExtensions and Qt was asked to enable them: QRhi
+/// enables exactly the extensions QT_VULKAN_DEVICE_EXTENSIONS names that the device has, and Vulkan can't tell which
+/// are enabled on a device somebody else created.
+bool deviceExtensionsEnabled(QVulkanFunctions& functions, VkPhysicalDevice physicalDevice, QByteArray& missing)
+{
+    uint32_t count = 0;
+    functions.vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &count, nullptr);
+    std::vector<VkExtensionProperties> supported(count);
+    if (functions.vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &count, supported.data()) !=
+        VK_SUCCESS) {
+        count = 0;
+    }
+    supported.resize(count);
+    const QByteArrayList requested = qgetenv(kDeviceExtensionsVariable).split(';');
+    for (const char* const extension : kRequiredDeviceExtensions) {
+        const bool deviceHasIt = std::any_of(supported.begin(), supported.end(), [extension](const auto& candidate) {
+            return qstrcmp(candidate.extensionName, extension) == 0;
+        });
+        if (!deviceHasIt || !requested.contains(extension)) {
+            missing = QByteArray(extension) + (deviceHasIt ? " (not requested)" : " (not supported)");
+            return false;
+        }
+    }
+    return true;
+}
+
+/// The modifiers @p physicalDevice imports a dma-buf with as a sampled image of @p format with one memory plane, which
+/// leaves out the layouts with auxiliary (compression) planes.
+std::vector<quint64> queryImportableModifiers(QVulkanFunctions& functions, VkPhysicalDevice physicalDevice,
+                                              VkFormat format)
+{
+    VkDrmFormatModifierPropertiesListEXT list = {};
+    list.sType = VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT;
+    VkFormatProperties2 properties = {};
+    properties.sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2;
+    properties.pNext = &list;
+    functions.vkGetPhysicalDeviceFormatProperties2(physicalDevice, format, &properties);
+    std::vector<VkDrmFormatModifierPropertiesEXT> candidates(list.drmFormatModifierCount);
+    list.pDrmFormatModifierProperties = candidates.data();
+    functions.vkGetPhysicalDeviceFormatProperties2(physicalDevice, format, &properties);
+    candidates.resize(list.drmFormatModifierCount);
+
+    std::vector<quint64> importable;
+    for (const VkDrmFormatModifierPropertiesEXT& candidate : candidates) {
+        if ((candidate.drmFormatModifierPlaneCount != 1) ||
+            !(candidate.drmFormatModifierTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT)) {
+            continue;
+        }
+        VkPhysicalDeviceImageDrmFormatModifierInfoEXT modifierInfo = {};
+        modifierInfo.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_DRM_FORMAT_MODIFIER_INFO_EXT;
+        modifierInfo.drmFormatModifier = candidate.drmFormatModifier;
+        modifierInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        VkPhysicalDeviceExternalImageFormatInfo externalInfo = {};
+        externalInfo.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_IMAGE_FORMAT_INFO;
+        externalInfo.pNext = &modifierInfo;
+        externalInfo.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
+        VkPhysicalDeviceImageFormatInfo2 imageInfo = {};
+        imageInfo.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_FORMAT_INFO_2;
+        imageInfo.pNext = &externalInfo;
+        imageInfo.format = format;
+        imageInfo.type = VK_IMAGE_TYPE_2D;
+        imageInfo.tiling = VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT;
+        imageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+        VkExternalImageFormatProperties externalProperties = {};
+        externalProperties.sType = VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES;
+        VkImageFormatProperties2 imageProperties = {};
+        imageProperties.sType = VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2;
+        imageProperties.pNext = &externalProperties;
+        if ((functions.vkGetPhysicalDeviceImageFormatProperties2(physicalDevice, &imageInfo, &imageProperties) ==
+             VK_SUCCESS) &&
+            (externalProperties.externalMemoryProperties.externalMemoryFeatures &
+             VK_EXTERNAL_MEMORY_FEATURE_IMPORTABLE_BIT)) {
+            importable.push_back(candidate.drmFormatModifier);
+        }
+    }
+    return importable;
+}
+
+void forgetDevice(const QRhi* rhi)
+{
+    const QMutexLocker lock(&s_deviceMutex);
+    if (s_device.rhi == rhi) {
+        s_importDevice.store(nullptr, std::memory_order_release);
+        s_device = {};
+    }
+}
 
 /// Entry points the import needs. Device-level ones come from vkGetDeviceProcAddr for the QRhi's VkDevice: an
 /// instance-level lookup of a device function may return a trampoline or null.
@@ -106,40 +265,55 @@ const DeviceFns& deviceFns(QVulkanInstance& inst, VkDevice dev)
     return fns;
 }
 
-/// An imported image and its memory, owned by one frame bundle.
-struct OwnedImage
+/// The images of one frame and their memory, owned by one frame bundle, and the buffer they sample.
+struct OwnedPlanes
 {
     VkDevice dev = VK_NULL_HANDLE;
-    VkImage image = VK_NULL_HANDLE;
-    VkDeviceMemory memory = VK_NULL_HANDLE;
+    std::array<VkImage, kMaxPlanes> images{};
+    std::array<VkDeviceMemory, kMaxPlanes> memories{};
+    /// Referenced until the GPU is done with the images, so the decoder can't write the next frame into it meanwhile.
+    GstBuffer* buffer = nullptr;
     DeviceFns fns;
 };
 
-// Render-thread confined, like the QRhi whose queue the fences are submitted to.
-struct RetiredImage
+void destroyPlanes(const OwnedPlanes& owned)
 {
-    OwnedImage owned;
-    VkFence fence = VK_NULL_HANDLE;
-};
-
-thread_local std::vector<RetiredImage> t_retiredImages;
-const char s_retiredImagesCleanupKey = 0;
-
-void destroyRetired(const RetiredImage& retired)
-{
-    const OwnedImage& o = retired.owned;
-    o.fns.destroyImage(o.dev, o.image, nullptr);
-    o.fns.freeMemory(o.dev, o.memory, nullptr);
-    if (retired.fence != VK_NULL_HANDLE) {
-        o.fns.destroyFence(o.dev, retired.fence, nullptr);
+    for (int i = 0; i < kMaxPlanes; ++i) {
+        if (owned.images[i] != VK_NULL_HANDLE) {
+            owned.fns.destroyImage(owned.dev, owned.images[i], nullptr);
+        }
+        if (owned.memories[i] != VK_NULL_HANDLE) {
+            owned.fns.freeMemory(owned.dev, owned.memories[i], nullptr);
+        }
+    }
+    if (owned.buffer) {
+        gst_buffer_unref(owned.buffer);
     }
 }
 
-// Destroys @p dev's retired images whose fence signalled; with @p waitAll (QRhi teardown) waits for every fence first.
+// Render-thread confined, like the QRhi whose queue the fences are submitted to.
+struct RetiredPlanes
+{
+    OwnedPlanes owned;
+    VkFence fence = VK_NULL_HANDLE;
+};
+
+thread_local std::vector<RetiredPlanes> t_retiredPlanes;
+const char s_retiredPlanesCleanupKey = 0;
+
+void destroyRetired(const RetiredPlanes& retired)
+{
+    destroyPlanes(retired.owned);
+    if (retired.fence != VK_NULL_HANDLE) {
+        retired.owned.fns.destroyFence(retired.owned.dev, retired.fence, nullptr);
+    }
+}
+
+// Destroys @p dev's retired planes whose fence signalled; with @p waitAll (QRhi teardown) waits for every fence first.
 void reapRetired(VkDevice dev, bool waitAll)
 {
-    for (auto it = t_retiredImages.begin(); it != t_retiredImages.end();) {
-        const OwnedImage& o = it->owned;
+    for (auto it = t_retiredPlanes.begin(); it != t_retiredPlanes.end();) {
+        const OwnedPlanes& o = it->owned;
         if (o.dev != dev) {
             ++it;
             continue;
@@ -151,13 +325,13 @@ void reapRetired(VkDevice dev, bool waitAll)
             continue;
         }
         destroyRetired(*it);
-        it = t_retiredImages.erase(it);
+        it = t_retiredPlanes.erase(it);
     }
 }
 
-void retire(VkQueue queue, const OwnedImage& owned)
+void retire(VkQueue queue, const OwnedPlanes& owned)
 {
-    RetiredImage retired{owned};
+    RetiredPlanes retired{owned};
     const VkFenceCreateInfo fenceInfo = {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, nullptr, 0};
     // A submit without batches signals its fence once all work already submitted to the queue has completed.
     if (owned.fns.createFence(owned.dev, &fenceInfo, nullptr, &retired.fence) != VK_SUCCESS ||
@@ -166,108 +340,118 @@ void retire(VkQueue queue, const OwnedImage& owned)
         destroyRetired(retired);
         return;
     }
-    t_retiredImages.push_back(retired);
+    t_retiredPlanes.push_back(retired);
     reapRetired(owned.dev, /*waitAll=*/false);
 }
 
 /// Release callback for a frame bundle owning @p owned (see GstVulkanOwnedFrameTextures::adoptVulkanResources). Qt
 /// destroys a bundle when its pool slot is reused, which can be right after the frame that last sampled it was
-/// submitted, so the callback queues a fence behind QRhi's submitted work and destroys the image once it signals; a
-/// keyed QRhi cleanup callback destroys what is left while the device still exists. Render thread only.
-std::function<void()> deferredRelease(QRhi& rhi, OwnedImage owned)
+/// submitted, so the callback queues a fence behind QRhi's submitted work and, once it signals, destroys the images and
+/// lets go of the buffer; a keyed QRhi cleanup callback destroys what is left while the device still exists. Render
+/// thread only.
+std::function<void()> deferredRelease(QRhi& rhi, VkQueue queue, const OwnedPlanes& owned)
 {
-    const auto* nh = static_cast<const QRhiVulkanNativeHandles*>(rhi.nativeHandles());
-    const VkQueue queue = nh ? nh->gfxQueue : VK_NULL_HANDLE;
     const VkDevice dev = owned.dev;
     // Keyed: one teardown hook per QRhi, run while its device is still alive.
-    rhi.addCleanupCallback(&s_retiredImagesCleanupKey, [dev](QRhi*) { reapRetired(dev, /*waitAll=*/true); });
+    rhi.addCleanupCallback(&s_retiredPlanesCleanupKey, [dev](QRhi*) { reapRetired(dev, /*waitAll=*/true); });
     return [queue, owned] { retire(queue, owned); };
 }
 
-// VkFormat for single-plane RGB layouts. Multi-planar YUV (NV12/P010/I420) maps to VK_FORMAT_UNDEFINED: QRhi would wrap
-// a multi-planar VkImage as one single-plane texture with a COLOR-aspect view (invalid usage, no chroma), so those
-// layouts take the CPU path until a per-plane import exists.
-VkFormat vkFormatForVideoInfo(const GstVideoInfo& videoInfo)
+/// Creates on @p dev the image of one plane, @p size texels of @p format laid out as @p plane says, and binds it to the
+/// plane's dma-buf, imported for it alone: a dedicated allocation, which some drivers require of dma-buf images.
+/// False, with the cause logged once, when the driver refuses; the caller destroys what @p image and @p memory hold.
+bool importPlane(const DeviceFns& fns, VkDevice dev, VkPhysicalDevice physicalDevice,
+                 const GstQtDmaBufImport::Plane& plane, VkFormat format, QSize size, VkImage& image,
+                 VkDeviceMemory& memory)
 {
-    if (GST_VIDEO_INFO_N_PLANES(&videoInfo) != 1) {
-        return VK_FORMAT_UNDEFINED;
-    }
-    // Bytes in memory order, which Qt's RGB shaders swizzle per pixel format.
-    switch (GST_VIDEO_INFO_FORMAT(&videoInfo)) {
-        case GST_VIDEO_FORMAT_RGBA:
-        case GST_VIDEO_FORMAT_RGBx:
-        case GST_VIDEO_FORMAT_ARGB:
-        case GST_VIDEO_FORMAT_xRGB:
-        case GST_VIDEO_FORMAT_ABGR:
-        case GST_VIDEO_FORMAT_xBGR:
-        case GST_VIDEO_FORMAT_AYUV:
-            return VK_FORMAT_R8G8B8A8_UNORM;
-        case GST_VIDEO_FORMAT_BGRA:
-        case GST_VIDEO_FORMAT_BGRx:
-            return VK_FORMAT_B8G8R8A8_UNORM;
-        default:
-            return VK_FORMAT_UNDEFINED;
-    }
-}
+    VkSubresourceLayout layout = {};
+    layout.offset = plane.offset;
+    layout.rowPitch = plane.pitch;
 
-quint64 dmaMemoryBound(GstMemory* memory, const GstVideoInfo& videoInfo) noexcept
-{
-    gsize maxSize = 0;
-    const gsize size = memory ? gst_memory_get_sizes(memory, nullptr, &maxSize) : 0;
-    return std::max({static_cast<quint64>(GST_VIDEO_INFO_SIZE(&videoInfo)), static_cast<quint64>(size),
-                     static_cast<quint64>(maxSize)});
-}
+    VkImageDrmFormatModifierExplicitCreateInfoEXT modifierInfo = {};
+    modifierInfo.sType = VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT;
+    modifierInfo.drmFormatModifier = explicitModifier(plane.modifier);
+    modifierInfo.drmFormatModifierPlaneCount = 1;
+    modifierInfo.pPlaneLayouts = &layout;
 
-/// @p planeLayout for the single plane vkFormatForVideoInfo() accepts; false (warned) when it can't lie inside
-/// @p memoryBound.
-bool validateVulkanPlaneLayout(const GstVideoInfo& videoInfo, GstVideoMeta* vmeta, quint64 memoryBound,
-                               VkSubresourceLayout& planeLayout)
-{
-    const int width = GST_VIDEO_INFO_WIDTH(&videoInfo);
-    const int height = GST_VIDEO_INFO_HEIGHT(&videoInfo);
-    if (width <= 0 || height <= 0) {
-        qCWarning(GstDmaBufVulkanLog) << "Vulkan import: invalid DMABuf dimensions" << width << "x" << height;
+    VkExternalMemoryImageCreateInfo externalInfo = {};
+    externalInfo.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
+    externalInfo.pNext = &modifierInfo;
+    externalInfo.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
+
+    VkImageCreateInfo imageInfo = {};
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.pNext = &externalInfo;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.format = format;
+    imageInfo.extent = {static_cast<uint32_t>(size.width()), static_cast<uint32_t>(size.height()), 1};
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.tiling = VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT;
+    imageInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+    if (const VkResult result = fns.createImage(dev, &imageInfo, nullptr, &image); result != VK_SUCCESS) {
+        image = VK_NULL_HANDLE;
+        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedImportFailed,
+                         "vkCreateImage failed (VkResult=" << result << "format=" << format << "modifier=" << Qt::hex
+                                                           << modifierInfo.drmFormatModifier << Qt::dec << ")");
         return false;
     }
 
-    const auto [offset, stride] = GstHw::planeLayout(videoInfo, vmeta, 0);
-    const int pixelStride = GST_VIDEO_INFO_COMP_PSTRIDE(&videoInfo, 0);
-    if (stride <= 0 || pixelStride <= 0) {
-        qCWarning(GstDmaBufVulkanLog) << "Vulkan import: invalid DMABuf plane layout"
-                                      << "stride" << stride << "pixelStride" << pixelStride;
+    // Vulkan owns an imported fd from a successful allocation on; until then it is ours to close.
+    const int fd = ::fcntl(plane.fd, F_DUPFD_CLOEXEC, 0);
+    if (fd < 0) {
         return false;
+    }
+    VkMemoryFdPropertiesKHR fdProperties = {};
+    fdProperties.sType = VK_STRUCTURE_TYPE_MEMORY_FD_PROPERTIES_KHR;
+    VkMemoryRequirements requirements = {};
+    fns.getImageMemoryRequirements(dev, image, &requirements);
+    VkPhysicalDeviceMemoryProperties memoryProperties = {};
+    fns.getPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
+    uint32_t memoryType = UINT32_MAX;
+    if (fns.getMemoryFdProperties(dev, VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT, fd, &fdProperties) ==
+        VK_SUCCESS) {
+        const uint32_t allowed = requirements.memoryTypeBits & fdProperties.memoryTypeBits;
+        for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; ++i) {
+            if (allowed & (1u << i)) {
+                memoryType = i;
+                break;
+            }
+        }
     }
 
-    constexpr quint64 kMaxVkDeviceSize = static_cast<quint64>((std::numeric_limits<VkDeviceSize>::max)());
-    const quint64 rowPitch = static_cast<quint64>(stride);
-    const quint64 minRowBytes = static_cast<quint64>(width) * static_cast<quint64>(pixelStride);
-    if (rowPitch < minRowBytes || offset > kMaxVkDeviceSize || rowPitch > kMaxVkDeviceSize) {
-        qCWarning(GstDmaBufVulkanLog) << "Vulkan import: implausible DMABuf plane layout"
-                                      << "offset" << static_cast<quint64>(offset) << "stride" << stride << "minRowBytes"
-                                      << minRowBytes;
-        return false;
-    }
+    VkImportMemoryFdInfoKHR importInfo = {};
+    importInfo.sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR;
+    importInfo.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
+    importInfo.fd = fd;
+    VkMemoryDedicatedAllocateInfo dedicatedInfo = {};
+    dedicatedInfo.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO;
+    dedicatedInfo.pNext = &importInfo;
+    dedicatedInfo.image = image;
+    VkMemoryAllocateInfo allocateInfo = {};
+    allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocateInfo.pNext = &dedicatedInfo;
+    allocateInfo.allocationSize = requirements.size;
+    allocateInfo.memoryTypeIndex = memoryType;
 
-    if (rowPitch > std::numeric_limits<quint64>::max() / static_cast<quint64>(height)) {
-        qCWarning(GstDmaBufVulkanLog) << "Vulkan import: DMABuf plane size overflow"
-                                      << "stride" << stride << "height" << height;
+    const VkResult allocated = (memoryType != UINT32_MAX) ? fns.allocateMemory(dev, &allocateInfo, nullptr, &memory)
+                                                          : VK_ERROR_FORMAT_NOT_SUPPORTED;
+    if (allocated != VK_SUCCESS) {
+        memory = VK_NULL_HANDLE;
+        ::close(fd);
+        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedImportFailed,
+                         "importing a dma-buf as image memory failed (VkResult=" << allocated << ")");
         return false;
     }
-    const quint64 planeSize = rowPitch * static_cast<quint64>(height);
-    if (static_cast<quint64>(offset) > std::numeric_limits<quint64>::max() - planeSize) {
-        qCWarning(GstDmaBufVulkanLog) << "Vulkan import: DMABuf plane end overflow"
-                                      << "offset" << static_cast<quint64>(offset) << "planeSize" << planeSize;
+    if (const VkResult bound = fns.bindImageMemory(dev, image, memory, 0); bound != VK_SUCCESS) {
+        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedImportFailed,
+                         "vkBindImageMemory failed (VkResult=" << bound << ")");
         return false;
     }
-    const quint64 planeEnd = static_cast<quint64>(offset) + planeSize;
-    if (memoryBound > 0 && planeEnd > memoryBound) {
-        qCWarning(GstDmaBufVulkanLog) << "Vulkan import: DMABuf plane exceeds buffer bounds"
-                                      << "end" << planeEnd << "bound" << memoryBound;
-        return false;
-    }
-
-    planeLayout.offset = static_cast<VkDeviceSize>(offset);
-    planeLayout.rowPitch = static_cast<VkDeviceSize>(rowPitch);
     return true;
 }
 
@@ -275,192 +459,179 @@ bool validateVulkanPlaneLayout(const GstVideoInfo& videoInfo, GstVideoMeta* vmet
 
 namespace GstDmaBufVulkan {
 
-bool canImport(const GstVideoInfo& videoInfo) noexcept
+std::span<const char* const> requiredDeviceExtensions() noexcept
 {
-    return vkFormatForVideoInfo(videoInfo) != VK_FORMAT_UNDEFINED;
+    return kRequiredDeviceExtensions;
+}
+
+void requestDeviceExtensions()
+{
+    QByteArrayList extensions = qgetenv(kDeviceExtensionsVariable).split(';');
+    extensions.removeAll(QByteArray());
+    for (const char* const extension : kRequiredDeviceExtensions) {
+        if (!extensions.contains(extension)) {
+            extensions.append(extension);
+        }
+    }
+    (void) qputenv(kDeviceExtensionsVariable, extensions.join(';'));
+}
+
+void probeDevice(QRhi& rhi)
+{
+    if (rhi.backend() != QRhi::Vulkan) {
+        return;
+    }
+    ImportDevice device;
+    device.rhi = &rhi;
+    QByteArray unusable;
+    const auto* handles = static_cast<const QRhiVulkanNativeHandles*>(rhi.nativeHandles());
+    if (!handles || !handles->inst || (handles->physDev == VK_NULL_HANDLE)) {
+        unusable = "QRhi exposes no Vulkan device";
+    } else {
+        device.physicalDevice = handles->physDev;
+        QVulkanFunctions& functions = *handles->inst->functions();
+        VkPhysicalDeviceProperties properties = {};
+        functions.vkGetPhysicalDeviceProperties(handles->physDev, &properties);
+        const QVersionNumber deviceVersion(VK_VERSION_MAJOR(properties.apiVersion),
+                                           VK_VERSION_MINOR(properties.apiVersion));
+        // The instance's version bounds the device functions an application may call.
+        if (std::min(deviceVersion, handles->inst->apiVersion()) < QVersionNumber(1, 2)) {
+            unusable = "it needs Vulkan 1.2";
+        } else if (QByteArray missing; !deviceExtensionsEnabled(functions, handles->physDev, missing)) {
+            unusable = "device extension " + missing;
+        } else {
+            for (std::size_t i = 0; i < kPlaneFormatCount; ++i) {
+                device.modifiers[i] = queryImportableModifiers(functions, handles->physDev, kPlaneFormats[i].vkFormat);
+            }
+            if (!device.imports()) {
+                unusable = "the device imports no plane format from a dma-buf";
+            }
+        }
+    }
+
+    if (unusable.isEmpty()) {
+        qCDebug(GstDmaBufVulkanLog) << "DMABuf import available on" << rhi.driverInfo().deviceName;
+    } else {
+        qCDebug(GstDmaBufVulkanLog) << "DMABuf frames take the CPU path under this Vulkan device:" << unusable;
+    }
+    {
+        const QMutexLocker lock(&s_deviceMutex);
+        s_importDevice.store(device.imports() ? static_cast<void*>(device.physicalDevice) : nullptr,
+                             std::memory_order_release);
+        s_device = std::move(device);
+    }
+    // Keyed, so probing a QRhi again replaces the callback.
+    rhi.addCleanupCallback(&s_deviceCleanupKey, [](QRhi* dying) { forgetDevice(dying); });
+}
+
+void* importDevice() noexcept
+{
+    return s_importDevice.load(std::memory_order_acquire);
+}
+
+bool canImport(const GstQtDmaBufImport::PlaneFourccs& planeFourccs, quint64 modifier)
+{
+    if (planeFourccs.count <= 0) {
+        return false;
+    }
+    const QMutexLocker lock(&s_deviceMutex);
+    for (int plane = 0; plane < planeFourccs.count; ++plane) {
+        const quint32 fourcc = planeFourccs.fourcc[std::size_t(plane)];
+        const std::size_t format =
+            planeFormatIndex([fourcc](const PlaneFormat& candidate) { return candidate.drmFourcc == fourcc; });
+        if ((format == kPlaneFormatCount) || !s_device.imports(format, explicitModifier(modifier))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::vector<quint64> importableModifiers(quint32 planeFourcc)
+{
+    const std::size_t format =
+        planeFormatIndex([planeFourcc](const PlaneFormat& candidate) { return candidate.drmFourcc == planeFourcc; });
+    const QMutexLocker lock(&s_deviceMutex);
+    return (format != kPlaneFormatCount) ? s_device.modifiers[format] : std::vector<quint64>();
 }
 
 void resetCachedState() noexcept
 {
-    s_loggedVulkanUnimpl.store(false, std::memory_order_release);
+    s_diag.reset();
+    s_loggedImportFailed.store(false, std::memory_order_relaxed);
     s_deviceFnsGeneration.fetch_add(1, std::memory_order_acq_rel);
 }
 
-}  // namespace GstDmaBufVulkan
-
-QVideoFrameTexturesUPtr GstDmaBufVideoBuffer::importVulkan(QRhi& rhi, QVideoFrameTexturesUPtr& old)
+QVideoFrameTexturesUPtr importTextures(GstHwVideoBuffer& source, QRhi& rhi, QVideoFrameTexturesUPtr& old,
+                                       std::span<const GstQtDmaBufImport::Plane> planes,
+                                       QVideoFrameFormat::PixelFormat pixelFormat, QSize frameSize, GstBuffer* buffer,
+                                       bool& rejected)
 {
-    // dmabuf-fd -> VkImage via VK_EXT_external_memory_dma_buf + VkImageDrmFormatModifierExplicitCreateInfoEXT, wrapped
-    // with QRhiTexture::createFrom. Every step is capability-gated; any miss returns fail(). Single-plane RGB layouts
-    // only (see vkFormatForVideoInfo); validatePlaneHandles() already routed other layouts to the CPU path.
-    const auto* nh = static_cast<const QRhiVulkanNativeHandles*>(rhi.nativeHandles());
-    if (!nh || nh->dev == VK_NULL_HANDLE || nh->physDev == VK_NULL_HANDLE || nh->gfxQueue == VK_NULL_HANDLE ||
-        !nh->inst) {
-        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedVulkanUnimpl, "Vulkan import: native device handles unavailable");
+    rejected = false;
+    const auto* handles = static_cast<const QRhiVulkanNativeHandles*>(rhi.nativeHandles());
+    const auto* description = QVideoTextureHelper::textureDescription(pixelFormat);
+    // Another window's QRhi, whose device wasn't probed, may lack the extensions or the layouts.
+    if (!handles || !handles->inst || (handles->dev == VK_NULL_HANDLE) || (handles->gfxQueue == VK_NULL_HANDLE) ||
+        (handles->physDev != importDevice()) || !description || planes.empty() ||
+        (std::ssize(planes) != description->nplanes) || (planes.size() > std::size_t(kMaxPlanes))) {
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
-    const VkDevice dev = nh->dev;
-    const DeviceFns& fns = deviceFns(*nh->inst, dev);
+    const DeviceFns& fns = deviceFns(*handles->inst, handles->dev);
     if (!fns.ok()) {
-        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedVulkanUnimpl,
-                         "Vulkan import: required device functions (VK_EXT_external_memory_dma_buf) unavailable");
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
-    }
-    GstBuffer* buffer = gst_sample_get_buffer(_sample);
-    if (!buffer || gst_buffer_n_memory(buffer) != 1) {
-        // Multi-fd disjoint planes: out of scope for this conservative single-VkImage import.
-        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedVulkanUnimpl,
-                         "Vulkan import: multi-fd DMABuf not supported — CPU upload");
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
-    }
-    const VkFormat vkFormat = vkFormatForVideoInfo(_videoInfo);
-    if (vkFormat == VK_FORMAT_UNDEFINED) {
-        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedVulkanUnimpl,
-                         "Vulkan import: no VkFormat for DMABuf layout — CPU upload");
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 
-    // Pre-flight RHI format/size support before building the VkImage so an unsupported import demotes to CPU on a
-    // query.
-    if (!GstHwImportPreflight::preflightOrRecord(&rhi, HwVideoBufferPath::DmaBuf, _format.pixelFormat(),
-                                                 _format.frameSize())) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
-    }
-
-    GstMemory* gstMemory = gst_buffer_peek_memory(buffer, 0);
-    const int fd = gst_dmabuf_memory_get_fd(gstMemory);
-    if (fd < 0) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
-    }
-    VkSubresourceLayout planeLayout = {};
-    if (!validateVulkanPlaneLayout(_videoInfo, gst_buffer_get_video_meta(buffer), dmaMemoryBound(gstMemory, _videoInfo),
-                                   planeLayout)) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
-    }
-
-    VkImageDrmFormatModifierExplicitCreateInfoEXT modInfo = {};
-    modInfo.sType = VK_STRUCTURE_TYPE_IMAGE_DRM_FORMAT_MODIFIER_EXPLICIT_CREATE_INFO_EXT;
-    // Legacy DMABuf caps carry no modifier; Vulkan needs an explicit one, and those producers export LINEAR.
-    modInfo.drmFormatModifier = (_drmModifier == DRM_FORMAT_MOD_INVALID) ? DRM_FORMAT_MOD_LINEAR : _drmModifier;
-    modInfo.drmFormatModifierPlaneCount = 1;
-    modInfo.pPlaneLayouts = &planeLayout;
-
-    VkExternalMemoryImageCreateInfo extImg = {};
-    extImg.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
-    extImg.pNext = &modInfo;
-    extImg.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
-
-    VkImageCreateInfo imgInfo = {};
-    imgInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imgInfo.pNext = &extImg;
-    imgInfo.imageType = VK_IMAGE_TYPE_2D;
-    imgInfo.format = vkFormat;
-    imgInfo.extent = {static_cast<uint32_t>(GST_VIDEO_INFO_WIDTH(&_videoInfo)),
-                      static_cast<uint32_t>(GST_VIDEO_INFO_HEIGHT(&_videoInfo)), 1};
-    imgInfo.mipLevels = 1;
-    imgInfo.arrayLayers = 1;
-    imgInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imgInfo.tiling = VK_IMAGE_TILING_DRM_FORMAT_MODIFIER_EXT;
-    imgInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
-    imgInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    imgInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-    VkImage image = VK_NULL_HANDLE;
-    if (fns.createImage(dev, &imgInfo, nullptr, &image) != VK_SUCCESS || image == VK_NULL_HANDLE) {
-        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedVulkanUnimpl, "Vulkan import: vkCreateImage failed — CPU upload");
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
-    }
-    const auto destroyImage = qScopeGuard([&] {
-        if (image != VK_NULL_HANDLE)
-            fns.destroyImage(dev, image, nullptr);
-    });
-
-    // dup the fd: Vulkan takes ownership of the imported fd on successful allocate.
-    const int dupFd = ::fcntl(fd, F_DUPFD_CLOEXEC, 0);
-    if (dupFd < 0) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
-    }
-    bool fdConsumed = false;
-    const auto closeFd = qScopeGuard([&] {
-        if (!fdConsumed && dupFd >= 0)
-            ::close(dupFd);
-    });
-
-    VkMemoryFdPropertiesKHR fdProps = {};
-    fdProps.sType = VK_STRUCTURE_TYPE_MEMORY_FD_PROPERTIES_KHR;
-    if (fns.getMemoryFdProperties(dev, VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT, dupFd, &fdProps) != VK_SUCCESS) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
-    }
-
-    VkMemoryRequirements memReq = {};
-    fns.getImageMemoryRequirements(dev, image, &memReq);
-    VkPhysicalDeviceMemoryProperties physMem = {};
-    fns.getPhysicalDeviceMemoryProperties(nh->physDev, &physMem);
-    uint32_t memTypeIndex = UINT32_MAX;
-    const uint32_t allowed = memReq.memoryTypeBits & fdProps.memoryTypeBits;
-    for (uint32_t i = 0; i < physMem.memoryTypeCount; ++i) {
-        if (allowed & (1u << i)) {
-            memTypeIndex = i;
+    OwnedPlanes owned;
+    owned.dev = handles->dev;
+    owned.fns = fns;
+    bool imported = true;
+    for (std::size_t i = 0; imported && (i < planes.size()); ++i) {
+        // The format of the image view QRhi creates for the plane, which the image must have too.
+        const QRhiTexture::Format rhiFormat = description->rhiTextureFormat(
+            int(i), &rhi, QVideoTextureHelper::TextureDescription::FallbackPolicy::Disable);
+        const std::size_t format =
+            planeFormatIndex([rhiFormat](const PlaneFormat& candidate) { return candidate.rhiFormat == rhiFormat; });
+        const bool importable = [&] {
+            const QMutexLocker lock(&s_deviceMutex);
+            return (format != kPlaneFormatCount) && s_device.imports(format, explicitModifier(planes[i].modifier));
+        }();
+        if (!importable) {
+            imported = false;
             break;
         }
+        imported = importPlane(fns, handles->dev, handles->physDev, planes[i], kPlaneFormats[format].vkFormat,
+                               description->rhiPlaneSize(frameSize, int(i), &rhi), owned.images[i], owned.memories[i]);
+        rejected = !imported;
     }
-    if (memTypeIndex == UINT32_MAX) {
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
-    }
-
-    VkImportMemoryFdInfoKHR importInfo = {};
-    importInfo.sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_FD_INFO_KHR;
-    importInfo.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_DMA_BUF_BIT_EXT;
-    importInfo.fd = dupFd;
-
-    VkMemoryDedicatedAllocateInfo dedicated = {};
-    dedicated.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO;
-    dedicated.image = image;
-    dedicated.pNext = &importInfo;
-
-    VkMemoryAllocateInfo allocInfo = {};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.pNext = &dedicated;
-    allocInfo.allocationSize = memReq.size;
-    allocInfo.memoryTypeIndex = memTypeIndex;
-
-    // VK_KHR_external_memory_fd transfers fd ownership to the implementation only on a SUCCESSFUL import; on failure
-    // the application still owns the fd and must close it. Disarm the close guard only after VK_SUCCESS.
-    VkDeviceMemory memory = VK_NULL_HANDLE;
-    if (fns.allocateMemory(dev, &allocInfo, nullptr, &memory) != VK_SUCCESS || memory == VK_NULL_HANDLE) {
-        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedVulkanUnimpl,
-                         "Vulkan import: vkAllocateMemory failed — CPU upload");
-        return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
-    }
-    fdConsumed = true;
-    const auto freeMemory = qScopeGuard([&] {
-        if (memory != VK_NULL_HANDLE)
-            fns.freeMemory(dev, memory, nullptr);
-    });
-
-    if (const VkResult bindRes = fns.bindImageMemory(dev, image, memory, 0); bindRes != VK_SUCCESS) {
-        QGC_HW_WARN_ONCE(GstDmaBufVulkanLog, s_loggedVulkanUnimpl,
-                         "Vulkan import: vkBindImageMemory failed (VkResult=" << bindRes << ") — CPU upload");
+    if (!imported) {
+        destroyPlanes(owned);
         return GstHwPathTelemetry::fail(HwVideoBufferPath::DmaBuf);
     }
 
     const GstHwMapTail tail{.path = HwVideoBufferPath::DmaBuf,
-                            .frameSize = _format.frameSize(),
-                            .pixelFormat = _format.pixelFormat(),
+                            .frameSize = frameSize,
+                            .pixelFormat = pixelFormat,
                             .log = &GstDmaBufVulkanLog(),
                             .diag = &s_diag,
                             .preflight = false,
                             .successTag = "DMABuf->Vulkan"};
-    return GstHwFrameTexturesBase::finishMap<GstVulkanOwnedFrameTextures>(*this, rhi, old, tail, nullptr, [&] {
-        auto bundle = std::make_unique<GstVulkanOwnedFrameTextures>(&rhi, tail.frameSize, tail.pixelFormat, image);
-        if (bundle->allPlanesValid()) {
-            // Ownership of image/memory passes to the bundle; disarm the scope guards.
-            bundle->adoptVulkanResources(deferredRelease(rhi, {dev, image, memory, fns}));
-            image = VK_NULL_HANDLE;
-            memory = VK_NULL_HANDLE;
-        }
-        return bundle;
-    });
+    bool adopted = false;
+    QVideoFrameTexturesUPtr textures =
+        GstHwFrameTexturesBase::finishMap<GstVulkanOwnedFrameTextures>(source, rhi, old, tail, nullptr, [&] {
+            auto bundle = std::make_unique<GstVulkanOwnedFrameTextures>(
+                &rhi, frameSize, pixelFormat, std::span<const VkImage>(owned.images.data(), planes.size()));
+            if (bundle->allPlanesValid()) {
+                owned.buffer = gst_buffer_ref(buffer);
+                bundle->adoptVulkanResources(deferredRelease(rhi, handles->gfxQueue, owned));
+                adopted = true;
+            }
+            return bundle;
+        });
+    if (!adopted) {
+        destroyPlanes(owned);
+    }
+    return textures;
 }
 
-#endif  // QGC_HAS_GST_DMABUF_GPU_PATH && QGC_HAS_GST_VULKAN_GPU_PATH
+}  // namespace GstDmaBufVulkan
+
+#endif  // QGC_HAS_GST_DMABUF_VULKAN_IMPORT

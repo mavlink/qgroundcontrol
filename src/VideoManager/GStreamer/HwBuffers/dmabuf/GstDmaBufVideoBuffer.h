@@ -11,13 +11,18 @@
 class QRhi;
 
 /// \brief Zero-copy QVideoFrame backing for GStreamer DMABuf samples. mapTextures() (render thread) waits for the
-/// producer's writes, then hands the planes to Qt's DMABuf importer under a GL QRhi, or imports a VkImage under a
-/// Vulkan QRhi.
+/// producer's writes, then hands the planes to Qt's DMABuf importer under a GL QRhi, or imports them as VkImages under
+/// a Vulkan QRhi (GstDmaBufVulkanImport).
 class GstDmaBufVideoBuffer final : public GstHwVideoBuffer
 {
 public:
+    /// @p eglDisplay is Qt's EGLDisplay for an import under OpenGL (eglDisplayFor()); EGL_NO_DISPLAY otherwise.
     GstDmaBufVideoBuffer(GstSample* sample, const GstVideoInfo& videoInfo, const QVideoFrameFormat& format,
                          EGLDisplay eglDisplay);
+
+    /// @p context's importer when it is Qt's EGLDisplay, as under OpenGL. EGL_NO_DISPLAY when it is the Vulkan device,
+    /// which EGL must never be asked about.
+    static EGLDisplay eglDisplayFor(const HwVideoBufferContext& context);
 
     bool isDmaBuf() const override { return true; }
 
@@ -53,8 +58,9 @@ public:
 private:
     /// The import itself; without textures, @p failure tells why when the driver refused.
     QVideoFrameTexturesUPtr importFrame(QRhi& rhi, QVideoFrameTexturesUPtr& old, ImportOutcome& failure);
-#if defined(QGC_HAS_GST_VULKAN_GPU_PATH)
-    QVideoFrameTexturesUPtr importVulkan(QRhi& rhi, QVideoFrameTexturesUPtr& old);
+#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+    QVideoFrameTexturesUPtr importVulkan(QRhi& rhi, GstBuffer* buffer, QVideoFrameTexturesUPtr& old,
+                                         ImportOutcome& failure);
 #endif
     QVideoFrameTexturesUPtr importGl(QRhi& rhi, GstBuffer* buffer, ImportOutcome& failure);
     /// Counts @p outcome in the run of failed imports of this frame's layout, which disables the path at

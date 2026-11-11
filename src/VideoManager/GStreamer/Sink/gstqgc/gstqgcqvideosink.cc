@@ -375,7 +375,7 @@ static GstFlowReturn gst_qgc_q_video_sink_show_frame(GstVideoSink* vsink, GstBuf
         p->counters.noteDropped();
         return GST_FLOW_OK;  // no destination yet; drop
     }
-    hwCtx.dmaBufEglDisplay = policy.dmaBufDisplay;
+    hwCtx.dmaBufImporter = policy.dmaBufDisplay;
     // Software-decoded frames skip GPU selection. Caps alone can't tell: GPU memory also arrives under plain
     // video/x-raw (vtdec's CoreVideo/IOSurface buffers, V4L2 dmabuf export), so frames in other memory still try it.
     hwCtx.gpuEnabled = hwCtx.gpuEnabled && (p->gpu_caps || !nothing_to_import(buf));

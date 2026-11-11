@@ -26,6 +26,8 @@ target_sources(
         HwBuffers/GstHwBuffersPipelineTest.h
         HwBuffers/GstHwBuffersTest.cc
         HwBuffers/GstHwBuffersTest.h
+        HwBuffers/GstHwBuffersVulkanReadbackTest.cc
+        HwBuffers/GstHwBuffersVulkanReadbackTest.h
         HwBuffers/GstHwImageReadback.h
         HwBuffers/apple/GStreamerIOSurfaceTest.cc
         HwBuffers/d3d/GStreamerD3DTest.cc
@@ -104,6 +106,10 @@ add_qgc_test(GstVideoReceiverStatsTest LABELS Integration)
 # X display.
 set(_qgc_gl_readback_env ENV_MODIFICATION "QT_QPA_PLATFORM=cmake_list_prepend:xcb" "QT_XCB_GL_INTEGRATION=set:xcb_egl")
 add_qgc_test(GstHwBuffersGlReadbackTest LABELS Integration GPU ${_qgc_gl_readback_env})
+# Needs a platform plugin with Vulkan support, which the offscreen QPA lacks too.
+add_qgc_test(
+    GstHwBuffersVulkanReadbackTest LABELS Integration GPU ENV_MODIFICATION "QT_QPA_PLATFORM=cmake_list_prepend:xcb"
+)
 
 # The GstHarness tests need gst-check, which the GStreamer layer finds only for test builds and only where the SDK or
 # distribution ships it (src/VideoManager/GStreamer/CMakeLists.txt).

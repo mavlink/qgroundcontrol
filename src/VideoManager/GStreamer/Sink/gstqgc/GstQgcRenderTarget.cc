@@ -149,8 +149,11 @@ const char* zeroCopyPathName(RenderBackend backend) noexcept
             return "CPU";
 #endif
         case RenderBackend::Vulkan:
-            // Vulkan import is dormant (foreign-VkDevice guard → CPU copy), so it never delivers zero-copy today.
-            return "CPU (Vulkan import dormant)";
+#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
+            return "DMABuf";
+#else
+            return "CPU";
+#endif
         default:
             return "CPU";
     }

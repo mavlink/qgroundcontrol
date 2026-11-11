@@ -38,7 +38,9 @@ void resetCachedGpuResources();
 
 /// Qt graphics setup the GPU paths need, which Qt reads at startup: call before the QGuiApplication exists. On
 /// desktop Linux it pins the scene graph to OpenGL, unless @p softwareRendering (--swrast) or QSG_RHI_BACKEND chose
-/// one, and Qt's xcb platform to EGL; with the GL or DMABuf path it shares Qt's OpenGL contexts. No-op otherwise.
+/// one, and Qt's xcb platform to EGL; with the GL or DMABuf path it shares Qt's OpenGL contexts, and with the DMABuf
+/// import under Vulkan it asks for the device extensions that takes, should Qt Quick render with Vulkan. No-op
+/// otherwise.
 void configureQtGraphics(bool softwareRendering);
 
 /// Wire the main QQuickWindow into the RHI-capture path so snapshots, and the EGLDisplay Qt renders with, follow its
@@ -50,9 +52,10 @@ void connectMainWindow(QQuickWindow* window);
 /// thread.
 HwVideoBufferContext makeAdapterContext(bool gpuEnabled) noexcept;
 
-/// The EGLDisplay (as HwVideoBufferContext::dmaBufEglDisplay stores it) the DMABuf path imports with now: Qt's
-/// (QGCRhiCapture::qtEglDisplay()). Null when Qt renders without EGL or that isn't known yet, an import failure
-/// disabled the path (until resetCachedGpuResources()), or no DMABuf path is compiled. Safe off the GUI thread.
+/// What the DMABuf path imports with now, as HwVideoBufferContext::dmaBufImporter stores it: Qt's EGLDisplay
+/// (QGCRhiCapture::qtEglDisplay()), or, once Qt Quick renders with Vulkan, its VkPhysicalDevice when that device
+/// imports dma-bufs. Null when Qt renders without either or that isn't known yet, an import failure disabled the path
+/// (until resetCachedGpuResources()), or no DMABuf path is compiled. Safe off the GUI thread.
 void* dmaBufImportDisplay() noexcept;
 
 /// Synchronously answer GST_QUERY_CONTEXT through the GPU paths' context bridges; false -> let bus NEED_CONTEXT run.

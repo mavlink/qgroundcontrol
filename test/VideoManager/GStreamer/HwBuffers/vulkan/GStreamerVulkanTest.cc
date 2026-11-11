@@ -16,8 +16,9 @@
 #include "gstqgc/GstQgcSinkStats.h"
 #include "gstqgc/GstQgcTestSupport.h"
 
-#if defined(QGC_HAS_GST_DMABUF_GPU_PATH) && defined(QGC_HAS_GST_VULKAN_GPU_PATH)
+#if defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
 #include <rhi/qrhi.h>
+#include <span>
 
 #include "GstDmaBufVulkanImport.h"
 #endif
@@ -115,7 +116,7 @@ void GstHwBuffersPipelineTest::_testVulkanDispatchDemotesToCpu()
 
 void GstHwBuffersTest::_testVulkanOwnedFrameTexturesReleaseOnDestroy()
 {
-#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH) || !defined(QGC_HAS_GST_VULKAN_GPU_PATH)
+#if !defined(QGC_HAS_GST_DMABUF_VULKAN_IMPORT)
     QSKIP("DMABuf->Vulkan frame bundles not compiled in this build");
 #else
     const std::unique_ptr<QRhi> rhi = GstTest::makeNullRhi();
@@ -123,8 +124,8 @@ void GstHwBuffersTest::_testVulkanOwnedFrameTexturesReleaseOnDestroy()
 
     // Any non-null handle: the Null QRhi wraps it without touching Vulkan, while a null one is left unwrapped.
     const auto image = VkImage(quintptr(1));
-    auto bundle = std::make_unique<GstVulkanOwnedFrameTextures>(rhi.get(), QSize(64, 64),
-                                                                QVideoFrameFormat::Format_RGBA8888, image);
+    auto bundle = std::make_unique<GstVulkanOwnedFrameTextures>(
+        rhi.get(), QSize(64, 64), QVideoFrameFormat::Format_RGBA8888, std::span<const VkImage>(&image, 1));
     QVERIFY(bundle->allPlanesValid());
     int releases = 0;
     bundle->adoptVulkanResources([&releases] { ++releases; });

@@ -17,6 +17,7 @@
 
 class GstContextBridgeBase;
 class GstHwVideoBuffer;
+class QRhi;
 
 /// Everything the factory and the HwBuffers facade know about one compiled GPU path. Each backend defines its
 /// descriptor in its own translation unit (GstHwPaths below); GstHwPathRegistry lists the compiled ones.
@@ -41,6 +42,10 @@ struct HwPathDescriptor
     /// Optional. Runs for each GPU-enabled HwVideoBufferContext a sink builds at start: fills this path's fields, or
     /// only logs once whether the path can import (DMABuf, whose display the sink sets per frame).
     void (*prepareContext)(HwVideoBufferContext& context) = nullptr;
+
+    /// Optional. Runs on the render thread when the scene graph's QRhi is published, before the streaming threads
+    /// see its backend: learns what its device imports.
+    void (*probeDevice)(QRhi& rhi) = nullptr;
 
     /// Optional. Drops cached native imports (scene-graph teardown, window swap, device loss).
     void (*resetCaches)() = nullptr;

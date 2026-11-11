@@ -81,9 +81,16 @@ std::string gpuMemoryCaps(const SinkCapsPolicy& policy, const std::string& forma
             offer("video/x-raw(memory:D3D11Memory)");
 #endif
             break;
+        case RenderBackend::Vulkan:
+            // DMA_DRM only, in the layouts Qt's Vulkan device imports: Vulkan needs the modifier, which legacy
+            // memory:DMABuf caps don't carry.
+            if (policy.dmaBufDisplay) {
+                caps += GstHw::buildVulkanDmaDrmCaps(advertisedFormats(kOfferDmaDrm));
+            }
+            break;
         default:
             // Direct3D12: D3D12Memory only through the D3D12Convert bin (buildSinkCaps). Metal: vtdec's
-            // IOSurface-backed CoreVideo buffers arrive as system memory. Vulkan: no import path.
+            // IOSurface-backed CoreVideo buffers arrive as system memory.
             break;
     }
     return caps;
