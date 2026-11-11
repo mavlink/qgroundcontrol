@@ -136,7 +136,7 @@ void fixedECEF(GPSTestClock& clock)
     QVERIFY(receiver.model.sent("PQTMSRR"));
     QVERIFY(!receiver.model.sent("PQTMCFGSVIN,W"));
     driver.consume(CORRECTION);
-    QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 0);
+    QCOMPARE(receiver.log.correctionsWhileValid, 0);
     feed(driver, nmeaSentence("PQTMSVINSTATUS,1,288282000,2,,00,0,0,0.0000,6378237.0000,0.0000,0.0000"));
     QCOMPARE(receiver.log.count<GPSBaseStatus>(), 1);
     QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 1);
@@ -146,16 +146,16 @@ void fixedECEF(GPSTestClock& clock)
     QVERIFY(std::abs(receiver.log.latest<GPSBaseStatus>().position.altitudeMeters - 100) < 0.001);
     QVERIFY(!std::isnan(receiver.log.latest<GPSBaseStatus>().position.altitudeMeters));
     driver.consume(CORRECTION);
-    QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
+    QCOMPARE(receiver.log.correctionsWhileValid, 1);
     feed(driver, nmeaSentence("PQTMSVINSTATUS,1,288283000,2,,00,0,0,0.0000,6378238.0000,0.0000,0.0000"));
     driver.consume(CORRECTION);
-    QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
+    QCOMPARE(receiver.log.correctionsWhileValid, 1);
     QCOMPARE(receiver.log.count<GPSBaseStatus>(), 2);
     revoked(receiver.log.latest<GPSBaseStatus>());
     feed(driver, nmeaSentence("PQTMSVINSTATUS,1,288284000,2,,00,0,0,0.0000,6378237.0000,0.0000,0.0000"));
     QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 1);
     driver.consume(CORRECTION);
-    QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 2);
+    QCOMPARE(receiver.log.correctionsWhileValid, 2);
     QVERIFY(std::any_of(receiver.log.commands.begin(), receiver.log.commands.end(), [](const auto& result) {
         return result.command == "PQTMSRR" && result.outcome == GPSCommandOutcome::Written;
     }));
@@ -177,7 +177,7 @@ void surveyLifecycle(GPSTestClock& clock)
     feed(driver, surveyStatus(291263000, 2, 60));
     QVERIFY(receiver.log.reports<GPSBaseStatus>().empty());
     driver.consume(CORRECTION);
-    QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 0);
+    QCOMPARE(receiver.log.correctionsWhileValid, 0);
     feed(driver, nmeaSentence("PQTMSVINSTATUS,1,291263500,1,,11,0,60,0,0,0,0"));
     QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 2);
     QVERIFY(std::isnan(receiver.log.latest<GPSBaseStatus>().position.latitudeDegrees));
@@ -192,16 +192,16 @@ void surveyLifecycle(GPSTestClock& clock)
     QVERIFY(receiver.log.latest<GPSBaseStatus>().meanAccuracyMeters.has_value());
     QCOMPARE(surveyMeanAccuracyMillimeters(receiver.log.latest<GPSBaseStatus>()), 1869);
     driver.consume(CORRECTION);
-    QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 0);
+    QCOMPARE(receiver.log.correctionsWhileValid, 0);
     feed(driver, COMPLETE, 2);
     QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 1);
     QCOMPARE(surveyDuration(receiver.log.latest<GPSBaseStatus>()), 60);
     QCOMPARE(surveyMeanAccuracyMillimeters(receiver.log.latest<GPSBaseStatus>()), 1808);
     driver.consume(CORRECTION);
-    QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
+    QCOMPARE(receiver.log.correctionsWhileValid, 1);
     clock.advanceBy(5000001);
     driver.consume(CORRECTION);
-    QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
+    QCOMPARE(receiver.log.correctionsWhileValid, 1);
     revoked(receiver.log.latest<GPSBaseStatus>());
     const auto expiredReports = receiver.log.count<GPSBaseStatus>();
     feed(driver, COMPLETE);
@@ -214,19 +214,19 @@ void surveyLifecycle(GPSTestClock& clock)
     QVERIFY(std::isnan(receiver.log.latest<GPSBaseStatus>().position.altitudeMeters));
     feed(driver, COMPLETE);
     driver.consume(CORRECTION);
-    QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
+    QCOMPARE(receiver.log.correctionsWhileValid, 1);
     feed(driver, PROGRESS);
     feed(driver, COMPLETE);
     driver.consume(CORRECTION);
-    QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
+    QCOMPARE(receiver.log.correctionsWhileValid, 1);
     QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 0);
     feed(driver, surveyStatus(291325000, 1, 1));
     feed(driver, surveyStatus(291326000, 2, 60));
     driver.consume(CORRECTION);
-    QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 2);
+    QCOMPARE(receiver.log.correctionsWhileValid, 2);
     feed(driver, nmeaSentence("PQTMSVINSTATUS,1,291327000,2,,11,60,60,nan,0,0,1"));
     driver.consume(CORRECTION);
-    QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 2);
+    QCOMPARE(receiver.log.correctionsWhileValid, 2);
     revoked(receiver.log.latest<GPSBaseStatus>());
     feed(driver, COMPLETE);
     QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 0);
@@ -237,7 +237,7 @@ void surveyLifecycle(GPSTestClock& clock)
     QCOMPARE(driver.errorDetail(), QStringLiteral("LG290P restarted; its base configuration is no longer verified"));
     revoked(receiver.log.latest<GPSBaseStatus>());
     driver.consume(CORRECTION);
-    QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 2);
+    QCOMPARE(receiver.log.correctionsWhileValid, 2);
     noPersistence(receiver);
 }
 
@@ -261,7 +261,7 @@ void numericStatusFields(GPSTestClock& clock)
         feed(driver, nmeaSentence("PQTMSVINSTATUS,1,291325000,2,,11,60,60," + std::string(invalid) + ",0,0,1"));
         revoked(receiver.log.latest<GPSBaseStatus>());
         driver.consume(CORRECTION);
-        QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 0);
+        QCOMPARE(receiver.log.correctionsWhileValid, 0);
     }
 }
 
@@ -300,7 +300,7 @@ void malformedAndMixedFraming(GPSTestClock& clock)
     for (const auto byte : CORRECTION) {
         driver.consume({&byte, 1});
     }
-    QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
+    QCOMPARE(receiver.log.correctionsWhileValid, 1);
     QCOMPARE(receiver.model.commands.size(), writes);
 }
 
@@ -354,7 +354,7 @@ void scheduledShortSurvey(GPSTestClock& clock)
                 QVERIFY(receiver.log.reports<GPSBaseStatus>().front().timestampUs < savedBaseVerifiedAt);
             }
             driver.consume(CORRECTION);
-            QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
+            QCOMPARE(receiver.log.correctionsWhileValid, 1);
             noPersistence(receiver);
             QCOMPARE(receiver.model.saves, 0);
 
@@ -364,7 +364,7 @@ void scheduledShortSurvey(GPSTestClock& clock)
             QVERIFY(receiver.log.count<GPSDecodedPosition>() > 0);
             revoked(receiver.log.latest<GPSBaseStatus>());
             driver.consume(CORRECTION);
-            QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
+            QCOMPARE(receiver.log.correctionsWhileValid, 1);
         }
     }
 }
@@ -392,7 +392,7 @@ void measurementOrderAndRollover(GPSTestClock& clock)
     revoked(receiver.log.latest<GPSBaseStatus>());
     feed(driver, complete);
     driver.consume(CORRECTION);
-    QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 0);
+    QCOMPARE(receiver.log.correctionsWhileValid, 0);
 
     feed(driver, surveyStatus(0, 1, 1));
     QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 2);
@@ -403,14 +403,14 @@ void measurementOrderAndRollover(GPSTestClock& clock)
     feed(driver, surveyStatus(1000, 2, 60));
     QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 1);
     driver.consume(CORRECTION);
-    QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
+    QCOMPARE(receiver.log.correctionsWhileValid, 1);
     feed(driver, surveyStatus(2000, 0, 0));
     QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 0);
     feed(driver, surveyStatus(0, 1, 1));
     feed(driver, surveyStatus(1000, 2, 60));
     QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 0);
     driver.consume(CORRECTION);
-    QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
+    QCOMPARE(receiver.log.correctionsWhileValid, 1);
 }
 
 void cancellationRevokesPublishedState(GPSTestClock& clock)
@@ -431,7 +431,7 @@ void cancellationRevokesPublishedState(GPSTestClock& clock)
     revoked(receiver.log.latest<GPSBaseStatus>());
     feed(driver, surveyStatus(291324000, 2, 60));
     driver.consume(CORRECTION);
-    QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 0);
+    QCOMPARE(receiver.log.correctionsWhileValid, 0);
     QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 0);
 }
 
@@ -534,7 +534,7 @@ void managedChanges(GPSTestClock& clock)
         QVERIFY(!receiver.model.sent("PQTMRESTOREPAR"));
         QVERIFY(!receiver.model.sent("PQTMCOLD"));
         driver.consume(CORRECTION);
-        QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 0);
+        QCOMPARE(receiver.log.correctionsWhileValid, 0);
         if (fixed) {
             feed(driver, nmeaSentence("PQTMSVINSTATUS,1,1000,2,,00,0,0,0.0000,6378237.0000,0.0000,0.0000"));
         } else {
@@ -542,7 +542,7 @@ void managedChanges(GPSTestClock& clock)
             feed(driver, COMPLETE);
         }
         driver.consume(CORRECTION);
-        QCOMPARE(receiver.log.count<GPSRTCMFrame>(), 1);
+        QCOMPARE(receiver.log.correctionsWhileValid, 1);
     }
 }
 

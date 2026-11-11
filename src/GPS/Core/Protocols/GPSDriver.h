@@ -28,7 +28,8 @@ struct GPSDriverSinks
 {
     std::function<void(const GPSPositionReport&)> onPosition;
     std::function<void(const GPSSatelliteReport&)> onSatelliteInfo;
-    /// One complete frame; copying it shares the receiver's buffer.
+    /// One complete frame; copying it shares the receiver's buffer. A base configured here delivers frames only while
+    /// its base status is Valid; passive input and Septentrio receivers deliver every frame.
     std::function<void(const QByteArray&)> onRTCM;
     /// Also delivered while configure() runs.
     std::function<void(const GPSBaseStatus&)> onBaseStatus;

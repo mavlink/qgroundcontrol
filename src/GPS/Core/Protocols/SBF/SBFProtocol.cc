@@ -231,10 +231,10 @@ GPSReceiveUpdates Protocol::_decodeBlock(const GPSFrame& frame, GPSDecodeContext
         position.navigation.fixType = GPSPositionReport::FixType::NoFix;
         position.navigation.timestampUs = context.nowUs();
         qCWarning(SBFProtocolLog) << "Unsupported Septentrio position datum:" << unsigned(pvt.datum);
-        context.failControl(QStringLiteral("Septentrio position datum is not WGS84/ITRS"));
         _ready = false;
+        // GPSDriver forwards this family's corrections whatever its base status, so they stop here.
         context.stream().setEnabled(GPSFrameKind::RTCM3, false);
-        context.publishBaseStatus(GPSBaseState::Inactive, {});
+        context.loseBase(QStringLiteral("Septentrio position datum is not WGS84/ITRS"));
     } else {
         const bool coordinatesValid = _applyPVTGeodetic(pvt, position, context);
         if (_ready) {

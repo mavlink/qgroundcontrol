@@ -225,6 +225,21 @@ void ashtechFailedSurvey(GPSTestClock& clock)
     }
 }
 
+/// A fixed base is valid once the receiver accepts its position, before its RTCM output is enabled: the receiver
+/// sends corrections while the output commands still run, and GPSDriver forwards only those of a valid base.
+void ashtechFixedBaseValidBeforeCorrections(GPSTestClock& clock)
+{
+    clock.reset(GPSTestClock::START_US);
+    Base receiver(clock);
+    receiver.peer.faults.rules = {
+        reply(startsWith("$PASHS,RT3,1074"), ashtechPacket("PASHR,ACK") + GPSTest::rtcmMessage(1074))};
+    QVERIFY(receiver.configure(true));
+    // The first position sets the fixed position and enables the RTCM output.
+    QVERIFY(receiver.startSurvey());
+    QVERIFY(receiver.peer.sent("$PASHS,RT3,1005"));
+    QCOMPARE(receiver.peer.log.correctionsWhileValid, 1);
+}
+
 /// The base setup waits for the first position, so a ready receiver that sends no $PASHR,POS at all fails the
 /// session; one that sends them without a fix keeps waiting.
 void ashtechNoPositionOutput(GPSTestClock& clock)
@@ -443,6 +458,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"framing", ashtechFraming},
     {"survey-receipts", ashtechSurveyReceipts},
     {"failed-survey", ashtechFailedSurvey},
+    {"fixed-base-valid-before-corrections", ashtechFixedBaseValidBeforeCorrections},
     {"no-position-output", ashtechNoPositionOutput},
     {"other-board-is-not-a-base", ashtechOtherBoardIsNotABase},
     {"port-reply-needs-one-letter", ashtechPortReplyNeedsOneLetter},

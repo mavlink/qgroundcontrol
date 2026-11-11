@@ -151,7 +151,7 @@ private:
     GPSCommandOutcome _match(const Plan::Command& command, std::string_view line);
     /// Reports base status from BESTNAVXYZA from now on; an averaging base is active until it reports FIXEDPOS.
     void _monitorBaseStatus(GPSDecodeContext& context);
-    /// The configuration failed: revokes a monitored base and stops corrections.
+    /// The configuration failed: revokes a monitored base.
     bool _failAttempt(GPSCommandChannel& channel);
     /// Each handler returns whether its log was valid.
     bool _handleVersion(std::string_view body, GPSDecodeContext& context);
@@ -185,9 +185,6 @@ private:
 
 bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned& baud)
 {
-    // Until this configuration proves a base, none is reported.
-    _publishBase(channel.context(), GPSBaseState::Inactive);
-    (void) channel.flush();
     const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&config.base.mode);
     const auto* averaging = std::get_if<GPSBaseStationConfig::ReceiverAveraging>(&config.base.mode);
     if (!fixed && !averaging) {
@@ -229,9 +226,7 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
     if (!channel.runRequired(_sequence(plan.output))) {
         return _failAttempt(channel);
     }
-    // Corrections flow while the base is valid.
     _ready = true;
-    _nmea.setRTCMEnabled(_baseValid);
     return true;
 }
 
@@ -326,7 +321,6 @@ bool Protocol::_failAttempt(GPSCommandChannel& channel)
     _ready = false;
     _monitorBase = false;
     _baseValid = false;
-    _nmea.setRTCMEnabled(false);
     (void) channel.flush();
     return false;
 }
@@ -454,7 +448,6 @@ bool Protocol::_handlePosition(std::string_view body, GPSDecodeContext& context)
     if (_baseValid) {
         _baseECEF = coordinates;
     }
-    _nmea.setRTCMEnabled(_ready && _baseValid);
     _publishBase(context, _baseValid   ? GPSBaseState::Valid
                           : _averaging ? GPSBaseState::Active
                                        : GPSBaseState::Inactive);
@@ -473,9 +466,7 @@ void Protocol::_invalidateBase(GPSDecodeContext& context, const QString& reason)
     _baseValid = false;
     _monitorBase = false;
     _ready = false;
-    _nmea.setRTCMEnabled(false);
-    _publishBase(context, GPSBaseState::Inactive);
-    context.failControl(reason);
+    context.loseBase(reason);
 }
 
 void Protocol::_expire(GPSDecodeContext& context)

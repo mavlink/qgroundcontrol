@@ -75,7 +75,6 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
     GPSStreamDemux& stream = channel.stream();
     stream.reset(GPSFrameKind::NMEASentence);
     stream.setEnabled(GPSFrameKind::RTCM3, true);
-    _nmea.setRTCMEnabled(true);
     _setUpBase(channel);
     _ready = !channel.failed();
     return _ready;

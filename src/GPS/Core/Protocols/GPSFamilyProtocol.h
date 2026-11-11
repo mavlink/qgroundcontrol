@@ -123,6 +123,16 @@ public:
         publishBaseStatus(status);
     }
 
+    /// The base position no longer holds: publishes that, which ends the forwarding of its corrections, and records
+    /// @a reason as the failure unless one is already recorded. The family ends its own readiness.
+    void loseBase(const QString& reason)
+    {
+        publishBaseStatus(GPSBaseState::Inactive, {});
+        failControl(reason);
+    }
+
+    /// Publishes one RTCM3 frame. Families publish every frame they decode; GPSDriver forwards those of a base whose
+    /// status is Valid.
     void publishRTCM(std::span<const uint8_t> frame)
     {
         _batch.events.emplace_back(GPSRTCMFrame{QByteArrayView(frame).toByteArray()});

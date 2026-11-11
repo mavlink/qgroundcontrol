@@ -36,6 +36,15 @@ QString mismatchHint(const GPSReceiverSignatures& signatures, GPSType configured
         .arg(evidence, gpsReceiverName(match->family->type));
 }
 
+/// Whether @a family's RTCM3 is forwarded whatever base status it publishes. Passive input comes from a receiver that
+/// was not configured here, so it reports no base. A Septentrio receiver starts its corrections with its configuration
+/// and reports its base in PVTGeodetic blocks half a second apart, and no recording of a base confirms how those read,
+/// so its corrections do not wait for them.
+bool forwardsCorrectionsWithoutBase(GPSType family)
+{
+    return family == GPSType::Passive || family == GPSType::Septentrio;
+}
+
 }  // namespace
 
 struct GPSDriver::State
@@ -50,6 +59,8 @@ struct GPSDriver::State
     QString configurationError;
     bool consentRequired = false;
     bool configuring = false;
+    /// The base status published last is Valid.
+    bool baseValid = false;
 
     struct ReceiveCycle
     {
@@ -327,6 +338,7 @@ void GPSDriver::_handleSatellites(const GPSSatelliteReport& report)
 void GPSDriver::_handle(const GPSBaseStatus& report)
 {
     _state->cycle.usefulData = true;
+    _state->baseValid = report.state == GPSBaseState::Valid;
     if (_sinks.onBaseStatus) {
         _sinks.onBaseStatus(report);
     }
@@ -334,8 +346,14 @@ void GPSDriver::_handle(const GPSBaseStatus& report)
 
 void GPSDriver::_handle(const GPSRTCMFrame& report)
 {
+    // Corrections state the base position, so those of a base configured here are forwarded only while it reports
+    // that position valid.
+    if (_state->configuring ||
+        (!_state->baseValid && !forwardsCorrectionsWithoutBase(_state->runtime->family().type))) {
+        return;
+    }
     _state->cycle.usefulData = true;
-    if (!_state->configuring && _sinks.onRTCM) {
+    if (_sinks.onRTCM) {
         _sinks.onRTCM(report.bytes);
     }
 }
