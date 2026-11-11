@@ -88,18 +88,28 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuZeroCopyProperty()
         const GStreamer::GstElementPtr qvideosink = GstQgcTest::qvideosink(bin.get());
         QVERIFY2(qvideosink, "qgcqvideosink missing from CPU bin");
 
+        // The bin leaves the deadline as the sink has it by itself (GstVideoSink's 15 ms): a live pipeline that syncs
+        // to the clock adds it to its latency.
+        guint64 sinkDeadline = 0;
+        {
+            GstElement* const sink = gst_element_factory_make("qgcqvideosink", nullptr);
+            QVERIFY(sink);
+            const GStreamer::GstElementPtr standalone = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(sink)));
+            g_object_get(standalone.get(), "processing-deadline", &sinkDeadline, NULL);
+        }
+
         gboolean sync = TRUE;
         gboolean qos = TRUE;
         guint64 processingDeadline = 0;
         g_object_get(bin.get(), "sync", &sync, "qos", &qos, "processing-deadline", &processingDeadline, NULL);
         QCOMPARE(sync, FALSE);
         QCOMPARE(qos, FALSE);
-        QCOMPARE(processingDeadline, G_GUINT64_CONSTANT(20000000));
+        QCOMPARE(processingDeadline, sinkDeadline);
 
         g_object_get(qvideosink.get(), "sync", &sync, "qos", &qos, "processing-deadline", &processingDeadline, NULL);
         QCOMPARE(sync, FALSE);
         QCOMPARE(qos, FALSE);
-        QCOMPARE(processingDeadline, G_GUINT64_CONSTANT(20000000));
+        QCOMPARE(processingDeadline, sinkDeadline);
 
         constexpr guint64 kUpdatedDeadline = G_GUINT64_CONSTANT(1234567);
         g_object_set(bin.get(), "sync", TRUE, "qos", TRUE, "processing-deadline", kUpdatedDeadline, NULL);

@@ -9,6 +9,10 @@
 
 #define GST_CAT_DEFAULT gst_qgc_debug
 
+// GstVideoSink's own default for "processing-deadline", which the bin proxies; GstBaseSink's is 20 ms. A live pipeline
+// that syncs to the clock adds the deadline to its latency.
+static constexpr guint64 kDefaultProcessingDeadline = 15 * GST_MSECOND;
+
 struct _GstQgcVideoSinkBin
 {
     GstBin parent;
@@ -24,7 +28,7 @@ struct _GstQgcVideoSinkBin
     gboolean sync;
     /// Proxied to the inner basesink's "qos"; default FALSE (off) preserves the existing no-QoS behavior.
     gboolean qos;
-    /// Proxied to the inner basesink's "processing-deadline" (ns); default matches the basesink default.
+    /// Proxied to the inner basesink's "processing-deadline" (ns); the default is the video sink's own.
     guint64 processing_deadline;
 };
 
@@ -98,7 +102,7 @@ static void gst_qgc_video_sink_bin_class_init(GstQgcVideoSinkBinClass* klass)
     properties[PROP_PROCESSING_DEADLINE] = g_param_spec_uint64(
         "processing-deadline", "Processing deadline",
         "Proxied to the inner basesink: maximum buffer processing time in nanoseconds.", 0, G_MAXUINT64,
-        G_GUINT64_CONSTANT(20000000), (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+        kDefaultProcessingDeadline, (GParamFlags) (G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
     g_object_class_install_properties(object_class, PROP_LAST, properties);
 
@@ -116,7 +120,7 @@ static void gst_qgc_video_sink_bin_init(GstQgcVideoSinkBin* self)
     self->disable_par = FALSE;
     self->sync = FALSE;
     self->qos = FALSE;
-    self->processing_deadline = G_GUINT64_CONSTANT(20000000);
+    self->processing_deadline = kDefaultProcessingDeadline;
 }
 
 // A single-element converter: the conversion-element override, else a SoC converter, else videoconvertscale (GStreamer

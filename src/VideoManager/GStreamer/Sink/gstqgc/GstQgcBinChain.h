@@ -12,6 +12,9 @@ namespace GstQgc {
 class BinChain
 {
 public:
+    /// The longest chain qgcvideosinkbin builds: videoconvert ! videoscale ! glupload ! glcolorconvert ! qgcqvideosink.
+    static constexpr std::size_t kMaxElements = 5;
+
     explicit BinChain(GstBin* bin)
         : _bin(bin)
     {}
@@ -90,7 +93,7 @@ public:
 
 private:
     GstBin* _bin;
-    std::array<GstElement*, 5> _owned{};
+    std::array<GstElement*, kMaxElements> _owned{};
     std::size_t _ownedCount = 0;
     GstPad* _ghost = nullptr;
     bool _committed = false;
