@@ -18,11 +18,20 @@ qt_add_qml_module(
     QML_FILES
         CorrectionsStatus.qml
         GcsPositionStatus.qml
+        GPSFactComboField.qml
+        GPSFactField.qml
+        GPSFactSwitchField.qml
+        GPSFactTextField.qml
         GPSField.qml
         GPSNoteLabel.qml
+        GPSReceiverBaseSites.qml
+        GPSReceiverBaseStation.qml
+        GPSReceiverConnectControls.qml
+        GPSReceiverConnection.qml
         GPSReceiverRecording.qml
         GPSReceiverSerialPort.qml
         GPSReceiverSettings.qml
+        GPSReceiverSettingsGroup.qml
         GPSReceiverStatus.qml
         NTRIPConnectionStatus.qml
         NTRIPMountpointBrowser.qml
