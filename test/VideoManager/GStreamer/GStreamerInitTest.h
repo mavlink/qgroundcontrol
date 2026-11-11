@@ -12,10 +12,13 @@ class GStreamerInitTest : public UnitTest
 
 private slots:
 #ifdef QGC_GST_STREAMING
+    // First: GStreamer initializes once in a process.
+    void _testInitializeLogsFromItsFirstLine();
     void _testNativeDebugLogRequested_data();
     void _testNativeDebugLogRequested();
     void _testNativeDebugLogIsNotBridged();
     void _testConfigureDebugLoggingIsIdempotent();
+    void _testBridgedLogNamesItsSource();
     void _testConfigureDebugLoggingDefaultsToDisabled();
     void _testRedirectGLibLogging();
     void _testExternalPluginLoaderFailed();

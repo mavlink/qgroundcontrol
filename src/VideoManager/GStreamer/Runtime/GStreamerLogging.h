@@ -18,7 +18,8 @@ void resetExternalPluginLoaderFailed();
 bool nativeDebugLogRequested();
 
 // Unless nativeDebugLogRequested(), replace gst's default log function with qtGstLog. Then apply @p level, the
-// persisted gstDebugLevel setting, else that setting's default (disabled), unless GST_DEBUG is set.
+// persisted gstDebugLevel setting, else that setting's default (disabled), unless GST_DEBUG is set. Also before
+// gst_init(), which then logs through qtGstLog at that level from its first line.
 void configureDebugLogging(std::optional<int> level = std::nullopt);
 
 void qtGstLog(GstDebugCategory* category, GstDebugLevel level, const gchar* file, const gchar* function, gint line,

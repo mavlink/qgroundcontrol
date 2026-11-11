@@ -193,6 +193,40 @@ void GStreamerTest::_testCompleteInit()
     }
 }
 
+void GStreamerTest::_testCompleteInitNamesBlacklistedPlugins()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("tcpclientsrc");
+    GstRegistry* const registry = gst_registry_get();
+
+    // A feature's element is missing, as when its plugin could not be loaded: GStreamer keeps such a file in the
+    // registry as a plugin with the blacklisted flag.
+    const GStreamer::GstFeaturePtr feature =
+        GStreamer::adoptFeature(gst_registry_lookup_feature(registry, "tcpclientsrc"));
+    QVERIFY(feature);
+    auto* const blacklisted = GST_PLUGIN(g_object_new(GST_TYPE_PLUGIN, nullptr));
+    GST_OBJECT_FLAG_SET(blacklisted, GST_PLUGIN_FLAG_BLACKLISTED);
+    gst_registry_remove_feature(registry, feature.get());
+    const bool added = gst_registry_add_plugin(registry, blacklisted);
+    const auto restore = qScopeGuard([registry, &feature, blacklisted, added] {
+        if (added) {
+            gst_registry_remove_plugin(registry, blacklisted);
+        }
+        (void) gst_registry_add_feature(registry, feature.get());
+    });
+    QVERIFY(added);
+
+    expectLogMessage("Video.GStreamer.GStreamer", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^TCP video unavailable.*tcpclientsrc")));
+    // The fake plugin has no file; the host's own blacklisted plugins have one.
+    ignoreLogMessage("Video.GStreamer.GStreamer", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Blacklisted plugin: .*file: [^(]")));
+    expectLogMessage("Video.GStreamer.GStreamer", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Blacklisted plugin: .*file: \\(null\\)")));
+    QVERIFY(GStreamer::completeInit());
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+}
+
 void GStreamerTest::_testCreateVideoReceiver()
 {
     std::unique_ptr<VideoReceiver> receiver(GStreamer::createVideoReceiver(nullptr));

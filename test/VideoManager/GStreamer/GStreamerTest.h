@@ -20,6 +20,7 @@ private slots:
     void _testLogDecoderRanks();
     void _testPipelineDotOmitsElementProperties();
     void _testCompleteInit();
+    void _testCompleteInitNamesBlacklistedPlugins();
     void _testCreateVideoReceiver();
     void _testVideoBackendForwards();
     void _testVideoBackendRunsInOrder();

@@ -114,9 +114,9 @@ bool _verifyPluginFeatures()
     // Surface blacklisted plugins so a failure from a corrupt/incompatible plugin file
     // shows up here instead of looking like a missing-plugin problem.
     GStreamer::forEachPlugin(registry, [](GstPlugin* p) {
-        const gchar* desc = gst_plugin_get_description(p);
-        if (!desc || !g_str_has_prefix(desc, "BLACKLIST"))
+        if (!GST_OBJECT_FLAG_IS_SET(p, GST_PLUGIN_FLAG_BLACKLISTED)) {
             return;
+        }
         const gchar* filename = gst_plugin_get_filename(p);
         qCWarning(GStreamerLog) << "Blacklisted plugin:" << gst_plugin_get_name(p)
                                 << "file:" << (filename ? filename : "(null)");
@@ -240,11 +240,10 @@ bool initialize(const VideoBackend::InitParams& params)
     GStreamer::resetExternalPluginLoaderFailed();
     GStreamer::redirectGLibLogging();
 
-    // Unless the user asked for GStreamer's own output, remove its default stderr handler before gst_init_check(),
-    // which would otherwise keep it; its raw ANSI codes corrupt the terminal on macOS.
-    if (!GStreamer::nativeDebugLogRequested()) {
-        gst_debug_remove_log_function(gst_debug_log_default);
-    }
+    // Before gst_init_check(), so that what GStreamer logs while it initializes (the plugin scan) reaches QGC's log at
+    // the persisted level. It also removes GStreamer's default stderr handler, unless the user asked for GStreamer's
+    // own output, which gst_init_check() would otherwise keep; its raw ANSI codes corrupt the terminal on macOS.
+    GStreamer::configureDebugLogging(params.debugLevel);
 
     if (!_initGstRuntime(params.arguments, params.environment)) {
         return false;
@@ -255,7 +254,9 @@ bool initialize(const VideoBackend::InitParams& params)
         qAddPostRoutine(_deinitGStreamer);
     }
 
-    return completeInit(params.debugLevel);
+    // The threshold in effect: the persisted level, unless a GStreamer option among the arguments (--gst-debug-level)
+    // replaced it during gst_init_check(), which then stays.
+    return completeInit(static_cast<int>(gst_debug_get_default_threshold()));
 }
 
 // Video sink refcount protocol: createVideoSink returns one owned, non-floating ref, which the caller

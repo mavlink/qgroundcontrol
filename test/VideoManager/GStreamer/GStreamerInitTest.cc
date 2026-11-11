@@ -22,6 +22,7 @@
 #include "GStreamerUdpSrcWorkaround.h"
 #include "GstScoped.h"
 #include "LogManager.h"
+#include "QGCLoggingCategoryManager.h"
 
 namespace {
 
@@ -41,6 +42,45 @@ struct NativeDebugLogEnvGuard
 };
 
 }  // namespace
+
+void GStreamerInitTest::_testInitializeLogsFromItsFirstLine()
+{
+#if defined(__SANITIZE_ADDRESS__) || (defined(__has_feature) && __has_feature(address_sanitizer))
+    QSKIP("GStreamer init deadlocks under AddressSanitizer, see GstTest::initGStreamer()");
+#else
+    if (gst_is_initialized()) {
+        QSKIP("GStreamer was initialized before this test could watch it");
+    }
+    const NativeDebugLogEnvGuard guard;
+    // The category passes GStreamer's lines below a warning only once it is turned on.
+    const QString category = QStringLiteral("Video.GStreamer.GStreamerAPI");
+    QGCLoggingCategoryManager::instance()->setCategoryEnabled(category, true);
+    const auto restore = qScopeGuard([&category] {
+        gst_debug_set_default_threshold(GST_LEVEL_NONE);
+        QGCLoggingCategoryManager::instance()->setCategoryEnabled(category, false);
+    });
+
+    // Whatever else GStreamer logs while it starts and scans this host's plugins.
+    const QRegularExpression anything(QStringLiteral("."));
+    for (const QtMsgType type : {QtDebugMsg, QtInfoMsg, QtWarningMsg, QtCriticalMsg}) {
+        ignoreLogMessage("Video.GStreamer.GStreamerAPI", type, anything);
+        ignoreLogMessage("Video.GStreamer.GStreamerLogging", type, anything);
+    }
+    // GStreamer's first log line, which it writes before it reads its options: at the persisted level.
+    expectLogMessage("Video.GStreamer.GStreamerAPI", QtInfoMsg,
+                     QRegularExpression(QStringLiteral("Initializing GStreamer Core Library")));
+    const VideoBackend::InitParams params{
+        .arguments = {QStringLiteral("QGroundControl"), QStringLiteral("--gst-debug-level=3")},
+        .environment = GStreamer::prepareEnvironment(),
+        .debugLevel = static_cast<int>(GST_LEVEL_INFO),
+    };
+    QVERIFY(GStreamer::initialize(params));
+    verifyExpectedLogMessage();
+
+    // The level GStreamer's own option set among the arguments is not replaced by the persisted one.
+    QCOMPARE(gst_debug_get_default_threshold(), GST_LEVEL_FIXME);
+#endif
+}
 
 void GStreamerInitTest::_testNativeDebugLogRequested_data()
 {
@@ -122,6 +162,39 @@ void GStreamerInitTest::_testConfigureDebugLoggingIsIdempotent()
     gst_debug_log(probeCategory, GST_LEVEL_WARNING, __FILE__, Q_FUNC_INFO, __LINE__, nullptr, "%s",
                   "idempotent configureDebugLogging probe");
     verifyExpectedLogMessage();
+}
+
+void GStreamerInitTest::_testBridgedLogNamesItsSource()
+{
+    GSTTEST_REQUIRE_GSTREAMER();
+
+    const NativeDebugLogEnvGuard guard;
+    GStreamer::configureDebugLogging();
+
+    GST_DEBUG_CATEGORY_STATIC(probeCategory);
+    GST_DEBUG_CATEGORY_INIT(probeCategory, "qgc-init-test-source", 0, "QGC GStreamer init test");
+    if (!probeCategory) {
+        QSKIP("GStreamer debug categories unavailable");
+    }
+    gst_debug_category_set_threshold(probeCategory, GST_LEVEL_WARNING);
+    const auto resetThreshold = qScopeGuard([] { gst_debug_category_set_threshold(probeCategory, GST_LEVEL_NONE); });
+
+    const GStreamer::GstElementPtr element = GStreamer::makeElement("identity", "probe-element");
+    QVERIFY(element);
+    expectLogMessage("Video.GStreamer.GStreamerAPI", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^<probe-element> logged by an object")));
+    gst_debug_log(probeCategory, GST_LEVEL_WARNING, __FILE__, Q_FUNC_INFO, __LINE__, G_OBJECT(element.get()), "%s",
+                  "logged by an object");
+    verifyExpectedLogMessage();
+
+#if GST_CHECK_VERSION(1, 22, 0)
+    // As GST_WARNING_ID() logs, which decodebin3's multiqueue uses for most of its lines.
+    expectLogMessage("Video.GStreamer.GStreamerAPI", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^<probe-id> logged by an id")));
+    gst_debug_log_id(probeCategory, GST_LEVEL_WARNING, __FILE__, Q_FUNC_INFO, __LINE__, "probe-id", "%s",
+                     "logged by an id");
+    verifyExpectedLogMessage();
+#endif
 }
 
 void GStreamerInitTest::_testConfigureDebugLoggingDefaultsToDisabled()
