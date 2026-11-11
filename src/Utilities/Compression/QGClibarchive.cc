@@ -166,6 +166,22 @@ la_int64_t deviceSeekCallback(struct archive*, void* clientData, la_int64_t offs
 // Utility Functions
 // ============================================================================
 
+NextEntry readNextEntry(struct archive* a, struct archive_entry** entry)
+{
+    switch (archive_read_next_header(a, entry)) {
+        case ARCHIVE_OK:
+            return NextEntry::Found;
+        case ARCHIVE_EOF:
+            return NextEntry::End;
+        case ARCHIVE_WARN:
+            qCWarning(QGClibarchiveLog) << "Archive entry read with a warning:" << archive_error_string(a);
+            return NextEntry::Found;
+        default:
+            qCWarning(QGClibarchiveLog) << "Failed to read archive entry:" << archive_error_string(a);
+            return NextEntry::Error;
+    }
+}
+
 ArchiveEntry toArchiveEntry(struct archive_entry* entry)
 {
     ArchiveEntry info;
@@ -419,7 +435,8 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
     existingDirs.insert(canonicalOutputDir);
 
     bool formatLogged = false;
-    while (archive_read_next_header(a, &entry) == ARCHIVE_OK) {
+    QGClibarchive::NextEntry next;
+    while ((next = QGClibarchive::readNextEntry(a, &entry)) == QGClibarchive::NextEntry::Found) {
         // Log detected format after first header read
         if (!formatLogged) {
             updateFormatState(a);
@@ -505,7 +522,8 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
             createdFiles.append(canonicalOutput);
         }
 
-        if (archive_entry_size(entry) > 0) {
+        // An entry of a streamed ZIP has data but no size in its header
+        if (!archive_entry_size_is_set(entry) || archive_entry_size(entry) > 0) {
             const void* buff;
             size_t size;
             la_int64_t offset;
@@ -554,6 +572,10 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
             success = false;
             break;
         }
+    }
+
+    if (next == QGClibarchive::NextEntry::Error) {
+        success = false;
     }
 
     archive_read_close(a);
@@ -962,19 +984,20 @@ bool extractSingleFile(const QString& archivePath, const QString& fileName, cons
     }
 
     struct archive_entry* entry;
+    NextEntry next;
 
-    while (archive_read_next_header(reader.handle(), &entry) == ARCHIVE_OK) {
+    while ((next = readNextEntry(reader.handle(), &entry)) == NextEntry::Found) {
         const QString entryName = QString::fromUtf8(archive_entry_pathname(entry));
 
         if (entryName == fileName) {
             QGCFileHelper::ensureParentExists(outputPath);
             return writeArchiveEntryToFile(reader.handle(), outputPath);
         }
-
-        archive_read_data_skip(reader.handle());
     }
 
-    qCWarning(QGClibarchiveLog) << "File not found in archive:" << fileName;
+    if (next == NextEntry::End) {
+        qCWarning(QGClibarchiveLog) << "File not found in archive:" << fileName;
+    }
     return false;
 }
 
@@ -991,8 +1014,9 @@ QByteArray extractFileToMemory(const QString& archivePath, const QString& fileNa
     }
 
     struct archive_entry* entry;
+    NextEntry next;
 
-    while (archive_read_next_header(reader.handle(), &entry) == ARCHIVE_OK) {
+    while ((next = readNextEntry(reader.handle(), &entry)) == NextEntry::Found) {
         const QString entryName = QString::fromUtf8(archive_entry_pathname(entry));
 
         if (entryName == fileName) {
@@ -1002,11 +1026,11 @@ QByteArray extractFileToMemory(const QString& archivePath, const QString& fileNa
             }
             return result;
         }
-
-        archive_read_data_skip(reader.handle());
     }
 
-    qCWarning(QGClibarchiveLog) << "File not found in archive:" << fileName;
+    if (next == NextEntry::End) {
+        qCWarning(QGClibarchiveLog) << "File not found in archive:" << fileName;
+    }
     return QByteArray();
 }
 
@@ -1028,12 +1052,12 @@ bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNam
     QSet<QString> targetFiles(fileNames.begin(), fileNames.end());
     QSet<QString> extractedFiles;
     struct archive_entry* entry;
+    NextEntry next;
 
-    while (archive_read_next_header(reader.handle(), &entry) == ARCHIVE_OK) {
+    while ((next = readNextEntry(reader.handle(), &entry)) == NextEntry::Found) {
         const QString entryName = QString::fromUtf8(archive_entry_pathname(entry));
 
         if (!targetFiles.contains(entryName)) {
-            archive_read_data_skip(reader.handle());
             continue;
         }
 
@@ -1049,6 +1073,10 @@ bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNam
         if (extractedFiles.size() == targetFiles.size()) {
             break;
         }
+    }
+
+    if (next == NextEntry::Error) {
+        return false;
     }
 
     if (extractedFiles.size() != targetFiles.size()) {
@@ -1096,15 +1124,14 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
 
     struct archive_entry* entry;
     int matchCount = 0;
+    NextEntry next;
 
-    while (archive_read_next_header(reader.handle(), &entry) == ARCHIVE_OK) {
+    while ((next = readNextEntry(reader.handle(), &entry)) == NextEntry::Found) {
         if (archive_match_excluded(match, entry)) {
-            archive_read_data_skip(reader.handle());
             continue;
         }
 
         if (archive_entry_filetype(entry) == AE_IFDIR) {
-            archive_read_data_skip(reader.handle());
             continue;
         }
 
@@ -1122,6 +1149,11 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
         if (extractedFiles) {
             extractedFiles->append(entryName);
         }
+    }
+
+    if (next == NextEntry::Error) {
+        archive_match_free(match);
+        return false;
     }
 
     if (archive_match_path_unmatched_inclusions(match) > 0) {
@@ -1145,9 +1177,10 @@ bool validateArchive(const QString& archivePath)
     }
 
     struct archive_entry* entry;
+    NextEntry next;
 
     // Read through all entries and their data to validate
-    while (archive_read_next_header(reader.handle(), &entry) == ARCHIVE_OK) {
+    while ((next = readNextEntry(reader.handle(), &entry)) == NextEntry::Found) {
         // Read and discard data to verify it can be decompressed
         char buffer[QGCFileHelper::kBufferSizeMax];
         la_ssize_t size;
@@ -1162,7 +1195,7 @@ bool validateArchive(const QString& archivePath)
         }
     }
 
-    return true;
+    return next == NextEntry::End;
 }
 
 bool fileExistsInArchive(const QString& archivePath, const QString& fileName)
@@ -1177,11 +1210,10 @@ bool fileExistsInArchive(const QString& archivePath, const QString& fileName)
     }
 
     struct archive_entry* entry;
-    while (archive_read_next_header(reader.handle(), &entry) == ARCHIVE_OK) {
+    while (readNextEntry(reader.handle(), &entry) == NextEntry::Found) {
         if (QString::fromUtf8(archive_entry_pathname(entry)) == fileName) {
             return true;
         }
-        archive_read_data_skip(reader.handle());
     }
 
     return false;
@@ -1196,9 +1228,12 @@ QStringList listArchiveEntries(const QString& archivePath)
 
     QStringList entries;
     struct archive_entry* entry;
-    while (archive_read_next_header(reader.handle(), &entry) == ARCHIVE_OK) {
+    NextEntry next;
+    while ((next = readNextEntry(reader.handle(), &entry)) == NextEntry::Found) {
         entries.append(QString::fromUtf8(archive_entry_pathname(entry)));
-        archive_read_data_skip(reader.handle());
+    }
+    if (next == NextEntry::Error) {
+        return {};
     }
 
     qCDebug(QGClibarchiveLog) << "Listed" << entries.size() << "entries in" << archivePath;
@@ -1214,9 +1249,12 @@ QList<ArchiveEntry> listArchiveEntriesDetailed(const QString& archivePath)
 
     QList<ArchiveEntry> entries;
     struct archive_entry* entry;
-    while (archive_read_next_header(reader.handle(), &entry) == ARCHIVE_OK) {
+    NextEntry next;
+    while ((next = readNextEntry(reader.handle(), &entry)) == NextEntry::Found) {
         entries.append(toArchiveEntry(entry));
-        archive_read_data_skip(reader.handle());
+    }
+    if (next == NextEntry::Error) {
+        return {};
     }
 
     qCDebug(QGClibarchiveLog) << "Listed" << entries.size() << "entries with metadata in" << archivePath;
@@ -1232,8 +1270,9 @@ ArchiveStats getArchiveStats(const QString& archivePath)
 
     ArchiveStats stats;
     struct archive_entry* entry;
+    NextEntry next;
 
-    while (archive_read_next_header(reader.handle(), &entry) == ARCHIVE_OK) {
+    while ((next = readNextEntry(reader.handle(), &entry)) == NextEntry::Found) {
         stats.totalEntries++;
 
         if (archive_entry_filetype(entry) == AE_IFDIR) {
@@ -1248,8 +1287,10 @@ ArchiveStats getArchiveStats(const QString& archivePath)
                 stats.largestFileName = QString::fromUtf8(archive_entry_pathname(entry));
             }
         }
+    }
 
-        archive_read_data_skip(reader.handle());
+    if (next == NextEntry::Error) {
+        return {};
     }
 
     qCDebug(QGClibarchiveLog) << "Archive stats:" << stats.fileCount << "files," << stats.directoryCount << "dirs,"
@@ -1288,21 +1329,20 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
     int extractedCount = 0;
     int skippedCount = 0;
     struct archive_entry* entry;
+    NextEntry next;
 
-    while (archive_read_next_header(reader.handle(), &entry) == ARCHIVE_OK) {
+    while ((next = readNextEntry(reader.handle(), &entry)) == NextEntry::Found) {
         // Build ArchiveEntry for filter callback
         const ArchiveEntry info = toArchiveEntry(entry);
 
         // Check filter
         if (!filter(info)) {
             skippedCount++;
-            archive_read_data_skip(reader.handle());
             continue;
         }
 
         // Skip directories for extraction (they're created by ensureParentExists)
         if (info.isDirectory) {
-            archive_read_data_skip(reader.handle());
             continue;
         }
 
@@ -1330,6 +1370,10 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
                 return false;
             }
         }
+    }
+
+    if (next == NextEntry::Error) {
+        return false;
     }
 
     qCDebug(QGClibarchiveLog) << "Extracted" << extractedCount << "files, skipped" << skippedCount;
@@ -1434,7 +1478,8 @@ QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName)
     }
 
     struct archive_entry* entry;
-    while (archive_read_next_header(reader.handle(), &entry) == ARCHIVE_OK) {
+    NextEntry next;
+    while ((next = readNextEntry(reader.handle(), &entry)) == NextEntry::Found) {
         if (QString::fromUtf8(archive_entry_pathname(entry)) == fileName) {
             QByteArray result = readArchiveToMemory(reader.handle(), archive_entry_size(entry));
             if (!result.isEmpty()) {
@@ -1442,10 +1487,11 @@ QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName)
             }
             return result;
         }
-        archive_read_data_skip(reader.handle());
     }
 
-    qCWarning(QGClibarchiveLog) << "File not found in archive:" << fileName;
+    if (next == NextEntry::End) {
+        qCWarning(QGClibarchiveLog) << "File not found in archive:" << fileName;
+    }
     return QByteArray();
 }
 

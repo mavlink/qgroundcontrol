@@ -1,8 +1,10 @@
 #include "QGCArchiveFile.h"
-#include "QGCLoggingCategory.h"
 
 #include <archive.h>
 #include <archive_entry.h>
+
+#include "QGCLoggingCategory.h"
+#include "QGClibarchive.h"
 
 QGC_LOGGING_CATEGORY(QGCArchiveFileLog, "Utilities.QGCArchiveFile")
 
@@ -101,7 +103,8 @@ bool QGCArchiveFile::seekToEntry()
     struct archive_entry *entry = nullptr;
     _entryFound = false;
 
-    while (archive_read_next_header(_archive, &entry) == ARCHIVE_OK) {
+    QGClibarchive::NextEntry next;
+    while ((next = QGClibarchive::readNextEntry(_archive, &entry)) == QGClibarchive::NextEntry::Found) {
         // Capture format info on first header
         if (_formatName.isEmpty()) {
             captureFormatInfo();
@@ -123,11 +126,12 @@ bool QGCArchiveFile::seekToEntry()
                                         << "modified:" << _entryModified;
             return true;
         }
-
-        // Skip this entry's data
-        archive_read_data_skip(_archive);
     }
 
-    _errorString = QStringLiteral("Entry not found in archive: ") + _entryName;
+    if (next == QGClibarchive::NextEntry::Error) {
+        _errorString = QString::fromUtf8(archive_error_string(_archive));
+    } else {
+        _errorString = QStringLiteral("Entry not found in archive: ") + _entryName;
+    }
     return false;
 }

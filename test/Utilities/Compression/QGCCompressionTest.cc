@@ -38,24 +38,27 @@ bool QGCCompressionTest::_compareFiles(const QString& file1, const QString& file
     return hash1.result() == hash2.result();
 }
 
-bool QGCCompressionTest::_writeGzipOfZeros(const QString& path, int memberCount)
+quint32 QGCCompressionTest::_crc32(const QByteArray& data)
 {
-    const QByteArray payload(64 * 1024, '\0');
-
     quint32 crc = 0xFFFFFFFFU;
-    for (const char byte : payload) {
+    for (const char byte : data) {
         crc ^= static_cast<quint8>(byte);
         for (int bit = 0; bit < 8; ++bit) {
             crc = (crc >> 1) ^ (0xEDB88320U & (0U - (crc & 1U)));
         }
     }
-    crc = ~crc;
+    return ~crc;
+}
+
+bool QGCCompressionTest::_writeGzipOfZeros(const QString& path, int memberCount)
+{
+    const QByteArray payload(64 * 1024, '\0');
 
     // qCompress() output: 4-byte length, 2-byte zlib header, deflate stream, 4-byte Adler-32
     const QByteArray zlibStream = qCompress(payload);
     QByteArray member = QByteArray::fromHex("1f8b08000000000000ff");
     member.append(zlibStream.mid(6, zlibStream.size() - 10));
-    for (const quint32 field : {crc, static_cast<quint32>(payload.size())}) {
+    for (const quint32 field : {_crc32(payload), static_cast<quint32>(payload.size())}) {
         for (int shift = 0; shift < 32; shift += 8) {
             member.append(static_cast<char>((field >> shift) & 0xFFU));
         }
@@ -71,6 +74,42 @@ bool QGCCompressionTest::_writeGzipOfZeros(const QString& path, int memberCount)
         }
     }
     return true;
+}
+
+QByteArray QGCCompressionTest::_makeTar(const QList<TarEntry>& entries)
+{
+    constexpr qsizetype blockSize = 512;
+    QByteArray archive;
+    for (const TarEntry& entry : entries) {
+        QByteArray header(blockSize, '\0');
+        const auto setField = [&header](qsizetype offset, const QByteArray& value) {
+            header.replace(offset, value.size(), value);
+        };
+        setField(0, entry.name.left(100));
+        setField(100, "0000644");
+        setField(108, "0000000");
+        setField(116, "0000000");
+        setField(124, QByteArray::number(entry.data.size(), 8).rightJustified(11, '0'));
+        setField(136, "00000000000");
+        setField(148, "        ");
+        header[156] = entry.type;
+        setField(157, entry.linkName.left(100));
+        setField(257, "ustar");
+        setField(263, "00");
+
+        quint32 checksum = 0;
+        for (const char byte : std::as_const(header)) {
+            checksum += static_cast<quint8>(byte);
+        }
+        setField(148, QByteArray::number(checksum, 8).rightJustified(6, '0'));
+        header[154] = '\0';
+
+        archive.append(header);
+        archive.append(entry.data);
+        archive.append(QByteArray((blockSize - (entry.data.size() % blockSize)) % blockSize, '\0'));
+    }
+    archive.append(QByteArray(2 * blockSize, '\0'));
+    return archive;
 }
 
 // ============================================================================
@@ -906,6 +945,153 @@ void QGCCompressionTest::_testNoExternalDecompressors()
 
     QVERIFY2(!QFile::exists(markerPath), "An external decompression program was run");
 #endif
+}
+
+void QGCCompressionTest::_testTruncatedArchive_data()
+{
+    QTest::addColumn<QString>("fileName");
+    QTest::addColumn<QByteArray>("data");
+
+    const auto resource = [](const QString& path) {
+        QFile file(path);
+        return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
+    };
+    const QByteArray tar = _makeTar({{.name = "first.txt", .data = QByteArray(600, 'a')},
+                                     {.name = "second.txt", .data = QByteArray(600, 'b')},
+                                     {.name = "third.txt", .data = "c"}});
+    const QByteArray zip = resource(QStringLiteral(":/unittest/manifest.json.zip"));
+    const QByteArray sevenZip = resource(QStringLiteral(":/unittest/manifest.json.7z"));
+
+    // first.txt takes three 512-byte blocks: its header and two of data
+    QTest::newRow("tar-inside-header") << "cut.tar" << tar.left(3 * 512 + 256);
+    QTest::newRow("tar-inside-data") << "cut.tar" << tar.left(4 * 512 + 100);
+    QTest::newRow("zip-inside-header") << "cut.zip" << zip.left(10);
+    QTest::newRow("zip-inside-data") << "cut.zip" << zip.left(zip.size() / 2);
+    QTest::newRow("7z") << "cut.7z" << sevenZip.left(sevenZip.size() / 2);
+}
+
+void QGCCompressionTest::_testTruncatedArchive()
+{
+    QFETCH(QString, fileName);
+    QFETCH(QByteArray, data);
+    QVERIFY(!data.isEmpty());
+
+    QTemporaryDir tempDir;
+    const QString archivePath = tempDir.filePath(fileName);
+    QFile file(archivePath);
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    QCOMPARE(file.write(data), data.size());
+    file.close();
+
+    // Each call reports the damage once, where it meets it: at an entry header or in entry data
+    const QRegularExpression readFailure(
+        "Failed to read archive entry|Failed to read data|Validation failed for entry");
+    const auto expectReadFailure = [this, &readFailure]() {
+        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, readFailure);
+    };
+
+    expectReadFailure();
+    QVERIFY(!QGCCompression::validateArchive(archivePath));
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
+
+    expectReadFailure();
+    QVERIFY(QGCCompression::listArchive(archivePath).isEmpty());
+    verifyExpectedLogMessage();
+
+    expectReadFailure();
+    QVERIFY(QGCCompression::listArchiveDetailed(archivePath).isEmpty());
+    verifyExpectedLogMessage();
+
+    expectReadFailure();
+    QCOMPARE(QGCCompression::getArchiveStats(archivePath).totalEntries, 0);
+    verifyExpectedLogMessage();
+
+    // Once for the size pre-check and once for the extraction itself
+    expectReadFailure();
+    expectReadFailure();
+    QVERIFY(!QGCCompression::extractArchive(archivePath, tempDir.filePath("output")));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+
+    const QString atomicOutput = tempDir.filePath("atomic_output");
+    expectReadFailure();
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Archive is empty or invalid"));
+    QVERIFY(!QGCCompression::extractArchiveAtomic(archivePath, atomicOutput));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QVERIFY(!QFileInfo::exists(atomicOutput));
+}
+
+namespace {
+
+/// Feeds bytes to a reader that cannot seek, like a network reply
+class QGCCompressionTestSequentialDevice : public QIODevice
+{
+public:
+    explicit QGCCompressionTestSequentialDevice(const QByteArray& data)
+        : _data(data)
+    {}
+
+    bool isSequential() const override { return true; }
+
+protected:
+    qint64 readData(char* data, qint64 maxSize) override
+    {
+        const qint64 count = qMin(maxSize, _data.size() - _offset);
+        memcpy(data, _data.constData() + _offset, static_cast<size_t>(count));
+        _offset += count;
+        return count;
+    }
+
+    qint64 writeData(const char*, qint64) override { return -1; }
+
+private:
+    const QByteArray _data;
+    qint64 _offset = 0;
+};
+
+}  // namespace
+
+void QGCCompressionTest::_testExtractStreamedZipEntry()
+{
+    // A ZIP written to a stream sets the "length at end" flag and leaves the sizes out of the
+    // local header, so a reader that cannot seek to the central directory does not know them
+    const QByteArray name("streamed.txt");
+    const QByteArray content("content of an entry whose size is only known after its data\n");
+    const QByteArray zlibStream = qCompress(content);
+    const QByteArray deflated = zlibStream.mid(6, zlibStream.size() - 10);
+    constexpr quint16 lengthAtEnd = 0x0008;
+    constexpr quint16 deflate = 8;
+
+    QByteArray zip;
+    QDataStream out(&zip, QIODevice::WriteOnly);
+    out.setByteOrder(QDataStream::LittleEndian);
+    // Local file header, data, data descriptor
+    out << quint32(0x04034B50) << quint16(20) << lengthAtEnd << deflate << quint32(0) << quint32(0) << quint32(0)
+        << quint32(0) << quint16(name.size()) << quint16(0);
+    out.writeRawData(name.constData(), name.size());
+    out.writeRawData(deflated.constData(), deflated.size());
+    out << quint32(0x08074B50) << _crc32(content) << quint32(deflated.size()) << quint32(content.size());
+    // Central directory header
+    const quint32 centralDirectoryOffset = zip.size();
+    out << quint32(0x02014B50) << quint16(20) << quint16(20) << lengthAtEnd << deflate << quint32(0) << _crc32(content)
+        << quint32(deflated.size()) << quint32(content.size()) << quint16(name.size()) << quint16(0) << quint16(0)
+        << quint16(0) << quint16(0) << quint32(0) << quint32(0);
+    out.writeRawData(name.constData(), name.size());
+    // End of central directory
+    const quint32 centralDirectorySize = zip.size() - centralDirectoryOffset;
+    out << quint32(0x06054B50) << quint16(0) << quint16(0) << quint16(1) << quint16(1) << centralDirectorySize
+        << centralDirectoryOffset << quint16(0);
+
+    QGCCompressionTestSequentialDevice device(zip);
+    QVERIFY(device.open(QIODevice::ReadOnly));
+    QTemporaryDir tempDir;
+    QVERIFY(QGCCompression::extractFromDevice(&device, tempDir.path()));
+
+    QFile extracted(tempDir.filePath(QString::fromLatin1(name)));
+    QVERIFY(extracted.open(QIODevice::ReadOnly));
+    QCOMPARE(extracted.readAll(), content);
 }
 
 // ============================================================================

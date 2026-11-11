@@ -50,6 +50,9 @@ private slots:
     void _testCorruptArchive();
     void _testNonExistentInput();
     void _testNoExternalDecompressors();
+    void _testTruncatedArchive_data();
+    void _testTruncatedArchive();
+    void _testExtractStreamedZipEntry();
 
     // QIODevice-based operations
     void _testDecompressFromDevice();
@@ -97,6 +100,20 @@ private slots:
 private:
     bool _compareFiles(const QString& file1, const QString& file2);
 
+    static quint32 _crc32(const QByteArray& data);
+
     /// Writes a gzip file of @a memberCount concatenated members, each expanding to 64 KiB of zeros
     static bool _writeGzipOfZeros(const QString& path, int memberCount);
+
+    /// Entry of a hand-built ustar archive
+    struct TarEntry
+    {
+        QByteArray name = {};
+        QByteArray data = {};
+        char type = '0';  ///< '0' file, '1' hard link, '2' symbolic link, '5' directory
+        QByteArray linkName = {};
+    };
+
+    /// Builds a ustar archive, so that tests can make archives libarchive's writer would refuse to
+    static QByteArray _makeTar(const QList<TarEntry>& entries);
 };

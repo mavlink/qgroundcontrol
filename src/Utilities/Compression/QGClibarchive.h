@@ -142,6 +142,28 @@ int deviceCloseCallback(struct archive *a, void *clientData);
 la_int64_t deviceSeekCallback(struct archive *a, void *clientData, la_int64_t offset, int whence);
 
 // ============================================================================
+// Entry Iteration
+// ============================================================================
+
+/// Outcome of advancing to the next entry of an archive
+enum class NextEntry
+{
+    Found,  ///< An entry header was read
+    End,    ///< The archive ended cleanly
+    Error   ///< The archive is truncated or corrupt (a warning has been logged)
+};
+
+/// Advance to the next entry header, first skipping whatever is unread of the current entry's data
+/// Every loop over archive entries goes through this function. Testing archive_read_next_header()
+/// against ARCHIVE_OK instead makes a truncated or corrupt archive look like one that has ended.
+/// ARCHIVE_WARN is logged and the entry returned: libarchive documents it as success with a
+/// warning (for example a pathname it could not convert) and the entry is usable.
+/// ARCHIVE_RETRY, ARCHIVE_FAILED and ARCHIVE_FATAL are all reported as Error.
+/// @param a Archive reader
+/// @param entry Receives the entry when Found is returned
+NextEntry readNextEntry(struct archive* a, struct archive_entry** entry);
+
+// ============================================================================
 // Utility Functions
 // ============================================================================
 
