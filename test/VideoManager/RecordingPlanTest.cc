@@ -46,7 +46,7 @@ void RecordingPlanTest::_testPartsFollowOpenedSessions()
     QCOMPARE(plan.currentFile(), QStringLiteral("/v/clip.mp4"));
 
     // A session that ended before its file got a frame leaves the part to the next one.
-    plan.onSessionEnded();
+    plan.nextPart();
     QCOMPARE(plan.part(), 1);
 
     // Only the current part's file opens it.
@@ -55,10 +55,29 @@ void RecordingPlanTest::_testPartsFollowOpenedSessions()
     QVERIFY(plan.onFileOpened(QStringLiteral("/v/clip.mp4")));
     QVERIFY(plan.opened());
 
-    plan.onSessionEnded();
+    plan.nextPart();
     QCOMPARE(plan.part(), 2);
     QVERIFY(!plan.opened());
     QCOMPARE(plan.currentFile(), QStringLiteral("/v/clip_part2.mp4"));
+}
+
+void RecordingPlanTest::_testPartDueAfterMaxDuration()
+{
+    RecordingPlan plan(QStringLiteral("/v/clip.mp4"), VideoReceiver::FileFormat::Mp4, 10s);
+    const RecordingPlan::Clock::time_point start = RecordingPlan::Clock::now();
+
+    // A part's time counts from its first frame.
+    QVERIFY(!plan.partDue(start + 1h));
+    QVERIFY(plan.onFileOpened(plan.currentFile(), start));
+    QVERIFY(!plan.partDue(start + 9s));
+    QVERIFY(plan.partDue(start + 10s));
+
+    plan.nextPart();
+    QCOMPARE(plan.part(), 2);
+    QVERIFY(!plan.partDue(start + 1h));
+    QVERIFY(plan.onFileOpened(plan.currentFile(), start + 12s));
+    QVERIFY(!plan.partDue(start + 21s));
+    QVERIFY(plan.partDue(start + 22s));
 }
 
 void RecordingPlanTest::_testRecordingTimeAndSize()
@@ -73,7 +92,7 @@ void RecordingPlanTest::_testRecordingTimeAndSize()
 
     QVERIFY(plan.onFileOpened(plan.currentFile(), start));
     QVERIFY(writeFile(plan.currentFile(), 100));
-    plan.onSessionEnded();
+    plan.nextPart();
     // The time counts from the first part's first frame, across parts.
     QVERIFY(plan.onFileOpened(plan.currentFile(), start + 5s));
     QVERIFY(writeFile(plan.currentFile(), 50));

@@ -4,6 +4,8 @@
 
 #include <QtTest/QTest>
 
+#include "GstReceiverWorker.h"
+
 bool GstVideoReceiverTestBase::runOnPipeline(GstVideoReceiver* receiver, const std::function<void(GstElement*)>& task)
 {
     return receiver && receiver->_runOnPipeline(task);
@@ -12,6 +14,12 @@ bool GstVideoReceiverTestBase::runOnPipeline(GstVideoReceiver* receiver, const s
 GstElement* GstVideoReceiverTestBase::displaySink(const GstVideoReceiver* receiver)
 {
     return receiver->_displaySink.get();
+}
+
+void GstVideoReceiverTestBase::setMaxRecordingPartDuration(GstVideoReceiver* receiver,
+                                                           std::chrono::milliseconds duration)
+{
+    receiver->_postToWorker([duration](GstReceiverWorker& worker) { worker.setMaxRecordingPartDuration(duration); });
 }
 
 void GstVideoReceiverTestBase::initTestCase()

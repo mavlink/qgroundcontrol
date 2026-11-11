@@ -35,6 +35,8 @@ public:
     /// Runs @p task with @p receiver's pipeline (null when none runs) on the worker thread that owns it, and waits.
     static bool runOnPipeline(GstVideoReceiver* receiver, const std::function<void(GstElement* pipeline)>& task);
     static GstElement* displaySink(const GstVideoReceiver* receiver);
+    /// Has @p receiver's recordings, those started from now on, continue in a new part every @p duration.
+    static void setMaxRecordingPartDuration(GstVideoReceiver* receiver, std::chrono::milliseconds duration);
 #endif
 
 protected slots:

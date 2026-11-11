@@ -125,7 +125,7 @@ void GstReceiverWorker::_startRecording(const RecordingRequest& request)
         return;
     }
 
-    _recording.emplace(request.file, request.format);
+    _recording.emplace(request.file, request.format, _maxRecordingPartDuration);
     _updateStatus(&Status::recording, true);
     if (_session) {
         _session->setRecording(_recordingRequest());
@@ -220,7 +220,7 @@ void GstReceiverWorker::_stopSession()
     session->deleteLater();
 
     if (_recording) {
-        _recording->onSessionEnded();
+        _recording->nextPart();
     }
 }
 
@@ -275,6 +275,12 @@ void GstReceiverWorker::_onWatchdogTick()
         }
     }
     _sampleStats();
+
+    if (_recording && _recording->partDue()) {
+        _recording->nextPart();
+        qCDebug(GstVideoReceiverLog) << "Recording continues in" << _recording->currentFile();
+        _session->setRecording(_recordingRequest());
+    }
 
     const StreamWatchdog::Result result = _watchdog.check(StreamWatchdog::now(), _session->displaying());
     switch (result.stall) {

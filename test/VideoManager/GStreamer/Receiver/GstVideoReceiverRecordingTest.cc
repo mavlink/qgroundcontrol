@@ -27,6 +27,9 @@ using GstReceiverTest::Receiver;
 using GstReceiverTest::State;
 using GstReceiverTest::udpListenUri;
 
+// The test stream has a keyframe every 5 frames.
+constexpr int kFramesPerGop = 5;
+
 enum class RecordingEnd
 {
     Stopped,
@@ -136,6 +139,44 @@ void GstVideoReceiverRecordingTest::_testReconnectResumesRecordingInNextPart()
     for (const QString& file : {path, part2}) {
         const QString problem = recordingProblem(file);
         QVERIFY2(problem.isEmpty(), qPrintable(problem));
+    }
+}
+
+void GstVideoReceiverRecordingTest::_testLongRecordingContinuesInNextPart()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    Receiver stream;
+    // Without the jitter buffer, which may drop a late packet: every frame sent is to reach a file.
+    VideoReceiver::Config config = stream.receiver->config();
+    config.lowLatency = true;
+    stream.receiver->setConfig(config);
+    setMaxRecordingPartDuration(stream.receiver.get(), std::chrono::seconds(1));
+    QVERIFY(stream.startStreaming());
+
+    const QString path = tempDir.filePath(QStringLiteral("long.mp4"));
+    const QStringList parts{path, tempDir.filePath(QStringLiteral("long_part2.mp4")),
+                            tempDir.filePath(QStringLiteral("long_part3.mp4"))};
+    QVERIFY(stream.record(path));
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingStartedSpy, parts.size(), TestTimeout::mediumMs());
+    QVERIFY(stream.receiver->recording());
+    stream.receiver->stopRecording();
+    QVERIFY_TRUE_WAIT(!stream.receiver->recording(), TestTimeout::mediumMs());
+    QVERIFY_SIGNAL_COUNT_WAIT(stream.recordingFinishedSpy, stream.recordingStartedSpy.count(), TestTimeout::mediumMs());
+    QVERIFY(stream.errorSpy.isEmpty());
+
+    for (qsizetype part = 0; part < parts.size(); ++part) {
+        QCOMPARE(stream.recordingStartedSpy.at(part).constFirst().toString(), parts.at(part));
+        QCOMPARE(stream.recordingFinishedSpy.at(part).at(0).toString(), parts.at(part));
+        QCOMPARE(stream.recordingFinishedSpy.at(part).at(1).toString(), QString());
+    }
+    // A part that the next one took over from ends right before the keyframe the next one starts with: it holds whole
+    // groups of pictures, and no frame between the two is lost.
+    for (const QString& part : parts.first(parts.size() - 1)) {
+        QString failure;
+        const int frames = GstTest::countPlayableFrames(part, failure);
+        QVERIFY2(frames >= kMinRecordedFrames, qPrintable(failure));
+        QVERIFY2((frames % kFramesPerGop) == 0, qPrintable(QStringLiteral("%1: %2 frames").arg(part).arg(frames)));
     }
 }
 

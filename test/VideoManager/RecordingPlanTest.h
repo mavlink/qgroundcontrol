@@ -11,5 +11,6 @@ private slots:
     void _testPartFile_data();
     void _testPartFile();
     void _testPartsFollowOpenedSessions();
+    void _testPartDueAfterMaxDuration();
     void _testRecordingTimeAndSize();
 };

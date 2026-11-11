@@ -141,8 +141,8 @@ public:
 
     /// Records to @p file until stopRecording() or setActive(false). Accepted only while active (otherwise
     /// errorOccurred()); the file opens once streaming, at the next keyframe for a receiver that records the stream as
-    /// it arrives. After a reconnect the recording continues, into "<base>_part<N>.<ext>", N counting from 2, or in the
-    /// same file for a receiver that encodes the frames anew.
+    /// it arrives. Such a receiver continues the recording after a reconnect, and after each hour, into
+    /// "<base>_part<N>.<ext>", N counting from 2; one that encodes the frames anew keeps to the same file.
     void startRecording(const QString& file, FileFormat format);
     void stopRecording();
 
@@ -156,7 +156,7 @@ signals:
     void streamingChanged(bool streaming);
     void decodingChanged(bool decoding);
     void recordingChanged(bool recording);
-    /// A recording file opened: the first one after startRecording(), or the next part after a reconnect.
+    /// A recording file opened: the first one after startRecording(), or the recording's next part.
     void recordingStarted(const QString& file);
     /// A recording file closed. @p error is empty when the file was finalized cleanly.
     void recordingFinished(const QString& file, const QString& error);

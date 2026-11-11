@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <optional>
 
 #include <QtCore/QObject>
@@ -39,6 +40,10 @@ public:
     void dumpPipelineGraph(const QString& tag) const;
     /// Stops everything and quits the thread.
     void shutdown();
+
+    /// How long a part of the recordings started from now on records, instead of RecordingPlan::kMaxPartDuration. For
+    /// tests, which can't wait that long.
+    void setMaxRecordingPartDuration(std::chrono::milliseconds duration) { _maxRecordingPartDuration = duration; }
 
     GstElement* pipeline() const { return _session ? _session->pipeline() : nullptr; }
 
@@ -94,8 +99,10 @@ private:
 
     Request _requested;
     Status _status;
-    /// The recording asked for, until it stops or fails; after a reconnect it continues in the next part.
+    /// The recording asked for, until it stops or fails; after a reconnect, and once a part has recorded for long
+    /// enough, it continues in the next part.
     std::optional<RecordingPlan> _recording;
+    std::chrono::milliseconds _maxRecordingPartDuration = RecordingPlan::kMaxPartDuration;
 
     PipelineSession* _session = nullptr;
     int _statsTicks = 0;

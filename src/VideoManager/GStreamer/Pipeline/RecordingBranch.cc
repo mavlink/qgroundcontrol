@@ -9,6 +9,7 @@
 #include "GStreamerHelpers.h"
 #include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
+#include "RecordingPlan.h"
 
 namespace {
 
@@ -16,9 +17,13 @@ namespace {
 // there every update period, so a crash or power loss leaves a file playable up to the last update.
 // The reservation (550 B/s per track by default, ~8 MB here) outlasts the nominal duration since the
 // index grows ~140 B/s at 30 fps and ~260 B/s at 60 fps; overrunning it makes qtmux post an ERROR.
+// No file gets that far: its recording continues in a new part after half the nominal duration.
 // The period bounds crash data loss without rewriting the growing moov too often.
 constexpr guint64 kRecordingReservedMaxDurationNs = 2 * 3600 * GST_SECOND;
 constexpr guint64 kRecordingMoovUpdatePeriodNs = 5 * GST_SECOND;
+static_assert((2 * std::chrono::nanoseconds(RecordingPlan::kMaxPartDuration).count()) <=
+                  static_cast<qint64>(kRecordingReservedMaxDurationNs),
+              "A recording's part must end well within the header space its muxer reserves");
 
 const char* muxerFactory(VideoReceiver::FileFormat format)
 {
@@ -75,6 +80,13 @@ struct KeyframeWatch
 {
     RecordingBranch* branch = nullptr;
     quint64 recording = 0;
+};
+
+/// The switch probe's data: which hold it is.
+struct SwitchWatch
+{
+    RecordingBranch* branch = nullptr;
+    quint64 hold = 0;
 };
 
 QString notFinalizedError()
@@ -233,6 +245,7 @@ void RecordingBranch::reset()
 {
     _finalizeTimer.stop();
     _keyframeWatch.remove();
+    _releaseSwitchHold();
     if (_fileSink) {
         GStreamer::flushAndDisposeChild(_fileSink.get());
         _fileSink.reset();
@@ -262,7 +275,12 @@ void RecordingBranch::_reconcile()
             }
             break;
         case State::Recording:
-            if (!_requested || (*_requested != _current)) {
+            if (_requested && (*_requested == _current)) {
+                _releaseSwitchHold();
+            } else if (_requested && _fileStarted.load(std::memory_order_acquire)) {
+                // A file with frames ends where the next one can begin, so the frames in between aren't lost.
+                _switchAtKeyframe();
+            } else {
                 _end();
             }
             break;
@@ -326,6 +344,38 @@ void RecordingBranch::_start(const Request& request)
 
     _head.open();
     _context.dotDumper->dump(_context.pipeline, "pipeline-with-filesink");
+}
+
+void RecordingBranch::_switchAtKeyframe()
+{
+    if (_switching) {
+        return;
+    }
+    const GStreamer::GstPadPtr valveSrc = GStreamer::adoptPad(gst_element_get_static_pad(_head.valve(), "src"));
+    if (!_switchHold.add(valveSrc.get(),
+                         static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BLOCK | GST_PAD_PROBE_TYPE_BUFFER),
+                         _switchProbe, new SwitchWatch{.branch = this, .hold = ++_switchHoldId},
+                         [](gpointer watch) { delete static_cast<SwitchWatch*>(watch); })) {
+        qCWarning(GstVideoReceiverLog) << "Unable to hold the next keyframe; frames up to it are not recorded";
+        _end();
+        return;
+    }
+    _switching = true;
+}
+
+void RecordingBranch::_onSwitchKeyframe(quint64 hold)
+{
+    if (!_switching || (hold != _switchHoldId) || (_state != State::Recording)) {
+        return;
+    }
+    // Its _finish() starts the requested file and lets the keyframe go.
+    _end();
+}
+
+void RecordingBranch::_releaseSwitchHold()
+{
+    _switchHold.remove();
+    _switching = false;
 }
 
 void RecordingBranch::_end(const QString& failure)
@@ -399,11 +449,17 @@ void RecordingBranch::_finish(const QString& error, bool fileClosed)
     }
 
     _reconcile();
+
+    // A keyframe held for a switch goes into the file _reconcile() started. Without one it finds the valve closed,
+    // which hides that nothing is linked behind it.
+    _releaseSwitchHold();
 }
 
 bool RecordingBranch::beginTeardown()
 {
     _requested.reset();
+    // A keyframe held for a switch that won't happen goes into the current file, ahead of the EOS that drains it.
+    _releaseSwitchHold();
     if (_state != State::Recording) {
         return finalizing();
     }
@@ -548,6 +604,22 @@ GstPadProbeReturn RecordingBranch::_keyframeProbe(GstPad* pad, GstPadProbeInfo* 
     // Reported from the worker, which knows whether this recording is still the current one.
     const quint64 recording = watch->recording;
     self->_context.post([self, recording]() { self->_onFileOpened(recording); });
+    return GST_PAD_PROBE_OK;
+}
+
+GstPadProbeReturn RecordingBranch::_switchProbe([[maybe_unused]] GstPad* pad, GstPadProbeInfo* info, gpointer data)
+{
+    const GstBuffer* const buffer = gst_pad_probe_info_get_buffer(info);
+    if (!buffer || GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT) || !GST_BUFFER_PTS_IS_VALID(buffer)) {
+        // Passes, and the probe is asked again for the next buffer.
+        return GST_PAD_PROBE_PASS;
+    }
+
+    const auto* const watch = static_cast<const SwitchWatch*>(data);
+    RecordingBranch* const self = watch->branch;
+    const quint64 hold = watch->hold;
+    self->_context.post([self, hold]() { self->_onSwitchKeyframe(hold); });
+    // Blocks, with the keyframe, until the probe is removed.
     return GST_PAD_PROBE_OK;
 }
 

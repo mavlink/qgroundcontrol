@@ -7,18 +7,23 @@
 
 #include "VideoReceiver.h"
 
-/// \brief What a receiver was asked to record, across the sessions reconnects start.
+/// \brief What a receiver was asked to record, across the sessions reconnects start and the hours it runs for.
 ///
-/// Owns VideoReceiver::startRecording()'s file contract for a receiver that records the stream as it arrives: the first
-/// session records to the file asked for, and each later one, once the part before got frames, to
-/// "<base>_part<N>.<ext>", N counting from 2. A receiver that encodes the frames anew keeps one part. Also tells the
-/// recording's time and size for VideoStreamStats.
+/// Owns VideoReceiver::startRecording()'s file contract for a receiver that records the stream as it arrives: it starts
+/// in the file asked for and continues in "<base>_part<N>.<ext>", N counting from 2, after each session that got
+/// frames and whenever a part has recorded for kMaxPartDuration. A receiver that encodes the frames anew keeps one
+/// part. Also tells the recording's time and size for VideoStreamStats.
 class RecordingPlan
 {
 public:
     using Clock = std::chrono::steady_clock;
 
-    RecordingPlan(const QString& file, VideoReceiver::FileFormat format);
+    /// How long a part records before the next one takes over. It bounds what a file holds, for the storage limit to
+    /// remove a long recording's oldest parts, and what an MP4 or MOV muxer must reserve header space for.
+    static constexpr std::chrono::minutes kMaxPartDuration{60};
+
+    RecordingPlan(const QString& file, VideoReceiver::FileFormat format,
+                  std::chrono::milliseconds maxPartDuration = kMaxPartDuration);
 
     /// "<base>_part<part>.<ext>" for @p file "<base>.<ext>"; @p file itself for part 1.
     static QString partFile(const QString& file, int part);
@@ -37,8 +42,11 @@ public:
 
     /// @p file got its first frame at @p now. False, changing nothing, unless it is the current part's file.
     bool onFileOpened(const QString& file, Clock::time_point now = Clock::now());
-    /// The session ended: the next one records the next part, if the current one got frames.
-    void onSessionEnded();
+    /// The current part has recorded for its maximum duration by @p now.
+    bool partDue(Clock::time_point now = Clock::now()) const;
+    /// What is recorded next goes to the next part, if the current one got frames: after partDue(), and once the
+    /// session ended.
+    void nextPart();
 
     /// For VideoStreamStats::recordingMs: since the first part got its first frame; -1 before.
     qint64 recordingMs(Clock::time_point now = Clock::now()) const;
@@ -48,7 +56,10 @@ public:
 private:
     QString _file;
     VideoReceiver::FileFormat _format;
+    std::chrono::milliseconds _maxPartDuration;
     int _part = 1;
     bool _opened = false;
     std::optional<Clock::time_point> _startedAt;
+    /// When the current part got its first frame; meaningful while _opened.
+    Clock::time_point _partStartedAt;
 };

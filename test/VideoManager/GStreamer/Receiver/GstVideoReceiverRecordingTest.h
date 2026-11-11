@@ -11,6 +11,7 @@ private slots:
 #ifdef QGC_GST_STREAMING
     void _testDecoderFailureKeepsRecording();
     void _testReconnectResumesRecordingInNextPart();
+    void _testLongRecordingContinuesInNextPart();
     void _testSlowRecordingDoesNotStallDisplay();
     void _testDeactivateFinishesRecording();
     void _testRecordingPlayableWhileInProgress_data();

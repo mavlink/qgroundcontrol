@@ -15,10 +15,11 @@
 /// \brief The recording branch behind the session's tee: queue ! valve [! parser ! muxer ! filesink].
 ///
 /// Records the requested file from the next keyframe once the source streams, asking upstream for that keyframe, and
-/// finalizes it within kFinalizeTimeout when the request goes away or the pipeline is torn down. MP4/MOV are muxed so a
-/// crash leaves the file playable up to the last header update. A failing recorder (disk full, storage too slow to keep
-/// up) ends the recording, not the stream: its queue holds kQueueMaxBytes of backlog and then stops taking frames
-/// rather than holding up the tee and with it the display.
+/// finalizes it within kFinalizeTimeout when the request goes away or the pipeline is torn down. A request for another
+/// file while one records ends that one before the stream's next keyframe, which starts the other: no frame between
+/// them is lost. MP4/MOV are muxed so a crash leaves the file playable up to the last header update. A failing recorder
+/// (disk full, storage too slow to keep up) ends the recording, not the stream: its queue holds kQueueMaxBytes of
+/// backlog and then stops taking frames rather than holding up the tee and with it the display.
 ///
 /// Threading: the receiver's worker, except the probes and the queue's signal handler (streaming threads), which hand
 /// their work to the worker through BranchContext::post().
@@ -69,7 +70,8 @@ public:
     /// Drops the recording, if any, without reports; the pipeline must be in NULL.
     void reset();
 
-    /// Records @p request from now on, finishing a different one first; nullopt stops recording.
+    /// Records @p request from now on, finishing a different one first, at the next keyframe if it has frames; nullopt
+    /// stops recording.
     void setRequest(const std::optional<Request>& request);
     /// The first frame reached the tee, so the input caps are known: a waiting request starts.
     void onSourceStreaming();
@@ -101,6 +103,13 @@ private:
 
     void _reconcile();
     void _start(const Request& request);
+    /// Holds the stream's next keyframe back until the current file is finished and the requested one linked, so that
+    /// it starts the requested one.
+    void _switchAtKeyframe();
+    /// The keyframe to switch files at is held by hold @p hold: the current file ends before it.
+    void _onSwitchKeyframe(quint64 hold);
+    /// Lets a held keyframe go and stops waiting for one.
+    void _releaseSwitchHold();
     /// Finishes the current recording: drains its file through EOS, or drops it without a frame. @p failure ends the
     /// request with that error once the file is closed.
     void _end(const QString& failure = QString());
@@ -115,6 +124,7 @@ private:
     void _reportOpened();
 
     static GstPadProbeReturn _keyframeProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data);
+    static GstPadProbeReturn _switchProbe(GstPad* pad, GstPadProbeInfo* info, gpointer data);
     static void _onQueueOverrun(GstElement* queue, gpointer data);
 
     const BranchContext _context;
@@ -132,6 +142,11 @@ private:
     /// The current recording's sink bin, from its start until _finish().
     GStreamer::GstElementPtr _fileSink;
     GStreamer::PadProbe _keyframeWatch;
+    /// Blocks the valve's output at a keyframe while _switching, until _finish() has started what follows.
+    GStreamer::PadProbe _switchHold;
+    bool _switching = false;
+    /// Identifies the hold, so a keyframe reported by an earlier one is ignored.
+    quint64 _switchHoldId = 0;
     /// Set by the keyframe probe once the file got its first frame.
     std::atomic<bool> _fileStarted = false;
     bool _openedReported = false;

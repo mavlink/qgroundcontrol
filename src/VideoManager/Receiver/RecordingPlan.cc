@@ -4,9 +4,11 @@
 
 #include <QtCore/QFileInfo>
 
-RecordingPlan::RecordingPlan(const QString& file, VideoReceiver::FileFormat format)
+RecordingPlan::RecordingPlan(const QString& file, VideoReceiver::FileFormat format,
+                             std::chrono::milliseconds maxPartDuration)
     : _file(file)
     , _format(format)
+    , _maxPartDuration(maxPartDuration)
 {}
 
 QString RecordingPlan::partFile(const QString& file, int part)
@@ -26,13 +28,19 @@ bool RecordingPlan::onFileOpened(const QString& file, Clock::time_point now)
         return false;
     }
     _opened = true;
+    _partStartedAt = now;
     if (!_startedAt) {
         _startedAt = now;
     }
     return true;
 }
 
-void RecordingPlan::onSessionEnded()
+bool RecordingPlan::partDue(Clock::time_point now) const
+{
+    return _opened && ((now - _partStartedAt) >= _maxPartDuration);
+}
+
+void RecordingPlan::nextPart()
 {
     if (_opened) {
         ++_part;
