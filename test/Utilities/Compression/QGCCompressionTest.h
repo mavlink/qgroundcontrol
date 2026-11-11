@@ -68,13 +68,14 @@ private slots:
     // QGCCompressionJob (async operations)
     void _testCompressionJobExtract();
     void _testCompressionJobReentrantStartFromFinished();
+    void _testCompressionJobCancel_data();
     void _testCompressionJobCancel();
     void _testCompressionJobAsyncStatic();
-    void _testCompressionJobProgress();
     void _testCompressionJobCancelFuture();
     void _testCompressionJobErrorString();
 
     // Sparse file handling
+    void _testSparseFileExtraction_data();
     void _testSparseFileExtraction();
 
     // Thread safety
@@ -119,18 +120,33 @@ private:
     /// Paths of everything below @a directoryPath, relative to it and sorted
     static QStringList _entriesBelow(const QString& directoryPath);
 
-    /// Writes a gzip file of @a memberCount concatenated members, each expanding to 64 KiB of zeros
-    static bool _writeGzipOfZeros(const QString& path, int memberCount);
+    /// One member of a gzip file, holding @a payload
+    static QByteArray _gzipMember(const QByteArray& payload);
 
-    /// Entry of a hand-built ustar archive
+    /// Writes a gzip file of @a firstMember followed by @a memberCount members, each expanding to 64 KiB of zeros
+    static bool _writeGzipOfZeros(const QString& path, int memberCount, const QByteArray& firstMember = {});
+
+    /// Part of a sparse file that is stored in the archive
+    struct TarSparseData
+    {
+        qint64 offset = 0;
+        qint64 size = 0;
+    };
+
+    /// Entry of a hand-built tar archive
     struct TarEntry
     {
         QByteArray name = {};
         QByteArray data = {};
-        char type = '0';  ///< '0' file, '1' hard link, '2' symbolic link, '5' directory
+        char type = '0';  ///< '0' file, '1' hard link, '2' symbolic link, '5' directory, 'S' old GNU sparse file
         QByteArray linkName = {};
+        QList<TarSparseData> sparseData = {};  ///< For 'S': where the data belongs in the file, at most four parts
+        qint64 sparseFileSize = 0;             ///< For 'S': size of the file with its holes
     };
 
-    /// Builds a ustar archive, so that tests can make archives libarchive's writer would refuse to
+    /// Header block of a tar entry whose data is @a dataSize bytes long
+    static QByteArray _tarHeader(const TarEntry& entry, qint64 dataSize);
+
+    /// Builds a tar archive, so that tests can make archives libarchive's writer would refuse to
     static QByteArray _makeTar(const QList<TarEntry>& entries);
 };

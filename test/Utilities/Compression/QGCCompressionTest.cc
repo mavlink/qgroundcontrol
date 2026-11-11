@@ -8,14 +8,12 @@
 
 #include <QtConcurrent/QtConcurrent>
 #include <QtCore/QBuffer>
-#include <QtCore/QCollator>
 #include <QtCore/QCryptographicHash>
 #include <QtCore/QDir>
 #include <QtCore/QDirIterator>
 #include <QtCore/QEventLoop>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
-#include <QtCore/QLocale>
 #include <QtCore/QMutex>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QThread>
@@ -23,6 +21,7 @@
 #include <QtCore/QWaitCondition>
 #include <QtTest/QSignalSpy>
 
+#include "QGCArchiveFile.h"
 #include "QGCCompression.h"
 #include "QGCCompressionJob.h"
 #include "QGCDecompressDevice.h"
@@ -78,10 +77,8 @@ QStringList QGCCompressionTest::_entriesBelow(const QString& directoryPath)
     return entries;
 }
 
-bool QGCCompressionTest::_writeGzipOfZeros(const QString& path, int memberCount)
+QByteArray QGCCompressionTest::_gzipMember(const QByteArray& payload)
 {
-    const QByteArray payload(64 * 1024, '\0');
-
     // qCompress() output: 4-byte length, 2-byte zlib header, deflate stream, 4-byte Adler-32
     const QByteArray zlibStream = qCompress(payload);
     QByteArray member = QByteArray::fromHex("1f8b08000000000000ff");
@@ -91,9 +88,15 @@ bool QGCCompressionTest::_writeGzipOfZeros(const QString& path, int memberCount)
             member.append(static_cast<char>((field >> shift) & 0xFFU));
         }
     }
+    return member;
+}
+
+bool QGCCompressionTest::_writeGzipOfZeros(const QString& path, int memberCount, const QByteArray& firstMember)
+{
+    const QByteArray member = _gzipMember(QByteArray(64 * 1024, '\0'));
 
     QFile file(path);
-    if (!file.open(QIODevice::WriteOnly)) {
+    if (!file.open(QIODevice::WriteOnly) || (file.write(firstMember) != firstMember.size())) {
         return false;
     }
     for (int i = 0; i < memberCount; ++i) {
@@ -104,38 +107,54 @@ bool QGCCompressionTest::_writeGzipOfZeros(const QString& path, int memberCount)
     return true;
 }
 
+QByteArray QGCCompressionTest::_tarHeader(const TarEntry& entry, qint64 dataSize)
+{
+    QByteArray header(512, '\0');
+    const auto setField = [&header](qsizetype offset, const QByteArray& value) {
+        header.replace(offset, value.size(), value);
+    };
+    const auto octal = [](qint64 value) { return QByteArray::number(value, 8).rightJustified(11, '0'); };
+    // A name longer than its field continues in the ustar prefix field
+    const qsizetype prefixSize = (entry.name.size() > 100) ? entry.name.indexOf('/', entry.name.size() - 101) : -1;
+    setField(0, entry.name.mid(prefixSize + 1).left(100));
+    setField(345, entry.name.left(qMax<qsizetype>(prefixSize, 0)));
+    setField(100, "0000644");
+    setField(108, "0000000");
+    setField(116, "0000000");
+    setField(124, octal(dataSize));
+    setField(136, "00000000000");
+    setField(148, "        ");
+    header[156] = entry.type;
+    setField(157, entry.linkName.left(100));
+    setField(257, "ustar");
+    setField(263, "00");
+    if (entry.type == 'S') {
+        // The old GNU header has its own magic, and lists the stored parts where ustar has the prefix
+        setField(257, QByteArray("ustar  \0", 8));
+        qsizetype field = 386;
+        for (const TarSparseData& part : entry.sparseData) {
+            setField(field, octal(part.offset));
+            setField(field + 12, octal(part.size));
+            field += 24;
+        }
+        setField(483, octal(entry.sparseFileSize));
+    }
+
+    quint32 checksum = 0;
+    for (const char byte : std::as_const(header)) {
+        checksum += static_cast<quint8>(byte);
+    }
+    setField(148, QByteArray::number(checksum, 8).rightJustified(6, '0'));
+    header[154] = '\0';
+    return header;
+}
+
 QByteArray QGCCompressionTest::_makeTar(const QList<TarEntry>& entries)
 {
     constexpr qsizetype blockSize = 512;
     QByteArray archive;
     for (const TarEntry& entry : entries) {
-        QByteArray header(blockSize, '\0');
-        const auto setField = [&header](qsizetype offset, const QByteArray& value) {
-            header.replace(offset, value.size(), value);
-        };
-        // A name longer than its field continues in the ustar prefix field
-        const qsizetype prefixSize = (entry.name.size() > 100) ? entry.name.indexOf('/', entry.name.size() - 101) : -1;
-        setField(0, entry.name.mid(prefixSize + 1).left(100));
-        setField(345, entry.name.left(qMax<qsizetype>(prefixSize, 0)));
-        setField(100, "0000644");
-        setField(108, "0000000");
-        setField(116, "0000000");
-        setField(124, QByteArray::number(entry.data.size(), 8).rightJustified(11, '0'));
-        setField(136, "00000000000");
-        setField(148, "        ");
-        header[156] = entry.type;
-        setField(157, entry.linkName.left(100));
-        setField(257, "ustar");
-        setField(263, "00");
-
-        quint32 checksum = 0;
-        for (const char byte : std::as_const(header)) {
-            checksum += static_cast<quint8>(byte);
-        }
-        setField(148, QByteArray::number(checksum, 8).rightJustified(6, '0'));
-        header[154] = '\0';
-
-        archive.append(header);
+        archive.append(_tarHeader(entry, entry.data.size()));
         archive.append(entry.data);
         archive.append(QByteArray((blockSize - (entry.data.size() % blockSize)) % blockSize, '\0'));
     }
@@ -424,45 +443,26 @@ void QGCCompressionTest::_testListArchiveDetailed()
 void QGCCompressionTest::_testListArchiveNaturalSort()
 {
     QTemporaryDir tempDir;
-    // Create a ZIP archive with files that sort differently with natural vs lexicographic sort
-    // Files: file1.txt, file2.txt, file10.txt, file20.txt
-    // Lexicographic: file1.txt, file10.txt, file2.txt, file20.txt
-    // Natural:       file1.txt, file2.txt, file10.txt, file20.txt
-    const QString zipPath = tempDir.path() + "/natural_sort_test.zip";
-    // Create test archive using miniz or system zip
-    // We'll create a simple ZIP with QBuffer and test the sorting
-    // For this test, we verify the sorting behavior using QCollator directly
-    // since QGCCompression uses it internally
-    QStringList unsorted = {"file10.txt", "file1.txt", "file20.txt", "file2.txt", "dir/file3.txt", "dir/file11.txt"};
-    // Simulate the sorting done by listArchive (using English locale for cross-platform consistency)
-    QCollator collator(QLocale(QLocale::English, QLocale::AnyCountry));
-    collator.setNumericMode(true);
-    collator.setCaseSensitivity(Qt::CaseInsensitive);
-    std::sort(unsorted.begin(), unsorted.end(), collator);
-    const int file1Index = unsorted.indexOf(QStringLiteral("file1.txt"));
-    const int file2Index = unsorted.indexOf(QStringLiteral("file2.txt"));
-    const int file10Index = unsorted.indexOf(QStringLiteral("file10.txt"));
-    const int file20Index = unsorted.indexOf(QStringLiteral("file20.txt"));
-    QVERIFY(file1Index >= 0);
-    QVERIFY(file2Index >= 0);
-    QVERIFY(file10Index >= 0);
-    QVERIFY(file20Index >= 0);
-    QVERIFY(file1Index < file2Index);
-    QVERIFY(file2Index < file10Index);
-    QVERIFY(file10Index < file20Index);
-    // Also verify case-insensitive behavior
-    QStringList caseTest = {"File.txt", "file.txt", "FILE.txt"};
-    std::sort(caseTest.begin(), caseTest.end(), collator);
-    // All should be equivalent, stable sort preserves order
-    QCOMPARE(caseTest.size(), 3);
-    // Verify numeric mode works with leading zeros
-    QStringList leadingZeros = {"file001.txt", "file01.txt", "file1.txt", "file10.txt"};
-    QStringList expectedZeros = {"file1.txt", "file001.txt", "file01.txt", "file10.txt"};
-    std::sort(leadingZeros.begin(), leadingZeros.end(), collator);
-    // Note: QCollator with numeric mode treats 001, 01, 1 as same value 1, so order depends on implementation
-    // The key behavior is that 1 < 10, which is the main point
-    QVERIFY2(leadingZeros.indexOf("file10.txt") > leadingZeros.indexOf("file1.txt"),
-             "file10.txt should come after file1.txt in natural sort");
+    const QString archivePath = tempDir.filePath("natural.tar");
+    // Stored in an order which neither the archive's own nor that of the character codes would keep
+    QVERIFY(_writeFile(archivePath, _makeTar({{.name = "file10.txt"},
+                                              {.name = "File2.txt"},
+                                              {.name = "file1.txt"},
+                                              {.name = "dir/file11.txt"},
+                                              {.name = "file20.txt"},
+                                              {.name = "dir/file3.txt"}})));
+
+    // Numbers compare by their value, and an upper case letter does not come before the lower case ones
+    const QStringList expected{QStringLiteral("dir/file3.txt"), QStringLiteral("dir/file11.txt"),
+                               QStringLiteral("file1.txt"),     QStringLiteral("File2.txt"),
+                               QStringLiteral("file10.txt"),    QStringLiteral("file20.txt")};
+    QCOMPARE(QGCCompression::listArchive(archivePath), expected);
+
+    QStringList detailedNames;
+    for (const QGCCompression::ArchiveEntry& entry : QGCCompression::listArchiveDetailed(archivePath)) {
+        detailedNames.append(entry.name);
+    }
+    QCOMPARE(detailedNames, expected);
 }
 
 void QGCCompressionTest::_testGetArchiveStats()
@@ -1557,41 +1557,6 @@ void QGCCompressionTest::_testCompressionJobReentrantStartFromFinished()
     QVERIFY(!job.isRunning());
 }
 
-void QGCCompressionTest::_testCompressionJobCancel()
-{
-    QTemporaryDir tempDir;
-    // We'll use a larger archive or repeated extraction to test cancellation
-    // For now, test the cancellation mechanism with a simple archive
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
-    const QString outputDir = tempDir.path() + "/job_cancel";
-    QGCCompressionJob job;
-    QSignalSpy finishedSpy(&job, &QGCCompressionJob::finished);
-    QVERIFY(finishedSpy.isValid());
-    // Initial state
-    QVERIFY(!job.isRunning());
-    // Start extraction
-    job.extractArchive(zipResource, outputDir);
-    // Cancel immediately
-    job.cancel();
-    // Wait for completion (cancellation or normal finish)
-    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
-    // Job should no longer be running
-    QVERIFY(!job.isRunning());
-    // Verify finished signal was emitted
-    QCOMPARE(finishedSpy.count(), 1);
-    // The result could be success (if it finished before cancel) or failure (if cancelled)
-    QList<QVariant> finishedArgs = finishedSpy.takeFirst();
-    bool success = finishedArgs.at(0).toBool();
-    if (!success) {
-        // If cancelled, error string should indicate cancellation
-        QVERIFY(job.errorString().contains("cancel", Qt::CaseInsensitive) ||
-                job.errorString().isEmpty());  // May be empty if just didn't succeed
-    }
-    // Test that cancel on non-running job is safe (no-op)
-    job.cancel();  // Should not crash or emit signals
-    QVERIFY(!job.isRunning());
-}
-
 void QGCCompressionTest::_testCompressionJobAsyncStatic()
 {
     QTemporaryDir tempDir;
@@ -1628,13 +1593,31 @@ void QGCCompressionTest::_testCompressionJobAsyncStatic()
     QVERIFY(QFileInfo::exists(decompressOutput));
 }
 
-void QGCCompressionTest::_testCompressionJobProgress()
+void QGCCompressionTest::_testCompressionJobCancel_data()
 {
+    QTest::addColumn<QString>("operation");
+
+    QTest::newRow("decompressFile") << "decompressFile";
+    QTest::newRow("extractArchive") << "extractArchive";
+}
+
+void QGCCompressionTest::_testCompressionJobCancel()
+{
+    QFETCH(QString, operation);
+    const bool extract = (operation == "extractArchive");
+
     QTemporaryDir tempDir;
-    const QString inputPath = tempDir.filePath("progress.gz");
-    const QString outputPath = tempDir.filePath("progress.bin");
+    const QString inputPath = tempDir.filePath(extract ? "zeros.tar.gz" : "zeros.gz");
+    const QString outputPath = tempDir.filePath("output");
     // Expands to 512 MiB so the worker is still busy when its first progress report is handled here
-    QVERIFY(_writeGzipOfZeros(inputPath, 8192));
+    constexpr int memberCount = 8192;
+    if (extract) {
+        // One entry of that size: its header, its data and a last member with the zero blocks which end a tar archive
+        const QByteArray header = _tarHeader({.name = "zeros.bin"}, static_cast<qint64>(memberCount) * 64 * 1024);
+        QVERIFY(_writeGzipOfZeros(inputPath, memberCount + 1, _gzipMember(header)));
+    } else {
+        QVERIFY(_writeGzipOfZeros(inputPath, memberCount));
+    }
 
     QGCCompressionJob job;
     QSignalSpy finishedSpy(&job, &QGCCompressionJob::finished);
@@ -1646,14 +1629,26 @@ void QGCCompressionTest::_testCompressionJobProgress()
         }
     });
 
-    job.decompressFile(inputPath, outputPath);
+    if (extract) {
+        job.extractArchive(inputPath, outputPath);
+    } else {
+        job.decompressFile(inputPath, outputPath);
+    }
     QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::longMs());
     QVERIFY(firstProgress > 0.0);
     QVERIFY(firstProgress < 1.0);
     // The report arrived while the worker was running, so the cancellation stopped it
     QVERIFY(!finishedSpy.first().first().toBool());
     QCOMPARE(job.errorString(), QStringLiteral("Operation cancelled"));
-    QVERIFY(!QFile::exists(outputPath));
+    QVERIFY(!job.isRunning());
+    // Nothing of the interrupted output is kept: no file, and an output directory without entries
+    QCOMPARE(_entriesBelow(outputPath), QStringList());
+    QVERIFY(!QFileInfo(outputPath).isFile());
+
+    // Cancelling a job which is not running does nothing
+    job.cancel();
+    QCOMPARE(finishedSpy.count(), 1);
+    QCOMPARE(job.errorString(), QStringLiteral("Operation cancelled"));
 }
 
 void QGCCompressionTest::_testCompressionJobCancelFuture()
@@ -1700,26 +1695,58 @@ void QGCCompressionTest::_testCompressionJobErrorString()
 // ============================================================================
 // Sparse File Handling Tests
 // ============================================================================
+void QGCCompressionTest::_testSparseFileExtraction_data()
+{
+    QTest::addColumn<QString>("api");
+
+    for (const char* api : {"extractArchive", "extractFile", "extractFileData", "QGCArchiveFile"}) {
+        QTest::newRow(api) << QString::fromLatin1(api);
+    }
+}
+
 void QGCCompressionTest::_testSparseFileExtraction()
 {
+    QFETCH(QString, api);
+
+    // The archive stores the two parts of the file which are not holes, one after the other
+    constexpr qsizetype blockSize = 512;
+    const QString entryName = QStringLiteral("sparse.bin");
+    const QByteArray firstPart(blockSize, 'A');
+    const QByteArray secondPart(blockSize, 'B');
+    QByteArray expected(9 * blockSize, '\0');
+    expected.replace(2 * blockSize, blockSize, firstPart);
+    expected.replace(8 * blockSize, blockSize, secondPart);
+
     QTemporaryDir tempDir;
-    // Test that archive_read_data_block with offsets is handled correctly
-    // This verifies the sparse file handling in writeArchiveEntryToFile()
-    // We can't easily create a sparse archive in tests, but we can verify
-    // that non-sparse files work correctly through the same code path
-    const QString zipResource = QStringLiteral(":/unittest/manifest.json.zip");
-    const QString outputDir = tempDir.path() + "/sparse_test";
-    // Extract using the standard path (which uses archive_read_data_block internally)
-    QVERIFY(QGCCompression::extractArchive(zipResource, outputDir));
-    QVERIFY(QFile::exists(outputDir + "/manifest.json"));
-    // Verify file content integrity
-    QFile extracted(outputDir + "/manifest.json");
-    QVERIFY(extracted.open(QIODevice::ReadOnly));
-    const QByteArray content = extracted.readAll();
-    QVERIFY(content.contains("\"name\""));
-    extracted.close();
-    // Verify file is not truncated or corrupted
-    QVERIFY(content.size() > 10);  // Should have meaningful content
+    const QString archivePath = tempDir.filePath("sparse.tar");
+    const QString outputPath = tempDir.filePath("output");
+    QVERIFY(_writeFile(archivePath, _makeTar({{.name = entryName.toLatin1(),
+                                               .data = firstPart + secondPart,
+                                               .type = 'S',
+                                               .sparseData = {{.offset = 2 * blockSize, .size = blockSize},
+                                                              {.offset = 8 * blockSize, .size = blockSize}},
+                                               .sparseFileSize = expected.size()}})));
+
+    QByteArray extracted;
+    if (api == "extractArchive") {
+        // The limit is that of the data: holes are not written, so they do not count
+        QVERIFY(QGCCompression::extractArchive(archivePath, outputPath, QGCCompression::Format::Auto, nullptr,
+                                               2 * blockSize));
+        extracted = _readFile(outputPath + QLatin1Char('/') + entryName);
+    } else if (api == "extractFile") {
+        QVERIFY(QGCCompression::extractFile(archivePath, entryName, outputPath));
+        extracted = _readFile(outputPath);
+    } else if (api == "extractFileData") {
+        extracted = QGCCompression::extractFileData(archivePath, entryName);
+    } else {
+        QGCArchiveFile entry(archivePath, entryName);
+        QVERIFY(entry.open(QIODevice::ReadOnly));
+        extracted = entry.readAll();
+    }
+
+    // Each part is where it belongs, with zeros in the holes
+    QCOMPARE(extracted.size(), expected.size());
+    QVERIFY(extracted == expected);
 }
 
 // ============================================================================
