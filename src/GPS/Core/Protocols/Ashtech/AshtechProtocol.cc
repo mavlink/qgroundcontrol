@@ -104,7 +104,8 @@ std::optional<uint64_t> receiptUtc(std::string_view date, std::string_view time)
 ///
 /// Decoding: GPSNMEAStream assembles satellites; positions come from $PASHR,POS, or from GGA until the first
 /// $PASHR,POS, with ZDA time and GST accuracy as metadata. $PASHR,RECEIPT position-averaging receipts start and
-/// complete a survey-in. Every other line is offered as a command reply.
+/// complete a survey-in; a receipt of failed averaging fails the session. Every other line is offered as a command
+/// reply.
 class Protocol final : public GPSNMEAFamilyProtocol
 {
 public:
@@ -186,6 +187,7 @@ private:
     EpochReceipt _positionEpoch;
     EpochReceipt _accuracyReceipt;
     NMEA::GST _accuracy;
+    /// Survey receipts are accepted: from the survey-start command until its finish receipt, valid or failed.
     bool _surveyReceiptRequested = false;
     std::optional<uint64_t> _surveyReceiptStartUtc;
 };
@@ -293,8 +295,8 @@ void Protocol::_setUpBase(GPSCommandChannel& channel)
         if (!channel.runRequired(Plan::sequence(Plan::STATION, _port))) {
             return;
         }
-        // A finish receipt may already have arrived with the station commands' replies.
-        if (!_rtcmActivationPending) {
+        // A finish receipt may already have arrived with the station commands' replies and ended the survey.
+        if (_surveyReceiptRequested) {
             _surveyClock.start(context);
         }
     }
@@ -614,6 +616,12 @@ std::optional<GPSReceiveUpdates> Protocol::_handleSurveyReceipt(const NMEA::Sent
         // The survey receipt's height is validated but not reported.
         _surveyClock.finish(context, !failed, {.latitudeDegrees = latitude, .longitudeDegrees = longitude});
         _rtcmActivationPending = !failed;
+        if (failed) {
+            // No base position will follow, so the session ends instead of idling without corrections.
+            _ready = false;
+            _nmea.setRTCMEnabled(false);
+            context.failControl(QStringLiteral("Trimble receiver reported that position averaging failed"));
+        }
     }
     return GPSReceiveUpdates{};
 }

@@ -192,6 +192,38 @@ void ashtechSurveyReceipts(GPSTestClock& clock)
     QCOMPARE(receiver.peer.commands().size(), count);
 }
 
+/// A failed averaging receipt ends the survey and fails the session, whether it arrives with the station commands'
+/// replies or once the survey runs.
+void ashtechFailedSurvey(GPSTestClock& clock)
+{
+    for (const bool duringStationCommands : {true, false}) {
+        clock.reset(GPSTestClock::START_US);
+        Base receiver(clock);
+        QVERIFY(receiver.configure());
+        if (duringStationCommands) {
+            receiver.peer.faults.rules = {
+                reply(startsWith("$PASHS,ANP"), ashtechPacket(ASHTECH_SURVEY_FAILED) + ashtechPacket("PASHR,ACK"))};
+            QVERIFY(!receiver.startSurvey());
+        } else {
+            QVERIFY(receiver.startSurvey());
+            (void) receiver.driver.consume(nmeaPacket(ASHTECH_SURVEY_FAILED));
+        }
+        QCOMPARE(receiver.driver.error(), GPSProtocolError::Protocol);
+        QCOMPARE(receiver.driver.errorDetail(),
+                 QStringLiteral("Trimble receiver reported that position averaging failed"));
+        QVERIFY(!receiver.driver.receiverReady());
+        QVERIFY(!receiver.surveys().empty() && surveyFlags(receiver.surveys().back()) == 0);
+
+        // Nothing times the survey any more, and RTCM output is never requested.
+        receiver.clearSurveys();
+        clock.advanceBy(2000000);
+        (void) receiver.driver.consume(nmeaPacket("GPHDT,121.2,T"));
+        (void) receiver.driver.receive(1ms);
+        QVERIFY(receiver.surveys().empty());
+        QVERIFY(!receiver.peer.sent("$PASHS,RT3"));
+    }
+}
+
 void ashtechMetadata(GPSTestClock& clock)
 {
     LoggedRuntime driver(Ashtech::FAMILY, makeDecoderOnlyIO(clock));
@@ -351,6 +383,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"metadata", ashtechMetadata},
     {"framing", ashtechFraming},
     {"survey-receipts", ashtechSurveyReceipts},
+    {"failed-survey", ashtechFailedSurvey},
     {"other-board-is-not-a-base", ashtechOtherBoardIsNotABase},
 };
 }  // namespace
