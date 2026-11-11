@@ -311,7 +311,7 @@ void GPSReceiverConfigTest::_descriptorIdentities()
     // The settings select each base family by its manufacturer ID; passive input is a role, not a manufacturer.
     QObject owner;
     const auto settings = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/RTK.SettingsGroup.json"), &owner);
-    const FactMetaData* selectable = settings.value(QStringLiteral("baseReceiverManufacturers"));
+    const FactMetaData* selectable = settings.value(QStringLiteral("baseReceiverManufacturer"));
     QVERIFY(selectable);
     QList<int> offered;
     for (const QVariant& value : selectable->enumValues()) {
