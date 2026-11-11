@@ -516,10 +516,12 @@ static gboolean gst_qgc_q_video_sink_stop(GstBaseSink* bsink)
 }
 
 // Add qgcqvideosink's consumed metas + min-buffer pool hint, then chain so GstBaseSink's default
-// allocation bookkeeping still runs.
+// allocation bookkeeping still runs. A query without video caps fails, as in upstream's sinks.
 static gboolean gst_qgc_q_video_sink_propose_allocation(GstBaseSink* bsink, GstQuery* query)
 {
-    GstQgc::populateAllocationQuery(query);
+    if (!GstQgc::populateAllocationQuery(query)) {
+        return FALSE;
+    }
     // GstBaseSink/GstVideoSink install no default propose_allocation vmethod, so the parent pointer
     // is NULL for a direct subclass; chaining unconditionally would call 0x0 on the first ALLOCATION query.
     GstBaseSinkClass* parentClass = GST_BASE_SINK_CLASS(gst_qgc_q_video_sink_parent_class);

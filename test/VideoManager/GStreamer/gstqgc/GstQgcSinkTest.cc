@@ -439,7 +439,7 @@ void GstQgcSinkTest::_testAllocationQueryHwMemoryPoolHint()
     QVERIFY2(caps, "HW caps did not parse");
 
     const GStreamer::GstQueryPtr query = GStreamer::adoptQuery(gst_query_new_allocation(caps.get(), TRUE));
-    GstQgc::populateAllocationQuery(query.get());
+    QVERIFY(GstQgc::populateAllocationQuery(query.get()));
 
     QCOMPARE(gst_query_get_n_allocation_pools(query.get()), 1U);
     GstBufferPool* pool = nullptr;
@@ -476,7 +476,7 @@ void GstQgcSinkTest::_testAllocationQueryOffersCropMeta()
                        .arg(memoryFeature))));
     QVERIFY2(caps, "HW caps did not parse");
     const GStreamer::GstQueryPtr query = GStreamer::adoptQuery(gst_query_new_allocation(caps.get(), TRUE));
-    GstQgc::populateAllocationQuery(query.get());
+    QVERIFY(GstQgc::populateAllocationQuery(query.get()));
 
     QCOMPARE(bool(gst_query_find_allocation_meta(query.get(), GST_VIDEO_CROP_META_API_TYPE, nullptr)), offered);
     QVERIFY(gst_query_find_allocation_meta(query.get(), GST_VIDEO_META_API_TYPE, nullptr));
@@ -535,7 +535,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkSystemMemoryAllocation_data()
     QTest::addColumn<bool>("needPool");
 
     QTest::newRow("pool needed") << true;
-    // When upstream does not need a pool, the sink must not force one.
+    // A producer with a pool of its own still learns how many buffers the sink holds.
     QTest::newRow("no pool needed") << false;
 }
 
@@ -554,12 +554,14 @@ void GstQgcSinkTest::_testQgcQVideoSinkSystemMemoryAllocation()
     const GStreamer::GstQueryPtr query = GStreamer::adoptQuery(gst_query_new_allocation(caps.get(), needPool));
 
     QVERIFY2(gst_pad_query(sinkPad.get(), query.get()), "qgcqvideosink did not answer ALLOCATION");
-    QCOMPARE(gst_query_get_n_allocation_pools(query.get()), needPool ? 1U : 0U);
+    QCOMPARE(gst_query_get_n_allocation_pools(query.get()), 1U);
+    GstBufferPool* pool = nullptr;
+    guint minBuffers = 0;
+    gst_query_parse_nth_allocation_pool(query.get(), 0, &pool, nullptr, &minBuffers, nullptr);
+    const GStreamer::GstObjectPtr ownedPool = GStreamer::adoptObject(pool ? GST_OBJECT(pool) : nullptr);
+    QCOMPARE(int(minBuffers), CpuVideoFramePool::kMaxPinnedFrames + 1);
+    QCOMPARE(pool != nullptr, needPool);
     if (needPool) {
-        GstBufferPool* pool = nullptr;
-        gst_query_parse_nth_allocation_pool(query.get(), 0, &pool, nullptr, nullptr, nullptr);
-        const GStreamer::GstObjectPtr ownedPool = GStreamer::adoptObject(GST_OBJECT(pool));
-        QVERIFY2(pool, "need_pool=TRUE must get a pool proposal");
         QVERIFY2(gst_buffer_pool_has_option(pool, GST_BUFFER_POOL_OPTION_VIDEO_META),
                  "proposed pool must support VIDEO_META so decoders can write into it directly");
     }
@@ -568,6 +570,20 @@ void GstQgcSinkTest::_testQgcQVideoSinkSystemMemoryAllocation()
              "VideoMeta not advertised for system-memory caps");
     QVERIFY2(gst_query_find_allocation_meta(query.get(), GST_VIDEO_CROP_META_API_TYPE, nullptr),
              "VideoCropMeta not advertised for system-memory caps");
+}
+
+void GstQgcSinkTest::_testQgcQVideoSinkAllocationNeedsCaps()
+{
+    GstElement* const element = gst_element_factory_make("qgcqvideosink", nullptr);
+    QVERIFY2(element, "qgcqvideosink factory not found");
+    const GStreamer::GstElementPtr sink = GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(element)));
+    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(sink.get(), "sink"));
+    QVERIFY(sinkPad);
+
+    // Nothing to propose for: the query fails, as in upstream's sinks, and its sender allocates by its defaults.
+    const GStreamer::GstQueryPtr query = GStreamer::adoptQuery(gst_query_new_allocation(nullptr, TRUE));
+    QVERIFY(!gst_pad_query(sinkPad.get(), query.get()));
+    QCOMPARE(gst_query_get_n_allocation_pools(query.get()), 0U);
 }
 
 void GstQgcSinkTest::_testAdapterFlushDropsInFlightSamples()

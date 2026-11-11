@@ -69,18 +69,18 @@ bool tryProposeMetaPool(GstQuery* query, GstCaps* caps, gsize size, guint minBuf
 
 }  // namespace
 
-void populateAllocationQuery(GstQuery* query)
+bool populateAllocationQuery(GstQuery* query)
 {
     GstCaps* caps = nullptr;
     gboolean need_pool = FALSE;
     gst_query_parse_allocation(query, &caps, &need_pool);
     if (!caps) {
-        return;
+        return false;
     }
 
     GstVideoInfo vinfo;
     if (!GstHw::dmaDrmAwareVideoInfo(caps, &vinfo)) {
-        return;
+        return false;
     }
     const gsize size = GST_VIDEO_INFO_SIZE(&vinfo);
     const guint minBuffers = proposedMinBuffers();
@@ -97,16 +97,16 @@ void populateAllocationQuery(GstQuery* query)
         // origin, with the meta saying where; the D3D11 path copies the picture from the origin. Without the offer the
         // decoder crops such a picture itself.
         addConsumedAllocationMetas(query, !gst_caps_features_contains(features, "memory:D3D11Memory"));
-        return;
+        return true;
     }
 
-    if (!need_pool) {
-        addConsumedAllocationMetas(query);
-        return;
+    // The entry carries the buffers the sink holds, which a producer with a pool of its own adds to that pool's size:
+    // it goes in without a pool when none is asked for, as in upstream's sinks.
+    if (!need_pool || !tryProposeMetaPool(query, caps, size, minBuffers)) {
+        gst_query_add_allocation_pool(query, NULL, size, minBuffers, 0);
     }
-
-    (void) tryProposeMetaPool(query, caps, size, minBuffers);
     addConsumedAllocationMetas(query);
+    return true;
 }
 
 }  // namespace GstQgc

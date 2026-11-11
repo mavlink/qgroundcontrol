@@ -50,6 +50,7 @@ private slots:
     void _testQgcVideoSinkBinAllocationQueryAdvertisesVideoMeta();
     void _testQgcQVideoSinkSystemMemoryAllocation_data();
     void _testQgcQVideoSinkSystemMemoryAllocation();
+    void _testQgcQVideoSinkAllocationNeedsCaps();
     void _testAdapterFlushDropsInFlightSamples();
     void _testFrameDeliveryKeepsTheLatestFrame();
     void _testPathSessionFailurePolicy();

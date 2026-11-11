@@ -149,7 +149,7 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   (`videoconvert ! videoscale` before GStreamer 1.22). It scales non-square pixels to square ones, converts formats the
   sink doesn't take (such as a software decoder's `Y444`), and passes GPU memory through.
 - **Allocation proposal** — the sink asks the decoder for at least five buffers (`kMaxPinnedFrames` + 1), covering the
-  frames Qt may still hold, and keeps the video and crop metas it reads. D3D11Memory gets no crop meta: the
+  frames Qt may still hold, also of a producer that asks for no pool, and keeps the video and crop metas it reads. D3D11Memory gets no crop meta: the
   d3d11 decoders then crop a picture that starts off their texture's origin themselves, where the D3D11 path would
   copy it from the origin. It asks for GL sync metas as upstream's Qt sink does, which has glcolorconvert end each
   frame with a sync point. The GL path leaves a frame's sync meta alone, since other consumers share the buffer: it
