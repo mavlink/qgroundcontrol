@@ -22,8 +22,8 @@ private slots:
     void _testSourceFactoryRejectsBadUri();
     void _testSourceFactoryTcpMpegTs();
     void _testSourceFactoryRejectsBadTcpUri();
-    void _testSourceFactoryUdp265();
-    void _testSourceFactoryUdpH264Caps();
+    void _testSourceFactoryUdpRtp_data();
+    void _testSourceFactoryUdpRtp();
     void _testParameterSetGateHoldsUntilCompleteSet();
     void _testParameterSetGatePassesLengthPrefixedOutput();
     void _testSourceFactoryUdpMpegTs();

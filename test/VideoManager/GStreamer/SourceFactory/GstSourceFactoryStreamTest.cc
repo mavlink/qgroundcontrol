@@ -34,29 +34,20 @@ GstPadProbeReturn recordDepayloaderUnit([[maybe_unused]] GstPad* pad, GstPadProb
     return GST_PAD_PROBE_OK;
 }
 
-// Units are recorded at h264parse's sink rather than the depayloader's src: the source bin sees
-// deep-element-added before parsebin's own handlers, so a probe added here would run before the factory's.
-void watchH264Depayloading([[maybe_unused]] GstBin* bin, [[maybe_unused]] GstBin* subBin, GstElement* element,
-                           gpointer data)
+/// Counts the RTP packets into @p source's rtph264depay and records the units that reach its h264parse: at the
+/// parser's sink rather than the depayloader's src, where the factory's own probe holds units back.
+bool watchH264Depayloading(GstElement* source, DepayloaderOutput* output)
 {
-    GstElementFactory* factory = gst_element_get_factory(element);
-    const char* factoryName = factory ? gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)) : nullptr;
-    auto* output = static_cast<DepayloaderOutput*>(data);
-    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(element, "sink"));
-    if (g_strcmp0(factoryName, "rtph264depay") == 0) {
-        (void) gst_pad_add_probe(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &output->packetsIn,
-                                 nullptr);
-    } else if (g_strcmp0(factoryName, "h264parse") == 0) {
-        (void) gst_pad_add_probe(sinkPad.get(), GST_PAD_PROBE_TYPE_BUFFER, recordDepayloaderUnit, output, nullptr);
-    }
-}
-
-void linkToSink([[maybe_unused]] GstElement* element, GstPad* pad, gpointer data)
-{
-    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(GST_ELEMENT(data), "sink"));
-    if (sinkPad && !gst_pad_is_linked(sinkPad.get())) {
-        (void) gst_pad_link(pad, sinkPad.get());
-    }
+    const GStreamer::GstElementPtr depayloader = GstTest::findByFactory(source, "rtph264depay");
+    const GStreamer::GstElementPtr parser = GstTest::findByFactory(source, "h264parse");
+    const GStreamer::GstPadPtr depayloaderSink =
+        GStreamer::adoptPad(depayloader ? gst_element_get_static_pad(depayloader.get(), "sink") : nullptr);
+    const GStreamer::GstPadPtr parserSink =
+        GStreamer::adoptPad(parser ? gst_element_get_static_pad(parser.get(), "sink") : nullptr);
+    return depayloaderSink && parserSink &&
+           gst_pad_add_probe(depayloaderSink.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers,
+                             &output->packetsIn, nullptr) &&
+           gst_pad_add_probe(parserSink.get(), GST_PAD_PROBE_TYPE_BUFFER, recordDepayloaderUnit, output, nullptr);
 }
 
 }  // namespace
@@ -103,7 +94,7 @@ void GstSourceFactoryStreamTest::_testSourceFactoryDropsRtpUntilParameterSets()
     GStreamer::SourceFactory::Config config;
     const GStreamer::GstElementPtr source = GstTest::createSource(QStringLiteral("udp://127.0.0.1:0"), config);
     QVERIFY(source);
-    (void) g_signal_connect(source.get(), "deep-element-added", G_CALLBACK(watchH264Depayloading), &output);
+    QVERIFY(watchH264Depayloading(source.get(), &output));
 
     GstTest::TestPipeline receiver(gst_pipeline_new("join-mid-gop"));
     GstElement* const sink = gst_element_factory_make("fakesink", nullptr);
@@ -111,7 +102,7 @@ void GstSourceFactoryStreamTest::_testSourceFactoryDropsRtpUntilParameterSets()
     g_object_set(sink, "sync", FALSE, "async", FALSE, nullptr);
     QVERIFY(gst_bin_add(receiver.bin(), source.get()));
     QVERIFY(gst_bin_add(receiver.bin(), sink));
-    (void) g_signal_connect(source.get(), "pad-added", G_CALLBACK(linkToSink), sink);
+    QVERIFY(gst_element_link(source.get(), sink));
     QVERIFY(receiver.play());
     gint port = 0;
     g_object_get(GstTest::findByFactory(source.get(), "udpsrc").get(), "port", &port, nullptr);

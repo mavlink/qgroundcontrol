@@ -159,7 +159,7 @@ void GstSourceFactoryTest::_testSourceFactoryJitterBufferNone()
     QVERIFY(bin);
 
     QVERIFY2(!GstTest::findByFactory(bin.get(), "rtpjitterbuffer"),
-             "JitterBuffer::None must link the source straight to the parser");
+             "JitterBuffer::None must link the source straight to the depayloader");
 }
 
 void GstSourceFactoryTest::_testSourceFactoryNoRetransmission()
@@ -371,58 +371,62 @@ void GstSourceFactoryTest::_testSourceFactoryRejectsBadTcpUri()
              "tcp:// with port 0 must be rejected");
 }
 
-void GstSourceFactoryTest::_testSourceFactoryUdp265()
+void GstSourceFactoryTest::_testSourceFactoryUdpRtp_data()
 {
-    GStreamer::SourceFactory::Config config;
-    const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("udp265://127.0.0.1:5600"), config);
-    QVERIFY(bin);
+    QTest::addColumn<QString>("uri");
+    QTest::addColumn<QString>("encodingName");
+    QTest::addColumn<QByteArray>("depayloader");
+    QTest::addColumn<QByteArray>("parser");
 
-    const GStreamer::GstElementPtr src = GstTest::findByFactory(bin.get(), "udpsrc");
-    QVERIFY2(src, "udp265:// must build a udpsrc");
-    GstCaps* rawCaps = nullptr;
-    g_object_get(src.get(), "caps", &rawCaps, nullptr);
-    const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(rawCaps);
-    QVERIFY2(caps, "udp265:// must set H265 RTP caps on udpsrc");
-    QCOMPARE(QString::fromUtf8(gst_structure_get_string(gst_caps_get_structure(caps.get(), 0), "encoding-name")),
-             QStringLiteral("H265"));
-
-    QVERIFY2(GstTest::findByFactory(bin.get(), "rtpjitterbuffer"), "udp265 RTP path must insert a jitterbuffer");
-    QVERIFY2(!GstTest::findByFactory(bin.get(), "tsdemux"), "udp265 is RTP, not MPEG-TS; no tsdemux");
-    const GStreamer::GstElementPtr depay = GstTest::findByFactory(bin.get(), "rtph265depay");
-    QVERIFY2(depay, "udp265:// must depayload H265 RTP explicitly");
-
-    // hvc1 would leave the depayloader's caps unset until in-band parameter sets arrive
-    const GStreamer::GstPadPtr depaySrc = GStreamer::adoptPad(gst_element_get_static_pad(depay.get(), "src"));
-    QVERIFY(depaySrc);
-    const GStreamer::GstCapsPtr allowed = GStreamer::adoptCaps(gst_pad_get_allowed_caps(depaySrc.get()));
-    QVERIFY2(allowed && !gst_caps_is_empty(allowed.get()), "rtph265depay must link to the parser");
-    for (guint i = 0; i < gst_caps_get_size(allowed.get()); ++i) {
-        QCOMPARE(QString::fromUtf8(gst_structure_get_string(gst_caps_get_structure(allowed.get(), i), "stream-format")),
-                 QStringLiteral("byte-stream"));
-    }
-
-    const GStreamer::GstElementPtr parser = GstTest::findByFactory(bin.get(), "h265parse");
-    QVERIFY2(parser, "udp265:// must parse H265 explicitly");
-    gint configInterval = 0;
-    g_object_get(parser.get(), "config-interval", &configInterval, nullptr);
-    QCOMPARE(configInterval, -1);
+    QTest::newRow("h264") << QStringLiteral("udp://127.0.0.1:5600") << QStringLiteral("H264")
+                          << QByteArray("rtph264depay") << QByteArray("h264parse");
+    QTest::newRow("h265") << QStringLiteral("udp265://127.0.0.1:5600") << QStringLiteral("H265")
+                          << QByteArray("rtph265depay") << QByteArray("h265parse");
 }
 
-void GstSourceFactoryTest::_testSourceFactoryUdpH264Caps()
+void GstSourceFactoryTest::_testSourceFactoryUdpRtp()
 {
+    QFETCH(QString, uri);
+    QFETCH(QString, encodingName);
+    QFETCH(QByteArray, depayloader);
+    QFETCH(QByteArray, parser);
+
     GStreamer::SourceFactory::Config config;
-    const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("udp://127.0.0.1:5600"), config);
+    const GStreamer::GstElementPtr bin = GstTest::createSource(uri, config);
     QVERIFY(bin);
 
+    // Plain RTP has no SDP: the scheme names the codec, which udpsrc's caps announce.
     const GStreamer::GstElementPtr src = GstTest::findByFactory(bin.get(), "udpsrc");
     QVERIFY(src);
     GstCaps* rawCaps = nullptr;
     g_object_get(src.get(), "caps", &rawCaps, nullptr);
     const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(rawCaps);
-    QVERIFY2(caps, "udp:// must set H264 RTP caps");
-    const GstStructure* st = gst_caps_get_structure(caps.get(), 0);
-    QCOMPARE(QString::fromUtf8(gst_structure_get_string(st, "media")), QStringLiteral("video"));
-    QCOMPARE(QString::fromUtf8(gst_structure_get_string(st, "encoding-name")), QStringLiteral("H264"));
+    QVERIFY2(caps, "RTP over UDP must set RTP caps on udpsrc");
+    const GstStructure* const rtp = gst_caps_get_structure(caps.get(), 0);
+    QCOMPARE(QString::fromUtf8(gst_structure_get_string(rtp, "media")), QStringLiteral("video"));
+    QCOMPARE(QString::fromUtf8(gst_structure_get_string(rtp, "encoding-name")), encodingName);
+
+    QVERIFY2(GstTest::findByFactory(bin.get(), "rtpjitterbuffer"), "the RTP path must insert a jitterbuffer");
+    QVERIFY2(!GstTest::findByFactory(bin.get(), "tsdemux"), "RTP is not MPEG-TS; no tsdemux");
+    QVERIFY2(!GstTest::findByFactory(bin.get(), "parsebin"), "RTP over UDP is depayloaded and parsed explicitly");
+    const GStreamer::GstElementPtr depay = GstTest::findByFactory(bin.get(), depayloader.constData());
+    QVERIFY2(depay, "RTP over UDP must be depayloaded explicitly");
+
+    // avc or hvc1 would leave the depayloader's caps unset until in-band parameter sets arrive
+    const GStreamer::GstPadPtr depaySrc = GStreamer::adoptPad(gst_element_get_static_pad(depay.get(), "src"));
+    QVERIFY(depaySrc);
+    const GStreamer::GstCapsPtr allowed = GStreamer::adoptCaps(gst_pad_get_allowed_caps(depaySrc.get()));
+    QVERIFY2(allowed && !gst_caps_is_empty(allowed.get()), "the depayloader must link to the parser");
+    for (guint i = 0; i < gst_caps_get_size(allowed.get()); ++i) {
+        QCOMPARE(QString::fromUtf8(gst_structure_get_string(gst_caps_get_structure(allowed.get(), i), "stream-format")),
+                 QStringLiteral("byte-stream"));
+    }
+
+    const GStreamer::GstElementPtr parserElement = GstTest::findByFactory(bin.get(), parser.constData());
+    QVERIFY2(parserElement, "RTP over UDP must be parsed explicitly");
+    gint configInterval = 0;
+    g_object_get(parserElement.get(), "config-interval", &configInterval, nullptr);
+    QCOMPARE(configInterval, -1);
 }
 
 void GstSourceFactoryTest::_testParameterSetGateHoldsUntilCompleteSet()

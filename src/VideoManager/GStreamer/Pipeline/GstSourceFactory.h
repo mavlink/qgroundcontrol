@@ -30,12 +30,13 @@ struct Config
     bool doRetransmission = true;  ///< RTSP only: plain UDP/TCP sources have no RTCP back-channel for NACKs.
 };
 
-/// Build a source bin (`source` [+ `tsdemux`] [+ `rtpjitterbuffer`] + `parsebin`)
-/// for `uri`. Supported schemes: rtsp/rtspt, tcp:// (MPEG-TS), udp:// (H.264 RTP),
-/// udp265:// (H.265 RTP), mpegts:// (MPEG-TS over UDP). A UDP URI with port 0 listens on a free port.
+/// Build a source bin for `uri`: `source` [+ `tsdemux`] [+ `rtpjitterbuffer`] + `parsebin`, or for RTP over UDP
+/// `udpsrc` [+ `rtpjitterbuffer`] + the codec's depayloader and parser. Supported schemes: rtsp/rtspt,
+/// tcp:// (MPEG-TS), udp:// (H.264 RTP), udp265:// (H.265 RTP), mpegts:// (MPEG-TS over UDP). A UDP URI with
+/// port 0 listens on a free port.
 ///
-/// Ghost pads on the returned bin are wired lazily; for `rtspsrc`/`tsdemux`/`parsebin`
-/// they appear only after upstream produces pads, so callers must connect any
+/// The RTP over UDP bin has its source pad from the start. The others' ghost pads are wired lazily; for
+/// `rtspsrc`/`tsdemux`/`parsebin` they appear only after upstream produces pads, so callers must connect any
 /// downstream `pad-added` handlers before transitioning to PLAYING.
 ///
 /// Returns the source bin or nullptr on failure.
