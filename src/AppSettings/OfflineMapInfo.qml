@@ -36,6 +36,7 @@ RowLayout {
     }
 
     QGCButton {
+        objectName: "offlineMaps_editButton_" + tileSet.name
         text:       qsTr("Edit")
         onClicked:  control.clicked()
     }

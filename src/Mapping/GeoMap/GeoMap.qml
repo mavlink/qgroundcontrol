@@ -33,6 +33,11 @@ Item {
     // thumbs are down (issue #13450)
     property bool pinchZoomDisabledByVirtualJoysticks: false
 
+    /// Imagery the map shows, named as QGCMapEngineManager.mapList names it. The map the user chose, unless a
+    /// view shows another one.
+    property string mapType: QGroundControl.settingsManager.flightMapSettings.mapProvider.rawValue
+                             + " " + QGroundControl.settingsManager.flightMapSettings.mapType.rawValue
+
     /// false: the surface is flat and no elevation is fetched, for a map that stays in 2D
     property alias terrain: patchModel.terrain
 
@@ -204,9 +209,8 @@ Item {
         scene: geoScene
         terrain: true
         statsEnabled: root.renderStats
-        // Drape the map imagery the rest of QGC uses (empty disables imagery)
-        mapType: QGroundControl.settingsManager.flightMapSettings.mapProvider.rawValue
-                 + " " + QGroundControl.settingsManager.flightMapSettings.mapType.rawValue
+        // Empty disables imagery
+        mapType: root.mapType
     }
 
     MapPositionTracker {
@@ -697,6 +701,16 @@ Item {
         target: root._activeVehicle
         function onHomePositionChanged() {
             root._updateHomeTerrainBias()
+        }
+    }
+
+    // A map can be destroyed with the view it is part of, as the offline map editor's is. Its View3D would then
+    // leave the window before it is destroyed, and Qt Quick 3D releases such a scene only in a later frame of
+    // another View3D: it warns when the window closes before one. Handed to the window here, the View3D is
+    // destroyed in it.
+    Component.onDestruction: {
+        if (root.Window.contentItem) {
+            viewport.parent = root.Window.contentItem
         }
     }
 }

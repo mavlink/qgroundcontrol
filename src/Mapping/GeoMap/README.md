@@ -145,9 +145,13 @@ and the 2D↔3D mode animation.
 `GeoMapControls` (2D/3D toggle, compass) and a map scale. The Plan View embeds them; the Fly View
 places them itself, because it also positions the occluders and the picture-in-picture swap.
 
-A view that shows a place of its own, such as the Log Viewer's map, turns `sharedView` off: it
-sets its own `center` and `zoomLevel` and leaves the shared view alone. With `terrain` and
-`allowRotation` off as well, the map behaves like a QtLocation one: flat, top-down and north-up.
+A view that shows a place of its own, such as the Log Viewer's map or the offline map editor's,
+turns `sharedView` off: it sets its own `center` and `zoomLevel` and leaves the shared view alone.
+With `terrain` and `allowRotation` off as well, the map behaves like a QtLocation one: flat,
+top-down and north-up. `mapType` gives such a map other imagery than the map the user chose.
+
+A map over other controls needs something under it that takes the pointer events it leaves: its
+handlers take only the gestures they know, and a click would otherwise reach what the map covers.
 
 ## Overlays: putting things on the map
 

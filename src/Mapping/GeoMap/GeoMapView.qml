@@ -32,9 +32,8 @@ GeoMap {
     property real controlsLeftMargin: ScreenTools.defaultFontPixelWidth * 0.75
     property real controlsTopMargin: ScreenTools.defaultFontPixelWidth * 0.75
 
-    readonly property bool isSatelliteMap: _mapTypeSetting.indexOf("Satellite") > -1 || _mapTypeSetting.indexOf("Hybrid") > -1
-
-    readonly property string _mapTypeSetting: QGroundControl.settingsManager.flightMapSettings.mapType.rawValue
+    readonly property bool isSatelliteMap: root.mapType.indexOf("Satellite") > -1 || root.mapType.indexOf("Hybrid") > -1
+    readonly property var gcsPosition: QGroundControl.positionManager.gcsPosition
 
     // Breaks the center/zoomLevel <-> camera cycle: camera moves echo into them and must not be written back
     property bool _echoingCamera: false
@@ -55,6 +54,11 @@ GeoMap {
     // MapFitFunctions contract
     function setVisibleRegion(region) {
         root.fitToRegion(region)
+    }
+
+    // CenterMapDropButton contract
+    function centerToSpecifiedLocation() {
+        specifyMapPositionDialogFactory.open()
     }
 
     // Zoom level to distance depends on the viewport size, so this also runs on every resize
@@ -174,6 +178,22 @@ GeoMap {
                 // The scale is ill-defined under the 3D tilt; isTopDown keeps it hidden until the 3D->2D tilt animation lands
                 visible: root.showScale && root.camera.mode === GeoMapCamera.Mode2D && root.camera.isTopDown
             }
+        }
+    }
+
+    QGCPopupDialogFactory {
+        id: specifyMapPositionDialogFactory
+
+        dialogComponent: specifyMapPositionDialog
+    }
+
+    Component {
+        id: specifyMapPositionDialog
+
+        EditPositionDialog {
+            title: qsTr("Specify Position")
+            coordinate: root.center
+            onCoordinateChanged: root.center = coordinate
         }
     }
 

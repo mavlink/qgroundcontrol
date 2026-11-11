@@ -46,6 +46,7 @@ Item {
             LabelledButton {
                 label:      qsTr("Add New Set")
                 buttonText: qsTr("Add")
+                buttonObjectName: "offlineMaps_addButton"
                 enabled:    !_currentlyImportOrExporting
                 onClicked:  offlineMapEditorComponent.createObject(mainWindow.contentItem).addNewSet()
             }
@@ -194,6 +195,7 @@ Item {
 
         OfflineMapEditor {
             id:             offlineMapEditor
+            objectName:     "offlineMapEditor"
             anchors.fill:   parent
             z:              QGroundControl.zOrderTopMost
         }

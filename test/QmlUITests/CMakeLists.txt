@@ -65,6 +65,8 @@ target_sources(
         ${CMAKE_CURRENT_SOURCE_DIR}/LogViewerMapUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/NTRIPSettingsUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/NTRIPSettingsUITest.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/OfflineMapEditorUITest.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/OfflineMapEditorUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/OnboardLogUITest.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/OnboardLogUITest.h
         ${CMAKE_CURRENT_SOURCE_DIR}/ParameterDiffDialogUITest.cc
@@ -135,6 +137,7 @@ add_qgc_test(FlyViewGeoROIUITest LABELS Integration NoSanitizer TIMEOUT 120 ${_v
 # Runs one row on the GeoMap engine, so it needs the same RHI environment
 add_qgc_test(FlyViewOccluderUITest LABELS Integration NoSanitizer TIMEOUT 120 ${_viewer3d_env_mod})
 add_qgc_test(LogViewerMapUITest LABELS Integration NoSanitizer TIMEOUT 120 ${_viewer3d_env_mod})
+add_qgc_test(OfflineMapEditorUITest LABELS Integration NoSanitizer TIMEOUT 120 ${_viewer3d_env_mod})
 # Runs rows on the GeoMap Plan map, so it needs the same RHI environment
 add_qgc_test(PlanViewUITest LABELS Integration NoSanitizer TIMEOUT 180 ${_viewer3d_env_mod})
 # StockUI: asserts stock UI elements that custom builds intentionally replace/omit
