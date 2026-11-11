@@ -297,6 +297,10 @@ QList<VideoDecoderOption> availableDecoderFamilies()
 
 void logDecoderRanks()
 {
+    if (!GStreamerDecoderRanksLog().isDebugEnabled()) {
+        return;
+    }
+
     struct Decoder
     {
         guint rank;

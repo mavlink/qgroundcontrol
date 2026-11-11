@@ -91,8 +91,8 @@ bool changeFeatureRank(GstRegistry* registry, const char* featureName, uint16_t 
 /// DecoderRankApplier::apply() on the process's applier. GUI thread.
 void setCodecPriorities(VideoDecoderOption option);
 
-// Diagnostic dump of installed video-decoder factories, sorted by rank, with
-// HW/SW classification. No-op once the registry is empty.
+// Diagnostic dump of installed video-decoder factories, sorted by rank, with HW/SW classification, at debug level:
+// does nothing while the Video.GStreamer.DecoderRanks category is off.
 void logDecoderRanks();
 
 }  // namespace GStreamer
