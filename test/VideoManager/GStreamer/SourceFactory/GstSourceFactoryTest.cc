@@ -112,6 +112,80 @@ private:
     }
 };
 
+/// An rtsp:// source bin in PAUSED whose rtspsrc stays in NULL and so connects nowhere: the tests add its pads by
+/// hand, as it adds one for each SSRC and payload type it receives, and what the bin plugs for them runs.
+struct RtspSource
+{
+    RtspSource()
+        : bin(GStreamer::SourceFactory::create(QStringLiteral("rtsp://127.0.0.1:8554/test"),
+                                               GStreamer::SourceFactory::Config{}))
+        , source(GstTest::findByFactory(bin.get(), "rtspsrc"))
+    {
+        started = source && gst_element_set_locked_state(source.get(), TRUE) &&
+                  (gst_element_set_state(bin.get(), GST_STATE_PAUSED) != GST_STATE_CHANGE_FAILURE);
+    }
+
+    /// An RTP pad of video in @p encoding, added to rtspsrc: null when it refuses it. rtspsrc owns the pad.
+    GstPad* addPad(const QByteArray& name, const QByteArray& encoding) const
+    {
+        const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(
+            gst_caps_new_simple("application/x-rtp", "media", G_TYPE_STRING, "video", "clock-rate", G_TYPE_INT, 90000,
+                                "encoding-name", G_TYPE_STRING, encoding.constData(), nullptr));
+        GstPadTemplate* const padTemplate = gst_pad_template_new("rtp", GST_PAD_SRC, GST_PAD_SOMETIMES, caps.get());
+        GstPad* const pad = gst_pad_new_from_template(padTemplate, name.constData());
+        gst_object_unref(padTemplate);
+        return gst_element_add_pad(source.get(), pad) ? pad : nullptr;
+    }
+
+    /// Starts a stream on @p pad and pushes @p nals, the NAL units of one access unit, each in an RTP packet of
+    /// @p ssrc. False when the bin refuses them; that nothing is linked behind the bin is no refusal.
+    static bool pushAccessUnit(GstPad* pad, quint32 ssrc, const QList<QByteArray>& nals)
+    {
+        const GStreamer::GstCapsPtr caps = GStreamer::adoptCaps(gst_pad_query_caps(pad, nullptr));
+        GstSegment segment;
+        gst_segment_init(&segment, GST_FORMAT_TIME);
+        bool pushed = gst_pad_set_active(pad, TRUE) && gst_pad_push_event(pad, gst_event_new_stream_start("qgc-rtp")) &&
+                      gst_pad_push_event(pad, gst_event_new_caps(caps.get())) &&
+                      gst_pad_push_event(pad, gst_event_new_segment(&segment));
+        auto sequence = static_cast<quint16>(ssrc);
+        for (const QByteArray& nal : nals) {
+            // The marker bit ends the access unit.
+            QByteArray packet =
+                QByteArray::fromHex((&nal == &nals.last()) ? "80e0" : "8060") + QByteArray(10, '\0') + nal;
+            auto* const header = reinterpret_cast<guint8*>(packet.data());
+            GST_WRITE_UINT16_BE(header + 2, sequence++);
+            GST_WRITE_UINT32_BE(header + 8, ssrc);
+            GstBuffer* const buffer = gst_buffer_new_memdup(packet.constData(), static_cast<gsize>(packet.size()));
+            GST_BUFFER_PTS(buffer) = 0;
+            const GstFlowReturn flow = gst_pad_push(pad, buffer);
+            pushed = pushed && ((flow == GST_FLOW_OK) || (flow == GST_FLOW_NOT_LINKED));
+        }
+        return pushed;
+    }
+
+    GstTest::TestPipeline bin;
+    GStreamer::GstElementPtr source;
+    bool started = false;
+};
+
+/// The NAL units of the Annex B @p data, without their start codes.
+QList<QByteArray> splitNalUnits(const QByteArray& data)
+{
+    QList<QByteArray> nals;
+    const QByteArrayView startCode("\x00\x00\x01", 3);
+    for (qsizetype start = data.indexOf(startCode); start >= 0;) {
+        const qsizetype next = data.indexOf(startCode, start + 3);
+        QByteArray nal = data.mid(start + 3, (next < 0) ? -1 : (next - start - 3));
+        // The zero ahead of the next start code is that one's.
+        while ((next >= 0) && nal.endsWith('\0')) {
+            nal.chop(1);
+        }
+        nals.append(nal);
+        start = next;
+    }
+    return nals;
+}
+
 }  // namespace
 
 void GstSourceFactoryTest::_testIsValidRtspUri()
@@ -803,8 +877,8 @@ void GstSourceFactoryTest::_testSourceFactoryRtspDepayloaderRequestsKeyframes()
     const GStreamer::GstElementPtr parser = GstTest::findByFactory(bin.get(), "parsebin");
     QVERIFY(source && parser);
 
-    // The source stays in NULL, so nothing connects: its RTP pad is added by hand, as it adds one after SETUP, and
-    // the stream caps make parsebin plug the depayloader.
+    // The source stays in NULL, so nothing connects: its RTP pad is added by hand, as it adds one after SETUP. The
+    // pad's encoding has the RTSP bin plug the depayloader; for the other source the stream caps make parsebin do it.
     GstPad* const pad = gst_pad_new_from_static_template(&sH264RtpPadTemplate, "recv_rtp_src_0");
     QVERIFY(gst_element_add_pad(source.get(), pad));
     QVERIFY(gst_pad_is_linked(pad));
@@ -827,6 +901,163 @@ void GstSourceFactoryTest::_testSourceFactoryRtspDepayloaderRequestsKeyframes()
     gboolean requestKeyframe = !expectedRequestKeyframe;
     g_object_get(depayloader.get(), "request-keyframe", &requestKeyframe, nullptr);
     QCOMPARE(bool(requestKeyframe), expectedRequestKeyframe);
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspPlugsCodec_data()
+{
+    QTest::addColumn<QByteArray>("encodingName");
+    QTest::addColumn<QByteArray>("depayloader");
+    QTest::addColumn<QByteArray>("parser");  // Empty: the stream is left to parsebin.
+
+    QTest::newRow("H264") << QByteArray("H264") << QByteArray("rtph264depay") << QByteArray("h264parse");
+    QTest::newRow("H265") << QByteArray("H265") << QByteArray("rtph265depay") << QByteArray("h265parse");
+    QTest::newRow("JPEG") << QByteArray("JPEG") << QByteArray("rtpjpegdepay") << QByteArray();
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspPlugsCodec()
+{
+    QFETCH(QByteArray, encodingName);
+    QFETCH(QByteArray, depayloader);
+    QFETCH(QByteArray, parser);
+
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+
+    const RtspSource rtsp;
+    QVERIFY(rtsp.started);
+    QVERIFY2(GstTest::findByFactory(rtsp.bin.get(), "parsebin"), "the encoding isn't known before the SDP is");
+
+    GstPad* const pad = rtsp.addPad("recv_rtp_src_0_1111_96", encodingName);
+    QVERIFY(pad && gst_pad_is_linked(pad));
+    const GStreamer::GstPadPtr peer = GStreamer::adoptPad(gst_pad_get_peer(pad));
+    const GStreamer::GstElementPtr linkedTo = GStreamer::adoptElement(gst_pad_get_parent_element(peer.get()));
+    const GStreamer::GstElementPtr parsebin = GstTest::findByFactory(rtsp.bin.get(), "parsebin");
+    if (parser.isEmpty()) {
+        // As before the bin knew of encodings: parsebin plugs the depayloader once the stream's caps arrive.
+        QCOMPARE(linkedTo.get(), parsebin.get());
+        QVERIFY(RtspSource::pushAccessUnit(pad, 1111, {}));
+        QVERIFY(GstTest::findByFactory(rtsp.bin.get(), depayloader.constData()));
+        return;
+    }
+
+    // As for RTP over UDP: the codec's depayloader, its parser, and whole access units in byte-stream between them.
+    QVERIFY2(!parsebin, "the codec's depayloader and parser take parsebin's place");
+    QCOMPARE(linkedTo.get(), GstTest::findByFactory(rtsp.bin.get(), depayloader.constData()).get());
+    const GStreamer::GstPadPtr depayloaderSrc = GStreamer::adoptPad(gst_element_get_static_pad(linkedTo.get(), "src"));
+    const GStreamer::GstCapsPtr allowed = GStreamer::adoptCaps(gst_pad_get_allowed_caps(depayloaderSrc.get()));
+    QVERIFY2(allowed && !gst_caps_is_empty(allowed.get()), "the depayloader must link to the parser");
+    for (guint i = 0; i < gst_caps_get_size(allowed.get()); ++i) {
+        const GstStructure* const format = gst_caps_get_structure(allowed.get(), i);
+        QCOMPARE(QByteArray(gst_structure_get_string(format, "stream-format")), QByteArray("byte-stream"));
+        QCOMPARE(QByteArray(gst_structure_get_string(format, "alignment")), QByteArray("au"));
+    }
+    const GStreamer::GstElementPtr parserElement = GstTest::findByFactory(rtsp.bin.get(), parser.constData());
+    QVERIFY(parserElement);
+    gint configInterval = 0;
+    gboolean requestKeyframe = FALSE;
+    g_object_get(parserElement.get(), "config-interval", &configInterval, nullptr);
+    QCOMPARE(configInterval, -1);
+    // rtph265depay asks for keyframes only from GStreamer 1.26 on.
+    if (g_object_class_find_property(G_OBJECT_GET_CLASS(linkedTo.get()), "request-keyframe")) {
+        g_object_get(linkedTo.get(), "request-keyframe", &requestKeyframe, nullptr);
+        QCOMPARE(requestKeyframe, TRUE);
+    }
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspPushesAccessUnitsAtOnce_data()
+{
+    QTest::addColumn<QString>("resource");
+    QTest::addColumn<QByteArray>("encodingName");
+    QTest::addColumn<QString>("mediaType");
+
+    QTest::newRow("h264") << QString::fromLatin1(GstTest::kH264Stream) << QByteArray("H264")
+                          << QStringLiteral("video/x-h264");
+    QTest::newRow("h265") << QString::fromLatin1(GstTest::kH265Stream) << QByteArray("H265")
+                          << QStringLiteral("video/x-h265");
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspPushesAccessUnitsAtOnce()
+{
+    QFETCH(QString, resource);
+    QFETCH(QByteArray, encodingName);
+    QFETCH(QString, mediaType);
+
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+    QString loadError;
+    const QList<GstTest::AccessUnit> units = GstTest::loadAccessUnits(resource, &loadError);
+    QVERIFY2(!units.isEmpty() && units.first().keyframe, qPrintable(loadError));
+
+    const RtspSource rtsp;
+    QVERIFY(rtsp.started);
+    GstPad* const pad = rtsp.addPad("recv_rtp_src_0_1111_96", encodingName);
+    QVERIFY(pad && gst_pad_is_linked(pad));
+
+    // The bin's pad for the stream is there as soon as the stream's encoding is known.
+    const GStreamer::GstPadPtr binSrc = GStreamer::adoptPad(gst_element_get_static_pad(rtsp.bin.get(), "src"));
+    QVERIFY(binSrc);
+    std::atomic<int> frames{0};
+    QVERIFY(gst_pad_add_probe(binSrc.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &frames, nullptr));
+
+    // The first frame of the stream, a keyframe with its parameter sets, and no more. A parser that gets it NAL unit
+    // by NAL unit, as from parsebin's depayloader, can't tell that it is complete until the next frame starts.
+    QVERIFY(RtspSource::pushAccessUnit(pad, 1111, splitNalUnits(units.first().bytes)));
+    QCOMPARE(frames.load(), 1);
+
+    const QString caps = GstTest::currentCapsString(binSrc.get());
+    QVERIFY2(caps.startsWith(mediaType), qPrintable(caps));
+    QVERIFY2(caps.contains(QLatin1String("alignment=(string)au")), qPrintable(caps));
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspFollowsStreamToNewPad_data()
+{
+    QTest::addColumn<QByteArray>("padName");
+    QTest::addColumn<QByteArray>("encodingName");
+    QTest::addColumn<bool>("takesOver");
+
+    // rtspsrc names its pads recv_rtp_src_<stream>_<SSRC>_<payload type>. The stream starts on recv_rtp_src_0_1111_96.
+    // A camera that starts its encoder over goes on under another SSRC, on a new pad.
+    QTest::newRow("new SSRC") << QByteArray("recv_rtp_src_0_2222_96") << QByteArray("H264") << true;
+    QTest::newRow("new payload type") << QByteArray("recv_rtp_src_0_1111_98") << QByteArray("H264") << true;
+    QTest::newRow("another video stream of the session")
+        << QByteArray("recv_rtp_src_1_2222_96") << QByteArray("H264") << false;
+    QTest::newRow("retransmissions of the stream")
+        << QByteArray("recv_rtp_src_0_2222_97") << QByteArray("RTX") << false;
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspFollowsStreamToNewPad()
+{
+    QFETCH(QByteArray, padName);
+    QFETCH(QByteArray, encodingName);
+    QFETCH(bool, takesOver);
+
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+
+    const RtspSource rtsp;
+    QVERIFY(rtsp.started);
+    // A keyframe with its parameter sets.
+    const QList<QByteArray> keyframe{QByteArray::fromHex("67640014acd9"), QByteArray::fromHex("68ebe3cb"),
+                                     QByteArray::fromHex("65888400")};
+
+    GstPad* const first = rtsp.addPad("recv_rtp_src_0_1111_96", "H264");
+    QVERIFY(first && gst_pad_is_linked(first));
+    QVERIFY(RtspSource::pushAccessUnit(first, 1111, keyframe));
+
+    std::atomic<int> packets{0};
+    const GStreamer::GstElementPtr depayloader = GstTest::findByFactory(rtsp.bin.get(), "rtph264depay");
+    QVERIFY(depayloader);
+    const GStreamer::GstPadPtr depayloaderSink =
+        GStreamer::adoptPad(gst_element_get_static_pad(depayloader.get(), "sink"));
+    QVERIFY(
+        gst_pad_add_probe(depayloaderSink.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers, &packets, nullptr));
+
+    GstPad* const second = rtsp.addPad(padName, encodingName);
+    QVERIFY(second);
+    QCOMPARE(bool(gst_pad_is_linked(second)), takesOver);
+    QCOMPARE(bool(gst_pad_is_linked(first)), !takesOver);
+    if (takesOver) {
+        // The depayloader the stream has goes on with it.
+        QVERIFY(RtspSource::pushAccessUnit(second, 2222, keyframe));
+        QCOMPARE(packets.load(), int(keyframe.size()));
+    }
 }
 
 void GstSourceFactoryTest::_testTransportFor_data()

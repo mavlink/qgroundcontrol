@@ -31,7 +31,8 @@ struct Config
 };
 
 /// Build a source bin for `uri`: `source` [+ `tsdemux`] [+ `rtpjitterbuffer`] + `parsebin`, or for RTP over UDP
-/// `udpsrc` [+ `rtpjitterbuffer`] + the codec's depayloader and parser. Supported schemes: rtsp/rtspt,
+/// `udpsrc` [+ `rtpjitterbuffer`] + the codec's depayloader and parser, which also take the place of an RTSP bin's
+/// `parsebin` once `rtspsrc` tells that its stream is H.264 or H.265. Supported schemes: rtsp/rtspt,
 /// tcp:// (MPEG-TS), udp:// (H.264 RTP), udp265:// (H.265 RTP), mpegts:// (MPEG-TS over UDP). A UDP URI with
 /// port 0 listens on a free port, and one without a host on every IPv4 address.
 ///

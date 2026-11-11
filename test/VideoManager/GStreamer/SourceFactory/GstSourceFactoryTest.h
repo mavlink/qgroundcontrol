@@ -44,5 +44,11 @@ private slots:
     void _testSourceFactoryDynamicLinkSkipsNonVideoRtp();
     void _testSourceFactoryRtspDepayloaderRequestsKeyframes_data();
     void _testSourceFactoryRtspDepayloaderRequestsKeyframes();
+    void _testSourceFactoryRtspPlugsCodec_data();
+    void _testSourceFactoryRtspPlugsCodec();
+    void _testSourceFactoryRtspPushesAccessUnitsAtOnce_data();
+    void _testSourceFactoryRtspPushesAccessUnitsAtOnce();
+    void _testSourceFactoryRtspFollowsStreamToNewPad_data();
+    void _testSourceFactoryRtspFollowsStreamToNewPad();
 #endif
 };

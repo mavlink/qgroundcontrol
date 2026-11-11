@@ -281,6 +281,7 @@ void GstVideoReceiverPipelineTest::_testDecodesMockLinkStreams_data()
     QTest::newRow("mpeg-ts tcp") << int(StreamType::MpegTsTcp);
 #ifdef QGC_GST_RTSP_SERVER
     QTest::newRow("rtsp") << int(StreamType::RtspH264);
+    QTest::newRow("rtsp h265") << int(StreamType::RtspH265);
 #endif
 }
 

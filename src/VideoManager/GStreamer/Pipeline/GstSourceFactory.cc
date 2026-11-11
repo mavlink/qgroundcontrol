@@ -2,10 +2,13 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdio>
 #include <gst/gst.h>
+#include <mutex>
 #include <optional>
 #include <utility>
 
+#include <QtCore/QByteArray>
 #include <QtCore/QFile>
 #include <QtCore/QUrl>
 #include <QtNetwork/QHostAddress>
@@ -202,13 +205,21 @@ GstElement* addJitterBuffer(GstElement* bin, guint latencyMs)
     return addToBin(bin, std::move(buffer), "rtpjitterbuffer");
 }
 
-// Heap-owned context for the dynamic (pad-added) link path; freed when @binParser is finalized.
+// Heap-owned context for the dynamic (pad-added) link path; freed with the pad-added handler it is given to.
 struct DynamicLinkContext
 {
+    /// What the source's video pad is linked into: parsebin, or the depayloader that took its place (plugRtspCodec()).
     GstElement* binParser;
     guint latencyMs;
     bool insertJitterBuffer;  // false for RTSP (rtspsrc has its own internal jitterbuffer) and JitterBuffer::None
+    bool isRtsp;
+    /// The codec whose depayloader and parser took parsebin's place.
+    const RtpCodec* rtspCodec;
+    /// rtspsrc adds the pads of each of a session's streams on a thread of their own.
+    std::mutex linking;
 };
+
+void plugRtspCodec(DynamicLinkContext* ctx, const QByteArray& encoding);
 
 // Inserts a running rtpjitterbuffer linked to the parser; returns it (bin-owned) or nullptr to link directly.
 GstElement* insertDynamicJitterBuffer(const DynamicLinkContext* ctx)
@@ -233,9 +244,48 @@ GstElement* insertDynamicJitterBuffer(const DynamicLinkContext* ctx)
     return buffer;
 }
 
+// rtspsrc names the pad of each RTP stream it receives "recv_rtp_src_<stream>_<SSRC>_<payload type>", the stream
+// being the one of the session, in the SDP's order. nullopt for any other pad.
+std::optional<guint> rtspStreamOfPad(GstPad* pad)
+{
+    const GCharPtr name = adoptGChar(gst_pad_get_name(pad));
+    guint stream = 0;
+    guint ssrc = 0;
+    guint payloadType = 0;
+    if (!name || (std::sscanf(name.get(), "recv_rtp_src_%u_%u_%u", &stream, &ssrc, &payloadType) != 3)) {
+        return std::nullopt;
+    }
+    return stream;
+}
+
+// The "encoding-name" of the RTP that @p pad carries, or can carry while it has no caps; empty when they don't tell.
+QByteArray rtpEncodingOfPad(GstPad* pad)
+{
+    GstCapsPtr caps = adoptCaps(gst_pad_get_current_caps(pad));
+    if (!caps) {
+        caps = adoptCaps(gst_pad_query_caps(pad, nullptr));
+    }
+    if (!caps || gst_caps_is_empty(caps.get()) || gst_caps_is_any(caps.get())) {
+        return {};
+    }
+    return QByteArray(gst_structure_get_string(gst_caps_get_structure(caps.get(), 0), "encoding-name"));
+}
+
+// rtspsrc adds a pad for every SSRC and payload type it receives in a stream of the session, and keeps the earlier
+// ones. A camera that starts its encoder over, as for another resolution, goes on under a new SSRC: its pad carries
+// the stream from then on, and @p linkedPad no more. A pad of another encoding is the stream's retransmissions or
+// error correction.
+bool continuesRtspStream(GstPad* pad, GstPad* linkedPad)
+{
+    const std::optional<guint> stream = rtspStreamOfPad(pad);
+    const QByteArray encoding = rtpEncodingOfPad(pad);
+    return stream && (rtspStreamOfPad(linkedPad) == stream) && !encoding.isEmpty() &&
+           (rtpEncodingOfPad(linkedPad) == encoding);
+}
+
 void linkPad(GstElement* element, GstPad* pad, gpointer data)
 {
-    const auto* ctx = static_cast<const DynamicLinkContext*>(data);
+    auto* const ctx = static_cast<DynamicLinkContext*>(data);
 
     // tsdemux/rtspsrc fire pad-added for audio/data pads too; only link video src pads so a
     // non-video pad can't claim the parser ahead of the real video pad.
@@ -266,11 +316,22 @@ void linkPad(GstElement* element, GstPad* pad, gpointer data)
         return;
     }
 
-    // Link only the first matching video pad. A second pad-added (duplicate RTP pad, or a later
-    // tsdemux elementary stream) must not stack a second jitterbuffer or re-link an occupied sink.
+    const std::lock_guard lock(ctx->linking);
+
+    // Link only the first matching video pad. A second pad-added (another video stream of an RTSP session, or a
+    // later tsdemux elementary stream) must not stack a second jitterbuffer or re-link an occupied sink. But a pad
+    // that the linked RTSP stream goes on on takes its place: left unlinked, its data would be dropped without an
+    // error, as rtspsrc reports the flow of the pad that is linked, until the stream watchdog ends the session.
     const GstPadPtr parserSink = adoptPad(gst_element_get_static_pad(ctx->binParser, "sink"));
     if (parserSink && gst_pad_is_linked(parserSink.get())) {
-        return;
+        const GstPadPtr linkedPad = adoptPad(gst_pad_get_peer(parserSink.get()));
+        if (!linkedPad || !continuesRtspStream(pad, linkedPad.get()) ||
+            !gst_pad_unlink(linkedPad.get(), parserSink.get())) {
+            return;
+        }
+        qCDebug(GstSourceFactoryLog) << "The RTSP stream goes on on a new pad:" << GST_PAD_NAME(pad);
+    } else if (isRtp && ctx->isRtsp) {
+        plugRtspCodec(ctx, rtpEncodingOfPad(pad));
     }
 
     // Insert a jitterbuffer ahead of the parser for RTP pads on non-RTSP dynamic sources, matching the
@@ -387,7 +448,7 @@ ParserStage buildParserStage(const TransportSpec& spec, bool isRtsp)
             return {};
         }
         configureH26xParser(stage.parser.get());
-        configureH26xRtpDepayloader(stage.depay.get(), false);
+        configureH26xRtpDepayloader(stage.depay.get(), isRtsp);
         return stage;
     }
 
@@ -438,15 +499,35 @@ void linkSourceToParserOnPadAdded(GstElement* upstream, GstElement* binParser, c
                                   bool isRtsp)
 {
     // linkPad applies the jitter-buffer policy itself when an application/x-rtp pad appears on a
-    // non-RTSP source. Context lifetime is tied to binParser (freed on its finalize).
-    auto* ctx = new DynamicLinkContext{binParser, latencyMs, !isRtsp && (config.jitterBuffer != JitterBuffer::None)};
-    g_object_set_data_full(G_OBJECT(binParser), "qgc-dynamic-link-ctx", ctx,
-                           [](gpointer p) { delete static_cast<DynamicLinkContext*>(p); });
-    (void) g_signal_connect(upstream, "pad-added", G_CALLBACK(linkPad), ctx);
+    // non-RTSP source. The context lives as long as the handler: binParser may be replaced (plugRtspCodec()).
+    auto* ctx = new DynamicLinkContext{
+        .binParser = binParser,
+        .latencyMs = latencyMs,
+        .insertJitterBuffer = !isRtsp && (config.jitterBuffer != JitterBuffer::None),
+        .isRtsp = isRtsp,
+        .rtspCodec = nullptr,
+        .linking = {},
+    };
+    (void) g_signal_connect_data(
+        upstream, "pad-added", G_CALLBACK(linkPad), ctx,
+        [](gpointer context, GClosure*) { delete static_cast<DynamicLinkContext*>(context); }, GConnectFlags(0));
 
     // pad-added fires on the streaming thread after create() returns the NULL-state bin, so it
     // can't race construction; wrapWithGhostPad ref-checks the parent against teardown.
     (void) g_signal_connect(binParser, "pad-added", G_CALLBACK(wrapWithGhostPad), nullptr);
+}
+
+bool linkDepayToParser(GstElement* depay, GstElement* parser, const RtpCodec& codec)
+{
+    // Left to negotiate, the depayloader may pick the length-prefixed format (avc, hvc1), whose caps it only sets once
+    // in-band parameter sets arrive, so its segment can go out first (GStreamer 1.28 warns) and the parameter-set
+    // gate, which handles byte-stream, stands down. Byte-stream caps are set as soon as the RTP caps arrive.
+    const GstCapsPtr byteStream = adoptCaps(gst_caps_from_string(codec.byteStreamCaps));
+    if (!byteStream || !gst_element_link_filtered(depay, parser, byteStream.get())) {
+        qCWarning(GstSourceFactoryLog) << "gst_element_link_filtered(depay, parser, byte-stream) failed";
+        return false;
+    }
+    return true;
 }
 
 bool linkUdpRtpToDepayAndParser(GstElement* bin, GstElement* source, GstElement* depay, GstElement* parser,
@@ -477,16 +558,46 @@ bool linkUdpRtpToDepayAndParser(GstElement* bin, GstElement* source, GstElement*
         return false;
     }
 
-    // Left to negotiate, the depayloader may pick the length-prefixed format (avc, hvc1), whose caps it only sets once
-    // in-band parameter sets arrive, so its segment can go out first (GStreamer 1.28 warns) and the parameter-set
-    // gate, which handles byte-stream, stands down. Byte-stream caps are set as soon as the RTP caps arrive.
-    const GstCapsPtr byteStream = adoptCaps(gst_caps_from_string(codec.byteStreamCaps));
-    if (!byteStream || !gst_element_link_filtered(depay, parser, byteStream.get())) {
-        qCWarning(GstSourceFactoryLog) << "gst_element_link_filtered(depay, parser, byte-stream) failed";
-        return false;
+    return linkDepayToParser(depay, parser, codec);
+}
+
+// The SDP names the encoding of an RTSP stream, as the scheme does for RTP over UDP: an H.264 or H.265 stream gets the
+// same depayloader and parser, linked the same way, in place of @p ctx's parsebin, which stays for any other
+// @p encoding. parsebin links a parser only after the depayloader has chosen its output, a buffer for each NAL unit,
+// and the parser then can't tell that a frame is complete until the next one starts: a frame interval of latency.
+void plugRtspCodec(DynamicLinkContext* ctx, const QByteArray& encoding)
+{
+    const RtpCodec* const codec =
+        (encoding == kRtpH264.encodingName) ? &kRtpH264 : ((encoding == kRtpH265.encodingName) ? &kRtpH265 : nullptr);
+    const GstObjectPtr bin = adoptObject(gst_object_get_parent(GST_OBJECT(ctx->binParser)));
+    if (!codec || ctx->rtspCodec || !bin) {
+        return;
     }
 
-    return true;
+    ParserStage stage = buildParserStage(TransportSpec{SourceElement::Rtsp, codec, false}, true);
+    if (!stage.parser) {
+        return;
+    }
+    // The bin has an element of the stage's name while parsebin is in it.
+    (void) gst_object_set_name(GST_OBJECT(stage.parser.get()), nullptr);
+    GstElement* const depay = addToBin(GST_ELEMENT(bin.get()), std::move(stage.depay), codec->depayloader);
+    GstElement* const parser = addToBin(GST_ELEMENT(bin.get()), std::move(stage.parser), codec->parser);
+    if (!depay || !parser || !linkDepayToParser(depay, parser, *codec) || !gst_element_sync_state_with_parent(parser) ||
+        !gst_element_sync_state_with_parent(depay) || !addStaticGhostPad(parser)) {
+        qCWarning(GstSourceFactoryLog) << "Unable to plug" << codec->depayloader << "and" << codec->parser
+                                       << "for the RTSP stream; leaving it to parsebin";
+        if (depay) {
+            disposeChild(depay);
+        }
+        if (parser) {
+            disposeChild(parser);
+        }
+        return;
+    }
+
+    disposeChild(ctx->binParser);
+    ctx->binParser = depay;
+    ctx->rtspCodec = codec;
 }
 
 }  // namespace

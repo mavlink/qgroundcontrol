@@ -92,6 +92,12 @@ bool MockVideoStreamServer::isStreamTypeAvailable(StreamType type)
 #else
             return false;
 #endif
+        case StreamType::RtspH265:
+#ifdef QGC_GST_RTSP_SERVER
+            return GStreamer::hasElementFactory("x265enc") && GStreamer::hasElementFactory("videotestsrc");
+#else
+            return false;
+#endif
     }
 
     return false;
@@ -108,9 +114,9 @@ bool MockVideoStreamServer::start(StreamType type, const QString& host, quint16 
         return false;
     }
 
-    if (type == StreamType::RtspH264) {
+    if ((type == StreamType::RtspH264) || (type == StreamType::RtspH265)) {
 #ifdef QGC_GST_RTSP_SERVER
-        const int boundPort = _startRtsp(host, port);
+        const int boundPort = _startRtsp(type, host, port);
         if (boundPort <= 0) {
             return false;
         }
@@ -149,6 +155,7 @@ bool MockVideoStreamServer::start(StreamType type, const QString& host, quint16 
             uri = QStringLiteral("tcp://%1:%2").arg(host, portString);
             break;
         case StreamType::RtspH264:
+        case StreamType::RtspH265:
             return false;  // handled above
     }
 
@@ -210,7 +217,7 @@ void MockVideoStreamServer::stop()
 }
 
 #ifdef QGC_GST_RTSP_SERVER
-int MockVideoStreamServer::_startRtsp(const QString& host, quint16 port)
+int MockVideoStreamServer::_startRtsp(StreamType type, const QString& host, quint16 port)
 {
     _rtspContext = g_main_context_new();
 
@@ -222,7 +229,10 @@ int MockVideoStreamServer::_startRtsp(const QString& host, quint16 port)
 
     GstRTSPMountPoints* mounts = gst_rtsp_server_get_mount_points(server);
     GstRTSPMediaFactory* factory = gst_rtsp_media_factory_new();
-    const QString launch = QStringLiteral("( %1 ! %2 ! rtph264pay name=pay0 pt=96 )").arg(kTestSource, h264Encoder());
+    const QString launch =
+        (type == StreamType::RtspH265)
+            ? QStringLiteral("( %1 ! %2 ! rtph265pay name=pay0 pt=96 )").arg(kTestSource, kH265Encoder)
+            : QStringLiteral("( %1 ! %2 ! rtph264pay name=pay0 pt=96 )").arg(kTestSource, h264Encoder());
     gst_rtsp_media_factory_set_launch(factory, launch.toUtf8().constData());
     gst_rtsp_media_factory_set_shared(factory, TRUE);
     gst_rtsp_mount_points_add_factory(mounts, "/test", factory);
