@@ -5,12 +5,16 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
+#include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
 #include "Fact.h"
 #include "FlyViewSettings.h"
 #include "GeoMapCamera.h"
+#include "QGCCachedTileSet.h"
+#include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
+#include "QGCMapTasks.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 
@@ -198,6 +202,66 @@ void OfflineMapEditorUITest::_defaultSetInfoOpensAndCloses()
 
     QVERIFY(clickButton(QStringLiteral("offlineMapEditor_closeButton")));
     QTRY_VERIFY_WITH_TIMEOUT(!findItem(_rootItem, QStringLiteral("offlineMapEditor")), TestTimeout::shortMs());
+
+    stopUI();
+}
+
+void OfflineMapEditorUITest::_renamedSetIsListedByItsNewName()
+{
+    // A set that is only in the database, like one of an earlier run: nothing downloads its tiles
+    QGCMapEngine* const engine = getQGCMapEngine();
+    engine->ensureInitialized();
+    const QString mapType = QGCMapEngineManager::mapList().constFirst();
+    const QString oldName = QStringLiteral("Rename test %1").arg(QCoreApplication::applicationPid());
+    const QString newName = oldName + QStringLiteral(" renamed");
+    QGCCachedTileSet* const savedSet = new QGCCachedTileSet(oldName);
+    savedSet->setMapTypeStr(mapType);
+    savedSet->setType(mapType);
+    savedSet->setTopleftLat(47.3906);
+    savedSet->setTopleftLon(8.4991);
+    savedSet->setBottomRightLat(47.3902);
+    savedSet->setBottomRightLon(8.4995);
+    savedSet->setMinZoom(3);
+    savedSet->setMaxZoom(3);
+    savedSet->setTotalTileCount(1);
+    // The task owns the set until it is saved
+    QGCCreateTileSetTask* const createTask = new QGCCreateTileSetTask(savedSet);
+    QSignalSpy savedSpy(createTask, &QGCCreateTileSetTask::tileSetSaved);
+    QVERIFY(engine->addTask(createTask));
+    QVERIFY_SIGNAL_COUNT_WAIT(savedSpy, 1, TestTimeout::mediumMs());
+    const quint64 setId = savedSet->id();
+    delete savedSet;
+    const auto deleteSavedSet = qScopeGuard([engine, setId] {
+        QGCDeleteTileSetTask* const deleteTask = new QGCDeleteTileSetTask(setId);
+        const QSignalSpy deletedSpy(deleteTask, &QGCDeleteTileSetTask::tileSetDeleted);
+        if (engine->addTask(deleteTask)) {
+            (void) QTest::qWaitFor([&deletedSpy] { return !deletedSpy.isEmpty(); }, TestTimeout::mediumMs());
+        } else {
+            delete deleteTask;
+        }
+    });
+
+    _openMapsSettings(/*geoMapEngine*/ false);
+    const auto restoreEngine = qScopeGuard(
+        [this] { SettingsManager::instance()->flyViewSettings()->useGeoMapEngine()->setRawValue(_savedEngine); });
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QVERIFY(clickButtonScrolled(QStringLiteral("offlineMaps_editButton_") + oldName,
+                                QStringLiteral("settingsPageFlickable")));
+    QQuickItem* const nameField =
+        findVisibleItem(_rootItem, QStringLiteral("offlineMapEditor_setNameField"), TestTimeout::mediumMs());
+    QVERIFY2(nameField, "name field of the set not visible");
+    QCOMPARE(nameField->property("text").toString(), oldName);
+    nameField->setProperty("text", newName);
+    QVERIFY(clickButton(QStringLiteral("offlineMapEditor_okButton")));
+    QTRY_VERIFY_WITH_TIMEOUT(!findItem(_rootItem, QStringLiteral("offlineMapEditor")), TestTimeout::shortMs());
+
+    QVERIFY2(findVisibleItemScrolled(QStringLiteral("offlineMaps_editButton_") + newName,
+                                     QStringLiteral("settingsPageFlickable")),
+             "the list does not show the new name");
+    QVERIFY(!findItem(_rootItem, QStringLiteral("offlineMaps_editButton_") + oldName));
 
     stopUI();
 }

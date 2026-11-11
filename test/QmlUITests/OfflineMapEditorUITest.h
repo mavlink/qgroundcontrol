@@ -14,6 +14,7 @@ private slots:
     void _newSetAreaFollowsMap();
     void _defaultSetInfoOpensAndCloses_data();
     void _defaultSetInfoOpensAndCloses();
+    void _renamedSetIsListedByItsNewName();
 
 private:
     void _addEngineRows();

@@ -47,7 +47,6 @@ Item {
     QGCPalette { id: qgcPal }
 
     Component.onCompleted: {
-        QGroundControl.mapEngineManager.loadTileSets()
         // The engine is chosen when the editor opens, as the Fly View chooses its own at startup
         _useGeoMap = _settingsManager.flyViewSettings.useGeoMapEngine.rawValue
         _mapLoader.sourceComponent = _useGeoMap ? geoMapComponent : flightMapComponent
@@ -300,6 +299,7 @@ Item {
                 }
                 QGCTextField {
                     id: editSetName
+                    objectName: "offlineMapEditor_setNameField"
                     anchors.left: parent.left
                     anchors.right: parent.right
                     visible: !_defaultSet
@@ -394,6 +394,7 @@ Item {
                         enabled: tileSet && tileSet.savedTileSize > 0
                     }
                     QGCButton {
+                        objectName: "offlineMapEditor_okButton"
                         text: qsTr("Ok")
                         width: ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 6 : 10)
                         visible: !_defaultSet
