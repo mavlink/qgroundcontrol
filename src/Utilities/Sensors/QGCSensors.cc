@@ -230,17 +230,11 @@ bool QGCPressureFilter::filter(QPressureReading *reading)
         return false;
     }
 
+    // Tested as inside the range, so that NaN, which fails every comparison, is rejected
     const qreal temperature = reading->temperature();
-    if ((temperature < s_minValidTemperatureC) || (temperature > s_maxValidTemperatureC)) {
-        return false;
-    }
-
     const qreal pressure = reading->pressure();
-    if ((pressure < s_minValidPressurePa) || (pressure > s_maxValidPressurePa)) {
-        return false;
-    }
-
-    return true;
+    return ((temperature >= s_minValidTemperatureC) && (temperature <= s_maxValidTemperatureC) &&
+            (pressure >= s_minValidPressurePa) && (pressure <= s_maxValidPressurePa));
 }
 
 ////////////////////////////////////////////////////////////////////

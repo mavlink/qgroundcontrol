@@ -45,10 +45,12 @@ void QGCSensorsTest::_testPressureFilter_data()
     QTest::newRow("highest valid pressure") << 110000.0 << roomC << true;
     QTest::newRow("above highest valid pressure") << 110000.1 << roomC << false;
     QTest::newRow("infinite pressure") << std::numeric_limits<qreal>::infinity() << roomC << false;
+    QTest::newRow("pressure not a number") << std::numeric_limits<qreal>::quiet_NaN() << roomC << false;
     QTest::newRow("coldest valid temperature") << seaLevelPa << -40.0 << true;
     QTest::newRow("below coldest valid temperature") << seaLevelPa << -40.01 << false;
     QTest::newRow("hottest valid temperature") << seaLevelPa << 85.0 << true;
     QTest::newRow("above hottest valid temperature") << seaLevelPa << 85.01 << false;
+    QTest::newRow("temperature not a number") << seaLevelPa << std::numeric_limits<qreal>::quiet_NaN() << false;
 }
 
 void QGCSensorsTest::_testPressureFilter()
