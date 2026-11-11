@@ -104,7 +104,7 @@ qint64 availableDiskSpace(const QString &path);
 // ============================================================================
 
 /// Convert URL or path string to local filesystem path
-/// Handles: file:// URLs, qrc:// URLs (-> :/), and plain paths
+/// Handles: file:// URLs, qrc:// URLs (-> :/), and plain paths (including Windows drive paths such as C:/dir)
 /// @param urlOrPath URL string, QUrl, or filesystem path
 /// @return Local path string, or original string if not convertible
 QString toLocalPath(const QString &urlOrPath);

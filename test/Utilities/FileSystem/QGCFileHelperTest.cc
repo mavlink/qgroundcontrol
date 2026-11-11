@@ -373,6 +373,41 @@ void QGCFileHelperTest::_testIsLocalPath()
     QVERIFY(!QGCFileHelper::isLocalPath("https://example.com/file.txt"));
 }
 
+void QGCFileHelperTest::_testWindowsDrivePaths_data()
+{
+    QTest::addColumn<QString>("input");
+    QTest::addColumn<QString>("localPath");
+    QTest::addColumn<bool>("isLocal");
+
+    const auto addUnchanged = [](const char* tag, const QString& input, bool isLocal) {
+        QTest::newRow(tag) << input << input << isLocal;
+    };
+
+    // QUrl parses a drive letter as a URL scheme
+    addUnchanged("forward slashes", QStringLiteral("C:/dir/file.txt"), true);
+    addUnchanged("backslashes", QStringLiteral("C:\\dir\\file.txt"), true);
+    addUnchanged("lower case drive", QStringLiteral("d:/dir/file.txt"), true);
+    addUnchanged("URL delimiters", QStringLiteral("C:/dir/a b#c?d.txt"), true);
+    addUnchanged("drive relative", QStringLiteral("C:file.txt"), true);
+    addUnchanged("drive only", QStringLiteral("C:"), true);
+
+    // Only a single leading letter is a drive
+    const QString fileUrl = QStringLiteral("file:///C:/dir/file.txt");
+    QTest::newRow("file URL with drive") << fileUrl << QUrl(fileUrl).toLocalFile() << true;
+    addUnchanged("two letter scheme", QStringLiteral("ab://host/file.txt"), false);
+    addUnchanged("http URL", QStringLiteral("http://host/C:/file.txt"), false);
+}
+
+void QGCFileHelperTest::_testWindowsDrivePaths()
+{
+    QFETCH(QString, input);
+    QFETCH(QString, localPath);
+    QFETCH(bool, isLocal);
+
+    QCOMPARE(QGCFileHelper::toLocalPath(input), localPath);
+    QCOMPARE(QGCFileHelper::isLocalPath(input), isLocal);
+}
+
 void QGCFileHelperTest::_testIsQtResource()
 {
     // Qt resource paths

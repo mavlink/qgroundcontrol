@@ -271,6 +271,18 @@ bool hasSufficientDiskSpace(const QString &path, qint64 requiredBytes, double ma
 // URL/Path Utilities
 // ============================================================================
 
+// QUrl takes the drive letter of "C:/dir" or "C:\\dir" for a URL scheme. No real scheme is a single letter, so a
+// leading "X:" is a drive on every platform.
+static bool hasWindowsDrivePrefix(const QString& path)
+{
+    if ((path.size() < 2) || (path.at(1) != QLatin1Char(':'))) {
+        return false;
+    }
+
+    const char16_t letter = path.at(0).unicode();
+    return ((letter >= u'A') && (letter <= u'Z')) || ((letter >= u'a') && (letter <= u'z'));
+}
+
 QString toLocalPath(const QString &urlOrPath)
 {
     if (urlOrPath.isEmpty()) {
@@ -279,6 +291,10 @@ QString toLocalPath(const QString &urlOrPath)
 
     // Already a Qt resource path in :/ format (qrc:// URLs need conversion below)
     if (urlOrPath.startsWith(QLatin1String(":/"))) {
+        return urlOrPath;
+    }
+
+    if (hasWindowsDrivePrefix(urlOrPath)) {
         return urlOrPath;
     }
 
@@ -337,6 +353,10 @@ bool isLocalPath(const QString &urlOrPath)
 
     // Qt resource paths are "local" (accessible via QFile)
     if (isQtResource(urlOrPath)) {
+        return true;
+    }
+
+    if (hasWindowsDrivePrefix(urlOrPath)) {
         return true;
     }
 
