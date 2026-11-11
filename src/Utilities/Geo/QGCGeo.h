@@ -109,7 +109,7 @@ int convertGeoToUTM(const QGeoCoordinate &coord, double &easting, double &northi
 /// @param northing UTM northing in meters.
 /// @param zone UTM zone (1-60).
 /// @param southhemi True if southern hemisphere.
-/// @param[out] coord Resulting geodetic coordinate (altitude = 0).
+/// @param[out] coord Latitude and longitude are set on success; altitude is left unchanged.
 /// @return True on success, false on failure.
 bool convertUTMToGeo(double easting, double northing, int zone, bool southhemi, QGeoCoordinate &coord);
 
@@ -124,7 +124,7 @@ QString convertGeoToMGRS(const QGeoCoordinate &coord);
 
 /// Convert MGRS string to geodetic coordinate.
 /// @param mgrs MGRS string (spaces optional, e.g., "32TMT6588647092" or "32T MT 65886 47092").
-/// @param[out] coord Resulting geodetic coordinate (altitude = 0).
+/// @param[out] coord Latitude and longitude are set on success; altitude is left unchanged.
 /// @return True on success, false on failure.
 bool convertMGRSToGeo(const QString &mgrs, QGeoCoordinate &coord);
 

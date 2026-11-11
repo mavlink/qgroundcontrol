@@ -110,13 +110,17 @@ void GeoTest::_convertUTMToGeo_test()
     const double northing = 5247092.44892;
     const int zone = 32;
     const bool southhemi = false;
-    QGeoCoordinate coord(0, 0, 0);
+    QGeoCoordinate coord(0, 0, 123.5);
     const bool result = QGCGeo::convertUTMToGeo(easting, northing, zone, southhemi, coord);
     QVERIFY(result);
     QVERIFY(coord.isValid());
     QVERIFY(compareDoubles(coord.latitude(), m_origin.latitude()));
     QVERIFY(compareDoubles(coord.longitude(), m_origin.longitude()));
-    QVERIFY(compareDoubles(coord.altitude(), m_origin.altitude()));
+    // The altitude is the caller's: the shapefile loader relies on a coordinate without one staying without one
+    QCOMPARE(coord.altitude(), 123.5);
+    QGeoCoordinate withoutAltitude;
+    QVERIFY(QGCGeo::convertUTMToGeo(easting, northing, zone, southhemi, withoutAltitude));
+    QCOMPARE(withoutAltitude.type(), QGeoCoordinate::Coordinate2D);
 }
 
 void GeoTest::_convertGeoToMGRS_test()
@@ -129,13 +133,16 @@ void GeoTest::_convertGeoToMGRS_test()
 void GeoTest::_convertMGRSToGeo_test()
 {
     const QString mgrs("32T MT 65886 47092");
-    QGeoCoordinate coord(0, 0, 0);
+    QGeoCoordinate coord(0, 0, 123.5);
     const bool result = QGCGeo::convertMGRSToGeo(mgrs, coord);
     QVERIFY(result);
     QVERIFY(coord.isValid());
     QVERIFY(compareDoubles(coord.latitude(), m_origin.latitude()));
     QVERIFY(compareDoubles(coord.longitude(), m_origin.longitude()));
-    QVERIFY(compareDoubles(coord.altitude(), m_origin.altitude()));
+    QCOMPARE(coord.altitude(), 123.5);
+    QGeoCoordinate withoutAltitude;
+    QVERIFY(QGCGeo::convertMGRSToGeo(mgrs, withoutAltitude));
+    QCOMPARE(withoutAltitude.type(), QGeoCoordinate::Coordinate2D);
 }
 
 void GeoTest::_convertMGRSToGeoInvalid_test_data()
