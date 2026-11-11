@@ -44,7 +44,7 @@ A network RTK mountpoint sends nothing until it has received a position. While n
 
 The report carries the selected position's height above mean sea level and the geoid separation that goes with it.
 A height above the WGS84 ellipsoid, as the position of an Android device or of a base station has, is converted with the EGM96 geoid model built into QGroundControl.
-A height of unknown reference, as the position of a Linux or Windows device has, is reported as it is, and a position without a height is reported with height 0, both without a geoid separation. A caster places the rover by its latitude and longitude.
+A height of unknown reference, as the position of a Linux device has, is reported as it is, and a position without a height is reported with height 0, both without a geoid separation. A caster places the rover by its latitude and longitude.
 
 ## UDP RTCM Input
 

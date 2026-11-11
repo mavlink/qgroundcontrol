@@ -11,24 +11,6 @@
 
 QGC_LOGGING_CATEGORY(PositionManagerLog, "GPS.Positioning.PositionManager")
 
-namespace {
-
-/// The datum of the altitudes Qt's default position source reports on this platform.
-constexpr GPSAltitudeDatum platformAltitudeDatum()
-{
-#if defined(Q_OS_ANDROID)
-    // The Android backend reports WGS84 ellipsoid height while its useMslAltitude parameter is false.
-    return GPSAltitudeDatum::Ellipsoid;
-#elif defined(Q_OS_DARWIN)
-    // Core Location reports altitude above mean sea level.
-    return GPSAltitudeDatum::MeanSeaLevel;
-#else
-    return GPSAltitudeDatum::Unknown;
-#endif
-}
-
-}  // namespace
-
 PositionManager::PositionManager(QObject* parent, RuntimeScheduler* scheduler)
     : QObject(parent)
     , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
@@ -92,15 +74,31 @@ void PositionManager::_setupPositionSources()
     auto* platformSource = _platformSourceFactory ? _platformSourceFactory(this) : nullptr;
     const bool custom = platformSource != nullptr;
     if (!custom) {
-        // Android reports MSL altitude only when asked; platformAltitudeDatum() relies on ellipsoid height.
+        // Android reports MSL altitude only when asked; _backendAltitudeDatum() relies on its ellipsoid height.
         platformSource = QGeoPositionInfoSource::createDefaultSource({{QStringLiteral("useMslAltitude"), false}}, this);
         if (platformSource) {
             qCDebug(PositionManagerLog) << "Device position backend:" << platformSource->sourceName();
         }
     }
-    setInternalPositionSource(platformSource,
-                              platformSource ? SourceStatus::WaitingForFix : SourceStatus::BackendUnavailable, custom,
-                              custom ? GPSAltitudeDatum::Unknown : platformAltitudeDatum());
+    setInternalPositionSource(
+        platformSource, platformSource ? SourceStatus::WaitingForFix : SourceStatus::BackendUnavailable, custom,
+        custom || !platformSource ? GPSAltitudeDatum::Unknown : _backendAltitudeDatum(platformSource->sourceName()));
+}
+
+GPSAltitudeDatum PositionManager::_backendAltitudeDatum(const QString& sourceName)
+{
+    // Android's Location.getAltitude(), which the backend reports while its useMslAltitude parameter is false.
+    if (sourceName == QLatin1String("android")) {
+        return GPSAltitudeDatum::Ellipsoid;
+    }
+    // Core Location's altitude and the GGA altitude the NMEA backend reads are above mean sea level, and the WinRT
+    // backend reports an altitude only when its reference is the geoid.
+    if (sourceName == QLatin1String("corelocation") || sourceName == QLatin1String("winrt") ||
+        sourceName == QLatin1String("nmea")) {
+        return GPSAltitudeDatum::MeanSeaLevel;
+    }
+    // GeoClue, the browser and OpenHarmony backends pass on an altitude whose reference they do not state.
+    return GPSAltitudeDatum::Unknown;
 }
 
 void PositionManager::_handlePermissionStatus(Qt::PermissionStatus permissionStatus)

@@ -137,16 +137,16 @@ _QGroundControl_ will automatically use an internal GPS to display its own locat
 It may also use the GPS as a location source for _Follow Me Mode_ - currently supported on [PX4 Multicopters only](https://docs.px4.io/en/flight_modes/follow_me.html).
 
 Vehicles take the altitudes they are sent as above mean sea level, so that is how _Follow Me_ and [Update return to home position based on device location](fly_view.md) send the ground station's altitude.
-A GNSS receiver and macOS and iOS devices report it that way.
+A GNSS receiver and macOS, iOS and Windows devices report it that way.
 A height above the WGS84 ellipsoid, which is what Android devices report and what the fixed or surveyed position of a base station has, is converted with the EGM96 geoid model built into QGroundControl.
 The converted altitude is within 1 m of the model almost everywhere, and up to 4 m off where the geoid changes over a short distance, as in northern Colombia, on the Canary Islands and on Hawaii.
 
-An altitude of unknown reference or a position without an altitude is not sent. The vehicle's own home altitude is sent instead: home moves only horizontally, and a followed target is taken to be at home altitude.
+An altitude of unknown reference, as the location service of a Linux device reports, or a position without an altitude is not sent. The vehicle's own home altitude is sent instead: home moves only horizontally, and a followed target is taken to be at home altitude.
 The home position also keeps the vehicle's altitude when the ground station's is not accurate to 10 m.
 A receiver that states no vertical accuracy, as an NMEA receiver without GST sentences, counts as that accurate while its VDOP is below 2.
 
 [Remote ID](remote_id.md) reports the operator's height above the WGS84 ellipsoid instead.
-It sends the ellipsoid height of a GNSS receiver or an Android device as it is, and converts an altitude above mean sea level, which is all macOS and iOS devices report, with the same geoid model.
+It sends the ellipsoid height of a GNSS receiver or an Android device as it is, and converts an altitude above mean sea level, which is all macOS, iOS and Windows devices report, with the same geoid model.
 
 A connected GNSS receiver can provide the ground station position instead; use the [Passive](#passive) role for a receiver that only does that.
 The settings are:

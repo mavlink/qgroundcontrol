@@ -11,6 +11,8 @@ private slots:
     void _sourcesShareAcceptance();
     void _deviceAltitudeDatum_data();
     void _deviceAltitudeDatum();
+    void _backendAltitudeDatum_data();
+    void _backendAltitudeDatum();
     void _registrationReplacementAndSessions();
     void _registrationDuringNotification();
     void _producerLoss_data();

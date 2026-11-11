@@ -225,6 +225,29 @@ void PositionManagerTest::_deviceAltitudeDatum_data()
     QTest::newRow("undeclared") << GPSAltitudeDatum::Unknown << true << GPSAltitudeDatum::Unknown << 500.0;
 }
 
+void PositionManagerTest::_backendAltitudeDatum_data()
+{
+    // What each Qt position backend reports as altitude, by the name of the backend in use.
+    QTest::addColumn<QString>("backend");
+    QTest::addColumn<GPSAltitudeDatum>("datum");
+    QTest::newRow("android") << QStringLiteral("android") << GPSAltitudeDatum::Ellipsoid;
+    QTest::newRow("corelocation") << QStringLiteral("corelocation") << GPSAltitudeDatum::MeanSeaLevel;
+    QTest::newRow("winrt") << QStringLiteral("winrt") << GPSAltitudeDatum::MeanSeaLevel;
+    QTest::newRow("nmea") << QStringLiteral("nmea") << GPSAltitudeDatum::MeanSeaLevel;
+    // Backends whose sources do not say which height they pass on.
+    QTest::newRow("geoclue2") << QStringLiteral("geoclue2") << GPSAltitudeDatum::Unknown;
+    QTest::newRow("wasm") << QStringLiteral("wasm") << GPSAltitudeDatum::Unknown;
+    QTest::newRow("ohos") << QStringLiteral("ohos") << GPSAltitudeDatum::Unknown;
+    QTest::newRow("unnamed") << QString() << GPSAltitudeDatum::Unknown;
+}
+
+void PositionManagerTest::_backendAltitudeDatum()
+{
+    QFETCH(QString, backend);
+    QFETCH(GPSAltitudeDatum, datum);
+    QCOMPARE(PositionManager::_backendAltitudeDatum(backend), datum);
+}
+
 void PositionManagerTest::_deviceAltitudeDatum()
 {
     QFETCH(GPSAltitudeDatum, declared);

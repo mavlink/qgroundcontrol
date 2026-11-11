@@ -162,6 +162,8 @@ private:
         SelectedSource kind, GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation,
         std::optional<std::chrono::milliseconds> maximumAge = std::nullopt) const;
     void _setupPositionSources();
+    /// The datum of the altitudes that Qt's position backend @a sourceName reports.
+    static GPSAltitudeDatum _backendAltitudeDatum(const QString& sourceName);
     void _handlePermissionStatus(Qt::PermissionStatus permissionStatus);
     void _checkPermission();
 
