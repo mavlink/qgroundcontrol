@@ -12,7 +12,6 @@
 #include "MultiVehicleManager.h"
 #include "SettingsManager.h"
 #include "SubtitleWriter.h"
-#include "UVCCameraController.h"
 #include "VideoRecordingService.h"
 #include "VideoSettings.h"
 #include "VideoStreamController.h"
@@ -56,10 +55,12 @@ void VideoRecordingServiceTest::init()
     _thermalStream = new VideoStreamController(VideoStreamController::Role::Thermal, videoSettings, _owner.get());
     _primary = new FakeVideoReceiver();
     _thermal = new FakeVideoReceiver();
+    _camera = new FakeVideoReceiver();
     _primaryStream->setReceiver(_primary);
     _thermalStream->setReceiver(_thermal);
-    _service =
-        new VideoRecordingService(_primaryStream, _thermalStream, new UVCCameraController(_owner.get()), _owner.get());
+    auto* const cameraSource =
+        new VideoStreamController(VideoStreamController::Role::Camera, videoSettings, _owner.get(), _camera);
+    _service = new VideoRecordingService({_primaryStream, _thermalStream, cameraSource}, _owner.get());
 }
 
 void VideoRecordingServiceTest::cleanup()
@@ -67,6 +68,7 @@ void VideoRecordingServiceTest::cleanup()
     _service = nullptr;
     _primary = nullptr;
     _thermal = nullptr;
+    _camera = nullptr;
     _owner.reset();
     _facts.reset();
     _saveDir.reset();
@@ -129,6 +131,28 @@ void VideoRecordingServiceTest::_testRecordsActiveStreams()
     _service->stopRecording();
     QCOMPARE(_primary->recordingStops, 1);
     QCOMPARE(_thermal->recordingStops, 1);
+}
+
+void VideoRecordingServiceTest::_testCameraRecordsAsTheVideo()
+{
+    // Running in place of the primary stream, the camera gets its file name and its subtitles.
+    _camera->setActive(true);
+    _service->startRecording(QStringLiteral("flight"));
+    const QString file = _videoDir + QStringLiteral("/flight.mkv");
+    QVERIFY(_primary->recordings.isEmpty());
+    QCOMPARE(_camera->recordings.size(), 1);
+    QCOMPARE(_camera->recordings.first().file, file);
+
+    emit _camera->recordingStarted(file);
+    _camera->setRecording(true);
+    QVERIFY(_service->recording());
+    QCOMPARE(_service->_subtitleWriter->videoFile(), file);
+
+    _service->stopRecording();
+    QCOMPARE(_camera->recordingStops, 1);
+    _camera->setRecording(false);
+    QVERIFY(!_service->recording());
+    QVERIFY(!_service->_subtitleWriter->capturing());
 }
 
 void VideoRecordingServiceTest::_testNothingToRecord()

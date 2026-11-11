@@ -7,6 +7,7 @@
 
 #include "Fact.h"
 #include "QGCVideoStreamInfo.h"
+#include "UVCDevices.h"
 #include "VideoDecoderOptions.h"
 #include "VideoSettings.h"
 #include "VideoStreamUri.h"
@@ -114,6 +115,7 @@ VideoStreamResolver::Settings VideoStreamResolver::snapshot(VideoSettings* video
 {
     Settings settings;
     settings.videoSource = videoSettings->videoSource()->rawValue().toString();
+    settings.cameraAttached = !isNetworkSource(settings.videoSource) && UVCDevices::deviceExists(settings.videoSource);
     settings.udpUrl = videoSettings->udpUrl()->rawValue().toString();
     settings.tcpUrl = videoSettings->tcpUrl()->rawValue().toString();
     settings.rtspUrl = videoSettings->rtspUrl()->rawValue().toString();
@@ -141,6 +143,16 @@ VideoReceiver::DisplayConfig VideoStreamResolver::displayConfig(const Settings& 
 std::optional<VideoReceiver::Config> VideoStreamResolver::resolve(const Settings& settings,
                                                                   const QGCVideoStreamInfo* streamInfo, Role role)
 {
+    if (role == Role::Camera) {
+        if (!settings.cameraAttached) {
+            return std::nullopt;
+        }
+        // The stream settings aren't a camera's: its config changes with the camera alone.
+        VideoReceiver::Config config;
+        config.uri = settings.videoSource;
+        return config;
+    }
+
     QString uri;
     if (isAutoStream(streamInfo)) {
         uri = autoStreamUri(*streamInfo);

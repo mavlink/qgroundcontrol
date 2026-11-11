@@ -42,12 +42,14 @@ private slots:
     void _testScreenshotFailuresReachUser();
     void _testAdvertisedRotationTurnsVideo_data();
     void _testAdvertisedRotationTurnsVideo();
-    void _testStreamErrorsReachUser();
+    void _testSourceErrorsReachUser();
     void _testReconnectingFollowsLostStream();
     void _testLinkRegainedReconnectsStreams();
     void _testUvcCameraFormatReachesCamera();
     void _testUvcControlsReachCamera();
     void _testStreamStatsReachQml();
+    void _testIndicatorReportsMeasuredSource();
+    void _testSourceStatsShowMeasuredSources();
     void _testStreamFormatText();
     void _testVideoViewFitsVideo_data();
     void _testVideoViewFitsVideo();

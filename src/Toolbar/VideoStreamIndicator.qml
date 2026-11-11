@@ -7,33 +7,49 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.VideoManager
 
-// Frame rate and bitrate of the measured video stream (its resolution where the receiver can't count the bitrate), or
-// frame rate and resolution of the USB camera, orange while a stream degrades. The drawer shows each stream's statistics, and expands to the video settings that change a running
-// stream.
+// Frame rate and bitrate of the measured video source (its resolution where the receiver can't count the bitrate, as
+// for the USB camera), orange while a source degrades. The drawer shows each source's statistics, and expands to the
+// video settings that change a running stream.
 Item {
     id: root
 
     property bool showIndicator: _stats.valid
+    /// The manager whose sources the indicator reports.
+    property VideoManager videoManager: QGroundControl.videoManager
 
-    readonly property VideoManager          _videoManager:  QGroundControl.videoManager
-    readonly property VideoStreamController _primary:       _videoManager.primaryStream
-    readonly property VideoStreamController _thermal:       _videoManager.thermalStream
-    readonly property UVCStreamMonitor      _uvc:           _videoManager.uvcCamera.monitor
-    readonly property bool _uvcMeasured: _uvc.stats.valid && !_primary.stats.valid && !_thermal.stats.valid
-    // The thermal stream's figures only while it is the one measured.
-    readonly property VideoStreamController _measuredStream: _primary.stats.valid ? _primary : _thermal
-    readonly property videoStreamStats _stats: _uvcMeasured ? _uvc.stats : _measuredStream.stats
-    readonly property bool _degraded: _statsDegraded(_primary.stats, _streamCameraFps(_primary))
-                                      || _statsDegraded(_thermal.stats, _streamCameraFps(_thermal))
-                                      || _statsDegraded(_uvc.stats, _uvc.cameraFrameRate)
-
-    // The frame rate the stream's camera advertises; none for a stream that isn't decoded, as the thermal stream while
-    // its view is off, which shows no frames to compare with it.
-    function _streamCameraFps(stream) {
-        return stream.decoding && stream.streamInfo ? stream.streamInfo.framerate : 0
+    // The first source that is measured, which puts the primary stream before the thermal stream; the USB camera runs
+    // in the primary stream's place.
+    readonly property VideoStreamController _measuredSource: {
+        const sources = root.videoManager.sources
+        for (let i = 0; i < sources.length; i++) {
+            if (sources[i].stats.valid) {
+                return sources[i]
+            }
+        }
+        return sources[0]
+    }
+    readonly property videoStreamStats _stats: _measuredSource.stats
+    readonly property bool _degraded: {
+        const sources = root.videoManager.sources
+        for (let i = 0; i < sources.length; i++) {
+            if (root._statsDegraded(sources[i].stats, root._cameraFps(sources[i]))) {
+                return true
+            }
+        }
+        return false
     }
 
-    // Losing packets or dropping frames now, or showing under three quarters of the frame rate the camera advertises.
+    // The frame rate the source's camera is set up for: the USB camera's own, or the one a stream's camera advertises.
+    // None for a stream that isn't decoded, as the thermal stream while its view is off, which shows no frames to
+    // compare with it.
+    function _cameraFps(source) {
+        if (source.role === VideoSourceRole.Camera) {
+            return root.videoManager.uvcCamera.monitor.cameraFrameRate
+        }
+        return source.decoding && source.streamInfo ? source.streamInfo.framerate : 0
+    }
+
+    // Losing packets or dropping frames now, or showing under three quarters of the frame rate the camera is set up for.
     function _statsDegraded(stats, cameraFps) {
         return stats.valid && (stats.lossPercent > 0 || stats.droppedFps > 0
                                || (cameraFps > 0 && stats.fps < cameraFps * 0.75))
@@ -74,10 +90,8 @@ Item {
 
             QGCLabel {
                 objectName: "videoStreamDetail"
-                text:       root._uvcMeasured ? qsTr("%1p").arg(root._uvc.videoSize.height)
-                                                 : (root._stats.bitrateKbps >= 0
-                                                    ? VideoStreamFormat.bitrateText(root._stats.bitrateKbps)
-                                                    : qsTr("%1p").arg(root._measuredStream.videoSize.height))
+                text:       root._stats.bitrateKbps >= 0 ? VideoStreamFormat.bitrateText(root._stats.bitrateKbps)
+                                                         : qsTr("%1p").arg(root._measuredSource.videoSize.height)
             }
         }
     }
@@ -94,27 +108,8 @@ Item {
             showExpand: true
 
             contentComponent: Component {
-                ColumnLayout {
-                    spacing: ScreenTools.defaultFontPixelHeight / 4
-
-                    VideoStreamStatsGroup {
-                        heading:    qsTr("Video")
-                        stream:     root._primary
-                    }
-
-                    VideoStreamStatsGroup {
-                        heading:    qsTr("Thermal")
-                        stream:     root._thermal
-                    }
-
-                    UVCStatsGroup {
-                        monitor: root._uvc
-                    }
-
-                    QGCLabel {
-                        text:       qsTr("No video stream")
-                        visible:    !root._stats.valid
-                    }
+                VideoSourceStats {
+                    videoManager: root.videoManager
                 }
             }
 
@@ -133,8 +128,8 @@ Item {
 
                         QGCButton {
                             text:       qsTr("Restart Video")
-                            visible:    !root._videoManager.isUvc
-                            onClicked:  root._videoManager.startVideo()
+                            visible:    !root.videoManager.isUvc
+                            onClicked:  root.videoManager.startVideo()
                         }
 
                         QGCButton {

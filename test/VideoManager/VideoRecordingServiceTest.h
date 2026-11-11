@@ -23,6 +23,7 @@ private slots:
 
     void _testUniqueBaseName();
     void _testRecordsActiveStreams();
+    void _testCameraRecordsAsTheVideo();
     void _testNothingToRecord();
     void _testSubtitlesFollowEachFile();
     void _testRecordingFailureReachesUser();
@@ -42,4 +43,5 @@ private:
     VideoRecordingService* _service = nullptr;
     FakeVideoReceiver* _primary = nullptr;
     FakeVideoReceiver* _thermal = nullptr;
+    FakeVideoReceiver* _camera = nullptr;
 };

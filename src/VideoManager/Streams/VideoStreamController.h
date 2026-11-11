@@ -15,9 +15,12 @@ class QGCVideoStreamInfo;
 class QQuickItem;
 class VideoSettings;
 
-/// One video stream, primary or thermal. Resolves the stream's config from the video settings and the camera's
-/// advertised stream, drives the stream's VideoReceiver, and connects the receiver to the QML VideoOutput that
-/// displays it.
+/// One video source: the primary stream, the thermal stream or the local camera. Resolves the source's config from the
+/// video settings and the vehicle camera's advertised stream, drives the source's VideoReceiver, and connects the
+/// receiver to the QML VideoOutput that displays it.
+///
+/// A stream's receiver comes from the video backend, and goes when the backend changes: setReceiver(). The local
+/// camera's is the source's for good, given to its constructor.
 ///
 /// The VideoOutput registers itself: registerVideoOutput() once it is created and again after it moved to another
 /// window, unregisterVideoOutput() when it is destroyed (see VideoStreamOutput.qml). The registration
@@ -27,6 +30,7 @@ class VideoStreamController : public QObject
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
+    Q_PROPERTY(VideoStreamResolver::Role role READ role CONSTANT)
     Q_PROPERTY(bool streaming READ streaming NOTIFY streamingChanged)
     Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged)
     Q_PROPERTY(bool reconnecting READ reconnecting NOTIFY reconnectingChanged)
@@ -43,18 +47,26 @@ class VideoStreamController : public QObject
 public:
     using Role = VideoStreamResolver::Role;
 
-    VideoStreamController(Role role, VideoSettings* videoSettings, QObject* parent = nullptr);
+    /// @p ownReceiver, when given, is the source's receiver for good; the source takes ownership of it.
+    VideoStreamController(Role role, VideoSettings* videoSettings, QObject* parent = nullptr,
+                          VideoReceiver* ownReceiver = nullptr);
     ~VideoStreamController() override;
 
-    /// "videoContent" or "thermalVideo": names the receiver, and tags the thermal stream's files.
+    Role role() const { return _role; }
+
+    /// "videoContent", "thermalVideo" or "uvcCamera": names the receiver, and tags the thermal stream's files.
     QString name() const;
-    /// @p file for this stream: the thermal stream's name goes before the extension, "<base>.thermalVideo.<ext>".
+    /// @p file for this source: the thermal stream's name goes before the extension, "<base>.thermalVideo.<ext>".
     QString taggedFile(const QString& file) const;
 
     VideoReceiver* receiver() const { return _receiver; }
 
-    /// Takes ownership of @p receiver, replacing (and deleting) the current one; nullptr just deletes it.
+    /// Takes ownership of @p receiver, replacing (and deleting) the current one; nullptr just deletes it. Nothing for
+    /// a source with a receiver of its own.
     void setReceiver(VideoReceiver* receiver);
+    /// Stops the source for good, before the application goes away: deletes its receiver, or shuts down
+    /// (VideoReceiver::shutDown()) one of its own.
+    void shutDown();
 
     QGCVideoStreamInfo* streamInfo() const;
     /// The stream the camera advertises for this role, which takes precedence over the manual settings.
@@ -113,9 +125,11 @@ public:
     double aspectRatio() const;
     /// The receiver's VideoReceiver::stats(); invalid without a receiver.
     VideoStreamStats stats() const;
-    /// The URI the receiver plays, without user info or query values, for display; empty without a stream.
+    /// The URI the receiver plays, without user info or query values, for display, or the local camera's description;
+    /// empty without a stream or a camera.
     QString uri() const;
-    /// How the stream arrives, from its URI: "RTSP", "RTP/UDP (H.264)", "MPEG-TS/TCP", ...; empty without a stream.
+    /// How the stream arrives, from its URI: "RTSP", "RTP/UDP (H.264)", "MPEG-TS/TCP", ...; empty without a stream, and
+    /// for the local camera.
     QString transport() const;
 
 signals:
@@ -147,6 +161,7 @@ private:
     const Role _role;
     VideoSettings* const _videoSettings;
     VideoReceiver* _receiver = nullptr;
+    bool _hasOwnReceiver = false;
     QPointer<QGCVideoStreamInfo> _streamInfo;
     QPointer<QQuickItem> _videoOutput;
     /// The URI the receiver was last configured with.

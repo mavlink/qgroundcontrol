@@ -1,9 +1,9 @@
 # ============================================================================
 # Video Manager Module
-# VideoManager, the QML facade, and its telemetry overlay; Streams: per-stream control and the settings resolver;
-# Recording: file naming, storage and subtitles; UVC: local cameras; Receiver: the backend-neutral receiver API;
-# GStreamer: the network backend; QtMultimedia: the QMediaPlayer receiver, without GStreamer or by choice; Qml: the
-# QGroundControl.VideoManager QML module.
+# VideoManager, the QML facade, and its telemetry overlay; Streams: per-source control and the settings resolver;
+# Recording: file naming, storage and subtitles; UVC: the local camera's receiver; Receiver: the receiver API the
+# sources share; GStreamer: the network backend; QtMultimedia: the QMediaPlayer receiver, without GStreamer or by
+# choice; Qml: the QGroundControl.VideoManager QML module.
 # ============================================================================
 
 target_sources(

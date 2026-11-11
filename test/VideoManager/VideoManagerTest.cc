@@ -1,5 +1,8 @@
 #include "VideoManagerTest.h"
 
+#include <array>
+#include <functional>
+
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtGui/QImage>
@@ -15,6 +18,7 @@
 #include "MavlinkCameraControlInterface.h"
 #include "SettingsManager.h"
 #include "UVCCameraController.h"
+#include "UVCStreamMonitor.h"
 #include "VideoBackend.h"
 #include "VideoDecoderOptions.h"
 #include "VideoManager.h"
@@ -76,6 +80,35 @@ import QtQuick
 import QGroundControl.VideoManager
 
 VideoStreamStatsGroup {
+}
+)QML";
+
+// The Video indicator in a stand-in toolbar, which gives it its height.
+constexpr const char* kIndicatorQml = R"QML(
+import QtQuick
+import QGroundControl.Toolbar
+
+Item {
+    id: root
+
+    property var videoManager
+
+    width: 400
+    height: 40
+
+    VideoStreamIndicator {
+        videoManager: root.videoManager
+    }
+}
+)QML";
+
+// The statistics in the Video indicator's drawer.
+constexpr const char* kSourceStatsQml = R"QML(
+import QtQuick
+import QGroundControl.VideoManager
+
+VideoSourceStats {
+    width: 400
 }
 )QML";
 
@@ -803,14 +836,18 @@ void VideoManagerTest::_testAdvertisedRotationTurnsVideo()
     QCOMPARE(stream->videoSize(), QSize(64, 48));
 }
 
-void VideoManagerTest::_testStreamErrorsReachUser()
+void VideoManagerTest::_testSourceErrorsReachUser()
 {
-    const QRegularExpression message(QStringLiteral("stream failed"));
-    expectLogMessage("Video.VideoManager", QtWarningMsg, message);
-    expectAppMessage(message);
-    emit _thermal->errorOccurred(QStringLiteral("stream failed"));
-    verifyExpectedLogMessage();
-    verifyExpectedLogMessage();
+    // The USB camera's among them, as when its photo can't be saved.
+    for (VideoReceiver* const receiver :
+         {static_cast<VideoReceiver*>(_thermal), _videoManager->_cameraSource->receiver()}) {
+        const QRegularExpression message(QStringLiteral("source failed"));
+        expectLogMessage("Video.VideoManager", QtWarningMsg, message);
+        expectAppMessage(message);
+        emit receiver->errorOccurred(QStringLiteral("source failed"));
+        verifyExpectedLogMessage();
+        verifyExpectedLogMessage();
+    }
 }
 
 void VideoManagerTest::_testReconnectingFollowsLostStream()
@@ -999,6 +1036,119 @@ void VideoManagerTest::_testStreamStatsReachQml()
     _primary = nullptr;
     QCOMPARE(statsSpy.count(), 3);
     QVERIFY(!group->isVisible());
+}
+
+void VideoManagerTest::_testIndicatorReportsMeasuredSource()
+{
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kIndicatorQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/Indicator.qml")));
+    const std::unique_ptr<QQuickItem> toolbar(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
+        {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}})));
+    QVERIFY2(toolbar, qPrintable(component.errorString()));
+    // Items outside a scene are never visible.
+    QQuickWindow window;
+    toolbar->setParentItem(window.contentItem());
+    const QQuickItem* const indicator = toolbar->findChild<QQuickItem*>(QStringLiteral("toolbar_videoStreamIndicator"));
+    QVERIFY(indicator);
+    QVERIFY(!indicator->property("showIndicator").toBool());
+
+    // Only the thermal stream is measured: the figures are its own.
+    VideoStreamStats thermalStats;
+    thermalStats.valid = true;
+    thermalStats.fps = 9.0;
+    thermalStats.bitrateKbps = 850.0;
+    _thermal->setStats(thermalStats);
+    QVERIFY(indicator->property("showIndicator").toBool());
+    QVERIFY(showsText(indicator, QStringLiteral("9 fps")));
+    QVERIFY(showsText(indicator, QStringLiteral("850 kbit/s")));
+
+    // The primary stream's come before them.
+    VideoStreamStats primaryStats;
+    primaryStats.valid = true;
+    primaryStats.fps = 30.0;
+    primaryStats.bitrateKbps = 8000.0;
+    _primary->setStats(primaryStats);
+    QVERIFY(showsText(indicator, QStringLiteral("30 fps")));
+    QVERIFY(showsText(indicator, QStringLiteral("8.0 Mbit/s")));
+
+    // The USB camera, which runs in the primary stream's place, has no bitrate to show: its resolution instead.
+    _primary->setStats({});
+    _thermal->setStats({});
+    QVERIFY(!indicator->property("showIndicator").toBool());
+    UVCCameraController* const camera = _videoManager->uvcCamera();
+    VideoStreamStats cameraStats;
+    cameraStats.valid = true;
+    cameraStats.fps = 25.0;
+    cameraStats.bitrateKbps = -1.0;
+    camera->setVideoSize(QSize(1280, 720));
+    camera->setStats(cameraStats);
+    QVERIFY(indicator->property("showIndicator").toBool());
+    QVERIFY(showsText(indicator, QStringLiteral("25 fps")));
+    QVERIFY(showsText(indicator, QStringLiteral("720p")));
+
+    // A source that drops frames colours the icon, whichever source the figures are of.
+    const QQuickItem* const icon = indicator->findChild<QQuickItem*>(QStringLiteral("videoStreamIcon"));
+    QVERIFY(icon);
+    const QVariant steadyColor = icon->property("color");
+    cameraStats.droppedFps = 2.0;
+    camera->setStats(cameraStats);
+    QVERIFY(icon->property("color") != steadyColor);
+    _primary->setStats(primaryStats);
+    QVERIFY(showsText(indicator, QStringLiteral("30 fps")));
+    QVERIFY(icon->property("color") != steadyColor);
+    camera->setStats({});
+    QCOMPARE(icon->property("color"), steadyColor);
+}
+
+void VideoManagerTest::_testSourceStatsShowMeasuredSources()
+{
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kSourceStatsQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/SourceStats.qml")));
+    const std::unique_ptr<QQuickItem> sourceStats(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
+        {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}})));
+    QVERIFY2(sourceStats, qPrintable(component.errorString()));
+    // Items outside a scene are never visible.
+    QQuickWindow window;
+    sourceStats->setParentItem(window.contentItem());
+    QVERIFY(showsText(sourceStats.get(), QStringLiteral("No video stream")));
+
+    // Each source has a group of its kind, in a loader.
+    QList<QQuickItem*> loaders;
+    for (QQuickItem* const child : sourceStats->childItems()) {
+        if (child->property("sourceComponent").isValid()) {
+            loaders.append(child);
+        }
+    }
+    QCOMPARE(loaders.size(), 3);
+    const auto group = [&loaders](int index) { return loaders.at(index)->property("item").value<QObject*>(); };
+    QCOMPARE(group(0)->property("stream").value<VideoStreamController*>(), _videoManager->primaryStream());
+    QCOMPARE(group(0)->property("heading").toString(), QStringLiteral("Video"));
+    QCOMPARE(group(1)->property("stream").value<VideoStreamController*>(), _videoManager->thermalStream());
+    QCOMPARE(group(1)->property("heading").toString(), QStringLiteral("Thermal"));
+    UVCCameraController* const camera = _videoManager->uvcCamera();
+    QCOMPARE(group(2)->property("monitor").value<UVCStreamMonitor*>(), camera->monitor());
+
+    // A group shows while its source is measured.
+    const std::array<std::function<void(const VideoStreamStats&)>, 3> setStats{
+        [this](const VideoStreamStats& stats) { _primary->setStats(stats); },
+        [this](const VideoStreamStats& stats) { _thermal->setStats(stats); },
+        [camera](const VideoStreamStats& stats) { camera->setStats(stats); },
+    };
+    VideoStreamStats measured;
+    measured.valid = true;
+    for (size_t shown = 0; shown < setStats.size(); ++shown) {
+        setStats.at(shown)(measured);
+        QVERIFY(!showsText(sourceStats.get(), QStringLiteral("No video stream")));
+        for (size_t index = 0; index < setStats.size(); ++index) {
+            QCOMPARE(loaders.at(index)->isVisible(), index == shown);
+        }
+        setStats.at(shown)({});
+    }
+    QVERIFY(showsText(sourceStats.get(), QStringLiteral("No video stream")));
 }
 
 void VideoManagerTest::_testStreamFormatText()

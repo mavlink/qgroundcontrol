@@ -1,5 +1,7 @@
 #include "VideoRecordingService.h"
 
+#include <algorithm>
+
 #include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
@@ -9,11 +11,8 @@
 #include "AppSettings.h"
 #include "Fact.h"
 #include "QGCLoggingCategory.h"
-#include "QtVideoRecorder.h"
 #include "SettingsManager.h"
 #include "SubtitleWriter.h"
-#include "UVCCameraController.h"
-#include "UVCStreamMonitor.h"
 #include "VideoSettings.h"
 #include "VideoStreamController.h"
 
@@ -33,24 +32,18 @@ QString subtitlePathFor(const QString& videoFile)
 
 }  // namespace
 
-VideoRecordingService::VideoRecordingService(VideoStreamController* primaryStream, VideoStreamController* thermalStream,
-                                             UVCCameraController* uvcCamera, QObject* parent)
+VideoRecordingService::VideoRecordingService(const QList<VideoStreamController*>& sources, QObject* parent)
     : QObject(parent)
-    , _primaryStream(primaryStream)
-    , _thermalStream(thermalStream)
-    , _uvcCamera(uvcCamera)
+    , _sources(sources)
     , _subtitleWriter(new SubtitleWriter(this))
 {
-    _connectRecordings(_primaryStream);
-    _connectRecordings(_thermalStream);
-    _connectRecordings(_uvcCamera);
-
-    // The recording holds the stream as it arrives, without the rotation its outputs add.
-    _connectSubtitles(_primaryStream, [this] {
-        const VideoReceiver* const receiver = _primaryStream->receiver();
-        return receiver ? receiver->videoSize() : QSize();
-    });
-    _connectSubtitles(_uvcCamera, [this] { return _uvcCamera->monitor()->videoSize(); });
+    for (VideoStreamController* source : _sources) {
+        _connectRecordings(source);
+        // The telemetry goes with the video on display: the primary stream, or the camera in its place.
+        if (source->role() != VideoStreamController::Role::Thermal) {
+            _connectSubtitles(source);
+        }
+    }
 
     _storageLimitTimer.setInterval(kStorageLimitInterval);
     (void) connect(&_storageLimitTimer, &QTimer::timeout, this, &VideoRecordingService::_applyStorageLimit);
@@ -58,47 +51,49 @@ VideoRecordingService::VideoRecordingService(VideoStreamController* primaryStrea
 
 VideoRecordingService::~VideoRecordingService() = default;
 
-template <class Source, class VideoSize>
-void VideoRecordingService::_connectSubtitles(Source* source, VideoSize videoSize)
+void VideoRecordingService::_connectSubtitles(VideoStreamController* source)
 {
     // Each file, including a stream's parts after a reconnect, gets its own subtitle file.
-    (void) connect(source, &Source::recordingStarted, this, [this, videoSize](const QString& file) {
-        _subtitleWriter->startCapturingTelemetry(file, videoSize());
+    (void) connect(source, &VideoStreamController::recordingStarted, this, [this, source](const QString& file) {
+        // The recording holds the video as it arrives, without the rotation its outputs add.
+        const VideoReceiver* const receiver = source->receiver();
+        _subtitleWriter->startCapturingTelemetry(file, receiver ? receiver->videoSize() : QSize());
     });
-    (void) connect(source, &Source::recordingFinished, this, [this](const QString& file) {
+    (void) connect(source, &VideoStreamController::recordingFinished, this, [this](const QString& file) {
         if (file == _subtitleWriter->videoFile()) {
             _subtitleWriter->stopCapturingTelemetry();
         }
     });
-    (void) connect(source, &Source::recordingChanged, this, [this](bool recording) {
+    (void) connect(source, &VideoStreamController::recordingChanged, this, [this](bool recording) {
         if (!recording) {
             _subtitleWriter->stopCapturingTelemetry();
         }
     });
 }
 
-template <class Source>
-void VideoRecordingService::_connectRecordings(Source* source)
+void VideoRecordingService::_connectRecordings(VideoStreamController* source)
 {
-    (void) connect(source, &Source::recordingChanged, this, &VideoRecordingService::_updateRecording);
-    (void) connect(source, &Source::recordingStarted, this, [this](const QString& file) {
+    (void) connect(source, &VideoStreamController::recordingChanged, this, &VideoRecordingService::_updateRecording);
+    (void) connect(source, &VideoStreamController::recordingStarted, this, [this](const QString& file) {
         qCDebug(VideoRecordingServiceLog) << "Recording to" << file;
         _recordingFiles.insert(file);
     });
-    (void) connect(source, &Source::recordingFinished, this, [this](const QString& file, const QString& error) {
-        _recordingFiles.remove(file);
-        if (error.isEmpty()) {
-            qCDebug(VideoRecordingServiceLog) << "Recorded" << file;
-            return;
-        }
-        qCWarning(VideoRecordingServiceLog) << "Recording" << file << "failed:" << error;
-        QGC::showAppMessage(tr("Video recording %1 failed: %2").arg(QFileInfo(file).fileName(), error));
-    });
+    (void) connect(source, &VideoStreamController::recordingFinished, this,
+                   [this](const QString& file, const QString& error) {
+                       _recordingFiles.remove(file);
+                       if (error.isEmpty()) {
+                           qCDebug(VideoRecordingServiceLog) << "Recorded" << file;
+                           return;
+                       }
+                       qCWarning(VideoRecordingServiceLog) << "Recording" << file << "failed:" << error;
+                       QGC::showAppMessage(tr("Video recording %1 failed: %2").arg(QFileInfo(file).fileName(), error));
+                   });
 }
 
 void VideoRecordingService::_updateRecording()
 {
-    const bool recording = _primaryStream->recording() || _thermalStream->recording() || _uvcCamera->recording();
+    const bool recording =
+        std::ranges::any_of(_sources, [](const VideoStreamController* source) { return source->recording(); });
     if (recording != _recording) {
         _recording = recording;
         if (_recording) {
@@ -146,14 +141,13 @@ void VideoRecordingService::startRecording(const QString& baseName)
         return;
     }
 
-    QList<VideoStreamController*> streams;
-    for (VideoStreamController* stream : {_primaryStream, _thermalStream}) {
-        if (stream->active()) {
-            streams.append(stream);
+    QList<VideoStreamController*> sources;
+    for (VideoStreamController* source : _sources) {
+        if (source->active()) {
+            sources.append(source);
         }
     }
-    const bool recordUvc = _uvcCamera->canRecord() && !_uvcCamera->recordingActive();
-    if (streams.isEmpty() && !recordUvc) {
+    if (sources.isEmpty()) {
         QGC::showAppMessage(tr("Unable to record video: no video stream is active."));
         return;
     }
@@ -161,29 +155,22 @@ void VideoRecordingService::startRecording(const QString& baseName)
     _applyStorageLimit();
 
     const QString name = baseName.isEmpty() ? uniqueBaseName(directory, QDateTime::currentDateTime()) : baseName;
-    for (VideoStreamController* stream : std::as_const(streams)) {
-        stream->startRecording(recordingFile(directory, name, stream, format), format);
-    }
-    if (recordUvc) {
-        _uvcCamera->startRecording(
-            QStringLiteral("%1/%2.%3").arg(directory, name, VideoReceiver::fileExtension(format)),
-            QtVideoRecorder::container(format),
-            QtVideoRecorder::recordingCodec(videoSettings->uvcRecordingCodec()->rawValue().toString()),
-            QtVideoRecorder::recordingQuality(videoSettings->uvcRecordingQuality()->rawValue().toInt()));
+    for (VideoStreamController* source : std::as_const(sources)) {
+        source->startRecording(recordingFile(directory, name, source, format), format);
     }
 }
 
 void VideoRecordingService::stopRecording()
 {
-    _primaryStream->stopRecording();
-    _thermalStream->stopRecording();
-    _uvcCamera->stopRecording();
+    for (VideoStreamController* source : _sources) {
+        source->stopRecording();
+    }
 }
 
 QString VideoRecordingService::recordingFile(const QString& directory, const QString& baseName,
-                                             const VideoStreamController* stream, VideoReceiver::FileFormat format)
+                                             const VideoStreamController* source, VideoReceiver::FileFormat format)
 {
-    return stream->taggedFile(
+    return source->taggedFile(
         QStringLiteral("%1/%2.%3").arg(directory, baseName, VideoReceiver::fileExtension(format)));
 }
 

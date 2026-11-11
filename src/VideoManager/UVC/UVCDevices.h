@@ -9,8 +9,8 @@
 
 class QObject;
 
-/// USB (UVC) cameras offered as video sources. A camera's description is its video source name. UVCCameraController
-/// runs the selected camera through Qt Multimedia; no VideoReceiver is involved.
+/// USB (UVC) cameras offered as video sources. A camera's description is its video source name. UVCCameraController,
+/// the VideoReceiver of a camera, runs the selected one through Qt Multimedia.
 namespace UVCDevices {
 
 /// Descriptions of the attached cameras.

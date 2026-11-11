@@ -4,9 +4,11 @@
 #include <functional>
 
 #include <QtCore/QFuture>
+#include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QString>
+#include <QtQml/QQmlListProperty>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 class QQuickWindow;
@@ -18,9 +20,11 @@ class VideoSettings;
 class VideoStreamController;
 class VideoTelemetryOverlay;
 
-/// QML facade of the video streams, each a VideoStreamController (primary, thermal). decoding and aspectRatio forward
-/// to the primary stream, thermalAspectRatio to the thermal stream, and recording covers both streams. uvcCamera
-/// runs the USB camera on display. The other properties, such as hasVideo and isUvc, are the manager's own state.
+/// QML facade of the video sources, each a VideoStreamController: the primary stream, the thermal stream and the USB
+/// camera, whose receiver is uvcCamera. One of the primary stream and the camera is on display: the camera while the
+/// video source setting names one and no vehicle camera advertises a stream. decoding and aspectRatio forward to the
+/// primary stream, thermalAspectRatio to the thermal stream, and recording covers every source. The other properties,
+/// such as hasVideo and isUvc, are the manager's own state.
 class VideoManager : public QObject
 {
     Q_OBJECT
@@ -29,6 +33,8 @@ class VideoManager : public QObject
     Q_MOC_INCLUDE("UVCCameraController.h")
     Q_MOC_INCLUDE("VideoStreamController.h")
 
+    /// Every source, for what treats them alike: the primary stream, the thermal stream, then the USB camera.
+    Q_PROPERTY(QQmlListProperty<VideoStreamController> sources READ sources CONSTANT)
     Q_PROPERTY(VideoStreamController* primaryStream READ primaryStream CONSTANT)
     Q_PROPERTY(VideoStreamController* thermalStream READ thermalStream CONSTANT)
     Q_PROPERTY(UVCCameraController* uvcCamera READ uvcCamera CONSTANT)
@@ -67,16 +73,17 @@ public:
     };
     Q_ENUM(NoVideoReason)
 
-    /// Saves the frame on display to @p imageFile (default: a timestamped file in the photo directory), and the
-    /// thermal stream's frame, when it is streaming, to the same name tagged ".thermalVideo". The files are written
-    /// off the GUI thread; the user is told when there is no video to save, or a file can't be written.
+    /// Saves the frame on display, or the USB camera's photo, to @p imageFile (default: a timestamped file in the
+    /// photo directory), and the thermal stream's frame, when it is streaming, to the same name tagged
+    /// ".thermalVideo". The files are written off the GUI thread; the user is told when there is no video to save, or
+    /// a file can't be written.
     Q_INVOKABLE void grabImage(const QString& imageFile = QString());
     /// See VideoRecordingService::startRecording().
     Q_INVOKABLE void startRecording(const QString& baseName = QString());
     /// Undoes stopVideo() and "disable when disarmed", and reconnects the streams.
     Q_INVOKABLE void startVideo();
     Q_INVOKABLE void stopRecording();
-    /// Stops the streams, and any recording, until startVideo().
+    /// Stops the sources, and any recording, until startVideo().
     Q_INVOKABLE void stopVideo();
 
     void init(QQuickWindow* mainWindow);
@@ -84,9 +91,11 @@ public:
     void startVideoBackendInit();
     /// Blocks until the backend init finishes, starting it if needed. True when the backend is ready.
     bool waitForVideoBackendReady();
-    /// Deletes the receivers and stops the USB camera, for good: nothing starts again afterwards. Call before the QML
-    /// engine and the application go away.
+    /// Shuts the sources down, for good: deletes the streams' receivers and stops the USB camera, and nothing starts
+    /// again afterwards. Call before the QML engine and the application go away.
     void cleanup();
+
+    QQmlListProperty<VideoStreamController> sources();
 
     VideoStreamController* primaryStream() const { return _primaryStream; }
 
@@ -152,7 +161,9 @@ private:
     bool _backendInitFinished() const { return (_initState == InitState::Ready) || (_initState == InitState::Failed); }
 
     void _createVideoReceivers();
-    /// Recomputes the derived state and what each stream should do, after any input changed.
+    /// Rebuilds the streams' display sinks and reconnects them; tries a camera that failed again.
+    void _restartSources();
+    /// Recomputes the derived state and which sources are enabled, after any input changed.
     void _updateState();
     void _setActiveVehicle(Vehicle* vehicle);
     void _updateStreamInfo();
@@ -163,9 +174,12 @@ private:
     void _reconnectStreams();
 
     VideoSettings* const _videoSettings;
+    /// The camera source's receiver.
+    UVCCameraController* const _uvcCamera;
     VideoStreamController* const _primaryStream;
     VideoStreamController* const _thermalStream;
-    UVCCameraController* const _uvcCamera;
+    VideoStreamController* const _cameraSource;
+    const QList<VideoStreamController*> _sources;
     VideoRecordingService* const _recordingService;
     VideoTelemetryOverlay* const _telemetryOverlay;
     std::function<VideoReceiver*(QObject* parent)> _receiverFactory;

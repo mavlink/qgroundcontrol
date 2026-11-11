@@ -143,6 +143,25 @@ void VideoStreamResolverTest::_testStreamSettingsPassThrough()
     }
 }
 
+void VideoStreamResolverTest::_testCameraRole()
+{
+    VideoStreamResolver::Settings settings = manualSettings(QStringLiteral("Integrated Camera"));
+    QVERIFY(!VideoStreamResolver::resolve(settings, nullptr, Role::Camera).has_value());
+
+    // The camera the video source names, once it is attached.
+    settings.cameraAttached = true;
+    const std::optional<VideoReceiver::Config> config = VideoStreamResolver::resolve(settings, nullptr, Role::Camera);
+    QVERIFY(config.has_value());
+    QCOMPARE(config->uri, QStringLiteral("Integrated Camera"));
+    QVERIFY(!VideoStreamResolver::resolve(settings, nullptr, Role::Primary).has_value());
+
+    // The stream settings leave its config alone: changing one doesn't restart the camera.
+    settings.lowLatency = true;
+    settings.rtpJitterLatencyMs = 250;
+    settings.autoReconnect = false;
+    QVERIFY(VideoStreamResolver::resolve(settings, nullptr, Role::Camera) == config);
+}
+
 void VideoStreamResolverTest::_testDisplayConfig_data()
 {
     QTest::addColumn<bool>("forceCpuVideoPath");

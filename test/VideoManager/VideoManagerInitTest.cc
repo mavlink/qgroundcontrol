@@ -7,6 +7,7 @@
 #include "GStreamerTestHelpers.h"
 #include "QtMultimediaVideoReceiver.h"
 #include "SettingsManager.h"
+#include "UVCCameraController.h"
 #include "VideoManager.h"
 #include "VideoSettings.h"
 #include "VideoStreamController.h"
@@ -139,6 +140,8 @@ void VideoManagerInitTest::_testNothingStartsAfterCleanup()
     restorer.set(backend, VideoSettings::VideoBackendQtMultimedia);
     QCOMPARE(receiverCount, 0);
     QVERIFY(!videoManager.primaryStream()->receiver());
+    // The USB camera, which QML refers to, is stopped rather than deleted.
+    QCOMPARE(videoManager._cameraSource->receiver(), videoManager.uvcCamera());
 }
 
 void VideoManagerInitTest::_testWaitForBackendReady()
@@ -194,6 +197,8 @@ void VideoManagerInitTest::_testBackendSettingReplacesReceivers()
     QVERIFY(thermal.isNull());
     QVERIFY(videoManager.primaryStream()->receiver());
     QVERIFY(videoManager.thermalStream()->receiver());
+    // The USB camera's receiver is no backend's: it stays.
+    QCOMPARE(videoManager._cameraSource->receiver(), videoManager.uvcCamera());
 }
 
 UT_REGISTER_TEST(VideoManagerInitTest, TestLabel::Unit)

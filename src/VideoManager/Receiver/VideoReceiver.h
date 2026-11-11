@@ -17,7 +17,8 @@ class QQuickItem;
 class QVideoFrame;
 class QVideoSink;
 
-/// One network video stream: connects to a URI, shows it in a QML VideoOutput and records it.
+/// One video source: a network stream, which a backend's receiver connects to at the config's URI, or a local camera
+/// (UVCCameraController), which the URI names. Shows it in a QML VideoOutput, records it and takes its screenshots.
 ///
 /// Intent-based: callers state what they want (setConfig(), setActive(), setVideoOutput(), startRecording()) and the
 /// receiver gets there on its own, restarting after a config change and reconnecting after a failure. Call every
@@ -129,6 +130,9 @@ public:
 
     /// Streams while true and the URI is set. False stops the stream, any pending reconnect and any recording.
     void setActive(bool active);
+    /// setActive(false) for a receiver that outlives its use, before the application goes away: once it has finished
+    /// what the exit would cut short.
+    virtual void shutDown();
     /// Tears the stream down and connects again now, skipping any reconnect backoff, and rebuilds the display sink so
     /// construct-only sink settings apply. No-op while inactive.
     void restart();
@@ -151,6 +155,7 @@ public:
     /// frame and then the VideoOutput (its orientation and mirrored properties) say, with @p exif for a JPEG. The frame
     /// is converted here; it is encoded and written on the thread pool. Returns false, with a warning logged, when
     /// there is no output or no frame. A file that can't be written is reported later, through errorOccurred().
+    /// A receiver that takes photos saves one instead: see onTakeScreenshot().
     bool takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif = {});
 
 signals:
@@ -177,6 +182,8 @@ protected:
     virtual void onVideoOutputChanged() = 0;
     virtual void onStartRecording(const QString& file, FileFormat format) = 0;
     virtual void onStopRecording() = 0;
+    /// takeScreenshot() with an output set: saves the frame on display, unless overridden.
+    virtual bool onTakeScreenshot(const QString& file, const VideoScreenshot::Exif& exif);
 
     /// The VideoOutput's QVideoSink, or nullptr.
     QVideoSink* videoSink() const;

@@ -15,9 +15,9 @@
 #include "QGCLoggingCategory.h"
 #include "QGCVideoStreamInfo.h"
 #include "QtMultimediaVideoReceiver.h"
+#include "QtVideoRecorder.h"
 #include "SettingsManager.h"
 #include "UVCCameraController.h"
-#include "UVCDevices.h"
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 #include "VideoBackend.h"
@@ -32,16 +32,16 @@ QGC_LOGGING_CATEGORY(VideoManagerLog, "Video.VideoManager")
 
 namespace {
 
-/// How a change to a video setting reaches the streams.
+/// How a change to a video setting reaches the sources.
 enum class VideoSettingReaction : uint8_t
 {
-    /// Live: the streams resolve their config again. VideoReceiver restarts for a changed config, except for a change
+    /// Live: the sources resolve their config again. VideoReceiver restarts for a changed config, except for a change
     /// of autoReconnect alone, which applies at once.
     Reconfigure,
-    /// Construct-only property of the display sink: the streams restart, which rebuilds the sink.
+    /// Construct-only property of the display sink: the sources restart, which rebuilds a stream's sink.
     RebuildSink,
-    /// The decoder ranks, which are global: once the backend is ready they are applied again, and the streams restart
-    /// so their new pipelines pick decoders by them.
+    /// The decoder ranks, which are global: once the backend is ready they are applied again, and the sources restart
+    /// so the streams' new pipelines pick decoders by them.
     RerankDecoders,
     /// Which receiver plays the streams: each stream gets a new one.
     RecreateReceivers,
@@ -54,9 +54,9 @@ struct VideoSettingReactionEntry
 };
 
 // Not listed: aspectRatio, read by VideoStreamController::aspectRatio(); videoFit, gridLines and showRecControl, read
-// by QML; showTelemetryOverlay, read by VideoTelemetryOverlay; recordingFormat, enableStorageLimit, maxVideoSize,
-// uvcRecordingCodec and uvcRecordingQuality, read when a recording starts; uvcCameraFormat, uvcCameraRotation,
-// uvcCameraMirror, uvcWhiteBalance, uvcZoom, uvcExposureCompensation and uvcFocusMode, which go to the USB camera
+// by QML; showTelemetryOverlay, read by VideoTelemetryOverlay; recordingFormat, enableStorageLimit and maxVideoSize,
+// read when a recording starts; uvcCameraFormat, uvcCameraRotation, uvcCameraMirror, uvcWhiteBalance, uvcZoom,
+// uvcExposureCompensation, uvcFocusMode, uvcRecordingCodec and uvcRecordingQuality, which go to the USB camera
 // (_connectSettings()).
 constexpr VideoSettingReactionEntry kVideoSettingReactions[] = {
     {&VideoSettings::videoSource, VideoSettingReaction::Reconfigure},
@@ -83,10 +83,12 @@ Q_APPLICATION_STATIC(VideoManager, _videoManagerInstance);
 VideoManager::VideoManager(QObject* parent)
     : QObject(parent)
     , _videoSettings(SettingsManager::instance()->videoSettings())
+    , _uvcCamera(new UVCCameraController(this))
     , _primaryStream(new VideoStreamController(VideoStreamController::Role::Primary, _videoSettings, this))
     , _thermalStream(new VideoStreamController(VideoStreamController::Role::Thermal, _videoSettings, this))
-    , _uvcCamera(new UVCCameraController(this))
-    , _recordingService(new VideoRecordingService(_primaryStream, _thermalStream, _uvcCamera, this))
+    , _cameraSource(new VideoStreamController(VideoStreamController::Role::Camera, _videoSettings, this, _uvcCamera))
+    , _sources{_primaryStream, _thermalStream, _cameraSource}
+    , _recordingService(new VideoRecordingService(_sources, this))
     , _telemetryOverlay(new VideoTelemetryOverlay(_videoSettings->showTelemetryOverlay(), this))
     , _receiverFactory([this](QObject* owner) -> VideoReceiver* {
         if (_videoSettings->videoBackend()->rawValue().toInt() == VideoSettings::VideoBackendQtMultimedia) {
@@ -98,16 +100,20 @@ VideoManager::VideoManager(QObject* parent)
     qCDebug(VideoManagerLog) << this;
 
     (void) connect(_primaryStream, &VideoStreamController::decodingChanged, this, &VideoManager::decodingChanged);
-    for (VideoStreamController* stream : {_primaryStream, _thermalStream}) {
-        (void) connect(stream, &VideoStreamController::aspectRatioChanged, this, &VideoManager::aspectRatioChanged);
-        (void) connect(stream, &VideoStreamController::streamInfoChanged, this, &VideoManager::_updateState);
-        (void) connect(stream, &VideoStreamController::errorOccurred, this, [stream](const QString& message) {
-            qCWarning(VideoManagerLog) << stream->name() << message;
+    for (VideoStreamController* source : _sources) {
+        (void) connect(source, &VideoStreamController::aspectRatioChanged, this, &VideoManager::aspectRatioChanged);
+        (void) connect(source, &VideoStreamController::streamInfoChanged, this, &VideoManager::_updateState);
+        (void) connect(source, &VideoStreamController::errorOccurred, this, [source](const QString& message) {
+            qCWarning(VideoManagerLog) << source->name() << message;
             QGC::showAppMessage(message);
         });
     }
     (void) connect(_recordingService, &VideoRecordingService::recordingChanged, this, &VideoManager::recordingChanged);
-    (void) connect(_uvcCamera, &UVCCameraController::camerasChanged, this, &VideoManager::_updateState);
+    // A camera plugged in or unplugged changes whether the camera source has one to run.
+    (void) connect(_uvcCamera, &UVCCameraController::camerasChanged, this, [this] {
+        _updateState();
+        _cameraSource->scheduleApply();
+    });
     (void) connect(_telemetryOverlay, &VideoTelemetryOverlay::textChanged, this,
                    &VideoManager::telemetryOverlayTextChanged);
 
@@ -133,20 +139,19 @@ void VideoManager::_connectSettings()
             case VideoSettingReaction::Reconfigure:
                 (void) connect(fact, &Fact::rawValueChanged, this, [this] {
                     _updateState();
-                    _primaryStream->scheduleApply();
-                    _thermalStream->scheduleApply();
+                    for (VideoStreamController* source : _sources) {
+                        source->scheduleApply();
+                    }
                 });
                 break;
             case VideoSettingReaction::RebuildSink:
-                (void) connect(fact, &Fact::rawValueChanged, this, [this] {
-                    _primaryStream->restart();
-                    _thermalStream->restart();
-                });
+                (void) connect(fact, &Fact::rawValueChanged, this, &VideoManager::_restartSources);
                 break;
             case VideoSettingReaction::RecreateReceivers:
                 (void) connect(fact, &Fact::rawValueChanged, this, [this] {
-                    _primaryStream->setReceiver(nullptr);
-                    _thermalStream->setReceiver(nullptr);
+                    for (VideoStreamController* source : _sources) {
+                        source->setReceiver(nullptr);
+                    }
                     if (_backendInitFinished() && _hasMainWindow) {
                         _createVideoReceivers();
                     }
@@ -158,8 +163,7 @@ void VideoManager::_connectSettings()
                     if (_initState == InitState::Ready) {
                         VideoBackend::instance().applyDecoderPriorities(videoDecoderOptionFromSetting(value.toInt()));
                     }
-                    _primaryStream->restart();
-                    _thermalStream->restart();
+                    _restartSources();
                 });
                 break;
         }
@@ -195,6 +199,15 @@ void VideoManager::_connectSettings()
                              _videoSettings->uvcExposureCompensation(), _videoSettings->uvcFocusMode()}) {
         (void) connect(fact, &Fact::rawValueChanged, this, applyUvcControls);
     }
+
+    const auto applyUvcRecordingEncoding = [this] {
+        _uvcCamera->setRecordingEncoding(
+            QtVideoRecorder::recordingCodec(_videoSettings->uvcRecordingCodec()->rawValue().toString()),
+            QtVideoRecorder::recordingQuality(_videoSettings->uvcRecordingQuality()->rawValue().toInt()));
+    };
+    applyUvcRecordingEncoding();
+    (void) connect(_videoSettings->uvcRecordingCodec(), &Fact::rawValueChanged, this, applyUvcRecordingEncoding);
+    (void) connect(_videoSettings->uvcRecordingQuality(), &Fact::rawValueChanged, this, applyUvcRecordingEncoding);
 }
 
 void VideoManager::startVideoBackendInit()
@@ -306,16 +319,24 @@ void VideoManager::_createVideoReceivers()
     if (_cleanedUp) {
         return;
     }
-    for (VideoStreamController* stream : {_primaryStream, _thermalStream}) {
-        if (stream->receiver()) {
+    for (VideoStreamController* source : _sources) {
+        // The camera source has its own.
+        if (source->receiver()) {
             continue;
         }
-        VideoReceiver* const receiver = _receiverFactory(stream);
+        VideoReceiver* const receiver = _receiverFactory(source);
         if (!receiver) {
-            qCDebug(VideoManagerLog) << "No video receiver for" << stream->name();
+            qCDebug(VideoManagerLog) << "No video receiver for" << source->name();
             continue;
         }
-        stream->setReceiver(receiver);
+        source->setReceiver(receiver);
+    }
+}
+
+void VideoManager::_restartSources()
+{
+    for (VideoStreamController* source : _sources) {
+        source->restart();
     }
 }
 
@@ -325,13 +346,11 @@ void VideoManager::cleanup()
     // or a camera changing) must not bring back what this takes down.
     _cleanedUp = true;
     // Receivers must die here, not in ~VideoManager: that runs inside ~QCoreApplication, where queued events are no
-    // longer delivered, so a receiver's worker thread never gets its quit task and the destructor waits forever.
-    _primaryStream->setReceiver(nullptr);
-    _thermalStream->setReceiver(nullptr);
-    // Qt Multimedia's backend goes away with the application, before ~VideoManager; it writes a recording's file on a
-    // thread of its own, which the exit would cut short.
-    _uvcCamera->stopRecordingAndWait();
-    _uvcCamera->setDevice(QString());
+    // longer delivered, so a receiver's worker thread never gets its quit task and the destructor waits forever. The
+    // camera stops here too: Qt Multimedia's backend goes away with the application, before ~VideoManager.
+    for (VideoStreamController* source : _sources) {
+        source->shutDown();
+    }
 }
 
 void VideoManager::startVideo()
@@ -341,8 +360,7 @@ void VideoManager::startVideo()
     _videoStopped = false;
     _disabledWhileDisarmed = false;
     _updateState();
-    _primaryStream->restart();
-    _thermalStream->restart();
+    _restartSources();
 }
 
 void VideoManager::stopVideo()
@@ -351,8 +369,9 @@ void VideoManager::stopVideo()
 
     _videoStopped = true;
     _updateState();
-    _primaryStream->stop();
-    _thermalStream->stop();
+    for (VideoStreamController* source : _sources) {
+        source->stop();
+    }
 }
 
 void VideoManager::startRecording(const QString& baseName)
@@ -386,20 +405,27 @@ void VideoManager::grabImage(const QString& imageFile)
     }
 
     bool taken = false;
-    if (_primaryStream->canTakeScreenshot()) {
-        taken = _primaryStream->takeScreenshot(file, exif);
-    } else if (_uvcCamera->canTakeScreenshot()) {
-        _uvcCamera->capturePhoto(file, exif);
-        taken = true;
+    for (VideoStreamController* source : _sources) {
+        if (source->canTakeScreenshot()) {
+            taken = source->takeScreenshot(source->taggedFile(file), exif) || taken;
+        }
     }
-    if (_thermalStream->canTakeScreenshot()) {
-        taken = _thermalStream->takeScreenshot(_thermalStream->taggedFile(file), exif) || taken;
-    }
-    // What goes wrong from here on, the stream or the camera reports.
+    // What goes wrong from here on, the source reports.
     if (!taken) {
         qCWarning(VideoManagerLog) << "No video on display to take a screenshot from";
         QGC::showAppMessage(tr("Unable to take a photo: no video is on display."));
     }
+}
+
+QQmlListProperty<VideoStreamController> VideoManager::sources()
+{
+    using Sources = QQmlListProperty<VideoStreamController>;
+    // Read-only: QML can't add or remove a source.
+    return Sources(
+        this, nullptr, [](Sources* sources) { return static_cast<VideoManager*>(sources->object)->_sources.size(); },
+        [](Sources* sources, qsizetype index) {
+            return static_cast<VideoManager*>(sources->object)->_sources.at(index);
+        });
 }
 
 bool VideoManager::decoding() const
@@ -458,18 +484,20 @@ void VideoManager::_updateState()
                                                                  : NoVideoReason::Waiting;
     const bool autoStreamConfigured = VideoStreamResolver::isAutoStream(_primaryStream->streamInfo());
     const bool isStreamSource = VideoStreamResolver::isNetworkSource(videoSource) || autoStreamConfigured;
-    const bool cameraSource = streamWanted && !isStreamSource;
-    if (cameraSource) {
+    // A stream to play takes the place of the camera.
+    const bool cameraWanted = streamWanted && !isStreamSource;
+    if (cameraWanted) {
         // A camera plugged in or unplugged changes uvcVideoSourceID.
         _uvcCamera->watchCameras();
     }
-    const QString uvcVideoSourceID = (cameraSource && UVCDevices::deviceExists(videoSource)) ? videoSource : QString();
+    const QString uvcVideoSourceID = (cameraWanted && _cameraSource->configured()) ? videoSource : QString();
     const bool hasVideo = streamWanted && (_primaryStream->configured() || !uvcVideoSourceID.isEmpty());
     const QGCVideoStreamInfo* const thermalStreamInfo = _thermalStream->streamInfo();
     const bool hasThermal = thermalStreamInfo && thermalStreamInfo->isThermal();
 
-    _primaryStream->setEnabled(streamWanted && !_videoStopped);
-    _thermalStream->setEnabled(streamWanted && !_videoStopped);
+    for (VideoStreamController* source : _sources) {
+        source->setEnabled(streamWanted && !_videoStopped && ((source != _cameraSource) || cameraWanted));
+    }
 
     if (autoStreamConfigured != _autoStreamConfigured) {
         _autoStreamConfigured = autoStreamConfigured;
@@ -482,7 +510,6 @@ void VideoManager::_updateState()
     if (uvcVideoSourceID != _uvcVideoSourceID) {
         qCDebug(VideoManagerLog) << "UVC changed from [" << _uvcVideoSourceID << "] to [" << uvcVideoSourceID << "]";
         _uvcVideoSourceID = uvcVideoSourceID;
-        _uvcCamera->setDevice(_uvcVideoSourceID);
         emit uvcVideoSourceIDChanged();
         emit isUvcChanged();
     }
@@ -573,6 +600,7 @@ void VideoManager::_communicationLostChanged(bool communicationLost)
 
 void VideoManager::_reconnectStreams()
 {
-    _primaryStream->reconnectNow();
-    _thermalStream->reconnectNow();
+    for (VideoStreamController* source : _sources) {
+        source->reconnectNow();
+    }
 }

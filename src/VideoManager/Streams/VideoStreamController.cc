@@ -31,7 +31,8 @@ int shownRotation(const QGCVideoStreamInfo* streamInfo)
 
 }  // namespace
 
-VideoStreamController::VideoStreamController(Role role, VideoSettings* videoSettings, QObject* parent)
+VideoStreamController::VideoStreamController(Role role, VideoSettings* videoSettings, QObject* parent,
+                                             VideoReceiver* ownReceiver)
     : QObject(parent)
     , _role(role)
     , _videoSettings(videoSettings)
@@ -40,26 +41,49 @@ VideoStreamController::VideoStreamController(Role role, VideoSettings* videoSett
         (void) connect(_videoSettings->aspectRatio(), &Fact::rawValueChanged, this,
                        &VideoStreamController::aspectRatioChanged);
     }
+    if (ownReceiver) {
+        setReceiver(ownReceiver);
+        _hasOwnReceiver = true;
+    }
 }
 
 VideoStreamController::~VideoStreamController() = default;
 
 QString VideoStreamController::name() const
 {
-    return (_role == Role::Primary) ? QStringLiteral("videoContent") : QStringLiteral("thermalVideo");
+    switch (_role) {
+        case Role::Primary:
+            break;
+        case Role::Thermal:
+            return QStringLiteral("thermalVideo");
+        case Role::Camera:
+            return QStringLiteral("uvcCamera");
+    }
+    return QStringLiteral("videoContent");
 }
 
 QString VideoStreamController::taggedFile(const QString& file) const
 {
-    if (_role == Role::Primary) {
+    if (_role != Role::Thermal) {
         return file;
     }
     return RecordingPlan::insertBeforeExtension(file, QLatin1Char('.') + name());
 }
 
+void VideoStreamController::shutDown()
+{
+    if (!_hasOwnReceiver) {
+        setReceiver(nullptr);
+        return;
+    }
+    // Disabled first: a pending _apply() must not bring the receiver back.
+    _enabled = false;
+    _receiver->shutDown();
+}
+
 void VideoStreamController::setReceiver(VideoReceiver* receiver)
 {
-    if (receiver == _receiver) {
+    if (_hasOwnReceiver || (receiver == _receiver)) {
         return;
     }
 
@@ -205,8 +229,7 @@ void VideoStreamController::_apply()
     if (!active) {
         _forgetDecoded();
     }
-    qCDebug(VideoStreamControllerLog) << name() << "active:" << active << "uri:"
-                                      << (config ? QGCNetworkHelper::redactedUrlForLogging(config->uri) : QString());
+    qCDebug(VideoStreamControllerLog) << name() << "active:" << active << "uri:" << uri();
 
     // Configure before activating and deactivate before configuring, so the receiver never starts a stream that is
     // about to change.
@@ -371,10 +394,13 @@ VideoStreamStats VideoStreamController::stats() const
 
 QString VideoStreamController::uri() const
 {
-    return _uri.isEmpty() ? QString() : QGCNetworkHelper::redactedUrlForLogging(_uri);
+    if (_uri.isEmpty() || (_role == Role::Camera)) {
+        return _uri;
+    }
+    return QGCNetworkHelper::redactedUrlForLogging(_uri);
 }
 
 QString VideoStreamController::transport() const
 {
-    return VideoStreamResolver::transportName(_uri);
+    return (_role == Role::Camera) ? QString() : VideoStreamResolver::transportName(_uri);
 }

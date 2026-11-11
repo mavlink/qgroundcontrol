@@ -20,7 +20,8 @@ class QVideoFrame;
 class QVideoSink;
 
 /// Measures the USB camera on display, from the frames its capture session hands the video sink, about once a second
-/// while frames arrive. UVCCameraController attaches its camera and the sink of the registered VideoOutput.
+/// while frames arrive. UVCCameraController attaches its camera and the sink of its VideoOutput, and publishes the
+/// stats as its own.
 ///
 /// stats fills valid, fps, codec (the camera's capture format, e.g. "MJPEG" or "YUYV"), gpuPath ("CPU" for frames in
 /// memory, "GPU" for textures) and uptimeMs; the network stream fields keep their defaults.

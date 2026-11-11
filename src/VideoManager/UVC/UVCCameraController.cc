@@ -1,6 +1,7 @@
 #include "UVCCameraController.h"
 
 #include <algorithm>
+#include <utility>
 
 #include <QtConcurrent/QtConcurrentRun>
 #include <QtCore/QFileInfo>
@@ -10,6 +11,7 @@
 #include <QtMultimedia/QImageCapture>
 #include <QtMultimedia/QMediaCaptureSession>
 #include <QtMultimedia/QMediaDevices>
+#include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 #include <QtQuick/QQuickItem>
 
@@ -48,14 +50,14 @@ constexpr QCamera::WhiteBalanceMode kWhiteBalancePresets[] = {
 }  // namespace
 
 UVCCameraController::UVCCameraController(QObject* parent)
-    : QObject(parent)
+    : VideoReceiver(parent)
     , _monitor(new UVCStreamMonitor(this))
     , _mediaDevices(new QMediaDevices(this))
     , _retryTimer(new QTimer(this))
     , _imageCapture(new QImageCapture(this))
     , _recorder(new QtVideoRecorder(this))
 {
-    (void) connect(_recorder, &QtVideoRecorder::recordingChanged, this, &UVCCameraController::recordingChanged);
+    (void) connect(_recorder, &QtVideoRecorder::recordingChanged, this, &UVCCameraController::setRecording);
     (void) connect(_recorder, &QtVideoRecorder::recordingStarted, this, &UVCCameraController::recordingStarted);
     (void) connect(_recorder, &QtVideoRecorder::recordingFinished, this, &UVCCameraController::recordingFinished);
     (void) connect(_imageCapture, &QImageCapture::imageAvailable, this, &UVCCameraController::_onImageAvailable);
@@ -65,8 +67,9 @@ UVCCameraController::UVCCameraController(QObject* parent)
     _retryTimer->setSingleShot(true);
     _retryTimer->setInterval(kRetryInterval);
     (void) connect(_retryTimer, &QTimer::timeout, this, &UVCCameraController::_recreateCamera);
-    // Frames flowing again end a run of retries.
     (void) connect(_monitor, &UVCStreamMonitor::statsChanged, this, [this] {
+        setStats(_monitor->stats());
+        // Frames flowing again end a run of retries.
         if (_monitor->stats().valid) {
             _retries = 0;
         }
@@ -78,15 +81,44 @@ UVCCameraController::~UVCCameraController()
     _releaseCamera();
 }
 
-void UVCCameraController::setDevice(const QString& description)
+void UVCCameraController::onConfigChanged()
 {
-    if (description == _deviceName) {
-        return;
+    qCDebug(UVCCameraControllerLog) << "device" << device();
+    _startOver();
+}
+
+void UVCCameraController::onActiveChanged()
+{
+    qCDebug(UVCCameraControllerLog) << "active" << active();
+    if (!active()) {
+        _recorder->stop();
     }
-    qCDebug(UVCCameraControllerLog) << "device" << description;
+    _startOver();
+}
+
+void UVCCameraController::onRestartRequested()
+{
+    // A camera that runs has no display sink to rebuild, and a new one would end its recording.
+    if (_gaveUp || _retryTimer->isActive()) {
+        _startOver();
+    }
+}
+
+void UVCCameraController::onReconnectRequested()
+{
+    // The retry keeps to its timer: a USB camera doesn't come back with a vehicle's link.
+}
+
+void UVCCameraController::shutDown()
+{
+    _recorder->stopAndWait();
+    VideoReceiver::shutDown();
+}
+
+void UVCCameraController::_startOver()
+{
     _retryTimer->stop();
     _retries = 0;
-    _deviceName = description;
     _recreateCamera();
 }
 
@@ -110,58 +142,53 @@ void UVCCameraController::watchCameras()
 
 void UVCCameraController::registerVideoOutput(QQuickItem* videoOutput)
 {
-    if (!videoOutput || (videoOutput == _videoOutput)) {
-        return;
+    // Not for the output already set: the camera has nothing to bind anew, and its measurements would start over.
+    if (videoOutput && (videoOutput != this->videoOutput())) {
+        setVideoOutput(videoOutput);
     }
-    qCDebug(UVCCameraControllerLog) << "video output" << videoOutput;
-    _videoOutput = videoOutput;
-    _connectVideoOutput();
 }
 
 void UVCCameraController::unregisterVideoOutput(QQuickItem* videoOutput)
 {
-    if (!videoOutput || (videoOutput != _videoOutput)) {
-        return;
+    if (videoOutput && (videoOutput == this->videoOutput())) {
+        setVideoOutput(nullptr);
     }
-    qCDebug(UVCCameraControllerLog) << "video output removed" << videoOutput;
-    _videoOutput = nullptr;
+}
+
+void UVCCameraController::onVideoOutputChanged()
+{
+    qCDebug(UVCCameraControllerLog) << "video output" << videoOutput();
     _connectVideoOutput();
 }
 
-void UVCCameraController::startRecording(const QString& file, QMediaFormat::FileFormat container,
-                                         QMediaFormat::VideoCodec codec, QMediaRecorder::Quality quality)
+void UVCCameraController::setRecordingEncoding(QMediaFormat::VideoCodec codec, QMediaRecorder::Quality quality)
 {
-    if (recordingActive() || !_captureSession || !canRecord()) {
+    _recordingCodec = codec;
+    _recordingQuality = quality;
+}
+
+void UVCCameraController::onStartRecording(const QString& file, FileFormat format)
+{
+    if (_recorder->active()) {
+        qCWarning(UVCCameraControllerLog) << "Not recording the camera to" << file << "- recording already";
+        return;
+    }
+    if (!_running()) {
         qCWarning(UVCCameraControllerLog) << "Can't record the camera now:" << file;
         emit recordingFinished(file, tr("The USB camera isn't running"));
         return;
     }
-    _recorder->start(file, container, codec, quality);
+    _recorder->start(file, QtVideoRecorder::container(format), _recordingCodec, _recordingQuality);
 }
 
-void UVCCameraController::stopRecording()
+void UVCCameraController::onStopRecording()
 {
     _recorder->stop();
 }
 
-void UVCCameraController::stopRecordingAndWait(std::chrono::milliseconds timeout)
+bool UVCCameraController::_running() const
 {
-    _recorder->stopAndWait(timeout);
-}
-
-bool UVCCameraController::canTakeScreenshot() const
-{
-    return _camera && _camera->isActive() && _videoSink();
-}
-
-bool UVCCameraController::takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif) const
-{
-    QVideoSink* const videoSink = _videoSink();
-    if (!videoSink) {
-        qCWarning(UVCCameraControllerLog) << "No video output to take a screenshot from";
-        return false;
-    }
-    return VideoScreenshot::save(videoSink->videoFrame(), file, exif, _rotation, _mirrored);
+    return _camera && _camera->isActive() && videoSink();
 }
 
 void UVCCameraController::setTransform(QtVideo::Rotation rotation, bool mirrored)
@@ -229,16 +256,15 @@ void UVCCameraController::_applyControls()
     }
 }
 
-void UVCCameraController::capturePhoto(const QString& file, const VideoScreenshot::Exif& exif)
+bool UVCCameraController::onTakeScreenshot(const QString& file, const VideoScreenshot::Exif& exif)
 {
-    const int id =
-        (_captureSession && canTakeScreenshot() && _imageCapture->isReadyForCapture()) ? _imageCapture->capture() : -1;
+    const int id = (_running() && _imageCapture->isReadyForCapture()) ? _imageCapture->capture() : -1;
     if (id < 0) {
-        _savePhotoOnDisplay(file, exif);
-        return;
+        return VideoReceiver::onTakeScreenshot(file, exif);
     }
     qCDebug(UVCCameraControllerLog) << "photo" << id << file;
     _photoFiles.insert(id, {file, exif});
+    return true;
 }
 
 void UVCCameraController::_onImageAvailable(int id, const QVideoFrame& frame)
@@ -255,19 +281,17 @@ void UVCCameraController::_onImageCaptureError(int id, const QString& errorStrin
     const PendingPhoto photo = _photoFiles.take(id);
     qCWarning(UVCCameraControllerLog) << "Photo capture failed:" << id << photo.file << errorString;
     if (!photo.file.isEmpty()) {
-        _savePhotoOnDisplay(photo.file, photo.exif);
+        _savePhotoOnDisplay(photo);
     }
 }
 
-void UVCCameraController::_savePhotoOnDisplay(const QString& file, const VideoScreenshot::Exif& exif)
+void UVCCameraController::_savePhotoOnDisplay(const PendingPhoto& photo)
 {
-    QVideoSink* const videoSink = _videoSink();
-    if (!videoSink) {
-        qCWarning(UVCCameraControllerLog) << "No video output to take a photo from";
-        QGC::showAppMessage(tr("Unable to take a photo: no video is on display."));
-        return;
+    // Not takeScreenshot(), which would ask for another capture.
+    if (!videoSink() || !VideoReceiver::onTakeScreenshot(photo.file, photo.exif)) {
+        qCWarning(UVCCameraControllerLog) << "No video on display to take the photo from:" << photo.file;
+        emit errorOccurred(tr("Unable to take a photo: no video is on display."));
     }
-    _savePhoto(videoSink->videoFrame(), {file, exif});
 }
 
 void UVCCameraController::_savePhoto(const QVideoFrame& frame, const PendingPhoto& photo)
@@ -275,26 +299,27 @@ void UVCCameraController::_savePhoto(const QVideoFrame& frame, const PendingPhot
     // Converting and encoding a full-resolution photo would stall the UI.
     (void) QtConcurrent::run([frame, photo, rotation = _rotation, mirrored = _mirrored] {
         return VideoScreenshot::save(frame, photo.file, photo.exif, rotation, mirrored);
-    }).then(this, [file = photo.file](bool saved) {
+    }).then(this, [this, file = photo.file](bool saved) {
         if (!saved) {
-            QGC::showAppMessage(tr("Unable to save the photo %1.").arg(QFileInfo(file).fileName()));
+            emit errorOccurred(tr("Unable to save the photo %1.").arg(QFileInfo(file).fileName()));
         }
     });
 }
 
 void UVCCameraController::_createCamera()
 {
-    const QCameraDevice device = UVCDevices::device(_deviceName);
+    const QString deviceName = active() ? device() : QString();
+    const QCameraDevice device = UVCDevices::device(deviceName);
     const QStringList formats = UVCDevices::formatNames(device);
     if (formats != _formats) {
         _formats = formats;
         emit formatsChanged();
     }
-    if (_deviceName.isEmpty()) {
+    if (deviceName.isEmpty()) {
         return;
     }
     if (device.isNull()) {
-        qCWarning(UVCCameraControllerLog) << "No camera named" << _deviceName;
+        qCWarning(UVCCameraControllerLog) << "No camera named" << deviceName;
         return;
     }
 
@@ -331,16 +356,17 @@ void UVCCameraController::_createCamera()
 void UVCCameraController::_releaseCamera()
 {
     // The capture session's photos still pending won't come: save the frame on display instead.
-    for (const PendingPhoto& photo : std::as_const(_photoFiles)) {
-        _savePhotoOnDisplay(photo.file, photo.exif);
+    for (const PendingPhoto& photo : std::exchange(_photoFiles, {})) {
+        _savePhotoOnDisplay(photo);
     }
-    _photoFiles.clear();
     _monitor->detach();
     delete _captureSession;
     _captureSession = nullptr;
     delete _camera;
     _camera = nullptr;
     _cameraId.clear();
+    _framesArriving = false;
+    _gaveUp = false;
 }
 
 void UVCCameraController::_recreateCamera()
@@ -353,44 +379,79 @@ void UVCCameraController::_recreateCamera()
 
 void UVCCameraController::_connectVideoOutput()
 {
-    QVideoSink* const videoSink = _videoSink();
-    if (_captureSession) {
-        _captureSession->setVideoSink(videoSink);
+    QVideoSink* const sink = videoSink();
+    (void) disconnect(_frameConnection);
+    if (sink) {
+        _frameConnection = connect(sink, &QVideoSink::videoFrameChanged, this, &UVCCameraController::_onVideoFrame);
+    } else {
+        _framesArriving = false;
     }
-    if (_camera && videoSink) {
-        _monitor->attach(_camera, videoSink);
+    if (_captureSession) {
+        _captureSession->setVideoSink(sink);
+    }
+    if (_camera && sink) {
+        _monitor->attach(_camera, sink);
     } else {
         _monitor->detach();
     }
     if (_camera) {
-        _camera->setActive(videoSink != nullptr);
+        _camera->setActive(sink != nullptr);
     }
+    _updateState();
+}
+
+void UVCCameraController::_onVideoFrame(const QVideoFrame& frame)
+{
+    // The sink clears the display with an invalid frame when the camera stops.
+    if (!_camera || !frame.isValid()) {
+        return;
+    }
+    setVideoSize(presentedSize(frame));
+    if (!_framesArriving) {
+        _framesArriving = true;
+        _updateState();
+    }
+}
+
+void UVCCameraController::_updateState()
+{
+    State state = State::Stopped;
+    if (_retryTimer->isActive()) {
+        state = State::Reconnecting;
+    } else if (_camera && !_gaveUp && videoSink()) {
+        state = _framesArriving ? State::Streaming : State::Connecting;
+    }
+    setState(state);
+    setDecoding(state == State::Streaming);
 }
 
 void UVCCameraController::_onCameraError(const QString& errorString)
 {
-    qCWarning(UVCCameraControllerLog) << "Camera error:" << _deviceName << errorString << "retries" << _retries;
+    qCWarning(UVCCameraControllerLog) << "Camera error:" << device() << errorString << "retries" << _retries;
+    _framesArriving = false;
     if (_retries >= kMaxRetries) {
-        QGC::showAppMessage(tr("USB camera %1: %2").arg(_deviceName, errorString));
-        return;
+        _gaveUp = true;
+        QGC::showAppMessage(tr("USB camera %1: %2").arg(device(), errorString));
+    } else {
+        if (_retries == 0) {
+            QGC::showAppMessage(tr("USB camera %1: %2. Retrying.").arg(device(), errorString));
+        }
+        ++_retries;
+        // Deferred: the camera emitting this error can't be deleted from its own signal.
+        _retryTimer->start();
     }
-    if (_retries == 0) {
-        QGC::showAppMessage(tr("USB camera %1: %2. Retrying.").arg(_deviceName, errorString));
-    }
-    ++_retries;
-    // Deferred: the camera emitting this error can't be deleted from its own signal.
-    _retryTimer->start();
+    _updateState();
 }
 
 void UVCCameraController::_onVideoInputsChanged()
 {
     if (!_cameraId.isEmpty() && !_cameraAttached()) {
         // Qt stops an unplugged camera without an error.
-        qCWarning(UVCCameraControllerLog) << "Camera unplugged:" << _deviceName << _cameraId;
-        QGC::showAppMessage(tr("USB camera %1 was disconnected").arg(_deviceName));
+        qCWarning(UVCCameraControllerLog) << "Camera unplugged:" << device() << _cameraId;
+        QGC::showAppMessage(tr("USB camera %1 was disconnected").arg(device()));
         // Runs another camera of the same name, if one is attached.
         _recreateCamera();
-    } else if (!_deviceName.isEmpty() && !_camera && _cameraAttached()) {
+    } else if (active() && !_camera && _cameraAttached()) {
         // Plugged back in.
         _recreateCamera();
     }
@@ -400,14 +461,9 @@ void UVCCameraController::_onVideoInputsChanged()
 bool UVCCameraController::_cameraAttached() const
 {
     if (_cameraId.isEmpty()) {
-        return UVCDevices::deviceExists(_deviceName);
+        return UVCDevices::deviceExists(device());
     }
     const QList<QCameraDevice> cameras = QMediaDevices::videoInputs();
     return std::any_of(cameras.cbegin(), cameras.cend(),
                        [this](const QCameraDevice& camera) { return camera.id() == _cameraId; });
-}
-
-QVideoSink* UVCCameraController::_videoSink() const
-{
-    return _videoOutput ? _videoOutput->property("videoSink").value<QVideoSink*>() : nullptr;
 }
