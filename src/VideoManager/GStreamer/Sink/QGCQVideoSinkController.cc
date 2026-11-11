@@ -25,8 +25,10 @@ void QGCQVideoSinkController::followWindowVisibility(QQuickItem* videoOutput)
 {
     (void) QObject::disconnect(_visibilityConnection);
     _videoOutput = videoOutput;
-    // QQuickVideoOutput never emits windowChanged (its itemChange() skips the base), so the window is taken now; an
-    // output that moves to another window is followed again from there.
+    // Qt defect, seen in Qt 6.12.0: QQuickVideoOutput::itemChange() never calls QQuickItem::itemChange()
+    // (qtmultimedia/src/multimediaquick/qquickvideooutput.cpp), so the output emits no windowChanged. The window is
+    // taken now, and VideoStreamOutput.qml registers an output again after it moved to another window. Once the minimum
+    // Qt has the fix, connect to QQuickItem::windowChanged here and drop that re-registration.
     if (QQuickWindow* window = videoOutput ? videoOutput->window() : nullptr) {
         _visibilityConnection = QObject::connect(window, &QWindow::visibilityChanged, this,
                                                  &QGCQVideoSinkController::_applyWindowVisibility);

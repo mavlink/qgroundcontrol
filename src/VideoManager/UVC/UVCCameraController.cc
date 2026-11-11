@@ -33,8 +33,10 @@ constexpr bool kStillPhotos = true;
 constexpr bool kStillPhotos = false;
 #endif
 
-// Qt's V4L2 camera (Qt 6.12) reads the focus range into the exposure compensation range and never sets its focus
-// range, so neither control does what it is asked.
+// Qt defect, seen in Qt 6.12.0: QV4L2Camera::initV4L2Controls() reads the focus range into the exposure compensation
+// range and never sets its focus range (qtmultimedia/src/plugins/multimedia/ffmpeg/qv4l2camera.cpp), so neither
+// control does what it is asked. Fixed after 6.12.0 by qtmultimedia b7f6f39957 (6.12 branch): remove this constant and
+// its two uses once the minimum Qt has that fix.
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 constexpr bool kExposureAndFocusControls = false;
 #else

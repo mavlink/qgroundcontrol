@@ -10,8 +10,11 @@ VideoOutput {
     required property VideoStreamController stream
 
     property bool _completed: false
-    // VideoOutput never emits windowChanged (QQuickVideoOutput::itemChange() doesn't chain up), so follow the
-    // parent's window. Moving to another window (PiP pop-out) needs a re-registration.
+    // Qt defect, seen in Qt 6.12.0: QQuickVideoOutput::itemChange() never calls QQuickItem::itemChange()
+    // (qtmultimedia/src/multimediaquick/qquickvideooutput.cpp), so a VideoOutput emits no windowChanged and its own
+    // Window.window goes stale. Hence the parent's window; moving to another window (PiP pop-out) needs a
+    // re-registration. Once the minimum Qt has the fix, QGCQVideoSinkController can connect to windowChanged, and
+    // _window, _completed and on_WindowChanged can go.
     readonly property QtObject _window: parent ? parent.Window.window : null
     // A lost stream's last frame stays up while it reconnects; a stopped or replaced stream's is cleared.
     readonly property bool _keepsFrame: root.stream.decoding || root.stream.reconnecting

@@ -215,6 +215,26 @@ read on the worker.
 
 `VideoStreamStatsMeterTest` covers the rate math on a fake clock and the sampler's session fields, `GstVideoReceiverStatsTest` the stats of real streams.
 
+### Qt defects worked around
+
+The video code works around three defects and one missing option in Qt Multimedia, as found in Qt 6.12.0. Qt
+locations are relative to `qtmultimedia/src/`, QGC locations to this directory. The comment at each workaround names
+the defect.
+
+| Qt problem | Qt location | QGC workaround | Remove when |
+| --- | --- | --- | --- |
+| A `VideoOutput` never emits `windowChanged` and its `Window.window` goes stale, because `QQuickVideoOutput::itemChange()` never calls `QQuickItem::itemChange()`. | `multimediaquick/qquickvideooutput.cpp` | `../Qml/VideoStreamOutput.qml` follows its parent's window and registers again after it moved to another one. `QGCQVideoSinkController::followWindowVisibility()` (`Sink/QGCQVideoSinkController.cc`) takes the output's window at each registration. | The minimum Qt's `VideoOutput` emits `windowChanged`. The controller then connects to it, and the QML needs no second registration. |
+| The V4L2 camera reads the focus range into its exposure compensation range and never sets its focus range, so `QCamera::setFocusDistance()` and `setExposureCompensation()` set wrong values. | `QV4L2Camera::initV4L2Controls()` in `plugins/multimedia/ffmpeg/qv4l2camera.cpp` | `kExposureAndFocusControls` in `../UVC/UVCCameraController.cc` turns the exposure and focus controls off on Linux. | The minimum Qt has qtmultimedia commit `b7f6f39957` ("v4l2: QV4L2Camera fixes"). It is on the 6.12 branch after 6.12.0, so Qt 6.12.1 should have it. |
+| The DMABuf fourcc table names `Format_BGRA8888`, `Format_BGRA8888_Premultiplied` and `Format_BGRX8888` as `ABGR8888`, which is the bytes R,G,B,A. Qt renders these formats without swapping channels, so red and blue are exchanged. Their bytes B,G,R,A are `ARGB8888`. | `dmaBufFourccFromPixelFormat()` in `multimedia/video/qmultimedia_drm_support_p.h` | `GstQtDmaBufImport::planeFourccs()` (`HwBuffers/dmabuf/GstQtDmaBufImport.cc`) names these three formats itself. | The minimum Qt's table gives them `ARGB8888`. `planeFourccs()` then only copies that table. |
+| A `QMediaPlayer`'s RTSP transport can only be chosen with the `QT_FFMPEG_RTSP_TRANSPORT` environment variable, which is process-wide and read on a worker thread while the source loads. `QPlaybackOptions` has no transport. | `loadMedia()` in `plugins/multimedia/ffmpeg/playbackengine/qffmpegmediadataholder.cpp` | `setRtspTransport()` in `../QtMultimedia/QtMultimediaVideoReceiver.cc` sets the variable before each open, so receivers that open at the same time can get each other's transport. | `QPlaybackOptions` carries the transport. The receiver then sets it there. |
+
+This project has reported none of these to Qt. As of November 2026:
+
+- The V4L2 defect is already fixed upstream, by the commit in the table (`fdcdec2d8c` on `dev`).
+- QTBUG-117074 (open) asks for a way to choose the RTSP transport. QTBUG-147533 (closed) added the environment variable
+  in Qt 6.12.
+- A search of Qt's bug tracker found no report of the `VideoOutput` or the DMABuf defect.
+
 ## Build Configuration
 
 - **Enable/disable**: Set the `QGC_ENABLE_GST_VIDEOSTREAMING` CMake option to `ON`/`OFF`. With `OFF`, streams play

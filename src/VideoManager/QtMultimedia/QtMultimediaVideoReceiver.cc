@@ -32,8 +32,11 @@ constexpr qint64 kMaxStreamStepUs = 1000000;
 
 constexpr const char* kRtspTransportEnv = "QT_FFMPEG_RTSP_TRANSPORT";
 
-/// Qt's FFmpeg player takes the RTSP transport from the environment alone, as it loads a source. A stream opening at
-/// the same time may get the other's, which costs it no more than FFmpeg's own fallback from UDP to TCP.
+/// Qt's FFmpeg player takes the RTSP transport from the environment alone, as it loads a source (seen in Qt 6.12.0:
+/// loadMedia(), qtmultimedia/src/plugins/multimedia/ffmpeg/playbackengine/qffmpegmediadataholder.cpp); QPlaybackOptions
+/// has no transport. A stream opening at the same time may get the other's, which costs it no more than FFmpeg's own
+/// fallback from UDP to TCP. Once QPlaybackOptions carries the transport (Qt's QTBUG-117074 asks for a way to choose
+/// it), set it there and remove this function and kRtspTransportEnv.
 void setRtspTransport(bool overTcp)
 {
     static const QByteArray userTransport = qgetenv(kRtspTransportEnv);
