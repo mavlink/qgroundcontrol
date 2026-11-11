@@ -397,7 +397,8 @@ bool GPSReceiver::connectSerial(const QString& device, GPSType type, uint32_t ba
 
 bool GPSReceiver::connectTcp(const QString& host, quint16 port, GPSType type, bool allowPersistentChanges)
 {
-    const QString endpoint = QStringLiteral("%1:%2").arg(host).arg(port);
+    // One pass, so the host's text is not searched for place markers: an IPv6 zone reads like one.
+    const QString endpoint = QStringLiteral("%1:%2").arg(host, QString::number(port));
     return _connectReceiver(
         type,
         [host, port](GPSCancelToken cancelToken) {

@@ -837,6 +837,19 @@ void GPSReceiverTest::_passiveInputStatus()
     QVERIFY(receiver.facts()->telemetryAvailable());
 }
 
+void GPSReceiverTest::_tcpEndpointNamesHostAsEntered()
+{
+    ScriptedGPSReceiver harness;
+    GPSReceiver& receiver = harness.receiver;
+    auto configuration = receiverConfiguration(kPassiveManufacturer);
+    useTcp(configuration);
+    // The zone of a link-local IPv6 address reads like a place marker of QString::arg().
+    configuration.tcpHost = QStringLiteral("fe80::1%2");
+    receiver.setConfiguration(configuration);
+    QVERIFY(receiver.connectReceiver());
+    QCOMPARE(receiver.activeEndpoint(), QStringLiteral("fe80::1%2:2101"));
+}
+
 void GPSReceiverTest::_openFailureNamesCause()
 {
     ScriptedGPSReceiver harness;
