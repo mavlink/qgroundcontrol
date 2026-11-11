@@ -3,6 +3,12 @@
 #include "AppSettings.h"
 #include "SettingsManager.h"
 
+QList<Fact*> MapboxCustomMapProvider::sourceSettings() const
+{
+    AppSettings* const appSettings = SettingsManager::instance()->appSettings();
+    return {appSettings->mapboxAccount(), appSettings->mapboxStyle()};
+}
+
 QString MapboxMapProvider::_getURL(int x, int y, int zoom) const
 {
     const QString mapBoxToken = SettingsManager::instance()->appSettings()->mapboxToken()->rawValue().toString();

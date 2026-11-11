@@ -2,8 +2,10 @@
 
 #include <QGCLoggingCategory.h>
 #include <QtCore/QLocale>
+#include <QtCore/QStringList>
 #include <QtCore/QUrl>
 
+#include "Fact.h"
 #include "QGCTileSet.h"
 
 QGC_LOGGING_CATEGORY(MapProviderLog, "MapTiles.MapProvider")
@@ -23,6 +25,15 @@ MapProvider::MapProvider(const QString& mapName, const QString& referrer, const 
 MapProvider::~MapProvider()
 {
     // qCDebug(MapProviderLog) << Q_FUNC_INFO << this << _mapId;
+}
+
+QString MapProvider::cacheVariant() const
+{
+    QStringList values;
+    for (const Fact* const setting : sourceSettings()) {
+        values.append(setting->rawValue().toString());
+    }
+    return values.join(QLatin1Char('/'));
 }
 
 QUrl MapProvider::getTileURL(int x, int y, int zoom) const

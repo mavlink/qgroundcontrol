@@ -3,6 +3,11 @@
 #include "AppSettings.h"
 #include "SettingsManager.h"
 
+QList<Fact*> CustomURLMapProvider::sourceSettings() const
+{
+    return {SettingsManager::instance()->appSettings()->customURL()};
+}
+
 QString CustomURLMapProvider::_getURL(int x, int y, int zoom) const
 {
     QString url = SettingsManager::instance()->appSettings()->customURL()->rawValue().toString();

@@ -3,6 +3,7 @@
 #include <memory>
 
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QHash>
 #include <QtCore/QMutex>
 #include <QtCore/QQueue>
 #include <QtCore/QString>
@@ -34,6 +35,16 @@ public:
             return;
         }
         _databasePath = path;
+    }
+
+    /// The cache variants (UrlFactory::cacheVariants()) that the tiles of a cache from before schema version 3 get.
+    /// Set them on the main thread, before the worker runs.
+    void setCacheVariants(const QHash<int, QString>& cacheVariants)
+    {
+        if (isRunning()) {
+            return;
+        }
+        _cacheVariants = cacheVariants;
     }
 
 #ifdef QGC_UNITTEST_BUILD
@@ -81,6 +92,7 @@ private:
     QQueue<QGCMapTask*> _taskQueue;
     QWaitCondition _waitc;
     QString _databasePath;
+    QHash<int, QString> _cacheVariants;
     QElapsedTimer _updateTimer;
     int _updateTimeout = kShortTimeoutMs;
     std::atomic_bool _dbValid = false;

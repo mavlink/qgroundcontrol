@@ -5,11 +5,14 @@
 
 #include <QtCore/QMap>
 #include <QtCore/QRect>
+#include <QtCore/QScopeGuard>
 
+#include "AppSettings.h"
 #include "ElevationMapProvider.h"
 #include "MapProvider.h"
 #include "QGCMapUrlEngine.h"
 #include "QGCTileSet.h"
+#include "SettingsManager.h"
 
 static const QString kBingRoad = QStringLiteral("Bing Road");
 static const QString kBingSatellite = QStringLiteral("Bing Satellite");
@@ -165,9 +168,56 @@ void UrlFactoryTest::_testProviderTypeFromInvalidHash()
 
 void UrlFactoryTest::_testGetTileHashFormat()
 {
-    const QString hash = UrlFactory::getTileHash(kBingRoad, 100, 200, 5);
-    // Format: "%010d%08d%08d%03d" = 10+8+8+3 = 29 chars
-    QCOMPARE(hash.length(), 29);
+    // "%010d%08d%08d%03d" of provider id, x, y and zoom. A cached tile is found by this key only.
+    QCOMPARE(UrlFactory::getTileHash(kBingHybrid, 4270, 2917, 13), QStringLiteral("00000000080000427000002917013"));
+}
+
+void UrlFactoryTest::_testTileHashFollowsConfiguredSource_data()
+{
+    QTest::addColumn<QString>("providerType");
+    QTest::addColumn<QString>("settingName");
+    QTest::addColumn<QString>("sourceA");
+    QTest::addColumn<QString>("sourceB");
+    QTest::addColumn<QString>("hashA");
+
+    // The 8 hex digits are those of the SHA-1 of the cache variant: the URL template, or account '/' style
+    QTest::newRow("Custom URL") << QStringLiteral("CustomURL Custom") << QStringLiteral("customURL")
+                                << QStringLiteral("https://a.example/{z}/{x}/{y}.png")
+                                << QStringLiteral("https://b.example/{z}/{x}/{y}.png")
+                                << QStringLiteral("00000000390000427000002917013-e16c3bed");
+    QTest::newRow("Mapbox Custom account")
+        << QStringLiteral("Mapbox Custom") << QStringLiteral("mapboxAccount") << QStringLiteral("alice")
+        << QStringLiteral("bob") << QStringLiteral("00000000260000427000002917013-18742c8e");
+    QTest::newRow("Mapbox Custom style") << QStringLiteral("Mapbox Custom") << QStringLiteral("mapboxStyle")
+                                         << QStringLiteral("streets") << QStringLiteral("night")
+                                         << QStringLiteral("00000000260000427000002917013-51d5ff8f");
+}
+
+void UrlFactoryTest::_testTileHashFollowsConfiguredSource()
+{
+    QFETCH(QString, providerType);
+    QFETCH(QString, settingName);
+    QFETCH(QString, sourceA);
+    QFETCH(QString, sourceB);
+    QFETCH(QString, hashA);
+
+    Fact* const setting = SettingsManager::instance()->appSettings()->property(qPrintable(settingName)).value<Fact*>();
+    QVERIFY(setting);
+    const QVariant saved = setting->rawValue();
+    const auto restore = qScopeGuard([setting, saved] { setting->setRawValue(saved); });
+
+    setting->setRawValue(sourceA);
+    QCOMPARE(UrlFactory::getTileHash(providerType, 4270, 2917, 13), hashA);
+    // The key the cache worker computes, from the variant it is given
+    QCOMPARE(UrlFactory::getTileHash(providerType, 4270, 2917, 13, UrlFactory::cacheVariant(providerType)), hashA);
+
+    setting->setRawValue(sourceB);
+    const QString hashB = UrlFactory::getTileHash(providerType, 4270, 2917, 13);
+    QVERIFY2(hashB != hashA, qPrintable(hashB));
+    QCOMPARE(hashB.left(29), hashA.left(29));
+
+    setting->setRawValue(sourceA);
+    QCOMPARE(UrlFactory::getTileHash(providerType, 4270, 2917, 13), hashA);
 }
 
 void UrlFactoryTest::_testTileHashToTypeRoundtrip()

@@ -15,4 +15,6 @@ private slots:
     void _abortedReplyStaysSilent();
     void _deletedDuringCacheLookup();
     void _networkManagerDestroyedFirst();
+    void _tileOfOtherSourceNotServed();
+    void _sourceChangedDuringRequest();
 };

@@ -18,6 +18,7 @@
 #include "QGCSqlHelper.h"
 #include "QGCTile.h"
 #include "QGCTileCacheDatabase.h"
+#include "QGCTileSet.h"
 
 static const QString kFixedProviderType = QStringLiteral("Bing Road");
 
@@ -912,7 +913,7 @@ void QGCTileCacheDatabaseTest::_testCreateTileSet()
     QVERIFY(UrlFactory::getMapIdFromProviderType(kFixedProviderType) != -1);
 
     const auto setID = db->createTileSet(QStringLiteral("Test Set"), QStringLiteral("TestMap"), 37.0, -122.0, 36.0,
-                                         -121.0, 5, 5, kFixedProviderType, 100);
+                                         -121.0, 5, 5, kFixedProviderType, 100, QString());
 
     QVERIFY(setID.has_value());
     QVERIFY(setID.value() != 0);
@@ -1218,6 +1219,134 @@ void QGCTileCacheDatabaseTest::_testImportMergeRefusesNewerVersion()
     QCOMPARE(db->computeTotals().totalCount, 0U);
 }
 
+void QGCTileCacheDatabaseTest::_testVersion2TilesGetCacheVariant_data()
+{
+    QTest::addColumn<QString>("how");
+    QTest::newRow("cache opened") << QStringLiteral("open");
+    QTest::newRow("import replacing") << QStringLiteral("replace");
+    QTest::newRow("import merging") << QStringLiteral("merge");
+}
+
+void QGCTileCacheDatabaseTest::_testVersion2TilesGetCacheVariant()
+{
+    QFETCH(QString, how);
+
+    // Tiles and downloads of the providers 39 and 26, which have a cache variant, and of provider 8, which has none.
+    // Version 2 has the tables of version 1.
+    const QString tile = QStringLiteral(
+        "INSERT INTO Tiles(tileID, hash, format, tile, size, type) VALUES(%1, '%2', 'png', X'%3', 1, %4)");
+    const QString download =
+        QStringLiteral("INSERT INTO TilesDownload(setID, hash, type, x, y, z) VALUES(%1, '%2', %3, 11, 21, 5)");
+    const QStringList rows = {
+        tile.arg(1).arg(tileCacheHash(39, 10, 20, 5), QStringLiteral("A1")).arg(39),
+        tile.arg(2).arg(tileCacheHash(26, 10, 20, 5), QStringLiteral("B2")).arg(26),
+        tile.arg(3).arg(tileCacheHash(8, 10, 20, 5), QStringLiteral("C3")).arg(8),
+        QStringLiteral("INSERT INTO TileSets(setID, name, type) VALUES(2, 'Set of 39', 39), (3, 'Set of 8', 8)"),
+        QStringLiteral("INSERT INTO SetTiles(setID, tileID) VALUES(1, 1), (1, 2), (1, 3), (2, 1), (3, 3)"),
+        download.arg(2).arg(tileCacheHash(39, 11, 21, 5)).arg(39),
+        download.arg(3).arg(tileCacheHash(8, 11, 21, 5)).arg(8),
+        QStringLiteral("PRAGMA user_version = 2"),
+    };
+    // The suffixes are the first 8 hex digits of the SHA-1 of the variants. An empty variant has none.
+    const QHash<int, QString> cacheVariants = {{39, QStringLiteral("https://a.example/{z}/{x}/{y}.png")},
+                                               {26, QStringLiteral("alice/streets")},
+                                               {8, QString()}};
+    const QStringList tiles = {
+        QStringLiteral("1|%1-e16c3bed|39|A1").arg(tileCacheHash(39, 10, 20, 5)),
+        QStringLiteral("2|%1-52f3eade|26|B2").arg(tileCacheHash(26, 10, 20, 5)),
+        QStringLiteral("3|%1|8|C3").arg(tileCacheHash(8, 10, 20, 5)),
+    };
+    const QStringList downloads = {
+        QStringLiteral("2|%1-e16c3bed|39|11|21|5|0").arg(tileCacheHash(39, 11, 21, 5)),
+        QStringLiteral("3|%1|8|11|21|5|0").arg(tileCacheHash(8, 11, 21, 5)),
+    };
+
+    QTemporaryDir tempDir;
+    const QString version2Path = tempDir.filePath("version2.db");
+    QCOMPARE(createVersion1TileCache(version2Path, rows), QString());
+    const QStringList setTiles = tileCacheRows(version2Path, kTileCacheSetTilesSql);
+
+    const QString path = (how == QStringLiteral("open")) ? version2Path : tempDir.filePath("tiles.db");
+    QGCTileCacheDatabase db(path);
+    if (how == QStringLiteral("open")) {
+        db.setCacheVariants(cacheVariants);
+        QVERIFY(db.init());
+    } else {
+        // The variants of an import are those set by the time of the import
+        QVERIFY(db.init());
+        QVERIFY(db.connectDB());
+        db.setCacheVariants(cacheVariants);
+        const DatabaseResult result = (how == QStringLiteral("replace")) ? db.importSetsReplace(version2Path, nullptr)
+                                                                         : db.importSetsMerge(version2Path, nullptr);
+        QVERIFY2(result.success, qPrintable(result.errorString));
+        db.disconnectDB();
+    }
+
+    QCOMPARE(tileCacheRows(path, kTileCacheVersionSql),
+             QStringList{QString::number(QGCTileCacheDatabase::kSchemaVersion)});
+    QCOMPARE(tileCacheRows(path, kTileCacheTilesSql), tiles);
+    if (how != QStringLiteral("merge")) {
+        // A merge takes the tiles of the sets, and leaves what the sets still had to download
+        QCOMPARE(tileCacheRows(path, kTileCacheSetTilesSql), setTiles);
+        QCOMPARE(tileCacheRows(path, kTileCacheDownloadsSql), downloads);
+    }
+}
+
+void QGCTileCacheDatabaseTest::_testVersion1TilesGetCacheVariantOfPermanentId()
+{
+    // The cache variants are by permanent provider id: tile 3 gets that of 41, which it is renumbered to from 36
+    QTemporaryDir tempDir;
+    const QString path = tempDir.filePath("version1.db");
+    QCOMPARE(createVersion1TileCache(path, version1Rows()), QString());
+
+    QGCTileCacheDatabase db(path);
+    db.setLegacyMapIds(shiftedLegacyMapIds());
+    db.setCacheVariants({{36, QStringLiteral("alice/night")}, {41, QStringLiteral("alice/streets")}});
+    QVERIFY(db.init());
+
+    QStringList tiles = renumberedTileRows();
+    tiles[2] = QStringLiteral("3|%1-52f3eade|41|C3").arg(tileCacheHash(41, 3, 4, 2));
+    QCOMPARE(tileCacheRows(path, kTileCacheTilesSql), tiles);
+}
+
+void QGCTileCacheDatabaseTest::_testCreateTileSetKeysTilesByCacheVariant()
+{
+    QTemporaryDir tempDir;
+    auto db = _createInitializedDB(tempDir);
+
+    const QString type = QStringLiteral("CustomURL Custom");
+    const QString sourceA = QStringLiteral("https://a.example/{z}/{x}/{y}.png");
+    const QString sourceB = QStringLiteral("https://b.example/{z}/{x}/{y}.png");
+
+    // A region of one tile, which the cache has from source A
+    const QGCTileSet region = UrlFactory::getTileCount(5, -122.0, 37.0, -121.0, 36.0, type);
+    QCOMPARE(region.tileCount, 1U);
+    const QString hashA = UrlFactory::getTileHash(type, region.tileX0, region.tileY0, 5, sourceA);
+    const QString hashB = UrlFactory::getTileHash(type, region.tileX0, region.tileY0, 5, sourceB);
+    QVERIFY(
+        db->saveTile(hashA, QStringLiteral("png"), QByteArray("tile"), type, QGCTileCacheDatabase::kInvalidTileSet));
+
+    const auto tilesOfSet = [&db](quint64 setID) {
+        return db->computeSetTotals(setID, false, 1, QStringLiteral("CustomURL Custom")).savedTileCount;
+    };
+
+    // A set of source B has to download the tile, under the key of source B
+    const auto setB =
+        db->createTileSet(QStringLiteral("Set B"), type, 37.0, -122.0, 36.0, -121.0, 5, 5, type, 1, sourceB);
+    QVERIFY(setB.has_value());
+    QCOMPARE(tilesOfSet(*setB), 0U);
+    const QList<QGCTile> downloadsB = db->getTileDownloadList(*setB, 10);
+    QCOMPARE(downloadsB.size(), 1);
+    QCOMPARE(downloadsB.first().hash, hashB);
+
+    // A set of source A has the tile already
+    const auto setA =
+        db->createTileSet(QStringLiteral("Set A"), type, 37.0, -122.0, 36.0, -121.0, 5, 5, type, 1, sourceA);
+    QVERIFY(setA.has_value());
+    QCOMPARE(tilesOfSet(*setA), 1U);
+    QVERIFY(db->getTileDownloadList(*setA, 10).isEmpty());
+}
+
 void QGCTileCacheDatabaseTest::_testSaveTileTypeStoredAsInteger()
 {
     QTemporaryDir tempDir;
@@ -1255,7 +1384,7 @@ void QGCTileCacheDatabaseTest::_testCreateTileSetTypeStoredAsInteger()
     QVERIFY(expectedMapId != -1);
 
     const auto setID = db->createTileSet(QStringLiteral("TypeInt Set"), QStringLiteral("TestMap"), 37.0, -122.0, 36.0,
-                                         -121.0, 5, 5, kFixedProviderType, 100);
+                                         -121.0, 5, 5, kFixedProviderType, 100, QString());
     QVERIFY(setID.has_value());
 
     // Verify TileSets.type stores the integer mapId
@@ -1604,7 +1733,7 @@ void QGCTileCacheDatabaseTest::_testForeignKeyCascadeDelete()
     QVERIFY(tileID.has_value());
 
     const auto setID = db->createTileSet(QStringLiteral("CascadeTestSet"), kFixedProviderType, 10.0, 20.0, 30.0, 40.0,
-                                         5, 5, kFixedProviderType, 1);
+                                         5, 5, kFixedProviderType, 1, QString());
     QVERIFY(setID.has_value());
 
     _linkTileToSet(db.get(), tileID.value(), setID.value());

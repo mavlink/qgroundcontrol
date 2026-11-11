@@ -99,4 +99,7 @@ public:
         : MapboxMapProvider(QStringLiteral("Mapbox Custom"), QStringLiteral("mapbox.custom"), QGC_AVERAGE_TILE_SIZE,
                             MapProvider::CustomMap)
     {}
+
+    /// The account and the style the user set
+    QList<Fact*> sourceSettings() const final;
 };

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtCore/QHash>
 #include <QtCore/QObject>
 #include <QtCore/QQueue>
 #include <QtCore/QString>
@@ -37,15 +38,15 @@ class QGCCreateTileSetTask : public QGCMapTask
     Q_OBJECT
 
 public:
-    explicit QGCCreateTileSetTask(QGCCachedTileSet* tileSet, QObject* parent = nullptr)
-        : QGCMapTask(TaskType::taskCreateTileSet, parent)
-        , m_tileSet(tileSet)
-        , m_saved(false)
-    {}
+    /// Create it on the main thread: it takes the cache variant of the set's provider there, for the worker thread
+    /// that computes the keys of the set's tiles.
+    explicit QGCCreateTileSetTask(QGCCachedTileSet* tileSet, QObject* parent = nullptr);
 
     ~QGCCreateTileSetTask();
 
     QGCCachedTileSet* tileSet() { return m_tileSet; }
+
+    QString cacheVariant() const { return m_cacheVariant; }
 
     void setTileSetSaved()
     {
@@ -58,6 +59,7 @@ signals:
 
 private:
     QGCCachedTileSet* const m_tileSet = nullptr;
+    const QString m_cacheVariant;
     bool m_saved = false;
 };
 
@@ -299,17 +301,17 @@ class QGCImportTileTask : public QGCMapTask
     Q_OBJECT
 
 public:
-    QGCImportTileTask(const QString& path, bool replace, QObject* parent = nullptr)
-        : QGCMapTask(TaskType::taskImport, parent)
-        , m_path(path)
-        , m_replace(replace)
-    {}
+    /// Create it on the main thread: it takes the cache variants there, which the tiles of a file from before
+    /// schema version 3 get.
+    QGCImportTileTask(const QString& path, bool replace, QObject* parent = nullptr);
 
     ~QGCImportTileTask() = default;
 
     QString path() const { return m_path; }
 
     bool replace() const { return m_replace; }
+
+    QHash<int, QString> cacheVariants() const { return m_cacheVariants; }
 
     int progress() const { return m_progress; }
 
@@ -328,6 +330,7 @@ signals:
 private:
     const QString m_path;
     const bool m_replace = false;
+    const QHash<int, QString> m_cacheVariants;
     int m_progress = 0;
 };
 

@@ -3,6 +3,7 @@
 #include <memory>
 
 #include <QtCore/QByteArrayView>
+#include <QtCore/QHash>
 #include <QtCore/QList>
 #include <QtCore/QMap>
 #include <QtCore/QString>
@@ -50,7 +51,23 @@ public:
 
     static int hashFromProviderType(QStringView type);
     static QString tileHashToType(QStringView tileHash);
+
+    /// Key of a tile in the tile cache: provider id, x, y and zoom as "%010d%08d%08d%03d". For a provider with a
+    /// cache variant (MapProvider::cacheVariant()), '-' and the first 8 hex digits of the SHA-1 of the variant
+    /// follow, so that the tiles of every source the user configures have keys of their own.
+    /// Takes the variant from the provider, which reads settings: call it on the main thread only.
     static QString getTileHash(QStringView type, int x, int y, int z);
+    /// The key for \a cacheVariant, which the caller got on the main thread. Callable on any thread.
+    static QString getTileHash(QStringView type, int x, int y, int z, QStringView cacheVariant);
+
+    /// What the key of a tile ends with for \a cacheVariant. Empty for an empty variant.
+    static QString cacheVariantSuffix(QStringView cacheVariant);
+
+    /// The cache variant of the provider \a type. Main thread only.
+    static QString cacheVariant(QStringView type);
+
+    /// The cache variants by provider id, of the providers that have one now. Main thread only.
+    static QHash<int, QString> cacheVariants();
 
 private:
     template <typename Provider>

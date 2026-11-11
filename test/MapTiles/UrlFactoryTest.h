@@ -21,6 +21,8 @@ private slots:
     void _testHashFromInvalidType();
     void _testProviderTypeFromInvalidHash();
     void _testGetTileHashFormat();
+    void _testTileHashFollowsConfiguredSource_data();
+    void _testTileHashFollowsConfiguredSource();
     void _testTileHashToTypeRoundtrip();
     void _testTileHashToTypeInvalid();
     void _testGetImageFormatByType();

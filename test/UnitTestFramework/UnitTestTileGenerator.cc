@@ -33,8 +33,10 @@ QAtomicInt s_forcedMissCount;
 /// "not found" warnings on garbage hashes.
 QString _providerTypeFromHash(const QString& hash)
 {
-    // Hash format: "%010d%08d%08d%03d" (provider map id, x, y, zoom)
-    if (hash.size() != 29) {
+    // Hash format: "%010d%08d%08d%03d" (provider map id, x, y, zoom), followed by '-' and 8 hex digits for a
+    // provider with a cache variant
+    const bool hasCacheVariant = (hash.size() == 38) && (hash.at(29) == QLatin1Char('-'));
+    if ((hash.size() != 29) && !hasCacheVariant) {
         return QString();
     }
 

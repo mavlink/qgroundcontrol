@@ -4,9 +4,11 @@
 #include <QtCore/QScopeGuard>
 #include <QtTest/QSignalSpy>
 
+#include "AppSettings.h"
 #include "MapProvider.h"
 #include "QGCMapUrlEngine.h"
 #include "QGCTileReply.h"
+#include "SettingsManager.h"
 #include "TileReplyNetworkMock.h"
 #include "UnitTestTileGenerator.h"
 
@@ -27,6 +29,11 @@ int tileReplyMapId()
 constexpr int kTileX = 4302;
 constexpr int kTileY = 2867;
 constexpr int kTileZoom = 13;
+
+/// The provider that fetches from the URL template the user sets
+const QString kTileReplyCustomUrlType = QStringLiteral("CustomURL Custom");
+const QString kTileReplySourceA = QStringLiteral("https://a.example/{z}/{x}/{y}.png");
+const QString kTileReplySourceB = QStringLiteral("https://b.example/{z}/{x}/{y}.png");
 
 }  // namespace
 
@@ -240,6 +247,86 @@ void QGCTileReplyTest::_networkManagerDestroyedFirst()
     QTRY_COMPARE_WITH_TIMEOUT(nam->requestCount, 1, TestTimeout::mediumMs());
     delete nam;
     delete fetching;
+}
+
+void QGCTileReplyTest::_tileOfOtherSourceNotServed()
+{
+    Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
+    const QVariant savedUrl = customUrl->rawValue();
+    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
+    const int mapId = UrlFactory::getMapIdFromProviderType(kTileReplyCustomUrlType);
+
+    // Each source misses the cache once; when it is configured again, its stored tile answers
+    UnitTestTileGenerator::setForcedMissCount(2);
+    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+
+    struct Request
+    {
+        QString source;
+        QByteArray tile;
+        bool cached;
+    };
+
+    const QByteArray tileA = tileReplyPngBody();
+    const QByteArray tileB = tileA + QByteArrayLiteral("of the other source");
+    const QList<Request> requests = {
+        {kTileReplySourceA, tileA, false},
+        {kTileReplySourceB, tileB, false},
+        {kTileReplySourceA, tileA, true},
+        {kTileReplySourceB, tileB, true},
+    };
+
+    TileReplyMockNam nam;
+    int serverRequests = 0;
+    for (const Request& request : requests) {
+        customUrl->setRawValue(request.source);
+        nam.body = request.tile;
+        if (!request.cached) {
+            serverRequests++;
+        }
+
+        QGCTileReply reply(&nam, mapId, kTileX + 30, kTileY, kTileZoom);
+        QSignalSpy finishedSpy(&reply, &QGCTileReply::finished);
+        QVERIFY(reply.start());
+        QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::mediumMs());
+        QCOMPARE(reply.error(), QGCTileReply::Error::NoError);
+        QCOMPARE(reply.isCached(), request.cached);
+        QCOMPARE(reply.data(), request.tile);
+        QCOMPARE(nam.requestCount, serverRequests);
+    }
+}
+
+void QGCTileReplyTest::_sourceChangedDuringRequest()
+{
+    Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
+    const QVariant savedUrl = customUrl->rawValue();
+    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
+    const int mapId = UrlFactory::getMapIdFromProviderType(kTileReplyCustomUrlType);
+
+    UnitTestTileGenerator::setForcedMissCount(1);
+    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+
+    TileReplyMockNam nam;
+    nam.body = tileReplyPngBody();
+
+    // The source changes while the cache is asked for the tile of source A: the tile is fetched from source B
+    customUrl->setRawValue(kTileReplySourceA);
+    QGCTileReply fetched(&nam, mapId, kTileX + 31, kTileY, kTileZoom);
+    QSignalSpy fetchedSpy(&fetched, &QGCTileReply::finished);
+    QVERIFY(fetched.start());
+    customUrl->setRawValue(kTileReplySourceB);
+    QVERIFY_SIGNAL_COUNT_WAIT(fetchedSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(fetched.error(), QGCTileReply::Error::NoError);
+    QCOMPARE(nam.requestCount, 1);
+
+    // It is stored as a tile of source B
+    QGCTileReply cached(&nam, mapId, kTileX + 31, kTileY, kTileZoom);
+    QSignalSpy cachedSpy(&cached, &QGCTileReply::finished);
+    QVERIFY(cached.start());
+    QVERIFY_SIGNAL_COUNT_WAIT(cachedSpy, 1, TestTimeout::mediumMs());
+    QVERIFY(cached.isCached());
+    QCOMPARE(cached.data(), nam.body);
+    QCOMPARE(nam.requestCount, 1);
 }
 
 UT_REGISTER_TEST(QGCTileReplyTest, TestLabel::Unit)

@@ -4,6 +4,7 @@
 #include <optional>
 
 #include <QtCore/QByteArray>
+#include <QtCore/QHash>
 #include <QtCore/QList>
 #include <QtCore/QMap>
 #include <QtCore/QString>
@@ -19,7 +20,8 @@ class QGCTileCacheDatabase
 public:
     static constexpr quint64 kInvalidTileSet = UINT64_MAX;
     /// 2: provider ids are the permanent ones (version 1 had the position in the provider list of the build)
-    static constexpr int kSchemaVersion = 2;
+    /// 3: the key of a tile ends with the cache variant of its provider (UrlFactory::getTileHash())
+    static constexpr int kSchemaVersion = 3;
 
     explicit QGCTileCacheDatabase(const QString& databasePath);
     ~QGCTileCacheDatabase();
@@ -31,6 +33,10 @@ public:
     /// Replaces the provider ids a version-1 cache is renumbered from (UrlFactory::legacyMapIds()). Call before init().
     /// For unit tests: on the platforms they run on, version 1 had the permanent ids already.
     void setLegacyMapIds(const QMap<int, int>& legacyMapIds) { _legacyMapIds = legacyMapIds; }
+
+    /// The cache variants by provider id (UrlFactory::cacheVariants()) that the tiles of a file from before schema
+    /// version 3 get: of the cache when set before init(), of a file imported afterwards.
+    void setCacheVariants(const QHash<int, QString>& cacheVariants) { _cacheVariants = cacheVariants; }
 
     bool isValid() const { return _valid; }
 
@@ -44,9 +50,12 @@ public:
 
     // Tile Sets
     QList<TileSetRecord> getTileSets();
+    /// \a cacheVariant is that of the provider \a type, which the caller got on the main thread: this runs on the
+    /// worker thread, where the provider must not read it from the settings.
     std::optional<quint64> createTileSet(const QString& name, const QString& mapTypeStr, double topleftLat,
                                          double topleftLon, double bottomRightLat, double bottomRightLon, int minZoom,
-                                         int maxZoom, const QString& type, quint32 numTiles);
+                                         int maxZoom, const QString& type, quint32 numTiles,
+                                         const QString& cacheVariant);
     bool deleteTileSet(quint64 id);
     bool renameTileSet(quint64 setID, const QString& newName);
     std::optional<quint64> findTileSetID(const QString& name);
@@ -81,6 +90,7 @@ private:
     bool _checkSchemaVersion();
     bool _migrate(QSqlDatabase db, int version);
     static bool _renumberMapIds(QSqlDatabase db, const QMap<int, int>& legacyMapIds);
+    static bool _adoptCacheVariants(QSqlDatabase db, const QHash<int, QString>& cacheVariants);
     bool _createDB(QSqlDatabase db, bool createDefault = true);
     quint64 _getDefaultTileSet();
     bool _deleteTilesByIDs(const QList<quint64>& ids);
@@ -92,6 +102,7 @@ private:
     QString _databasePath;
     QString _connectionName;
     QMap<int, int> _legacyMapIds;
+    QHash<int, QString> _cacheVariants;
     quint64 _defaultSet = kInvalidTileSet;
     bool _connected = false;
     bool _valid = false;

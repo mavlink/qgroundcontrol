@@ -1,10 +1,13 @@
 #pragma once
 
 #include <QtCore/QByteArray>
+#include <QtCore/QList>
 #include <QtCore/QString>
 #include <QtCore/QUrl>
 
 #include "QGCTileSet.h"
+
+class Fact;
 
 #define QGC_MAX_MAP_ZOOM 23
 static constexpr const quint32 QGC_AVERAGE_TILE_SIZE = 13652;
@@ -52,6 +55,15 @@ public:
     const QString& getReferrer() const { return _referrer; }
 
     virtual QByteArray getToken() const { return QByteArray(); }
+
+    /// The settings with which the user configures the source the provider fetches from. Empty for a provider with
+    /// a fixed source. Main thread only, as their values are.
+    virtual QList<Fact*> sourceSettings() const { return {}; }
+
+    /// Identifies the source the provider fetches from: the values of sourceSettings(), joined with '/'. Tiles of
+    /// different sources have different keys in the tile cache: see UrlFactory::getTileHash(). Empty for a provider
+    /// with a fixed source. Reads settings, so call it on the main thread only.
+    QString cacheVariant() const;
 
     virtual int long2tileX(double lon, int z) const;
     virtual int lat2tileY(double lat, int z) const;

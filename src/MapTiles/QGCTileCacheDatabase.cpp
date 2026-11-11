@@ -125,6 +125,9 @@ bool QGCTileCacheDatabase::_migrate(QSqlDatabase db, int version)
     if ((version < 2) && !_renumberMapIds(db, _legacyMapIds)) {
         return false;
     }
+    if ((version < 3) && !_adoptCacheVariants(db, _cacheVariants)) {
+        return false;
+    }
 
     // Within the transaction, so that a migration that fails leaves the version it started from
     if (!QGCSqlHelper::setUserVersion(db, kSchemaVersion)) {
@@ -163,6 +166,31 @@ bool QGCTileCacheDatabase::_renumberMapIds(QSqlDatabase db, const QMap<int, int>
             !execBound(query, QStringLiteral("UPDATE TileSets SET type = ? WHERE type = ?"), {mapId, *legacyId})) {
             qCWarning(QGCTileCacheDatabaseLog)
                 << "Failed to renumber provider" << *legacyId << "to" << mapId << ":" << query.lastError().text();
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool QGCTileCacheDatabase::_adoptCacheVariants(QSqlDatabase db, const QHash<int, QString>& cacheVariants)
+{
+    QSqlQuery query(db);
+
+    // Until version 3 a provider's tiles had one key whatever source the user had configured for it, so which source
+    // a tile is from is not known. They become tiles of the source configured now.
+    for (auto it = cacheVariants.cbegin(); it != cacheVariants.cend(); ++it) {
+        const QString suffix = UrlFactory::cacheVariantSuffix(it.value());
+        if (suffix.isEmpty()) {
+            continue;
+        }
+        const QVariantList values = {suffix, QString::asprintf("%010d", it.key()),
+                                     QString::asprintf("%010d", it.key() + 1)};
+        static const QString sql = QStringLiteral("UPDATE %1 SET hash = hash || ? WHERE hash >= ? AND hash < ?");
+        if (!execBound(query, sql.arg(QStringLiteral("Tiles")), values) ||
+            !execBound(query, sql.arg(QStringLiteral("TilesDownload")), values)) {
+            qCWarning(QGCTileCacheDatabaseLog)
+                << "Failed to add the cache variant of provider" << it.key() << ":" << query.lastError().text();
             return false;
         }
     }
@@ -383,7 +411,8 @@ QList<TileSetRecord> QGCTileCacheDatabase::getTileSets()
 std::optional<quint64> QGCTileCacheDatabase::createTileSet(const QString& name, const QString& mapTypeStr,
                                                            double topleftLat, double topleftLon, double bottomRightLat,
                                                            double bottomRightLon, int minZoom, int maxZoom,
-                                                           const QString& type, quint32 numTiles)
+                                                           const QString& type, quint32 numTiles,
+                                                           const QString& cacheVariant)
 {
     if (!_ensureConnected()) {
         return std::nullopt;
@@ -493,7 +522,7 @@ std::optional<quint64> QGCTileCacheDatabase::createTileSet(const QString& name, 
 
         for (int x = set.tileX0; x <= set.tileX1; x++) {
             for (int y = set.tileY0; y <= set.tileY1; y++) {
-                batch.append({x, y, UrlFactory::getTileHash(type, x, y, z)});
+                batch.append({x, y, UrlFactory::getTileHash(type, x, y, z, cacheVariant)});
 
                 if (batch.size() >= kHashBatchSize) {
                     if (!processBatch(batch, z))
@@ -1087,6 +1116,7 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString& path, Progre
 
         QGCTileCacheDatabase migrated(migratedPath);
         migrated.setLegacyMapIds(_legacyMapIds);
+        migrated.setCacheVariants(_cacheVariants);
         if (!migrated.init()) {
             result.errorString = "Failed to migrate import database";
             return result;

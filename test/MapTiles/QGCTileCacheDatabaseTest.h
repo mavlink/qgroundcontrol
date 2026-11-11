@@ -52,6 +52,10 @@ private slots:
     void _testImportVersion1();
     void _testImportMergeRefusesVersion0();
     void _testImportMergeRefusesNewerVersion();
+    void _testVersion2TilesGetCacheVariant_data();
+    void _testVersion2TilesGetCacheVariant();
+    void _testVersion1TilesGetCacheVariantOfPermanentId();
+    void _testCreateTileSetKeysTilesByCacheVariant();
     void _testSaveTileTypeStoredAsInteger();
     void _testCreateTileSetTypeStoredAsInteger();
     void _testTablesExist();

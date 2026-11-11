@@ -1,12 +1,16 @@
 #include "QGCCacheWorkerTest.h"
 
 #include <cmath>
+#include <memory>
 #include <optional>
 
+#include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtSql/QSqlQuery>
 #include <QtTest/QTest>
 
+#include "AppSettings.h"
 #include "BaseClasses/TerrainTest.h"
 #include "ElevationMapProvider.h"
 #include "QGCCacheTile.h"
@@ -14,11 +18,37 @@
 #include "QGCMapEngine.h"
 #include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
+#include "QGCTileCacheDatabase.h"
 #include "QGCTileCacheWorker.h"
+#include "QGCTileSet.h"
+#include "SettingsManager.h"
 #include "TerrainTile.h"
 #include "TerrainTileCopernicus.h"
 
 static const QString kTestProviderType = QStringLiteral("Bing Road");
+
+namespace {
+
+/// The provider that fetches from the URL template the user sets
+const QString kCacheWorkerCustomUrlType = QStringLiteral("CustomURL Custom");
+const QString kCacheWorkerSourceA = QStringLiteral("https://a.example/{z}/{x}/{y}.png");
+const QString kCacheWorkerSourceB = QStringLiteral("https://b.example/{z}/{x}/{y}.png");
+
+/// A cache of schema version 2, where the key of a tile did not tell its source, with a tile of the custom URL
+/// provider. Version 2 has the tables of today.
+bool createVersion2CacheWithCustomUrlTile(const QString& path, int x, int y, int z, const QByteArray& image)
+{
+    QGCTileCacheDatabase db(path);
+    if (!db.init() || !db.connectDB() ||
+        !db.saveTile(UrlFactory::getTileHash(kCacheWorkerCustomUrlType, x, y, z, QString()), QStringLiteral("png"),
+                     image, kCacheWorkerCustomUrlType, QGCTileCacheDatabase::kInvalidTileSet)) {
+        return false;
+    }
+    QSqlQuery query(db.database());
+    return query.exec(QStringLiteral("PRAGMA user_version = 2"));
+}
+
+}  // namespace
 
 void QGCCacheWorkerTest::initTestCase()
 {
@@ -43,6 +73,24 @@ bool QGCCacheWorkerTest::_startWorker(QGCCacheWorker& worker, int timeoutMs)
                                                QStringLiteral("QGCCacheWorker::updateTotals"));
     disconnect(conn);
     return ok;
+}
+
+QByteArray QGCCacheWorkerTest::_fetchTileImage(const std::function<bool(QGCMapTask*)>& addTask, const QString& hash)
+{
+    const auto image = std::make_shared<std::optional<QByteArray>>();
+    auto* const task = new QGCFetchTileTask(hash);
+    connect(
+        task, &QGCFetchTileTask::tileFetched, this, [image](const QGCCacheTile& tile) { *image = tile.img; },
+        Qt::QueuedConnection);
+    connect(task, &QGCMapTask::error, this, [image] { *image = QByteArray(); }, Qt::QueuedConnection);
+    if (!addTask(task)) {
+        task->deleteLater();
+        return QByteArray();
+    }
+
+    (void) UnitTest::waitForCondition([image] { return image->has_value(); }, TestTimeout::mediumMs(),
+                                      QStringLiteral("answer of the tile cache"));
+    return image->value_or(QByteArray());
 }
 
 void QGCCacheWorkerTest::_testStartAndStop()
@@ -471,6 +519,120 @@ void QGCCacheWorkerTest::_testMapEngineEnsureInitializedAcceptsTasks()
     engine.ensureInitialized();
     auto* afterSecondCall = new QGCFetchTileTask(QStringLiteral("hash"));
     QVERIFY(engine.addTask(afterSecondCall));
+
+    engine.close();
+}
+
+void QGCCacheWorkerTest::_testCreateTileSetKeepsSourceOfItsCreation()
+{
+    Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
+    const QVariant savedUrl = customUrl->rawValue();
+    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
+
+    QTemporaryDir tempDir;
+    QGCCacheWorker worker;
+    worker.setDatabaseFile(tempDir.filePath("set_source.db"));
+    QVERIFY(_startWorker(worker));
+
+    // A region of one tile
+    const QGCTileSet region = UrlFactory::getTileCount(5, -122.0, 37.0, -121.0, 36.0, kCacheWorkerCustomUrlType);
+    QCOMPARE(region.tileCount, 1U);
+    auto* const tileSet = new QGCCachedTileSet(QStringLiteral("Custom URL Set"));
+    tileSet->setMapTypeStr(kCacheWorkerCustomUrlType);
+    tileSet->setType(kCacheWorkerCustomUrlType);
+    tileSet->setTopleftLat(37.0);
+    tileSet->setTopleftLon(-122.0);
+    tileSet->setBottomRightLat(36.0);
+    tileSet->setBottomRightLon(-121.0);
+    tileSet->setMinZoom(5);
+    tileSet->setMaxZoom(5);
+    tileSet->setTotalTileCount(1);
+
+    // The set is of the source configured when it is created. The worker computes the keys of its tiles later, and
+    // cannot read the settings.
+    customUrl->setRawValue(kCacheWorkerSourceA);
+    auto* const createTask = new QGCCreateTileSetTask(tileSet);
+    customUrl->setRawValue(kCacheWorkerSourceB);
+
+    QGCCachedTileSet* savedSet = nullptr;
+    connect(
+        createTask, &QGCCreateTileSetTask::tileSetSaved, this, [&](QGCCachedTileSet* set) { savedSet = set; },
+        Qt::QueuedConnection);
+    QVERIFY(worker.enqueueTask(createTask));
+    QTRY_VERIFY_WITH_TIMEOUT(savedSet, TestTimeout::mediumMs());
+    const std::unique_ptr<QGCCachedTileSet> savedSetOwner(savedSet);
+
+    auto* const listTask = new QGCGetTileDownloadListTask(savedSet->id(), 10);
+    std::optional<QStringList> hashes;
+    connect(
+        listTask, &QGCGetTileDownloadListTask::tileListFetched, this,
+        [&](const QQueue<QGCTile*>& tiles) {
+            hashes = QStringList();
+            for (const QGCTile* tile : tiles) {
+                hashes->append(tile->hash);
+            }
+            qDeleteAll(tiles);
+        },
+        Qt::QueuedConnection);
+    QVERIFY(worker.enqueueTask(listTask));
+    QTRY_VERIFY_WITH_TIMEOUT(hashes.has_value(), TestTimeout::mediumMs());
+    QCOMPARE(*hashes, QStringList{UrlFactory::getTileHash(kCacheWorkerCustomUrlType, region.tileX0, region.tileY0, 5,
+                                                          kCacheWorkerSourceA)});
+
+    worker.stop();
+    worker.wait(TestTimeout::mediumMs());
+}
+
+void QGCCacheWorkerTest::_testImportGivesOldTilesTheConfiguredSource()
+{
+    Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
+    const QVariant savedUrl = customUrl->rawValue();
+    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
+
+    QTemporaryDir tempDir;
+    const QString importPath = tempDir.filePath("version2.db");
+    const QByteArray image("tile of the custom URL");
+    QVERIFY(createVersion2CacheWithCustomUrlTile(importPath, 1, 2, 3, image));
+
+    customUrl->setRawValue(kCacheWorkerSourceA);
+    QGCCacheWorker worker;
+    worker.setDatabaseFile(tempDir.filePath("import_source.db"));
+    QVERIFY(_startWorker(worker));
+
+    // The source configured when the file is imported, not the one of the time the cache was opened
+    customUrl->setRawValue(kCacheWorkerSourceB);
+    auto* const importTask = new QGCImportTileTask(importPath, false);
+    bool imported = false;
+    connect(
+        importTask, &QGCImportTileTask::actionCompleted, this, [&imported] { imported = true; }, Qt::QueuedConnection);
+    QVERIFY(worker.enqueueTask(importTask));
+    QTRY_VERIFY_WITH_TIMEOUT(imported, TestTimeout::mediumMs());
+
+    const auto addTask = [&worker](QGCMapTask* task) { return worker.enqueueTask(task); };
+    QCOMPARE(_fetchTileImage(addTask, UrlFactory::getTileHash(kCacheWorkerCustomUrlType, 1, 2, 3)), image);
+
+    worker.stop();
+    worker.wait(TestTimeout::mediumMs());
+}
+
+void QGCCacheWorkerTest::_testMapEngineGivesOldTilesTheConfiguredSource()
+{
+    Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
+    const QVariant savedUrl = customUrl->rawValue();
+    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
+
+    QTemporaryDir tempDir;
+    const QString databasePath = tempDir.filePath("version2.db");
+    const QByteArray image("tile of the custom URL");
+    QVERIFY(createVersion2CacheWithCustomUrlTile(databasePath, 1, 2, 3, image));
+
+    // The engine takes the source from the settings for the worker thread, which migrates the cache
+    customUrl->setRawValue(kCacheWorkerSourceA);
+    QGCMapEngine engine;
+    engine.init(databasePath);
+
+    const auto addTask = [&engine](QGCMapTask* task) { return engine.addTask(task); };
+    QCOMPARE(_fetchTileImage(addTask, UrlFactory::getTileHash(kCacheWorkerCustomUrlType, 1, 2, 3)), image);
 
     engine.close();
 }

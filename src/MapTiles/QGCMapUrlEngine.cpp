@@ -1,5 +1,6 @@
 #include "QGCMapUrlEngine.h"
 
+#include <QtCore/QCryptographicHash>
 #include <QtCore/QUrl>
 #include <QtCore/QtMinMax>
 
@@ -316,6 +317,46 @@ QString UrlFactory::tileHashToType(QStringView tileHash)
 
 QString UrlFactory::getTileHash(QStringView type, int x, int y, int z)
 {
+    return getTileHash(type, x, y, z, cacheVariant(type));
+}
+
+QString UrlFactory::getTileHash(QStringView type, int x, int y, int z, QStringView cacheVariant)
+{
     const int hash = hashFromProviderType(type);
-    return QString::asprintf("%010d%08d%08d%03d", hash, x, y, z);
+    return QString::asprintf("%010d%08d%08d%03d", hash, x, y, z) + cacheVariantSuffix(cacheVariant);
+}
+
+QString UrlFactory::cacheVariantSuffix(QStringView cacheVariant)
+{
+    if (cacheVariant.isEmpty()) {
+        return QString();
+    }
+
+    // Not qHash(): the keys are stored, and its values differ between Qt versions and runs
+    const QByteArray digest = QCryptographicHash::hash(cacheVariant.toUtf8(), QCryptographicHash::Sha1);
+    return QLatin1Char('-') + QString::fromLatin1(digest.toHex().left(8));
+}
+
+QString UrlFactory::cacheVariant(QStringView type)
+{
+    for (const SharedMapProvider& provider : _providers) {
+        if (provider->getMapName() == type) {
+            return provider->cacheVariant();
+        }
+    }
+
+    return QString();
+}
+
+QHash<int, QString> UrlFactory::cacheVariants()
+{
+    QHash<int, QString> variants;
+    for (const SharedMapProvider& provider : _providers) {
+        const QString variant = provider->cacheVariant();
+        if (!variant.isEmpty()) {
+            variants.insert(provider->getMapId(), variant);
+        }
+    }
+
+    return variants;
 }

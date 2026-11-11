@@ -13,6 +13,7 @@
 #include "QGCFileHelper.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapTasks.h"
+#include "QGCMapUrlEngine.h"
 #include "QGCTile.h"
 #include "QGCTileCacheWorker.h"
 #include "QGCTileSet.h"
@@ -176,6 +177,7 @@ void QGCMapEngine::init(const QString& databasePath)
 
     m_worker = new QGCCacheWorker(this);
     m_worker->setDatabaseFile(databasePath);
+    m_worker->setCacheVariants(UrlFactory::cacheVariants());
     (void) connect(m_worker, &QGCCacheWorker::updateTotals, this, &QGCMapEngine::_updateTotals);
 
     QGCMapTask* task = new QGCMapTask(QGCMapTask::TaskType::taskInit);

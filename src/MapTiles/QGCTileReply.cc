@@ -171,6 +171,9 @@ void QGCTileReply::_fetchFromServer()
         return;
     }
 
+    // The user can have configured another source for the provider since start(): the tile gets the key of the
+    // source it is fetched from
+    _hash = UrlFactory::getTileHash(_provider->getMapName(), _x, _y, _zoom);
     QNetworkRequest request = tileRequest(*_provider, _x, _y, _zoom);
     if (request.url().isEmpty()) {
         _finish(Error::NetworkError, QStringLiteral("provider has no URL for the tile"));

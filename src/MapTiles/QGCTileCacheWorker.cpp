@@ -77,6 +77,7 @@ bool QGCCacheWorker::enqueueTask(QGCMapTask* task)
 void QGCCacheWorker::run()
 {
     _database = std::make_unique<QGCTileCacheDatabase>(_databasePath);
+    _database->setCacheVariants(_cacheVariants);
 
     if (!_database->init()) {
         qCWarning(QGCTileCacheWorkerLog) << "Failed To Init Database";
@@ -297,11 +298,11 @@ void QGCCacheWorker::_createTileSet(QGCMapTask* mtask)
     }
 
     QGCCreateTileSetTask* task = static_cast<QGCCreateTileSetTask*>(mtask);
-    const auto setID = _database->createTileSet(task->tileSet()->name(), task->tileSet()->mapTypeStr(),
-                                                task->tileSet()->topleftLat(), task->tileSet()->topleftLon(),
-                                                task->tileSet()->bottomRightLat(), task->tileSet()->bottomRightLon(),
-                                                task->tileSet()->minZoom(), task->tileSet()->maxZoom(),
-                                                task->tileSet()->type(), task->tileSet()->totalTileCount());
+    const auto setID = _database->createTileSet(
+        task->tileSet()->name(), task->tileSet()->mapTypeStr(), task->tileSet()->topleftLat(),
+        task->tileSet()->topleftLon(), task->tileSet()->bottomRightLat(), task->tileSet()->bottomRightLon(),
+        task->tileSet()->minZoom(), task->tileSet()->maxZoom(), task->tileSet()->type(),
+        task->tileSet()->totalTileCount(), task->cacheVariant());
 
     if (!setID.has_value()) {
         mtask->setError("Error saving tile set");
@@ -420,6 +421,8 @@ void QGCCacheWorker::_importSets(QGCMapTask* mtask)
 
     QGCImportTileTask* task = static_cast<QGCImportTileTask*>(mtask);
     auto progress = [task](int pct) { task->setProgress(pct); };
+
+    _database->setCacheVariants(task->cacheVariants());
 
     DatabaseResult result;
     if (task->replace()) {

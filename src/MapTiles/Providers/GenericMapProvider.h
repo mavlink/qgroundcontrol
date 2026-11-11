@@ -10,6 +10,9 @@ public:
                       MapProvider::CustomMap)
     {}
 
+    /// The URL template the user set
+    QList<Fact*> sourceSettings() const final;
+
 private:
     QString _getURL(int x, int y, int zoom) const final;
 };
