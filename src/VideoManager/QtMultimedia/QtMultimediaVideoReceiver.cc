@@ -170,7 +170,7 @@ void QtMultimediaVideoReceiver::onVideoOutputChanged()
     }
     _bindVideoSink();
     // The watchdog counts from now: no frame reached an output while there was none.
-    _sinceFrame.restart();
+    _sinceFrame.start();
 }
 
 void QtMultimediaVideoReceiver::onStartRecording(const QString& file, FileFormat format)
