@@ -42,6 +42,7 @@ private slots:
     void _testDmaBufImportFailureLatch();
     void _testDmaBufProducerWaitNeedsSignalledFences_data();
     void _testDmaBufProducerWaitNeedsSignalledFences();
+    void _testDmaBufFdCheckRejectsOtherFds();
     void _testDmaBufVulkanImportNeedsProbedDevice_data();
     void _testDmaBufVulkanImportNeedsProbedDevice();
     void _testDmaBufVulkanRequestsDeviceExtensions_data();

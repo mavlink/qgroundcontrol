@@ -633,6 +633,24 @@ void GstHwBuffersTest::_testDmaBufProducerWaitNeedsSignalledFences()
 #endif
 }
 
+void GstHwBuffersTest::_testDmaBufFdCheckRejectsOtherFds()
+{
+#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+    QSKIP("DMABuf GPU path not compiled in this build");
+#else
+    // GStreamer's dmabuf allocator calls any fd a dma-buf, as the memfd-backed samples of these tests rely on.
+    GstVideoInfo info;
+    GstSample* sample = makeMemfdDmaBufSample(GST_VIDEO_FORMAT_NV12, info);
+    QVERIFY(sample);
+    const auto sampleGuard = qScopeGuard([sample] { gst_sample_unref(sample); });
+    GstMemory* const memory = gst_buffer_peek_memory(gst_sample_get_buffer(sample), 0);
+    QVERIFY(gst_is_dmabuf_memory(memory));
+
+    QVERIFY(!GstDmaBufVideoBuffer::isDmaBufFd(gst_dmabuf_memory_get_fd(memory)));
+    QVERIFY(!GstDmaBufVideoBuffer::isDmaBufFd(-1));
+#endif
+}
+
 void GstHwBuffersTest::_testDmaBufVulkanImportNeedsProbedDevice_data()
 {
     QTest::addColumn<int>("rhiBackend");

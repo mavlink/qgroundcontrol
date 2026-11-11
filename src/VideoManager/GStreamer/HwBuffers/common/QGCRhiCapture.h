@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <atomic>
 
 #include <QtCore/QObject>
@@ -25,13 +26,22 @@ struct DeviceSnapshot
     std::atomic<void*> d3d11Device{nullptr};       ///< ID3D11Device*  (Windows only)
     std::atomic<void*> d3d12Device{nullptr};       ///< ID3D12Device*  (Windows only)
     std::atomic<qint64> adapterLuid{0};            ///< Composed (high<<32)|low LUID, 0 if unknown
-    std::atomic<void*> vkPhysicalDevice{nullptr};  ///< VkPhysicalDevice (Vulkan backend only)
-    std::atomic<quint32> vkQueueFamilyIdx{0};      ///< QRhi's gfx queue family (Vulkan backend only)
-    std::atomic<quint32> vkQueueIdx{0};            ///< QRhi's gfx queue index (Vulkan backend only)
+    /// The Vulkan physical device Qt renders on, as its VkPhysicalDeviceProperties name it: the VkPhysicalDevice handle
+    /// belongs to Qt's VkInstance and matches nothing in another one, such as GStreamer's. Zero unless the backend is
+    /// Vulkan and the gst-vulkan path is compiled.
+    std::atomic<quint32> vkVendorId{0};                         ///< vendorID
+    std::atomic<quint32> vkDeviceId{0};                         ///< deviceID
+    std::array<std::atomic<quint64>, 2> vkPipelineCacheUuid{};  ///< pipelineCacheUUID, 8 bytes each in memory order
 };
 
 /// Returns the global snapshot. Atomic fields make individual reads thread-safe.
 DeviceSnapshot& deviceSnapshot() noexcept;
+
+#ifdef QGC_UNITTEST_BUILD
+/// Publishes @p rhi's device in deviceSnapshot() as the scene graph's render thread does for its own, and withdraws it
+/// when null; cachedRhi() is left alone. On the thread @p rhi lives on.
+void publishDeviceSnapshotForTest(QRhi* rhi);
+#endif
 
 /// Call once from the GUI thread once the main QQuickWindow exists; wires sceneGraph signals to maintain cachedRhi()
 /// and the device snapshot.

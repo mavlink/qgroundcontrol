@@ -130,8 +130,9 @@ them as VkImages itself (`dmabuf/GstDmaBufVulkanImport`):
   pool proposal, context bridge). `GstHwPathRegistry` lists the compiled ones in a constant array. The factory selects
   the first path whose descriptor matches a frame's memory, and the facade loops over the list for bus messages,
   context queries, restarts and resets.
-- **`GstContextBridgeBase`**: GL, Vulkan, D3D11 and D3D12 bridges hand Qt's GPU device to GStreamer elements through
-  `NEED_CONTEXT` and context queries. That is the main window's device: a VideoOutput popped out into its own window
+- **`GstContextBridgeBase`**: GL, D3D11 and D3D12 bridges hand Qt's GPU device to GStreamer elements through
+  `NEED_CONTEXT` and context queries (the Vulkan bridge can't: see the opt-in paths below). That is the main window's
+  device: a VideoOutput popped out into its own window
   renders on that window's device, so on Direct3D11 its frames take the CPU path. So do GLMemory frames from a GL
   context outside Qt's share group, which gst-gl creates for itself when no element was handed the GL bridge's.
 - **D3D11 decoder padding**: decoders pad their textures to their alignment (16 rows for H.264, 128 for HEVC/AV1)
@@ -143,12 +144,38 @@ them as VkImages itself (`dmabuf/GstDmaBufVulkanImport`):
   change since its own snapshot, so receivers don't take each other's counts.
 - **`CpuVideoFramePool`** recycles CPU-backed `QVideoFrame` storage (WebRTC-style slab) for the software-fallback path, avoiding per-frame allocation.
 - **Build options**: `HwBuffers/CMakeLists.txt` probes one table row per path; the `QGC_GST_ENABLE_<PATH>` switches
-  that compile a path in or out are listed in [`cmake/README.md`](../../../cmake/README.md#gstreamer). The CUDA,
-  AHardwareBuffer and Vulkan paths are opt-in (`QGC_GST_ENABLE_<PATH>=ON`): no bin advertises CUDAMemory or
-  VulkanImage caps, and Android's glupload bin offers only GLMemory. Configure lists compiled paths that the sink can't
-  reach at runtime. Windows builds leave out the GLMemory path: Qt 6's OpenGL
-  there is WGL, which gst-gl can't share. Linux builds with gst-gl and DMABuf compile both GPU bins; see
-  [GPU bin selection](#gpu-bin-selection).
+  that compile a path in or out are listed in [`cmake/README.md`](../../../cmake/README.md#gstreamer). Windows builds
+  leave out the GLMemory path: Qt 6's OpenGL there is WGL, which gst-gl can't share. Linux builds with gst-gl and
+  DMABuf compile both GPU bins; see [GPU bin selection](#gpu-bin-selection).
+- **Opt-in paths**: the CUDA, AHardwareBuffer and Vulkan paths are compiled only with `QGC_GST_ENABLE_<PATH>=ON`,
+  because no stream reaches them: no bin advertises CUDAMemory or VulkanImage caps, and Android's glupload bin offers
+  only GLMemory. Configure lists the compiled paths that the sink can't reach at runtime. None of them is a zero-copy
+  path that works today:
+  - **Vulkan** (`vulkan/`, gst-vulkan's VulkanImage memory): gst-vulkan creates its own `VkDevice` and has no way to
+    wrap Qt's (`gst_vulkan_device_new()` takes a physical device; so in 1.24, 1.28 and on `main`), and QRhi can't
+    sample an image of another device. `GstVulkanVideoBuffer` therefore imports no frame, and the Vulkan bridge only
+    puts GStreamer's device on the physical device Qt renders on. A VulkanImage frame that did reach the sink would
+    not be shown: gst-vulkan's pools allocate device-local memory, which it doesn't map on the CPU either. In a build
+    with the path, `GstHwBuffersVulkanReadbackTest` checks the bridge's device and the refused import.
+  - **CUDA** (`cuda/`, gst-cuda's CUDAMemory): never run on NVIDIA hardware, only compiled, against a stub `cuda.h`.
+    The path wraps the fd of `gst_cuda_memory_export()` as a dma-buf for the DMABuf path. gst-cuda exports only memory
+    of a `GST_CUDA_MEMORY_ALLOC_MMAP` pool, which nothing in QGC proposes to a decoder, so a decoder's frames aren't
+    admitted and take the CPU path. And the fd is CUDA's shareable handle (`cuMemExportToShareableHandle`), which the
+    desktop driver's EGL is [reported](https://forums.developer.nvidia.com/t/cuda-and-linux-dma-buf/194267) to refuse
+    as a dma-buf: the path asks the kernel whether it is one, and turns itself off for the process when it isn't
+    rather than fail every import. The route to try on NVIDIA hardware is `cudadownload` to GLMemory (a copy on the
+    GPU, where gst-cuda is built with OpenGL support) into the glupload bin.
+  - **AHardwareBuffer** (`android/`): never compiled for Android, let alone run. It is written against
+    `<gst/android/gstandroid.h>` (`gst_ahardware_buffer_memory_get_buffer()`), which no GStreamer release has, so
+    `QGC_GST_ENABLE_AHARDWAREBUFFER=ON` finds nothing to build against in the SDK QGC downloads. GStreamer 1.30 brings
+    an AHardwareBuffer memory of its own, which this path can't take as it is: another header
+    (`<gst/allocators/gstahardwarebuffer.h>`), another getter (`gst_ahardware_buffer_memory_peek_buffer()`) and caps
+    with `format=AHARDWARE_BUFFER` and an `ahb-format` field, where the sink offers the path NV12-style formats. It
+    also gives glupload an uploader for that memory, so the glupload bin may need no path of QGC's for it.
+    Its source is only syntax-checked on Linux against a stub of that header. Its frames are external-OES textures
+    with no CPU layout Qt could show instead, so the path takes a frame only while it can import it: not under a
+    renderer other than OpenGL, nor after the EGL display lacked `EGL_ANDROID_image_native_buffer` or the driver
+    refused frame after frame. Android's zero-copy path is GLMemory through the glupload bin.
 
 ### Stream statistics
 
@@ -397,9 +424,9 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 | `GstRecordingSinkTest` | Integration | The recording file sink fed by running pipelines: a mid-stream H.265 MP4 start, frames that carry only a DTS, and the start time and comment each container is tagged with. |
 | `GStreamerHelpersTest` | Integration | The pipeline helpers: adding to a bin, removing a child with or without a flush, tee branches, keyframe requests, events sent from GStreamer's thread pool, pads held until linked, and the plugin registry walk. |
 | `GstSelfTestPipelineTest` | Integration | The [boot self-test](#boot-self-test) against the GStreamer the tests run on, and its software retry after a hardware decoder fails mid-stream, which restores the decoder ranks. |
-| `GstHwBuffersPipelineTest` | Integration, GPU | Pipelines that upload into or decode to GPU memory (DMABuf, GLMemory, Vulkan, D3D11/D3D12, IOSurface) and the path each frame takes; D3D11/D3D12 and IOSurface frames are also converted with `QVideoFrame::toImage()` on a QRhi of that API and compared with the CPU frame; the D3D QRhi uses the WARP software adapter when `QSG_RHI_PREFER_SOFTWARE_RENDERER` is set or DXGI lists no hardware adapter. Software frames through the glupload bin and the Windows D3D11 sink. Skips without the device. |
+| `GstHwBuffersPipelineTest` | Integration, GPU | Pipelines that upload into or decode to GPU memory (DMABuf, GLMemory, D3D11/D3D12, IOSurface) and the path each frame takes; D3D11/D3D12 and IOSurface frames are also converted with `QVideoFrame::toImage()` on a QRhi of that API and compared with the CPU frame; the D3D QRhi uses the WARP software adapter when `QSG_RHI_PREFER_SOFTWARE_RENDERER` is set or DXGI lists no hardware adapter. Software frames through the glupload bin and the Windows D3D11 sink. Skips without the device. |
 | `GstHwBuffersGlReadbackTest` | Integration, GPU | DMABuf planes and glupload's GLMemory frames imported into a GL QRhi that shares Qt's EGL context, read back pixel by pixel and converted with `QVideoFrame::toImage()` (xcb with `xcb_egl`). |
-| `GstHwBuffersVulkanReadbackTest` | Integration, GPU | VA-API DMABuf frames imported into a Vulkan QRhi and converted with `QVideoFrame::toImage()`, and a VA stream into the sink under a Vulkan render target (xcb). |
+| `GstHwBuffersVulkanReadbackTest` | Integration, GPU | VA-API DMABuf frames imported into a Vulkan QRhi and converted with `QVideoFrame::toImage()`, and a VA stream into the sink under a Vulkan render target (xcb). With `QGC_GST_ENABLE_VULKAN`: the gst-vulkan bridge's device and a VulkanImage frame's refused import. |
 | `GstVideoReceiverPipelineTest` | Integration | `GstVideoReceiver` end to end against the H.264 test stream it sends itself on loopback: states, display, restarts, config changes, a mid-stream resolution change, H.265, MockLink's streams, screenshots. Receivers and servers in every `GstVideoReceiver*Test` listen on port 0, so parallel runs never collide. |
 | `GstVideoReceiverReconnectTest` | Integration | Permanent failures, reconnect backoff after a failed start, the restart policy on stream loss, and an RTSP server that never answers. |
 | `GstVideoReceiverRecordingTest` | Integration | Recordings that stay playable: decoder-only recovery, across reconnects, slow and hung storage, recorder errors, stream end, deactivation and bounded teardown. |

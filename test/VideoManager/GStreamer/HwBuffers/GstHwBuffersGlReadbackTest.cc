@@ -433,6 +433,9 @@ void GstHwBuffersGlReadbackTest::_testVaDecodedFrameReadBack()
                                QVideoFrameFormat(QSize(kVaWidth, kVaHeight), QVideoFrameFormat::Format_NV12),
                                static_cast<EGLDisplay>(QGCRhiCapture::qtEglDisplay()));
     QVERIFY(frame.validatePlaneHandles());
+    // What a driver exports is a dma-buf to the kernel too, unlike the memfds other tests wrap as one.
+    QVERIFY(GstDmaBufVideoBuffer::isDmaBufFd(
+        gst_dmabuf_memory_get_fd(gst_buffer_peek_memory(gst_sample_get_buffer(gpuSample), 0))));
     QVideoFrameTexturesUPtr none;
     const QVideoFrameTexturesUPtr textures = frame.mapTextures(*rhi, none);
     const GStreamer::GCharPtr negotiated = GStreamer::adoptGChar(gst_caps_to_string(gst_sample_get_caps(gpuSample)));

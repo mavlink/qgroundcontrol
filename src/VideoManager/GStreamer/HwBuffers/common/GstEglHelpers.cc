@@ -35,7 +35,9 @@ EGLDisplay resolveEglDisplay(QOpenGLContext* qtCtx)
 
 QOpenGLContext* bindRhiContext(QRhi& rhi)
 {
-    rhi.makeThreadLocalNativeContextCurrent();
+    if (!rhi.makeThreadLocalNativeContextCurrent()) {
+        return nullptr;
+    }
     const auto* handles = static_cast<const QRhiGles2NativeHandles*>(rhi.nativeHandles());
     return handles ? handles->context : nullptr;
 }

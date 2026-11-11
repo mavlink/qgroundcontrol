@@ -29,6 +29,7 @@
 #include "GstHwPathTelemetry.h"
 #include "GstHwVideoBuffer.h"
 #include "QGCLoggingCategory.h"
+#include "QGCRhiCapture.h"
 #include <EGL/eglext.h>
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
@@ -37,12 +38,61 @@ QGC_LOGGING_CATEGORY(GstAHWBufLog, "Video.GStreamer.HwBuffers.GstAHWBuf")
 
 namespace {
 
-GstHw::MapDiagnostics s_diag;
+/// Every once-only log latch of the path, so rearmImport() re-arms them as one.
+struct AhbDiagnostics : GstHw::MapDiagnostics
+{
+    std::atomic<bool> loggedNoFenceSync{false};
+    std::atomic<bool> loggedNoGlContext{false};
+    std::atomic<bool> loggedClientBufferFailed{false};
+    std::atomic<bool> loggedCreateImageFailed{false};
+    std::atomic<bool> loggedImageTargetFailed{false};
+
+    void reset() noexcept
+    {
+        GstHw::MapDiagnostics::reset();
+        for (std::atomic<bool>* flag : {&loggedNoFenceSync, &loggedNoGlContext, &loggedClientBufferFailed,
+                                        &loggedCreateImageFailed, &loggedImageTargetFailed}) {
+            flag->store(false, std::memory_order_relaxed);
+        }
+    }
+};
+
+static_assert(sizeof(AhbDiagnostics) == sizeof(GstHw::MapDiagnostics) + (5 * sizeof(std::atomic<bool>)),
+              "AhbDiagnostics::reset() must list every flag");
+
+AhbDiagnostics s_diag;
 
 constexpr const char* kNativeBufferExt = "EGL_ANDROID_image_native_buffer";
 
-std::atomic<bool> s_loggedNoFenceSync{false};
-std::atomic<bool> s_loggedImageTargetFailed{false};
+/// Imports the driver refused in a row that disable the path: a stream it can't import fails every frame.
+constexpr int kMaxConsecutiveImportFailures = 30;
+
+// Set when the import can't work until the scene graph's device changes: the EGL display or the GL implementation
+// lacks what it needs, or the driver refused frame after frame. A frame of this path is external-OES, without a CPU
+// layout Qt could show instead, so admitAhb() then keeps frames off the path. Cleared by rearmImport().
+std::atomic<bool> s_importDisabled{false};
+std::atomic<int> s_consecutiveImportFailures{0};
+
+void disableImport(const char* why)
+{
+    if (!s_importDisabled.exchange(true, std::memory_order_relaxed)) {
+        qCWarning(GstAHWBufLog) << "AHardwareBuffer import disabled:" << why;
+    }
+}
+
+void noteImportRefused()
+{
+    if ((s_consecutiveImportFailures.fetch_add(1, std::memory_order_relaxed) + 1) >= kMaxConsecutiveImportFailures) {
+        disableImport("the driver refused frame after frame");
+    }
+}
+
+void rearmImport()
+{
+    s_importDisabled.store(false, std::memory_order_relaxed);
+    s_consecutiveImportFailures.store(0, std::memory_order_relaxed);
+    s_diag.reset();
+}
 
 // LRU cache (QRhi, AHardwareBuffer, EGLDisplay) -> (EGLImage, GL texture): MediaCodec recycles the same AHB so the
 // import stays valid, saving ~50-200 us/frame on Mali/Adreno.
@@ -150,7 +200,7 @@ void waitProducerComplete(GstBuffer* buffer)
         }
     }
 
-    QGC_HW_WARN_ONCE(GstAHWBufLog, s_loggedNoFenceSync,
+    QGC_HW_WARN_ONCE(GstAHWBufLog, s_diag.loggedNoFenceSync,
                      "AHardwareBuffer: no GstGLSyncMeta producer fence; frames may tear on recycle (no consumer-side "
                      "barrier can substitute)");
 }
@@ -203,7 +253,8 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
 
     QOpenGLContext* glContext = GstEglHelpers::bindRhiContext(rhi);
     if (!glContext) {
-        qCWarning(GstAHWBufLog) << "QRhi exposes no GL context";
+        QGC_HW_WARN_ONCE(GstAHWBufLog, s_diag.loggedNoGlContext,
+                         "QRhi's GL context can't be made current; frame not shown");
         return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
     }
     // Sampling an EGLImage created on a foreign display silently returns black.
@@ -218,10 +269,7 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
     }
 
     if (!GstEglHelpers::displaySupportsExtension(eglDpy, kNativeBufferExt)) {
-        static std::atomic<bool> s_warnedNativeBufferExt{false};
-        if (!s_warnedNativeBufferExt.exchange(true, std::memory_order_relaxed)) {
-            qCWarning(GstAHWBufLog) << "EGL_ANDROID_image_native_buffer unavailable; AHardwareBuffer path disabled";
-        }
+        disableImport("EGL_ANDROID_image_native_buffer unavailable");
         return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
     }
 
@@ -234,7 +282,7 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
 
     if (!eglGetNativeClientBufferANDROID_ || !eglCreateImageKHR_ || !eglDestroyImageKHR_ ||
         !glEGLImageTargetTexture2DOES_) {
-        qCWarning(GstAHWBufLog) << "Required EGL/GL proc addresses unavailable";
+        disableImport("required EGL/GL functions unavailable");
         return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
     }
 
@@ -267,7 +315,9 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
 
         EGLClientBuffer clientBuffer = eglGetNativeClientBufferANDROID_(ahwb);
         if (!clientBuffer) {
-            qCWarning(GstAHWBufLog) << "eglGetNativeClientBufferANDROID returned null";
+            QGC_HW_WARN_ONCE(GstAHWBufLog, s_diag.loggedClientBufferFailed,
+                             "eglGetNativeClientBufferANDROID returned null; frame not shown");
+            noteImportRefused();
             return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
         }
 
@@ -275,7 +325,9 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
         EGLImageKHR image =
             eglCreateImageKHR_(eglDpy, EGL_NO_CONTEXT, EGL_NATIVE_BUFFER_ANDROID, clientBuffer, attribs);
         if (image == EGL_NO_IMAGE_KHR) {
-            qCWarning(GstAHWBufLog) << "eglCreateImageKHR failed, err=" << Qt::hex << eglGetError();
+            QGC_HW_WARN_ONCE(GstAHWBufLog, s_diag.loggedCreateImageFailed,
+                             "eglCreateImageKHR failed, err=" << Qt::hex << eglGetError() << "; frame not shown");
+            noteImportRefused();
             return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
         }
 
@@ -288,11 +340,12 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
         glEGLImageTargetTexture2DOES_(GL_TEXTURE_EXTERNAL_OES, image);
         // A failed bind leaves an empty texture; cached, it would show black whenever the decoder recycles this AHB.
         if (const GLenum glErr = functions.glGetError(); glErr != GL_NO_ERROR) {
-            QGC_HW_WARN_ONCE(GstAHWBufLog, s_loggedImageTargetFailed,
-                             "glEGLImageTargetTexture2DOES failed, glError="
-                                 << Qt::hex << glErr << "eglError=" << eglGetError() << "; using the CPU path");
+            QGC_HW_WARN_ONCE(GstAHWBufLog, s_diag.loggedImageTargetFailed,
+                             "glEGLImageTargetTexture2DOES failed, glError=" << Qt::hex << glErr << "eglError="
+                                                                             << eglGetError() << "; frame not shown");
             functions.glDeleteTextures(1, &name);
             eglDestroyImageKHR_(eglDpy, image);
+            noteImportRefused();
             return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
         }
 
@@ -323,6 +376,7 @@ QVideoFrameTexturesUPtr GstAHardwareBufferVideoBuffer::mapTextures(QRhi& rhi, QV
     if (name == 0) {
         return GstHwPathTelemetry::fail(HwVideoBufferPath::AHardwareBuffer);
     }
+    s_consecutiveImportFailures.store(0, std::memory_order_relaxed);
 
     // Provisional pin keeps LRU eviction from freeing the name before FrameTextures takes its own pin.
     const auto pinGuard = qScopeGuard([&] {
@@ -370,10 +424,25 @@ void prepareAhbContext(HwVideoBufferContext& context)
     context.ahbEglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     if (context.ahbEglDisplay == EGL_NO_DISPLAY) {
         qCWarning(GstAHWBufLog) << "AHardwareBuffer path: EGLDisplay unavailable";
-    } else {
-        qCInfo(GstAHWBufLog) << "AHardwareBuffer zero-copy path available"
-                             << "— actual path chosen at caps negotiation";
     }
+}
+
+// Streaming thread, for every frame. A frame kept off the path goes to the sink's CPU path, which shows it only if
+// its memory maps on the CPU; wrapped, a frame that then fails to import isn't shown at all.
+bool admitAhb(GstMemory*, const HwVideoBufferContext& context)
+{
+    using GstHwPathTelemetry::HwFallbackReason;
+    // The import binds an external-OES texture in Qt's OpenGL context: nothing to import into under another QRhi.
+    const int backend = QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire);
+    const bool otherRenderer = (backend >= 0) && (backend != static_cast<int>(QRhi::OpenGLES2));
+    if ((context.ahbEglDisplay != EGL_NO_DISPLAY) && !otherRenderer &&
+        !s_importDisabled.load(std::memory_order_relaxed)) {
+        return true;
+    }
+    GstHwPathTelemetry::recordFallbackReason(
+        HwVideoBufferPath::AHardwareBuffer,
+        (context.ahbEglDisplay == EGL_NO_DISPLAY) ? HwFallbackReason::NoExt : HwFallbackReason::ImportUnsupported);
+    return false;
 }
 
 }  // namespace
@@ -381,9 +450,7 @@ void prepareAhbContext(HwVideoBufferContext& context)
 constinit const HwPathDescriptor GstHwPaths::kAHardwareBuffer = {
     .path = HwVideoBufferPath::AHardwareBuffer,
     .matches = [](GstMemory* mem) -> bool { return gst_is_ahardware_buffer_memory(mem); },
-    .admits = [](GstMemory*, const HwVideoBufferContext& context) -> bool {
-        return context.ahbEglDisplay != EGL_NO_DISPLAY;
-    },
+    .admits = &admitAhb,
     .construct = [](GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
                     const HwVideoBufferContext& context) -> std::unique_ptr<GstHwVideoBuffer> {
         return std::make_unique<GstAHardwareBufferVideoBuffer>(sample, info, externalOesFormat(format),
@@ -394,6 +461,7 @@ constinit const HwPathDescriptor GstHwPaths::kAHardwareBuffer = {
         [] {
             GstAHardwareBufferVideoBuffer::resetImageCache();
             GstEglHelpers::resetExtensionCache();
+            rearmImport();
         },
 };
 

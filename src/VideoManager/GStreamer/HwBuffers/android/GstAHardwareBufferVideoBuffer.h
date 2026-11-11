@@ -11,8 +11,10 @@
 
 class QRhi;
 
-/// \brief Zero-copy QVideoFrame backing for GStreamer AHardwareBuffer samples (Android); imports via
-/// eglGetNativeClientBufferANDROID + eglCreateImageKHR (needs EGL_ANDROID_image_native_buffer).
+/// \brief QVideoFrame backing for GStreamer AHardwareBuffer samples (Android); imports via
+/// eglGetNativeClientBufferANDROID + eglCreateImageKHR (needs EGL_ANDROID_image_native_buffer). Never compiled or run:
+/// it needs <gst/android/gstandroid.h> (gst_is_ahardware_buffer_memory), which no GStreamer release through 1.28 nor
+/// its main branch has, so it builds only against an SDK that adds that API.
 class GstAHardwareBufferVideoBuffer final : public GstHwVideoBuffer
 {
 public:

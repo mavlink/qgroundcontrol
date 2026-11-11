@@ -184,6 +184,7 @@ QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::mapTextures(QRhi& rhi, QVideoFr
 
     // Mirror of GstCoreVideoMeta from gst-plugins-bad sys/applemedia/corevideobuffer.h (plugin-private, not installed;
     // identical in 1.20-1.28). The registered meta size is checked below before reading past the GstMeta header.
+    // GStreamer 1.30 gives the surface without it: gst_iosurface_memory_peek_surface() (gst/allocators/gstiosurface.h).
     struct CoreVideoMetaMirror
     {
         GstMeta meta;

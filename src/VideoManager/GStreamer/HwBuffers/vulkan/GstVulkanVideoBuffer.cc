@@ -29,10 +29,26 @@ QGC_LOGGING_CATEGORY(GstVulkanBufLog, "Video.GStreamer.HwBuffers.GstVulkanBuf")
 
 namespace {
 
-GstHw::MapDiagnostics s_diag;
-std::atomic<bool> s_loggedDeviceMismatch{false};
-std::atomic<bool> s_loggedMultiMemory{false};
-std::atomic<bool> s_loggedSyncFallback{false};
+/// Every once-only log latch of the path, so the descriptor's resetCaches re-arms them as one.
+struct VulkanDiagnostics : GstHw::MapDiagnostics
+{
+    std::atomic<bool> loggedDeviceMismatch{false};
+    std::atomic<bool> loggedMultiMemory{false};
+    std::atomic<bool> loggedNoSync{false};
+
+    void reset() noexcept
+    {
+        GstHw::MapDiagnostics::reset();
+        for (std::atomic<bool>* flag : {&loggedDeviceMismatch, &loggedMultiMemory, &loggedNoSync}) {
+            flag->store(false, std::memory_order_relaxed);
+        }
+    }
+};
+
+static_assert(sizeof(VulkanDiagnostics) == sizeof(GstHw::MapDiagnostics) + (3 * sizeof(std::atomic<bool>)),
+              "VulkanDiagnostics::reset() must list every flag");
+
+VulkanDiagnostics s_diag;
 
 }  // namespace
 
@@ -56,8 +72,8 @@ QVideoFrameTexturesUPtr GstVulkanVideoBuffer::mapTextures(QRhi& rhi, QVideoFrame
 
     // Vulkan video decode yields one multiplanar VkImage (NV12/P010); disjoint multi-memory layouts are out of scope.
     if (gst_buffer_n_memory(buffer) != 1) {
-        QGC_HW_WARN_ONCE(GstVulkanBufLog, s_loggedMultiMemory,
-                         "Vulkan import: multi-memory buffer not supported — CPU fallback");
+        QGC_HW_WARN_ONCE(GstVulkanBufLog, s_diag.loggedMultiMemory,
+                         "Vulkan import: multi-memory buffer not supported; frame not imported");
         return GstHwPathTelemetry::fail(HwVideoBufferPath::Vulkan);
     }
 
@@ -72,25 +88,23 @@ QVideoFrameTexturesUPtr GstVulkanVideoBuffer::mapTextures(QRhi& rhi, QVideoFrame
         return GstHwPathTelemetry::fail(HwVideoBufferPath::Vulkan);
     }
 
-    // Hard safety net: createFrom() requires the texture belong to QRhi's VkDevice. A VkImage from a different VkDevice
-    // is unusable (UB), so any mismatch routes to the CPU memcpy path. This is the expected outcome until gst-vulkan
-    // offers a same-VkDevice wrap (see GstVulkanContextBridge).
+    // createFrom() requires the image to belong to QRhi's VkDevice; one of another VkDevice is unusable (UB). Every
+    // GstVulkanImageMemory is: gst-vulkan creates its own VkDevice and can't wrap Qt's (see GstVulkanContextBridge).
     if (!vkMem->device || vkMem->device->device != nh->dev) {
         GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::Vulkan,
                                                  GstHwPathTelemetry::HwFallbackReason::NoExt);
-        QGC_HW_WARN_ONCE(GstVulkanBufLog, s_loggedDeviceMismatch,
-                         "Vulkan import: GstVulkanImageMemory VkDevice != QRhi VkDevice — CPU fallback");
+        QGC_HW_WARN_ONCE(GstVulkanBufLog, s_diag.loggedDeviceMismatch,
+                         "Vulkan import: GstVulkanImageMemory VkDevice != QRhi VkDevice; frame not imported");
         return GstHwPathTelemetry::fail(HwVideoBufferPath::Vulkan);
     }
 
-    // No decoder->QRhi sync wired: real zero-copy needs a shared timeline semaphore (GstVulkanOperation); the only
-    // correct alternative — a per-frame vkDeviceWaitIdle — would stall the whole UI, and an unsynchronized VkImage
-    // would tear. Unreachable on gst-vulkan 1.24.2 (the device-match guard above fails first); reachable once a
-    // same-VkDevice wrap exists, which is where the import belongs.
+    // Unreachable until gst-vulkan can wrap Qt's VkDevice. Sampling the image would then also need the decoder's
+    // writes to be complete: its timeline semaphore (GstVulkanOperation) can't be handed to QRhi's submission, a
+    // per-frame vkDeviceWaitIdle would stall the whole UI, and an unsynchronized VkImage would tear.
     GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::Vulkan,
                                              GstHwPathTelemetry::HwFallbackReason::VulkanNoSync);
-    QGC_HW_WARN_ONCE(GstVulkanBufLog, s_loggedSyncFallback,
-                     "Vulkan import: decoder sync unimplemented (no timeline semaphore) — CPU fallback");
+    QGC_HW_WARN_ONCE(GstVulkanBufLog, s_diag.loggedNoSync,
+                     "Vulkan import: no decoder-to-QRhi sync (timeline semaphore); frame not imported");
     return GstHwPathTelemetry::fail(HwVideoBufferPath::Vulkan);
 }
 
@@ -98,6 +112,7 @@ constinit const HwPathDescriptor GstHwPaths::kVulkan = {
     .path = HwVideoBufferPath::Vulkan,
     .matches = [](GstMemory* mem) -> bool { return gst_is_vulkan_image_memory(mem); },
     .construct = &GstHwPaths::construct<GstVulkanVideoBuffer>,
+    .resetCaches = [] { s_diag.reset(); },
     .bridge = &GstVulkanContextBridge::instance,
 };
 

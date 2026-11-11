@@ -24,6 +24,10 @@ public:
     /// which EGL must never be asked about.
     static EGLDisplay eglDisplayFor(const HwVideoBufferContext& context);
 
+    /// True when @p fd is a dma-buf to the kernel. GStreamer's dmabuf allocator wraps any fd, so the memory type
+    /// doesn't tell.
+    static bool isDmaBufFd(int fd) noexcept;
+
     bool isDmaBuf() const override { return true; }
 
     MapData map(QVideoFrame::MapMode mode) override;

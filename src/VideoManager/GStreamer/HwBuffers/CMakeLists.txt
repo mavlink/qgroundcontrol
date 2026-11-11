@@ -211,7 +211,8 @@ set(_qgc_gpu_row_DMABuf_Vulkan
     REQUIRES _qgc_gpu_DMABuf QT_FEATURE_vulkan QGC_VULKAN_HEADERS
     DEFINE QGC_HAS_GST_DMABUF_VULKAN_IMPORT
     SOURCES dmabuf/GstDmaBufVulkanImport.cc dmabuf/GstDmaBufVulkanImport.h)
-# NVMM/CUDA: exports CUDA memory as a DMABuf fd and reuses the DMABuf EGLImage path; gst_cuda_memory_export is 1.24+.
+# gst-cuda's CUDAMemory, handed to the DMABuf path through the fd of gst_cuda_memory_export (1.24+). Never run on
+# NVIDIA hardware, where that fd is not expected to be a dma-buf (cuda/GstCudaVideoBuffer.h).
 set(_qgc_gpu_row_CUDA
     PLATFORMS LINUX
     REQUIRES _qgc_gpu_DMABuf QGC_CUDA_INCLUDE_DIR
@@ -249,16 +250,19 @@ foreach(_ver IN ITEMS 11 12)
         SOURCES d3d/GstD3D${_ver}VideoBuffer.cc d3d/GstD3D${_ver}ContextBridge.cc d3d/GstD3D${_ver}ContextBridge.h
                 d3d/GstD3DVideoBufferCommon.h ${_qgc_d3d${_ver}_extra_sources})
 endforeach()
-# Android AHardwareBuffer (gst-plugins-bad >= 1.28; GLMemory covers older SDKs).
+# Android AHardwareBuffer memory. The probe finds its header in no GStreamer SDK: gst/android/gstandroid.h is in no
+# release, and the AHardwareBuffer memory of GStreamer 1.30 (gst/allocators/gstahardwarebuffer.h) is another API, so
+# the row compiles only against an SDK that adds this one. GLMemory is Android's path.
 set(_qgc_gpu_row_AHardwareBuffer
     PLATFORMS ANDROID
     PROBE HAS_VAR QGC_GST_HAS_AHARDWAREBUFFER HEADER gst/android/gstandroid.h SYMBOL gst_is_ahardware_buffer_memory
     EGL REQUIRED
     DEFINE QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH
     SOURCES android/GstAHardwareBufferVideoBuffer.cc android/GstAHardwareBufferVideoBuffer.h)
-# gst-vulkan. The impl TUs also gate on QT_CONFIG(vulkan) but callsites gate on the define alone, so the define must
-# imply Qt Vulkan support (macOS Qt ships none while GStreamer.framework carries libgstvulkan-1.0). The framework also
-# ships the .pc and headers without the library, hence the link-path check.
+# gst-vulkan's VulkanImage memory. Not a zero-copy path: gst-vulkan can't wrap Qt's VkDevice, so the wrapper imports no
+# frame (vulkan/GstVulkanVideoBuffer.h). The impl TUs also gate on QT_CONFIG(vulkan) but callsites gate on the define
+# alone, so the define must imply Qt Vulkan support (macOS Qt ships none while GStreamer.framework carries
+# libgstvulkan-1.0). The framework also ships the .pc and headers without the library, hence the link-path check.
 set(_qgc_gpu_row_Vulkan
     PLATFORMS LINUX WIN32 MACOS ANDROID
     REQUIRES ${_qgc_vulkan_requires}
