@@ -16,6 +16,11 @@
 #include <QtCore/QStringList>
 #include <QtCore/QTimeZone>
 
+#ifdef Q_OS_LINUX
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 #include "Fixtures/RAIIFixtures.h"
 #include "GPSCancellation.h"
 #include "GPSProtocolRuntime.h"
@@ -32,6 +37,28 @@ using namespace std::chrono_literals;
 using namespace GPSTest;
 
 namespace {
+#ifdef Q_OS_LINUX
+/// Points this process's open descriptors of @a file at /dev/full, so that what is written to the open file from now
+/// on fails as on a full disk. Only that file is affected. @return whether a descriptor was found.
+bool failWritesTo(const QString& file)
+{
+    constexpr int DESCRIPTORS = 4096;
+    const QString path = QFileInfo(file).canonicalFilePath();
+    const int full = ::open("/dev/full", O_WRONLY | O_CLOEXEC);
+    if (path.isEmpty() || full < 0) {
+        return false;
+    }
+    bool found = false;
+    for (int descriptor = 0; descriptor < DESCRIPTORS; ++descriptor) {
+        if (descriptor != full && QFile::symLinkTarget(QStringLiteral("/proc/self/fd/%1").arg(descriptor)) == path) {
+            found = ::dup2(full, descriptor) == descriptor || found;
+        }
+    }
+    (void) ::close(full);
+    return found;
+}
+#endif
+
 /// Serves its input in fixed chunks; once drained, every read times out at once rather than waiting out its timeout.
 /// Writes are kept.
 class MemoryGPSTransport final : public GPSTransport
@@ -283,10 +310,11 @@ void GPSRecordingTransportTest::_fileErrorKeepsLink()
     } else if (failure == QStringLiteral("existing-file")) {
         file = directory.createFile(QStringLiteral("session.log"), "an earlier recording");
     } else {
-        if (!QFileInfo::exists(QStringLiteral("/dev/full"))) {
-            QSKIP("Needs /dev/full to fail file writes");
-        }
-        file = QStringLiteral("/dev/full");
+#ifdef Q_OS_LINUX
+        file = QDir(directory.path()).filePath(QStringLiteral("session.log"));
+#else
+        QSKIP("Needs /proc/self/fd and /dev/full to fail the writes to an open file");
+#endif
     }
     // More than QFile's write buffer, so a failing device reports the error during the session.
     const QByteArray input = bytePattern(64 * 1024, 5);
@@ -298,6 +326,13 @@ void GPSRecordingTransportTest::_fileErrorKeepsLink()
 
     expectLogMessage(RECORDING_LOG, QtWarningMsg, QRegularExpression(QStringLiteral("file error")));
     QCOMPARE(recorder.open().status, GPSOpenStatus::Opened);
+#ifdef Q_OS_LINUX
+    // The file opens, and then its disk is full.
+    if (failure == QStringLiteral("write-error")) {
+        QVERIFY(recorder.recording());
+        QVERIFY(failWritesTo(file));
+    }
+#endif
     QCOMPARE(readAvailable(recorder), input);
     verifyExpectedLogMessage();
     QVERIFY(!recorder.recording());
