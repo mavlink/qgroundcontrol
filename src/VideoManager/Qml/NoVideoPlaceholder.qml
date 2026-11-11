@@ -30,6 +30,7 @@ Image {
     VideoStatusLabel {
         anchors.centerIn:   parent
         useSmallFont:       root.useSmallFont
+        maximumWidth:       root.width
         text:               root._reasonText
     }
 }

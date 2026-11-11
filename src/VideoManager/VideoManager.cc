@@ -518,6 +518,16 @@ void VideoManager::setFullScreen(bool on)
     }
 }
 
+void VideoManager::setTileRoom(int room)
+{
+    if (room == _tileRoom) {
+        return;
+    }
+    _tileRoom = room;
+    emit tileRoomChanged();
+    (void) QMetaObject::invokeMethod(this, &VideoManager::_updateState, Qt::QueuedConnection);
+}
+
 void VideoManager::selectSource(VideoStreamController* source)
 {
     if (!source || !source->tile()) {
@@ -581,8 +591,9 @@ void VideoManager::_updateStateNow()
                                                                  : NoVideoReason::Waiting;
     const bool autoStreamConfigured = VideoStreamResolver::isAutoStream(_primaryStream->streamInfo());
     const bool isStreamSource = VideoStreamResolver::isNetworkSource(videoSource) || autoStreamConfigured;
-    const int maxTiles =
+    const int tilesAllowed =
         static_cast<int>(std::min(_videoSettings->maxVideoTiles()->rawValue().toUInt(), kMaxVideoTiles));
+    const int maxTiles = (_tileRoom < 0) ? tilesAllowed : std::min(tilesAllowed, _tileRoom);
     // A stream to play takes the place of the camera the video source names: the camera source then plays the camera
     // to show in a tile.
     const QString cameraName =

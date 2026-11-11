@@ -4,15 +4,20 @@ import QtQuick
 import QtMultimedia
 
 import QGroundControl
+import QGroundControl.Controls
 
 // The video of the primary stream or the UVC camera, fitted to the view, with grid lines, the telemetry overlay and the
-// thermal stream.
+// thermal stream. Where it is asked to, it shows the other video sources in tiles along its top.
 Item {
     id: root
 
     property bool useSmallFont: true
-    /// Height covered at the top of the view, which the thermal picture-in-picture stays below.
+    /// Height covered at the top of the view, which the thermal picture-in-picture and the tiles stay below.
     property real thermalPipTopInset: 0
+    /// Whether the other video sources are shown in tiles: for a view with room for them, not a picture-in-picture.
+    property bool showTiles: false
+    /// Width covered at the right of the view, which the tiles stay clear of.
+    property real tilesRightInset: 0
     /// The camera whose thermal mode and zoom the view follows: the active vehicle's current camera by default. Any
     /// object with the camera properties the view reads will do, as the tests' stand-ins.
     property var camera: root._activeVehicle && root._activeVehicle.cameraManager
@@ -81,6 +86,14 @@ Item {
                                                 || (root._isModeFitHeight && (root._viewAr < root._ar))))
     readonly property int _outputFillMode: root._cropsVideo ? VideoOutput.PreserveAspectCrop
                                                             : VideoOutput.PreserveAspectFit
+    readonly property real _tilesMargin: ScreenTools.defaultFontPixelHeight * 0.5
+    readonly property bool _thermalPipShown: thermalOverlay.visible && !!root.camera
+                                             && root.camera.thermalMode === MavlinkCameraControlInterface.THERMAL_PIP
+
+    /// Whether a tile is at @p x, @p y of the view: a press there is the tile's.
+    function tileAt(x, y) {
+        return tiles.visible && !!tiles.childAt(x - tiles.x, y - tiles.y)
+    }
 
     // The grid lines span the fitted video, beyond the view where it crops.
     clip: true
@@ -166,6 +179,7 @@ Item {
         }
 
         ThermalVideoOverlay {
+            id:             thermalOverlay
             objectName:     "videoViewThermal"
             camera:         root.camera
             pipTopInset:    root.thermalPipTopInset
@@ -176,5 +190,18 @@ Item {
             anchors.fill:   parent
             camera:         root.camera
         }
+    }
+
+    // Along the top, right of the thermal picture-in-picture, or in its place: clear of the Fly View's tool strip, as
+    // that one is.
+    VideoTiles {
+        id:             tiles
+        objectName:     "videoViewTiles"
+        x:              root._thermalPipShown ? thermalOverlay.x + thermalOverlay.width + root._tilesMargin
+                                              : ScreenTools.defaultFontPixelWidth * 12
+        y:              root.thermalPipTopInset + root._tilesMargin
+        maximumWidth:   root.width - tiles.x - root.tilesRightInset - root._tilesMargin
+        videoManager:   root.videoManager
+        shown:          root.showTiles
     }
 }

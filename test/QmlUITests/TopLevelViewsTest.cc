@@ -95,6 +95,24 @@ static QQuickItem* findFirstVisibleSettingsButton(QQuickItem* root)
     return (first == buttons.cend()) ? nullptr : *first;
 }
 
+// The visible control of a settings group that edits fact
+static QQuickItem* findVisibleFactControl(QQuickItem* root, const Fact* fact)
+{
+    if (!root || !root->isVisible()) {
+        return nullptr;
+    }
+    if (root->property("fact").value<Fact*>() == fact) {
+        return root;
+    }
+    const auto children = root->childItems();
+    for (auto* child : children) {
+        if (auto* found = findVisibleFactControl(child, fact)) {
+            return found;
+        }
+    }
+    return nullptr;
+}
+
 // Sets the video source and returns a guard restoring the original value on scope exit
 [[nodiscard]] static auto setVideoSourceWithRestore(const char* source)
 {
@@ -439,9 +457,16 @@ void TopLevelViewsTest::_testDiscoveredCameraReceiverSettingsVisible()
     QVERIFY(videoPage->setProperty("autoStreamConfig", true));
     QVERIFY(videoPage->setProperty("isStreamSource", true));
 
+    // The camera's stream leaves no source to pick. The USB camera to show in a tile beside it can be.
     QQuickItem* const sourceGroup = findVisibleItem(_rootItem, QStringLiteral("settingsGroup_VideoSource"));
     QVERIFY(sourceGroup);
-    QTRY_VERIFY(!sourceGroup->isEnabled());
+    VideoSettings* const videoSettings = SettingsManager::instance()->videoSettings();
+    const QQuickItem* const sourceControl = findVisibleFactControl(sourceGroup, videoSettings->videoSource());
+    QVERIFY(sourceControl);
+    QTRY_VERIFY(!sourceControl->isEnabled());
+    const QQuickItem* tileCameraControl = nullptr;
+    QTRY_VERIFY((tileCameraControl = findVisibleFactControl(sourceGroup, videoSettings->uvcTileCamera())));
+    QVERIFY(tileCameraControl->isEnabled());
     QTRY_VERIFY(!findVisibleItem(_rootItem, QStringLiteral("settingsGroup_Connection"), 0));
     QTRY_VERIFY(!findVisibleItem(_rootItem, QStringLiteral("settingsTextField_aspectRatio"), 0));
 

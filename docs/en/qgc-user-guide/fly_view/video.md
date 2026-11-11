@@ -22,6 +22,46 @@ A video view without a picture says why: **WAITING FOR VIDEO** until the stream 
 DISARMED** when [Disable Video Stream When Disarmed](../settings_view/video.md#settings) has stopped it until the vehicle
 arms, and **VIDEO STOPPED** once the video was stopped.
 
+## Video Tiles
+
+While the video is in the foreground, _QGroundControl_ shows the other video it can play in small tiles along the top
+of the video, each under its name:
+
+1. The USB camera chosen as **USB Camera Tile** in [Application Settings > Video](../settings_view/video.md#video-source),
+   while the video source is a stream.
+1. The other video streams of the vehicle's current camera: those that are neither on display already nor its thermal
+   stream, which is shown with the video as before.
+1. The video streams of the vehicle's other MAVLink cameras, in the order the camera tools list the cameras.
+
+At most three tiles are shown. [Video Tiles](../settings_view/video.md#settings) sets how many, up to four, and 0 turns
+them off. The tiles are filled in that order: a source there is no tile left for isn't shown, connected to or
+decoded. A camera that advertises several streams at one address (the same URL or UDP port) sends one of them at a
+time, so only one of those streams gets a picture.
+
+The tiles share the width of the video, and are never smaller than half their full size. Where the video is too narrow
+for all of them at that size, as on a phone held upright, it shows as many as fit, in the same order, and the sources
+left without a tile aren't connected to. Where not even one tile fits, the stream is the main picture, also when the
+USB camera was made the main picture.
+
+Tap a tile to make it the main picture:
+
+- A camera's stream becomes that camera's current stream, and its camera the current camera, as when you select them in
+  the [camera tools](camera_tools.md)' settings. The camera controls, the thermal view, recordings and photos are then
+  that camera's and that stream's. The stream that was the main picture takes the tile. Both streams keep playing: they
+  aren't connected to again.
+- The USB camera becomes the main picture, and the stream takes the camera's tile. Tap the stream's tile to change them
+  back. This choice isn't saved: the stream is the main picture again the next time _QGroundControl_ starts.
+
+A tile says **WAITING FOR VIDEO** until its video arrives and **VIDEO LOST - RECONNECTING** while its stream is lost, as
+the main picture does. The tiles are not shown in the video switcher window, and their streams aren't decoded while the
+video is there.
+
+The vehicle is asked to send each stream that has a tile, and to stop it once it has none, so every tile takes some of
+the link's bandwidth, as well as a video decoder on the ground station.
+
+Recordings and photos are of the main picture, with its thermal stream: the tiles aren't recorded. A stream that moves
+to a tile while it is being recorded goes on being recorded until you stop the recording.
+
 ## Video Statistics
 
 While a video stream plays, the [Video indicator](fly_view_toolbar.md#video) in the Fly View toolbar shows its frame
@@ -55,6 +95,8 @@ dropdown shows, about once a second:
 - **Recording**: while recording, how long and how much has been written.
 
 For a MAVLink camera, its advertised frame rate, bitrate and resolution follow the measured ones in brackets.
+The indicator's figures are the main picture's. The statistics of each stream in a [tile](#video-tiles) appear below
+those of the main picture, under the stream's name.
 When a camera also sends a thermal stream, its statistics appear below. The thermal stream is decoded only while the
 camera's thermal view is on. With the view off it is still received, and GStreamer still records it with the video (the
 Qt Multimedia backend records only video on display), but it shows no frame rate, and turning the view on shows it from

@@ -378,6 +378,9 @@ void VideoStreamController::unregisterVideoOutput(QQuickItem* videoOutput)
 void VideoStreamController::_detachVideoOutput()
 {
     if (!_videoOutput && _receiver) {
+        // Not decoded without an output, and decoded again from the next keyframe once it has one: the stream wasn't
+        // lost, so the output it returns to waits for video rather than report a reconnect.
+        _forgetDecoded();
         _receiver->setVideoOutput(nullptr);
     }
 }

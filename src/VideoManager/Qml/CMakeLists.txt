@@ -29,6 +29,8 @@ qt_add_qml_module(
         VideoStreamOutput.qml
         VideoStreamSettingsGroup.qml
         VideoStreamStatsGroup.qml
+        VideoTile.qml
+        VideoTiles.qml
         VideoView.qml
     NO_PLUGIN
 )

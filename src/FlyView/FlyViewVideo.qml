@@ -10,7 +10,11 @@ Item {
     property Item pipView
     /// Height the Fly View toolbar covers at the top of the full-size video.
     property real topInset: 0
+    /// Width the Fly View's widgets cover at the top right of the full-size video.
+    property real rightInset: 0
     property Item pipState: videoPipState
+    /// The manager whose video the view shows.
+    property VideoManager videoManager: QGroundControl.videoManager
 
     PipState {
         id:         videoPipState
@@ -19,7 +23,7 @@ Item {
 
         onStateChanged: {
             if (videoPipState.state !== videoPipState.fullState) {
-                QGroundControl.videoManager.fullScreen = false
+                root.videoManager.fullScreen = false
             }
         }
     }
@@ -30,13 +34,16 @@ Item {
         anchors.fill:       parent
         useSmallFont:       root.pipState.state !== root.pipState.fullState
         thermalPipTopInset: root.pipState.state === root.pipState.fullState ? root.topInset : 0
-        visible:        QGroundControl.videoManager.isStreamSource || QGroundControl.videoManager.isUvc
+        showTiles:          root.pipState.state === root.pipState.fullState
+        tilesRightInset:    root.rightInset
+        videoManager:       root.videoManager
+        visible:        root.videoManager.isStreamSource || root.videoManager.isUvc
     }
 
     QGCLabel {
         text: qsTr("Double-click to exit full screen")
         font.pointSize: ScreenTools.largeFontPointSize
-        visible: QGroundControl.videoManager.fullScreen
+        visible: root.videoManager.fullScreen
         anchors.centerIn: parent
 
         onVisibleChanged: {
@@ -97,15 +104,24 @@ Item {
             }
         }
 
-        onDoubleClicked: {
+        onDoubleClicked: (mouse) => {
+            if (videoStreaming.tileAt(mouse.x, mouse.y)) {
+                mouse.accepted = false
+                return
+            }
             // Fires on the second press of a double-click. The second release still emits
             // onReleased, so flag it to prevent re-arming the single-click timer.
             _doubleClicked = true
             singleClickTimer.stop()
-            QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
+            root.videoManager.fullScreen = !root.videoManager.fullScreen
         }
 
         onPressed: (mouse) => {
+            // A press on a video tile is the tile's, which is below this area.
+            if (videoStreaming.tileAt(mouse.x, mouse.y)) {
+                mouse.accepted = false
+                return
+            }
             _pressX = mouse.x
             _pressY = mouse.y
             _dragging = false

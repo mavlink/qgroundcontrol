@@ -63,6 +63,10 @@ private slots:
     void _testTelemetryOverlayFollowsTelemetry();
     void _testCameraPinchZoomSteps();
     void _testVideoViewPlacesThermalPip();
+    void _testVideoViewShowsOtherSourcesInTiles();
+    void _testTappedTileBecomesMainPicture();
+    void _testTilesOutlastViewOnItsWayToFullSize();
+    void _testFlyViewLeavesTapsOnTilesToThem();
     void _testThermalDecodesOnlyWhileShown();
     void _testStreamUriAndTransport_data();
     void _testStreamUriAndTransport();

@@ -7,19 +7,25 @@
         "autoStreamConfig": "QGroundControl.videoManager.autoStreamConfigured",
         "sourceDisabled": "videoSource === QGroundControl.settingsManager.videoSettings.disabledVideoSource && !autoStreamConfig",
         "isStreamSource": "QGroundControl.videoManager.isStreamSource",
+        "tilesShown": "QGroundControl.settingsManager.videoSettings.maxVideoTiles.rawValue > 0",
         "rtpLatencyVisible": "!QGroundControl.settingsManager.videoSettings.lowLatencyMode.rawValue",
         "gstreamer": "QGroundControl.settingsManager.videoSettings.videoBackend.rawValue === 0"
     },
     "groups": [
         {
             "heading": "Video Source",
-            "keywords": ["video source", "camera", "stream", "usb camera", "resolution", "frame rate", "camera format", "white balance", "zoom", "exposure", "focus"],
-            "enableWhen": "!autoStreamConfig",
+            "keywords": ["video source", "camera", "stream", "usb camera", "resolution", "frame rate", "camera format", "white balance", "zoom", "exposure", "focus", "tile"],
             "headingDescription": "autoStreamConfig ? qsTr(\"MAVLink camera stream is automatically configured\") : \"\"",
             "controls": [
                 {
                     "setting": "videoSettings.videoSource",
-                    "control": "combobox"
+                    "control": "combobox",
+                    "enableWhen": "!autoStreamConfig"
+                },
+                {
+                    "setting": "videoSettings.uvcTileCamera",
+                    "control": "combobox",
+                    "showWhen": "isStreamSource && tilesShown"
                 },
                 {
                     "control": "component",
@@ -88,7 +94,7 @@
         },
         {
             "heading": "Settings",
-            "keywords": ["aspect ratio", "low latency", "decoder", "hardware decode", "disable when disarmed", "gpu", "zero-copy", "backend", "gstreamer", "qt multimedia", "ffmpeg"],
+            "keywords": ["aspect ratio", "low latency", "decoder", "hardware decode", "disable when disarmed", "gpu", "zero-copy", "backend", "gstreamer", "qt multimedia", "ffmpeg", "tiles"],
             "showWhen": "!sourceDisabled && isStreamSource",
             "controls": [
                 {
@@ -99,6 +105,10 @@
                 {
                     "setting": "videoSettings.aspectRatio",
                     "showWhen": "!autoStreamConfig && isStreamSource"
+                },
+                {
+                    "setting": "videoSettings.maxVideoTiles",
+                    "showWhen": "isStreamSource"
                 },
                 {
                     "setting": "videoSettings.disableWhenDisarmed",

@@ -29,13 +29,13 @@ class VideoTelemetryOverlay;
 /// covers the main picture and the thermal stream. The other properties, such as hasVideo and isUvc, are the manager's
 /// own state.
 ///
-/// The tiles show what else there is to see, up to VideoSettings::maxVideoTiles of them: the USB camera
-/// VideoSettings::uvcTileCamera names, while a stream is the video source, then the other streams of the active
-/// vehicle's current camera, then its other cameras' streams. Each stream in a tile has a source of its own, which
-/// plays that stream for as long as it is shown. When the vehicle's current stream becomes one that plays in a tile,
-/// that source becomes the primary stream and the former one takes a tile: neither stream restarts. The camera
-/// selected in its tile (selectSource()) is the main picture as well, with the primary stream in a tile, until a
-/// stream is selected.
+/// The tiles show what else there is to see, up to VideoSettings::maxVideoTiles of them, and no more than the row of
+/// tiles has room for (tileRoom): the USB camera VideoSettings::uvcTileCamera names, while a stream is the video
+/// source, then the other streams of the active vehicle's current camera, then its other cameras' streams. Each stream
+/// in a tile has a source of its own, which plays that stream for as long as it is shown. When the vehicle's current
+/// stream becomes one that plays in a tile, that source becomes the primary stream and the former one takes a tile:
+/// neither stream restarts. The camera selected in its tile (selectSource()) is the main picture as well, with the
+/// primary stream in a tile, until a stream is selected.
 class VideoManager : public QObject
 {
     Q_OBJECT
@@ -60,6 +60,9 @@ class VideoManager : public QObject
     Q_PROPERTY(bool isUvc READ isUvc NOTIFY isUvcChanged FINAL)
     Q_PROPERTY(NoVideoReason noVideoReason READ noVideoReason NOTIFY noVideoReasonChanged FINAL)
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged FINAL)
+    /// How many tiles the row of tiles has room for, which it tells while it is shown: no more sources than that play
+    /// in tiles, whatever VideoSettings::maxVideoTiles allows. -1 until a row tells.
+    Q_PROPERTY(int tileRoom READ tileRoom WRITE setTileRoom NOTIFY tileRoomChanged FINAL)
     Q_PROPERTY(double aspectRatio READ aspectRatio NOTIFY aspectRatioChanged FINAL)
     Q_PROPERTY(double thermalAspectRatio READ thermalAspectRatio NOTIFY aspectRatioChanged FINAL)
     Q_PROPERTY(QString uvcVideoSourceID READ uvcVideoSourceID NOTIFY uvcVideoSourceIDChanged FINAL)
@@ -137,6 +140,9 @@ public:
     NoVideoReason noVideoReason() const { return _noVideoReason; }
 
     bool recording() const;
+
+    int tileRoom() const { return _tileRoom; }
+
     double aspectRatio() const;
     double thermalAspectRatio() const;
 
@@ -145,6 +151,9 @@ public:
     QString telemetryOverlayText() const;
 
     void setFullScreen(bool on);
+    /// The sources follow on the next pass of the event loop, with the room there is then: a view on its way from the
+    /// picture-in-picture to its full size tells of the room it has on the way, which mustn't stop the tiles' streams.
+    void setTileRoom(int room);
 
 signals:
     void sourcesChanged();
@@ -160,6 +169,7 @@ signals:
     void noVideoReasonChanged();
     void recordingChanged(bool recording);
     void telemetryOverlayTextChanged();
+    void tileRoomChanged();
     void uvcVideoSourceIDChanged();
 
 private:
@@ -251,6 +261,7 @@ private:
     bool _cameraTileOnMain = false;
     /// How many tile sources there have been, which names the next one.
     int _tileStreamSerial = 0;
+    int _tileRoom = -1;
     bool _disabledWhileDisarmed = false;
     bool _autoStreamConfigured = false;
     bool _hasThermal = false;

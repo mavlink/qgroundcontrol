@@ -21,6 +21,28 @@ The backend-neutral `VideoReceiver`, `VideoBackend` and `VideoStreamStats` are i
 holds the other `VideoReceiver`, `QtMultimediaVideoReceiver`, which plays streams through `QMediaPlayer` (FFmpeg): in
 builds without GStreamer, where `VideoSettings::videoBackend` picks it, and when GStreamer failed to initialize.
 
+Each receiver plays for one video source, a `VideoStreamController` (`../Streams/`), and `VideoManager` (`..`) is the
+QML facade of the sources: the primary stream, the thermal stream, the USB camera (`../UVC/`), and one for each other
+stream shown in a tile beside the main picture (`VideoTiles.qml` and `VideoTile.qml` in `../Qml/`). Those are the other
+streams the active vehicle's cameras advertise, up to `VideoSettings::maxVideoTiles`, or to the tiles the row has
+room for where those are fewer (`VideoManager::tileRoom`), less the tile of the USB camera that
+`VideoSettings::uvcTileCamera` names. A stream at an address (its URI, or the UDP port it is listened for on)
+that a stream on display already has gets no source: a camera sends such streams one at a time.
+
+- `VideoManager::sources` and `primaryStream` notify. When the vehicle's current stream becomes one that plays in a
+  tile, as after `VideoManager::selectSource()`, that tile's source becomes the primary stream and the former primary
+  stream takes the tile: both keep their receivers, and neither stream restarts. A stream that plays in no tile is
+  played by the primary stream, whose receiver connects to it.
+- A QML `VideoOutput` registers with the source it shows (`VideoStreamOutput.qml`). One that registers as another one
+  leaves takes the source over, so a source moves between the main picture and a tile without its receiver being
+  without an output, which would take the decoder out of its pipeline. A tile's source has an output only while the
+  tile is shown: hidden, its stream is received but not decoded, as the thermal stream is with its view off.
+- The vehicle's cameras are told which of their streams play in tiles
+  (`MavlinkCameraControlInterface::setExtraStreams()`). `VehicleCameraControl` asks the camera to transmit them
+  (`MAV_CMD_VIDEO_START_STREAMING`) and to stop those that left (`MAV_CMD_VIDEO_STOP_STREAMING`), and neither stops
+  nor starts a stream that stays on display when the current stream changes.
+- Recordings and photos are of the main picture and its thermal stream, not of the tiles.
+
 | Component | Role |
 | --- | --- |
 | `GstVideoReceiver` | The `VideoReceiver` the app uses. Callers state what they want (config, active, video output, recording), which it hands to its `GstReceiverWorker` as one `GstReceiverRequest` after each change. It owns the display sink, built from its `VideoReceiver::DisplayConfig` when an output is set and rebuilt by `restart()`. |
@@ -521,7 +543,7 @@ QGC supports the standard GStreamer observability env vars. Set them before laun
 
 ### Pipeline graph dumps (`.dot` files)
 
-When `GST_DEBUG_DUMP_DOT_DIR` is set, QGC writes each receiver's pipeline graph there at key transitions as `receiver-<stream>-<tag>.dot`. `<stream>` is the receiver's name (`videoContent`, `thermalVideo`), so the two receivers don't overwrite each other's files, and `<tag>` names the transition (`pipeline-initial`, `pipeline-started`, `pipeline-with-decoder`, `pipeline-with-videosink`, `pipeline-with-filesink`, `pipeline-error`, `pipeline-watchdog-timeout`, `pipeline-decoder-timeout`, `pipeline-recording-stopped`, …). A transition's next dump overwrites its last one.
+When `GST_DEBUG_DUMP_DOT_DIR` is set, QGC writes each receiver's pipeline graph there at key transitions as `receiver-<stream>-<tag>.dot`. `<stream>` is the receiver's name (`videoContent`, `thermalVideo`, or `videoTile<N>` for the N-th stream that got a tile, which keeps the name if the stream becomes the main picture), so the receivers don't overwrite each other's files, and `<tag>` names the transition (`pipeline-initial`, `pipeline-started`, `pipeline-with-decoder`, `pipeline-with-videosink`, `pipeline-with-filesink`, `pipeline-error`, `pipeline-watchdog-timeout`, `pipeline-decoder-timeout`, `pipeline-recording-stopped`, …). A transition's next dump overwrites its last one.
 
 ```bash
 export GST_DEBUG_DUMP_DOT_DIR=/tmp/qgc-pipeline-dots

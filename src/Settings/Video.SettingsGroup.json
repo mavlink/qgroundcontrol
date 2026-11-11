@@ -218,7 +218,7 @@
         {
             "name": "maxVideoTiles",
             "shortDesc": "How many other video sources are shown in tiles beside the main video. 0 shows none.",
-            "longDesc": "Besides the main video, the video view shows the other streams of the vehicle's cameras, and the USB camera chosen for a tile, each in a small tile: at most this many, 0 for none. Each tile takes a network connection and a video decoder, of which tablets have few.",
+            "longDesc": "Besides the main video, the video view shows the other streams of the vehicle's cameras, and the USB camera chosen for a tile, each in a small tile: at most this many, fewer where the video is too narrow for them, 0 for none. Each tile takes a network connection and a video decoder, of which tablets have few.",
             "type": "uint32",
             "min": 0,
             "max": 4,

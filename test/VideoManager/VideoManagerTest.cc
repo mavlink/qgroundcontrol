@@ -210,6 +210,76 @@ VideoView {
 }
 )QML";
 
+// A VideoView with room for tiles, following a stand-in camera, whose thermal mode the test changes.
+constexpr const char* kTilesVideoViewQml = R"QML(
+import QtQuick
+import QGroundControl
+import QGroundControl.Controls
+import QGroundControl.VideoManager
+
+VideoView {
+    width: 800
+    height: 400
+    showTiles: true
+    thermalPipTopInset: 30
+    camera: QtObject {
+        property int thermalMode: MavlinkCameraControlInterface.THERMAL_OFF
+        property real thermalOpacity: 100
+        property bool hasZoom: false
+    }
+
+    readonly property real pipX: ScreenTools.defaultFontPixelWidth * 12
+}
+)QML";
+
+// The Fly View's video as its main view, which a stand-in picture-in-picture view makes it.
+constexpr const char* kFlyViewVideoQml = R"QML(
+import QtQuick
+import QGroundControl.FlyView
+
+Item {
+    id: root
+
+    property alias videoManager: video.videoManager
+    // The video's obstacle overlay takes the vehicle from the view it is in.
+    property var _activeVehicle: null
+
+    width: 800
+    height: 400
+
+    Item {
+        id: pipView
+
+        property Item _pipContentItem: pipContent
+        property Item _windowContentItem: pipContent
+
+        Item {
+            id: pipContent
+        }
+    }
+
+    FlyViewVideo {
+        id: video
+        pipView: pipView
+
+        Component.onCompleted: pipState.state = pipState.fullState
+    }
+}
+)QML";
+
+/// The tiles @p tiles, a VideoTiles, shows: each the item of a loader.
+QList<QQuickItem*> shownTiles(const QQuickItem* tiles)
+{
+    QList<QQuickItem*> shown;
+    for (const QQuickItem* const child : tiles->childItems()) {
+        auto* const tile = child->property("item").value<QQuickItem*>();
+        if (child->isVisible() && tile) {
+            shown.append(tile);
+        }
+    }
+    return shown;
+}
+
 }  // namespace
 
 void VideoManagerTest::init()
@@ -501,23 +571,29 @@ void VideoManagerTest::_testThermalOnlyChangeReconfiguresThermal()
 void VideoManagerTest::_testOtherStreamsPlayInTiles_data()
 {
     QTest::addColumn<int>("maxTiles");
+    QTest::addColumn<int>("tileRoom");  ///< What the row of tiles tells; -1 when none does
     QTest::addColumn<QStringList>("tileUris");
 
     const QString second = QStringLiteral("udp://0.0.0.0:5602");
     const QString wide = QStringLiteral("rtsp://10.0.0.2/wide");
     const QString fourth = QStringLiteral("udp://0.0.0.0:5604");
-    QTest::newRow("no tiles") << 0 << QStringList();
-    QTest::newRow("one tile") << 1 << QStringList({second});
-    QTest::newRow("three tiles") << 3 << QStringList({second, wide, fourth});
-    QTest::newRow("as many tiles as streams") << 4 << QStringList({second, wide, fourth});
+    QTest::newRow("no tiles") << 0 << -1 << QStringList();
+    QTest::newRow("one tile") << 1 << -1 << QStringList({second});
+    QTest::newRow("three tiles") << 3 << -1 << QStringList({second, wide, fourth});
+    QTest::newRow("as many tiles as streams") << 4 << -1 << QStringList({second, wide, fourth});
+    QTest::newRow("room for two of three tiles") << 3 << 2 << QStringList({second, wide});
+    QTest::newRow("room for more tiles than allowed") << 1 << 4 << QStringList({second});
+    QTest::newRow("no room for a tile") << 3 << 0 << QStringList();
 }
 
 void VideoManagerTest::_testOtherStreamsPlayInTiles()
 {
     QFETCH(int, maxTiles);
+    QFETCH(int, tileRoom);
     QFETCH(QStringList, tileUris);
 
     _facts->set(_videoSettings->maxVideoTiles(), maxTiles);
+    _videoManager->setTileRoom(tileRoom);
     const auto current = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
     const auto second = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5602");
     // A camera sends the streams it advertises at one address one at a time: the stream on display has that port,
@@ -761,7 +837,7 @@ void VideoManagerTest::_testCameraSourcePlaysVideoSourceOrTileCamera()
 void VideoManagerTest::_testSelectedCameraTileTakesMainPicture()
 {
     const QString camera = QStringLiteral("QGC Test Camera");
-    _videoManager->_cameraAttached = [&camera](const QString& name) { return name == camera; };
+    _videoManager->_cameraAttached = [camera](const QString& name) { return name == camera; };
     const auto current = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
     const auto thermalInfo =
         makeStreamInfo(VIDEO_STREAM_TYPE_RTSP, "rtsp://10.0.0.1/thermal", VIDEO_STREAM_ENCODING_H264, true);
@@ -1272,6 +1348,16 @@ void VideoManagerTest::_testReconnectingFollowsLostStream()
     _videoManager->stopVideo();
     _settle();
     QVERIFY(!stream->reconnecting());
+
+    // A stream that isn't decoded because its output left, as a hidden tile's does, wasn't lost.
+    QQuickItem output;
+    stream->registerVideoOutput(&output);
+    _primary->setState(State::Streaming);
+    _primary->setDecoding(true);
+    stream->unregisterVideoOutput(&output);
+    _settle();
+    _primary->setDecoding(false);
+    QVERIFY(!stream->reconnecting());
 }
 
 void VideoManagerTest::_testLinkRegainedReconnectsStreams()
@@ -1700,6 +1786,251 @@ void VideoManagerTest::_testVideoViewPlacesThermalPip()
     (void) camera->setProperty("thermalMode", MavlinkCameraControlInterface::THERMAL_PIP);
     QCOMPARE(thermal->x(), view->property("pipX").toReal());
     QCOMPARE(thermal->y(), view->property("pipY").toReal());
+}
+
+void VideoManagerTest::_testVideoViewShowsOtherSourcesInTiles()
+{
+    const auto current = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
+    const auto thermalInfo =
+        makeStreamInfo(VIDEO_STREAM_TYPE_RTSP, "rtsp://10.0.0.1/thermal", VIDEO_STREAM_ENCODING_H264, true);
+    const auto second = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5602");
+    const auto third = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5603");
+    _videoManager->_setAdvertisedStreams(
+        {current.get(), nullptr, QStringLiteral("Main")}, thermalInfo.get(),
+        {{second.get(), nullptr, QStringLiteral("Second")}, {third.get(), nullptr, QStringLiteral("Third")}});
+    _settle();
+    VideoStreamController* const secondSource = _videoManager->_sources.at(3);
+    FakeVideoReceiver* const secondReceiver = _receiverOf(secondSource);
+
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kTilesVideoViewQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/TilesVideoView.qml")));
+    const std::unique_ptr<QQuickItem> view(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
+        {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}})));
+    QVERIFY2(view, qPrintable(component.errorString()));
+    // Items outside a scene are never visible.
+    QQuickWindow window;
+    view->setParentItem(window.contentItem());
+    auto* const tiles = view->findChild<QQuickItem*>(QStringLiteral("videoViewTiles"));
+    QVERIFY(tiles);
+
+    // Each other stream has a tile, under its name, below what covers the top of the view and clear of the tool
+    // strip at its left.
+    QVERIFY(tiles->isVisible());
+    QCOMPARE(shownTiles(tiles).size(), 2);
+    // The row places its tiles when it is polished, as a window does before each frame.
+    tiles->ensurePolished();
+    const QQuickItem* const secondTile = shownTiles(tiles).first();
+    QCOMPARE(secondTile->property("source").value<VideoStreamController*>(), secondSource);
+    QVERIFY(showsText(secondTile, QStringLiteral("Second")));
+    QVERIFY(showsText(shownTiles(tiles).last(), QStringLiteral("Third")));
+    QCOMPARE(tiles->x(), view->property("pipX").toReal());
+    QVERIFY(tiles->y() > 30);
+    QVERIFY(tiles->width() > (2 * secondTile->width()));
+    QVERIFY((tiles->x() + tiles->width()) < 800);
+    QVERIFY(shownTiles(tiles).last()->mapToItem(tiles, QPointF()).x() > secondTile->width());
+    // A press on a tile is the tile's, which the view tells whoever takes the presses over it.
+    const auto tileAt = [&view](qreal x, qreal y) {
+        QVariant onTile;
+        return QMetaObject::invokeMethod(view.get(), "tileAt", Q_RETURN_ARG(QVariant, onTile), Q_ARG(QVariant, x),
+                                         Q_ARG(QVariant, y)) &&
+               onTile.toBool();
+    };
+    QVERIFY(tileAt(tiles->x() + tiles->width() - 1, tiles->y() + 1));
+    QVERIFY(!tileAt(tiles->x() + tiles->width() + 1, tiles->y() + 1));
+
+    // The stream plays into its tile, which says what a main picture does while it has none to show.
+    QVERIFY(secondReceiver->videoOutput());
+    QVERIFY(showsText(secondTile, QStringLiteral("WAITING FOR VIDEO")));
+    secondReceiver->setState(VideoReceiver::State::Streaming);
+    secondReceiver->setDecoding(true);
+    QVERIFY(!showsText(secondTile, QStringLiteral("WAITING FOR VIDEO")));
+    secondReceiver->setDecoding(false);
+    QVERIFY(showsText(secondTile, QStringLiteral("VIDEO LOST - RECONNECTING")));
+
+    // The tiles start right of the thermal picture-in-picture.
+    auto* const thermalView = view->findChild<QQuickItem*>(QStringLiteral("videoViewThermal"));
+    auto* const camera = view->property("camera").value<QObject*>();
+    QVERIFY(thermalView && camera);
+    _primary->setState(VideoReceiver::State::Streaming);
+    _primary->setDecoding(true);
+    (void) camera->setProperty("thermalMode", MavlinkCameraControlInterface::THERMAL_PIP);
+    QVERIFY(thermalView->isVisible());
+    QVERIFY(tiles->x() > (thermalView->x() + thermalView->width()));
+    (void) camera->setProperty("thermalMode", MavlinkCameraControlInterface::THERMAL_OFF);
+    QCOMPARE(tiles->x(), view->property("pipX").toReal());
+
+    // With less room, as beside the Fly View's widgets, the tiles are smaller, down to a tile's least size. With room
+    // for one tile of that size, the first stream alone has a tile: the other one's source is gone, so nothing
+    // connects to its stream.
+    const qreal roomyWidth = tiles->width();
+    const qreal minimumTileWidth = tiles->property("minimumTileWidth").toReal();
+    QVERIFY(minimumTileWidth > 0);
+    (void) view->setProperty("tilesRightInset", tiles->property("maximumWidth").toReal() - (1.5 * minimumTileWidth));
+    _settle();
+    QCOMPARE(_videoManager->tileRoom(), 1);
+    QCOMPARE(_videoManager->_sources.size(), 4);
+    QCOMPARE(shownTiles(tiles).size(), 1);
+    tiles->ensurePolished();
+    QCOMPARE(shownTiles(tiles).first()->property("source").value<VideoStreamController*>(), secondSource);
+    QVERIFY(tiles->width() < roomyWidth);
+    QVERIFY(tiles->width() >= minimumTileWidth);
+
+    // A view without room for tiles, as the picture-in-picture, shows none: their streams aren't decoded. It leaves
+    // the manager with the room there was, and so the tiles' sources as they are.
+    (void) view->setProperty("showTiles", false);
+    QVERIFY(!tiles->isVisible());
+    (void) view->setProperty("tilesRightInset", 0);
+    _settle();
+    QCOMPARE(secondReceiver->videoOutput(), nullptr);
+    QCOMPARE(_videoManager->tileRoom(), 1);
+    (void) view->setProperty("showTiles", true);
+    QVERIFY(secondReceiver->videoOutput());
+    _settle();
+    QCOMPARE(shownTiles(tiles).size(), 2);
+
+    // Out of sight behind another view, as the Fly View is behind the Plan view, the tiles play on, as the main picture
+    // does: their streams would otherwise wait for a keyframe once the view is back.
+    view->setVisible(false);
+    QVERIFY(!tiles->isVisible());
+    _settle();
+    QVERIFY(secondReceiver->videoOutput());
+}
+
+void VideoManagerTest::_testTappedTileBecomesMainPicture()
+{
+    const QString camera = QStringLiteral("QGC Test Camera");
+    _videoManager->_cameraAttached = [camera](const QString& name) { return name == camera; };
+    _facts->set(_videoSettings->uvcTileCamera(), camera);
+    // The camera the test attached isn't one Qt knows.
+    expectLogMessage("Video.UVCCameraController", QtWarningMsg, QRegularExpression(QStringLiteral("No camera named")));
+    _settle();
+    verifyExpectedLogMessage();
+    const UVCCameraController* const uvcCamera = _videoManager->uvcCamera();
+
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kTilesVideoViewQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/TilesVideoView.qml")));
+    const std::unique_ptr<QQuickItem> view(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
+        {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}})));
+    QVERIFY2(view, qPrintable(component.errorString()));
+    QQuickWindow window;
+    window.resize(800, 400);
+    view->setParentItem(window.contentItem());
+    window.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&window));
+    auto* const tiles = view->findChild<QQuickItem*>(QStringLiteral("videoViewTiles"));
+    QVERIFY(tiles);
+    const auto tapTile = [&window, tiles] {
+        const QQuickItem* const tile = shownTiles(tiles).value(0);
+        if (tile) {
+            QTest::mouseClick(&window, Qt::LeftButton, Qt::NoModifier,
+                              tile->mapToScene(QPointF(tile->width() / 2, tile->height() / 2)).toPoint());
+        }
+        return tile != nullptr;
+    };
+
+    // The camera plays in the one tile, the stream in the main picture.
+    QCOMPARE(shownTiles(tiles).size(), 1);
+    QCOMPARE(shownTiles(tiles).first()->property("source").value<VideoStreamController*>(),
+             _videoManager->_cameraSource);
+    const QPointer<QQuickItem> streamOutput = _primary->videoOutput();
+    const QPointer<QQuickItem> cameraOutput = uvcCamera->videoOutput();
+    QVERIFY(streamOutput);
+    QVERIFY(cameraOutput);
+    _resetCounters();
+
+    // A tap on its tile makes the camera the main picture. The stream takes the tile, and each plays on into the
+    // output that took it over: the stream's receiver is never without one.
+    QVERIFY(tapTile());
+    QVERIFY(_videoManager->isUvc());
+    _settle();
+    QCOMPARE(shownTiles(tiles).size(), 1);
+    QCOMPARE(shownTiles(tiles).first()->property("source").value<VideoStreamController*>(),
+             _videoManager->primaryStream());
+    QVERIFY(_primary->videoOutput());
+    QVERIFY(_primary->videoOutput() != streamOutput);
+    QCOMPARE(_primary->videoOutputChanges, 1);
+    QCOMPARE(_primary->activeChanges, 0);
+    QVERIFY(uvcCamera->videoOutput());
+    QVERIFY(uvcCamera->videoOutput() != cameraOutput);
+
+    // A tap on the stream's tile gives it the main picture back.
+    QVERIFY(tapTile());
+    QVERIFY(!_videoManager->isUvc());
+    _settle();
+    QCOMPARE(shownTiles(tiles).first()->property("source").value<VideoStreamController*>(),
+             _videoManager->_cameraSource);
+    QCOMPARE(_primary->videoOutputChanges, 2);
+    QCOMPARE(_primary->activeChanges, 0);
+}
+
+void VideoManagerTest::_testTilesOutlastViewOnItsWayToFullSize()
+{
+    const auto current = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
+    const auto second = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5602");
+    _videoManager->_setAdvertisedStreams({current.get(), nullptr, QStringLiteral("Main")}, nullptr,
+                                         {{second.get(), nullptr, QStringLiteral("Second")}});
+    _settle();
+    const QPointer<VideoReceiver> tileReceiver = _videoManager->_sources.at(3)->receiver();
+    QVERIFY(tileReceiver);
+
+    // The Fly View's video becomes the main view before it has that view's size: it shows its tiles while it still has
+    // the room of the picture-in-picture, none.
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kFlyViewVideoQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/FlyViewVideo.qml")));
+    const std::unique_ptr<QQuickItem> flyView(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
+        {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}})));
+    QVERIFY2(flyView, qPrintable(component.errorString()));
+    _settle();
+
+    // The stream in the tile played on through that: it didn't have to connect anew.
+    QVERIFY(_videoManager->tileRoom() > 0);
+    QVERIFY(tileReceiver);
+}
+
+void VideoManagerTest::_testFlyViewLeavesTapsOnTilesToThem()
+{
+    const QString camera = QStringLiteral("QGC Test Camera");
+    _videoManager->_cameraAttached = [camera](const QString& name) { return name == camera; };
+    _facts->set(_videoSettings->uvcTileCamera(), camera);
+    // The camera the test attached isn't one Qt knows.
+    expectLogMessage("Video.UVCCameraController", QtWarningMsg, QRegularExpression(QStringLiteral("No camera named")));
+    _settle();
+    verifyExpectedLogMessage();
+
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kFlyViewVideoQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/FlyViewVideo.qml")));
+    const std::unique_ptr<QQuickItem> flyView(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
+        {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}})));
+    QVERIFY2(flyView, qPrintable(component.errorString()));
+    QQuickWindow window;
+    window.resize(800, 400);
+    flyView->setParentItem(window.contentItem());
+    window.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&window));
+    auto* const tiles = flyView->findChild<QQuickItem*>(QStringLiteral("videoViewTiles"));
+    QVERIFY(tiles);
+    QVERIFY(tiles->isVisible());
+    QCOMPARE(shownTiles(tiles).size(), 1);
+
+    // The Fly View takes the presses on its video, for the gimbal and for full screen. One on a tile it leaves to the
+    // tile, which lies below it.
+    const QQuickItem* const tile = shownTiles(tiles).first();
+    const QPoint onTile = tile->mapToScene(QPointF(tile->width() / 2, tile->height() / 2)).toPoint();
+    QTest::mouseClick(&window, Qt::LeftButton, Qt::NoModifier, onTile);
+    QVERIFY(_videoManager->isUvc());
+
+    // A double tap selects once: the tile that takes the place of the selected one isn't selected with it.
+    QCOMPARE(shownTiles(tiles).size(), 1);
+    QTest::mouseDClick(&window, Qt::LeftButton, Qt::NoModifier, onTile);
+    QVERIFY(!_videoManager->isUvc());
 }
 
 void VideoManagerTest::_testThermalDecodesOnlyWhileShown()
