@@ -37,8 +37,8 @@ public:
     /// soon after a position becomes available.
     static constexpr std::chrono::milliseconds FAST_RETRY_INTERVAL{1000};
 
-    /// A fresh position for a GGA report, or none. GGA carries altitude above mean sea level, so an observation in
-    /// another datum, which has no geoid separation to convert it, is not reported.
+    /// A fresh position for a GGA report, or none. Its latitude and longitude are what a caster needs, so it is
+    /// reported whatever the datum of its altitude, and without one.
     using PositionProvider = std::function<std::optional<GPSObservation>()>;
 
     struct Configuration

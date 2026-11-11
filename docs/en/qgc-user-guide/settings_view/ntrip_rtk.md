@@ -42,6 +42,8 @@ Network RTK (VRS) casters need the rover position. Select the position QGC repor
 
 A network RTK mountpoint sends nothing until it has received a position. While none is available, for example before the vehicle has a GPS fix, QGroundControl stays connected and the connection status reads **Connected, waiting for a position to report**. The 30-second limit on a silent stream starts with the first position reported or the first data received.
 
+The report carries the height of the selected position. When that height is not above mean sea level, as for the position of an Android, Linux or Windows device or of a base station, it is reported as it is, and a position without a height is reported with height 0. A caster places the rover by its latitude and longitude.
+
 ## UDP RTCM Input
 
 - **Enable UDP RTCM input** — receive RTCM corrections over UDP, for example from another application. UDP input is used alongside NTRIP and a local base station, and incoming data is always checked to be valid RTCM.

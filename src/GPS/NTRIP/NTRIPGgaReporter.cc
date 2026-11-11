@@ -44,12 +44,19 @@ unsigned ggaQuality(GPSFixQuality quality)
 
 bool reportable(const std::optional<GPSObservation>& observation)
 {
-    if (!observation || observation->altitudeDatum != GPSAltitudeDatum::MeanSeaLevel ||
-        observation->fixQuality == GPSFixQuality::NoFix) {
-        return false;
+    return observation && observation->fixQuality != GPSFixQuality::NoFix &&
+           observation->position.coordinate().isValid();
+}
+
+/// The height a GGA reports for @a observation. A caster places the rover by its latitude and longitude, so a height
+/// in another datum than mean sea level is reported as it is, and zero when none is known.
+double reportedAltitude(const GPSObservation& observation)
+{
+    if (const double altitude = observation.position.coordinate().altitude(); qIsFinite(altitude)) {
+        return altitude;
     }
-    const QGeoCoordinate coordinate = observation->position.coordinate();
-    return coordinate.isValid() && qIsFinite(coordinate.altitude());
+    const std::optional<double> ellipsoid = observation.altitudeEllipsoidMeters;
+    return ellipsoid && qIsFinite(*ellipsoid) ? *ellipsoid : 0.0;
 }
 }  // namespace
 
@@ -159,7 +166,7 @@ void NTRIPGgaReporter::_sendGGA()
     const NMEA::GGA fix{
         .latitude = coordinate.latitude(),
         .longitude = coordinate.longitude(),
-        .altitude = coordinate.altitude(),
+        .altitude = reportedAltitude(position),
         .hdop = position.horizontalDop && qIsFinite(*position.horizontalDop) && *position.horizontalDop >= 0
                     ? *position.horizontalDop
                     : qQNaN(),
