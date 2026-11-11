@@ -162,6 +162,12 @@ std::optional<double> coordinate(std::string_view field, std::string_view hemisp
     return (degrees + minutes / MINUTES_PER_DEGREE) * (hemisphere[0] == negative ? -1 : 1);
 }
 
+std::optional<unsigned> ggaSatellitesUsed(std::string_view field)
+{
+    const auto count = number<unsigned>(field);
+    return count && *count <= MAX_GGA_SATELLITES ? count : std::nullopt;
+}
+
 std::optional<GGA> gga(const Sentence& input)
 {
     if (input.type() != "GGA" || input.count < Field::GGA_MIN_FIELDS) {
@@ -171,8 +177,10 @@ std::optional<GGA> gga(const Sentence& input)
     const auto latitude = coordinate(f[Field::GGA_LATITUDE], f[Field::GGA_LATITUDE_HEMISPHERE], true);
     const auto longitude = coordinate(f[Field::GGA_LONGITUDE], f[Field::GGA_LONGITUDE_HEMISPHERE], false);
     const auto quality = number<unsigned>(f[Field::GGA_QUALITY]);
-    const auto satellites = number<unsigned>(f[Field::GGA_SATELLITES_USED]);
-    if (!quality || *quality > GgaQuality::MAX_VALUE || (satellites && *satellites > MAX_GGA_SATELLITES)) {
+    const auto satellites = ggaSatellitesUsed(f[Field::GGA_SATELLITES_USED]);
+    // A count beyond the range makes the sentence malformed; an empty or unreadable one is only unknown.
+    const bool satellitesOutOfRange = !satellites && number<unsigned>(f[Field::GGA_SATELLITES_USED]);
+    if (!quality || *quality > GgaQuality::MAX_VALUE || satellitesOutOfRange) {
         return {};
     }
     const auto latitudeHemisphere = f[Field::GGA_LATITUDE_HEMISPHERE];
@@ -209,7 +217,7 @@ std::optional<int> utcMilliseconds(std::string_view field)
         return {};
     }
     for (size_t index = 0; index < field.size(); ++index) {
-        if (index != UTC_INTEGER_DIGITS && (field[index] < '0' || field[index] > '9')) {
+        if (index != UTC_INTEGER_DIGITS && !isAsciiDigit(field[index])) {
             return {};
         }
     }
@@ -249,7 +257,7 @@ std::optional<UtcDate> rmcDate(std::string_view field)
         return {};
     }
     for (const char digit : field) {
-        if (digit < '0' || digit > '9') {
+        if (!isAsciiDigit(digit)) {
             return {};
         }
     }

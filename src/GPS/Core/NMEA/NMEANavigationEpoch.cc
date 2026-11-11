@@ -51,7 +51,7 @@ std::optional<NavigationUpdate> NavigationEpochAssembler::ingest(const Sentence&
             loss.sequence = sequence;
             loss.fixQuality = GPSFixQuality::NoFix;
             if (sentence.type() == "GGA" && sentence.count > Field::GGA_SATELLITES_USED) {
-                loss.satellitesUsed = number<unsigned>(sentence.fields[Field::GGA_SATELLITES_USED]);
+                loss.satellitesUsed = ggaSatellitesUsed(sentence.fields[Field::GGA_SATELLITES_USED]);
             }
             return NavigationUpdate{
                 .type = NavigationUpdate::Type::FixLoss, .trigger = NavigationUpdate::Trigger::Position, .epoch = loss};

@@ -215,13 +215,18 @@ void NMEASentenceTest::_navigationFreshnessBoundaries()
 void NMEASentenceTest::_navigationFixLoss_data()
 {
     QTest::addColumn<QByteArray>("body");
-    QTest::newRow("gga-quality-zero") << QByteArray("$GPGGA,092751.000,,,,,0,0,,,,,,,");
-    QTest::newRow("rmc-status-void") << QByteArray("$GPRMC,092751.000,V,,,,,,,280511,,,N");
+    QTest::addColumn<int>("satellitesUsed");
+    QTest::newRow("gga-quality-zero") << QByteArray("$GPGGA,092751.000,,,,,0,0,,,,,,,") << 0;
+    QTest::newRow("gga-most-satellites") << QByteArray("$GPGGA,092751.000,,,,,0,255,,,,,,,") << 255;
+    // gga() rejects a larger count, so the fix loss reports none.
+    QTest::newRow("gga-too-many-satellites") << QByteArray("$GPGGA,092751.000,,,,,0,256,,,,,,,") << -1;
+    QTest::newRow("rmc-status-void") << QByteArray("$GPRMC,092751.000,V,,,,,,,280511,,,N") << -1;
 }
 
 void NMEASentenceTest::_navigationFixLoss()
 {
     QFETCH(QByteArray, body);
+    QFETCH(int, satellitesUsed);
     const auto sentence = ownedSentence(NMEAUtils::repairChecksum(body));
     QVERIFY(sentence);
     NMEA::NavigationEpochAssembler assembler;
@@ -230,6 +235,7 @@ void NMEASentenceTest::_navigationFixLoss()
     QVERIFY(update->type == NMEA::NavigationUpdate::Type::FixLoss);
     QCOMPARE(update->epoch.fixQuality, GPSFixQuality::NoFix);
     QCOMPARE(update->epoch.receivedAtUs, quint64(42));
+    QCOMPARE(update->epoch.satellitesUsed, satellitesUsed < 0 ? std::nullopt : std::optional<unsigned>(satellitesUsed));
 }
 
 void NMEASentenceTest::_utcMilliseconds_data()

@@ -205,6 +205,10 @@ struct GGA
     std::optional<unsigned> satellitesUsed = std::nullopt;
 };
 
+/// The count in a GGA satellites-used field; nullopt when the field is empty, malformed or beyond the 255 a GGA may
+/// report.
+[[nodiscard]] std::optional<unsigned> ggaSatellitesUsed(std::string_view field);
+
 /// Quality zero is a valid fix-loss observation with empty coordinates and optional hemisphere fields.
 [[nodiscard]] std::optional<GGA> gga(const Sentence& input);
 
