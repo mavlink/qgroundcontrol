@@ -358,6 +358,16 @@ Protocol::RTCMActivation Protocol::_activateRTCMOutput(GPSCommandChannel& channe
 Protocol::RTCMActivation Protocol::_activateLegacyRTCMOutput(GPSCommandChannel& channel)
 {
     auto& progress = _legacyRTCM;
+    // An unanswered activation is left to a later service, unless activations keep ending without another output
+    // settled: a receiver that stopped answering would otherwise be asked forever while RTCM never starts.
+    const auto resumeLater = [&progress, resumedAt = progress.next] {
+        progress.stalled = progress.next == resumedAt ? progress.stalled + 1 : 0;
+        if (progress.stalled < Plan::LEGACY_RTCM_ACTIVATION_ATTEMPTS) {
+            return RTCMActivation::Unanswered;
+        }
+        progress = {};
+        return RTCMActivation::Failed;
+    };
     const auto rate = Wire::encode(Plan::LEGACY_BASE_RATE);
     if (!_send(channel, Msg::CFG_RATE, rate, {{}, Plan::LEGACY_REPLY_TIMEOUT})) {
         progress = {};
@@ -370,7 +380,7 @@ Protocol::RTCMActivation Protocol::_activateLegacyRTCMOutput(GPSCommandChannel& 
     // base rate leaves activation to a later service; a rejected one leaves RTCM at the survey rate.
     const auto baseRate = _waitForAck(channel, Msg::CFG_RATE).outcome;
     if (baseRate == GPSCommandOutcome::TimedOut) {
-        return RTCMActivation::Unanswered;
+        return resumeLater();
     }
     if (baseRate != GPSCommandOutcome::Acknowledged && baseRate != GPSCommandOutcome::Rejected) {
         progress = {};
@@ -385,7 +395,7 @@ Protocol::RTCMActivation Protocol::_activateLegacyRTCMOutput(GPSCommandChannel& 
         if (channel.operationDeadline().remaining(channel.nowUs()) <
             Plan::CONFIG_TIMEOUT + Plan::LEGACY_REPLY_TIMEOUT) {
             qCDebug(UBXProtocolLog) << "Service budget spent; RTCM activation resumes in the next service";
-            return RTCMActivation::Unanswered;
+            return resumeLater();
         }
         const auto output = progress.next < status.size()
                                 ? Plan::RTCMOutput{status[progress.next], Plan::RTCMContent::Optional}
@@ -415,7 +425,7 @@ Protocol::RTCMActivation Protocol::_activateLegacyRTCMOutput(GPSCommandChannel& 
         qCWarning(UBXProtocolLog) << "Receiver did not answer a CFG-MSG rate or its poll; later RTCM messages are not"
                                      " configured";
         if (!active) {
-            return RTCMActivation::Unanswered;
+            return resumeLater();
         }
     } else if (!active) {
         qCWarning(UBXProtocolLog) << "Receiver rejected the RTCM station position or every observation message";
@@ -430,7 +440,7 @@ void Protocol::serviceStreaming(GPSCommandChannel& channel)
     if (requests.rtcmActivation) {
         const auto activation = _activateRTCMOutput(channel);
         // A slow receiver keeps its session and finished survey: the next service resumes activation. Survey reports
-        // decoded meanwhile do not request another.
+        // decoded meanwhile do not request another. One that stopped answering fails as one that rejects the outputs.
         requests.rtcmActivation = activation == RTCMActivation::Unanswered;
         if (activation == RTCMActivation::Failed) {
             channel.failControl(QStringLiteral("%1 after the survey-in").arg(RTCM_ACTIVATION_FAILURE));

@@ -106,7 +106,8 @@ private:
         uint16_t disableMessage = 0;
     };
 
-    /// How an RTCM activation ended. An unanswered one is resumed by a later streaming service.
+    /// How an RTCM activation ended. An unanswered one is resumed by a later streaming service, until
+    /// Plan::LEGACY_RTCM_ACTIVATION_ATTEMPTS in a row settle no output.
     enum class RTCMActivation : uint8_t
     {
         Active,
@@ -128,6 +129,8 @@ private:
         size_t next = 0;
         bool stationPosition = false;
         bool observations = false;
+        /// Activations in a row that settled no output.
+        unsigned stalled = 0;
     };
 
     // Decoding (UBXDecoder.cc)

@@ -242,6 +242,9 @@ inline constexpr MessageRate LEGACY_SURVEY_STATUS{Msg::NAV_SVIN, SURVEY_STATUS_R
 [[nodiscard]] std::array<MessageRate, 10> legacyDisableRTCMOutput();
 /// Survey status and satellite rates for the 1 Hz base; rejections are ignored.
 [[nodiscard]] std::array<MessageRate, 2> legacyBaseStatus();
+/// Streaming services in a row that may resume the RTCM activation without settling another output. A slow receiver
+/// settles some in each; one that stops answering gets about five times the u-blox 8 reply time before it fails.
+inline constexpr unsigned LEGACY_RTCM_ACTIVATION_ATTEMPTS = 5;
 
 /// What a legacy RTCM output gives a rover. A base needs the station position and the observations of at least one
 /// constellation; M8P firmware versions differ in the RTCM messages they support, so the others may be rejected.

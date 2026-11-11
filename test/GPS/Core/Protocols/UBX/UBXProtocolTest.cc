@@ -1361,6 +1361,40 @@ void slowLegacyRTCMActivation(GPSTestClock& clock)
     }
 }
 
+/// A receiver that keeps streaming after its survey but leaves the activation commands unanswered, all of them or
+/// only the CFG-MSG rates, is not asked forever: after a few services without a settled output the session fails as
+/// it does when the receiver rejects the outputs.
+void silentLegacyRTCMActivation(GPSTestClock& clock)
+{
+    const QByteArray baseRate("\xb5\x62\x06\x08", 4);
+    const QByteArray messageRate("\xb5\x62\x06\x01", 4);
+    for (const bool baseRateAnswered : {false, true}) {
+        Fixture f(clock);
+        f.receiver.model.legacy = true;
+        f.receiver.model.module = "NEO-M8P";
+        QVERIFY(f.configure());
+        if (!baseRateAnswered) {
+            f.receiver.faults.rules.push_back(silence(baseRate));
+        }
+        f.receiver.faults.rules.push_back(silence(messageRate));
+        f.receiver.clearCommands();
+        f.receiver.model.queueSurveyReply(SurveyReply::Valid);
+        unsigned services = 0;
+        for (; services < 3 * UBX::Plan::LEGACY_RTCM_ACTIVATION_ATTEMPTS && !failed(f.driver); ++services) {
+            f.receiver.model.queueBytes(ubxNavigationEpoch(ubxFix3D(), 1000 + 200 * services));
+            QVERIFY(positionUpdated(f.driver.receive(100ms)));
+        }
+        QCOMPARE(services, UBX::Plan::LEGACY_RTCM_ACTIVATION_ATTEMPTS);
+        QCOMPARE(f.driver.error(), GPSProtocolError::Protocol);
+        QCOMPARE(f.driver.errorDetail(),
+                 QStringLiteral("u-blox receiver did not start RTCM output after the survey-in"));
+        QCOMPARE(std::ranges::count_if(f.receiver.commands(),
+                                       [&](const QByteArray& command) { return command.startsWith(baseRate); }),
+                 UBX::Plan::LEGACY_RTCM_ACTIVATION_ATTEMPTS);
+        QCOMPARE(f.receiver.model.rtcmEnables, 0);
+    }
+}
+
 /// A survey-stop poll that cannot be written, or whose reply wait is cancelled, ends the configuration before the
 /// survey restarts.
 void surveyStopPollFailures(GPSTestClock& clock)
@@ -1664,6 +1698,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"rejected-optional-batch", rejectedOptionalBatch},
     {"legacy-rtcm-rate-polls", legacyRTCMRatePolls},
     {"slow-legacy-rtcm-activation", slowLegacyRTCMActivation},
+    {"silent-legacy-rtcm-activation", silentLegacyRTCMActivation},
     {"integrity-original-receipts", integrityReceipts},
     {"plan-output-decoded", planOutputDecoded},
     {"antenna-states", antennaStates},
