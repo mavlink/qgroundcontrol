@@ -461,9 +461,6 @@ qt_add_qml_module(
         QtQuick.Controls
         QtQuick.Dialogs
         QtQuick.Layouts
-    # Application types expose GPS library types registered by the GPS module.
-    DEPENDENCIES
-        QGroundControl.GPS
 )
 
 # ----------------------------------------------------------------------------

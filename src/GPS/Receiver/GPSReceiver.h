@@ -16,6 +16,7 @@
 #include "GPSObservation.h"
 #include "GPSReceiverConnector.h"
 #include "GPSReceiverDescriptor.h"
+#include "GPSReceiverPresentation.h"
 #include "GPSReceiverReports.h"
 #include "ScheduledTask.h"
 

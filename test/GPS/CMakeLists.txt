@@ -65,6 +65,7 @@ set(_qgc_gps_suites
     Receiver/GPSBaseStationSettingsTest
     Receiver/GPSReceiverConnectionPolicyTest
     Receiver/GPSReceiverFactGroupTest
+    Receiver/GPSReceiverPresentationTest
     Receiver/GPSReceiverTest
 )
 qgc_add_gps_suites(Unit ${_qgc_gps_suites})

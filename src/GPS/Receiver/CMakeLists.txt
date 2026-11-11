@@ -1,4 +1,5 @@
-# Local GPS receiver: sessions, connection policy, and the receiver's status Facts.
+# Local GPS receiver: sessions, connection policy, the receiver's status Facts and what its views offer for each
+# receiver family.
 target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE
@@ -11,6 +12,8 @@ target_sources(
         GPSReceiverFactGroup.h
         GPSReceiverMessages.cc
         GPSReceiverMessages.h
+        GPSReceiverPresentation.cc
+        GPSReceiverPresentation.h
         GPSReceiverSession.cc
         GPSReceiverSession.h
 )

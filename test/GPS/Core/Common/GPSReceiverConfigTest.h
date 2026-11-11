@@ -22,8 +22,6 @@ private slots:
     void _validationPrecedence_data();
     void _validationPrecedence();
     void _descriptorIdentities();
-    void _presentation_data();
-    void _presentation();
     void _detectedReceiverFit_data();
     void _detectedReceiverFit();
 };
