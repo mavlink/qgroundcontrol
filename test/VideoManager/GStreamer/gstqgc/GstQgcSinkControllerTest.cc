@@ -119,6 +119,49 @@ void GstQgcSinkControllerTest::_testQVideoSinkControllerNoWindowStartsInactive()
     QCOMPARE(active, FALSE);
 }
 
+void GstQgcSinkControllerTest::_testQVideoSinkControllerRebindRestoresActive_data()
+{
+    QTest::addColumn<bool>("active");
+    QTest::addColumn<bool>("askedWhileUnbound");
+
+    QTest::newRow("active") << true << false;
+    QTest::newRow("inactive") << false << false;
+    QTest::newRow("activated while unbound") << true << true;
+    QTest::newRow("deactivated while unbound") << false << true;
+}
+
+void GstQgcSinkControllerTest::_testQVideoSinkControllerRebindRestoresActive()
+{
+    QFETCH(bool, active);
+    QFETCH(bool, askedWhileUnbound);
+
+    const GstQgcTest::SinkBin sink = GstQgcTest::makeSinkBin();
+    QVERIFY2(sink.bin && sink.qvideosink, "qgcvideosinkbin or its qvideosink accessor failed");
+    const auto elementActive = [&sink]() {
+        gboolean value = FALSE;
+        g_object_get(sink.qvideosink.get(), "active", &value, nullptr);
+        return value == TRUE;
+    };
+
+    QVideoSink videoSink;
+    QObject controllerOwner;
+    QGCQVideoSinkController controller(sink.qvideosink.get(), &controllerOwner);
+    controller.setVideoSink(QPointer<QVideoSink>(&videoSink));
+    controller.setActive(askedWhileUnbound ? !active : active);
+
+    // Without a QVideoSink the element delivers nothing, whatever is asked of it.
+    controller.setVideoSink(QPointer<QVideoSink>());
+    QVERIFY(!elementActive());
+    if (askedWhileUnbound) {
+        controller.setActive(active);
+        QVERIFY(!elementActive());
+    }
+
+    // Bound again, it goes on as last asked, without a call to make it.
+    controller.setVideoSink(QPointer<QVideoSink>(&videoSink));
+    QCOMPARE(elementActive(), active);
+}
+
 void GstQgcSinkControllerTest::_testQVideoSinkControllerReleaseClearsVideoFrame()
 {
     QVideoSink videoSink;

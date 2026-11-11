@@ -47,6 +47,7 @@ void QGCQVideoSinkController::setActive(bool active)
         qCCritical(QGCQVideoSinkControllerLog) << "called from wrong thread";
         return;
     }
+    _active = active;
     if (!_element || _bindingReleased)
         return;
     g_object_set(_element.get(), "active", active ? TRUE : FALSE, nullptr);
@@ -73,7 +74,8 @@ void QGCQVideoSinkController::setVideoSink(QPointer<QVideoSink> sink)
         _clearVideoSinkFrame();
         return;
     }
-    g_object_set(_element.get(), "qvideosink", static_cast<gpointer>(raw), nullptr);
+    // Unbinding turned the element off: bound again, it goes on as setActive() last asked.
+    g_object_set(_element.get(), "qvideosink", static_cast<gpointer>(raw), "active", _active ? TRUE : FALSE, nullptr);
     if (_videoSink != raw) {
         _clearVideoSinkFrame();
     }

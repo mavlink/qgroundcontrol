@@ -29,6 +29,8 @@ public:
     // GST_OBJECT_LOCK. QPointer so a caller-thread destruction race is caught here, not in GObject.
     // Releasing a binding (swap, null, prepareForRelease, destruction) also clears the released QVideoSink's
     // current frame so it stops pinning a GstSample/decoder buffer.
+    // Without a QVideoSink the element is inactive whatever was asked for; binding one again goes on with what
+    // setActive() asked for last (the window's visibility while following one), which is active to begin with.
     void setActive(bool active);
     void setVideoSink(QPointer<QVideoSink> sink);
 
@@ -53,6 +55,8 @@ private:
     QPointer<QVideoSink> _videoSink;
     QMetaObject::Connection _sinkDestroyedConnection;
     bool _bindingReleased = false;
+    /// What setActive() asked for last, kept while no QVideoSink is bound; the element's default.
+    bool _active = true;
 
     QPointer<QQuickItem> _videoOutput;
     QMetaObject::Connection _visibilityConnection;

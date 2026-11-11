@@ -14,6 +14,8 @@ private slots:
     void _testQVideoSinkControllerClearsElementWhenVideoSinkDestroyed();
     void _testQVideoSinkControllerNullSinkStillDeactivatesOnDestroy();
     void _testQVideoSinkControllerNoWindowStartsInactive();
+    void _testQVideoSinkControllerRebindRestoresActive_data();
+    void _testQVideoSinkControllerRebindRestoresActive();
     void _testQVideoSinkControllerReleaseClearsVideoFrame();
 #endif
 };
