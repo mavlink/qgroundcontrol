@@ -1178,6 +1178,15 @@ void QGCCompressionTest::_testTruncatedArchive()
          [&]() { return !QGCCompression::extractArchiveFiltered(archivePath, partialDir, rejectAll); }},
         {"extractFromDevice", 1,
          [&]() { return !QGCCompression::extractFromDevice(&archiveFile, tempDir.filePath("device_output")); }},
+        {"extractFileDataFromDevice", 1,
+         [&]() {
+             return archiveFile.seek(0) && QGCCompression::extractFileDataFromDevice(&archiveFile, absent).isEmpty();
+         }},
+        {"QGCArchiveFile", 1,
+         [&]() {
+             QGCArchiveFile entry(archivePath, absent);
+             return !entry.open(QIODevice::ReadOnly) && !entry.errorString().contains("not found");
+         }},
     };
     for (const Search& search : searches) {
         for (int i = 0; i < search.reports; ++i) {

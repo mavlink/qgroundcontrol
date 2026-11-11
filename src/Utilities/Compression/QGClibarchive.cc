@@ -106,10 +106,12 @@ la_int64_t deviceSkipCallback(struct archive*, void* clientData, la_int64_t requ
     auto* device = static_cast<QIODevice*>(clientData);
 
     if (!device->isSequential()) {
+        // A file can be positioned beyond its end, so no more is skipped than is there. libarchive
+        // takes a short skip for what it is: an archive cut inside the data that was to be skipped.
         const qint64 currentPos = device->pos();
-        const qint64 newPos = currentPos + request;
-        if (device->seek(newPos)) {
-            return request;
+        const qint64 skipped = qBound(qint64(0), device->size() - currentPos, static_cast<qint64>(request));
+        if (device->seek(currentPos + skipped)) {
+            return skipped;
         }
     }
 
