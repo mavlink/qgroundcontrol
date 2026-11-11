@@ -19,6 +19,7 @@
 #include "GPSReceiverReports.h"
 #include "ScheduledTask.h"
 
+struct GPSConstellationSatellites;
 class GPSCorrectionManager;
 class GPSReceiverConnectionPolicy;
 class GPSReceiverFactGroup;
@@ -76,6 +77,9 @@ class GPSReceiver : public QObject, private GPSReceiverConnector
     Q_MOC_INCLUDE("GPSReceiverFactGroup.h")
 
     Q_PROPERTY(GPSReceiverFactGroup* facts READ facts CONSTANT FINAL)
+    /// GPSReceiverFactGroup::constellations(): the satellites used and in view of each constellation in view.
+    /// Notified only when a count or the constellations in view change.
+    Q_PROPERTY(QList<GPSConstellationSatellites> constellations READ constellations NOTIFY constellationsChanged FINAL)
     Q_PROPERTY(QList<GPSSerialPortEntry> serialPortEntries READ serialPortEntries NOTIFY serialPortEntriesChanged FINAL)
     Q_PROPERTY(QList<int> serialBaudRates READ serialBaudRates CONSTANT FINAL)
     Q_PROPERTY(bool hasReceiver READ hasReceiver NOTIFY receiverChanged FINAL)
@@ -166,6 +170,8 @@ public:
     /// The receiver's reported state; with no receiver, every Fact is at its metadata default.
     GPSReceiverFactGroup* facts() const { return _facts; }
 
+    QList<GPSConstellationSatellites> constellations() const;
+
     bool hasReceiver() const override;
 
     bool serialSupported() const
@@ -234,6 +240,7 @@ public:
 
 signals:
     void receiverChanged();
+    void constellationsChanged();
     void errorMessageChanged();
     void configurationChanged();
     void persistentChangesAllowedChanged();
@@ -367,6 +374,8 @@ private:
     QHash<QString, std::weak_ptr<const SerialPortManager::Reservation>> _serialClaims;
     std::function<std::unique_ptr<GPSTransport>(const QString&, GPSCancelToken)> _serialTransportFactory;
 #endif
+    /// The constellations last notified, as the values in Notified are.
+    QList<GPSConstellationSatellites> _notifiedConstellations;
     const std::function<QString()> _recordingDirectory;
     /// The recording of the latest session.
     QString _recordingFile;

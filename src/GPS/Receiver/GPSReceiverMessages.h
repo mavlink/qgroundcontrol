@@ -32,6 +32,9 @@ namespace GPSReceiverMessages {
 /// The short label of a fix type; empty for an unknown one.
 [[nodiscard]] QString fixLabel(GPSFixQuality fixType);
 
+/// The name of a satellite constellation; "Other" for one the receiver does not identify.
+[[nodiscard]] QString constellationName(GPSConstellation constellation);
+
 /// What the receiver status sentence describes.
 struct ReceiverStatus
 {

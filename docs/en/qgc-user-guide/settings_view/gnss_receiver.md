@@ -8,6 +8,8 @@ Corrections from NTRIP casters and UDP are configured in [RTK Corrections](ntrip
 
 The receiver status shows the connection, the receiver's fix and satellites, and any jamming or spoofing it reports.
 An identified receiver family or output protocol is shown as _Detected_.
+**Constellations** lists the satellites of each satellite system in view as used/in view, such as _GPS 8/10, Galileo 6/7_; a dash replaces the used count when the receiver does not report which satellites it uses.
+The row is not shown when the receiver does not report which system its satellites belong to.
 The **Antenna** is shown as _OK_, _Open_ or _Short_ when the receiver supervises its antenna and reports it (u-blox MON-RF or MON-HW, also from a passive receiver); an open or shorted antenna turns the GNSS indicator orange, as jamming does.
 
 ## GNSS Receiver {#receiver}

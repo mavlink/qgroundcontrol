@@ -3,11 +3,34 @@
 #include <initializer_list>
 #include <optional>
 
+#include <QtCore/QList>
+#include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "FactGroup.h"
 #include "GPSReceiverConfig.h"
 #include "GPSReceiverReports.h"
+
+/// The satellites of one constellation in view, as the receiver status lists them.
+struct GPSConstellationSatellites
+{
+    Q_GADGET
+    QML_VALUE_TYPE(gpsConstellationSatellites)
+    Q_PROPERTY(QString name READ name FINAL)
+    Q_PROPERTY(int used MEMBER used FINAL)
+    Q_PROPERTY(int inView MEMBER inView FINAL)
+
+public:
+    /// The constellation's translated name; "Other" for satellites of a constellation the receiver does not identify.
+    QString name() const;
+
+    GPSConstellation constellation = GPSConstellation::Unknown;
+    /// -1 when the receiver does not report which satellites it uses.
+    int used = -1;
+    int inView = 0;
+
+    bool operator==(const GPSConstellationSatellites&) const = default;
+};
 
 /// The local receiver's status as Facts, which its GPSReceiver writes as the receiver reports. Raw values notify when
 /// written; the values QML shows notify at most once a second. telemetryAvailable follows whether the receiver finished
@@ -67,6 +90,10 @@ public:
     /// Jamming at Warning or Critical, any spoofing indication, or an open or shorted antenna.
     bool receiverWarning() const { return _receiverWarning; }
 
+    /// The constellations with satellites in view, in GPSConstellation order, which GPSReceiver notifies of. Empty
+    /// when the receiver identifies none of them, as the list would only repeat the satellite totals.
+    QList<GPSConstellationSatellites> constellations() const { return _constellations; }
+
 signals:
     void currentBasePositionChanged();
     void receiverWarningChanged();
@@ -77,7 +104,7 @@ private:
 
     // Written by GPSReceiver.
     void _setSurvey(const GPSSurveyReport& report);
-    void _setSatellites(int inView, int used);
+    void _setSatellites(const GPSSatelliteReport& report);
     void _setSolution(GPSFixQuality fixType, const GPSIntegrityReport& integrity);
     /// Clears the fix, satellites, and integrity of a receiver that stopped reporting position.
     void _clearSolution();
@@ -95,6 +122,7 @@ private:
     std::optional<GPSBaseStationConfig::Fixed> _currentBasePosition;
     bool _currentBasePositionSaved = false;
     bool _receiverWarning = false;
+    QList<GPSConstellationSatellites> _constellations;
 
     Fact _currentDurationFact = Fact(0, QStringLiteral("currentDuration"), FactMetaData::valueTypeDouble);
     Fact _currentAccuracyFact = Fact(0, QStringLiteral("currentAccuracy"), FactMetaData::valueTypeDouble);

@@ -4,8 +4,20 @@
 #include <cmath>
 #include <limits>
 
+#include <QtCore/QList>
+
 #include "GPSDecodedData.h"
 #include "GPSReceiverReports.h"
+
+namespace {
+using ReportedConstellation = GPSSatelliteReport::Constellation;
+
+QList<ReportedConstellation> reportedConstellations(const GPSSatelliteReport& report)
+{
+    const auto constellations = report.constellationsInView();
+    return {constellations.begin(), constellations.end()};
+}
+}  // namespace
 
 void GPSDecodedDataTest::_unreportedPosition()
 {
@@ -288,6 +300,10 @@ void GPSDecodedDataTest::_satelliteSnapshotScopes()
     QCOMPARE(report.timestampUs, uint64_t{100});
     QCOMPARE(report.inView, std::optional<int>{3});
     QVERIFY(!report.used);
+    // Each constellation in view is listed in GPSConstellation order, with its used count when it has one.
+    QCOMPARE(reportedConstellations(report), (QList<ReportedConstellation>{{GPSConstellation::GPS, 1, 0},
+                                                                           {GPSConstellation::GLONASS, 1, std::nullopt},
+                                                                           {GPSConstellation::SBAS, 1, std::nullopt}}));
 
     GPSDecodedSatellites scoped;
     scoped.fullSnapshot = false;
@@ -301,6 +317,9 @@ void GPSDecodedDataTest::_satelliteSnapshotScopes()
     QCOMPARE(report.timestampUs, uint64_t{200});
     QCOMPARE(report.inView, std::optional<int>{3});
     QVERIFY(!report.used);
+    QCOMPARE(reportedConstellations(report), (QList<ReportedConstellation>{{GPSConstellation::GPS, 1, 0},
+                                                                           {GPSConstellation::GLONASS, 1, 1},
+                                                                           {GPSConstellation::SBAS, 1, std::nullopt}}));
 
     scoped = {};
     scoped.fullSnapshot = false;
@@ -314,6 +333,9 @@ void GPSDecodedDataTest::_satelliteSnapshotScopes()
     scoped.constellations[0].constellation = GPSConstellation::GLONASS;
     report = counts.update(scoped, 300);
     QCOMPARE(report.inView, std::optional<int>{2});
+    // A constellation without satellites in view is not listed.
+    QCOMPARE(reportedConstellations(report),
+             (QList<ReportedConstellation>{{GPSConstellation::GPS, 1, 0}, {GPSConstellation::SBAS, 1, std::nullopt}}));
 
     whole = {};
     galileo = whole.ensureConstellation(GPSConstellation::Galileo);
@@ -325,6 +347,7 @@ void GPSDecodedDataTest::_satelliteSnapshotScopes()
     report = counts.update(whole, 400);
     QCOMPARE(report.inView, std::optional<int>{1});
     QCOMPARE(report.used, std::optional<int>{0});
+    QCOMPARE(reportedConstellations(report), (QList<ReportedConstellation>{{GPSConstellation::Galileo, 1, 0}}));
 
     whole = {};
     auto* empty = whole.ensureConstellation(GPSConstellation::Unknown);
@@ -334,6 +357,7 @@ void GPSDecodedDataTest::_satelliteSnapshotScopes()
     report = counts.update(whole, 600);
     QCOMPARE(report.inView, std::optional<int>{0});
     QCOMPARE(report.used, std::optional<int>{0});
+    QVERIFY(report.constellationsInView().empty());
 }
 
 void GPSDecodedDataTest::_satelliteSnapshotBounds()
@@ -389,12 +413,16 @@ void GPSDecodedDataTest::_satelliteSnapshotExpiry()
     auto snapshot = state.update(glonass, 4'000'000);
     QCOMPARE(snapshot.inView, std::optional<int>{2});
     QCOMPARE(snapshot.used, std::optional<int>{1});
+    QCOMPARE(reportedConstellations(snapshot),
+             (QList<ReportedConstellation>{{GPSConstellation::GPS, 1, 0}, {GPSConstellation::GLONASS, 1, 1}}));
 
+    // A constellation leaves the list when its view expires, as it leaves the totals.
     glonassGroup->inViewTimestampUs = 6'000'000;
     glonassGroup->inUseTimestampUs = 6'000'000;
     snapshot = state.update(glonass, 6'000'000);
     QCOMPARE(snapshot.inView, std::optional<int>{1});
     QCOMPARE(snapshot.used, std::optional<int>{1});
+    QCOMPARE(reportedConstellations(snapshot), (QList<ReportedConstellation>{{GPSConstellation::GLONASS, 1, 1}}));
     QCOMPARE(state.update(gps, 6'000'000).inView, std::optional<int>{1});  // Expired receipts cannot resurrect a view.
     gpsGroup->inViewTimestampUs = 6'000'001;
     gpsGroup->inUseTimestampUs = 0;
@@ -422,6 +450,9 @@ void GPSDecodedDataTest::_satelliteSnapshotExpiry()
     snapshot = state.update(gps, 12'000'000);
     QCOMPARE(snapshot.inView, std::optional<int>{1});
     QVERIFY(!snapshot.used);
+    // The used count expired on its own receipt, ahead of the view it belongs to.
+    QCOMPARE(reportedConstellations(snapshot),
+             (QList<ReportedConstellation>{{GPSConstellation::GPS, 1, std::nullopt}}));
     gpsGroup->inView = 0;
     ++gpsGroup->inViewTimestampUs;
     QCOMPARE(state.update(gps, gpsGroup->inViewTimestampUs).inView, std::optional<int>{0});
@@ -433,10 +464,11 @@ void GPSDecodedDataTest::_satelliteSnapshotExpiry()
 
     gpsGroup->inViewTimestampUs += 7'000'000;
     gpsGroup->inView = 1;
-    state.update(gps, gpsGroup->inViewTimestampUs);
+    QCOMPARE(state.update(gps, gpsGroup->inViewTimestampUs).constellationsInView().size(), size_t{1});
     const auto gone = state.expire(gpsGroup->inViewTimestampUs + 5'000'000);
     QVERIFY(gone);
     QVERIFY(!gone->inView);
+    QVERIFY(gone->constellationsInView().empty());
     QVERIFY(!state.expire(gpsGroup->inViewTimestampUs + 5'000'001));
 }
 
@@ -488,6 +520,8 @@ void GPSDecodedDataTest::_satelliteUsageCombination()
     auto report = counts.update(view, 200);
     QCOMPARE(report.inView, std::optional<int>{4});
     QCOMPARE(report.used, std::optional<int>{12});
+    // The count-only report says nothing about any one constellation.
+    QCOMPARE(reportedConstellations(report), (QList<ReportedConstellation>{{GPSConstellation::GPS, 4, std::nullopt}}));
 
     gps->inViewTimestampUs = 300;
     gps->inUseTimestampUs = 300;
