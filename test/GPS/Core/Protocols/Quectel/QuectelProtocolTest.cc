@@ -504,6 +504,9 @@ void restartAndConfigurationSafety(GPSTestClock& clock)
         }
         QVERIFY(!driver.configure(config, baud));
         QVERIFY(receiver.model.commands.empty());
+        // A recording replay refuses the request a live configuration refuses.
+        LoggedRuntime replay(Quectel::FAMILY, makeDecoderOnlyIO(clock));
+        QVERIFY(!replay->armDecodeOnly(config));
     }
 }
 

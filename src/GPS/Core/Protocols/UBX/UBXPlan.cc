@@ -22,6 +22,13 @@ constexpr Observations MSM4{{Cfg::MSGOUT_RTCM_3X_TYPE1074, Cfg::MSGOUT_RTCM_3X_T
                              Cfg::MSGOUT_RTCM_3X_TYPE1124},
                             {Msg::RTCM3_1074, Msg::RTCM3_1084, Msg::RTCM3_1094, Msg::RTCM3_1124}};
 
+/// CFG-TMODE-MODE, and the mode in bits 7..0 of the CFG-TMODE3 flags.
+constexpr uint8_t TIME_MODE_DISABLED = 0;
+constexpr uint8_t TIME_MODE_SURVEY_IN = 1;
+constexpr uint8_t TIME_MODE_FIXED = 2;
+/// CFG-TMODE3 flags: the position is latitude, longitude and height.
+constexpr uint16_t LEGACY_TIME_MODE_LLA = 1 << 8;
+
 constexpr uint32_t LEGACY_PORT_MODE_8N1 = 0x08d0;
 constexpr uint16_t LEGACY_PROTOCOL_UBX = 1 << 0;
 constexpr uint16_t LEGACY_PROTOCOL_NMEA = 1 << 1;
@@ -160,12 +167,12 @@ ValsetBatch disableRTCMOutput()
 
 ValsetBatch disableTimeMode()
 {
-    return {.items = {{Cfg::TMODE_MODE, 0}}};
+    return {.items = {{Cfg::TMODE_MODE, TIME_MODE_DISABLED}}};
 }
 
 ValsetBatch surveyIn(const GPSBaseStationConfig::SurveyIn& survey)
 {
-    return {.items = {{Cfg::TMODE_MODE, 1},
+    return {.items = {{Cfg::TMODE_MODE, TIME_MODE_SURVEY_IN},
                       {Cfg::TMODE_SVIN_MIN_DUR, static_cast<uint32_t>(survey.duration.count())},
                       {Cfg::TMODE_SVIN_ACC_LIMIT, accuracyWireUnits(survey.accuracyMeters)},
                       {Cfg::MSGOUT_UBX_NAV_SVIN, SURVEY_STATUS_RATE}}};
@@ -174,7 +181,7 @@ ValsetBatch surveyIn(const GPSBaseStationConfig::SurveyIn& survey)
 ValsetBatch fixedBase(const GPSBaseStationConfig::Fixed& fixed)
 {
     const auto position = fixedPositionWire(fixed.position);
-    return {.items = {{Cfg::TMODE_MODE, 2},
+    return {.items = {{Cfg::TMODE_MODE, TIME_MODE_FIXED},
                       {Cfg::TMODE_POS_TYPE, 1},  // latitude, longitude and height
                       {Cfg::TMODE_LAT, position.latitude},
                       {Cfg::TMODE_LAT_HP, position.latitudeHp},
@@ -229,7 +236,11 @@ std::array<uint8_t, 2 * WIRE_SIZE<CfgPrt>> legacyPorts(uint32_t baudrate)
 
 std::array<MessageRate, 5> legacyMessageOutput()
 {
-    return {{{Msg::NAV_PVT, 1}, {Msg::NAV_STATUS, 1}, {Msg::NAV_DOP, 1}, {Msg::NAV_SVINFO, 5}, {Msg::MON_HW, 1}}};
+    return {{{Msg::NAV_PVT, 1},
+             {Msg::NAV_STATUS, 1},
+             {Msg::NAV_DOP, 1},
+             {Msg::NAV_SVINFO, LEGACY_SURVEY_SATELLITE_RATE},
+             {Msg::MON_HW, 1}}};
 }
 
 std::array<MessageRate, 10> legacyDisableRTCMOutput()
@@ -264,7 +275,7 @@ std::array<RTCMOutput, 6> legacyRTCMOutput(bool compactObservations)
 
 CfgTmode3 legacySurveyIn(const GPSBaseStationConfig::SurveyIn& survey)
 {
-    return {.flags = 1,
+    return {.flags = TIME_MODE_SURVEY_IN,
             .svinMinDur = static_cast<uint32_t>(survey.duration.count()),
             .svinAccLimit = accuracyWireUnits(survey.accuracyMeters)};
 }
@@ -272,7 +283,7 @@ CfgTmode3 legacySurveyIn(const GPSBaseStationConfig::SurveyIn& survey)
 CfgTmode3 legacyFixedBase(const GPSBaseStationConfig::Fixed& fixed)
 {
     const auto position = fixedPositionWire(fixed.position);
-    return {.flags = 2 | (1 << 8),  // fixed mode, latitude/longitude/height
+    return {.flags = TIME_MODE_FIXED | LEGACY_TIME_MODE_LLA,
             .ecefXOrLat = position.latitude,
             .ecefYOrLon = position.longitude,
             .ecefZOrAlt = position.height,

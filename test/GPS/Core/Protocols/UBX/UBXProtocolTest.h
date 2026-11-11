@@ -14,4 +14,6 @@ private slots:
     void _surveyStop();
     void _replyFaults_data();
     void _replyFaults();
+    void _timeOfWeekSteps_data();
+    void _timeOfWeekSteps();
 };

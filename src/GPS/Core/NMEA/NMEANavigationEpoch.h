@@ -46,14 +46,14 @@ struct NavigationUpdate
     enum class Type
     {
         Epoch,
-        FixLoss
+        FixLoss,
     };
 
     enum class Trigger
     {
         Position,
         TimedMetadata,
-        UntimedMetadata
+        UntimedMetadata,
     };
 
     Type type = Type::Epoch;

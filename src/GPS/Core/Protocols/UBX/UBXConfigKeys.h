@@ -12,10 +12,22 @@
 
 namespace UBX {
 
-/// Value size in bytes from bits 28-30 of a configuration key id, or 0 for a reserved size.
+/// The size code of a configuration key id, in bits 28-30.
+[[nodiscard]] constexpr unsigned cfgKeySizeCode(uint32_t keyId)
+{
+    return (keyId >> 28) & 0x7;
+}
+
+/// Whether @a keyId has a one-bit (L) value, which is 0 or 1.
+[[nodiscard]] constexpr bool cfgKeyIsBoolean(uint32_t keyId)
+{
+    return cfgKeySizeCode(keyId) == 1;
+}
+
+/// Value size in bytes of a configuration key id, or 0 for a reserved size.
 [[nodiscard]] constexpr size_t cfgKeyValueBytes(uint32_t keyId)
 {
-    switch ((keyId >> 28) & 0x7) {
+    switch (cfgKeySizeCode(keyId)) {
         case 1:  // A one-bit value still occupies a byte.
         case 2:
             return 1;
@@ -202,6 +214,9 @@ struct ConfigurationValue
     bool operator==(const ConfigurationValue&) const = default;
 };
 
+/// The header bytes before the key/value entries of a CFG-VALSET, a CFG-VALGET poll and its response.
+inline constexpr size_t CONFIGURATION_HEADER_SIZE = 4;
+
 /// Reads only key/value entries; VALSET and VALGET validate their different headers separately.
 class ConfigurationValueCursor
 {
@@ -219,7 +234,7 @@ public:
         }
         const auto key = LittleEndian::read<uint32_t>(_remaining, 0);
         const unsigned width = key ? configurationValueBytes(*key) : 0;
-        if (!width || _remaining.size() < sizeof(uint32_t) + width) {
+        if (!key || !width || _remaining.size() < sizeof(uint32_t) + width) {
             _valid = false;
             return std::nullopt;
         }
@@ -227,7 +242,7 @@ public:
         for (unsigned byte = 0; byte < width; ++byte) {
             value |= uint32_t(_remaining[sizeof(uint32_t) + byte]) << (8 * byte);
         }
-        if ((*key >> 28) == 1 && value > 1) {
+        if (cfgKeyIsBoolean(*key) && value > 1) {
             _valid = false;
             return std::nullopt;
         }
@@ -253,11 +268,11 @@ struct ConfigurationValues
 /// Decodes a CFG-VALGET response (version 1, RAM layer) of at most ConfigurationValues::MAX_KEYS values.
 [[nodiscard]] inline std::optional<ConfigurationValues> decodeConfigurationValues(std::span<const uint8_t> payload)
 {
-    if (payload.size() < 4 || payload[0] != 1 || payload[1] || payload[2] || payload[3]) {
+    if (payload.size() < CONFIGURATION_HEADER_SIZE || payload[0] != 1 || payload[1] || payload[2] || payload[3]) {
         return std::nullopt;
     }
     ConfigurationValues result;
-    ConfigurationValueCursor cursor(payload.subspan(4));
+    ConfigurationValueCursor cursor(payload.subspan(CONFIGURATION_HEADER_SIZE));
     while (!cursor.empty()) {
         const auto entry = cursor.next();
         if (!entry || result.count == result.values.size()) {
@@ -273,23 +288,27 @@ struct ConfigurationValues
 template <size_t Capacity>
 struct CheckedValsetBatch
 {
-    static_assert(Capacity >= 4);
+    static_assert(Capacity >= CONFIGURATION_HEADER_SIZE);
     std::array<uint8_t, Capacity> bytes{0, 1};  // RAM layer; no persistent writes.
-    size_t size = 4;
+    size_t size = CONFIGURATION_HEADER_SIZE;
     bool valid = true;
 
     std::span<const uint8_t> payload() const
     {
-        return valid && size > 4 ? std::span<const uint8_t>(bytes).first(size) : std::span<const uint8_t>{};
+        return valid && size > CONFIGURATION_HEADER_SIZE ? std::span<const uint8_t>(bytes).first(size)
+                                                         : std::span<const uint8_t>{};
     }
 
     /// The appended key/value entries, without the header.
-    std::span<const uint8_t> entries() const { return std::span<const uint8_t>(bytes).subspan(4, size - 4); }
+    std::span<const uint8_t> entries() const
+    {
+        return std::span<const uint8_t>(bytes).subspan(CONFIGURATION_HEADER_SIZE, size - CONFIGURATION_HEADER_SIZE);
+    }
 
     bool append(uint32_t key, uint32_t value)
     {
         const unsigned width = configurationValueBytes(key);
-        if (!valid || !width || (width < 4 && value >= (1u << (width * 8))) || ((key >> 28) == 1 && value > 1) ||
+        if (!valid || !width || (width < 4 && value >= (1u << (width * 8))) || (cfgKeyIsBoolean(key) && value > 1) ||
             sizeof(key) + width > bytes.size() - size) {
             valid = false;
             return false;

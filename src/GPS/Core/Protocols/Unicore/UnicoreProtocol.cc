@@ -37,6 +37,10 @@ namespace {
 
 namespace Plan = Unicore::Plan;
 
+/// A command reply is "$command,<text>,response: <status>*hh", echoing the command's text.
+constexpr std::string_view REPLY_PREFIX = "$command,";
+constexpr std::string_view REPLY_STATUS_PREFIX = ",response: ";
+
 std::string_view unquote(std::string_view field)
 {
     if (field.size() < 2 || field.front() != '"' || field.back() != '"') {
@@ -78,9 +82,14 @@ bool modeMatches(std::string_view mode, Plan::Reply reply)
             return starts("MODE ROVER");
         case Plan::Reply::AveragingMode:
             return starts("MODE BASE TIME");
-        default:
+        case Plan::Reply::FixedMode:
             return mode == "MODE BASE";
+        case Plan::Reply::Acknowledgement:
+        case Plan::Reply::Version:
+        case Plan::Reply::FixedPosition:
+            return false;
     }
+    return false;
 }
 
 bool samePosition(const GPSProtocolMath::Ecef& left, const GPSProtocolMath::Ecef& right)
@@ -127,6 +136,11 @@ public:
     /// firmware is not supported.
     bool probe(GPSCommandChannel& channel) override { return _identify(channel).succeeded() || !_model.isEmpty(); }
 
+protected:
+    GPSReceiveUpdates _decodeLine(std::string_view line, GPSDecodeContext& context) override;
+    /// Ends readiness when base status expired or a failure is recorded.
+    void _expire(GPSDecodeContext& context) override;
+
 private:
     /// Starts a configuration attempt: forgets the receiver and its stream, stops corrections and revokes the base.
     void _startAttempt(GPSStreamDemux& stream, GPSDecodeContext& context);
@@ -141,7 +155,6 @@ private:
     void _monitorBaseStatus(GPSDecodeContext& context);
     /// The configuration failed: revokes a monitored base and stops corrections.
     bool _failAttempt(GPSCommandChannel& channel);
-    GPSReceiveUpdates _decodeLine(std::string_view line, GPSDecodeContext& context) override;
     /// Each handler returns whether its log was valid.
     bool _handleVersion(std::string_view body, GPSDecodeContext& context);
     bool _handleMode(std::string_view body, GPSDecodeContext& context);
@@ -149,8 +162,6 @@ private:
     void _publishBase(GPSDecodeContext& context, bool active, bool valid);
     /// Ends readiness; @a reason becomes the error detail unless a failure is already recorded.
     void _invalidateBase(GPSDecodeContext& context, const QString& reason);
-    /// Ends readiness when base status expired or a failure is recorded.
-    void _expire(GPSDecodeContext& context) override;
 
     /// The role MODE must report once ready.
     Plan::Reply _expectedMode = Plan::Reply::AveragingMode;
@@ -182,7 +193,9 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
     const auto* averaging = std::get_if<GPSBaseStationConfig::ReceiverAveraging>(&config.base.mode);
     if (!fixed && !averaging) {
         channel.failControl(
-            QStringLiteral("Unicore requires receiver-managed averaging with a duration between 1 and 3600 seconds"));
+            QStringLiteral("Unicore requires receiver-managed averaging with a duration between %1 and %2 seconds")
+                .arg(GPSBaseStationConfig::ReceiverAveraging::MIN_DURATION.count())
+                .arg(GPSBaseStationConfig::ReceiverAveraging::MAX_DURATION.count()));
         return _failAttempt(channel);
     }
     _setBase(config.base.mode);
@@ -266,14 +279,16 @@ GPSCommandSequence Protocol::_sequence(const QList<Plan::Command>& commands)
 
 GPSCommandOutcome Protocol::_match(const Plan::Command& command, std::string_view line)
 {
-    if (line.starts_with("$command,")) {
-        const auto response = line.find(",response: ", 9);
+    if (line.starts_with(REPLY_PREFIX)) {
+        const auto echo = REPLY_PREFIX.size();
+        const auto response = line.find(REPLY_STATUS_PREFIX, echo);
         if (response == std::string_view::npos ||
-            QByteArrayView(line.substr(9, response - 9)).compare(command.text, Qt::CaseInsensitive) != 0) {
+            QByteArrayView(line.substr(echo, response - echo)).compare(command.text, Qt::CaseInsensitive) != 0) {
             return GPSCommandOutcome::Pending;
         }
         _acknowledgementMatched = true;
-        if (line.substr(response + 11, line.rfind('*') - response - 11) != "OK") {
+        const auto status = response + REPLY_STATUS_PREFIX.size();
+        if (line.substr(status, line.rfind('*') - status) != "OK") {
             return GPSCommandOutcome::Rejected;
         }
         return command.reply == Plan::Reply::Acknowledgement ? GPSCommandOutcome::Acknowledged
@@ -333,7 +348,7 @@ bool Protocol::_failAttempt(GPSCommandChannel& channel)
 
 GPSReceiveUpdates Protocol::_decodeLine(std::string_view line, GPSDecodeContext& context)
 {
-    if (line.starts_with("$command,")) {
+    if (line.starts_with(REPLY_PREFIX)) {
         if (!context.replyPending() || !validXorChecksum(line)) {
             return {};
         }
@@ -490,7 +505,8 @@ QLatin1StringView signature(const GPSFrame& frame)
     if (frame.kind != GPSFrameKind::ASCIILine) {
         return {};
     }
-    if (text.starts_with("$command,") && text.find(",response: ") != std::string_view::npos && validXorChecksum(text)) {
+    if (text.starts_with(REPLY_PREFIX) && text.find(REPLY_STATUS_PREFIX) != std::string_view::npos &&
+        validXorChecksum(text)) {
         return QLatin1StringView("Unicore command replies");
     }
     const auto log = gpsASCIILog(text);

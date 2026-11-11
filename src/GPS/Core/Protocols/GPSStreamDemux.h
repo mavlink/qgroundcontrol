@@ -14,7 +14,7 @@ enum class GPSFrameKind : uint8_t
 {
     RTCM3 = 0x01,         ///< 0xD3 frames with a valid CRC-24Q.
     UBX = 0x02,           ///< u-blox 0xB5 0x62 frames with a valid Fletcher checksum.
-    SBF = 0x04,           ///< Septentrio "$@" block candidates, up to the first 110 bytes; the decoder checks the CRC.
+    SBF = 0x04,           ///< Septentrio "$@" block candidates, cut at SBF_CAPTURE_LIMIT; the decoder checks the CRC.
     NMEASentence = 0x08,  ///< '$' to a valid "*hh" checksum, without a line ending.
     ASCIILine = 0x10,     ///< Printable lines up to CR/LF, without the terminator; the decoder checks checksums.
 };
@@ -64,12 +64,18 @@ public:
     class Handler
     {
     public:
+        Q_DISABLE_COPY_MOVE(Handler)
+
         /// Receives each completed frame; the handler may reset or enable framers.
         virtual void frame(const GPSFrame& frame) = 0;
 
     protected:
+        Handler() = default;
         ~Handler() = default;
     };
+
+    /// The most bytes of a Septentrio block candidate that a frame carries.
+    static constexpr size_t SBF_CAPTURE_LIMIT = 110;
 
     explicit GPSStreamDemux(const GPSStreamConfig& config);
     ~GPSStreamDemux();

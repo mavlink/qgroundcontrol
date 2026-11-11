@@ -11,8 +11,8 @@
 GPSReceiverConfigError gpsValidateBaseStationConfig(const GPSBaseStationConfig& config)
 {
     if (const auto* averaging = std::get_if<GPSBaseStationConfig::ReceiverAveraging>(&config.mode)) {
-        if (averaging->maximumDuration < std::chrono::seconds{1} ||
-            averaging->maximumDuration > std::chrono::hours{1}) {
+        if (averaging->maximumDuration < GPSBaseStationConfig::ReceiverAveraging::MIN_DURATION ||
+            averaging->maximumDuration > GPSBaseStationConfig::ReceiverAveraging::MAX_DURATION) {
             return GPSReceiverConfigError::InvalidReceiverAveraging;
         }
         return GPSReceiverConfigError::None;
@@ -96,8 +96,11 @@ QString gpsReceiverConfigErrorText(GPSReceiverConfigError error)
             return QCoreApplication::translate("GPSReceiverConfig",
                                                "This receiver does not support the selected base mode");
         case GPSReceiverConfigError::InvalidReceiverAveraging:
+            //: %1 and %2 are the shortest and the longest duration, in seconds
             return QCoreApplication::translate("GPSReceiverConfig",
-                                               "Enter a receiver averaging duration between 1 and 3600 seconds");
+                                               "Enter a receiver averaging duration between %1 and %2 seconds")
+                .arg(GPSBaseStationConfig::ReceiverAveraging::MIN_DURATION.count())
+                .arg(GPSBaseStationConfig::ReceiverAveraging::MAX_DURATION.count());
         case GPSReceiverConfigError::InvalidBaudRate:
             return QCoreApplication::translate(
                 "GPSReceiverConfig", "Select a valid serial baud rate; passive input requires an explicit rate");

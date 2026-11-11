@@ -35,9 +35,11 @@ public:
     /// Starts RTCM output once decoding saw position averaging finish.
     void serviceStreaming(GPSCommandChannel& channel) override;
 
-private:
+protected:
     /// Completes a survey-in from a fixed-quality GGA and advances its duration; a malformed GGA does neither.
     GPSReceiveUpdates _decodeLine(std::string_view line, GPSDecodeContext& context) override;
+
+private:
     void _setUpBase(GPSCommandChannel& channel);
     void _activateRTCMOutput(GPSCommandChannel& channel);
 

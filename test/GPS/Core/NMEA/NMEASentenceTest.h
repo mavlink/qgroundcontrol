@@ -12,6 +12,8 @@ private slots:
     void _utcMilliseconds_data();
     void _utcMilliseconds();
     void _qtTimestampEquivalence();
+    void _zdaDate_data();
+    void _zdaDate();
     void _makeGga_data();
     void _makeGga();
     void _repairChecksum_data();

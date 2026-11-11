@@ -25,7 +25,7 @@ public:
 
     virtual ~Framer() = default;
 
-    Q_DISABLE_COPY(Framer)
+    Q_DISABLE_COPY_MOVE(Framer)
 
     GPSFrameKind kind() const { return _kind; }
 
@@ -111,7 +111,7 @@ private:
     UBX::FrameDecoder _decoder;
 };
 
-/// Septentrio block candidates: a candidate ends at its length field or at the 110-byte capture limit, so an oversized
+/// Septentrio block candidates: a candidate ends at its length field or at SBF_CAPTURE_LIMIT bytes, so an oversized
 /// block is delivered truncated for the decoder to reject. The rest of a block whose length is plausible, a multiple
 /// of four up to MAX_SKIPPED_LENGTH, is then discarded, so its binary content never reaches another framer.
 class SBFFramer final : public GPSStreamDemux::Framer
@@ -209,7 +209,7 @@ private:
         return (_size >= Wire::SIZE<SBF::BlockHeader> && _size >= _header().length) || _size >= _wire.size();
     }
 
-    std::array<uint8_t, 110> _wire{};
+    std::array<uint8_t, GPSStreamDemux::SBF_CAPTURE_LIMIT> _wire{};
     uint16_t _size = 0;
     uint16_t _remaining = 0;
     State _state = State::Sync1;

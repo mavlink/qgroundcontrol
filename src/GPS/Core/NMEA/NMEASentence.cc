@@ -11,39 +11,43 @@ namespace {
 constexpr double DEGREE_MINUTE_SCALE = 100.0;
 constexpr double MAX_LATITUDE_DEGREES = 90.0;
 constexpr double MAX_LONGITUDE_DEGREES = 180.0;
-constexpr unsigned MAX_GGA_SATELLITES = std::numeric_limits<uint8_t>::max();
+constexpr unsigned MAX_GGA_SATELLITES = (std::numeric_limits<uint8_t>::max)();
 constexpr size_t UTC_COMPONENT_DIGITS = 2;
 constexpr size_t UTC_INTEGER_DIGITS = 3 * UTC_COMPONENT_DIGITS;
 constexpr size_t UTC_FRACTION_OFFSET = UTC_INTEGER_DIGITS + 1;
+constexpr size_t RMC_DATE_DIGITS = 3 * UTC_COMPONENT_DIGITS;
+// RMC carries the last two digits of the year.
+constexpr int RMC_DATE_CENTURY = 2000;
 constexpr unsigned HOURS_PER_DAY = 24;
 constexpr unsigned MINUTES_PER_HOUR = 60;
 constexpr unsigned SECONDS_PER_MINUTE = 60;
 constexpr size_t FIRST_MILLISECOND_DIGIT_WEIGHT = 100;
-constexpr double KNOTS_TO_METERS_PER_SECOND = 0.5144444444444445;
 constexpr double KILOMETERS_PER_HOUR_TO_METERS_PER_SECOND = 1.0 / 3.6;
+constexpr double FULL_CIRCLE_DEGREES = 360.0;
+
+constexpr unsigned MAX_DAY_OF_MONTH = 31;
+constexpr unsigned MONTHS_PER_YEAR = 12;
+// Dates carry a four-digit year.
+constexpr int MIN_YEAR = 1;
+constexpr int MAX_YEAR = 9999;
 
 std::optional<NMEA::UtcDate> dateFromParts(unsigned day, unsigned month, int year)
 {
+    // std::chrono's day, month and year narrow their argument, so ok() alone would validate the truncated value.
+    if (day < 1 || day > MAX_DAY_OF_MONTH || month < 1 || month > MONTHS_PER_YEAR || year < MIN_YEAR ||
+        year > MAX_YEAR) {
+        return {};
+    }
     if (!std::chrono::year_month_day{std::chrono::year{year}, std::chrono::month{month}, std::chrono::day{day}}.ok()) {
         return {};
     }
     return NMEA::UtcDate{year, month, day};
 }
 
-std::optional<double> nonnegativeDegrees(std::string_view field)
-{
-    const auto value = NMEA::number<double>(field);
-    return value && *value >= 0.0 && *value <= 360.0 ? value : std::nullopt;
-}
-
-std::optional<double> nonnegativeSpeed(std::string_view field, double scale)
-{
-    const auto value = NMEA::number<double>(field);
-    return value && *value >= 0.0 ? std::optional<double>(*value * scale) : std::nullopt;
-}
-
 constexpr int MIN_REPAIRABLE_SENTENCE_LENGTH = 5;
 constexpr int MINUTE_DECIMAL_PLACES = 4;
+// Minutes below this take a leading zero to fill their two integer digits.
+constexpr double TWO_DIGIT_MINUTES = 10.0;
 constexpr double MINUTE_FRACTION_SCALE = 10000.0;
 constexpr int LATITUDE_DEGREE_DIGITS = 2;
 constexpr int LONGITUDE_DEGREE_DIGITS = 3;
@@ -144,8 +148,9 @@ double degreesFromDegreesMinutes(double ddmm)
     return std::abs(minutes) < MINUTES_PER_DEGREE ? degrees + minutes / MINUTES_PER_DEGREE : NAN;
 }
 
-std::optional<double> coordinate(std::string_view field, std::string_view hemisphere, bool latitude)
+std::optional<double> coordinate(std::string_view field, std::string_view hemisphere, Coordinate which)
 {
+    const bool latitude = which == Coordinate::Latitude;
     const auto value = number<double>(field);
     if (!value || *value < 0 || hemisphere.size() != 1) {
         return {};
@@ -164,17 +169,26 @@ std::optional<double> coordinate(std::string_view field, std::string_view hemisp
     return (degrees + minutes / MINUTES_PER_DEGREE) * (hemisphere[0] == negative ? -1 : 1);
 }
 
+std::optional<unsigned> ggaSatellitesUsed(std::string_view field)
+{
+    const auto count = number<unsigned>(field);
+    return count && *count <= MAX_GGA_SATELLITES ? count : std::nullopt;
+}
+
 std::optional<GGA> gga(const Sentence& input)
 {
     if (input.type() != "GGA" || input.count < Field::GGA_MIN_FIELDS) {
         return {};
     }
     const auto& f = input.fields;
-    const auto latitude = coordinate(f[Field::GGA_LATITUDE], f[Field::GGA_LATITUDE_HEMISPHERE], true);
-    const auto longitude = coordinate(f[Field::GGA_LONGITUDE], f[Field::GGA_LONGITUDE_HEMISPHERE], false);
+    const auto latitude = coordinate(f[Field::GGA_LATITUDE], f[Field::GGA_LATITUDE_HEMISPHERE], Coordinate::Latitude);
+    const auto longitude =
+        coordinate(f[Field::GGA_LONGITUDE], f[Field::GGA_LONGITUDE_HEMISPHERE], Coordinate::Longitude);
     const auto quality = number<unsigned>(f[Field::GGA_QUALITY]);
-    const auto satellites = number<unsigned>(f[Field::GGA_SATELLITES_USED]);
-    if (!quality || *quality > GgaQuality::MAX_VALUE || (satellites && *satellites > MAX_GGA_SATELLITES)) {
+    const auto satellites = ggaSatellitesUsed(f[Field::GGA_SATELLITES_USED]);
+    // A count beyond the range makes the sentence malformed; an empty or unreadable one is only unknown.
+    const bool satellitesOutOfRange = !satellites && number<unsigned>(f[Field::GGA_SATELLITES_USED]);
+    if (!quality || *quality > GgaQuality::MAX_VALUE || satellitesOutOfRange) {
         return {};
     }
     const auto latitudeHemisphere = f[Field::GGA_LATITUDE_HEMISPHERE];
@@ -211,7 +225,7 @@ std::optional<int> utcMilliseconds(std::string_view field)
         return {};
     }
     for (size_t index = 0; index < field.size(); ++index) {
-        if (index != UTC_INTEGER_DIGITS && (field[index] < '0' || field[index] > '9')) {
+        if (index != UTC_INTEGER_DIGITS && !isAsciiDigit(field[index])) {
             return {};
         }
     }
@@ -233,23 +247,35 @@ std::optional<int> utcMilliseconds(std::string_view field)
     return static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(wholeSeconds).count()) + milliseconds;
 }
 
+std::optional<double> courseDegrees(std::string_view field)
+{
+    const auto value = number<double>(field);
+    return value && *value >= 0.0 && *value <= FULL_CIRCLE_DEGREES ? value : std::nullopt;
+}
+
+std::optional<double> speedMetersPerSecond(std::string_view field, double scale)
+{
+    const auto value = number<double>(field);
+    return value && *value >= 0.0 ? std::optional<double>(*value * scale) : std::nullopt;
+}
+
 std::optional<UtcDate> rmcDate(std::string_view field)
 {
-    if (field.size() != 6) {
+    if (field.size() != RMC_DATE_DIGITS) {
         return {};
     }
     for (const char digit : field) {
-        if (digit < '0' || digit > '9') {
+        if (!isAsciiDigit(digit)) {
             return {};
         }
     }
-    const auto day = number<unsigned>(field.substr(0, 2));
-    const auto month = number<unsigned>(field.substr(2, 2));
-    const auto year = number<unsigned>(field.substr(4, 2));
+    const auto day = number<unsigned>(field.substr(0, UTC_COMPONENT_DIGITS));
+    const auto month = number<unsigned>(field.substr(UTC_COMPONENT_DIGITS, UTC_COMPONENT_DIGITS));
+    const auto year = number<unsigned>(field.substr(2 * UTC_COMPONENT_DIGITS, UTC_COMPONENT_DIGITS));
     if (!day || !month || !year) {
         return {};
     }
-    return dateFromParts(*day, *month, 2000 + static_cast<int>(*year));
+    return dateFromParts(*day, *month, RMC_DATE_CENTURY + static_cast<int>(*year));
 }
 
 std::optional<RMC> rmc(const Sentence& input)
@@ -258,8 +284,9 @@ std::optional<RMC> rmc(const Sentence& input)
         return {};
     }
     const auto& f = input.fields;
-    const auto latitude = coordinate(f[Field::RMC_LATITUDE], f[Field::RMC_LATITUDE_HEMISPHERE], true);
-    const auto longitude = coordinate(f[Field::RMC_LONGITUDE], f[Field::RMC_LONGITUDE_HEMISPHERE], false);
+    const auto latitude = coordinate(f[Field::RMC_LATITUDE], f[Field::RMC_LATITUDE_HEMISPHERE], Coordinate::Latitude);
+    const auto longitude =
+        coordinate(f[Field::RMC_LONGITUDE], f[Field::RMC_LONGITUDE_HEMISPHERE], Coordinate::Longitude);
     if (!latitude || !longitude) {
         return {};
     }
@@ -267,8 +294,9 @@ std::optional<RMC> rmc(const Sentence& input)
     result.latitude = *latitude;
     result.longitude = *longitude;
     result.utcMilliseconds = utcMilliseconds(f[Field::UTC_TIME]);
-    result.speedMetersPerSecond = nonnegativeSpeed(f[Field::RMC_SPEED_KNOTS], KNOTS_TO_METERS_PER_SECOND).value_or(NAN);
-    result.courseDegrees = nonnegativeDegrees(f[Field::RMC_COURSE]).value_or(NAN);
+    result.speedMetersPerSecond =
+        speedMetersPerSecond(f[Field::RMC_SPEED_KNOTS], KNOTS_TO_METERS_PER_SECOND).value_or(NAN);
+    result.courseDegrees = courseDegrees(f[Field::RMC_COURSE]).value_or(NAN);
     return result;
 }
 
@@ -278,8 +306,9 @@ std::optional<GLL> gll(const Sentence& input)
         return {};
     }
     const auto& f = input.fields;
-    const auto latitude = coordinate(f[Field::GLL_LATITUDE], f[Field::GLL_LATITUDE_HEMISPHERE], true);
-    const auto longitude = coordinate(f[Field::GLL_LONGITUDE], f[Field::GLL_LONGITUDE_HEMISPHERE], false);
+    const auto latitude = coordinate(f[Field::GLL_LATITUDE], f[Field::GLL_LATITUDE_HEMISPHERE], Coordinate::Latitude);
+    const auto longitude =
+        coordinate(f[Field::GLL_LONGITUDE], f[Field::GLL_LONGITUDE_HEMISPHERE], Coordinate::Longitude);
     if (!latitude || !longitude) {
         return {};
     }
@@ -292,10 +321,10 @@ std::optional<VTG> vtg(const Sentence& input)
         return {};
     }
     VTG result;
-    result.courseDegrees = nonnegativeDegrees(input.fields[Field::VTG_TRUE_COURSE]).value_or(NAN);
+    result.courseDegrees = courseDegrees(input.fields[Field::VTG_TRUE_COURSE]).value_or(NAN);
     const auto speedKmh =
-        nonnegativeSpeed(input.fields[Field::VTG_SPEED_KMH], KILOMETERS_PER_HOUR_TO_METERS_PER_SECOND);
-    const auto speedKnots = nonnegativeSpeed(input.fields[Field::VTG_SPEED_KNOTS], KNOTS_TO_METERS_PER_SECOND);
+        speedMetersPerSecond(input.fields[Field::VTG_SPEED_KMH], KILOMETERS_PER_HOUR_TO_METERS_PER_SECOND);
+    const auto speedKnots = speedMetersPerSecond(input.fields[Field::VTG_SPEED_KNOTS], KNOTS_TO_METERS_PER_SECOND);
     result.speedMetersPerSecond = speedKmh.value_or(speedKnots.value_or(NAN));
     return result;
 }
@@ -411,15 +440,15 @@ QByteArray repairChecksum(const QByteArray& sentence)
 
 QByteArray makeGGA(const NMEA::GGA& fix, const QTime& utc)
 {
-    if (!utc.isValid() || !std::isfinite(fix.latitude) || fix.latitude < -90.0 || fix.latitude > 90.0 ||
-        !std::isfinite(fix.longitude) || fix.longitude < -180.0 || fix.longitude > 180.0 || std::isinf(fix.altitude) ||
+    if (!utc.isValid() || !std::isfinite(fix.latitude) || std::abs(fix.latitude) > MAX_LATITUDE_DEGREES ||
+        !std::isfinite(fix.longitude) || std::abs(fix.longitude) > MAX_LONGITUDE_DEGREES || std::isinf(fix.altitude) ||
         std::isinf(fix.geoidSeparation) || std::isinf(fix.hdop) || fix.hdop < 0.0 ||
         fix.quality > NMEA::GgaQuality::MAX_VALUE) {
         return {};
     }
     const QByteArray hhmmss = utc.toString(u"hhmmss").toLatin1();
 
-    auto dmm = [](double deg, bool lat) -> QByteArray {
+    auto dmm = [](double deg, NMEA::Coordinate which) -> QByteArray {
         const double a = qFabs(deg);
         int d = static_cast<int>(a);
         double m = (a - d) * NMEA::MINUTES_PER_DEGREE;
@@ -432,19 +461,19 @@ QByteArray makeGGA(const NMEA::GGA& fix, const QTime& utc)
         }
 
         QByteArray mm = QByteArray::number(mRounded, 'f', MINUTE_DECIMAL_PLACES);
-        if (mRounded < NMEA::DECIMAL_BASE) {
+        if (mRounded < TWO_DIGIT_MINUTES) {
             mm.prepend('0');
         }
 
-        const int dWidth = lat ? LATITUDE_DEGREE_DIGITS : LONGITUDE_DEGREE_DIGITS;
+        const int dWidth = which == NMEA::Coordinate::Latitude ? LATITUDE_DEGREE_DIGITS : LONGITUDE_DEGREE_DIGITS;
         return QByteArray::number(d).rightJustified(dWidth, '0') + mm;
     };
 
     const bool latNorth = fix.latitude >= 0.0;
     const bool lonEast = fix.longitude >= 0.0;
 
-    const QByteArray latField = dmm(fix.latitude, true);
-    const QByteArray lonField = dmm(fix.longitude, false);
+    const QByteArray latField = dmm(fix.latitude, NMEA::Coordinate::Latitude);
+    const QByteArray lonField = dmm(fix.longitude, NMEA::Coordinate::Longitude);
     const auto measurement = [](double value, int decimalPlaces) {
         return std::isnan(value) ? QByteArray() : QByteArray::number(value, 'f', decimalPlaces);
     };

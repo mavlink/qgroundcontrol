@@ -20,6 +20,7 @@ constexpr int DECIMAL_BASE = 10;
 constexpr int HEX_BASE = 16;
 constexpr int CHECKSUM_DIGITS = 2;
 constexpr double MINUTES_PER_DEGREE = 60.0;
+constexpr double KNOTS_TO_METERS_PER_SECOND = 0.5144444444444445;
 
 namespace Field {
 constexpr size_t UTC_TIME = 1;
@@ -191,7 +192,16 @@ struct Frame
 /// Convert a signed ddmm.mmmm (or dddmm.mmmm) value; invalid values return NaN.
 [[nodiscard]] double degreesFromDegreesMinutes(double ddmm);
 
-[[nodiscard]] std::optional<double> coordinate(std::string_view field, std::string_view hemisphere, bool latitude);
+/// Which coordinate a ddmm.mmmm field holds: it sets the degree limit and the hemisphere letters.
+enum class Coordinate
+{
+    Latitude,
+    Longitude,
+};
+
+/// Signed degrees of an unsigned ddmm.mmmm (or dddmm.mmmm) field and its hemisphere letter; nullopt when either is
+/// malformed or out of range.
+[[nodiscard]] std::optional<double> coordinate(std::string_view field, std::string_view hemisphere, Coordinate which);
 
 struct GGA
 {
@@ -204,11 +214,23 @@ struct GGA
     std::optional<unsigned> satellitesUsed = std::nullopt;
 };
 
+/// The count in a GGA satellites-used field; nullopt when the field is empty, malformed or beyond the 255 a GGA may
+/// report.
+[[nodiscard]] std::optional<unsigned> ggaSatellitesUsed(std::string_view field);
+
 /// Quality zero is a valid fix-loss observation with empty coordinates and optional hemisphere fields.
 [[nodiscard]] std::optional<GGA> gga(const Sentence& input);
 
 std::optional<int> utcMilliseconds(std::string_view field);
 
+/// A course over ground in degrees, 0 to 360; nullopt when the field is empty, malformed or out of range.
+[[nodiscard]] std::optional<double> courseDegrees(std::string_view field);
+
+/// A speed field converted to metres per second by @a scale, such as KNOTS_TO_METERS_PER_SECOND; nullopt when the
+/// field is empty, malformed or negative.
+[[nodiscard]] std::optional<double> speedMetersPerSecond(std::string_view field, double scale);
+
+/// A calendar date that exists, in the years 1 to 9999.
 struct UtcDate
 {
     int year = 0;

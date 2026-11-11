@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cstdint>
 #include <string_view>
+#include <utility>
 
 #include "GPSProtocolEvent.h"
 #include "GPSStreamDemux.h"
@@ -48,7 +49,7 @@ public:
             return {};
         }
         GPSReceiveUpdates updates = _decodeStandard(frame.text(), context);
-        updates |= vendor(frame.text());
+        updates |= std::forward<Vendor>(vendor)(frame.text());
         return _finishLine(updates, context);
     }
 

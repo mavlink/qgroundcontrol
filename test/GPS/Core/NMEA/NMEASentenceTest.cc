@@ -215,13 +215,18 @@ void NMEASentenceTest::_navigationFreshnessBoundaries()
 void NMEASentenceTest::_navigationFixLoss_data()
 {
     QTest::addColumn<QByteArray>("body");
-    QTest::newRow("gga-quality-zero") << QByteArray("$GPGGA,092751.000,,,,,0,0,,,,,,,");
-    QTest::newRow("rmc-status-void") << QByteArray("$GPRMC,092751.000,V,,,,,,,280511,,,N");
+    QTest::addColumn<int>("satellitesUsed");
+    QTest::newRow("gga-quality-zero") << QByteArray("$GPGGA,092751.000,,,,,0,0,,,,,,,") << 0;
+    QTest::newRow("gga-most-satellites") << QByteArray("$GPGGA,092751.000,,,,,0,255,,,,,,,") << 255;
+    // gga() rejects a larger count, so the fix loss reports none.
+    QTest::newRow("gga-too-many-satellites") << QByteArray("$GPGGA,092751.000,,,,,0,256,,,,,,,") << -1;
+    QTest::newRow("rmc-status-void") << QByteArray("$GPRMC,092751.000,V,,,,,,,280511,,,N") << -1;
 }
 
 void NMEASentenceTest::_navigationFixLoss()
 {
     QFETCH(QByteArray, body);
+    QFETCH(int, satellitesUsed);
     const auto sentence = ownedSentence(NMEAUtils::repairChecksum(body));
     QVERIFY(sentence);
     NMEA::NavigationEpochAssembler assembler;
@@ -230,6 +235,7 @@ void NMEASentenceTest::_navigationFixLoss()
     QVERIFY(update->type == NMEA::NavigationUpdate::Type::FixLoss);
     QCOMPARE(update->epoch.fixQuality, GPSFixQuality::NoFix);
     QCOMPARE(update->epoch.receivedAtUs, quint64(42));
+    QCOMPARE(update->epoch.satellitesUsed, satellitesUsed < 0 ? std::nullopt : std::optional<unsigned>(satellitesUsed));
 }
 
 void NMEASentenceTest::_utcMilliseconds_data()
@@ -263,6 +269,37 @@ void NMEASentenceTest::_qtTimestampEquivalence()
         const auto expected = QTime::fromString(QString::fromLatin1(text), u"hhmmss.z");
         const auto actual = NMEA::utcMilliseconds(std::string_view(text.constData(), text.size()));
         QVERIFY2(actual && *actual == expected.msecsSinceStartOfDay(), text.constData());
+    }
+}
+
+void NMEASentenceTest::_zdaDate_data()
+{
+    QTest::addColumn<QByteArray>("date");
+    QTest::addColumn<bool>("accepted");
+    QTest::newRow("valid") << QByteArray("12,07,2026") << true;
+    QTest::newRow("leap-day") << QByteArray("29,02,2024") << true;
+    QTest::newRow("no-leap-day") << QByteArray("29,02,2026") << false;
+    // Values that std::chrono's day, month and year would narrow to a valid date.
+    QTest::newRow("day-narrows-to-1") << QByteArray("257,07,2026") << false;
+    QTest::newRow("month-narrows-to-1") << QByteArray("12,257,2026") << false;
+    QTest::newRow("year-narrows-to-2024") << QByteArray("12,07,67560") << false;
+    QTest::newRow("year-zero") << QByteArray("12,07,0000") << false;
+    QTest::newRow("negative-year") << QByteArray("12,07,-2026") << false;
+}
+
+void NMEASentenceTest::_zdaDate()
+{
+    QFETCH(QByteArray, date);
+    QFETCH(bool, accepted);
+    const auto sentence = ownedSentence(NMEAUtils::repairChecksum("$GPZDA,172809.456," + date + ",00,00"));
+    QVERIFY(sentence);
+    const auto zda = NMEA::zda(sentence->sentence());
+    QCOMPARE(zda.has_value(), accepted);
+    if (zda) {
+        const QList<QByteArray> parts = date.split(',');
+        QCOMPARE(zda->date.day, parts[0].toUInt());
+        QCOMPARE(zda->date.month, parts[1].toUInt());
+        QCOMPARE(zda->date.year, parts[2].toInt());
     }
 }
 

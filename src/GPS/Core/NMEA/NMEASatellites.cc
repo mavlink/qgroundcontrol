@@ -133,10 +133,10 @@ std::optional<GSV> gsv(const Sentence& input)
     const auto system = satelliteConstellation(input.talker(), {}, {});
     if (!total || !message || !count || (system == GPSConstellation::Unknown && input.talker() != "GN") || *total < 1 ||
         *total > MAX_GSV_PAGES || *message < 1 || *message > *total || *count < 0 || *count > MAX_GSV_SATELLITES ||
-        *total != std::max(1, (*count + GSV_SATELLITES_PER_PAGE - 1) / GSV_SATELLITES_PER_PAGE)) {
+        *total != (std::max) (1, (*count + GSV_SATELLITES_PER_PAGE - 1) / GSV_SATELLITES_PER_PAGE)) {
         return {};
     }
-    const int entries = std::min(GSV_SATELLITES_PER_PAGE, *count - (*message - 1) * GSV_SATELLITES_PER_PAGE);
+    const int entries = (std::min) (GSV_SATELLITES_PER_PAGE, *count - (*message - 1) * GSV_SATELLITES_PER_PAGE);
     const size_t end = GSV_FIRST_SATELLITE_FIELD + entries * GSV_SATELLITE_FIELDS;
     const size_t fields = input.count - GSV_FIRST_SATELLITE_FIELD;
     const size_t satelliteSlots = fields / GSV_SATELLITE_FIELDS;
@@ -220,7 +220,7 @@ SatelliteAssembler::Update SatelliteAssembler::ingest(const Sentence& input, uin
             return update;
         }
         report.satellites.insert(report.satellites.end(), page.satellites.begin(), page.satellites.end());
-        report.timestamp = std::min(report.timestamp, receivedAtUs);
+        report.timestamp = (std::min) (report.timestamp, receivedAtUs);
         ++report.next;
         update.accepted = true;
     } else if (input.type() == "GSA" && input.count >= Field::GSA_MIN_FIELDS) {
@@ -289,8 +289,8 @@ std::optional<uint64_t> SatelliteAssembler::deadlineUs() const
     if (!_batchStartedUs) {
         return std::nullopt;
     }
-    return std::min(*_batchStartedUs + static_cast<uint64_t>(BATCH_TIMEOUT.count()),
-                    _lastAcceptedUs + static_cast<uint64_t>(IDLE_TIMEOUT.count()));
+    return (std::min) (*_batchStartedUs + static_cast<uint64_t>(BATCH_TIMEOUT.count()),
+                       _lastAcceptedUs + static_cast<uint64_t>(IDLE_TIMEOUT.count()));
 }
 
 SatelliteEpoch SatelliteAssembler::flushDue(uint64_t nowUs)
@@ -307,7 +307,7 @@ SatelliteEpoch SatelliteAssembler::flush()
     const auto includeView = [&systems](GPSConstellation constellation, uint64_t timestamp) {
         auto& out = systems[constellation];
         out.constellation = constellation;
-        out.inViewTimestampUs = out.inViewTimestampUs ? std::min(out.inViewTimestampUs, timestamp) : timestamp;
+        out.inViewTimestampUs = out.inViewTimestampUs ? (std::min) (out.inViewTimestampUs, timestamp) : timestamp;
     };
     for (const auto& [system, signalReports] : _views) {
         for (const auto& [signal, report] : signalReports) {
