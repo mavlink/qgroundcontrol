@@ -1,6 +1,4 @@
 #include "SHPFileHelper.h"
-#include "QGCGeo.h"
-#include "QGCLoggingCategory.h"
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
@@ -8,6 +6,8 @@
 #include <QtCore/QScopeGuard>
 #include <QtCore/QTextStream>
 
+#include "QGCGeo.h"
+#include "QGCLoggingCategory.h"
 #include "shapefil.h"
 
 QGC_LOGGING_CATEGORY(SHPFileHelperLog, "Utilities.SHPFileHelper")

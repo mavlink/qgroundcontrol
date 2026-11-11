@@ -1,16 +1,17 @@
 #include "GeoJsonHelper.h"
-#include "JsonParsing.h"
-#include "QGCLoggingCategory.h"
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonValue>
-#include <QtCore/QCoreApplication>
 #include <QtCore/QVariantMap>
 #include <QtLocation/private/qgeojson_p.h>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtPositioning/QGeoPath>
 #include <QtPositioning/QGeoPolygon>
+
+#include "JsonParsing.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GeoJsonHelperLog, "Utilities.GeoJsonHelper")
 
