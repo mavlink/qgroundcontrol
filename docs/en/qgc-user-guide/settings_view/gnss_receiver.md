@@ -14,6 +14,16 @@ The **Antenna** is shown as _OK_, _Open_ or _Short_ when the receiver supervises
 
 ## GNSS Receiver {#receiver}
 
+The settings page shows the receiver settings in four groups.
+Each is a section of **GNSS Receiver** in the settings sidebar, and the settings search finds each one:
+
+- **GNSS Receiver:** The receiver role, manufacturer and connection.
+- **RTK Base Station** (_Configured base_ only): The base mode and its settings.
+- **Saved Base Sites** (_Fixed position_ only): The [saved base sites](#base_sites).
+- **Connect:** The remaining settings and the **Connect** button.
+
+The GNSS indicator's drop-down shows the same settings as one form.
+
 The settings are:
 
 - **Receiver role:** _Configured base_ sets up a supported receiver as an RTK base station. _Passive_ uses a receiver's existing output without configuring it.

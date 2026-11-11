@@ -2,6 +2,12 @@
     "version": 1,
     "fileType": "SettingsUI",
     "imports": ["QGroundControl.GPS"],
+    "bindings": {
+        "rtkSettings": "QGroundControl.settingsManager.rtkSettings",
+        "gpsReceiver": "QGroundControl.gpsManager.receiver",
+        "canBeRtkBase": "gpsReceiver.capabilitiesFor(rtkSettings.receiverRole.rawValue, rtkSettings.baseReceiverManufacturer.rawValue).rtkBase",
+        "fixedBaseMode": "rtkSettings.baseMode.rawValue === BaseModeDefinition.BaseFixed"
+    },
     "groups": [
         {
             "component": "GPSReceiverStatus",
@@ -12,9 +18,29 @@
             "keywords": ["rtk", "gnss", "gps", "base station", "receiver", "status", "fix", "satellites", "jamming", "spoofing"]
         },
         {
-            "component": "GPSReceiverSettings",
+            "comment": "This group and the next three are the groups GPSReceiverSettings shows as one form.",
+            "component": "GPSReceiverConnection",
             "sectionName": "GNSS Receiver",
-            "keywords": ["rtk", "gnss", "gps", "nmea", "external gps", "base station", "receiver", "role", "passive", "position only", "survey-in", "fixed position", "saved base sites", "u-blox", "septentrio", "automatic", "detection", "serial", "tcp", "udp", "startup", "auto connect"]
+            "keywords": ["rtk", "gnss", "gps", "nmea", "external gps", "base station", "receiver", "role", "passive", "position only", "u-blox", "septentrio", "automatic", "detection", "serial", "tcp", "udp"]
+        },
+        {
+            "comment": "showWhen repeats the component's own visible, so the sidebar lists the section while it has content.",
+            "component": "GPSReceiverBaseStation",
+            "showWhen": "canBeRtkBase || !gpsReceiver.baseModeSupported",
+            "sectionName": "RTK Base Station",
+            "keywords": ["base mode", "survey-in", "fixed position"]
+        },
+        {
+            "comment": "showWhen repeats the component's own visible, as for the base station.",
+            "component": "GPSReceiverBaseSites",
+            "showWhen": "canBeRtkBase && fixedBaseMode",
+            "sectionName": "Saved Base Sites",
+            "keywords": ["fixed position"]
+        },
+        {
+            "component": "GPSReceiverConnectControls",
+            "sectionName": "Connect",
+            "keywords": ["automatic", "startup", "auto connect"]
         },
         {
             "component": "GcsPositionStatus",
