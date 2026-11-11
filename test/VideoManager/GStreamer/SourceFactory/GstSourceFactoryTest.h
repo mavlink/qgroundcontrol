@@ -12,7 +12,8 @@ private slots:
 #ifdef QGC_GST_STREAMING
     void _testIsValidRtspUri();
     void _testSourceFactoryUdpRtpJitterBuffer();
-    void _testSourceFactoryJitterBufferNone();
+    void _testSourceFactoryCountsRtpPacketsWithoutJitterBuffer_data();
+    void _testSourceFactoryCountsRtpPacketsWithoutJitterBuffer();
     void _testSourceFactoryNoRetransmission();
     void _testSourceFactoryRtspJitterBufferPolicy_data();
     void _testSourceFactoryRtspJitterBufferPolicy();

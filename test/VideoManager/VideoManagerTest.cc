@@ -1478,8 +1478,17 @@ void VideoManagerTest::_testStreamStatsReachQml()
     QVERIFY(!showsText(group.get(), QStringLiteral("Keyframe interval")));
     QVERIFY(!showsText(group.get(), QStringLiteral("Recording")));
 
+    // A stream without a jitter buffer counts its RTP packets itself: what it hasn't measured, and what only a jitter
+    // buffer tells, stays hidden.
     stats.packetsLost = 3;
     stats.lossPercent = 1.5;
+    _primary->setStats(stats);
+    QCOMPARE(statsSpy.count(), 2);
+    QVERIFY(showsText(group.get(), QStringLiteral("1.5% (3 packet(s))")));
+    QVERIFY(!showsText(group.get(), QStringLiteral("Jitter")));
+    QVERIFY(!showsText(group.get(), QStringLiteral("Late / duplicate packets")));
+    QVERIFY(!showsText(group.get(), QStringLiteral("Retransmissions")));
+
     stats.jitterMs = 2.0;
     stats.packetsLate = 1;
     stats.packetsDuplicate = 0;
@@ -1492,9 +1501,10 @@ void VideoManagerTest::_testStreamStatsReachQml()
     stats.recordingBytes = 2 * 1024 * 1024;
     stats.codec = QStringLiteral("H.264");
     _primary->setStats(stats);
-    QCOMPARE(statsSpy.count(), 2);
+    QCOMPARE(statsSpy.count(), 3);
     QVERIFY(showsText(group.get(), QStringLiteral("Packet loss")));
     QVERIFY(showsText(group.get(), QStringLiteral("1.5% (3 packet(s))")));
+    QVERIFY(showsText(group.get(), QStringLiteral("2.0 ms")));
     QVERIFY(showsText(group.get(), QStringLiteral("1 / 0")));
     QVERIFY(showsText(group.get(), QStringLiteral("4 requested, 3 recovered")));
     QVERIFY(showsText(group.get(), QStringLiteral("1.0 s")));
@@ -1505,7 +1515,7 @@ void VideoManagerTest::_testStreamStatsReachQml()
     // The same measurement again is no change, and the thermal stream's are its own.
     _primary->setStats(stats);
     _thermal->setStats(stats);
-    QCOMPARE(statsSpy.count(), 2);
+    QCOMPARE(statsSpy.count(), 3);
 
     // A camera's advertised stream follows the measured values.
     mavlink_video_stream_information_t info{};
@@ -1530,7 +1540,7 @@ void VideoManagerTest::_testStreamStatsReachQml()
     // A receiver going away takes its measurements with it.
     stream->setReceiver(nullptr);
     _primary = nullptr;
-    QCOMPARE(statsSpy.count(), 3);
+    QCOMPARE(statsSpy.count(), 4);
     QVERIFY(!group->isVisible());
 }
 

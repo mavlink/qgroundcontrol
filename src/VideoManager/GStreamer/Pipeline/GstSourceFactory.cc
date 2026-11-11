@@ -10,6 +10,7 @@
 
 #include "GStreamerHelpers.h"
 #include "GstH26xParameterSetGate.h"
+#include "GstRtpPacketProbe.h"
 #include "GstRtspSource.h"
 #include "GstScoped.h"
 #include "QGCLoggingCategory.h"
@@ -23,6 +24,8 @@ namespace {
 using namespace GStreamer;
 
 constexpr int kUdpBufferSizeBytes = 8 * 1024 * 1024;
+// Of the RTP timestamps of video, H.264 (RFC 6184) and H.265 (RFC 7798) included.
+constexpr int kRtpVideoClockRate = 90000;
 
 /// @p data: non-null when the source is RTSP.
 void configureAutopluggedElement([[maybe_unused]] GstBin* bin, [[maybe_unused]] GstBin* subBin, GstElement* element,
@@ -348,9 +351,9 @@ GstElementPtr buildUdpSource(const QUrl& sourceUrl, const char* rtpEncoding)
     g_object_set(source.get(), "uri", udpUri.constData(), "buffer-size", udpBufferSize, nullptr);
 
     if (rtpEncoding) {
-        const GstCapsPtr caps =
-            adoptCaps(gst_caps_new_simple("application/x-rtp", "media", G_TYPE_STRING, "video", "clock-rate",
-                                          G_TYPE_INT, 90000, "encoding-name", G_TYPE_STRING, rtpEncoding, nullptr));
+        const GstCapsPtr caps = adoptCaps(gst_caps_new_simple("application/x-rtp", "media", G_TYPE_STRING, "video",
+                                                              "clock-rate", G_TYPE_INT, kRtpVideoClockRate,
+                                                              "encoding-name", G_TYPE_STRING, rtpEncoding, nullptr));
         g_object_set(source.get(), "caps", caps.get(), nullptr);
     }
     return source;
@@ -452,6 +455,13 @@ bool linkUdpRtpToDepayAndParser(GstElement* bin, GstElement* source, GstElement*
             return false;
         }
         upstream = buffer;
+    } else {
+        // A jitter buffer counts the packets it is given, lost ones included. Without one the bin counts them itself,
+        // where they arrive, so the stream's statistics tell packet loss in this mode too.
+        const GstPadPtr sourcePad = adoptPad(gst_element_get_static_pad(source, "src"));
+        if (!sourcePad || !countRtpPackets(bin, sourcePad.get(), kRtpVideoClockRate)) {
+            qCWarning(GstSourceFactoryLog) << "Unable to count the RTP packets: no packet loss statistics";
+        }
     }
 
     if (!gst_element_link(upstream, depay)) {

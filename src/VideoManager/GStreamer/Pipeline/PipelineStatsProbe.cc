@@ -5,6 +5,7 @@
 
 #include <QtCore/QString>
 
+#include "GstRtpPacketProbe.h"
 #include "GstScoped.h"
 #include "VideoStreamStats.h"
 
@@ -128,10 +129,16 @@ void PipelineStatsProbe::_noteKeyframe(GstClockTime time)
 }
 
 void PipelineStatsProbe::sample(GstElement* pipeline, GstElement* source, GstElement* tee,
-                                VideoStreamStatsMeter::Counters& counters, VideoStreamStats& stats) const
+                                VideoStreamStatsMeter::Counters& counters, VideoStreamStats& stats)
 {
     counters.bytesReceived = _bytesReceived.load(std::memory_order_relaxed);
 
+    counters.rtp.reset();
+    stats.jitterMs = -1.0;
+    stats.packetsLate = -1;
+    stats.packetsDuplicate = -1;
+    stats.rtxRequested = -1;
+    stats.rtxRecovered = -1;
     const JitterBufferTotals jitterBuffers = jitterBufferTotals(source);
     if (jitterBuffers.found) {
         counters.rtp = VideoStreamStatsMeter::RtpCounters{.packetsReceived = jitterBuffers.packetsPushed,
@@ -141,13 +148,13 @@ void PipelineStatsProbe::sample(GstElement* pipeline, GstElement* source, GstEle
         stats.packetsDuplicate = static_cast<qint64>(jitterBuffers.packetsDuplicate);
         stats.rtxRequested = static_cast<qint64>(jitterBuffers.rtxRequested);
         stats.rtxRecovered = static_cast<qint64>(jitterBuffers.rtxRecovered);
-    } else {
-        counters.rtp.reset();
-        stats.jitterMs = -1.0;
-        stats.packetsLate = -1;
-        stats.packetsDuplicate = -1;
-        stats.rtxRequested = -1;
-        stats.rtxRecovered = -1;
+    } else if (const std::optional<GStreamer::RtpPacketCounts> packets = GStreamer::rtpPacketCounts(source)) {
+        // A packet that arrives late is no longer lost, but the meter takes a counter that shrank for one that started
+        // again from zero: the count it is given only grows, and the next packets lost make up for the late one.
+        _rtpPacketsLost = std::max(_rtpPacketsLost, packets->packetsLost);
+        counters.rtp = VideoStreamStatsMeter::RtpCounters{.packetsReceived = packets->packetsReceived,
+                                                          .packetsLost = _rtpPacketsLost};
+        stats.jitterMs = packets->jitterMs;
     }
 
     const GstClockTime keyframeInterval = _keyframeInterval.load(std::memory_order_relaxed);

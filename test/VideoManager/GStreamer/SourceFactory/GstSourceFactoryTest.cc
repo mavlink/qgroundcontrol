@@ -10,6 +10,7 @@
 #include <QtCore/QScopeGuard>
 
 #include "GStreamerTestHelpers.h"
+#include "GstRtpPacketProbe.h"
 #include "GstRtspSource.h"
 #include "GstScoped.h"
 #include "GstSourceFactory.h"
@@ -150,16 +151,46 @@ void GstSourceFactoryTest::_testSourceFactoryUdpRtpJitterBuffer()
     QCOMPARE(dropOnLatency, TRUE);
 }
 
-void GstSourceFactoryTest::_testSourceFactoryJitterBufferNone()
+void GstSourceFactoryTest::_testSourceFactoryCountsRtpPacketsWithoutJitterBuffer_data()
 {
-    GStreamer::SourceFactory::Config config;
-    config.jitterBuffer = GStreamer::SourceFactory::JitterBuffer::None;
+    QTest::addColumn<QString>("uri");
+    QTest::addColumn<QByteArray>("optionalFactory");
+    QTest::addColumn<bool>("lowLatency");
+    QTest::addColumn<bool>("jitterBuffer");
+    QTest::addColumn<bool>("countsPackets");
 
-    const GStreamer::GstElementPtr bin = GstTest::createSource(QStringLiteral("udp://127.0.0.1:5600"), config);
+    const QByteArray none;
+    // RTP over UDP is counted by its jitter buffer, or without one by the bin itself: never by both.
+    QTest::newRow("udp") << QStringLiteral("udp://127.0.0.1:5600") << none << false << true << false;
+    QTest::newRow("udp, low latency") << QStringLiteral("udp://127.0.0.1:5600") << none << true << false << true;
+    QTest::newRow("udp265, low latency") << QStringLiteral("udp265://127.0.0.1:5600") << none << true << false << true;
+    // MPEG-TS carries no RTP, and rtspsrc brings jitter buffers of its own once it streams.
+    QTest::newRow("mpegts, low latency") << QStringLiteral("mpegts://127.0.0.1:5600") << QByteArray("tsdemux") << true
+                                         << false << false;
+    QTest::newRow("rtsp, low latency") << QStringLiteral("rtsp://127.0.0.1:8554/test") << QByteArray("rtspsrc") << true
+                                       << false << false;
+}
+
+void GstSourceFactoryTest::_testSourceFactoryCountsRtpPacketsWithoutJitterBuffer()
+{
+    QFETCH(QString, uri);
+    QFETCH(QByteArray, optionalFactory);
+    QFETCH(bool, lowLatency);
+    QFETCH(bool, jitterBuffer);
+    QFETCH(bool, countsPackets);
+
+    if (!optionalFactory.isEmpty()) {
+        GSTTEST_SKIP_UNLESS_FACTORIES(optionalFactory.constData());
+    }
+    GStreamer::SourceFactory::Config config;
+    config.jitterBuffer = lowLatency ? GStreamer::SourceFactory::JitterBuffer::None
+                                     : GStreamer::SourceFactory::JitterBuffer::DropOnLatency;
+
+    const GStreamer::GstElementPtr bin = GstTest::createSource(uri, config);
     QVERIFY(bin);
 
-    QVERIFY2(!GstTest::findByFactory(bin.get(), "rtpjitterbuffer"),
-             "JitterBuffer::None must link the source straight to the depayloader");
+    QCOMPARE(static_cast<bool>(GstTest::findByFactory(bin.get(), "rtpjitterbuffer")), jitterBuffer);
+    QCOMPARE(GStreamer::rtpPacketCounts(bin.get()).has_value(), countsPackets);
 }
 
 void GstSourceFactoryTest::_testSourceFactoryNoRetransmission()

@@ -9,9 +9,10 @@
 /// second while it streams.
 ///
 /// A field that doesn't apply to the stream is -1, which tells it apart from a measured zero: the RTP fields for a
-/// stream without an RTP jitter buffer (MPEG-TS, or UDP RTP in low-latency mode), latencyMs while the pipeline
-/// can't tell its latency, keyframeIntervalMs until two keyframes arrived and the recording fields while not recording.
-/// Strings are empty until known.
+/// stream whose RTP packets nothing counts (MPEG-TS, Qt Multimedia), those only an RTP jitter buffer measures (late,
+/// duplicate and retransmitted packets) for a stream without one (UDP RTP in low-latency mode), latencyMs while the
+/// pipeline can't tell its latency, keyframeIntervalMs until two keyframes arrived and the recording fields while not
+/// recording. Strings are empty until known.
 struct VideoStreamStats
 {
     Q_GADGET
@@ -61,7 +62,7 @@ public:
     qint64 packetsLost = -1;
     /// Share of the RTP packets due in the last interval that were lost.
     double lossPercent = -1.0;
-    /// RTP interarrival jitter, averaged by the jitter buffer.
+    /// RTP interarrival jitter (RFC 3550), averaged over the last packets.
     double jitterMs = -1.0;
     /// The pipeline's minimum latency, the playout delay it adds on top of the network's.
     double latencyMs = -1.0;

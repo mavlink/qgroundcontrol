@@ -125,13 +125,14 @@ QGCGroupBox {
     LabelledLabel {
         label:      qsTr("Jitter")
         labelText:  qsTr("%1 ms").arg(root._stats.jitterMs.toFixed(1))
-        visible:    root._stats.hasRtpStats
+        visible:    root._stats.jitterMs >= 0
     }
 
+    // Only a jitter buffer tells them.
     LabelledLabel {
         label:      qsTr("Late / duplicate packets")
         labelText:  qsTr("%1 / %2").arg(root._stats.packetsLate).arg(root._stats.packetsDuplicate)
-        visible:    root._stats.hasRtpStats
+        visible:    root._stats.packetsLate >= 0
     }
 
     LabelledLabel {

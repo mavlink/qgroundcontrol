@@ -23,6 +23,11 @@ private slots:
     void _testPresentedSize();
     void _testBusPump();
     void _testStatsProbe();
+    void _testRtpPacketCounter_data();
+    void _testRtpPacketCounter();
+    void _testRtpPacketCounterJitter_data();
+    void _testRtpPacketCounterJitter();
+    void _testStatsProbeCountsRtpPackets();
 #else
     void _testGStreamerDisabled();
 #endif

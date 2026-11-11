@@ -357,6 +357,15 @@ bool FixtureRtpSender::start(quint16 port)
     if (!sourcePad || !gst_pad_add_probe(sourcePad.get(), GST_PAD_PROBE_TYPE_BUFFER, countBuffers, &_frames, nullptr)) {
         return false;
     }
+    const GStreamer::GstElementPtr udpSink = findByFactory(_pipeline->get(), "udpsink");
+    const GStreamer::GstPadPtr rtpPad =
+        GStreamer::adoptPad(udpSink ? gst_element_get_static_pad(udpSink.get(), "sink") : nullptr);
+    if (!rtpPad ||
+        !gst_pad_add_probe(rtpPad.get(),
+                           static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST),
+                           _dropProbe, this, nullptr)) {
+        return false;
+    }
     (void) g_signal_connect(source.get(), "need-data", G_CALLBACK(_needData), this);
     return _pipeline->play();
 }
@@ -386,6 +395,14 @@ void FixtureRtpSender::holdKeyframes(bool hold)
 {
     const std::lock_guard lock(_mutex);
     _keyframesHeld = hold;
+}
+
+GstPadProbeReturn FixtureRtpSender::_dropProbe([[maybe_unused]] GstPad* pad, [[maybe_unused]] GstPadProbeInfo* info,
+                                               gpointer self)
+{
+    auto* const sender = static_cast<FixtureRtpSender*>(self);
+    const int interval = sender->_dropInterval.load(std::memory_order_relaxed);
+    return ((interval > 0) && ((++sender->_rtpPushes % interval) == 0)) ? GST_PAD_PROBE_DROP : GST_PAD_PROBE_OK;
 }
 
 void FixtureRtpSender::_needData(GstElement* appsrc, [[maybe_unused]] guint length, gpointer self)

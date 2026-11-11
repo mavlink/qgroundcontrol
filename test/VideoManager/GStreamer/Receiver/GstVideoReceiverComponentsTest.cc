@@ -15,9 +15,11 @@
 
 #include "GStreamerTestHelpers.h"
 #include "GstBusPump.h"
+#include "GstRtpPacketProbe.h"
 #include "GstVideoReceiver.h"
 #include "PipelineDotDumper.h"
 #include "PipelineStatsProbe.h"
+#include "RtpPacketCounter.h"
 #include "StreamWatchdog.h"
 #include "VideoStreamStats.h"
 
@@ -26,6 +28,31 @@ namespace {
 // Any monotonic time well clear of 0, which the watchdog reads as "no frame yet".
 constexpr qint64 kNowMs = 100000;
 constexpr qint64 kNoFrame = -1;
+
+constexpr int kVideoClockRate = 90000;
+constexpr quint32 kSsrc = 0x1234ABCD;
+
+/// An RTP packet with a one-byte payload, stamped as arrived at @p arrivalMs.
+GstBuffer* makeRtpPacket(quint16 sequence, quint32 timestamp, qint64 arrivalMs, quint8 firstByte = 0x80)
+{
+    guint8 packet[13] = {firstByte, 96};
+    GST_WRITE_UINT16_BE(packet + 2, sequence);
+    GST_WRITE_UINT32_BE(packet + 4, timestamp);
+    GST_WRITE_UINT32_BE(packet + 8, kSsrc);
+    GstBuffer* const buffer = gst_buffer_new_memdup(packet, sizeof(packet));
+    GST_BUFFER_DTS(buffer) = static_cast<GstClockTime>(arrivalMs) * GST_MSECOND;
+    return buffer;
+}
+
+/// An RTCP sender report of the same sender, without reception reports.
+GstBuffer* makeRtcpSenderReport(qint64 arrivalMs)
+{
+    guint8 packet[28] = {0x80, 200, 0, 6};
+    GST_WRITE_UINT32_BE(packet + 4, kSsrc);
+    GstBuffer* const buffer = gst_buffer_new_memdup(packet, sizeof(packet));
+    GST_BUFFER_DTS(buffer) = static_cast<GstClockTime>(arrivalMs) * GST_MSECOND;
+    return buffer;
+}
 
 }  // namespace
 
@@ -366,6 +393,164 @@ void GstVideoReceiverComponentsTest::_testStatsProbe()
     note(400, true);
     std::tie(counters, stats) = sample();
     QCOMPARE(stats.keyframeIntervalMs, 300.0);
+}
+
+void GstVideoReceiverComponentsTest::_testRtpPacketCounter_data()
+{
+    QTest::addColumn<QList<int>>("sequences");
+    QTest::addColumn<int>("secondSsrcFrom");  // The first packet of another SSRC; -1 for one sender.
+    QTest::addColumn<quint64>("received");
+    QTest::addColumn<quint64>("lost");
+
+    const auto row = [](const char* name, const QList<int>& sequences, quint64 received, quint64 lost,
+                        int secondSsrcFrom = -1) {
+        QTest::newRow(name) << sequences << secondSsrcFrom << received << lost;
+    };
+    row("first packet", {1000}, 1, 0);
+    row("in order", {10, 11, 12, 13}, 4, 0);
+    row("loss", {10, 11, 14, 15}, 4, 2);
+    row("late packet still missing", {10, 12}, 2, 1);
+    row("late packet", {10, 12, 11, 13}, 4, 0);
+    row("duplicate", {10, 11, 11, 12}, 3, 0);
+    row("duplicate does not hide a loss", {10, 12, 12, 13}, 3, 1);
+    row("duplicate of a late packet", {10, 12, 11, 11}, 3, 0);
+    row("wraparound", {65534, 65535, 0, 1}, 4, 0);
+    row("loss across the wraparound", {65534, 1}, 2, 2);
+    row("late packet across the wraparound", {65535, 1, 0}, 3, 0);
+    row("before the first packet", {100, 99, 101}, 2, 0);
+    const int window = RtpPacketCounter::kReorderWindow;
+    row("late at the end of the reorder window", {200, 200 + window, 201}, 3, quint64(window - 2));
+    row("too late for the reorder window", {200, 201 + window, 201}, 2, quint64(window));
+    row("longest loss", {0, 2999}, 2, 2998);
+    // Too far ahead to be loss: counted once a second packet shows the sender went on from there.
+    row("jump, unconfirmed", {0, 3000}, 1, 0);
+    row("sender restarted", {0, 1, 5000, 5001}, 4, 0);
+    row("sender restarted to lower numbers", {30000, 30001, 100, 101}, 4, 0);
+    row("sender restarted, next packet lost", {0, 1, 40000, 40002}, 4, 1);
+    row("stray packet", {10, 11, 40000, 12, 13}, 4, 0);
+    row("stray packets apart", {10, 40000, 11, 40001, 12}, 3, 0);
+    row("stray packet twice", {10, 40000, 40000, 11}, 2, 0);
+    row("losses add up across a restart", {10, 12, 40000, 40001, 40003}, 5, 2);
+    // Another sender's numbers continue nothing, however close they are.
+    row("new SSRC", {10, 11, 500, 501}, 4, 0, 2);
+    row("new SSRC, numbers go on after a gap", {10, 12, 15, 16}, 4, 1, 2);
+}
+
+void GstVideoReceiverComponentsTest::_testRtpPacketCounter()
+{
+    QFETCH(QList<int>, sequences);
+    QFETCH(int, secondSsrcFrom);
+    QFETCH(quint64, received);
+    QFETCH(quint64, lost);
+
+    RtpPacketCounter counter(kVideoClockRate);
+    QCOMPARE(counter.packetsReceived(), quint64(0));
+    QCOMPARE(counter.packetsLost(), quint64(0));
+    for (qsizetype i = 0; i < sequences.size(); ++i) {
+        const quint32 ssrc = ((secondSsrcFrom >= 0) && (i >= secondSsrcFrom)) ? (kSsrc + 1) : kSsrc;
+        counter.add(static_cast<quint16>(sequences.at(i)), 0, ssrc, std::nullopt);
+    }
+    QCOMPARE(counter.packetsReceived(), received);
+    QCOMPARE(counter.packetsLost(), lost);
+    QVERIFY(!counter.jitterNs());
+}
+
+void GstVideoReceiverComponentsTest::_testRtpPacketCounterJitter_data()
+{
+    QTest::addColumn<QList<quint32>>("timestamps");
+    QTest::addColumn<QList<qint64>>("arrivalsMs");  // -1: unknown
+    QTest::addColumn<qint64>("jitterNs");           // -1: not measured
+
+    // 9000 ticks of the 90 kHz clock are 100 ms.
+    QTest::newRow("one packet") << QList<quint32>{0} << QList<qint64>{0} << qint64(-1);
+    QTest::newRow("steady") << QList<quint32>{0, 9000, 18000} << QList<qint64>{0, 100, 200} << qint64(0);
+    // RFC 3550: a sixteenth of each deviation goes into the estimate.
+    QTest::newRow("late by 16 ms") << QList<quint32>{0, 9000, 18000} << QList<qint64>{0, 100, 216} << qint64(1'000'000);
+    QTest::newRow("decays") << QList<quint32>{0, 9000, 18000, 27000, 36000} << QList<qint64>{0, 100, 216, 316, 416}
+                            << qint64(878'906);
+    QTest::newRow("packets of one frame")
+        << QList<quint32>{0, 0, 9000} << QList<qint64>{0, 16, 100} << qint64(1'937'500);
+    QTest::newRow("timestamp wraparound")
+        << QList<quint32>{0xFFFFFF00, 0x00002228} << QList<qint64>{0, 100} << qint64(0);
+    QTest::newRow("sent before the previous packet")
+        << QList<quint32>{9000, 0} << QList<qint64>{100, 100} << qint64(6'250'000);
+    QTest::newRow("no arrival times") << QList<quint32>{0, 9000, 18000} << QList<qint64>{-1, -1, -1} << qint64(-1);
+    QTest::newRow("arrival time missing") << QList<quint32>{0, 9000, 18000} << QList<qint64>{0, -1, 200} << qint64(0);
+}
+
+void GstVideoReceiverComponentsTest::_testRtpPacketCounterJitter()
+{
+    QFETCH(QList<quint32>, timestamps);
+    QFETCH(QList<qint64>, arrivalsMs);
+    QFETCH(qint64, jitterNs);
+
+    RtpPacketCounter counter(kVideoClockRate);
+    for (qsizetype i = 0; i < timestamps.size(); ++i) {
+        const qint64 arrivalMs = arrivalsMs.at(i);
+        counter.add(static_cast<quint16>(i), timestamps.at(i), kSsrc,
+                    (arrivalMs >= 0) ? std::optional(arrivalMs * 1'000'000) : std::nullopt);
+    }
+    QCOMPARE(counter.jitterNs().value_or(-1), jitterNs);
+}
+
+void GstVideoReceiverComponentsTest::_testStatsProbeCountsRtpPackets()
+{
+    GSTTEST_REQUIRE_GSTREAMER();
+
+    // A source bin without a jitter buffer, and the pad its packets arrive on.
+    const GStreamer::GstElementPtr source =
+        GStreamer::adoptElement(GST_ELEMENT(gst_object_ref_sink(gst_bin_new(nullptr))));
+    const GStreamer::GstPadPtr pad = GStreamer::adoptPad(GST_PAD(gst_object_ref_sink(gst_pad_new("src", GST_PAD_SRC))));
+    QVERIFY(gst_pad_set_active(pad.get(), TRUE));
+    const auto push = [&pad](GstBuffer* packet) { return gst_pad_push(pad.get(), packet); };
+
+    // The RTP packets received and lost that a sample hands the meter.
+    using Counted = std::pair<qint64, qint64>;
+    constexpr Counted kNotCounted{-1, -1};
+    PipelineStatsProbe probe;
+    VideoStreamStats stats;
+    const auto sample = [&probe, &source, &stats, kNotCounted]() {
+        VideoStreamStatsMeter::Counters counters;
+        probe.sample(nullptr, source.get(), nullptr, counters, stats);
+        return counters.rtp ? Counted(counters.rtp->packetsReceived, counters.rtp->packetsLost) : kNotCounted;
+    };
+
+    // Nobody counts the packets of a source without a jitter buffer unless it does so itself.
+    QVERIFY(!GStreamer::rtpPacketCounts(source.get()));
+    QCOMPARE(sample(), kNotCounted);
+    QVERIFY(GStreamer::countRtpPackets(source.get(), pad.get(), kVideoClockRate));
+    QCOMPARE(sample(), Counted(0, 0));
+
+    // Packets arrive one by one or as a list; 103 is missing, and 104 is 16 ms late.
+    QCOMPARE(push(makeRtpPacket(100, 0, 0)), GST_FLOW_NOT_LINKED);
+    QCOMPARE(push(makeRtpPacket(101, 9000, 100)), GST_FLOW_NOT_LINKED);
+    GstBufferList* const list = gst_buffer_list_new();
+    gst_buffer_list_add(list, makeRtpPacket(102, 18000, 200));
+    gst_buffer_list_add(list, makeRtpPacket(104, 27000, 316));
+    QCOMPARE(gst_pad_push_list(pad.get(), list), GST_FLOW_NOT_LINKED);
+    // Neither RTP version 2 nor a whole RTP header: not counted.
+    QCOMPARE(push(makeRtpPacket(105, 36000, 400, 0x40)), GST_FLOW_NOT_LINKED);
+    QCOMPARE(push(gst_buffer_new_allocate(nullptr, 11, nullptr)), GST_FLOW_NOT_LINKED);
+
+    QCOMPARE(sample(), Counted(4, 1));
+    QCOMPARE(stats.jitterMs, 1.0);
+    // Only a jitter buffer tells these.
+    QCOMPARE(stats.packetsLate, qint64(-1));
+    QCOMPARE(stats.packetsDuplicate, qint64(-1));
+    QCOMPARE(stats.rtxRequested, qint64(-1));
+    QCOMPARE(stats.rtxRecovered, qint64(-1));
+
+    // The missing packet arrives late: it isn't lost, but the meter is never given a count that shrank, which it would
+    // take for a counter that restarted. The next loss makes up for it.
+    QCOMPARE(push(makeRtpPacket(103, 22500, 420)), GST_FLOW_NOT_LINKED);
+    QCOMPARE(GStreamer::rtpPacketCounts(source.get())->packetsLost, quint64(0));
+    QCOMPARE(sample(), Counted(5, 1));
+    QCOMPARE(push(makeRtpPacket(106, 45000, 500)), GST_FLOW_NOT_LINKED);
+    QCOMPARE(sample(), Counted(6, 1));
+    // An RTCP packet on the RTP port is neither a packet of the stream nor the start of another one: 107 is lost.
+    QCOMPARE(push(makeRtcpSenderReport(550)), GST_FLOW_NOT_LINKED);
+    QCOMPARE(push(makeRtpPacket(108, 54000, 600)), GST_FLOW_NOT_LINKED);
+    QCOMPARE(sample(), Counted(7, 2));
 }
 
 #else

@@ -85,10 +85,10 @@ dropdown shows, about once a second:
 - **Latency**: the delay the video pipeline adds on top of the network (mostly the RTP jitter buffer).
 - **Packet loss** and **Jitter** (RTP streams only: UDP h.264/h.265 and RTSP): the share of packets lost over the last
   second (with the number lost since the stream started), and the variation in packet arrival times.
-  They are not shown for MPEG-TS streams, nor for UDP streams in **Low Latency Mode**, which has no jitter buffer to
-  measure them.
+  They are not shown for MPEG-TS streams. A UDP stream in **Low Latency Mode** has no jitter buffer to wait for packets:
+  one that arrives out of order counts as lost until it arrives.
 - **Late / duplicate packets** (RTP streams only): packets that arrived after their playout time, and packets that
-  arrived twice.
+  arrived twice. They are not shown for UDP streams in **Low Latency Mode**, which has no jitter buffer to tell them.
 - **Retransmissions** (RTSP): lost packets QGroundControl asked the camera to send again, and how many arrived in time.
 - **Uptime**: how long the stream has played since it last connected. **Reconnects** counts the times it came back
   after a loss.

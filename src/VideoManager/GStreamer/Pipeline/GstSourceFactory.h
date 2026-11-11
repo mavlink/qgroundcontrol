@@ -35,7 +35,8 @@ struct Config
 /// tcp:// (MPEG-TS), udp:// (H.264 RTP), udp265:// (H.265 RTP), mpegts:// (MPEG-TS over UDP). A UDP URI with
 /// port 0 listens on a free port.
 ///
-/// The RTP over UDP bin has its source pad from the start. The others' ghost pads are wired lazily; for
+/// The RTP over UDP bin has its source pad from the start, and without a jitter buffer counts its RTP packets itself
+/// (GStreamer::rtpPacketCounts()). The others' ghost pads are wired lazily; for
 /// `rtspsrc`/`tsdemux`/`parsebin` they appear only after upstream produces pads, so callers must connect any
 /// downstream `pad-added` handlers before transitioning to PLAYING.
 ///

@@ -140,6 +140,8 @@ target_sources(
         Pipeline/GstReceiverRequest.h
         Pipeline/GstReceiverWorker.cc
         Pipeline/GstReceiverWorker.h
+        Pipeline/GstRtpPacketProbe.cc
+        Pipeline/GstRtpPacketProbe.h
         Pipeline/GstRtspSource.cc
         Pipeline/GstRtspSource.h
         Pipeline/GstSourceFactory.cc
@@ -152,6 +154,8 @@ target_sources(
         Pipeline/PipelineStatsProbe.h
         Pipeline/RecordingBranch.cc
         Pipeline/RecordingBranch.h
+        Pipeline/RtpPacketCounter.cc
+        Pipeline/RtpPacketCounter.h
         Pipeline/StreamWatchdog.cc
         Pipeline/StreamWatchdog.h
         Pipeline/TeeBranchHead.cc

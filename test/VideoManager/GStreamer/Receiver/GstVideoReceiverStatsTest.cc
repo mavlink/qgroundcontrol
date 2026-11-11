@@ -29,7 +29,7 @@ void GstVideoReceiverStatsTest::_testStatsMeasureStream_data()
                               << QStringLiteral("H.264");
     QTest::newRow("rtp h265") << loopbackUri(QLatin1StringView("udp265"), 0) << h265 << QStringLiteral("avdec_h265")
                               << false << QStringLiteral("H.265");
-    // Low-latency UDP has no jitter buffer, which is what measures RTP loss and jitter.
+    // Low-latency UDP has no jitter buffer: the source counts the RTP packets itself.
     QTest::newRow("rtp h264 low latency")
         << udpListenUri() << h264 << QStringLiteral("avdec_h264") << true << QStringLiteral("H.264");
 }
@@ -70,20 +70,24 @@ void GstVideoReceiverStatsTest::_testStatsMeasureStream()
     // The fixture's receiver displays through the CPU path.
     QCOMPARE(stats.gpuPath, QStringLiteral("CPU"));
     QVERIFY(stats.latencyMs >= 0);
-    QCOMPARE(stats.hasRtpStats(), !lowLatency);
-    if (stats.hasRtpStats()) {
-        QVERIFY(stats.lossPercent >= 0);
-        QVERIFY(stats.lossPercent <= 100);
-        QVERIFY(stats.jitterMs >= 0);
+    QVERIFY(stats.hasRtpStats());
+    QVERIFY(stats.lossPercent >= 0);
+    QVERIFY(stats.lossPercent <= 100);
+    QVERIFY(stats.jitterMs >= 0);
+    if (lowLatency) {
+        // Counted from the sequence numbers of the packets that arrived, all of them on loopback. What only a jitter
+        // buffer tells isn't measured.
+        QCOMPARE(stats.packetsLost, qint64(0));
+        QCOMPARE(stats.lossPercent, 0.0);
+        QCOMPARE(stats.packetsLate, qint64(-1));
+        QCOMPARE(stats.packetsDuplicate, qint64(-1));
+        QCOMPARE(stats.rtxRequested, qint64(-1));
+        QCOMPARE(stats.rtxRecovered, qint64(-1));
+    } else {
         QVERIFY(stats.packetsLate >= 0);
         QVERIFY(stats.packetsDuplicate >= 0);
         QVERIFY(stats.rtxRequested >= 0);
         QVERIFY(stats.rtxRecovered >= 0);
-    } else {
-        QCOMPARE(stats.lossPercent, -1.0);
-        QCOMPARE(stats.jitterMs, -1.0);
-        QCOMPARE(stats.packetsLate, qint64(-1));
-        QCOMPARE(stats.rtxRequested, qint64(-1));
     }
     // The fixture streams have a keyframe every 5 frames at 30 fps.
     QVERIFY2((stats.keyframeIntervalMs > 100) && (stats.keyframeIntervalMs < 400),
@@ -100,6 +104,29 @@ void GstVideoReceiverStatsTest::_testStatsMeasureStream()
     QVERIFY(receiving.waitForState(State::Stopped));
     QVERIFY_TRUE_WAIT(!receiving.receiver->stats().valid, TestTimeout::shortMs());
     QVERIFY(!statsSpy.constLast().constFirst().value<VideoStreamStats>().valid);
+    QVERIFY(receiving.errorSpy.isEmpty());
+}
+
+void GstVideoReceiverStatsTest::_testStatsCountLostPacketsWithoutJitterBuffer()
+{
+    // One buffer or buffer list of RTP packets in seven never arrives.
+    constexpr int kDropInterval = 7;
+
+    Receiver receiving;
+    QVERIFY2(receiving.sender.error().isEmpty(), qPrintable(receiving.sender.error()));
+    VideoReceiver::Config config = receiving.receiver->config();
+    config.lowLatency = true;
+    receiving.receiver->setConfig(config);
+
+    QVERIFY(receiving.startStreaming());
+    receiving.sender.dropPackets(kDropInterval);
+    // The first sample is the baseline; each later one tells the loss of its interval.
+    QVERIFY_TRUE_WAIT(receiving.receiver->stats().lossPercent > 0, TestTimeout::mediumMs());
+
+    const VideoStreamStats stats = receiving.receiver->stats();
+    QVERIFY(stats.valid);
+    QVERIFY(stats.packetsLost > 0);
+    QVERIFY2(stats.lossPercent < 100, qPrintable(QString::number(stats.lossPercent)));
     QVERIFY(receiving.errorSpy.isEmpty());
 }
 
