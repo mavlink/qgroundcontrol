@@ -1,59 +1,124 @@
 #include "GeoJsonHelper.h"
+
+#include <QtCore/QCoreApplication>
+#include <QtCore/QFile>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonObject>
+#include <QtCore/QJsonValue>
+#include <QtCore/QVariantMap>
+#include <QtPositioning/QGeoCoordinate>
+
 #include "JsonParsing.h"
 #include "QGCLoggingCategory.h"
 
-#include <QtCore/QFile>
-#include <QtCore/QJsonArray>
-#include <QtCore/QJsonValue>
-#include <QtCore/QCoreApplication>
-#include <QtCore/QVariantMap>
-#include <QtLocation/private/qgeojson_p.h>
-#include <QtPositioning/QGeoCoordinate>
-#include <QtPositioning/QGeoPath>
-#include <QtPositioning/QGeoPolygon>
-
 QGC_LOGGING_CATEGORY(GeoJsonHelperLog, "Utilities.GeoJsonHelper")
 
-namespace GeoJsonHelper
-{
-    QJsonDocument _loadFile(const QString &filePath, QString &errorString);
-    QVariantList _extractShapeValues(const QVariantList &values);
-    void _extractShapeValuesRecursive(const QVariant &value, QVariantList &shapes, int depth = 0);
+namespace GeoJsonHelper {
 
-    constexpr int _maxRecursionDepth = 32;
-    constexpr const char *_errorPrefix = QT_TRANSLATE_NOOP("GeoJsonHelper", "GeoJson file load failed. %1");
-}
-
-void GeoJsonHelper::_extractShapeValuesRecursive(const QVariant &value, QVariantList &shapes, int depth)
+struct Shape
 {
-    if (depth >= _maxRecursionDepth) {
+    enum class Kind
+    {
+        Point,
+        Polyline,
+        Polygon,
+    };
+
+    Kind kind;
+    QVariantList positions;
+};
+
+QJsonDocument _loadFile(const QString& filePath, QString& errorString);
+QList<Shape> _shapes(const QJsonDocument& jsonDoc);
+void _appendShapes(const QVariantMap& geometry, int nestingDepth, QList<Shape>& shapes);
+QList<QGeoCoordinate> _coordinates(const QVariantList& positions);
+
+// Shapes inside more collections (FeatureCollection, GeometryCollection, Multi* geometry) are ignored.
+constexpr int _maxNestingDepth = 15;
+constexpr const char* _errorPrefix = QT_TRANSLATE_NOOP("GeoJsonHelper", "GeoJson file load failed. %1");
+
+}  // namespace GeoJsonHelper
+
+void GeoJsonHelper::_appendShapes(const QVariantMap& geometry, int nestingDepth, QList<Shape>& shapes)
+{
+    if (nestingDepth > _maxNestingDepth) {
         return;
     }
 
-    if (value.canConvert<QGeoPolygon>() || value.canConvert<QGeoPath>() || value.canConvert<QGeoShape>()) {
-        (void) shapes.append(value);
-    }
+    const QString type = geometry.value(QStringLiteral("type")).toString();
+    const QVariantList coordinates = geometry.value(QStringLiteral("coordinates")).toList();
 
-    if (value.typeId() == QMetaType::QVariantList) {
-        const QVariantList children = value.toList();
-        for (const QVariant &child : children) {
-            _extractShapeValuesRecursive(child, shapes, depth + 1);
+    if (type == QLatin1String("Point")) {
+        shapes.append(Shape{Shape::Kind::Point, {}});
+    } else if (type == QLatin1String("LineString")) {
+        shapes.append(Shape{Shape::Kind::Polyline, coordinates});
+    } else if (type == QLatin1String("Polygon")) {
+        // The first ring is the perimeter, the others are holes.
+        shapes.append(Shape{Shape::Kind::Polygon, coordinates.value(0).toList()});
+    } else if ((type == QLatin1String("MultiPoint")) || (type == QLatin1String("MultiLineString")) ||
+               (type == QLatin1String("MultiPolygon"))) {
+        // A Multi* geometry lists the coordinates of geometries of the type named after "Multi".
+        const QString memberType = type.sliced(QLatin1String("Multi").size());
+        for (const QVariant& memberCoordinates : coordinates) {
+            _appendShapes({{QStringLiteral("type"), memberType}, {QStringLiteral("coordinates"), memberCoordinates}},
+                          nestingDepth + 1, shapes);
         }
-    } else if (value.typeId() == QMetaType::QVariantMap) {
-        const QVariantMap map = value.toMap();
-        for (auto it = map.cbegin(); it != map.cend(); ++it) {
-            _extractShapeValuesRecursive(it.value(), shapes, depth + 1);
+    } else if (type == QLatin1String("GeometryCollection")) {
+        const QVariantList geometries = geometry.value(QStringLiteral("geometries")).toList();
+        for (const QVariant& member : geometries) {
+            _appendShapes(member.toMap(), nestingDepth + 1, shapes);
         }
     }
 }
 
-QVariantList GeoJsonHelper::_extractShapeValues(const QVariantList &values)
+// Returns the shapes of all geometries in document order: callers use the first of the kind they want.
+QList<GeoJsonHelper::Shape> GeoJsonHelper::_shapes(const QJsonDocument& jsonDoc)
 {
-    QVariantList shapes;
-    for (const QVariant &value : values) {
-        _extractShapeValuesRecursive(value, shapes);
+    // Values are converted by QVariant, as in Qt's GeoJSON importer, so that malformed files load as they did
+    // with it: a number written as a string still counts as a number, for example.
+    const QVariantMap root = jsonDoc.object().toVariantMap();
+    const QString type = root.value(QStringLiteral("type")).toString();
+
+    QList<Shape> shapes;
+    if (type == QLatin1String("FeatureCollection")) {
+        const QVariantList features = root.value(QStringLiteral("features")).toList();
+        for (const QVariant& feature : features) {
+            _appendShapes(feature.toMap().value(QStringLiteral("geometry")).toMap(), 1, shapes);
+        }
+    } else if (type == QLatin1String("Feature")) {
+        _appendShapes(root.value(QStringLiteral("geometry")).toMap(), 0, shapes);
+    } else {
+        _appendShapes(root, 0, shapes);
     }
+
     return shapes;
+}
+
+QList<QGeoCoordinate> GeoJsonHelper::_coordinates(const QVariantList& positions)
+{
+    QList<QGeoCoordinate> coordinates;
+    coordinates.reserve(positions.size());
+
+    for (const QVariant& positionValue : positions) {
+        // GeoJSON ordering is [lon, lat, alt] (RFC 7946).
+        const QVariantList position = positionValue.toList();
+        QGeoCoordinate coordinate;
+        if (position.size() >= 2) {
+            coordinate.setLongitude(position.at(0).toDouble());
+            coordinate.setLatitude(position.at(1).toDouble());
+        }
+        if (position.size() >= 3) {
+            coordinate.setAltitude(position.at(2).toDouble());
+        }
+        if (!coordinate.isValid()) {
+            // One invalid position discards the whole line or ring, as QGeoPath and QGeoPolygon did.
+            return {};
+        }
+        coordinates.append(coordinate);
+    }
+
+    return coordinates;
 }
 
 QJsonDocument GeoJsonHelper::_loadFile(const QString &filePath, QString &errorString)
@@ -92,29 +157,19 @@ ShapeFileHelper::ShapeType GeoJsonHelper::determineShapeType(const QString &file
         return ShapeType::Error;
     }
 
-    const QVariantList imported = QGeoJson::importGeoJson(jsonDoc);
-    const QVariantList shapes = _extractShapeValues(imported);
+    const QList<Shape> shapes = _shapes(jsonDoc);
     if (shapes.isEmpty()) {
         errorString = QCoreApplication::translate("GeoJsonHelper", _errorPrefix).arg(
             QCoreApplication::translate("GeoJson", "No shapes found in GeoJson file."));
         return ShapeType::Error;
     }
 
-    for (const QVariant &shapeVar : shapes) {
-        if (shapeVar.canConvert<QGeoPolygon>()) {
+    for (const Shape& shape : shapes) {
+        if (shape.kind == Shape::Kind::Polygon) {
             return ShapeType::Polygon;
         }
-        if (shapeVar.canConvert<QGeoPath>()) {
+        if (shape.kind == Shape::Kind::Polyline) {
             return ShapeType::Polyline;
-        }
-        if (shapeVar.canConvert<QGeoShape>()) {
-            const QGeoShape shape = shapeVar.value<QGeoShape>();
-            if (shape.type() == QGeoShape::PolygonType) {
-                return ShapeType::Polygon;
-            }
-            if (shape.type() == QGeoShape::PathType) {
-                return ShapeType::Polyline;
-            }
         }
     }
 
@@ -133,29 +188,17 @@ bool GeoJsonHelper::loadPolygonFromFile(const QString &filePath, QList<QGeoCoord
         return false;
     }
 
-    const QVariantList imported = QGeoJson::importGeoJson(jsonDoc);
-    const QVariantList shapes = _extractShapeValues(imported);
+    const QList<Shape> shapes = _shapes(jsonDoc);
     if (shapes.isEmpty()) {
         errorString = QCoreApplication::translate("GeoJsonHelper", _errorPrefix).arg(
             QCoreApplication::translate("GeoJson", "No polygon data found in GeoJson file."));
         return false;
     }
 
-    for (const QVariant &shapeVar : shapes) {
-        if (shapeVar.canConvert<QGeoPolygon>()) {
-            const QGeoPolygon poly = shapeVar.value<QGeoPolygon>();
-            vertices = poly.perimeter();
+    for (const Shape& shape : shapes) {
+        if (shape.kind == Shape::Kind::Polygon) {
+            vertices = _coordinates(shape.positions);
             return true;
-        }
-        if (shapeVar.canConvert<QGeoShape>()) {
-            const QGeoShape shape = shapeVar.value<QGeoShape>();
-            if (shape.type() == QGeoShape::PolygonType) {
-                const QGeoPolygon poly(shape);
-                vertices = poly.perimeter();
-                if (!vertices.isEmpty()) {
-                    return true;
-                }
-            }
         }
     }
 
@@ -174,29 +217,17 @@ bool GeoJsonHelper::loadPolylineFromFile(const QString &filePath, QList<QGeoCoor
         return false;
     }
 
-    const QVariantList imported = QGeoJson::importGeoJson(jsonDoc);
-    const QVariantList shapes = _extractShapeValues(imported);
+    const QList<Shape> shapes = _shapes(jsonDoc);
     if (shapes.isEmpty()) {
         errorString = QCoreApplication::translate("GeoJsonHelper", _errorPrefix).arg(
             QCoreApplication::translate("GeoJson", "No polyline data found in GeoJson file."));
         return false;
     }
 
-    for (const QVariant &shapeVar : shapes) {
-        if (shapeVar.canConvert<QGeoPath>()) {
-            const QGeoPath path = shapeVar.value<QGeoPath>();
-            coords = path.path();
+    for (const Shape& shape : shapes) {
+        if (shape.kind == Shape::Kind::Polyline) {
+            coords = _coordinates(shape.positions);
             return true;
-        }
-        if (shapeVar.canConvert<QGeoShape>()) {
-            const QGeoShape shape = shapeVar.value<QGeoShape>();
-            if (shape.type() == QGeoShape::PathType) {
-                const QGeoPath path(shape);
-                coords = path.path();
-                if (!coords.isEmpty()) {
-                    return true;
-                }
-            }
         }
     }
 
