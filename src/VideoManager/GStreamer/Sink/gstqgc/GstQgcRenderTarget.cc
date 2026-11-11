@@ -154,9 +154,11 @@ const char* zeroCopyPathName(RenderBackend backend) noexcept
 #else
             return "CPU";
 #endif
-        default:
-            return "CPU";
+        case RenderBackend::Null:
+        case RenderBackend::Unknown:
+            break;
     }
+    return "CPU";
 }
 
 }  // namespace GstQgc

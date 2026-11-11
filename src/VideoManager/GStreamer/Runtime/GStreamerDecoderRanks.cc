@@ -164,7 +164,12 @@ RankTraits currentRankTraits()
         case GstQgc::RenderBackend::Unknown:
             d3d12 = qEnvironmentVariable("QSG_RHI_BACKEND").compare(QLatin1String("d3d12"), Qt::CaseInsensitive) == 0;
             break;
-        default:
+        case GstQgc::RenderBackend::Direct3D11:
+        // No D3D API is sampled zero-copy under these: the D3D11 decoders stay the ones preferred.
+        case GstQgc::RenderBackend::Null:
+        case GstQgc::RenderBackend::OpenGL:
+        case GstQgc::RenderBackend::Metal:
+        case GstQgc::RenderBackend::Vulkan:
             break;
     }
     traits.rhiD3DApi = d3d12 ? D3DApi::D3D12 : D3DApi::D3D11;

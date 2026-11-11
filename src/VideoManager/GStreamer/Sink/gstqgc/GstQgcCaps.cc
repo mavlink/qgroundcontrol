@@ -88,7 +88,10 @@ std::string gpuMemoryCaps(const SinkCapsPolicy& policy, const std::string& forma
                 caps += GstHw::buildVulkanDmaDrmCaps(advertisedFormats(kOfferDmaDrm));
             }
             break;
-        default:
+        case RenderBackend::Direct3D12:
+        case RenderBackend::Metal:
+        case RenderBackend::Null:
+        case RenderBackend::Unknown:
             // Direct3D12: D3D12Memory only through the D3D12Convert bin (buildSinkCaps). Metal: vtdec's
             // IOSurface-backed CoreVideo buffers arrive as system memory.
             break;
