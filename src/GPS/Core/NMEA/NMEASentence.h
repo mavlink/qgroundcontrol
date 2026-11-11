@@ -217,6 +217,7 @@ std::optional<int> utcMilliseconds(std::string_view field);
 /// field is empty, malformed or negative.
 [[nodiscard]] std::optional<double> speedMetersPerSecond(std::string_view field, double scale);
 
+/// A calendar date that exists, in the years 1 to 9999.
 struct UtcDate
 {
     int year = 0;

@@ -266,6 +266,37 @@ void NMEASentenceTest::_qtTimestampEquivalence()
     }
 }
 
+void NMEASentenceTest::_zdaDate_data()
+{
+    QTest::addColumn<QByteArray>("date");
+    QTest::addColumn<bool>("accepted");
+    QTest::newRow("valid") << QByteArray("12,07,2026") << true;
+    QTest::newRow("leap-day") << QByteArray("29,02,2024") << true;
+    QTest::newRow("no-leap-day") << QByteArray("29,02,2026") << false;
+    // Values that std::chrono's day, month and year would narrow to a valid date.
+    QTest::newRow("day-narrows-to-1") << QByteArray("257,07,2026") << false;
+    QTest::newRow("month-narrows-to-1") << QByteArray("12,257,2026") << false;
+    QTest::newRow("year-narrows-to-2024") << QByteArray("12,07,67560") << false;
+    QTest::newRow("year-zero") << QByteArray("12,07,0000") << false;
+    QTest::newRow("negative-year") << QByteArray("12,07,-2026") << false;
+}
+
+void NMEASentenceTest::_zdaDate()
+{
+    QFETCH(QByteArray, date);
+    QFETCH(bool, accepted);
+    const auto sentence = ownedSentence(NMEAUtils::repairChecksum("$GPZDA,172809.456," + date + ",00,00"));
+    QVERIFY(sentence);
+    const auto zda = NMEA::zda(sentence->sentence());
+    QCOMPARE(zda.has_value(), accepted);
+    if (zda) {
+        const QList<QByteArray> parts = date.split(',');
+        QCOMPARE(zda->date.day, parts[0].toUInt());
+        QCOMPARE(zda->date.month, parts[1].toUInt());
+        QCOMPARE(zda->date.year, parts[2].toInt());
+    }
+}
+
 void NMEASentenceTest::_makeGga_data()
 {
     QTest::addColumn<NMEA::GGA>("fix");

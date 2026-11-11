@@ -21,8 +21,19 @@ constexpr unsigned SECONDS_PER_MINUTE = 60;
 constexpr size_t FIRST_MILLISECOND_DIGIT_WEIGHT = 100;
 constexpr double KILOMETERS_PER_HOUR_TO_METERS_PER_SECOND = 1.0 / 3.6;
 
+constexpr unsigned MAX_DAY_OF_MONTH = 31;
+constexpr unsigned MONTHS_PER_YEAR = 12;
+// Dates carry a four-digit year.
+constexpr int MIN_YEAR = 1;
+constexpr int MAX_YEAR = 9999;
+
 std::optional<NMEA::UtcDate> dateFromParts(unsigned day, unsigned month, int year)
 {
+    // std::chrono's day, month and year narrow their argument, so ok() alone would validate the truncated value.
+    if (day < 1 || day > MAX_DAY_OF_MONTH || month < 1 || month > MONTHS_PER_YEAR || year < MIN_YEAR ||
+        year > MAX_YEAR) {
+        return {};
+    }
     if (!std::chrono::year_month_day{std::chrono::year{year}, std::chrono::month{month}, std::chrono::day{day}}.ok()) {
         return {};
     }
