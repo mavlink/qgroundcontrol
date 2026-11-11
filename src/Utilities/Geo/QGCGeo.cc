@@ -8,14 +8,14 @@
  ****************************************************************************/
 
 #include "QGCGeo.h"
-#include "QGCLoggingCategory.h"
+
+#include <cmath>
 
 #include <QtCore/QLocale>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QString>
 
-#include <cmath>
-
+#include "QGCLoggingCategory.h"
 #include <GeographicLib/Geocentric.hpp>
 #include <GeographicLib/Geodesic.hpp>
 #include <GeographicLib/GeodesicLine.hpp>
