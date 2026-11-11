@@ -12,7 +12,7 @@ private slots:
     void _pagePanelUsesApplicationReceiver();
     void _pageFitsWidth_data();
     void _pageFitsWidth();
-    void _compactExpandedPageHasSettingsHeight();
+    void _compactExpandedPageHasSettingsSize();
     void _pageOffersNtripConnect();
     void _pageVehicleMeasurements();
     void _pageResilienceGroups();
