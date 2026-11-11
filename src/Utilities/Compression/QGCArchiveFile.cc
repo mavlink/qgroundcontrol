@@ -94,19 +94,19 @@ void QGCArchiveFile::resetState()
 
 bool QGCArchiveFile::seekToEntry()
 {
-    struct archive_entry *entry = nullptr;
     _entryFound = false;
 
-    QGClibarchive::NextEntry next;
-    while ((next = QGClibarchive::readNextEntry(_reader->handle(), &entry)) == QGClibarchive::NextEntry::Found) {
-        // Capture format info on first header
-        if (_formatName.isEmpty()) {
-            captureFormatInfo();
-        }
+    const QGClibarchive::EntryWalk walk =
+        QGClibarchive::forEachEntry(_reader->handle(), [this](struct archive_entry* entry) {
+            // Capture format info on first header
+            if (_formatName.isEmpty()) {
+                captureFormatInfo();
+            }
 
-        const QString currentEntry = QString::fromUtf8(archive_entry_pathname(entry));
+            if (QString::fromUtf8(archive_entry_pathname(entry)) != _entryName) {
+                return true;
+            }
 
-        if (currentEntry == _entryName) {
             _entryFound = true;
             _entrySize = archive_entry_size(entry);
 
@@ -115,14 +115,16 @@ bool QGCArchiveFile::seekToEntry()
                 _entryModified = QDateTime::fromSecsSinceEpoch(archive_entry_mtime(entry));
             }
 
-            qCDebug(QGCArchiveFileLog) << "Found entry:" << _entryName
-                                        << "size:" << _entrySize
-                                        << "modified:" << _entryModified;
-            return true;
-        }
+            qCDebug(QGCArchiveFileLog) << "Found entry:" << _entryName << "size:" << _entrySize
+                                       << "modified:" << _entryModified;
+            return false;
+        });
+
+    if (_entryFound) {
+        return true;
     }
 
-    if (next == QGClibarchive::NextEntry::Error) {
+    if (walk == QGClibarchive::EntryWalk::Failed) {
         _errorString = QString::fromUtf8(archive_error_string(_reader->handle()));
     } else {
         _errorString = QStringLiteral("Entry not found in archive: ") + _entryName;

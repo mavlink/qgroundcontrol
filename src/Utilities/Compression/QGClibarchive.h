@@ -5,6 +5,7 @@
 /// @note This is an internal header - use QGCCompression.h for public API
 
 #include <archive.h>
+#include <functional>
 #include <memory>
 
 #include <QtCore/QByteArray>
@@ -186,14 +187,32 @@ enum class NextEntry
 };
 
 /// Advance to the next entry header, first skipping whatever is unread of the current entry's data
-/// Every loop over archive entries goes through this function. Testing archive_read_next_header()
-/// against ARCHIVE_OK instead makes a truncated or corrupt archive look like one that has ended.
+/// forEachEntry() is the loop over this function. Testing archive_read_next_header() against
+/// ARCHIVE_OK instead makes a truncated or corrupt archive look like one that has ended.
 /// ARCHIVE_WARN is logged and the entry returned: libarchive documents it as success with a
 /// warning (for example a pathname it could not convert) and the entry is usable.
 /// ARCHIVE_RETRY, ARCHIVE_FAILED and ARCHIVE_FATAL are all reported as Error.
 /// @param a Archive reader
 /// @param entry Receives the entry when Found is returned
 NextEntry readNextEntry(struct archive* a, struct archive_entry** entry);
+
+/// How a walk over the entries of an archive ended
+enum class EntryWalk
+{
+    Completed,  ///< Every entry was visited and the archive ended cleanly
+    Stopped,    ///< The visitor returned false
+    Failed      ///< The archive is truncated or corrupt (a warning has been logged)
+};
+
+/// Called by forEachEntry() with each entry of the archive. Returns false to stop the walk.
+using EntryVisitor = std::function<bool(struct archive_entry* entry)>;
+
+/// Visit the entries of an archive in order
+/// Every loop over archive entries is this one. Only Completed says that the archive was read to
+/// its end, so a caller cannot take a read error for the end of the archive.
+/// @param a Archive reader
+/// @param visitor Called with each entry header, when the data of that entry can be read from @a a
+EntryWalk forEachEntry(struct archive* a, const EntryVisitor& visitor);
 
 // ============================================================================
 // Utility Functions
