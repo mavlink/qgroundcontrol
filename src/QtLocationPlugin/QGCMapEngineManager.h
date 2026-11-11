@@ -112,6 +112,9 @@ private slots:
     void _handleExtractionFinished(bool success);
 
 private:
+    /// Stores a set of \a tiles for the region of the current view and starts its download
+    void _createTileSet(const QString& name, const QString& mapType, int minZoom, int maxZoom, const QGCTileSet& tiles);
+
     QmlObjectListModel *_tileSets = nullptr;
     QGCTileSet _imageSet;
     QGCTileSet _elevationSet;

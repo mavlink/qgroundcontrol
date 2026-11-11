@@ -119,51 +119,40 @@ void QGCMapEngineManager::_tileSetFetched(QGCCachedTileSet *tileSet)
 void QGCMapEngineManager::startDownload(const QString &name, const QString &mapType)
 {
     if (_imageSet.tileSize > 0) {
-        QGCCachedTileSet* const set = new QGCCachedTileSet(name);
-        set->setMapTypeStr(mapType);
-        set->setTopleftLat(_topleftLat);
-        set->setTopleftLon(_topleftLon);
-        set->setBottomRightLat(_bottomRightLat);
-        set->setBottomRightLon(_bottomRightLon);
-        set->setMinZoom(_minZoom);
-        set->setMaxZoom(_maxZoom);
-        set->setTotalTileSize(_imageSet.tileSize);
-        set->setTotalTileCount(static_cast<quint32>(_imageSet.tileCount));
-        set->setType(mapType);
-
-        QGCCreateTileSetTask *task = new QGCCreateTileSetTask(set);
-        (void) connect(task, &QGCCreateTileSetTask::tileSetSaved, this, &QGCMapEngineManager::_tileSetSaved);
-        (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-        if (!getQGCMapEngine()->addTask(task)) {
-            task->deleteLater();
-        }
+        _createTileSet(name, mapType, _minZoom, _maxZoom, _imageSet);
     } else {
         qCWarning(QGCMapEngineManagerLog) << "No Tiles to save";
     }
 
     const int mapid = UrlFactory::getQtMapIdFromProviderType(mapType);
     if (_fetchElevation && !UrlFactory::isElevation(mapid)) {
-        QGCCachedTileSet* const set = new QGCCachedTileSet(name + QStringLiteral(" Elevation"));
         const QString elevationProviderName = SettingsManager::instance()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
-        set->setMapTypeStr(elevationProviderName);
-        set->setTopleftLat(_topleftLat);
-        set->setTopleftLon(_topleftLon);
-        set->setBottomRightLat(_bottomRightLat);
-        set->setBottomRightLon(_bottomRightLon);
-        set->setMinZoom(1);
-        set->setMaxZoom(1);
-        set->setTotalTileSize(_elevationSet.tileSize);
-        set->setTotalTileCount(static_cast<quint32>(_elevationSet.tileCount));
-        set->setType(elevationProviderName);
-
-        QGCCreateTileSetTask *task = new QGCCreateTileSetTask(set);
-        (void) connect(task, &QGCCreateTileSetTask::tileSetSaved, this, &QGCMapEngineManager::_tileSetSaved);
-        (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
-        if (!getQGCMapEngine()->addTask(task)) {
-            task->deleteLater();
-        }
+        _createTileSet(name + QStringLiteral(" Elevation"), elevationProviderName, 1, 1, _elevationSet);
     } else {
         qCWarning(QGCMapEngineManagerLog) << "No Tiles to save";
+    }
+}
+
+void QGCMapEngineManager::_createTileSet(const QString& name, const QString& mapType, int minZoom, int maxZoom,
+                                         const QGCTileSet& tiles)
+{
+    QGCCachedTileSet* const set = new QGCCachedTileSet(name);
+    set->setMapTypeStr(mapType);
+    set->setTopleftLat(_topleftLat);
+    set->setTopleftLon(_topleftLon);
+    set->setBottomRightLat(_bottomRightLat);
+    set->setBottomRightLon(_bottomRightLon);
+    set->setMinZoom(minZoom);
+    set->setMaxZoom(maxZoom);
+    set->setTotalTileSize(tiles.tileSize);
+    set->setTotalTileCount(static_cast<quint32>(tiles.tileCount));
+    set->setType(mapType);
+
+    QGCCreateTileSetTask* const task = new QGCCreateTileSetTask(set);
+    (void) connect(task, &QGCCreateTileSetTask::tileSetSaved, this, &QGCMapEngineManager::_tileSetSaved);
+    (void) connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
+    if (!getQGCMapEngine()->addTask(task)) {
+        task->deleteLater();
     }
 }
 
