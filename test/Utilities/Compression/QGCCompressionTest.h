@@ -46,12 +46,18 @@ private slots:
     // Progress callbacks
     void _testProgressCallbackExtract();
 
+    // Format reported for the last operation
+    void _testDetectedFormat_data();
+    void _testDetectedFormat();
+
     // Edge cases and error handling
     void _testCorruptArchive();
     void _testNonExistentInput();
     void _testNoExternalDecompressors();
     void _testTruncatedArchive_data();
     void _testTruncatedArchive();
+    void _testTruncatedStream_data();
+    void _testTruncatedStream();
     void _testExtractStreamedZipEntry();
 
     // QIODevice-based operations
@@ -81,6 +87,8 @@ private slots:
     void _testLargeFileDecompression();
     void _testDecompressToFileSizeLimit();
     void _testDecompressToMemorySizeLimit();
+    void _testExtractionStopsCleanly_data();
+    void _testExtractionStopsCleanly();
     void _testMaxEntriesArchive();
 
     // Cross-platform path handling
@@ -104,6 +112,12 @@ private:
     bool _compareFiles(const QString& file1, const QString& file2);
 
     static quint32 _crc32(const QByteArray& data);
+
+    static bool _writeFile(const QString& path, const QByteArray& data);
+    static QByteArray _readFile(const QString& path);
+
+    /// Paths of everything below @a directoryPath, relative to it and sorted
+    static QStringList _entriesBelow(const QString& directoryPath);
 
     /// Writes a gzip file of @a memberCount concatenated members, each expanding to 64 KiB of zeros
     static bool _writeGzipOfZeros(const QString& path, int memberCount);

@@ -131,6 +131,13 @@ void QGCStreamingDecompressionTest::_testDecompressDeviceErrors()
     QCOMPARE(device4.write("test", 4), qint64(-1));
     verifyExpectedLogMessage();
     device4.close();
+    // A stream which cannot be opened: the reason is in errorString(), and nothing is logged
+    QBuffer headerOnly;
+    headerOnly.setData(QByteArray::fromHex("1f8b08000000000000ff"));
+    QVERIFY(headerOnly.open(QIODevice::ReadOnly));
+    QGCDecompressDevice device5(&headerOnly);
+    QVERIFY(!device5.open(QIODevice::ReadOnly));
+    QVERIFY2(device5.errorString().contains("truncated gzip input"), qPrintable(device5.errorString()));
 }
 
 void QGCStreamingDecompressionTest::_testDecompressDeviceFormatInfo()
@@ -248,6 +255,13 @@ void QGCStreamingDecompressionTest::_testArchiveFileErrors()
     QCOMPARE(device4.write("test", 4), qint64(-1));
     verifyExpectedLogMessage();
     device4.close();
+    // Data which is not an archive: the reason is in errorString(), and nothing is logged
+    QBuffer notAnArchive;
+    notAnArchive.setData("This is not an archive");
+    QVERIFY(notAnArchive.open(QIODevice::ReadOnly));
+    QGCArchiveFile device5(&notAnArchive, "file.txt");
+    QVERIFY(!device5.open(QIODevice::ReadOnly));
+    QVERIFY2(device5.errorString().contains("Unrecognized archive format"), qPrintable(device5.errorString()));
 }
 
 void QGCStreamingDecompressionTest::_testArchiveFileMetadata()
