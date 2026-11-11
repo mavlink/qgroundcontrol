@@ -221,6 +221,8 @@ void QtMultimediaVideoReceiver::_open()
     }
 
     _sessionConfig = config();
+    // Before the player opens its sockets, so its own timeout can't run out sooner than this one.
+    _sinceOpened.start();
     _player = new QMediaPlayer(this);
     QPlaybackOptions options;
     options.setNetworkTimeout(config().timeout);
@@ -273,9 +275,24 @@ void QtMultimediaVideoReceiver::_stopSession()
     setStats(_statsSampler.stats());
 }
 
+bool QtMultimediaVideoReceiver::_awaitingSender() const
+{
+    const std::optional<VideoStreamUri::Transport> transport = VideoStreamUri::transportFor(QUrl(_sessionConfig.uri));
+    // A session that ends sooner than its timeout didn't run out of patience: its port is taken, or it can't play.
+    return transport && VideoStreamUri::listens(*transport) &&
+           (_supervisor->phase() == StreamSupervisor::Phase::Connecting) &&
+           (_sinceOpened.durationElapsed() >= _sessionConfig.timeout);
+}
+
 void QtMultimediaVideoReceiver::_fail(const QString& reason)
 {
     if (!_player) {
+        return;
+    }
+    if (_awaitingSender()) {
+        // FFmpeg gives up on a silent port; a backoff would leave it unbound when the stream starts.
+        qCDebug(QtMultimediaVideoReceiverLog) << name() << "no stream yet, listening on:" << reason;
+        _start();
         return;
     }
     _stopSession();

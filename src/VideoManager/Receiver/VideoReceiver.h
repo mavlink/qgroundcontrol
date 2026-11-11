@@ -60,7 +60,8 @@ public:
     struct Config
     {
         QString uri;
-        /// No data, or no decoded frame while displaying, for this long is a stream failure.
+        /// No data, or no decoded frame while displaying, for this long is a stream failure. Not before the first data
+        /// of a stream the receiver listens for on a UDP port, which may start at any time.
         std::chrono::seconds timeout{3};
         bool lowLatency = false;
         int rtpJitterLatencyMs = 80;

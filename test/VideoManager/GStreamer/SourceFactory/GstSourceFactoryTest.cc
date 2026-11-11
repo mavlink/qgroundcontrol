@@ -620,28 +620,32 @@ void GstSourceFactoryTest::_testTransportFor_data()
 {
     using VideoStreamUri::Transport;
     QTest::addColumn<QString>("uri");
-    QTest::addColumn<int>("transport");  // -1: unsupported
+    QTest::addColumn<int>("transport");       // -1: unsupported
+    QTest::addColumn<int>("connectGraceMs");  // -1: none, the first data may take any time
 
-    QTest::newRow("rtsp") << QStringLiteral("rtsp://10.0.0.1:554/live") << int(Transport::Rtsp);
-    QTest::newRow("rtspt") << QStringLiteral("rtspt://10.0.0.1/live") << int(Transport::Rtsp);
-    QTest::newRow("upper-case rtsp") << QStringLiteral("RTSP://10.0.0.1/live") << int(Transport::Rtsp);
-    QTest::newRow("udp") << QStringLiteral("udp://0.0.0.0:5600") << int(Transport::RtpUdpH264);
-    QTest::newRow("udp265") << QStringLiteral("udp265://0.0.0.0:5600") << int(Transport::RtpUdpH265);
-    QTest::newRow("mpegts") << QStringLiteral("mpegts://0.0.0.0:5600") << int(Transport::MpegTsUdp);
-    QTest::newRow("tcp") << QStringLiteral("tcp://192.168.1.2:5000") << int(Transport::MpegTsTcp);
-    QTest::newRow("http") << QStringLiteral("http://10.0.0.1/video") << -1;
-    QTest::newRow("no scheme") << QStringLiteral("10.0.0.1:5600") << -1;
+    // RTSP may fall back from UDP to TCP; a UDP source only listens until somebody sends to it.
+    const int rtspGrace = int(GStreamer::SourceFactory::kRtspUdpTimeout.count());
+    QTest::newRow("rtsp") << QStringLiteral("rtsp://10.0.0.1:554/live") << int(Transport::Rtsp) << rtspGrace;
+    QTest::newRow("rtspt") << QStringLiteral("rtspt://10.0.0.1/live") << int(Transport::Rtsp) << rtspGrace;
+    QTest::newRow("upper-case rtsp") << QStringLiteral("RTSP://10.0.0.1/live") << int(Transport::Rtsp) << rtspGrace;
+    QTest::newRow("udp") << QStringLiteral("udp://0.0.0.0:5600") << int(Transport::RtpUdpH264) << -1;
+    QTest::newRow("udp265") << QStringLiteral("udp265://0.0.0.0:5600") << int(Transport::RtpUdpH265) << -1;
+    QTest::newRow("mpegts") << QStringLiteral("mpegts://0.0.0.0:5600") << int(Transport::MpegTsUdp) << -1;
+    QTest::newRow("tcp") << QStringLiteral("tcp://192.168.1.2:5000") << int(Transport::MpegTsTcp) << 0;
+    QTest::newRow("http") << QStringLiteral("http://10.0.0.1/video") << -1 << 0;
+    QTest::newRow("no scheme") << QStringLiteral("10.0.0.1:5600") << -1 << 0;
 }
 
 void GstSourceFactoryTest::_testTransportFor()
 {
     QFETCH(QString, uri);
     QFETCH(int, transport);
+    QFETCH(int, connectGraceMs);
 
     const std::optional<VideoStreamUri::Transport> actual = VideoStreamUri::transportFor(QUrl(uri));
     QCOMPARE(actual ? int(*actual) : -1, transport);
-    QCOMPARE(GStreamer::SourceFactory::connectGracePeriod(uri) > std::chrono::milliseconds{0},
-             transport == int(VideoStreamUri::Transport::Rtsp));
+    const std::optional<std::chrono::milliseconds> grace = GStreamer::SourceFactory::connectGracePeriod(uri);
+    QCOMPARE(grace ? int(grace->count()) : -1, connectGraceMs);
 }
 
 #endif

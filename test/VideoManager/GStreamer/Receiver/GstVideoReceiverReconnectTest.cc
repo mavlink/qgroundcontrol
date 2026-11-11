@@ -18,6 +18,10 @@ using GstReceiverTest::Receiver;
 using GstReceiverTest::State;
 using GstReceiverTest::udpListenUri;
 
+// Longer than the watchdog takes to give up on a source: the shortest timeout, counted from its first one-second tick
+// and checked at the next two.
+constexpr int kSilentSourceWindowMs = 3500;
+
 }  // namespace
 
 void GstVideoReceiverReconnectTest::_testPermanentFailureStops()
@@ -67,6 +71,24 @@ void GstVideoReceiverReconnectTest::_testReconnectBacksOffAfterFailedStart()
     QVERIFY(stream.waitForState(State::Connecting));
     const qint64 retry = clock.elapsed();
     QVERIFY2(retry >= kFirstReconnectDelayMs, qPrintable(QStringLiteral("retried after %1 ms").arg(retry)));
+    QVERIFY(stream.errorSpy.isEmpty());
+}
+
+void GstVideoReceiverReconnectTest::_testUdpListensUntilStreamStarts()
+{
+    // Without auto-reconnect a stream that fails stops, so one that stays Connecting didn't fail.
+    Receiver stream(udpListenUri(), /*autoReconnect=*/false, kShortWatchdogTimeout);
+    stream.receiver->setActive(true);
+    QVERIFY(stream.waitForState(State::Connecting));
+    const quint16 port = stream.udpPort();
+    QVERIFY(port != 0);
+
+    QVERIFY_NO_SIGNAL_WAIT(stream.stateSpy, kSilentSourceWindowMs);
+    // Still the first session's socket: nothing sent to it meanwhile would have been lost.
+    QCOMPARE(stream.udpPort(), port);
+
+    QVERIFY(stream.sender.start(port));
+    QVERIFY(stream.waitForState(State::Streaming));
     QVERIFY(stream.errorSpy.isEmpty());
 }
 

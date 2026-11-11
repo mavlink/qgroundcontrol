@@ -16,11 +16,14 @@ qint64 StreamWatchdog::now()
         .count();
 }
 
-void StreamWatchdog::start(std::chrono::seconds timeout, std::chrono::milliseconds firstFrameGrace)
+void StreamWatchdog::start(std::chrono::seconds timeout, std::optional<std::chrono::milliseconds> firstFrameGrace)
 {
     // A zero timeout would otherwise trip on every check.
     _timeoutMs = std::max<qint64>(std::chrono::milliseconds(timeout).count(), kMinTimeoutMs);
-    _firstFrameGraceMs = std::max<qint64>(firstFrameGrace.count(), 0);
+    _firstFrameGraceMs.reset();
+    if (firstFrameGrace) {
+        _firstFrameGraceMs = std::max<qint64>(firstFrameGrace->count(), 0);
+    }
     _sourceFrames.store(0, std::memory_order_relaxed);
     _lastSourceFrameMs.store(0, std::memory_order_relaxed);
     _lastSinkFrameMs.store(0, std::memory_order_relaxed);
@@ -57,10 +60,12 @@ StreamWatchdog::Result StreamWatchdog::check(qint64 nowMs, bool displaying)
         lastSourceFrameMs = nowMs;
     }
 
-    const qint64 sourceTimeoutMs = firstFrameSeen ? _timeoutMs : (_timeoutMs + _firstFrameGraceMs);
-    const qint64 sourceSilentMs = nowMs - lastSourceFrameMs;
-    if (sourceSilentMs > sourceTimeoutMs) {
-        return {.stall = Stall::Source, .silentMs = sourceSilentMs};
+    if (firstFrameSeen || _firstFrameGraceMs) {
+        const qint64 sourceTimeoutMs = firstFrameSeen ? _timeoutMs : (_timeoutMs + *_firstFrameGraceMs);
+        const qint64 sourceSilentMs = nowMs - lastSourceFrameMs;
+        if (sourceSilentMs > sourceTimeoutMs) {
+            return {.stall = Stall::Source, .silentMs = sourceSilentMs};
+        }
     }
 
     if (displaying) {

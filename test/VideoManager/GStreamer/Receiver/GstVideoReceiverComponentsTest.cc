@@ -75,18 +75,38 @@ void GstVideoReceiverComponentsTest::_testStallDetection()
     QCOMPARE(int(watchdog.check(kNowMs, decoding).stall), expected);
 }
 
+void GstVideoReceiverComponentsTest::_testFirstFrameGrace_data()
+{
+    QTest::addColumn<qint64>("graceMs");        // kNoFrame: none, the first frame may take any time
+    QTest::addColumn<qint64>("silentStallMs");  // kNoFrame: never
+
+    // RTSP's UDP to TCP fallback must not be cut short before the first frame.
+    QTest::newRow("rtsp fallback") << qint64(5000) << qint64(6001);
+    // A UDP port nobody sends to yet hasn't stalled.
+    QTest::newRow("listening") << kNoFrame << kNoFrame;
+}
+
 void GstVideoReceiverComponentsTest::_testFirstFrameGrace()
 {
-    // RTSP's UDP to TCP fallback must not be cut short before the first frame; once frames flow, the timeout applies.
-    StreamWatchdog watchdog;
-    watchdog.start(std::chrono::seconds(1), std::chrono::milliseconds(5000));
-    QCOMPARE(watchdog.check(kNowMs, false).stall, StreamWatchdog::Stall::None);
-    QCOMPARE(watchdog.check(kNowMs + 6000, false).stall, StreamWatchdog::Stall::None);
-    QCOMPARE(watchdog.check(kNowMs + 6001, false).stall, StreamWatchdog::Stall::Source);
+    QFETCH(qint64, graceMs);
+    QFETCH(qint64, silentStallMs);
 
-    (void) watchdog.noteSourceFrame(kNowMs + 7000);
-    QCOMPARE(watchdog.check(kNowMs + 8000, false).stall, StreamWatchdog::Stall::None);
-    QCOMPARE(watchdog.check(kNowMs + 8001, false).stall, StreamWatchdog::Stall::Source);
+    constexpr qint64 kHourMs = 3'600'000;
+    StreamWatchdog watchdog;
+    watchdog.start(std::chrono::seconds(1),
+                   (graceMs == kNoFrame) ? std::nullopt : std::optional(std::chrono::milliseconds(graceMs)));
+    QCOMPARE(watchdog.check(kNowMs, false).stall, StreamWatchdog::Stall::None);
+    if (silentStallMs == kNoFrame) {
+        QCOMPARE(watchdog.check(kNowMs + kHourMs, false).stall, StreamWatchdog::Stall::None);
+    } else {
+        QCOMPARE(watchdog.check(kNowMs + silentStallMs - 1, false).stall, StreamWatchdog::Stall::None);
+        QCOMPARE(watchdog.check(kNowMs + silentStallMs, false).stall, StreamWatchdog::Stall::Source);
+    }
+
+    // Once frames flow, the timeout applies.
+    (void) watchdog.noteSourceFrame(kNowMs + kHourMs);
+    QCOMPARE(watchdog.check(kNowMs + kHourMs + 1000, false).stall, StreamWatchdog::Stall::None);
+    QCOMPARE(watchdog.check(kNowMs + kHourMs + 1001, false).stall, StreamWatchdog::Stall::Source);
 }
 
 void GstVideoReceiverComponentsTest::_testDecoderSilenceCountsFromInsertion()

@@ -51,7 +51,8 @@ Connection settings vary by source type:
   A lower value shortens the video delay; a higher one leaves more time to reorder packets and to recover lost ones by
   retransmission, which values below about 40 ms prevent. Not used, and hidden, in **Low Latency Mode**.
 - **Auto-reconnect on stream loss** — reconnect a stream that times out or fails, waiting 1 s before the first attempt
-  and up to 30 s between later ones (default: on). When off, the stream stops after the first failure.
+  and up to 30 s between later ones (default: on). When off, the stream stops after the first failure. A UDP source
+  that has received nothing yet hasn't failed: with either setting QGC keeps listening until the stream starts.
 - **Force CPU video path** — disable hardware-accelerated rendering (use if video displays incorrectly). Changing it
   restarts the video stream.
 - **Force video decoder priority** — override the automatic decoder selection: Default / Software / Hardware / NVIDIA / VA-API / Direct3D / VideoToolbox / Intel / Vulkan. Only the families of the installed decoders are listed, and Vulkan only in builds with the Vulkan GPU path (`QGC_GST_ENABLE_VULKAN`). Changing it restarts the video stream.

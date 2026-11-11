@@ -3,6 +3,7 @@
 #include <memory>
 
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QPointer>
 #include <QtCore/QRandomGenerator>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
@@ -177,6 +178,34 @@ void QtMultimediaVideoReceiverTest::_testRecordingNeedsActiveStream()
     QCOMPARE(stream.errorSpy.count(), 1);
     QVERIFY(!stream.receiver->recording());
     QVERIFY(!QFile::exists(file));
+}
+
+void QtMultimediaVideoReceiverTest::_testUdpListensUntilStreamStarts()
+{
+    // Without auto-reconnect a stream that fails stops, so one that stays Connecting didn't fail.
+    const quint16 port = freeUdpPort();
+    _ignorePlayerLogs();
+    ReceiverUnderTest stream(QStringLiteral("udp://127.0.0.1:%1").arg(port), false, std::chrono::seconds(1));
+    stream.receiver->setActive(true);
+    QTRY_VERIFY_WITH_TIMEOUT(stream.receiver->_player, TestTimeout::shortMs());
+    const QPointer<QMediaPlayer> firstPlayer = stream.receiver->_player;
+
+    // The player gives up on the silent port, and the receiver listens again with a new one.
+    QTRY_VERIFY_WITH_TIMEOUT(!firstPlayer, TestTimeout::longMs());
+    QCOMPARE(stream.receiver->state(), State::Connecting);
+    QTRY_VERIFY_WITH_TIMEOUT(stream.receiver->_player, TestTimeout::shortMs());
+    QCOMPARE(stream.stateSpy.count(), 1);
+    QVERIFY(stream.errorSpy.isEmpty());
+
+#if defined(QGC_GST_STREAMING) && defined(QGC_HAS_MOCK_VIDEO_STREAM_SERVER)
+    using StreamType = MockVideoStreamServer::StreamType;
+    if (MockVideoStreamServer::isStreamTypeAvailable(StreamType::RtpUdpH264)) {
+        MockVideoStreamServer server;
+        QVERIFY(server.start(StreamType::RtpUdpH264, QStringLiteral("127.0.0.1"), port));
+        QVERIFY(stream.waitForDisplay());
+        QVERIFY(stream.errorSpy.isEmpty());
+    }
+#endif
 }
 
 void QtMultimediaVideoReceiverTest::_testRecordingTimes_data()

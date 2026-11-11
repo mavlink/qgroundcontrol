@@ -26,7 +26,8 @@ class QVideoSink;
 /// Streaming once the first frame arrives; decoding while frames reach the output. A stream that errors, ends, or
 /// shows no frame for the config's timeout while displaying (5 s more for the first, while FFmpeg probes the stream)
 /// has failed: its StreamSupervisor reconnects it after 1 s, doubling up to 30 s, while autoReconnect is on, and it
-/// stops with errorOccurred() otherwise.
+/// stops with errorOccurred() otherwise. A UDP port nobody sends to yet hasn't failed: once FFmpeg gives up on it, the
+/// receiver listens again at once, for as long as it takes.
 class QtMultimediaVideoReceiver : public VideoReceiver
 {
     Q_OBJECT
@@ -69,7 +70,10 @@ private:
     void _open();
     /// Ends the session: no player, frame or stats.
     void _stopSession();
-    /// The session failed for @p reason: reconnects with backoff, or stops and reports it.
+    /// The session listens on a UDP port, for at least its timeout, and no stream has arrived.
+    bool _awaitingSender() const;
+    /// The session failed for @p reason: reconnects with backoff, or stops and reports it. One still awaiting its
+    /// sender starts anew instead.
     void _fail(const QString& reason);
     void _bindVideoSink();
     void _onMediaStatusChanged(QMediaPlayer::MediaStatus status);
@@ -94,6 +98,8 @@ private:
     QMetaObject::Connection _frameConnection;
     StreamSupervisor* const _supervisor;
     QTimer _sampleTimer;
+    /// Since the session's player was created.
+    QElapsedTimer _sinceOpened;
     /// Since the session started, or its last frame.
     QElapsedTimer _sinceFrame;
     VideoStreamStatsSampler _statsSampler;

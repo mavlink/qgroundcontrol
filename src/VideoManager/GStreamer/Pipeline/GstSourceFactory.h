@@ -3,6 +3,7 @@
 #include <chrono>
 #include <gst/gstelement.h>
 #include <gst/gstpad.h>
+#include <optional>
 
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
@@ -44,8 +45,9 @@ GstElement* create(const QString& uri, const Config& config);
 inline constexpr std::chrono::milliseconds kRtspUdpTimeout{5000};
 
 /// How much longer than the stream timeout the first data for @p uri may take: kRtspUdpTimeout for RTSP, whose UDP to
-/// TCP fallback must not be cut short; zero for other sources.
-std::chrono::milliseconds connectGracePeriod(const QString& uri);
+/// TCP fallback must not be cut short, and zero for a TCP source. nullopt, any time at all, for a UDP source: it only
+/// listens on its port, so until somebody sends to it nothing has failed, and a new source would listen no better.
+std::optional<std::chrono::milliseconds> connectGracePeriod(const QString& uri);
 
 /// Holds an RTP H.264/H.265 depayloader's byte-stream output back until a full parameter set (SPS and PPS, plus VPS
 /// for H.265) has arrived, then emits the parameter sets together with the first slice and removes itself. create()

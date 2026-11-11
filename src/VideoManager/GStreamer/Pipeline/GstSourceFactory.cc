@@ -590,10 +590,13 @@ GstElement* create(const QString& uri, const Config& config)
     return bin.release();
 }
 
-std::chrono::milliseconds connectGracePeriod(const QString& uri)
+std::optional<std::chrono::milliseconds> connectGracePeriod(const QString& uri)
 {
-    return (VideoStreamUri::transportFor(QUrl(uri)) == Transport::Rtsp) ? kRtspUdpTimeout
-                                                                        : std::chrono::milliseconds{0};
+    const std::optional<Transport> transport = VideoStreamUri::transportFor(QUrl(uri));
+    if (transport && VideoStreamUri::listens(*transport)) {
+        return std::nullopt;
+    }
+    return (transport == Transport::Rtsp) ? kRtspUdpTimeout : std::chrono::milliseconds{0};
 }
 
 }  // namespace GStreamer::SourceFactory

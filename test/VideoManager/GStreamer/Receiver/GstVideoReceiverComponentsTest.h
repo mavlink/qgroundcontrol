@@ -11,6 +11,7 @@ private slots:
 #ifdef QGC_GST_STREAMING
     void _testStallDetection_data();
     void _testStallDetection();
+    void _testFirstFrameGrace_data();
     void _testFirstFrameGrace();
     void _testDecoderSilenceCountsFromInsertion();
     void _testSourceTimeoutStartsAtFirstCheck();

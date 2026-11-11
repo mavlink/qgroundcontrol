@@ -20,6 +20,13 @@ enum class Transport : uint8_t
 /// The transport @p url's scheme selects, case-insensitively; nullopt for any other scheme.
 std::optional<Transport> transportFor(const QUrl& url);
 
+/// The receiver listens on a local UDP port for @p transport, rather than connect to a server.
+constexpr bool listens(Transport transport)
+{
+    return (transport == Transport::RtpUdpH264) || (transport == Transport::RtpUdpH265) ||
+           (transport == Transport::MpegTsUdp);
+}
+
 /// A TCP or UDP port a source can name: 1 to 65535.
 constexpr bool isValidPort(int port)
 {

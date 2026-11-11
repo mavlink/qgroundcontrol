@@ -43,7 +43,7 @@ target_sources(
         VideoTestHelpers.h
 )
 
-add_qgc_test(QtMultimediaVideoReceiverTest LABELS Integration)
+add_qgc_test(QtMultimediaVideoReceiverTest LABELS Integration TIMEOUT ${QGC_TEST_TIMEOUT_EXTENDED})
 add_qgc_test(QtVideoRecorderTest LABELS Integration)
 add_qgc_test(RecordingPlanTest LABELS Unit)
 add_qgc_test(StreamSupervisorTest LABELS Unit)
