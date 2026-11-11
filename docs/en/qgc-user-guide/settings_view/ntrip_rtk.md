@@ -5,7 +5,8 @@ Configure where RTK corrections come from and how they reach vehicles: the built
 ## Corrections Status
 
 Shows the correction stream currently sent to vehicles and its data rate, whether it comes from NTRIP, the local base station, or UDP.
-**Message Types** lists the RTCM message types of that stream and how many messages of each have arrived. The counts start again when vehicles receive another stream, or when the stream resumes after it stopped for more than 5 seconds.
+**Message Types** lists the RTCM message types of that stream and how many messages of each have arrived, such as `1077 × 120, every 1 s`. The counts start again when vehicles receive another stream, or when the stream resumes after it stopped for more than 5 seconds.
+Once a second message of a type has arrived, its entry also says how often the type arrives: in whole seconds (`every 10 s`), or in messages per second (`5 Hz`) from two a second. It is an average over the last few messages, and it disappears when the type stops arriving while the stream goes on.
 **Base position** shows the latitude and longitude of the stream's base station once the stream has sent them (RTCM message 1005 or 1006), and **Base distance from GCS** how far the base station is from the [ground station position](gnss_receiver.md#gcs_position) when that is known. Both disappear when vehicles receive another stream or the stream stops for more than 5 seconds.
 The toolbar GNSS indicator's drop-down shows the distance without the coordinates.
 The toolbar GNSS indicator also offers **Connect** once an NTRIP server is configured.

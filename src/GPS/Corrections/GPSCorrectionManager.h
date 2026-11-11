@@ -136,8 +136,8 @@ public:
     /// Why the enabled UDP output does not forward; empty while it forwards or is disabled.
     QString udpOutputError() const { return _udpOutputError; }
 
-    /// The selected stream's frames per RTCM message ID. They start again when another stream is selected, and are
-    /// empty while none is.
+    /// The selected stream's frames per RTCM message ID, and how often each arrives. They start again when another
+    /// stream is selected, and are empty while none is.
     RTCMMessageCountModel* messageCounts() { return &_messageCounts; }
 
     /// Where the selected stream's base station is, as its RTCM message 1005 or 1006 says, with the ellipsoid height
@@ -163,8 +163,8 @@ private:
                  qint64 receivedAtMs);
     /// Forwards @a data to the enabled UDP output and publishes whether it was sent; a repeated outcome is silent.
     void _forwardToUdpOutput(const QByteArray& data);
-    /// Records what the frame @a data tells about the selected stream @a stream.
-    void _recordSelected(const GPSCorrectionStream& stream, const QByteArray& data);
+    /// Records what the frame @a data, received at @a receivedAtMs, tells about the selected stream @a stream.
+    void _recordSelected(const GPSCorrectionStream& stream, const QByteArray& data, qint64 receivedAtMs);
     /// Forgets what the selected stream's frames told once it is no longer the selected one.
     void _forgetSelected();
     void _setBasePosition(const QGeoCoordinate& position);
