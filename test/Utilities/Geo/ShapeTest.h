@@ -26,6 +26,7 @@ private slots:
     void _testVertexFiltering();
     void _testKMLVertexFiltering();
     void _testKMLAltitudeParsing();
+    void _testKMLUnparseableAltitude();
     void _testKMLCoordinateValidation();
     void _testSHPCoordinateValidation_data();
     void _testSHPCoordinateValidation();

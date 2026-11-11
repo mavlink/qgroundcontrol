@@ -79,7 +79,11 @@ bool KMLHelper::_parseCoordinateString(const QString &coordinatesString, QList<Q
         }
         double alt = 0.0;
         if (rgValueStrings.size() >= 3) {
-            alt = rgValueStrings[2].toDouble();
+            bool altOk = false;
+            alt = rgValueStrings[2].toDouble(&altOk);
+            if (!altOk) {
+                qCWarning(KMLHelperLog) << "Failed to parse altitude, using" << alt << "in:" << coordinateString;
+            }
         }
         coords.append(QGeoCoordinate(lat, lon, alt));
     }

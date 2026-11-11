@@ -855,6 +855,25 @@ void ShapeTest::_testKMLAltitudeParsing()
     QCOMPARE(coords[0].longitude(), -122.0);
 }
 
+void ShapeTest::_testKMLUnparseableAltitude()
+{
+    QTemporaryDir tempDir;
+    const QString kmlFile =
+        _writeKmlFile(tempDir.path(), "altitude.kml",
+                      kmlShapeDocument(ShapeType::Polyline, {"8,47,10 8,47.001,high 8.001,47.001, 8.002,47.001,30"}));
+
+    // Unlike a latitude or longitude that is not a number, the vertex stays, with the altitude of a vertex that
+    // states none.
+    expectLogMessage("Utilities.KMLHelper", QtWarningMsg, QRegularExpression("altitude.*\"8,47\\.001,high\""));
+    expectLogMessage("Utilities.KMLHelper", QtWarningMsg, QRegularExpression("altitude.*\"8\\.001,47\\.001,\""));
+    QString errorString;
+    QList<QList<QGeoCoordinate>> loaded;
+    QVERIFY2(loadShapes(kmlFile, ShapeType::Polyline, loaded, errorString, 0), qPrintable(errorString));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QCOMPARE(coordinateTexts(loaded), QStringList{"8,47,10 8,47.001,0 8.001,47.001,0 8.002,47.001,30"});
+}
+
 void ShapeTest::_testKMLCoordinateValidation()
 {
     QTemporaryDir tempDir;
