@@ -429,6 +429,8 @@ void GPSCorrectionManagerTest::_udpOutputSkipsHostTargets_data()
     QTest::newRow("unspecified-ipv6") << QStringLiteral("::");
     QTest::newRow("multicast-ipv4") << QStringLiteral("239.255.0.1");
     QTest::newRow("multicast-ipv6") << QStringLiteral("ff02::1");
+    // A numeric zone ID looks like a place marker of the error message.
+    QTest::newRow("zoned-loopback") << QStringLiteral("::1%1");
 }
 
 void GPSCorrectionManagerTest::_udpOutputSkipsHostTargets()
@@ -449,7 +451,8 @@ void GPSCorrectionManagerTest::_udpOutputSkipsHostTargets()
     configureUdpOutput(saved, settings, target, port);
     verifyExpectedLogMessage();
     QVERIFY(!udpForwarding(corrections)->isEnabled());
-    QVERIFY(!corrections.udpOutputError().isEmpty());
+    const QString error = corrections.udpOutputError();
+    QVERIFY2(error.contains(target) && error.contains(QString::number(port)), qPrintable(error));
 }
 
 void GPSCorrectionManagerTest::_udpOutputEndpointChanges_data()

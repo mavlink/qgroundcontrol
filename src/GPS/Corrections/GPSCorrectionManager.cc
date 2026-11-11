@@ -123,10 +123,10 @@ bool GPSCorrectionManager::_applyUdpOutput()
             reachesThisHost(QHostAddress(address))) {
             qCWarning(GPSCorrectionManagerLog)
                 << "Not forwarding corrections to this host's own UDP input port" << output.port;
+            // A second arg() pass would take an IPv6 zone such as "%1" in the address for a place marker.
             //: %1 is an IP address, %2 a UDP port
             error = tr("Not forwarding to %1 port %2: this computer's UDP input receives on that port.")
-                        .arg(address)
-                        .arg(output.port);
+                        .arg(address, QString::number(output.port));
         } else if (!_udpOutput.configure(address, output.port)) {
             error = tr("Enter an IP address and a port for UDP output.");
         }
