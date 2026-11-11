@@ -65,7 +65,7 @@ void QGCTileCacheDatabaseTest::_testInitWithValidPath()
 void QGCTileCacheDatabaseTest::_testInitWithEmptyPath()
 {
     // Expected: critical about missing cache directory
-    expectLogMessage("QtLocationPlugin.QGCTileCacheDatabase", QtCriticalMsg,
+    expectLogMessage("MapTiles.QGCTileCacheDatabase", QtCriticalMsg,
                      QRegularExpression("Could not find suitable cache directory"));
 
     const QString emptyPath;
@@ -531,7 +531,7 @@ void QGCTileCacheDatabaseTest::_testOperationsAfterDisconnect()
     auto db = _createInitializedDB(tempDir);
     db->disconnectDB();
 
-    const char* categoryPattern = "QtLocationPlugin.QGCTileCacheDatabase";
+    const char* categoryPattern = "MapTiles.QGCTileCacheDatabase";
     const QRegularExpression disconnectedPattern(QStringLiteral("Database not connected"));
 
     expectLogMessage(categoryPattern, QtWarningMsg, disconnectedPattern);
@@ -854,9 +854,9 @@ void QGCTileCacheDatabaseTest::_testDeleteDefaultSetInvalidatesCache()
 
     // After deleting default set, saveTile with kInvalidTileSet should fail gracefully
     // (no default set to link to), not crash or use stale ID
-    expectLogMessage("QtLocationPlugin.QGCTileCacheDatabase", QtWarningMsg,
+    expectLogMessage("MapTiles.QGCTileCacheDatabase", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Default tile set not found in database")));
-    expectLogMessage("QtLocationPlugin.QGCTileCacheDatabase", QtWarningMsg,
+    expectLogMessage("MapTiles.QGCTileCacheDatabase", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Cannot save tile: no valid tile set")));
     QVERIFY(!db->saveTile(QStringLiteral("orphan"), QStringLiteral("png"), QByteArray(10, 'O'), kFixedProviderType,
                           QGCTileCacheDatabase::kInvalidTileSet));
@@ -929,7 +929,7 @@ void QGCTileCacheDatabaseTest::_testSchemaVersionResetsLegacyDB()
 
     // Open with the versioned code — should detect legacy and reset
     QGCTileCacheDatabase db(path);
-    expectLogMessage("QtLocationPlugin.QGCTileCacheDatabase", QtWarningMsg,
+    expectLogMessage("MapTiles.QGCTileCacheDatabase", QtWarningMsg,
                      QRegularExpression(QStringLiteral(
                          "Legacy database detected \\(no schema version\\)\\. Discarding cached tiles and "
                          "rebuilding\\.")));

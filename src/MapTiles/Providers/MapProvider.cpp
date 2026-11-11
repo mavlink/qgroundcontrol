@@ -6,7 +6,7 @@
 
 #include "QGCTileSet.h"
 
-QGC_LOGGING_CATEGORY(MapProviderLog, "QtLocationPlugin.MapProvider")
+QGC_LOGGING_CATEGORY(MapProviderLog, "MapTiles.MapProvider")
 
 // QtLocation expects MapIds to start at 1 and be sequential.
 int MapProvider::_mapIdIndex = 1;

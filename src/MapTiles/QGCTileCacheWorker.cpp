@@ -14,7 +14,7 @@
 #include "AppMessages.h"
 #endif
 
-QGC_LOGGING_CATEGORY(QGCTileCacheWorkerLog, "QtLocationPlugin.QGCTileCacheWorker")
+QGC_LOGGING_CATEGORY(QGCTileCacheWorkerLog, "MapTiles.QGCTileCacheWorker")
 
 #ifdef QGC_UNITTEST_BUILD
 std::function<QGCCacheTile*(const QString&)> QGCCacheWorker::_unitTestTileGenerator;

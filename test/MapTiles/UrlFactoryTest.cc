@@ -70,7 +70,7 @@ void UrlFactoryTest::_testMapIdFromEmptyType()
 
 void UrlFactoryTest::_testMapIdFromInvalidType()
 {
-    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("type not found:"));
+    expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("type not found:"));
     QCOMPARE(UrlFactory::getQtMapIdFromProviderType(QStringLiteral("Nonexistent")), -1);
     verifyExpectedLogMessage();
 }
@@ -78,7 +78,7 @@ void UrlFactoryTest::_testMapIdFromInvalidType()
 void UrlFactoryTest::_testProviderTypeFromInvalidId()
 {
     QVERIFY(UrlFactory::getProviderTypeFromQtMapId(-1).isEmpty());
-    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("map id not found:"));
+    expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("map id not found:"));
     QVERIFY(UrlFactory::getProviderTypeFromQtMapId(99999).isEmpty());
     verifyExpectedLogMessage();
 }
@@ -105,16 +105,14 @@ void UrlFactoryTest::_testProviderTypeFromHashRoundtrip()
 
 void UrlFactoryTest::_testHashFromInvalidType()
 {
-    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg,
-                     QRegularExpression("provider not found for type:"));
+    expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("provider not found for type:"));
     QCOMPARE(UrlFactory::hashFromProviderType(QString()), -1);
     verifyExpectedLogMessage();
 }
 
 void UrlFactoryTest::_testProviderTypeFromInvalidHash()
 {
-    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg,
-                     QRegularExpression("provider not found from hash:"));
+    expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("provider not found from hash:"));
     QVERIFY(UrlFactory::providerTypeFromHash(0).isEmpty());
     verifyExpectedLogMessage();
 }
@@ -140,8 +138,7 @@ void UrlFactoryTest::_testTileHashToTypeRoundtrip()
 
 void UrlFactoryTest::_testTileHashToTypeInvalid()
 {
-    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg,
-                     QRegularExpression("provider not found from hash:"));
+    expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("provider not found from hash:"));
     QVERIFY(UrlFactory::tileHashToType(QStringLiteral("garbage")).isEmpty());
     verifyExpectedLogMessage();
 }
@@ -209,7 +206,7 @@ void UrlFactoryTest::_testAverageSizeForKnownProviders()
 
 void UrlFactoryTest::_testAverageSizeForInvalidType()
 {
-    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("type not found:"));
+    expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("type not found:"));
     QCOMPARE(UrlFactory::averageSizeForType(QStringLiteral("Nonexistent")), QGC_AVERAGE_TILE_SIZE);
     verifyExpectedLogMessage();
 }
@@ -412,7 +409,7 @@ void UrlFactoryTest::_testGetMapProviderInvalid()
 {
     QVERIFY(UrlFactory::getMapProviderFromQtMapId(-1) == nullptr);
     QVERIFY(UrlFactory::getMapProviderFromProviderType(QString()) == nullptr);
-    expectLogMessage("QtLocationPlugin.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("type not found:"));
+    expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("type not found:"));
     QVERIFY(UrlFactory::getMapProviderFromProviderType(QStringLiteral("Nonexistent")) == nullptr);
     verifyExpectedLogMessage();
 }

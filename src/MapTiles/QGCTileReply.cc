@@ -15,7 +15,7 @@
 #include "QGCMapUrlEngine.h"
 #include "QGCNetworkHelper.h"
 
-QGC_LOGGING_CATEGORY(QGCTileReplyLog, "QtLocationPlugin.QGCTileReply")
+QGC_LOGGING_CATEGORY(QGCTileReplyLog, "MapTiles.QGCTileReply")
 
 namespace {
 

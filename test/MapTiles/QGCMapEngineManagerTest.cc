@@ -166,7 +166,7 @@ void QGCMapEngineManagerTest::_testTerrainSet()
 
     const QString name = QStringLiteral("terrain set test: %1").arg(QString::fromLatin1(QTest::currentDataTag()));
     if (!fetchElevation) {
-        expectLogMessage("QtLocationPlugin.QGCMapEngineManager", QtWarningMsg,
+        expectLogMessage("MapTiles.QGCMapEngineManager", QtWarningMsg,
                          QRegularExpression(QStringLiteral("No Tiles to save")));
     }
     sets.manager.startDownload(name, mapType);

@@ -19,7 +19,7 @@
 #include "QGCTile.h"
 #include "QGCTileSet.h"
 
-QGC_LOGGING_CATEGORY(QGCTileCacheDatabaseLog, "QtLocationPlugin.QGCTileCacheDatabase")
+QGC_LOGGING_CATEGORY(QGCTileCacheDatabaseLog, "MapTiles.QGCTileCacheDatabase")
 
 static std::atomic<quint64> s_connectionCounter{0};
 

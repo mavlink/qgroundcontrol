@@ -337,7 +337,7 @@ void QGCCachedTileSetTest::_testDownload()
     (void) connect(set.get(), &QGCCachedTileSet::downloadStatusChanged, this,
                    [&shownStatus, &set] { shownStatus = set->downloadStatus(); });
     if (!expectedWarning.isEmpty()) {
-        expectLogMessage("QtLocationPlugin.QGCCachedTileSet", QtWarningMsg, QRegularExpression(expectedWarning));
+        expectLogMessage("MapTiles.QGCCachedTileSet", QtWarningMsg, QRegularExpression(expectedWarning));
     }
     set->createDownloadTask();
     QVERIFY(set->downloading());

@@ -26,7 +26,7 @@
 
 using namespace Qt::StringLiterals;
 
-QGC_LOGGING_CATEGORY(QGCMapEngineManagerLog, "QtLocationPlugin.QGCMapEngineManager")
+QGC_LOGGING_CATEGORY(QGCMapEngineManagerLog, "MapTiles.QGCMapEngineManager")
 
 Q_APPLICATION_STATIC(QGCMapEngineManager, _mapEngineManager);
 

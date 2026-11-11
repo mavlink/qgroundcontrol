@@ -12,7 +12,7 @@
 #include "QGCNetworkHelper.h"
 #include "QGCTileReply.h"
 
-QGC_LOGGING_CATEGORY(QGCCachedTileSetLog, "QtLocationPlugin.QGCCachedTileSet")
+QGC_LOGGING_CATEGORY(QGCCachedTileSetLog, "MapTiles.QGCCachedTileSet")
 
 namespace {
 

@@ -13,7 +13,7 @@
 #include "QGCTileSet.h"
 #include "TianDiTuProvider.h"
 
-QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "QtLocationPlugin.QGCMapUrlEngine")
+QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "MapTiles.QGCMapUrlEngine")
 
 const QList<SharedMapProvider> UrlFactory::_providers = {
 #ifndef QGC_NO_GOOGLE_MAPS

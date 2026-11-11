@@ -18,7 +18,7 @@
 #include "QGCTileSet.h"
 #include "SettingsManager.h"
 
-QGC_LOGGING_CATEGORY(QGCMapEngineLog, "QtLocationPlugin.QGCMapEngine")
+QGC_LOGGING_CATEGORY(QGCMapEngineLog, "MapTiles.QGCMapEngine")
 
 Q_APPLICATION_STATIC(QGCMapEngine, _mapEngine);
 
