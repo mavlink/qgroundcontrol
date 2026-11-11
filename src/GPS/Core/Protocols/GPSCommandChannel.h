@@ -44,9 +44,7 @@ struct GPSBaudDetection
     bool found = false;
     /// The rate that was found, or the last rate attempted.
     unsigned baud = 0;
-    /// The link could not be set to the last rate attempted.
-    bool linkFailed = false;
-    /// The rates the link ran at while probing, in order.
+    /// The rates the link ran at while probing, in order: without a rate the link could not be set to.
     std::vector<unsigned> probed{};
 };
 

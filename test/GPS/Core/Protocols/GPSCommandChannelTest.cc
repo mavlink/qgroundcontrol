@@ -37,10 +37,10 @@ GPSCommandOutcome lineReply(std::string_view reply)
 
 QString note(const GPSBaudDetection& detection)
 {
-    return QStringLiteral("baud found=%1 rate=%2 linkFailed=%3")
+    return QStringLiteral("baud found=%1 rate=%2 probed=[%3]")
         .arg(int(detection.found))
         .arg(detection.baud)
-        .arg(int(detection.linkFailed));
+        .arg(gpsRateList(detection.probed));
 }
 
 QString note(const GPSCommandSequence::Result& result)
@@ -450,8 +450,7 @@ QList<Scenario> scenarios()
                       .notes = {command("A", Acknowledged, 1000000, 3), command("B", TransportError, 1001000, 0),
                                 command("C", TransportError, 0, 0), QStringLiteral("0"), QStringLiteral("-1"),
                                 QStringLiteral("0"), QStringLiteral("sequence step=0 label=S outcome=7"),
-                                QStringLiteral("baud found=0 rate=9600 linkFailed=1"),
-                                command("W", TransportError, 0, 0)},
+                                QStringLiteral("baud found=0 rate=9600 probed=[]"), command("W", TransportError, 0, 0)},
                       .evidence = {command("A", Acknowledged, 1000000, 3), command("B", TransportError, 1001000, 0)}}});
 
     // Attempts and optional failures in a sequence; the required failure names its step.
@@ -487,7 +486,8 @@ QList<Scenario> scenarios()
                                    command("S4", Rejected, 1063000, 4)}}});
 
     // Baud detection through a probing command, a fixed rate, and a rate the link rejects: skipped among
-    // candidates, a link failure when it was the one requested.
+    // candidates, a link failure when it was the one requested. The rates probed tell a receiver that did not answer
+    // from a link that could not be set, as they do for GPSCommandChannel::failNoAnswer().
     result.append(
         {.name = "baud",
          .setup =
@@ -519,10 +519,10 @@ QList<Scenario> scenarios()
                       .reads = 5,
                       .writes = {"PING\r\n", "PING\r\n", "PING\r\n", "PING\r\n", "PING\r\n"},
                       .bauds = {9600, 38400, 115200, 38400, 57600, 115200, 57600},
-                      .notes = {QStringLiteral("baud found=1 rate=115200 linkFailed=0"),
-                                QStringLiteral("baud found=0 rate=38400 linkFailed=0"),
-                                QStringLiteral("baud found=1 rate=115200 linkFailed=0"),
-                                QStringLiteral("baud found=0 rate=57600 linkFailed=1")},
+                      .notes = {QStringLiteral("baud found=1 rate=115200 probed=[9600, 38400, 115200]"),
+                                QStringLiteral("baud found=0 rate=38400 probed=[38400]"),
+                                QStringLiteral("baud found=1 rate=115200 probed=[115200]"),
+                                QStringLiteral("baud found=0 rate=57600 probed=[]")},
                       .evidence = {command("PING", TimedOut, 1000000, 6), command("PING", TimedOut, 1050000, 6),
                                    command("PING", Acknowledged, 1100000, 6), command("PING", TimedOut, 1101000, 6),
                                    command("PING", Acknowledged, 1151000, 6)}}});

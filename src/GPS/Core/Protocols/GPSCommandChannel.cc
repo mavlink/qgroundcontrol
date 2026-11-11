@@ -439,7 +439,6 @@ GPSBaudDetection GPSCommandChannel::detectBaud(std::span<const unsigned> candida
             continue;
         }
         if (status != GPSBaudStatus::Configured) {
-            result.linkFailed = true;
             return result;
         }
         result.probed.push_back(candidate);
