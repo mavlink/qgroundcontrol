@@ -71,8 +71,37 @@ bool validXorChecksum(std::string_view line)
            NMEA::hexNumber(line.substr(star + 1)) == NMEA::checksum(line.substr(0, star));
 }
 
-/// Whether the MODE log's @a mode is the role @a reply reads back.
-bool modeMatches(std::string_view mode, Plan::Reply reply)
+bool samePosition(const GPSProtocolMath::Ecef& left, const GPSProtocolMath::Ecef& right)
+{
+    // ECEF command/readback values have four decimal places; this is not survey accuracy.
+    return GPSProtocolMath::distance(left, right) < 0.02;
+}
+
+/// The coordinates of a MODE log's "MODE BASE <x> <y> <z>".
+std::optional<GPSProtocolMath::Ecef> fixedModePosition(std::string_view mode)
+{
+    constexpr std::string_view PREFIX = "MODE BASE ";
+    if (!mode.starts_with(PREFIX)) {
+        return std::nullopt;
+    }
+    mode.remove_prefix(PREFIX.size());
+    std::array<double, 3> coordinates{};
+    for (size_t index = 0; index < coordinates.size(); ++index) {
+        const bool last = index + 1 == coordinates.size();
+        const auto space = mode.find(' ');
+        const auto coordinate = NMEA::number<double>(mode.substr(0, space));
+        if (!coordinate || last != (space == std::string_view::npos)) {
+            return std::nullopt;
+        }
+        coordinates[index] = *coordinate;
+        mode.remove_prefix(last ? mode.size() : space + 1);
+    }
+    return GPSProtocolMath::Ecef{coordinates[0], coordinates[1], coordinates[2]};
+}
+
+/// Whether the MODE log's @a mode is the role @a reply reads back. A fixed base reports its role alone or, as a UM980
+/// does, followed by the coordinates it was given, which must then be @a fixed.
+bool modeMatches(std::string_view mode, Plan::Reply reply, const GPSProtocolMath::Ecef& fixed)
 {
     const auto starts = [mode](std::string_view name) {
         return mode == name || (mode.starts_with(name) && mode.size() > name.size() && mode[name.size()] == ' ');
@@ -82,20 +111,19 @@ bool modeMatches(std::string_view mode, Plan::Reply reply)
             return starts("MODE ROVER");
         case Plan::Reply::AveragingMode:
             return starts("MODE BASE TIME");
-        case Plan::Reply::FixedMode:
-            return mode == "MODE BASE";
+        case Plan::Reply::FixedMode: {
+            if (mode == "MODE BASE") {
+                return true;
+            }
+            const auto position = fixedModePosition(mode);
+            return position && samePosition(*position, fixed);
+        }
         case Plan::Reply::Acknowledgement:
         case Plan::Reply::Version:
         case Plan::Reply::FixedPosition:
             return false;
     }
     return false;
-}
-
-bool samePosition(const GPSProtocolMath::Ecef& left, const GPSProtocolMath::Ecef& right)
-{
-    // ECEF command/readback values have four decimal places; this is not survey accuracy.
-    return GPSProtocolMath::distance(left, right) < 0.02;
 }
 
 /// Configures a UM980/UM982 as an RTK base: finds it at one of Plan::BAUD_RATES, or at the rate configure() gets when
@@ -295,8 +323,9 @@ GPSCommandOutcome Protocol::_match(const Plan::Command& command, std::string_vie
             if (!line.starts_with("#MODE,")) {
                 return GPSCommandOutcome::Pending;
             }
-            return modeMatches(_reportedMode.toStdString(), command.reply) ? GPSCommandOutcome::ReadbackVerified
-                                                                           : GPSCommandOutcome::Rejected;
+            return modeMatches(_reportedMode.toStdString(), command.reply, _fixedECEF)
+                       ? GPSCommandOutcome::ReadbackVerified
+                       : GPSCommandOutcome::Rejected;
         case Plan::Reply::FixedPosition:
             if (!line.starts_with("#BESTNAVXYZA,") || !_reportedFixed) {
                 return GPSCommandOutcome::Pending;
@@ -415,7 +444,7 @@ bool Protocol::_handleMode(std::string_view body, GPSDecodeContext& context)
 {
     const auto mode = body.substr(0, body.find(','));
     _reportedMode = QByteArrayView(mode).toByteArray();
-    if (_ready && !modeMatches(mode, _expectedMode)) {
+    if (_ready && !modeMatches(mode, _expectedMode, _fixedECEF)) {
         _invalidateBase(context, QStringLiteral("Unicore receiver left the configured base mode"));
     }
     return true;

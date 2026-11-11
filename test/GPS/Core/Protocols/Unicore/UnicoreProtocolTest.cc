@@ -189,6 +189,54 @@ void fixedBaseAndTransition(GPSTestClock& clock)
     QCOMPARE(receiver.log.correctionsWhileValid, 1);
 }
 
+void fixedModeReadback(GPSTestClock& clock)
+{
+    // The MODE log SparkFun's UM980 library quotes for a fixed base, and the position its example sets, which is these
+    // coordinates within a millimetre.
+    constexpr std::string_view UM980_FIXED_MODE =
+        "#MODE,97,GPS,FINE,2283,499142000,0,0,18,22;MODE BASE -1280206.5680 -4716804.4030 4086665.4840,*60\r\n";
+    GPSConfig config{};
+    config.base.mode = GPSBaseStationConfig::Fixed{
+        .position = {.latitudeDegrees = 40.09029479, .longitudeDegrees = -105.18505761, .altitudeMeters = 1560.089}};
+
+    // The receiver repeats the commanded coordinates after the role, or reports the role alone.
+    for (const bool coordinates : {true, false}) {
+        clock.reset();
+        Receiver receiver(clock);
+        if (!coordinates) {
+            receiver.model.fixedModeLog = "MODE BASE";
+        }
+        GPSProtocolRuntime driver = receiver.runtime(Unicore::FAMILY);
+        unsigned rate = 115200;
+        QVERIFY(driver.configure(config, rate));
+        QVERIFY(receiver.sent("MODE BASE -1280206.56"));
+        consume(driver, UM980_FIXED_MODE);
+        QVERIFY(driver.receiverReady());
+        driver.consume(correction());
+        QCOMPARE(receiver.log.correctionsWhileValid, 1);
+
+        consume(driver, native("MODE", coordinates ? "MODE BASE -1280206.5680 -4716804.4030 4086675.4840,"
+                                                   : "MODE BASE TIME 60,"));
+        QVERIFY(!driver.receiverReady());
+        QCOMPARE(driver.errorDetail(), QStringLiteral("Unicore receiver left the configured base mode"));
+        driver.consume(correction());
+        QCOMPARE(receiver.log.correctionsWhileValid, 1);
+    }
+
+    // Another position or averaging is not the base that was commanded.
+    for (const char* mode : {"MODE BASE -1280206.5680 -4716804.4030 4086675.4840", "MODE BASE TIME 60"}) {
+        clock.reset();
+        Receiver receiver(clock);
+        receiver.model.fixedModeLog = mode;
+        GPSProtocolRuntime driver = receiver.runtime(Unicore::FAMILY);
+        unsigned rate = 115200;
+        QVERIFY(!driver.configure(config, rate));
+        QCOMPARE(receiver.commands().back(), "MODE\r\n");
+        QCOMPARE(receiver.log.commands.back().outcome, GPSCommandOutcome::Rejected);
+        QVERIFY(!receiver.sent("RTCM"));
+    }
+}
+
 void averagingEvidenceAndRestart(GPSTestClock& clock)
 {
     clock.reset();
@@ -435,6 +483,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"identity-and-role", identityAndRole},
     {"reject-before-mutation", rejectBeforeMutation},
     {"fixed-base-and-transition", fixedBaseAndTransition},
+    {"fixed-mode-readback", fixedModeReadback},
     {"averaging-evidence-and-restart", averagingEvidenceAndRestart},
     {"readback-failures", readbackFailures},
     {"corrupt-status-and-expiry", corruptStatusAndExpiry},
