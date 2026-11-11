@@ -8,6 +8,8 @@
 #include <QtCore/QPointer>
 #include <QtCore/QSize>
 #include <QtCore/QString>
+#include <QtMultimedia/QMediaFormat>
+#include <QtMultimedia/QMediaRecorder>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "VideoScreenshot.h"
@@ -82,6 +84,17 @@ public:
         friend bool operator==(const DisplayConfig&, const DisplayConfig&) = default;
     };
 
+    /// How a receiver that encodes its recordings anew (encodesRecordings()) encodes them, as QtVideoRecorder::start()
+    /// takes it: from VideoSettings' uvcRecordingCodec and uvcRecordingQuality.
+    struct RecordingEncoding
+    {
+        /// Tried first; Unspecified for the first codec that encodes.
+        QMediaFormat::VideoCodec codec = QMediaFormat::VideoCodec::Unspecified;
+        QMediaRecorder::Quality quality = QMediaRecorder::HighQuality;
+
+        friend bool operator==(const RecordingEncoding&, const RecordingEncoding&) = default;
+    };
+
     explicit VideoReceiver(QObject* parent = nullptr);
     ~VideoReceiver() override;
 
@@ -128,6 +141,15 @@ public:
     /// Stores @p config for the display sink restart() builds next.
     void setDisplayConfig(const DisplayConfig& config) { _displayConfig = config; }
 
+    /// True for a receiver that encodes its recordings anew, as recordingEncoding() says: a USB camera, or Qt
+    /// Multimedia's player. False for one that records the stream as it arrives.
+    virtual bool encodesRecordings() const { return false; }
+
+    const RecordingEncoding& recordingEncoding() const { return _recordingEncoding; }
+
+    /// Stores @p encoding for the recordings that start from now on; one in progress keeps its own.
+    void setRecordingEncoding(const RecordingEncoding& encoding) { _recordingEncoding = encoding; }
+
     /// Streams while true and the URI is set. False stops the stream, any pending reconnect and any recording.
     void setActive(bool active);
     /// setActive(false) for a receiver that outlives its use, before the application goes away: once it has finished
@@ -147,7 +169,8 @@ public:
     /// Records to @p file until stopRecording() or setActive(false). Accepted only while active (otherwise
     /// errorOccurred()); the file opens once streaming, at the next keyframe for a receiver that records the stream as
     /// it arrives. Such a receiver continues the recording after a reconnect, and after each hour, into
-    /// "<base>_part<N>.<ext>", N counting from 2; one that encodes the frames anew keeps to the same file.
+    /// "<base>_part<N>.<ext>", N counting from 2; one that encodes the frames anew, as recordingEncoding() says, keeps
+    /// to the same file.
     void startRecording(const QString& file, FileFormat format);
     void stopRecording();
 
@@ -202,6 +225,7 @@ private:
     QString _name;
     Config _config;
     DisplayConfig _displayConfig;
+    RecordingEncoding _recordingEncoding;
     bool _active = false;
     QPointer<QQuickItem> _videoOutput;
     QMetaObject::Connection _videoOutputDestroyed;

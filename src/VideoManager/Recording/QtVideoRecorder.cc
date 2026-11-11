@@ -194,6 +194,10 @@ void QtVideoRecorder::_recordNextFormat()
     _recordingError.clear();
     qCDebug(QtVideoRecorderLog) << "record" << _recordingFile << format.fileFormat() << format.videoCodec();
     _recorder->setMediaFormat(format);
+    // Qt defect, seen in Qt 6.12.0 on Android: the recorder opens the encoder with a time base of one frame, then
+    // stamps the frames in the muxer's (1/15360 s in MP4). MediaCodec takes them for seconds apart and spends several
+    // times the bit rate Qt worked out from the quality: 45 Mbit/s rather than 6 for 1080p at High on a Snapdragon
+    // 778G. No setting of the recorder corrects the times; a lower quality still makes a smaller file.
     _recorder->setQuality(_quality);
     // Tagged with the time it starts and the application, as GStreamer's recordings are (RecordingBranch).
     QMediaMetaData metaData;

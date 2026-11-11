@@ -50,7 +50,8 @@ Connection settings vary by source type:
 
 - **Video backend** — plays network streams with **GStreamer** (default) or **Qt Multimedia**'s player (FFmpeg).
   Qt Multimedia plays RTSP, MPEG-TS over UDP or TCP, and H.264 or H.265 RTP over UDP with payload type 96. It records
-  a stream by encoding the video on display anew, as it does a USB camera, so only while the video is shown; it doesn't
+  a stream by encoding the video on display anew, as it does a USB camera, so only while the video is shown, and with
+  the [Recording Codec and Recording Quality](#local-video-storage) settings; it doesn't
   measure a stream's bitrate or packet loss, and the decoder, CPU video path and RTP jitter latency settings don't
   apply to it, so they are hidden. Changing it restarts the video stream. Builds without GStreamer always
   use Qt Multimedia and don't show the setting. When GStreamer fails to start, QGroundControl says so in a message and
@@ -83,12 +84,15 @@ Connection settings vary by source type:
 ## Local Video Storage
 
 - **Record File Format** — mp4 / mov / mkv
-- **USB Camera Recording Codec** (USB cameras only) — the codec a USB camera recording tries first, from the ones Qt
-  can encode on this computer. **Auto** records with the first of H.264, H.265, AV1, VP9, MPEG-4 Part 2 and MPEG-2 that
-  encodes, which also follow a chosen codec the encoder turns down. A codec the recording format's container can't hold
-  goes into another container.
-- **USB Camera Recording Quality** (USB cameras only) — Very Low / Low / Normal / High / Very High (default: High). A
-  lower quality makes a smaller file.
+- **Recording Codec** (USB cameras, and streams with the Qt Multimedia [video backend](#settings)) — the codec a
+  recording that QGroundControl encodes tries first, from the ones Qt can encode on this computer. **Auto** records with
+  the first of H.264, H.265, AV1, VP9, MPEG-4 Part 2 and MPEG-2 that encodes, which also follow a chosen codec the
+  encoder turns down. A codec the recording format's container can't hold goes into another container. GStreamer saves
+  a stream as it arrives, without encoding it again, so this setting and the next don't apply to its recordings and are
+  hidden.
+- **Recording Quality** (the same recordings) — Very Low / Low / Normal / High / Very High (default: High). A lower
+  quality makes a smaller file. On Android these recordings are several times larger than the quality asks for, a defect
+  in Qt 6.12: about 340 MB a minute for 1080p at High and 45 MB at Very Low on the tablet tested.
 - **Auto-Delete Saved Recordings** — automatically delete the oldest recordings when the storage limit is reached. The
   limit is checked when a recording starts and every minute while one runs. Files being recorded are kept, so a long
   recording can end up with only its latest [parts](../fly_view/video.md#record-video-stream-on-gcs).

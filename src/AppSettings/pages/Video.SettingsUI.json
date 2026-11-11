@@ -9,7 +9,8 @@
         "isStreamSource": "QGroundControl.videoManager.isStreamSource",
         "tilesShown": "QGroundControl.settingsManager.videoSettings.maxVideoTiles.rawValue > 0",
         "rtpLatencyVisible": "!QGroundControl.settingsManager.videoSettings.lowLatencyMode.rawValue",
-        "gstreamer": "QGroundControl.settingsManager.videoSettings.videoBackend.rawValue === 0"
+        "gstreamer": "QGroundControl.settingsManager.videoSettings.videoBackend.rawValue === 0",
+        "recordingEncoded": "QGroundControl.videoManager.isUvc || (isStreamSource && QGroundControl.videoManager.primaryStream.encodesRecordings)"
     },
     "groups": [
         {
@@ -138,7 +139,7 @@
         },
         {
             "heading": "Local Video Storage",
-            "keywords": ["record", "recording format", "mp4", "mkv", "storage limit", "video file", "codec", "quality"],
+            "keywords": ["record", "recording format", "mp4", "mkv", "storage limit", "video file", "codec", "encoder", "quality"],
             "showWhen": "!sourceDisabled",
             "controls": [
                 {
@@ -147,12 +148,12 @@
                 {
                     "control": "component",
                     "component": "UVCRecordingCodecComboBox",
-                    "showWhen": "QGroundControl.videoManager.isUvc"
+                    "showWhen": "recordingEncoded"
                 },
                 {
                     "setting": "videoSettings.uvcRecordingQuality",
                     "control": "combobox",
-                    "showWhen": "QGroundControl.videoManager.isUvc"
+                    "showWhen": "recordingEncoded"
                 },
                 {
                     "setting": "videoSettings.enableStorageLimit"

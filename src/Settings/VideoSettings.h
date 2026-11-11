@@ -55,6 +55,8 @@ public:
     DEFINE_SETTINGFACT(uvcZoom)
     DEFINE_SETTINGFACT(uvcExposureCompensation)
     DEFINE_SETTINGFACT(uvcFocusMode)
+    /// For every recording Qt encodes, a USB camera's or a Qt Multimedia stream's, despite their names, which are the
+    /// ones the settings are stored under.
     DEFINE_SETTINGFACT(uvcRecordingCodec)
     DEFINE_SETTINGFACT(uvcRecordingQuality)
 

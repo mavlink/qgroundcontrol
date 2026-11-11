@@ -173,12 +173,6 @@ void UVCCameraController::onVideoOutputChanged()
     _connectVideoOutput();
 }
 
-void UVCCameraController::setRecordingEncoding(QMediaFormat::VideoCodec codec, QMediaRecorder::Quality quality)
-{
-    _recordingCodec = codec;
-    _recordingQuality = quality;
-}
-
 void UVCCameraController::onStartRecording(const QString& file, FileFormat format)
 {
     if (_recorder->active()) {
@@ -190,7 +184,7 @@ void UVCCameraController::onStartRecording(const QString& file, FileFormat forma
         emit recordingFinished(file, tr("The USB camera isn't running"));
         return;
     }
-    _recorder->start(file, QtVideoRecorder::container(format), _recordingCodec, _recordingQuality);
+    _recorder->start(file, QtVideoRecorder::container(format), recordingEncoding().codec, recordingEncoding().quality);
 }
 
 void UVCCameraController::onStopRecording()

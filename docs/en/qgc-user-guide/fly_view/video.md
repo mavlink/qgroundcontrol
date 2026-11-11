@@ -144,10 +144,11 @@ Recordings carry the time they started and, as their comment, the _QGroundContro
 A USB camera is recorded the same way, with its telemetry subtitles. QGroundControl encodes it with Qt: as H.264
 where the platform's encoder accepts the camera's frames, otherwise with the next codec that does (H.265, AV1, VP9,
 MPEG-4 Part 2 or MPEG-2). On Linux, Qt encodes H.264 only on the GPU (VA-API or NVENC), so without one a USB camera
-recording is MPEG-4 Part 2. **USB Camera Recording Codec** in
-[Application Settings > Video](../settings_view/video.md#local-video-storage) picks a codec to try first. If Qt can't
-write the recording format's container, another container is used and the file is named for it. A recording ends when
-the USB camera, or its format, changes.
+recording is MPEG-4 Part 2. **Recording Codec** in
+[Application Settings > Video](../settings_view/video.md#local-video-storage) picks a codec to try first, and
+**Recording Quality** how large the file gets; both apply to a stream recorded with the Qt Multimedia video backend as
+well. If Qt can't write the recording format's container, another container is used and the file is named for it. A
+recording ends when the USB camera, or its format, changes.
 
 Video stream recording is configured in the [Application Settings > General tab](../settings_view/general.md):
 

@@ -1399,6 +1399,46 @@ void VideoManagerTest::_testUvcControlsReachCamera()
     QCOMPARE(camera->controls(), expected);
 }
 
+void VideoManagerTest::_testRecordingEncodingReachesEverySource()
+{
+    const auto receivers = [this] {
+        QList<VideoReceiver*> receivers;
+        for (const VideoStreamController* source : std::as_const(_videoManager->_sources)) {
+            receivers.append(source->receiver());
+        }
+        return receivers;
+    };
+    // Set first, so that choosing the other backend below is a change.
+    _facts->set(_videoSettings->videoBackend(), int(VideoSettings::VideoBackendGStreamer));
+
+    _facts->set(_videoSettings->uvcRecordingCodec(), QStringLiteral("MPEG2"));
+    _facts->set(_videoSettings->uvcRecordingQuality(), int(QMediaRecorder::LowQuality));
+    const VideoReceiver::RecordingEncoding expected{.codec = QMediaFormat::VideoCodec::MPEG2,
+                                                    .quality = QMediaRecorder::LowQuality};
+    // A tile's source, made after the settings were, among them: it records once it is the primary stream.
+    const auto current = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5601");
+    const auto other = makeStreamInfo(VIDEO_STREAM_TYPE_RTPUDP, "5602");
+    _videoManager->_setAdvertisedStreams({current.get(), nullptr, QStringLiteral("Main")}, nullptr,
+                                         {{other.get(), nullptr, QStringLiteral("Other")}});
+    QCOMPARE(receivers().size(), 4);
+    for (const VideoReceiver* receiver : receivers()) {
+        QVERIFY(receiver);
+        QCOMPARE(receiver->recordingEncoding(), expected);
+    }
+
+    // The receivers another video backend gives the streams get them too.
+    _primary = nullptr;
+    _thermal = nullptr;
+    _facts->set(_videoSettings->videoBackend(), int(VideoSettings::VideoBackendQtMultimedia));
+    QVERIFY(!_videoManager->primaryStream()->receiver());
+    _videoManager->_createVideoReceivers();
+    for (const VideoReceiver* receiver : receivers()) {
+        QVERIFY(receiver);
+        QCOMPARE(receiver->recordingEncoding(), expected);
+    }
+    _videoManager->_setAdvertisedStreams({}, nullptr, {});
+}
+
 void VideoManagerTest::_testStreamStatsReachQml()
 {
     VideoStreamController* const stream = _videoManager->primaryStream();

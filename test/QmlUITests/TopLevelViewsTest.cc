@@ -1,15 +1,18 @@
 #include "TopLevelViewsTest.h"
 
+#include <algorithm>
+
 #include <QtCore/QScopeGuard>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
 
-#include <algorithm>
-
 #include "Fact.h"
+#include "QtMultimediaVideoReceiver.h"
 #include "ScreenToolsController.h"
 #include "SettingsManager.h"
+#include "VideoManager.h"
 #include "VideoSettings.h"
+#include "VideoStreamController.h"
 
 UT_REGISTER_TEST(TopLevelViewsTest, TestLabel::Integration)
 
@@ -120,6 +123,24 @@ static QQuickItem* findVisibleFactControl(QQuickItem* root, const Fact* fact)
     const QVariant savedVideoSource = videoSource->rawValue();
     videoSource->setRawValue(QString::fromLatin1(source));
     return qScopeGuard([videoSource, savedVideoSource] { videoSource->setRawValue(savedVideoSource); });
+}
+
+// A settings page's control by its label, whether it is shown or not
+static QQuickItem* findLabelledControl(QQuickItem* root, const QString& label)
+{
+    if (!root) {
+        return nullptr;
+    }
+    if (root->property("label").toString() == label) {
+        return root;
+    }
+    const auto children = root->childItems();
+    for (auto* child : children) {
+        if (auto* found = findLabelledControl(child, label)) {
+            return found;
+        }
+    }
+    return nullptr;
 }
 
 QQuickItem* TopLevelViewsTest::_clickSettingsButton(const QString& pageName)
@@ -477,4 +498,53 @@ void TopLevelViewsTest::_testDiscoveredCameraReceiverSettingsVisible()
 
     stopUI();
 #endif
+}
+
+void TopLevelViewsTest::_testRecordingEncodingSettingsVisible()
+{
+    // A stream source, which shows the recording settings. Without a URL it plays nothing.
+    const auto restoreVideoSource = setVideoSourceWithRestore(VideoSettings::videoSourceRTSP);
+    VideoStreamController* const stream = VideoManager::instance()->primaryStream();
+    const auto restoreReceiver = qScopeGuard([stream] { stream->setReceiver(nullptr); });
+
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QVERIFY(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewSettings")));
+    if (!_clickSettingsButton(QStringLiteral("Video"))) {
+        return;
+    }
+
+    QQuickItem* const videoPage = findVisibleItem(_rootItem, QStringLiteral("settingsPage_Video"));
+    QVERIFY(videoPage);
+    VideoSettings* const videoSettings = SettingsManager::instance()->videoSettings();
+    QQuickItem* const codec = findLabelledControl(videoPage, videoSettings->uvcRecordingCodec()->label());
+    QQuickItem* const quality = findLabelledControl(videoPage, videoSettings->uvcRecordingQuality()->label());
+    QVERIFY(codec);
+    QVERIFY(quality);
+
+    // Nothing encodes the stream's recording: GStreamer's receiver saves the stream as it arrives.
+    QVERIFY(!stream->encodesRecordings());
+    QVERIFY(!codec->isVisible());
+    QVERIFY(!quality->isVisible());
+
+    // Qt Multimedia's receiver encodes it, as the video backend setting or a GStreamer that failed to start brings.
+    stream->setReceiver(new QtMultimediaVideoReceiver);
+    QTRY_VERIFY(codec->isVisible());
+    QTRY_VERIFY(quality->isVisible());
+
+    // A USB camera that isn't attached leaves nothing to record.
+    setVideoSource("Unplugged USB Camera");
+    QTRY_VERIFY(!codec->isVisible());
+    QTRY_VERIFY(!quality->isVisible());
+
+    setVideoSource(VideoSettings::videoSourceRTSP);
+    QTRY_VERIFY(codec->isVisible());
+    stream->setReceiver(nullptr);
+    QTRY_VERIFY(!codec->isVisible());
+    QTRY_VERIFY(!quality->isVisible());
+
+    stopUI();
 }

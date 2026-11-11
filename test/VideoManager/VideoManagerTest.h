@@ -54,6 +54,7 @@ private slots:
     void _testLinkRegainedReconnectsStreams();
     void _testUvcCameraFormatReachesCamera();
     void _testUvcControlsReachCamera();
+    void _testRecordingEncodingReachesEverySource();
     void _testStreamStatsReachQml();
     void _testIndicatorReportsMeasuredSource();
     void _testSourceStatsShowMeasuredSources();

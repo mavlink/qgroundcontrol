@@ -21,7 +21,8 @@ class QVideoSink;
 /// A network video stream played by Qt Multimedia's QMediaPlayer (FFmpeg): the receiver of builds without GStreamer,
 /// and of VideoSettings::videoBackend's Qt Multimedia choice. Plays RTSP, MPEG-TS over UDP or TCP, and H.264 or H.265
 /// RTP over UDP with payload type 96, which an SDP description tells FFmpeg about. Records by encoding the frames it
-/// displays anew (QtVideoRecorder): only while an output displays the stream, and after a reconnect in the same file.
+/// displays anew (QtVideoRecorder), as recordingEncoding() says: only while an output displays the stream, and after a
+/// reconnect in the same file.
 ///
 /// Streaming once the first frame arrives; decoding while frames reach the output. A stream that errors, ends, or
 /// shows no frame for the config's timeout while displaying (5 s more for the first, while FFmpeg probes the stream)
@@ -53,6 +54,8 @@ public:
     /// TCP, as GStreamer plays it, mpegts:// as udp://, and udp:// (H.264) or udp265:// (H.265) RTP as an SDP
     /// description. Other URLs play as they are; nullopt for an invalid one.
     static std::optional<Source> playerSource(const QString& uri);
+
+    bool encodesRecordings() const override { return true; }
 
 protected:
     void onConfigChanged() override;

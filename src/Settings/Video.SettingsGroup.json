@@ -169,7 +169,7 @@
         {
             "name": "videoBackend",
             "shortDesc": "Plays network video streams with GStreamer, or with Qt Multimedia's player.",
-            "longDesc": "GStreamer plays every stream source and records them. Qt Multimedia plays them with FFmpeg: RTSP, MPEG-TS over UDP or TCP, and H.264 or H.265 RTP over UDP with payload type 96. It records a stream by encoding the video on display anew, and the decoder, CPU video path and RTP jitter latency settings don't apply to it. Changing it restarts the video stream.",
+            "longDesc": "GStreamer plays every stream source and records them. Qt Multimedia plays them with FFmpeg: RTSP, MPEG-TS over UDP or TCP, and H.264 or H.265 RTP over UDP with payload type 96. It records a stream by encoding the video on display anew, with the Recording Codec and Recording Quality settings, and the decoder, CPU video path and RTP jitter latency settings don't apply to it. Changing it restarts the video stream.",
             "type": "uint32",
             "enumStrings": "GStreamer,Qt Multimedia",
             "enumValues": "0,1",
@@ -313,23 +313,23 @@
         },
         {
             "name": "uvcRecordingCodec",
-            "shortDesc": "Video codec a USB camera recording tries first.",
-            "longDesc": "One of the codecs Qt can encode on this computer, by its QMediaFormat::VideoCodec key, such as \"H264\". Empty (Auto), or a codec the encoder turns down, records with the first of H.264, H.265, AV1, VP9, MPEG-4 Part 2 and MPEG-2 that encodes.",
+            "shortDesc": "Video codec tried first for the recordings QGroundControl encodes: a USB camera's, and a stream's with the Qt Multimedia video backend.",
+            "longDesc": "Applies to the recordings QGroundControl encodes itself: a USB camera's and, with the Qt Multimedia video backend, a stream's. Not to a stream GStreamer records, which is saved as it arrives. One of the codecs Qt can encode on this computer, by its QMediaFormat::VideoCodec key, such as \"H264\". Empty (Auto), or a codec the encoder turns down, records with the first of H.264, H.265, AV1, VP9, MPEG-4 Part 2 and MPEG-2 that encodes.",
             "type": "string",
             "default": "",
-            "label": "USB Camera Recording Codec",
-            "keywords": "usb camera,uvc,webcam,record,codec,encoder,h264,h265,av1,vp9"
+            "label": "Recording Codec",
+            "keywords": "record,codec,encoder,h264,h265,av1,vp9,usb camera,uvc,webcam,qt multimedia"
         },
         {
             "name": "uvcRecordingQuality",
-            "shortDesc": "Quality a USB camera recording is encoded at.",
-            "longDesc": "How much detail a USB camera recording keeps, which sets how large its file gets: Qt's encoders aim at a constant quality rather than a bit rate.",
+            "shortDesc": "Quality of the recordings QGroundControl encodes: a USB camera's, and a stream's with the Qt Multimedia video backend.",
+            "longDesc": "Applies to the recordings QGroundControl encodes itself: a USB camera's and, with the Qt Multimedia video backend, a stream's. Not to a stream GStreamer records, which is saved as it arrives. How much detail such a recording keeps, which sets how large its file gets: Qt's encoders aim at a constant quality rather than a bit rate. On Android the quality sets a bit rate instead, and a defect in Qt 6.12 makes the files several times larger than that bit rate.",
             "type": "uint32",
             "enumStrings": "Very Low,Low,Normal,High,Very High",
             "enumValues": "0,1,2,3,4",
             "default": 3,
-            "label": "USB Camera Recording Quality",
-            "keywords": "usb camera,uvc,webcam,record,quality,file size,bit rate"
+            "label": "Recording Quality",
+            "keywords": "record,quality,file size,bit rate,usb camera,uvc,webcam,qt multimedia"
         }
     ]
 }

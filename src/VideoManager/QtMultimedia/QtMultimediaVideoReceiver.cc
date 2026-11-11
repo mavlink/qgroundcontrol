@@ -206,7 +206,7 @@ void QtMultimediaVideoReceiver::onStartRecording(const QString& file, FileFormat
         _recordingSession->setRecorder(_recorder->mediaRecorder());
     }
     qCDebug(QtMultimediaVideoReceiverLog) << name() << "recording to" << file;
-    _recorder->start(file, QtVideoRecorder::container(format));
+    _recorder->start(file, QtVideoRecorder::container(format), recordingEncoding().codec, recordingEncoding().quality);
 }
 
 void QtMultimediaVideoReceiver::onStopRecording()

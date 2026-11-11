@@ -42,7 +42,8 @@ public:
 
     /// Records the capture session mediaRecorder() is set on to @p file, in @p container and @p codec where Qt can
     /// encode them: see recordingFormats(). @p quality sets how large the file gets: Qt encodes for a constant
-    /// quality. Reports recordingFinished() with an error when no format encodes.
+    /// quality, or for a bit rate it works out from one where the encoder takes only that (Android, iOS, Intel Macs).
+    /// Reports recordingFinished() with an error when no format encodes.
     void start(const QString& file, QMediaFormat::FileFormat container,
                QMediaFormat::VideoCodec codec = QMediaFormat::VideoCodec::Unspecified,
                QMediaRecorder::Quality quality = QMediaRecorder::HighQuality);

@@ -44,6 +44,7 @@ class VideoStreamController : public QObject
     Q_PROPERTY(bool decoding READ decoding NOTIFY decodingChanged FINAL)
     Q_PROPERTY(bool reconnecting READ reconnecting NOTIFY reconnectingChanged FINAL)
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged FINAL)
+    Q_PROPERTY(bool encodesRecordings READ encodesRecordings NOTIFY encodesRecordingsChanged FINAL)
     Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged FINAL)
     Q_PROPERTY(int rotation READ rotation NOTIFY rotationChanged FINAL)
     Q_PROPERTY(double aspectRatio READ aspectRatio NOTIFY aspectRatioChanged FINAL)
@@ -130,6 +131,12 @@ public:
     void startRecording(const QString& file, VideoReceiver::FileFormat format);
     void stopRecording();
 
+    /// True when the receiver encodes the source's recordings anew (VideoReceiver::encodesRecordings()), which the
+    /// recording codec and quality settings then govern. False without a receiver.
+    bool encodesRecordings() const;
+    /// VideoReceiver::setRecordingEncoding(), for the receiver and for each one set later.
+    void setRecordingEncoding(const VideoReceiver::RecordingEncoding& encoding);
+
     /// True while the stream is streaming into a registered output.
     bool canTakeScreenshot() const;
     bool takeScreenshot(const QString& file, const VideoScreenshot::Exif& exif = {}) const;
@@ -170,6 +177,7 @@ signals:
     void decodingChanged();
     void reconnectingChanged();
     void recordingChanged(bool recording);
+    void encodesRecordingsChanged();
     void videoSizeChanged();
     void rotationChanged();
     void aspectRatioChanged();
@@ -203,6 +211,7 @@ private:
     QPointer<QGCVideoStreamInfo> _streamInfo;
     QString _camera;
     QPointer<QQuickItem> _videoOutput;
+    VideoReceiver::RecordingEncoding _recordingEncoding;
     /// The URI the receiver was last configured with.
     QString _uri;
     bool _enabled = false;

@@ -17,6 +17,7 @@
 #include <QtTest/QSignalSpy>
 
 #include "QtMultimediaVideoReceiver.h"
+#include "QtVideoRecorder.h"
 #include "VideoTestHelpers.h"
 
 #ifdef QGC_GST_STREAMING
@@ -182,6 +183,40 @@ void QtMultimediaVideoReceiverTest::_testRecordingNeedsActiveStream()
     QCOMPARE(stream.errorSpy.count(), 1);
     QVERIFY(!stream.receiver->recording());
     QVERIFY(!QFile::exists(file));
+}
+
+void QtMultimediaVideoReceiverTest::_testRecordingUsesEncodingSet()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    // The last of the codecs Qt encodes here: not the one a recording tries first when none is set.
+    const QStringList codecs = QtVideoRecorder::recordingCodecs();
+    QVERIFY(!codecs.isEmpty());
+    const VideoReceiver::RecordingEncoding encoding{.codec = QtVideoRecorder::recordingCodec(codecs.last()),
+                                                    .quality = QMediaRecorder::LowQuality};
+
+    _ignorePlayerLogs();
+    _ignoreEncoderFallbacks();
+    // Nobody sends the stream, so the recorder waits for its first frame, set up as the recording was started.
+    ReceiverUnderTest stream(QStringLiteral("udp://127.0.0.1:%1").arg(freeUdpPort()));
+    stream.receiver->setRecordingEncoding(encoding);
+    stream.receiver->setActive(true);
+    stream.receiver->startRecording(dir.filePath(QStringLiteral("first.mkv")), VideoReceiver::FileFormat::Mkv);
+    const QtVideoRecorder* const recorder = stream.receiver->_recorder;
+    QVERIFY(recorder->active());
+    QCOMPARE(recorder->mediaRecorder()->mediaFormat().videoCodec(), encoding.codec);
+    QCOMPARE(recorder->mediaRecorder()->quality(), encoding.quality);
+
+    // The next recording is encoded as set by then.
+    stream.receiver->stopRecording();
+    stream.receiver->setRecordingEncoding({.quality = QMediaRecorder::VeryHighQuality});
+    QTRY_VERIFY_WITH_TIMEOUT(!recorder->active(), TestTimeout::mediumMs());
+    stream.receiver->startRecording(dir.filePath(QStringLiteral("next.mkv")), VideoReceiver::FileFormat::Mkv);
+    QVERIFY(recorder->active());
+    QCOMPARE(recorder->mediaRecorder()->mediaFormat().videoCodec(),
+             QtVideoRecorder::recordingFormats(QMediaFormat::Matroska).first().videoCodec());
+    QCOMPARE(recorder->mediaRecorder()->quality(), QMediaRecorder::VeryHighQuality);
+    QVERIFY(stream.errorSpy.isEmpty());
 }
 
 void QtMultimediaVideoReceiverTest::_testUdpListensUntilStreamStarts()

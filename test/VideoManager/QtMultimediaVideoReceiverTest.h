@@ -19,6 +19,7 @@ private slots:
     void _testPlayerSource();
     void _testUnplayableUri();
     void _testRecordingNeedsActiveStream();
+    void _testRecordingUsesEncodingSet();
     void _testUdpListensUntilStreamStarts();
     void _testRecordingTimes_data();
     void _testRecordingTimes();

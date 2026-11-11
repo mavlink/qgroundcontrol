@@ -8,8 +8,6 @@
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 #include <QtMultimedia/QCamera>
-#include <QtMultimedia/QMediaFormat>
-#include <QtMultimedia/QMediaRecorder>
 #include <QtMultimedia/qtvideo.h>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -127,9 +125,7 @@ public:
 
     bool mirrored() const { return _mirrored; }
 
-    /// The codec and quality startRecording() records with, as QtVideoRecorder::start() takes them: from
-    /// VideoSettings' uvcRecordingCodec and uvcRecordingQuality.
-    void setRecordingEncoding(QMediaFormat::VideoCodec codec, QMediaRecorder::Quality quality);
+    bool encodesRecordings() const override { return true; }
 
     /// Waits for a recording's file to be finished first: Qt writes it on its own thread, which the application's exit
     /// would cut short.
@@ -208,8 +204,6 @@ private:
     QtVideo::Rotation _rotation = QtVideo::Rotation::None;
     bool _mirrored = false;
     Controls _controls;
-    QMediaFormat::VideoCodec _recordingCodec = QMediaFormat::VideoCodec::Unspecified;
-    QMediaRecorder::Quality _recordingQuality = QMediaRecorder::HighQuality;
     QMediaCaptureSession* _captureSession = nullptr;
     QMetaObject::Connection _frameConnection;
     QString _formatName;

@@ -119,6 +119,7 @@ void VideoStreamController::setReceiver(VideoReceiver* receiver)
     const bool wasStreaming = streaming();
     const bool wasDecoding = decoding();
     const bool wasRecording = recording();
+    const bool wasEncoding = encodesRecordings();
     const QSize oldVideoSize = videoSize();
     const VideoStreamStats oldStats = stats();
 
@@ -162,6 +163,7 @@ void VideoStreamController::setReceiver(VideoReceiver* receiver)
         (void) connect(_receiver, &VideoReceiver::recordingFinished, this, &VideoStreamController::recordingFinished);
         (void) connect(_receiver, &VideoReceiver::errorOccurred, this, &VideoStreamController::errorOccurred);
         _receiver->setDisplayConfig(_resolvedDisplayConfig());
+        _receiver->setRecordingEncoding(_recordingEncoding);
         _receiver->setVideoOutput(_videoOutput);
         _apply();
     }
@@ -174,6 +176,9 @@ void VideoStreamController::setReceiver(VideoReceiver* receiver)
     }
     if (recording() != wasRecording) {
         emit recordingChanged(recording());
+    }
+    if (encodesRecordings() != wasEncoding) {
+        emit encodesRecordingsChanged();
     }
     if (videoSize() != oldVideoSize) {
         emit videoSizeChanged();
@@ -401,6 +406,19 @@ void VideoStreamController::stopRecording()
 {
     if (_receiver) {
         _receiver->stopRecording();
+    }
+}
+
+bool VideoStreamController::encodesRecordings() const
+{
+    return _receiver && _receiver->encodesRecordings();
+}
+
+void VideoStreamController::setRecordingEncoding(const VideoReceiver::RecordingEncoding& encoding)
+{
+    _recordingEncoding = encoding;
+    if (_receiver) {
+        _receiver->setRecordingEncoding(encoding);
     }
 }
 

@@ -64,8 +64,8 @@ struct VideoSettingReactionEntry
 // Not listed: aspectRatio, read by VideoStreamController::aspectRatio(); videoFit, gridLines and showRecControl, read
 // by QML; showTelemetryOverlay, read by VideoTelemetryOverlay; recordingFormat, enableStorageLimit and maxVideoSize,
 // read when a recording starts; uvcCameraFormat, uvcCameraRotation, uvcCameraMirror, uvcWhiteBalance, uvcZoom,
-// uvcExposureCompensation, uvcFocusMode, uvcRecordingCodec and uvcRecordingQuality, which go to the USB camera
-// (_connectSettings()).
+// uvcExposureCompensation and uvcFocusMode, which go to the USB camera, and uvcRecordingCodec and uvcRecordingQuality,
+// which go to every source (_connectSettings()).
 constexpr VideoSettingReactionEntry kVideoSettingReactions[] = {
     {&VideoSettings::videoSource, VideoSettingReaction::Reconfigure},
     {&VideoSettings::udpUrl, VideoSettingReaction::Reconfigure},
@@ -88,6 +88,14 @@ constexpr VideoSettingReactionEntry kVideoSettingReactions[] = {
 
 // What VideoSettings::maxVideoTiles allows: as many tiles as fit beside the main picture.
 constexpr uint kMaxVideoTiles = 4;
+
+/// What @p videoSettings has the receivers that encode their recordings anew record with: the USB camera's and Qt
+/// Multimedia's.
+VideoReceiver::RecordingEncoding recordingEncodingSetting(VideoSettings* videoSettings)
+{
+    return {.codec = QtVideoRecorder::recordingCodec(videoSettings->uvcRecordingCodec()->rawValue().toString()),
+            .quality = QtVideoRecorder::recordingQuality(videoSettings->uvcRecordingQuality()->rawValue().toInt())};
+}
 
 /// What only one stream at a time can be played at: the local port of a stream that is listened for, else its URI.
 QString streamAddress(const QString& uri)
@@ -252,14 +260,15 @@ void VideoManager::_connectSettings()
         (void) connect(fact, &Fact::rawValueChanged, this, applyUvcControls);
     }
 
-    const auto applyUvcRecordingEncoding = [this] {
-        _uvcCamera->setRecordingEncoding(
-            QtVideoRecorder::recordingCodec(_videoSettings->uvcRecordingCodec()->rawValue().toString()),
-            QtVideoRecorder::recordingQuality(_videoSettings->uvcRecordingQuality()->rawValue().toInt()));
+    const auto applyRecordingEncoding = [this] {
+        const VideoReceiver::RecordingEncoding encoding = recordingEncodingSetting(_videoSettings);
+        for (VideoStreamController* source : std::as_const(_sources)) {
+            source->setRecordingEncoding(encoding);
+        }
     };
-    applyUvcRecordingEncoding();
-    (void) connect(_videoSettings->uvcRecordingCodec(), &Fact::rawValueChanged, this, applyUvcRecordingEncoding);
-    (void) connect(_videoSettings->uvcRecordingQuality(), &Fact::rawValueChanged, this, applyUvcRecordingEncoding);
+    applyRecordingEncoding();
+    (void) connect(_videoSettings->uvcRecordingCodec(), &Fact::rawValueChanged, this, applyRecordingEncoding);
+    (void) connect(_videoSettings->uvcRecordingQuality(), &Fact::rawValueChanged, this, applyRecordingEncoding);
 }
 
 void VideoManager::startVideoBackendInit()
@@ -696,6 +705,8 @@ void VideoManager::_updateTileStreams(int count)
             tile = new VideoStreamController(VideoStreamController::Role::Tile, _videoSettings, this);
             tile->setName(QStringLiteral("videoTile%1").arg(++_tileStreamSerial));
             tile->setStreamInfo(stream.streamInfo);
+            // Its source records once it is the primary stream.
+            tile->setRecordingEncoding(recordingEncodingSetting(_videoSettings));
             _connectSource(tile);
             _recordingService->addSource(tile);
         }
