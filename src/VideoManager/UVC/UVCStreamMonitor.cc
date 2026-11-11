@@ -8,6 +8,7 @@
 #include <QtMultimedia/QVideoFrame>
 #include <QtMultimedia/QVideoSink>
 
+#include "MonotonicClock.h"
 #include "QGCLoggingCategory.h"
 #include "UVCDevices.h"
 
@@ -17,17 +18,11 @@ namespace {
 
 constexpr std::chrono::milliseconds kSampleInterval{1000};
 
-qint64 uvcSteadyClockMs()
-{
-    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
-        .count();
-}
-
 }  // namespace
 
 UVCStreamMonitor::UVCStreamMonitor(QObject* parent, VideoStreamStatsMeter::Clock clock)
     : QObject(parent)
-    , _clock(clock ? std::move(clock) : VideoStreamStatsMeter::Clock(uvcSteadyClockMs))
+    , _clock(clock ? std::move(clock) : VideoStreamStatsMeter::Clock(MonotonicClock::nowMs))
     , _meter(_clock)
 {
     _sampleTimer.setInterval(kSampleInterval);

@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "MonotonicClock.h"
+
 namespace {
 
 constexpr qint64 kMinTimeoutMs = 1000;
@@ -12,8 +14,7 @@ constexpr qint64 kDecoderTimeoutFactor = 2;
 
 qint64 StreamWatchdog::now()
 {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
-        .count();
+    return MonotonicClock::nowMs();
 }
 
 void StreamWatchdog::start(std::chrono::seconds timeout, std::optional<std::chrono::milliseconds> firstFrameGrace)

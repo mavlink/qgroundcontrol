@@ -1,8 +1,8 @@
 #include "VideoStreamStatsMeter.h"
 
-#include <chrono>
 #include <utility>
 
+#include "MonotonicClock.h"
 #include "VideoStreamStats.h"
 
 namespace {
@@ -13,16 +13,10 @@ quint64 statsCounterGrowth(quint64 now, quint64 before)
     return (now >= before) ? (now - before) : now;
 }
 
-qint64 steadyClockMs()
-{
-    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
-        .count();
-}
-
 }  // namespace
 
 VideoStreamStatsMeter::VideoStreamStatsMeter(Clock clock)
-    : _clock(clock ? std::move(clock) : Clock(steadyClockMs))
+    : _clock(clock ? std::move(clock) : Clock(MonotonicClock::nowMs))
 {}
 
 void VideoStreamStatsMeter::reset()

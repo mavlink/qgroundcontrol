@@ -254,16 +254,11 @@ void VideoStreamController::registerVideoOutput(QQuickItem* videoOutput)
         return;
     }
 
-    if (videoOutput == _videoOutput) {
-        qCDebug(VideoStreamControllerLog) << name() << "re-attaching video output" << videoOutput;
-        if (_receiver) {
-            _receiver->setVideoOutput(videoOutput);
-        }
-        return;
-    }
-
-    qCDebug(VideoStreamControllerLog) << name() << "video output" << videoOutput;
+    qCDebug(VideoStreamControllerLog) << name()
+                                      << ((videoOutput == _videoOutput) ? "re-attaching video output" : "video output")
+                                      << videoOutput;
     _videoOutput = videoOutput;
+    // Also for the current output: the receiver binds it anew.
     if (_receiver) {
         _receiver->setVideoOutput(videoOutput);
     }
