@@ -246,7 +246,7 @@ Item {
         sourceComponent: Item {
             MapScale {
                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
-                anchors.bottomMargin: anchors.leftMargin
+                anchors.bottomMargin: anchors.leftMargin + _map.attributionHeight
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
                 mapControl: _map
@@ -493,6 +493,7 @@ Item {
                                 sharedView: false
                                 terrain: false
                                 allowRotation: false
+                                showAttribution: false
                                 mapType: _map.mapType
 
                                 // Not bindings on center and zoomLevel themselves: GeoMapView assigns to them

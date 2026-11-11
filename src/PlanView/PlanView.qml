@@ -47,6 +47,9 @@ Item {
     readonly property real  _rightToolWidth: rightPanel.width + rightPanel.anchors.rightMargin
     // This is the center rectangle of the map which is not obscured by tools
     readonly property rect  _centerViewport: Qt.rect(_leftToolWidth + _margin, _margin, mainPlanViewArea.width - _leftToolWidth - _rightToolWidth - (_margin * 2), (missionStatus.visible ? missionStatus.y : mainPlanViewArea.height - _margin) - _margin)
+    // Margins which keep what the map shows in its bottom left corner clear of the tool strip and of the mission status
+    readonly property real  _mapCornerLeftMargin: _leftToolWidth + _margin
+    readonly property real  _mapCornerBottomMargin: (missionStatus.visible ? mainPlanViewArea.height - missionStatus.y : 0) + _margin
 
     readonly property int _layerMission: PlanEditLayers.layerMission
     readonly property int _layerPlan: PlanEditLayers.layerPlan
@@ -358,6 +361,8 @@ Item {
                 showScale: true
                 controlsLeftMargin: _root._leftToolWidth + _root._toolsMargin
                 controlsTopMargin: _root._toolsMargin
+                attributionLeftMargin: _root._mapCornerLeftMargin
+                attributionBottomMargin: _root._mapCornerBottomMargin
                 _nonInteractiveOpacity: _root._nonInteractiveOpacity
 
                 onMapClicked: (mouse) => _root._onEditorMapClicked(mouse)
@@ -375,6 +380,8 @@ Item {
                 allowGCSLocationCenter: true
                 allowVehicleLocationCenter: true
                 planView: true
+                attributionLeftMargin: _root._mapCornerLeftMargin
+                attributionBottomMargin: _root._mapCornerBottomMargin
 
                 zoomLevel: QGroundControl.flightMapZoom
                 center: QGroundControl.flightMapPosition

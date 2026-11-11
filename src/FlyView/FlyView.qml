@@ -47,6 +47,9 @@ Item {
     property real   _widgetMargin:          ScreenTools.defaultFontPixelWidth * 0.75
     property var    _layerOccluders:        widgetLayer.occluders
     property var    _mapOccluders:          _layerOccluders.all.concat(customOverlay.customOccluders).map(r => Qt.rect(r.x + widgetLayer.x, r.y + widgetLayer.y, r.width, r.height))
+    // Margins which keep what the map shows in its bottom left corner clear of the tool strip, and of the PiP window and the virtual joystick
+    property real   _mapCornerLeftMargin:   widgetLayer.x + _layerOccluders.toolStrip.x + _layerOccluders.toolStrip.width + _widgetMargin
+    property real   _mapCornerBottomMargin: mapHolder.height - widgetLayer.y - Math.min(_layerOccluders.pipView.y, _layerOccluders.virtualJoystickLeft.y) + ScreenTools.defaultFontPixelWidth / 2
 
     property real   _fullItemZorder:    0
     property real   _pipItemZorder:     QGroundControl.zOrderWidgets
@@ -81,6 +84,8 @@ Item {
                 pipMode:                !_mainWindowIsMap
                 viewportRect:           Qt.rect(widgetLayer.x, widgetLayer.y, widgetLayer.width, widgetLayer.height)
                 occluders:              _mapOccluders
+                attributionLeftMargin:  _mapCornerLeftMargin
+                attributionBottomMargin: _mapCornerBottomMargin
                 mapName:                "FlightDisplayView"
                 enabled:                !_is3DMode
                 visible:                !_is3DMode
@@ -99,7 +104,8 @@ Item {
                 viewportRect:           Qt.rect(widgetLayer.x, widgetLayer.y, widgetLayer.width, widgetLayer.height)
                 occluders:              _mapOccluders
                 chromeTopMargin:        widgetLayer.y + _layerOccluders.topRight.y + _layerOccluders.topRight.height + _widgetMargin
-                chromeBottomMargin:     mapHolder.height - widgetLayer.y - Math.min(_layerOccluders.pipView.y, _layerOccluders.virtualJoystickLeft.y) + ScreenTools.defaultFontPixelWidth / 2
+                chromeBottomMargin:     _mapCornerBottomMargin
+                attributionLeftMargin:  _mapCornerLeftMargin
                 mapName:                "FlightDisplayView"
                 enabled:                !_is3DMode
                 visible:                !_is3DMode

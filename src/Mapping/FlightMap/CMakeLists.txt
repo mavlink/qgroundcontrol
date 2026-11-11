@@ -42,6 +42,7 @@ qt_add_qml_module(
         Widgets/QGCPitchIndicator.qml
         Widgets/VerticalCompassAttitude.qml
         FlightMap.qml
+        MapAttribution.qml
         MapScale.qml
     NO_PLUGIN
 )

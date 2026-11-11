@@ -32,6 +32,14 @@ GeoMap {
     property real controlsLeftMargin: ScreenTools.defaultFontPixelWidth * 0.75
     property real controlsTopMargin: ScreenTools.defaultFontPixelWidth * 0.75
 
+    /// false: the imagery and the terrain are not credited, for a map that is a small picture beside a larger one
+    property bool showAttribution: true
+    /// Larger margins keep the credit clear of what a view puts in the bottom left corner
+    property alias attributionLeftMargin: attribution.leftMargin
+    property alias attributionBottomMargin: attribution.bottomMargin
+    /// For a view to put its own controls above the credit
+    readonly property real attributionHeight: attribution.visible ? attribution.height : 0
+
     readonly property bool isSatelliteMap: root.mapType.indexOf("Satellite") > -1 || root.mapType.indexOf("Hybrid") > -1
     readonly property var gcsPosition: QGroundControl.positionManager.gcsPosition
 
@@ -154,6 +162,22 @@ GeoMap {
                 root._echoCameraZoom()
             }
         }
+    }
+
+    MapAttribution {
+        id: attribution
+        objectName: "mapAttribution"
+        z: 1  // Above the content that views add
+        map: root
+        text: {
+            const credits = [QGroundControl.mapEngineManager.mapAttribution(root.mapType)]
+            // The relief is drawn in 3D only
+            if (root.terrain && root.camera.mode === GeoMapCamera.Mode3D) {
+                credits.push(QGroundControl.mapEngineManager.terrainAttribution)
+            }
+            return credits.filter(credit => credit !== "").join(" | ")
+        }
+        visible: root.showAttribution && text !== ""
     }
 
     Loader {

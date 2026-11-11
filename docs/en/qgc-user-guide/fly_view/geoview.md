@@ -57,7 +57,7 @@ Keyboard modifiers provide alternatives to the multi-button mouse gestures (usef
 
 ## Imagery and Terrain
 
-The GeoMap engine drapes the same map imagery you have selected in **Application Settings > Maps** over its terrain surface. Terrain elevation comes from the [Mapzen/Tilezen Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) dataset, which combines the following sources:
+The GeoMap engine drapes the same map imagery you have selected in **Application Settings > Maps** over its terrain surface. The map credits the imagery provider in its bottom left corner, and in 3D mode the terrain as well, in short. Terrain elevation comes from the [Mapzen/Tilezen Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) dataset, which combines the following sources:
 
 - ArcticDEM terrain data DEM(s) were created from DigitalGlobe, Inc., imagery and funded under National Science Foundation awards 1043681, 1559691, and 1542736
 - Australia terrain data © Commonwealth of Australia (Geoscience Australia) 2017

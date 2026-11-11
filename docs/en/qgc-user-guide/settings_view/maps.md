@@ -8,6 +8,8 @@ Centralized map configuration — provider selection, offline tile management, A
 - **Type** — map type for the selected provider (e.g., Hybrid, Satellite, Street, Terrain)
 - **Elevation Provider** — source for terrain elevation data (e.g., Copernicus)
 
+Every map shows the credit of the selected provider in its bottom left corner. The map of a [Custom Map URL](#custom-map-url) shows none.
+
 ## Offline Maps
 
 Download map tiles for use without an internet connection. You can create multiple tile sets for different locations.

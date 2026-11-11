@@ -18,6 +18,7 @@ FlightMap {
     planView:                   false
     zoomLevel:                  QGroundControl.flightMapZoom
     center:                     QGroundControl.flightMapPosition
+    showAttribution:            _pipState.state !== _pipState.pipState
 
     property Item   pipView
     property Item   pipState:                   _pipState

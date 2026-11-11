@@ -24,6 +24,10 @@ Map {
     property alias  positionTracker:                _positionTracker                            ///< Auto-centering policy, for derived maps to layer follow behavior on
     property bool   planView:                       false   ///< true: map being using for Plan view, items should be draggable
     property bool   pinchZoomDisabledByVirtualJoysticks: false ///< true: disable pinch-to-zoom while virtual joystick thumbs are down
+    property bool   showAttribution:                true    ///< false: the imagery is not credited, for a map that is a small picture beside a larger one
+    property alias  attributionLeftMargin:          attribution.leftMargin  ///< Larger margins keep the credit clear of what a view puts in the bottom left corner
+    property alias  attributionBottomMargin:        attribution.bottomMargin
+    readonly property real attributionHeight:       attribution.visible ? attribution.height : 0 ///< For a view to put its own controls above the credit
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
@@ -260,5 +264,13 @@ Map {
                 angle:          isNaN(gcsHeading) ? 0 : gcsHeading
             }
         }
+    }
+
+    MapAttribution {
+        id:         attribution
+        objectName: "mapAttribution"
+        map:        _map
+        text:       QGroundControl.mapEngineManager.mapAttribution(_map.activeMapType.name)
+        visible:    _map.showAttribution && text !== ""
     }
 } // Map

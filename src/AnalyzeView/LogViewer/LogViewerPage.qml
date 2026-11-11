@@ -447,6 +447,7 @@ AnalyzePage {
 
                                         MapScale {
                                             anchors.margins: ScreenTools.defaultFontPixelWidth
+                                            anchors.bottomMargin: ScreenTools.defaultFontPixelWidth + _flightMap.attributionHeight
                                             anchors.left: parent.left
                                             anchors.bottom: parent.bottom
                                             mapControl: _flightMap
@@ -516,6 +517,7 @@ AnalyzePage {
 
                                         MapScale {
                                             anchors.margins: ScreenTools.defaultFontPixelWidth
+                                            anchors.bottomMargin: ScreenTools.defaultFontPixelWidth + _geoMap.attributionHeight
                                             anchors.left: parent.left
                                             anchors.bottom: parent.bottom
                                             mapControl: _geoMap
