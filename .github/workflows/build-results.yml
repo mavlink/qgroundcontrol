@@ -22,6 +22,7 @@ on:
       - Docker
       - Docs
       - Doxygen API Docs
+      - GPS Standalone
       - VM Builds
     types: [completed]
 

@@ -51,6 +51,7 @@
 | `analysis.yml` | Code Analysis: clang-tidy and Clazy; manual IWYU, qmllint, and ThreadSanitizer |
 | `codeql.yml` | CodeQL for Actions, Java/Kotlin, and Python |
 | `clusterfuzzlite.yml` | MAVLink parser fuzzing on PRs |
+| `gps-standalone.yml` | The [standalone GPS build](#platform-notes) (`test/GPS/Standalone`): `QGCGPSCore` and `QGCNTRIPHttp` without the application, its CTest, and a 60-second run of each libFuzzer harness, when GPS sources or tests change |
 | `pre-commit.yml` | pre-commit hooks (run by prek) on changed files, including docs prose and translation placeholders |
 | `ci-scripts.yml` | Runs the CI Python tests on Linux and Windows (see [Tests](#tests)); lint and config validation run in `pre-commit.yml` |
 | `check-links.yml` | Markdown link validation (lychee) |
@@ -121,13 +122,14 @@
   SHA-256 digests and the Bloaty commit that `tools/ci` scripts and `build_profile.py` install),
   validated against `build-config.schema.json`
   (`just validate-configs`).
-- **CMake and Ninja**: every CI build job runs the `build.cmake_version` and `build.ninja_version`
-  that `build-setup` installs with `lukka/get-cmake`, after `setup-python` so they precede any CMake
-  in `tools/.venv`; `install-dependencies` installs neither, nor the distro ccache and mold
-  (`CI_PROVIDED_TOOLS` in `install_dependencies_helper.py`; `cache` installs pinned ccache and
-  mold). Local development uses the `build` group's CMake, Ninja and just (`install_dependencies`
-  syncs it on Linux). get-cmake resolves versions from the catalog bundled in its release, so the CMake pin cannot
-  exceed the action's tag.
+- **CMake and Ninja**: every CI application build job runs the `build.cmake_version` and
+  `build.ninja_version` that `build-setup` installs with `lukka/get-cmake`, after `setup-python` so
+  they precede any CMake in `tools/.venv`; `install-dependencies` installs neither, nor the distro
+  ccache and mold (`CI_PROVIDED_TOOLS` in `install_dependencies_helper.py`; `cache` installs pinned
+  ccache and mold). Local development uses the `build` group's CMake, Ninja and just
+  (`install_dependencies` syncs it on Linux), and so does `gps-standalone.yml`, whose small test
+  project builds without `build-setup`. get-cmake resolves versions from the catalog bundled in
+  its release, so the CMake pin cannot exceed the action's tag.
 - Read values with `tools/setup/read_config.py --get <dotted.path>`,
   `common.build_config.get_build_config_value()`, or, as step outputs,
   `read_config.py --github-output <dotted.path>...` (dots become underscores). `build-setup`'s
@@ -136,8 +138,9 @@
 - **Qt installer**: `qt-install` runs `install_qt.py`, which installs Qt with QGC's installer
   (`tools/setup/qt_installer`, standard library plus `cmake -E tar`); aqtinstall stays as the
   fallback through `QGC_QT_INSTALLER`. Every job reaching `qt-install` has CMake: `build-setup`
-  installs it first, `pre-commit.yml` syncs the `dev` group, and `lupdate.yml` uses the
-  GitHub-hosted image's ([tools/README.md](../tools/README.md#qt-installer)).
+  installs it first, `pre-commit.yml` syncs the `dev` group, `gps-standalone.yml` the `build`
+  group, and `lupdate.yml` uses the GitHub-hosted image's
+  ([tools/README.md](../tools/README.md#qt-installer)).
 
 ## Dependency Management
 
@@ -686,6 +689,27 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   reproducible crashes fail the PR whether or not they predate it. Crash files and SARIF
   diagnostics are uploaded separately. The workflow runs only on pull requests: nothing reads
   uploaded fuzzer builds, so there is no continuous build.
+- **GPS standalone** (`gps-standalone.yml`): `test/GPS/Standalone` builds `QGCGPSCore` and
+  `QGCNTRIPHttp` without the application, with the receiver qualification runner, the NTRIP decoder
+  smoke test and the libFuzzer harnesses. It is its own path-filtered workflow, not a Linux leg or
+  a required check: pull requests and `master`/`Stable*` pushes run it when `src/GPS`, the utility
+  libraries and CMake modules the project adds, `test/GPS`, `build-config.json` or the workflow
+  change (`test_gps_standalone_workflow.py` keeps the source directories in step with the project),
+  and it can be dispatched. One GitHub-hosted job configures the project with the runner image's
+  Clang, `-DQGC_GPS_LIBFUZZER=ON` (ASan and UBSan) and `RelWithDebInfo`: unoptimized,
+  `GPSProtocolFuzzSmoke` takes about six times as long. It skips `build-setup`, whose caches and
+  full Qt serve the application build: `setup-python` syncs the `build` group for CMake and Ninja,
+  `qt-install` installs only `qtbase`, `icu` and `qtserialport`, CPM clones GeographicLib, and the
+  build's three CPU-minutes need no compiler cache. `cmake-build` and `run-unit-tests` (label
+  `GPS`) report as in the platform jobs. Each harness (`QGCGPSProtocolFuzz`,
+  `ntrip_http_decoder_fuzzer`) then fuzzes its seeds for 60 s with a new random seed.
+  `UBSAN_OPTIONS=halt_on_error=1` makes a UBSan report fail the tests and the fuzzers, which
+  otherwise print it and continue, and `-timeout=25` reports a hang. A crash, leak, hang or
+  sanitizer report fails the job, and the input libFuzzer saved is uploaded as
+  `gps-fuzzing-diagnostics` for seven days; passing runs upload nothing. The harnesses are not
+  ClusterFuzzLite targets: they link Qt (`qt.minimum_version`), which its base image lacks, and its
+  toolchain compiles against libc++, which cannot link Qt's prebuilt libstdc++ binaries, so every
+  run would have to build Qt from source.
 
 ### Docker
 

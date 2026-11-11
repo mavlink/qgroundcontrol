@@ -417,6 +417,11 @@ cmake -S test/GPS/Standalone -B build-gps -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCM
 cmake --build build-gps && ctest --test-dir build-gps
 ```
 
+The GPS Standalone workflow runs these commands when the GPS sources, the utility libraries they link or `test/GPS`
+change, with `UBSAN_OPTIONS=halt_on_error=1` so that a UBSan report fails the run instead of only printing. It then
+fuzzes each harness for 60 seconds and uploads the input of a crash or hang
+([ci-overview.md](../.github/ci-overview.md#platform-notes)).
+
 ## MultiSignalSpy
 
 ```cpp

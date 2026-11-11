@@ -1,0 +1,125 @@
+name: GPS Standalone
+
+# QGCGPSCore and QGCNTRIPHttp must build without the application (test/GPS/Standalone). One Clang build
+# with ASan and UBSan checks that, runs the project's CTest, and fuzzes each libFuzzer harness briefly.
+# ClusterFuzzLite cannot build the harnesses: they link Qt, which its base image does not have.
+on:
+  pull_request:
+    # Everything test/GPS/Standalone builds or reads;
+    # tools/tests/ci/contracts/test_gps_standalone_workflow.py keeps the source directories complete.
+    paths: &standalone-inputs
+      - 'src/GPS/**'
+      - 'src/Utilities/Geo/GeographicLib.cmake'
+      - 'src/Utilities/Geo/geographiclib.patch'
+      - 'src/Utilities/Logging/Category/**'
+      - 'src/Utilities/Math/**'
+      - 'src/Utilities/Network/Client/**'
+      - 'src/Utilities/Parsing/Wire/**'
+      - 'src/Utilities/Timing/**'
+      - 'test/GPS/**'
+      - 'cmake/modules/CPM.cmake'
+      - 'cmake/modules/CPMPatchCache.cmake'
+      - '.github/build-config.json'
+      - '.github/workflows/gps-standalone.yml'
+  push:
+    branches:
+      - master
+      - 'Stable*'
+    paths: *standalone-inputs
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions:
+  contents: read
+
+jobs:
+  standalone:
+    name: Build, Test, and Fuzz (Clang ASan+UBSan)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      # As in the application's sanitizer tests (cmake/QGCTest.cmake): a UBSan report otherwise only prints.
+      UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      # The build group's CMake and Ninja, as in a local `just build`; Clang is the runner image's.
+      - name: Setup Python
+        uses: ./.github/actions/setup-python
+        with:
+          groups: build
+
+      # Qt Core, Network and SerialPort are all the standalone project links.
+      - name: Install Qt
+        uses: ./.github/actions/qt-install
+        with:
+          host: linux
+          arch: linux_gcc_64
+          modules: qtserialport
+          archives: qtbase icu
+
+      # Optimized: unoptimized, GPSProtocolFuzzSmoke's 10000 runs take about six times as long.
+      - name: Configure
+        run: >-
+          cmake -S test/GPS/Standalone -B "${RUNNER_TEMP}/build" -G Ninja
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_PREFIX_PATH="${QT_ROOT_DIR}"
+          -DCMAKE_CXX_COMPILER=clang++ -DQGC_GPS_LIBFUZZER=ON
+
+      - name: Build
+        id: build
+        uses: ./.github/actions/cmake-build
+
+      - name: Run tests
+        uses: ./.github/actions/run-unit-tests
+        with:
+          include-labels: GPS
+          report-name: GPS Standalone Tests
+          artifact-name: test-results-gps-standalone
+          retention-days: 7
+
+      # -timeout turns a hang into a saved input instead of a cancelled step.
+      - name: Fuzz the receiver protocols
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 5
+        working-directory: ${{ runner.temp }}/build
+        run: >-
+          ProtocolFuzz/QGCGPSProtocolFuzz -max_total_time=60 -timeout=25 -max_len=8192
+          -create_missing_dirs=1 -artifact_prefix="${RUNNER_TEMP}/gps-fuzz-artifacts/protocol-"
+          ProtocolFuzz/corpus ProtocolFuzz/fixture-seeds
+
+      - name: Fuzz the NTRIP HTTP decoder
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        timeout-minutes: 5
+        working-directory: ${{ runner.temp }}/build
+        run: |
+          NTRIPHttpFuzz/ntrip_http_decoder_smoke --write-corpus NTRIPHttpFuzz/corpus
+          NTRIPHttpFuzz/ntrip_http_decoder_fuzzer -max_total_time=60 -timeout=25 -max_len=65536 \
+            -dict="${GITHUB_WORKSPACE}/test/GPS/NTRIP/HTTP/Fuzz/NTRIPHttpDecoderFuzzer.dict" \
+            -create_missing_dirs=1 -artifact_prefix="${RUNNER_TEMP}/gps-fuzz-artifacts/ntrip-" NTRIPHttpFuzz/corpus
+
+      # Only a failed fuzzer writes an input (crash-, leak-, oom- or timeout-), so passing runs upload nothing.
+      - name: Upload fuzzing diagnostics
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: gps-fuzzing-diagnostics
+          path: ${{ runner.temp }}/gps-fuzz-artifacts
+          if-no-files-found: ignore
+          retention-days: 7
