@@ -16,6 +16,8 @@ private slots:
     void _testCachedFileDownloadDownload();
     void _testCachedFileDownloadSyntheticCacheHit();
     void _testCachedFileDownloadCacheHitKeepsTimestamp();
+    void _testCachedFileDownloadMaxAgeDecidesCacheOrNetwork_data();
+    void _testCachedFileDownloadMaxAgeDecidesCacheOrNetwork();
     void _testCachedFileDownloadExpiredFallsBackToCache();
     void _testCachedFileDownloadStartForgetsFailedNetworkAttempt_data();
     void _testCachedFileDownloadStartForgetsFailedNetworkAttempt();

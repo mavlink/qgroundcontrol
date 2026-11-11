@@ -30,6 +30,12 @@ QByteArray readDownloadTestFile(const QString& path)
     return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
 }
 
+QByteArray downloadTestRedirectResponse(int httpStatus, const QString& location)
+{
+    return "HTTP/1.1 " + QByteArray::number(httpStatus) + " Redirect\r\nLocation: " + location.toUtf8() +
+           "\r\nConnection: close\r\nContent-Length: 0\r\n\r\n";
+}
+
 }  // namespace
 
 void QGCFileDownloadTest::_testFileDownload()
@@ -286,6 +292,134 @@ void QGCFileDownloadTest::_testFileDownloadFailureRemovesPartialFile()
     QVERIFY(!output.exists());
     // Only a directory that was made for the download goes with it
     QCOMPARE(output.dir().exists(), customOutputPath);
+}
+
+void QGCFileDownloadTest::_testFileDownloadHttpErrorStatus_data()
+{
+    QTest::addColumn<int>("httpStatus");
+    QTest::addColumn<QString>("reason");  // the reason phrase of the server, which the reported error names
+
+    QTest::newRow("400") << 400 << QStringLiteral("Bad Request");
+    QTest::newRow("404") << 404 << QStringLiteral("Not Found");
+    QTest::newRow("500") << 500 << QStringLiteral("Internal Server Error");
+}
+
+void QGCFileDownloadTest::_testFileDownloadHttpErrorStatus()
+{
+    QFETCH(int, httpStatus);
+    QFETCH(QString, reason);
+
+    TestFixtures::LocalHttpTestServer server;
+    QVERIFY2(server.listen(), "Could not start local test HTTP server");
+    server.installHttpResponder("error page", httpStatus, "text/plain");
+
+    QGCFileDownload downloader(this);
+    QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
+
+    expectLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression("Download error:"));
+    QVERIFY(downloader.start(server.url(QStringLiteral("/status.bin"))));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(finishedSpy.count(), 1);
+
+    const QList<QVariant> args = finishedSpy.first();
+    QVERIFY(!args.at(0).toBool());
+    QVERIFY(args.at(1).toString().isEmpty());
+    QVERIFY2(args.at(2).toString().contains(reason), qPrintable(args.at(2).toString()));
+    QCOMPARE(downloader.state(), QGCFileDownload::State::Failed);
+    QVERIFY(!downloader.errorString().isEmpty());
+    // The error page is not a download
+    QVERIFY(!QFileInfo::exists(downloader.localPath()));
+}
+
+void QGCFileDownloadTest::_testFileDownloadFollowsRedirect_data()
+{
+    QTest::addColumn<int>("httpStatus");
+
+    QTest::newRow("301") << 301;
+    QTest::newRow("302") << 302;
+    QTest::newRow("303") << 303;
+    QTest::newRow("307") << 307;
+    QTest::newRow("308") << 308;
+}
+
+void QGCFileDownloadTest::_testFileDownloadFollowsRedirect()
+{
+    QFETCH(int, httpStatus);
+
+    const QByteArray payload("redirect target");
+    TestFixtures::LocalHttpTestServer targetServer;
+    QVERIFY2(targetServer.listen(), "Could not start local test HTTP server");
+    targetServer.installHttpResponder(payload);
+    TestFixtures::LocalHttpTestServer redirectingServer;
+    QVERIFY2(redirectingServer.listen(), "Could not start local test HTTP server");
+    redirectingServer.installRawResponder(
+        downloadTestRedirectResponse(httpStatus, targetServer.url(QStringLiteral("/target.bin"))));
+
+    QGCFileDownload downloader(this);
+    QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
+    QVERIFY(downloader.start(redirectingServer.url(QStringLiteral("/moved.bin"))));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+
+    const QList<QVariant> args = finishedSpy.first();
+    QVERIFY2(args.at(0).toBool(), qPrintable(args.at(2).toString()));
+    const QString localPath = args.at(1).toString();
+    QCOMPARE(readDownloadTestFile(localPath), payload);
+    // Callers tell the file type from the name, which stays the one that was asked for
+    QCOMPARE(QFileInfo(localPath).fileName(), QStringLiteral("moved.bin"));
+
+    QFile::remove(localPath);
+}
+
+void QGCFileDownloadTest::_testFileDownloadRefusesRedirect_data()
+{
+    QTest::addColumn<bool>("allowRedirects");
+    QTest::addColumn<bool>("toLocalFile");
+    QTest::addColumn<QString>("warning");  // empty: the redirect itself is the reply, which is not a network error
+    QTest::addColumn<QString>("error");
+
+    QTest::newRow("redirects not allowed") << false << false << QString() << QStringLiteral("^HTTP error 302: Found$");
+    QTest::newRow("to a local file") << true << true << QStringLiteral("Download error:") << QStringLiteral("protocol");
+}
+
+void QGCFileDownloadTest::_testFileDownloadRefusesRedirect()
+{
+    QFETCH(bool, allowRedirects);
+    QFETCH(bool, toLocalFile);
+    QFETCH(QString, warning);
+    QFETCH(QString, error);
+
+    const QByteArray payload("redirect target");
+    QTemporaryDir targetDir;
+    const QString targetFile = targetDir.filePath(QStringLiteral("target.bin"));
+    QVERIFY(writeDownloadTestFile(targetFile, payload));
+    TestFixtures::LocalHttpTestServer targetServer;
+    QVERIFY2(targetServer.listen(), "Could not start local test HTTP server");
+    targetServer.installHttpResponder(payload);
+    const QString location =
+        toLocalFile ? QUrl::fromLocalFile(targetFile).toString() : targetServer.url(QStringLiteral("/target.bin"));
+    TestFixtures::LocalHttpTestServer redirectingServer;
+    QVERIFY2(redirectingServer.listen(), "Could not start local test HTTP server");
+    redirectingServer.installRawResponder(downloadTestRedirectResponse(302, location));
+
+    QGCNetworkHelper::RequestConfig config;
+    config.allowRedirects = allowRedirects;
+    QGCFileDownload downloader(this);
+    QSignalSpy finishedSpy(&downloader, &QGCFileDownload::finished);
+    if (!warning.isEmpty()) {
+        expectLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression(warning));
+    }
+    QVERIFY(downloader.start(redirectingServer.url(QStringLiteral("/moved.bin")), config));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    if (!warning.isEmpty()) {
+        verifyExpectedLogMessage();
+    }
+
+    const QList<QVariant> args = finishedSpy.first();
+    QVERIFY(!args.at(0).toBool());
+    QVERIFY(args.at(1).toString().isEmpty());
+    QVERIFY2(QRegularExpression(error).match(args.at(2).toString()).hasMatch(), qPrintable(args.at(2).toString()));
+    QVERIFY(!QFileInfo::exists(downloader.localPath()));
 }
 
 void QGCFileDownloadTest::_testAutoDecompressGzip()

@@ -273,6 +273,53 @@ void QGCCachedFileDownloadTest::_testCachedFileDownloadCacheHitKeepsTimestamp()
     QVERIFY(downloader.cacheAge(url) >= ageSec);
 }
 
+void QGCCachedFileDownloadTest::_testCachedFileDownloadMaxAgeDecidesCacheOrNetwork_data()
+{
+    QTest::addColumn<int>("entryAgeSec");
+    QTest::addColumn<int>("maxCacheAgeSec");
+    QTest::addColumn<bool>("fromCache");
+
+    QTest::newRow("younger than the maximum age") << 600 << 3600 << true;
+    QTest::newRow("older than the maximum age") << 7200 << 3600 << false;
+    QTest::newRow("no maximum age") << 7200 << 0 << true;
+}
+
+void QGCCachedFileDownloadTest::_testCachedFileDownloadMaxAgeDecidesCacheOrNetwork()
+{
+    QFETCH(int, entryAgeSec);
+    QFETCH(int, maxCacheAgeSec);
+    QFETCH(bool, fromCache);
+
+    QTemporaryDir tempDir;
+    QGCCachedFileDownload downloader(tempDir.path(), this);
+    QSignalSpy finishedSpy(&downloader, &QGCCachedFileDownload::finished);
+
+    const QByteArray cachedBody("cached body");
+    const QByteArray serverBody("newer body on the server");
+    TestFixtures::LocalHttpTestServer server;
+    QVERIFY2(server.listen(), "Could not start local test HTTP server");
+    const QString url = server.url(QStringLiteral("/max-age.txt"));
+    server.installHttpResponder(cachedBody, 200, "text/plain", 3600);
+    QVERIFY(downloader.download(url, maxCacheAgeSec));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    QVERIFY(finishedSpy.first().at(0).toBool());
+    QCOMPARE(takeCachedDownloadContent(finishedSpy.first()), cachedBody);
+
+    server.installHttpResponder(serverBody, 200, "text/plain", 3600);
+    setCachedDownloadTimestamp(downloader.diskCache(), url, QDateTime::currentDateTime().addSecs(-entryAgeSec));
+    QCOMPARE(downloader.isCached(url, maxCacheAgeSec), fromCache);
+
+    finishedSpy.clear();
+    QVERIFY(downloader.download(url, maxCacheAgeSec));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    QVERIFY2(finishedSpy.first().at(0).toBool(), qPrintable(finishedSpy.first().at(2).toString()));
+    QCOMPARE(finishedSpy.first().at(3).toBool(), fromCache);
+    QCOMPARE(takeCachedDownloadContent(finishedSpy.first()), fromCache ? cachedBody : serverBody);
+
+    // Only a download from the network renews the entry
+    QCOMPARE(downloader.cacheAge(url) < entryAgeSec, !fromCache);
+}
+
 void QGCCachedFileDownloadTest::_testCachedFileDownloadExpiredFallsBackToCache()
 {
     QTemporaryDir tempDir;

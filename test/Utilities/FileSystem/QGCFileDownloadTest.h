@@ -20,6 +20,12 @@ private slots:
     void _testFileDownloadLocalSourceInTempDirSurvives();
     void _testFileDownloadFailureRemovesPartialFile_data();
     void _testFileDownloadFailureRemovesPartialFile();
+    void _testFileDownloadHttpErrorStatus_data();
+    void _testFileDownloadHttpErrorStatus();
+    void _testFileDownloadFollowsRedirect_data();
+    void _testFileDownloadFollowsRedirect();
+    void _testFileDownloadRefusesRedirect_data();
+    void _testFileDownloadRefusesRedirect();
     void _testAutoDecompressGzip();
     void _testAutoDecompressDisabled();
     void _testAutoDecompressUncompressedFile();
