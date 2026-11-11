@@ -143,21 +143,22 @@ bool GeoJsonHelper::loadPolygonFromFile(const QString &filePath, QList<QGeoCoord
     }
 
     for (const QVariant &shapeVar : shapes) {
+        QGeoPolygon poly;
         if (shapeVar.canConvert<QGeoPolygon>()) {
-            const QGeoPolygon poly = shapeVar.value<QGeoPolygon>();
-            vertices = poly.perimeter();
-            return true;
+            poly = shapeVar.value<QGeoPolygon>();
+        } else if (shapeVar.canConvert<QGeoShape>() && (shapeVar.value<QGeoShape>().type() == QGeoShape::PolygonType)) {
+            poly = QGeoPolygon(shapeVar.value<QGeoShape>());
+        } else {
+            continue;
         }
-        if (shapeVar.canConvert<QGeoShape>()) {
-            const QGeoShape shape = shapeVar.value<QGeoShape>();
-            if (shape.type() == QGeoShape::PolygonType) {
-                const QGeoPolygon poly(shape);
-                vertices = poly.perimeter();
-                if (!vertices.isEmpty()) {
-                    return true;
-                }
-            }
+
+        if (poly.perimeter().count() < 3) {
+            qCWarning(GeoJsonHelperLog) << "Skipping polygon with fewer than 3 vertices";
+            continue;
         }
+
+        vertices = poly.perimeter();
+        return true;
     }
 
     errorString = QCoreApplication::translate("GeoJsonHelper", _errorPrefix).arg(
@@ -184,21 +185,22 @@ bool GeoJsonHelper::loadPolylineFromFile(const QString &filePath, QList<QGeoCoor
     }
 
     for (const QVariant &shapeVar : shapes) {
+        QGeoPath path;
         if (shapeVar.canConvert<QGeoPath>()) {
-            const QGeoPath path = shapeVar.value<QGeoPath>();
-            coords = path.path();
-            return true;
+            path = shapeVar.value<QGeoPath>();
+        } else if (shapeVar.canConvert<QGeoShape>() && (shapeVar.value<QGeoShape>().type() == QGeoShape::PathType)) {
+            path = QGeoPath(shapeVar.value<QGeoShape>());
+        } else {
+            continue;
         }
-        if (shapeVar.canConvert<QGeoShape>()) {
-            const QGeoShape shape = shapeVar.value<QGeoShape>();
-            if (shape.type() == QGeoShape::PathType) {
-                const QGeoPath path(shape);
-                coords = path.path();
-                if (!coords.isEmpty()) {
-                    return true;
-                }
-            }
+
+        if (path.path().count() < 2) {
+            qCWarning(GeoJsonHelperLog) << "Skipping polyline with fewer than 2 vertices";
+            continue;
         }
+
+        coords = path.path();
+        return true;
     }
 
     errorString = QCoreApplication::translate("GeoJsonHelper", _errorPrefix).arg(

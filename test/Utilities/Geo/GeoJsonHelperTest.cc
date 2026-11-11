@@ -4,10 +4,11 @@
 #include <QtCore/QFile>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonValue>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QTemporaryDir>
 #include <QtPositioning/QGeoCoordinate>
 
 #include "GeoJsonHelper.h"
-#include <QtCore/QTemporaryDir>
 
 namespace {
 
@@ -302,6 +303,48 @@ void GeoJsonHelperTest::_loadPolylineFromPolygonFails_test()
     QVERIFY(coords.isEmpty());
     QVERIFY(!error.isEmpty());
     QVERIFY(error.contains("No polyline"));
+}
+
+void GeoJsonHelperTest::_loadTooFewVertices_test_data()
+{
+    QTest::addColumn<QByteArray>("geometry");
+    QTest::addColumn<bool>("polygon");
+
+    QTest::newRow("polygon without rings") << QByteArray(R"({"type": "Polygon", "coordinates": []})") << true;
+    QTest::newRow("polygon with an empty ring") << QByteArray(R"({"type": "Polygon", "coordinates": [[]]})") << true;
+    QTest::newRow("polygon of two vertices")
+        << QByteArray(R"({"type": "Polygon", "coordinates": [[[8.0, 47.0], [8.001, 47.0]]]})") << true;
+    // Qt's importer drops the whole ring when one of its positions is not on the globe.
+    QTest::newRow("polygon with a latitude out of range")
+        << QByteArray(
+               R"({"type": "Polygon", "coordinates": [[[8.0, 47.0], [8.0, 147.0], [8.001, 47.0], [8.0, 47.0]]]})")
+        << true;
+    QTest::newRow("polyline without vertices") << QByteArray(R"({"type": "LineString", "coordinates": []})") << false;
+    QTest::newRow("polyline of one vertex")
+        << QByteArray(R"({"type": "LineString", "coordinates": [[8.0, 47.0]]})") << false;
+}
+
+void GeoJsonHelperTest::_loadTooFewVertices_test()
+{
+    QFETCH(QByteArray, geometry);
+    QFETCH(bool, polygon);
+
+    QTemporaryDir tempDir;
+    const QString filePath = _writeGeoJsonFile(tempDir.path(), "shape.geojson", geometry);
+    QList<QGeoCoordinate> vertices;
+    QString error;
+
+    if (polygon) {
+        expectLogMessage("Utilities.GeoJsonHelper", QtWarningMsg, QRegularExpression("fewer than 3 vertices"));
+        QVERIFY(!GeoJsonHelper::loadPolygonFromFile(filePath, vertices, error));
+        QCOMPARE(error, QStringLiteral("GeoJson file load failed. No polygon found in GeoJson file."));
+    } else {
+        expectLogMessage("Utilities.GeoJsonHelper", QtWarningMsg, QRegularExpression("fewer than 2 vertices"));
+        QVERIFY(!GeoJsonHelper::loadPolylineFromFile(filePath, vertices, error));
+        QCOMPARE(error, QStringLiteral("GeoJson file load failed. No polyline found in GeoJson file."));
+    }
+    verifyExpectedLogMessage();
+    QVERIFY(vertices.isEmpty());
 }
 
 void GeoJsonHelperTest::_loadSaveGeoJsonCoordinate_test()
