@@ -72,6 +72,11 @@ QString lastDetectedFilterName()
     return t_formatState.filterName;
 }
 
+void clearLastDetectedFormat()
+{
+    updateFormatState(nullptr);
+}
+
 bool takeSizeLimitExceeded()
 {
     const bool exceeded = t_sizeLimitExceeded;

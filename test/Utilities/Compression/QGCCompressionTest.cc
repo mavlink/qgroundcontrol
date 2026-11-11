@@ -1018,6 +1018,81 @@ void QGCCompressionTest::_testDetectedFormat()
     QCOMPARE(QGCCompression::detectedFilterName(), filter);
 }
 
+void QGCCompressionTest::_testDetectedFormatAfterFailure_data()
+{
+    QTest::addColumn<QString>("api");
+    QTest::addColumn<int>("reports");  // Warnings the failure is logged with
+
+    QTest::newRow("decompressFile") << "decompressFile" << 1;
+    QTest::newRow("decompressData") << "decompressData" << 1;
+    QTest::newRow("decompressFromDevice-file") << "decompressFromDevice-file" << 1;
+    QTest::newRow("decompressFromDevice-memory") << "decompressFromDevice-memory" << 1;
+    // The archive is opened twice: for the size pre-check and for the extraction
+    QTest::newRow("extractArchive") << "extractArchive" << 2;
+    QTest::newRow("extractArchiveAtomic") << "extractArchiveAtomic" << 2;
+    QTest::newRow("extractArchiveFiltered") << "extractArchiveFiltered" << 2;
+    QTest::newRow("extractFromDevice") << "extractFromDevice" << 1;
+    QTest::newRow("extractFileDataFromDevice") << "extractFileDataFromDevice" << 1;
+}
+
+void QGCCompressionTest::_testDetectedFormatAfterFailure()
+{
+    QFETCH(QString, api);
+    QFETCH(int, reports);
+
+    // Neither input gets as far as the header that tells its format: a gzip stream that ends with its own
+    // header, and bytes that are no archive
+    const bool isStream = api.startsWith("decompress");
+    const QByteArray data =
+        isStream ? QByteArray::fromHex("1f8b08000000000000ff") : QByteArray("This is not an archive of any format");
+    QTemporaryDir tempDir;
+    const QString inputPath = tempDir.filePath(isStream ? "cut.gz" : "garbage.zip");
+    const QString outputPath = tempDir.filePath("output");
+    QVERIFY(_writeFile(inputPath, data));
+    QBuffer device;
+    device.setData(data);
+    QVERIFY(device.open(QIODevice::ReadOnly));
+
+    // What the operation before it detected must not be reported for the one that fails
+    QVERIFY(QGCCompression::extractArchive(QStringLiteral(":/unittest/manifest.json.zip"), tempDir.filePath("other")));
+    QVERIFY(QGCCompression::detectedFormatName().startsWith("ZIP"));
+    QCOMPARE(QGCCompression::detectedFilterName(), QStringLiteral("none"));
+
+    for (int i = 0; i < reports; ++i) {
+        expectLogMessage(
+            "Utilities.QGClibarchive", QtWarningMsg,
+            QRegularExpression("truncated gzip input|Unrecognized archive format|Archive is empty or invalid"));
+    }
+    if (api == "decompressFile") {
+        QVERIFY(!QGCCompression::decompressFile(inputPath, outputPath));
+    } else if (api == "decompressData") {
+        QVERIFY(QGCCompression::decompressData(data).isEmpty());
+    } else if (api == "decompressFromDevice-file") {
+        QVERIFY(!QGCCompression::decompressFromDevice(&device, outputPath));
+    } else if (api == "decompressFromDevice-memory") {
+        QVERIFY(QGCCompression::decompressFromDevice(&device).isEmpty());
+    } else if (api == "extractArchive") {
+        QVERIFY(!QGCCompression::extractArchive(inputPath, outputPath));
+    } else if (api == "extractArchiveAtomic") {
+        QVERIFY(!QGCCompression::extractArchiveAtomic(inputPath, outputPath));
+    } else if (api == "extractArchiveFiltered") {
+        QVERIFY(!QGCCompression::extractArchiveFiltered(inputPath, outputPath,
+                                                        [](const QGCCompression::ArchiveEntry&) { return true; }));
+    } else if (api == "extractFromDevice") {
+        QVERIFY(!QGCCompression::extractFromDevice(&device, outputPath));
+    } else if (api == "extractFileDataFromDevice") {
+        QVERIFY(QGCCompression::extractFileDataFromDevice(&device, QStringLiteral("manifest.json")).isEmpty());
+    } else {
+        QFAIL("Unknown row");
+    }
+    for (int i = 0; i < reports; ++i) {
+        verifyExpectedLogMessage();
+    }
+
+    QCOMPARE(QGCCompression::detectedFormatName(), QString());
+    QCOMPARE(QGCCompression::detectedFilterName(), QString());
+}
+
 // ============================================================================
 // Edge Cases and Error Handling Tests
 // ============================================================================

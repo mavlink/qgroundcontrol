@@ -141,6 +141,7 @@ void clearFormatInfo()
 {
     t_state.formatName.clear();
     t_state.filterName.clear();
+    QGClibarchive::clearLastDetectedFormat();
 }
 
 }  // namespace
@@ -630,6 +631,8 @@ QString decompressIfNeeded(const QString& filePath, const QString& outputPath, b
 
 QByteArray decompressData(const QByteArray& data, Format format, qint64 maxDecompressedBytes)
 {
+    clearFormatInfo();
+
     if (data.isEmpty()) {
         qCWarning(QGCCompressionLog) << "Cannot decompress empty data";
         return {};

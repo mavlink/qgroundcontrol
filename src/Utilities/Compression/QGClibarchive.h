@@ -418,6 +418,11 @@ QString lastDetectedFormatName();
 /// @return Filter name like "gzip", "xz", "zstd", "none", or empty
 QString lastDetectedFilterName();
 
+/// Forget the format and filter detected on this thread (thread-local)
+/// They are recorded when the first header of an archive is read. An operation that fails before that
+/// records nothing, and would be described by what the operation before it detected.
+void clearLastDetectedFormat();
+
 /// Tell whether an operation on this thread stopped at its maxBytes limit since the last call
 /// (thread-local). Resets the flag, so call it once for each failed operation that takes a limit.
 bool takeSizeLimitExceeded();

@@ -50,6 +50,8 @@ private slots:
     // Format reported for the last operation
     void _testDetectedFormat_data();
     void _testDetectedFormat();
+    void _testDetectedFormatAfterFailure_data();
+    void _testDetectedFormatAfterFailure();
 
     // Edge cases and error handling
     void _testCorruptArchive();
