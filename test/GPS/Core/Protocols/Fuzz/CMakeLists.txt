@@ -27,4 +27,10 @@ add_test(NAME GPSProtocolFuzzSmoke
          COMMAND QGCGPSProtocolFuzz -runs=10000 -seed=12345 -max_len=8192 "${CMAKE_CURRENT_BINARY_DIR}/corpus"
                  "${CMAKE_CURRENT_BINARY_DIR}/fixture-seeds"
 )
-set_tests_properties(GPSProtocolFuzzSmoke PROPERTIES LABELS "GPS;Fuzz" TIMEOUT 60)
+# Always built with ASan and UBSan, so it gets the unit-test timeout of the application's sanitizer builds.
+set_tests_properties(
+    GPSProtocolFuzzSmoke
+    PROPERTIES
+        LABELS "GPS;Fuzz"
+        TIMEOUT 180
+)
