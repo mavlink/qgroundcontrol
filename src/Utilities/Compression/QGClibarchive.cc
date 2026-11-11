@@ -393,6 +393,48 @@ void trackAndCreateParentDirs(const QString& path, const QString& outputDir, QSe
     }
 }
 
+/// Canonical path of an extraction root. Resolving it first keeps a symlinked parent (for example
+/// /var -> /private/var on macOS) from tripping the containment and secure symlink checks.
+QString canonicalDirectoryPath(const QString& directoryPath)
+{
+    const QString canonicalPath = QFileInfo(directoryPath).canonicalFilePath();
+    return canonicalPath.isEmpty() ? QFileInfo(directoryPath).absoluteFilePath() : canonicalPath;
+}
+
+/// Whether @a path, absolute and free of "." and "..", is inside the extraction root and stays there
+/// on disk: its nearest existing component, which may be the path itself, has to resolve inside the
+/// root, because a symbolic link there would redirect the write.
+bool isContainedPath(const QString& canonicalOutputDir, const QString& path)
+{
+    const auto isInsideRoot = [&canonicalOutputDir](const QString& candidate) {
+        return candidate == canonicalOutputDir || candidate.startsWith(canonicalOutputDir + QLatin1Char('/'));
+    };
+
+    if (!isInsideRoot(path)) {
+        return false;
+    }
+
+    QFileInfo existing(path);
+    while (!existing.exists() && !existing.isSymLink()) {
+        const QString parentPath = existing.path();
+        if (parentPath == existing.filePath()) {
+            return false;
+        }
+        existing.setFile(parentPath);
+    }
+    return isInsideRoot(existing.canonicalFilePath());
+}
+
+/// Path an archive entry is extracted to. Every extraction path resolves entry names through this.
+/// @param canonicalOutputDir Extraction root as returned by canonicalDirectoryPath()
+/// @param entryName Entry path as stored in the archive
+/// @return Absolute path inside the root, or an empty string if the entry would land outside it
+QString containedEntryPath(const QString& canonicalOutputDir, const QString& entryName)
+{
+    const QString path = QDir::cleanPath(QGCFileHelper::joinPath(canonicalOutputDir, entryName));
+    return isContainedPath(canonicalOutputDir, path) ? path : QString();
+}
+
 /// Extract entries from an open archive to a directory
 /// @param a Archive reader (already opened with format support configured)
 /// @param outputDirectoryPath Directory to extract to (must exist)
@@ -425,13 +467,7 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
     QStringList createdDirs;
     QSet<QString> existingDirs;
 
-    // Resolve the extraction root to a canonical path when possible so platforms
-    // with symlinked temp roots (for example, /var -> /private/var on macOS)
-    // do not trip libarchive's secure symlink checks for parent directories.
-    QString canonicalOutputDir = QFileInfo(outputDirectoryPath).canonicalFilePath();
-    if (canonicalOutputDir.isEmpty()) {
-        canonicalOutputDir = QFileInfo(outputDirectoryPath).absoluteFilePath();
-    }
+    const QString canonicalOutputDir = canonicalDirectoryPath(outputDirectoryPath);
     existingDirs.insert(canonicalOutputDir);
 
     bool formatLogged = false;
@@ -445,13 +481,10 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
 
         const char* currentFile = archive_entry_pathname(entry);
         QString entryName = QString::fromUtf8(currentFile);
-        QString outputPath = QGCFileHelper::joinPath(canonicalOutputDir, entryName);
 
         // Prevent path traversal attacks
-        QFileInfo outputInfo(outputPath);
-        QString canonicalOutput = outputInfo.absoluteFilePath();
-
-        if (!canonicalOutput.startsWith(canonicalOutputDir + "/") && canonicalOutput != canonicalOutputDir) {
+        const QString outputPath = containedEntryPath(canonicalOutputDir, entryName);
+        if (outputPath.isEmpty()) {
             qCWarning(QGClibarchiveLog) << "Skipping path traversal attempt:" << currentFile;
             continue;
         }
@@ -462,27 +495,41 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
             continue;
         }
 
+        // Security: libarchive resolves a hard link's target against the working directory, not the
+        // output directory, and writes the entry's data through the link
+        if (archive_entry_hardlink(entry) != nullptr) {
+            qCWarning(QGClibarchiveLog) << "Skipping hard link:" << currentFile << "->"
+                                        << archive_entry_hardlink(entry);
+            continue;
+        }
+
         // Security: validate symlink targets don't escape output directory
         const auto fileType = archive_entry_filetype(entry);
         if (fileType == AE_IFLNK) {
             const char* symlinkTarget = archive_entry_symlink(entry);
             if (symlinkTarget) {
                 QString target = QString::fromUtf8(symlinkTarget);
-                QString resolvedTarget;
 
                 if (QFileInfo(target).isAbsolute()) {
                     // Absolute symlink - reject outright
                     qCWarning(QGClibarchiveLog)
                         << "Skipping symlink with absolute target:" << currentFile << "->" << target;
                     continue;
-                } else {
-                    // Relative symlink - resolve against entry's parent directory
-                    QString entryDir = QFileInfo(outputPath).absolutePath();
-                    resolvedTarget = QFileInfo(entryDir + "/" + target).absoluteFilePath();
+                }
+
+                // Where ".." leads depends on the links before it in the target, which the archive can
+                // still create after this check, so no target with ".." is accepted
+                target.replace(QLatin1Char('\\'), QLatin1Char('/'));
+                if (target.split(QLatin1Char('/')).contains(QLatin1String(".."))) {
+                    qCWarning(QGClibarchiveLog)
+                        << "Skipping symlink with \"..\" in its target:" << currentFile << "->" << symlinkTarget;
+                    continue;
                 }
 
                 // Verify resolved target stays within output directory
-                if (!resolvedTarget.startsWith(canonicalOutputDir + "/") && resolvedTarget != canonicalOutputDir) {
+                const QString resolvedTarget =
+                    QDir::cleanPath(QFileInfo(outputPath).path() + QLatin1Char('/') + target);
+                if (!isContainedPath(canonicalOutputDir, resolvedTarget)) {
                     qCWarning(QGClibarchiveLog)
                         << "Skipping symlink escaping output directory:" << currentFile << "->" << symlinkTarget;
                     continue;
@@ -514,12 +561,12 @@ bool extractArchiveEntries(struct archive* a, const QString& outputDirectoryPath
 
         // Track created file/directory for cleanup
         if (fileType == AE_IFDIR) {
-            if (!existingDirs.contains(canonicalOutput)) {
-                createdDirs.append(canonicalOutput);
-                existingDirs.insert(canonicalOutput);
+            if (!existingDirs.contains(outputPath)) {
+                createdDirs.append(outputPath);
+                existingDirs.insert(outputPath);
             }
         } else {
-            createdFiles.append(canonicalOutput);
+            createdFiles.append(outputPath);
         }
 
         // An entry of a streamed ZIP has data but no size in its header
@@ -1049,6 +1096,7 @@ bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNam
         return false;
     }
 
+    const QString canonicalOutputDir = canonicalDirectoryPath(outputDirectoryPath);
     QSet<QString> targetFiles(fileNames.begin(), fileNames.end());
     QSet<QString> extractedFiles;
     struct archive_entry* entry;
@@ -1061,7 +1109,11 @@ bool extractMultipleFiles(const QString& archivePath, const QStringList& fileNam
             continue;
         }
 
-        const QString outputPath = QGCFileHelper::joinPath(outputDirectoryPath, entryName);
+        const QString outputPath = containedEntryPath(canonicalOutputDir, entryName);
+        if (outputPath.isEmpty()) {
+            qCWarning(QGClibarchiveLog) << "Path traversal attempt:" << entryName;
+            return false;
+        }
         QGCFileHelper::ensureParentExists(outputPath);
 
         if (!writeArchiveEntryToFile(reader.handle(), outputPath)) {
@@ -1122,6 +1174,7 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
         return false;
     }
 
+    const QString canonicalOutputDir = canonicalDirectoryPath(outputDirectoryPath);
     struct archive_entry* entry;
     int matchCount = 0;
     NextEntry next;
@@ -1136,7 +1189,11 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
         }
 
         const QString entryName = QString::fromUtf8(archive_entry_pathname(entry));
-        const QString outputPath = QGCFileHelper::joinPath(outputDirectoryPath, entryName);
+        const QString outputPath = containedEntryPath(canonicalOutputDir, entryName);
+        if (outputPath.isEmpty()) {
+            qCWarning(QGClibarchiveLog) << "Skipping path traversal attempt:" << entryName;
+            continue;
+        }
 
         QGCFileHelper::ensureParentExists(outputPath);
 
@@ -1323,6 +1380,7 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
         return false;
     }
 
+    const QString canonicalOutputDir = canonicalDirectoryPath(outputDirectoryPath);
     const qint64 totalSize = reader.dataSize();
     qint64 bytesProcessed = 0;
     qint64 bytesExtracted = 0;
@@ -1352,7 +1410,11 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
             return false;
         }
 
-        const QString outputPath = QGCFileHelper::joinPath(outputDirectoryPath, info.name);
+        const QString outputPath = containedEntryPath(canonicalOutputDir, info.name);
+        if (outputPath.isEmpty()) {
+            qCWarning(QGClibarchiveLog) << "Skipping path traversal attempt:" << info.name;
+            continue;
+        }
         QGCFileHelper::ensureParentExists(outputPath);
 
         if (!writeArchiveEntryToFile(reader.handle(), outputPath)) {

@@ -85,7 +85,10 @@ QByteArray QGCCompressionTest::_makeTar(const QList<TarEntry>& entries)
         const auto setField = [&header](qsizetype offset, const QByteArray& value) {
             header.replace(offset, value.size(), value);
         };
-        setField(0, entry.name.left(100));
+        // A name longer than its field continues in the ustar prefix field
+        const qsizetype prefixSize = (entry.name.size() > 100) ? entry.name.indexOf('/', entry.name.size() - 101) : -1;
+        setField(0, entry.name.mid(prefixSize + 1).left(100));
+        setField(345, entry.name.left(qMax<qsizetype>(prefixSize, 0)));
         setField(100, "0000644");
         setField(108, "0000000");
         setField(116, "0000000");
@@ -1785,6 +1788,116 @@ void QGCCompressionTest::_testExtractArchiveToSymlinkedOutputPath()
     QVERIFY(QGCCompression::extractArchive(zipResource, symlinkOutputDir));
     QVERIFY(QFile::exists(realOutputDir + "/manifest.json"));
     QVERIFY(QFile::exists(symlinkOutputDir + "/manifest.json"));
+}
+
+void QGCCompressionTest::_testExtractRejectsEscapingNames_data()
+{
+    QTest::addColumn<QString>("api");
+
+    for (const char* api : {"extractArchive", "extractArchiveFiltered", "extractByPattern", "extractFiles"}) {
+        QTest::newRow(api) << QString::fromLatin1(api);
+    }
+}
+
+void QGCCompressionTest::_testExtractRejectsEscapingNames()
+{
+    QFETCH(QString, api);
+
+    QTemporaryDir tempDir;
+    const QString outputDir = tempDir.filePath("output");
+    const QString absolutePath = tempDir.filePath("absolute.txt");
+    const QString archivePath = tempDir.filePath("hostile.tar");
+    QFile archive(archivePath);
+    QVERIFY(archive.open(QIODevice::WriteOnly));
+    archive.write(_makeTar({{.name = "../escape.txt", .data = "escaped"},
+                            {.name = QFile::encodeName(absolutePath), .data = "absolute"},
+                            {.name = "good.txt", .data = "good"}}));
+    archive.close();
+
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("ath traversal attempt.*escape"));
+    if (api == "extractArchive") {
+        QVERIFY(QGCCompression::extractArchive(archivePath, outputDir));
+    } else if (api == "extractArchiveFiltered") {
+        QVERIFY(QGCCompression::extractArchiveFiltered(archivePath, outputDir,
+                                                       [](const QGCCompression::ArchiveEntry&) { return true; }));
+    } else if (api == "extractByPattern") {
+        QVERIFY(QGCCompression::extractByPattern(archivePath, {"*.txt"}, outputDir));
+    } else {
+        // Asked for by name, so refusing the entry fails the call
+        QVERIFY(!QGCCompression::extractFiles(archivePath, {"../escape.txt", "good.txt"}, outputDir));
+    }
+    verifyExpectedLogMessage();
+
+    QVERIFY(!QFile::exists(tempDir.filePath("escape.txt")));
+    QVERIFY(!QFile::exists(absolutePath));
+    const QStringList archiveAndOutput{QStringLiteral("hostile.tar"), QStringLiteral("output")};
+    QCOMPARE(QDir(tempDir.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot, QDir::Name),
+             archiveAndOutput);
+    if (api != "extractFiles") {
+        QVERIFY(QFile::exists(outputDir + "/good.txt"));
+        // The absolute name is kept, below the output directory
+        QVERIFY(QFile::exists(outputDir + absolutePath));
+    }
+}
+
+void QGCCompressionTest::_testExtractRejectsEscapingLinks()
+{
+#ifndef Q_OS_UNIX
+    QSKIP("The hostile archive is made of POSIX links");
+#else
+    QTemporaryDir tempDir;
+    const QString outputDir = tempDir.filePath("output");
+    const QString archivePath = tempDir.filePath("hostile.tar");
+    const QString victimPath = tempDir.filePath("victim.txt");
+    QFile victim(victimPath);
+    QVERIFY(victim.open(QIODevice::WriteOnly));
+    victim.write("original");
+    victim.close();
+
+    QFile archive(archivePath);
+    QVERIFY(archive.open(QIODevice::WriteOnly));
+    archive.write(_makeTar({
+        // "climb" only leaves the output directory through "inside", which a check of the names alone misses
+        {.name = "inside", .type = '2', .linkName = "."},
+        {.name = "climb", .type = '2', .linkName = "inside/.."},
+        {.name = "absolute", .type = '2', .linkName = "/"},
+        {.name = "parent", .type = '2', .linkName = ".."},
+        {.name = "hard.txt", .type = '1', .linkName = "victim.txt"},
+        {.name = "good.txt", .data = "good"},
+        {.name = "climb/made_dir/inner.txt", .data = "inner"},
+    }));
+    archive.close();
+
+    // libarchive resolves a hard link target against the working directory
+    const QString originalDir = QDir::currentPath();
+    QVERIFY(QDir::setCurrent(tempDir.path()));
+    const auto restoreDir = qScopeGuard([&originalDir]() { QDir::setCurrent(originalDir); });
+
+    for (const char* skipped : {"climb", "absolute", "parent"}) {
+        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("Skipping symlink.*%1").arg(QLatin1String(skipped))));
+    }
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Skipping hard link.*hard.txt"));
+    const bool extracted = QGCCompression::extractArchive(archivePath, outputDir);
+    for (int i = 0; i < 4; ++i) {
+        verifyExpectedLogMessage();
+    }
+
+    QVERIFY(!QFileInfo::exists(outputDir + "/hard.txt"));
+    QVERIFY(victim.open(QIODevice::ReadOnly));
+    QCOMPARE(victim.readAll(), QByteArray("original"));
+    for (const char* link : {"climb", "absolute", "parent"}) {
+        QVERIFY2(!QFileInfo(outputDir + QLatin1Char('/') + QLatin1String(link)).isSymLink(), link);
+    }
+    const QStringList untouched{QStringLiteral("hostile.tar"), QStringLiteral("output"), QStringLiteral("victim.txt")};
+    QCOMPARE(QDir(tempDir.path()).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot, QDir::Name),
+             untouched);
+
+    // Entries that stay inside are still extracted
+    QVERIFY(extracted);
+    QVERIFY(QFile::exists(outputDir + "/good.txt"));
+    QVERIFY(QFile::exists(outputDir + "/climb/made_dir/inner.txt"));
+#endif
 }
 
 void QGCCompressionTest::_testSpecialCharactersInPath()

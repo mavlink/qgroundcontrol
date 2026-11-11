@@ -169,6 +169,8 @@ QByteArray decompressData(const QByteArray &data, Format format = Format::Auto,
 // ============================================================================
 
 /// Extract an archive to a directory
+/// Nothing is written outside the output directory: entries whose path leaves it, hard links, and
+/// symbolic links with an absolute target or ".." in it are skipped with a warning.
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param outputDirectoryPath Output directory path
 /// @param format Archive format (Auto = detect from archivePath)
