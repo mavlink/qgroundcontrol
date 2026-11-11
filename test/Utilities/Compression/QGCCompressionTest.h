@@ -40,6 +40,8 @@ private slots:
     void _testDecompressFromResource();
     void _testDecompressData();
     void _testDecompressIfNeeded();
+    void _testDecompressIfNeededDefaultOutput_data();
+    void _testDecompressIfNeededDefaultOutput();
 
     // Progress callbacks
     void _testProgressCallbackExtract();

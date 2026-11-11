@@ -708,6 +708,63 @@ void QGCCompressionTest::_testDecompressIfNeeded()
     verifyExpectedLogMessage();
 }
 
+void QGCCompressionTest::_testDecompressIfNeededDefaultOutput_data()
+{
+    QTest::addColumn<QString>("resource");
+    QTest::addColumn<QString>("inputName");
+    QTest::addColumn<QString>("expectedOutputName");
+
+    const QString gz = QStringLiteral(":/unittest/manifest.json.gz");
+    const QString xz = QStringLiteral(":/unittest/manifest.json.xz");
+    const QString zst = QStringLiteral(":/unittest/manifest.json.zst");
+
+    QTest::newRow("gz") << gz << "manifest.json.gz" << "manifest.json";
+    QTest::newRow("gzip") << gz << "manifest.json.gzip" << "manifest.json";
+    QTest::newRow("xz") << xz << "manifest.json.xz" << "manifest.json";
+    QTest::newRow("lzma") << xz << "manifest.json.lzma" << "manifest.json";
+    QTest::newRow("zst") << zst << "manifest.json.zst" << "manifest.json";
+    QTest::newRow("zstd") << zst << "manifest.json.zstd" << "manifest.json";
+#ifdef QGC_ENABLE_BZIP2
+    const QString bz2 = QStringLiteral(":/unittest/manifest.json.bz2");
+    QTest::newRow("bz2") << bz2 << "manifest.json.bz2" << "manifest.json";
+    QTest::newRow("bzip2") << bz2 << "manifest.json.bzip2" << "manifest.json";
+#endif
+#ifdef QGC_ENABLE_LZ4
+    QTest::newRow("lz4") << QStringLiteral(":/unittest/manifest.json.lz4") << "manifest.json.lz4" << "manifest.json";
+#endif
+    QTest::newRow("uppercase") << gz << "MANIFEST.JSON.GZIP" << "MANIFEST.JSON";
+    QTest::newRow("no-extension") << gz << "manifest" << "manifest.decompressed";
+    QTest::newRow("unrecognised-extension") << gz << "manifest.bin" << "manifest.bin.decompressed";
+}
+
+void QGCCompressionTest::_testDecompressIfNeededDefaultOutput()
+{
+    QFETCH(QString, resource);
+    QFETCH(QString, inputName);
+    QFETCH(QString, expectedOutputName);
+
+    QFile resourceFile(resource);
+    QVERIFY(resourceFile.open(QIODevice::ReadOnly));
+    const QByteArray compressed = resourceFile.readAll();
+
+    QTemporaryDir tempDir;
+    const QString inputPath = tempDir.filePath(inputName);
+    QFile input(inputPath);
+    QVERIFY(input.open(QIODevice::WriteOnly));
+    QCOMPARE(input.write(compressed), compressed.size());
+    input.close();
+
+    const QString expectedPath = tempDir.filePath(expectedOutputName);
+    QCOMPARE(QGCCompression::decompressIfNeeded(inputPath), expectedPath);
+    QCOMPARE(QGCCompression::strippedPath(inputPath), expectedPath);
+
+    QFile output(expectedPath);
+    QVERIFY(output.open(QIODevice::ReadOnly));
+    QVERIFY(output.readAll().contains("\"name\""));
+    QVERIFY(input.open(QIODevice::ReadOnly));
+    QCOMPARE(input.readAll(), compressed);
+}
+
 // ============================================================================
 // Progress Callback Tests
 // ============================================================================

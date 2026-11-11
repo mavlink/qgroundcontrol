@@ -535,17 +535,17 @@ bool isCompressionFormat(Format format)
 
 QString strippedPath(const QString& filePath)
 {
-    const Format format = detectFormat(filePath);
-    if (!isCompressionFormat(format)) {
+    if (!isCompressionFormat(detectFormat(filePath))) {
         return filePath;
     }
 
-    const QString ext = formatExtension(format);
-    if (filePath.endsWith(ext, Qt::CaseInsensitive)) {
-        return filePath.left(filePath.size() - ext.size());
+    // Every single-stream extension the detection accepts is the suffix after the last dot
+    if (detectFormatFromExtension(filePath) != Format::Auto) {
+        return filePath.left(filePath.lastIndexOf(QLatin1Char('.')));
     }
 
-    return filePath;
+    // Detected from the content: the name has nothing to strip, and the result must not be the input
+    return filePath + QStringLiteral(".decompressed");
 }
 
 // ============================================================================

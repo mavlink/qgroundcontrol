@@ -109,8 +109,10 @@ inline bool isArchiveFile(const QString &filePath) {
     return isArchiveFormat(detectFormat(filePath));
 }
 
-/// Get path with compression extension stripped (.gz, .xz, .zst removed)
-/// Returns original path if not a compressed file format
+/// Get the path a compressed file decompresses to: its compression extension removed
+/// (.gz, .gzip, .xz, .lzma, .zst, ...), or ".decompressed" appended when the format was
+/// detected from the content and the name has no such extension, so that the result
+/// differs from the input. Returns original path if not a compressed file format
 QString strippedPath(const QString &filePath);
 
 /// Get the detected archive format name from the last operation (thread-local)
