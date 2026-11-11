@@ -98,8 +98,7 @@ GPSOpenResult SerialGPSTransport::open()
                             _serial->setParity(QSerialPort::NoParity) && _serial->setStopBits(QSerialPort::OneStop) &&
                             _serial->setFlowControl(QSerialPort::NoFlowControl);
     if (!configured || isCancelled()) {
-        const GPSOpenResult result{isCancelled() ? GPSOpenStatus::Cancelled : GPSOpenStatus::Error,
-                                   _serial->errorString()};
+        GPSOpenResult result{isCancelled() ? GPSOpenStatus::Cancelled : GPSOpenStatus::Error, _serial->errorString()};
         _serial->close();
         return result;
     }

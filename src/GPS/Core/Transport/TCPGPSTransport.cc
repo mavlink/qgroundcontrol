@@ -13,7 +13,7 @@ namespace {
 GPSOpenResult socketOpenFailure(const GPSTransport& transport, QAbstractSocket& socket, QDeadlineTimer deadline)
 {
     const bool timedOut = deadline.hasExpired();
-    const GPSOpenResult result{
+    GPSOpenResult result{
         transport.isCancelled() ? GPSOpenStatus::Cancelled
         : timedOut              ? GPSOpenStatus::TimedOut
                                 : GPSOpenStatus::Error,

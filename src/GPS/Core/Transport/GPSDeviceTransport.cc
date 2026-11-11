@@ -106,8 +106,8 @@ GPSWriteResult GPSDeviceTransport::writeData(QByteArrayView bytes, QDeadlineTime
             status = GPSWriteStatus::TimedOut;
         }
     }
-    const GPSWriteResult result{status, accepted, written,
-                                status == GPSWriteStatus::Error ? readFailure().detail : QString()};
+    GPSWriteResult result{status, accepted, written,
+                          status == GPSWriteStatus::Error ? readFailure().detail : QString()};
     if (status != GPSWriteStatus::Completed && accepted > 0) {
         retire();
     }

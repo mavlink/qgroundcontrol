@@ -13,7 +13,7 @@
 #include "Vehicle.h"
 #include "VehicleLinkManager.h"
 
-QGC_LOGGING_CATEGORY(RTCMMAVLinkLog, "GPS.Corrections.RTCMMavlink")
+QGC_LOGGING_CATEGORY(RTCMMAVLinkLog, "GPS.Corrections.RTCMMAVLink")
 static_assert(RTCMMAVLinkPacket::kFragmentLen == MAVLINK_MSG_GPS_RTCM_DATA_FIELD_DATA_LEN);
 
 namespace {

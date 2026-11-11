@@ -35,7 +35,7 @@ GPSWriteResult GPSTransport::write(QByteArrayView bytes, QDeadlineTimer deadline
 
 std::chrono::milliseconds GPSTransport::configurationWriteTimeout() const
 {
-    return std::chrono::milliseconds(500);
+    return DEFAULT_WRITE_TIMEOUT;
 }
 
 bool GPSTransport::setBaudrate(unsigned baudrate)

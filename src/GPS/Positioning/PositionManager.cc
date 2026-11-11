@@ -9,7 +9,7 @@
 #include "QGCLoggingCategory.h"
 #include "RuntimeScheduler.h"
 
-QGC_LOGGING_CATEGORY(PositionManagerLog, "GPS.PositionManager.QGCPositionManager")
+QGC_LOGGING_CATEGORY(PositionManagerLog, "GPS.Positioning.PositionManager")
 
 namespace {
 
