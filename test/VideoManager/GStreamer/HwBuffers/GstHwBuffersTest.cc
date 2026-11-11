@@ -102,14 +102,14 @@ int s_testCacheResets = 0;
 
 const HwPathDescriptor kTestBridgePathA = {
     .path = HwVideoBufferPath::GlMemory,
-    .matches = [](GstMemory*, const HwVideoBufferContext&) { return false; },
+    .matches = [](GstMemory*) { return false; },
     .resetCaches = [] { ++s_testCacheResets; },
     .bridge = []() -> GstContextBridgeBase& { return testBridgeA(); },
 };
 
 const HwPathDescriptor kTestBridgePathB = {
     .path = HwVideoBufferPath::Vulkan,
-    .matches = [](GstMemory*, const HwVideoBufferContext&) { return false; },
+    .matches = [](GstMemory*) { return false; },
     .bridge = []() -> GstContextBridgeBase& { return testBridgeB(); },
 };
 
@@ -455,15 +455,15 @@ std::unique_ptr<GstHwVideoBuffer> constructTestBuffer(TestPathState& state, GstS
 
 const HwPathDescriptor kTestSelectPathA = {
     .path = HwVideoBufferPath::GlMemory,
-    .matches = [](GstMemory*, const HwVideoBufferContext&) { return s_testPathA.matches; },
-    .admits = [] { return s_testPathA.admits; },
+    .matches = [](GstMemory*) { return s_testPathA.matches; },
+    .admits = [](GstMemory*, const HwVideoBufferContext&) { return s_testPathA.admits; },
     .construct = [](GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
                     const HwVideoBufferContext&) { return constructTestBuffer(s_testPathA, sample, info, format); },
 };
 
 const HwPathDescriptor kTestSelectPathB = {
     .path = HwVideoBufferPath::Vulkan,
-    .matches = [](GstMemory*, const HwVideoBufferContext&) { return s_testPathB.matches; },
+    .matches = [](GstMemory*) { return s_testPathB.matches; },
     .construct = [](GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
                     const HwVideoBufferContext&) { return constructTestBuffer(s_testPathB, sample, info, format); },
 };

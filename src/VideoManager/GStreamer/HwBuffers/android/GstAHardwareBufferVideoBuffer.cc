@@ -380,8 +380,9 @@ void prepareAhbContext(HwVideoBufferContext& context)
 
 constinit const HwPathDescriptor GstHwPaths::kAHardwareBuffer = {
     .path = HwVideoBufferPath::AHardwareBuffer,
-    .matches = [](GstMemory* mem, const HwVideoBufferContext& context) -> bool {
-        return (context.ahbEglDisplay != EGL_NO_DISPLAY) && gst_is_ahardware_buffer_memory(mem);
+    .matches = [](GstMemory* mem) -> bool { return gst_is_ahardware_buffer_memory(mem); },
+    .admits = [](GstMemory*, const HwVideoBufferContext& context) -> bool {
+        return context.ahbEglDisplay != EGL_NO_DISPLAY;
     },
     .construct = [](GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
                     const HwVideoBufferContext& context) -> std::unique_ptr<GstHwVideoBuffer> {

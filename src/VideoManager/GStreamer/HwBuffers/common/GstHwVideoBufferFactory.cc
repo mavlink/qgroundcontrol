@@ -97,7 +97,7 @@ std::unique_ptr<QHwVideoBuffer> selectHwVideoBuffer(LazySample& sample, GstBuffe
 
     // A matched path owns the frame: when it declines or fails, the frame goes to the CPU without trying later paths.
     auto importThrough = [&](const HwPathDescriptor& path) -> std::unique_ptr<QHwVideoBuffer> {
-        if (path.admits && !path.admits()) {
+        if (path.admits && !path.admits(mem0, context)) {
             if (cache) {
                 cache->validated = false;
             }
@@ -113,7 +113,7 @@ std::unique_ptr<QHwVideoBuffer> selectHwVideoBuffer(LazySample& sample, GstBuffe
     // stay per-buffer: decoders can swap memory or recycle bad handles under stable caps.
     if (cache && cache->validated && cache->path != HwVideoBufferPath::None) {
         for (const HwPathDescriptor* path : paths) {
-            if ((path->path == cache->path) && path->matches(mem0, context)) {
+            if ((path->path == cache->path) && path->matches(mem0)) {
                 return importThrough(*path);
             }
         }
@@ -121,7 +121,7 @@ std::unique_ptr<QHwVideoBuffer> selectHwVideoBuffer(LazySample& sample, GstBuffe
     }
 
     for (const HwPathDescriptor* path : paths) {
-        if (path->matches(mem0, context)) {
+        if (path->matches(mem0)) {
             return importThrough(*path);
         }
     }

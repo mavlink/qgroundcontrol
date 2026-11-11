@@ -310,7 +310,7 @@ namespace {
 
 // Streaming thread (sink start). Only the EGLDisplay Qt itself renders with can import for it, and Qt has none under
 // GLX; qgcqvideosink puts the current one (HwBuffers::dmaBufImportDisplay()) into each frame's context. Without one
-// the path never matches, so DMABuf frames take the CPU path up front instead of failing every import.
+// the path admits no frame, so DMABuf frames take the CPU path up front instead of failing every import.
 void prepareDmaBufContext(HwVideoBufferContext&)
 {
     static std::atomic<bool> s_logged{false};
@@ -324,13 +324,23 @@ void prepareDmaBufContext(HwVideoBufferContext&)
     }
 }
 
+// The display comes and goes within a caps epoch (Qt's EGLDisplay becomes known, an import failure disables the path
+// until the scene graph is recreated), so it is asked for every frame rather than deciding whether the path matches.
+bool admitDmaBuf(GstMemory*, const HwVideoBufferContext& context)
+{
+    if (context.dmaBufEglDisplay != EGL_NO_DISPLAY) {
+        return true;
+    }
+    GstHwPathTelemetry::recordFallbackReason(HwVideoBufferPath::DmaBuf, GstHwPathTelemetry::HwFallbackReason::NoExt);
+    return false;
+}
+
 }  // namespace
 
 constinit const HwPathDescriptor GstHwPaths::kDmaBuf = {
     .path = HwVideoBufferPath::DmaBuf,
-    .matches = [](GstMemory* mem, const HwVideoBufferContext& context) -> bool {
-        return (context.dmaBufEglDisplay != EGL_NO_DISPLAY) && gst_is_dmabuf_memory(mem);
-    },
+    .matches = [](GstMemory* mem) -> bool { return gst_is_dmabuf_memory(mem); },
+    .admits = &admitDmaBuf,
     .construct = [](GstSample* sample, const GstVideoInfo& info, QVideoFrameFormat format,
                     const HwVideoBufferContext& context) -> std::unique_ptr<GstHwVideoBuffer> {
         return std::make_unique<GstDmaBufVideoBuffer>(sample, info, format, context.dmaBufEglDisplay);

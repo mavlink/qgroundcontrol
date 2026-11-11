@@ -96,7 +96,7 @@ QVideoFrameTexturesUPtr GstVulkanVideoBuffer::mapTextures(QRhi& rhi, QVideoFrame
 
 constinit const HwPathDescriptor GstHwPaths::kVulkan = {
     .path = HwVideoBufferPath::Vulkan,
-    .matches = [](GstMemory* mem, const HwVideoBufferContext&) -> bool { return gst_is_vulkan_image_memory(mem); },
+    .matches = [](GstMemory* mem) -> bool { return gst_is_vulkan_image_memory(mem); },
     .construct = &GstHwPaths::construct<GstVulkanVideoBuffer>,
     .bridge = &GstVulkanContextBridge::instance,
 };

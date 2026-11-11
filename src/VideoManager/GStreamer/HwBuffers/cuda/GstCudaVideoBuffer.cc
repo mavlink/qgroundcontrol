@@ -145,8 +145,8 @@ std::unique_ptr<GstHwVideoBuffer> exportToDmaBuf(GstSample* sample, const GstVid
 
 constinit const HwPathDescriptor GstHwPaths::kCuda = {
     .path = HwVideoBufferPath::DmaBuf,
-    .matches = [](GstMemory* mem, const HwVideoBufferContext&) -> bool { return gst_is_cuda_memory(mem); },
-    .admits = &GstCudaVideoBuffer::exportSupported,
+    .matches = [](GstMemory* mem) -> bool { return gst_is_cuda_memory(mem); },
+    .admits = [](GstMemory*, const HwVideoBufferContext&) -> bool { return GstCudaVideoBuffer::exportSupported(); },
     .construct = &GstCudaVideoBuffer::exportToDmaBuf,
 };
 

@@ -14,6 +14,7 @@ private slots:
     void _testDmaDrmModifierPolicy();
     void _testDmaDrmPlaneFourccsMatchQtImporter();
     void _testDmaBufPathNeedsQtEglDisplay();
+    void _testDmaBufPathResumesOnceDisplayIsKnown();
     void _testDmaBufMapTexturesRejectsForeignRhi();
     void _testVulkanOwnedFrameTexturesReleaseOnDestroy();
     void _testContextBridgeRegistry();

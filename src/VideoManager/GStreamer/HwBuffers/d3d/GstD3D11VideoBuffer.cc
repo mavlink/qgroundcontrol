@@ -301,7 +301,7 @@ void resetCachedState() noexcept
 
 constinit const HwPathDescriptor GstHwPaths::kD3D11 = {
     .path = HwVideoBufferPath::D3D11,
-    .matches = [](GstMemory* mem, const HwVideoBufferContext&) -> bool { return gst_is_d3d11_memory(mem); },
+    .matches = [](GstMemory* mem) -> bool { return gst_is_d3d11_memory(mem); },
     .construct = &GstHwPaths::construct<D3D11VideoBuffer>,
     .resetCaches = &resetCachedState,
     .proposePool = &GstD3DVideoBufferCommon::proposePool<D3D11PlaneResolver>,

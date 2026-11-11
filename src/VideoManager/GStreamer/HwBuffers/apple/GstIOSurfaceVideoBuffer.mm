@@ -335,7 +335,7 @@ QVideoFrameTexturesUPtr GstIOSurfaceVideoBuffer::mapTextures(QRhi& rhi, QVideoFr
 // gst-applemedia exports no public gst_is_apple_core_video_memory() predicate, so match the allocator's memory type.
 constinit const HwPathDescriptor GstHwPaths::kIOSurface = {
     .path = HwVideoBufferPath::IOSurface,
-    .matches = [](GstMemory* mem, const HwVideoBufferContext&) -> bool {
+    .matches = [](GstMemory* mem) -> bool {
         return mem->allocator && (g_strcmp0(mem->allocator->mem_type, "AppleCoreVideoMemory") == 0);
     },
     .construct = &GstHwPaths::construct<GstIOSurfaceVideoBuffer>,

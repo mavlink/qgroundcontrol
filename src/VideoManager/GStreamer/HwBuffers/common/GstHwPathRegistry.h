@@ -25,11 +25,13 @@ struct HwPathDescriptor
     /// Path the imported buffers report. CUDA reports DmaBuf: it imports through the DMABuf importer.
     HwVideoBufferPath path = HwVideoBufferPath::None;
 
-    /// True when this path imports @p mem's memory; plane 0's memory is the dispatch key. Streaming thread.
-    bool (*matches)(GstMemory* mem, const HwVideoBufferContext& context) = nullptr;
+    /// True when this path imports @p mem's kind of memory; plane 0's memory is the dispatch key. Decided by the memory
+    /// alone, so a miss holds for every frame of that allocator. Streaming thread.
+    bool (*matches)(GstMemory* mem) = nullptr;
 
-    /// Optional. False sends a matched frame to the CPU without trying later paths; records why.
-    bool (*admits)() = nullptr;
+    /// Optional. False when the path can't import @p mem now (no display yet, a latched failure, a foreign context):
+    /// the matched frame goes to the CPU without trying later paths, and a later frame is asked again. Records why.
+    bool (*admits)(GstMemory* mem, const HwVideoBufferContext& context) = nullptr;
 
     /// Wraps @p sample for import; nullptr when it can't be imported.
     std::unique_ptr<GstHwVideoBuffer> (*construct)(GstSample* sample, const GstVideoInfo& info,

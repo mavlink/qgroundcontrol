@@ -82,7 +82,7 @@ void waitInQtContext(GstGLSyncMeta* syncMeta, GstGLContext* glCtx)
 // mapTextures() binds GLMemory only under Qt's OpenGL(ES2) QRhi, but the glupload bin still emits GLMemory under a
 // non-GL RHI (forced Vulkan): those frames take the CPU path. Streaming thread, so read the published backend rather
 // than the render-thread-owned QRhi. Records each rejected frame.
-bool admitGlMemory()
+bool admitGlMemory(GstMemory*, const HwVideoBufferContext&)
 {
     const int backend = QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire);
     if ((backend < 0) || (backend == static_cast<int>(QRhi::OpenGLES2))) {
@@ -189,7 +189,7 @@ QVideoFrameTexturesUPtr GstGlVideoBuffer::mapTextures(QRhi& rhi, QVideoFrameText
 
 constinit const HwPathDescriptor GstHwPaths::kGlMemory = {
     .path = HwVideoBufferPath::GlMemory,
-    .matches = [](GstMemory* mem, const HwVideoBufferContext&) -> bool { return gst_is_gl_memory(mem); },
+    .matches = [](GstMemory* mem) -> bool { return gst_is_gl_memory(mem); },
     .admits = &admitGlMemory,
     .construct = &GstHwPaths::construct<GstGlVideoBuffer>,
     .bridge = &GstGlContextBridge::instance,

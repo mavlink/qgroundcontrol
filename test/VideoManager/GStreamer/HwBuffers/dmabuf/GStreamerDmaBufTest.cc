@@ -308,6 +308,34 @@ void GstHwBuffersTest::_testDmaBufPathNeedsQtEglDisplay()
 #endif
 }
 
+void GstHwBuffersTest::_testDmaBufPathResumesOnceDisplayIsKnown()
+{
+#if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
+    QSKIP("DMABuf GPU path not compiled in this build");
+#else
+    GstDmaBufVideoBuffer::resetCachedState();
+    GstVideoInfo info;
+    GstSample* sample = makeMemfdDmaBufSample(GST_VIDEO_FORMAT_NV12, info);
+    QVERIFY(sample);
+    const auto sampleGuard = qScopeGuard([sample] { gst_sample_unref(sample); });
+    const QVideoFrameFormat format(QSize(64, 64), QVideoFrameFormat::Format_NV12);
+    HwResolvedPathCache cache;
+    const auto pathTaken = [&](const HwVideoBufferContext& context) {
+        HwVideoBufferPath path = HwVideoBufferPath::None;
+        const auto hwBuffer = makeHwVideoBuffer(gst_sample_get_buffer(sample), gst_sample_get_caps(sample), info,
+                                                format, context, path, &cache);
+        return path;
+    };
+
+    // Within one caps epoch: a frame arrives before Qt's EGLDisplay is known, the next one after.
+    HwVideoBufferContext context;
+    context.gpuEnabled = true;
+    QCOMPARE(pathTaken(context), HwVideoBufferPath::None);
+    context.dmaBufEglDisplay = reinterpret_cast<EGLDisplay>(quintptr(1));
+    QCOMPARE(pathTaken(context), HwVideoBufferPath::DmaBuf);
+#endif
+}
+
 void GstHwBuffersTest::_testDmaBufMapTexturesRejectsForeignRhi()
 {
 #if !defined(QGC_HAS_GST_DMABUF_GPU_PATH)
