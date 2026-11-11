@@ -146,31 +146,9 @@ int QGCCachedFileDownload::cacheAge(const QString &url) const
 
 bool QGCCachedFileDownload::download(const QString &url, int maxCacheAgeSec)
 {
-    if (_running) {
-        qCWarning(QGCCachedFileDownloadLog) << "Download already in progress";
+    if (!_beginDownload(url, maxCacheAgeSec, true)) {
         return false;
     }
-
-    if (url.isEmpty()) {
-        qCWarning(QGCCachedFileDownloadLog) << "Empty URL";
-        _setErrorString(tr("Empty URL"));
-        return false;
-    }
-
-    if (cacheDirectory().isEmpty()) {
-        qCWarning(QGCCachedFileDownloadLog) << "Cache directory not set";
-        _setErrorString(tr("Cache directory not configured"));
-        return false;
-    }
-
-    _pendingUrl = url;
-    _maxCacheAgeSec = maxCacheAgeSec;
-    _networkAttemptFailed = false;
-    _forceNetwork = false;
-    _cancelRequested = false;
-
-    _url = QUrl::fromUserInput(url);
-    emit urlChanged(_url);
 
     // Check if we have a valid cached version
     const QNetworkCacheMetaData metadata = _diskCache->metaData(_url);
@@ -203,58 +181,13 @@ bool QGCCachedFileDownload::download(const QString &url, int maxCacheAgeSec)
 
 bool QGCCachedFileDownload::downloadPreferCache(const QString &url)
 {
-    if (_running) {
-        qCWarning(QGCCachedFileDownloadLog) << "Download already in progress";
-        return false;
-    }
-
-    if (url.isEmpty()) {
-        qCWarning(QGCCachedFileDownloadLog) << "Empty URL";
-        _setErrorString(tr("Empty URL"));
-        return false;
-    }
-
-    if (cacheDirectory().isEmpty()) {
-        qCWarning(QGCCachedFileDownloadLog) << "Cache directory not set";
-        _setErrorString(tr("Cache directory not configured"));
-        return false;
-    }
-
-    _pendingUrl = url;
-    _maxCacheAgeSec = 0;
-    _networkAttemptFailed = false;
-    _forceNetwork = false;
-    _cancelRequested = false;
-
-    _url = QUrl::fromUserInput(url);
-    emit urlChanged(_url);
-
-    return _startDownload(url, false, true);
+    return _beginDownload(url, 0, true) && _startDownload(url, false, true);
 }
 
 bool QGCCachedFileDownload::downloadNoCache(const QString &url)
 {
-    if (_running) {
-        qCWarning(QGCCachedFileDownloadLog) << "Download already in progress";
-        return false;
-    }
-
-    if (url.isEmpty()) {
-        qCWarning(QGCCachedFileDownloadLog) << "Empty URL";
-        _setErrorString(tr("Empty URL"));
-        return false;
-    }
-
-    _pendingUrl = url;
-    _maxCacheAgeSec = 0;
-    _networkAttemptFailed = false;
-    _forceNetwork = false;  // true would allow the cache fallback
-    _cancelRequested = false;
-
-    _url = QUrl::fromUserInput(url);
-    emit urlChanged(_url);
-
-    return _startDownload(url, true, false);
+    // _forceNetwork stays false: true would allow the cache fallback
+    return _beginDownload(url, 0, false) && _startDownload(url, true, false);
 }
 
 void QGCCachedFileDownload::cancel()
@@ -363,6 +296,37 @@ void QGCCachedFileDownload::_onDownloadProgress(qint64 bytesReceived, qint64 tot
 // ============================================================================
 // Private Methods
 // ============================================================================
+
+bool QGCCachedFileDownload::_beginDownload(const QString& url, int maxCacheAgeSec, bool needsCacheDirectory)
+{
+    if (_running) {
+        qCWarning(QGCCachedFileDownloadLog) << "Download already in progress";
+        return false;
+    }
+
+    if (url.isEmpty()) {
+        qCWarning(QGCCachedFileDownloadLog) << "Empty URL";
+        _setErrorString(tr("Empty URL"));
+        return false;
+    }
+
+    if (needsCacheDirectory && cacheDirectory().isEmpty()) {
+        qCWarning(QGCCachedFileDownloadLog) << "Cache directory not set";
+        _setErrorString(tr("Cache directory not configured"));
+        return false;
+    }
+
+    _pendingUrl = url;
+    _maxCacheAgeSec = maxCacheAgeSec;
+    _networkAttemptFailed = false;
+    _forceNetwork = false;
+    _cancelRequested = false;
+
+    _url = QUrl::fromUserInput(url);
+    emit urlChanged(_url);
+
+    return true;
+}
 
 void QGCCachedFileDownload::_initializeCache(const QString &directory)
 {

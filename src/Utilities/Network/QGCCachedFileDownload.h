@@ -205,6 +205,8 @@ private slots:
     void _onDownloadProgress(qint64 bytesReceived, qint64 totalBytes);
 
 private:
+    /// Checks that a download can start, reporting why it cannot, and resets the state the previous one left
+    bool _beginDownload(const QString& url, int maxCacheAgeSec, bool needsCacheDirectory);
     void _initializeCache(const QString &directory);
     void _setRunning(bool running);
     void _setProgress(qreal progress);
