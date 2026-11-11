@@ -34,7 +34,7 @@ void VideoManagerVehicleTest::_testTilesFollowCameraStreams()
         }
     }
     QVERIFY(camera);
-    QVERIFY_TRUE_WAIT(camera->streamLabels().count() == 2, TestTimeout::longMs());
+    QVERIFY_TRUE_WAIT(camera->streamLabels().size() == 2, TestTimeout::longMs());
 
     const auto settle = [] { QCoreApplication::sendPostedEvents(nullptr, QEvent::MetaCall); };
     const auto started = [this] {

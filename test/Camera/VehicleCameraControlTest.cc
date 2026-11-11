@@ -561,7 +561,7 @@ void VehicleCameraControlTest::_testExtraStreamsStartAndStop()
     }
     QVERIFY2(camera, "Camera 1 (MAV_COMP_ID_CAMERA) not found in camera list");
     // The mock camera advertises its streams 1 and 2.
-    QVERIFY_TRUE_WAIT(camera->streamLabels().count() == 2, TestTimeout::longMs());
+    QVERIFY_TRUE_WAIT(camera->streamLabels().size() == 2, TestTimeout::longMs());
     QCOMPARE(camera->currentStream(), 0);
 
     const auto transmitted = [this](uint8_t streamId) {

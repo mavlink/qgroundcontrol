@@ -1779,7 +1779,7 @@ void VehicleCameraControl::handleVideoStreamInformation(const mavlink_video_stre
         //-- Thermal is handled separately and not listed
         if(!pStream->isThermal()) {
             _streamLabels.append(pStream->name());
-            if (_streamLabels.count() == 1) {
+            if (_streamLabels.size() == 1) {
                 //-- The camera's first stream is the current one, which it transmits without being asked
                 _transmittedStreams.insert(pStream->streamID());
             }

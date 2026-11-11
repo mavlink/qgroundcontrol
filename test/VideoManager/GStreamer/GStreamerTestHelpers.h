@@ -178,9 +178,9 @@ public:
     /// While held, keyframes (and with them the parameter sets) are skipped, as a long GOP the receiver joined late.
     void holdKeyframes(bool hold);
 
-    /// Drops every @p interval-th buffer or buffer list of RTP packets before it is sent, as a link that loses
-    /// packets; 0 drops none.
-    void dropPackets(int interval) { _dropInterval.store(interval, std::memory_order_relaxed); }
+    /// Drops one in @p oneIn buffers or buffer lists of RTP packets before it is sent, as a link that loses packets;
+    /// 0 drops none.
+    void dropPackets(int oneIn) { _dropOneIn.store(oneIn, std::memory_order_relaxed); }
 
     const QString& error() const { return _error; }
 
@@ -196,7 +196,7 @@ private:
     GstClockTime _pts = 0;
     bool _keyframesHeld = false;
     std::atomic<int> _frames{0};
-    std::atomic<int> _dropInterval{0};
+    std::atomic<int> _dropOneIn{0};
     // Only the sender's streaming thread uses it.
     int _rtpPushes = 0;
     // Declared last, so the pipeline stops before the state its callback and probe use goes away.

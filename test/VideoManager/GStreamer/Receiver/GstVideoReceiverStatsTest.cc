@@ -110,7 +110,7 @@ void GstVideoReceiverStatsTest::_testStatsMeasureStream()
 void GstVideoReceiverStatsTest::_testStatsCountLostPacketsWithoutJitterBuffer()
 {
     // One buffer or buffer list of RTP packets in seven never arrives.
-    constexpr int kDropInterval = 7;
+    constexpr int kDropOneIn = 7;
 
     Receiver receiving;
     QVERIFY2(receiving.sender.error().isEmpty(), qPrintable(receiving.sender.error()));
@@ -119,7 +119,7 @@ void GstVideoReceiverStatsTest::_testStatsCountLostPacketsWithoutJitterBuffer()
     receiving.receiver->setConfig(config);
 
     QVERIFY(receiving.startStreaming());
-    receiving.sender.dropPackets(kDropInterval);
+    receiving.sender.dropPackets(kDropOneIn);
     // The first sample is the baseline; each later one tells the loss of its interval.
     QVERIFY_TRUE_WAIT(receiving.receiver->stats().lossPercent > 0, TestTimeout::mediumMs());
 

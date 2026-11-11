@@ -401,8 +401,8 @@ GstPadProbeReturn FixtureRtpSender::_dropProbe([[maybe_unused]] GstPad* pad, [[m
                                                gpointer self)
 {
     auto* const sender = static_cast<FixtureRtpSender*>(self);
-    const int interval = sender->_dropInterval.load(std::memory_order_relaxed);
-    return ((interval > 0) && ((++sender->_rtpPushes % interval) == 0)) ? GST_PAD_PROBE_DROP : GST_PAD_PROBE_OK;
+    const int oneIn = sender->_dropOneIn.load(std::memory_order_relaxed);
+    return ((oneIn > 0) && ((++sender->_rtpPushes % oneIn) == 0)) ? GST_PAD_PROBE_DROP : GST_PAD_PROBE_OK;
 }
 
 void FixtureRtpSender::_needData(GstElement* appsrc, [[maybe_unused]] guint length, gpointer self)

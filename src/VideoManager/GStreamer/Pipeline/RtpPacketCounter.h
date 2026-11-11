@@ -54,7 +54,7 @@ private:
     const int _clockRate;
 
     /// The sender of the current sequence; nullopt before the first packet.
-    std::optional<quint32> _ssrc;
+    std::optional<quint32> _ssrc = std::nullopt;
     /// Its first and its highest sequence number, extended by the wraparounds since the first.
     qint64 _baseSeq = 0;
     qint64 _maxSeq = 0;
@@ -63,14 +63,14 @@ private:
     /// Bit n: the packet n sequence numbers behind _maxSeq arrived.
     std::bitset<kReorderWindow> _seen;
     /// The last packet too far from the sequence to count: where a new one starts if the next packet goes on from it.
-    std::optional<quint16> _restartSeq;
+    std::optional<quint16> _restartSeq = std::nullopt;
 
     /// The sequences before the current one.
     quint64 _receivedBefore = 0;
     quint64 _lostBefore = 0;
 
     /// The last packet of the sequence that had an arrival time.
-    std::optional<qint64> _lastArrivalNs;
+    std::optional<qint64> _lastArrivalNs = std::nullopt;
     quint32 _lastTimestamp = 0;
-    std::optional<qint64> _jitterNs;
+    std::optional<qint64> _jitterNs = std::nullopt;
 };

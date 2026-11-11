@@ -27,6 +27,7 @@ Rectangle {
     color:          qgcPal.mapWidgetBorderDark
     border.color:   qgcPal.mapWidgetBorderLight
     border.width:   1
+    // The placeholder's picture is cropped to fill the tile, and a notice can be taller than a small one.
     clip:           true
 
     QGCPalette { id: qgcPal }
@@ -76,27 +77,33 @@ Rectangle {
     }
 
     Rectangle {
-        anchors.left:       parent.left
-        anchors.right:      parent.right
-        anchors.bottom:     parent.bottom
-        anchors.margins:    root.border.width
         height:             nameLabel.height + root._margin
         color:              qgcPal.mapWidgetBorderDark
         opacity:            0.6
         visible:            nameLabel.text !== ""
+
+        anchors {
+            left:       parent.left
+            right:      parent.right
+            bottom:     parent.bottom
+            margins:    root.border.width
+        }
     }
 
     QGCLabel {
         id:                     nameLabel
-        anchors.left:           parent.left
-        anchors.right:          parent.right
-        anchors.bottom:         parent.bottom
-        anchors.margins:        root._margin
         text:                   root.source.displayName
         color:                  qgcPal.mapWidgetBorderLight
         font.pointSize:         ScreenTools.smallFontPointSize
         horizontalAlignment:    Text.AlignHCenter
         elide:                  Text.ElideRight
+
+        anchors {
+            left:       parent.left
+            right:      parent.right
+            bottom:     parent.bottom
+            margins:    root._margin
+        }
     }
 
     MouseArea {
