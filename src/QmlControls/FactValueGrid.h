@@ -68,6 +68,18 @@ public:
 
     void setFontSize(FontSize fontSize);
 
+    /// A Fact a layout shows, named as InstrumentValueData names it.
+    struct LayoutFact
+    {
+        QString factGroupName;
+        QString factName;
+    };
+
+    /// The Facts of the layout that grids of settings group @p settingsGroup show, saved or default, column by column,
+    /// for the active vehicle (the offline editing vehicle without one): for code that reads a layout without showing
+    /// a grid. Empty without a vehicle.
+    static QList<LayoutFact> layoutFacts(const QString& settingsGroup);
+
     // Override from QQmlParserStatus
     void componentComplete(void) final;
 

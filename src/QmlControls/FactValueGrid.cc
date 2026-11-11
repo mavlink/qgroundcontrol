@@ -57,6 +57,36 @@ void FactValueGrid::componentComplete(void)
     }
 }
 
+QList<FactValueGrid::LayoutFact> FactValueGrid::layoutFacts(const QString& settingsGroup)
+{
+    MultiVehicleManager* const multiVehicleManager = MultiVehicleManager::instance();
+    Vehicle* vehicle = multiVehicleManager->activeVehicle();
+    if (!vehicle) {
+        vehicle = multiVehicleManager->offlineEditingVehicle();
+    }
+    if (!vehicle) {
+        return {};
+    }
+
+    // A layout loads into a grid, which the core plugin fills with the defaults: one that is never shown.
+    FactValueGrid grid;
+    grid._settingsGroup = settingsGroup;
+    grid._activeVehicle = vehicle;
+    grid._resetFromSettings();
+
+    QList<LayoutFact> facts;
+    for (int colIndex = 0; colIndex < grid._columns->count(); colIndex++) {
+        const QmlObjectListModel* const column = grid._columns->value<const QmlObjectListModel*>(colIndex);
+        for (int rowIndex = 0; rowIndex < column->count(); rowIndex++) {
+            const InstrumentValueData* const value = column->value<InstrumentValueData*>(rowIndex);
+            if (value->fact()) {
+                facts.append({value->factGroupName(), value->factName()});
+            }
+        }
+    }
+    return facts;
+}
+
 void FactValueGrid::_initForNewVehicle(Vehicle* vehicle)
 {
     if (!vehicle) {
