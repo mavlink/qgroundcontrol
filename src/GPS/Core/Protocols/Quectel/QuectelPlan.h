@@ -48,6 +48,19 @@ inline constexpr unsigned FIX_INTERVAL_MS = 1000;
 inline constexpr std::string_view READ_BASE = "PQTMCFGSVIN,R";
 inline constexpr std::chrono::hours MAXIMUM_SURVEY_DURATION{24};
 inline constexpr double MAXIMUM_SURVEY_ACCURACY_METERS = 1000;
+/// The largest <distance> a READ_BASE reply may report.
+inline constexpr double MAXIMUM_BASE_DISTANCE = 10;
+/// Decimals writeBase() gives a fixed base's ECEF coordinates, 0.1 mm, and a survey's accuracy threshold.
+inline constexpr int ECEF_DECIMALS = 4;
+inline constexpr int SURVEY_ACCURACY_DECIMALS = 9;
+/// How far a READ_BASE reply may lie from the request and still match it: it must return what writeBase() sends.
+/// Rounding three coordinates to ECEF_DECIMALS moves a position by up to 0.087 mm (√3 × 0.05 mm), which the position
+/// tolerance covers with a margin; the accuracy tolerance is one unit of its last decimal.
+inline constexpr double FIXED_BASE_READBACK_TOLERANCE_METERS = 0.00011;
+inline constexpr double SURVEY_ACCURACY_READBACK_TOLERANCE_METERS = 0.000000001;
+/// How far the position PQTMSVINSTATUS reports for a fixed base may lie from the requested one. The status is the
+/// receiver's periodic report rather than a readback of the written digits, so it is held to a millimetre instead.
+inline constexpr double FIXED_BASE_STATUS_TOLERANCE_METERS = 0.001;
 /// Re-runs a survey with exactly the fields READ_BASE reported.
 inline constexpr std::string_view RESTART_SURVEY = "PQTMCFGSVIN,W";
 /// Labels for the base writes whose bodies carry ECEF coordinates.

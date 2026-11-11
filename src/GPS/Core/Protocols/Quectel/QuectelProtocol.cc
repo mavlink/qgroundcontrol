@@ -47,6 +47,60 @@ bool supportedBase(const GPSBaseStationConfig::Mode& mode)
     return std::holds_alternative<GPSBaseStationConfig::Fixed>(mode);
 }
 
+/// What a Plan::READ_BASE reply says about the saved base.
+struct SavedBase
+{
+    /// The reply carries every field within its range.
+    bool valid = false;
+    /// It is the requested base.
+    bool matches = false;
+    /// It ends with the distance field, which a base write must then carry too.
+    bool hasDistance = false;
+    /// The Plan::RESTART_SURVEY body that re-runs a matching survey-in; empty otherwise.
+    QByteArray surveyRestart;
+};
+
+/// Reads @a reply to Plan::READ_BASE against the @a requested base, whose coordinates are @a fixedECEF when fixed.
+SavedBase savedBase(const Fields& reply, const GPSBaseStationConfig::Mode& requested,
+                    const GPSProtocolMath::Ecef& fixedECEF)
+{
+    unsigned mode = 0;
+    unsigned count = 0;
+    double accuracy = 0;
+    double distance = 0;
+    GPSProtocolMath::Ecef ecef;
+    SavedBase saved;
+    saved.valid = (reply.size() == 8 || reply.size() == 9) && reply[0] == "PQTMCFGSVIN" && reply[1] == "OK" &&
+                  number(reply[2], mode) && mode <= 2 && number(reply[3], count) && number(reply[4], accuracy) &&
+                  number(reply[5], ecef.x) && number(reply[6], ecef.y) && number(reply[7], ecef.z) &&
+                  (reply.size() == 8 || number(reply[8], distance)) &&
+                  std::chrono::seconds(count) <= Plan::MAXIMUM_SURVEY_DURATION && accuracy >= 0 &&
+                  accuracy <= Plan::MAXIMUM_SURVEY_ACCURACY_METERS && distance >= 0 &&
+                  distance <= Plan::MAXIMUM_BASE_DISTANCE;
+    if (!saved.valid) {
+        return saved;
+    }
+    saved.hasDistance = reply.size() == 9;
+    if (std::holds_alternative<GPSBaseStationConfig::Fixed>(requested)) {
+        saved.matches = mode == 2 && count == 0 && accuracy == 0 &&
+                        GPSProtocolMath::distance(ecef, fixedECEF) <= Plan::FIXED_BASE_READBACK_TOLERANCE_METERS;
+    } else if (const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&requested)) {
+        saved.matches =
+            mode == 1 && count == survey->duration.count() &&
+            std::abs(accuracy - survey->accuracyMeters) <= Plan::SURVEY_ACCURACY_READBACK_TOLERANCE_METERS &&
+            distance == 0;
+        if (saved.matches) {
+            // Re-execute precisely the read configuration, including otherwise ignored ECEF fields.
+            saved.surveyRestart = QByteArrayView(Plan::RESTART_SURVEY).toByteArray();
+            for (size_t index = 2; index < reply.size(); ++index) {
+                saved.surveyRestart += ',';
+                saved.surveyRestart.append(QByteArrayView(reply[index]));
+            }
+        }
+    }
+    return saved;
+}
+
 /// Configures an LG290P(03) as an RTK base: finds it at one of Plan::BAUD_RATES, or at the rate configure() gets when
 /// nonzero, which then reports the rate found. The receiver must run the requested role and base from its saved
 /// settings, verified after a restart; with consent to persistent changes, what differs is written, saved and
@@ -85,6 +139,11 @@ public:
         return (std::min) (timeout, STATUS_POLL);
     }
 
+protected:
+    /// Ends readiness after a recorded failure; otherwise revokes stale survey status.
+    void _expire(GPSDecodeContext& context) override;
+    GPSReceiveUpdates _decodeLine(std::string_view line, GPSDecodeContext& context) override;
+
 private:
     class Attempt;
 
@@ -122,9 +181,6 @@ private:
     void _finishAttempt(GPSDecodeContext& context);
     /// Revokes survey status that is stale or belongs to a failed configuration.
     void _expireSurvey(GPSDecodeContext& context);
-    /// Ends readiness after a recorded failure; otherwise revokes stale survey status.
-    void _expire(GPSDecodeContext& context) override;
-    GPSReceiveUpdates _decodeLine(std::string_view line, GPSDecodeContext& context) override;
     bool _handleSurvey(std::string_view body, GPSDecodeContext& context);
     void _revokeSurvey(GPSDecodeContext& context);
     void _publishSurvey(GPSDecodeContext& context);
@@ -155,15 +211,24 @@ public:
     bool run(GPSConfig config, unsigned& baud);
 
 private:
+    /// Whether a saved setting read back must be the requested one. When not, any valid setting passes and the caller
+    /// compares what was read.
+    enum class Match
+    {
+        Required,
+        NotRequired,
+    };
+
     /// Labels the command @a label, or its @a body when empty.
     bool _acknowledge(QByteArrayView body, std::string_view label = {});
     bool _identify(std::chrono::milliseconds timeout = Plan::COMMAND_TIMEOUT);
-    bool _verifyRole(bool requireMatch = true);
-    bool _verifyBase(bool requireMatch = true);
+    bool _verifyRole(Match match = Match::Required);
+    bool _verifyBase(Match match = Match::Required);
     bool _changeRole();
     bool _changeBase(QByteArrayView body, std::string_view label);
     bool _save();
-    bool _restart(bool requireRoleMatch = true);
+    /// Restarts the receiver and reads its saved role back.
+    bool _restart(Match roleMatch = Match::Required);
     bool _restartWithBase();
     bool _verifySaved(bool restarted, bool baseVerified);
     /// @a failure is ConsentRequired when the request needs a persistent change without consent.
@@ -216,7 +281,7 @@ bool Protocol::Attempt::run(GPSConfig config, unsigned& baud)
     }
     baud = detection.baud;
     qCDebug(QuectelProtocolLog).noquote() << "Quectel receiver firmware:" << _protocol._firmware;
-    if (!_verifyRole(false)) {
+    if (!_verifyRole(Match::NotRequired)) {
         return _fail(QStringLiteral("LG290P receiver role query failed; no role change was attempted"));
     }
 
@@ -224,7 +289,7 @@ bool Protocol::Attempt::run(GPSConfig config, unsigned& baud)
     if (config.allowPersistentChanges) {
         // Work from saved settings, not another client's uncommitted changes. A role
         // readback alone cannot distinguish a pending role from the active one.
-        if (!_restart(false)) {
+        if (!_restart(Match::NotRequired)) {
             return _fail(
                 QStringLiteral("LG290P saved role query after restart failed; no persistent change was attempted"));
         }
@@ -250,7 +315,7 @@ bool Protocol::Attempt::run(GPSConfig config, unsigned& baud)
     }
 
     bool baseChanged = false;
-    if (!_verifyBase(false)) {
+    if (!_verifyBase(Match::NotRequired)) {
         return _fail(QStringLiteral("LG290P base settings query failed; no base change was attempted"));
     }
     if (!_baseMatches && !config.allowPersistentChanges) {
@@ -332,9 +397,9 @@ bool Protocol::Attempt::_identify(std::chrono::milliseconds timeout)
     return result.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
-bool Protocol::Attempt::_verifyRole(bool requireMatch)
+bool Protocol::Attempt::_verifyRole(Match match)
 {
-    const auto result = _channel.transact(Plan::command(Plan::READ_ROLE, [this, requireMatch](std::string_view body) {
+    const auto result = _channel.transact(Plan::command(Plan::READ_ROLE, [this, match](std::string_view body) {
         const Fields reply(body);
         unsigned role = 0;
         const bool valid = reply.size() == 3 && reply[0] == "PQTMCFGRCVRMODE" && reply[1] == "OK" &&
@@ -342,12 +407,12 @@ bool Protocol::Attempt::_verifyRole(bool requireMatch)
         if (valid) {
             _role = role;
         }
-        return readback(reply, "PQTMCFGRCVRMODE", valid && (!requireMatch || role == Plan::BASE_ROLE));
+        return readback(reply, "PQTMCFGRCVRMODE", valid && (match == Match::NotRequired || role == Plan::BASE_ROLE));
     }));
     return result.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
-bool Protocol::Attempt::_verifyBase(bool requireMatch)
+bool Protocol::Attempt::_verifyBase(Match match)
 {
     _baseMatches = false;
     const auto rate = _channel.transact(Plan::command(Plan::READ_FIX_RATE, [](std::string_view body) {
@@ -359,43 +424,20 @@ bool Protocol::Attempt::_verifyBase(bool requireMatch)
     if (rate.outcome != GPSCommandOutcome::ReadbackVerified) {
         return false;
     }
-    const auto base = _channel.transact(Plan::command(Plan::READ_BASE, [this, requireMatch](std::string_view body) {
+    // Every line is offered until one completes the command, so the last reading is that of the reply, if any.
+    SavedBase saved;
+    const auto base = _channel.transact(Plan::command(Plan::READ_BASE, [this, match, &saved](std::string_view body) {
         const Fields reply(body);
-        unsigned mode = 0;
-        unsigned count = 0;
-        double accuracy = 0;
-        double distance = 0;
-        GPSProtocolMath::Ecef ecef;
-        const bool valid = (reply.size() == 8 || reply.size() == 9) && reply[0] == "PQTMCFGSVIN" && reply[1] == "OK" &&
-                           number(reply[2], mode) && mode <= 2 && number(reply[3], count) &&
-                           number(reply[4], accuracy) && number(reply[5], ecef.x) && number(reply[6], ecef.y) &&
-                           number(reply[7], ecef.z) && (reply.size() == 8 || number(reply[8], distance)) &&
-                           std::chrono::seconds(count) <= Plan::MAXIMUM_SURVEY_DURATION && accuracy >= 0 &&
-                           accuracy <= Plan::MAXIMUM_SURVEY_ACCURACY_METERS && distance >= 0 && distance <= 10;
-        bool matches = valid;
-        if (valid) {
-            _baseHasDistance = reply.size() == 9;
-        }
-        const auto& requested = _protocol._baseMode;
-        if (matches && std::holds_alternative<GPSBaseStationConfig::Fixed>(requested)) {
-            const auto& fixed = _protocol._fixedECEF;
-            matches = mode == 2 && count == 0 && accuracy == 0 && GPSProtocolMath::distance(ecef, fixed) <= 0.00011;
-        } else if (matches) {
-            const auto& survey = std::get<GPSBaseStationConfig::SurveyIn>(requested);
-            matches = mode == 1 && count == survey.duration.count() &&
-                      std::abs(accuracy - survey.accuracyMeters) <= 0.000000001 && distance == 0;
-            if (matches) {
-                // Re-execute precisely the read configuration, including otherwise ignored ECEF fields.
-                _surveyRestart = QByteArrayView(Plan::RESTART_SURVEY).toByteArray();
-                for (size_t index = 2; index < reply.size(); ++index) {
-                    _surveyRestart += ',';
-                    _surveyRestart.append(QByteArrayView(reply[index]));
-                }
-            }
-        }
-        _baseMatches = matches;
-        return readback(reply, "PQTMCFGSVIN", valid && (!requireMatch || matches));
+        saved = savedBase(reply, _protocol._baseMode, _protocol._fixedECEF);
+        return readback(reply, "PQTMCFGSVIN", match == Match::Required ? saved.matches : saved.valid);
     }));
+    _baseMatches = saved.matches;
+    if (saved.valid) {
+        _baseHasDistance = saved.hasDistance;
+    }
+    if (!saved.surveyRestart.isEmpty()) {
+        _surveyRestart = saved.surveyRestart;
+    }
     return base.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 
@@ -453,7 +495,7 @@ bool Protocol::Attempt::_save()
     return saved;
 }
 
-bool Protocol::Attempt::_restart(bool requireRoleMatch)
+bool Protocol::Attempt::_restart(Match roleMatch)
 {
     _protocol._beginRestart(_channel.context());
     qCDebug(QuectelProtocolLog) << "Restarting LG290P and verifying its saved configuration";
@@ -477,7 +519,7 @@ bool Protocol::Attempt::_restart(bool requireRoleMatch)
         }
         if (identified && _protocol._sawBoot) {
             _protocol._endBootWatch();
-            return _verifyRole(requireRoleMatch);
+            return _verifyRole(roleMatch);
         }
     } while (!_channel.failed() && _channel.nowUs() < _channel.operationDeadline().untilUs);
     _protocol._endBootWatch();
@@ -655,20 +697,21 @@ bool Protocol::_handleSurvey(std::string_view body, GPSDecodeContext& context)
         std::chrono::seconds(observations) > Plan::MAXIMUM_SURVEY_DURATION || !number(reply[7], configuredCount) ||
         std::chrono::seconds(configuredCount) > Plan::MAXIMUM_SURVEY_DURATION || !number(reply[8], ecef.x) ||
         !number(reply[9], ecef.y) || !number(reply[10], ecef.z) || !number(reply[11], accuracy) || accuracy < 0 ||
-        accuracy > std::numeric_limits<uint32_t>::max() / 1000.0) {
+        accuracy > (std::numeric_limits<uint32_t>::max)() / 1000.0) {
         _revokeSurvey(context);
         return false;
     }
     const bool fixed = std::holds_alternative<GPSBaseStationConfig::Fixed>(_baseMode);
-    const bool matches = fixed
-                             ? configuredCount == 0 && observations == 0
-                             : configuredCount == std::get<GPSBaseStationConfig::SurveyIn>(_baseMode).duration.count();
+    const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&_baseMode);
+    const bool matches =
+        survey ? configuredCount == survey->duration.count() : configuredCount == 0 && observations == 0;
     const bool coordinatesKnown = GPSProtocolMath::nearEarthSurface(ecef);
     if (!matches || (!coordinatesKnown && (validity == 2 || (validity == 1 && observations != 0)))) {
         _revokeSurvey(context);
         return false;
     }
-    if (fixed && validity == 2 && GPSProtocolMath::distance(ecef, _fixedECEF) > 0.001) {
+    if (fixed && validity == 2 &&
+        GPSProtocolMath::distance(ecef, _fixedECEF) > Plan::FIXED_BASE_STATUS_TOLERANCE_METERS) {
         _revokeSurvey(context);
         return false;
     }

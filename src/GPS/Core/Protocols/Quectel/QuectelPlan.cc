@@ -34,12 +34,11 @@ QByteArray writeBase(const GPSBaseStationConfig::Mode& mode, const GPSProtocolMa
 {
     QByteArray body = "PQTMCFGSVIN,W,";
     if (std::holds_alternative<GPSBaseStationConfig::Fixed>(mode)) {
-        body += "2,0,0," + gpsFixedDecimal(position.x, 4) + ',' + gpsFixedDecimal(position.y, 4) + ',' +
-                gpsFixedDecimal(position.z, 4);
-    } else {
-        const auto& survey = std::get<GPSBaseStationConfig::SurveyIn>(mode);
-        body += "1," + QByteArray::number(static_cast<qint64>(survey.duration.count())) + ',' +
-                gpsFixedDecimal(survey.accuracyMeters, 9) + ",0,0,0";
+        body += "2,0,0," + gpsFixedDecimal(position.x, ECEF_DECIMALS) + ',' +
+                gpsFixedDecimal(position.y, ECEF_DECIMALS) + ',' + gpsFixedDecimal(position.z, ECEF_DECIMALS);
+    } else if (const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&mode)) {
+        body += "1," + QByteArray::number(static_cast<qint64>(survey->duration.count())) + ',' +
+                gpsFixedDecimal(survey->accuracyMeters, SURVEY_ACCURACY_DECIMALS) + ",0,0,0";
     }
     if (distanceField) {
         body += ",0";

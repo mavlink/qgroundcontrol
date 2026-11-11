@@ -35,7 +35,22 @@ namespace SBF::BlockId {
 inline constexpr uint16_t PVT_GEODETIC = 4007;
 }  // namespace SBF::BlockId
 
+/// PVTGeodetic::modeType(), the type of PVT solution. Only the values QGC distinguishes are named.
+namespace SBF::PVTMode {
+inline constexpr uint8_t NO_PVT = 0;
+inline constexpr uint8_t DIFFERENTIAL = 2;
+inline constexpr uint8_t FIXED_LOCATION = 3;
+inline constexpr uint8_t RTK_FIXED = 4;
+inline constexpr uint8_t RTK_FLOAT = 5;
+inline constexpr uint8_t SBAS = 6;
+inline constexpr uint8_t MOVING_BASE_RTK_FIXED = 7;
+inline constexpr uint8_t MOVING_BASE_RTK_FLOAT = 8;
+}  // namespace SBF::PVTMode
+
 namespace SBF {
+
+/// PVTGeodetic::datum of a position in WGS84/ITRS.
+inline constexpr uint8_t DATUM_WGS84 = 0;
 
 struct PVTGeodetic
 {
