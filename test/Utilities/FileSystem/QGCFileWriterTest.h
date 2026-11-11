@@ -14,6 +14,11 @@ private slots:
     void _testRecoversAfterError_data();
     void _testRecoversAfterError();
     void _testDestructorWritesQueuedData();
+    void _testCloseWritesQueuedDataAndNextWriteReopens();
+    void _testChangingPathSwitchesFile();
+    void _testAppendsAndReportsFileSize();
+    void _testWritesKeepQueueOrder();
+    void _testWritesOverPendingLimitAreDropped();
 
 private:
     static QByteArray _fileContents(const QString& path);

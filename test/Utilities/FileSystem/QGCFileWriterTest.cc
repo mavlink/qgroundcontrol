@@ -1,9 +1,13 @@
 #include "QGCFileWriterTest.h"
 
+#include <atomic>
+
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
+#include <QtCore/QSemaphore>
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QSignalSpy>
 
@@ -159,6 +163,171 @@ void QGCFileWriterTest::_testDestructorWritesQueuedData()
     }
 
     QCOMPARE(_fileContents(path), expected);
+}
+
+void QGCFileWriterTest::_testCloseWritesQueuedDataAndNextWriteReopens()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString path = tempDir.filePath(QStringLiteral("out.log"));
+    const QString rotatedPath = tempDir.filePath(QStringLiteral("out.1.log"));
+
+    QGCFileWriter writer;
+    writer.setFilePath(path);
+    QByteArray expected;
+    for (int i = 0; i < 100; ++i) {
+        const QByteArray chunk = QByteArray::number(i) + ';';
+        writer.write(chunk);
+        expected += chunk;
+    }
+    writer.close();
+
+    QCOMPARE(_fileContents(path), expected);
+    QVERIFY(!writer.isRunning());
+    QVERIFY(!writer.isOpen());
+    QCOMPARE(writer.pendingBytes(), qint64(0));
+
+    // LogManager rotates its log this way: close, rename the file, write on to the same path.
+    QVERIFY(QFile::rename(path, rotatedPath));
+    writer.write("next;");
+    QVERIFY(writer.flush(TestTimeout::mediumMs()));
+    QCOMPARE(_fileContents(path), QByteArray("next;"));
+    QCOMPARE(_fileContents(rotatedPath), expected);
+}
+
+void QGCFileWriterTest::_testChangingPathSwitchesFile()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString firstPath = tempDir.filePath(QStringLiteral("first.log"));
+    const QString secondPath = tempDir.filePath(QStringLiteral("second.log"));
+
+    QGCFileWriter writer;
+    writer.setFilePath(firstPath);
+    writer.write("one;");
+    // What is queued for the first file is written to it before the path changes.
+    writer.setFilePath(secondPath);
+    QCOMPARE(_fileContents(firstPath), QByteArray("one;"));
+
+    writer.write("two;");
+    QVERIFY(writer.flush(TestTimeout::mediumMs()));
+    QCOMPARE(_fileContents(secondPath), QByteArray("two;"));
+
+    // An empty path turns writing off.
+    writer.setFilePath(QString());
+    QVERIFY(!writer.isRunning());
+    writer.write("three;");
+    QVERIFY(writer.flush(TestTimeout::shortMs()));
+    QVERIFY(!writer.isRunning());
+    QVERIFY(!writer.hasError());
+    QCOMPARE(_fileContents(firstPath), QByteArray("one;"));
+    QCOMPARE(_fileContents(secondPath), QByteArray("two;"));
+}
+
+void QGCFileWriterTest::_testAppendsAndReportsFileSize()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString path = tempDir.filePath(QStringLiteral("out.log"));
+    {
+        QFile existing(path);
+        QVERIFY(existing.open(QIODevice::WriteOnly));
+        QCOMPARE(existing.write("old;"), qint64(4));
+    }
+
+    QGCFileWriter writer;
+    QSignalSpy sizeSpy(&writer, &QGCFileWriter::fileSizeChanged);
+    writer.setFilePath(path);
+    writer.write("new;");
+    QVERIFY(writer.flush(TestTimeout::mediumMs()));
+    QCOMPARE(_fileContents(path), QByteArray("old;new;"));
+
+    // LogManager rotates on this size, so it has to count what the file already held.
+    QCOMPARE(writer.fileSize(), qint64(8));
+    QVERIFY_SIGNAL_COUNT_WAIT(sizeSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(sizeSpy.constLast().constFirst().toLongLong(), qint64(8));
+}
+
+void QGCFileWriterTest::_testWritesKeepQueueOrder()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString path = tempDir.filePath(QStringLiteral("out.log"));
+
+    QSemaphore workerHeld;
+    QSemaphore releaseWorker;
+    QGCFileWriter writer;
+    // Runs before the writer is destroyed, which waits for its worker.
+    const auto releaseOnExit = qScopeGuard([&releaseWorker]() { releaseWorker.release(); });
+    writer.setFilePath(path);
+
+    // Holds the worker in its first batch, so that everything else is queued behind it.
+    writer.writeDeferred([&workerHeld, &releaseWorker]() {
+        workerHeld.release();
+        releaseWorker.acquire();
+        return QByteArray("0;");
+    });
+    QVERIFY(workerHeld.tryAcquire(1, TestTimeout::mediumMs()));
+
+    QByteArray expected("0;");
+    std::atomic<int> formatted{0};
+    for (int i = 1; i <= 50; ++i) {
+        const QByteArray chunk = QByteArray::number(i) + ';';
+        if ((i % 2) == 0) {
+            writer.write(chunk);
+        } else {
+            writer.writeDeferred([chunk, &formatted]() {
+                ++formatted;
+                return chunk;
+            });
+        }
+        expected += chunk;
+    }
+    releaseWorker.release();
+
+    QVERIFY(writer.flush(TestTimeout::mediumMs()));
+    QCOMPARE(_fileContents(path), expected);
+    QCOMPARE(formatted.load(), 25);
+}
+
+void QGCFileWriterTest::_testWritesOverPendingLimitAreDropped()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString path = tempDir.filePath(QStringLiteral("out.log"));
+
+    QSemaphore workerHeld;
+    QSemaphore releaseWorker;
+    QGCFileWriter writer;
+    // Runs before the writer is destroyed, which waits for its worker.
+    const auto releaseOnExit = qScopeGuard([&releaseWorker]() { releaseWorker.release(); });
+    writer.setFilePath(path);
+    writer.setMaxPendingBytes(10);
+
+    // Holds the worker, so that the writes below stay pending.
+    writer.writeDeferred([&workerHeld, &releaseWorker]() {
+        workerHeld.release();
+        releaseWorker.acquire();
+        return QByteArray();
+    });
+    QVERIFY(workerHeld.tryAcquire(1, TestTimeout::mediumMs()));
+
+    // A write is refused while more than the limit is waiting to be written.
+    writer.write("12345678");
+    writer.write("abcdefgh");
+    QCOMPARE(writer.pendingBytes(), qint64(16));
+    writer.write("dropped!");
+    QCOMPARE(writer.pendingBytes(), qint64(16));
+
+    releaseWorker.release();
+    QVERIFY(writer.flush(TestTimeout::mediumMs()));
+    QCOMPARE(writer.pendingBytes(), qint64(0));
+    QCOMPARE(_fileContents(path), QByteArray("12345678abcdefgh"));
+
+    // With the backlog written, writes are accepted again.
+    writer.write("more");
+    QVERIFY(writer.flush(TestTimeout::mediumMs()));
+    QCOMPARE(_fileContents(path), QByteArray("12345678abcdefghmore"));
 }
 
 UT_REGISTER_TEST(QGCFileWriterTest, TestLabel::Unit, TestLabel::Utilities)
