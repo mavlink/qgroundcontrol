@@ -9,6 +9,7 @@
 #include "ManualScheduler.h"
 #include "MockLink.h"
 #include "PositionManager.h"
+#include "QGCGeoid.h"
 #include "RemoteIDManager.h"
 #include "RemoteIDSettings.h"
 #include "SettingsManager.h"
@@ -251,7 +252,8 @@ void RemoteIDManagerTest::_liveGpsFailureDiagnostics()
     publish(fix);
     QVERIFY(QMetaObject::invokeMethod(manager, "_sendMessages", Qt::DirectConnection));
     QVERIFY(manager->gcsPositionUsable());
-    QCOMPARE(positioning->gcsPosition(), fix.coordinate());
+    // The fix has an ellipsoid height, which the ground station publishes as an altitude above mean sea level.
+    QCOMPARE(positioning->gcsPosition(), QGeoCoordinate(47, 8, 500 - QGCGeo::geoidSeparation(47, 8)));
 }
 
 void RemoteIDManagerTest::_gpsAltitudePolicy_data()

@@ -33,6 +33,7 @@
 #include "Protocols/Support/GPSProtocolTestData.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "Protocols/Support/ScriptedReceiver.h"
+#include "QGCGeoid.h"
 #include "RTKSettings.h"
 #include "Receiver/Support/GPSReceiverTestSupport.h"
 #include "Receiver/Support/ScriptedReceiverWorker.h"
@@ -504,7 +505,8 @@ void GPSReceiverTest::_fixedBasePositionIsGcsPosition()
     // Fixed-mode receivers report only a time fix.
     worker->position(fixReport(GPSFixQuality::NoFix));
     QCOMPARE(positions.selectedSource(), PositionManager::SelectedSource::Receiver);
-    QCOMPARE(positions.gcsPosition(), QGeoCoordinate(47.5, 8.25));
+    // The base's ellipsoid height becomes the ground station's altitude above mean sea level.
+    QCOMPARE(positions.gcsPosition(), QGeoCoordinate(47.5, 8.25, 480.0 - QGCGeo::geoidSeparation(47.5, 8.25)));
     QCOMPARE(positions.gcsPositionHorizontalAccuracy(), 0.01);
     const auto remoteId = receiver.acceptedPositionObservation(GPSObservation::PositionUse::RemoteID);
     QVERIFY(remoteId);
@@ -544,7 +546,7 @@ void GPSReceiverTest::_surveyedBasePositionIsGcsPosition()
     survey.meanAccuracyMeters = 1.5;
     worker->baseStatus(survey);
     deliver(fixReport(GPSFixQuality::NoFix));
-    QCOMPARE(positions.gcsPosition(), QGeoCoordinate(11, 21));
+    QCOMPARE(positions.gcsPosition(), QGeoCoordinate(11, 21, 400.0 - QGCGeo::geoidSeparation(11, 21)));
     QCOMPARE(positions.gcsPositionHorizontalAccuracy(), 1.5);
 
     survey.meanAccuracyMeters.reset();

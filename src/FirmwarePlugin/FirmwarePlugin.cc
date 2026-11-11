@@ -470,8 +470,8 @@ void FirmwarePlugin::sendGCSMotionReport(Vehicle *vehicle, const FollowMe::GCSMo
     if (!vehicle) {
         return;
     }
-    // FOLLOW_TARGET takes an altitude above mean sea level. When the ground station's is not known to be that, as for
-    // an ellipsoid height, the target is given the vehicle's home altitude, as ArduPilot is.
+    // FOLLOW_TARGET takes an altitude above mean sea level. When the datum of the ground station's is not known, the
+    // target is given the vehicle's home altitude, as ArduPilot is.
     const float altitude = static_cast<float>(
         qIsFinite(motionReport.altMetersAMSL) ? motionReport.altMetersAMSL : vehicle->homePosition().altitude());
     if (!qIsFinite(altitude)) {

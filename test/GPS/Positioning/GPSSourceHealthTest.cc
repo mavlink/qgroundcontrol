@@ -11,10 +11,12 @@
 
 #include "Fixtures/RAIIFixtures.h"
 #include "GPSObservation.h"
+#include "GPSReceiverConfig.h"
 #include "GPSReceiverReports.h"
 #include "GPSSourceHealth.h"
 #include "ManualScheduler.h"
 #include "MonotonicClock.h"
+#include "QGCGeoid.h"
 #include "Support/GPSTestHelpers.h"
 
 using namespace std::chrono_literals;
@@ -326,6 +328,62 @@ void GPSSourceHealthTest::_consumerPolicies()
     QVERIFY(!health.acceptedObservation(use));
 }
 
+void GPSSourceHealthTest::_groundStationAltitude_data()
+{
+    QTest::addColumn<GPSAltitudeDatum>("datum");
+    QTest::addColumn<double>("altitude");
+    QTest::addColumn<double>("ellipsoid");
+    QTest::addColumn<double>("verticalAccuracy");
+    // NaN when the ground station gets no altitude.
+    QTest::addColumn<double>("expected");
+    QTest::addColumn<GPSAltitudeDatum>("expectedDatum");
+    using Datum = GPSAltitudeDatum;
+    const double none = qQNaN();
+    // The geoid is about 48 m above the ellipsoid at the test position.
+    const double separation = QGCGeo::geoidSeparation(47, 8);
+    QTest::newRow("mean-sea-level") << Datum::MeanSeaLevel << 500.0 << none << 1.0 << 500.0 << Datum::MeanSeaLevel;
+    QTest::newRow("ellipsoid") << Datum::Ellipsoid << 550.0 << none << 1.0 << 550.0 - separation << Datum::MeanSeaLevel;
+    QTest::newRow("both-heights") << Datum::MeanSeaLevel << 500.0 << 550.0 << 1.0 << 500.0 << Datum::MeanSeaLevel;
+    QTest::newRow("unknown-datum") << Datum::Unknown << 500.0 << none << 1.0 << 500.0 << Datum::Unknown;
+    QTest::newRow("inaccurate-ellipsoid") << Datum::Ellipsoid << 550.0 << none << 11.0 << none << Datum::Ellipsoid;
+    // The ellipsoid height beside an inaccurate altitude is no more accurate.
+    QTest::newRow("inaccurate-with-ellipsoid-height")
+        << Datum::MeanSeaLevel << 500.0 << 550.0 << 11.0 << none << Datum::MeanSeaLevel;
+    QTest::newRow("no-altitude") << Datum::Unknown << none << none << 1.0 << none << Datum::Unknown;
+}
+
+void GPSSourceHealthTest::_groundStationAltitude()
+{
+    QFETCH(GPSAltitudeDatum, datum);
+    QFETCH(double, altitude);
+    QFETCH(double, ellipsoid);
+    QFETCH(double, verticalAccuracy);
+    QFETCH(double, expected);
+    QFETCH(GPSAltitudeDatum, expectedDatum);
+    GPSObservation observation;
+    observation.position = QGeoPositionInfo(QGeoCoordinate(47, 8, altitude), QDateTime::currentDateTimeUtc());
+    observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
+    observation.position.setAttribute(QGeoPositionInfo::VerticalAccuracy, verticalAccuracy);
+    observation.altitudeDatum = datum;
+    if (qIsFinite(ellipsoid)) {
+        observation.altitudeEllipsoidMeters = ellipsoid;
+    }
+    const auto groundStation = observation.projected(GPSObservation::PositionUse::GroundStation);
+    QVERIFY(groundStation);
+    if (qIsFinite(expected)) {
+        QCOMPARE(groundStation->position.coordinate().altitude(), expected);
+        QCOMPARE(groundStation->altitudeDatum, expectedDatum);
+        QCOMPARE(groundStation->position.attribute(QGeoPositionInfo::VerticalAccuracy), verticalAccuracy);
+        // Vehicles are sent the altitude only above mean sea level.
+        QCOMPARE(groundStation->altitudeMslMeters(),
+                 expectedDatum == GPSAltitudeDatum::MeanSeaLevel ? std::optional<double>(expected) : std::nullopt);
+    } else {
+        QCOMPARE(groundStation->position.coordinate().type(), QGeoCoordinate::Coordinate2D);
+        QVERIFY(!groundStation->position.hasAttribute(QGeoPositionInfo::VerticalAccuracy));
+        QVERIFY(!groundStation->altitudeMslMeters());
+    }
+}
+
 void GPSSourceHealthTest::_ggaDoesNotRequireAccuracy()
 {
     ManualScheduler scheduler;
@@ -558,12 +616,50 @@ void GPSSourceHealthTest::_navigationObservation()
     QVERIFY(dopOnly.usable());
     QCOMPARE(dopOnly.position.attribute(QGeoPositionInfo::HorizontalAccuracy), GPSObservation::accuracyFromDop(0.5f));
 
-    navigation.fixType = GPSFixQuality::NoFix;
+    // A receiver that reports only its height above the ellipsoid.
     navigation.altitudeMslMeters = std::numeric_limits<double>::quiet_NaN();
+    const auto ellipsoidOnly = GPSObservation::fromNavigation(navigation, 1237);
+    QCOMPARE(ellipsoidOnly.position.coordinate(), QGeoCoordinate(47.5, 8.25, 497.5));
+    QCOMPARE(ellipsoidOnly.altitudeDatum, GPSAltitudeDatum::Ellipsoid);
+    QCOMPARE(ellipsoidOnly.altitudeMslMeters(), std::optional<double>(497.5 - QGCGeo::geoidSeparation(47.5, 8.25)));
+
+    navigation.fixType = GPSFixQuality::NoFix;
+    navigation.altitudeEllipsoidMeters = std::numeric_limits<double>::quiet_NaN();
     navigation.utcTimeUs = 0;
     const auto lost = GPSObservation::fromNavigation(navigation, 1235);
     QVERIFY(!lost.hasNavigationSolution());
     QCOMPARE(lost.altitudeDatum, GPSAltitudeDatum::Unknown);
     QVERIFY(lost.position.timestamp().isValid());
     QVERIFY(!GPSObservation::fromNavigation(GPSNavigationValues{}, 1).position.isValid());
+}
+
+void GPSSourceHealthTest::_surveyedPositionObservation()
+{
+    using Use = GPSObservation::PositionUse;
+    GPSEllipsoidPosition base{.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 550};
+    const auto observation = GPSObservation::fromSurveyedPosition(base, 1.5, 1234);
+    QCOMPARE(observation.monotonicTimestampUs, quint64(1234));
+    // A base is positioned by its height above the ellipsoid; the ground station is given the altitude above mean
+    // sea level, about 48 m lower here.
+    const auto groundStation = observation.projected(Use::GroundStation);
+    QVERIFY(groundStation);
+    QCOMPARE(groundStation->position.coordinate(), QGeoCoordinate(47, 8, 550 - QGCGeo::geoidSeparation(47, 8)));
+    QCOMPARE(groundStation->altitudeDatum, GPSAltitudeDatum::MeanSeaLevel);
+    QCOMPARE(groundStation->position.attribute(QGeoPositionInfo::HorizontalAccuracy), 1.5);
+    QCOMPARE(groundStation->position.attribute(QGeoPositionInfo::VerticalAccuracy), 1.5);
+    const auto remoteId = observation.projected(Use::RemoteID);
+    QVERIFY(remoteId);
+    QCOMPARE(remoteId->position.coordinate(), QGeoCoordinate(47, 8, 550));
+    QCOMPARE(remoteId->altitudeDatum, GPSAltitudeDatum::Ellipsoid);
+
+    // A base surveyed less accurately than the ground station's altitude limit gives it no altitude.
+    const auto coarse = GPSObservation::fromSurveyedPosition(base, 11, 1234).projected(Use::GroundStation);
+    QVERIFY(coarse);
+    QCOMPARE(coarse->position.coordinate(), QGeoCoordinate(47, 8));
+
+    base.altitudeMeters = std::numeric_limits<double>::quiet_NaN();
+    const auto horizontal = GPSObservation::fromSurveyedPosition(base, 1.5, 1234).projected(Use::GroundStation);
+    QVERIFY(horizontal);
+    QCOMPARE(horizontal->position.coordinate(), QGeoCoordinate(47, 8));
+    QVERIFY(!horizontal->position.hasAttribute(QGeoPositionInfo::VerticalAccuracy));
 }

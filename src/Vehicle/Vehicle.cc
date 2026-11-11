@@ -2776,8 +2776,8 @@ void Vehicle::_updateHomepoint()
         PositionManager* const positionManager = GPSManager::instance()->positionManager();
         QGeoCoordinate gcsPosition = positionManager->gcsPosition();
         // The command takes an altitude above mean sea level and has no value for an unknown one, which ArduPilot
-        // before 4.5 does not reject. The ground station's is sent only when it is known to be that. Otherwise, as for
-        // an ellipsoid height, home keeps the altitude the vehicle reports and moves only horizontally.
+        // before 4.5 does not reject. The ground station's is sent only when its datum is known. Otherwise home keeps
+        // the altitude the vehicle reports and moves only horizontally.
         const auto gcsObservation = positionManager->acceptedObservation();
         const double homeAltitude = homePosition().altitude();
         const double altitude =

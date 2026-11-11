@@ -13,6 +13,7 @@
 #include "MockLink.h"
 #include "MultiVehicleManager.h"
 #include "PositionManager.h"
+#include "QGCGeoid.h"
 #include "SettingsManager.h"
 #include "Support/GPSTestHelpers.h"
 #include "Vehicle.h"
@@ -78,8 +79,8 @@ void FollowMeTest::_motionPolicyReports_data()
     QTest::newRow("ardupilot-home-altitude") << 2.0 << true << 1.0 << 500.0 << true << false << true << Datum::Unknown;
     QTest::newRow("ardupilot-2d-after-report")
         << 2.0 << true << qQNaN() << qQNaN() << true << true << true << Datum::Unknown;
-    // FOLLOW_TARGET.alt is defined as MSL. Only an altitude known to be that is sent; the others give way to the
-    // vehicle's home altitude, as an ellipsoid height cannot be converted without a geoid model.
+    // FOLLOW_TARGET.alt is defined as MSL. An altitude known to be that is sent, and an ellipsoid height after the
+    // geoid has converted it; an altitude of unknown datum gives way to the vehicle's home altitude.
     QTest::newRow("mean-sea-level-altitude")
         << 2.0 << true << 1.0 << 500.0 << true << false << false << Datum::MeanSeaLevel;
     QTest::newRow("ellipsoid-altitude") << 2.0 << true << 1.0 << 500.0 << true << false << false << Datum::Ellipsoid;
@@ -175,8 +176,14 @@ void FollowMeTest::_motionPolicyReports()
         QVERIFY(qAbs(report.vel[0]) < 0.0001);
         QCOMPARE(report.vel[1], reliableCourse ? float(speed) : 0.0f);
         QCOMPARE(report.position_cov[2], qIsFinite(verticalAccuracy) ? float(verticalAccuracy) : 0.0f);
-        const bool altitudeKnown = datum == GPSAltitudeDatum::MeanSeaLevel && qIsFinite(altitude);
-        QCOMPARE(report.alt, float(altitudeKnown ? altitude : vehicle()->homePosition().altitude()));
+        double expectedAltitude = vehicle()->homePosition().altitude();
+        if (datum == GPSAltitudeDatum::MeanSeaLevel && qIsFinite(altitude)) {
+            expectedAltitude = altitude;
+        } else if (datum == GPSAltitudeDatum::Ellipsoid && qIsFinite(altitude)) {
+            // The geoid is about 48 m above the ellipsoid here.
+            expectedAltitude = altitude - QGCGeo::geoidSeparation(47, 8);
+        }
+        QCOMPARE(report.alt, float(expectedAltitude));
     }
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(5)));
     sent.clear();

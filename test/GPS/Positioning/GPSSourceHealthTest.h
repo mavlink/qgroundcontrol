@@ -16,6 +16,8 @@ private slots:
     void _logsOnlyHealthTransitions();
     void _consumerPolicies_data();
     void _consumerPolicies();
+    void _groundStationAltitude_data();
+    void _groundStationAltitude();
     void _remoteIdDatum_data();
     void _remoteIdDatum();
     void _ggaDoesNotRequireAccuracy();
@@ -27,4 +29,5 @@ private slots:
     void _maximumAge();
     void _receiptDeadlineBoundaries();
     void _navigationObservation();
+    void _surveyedPositionObservation();
 };

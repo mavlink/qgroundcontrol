@@ -55,6 +55,8 @@ struct GPSObservation
     [[nodiscard]] bool usable() const;
     [[nodiscard]] QGeoCoordinate coordinate() const;
     [[nodiscard]] double heading() const;
-    /// The position's altitude above mean sea level; empty when it has none or its datum is not known to be that.
+    /// The position's altitude above mean sea level. A height above the WGS84 ellipsoid, which the altitude or
+    /// altitudeEllipsoidMeters may be, is converted with the EGM96 geoid. Empty when the position has no height or
+    /// only an altitude of unknown datum.
     [[nodiscard]] std::optional<double> altitudeMslMeters() const;
 };

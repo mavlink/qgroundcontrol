@@ -10,6 +10,7 @@
 #include "GPSManager.h"
 #include "MockLink.h"
 #include "PositionManager.h"
+#include "QGCGeoid.h"
 #include "SettingsManager.h"
 #include "Support/GPSTestHelpers.h"
 #include "Vehicle.h"
@@ -45,21 +46,23 @@ void SetHomeTest::_setHomeHereSendsCommandInt()
 void SetHomeTest::_gcsPositionUpdateSendsCommandInt_data()
 {
     QTest::addColumn<GPSAltitudeDatum>("datum");
-    QTest::addColumn<bool>("hasAltitude");
-    // MAV_FRAME_GLOBAL altitudes are MSL, so only an altitude known to be that becomes the home altitude.
+    // NaN for a position without an altitude.
+    QTest::addColumn<double>("verticalAccuracy");
+    // MAV_FRAME_GLOBAL altitudes are MSL, so only an altitude known in that datum becomes the home altitude.
     QTest::addColumn<bool>("movesHomeVertically");
-    QTest::newRow("mean-sea-level") << GPSAltitudeDatum::MeanSeaLevel << true << true;
-    // Without a geoid model an ellipsoid height, as Android reports, cannot be converted.
-    QTest::newRow("ellipsoid") << GPSAltitudeDatum::Ellipsoid << true << false;
-    QTest::newRow("unknown-datum") << GPSAltitudeDatum::Unknown << true << false;
+    QTest::newRow("mean-sea-level") << GPSAltitudeDatum::MeanSeaLevel << 1.0 << true;
+    // An ellipsoid height, as Android reports, is converted with the geoid.
+    QTest::newRow("ellipsoid") << GPSAltitudeDatum::Ellipsoid << 1.0 << true;
+    QTest::newRow("inaccurate-ellipsoid") << GPSAltitudeDatum::Ellipsoid << 11.0 << false;
+    QTest::newRow("unknown-datum") << GPSAltitudeDatum::Unknown << 1.0 << false;
     // The command has no value for an unknown altitude.
-    QTest::newRow("no-altitude") << GPSAltitudeDatum::MeanSeaLevel << false << false;
+    QTest::newRow("no-altitude") << GPSAltitudeDatum::MeanSeaLevel << qQNaN() << false;
 }
 
 void SetHomeTest::_gcsPositionUpdateSendsCommandInt()
 {
     QFETCH(GPSAltitudeDatum, datum);
-    QFETCH(bool, hasAltitude);
+    QFETCH(double, verticalAccuracy);
     QFETCH(bool, movesHomeVertically);
     QVERIFY(vehicle());
     QVERIFY_TRUE_WAIT(vehicle()->coordinate().isValid(), TestTimeout::shortMs());
@@ -84,14 +87,20 @@ void SetHomeTest::_gcsPositionUpdateSendsCommandInt()
     QGeoCoordinate gcsCoord(47.3977419, 8.5455938);
     QGeoPositionInfo fix(gcsCoord, QDateTime::currentDateTimeUtc());
     fix.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 1);
-    if (hasAltitude) {
+    if (qIsFinite(verticalAccuracy)) {
         gcsCoord.setAltitude(homeAltitude + 25);
         fix.setCoordinate(gcsCoord);
-        fix.setAttribute(QGeoPositionInfo::VerticalAccuracy, 1);
+        fix.setAttribute(QGeoPositionInfo::VerticalAccuracy, verticalAccuracy);
     }
     source.publish(fix);
     // Otherwise home moves horizontally and keeps the altitude the vehicle reports.
-    _verifySetHomeCommandInt(gcsCoord, movesHomeVertically ? gcsCoord.altitude() : homeAltitude);
+    double expectedAltitude = homeAltitude;
+    if (movesHomeVertically) {
+        // The geoid is about 47.5 m above the ellipsoid here.
+        const double separation = QGCGeo::geoidSeparation(gcsCoord.latitude(), gcsCoord.longitude());
+        expectedAltitude = gcsCoord.altitude() - (datum == GPSAltitudeDatum::Ellipsoid ? separation : 0.0);
+    }
+    _verifySetHomeCommandInt(gcsCoord, expectedAltitude);
     QCOMPARE(mockLink()->receivedMavCommandCount(MAV_CMD_DO_SET_HOME), 1);
 }
 
