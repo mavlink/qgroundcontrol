@@ -18,6 +18,7 @@ public:
     /// How long open() keeps retrying a device it is not permitted to open yet.
     static constexpr std::chrono::milliseconds OPEN_TIMEOUT{30000};
 
+    /// An @a openTimeout of std::chrono::milliseconds::max() retries until a stop is requested.
     SerialGPSTransport(QString device, GPSCancelToken cancelToken,
                        std::chrono::milliseconds openTimeout = OPEN_TIMEOUT);
     ~SerialGPSTransport() override;

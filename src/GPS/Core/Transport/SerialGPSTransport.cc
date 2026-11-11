@@ -86,9 +86,8 @@ GPSOpenResult SerialGPSTransport::open()
                     openFailure(*_serial, _device)};
         }
         qCDebug(SerialGPSTransportLog) << "Cannot open device... retrying";
-        const QDeadlineTimer retryDeadline(
-            (std::min) (std::chrono::milliseconds(openDeadline.remainingTime()), OPEN_RETRY));
-        (void) waitUntil([]() { return false; }, retryDeadline);
+        // The deadlines are compared because an open that never times out reports no remaining time.
+        (void) waitUntil([]() { return false; }, (std::min) (openDeadline, QDeadlineTimer(OPEN_RETRY)));
         if (isCancelled()) {
             return {GPSOpenStatus::Cancelled};
         }
