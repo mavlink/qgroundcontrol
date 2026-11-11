@@ -103,6 +103,10 @@ QString getMappingForGUID(const QString &guid);
 /// Add gamepad mappings from a file
 int addMappingsFromFile(const QString &filePath);
 
+/// Add gamepad mappings from the contents of a mapping database, skipping the entries for other platforms.
+/// @return Number of mappings added, or -1 on error.
+int addMappingsFromData(const QByteArray& data);
+
 /// Add a single mapping string
 bool addMapping(const QString &mapping);
 

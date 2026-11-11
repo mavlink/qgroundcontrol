@@ -533,4 +533,29 @@ void SDLTest::_mappingManagementTest()
     QVERIFY2(updated, "Updating existing mapping should succeed");
 }
 
+void SDLTest::_mappingPlatformFilterTest()
+{
+    const QString platform = SDLPlatform::getPlatform();
+    const QString otherPlatform =
+        (platform == QStringLiteral("Windows")) ? QStringLiteral("Linux") : QStringLiteral("Windows");
+    // GUIDs in the standard bus/vendor/product/version form that no device or bundled mapping uses
+    const QString guid = QStringLiteral("03000000d10d0000d10d000011010000");
+    const QString guidWithoutPlatform = QStringLiteral("03000000d10d0000d20d000011010000");
+
+    // The entry for the other platform comes last, where it would replace the one for this platform
+    const QStringList database = {
+        QStringLiteral("# Test database"),
+        QStringLiteral("%1,Current Platform Pad,a:b0,b:b1,platform:%2,").arg(guid, platform),
+        QStringLiteral("%1,No Platform Pad,a:b0,b:b1,").arg(guidWithoutPlatform),
+        QStringLiteral("%1,Other Platform Pad,a:b1,b:b0,platform:%2,").arg(guid, otherPlatform),
+    };
+    QVERIFY(SDLJoystick::addMappingsFromData(database.join('\n').toUtf8()) >= 0);
+
+    const QString mapping = SDLJoystick::getMappingForGUID(guid);
+    QVERIFY2(mapping.contains(QStringLiteral("Current Platform Pad")), qPrintable(mapping));
+    // Entries without a platform apply to every platform
+    const QString mappingWithoutPlatform = SDLJoystick::getMappingForGUID(guidWithoutPlatform);
+    QVERIFY2(mappingWithoutPlatform.contains(QStringLiteral("No Platform Pad")), qPrintable(mappingWithoutPlatform));
+}
+
 UT_REGISTER_TEST(SDLTest, TestLabel::Unit, TestLabel::Joystick)

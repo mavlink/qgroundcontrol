@@ -64,4 +64,5 @@ private slots:
 
     // Mapping management tests
     void _mappingManagementTest();
+    void _mappingPlatformFilterTest();
 };
