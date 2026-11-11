@@ -29,5 +29,7 @@ private slots:
     void _maximumAge();
     void _receiptDeadlineBoundaries();
     void _navigationObservation();
+    void _dopOnlyAltitude_data();
+    void _dopOnlyAltitude();
     void _surveyedPositionObservation();
 };

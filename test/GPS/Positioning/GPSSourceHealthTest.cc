@@ -615,7 +615,8 @@ void GPSSourceHealthTest::_navigationObservation()
     navigation.horizontalDop = 0.5f;
     const auto dopOnly = GPSObservation::fromNavigation(navigation, 1236);
     QVERIFY(dopOnly.usable());
-    QCOMPARE(dopOnly.position.attribute(QGeoPositionInfo::HorizontalAccuracy), GPSObservation::accuracyFromDop(0.5f));
+    QCOMPARE(dopOnly.position.attribute(QGeoPositionInfo::HorizontalAccuracy),
+             GPSObservation::horizontalAccuracyFromDop(0.5f));
 
     // A receiver that reports only its height above the ellipsoid.
     navigation.altitudeMslMeters = std::numeric_limits<double>::quiet_NaN();
@@ -632,6 +633,39 @@ void GPSSourceHealthTest::_navigationObservation()
     QCOMPARE(lost.altitudeDatum, GPSAltitudeDatum::Unknown);
     QVERIFY(lost.position.timestamp().isValid());
     QVERIFY(!GPSObservation::fromNavigation(GPSNavigationValues{}, 1).position.isValid());
+}
+
+void GPSSourceHealthTest::_dopOnlyAltitude_data()
+{
+    // An NMEA receiver without GST reports no vertical accuracy, only VDOP.
+    QTest::addColumn<float>("verticalDop");
+    QTest::addColumn<bool>("altitudeKept");
+    QTest::newRow("open-sky") << 1.2f << true;
+    QTest::newRow("limit") << 1.9f << true;
+    QTest::newRow("poor-geometry") << 2.0f << false;
+    QTest::newRow("no-vdop") << std::numeric_limits<float>::quiet_NaN() << false;
+}
+
+void GPSSourceHealthTest::_dopOnlyAltitude()
+{
+    QFETCH(float, verticalDop);
+    QFETCH(bool, altitudeKept);
+    GPSNavigationValues navigation;
+    navigation.fixType = GPSFixQuality::Fix3D;
+    navigation.latitudeDegrees = 47.5;
+    navigation.longitudeDegrees = 8.25;
+    navigation.altitudeMslMeters = 450;
+    navigation.horizontalDop = 0.8f;
+    navigation.verticalDop = verticalDop;
+    const auto observation = GPSObservation::fromNavigation(navigation, 1234);
+    QVERIFY(observation.usable());
+    QCOMPARE(observation.position.hasAttribute(QGeoPositionInfo::VerticalAccuracy), qIsFinite(verticalDop));
+    if (qIsFinite(verticalDop)) {
+        // One standard deviation for a range error of 5.1 m, which is how receivers state a vertical accuracy.
+        QCOMPARE(observation.position.attribute(QGeoPositionInfo::VerticalAccuracy), double(verticalDop) * 5.1);
+    }
+    // The ground station keeps an altitude that is accurate to 10 m.
+    QCOMPARE(observation.coordinate(), altitudeKept ? QGeoCoordinate(47.5, 8.25, 450) : QGeoCoordinate(47.5, 8.25));
 }
 
 void GPSSourceHealthTest::_surveyedPositionObservation()

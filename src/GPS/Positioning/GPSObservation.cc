@@ -13,6 +13,9 @@
 
 namespace {
 
+/// The user-equivalent range error assumed for a receiver that reports only DOP.
+constexpr double DOP_RANGE_ERROR_METERS = 5.1;
+
 /// The height of mean sea level above the ellipsoid at @a coordinate; empty for an invalid coordinate.
 std::optional<double> egm96Separation(const QGeoCoordinate& coordinate)
 {
@@ -63,13 +66,14 @@ GPSObservation GPSObservation::fromNavigation(const GPSNavigationValues& navigat
         }
     };
     // Receivers without a metric estimate, such as NMEA without GST, fall back to DOP.
-    const auto accuracy = [](float meters, float dop) {
-        return qIsFinite(meters) && meters > 0 ? meters : (qIsFinite(dop) && dop > 0 ? accuracyFromDop(dop) : qQNaN());
+    const auto accuracy = [](float meters, float dop, double (*fromDop)(double)) {
+        return qIsFinite(meters) && meters > 0 ? meters : (qIsFinite(dop) && dop > 0 ? fromDop(dop) : qQNaN());
     };
     setAttribute(QGeoPositionInfo::HorizontalAccuracy,
-                 accuracy(navigation.horizontalAccuracyMeters, navigation.horizontalDop), false);
+                 accuracy(navigation.horizontalAccuracyMeters, navigation.horizontalDop, horizontalAccuracyFromDop),
+                 false);
     setAttribute(QGeoPositionInfo::VerticalAccuracy,
-                 accuracy(navigation.verticalAccuracyMeters, navigation.verticalDop), false);
+                 accuracy(navigation.verticalAccuracyMeters, navigation.verticalDop, verticalAccuracyFromDop), false);
     setAttribute(QGeoPositionInfo::GroundSpeed, navigation.speedMetersPerSecond, true);
     if (qIsFinite(navigation.courseRadians)) {
         const double degrees = std::fmod(qRadiansToDegrees(static_cast<double>(navigation.courseRadians)), 360.0);
@@ -117,11 +121,15 @@ GPSObservation GPSObservation::fromSurveyedPosition(const GPSEllipsoidPosition& 
     return observation;
 }
 
-double GPSObservation::accuracyFromDop(double dop)
+double GPSObservation::horizontalAccuracyFromDop(double dop)
 {
-    constexpr double USER_EQUIVALENT_RANGE_ERROR_METERS = 5.1;
     constexpr double CONFIDENCE_SCALE = 2.0;
-    return dop * USER_EQUIVALENT_RANGE_ERROR_METERS * CONFIDENCE_SCALE;
+    return dop * DOP_RANGE_ERROR_METERS * CONFIDENCE_SCALE;
+}
+
+double GPSObservation::verticalAccuracyFromDop(double dop)
+{
+    return dop * DOP_RANGE_ERROR_METERS;
 }
 
 std::optional<GPSObservation> GPSObservation::projected(PositionUse use) const

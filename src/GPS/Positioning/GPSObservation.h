@@ -46,8 +46,12 @@ struct GPSObservation
     /// A known antenna position, such as a fixed or surveyed RTK base, which receivers report as a time-only fix.
     static GPSObservation fromSurveyedPosition(const GPSEllipsoidPosition& position, double accuracyMeters,
                                                quint64 receivedAtUs);
-    /// Nominal accuracy in meters for receivers that report only DOP (DOP x 5.1 m UERE x 2).
-    [[nodiscard]] static double accuracyFromDop(double dop);
+    /// Nominal horizontal accuracy in meters of a receiver that reports only HDOP: HDOP x 5.1 m UERE x 2, the
+    /// estimate Qt's NMEA source makes.
+    [[nodiscard]] static double horizontalAccuracyFromDop(double dop);
+    /// Nominal vertical accuracy in meters of a receiver that reports only VDOP: VDOP x 5.1 m UERE. It is one standard
+    /// deviation, as the vertical accuracy of a GST sentence, of the Septentrio driver and of Android is.
+    [[nodiscard]] static double verticalAccuracyFromDop(double dop);
 
     /// The owner separately enforces freshness and session authorization.
     [[nodiscard]] std::optional<GPSObservation> projected(PositionUse use) const;
