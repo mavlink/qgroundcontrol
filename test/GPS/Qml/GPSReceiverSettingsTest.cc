@@ -406,13 +406,15 @@ void GPSReceiverSettingsTest::_reconnectingOffersDisconnect()
     verifyExpectedLogMessage();
     QVERIFY(receiver.reconnecting());
     QVERIFY(!receiver.hasReceiver());
-    QCOMPARE(connect->property("text").toString(), QCoreApplication::translate("GPSReceiverSettings", "Disconnect"));
+    QCOMPARE(connect->property("text").toString(),
+             QCoreApplication::translate("GPSReceiverConnectControls", "Disconnect"));
     QVERIFY(connect->isEnabled());
     QVERIFY(!device->isEnabled());
     QVERIFY(QMetaObject::invokeMethod(connect, "clicked"));
     QVERIFY(!receiver.reconnecting());
     QVERIFY(device->isEnabled());
-    QCOMPARE(connect->property("text").toString(), QCoreApplication::translate("GPSReceiverSettings", "Connect"));
+    QCOMPARE(connect->property("text").toString(),
+             QCoreApplication::translate("GPSReceiverConnectControls", "Connect"));
     QCOMPARE(panel.receiver.workers.count(), 1);
 }
 
@@ -761,7 +763,7 @@ void GPSReceiverSettingsTest::_serialSelectionTracksFacts()
     QVERIFY(panel.item->setProperty("serialPorts", portEntries(QStringLiteral("/test/missing"), label)));
     QCOMPARE(device->property("currentText").toString(), label);
     // With Connect automatically on, a configured base can leave the device to USB discovery.
-    const QString anyReceiver = QCoreApplication::translate("GPSReceiverSettings", "Any RTK receiver on USB");
+    const QString anyReceiver = QCoreApplication::translate("GPSReceiverConnection", "Any RTK receiver on USB");
     panel.settings.autoConnect->setRawValue(true);
     QVERIFY(QMetaObject::invokeMethod(device, "activated", Q_ARG(int, 0)));
     QVERIFY(settings->serialDevice()->rawValue().toString().isEmpty());
