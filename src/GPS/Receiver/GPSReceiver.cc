@@ -20,9 +20,7 @@
 #endif
 
 #include <algorithm>
-#include <type_traits>
 #include <utility>
-#include <variant>
 
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QSet>
@@ -122,34 +120,19 @@ void GPSReceiver::_setPersistentChangesAllowed(bool allowed)
 
 bool GPSReceiver::connectionSupported() const
 {
-    return _configuration.receiverRole != RTKSettings::ConfiguredBase || effectiveConnectionType() != RTKSettings::Udp;
+    return GPSReceiverConnectionPolicy::connectability(_configuration).connectionSupported;
 }
 
 bool GPSReceiver::baseModeSupported() const
 {
-    const GPSReceiverPresentation presentation =
-        capabilitiesFor(_configuration.receiverRole, _configuration.baseReceiverManufacturer);
-    if (presentation.passive) {
-        return true;
-    }
-    return std::visit(
-        [&presentation]<typename Mode>(const Mode&) {
-            if constexpr (std::is_same_v<Mode, GPSBaseStationConfig::Fixed>) {
-                return presentation.rtkBase;
-            } else if constexpr (std::is_same_v<Mode, GPSBaseStationConfig::SurveyIn>) {
-                return presentation.surveyIn;
-            } else {
-                return presentation.receiverAveraging;
-            }
-        },
-        _configuration.base.mode);
+    return GPSReceiverConnectionPolicy::connectability(_configuration).baseModeSupported;
 }
 
 bool GPSReceiver::canConnect() const
 {
-    const GPSReceiverPresentation presentation =
-        capabilitiesFor(_configuration.receiverRole, _configuration.baseReceiverManufacturer);
-    return (presentation.specificReceiver || presentation.automatic) && baseModeSupported() && connectionSupported();
+    // Connect stays available for what it reports when pressed, such as a missing address or device.
+    const GPSReceiverConnectability check = GPSReceiverConnectionPolicy::connectability(_configuration);
+    return check.type && check.baseModeSupported && check.connectionSupported;
 }
 
 void GPSReceiver::setWorkerFactory(WorkerFactory factory)

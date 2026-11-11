@@ -14,6 +14,8 @@ private slots:
     void _connectConfiguredValidationErrors();
     void _configurationChangeCancelsRetry_data();
     void _configurationChangeCancelsRetry();
+    void _unconnectableConfigurationIsNotRetried_data();
+    void _unconnectableConfigurationIsNotRetried();
     void _sessionEndMessages_data();
     void _sessionEndMessages();
     void _pollingTicksReceiver();

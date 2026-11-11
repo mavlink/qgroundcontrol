@@ -37,6 +37,7 @@ The settings are:
 - **Compact RTCM corrections (MSM4)** (u-blox): Sends MSM4 instead of MSM7 observations, about a third less correction bandwidth for slow telemetry links.
 - **Allow flash save and restart** (Quectel): For the next connection only, lets QGroundControl save base settings to the receiver's flash and restart it.
 - **Connect automatically:** On by default. QGroundControl connects the saved receiver when it starts, reconnects it with increasing delays when the connection is lost, and reconnects a serial receiver as soon as it is plugged back in.
+  Settings that cannot connect, such as a base mode the selected receiver does not support, are reported once and not retried until you change them.
   With _Any RTK receiver on USB_ selected, it connects to an RTK receiver detected on USB instead.
   **Disconnect** pauses automatic connection until you select **Connect** again or turn the setting back on.
   When off, the receiver connects only when you select **Connect**, and a lost connection is only reported.

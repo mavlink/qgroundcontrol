@@ -1,10 +1,15 @@
 #include "GPSReceiverConnectionPolicy.h"
 
+#include <limits>
+#include <type_traits>
 #include <utility>
+#include <variant>
 
 #include <QtCore/QStringList>
 
 #include "GPSReceiverConfig.h"
+#include "GPSReceiverSession.h"
+#include "GPSTransport.h"
 #include "QGCLoggingCategory.h"
 #include "RuntimeScheduler.h"
 #ifndef QGC_NO_SERIAL_LINK
@@ -21,6 +26,62 @@ GPSReceiverConnectionPolicy::GPSReceiverConnectionPolicy(GPSReceiverConnector& r
     , _scheduler(scheduler)
 {}
 
+GPSReceiverConnectability GPSReceiverConnectionPolicy::connectability(const GPSReceiverConfiguration& configuration)
+{
+    const bool configuredBase = configuration.receiverRole == RTKSettings::ConfiguredBase;
+    const auto connection = configuration.effectiveConnectionType();
+    GPSReceiverConnectability result;
+    result.type = configuredBase ? gpsReceiverTypeForManufacturer(configuration.baseReceiverManufacturer)
+                                 : std::optional(GPSType::passive);
+    const GPSReceiverCapabilities family =
+        result.type ? gpsReceiverCapabilities(*result.type) : GPSReceiverCapabilities{};
+    const auto supportsMode = [&family]<typename Mode>(const Mode&) {
+        if constexpr (std::is_same_v<Mode, GPSBaseStationConfig::Fixed>) {
+            return family.rtkBase;
+        } else if constexpr (std::is_same_v<Mode, GPSBaseStationConfig::SurveyIn>) {
+            return family.surveyIn;
+        } else {
+            return family.receiverAveraging;
+        }
+    };
+    result.baseModeSupported = family.passive || std::visit(supportsMode, configuration.base.mode);
+    result.connectionSupported = !configuredBase || connection != RTKSettings::Udp;
+
+    const auto validPort = [](uint32_t port) { return port != 0 && port <= (std::numeric_limits<quint16>::max)(); };
+    QString endpointError;
+    // A network connection runs at its bridge's rate, whatever serial rate is saved.
+    uint32_t baudRate = GPSTransport::BRIDGE_BAUDRATE;
+    switch (connection) {
+        case RTKSettings::Serial:
+            result.hasEndpoint = !configuration.serialDevice.trimmed().isEmpty();
+            endpointError = tr("Select an available serial device that is not a bootloader.");
+            baudRate = configuration.serialBaudRate;
+            break;
+        case RTKSettings::Tcp:
+            result.hasEndpoint = !configuration.tcpHost.trimmed().isEmpty() && validPort(configuration.tcpPort);
+            endpointError = tr("Enter the receiver's TCP host and port.");
+            break;
+        case RTKSettings::Udp:
+            result.hasEndpoint = validPort(configuration.udpPort);
+            endpointError = tr("Enter the UDP port that receives the data.");
+            break;
+    }
+
+    if (!result.type) {
+        result.error = tr("Select a receiver type before connecting.");
+    } else if (!result.connectionSupported) {
+        result.error = tr("A configured base needs a serial or TCP connection. UDP only receives data.");
+    } else if (!result.hasEndpoint) {
+        result.error = endpointError;
+    } else if (!result.baseModeSupported) {
+        result.error = gpsReceiverConfigErrorText(GPSReceiverConfigError::UnsupportedBaseMode);
+    } else {
+        // The request a connection sends, without the flash-save consent only the user's Connect may add.
+        (void) gpsReceiverConfigFor(configuration.base, *result.type, baudRate, false, &result.error);
+    }
+    return result;
+}
+
 void GPSReceiverConnectionPolicy::configurationChanged(const GPSReceiverConfiguration& previous)
 {
     const bool connectionChanged = !previous.sameConnection(_configuration);
@@ -34,6 +95,11 @@ void GPSReceiverConnectionPolicy::configurationChanged(const GPSReceiverConfigur
         _startPending = true;
         // A saved receiver the user already connected is kept connected from now on.
         _keepConnected = _owner == Owner::Saved && !connectionChanged;
+    }
+    if (std::exchange(_unconnectable, false)) {
+        // The changed configuration is tried as at startup, and the message about the previous one is stale.
+        _receiver.setConnectionError({});
+        _startPending = true;
     }
 }
 
@@ -56,11 +122,21 @@ void GPSReceiverConnectionPolicy::_cancelRetries()
     _retryBackoff.reset();
 }
 
+void GPSReceiverConnectionPolicy::_rejectConfiguration(const QString& error)
+{
+    qCDebug(GPSReceiverConnectionPolicyLog) << "The configuration cannot connect:" << error;
+    _cancelRetries();
+    _owner = Owner::None;
+    _unconnectable = true;
+    _receiver.setConnectionError(error);
+}
+
 void GPSReceiverConnectionPolicy::reset()
 {
     _cancelRetries();
     _owner = Owner::None;
     _startPending = false;
+    _unconnectable = false;
 }
 
 bool GPSReceiverConnectionPolicy::connectConfigured(bool allowPersistentChanges)
@@ -130,7 +206,7 @@ void GPSReceiverConnectionPolicy::_scheduleRetry()
 
 void GPSReceiverConnectionPolicy::update()
 {
-    if (!_configuration.autoConnect || _paused || _receiver.hasReceiver()) {
+    if (!_configuration.autoConnect || _paused || _unconnectable || _receiver.hasReceiver()) {
         return;
     }
     if (std::exchange(_startPending, false) && _hasSavedReceiver()) {
@@ -146,16 +222,7 @@ void GPSReceiverConnectionPolicy::update()
 
 bool GPSReceiverConnectionPolicy::_hasSavedReceiver() const
 {
-    switch (_configuration.effectiveConnectionType()) {
-        case RTKSettings::Serial:
-            return !_configuration.serialDevice.trimmed().isEmpty();
-        case RTKSettings::Tcp:
-            return !_configuration.tcpHost.trimmed().isEmpty() && _configuration.tcpPort != 0;
-        case RTKSettings::Udp:
-            // UDP only receives, so it cannot carry a configured base.
-            return _configuration.receiverRole != RTKSettings::ConfiguredBase;
-    }
-    return false;
+    return connectability(_configuration).hasEndpoint;
 }
 
 bool GPSReceiverConnectionPolicy::_discoveryEnabled() const
@@ -172,6 +239,11 @@ bool GPSReceiverConnectionPolicy::_discoveryEnabled() const
 
 void GPSReceiverConnectionPolicy::_updateSaved()
 {
+    // Neither its port nor a retry is waited for when the configuration cannot connect.
+    if (const QString error = connectability(_configuration).error; !error.isEmpty()) {
+        _rejectConfiguration(error);
+        return;
+    }
     if (_configuration.effectiveConnectionType() == RTKSettings::Serial) {
         if (!_serialDeviceAvailable(_configuration.serialDevice.trimmed())) {
             if (!std::exchange(_waitingForPort, true)) {
@@ -212,46 +284,25 @@ bool GPSReceiverConnectionPolicy::_serialDeviceAvailable([[maybe_unused]] const 
 
 bool GPSReceiverConnectionPolicy::_connectConfigured(bool allowPersistentChanges)
 {
-    const bool configuredBase = _configuration.receiverRole == RTKSettings::ConfiguredBase;
-    const auto type = configuredBase ? gpsReceiverTypeForManufacturer(_configuration.baseReceiverManufacturer)
-                                     : std::optional(GPSType::passive);
-    if (!type) {
-        _receiver.setConnectionError(tr("Select a receiver type before connecting."));
+    const GPSReceiverConnectability check = connectability(_configuration);
+    if (!check.type || !check.error.isEmpty()) {
+        _receiver.setConnectionError(check.error);
         return false;
     }
+    const GPSType type = *check.type;
     const auto connection = _configuration.effectiveConnectionType();
     if (connection == RTKSettings::Tcp) {
-        const QString host = _configuration.tcpHost.trimmed();
-        const uint tcpPort = _configuration.tcpPort;
-        if (host.isEmpty() || tcpPort == 0 || tcpPort > 65535) {
-            _receiver.setConnectionError(tr("Enter the receiver's TCP host and port."));
-            return false;
-        }
-        return _receiver.connectTcp(host, static_cast<quint16>(tcpPort), *type, allowPersistentChanges);
+        return _receiver.connectTcp(_configuration.tcpHost.trimmed(), static_cast<quint16>(_configuration.tcpPort),
+                                    type, allowPersistentChanges);
     }
     if (connection == RTKSettings::Udp) {
-        const uint udpPort = _configuration.udpPort;
-        if (configuredBase) {
-            _receiver.setConnectionError(
-                tr("A configured base needs a serial or TCP connection. UDP only receives data."));
-            return false;
-        }
-        if (udpPort == 0 || udpPort > 65535) {
-            _receiver.setConnectionError(tr("Enter the UDP port that receives the data."));
-            return false;
-        }
-        return _receiver.connectUdp(static_cast<quint16>(udpPort), *type);
+        return _receiver.connectUdp(static_cast<quint16>(_configuration.udpPort), type);
     }
 #ifndef QGC_NO_SERIAL_LINK
+    // What follows depends on the devices present, so automatic connection retries it.
     const QString device = _configuration.serialDevice.trimmed();
     if (!_serialDeviceAvailable(device)) {
         _receiver.setConnectionError(tr("Select an available serial device that is not a bootloader."));
-        return false;
-    }
-    // Zero asks configurable receivers to detect the rate.
-    const auto baud = _configuration.serialBaudRate;
-    if (!gpsValidBaudRate(baud, *type == GPSType::passive)) {
-        _receiver.setConnectionError(gpsReceiverConfigErrorText(GPSReceiverConfigError::InvalidBaudRate));
         return false;
     }
     auto claim = _receiver.claimSerialPort(device);
@@ -259,7 +310,9 @@ bool GPSReceiverConnectionPolicy::_connectConfigured(bool allowPersistentChanges
         _receiver.setConnectionError(tr("The selected serial device is already in use."));
         return false;
     }
-    return _receiver.connectSerial(device, *type, baud, allowPersistentChanges, std::move(claim));
+    // Zero asks configurable receivers to detect the rate.
+    return _receiver.connectSerial(device, type, _configuration.serialBaudRate, allowPersistentChanges,
+                                   std::move(claim));
 #else
     return false;
 #endif
@@ -294,6 +347,16 @@ void GPSReceiverConnectionPolicy::_updateDiscovery()
 #ifndef QGC_NO_SERIAL_LINK
 void GPSReceiverConnectionPolicy::_connectDiscovered(const QString& device)
 {
+    // The USB identity only chose the port; the saved manufacturer chooses the family, detecting it when Automatic,
+    // and the receiver detects the rate.
+    GPSReceiverConfiguration discovered = _configuration;
+    discovered.serialDevice = device;
+    discovered.serialBaudRate = 0;
+    const GPSReceiverConnectability check = connectability(discovered);
+    if (!check.type || !check.error.isEmpty()) {
+        _rejectConfiguration(check.error);
+        return;
+    }
     auto claim = _receiver.claimSerialPort(device);
     if (!claim) {
         return;
@@ -302,12 +365,7 @@ void GPSReceiverConnectionPolicy::_connectDiscovered(const QString& device)
     _autoPort = device;
     _waitingPorts.clear();
     _retryDeadlineUs.reset();
-    // The USB identity only chose the port; the saved manufacturer chooses the family, detecting it when Automatic.
-    const auto type = gpsReceiverTypeForManufacturer(_configuration.baseReceiverManufacturer);
-    if (!type) {
-        _receiver.setConnectionError(tr("Select a receiver type before connecting."));
-    }
-    if (!type || !_receiver.connectSerial(device, *type, 0, false, std::move(claim))) {
+    if (!_receiver.connectSerial(device, *check.type, discovered.serialBaudRate, false, std::move(claim))) {
         _scheduleRetry();
     }
 }
