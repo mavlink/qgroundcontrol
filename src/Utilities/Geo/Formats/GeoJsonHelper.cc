@@ -256,8 +256,8 @@ void GeoJsonHelper::saveGeoJsonCoordinate(const QGeoCoordinate &coordinate, bool
     jsonValue = QJsonValue(coordinateArray);
 }
 
-bool GeoJsonHelper::loadGeoCoordinate(const QJsonValue &jsonValue, bool altitudeRequired, QGeoCoordinate &coordinate,
-                                      QString &errorString)
+bool GeoJsonHelper::loadGeoCoordinate(const QJsonValue& jsonValue, bool altitudeRequired, QGeoCoordinate& coordinate,
+                                      QString& errorString)
 {
     if (!jsonValue.isArray()) {
         errorString = QCoreApplication::translate("GeoJsonHelper", "value for coordinate is not array");
@@ -267,21 +267,22 @@ bool GeoJsonHelper::loadGeoCoordinate(const QJsonValue &jsonValue, bool altitude
     const QJsonArray coordinateArray = jsonValue.toArray();
     const int requiredCount = altitudeRequired ? 3 : 2;
     if (coordinateArray.count() != requiredCount) {
-        errorString = QCoreApplication::translate("GeoJsonHelper", "Coordinate array must contain %1 values").arg(requiredCount);
+        errorString =
+            QCoreApplication::translate("GeoJsonHelper", "Coordinate array must contain %1 values").arg(requiredCount);
         return false;
     }
 
-    for (const QJsonValue &coordinateValue : coordinateArray) {
+    for (const QJsonValue& coordinateValue : coordinateArray) {
         if ((coordinateValue.type() != QJsonValue::Double) && (coordinateValue.type() != QJsonValue::Null)) {
-            errorString =
-                QCoreApplication::translate("GeoJsonHelper", "Coordinate array may only contain double values, found: %1").arg(coordinateValue.type());
+            errorString = QCoreApplication::translate("GeoJsonHelper",
+                                                      "Coordinate array may only contain double values, found: %1")
+                              .arg(coordinateValue.type());
             return false;
         }
     }
 
-    coordinate = QGeoCoordinate(
-        JsonParsing::possibleNaNJsonValue(coordinateArray[0]),
-        JsonParsing::possibleNaNJsonValue(coordinateArray[1]));
+    coordinate = QGeoCoordinate(JsonParsing::possibleNaNJsonValue(coordinateArray[0]),
+                                JsonParsing::possibleNaNJsonValue(coordinateArray[1]));
 
     if (altitudeRequired) {
         coordinate.setAltitude(JsonParsing::possibleNaNJsonValue(coordinateArray[2]));
@@ -290,7 +291,7 @@ bool GeoJsonHelper::loadGeoCoordinate(const QJsonValue &jsonValue, bool altitude
     return true;
 }
 
-void GeoJsonHelper::saveGeoCoordinate(const QGeoCoordinate &coordinate, bool writeAltitude, QJsonValue &jsonValue)
+void GeoJsonHelper::saveGeoCoordinate(const QGeoCoordinate& coordinate, bool writeAltitude, QJsonValue& jsonValue)
 {
     QJsonArray coordinateArray;
     coordinateArray << coordinate.latitude() << coordinate.longitude();
@@ -302,8 +303,8 @@ void GeoJsonHelper::saveGeoCoordinate(const QGeoCoordinate &coordinate, bool wri
     jsonValue = QJsonValue(coordinateArray);
 }
 
-bool GeoJsonHelper::loadGeoCoordinateArray(const QJsonValue &jsonValue, bool altitudeRequired,
-                                           QVariantList &rgVarPoints, QString &errorString)
+bool GeoJsonHelper::loadGeoCoordinateArray(const QJsonValue& jsonValue, bool altitudeRequired,
+                                           QVariantList& rgVarPoints, QString& errorString)
 {
     if (!jsonValue.isArray()) {
         errorString = QCoreApplication::translate("GeoJsonHelper", "value for coordinate array is not array");
@@ -313,7 +314,7 @@ bool GeoJsonHelper::loadGeoCoordinateArray(const QJsonValue &jsonValue, bool alt
     const QJsonArray rgJsonPoints = jsonValue.toArray();
 
     rgVarPoints.clear();
-    for (const QJsonValue &point : rgJsonPoints) {
+    for (const QJsonValue& point : rgJsonPoints) {
         QGeoCoordinate coordinate;
         if (!loadGeoCoordinate(point, altitudeRequired, coordinate, errorString)) {
             return false;
@@ -324,8 +325,8 @@ bool GeoJsonHelper::loadGeoCoordinateArray(const QJsonValue &jsonValue, bool alt
     return true;
 }
 
-bool GeoJsonHelper::loadGeoCoordinateArray(const QJsonValue &jsonValue, bool altitudeRequired,
-                                           QList<QGeoCoordinate> &rgPoints, QString &errorString)
+bool GeoJsonHelper::loadGeoCoordinateArray(const QJsonValue& jsonValue, bool altitudeRequired,
+                                           QList<QGeoCoordinate>& rgPoints, QString& errorString)
 {
     QVariantList rgVarPoints;
 
@@ -334,17 +335,17 @@ bool GeoJsonHelper::loadGeoCoordinateArray(const QJsonValue &jsonValue, bool alt
     }
 
     rgPoints.clear();
-    for (const QVariant &point : rgVarPoints) {
+    for (const QVariant& point : rgVarPoints) {
         rgPoints.append(point.value<QGeoCoordinate>());
     }
 
     return true;
 }
 
-void GeoJsonHelper::saveGeoCoordinateArray(const QVariantList &rgVarPoints, bool writeAltitude, QJsonValue &jsonValue)
+void GeoJsonHelper::saveGeoCoordinateArray(const QVariantList& rgVarPoints, bool writeAltitude, QJsonValue& jsonValue)
 {
     QJsonArray rgJsonPoints;
-    for (const QVariant &point : rgVarPoints) {
+    for (const QVariant& point : rgVarPoints) {
         QJsonValue jsonPoint;
         saveGeoCoordinate(point.value<QGeoCoordinate>(), writeAltitude, jsonPoint);
         rgJsonPoints.append(jsonPoint);
@@ -353,11 +354,11 @@ void GeoJsonHelper::saveGeoCoordinateArray(const QVariantList &rgVarPoints, bool
     jsonValue = rgJsonPoints;
 }
 
-void GeoJsonHelper::saveGeoCoordinateArray(const QList<QGeoCoordinate> &rgPoints, bool writeAltitude,
-                                           QJsonValue &jsonValue)
+void GeoJsonHelper::saveGeoCoordinateArray(const QList<QGeoCoordinate>& rgPoints, bool writeAltitude,
+                                           QJsonValue& jsonValue)
 {
     QVariantList rgVarPoints;
-    for (const QGeoCoordinate &coord : rgPoints) {
+    for (const QGeoCoordinate& coord : rgPoints) {
         rgVarPoints.append(QVariant::fromValue(coord));
     }
 
