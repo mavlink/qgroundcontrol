@@ -198,7 +198,7 @@ void GPSCorrectionManager::_submit(GPSCorrectionSettings::CorrectionSource sourc
                                    const QByteArray& data, qint64 receivedAtMs)
 {
     if (_selector.submit(source, instance, receivedAtMs, _scheduler->nowMs())) {
-        _recordSelected({.source = static_cast<int>(source), .instanceId = instance}, data);
+        _recordSelected({.source = static_cast<int>(source), .instanceId = instance}, data, receivedAtMs);
         _selectedRate.recordBytes(data.size());
         if (_rtcmMavlink.submitToOutputs(data) > 0) {
             emit vehicleBytesSubmittedChanged();
@@ -208,13 +208,14 @@ void GPSCorrectionManager::_submit(GPSCorrectionSettings::CorrectionSource sourc
     _scheduleRefresh();
 }
 
-void GPSCorrectionManager::_recordSelected(const GPSCorrectionStream& stream, const QByteArray& data)
+void GPSCorrectionManager::_recordSelected(const GPSCorrectionStream& stream, const QByteArray& data,
+                                           qint64 receivedAtMs)
 {
     if (stream != _recordedStream) {
         _forgetSelected();
         _recordedStream = stream;
     }
-    _messageCounts.record(RTCMFramer::frameMessageId(data));
+    _messageCounts.record(RTCMFramer::frameMessageId(data), receivedAtMs);
     if (const auto station = RTCMStationPosition::fromFrame(data)) {
         const GPSEllipsoidPosition& position = station->position;
         _setBasePosition(QGeoCoordinate(position.latitudeDegrees, position.longitudeDegrees, position.altitudeMeters));
@@ -269,10 +270,12 @@ QString GPSCorrectionManager::sourceName(int source)
 
 void GPSCorrectionManager::_refresh()
 {
-    const std::optional<GPSCorrectionStream> selected = _selector.selectedStream(_scheduler->nowMs());
+    const qint64 now = _scheduler->nowMs();
+    const std::optional<GPSCorrectionStream> selected = _selector.selectedStream(now);
     if (selected != _recordedStream) {
         _forgetSelected();
     }
+    _messageCounts.expireIntervals(now);
     State state = State::Inactive;
     if (selected) {
         state = State::Fresh;

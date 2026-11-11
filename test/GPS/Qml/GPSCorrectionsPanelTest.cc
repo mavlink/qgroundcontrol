@@ -134,7 +134,7 @@ void GPSCorrectionsPanelTest::_correctionsStatusCountsMessageTypes()
     const QList<QQuickItem*> shown = chips();
     submit(udp, 1077);
     QCOMPARE(chips(), shown);
-    QCOMPARE(chipTexts(), QStringList({QStringLiteral(u"1005 \u00d7 1"), QStringLiteral(u"1077 \u00d7 3")}));
+    QCOMPARE(chipTexts(), QStringList({QStringLiteral(u"1005 \u00d7 1"), QStringLiteral(u"1077 \u00d7 3, 10 Hz")}));
 
     // A stream that is not selected is not counted; once it is, the counts are its own.
     const auto ntrip = corrections.openSource(GPSCorrectionSettings::Ntrip, QStringLiteral("caster/MOUNT"));
@@ -151,6 +151,55 @@ void GPSCorrectionsPanelTest::_correctionsStatusCountsMessageTypes()
     QVERIFY(chips().isEmpty());
     submit(ntrip, 1087);
     QCOMPARE(chipTexts(), QStringList({QStringLiteral(u"1087 \u00d7 1")}));
+}
+
+void GPSCorrectionsPanelTest::_correctionsStatusShowsMessageRates()
+{
+    using namespace std::chrono_literals;
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler);
+    GPSTest::QmlEngine engine;
+    std::unique_ptr<QObject> status =
+        engine.create(GPSTest::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsStatus.qml")),
+                      {{QStringLiteral("corrections"), QVariant::fromValue(&corrections)}});
+    QVERIFY2(status, qPrintable(engine.lastError()));
+    auto* types = status->findChild<QQuickItem*>(QStringLiteral("correctionsMessageTypes"));
+    QVERIFY(types);
+    const auto chipTexts = [types]() {
+        QStringList texts;
+        for (const QQuickItem* chip :
+             GPSTest::findItems(types, [](QQuickItem* item) { return item->property("messageId").isValid(); })) {
+            texts.append(chip->childItems().constFirst()->property("text").toString());
+        }
+        return texts;
+    };
+    const auto ntrip = corrections.openSource(GPSCorrectionSettings::Ntrip, QStringLiteral("caster/MOUNT"));
+    const auto submit = [&](uint16_t messageId) {
+        ntrip->submit(GPSTest::rtcmMessage(messageId, 20), scheduler.nowMs());
+    };
+
+    // A type shows how often it arrives once a second message tells: in whole seconds, or per second from two a
+    // second.
+    submit(1005);
+    for (int second = 0; second < 2; ++second) {
+        submit(1077);
+        for (int fifth = 0; fifth < 5; ++fifth) {
+            submit(1087);
+            QVERIFY(scheduler.advanceBy(200ms));
+        }
+    }
+    submit(1077);
+    QCOMPARE(chipTexts(), QStringList({QStringLiteral(u"1005 \u00d7 1"), QStringLiteral(u"1077 \u00d7 3, every 1 s"),
+                                       QStringLiteral(u"1087 \u00d7 10, 5 Hz")}));
+
+    // A type that stops arriving, while the stream goes on, keeps its count without a rate.
+    for (int second = 0; second < 3; ++second) {
+        QVERIFY(scheduler.advanceBy(1s));
+        submit(1077);
+    }
+    QCOMPARE(corrections.state(), GPSCorrectionManager::State::Fresh);
+    QCOMPARE(chipTexts(), QStringList({QStringLiteral(u"1005 \u00d7 1"), QStringLiteral(u"1077 \u00d7 6, every 1 s"),
+                                       QStringLiteral(u"1087 \u00d7 10")}));
 }
 
 void GPSCorrectionsPanelTest::_correctionsStatusShowsBaseStation()

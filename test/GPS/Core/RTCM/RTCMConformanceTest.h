@@ -22,6 +22,7 @@ private slots:
     void _repeatedMalformedPreambles();
     void _queuedResultDelivery();
     void _messageCountsChangeInPlace();
+    void _messageIntervals();
     void _stationPosition_data();
     void _stationPosition();
 
