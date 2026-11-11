@@ -89,21 +89,20 @@ namespace QGClibarchive {
 
 la_ssize_t deviceReadCallback(struct archive*, void* clientData, const void** buffer)
 {
-    static thread_local char readBuffer[QGCFileHelper::kBufferSizeMax];
-    auto* device = static_cast<QIODevice*>(clientData);
+    auto* source = static_cast<DeviceSource*>(clientData);
 
-    const qint64 bytesRead = device->read(readBuffer, sizeof(readBuffer));
+    const qint64 bytesRead = source->device->read(source->block.data(), source->block.size());
     if (bytesRead < 0) {
         return ARCHIVE_FATAL;
     }
 
-    *buffer = readBuffer;
+    *buffer = source->block.constData();
     return static_cast<la_ssize_t>(bytesRead);
 }
 
 la_int64_t deviceSkipCallback(struct archive*, void* clientData, la_int64_t request)
 {
-    auto* device = static_cast<QIODevice*>(clientData);
+    QIODevice* device = static_cast<DeviceSource*>(clientData)->device;
 
     if (!device->isSequential()) {
         // A file can be positioned beyond its end, so no more is skipped than is there. libarchive
@@ -136,7 +135,7 @@ int deviceCloseCallback(struct archive*, void*)
 
 la_int64_t deviceSeekCallback(struct archive*, void* clientData, la_int64_t offset, int whence)
 {
-    auto* device = static_cast<QIODevice*>(clientData);
+    QIODevice* device = static_cast<DeviceSource*>(clientData)->device;
 
     if (device->isSequential()) {
         return ARCHIVE_FATAL;
@@ -769,8 +768,8 @@ qint64 ArchiveReader::dataSize() const
     if (!_memoryData.isEmpty()) {
         return _memoryData.size();
     }
-    if (_device) {
-        return _device->size() > 0 ? _device->size() : 0;
+    if (_source.device) {
+        return _source.device->size() > 0 ? _source.device->size() : 0;
     }
     if (!_filePath.isEmpty()) {
         return QFileInfo(_filePath).size();
@@ -809,7 +808,7 @@ void ArchiveReader::close()
     _archive.reset();
     _filePath.clear();
     _memoryData.clear();
-    _device = nullptr;
+    _source = {};
 }
 
 bool ArchiveReader::_create(ReaderMode mode, const QByteArray& signature)
@@ -882,7 +881,8 @@ bool ArchiveReader::open(QIODevice* device, ReaderMode mode, QString& errorStrin
     if (!_create(mode, signature)) {
         return false;
     }
-    _device = device;
+    _source.device = device;
+    _source.block = QByteArray(static_cast<qsizetype>(QGCFileHelper::kBufferSizeMax), Qt::Uninitialized);
 
     // Enable seek callback for random-access devices (improves ZIP performance)
     // Must be set before opening the archive
@@ -890,7 +890,7 @@ bool ArchiveReader::open(QIODevice* device, ReaderMode mode, QString& errorStrin
         archive_read_set_seek_callback(_archive.get(), deviceSeekCallback);
     }
 
-    const int result = archive_read_open2(_archive.get(), device,
+    const int result = archive_read_open2(_archive.get(), &_source,
                                           nullptr,  // open callback (not needed)
                                           deviceReadCallback, deviceSkipCallback, deviceCloseCallback);
 

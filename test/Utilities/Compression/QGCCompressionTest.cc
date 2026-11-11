@@ -1556,6 +1556,51 @@ void QGCCompressionTest::_testExtractFileDataFromDevice()
     verifyExpectedLogMessage();
 }
 
+void QGCCompressionTest::_testInterleavedDeviceReaders()
+{
+    // Each stream expands to several of the blocks it is decompressed in, so it is partly read
+    // when the other one is read from
+    const auto payload = [](char first) {
+        QByteArray data(400000, Qt::Uninitialized);
+        for (qsizetype i = 0; i < data.size(); ++i) {
+            data[i] = static_cast<char>(first + ((i * 7) + (i / 13)) % 23);
+        }
+        return data;
+    };
+    const QByteArray firstPayload = payload('a');
+    const QByteArray secondPayload = payload('A');
+    QBuffer firstSource;
+    firstSource.setData(_gzipMember(firstPayload));
+    QVERIFY(firstSource.open(QIODevice::ReadOnly));
+    QBuffer secondSource;
+    secondSource.setData(_gzipMember(secondPayload));
+    QVERIFY(secondSource.open(QIODevice::ReadOnly));
+
+    QGCDecompressDevice first(&firstSource);
+    QGCDecompressDevice second(&secondSource);
+    QVERIFY(first.open(QIODevice::ReadOnly));
+    QVERIFY(second.open(QIODevice::ReadOnly));
+
+    QByteArray firstData;
+    QByteArray secondData;
+    QByteArray chunk(4096, Qt::Uninitialized);
+    qint64 firstRead = 0;
+    qint64 secondRead = 0;
+    do {
+        firstRead = first.read(chunk.data(), chunk.size());
+        firstData.append(chunk.constData(), qMax<qint64>(firstRead, 0));
+        secondRead = second.read(chunk.data(), chunk.size());
+        secondData.append(chunk.constData(), qMax<qint64>(secondRead, 0));
+    } while ((firstRead > 0) || (secondRead > 0));
+
+    QCOMPARE(firstRead, 0);
+    QCOMPARE(secondRead, 0);
+    QCOMPARE(firstData.size(), firstPayload.size());
+    QVERIFY(firstData == firstPayload);
+    QCOMPARE(secondData.size(), secondPayload.size());
+    QVERIFY(secondData == secondPayload);
+}
+
 // ============================================================================
 // QGCCompressionJob Tests (Async Operations)
 // ============================================================================

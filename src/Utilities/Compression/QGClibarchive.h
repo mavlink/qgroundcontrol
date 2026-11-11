@@ -61,6 +61,21 @@ constexpr qsizetype kStreamSignatureSize = 4;
 bool canDecodeStream(const QByteArray& signature);
 
 // ============================================================================
+// QIODevice Source
+// ============================================================================
+
+/// What a reader on a QIODevice gives the device callbacks as their client data
+struct DeviceSource
+{
+    QIODevice* device = nullptr;
+
+    /// Block last handed to libarchive by the read callback. libarchive reads from it until it
+    /// asks for the next one, and another reader of the thread can be read from in between, so
+    /// each reader has its own.
+    QByteArray block;
+};
+
+// ============================================================================
 // RAII Archive Reader
 // ============================================================================
 
@@ -112,6 +127,7 @@ public:
     struct archive* handle() const { return _archive.get(); }
 
     /// Release ownership of archive handle (caller must free)
+    /// @note The handle keeps reading through this object, which has to outlive it
     struct archive* release() { return _archive.release(); }
 
     /// Check if archive is open
@@ -140,10 +156,11 @@ private:
     /// @return false, after logging a warning, if the reader was not created
     bool _create(ReaderMode mode, const QByteArray& signature);
 
+    // Declared before the reader, which reads from them and so is the first to go
+    QByteArray _memoryData;  // Data read from memory: a Qt resource, or the bytes given to openMemory()
+    DeviceSource _source;    // Device for streaming reads
     std::unique_ptr<struct archive, Deleter> _archive;
     QString _filePath;  // Stored path for size queries
-    QByteArray _memoryData;        // Data read from memory: a Qt resource, or the bytes given to openMemory()
-    QIODevice *_device = nullptr;  // Device for streaming reads
 };
 
 // ============================================================================
@@ -151,24 +168,24 @@ private:
 // ============================================================================
 
 /// Read callback for QIODevice streaming
-/// @param clientData QIODevice pointer
+/// @param clientData DeviceSource pointer
 /// @param buffer Output pointer to buffer
 /// @return Bytes read, or ARCHIVE_FATAL on error
 la_ssize_t deviceReadCallback(struct archive *a, void *clientData, const void **buffer);
 
 /// Skip callback for QIODevice streaming
-/// @param clientData QIODevice pointer
+/// @param clientData DeviceSource pointer
 /// @param request Bytes to skip
 /// @return Bytes actually skipped
 la_int64_t deviceSkipCallback(struct archive *a, void *clientData, la_int64_t request);
 
 /// Close callback for QIODevice streaming (does not close device)
-/// @param clientData QIODevice pointer
+/// @param clientData DeviceSource pointer
 /// @return ARCHIVE_OK
 int deviceCloseCallback(struct archive *a, void *clientData);
 
 /// Seek callback for random-access QIODevice (improves ZIP performance)
-/// @param clientData QIODevice pointer
+/// @param clientData DeviceSource pointer
 /// @param offset Seek offset
 /// @param whence SEEK_SET, SEEK_CUR, or SEEK_END
 /// @return New position, or ARCHIVE_FATAL on error
