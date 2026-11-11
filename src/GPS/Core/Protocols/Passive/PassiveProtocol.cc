@@ -16,6 +16,8 @@
 
 QGC_LOGGING_CATEGORY(PassiveProtocolLog, "GPS.Protocols.Passive")
 
+namespace Passive {
+
 namespace {
 
 /// Standard NMEA, decoded as the ASCII families decode it.
@@ -38,7 +40,7 @@ private:
 };
 
 const GPSReceiverFamily NMEA_FAMILY{
-    .type = GPSType::passive,
+    .type = GPSType::Passive,
     .logCategory = &PassiveProtocolLog,
     .stream = {.framers = GPSFrameKind::ASCIILine, .enabled = GPSFrameKind::ASCIILine},
     .create = &gpsCreateProtocol<NMEAProtocol>,
@@ -97,7 +99,7 @@ public:
         _ready = false;
         _reset();
         channel.stream().reset();
-        if (!channel.setBaudrate(baud)) {
+        if (!channel.setBaudRate(baud)) {
             channel.failControl(QStringLiteral("The link cannot run at %1 baud").arg(baud));
             return false;
         }
@@ -208,10 +210,8 @@ private:
 
 }  // namespace
 
-namespace Passive {
-
 const GPSReceiverFamily FAMILY{
-    .type = GPSType::passive,
+    .type = GPSType::Passive,
     .logCategory = &PassiveProtocolLog,
     .stream = {.framers = inputFrames(), .enabled = inputFrames(), .shareSBFSync = true},
     .create = &gpsCreateProtocol<PassiveProtocol>,

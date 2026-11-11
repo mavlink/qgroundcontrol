@@ -18,6 +18,7 @@
 #include "NMEASentence.h"
 #include "Protocols/Support/AshtechReceiverModel.h"
 #include "Protocols/Support/GPSProtocolTestBase.h"
+#include "Protocols/Support/ProtocolTestPackets.h"
 #include "Protocols/Support/ReceiverBench.h"
 
 using namespace std::chrono_literals;
@@ -42,8 +43,8 @@ struct Base
                                 .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}
                           : GPSBaseStationConfig::Mode{GPSBaseStationConfig::SurveyIn{
                                 .accuracyMeters = 1, .duration = std::chrono::seconds{100}}}};
-        unsigned baudrate = 115200;
-        if (!driver.configure(config, baudrate) || !driver.receiverReady()) {
+        unsigned baudRate = 115200;
+        if (!driver.configure(config, baudRate) || !driver.receiverReady()) {
             return false;
         }
         (void) driver.consume({});
@@ -371,7 +372,7 @@ void ashtechFixedPositionText(GPSTestClock&)
 void ashtechAcknowledgementReturnsImmediately(GPSTestClock& clock)
 {
     clock.reset(GPSTestClock::START_US);
-    std::string reply = NMEAUtils::repairChecksum("$PASHR,PRT,A,115200").toStdString();
+    std::string reply = GPSTest::repairChecksum("$PASHR,PRT,A,115200").toStdString();
     std::vector<std::string> writes;
     std::vector<GPSConfigurationEvidence> completions;
     int reads = 0;

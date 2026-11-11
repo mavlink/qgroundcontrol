@@ -258,24 +258,24 @@ bool GPSCommandChannel::write(QByteArrayView bytes)
     return false;
 }
 
-bool GPSCommandChannel::setBaudrate(unsigned baudrate)
+bool GPSCommandChannel::setBaudRate(unsigned baudRate)
 {
-    return _setBaudrate(baudrate) == GPSBaudStatus::Configured;
+    return _setBaudRate(baudRate) == GPSBaudStatus::Configured;
 }
 
-GPSBaudStatus GPSCommandChannel::_setBaudrate(unsigned baudrate)
+GPSBaudStatus GPSCommandChannel::_setBaudRate(unsigned baudRate)
 {
     if (failed()) {
         return GPSBaudStatus::Error;
     }
     _errorDetail.clear();
     const auto status =
-        _runtime._io.cancelToken.isCancelled() ? GPSBaudStatus::Cancelled : _runtime._io.setBaudrate(baudrate);
+        _runtime._io.cancelToken.isCancelled() ? GPSBaudStatus::Cancelled : _runtime._io.setBaudRate(baudRate);
     if (status == GPSBaudStatus::Cancelled) {
         _error = GPSProtocolError::Cancelled;
     } else if (status == GPSBaudStatus::Error) {
         _error = GPSProtocolError::Transport;
-        _errorDetail = QStringLiteral("Cannot set the receiver link to %1 baud").arg(baudrate);
+        _errorDetail = QStringLiteral("Cannot set the receiver link to %1 baud").arg(baudRate);
     }
     return status;
 }
@@ -434,7 +434,7 @@ GPSBaudDetection GPSCommandChannel::detectBaud(std::span<const unsigned> candida
     GPSBaudDetection result{.baud = baud};
     for (const unsigned candidate : order) {
         result.baud = candidate;
-        const GPSBaudStatus status = _setBaudrate(candidate);
+        const GPSBaudStatus status = _setBaudRate(candidate);
         if (status == GPSBaudStatus::Unsupported && !baud) {
             continue;
         }

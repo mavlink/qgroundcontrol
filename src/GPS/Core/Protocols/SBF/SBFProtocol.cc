@@ -28,6 +28,8 @@
 
 QGC_LOGGING_CATEGORY(SBFProtocolLog, "GPS.Protocols.SBF")
 
+namespace SBF {
+
 namespace {
 
 constexpr double DNU = 100000.0;
@@ -177,7 +179,7 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
 
 bool Protocol::_configureBase(GPSCommandChannel& channel, const GPSBaseStationConfig& base, unsigned baud)
 {
-    (void) channel.setBaudrate(baud);
+    (void) channel.setBaudRate(baud);
     (void) channel.write(SBF::Plan::FORCE_COMMAND_INPUT);
 
     if (!channel.runSequence(SBF::Plan::silenceCorrectionOutput()).succeeded()) {
@@ -239,7 +241,7 @@ GPSReceiveUpdates Protocol::_decodeBlock(const GPSFrame& frame, GPSDecodeContext
         context.failControl(QStringLiteral("Septentrio position datum is not WGS84/ITRS"));
         _ready = false;
         context.stream().setEnabled(GPSFrameKind::RTCM3, false);
-        context.publishSurvey(false, false, {});
+        context.publishSurvey(GPSSurveyState::Inactive, {});
     } else {
         const bool coordinatesValid = _applyPVTGeodetic(pvt, position, context);
         if (_ready) {
@@ -320,7 +322,10 @@ void Protocol::_publishSurveyStatus(const SBF::PVTGeodetic& pvt, const GPSDecode
                           .longitudeDegrees = position.navigation.longitudeDegrees,
                           .altitudeMeters = position.navigation.altitudeEllipsoidMeters};
     }
-    context.publishSurvey(active, valid, _surveyClock.duration(), surveyPosition);
+    const GPSSurveyState state = valid    ? GPSSurveyState::Valid
+                                 : active ? GPSSurveyState::Active
+                                          : GPSSurveyState::Inactive;
+    context.publishSurvey(state, _surveyClock.duration(), surveyPosition);
 }
 
 QLatin1StringView signature(const GPSFrame& frame)
@@ -354,10 +359,8 @@ bool Protocol::probe(GPSCommandChannel& channel)
 
 }  // namespace
 
-namespace SBF {
-
 const GPSReceiverFamily FAMILY{
-    .type = GPSType::septentrio,
+    .type = GPSType::Septentrio,
     .logCategory = &SBFProtocolLog,
     .stream = {.framers = GPSFrameKind::SBF | GPSFrameKind::RTCM3, .enabled = GPSFrameKind::SBF},
     .baudCandidates = Plan::BAUD_RATES,

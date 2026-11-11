@@ -44,7 +44,6 @@ std::optional<NMEA::UtcDate> dateFromParts(unsigned day, unsigned month, int yea
     return NMEA::UtcDate{year, month, day};
 }
 
-constexpr int MIN_REPAIRABLE_SENTENCE_LENGTH = 5;
 constexpr int MINUTE_DECIMAL_PLACES = 4;
 // Minutes below this take a leading zero to fill their two integer digits.
 constexpr double TWO_DIGIT_MINUTES = 10.0;
@@ -420,22 +419,6 @@ QByteArray frame(QByteArrayView body)
 {
     const char checksum = static_cast<char>(NMEA::checksum(body));
     return '$' + body.toByteArray() + '*' + QByteArray(1, checksum).toHex().toUpper() + "\r\n";
-}
-
-QByteArray repairChecksum(const QByteArray& sentence)
-{
-    const auto wire = NMEA::frame(QByteArrayView(sentence));
-    if (wire && wire->body.size() + NMEA::Sentence::PREFIX_LENGTH >= MIN_REPAIRABLE_SENTENCE_LENGTH) {
-        return frame(QByteArrayView(wire->body));
-    }
-    QByteArray line = sentence;
-    if (line.endsWith('\n')) {
-        line.chop(1);
-        if (line.endsWith('\r')) {
-            line.chop(1);
-        }
-    }
-    return line + "\r\n";
 }
 
 QByteArray makeGGA(const NMEA::GGA& fix, const QTime& utc)

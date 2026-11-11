@@ -18,6 +18,8 @@
 
 QGC_LOGGING_CATEGORY(FemtoProtocolLog, "GPS.Protocols.Femto")
 
+namespace Femto {
+
 namespace {
 
 /// Configures a Femtomes receiver from Femto::Plan at the rate selected or detected, else Plan::BAUD: stops its logs,
@@ -64,7 +66,7 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
     _base = config.base;
     // No command depends on the rate, so the link keeps the one selected or detected; otherwise it runs at Plan::BAUD.
     baud = config.linkBaud(baud, Femto::Plan::BAUD);
-    (void) channel.setBaudrate(baud);
+    (void) channel.setBaudRate(baud);
     auto identity = channel.runSequence(Femto::Plan::sequence(Femto::Plan::IDENTIFY));
     for (unsigned round = 1; round < Femto::Plan::IDENTIFY_ROUNDS && !identity.succeeded(); ++round) {
         identity = channel.runSequence(Femto::Plan::sequence(Femto::Plan::IDENTIFY));
@@ -110,7 +112,7 @@ void Protocol::_setUpBase(GPSCommandChannel& channel)
     }
     _activateRTCMOutput(channel);
     if (_rtcmOutputActive) {
-        context.publishSurvey(false, true, {}, fixed->position);
+        context.publishSurvey(GPSSurveyState::Valid, {}, fixed->position);
     }
 }
 
@@ -131,7 +133,7 @@ GPSReceiveUpdates Protocol::_decodeLine(std::string_view line, GPSDecodeContext&
         }
         // Only a survey started by this configuration may complete it; earlier GGA output is stale.
         if (!_rtcmOutputActive && _surveyClock.running() && fix->quality == Femto::Plan::AVERAGED_POSITION_QUALITY) {
-            _surveyClock.finish(context, true,
+            _surveyClock.finish(context, GPSSurveyState::Valid,
                                 {.latitudeDegrees = fix->latitude,
                                  .longitudeDegrees = fix->longitude,
                                  .altitudeMeters = fix->altitude + fix->geoidSeparation});
@@ -179,10 +181,8 @@ bool Protocol::probe(GPSCommandChannel& channel)
 
 }  // namespace
 
-namespace Femto {
-
 const GPSReceiverFamily FAMILY{
-    .type = GPSType::femto,
+    .type = GPSType::Femto,
     .logCategory = &FemtoProtocolLog,
     // RTCM3 is framed once the receiver answered (see Protocol::configure()).
     .stream = {.framers = GPSFrameKind::NMEASentence | GPSFrameKind::RTCM3, .enabled = GPSFrameKind::NMEASentence},

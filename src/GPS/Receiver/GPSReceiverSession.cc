@@ -31,7 +31,7 @@ GPSReceiverConfig gpsReceiverConfigFor(const GPSBaseStationConfig& base, GPSType
                                        bool allowPersistentChanges, QString* error)
 {
     GPSReceiverConfig config{.baudRate = baudRate, .allowPersistentChanges = allowPersistentChanges};
-    if (type != GPSType::passive) {
+    if (type != GPSType::Passive) {
         config.base = base;
         // The option is hidden for receivers that cannot send MSM4, so it never blocks their connection.
         config.base.compactObservations = base.compactObservations && gpsReceiverCapabilities(type).compactObservations;
@@ -46,7 +46,7 @@ GPSReceiverConfig gpsReceiverConfigFor(const GPSBaseStationConfig& base, GPSType
 GPSBaseStationState gpsBaseStationStateFor(GPSType type, const GPSReceiverConfig& config)
 {
     GPSBaseStationState state;
-    if (type == GPSType::passive) {
+    if (type == GPSType::Passive) {
         return state;
     }
     if (const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&config.base.mode)) {
@@ -186,7 +186,7 @@ void GPSReceiverSession::_onReady(const QString& identity)
 
 void GPSReceiverSession::_onDetected(GPSType type)
 {
-    if (_connection.type != GPSType::automatic && _connection.type != GPSType::passive) {
+    if (_connection.type != GPSType::Automatic && _connection.type != GPSType::Passive) {
         return;
     }
     _detectedType = type;

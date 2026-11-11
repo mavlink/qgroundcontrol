@@ -44,7 +44,7 @@ private:
     GPSNMEAStream _nmea;
 };
 
-constexpr GPSReceiverFamily NMEA_FAMILY{.type = GPSType::passive, .stream = GPSNMEAStream::STREAM};
+constexpr GPSReceiverFamily NMEA_FAMILY{.type = GPSType::Passive, .stream = GPSNMEAStream::STREAM};
 
 QByteArray rtcm(uint16_t message, int size)
 {
@@ -325,7 +325,7 @@ void GPSNMEAStreamTest::_positionSourceEquivalence()
     };
     NMEAReceiver receiver;
     for (const auto& body : bodies) {
-        receiver.send(NMEAUtils::repairChecksum(body));
+        receiver.send(GPSTest::repairChecksum(body));
     }
     QVERIFY(receiver.published);
     const auto& navigation = receiver.published->navigation;

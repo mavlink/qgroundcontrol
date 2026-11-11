@@ -44,9 +44,9 @@ void TCPGPSTransportTest::_fixedRateAndPeerClose()
     QTRY_VERIFY_WITH_TIMEOUT(server.hasPendingConnections(), TestTimeout::shortMs());
     auto* peer = server.nextPendingConnection();
     QVERIFY(peer);
-    QVERIFY(transport.setBaudrate(115200));
-    QCOMPARE(transport.fixedBaudrate(), 115200u);
-    QVERIFY(!transport.setBaudrate(9600));
+    QVERIFY(transport.setBaudRate(115200));
+    QCOMPARE(transport.fixedBaudRate(), 115200u);
+    QVERIFY(!transport.setBaudRate(9600));
     QVERIFY(!transport.fatalError());
 
     // GPSTransportContractTest covers reads, writes and timeouts. The final buffered bytes survive the peer's orderly

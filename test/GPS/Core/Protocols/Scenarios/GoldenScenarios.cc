@@ -253,7 +253,7 @@ Rule ubxNak(uint32_t key)
 BenchFactory ubxWire(std::function<void(UBXBench&)> setup)
 {
     return bench<UBXBench>([setup = std::move(setup)](UBXBench& b) {
-        b.setFixedBaudrate(0);
+        b.setFixedBaudRate(0);
         if (setup) {
             setup(b);
         }
@@ -292,8 +292,8 @@ BenchFactory passive(std::function<void(PassiveBench&)> setup)
 
 void enforceBaud(ReceiverBench& b, unsigned baud)
 {
-    b.setReceiverBaudrate(baud);
-    b.setBaudrateEnforced(true);
+    b.setReceiverBaudRate(baud);
+    b.setBaudRateEnforced(true);
 }
 
 const std::vector<ScenarioDef>& scenarios()

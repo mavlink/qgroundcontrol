@@ -25,8 +25,8 @@ constexpr float INF_FLOAT = std::numeric_limits<float>::infinity();
 constexpr int64_t MAX_DURATION = (std::numeric_limits<uint32_t>::max)();
 constexpr double MAX_SURVEY_ACCURACY = static_cast<double>(MAX_DURATION) / 10000.0;
 constexpr std::pair<const char*, GPSType> MANAGED_RECEIVERS[] = {
-    {"ublox", GPSType::ublox}, {"trimble", GPSType::trimble}, {"septentrio", GPSType::septentrio},
-    {"femto", GPSType::femto}, {"unicore", GPSType::unicore}, {"quectel", GPSType::quectel},
+    {"ublox", GPSType::UBlox}, {"trimble", GPSType::Trimble}, {"septentrio", GPSType::Septentrio},
+    {"femto", GPSType::Femto}, {"unicore", GPSType::Unicore}, {"quectel", GPSType::Quectel},
 };
 constexpr GPSBaseStationConfig VALID_SURVEY{
     .mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 0.0001, .duration = 1s}};
@@ -157,22 +157,22 @@ void GPSReceiverConfigTest::_capabilities_data()
     QTest::addColumn<GPSType>("type");
     QTest::addColumn<GPSReceiverCapabilities>("expected");
     constexpr GPSReceiverCapabilities survey{.recognized = true, .rtkBase = true, .surveyIn = true};
-    QTest::newRow("trimble") << GPSType::trimble << survey;
-    QTest::newRow("septentrio") << GPSType::septentrio << survey;
-    QTest::newRow("femto") << GPSType::femto << survey;
-    QTest::newRow("ublox") << GPSType::ublox
+    QTest::newRow("trimble") << GPSType::Trimble << survey;
+    QTest::newRow("septentrio") << GPSType::Septentrio << survey;
+    QTest::newRow("femto") << GPSType::Femto << survey;
+    QTest::newRow("ublox") << GPSType::UBlox
                            << GPSReceiverCapabilities{
                                   .recognized = true, .rtkBase = true, .surveyIn = true, .compactObservations = true};
-    QTest::newRow("unicore") << GPSType::unicore
+    QTest::newRow("unicore") << GPSType::Unicore
                              << GPSReceiverCapabilities{.recognized = true, .rtkBase = true, .receiverAveraging = true};
-    QTest::newRow("quectel") << GPSType::quectel
+    QTest::newRow("quectel") << GPSType::Quectel
                              << GPSReceiverCapabilities{.recognized = true,
                                                         .rtkBase = true,
                                                         .surveyIn = true,
                                                         .persistentConfiguration = true};
-    QTest::newRow("passive") << GPSType::passive << GPSReceiverCapabilities{.recognized = true, .passive = true};
+    QTest::newRow("passive") << GPSType::Passive << GPSReceiverCapabilities{.recognized = true, .passive = true};
     // Automatic accepts every option some base family supports, until detection names the family.
-    QTest::newRow("automatic") << GPSType::automatic
+    QTest::newRow("automatic") << GPSType::Automatic
                                << GPSReceiverCapabilities{.recognized = true,
                                                           .rtkBase = true,
                                                           .surveyIn = true,
@@ -205,7 +205,7 @@ void GPSReceiverConfigTest::_receiverValidation_data()
     QTest::addColumn<Error>("expected");
     for (const auto& [typeName, type] : MANAGED_RECEIVERS) {
         const auto add = [=](const char* name, const GPSBaseStationConfig& base, Error expected) {
-            if (type == GPSType::unicore && std::holds_alternative<GPSBaseStationConfig::SurveyIn>(base.mode)) {
+            if (type == GPSType::Unicore && std::holds_alternative<GPSBaseStationConfig::SurveyIn>(base.mode)) {
                 expected = Error::UnsupportedBaseMode;
             }
             QTest::addRow("%s-%s", typeName, name) << type << GPSReceiverConfig{.base = base} << expected;
@@ -215,37 +215,37 @@ void GPSReceiverConfigTest::_receiverValidation_data()
         add("missing-survey", {}, Error::InvalidSurveyIn);
         add("missing-fixed", {.mode = GPSBaseStationConfig::Fixed{}}, Error::InvalidFixedBase);
     }
-    QTest::newRow("passive-valid") << GPSType::passive << GPSReceiverConfig{.baudRate = 115200} << Error::None;
+    QTest::newRow("passive-valid") << GPSType::Passive << GPSReceiverConfig{.baudRate = 115200} << Error::None;
     QTest::newRow("passive-rejects-base")
-        << GPSType::passive << GPSReceiverConfig{.base = VALID_SURVEY, .baudRate = 115200}
+        << GPSType::Passive << GPSReceiverConfig{.base = VALID_SURVEY, .baudRate = 115200}
         << Error::UnsupportedBaseMode;
-    QTest::newRow("passive-requires-baud") << GPSType::passive << GPSReceiverConfig{} << Error::InvalidBaudRate;
+    QTest::newRow("passive-requires-baud") << GPSType::Passive << GPSReceiverConfig{} << Error::InvalidBaudRate;
     QTest::newRow("unsupported-persistent")
-        << GPSType::ublox << GPSReceiverConfig{.base = VALID_SURVEY, .allowPersistentChanges = true}
+        << GPSType::UBlox << GPSReceiverConfig{.base = VALID_SURVEY, .allowPersistentChanges = true}
         << Error::UnsupportedPersistentConfiguration;
     QTest::newRow("supported-persistent")
-        << GPSType::quectel << GPSReceiverConfig{.base = VALID_SURVEY, .allowPersistentChanges = true} << Error::None;
-    QTest::newRow("unicore-persistent") << GPSType::unicore
+        << GPSType::Quectel << GPSReceiverConfig{.base = VALID_SURVEY, .allowPersistentChanges = true} << Error::None;
+    QTest::newRow("unicore-persistent") << GPSType::Unicore
                                         << GPSReceiverConfig{.base = {.mode =
                                                                           GPSBaseStationConfig::ReceiverAveraging{1s}},
                                                              .allowPersistentChanges = true}
                                         << Error::UnsupportedPersistentConfiguration;
-    QTest::newRow("receiver-averaging") << GPSType::unicore
+    QTest::newRow("receiver-averaging") << GPSType::Unicore
                                         << GPSReceiverConfig{.base = {.mode =
                                                                           GPSBaseStationConfig::ReceiverAveraging{1s}}}
                                         << Error::None;
     QTest::newRow("compact-observations")
-        << GPSType::ublox << GPSReceiverConfig{.base = {.mode = VALID_SURVEY.mode, .compactObservations = true}}
+        << GPSType::UBlox << GPSReceiverConfig{.base = {.mode = VALID_SURVEY.mode, .compactObservations = true}}
         << Error::None;
-    for (const auto type : {GPSType::septentrio, GPSType::unicore, GPSType::quectel}) {
+    for (const auto type : {GPSType::Septentrio, GPSType::Unicore, GPSType::Quectel}) {
         QTest::addRow("unsupported-compact-observations-%d", static_cast<int>(type))
             << type << GPSReceiverConfig{.base = {.mode = VALID_FIXED.mode, .compactObservations = true}}
             << Error::UnsupportedCompactObservations;
     }
     QTest::newRow("passive-rejects-compact-observations")
-        << GPSType::passive << GPSReceiverConfig{.base = {.compactObservations = true}, .baudRate = 115200}
+        << GPSType::Passive << GPSReceiverConfig{.base = {.compactObservations = true}, .baudRate = 115200}
         << Error::UnsupportedBaseMode;
-    for (const auto type : {GPSType::ublox, GPSType::quectel}) {
+    for (const auto type : {GPSType::UBlox, GPSType::Quectel}) {
         QTest::addRow("unsupported-receiver-averaging-%d", static_cast<int>(type))
             << type << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::ReceiverAveraging{1s}}}
             << Error::UnsupportedBaseMode;
@@ -272,16 +272,16 @@ void GPSReceiverConfigTest::_validationPrecedence_data()
 
     QTest::newRow("unknown-receiver-precedes-invalid-base")
         << static_cast<GPSType>(-1) << GPSReceiverConfig{} << Error::UnknownReceiver;
-    QTest::newRow("persistent-precedes-base") << GPSType::ublox << GPSReceiverConfig{.allowPersistentChanges = true}
+    QTest::newRow("persistent-precedes-base") << GPSType::UBlox << GPSReceiverConfig{.allowPersistentChanges = true}
                                               << Error::UnsupportedPersistentConfiguration;
     QTest::newRow("unsupported-base-mode-precedes-invalid-baud")
-        << GPSType::ublox
+        << GPSType::UBlox
         << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::ReceiverAveraging{0s}}, .baudRate = 1}
         << Error::UnsupportedBaseMode;
     QTest::newRow("invalid-base-precedes-invalid-baud")
-        << GPSType::ublox << GPSReceiverConfig{.baudRate = 1} << Error::InvalidSurveyIn;
+        << GPSType::UBlox << GPSReceiverConfig{.baudRate = 1} << Error::InvalidSurveyIn;
     QTest::newRow("invalid-baud-after-valid-base")
-        << GPSType::ublox << GPSReceiverConfig{.base = VALID_SURVEY, .baudRate = 1} << Error::InvalidBaudRate;
+        << GPSType::UBlox << GPSReceiverConfig{.base = VALID_SURVEY, .baudRate = 1} << Error::InvalidBaudRate;
 }
 
 void GPSReceiverConfigTest::_validationPrecedence()
@@ -303,10 +303,10 @@ void GPSReceiverConfigTest::_descriptorIdentities()
     QVERIFY(!gpsReceiverDescriptor(static_cast<GPSType>(-1)));
     QVERIFY(!gpsReceiverDescriptorForManufacturer(-1));
     // The protocols a passive input decodes.
-    QCOMPARE(gpsInputProtocolName(GPSType::ublox), QStringLiteral("u-blox (UBX)"));
-    QCOMPARE(gpsInputProtocolName(GPSType::septentrio), QStringLiteral("Septentrio (SBF)"));
-    QCOMPARE(gpsInputProtocolName(GPSType::passive), QStringLiteral("NMEA"));
-    QVERIFY(gpsInputProtocolName(GPSType::trimble).isEmpty());
+    QCOMPARE(gpsInputProtocolName(GPSType::UBlox), QStringLiteral("u-blox (UBX)"));
+    QCOMPARE(gpsInputProtocolName(GPSType::Septentrio), QStringLiteral("Septentrio (SBF)"));
+    QCOMPARE(gpsInputProtocolName(GPSType::Passive), QStringLiteral("NMEA"));
+    QVERIFY(gpsInputProtocolName(GPSType::Trimble).isEmpty());
 
     // The settings select each base family by its manufacturer ID; passive input is a role, not a manufacturer.
     QObject owner;
@@ -418,14 +418,14 @@ void GPSReceiverConfigTest::_detectedReceiverFit_data()
         .base = {.mode = GPSBaseStationConfig::ReceiverAveraging{.maximumDuration = 60s}}};
     const GPSReceiverConfig survey{.base = VALID_SURVEY};
     // Consent is a permission, kept only where the family can save settings; MSM4 falls back to MSM7 elsewhere.
-    QTest::newRow("ublox-keeps-compact") << GPSType::ublox << compactSurvey << false << true << false << QString();
-    QTest::newRow("quectel-keeps-consent") << GPSType::quectel << compactSurvey << true << false << true << QString();
+    QTest::newRow("ublox-keeps-compact") << GPSType::UBlox << compactSurvey << false << true << false << QString();
+    QTest::newRow("quectel-keeps-consent") << GPSType::Quectel << compactSurvey << true << false << true << QString();
     QTest::newRow("septentrio-averaging")
-        << GPSType::septentrio << averaging << false << false << false
+        << GPSType::Septentrio << averaging << false << false << false
         << QStringLiteral("Detected Septentrio receiver does not support receiver-managed averaging");
-    QTest::newRow("unicore-survey") << GPSType::unicore << survey << false << false << false
+    QTest::newRow("unicore-survey") << GPSType::Unicore << survey << false << false << false
                                     << QStringLiteral("Detected Unicore receiver does not support survey-in");
-    QTest::newRow("unicore-averaging") << GPSType::unicore << averaging << false << false << false << QString();
+    QTest::newRow("unicore-averaging") << GPSType::Unicore << averaging << false << false << false << QString();
 }
 
 void GPSReceiverConfigTest::_detectedReceiverFit()
@@ -436,7 +436,7 @@ void GPSReceiverConfigTest::_detectedReceiverFit()
     QFETCH(bool, compact);
     QFETCH(bool, fallback);
     QFETCH(QString, error);
-    QVERIFY(gpsReceiverConfigError(GPSType::automatic, request).isEmpty());
+    QVERIFY(gpsReceiverConfigError(GPSType::Automatic, request).isEmpty());
     bool compactFallback = !fallback;
     const GPSReceiverConfig fitted = gpsReceiverConfigForDetected(detected, request, &compactFallback);
     QCOMPARE(fitted.allowPersistentChanges, persistent);
@@ -481,17 +481,17 @@ void GPSReceiverConfigTest::_receiverDiagnostic_data()
     QTest::addColumn<GPSType>("type");
     QTest::addColumn<GPSReceiverConfig>("config");
     QTest::addColumn<QString>("expected");
-    QTest::newRow("valid") << GPSType::ublox
+    QTest::newRow("valid") << GPSType::UBlox
                            << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::SurveyIn{1, 60s}}} << QString();
     QTest::newRow("unknown-receiver") << static_cast<GPSType>(-1) << GPSReceiverConfig{}
                                       << QStringLiteral("Unsupported GPS receiver type");
-    QTest::newRow("invalid-survey") << GPSType::ublox << GPSReceiverConfig{}
+    QTest::newRow("invalid-survey") << GPSType::UBlox << GPSReceiverConfig{}
                                     << QStringLiteral("Enter a valid survey-in accuracy and duration");
-    QTest::newRow("invalid-fixed") << GPSType::ublox
+    QTest::newRow("invalid-fixed") << GPSType::UBlox
                                    << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::Fixed{}}}
                                    << QStringLiteral("Enter a valid fixed base position and accuracy");
     QTest::newRow("unsupported-persistent-configuration")
-        << GPSType::ublox
+        << GPSType::UBlox
         << GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::SurveyIn{1, 60s}}, .allowPersistentChanges = true}
         << QStringLiteral("This driver does not support persistent receiver configuration");
 }

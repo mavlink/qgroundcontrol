@@ -30,8 +30,8 @@ GPSProtocolRuntime::GPSProtocolRuntime(const GPSReceiverFamily& family, std::uni
     if (!_io.write) {
         _io.write = [](std::span<const uint8_t>, GPSDeadline) { return GPSWriteResult{}; };
     }
-    if (!_io.setBaudrate) {
-        _io.setBaudrate = [](unsigned) { return GPSBaudStatus::Unsupported; };
+    if (!_io.setBaudRate) {
+        _io.setBaudRate = [](unsigned) { return GPSBaudStatus::Unsupported; };
     }
     if (!_io.clock.wait) {
         _io.clock.wait = [token = _io.cancelToken](std::chrono::microseconds duration) {

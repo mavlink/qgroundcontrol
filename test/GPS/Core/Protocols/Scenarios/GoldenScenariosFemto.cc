@@ -11,7 +11,7 @@ const QByteArray FEMTO_NAK = "<ERROR\r\n";
 
 void addFemto(Table& table)
 {
-    constexpr GPSType type = GPSType::femto;
+    constexpr GPSType type = GPSType::Femto;
     const auto survey = surveyIn(1, 60);
     const auto fixed = fixedBase(47, 8, 500, 1);
     const auto stream = femtoStream();

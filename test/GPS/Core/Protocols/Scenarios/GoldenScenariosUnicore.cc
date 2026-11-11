@@ -5,7 +5,7 @@ namespace GPSTest::GoldenScenario {
 
 void addUnicore(Table& table)
 {
-    constexpr GPSType type = GPSType::unicore;
+    constexpr GPSType type = GPSType::Unicore;
     const auto average = averaging(5);
     const auto fixed = fixedBase(47, 8, 500, 1);
     const auto stream = unicoreStream();

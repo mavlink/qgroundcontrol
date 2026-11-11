@@ -34,7 +34,7 @@ inline GPSRuntimeIO makeGPSRuntimeTestIO(GPSTestClock& clock)
 {
     GPSRuntimeIO io;
     io.clock = clock.source();
-    io.setBaudrate = [](unsigned) { return GPSBaudStatus::Configured; };
+    io.setBaudRate = [](unsigned) { return GPSBaudStatus::Configured; };
     return io;
 }
 
@@ -50,7 +50,7 @@ inline GPSRuntimeIO makeDecoderOnlyIO(GPSTestClock& clock)
         GPSTest::ModelViolations::record("Decoder wrote to the device");
         return GPSWriteResult{GPSWriteStatus::Error};
     };
-    io.setBaudrate = [](unsigned) {
+    io.setBaudRate = [](unsigned) {
         GPSTest::ModelViolations::record("Decoder changed the baud rate");
         return GPSBaudStatus::Error;
     };
@@ -238,7 +238,7 @@ public:
     {
         detection.emplace(faults, dialect, clock, [this] { return atRate(); });
         setModel(&*detection);
-        setFixedBaudrate(0);
+        setFixedBaudRate(0);
         detection->attach(*this);
         return *detection;
     }
@@ -246,8 +246,8 @@ public:
     ReceiverModel model;
     ScriptedFaults faults;
     std::optional<DetectionReceiver> detection;
-    /// For detect(): defaults to the rate setReceiverBaudrate() gave the receiver.
-    std::function<bool()> atRate = [this] { return hostBaudrate() == receiverBaudrate(); };
+    /// For detect(): defaults to the rate setReceiverBaudRate() gave the receiver.
+    std::function<bool()> atRate = [this] { return hostBaudRate() == receiverBaudRate(); };
 
 private:
     template <typename... Args>

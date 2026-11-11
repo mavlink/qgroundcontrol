@@ -139,8 +139,8 @@ void FemtoProtocolTest::_receiverMode()
                             .accuracyMeters = 1.0f}}
                       : GPSBaseStationConfig::Mode{
                             GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1.25, .duration = 60s}}};
-    unsigned baudrate = 115200;
-    const bool configured = driver.configure(config, baudrate);
+    unsigned baudRate = 115200;
+    const bool configured = driver.configure(config, baudRate);
     if (!rejectedCommand.isEmpty()) {
         QVERIFY(!configured);
         // A receiver whose base setup was rejected must not take injected corrections.

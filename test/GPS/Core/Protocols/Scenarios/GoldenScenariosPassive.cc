@@ -71,12 +71,12 @@ std::vector<StreamStep> ubxWithoutPositionInput()
 
 void addPassive(Table& table)
 {
-    constexpr GPSType type = GPSType::passive;
+    constexpr GPSType type = GPSType::Passive;
     const auto stream = passiveStream();
     table.add(type, "baud-115200", "NMEA and RTCM input at 115200", passive(), passiveInput(115200), stream);
     table.add(type, "baud-9600", "NMEA and RTCM input at 9600", passive(), passiveInput(9600));
     table.add(type, "baud-unsupported", "Transport cannot change its baud",
-              passive([](PassiveBench& b) { b.setBaudrateHandler([](unsigned) { return std::optional(false); }); }),
+              passive([](PassiveBench& b) { b.setBaudRateHandler([](unsigned) { return std::optional(false); }); }),
               passiveInput(115200), stream);
     table.add(type, "ubx-115200", "u-blox UBX and RTCM input, never answered", passive(), passiveInput(115200),
               ubxInput());
