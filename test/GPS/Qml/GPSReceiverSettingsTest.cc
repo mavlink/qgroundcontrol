@@ -143,14 +143,14 @@ void GPSReceiverSettingsTest::_surveySaveWorkflow()
     QCOMPARE(settings->fixedBasePositionLongitude()->rawValue().toDouble(), kSurveyedPosition.longitudeDegrees);
     QCOMPARE(settings->fixedBasePositionAltitude()->rawValue().toFloat(), kSurveyedPosition.altitudeMeters);
     QCOMPARE(settings->fixedBasePositionAccuracy()->rawValue().toDouble(), 0.75);
-    QCOMPARE(settings->useFixedBasePosition()->rawValue().toInt(), 0);
+    QCOMPARE(settings->baseMode()->rawValue().toInt(), 0);
 
     QVERIFY(QMetaObject::invokeMethod(connect, "click"));
     QVERIFY(!panel.receiver.gps.hasReceiver());
     workers.finishRetired();
     QVERIFY(fixed->isEnabled());
     QVERIFY(QMetaObject::invokeMethod(fixed, "click"));
-    QCOMPARE(settings->useFixedBasePosition()->rawValue().toInt(), 1);
+    QCOMPARE(settings->baseMode()->rawValue().toInt(), 1);
     QVERIFY(QMetaObject::invokeMethod(connect, "click"));
     QCOMPARE(workers.count(), 2);
     // The saved position starts the fixed base.
@@ -285,7 +285,7 @@ void GPSReceiverSettingsTest::_baseSitePicker()
     RTKSettings* const settings = panel.settings.settings;
     TestFixtures::SettingsFixture& saved = panel.settings.saved;
     saved.setFactValue(settings->savedBaseSites(), QString());
-    saved.setFactValue(settings->useFixedBasePosition(), static_cast<int>(BaseModeDefinition::Mode::BaseFixed));
+    saved.setFactValue(settings->baseMode(), static_cast<int>(BaseModeDefinition::Mode::BaseFixed));
     saved.setFactValue(settings->fixedBasePositionLatitude(), 47.5);
     saved.setFactValue(settings->fixedBasePositionLongitude(), 8.25);
     saved.setFactValue(settings->fixedBasePositionAltitude(), 512.5);
@@ -435,7 +435,7 @@ void GPSReceiverSettingsTest::_tcpConnectionFields()
     settings->connectionType()->setRawValue(RTKSettings::Tcp);
     QVERIFY(host->isVisible() && port->isVisible());
     QVERIFY(!device->isVisible());
-    settings->baseReceiverManufacturers()->setRawValue(gpsReceiverManufacturerForType(GPSType::quectel));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::quectel));
     QVERIFY(consent->property("visible").toBool());
     // Which settings withdraw the permission is GPSReceiverSettingsBindingTest's; the checkbox follows the receiver.
     QVERIFY(QMetaObject::invokeMethod(consent, "click"));
@@ -513,12 +513,12 @@ void GPSReceiverSettingsTest::_automaticManufacturer()
     QVERIFY(explanation->property("text").toString().contains(QStringLiteral("identification queries")));
     QVERIFY(connect->property("enabled").toBool());
     // Until a receiver is identified, the base modes of every family are offered.
-    settings->useFixedBasePosition()->setRawValue(2);
+    settings->baseMode()->setRawValue(2);
     QVERIFY(connect->property("enabled").toBool());
-    settings->baseReceiverManufacturers()->setRawValue(gpsReceiverManufacturerForType(GPSType::ublox));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::ublox));
     QVERIFY(!explanation->isVisible());
     QVERIFY(!connect->property("enabled").toBool());
-    settings->baseReceiverManufacturers()->setRawValue(GPS_AUTOMATIC_MANUFACTURER);
+    settings->baseReceiverManufacturer()->setRawValue(GPS_AUTOMATIC_MANUFACTURER);
     QVERIFY(QMetaObject::invokeMethod(connect, "clicked"));
     QVERIFY(receiver.hasReceiver());
     QCOMPARE(panel.receiver.worker()->type(), GPSType::automatic);
@@ -572,10 +572,10 @@ void GPSReceiverSettingsTest::_automaticOffersQuectelConsent()
     panel.receiver.gps.disconnectReceiver();
 
     RTKSettings* const settings = panel.settings.settings;
-    settings->baseReceiverManufacturers()->setRawValue(gpsReceiverManufacturerForType(GPSType::ublox));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::ublox));
     QVERIFY(!consent->isVisible());
     QVERIFY(!restartNote->isVisible());
-    settings->baseReceiverManufacturers()->setRawValue(gpsReceiverManufacturerForType(GPSType::quectel));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::quectel));
     QVERIFY(consent->isVisible());
     QCOMPARE(consent->property("text").toString(), QStringLiteral("Allow flash save and restart"));
 }
@@ -592,9 +592,9 @@ void GPSReceiverSettingsTest::_compactCorrectionsToggle()
     QVERIFY(QMetaObject::invokeMethod(toggle, "click"));
     QVERIFY(settings->compactRtcmCorrections()->rawValue().toBool());
     // Which families send compact corrections is the receiver presentation's; the toggle follows it.
-    settings->baseReceiverManufacturers()->setRawValue(gpsReceiverManufacturerForType(GPSType::septentrio));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::septentrio));
     QVERIFY(!toggle->isVisible());
-    settings->baseReceiverManufacturers()->setRawValue(gpsReceiverManufacturerForType(GPSType::ublox));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::ublox));
     QVERIFY(toggle->isVisible());
     QVERIFY(panel.receiver.gps.connectReceiver());
     QVERIFY(panel.receiver.worker()->capturedConfig().base.compactObservations);
@@ -674,9 +674,9 @@ void GPSReceiverSettingsTest::_consentIsOneUse()
     QVERIFY(consent->property("checked").toBool());
     settings->serialDevice()->setRawValue(QStringLiteral("/test/other"));
     QVERIFY(!consent->property("checked").toBool());
-    settings->baseReceiverManufacturers()->setRawValue(gpsReceiverManufacturerForType(GPSType::unicore));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::unicore));
     QVERIFY(!consent->property("visible").toBool());
-    settings->baseReceiverManufacturers()->setRawValue(gpsReceiverManufacturerForType(GPSType::quectel));
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::quectel));
     QVERIFY(QMetaObject::invokeMethod(consent, "click"));
     QVERIFY(receiver.gps.connectReceiver());
     QVERIFY(!consent->property("checked").toBool());

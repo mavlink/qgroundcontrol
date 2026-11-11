@@ -80,7 +80,7 @@ GPSBaseStationConfig baseStationFromSettings(RTKSettings* settings, FactReader& 
 {
     using Mode = BaseModeDefinition::Mode;
     Mode mode = Mode::BaseSurveyIn;
-    const int persistedMode = read(settings->useFixedBasePosition()).toInt();
+    const int persistedMode = read(settings->baseMode()).toInt();
     if (persistedMode >= static_cast<int>(Mode::BaseSurveyIn) &&
         persistedMode <= static_cast<int>(Mode::BaseReceiverAveraging)) {
         mode = static_cast<Mode>(persistedMode);
@@ -118,7 +118,7 @@ ReceiverConfig receiverFromSettings(RTKSettings* settings, FactReader& read)
     ReceiverConfig configuration;
     configuration.receiverRole = static_cast<RTKSettings::ReceiverRole>(read(settings->receiverRole()).toInt());
     configuration.forwardReceiverRtcm = read(settings->forwardReceiverRtcm()).toBool();
-    configuration.baseReceiverManufacturer = read(settings->baseReceiverManufacturers()).toInt();
+    configuration.baseReceiverManufacturer = read(settings->baseReceiverManufacturer()).toInt();
     configuration.connectionType = static_cast<RTKSettings::ConnectionType>(read(settings->connectionType()).toInt());
     configuration.tcpHost = read(settings->tcpHost()).toString();
     configuration.tcpPort = read(settings->tcpPort()).toUInt();

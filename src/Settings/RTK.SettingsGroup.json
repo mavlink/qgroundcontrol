@@ -20,7 +20,7 @@
             "label": "Forward receiver RTCM"
         },
         {
-            "name": "baseReceiverManufacturers",
+            "name": "baseReceiverManufacturer",
             "shortDesc": "Detect automatically identifies the receiver each time it connects, by listening to its output and sending read-only identification queries. Until then the settings of every supported receiver are shown.",
             "longDesc": "Detect automatically identifies the receiver family on every connection: QGroundControl listens to the receiver's output and sends read-only identification queries at each supported baud rate, then configures the family it found. Until then the settings of every supported receiver are shown. Select a manufacturer to configure only that receiver family.",
             "type": "uint8",
@@ -146,7 +146,7 @@
             "label": "Maximum averaging time"
         },
         {
-            "name": "useFixedBasePosition",
+            "name": "baseMode",
             "shortDesc": "Base mode",
             "longDesc": "Specify the RTK base mode: accuracy-controlled survey-in, fixed position, or receiver-managed averaging without an accuracy guarantee.",
             "type": "uint8",

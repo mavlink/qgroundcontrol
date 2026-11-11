@@ -159,6 +159,38 @@ void RTKSettingsTest::_configuredReceiverKeepsSettings()
     QVERIFY(readGroup(QLatin1String(AutoConnectSettings::settingsGroup)).isEmpty());
 }
 
+void RTKSettingsTest::_renamedSettingsMigration_data()
+{
+    QTest::addColumn<QString>("legacy");
+    QTest::addColumn<QString>("current");
+    QTest::newRow("manufacturer") << QStringLiteral("baseReceiverManufacturers")
+                                  << QStringLiteral("baseReceiverManufacturer");
+    QTest::newRow("base-mode") << QStringLiteral("useFixedBasePosition") << QStringLiteral("baseMode");
+}
+
+void RTKSettingsTest::_renamedSettingsMigration()
+{
+    QFETCH(QString, legacy);
+    QFETCH(QString, current);
+    const QString group = QLatin1String(RTKSettings::settingsGroup);
+    // A stored role keeps the manufacturer a modern profile selected.
+    const QHash<QString, QVariant> profile{{QStringLiteral("receiverRole"), 2}, {legacy, 2}};
+    writeGroup(group, profile);
+    const RTKSettings rtk;
+    QHash<QString, QVariant> migrated = readGroup(group);
+    QCOMPARE(migrated.value(current).toInt(), 2);
+    QVERIFY(!migrated.contains(legacy));
+
+    // A value already saved under the new name is the later choice.
+    QHash<QString, QVariant> both = profile;
+    both.insert(current, 1);
+    writeGroup(group, both);
+    const RTKSettings again;
+    migrated = readGroup(group);
+    QCOMPARE(migrated.value(current).toInt(), 1);
+    QVERIFY(!migrated.contains(legacy));
+}
+
 void RTKSettingsTest::_manufacturerMigration_data()
 {
     QTest::addColumn<QVariant>("role");
@@ -181,6 +213,7 @@ void RTKSettingsTest::_manufacturerMigration()
     QFETCH(int, migratedManufacturer);
     QHash<QString, QVariant> values;
     if (manufacturer.isValid()) {
+        // Profiles that old saved the manufacturer under its earlier name.
         values.insert(QStringLiteral("baseReceiverManufacturers"), manufacturer);
     }
     if (role.isValid()) {
@@ -191,15 +224,15 @@ void RTKSettingsTest::_manufacturerMigration()
     QCOMPARE(stored(RTKSettings::settingsGroup, "receiverRole").isValid(), migratedRole.isValid());
     QCOMPARE(stored(RTKSettings::settingsGroup, "receiverRole").toInt(), migratedRole.toInt());
     // As a SettingsFact resolves it outside unit tests: the stored value, else the default.
-    const QVariant saved = stored(RTKSettings::settingsGroup, "baseReceiverManufacturers");
-    QCOMPARE(saved.isValid() ? saved.toInt() : rtk.baseReceiverManufacturers()->rawDefaultValue().toInt(),
+    const QVariant saved = stored(RTKSettings::settingsGroup, "baseReceiverManufacturer");
+    QCOMPARE(saved.isValid() ? saved.toInt() : rtk.baseReceiverManufacturer()->rawDefaultValue().toInt(),
              migratedManufacturer);
 
     // The migration runs once: a manufacturer chosen afterwards is kept, with or without a stored role.
-    QSettings().setValue(QStringLiteral("%1/baseReceiverManufacturers").arg(QLatin1String(RTKSettings::settingsGroup)),
+    QSettings().setValue(QStringLiteral("%1/baseReceiverManufacturer").arg(QLatin1String(RTKSettings::settingsGroup)),
                          5);
     const RTKSettings again;
-    QCOMPARE(stored(RTKSettings::settingsGroup, "baseReceiverManufacturers").toInt(), 5);
+    QCOMPARE(stored(RTKSettings::settingsGroup, "baseReceiverManufacturer").toInt(), 5);
     QCOMPARE(stored(RTKSettings::settingsGroup, "receiverRole").isValid(), migratedRole.isValid());
     QCOMPARE(stored(RTKSettings::settingsGroup, "receiverRole").toInt(), migratedRole.toInt());
 }
