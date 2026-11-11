@@ -1,7 +1,5 @@
 #include "KMLHelper.h"
 
-#include <algorithm>
-
 #include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
 #include <QtXml/QDomDocument>
@@ -200,18 +198,7 @@ bool KMLHelper::loadPolygonsFromFile(const QString &kmlFile, QList<QList<QGeoCoo
         }
 
         ShapeVertices::removeClosingVertex(rgCoords);
-
-        // Determine winding, reverse if needed. QGC wants clockwise winding
-        double sum = 0;
-        for (int i = 0; i < rgCoords.count(); i++) {
-            const QGeoCoordinate &coord1 = rgCoords[i];
-            const QGeoCoordinate &coord2 = rgCoords[(i + 1) % rgCoords.count()];
-            sum += (coord2.longitude() - coord1.longitude()) * (coord2.latitude() + coord1.latitude());
-        }
-        if (sum < 0.0) {
-            std::reverse(rgCoords.begin(), rgCoords.end());
-        }
-
+        ShapeVertices::makeClockwise(rgCoords);
         ShapeVertices::filterNearby(rgCoords, filterMeters, 3);
         polygons.append(rgCoords);
     }

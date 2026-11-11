@@ -1,10 +1,25 @@
 #include "ShapeVertices.h"
 
+#include <algorithm>
+
 void ShapeVertices::removeClosingVertex(QList<QGeoCoordinate>& vertices)
 {
     constexpr double closureThresholdMeters = 0.01;
     if (vertices.count() > 3 && vertices.last().distanceTo(vertices.first()) < closureThresholdMeters) {
         vertices.removeLast();
+    }
+}
+
+void ShapeVertices::makeClockwise(QList<QGeoCoordinate>& vertices)
+{
+    double sum = 0;
+    for (qsizetype i = 0; i < vertices.count(); i++) {
+        const QGeoCoordinate& coord1 = vertices[i];
+        const QGeoCoordinate& coord2 = vertices[(i + 1) % vertices.count()];
+        sum += (coord2.longitude() - coord1.longitude()) * (coord2.latitude() + coord1.latitude());
+    }
+    if (sum < 0.0) {
+        std::reverse(vertices.begin(), vertices.end());
     }
 }
 

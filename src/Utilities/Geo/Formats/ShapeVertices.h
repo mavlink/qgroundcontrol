@@ -11,6 +11,9 @@ namespace ShapeVertices {
 /// and a ring of three vertices is left alone.
 void removeClosingVertex(QList<QGeoCoordinate>& vertices);
 
+/// Reverses a counter-clockwise ring: QGC polygons wind clockwise.
+void makeClockwise(QList<QGeoCoordinate>& vertices);
+
 /// Removes each vertex closer than @a filterMeters to the vertex kept before it, without going below
 /// @a minVertices. The last vertex is not compared with the first.
 /// @param filterMeters 0 or less disables the filter
