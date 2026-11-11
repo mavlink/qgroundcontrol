@@ -4,9 +4,9 @@
 
 #include "GPSReceiverDescriptor.h"
 #include "GPSReceiverReports.h"
-#include "RTCMMessageCount.h"
+#include "RTCMMessageCountModel.h"
 
-// QGCGPSCore builds without QML, so its value types are registered here.
+// QGCGPSCore builds without QML, so its types are registered here.
 
 struct GPSReceiverPresentationQmlType
 {
@@ -16,12 +16,12 @@ struct GPSReceiverPresentationQmlType
     QML_STRUCTURED_VALUE
 };
 
-struct RTCMMessageCountQmlType
+struct RTCMMessageCountModelQmlType
 {
     Q_GADGET
-    QML_FOREIGN(RTCMMessageCount)
-    QML_VALUE_TYPE(rtcmMessageCount)
-    QML_STRUCTURED_VALUE
+    QML_FOREIGN(RTCMMessageCountModel)
+    QML_NAMED_ELEMENT(RTCMMessageCountModel)
+    QML_UNCREATABLE("Provided by the correction manager")
 };
 
 // Registers GPSFixQuality's values as a namespace, so QML names fix types instead of numbers.

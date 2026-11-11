@@ -8,6 +8,7 @@
 #include <QtNetwork/QNetworkInterface>
 
 #include "QGCLoggingCategory.h"
+#include "RTCMFramer.h"
 #include "RuntimeScheduler.h"
 
 QGC_LOGGING_CATEGORY(GPSCorrectionManagerLog, "GPS.Corrections.GPSCorrectionManager")
@@ -196,6 +197,7 @@ void GPSCorrectionManager::_submit(GPSCorrectionSettings::CorrectionSource sourc
                                    const QByteArray& data, qint64 receivedAtMs)
 {
     if (_selector.submit(source, instance, receivedAtMs, _scheduler->nowMs())) {
+        _recordSelected({.source = static_cast<int>(source), .instanceId = instance}, data);
         _selectedRate.recordBytes(data.size());
         if (_rtcmMavlink.submitToOutputs(data) > 0) {
             emit vehicleBytesSubmittedChanged();
@@ -203,6 +205,21 @@ void GPSCorrectionManager::_submit(GPSCorrectionSettings::CorrectionSource sourc
         _forwardToUdpOutput(data);
     }
     _scheduleRefresh();
+}
+
+void GPSCorrectionManager::_recordSelected(const GPSCorrectionStream& stream, const QByteArray& data)
+{
+    if (stream != _recordedStream) {
+        _forgetSelected();
+        _recordedStream = stream;
+    }
+    _messageCounts.record(RTCMFramer::frameMessageId(data));
+}
+
+void GPSCorrectionManager::_forgetSelected()
+{
+    _recordedStream = {};
+    _messageCounts.clear();
 }
 
 void GPSCorrectionManager::_forwardToUdpOutput(const QByteArray& data)
@@ -240,6 +257,9 @@ QString GPSCorrectionManager::sourceName(int source)
 void GPSCorrectionManager::_refresh()
 {
     const std::optional<GPSCorrectionStream> selected = _selector.selectedStream(_scheduler->nowMs());
+    if (selected != _recordedStream) {
+        _forgetSelected();
+    }
     State state = State::Inactive;
     if (selected) {
         state = State::Fresh;

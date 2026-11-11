@@ -573,7 +573,7 @@ void NTRIPManager::_onCorrectionFrame(const RTCMDecodedFrame& frame)
     if (_correctionSource) {
         _correctionSource->submit(frame.data, frame.receivedAtMs);
     }
-    _stats.recordMessage(frame.data.size(), frame.messageId, frame.receivedAtMs);
+    _stats.recordMessage(frame.data.size(), frame.receivedAtMs);
 
     // Only corrections show the caster serves this stream; one that accepts and then drops must keep backing off.
     _reconnectBackoff.reset();
