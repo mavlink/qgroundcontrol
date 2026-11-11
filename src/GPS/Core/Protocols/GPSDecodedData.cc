@@ -21,7 +21,7 @@ GPSPositionReport position(const GPSDecodedPosition& source, const GPSIntegrityR
     integrity.jamming.state = GPSIntegrityReport::jammingStateFromValue(static_cast<int>(diagnostic.jamming.state));
     integrity.spoofing.state = GPSIntegrityReport::spoofingStateFromValue(static_cast<int>(diagnostic.spoofing.state));
     // Navigation epochs retain their first receipt; diagnostics may arrive before that epoch is published.
-    integrity = integrity.freshAt(nowUs ? nowUs : std::max(navigation.timestampUs, diagnostic.timestampUs));
+    integrity = integrity.freshAt(nowUs ? nowUs : (std::max) (navigation.timestampUs, diagnostic.timestampUs));
     return result;
 }
 
@@ -96,7 +96,7 @@ GPSSatelliteReport SatelliteCounts::_report() const
         if (!counts.inView.receivedAtUs) {
             continue;
         }
-        report.timestampUs = std::max(report.timestampUs, counts.inView.receivedAtUs);
+        report.timestampUs = (std::max) (report.timestampUs, counts.inView.receivedAtUs);
         const int visible = counts.inView.value.value_or(0);
         inView += visible;
         if (visible == 0) {

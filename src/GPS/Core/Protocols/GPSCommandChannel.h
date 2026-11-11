@@ -28,7 +28,7 @@ enum class [[nodiscard]] GPSBaudStatus
     Configured,
     Unsupported,
     Cancelled,
-    Error
+    Error,
 };
 
 enum class GPSBaudProbe

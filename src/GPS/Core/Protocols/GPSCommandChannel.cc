@@ -42,7 +42,7 @@ GPSDeadlineScope::~GPSDeadlineScope()
 
 void GPSDeadlineScope::_limitUntil(uint64_t untilUs)
 {
-    _channel._operationDeadline.untilUs = std::min(_channel._operationDeadline.untilUs, untilUs);
+    _channel._operationDeadline.untilUs = (std::min) (_channel._operationDeadline.untilUs, untilUs);
 }
 
 GPSCommandChannel::GPSCommandChannel(GPSProtocolRuntime& runtime)
@@ -146,7 +146,7 @@ void GPSCommandChannel::beginCommand(GPSConfigurationStep step)
     _command.command = std::move(step.command);
     _command.required = step.required;
     _commandDeadline.untilUs =
-        std::min(_operationDeadline.untilUs, GPSDeadline::after(_command.startedAtUs, step.timeout).untilUs);
+        (std::min) (_operationDeadline.untilUs, GPSDeadline::after(_command.startedAtUs, step.timeout).untilUs);
     _commandCompleted = false;
 }
 
@@ -158,7 +158,7 @@ GPSConfigurationEvidence GPSCommandChannel::completeCommand(GPSCommandOutcome ou
     _command.outcome = outcome;
     _commandCompleted = true;
     // Completion observers may finish evidence again or begin another attempt.
-    const auto result = _command;
+    auto result = _command;
     _runtime._commandFinished(result);
     return result;
 }
@@ -168,8 +168,8 @@ int GPSCommandChannel::read(std::span<uint8_t> buffer, std::chrono::milliseconds
     if (failed() || !buffer.data() || buffer.empty()) {
         return failed() ? -1 : 0;
     }
-    const auto result =
-        _runtime._io.read(buffer, {std::min(_operationDeadline.untilUs, GPSDeadline::after(nowUs(), timeout).untilUs)});
+    const auto result = _runtime._io.read(
+        buffer, {(std::min) (_operationDeadline.untilUs, GPSDeadline::after(nowUs(), timeout).untilUs)});
     _errorDetail = result.detail;
     if (result.status == GPSReadStatus::Data && result.bytesRead >= 0 &&
         static_cast<size_t>(result.bytesRead) <= buffer.size()) {
@@ -208,7 +208,7 @@ bool GPSCommandChannel::write(QByteArrayView bytes)
         return false;
     }
     const uint64_t deadline =
-        std::min(_operationDeadline.untilUs, _commandCompleted ? UINT64_MAX : _commandDeadline.untilUs);
+        (std::min) (_operationDeadline.untilUs, _commandCompleted ? UINT64_MAX : _commandDeadline.untilUs);
     // A late command that wrote nothing just times out. A late later part goes to the transport, whose sticky failure
     // stops the session rather than leave a torn frame on the link.
     if (nowUs() >= deadline && (_commandCompleted || _command.acceptedBytes == 0)) {
@@ -288,7 +288,7 @@ void GPSCommandChannel::wait(std::chrono::microseconds duration)
     const auto now = nowUs();
     const auto remaining = _operationDeadline.untilUs > now ? _operationDeadline.untilUs - now : 0;
     const auto untilDeadline = std::chrono::microseconds(std::min<uint64_t>(remaining, INT64_MAX));
-    if (!_runtime._io.clock.wait(std::min(duration, untilDeadline))) {
+    if (!_runtime._io.clock.wait((std::min) (duration, untilDeadline))) {
         _error = GPSProtocolError::Cancelled;
         _errorDetail.clear();
     }

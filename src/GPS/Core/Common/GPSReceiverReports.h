@@ -47,7 +47,7 @@ enum class GPSConstellation
     BeiDou,
     QZSS,
     SBAS,
-    NavIC
+    NavIC,
 };
 
 struct GPSIntegrityReport
@@ -57,14 +57,14 @@ struct GPSIntegrityReport
         Unknown,
         Ok,
         Warning,
-        Critical
+        Critical,
     };
     enum class SpoofingState
     {
         Unknown,
         None,
         Indicated,
-        Multiple
+        Multiple,
     };
     /// Ordered by severity, so the worst of several reports is the greatest.
     enum class AntennaState
@@ -72,7 +72,7 @@ struct GPSIntegrityReport
         Unknown,
         Ok,
         Open,
-        Short
+        Short,
     };
 
     [[nodiscard]] static constexpr JammingState jammingStateFromValue(int value)

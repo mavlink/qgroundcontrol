@@ -117,7 +117,7 @@ bool GPSDriver::configure()
     GPSRuntimeIO io;
     io.clock = _clock;
     io.read = [this](std::span<uint8_t> bytes, GPSDeadline deadline) {
-        const auto result = _transport.read(bytes, deadline.remaining(_clock.nowUs()));
+        auto result = _transport.read(bytes, deadline.remaining(_clock.nowUs()));
         const bool data = result.status == GPSReadStatus::Data && result.bytesRead > 0 &&
                           static_cast<size_t>(result.bytesRead) <= bytes.size();
         _state->cycle.activity |= data;

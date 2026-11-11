@@ -37,7 +37,7 @@ public:
         if (!_startedUs || nowUs < *_startedUs) {
             return false;
         }
-        const auto seconds = static_cast<uint32_t>((nowUs - *_startedUs) / 1000000);
+        const auto seconds = static_cast<uint32_t>((nowUs - *_startedUs) / MICROSECONDS_PER_SECOND);
         if (seconds == _seconds) {
             return false;
         }
@@ -70,6 +70,8 @@ public:
     }
 
 private:
+    static constexpr uint64_t MICROSECONDS_PER_SECOND = 1000000;
+
     std::optional<uint64_t> _startedUs;
     uint32_t _seconds = 0;
 };
