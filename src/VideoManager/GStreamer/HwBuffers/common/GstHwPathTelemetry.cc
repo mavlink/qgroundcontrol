@@ -7,12 +7,12 @@ namespace GstHwPathTelemetry {
 
 namespace {
 
-constexpr size_t kCounterCount = size_t(Counter::_Count);
+constexpr size_t kCounterCount = size_t(Counter::Count);
 std::array<std::array<std::atomic<quint64>, kCounterCount>, GstHw::kPathCount> s_counters{};
 
 std::array<std::atomic<quint64>, GstHw::kPathCount> s_mapDurationUsEwma{};
 
-constexpr size_t kReasonCount = size_t(HwFallbackReason::_Count);
+constexpr size_t kReasonCount = size_t(HwFallbackReason::Count);
 std::array<std::array<std::atomic<quint64>, kReasonCount>, GstHw::kPathCount> s_fallbackReasons{};
 
 }  // namespace

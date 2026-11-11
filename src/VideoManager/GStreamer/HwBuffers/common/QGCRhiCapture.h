@@ -28,7 +28,6 @@ struct DeviceSnapshot
     std::atomic<void*> vkPhysicalDevice{nullptr};  ///< VkPhysicalDevice (Vulkan backend only)
     std::atomic<quint32> vkQueueFamilyIdx{0};      ///< QRhi's gfx queue family (Vulkan backend only)
     std::atomic<quint32> vkQueueIdx{0};            ///< QRhi's gfx queue index (Vulkan backend only)
-    std::atomic<int> framesInFlight{0};            ///< QRhi::FramesInFlight resource limit (0 = unset)
 };
 
 /// Returns the global snapshot. Atomic fields make individual reads thread-safe.

@@ -65,7 +65,6 @@ void clearSnapshot()
     s_snapshot.vkPhysicalDevice.store(nullptr, std::memory_order_release);
     s_snapshot.vkQueueFamilyIdx.store(0, std::memory_order_release);
     s_snapshot.vkQueueIdx.store(0, std::memory_order_release);
-    s_snapshot.framesInFlight.store(0, std::memory_order_release);
 }
 
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
@@ -153,9 +152,27 @@ void populateSnapshot(QRhi* rhi)
     s_snapshot.vkPhysicalDevice.store(vkPhysDev, std::memory_order_release);
     s_snapshot.vkQueueFamilyIdx.store(vkQueueFamilyIdx, std::memory_order_release);
     s_snapshot.vkQueueIdx.store(vkQueueIdx, std::memory_order_release);
-    s_snapshot.framesInFlight.store(rhi->resourceLimit(QRhi::FramesInFlight), std::memory_order_release);
     s_snapshot.backend.store(backend, std::memory_order_release);
 }
+
+/// Publishes @p window's QRhi and its native device handles. Render thread, where rhi() is valid.
+void publishRhi(QQuickWindow* window)
+{
+    QRhi* rhi = window->rhi();
+    s_cachedRhi.store(rhi, std::memory_order_release);
+    populateSnapshot(rhi);
+}
+
+/// Withdraws the published QRhi, and drops the native GPU handles that wrap its device or context.
+void unpublishRhi()
+{
+    s_cachedRhi.store(nullptr, std::memory_order_release);
+    clearSnapshot();
+#if defined(QGC_HAS_ANY_GPU_PATH)
+    HwBuffers::resetCachedGpuResources();
+#endif
+}
+
 }  // namespace
 
 QRhi* cachedRhi() noexcept
@@ -198,14 +215,10 @@ void connectWindow(QQuickWindow* window)
     if (s_connectedWindow.load(std::memory_order_acquire) == window)
         return;  // idempotent — avoid duplicate connections
 
-    // Window swap: the old window's QRhi can be torn down before the new window's SG initializes; drop the cached
-    // QRhi/snapshot and native GPU handles now so bus-sync threads never dereference a dead device across the gap.
+    // Window swap: the old window's QRhi can be torn down before the new window's SG initializes; withdraw it now so
+    // bus-sync threads never dereference a dead device across the gap.
     if (s_connectedWindow.load(std::memory_order_acquire) != nullptr) {
-        s_cachedRhi.store(nullptr, std::memory_order_release);
-        clearSnapshot();
-#if defined(QGC_HAS_ANY_GPU_PATH)
-        HwBuffers::resetCachedGpuResources();
-#endif
+        unpublishRhi();
     }
 
     // Detach the prior window's signals first, else its destroyed/invalidated lambdas later wipe cachedRhi() and reset
@@ -220,44 +233,21 @@ void connectWindow(QQuickWindow* window)
     // sceneGraphInitialized fires on the render thread where rhi() is valid — snapshot native device pointers here so
     // bus-sync callbacks never deref QRhi* cross-thread.
     s_connections[0] = QObject::connect(
-        window, &QQuickWindow::sceneGraphInitialized, window,
-        [window]() {
-            QRhi* rhi = window->rhi();
-            s_cachedRhi.store(rhi, std::memory_order_release);
-            populateSnapshot(rhi);
-        },
-        Qt::DirectConnection);
-    s_connections[1] = QObject::connect(
-        window, &QQuickWindow::sceneGraphInvalidated, window,
-        []() {
-            s_cachedRhi.store(nullptr, std::memory_order_release);
-            clearSnapshot();
-#if defined(QGC_HAS_ANY_GPU_PATH)
-            // Drop native GPU handles that wrap the now-defunct QRhi-owned device/context.
-            HwBuffers::resetCachedGpuResources();
-#endif
-        },
-        Qt::DirectConnection);
+        window, &QQuickWindow::sceneGraphInitialized, window, [window]() { publishRhi(window); }, Qt::DirectConnection);
+    s_connections[1] =
+        QObject::connect(window, &QQuickWindow::sceneGraphInvalidated, window, &unpublishRhi, Qt::DirectConnection);
     // Clear cache when window is destroyed so a stale QRhi* is never returned.
     s_connections[2] = QObject::connect(
         window, &QQuickWindow::destroyed, window,
         [](QObject*) {
             s_connectedWindow.store(nullptr, std::memory_order_release);
-            s_cachedRhi.store(nullptr, std::memory_order_release);
-            clearSnapshot();
-#if defined(QGC_HAS_ANY_GPU_PATH)
-            HwBuffers::resetCachedGpuResources();
-#endif
+            unpublishRhi();
         },
         Qt::DirectConnection);
 
-    // SG already initialized (video init runs after first render) — publish on the render thread, where rhi() is valid.
+    // SG already initialized (video init runs after first render) — publish on the render thread.
     if (window->isSceneGraphInitialized()) {
-        window->scheduleRenderJob(QRunnable::create([window]() {
-                                      QRhi* rhi = window->rhi();
-                                      s_cachedRhi.store(rhi, std::memory_order_release);
-                                      populateSnapshot(rhi);
-                                  }),
+        window->scheduleRenderJob(QRunnable::create([window]() { publishRhi(window); }),
                                   QQuickWindow::BeforeSynchronizingStage);
         window->update();
     }

@@ -48,15 +48,6 @@ bool hasCpuLayout([[maybe_unused]] GstCaps* caps)
     return true;
 }
 
-int planeWidth(const GstVideoInfo& info, int plane)
-{
-    const int component = firstComponentOf(info, plane);
-    if (component < 0) {
-        return 0;
-    }
-    return GST_VIDEO_INFO_COMP_WIDTH(&info, component);
-}
-
 int planeHeight(const GstVideoInfo& info, int plane)
 {
     const int component = firstComponentOf(info, plane);
