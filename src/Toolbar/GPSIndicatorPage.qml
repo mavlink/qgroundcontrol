@@ -15,7 +15,7 @@ ToolIndicatorPage {
     readonly property NTRIPSettings _ntripSettings: QGroundControl.settingsManager.ntripSettings
     // Connecting to a configured caster is the common field action, so it is offered without opening settings.
     readonly property bool _ntripConfigured: root._ntripSettings.userVisible
-                                             && root._ntripSettings.ntripServerHostAddress.rawValue !== ""
+                                             && QGroundControl.gpsManager.ntrip.canConnect
     readonly property VehicleGPSFactGroup _gps: root.activeVehicle ? root.activeVehicle.gps : null
     readonly property bool _vehicleGps: !!root._gps && root._gps.telemetryAvailable
     readonly property real _preferredStatusWidth: ScreenTools.defaultFontPixelWidth * 36

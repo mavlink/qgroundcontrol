@@ -424,9 +424,9 @@ void GPSCorrectionsPanelTest::_ntripConnectionActionIsIdempotent()
     QPointer<MockNTRIPTransport> unexpected = ntrip.nextTransport();
     GPSTest::QmlWindowFixture window(640, 400);
     GPSTest::QmlEngine engine;
+    // Whether there is a caster to connect to is the manager's to say, whatever the application's settings hold.
     TestFixtures::SettingsFixture saved;
-    saved.setFactValue(SettingsManager::instance()->ntripSettings()->ntripServerHostAddress(),
-                       QStringLiteral("caster.example.com"));
+    saved.setFactValue(SettingsManager::instance()->ntripSettings()->ntripServerHostAddress(), QString());
     std::unique_ptr<QObject> panel = createConnectionPanel(engine, window, ntrip.manager);
     QVERIFY2(panel, qPrintable(engine.lastError()));
     auto* button = panel->findChild<QObject*>(QStringLiteral("ntripConnectButton"));

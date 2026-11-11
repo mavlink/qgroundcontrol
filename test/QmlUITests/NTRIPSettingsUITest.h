@@ -9,10 +9,10 @@
 ///
 /// Navigates to the page through the real settings left-nav and verifies the
 /// enable/disable gating of the hand-written NTRIP controls: the Browse button
-/// and Connect button follow the server host address, and the
-/// accept-self-signed-certificate switch follows the use-TLS switch. Gating is
-/// driven through the underlying Facts so the test never touches the network or
-/// a real caster.
+/// and Connect button follow whether the NTRIP manager has a caster host, and the
+/// accept-self-signed-certificate switch follows the use-TLS switch. The test
+/// gives the manager the host its settings binding would, and drives the switch
+/// through its Fact, so it never touches the network or a real caster.
 class NTRIPSettingsUITest : public QmlUITestBase
 {
     Q_OBJECT

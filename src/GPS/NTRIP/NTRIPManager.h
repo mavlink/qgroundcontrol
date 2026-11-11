@@ -52,6 +52,8 @@ class NTRIPManager : public QObject
     Q_PROPERTY(QString statusMessage READ statusMessage NOTIFY statusMessageChanged FINAL)
     Q_PROPERTY(QString securityWarning READ securityWarning NOTIFY securityWarningChanged FINAL)
     Q_PROPERTY(QString ggaSource READ ggaSource NOTIFY ggaSourceChanged FINAL)
+    /// A caster host is configured, so there is a caster to connect to and to ask for its mountpoints.
+    Q_PROPERTY(bool canConnect READ canConnect NOTIFY canConnectChanged FINAL)
     Q_PROPERTY(NTRIPSourceTableController* sourceTableController READ sourceTableController CONSTANT FINAL)
     Q_PROPERTY(NTRIPConnectionStats* connectionStats READ connectionStats CONSTANT FINAL)
 
@@ -117,6 +119,8 @@ public:
 
     QString ggaSource() const { return _ggaReporter.currentSource(); }
 
+    bool canConnect() const { return !_configuration.connection.host.isEmpty(); }
+
     NTRIPSourceTableController* sourceTableController() { return &_sourceTableController; }
 
     NTRIPConnectionStats* connectionStats() { return &_stats; }
@@ -146,6 +150,7 @@ signals:
     void statusMessageChanged();
     void securityWarningChanged();
     void ggaSourceChanged();
+    void canConnectChanged();
     /// The user turned the saved connection on or off; the settings should store it.
     void enabledRequested(bool enabled);
     /// The trusted self-signed caster certificate changed, or was forgotten (empty); the settings should store it.

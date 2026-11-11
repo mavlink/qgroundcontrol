@@ -133,6 +133,7 @@ void NTRIPManager::setConfiguration(const Configuration& configuration)
     const bool ggaChanged = configuration.gga != _configuration.gga;
     const bool streamChanged =
         configuration.enabled != _configuration.enabled || configuration.connection != _configuration.connection;
+    const bool couldConnect = canConnect();
     _configuration = configuration;
     // Opting out forgets the pinned certificate, so opting in again trusts the caster's current certificate.
     QString& pin = _configuration.connection.pinnedCertificate;
@@ -148,6 +149,9 @@ void NTRIPManager::setConfiguration(const Configuration& configuration)
     }
     if (pinForgotten) {
         emit certificatePinChanged(QString());
+    }
+    if (canConnect() != couldConnect) {
+        emit canConnectChanged();
     }
 }
 

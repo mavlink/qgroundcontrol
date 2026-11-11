@@ -21,6 +21,7 @@ class NTRIPManagerTest : public UnitTest
 private slots:
     void _stopFromIdleIsNoop();
     void _statusMessageNamesStateWithoutDetail();
+    void _canConnectNeedsCasterHost();
     void _transportFactory();
     void _stopCancelsDeferredSettings_data();
     void _stopCancelsDeferredSettings();

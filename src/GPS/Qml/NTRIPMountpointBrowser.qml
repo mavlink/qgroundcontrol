@@ -19,7 +19,6 @@ QGCGroupBox {
     readonly property NTRIPSourceTableController _sourceTable: root._ntripMgr.sourceTableController
     readonly property Vehicle _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     readonly property bool _isActive: root.enabledFact.rawValue
-    readonly property bool _hasHost: root._ntrip.ntripServerHostAddress.rawValue !== ""
     readonly property bool _fetching: root._sourceTable.fetchStatus === NTRIPSourceTableController.InProgress
 
     Layout.fillWidth:   true
@@ -41,7 +40,7 @@ QGCGroupBox {
         QGCButton {
             objectName: "ntripBrowseButton"
             text:       qsTr("Browse")
-            enabled:    !root._isActive && root._hasHost && !root._fetching
+            enabled:    !root._isActive && root._ntripMgr.canConnect && !root._fetching
             onClicked:  root._activeVehicle ? root._ntripMgr.fetchMountpoints(root._activeVehicle.coordinate)
                                             : root._ntripMgr.fetchMountpoints()
         }

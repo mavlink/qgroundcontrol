@@ -75,6 +75,29 @@ void NTRIPManagerTest::_statusMessageNamesStateWithoutDetail()
     QCOMPARE(messages.size(), 1);
 }
 
+void NTRIPManagerTest::_canConnectNeedsCasterHost()
+{
+    NTRIPManager manager;
+    QSignalSpy changes(&manager, &NTRIPManager::canConnectChanged);
+    // The panels read the property.
+    QVERIFY(!manager.property("canConnect").toBool());
+    auto configuration = mockCasterConfiguration(false);
+    manager.setConfiguration(configuration);
+    QVERIFY(manager.property("canConnect").toBool());
+    QCOMPARE(changes.size(), 1);
+
+    // The host alone decides: the mountpoint browser needs a caster before there is a mountpoint.
+    configuration.connection.mountpoint.clear();
+    manager.setConfiguration(configuration);
+    QVERIFY(manager.canConnect());
+    QCOMPARE(changes.size(), 1);
+
+    configuration.connection.host.clear();
+    manager.setConfiguration(configuration);
+    QVERIFY(!manager.canConnect());
+    QCOMPARE(changes.size(), 2);
+}
+
 void NTRIPManagerTest::_transportFactory()
 {
     NTRIPManager manager;

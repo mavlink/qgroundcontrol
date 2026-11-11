@@ -17,7 +17,6 @@ QGCGroupBox {
     property GPSCorrectionManager corrections: QGroundControl.gpsManager.corrections
 
     readonly property NTRIPSettings _ntripSettings: QGroundControl.settingsManager.ntripSettings
-    readonly property bool   _hasHost:   root._ntripSettings.ntripServerHostAddress.rawValue !== ""
     readonly property int    _status:    root.ntripManager.connectionStatus
     readonly property NTRIPConnectionStats _stats: root.ntripManager.connectionStats
     readonly property bool   _connected: root._status === NTRIPManager.Connected
@@ -54,7 +53,7 @@ QGCGroupBox {
             }
         }
         // Only Connect needs a caster to connect to.
-        buttonEnabled: root._status === NTRIPManager.Disconnected ? root._hasHost
+        buttonEnabled: root._status === NTRIPManager.Disconnected ? root.ntripManager.canConnect
                                                                   : root._status !== NTRIPManager.Connecting
         // Explicit targets keep repeated clicks idempotent while the manager debounces the setting change.
         onClicked: {

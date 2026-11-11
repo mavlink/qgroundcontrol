@@ -4,6 +4,8 @@
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QTest>
 
+#include "GPSManager.h"
+#include "NTRIP/Support/MockNTRIPTransport.h"
 #include "NTRIPSettings.h"
 #include "SettingsManager.h"
 
@@ -66,10 +68,11 @@ void NTRIPSettingsUITest::_testControlsGated()
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("settingsTextField_ntripServerHostAddress")),
              "Host field not found on NTRIP page");
     NTRIPSettings* ntrip = SettingsManager::instance()->ntripSettings();
+    GPSTest::CasterHost caster(GPSManager::instance()->ntrip());
 
     QVERIFY(verifyEnabled(QStringLiteral("ntripConnectButton"), false, QStringLiteral("empty host")));
     QVERIFY(verifyEnabled(QStringLiteral("ntripBrowseButton"), false, QStringLiteral("empty host")));
-    ntrip->ntripServerHostAddress()->setRawValue(QStringLiteral("caster.example.com"));
+    caster.set(QStringLiteral("caster.example.com"));
     QVERIFY(verifyEnabled(QStringLiteral("ntripConnectButton"), true, QStringLiteral("host set")));
     QVERIFY(verifyEnabled(QStringLiteral("ntripBrowseButton"), true, QStringLiteral("host set")));
 

@@ -15,6 +15,7 @@
 #include "GPSReceiver.h"
 #include "GPSReceiverFactGroup.h"
 #include "MAVLinkLib.h"
+#include "NTRIP/Support/MockNTRIPTransport.h"
 #include "NTRIPSettings.h"
 #include "QGCPalette.h"
 #include "Qml/Support/GPSPanelFixtures.h"
@@ -160,7 +161,7 @@ void GPSIndicatorTest::_compactExpandedPageHasSettingsSize()
     RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::Passive));
     NTRIPSettings* const ntrip = SettingsManager::instance()->ntripSettings();
     settings.saved.setFactValue(ntrip->ntripServerConnectEnabled(), false);
-    settings.saved.setFactValue(ntrip->ntripServerHostAddress(), QStringLiteral("caster.example"));
+    const GPSTest::CasterHost caster(GPSManager::instance()->ntrip(), QStringLiteral("caster.example"));
     Vehicle vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
     auto* gps = vehicle.gpsFactGroup();
     QVERIFY(gps);
@@ -229,7 +230,7 @@ void GPSIndicatorTest::_pageOffersNtripConnect()
     TestFixtures::SettingsFixture saved;
     NTRIPSettings* ntrip = SettingsManager::instance()->ntripSettings();
     saved.setFactValue(ntrip->ntripServerConnectEnabled(), false);
-    saved.setFactValue(ntrip->ntripServerHostAddress(), QString());
+    GPSTest::CasterHost caster(GPSManager::instance()->ntrip());
     GPSTest::QmlWindowFixture window;
     GPSTest::QmlEngine engine;
     std::unique_ptr<QObject> page = createIndicatorPage(engine, window, nullptr);
@@ -238,7 +239,7 @@ void GPSIndicatorTest::_pageOffersNtripConnect()
     QVERIFY(section);
     QVERIFY(!section->property("visible").toBool());
 
-    ntrip->ntripServerHostAddress()->setRawValue(QStringLiteral("caster.example"));
+    caster.set(QStringLiteral("caster.example"));
     QTRY_VERIFY_WITH_TIMEOUT(section->property("visible").toBool(), TestTimeout::shortMs());
     auto* connect = section->findChild<QObject*>(QStringLiteral("ntripConnectButton"));
     QVERIFY(connect);

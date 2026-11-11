@@ -101,6 +101,35 @@ inline MockNTRIPTransport* injectMockTransport(NTRIPManager& manager, bool autoC
     return transport;
 }
 
+/// Gives @a manager a caster host for the life of the object and then restores its configuration. The application's
+/// settings binding gives its manager the saved host; tests run without that binding.
+class CasterHost
+{
+public:
+    explicit CasterHost(NTRIPManager* manager, const QString& host = {})
+        : _manager(manager)
+        , _restored(manager->configuration())
+    {
+        set(host);
+    }
+
+    ~CasterHost() { _manager->setConfiguration(_restored); }
+
+    CasterHost(const CasterHost&) = delete;
+    CasterHost& operator=(const CasterHost&) = delete;
+
+    void set(const QString& host)
+    {
+        NTRIPManager::Configuration configuration = _manager->configuration();
+        configuration.connection.host = host;
+        _manager->setConfiguration(configuration);
+    }
+
+private:
+    NTRIPManager* const _manager;
+    const NTRIPManager::Configuration _restored;
+};
+
 /// A position a GGA provider reports: @a coordinate, with its altitude above mean sea level.
 inline std::optional<GPSObservation> ggaObservation(const QGeoCoordinate& coordinate,
                                                     GPSFixQuality quality = GPSFixQuality::Unknown,
