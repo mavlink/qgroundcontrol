@@ -28,9 +28,9 @@ bool isRetryable(NTRIPError error, bool streamServed)
         // TLS failures recur the same way until the user changes the TLS settings.
         case NTRIPError::SslError:
             return false;
-        // A caster answers with its source table for a mountpoint it does not have. Before any corrections that is a
-        // wrong mountpoint, and casters count repeated requests for a missing one towards a ban. After them, the
-        // mountpoint has only gone offline.
+        // A caster answers with its source table, or with 404 or 410, for a mountpoint it does not have. Before any
+        // corrections that is a wrong mountpoint, and casters count repeated requests for a missing one towards a ban.
+        // After them, the mountpoint has only gone offline.
         case NTRIPError::InvalidMountpoint:
             return streamServed;
         case NTRIPError::ConnectionTimeout:

@@ -662,8 +662,26 @@ void NTRIPManagerTest::_httpRetryAfterReachesManager()
     QCOMPARE(retry->startCount, 1);
 }
 
-void NTRIPManagerTest::_redirectWaitsForUser()
+void NTRIPManagerTest::_unrepeatableAnswerWaitsForUser_data()
 {
+    QTest::addColumn<QByteArray>("response");
+    QTest::addColumn<QString>("logged");
+    QTest::addColumn<QString>("message");
+    QTest::newRow("redirect") << QByteArray(
+                                     "HTTP/1.1 301 Moved Permanently\r\nLocation: https://caster.example:2102/TEST\r\n"
+                                     "Content-Length: 0\r\n\r\n")
+                              << QStringLiteral("301")
+                              << QStringLiteral("redirected the request to https://caster.example:2102/TEST");
+    // A mountpoint the caster does not have, before it served any corrections.
+    QTest::newRow("not-found") << QByteArray("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n")
+                               << QStringLiteral("404") << QStringLiteral("no such mountpoint");
+}
+
+void NTRIPManagerTest::_unrepeatableAnswerWaitsForUser()
+{
+    QFETCH(QByteArray, response);
+    QFETCH(QString, logged);
+    QFETCH(QString, message);
     ScriptedNTRIPCaster caster;
     QVERIFY(caster.isListening());
     ManualScheduler scheduler;
@@ -675,18 +693,14 @@ void NTRIPManagerTest::_redirectWaitsForUser()
     auto* connection = caster.waitForConnection(TestTimeout::shortMs());
     QVERIFY(connection && connection->peer);
     QVERIFY(connection->waitForRequest(TestTimeout::shortMs()).startsWith("GET /TEST HTTP/1.1"));
-    expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("NTRIP error:.*301")));
-    const QByteArray response =
-        "HTTP/1.1 301 Moved Permanently\r\nLocation: https://caster.example:2102/TEST\r\nContent-Length: 0\r\n\r\n";
+    expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("NTRIP error:.*") + logged));
     QCOMPARE(connection->write(response), response.size());
     // The request is not repeated: the caster would answer it the same way every time.
     QTRY_VERIFY_WITH_TIMEOUT(manager.connectionStatus() != NTRIPManager::ConnectionStatus::Connecting,
                              TestTimeout::shortMs());
     verifyExpectedLogMessage();
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
-    QVERIFY2(
-        manager.statusMessage().contains(QStringLiteral("redirected the request to https://caster.example:2102/TEST")),
-        qPrintable(manager.statusMessage()));
+    QVERIFY2(manager.statusMessage().contains(message), qPrintable(manager.statusMessage()));
     auto* retry = injectMockTransport(manager);
     QVERIFY(scheduler.advanceBy(NTRIPFailure::MAX_RETRY_AFTER));
     QCOMPARE(retry->startCount, 0);

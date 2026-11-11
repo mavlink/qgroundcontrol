@@ -21,6 +21,7 @@ enum class NTRIPError
     /// HTTP 3xx, 400 or 403: the caster does not serve the request as sent, so repeating it cannot succeed.
     RequestRejected,
     HeaderTooLarge,
+    /// The caster does not have the mountpoint: it answered with its source table, or with HTTP 404 or 410.
     InvalidMountpoint,
     InvalidConfig,
     Unknown,

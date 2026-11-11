@@ -32,7 +32,7 @@ The counters count everything the caster sends, including messages the [RTCM mes
 
 QGroundControl receives RTCM 3 corrections only: a mountpoint that sends another format, such as SPARTN, is disconnected after 30 seconds without a valid RTCM message, and the connection is tried again.
 
-A caster answers with its source table when it does not have the requested mountpoint. Before any corrections have arrived, QGroundControl reports that and does not retry, because some public casters temporarily ban clients that keep requesting a missing mountpoint. Once the mountpoint has delivered corrections, the same answer means it went offline, and QGroundControl keeps reconnecting.
+A caster answers with its source table, or with HTTP status 404 or 410, when it does not have the requested mountpoint. Before any corrections have arrived, QGroundControl reports that and does not retry, because some public casters temporarily ban clients that keep requesting a missing mountpoint. Once the mountpoint has delivered corrections, the same answer means it went offline, and QGroundControl keeps reconnecting.
 
 A caster that answers with an HTTP redirect is not followed. QGroundControl reports the address the caster names, when it names one, and waits for you to change the server settings and connect again.
 

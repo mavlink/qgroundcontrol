@@ -48,7 +48,8 @@ private slots:
     void _retryPolicy();
     void _sourceTableRetriedOnlyAfterCorrections();
     void _httpRetryAfterReachesManager();
-    void _redirectWaitsForUser();
+    void _unrepeatableAnswerWaitsForUser_data();
+    void _unrepeatableAnswerWaitsForUser();
     void _retryPublicationSuperseded();
     void _missingMountpointDoesNotStartTransport();
     void _correctionIngressKeepsSessionAndIdentity();
