@@ -254,9 +254,10 @@ bool extractFile(const QString &archivePath, const QString &fileName,
 /// @param archivePath Path to archive file (or Qt resource path :/)
 /// @param fileName Name of file inside archive (as shown by listArchive)
 /// @param format Archive format (Auto = detect from archivePath)
+/// @param maxDecompressedBytes Fail, returning nothing, if the file is larger than this many bytes (0 = unlimited)
 /// @return File contents, or empty QByteArray if not found or extraction failed
-QByteArray extractFileData(const QString &archivePath, const QString &fileName,
-                           Format format = Format::Auto);
+QByteArray extractFileData(const QString& archivePath, const QString& fileName, Format format = Format::Auto,
+                           qint64 maxDecompressedBytes = kDefaultMaxDecompressedMemoryBytes);
 
 /// Extract multiple files from an archive in one pass
 /// @param archivePath Path to archive file (or Qt resource path :/)
@@ -315,8 +316,10 @@ bool extractFromDevice(QIODevice *device, const QString &outputDirectoryPath,
 /// Extract a single file from archive device to memory
 /// @param device QIODevice to read from (must be open and readable)
 /// @param fileName Name of file inside archive
+/// @param maxDecompressedBytes Fail, returning nothing, if the file is larger than this many bytes (0 = unlimited)
 /// @return File contents, or empty QByteArray if not found
-QByteArray extractFileDataFromDevice(QIODevice *device, const QString &fileName);
+QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName,
+                                     qint64 maxDecompressedBytes = kDefaultMaxDecompressedMemoryBytes);
 
 // ============================================================================
 // In-Memory Compression (zlib via qCompress/qUncompress)

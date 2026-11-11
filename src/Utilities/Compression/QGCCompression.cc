@@ -816,7 +816,8 @@ bool extractFile(const QString& archivePath, const QString& fileName, const QStr
     return success;
 }
 
-QByteArray extractFileData(const QString& archivePath, const QString& fileName, Format format)
+QByteArray extractFileData(const QString& archivePath, const QString& fileName, Format format,
+                           qint64 maxDecompressedBytes)
 {
     if (fileName.isEmpty()) {
         qCWarning(QGCCompressionLog) << "File name cannot be empty";
@@ -827,9 +828,15 @@ QByteArray extractFileData(const QString& archivePath, const QString& fileName, 
         return {};
     }
     qCDebug(QGCCompressionLog) << "Extracting" << fileName << "from" << archivePath << "to memory";
-    QByteArray result = QGClibarchive::extractFileToMemory(archivePath, fileName);
+    QByteArray result = QGClibarchive::extractFileToMemory(archivePath, fileName, maxDecompressedBytes);
     if (result.isEmpty()) {
-        setError(Error::FileNotInArchive, QStringLiteral("Could not extract %1 from %2").arg(fileName, archivePath));
+        if (QGClibarchive::takeSizeLimitExceeded()) {
+            setError(Error::SizeLimitExceeded,
+                     QStringLiteral("%1 in %2 exceeds the size limit").arg(fileName, archivePath));
+        } else {
+            setError(Error::FileNotInArchive,
+                     QStringLiteral("Could not extract %1 from %2").arg(fileName, archivePath));
+        }
     }
     return result;
 }
@@ -917,7 +924,7 @@ bool extractFromDevice(QIODevice* device, const QString& outputDirectoryPath, Pr
     return success;
 }
 
-QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName)
+QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName, qint64 maxDecompressedBytes)
 {
     if (!validateDeviceInput(device)) {
         return {};
@@ -928,10 +935,14 @@ QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName)
         return {};
     }
     qCDebug(QGCCompressionLog) << "Extracting" << fileName << "from device to memory";
-    QByteArray result = QGClibarchive::extractFileDataFromDevice(device, fileName);
+    QByteArray result = QGClibarchive::extractFileDataFromDevice(device, fileName, maxDecompressedBytes);
     captureFormatInfo();
     if (result.isEmpty()) {
-        setError(Error::FileNotInArchive, QStringLiteral("File not found: ") + fileName);
+        if (QGClibarchive::takeSizeLimitExceeded()) {
+            setError(Error::SizeLimitExceeded, fileName + QStringLiteral(" exceeds the size limit"));
+        } else {
+            setError(Error::FileNotInArchive, QStringLiteral("File not found: ") + fileName);
+        }
     }
     return result;
 }

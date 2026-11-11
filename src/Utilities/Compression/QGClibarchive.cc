@@ -336,6 +336,21 @@ QByteArray readArchiveToMemory(struct archive* a, qint64 expectedSize = 0, qint6
     return (copied == CopyResult::Completed) ? result : QByteArray();
 }
 
+/// Read the data of the archive entry whose header was just read into a QByteArray
+/// An entry that says it does not fit in @a maxBytes is not started. One that says less than it holds, or
+/// nothing, is stopped at the limit while it is read.
+/// @param maxBytes Maximum size of the entry (0 = unlimited)
+/// @return Data read, or empty QByteArray on error or size limit exceeded
+QByteArray readEntryToMemory(struct archive* a, struct archive_entry* entry, qint64 maxBytes)
+{
+    const qint64 declaredSize = archive_entry_size(entry);
+    if (maxBytes > 0 && declaredSize > maxBytes) {
+        reportSizeLimitExceeded(maxBytes);
+        return {};
+    }
+    return readArchiveToMemory(a, declaredSize, maxBytes);
+}
+
 /// Write the data of the current archive entry to a file atomically
 /// @param a Archive handle (must have entry header already read)
 /// @param outputPath Output file path (parent directory must exist)
@@ -1173,7 +1188,7 @@ bool extractSingleFile(const QString& archivePath, const QString& fileName, cons
     return writeArchiveEntryToFile(reader.handle(), outputPath, unlimited);
 }
 
-QByteArray extractFileToMemory(const QString& archivePath, const QString& fileName)
+QByteArray extractFileToMemory(const QString& archivePath, const QString& fileName, qint64 maxBytes)
 {
     if (fileName.isEmpty()) {
         qCWarning(QGClibarchiveLog) << "Empty file name";
@@ -1190,7 +1205,7 @@ QByteArray extractFileToMemory(const QString& archivePath, const QString& fileNa
         return QByteArray();
     }
 
-    QByteArray result = readArchiveToMemory(reader.handle(), archive_entry_size(entry));
+    QByteArray result = readEntryToMemory(reader.handle(), entry, maxBytes);
     if (!result.isEmpty()) {
         qCDebug(QGClibarchiveLog) << "Extracted" << fileName << "to memory:" << result.size() << "bytes";
     }
@@ -1591,7 +1606,7 @@ bool extractFromDevice(QIODevice* device, const QString& outputDirectoryPath, Pr
     return extractArchiveEntries(reader, outputDirectoryPath, progress, maxBytes);
 }
 
-QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName)
+QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName, qint64 maxBytes)
 {
     if (fileName.isEmpty()) {
         qCWarning(QGClibarchiveLog) << "Empty file name";
@@ -1608,7 +1623,7 @@ QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName)
         return QByteArray();
     }
 
-    QByteArray result = readArchiveToMemory(reader.handle(), archive_entry_size(entry));
+    QByteArray result = readEntryToMemory(reader.handle(), entry, maxBytes);
     if (!result.isEmpty()) {
         qCDebug(QGClibarchiveLog) << "Extracted" << fileName << "from device:" << result.size() << "bytes";
     }

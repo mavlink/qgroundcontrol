@@ -288,8 +288,9 @@ bool extractSingleFile(const QString &archivePath, const QString &fileName,
 /// Extract a single file from any archive directly to memory
 /// @param archivePath Path to the archive file (or Qt resource path)
 /// @param fileName Name of file inside archive
-/// @return File contents, or empty QByteArray if not found or extraction failed
-QByteArray extractFileToMemory(const QString &archivePath, const QString &fileName);
+/// @param maxBytes Maximum size of the file (0 = unlimited)
+/// @return File contents, or empty QByteArray if not found, larger than maxBytes or extraction failed
+QByteArray extractFileToMemory(const QString& archivePath, const QString& fileName, qint64 maxBytes = 0);
 
 /// Extract multiple files from any archive by name in one pass
 /// @param archivePath Path to the archive file (or Qt resource path)
@@ -385,8 +386,9 @@ bool extractFromDevice(QIODevice *device, const QString &outputDirectoryPath,
 /// Extract a single file from archive device directly to memory
 /// @param device QIODevice to read from (must be open and readable)
 /// @param fileName Name of file inside archive
-/// @return File contents, or empty QByteArray if not found
-QByteArray extractFileDataFromDevice(QIODevice *device, const QString &fileName);
+/// @param maxBytes Maximum size of the file (0 = unlimited)
+/// @return File contents, or empty QByteArray if not found or larger than maxBytes
+QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName, qint64 maxBytes = 0);
 
 /// Decompress single-file format from QIODevice to disk
 /// @param device QIODevice to read from (must be open and readable)

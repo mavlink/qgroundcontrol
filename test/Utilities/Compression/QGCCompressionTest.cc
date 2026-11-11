@@ -2263,15 +2263,84 @@ void QGCCompressionTest::_testOverstatedEntrySize()
     QFile device(archivePath);
     QVERIFY(device.open(QIODevice::ReadOnly));
 
-    // No memory is set aside on the word of the header: the entry fails where its data runs out
+    // Without a limit, no memory is set aside on the word of the header: the entry fails where its data runs out
     const QRegularExpression dataRanOut("Read error.*Truncated");
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, dataRanOut);
-    QVERIFY(QGCCompression::extractFileData(archivePath, entryName).isEmpty());
+    QVERIFY(QGCCompression::extractFileData(archivePath, entryName, QGCCompression::Format::Auto, 0).isEmpty());
     verifyExpectedLogMessage();
 
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, dataRanOut);
+    QVERIFY(QGCCompression::extractFileDataFromDevice(&device, entryName, 0).isEmpty());
+    verifyExpectedLogMessage();
+
+    // The default limit is far below what the header declares, so the entry is not started
+    const QRegularExpression overTheLimit("Size limit exceeded");
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, overTheLimit);
+    QVERIFY(QGCCompression::extractFileData(archivePath, entryName).isEmpty());
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
+
+    QVERIFY(device.seek(0));
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, overTheLimit);
     QVERIFY(QGCCompression::extractFileDataFromDevice(&device, entryName).isEmpty());
     verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
+}
+
+void QGCCompressionTest::_testExtractFileDataSizeLimit_data()
+{
+    QTest::addColumn<bool>("declaredSize");
+    QTest::addColumn<bool>("fromDevice");
+
+    // A TAR header declares the size of its entry; an entry of a streamed ZIP shows its size only as it is read
+    QTest::newRow("declared size, file") << true << false;
+    QTest::newRow("declared size, device") << true << true;
+    QTest::newRow("undeclared size, file") << false << false;
+    QTest::newRow("undeclared size, device") << false << true;
+}
+
+void QGCCompressionTest::_testExtractFileDataSizeLimit()
+{
+    QFETCH(bool, declaredSize);
+    QFETCH(bool, fromDevice);
+
+    const QByteArray entryName("entry.bin");
+    const QByteArray content(3000, 'a');
+    QTemporaryDir tempDir;
+    const QString archivePath = tempDir.filePath(declaredSize ? "entry.tar" : "entry.zip");
+    QVERIFY(_writeFile(archivePath, declaredSize ? _makeTar({{.name = entryName, .data = content}})
+                                                 : _makeStreamedZip({{.name = entryName, .data = content}}, false)));
+
+    const auto extract = [&](const QString& path, qint64 limit) {
+        if (!fromDevice) {
+            return QGCCompression::extractFileData(path, entryName, QGCCompression::Format::Auto, limit);
+        }
+        QFile device(path);
+        if (!device.open(QIODevice::ReadOnly)) {
+            return QByteArray();
+        }
+        return QGCCompression::extractFileDataFromDevice(&device, entryName, limit);
+    };
+
+    // One byte short of the entry
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Size limit exceeded: 2999 bytes"));
+    QVERIFY(extract(archivePath, content.size() - 1).isEmpty());
+    verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
+
+    QCOMPARE(extract(archivePath, content.size()), content);
+    QCOMPARE(extract(archivePath, 0), content);
+
+    if (declaredSize) {
+        // An entry that says it does not fit is not started: its data, cut short here, is never read
+        const QString overstatedPath = tempDir.filePath("overstated.tar");
+        QVERIFY(_writeFile(overstatedPath, _tarHeader({.name = entryName}, 5000) + QByteArray(512, 'x')));
+        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg,
+                         QRegularExpression("Size limit exceeded: 4000 bytes"));
+        QVERIFY(extract(overstatedPath, 4000).isEmpty());
+        verifyExpectedLogMessage();
+        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
+    }
 }
 
 // ============================================================================
