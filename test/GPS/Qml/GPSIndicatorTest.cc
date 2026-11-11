@@ -345,6 +345,11 @@ void GPSIndicatorTest::_resilienceIcon_data()
                                  << QByteArrayLiteral("colorRed");
     QTest::newRow("worse-second") << 1 << 2 << int(Auth::Ok) << int(Auth::Error) << QByteArrayLiteral("colorOrange")
                                   << QByteArrayLiteral("colorRed");
+    // Still initializing is worse than authenticated; a receiver with authentication disabled does not count.
+    QTest::newRow("initializing-with-ok")
+        << NONE << NONE << int(Auth::Ok) << int(Auth::Initializing) << QByteArray() << QByteArrayLiteral("colorYellow");
+    QTest::newRow("disabled-with-ok") << NONE << NONE << int(Auth::Disabled) << int(Auth::Ok) << QByteArray()
+                                      << QByteArrayLiteral("colorGreen");
     // A value above those MAVLink defines today counts as worse, as VehicleGPSFactGroup ranks within one receiver.
     QTest::newRow("undefined-interference") << 4 << 1 << NONE << NONE << QByteArrayLiteral("colorRed") << QByteArray();
 }

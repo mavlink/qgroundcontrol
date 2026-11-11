@@ -304,9 +304,9 @@ int VehicleGPSFactGroup::authenticationSeverity() const
     switch (static_cast<AuthenticationState>(_authenticationStateFact.rawValue().toInt())) {
         case AuthenticationState::Disabled:
             return 1;
-        case AuthenticationState::Initializing:
-            return 2;
         case AuthenticationState::Ok:
+            return 2;
+        case AuthenticationState::Initializing:
             return 3;
         case AuthenticationState::Error:
             return 4;
