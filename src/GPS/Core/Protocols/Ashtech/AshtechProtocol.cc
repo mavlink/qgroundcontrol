@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -310,10 +311,13 @@ void Protocol::_activateRTCMOutput(GPSCommandChannel& channel)
 
 GPSCommandOutcome Protocol::_portReply(std::string_view reply)
 {
-    if (!reply.starts_with("$PASHR,PRT,") || std::count(reply.begin(), reply.end(), ',') != 3) {
+    // $PASHR,PRT,<port letter>,<speed code>: any other port field leaves the query unanswered.
+    std::array<std::string_view, 4> fields{};
+    if (NMEA::splitFields(reply, fields) != fields.size() || fields[0] != "$PASHR" || fields[1] != "PRT" ||
+        fields[2].size() != 1 || !NMEA::isAsciiUpper(fields[2].front())) {
         return Plan::rejection(reply);
     }
-    _port = reply[11];
+    _port = fields[2].front();
     return GPSCommandOutcome::Acknowledged;
 }
 

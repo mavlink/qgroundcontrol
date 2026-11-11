@@ -389,6 +389,19 @@ void ashtechOtherBoardIsNotABase(GPSTestClock& clock)
     QCOMPARE(receiver.peer.commands().back(), "$PASHQ,RID\r\n");
 }
 
+/// A port reply whose port field is not one upper-case letter leaves the port query unanswered.
+void ashtechPortReplyNeedsOneLetter(GPSTestClock& clock)
+{
+    for (const std::string_view portReply : {"PASHR,PRT,,9", "PASHR,PRT,AB,9"}) {
+        Base receiver(clock);
+        receiver.peer.faults.rules = {reply(startsWith("$PASHQ,PRT"), ashtechPacket(portReply))};
+        QVERIFY(!receiver.configure());
+        QCOMPARE(receiver.driver.errorDetail(), QStringLiteral("No Trimble receiver answered at 115200 baud"));
+        // No command was built from the malformed port.
+        QCOMPARE(receiver.peer.commands().back(), "$PASHQ,PRT\r\n");
+    }
+}
+
 constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"fixed-position-text", ashtechFixedPositionText},
     {"acknowledgement-returns-immediately", ashtechAcknowledgementReturnsImmediately},
@@ -397,6 +410,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"survey-receipts", ashtechSurveyReceipts},
     {"failed-survey", ashtechFailedSurvey},
     {"other-board-is-not-a-base", ashtechOtherBoardIsNotABase},
+    {"port-reply-needs-one-letter", ashtechPortReplyNeedsOneLetter},
 };
 }  // namespace
 
