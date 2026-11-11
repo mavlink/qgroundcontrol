@@ -6,6 +6,7 @@
 #include "QGCArchiveDeviceBase.h"
 
 #include <QtCore/QDateTime>
+
 /// \brief QIODevice for reading a single entry from an archive without full extraction
 ///
 /// Supports ZIP, TAR, 7z, and other libarchive-supported formats
