@@ -1,10 +1,8 @@
-// MSVC's <cmath> hides M_PI unless _USE_MATH_DEFINES is set before any C runtime header.
-#define _USE_MATH_DEFINES
-
 #include "QGCMath.h"
 
 #include <cmath>
 #include <float.h>
+#include <numbers>
 
 #include <QtCore/QtNumeric>
 
@@ -14,17 +12,17 @@ namespace QGC {
 
 float limitAngleToPMPIf(double angle)
 {
-    if ((angle > (-20 * M_PI)) && (angle < (20 * M_PI))) {
-        while (angle > ((float) M_PI + FLT_EPSILON)) {
-            angle -= 2.0f * (float)M_PI;
+    if ((angle > (-20 * std::numbers::pi)) && (angle < (20 * std::numbers::pi))) {
+        while (angle > (std::numbers::pi_v<float> + FLT_EPSILON)) {
+            angle -= 2.0f * std::numbers::pi_v<float>;
         }
 
-        while (angle <= -((float) M_PI + FLT_EPSILON)) {
-            angle += 2.0f * (float)M_PI;
+        while (angle <= -(std::numbers::pi_v<float> + FLT_EPSILON)) {
+            angle += 2.0f * std::numbers::pi_v<float>;
         }
     } else {
         // Too many turns for the loops above
-        angle = std::remainder(angle, 2.0 * M_PI);
+        angle = std::remainder(angle, 2.0 * std::numbers::pi);
     }
 
     return angle;
@@ -32,19 +30,19 @@ float limitAngleToPMPIf(double angle)
 
 double limitAngleToPMPId(double angle)
 {
-    if ((angle > (-20 * M_PI)) && (angle < (20 * M_PI))) {
-        if (angle < -M_PI) {
-            while (angle < -M_PI) {
-                angle += 2.0f * M_PI;
+    if ((angle > (-20 * std::numbers::pi)) && (angle < (20 * std::numbers::pi))) {
+        if (angle < -std::numbers::pi) {
+            while (angle < -std::numbers::pi) {
+                angle += 2.0f * std::numbers::pi;
             }
-        } else if (angle > M_PI) {
-            while (angle > M_PI) {
-                angle -= 2.0f * M_PI;
+        } else if (angle > std::numbers::pi) {
+            while (angle > std::numbers::pi) {
+                angle -= 2.0f * std::numbers::pi;
             }
         }
     } else {
         // Too many turns for the loops above
-        angle = std::remainder(angle, 2.0 * M_PI);
+        angle = std::remainder(angle, 2.0 * std::numbers::pi);
     }
 
     return angle;
