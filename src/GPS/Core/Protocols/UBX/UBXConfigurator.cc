@@ -585,9 +585,6 @@ void Protocol::_load(const UBX::Plan::ValsetBatch& batch)
 {
     _valset = {};
     for (const auto& item : batch.items) {
-        if (!item.included) {
-            continue;
-        }
         if (item.msgOut) {
             const UBX::MsgOutKey family{{item.key}};
             (void) _valset.append(family.port(UBX::MsgOutPort::UART1).id, item.value);

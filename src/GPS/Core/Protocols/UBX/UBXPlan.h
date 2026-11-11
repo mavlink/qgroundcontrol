@@ -145,24 +145,21 @@ inline constexpr uint16_t BASE_MEASUREMENT_PERIOD_MS = 1000;
 struct ValsetItem
 {
     template <typename T>
-    constexpr ValsetItem(CfgKey<T> setting, std::type_identity_t<T> setValue, bool when = true)
+    constexpr ValsetItem(CfgKey<T> setting, std::type_identity_t<T> setValue)
         : key(setting.id)
         , value(static_cast<uint32_t>(static_cast<std::make_unsigned_t<T>>(setValue)))
-        , included(when)
     {}
 
-    constexpr ValsetItem(MsgOutKey output, uint8_t rate, bool when = true)
+    constexpr ValsetItem(MsgOutKey output, uint8_t rate)
         : key(output.i2c.id)
         , value(rate)
         , msgOut(true)
-        , included(when)
     {}
 
     /// The key, or the I2C key of a CFG-MSGOUT family.
     uint32_t key;
     uint32_t value;
     bool msgOut = false;
-    bool included = true;
 };
 
 /// What a batch that is rejected, unanswered or not written means for configuration.
