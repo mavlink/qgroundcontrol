@@ -93,6 +93,9 @@ void QGCFileWriter::writeDeferred(FormatFunc formatter)
 
     {
         QMutexLocker locker(&_mutex);
+        if (_filePath.isEmpty()) {
+            return;
+        }
         _clearErrorLocked();
         if (!_thread) {
             _startLocked();

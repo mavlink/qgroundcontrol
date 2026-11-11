@@ -19,6 +19,8 @@ private slots:
     void _testAppendsAndReportsFileSize();
     void _testWritesKeepQueueOrder();
     void _testWritesOverPendingLimitAreDropped();
+    void _testWriteWithoutPathIsDropped_data();
+    void _testWriteWithoutPathIsDropped();
 
 private:
     static QByteArray _fileContents(const QString& path);

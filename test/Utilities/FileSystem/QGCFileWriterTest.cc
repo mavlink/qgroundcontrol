@@ -330,4 +330,28 @@ void QGCFileWriterTest::_testWritesOverPendingLimitAreDropped()
     QCOMPARE(_fileContents(path), QByteArray("12345678abcdefghmore"));
 }
 
+void QGCFileWriterTest::_testWriteWithoutPathIsDropped_data()
+{
+    QTest::addColumn<bool>("deferred");
+
+    QTest::newRow("write") << false;
+    QTest::newRow("deferred write") << true;
+}
+
+void QGCFileWriterTest::_testWriteWithoutPathIsDropped()
+{
+    QFETCH(bool, deferred);
+
+    QGCFileWriter writer;
+    if (deferred) {
+        writer.writeDeferred([]() { return QByteArray("data"); });
+    } else {
+        writer.write("data");
+    }
+
+    QVERIFY(writer.flush(TestTimeout::shortMs()));
+    QVERIFY(!writer.isRunning());
+    QVERIFY(!writer.hasError());
+}
+
 UT_REGISTER_TEST(QGCFileWriterTest, TestLabel::Unit, TestLabel::Utilities)
