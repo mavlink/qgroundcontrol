@@ -1456,9 +1456,13 @@ class TestRealPageDefinitions:
     def test_gnss_receiver_page(self, repo_root: Path):
         pages_dir = repo_root / "src" / "AppSettings" / "pages"
         receiver = load_page_def(pages_dir / "GNSSReceiver.SettingsUI.json")
+        # The receiver form is listed group by group, so the sidebar and the search reach each of them.
         assert [group.component for group in receiver.groups] == [
             "GPSReceiverStatus",
-            "GPSReceiverSettings",
+            "GPSReceiverConnection",
+            "GPSReceiverBaseStation",
+            "GPSReceiverBaseSites",
+            "GPSReceiverConnectControls",
             "GcsPositionStatus",
         ]
         # The status section says so when no receiver is connected instead of showing an empty page.
