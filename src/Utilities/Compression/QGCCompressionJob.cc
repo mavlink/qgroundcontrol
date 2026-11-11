@@ -163,8 +163,8 @@ void QGCCompressionJob::_onFutureFinished()
     } else {
         try {
             success = _future.result();
-            if (!success) {
-                error = QGCCompression::lastErrorString();
+            if (!success && _workError) {
+                error = *_workError;
             }
         } catch (const std::exception &e) {
             error = QString::fromUtf8(e.what());
@@ -185,6 +185,7 @@ void QGCCompressionJob::_onFutureFinished()
     _setRunning(false);
     _operation = Operation::None;
     _cancelRequested.reset();
+    _workError.reset();
 
     emit finished(success);
 }
@@ -221,21 +222,19 @@ void QGCCompressionJob::_startOperation(Operation op, const QString &source,
     _setErrorString(QString());
     _setRunning(true);
     _cancelRequested = std::make_shared<std::atomic_bool>(false);
+    _workError = std::make_shared<QString>();
 
     // Create and start the future
-    _future = _runWithProgress(std::move(work), _cancelRequested);
+    _future = _runWithProgress(std::move(work), _cancelRequested, _workError);
     _watcher->setFuture(_future);
 }
 
 QFuture<bool> QGCCompressionJob::_runWithProgress(WorkFunction work,
-                                                  const std::shared_ptr<std::atomic_bool> &cancelRequested)
+                                                  const std::shared_ptr<std::atomic_bool>& cancelRequested,
+                                                  const std::shared_ptr<QString>& errorString)
 {
-    // Use QPromise to create a QFuture with progress reporting
-    return QtConcurrent::run([work = std::move(work), cancelRequested]() -> bool {
-        QPromise<bool> promise;
-        QFuture<bool> future = promise.future();
-
-        promise.start();
+    // QtConcurrent passes in the promise of the returned future, so progress and cancellation reach the caller
+    return QtConcurrent::run([work = std::move(work), cancelRequested, errorString](QPromise<bool>& promise) {
         promise.setProgressRange(0, 100);
 
         // Progress callback that updates QPromise and checks for cancellation
@@ -264,17 +263,22 @@ QFuture<bool> QGCCompressionJob::_runWithProgress(WorkFunction work,
                 success = false;
             } else {
                 success = work(progressCallback);
+                if (!success && errorString) {
+                    *errorString = QGCCompression::lastErrorString();
+                }
             }
         } catch (const std::exception &e) {
             qCWarning(QGCCompressionJobLog) << "Exception during compression operation:" << e.what();
             success = false;
+            if (errorString) {
+                *errorString = QString::fromUtf8(e.what());
+            }
         }
 
-        promise.setProgressValue(100);
+        if (success) {
+            promise.setProgressValue(100);
+        }
         promise.addResult(success);
-        promise.finish();
-
-        return success;
     });
 }
 

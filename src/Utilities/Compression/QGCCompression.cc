@@ -761,25 +761,35 @@ bool validateArchive(const QString& archivePath, Format format)
         return false;
     }
     qCDebug(QGCCompressionLog) << "Validating archive:" << archivePath;
-    return QGClibarchive::validateArchive(archivePath);
+    const bool valid = QGClibarchive::validateArchive(archivePath);
+    if (!valid) {
+        setError(Error::InvalidArchive, QStringLiteral("Invalid or corrupt archive: ") + archivePath);
+    }
+    return valid;
 }
 
 bool fileExists(const QString& archivePath, const QString& fileName, Format format)
 {
     if (fileName.isEmpty()) {
         qCWarning(QGCCompressionLog) << "File name cannot be empty";
+        setError(Error::FileNotInArchive, QStringLiteral("File name cannot be empty"));
         return false;
     }
     if (!validateArchiveInput(archivePath, format)) {
         return false;
     }
-    return QGClibarchive::fileExistsInArchive(archivePath, fileName);
+    const bool exists = QGClibarchive::fileExistsInArchive(archivePath, fileName);
+    if (!exists) {
+        setError(Error::FileNotInArchive, QStringLiteral("File not found in archive: ") + fileName);
+    }
+    return exists;
 }
 
 bool extractFile(const QString& archivePath, const QString& fileName, const QString& outputPath, Format format)
 {
     if (fileName.isEmpty()) {
         qCWarning(QGCCompressionLog) << "File name cannot be empty";
+        setError(Error::FileNotInArchive, QStringLiteral("File name cannot be empty"));
         return false;
     }
     if (!validateArchiveInput(archivePath, format)) {
@@ -788,20 +798,29 @@ bool extractFile(const QString& archivePath, const QString& fileName, const QStr
 
     const QString actualOutput = outputPath.isEmpty() ? QFileInfo(fileName).fileName() : outputPath;
     qCDebug(QGCCompressionLog) << "Extracting" << fileName << "from" << archivePath << "to" << actualOutput;
-    return QGClibarchive::extractSingleFile(archivePath, fileName, actualOutput);
+    const bool success = QGClibarchive::extractSingleFile(archivePath, fileName, actualOutput);
+    if (!success) {
+        setError(Error::FileNotInArchive, QStringLiteral("Could not extract %1 from %2").arg(fileName, archivePath));
+    }
+    return success;
 }
 
 QByteArray extractFileData(const QString& archivePath, const QString& fileName, Format format)
 {
     if (fileName.isEmpty()) {
         qCWarning(QGCCompressionLog) << "File name cannot be empty";
+        setError(Error::FileNotInArchive, QStringLiteral("File name cannot be empty"));
         return {};
     }
     if (!validateArchiveInput(archivePath, format)) {
         return {};
     }
     qCDebug(QGCCompressionLog) << "Extracting" << fileName << "from" << archivePath << "to memory";
-    return QGClibarchive::extractFileToMemory(archivePath, fileName);
+    QByteArray result = QGClibarchive::extractFileToMemory(archivePath, fileName);
+    if (result.isEmpty()) {
+        setError(Error::FileNotInArchive, QStringLiteral("Could not extract %1 from %2").arg(fileName, archivePath));
+    }
+    return result;
 }
 
 bool extractFiles(const QString& archivePath, const QStringList& fileNames, const QString& outputDirectoryPath,
@@ -814,7 +833,11 @@ bool extractFiles(const QString& archivePath, const QStringList& fileNames, cons
         return false;
     }
     qCDebug(QGCCompressionLog) << "Extracting" << fileNames.size() << "files from" << archivePath;
-    return QGClibarchive::extractMultipleFiles(archivePath, fileNames, outputDirectoryPath);
+    const bool success = QGClibarchive::extractMultipleFiles(archivePath, fileNames, outputDirectoryPath);
+    if (!success) {
+        setError(Error::FileNotInArchive, QStringLiteral("Could not extract all requested files from ") + archivePath);
+    }
+    return success;
 }
 
 bool extractByPattern(const QString& archivePath, const QStringList& patterns, const QString& outputDirectoryPath,

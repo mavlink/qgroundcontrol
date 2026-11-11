@@ -58,6 +58,9 @@ private slots:
     void _testCompressionJobReentrantStartFromFinished();
     void _testCompressionJobCancel();
     void _testCompressionJobAsyncStatic();
+    void _testCompressionJobProgress();
+    void _testCompressionJobCancelFuture();
+    void _testCompressionJobErrorString();
 
     // Sparse file handling
     void _testSparseFileExtraction();
@@ -88,4 +91,7 @@ private slots:
 
 private:
     bool _compareFiles(const QString& file1, const QString& file2);
+
+    /// Writes a gzip file of @a memberCount concatenated members, each expanding to 64 KiB of zeros
+    static bool _writeGzipOfZeros(const QString& path, int memberCount);
 };

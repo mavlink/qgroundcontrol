@@ -199,8 +199,10 @@ private:
     void _setRunning(bool running);
     void _setErrorString(const QString &error);
 
-    static QFuture<bool> _runWithProgress(WorkFunction work,
-                                          const std::shared_ptr<std::atomic_bool> &cancelRequested);
+    /// @param errorString Receives the failure reason from the worker thread, where the
+    ///        thread-local QGCCompression error state lives
+    static QFuture<bool> _runWithProgress(WorkFunction work, const std::shared_ptr<std::atomic_bool>& cancelRequested,
+                                          const std::shared_ptr<QString>& errorString = nullptr);
 
     QFutureWatcher<bool> *_watcher = nullptr;
     QFuture<bool> _future;
@@ -212,4 +214,5 @@ private:
     QString _outputPath;
     Operation _operation = Operation::None;
     std::shared_ptr<std::atomic_bool> _cancelRequested;
+    std::shared_ptr<QString> _workError;
 };

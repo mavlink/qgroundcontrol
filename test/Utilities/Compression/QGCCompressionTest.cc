@@ -38,6 +38,41 @@ bool QGCCompressionTest::_compareFiles(const QString& file1, const QString& file
     return hash1.result() == hash2.result();
 }
 
+bool QGCCompressionTest::_writeGzipOfZeros(const QString& path, int memberCount)
+{
+    const QByteArray payload(64 * 1024, '\0');
+
+    quint32 crc = 0xFFFFFFFFU;
+    for (const char byte : payload) {
+        crc ^= static_cast<quint8>(byte);
+        for (int bit = 0; bit < 8; ++bit) {
+            crc = (crc >> 1) ^ (0xEDB88320U & (0U - (crc & 1U)));
+        }
+    }
+    crc = ~crc;
+
+    // qCompress() output: 4-byte length, 2-byte zlib header, deflate stream, 4-byte Adler-32
+    const QByteArray zlibStream = qCompress(payload);
+    QByteArray member = QByteArray::fromHex("1f8b08000000000000ff");
+    member.append(zlibStream.mid(6, zlibStream.size() - 10));
+    for (const quint32 field : {crc, static_cast<quint32>(payload.size())}) {
+        for (int shift = 0; shift < 32; shift += 8) {
+            member.append(static_cast<char>((field >> shift) & 0xFFU));
+        }
+    }
+
+    QFile file(path);
+    if (!file.open(QIODevice::WriteOnly)) {
+        return false;
+    }
+    for (int i = 0; i < memberCount; ++i) {
+        if (file.write(member) != member.size()) {
+            return false;
+        }
+    }
+    return true;
+}
+
 // ============================================================================
 // Format Detection Tests
 // ============================================================================
@@ -402,6 +437,7 @@ void QGCCompressionTest::_testValidateArchive()
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Failed to open file.*Unrecognized archive format"));
     QVERIFY(!QGCCompression::validateArchive(corruptZip));
     verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
     // Test non-existent file
     expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
     QVERIFY(!QGCCompression::validateArchive("/nonexistent/path/file.zip"));
@@ -415,6 +451,7 @@ void QGCCompressionTest::_testFileExists()
     QVERIFY(QGCCompression::fileExists(zipResource, "manifest.json"));
     // File that doesn't exist
     QVERIFY(!QGCCompression::fileExists(zipResource, "nonexistent.txt"));
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::FileNotInArchive);
     // Empty file name
     expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File name cannot be empty"));
     QVERIFY(!QGCCompression::fileExists(zipResource, ""));
@@ -509,6 +546,7 @@ void QGCCompressionTest::_testExtractSingleFile()
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("File not found in archive"));
     QVERIFY(!QGCCompression::extractFile(zipResource, "nonexistent.txt", tempDir.path() + "/nope.txt"));
     verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::FileNotInArchive);
 }
 
 void QGCCompressionTest::_testExtractFileData()
@@ -522,6 +560,7 @@ void QGCCompressionTest::_testExtractFileData()
     const QByteArray notFound = QGCCompression::extractFileData(zipResource, "nonexistent.txt");
     QVERIFY(notFound.isEmpty());
     verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::FileNotInArchive);
     // Test empty file name returns empty
     expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File name cannot be empty"));
     const QByteArray emptyName = QGCCompression::extractFileData(zipResource, "");
@@ -544,6 +583,7 @@ void QGCCompressionTest::_testExtractMultipleFiles()
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("File not found in archive"));
     QVERIFY(!QGCCompression::extractFiles(zipResource, badFiles, outputDir2));
     verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::FileNotInArchive);
     // Test empty list succeeds (no-op)
     QVERIFY(QGCCompression::extractFiles(zipResource, {}, outputDir));
 }
@@ -1009,6 +1049,8 @@ void QGCCompressionTest::_testCompressionJobAsyncStatic()
     QVERIFY(future.isFinished());
     QVERIFY(!future.isCanceled());
     QVERIFY2(future.result(), "Static async extraction failed");
+    QVERIFY(!progressSpy.isEmpty());
+    QCOMPARE(progressSpy.last().first().toInt(), 100);
     // Verify extracted file exists
     QVERIFY(QFileInfo::exists(outputDir + "/manifest.json"));
     // Test decompressFileAsync as well
@@ -1022,6 +1064,75 @@ void QGCCompressionTest::_testCompressionJobAsyncStatic()
     QVERIFY(decompressFuture.isFinished());
     QVERIFY2(decompressFuture.result(), "Static async decompression failed");
     QVERIFY(QFileInfo::exists(decompressOutput));
+}
+
+void QGCCompressionTest::_testCompressionJobProgress()
+{
+    QTemporaryDir tempDir;
+    const QString inputPath = tempDir.filePath("progress.gz");
+    const QString outputPath = tempDir.filePath("progress.bin");
+    // Expands to 512 MiB so the worker is still busy when its first progress report is handled here
+    QVERIFY(_writeGzipOfZeros(inputPath, 8192));
+
+    QGCCompressionJob job;
+    QSignalSpy finishedSpy(&job, &QGCCompressionJob::finished);
+    qreal firstProgress = 0.0;
+    connect(&job, &QGCCompressionJob::progressChanged, this, [&job, &firstProgress](qreal progress) {
+        if (qFuzzyIsNull(firstProgress)) {
+            firstProgress = progress;
+            job.cancel();
+        }
+    });
+
+    job.decompressFile(inputPath, outputPath);
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::longMs());
+    QVERIFY(firstProgress > 0.0);
+    QVERIFY(firstProgress < 1.0);
+    // The report arrived while the worker was running, so the cancellation stopped it
+    QVERIFY(!finishedSpy.first().first().toBool());
+    QCOMPARE(job.errorString(), QStringLiteral("Operation cancelled"));
+    QVERIFY(!QFile::exists(outputPath));
+}
+
+void QGCCompressionTest::_testCompressionJobCancelFuture()
+{
+    QTemporaryDir tempDir;
+    const QString inputPath = tempDir.filePath("cancel.gz");
+    const QString outputPath = tempDir.filePath("cancel.bin");
+    QVERIFY(_writeGzipOfZeros(inputPath, 8192));
+
+    QFuture<bool> future = QGCCompressionJob::decompressFileAsync(inputPath, outputPath);
+    QFutureWatcher<bool> watcher;
+    QSignalSpy finishedSpy(&watcher, &QFutureWatcher<bool>::finished);
+    connect(&watcher, &QFutureWatcher<bool>::progressValueChanged, &watcher, [&future]() { future.cancel(); });
+    watcher.setFuture(future);
+
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::longMs());
+    QVERIFY(future.isCanceled());
+    QVERIFY(!QFile::exists(outputPath));
+}
+
+void QGCCompressionTest::_testCompressionJobErrorString()
+{
+    QTemporaryDir tempDir;
+    const QString corruptZip = tempDir.filePath("corrupt.zip");
+    QFile file(corruptZip);
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    file.write("This is not a valid ZIP file");
+    file.close();
+
+    QGCCompressionJob job;
+    QSignalSpy finishedSpy(&job, &QGCCompressionJob::finished);
+    // The archive is opened twice: for the size pre-check and for the extraction
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Unrecognized archive format"));
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Unrecognized archive format"));
+    job.extractArchive(corruptZip, tempDir.filePath("corrupt_output"));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+
+    QVERIFY(!finishedSpy.first().first().toBool());
+    QCOMPARE(job.errorString(), QStringLiteral("Failed to extract archive: ") + corruptZip);
 }
 
 // ============================================================================
