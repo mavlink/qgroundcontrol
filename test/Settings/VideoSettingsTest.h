@@ -10,4 +10,7 @@ private slots:
     void _streamEnabledMigration_data();
     void _streamEnabledMigration();
     void _videoFitEnumMatchesMetaData();
+    void _videoSourcesFollowCameras();
+    void _absentStoredCameraStaysSelected();
+    void _overriddenVideoSourcesAreKept();
 };

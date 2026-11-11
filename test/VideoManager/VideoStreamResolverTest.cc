@@ -47,7 +47,6 @@ void VideoStreamResolverTest::_testResolve_data()
 
     // clang-format off
     QTest::newRow("disabled") << QString(VideoSettings::videoDisabled) << QString() << kNoStreamInfo << h264 << QString() << primary << QString() << 0;
-    QTest::newRow("no video") << QString(VideoSettings::videoSourceNoVideo) << QString() << kNoStreamInfo << h264 << QString() << primary << QString() << 0;
     QTest::newRow("UVC camera") << QStringLiteral("Integrated Camera") << QString() << kNoStreamInfo << h264 << QString() << primary << QString() << 0;
     QTest::newRow("UDP h.264") << udp264 << QString() << kNoStreamInfo << h264 << QString() << primary << QStringLiteral("udp://0.0.0.0:5600") << timeout;
     QTest::newRow("UDP h.264 without address") << udp264 << QStringLiteral("") << kNoStreamInfo << h264 << QString() << primary << QString() << 0;
@@ -198,7 +197,6 @@ void VideoStreamResolverTest::_testNetworkSources_data()
     QTest::addColumn<bool>("networkSource");
 
     QTest::newRow("disabled") << QString(VideoSettings::videoDisabled) << false;
-    QTest::newRow("no video") << QString(VideoSettings::videoSourceNoVideo) << false;
     QTest::newRow("UVC camera") << QStringLiteral("Integrated Camera") << false;
     QTest::newRow("RTSP") << QString(VideoSettings::videoSourceRTSP) << true;
     QTest::newRow("Herelink Hotspot") << QString(VideoSettings::videoSourceHerelinkHotspot) << true;

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <functional>
+
+#include <QtCore/QStringList>
 #include <QtQmlIntegration/QtQmlIntegration>
 
 #include "SettingsGroup.h"
@@ -9,6 +12,9 @@ class VideoSettings : public SettingsGroup
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("")
+
+    friend class VideoSettingsTest;
+
 public:
     VideoSettings(QObject* parent = nullptr);
     DEFINE_SETTING_NAME_GROUP()
@@ -83,7 +89,6 @@ public:
     /// initialized (the registry is empty until then).
     void pruneUnavailableDecoders();
 
-    static constexpr const char* videoSourceNoVideo           = QT_TRANSLATE_NOOP("VideoSettings", "No Video Available");
     static constexpr const char* videoDisabled                = QT_TRANSLATE_NOOP("VideoSettings", "Video Stream Disabled");
     static constexpr const char* videoSourceRTSP              = QT_TRANSLATE_NOOP("VideoSettings", "RTSP Video Stream");
     static constexpr const char* videoSourceUDPH264           = QT_TRANSLATE_NOOP("VideoSettings", "UDP h.264 Video Stream");
@@ -99,8 +104,11 @@ public:
 private:
     void _setDefaults               ();
     void _setForceVideoDecodeList();
+    /// Lists what videoSource offers: no video, the stream sources, the attached cameras and, when it is none of those,
+    /// the selected source. That one is a camera that isn't attached: it stays selected, so that it plays once it is
+    /// plugged in.
+    void _updateVideoSources();
 
-private:
-    bool _noVideo = false;
-
+    /// Stands in for UVCDevices::deviceNames() in tests.
+    std::function<QStringList()> _cameraNames;
 };

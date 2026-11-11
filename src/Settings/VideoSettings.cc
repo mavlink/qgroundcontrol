@@ -2,6 +2,7 @@
 
 #include <QtCore/QSettings>
 #include <QtCore/QVariantList>
+#include <QtMultimedia/QMediaDevices>
 
 #include "QGCLoggingCategory.h"
 #include "UVCDevices.h"
@@ -25,41 +26,9 @@ bool hasPipelineSettings()
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
-    // Setup enum values for videoSource settings into meta data
-    QVariantList videoSourceList;
-    videoSourceList.append(videoSourceRTSP);
-    videoSourceList.append(videoSourceUDPH264);
-    videoSourceList.append(videoSourceUDPH265);
-    videoSourceList.append(videoSourceTCP);
-    videoSourceList.append(videoSourceMPEGTS);
-    videoSourceList.append(videoSource3DRSolo);
-    videoSourceList.append(videoSourceParrotDiscovery);
-    videoSourceList.append(videoSourceYuneecMantisG);
-
-#ifdef QGC_HERELINK_AIRUNIT_VIDEO
-    videoSourceList.append(videoSourceHerelinkAirUnit);
-#else
-    videoSourceList.append(videoSourceHerelinkHotspot);
-#endif
-    QStringList uvcDevices = UVCDevices::deviceNames();
-    for (const QString& device : uvcDevices) {
-        videoSourceList.append(device);
-    }
-    if (videoSourceList.count() == 0) {
-        _noVideo = true;
-        videoSourceList.append(videoSourceNoVideo);
-        setUserVisible(false);
-    } else {
-        videoSourceList.insert(0, videoDisabled);
-    }
-
-    // make translated strings
-    QStringList videoSourceCookedList;
-    for (const QVariant& videoSource: videoSourceList) {
-        videoSourceCookedList.append( VideoSettings::tr(videoSource.toString().toStdString().c_str()) );
-    }
-
-    _nameToMetaDataMap[videoSourceName]->setEnumInfo(videoSourceCookedList, videoSourceList);
+    _updateVideoSources();
+    (void) connect(new QMediaDevices(this), &QMediaDevices::videoInputsChanged, this,
+                   &VideoSettings::_updateVideoSources);
 
     _setForceVideoDecodeList();
 
@@ -96,10 +65,64 @@ DECLARE_SETTINGGROUP(Video, "Video")
 
 void VideoSettings::_setDefaults()
 {
-    if (_noVideo) {
-        _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoSourceNoVideo);
+    _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoDisabled);
+}
+
+void VideoSettings::_updateVideoSources()
+{
+    static constexpr const char* fixedSources[] = {
+        videoDisabled,
+        videoSourceRTSP,
+        videoSourceUDPH264,
+        videoSourceUDPH265,
+        videoSourceTCP,
+        videoSourceMPEGTS,
+        videoSource3DRSolo,
+        videoSourceParrotDiscovery,
+        videoSourceYuneecMantisG,
+#ifdef QGC_HERELINK_AIRUNIT_VIDEO
+        videoSourceHerelinkAirUnit,
+#else
+        videoSourceHerelinkHotspot,
+#endif
+    };
+
+    FactMetaData* const metaData = _nameToMetaDataMap.value(videoSourceName);
+    if (!metaData) {
+        return;
+    }
+
+    QVariantList sources;
+    QStringList labels;
+    for (const char* const source : fixedSources) {
+        sources.append(QString::fromLatin1(source));
+        labels.append(tr(source));
+    }
+    // A settings override file or a custom build that replaced the sources, as the Fact was created, keeps its list.
+    const QVariantList listed = metaData->enumValues();
+    if (!listed.isEmpty() && (listed.mid(0, sources.size()) != sources)) {
+        return;
+    }
+
+    const QStringList cameras = _cameraNames ? _cameraNames() : UVCDevices::deviceNames();
+    for (const QString& camera : cameras) {
+        sources.append(camera);
+        labels.append(camera);
+    }
+    const QString selected = _videoSourceFact ? _videoSourceFact->rawValue().toString() : QString();
+    if (!selected.isEmpty() && !sources.contains(selected)) {
+        sources.append(selected);
+        labels.append(tr("%1 (not connected)").arg(selected));
+    }
+
+    if ((sources == listed) && (labels == metaData->enumStrings())) {
+        return;
+    }
+    if (_videoSourceFact) {
+        // Tells the settings page's combo box as well.
+        _videoSourceFact->setEnumInfo(labels, sources);
     } else {
-        _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoDisabled);
+        metaData->setEnumInfo(labels, sources);
     }
 }
 
@@ -130,14 +153,12 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
 {
     if (!_videoSourceFact) {
         _videoSourceFact = _createSettingsFact(videoSourceName);
-        //-- Check for sources no longer available
-        if(!_videoSourceFact->enumValues().contains(_videoSourceFact->rawValue().toString())) {
-            if (_noVideo) {
-                _videoSourceFact->setRawValue(videoSourceNoVideo);
-            } else {
-                _videoSourceFact->setRawValue(videoDisabled);
-            }
-        }
+        // The stored source may be a camera that isn't attached, which is listed only while it is selected. Queued:
+        // the combo box that sets the source deletes its items when its model changes, which it mustn't do while one
+        // of them reports its click.
+        _updateVideoSources();
+        (void) connect(_videoSourceFact, &Fact::rawValueChanged, this, &VideoSettings::_updateVideoSources,
+                       Qt::QueuedConnection);
     }
     return _videoSourceFact;
 }

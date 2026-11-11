@@ -4,7 +4,10 @@ Configure video streaming and recording settings.
 
 ## Video Source
 
-- **Source** — Video Stream Disabled / RTSP Video Stream / UDP h.264 / UDP h.265 / TCP-MPEG2 / MPEG-TS / Integrated Camera
+- **Source** — Video Stream Disabled / RTSP Video Stream / UDP h.264 / UDP h.265 / TCP-MPEG2 / MPEG-TS, or an attached
+  USB camera by its name, such as Integrated Camera. The list follows the cameras as they are plugged in and unplugged.
+  A selected camera stays selected while it is unplugged, listed as **(not connected)**, and plays again once it is
+  plugged back in.
 - **USB Camera Format** (USB cameras only) — the resolution, frame rate and pixel format the camera runs in, from the
   ones it offers, best first. **Auto** lets Qt choose: the highest resolution at 30 fps or more, often an MJPEG format,
   which costs CPU time to decode. YUYV and NV12 formats need no decoding but more USB bandwidth.
