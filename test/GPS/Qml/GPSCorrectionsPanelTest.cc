@@ -195,6 +195,11 @@ void GPSCorrectionsPanelTest::_correctionsStatusShowsBaseStation()
                                 QVariant::fromValue(corrections.basePosition().atDistanceAndAzimuth(2500, 90))));
     QVERIFY(distance->property("visible").toBool());
     QCOMPARE(distance->property("labelText").toString(), QStringLiteral("2500 m"));
+    // A panel that hides the coordinates, as the toolbar drop-down does, keeps the distance.
+    QVERIFY(status->setProperty("showCoordinates", false));
+    QVERIFY(!position->property("visible").toBool());
+    QVERIFY(distance->property("visible").toBool());
+    QVERIFY(status->setProperty("showCoordinates", true));
 
     // A stream that goes stale is no longer selected, and its base station is forgotten with it.
     QVERIFY(scheduler.advanceBy(GPSCorrectionSelector::FRESHNESS_TIMEOUT + 1s));
