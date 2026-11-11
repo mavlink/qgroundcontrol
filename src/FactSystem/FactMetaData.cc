@@ -57,6 +57,9 @@ const FactMetaData::AppSettingsTranslation_s FactMetaData::_rgAppSettingsTransla
     { "g",      "kg",       FactMetaData::UnitWeight,                UnitsSettings::WeightUnitsKg,                 FactMetaData::_gramsToKilograms,                    FactMetaData::_kilogramsToGrams },
     { "g",      "oz",       FactMetaData::UnitWeight,                UnitsSettings::WeightUnitsOz,                 FactMetaData::_gramsToOunces,                       FactMetaData::_ouncesToGrams },
     { "g",      "lbs",      FactMetaData::UnitWeight,                UnitsSettings::WeightUnitsLbs,                FactMetaData::_gramsToPunds,                        FactMetaData::_poundsToGrams },
+    { "m",      "NM",       FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsNauticalMiles, FactMetaData::_metersToNauticalMiles,               FactMetaData::_nauticalMilesToMeters },
+    { "meter",  "NM",       FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsNauticalMiles, FactMetaData::_metersToNauticalMiles,               FactMetaData::_nauticalMilesToMeters },
+    { "meters", "NM",       FactMetaData::UnitHorizontalDistance,    UnitsSettings::HorizontalDistanceUnitsNauticalMiles, FactMetaData::_metersToNauticalMiles,               FactMetaData::_nauticalMilesToMeters },
 };
 
 FactMetaData::FactMetaData(QObject *parent)
@@ -863,6 +866,16 @@ QVariant FactMetaData::_gramsToOunces(const QVariant &g)
 QVariant FactMetaData::_gramsToPunds(const QVariant &g)
 {
     return QVariant(g.toDouble() / constants.poundsToGrams);
+}
+
+QVariant FactMetaData::_metersToNauticalMiles(const QVariant &meters)
+{
+    return QVariant(meters.toDouble() / constants.metersToNauticalMiles);
+}
+
+QVariant FactMetaData::_nauticalMilesToMeters(const QVariant &nauticalMiles)
+{
+    return QVariant(nauticalMiles.toDouble() * constants.metersToNauticalMiles);
 }
 
 void FactMetaData::setRawUnits(const QString &rawUnits)

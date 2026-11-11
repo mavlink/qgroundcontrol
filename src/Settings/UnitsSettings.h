@@ -14,7 +14,8 @@ public:
 
     enum HorizontalDistanceUnits {
         HorizontalDistanceUnitsFeet = 0,
-        HorizontalDistanceUnitsMeters
+        HorizontalDistanceUnitsMeters,
+        HorizontalDistanceUnitsNauticalMiles
     };
 
     enum VerticalDistanceUnits {

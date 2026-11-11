@@ -13,9 +13,10 @@ Item {
     property var    mapControl                      ///< Map control for which this scale control is being used
     property bool   autoHide:               false   ///< true: disappears after a timeout on scale change
 
-    property var    _scaleLengthsMeters:    [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
-    property var    _scaleLengthsFeet:      [10, 25, 50, 100, 250, 500, 1000, 2000, 3000, 4000, 5280, 5280*2, 5280*5, 5280*10, 5280*25, 5280*50, 5280*100, 5280*250, 5280*500, 5280*1000]
-    property var    _color:                 mapControl && mapControl.isSatelliteMap ? "white" : "black"
+    property var    _scaleLengthsMeters:            [5, 10, 25, 50, 100, 150, 250, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000, 2000000]
+    property var    _scaleLengthsFeet:              [10, 25, 50, 100, 250, 500, 1000, 2000, 3000, 4000, 5280, 5280*2, 5280*5, 5280*10, 5280*25, 5280*50, 5280*100, 5280*250, 5280*500, 5280*1000]
+    property var    _scaleLengthsNauticalMiles:     [0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
+    property var    _color:                         mapControl && mapControl.isSatelliteMap ? "white" : "black"
 
     function formatDistanceMeters(meters) {
         var dist = Math.round(meters)
@@ -47,6 +48,14 @@ Item {
             dist = dist + qsTr(" ft")
         }
         return dist
+    }
+
+    function formatDistanceNauticalMiles(nauticalMiles) {
+        if (nauticalMiles >= 1) {
+            return Math.round(nauticalMiles) + qsTr(" NM")
+        } else {
+            return (Math.round(nauticalMiles * 10) / 10) + qsTr(" NM")
+        }
     }
 
     function calculateMetersRatio(scaleLineMeters, scaleLinePixelLength) {
@@ -98,6 +107,31 @@ Item {
         scaleText.text = text
     }
 
+    function calculateNauticalMilesRatio(scaleLineMeters, scaleLinePixelLength) {
+        var scaleLineRatio = 0
+        var scaleLineNauticalMiles = scaleLineMeters / 1852.0
+
+        if (scaleLineNauticalMiles === 0) {
+            // not visible
+        } else {
+            for (var i = 0; i < _scaleLengthsNauticalMiles.length - 1; i++) {
+                if (scaleLineNauticalMiles < (_scaleLengthsNauticalMiles[i] + _scaleLengthsNauticalMiles[i+1]) / 2 ) {
+                    scaleLineRatio = _scaleLengthsNauticalMiles[i] / scaleLineNauticalMiles
+                    scaleLineNauticalMiles = _scaleLengthsNauticalMiles[i]
+                    break;
+                }
+            }
+            if (scaleLineRatio === 0) {
+                scaleLineRatio = scaleLineNauticalMiles / _scaleLengthsNauticalMiles[i]
+                scaleLineNauticalMiles = _scaleLengthsNauticalMiles[i]
+            }
+        }
+
+        var text = formatDistanceNauticalMiles(scaleLineNauticalMiles)
+        centerLine.width = (scaleLinePixelLength * scaleLineRatio) - (2 * leftEnd.width)
+        scaleText.text = text
+    }
+
     function calculateScale() {
         if(mapControl) {
             var scaleLinePixelLength = 100
@@ -106,6 +140,8 @@ Item {
             var scaleLineMeters = Math.round(leftCoord.distanceTo(rightCoord))
             if (QGroundControl.settingsManager.unitsSettings.horizontalDistanceUnits.value === UnitsSettings.HorizontalDistanceUnitsFeet) {
                 calculateFeetRatio(scaleLineMeters, scaleLinePixelLength)
+            } else if (QGroundControl.settingsManager.unitsSettings.horizontalDistanceUnits.value === UnitsSettings.HorizontalDistanceUnitsNauticalMiles) {
+                calculateNauticalMilesRatio(scaleLineMeters, scaleLinePixelLength)
             } else {
                 calculateMetersRatio(scaleLineMeters, scaleLinePixelLength)
             }
