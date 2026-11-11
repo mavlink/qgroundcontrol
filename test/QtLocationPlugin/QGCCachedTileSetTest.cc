@@ -1,8 +1,18 @@
 #include "QGCCachedTileSetTest.h"
-#include "PropertyTestHelper.h"
+
+#include <algorithm>
+#include <memory>
+
+#include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtTest/QSignalSpy>
 
+#include "PropertyTestHelper.h"
 #include "QGCCachedTileSet.h"
+#include "QGCMapEngine.h"
+#include "QGCMapTasks.h"
+#include "QGCMapUrlEngine.h"
+#include "TileReplyNetworkMock.h"
 
 void QGCCachedTileSetTest::_testConstructorSetsName()
 {
@@ -243,6 +253,123 @@ void QGCCachedTileSetTest::_testSetSelectedEmitsSignal()
     ts.setSelected(false);
     QCOMPARE(spy.count(), 2);
     QVERIFY(!ts.selected());
+}
+
+void QGCCachedTileSetTest::_testDownload_data()
+{
+    QTest::addColumn<QString>("providerType");
+    QTest::addColumn<double>("longitude");  // a region of its own for every row
+    QTest::addColumn<int>("maxZoom");
+    QTest::addColumn<QByteArray>("serverBody");
+    QTest::addColumn<bool>("stored");
+    QTest::addColumn<bool>("failed");
+    QTest::addColumn<QString>("expectedWarning");
+
+    QString mapType;
+    const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
+    for (const QString& type : UrlFactory::getProviderTypes()) {
+        if (!elevationTypes.contains(type)) {
+            mapType = type;
+            break;
+        }
+    }
+
+    QTest::newRow("tiles stored in the set")
+        << mapType << 8.50 << 16 << tileReplyPngBody() << true << false << QString();
+    // The two rows below download one tile, for the one warning each.
+    // A bad answer must count as an error and must not stall the download.
+    QTest::newRow("server answers without a tile")
+        << mapType << 8.60 << 14 << QByteArray() << false << true << QStringLiteral("Error fetching tile");
+    // The set is done, without an error, when its provider has no tile to give
+    QTest::newRow("provider has no tile") << QStringLiteral("Bing Hybrid") << 8.70 << 14 << tileReplyBingPlaceholder()
+                                          << false << false << QStringLiteral("_savedTileCount=0");
+}
+
+void QGCCachedTileSetTest::_testDownload()
+{
+    QFETCH(QString, providerType);
+    QFETCH(double, longitude);
+    QFETCH(int, maxZoom);
+    QFETCH(QByteArray, serverBody);
+    QFETCH(bool, stored);
+    QFETCH(bool, failed);
+    QFETCH(QString, expectedWarning);
+
+    QVERIFY(!providerType.isEmpty());
+
+    // The region lies within one tile at zoom 14
+    constexpr int kMinZoom = 14;
+    constexpr double kTopLat = 47.3905;
+    constexpr double kBottomLat = 47.3895;
+    const double leftLon = longitude - 0.0005;
+    const double rightLon = longitude + 0.0005;
+    quint32 tileCount = 0;
+    for (int zoom = kMinZoom; zoom <= maxZoom; zoom++) {
+        tileCount += UrlFactory::getTileCount(zoom, leftLon, kTopLat, rightLon, kBottomLat, providerType).tileCount;
+    }
+    QCOMPARE_GE(tileCount, static_cast<quint32>(maxZoom - kMinZoom + 1));
+
+    QGCMapEngine* const engine = getQGCMapEngine();
+    engine->ensureInitialized();
+
+    const QString name = QStringLiteral("download test: %1").arg(QString::fromLatin1(QTest::currentDataTag()));
+    QGCCachedTileSet* const newSet = new QGCCachedTileSet(name);
+    newSet->setMapTypeStr(providerType);
+    newSet->setType(providerType);
+    newSet->setTopleftLat(kTopLat);
+    newSet->setTopleftLon(leftLon);
+    newSet->setBottomRightLat(kBottomLat);
+    newSet->setBottomRightLon(rightLon);
+    newSet->setMinZoom(kMinZoom);
+    newSet->setMaxZoom(maxZoom);
+    newSet->setTotalTileCount(tileCount);
+
+    QGCCreateTileSetTask* const createTask = new QGCCreateTileSetTask(newSet);
+    QSignalSpy savedSpy(createTask, &QGCCreateTileSetTask::tileSetSaved);
+    QVERIFY(engine->addTask(createTask));
+    QVERIFY_SIGNAL_COUNT_WAIT(savedSpy, 1, TestTimeout::mediumMs());
+    const std::unique_ptr<QGCCachedTileSet> set(newSet);  // a saved set no longer belongs to its task
+
+    TileReplyMockNam nam;
+    nam.body = serverBody;
+    set->setNetworkManager(&nam);
+    if (!expectedWarning.isEmpty()) {
+        expectLogMessage("QtLocationPlugin.QGCCachedTileSet", QtWarningMsg, QRegularExpression(expectedWarning));
+    }
+    set->createDownloadTask();
+    QVERIFY(set->downloading());
+
+    QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, static_cast<int>(tileCount), TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(!set->downloading(), TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(set->savedTileCount(), stored ? tileCount : 0U, TestTimeout::mediumMs());
+    QCOMPARE(set->errorCount(), failed ? tileCount : 0U);
+    QCOMPARE(set->complete(), !failed);
+    if (!expectedWarning.isEmpty()) {
+        verifyExpectedLogMessage();
+    }
+    if (!stored) {
+        return;
+    }
+
+    // The database holds the tiles in this set, not only in the default one. Its worker runs tasks in order: the
+    // sets are all reported once the task queued after them is.
+    QList<QGCCachedTileSet*> databaseSets;
+    const auto deleteSets = qScopeGuard([&databaseSets] { qDeleteAll(databaseSets); });
+    QGCFetchTileSetTask* const fetchSetsTask = new QGCFetchTileSetTask();
+    connect(fetchSetsTask, &QGCFetchTileSetTask::tileSetFetched, this,
+            [&databaseSets](QGCCachedTileSet* databaseSet) { databaseSets.append(databaseSet); });
+    QVERIFY(engine->addTask(fetchSetsTask));
+    bool setsReported = false;
+    QGCFetchTileTask* const sentinelTask = new QGCFetchTileTask(QStringLiteral("no such tile"));
+    connect(sentinelTask, &QGCMapTask::error, this, [&setsReported] { setsReported = true; });
+    QVERIFY(engine->addTask(sentinelTask));
+    QTRY_VERIFY_WITH_TIMEOUT(setsReported, TestTimeout::mediumMs());
+
+    const auto databaseSet =
+        std::find_if(databaseSets.cbegin(), databaseSets.cend(),
+                     [&name](const QGCCachedTileSet* candidate) { return candidate->name() == name; });
+    QVERIFY(databaseSet != databaseSets.cend());
+    QCOMPARE((*databaseSet)->savedTileCount(), tileCount);
 }
 
 UT_REGISTER_TEST(QGCCachedTileSetTest, TestLabel::Unit)

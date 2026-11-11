@@ -46,6 +46,10 @@ public:
     /// DataError and is not stored in the cache.
     void setValidator(Validator validator) { _validator = std::move(validator); }
 
+    /// Downloads the tile for an offline tile set: the tile is stored in \a tileSet, and the cache is not asked for
+    /// it first, as a set downloads only the tiles the cache lacks.
+    void setTileSet(quint64 tileSet) { _tileSet = tileSet; }
+
     /// Returns false when the request could not be started; finished() is then not emitted.
     [[nodiscard]] bool start();
 
@@ -100,6 +104,7 @@ private:
     const int _zoom;
     bool _requiresInternet = false;
     Validator _validator;
+    quint64 _tileSet = UINT64_MAX;
 
     State _state = State::Idle;
     std::shared_ptr<const MapProvider> _provider;

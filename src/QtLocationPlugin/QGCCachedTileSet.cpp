@@ -1,17 +1,30 @@
 #include "QGCCachedTileSet.h"
 
-#include "ElevationMapProvider.h"
+#include <memory>
+
+#include <QtNetwork/QNetworkAccessManager>
+
 #include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
-#include "QGCNetworkHelper.h"
 #include "QGCMapTasks.h"
-#include "QGCMapUrlEngine.h"
-#include "QGeoFileTileCacheQGC.h"
-#include "QGeoTileFetcherQGC.h"
+#include "QGCNetworkHelper.h"
+#include "QGCTileReply.h"
 
 QGC_LOGGING_CATEGORY(QGCCachedTileSetLog, "QtLocationPlugin.QGCCachedTileSet")
+
+namespace {
+
+void queueDownloadState(quint64 setId, const QString& hash, QGCTile::TileState state)
+{
+    QGCUpdateTileDownloadStateTask* const task = new QGCUpdateTileDownloadStateTask(setId, state, hash);
+    if (!getQGCMapEngine()->addTask(task)) {
+        task->deleteLater();
+    }
+}
+
+}  // namespace
 
 QGCCachedTileSet::QGCCachedTileSet(const QString &name, QObject *parent)
     : QObject(parent)
@@ -136,155 +149,71 @@ void QGCCachedTileSet::_prepareDownload()
         return;
     }
 
-    for (qsizetype i = _replies.count(); i < QGeoTileFetcherQGC::concurrentDownloads(_type); i++) {
+    for (qsizetype i = _replies.count(); i < kConcurrentDownloads; i++) {
         if (_tilesToDownload.isEmpty()) {
             break;
         }
 
-        QGCTile* const tile = _tilesToDownload.dequeue();
-        QNetworkRequest request = QGeoTileFetcherQGC::getNetworkRequest(tile->type, tile->x, tile->y, tile->z);
-        if (!request.url().isValid()) {
-            qCWarning(QGCCachedTileSetLog) << "Invalid URL for tile" << tile->hash << "- skipping";
-            setErrorCount(_errorCount + 1);
-            delete tile;
-            continue;
-        }
-        request.setOriginatingObject(this);
-        request.setAttribute(QNetworkRequest::User, tile->hash);
-
-        QNetworkReply* const reply = _networkManager->get(request);
-        reply->setParent(this);
-        QGCNetworkHelper::ignoreSslErrorsIfNeeded(reply);
-        (void) connect(reply, &QNetworkReply::finished, this, &QGCCachedTileSet::_networkReplyFinished);
-        (void) connect(reply, &QNetworkReply::errorOccurred, this, &QGCCachedTileSet::_networkReplyError);
+        const std::unique_ptr<QGCTile> tile(_tilesToDownload.dequeue());
+        const QString hash = tile->hash;
+        QGCTileReply* const reply = new QGCTileReply(_networkManager, tile->type, tile->x, tile->y, tile->z, this);
+        reply->setTileSet(_id);
+        (void) connect(reply, &QGCTileReply::finished, this, [this, reply, hash] { _tileReplyFinished(reply, hash); });
         {
             QMutexLocker lock(&_repliesMutex);
-            (void) _replies.insert(tile->hash, reply);
+            (void) _replies.insert(hash, reply);
+        }
+        if (!reply->start()) {
+            // Handled like a failed download, once this loop is done
+            QMetaObject::invokeMethod(
+                this, [this, reply, hash] { _tileReplyFinished(reply, hash); }, Qt::QueuedConnection);
         }
 
-        delete tile;
-        if (!_batchRequested && !_noMoreTiles && (_tilesToDownload.count() < (QGeoTileFetcherQGC::concurrentDownloads(_type) * 10))) {
+        if (!_batchRequested && !_noMoreTiles && (_tilesToDownload.count() < (kConcurrentDownloads * 10))) {
             createDownloadTask();
         }
     }
 }
 
-void QGCCachedTileSet::_networkReplyFinished()
+void QGCCachedTileSet::_tileReplyFinished(QGCTileReply* reply, const QString& hash)
 {
-    QNetworkReply* const reply = qobject_cast<QNetworkReply*>(QObject::sender());
-    if (!reply) {
-        qCWarning(QGCCachedTileSetLog) << "NULL Reply";
-        return;
-    }
     reply->deleteLater();
-
-    if (reply->error() != QNetworkReply::NoError) {
-        return;
-    }
-
-    if (!reply->isOpen()) {
-        qCWarning(QGCCachedTileSetLog) << "Empty Reply";
-        return;
-    }
-
-    const QString hash = reply->request().attribute(QNetworkRequest::User).toString();
-    if (hash.isEmpty()) {
-        qCWarning(QGCCachedTileSetLog) << "Empty Hash";
-        return;
-    }
-
     {
         QMutexLocker lock(&_repliesMutex);
-        if (_replies.contains(hash)) {
-            (void) _replies.remove(hash);
-        } else {
-            qCWarning(QGCCachedTileSetLog) << "Reply not in list: " << hash;
+        (void) _replies.remove(hash);
+    }
+
+    if (!reply->isFinished()) {
+        _tileFailed(hash, QStringLiteral("could not start the request"));
+    } else if (reply->error() == QGCTileReply::Error::NoTileError) {
+        // Nothing to download: the set is complete without a tile its provider does not have
+        qCDebug(QGCCachedTileSetLog) << "No tile to fetch:" << hash;
+        queueDownloadState(_id, hash, QGCTile::StateComplete);
+    } else if (reply->error() != QGCTileReply::Error::NoError) {
+        _tileFailed(hash, reply->errorString());
+    } else {
+        qCDebug(QGCCachedTileSetLog) << "Tile fetched:" << hash;
+        queueDownloadState(_id, hash, QGCTile::StateComplete);
+
+        setSavedTileSize(_savedTileSize + reply->data().size());
+        setSavedTileCount(_savedTileCount + 1);
+
+        if (_savedTileCount % 10 == 0) {
+            const quint32 avg = _savedTileSize / _savedTileCount;
+            setTotalTileSize(avg * _totalTileCount);
+            setUniqueTileSize(avg * _uniqueTileCount);
         }
-    }
-    qCDebug(QGCCachedTileSetLog) << "Tile fetched:" << hash;
-
-    QByteArray image = reply->readAll();
-    if (image.isEmpty()) {
-        qCWarning(QGCCachedTileSetLog) << "Empty Image";
-        return;
-    }
-
-    const QString type = UrlFactory::tileHashToType(hash);
-    const SharedMapProvider mapProvider = UrlFactory::getMapProviderFromProviderType(type);
-    if (!mapProvider) {
-        qCWarning(QGCCachedTileSetLog) << "Invalid map provider for type:" << type;
-        return;
-    }
-
-    if (mapProvider->isElevationProvider()) {
-        const SharedElevationProvider elevationProvider = std::dynamic_pointer_cast<const ElevationProvider>(mapProvider);
-        image = elevationProvider->serialize(image);
-        if (image.isEmpty()) {
-            qCWarning(QGCCachedTileSetLog) << "Failed to Serialize Terrain Tile";
-            return;
-        }
-    }
-
-    const QString format = mapProvider->getImageFormat(image);
-    if (format.isEmpty()) {
-        qCWarning(QGCCachedTileSetLog) << "Empty Format";
-        return;
-    }
-
-    QGeoFileTileCacheQGC::cacheTile(type, hash, image, format, _id);
-
-    QGCUpdateTileDownloadStateTask *task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StateComplete, hash);
-    if (!getQGCMapEngine()->addTask(task)) {
-        task->deleteLater();
-    }
-
-    setSavedTileSize(_savedTileSize + image.size());
-    setSavedTileCount(_savedTileCount + 1);
-
-    if (_savedTileCount % 10 == 0) {
-        const quint32 avg = _savedTileSize / _savedTileCount;
-        setTotalTileSize(avg * _totalTileCount);
-        setUniqueTileSize(avg * _uniqueTileCount);
     }
 
     _prepareDownload();
 }
 
-void QGCCachedTileSet::_networkReplyError(QNetworkReply::NetworkError error)
+void QGCCachedTileSet::_tileFailed(const QString& hash, const QString& reason)
 {
-    QNetworkReply* const reply = qobject_cast<QNetworkReply*>(QObject::sender());
-    if (!reply) {
-        return;
-    }
-    qCDebug(QGCCachedTileSetLog) << "Error fetching tile" << reply->errorString();
+    qCWarning(QGCCachedTileSetLog) << "Error fetching tile" << hash << reason;
 
     setErrorCount(_errorCount + 1);
-
-    const QString hash = reply->request().attribute(QNetworkRequest::User).toString();
-    if (hash.isEmpty()) {
-        qCWarning(QGCCachedTileSetLog) << "Empty Hash";
-        return;
-    }
-
-    {
-        QMutexLocker lock(&_repliesMutex);
-        if (_replies.contains(hash)) {
-            (void) _replies.remove(hash);
-        } else {
-            qCWarning(QGCCachedTileSetLog) << "Reply not in list:" << hash;
-        }
-    }
-
-    if (error != QNetworkReply::OperationCanceledError) {
-        qCWarning(QGCCachedTileSetLog) << "Error:" << reply->errorString();
-    }
-
-    QGCUpdateTileDownloadStateTask *task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StateError, hash);
-    if (!getQGCMapEngine()->addTask(task)) {
-        task->deleteLater();
-    }
-
-    _prepareDownload();
+    queueDownloadState(_id, hash, QGCTile::StateError);
 }
 
 void QGCCachedTileSet::setSelected(bool sel)

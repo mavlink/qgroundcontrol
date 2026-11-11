@@ -6,10 +6,10 @@
 #include <QtCore/QObject>
 #include <QtCore/QQueue>
 #include <QtCore/QString>
-#include <QtNetwork/QNetworkReply>
 
 struct QGCTile;
 class QGCMapEngineManager;
+class QGCTileReply;
 class QNetworkAccessManager;
 
 class QGCCachedTileSet : public QObject
@@ -95,6 +95,9 @@ public:
     void setSelected(bool sel);
     void setName(const QString &name) { if (name != _name) { _name = name; emit nameChanged(); } }
 
+    /// Downloads with \a networkManager, which must outlive this set, instead of with a manager of its own
+    void setNetworkManager(QNetworkAccessManager* networkManager) { _networkManager = networkManager; }
+
     void setMapTypeStr(const QString &typeStr) { _mapTypeStr = typeStr; }
     void setTopleftLat(double lat) { _topleftLat = lat; }
     void setTopleftLon(double lon) { _topleftLon = lon; }
@@ -134,12 +137,12 @@ signals:
 
 private slots:
     void _tileListFetched(const QQueue<QGCTile*> &tiles);
-    void _networkReplyFinished();
-    void _networkReplyError(QNetworkReply::NetworkError error);
 
 private:
     void _prepareDownload();
     void _doneWithDownload();
+    void _tileReplyFinished(QGCTileReply* reply, const QString& hash);
+    void _tileFailed(const QString& hash, const QString& reason);
 
     QString _name;
     QString _mapTypeStr;
@@ -167,11 +170,14 @@ private:
     bool _cancelPending = false;
     QDateTime _creationDate;
 
-    QHash<QString, QNetworkReply*> _replies;
+    QHash<QString, QGCTileReply*> _replies;
     QMutex _repliesMutex;
     QQueue<QGCTile*> _tilesToDownload;
     QGCMapEngineManager *_manager = nullptr;
     QNetworkAccessManager *_networkManager = nullptr;
 
     static constexpr int kTileBatchSize = 256;
+    /// QNetworkAccessManager queues the requests it receives and runs 6 of them in parallel for one HTTP host and
+    /// port on desktop platforms
+    static constexpr int kConcurrentDownloads = 6;
 };

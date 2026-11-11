@@ -112,6 +112,13 @@ bool QGCTileReply::start()
     // Only a QtLocation map initializes the tile cache on its own
     engine->ensureInitialized();
 
+    if (_tileSet != UINT64_MAX) {
+        _state = State::CacheLookup;
+        // Queued: finished() must not be emitted from within start()
+        QMetaObject::invokeMethod(this, [this] { _cacheLookupFinished(nullptr); }, Qt::QueuedConnection);
+        return true;
+    }
+
     QGCFetchTileTask* const task = new QGCFetchTileTask(_hash);
     (void) connect(task, &QGCFetchTileTask::tileFetched, this,
                    [this](const QGCCacheTile& tile) { _cacheLookupFinished(&tile); });
@@ -239,7 +246,7 @@ void QGCTileReply::_networkReplyFinished()
     }
 
     qCDebug(QGCTileReplyLog) << "tile" << _hash << "fetched from network," << data.size() << "bytes, caching";
-    getQGCMapEngine()->cacheTile(_provider->getMapName(), _hash, data, format);
+    getQGCMapEngine()->cacheTile(_provider->getMapName(), _hash, data, format, _tileSet);
     _data = data;
     _format = format;
     _finish(Error::NoError);

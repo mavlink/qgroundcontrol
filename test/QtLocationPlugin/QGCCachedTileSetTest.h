@@ -22,4 +22,6 @@ private slots:
     void _testCompleteWhenDefaultSet();
     void _testCompleteWhenAllSaved();
     void _testSetSelectedEmitsSignal();
+    void _testDownload_data();
+    void _testDownload();
 };
