@@ -1,6 +1,7 @@
 # ============================================================================
 # GPS Core Transport
-# The transport interface the driver reads and writes, and the serial, TCP and UDP receiver transports.
+# The transport interface the driver reads and writes, the serial, TCP and UDP receiver transports, and the
+# transport that records a session.
 # ============================================================================
 
 target_sources(
@@ -10,6 +11,8 @@ target_sources(
         GPSCancellation.h
         GPSDeviceTransport.cc
         GPSDeviceTransport.h
+        GPSRecordingTransport.cc
+        GPSRecordingTransport.h
         GPSTransport.cc
         GPSTransport.h
         TCPGPSTransport.cc

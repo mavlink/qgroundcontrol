@@ -16,6 +16,7 @@ private slots:
     void _automaticManufacturer();
     void _automaticOffersQuectelConsent();
     void _compactCorrectionsToggle();
+    void _recordingSwitch();
     void _consentIsOneUse();
     void _warningWidth_data();
     void _warningWidth();

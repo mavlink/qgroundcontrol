@@ -1,8 +1,10 @@
 #include "GPSManager.h"
 
 #include <QtCore/QApplicationStatic>
+#include <QtCore/QDir>
 #include <QtCore/QPointer>
 
+#include "AppSettings.h"
 #include "GPSCorrectionManager.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverFactGroup.h"
@@ -34,6 +36,11 @@ GPSReceiver::Dependencies receiverDependencies(GPSCorrectionManager* corrections
 #ifndef QGC_NO_SERIAL_LINK
     dependencies.serialPorts = SerialPortManager::instance();
 #endif
+    // Beside the other files the application saves, and following a save location changed while it runs.
+    dependencies.recordingDirectory = []() {
+        const QString savePath = SettingsManager::instance()->appSettings()->savePath()->rawValue().toString();
+        return savePath.isEmpty() ? QString() : QDir(savePath).filePath(QStringLiteral("GPSReceiver"));
+    };
     return dependencies;
 }
 
