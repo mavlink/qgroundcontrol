@@ -131,6 +131,9 @@ public:
     /// Tears the stream down and connects again now, skipping any reconnect backoff, and rebuilds the display sink so
     /// construct-only sink settings apply. No-op while inactive.
     void restart();
+    /// Connects again now when the stream is waiting out a reconnect backoff, and starts the backoff over: for when the
+    /// stream's source is likely back, as when its vehicle's link returned. Nothing otherwise.
+    void reconnectNow();
     /// Displays the stream in @p videoOutput, a QML VideoOutput; nullptr stops displaying. Decoding runs only while an
     /// output is set. Setting the current output again binds it anew, for one that moved to another window. The
     /// output's destruction is tracked: it detaches as if nullptr had been set.
@@ -167,6 +170,7 @@ protected:
     virtual void onConfigChanged() = 0;
     virtual void onActiveChanged() = 0;
     virtual void onRestartRequested() = 0;
+    virtual void onReconnectRequested() = 0;
     /// Also called when the current output is set again.
     virtual void onVideoOutputChanged() = 0;
     virtual void onStartRecording(const QString& file, FileFormat format) = 0;

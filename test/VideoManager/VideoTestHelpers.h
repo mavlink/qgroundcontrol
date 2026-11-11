@@ -41,6 +41,7 @@ public:
     int configChanges = 0;
     int activeChanges = 0;
     int restarts = 0;
+    int reconnects = 0;
     int videoOutputChanges = 0;
     QList<Recording> recordings;
     int recordingStops = 0;
@@ -51,6 +52,8 @@ protected:
     void onActiveChanged() override { ++activeChanges; }
 
     void onRestartRequested() override { ++restarts; }
+
+    void onReconnectRequested() override { ++reconnects; }
 
     void onVideoOutputChanged() override { ++videoOutputChanges; }
 

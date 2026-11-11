@@ -16,4 +16,5 @@ private slots:
     void _testAutoReconnectChange();
     void _testStates();
     void _testReconnectDue();
+    void _testReconnectNow();
 };

@@ -90,10 +90,13 @@ public:
     FailureOutcome sessionFailed(const QString& message, bool permanent, bool autoReconnect);
     /// The config's autoReconnect became @p autoReconnect.
     AutoReconnectChange autoReconnectChanged(bool autoReconnect);
+    /// The stream's source may be back: a reconnect waiting out its backoff is due now, and the backoff starts over.
+    /// Nothing without one.
+    void reconnectNow();
 
 signals:
     void stateChanged(VideoReceiver::State state);
-    /// A failure's backoff has passed: the receiver starts the next session.
+    /// A failure's backoff has passed, or reconnectNow() cut it short: the receiver starts the next session.
     void reconnectDue();
 
 private:

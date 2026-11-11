@@ -60,6 +60,9 @@ void GstReceiverWorker::apply(const Request& request)
         if ((request.videoSink != previous.videoSink) && _session) {
             _session->setVideoSink(_requested.videoSink.get());
         }
+        if (request.reconnects != previous.reconnects) {
+            _supervisor->reconnectNow();
+        }
     }
 
     const quint64 recordingId = request.recording ? request.recording->id : 0;

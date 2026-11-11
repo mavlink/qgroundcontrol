@@ -651,6 +651,18 @@ void VideoManagerTest::_testReconnectingFollowsLostStream()
     QVERIFY(!stream->reconnecting());
 }
 
+void VideoManagerTest::_testLinkRegainedReconnectsStreams()
+{
+    // Losing the link is not the streams' business: each notices its own loss.
+    _videoManager->_communicationLostChanged(true);
+    QCOMPARE(_primary->reconnects, 0);
+
+    // With the link, the camera is likely back: a stream backing off is asked to connect now.
+    _videoManager->_communicationLostChanged(false);
+    QCOMPARE(_primary->reconnects, 1);
+    QCOMPARE(_primary->restarts, 0);
+}
+
 void VideoManagerTest::_testUvcCameraFormatReachesCamera()
 {
     UVCCameraController* const camera = _videoManager->uvcCamera();

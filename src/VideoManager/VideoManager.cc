@@ -500,6 +500,7 @@ void VideoManager::_setActiveVehicle(Vehicle* vehicle)
                 camera->resumeStream();
             }
         }
+        _reconnectStreams();
     } else {
         setfullScreen(false);
     }
@@ -529,5 +530,13 @@ void VideoManager::_communicationLostChanged(bool communicationLost)
 {
     if (communicationLost) {
         setfullScreen(false);
+    } else {
+        _reconnectStreams();
     }
+}
+
+void VideoManager::_reconnectStreams()
+{
+    _primaryStream->reconnectNow();
+    _thermalStream->reconnectNow();
 }

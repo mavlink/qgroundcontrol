@@ -215,6 +215,13 @@ void VideoStreamController::restart()
     }
 }
 
+void VideoStreamController::reconnectNow()
+{
+    if (_receiver) {
+        _receiver->reconnectNow();
+    }
+}
+
 void VideoStreamController::_onReceiverStateChanged(VideoReceiver::State state)
 {
     if (state == VideoReceiver::State::Stopped) {

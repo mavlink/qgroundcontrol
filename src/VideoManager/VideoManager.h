@@ -137,6 +137,9 @@ private:
     void _updateStreamInfo();
     void _onArmedChanged(bool armed);
     void _communicationLostChanged(bool communicationLost);
+    /// The streams' sources are likely back, with a vehicle that connected or whose link returned: a stream waiting
+    /// to reconnect does so now.
+    void _reconnectStreams();
 
     VideoSettings* const _videoSettings;
     VideoStreamController* const _primaryStream;

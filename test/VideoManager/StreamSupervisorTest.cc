@@ -158,4 +158,31 @@ void StreamSupervisorTest::_testReconnectDue()
     QVERIFY(!due.wait(100));
 }
 
+void StreamSupervisorTest::_testReconnectNow()
+{
+    StreamSupervisor supervisor;
+    QSignalSpy due(&supervisor, &StreamSupervisor::reconnectDue);
+
+    // Nothing to cut short while a session runs.
+    supervisor.sessionStarted();
+    supervisor.reconnectNow();
+    QVERIFY(due.isEmpty());
+
+    for (int failedStart = 0; failedStart < 4; ++failedStart) {
+        (void) failSec(supervisor);
+    }
+    QVERIFY(supervisor.reconnectPending());
+    supervisor.reconnectNow();
+    QCOMPARE(due.count(), 1);
+    QVERIFY(!supervisor.reconnectPending());
+    // The source that came back may still take a moment: the next failures back off from the start.
+    QCOMPARE(failSec(supervisor), qint64(1));
+
+    // A stream that gave up stays stopped.
+    (void) supervisor.sessionFailed(QStringLiteral("gone"), /*permanent=*/false, /*autoReconnect=*/false);
+    supervisor.reconnectNow();
+    QCOMPARE(due.count(), 1);
+    QVERIFY(supervisor.halted());
+}
+
 UT_REGISTER_TEST(StreamSupervisorTest, TestLabel::Unit)

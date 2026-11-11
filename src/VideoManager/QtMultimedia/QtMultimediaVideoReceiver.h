@@ -56,6 +56,7 @@ protected:
     void onConfigChanged() override;
     void onActiveChanged() override;
     void onRestartRequested() override;
+    void onReconnectRequested() override;
     void onVideoOutputChanged() override;
     void onStartRecording(const QString& file, FileFormat format) override;
     void onStopRecording() override;

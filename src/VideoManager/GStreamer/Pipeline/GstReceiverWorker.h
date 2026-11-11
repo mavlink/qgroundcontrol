@@ -18,8 +18,8 @@
 class QTimer;
 
 /// GstVideoReceiver's worker, on a thread of its own: steers a PipelineSession towards the receiver's latest
-/// GstReceiverRequest (active, config, video sink, restarts, recording), reconnecting after a failure as its
-/// StreamSupervisor decides.
+/// GstReceiverRequest (active, config, video sink, restarts, reconnects, recording), reconnecting after a failure as
+/// its StreamSupervisor decides.
 ///
 /// Reports back through its signals only, so it can outlive a receiver that stopped waiting for it.
 class GstReceiverWorker : public QObject, private PipelineSession::Listener

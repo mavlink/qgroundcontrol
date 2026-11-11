@@ -92,6 +92,12 @@ void GstVideoReceiver::onRestartRequested()
     _postRequest();
 }
 
+void GstVideoReceiver::onReconnectRequested()
+{
+    ++_request.reconnects;
+    _postRequest();
+}
+
 void GstVideoReceiver::onVideoOutputChanged()
 {
     (void) disconnect(_videoSizeConnection);

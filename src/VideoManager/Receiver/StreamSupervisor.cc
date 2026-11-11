@@ -112,6 +112,16 @@ StreamSupervisor::AutoReconnectChange StreamSupervisor::autoReconnectChanged(boo
     return AutoReconnectChange::None;
 }
 
+void StreamSupervisor::reconnectNow()
+{
+    if (!_reconnectTimer.isActive()) {
+        return;
+    }
+    _reconnectTimer.stop();
+    _backoff.reset();
+    emit reconnectDue();
+}
+
 void StreamSupervisor::_setPhase(Phase phase)
 {
     if (phase == _phase) {

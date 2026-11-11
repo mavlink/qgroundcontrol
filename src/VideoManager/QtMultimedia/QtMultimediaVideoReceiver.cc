@@ -150,6 +150,11 @@ void QtMultimediaVideoReceiver::onRestartRequested()
     _startOver();
 }
 
+void QtMultimediaVideoReceiver::onReconnectRequested()
+{
+    _supervisor->reconnectNow();
+}
+
 void QtMultimediaVideoReceiver::_startOver()
 {
     _supervisor->startOver();

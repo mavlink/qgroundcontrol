@@ -71,6 +71,8 @@ public:
     void stop();
     /// Reconnects now and rebuilds the receiver's display sink, so construct-only sink settings apply.
     void restart();
+    /// VideoReceiver::reconnectNow(): the stream's source is likely back, so a reconnect doesn't wait out its backoff.
+    void reconnectNow();
 
     QQuickItem* videoOutput() const;
 

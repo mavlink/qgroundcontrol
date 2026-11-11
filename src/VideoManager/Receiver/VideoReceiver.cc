@@ -82,6 +82,13 @@ void VideoReceiver::restart()
     }
 }
 
+void VideoReceiver::reconnectNow()
+{
+    if (_active) {
+        onReconnectRequested();
+    }
+}
+
 QQuickItem* VideoReceiver::videoOutput() const
 {
     return _videoOutput;
