@@ -58,9 +58,9 @@ struct Bench
     {
         GPSRuntimeIO io = receiver->makeIO(makeGPSRuntimeTestIO(clock));
         io.cancelToken = receiver->cancelToken();
-        io.setBaudrate = [this, setBaudrate = io.setBaudrate](unsigned rate) {
+        io.setBaudRate = [this, setBaudRate = io.setBaudRate](unsigned rate) {
             rates.append(rate);
-            return setBaudrate(rate);
+            return setBaudRate(rate);
         };
         io.write = [this, write = io.write](std::span<const uint8_t> data, GPSDeadline deadline) {
             if (onWrite) {
@@ -85,7 +85,7 @@ ModelReceiver<Model>& detecting(Bench& b, Dialect dialect, unsigned baud)
 {
     auto receiver = std::make_unique<ModelReceiver<Model>>(b.clock);
     auto& result = *receiver;
-    result.atRate = [&result, baud] { return result.hostBaudrate() == baud; };
+    result.atRate = [&result, baud] { return result.hostBaudRate() == baud; };
     b.detection = &result.detect(dialect);
     b.model = &result.model;
     b.receiver = std::move(receiver);

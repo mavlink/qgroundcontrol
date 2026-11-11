@@ -996,7 +996,7 @@ std::unique_ptr<GPSTransport> makePassiveTestTransport(GPSCancelToken cancelToke
                                                        const std::shared_ptr<PassiveTransportState>& state)
 {
     auto transport = std::make_unique<ScriptedReceiver>(std::move(cancelToken));
-    transport->setBaudrateHandler([state](unsigned baud) -> std::optional<bool> {
+    transport->setBaudRateHandler([state](unsigned baud) -> std::optional<bool> {
         state->baud = baud;
         ++state->baudChanges;
         return true;

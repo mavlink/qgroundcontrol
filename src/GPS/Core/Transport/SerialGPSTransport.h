@@ -30,7 +30,7 @@ public:
     /// True once the port hits an error the receive loop should stop retrying past.
     bool fatalError() const override;
 
-    bool setBaudrate(unsigned baudrate) override;
+    bool setBaudRate(unsigned baudRate) override;
 
 protected:
     QIODevice* device() const override;

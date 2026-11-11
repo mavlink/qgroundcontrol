@@ -45,10 +45,10 @@ GPSWriteResult ScriptedReceiver::Model::handleCommand(ScriptedReceiver& receiver
     return {GPSWriteStatus::Completed, length, length};
 }
 
-std::optional<bool> ScriptedReceiver::Model::handleBaudrate(ScriptedReceiver& receiver, unsigned baudrate)
+std::optional<bool> ScriptedReceiver::Model::handleBaudRate(ScriptedReceiver& receiver, unsigned baudRate)
 {
     Q_UNUSED(receiver)
-    Q_UNUSED(baudrate)
+    Q_UNUSED(baudRate)
     return std::nullopt;
 }
 
@@ -107,9 +107,9 @@ GPSOpenResult ScriptedReceiver::open()
     return {GPSOpenStatus::Opened};
 }
 
-bool ScriptedReceiver::setBaudrate(unsigned baudrate)
+bool ScriptedReceiver::setBaudRate(unsigned baudRate)
 {
-    return _setBaudrate(baudrate);
+    return _setBaudRate(baudRate);
 }
 
 std::chrono::milliseconds ScriptedReceiver::configurationWriteTimeout() const
@@ -144,8 +144,8 @@ GPSRuntimeIO ScriptedReceiver::makeIO(GPSRuntimeIO io)
         context.hasProtocolDeadline = true;
         return _write(QByteArrayView(bytes).toByteArray(), context);
     };
-    io.setBaudrate = [this](unsigned baudrate) {
-        return _setBaudrate(baudrate) ? GPSBaudStatus::Configured : GPSBaudStatus::Unsupported;
+    io.setBaudRate = [this](unsigned baudRate) {
+        return _setBaudRate(baudRate) ? GPSBaudStatus::Configured : GPSBaudStatus::Unsupported;
     };
     return io;
 }
@@ -172,9 +172,9 @@ void ScriptedReceiver::cancel()
     _cancelSource.cancel();
 }
 
-bool ScriptedReceiver::_baudrateMatches() const
+bool ScriptedReceiver::_baudRateMatches() const
 {
-    return !_baudrateEnforced || !_receiverBaudrate || _hostBaudrate == _receiverBaudrate;
+    return !_baudRateEnforced || !_receiverBaudRate || _hostBaudRate == _receiverBaudRate;
 }
 
 GPSWriteResult ScriptedReceiver::writeData(QByteArrayView bytes, QDeadlineTimer deadline)
@@ -241,7 +241,7 @@ GPSWriteResult ScriptedReceiver::_write(const QByteArray& bytes, const WriteCont
             break;
         }
         _commands.append(*command);
-        if (_baudrateMatches()) {
+        if (_baudRateMatches()) {
             const auto result = _model->handleCommand(*this, *command, context);
             if (result.status != GPSWriteStatus::Completed || result.acceptedBytes != command->size() ||
                 result.writtenBytes != command->size()) {
@@ -253,17 +253,17 @@ GPSWriteResult ScriptedReceiver::_write(const QByteArray& bytes, const WriteCont
     return {GPSWriteStatus::Completed, length, length};
 }
 
-bool ScriptedReceiver::_setBaudrate(unsigned baudrate)
+bool ScriptedReceiver::_setBaudRate(unsigned baudRate)
 {
     ++_baudChanges;
-    _hostBaudrate = baudrate;
-    if (_baudrateHandler) {
-        if (const auto accepted = _baudrateHandler(baudrate)) {
+    _hostBaudRate = baudRate;
+    if (_baudRateHandler) {
+        if (const auto accepted = _baudRateHandler(baudRate)) {
             return *accepted;
         }
     }
     if (_model) {
-        if (const auto accepted = _model->handleBaudrate(*this, baudrate)) {
+        if (const auto accepted = _model->handleBaudRate(*this, baudRate)) {
             return *accepted;
         }
     }

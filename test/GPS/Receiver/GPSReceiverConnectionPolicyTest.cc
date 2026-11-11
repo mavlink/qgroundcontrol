@@ -121,7 +121,7 @@ void GPSReceiverConnectionPolicyTest::_lostConnectionRetriesWithBackoff()
     QCOMPARE(harness.attempts(), 1);
     QCOMPARE(receiver.activeEndpoint(), QStringLiteral("rtk.test:2101"));
     QCOMPARE(harness.worker()->type(), GPSType::Passive);
-    QCOMPARE(harness.worker()->capturedConfig().baudRate, GPSTransport::BRIDGE_BAUDRATE);
+    QCOMPARE(harness.worker()->capturedConfig().baudRate, GPSTransport::BRIDGE_BAUD_RATE);
     harness.worker()->ready();
     QVERIFY(receiver.facts()->telemetryAvailable());
     QVERIFY(!receiver.reconnecting());

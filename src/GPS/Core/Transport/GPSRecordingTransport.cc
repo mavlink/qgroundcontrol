@@ -54,9 +54,9 @@ bool GPSRecordingTransport::fatalError() const
     return !_transport || _transport->fatalError();
 }
 
-unsigned GPSRecordingTransport::fixedBaudrate() const
+unsigned GPSRecordingTransport::fixedBaudRate() const
 {
-    return _transport ? _transport->fixedBaudrate() : 0;
+    return _transport ? _transport->fixedBaudRate() : 0;
 }
 
 GPSReadResult GPSRecordingTransport::read(std::span<uint8_t> buffer, std::chrono::milliseconds timeout)
@@ -79,12 +79,12 @@ std::chrono::milliseconds GPSRecordingTransport::configurationWriteTimeout() con
     return _transport ? _transport->configurationWriteTimeout() : GPSTransport::configurationWriteTimeout();
 }
 
-bool GPSRecordingTransport::setBaudrate(unsigned baudrate)
+bool GPSRecordingTransport::setBaudRate(unsigned baudRate)
 {
-    if (!_transport || !_transport->setBaudrate(baudrate)) {
+    if (!_transport || !_transport->setBaudRate(baudRate)) {
         return false;
     }
-    _record(BAUD, QByteArray::number(baudrate));
+    _record(BAUD, QByteArray::number(baudRate));
     _flushIfDue();
     return true;
 }

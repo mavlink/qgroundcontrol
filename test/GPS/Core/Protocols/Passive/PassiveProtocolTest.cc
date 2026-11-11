@@ -71,7 +71,7 @@ private:
             clock.advanceTo(deadline.untilUs);
             return GPSReadResult{self->readStatus};
         };
-        io.setBaudrate = [self](unsigned value) {
+        io.setBaudRate = [self](unsigned value) {
             self->baud = value;
             return self->baudStatus;
         };

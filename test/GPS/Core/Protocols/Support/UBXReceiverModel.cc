@@ -196,7 +196,7 @@ void UBXReceiverModel::reset(ScriptedReceiver& receiver)
 {
     _receiver = &receiver;
     _delayed.clear();
-    receiver.setFixedBaudrate(115200);
+    receiver.setFixedBaudRate(115200);
     receiver.setFatalError(_readError);
     receiver.setReadHandler(
         [this, &receiver](uint8_t*, int, std::chrono::milliseconds) -> std::optional<GPSReadResult> {
@@ -346,10 +346,10 @@ GPSWriteResult UBXReceiverModel::handleCommand(ScriptedReceiver& receiver, const
     return {GPSWriteStatus::Completed, length, length};
 }
 
-std::optional<bool> UBXReceiverModel::handleBaudrate(ScriptedReceiver& receiver, unsigned baudrate)
+std::optional<bool> UBXReceiverModel::handleBaudRate(ScriptedReceiver& receiver, unsigned baudRate)
 {
     Q_UNUSED(receiver)
-    hostBaud = baudrate;
+    hostBaud = baudRate;
     ++transportOperations;
     return std::nullopt;
 }

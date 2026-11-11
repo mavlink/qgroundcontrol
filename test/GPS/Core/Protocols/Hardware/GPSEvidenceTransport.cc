@@ -50,14 +50,14 @@ bool GPSEvidenceTransport::fatalError() const
     return _transport.fatalError();
 }
 
-unsigned GPSEvidenceTransport::fixedBaudrate() const
+unsigned GPSEvidenceTransport::fixedBaudRate() const
 {
-    return _transport.fixedBaudrate();
+    return _transport.fixedBaudRate();
 }
 
-bool GPSEvidenceTransport::setBaudrate(unsigned baudrate)
+bool GPSEvidenceTransport::setBaudRate(unsigned baudRate)
 {
-    return _transport.setBaudrate(baudrate);
+    return _transport.setBaudRate(baudRate);
 }
 
 GPSReadResult GPSEvidenceTransport::read(std::span<uint8_t> buffer, std::chrono::milliseconds timeout)

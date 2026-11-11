@@ -404,7 +404,7 @@ bool GPSReceiver::connectTcp(const QString& host, quint16 port, GPSType type, bo
         [host, port](GPSCancelToken cancelToken) {
             return std::make_unique<TCPGPSTransport>(host, port, std::move(cancelToken));
         },
-        QStringLiteral("tcp:%1").arg(endpoint), GPSTransport::BRIDGE_BAUDRATE, allowPersistentChanges, {}, endpoint);
+        QStringLiteral("tcp:%1").arg(endpoint), GPSTransport::BRIDGE_BAUD_RATE, allowPersistentChanges, {}, endpoint);
 }
 
 bool GPSReceiver::connectUdp(quint16 port, GPSType type)
@@ -414,7 +414,7 @@ bool GPSReceiver::connectUdp(quint16 port, GPSType type)
     return _connectReceiver(
         type,
         [port](GPSCancelToken cancelToken) { return std::make_unique<UDPGPSTransport>(port, std::move(cancelToken)); },
-        QStringLiteral("udp:%1").arg(port), GPSTransport::BRIDGE_BAUDRATE, false, {}, endpoint);
+        QStringLiteral("udp:%1").arg(port), GPSTransport::BRIDGE_BAUD_RATE, false, {}, endpoint);
 }
 
 QList<int> GPSReceiver::serialBaudRates()

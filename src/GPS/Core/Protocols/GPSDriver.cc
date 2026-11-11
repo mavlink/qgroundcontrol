@@ -138,8 +138,8 @@ bool GPSDriver::configure()
                                                      : QDeadlineTimer(remaining, Qt::PreciseTimer);
         return _transport.write(bytes, transportDeadline);
     };
-    io.setBaudrate = [this](unsigned baud) {
-        if (_transport.setBaudrate(baud)) {
+    io.setBaudRate = [this](unsigned baud) {
+        if (_transport.setBaudRate(baud)) {
             return GPSBaudStatus::Configured;
         }
         return _transport.fatalError() ? GPSBaudStatus::Error : GPSBaudStatus::Unsupported;
@@ -153,14 +153,14 @@ bool GPSDriver::configure()
     };
     observer.decoded = [this](const GPSEventBatch& batch) { _publish(batch); };
 
-    unsigned baudrate = _config.baudRate ? _config.baudRate : _transport.fixedBaudrate();
-    if (_config.baudRate && _transport.fixedBaudrate() && _config.baudRate != _transport.fixedBaudrate()) {
+    unsigned baudRate = _config.baudRate ? _config.baudRate : _transport.fixedBaudRate();
+    if (_config.baudRate && _transport.fixedBaudRate() && _config.baudRate != _transport.fixedBaudRate()) {
         _state->configurationError = QStringLiteral("Selected baud rate differs from the transport's fixed baud rate");
         qCWarning(GPSDriverLog) << _state->configurationError;
         return false;
     }
     if (_type == GPSType::Automatic) {
-        return _configureDetected(std::move(io), std::move(observer), baudrate);
+        return _configureDetected(std::move(io), std::move(observer), baudRate);
     }
     const GPSReceiverFamily* family = gpsReceiverFamily(_type);
     if (!family) {
@@ -171,22 +171,22 @@ bool GPSDriver::configure()
         return false;
     }
     // Without a selected rate or a fixed link rate, the family may prefer one to detection.
-    if (family->autoBaudRate && !baudrate) {
-        baudrate = family->autoBaudRate;
+    if (family->autoBaudRate && !baudRate) {
+        baudRate = family->autoBaudRate;
     }
     if (_type != GPSType::Passive) {
         _state->signatures = std::make_unique<GPSReceiverSignatures>(gpsReceiverFamilies());
     }
     return _configureFamily(*family, std::move(io), std::move(observer),
-                            {.base = _config.base, .allowPersistentChanges = _config.allowPersistentChanges}, baudrate,
+                            {.base = _config.base, .allowPersistentChanges = _config.allowPersistentChanges}, baudRate,
                             {});
 }
 
-bool GPSDriver::_configureDetected(GPSRuntimeIO io, GPSRuntimeObserver observer, unsigned baudrate)
+bool GPSDriver::_configureDetected(GPSRuntimeIO io, GPSRuntimeObserver observer, unsigned baudRate)
 {
     _state->configuring = true;
     const GPSReceiverDetection detection =
-        GPSReceiverDetector(gpsReceiverFamilies(), io, observer.commandFinished).detect(baudrate);
+        GPSReceiverDetector(gpsReceiverFamilies(), io, observer.commandFinished).detect(baudRate);
     _state->configuring = false;
     if (!detection.found()) {
         _state->configurationError = !detection.errorDetail.isEmpty() ? detection.errorDetail
@@ -218,15 +218,15 @@ bool GPSDriver::_configureDetected(GPSRuntimeIO io, GPSRuntimeObserver observer,
     return _configureFamily(
         *detection.family, std::move(io), std::move(observer),
         {.base = config.base, .allowPersistentChanges = config.allowPersistentChanges, .detectedBaud = detection.baud},
-        baudrate, QStringLiteral("Detected %1 receiver at %2 baud").arg(name).arg(detection.baud));
+        baudRate, QStringLiteral("Detected %1 receiver at %2 baud").arg(name).arg(detection.baud));
 }
 
 bool GPSDriver::_configureFamily(const GPSReceiverFamily& family, GPSRuntimeIO io, GPSRuntimeObserver observer,
-                                 const GPSConfig& config, unsigned baudrate, const QString& detected)
+                                 const GPSConfig& config, unsigned baudRate, const QString& detected)
 {
     _state->runtime = std::make_unique<GPSProtocolRuntime>(family, std::move(io), std::move(observer));
     _state->configuring = true;
-    const bool configured = _state->runtime->configure(config, baudrate);
+    const bool configured = _state->runtime->configure(config, baudRate);
     _state->configuring = false;
     const auto signatures = std::exchange(_state->signatures, nullptr);
     if (!configured) {

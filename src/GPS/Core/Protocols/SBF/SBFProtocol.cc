@@ -177,7 +177,7 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
 
 bool Protocol::_configureBase(GPSCommandChannel& channel, const GPSBaseStationConfig& base, unsigned baud)
 {
-    (void) channel.setBaudrate(baud);
+    (void) channel.setBaudRate(baud);
     (void) channel.write(SBF::Plan::FORCE_COMMAND_INPUT);
 
     if (!channel.runSequence(SBF::Plan::silenceCorrectionOutput()).succeeded()) {

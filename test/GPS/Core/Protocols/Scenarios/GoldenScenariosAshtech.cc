@@ -18,7 +18,7 @@ void addTrimble(Table& table)
             enforceBaud(b, 38400);
             if (followSpeedChange) {
                 b.faults.rules.push_back(afterCommand(
-                    "$PASHS,SPD", [](ScriptedReceiver& receiver) { receiver.setReceiverBaudrate(115200); }));
+                    "$PASHS,SPD", [](ScriptedReceiver& receiver) { receiver.setReceiverBaudRate(115200); }));
             }
         });
     };

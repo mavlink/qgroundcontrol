@@ -76,9 +76,9 @@ ValsetBatch uart1Protocols()
                       {Cfg::UART1OUTPROT_NMEA, 0}}};
 }
 
-ValsetBatch uart1Baudrate(uint32_t baudrate)
+ValsetBatch uart1BaudRate(uint32_t baudRate)
 {
-    return {.policy = NakPolicy::Tolerate, .items = {{Cfg::UART1_BAUDRATE, baudrate}}};
+    return {.policy = NakPolicy::Tolerate, .items = {{Cfg::UART1_BAUDRATE, baudRate}}};
 }
 
 std::vector<ValsetBatch> portsAndNavigation(const ReceiverProfile& profile)
@@ -217,7 +217,7 @@ ValsetBatch disableMessage(MsgOutKey key)
     return {.policy = NakPolicy::WriteOnly, .items = {{key, NO_OUTPUT}}};
 }
 
-std::array<uint8_t, 2 * WIRE_SIZE<CfgPrt>> legacyPorts(uint32_t baudrate)
+std::array<uint8_t, 2 * WIRE_SIZE<CfgPrt>> legacyPorts(uint32_t baudRate)
 {
     std::array<uint8_t, 2 * WIRE_SIZE<CfgPrt>> payload{};
     auto next = payload.begin();
@@ -226,7 +226,7 @@ std::array<uint8_t, 2 * WIRE_SIZE<CfgPrt>> legacyPorts(uint32_t baudrate)
         const auto port = Wire::encode(
             CfgPrt{.portID = static_cast<uint8_t>(id),
                    .mode = LEGACY_PORT_MODE_8N1,
-                   .baudRate = baudrate,
+                   .baudRate = baudRate,
                    .inProtoMask = LEGACY_PROTOCOL_UBX,
                    .outProtoMask = static_cast<uint16_t>(LEGACY_PROTOCOL_UBX | nmea | LEGACY_PROTOCOL_RTCM3)});
         next = std::copy(port.begin(), port.end(), next);

@@ -36,7 +36,7 @@ namespace {
 class MemoryGPSTransport final : public GPSTransport
 {
 public:
-    static constexpr unsigned REFUSED_BAUDRATE = 1200;
+    static constexpr unsigned REFUSED_BAUD_RATE = 1200;
 
     explicit MemoryGPSTransport(QByteArray input = {}, int chunkBytes = 64, GPSCancelToken cancelToken = {})
         : GPSTransport(std::move(cancelToken))
@@ -63,12 +63,12 @@ public:
         return {GPSReadStatus::Data, count};
     }
 
-    bool setBaudrate(unsigned baudrate) override
+    bool setBaudRate(unsigned baudRate) override
     {
-        if (baudrate == REFUSED_BAUDRATE) {
+        if (baudRate == REFUSED_BAUD_RATE) {
             return false;
         }
-        _baudrate = baudrate;
+        _baudRate = baudRate;
         return true;
     }
 
@@ -79,7 +79,7 @@ public:
 
     const QByteArray& written() const { return _written; }
 
-    unsigned baudrate() const { return _baudrate; }
+    unsigned baudRate() const { return _baudRate; }
 
 protected:
     GPSWriteResult writeData(QByteArrayView bytes, QDeadlineTimer) override
@@ -96,7 +96,7 @@ private:
     qsizetype _offset = 0;
     int _chunkBytes;
     std::optional<int> _acceptedBytes;
-    unsigned _baudrate = 0;
+    unsigned _baudRate = 0;
 };
 
 constexpr const char* RECORDING_LOG = "GPS.Transport.GPSRecordingTransport";
@@ -205,9 +205,9 @@ void GPSRecordingTransportTest::_recordsLinkTrafficInOrder()
         QCOMPARE(recorder.open().status, GPSOpenStatus::Opened);
         QVERIFY(recorder.recording());
 
-        QVERIFY(recorder.setBaudrate(38400));
-        QVERIFY(!recorder.setBaudrate(MemoryGPSTransport::REFUSED_BAUDRATE));
-        QCOMPARE(link->baudrate(), 38400U);
+        QVERIFY(recorder.setBaudRate(38400));
+        QVERIFY(!recorder.setBaudRate(MemoryGPSTransport::REFUSED_BAUD_RATE));
+        QCOMPARE(link->baudRate(), 38400U);
         uint8_t buffer[512];
         QCOMPARE(recorder.read(buffer, 0ms).bytesRead, 40);
         QCOMPARE(QByteArray(reinterpret_cast<const char*>(buffer), 40), input.first(40));
@@ -246,7 +246,7 @@ void GPSRecordingTransportTest::_recordingReplaysToSameEvents()
         QCOMPARE(recorder.open().status, GPSOpenStatus::Opened);
         // The session's own traffic lies between the reads.
         live = decodedEvents(recorder, 512, [&recorder](int read) {
-            (void) recorder.setBaudrate(read % 2 ? 115200 : 230400);
+            (void) recorder.setBaudRate(read % 2 ? 115200 : 230400);
             (void) writeBytes(recorder, QByteArrayLiteral("$PQTMVERNO*58\r\n"));
         });
     }
@@ -298,8 +298,8 @@ void GPSRecordingTransportTest::_fileErrorKeepsLink()
     verifyExpectedLogMessage();
     QVERIFY(!recorder.recording());
     QCOMPARE(stops, 1);
-    QVERIFY(recorder.setBaudrate(57600));
-    QCOMPARE(link->baudrate(), 57600U);
+    QVERIFY(recorder.setBaudRate(57600));
+    QCOMPARE(link->baudRate(), 57600U);
     QCOMPARE(writeBytes(recorder, QByteArrayLiteral("$PQTMVERNO*58\r\n")).status, GPSWriteStatus::Completed);
     QCOMPARE(link->written(), QByteArrayLiteral("$PQTMVERNO*58\r\n"));
     QVERIFY(!recorder.fatalError());

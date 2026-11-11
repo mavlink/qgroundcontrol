@@ -50,7 +50,7 @@ GPSReceiverConnectability GPSReceiverConnectionPolicy::connectability(const GPSR
     const auto validPort = [](uint32_t port) { return port != 0 && port <= (std::numeric_limits<quint16>::max)(); };
     QString endpointError;
     // A network connection runs at its bridge's rate, whatever serial rate is saved.
-    uint32_t baudRate = GPSTransport::BRIDGE_BAUDRATE;
+    uint32_t baudRate = GPSTransport::BRIDGE_BAUD_RATE;
     switch (connection) {
         case RTKSettings::Serial:
             result.hasEndpoint = !configuration.serialDevice.trimmed().isEmpty();

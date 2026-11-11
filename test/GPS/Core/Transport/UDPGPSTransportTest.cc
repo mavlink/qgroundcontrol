@@ -117,9 +117,9 @@ void UDPGPSTransportTest::_receiveOnlyLink()
     GPSCancelSource stop;
     UDPGPSTransport transport(0, stop.token());
     QCOMPARE(transport.open().status, GPSOpenStatus::Opened);
-    QCOMPARE(transport.fixedBaudrate(), GPSTransport::BRIDGE_BAUDRATE);
-    QVERIFY(transport.setBaudrate(GPSTransport::BRIDGE_BAUDRATE));
-    QVERIFY(!transport.setBaudrate(9600));
+    QCOMPARE(transport.fixedBaudRate(), GPSTransport::BRIDGE_BAUD_RATE);
+    QVERIFY(transport.setBaudRate(GPSTransport::BRIDGE_BAUD_RATE));
+    QVERIFY(!transport.setBaudRate(9600));
     const auto written = transport.write("$P", QDeadlineTimer(TestTimeout::shortMs()));
     QCOMPARE(written.status, GPSWriteStatus::Unsupported);
     QCOMPARE(written.acceptedBytes, 0);

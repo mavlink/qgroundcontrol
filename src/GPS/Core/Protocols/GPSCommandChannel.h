@@ -155,7 +155,7 @@ public:
 
     /// An unsupported change fails without a sticky failure; a failed one names the rate in the error detail.
     /// @return true when the link runs at the requested rate.
-    bool setBaudrate(unsigned baudrate);
+    bool setBaudRate(unsigned baudRate);
 
     /// Waits for @a duration, capped by the operation deadline.
     void wait(std::chrono::microseconds duration);
@@ -256,8 +256,8 @@ private:
     /// The attempt @a step would be after a sticky failure: never started, ended by the failure.
     [[nodiscard]] GPSConfigurationEvidence _failedAttempt(GPSConfigurationStep step) const;
 
-    /// setBaudrate() with the link's answer; an unsupported rate leaves no failure.
-    GPSBaudStatus _setBaudrate(unsigned baudrate);
+    /// setBaudRate() with the link's answer; an unsupported rate leaves no failure.
+    GPSBaudStatus _setBaudRate(unsigned baudRate);
 
     /// Reads one bounded chunk and decodes it. @return the chunk's updates.
     GPSReceiveUpdates _readAndDecode(std::chrono::milliseconds timeout);

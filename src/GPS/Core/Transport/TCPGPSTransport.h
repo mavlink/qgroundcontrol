@@ -11,7 +11,7 @@
 class QTcpSocket;
 
 /// Owns a TCP socket on the receiver worker. A stop request wakes every wait at once.
-/// Serial-to-TCP bridges and their receivers must already run the link at BRIDGE_BAUDRATE.
+/// Serial-to-TCP bridges and their receivers must already run the link at BRIDGE_BAUD_RATE.
 class TCPGPSTransport : public GPSDeviceTransport
 {
 public:
@@ -21,7 +21,7 @@ public:
     GPSOpenResult open() override;
     bool fatalError() const override;
 
-    unsigned fixedBaudrate() const override { return BRIDGE_BAUDRATE; }
+    unsigned fixedBaudRate() const override { return BRIDGE_BAUD_RATE; }
 
     std::chrono::milliseconds configurationWriteTimeout() const override;
 

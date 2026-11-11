@@ -185,7 +185,7 @@ struct ValsetBatch
 
 /// Protocol 27+ port setup at the detected baud rate: UBX only on UART1, 8N1.
 [[nodiscard]] ValsetBatch uart1Protocols();
-[[nodiscard]] ValsetBatch uart1Baudrate(uint32_t baudrate);
+[[nodiscard]] ValsetBatch uart1BaudRate(uint32_t baudRate);
 /// Protocol 27+ configuration before jamming detection: ports, navigation, odometer and RTK.
 [[nodiscard]] std::vector<ValsetBatch> portsAndNavigation(const ReceiverProfile& profile);
 /// Probes CFG-SEC-JAMDET, which F9 HPG 1.50+, F9 L1L5 and X20 have instead of CFG-ITFM.
@@ -228,7 +228,7 @@ inline constexpr uint16_t LEGACY_PORT_USB = 3;
 
 /// CFG-PRT of UART1 and USB as one message, which older receivers take: UBX in, UBX and RTCM3 out, and NMEA out on USB
 /// as the protocol 27+ configuration keeps it.
-[[nodiscard]] std::array<uint8_t, 2 * WIRE_SIZE<CfgPrt>> legacyPorts(uint32_t baudrate);
+[[nodiscard]] std::array<uint8_t, 2 * WIRE_SIZE<CfgPrt>> legacyPorts(uint32_t baudRate);
 
 /// 5 Hz, UTC-aligned.
 inline constexpr CfgRate LEGACY_SURVEY_RATE{.measRate = 200, .navRate = 1, .timeRef = 0};

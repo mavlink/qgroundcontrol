@@ -30,10 +30,10 @@ QByteArray receivedBytes(const QByteArray& line)
 }
 }  // namespace
 
-ReplayGPSTransport::ReplayGPSTransport(QString path, GPSCancelToken cancelToken, unsigned baudrate, int chunkBytes)
+ReplayGPSTransport::ReplayGPSTransport(QString path, GPSCancelToken cancelToken, unsigned baudRate, int chunkBytes)
     : GPSTransport(std::move(cancelToken))
     , _file(std::move(path))
-    , _baudrate(baudrate)
+    , _baudRate(baudRate)
     , _chunkBytes(std::max(chunkBytes, 1))
 {
     qCDebug(ReplayGPSTransportLog) << this;
@@ -69,7 +69,7 @@ GPSOpenResult ReplayGPSTransport::open()
     _load();
     _clock.start();
     qCDebug(ReplayGPSTransportLog) << "Replaying" << (_recording ? "recording" : "raw capture") << _file.fileName()
-                                   << "at baud" << _baudrate;
+                                   << "at baud" << _baudRate;
     return {GPSOpenStatus::Opened};
 }
 
@@ -114,7 +114,7 @@ GPSReadResult ReplayGPSTransport::read(std::span<uint8_t> buffer, std::chrono::m
     return {GPSReadStatus::Data, static_cast<int>(count)};
 }
 
-bool ReplayGPSTransport::setBaudrate(unsigned)
+bool ReplayGPSTransport::setBaudRate(unsigned)
 {
     return !isCancelled();
 }
@@ -143,9 +143,9 @@ void ReplayGPSTransport::_load()
 qint64 ReplayGPSTransport::_available(qint64 length) const
 {
     qint64 available = std::min({length, static_cast<qint64>(_chunkBytes), static_cast<qint64>(_pending.size())});
-    if (_baudrate > 0) {
+    if (_baudRate > 0) {
         const qint64 elapsedUs = _clock.nsecsElapsed() / 1000;
-        const qint64 due = elapsedUs * _baudrate / (BITS_PER_BYTE * MICROSECONDS_PER_SECOND);
+        const qint64 due = elapsedUs * _baudRate / (BITS_PER_BYTE * MICROSECONDS_PER_SECOND);
         available = std::min(available, due - _delivered);
     }
     return std::max<qint64>(available, 0);
@@ -153,10 +153,10 @@ qint64 ReplayGPSTransport::_available(qint64 length) const
 
 QDeadlineTimer ReplayGPSTransport::_nextByteDue() const
 {
-    if (_baudrate == 0) {
+    if (_baudRate == 0) {
         return QDeadlineTimer(0);
     }
-    const qint64 dueUs = ((_delivered + 1) * BITS_PER_BYTE * MICROSECONDS_PER_SECOND + _baudrate - 1) / _baudrate;
+    const qint64 dueUs = ((_delivered + 1) * BITS_PER_BYTE * MICROSECONDS_PER_SECOND + _baudRate - 1) / _baudRate;
     return QDeadlineTimer(std::chrono::microseconds(dueUs - _clock.nsecsElapsed() / 1000), Qt::PreciseTimer);
 }
 

@@ -140,7 +140,7 @@ bool Protocol::_setUpPort(GPSCommandChannel& channel, unsigned detectedBaud, uns
     const UBX::Board identifiedBoard = _identity.board;
     const UBX::MessageId command = modern ? Msg::CFG_VALSET : Msg::CFG_PRT;
     if (modern) {
-        if (!_writeValset(channel, Plan::uart1Baudrate(desiredBaud))) {
+        if (!_writeValset(channel, Plan::uart1BaudRate(desiredBaud))) {
             return false;
         }
     } else {
@@ -154,7 +154,7 @@ bool Protocol::_setUpPort(GPSCommandChannel& channel, unsigned detectedBaud, uns
     if (channel.failed() || result.outcome == GPSCommandOutcome::Rejected) {
         return false;
     }
-    if (!channel.setBaudrate(desiredBaud)) {
+    if (!channel.setBaudRate(desiredBaud)) {
         channel.failControl(QStringLiteral("The link cannot run at %1 baud").arg(desiredBaud));
         return false;
     }

@@ -43,8 +43,8 @@ struct Base
                                 .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}
                           : GPSBaseStationConfig::Mode{GPSBaseStationConfig::SurveyIn{
                                 .accuracyMeters = 1, .duration = std::chrono::seconds{100}}}};
-        unsigned baudrate = 115200;
-        if (!driver.configure(config, baudrate) || !driver.receiverReady()) {
+        unsigned baudRate = 115200;
+        if (!driver.configure(config, baudRate) || !driver.receiverReady()) {
             return false;
         }
         (void) driver.consume({});

@@ -100,7 +100,7 @@ struct FaultyLink
             }
             return {GPSWriteStatus::Completed, int(bytes.size()), int(bytes.size())};
         };
-        result.setBaudrate = [this](unsigned) {
+        result.setBaudRate = [this](unsigned) {
             return !fail(Operation::Baud)                 ? GPSBaudStatus::Configured
                    : error == GPSProtocolError::Cancelled ? GPSBaudStatus::Cancelled
                                                           : GPSBaudStatus::Error;
@@ -269,8 +269,8 @@ void GPSProtocolFamilyContractTest::_linkFailure()
         std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
         std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).duration = 60s;
     }
-    unsigned baudrate = passive ? 115200 : 0;
-    const bool configured = receiver->configure(config, baudrate);
+    unsigned baudRate = passive ? 115200 : 0;
+    const bool configured = receiver->configure(config, baudRate);
     QVERIFY(link.failed);
     QVERIFY(!configured);
     QCOMPARE(receiver->error(), error);

@@ -452,7 +452,7 @@ void GPSDriverTest::_nativeConfigurationRejectedBeforeIo()
     QFETCH(QString, message);
     GPSTestClock clock(GPSTestClock::START_US);
     ModelReceiver<ScriptedReceiver::Model> link(clock);
-    link.setFixedBaudrate(fixedBaud);
+    link.setFixedBaudRate(fixedBaud);
     GPSDriver driver(static_cast<GPSType>(type), link, config, {}, clock.source());
     QCOMPARE(driver.receiveOutcome(0ms).error, GPSProtocolError::InvalidArgument);
     expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression(QRegularExpression::escape(message)));
@@ -475,7 +475,7 @@ struct AutomaticLink
         , septentrio(clock)
         , transport(type == GPSType::UBlox ? static_cast<ReceiverBench&>(ublox) : septentrio)
     {
-        transport.setFixedBaudrate(115200);
+        transport.setFixedBaudRate(115200);
         if (type == GPSType::UBlox) {
             ublox.model.queueFrame(0x01, 0x07, QByteArray(92, '\0'));
         } else {
@@ -568,11 +568,11 @@ void GPSDriverTest::_detectionSkipsRefusedRate()
 {
     // A serial adapter that cannot run the first candidate rate stays usable at the next one.
     AutomaticLink link(GPSType::UBlox);
-    link.transport.setFixedBaudrate(0);
-    link.transport.setReceiverBaudrate(38400);
-    link.transport.setBaudrateEnforced(true);
+    link.transport.setFixedBaudRate(0);
+    link.transport.setReceiverBaudRate(38400);
+    link.transport.setBaudRateEnforced(true);
     QList<unsigned> rates;
-    link.transport.setBaudrateHandler([&rates](unsigned rate) -> std::optional<bool> {
+    link.transport.setBaudRateHandler([&rates](unsigned rate) -> std::optional<bool> {
         rates.append(rate);
         return rate == 115200 ? std::optional<bool>(false) : std::nullopt;
     });

@@ -164,17 +164,17 @@ qint64 SerialGPSTransport::confirmedWritten(int accepted, qint64 drained)
     return confirmed - previousAccepted;
 }
 
-bool SerialGPSTransport::setBaudrate(unsigned baudrate)
+bool SerialGPSTransport::setBaudRate(unsigned baudRate)
 {
     if (isCancelled() || fatalError()) {
         return false;
     }
-    if (_serial->setBaudRate(static_cast<qint32>(baudrate))) {
+    if (_serial->setBaudRate(static_cast<qint32>(baudRate))) {
         return true;
     }
     // A refused rate leaves the port open at its previous rate; only a lost device ends the link.
     if (_serial->isOpen() && _serial->error() != QSerialPort::ResourceError) {
-        qCDebug(SerialGPSTransportLog) << "Link refused" << baudrate << "baud:" << _serial->errorString();
+        qCDebug(SerialGPSTransportLog) << "Link refused" << baudRate << "baud:" << _serial->errorString();
         _serial->clearError();
     }
     return false;

@@ -38,7 +38,7 @@ std::chrono::milliseconds GPSTransport::configurationWriteTimeout() const
     return DEFAULT_WRITE_TIMEOUT;
 }
 
-bool GPSTransport::setBaudrate(unsigned baudrate)
+bool GPSTransport::setBaudRate(unsigned baudRate)
 {
-    return !isCancelled() && !fatalError() && fixedBaudrate() != 0 && baudrate == fixedBaudrate();
+    return !isCancelled() && !fatalError() && fixedBaudRate() != 0 && baudRate == fixedBaudRate();
 }

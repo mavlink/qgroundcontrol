@@ -97,10 +97,10 @@ public:
     [[nodiscard]] QString receiverIdentity() const;
 
 private:
-    bool _configureDetected(GPSRuntimeIO io, GPSRuntimeObserver observer, unsigned baudrate);
+    bool _configureDetected(GPSRuntimeIO io, GPSRuntimeObserver observer, unsigned baudRate);
     /// @a detected describes the detection that chose @a family; empty for a configured type.
     bool _configureFamily(const GPSReceiverFamily& family, GPSRuntimeIO io, GPSRuntimeObserver observer,
-                          const GPSConfig& config, unsigned baudrate, const QString& detected);
+                          const GPSConfig& config, unsigned baudRate, const QString& detected);
     void _publish(const GPSEventBatch& batch);
     void _handle(const GPSIntegrityReport& report);
     void _handle(const GPSDecodedPosition& report);

@@ -29,7 +29,7 @@ public:
     bool fatalError() const override;
 
     /// Datagrams carry no line rate; drivers see the bridge rate.
-    unsigned fixedBaudrate() const override { return BRIDGE_BAUDRATE; }
+    unsigned fixedBaudRate() const override { return BRIDGE_BAUD_RATE; }
 
 protected:
     QIODevice* device() const override;

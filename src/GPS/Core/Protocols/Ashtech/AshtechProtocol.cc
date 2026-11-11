@@ -222,7 +222,7 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
         _nmea.reset(channel.stream());
         channel.receiveFor(Plan::LINK_SPEED_SETTLE);
         _nmea.reset(channel.stream());
-        (void) channel.setBaudrate(baud);
+        (void) channel.setBaudRate(baud);
         if (!_queryPort(channel, Plan::PORT_QUERY_ATTEMPTS_AT_LINK_BAUD)) {
             channel.failNoAnswer({&baud, 1});
             return false;

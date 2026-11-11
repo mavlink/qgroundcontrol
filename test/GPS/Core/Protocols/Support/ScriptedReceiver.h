@@ -38,7 +38,7 @@ public:
         virtual std::optional<QByteArray> takeCommand(QByteArray& pending);
         virtual GPSWriteResult handleCommand(ScriptedReceiver& receiver, const QByteArray& command,
                                              const WriteContext& context);
-        virtual std::optional<bool> handleBaudrate(ScriptedReceiver& receiver, unsigned baudrate);
+        virtual std::optional<bool> handleBaudRate(ScriptedReceiver& receiver, unsigned baudRate);
         virtual void onTransportReadWait(ScriptedReceiver& receiver, std::chrono::milliseconds timeout);
         virtual void onProtocolReadWait(ScriptedReceiver& receiver, GPSDeadline deadline);
         virtual int readChunkSize(const ScriptedReceiver& receiver, int requested, int available) const;
@@ -58,15 +58,15 @@ public:
 
     bool fatalError() const override { return _fatalError; }
 
-    unsigned fixedBaudrate() const override { return _fixedBaudrate; }
+    unsigned fixedBaudRate() const override { return _fixedBaudRate; }
 
     std::chrono::milliseconds configurationWriteTimeout() const override;
 
-    bool setBaudrate(unsigned baudrate) override;
+    bool setBaudRate(unsigned baudRate) override;
 
     GPSReadResult read(std::span<uint8_t> buffer, std::chrono::milliseconds timeout) override;
 
-    /// Runtime services over this receiver: read, write and setBaudrate replace those of @a io, which keeps its clock.
+    /// Runtime services over this receiver: read, write and setBaudRate replace those of @a io, which keeps its clock.
     GPSRuntimeIO makeIO(GPSRuntimeIO io);
 
     void setModel(Model* model);
@@ -77,11 +77,11 @@ public:
 
     void setFatalError(bool fatalError) { _fatalError = fatalError; }
 
-    void setFixedBaudrate(unsigned baudrate) { _fixedBaudrate = baudrate; }
+    void setFixedBaudRate(unsigned baudRate) { _fixedBaudRate = baudRate; }
 
-    void setReceiverBaudrate(unsigned baudrate) { _receiverBaudrate = baudrate; }
+    void setReceiverBaudRate(unsigned baudRate) { _receiverBaudRate = baudRate; }
 
-    void setBaudrateEnforced(bool enforced) { _baudrateEnforced = enforced; }
+    void setBaudRateEnforced(bool enforced) { _baudRateEnforced = enforced; }
 
     void setOpenHandler(std::function<std::optional<GPSOpenResult>()> handler) { _openHandler = std::move(handler); }
 
@@ -100,9 +100,9 @@ public:
         _configurationWriteTimeoutHandler = std::move(handler);
     }
 
-    void setBaudrateHandler(std::function<std::optional<bool>(unsigned)> handler)
+    void setBaudRateHandler(std::function<std::optional<bool>(unsigned)> handler)
     {
-        _baudrateHandler = std::move(handler);
+        _baudRateHandler = std::move(handler);
     }
 
     void queueReply(const QByteArray& bytes);
@@ -114,9 +114,9 @@ public:
 
     void cancel();
 
-    unsigned hostBaudrate() const { return _hostBaudrate; }
+    unsigned hostBaudRate() const { return _hostBaudRate; }
 
-    unsigned receiverBaudrate() const { return _receiverBaudrate; }
+    unsigned receiverBaudRate() const { return _receiverBaudRate; }
 
     const QList<QByteArray>& commands() const { return _commands; }
 
@@ -138,9 +138,9 @@ private:
     GPSReadResult _read(std::span<uint8_t> buffer, std::chrono::milliseconds timeout,
                         std::optional<GPSDeadline> deadline);
     GPSWriteResult _write(const QByteArray& bytes, const WriteContext& context);
-    bool _setBaudrate(unsigned baudrate);
+    bool _setBaudRate(unsigned baudRate);
     GPSReadResult _readOne(std::span<uint8_t> buffer);
-    bool _baudrateMatches() const;
+    bool _baudRateMatches() const;
     void _attachModel(Model* model);
 
     struct ReadStep
@@ -160,11 +160,11 @@ private:
     std::function<std::optional<GPSReadResult>(uint8_t*, int, std::chrono::milliseconds)> _readHandler;
     std::function<std::optional<GPSWriteResult>(const QByteArray&, const WriteContext&)> _writeHandler;
     std::function<std::chrono::milliseconds()> _configurationWriteTimeoutHandler;
-    std::function<std::optional<bool>(unsigned)> _baudrateHandler;
-    unsigned _hostBaudrate = 0;
-    unsigned _receiverBaudrate = 0;
-    unsigned _fixedBaudrate = 0;
-    bool _baudrateEnforced = false;
+    std::function<std::optional<bool>(unsigned)> _baudRateHandler;
+    unsigned _hostBaudRate = 0;
+    unsigned _receiverBaudRate = 0;
+    unsigned _fixedBaudRate = 0;
+    bool _baudRateEnforced = false;
     bool _fatalError = false;
     int _opens = 0;
     int _reads = 0;
@@ -190,9 +190,9 @@ public:
         return _model.handleCommand(receiver, command, context);
     }
 
-    std::optional<bool> handleBaudrate(ScriptedReceiver& receiver, unsigned baudrate) override
+    std::optional<bool> handleBaudRate(ScriptedReceiver& receiver, unsigned baudRate) override
     {
-        return _model.handleBaudrate(receiver, baudrate);
+        return _model.handleBaudRate(receiver, baudRate);
     }
 
     void onTransportReadWait(ScriptedReceiver& receiver, std::chrono::milliseconds timeout) override

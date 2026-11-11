@@ -33,7 +33,7 @@ void addAutomatic(Table& table)
     const auto quectelRover = [](QuectelBench& b) {
         b.model.role = 1;
         b.model.base = "1,10,15.0,0.0000,0.0000,0.0000,0.0";
-        b.setReceiverBaudrate(460800);
+        b.setReceiverBaudRate(460800);
     };
 
     table.add(type, "ublox-19200",
@@ -51,7 +51,7 @@ void addAutomatic(Table& table)
     table.add(type, "septentrio-230400", "Septentrio streaming SBF at 230400 is identified and configured at that rate",
               automatic<SBFReceiverModel>(Dialect::SBF,
                                           [](SBFBench& b) {
-                                              b.setReceiverBaudrate(230400);
+                                              b.setReceiverBaudRate(230400);
                                               b.detection->stream = SBFReceiverModel::pvt(12, 1000);
                                               // Forcing command input ends the stream.
                                               b.faults.rules.push_back(afterCommand(
@@ -62,9 +62,9 @@ void addAutomatic(Table& table)
               automatic<GPSTest::AshtechReceiverModel>(
                   Dialect::Ashtech,
                   [](AshtechBench& b) {
-                      b.setReceiverBaudrate(38400);
+                      b.setReceiverBaudRate(38400);
                       b.faults.rules.push_back(afterCommand(
-                          "$PASHS,SPD", [](ScriptedReceiver& receiver) { receiver.setReceiverBaudrate(115200); }));
+                          "$PASHS,SPD", [](ScriptedReceiver& receiver) { receiver.setReceiverBaudRate(115200); }));
                   }),
               surveyIn(1, 100));
     table.add(type, "quectel-rover-role", "Factory Quectel in its rover role, without consent: nothing is changed",

@@ -17,8 +17,8 @@ public:
 
     GPSOpenResult open() override;
     bool fatalError() const override;
-    unsigned fixedBaudrate() const override;
-    bool setBaudrate(unsigned baudrate) override;
+    unsigned fixedBaudRate() const override;
+    bool setBaudRate(unsigned baudRate) override;
     GPSReadResult read(std::span<uint8_t> buffer, std::chrono::milliseconds timeout) override;
     std::chrono::milliseconds configurationWriteTimeout() const override;
 

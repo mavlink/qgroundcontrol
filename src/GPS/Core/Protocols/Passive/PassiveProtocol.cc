@@ -97,7 +97,7 @@ public:
         _ready = false;
         _reset();
         channel.stream().reset();
-        if (!channel.setBaudrate(baud)) {
+        if (!channel.setBaudRate(baud)) {
             channel.failControl(QStringLiteral("The link cannot run at %1 baud").arg(baud));
             return false;
         }

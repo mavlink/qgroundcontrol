@@ -108,7 +108,7 @@ void GPSReceiverSettingsBindingTest::_receiverSettingsMapping()
         return;
     }
     const auto& config = harness.workers.current()->capturedConfig();
-    QCOMPARE(config.baudRate, uint32_t(GPSTransport::BRIDGE_BAUDRATE));
+    QCOMPARE(config.baudRate, uint32_t(GPSTransport::BRIDGE_BAUD_RATE));
     QVERIFY(!config.allowPersistentChanges);
     const GPSBaseStationConfig::Mode expected =
         baseMode == 1 ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{

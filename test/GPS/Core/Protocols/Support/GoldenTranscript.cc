@@ -146,12 +146,12 @@ public:
             recorded.writtenBytes = result.writtenBytes;
             return result;
         };
-        services.setBaudrate = [this, setBaudrate = transport.setBaudrate](unsigned rate) {
+        services.setBaudRate = [this, setBaudRate = transport.setBaudRate](unsigned rate) {
             if (offline) {
                 ++transportCalls;
                 return GPSBaudStatus::Error;
             }
-            const auto status = setBaudrate(rate);
+            const auto status = setBaudRate(rate);
             _records->push_back({phase, Baud{rate, status}});
             return status;
         };
@@ -227,7 +227,7 @@ std::unique_ptr<GPSProtocolRuntime> configure(const Scenario& scenario, const Li
 {
     run.startedAtUs = link.clock.nowUs();
     run.configuredAtUs = run.startedAtUs;
-    unsigned baud = scenario.config.baudRate ? scenario.config.baudRate : link.receiver.fixedBaudrate();
+    unsigned baud = scenario.config.baudRate ? scenario.config.baudRate : link.receiver.fixedBaudRate();
     if (scenario.type == GPSType::Automatic) {
         return configureDetected(scenario, baud, link, session, run);
     }

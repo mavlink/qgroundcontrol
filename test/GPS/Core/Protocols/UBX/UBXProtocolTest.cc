@@ -154,11 +154,11 @@ struct Fixture
 
     bool configure()
     {
-        unsigned baudrate = 115200;
+        unsigned baudRate = 115200;
         GPSConfig config{};
         config.base = base;
         receiver.log.commands.clear();
-        return driver.configure(config, baudrate);
+        return driver.configure(config, baudRate);
     }
 
     void success(unsigned expectedSurveyPolls)
@@ -1050,7 +1050,7 @@ void baudChangeVerification(GPSTestClock& clock)
         receiver.model.receiverBaud = 9600;
         receiver.model.protocol = "27.31";
         receiver.model.loseBaudAck = true;
-        receiver.setBaudrateHandler([&](unsigned baud) -> std::optional<bool> {
+        receiver.setBaudRateHandler([&](unsigned baud) -> std::optional<bool> {
             if (baud == UBX::Plan::BASE_BAUD) {
                 scenario.atNewBaud(receiver);
             }

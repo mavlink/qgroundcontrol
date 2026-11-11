@@ -64,7 +64,7 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
     _base = config.base;
     // No command depends on the rate, so the link keeps the one selected or detected; otherwise it runs at Plan::BAUD.
     baud = config.linkBaud(baud, Femto::Plan::BAUD);
-    (void) channel.setBaudrate(baud);
+    (void) channel.setBaudRate(baud);
     auto identity = channel.runSequence(Femto::Plan::sequence(Femto::Plan::IDENTIFY));
     for (unsigned round = 1; round < Femto::Plan::IDENTIFY_ROUNDS && !identity.succeeded(); ++round) {
         identity = channel.runSequence(Femto::Plan::sequence(Femto::Plan::IDENTIFY));

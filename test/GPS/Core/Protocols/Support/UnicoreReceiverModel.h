@@ -155,7 +155,7 @@ struct UnicoreReceiverModel : public ScriptedReceiver::Model
         return static_cast<int>((std::min) ({size_t(requested), size_t(available), chunk}));
     }
 
-    std::optional<bool> handleBaudrate(ScriptedReceiver& receiver, unsigned baud) override
+    std::optional<bool> handleBaudRate(ScriptedReceiver& receiver, unsigned baud) override
     {
         Q_UNUSED(receiver)
         hostBaud = baud;

@@ -211,7 +211,7 @@ std::unique_ptr<GPSTransport> quectelTransport(GPSCancelToken cancelToken, GPSTe
     model.identity = identity;
     model.role = model.activeRole = model.savedRole = role;
     model.base = model.activeBase = model.savedBase = base;
-    transport->setFixedBaudrate(460800);
+    transport->setFixedBaudRate(460800);
     return transport;
 }
 

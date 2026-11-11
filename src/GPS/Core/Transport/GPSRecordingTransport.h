@@ -55,10 +55,10 @@ public:
 
     GPSOpenResult open() override;
     bool fatalError() const override;
-    unsigned fixedBaudrate() const override;
+    unsigned fixedBaudRate() const override;
     GPSReadResult read(std::span<uint8_t> buffer, std::chrono::milliseconds timeout) override;
     std::chrono::milliseconds configurationWriteTimeout() const override;
-    bool setBaudrate(unsigned baudrate) override;
+    bool setBaudRate(unsigned baudRate) override;
 
     /// The file is still being written.
     [[nodiscard]] bool recording() const { return _file.isOpen(); }

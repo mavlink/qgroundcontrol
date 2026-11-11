@@ -409,8 +409,8 @@ void frameOwnership(GPSTestClock& clock)
 {
     Receiver receiver(clock);
     LoggedRuntime sbf(SBF::FAMILY, receiver.io());
-    unsigned baudrate = 115200;
-    QVERIFY(sbf->configure(fixedBase(47, 8, 500, 1), baudrate));
+    unsigned baudRate = 115200;
+    QVERIFY(sbf->configure(fixedBase(47, 8, 500, 1), baudRate));
     const auto corrections = [&sbf] { return sbf.reports<GPSRTCMFrame>().size(); };
     const auto fixes = [&sbf] { return sbf.reports<GPSDecodedPosition>().size(); };
     const auto correction = rtcmPacket(std::array<uint8_t, 2>{0x3e, 0xd0});
@@ -433,7 +433,7 @@ void surveyEvidence(GPSTestClock& clock)
     Receiver receiver(clock);
     LoggedRuntime sbf(SBF::FAMILY, receiver.io());
     const auto& position = sbf.position;
-    unsigned baudrate = 115200;
+    unsigned baudRate = 115200;
     uint32_t tow = 0;
     auto payload = bytes({.latitude = 0.5, .longitude = 1, .height = 500});
     std::vector<GPSSurveyReport> surveys;
@@ -465,7 +465,7 @@ void surveyEvidence(GPSTestClock& clock)
 
     for (bool fixed : {false, true, false}) {
         const GPSConfig config = fixed ? fixedBase(47, 8, 500) : surveyIn();
-        QVERIFY(sbf->configure(config, baudrate));
+        QVERIFY(sbf->configure(config, baudRate));
         QVERIFY(sbf->receiverReady());
         // A standalone solution without the determination flag is not a completed fixed base.
         publish(1, 0);
