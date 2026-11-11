@@ -257,23 +257,27 @@ void APMDataFlashUtilityTest::_testIsValidHeaderInvalid()
 
 void APMDataFlashUtilityTest::_testFindNextHeader_data()
 {
+    QTest::addColumn<int>("start");
     QTest::addColumn<int>("size");
     QTest::addColumn<qint64>("offset");
     QTest::addColumn<qint64>("expected");
 
     // The data has a header at 0 and at 10
-    QTest::newRow("at-offset") << 20 << qint64(0) << qint64(0);
-    QTest::newRow("after-offset") << 20 << qint64(1) << qint64(10);
-    QTest::newRow("none-left") << 20 << qint64(11) << qint64(-1);
-    QTest::newRow("offset-at-end") << 20 << qint64(20) << qint64(-1);
-    QTest::newRow("offset-past-end") << 20 << qint64(21) << qint64(-1);
-    QTest::newRow("header-without-type-at-end") << 12 << qint64(1) << qint64(-1);
-    QTest::newRow("header-with-type-at-end") << 13 << qint64(1) << qint64(10);
-    QTest::newRow("empty") << 0 << qint64(0) << qint64(-1);
+    QTest::newRow("at-offset") << 0 << 20 << qint64(0) << qint64(0);
+    QTest::newRow("after-offset") << 0 << 20 << qint64(1) << qint64(10);
+    QTest::newRow("none-left") << 0 << 20 << qint64(11) << qint64(-1);
+    QTest::newRow("offset-at-end") << 0 << 20 << qint64(20) << qint64(-1);
+    QTest::newRow("offset-past-end") << 0 << 20 << qint64(21) << qint64(-1);
+    QTest::newRow("header-without-type-at-end") << 0 << 12 << qint64(1) << qint64(-1);
+    QTest::newRow("header-with-type-at-end") << 0 << 13 << qint64(1) << qint64(10);
+    QTest::newRow("empty") << 0 << 0 << qint64(0) << qint64(-1);
+    // The header at 10 is in front of the data that is searched
+    QTest::newRow("offset-before-data") << 13 << 7 << qint64(-3) << qint64(-1);
 }
 
 void APMDataFlashUtilityTest::_testFindNextHeader()
 {
+    QFETCH(int, start);
     QFETCH(int, size);
     QFETCH(qint64, offset);
     QFETCH(qint64, expected);
@@ -287,7 +291,7 @@ void APMDataFlashUtilityTest::_testFindNextHeader()
     data[11] = static_cast<char>(0x95);
     data[12] = 2;  // message type
 
-    QCOMPARE(APMDataFlashUtility::findNextHeader(data, size, offset), expected);
+    QCOMPARE(APMDataFlashUtility::findNextHeader(data + start, size, offset), expected);
 }
 
 // ============================================================================
@@ -626,6 +630,39 @@ void APMDataFlashUtilityTest::_testIterateMessagesProgress()
     for (int i = 1; i < progressValues.size(); ++i) {
         QVERIFY(progressValues[i] >= progressValues[i - 1]);
     }
+}
+
+void APMDataFlashUtilityTest::_testIterateMessagesFormatShorterThanHeader_data()
+{
+    QTest::addColumn<int>("length");
+    QTest::newRow("0") << 0;
+    QTest::newRow("1") << 1;
+    QTest::newRow("2") << 2;
+}
+
+void APMDataFlashUtilityTest::_testIterateMessagesFormatShorterThanHeader()
+{
+    QFETCH(int, length);
+
+    // parseFmtMessages() drops a format whose length does not cover the three header bytes; one handed in
+    // directly must not give a payload of negative size or move the parser back onto the header
+    QMap<uint8_t, APMDataFlashUtility::MessageFormat> formats;
+    formats[150].length = static_cast<uint8_t>(length);
+    formats[200].length = 4;
+    const QByteArray log = dataFlashTestRecord(150, QByteArray()) + dataFlashTestRecord(200, QByteArray(1, '\x2a'));
+
+    QList<int> types;
+    QList<int> payloadSizes;
+    const int count = APMDataFlashUtility::iterateMessages(
+        log.constData(), log.size(), formats,
+        [&](uint8_t msgType, const char*, int payloadSize, const APMDataFlashUtility::MessageFormat&) {
+            types.append(msgType);
+            payloadSizes.append(payloadSize);
+            return msgType == 200;
+        });
+    QCOMPARE(types, QList<int>{200});
+    QCOMPARE(payloadSizes, QList<int>{1});
+    QCOMPARE(count, 1);
 }
 
 void APMDataFlashUtilityTest::_testTruncatedLog_data()

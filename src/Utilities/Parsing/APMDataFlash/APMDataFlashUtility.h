@@ -85,7 +85,7 @@ bool isValidHeader(const char *data, qint64 size);
 /// @param data Pointer to data
 /// @param size Total size of data
 /// @param offset Starting position to search from
-/// @return Offset of next header, or -1 if not found
+/// @return Offset of next header, or -1 if not found or if offset is negative
 qint64 findNextHeader(const char *data, qint64 size, qint64 offset);
 
 // ============================================================================
@@ -121,7 +121,8 @@ using MessageCallback = std::function<bool(uint8_t msgType, const char *payload,
 /// Iterate over all messages in a DataFlash log
 /// @param data Pointer to complete log data
 /// @param size Size of log data
-/// @param formats Message formats from parseFmtMessages()
+/// @param formats Message formats from parseFmtMessages(). Messages of a format whose length is less than the
+///        3 header bytes are skipped.
 /// @param callback Function called for each message
 /// @param progressCallback Optional callback invoked every ~1000 messages with byte-position progress (0.0–1.0)
 /// @return Number of messages processed

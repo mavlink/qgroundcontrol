@@ -50,6 +50,8 @@ private slots:
     // Message iteration tests
     void _testIterateMessages();
     void _testIterateMessagesProgress();
+    void _testIterateMessagesFormatShorterThanHeader_data();
+    void _testIterateMessagesFormatShorterThanHeader();
     void _testTruncatedLog_data();
     void _testTruncatedLog();
 };
