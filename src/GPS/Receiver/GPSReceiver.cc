@@ -257,7 +257,6 @@ void GPSReceiver::_endSession(GPSConnectionError error, const QString& detail, b
     // The family an Automatic session detected, else the selected one.
     const auto* family = _session ? gpsReceiverDescriptorForManufacturer(_session->manufacturer()) : nullptr;
     _retireSession();
-    _resetStatus();
     _setPersistentChangesAllowed(false);
     const GPSReceiverSessionOutcome outcome = _connection->sessionEnded(portRemoved);
     if (portRemoved) {
@@ -268,14 +267,16 @@ void GPSReceiver::_endSession(GPSConnectionError error, const QString& detail, b
         !detail.isEmpty() && family) {
         qCWarning(GPSReceiverLog) << "GPS receiver did not accept configuration";
         _setError(GPSReceiverMessages::consentRefused(detail, family->type));
-        return;
+    } else {
+        if (outcome == GPSReceiverSessionOutcome::AutoRetrying || outcome == GPSReceiverSessionOutcome::Retrying) {
+            qCWarning(GPSReceiverLog) << "GPS receiver session ended:" << error << detail;
+        } else if (outcome == GPSReceiverSessionOutcome::None && !portRemoved) {
+            logConnectionError(error, detail);
+        }
+        _setError(GPSReceiverMessages::sessionEnded(outcome, error, detail, portRemoved));
     }
-    if (outcome == GPSReceiverSessionOutcome::AutoRetrying || outcome == GPSReceiverSessionOutcome::Retrying) {
-        qCWarning(GPSReceiverLog) << "GPS receiver session ended:" << error << detail;
-    } else if (outcome == GPSReceiverSessionOutcome::None && !portRemoved) {
-        logConnectionError(error, detail);
-    }
-    _setError(GPSReceiverMessages::sessionEnded(outcome, error, detail, portRemoved));
+    // Last, because the status Facts notify as they reset and an observer may connect or disconnect from there.
+    _resetStatus();
 }
 
 void GPSReceiver::_onGPSSurveyReport(const GPSSurveyReport& status)
@@ -463,11 +464,24 @@ GPSReceiverPresentation GPSReceiver::activePresentation() const
     return gpsReceiverPresentation(_activeManufacturer());
 }
 
+void GPSReceiver::_scanSerialPorts()
+{
+#ifndef QGC_NO_SERIAL_LINK
+    // The policy asks for the serial ports only without a receiver, and a scan that is due notifies observers, who
+    // may connect, disconnect or change the configuration. Scanned first, they act before the policy decides, and
+    // its questions reuse the scan.
+    if (_serialPorts && !hasReceiver()) {
+        (void) _serialPorts->availablePorts();
+    }
+#endif
+}
+
 bool GPSReceiver::connectReceiver()
 {
     if (_destroying) {
         return false;
     }
+    _scanSerialPorts();
     const bool allowed =
         _persistentChangesAllowed &&
         capabilitiesFor(_configuration.receiverRole, _configuration.baseReceiverManufacturer).persistentConfiguration;
@@ -504,6 +518,7 @@ void GPSReceiver::tick()
     if (_destroying) {
         return;
     }
+    _scanSerialPorts();
     _connection->update();
     _emitChanges();
 }

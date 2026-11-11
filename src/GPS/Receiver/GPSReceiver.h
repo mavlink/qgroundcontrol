@@ -267,6 +267,8 @@ private:
     void _onSerialPortsEnumerated(const QStringList& devices);
     void _updateSerialPortEntries();
 #endif
+    /// Scans the serial ports, when a scan is due, before the connection policy asks for them.
+    void _scanSerialPorts();
 
     bool _connectReceiver(GPSType type, GPSReceiverWorker::TransportFactory transportFactory,
                           const QString& sourceInstance, uint32_t baudRate, bool allowPersistentChanges,

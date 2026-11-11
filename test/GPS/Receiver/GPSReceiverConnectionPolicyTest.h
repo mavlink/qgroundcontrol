@@ -16,6 +16,8 @@ private slots:
     void _configurationChangeCancelsRetry();
     void _unconnectableConfigurationIsNotRetried_data();
     void _unconnectableConfigurationIsNotRetried();
+    void _observerActsOnLostSession_data();
+    void _observerActsOnLostSession();
     void _sessionEndMessages_data();
     void _sessionEndMessages();
     void _pollingTicksReceiver();
@@ -34,6 +36,8 @@ private slots:
     void _retryOfListedPortBacksOff();
     void _discoveryUsesSavedManufacturer_data();
     void _discoveryUsesSavedManufacturer();
+    void _observerActsOnPortScan_data();
+    void _observerActsOnPortScan();
 #endif
 
 private:
