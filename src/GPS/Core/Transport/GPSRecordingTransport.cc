@@ -5,7 +5,6 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
-#include <QtCore/QFileInfo>
 #include <QtCore/QMetaEnum>
 
 #include "QGCLoggingCategory.h"
@@ -16,16 +15,19 @@ GPSRecordingTransport::GPSRecordingTransport(std::unique_ptr<GPSTransport> trans
                                              qint64 maxFileBytes, std::function<void()> stopped)
     : GPSTransport(transport ? transport->cancelToken() : GPSCancelToken{})
     , _transport(std::move(transport))
-    , _maxFileBytes(maxFileBytes)
+    , _path(file)
     , _stopped(std::move(stopped))
-    , _file(file)
+    , _file(&GPSRecordingTransportLog, "Receiver recording", maxFileBytes)
 {
     qCDebug(GPSRecordingTransportLog) << this;
 }
 
 GPSRecordingTransport::~GPSRecordingTransport()
 {
-    _finish();
+    if (recording() && !_file.flush()) {
+        _notifyStopped();
+    }
+    _file.close();
     qCDebug(GPSRecordingTransportLog) << this;
 }
 
@@ -105,19 +107,14 @@ GPSWriteResult GPSRecordingTransport::writeData(QByteArrayView bytes, QDeadlineT
 
 void GPSRecordingTransport::_start()
 {
-    const QString directory = QFileInfo(_file).absolutePath();
-    if (!QDir().mkpath(directory)) {
-        _fail(QStringLiteral("Cannot create the folder %1").arg(directory));
-        return;
-    }
     // Never over an earlier recording: session names differ by their start time alone.
-    if (!_file.open(QIODevice::WriteOnly | QIODevice::NewOnly)) {
-        _fail(_file.errorString());
+    if (!_file.open(_path)) {
+        _notifyStopped();
         return;
     }
     _clock.start();
     _nextFlush.setRemainingTime(FLUSH_INTERVAL, Qt::CoarseTimer);
-    qCDebug(GPSRecordingTransportLog) << "Recording receiver data to" << _file.fileName();
+    qCDebug(GPSRecordingTransportLog) << "Recording receiver data to" << _path;
     _write(QByteArray(FILE_HEADER) + '\n');
 }
 
@@ -130,19 +127,9 @@ void GPSRecordingTransport::_record(const char* kind, const QByteArray& value)
 
 void GPSRecordingTransport::_write(const QByteArray& line)
 {
-    // Whole records only, so a recording that reached its limit still ends with a complete line.
-    if (_bytes + line.size() > _maxFileBytes) {
-        qCWarning(GPSRecordingTransportLog) << "Receiver recording reached its size limit of" << _maxFileBytes
-                                            << "bytes and stopped:" << _file.fileName();
-        _finish();
+    if (!_file.write(line)) {
         _notifyStopped();
-        return;
     }
-    if (_file.write(line) != line.size()) {
-        _fail(_file.errorString());
-        return;
-    }
-    _bytes += line.size();
 }
 
 void GPSRecordingTransport::_flushIfDue()
@@ -152,28 +139,8 @@ void GPSRecordingTransport::_flushIfDue()
     }
     _nextFlush.setRemainingTime(FLUSH_INTERVAL, Qt::CoarseTimer);
     if (!_file.flush()) {
-        _fail(_file.errorString());
+        _notifyStopped();
     }
-}
-
-void GPSRecordingTransport::_fail(const QString& error)
-{
-    qCWarning(GPSRecordingTransportLog) << "Receiver recording stopped after a file error:" << _file.fileName()
-                                        << error;
-    _file.close();
-    _notifyStopped();
-}
-
-void GPSRecordingTransport::_finish()
-{
-    if (!recording()) {
-        return;
-    }
-    if (!_file.flush()) {
-        _fail(_file.errorString());
-        return;
-    }
-    _file.close();
 }
 
 void GPSRecordingTransport::_notifyStopped()

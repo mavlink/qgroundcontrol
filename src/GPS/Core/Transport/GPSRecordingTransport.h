@@ -8,9 +8,9 @@
 #include <QtCore/QByteArray>
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QElapsedTimer>
-#include <QtCore/QFile>
 #include <QtCore/QString>
 
+#include "GPSBoundedFile.h"
 #include "GPSTransport.h"
 #include "GPSType.h"
 
@@ -24,9 +24,9 @@ class QDateTime;
 /// - RX and the bytes read from the receiver, in hexadecimal;
 /// - TX and the bytes the link accepted for writing to the receiver, in hexadecimal;
 /// - BAUD and the baud rate the link changed to.
-/// The file is created when the link first opens, on the thread that owns the transport, and written through QFile's
-/// buffer, which is flushed every FLUSH_INTERVAL and on destruction. It keeps the records that fit in maxFileBytes and
-/// then stops growing, which bounds disk use without a retention policy.
+/// The file is a GPSBoundedFile, created when the link first opens, on the thread that owns the transport, and flushed
+/// every FLUSH_INTERVAL and on destruction. It keeps the records that fit in maxFileBytes and then stops growing,
+/// which bounds disk use without a retention policy.
 /// A file error logs one warning and ends the recording. The link and its results are never affected.
 /// A recording that ends before its session, after a file error or at the size limit, calls the stopped callback
 /// once, on the thread that uses the transport.
@@ -71,17 +71,13 @@ private:
     void _record(const char* kind, const QByteArray& value);
     void _write(const QByteArray& line);
     void _flushIfDue();
-    /// Ends the recording after a file error.
-    void _fail(const QString& error);
-    void _finish();
     void _notifyStopped();
 
     std::unique_ptr<GPSTransport> _transport;
-    const qint64 _maxFileBytes;
+    const QString _path;
     std::function<void()> _stopped;
-    QFile _file;
+    GPSBoundedFile _file;
     QElapsedTimer _clock;
     QDeadlineTimer _nextFlush;
-    qint64 _bytes = 0;
     bool _started = false;
 };

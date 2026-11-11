@@ -1,12 +1,15 @@
 # ============================================================================
 # GPS Core Common
 # Lowest-level GPS vocabulary: receiver types, the receiver configuration request with its base-station settings and
-# validation, the driver reports with fix quality and constellations, and the receiver families' descriptors.
+# validation, the driver reports with fix quality and constellations, and the receiver families' descriptors. Also the
+# size-limited file that the receiver recording and the correction log are written to.
 # ============================================================================
 
 target_sources(
     QGCGPSCore
     PRIVATE
+        GPSBoundedFile.cc
+        GPSBoundedFile.h
         GPSClock.h
         GPSConnectionErrors.h
         GPSProtocolMath.cc
