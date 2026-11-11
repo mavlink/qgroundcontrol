@@ -25,6 +25,8 @@ private slots:
     void _testStatsProbe();
     void _testRtpPacketCounter_data();
     void _testRtpPacketCounter();
+    void _testRtpPacketCounterDropoutFollowsPacketRate_data();
+    void _testRtpPacketCounterDropoutFollowsPacketRate();
     void _testRtpPacketCounterJitter_data();
     void _testRtpPacketCounterJitter();
     void _testStatsProbeCountsRtpPackets();

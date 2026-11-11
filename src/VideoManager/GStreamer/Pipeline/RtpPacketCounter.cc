@@ -1,5 +1,6 @@
 #include "RtpPacketCounter.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdlib>
 
@@ -21,11 +22,12 @@ RtpPacketCounter::RtpPacketCounter(int clockRate)
 
 void RtpPacketCounter::add(quint16 sequence, quint32 timestamp, quint32 ssrc, std::optional<qint64> arrivalNs)
 {
-    if (_ssrc != ssrc) {
+    if (!_ssrc) {
         _startSequence(sequence, ssrc);
-    } else if (!_continueSequence(sequence)) {
+    } else if (!_continueSequence(sequence, ssrc)) {
         return;
     }
+    _notePacketRate(timestamp);
     if (arrivalNs) {
         _noteArrival(timestamp, *arrivalNs);
     }
@@ -42,26 +44,29 @@ void RtpPacketCounter::_startSequence(quint16 sequence, quint32 ssrc)
     _received = 1;
     _seen.reset();
     _seen.set(0);
-    _restartSeq.reset();
+    _restart.reset();
     // Its timestamps have an origin of their own.
     _lastArrivalNs.reset();
+    _rateSeq.reset();
 }
 
-bool RtpPacketCounter::_continueSequence(quint16 sequence)
+bool RtpPacketCounter::_continueSequence(quint16 sequence, quint32 ssrc)
 {
+    const qint64 maxDropout = _maxDropout();
     int ahead = rtpSequencesAhead(sequence, static_cast<quint16>(_maxSeq));
-    if ((ahead >= kMaxDropout) || (ahead <= -kReorderWindow)) {
+    if ((ssrc != *_ssrc) || (ahead >= maxDropout) || (ahead <= -kReorderWindow)) {
         // RFC 3550 starts over only with the very next sequence number, which a sender that restarted into a lossy
         // link may never show.
-        const int afterRestart = _restartSeq ? rtpSequencesAhead(sequence, *_restartSeq) : 0;
-        if ((afterRestart <= 0) || (afterRestart >= kMaxDropout)) {
-            _restartSeq = sequence;
+        const int afterRestart =
+            (_restart && (_restart->ssrc == ssrc)) ? rtpSequencesAhead(sequence, _restart->sequence) : 0;
+        if ((afterRestart <= 0) || (afterRestart >= maxDropout)) {
+            _restart = Restart{.ssrc = ssrc, .sequence = sequence};
             return false;
         }
-        _startSequence(*_restartSeq, *_ssrc);
+        _startSequence(_restart->sequence, ssrc);
         ahead = afterRestart;
     }
-    _restartSeq.reset();
+    _restart.reset();
 
     if (ahead > 0) {
         _seen <<= static_cast<std::size_t>(ahead);
@@ -84,6 +89,35 @@ quint64 RtpPacketCounter::_sequenceLost() const
 {
     // Never negative: every packet counted is one of these sequence numbers, counted once.
     return _ssrc ? (static_cast<quint64>(_maxSeq - _baseSeq + 1) - _received) : 0;
+}
+
+qint64 RtpPacketCounter::_maxDropout() const
+{
+    return (_packetRate > 0) ? std::max<qint64>(_packetRate * kMaxDropoutSeconds, kMinDropout) : kDefaultMaxDropout;
+}
+
+void RtpPacketCounter::_notePacketRate(quint32 timestamp)
+{
+    if (_clockRate <= 0) {
+        return;
+    }
+    if (!_rateSeq) {
+        _rateSeq = _maxSeq;
+        _rateTimestamp = timestamp;
+        return;
+    }
+    // Over a second of the sender's time at least: the packets of a frame share a timestamp. Negative for a packet
+    // sent before the one the measurement started at.
+    const qint64 ticks = static_cast<qint32>(timestamp - _rateTimestamp);
+    if (ticks < _clockRate) {
+        return;
+    }
+    const qint64 rate = (_maxSeq - *_rateSeq) * _clockRate / ticks;
+    // A rate that fell lowers the limit only gradually: the sender may be back at the higher one when packets are
+    // lost.
+    _packetRate = (rate >= _packetRate) ? rate : ((3 * _packetRate) + rate) / 4;
+    _rateSeq = _maxSeq;
+    _rateTimestamp = timestamp;
 }
 
 void RtpPacketCounter::_noteArrival(quint32 timestamp, qint64 arrivalNs)

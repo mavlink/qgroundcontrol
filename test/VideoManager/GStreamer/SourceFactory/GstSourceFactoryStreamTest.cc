@@ -6,10 +6,13 @@
 #include <gst/gst.h>
 
 #include <QtCore/QByteArray>
+#include <QtNetwork/QUdpSocket>
 
 #include "GStreamerTestHelpers.h"
 #include "GstScoped.h"
 #include "GstSourceFactory.h"
+#include "PipelineStatsProbe.h"
+#include "VideoStreamStats.h"
 
 namespace {
 
@@ -48,6 +51,20 @@ bool watchH264Depayloading(GstElement* source, DepayloaderOutput* output)
            gst_pad_add_probe(depayloaderSink.get(), GST_PAD_PROBE_TYPE_BUFFER, GstTest::countBuffers,
                              &output->packetsIn, nullptr) &&
            gst_pad_add_probe(parserSink.get(), GST_PAD_PROBE_TYPE_BUFFER, recordDepayloaderUnit, output, nullptr);
+}
+
+/// An RTP packet (payload type 96) carrying a slice of an H.264 picture that isn't a keyframe.
+QByteArray makeH264RtpPacket(quint16 sequence, quint32 timestamp)
+{
+    QByteArray packet(16, '\0');
+    auto* const bytes = reinterpret_cast<guint8*>(packet.data());
+    bytes[0] = 0x80;
+    bytes[1] = 96;
+    GST_WRITE_UINT16_BE(bytes + 2, sequence);
+    GST_WRITE_UINT32_BE(bytes + 4, timestamp);
+    GST_WRITE_UINT32_BE(bytes + 8, 0x1234ABCD);
+    bytes[12] = 0x41;
+    return packet;
 }
 
 }  // namespace
@@ -120,6 +137,67 @@ void GstSourceFactoryStreamTest::_testSourceFactoryDropsRtpUntilParameterSets()
     sender.holdKeyframes(false);
     QVERIFY_TRUE_WAIT(output.unitsOut.load() > 0, TestTimeout::mediumMs());
     QVERIFY2(output.firstUnitHasSps.load(), "the first unit reaching h264parse must carry the SPS");
+}
+
+void GstSourceFactoryStreamTest::_testStatsCountPacketsDroppedOnLatency()
+{
+    // The RTP timestamps of the packets are a second apart, so the third one is the jitter buffer's latency after the
+    // first.
+    constexpr quint32 kPacketSpacing = 90000;
+
+    GStreamer::SourceFactory::Config config;
+    config.latencyMs = 2000;
+    const GStreamer::GstElementPtr source = GstTest::createSource(QStringLiteral("udp://127.0.0.1:0"), config);
+    QVERIFY(source);
+    const GStreamer::GstElementPtr jitterBuffer = GstTest::findByFactory(source.get(), "rtpjitterbuffer");
+    QVERIFY(jitterBuffer);
+
+    GstTest::TestPipeline receiver(gst_pipeline_new("drop-on-latency"));
+    GstElement* const sink = gst_element_factory_make("fakesink", nullptr);
+    QVERIFY(sink);
+    g_object_set(sink, "sync", FALSE, "async", FALSE, nullptr);
+    QVERIFY(gst_bin_add(receiver.bin(), source.get()));
+    QVERIFY(gst_bin_add(receiver.bin(), sink));
+    QVERIFY(gst_element_link(source.get(), sink));
+    QVERIFY(receiver.play());
+    gint port = 0;
+    g_object_get(GstTest::findByFactory(source.get(), "udpsrc").get(), "port", &port, nullptr);
+    QVERIFY(port > 0);
+
+    QUdpSocket sender;
+    int sent = 0;
+    const auto sendPacket = [&sender, &sent, port]() {
+        const QByteArray packet =
+            makeH264RtpPacket(static_cast<quint16>(100 + sent), static_cast<quint32>(sent) * kPacketSpacing);
+        ++sent;
+        return sender.writeDatagram(packet, QHostAddress::LocalHost, static_cast<quint16>(port)) == packet.size();
+    };
+
+    // As PipelineSession does with its bus.
+    const GStreamer::GstBusPtr bus = GStreamer::adoptBus(gst_element_get_bus(receiver.get()));
+    PipelineStatsProbe probe;
+    const auto packetsLost = [&]() {
+        while (const GStreamer::GstMessagePtr message =
+                   GStreamer::adoptMessage(gst_bus_pop_filtered(bus.get(), GST_MESSAGE_ELEMENT))) {
+            PipelineStatsProbe::noteElementMessage(message.get());
+        }
+        VideoStreamStatsMeter::Counters counters;
+        VideoStreamStats stats;
+        probe.sample(nullptr, source.get(), nullptr, counters, stats);
+        return counters.rtp ? counters.rtp->packetsLost : 0;
+    };
+    // A burst, as after a stalled link: the packets of many seconds arrive within the two that the jitter buffer holds
+    // the stream's first packets for. None is missing, but it keeps no more than its latency and drops the oldest ones.
+    // The packets go on until it has: it drops none while the events that start the stream are still ahead of them.
+    QVERIFY_TRUE_WAIT(sendPacket() && (packetsLost() > 0), TestTimeout::mediumMs());
+
+    // Its own count of lost packets is of those that never arrived.
+    GstStructure* rawStats = nullptr;
+    g_object_get(jitterBuffer.get(), "stats", &rawStats, nullptr);
+    const GStreamer::GstStructurePtr stats = GStreamer::adoptStructure(rawStats);
+    guint64 neverArrived = 1;
+    QVERIFY(stats && gst_structure_get_uint64(stats.get(), "num-lost", &neverArrived));
+    QCOMPARE(neverArrived, guint64(0));
 }
 
 void GstSourceFactoryStreamTest::_testUdpSourceRefusesPortInUse()

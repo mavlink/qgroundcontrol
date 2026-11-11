@@ -51,6 +51,15 @@ inline constexpr std::chrono::milliseconds kRtspUdpTimeout{5000};
 /// listens on its port, so until somebody sends to it nothing has failed, and a new source would listen no better.
 std::optional<std::chrono::milliseconds> connectGracePeriod(const QString& uri);
 
+/// The receive buffer, in bytes, the factory asks of every UDP socket of its sources, rtspsrc's included: 8 MiB, or as
+/// much as the kernel lets a socket ask for where that is less (Linux's net.core.rmem_max).
+int udpReceiveBufferSize();
+
+/// Has @p jitterBuffer, an rtpjitterbuffer of a source (rtspsrc's included), tell of each packet it drops in a
+/// "drop-msg" element message: those it drops to stay within its latency ("drop-on-latency") are in none of its
+/// "stats", so PipelineStatsProbe counts them from the bus.
+void reportDroppedPackets(GstElement* jitterBuffer);
+
 /// Holds an RTP H.264/H.265 depayloader's byte-stream output back until a full parameter set (SPS and PPS, plus VPS
 /// for H.265) has arrived, then emits the parameter sets together with the first slice and removes itself. create()
 /// applies it to every depayloader it builds or parsebin plugs; length-prefixed output is left alone.

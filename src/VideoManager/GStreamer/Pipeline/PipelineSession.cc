@@ -344,6 +344,7 @@ void PipelineSession::_handleMessage(GstMessage* message)
             }
             break;
         case GST_MESSAGE_ELEMENT:
+            PipelineStatsProbe::noteElementMessage(message);
             _recording->onBusElement(message);
             break;
         case GST_MESSAGE_STATE_CHANGED:

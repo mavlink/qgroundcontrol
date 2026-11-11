@@ -31,6 +31,8 @@ constexpr qint64 kNoFrame = -1;
 
 constexpr int kVideoClockRate = 90000;
 constexpr quint32 kSsrc = 0x1234ABCD;
+// Added to a sequence number of _testRtpPacketCounter: the packet is of another SSRC.
+constexpr int kOtherSender = 0x10000;
 
 /// An RTP packet with a one-byte payload, stamped as arrived at @p arrivalMs.
 GstBuffer* makeRtpPacket(quint16 sequence, quint32 timestamp, qint64 arrivalMs, quint8 firstByte = 0x80)
@@ -408,15 +410,14 @@ void GstVideoReceiverComponentsTest::_testStatsProbe()
 
 void GstVideoReceiverComponentsTest::_testRtpPacketCounter_data()
 {
-    QTest::addColumn<QList<int>>("sequences");
-    QTest::addColumn<int>("secondSsrcFrom");  // The first packet of another SSRC; -1 for one sender.
+    QTest::addColumn<QList<int>>("sequences");  // Plus kOtherSender for a packet of another SSRC.
     QTest::addColumn<quint64>("received");
     QTest::addColumn<quint64>("lost");
 
-    const auto row = [](const char* name, const QList<int>& sequences, quint64 received, quint64 lost,
-                        int secondSsrcFrom = -1) {
-        QTest::newRow(name) << sequences << secondSsrcFrom << received << lost;
+    const auto row = [](const char* name, const QList<int>& sequences, quint64 received, quint64 lost) {
+        QTest::newRow(name) << sequences << received << lost;
     };
+    const int other = kOtherSender;
     row("first packet", {1000}, 1, 0);
     row("in order", {10, 11, 12, 13}, 4, 0);
     row("loss", {10, 11, 14, 15}, 4, 2);
@@ -443,27 +444,70 @@ void GstVideoReceiverComponentsTest::_testRtpPacketCounter_data()
     row("stray packet twice", {10, 40000, 40000, 11}, 2, 0);
     row("losses add up across a restart", {10, 12, 40000, 40001, 40003}, 5, 2);
     // Another sender's numbers continue nothing, however close they are.
-    row("new SSRC", {10, 11, 500, 501}, 4, 0, 2);
-    row("new SSRC, numbers go on after a gap", {10, 12, 15, 16}, 4, 1, 2);
+    row("new SSRC", {10, 11, other + 500, other + 501}, 4, 0);
+    row("new SSRC, numbers go on after a gap", {10, 12, other + 15, other + 16}, 4, 1);
+    row("new SSRC, next packet lost", {10, 11, other + 500, other + 502}, 4, 1);
+    // It takes two packets in a row to be the stream: one that strays in leaves the sequence, and its loss, alone.
+    row("stray packet of another SSRC", {10, other + 500, 12, 13}, 3, 1);
+    row("stray packets of another SSRC apart", {10, other + 500, 11, other + 501, 12}, 3, 0);
+    row("another SSRC, unconfirmed", {10, 11, other + 500}, 2, 0);
 }
 
 void GstVideoReceiverComponentsTest::_testRtpPacketCounter()
 {
     QFETCH(QList<int>, sequences);
-    QFETCH(int, secondSsrcFrom);
     QFETCH(quint64, received);
     QFETCH(quint64, lost);
 
     RtpPacketCounter counter(kVideoClockRate);
     QCOMPARE(counter.packetsReceived(), quint64(0));
     QCOMPARE(counter.packetsLost(), quint64(0));
-    for (qsizetype i = 0; i < sequences.size(); ++i) {
-        const quint32 ssrc = ((secondSsrcFrom >= 0) && (i >= secondSsrcFrom)) ? (kSsrc + 1) : kSsrc;
-        counter.add(static_cast<quint16>(sequences.at(i)), 0, ssrc, std::nullopt);
+    for (const int sequence : sequences) {
+        counter.add(static_cast<quint16>(sequence), 0, (sequence >= kOtherSender) ? (kSsrc + 1) : kSsrc, std::nullopt);
     }
     QCOMPARE(counter.packetsReceived(), received);
     QCOMPARE(counter.packetsLost(), lost);
     QVERIFY(!counter.jitterNs());
+}
+
+void GstVideoReceiverComponentsTest::_testRtpPacketCounterDropoutFollowsPacketRate_data()
+{
+    QTest::addColumn<int>("packetsPerSecond");
+    QTest::addColumn<int>("packetsMissing");
+    QTest::addColumn<bool>("countedAsLost");
+
+    // Up to ten seconds of packets may be lost; a longer jump is a sender that started over.
+    QTest::newRow("3 s of a 1500 packets/s stream") << 1500 << 4500 << true;
+    QTest::newRow("12 s of a 1500 packets/s stream") << 1500 << 18000 << false;
+    QTest::newRow("5 s of a 100 packets/s stream") << 100 << 500 << true;
+    QTest::newRow("20 s of a 100 packets/s stream") << 100 << 2000 << false;
+    // Not less than RtpPacketCounter::kMinDropout, however few packets a stream has.
+    QTest::newRow("20 s of a 1 packet/s stream") << 1 << 20 << true;
+}
+
+void GstVideoReceiverComponentsTest::_testRtpPacketCounterDropoutFollowsPacketRate()
+{
+    QFETCH(int, packetsPerSecond);
+    QFETCH(int, packetsMissing);
+    QFETCH(bool, countedAsLost);
+
+    // Three seconds of the stream measure its packet rate.
+    const int streamed = 3 * packetsPerSecond;
+    const auto timestamp = [packetsPerSecond](int packet) {
+        return static_cast<quint32>(qint64(packet) * kVideoClockRate / packetsPerSecond);
+    };
+    RtpPacketCounter counter(kVideoClockRate);
+    for (int packet = 0; packet <= streamed; ++packet) {
+        counter.add(static_cast<quint16>(packet), timestamp(packet), kSsrc, std::nullopt);
+    }
+    QCOMPARE(counter.packetsLost(), quint64(0));
+
+    // The stream goes on after the missing packets; a second packet confirms a sender that started over.
+    const int resumed = streamed + packetsMissing + 1;
+    counter.add(static_cast<quint16>(resumed), timestamp(resumed), kSsrc, std::nullopt);
+    counter.add(static_cast<quint16>(resumed + 1), timestamp(resumed + 1), kSsrc, std::nullopt);
+    QCOMPARE(counter.packetsReceived(), quint64(streamed + 3));
+    QCOMPARE(counter.packetsLost(), quint64(countedAsLost ? packetsMissing : 0));
 }
 
 void GstVideoReceiverComponentsTest::_testRtpPacketCounterJitter_data()

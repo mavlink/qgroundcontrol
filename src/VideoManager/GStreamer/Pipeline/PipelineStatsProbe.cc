@@ -11,10 +11,15 @@
 
 namespace {
 
+// On a jitter buffer: the packets its "drop-msg" messages told it dropped to stay within its latency. Kept with the
+// element, as its "stats" are, so that both go when rtspsrc replaces its jitter buffers on a reconnect.
+constexpr char kDroppedOnLatencyKey[] = "qgc-dropped-on-latency";
+
 struct JitterBufferTotals
 {
     bool found = false;
     quint64 packetsPushed = 0;
+    /// Never arrived ("num-lost"), or dropped on arrival to stay within the latency.
     quint64 packetsLost = 0;
     quint64 packetsLate = 0;
     quint64 packetsDuplicate = 0;
@@ -49,7 +54,8 @@ JitterBufferTotals jitterBufferTotals(GstElement* bin)
         auto* const sum = static_cast<JitterBufferTotals*>(data);
         sum->found = true;
         sum->packetsPushed += field("num-pushed");
-        sum->packetsLost += field("num-lost");
+        sum->packetsLost +=
+            field("num-lost") + GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(element), kDroppedOnLatencyKey));
         sum->packetsLate += field("num-late");
         sum->packetsDuplicate += field("num-duplicates");
         sum->rtxRequested += field("rtx-count");
@@ -102,6 +108,20 @@ void PipelineStatsProbe::noteBuffer(GstBuffer* buffer)
     if (GST_CLOCK_TIME_IS_VALID(time)) {
         _noteKeyframe(time);
     }
+}
+
+void PipelineStatsProbe::noteElementMessage(GstMessage* message)
+{
+    const GstStructure* const structure = gst_message_get_structure(message);
+    GstObject* const jitterBuffer = GST_MESSAGE_SRC(message);
+    guint dropped = 0;
+    // "num-too-late", the message's other count, is "num-late" of the jitter buffer's stats.
+    if (!structure || !jitterBuffer || !gst_structure_has_name(structure, "drop-msg") ||
+        !gst_structure_get_uint(structure, "num-drop-on-latency", &dropped) || (dropped == 0)) {
+        return;
+    }
+    const gsize total = GPOINTER_TO_SIZE(g_object_get_data(G_OBJECT(jitterBuffer), kDroppedOnLatencyKey)) + dropped;
+    g_object_set_data(G_OBJECT(jitterBuffer), kDroppedOnLatencyKey, GSIZE_TO_POINTER(total));
 }
 
 void PipelineStatsProbe::_noteKeyframe(GstClockTime time)

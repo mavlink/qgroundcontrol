@@ -142,13 +142,19 @@ void GstSourceFactoryTest::_testSourceFactoryUdpRtpJitterBuffer()
     QVERIFY2(jb, "static UDP-RTP path must insert an rtpjitterbuffer at NULL state");
 
     guint latency = 0;
-    gboolean doLost = FALSE, doRtx = TRUE, dropOnLatency = FALSE;
+    gboolean doLost = TRUE, doRtx = TRUE, dropOnLatency = FALSE;
     g_object_get(jb.get(), "latency", &latency, "do-lost", &doLost, "do-retransmission", &doRtx, "drop-on-latency",
                  &dropOnLatency, nullptr);
     QCOMPARE(latency, 80u);
-    QCOMPARE(doLost, TRUE);
+    QVERIFY2(!doLost, "as in rtspsrc's jitter buffers: nothing downstream acts on the events about lost packets");
     QVERIFY2(!doRtx, "plain UDP has no RTCP back-channel, so retransmission requests could never reach the sender");
     QCOMPARE(dropOnLatency, TRUE);
+
+    // Nothing reads the sender's address, which udpsrc otherwise attaches to every packet.
+    gboolean retrievesSenderAddress = TRUE;
+    g_object_get(GstTest::findByFactory(bin.get(), "udpsrc").get(), "retrieve-sender-address", &retrievesSenderAddress,
+                 nullptr);
+    QCOMPARE(retrievesSenderAddress, FALSE);
 }
 
 void GstSourceFactoryTest::_testSourceFactoryCountsRtpPacketsWithoutJitterBuffer_data()
@@ -273,9 +279,52 @@ void GstSourceFactoryTest::_testSourceFactoryRtspJitterBufferPolicy()
 
     gint rtxDelay = 0;
     gint rtxMaxRetries = 0;
-    g_object_get(internalBuffer.get(), "rtx-delay", &rtxDelay, "rtx-max-retries", &rtxMaxRetries, nullptr);
+    gboolean postsDrops = FALSE;
+    g_object_get(internalBuffer.get(), "rtx-delay", &rtxDelay, "rtx-max-retries", &rtxMaxRetries, "post-drop-messages",
+                 &postsDrops, nullptr);
     QCOMPARE(rtxDelay, expectedRtxDelay);
     QCOMPARE(rtxMaxRetries, expectedRtxMaxRetries);
+    QVERIFY2(postsDrops, "the packets rtspsrc's jitter buffers drop on latency are only told in their messages");
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspUdpBufferSize()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+
+    const GStreamer::SourceFactory::Config config;
+    const GStreamer::GstElementPtr udpBin = GstTest::createSource(QStringLiteral("udp://127.0.0.1:5600"), config);
+    const GStreamer::GstElementPtr rtspBin =
+        GstTest::createSource(QStringLiteral("rtsp://127.0.0.1:8554/test"), config);
+    const GStreamer::GstElementPtr udpsrc = GstTest::findByFactory(udpBin.get(), "udpsrc");
+    const GStreamer::GstElementPtr rtspsrc = GstTest::findByFactory(rtspBin.get(), "rtspsrc");
+    QVERIFY(udpsrc && rtspsrc);
+
+    // rtspsrc's default, 512 KiB, is more than a stock Linux allows a socket, which udpsrc warns about for every
+    // session, and less than udp:// streams get where the kernel allows more.
+    gint udpBufferSize = 0;
+    gint rtspUdpBufferSize = 0;
+    g_object_get(udpsrc.get(), "buffer-size", &udpBufferSize, nullptr);
+    g_object_get(rtspsrc.get(), "udp-buffer-size", &rtspUdpBufferSize, nullptr);
+    QVERIFY(udpBufferSize > 0);
+    QCOMPARE(rtspUdpBufferSize, udpBufferSize);
+}
+
+void GstSourceFactoryTest::_testSourceFactoryRtspTimestampsTcpPackets()
+{
+    GSTTEST_SKIP_UNLESS_FACTORIES("rtspsrc");
+
+    const GStreamer::GstElementPtr bin =
+        GstTest::createSource(QStringLiteral("rtspt://127.0.0.1:8554/test"), GStreamer::SourceFactory::Config{});
+    const GStreamer::GstElementPtr source = GstTest::findByFactory(bin.get(), "rtspsrc");
+    QVERIFY(source);
+    if (!g_object_class_find_property(G_OBJECT_GET_CLASS(source.get()), "tcp-timestamp")) {
+        QSKIP("rtspsrc has no tcp-timestamp before GStreamer 1.24.10");
+    }
+
+    // Without it the packets of a TCP session are timed by the camera's clock alone, which drifts against ours.
+    gboolean tcpTimestamp = FALSE;
+    g_object_get(source.get(), "tcp-timestamp", &tcpTimestamp, nullptr);
+    QCOMPARE(tcpTimestamp, TRUE);
 }
 
 void GstSourceFactoryTest::_testSourceFactoryRtspSelectsOnlyVideoStreams_data()

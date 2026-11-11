@@ -17,6 +17,8 @@ private slots:
     void _testSourceFactoryNoRetransmission();
     void _testSourceFactoryRtspJitterBufferPolicy_data();
     void _testSourceFactoryRtspJitterBufferPolicy();
+    void _testSourceFactoryRtspUdpBufferSize();
+    void _testSourceFactoryRtspTimestampsTcpPackets();
     void _testSourceFactoryRtspSelectsOnlyVideoStreams_data();
     void _testSourceFactoryRtspSelectsOnlyVideoStreams();
     void _testSourceFactoryRtspCredentials();

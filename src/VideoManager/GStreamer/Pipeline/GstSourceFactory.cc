@@ -194,7 +194,11 @@ GstElement* addJitterBuffer(GstElement* bin, guint latencyMs)
         return nullptr;
     }
 
-    g_object_set(buffer.get(), "latency", latencyMs, "do-lost", TRUE, "drop-on-latency", TRUE, nullptr);
+    // No "do-lost", as in rtspsrc's jitter buffers: nothing downstream acts on the GAP events it brings (the
+    // depayloader tells loss from the DISCONT flag, and the lost packets are counted either way), while one that
+    // reaches a parser ahead of the stream's parameter sets has it announce caps without them.
+    g_object_set(buffer.get(), "latency", latencyMs, "drop-on-latency", TRUE, nullptr);
+    reportDroppedPackets(buffer.get());
     return addToBin(bin, std::move(buffer), "rtpjitterbuffer");
 }
 
@@ -344,29 +348,9 @@ GstElementPtr buildUdpSource(const QUrl& sourceUrl, const char* rtpEncoding)
     // the other nothing and no error: a port in use has to fail to bind. The members of a multicast group do share it.
     const gboolean sharePort = QHostAddress(udpUrl.host()).isMulticast() ? TRUE : FALSE;
 
-    // SO_RCVBUF above net.core.rmem_max needs CAP_NET_ADMIN; without it gstudpsrc fails with EPERM
-    // (scary warning) then clamps. Request the kernel-permitted max instead (Linux/Android only).
-    int udpBufferSize = kUdpBufferSizeBytes;
-#ifdef Q_OS_LINUX
-    // rmem_max is a boot-time sysctl; parse once and cache (0 = unreadable, leave request unclamped).
-    static const int s_rmemMax = [] {
-        QFile rmemMaxFile(QStringLiteral("/proc/sys/net/core/rmem_max"));
-        if (rmemMaxFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            bool ok = false;
-            const int sysMax = rmemMaxFile.readAll().trimmed().toInt(&ok);
-            if (ok && (sysMax > 0)) {
-                return sysMax;
-            }
-        }
-        return 0;
-    }();
-    if ((s_rmemMax > 0) && (s_rmemMax < udpBufferSize)) {
-        qCDebug(GstSourceFactoryLog) << "Clamping UDP buffer-size from" << udpBufferSize << "to net.core.rmem_max"
-                                     << s_rmemMax;
-        udpBufferSize = s_rmemMax;
-    }
-#endif
-    g_object_set(source.get(), "uri", udpUri.constData(), "buffer-size", udpBufferSize, "reuse", sharePort, nullptr);
+    // Nothing reads the sender's address, which udpsrc otherwise allocates a meta for with every packet.
+    g_object_set(source.get(), "uri", udpUri.constData(), "buffer-size", udpReceiveBufferSize(), "reuse", sharePort,
+                 "retrieve-sender-address", FALSE, nullptr);
 
     if (rtpEncoding) {
         const GstCapsPtr caps = adoptCaps(gst_caps_new_simple("application/x-rtp", "media", G_TYPE_STRING, "video",
@@ -506,6 +490,42 @@ bool linkUdpRtpToDepayAndParser(GstElement* bin, GstElement* source, GstElement*
 }
 
 }  // namespace
+
+int udpReceiveBufferSize()
+{
+    // SO_RCVBUF above net.core.rmem_max needs CAP_NET_ADMIN; without it gstudpsrc fails with EPERM
+    // (scary warning) then clamps. Request the kernel-permitted max instead (Linux/Android only).
+    int udpBufferSize = kUdpBufferSizeBytes;
+#ifdef Q_OS_LINUX
+    // rmem_max is a boot-time sysctl; parse once and cache (0 = unreadable, leave request unclamped).
+    static const int s_rmemMax = [] {
+        QFile rmemMaxFile(QStringLiteral("/proc/sys/net/core/rmem_max"));
+        if (rmemMaxFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            bool ok = false;
+            const int sysMax = rmemMaxFile.readAll().trimmed().toInt(&ok);
+            if (ok && (sysMax > 0)) {
+                return sysMax;
+            }
+        }
+        return 0;
+    }();
+    if ((s_rmemMax > 0) && (s_rmemMax < udpBufferSize)) {
+        qCDebug(GstSourceFactoryLog) << "Clamping UDP buffer-size from" << udpBufferSize << "to net.core.rmem_max"
+                                     << s_rmemMax;
+        udpBufferSize = s_rmemMax;
+    }
+#endif
+    return udpBufferSize;
+}
+
+void reportDroppedPackets(GstElement* jitterBuffer)
+{
+    // GStreamer 1.18. A message for every packet, rather than the default of one every 200 ms that tells of those
+    // dropped since the last: the rest of a burst would only be told with the next one, which may never come.
+    if (g_object_class_find_property(G_OBJECT_GET_CLASS(jitterBuffer), "post-drop-messages")) {
+        g_object_set(jitterBuffer, "post-drop-messages", TRUE, "drop-messages-interval", 0u, nullptr);
+    }
+}
 
 GstElement* create(const QString& uri, const Config& config)
 {

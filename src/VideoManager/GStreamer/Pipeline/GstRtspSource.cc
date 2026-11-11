@@ -12,29 +12,35 @@ namespace GStreamer::SourceFactory {
 
 namespace {
 
-// rtspsrc gives up on a TCP connection (RTSP control, or interleaved data) that stays silent this long.
+// How long rtspsrc waits to connect and for the answer to each request (20 s by default). It doesn't end a stream
+// whose TCP-interleaved data stops: there rtspsrc only sends a keep-alive when the time is up, and it is the
+// receiver's watchdog that notices the stall.
 constexpr guint64 kRtspTcpTimeoutUs = G_GUINT64_CONSTANT(5000000);
 
 // Fixed rtx timing instead of the auto(-1) heuristic, which can stack retries and balloon playout
 // latency: bounded recovery latency over a lossy RF link.
 constexpr int kRtxDelayMs = 25;
+// One retry after the first request: at most two requests for a packet.
 constexpr int kRtxMaxRetries = 1;
 
+/// @p data: non-null to set the retransmission timing.
 void configureRtspJitterBuffer([[maybe_unused]] GstElement* manager, GstElement* jitterBuffer,
-                               [[maybe_unused]] guint session, [[maybe_unused]] guint ssrc,
-                               [[maybe_unused]] gpointer data)
+                               [[maybe_unused]] guint session, [[maybe_unused]] guint ssrc, gpointer data)
 {
-    g_object_set(jitterBuffer, "rtx-delay", kRtxDelayMs, "rtx-max-retries", kRtxMaxRetries, nullptr);
+    reportDroppedPackets(jitterBuffer);
+    if (data) {
+        g_object_set(jitterBuffer, "rtx-delay", kRtxDelayMs, "rtx-max-retries", kRtxMaxRetries, nullptr);
+    }
 }
 
-void connectRtspJitterBufferPolicy([[maybe_unused]] GstElement* rtspsrc, GstElement* manager,
-                                   [[maybe_unused]] gpointer data)
+/// @p data: passed on to configureRtspJitterBuffer().
+void connectRtspJitterBufferPolicy([[maybe_unused]] GstElement* rtspsrc, GstElement* manager, gpointer data)
 {
     // rtspsrc picks rtpdec instead of rtpbin for RealMedia; only rtpbin exposes its jitterbuffers.
     if (g_signal_lookup("new-jitterbuffer", G_OBJECT_TYPE(manager)) == 0) {
         return;
     }
-    (void) g_signal_connect(manager, "new-jitterbuffer", G_CALLBACK(configureRtspJitterBuffer), nullptr);
+    (void) g_signal_connect(manager, "new-jitterbuffer", G_CALLBACK(configureRtspJitterBuffer), data);
 }
 
 // Runs before SETUP, so skipped SDP streams cost no bandwidth and can't claim the video parser. The caps are
@@ -112,11 +118,21 @@ GstElementPtr buildRtspSource(const QString& uri, const QUrl& sourceUrl, const C
     g_object_set(source.get(), "location", cleanLocation.constData(), "latency", rtspLatencyMs, "do-rtcp", TRUE,
                  "do-retransmission", doRetransmission, "tcp-timeout", kRtspTcpTimeoutUs, "udp-reconnect", TRUE,
                  "drop-on-latency", TRUE, "timeout", kRtspUdpTimeoutUs, "protocols", kRtspProtocols, nullptr);
-
-    // rtspsrc forwards latency/drop-on-latency/do-retransmission to its rtpbin, but not the rtx timing.
-    if (doRetransmission) {
-        (void) g_signal_connect(source.get(), "new-manager", G_CALLBACK(connectRtspJitterBufferPolicy), nullptr);
+    // rtspsrc's own 512 KiB is more than a stock Linux lets a socket ask for, which udpsrc warns about, and less than
+    // the factory's other UDP sockets get where the kernel allows more.
+    g_object_set(source.get(), "udp-buffer-size", udpReceiveBufferSize(), nullptr);
+    // Over TCP rtspsrc stamps only the first packet with its arrival time and derives the others from their RTP
+    // timestamps, so the camera's clock drifts against ours until, with a short latency, every packet is late. With
+    // this (GStreamer 1.24.10) each packet gets its arrival time, as over UDP, and the jitter buffer evens out the
+    // drift.
+    if (g_object_class_find_property(G_OBJECT_GET_CLASS(source.get()), "tcp-timestamp")) {
+        g_object_set(source.get(), "tcp-timestamp", TRUE, nullptr);
     }
+
+    // rtspsrc forwards latency/drop-on-latency/do-retransmission to its rtpbin, but neither the rtx timing nor the
+    // messages about dropped packets.
+    (void) g_signal_connect(source.get(), "new-manager", G_CALLBACK(connectRtspJitterBufferPolicy),
+                            doRetransmission ? GINT_TO_POINTER(TRUE) : nullptr);
     (void) g_signal_connect(source.get(), "select-stream", G_CALLBACK(selectVideoStream), nullptr);
 
     const QString rtspUser = sourceUrl.userName(QUrl::FullyDecoded);

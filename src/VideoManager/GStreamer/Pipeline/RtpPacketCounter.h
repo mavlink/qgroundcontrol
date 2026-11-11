@@ -12,18 +12,25 @@
 /// wraparounds. A packet that arrives late is therefore no longer lost, and one that arrives twice counts once, both
 /// as far back as kReorderWindow packets.
 ///
-/// A sender that starts over begins a new sequence: one with another SSRC at once, one whose sequence numbers are too
-/// far from the last ones to be loss or reordering with the second packet that goes on from there, so a single stray
-/// packet changes nothing. The totals go on across sequences, without the packets lost between them, which nothing
-/// tells.
+/// A sender that starts over begins a new sequence: with another SSRC, or with sequence numbers too far from the last
+/// ones to be loss or reordering. Either way it starts with the second packet that goes on from the first, so a single
+/// stray packet changes nothing. The totals go on across sequences, without the packets lost between them, which
+/// nothing tells.
+///
+/// How far ahead is too far for loss follows the sender's packet rate, measured from the RTP timestamps: what it sends
+/// in kMaxDropoutSeconds, as rtpbin does (its "max-dropout-time").
 ///
 /// Not thread-safe: the thread the packets arrive on adds them.
 class RtpPacketCounter
 {
 public:
     /// A packet this far ahead of the highest sequence number, or further, isn't the next one after a loss (RFC 3550's
-    /// MAX_DROPOUT).
-    static constexpr int kMaxDropout = 3000;
+    /// MAX_DROPOUT), while the packet rate isn't known: before a second of the stream, and without a clock rate.
+    static constexpr int kDefaultMaxDropout = 3000;
+    /// With a packet rate, that is as many packets as the sender sends in this time, but kMinDropout at least. A
+    /// receiver gives up on a stream that is silent for a few seconds, well before this.
+    static constexpr int kMaxDropoutSeconds = 10;
+    static constexpr int kMinDropout = 30;
     /// A packet less than this far behind the highest sequence number is a late one or a duplicate, which the packets
     /// seen there tell apart. RFC 3550's MAX_MISORDER, 100, is for audio's tens of packets a second, where video sends
     /// hundreds to thousands.
@@ -46,9 +53,12 @@ public:
 
 private:
     void _startSequence(quint16 sequence, quint32 ssrc);
-    /// False for a packet that doesn't count: a duplicate, one from before the sequence, or one too far from it.
-    bool _continueSequence(quint16 sequence);
+    /// False for a packet that doesn't count: a duplicate, one from before the sequence, or one too far from it or of
+    /// another sender.
+    bool _continueSequence(quint16 sequence, quint32 ssrc);
     quint64 _sequenceLost() const;
+    qint64 _maxDropout() const;
+    void _notePacketRate(quint32 timestamp);
     void _noteArrival(quint32 timestamp, qint64 arrivalNs);
 
     const int _clockRate;
@@ -62,8 +72,22 @@ private:
     quint64 _received = 0;
     /// Bit n: the packet n sequence numbers behind _maxSeq arrived.
     std::bitset<kReorderWindow> _seen;
-    /// The last packet too far from the sequence to count: where a new one starts if the next packet goes on from it.
-    std::optional<quint16> _restartSeq = std::nullopt;
+
+    struct Restart
+    {
+        quint32 ssrc;
+        quint16 sequence;
+    };
+
+    /// The last packet that didn't count for being too far from the sequence or of another sender: where a new
+    /// sequence starts if the next packet goes on from it.
+    std::optional<Restart> _restart = std::nullopt;
+
+    /// The sender's packets per second, lost ones included; 0 until measured.
+    qint64 _packetRate = 0;
+    /// Where the current measurement of the packet rate started: _maxSeq then, and that packet's timestamp.
+    std::optional<qint64> _rateSeq = std::nullopt;
+    quint32 _rateTimestamp = 0;
 
     /// The sequences before the current one.
     quint64 _receivedBefore = 0;
