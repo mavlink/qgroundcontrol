@@ -125,7 +125,9 @@ SubtitleWriter::Sample SubtitleWriter::_sample(qint64 startMs) const
         return sample;
     }
 
-    sample.date = QDateTime::currentDateTime().toString(QLocale::system().dateFormat(QLocale::ShortFormat));
+    // The clock time lets a recording be matched with the flight's logs.
+    sample.dateTime = QDateTime::currentDateTime().toString(QLocale::system().dateFormat(QLocale::ShortFormat) +
+                                                            QStringLiteral(" HH:mm:ss"));
     for (const TelemetryBarValues::Value& value : *values) {
         sample.names << QStringLiteral("%1:").arg(value.name);
         sample.values << value.value;
@@ -135,7 +137,7 @@ SubtitleWriter::Sample SubtitleWriter::_sample(qint64 startMs) const
 
 void SubtitleWriter::_writeSample(const Sample& sample, qint64 endMs)
 {
-    if ((sample.startMs < 0) || sample.date.isEmpty() || (endMs <= sample.startMs) || !_file.isOpen()) {
+    if ((sample.startMs < 0) || sample.dateTime.isEmpty() || (endMs <= sample.startMs) || !_file.isOpen()) {
         return;
     }
 
@@ -155,5 +157,5 @@ void SubtitleWriter::_writeSample(const Sample& sample, qint64 endMs)
                       .arg(start, end, QString::number(x), y,
                            sample.values.mid(column * valuesPerColumn, valuesPerColumn).join(QStringLiteral("\\N")));
     }
-    stream << QStringLiteral("Dialogue: 0,%1,%2,Default,,0,0,0,,{\\pos(10,35)}%3\n").arg(start, end, sample.date);
+    stream << QStringLiteral("Dialogue: 0,%1,%2,Default,,0,0,0,,{\\pos(10,35)}%3\n").arg(start, end, sample.dateTime);
 }

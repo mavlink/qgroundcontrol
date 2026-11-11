@@ -1,6 +1,7 @@
 #include "SubtitleWriterTest.h"
 
 #include <QtCore/QFile>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QUrl>
 #include <QtCore/QVariantMap>
@@ -83,7 +84,7 @@ void SubtitleWriterTest::_testReadsBack()
     writer._writeSample(writer._sample(0), 1000);
     writer.stopCapturingTelemetry();
 
-    // The Video Recordings page's reader shows each column's names and values, and the date.
+    // The Video Recordings page's reader shows each column's names and values, and the date and time.
     SubtitleTrack track;
     track.setSource(QUrl::fromLocalFile(dir.filePath(QStringLiteral("flight.ass"))));
     QCOMPARE(track.playResX(), 1280);
@@ -95,6 +96,8 @@ void SubtitleWriterTest::_testReadsBack()
     QCOMPARE(firstNames.value(QStringLiteral("alignment")).toInt(), 3);
     QVERIFY(firstNames.value(QStringLiteral("text")).toString().startsWith(names.first()));
     QCOMPARE(events.at(1).toMap().value(QStringLiteral("alignment")).toInt(), 1);
+    static const QRegularExpression clockTime(QStringLiteral(R"( \d\d:\d\d:\d\d$)"));
+    QVERIFY(events.at(6).toMap().value(QStringLiteral("text")).toString().contains(clockTime));
     track.setPosition(1000);
     QVERIFY(track.events().isEmpty());
 }

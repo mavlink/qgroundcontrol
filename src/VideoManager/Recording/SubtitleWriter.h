@@ -39,7 +39,7 @@ private:
         qint64 startMs = -1;
         QStringList names;
         QStringList values;
-        QString date;
+        QString dateTime;
     };
 
     void _captureTelemetry();
