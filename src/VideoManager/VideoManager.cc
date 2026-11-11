@@ -350,6 +350,7 @@ void VideoManager::stopVideo()
     qCDebug(VideoManagerLog) << "stopVideo";
 
     _videoStopped = true;
+    _updateState();
     _primaryStream->stop();
     _thermalStream->stop();
 }
@@ -448,7 +449,13 @@ void VideoManager::_updateState()
     }
 
     const QString videoSource = _videoSettings->videoSource()->rawValue().toString();
-    const bool streamWanted = _videoSettings->streamEnabled()->rawValue().toBool() && !_disabledWhileDisarmed;
+    const bool streamEnabled = _videoSettings->streamEnabled()->rawValue().toBool();
+    const bool streamWanted = streamEnabled && !_disabledWhileDisarmed;
+    // The reason that takes the most to lift comes first: arming doesn't bring back video that was stopped.
+    const NoVideoReason noVideoReason = !streamEnabled           ? NoVideoReason::Disabled
+                                        : _videoStopped          ? NoVideoReason::Stopped
+                                        : _disabledWhileDisarmed ? NoVideoReason::DisabledWhileDisarmed
+                                                                 : NoVideoReason::Waiting;
     const bool autoStreamConfigured = VideoStreamResolver::isAutoStream(_primaryStream->streamInfo());
     const bool isStreamSource = VideoStreamResolver::isNetworkSource(videoSource) || autoStreamConfigured;
     const bool cameraSource = streamWanted && !isStreamSource;
@@ -490,6 +497,10 @@ void VideoManager::_updateState()
     if (hasThermal != _hasThermal) {
         _hasThermal = hasThermal;
         emit hasThermalChanged();
+    }
+    if (noVideoReason != _noVideoReason) {
+        _noVideoReason = noVideoReason;
+        emit noVideoReasonChanged();
     }
 }
 

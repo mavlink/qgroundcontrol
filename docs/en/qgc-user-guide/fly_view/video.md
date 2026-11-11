@@ -18,6 +18,10 @@ You can further configure video display using controls on the switcher:
 When a stream is lost, its last picture stays on screen, dimmed, under **VIDEO LOST - RECONNECTING** until the video
 returns. A stream you stop or change is cleared instead.
 
+A video view without a picture says why: **WAITING FOR VIDEO** until the stream arrives, **VIDEO DISABLED WHILE
+DISARMED** when [Disable Video Stream When Disarmed](../settings_view/video.md#settings) has stopped it until the vehicle
+arms, and **VIDEO STOPPED** once the video was stopped.
+
 ## Video Statistics
 
 While a video stream plays, the [Video indicator](fly_view_toolbar.md#video) in the Fly View toolbar shows its frame

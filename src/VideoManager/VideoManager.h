@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <functional>
 
 #include <QtCore/QFuture>
@@ -38,6 +39,7 @@ class VideoManager : public QObject
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
     Q_PROPERTY(bool isStreamSource READ isStreamSource NOTIFY isStreamSourceChanged)
     Q_PROPERTY(bool isUvc READ isUvc NOTIFY isUvcChanged)
+    Q_PROPERTY(NoVideoReason noVideoReason READ noVideoReason NOTIFY noVideoReasonChanged)
     Q_PROPERTY(bool recording READ recording NOTIFY recordingChanged)
     Q_PROPERTY(double aspectRatio READ aspectRatio NOTIFY aspectRatioChanged)
     Q_PROPERTY(double thermalAspectRatio READ thermalAspectRatio NOTIFY aspectRatioChanged)
@@ -54,6 +56,16 @@ public:
     ~VideoManager() override;
 
     static VideoManager* instance();
+
+    /// Why a video view without a picture has none.
+    enum class NoVideoReason : uint8_t
+    {
+        Waiting,                ///< Nothing keeps the video from playing: it is awaited.
+        Stopped,                ///< stopVideo(), until startVideo().
+        DisabledWhileDisarmed,  ///< VideoSettings::disableWhenDisarmed, until the vehicle arms.
+        Disabled,               ///< VideoSettings::streamEnabled is off.
+    };
+    Q_ENUM(NoVideoReason)
 
     /// Saves the frame on display to @p imageFile (default: a timestamped file in the photo directory), and the
     /// thermal stream's frame, when it is streaming, to the same name tagged ".thermalVideo". The files are written
@@ -96,6 +108,8 @@ public:
 
     bool isUvc() const { return !_uvcVideoSourceID.isEmpty(); }
 
+    NoVideoReason noVideoReason() const { return _noVideoReason; }
+
     bool recording() const;
     double aspectRatio() const;
     double thermalAspectRatio() const;
@@ -115,6 +129,7 @@ signals:
     void hasVideoChanged();
     void isStreamSourceChanged();
     void isUvcChanged();
+    void noVideoReasonChanged();
     void recordingChanged(bool recording);
     void telemetryOverlayTextChanged();
     void uvcVideoSourceIDChanged();
@@ -168,5 +183,6 @@ private:
     bool _hasThermal = false;
     bool _hasVideo = false;
     bool _isStreamSource = false;
+    NoVideoReason _noVideoReason = NoVideoReason::Waiting;
     QString _uvcVideoSourceID;
 };

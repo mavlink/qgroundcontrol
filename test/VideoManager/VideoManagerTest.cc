@@ -91,6 +91,16 @@ QtObject {
 }
 )QML";
 
+constexpr const char* kPlaceholderQml = R"QML(
+import QtQuick
+import QGroundControl.VideoManager
+
+NoVideoPlaceholder {
+    width: 400
+    height: 300
+}
+)QML";
+
 constexpr const char* kVideoViewQml = R"QML(
 import QtQuick
 import QGroundControl.VideoManager
@@ -484,6 +494,57 @@ void VideoManagerTest::_testDisableWhenDisarmed()
     QVERIFY(_videoManager->hasVideo());
     _settle();
     QVERIFY(_primary->active());
+}
+
+void VideoManagerTest::_testPlaceholderTellsWhyThereIsNoVideo_data()
+{
+    QTest::addColumn<int>("reason");
+    QTest::addColumn<QString>("text");
+
+    QTest::newRow("awaited") << int(VideoManager::NoVideoReason::Waiting) << "WAITING FOR VIDEO";
+    QTest::newRow("stopped") << int(VideoManager::NoVideoReason::Stopped) << "VIDEO STOPPED";
+    QTest::newRow("disarmed") << int(VideoManager::NoVideoReason::DisabledWhileDisarmed)
+                              << "VIDEO DISABLED WHILE DISARMED";
+    QTest::newRow("stopped and disarmed") << int(VideoManager::NoVideoReason::Stopped) << "VIDEO STOPPED";
+    QTest::newRow("setting off") << int(VideoManager::NoVideoReason::Disabled) << "VIDEO DISABLED";
+}
+
+void VideoManagerTest::_testPlaceholderTellsWhyThereIsNoVideo()
+{
+    QFETCH(int, reason);
+    QFETCH(QString, text);
+
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/qml"));
+    QQmlComponent component(&engine);
+    component.setData(kPlaceholderQml, QUrl(QStringLiteral("qrc:/VideoManagerTest/Placeholder.qml")));
+    const std::unique_ptr<QQuickItem> placeholder(qobject_cast<QQuickItem*>(component.createWithInitialProperties(
+        {{QStringLiteral("videoManager"), QVariant::fromValue(_videoManager.get())}})));
+    QVERIFY2(placeholder, qPrintable(component.errorString()));
+    // Items outside a scene are never visible.
+    QQuickWindow window;
+    placeholder->setParentItem(window.contentItem());
+    QVERIFY(showsText(placeholder.get(), QStringLiteral("WAITING FOR VIDEO")));
+
+    const QString row = QString::fromLatin1(QTest::currentDataTag());
+    if (row.contains(QLatin1String("disarmed"))) {
+        _facts->set(_videoSettings->disableWhenDisarmed(), true);
+        _videoManager->_onArmedChanged(false);
+    }
+    if (row.contains(QLatin1String("stopped"))) {
+        _videoManager->stopVideo();
+    }
+    if (row == QLatin1String("setting off")) {
+        _facts->set(_videoSettings->streamEnabled(), false);
+    }
+    QCOMPARE(int(_videoManager->noVideoReason()), reason);
+    QVERIFY(showsText(placeholder.get(), text));
+
+    // startVideo() lifts all but the setting.
+    _videoManager->startVideo();
+    QCOMPARE(_videoManager->noVideoReason(), (row == QLatin1String("setting off"))
+                                                 ? VideoManager::NoVideoReason::Disabled
+                                                 : VideoManager::NoVideoReason::Waiting);
 }
 
 void VideoManagerTest::_testVideoOutputRegistration()

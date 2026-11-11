@@ -3,14 +3,27 @@ import QtQuick
 import QGroundControl
 import QGroundControl.Controls
 
-// What a video view shows without video: whether the stream is awaited or disabled, over a background picture.
+// What a video view shows without video: why it has none, over a background picture.
 Image {
     id: root
 
     /// Small text, for a picture-in-picture view.
     property bool useSmallFont: true
+    /// The manager whose reason for having no video is shown.
+    property VideoManager videoManager: QGroundControl.videoManager
 
-    readonly property VideoSettings _videoSettings: QGroundControl.settingsManager.videoSettings
+    readonly property string _reasonText: {
+        switch (root.videoManager.noVideoReason) {
+        case VideoManager.NoVideoReason.Disabled:
+            return qsTr("VIDEO DISABLED")
+        case VideoManager.NoVideoReason.DisabledWhileDisarmed:
+            return qsTr("VIDEO DISABLED WHILE DISARMED")
+        case VideoManager.NoVideoReason.Stopped:
+            return qsTr("VIDEO STOPPED")
+        default:
+            return qsTr("WAITING FOR VIDEO")
+        }
+    }
 
     source:     "/res/NoVideoBackground.jpg"
     sourceSize: Qt.size(root.width, root.height)
@@ -19,6 +32,6 @@ Image {
     VideoStatusLabel {
         anchors.centerIn:   parent
         useSmallFont:       root.useSmallFont
-        text:               root._videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
+        text:               root._reasonText
     }
 }

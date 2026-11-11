@@ -33,6 +33,8 @@ private slots:
     void _testThermalOnlyChangeReconfiguresThermal();
     void _testDisableWhenDisarmed_data();
     void _testDisableWhenDisarmed();
+    void _testPlaceholderTellsWhyThereIsNoVideo_data();
+    void _testPlaceholderTellsWhyThereIsNoVideo();
     void _testVideoOutputRegistration();
     void _testQmlVideoOutputRegistersItself();
     void _testScreenshotsComeFromStreamsOnDisplay();
