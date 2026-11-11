@@ -420,7 +420,7 @@ double VideoManager::thermalAspectRatio() const
     return _thermalStream->aspectRatio();
 }
 
-void VideoManager::setfullScreen(bool on)
+void VideoManager::setFullScreen(bool on)
 {
     if (on && (!_hasVideo || !_activeVehicle || _activeVehicle->vehicleLinkManager()->communicationLost())) {
         on = false;
@@ -475,7 +475,7 @@ void VideoManager::_updateState()
         emit hasVideoChanged();
         if (!_hasVideo) {
             // The Fly View swaps the video out of its PiP when hasVideo drops; nothing in QML could leave full screen.
-            setfullScreen(false);
+            setFullScreen(false);
         }
     }
     if (hasThermal != _hasThermal) {
@@ -518,7 +518,7 @@ void VideoManager::_setActiveVehicle(Vehicle* vehicle)
         }
         _reconnectStreams();
     } else {
-        setfullScreen(false);
+        setFullScreen(false);
     }
 
     _updateStreamInfo();
@@ -545,7 +545,7 @@ void VideoManager::_onArmedChanged(bool armed)
 void VideoManager::_communicationLostChanged(bool communicationLost)
 {
     if (communicationLost) {
-        setfullScreen(false);
+        setFullScreen(false);
     } else {
         _reconnectStreams();
     }
