@@ -33,9 +33,9 @@ QGC_LOGGING_CATEGORY(UnicoreProtocolLog, "GPS.Protocols.Unicore")
 // Sections 3, 7.3.1, 7.3.27, 7.3.44; Appendices 1/2 and position/solution status tables.
 // Captured command-reply framing (XOR includes '$'):
 // https://s-taka.org/control-command-for-gnss-receiver-um982/
-namespace {
+namespace Unicore {
 
-namespace Plan = Unicore::Plan;
+namespace {
 
 /// A command reply is "$command,<text>,response: <status>*hh", echoing the command's text.
 constexpr std::string_view REPLY_PREFIX = "$command,";
@@ -518,8 +518,6 @@ QLatin1StringView signature(const GPSFrame& frame)
 }
 
 }  // namespace
-
-namespace Unicore {
 
 const GPSReceiverFamily FAMILY{
     .type = GPSType::Unicore,

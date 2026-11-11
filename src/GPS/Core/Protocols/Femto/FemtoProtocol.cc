@@ -18,6 +18,8 @@
 
 QGC_LOGGING_CATEGORY(FemtoProtocolLog, "GPS.Protocols.Femto")
 
+namespace Femto {
+
 namespace {
 
 /// Configures a Femtomes receiver from Femto::Plan at the rate selected or detected, else Plan::BAUD: stops its logs,
@@ -178,8 +180,6 @@ bool Protocol::probe(GPSCommandChannel& channel)
 }
 
 }  // namespace
-
-namespace Femto {
 
 const GPSReceiverFamily FAMILY{
     .type = GPSType::Femto,

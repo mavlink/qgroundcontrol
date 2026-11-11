@@ -25,9 +25,9 @@
 
 QGC_LOGGING_CATEGORY(AshtechProtocolLog, "GPS.Protocols.Ashtech")
 
-namespace {
+namespace Ashtech {
 
-namespace Plan = Ashtech::Plan;
+namespace {
 
 /// The number in @a field, @a fallback when the field is empty, or nothing when it is malformed.
 template <typename T>
@@ -708,8 +708,6 @@ QLatin1StringView signature(const GPSFrame& frame)
 }
 
 }  // namespace
-
-namespace Ashtech {
 
 const GPSReceiverFamily FAMILY{
     .type = GPSType::Trimble,

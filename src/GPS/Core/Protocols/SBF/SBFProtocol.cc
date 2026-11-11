@@ -28,6 +28,8 @@
 
 QGC_LOGGING_CATEGORY(SBFProtocolLog, "GPS.Protocols.SBF")
 
+namespace SBF {
+
 namespace {
 
 constexpr double DNU = 100000.0;
@@ -356,8 +358,6 @@ bool Protocol::probe(GPSCommandChannel& channel)
 }
 
 }  // namespace
-
-namespace SBF {
 
 const GPSReceiverFamily FAMILY{
     .type = GPSType::Septentrio,

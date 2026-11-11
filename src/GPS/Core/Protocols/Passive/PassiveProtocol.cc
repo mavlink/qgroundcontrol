@@ -16,6 +16,8 @@
 
 QGC_LOGGING_CATEGORY(PassiveProtocolLog, "GPS.Protocols.Passive")
 
+namespace Passive {
+
 namespace {
 
 /// Standard NMEA, decoded as the ASCII families decode it.
@@ -207,8 +209,6 @@ private:
 };
 
 }  // namespace
-
-namespace Passive {
 
 const GPSReceiverFamily FAMILY{
     .type = GPSType::Passive,

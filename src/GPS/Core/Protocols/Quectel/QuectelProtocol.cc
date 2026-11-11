@@ -28,9 +28,10 @@
 
 QGC_LOGGING_CATEGORY(QuectelProtocolLog, "GPS.Protocols.Quectel")
 
+namespace Quectel {
+
 namespace {
 
-namespace Plan = Quectel::Plan;
 using QuectelCodec::Fields;
 using QuectelCodec::number;
 using QuectelCodec::readback;
@@ -756,8 +757,6 @@ bool Protocol::probe(GPSCommandChannel& channel)
 }
 
 }  // namespace
-
-namespace Quectel {
 
 const GPSReceiverFamily FAMILY{
     .type = GPSType::Quectel,
