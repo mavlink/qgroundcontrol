@@ -32,15 +32,10 @@ public:
         }
     }
 
-    void finishNow()
-    {
-        if (_cannedError != NoError) {
-            setError(_cannedError, QStringLiteral("canned error"));
-            emit errorOccurred(_cannedError);
-        }
-        setFinished(true);
-        emit finished();
-    }
+    void finishNow() { _finish(_cannedError); }
+
+    /// Finishes a held reply with @a error instead of the canned one
+    void failNow(NetworkError error) { _finish(error); }
 
     void abort() final {}
 
@@ -59,6 +54,16 @@ protected:
     }
 
 private:
+    void _finish(NetworkError error)
+    {
+        if (error != NoError) {
+            setError(error, QStringLiteral("canned error"));
+            emit errorOccurred(error);
+        }
+        setFinished(true);
+        emit finished();
+    }
+
     const QByteArray _body;
     const NetworkError _cannedError;
     qint64 _offset = 0;

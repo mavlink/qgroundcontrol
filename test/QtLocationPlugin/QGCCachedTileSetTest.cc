@@ -263,6 +263,7 @@ void QGCCachedTileSetTest::_testDownload_data()
     QTest::addColumn<QByteArray>("serverBody");
     QTest::addColumn<bool>("stored");
     QTest::addColumn<bool>("failed");
+    QTest::addColumn<bool>("lastTileFails");
     QTest::addColumn<QString>("expectedWarning");
 
     QString mapType;
@@ -275,14 +276,18 @@ void QGCCachedTileSetTest::_testDownload_data()
     }
 
     QTest::newRow("tiles stored in the set")
-        << mapType << 8.50 << 16 << tileReplyPngBody() << true << false << QString();
+        << mapType << 8.50 << 16 << tileReplyPngBody() << true << false << false << QString();
     // The two rows below download one tile, for the one warning each.
     // A bad answer must count as an error and must not stall the download.
     QTest::newRow("server answers without a tile")
-        << mapType << 8.60 << 14 << QByteArray() << false << true << QStringLiteral("Error fetching tile");
+        << mapType << 8.60 << 14 << QByteArray() << false << true << false << QStringLiteral("Error fetching tile");
     // The set is done, without an error, when its provider has no tile to give
     QTest::newRow("provider has no tile") << QStringLiteral("Bing Hybrid") << 8.70 << 14 << tileReplyBingPlaceholder()
-                                          << false << false << QStringLiteral("_savedTileCount=0");
+                                          << false << false << false << QStringLiteral("_savedTileCount=0");
+    // The set is not done while a tile is being fetched: that tile can fail. Few enough tiles to be fetched at once.
+    QTest::newRow("last tile fails after the others are stored")
+        << mapType << 8.80 << 15 << tileReplyPngBody() << true << false << true
+        << QStringLiteral("Error fetching tile");
 }
 
 void QGCCachedTileSetTest::_testDownload()
@@ -293,6 +298,7 @@ void QGCCachedTileSetTest::_testDownload()
     QFETCH(QByteArray, serverBody);
     QFETCH(bool, stored);
     QFETCH(bool, failed);
+    QFETCH(bool, lastTileFails);
     QFETCH(QString, expectedWarning);
 
     QVERIFY(!providerType.isEmpty());
@@ -308,6 +314,8 @@ void QGCCachedTileSetTest::_testDownload()
         tileCount += UrlFactory::getTileCount(zoom, leftLon, kTopLat, rightLon, kBottomLat, providerType).tileCount;
     }
     QCOMPARE_GE(tileCount, static_cast<quint32>(maxZoom - kMinZoom + 1));
+    const quint32 failedCount = lastTileFails ? 1U : (failed ? tileCount : 0U);
+    const quint32 storedCount = stored ? (tileCount - failedCount) : 0U;
 
     QGCMapEngine* const engine = getQGCMapEngine();
     engine->ensureInitialized();
@@ -332,7 +340,12 @@ void QGCCachedTileSetTest::_testDownload()
 
     TileReplyMockNam nam;
     nam.body = serverBody;
+    nam.holdReplies = lastTileFails;
     set->setNetworkManager(&nam);
+    // What a view bound to downloadStatus shows: the text it read when the property last notified
+    QString shownStatus;
+    (void) connect(set.get(), &QGCCachedTileSet::downloadStatusChanged, this,
+                   [&shownStatus, &set] { shownStatus = set->downloadStatus(); });
     if (!expectedWarning.isEmpty()) {
         expectLogMessage("QtLocationPlugin.QGCCachedTileSet", QtWarningMsg, QRegularExpression(expectedWarning));
     }
@@ -340,10 +353,19 @@ void QGCCachedTileSetTest::_testDownload()
     QVERIFY(set->downloading());
 
     QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, static_cast<int>(tileCount), TestTimeout::mediumMs());
+    if (lastTileFails) {
+        for (qsizetype i = 0; i < (nam.replies.size() - 1); i++) {
+            nam.replies.at(i)->finishNow();
+        }
+        QTRY_COMPARE_WITH_TIMEOUT(set->savedTileCount(), storedCount, TestTimeout::mediumMs());
+        QVERIFY(set->downloading());
+        nam.replies.constLast()->failNow(QNetworkReply::TimeoutError);
+    }
     QTRY_VERIFY_WITH_TIMEOUT(!set->downloading(), TestTimeout::mediumMs());
-    QTRY_COMPARE_WITH_TIMEOUT(set->savedTileCount(), stored ? tileCount : 0U, TestTimeout::mediumMs());
-    QCOMPARE(set->errorCount(), failed ? tileCount : 0U);
-    QCOMPARE(set->complete(), !failed);
+    QTRY_COMPARE_WITH_TIMEOUT(set->savedTileCount(), storedCount, TestTimeout::mediumMs());
+    QCOMPARE(set->errorCount(), failedCount);
+    QCOMPARE(set->complete(), failedCount == 0U);
+    QCOMPARE(shownStatus, set->downloadStatus());
     if (!expectedWarning.isEmpty()) {
         verifyExpectedLogMessage();
     }
@@ -367,8 +389,8 @@ void QGCCachedTileSetTest::_testDownload()
         std::find_if(databaseSets.cbegin(), databaseSets.cend(),
                      [&name](const QGCCachedTileSet* candidate) { return candidate->name() == name; });
     QVERIFY(databaseSet != databaseSets.cend());
-    QCOMPARE((*databaseSet)->savedTileCount(), stored ? tileCount : 0U);
-    QCOMPARE((*databaseSet)->complete(), !failed);
+    QCOMPARE((*databaseSet)->savedTileCount(), storedCount);
+    QCOMPARE((*databaseSet)->complete(), failedCount == 0U);
 }
 
 UT_REGISTER_TEST(QGCCachedTileSetTest, TestLabel::Unit)

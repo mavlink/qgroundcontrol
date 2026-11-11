@@ -37,7 +37,7 @@ class QGCCachedTileSet : public QObject
     Q_PROPERTY(QString      savedTileCountStr   READ    savedTileCountStr   NOTIFY savedTileCountChanged)
     Q_PROPERTY(quint64      savedTileSize       READ    savedTileSize       NOTIFY savedTileSizeChanged)
     Q_PROPERTY(QString      savedTileSizeStr    READ    savedTileSizeStr    NOTIFY savedTileSizeChanged)
-    Q_PROPERTY(QString      downloadStatus      READ    downloadStatus      NOTIFY savedTileSizeChanged)
+    Q_PROPERTY(QString downloadStatus READ downloadStatus NOTIFY downloadStatusChanged)
     Q_PROPERTY(QDateTime    creationDate        READ    creationDate        CONSTANT)
     Q_PROPERTY(bool         complete            READ    complete            NOTIFY completeChanged)
     Q_PROPERTY(bool         defaultSet          READ    defaultSet          CONSTANT)
@@ -130,6 +130,7 @@ signals:
     void totalTilesSizeChanged();
     void savedTileCountChanged();
     void savedTileSizeChanged();
+    void downloadStatusChanged();
     void completeChanged();
     void errorCountChanged();
     void selectedChanged();

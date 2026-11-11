@@ -31,6 +31,12 @@ QGCCachedTileSet::QGCCachedTileSet(const QString &name, QObject *parent)
     , _name(name)
 {
     qCDebug(QGCCachedTileSetLog) << this;
+
+    // downloadStatus() is built from the tile counts and sizes
+    (void) connect(this, &QGCCachedTileSet::totalTileCountChanged, this, &QGCCachedTileSet::downloadStatusChanged);
+    (void) connect(this, &QGCCachedTileSet::totalTilesSizeChanged, this, &QGCCachedTileSet::downloadStatusChanged);
+    (void) connect(this, &QGCCachedTileSet::savedTileCountChanged, this, &QGCCachedTileSet::downloadStatusChanged);
+    (void) connect(this, &QGCCachedTileSet::savedTileSizeChanged, this, &QGCCachedTileSet::downloadStatusChanged);
 }
 
 QGCCachedTileSet::~QGCCachedTileSet()
@@ -104,7 +110,7 @@ void QGCCachedTileSet::_tileListFetched(const QQueue<QGCTile*> &tiles)
     }
 
     if (tiles.isEmpty()) {
-        _doneWithDownload();
+        _prepareDownload();
         return;
     }
 
@@ -142,7 +148,10 @@ void QGCCachedTileSet::_prepareDownload()
 {
     if (_tilesToDownload.isEmpty()) {
         if (_noMoreTiles) {
-            _doneWithDownload();
+            // A tile that is still being fetched can fail, so the download is done with the last answer
+            if (_replies.isEmpty()) {
+                _doneWithDownload();
+            }
         } else if (!_batchRequested) {
             createDownloadTask();
         }
