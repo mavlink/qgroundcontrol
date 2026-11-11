@@ -210,11 +210,11 @@ void GPSCorrectionManager::_forwardToUdpOutput(const QByteArray& data)
         return;
     }
     QString error;
-    // forward() returns the bytes sent and logs why a datagram was not.
+    // forward() returns the bytes sent and keeps the socket's reason when a datagram was not.
     if (_udpOutput.forward(data) <= 0) {
-        //: %1 is an IP address, %2 a UDP port
-        error = tr("Not forwarding to %1 port %2: the corrections could not be sent.")
-                    .arg(_udpOutput.address(), QString::number(_udpOutput.port()));
+        //: %1 is an IP address, %2 a UDP port, %3 the reason the system gives
+        error = tr("Not forwarding to %1 port %2: %3")
+                    .arg(_udpOutput.address(), QString::number(_udpOutput.port()), _udpOutput.errorString());
     }
     if (std::exchange(_udpOutputError, error) != error) {
         emit udpOutputChanged();

@@ -46,6 +46,8 @@ Network RTK (VRS) casters need the rover position. Select the position QGC repor
 - **UDP output address** — destination IP for forwarded data
 - **UDP output port** — destination port for forwarded data
 
+When forwarded data cannot be sent, **Corrections Status** names the destination and the reason the operating system gives, such as an unreachable network, until a send succeeds again.
+
 ## Correction Routing
 
 - **Vehicle correction source** — _Highest priority_ sends one fresh stream to vehicles, preferring the local base station, then NTRIP, then UDP, and switches when the preferred stream stops. Selecting a source category uses only that category, without falling back to another. When several UDP senders deliver, QGC stays on the first fresh one.

@@ -349,14 +349,15 @@ void GPSCorrectionManagerTest::_udpOutputReportsSendFailure()
 
     // No UDP datagram carries this much, so the socket refuses to send it.
     const QByteArray oversized(70000, '\0');
-    for (int attempt = 0; attempt < 2; ++attempt) {
-        expectLogMessage("Utilities.UdpForwarder", QtWarningMsg,
-                         QRegularExpression(QStringLiteral("UDP forward failed")));
-        source->submit(oversized, scheduler.nowMs());
-        verifyExpectedLogMessage();
-    }
-    // A repeated failure keeps its reason without notifying again.
-    QVERIFY(corrections.udpOutputError().contains(QString::number(port)));
+    expectLogMessage("Utilities.UdpForwarder", QtWarningMsg, QRegularExpression(QStringLiteral("UDP forward failed")));
+    source->submit(oversized, scheduler.nowMs());
+    verifyExpectedLogMessage();
+    // A repeated failure keeps its reason without warning or notifying again.
+    source->submit(oversized, scheduler.nowMs());
+    const QString reason = udpForwarding(corrections)->errorString();
+    QVERIFY(!reason.isEmpty());
+    const QString error = corrections.udpOutputError();
+    QVERIFY2(error.contains(QString::number(port)) && error.endsWith(reason), qPrintable(error));
     QCOMPARE(changes.size(), 1);
 
     const QByteArray frame = GPSTest::rtcmMessage(1005, 20);
