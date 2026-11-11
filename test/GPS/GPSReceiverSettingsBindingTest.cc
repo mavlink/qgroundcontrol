@@ -384,7 +384,6 @@ void GPSReceiverSettingsBindingTest::_ntripSettingsBinding()
                        .useTls = true,
                        .allowSelfSignedCerts = true,
                        .pinnedCertificate = QStringLiteral("caster.example.com:443|00ff")},
-        .filter = {.whitelist = QStringLiteral("1005,1077")},
         .gga = {.source = NTRIPGgaReporter::PositionSource::GCSPosition, .interval = std::chrono::seconds(7)}};
     saved.setFactValue(settings->ntripServerHostAddress(), expected.connection.host);
     saved.setFactValue(settings->ntripServerPort(), expected.connection.port);
@@ -394,7 +393,6 @@ void GPSReceiverSettingsBindingTest::_ntripSettingsBinding()
     saved.setFactValue(settings->ntripUseTls(), expected.connection.useTls);
     saved.setFactValue(settings->ntripAllowSelfSignedCerts(), expected.connection.allowSelfSignedCerts);
     saved.setFactValue(settings->ntripPinnedCertificate(), expected.connection.pinnedCertificate);
-    saved.setFactValue(settings->ntripWhitelist(), expected.filter.whitelist);
     saved.setFactValue(settings->ntripGgaPositionSource(), static_cast<int>(expected.gga.source));
     saved.setFactValue(settings->ntripGgaIntervalSec(), 7);
 

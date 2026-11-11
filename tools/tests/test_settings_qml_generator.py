@@ -1436,6 +1436,7 @@ class TestRealPageDefinitions:
         }
         for name in (
             "correctionSource",
+            "ntripWhitelist",
             "rtcmUdpInputEnabled",
             "rtcmUdpInputPort",
             "rtcmUdpOutputEnabled",
@@ -1448,7 +1449,7 @@ class TestRealPageDefinitions:
         assert 'heading: qsTr("UDP Forwarding")' in qml
         assert "gpsCorrectionSettings.userVisible" in qml
         # The generated NTRIP groups hide with the NTRIP settings group, as its hand-written panels do.
-        assert qml.count("(QGroundControl.settingsManager.ntripSettings.userVisible)") == 3
+        assert qml.count("(QGroundControl.settingsManager.ntripSettings.userVisible)") == 2
         assert "NTRIPPasswordField" in qml
         assert "correctionSourceInstance" not in qml
         assert "injectLocalReceiver" not in qml

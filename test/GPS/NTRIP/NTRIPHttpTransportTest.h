@@ -17,12 +17,9 @@ class NTRIPHttpTransportTest : public UnitTest
     static void _feed(NTRIPHttpTransport& transport, QByteArrayView bytes, qint64 receivedAtMs);
 
 private slots:
-    // RTCM framing and filtering
-    void _rtcmWhitelist_data();
-    void _rtcmWhitelist();
+    // RTCM framing
     void _filterRejectsInvalidFrame_data();
     void _filterRejectsInvalidFrame();
-    void _filterConfigurationUpdatesWithoutReconnect();
     void _receiptTimesAndEvidence_data();
     void _receiptTimesAndEvidence();
     void _icyPartialFrame_data();

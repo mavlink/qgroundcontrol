@@ -21,7 +21,6 @@ public:
     DEFINE_SETTINGFACT(ntripUsername)
     DEFINE_SETTINGFACT(ntripPassword)
     DEFINE_SETTINGFACT(ntripMountpoint)
-    DEFINE_SETTINGFACT(ntripWhitelist)
     DEFINE_SETTINGFACT(ntripUseTls)
     DEFINE_SETTINGFACT(ntripAllowSelfSignedCerts)
     /// Not shown in the UI: host:port and SHA-256 digest of the self-signed caster certificate trusted on first

@@ -610,17 +610,8 @@ void NTRIPManagerTest::_sourceTableRetriedOnlyAfterCorrections()
     _fail(transport, sourceTable, NTRIPError::InvalidMountpoint);
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting);
 
-    // A setting that keeps the mountpoint restarts the connection without forgetting that.
-    auto changed = manager.configuration();
-    changed.filter.whitelist = QStringLiteral("1005");
-    transport = injectMockTransport(manager, true);
-    manager.setConfiguration(changed);
-    QVERIFY(scheduler.advanceBy(SettingsDebounce));
-    QCOMPARE(transport->startCount, 1);
-    _fail(transport, sourceTable, NTRIPError::InvalidMountpoint);
-    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Reconnecting);
-
     // Another mountpoint has served nothing yet.
+    auto changed = manager.configuration();
     changed.connection.mountpoint = QStringLiteral("OTHER");
     transport = injectMockTransport(manager, true);
     manager.setConfiguration(changed);
@@ -758,7 +749,7 @@ void NTRIPManagerTest::_correctionIngressKeepsSessionAndIdentity()
     QCOMPARE(result.data, frame);
     QCOMPARE(result.messageId, 1005);
     QCOMPARE(result.receivedAtMs, receivedAtMs);
-    QVERIFY(result.valid && !result.filtered);
+    QVERIFY(result.valid);
     QVERIFY(routed.isEmpty());
     deliverQueuedCalls();
     QCOMPARE(routed.size(), 1);
@@ -801,13 +792,6 @@ void NTRIPManagerTest::_correctionIngressKeepsSessionAndIdentity()
     QVERIFY(!mgr.connectionStats()->dataStale());
 }
 
-void NTRIPManagerTest::_factChangesReconfigureTransport_data()
-{
-    QTest::addColumn<QString>("setting");
-    QTest::newRow("cold-whitelist") << QStringLiteral("whitelist");
-    QTest::newRow("hot-mountpoint") << QStringLiteral("mountpoint");
-}
-
 void NTRIPManagerTest::_ggaSettingsUseInjectedProviders()
 {
     using Source = NTRIPGgaReporter::PositionSource;
@@ -839,14 +823,12 @@ void NTRIPManagerTest::_ggaSettingsUseInjectedProviders()
     manager._stop();
 }
 
-void NTRIPManagerTest::_factChangesReconfigureTransport()
+void NTRIPManagerTest::_mountpointChangeReconnects()
 {
-    QFETCH(QString, setting);
     ManualScheduler scheduler;
     GPSCorrectionManager corrections(nullptr, &scheduler);
     NTRIPManager mgr(nullptr, &scheduler, {.corrections = &corrections});
-    auto configuration = mockCasterConfiguration();
-    configuration.filter.whitelist = QStringLiteral("1005");
+    const auto configuration = mockCasterConfiguration();
     mgr.setConfiguration(configuration);
     auto* first = injectMockTransport(mgr, true);
     int stops = 0;
@@ -861,34 +843,21 @@ void NTRIPManagerTest::_factChangesReconfigureTransport()
     QCOMPARE(routed.size(), 1);
 
     auto* second = injectMockTransport(mgr, true);
-    const bool reconnect = setting == QStringLiteral("mountpoint");
     auto changed = configuration;
-    if (reconnect) {
-        changed.connection.mountpoint = QStringLiteral("REPLACEMENT");
-    } else {
-        changed.filter.whitelist = QStringLiteral("1077");
-    }
+    changed.connection.mountpoint = QStringLiteral("REPLACEMENT");
     mgr.setConfiguration(changed);
     QVERIFY(scheduler.advanceBy(SettingsDebounce));
-    QCOMPARE(second->startCount, reconnect ? 1 : 0);
-    QCOMPARE(stops, reconnect ? 1 : 0);
-    auto* active = reconnect ? second : first;
-    QCOMPARE(active->startCount, 1);
-    QCOMPARE(active->stopCount, 0);
-    if (setting == QStringLiteral("whitelist")) {
-        QCOMPARE(active->lastWhitelist, QVector<int>{1077});
-        active->simulateRtcmData(GPSTest::rtcmMessage(1005), 1005, scheduler.nowMs());
-    }
+    QCOMPARE(second->startCount, 1);
+    QCOMPARE(stops, 1);
+    QCOMPARE(second->stopCount, 0);
     const auto frame = GPSTest::rtcmMessage(1077);
-    active->simulateRtcmData(frame, 1077, scheduler.nowMs() - 10);
+    second->simulateRtcmData(frame, 1077, scheduler.nowMs() - 10);
     deliverQueuedCalls();
     QCOMPARE(routed.size(), 2);
     QCOMPARE(routed[1], frame);
-    // Only a reconnect names a new stream.
+    // The reconnect names a new stream.
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(100)));
-    QCOMPARE(corrections.selectedStream().instanceId,
-             reconnect ? QStringLiteral("ntrip://caster.example.com:2101/REPLACEMENT")
-                       : QStringLiteral("ntrip://caster.example.com:2101/TEST"));
+    QCOMPARE(corrections.selectedStream().instanceId, QStringLiteral("ntrip://caster.example.com:2101/REPLACEMENT"));
     changed.enabled = false;
     mgr.setConfiguration(changed);
     mgr.setConfiguration(changed);
@@ -906,8 +875,8 @@ void NTRIPManagerTest::_transportDiagnosticsReachManager()
     NTRIPManager mgr(nullptr, nullptr, {.corrections = &corrections});
     auto configuration = mockCasterConfiguration();
     configuration.connection = caster.connectionConfig();
-    configuration.filter.whitelist = QStringLiteral("1005");
     mgr.setConfiguration(configuration);
+    corrections.setConfiguration({.udpInput = {}, .udpOutput = {}, .messageFilter = QStringLiteral("1005")});
     QList<QByteArray> routed;
     captureVehicleFrames(corrections, routed);
     mgr._start();
@@ -921,10 +890,12 @@ void NTRIPManagerTest::_transportDiagnosticsReachManager()
     expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg, QRegularExpression(QStringLiteral("Invalid RTCM frame")));
     const QByteArray response = okChunkedResponse(accepted + filtered + rejected, false);
     QCOMPARE(connection->write(response), response.size());
-    QTRY_COMPARE_WITH_TIMEOUT(mgr.connectionStats()->messagesReceived(), quint32(1), TestTimeout::shortMs());
+    // The connection counts every valid frame the caster sends, whatever the routing's message filter takes of them.
+    QTRY_COMPARE_WITH_TIMEOUT(mgr.connectionStats()->messagesReceived(), quint32(2), TestTimeout::shortMs());
     verifyExpectedLogMessage();
     deliverQueuedCalls();
-    // Only the whitelisted valid frame reaches vehicles; the filtered and the corrupt one do not.
+    QCOMPARE(mgr.connectionStats()->bytesReceived(), quint64(accepted.size() + filtered.size()));
+    // Only the valid frame the filter takes reaches vehicles; the filtered and the corrupt one do not.
     QCOMPARE(routed, QList<QByteArray>{accepted});
     mgr._stop();
 }

@@ -21,6 +21,15 @@
             "label": "Send corrections to"
         },
         {
+            "name": "ntripWhitelist",
+            "shortDesc": "Comma-separated RTCM message IDs to send from the selected stream, whatever its source. Leave blank for all messages.",
+            "longDesc": "Comma-separated RTCM message IDs (e.g. 1005,1077,1087). Only these messages of the selected stream are sent to vehicles and forwarded over UDP, whether the stream comes from NTRIP, the local base station or UDP. Leave blank for all messages.",
+            "type": "string",
+            "default": "",
+            "label": "RTCM Message Filter",
+            "keywords": "whitelist,message filter"
+        },
+        {
             "name": "rtcmUdpInputEnabled",
             "shortDesc": "Receive RTCM corrections from another application over UDP.",
             "longDesc": "Listen on a UDP port for incoming RTCM3 correction data and forward it to connected vehicles via MAVLink GPS_RTCM_DATA.",

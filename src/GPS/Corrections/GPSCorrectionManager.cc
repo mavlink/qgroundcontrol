@@ -105,6 +105,8 @@ void GPSCorrectionManager::setConfiguration(const Configuration& configuration)
     const bool inputNotified = inputChanged && (_applyUdpInput() || enabledChanged);
     // The output also depends on the input port, which it must not feed back into.
     const bool outputNotified = (inputChanged || previous->udpOutput != configuration.udpOutput) && _applyUdpOutput();
+    const bool filterNotified =
+        (!previous || previous->messageFilter != configuration.messageFilter) && _applyMessageFilter();
     _refresh();
     if (inputNotified) {
         emit udpInputChanged();
@@ -112,6 +114,34 @@ void GPSCorrectionManager::setConfiguration(const Configuration& configuration)
     if (outputNotified) {
         emit udpOutputChanged();
     }
+    if (filterNotified) {
+        emit messageFilterChanged();
+    }
+}
+
+bool GPSCorrectionManager::_applyMessageFilter()
+{
+    _messageFilter.clear();
+    QString error;
+    for (const auto& token : _configuration->messageFilter.split(QLatin1Char(','), Qt::SkipEmptyParts)) {
+        const QString entry = token.trimmed();
+        if (entry.isEmpty()) {
+            continue;
+        }
+        bool isNumber = false;
+        const int id = entry.toInt(&isNumber);
+        if (!isNumber || id < 1 || id > MAX_MESSAGE_ID) {
+            // Skipping the entry could leave an empty filter, which takes every message.
+            qCWarning(GPSCorrectionManagerLog) << "Invalid RTCM message filter entry" << entry;
+            //: %1 is the text the user entered, %2 the largest message ID
+            error = tr("No corrections are sent: the RTCM message filter entry \"%1\" is not a message ID. Enter "
+                       "message IDs from 1 to %2, separated by commas.")
+                        .arg(entry, QString::number(MAX_MESSAGE_ID));
+            break;
+        }
+        _messageFilter.insert(id);
+    }
+    return std::exchange(_messageFilterError, error) != error;
 }
 
 bool GPSCorrectionManager::_applyUdpOutput()
@@ -197,7 +227,9 @@ void GPSCorrectionManager::_endSource(GPSCorrectionSettings::CorrectionSource so
 void GPSCorrectionManager::_submit(GPSCorrectionSettings::CorrectionSource source, const QString& instance,
                                    const QByteArray& data, qint64 receivedAtMs)
 {
-    if (_selector.submit(source, instance, receivedAtMs, _scheduler->nowMs())) {
+    const bool taken = _messageFilterError.isEmpty() &&
+                       (_messageFilter.isEmpty() || _messageFilter.contains(RTCMFramer::frameMessageId(data)));
+    if (taken && _selector.submit(source, instance, receivedAtMs, _scheduler->nowMs())) {
         _recordSelected({.source = static_cast<int>(source), .instanceId = instance}, data, receivedAtMs);
         _selectedRate.recordBytes(data.size());
         if (_rtcmMavlink.submitToOutputs(data) > 0) {

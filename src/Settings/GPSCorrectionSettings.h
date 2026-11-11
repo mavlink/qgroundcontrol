@@ -40,4 +40,7 @@ public:
     DEFINE_SETTINGFACT(rtcmUdpOutputPort)
     DEFINE_SETTINGFACT(correctionSource)
     DEFINE_SETTINGFACT(correctionVehicles)
+    /// The RTCM message filter of every correction source. It was an NTRIP setting and keeps that name, and so its
+    /// stored key, so a saved filter still applies.
+    DEFINE_SETTINGFACT(ntripWhitelist)
 };

@@ -52,6 +52,7 @@ CorrectionsConfig correctionsFromSettings(GPSCorrectionSettings* settings, FactR
     configuration.udpOutput.enabled = read(settings->rtcmUdpOutputEnabled()).toBool();
     configuration.udpOutput.address = read(settings->rtcmUdpOutputAddress()).toString().trimmed();
     configuration.udpOutput.port = read(settings->rtcmUdpOutputPort()).value<quint16>();
+    configuration.messageFilter = read(settings->ntripWhitelist()).toString();
     return configuration;
 }
 
@@ -68,7 +69,6 @@ NTRIPConfig ntripFromSettings(NTRIPSettings* settings, FactReader& read)
     connection.useTls = read(settings->ntripUseTls()).toBool();
     connection.allowSelfSignedCerts = read(settings->ntripAllowSelfSignedCerts()).toBool();
     connection.pinnedCertificate = read(settings->ntripPinnedCertificate()).toString();
-    configuration.filter.whitelist = read(settings->ntripWhitelist()).toString();
     configuration.gga.source =
         static_cast<NTRIPGgaReporter::PositionSource>(read(settings->ntripGgaPositionSource()).toInt());
     configuration.gga.interval = std::chrono::seconds(read(settings->ntripGgaIntervalSec()).toUInt());

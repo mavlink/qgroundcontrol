@@ -8,8 +8,6 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QByteArrayView>
-#include <QtCore/QSet>
-#include <QtCore/QVector>
 
 #include "Checksums.h"
 
@@ -100,7 +98,6 @@ struct RTCMDecodedFrame
     int messageId = 0;
     qint64 receivedAtMs = 0;
     bool valid = false;
-    bool filtered = false;
 };
 
 /// Frames RTCM bytes while retaining the first fragment's monotonic receipt time.
@@ -130,13 +127,10 @@ public:
         return true;
     }
 
-    void setWhitelist(const QVector<int>& ids) { _whitelist = QSet<int>(ids.begin(), ids.end()); }
-
 private:
     RTCMDecodedFrame _result() const;
 
     RTCMFramer _framer;
-    QSet<int> _whitelist;
     std::array<qint64, RTCMFramer::MAX_FRAME_SIZE> _receiptTimes{};
     size_t _nextReceiptIndex = 0;
 };

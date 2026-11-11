@@ -5,6 +5,7 @@
 
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
+#include <QtCore/QSet>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -27,8 +28,8 @@ public:
     Q_DISABLE_COPY_MOVE(GPSCorrectionSourceHandle)
 
     /// Offers one valid RTCM frame of the source's stream, received at @a receivedAtMs on the scheduler's clock. Fresh
-    /// frames of the selected stream go to vehicles and UDP forwarding. A non-empty @a instance names the frame's
-    /// stream instead, for a source that names streams per frame.
+    /// frames of the selected stream that the message filter takes go to vehicles and UDP forwarding. A non-empty
+    /// @a instance names the frame's stream instead, for a source that names streams per frame.
     void submit(const QByteArray& data, qint64 receivedAtMs, const QString& instance = {}) const;
 
 private:
@@ -42,8 +43,9 @@ private:
 };
 
 /// Owns the shared MAVLink sequence domain and the UDP correction input and output for all GPS sources. The selected
-/// stream goes to vehicles over MAVLink and to UDP forwarding. Receipt times are on the scheduler's clock; producers
-/// on worker threads stamp with the steady clock, which the application's QtRuntimeScheduler uses.
+/// stream, as far as the message filter takes it, goes to vehicles over MAVLink and to UDP forwarding. Receipt times
+/// are on the scheduler's clock; producers on worker threads stamp with the steady clock, which the application's
+/// QtRuntimeScheduler uses.
 class GPSCorrectionManager : public QObject
 {
     Q_OBJECT
@@ -55,6 +57,7 @@ class GPSCorrectionManager : public QObject
     Q_PROPERTY(quint64 vehicleBytesSubmitted READ vehicleBytesSubmitted NOTIFY vehicleBytesSubmittedChanged FINAL)
     Q_PROPERTY(QString udpInputError READ udpInputError NOTIFY udpInputChanged FINAL)
     Q_PROPERTY(QString udpOutputError READ udpOutputError NOTIFY udpOutputChanged FINAL)
+    Q_PROPERTY(QString messageFilterError READ messageFilterError NOTIFY messageFilterChanged FINAL)
     Q_PROPERTY(RTCMMessageCountModel* messageCounts READ messageCounts CONSTANT FINAL)
     Q_PROPERTY(QGeoCoordinate basePosition READ basePosition NOTIFY basePositionChanged FINAL)
 
@@ -99,8 +102,15 @@ public:
         UdpInputConfiguration udpInput;
         /// Forwards the selected stream to a UDP peer.
         UdpOutputConfiguration udpOutput;
+        /// Comma-separated RTCM message IDs, from 1 to MAX_MESSAGE_ID: the only messages taken from any source. The
+        /// others count as not received, so they are not routed, not counted and no sign of a fresh stream. Empty
+        /// takes every message. With an entry that is not a message ID, none is taken until the filter is corrected.
+        QString messageFilter{};
         bool operator==(const Configuration&) const = default;
     };
+
+    /// RTCM message numbers are 12 bits.
+    static constexpr int MAX_MESSAGE_ID = 4095;
 
     explicit GPSCorrectionManager(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr);
     ~GPSCorrectionManager() override;
@@ -136,6 +146,9 @@ public:
     /// Why the enabled UDP output does not forward; empty while it forwards or is disabled.
     QString udpOutputError() const { return _udpOutputError; }
 
+    /// Names the message filter's first entry that is not a message ID; empty for a valid filter.
+    QString messageFilterError() const { return _messageFilterError; }
+
     /// The selected stream's frames per RTCM message ID, and how often each arrives. They start again when another
     /// stream is selected, and are empty while none is.
     RTCMMessageCountModel* messageCounts() { return &_messageCounts; }
@@ -152,13 +165,15 @@ signals:
     void vehicleBytesSubmittedChanged();
     void udpInputChanged();
     void udpOutputChanged();
+    void messageFilterChanged();
     void basePositionChanged();
 
 private:
     /// See GPSCorrectionSelector::beginSource(); each source calls _endSource() before it is replaced or stops.
     void _beginSource(GPSCorrectionSettings::CorrectionSource source);
     void _endSource(GPSCorrectionSettings::CorrectionSource source);
-    /// See GPSCorrectionSelector::submit(); a selected frame goes to vehicles and UDP forwarding.
+    /// See GPSCorrectionSelector::submit(), which is offered the frames the message filter takes; a selected frame
+    /// goes to vehicles and UDP forwarding.
     void _submit(GPSCorrectionSettings::CorrectionSource source, const QString& instance, const QByteArray& data,
                  qint64 receivedAtMs);
     /// Forwards @a data to the enabled UDP output and publishes whether it was sent; a repeated outcome is silent.
@@ -169,9 +184,10 @@ private:
     void _forgetSelected();
     void _setBasePosition(const QGeoCoordinate& position);
 
-    /// Each returns whether the input's state or the output's error changed.
+    /// Each returns whether the input's state, the output's error or the filter's error changed.
     [[nodiscard]] bool _applyUdpInput();
     [[nodiscard]] bool _applyUdpOutput();
+    [[nodiscard]] bool _applyMessageFilter();
     bool _udpInputEnabled() const;
     void _startUdpInput();
     void _retryUdpInput();
@@ -195,6 +211,9 @@ private:
     quint64 _selectedBytesPerSecond = 0;
     QString _udpInputError;
     QString _udpOutputError;
+    /// The message IDs of a valid filter; empty takes every message.
+    QSet<int> _messageFilter;
+    QString _messageFilterError;
     RTCMMessageCountModel _messageCounts{this};
     QGeoCoordinate _basePosition;
     /// The stream _messageCounts and _basePosition describe. _selected follows it only at the next refresh.

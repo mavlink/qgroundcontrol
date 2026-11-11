@@ -15,7 +15,7 @@ class CasterSession
 {
 public:
     CasterSession()
-        : transport(caster.connectionConfig(), {}, nullptr, &scheduler)
+        : transport(caster.connectionConfig(), nullptr, &scheduler)
     {
         (void) spy.init(&transport);
     }

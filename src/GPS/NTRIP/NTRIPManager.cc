@@ -55,19 +55,6 @@ QString correctionSourceInstance(const NTRIPConnectionConfig& connection)
 
 }  // namespace
 
-QVector<int> NTRIPRTCMFilterConfig::messageIds() const
-{
-    QVector<int> ids;
-    for (const auto& token : whitelist.split(QLatin1Char(','), Qt::SkipEmptyParts)) {
-        bool ok = false;
-        const int id = token.trimmed().toInt(&ok);
-        if (ok && id > 0) {
-            ids.append(id);
-        }
-    }
-    return ids;
-}
-
 // -----------------------------------------------------------------------------
 // Lifecycle
 // -----------------------------------------------------------------------------
@@ -151,9 +138,8 @@ void NTRIPManager::setConfiguration(const Configuration& configuration)
         return;
     }
     const bool ggaChanged = configuration.gga != _configuration.gga;
-    const bool streamChanged = configuration.enabled != _configuration.enabled ||
-                               configuration.connection != _configuration.connection ||
-                               configuration.filter != _configuration.filter;
+    const bool streamChanged =
+        configuration.enabled != _configuration.enabled || configuration.connection != _configuration.connection;
     _configuration = configuration;
     // Opting out forgets the pinned certificate, so opting in again trusts the caster's current certificate.
     QString& pin = _configuration.connection.pinnedCertificate;
@@ -227,8 +213,7 @@ void NTRIPManager::_start()
     _settingsDebounceTask.cancel();
     _cancelReconnect();
     _reconnectBackoff.reset();
-    // Restarting the connection that served corrections, as after a filter change, keeps what it showed.
-    _streamServed = _streamServed && _configuration.connection == _running.connection;
+    _streamServed = false;
     _dispatch(Event::StartRequested);
     _publish();
 }
@@ -460,7 +445,8 @@ void NTRIPManager::_openSession()
             _correctionManager->openSource(GPSCorrectionSettings::Ntrip, correctionSourceInstance(connection));
     }
 
-    if (const QString err = connection.streamValidationError(); !err.isEmpty()) {
+    const QString err = connection.streamValidationError();
+    if (!err.isEmpty()) {
         qCWarning(NTRIPManagerLog) << "NTRIP config invalid:" << err << "host=" << connection.host
                                    << " port=" << connection.port;
         _dispatch(Event::ConfigInvalid, err);
@@ -478,7 +464,7 @@ void NTRIPManager::_openSession()
 
     NTRIPTransport* transport = _transportFactory ? _transportFactory(_configuration, this) : nullptr;
     if (!transport) {
-        transport = new NTRIPHttpTransport(connection, config.filter.messageIds(), this, _scheduler);
+        transport = new NTRIPHttpTransport(connection, this, _scheduler);
     }
     _transport = transport;
 
@@ -600,12 +586,6 @@ void NTRIPManager::_applyConfiguration()
         qCDebug(NTRIPManagerLog) << "NTRIP transport-affecting setting changed, reconnecting";
         _streamServed = false;
         _dispatch(Event::HotReconfigure);
-    } else {
-        if (newConfig.filter != _running.filter && _transport) {
-            qCDebug(NTRIPManagerLog) << "NTRIP RTCM whitelist changed, applying to live parser";
-            _transport->setRtcmWhitelist(newConfig.filter.messageIds());
-        }
-        _running = newConfig;
     }
     _publish();
 }

@@ -47,15 +47,6 @@
             "label": "Mount Point"
         },
         {
-            "name": "ntripWhitelist",
-            "shortDesc": "Comma-separated RTCM message IDs to forward. Leave blank for all messages.",
-            "longDesc": "Comma-separated RTCM message IDs to forward (e.g. 1005,1077,1087). Leave blank for all messages.",
-            "type": "string",
-            "default": "",
-            "label": "RTCM Message Filter",
-            "keywords": "whitelist,message filter"
-        },
-        {
             "name": "ntripUseTls",
             "shortDesc": "Use TLS encryption",
             "longDesc": "Connect to the caster with TLS 1.2 or later. The caster must offer TLS on the server port.",

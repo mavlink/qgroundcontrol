@@ -14,6 +14,7 @@ The toolbar GNSS indicator also offers **Connect** once an NTRIP server is confi
 ## NTRIP Connection
 
 Shows the NTRIP connection state with message and byte counters, the age of the last correction, and a Connect/Disconnect button.
+The counters count everything the caster sends, including messages the [RTCM message filter](#correction-routing) keeps from vehicles.
 
 ## NTRIP Server
 
@@ -39,10 +40,6 @@ A caster that answers with an HTTP redirect is not followed. QGroundControl repo
 
 Network RTK (VRS) casters need the rover position. Select the position QGC reports and how often.
 
-## NTRIP Message Filter
-
-- **RTCM Message Filter** — whitelist of RTCM message types to forward from NTRIP (empty = forward all)
-
 ## UDP RTCM Input
 
 - **Enable UDP RTCM input** — receive RTCM corrections over UDP, for example from another application. UDP input is used alongside NTRIP and a local base station, and incoming data is always checked to be valid RTCM.
@@ -60,6 +57,10 @@ When forwarded data cannot be sent, **Corrections Status** names the destination
 
 - **Vehicle correction source** — _Highest priority_ sends one fresh stream to vehicles, preferring the local base station, then NTRIP, then UDP, and switches when the preferred stream stops. Selecting a source category uses only that category, without falling back to another. When several UDP senders deliver, QGC stays on the first fresh one.
 - **Send corrections to** — _All vehicles_ (the default) sends the selected stream to every connected vehicle. _Active vehicle only_ sends it to the active vehicle alone: the corrections follow a change of the active vehicle, and no vehicle receives them while none is active. Corrections go out on the active vehicle's link, so vehicles that share that link, such as several on one telemetry radio, receive them as well.
+- **RTCM Message Filter** — comma-separated RTCM message IDs (1 to 4095), such as `1005,1077,1087`. Only these messages of the selected stream are used, whichever source it comes from: NTRIP, the local base station or UDP. Empty uses every message.
+
+Messages the filter leaves out are not sent to vehicles, not forwarded over UDP and not counted under **Message Types**. A stream of which the filter leaves nothing counts as delivering no corrections, so with _Highest priority_ the next source is used instead.
+An entry that is not a message ID stops all corrections until it is corrected, and **Corrections Status** names the entry: a mistyped filter never sends every message.
 
 A vehicle receives no corrections while it is connected through a link marked **High Latency** in its [link settings](comm_links.md), such as a satellite modem: a correction stream is far more data than such a link carries. Corrections reach the vehicle again once a regular link takes over.
 

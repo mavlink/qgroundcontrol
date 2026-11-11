@@ -71,6 +71,7 @@ When a u-blox receiver reports that it produces more output than its connection 
 ### RTK Base Station {#base_station}
 
 A configured base can survey its own position, or start from a known position for the base station.
+Its corrections pass the [RTCM message filter](ntrip_rtk.md#correction-routing) before they reach vehicles.
 
 ::: info
 The _Survey-In_ process is a startup procedure required by RTK GPS systems to get an accurate estimate of the base station position.

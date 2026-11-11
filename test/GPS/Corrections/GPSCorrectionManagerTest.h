@@ -27,4 +27,7 @@ private slots:
     void _udpInputRetriesUnavailablePort();
     void _settingsOwnRouting_data();
     void _settingsOwnRouting();
+    void _messageFilter_data();
+    void _messageFilter();
+    void _messageFilterGovernsRouting();
 };
