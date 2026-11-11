@@ -47,4 +47,4 @@ QString bigSizeMBToString(quint64 sizeMB)
     return locale.toString(static_cast<double>(sizeMB) / kMB, 'f', 2) + QStringLiteral(" TB");
 }
 
-}
+}  // namespace QGC
