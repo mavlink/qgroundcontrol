@@ -104,11 +104,11 @@ void GPSDriverTest::_ashtechSatelliteSnapshots()
     constellations = snapshots.back().constellationsInView();
     QCOMPARE(constellations.size(), size_t(2));
     QCOMPARE(constellations[1].constellation, GPSConstellation::SBAS);
+    // An empty GPS view empties its SBAS scope with it, in one report.
     QCOMPARE(feed("GPGSV,1,1,00").liveness, GPSReceiveLiveness::Data);
-    QCOMPARE(snapshots.size(), size_t(2));
-    QCOMPARE(snapshots[0].inView, std::optional<int>{1});
-    QCOMPARE(snapshots[1].inView, std::optional<int>{0});
-    QVERIFY(snapshots[1].constellationsInView().empty());
+    QCOMPARE(snapshots.size(), size_t(1));
+    QCOMPARE(snapshots[0].inView, std::optional<int>{0});
+    QVERIFY(snapshots[0].constellationsInView().empty());
 }
 
 void GPSDriverTest::_nativeIntegrityProvenance()

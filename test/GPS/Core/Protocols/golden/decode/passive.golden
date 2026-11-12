@@ -5,8 +5,7 @@ file corpus/gga.nmea bytes=88
     position fix=differential lat=37.39109795 lon=-122.03782631 msl=18.8930 ellipsoid=-6.7760 hacc=nan vacc=nan hdop=1.200 vdop=nan speed=nan course=nan used=6 utc=0 velocity=0 receipt=1
 file corpus/gsv.nmea bytes=30
     input type=passive
-    expired satellites full=0 gps:view=1/1,use=-/0
-    expired satellites full=0 sbas:view=0/1,use=-/0
+    expired satellites full=0 gps:view=1/1,use=-/0 sbas:view=0/1,use=-/0
 file corpus/pashr-receipt-replay.nmea bytes=139
 file corpus/pashr.nmea bytes=86
 file corpus/zda-overflow.nmea bytes=33

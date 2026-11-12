@@ -4,8 +4,7 @@ file corpus/gga.nmea bytes=88
     expired survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
 file corpus/gsv.nmea bytes=30
     expired survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
-    expired satellites full=0 gps:view=1/1,use=-/0
-    expired satellites full=0 sbas:view=0/1,use=-/0
+    expired satellites full=0 gps:view=1/1,use=-/0 sbas:view=0/1,use=-/0
 file corpus/pashr-receipt-replay.nmea bytes=139
     expired survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
 file corpus/pashr.nmea bytes=86

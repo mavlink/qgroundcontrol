@@ -39,6 +39,7 @@ set(_qgc_gps_core_suites
     Protocols/GPSProtocolFamilyContractTest
     Protocols/GPSProtocolRuntimeTest
     Protocols/GPSReceiverDetectorTest
+    Protocols/GPSSatelliteReportTest
     Protocols/GPSStreamDemuxTest
     Protocols/Ashtech/AshtechProtocolTest
     Protocols/Femto/FemtoProtocolTest

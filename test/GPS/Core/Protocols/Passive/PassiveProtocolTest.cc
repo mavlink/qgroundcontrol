@@ -299,10 +299,14 @@ void satellites(GPSTestClock& clock)
     QVERIFY(receiver.reports<GPSDecodedSatellites>().empty());
     receiver.clock.advanceBy(NMEA::SatelliteAssembler::IDLE_TIMEOUT);
     receiver.consume({});
+    // One report for the epoch: GPS and the SBAS satellites a GP view would list.
     const auto reports = receiver.reports<GPSDecodedSatellites>();
-    QCOMPARE(reports.size(), 2);
+    QCOMPARE(reports.size(), 1);
+    QCOMPARE(reports[0].count, 2);
     QCOMPARE(reports[0].constellations[0].constellation, GPSConstellation::GPS);
     QCOMPARE(reports[0].constellations[0].inView, 5);
+    QVERIFY(reports[0].constellations[1].constellation == GPSConstellation::SBAS &&
+            reports[0].constellations[1].inView == 0);
     QVERIFY(receiver.reports<GPSDecodedPosition>().empty());
     QCOMPARE(receiver.writes, 0);
 }
@@ -317,22 +321,25 @@ void satelliteEpochBoundaries(GPSTestClock& clock)
     send("GPGSV,1,1,01,07,10,20,45,7");
     QVERIFY(receiver.reports<GPSDecodedSatellites>().empty());
     send("GNRMC,120001.00,V,,,,,,,090926,,,N");
+    // The systems of the epoch arrive together.
     auto reports = receiver.reports<GPSDecodedSatellites>();
-    QCOMPARE(reports.size(), 3);
+    QCOMPARE(reports.size(), 1);
+    QCOMPARE(reports[0].count, 3);
     QVERIFY(reports[0].constellations[0].constellation == GPSConstellation::GPS &&
             reports[0].constellations[0].inView == 6);
-    QVERIFY(reports[1].constellations[0].constellation == GPSConstellation::GLONASS &&
-            reports[1].constellations[0].inView == 1);
+    QVERIFY(reports[0].constellations[1].constellation == GPSConstellation::GLONASS &&
+            reports[0].constellations[1].inView == 1);
     QCOMPARE(reports[0].constellations[0].inViewTimestampUs, 1000000);
     receiver.events.clear();
     receiver.feed(nmeaSentence("GPGSA,A,3,01,,,,,,,,,,,,1.0,0.8,0.6"));
     receiver.clock.advanceBy(NMEA::SatelliteAssembler::IDLE_TIMEOUT);
     receiver.consume({});
     reports = receiver.reports<GPSDecodedSatellites>();
-    QCOMPARE(reports.size(), 2);
+    QCOMPARE(reports.size(), 1);
+    QCOMPARE(reports[0].count, 2);
     QCOMPARE(reports[0].constellations[0].inViewTimestampUs, 0);
     QCOMPARE(reports[0].constellations[0].inUse, 1);
-    QCOMPARE(reports[1].constellations[0].inUse, 0);
+    QCOMPARE(reports[0].constellations[1].inUse, 0);
 
     receiver.events.clear();
     send("GPGSV,2,1,05,01,10,20,30,02,20,30,40,03,30,40,50,04,40,50,60");
@@ -350,7 +357,7 @@ void satelliteEpochBoundaries(GPSTestClock& clock)
     receiver.clock.advanceBy(NMEA::SatelliteAssembler::IDLE_TIMEOUT);
     receiver.consume({});
     reports = receiver.reports<GPSDecodedSatellites>();
-    QVERIFY(reports.size() == 2 && reports[0].constellations[0].inView == 0);
+    QVERIFY(reports.size() == 1 && reports[0].count == 2 && reports[0].constellations[0].inView == 0);
 }
 
 void satelliteBatchDeadline(GPSTestClock& clock)

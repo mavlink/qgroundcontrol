@@ -86,7 +86,8 @@ private:
 
     GPSDecodedPosition _position;
     NMEA::SatelliteAssembler _satelliteAssembler;
-    /// Systems a line completed, published by _finishLine() after the line's vendor events.
+    /// The systems of the epoch a line completed, published as one report by _finishLine() after the line's vendor
+    /// events.
     NMEA::SatelliteEpoch _pendingSatellites;
     NMEA::NavigationEpochAssembler _navigationAssembler;
     Navigation _navigation = Navigation::StandardNMEA;
