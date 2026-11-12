@@ -47,8 +47,10 @@ Item {
     readonly property real  _rightToolWidth: rightPanel.width + rightPanel.anchors.rightMargin
     // This is the center rectangle of the map which is not obscured by tools
     readonly property rect  _centerViewport: Qt.rect(_leftToolWidth + _margin, _margin, mainPlanViewArea.width - _leftToolWidth - _rightToolWidth - (_margin * 2), (missionStatus.visible ? missionStatus.y : mainPlanViewArea.height - _margin) - _margin)
-    // Margins which keep what the map shows in its bottom left corner clear of the tool strip and of the mission status
+    // Margins which keep what the map shows in its bottom left corner clear of the tool strip, of the mission status
+    // and of the panel on the right
     readonly property real  _mapCornerLeftMargin: _leftToolWidth + _margin
+    readonly property real  _mapCornerRightMargin: _rightToolWidth + _margin
     readonly property real  _mapCornerBottomMargin: (missionStatus.visible ? mainPlanViewArea.height - missionStatus.y : 0) + _margin
     // The terrain profile draws the heights of the elevation provider
     readonly property string _terrainProfileAttribution: terrainStatus.visible ? QGroundControl.elevationProviderNotice : ""
@@ -365,6 +367,7 @@ Item {
                 controlsTopMargin: _root._toolsMargin
                 attributionLeftMargin: _root._mapCornerLeftMargin
                 attributionBottomMargin: _root._mapCornerBottomMargin
+                attributionRightMargin: _root._mapCornerRightMargin
                 viewAttribution: _root._terrainProfileAttribution
                 _nonInteractiveOpacity: _root._nonInteractiveOpacity
 
@@ -385,6 +388,7 @@ Item {
                 planView: true
                 attributionLeftMargin: _root._mapCornerLeftMargin
                 attributionBottomMargin: _root._mapCornerBottomMargin
+                attributionRightMargin: _root._mapCornerRightMargin
                 viewAttribution: _root._terrainProfileAttribution
 
                 zoomLevel: QGroundControl.flightMapZoom

@@ -395,6 +395,10 @@ void MapAttributionUITest::_flyViewEsriMapCreditsAreaShown()
     QTRY_COMPARE_WITH_TIMEOUT(creditText(), secondPlaceCredit, TestTimeout::shortMs());
     QTRY_COMPARE_WITH_TIMEOUT(credit->property("lineCount").toInt(), 2, TestTimeout::shortMs());
     QVERIFY(credit->property("truncated").toBool());
+    // The credit ends before the instruments that lie on the map to the right of it
+    QQuickItem* const instruments = findVisibleItem(_rootItem, QStringLiteral("flyViewBottomRightRowLayout"));
+    QVERIFY2(instruments, "instruments of the bottom right corner not visible");
+    QTRY_COMPARE_LE_WITH_TIMEOUT(_sceneRect(credit).right(), _sceneRect(instruments).left(), TestTimeout::shortMs());
     QVERIFY(_sceneRect(map).contains(_sceneRect(credit)));
     QCOMPARE(nam.requestCount, 1);
 

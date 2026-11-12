@@ -37,6 +37,8 @@ GeoMap {
     /// Larger margins keep the credit clear of what a view puts in the bottom left corner
     property alias attributionLeftMargin: attribution.leftMargin
     property alias attributionBottomMargin: attribution.bottomMargin
+    /// Keeps the credit clear of what a view puts to the right of it
+    property alias attributionRightMargin: attribution.rightMargin
     /// For a view to put its own controls above the credit
     readonly property real attributionHeight: attribution.visible ? attribution.height : 0
     /// Credit of what a view draws beside the map from another source: it follows the credits of the map

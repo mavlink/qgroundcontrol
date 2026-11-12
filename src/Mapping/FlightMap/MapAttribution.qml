@@ -7,9 +7,10 @@ import QGroundControl.Controls
 QGCMapLabel {
     /// The credit of each source of what the map shows. Empty ones are left out.
     property var credits: []
-    /// Larger margins keep the credit clear of what a view puts in that corner
+    /// Larger margins keep the credit clear of what a view puts in that corner, and of what it puts to the right of it
     property real leftMargin: _margin
     property real bottomMargin: _margin
+    property real rightMargin: _margin
 
     readonly property real _margin: ScreenTools.defaultFontPixelWidth / 2
 
@@ -17,7 +18,7 @@ QGCMapLabel {
     anchors.bottom: parent.bottom
     anchors.leftMargin: leftMargin
     anchors.bottomMargin: bottomMargin
-    width: Math.min(implicitWidth, parent.width - leftMargin - _margin)
+    width: Math.min(implicitWidth, Math.max(0, parent.width - leftMargin - rightMargin))
     text: credits.filter(credit => credit !== "").join(" | ")
     font.pointSize: ScreenTools.smallFontPointSize
     wrapMode: Text.WordWrap

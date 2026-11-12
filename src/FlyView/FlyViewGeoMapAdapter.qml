@@ -39,6 +39,7 @@ Item {
     property alias isSatelliteMap: geoMapControl.isSatelliteMap
     property alias pinchZoomDisabledByVirtualJoysticks: geoMapControl.pinchZoomDisabledByVirtualJoysticks
     property alias attributionLeftMargin: geoMapControl.attributionLeftMargin
+    property alias attributionRightMargin: geoMapControl.attributionRightMargin
 
     // Escape hatch for GeoMap-specific chrome/controls
     readonly property var geoMap: geoMapControl

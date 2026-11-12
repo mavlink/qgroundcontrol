@@ -155,8 +155,9 @@ that `FlightMap` offers, the view shared across both views and restarts, and opt
 places them itself, because it also positions the occluders and the picture-in-picture swap.
 A region asked for with `setVisibleRegion` while the view has no size is shown once it has one.
 It also credits the imagery, and in 3D the terrain, in its bottom left corner, as `FlightMap` credits
-its imagery. A view moves that credit clear of its own controls with `attributionLeftMargin` and
-`attributionBottomMargin`, and turns it off with `showAttribution` for a map that is a small picture.
+its imagery. A view moves that credit clear of its own controls with `attributionLeftMargin`,
+`attributionBottomMargin` and `attributionRightMargin`, and turns it off with `showAttribution` for a map
+that is a small picture.
 A view adds the credit of what it draws beside the map from another source with `viewAttribution`.
 
 A view that shows a place of its own, such as the Log Viewer's map or the offline map editor's,

@@ -28,6 +28,7 @@ Map {
     property string viewAttribution:                ""      ///< Credit of what a view draws beside the map from another source: it follows the credit of the imagery
     property alias  attributionLeftMargin:          attribution.leftMargin  ///< Larger margins keep the credit clear of what a view puts in the bottom left corner
     property alias  attributionBottomMargin:        attribution.bottomMargin
+    property alias  attributionRightMargin:         attribution.rightMargin ///< Keeps the credit clear of what a view puts to the right of it
     readonly property real attributionHeight:       attribution.visible ? attribution.height : 0 ///< For a view to put its own controls above the credit
 
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle

@@ -24,6 +24,7 @@ View3D {
     /// Larger margins keep the credit clear of what a view puts in the bottom left corner
     property alias attributionLeftMargin: attribution.leftMargin
     property alias attributionBottomMargin: attribution.bottomMargin
+    property alias attributionRightMargin: attribution.rightMargin
 
     camera: standAloneScene.cameraOne
 

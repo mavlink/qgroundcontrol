@@ -51,9 +51,14 @@ Item {
     // the virtual joystick
     property real   _windowCornerLeftMargin:   widgetLayer.x + _layerOccluders.toolStrip.x + _layerOccluders.toolStrip.width + _widgetMargin
     property real   _windowCornerBottomMargin: mapHolder.height - widgetLayer.y - Math.min(_layerOccluders.pipView.y, _layerOccluders.virtualJoystickLeft.y) + ScreenTools.defaultFontPixelWidth / 2
+    // What a view shows there ends before the instruments of the bottom right corner, where it lies as low as they do
+    property real   _windowCornerRightMargin:  _windowCornerBottomMargin < mapHolder.height - widgetLayer.y - _layerOccluders.bottomRight.y
+                                                   ? mapHolder.width - widgetLayer.x - _layerOccluders.bottomRight.x + _widgetMargin
+                                                   : _margins
     // A map that is popped out to a window of its own has that corner free
     property real   _mapCornerLeftMargin:   _mainWindowIsMap ? _windowCornerLeftMargin : _margins
     property real   _mapCornerBottomMargin: _mainWindowIsMap ? _windowCornerBottomMargin : _margins
+    property real   _mapCornerRightMargin:  _mainWindowIsMap ? _windowCornerRightMargin : _margins
 
     property real   _fullItemZorder:    0
     property real   _pipItemZorder:     QGroundControl.zOrderWidgets
@@ -90,6 +95,7 @@ Item {
                 occluders:              _mapOccluders
                 attributionLeftMargin:  _mapCornerLeftMargin
                 attributionBottomMargin: _mapCornerBottomMargin
+                attributionRightMargin: _mapCornerRightMargin
                 mapName:                "FlightDisplayView"
                 enabled:                !_is3DMode
                 visible:                !_is3DMode
@@ -110,6 +116,7 @@ Item {
                 chromeTopMargin:        widgetLayer.y + _layerOccluders.topRight.y + _layerOccluders.topRight.height + _widgetMargin
                 chromeBottomMargin:     _mapCornerBottomMargin
                 attributionLeftMargin:  _mapCornerLeftMargin
+                attributionRightMargin: _mapCornerRightMargin
                 mapName:                "FlightDisplayView"
                 enabled:                !_is3DMode
                 visible:                !_is3DMode
@@ -208,6 +215,12 @@ Item {
             target:   viewer3DLoader.item
             property: "attributionBottomMargin"
             value:    _root._windowCornerBottomMargin
+        }
+
+        Binding {
+            target:   viewer3DLoader.item
+            property: "attributionRightMargin"
+            value:    _root._windowCornerRightMargin
         }
 
         Connections {
