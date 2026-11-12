@@ -15,7 +15,9 @@ class TerrainTileManager : public QObject
 {
     Q_OBJECT
 public:
-    explicit TerrainTileManager(QObject* parent = nullptr);
+    /// \a networkManager replaces the manager this object creates (test injection seam): it is not owned and must
+    /// outlive this object
+    explicit TerrainTileManager(QObject* parent = nullptr, QNetworkAccessManager* networkManager = nullptr);
     ~TerrainTileManager();
 
     static TerrainTileManager* instance();
@@ -40,7 +42,8 @@ private:
     static QList<QGeoCoordinate> _pathQueryToCoords(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord,
                                                     double& distanceBetween, double& finalDistanceBetween);
     void _tileFailed();
-    void _cacheTile(const QByteArray& data, const QString& hash);
+    /// Returns false for data that is not a valid tile
+    bool _cacheTile(const QByteArray& data, const QString& hash);
     TerrainTile* _getCachedTile(const QString& hash);
     bool _isFailedTile(const QString& hash);
     bool _recordFailedTile(

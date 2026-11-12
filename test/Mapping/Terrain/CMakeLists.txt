@@ -8,6 +8,8 @@ target_sources(
     PRIVATE
         TerrainQueryTest.cc
         TerrainQueryTest.h
+        TerrainTileManagerTest.cc
+        TerrainTileManagerTest.h
         TerrainTileTest.cc
         TerrainTileTest.h
 )
@@ -15,4 +17,5 @@ target_sources(
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_qgc_test(TerrainQueryTest LABELS Integration Terrain)
+add_qgc_test(TerrainTileManagerTest LABELS Unit Terrain)
 add_qgc_test(TerrainTileTest LABELS Unit Terrain)

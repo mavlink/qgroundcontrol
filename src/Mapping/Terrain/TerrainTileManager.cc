@@ -29,13 +29,16 @@ TerrainTileManager* TerrainTileManager::instance()
     return _terrainTileManager();
 }
 
-TerrainTileManager::TerrainTileManager(QObject* parent)
+TerrainTileManager::TerrainTileManager(QObject* parent, QNetworkAccessManager* networkManager)
     : QObject(parent)
-    , _networkManager(new QNetworkAccessManager(this))
+    , _networkManager(networkManager)
 {
     qCDebug(TerrainTileManagerLog) << this;
 
-    QGCNetworkHelper::configureProxy(_networkManager);
+    if (!_networkManager) {
+        _networkManager = new QNetworkAccessManager(this);
+        QGCNetworkHelper::configureProxy(_networkManager);
+    }
 }
 
 TerrainTileManager::~TerrainTileManager()
@@ -78,6 +81,8 @@ bool TerrainTileManager::getAltitudesForCoordinates(const QList<QGeoCoordinate>&
             QGCTileReply* const reply =
                 new QGCTileReply(_networkManager, provider->getMapId(), provider->long2tileX(coordinate.longitude(), 1),
                                  provider->lat2tileY(coordinate.latitude(), 1), 1, this);
+            // A cached tile that does not decode must be fetched again: the cache would serve it for every request
+            reply->setValidator([](const QByteArray& data) { return TerrainTile(data).isValid(); });
             (void) connect(reply, &QGCTileReply::finished, this, &TerrainTileManager::_terrainDone);
             if (reply->start()) {
                 _state = TerrainQuery::State::Downloading;
@@ -313,11 +318,15 @@ void TerrainTileManager::_terrainDone()
         return;
     }
 
-    _clearFailedTile(hash);
-
     qCDebug(TerrainTileManagerLog) << "Received some bytes of terrain data:" << responseBytes.size();
 
-    _cacheTile(responseBytes, hash);
+    if (!_cacheTile(responseBytes, hash)) {
+        (void) _recordFailedTile(hash);
+        _tileFailed();
+        return;
+    }
+
+    _clearFailedTile(hash);
 
     for (qsizetype i = _requestQueue.count() - 1; i >= 0; i--) {
         bool error;
@@ -382,13 +391,13 @@ void TerrainTileManager::_terrainDone()
     }
 }
 
-void TerrainTileManager::_cacheTile(const QByteArray& data, const QString& hash)
+bool TerrainTileManager::_cacheTile(const QByteArray& data, const QString& hash)
 {
     TerrainTile* const terrainTile = new TerrainTile(data);
     if (!terrainTile->isValid()) {
         delete terrainTile;
         qCWarning(TerrainTileManagerLog) << "Received invalid tile";
-        return;
+        return false;
     }
 
     QMutexLocker locker(&_tilesMutex);
@@ -397,6 +406,7 @@ void TerrainTileManager::_cacheTile(const QByteArray& data, const QString& hash)
     } else {
         delete terrainTile;
     }
+    return true;
 }
 
 TerrainTile* TerrainTileManager::_getCachedTile(const QString& hash)
