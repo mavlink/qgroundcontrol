@@ -567,7 +567,7 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   the same build after the coverage report; they have separate reports and still fail the job.
 - Reproduce either Linux lane with `cmake --workflow --preset Linux-sanitizers` or
   `--preset Linux-coverage` (`just coverage` uses `Linux-coverage`).
-- **Portable tests**: Windows x64 and the macOS Release leg build and run ten standalone portable
+- **Portable tests**: Windows x64 and the macOS Release leg build and run eleven standalone portable
   utility executables (`QGC_BUILD_PORTABLE_TESTS=ON`, CTest label `Portable`). They share test
   bodies with the full harness and do not enable test hooks in the packaged application. There is
   no separate Extended Tests workflow.

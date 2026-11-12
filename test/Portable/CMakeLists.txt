@@ -80,3 +80,6 @@ qgc_add_portable_test(GeoTest ../Utilities/Geo/GeoTest)
 target_link_libraries(GeoTest PRIVATE QGCGeoMath)
 qgc_add_benchmark_support(GeoTest)
 qgc_add_property_support(GeoTest)
+
+qgc_add_portable_test(GeoidTest ../Utilities/Geo/GeoidTest)
+target_link_libraries(GeoidTest PRIVATE QGCGeoMath)
