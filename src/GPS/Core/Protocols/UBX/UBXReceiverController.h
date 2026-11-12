@@ -9,6 +9,7 @@
 #include "GPSCommand.h"
 #include "UBX/UBXConfigKeys.h"
 #include "UBX/UBXFrame.h"
+#include "UBX/UBXMessageSchema.h"
 
 namespace UBX {
 
@@ -22,7 +23,7 @@ struct Acknowledgement
 struct MessageRates
 {
     uint16_t message;
-    std::array<uint8_t, 6> rates;
+    PortRates rates;
 };
 
 /// Owns control-response correlation: decoding reports replies through accept(); only configuration opens requests.
@@ -151,7 +152,7 @@ public:
     bool ratePollPending() const { return _ratePoll.has_value(); }
 
     /// The polled rates, once they arrived.
-    std::optional<std::array<uint8_t, 6>> polledRates() const { return _ratePoll ? _ratePoll->rates : std::nullopt; }
+    std::optional<PortRates> polledRates() const { return _ratePoll ? _ratePoll->rates : std::nullopt; }
 
     /// A NAK came before the polled rates: the receiver rejected the rate or the poll.
     bool ratePollRejected() const { return _ratePoll && _ratePoll->rejected; }
@@ -174,7 +175,7 @@ private:
     struct RatePoll
     {
         uint16_t message = 0;
-        std::optional<std::array<uint8_t, 6>> rates{};
+        std::optional<PortRates> rates{};
         unsigned repliesBeforeRates = 0;
         bool rejected = false;
         bool acknowledged = false;

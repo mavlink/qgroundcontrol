@@ -225,6 +225,8 @@ struct MessageRate
 
 inline constexpr uint16_t LEGACY_PORT_UART1 = 1;
 inline constexpr uint16_t LEGACY_PORT_USB = 3;
+// The rates of a CFG-MSG poll reply are read at these.
+static_assert(LEGACY_PORT_UART1 < CFG_MSG_PORTS && LEGACY_PORT_USB < CFG_MSG_PORTS);
 
 /// CFG-PRT of UART1 and USB as one message, which older receivers take: UBX in, UBX and RTCM3 out, and NMEA out on USB
 /// as the protocol 27+ configuration keeps it.

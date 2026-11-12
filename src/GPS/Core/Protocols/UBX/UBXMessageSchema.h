@@ -8,6 +8,7 @@
 #include <tuple>
 
 #include "GPSProtocolMath.h"
+#include "UBX/UBXConfigKeys.h"
 #include "UBX/UBXFrame.h"
 #include "WireFields.h"
 
@@ -185,12 +186,18 @@ struct CfgMsg
     uint8_t rate = 0;
 };
 
+/// The I/O ports a CFG-MSG poll reply reports an output rate for, in port ID order: I2C, UART1, UART2, USB, SPI and
+/// one reserved.
+inline constexpr size_t CFG_MSG_PORTS = 6;
+/// The output rate of one message on each of them, indexed by port ID.
+using PortRates = std::array<uint8_t, CFG_MSG_PORTS>;
+
 /// A CFG-MSG poll reply: the message's output rate on each I/O port.
 struct CfgMsgRates
 {
     static constexpr MessageId ID = Msg::CFG_MSG;
     uint16_t msg;
-    uint8_t rates[6];
+    uint8_t rates[CFG_MSG_PORTS];
 };
 
 struct CfgTmode3
@@ -476,7 +483,7 @@ inline constexpr std::array MESSAGE_SCHEMAS = {
     MessageSchema{Msg::SEC_SIG.value(), SEC_SIG_HEADER_SIZE, MAX_PAYLOAD_SIZE, 1, -1},
     fixedSchema<Ack>(),
     MessageSchema{Msg::ACK_NAK.value(), WIRE_SIZE<Ack>, WIRE_SIZE<Ack>, 1, -1},
-    MessageSchema{Msg::CFG_VALGET.value(), 4, MAX_CONTROL_PAYLOAD_SIZE, 1, -1},
+    MessageSchema{Msg::CFG_VALGET.value(), CONFIGURATION_HEADER_SIZE, MAX_CONTROL_PAYLOAD_SIZE, 1, -1},
     fixedSchema<CfgMsgRates>(),
     MessageSchema{Msg::CFG_TMODE3.value(), WIRE_SIZE<CfgTmode3>, WIRE_SIZE<CfgTmode3>, 1, -1},
 };
