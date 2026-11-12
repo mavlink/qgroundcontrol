@@ -136,6 +136,8 @@ struct Satellites
 
     bool fullSnapshot = true;
     std::vector<System> systems{};
+    /// The satellites the decoder listed, in its order.
+    std::vector<GPSSatellite> listed{};
 };
 
 struct SatelliteUsage

@@ -132,7 +132,9 @@ QString checkInventory(const QString& root, const QString& pattern, const QSet<Q
 //   `write <command label|-> <bytes> [<outcome> required|optional]`, then the bytes as text when printable, else hex
 //   `evidence <command label> <outcome> required|optional accepted=<n> written=<n>` for a command that wrote nothing
 //   decoded events; host timestamps appear only as receipt=0/1, and an RTCM frame ends with `forwarded=0|1`, whether
-//   GPSDriver passed it to its RTCM sink
+//   GPSDriver passed it to its RTCM sink. A satellites event lists, after `sky`, each satellite the receiver
+//   describes as `<constellation>-<number>:<elevation>/<azimuth>/<C/N0>/used|unused|?`, with `-/-` for a direction
+//   it does not know and `?` where it does not say whether it uses the satellite
 // A decode golden lists, per data file, the events of each chunking (1, 7, whole) and those after the freshness
 // horizon, marked `expired`; chunkings with identical results share one block.
 
@@ -359,6 +361,22 @@ QString formatEvent(const Event& event)
                                  .arg(system.inView)
                                  .arg(receipt(system.inViewTimestampUs), optionalNumber(system.inUse),
                                       receipt(system.inUseTimestampUs));
+                }
+                if (!report.listed.empty()) {
+                    parts << QStringLiteral("sky");
+                }
+                for (const GPSSatellite& satellite : report.listed) {
+                    parts << QStringLiteral("%1-%2:%3/%4/%5")
+                                 .arg(nameOf(satellite.constellation))
+                                 .arg(satellite.id)
+                                 .arg(satellite.directionKnown ? QStringLiteral("%1/%2")
+                                                                     .arg(satellite.elevationDegrees)
+                                                                     .arg(satellite.azimuthDegrees)
+                                                               : QStringLiteral("-/-"))
+                                 .arg(satellite.signalDbHz)
+                                 .arg(satellite.use == GPSSatellite::Use::Used     ? QStringLiteral("used")
+                                      : satellite.use == GPSSatellite::Use::Unused ? QStringLiteral("unused")
+                                                                                   : QStringLiteral("?"));
                 }
                 return parts.join(u' ');
             } else if constexpr (std::is_same_v<Report, SatelliteUsage>) {

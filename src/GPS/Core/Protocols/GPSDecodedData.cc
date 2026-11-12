@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iterator>
 #include <span>
 
 #include "MonotonicClock.h"
@@ -29,7 +30,9 @@ GPSSatelliteReport SatelliteCounts::update(const GPSDecodedSatellites& source, u
 {
     if (source.fullSnapshot) {
         for (auto& [constellation, counts] : _constellations) {
-            counts = {};
+            counts.inView = {};
+            counts.used = {};
+            counts.satellites.clear();
         }
     }
     constexpr int LIMIT = GPSDecodedSatellites::SAT_INFO_MAX_SATELLITES;
@@ -37,7 +40,13 @@ GPSSatelliteReport SatelliteCounts::update(const GPSDecodedSatellites& source, u
         std::span(source.constellations).first(std::min<size_t>(source.count, source.constellations.size()));
     for (const auto& native : reported) {
         auto& counts = _constellations[native.constellation];
-        _accept(counts.inView, native.inViewTimestampUs, std::clamp(native.inView, 0, LIMIT), nowUs);
+        if (_accept(counts.inView, native.inViewTimestampUs, std::clamp(native.inView, 0, LIMIT), nowUs)) {
+            counts.satellites.clear();
+            std::ranges::copy_if(
+                source.satellitesInView(), std::back_inserter(counts.satellites),
+                [&native](const GPSSatellite& satellite) { return satellite.constellation == native.constellation; });
+            std::ranges::sort(counts.satellites, {}, &GPSSatellite::id);
+        }
         _accept(counts.used, native.inUseTimestampUs,
                 native.inUse ? std::optional<int>(std::clamp(*native.inUse, 0, LIMIT)) : std::nullopt, nowUs);
     }
@@ -60,12 +69,14 @@ std::optional<GPSSatelliteReport> SatelliteCounts::expire(uint64_t nowUs)
     return _report();
 }
 
-void SatelliteCounts::_accept(Count& count, uint64_t receivedAtUs, std::optional<int> value, uint64_t nowUs)
+bool SatelliteCounts::_accept(Count& count, uint64_t receivedAtUs, std::optional<int> value, uint64_t nowUs)
 {
-    if (receivedAtUs >= count.receivedAtUs &&
-        MonotonicClock::fresh(receivedAtUs, nowUs, SatelliteCounts::FRESHNESS_TIMEOUT)) {
+    const bool accepted = receivedAtUs >= count.receivedAtUs &&
+                          MonotonicClock::fresh(receivedAtUs, nowUs, SatelliteCounts::FRESHNESS_TIMEOUT);
+    if (accepted) {
         count = {receivedAtUs, value};
     }
+    return accepted;
 }
 
 bool SatelliteCounts::_expire(uint64_t nowUs)
@@ -80,6 +91,9 @@ bool SatelliteCounts::_expire(uint64_t nowUs)
     };
     for (auto& [constellation, counts] : _constellations) {
         retire(counts.inView);
+        if (!counts.inView.receivedAtUs) {
+            counts.satellites.clear();
+        }
         retire(counts.used);
     }
     retire(_countOnlyUsed);
@@ -109,6 +123,9 @@ GPSSatelliteReport SatelliteCounts::_report() const
             usedKnown = false;
         }
         report.addConstellation({.constellation = constellation, .inView = visible, .used = constellationUsed});
+        for (const GPSSatellite& satellite : counts.satellites) {
+            report.addSatellite(satellite);
+        }
     }
     std::optional<int> viewUsed;
     if (report.timestampUs) {

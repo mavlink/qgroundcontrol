@@ -28,6 +28,9 @@ logs of [gpsd](https://gitlab.com/gpsd/gpsd) (BSD-2-Clause) at commit
 decodes each one whole, byte by byte and in chunks of seven bytes, and they seed the protocol
 fuzzers. The golden transcripts do not read them. A capture that a user sent has no upstream
 file: its row names the sender, the receiver and its firmware instead.
+`GPSSatelliteReportTest` checks the satellites of each NAV-SAT in them, and of the GSV and GSA of
+`gpsd-ac12-pashr.cap`. Its expected values were read from the bytes by hand, at the offsets of the
+u-blox interface description, and are not in `GPSCaptureExpectations.h`.
 
 | File | Upstream file | Offset, length | Content |
 | --- | --- | --- | --- |

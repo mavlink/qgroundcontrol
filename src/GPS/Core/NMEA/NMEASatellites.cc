@@ -13,6 +13,15 @@ constexpr size_t GSV_PAGE_NUMBER_FIELD = 2;
 constexpr size_t GSV_SATELLITE_COUNT_FIELD = 3;
 constexpr size_t GSV_FIRST_SATELLITE_FIELD = 4;
 constexpr size_t GSV_SATELLITE_FIELDS = 4;
+/// Within a satellite's fields, after its identifier.
+constexpr size_t GSV_ELEVATION_OFFSET = 1;
+constexpr size_t GSV_AZIMUTH_OFFSET = 2;
+constexpr size_t GSV_SIGNAL_OFFSET = 3;
+constexpr int MAX_GSV_ELEVATION = 90;
+/// North, which some receivers report as 360 degrees.
+constexpr int GSV_FULL_CIRCLE = 360;
+/// C/N0 in dB-Hz.
+constexpr int MAX_GSV_SIGNAL_STRENGTH = 99;
 constexpr int GSV_SATELLITES_PER_PAGE = 4;
 constexpr int MAX_GSV_PAGES = 64;
 constexpr int MAX_GSV_SATELLITES = MAX_GSV_PAGES * GSV_SATELLITES_PER_PAGE;
@@ -164,12 +173,26 @@ std::optional<GSV> gsv(const Sentence& input)
         if (!id || *id < 1 || *id > MAX_GSV_SATELLITE_ID) {
             return {};
         }
-        SatelliteData satellite;
+        GPSSatellite satellite;
         satellite.constellation = satelliteConstellation(input.talker(), {}, *id);
         if (satellite.constellation == GPSConstellation::Unknown) {
             return {};
         }
-        satellite.id = satelliteId(satellite.constellation, *id);
+        satellite.id = static_cast<uint16_t>(satelliteId(satellite.constellation, *id));
+        // A satellite without orbit data has no direction and one that is not tracked no signal: those fields are
+        // empty. A value outside its range is as good as none.
+        const auto elevation = number<int>(f[index + GSV_ELEVATION_OFFSET]);
+        const auto azimuth = number<int>(f[index + GSV_AZIMUTH_OFFSET]);
+        if (elevation && azimuth && *elevation >= -MAX_GSV_ELEVATION && *elevation <= MAX_GSV_ELEVATION &&
+            *azimuth >= 0 && *azimuth <= GSV_FULL_CIRCLE) {
+            satellite.elevationDegrees = static_cast<int8_t>(*elevation);
+            satellite.azimuthDegrees = static_cast<uint16_t>(*azimuth % GSV_FULL_CIRCLE);
+            satellite.directionKnown = true;
+        }
+        const auto signal = number<int>(f[index + GSV_SIGNAL_OFFSET]);
+        if (signal && *signal > 0 && *signal <= MAX_GSV_SIGNAL_STRENGTH) {
+            satellite.signalDbHz = static_cast<uint8_t>(*signal);
+        }
         result.satellites.push_back(satellite);
     }
     return result;
@@ -315,11 +338,11 @@ SatelliteEpoch SatelliteAssembler::flush()
 {
     _batchStartedUs.reset();
     std::map<GPSConstellation, SatelliteSystem> systems;
-    std::map<GPSConstellation, std::set<int>> satellites;
-    const auto includeView = [&systems](GPSConstellation constellation, uint64_t timestamp) {
+    const auto includeView = [&systems](GPSConstellation constellation, uint64_t timestamp) -> SatelliteSystem& {
         auto& out = systems[constellation];
         out.constellation = constellation;
         out.inViewTimestampUs = out.inViewTimestampUs ? (std::min) (out.inViewTimestampUs, timestamp) : timestamp;
+        return out;
     };
     for (const auto& [system, signalReports] : _views) {
         for (const auto& [signal, report] : signalReports) {
@@ -334,19 +357,34 @@ SatelliteEpoch SatelliteAssembler::flush()
                 }
             }
             for (const auto& satellite : report.satellites) {
-                includeView(satellite.constellation, report.timestamp);
-                satellites[satellite.constellation].insert(satellite.id);
+                auto& listed = includeView(satellite.constellation, report.timestamp).satellites;
+                const auto known = std::ranges::find(listed, satellite.id, &GPSSatellite::id);
+                if (known == listed.end()) {
+                    listed.push_back(satellite);
+                    continue;
+                }
+                // Another signal of a satellite already listed.
+                if (!known->directionKnown && satellite.directionKnown) {
+                    known->elevationDegrees = satellite.elevationDegrees;
+                    known->azimuthDegrees = satellite.azimuthDegrees;
+                    known->directionKnown = true;
+                }
+                known->signalDbHz = (std::max) (known->signalDbHz, satellite.signalDbHz);
             }
         }
     }
-    for (auto& [system, view] : satellites) {
-        systems[system].inView = static_cast<int>(view.size());
+    for (auto& [system, view] : systems) {
+        std::ranges::sort(view.satellites, {}, &GPSSatellite::id);
+        view.inView = static_cast<int>(view.satellites.size());
     }
     for (const auto& [system, used] : _used) {
         auto& out = systems[system];
         out.constellation = system;
         out.inUseTimestampUs = used.timestamp;
         out.inUse = static_cast<int>(used.ids.size());
+        for (GPSSatellite& satellite : out.satellites) {
+            satellite.use = used.ids.contains(satellite.id) ? GPSSatellite::Use::Used : GPSSatellite::Use::Unused;
+        }
     }
     SatelliteEpoch result;
     for (auto& [system, report] : systems) {

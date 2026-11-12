@@ -56,6 +56,11 @@ constexpr uint8_t SEC_SIG_JAMMING_ENABLED = 0x01;
 /// svUsed in the flags of a NAV-SAT satellite and of a NAV-SVINFO channel.
 constexpr uint32_t NAV_SAT_USED = 0x08;
 constexpr uint8_t NAV_SVINFO_USED = 0x01;
+/// The elevation of a satellite whose direction the receiver knows is within this of the horizon.
+constexpr int MAX_ELEVATION = 90;
+constexpr int FULL_CIRCLE_DEGREES = 360;
+/// The svid of a GLONASS satellite whose slot the receiver does not know yet.
+constexpr uint8_t UNKNOWN_GLONASS_SLOT = 255;
 
 GPSPositionReport::FixType navigationFix(uint8_t wireFix, uint8_t flags)
 {
@@ -118,6 +123,54 @@ GPSIntegrityReport::AntennaState antennaState(uint8_t status)
         default:
             return GPSIntegrityReport::AntennaState::Unknown;
     }
+}
+
+/// One satellite as NAV-SAT and NAV-SVINFO describe it. The receiver reports an elevation out of range for a
+/// satellite whose direction it does not know.
+GPSSatellite satelliteInView(GPSConstellation constellation, uint16_t id, uint8_t cno, int8_t elevation,
+                             int16_t azimuth, bool used)
+{
+    GPSSatellite satellite{.constellation = constellation,
+                           .id = id,
+                           .signalDbHz = cno,
+                           .use = used ? GPSSatellite::Use::Used : GPSSatellite::Use::Unused};
+    if (elevation >= -MAX_ELEVATION && elevation <= MAX_ELEVATION && azimuth >= 0 && azimuth <= FULL_CIRCLE_DEGREES) {
+        satellite.azimuthDegrees = static_cast<uint16_t>(azimuth % FULL_CIRCLE_DEGREES);
+        satellite.elevationDegrees = elevation;
+        satellite.directionKnown = true;
+    }
+    return satellite;
+}
+
+/// The constellation and the number in it of a NAV-SVINFO svid, which numbers the satellites of every constellation
+/// in one range (u-blox 8 / M8 receiver description, "Satellite Numbering"); an svid outside those ranges keeps its
+/// number, in no constellation.
+std::pair<GPSConstellation, uint16_t> legacySatellite(uint8_t svid)
+{
+    struct Range
+    {
+        uint8_t first;
+        uint8_t last;
+        GPSConstellation constellation;
+        /// The number in the constellation of the range's first svid.
+        uint16_t firstId;
+    };
+
+    constexpr Range RANGES[] = {
+        {1, 32, GPSConstellation::GPS, 1},        {33, 64, GPSConstellation::BeiDou, 6},
+        {65, 96, GPSConstellation::GLONASS, 1},   {120, 158, GPSConstellation::SBAS, 120},
+        {159, 163, GPSConstellation::BeiDou, 1},  {193, 202, GPSConstellation::QZSS, 1},
+        {211, 246, GPSConstellation::Galileo, 1},
+    };
+    if (svid == UNKNOWN_GLONASS_SLOT) {
+        return {GPSConstellation::GLONASS, svid};
+    }
+    for (const Range& range : RANGES) {
+        if (svid >= range.first && svid <= range.last) {
+            return {range.constellation, static_cast<uint16_t>(svid - range.first + range.firstId)};
+        }
+    }
+    return {GPSConstellation::Unknown, svid};
 }
 
 /// Fixed-size satellite blocks follow the header, as many as the validated payload holds.
@@ -544,16 +597,19 @@ void Protocol::_decodeSatellites(uint16_t message, std::span<const uint8_t> payl
         decodeSatelliteBlocks<UBX::NavSat, UBX::NavSatSatellite>(
             payload, _satellites, [](const auto& header) { return header.numSvs; },
             [&SYSTEMS](auto& report, const auto& satellite) {
-                report.addSatellite(
+                report.addSatellite(satelliteInView(
                     satellite.gnssId < std::size(SYSTEMS) ? SYSTEMS[satellite.gnssId] : GPSConstellation::Unknown,
-                    (satellite.flags & NAV_SAT_USED) != 0);
+                    satellite.svId, satellite.cno, satellite.elev, satellite.azim,
+                    (satellite.flags & NAV_SAT_USED) != 0));
             });
         return;
     }
     decodeSatelliteBlocks<UBX::NavSvinfo, UBX::NavSvinfoChannel>(
         payload, _satellites, [](const auto& header) { return header.numCh; },
         [](auto& report, const auto& channel) {
-            report.addSatellite(GPSConstellation::Unknown, (channel.flags & NAV_SVINFO_USED) != 0);
+            const auto [constellation, id] = legacySatellite(channel.svid);
+            report.addSatellite(satelliteInView(constellation, id, channel.cno, channel.elev, channel.azim,
+                                                (channel.flags & NAV_SVINFO_USED) != 0));
         });
 }
 

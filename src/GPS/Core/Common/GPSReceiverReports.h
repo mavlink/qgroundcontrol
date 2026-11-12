@@ -169,6 +169,32 @@ struct GPSPositionReport
     GPSIntegrityReport integrity{};
 };
 
+/// One satellite a receiver has in view.
+struct GPSSatellite
+{
+    /// Whether the receiver uses the satellite in its solution.
+    enum class Use : uint8_t
+    {
+        /// The receiver does not report which satellites it uses.
+        Unknown,
+        Unused,
+        Used,
+    };
+
+    GPSConstellation constellation = GPSConstellation::Unknown;
+    /// The satellite's number in its constellation: a PRN or slot counted from 1, or an SBAS PRN, 120 to 158.
+    uint16_t id = 0;
+    /// Clockwise from north, 0 to 359, and above the horizon, -90 to 90: where the satellite is, while directionKnown.
+    uint16_t azimuthDegrees = 0;
+    int8_t elevationDegrees = 0;
+    bool directionKnown = false;
+    /// Carrier-to-noise density in dB-Hz of the strongest signal the receiver reports; zero while it tracks none.
+    uint8_t signalDbHz = 0;
+    Use use = Use::Unknown;
+
+    bool operator==(const GPSSatellite&) const = default;
+};
+
 struct GPSSatelliteReport
 {
     /// A constellation with satellites in view.
@@ -199,6 +225,25 @@ struct GPSSatelliteReport
         }
     }
 
+    /// The most satellites a report lists.
+    static constexpr size_t MAX_SATELLITES = 128;
+
+    /// The satellites in view that the receiver describes, in GPSConstellation order and by number within a
+    /// constellation: those the in-view counts of constellationsInView() sum, as far as MAX_SATELLITES list them.
+    /// Empty for a receiver that only counts its satellites.
+    [[nodiscard]] std::span<const GPSSatellite> satellitesInView() const
+    {
+        return std::span(satellites).first(std::min<size_t>(satelliteCount, satellites.size()));
+    }
+
+    /// Appends to satellitesInView(); ignored once MAX_SATELLITES are listed.
+    void addSatellite(const GPSSatellite& satellite)
+    {
+        if (satelliteCount < satellites.size()) {
+            satellites[satelliteCount++] = satellite;
+        }
+    }
+
     // Latest accepted view receipt. Zero plus absent inView means no view coverage.
     uint64_t timestampUs = 0;
     std::optional<int> inView = std::nullopt;
@@ -207,6 +252,9 @@ struct GPSSatelliteReport
     /// equal reports compare equal.
     std::array<Constellation, MAX_CONSTELLATIONS> constellations{};
     uint8_t constellationCount = 0;
+    /// Backs satellitesInView() with its first satelliteCount entries, the others default as for the constellations.
+    std::array<GPSSatellite, MAX_SATELLITES> satellites{};
+    uint8_t satelliteCount = 0;
 
     bool operator==(const GPSSatelliteReport&) const = default;
 };

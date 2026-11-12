@@ -32,7 +32,7 @@ void applyNavigationEpoch(GPSDecodedPosition& report, const NMEA::NavigationEpoc
     report.velocityValid = epoch.speedMetersPerSecond || epoch.courseDegrees;
 }
 
-/// Adds what an epoch reports of one system to @a report.
+/// Adds what an epoch reports of one system to @a report: its counts and the satellites of its view.
 void addSystem(GPSDecodedSatellites& report, const NMEA::SatelliteSystem& system)
 {
     auto* constellation = report.ensureConstellation(system.constellation);
@@ -44,6 +44,9 @@ void addSystem(GPSDecodedSatellites& report, const NMEA::SatelliteSystem& system
     if (system.inUse) {
         constellation->inUseTimestampUs = system.inUseTimestampUs;
         constellation->inUse = *system.inUse;
+    }
+    for (const GPSSatellite& satellite : system.satellites) {
+        report.listSatellite(satellite);
     }
 }
 

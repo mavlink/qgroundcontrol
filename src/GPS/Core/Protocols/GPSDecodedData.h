@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <map>
 #include <optional>
+#include <vector>
 
 #include "GPSProtocolEvent.h"
 #include "GPSReceiverReports.h"
@@ -18,7 +19,9 @@ GPSPositionReport position(const GPSDecodedPosition& source, const GPSIntegrityR
 /// when none has satellites in view. Only while that sum is unknown, before any view is known or while a constellation
 /// with satellites in view lacks a used count, does the latest count-only report stand in, under the same timeout from
 /// its own receipt. The report also lists each constellation with satellites in view, with the counts the totals sum;
-/// a count-only report never stands in for a constellation's used count.
+/// a count-only report never stands in for a constellation's used count. The satellites a decoder lists stay and go
+/// with the in-view count of their constellation, so the report lists those of every constellation in view, by
+/// number.
 class SatelliteCounts
 {
 public:
@@ -44,9 +47,13 @@ private:
     {
         Count inView;
         Count used;
+        /// Those the in-view count was listed with, by number. Emptied rather than replaced, so that an epoch does
+        /// not allocate.
+        std::vector<GPSSatellite> satellites;
     };
 
-    static void _accept(Count& count, uint64_t receivedAtUs, std::optional<int> value, uint64_t nowUs);
+    /// @return whether @a value replaced the count.
+    static bool _accept(Count& count, uint64_t receivedAtUs, std::optional<int> value, uint64_t nowUs);
     bool _expire(uint64_t nowUs);
     GPSSatelliteReport _report() const;
 

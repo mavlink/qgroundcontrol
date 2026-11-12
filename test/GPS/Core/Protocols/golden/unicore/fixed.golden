@@ -44,7 +44,7 @@ configure configured=1 baud=0->115200 failure=none ready=1 elapsed=2ms
 stream failure=none ready=1
   usage used=12 receipt=1
   position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=nan vacc=nan hdop=0.900 vdop=nan speed=nan course=nan used=12 utc=0 velocity=0 receipt=1
-  satellites full=0 gps:view=3/1,use=-/0 sbas:view=0/1,use=-/0
+  satellites full=0 gps:view=3/1,use=-/0 sbas:view=0/1,use=-/0 sky gps-1:40/83/46/? gps-2:17/308/41/? gps-12:7/344/39/?
   survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1
   survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1
   survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1

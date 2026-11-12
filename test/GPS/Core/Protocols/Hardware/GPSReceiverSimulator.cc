@@ -72,6 +72,22 @@ constexpr Satellite SKY[] = {
     {6, 24, 27, 6, 345, false},
 };
 
+/// The svid of NAV-SVINFO, which numbers the satellites of every constellation in one range: GPS 1 to 32, BeiDou 159
+/// to 163 and then 33 to 64, GLONASS 65 to 96 and Galileo 211 to 246.
+constexpr uint8_t legacySvid(const Satellite& satellite)
+{
+    switch (satellite.gnssId) {
+        case 2:
+            return static_cast<uint8_t>(210 + satellite.svId);
+        case 3:
+            return static_cast<uint8_t>(satellite.svId <= 5 ? 158 + satellite.svId : 27 + satellite.svId);
+        case 6:
+            return static_cast<uint8_t>(64 + satellite.svId);
+        default:
+            return satellite.svId;
+    }
+}
+
 /// A UBX payload written at the offsets of the u-blox interface description, not through the driver's layouts.
 class Payload
 {
@@ -478,7 +494,7 @@ QByteArray GPSReceiverSimulator::_satellites() const
     for (const Satellite& satellite : SKY) {
         if (_model.legacy) {
             payload.set<uint8_t>(offset, channel++)
-                .set<uint8_t>(offset + 1, satellite.svId)
+                .set<uint8_t>(offset + 1, legacySvid(satellite))
                 .set<uint8_t>(offset + 2, satellite.used ? 0x01 : 0)  // svUsed
                 .set<uint8_t>(offset + 4, satellite.signalDbHz)
                 .set<int8_t>(offset + 5, satellite.elevationDegrees)

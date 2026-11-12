@@ -67,6 +67,16 @@ inline QString summary(const GPSDecodedSatellites& report)
                       .arg(system.inUseTimestampUs)
                       .arg(summaryOptional(system.inUse));
     }
+    for (const GPSSatellite& satellite : report.satellitesInView()) {
+        result += QStringLiteral(" {%1-%2 %3/%4/%5 %6 %7}")
+                      .arg(static_cast<int>(satellite.constellation))
+                      .arg(satellite.id)
+                      .arg(satellite.elevationDegrees)
+                      .arg(satellite.azimuthDegrees)
+                      .arg(int(satellite.directionKnown))
+                      .arg(satellite.signalDbHz)
+                      .arg(static_cast<int>(satellite.use));
+    }
     return result;
 }
 

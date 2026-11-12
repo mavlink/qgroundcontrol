@@ -93,6 +93,10 @@ struct NavSat
 struct NavSatSatellite
 {
     uint8_t gnssId;
+    uint8_t svId;
+    uint8_t cno;     ///< dB-Hz
+    int8_t elev;     ///< degrees; unknown outside -90 to 90, and the azimuth with it
+    int16_t azim;    ///< degrees
     uint32_t flags;  ///< svUsed in bit 3
 };
 
@@ -103,7 +107,11 @@ struct NavSvinfo
 
 struct NavSvinfoChannel
 {
+    uint8_t svid;   ///< numbered across constellations
     uint8_t flags;  ///< svUsed in bit 0
+    uint8_t cno;    ///< dB-Hz
+    int8_t elev;    ///< degrees
+    int16_t azim;   ///< degrees
 };
 
 /// MON-HW of u-blox 7 and later; protocol 27 deprecates it for MON-RF.
@@ -281,7 +289,8 @@ struct Layout<UBX::NavSatSatellite>
 {
     using T = UBX::NavSatSatellite;
     static constexpr size_t SIZE = 12;
-    static constexpr auto FIELDS = std::tuple{Field<&T::gnssId, 0>{}, Field<&T::flags, 8>{}};
+    static constexpr auto FIELDS = std::tuple{Field<&T::gnssId, 0>{}, Field<&T::svId, 1>{}, Field<&T::cno, 2>{},
+                                              Field<&T::elev, 3>{},   Field<&T::azim, 4>{}, Field<&T::flags, 8>{}};
 };
 
 template <>
@@ -297,7 +306,8 @@ struct Layout<UBX::NavSvinfoChannel>
 {
     using T = UBX::NavSvinfoChannel;
     static constexpr size_t SIZE = 12;
-    static constexpr auto FIELDS = std::tuple{Field<&T::flags, 2>{}};
+    static constexpr auto FIELDS = std::tuple{Field<&T::svid, 1>{}, Field<&T::flags, 2>{}, Field<&T::cno, 4>{},
+                                              Field<&T::elev, 5>{}, Field<&T::azim, 6>{}};
 };
 
 template <>

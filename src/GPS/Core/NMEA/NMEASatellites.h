@@ -70,12 +70,6 @@ inline constexpr int SBAS_FIRST_PRN = 120;
 
 struct Sentence;
 
-struct SatelliteData
-{
-    uint16_t id = 0;
-    GPSConstellation constellation = GPSConstellation::Unknown;
-};
-
 struct SatelliteSystem
 {
     GPSConstellation constellation = GPSConstellation::Unknown;
@@ -83,6 +77,9 @@ struct SatelliteSystem
     uint64_t inUseTimestampUs = 0;
     int inView = 0;
     std::optional<int> inUse;
+    /// The inView satellites, by number. One that several signals' views list has the strongest of their signals,
+    /// and its use is known when a GSA of the epoch names the system.
+    std::vector<GPSSatellite> satellites = {};
 };
 
 using SatelliteEpoch = std::vector<SatelliteSystem>;
@@ -95,7 +92,8 @@ struct GSV
     int message = 0;
     int satelliteCount = 0;
     int signal = -1;
-    std::vector<SatelliteData> satellites = {};
+    /// Their use is unknown: GSA reports it.
+    std::vector<GPSSatellite> satellites = {};
 };
 
 [[nodiscard]] std::optional<GSV> gsv(const Sentence& input);
@@ -133,7 +131,7 @@ private:
         int count = 0;
         int next = 1;
         uint64_t timestamp = 0;
-        std::vector<SatelliteData> satellites = {};
+        std::vector<GPSSatellite> satellites = {};
 
         bool complete() const { return messages > 0 && next == messages + 1; }
     };

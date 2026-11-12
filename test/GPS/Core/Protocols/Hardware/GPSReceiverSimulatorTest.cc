@@ -7,6 +7,7 @@
 #include <variant>
 
 #include <QtCore/QElapsedTimer>
+#include <QtCore/QList>
 #include <QtCore/QSet>
 #include <QtNetwork/QTcpSocket>
 #include <QtTest/QSignalSpy>
@@ -156,6 +157,30 @@ void GPSReceiverSimulatorTest::_workerConfiguresBase()
     const auto sky = qvariant_cast<GPSSatelliteReport>(satellites.last().first());
     QCOMPARE(sky.inView.value_or(-1), 17);
     QCOMPARE(sky.used.value_or(-1), 14);
+    // Each satellite of the simulator's sky is described, under its constellation, by either satellite message.
+    using Constellation = GPSSatelliteReport::Constellation;
+    const auto constellations = sky.constellationsInView();
+    QCOMPARE(QList<Constellation>(constellations.begin(), constellations.end()),
+             (QList<Constellation>{{GPSConstellation::GPS, 6, 5},
+                                   {GPSConstellation::GLONASS, 4, 3},
+                                   {GPSConstellation::Galileo, 4, 3},
+                                   {GPSConstellation::BeiDou, 3, 3}}));
+    const auto listed = sky.satellitesInView();
+    QCOMPARE(listed.size(), size_t(17));
+    QCOMPARE(listed.front(), (GPSSatellite{.constellation = GPSConstellation::GPS,
+                                           .id = 2,
+                                           .azimuthDegrees = 40,
+                                           .elevationDegrees = 62,
+                                           .directionKnown = true,
+                                           .signalDbHz = 44,
+                                           .use = GPSSatellite::Use::Used}));
+    QCOMPARE(listed.back(), (GPSSatellite{.constellation = GPSConstellation::BeiDou,
+                                          .id = 36,
+                                          .azimuthDegrees = 330,
+                                          .elevationDegrees = 66,
+                                          .directionKnown = true,
+                                          .signalDbHz = 43,
+                                          .use = GPSSatellite::Use::Used}));
 
     const GPSBaseStatus status = baseStatus();
     QVERIFY(near(status.position, position));

@@ -53,6 +53,8 @@ Event eventOf(const GPSProtocolEvent& decoded)
                     satellites.systems.push_back({system.constellation, system.inView, system.inUse,
                                                   system.inViewTimestampUs, system.inUseTimestampUs});
                 }
+                const auto listed = report.satellitesInView();
+                satellites.listed.assign(listed.begin(), listed.end());
                 return satellites;
             } else if constexpr (std::is_same_v<Report, GPSDecodedSatelliteUsage>) {
                 return SatelliteUsage{report.timestampUs, report.usedCount};

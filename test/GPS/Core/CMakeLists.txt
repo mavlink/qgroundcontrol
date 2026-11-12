@@ -21,6 +21,7 @@ set(_qgc_gps_core_suites
     GPSReceiverWorkerTest
     Common/GPSProtocolMathTest
     Common/GPSReceiverConfigTest
+    NMEA/NMEASatellitesTest
     NMEA/NMEASentenceTest
     RTCM/RTCMConformanceTest
     Transport/GPSCancellationTest

@@ -1,8 +1,10 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <optional>
+#include <span>
 #include <variant>
 #include <vector>
 
@@ -32,7 +34,7 @@ struct GPSDecodedPosition
 
 struct GPSDecodedSatellites
 {
-    static constexpr uint16_t SAT_INFO_MAX_SATELLITES = 128;
+    static constexpr uint16_t SAT_INFO_MAX_SATELLITES = GPSSatelliteReport::MAX_SATELLITES;
     static constexpr uint8_t MAX_CONSTELLATIONS = 8;
 
     struct Constellation
@@ -59,20 +61,44 @@ struct GPSDecodedSatellites
         return &report;
     }
 
-    /// Counts one satellite in view of @a constellation, and in use when @a used. Dropped when MAX_CONSTELLATIONS other
-    /// constellations are already present.
-    void addSatellite(GPSConstellation constellation, bool used)
+    /// Lists @a satellite as in view of a constellation the caller counts; dropped once SAT_INFO_MAX_SATELLITES are
+    /// listed.
+    void listSatellite(const GPSSatellite& satellite)
     {
-        if (auto* system = ensureConstellation(constellation)) {
-            ++system->inView;
-            system->inUse = system->inUse.value_or(0) + (used ? 1 : 0);
+        if (satelliteCount < satellites.size()) {
+            satellites[satelliteCount++] = satellite;
         }
+    }
+
+    /// Counts @a satellite in view of its constellation, and in use or not where it reports that, and lists it.
+    /// Dropped when MAX_CONSTELLATIONS other constellations are already present.
+    void addSatellite(const GPSSatellite& satellite)
+    {
+        auto* system = ensureConstellation(satellite.constellation);
+        if (!system) {
+            return;
+        }
+        ++system->inView;
+        if (satellite.use != GPSSatellite::Use::Unknown) {
+            system->inUse = system->inUse.value_or(0) + (satellite.use == GPSSatellite::Use::Used ? 1 : 0);
+        }
+        listSatellite(satellite);
+    }
+
+    /// The satellites listed, in the order the decoder listed them.
+    [[nodiscard]] std::span<const GPSSatellite> satellitesInView() const
+    {
+        return std::span(satellites).first(std::min<size_t>(satelliteCount, satellites.size()));
     }
 
     // Full snapshots retire omitted constellations; deltas preserve them.
     bool fullSnapshot = true;
     uint8_t count = 0;
     std::array<Constellation, MAX_CONSTELLATIONS> constellations{};
+    /// The satellites in view of the constellations above, where the receiver describes them: the first
+    /// satelliteCount entries.
+    uint8_t satelliteCount = 0;
+    std::array<GPSSatellite, SAT_INFO_MAX_SATELLITES> satellites{};
 };
 
 struct GPSDecodedSatelliteUsage
