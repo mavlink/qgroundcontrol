@@ -11,6 +11,7 @@ The dot is grey without a receiver, orange while a connection is opened or await
 The button reads **Connect**, then **Disconnect** from the moment a connection is being opened, and **Cancel reconnect** while QGroundControl waits to reconnect automatically.
 **Connect** uses the [settings](#receiver) as they are, and is unavailable while they select no receiver type, a base mode the receiver does not support, or UDP for a configured base.
 A message below that line explains a failed or lost connection.
+When **Connect** cannot start, as without a TCP host or with a serial device that is not plugged in, the message says why, and it goes away once the settings no longer have that problem.
 Below the connection, the status shows the receiver's fix and satellites, and any jamming or spoofing it reports.
 The status of a configured base says when the base sends no corrections.
 While a survey or the receiver's own averaging runs, it sends none until that completes.

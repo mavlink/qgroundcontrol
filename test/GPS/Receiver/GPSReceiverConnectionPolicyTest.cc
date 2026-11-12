@@ -376,6 +376,105 @@ void GPSReceiverConnectionPolicyTest::_unconnectableConfigurationIsNotRetried()
     QCOMPARE(harness.attempts(), 2);
 }
 
+void GPSReceiverConnectionPolicyTest::_configurationChangeWithdrawsRefusal_data()
+{
+    QTest::addColumn<QString>("refused");
+    QTest::addColumn<QString>("change");
+    QTest::addColumn<bool>("withdrawn");
+    const auto row = [](const char* refused, const char* change, bool withdrawn) {
+        QTest::addRow("%s-%s", refused, change)
+            << QString::fromLatin1(refused) << QString::fromLatin1(change) << withdrawn;
+    };
+    row("tcp-without-host", "host-entered", true);
+    row("tcp-without-host", "udp-selected", true);
+    // The host is still missing.
+    row("tcp-without-host", "port-changed", false);
+    row("tcp-without-host", "forwarding-off", false);
+    // What ended a session stays, whatever is selected next.
+    row("lost-connection", "port-changed", false);
+#ifndef QGC_NO_SERIAL_LINK
+    row("serial-unplugged", "device-selected", true);
+    row("serial-unplugged", "baud-changed", false);
+    row("serial-in-use", "device-selected", true);
+    // The refused device returned and its session ended: the message on display is no longer the refusal.
+    row("serial-returned-and-lost", "device-selected", false);
+#endif
+}
+
+void GPSReceiverConnectionPolicyTest::_configurationChangeWithdrawsRefusal()
+{
+    QFETCH(QString, refused);
+    QFETCH(QString, change);
+    QFETCH(bool, withdrawn);
+    auto configuration = tcpConfiguration(false);
+    if (refused == QStringLiteral("tcp-without-host")) {
+        configuration.tcpHost.clear();
+    }
+#ifdef QGC_NO_SERIAL_LINK
+    PolicyHarness harness(configuration);
+#else
+    const QString other = QStringLiteral("/test/other");
+    QList<SerialPortManager::Port> listed{serialPort(other)};
+    if (refused.startsWith(QStringLiteral("serial-"))) {
+        configuration = savedSerialConfiguration(false);
+    }
+    if (refused == QStringLiteral("serial-in-use")) {
+        listed.append(serialPort(configuration.serialDevice));
+    }
+    PolicyHarness harness(configuration, listed);
+    // Another connection, such as a vehicle link, holds the selected device.
+    const auto vehicleLink =
+        refused == QStringLiteral("serial-in-use") ? harness.ports.reservePort(configuration.serialDevice) : nullptr;
+#endif
+    GPSReceiver& receiver = harness.receiver;
+    const auto loseConnection = [&] {
+        QVERIFY(receiver.connectReceiver());
+        harness.worker()->ready();
+        expectLogMessage(kReceiverLog, QtWarningMsg, QRegularExpression(QStringLiteral("connection lost")));
+        harness.worker()->fail(GPSConnectionError::DeviceError);
+        verifyExpectedLogMessage();
+    };
+    if (refused == QStringLiteral("lost-connection")) {
+        loseConnection();
+    } else {
+        QVERIFY(!receiver.connectReceiver());
+    }
+#ifndef QGC_NO_SERIAL_LINK
+    if (refused == QStringLiteral("serial-returned-and-lost")) {
+        QVERIFY(!receiver.errorMessage().isEmpty());
+        harness.serial.plug({serialPort(other), serialPort(configuration.serialDevice)});
+        loseConnection();
+    }
+#endif
+    const QString error = receiver.errorMessage();
+    QVERIFY(!error.isEmpty());
+    const qsizetype attempts = harness.attempts();
+
+    if (change == QStringLiteral("host-entered")) {
+        configuration.tcpHost = QStringLiteral("rtk.test");
+    } else if (change == QStringLiteral("udp-selected")) {
+        configuration.connectionType = RTKSettings::Udp;
+    } else if (change == QStringLiteral("port-changed")) {
+        ++configuration.tcpPort;
+    } else if (change == QStringLiteral("forwarding-off")) {
+        configuration.forwardReceiverRtcm = false;
+    }
+#ifndef QGC_NO_SERIAL_LINK
+    if (change == QStringLiteral("device-selected")) {
+        configuration.serialDevice = other;
+    } else if (change == QStringLiteral("baud-changed")) {
+        configuration.serialBaudRate = 9600;
+    }
+#endif
+    QSignalSpy errors(&receiver, &GPSReceiver::errorMessageChanged);
+    receiver.setConfiguration(configuration);
+    QCOMPARE(receiver.errorMessage(), withdrawn ? QString() : error);
+    QCOMPARE(errors.size(), withdrawn ? 1 : 0);
+    // Only the message follows the settings; connecting stays the user's.
+    harness.update();
+    QCOMPARE(harness.attempts(), attempts);
+}
+
 void GPSReceiverConnectionPolicyTest::_observerActsOnLostSession_data()
 {
     QTest::addColumn<bool>("reconnects");

@@ -16,6 +16,8 @@ private slots:
     void _configurationChangeCancelsRetry();
     void _unconnectableConfigurationIsNotRetried_data();
     void _unconnectableConfigurationIsNotRetried();
+    void _configurationChangeWithdrawsRefusal_data();
+    void _configurationChangeWithdrawsRefusal();
     void _observerActsOnLostSession_data();
     void _observerActsOnLostSession();
     void _observerActsOnReport_data();

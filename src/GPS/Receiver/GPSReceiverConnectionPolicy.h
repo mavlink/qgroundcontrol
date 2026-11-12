@@ -44,8 +44,9 @@ enum class GPSReceiverSessionOutcome
 /// both until the user connects again or turns the setting back on. With the setting off, receivers connect only when
 /// the user asks, and a lost connection is reported. Automatic attempts never pass flash-save consent. A saved or
 /// discovered receiver whose configuration cannot connect is reported once and not retried until the configuration
-/// changes or the user connects. The policy reports why a connection cannot start or is waiting for its port; the
-/// receiver words how a session ended.
+/// changes or the user connects. The policy reports why a connection cannot start or is waiting for its port, and
+/// withdraws the reason a connection could not start once the configuration no longer has it; the receiver words how a
+/// session ended.
 class GPSReceiverConnectionPolicy
 {
     Q_DECLARE_TR_FUNCTIONS(GPSReceiverConnectionPolicy)
@@ -93,6 +94,14 @@ private:
         Discovered,
     };
 
+    /// Why a connection could not start.
+    struct Refusal
+    {
+        QString error;
+        /// The serial device that was missing or in use; empty when the configuration itself cannot connect.
+        QString serialDevice;
+    };
+
     bool _hasSavedReceiver() const;
     bool _discoveryEnabled() const;
     bool _connectConfigured(bool allowPersistentChanges);
@@ -102,6 +111,12 @@ private:
     void _cancelRetries();
     /// Shows why the configuration cannot connect and stops connecting it automatically.
     void _rejectConfiguration(const QString& error);
+    /// Shows @a error in place of the connection error on display; an empty one clears it.
+    void _showError(const QString& error);
+    /// Shows why the connection cannot start, until a change of the configuration removes the reason.
+    void _refuse(Refusal refusal);
+    /// The configuration still has the reason of _refusal.
+    bool _refusalApplies() const;
     void _updateDiscovery();
     /// Connects a discovered receiver; while another connection holds its port, a later update tries again without
     /// advancing the backoff.
@@ -123,6 +138,8 @@ private:
     /// The configuration cannot connect; nothing connects automatically until it changes or the user connects.
     bool _unconnectable = false;
     bool _waitingForPort = false;
+    /// Set while its error is the one on display: nothing else was shown and no connection started since.
+    std::optional<Refusal> _refusal;
     QString _autoPort;
     std::optional<quint64> _retryDeadlineUs;
     ExponentialBackoff _retryBackoff{std::chrono::seconds(1), 2, std::chrono::seconds(30)};

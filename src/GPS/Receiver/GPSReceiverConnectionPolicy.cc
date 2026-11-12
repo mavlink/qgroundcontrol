@@ -104,9 +104,33 @@ void GPSReceiverConnectionPolicy::configurationChanged(const GPSReceiverConfigur
     }
     if (std::exchange(_unconnectable, false)) {
         // The changed configuration is tried as at startup, and the message about the previous one is stale.
-        _receiver.setConnectionError({});
+        _showError({});
         _startPending = true;
     }
+    if (_refusal && !_refusalApplies()) {
+        _showError({});
+    }
+}
+
+void GPSReceiverConnectionPolicy::_showError(const QString& error)
+{
+    _refusal.reset();
+    _receiver.setConnectionError(error);
+}
+
+void GPSReceiverConnectionPolicy::_refuse(Refusal refusal)
+{
+    _receiver.setConnectionError(refusal.error);
+    _refusal = std::move(refusal);
+}
+
+bool GPSReceiverConnectionPolicy::_refusalApplies() const
+{
+    if (_refusal->serialDevice.isEmpty()) {
+        return _connectability.error == _refusal->error;
+    }
+    return _connectability.connection == RTKSettings::Serial &&
+           _configuration.serialDevice.trimmed() == _refusal->serialDevice;
 }
 
 void GPSReceiverConnectionPolicy::_cancelRetries()
@@ -116,7 +140,7 @@ void GPSReceiverConnectionPolicy::_cancelRetries()
     }
     // Nothing reconnects any more, so a message about the pending reconnect would be stale.
     if ((_keepConnected || _retryDeadlineUs) && !_receiver.hasReceiver()) {
-        _receiver.setConnectionError({});
+        _showError({});
     }
     _keepConnected = false;
     _waitingForPort = false;
@@ -132,7 +156,7 @@ void GPSReceiverConnectionPolicy::_rejectConfiguration(const QString& error)
     _cancelRetries();
     _owner = Owner::None;
     _unconnectable = true;
-    _receiver.setConnectionError(error);
+    _showError(error);
 }
 
 void GPSReceiverConnectionPolicy::reset()
@@ -141,13 +165,14 @@ void GPSReceiverConnectionPolicy::reset()
     _owner = Owner::None;
     _startPending = false;
     _unconnectable = false;
+    _refusal.reset();
 }
 
 bool GPSReceiverConnectionPolicy::connectConfigured(bool allowPersistentChanges)
 {
     // A rejected request leaves the current connection's ownership and retries as they are.
     if (_receiver.hasReceiver()) {
-        _receiver.setConnectionError(tr("Disconnect the current receiver before connecting another."));
+        _showError(tr("Disconnect the current receiver before connecting another."));
         return false;
     }
     reset();
@@ -249,8 +274,7 @@ void GPSReceiverConnectionPolicy::_updateSaved()
         if (!_serial.available(_configuration.serialDevice.trimmed())) {
             if (!std::exchange(_waitingForPort, true)) {
                 //: %1 is a serial device, such as /dev/ttyACM0 or COM3
-                _receiver.setConnectionError(
-                    tr("Waiting for the receiver on %1.").arg(_configuration.serialDevice.trimmed()));
+                _showError(tr("Waiting for the receiver on %1.").arg(_configuration.serialDevice.trimmed()));
             }
             return;
         }
@@ -280,9 +304,11 @@ bool GPSReceiverConnectionPolicy::_connectConfigured(bool allowPersistentChanges
     const GPSReceiverConnectability check =
         allowPersistentChanges ? connectability(_configuration, _serial.supported(), true) : _connectability;
     if (!check.type || !check.error.isEmpty()) {
-        _receiver.setConnectionError(check.error);
+        _refuse({.error = check.error, .serialDevice = {}});
         return false;
     }
+    // What a connection shows from here on is its own.
+    _refusal.reset();
     const GPSType type = *check.type;
     if (check.connection == RTKSettings::Tcp) {
         return _receiver.connectTcp(_configuration.tcpHost.trimmed(), static_cast<quint16>(_configuration.tcpPort),
@@ -294,12 +320,12 @@ bool GPSReceiverConnectionPolicy::_connectConfigured(bool allowPersistentChanges
     // What follows depends on the devices present, so automatic connection retries it.
     const QString device = _configuration.serialDevice.trimmed();
     if (!_serial.available(device)) {
-        _receiver.setConnectionError(tr("Select an available serial device that is not a bootloader."));
+        _refuse({.error = tr("Select an available serial device that is not a bootloader."), .serialDevice = device});
         return false;
     }
     GPSSerialClaim claim = _serial.claim(device);
     if (!claim) {
-        _receiver.setConnectionError(tr("The selected serial device is already in use."));
+        _refuse({.error = tr("The selected serial device is already in use."), .serialDevice = device});
         return false;
     }
     return _receiver.connectSerial(device, type, check.request, std::move(claim));
@@ -343,6 +369,7 @@ void GPSReceiverConnectionPolicy::_connectDiscovered(const QString& device)
     _autoPort = device;
     _serial.forgetRtkReceivers();
     _retryDeadlineUs.reset();
+    _refusal.reset();
     if (!_receiver.connectSerial(device, *check.type, check.request, std::move(claim))) {
         _scheduleRetry();
     }
