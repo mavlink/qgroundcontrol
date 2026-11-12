@@ -1699,7 +1699,8 @@ void QGCCompressionTest::_testDecompressFromDevice()
     QBuffer closedBuffer;
     closedBuffer.setData(compressedData);
     // Don't open it
-    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("Device is null, not open, or not readable"));
+    expectLogMessage("Utilities.QGCCompression", QtWarningMsg,
+                     QRegularExpression("Device is null, not open, or not readable"));
     QVERIFY(!QGCCompression::decompressFromDevice(&closedBuffer, outputPath));
     verifyExpectedLogMessage();
 }
