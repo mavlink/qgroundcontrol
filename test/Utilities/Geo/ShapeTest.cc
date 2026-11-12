@@ -1005,6 +1005,11 @@ void ShapeTest::_testSHPCoordinateValidation_data()
         << QStringList{"424000,5205000 424000,15205000 424100,5205100 424100,5205000 424000,5205000"}
         << "UTM conversion failed for entity 0 vertex 1"
         << QStringList{"8.000441856,46.99416047 8.001740103,46.99507168 8.00175686,46.99417194"};
+    QTest::newRow("utm easting that is not a number")
+        << kUtm32NorthPrj << ShapeType::Polygon
+        << QStringList{"424000,5205000 nan,5205050 424100,5205100 424100,5205000 424000,5205000"}
+        << "UTM conversion failed for entity 0 vertex 1"
+        << QStringList{"8.000441856,46.99416047 8.001740103,46.99507168 8.00175686,46.99417194"};
     // The polygon winds clockwise without the vertex that is left out, whichever way the ring ran with it, and
     // the warning names that vertex by its place in the file.
     QTest::newRow("clockwise ring that an out of range vertex makes counter-clockwise")

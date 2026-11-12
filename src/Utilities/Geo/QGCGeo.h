@@ -110,7 +110,7 @@ int convertGeoToUTM(const QGeoCoordinate &coord, double &easting, double &northi
 /// @param zone UTM zone (1-60).
 /// @param southhemi True if southern hemisphere.
 /// @param[out] coord Latitude and longitude are set on success; altitude is left unchanged.
-/// @return True on success, false on failure.
+/// @return True on success, false on failure: a position outside the zone, or one that is not a number.
 bool convertUTMToGeo(double easting, double northing, int zone, bool southhemi, QGeoCoordinate &coord);
 
 // ============================================================================

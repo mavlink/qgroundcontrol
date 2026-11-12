@@ -172,6 +172,13 @@ bool convertUTMToGeo(double easting, double northing, int zone, bool southhemi, 
     try {
         double lat, lon;
         GeographicLib::UTMUPS::Reverse(zone, !southhemi, easting, northing, lat, lon);
+
+        // GeographicLib returns NaN instead of throwing for an easting or northing that is not a number
+        if (!QGeoCoordinate(lat, lon).isValid()) {
+            qCDebug(QGCGeoLog) << "Invalid UTM position" << easting << northing;
+            return false;
+        }
+
         coord.setLatitude(lat);
         coord.setLongitude(lon);
         return true;

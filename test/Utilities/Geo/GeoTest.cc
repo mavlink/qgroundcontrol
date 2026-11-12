@@ -121,6 +121,13 @@ void GeoTest::_convertUTMToGeo_test()
     QGeoCoordinate withoutAltitude;
     QVERIFY(QGCGeo::convertUTMToGeo(easting, northing, zone, southhemi, withoutAltitude));
     QCOMPARE(withoutAltitude.type(), QGeoCoordinate::Coordinate2D);
+
+    // GeographicLib gives NaN for these instead of throwing
+    const QGeoCoordinate original(1.0, 2.0, 3.0);
+    QGeoCoordinate unchanged(original);
+    QVERIFY(!QGCGeo::convertUTMToGeo(qQNaN(), northing, zone, southhemi, unchanged));
+    QVERIFY(!QGCGeo::convertUTMToGeo(easting, qQNaN(), zone, southhemi, unchanged));
+    QCOMPARE(unchanged, original);
 }
 
 void GeoTest::_convertGeoToMGRS_test()
