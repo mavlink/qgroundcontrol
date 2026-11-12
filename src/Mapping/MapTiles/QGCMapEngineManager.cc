@@ -539,7 +539,7 @@ void QGCMapEngineManager::_repairMapOfSettings()
     Fact* const providerFact = settings->mapProvider();
     Fact* const typeFact = settings->mapType();
     const QString provider = providerFact->rawValue().toString();
-    const QStringList maps = mapList();
+    const QStringList maps = _imageryMapList();
     if (maps.contains(mapName(provider, typeFact->rawValue().toString()))) {
         return;
     }
@@ -562,7 +562,7 @@ void QGCMapEngineManager::_repairMapOfSettings()
 void QGCMapEngineManager::_updateChosenMap()
 {
     const QString map = _mapOfSettings();
-    if ((map != _chosenMap) && mapList().contains(map)) {
+    if ((map != _chosenMap) && _imageryMapList().contains(map)) {
         _chosenMap = map;
         emit chosenMapChanged();
     }
@@ -573,15 +573,22 @@ QStringList QGCMapEngineManager::mapList()
     return UrlFactory::getProviderTypes();
 }
 
-QStringList QGCMapEngineManager::mapProviderList()
+QStringList QGCMapEngineManager::_imageryMapList()
 {
     QStringList mapStringList = mapList();
     // Subtract ALL elevation providers (not just user-selectable ones) so
-    // hidden elevation providers don't leak into the imagery provider list
+    // hidden elevation providers don't leak into the imagery maps
     const QStringList elevationStringList = UrlFactory::getElevationProviderTypes();
     for (const QString& elevationProviderName : elevationStringList) {
         (void) mapStringList.removeAll(elevationProviderName);
     }
+
+    return mapStringList;
+}
+
+QStringList QGCMapEngineManager::mapProviderList()
+{
+    QStringList mapStringList = _imageryMapList();
 
     static const QRegularExpression providerType = QRegularExpression(uR"(^([^\ ]*) (.*)$)"_s);
     (void) mapStringList.replaceInStrings(providerType, "\\1");

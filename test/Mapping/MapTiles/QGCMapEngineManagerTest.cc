@@ -455,6 +455,14 @@ void QGCMapEngineManagerTest::_testChosenMap_data()
     QTest::newRow("saved provider that no map has")
         << QStringLiteral("No Such Provider") << QStringLiteral("Custom") << bing << hybrid << bingHybrid << notSet
         << notSet << notSet << notSet;
+
+    // An elevation provider is in the map list, and is no map that a map engine can show
+    QTest::newRow("saved provider that is an elevation provider")
+        << QString::fromLatin1(CopernicusElevationProvider::kProviderKey) << hybrid << bing << hybrid << bingHybrid
+        << notSet << notSet << notSet << notSet;
+    QTest::newRow("elevation provider set as the provider")
+        << bing << hybrid << bing << hybrid << bingHybrid
+        << QString::fromLatin1(TerrariumElevationProvider::kProviderKey) << bingHybrid << notSet << notSet;
 }
 
 void QGCMapEngineManagerTest::_testChosenMap()

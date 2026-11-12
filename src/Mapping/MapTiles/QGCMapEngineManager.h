@@ -168,6 +168,8 @@ private slots:
     void _handleExtractionFinished(bool success);
 
 private:
+    /// The maps that a map engine can show: mapList() without the elevation providers
+    static QStringList _imageryMapList();
     /// The name that the provider and the type in the settings make: no map has it while one of the two is being set
     static QString _mapOfSettings();
     /// Makes settings that name no map name one: they get the first type of their provider or, when no map has that
