@@ -917,6 +917,38 @@ void ShapeTest::_testKMLCoordinateValidation()
     QCOMPARE(coords[2].longitude(), -121.0);
 }
 
+void ShapeTest::_testKMLNonFiniteCoordinates_data()
+{
+    QTest::addColumn<QString>("tuple");
+
+    // QString::toDouble() reads these words as numbers
+    QTest::newRow("longitude nan") << "nan,47.0005";
+    QTest::newRow("latitude NaN") << "8.0005,NaN";
+    QTest::newRow("longitude inf") << "inf,47.0005";
+    QTest::newRow("latitude -inf") << "8.0005,-inf";
+}
+
+void ShapeTest::_testKMLNonFiniteCoordinates()
+{
+    QFETCH(QString, tuple);
+
+    QTemporaryDir tempDir;
+    const QString kmlFile =
+        _writeKmlFile(tempDir.path(), "nonfinite.kml",
+                      kmlShapeDocument(ShapeType::Polyline, {QStringLiteral("8,47 %1 8.001,47.001").arg(tuple)}));
+
+    // Like a latitude or longitude that is not a number at all, the vertex is left out with a warning.
+    expectLogMessage(
+        "Utilities.KMLHelper", QtWarningMsg,
+        QRegularExpression(
+            QStringLiteral("Failed to parse coordinate values: \"%1\"").arg(QRegularExpression::escape(tuple))));
+    QString errorString;
+    QList<QList<QGeoCoordinate>> loaded;
+    QVERIFY2(loadShapes(kmlFile, ShapeType::Polyline, loaded, errorString, 0), qPrintable(errorString));
+    verifyExpectedLogMessage();
+    QCOMPARE(coordinateTexts(loaded), QStringList{"8,47,0 8.001,47.001,0"});
+}
+
 void ShapeTest::_testSHPCoordinateValidation_data()
 {
     QTest::addColumn<QString>("prj");

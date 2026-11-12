@@ -1,5 +1,7 @@
 #include "KMLHelper.h"
 
+#include <cmath>
+
 #include <QtCore/QCoreApplication>
 #include <QtCore/QFile>
 #include <QtXml/QDomDocument>
@@ -65,7 +67,8 @@ bool KMLHelper::_parseCoordinateString(const QString &coordinatesString, QList<Q
         bool lonOk = false, latOk = false;
         const double lon = rgValueStrings[0].toDouble(&lonOk);
         const double lat = rgValueStrings[1].toDouble(&latOk);
-        if (!lonOk || !latOk) {
+        // toDouble() reads "nan" and "inf" as numbers
+        if (!lonOk || !latOk || !std::isfinite(lon) || !std::isfinite(lat)) {
             qCWarning(KMLHelperLog) << "Failed to parse coordinate values:" << coordinateString;
             continue;
         }
