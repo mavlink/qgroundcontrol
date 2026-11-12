@@ -683,6 +683,27 @@ void ToolbarIndicatorUITest::_testIndicatorDrawerClosesOnVehicleDisconnect()
                     });
 }
 
+void ToolbarIndicatorUITest::_testStatusPageOutlivesItsVehicle()
+{
+    runWithMockLink([] { return MockLink::startPX4MockLink(); },
+                    [this](QPointer<MockLink>, Vehicle*) {
+                        const QString indicatorName = QStringLiteral("toolbar_mainStatusIndicator");
+                        const QString drawerName = QStringLiteral("indicatorDrawerLoader");
+                        QQuickItem* const indicator =
+                            findVisibleItem(_rootItem, indicatorName, TestTimeout::mediumMs());
+                        QVERIFY2(indicator, "Main status indicator not visible");
+                        QVERIFY(_clickItemAt(indicator, 0.5, 0.5, indicatorName));
+                        QVERIFY2(findVisibleItem(_rootItem, drawerName, TestTimeout::mediumMs()),
+                                 "Main status drawer did not open");
+
+                        // The drawer is closed when the vehicle becomes unavailable, and its page deleted
+                        // later: a page that is still there when the active vehicle is cleared sees no vehicle.
+                        // A page that then reads the vehicle without a check warns, which fails the test
+                        QVERIFY(indicator->setProperty("_activeVehicle", QVariant::fromValue<QObject*>(nullptr)));
+                        QVERIFY2(findVisibleItem(_rootItem, drawerName, 0), "Main status drawer closed");
+                    });
+}
+
 void ToolbarIndicatorUITest::_testVehicleMessagesMarkReadAndClear()
 {
     runWithMockLink(

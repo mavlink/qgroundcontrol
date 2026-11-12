@@ -37,6 +37,7 @@ private slots:
     void _testRebootRequiredIndicator_data();
     void _testRebootRequiredIndicator();
     void _testIndicatorDrawerClosesOnVehicleDisconnect();
+    void _testStatusPageOutlivesItsVehicle();
     void _testVehicleMessagesMarkReadAndClear();
     void _testMockLinkBootStatusTextShowsNonCriticalIndicator();
     void _testChecklistBadgeShownBesideOtherProblems();
