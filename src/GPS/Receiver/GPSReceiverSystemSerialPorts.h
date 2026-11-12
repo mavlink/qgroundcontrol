@@ -42,8 +42,8 @@ private:
     const QPointer<SerialPortManager> _manager;
     /// The devices of the last scan, which the entries are made of.
     QList<SerialPortManager::Port> _scannedPorts;
-    /// The claims made here, which never mark their port as in use, even while a retired session's worker still holds
-    /// one.
+    /// The claims made here, which mark neither their port as in use nor the others as kept closed, even while a
+    /// retired session's worker still holds one.
     QHash<QString, std::weak_ptr<const SerialPortManager::Reservation>> _claims;
     /// Since when each free RTK receiver has been listed.
     SerialPortSettleTracker _rtkReceivers;

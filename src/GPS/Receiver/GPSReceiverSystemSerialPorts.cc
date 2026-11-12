@@ -116,6 +116,10 @@ void GPSReceiverSystemSerialPorts::refreshEntries()
     if (!_manager) {
         return;
     }
+    // The marks tell what other connections hold. A session of this receiver keeps the other devices closed too
+    // where only one can be open at a time, and marks them no more than its own.
+    const bool heldHere =
+        std::any_of(_claims.cbegin(), _claims.cend(), [](const auto& claim) { return !claim.expired(); });
     QList<GPSSerialPortEntry> entries;
     entries.reserve(_scannedPorts.size());
     for (const auto& port : std::as_const(_scannedPorts)) {
@@ -124,9 +128,15 @@ void GPSReceiverSystemSerialPorts::refreshEntries()
         //: %1 is a serial device's name, such as u-blox GNSS receiver; %2 its path, such as /dev/ttyACM0 or COM3
         QString label =
             name.isEmpty() ? port.systemLocation : GPSReceiver::tr("%1 – %2").arg(name, port.systemLocation);
-        if (_manager->isPortReserved(port.systemLocation) && _claims.value(port.systemLocation).expired()) {
-            //: %1 is a serial device that another QGroundControl connection, such as a vehicle link, uses
-            label = GPSReceiver::tr("%1 (in use)").arg(label);
+        if (_manager->isPortReserved(port.systemLocation)) {
+            if (_claims.value(port.systemLocation).expired()) {
+                //: %1 is a serial device that another QGroundControl connection, such as a vehicle link, uses
+                label = GPSReceiver::tr("%1 (in use)").arg(label);
+            }
+        } else if (!heldHere && !_manager->canReservePort(port.systemLocation)) {
+            //: %1 is a serial device that cannot be opened while another QGroundControl connection uses another
+            //: serial device, where only one can be open at a time, as with Android's USB serial driver
+            label = GPSReceiver::tr("%1 (another is in use)").arg(label);
         }
         entries.append({.value = port.systemLocation, .label = label});
     }

@@ -1437,14 +1437,18 @@ void GPSReceiverTest::_serialPortEntries()
         }
         return values;
     };
-    // The picker shows the device's name and path, and stores the path.
-    QCOMPARE(entries(&GPSSerialPortEntry::label), (QStringList{
-                                                      QStringLiteral("u-blox GNSS receiver – /dev/ttyACM0"),
-                                                      QStringLiteral("CubeOrange+ – /dev/ttyACM1 (in use)"),
-                                                      QStringLiteral("STLINK-V3 – /dev/ttyACM2"),
-                                                      QStringLiteral("SiK Radio – /dev/ttyUSB0"),
-                                                      QStringLiteral("/dev/ttyS0"),
-                                                  }));
+    // The picker shows the device's name and path, and stores the path. Other ports open while the link holds its
+    // port, so only that one is marked.
+    const QStringList unmarked{
+        QStringLiteral("u-blox GNSS receiver – /dev/ttyACM0"),
+        QStringLiteral("CubeOrange+ – /dev/ttyACM1"),
+        QStringLiteral("STLINK-V3 – /dev/ttyACM2"),
+        QStringLiteral("SiK Radio – /dev/ttyUSB0"),
+        QStringLiteral("/dev/ttyS0"),
+    };
+    QStringList linkPortMarked = unmarked;
+    linkPortMarked[1] = QStringLiteral("CubeOrange+ – /dev/ttyACM1 (in use)");
+    QCOMPARE(entries(&GPSSerialPortEntry::label), linkPortMarked);
     QCOMPARE(entries(&GPSSerialPortEntry::value).first(), QStringLiteral("/dev/ttyACM0"));
 
     // A link releases its port without a scan, so the mark follows it when the receiver is next polled. The
@@ -1452,21 +1456,27 @@ void GPSReceiverTest::_serialPortEntries()
     vehicleLink.reset();
     receiver.disconnectReceiver();
     receiver.tick();
-    QCOMPARE(entries(&GPSSerialPortEntry::label).at(1), QStringLiteral("CubeOrange+ – /dev/ttyACM1"));
     QVERIFY(serial.manager.isPortReserved(QStringLiteral("/dev/ttyACM0")));
-    QCOMPARE(entries(&GPSSerialPortEntry::label).first(), QStringLiteral("u-blox GNSS receiver – /dev/ttyACM0"));
+    QCOMPARE(entries(&GPSSerialPortEntry::label), unmarked);
     harness.workers.finishRetired();
     QVERIFY(!serial.manager.isPortReserved(QStringLiteral("/dev/ttyACM0")));
 
     // Where only one port can be open at a time, nothing is scanned while a link holds its port, and the port is
-    // marked all the same.
+    // marked all the same. No other port can be opened until the link releases it, so each says so.
     serial.manager.setSinglePortOnly(true);
     QSignalSpy scans(&serial.manager, &SerialPortManager::portsEnumerated);
     vehicleLink = serial.manager.reservePort(QStringLiteral("/dev/ttyACM1"));
     QVERIFY(vehicleLink);
     changes.clear();
     receiver.tick();
-    QCOMPARE(entries(&GPSSerialPortEntry::label).at(1), QStringLiteral("CubeOrange+ – /dev/ttyACM1 (in use)"));
+    const QStringList everyPortMarked{
+        QStringLiteral("u-blox GNSS receiver – /dev/ttyACM0 (another is in use)"),
+        QStringLiteral("CubeOrange+ – /dev/ttyACM1 (in use)"),
+        QStringLiteral("STLINK-V3 – /dev/ttyACM2 (another is in use)"),
+        QStringLiteral("SiK Radio – /dev/ttyUSB0 (another is in use)"),
+        QStringLiteral("/dev/ttyS0 (another is in use)"),
+    };
+    QCOMPARE(entries(&GPSSerialPortEntry::label), everyPortMarked);
     QCOMPARE(changes.size(), 1);
     QVERIFY(scans.isEmpty());
     // Polled again, the entries are as they were, so their views are left alone.
@@ -1481,15 +1491,23 @@ void GPSReceiverTest::_serialPortEntries()
     receiver.startConnectionPolling([] { return true; });
     vehicleLink.reset();
     QVERIFY(scheduler.advanceBy(GPSReceiver::POLL_INTERVAL));
-    QCOMPARE(entries(&GPSSerialPortEntry::label).at(1), QStringLiteral("CubeOrange+ – /dev/ttyACM1"));
+    QCOMPARE(entries(&GPSSerialPortEntry::label), unmarked);
     QCOMPARE(changes.size(), 2);
     QVERIFY(!receiver.hasReceiver());
     vehicleLink = serial.manager.reservePort(QStringLiteral("/dev/ttyACM1"));
     QVERIFY(vehicleLink);
     QVERIFY(scheduler.advanceBy(GPSReceiver::POLL_INTERVAL));
-    QCOMPARE(entries(&GPSSerialPortEntry::label).at(1), QStringLiteral("CubeOrange+ – /dev/ttyACM1 (in use)"));
+    QCOMPARE(entries(&GPSSerialPortEntry::label), everyPortMarked);
     QCOMPARE(changes.size(), 3);
     QVERIFY(scans.isEmpty());
+
+    // The receiver's own session keeps the other ports closed as well. It marks them no more than its own port: the
+    // marks tell what other connections hold.
+    vehicleLink.reset();
+    QVERIFY(receiver.connectReceiver());
+    QVERIFY(!serial.manager.canReservePort(QStringLiteral("/dev/ttyACM2")));
+    QVERIFY(scheduler.advanceBy(GPSReceiver::POLL_INTERVAL));
+    QCOMPARE(entries(&GPSSerialPortEntry::label), unmarked);
 }
 
 void GPSReceiverTest::_serialReservationSurvivesDelayedStop()
