@@ -1170,6 +1170,9 @@ void GPSReceiverConnectionPolicyTest::_retryBacksOffAndRespectsReservations()
     QVERIFY(harness.scheduler.advanceBy(std::chrono::seconds(2)));
     harness.update();
     QCOMPARE(harness.attempts(), 2);
+    // Meanwhile the last attempt's message stands: the receiver is reconnected, once its port is free.
+    QCOMPARE(harness.receiver.errorMessage(),
+             GPSReceiver::tr("Failed to open the receiver. Reconnecting automatically."));
     claim.reset();
     harness.update();
     QCOMPARE(harness.attempts(), 3);
