@@ -936,9 +936,9 @@ void GPSReceiverSettingsTest::_horizontalAccuracyLabel()
     QCOMPARE(accuracy->property("labelText").toString(), QStringLiteral("5.1 m"));
     QVERIFY(panel->setProperty("horizontalAccuracy", 0));
     QCOMPARE(accuracy->property("labelText").toString(), QStringLiteral("0.0 m"));
-    // The accuracy follows the application's distance units.
-    units->setRawValue(UnitsSettings::HorizontalDistanceUnitsFeet);
     QVERIFY(panel->setProperty("horizontalAccuracy", 5.1));
+    // The accuracy follows the units setting while it is shown.
+    units->setRawValue(UnitsSettings::HorizontalDistanceUnitsFeet);
     QCOMPARE(accuracy->property("labelText").toString(), QStringLiteral("16.7 ft"));
     // An unknown accuracy is not shown.
     QVERIFY(panel->setProperty("horizontalAccuracy", qInf()));

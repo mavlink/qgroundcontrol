@@ -19,6 +19,14 @@ QGCGroupBox {
     property real horizontalAccuracy: root._positionManager.gcsPositionHorizontalAccuracy
 
     readonly property PositionManager _positionManager: QGroundControl.positionManager
+    /// The accuracy in the application's horizontal distance unit. The unit's name is a property, so the text follows
+    /// a change of the unit setting; the conversion that returns both in one string is a method call, which no
+    /// binding follows.
+    readonly property string _horizontalAccuracyText: {
+        const conversion = QGroundControl.unitsConversion
+        const accuracy = Number(conversion.metersToAppSettingsHorizontalDistanceUnits(root.horizontalAccuracy))
+        return accuracy.toFixed(1) + " " + conversion.appSettingsHorizontalDistanceUnitsString
+    }
 
     heading: qsTr("GCS Position")
 
@@ -64,7 +72,7 @@ QGCGroupBox {
         visible:   root.showCoordinates && root.gcsPosition.isValid
                    && Number.isFinite(root.horizontalAccuracy) && root.horizontalAccuracy >= 0
         label:     qsTr("Horizontal accuracy")
-        labelText: QGroundControl.unitsConversion.metersToAppSettingsHorizontalDistanceUnitsString(root.horizontalAccuracy, 1)
+        labelText: root._horizontalAccuracyText
         labelTextFormat: Text.PlainText
     }
 }
