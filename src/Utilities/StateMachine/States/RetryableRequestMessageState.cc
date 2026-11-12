@@ -27,6 +27,7 @@ void RetryableRequestMessageState::onWaitEntered()
 {
     WaitStateBase::onWaitEntered();
     _retryCount = 0;
+    _retryWhenRequestFails = false;
 
     // Check skip predicate
     if (_skipPredicate && _skipPredicate()) {
@@ -76,6 +77,9 @@ void RetryableRequestMessageState::_sendRequest()
 
 void RetryableRequestMessageState::_queueRetry()
 {
+    // Each attempt gets the full timeout
+    restartWait();
+
     // Defer retries so Vehicle can finish command-list cleanup from the prior callback.
     // Immediate resend from within the callback can hit duplicate-request rejection.
     QMetaObject::invokeMethod(this, [this]() {
@@ -116,7 +120,12 @@ void RetryableRequestMessageState::_handleResult(
     // Failure - check if we should retry
     qCDebug(RetryableRequestMessageStateLog) << stateName() << "Request failed, failureCode:" << effectiveFailureCode;
 
-    if (_retryCount < _maxRetries) {
+    if (_retryWhenRequestFails) {
+        // This attempt was counted when it timed out
+        _retryWhenRequestFails = false;
+        qCDebug(RetryableRequestMessageStateLog) << stateName() << "Sending retry, attempt" << (_retryCount + 1);
+        _queueRetry();
+    } else if (_retryCount < _maxRetries) {
         _retryCount++;
         qCDebug(RetryableRequestMessageStateLog) << stateName() << "Retrying, attempt" << (_retryCount + 1);
         _queueRetry();
@@ -146,9 +155,15 @@ void RetryableRequestMessageState::onWaitTimeout()
     if (_retryCount < _maxRetries) {
         _retryCount++;
         qCDebug(RetryableRequestMessageStateLog) << stateName() << "Retrying after timeout, attempt" << (_retryCount + 1);
-        _queueRetry();
+        // Vehicle still tracks the request that timed out and rejects a second one for the same message as a
+        // duplicate. The retry is sent once that request fails; if it is answered after all, the answer is used.
+        _retryWhenRequestFails = true;
+        restartWait();
     } else {
         qCWarning(RetryableRequestMessageStateLog) << stateName() << "Max retries exhausted after timeout";
+
+        // The outcome is reported now, so whatever the outstanding request still returns is ignored
+        _requestActive = false;
 
         if (_failureHandler) {
             _failureHandler(_lastFailureCode, _lastResult);
@@ -156,7 +171,8 @@ void RetryableRequestMessageState::onWaitTimeout()
         emit retriesExhausted();
 
         if (_failOnMaxRetries) {
-            WaitStateBase::onWaitTimeout();  // Emits timeout() and error()
+            WaitStateBase::onWaitTimeout();  // Emits timeout()
+            waitFailed();                    // Emits error()
         } else {
             waitComplete();  // Advance anyway
         }

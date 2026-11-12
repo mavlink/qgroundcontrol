@@ -5,6 +5,8 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
+#include <QtCore/QFile>
+#include <QtCore/QTemporaryDir>
 #include <QtNetwork/QNetworkRequest>
 
 #include "AppSettings.h"
@@ -159,10 +161,32 @@ qint64 NetworkReplyFixture::readData(char* data, qint64 maxSize)
 // SingleInstanceLockFixture Implementation
 // ============================================================================
 
+namespace {
+
+/// RunGuard keeps its lock in the runtime directory on XDG platforms. Where the environment names none, as on a
+/// CI runner, Qt makes one up and warns: the process gets a private one instead, for the rest of its life.
+void ensureRuntimeDir()
+{
+#if defined(Q_OS_UNIX) && !defined(Q_OS_DARWIN)
+    if (!qEnvironmentVariableIsEmpty("XDG_RUNTIME_DIR")) {
+        return;
+    }
+    // Created with the permissions Qt requires of a runtime directory (0700)
+    static const QTemporaryDir runtimeDir;
+    if (runtimeDir.isValid()) {
+        (void) qputenv("XDG_RUNTIME_DIR", QFile::encodeName(runtimeDir.path()));
+    }
+#endif
+}
+
+}  // namespace
+
 SingleInstanceLockFixture::SingleInstanceLockFixture(const QString& lockKey, bool acquireOnCreate)
     : _lockKey(lockKey)
-    , _guard(std::make_unique<RunGuard>(lockKey))
 {
+    ensureRuntimeDir();
+    _guard = std::make_unique<RunGuard>(lockKey);
+
     if (acquireOnCreate) {
         (void) tryAcquire();
     }

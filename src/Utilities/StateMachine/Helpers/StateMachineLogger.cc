@@ -189,6 +189,7 @@ void StateMachineLogger::setEnabled(bool enabled)
                                     this, &StateMachineLogger::_onMachineStarted));
         _connections.append(connect(_machine, &QStateMachine::stopped,
                                     this, &StateMachineLogger::_onMachineStopped));
+        _connections.append(connect(_machine, &QStateMachine::finished, this, &StateMachineLogger::_onMachineStopped));
 
         // Connect to all existing states
         const auto states = _machine->findChildren<QAbstractState*>();

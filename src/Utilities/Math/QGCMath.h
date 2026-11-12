@@ -7,7 +7,8 @@ namespace QGC
     float limitAngleToPMPIf(double angle);
     double limitAngleToPMPId(double angle);
 
-    /// Returns true if the two values are equal or close. Correctly handles 0 and NaN values.
+    /// Returns true if the two values are equal or close. Correctly handles 0, NaN and infinite values:
+    /// two NaNs compare equal, and an infinity only equals the same infinity.
     bool fuzzyCompare(double value1, double value2);
     bool fuzzyCompare(float value1, float value2);
     bool fuzzyCompare(double value1, double value2, double tolerance);

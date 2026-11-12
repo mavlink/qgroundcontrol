@@ -10,19 +10,15 @@
 
 set(SDL_EXTRA_OPTIONS "")
 if(WIN32)
-    set(SDL_EXTRA_OPTIONS
-        ${SDL_EXTRA_OPTIONS}
-        "SDL_DIRECTX OFF"
-        "SDL_XINPUT ON"
-    )
+    set(SDL_EXTRA_OPTIONS ${SDL_EXTRA_OPTIONS} "SDL_DIRECTX OFF" "SDL_XINPUT ON")
 elseif(UNIX AND NOT ANDROID)
-    set(SDL_EXTRA_OPTIONS
-        ${SDL_EXTRA_OPTIONS}
-        "SDL_UNIX_CONSOLE_BUILD ON"
-    )
+    set(SDL_EXTRA_OPTIONS ${SDL_EXTRA_OPTIONS} "SDL_UNIX_CONSOLE_BUILD ON")
 endif()
 
-if(MACOS OR IOS OR ANDROID)
+if(MACOS
+   OR IOS
+   OR ANDROID
+)
     set(SDL_VIDEO_FLAG "ON")
 else()
     set(SDL_VIDEO_FLAG "OFF")
@@ -31,11 +27,7 @@ endif()
 if(ANDROID)
     set(SDL_SHARED_FLAG "ON")
     set(SDL_STATIC_FLAG "OFF")
-    set(SDL_EXTRA_OPTIONS
-        ${SDL_EXTRA_OPTIONS}
-        "SDL_ANDROID_JAR OFF"
-        "SDL_HIDAPI_LIBUSB OFF"
-    )
+    set(SDL_EXTRA_OPTIONS ${SDL_EXTRA_OPTIONS} "SDL_ANDROID_JAR OFF" "SDL_HIDAPI_LIBUSB OFF")
 else()
     set(SDL_SHARED_FLAG "OFF")
     set(SDL_STATIC_FLAG "ON")
@@ -84,23 +76,40 @@ endif()
 
 qgc_disable_dependency_warnings(${_qgc_sdl3_target})
 
-set_target_properties(${_qgc_sdl3_target} PROPERTIES
-    AUTOMOC OFF
-    AUTOUIC OFF
-    AUTORCC OFF
+set_target_properties(
+    ${_qgc_sdl3_target}
+    PROPERTIES
+        AUTOMOC OFF
+        AUTOUIC OFF
+        AUTORCC OFF
 )
 
 # SDL3's subdir-scoped LibUSB::LibUSB target breaks qt_add_translations' top-level scan.
 set_property(DIRECTORY "${SDL3_SOURCE_DIR}" PROPERTY QT_EXCLUDE_FROM_TRANSLATION ON)
 
 if(ANDROID)
-    target_compile_definitions(SDL3-shared PRIVATE SDL_MAIN_NOIMPL SDL_MAIN_HANDLED)
-    target_link_libraries(SDL3-shared PRIVATE log android)
+    target_compile_definitions(
+        SDL3-shared
+        PRIVATE
+            SDL_MAIN_NOIMPL
+            SDL_MAIN_HANDLED
+    )
+    target_link_libraries(
+        SDL3-shared
+        PRIVATE
+            log
+            android
+    )
     # SDL3 doesn't link Qt, so it misses Qt's 16 KB page-size link option (NDK r27 defaults to 4 KB).
     target_link_options(SDL3-shared PRIVATE "-Wl,-z,max-page-size=16384")
     set(QGC_SDL3_TARGET SDL3::SDL3-shared)
 else()
-    target_compile_definitions(SDL3-static PRIVATE SDL_MAIN_NOIMPL SDL_MAIN_HANDLED)
+    target_compile_definitions(
+        SDL3-static
+        PRIVATE
+            SDL_MAIN_NOIMPL
+            SDL_MAIN_HANDLED
+    )
     set(QGC_SDL3_TARGET SDL3::SDL3-static)
 endif()
 
@@ -108,19 +117,20 @@ endif()
 # QGCSDL static library
 # ============================================================================
 
-qt_add_library(QGCSDL STATIC
+qt_add_library(
+    QGCSDL STATIC
     SDLPlatform.cc
     SDLPlatform.h
     SDLJoystick.cc
     SDLJoystick.h
 )
 
-target_link_libraries(QGCSDL
+target_link_libraries(
+    QGCSDL
     PUBLIC
         Qt6::Core
         ${QGC_SDL3_TARGET}
-    PRIVATE
-        QGCLogging
+    PRIVATE QGCLogging
 )
 
 target_include_directories(QGCSDL PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -140,7 +150,8 @@ CPMAddPackage(
 set(SDL_GAMECONTROLLERDB_PATH "${sdl_gamecontrollerdb_SOURCE_DIR}/gamecontrollerdb.txt")
 qgc_set_qt_resource_alias("${SDL_GAMECONTROLLERDB_PATH}")
 
-qt_add_resources(QGCSDL "qgcresources_sdl"
+qt_add_resources(
+    QGCSDL "qgcresources_sdl"
     PREFIX "/"
     FILES
         "${SDL_GAMECONTROLLERDB_PATH}"
@@ -152,7 +163,6 @@ if(ANDROID)
     set_property(
         TARGET ${CMAKE_PROJECT_NAME}
         APPEND
-        PROPERTY
-            QT_ANDROID_EXTRA_LIBS "$<TARGET_FILE:SDL3-shared>"
+        PROPERTY QT_ANDROID_EXTRA_LIBS "$<TARGET_FILE:SDL3-shared>"
     )
 endif()

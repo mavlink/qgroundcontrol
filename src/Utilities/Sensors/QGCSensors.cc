@@ -8,6 +8,64 @@ QGC_LOGGING_CATEGORY(QGCSensorsLog, "Utilities.QGCSensors")
 namespace QGCSensors
 {
 
+namespace {
+
+/// Puts @a filter on the readings of @a sensor, connects it to its backend and logs what the backend offers.
+/// @a name is what the log calls the sensor.
+bool connectSensor(QSensor* sensor, QSensorFilter* filter, const char* name)
+{
+    // QSensor lists a filter once for each addFilter(), and a filter that is destroyed takes only one of its
+    // entries out: a second one would be left for the sensor to use
+    if (!sensor->filters().contains(filter)) {
+        sensor->addFilter(filter);
+    }
+
+    if (!sensor->connectToBackend()) {
+        qCWarning(QGCSensorsLog) << "Failed to connect to" << name << "backend";
+        return false;
+    }
+    qCDebug(QGCSensorsLog) << "Connected to" << name << "backend:" << sensor->identifier();
+
+    if (sensor->isFeatureSupported(QSensor::SkipDuplicates)) {
+        sensor->setSkipDuplicates(true);
+    }
+
+    const qrangelist dataRates = sensor->availableDataRates();
+    if (!dataRates.isEmpty()) {
+        qCDebug(QGCSensorsLog) << "Available Data Rates:" << dataRates;
+        // sensor->setDataRate(dataRates.first().first);
+        qCDebug(QGCSensorsLog) << "Selected Data Rate:" << sensor->dataRate();
+    }
+
+    const qoutputrangelist outputRanges = sensor->outputRanges();
+    if (!outputRanges.isEmpty()) {
+        // qCDebug(QGCSensorsLog) << "Output Ranges:" << outputRanges;
+        // sensor->setOutputRange(outputRanges.first().first);
+        const int outputRangeIndex = sensor->outputRange();
+        // The index is -1 unless an output range was selected
+        if ((outputRangeIndex >= 0) && (outputRangeIndex < outputRanges.size())) {
+            const qoutputrange outputRange = outputRanges.at(outputRangeIndex);
+            qCDebug(QGCSensorsLog) << "Selected Output Range:" << outputRange.minimum << outputRange.maximum
+                                   << outputRange.accuracy;
+        }
+    }
+
+    return true;
+}
+
+bool startSensor(QSensor* sensor, const char* name)
+{
+    // sensor->setActive(true);
+    if (!sensor->start()) {
+        qCWarning(QGCSensorsLog) << "Failed to start" << name;
+        return false;
+    }
+
+    return true;
+}
+
+}  // namespace
+
 ////////////////////////////////////////////////////////////////////
 
 Q_APPLICATION_STATIC(QGCAmbientTemperature, s_ambientTemperature);
@@ -22,56 +80,29 @@ QGCAmbientTemperature::QGCAmbientTemperature(QObject* parent)
     , _ambientTemperature(new QAmbientTemperatureSensor(this))
     , _ambientTemperatureFilter(std::make_shared<QGCAmbientTemperatureFilter>())
 {
-    connect(_ambientTemperature, &QAmbientTemperatureSensor::sensorError, this, [](int error) {
-        qCWarning(QGCSensorsLog) << Q_FUNC_INFO << "QAmbientTemperature error:" << error;
-    });
+    connect(_ambientTemperature, &QAmbientTemperatureSensor::sensorError, this,
+            [](int error) { qCWarning(QGCSensorsLog) << "QAmbientTemperature error:" << error; });
 
     if (!init()) {
-        qCWarning(QGCSensorsLog) << Q_FUNC_INFO << "Error Initializing Ambient Temperature Sensor";
+        qCWarning(QGCSensorsLog) << "Error Initializing Ambient Temperature Sensor";
     }
 
-    qCDebug(QGCSensorsLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCSensorsLog) << this;
 }
 
 QGCAmbientTemperature::~QGCAmbientTemperature()
 {
-    qCDebug(QGCSensorsLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCSensorsLog) << this;
 }
 
 bool QGCAmbientTemperature::init()
 {
-    _ambientTemperature->addFilter(_ambientTemperatureFilter.get());
-
-    const bool connected = _ambientTemperature->connectToBackend();
-    if(!connected) {
-        qCWarning(QGCSensorsLog) << Q_FUNC_INFO << "Failed to connect to ambient temperature backend";
+    if (!connectSensor(_ambientTemperature, _ambientTemperatureFilter.get(), "ambient temperature")) {
         return false;
-    } else {
-        qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Connected to ambient temperature backend:" << _ambientTemperature->identifier();
     }
 
-    if (_ambientTemperature->isFeatureSupported(QSensor::SkipDuplicates)) {
-        _ambientTemperature->setSkipDuplicates(true);
-    }
-
-    const qrangelist dataRates = _ambientTemperature->availableDataRates();
-    if (!dataRates.isEmpty()) {
-        qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Available Data Rates:" << dataRates;
-        // _ambientTemperature->setDataRate(dataRates.first().first);
-        qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Selected Data Rate:" << _ambientTemperature->dataRate();
-    }
-
-    const qoutputrangelist outputRanges = _ambientTemperature->outputRanges();
-    if (!outputRanges.isEmpty()) {
-        // qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Output Ranges:" << outputRanges;
-        // _ambientTemperature->setOutputRange(outputRanges.first().first);
-        const int outputRangeIndex = _ambientTemperature->outputRange();
-        if (outputRangeIndex < outputRanges.size()) {
-            const qoutputrange outputRange = outputRanges.at(_ambientTemperature->outputRange());
-            qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Selected Output Range:" << outputRange.minimum << outputRange.maximum << outputRange.accuracy;
-        }
-    }
-
+    // A connection left by an earlier init() would report every reading again
+    (void) disconnect(_readingChangedConnection);
     _readingChangedConnection = connect(_ambientTemperature, &QAmbientTemperatureSensor::readingChanged, this, [this]() {
         QAmbientTemperatureReading* reading = _ambientTemperature->reading();
         if (!reading) {
@@ -83,14 +114,7 @@ bool QGCAmbientTemperature::init()
         emit temperatureUpdated(_temperatureC);
     });
 
-    // _ambientTemperature->setActive(true);
-    const bool started = _ambientTemperature->start();
-    if (!started) {
-        qCWarning(QGCSensorsLog) << Q_FUNC_INFO << "Failed to start ambient temperature";
-        return false;
-    }
-
-    return true;
+    return startSensor(_ambientTemperature, "ambient temperature");
 }
 
 void QGCAmbientTemperature::quit()
@@ -103,12 +127,12 @@ void QGCAmbientTemperature::quit()
 QGCAmbientTemperatureFilter::QGCAmbientTemperatureFilter()
     : QAmbientTemperatureFilter()
 {
-    qCDebug(QGCSensorsLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCSensorsLog) << this;
 }
 
 QGCAmbientTemperatureFilter::~QGCAmbientTemperatureFilter()
 {
-    qCDebug(QGCSensorsLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCSensorsLog) << this;
 }
 
 bool QGCAmbientTemperatureFilter::filter(QAmbientTemperatureReading *reading)
@@ -135,56 +159,29 @@ QGCPressure::QGCPressure(QObject* parent)
     , _pressure(new QPressureSensor(this))
     , _pressureFilter(std::make_shared<QGCPressureFilter>())
 {
-    connect(_pressure, &QPressureSensor::sensorError, this, [](int error) {
-        qCWarning(QGCSensorsLog) << Q_FUNC_INFO << "QPressure error:" << error;
-    });
+    connect(_pressure, &QPressureSensor::sensorError, this,
+            [](int error) { qCWarning(QGCSensorsLog) << "QPressure error:" << error; });
 
     if (!init()) {
-        qCWarning(QGCSensorsLog) << Q_FUNC_INFO << "Error Initializing Pressure Sensor";
+        qCWarning(QGCSensorsLog) << "Error Initializing Pressure Sensor";
     }
 
-    qCDebug(QGCSensorsLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCSensorsLog) << this;
 }
 
 QGCPressure::~QGCPressure()
 {
-    qCDebug(QGCSensorsLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCSensorsLog) << this;
 }
 
 bool QGCPressure::init()
 {
-    _pressure->addFilter(_pressureFilter.get());
-
-    const bool connected = _pressure->connectToBackend();
-    if(!connected) {
-        qCWarning(QGCSensorsLog) << Q_FUNC_INFO << "Failed to connect to pressure backend";
+    if (!connectSensor(_pressure, _pressureFilter.get(), "pressure")) {
         return false;
-    } else {
-        qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Connected to pressure backend:" << _pressure->identifier();
     }
 
-    if (_pressure->isFeatureSupported(QSensor::SkipDuplicates)) {
-        _pressure->setSkipDuplicates(true);
-    }
-
-    const qrangelist dataRates = _pressure->availableDataRates();
-    if (!dataRates.isEmpty()) {
-        qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Available Data Rates:" << dataRates;
-        // _pressure->setDataRate(dataRates.first().first);
-        qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Selected Data Rate:" << _pressure->dataRate();
-    }
-
-    const qoutputrangelist outputRanges = _pressure->outputRanges();
-    if (!outputRanges.isEmpty()) {
-        // qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Output Ranges:" << outputRanges;
-        // _pressure->setOutputRange(outputRanges.first().first);
-        const int outputRangeIndex = _pressure->outputRange();
-        if (outputRangeIndex < outputRanges.size()) {
-            const qoutputrange outputRange = outputRanges.at(_pressure->outputRange());
-            qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Selected Output Range:" << outputRange.minimum << outputRange.maximum << outputRange.accuracy;
-        }
-    }
-
+    // A connection left by an earlier init() would report every reading again
+    (void) disconnect(_readingChangedConnection);
     _readingChangedConnection = connect(_pressure, &QPressureSensor::readingChanged, this, [this]() {
         QPressureReading* reading = _pressure->reading();
         if (!reading) {
@@ -196,14 +193,7 @@ bool QGCPressure::init()
         emit pressureUpdated(_pressurePa, _temperatureC);
     });
 
-    // _pressure->setActive(true);
-    const bool started = _pressure->start();
-    if (!started) {
-        qCWarning(QGCSensorsLog) << Q_FUNC_INFO << "Failed to start pressure";
-        return false;
-    }
-
-    return true;
+    return startSensor(_pressure, "pressure");
 }
 
 void QGCPressure::quit()
@@ -216,12 +206,12 @@ void QGCPressure::quit()
 QGCPressureFilter::QGCPressureFilter()
     : QPressureFilter()
 {
-    qCDebug(QGCSensorsLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCSensorsLog) << this;
 }
 
 QGCPressureFilter::~QGCPressureFilter()
 {
-    qCDebug(QGCSensorsLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCSensorsLog) << this;
 }
 
 bool QGCPressureFilter::filter(QPressureReading *reading)
@@ -230,17 +220,11 @@ bool QGCPressureFilter::filter(QPressureReading *reading)
         return false;
     }
 
+    // Tested as inside the range, so that NaN, which fails every comparison, is rejected
     const qreal temperature = reading->temperature();
-    if ((temperature < s_minValidTemperatureC) || (temperature > s_maxValidTemperatureC)) {
-        return false;
-    }
-
     const qreal pressure = reading->pressure();
-    if ((pressure < s_minValidPressurePa) || (pressure > s_maxValidPressurePa)) {
-        return false;
-    }
-
-    return true;
+    return ((temperature >= s_minValidTemperatureC) && (temperature <= s_maxValidTemperatureC) &&
+            (pressure >= s_minValidPressurePa) && (pressure <= s_maxValidPressurePa));
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -259,12 +243,11 @@ QGCCompass::QGCCompass(QObject* parent)
 {
     // qCDebug(QGCSensorsLog) << Q_FUNC_INFO << this;
 
-    (void) connect(_compass, &QCompass::sensorError, this, [](int error) {
-        qCWarning(QGCSensorsLog) << Q_FUNC_INFO << "Compass error:" << error;
-    });
+    (void) connect(_compass, &QCompass::sensorError, this,
+                   [](int error) { qCWarning(QGCSensorsLog) << "Compass error:" << error; });
 
     if (!init()) {
-        qCWarning(QGCSensorsLog) << Q_FUNC_INFO << "Error Initializing Compass Sensor";
+        qCWarning(QGCSensorsLog) << "Error Initializing Compass Sensor";
     }
 }
 
@@ -275,38 +258,12 @@ QGCCompass::~QGCCompass()
 
 bool QGCCompass::init()
 {
-    _compass->addFilter(_compassFilter.get());
-
-    const bool connected = _compass->connectToBackend();
-    if (!connected) {
-        qCWarning(QGCSensorsLog) << Q_FUNC_INFO << "Failed to connect to compass backend";
+    if (!connectSensor(_compass, _compassFilter.get(), "compass")) {
         return false;
-    } else {
-        qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Connected to compass backend:" << _compass->identifier();
     }
 
-    if (_compass->isFeatureSupported(QSensor::SkipDuplicates)) {
-        _compass->setSkipDuplicates(true);
-    }
-
-    const qrangelist dataRates = _compass->availableDataRates();
-    if (!dataRates.isEmpty()) {
-        qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Available Data Rates:" << dataRates;
-        // _compass->setDataRate(dataRates.first().first);
-        qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Selected Data Rate:" << _compass->dataRate();
-    }
-
-    const qoutputrangelist outputRanges = _compass->outputRanges();
-    if (!outputRanges.isEmpty()) {
-        // qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Output Ranges:" << outputRanges;
-        // _compass->setOutputRange(outputRanges.first().first);
-        const int outputRangeIndex = _compass->outputRange();
-        if (outputRangeIndex < outputRanges.size()) {
-            const qoutputrange outputRange = outputRanges.at(_compass->outputRange());
-            qCDebug(QGCSensorsLog) << Q_FUNC_INFO << "Selected Output Range:" << outputRange.minimum << outputRange.maximum << outputRange.accuracy;
-        }
-    }
-
+    // A connection left by an earlier init() would report every reading again
+    (void) disconnect(_readingChangedConnection);
     _readingChangedConnection = connect(_compass, &QCompass::readingChanged, this, [this]() {
         QCompassReading* const reading = _compass->reading();
         if (!reading) {
@@ -325,14 +282,7 @@ bool QGCCompass::init()
         emit positionUpdated(update);
     });
 
-    // _compass->setActive(true);
-    const bool started = _compass->start();
-    if (!started) {
-        qCWarning(QGCSensorsLog) << Q_FUNC_INFO << "Failed to start compass";
-        return false;
-    }
-
-    return true;
+    return startSensor(_compass, "compass");
 }
 
 void QGCCompass::quit()
@@ -345,12 +295,12 @@ void QGCCompass::quit()
 QGCCompassFilter::QGCCompassFilter()
     : QCompassFilter()
 {
-    qCDebug(QGCSensorsLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCSensorsLog) << this;
 }
 
 QGCCompassFilter::~QGCCompassFilter()
 {
-    qCDebug(QGCSensorsLog) << Q_FUNC_INFO << this;
+    qCDebug(QGCSensorsLog) << this;
 }
 
 bool QGCCompassFilter::filter(QCompassReading *reading)

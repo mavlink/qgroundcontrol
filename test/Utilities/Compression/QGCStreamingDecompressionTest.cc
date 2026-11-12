@@ -1,5 +1,7 @@
 #include "QGCStreamingDecompressionTest.h"
 
+#include <memory>
+
 #include <QtCore/QBuffer>
 #include <QtCore/QFile>
 #include <QtCore/QJsonDocument>
@@ -8,6 +10,7 @@
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTextStream>
 
+#include "FileFixtures.h"
 #include "QGCArchiveFile.h"
 #include "QGCDecompressDevice.h"
 #include "UnitTest.h"
@@ -19,15 +22,8 @@ void QGCStreamingDecompressionTest::_testDecompressDeviceFromFile()
 {
     QTemporaryDir tempDir;
     // Copy resource to temp file for testing
-    QFile resource(":/unittest/manifest.json.gz");
-    QVERIFY(resource.open(QIODevice::ReadOnly));
-    const QByteArray compressedData = resource.readAll();
-    resource.close();
     const QString tempFile = tempDir.filePath("test.json.gz");
-    QFile outFile(tempFile);
-    QVERIFY(outFile.open(QIODevice::WriteOnly));
-    outFile.write(compressedData);
-    outFile.close();
+    QVERIFY(QFile::copy(":/unittest/manifest.json.gz", tempFile));
     // Test decompression from file
     QGCDecompressDevice device(tempFile);
     QVERIFY(device.open(QIODevice::ReadOnly));
@@ -41,12 +37,8 @@ void QGCStreamingDecompressionTest::_testDecompressDeviceFromFile()
 void QGCStreamingDecompressionTest::_testDecompressDeviceFromQBuffer()
 {
     // Load compressed data into QBuffer
-    QFile resource(":/unittest/manifest.json.gz");
-    QVERIFY(resource.open(QIODevice::ReadOnly));
-    const QByteArray compressedData = resource.readAll();
-    resource.close();
     QBuffer buffer;
-    buffer.setData(compressedData);
+    buffer.setData(TestFixtures::readFile(":/unittest/manifest.json.gz"));
     QVERIFY(buffer.open(QIODevice::ReadOnly));
     QGCDecompressDevice device(&buffer);
     QVERIFY(device.open(QIODevice::ReadOnly));
@@ -131,6 +123,13 @@ void QGCStreamingDecompressionTest::_testDecompressDeviceErrors()
     QCOMPARE(device4.write("test", 4), qint64(-1));
     verifyExpectedLogMessage();
     device4.close();
+    // A stream which cannot be opened: the reason is in errorString(), and nothing is logged
+    QBuffer headerOnly;
+    headerOnly.setData(QByteArray::fromHex("1f8b08000000000000ff"));
+    QVERIFY(headerOnly.open(QIODevice::ReadOnly));
+    QGCDecompressDevice device5(&headerOnly);
+    QVERIFY(!device5.open(QIODevice::ReadOnly));
+    QVERIFY2(device5.errorString().contains("truncated gzip input"), qPrintable(device5.errorString()));
 }
 
 void QGCStreamingDecompressionTest::_testDecompressDeviceFormatInfo()
@@ -172,12 +171,8 @@ void QGCStreamingDecompressionTest::_testArchiveFileFrom7z()
 void QGCStreamingDecompressionTest::_testArchiveFileFromQBuffer()
 {
     // Load archive into QBuffer
-    QFile resource(":/unittest/manifest.json.zip");
-    QVERIFY(resource.open(QIODevice::ReadOnly));
-    const QByteArray archiveData = resource.readAll();
-    resource.close();
     QBuffer buffer;
-    buffer.setData(archiveData);
+    buffer.setData(TestFixtures::readFile(":/unittest/manifest.json.zip"));
     QVERIFY(buffer.open(QIODevice::ReadOnly));
     QGCArchiveFile device(&buffer, "manifest.json");
     QVERIFY(device.open(QIODevice::ReadOnly));
@@ -248,6 +243,13 @@ void QGCStreamingDecompressionTest::_testArchiveFileErrors()
     QCOMPARE(device4.write("test", 4), qint64(-1));
     verifyExpectedLogMessage();
     device4.close();
+    // Data which is not an archive: the reason is in errorString(), and nothing is logged
+    QBuffer notAnArchive;
+    notAnArchive.setData("This is not an archive");
+    QVERIFY(notAnArchive.open(QIODevice::ReadOnly));
+    QGCArchiveFile device5(&notAnArchive, "file.txt");
+    QVERIFY(!device5.open(QIODevice::ReadOnly));
+    QVERIFY2(device5.errorString().contains("Unrecognized archive format"), qPrintable(device5.errorString()));
 }
 
 void QGCStreamingDecompressionTest::_testArchiveFileMetadata()
@@ -292,6 +294,42 @@ void QGCStreamingDecompressionTest::_testMultipleOpens()
     const QByteArray data2 = device.readAll();
     device.close();
     QCOMPARE(data1, data2);
+}
+
+void QGCStreamingDecompressionTest::_testErrorString_data()
+{
+    QTest::addColumn<bool>("archive");
+
+    QTest::newRow("QGCDecompressDevice") << false;
+    QTest::newRow("QGCArchiveFile") << true;
+}
+
+void QGCStreamingDecompressionTest::_testErrorString()
+{
+    QFETCH(bool, archive);
+
+    QBuffer source;
+    source.setData(TestFixtures::readFile(archive ? ":/unittest/manifest.json.zip" : ":/unittest/manifest.json.gz"));
+    std::unique_ptr<QGCArchiveDeviceBase> device;
+    if (archive) {
+        device = std::make_unique<QGCArchiveFile>(&source, QStringLiteral("manifest.json"));
+    } else {
+        device = std::make_unique<QGCDecompressDevice>(&source);
+    }
+    // QIODevice::errorString() is not virtual: this is what a caller holding a QIODevice sees
+    const QIODevice& asDevice = *device;
+
+    // The source is not open yet
+    QVERIFY(!device->open(QIODevice::ReadOnly));
+    QCOMPARE(device->errorString(), QStringLiteral("Source device is not ready"));
+    QCOMPARE(asDevice.errorString(), device->errorString());
+
+    // The failure is forgotten when the device opens, and a stream read to its end leaves no error
+    QVERIFY(source.open(QIODevice::ReadOnly));
+    QVERIFY(device->open(QIODevice::ReadOnly));
+    QVERIFY2(device->errorString().isEmpty(), qPrintable(device->errorString()));
+    QVERIFY(device->readAll().contains("\"name\""));
+    QVERIFY2(device->errorString().isEmpty(), qPrintable(device->errorString()));
 }
 
 UT_REGISTER_TEST(QGCStreamingDecompressionTest, TestLabel::Unit, TestLabel::Utilities)

@@ -1,8 +1,15 @@
 #include "QGCVersionCheckTest.h"
 
+#include <QtCore/QCoreApplication>
+#include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QString>
+#include <QtTest/QSignalSpy>
 
+#include "AppSettings.h"
+#include "Fact.h"
 #include "QGCVersionCheck.h"
+#include "SettingsManager.h"
 
 void QGCVersionCheckTest::_newerVersionDetected_data()
 {
@@ -55,6 +62,60 @@ void QGCVersionCheckTest::_notifyOncePerVersion()
     QFETCH(bool, expected);
 
     QCOMPARE(QGCVersionCheck::shouldNotify(latest, lastNotified), expected);
+}
+
+void QGCVersionCheckTest::_downloadedVersionFile_data()
+{
+    QTest::addColumn<bool>("downloaded");
+    QTest::addColumn<QByteArray>("versionFile");
+    QTest::addColumn<QString>("newStableVersion");  // empty: no newer version is announced
+
+    QTest::newRow("newer version") << true << QByteArrayLiteral("v9.9.9\n") << QStringLiteral("v9.9.9");
+    QTest::newRow("only the first line counts")
+        << true << QByteArrayLiteral("v9.9.9\r\nv10.0.0\r\n") << QStringLiteral("v9.9.9");
+    QTest::newRow("no line end") << true << QByteArrayLiteral("v9.9.9") << QStringLiteral("v9.9.9");
+    QTest::newRow("running version") << true << QByteArrayLiteral("v5.1.2\n") << QString();
+    QTest::newRow("older version") << true << QByteArrayLiteral("v5.1.1\n") << QString();
+    QTest::newRow("not a version") << true << QByteArrayLiteral("<html>Not Found</html>\n") << QString();
+    QTest::newRow("empty file") << true << QByteArray() << QString();
+    QTest::newRow("download failed") << false << QByteArrayLiteral("v9.9.9\n") << QString();
+}
+
+void QGCVersionCheckTest::_downloadedVersionFile()
+{
+    QFETCH(bool, downloaded);
+    QFETCH(QByteArray, versionFile);
+    QFETCH(QString, newStableVersion);
+
+    const QString originalVersion = QCoreApplication::applicationVersion();
+    QCoreApplication::setApplicationVersion(QStringLiteral("v5.1.2"));
+    Fact* const lastNotifiedFact = SettingsManager::instance()->appSettings()->lastNotifiedStableVersion();
+    const QVariant originalLastNotified = lastNotifiedFact->rawValue();
+    lastNotifiedFact->setRawValue(QString());
+    const auto restore = qScopeGuard([originalVersion, lastNotifiedFact, originalLastNotified]() {
+        QCoreApplication::setApplicationVersion(originalVersion);
+        lastNotifiedFact->setRawValue(originalLastNotified);
+    });
+
+    QGCVersionCheck versionCheck;
+    QSignalSpy changedSpy(&versionCheck, &QGCVersionCheck::newStableVersionChanged);
+
+    const bool announced = !newStableVersion.isEmpty();
+    if (announced) {
+        expectAppMessage(QRegularExpression(QStringLiteral("There is a newer version of")));
+    }
+    if (downloaded) {
+        versionCheck._downloadComplete(true, versionFile, QString());
+    } else {
+        versionCheck._downloadComplete(false, QByteArray(), QStringLiteral("simulated download error"));
+    }
+    if (announced) {
+        verifyExpectedLogMessage();
+    }
+
+    QCOMPARE(versionCheck.newStableVersion(), newStableVersion);
+    QCOMPARE(changedSpy.count(), announced ? 1 : 0);
+    QCOMPARE(lastNotifiedFact->rawValue().toString(), newStableVersion);
 }
 
 UT_REGISTER_TEST(QGCVersionCheckTest, TestLabel::Unit, TestLabel::Utilities)

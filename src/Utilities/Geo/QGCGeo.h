@@ -99,9 +99,9 @@ QVector3D convertEnuToEcef(const QVector3D &enu, const QGeoCoordinate &ref);
 
 /// Convert geodetic coordinate to UTM.
 /// @param coord Geodetic coordinate to convert.
-/// @param[out] easting UTM easting in meters.
-/// @param[out] northing UTM northing in meters.
-/// @return UTM zone (1-60), or 0 on failure.
+/// @param[out] easting UTM easting in meters (unchanged on failure).
+/// @param[out] northing UTM northing in meters (unchanged on failure).
+/// @return UTM zone (1-60), or 0 on failure. The polar regions, which UTM does not cover, are a failure.
 int convertGeoToUTM(const QGeoCoordinate &coord, double &easting, double &northing);
 
 /// Convert UTM to geodetic coordinate.
@@ -109,8 +109,8 @@ int convertGeoToUTM(const QGeoCoordinate &coord, double &easting, double &northi
 /// @param northing UTM northing in meters.
 /// @param zone UTM zone (1-60).
 /// @param southhemi True if southern hemisphere.
-/// @param[out] coord Resulting geodetic coordinate (altitude = 0).
-/// @return True on success, false on failure.
+/// @param[out] coord Latitude and longitude are set on success; altitude is left unchanged.
+/// @return True on success, false on failure: a position outside the zone, or one that is not a number.
 bool convertUTMToGeo(double easting, double northing, int zone, bool southhemi, QGeoCoordinate &coord);
 
 // ============================================================================
@@ -124,7 +124,7 @@ QString convertGeoToMGRS(const QGeoCoordinate &coord);
 
 /// Convert MGRS string to geodetic coordinate.
 /// @param mgrs MGRS string (spaces optional, e.g., "32TMT6588647092" or "32T MT 65886 47092").
-/// @param[out] coord Resulting geodetic coordinate (altitude = 0).
+/// @param[out] coord Latitude and longitude are set on success; altitude is left unchanged.
 /// @return True on success, false on failure.
 bool convertMGRSToGeo(const QString &mgrs, QGeoCoordinate &coord);
 

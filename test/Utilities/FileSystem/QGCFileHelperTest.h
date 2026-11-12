@@ -52,6 +52,8 @@ private slots:
     void _testToLocalPathQrcUrls();
     void _testToLocalPathCompressionInterop();
     void _testIsLocalPath();
+    void _testWindowsDrivePaths_data();
+    void _testWindowsDrivePaths();
     void _testIsQtResource();
 
     // Checksum utilities tests

@@ -1,8 +1,10 @@
 #include "QGCArchiveFile.h"
-#include "QGCLoggingCategory.h"
 
 #include <archive.h>
 #include <archive_entry.h>
+
+#include "QGCLoggingCategory.h"
+#include "QGClibarchive.h"
 
 QGC_LOGGING_CATEGORY(QGCArchiveFileLog, "Utilities.QGCArchiveFile")
 
@@ -26,36 +28,6 @@ QGCArchiveFile::QGCArchiveFile(QIODevice *source, const QString &entryName, QObj
 // QIODevice Interface
 // ============================================================================
 
-bool QGCArchiveFile::open(OpenMode mode)
-{
-    if (mode != ReadOnly) {
-        _errorString = QStringLiteral("QGCArchiveFile only supports ReadOnly mode");
-        return false;
-    }
-
-    if (_entryName.isEmpty()) {
-        _errorString = QStringLiteral("Entry name cannot be empty");
-        return false;
-    }
-
-    // Handle file path constructor
-    if (!_filePath.isEmpty()) {
-        if (!initSourceFromPath()) {
-            return false;
-        }
-    }
-
-    if (!initArchive()) {
-        return false;
-    }
-
-    if (!prepareForReading()) {
-        return false;
-    }
-
-    return QIODevice::open(mode);
-}
-
 qint64 QGCArchiveFile::size() const
 {
     return _entrySize >= 0 ? _entrySize : QIODevice::size();
@@ -67,9 +39,8 @@ qint64 QGCArchiveFile::size() const
 
 bool QGCArchiveFile::initArchive()
 {
-    _archive = archive_read_new();
-    if (!_archive) {
-        _errorString = QStringLiteral("Failed to create archive reader");
+    if (_entryName.isEmpty()) {
+        setError(QStringLiteral("Entry name cannot be empty"));
         return false;
     }
 
@@ -98,18 +69,26 @@ void QGCArchiveFile::resetState()
 
 bool QGCArchiveFile::seekToEntry()
 {
-    struct archive_entry *entry = nullptr;
     _entryFound = false;
+    const char* skippedKind = nullptr;
 
-    while (archive_read_next_header(_archive, &entry) == ARCHIVE_OK) {
-        // Capture format info on first header
-        if (_formatName.isEmpty()) {
-            captureFormatInfo();
-        }
+    const QGClibarchive::EntryWalk walk =
+        QGClibarchive::forEachEntry(*_reader, [this, &skippedKind](struct archive_entry* entry) {
+            // Capture format info on first header
+            if (_formatName.isEmpty()) {
+                captureFormatInfo();
+            }
 
-        const QString currentEntry = QString::fromUtf8(archive_entry_pathname(entry));
+            if (QString::fromUtf8(archive_entry_pathname(entry)) != _entryName) {
+                return true;
+            }
 
-        if (currentEntry == _entryName) {
+            // Read as a file, a directory, a link or a special file would look like one that is empty
+            skippedKind = QGClibarchive::skippedEntryKind(entry);
+            if (skippedKind != nullptr) {
+                return false;
+            }
+
             _entryFound = true;
             _entrySize = archive_entry_size(entry);
 
@@ -118,16 +97,21 @@ bool QGCArchiveFile::seekToEntry()
                 _entryModified = QDateTime::fromSecsSinceEpoch(archive_entry_mtime(entry));
             }
 
-            qCDebug(QGCArchiveFileLog) << "Found entry:" << _entryName
-                                        << "size:" << _entrySize
-                                        << "modified:" << _entryModified;
-            return true;
-        }
+            qCDebug(QGCArchiveFileLog) << "Found entry:" << _entryName << "size:" << _entrySize
+                                       << "modified:" << _entryModified;
+            return false;
+        });
 
-        // Skip this entry's data
-        archive_read_data_skip(_archive);
+    if (_entryFound) {
+        return true;
     }
 
-    _errorString = QStringLiteral("Entry not found in archive: ") + _entryName;
+    if (skippedKind != nullptr) {
+        setError(QStringLiteral("Entry is a %1, which is not read: %2").arg(QLatin1String(skippedKind), _entryName));
+    } else if (walk == QGClibarchive::EntryWalk::Failed) {
+        setError(QString::fromUtf8(archive_error_string(_reader->handle())));
+    } else {
+        setError(QStringLiteral("Entry not found in archive: ") + _entryName);
+    }
     return false;
 }

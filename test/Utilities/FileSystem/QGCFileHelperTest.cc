@@ -343,7 +343,8 @@ void QGCFileHelperTest::_testToLocalPathCompressionInterop()
     QCOMPARE(QGCCompression::detectFormat(archivePath), QGCCompression::Format::ZIP);
     QVERIFY(QGCCompression::validateArchive(archivePath));
 
-    const QStringList entries = QGCCompression::listArchive(archivePath);
+    QStringList entries;
+    QVERIFY(QGCCompression::listArchive(archivePath, entries));
     QVERIFY(entries.contains(QStringLiteral("manifest.json")));
 
     const QString extractDir = tempDir.filePath("from_url_extract");
@@ -371,6 +372,41 @@ void QGCFileHelperTest::_testIsLocalPath()
     // Network URLs (not local)
     QVERIFY(!QGCFileHelper::isLocalPath("http://example.com/file.txt"));
     QVERIFY(!QGCFileHelper::isLocalPath("https://example.com/file.txt"));
+}
+
+void QGCFileHelperTest::_testWindowsDrivePaths_data()
+{
+    QTest::addColumn<QString>("input");
+    QTest::addColumn<QString>("localPath");
+    QTest::addColumn<bool>("isLocal");
+
+    const auto addUnchanged = [](const char* tag, const QString& input, bool isLocal) {
+        QTest::newRow(tag) << input << input << isLocal;
+    };
+
+    // QUrl parses a drive letter as a URL scheme
+    addUnchanged("forward slashes", QStringLiteral("C:/dir/file.txt"), true);
+    addUnchanged("backslashes", QStringLiteral("C:\\dir\\file.txt"), true);
+    addUnchanged("lower case drive", QStringLiteral("d:/dir/file.txt"), true);
+    addUnchanged("URL delimiters", QStringLiteral("C:/dir/a b#c?d.txt"), true);
+    addUnchanged("drive relative", QStringLiteral("C:file.txt"), true);
+    addUnchanged("drive only", QStringLiteral("C:"), true);
+
+    // Only a single leading letter is a drive
+    const QString fileUrl = QStringLiteral("file:///C:/dir/file.txt");
+    QTest::newRow("file URL with drive") << fileUrl << QUrl(fileUrl).toLocalFile() << true;
+    addUnchanged("two letter scheme", QStringLiteral("ab://host/file.txt"), false);
+    addUnchanged("http URL", QStringLiteral("http://host/C:/file.txt"), false);
+}
+
+void QGCFileHelperTest::_testWindowsDrivePaths()
+{
+    QFETCH(QString, input);
+    QFETCH(QString, localPath);
+    QFETCH(bool, isLocal);
+
+    QCOMPARE(QGCFileHelper::toLocalPath(input), localPath);
+    QCOMPARE(QGCFileHelper::isLocalPath(input), isLocal);
 }
 
 void QGCFileHelperTest::_testIsQtResource()
@@ -427,12 +463,12 @@ void QGCFileHelperTest::_testComputeFileHash()
     QVERIFY(!resourceHash.isEmpty());
     QCOMPARE(resourceHash.length(), 64);  // SHA-256 = 32 bytes = 64 hex chars
     // Non-existent file should return empty
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("computeFileHash: failed to open"));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("^failed to open file:"));
     const QString noFileHash = QGCFileHelper::computeFileHash("/nonexistent/file.txt");
     QVERIFY(noFileHash.isEmpty());
     verifyExpectedLogMessage();
     // Empty path should return empty
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("computeFileHash: empty file path"));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("^empty file path$"));
     QVERIFY(QGCFileHelper::computeFileHash(QString()).isEmpty());
     verifyExpectedLogMessage();
 }
@@ -475,15 +511,15 @@ void QGCFileHelperTest::_testVerifyFileHash()
     // Case insensitive
     QVERIFY(QGCFileHelper::verifyFileHash(filePath, correctHash.toUpper()));
     // Wrong hash should fail
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("verifyFileHash: hash mismatch"));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("^hash mismatch for"));
     QVERIFY(!QGCFileHelper::verifyFileHash(filePath, wrongHash));
     verifyExpectedLogMessage();
     // Empty expected hash should fail
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("verifyFileHash: empty expected hash"));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("^empty expected hash$"));
     QVERIFY(!QGCFileHelper::verifyFileHash(filePath, QString()));
     verifyExpectedLogMessage();
     // Non-existent file should fail
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("computeFileHash: failed to open"));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("^failed to open file:"));
     QVERIFY(!QGCFileHelper::verifyFileHash("/nonexistent/file.txt", correctHash));
     verifyExpectedLogMessage();
 }
@@ -582,12 +618,12 @@ void QGCFileHelperTest::_testCreateTempCopy()
     QVERIFY(copy2 != nullptr);
     QVERIFY(copy2->fileName().contains("backup"));
     // Non-existent source should return nullptr
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("createTempCopy: failed to open source"));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("^failed to open source:"));
     auto noCopy = QGCFileHelper::createTempCopy("/nonexistent/file.txt");
     QVERIFY(noCopy == nullptr);
     verifyExpectedLogMessage();
     // Empty path should return nullptr
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("createTempCopy: source path is empty"));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("^source path is empty$"));
     auto emptyCopy = QGCFileHelper::createTempCopy(QString());
     QVERIFY(emptyCopy == nullptr);
     verifyExpectedLogMessage();
@@ -705,13 +741,13 @@ void QGCFileHelperTest::_testMoveFileOrCopyDirectory()
 void QGCFileHelperTest::_testReplaceFileFromTempInvalidArgs()
 {
     QTemporaryDir tempDir;
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("replaceFileFromTemp: temp file is null or not open"));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("^temp file is null or not open$"));
     QVERIFY(!QGCFileHelper::replaceFileFromTemp(nullptr, tempDir.filePath("out.txt")));
     verifyExpectedLogMessage();
 
     auto temp = QGCFileHelper::createTempFile(QByteArrayLiteral("data"));
     QVERIFY(temp != nullptr);
-    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("replaceFileFromTemp: target path is empty"));
+    expectLogMessage("Utilities.QGCFileHelper", QtWarningMsg, QRegularExpression("^target path is empty$"));
     QVERIFY(!QGCFileHelper::replaceFileFromTemp(temp.get(), QString()));
     verifyExpectedLogMessage();
 }

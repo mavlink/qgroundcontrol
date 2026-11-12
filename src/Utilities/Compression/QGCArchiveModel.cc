@@ -1,13 +1,13 @@
 #include "QGCArchiveModel.h"
-#include "QGCCompression.h"
-#include "QGCFileHelper.h"
-#include "QGCLoggingCategory.h"
-
-#include <QtCore/QCollator>
-#include <QtCore/QFileInfo>
-#include <QtCore/QLocale>
 
 #include <algorithm>
+
+#include <QtCore/QFileInfo>
+
+#include "QGCCompression.h"
+#include "QGCFileHelper.h"
+#include "QGCFormat.h"
+#include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(QGCArchiveModelLog, "Utilities.QGCArchiveModel")
 
@@ -204,30 +204,7 @@ bool QGCArchiveModel::contains(const QString &fileName) const
 
 QString QGCArchiveModel::formatSize(qint64 bytes)
 {
-    if (bytes < 0) {
-        return QStringLiteral("--");
-    }
-
-    static const char* units[] = { "B", "KB", "MB", "GB", "TB" };
-    constexpr int numUnits = sizeof(units) / sizeof(units[0]);
-
-    double size = static_cast<double>(bytes);
-    int unitIndex = 0;
-
-    while (size >= 1024.0 && unitIndex < numUnits - 1) {
-        size /= 1024.0;
-        unitIndex++;
-    }
-
-    if (unitIndex == 0) {
-        // Bytes - no decimals
-        return QStringLiteral("%1 %2").arg(bytes).arg(QLatin1String(units[unitIndex]));
-    }
-
-    // Use locale-aware number formatting
-    return QStringLiteral("%1 %2")
-        .arg(QLocale().toString(size, 'f', 1))
-        .arg(QLatin1String(units[unitIndex]));
+    return (bytes < 0) ? QStringLiteral("--") : QGC::bigSizeToString(static_cast<quint64>(bytes));
 }
 
 void QGCArchiveModel::_loadArchive()
@@ -245,31 +222,23 @@ void QGCArchiveModel::_loadArchive()
     qCDebug(QGCArchiveModelLog) << "Loading archive:" << _archivePath;
 
     // Load entries using QGCCompression (already sorted with QCollator)
-    QList<QGCCompression::ArchiveEntry> entries = QGCCompression::listArchiveDetailed(_archivePath);
-
-    if (entries.isEmpty() && !_archivePath.isEmpty()) {
-        // Check if it was an error or just empty archive
-        if (!QGCCompression::validateArchive(_archivePath)) {
-            _setErrorString(QGCCompression::lastErrorString());
-            _setLoading(false);
-            emit loadingComplete(false);
-            return;
-        }
+    QList<QGCCompression::ArchiveEntry> entries;
+    const QGCCompression::Outcome listed = QGCCompression::listArchiveDetailed(_archivePath, entries);
+    if (!listed) {
+        _setErrorString(listed.message);
+        _setLoading(false);
+        emit loadingComplete(false);
+        return;
     }
 
     // Calculate statistics
-    int fileCount = 0;
-    int dirCount = 0;
-    qint64 totalSize = 0;
-
+    QGCCompression::ArchiveStats stats;
     for (const auto &entry : entries) {
-        if (entry.isDirectory) {
-            dirCount++;
-        } else {
-            fileCount++;
-            totalSize += entry.size;
-        }
+        QGCCompression::addTo(stats, entry);
     }
+    const int fileCount = stats.fileCount;
+    const int dirCount = stats.directoryCount;
+    const qint64 totalSize = stats.totalUncompressedSize;
 
     // Store all entries
     _allEntries = std::move(entries);

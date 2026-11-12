@@ -19,7 +19,7 @@ target_sources(
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_qgc_test(QGCNetworkAvailabilityMonitorTest LABELS Unit Utilities)
-add_qgc_test(QGCNetworkHelperTest LABELS Unit Utilities Network)
+add_qgc_test(QGCNetworkHelperTest LABELS Unit Utilities)
 add_qgc_test(QGCNetworkRedactionTest LABELS Unit Utilities)
 
 add_qgc_test(UdpForwarderTest LABELS Unit Utilities)

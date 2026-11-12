@@ -44,16 +44,6 @@ QGCStateMachine::QGCStateMachine(const QString& machineName, Vehicle *vehicle, Q
             emit progressUpdate(1.0f);
         }
     });
-
-    if (qEnvironmentVariableIsSet("QGC_STATEMACHINE_HISTORY")) {
-        setHistoryRecordingEnabled(true);
-    }
-    if (qEnvironmentVariableIsSet("QGC_STATEMACHINE_PROFILE")) {
-        setProfilingEnabled(true);
-    }
-    if (qEnvironmentVariableIsSet("QGC_STATEMACHINE_LOG")) {
-        setStructuredLoggingEnabled(true);
-    }
 }
 
 QString QGCStateMachine::currentStateName() const
@@ -78,10 +68,46 @@ void QGCStateMachine::start()
         qCCritical(QGCStateMachineLog) << objectName() << "start() called without an initial state";
         return;
     }
+    _applyEnvironmentDiagnostics();
     _inProgress = true;
     QStateMachine::start();
     // Emitted after Qt's start so a stop() from a listener is honored
     emit inProgressChanged();
+}
+
+void QGCStateMachine::_applyEnvironmentDiagnostics()
+{
+    const bool history = qEnvironmentVariableIsSet("QGC_STATEMACHINE_HISTORY");
+    const bool profile = qEnvironmentVariableIsSet("QGC_STATEMACHINE_PROFILE");
+
+    // The helpers attach to the states that exist when they are enabled
+    if (history && !historyRecordingEnabled()) {
+        setHistoryRecordingEnabled(true);
+    }
+    if (profile) {
+        setProfilingEnabled(true);
+    }
+    if (qEnvironmentVariableIsSet("QGC_STATEMACHINE_LOG")) {
+        setStructuredLoggingEnabled(true);
+    }
+
+    if (history || profile) {
+        // Connected after the helpers so that they have seen the end of the run before it is reported
+        connect(this, &QGCStateMachine::stopped, this, &QGCStateMachine::_logEnvironmentDiagnostics,
+                Qt::UniqueConnection);
+        connect(this, &QGCStateMachine::finished, this, &QGCStateMachine::_logEnvironmentDiagnostics,
+                Qt::UniqueConnection);
+    }
+}
+
+void QGCStateMachine::_logEnvironmentDiagnostics()
+{
+    if (_historyRecorder && qEnvironmentVariableIsSet("QGC_STATEMACHINE_HISTORY")) {
+        _historyRecorder->logHistory();
+    }
+    if (_profiler && qEnvironmentVariableIsSet("QGC_STATEMACHINE_PROFILE")) {
+        _profiler->logProfile();
+    }
 }
 
 void QGCStateMachine::_setInProgress(bool inProgress)

@@ -573,6 +573,10 @@ public:
     /// Log the full configuration to debug output.
     void logConfiguration() const;
 
+    // The three helpers below can also be enabled for every machine with the environment variables
+    // QGC_STATEMACHINE_HISTORY, QGC_STATEMACHINE_PROFILE and QGC_STATEMACHINE_LOG. They take effect when a
+    // machine is started; the history and the profile are logged when it stops or finishes.
+
     /// Enable/disable structured transition history recording.
     void setHistoryRecordingEnabled(bool enabled, int maxEntries = 1000);
     bool historyRecordingEnabled() const;
@@ -711,6 +715,8 @@ protected:
 
 private:
     void _onStateEntered();
+    void _applyEnvironmentDiagnostics();
+    void _logEnvironmentDiagnostics();
     void _setInProgress(bool inProgress);
     float _calculateProgress() const;
 

@@ -21,6 +21,12 @@ private slots:
     void _testSaveToBuffer();
     void _testSaveToBufferRejectsNonJpeg();
     void _testSaveToBufferRejectsTiff();
+    void _testSaveToBufferKeepsOtherSegments_data();
+    void _testSaveToBufferKeepsOtherSegments();
+    void _testSaveToBufferLargestExif();
+    void _testSaveToBufferRejectsOversizedExif();
+    void _testSaveToBufferRejectsMalformedJpeg_data();
+    void _testSaveToBufferRejectsMalformedJpeg();
 
     // Tag reading
     void _testReadString();

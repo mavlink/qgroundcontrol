@@ -8,14 +8,14 @@
  ****************************************************************************/
 
 #include "QGCGeo.h"
-#include "QGCLoggingCategory.h"
+
+#include <cmath>
 
 #include <QtCore/QLocale>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QString>
 
-#include <cmath>
-
+#include "QGCLoggingCategory.h"
 #include <GeographicLib/Geocentric.hpp>
 #include <GeographicLib/Geodesic.hpp>
 #include <GeographicLib/GeodesicLine.hpp>
@@ -152,7 +152,14 @@ int convertGeoToUTM(const QGeoCoordinate &coord, double &easting, double &northi
     try {
         int zone;
         bool northp;
-        GeographicLib::UTMUPS::Forward(coord.latitude(), coord.longitude(), zone, northp, easting, northing);
+        double x, y;
+        GeographicLib::UTMUPS::Forward(coord.latitude(), coord.longitude(), zone, northp, x, y);
+        // Near the poles the result is in UPS (zone 0); NaN input gives a negative zone
+        if (zone < GeographicLib::UTMUPS::MINUTMZONE || zone > GeographicLib::UTMUPS::MAXUTMZONE) {
+            return 0;
+        }
+        easting = x;
+        northing = y;
         return zone;
     } catch (const GeographicLib::GeographicErr &e) {
         qCDebug(QGCGeoLog) << e.what();
@@ -165,6 +172,13 @@ bool convertUTMToGeo(double easting, double northing, int zone, bool southhemi, 
     try {
         double lat, lon;
         GeographicLib::UTMUPS::Reverse(zone, !southhemi, easting, northing, lat, lon);
+
+        // GeographicLib returns NaN instead of throwing for an easting or northing that is not a number
+        if (!QGeoCoordinate(lat, lon).isValid()) {
+            qCDebug(QGCGeoLog) << "Invalid UTM position" << easting << northing;
+            return false;
+        }
+
         coord.setLatitude(lat);
         coord.setLongitude(lon);
         return true;
@@ -206,14 +220,26 @@ QString convertGeoToMGRS(const QGeoCoordinate &coord)
 
 bool convertMGRSToGeo(const QString &mgrs, QGeoCoordinate &coord)
 {
+    const std::string reference = mgrs.simplified().replace(" ", "").toStdString();
+    // GeographicLib refuses this with an exception, which the commonest invalid input then does not need
+    if (reference.empty()) {
+        return false;
+    }
+
     try {
         int zone, prec;
         bool northp;
         double x, y;
-        GeographicLib::MGRS::Reverse(mgrs.simplified().replace(" ", "").toStdString(), zone, northp, x, y, prec);
+        GeographicLib::MGRS::Reverse(reference, zone, northp, x, y, prec);
 
         double lat, lon;
         GeographicLib::UTMUPS::Reverse(zone, northp, x, y, lat, lon);
+
+        // GeographicLib returns NaN instead of throwing for strings that start with "INV"
+        if (!QGeoCoordinate(lat, lon).isValid()) {
+            qCDebug(QGCGeoLog) << "Invalid MGRS string" << mgrs;
+            return false;
+        }
 
         coord.setLatitude(lat);
         coord.setLongitude(lon);

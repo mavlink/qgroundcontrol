@@ -1,5 +1,9 @@
 #include "QGCCompression.h"
 
+#include <algorithm>
+#include <iterator>
+#include <utility>
+
 #include <QtCore/QCollator>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
@@ -8,9 +12,6 @@
 #include <QtCore/QMimeDatabase>
 #include <QtCore/QMimeType>
 #include <QtCore/QtEndian>
-
-#include <algorithm>
-#include <cstring>
 
 #include "QGCDecompressDevice.h"
 #include "QGCFileHelper.h"
@@ -22,7 +23,7 @@ QGC_LOGGING_CATEGORY(QGCCompressionLog, "Utilities.QGCCompression")
 namespace QGCCompression {
 
 // ============================================================================
-// Format Detection Constants
+// Formats
 // ============================================================================
 
 namespace {
@@ -35,112 +36,72 @@ constexpr size_t kTarUstarOffset = 257;
 constexpr size_t kTarUstarMagicLen = 5;
 constexpr size_t kMinBytesForTar = 263;  // kTarUstarOffset + kTarUstarMagicLen + 1
 
-// Magic byte sequences for format detection
-constexpr unsigned char kMagicZip[] = {0x50, 0x4B};                         // "PK"
-constexpr unsigned char kZipLocalFile = 0x03;                               // PK\x03\x04 - local file header
-constexpr unsigned char kZipEmptyArchive = 0x05;                            // PK\x05\x06 - empty archive
-constexpr unsigned char kZipSpannedArchive = 0x07;                          // PK\x07\x08 - spanned archive
-constexpr unsigned char kMagic7z[] = {0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C};  // "7z\xBC\xAF'\x1C"
-constexpr unsigned char kMagicGzip[] = {0x1F, 0x8B};
-constexpr unsigned char kMagicXz[] = {0xFD, 0x37, 0x7A, 0x58, 0x5A, 0x00};  // "\xFD7zXZ\0"
-constexpr unsigned char kMagicZstd[] = {0x28, 0xB5, 0x2F, 0xFD};
-constexpr unsigned char kMagicBzip2[] = {0x42, 0x5A, 0x68};                 // "BZh"
-constexpr unsigned char kMagicLz4[] = {0x04, 0x22, 0x4D, 0x18};
+/// What is known of a format: every function that tells about formats looks it up here
+struct FormatInfo
+{
+    Format format;
+    bool isArchive;                ///< Holds several files; otherwise it is a single compressed stream
+    const char* name;              ///< formatName()
+    const char* suffixes[3];       ///< In lower case. The first one is formatExtension()
+    const char* mimeTypes[2];      ///< Names Qt's MIME database has for the format
+    QByteArrayView signatures[3];  ///< What a file of the format starts with (TAR: see kTarUstarOffset)
+};
+
+// Looked through in this order. The compressed TAR formats come first, because their suffixes end in those of
+// the compression, and TAR last, because its signature is not at the start of the file.
+constexpr FormatInfo kFormats[] = {
+    {Format::TAR_GZ, true, "TAR.GZ", {".tar.gz", ".tgz"}, {"application/x-compressed-tar"}, {}},
+    {Format::TAR_XZ, true, "TAR.XZ", {".tar.xz", ".txz"}, {"application/x-xz-compressed-tar"}, {}},
+    {Format::TAR_ZSTD, true, "TAR.ZSTD", {".tar.zst", ".tar.zstd"}, {"application/x-zstd-compressed-tar"}, {}},
+    {Format::TAR_BZ2,
+     true,
+     "TAR.BZ2",
+     {".tar.bz2", ".tbz2", ".tbz"},
+     {"application/x-bzip2-compressed-tar", "application/x-bzip-compressed-tar"},
+     {}},
+    {Format::TAR_LZ4, true, "TAR.LZ4", {".tar.lz4"}, {"application/x-lz4-compressed-tar"}, {}},
+    // Local file header, empty archive, spanned archive
+    {Format::ZIP,
+     true,
+     "ZIP",
+     {".zip"},
+     {"application/zip", "application/x-zip-compressed"},
+     {"PK\x03", "PK\x05", "PK\x07"}},
+    {Format::SEVENZ, true, "7-Zip", {".7z"}, {"application/x-7z-compressed"}, {"7z\xBC\xAF\x27\x1C"}},
+    {Format::GZIP, false, "GZIP", {".gz", ".gzip"}, {"application/gzip", "application/x-gzip"}, {"\x1F\x8B"}},
+    // "\xFD7zXZ" and a zero byte, which a view of the literal alone would leave out
+    {Format::XZ, false, "XZ/LZMA", {".xz", ".lzma"}, {"application/x-xz"}, {{"\xFD\x37\x7A\x58\x5A\x00", 6}}},
+    {Format::ZSTD,
+     false,
+     "Zstandard",
+     {".zst", ".zstd"},
+     {"application/zstd", "application/x-zstd"},
+     {"\x28\xB5\x2F\xFD"}},
+    {Format::BZIP2, false, "BZip2", {".bz2", ".bzip2"}, {"application/x-bzip2", "application/bzip2"}, {"BZh"}},
+    {Format::LZ4, false, "LZ4", {".lz4"}, {"application/x-lz4"}, {"\x04\x22\x4D\x18"}},
+    {Format::TAR, true, "TAR", {".tar"}, {"application/x-tar"}, {}},
+};
+
+/// @return What is known of @a format, nullptr for Format::Auto
+const FormatInfo* formatInfo(Format format)
+{
+    const auto info = std::ranges::find(kFormats, format, &FormatInfo::format);
+    return (info != std::end(kFormats)) ? &*info : nullptr;
+}
 
 /// Convert Qt MIME type name to Format
 /// @param mimeType MIME type name (e.g., "application/gzip")
 /// @return Corresponding Format, or Format::Auto if not recognized
 Format formatFromMimeType(const QString& mimeType)
 {
-    // Archive formats
-    if (mimeType == QLatin1String("application/zip") || mimeType == QLatin1String("application/x-zip-compressed")) {
-        return Format::ZIP;
+    for (const FormatInfo& info : kFormats) {
+        for (const char* name : info.mimeTypes) {
+            if ((name != nullptr) && (mimeType == QLatin1StringView(name))) {
+                return info.format;
+            }
+        }
     }
-    if (mimeType == QLatin1String("application/x-7z-compressed")) {
-        return Format::SEVENZ;
-    }
-    if (mimeType == QLatin1String("application/x-tar")) {
-        return Format::TAR;
-    }
-
-    // Compression formats
-    if (mimeType == QLatin1String("application/gzip") || mimeType == QLatin1String("application/x-gzip")) {
-        return Format::GZIP;
-    }
-    if (mimeType == QLatin1String("application/x-xz")) {
-        return Format::XZ;
-    }
-    if (mimeType == QLatin1String("application/zstd") || mimeType == QLatin1String("application/x-zstd")) {
-        return Format::ZSTD;
-    }
-    if (mimeType == QLatin1String("application/x-bzip2") || mimeType == QLatin1String("application/bzip2")) {
-        return Format::BZIP2;
-    }
-    if (mimeType == QLatin1String("application/x-lz4")) {
-        return Format::LZ4;
-    }
-
-    // Compound TAR formats (Qt may detect these as compressed TAR)
-    if (mimeType == QLatin1String("application/x-compressed-tar")) {
-        return Format::TAR_GZ;  // Most common, fallback will refine
-    }
-    if (mimeType == QLatin1String("application/x-xz-compressed-tar")) {
-        return Format::TAR_XZ;
-    }
-    if (mimeType == QLatin1String("application/x-zstd-compressed-tar")) {
-        return Format::TAR_ZSTD;
-    }
-    if (mimeType == QLatin1String("application/x-bzip2-compressed-tar") ||
-        mimeType == QLatin1String("application/x-bzip-compressed-tar")) {
-        return Format::TAR_BZ2;
-    }
-    if (mimeType == QLatin1String("application/x-lz4-compressed-tar")) {
-        return Format::TAR_LZ4;
-    }
-
     return Format::Auto;
-}
-
-}  // namespace
-
-// ============================================================================
-// Thread-Local Error State
-// ============================================================================
-
-namespace {
-
-struct ThreadState
-{
-    Error error = Error::None;
-    QString errorString;
-    QString formatName;
-    QString filterName;
-};
-
-thread_local ThreadState t_state;
-
-void clearError()
-{
-    t_state.error = Error::None;
-    t_state.errorString.clear();
-}
-
-void setError(Error error, const QString& message = QString())
-{
-    t_state.error = error;
-    t_state.errorString = message;
-}
-
-void setFormatInfo(const QString& format, const QString& filter)
-{
-    t_state.formatName = format;
-    t_state.filterName = filter;
-}
-
-void clearFormatInfo()
-{
-    t_state.formatName.clear();
-    t_state.filterName.clear();
 }
 
 }  // namespace
@@ -148,19 +109,6 @@ void clearFormatInfo()
 // ============================================================================
 // Error Handling
 // ============================================================================
-
-Error lastError()
-{
-    return t_state.error;
-}
-
-QString lastErrorString()
-{
-    if (!t_state.errorString.isEmpty()) {
-        return t_state.errorString;
-    }
-    return errorName(t_state.error);
-}
 
 QString errorName(Error error)
 {
@@ -189,16 +137,6 @@ QString errorName(Error error)
     return QStringLiteral("Unknown error");
 }
 
-QString detectedFormatName()
-{
-    return t_state.formatName;
-}
-
-QString detectedFilterName()
-{
-    return t_state.filterName;
-}
-
 // ============================================================================
 // Internal Helpers
 // ============================================================================
@@ -206,60 +144,142 @@ QString detectedFilterName()
 /// Validate file input: check existence and detect format
 /// @param filePath Path to validate
 /// @param format Format to use/detect (modified if Auto)
-/// @return true if file exists and format was detected
-static bool validateFileInput(const QString& filePath, Format& format)
+/// @return Success if file exists and format was detected, or why the file is refused
+static Outcome validateFileInput(const QString& filePath, Format& format)
 {
-    clearError();
-    clearFormatInfo();
-
     if (!QGCFileHelper::exists(filePath)) {
         qCWarning(QGCCompressionLog) << "File does not exist:" << filePath;
-        setError(Error::FileNotFound, QStringLiteral("File does not exist: ") + filePath);
-        return false;
+        return {.error = Error::FileNotFound, .message = QStringLiteral("File does not exist: ") + filePath};
+    }
+    if (!QGCFileHelper::isQtResource(filePath) && !QFileInfo(filePath).isReadable()) {
+        qCWarning(QGCCompressionLog) << "No permission to read:" << filePath;
+        return {.error = Error::PermissionDenied, .message = QStringLiteral("No permission to read: ") + filePath};
     }
     if (format == Format::Auto) {
         format = detectFormat(filePath);
         if (format == Format::Auto) {
             qCWarning(QGCCompressionLog) << "Could not detect format for:" << filePath;
-            setError(Error::UnsupportedFormat, QStringLiteral("Could not detect format: ") + filePath);
-            return false;
+            return {.error = Error::UnsupportedFormat,
+                    .message = QStringLiteral("Could not detect format: ") + filePath};
         }
     }
-    return true;
+    return {};
 }
 
 /// Validate archive input: file exists, format detected, and is archive format
-static bool validateArchiveInput(const QString& archivePath, Format& format)
+static Outcome validateArchiveInput(const QString& archivePath, Format& format)
 {
-    if (!validateFileInput(archivePath, format)) {
-        return false;
-    }
-    if (!isArchiveFormat(format)) {
+    Outcome validated = validateFileInput(archivePath, format);
+    if (validated && !isArchiveFormat(format)) {
         qCWarning(QGCCompressionLog) << "Not an archive format:" << formatName(format);
-        setError(Error::UnsupportedFormat, formatName(format) + QStringLiteral(" is not an archive format"));
-        return false;
+        validated = {.error = Error::UnsupportedFormat,
+                     .message = formatName(format) + QStringLiteral(" is not an archive format")};
     }
-    return true;
+    return validated;
 }
 
 /// Validate device input for streaming operations
-static bool validateDeviceInput(QIODevice* device)
+static Outcome validateDeviceInput(QIODevice* device)
 {
-    clearError();
-    clearFormatInfo();
-
     if (!device || !device->isOpen() || !device->isReadable()) {
         qCWarning(QGCCompressionLog) << "Device is null, not open, or not readable";
-        setError(Error::IoError, QStringLiteral("Device is null, not open, or not readable"));
-        return false;
+        return {.error = Error::IoError, .message = QStringLiteral("Device is null, not open, or not readable")};
     }
-    return true;
+    return {};
 }
 
-/// Capture format detection info from QGClibarchive after an operation
-static void captureFormatInfo()
+/// Validate the name of an entry that is asked for
+static Outcome validateEntryName(const QString& fileName)
 {
-    setFormatInfo(QGClibarchive::lastDetectedFormatName(), QGClibarchive::lastDetectedFilterName());
+    if (fileName.isEmpty()) {
+        qCWarning(QGCCompressionLog) << "File name cannot be empty";
+        return {.error = Error::FileNotInArchive, .message = QStringLiteral("File name cannot be empty")};
+    }
+    return {};
+}
+
+/// Why an operation of QGClibarchive failed, for the end of the message, if its code has more to say than the
+/// message does
+static QString failureReason(Error error, const QGClibarchive::ArchiveReader& reader)
+{
+    switch (error) {
+        case Error::SizeLimitExceeded:
+            return QStringLiteral(": size limit exceeded");
+        case Error::Cancelled:
+            return QStringLiteral(": cancelled");
+        case Error::PermissionDenied:
+            return QStringLiteral(": no permission to write the output");
+        case Error::FileNotInArchive:
+            return QStringLiteral(": not in the archive");
+        case Error::UnsupportedFormat:
+            if (reader.unsupportedStream()) {
+                return QStringLiteral(": the compression is not supported by this build");
+            }
+            if (reader.mode() == QGClibarchive::ReaderMode::RawFormat) {
+                return QStringLiteral(": the input is not compressed");
+            }
+            return QStringLiteral(
+                ": a directory, a link, a special file or a name that leaves the output directory "
+                "is not extracted");
+        default:
+            // The input cannot be read or is damaged, or the output cannot be written
+            return {};
+    }
+}
+
+/// Run an operation of QGClibarchive
+/// @param what What could not be done, for the message of a failure
+/// @param operation Called with the reader for it to open. Returns the Error of the operation
+template <typename Operation>
+static Outcome runOperation(const QString& what, const Operation& operation)
+{
+    QGClibarchive::ArchiveReader reader;
+    Outcome outcome;
+    outcome.error = operation(reader);
+    if (!outcome) {
+        outcome.message = what + failureReason(outcome.error, reader);
+    }
+    outcome.formatName = reader.formatName();
+    outcome.filterName = reader.filterName();
+    return outcome;
+}
+
+/// As runOperation(), for an archive file, which is validated first
+template <typename Operation>
+static Outcome archiveOperation(const QString& archivePath, Format& format, const QString& what,
+                                const Operation& operation)
+{
+    const Outcome validated = validateArchiveInput(archivePath, format);
+    return validated ? runOperation(what, operation) : validated;
+}
+
+/// As runOperation(), for a device, which is validated first
+template <typename Operation>
+static Outcome deviceOperation(QIODevice* device, const QString& what, const Operation& operation)
+{
+    const Outcome validated = validateDeviceInput(device);
+    return validated ? runOperation(what, operation) : validated;
+}
+
+/// As archiveOperation(), for the functions that extract the entries they are asked for, by name or by pattern:
+/// the message of a failure also tells the output that cannot be written from the archive that cannot be read
+template <typename Operation>
+static Outcome selectedEntriesOperation(const QString& archivePath, Format& format, const QString& what,
+                                        const Operation& operation)
+{
+    Outcome outcome = archiveOperation(archivePath, format, what, operation);
+    if (outcome.error == Error::IoError) {
+        outcome.message += QStringLiteral(": the output cannot be written");
+    } else if (outcome.error == Error::InvalidArchive) {
+        outcome.message += QStringLiteral(": the archive cannot be read or is damaged");
+    }
+    return outcome;
+}
+
+/// What could not be done with an archive whose entries were to be read, and none of them written
+static QString unreadableArchive(const QString& archivePath)
+{
+    return QStringLiteral("Invalid or corrupt archive: ") + archivePath;
 }
 
 // ============================================================================
@@ -270,50 +290,13 @@ static void captureFormatInfo()
 static Format detectFormatFromExtension(const QString& filePath)
 {
     const QString lower = filePath.toLower();
-
-    // Check compound extensions first
-    if (lower.endsWith(".tar.gz") || lower.endsWith(".tgz")) {
-        return Format::TAR_GZ;
+    for (const FormatInfo& info : kFormats) {
+        for (const char* suffix : info.suffixes) {
+            if ((suffix != nullptr) && lower.endsWith(QLatin1StringView(suffix))) {
+                return info.format;
+            }
+        }
     }
-    if (lower.endsWith(".tar.xz") || lower.endsWith(".txz")) {
-        return Format::TAR_XZ;
-    }
-    if (lower.endsWith(".tar.zst") || lower.endsWith(".tar.zstd")) {
-        return Format::TAR_ZSTD;
-    }
-    if (lower.endsWith(".tar.bz2") || lower.endsWith(".tbz2") || lower.endsWith(".tbz")) {
-        return Format::TAR_BZ2;
-    }
-    if (lower.endsWith(".tar.lz4")) {
-        return Format::TAR_LZ4;
-    }
-
-    // Check single extensions
-    if (lower.endsWith(".zip")) {
-        return Format::ZIP;
-    }
-    if (lower.endsWith(".7z")) {
-        return Format::SEVENZ;
-    }
-    if (lower.endsWith(".gz") || lower.endsWith(".gzip")) {
-        return Format::GZIP;
-    }
-    if (lower.endsWith(".xz") || lower.endsWith(".lzma")) {
-        return Format::XZ;
-    }
-    if (lower.endsWith(".zst") || lower.endsWith(".zstd")) {
-        return Format::ZSTD;
-    }
-    if (lower.endsWith(".bz2") || lower.endsWith(".bzip2")) {
-        return Format::BZIP2;
-    }
-    if (lower.endsWith(".lz4")) {
-        return Format::LZ4;
-    }
-    if (lower.endsWith(".tar")) {
-        return Format::TAR;
-    }
-
     return Format::Auto;
 }
 
@@ -373,42 +356,12 @@ Format detectFormatFromData(const QByteArray& data)
         return Format::Auto;
     }
 
-    const auto* bytes = reinterpret_cast<const unsigned char*>(data.constData());
-
-    // ZIP: PK\x03\x04 (local file) or PK\x05\x06 (empty) or PK\x07\x08 (spanned)
-    if (bytes[0] == kMagicZip[0] && bytes[1] == kMagicZip[1] &&
-        (bytes[2] == kZipLocalFile || bytes[2] == kZipEmptyArchive || bytes[2] == kZipSpannedArchive)) {
-        return Format::ZIP;
-    }
-
-    // 7-Zip
-    if (memcmp(bytes, kMagic7z, sizeof(kMagic7z)) == 0) {
-        return Format::SEVENZ;
-    }
-
-    // GZIP
-    if (memcmp(bytes, kMagicGzip, sizeof(kMagicGzip)) == 0) {
-        return Format::GZIP;
-    }
-
-    // XZ
-    if (memcmp(bytes, kMagicXz, sizeof(kMagicXz)) == 0) {
-        return Format::XZ;
-    }
-
-    // ZSTD
-    if (memcmp(bytes, kMagicZstd, sizeof(kMagicZstd)) == 0) {
-        return Format::ZSTD;
-    }
-
-    // BZip2
-    if (memcmp(bytes, kMagicBzip2, sizeof(kMagicBzip2)) == 0) {
-        return Format::BZIP2;
-    }
-
-    // LZ4
-    if (memcmp(bytes, kMagicLz4, sizeof(kMagicLz4)) == 0) {
-        return Format::LZ4;
+    for (const FormatInfo& info : kFormats) {
+        for (const QByteArrayView signature : info.signatures) {
+            if (!signature.isEmpty() && data.startsWith(signature)) {
+                return info.format;
+            }
+        }
     }
 
     // TAR: Check for ustar magic at offset 257
@@ -434,129 +387,52 @@ Format detectFormatFromData(const QByteArray& data)
 
 QString formatExtension(Format format)
 {
-    switch (format) {
-        case Format::ZIP:
-            return QStringLiteral(".zip");
-        case Format::SEVENZ:
-            return QStringLiteral(".7z");
-        case Format::GZIP:
-            return QStringLiteral(".gz");
-        case Format::XZ:
-            return QStringLiteral(".xz");
-        case Format::ZSTD:
-            return QStringLiteral(".zst");
-        case Format::BZIP2:
-            return QStringLiteral(".bz2");
-        case Format::LZ4:
-            return QStringLiteral(".lz4");
-        case Format::TAR:
-            return QStringLiteral(".tar");
-        case Format::TAR_GZ:
-            return QStringLiteral(".tar.gz");
-        case Format::TAR_XZ:
-            return QStringLiteral(".tar.xz");
-        case Format::TAR_ZSTD:
-            return QStringLiteral(".tar.zst");
-        case Format::TAR_BZ2:
-            return QStringLiteral(".tar.bz2");
-        case Format::TAR_LZ4:
-            return QStringLiteral(".tar.lz4");
-        case Format::Auto:
-            return QString();
-    }
-    Q_UNREACHABLE();
+    const FormatInfo* const info = formatInfo(format);
+    return (info != nullptr) ? QString::fromLatin1(info->suffixes[0]) : QString();
 }
 
 QString formatName(Format format)
 {
-    switch (format) {
-        case Format::Auto:
-            return QStringLiteral("Auto");
-        case Format::ZIP:
-            return QStringLiteral("ZIP");
-        case Format::SEVENZ:
-            return QStringLiteral("7-Zip");
-        case Format::GZIP:
-            return QStringLiteral("GZIP");
-        case Format::XZ:
-            return QStringLiteral("XZ/LZMA");
-        case Format::ZSTD:
-            return QStringLiteral("Zstandard");
-        case Format::BZIP2:
-            return QStringLiteral("BZip2");
-        case Format::LZ4:
-            return QStringLiteral("LZ4");
-        case Format::TAR:
-            return QStringLiteral("TAR");
-        case Format::TAR_GZ:
-            return QStringLiteral("TAR.GZ");
-        case Format::TAR_XZ:
-            return QStringLiteral("TAR.XZ");
-        case Format::TAR_ZSTD:
-            return QStringLiteral("TAR.ZSTD");
-        case Format::TAR_BZ2:
-            return QStringLiteral("TAR.BZ2");
-        case Format::TAR_LZ4:
-            return QStringLiteral("TAR.LZ4");
-    }
-    Q_UNREACHABLE();
+    const FormatInfo* const info = formatInfo(format);
+    return (info != nullptr) ? QString::fromLatin1(info->name) : QStringLiteral("Auto");
 }
 
 bool isArchiveFormat(Format format)
 {
-    switch (format) {
-        case Format::ZIP:
-        case Format::SEVENZ:
-        case Format::TAR:
-        case Format::TAR_GZ:
-        case Format::TAR_XZ:
-        case Format::TAR_ZSTD:
-        case Format::TAR_BZ2:
-        case Format::TAR_LZ4:
-            return true;
-        default:
-            return false;
-    }
+    const FormatInfo* const info = formatInfo(format);
+    return (info != nullptr) && info->isArchive;
 }
 
 bool isCompressionFormat(Format format)
 {
-    switch (format) {
-        case Format::GZIP:
-        case Format::XZ:
-        case Format::ZSTD:
-        case Format::BZIP2:
-        case Format::LZ4:
-            return true;
-        default:
-            return false;
-    }
+    const FormatInfo* const info = formatInfo(format);
+    return (info != nullptr) && !info->isArchive;
 }
 
 QString strippedPath(const QString& filePath)
 {
-    const Format format = detectFormat(filePath);
-    if (!isCompressionFormat(format)) {
+    if (!isCompressionFormat(detectFormat(filePath))) {
         return filePath;
     }
 
-    const QString ext = formatExtension(format);
-    if (filePath.endsWith(ext, Qt::CaseInsensitive)) {
-        return filePath.left(filePath.size() - ext.size());
+    // Every single-stream extension the detection accepts is the suffix after the last dot
+    if (detectFormatFromExtension(filePath) != Format::Auto) {
+        return filePath.left(filePath.lastIndexOf(QLatin1Char('.')));
     }
 
-    return filePath;
+    // Detected from the content: the name has nothing to strip, and the result must not be the input
+    return filePath + QStringLiteral(".decompressed");
 }
 
 // ============================================================================
 // Single-File Decompression
 // ============================================================================
 
-bool decompressFile(const QString& inputPath, const QString& outputPath, Format format, ProgressCallback progress,
-                    qint64 maxDecompressedBytes)
+Outcome decompressFile(const QString& inputPath, const QString& outputPath, Format format, ProgressCallback progress,
+                       qint64 maxDecompressedBytes, PlainInput plainInput)
 {
-    if (!validateFileInput(inputPath, format)) {
-        return false;
+    if (Outcome refused = validateFileInput(inputPath, format); !refused) {
+        return refused;
     }
 
     // Determine output path
@@ -565,6 +441,9 @@ bool decompressFile(const QString& inputPath, const QString& outputPath, Format 
         QString ext = formatExtension(format);
         if (inputPath.endsWith(ext, Qt::CaseInsensitive)) {
             actualOutput = inputPath.left(inputPath.size() - ext.size());
+        } else if (isCompressionFormat(format) && (detectFormatFromExtension(inputPath) == format)) {
+            // Another extension of the format (.gzip, .lzma, .zstd, .bzip2), which strippedPath() removes too
+            actualOutput = inputPath.left(inputPath.lastIndexOf(QLatin1Char('.')));
         } else {
             actualOutput = inputPath + ".decompressed";
         }
@@ -574,13 +453,10 @@ bool decompressFile(const QString& inputPath, const QString& outputPath, Format 
 
     // Single-file compression formats
     if (isCompressionFormat(format)) {
-        const bool success =
-            QGClibarchive::decompressSingleFile(inputPath, actualOutput, progress, maxDecompressedBytes);
-        captureFormatInfo();
-        if (!success) {
-            setError(Error::IoError, QStringLiteral("Decompression failed: ") + inputPath);
-        }
-        return success;
+        return runOperation(QStringLiteral("Decompression failed: ") + inputPath, [&](auto& reader) {
+            return QGClibarchive::decompressSingleFile(reader, inputPath, actualOutput, progress, maxDecompressedBytes,
+                                                       plainInput == PlainInput::Copy);
+        });
     }
 
     // Archive formats - delegate to extractArchive with a warning
@@ -590,12 +466,22 @@ bool decompressFile(const QString& inputPath, const QString& outputPath, Format 
     }
 
     qCWarning(QGCCompressionLog) << "Unsupported decompression format:" << formatName(format);
-    setError(Error::UnsupportedFormat, QStringLiteral("Unsupported decompression format: ") + formatName(format));
-    return false;
+    return {.error = Error::UnsupportedFormat,
+            .message = QStringLiteral("Unsupported decompression format: ") + formatName(format)};
 }
 
-QString decompressIfNeeded(const QString& filePath, const QString& outputPath, bool removeOriginal)
+QString decompressIfNeeded(const QString& filePath, const QString& outputPath, bool removeOriginal,
+                           qint64 maxDecompressedBytes)
 {
+    Outcome outcome;
+    return decompressIfNeeded(filePath, outcome, outputPath, removeOriginal, maxDecompressedBytes);
+}
+
+QString decompressIfNeeded(const QString& filePath, Outcome& outcome, const QString& outputPath, bool removeOriginal,
+                           qint64 maxDecompressedBytes)
+{
+    outcome = {};
+
     // If not a compressed file, return original path unchanged
     if (!isCompressedFile(filePath)) {
         return filePath;
@@ -605,7 +491,15 @@ QString decompressIfNeeded(const QString& filePath, const QString& outputPath, b
     const QString actualOutput = outputPath.isEmpty() ? strippedPath(filePath) : outputPath;
 
     // Attempt decompression
-    if (!decompressFile(filePath, actualOutput)) {
+    outcome = decompressFile(filePath, actualOutput, Format::Auto, nullptr, maxDecompressedBytes);
+    if (!outcome) {
+        if ((outcome.error == Error::UnsupportedFormat) && (outcome.filterName == QLatin1String("none"))) {
+            // Only its name said that the file is compressed, and no decompression filter took it: it is the
+            // result as it is, and stays
+            outcome.error = Error::None;
+            outcome.message.clear();
+            return filePath;
+        }
         qCWarning(QGCCompressionLog) << "Decompression failed:" << filePath;
         return QString();
     }
@@ -617,123 +511,103 @@ QString decompressIfNeeded(const QString& filePath, const QString& outputPath, b
     return actualOutput;
 }
 
-QByteArray decompressData(const QByteArray& data, Format format, qint64 maxDecompressedBytes)
+/// Validate data input: there is data, and its format is that of a single compressed stream
+/// @param format Format to use/detect (modified if Auto)
+static Outcome validateDataInput(const QByteArray& data, Format& format)
 {
     if (data.isEmpty()) {
         qCWarning(QGCCompressionLog) << "Cannot decompress empty data";
-        return {};
+        return {.error = Error::UnsupportedFormat, .message = QStringLiteral("Cannot decompress empty data")};
     }
 
     if (format == Format::Auto) {
         format = detectFormatFromData(data);
         if (format == Format::Auto) {
             qCWarning(QGCCompressionLog) << "Could not detect format from data";
-            return {};
+            return {.error = Error::UnsupportedFormat, .message = QStringLiteral("Could not detect format from data")};
         }
     }
 
     if (!isCompressionFormat(format)) {
         qCWarning(QGCCompressionLog) << "Invalid decompression format:" << formatName(format);
-        setError(Error::UnsupportedFormat, formatName(format) + QStringLiteral(" is not a compression format"));
-        return {};
+        return {.error = Error::UnsupportedFormat,
+                .message = formatName(format) + QStringLiteral(" is not a compression format")};
     }
+    return {};
+}
 
-    QByteArray result = QGClibarchive::decompressDataFromMemory(data, maxDecompressedBytes);
-    captureFormatInfo();
-    if (result.isEmpty()) {
-        setError(Error::IoError, QStringLiteral("Failed to decompress data"));
+Outcome decompressData(const QByteArray& data, QByteArray& decompressed, Format format, qint64 maxDecompressedBytes)
+{
+    if (Outcome refused = validateDataInput(data, format); !refused) {
+        decompressed.clear();
+        return refused;
     }
-    return result;
+    return runOperation(QStringLiteral("Failed to decompress data"), [&](auto& reader) {
+        return QGClibarchive::decompressToMemory(reader, data, maxDecompressedBytes, decompressed);
+    });
 }
 
 // ============================================================================
 // Archive Extraction
 // ============================================================================
 
-bool extractArchive(const QString& archivePath, const QString& outputDirectoryPath, Format format,
-                    ProgressCallback progress, qint64 maxDecompressedBytes)
+/// extractArchive(), and extractArchiveFiltered() with its filter
+static Outcome extractEntries(const QString& archivePath, const QString& outputDirectoryPath, Format format,
+                              const EntryFilter& filter, const ProgressCallback& progress, qint64 maxDecompressedBytes)
 {
-    if (!validateArchiveInput(archivePath, format)) {
-        return false;
-    }
-
-    qCDebug(QGCCompressionLog) << "Extracting" << formatName(format) << "archive" << archivePath << "to"
-                               << outputDirectoryPath;
-
-    const bool success =
-        QGClibarchive::extractAnyArchive(archivePath, outputDirectoryPath, progress, maxDecompressedBytes);
-    captureFormatInfo();
-    if (!success) {
-        setError(Error::IoError, QStringLiteral("Failed to extract archive: ") + archivePath);
-    }
-    return success;
+    const QString what = QStringLiteral("Failed to extract archive: ") + archivePath;
+    return archiveOperation(archivePath, format, what, [&](auto& reader) {
+        qCDebug(QGCCompressionLog) << "Extracting" << formatName(format) << "archive" << archivePath << "to"
+                                   << outputDirectoryPath;
+        return QGClibarchive::extractAnyArchive(reader, archivePath, outputDirectoryPath, filter, progress,
+                                                maxDecompressedBytes);
+    });
 }
 
-bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirectoryPath, Format format,
-                          ProgressCallback progress, qint64 maxDecompressedBytes)
+Outcome extractArchive(const QString& archivePath, const QString& outputDirectoryPath, Format format,
+                       ProgressCallback progress, qint64 maxDecompressedBytes)
 {
-    if (!validateArchiveInput(archivePath, format)) {
-        return false;
-    }
-
-    qCDebug(QGCCompressionLog) << "Atomically extracting" << formatName(format) << "archive" << archivePath
-                               << "to" << outputDirectoryPath;
-
-    const bool success =
-        QGClibarchive::extractArchiveAtomic(archivePath, outputDirectoryPath, progress, maxDecompressedBytes);
-    captureFormatInfo();
-    if (!success) {
-        setError(Error::IoError, QStringLiteral("Failed to atomically extract archive: ") + archivePath);
-    }
-    return success;
+    return extractEntries(archivePath, outputDirectoryPath, format, {}, progress, maxDecompressedBytes);
 }
 
-bool extractArchiveFiltered(const QString& archivePath, const QString& outputDirectoryPath, EntryFilter filter,
-                            ProgressCallback progress, qint64 maxDecompressedBytes)
+Outcome extractArchiveAtomic(const QString& archivePath, const QString& outputDirectoryPath, Format format,
+                             ProgressCallback progress, qint64 maxDecompressedBytes)
+{
+    const QString what = QStringLiteral("Failed to atomically extract archive: ") + archivePath;
+    return archiveOperation(archivePath, format, what, [&](auto& reader) {
+        qCDebug(QGCCompressionLog) << "Atomically extracting" << formatName(format) << "archive" << archivePath << "to"
+                                   << outputDirectoryPath;
+        return QGClibarchive::extractArchiveAtomic(reader, archivePath, outputDirectoryPath, progress,
+                                                   maxDecompressedBytes);
+    });
+}
+
+Outcome extractArchiveFiltered(const QString& archivePath, const QString& outputDirectoryPath, EntryFilter filter,
+                               ProgressCallback progress, qint64 maxDecompressedBytes)
 {
     if (!filter) {
-        setError(Error::InternalError, QStringLiteral("No filter callback provided"));
-        return false;
+        return {.error = Error::InternalError, .message = QStringLiteral("No filter callback provided")};
     }
-    Format format = Format::Auto;
-    if (!validateArchiveInput(archivePath, format)) {
-        return false;
-    }
-
-    qCDebug(QGCCompressionLog) << "Extracting archive with filter:" << archivePath;
-
-    const bool success =
-        QGClibarchive::extractWithFilter(archivePath, outputDirectoryPath, filter, progress, maxDecompressedBytes);
-    captureFormatInfo();
-    if (!success) {
-        setError(Error::IoError, QStringLiteral("Failed to extract archive: ") + archivePath);
-    }
-    return success;
+    return extractEntries(archivePath, outputDirectoryPath, Format::Auto, filter, progress, maxDecompressedBytes);
 }
 
-QStringList listArchive(const QString& archivePath, Format format)
+Outcome listArchive(const QString& archivePath, QStringList& entries, Format format)
 {
-    if (!validateArchiveInput(archivePath, format)) {
-        return {};
+    QList<ArchiveEntry> detailed;
+    const Outcome outcome = listArchiveDetailed(archivePath, detailed, format);
+    entries.clear();
+    for (const ArchiveEntry& entry : std::as_const(detailed)) {
+        entries.append(entry.name);
     }
-    QStringList entries = QGClibarchive::listArchiveEntries(archivePath);
-
-    // Natural sort: "file2.txt" before "file10.txt"
-    // Use English locale for consistent cross-platform numeric collation
-    QCollator collator{QLocale{QLocale::English}};
-    collator.setNumericMode(true);
-    collator.setCaseSensitivity(Qt::CaseInsensitive);
-    std::sort(entries.begin(), entries.end(), collator);
-
-    return entries;
+    return outcome;
 }
 
-QList<ArchiveEntry> listArchiveDetailed(const QString& archivePath, Format format)
+Outcome listArchiveDetailed(const QString& archivePath, QList<ArchiveEntry>& entries, Format format)
 {
-    if (!validateArchiveInput(archivePath, format)) {
-        return {};
-    }
-    QList<ArchiveEntry> entries = QGClibarchive::listArchiveEntriesDetailed(archivePath);
+    entries.clear();
+    const Outcome outcome = archiveOperation(archivePath, format, unreadableArchive(archivePath), [&](auto& reader) {
+        return QGClibarchive::listArchiveEntriesDetailed(reader, archivePath, entries);
+    });
 
     // Natural sort by name: "file2.txt" before "file10.txt"
     // Use English locale for consistent cross-platform numeric collation
@@ -744,162 +618,139 @@ QList<ArchiveEntry> listArchiveDetailed(const QString& archivePath, Format forma
         return collator.compare(a.name, b.name) < 0;
     });
 
-    return entries;
+    return outcome;
 }
 
-ArchiveStats getArchiveStats(const QString& archivePath, Format format)
+Outcome getArchiveStats(const QString& archivePath, ArchiveStats& stats, Format format)
 {
-    if (!validateArchiveInput(archivePath, format)) {
-        return {};
-    }
-    return QGClibarchive::getArchiveStats(archivePath);
+    stats = {};
+    return archiveOperation(archivePath, format, unreadableArchive(archivePath),
+                            [&](auto& reader) { return QGClibarchive::getArchiveStats(reader, archivePath, stats); });
 }
 
-bool validateArchive(const QString& archivePath, Format format)
+Outcome validateArchive(const QString& archivePath, Format format)
 {
-    if (!validateArchiveInput(archivePath, format)) {
-        return false;
-    }
-    qCDebug(QGCCompressionLog) << "Validating archive:" << archivePath;
-    return QGClibarchive::validateArchive(archivePath);
+    return archiveOperation(archivePath, format, unreadableArchive(archivePath), [&](auto& reader) {
+        qCDebug(QGCCompressionLog) << "Validating archive:" << archivePath;
+        return QGClibarchive::validateArchive(reader, archivePath);
+    });
 }
 
-bool fileExists(const QString& archivePath, const QString& fileName, Format format)
+Outcome fileExists(const QString& archivePath, const QString& fileName, Format format)
 {
-    if (fileName.isEmpty()) {
-        qCWarning(QGCCompressionLog) << "File name cannot be empty";
-        return false;
+    if (Outcome refused = validateEntryName(fileName); !refused) {
+        return refused;
     }
-    if (!validateArchiveInput(archivePath, format)) {
-        return false;
+    Outcome outcome = archiveOperation(archivePath, format, unreadableArchive(archivePath), [&](auto& reader) {
+        return QGClibarchive::findEntryInArchive(reader, archivePath, fileName);
+    });
+    if (outcome.error == Error::FileNotInArchive) {
+        // The archive was read to its end: it is not what is wrong
+        outcome.message = QStringLiteral("File not found in archive: ") + fileName;
     }
-    return QGClibarchive::fileExistsInArchive(archivePath, fileName);
+    return outcome;
 }
 
-bool extractFile(const QString& archivePath, const QString& fileName, const QString& outputPath, Format format)
+Outcome extractFile(const QString& archivePath, const QString& fileName, const QString& outputPath, Format format)
 {
-    if (fileName.isEmpty()) {
-        qCWarning(QGCCompressionLog) << "File name cannot be empty";
-        return false;
+    if (Outcome refused = validateEntryName(fileName); !refused) {
+        return refused;
     }
-    if (!validateArchiveInput(archivePath, format)) {
-        return false;
-    }
-
-    const QString actualOutput = outputPath.isEmpty() ? QFileInfo(fileName).fileName() : outputPath;
-    qCDebug(QGCCompressionLog) << "Extracting" << fileName << "from" << archivePath << "to" << actualOutput;
-    return QGClibarchive::extractSingleFile(archivePath, fileName, actualOutput);
+    const QString what = QStringLiteral("Could not extract %1 from %2").arg(fileName, archivePath);
+    return selectedEntriesOperation(archivePath, format, what, [&](auto& reader) {
+        const QString actualOutput = outputPath.isEmpty() ? QFileInfo(fileName).fileName() : outputPath;
+        qCDebug(QGCCompressionLog) << "Extracting" << fileName << "from" << archivePath << "to" << actualOutput;
+        return QGClibarchive::extractSingleFile(reader, archivePath, fileName, actualOutput);
+    });
 }
 
-QByteArray extractFileData(const QString& archivePath, const QString& fileName, Format format)
+Outcome extractFileData(const QString& archivePath, const QString& fileName, QByteArray& data, Format format,
+                        qint64 maxDecompressedBytes)
 {
-    if (fileName.isEmpty()) {
-        qCWarning(QGCCompressionLog) << "File name cannot be empty";
-        return {};
+    data.clear();
+    if (Outcome refused = validateEntryName(fileName); !refused) {
+        return refused;
     }
-    if (!validateArchiveInput(archivePath, format)) {
-        return {};
-    }
-    qCDebug(QGCCompressionLog) << "Extracting" << fileName << "from" << archivePath << "to memory";
-    return QGClibarchive::extractFileToMemory(archivePath, fileName);
+    const QString what = QStringLiteral("Could not extract %1 from %2").arg(fileName, archivePath);
+    return archiveOperation(archivePath, format, what, [&](auto& reader) {
+        qCDebug(QGCCompressionLog) << "Extracting" << fileName << "from" << archivePath << "to memory";
+        return QGClibarchive::extractFileToMemory(reader, archivePath, fileName, maxDecompressedBytes, data);
+    });
 }
 
-bool extractFiles(const QString& archivePath, const QStringList& fileNames, const QString& outputDirectoryPath,
-                  Format format)
+Outcome extractFiles(const QString& archivePath, const QStringList& fileNames, const QString& outputDirectoryPath,
+                     Format format)
 {
     if (fileNames.isEmpty()) {
-        return true;
+        return {};
     }
-    if (!validateArchiveInput(archivePath, format)) {
-        return false;
-    }
-    qCDebug(QGCCompressionLog) << "Extracting" << fileNames.size() << "files from" << archivePath;
-    return QGClibarchive::extractMultipleFiles(archivePath, fileNames, outputDirectoryPath);
+    const QString what = QStringLiteral("Could not extract all requested files from ") + archivePath;
+    return selectedEntriesOperation(archivePath, format, what, [&](auto& reader) {
+        qCDebug(QGCCompressionLog) << "Extracting" << fileNames.size() << "files from" << archivePath;
+        return QGClibarchive::extractMultipleFiles(reader, archivePath, fileNames, outputDirectoryPath);
+    });
 }
 
-bool extractByPattern(const QString& archivePath, const QStringList& patterns, const QString& outputDirectoryPath,
-                      QStringList* extractedFiles, Format format)
+Outcome extractByPattern(const QString& archivePath, const QStringList& patterns, const QString& outputDirectoryPath,
+                         QStringList* extractedFiles, Format format)
 {
     if (patterns.isEmpty()) {
-        setError(Error::FileNotInArchive, QStringLiteral("No patterns provided"));
-        return false;
+        return {.error = Error::FileNotInArchive, .message = QStringLiteral("No patterns provided")};
     }
-    if (!validateArchiveInput(archivePath, format)) {
-        return false;
-    }
-    qCDebug(QGCCompressionLog) << "Extracting files matching patterns" << patterns << "from" << archivePath;
-    const bool success = QGClibarchive::extractByPattern(archivePath, patterns, outputDirectoryPath, extractedFiles);
-    if (!success) {
-        setError(Error::FileNotInArchive, QStringLiteral("No files matched patterns"));
-    }
-    return success;
+    const QString what = QStringLiteral("Could not extract files that match the patterns from ") + archivePath;
+    return selectedEntriesOperation(archivePath, format, what, [&](auto& reader) {
+        qCDebug(QGCCompressionLog) << "Extracting files matching patterns" << patterns << "from" << archivePath;
+        return QGClibarchive::extractByPattern(reader, archivePath, patterns, outputDirectoryPath, extractedFiles);
+    });
 }
 
 // ============================================================================
 // QIODevice-based Operations
 // ============================================================================
 
-bool decompressFromDevice(QIODevice* device, const QString& outputPath, ProgressCallback progress,
+Outcome decompressFromDevice(QIODevice* device, const QString& outputPath, ProgressCallback progress,
+                             qint64 maxDecompressedBytes)
+{
+    return deviceOperation(device, QStringLiteral("Failed to decompress from device"), [&](auto& reader) {
+        qCDebug(QGCCompressionLog) << "Decompressing from device to" << outputPath;
+        return QGClibarchive::decompressSingleFile(reader, device, outputPath, progress, maxDecompressedBytes);
+    });
+}
+
+Outcome decompressFromDevice(QIODevice* device, QByteArray& data, qint64 maxDecompressedBytes)
+{
+    data.clear();
+    return deviceOperation(device, QStringLiteral("Failed to decompress from device"), [&](auto& reader) {
+        qCDebug(QGCCompressionLog) << "Decompressing from device to memory";
+        return QGClibarchive::decompressToMemory(reader, device, maxDecompressedBytes, data);
+    });
+}
+
+Outcome extractFromDevice(QIODevice* device, const QString& outputDirectoryPath, ProgressCallback progress,
                           qint64 maxDecompressedBytes)
 {
-    if (!validateDeviceInput(device)) {
-        return false;
-    }
-    qCDebug(QGCCompressionLog) << "Decompressing from device to" << outputPath;
-    const bool success = QGClibarchive::decompressFromDevice(device, outputPath, progress, maxDecompressedBytes);
-    captureFormatInfo();
-    if (!success) {
-        setError(Error::IoError, QStringLiteral("Failed to decompress from device"));
-    }
-    return success;
+    return deviceOperation(device, QStringLiteral("Failed to extract archive from device"), [&](auto& reader) {
+        qCDebug(QGCCompressionLog) << "Extracting archive from device to" << outputDirectoryPath;
+        return QGClibarchive::extractAnyArchive(reader, device, outputDirectoryPath, {}, progress,
+                                                maxDecompressedBytes);
+    });
 }
 
-QByteArray decompressFromDevice(QIODevice* device, qint64 maxDecompressedBytes)
+Outcome extractFileDataFromDevice(QIODevice* device, const QString& fileName, QByteArray& data,
+                                  qint64 maxDecompressedBytes)
 {
-    if (!validateDeviceInput(device)) {
-        return {};
+    data.clear();
+    Outcome validated = validateDeviceInput(device);
+    if (validated) {
+        validated = validateEntryName(fileName);
     }
-    qCDebug(QGCCompressionLog) << "Decompressing from device to memory";
-    QByteArray result = QGClibarchive::decompressDataFromDevice(device, maxDecompressedBytes);
-    captureFormatInfo();
-    if (result.isEmpty()) {
-        setError(Error::IoError, QStringLiteral("Failed to decompress from device"));
+    if (!validated) {
+        return validated;
     }
-    return result;
-}
-
-bool extractFromDevice(QIODevice* device, const QString& outputDirectoryPath, ProgressCallback progress,
-                       qint64 maxDecompressedBytes)
-{
-    if (!validateDeviceInput(device)) {
-        return false;
-    }
-    qCDebug(QGCCompressionLog) << "Extracting archive from device to" << outputDirectoryPath;
-    const bool success = QGClibarchive::extractFromDevice(device, outputDirectoryPath, progress, maxDecompressedBytes);
-    captureFormatInfo();
-    if (!success) {
-        setError(Error::IoError, QStringLiteral("Failed to extract archive from device"));
-    }
-    return success;
-}
-
-QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName)
-{
-    if (!validateDeviceInput(device)) {
-        return {};
-    }
-    if (fileName.isEmpty()) {
-        qCWarning(QGCCompressionLog) << "File name cannot be empty";
-        setError(Error::FileNotInArchive, QStringLiteral("File name cannot be empty"));
-        return {};
-    }
-    qCDebug(QGCCompressionLog) << "Extracting" << fileName << "from device to memory";
-    QByteArray result = QGClibarchive::extractFileDataFromDevice(device, fileName);
-    captureFormatInfo();
-    if (result.isEmpty()) {
-        setError(Error::FileNotInArchive, QStringLiteral("File not found: ") + fileName);
-    }
-    return result;
+    return runOperation(QStringLiteral("Could not extract ") + fileName, [&](auto& reader) {
+        qCDebug(QGCCompressionLog) << "Extracting" << fileName << "from device to memory";
+        return QGClibarchive::extractFileToMemory(reader, device, fileName, maxDecompressedBytes, data);
+    });
 }
 
 // ============================================================================
@@ -973,7 +824,7 @@ QByteArray uncompressData(const QByteArray &data, qint64 maxDecompressedSize)
     if (header == kHeaderCompressed) {
         if (maxDecompressedSize > 0 && payload.size() >= 4) {
             const quint32 declaredSize = qFromBigEndian<quint32>(payload.constData());
-            if (declaredSize > static_cast<quint32>(maxDecompressedSize)) {
+            if (static_cast<qint64>(declaredSize) > maxDecompressedSize) {
                 qCWarning(QGCCompressionLog) << "Rejected decompression: declared size"
                                              << declaredSize << "exceeds limit" << maxDecompressedSize;
                 return {};
@@ -1001,7 +852,7 @@ int lastCompressionRatio()
     return s_lastCompressionRatio;
 }
 
-QByteArray readFile(const QString &filePath, QString *errorString, qint64 maxBytes)
+QByteArray readFile(const QString& filePath, QString* errorString, qint64 maxBytes, qint64 maxDecompressedBytes)
 {
     if (!isCompressedFile(filePath)) {
         return QGCFileHelper::readFile(filePath, errorString, maxBytes);
@@ -1015,7 +866,35 @@ QByteArray readFile(const QString &filePath, QString *errorString, qint64 maxByt
         return {};
     }
 
-    const QByteArray data = (maxBytes > 0) ? decompressor.read(maxBytes) : decompressor.readAll();
+    // Read in chunks so that a stream expanding beyond the limit is given up on before it is all in memory
+    QByteArray data;
+    QByteArray chunk(static_cast<qsizetype>(QGCFileHelper::kBufferSizeMax), Qt::Uninitialized);
+    while (maxBytes <= 0 || data.size() < maxBytes) {
+        qint64 chunkSize = chunk.size();
+        if (maxBytes > 0) {
+            chunkSize = qMin(chunkSize, maxBytes - data.size());
+        }
+        // The count tells a damaged stream (-1) from one that has ended (0)
+        const qint64 bytesRead = decompressor.read(chunk.data(), chunkSize);
+        if (bytesRead < 0) {
+            if (errorString != nullptr) {
+                *errorString = QObject::tr("Failed to decompress %1: %2").arg(filePath, decompressor.errorString());
+            }
+            return {};
+        }
+        if (bytesRead == 0) {
+            break;
+        }
+        if (maxDecompressedBytes > 0 && (data.size() + bytesRead) > maxDecompressedBytes) {
+            if (errorString != nullptr) {
+                *errorString = QObject::tr("Decompressed size of %1 exceeds the limit of %2 bytes")
+                                   .arg(filePath)
+                                   .arg(maxDecompressedBytes);
+            }
+            return {};
+        }
+        data.append(chunk.constData(), static_cast<qsizetype>(bytesRead));
+    }
     decompressor.close();
     return data;
 }
@@ -1038,18 +917,19 @@ QString computeFileHash(const QString &filePath, QCryptographicHash::Algorithm a
     }
 
     QCryptographicHash hash(algorithm);
-    constexpr qint64 chunkSize = 65536;
+    QByteArray buffer(65536, Qt::Uninitialized);
     while (true) {
-        const QByteArray buffer = decompressor.read(chunkSize);
-        if (buffer.isEmpty()) {
-            if (decompressor.atEnd()) {
-                break;
-            }
+        // atEnd() is also true after a read error: the count is what tells one (-1) from the end (0)
+        const qint64 bytesRead = decompressor.read(buffer.data(), buffer.size());
+        if (bytesRead < 0) {
             qCWarning(QGCCompressionLog) << "computeFileHash: read error";
             decompressor.close();
             return {};
         }
-        hash.addData(buffer);
+        if (bytesRead == 0) {
+            break;
+        }
+        hash.addData(QByteArrayView(buffer.constData(), static_cast<qsizetype>(bytesRead)));
     }
 
     decompressor.close();
@@ -1065,13 +945,12 @@ bool looksLikeCompressedData(const QByteArray &data)
     return isCompressionFormat(detectFormatFromData(data));
 }
 
-QJsonDocument parseCompressedJson(const QByteArray &data, QJsonParseError *error)
+QJsonDocument parseCompressedJson(const QByteArray& data, QJsonParseError* error, qint64 maxDecompressedBytes)
 {
     QByteArray jsonData = data;
 
     if (looksLikeCompressedData(data)) {
-        jsonData = decompressData(data);
-        if (jsonData.isEmpty()) {
+        if (!decompressData(data, jsonData, Format::Auto, maxDecompressedBytes) || jsonData.isEmpty()) {
             if (error != nullptr) {
                 error->error = QJsonParseError::IllegalValue;
                 error->offset = 0;

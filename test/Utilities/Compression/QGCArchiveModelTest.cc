@@ -1,11 +1,14 @@
 #include "QGCArchiveModelTest.h"
 
 #include <QtCore/QDir>
+#include <QtCore/QLocale>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QAbstractItemModelTester>
 #include <QtTest/QSignalSpy>
 
+#include "FileFixtures.h"
 #include "QGCArchiveModel.h"
 #include "UnitTest.h"
 
@@ -220,22 +223,21 @@ void QGCArchiveModelTest::_testFilterModeDirectoriesOnly()
 // ============================================================================
 void QGCArchiveModelTest::_testFormatSize()
 {
-    // Bytes
-    QCOMPARE(QGCArchiveModel::formatSize(0), QStringLiteral("0 B"));
-    QCOMPARE(QGCArchiveModel::formatSize(100), QStringLiteral("100 B"));
-    QCOMPARE(QGCArchiveModel::formatSize(1023), QStringLiteral("1023 B"));
-    // Kilobytes
-    QString kb = QGCArchiveModel::formatSize(1024);
-    QVERIFY(kb.contains("KB"));
-    QString kb2 = QGCArchiveModel::formatSize(1536);  // 1.5 KB
-    QVERIFY(kb2.contains("KB"));
-    // Megabytes
-    QString mb = QGCArchiveModel::formatSize(1024 * 1024);
-    QVERIFY(mb.contains("MB"));
-    // Gigabytes
-    QString gb = QGCArchiveModel::formatSize(1024LL * 1024 * 1024);
-    QVERIFY(gb.contains("GB"));
-    // Negative (edge case)
+    const QLocale previous;
+    QLocale::setDefault(QLocale(QStringLiteral("en_US")));
+    const auto restoreLocale = qScopeGuard([&previous]() { QLocale::setDefault(previous); });
+
+    // The text is that of QGC::bigSizeToString()
+    QCOMPARE(QGCArchiveModel::formatSize(0), QStringLiteral("0B"));
+    QCOMPARE(QGCArchiveModel::formatSize(100), QStringLiteral("100B"));
+    QCOMPARE(QGCArchiveModel::formatSize(1023), QStringLiteral("1,023B"));
+    QCOMPARE(QGCArchiveModel::formatSize(1024), QStringLiteral("1.0KB"));
+    QCOMPARE(QGCArchiveModel::formatSize(1536), QStringLiteral("1.5KB"));
+    // The unit follows the rounded number
+    QCOMPARE(QGCArchiveModel::formatSize(1024 * 1024 - 1), QStringLiteral("1.0MB"));
+    QCOMPARE(QGCArchiveModel::formatSize(1024 * 1024), QStringLiteral("1.0MB"));
+    QCOMPARE(QGCArchiveModel::formatSize(1024LL * 1024 * 1024), QStringLiteral("1.0GB"));
+    // A size that is not known has no number to show
     QCOMPARE(QGCArchiveModel::formatSize(-1), QStringLiteral("--"));
 }
 
@@ -289,10 +291,7 @@ void QGCArchiveModelTest::_testInvalidArchive()
     QTemporaryDir tempDir;
     // Create a corrupt archive
     const QString corruptPath = tempDir.path() + "/corrupt.zip";
-    QFile corrupt(corruptPath);
-    QVERIFY(corrupt.open(QIODevice::WriteOnly));
-    corrupt.write("This is not a valid ZIP file");
-    corrupt.close();
+    QVERIFY(TestFixtures::writeFile(corruptPath, "This is not a valid ZIP file"));
     QGCArchiveModel model;
     QSignalSpy errorSpy(&model, &QGCArchiveModel::errorStringChanged);
     QSignalSpy loadingSpy(&model, &QGCArchiveModel::loadingComplete);
@@ -303,7 +302,7 @@ void QGCArchiveModelTest::_testInvalidArchive()
     model.setArchivePath(corruptPath);
     QCOMPARE(loadingSpy.count(), 1);
     QCOMPARE(loadingSpy.first().first().toBool(), false);
-    QVERIFY(!model.errorString().isEmpty());
+    QCOMPARE(model.errorString(), QStringLiteral("Invalid or corrupt archive: ") + corruptPath);
     QCOMPARE(model.count(), 0);
 }
 
@@ -311,14 +310,13 @@ void QGCArchiveModelTest::_testNonExistentArchive()
 {
     QGCArchiveModel model;
     QSignalSpy loadingSpy(&model, &QGCArchiveModel::loadingComplete);
-    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
+    // The archive is read once: the listing tells why it failed
     expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
     model.setArchivePath("/nonexistent/path/archive.zip");
     verifyExpectedLogMessage();
-    verifyExpectedLogMessage();
     QCOMPARE(loadingSpy.count(), 1);
     QCOMPARE(loadingSpy.first().first().toBool(), false);
-    QVERIFY(!model.errorString().isEmpty());
+    QCOMPARE(model.errorString(), QStringLiteral("File does not exist: /nonexistent/path/archive.zip"));
     QCOMPARE(model.count(), 0);
 }
 

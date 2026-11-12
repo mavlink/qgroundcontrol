@@ -193,6 +193,10 @@ bool isValidHeader(const char *data, qint64 size)
 
 qint64 findNextHeader(const char *data, qint64 size, qint64 offset)
 {
+    if (offset < 0) {
+        return -1;
+    }
+
     while (offset + 2 < size) {
         if (static_cast<uint8_t>(data[offset]) == kHeaderByte1 &&
             static_cast<uint8_t>(data[offset + 1]) == kHeaderByte2) {
@@ -317,6 +321,10 @@ int iterateMessages(const char *data, qint64 size,
         }
 
         const MessageFormat &fmt = formats[msgType];
+        // parseFmtMessages() drops a length that does not cover the header; such a format has no messages
+        if (fmt.length < 3) {
+            continue;
+        }
         const int payloadSize = fmt.length - 3;
 
         if (pos + payloadSize > size) {

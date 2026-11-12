@@ -17,10 +17,12 @@ private slots:
     void _limitAngleToPMPIfZero_test();
     void _limitAngleToPMPIfBoundary_test();
     void _limitAngleToPMPIfWrap_test();
+    void _limitAngleToPMPIfLargeAngle_test_data();
     void _limitAngleToPMPIfLargeAngle_test();
     void _limitAngleToPMPIdZero_test();
     void _limitAngleToPMPIdBoundary_test();
     void _limitAngleToPMPIdWrap_test();
+    void _limitAngleToPMPIdLargeAngle_test_data();
     void _limitAngleToPMPIdLargeAngle_test();
     void _crc32Empty_test();
     void _crc32KnownVector_test();

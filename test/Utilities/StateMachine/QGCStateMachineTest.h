@@ -38,6 +38,8 @@ private slots:
     void _testProgressTrackingWithSubProgress();
     void _testStateHistoryLimit();
     void _testRuntimeDiagnosticsHelpers();
+    void _testEnvironmentDiagnostics_data();
+    void _testEnvironmentDiagnostics();
 
     // Composite state patterns
     void _testTimedActionState();

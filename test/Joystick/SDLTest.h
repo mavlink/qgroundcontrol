@@ -43,6 +43,7 @@ private slots:
 
     // Event control tests
     void _eventControlTest();
+    void _pumpEventsEmptiesEventQueueTest();
 
     // Thread safety tests
     void _threadSafetyTest();
@@ -64,4 +65,5 @@ private slots:
 
     // Mapping management tests
     void _mappingManagementTest();
+    void _mappingPlatformFilterTest();
 };

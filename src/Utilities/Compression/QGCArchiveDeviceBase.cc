@@ -37,12 +37,25 @@ QGCArchiveDeviceBase::~QGCArchiveDeviceBase()
 // QIODevice Interface
 // ============================================================================
 
+bool QGCArchiveDeviceBase::open(OpenMode mode)
+{
+    _errorString.clear();
+
+    if (mode != ReadOnly) {
+        setError(QLatin1StringView(metaObject()->className()) + QStringLiteral(" only supports ReadOnly mode"));
+        return false;
+    }
+
+    if (!initArchive() || !prepareForReading()) {
+        return false;
+    }
+
+    return QIODevice::open(mode);
+}
+
 void QGCArchiveDeviceBase::close()
 {
-    if (_archive) {
-        archive_read_free(_archive);
-        _archive = nullptr;
-    }
+    _reader.reset();
 
     resetState();
 
@@ -59,12 +72,23 @@ qint64 QGCArchiveDeviceBase::bytesAvailable() const
     return _buffer.size() + QIODevice::bytesAvailable();
 }
 
+bool QGCArchiveDeviceBase::atEnd() const
+{
+    if (!isOpen()) {
+        return true;
+    }
+    if (bytesAvailable() > 0) {
+        return false;
+    }
+
+    // QIODevice goes by what is buffered, which says nothing about what is still compressed
+    const_cast<QGCArchiveDeviceBase*>(this)->fillBuffer();
+    return _buffer.isEmpty();
+}
+
 QString QGCArchiveDeviceBase::errorString() const
 {
-    if (!_errorString.isEmpty()) {
-        return _errorString;
-    }
-    return QIODevice::errorString();
+    return _errorString;
 }
 
 // ============================================================================
@@ -113,81 +137,47 @@ qint64 QGCArchiveDeviceBase::writeData(const char *, qint64)
 bool QGCArchiveDeviceBase::initSourceFromPath()
 {
     if (_filePath.isEmpty()) {
-        _errorString = QStringLiteral("File path is empty");
+        setError(QStringLiteral("File path is empty"));
         return false;
     }
 
-    const bool isResource = QGCFileHelper::isQtResource(_filePath);
-
-    if (isResource) {
-        // Load Qt resource into memory
-        QFile resourceFile(_filePath);
-        if (!resourceFile.open(QIODevice::ReadOnly)) {
-            _errorString = QStringLiteral("Failed to open resource: ") + _filePath;
-            return false;
-        }
-        _resourceData = resourceFile.readAll();
-        resourceFile.close();
-
-        // Create QBuffer as source
-        auto buffer = std::make_unique<QBuffer>();
-        buffer->setData(_resourceData);
-        if (!buffer->open(QIODevice::ReadOnly)) {
-            _errorString = QStringLiteral("Failed to open buffer for resource");
-            return false;
-        }
-        _ownedSource = std::move(buffer);
-        _sourceDevice = _ownedSource.get();
-    } else {
-        auto file = std::make_unique<QFile>(_filePath);
-        if (!file->open(QIODevice::ReadOnly)) {
-            _errorString = QStringLiteral("Failed to open file: ") + _filePath;
-            return false;
-        }
-        _ownedSource = std::move(file);
-        _sourceDevice = _ownedSource.get();
+    // QFile reads a Qt resource as it reads a file
+    auto file = std::make_unique<QFile>(_filePath);
+    if (!file->open(QIODevice::ReadOnly)) {
+        const bool isResource = QGCFileHelper::isQtResource(_filePath);
+        setError((isResource ? QStringLiteral("Failed to open resource: ") : QStringLiteral("Failed to open file: ")) +
+                 _filePath);
+        return false;
     }
+    _ownedSource = std::move(file);
+    _sourceDevice = _ownedSource.get();
 
     return true;
 }
 
 void QGCArchiveDeviceBase::configureArchiveFormats(bool allFormats)
 {
-    if (!_archive) {
-        return;
-    }
-
-    archive_read_support_filter_all(_archive);
-
-    if (allFormats) {
-        archive_read_support_format_all(_archive);
-    } else {
-        archive_read_support_format_raw(_archive);
-    }
+    _allFormats = allFormats;
 }
 
 bool QGCArchiveDeviceBase::openArchive()
 {
-    if (!_sourceDevice || !_sourceDevice->isOpen() || !_sourceDevice->isReadable()) {
-        _errorString = QStringLiteral("Source device is not ready");
+    if (!_filePath.isEmpty() && !initSourceFromPath()) {
         return false;
     }
 
-    // Enable seek callback for random-access devices (improves ZIP performance)
-    if (!_sourceDevice->isSequential()) {
-        archive_read_set_seek_callback(_archive, QGClibarchive::deviceSeekCallback);
+    if (!_sourceDevice || !_sourceDevice->isOpen() || !_sourceDevice->isReadable()) {
+        setError(QStringLiteral("Source device is not ready"));
+        return false;
     }
 
-    const int result = archive_read_open2(_archive, _sourceDevice,
-                                          nullptr,  // open callback
-                                          QGClibarchive::deviceReadCallback,
-                                          QGClibarchive::deviceSkipCallback,
-                                          QGClibarchive::deviceCloseCallback);
-
-    if (result != ARCHIVE_OK) {
-        _errorString = QString::fromUtf8(archive_error_string(_archive));
-        archive_read_free(_archive);
-        _archive = nullptr;
+    _reader = std::make_unique<QGClibarchive::ArchiveReader>();
+    const QGClibarchive::ReaderMode mode =
+        _allFormats ? QGClibarchive::ReaderMode::AllFormats : QGClibarchive::ReaderMode::RawFormat;
+    QString reason;
+    if (!_reader->open(_sourceDevice, mode, reason)) {
+        setError(reason);
+        _reader.reset();
         return false;
     }
 
@@ -196,16 +186,18 @@ bool QGCArchiveDeviceBase::openArchive()
 
 bool QGCArchiveDeviceBase::fillBuffer()
 {
-    if (_eof || !_archive) {
+    if (_eof || !_reader) {
         return false;
     }
 
     char readBuffer[QGCFileHelper::kBufferSizeMax];
-    const la_ssize_t bytesRead = archive_read_data(_archive, readBuffer, sizeof(readBuffer));
+    const la_ssize_t bytesRead = archive_read_data(_reader->handle(), readBuffer, sizeof(readBuffer));
 
     if (bytesRead < 0) {
-        _errorString = QString::fromUtf8(archive_error_string(_archive));
+        setError(QString::fromUtf8(archive_error_string(_reader->handle())));
         qCWarning(QGCArchiveDeviceBaseLog) << "Read error:" << _errorString;
+        // libarchive has no more data to give, and would report the error again for every read
+        _reader.reset();
         return false;
     }
 
@@ -220,15 +212,19 @@ bool QGCArchiveDeviceBase::fillBuffer()
 
 void QGCArchiveDeviceBase::captureFormatInfo()
 {
-    if (!_archive) {
+    if (!_reader) {
         return;
     }
 
-    const char *fmt = archive_format_name(_archive);
-    _formatName = fmt ? QString::fromUtf8(fmt) : QString();
+    _formatName = _reader->formatName();
+    _filterName = _reader->filterName();
+}
 
-    const char *flt = archive_filter_name(_archive, 0);
-    _filterName = flt ? QString::fromUtf8(flt) : QStringLiteral("none");
+void QGCArchiveDeviceBase::setError(const QString& reason)
+{
+    // libarchive has no text for some failures, and an empty one would say that nothing failed
+    _errorString = reason.isEmpty() ? QStringLiteral("Unknown error") : reason;
+    setErrorString(_errorString);
 }
 
 void QGCArchiveDeviceBase::resetState()

@@ -13,3 +13,15 @@ target_sources(
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_qgc_test(AudioOutputTest LABELS Unit Utilities)
+
+# PiperTtsEngine is only built on Linux
+if(LINUX)
+    target_sources(
+        QGCUnitTests
+        PRIVATE
+            PiperTtsEngineTest.cc
+            PiperTtsEngineTest.h
+    )
+
+    add_qgc_test(PiperTtsEngineTest LABELS Unit Utilities)
+endif()

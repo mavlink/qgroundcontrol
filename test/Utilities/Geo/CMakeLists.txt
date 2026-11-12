@@ -35,7 +35,11 @@ qt_add_resources(
         polygon.prj
         polygon.shp
         polygon.shx
+        polyline.dbf
         polyline.kml
+        polyline.prj
+        polyline.shp
+        polyline.shx
         polygon.kml
 )
 

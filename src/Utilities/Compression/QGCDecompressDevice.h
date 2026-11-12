@@ -9,6 +9,8 @@
 ///
 /// Supports .gz, .xz, .zst, .bz2, .lz4 compressed data
 /// Read-only, sequential access only
+/// A truncated or corrupt stream reads as far as it can be decompressed: errorString() tells of it
+/// Input that is not compressed is read as it is, which filterName() tells with "none"
 ///
 /// Example usage:
 /// @code
@@ -35,9 +37,6 @@ public:
     explicit QGCDecompressDevice(const QString &filePath, QObject *parent = nullptr);
 
     ~QGCDecompressDevice() override = default;
-
-    // QIODevice interface
-    bool open(OpenMode mode) override;
 
 protected:
     bool initArchive() override;
