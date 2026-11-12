@@ -15,6 +15,9 @@ ColumnLayout {
     required property GPSCorrectionManager corrections
     /// The vehicles listed. Each is named by its ID once there are several.
     property QmlObjectListModel vehicles: QGroundControl.multiVehicleManager.vehicles
+    /// A vehicle whose RTK baseline and correction rate the view shows elsewhere, as the GPS indicator's drop-down
+    /// does in the active vehicle's GPS status. The list shows its fix alone.
+    property Vehicle rtkShownElsewhere: null
 
     readonly property int _vehicleCount: root.vehicles ? root.vehicles.count : 0
     readonly property bool _queued: root.corrections.vehicleBytesSubmitted > 0
@@ -51,6 +54,7 @@ ColumnLayout {
             readonly property Vehicle vehicle: entry.object as Vehicle
             readonly property VehicleGPSFactGroup gps: entry.vehicle ? entry.vehicle.gps : null
             readonly property bool reportsGps: !!entry.gps && entry.gps.telemetryAvailable
+            readonly property bool showsRtk: !!entry.gps && entry.vehicle !== root.rtkShownElsewhere
 
             Layout.fillWidth: true
             spacing: root.spacing
@@ -71,12 +75,12 @@ ColumnLayout {
 
             RtkLabel {
                 objectName: "correctionsVehicleBaseline"
-                fact: entry.gps ? entry.gps.rtkBaseline : null
+                fact: entry.showsRtk ? entry.gps.rtkBaseline : null
             }
 
             RtkLabel {
                 objectName: "correctionsVehicleCorrectionRate"
-                fact: entry.gps ? entry.gps.rtkRate : null
+                fact: entry.showsRtk ? entry.gps.rtkRate : null
             }
         }
     }

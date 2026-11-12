@@ -21,6 +21,8 @@ QGCGroupBox {
     property geoCoordinate gcsPosition: QGroundControl.positionManager.gcsPosition
     /// The vehicles whose fix is listed.
     property QmlObjectListModel vehicles: QGroundControl.multiVehicleManager.vehicles
+    /// CorrectionsVehicles::rtkShownElsewhere: a vehicle whose RTK baseline and correction rate are not repeated here.
+    property Vehicle rtkShownElsewhere: null
 
     readonly property gpsCorrectionStream _selected: root.corrections.selectedStream
     readonly property bool _active: root.corrections.state !== GPSCorrectionManager.Inactive
@@ -111,6 +113,7 @@ QGCGroupBox {
         objectName: "correctionsVehicles"
         corrections: root.corrections
         vehicles: root.vehicles
+        rtkShownElsewhere: root.rtkShownElsewhere
     }
 
     // Why no stream is routed: the message filter has an entry that is not a message ID, or takes none of the

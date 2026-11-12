@@ -187,6 +187,8 @@ ToolIndicatorPage {
                     Layout.minimumWidth: 0
                     showWhenInactive: false
                     showCoordinates: false
+                    // The active vehicle's RTK baseline and correction rate are rows of its GPS status above.
+                    rtkShownElsewhere: root._vehicleGps ? root.activeVehicle as Vehicle : null
                 }
 
                 NTRIPConnectionStatus {

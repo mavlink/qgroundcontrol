@@ -108,6 +108,14 @@ QStringList textsOutside(QQuickItem* box)
     return outside;
 }
 
+/// The items shown under @a root that are named @a name; a list's delegates can share a name.
+QList<QQuickItem*> shownItems(const QObject* root, const char* name)
+{
+    return TestFixtures::findItems(qobject_cast<QQuickItem*>(const_cast<QObject*>(root)), [name](QQuickItem* item) {
+        return item->isVisible() && item->objectName() == QLatin1String(name);
+    });
+}
+
 /// The number of lines the one label under @a box that shows @a text takes; 0 when none or several show it.
 int lineCount(QQuickItem* box, const QString& text)
 {
@@ -451,6 +459,49 @@ void GPSIndicatorTest::_receiverStaysInsideItsBox()
     // It wraps inside the box instead of running past it and taking the other rows' values along.
     const QStringList outside = textsOutside(box);
     QVERIFY2(outside.isEmpty(), qPrintable(outside.join(QStringLiteral("; "))));
+}
+
+void GPSIndicatorTest::_vehicleRtkValuesShownOnce()
+{
+    // Two vehicles that report an RTK baseline and a correction rate. The first is the active one, whose GPS status
+    // the page shows.
+    Vehicle active(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
+    Vehicle other(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
+    QmlObjectListModel vehicles;
+    for (Vehicle* const vehicle : {&active, &other}) {
+        auto* gps = vehicle->gpsFactGroup();
+        QVERIFY(gps);
+        gps->setLiveUpdates(true);
+        gps->handleMessage(vehicle,
+                           GPSTest::gpsRawMessage({.fixType = GPS_FIX_TYPE_RTK_FIXED, .satellitesVisible = 20}));
+        mavlink_gps_rtk_t rtk{};
+        rtk.baseline_a_mm = 3000;
+        rtk.baseline_b_mm = 4000;
+        rtk.rtk_rate = 1;
+        mavlink_message_t rtkMessage{};
+        mavlink_msg_gps_rtk_encode(1, 1, &rtkMessage, &rtk);
+        gps->handleMessage(vehicle, rtkMessage);
+        vehicles.append(vehicle);
+    }
+
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
+    std::unique_ptr<QObject> page = createIndicatorPage(engine, window, &active);
+    QVERIFY2(page, qPrintable(engine.lastError()));
+    QVERIFY(window.show());
+    auto* box = page->findChild<QQuickItem*>(QStringLiteral("gpsIndicatorCorrections"));
+    QVERIFY(box);
+    // Shown as it is while a correction source is on.
+    QVERIFY(box->setProperty("showWhenInactive", true));
+    QVERIFY(box->setProperty("vehicles", QVariant::fromValue(&vehicles)));
+    QVERIFY(box->isVisible());
+    // The active vehicle's baseline and correction rate are rows of its GPS status.
+    QCOMPARE(shownItems(page.get(), "vehicleGpsRtkBaseline").size(), 1);
+    QCOMPARE(shownItems(page.get(), "vehicleGpsRtkRate").size(), 1);
+    // The corrections therefore list every vehicle's fix, and these two values of the other vehicle alone.
+    QCOMPARE(shownItems(box, "correctionsVehicleFix").size(), 2);
+    QCOMPARE(shownItems(box, "correctionsVehicleBaseline").size(), 1);
+    QCOMPARE(shownItems(box, "correctionsVehicleCorrectionRate").size(), 1);
 }
 
 void GPSIndicatorTest::_correctionsStayInsideTheirBox_data()

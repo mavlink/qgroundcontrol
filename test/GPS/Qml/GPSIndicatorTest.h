@@ -16,6 +16,7 @@ private slots:
     void _gcsPositionStaysInsideItsBox();
     void _ntripStaysInsideItsBox();
     void _receiverStaysInsideItsBox();
+    void _vehicleRtkValuesShownOnce();
     void _correctionsStayInsideTheirBox_data();
     void _correctionsStayInsideTheirBox();
     void _statusColumnKeepsItsWidth();
