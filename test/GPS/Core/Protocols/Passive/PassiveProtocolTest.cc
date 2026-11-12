@@ -478,7 +478,7 @@ void listensInVain(GPSTestClock& clock)
         receiver.unsupported = LISTEN_RATES;
         QCOMPARE(receiver.listen(), 0U);
         QCOMPARE(receiver.runtime.errorDetail(),
-                 QStringLiteral("The link cannot run at any rate a passive receiver is listened for at"));
+                 QStringLiteral("The link cannot run at any baud rate the receiver is listened for at"));
         QCOMPARE(receiver.elapsed, std::chrono::milliseconds::zero());
     }
     {

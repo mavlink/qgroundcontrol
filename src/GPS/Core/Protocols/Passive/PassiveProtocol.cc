@@ -199,7 +199,7 @@ private:
             // A link failure or a stop is already recorded, and stays.
             channel.failControl(
                 listened.probed.empty()
-                    ? QStringLiteral("The link cannot run at any rate a passive receiver is listened for at")
+                    ? QStringLiteral("The link cannot run at any baud rate the receiver is listened for at")
                     : QStringLiteral("No NMEA, UBX, SBF or RTCM output arrived at %1 baud. Select the receiver's baud "
                                      "rate if it reports less often than every two seconds")
                           .arg(gpsRateList(listened.probed)));
