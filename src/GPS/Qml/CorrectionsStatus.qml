@@ -84,6 +84,11 @@ QGCGroupBox {
         }
     }
 
+    CorrectionsStreamContent {
+        objectName: "correctionsStream"
+        corrections: root.corrections
+    }
+
     LabelledLabel {
         objectName: "correctionsBasePosition"
         visible: root.showCoordinates && root._baseKnown

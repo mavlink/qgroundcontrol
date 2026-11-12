@@ -306,6 +306,7 @@ void GPSCorrectionManager::_recordSelected(const GPSCorrectionStream& stream, co
         _recordedStream = stream;
     }
     _messageCounts->record(RTCMFramer::frameMessageId(data), receivedAtMs);
+    _streamContent.record(data, receivedAtMs);
     if (const auto station = RTCMStationPosition::fromFrame(data)) {
         const GPSEllipsoidPosition& position = station->position;
         _setBasePosition(QGeoCoordinate(position.latitudeDegrees, position.longitudeDegrees, position.altitudeMeters));
@@ -316,6 +317,7 @@ void GPSCorrectionManager::_forgetSelected()
 {
     _recordedStream = {};
     _messageCounts->clear();
+    _streamContent.clear();
     _setBasePosition(QGeoCoordinate());
 }
 
@@ -431,6 +433,65 @@ void GPSCorrectionManager::_refresh()
         emit selectedBytesPerSecondChanged();
     }
     _refreshMessageFilterError(selected.has_value(), now);
+    _refreshStreamContent(now);
+}
+
+void GPSCorrectionManager::_refreshStreamContent(qint64 now)
+{
+    QStringList constellations;
+    for (const RTCMStreamContent::Observed& observed : _streamContent.observed(now)) {
+        const QString name = _constellationName(observed.constellation);
+        //: %1 is a satellite constellation, such as Galileo, and %2 the number of its satellites the corrections have
+        //: observations of. The space between them is a no-break space.
+        constellations.append(observed.satellites ? tr("%1\u00A0%2").arg(name).arg(*observed.satellites) : name);
+    }
+    const QString content = constellations.join(QStringLiteral(", "));
+    QString warning;
+    switch (_streamContent.problem(now)) {
+        case RTCMStreamContent::Problem::NoObservations:
+            warning = tr("This stream carries no satellite observations, so a vehicle cannot get an RTK fix from it.");
+            break;
+        case RTCMStreamContent::Problem::NoStationPosition:
+            warning =
+                tr("This stream has not sent the position of its base station (RTCM message 1005 or 1006), so "
+                   "a vehicle cannot get an RTK fix from it.");
+            break;
+        case RTCMStreamContent::Problem::None:
+            if (_streamContent.glonassWithoutBiases(now)) {
+                warning =
+                    tr("This stream has GLONASS observations but not their code-phase biases (RTCM message "
+                       "1230). A receiver of another make than the base station may not use GLONASS for an "
+                       "RTK fixed fix.");
+            }
+            break;
+    }
+    const bool contentChanged = std::exchange(_streamContentText, content) != content;
+    if (std::exchange(_streamWarning, warning) != warning || contentChanged) {
+        emit streamContentChanged();
+    }
+}
+
+QString GPSCorrectionManager::_constellationName(GPSConstellation constellation)
+{
+    switch (constellation) {
+        case GPSConstellation::GPS:
+            return tr("GPS");
+        case GPSConstellation::GLONASS:
+            return tr("GLONASS");
+        case GPSConstellation::Galileo:
+            return tr("Galileo");
+        case GPSConstellation::BeiDou:
+            return tr("BeiDou");
+        case GPSConstellation::QZSS:
+            return tr("QZSS");
+        case GPSConstellation::SBAS:
+            return tr("SBAS");
+        case GPSConstellation::NavIC:
+            return tr("NavIC");
+        case GPSConstellation::Unknown:
+            break;
+    }
+    return {};
 }
 
 void GPSCorrectionManager::_alertOnLoss()

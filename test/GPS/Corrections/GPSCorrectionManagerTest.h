@@ -41,4 +41,5 @@ private slots:
     void _logStopsAfterWriteError();
     void _tellsUserWhenVehiclesLoseCorrections();
     void _lossIsAVehicleAlert();
+    void _describesWhatTheStreamCarries();
 };

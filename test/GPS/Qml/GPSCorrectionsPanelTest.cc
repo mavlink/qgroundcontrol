@@ -25,6 +25,7 @@
 #include "QGCFormat.h"
 #include "QmlObjectListModel.h"
 #include "QmlTesting/QmlFixtures.h"
+#include "RTCM/Support/RTCMTestFrames.h"
 #include "SettingsManager.h"
 #include "Support/GPSTestHelpers.h"
 #include "UnitsSettings.h"
@@ -443,6 +444,52 @@ void GPSCorrectionsPanelTest::_correctionsStatusShowsVehicles()
     QCOMPARE(rowTexts("correctionsVehicleFix"), QStringList{QStringLiteral("Vehicle fix: 3D Lock")});
     QVERIFY(rows("correctionsVehicleBaseline").isEmpty());
     vehicles.clear();
+}
+
+void GPSCorrectionsPanelTest::_correctionsStatusShowsStreamContent()
+{
+    using namespace std::chrono_literals;
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler);
+    TestFixtures::QmlEngine engine;
+    std::unique_ptr<QObject> status =
+        engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsStatus.qml")),
+                      {{QStringLiteral("corrections"), QVariant::fromValue(&corrections)}});
+    QVERIFY2(status, qPrintable(engine.lastError()));
+    auto* stream = status->findChild<QObject*>(QStringLiteral("correctionsStream"));
+    auto* content = status->findChild<QObject*>(QStringLiteral("correctionsStreamContent"));
+    auto* warning = status->findChild<QObject*>(QStringLiteral("correctionsStreamWarning"));
+    QVERIFY(stream && content && warning);
+    QVERIFY(!stream->property("visible").toBool());
+
+    // The constellations of the stream's observations, with the satellites of each.
+    const auto ntrip = corrections.openSource(GPSCorrectionSettings::Ntrip, QStringLiteral("caster/MOUNT"));
+    quint32 epoch = 0;
+    const auto observations = [&]() {
+        ++epoch;
+        ntrip->submit(GPSTest::rtcmMsmFrame(1077, 9, epoch), scheduler.nowMs());
+        ntrip->submit(GPSTest::rtcmMsmFrame(1097, 7, epoch), scheduler.nowMs());
+        return scheduler.advanceBy(1s);
+    };
+    QVERIFY(observations());
+    QVERIFY(stream->property("visible").toBool());
+    QVERIFY(content->property("visible").toBool());
+    QCOMPARE(content->property("label").toString(), QStringLiteral("Constellations"));
+    QCOMPARE(content->property("labelText").toString(), QStringLiteral(u"GPS\u00a09, Galileo\u00a07"));
+    QVERIFY(!warning->property("visible").toBool());
+
+    // A stream that never tells where its base station is gets a warning.
+    while (corrections.streamWarning().isEmpty() && epoch < 60) {
+        QVERIFY(observations());
+    }
+    QVERIFY(warning->property("visible").toBool());
+    QCOMPARE(warning->property("text").toString(), corrections.streamWarning());
+    QVERIFY(warning->property("text").toString().contains(QStringLiteral("1005 or 1006")));
+    QVERIFY(warning->property("warning").toBool());
+
+    // Nothing is said of a stream that is no longer selected.
+    QVERIFY(scheduler.advanceBy(GPSCorrectionSelector::FRESHNESS_TIMEOUT + 1s));
+    QVERIFY(!stream->property("visible").toBool());
 }
 
 void GPSCorrectionsPanelTest::_correctionsLogSwitch()

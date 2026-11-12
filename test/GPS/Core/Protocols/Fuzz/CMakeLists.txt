@@ -2,9 +2,9 @@
 # GPS Protocol Fuzzing
 # The smoke tests of the fuzzers, in the QGC test build and test/GPS/Standalone, and the libFuzzer harnesses: of the
 # native protocols, where one decodes its input and the other feeds it to the driver as the replies of the receiver it
-# configures or detects, and of what a caster sends, the RTCM station position and the NTRIP source table. Only the
-# standalone project builds the harnesses, with QGC_GPS_LIBFUZZER, which builds QGCGPSCore, QGCNTRIPHttp and everything
-# that links them with ASan and UBSan.
+# configures or detects, and of what a caster sends, the RTCM station position with the MSM header, and the NTRIP
+# source table. Only the standalone project builds the harnesses, with QGC_GPS_LIBFUZZER, which builds QGCGPSCore,
+# QGCNTRIPHttp and everything that links them with ASan and UBSan.
 # ============================================================================
 
 add_executable(QGCGPSReplyFuzzSmoke ReplyFuzz.cc ReplyFuzz.h ReplyFuzzSmoke.cc)

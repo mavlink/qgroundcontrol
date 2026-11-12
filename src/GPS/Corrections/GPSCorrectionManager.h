@@ -16,6 +16,7 @@
 #include "RTCMLogFile.h"
 #include "RTCMMAVLink.h"
 #include "RTCMMessageCountModel.h"
+#include "RTCMStreamContent.h"
 #include "RTCMUdpInput.h"
 #include "ScheduledTask.h"
 #include "UdpForwarder.h"
@@ -91,6 +92,8 @@ class GPSCorrectionManager : public QObject
     Q_PROPERTY(QString logError READ logError NOTIFY logChanged FINAL)
     Q_PROPERTY(RTCMMessageCountModel* messageCounts READ messageCounts CONSTANT FINAL)
     Q_PROPERTY(QGeoCoordinate basePosition READ basePosition NOTIFY basePositionChanged FINAL)
+    Q_PROPERTY(QString streamContent READ streamContent NOTIFY streamContentChanged FINAL)
+    Q_PROPERTY(QString streamWarning READ streamWarning NOTIFY streamContentChanged FINAL)
 
     friend class GPSCorrectionSourceHandle;
 
@@ -205,6 +208,16 @@ public:
     /// as altitude. Invalid until the stream sends one, and once it is no longer the selected stream.
     QGeoCoordinate basePosition() const { return _basePosition; }
 
+    /// The constellations the selected stream has had observations of in the last RTCMStreamContent::WINDOW, each with
+    /// the satellites of its latest epoch where the stream's messages tell, such as "GPS 12, GLONASS 8". Empty while it
+    /// has none, and while no stream is selected.
+    QString streamContent() const { return _streamContentText; }
+
+    /// Why a vehicle cannot get an RTK fix from the selected stream, as RTCMStreamContent::problem() finds, or that
+    /// its GLONASS observations lack their biases. Empty otherwise, and while the stream is younger than
+    /// RTCMStreamContent::WINDOW.
+    QString streamWarning() const { return _streamWarning; }
+
     Q_INVOKABLE static QString sourceName(int source);
 
 signals:
@@ -216,6 +229,7 @@ signals:
     void messageFilterChanged();
     void logChanged();
     void basePositionChanged();
+    void streamContentChanged();
 
 private:
     /// See GPSCorrectionSelector::beginSource(); each source calls _endSource() before it is replaced or stops.
@@ -232,6 +246,9 @@ private:
     /// Forgets what the selected stream's frames told once it is no longer the selected one.
     void _forgetSelected();
     void _setBasePosition(const QGeoCoordinate& position);
+    /// Publishes what the selected stream carries at @a now.
+    void _refreshStreamContent(qint64 now);
+    static QString _constellationName(GPSConstellation constellation);
 
     /// Each returns whether the input's state or the output's error changed.
     [[nodiscard]] bool _applyUdpInput();
@@ -296,7 +313,11 @@ private:
     QString _messageFilterError;
     RTCMMessageCountModel* const _messageCounts = new RTCMMessageCountModel(this);
     QGeoCoordinate _basePosition;
-    /// The stream _messageCounts and _basePosition describe. _selected follows it only at the next refresh.
+    RTCMStreamContent _streamContent;
+    QString _streamContentText;
+    QString _streamWarning;
+    /// The stream _messageCounts, _basePosition and _streamContent describe. _selected follows it only at the next
+    /// refresh.
     GPSCorrectionStream _recordedStream;
     bool _shutdown = false;
 };

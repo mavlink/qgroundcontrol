@@ -30,6 +30,7 @@
 #include "Protocols/Support/GPSProtocolTestData.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "QGCFormat.h"
+#include "RTCM/Support/RTCMTestFrames.h"
 #include "RTCMFramer.h"
 #include "RTCMMessageCountModel.h"
 #include "RTCMUdpInput.h"
@@ -1120,6 +1121,80 @@ void GPSCorrectionManagerTest::_lossIsAVehicleAlert()
     QCOMPARE(shownAsCriticalVehicleMessage(QStringLiteral("RTK corrections resumed.")), 0);
     QCOMPARE(shownAsCriticalVehicleMessage(lost), 1);
     QCOMPARE(debugMessages(dialogs), QStringList());
+}
+
+void GPSCorrectionManagerTest::_describesWhatTheStreamCarries()
+{
+    using namespace std::chrono_literals;
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler);
+    QSignalSpy changes(&corrections, &GPSCorrectionManager::streamContentChanged);
+    const auto source = corrections.openSource(GPSCorrectionSettings::Ntrip, QStringLiteral("caster/MOUNT"));
+    // Sends @a frames each second, with observations of an epoch of its own.
+    quint32 epoch = 0;
+    const auto streamFor = [&](std::chrono::seconds duration, const QList<QByteArray>& frames, int gps = 9,
+                               int glonass = 0) {
+        for (int second = 0; second < duration.count(); ++second) {
+            ++epoch;
+            if (gps > 0) {
+                source->submit(rtcmMsmFrame(1077, gps, epoch), scheduler.nowMs());
+            }
+            if (glonass > 0) {
+                source->submit(rtcmMsmFrame(1087, glonass, epoch), scheduler.nowMs());
+            }
+            for (const QByteArray& frame : frames) {
+                source->submit(frame, scheduler.nowMs());
+            }
+            if (!advanceTick(scheduler)) {
+                return false;
+            }
+        }
+        return true;
+    };
+    // The 1005 frame of the recording Core/Protocols/fixtures/mixed.gps.
+    const QByteArray station = QByteArray::fromHex("d300133ed000038a58d9493c872f34109d07d6af48205ad7f7");
+    const QByteArray biases = rtcmMessage(1230, 8);
+    const auto window = std::chrono::duration_cast<std::chrono::seconds>(RTCMStreamContent::WINDOW);
+    QCOMPARE(corrections.streamContent(), QString());
+    QCOMPARE(corrections.streamWarning(), QString());
+
+    // The constellations of the stream and the satellites of their latest epoch, without a warning while the stream
+    // is young.
+    QVERIFY(streamFor(1s, {}, 9, 6));
+    QCOMPARE(corrections.streamContent(), QStringLiteral(u"GPS\u00a09, GLONASS\u00a06"));
+    QCOMPARE(changes.size(), 1);
+    QVERIFY(streamFor(1s, {}, 11, 6));
+    QCOMPARE(corrections.streamContent(), QStringLiteral(u"GPS\u00a011, GLONASS\u00a06"));
+    QCOMPARE(corrections.streamWarning(), QString());
+    QCOMPARE(changes.size(), 2);
+
+    // Observations without a base station position give no fix.
+    QVERIFY(streamFor(window, {}, 11, 6));
+    QVERIFY2(corrections.streamWarning().contains(QStringLiteral("1005 or 1006")),
+             qPrintable(corrections.streamWarning()));
+    QCOMPARE(changes.size(), 3);
+
+    // With the position, what is left to say is that the GLONASS observations lack their biases.
+    QVERIFY(streamFor(1s, {station}, 11, 6));
+    QVERIFY2(corrections.streamWarning().contains(QStringLiteral("1230")), qPrintable(corrections.streamWarning()));
+    QVERIFY(streamFor(1s, {station, biases}, 11, 6));
+    QCOMPARE(corrections.streamWarning(), QString());
+    QCOMPARE(changes.size(), 5);
+
+    // A stream that goes on with its station messages alone is still fresh, and carries nothing to fix with.
+    QVERIFY(streamFor(window, {station}, 0, 0));
+    QCOMPARE(corrections.state(), GPSCorrectionManager::State::Fresh);
+    QCOMPARE(corrections.streamContent(), QString());
+    QVERIFY2(corrections.streamWarning().contains(QStringLiteral("no satellite observations")),
+             qPrintable(corrections.streamWarning()));
+
+    // What a stream carried is forgotten once it is no longer selected.
+    QVERIFY(scheduler.advanceBy(GPSCorrectionSelector::FRESHNESS_TIMEOUT + 1s));
+    QCOMPARE(corrections.state(), GPSCorrectionManager::State::Waiting);
+    QCOMPARE(corrections.streamWarning(), QString());
+    QVERIFY(streamFor(1s, {}));
+    QCOMPARE(corrections.streamContent(), QStringLiteral(u"GPS\u00a09"));
+    QCOMPARE(corrections.streamWarning(), QString());
 }
 
 UT_REGISTER_TEST(GPSCorrectionManagerTest, TestLabel::Unit)

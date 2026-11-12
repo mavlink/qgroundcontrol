@@ -24,6 +24,7 @@ set(_qgc_gps_core_suites
     NMEA/NMEASatellitesTest
     NMEA/NMEASentenceTest
     RTCM/RTCMConformanceTest
+    RTCM/RTCMStreamContentTest
     Transport/GPSCancellationTest
     Transport/GPSRecordingDialogueTest
     Transport/GPSRecordingTransportTest

@@ -1,5 +1,6 @@
 #include "RTCMConformanceTest.h"
 
+#include <bit>
 #include <cmath>
 #include <limits>
 #include <optional>
@@ -13,7 +14,9 @@
 #include "Protocols/Support/GPSProtocolTestBase.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "Protocols/fixtures/GPSFixtureExpectations.h"
+#include "RTCM/Support/RTCMTestFrames.h"
 #include "RTCMFramer.h"
+#include "RTCMMsmHeader.h"
 #include "RTCMStationPosition.h"
 
 namespace {
@@ -62,15 +65,24 @@ QByteArray stationFrame(uint16_t messageId, int64_t x, int64_t y, int64_t z,
     return GPSTest::rtcmBytes(payload);
 }
 
-/// The 1005 frame of the recording fixtures/mixed.gps, which a u-blox base station sent; empty when unreadable.
-QByteArray recordedStationFrame()
+/// The frame of message @a messageId at @a index of the corrections in the recording fixtures/mixed.gps, which a
+/// u-blox base station sent; empty when unreadable.
+QByteArray recordedFrame(size_t index, unsigned messageId)
 {
     const auto recording = GPSTest::fixtureBytes("mixed.gps");
-    const auto& slice = GPSFixture::corrections[0];
-    if (!recording || slice.id != 1005 || recording->size() < slice.offset + slice.size) {
+    if (!recording || index >= std::size(GPSFixture::corrections)) {
+        return {};
+    }
+    const auto& slice = GPSFixture::corrections[index];
+    if (slice.id != messageId || recording->size() < slice.offset + slice.size) {
         return {};
     }
     return GPSTest::toByteArray(std::span<const uint8_t>(*recording).subspan(slice.offset, slice.size));
+}
+
+QByteArray recordedStationFrame()
+{
+    return recordedFrame(0, 1005);
 }
 }  // namespace
 
@@ -460,6 +472,109 @@ void RTCMConformanceTest::_stationPosition()
     if (station->antennaHeightMeters) {
         QCOMPARE(*station->antennaHeightMeters, antennaHeight);
     }
+}
+
+void RTCMConformanceTest::_msmHeader_data()
+{
+    QTest::addColumn<QByteArray>("frame");
+    QTest::addColumn<bool>("decoded");
+    QTest::addColumn<GPSConstellation>("constellation");
+    QTest::addColumn<int>("msmType");
+    QTest::addColumn<int>("stationId");
+    QTest::addColumn<quint32>("epochTime");
+    QTest::addColumn<bool>("moreMessages");
+    QTest::addColumn<quint64>("satelliteMask");
+    QTest::addColumn<quint32>("signalMask");
+
+    using GPSTest::RtcmMsmFields;
+    const auto valid = [](const char* name, uint16_t messageId, GPSConstellation constellation, int msmType,
+                          const RtcmMsmFields& fields) {
+        QTest::newRow(name) << GPSTest::rtcmMsmFrame(messageId, fields) << true << constellation << msmType
+                            << int(fields.stationId) << fields.epochTime << fields.moreMessages
+                            << quint64(fields.satelliteMask) << fields.signalMask;
+    };
+    // Each field with its first and its last bit set, between neighbours that have all their bits set.
+    const RtcmMsmFields edges{.satelliteMask = 0x8000000000000001,
+                              .signalMask = 0x80000001,
+                              .epochTime = 0x20000001,
+                              .moreMessages = false,
+                              .stationId = 0x801};
+    valid("gps-msm1", 1071, GPSConstellation::GPS, 1, edges);
+    valid("gps-msm7", 1077, GPSConstellation::GPS, 7, edges);
+    valid("glonass-msm4", 1084, GPSConstellation::GLONASS, 4, edges);
+    valid("galileo-msm5", 1095, GPSConstellation::Galileo, 5, edges);
+    valid("sbas-msm6", 1106, GPSConstellation::SBAS, 6, edges);
+    valid("qzss-msm2", 1112, GPSConstellation::QZSS, 2, edges);
+    valid("beidou-msm3", 1123, GPSConstellation::BeiDou, 3, edges);
+    valid("navic-msm7", 1137, GPSConstellation::NavIC, 7, edges);
+    valid("more-messages", 1077, GPSConstellation::GPS, 7,
+          {.satelliteMask = 0x4000000000000002,
+           .signalMask = 0x40000002,
+           .epochTime = 0x1ffffffe,
+           .moreMessages = true,
+           .stationId = 0x7fe});
+    valid("no-satellites", 1077, GPSConstellation::GPS, 7, {.satelliteMask = 0, .signalMask = 0});
+    // Sixteen satellites with four signals each are the 64 cells the standard allows.
+    valid("most-cells", 1077, GPSConstellation::GPS, 7,
+          {.satelliteMask = GPSTest::rtcmMsmSatellites(16), .signalMask = 0xf0000000});
+
+    // The MSM7 frames of the recording, with the values a decoder written apart from QGC reads.
+    const auto recorded = [](const char* name, size_t index, unsigned messageId, GPSConstellation constellation,
+                             quint32 epochTime, bool moreMessages, quint64 satelliteMask, quint32 signalMask) {
+        QTest::newRow(name) << recordedFrame(index, messageId) << true << constellation << 7 << 0 << epochTime
+                            << moreMessages << satelliteMask << signalMask;
+    };
+    recorded("recorded-gps", 2, 1077, GPSConstellation::GPS, 204137001, true, 0x0a8eb00400000000, 0x40010000);
+    recorded("recorded-glonass", 3, 1087, GPSConstellation::GLONASS, 310554457, true, 0x380e020000000000, 0x41000000);
+    recorded("recorded-galileo", 4, 1097, GPSConstellation::Galileo, 204137001, true, 0x0300082400000000, 0x40020000);
+    recorded("recorded-beidou", 5, 1127, GPSConstellation::BeiDou, 204123001, false, 0x02c0121109200000, 0x40040000);
+
+    const auto invalid = [](const char* name, const QByteArray& frame) {
+        QTest::newRow(name) << frame << false << GPSConstellation::Unknown << 0 << 0 << quint32(0) << false
+                            << quint64(0) << quint32(0);
+    };
+    // The numbers around those of the MSM messages.
+    for (const uint16_t messageId : {1070, 1078, 1080, 1138, 1141}) {
+        invalid(qPrintable(QStringLiteral("message-%1").arg(messageId)), GPSTest::rtcmMsmFrame(messageId, edges));
+    }
+    invalid("station-message", recordedStationFrame());
+    invalid("sixty-five-cells",
+            GPSTest::rtcmMsmFrame(1077, {.satelliteMask = GPSTest::rtcmMsmSatellites(13), .signalMask = 0xf8000000}));
+    invalid("cell-mask-cut-short",
+            GPSTest::rtcmMsmFrame(
+                1077, {.satelliteMask = GPSTest::rtcmMsmSatellites(16), .signalMask = 0xf0000000, .cellMaskBits = 40}));
+    // 168 bits, one short of the header.
+    invalid("header-cut-short", GPSTest::rtcmMessage(1077, 19));
+    QByteArray badCrc = GPSTest::rtcmMsmFrame(1077, edges);
+    badCrc.back() = static_cast<char>(badCrc.back() ^ 1);
+    invalid("bad-crc", badCrc);
+    invalid("empty", {});
+}
+
+void RTCMConformanceTest::_msmHeader()
+{
+    QFETCH(QByteArray, frame);
+    QFETCH(bool, decoded);
+    QFETCH(GPSConstellation, constellation);
+    QFETCH(int, msmType);
+    QFETCH(int, stationId);
+    QFETCH(quint32, epochTime);
+    QFETCH(bool, moreMessages);
+    QFETCH(quint64, satelliteMask);
+    QFETCH(quint32, signalMask);
+    const auto header = RTCMMsmHeader::fromFrame(frame);
+    QCOMPARE(header.has_value(), decoded);
+    if (!decoded) {
+        return;
+    }
+    QCOMPARE(header->constellation, constellation);
+    QCOMPARE(int(header->msmType), msmType);
+    QCOMPARE(int(header->stationId), stationId);
+    QCOMPARE(header->epochTime, epochTime);
+    QCOMPARE(header->moreMessages, moreMessages);
+    QCOMPARE(quint64(header->satelliteMask), satelliteMask);
+    QCOMPARE(header->signalMask, signalMask);
+    QCOMPARE(header->satelliteCount(), std::popcount(satelliteMask));
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(RTCMConformanceTest, TestLabel::Unit)
