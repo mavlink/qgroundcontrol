@@ -60,9 +60,11 @@ struct NavigationUpdate
 /// sentences reports them: an empty field leaves the value an earlier one supplied. An epoch is published when its
 /// GGA arrives, unless the receiver sends more of it after the GGA: the sentences that followed the GGA in both
 /// previous epochs are waited for, so that a receiver that sends GGA first is published with its speed, course, DOP
-/// and accuracy, at the last of those sentences. What arrives after an epoch was published is not published: not
-/// with that epoch, because every published position is a new observation, and not with the next, whose solution it
-/// does not describe.
+/// and accuracy, at the last of those sentences. Those epochs are the last two whose GGA stood: an epoch without a
+/// GGA shows nothing of what follows one, and an epoch that a fix loss hid not all of it, so neither changes what the
+/// next one waits for, and the first position after a fix loss has what the last one before it had. What arrives
+/// after an epoch was published is not published: not with that epoch, because every published position is a new
+/// observation, and not with the next, whose solution it does not describe.
 ///
 /// An RMC or GST names its epoch, so it follows its GGA whenever it arrives, and the position waits for it as long as
 /// the receiver takes to send it. At 4800 baud that is 0.6 to 0.8 s when the GSV sentences come between them, which
@@ -153,7 +155,7 @@ private:
     uint64_t _sequence = 0;
     uint64_t _invalidThroughSequence = 0;
     bool _navigationValid = true;
-    /// The followers of the previous epoch and of the one before it.
+    /// The followers of the last epoch whose GGA stood when it ended, and of the one before it.
     Additions _previousFollowers;
     Additions _earlierFollowers;
     uint64_t _ggaReceivedAtUs = 0;

@@ -31,6 +31,9 @@ private slots:
     void _epochLongerThanTwoSeconds_data();
     void _epochLongerThanTwoSeconds();
     void _fixLossWhileWaiting();
+    void _fixLossKeepsSentenceOrder_data();
+    void _fixLossKeepsSentenceOrder();
+    void _epochWithoutGga();
     void _timeDoesNotAdvance_data();
     void _timeDoesNotAdvance();
     void _timeStepsBack();

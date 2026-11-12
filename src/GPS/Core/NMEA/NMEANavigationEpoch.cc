@@ -124,11 +124,14 @@ NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_positionEpoch(
 std::optional<NavigationEpoch> NavigationEpochAssembler::_end(StoredEpoch& stored)
 {
     std::optional<NavigationEpoch> overdue;
-    if (!stored.published && stored.epoch.ggaQuality && !_hiddenByFixLoss(stored)) {
-        overdue = stored.epoch;
+    // Without a GGA, or with one that a fix loss hid, the epoch does not show what the receiver sends after its GGA.
+    if (stored.epoch.ggaQuality && !_hiddenByFixLoss(stored)) {
+        if (!stored.published) {
+            overdue = stored.epoch;
+        }
+        _earlierFollowers = std::exchange(_previousFollowers, stored.followers);
     }
     stored.published = true;
-    _earlierFollowers = std::exchange(_previousFollowers, stored.followers);
     return overdue;
 }
 

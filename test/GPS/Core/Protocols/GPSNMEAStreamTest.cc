@@ -664,12 +664,84 @@ void GPSNMEAStreamTest::_fixLossWhileWaiting()
     QCOMPARE(receiver.positions, 3);
     QCOMPARE(receiver.published->navigation.fixType, GPSFixQuality::NoFix);
 
-    // The epoch that was waiting is not published after the loss.
+    // The epoch that was waiting is not published after the loss: the next position is the next epoch's.
     receiver.now += EPOCH_INTERVAL_US;
+    const uint64_t positionReceipt = receiver.now;
     receiver.feed(gga("123522"));
+    receiver.feed(rmc("123522"));
     QCOMPARE(receiver.positions, 4);
-    QCOMPARE(receiver.published->navigation.timestampUs, receiver.now);
+    QCOMPARE(receiver.published->navigation.timestampUs, positionReceipt);
     QCOMPARE(receiver.published->navigation.fixType, GPSFixQuality::Fix3D);
+}
+
+void GPSNMEAStreamTest::_fixLossKeepsSentenceOrder_data()
+{
+    QTest::addColumn<QByteArrayList>("loss");
+    const QByteArray noFixGga("GPGGA,123522,,,,,0,00,,,M,,M,,");
+    const QByteArray noFixGsa("GPGSA,A,1,,,,,,,,,,,,,,,");
+    const QByteArray voidRmc("GPRMC,123522,V,,,,,,,230394,,,N");
+    // The receiver still sends the epoch's GGA as a fix, and the sentences after it declare the loss.
+    QTest::newRow("after-the-gga") << QByteArrayList{gga("123522"), noFixGsa, voidRmc};
+    // The fix returns after the epoch's GGA, so its RMC begins an epoch that has no GGA.
+    QTest::newRow("fix-returns-after-the-gga") << QByteArrayList{noFixGga, GSA, rmc("123522")};
+    // The RMC stays void for an epoch longer than the GGA.
+    QTest::newRow("rmc-void-longer") << QByteArrayList{noFixGga,      noFixGsa, voidRmc,
+                                                       gga("123523"), GSA,      "GPRMC,123523,V,,,,,,,230394,,,N"};
+}
+
+void GPSNMEAStreamTest::_fixLossKeepsSentenceOrder()
+{
+    QFETCH(QByteArrayList, loss);
+    NMEAReceiver receiver;
+    // Three epochs show that the receiver sends GSA and RMC after its GGA.
+    for (const QByteArray& utc : {QByteArray("123519"), QByteArray("123520"), QByteArray("123521")}) {
+        receiver.now += EPOCH_INTERVAL_US;
+        for (const auto& sentence : {gga(utc), QByteArray(GSA), rmc(utc)}) {
+            receiver.feed(sentence);
+        }
+    }
+    QVERIFY(receiver.published->velocityValid);
+    receiver.now += EPOCH_INTERVAL_US;
+    for (const auto& sentence : loss) {
+        receiver.feed(sentence);
+    }
+    QCOMPARE(receiver.published->navigation.fixType, GPSFixQuality::NoFix);
+
+    // The first epoch after the loss waits for them as the last one before it did.
+    receiver.now += 10 * EPOCH_INTERVAL_US;
+    const uint64_t positionReceipt = receiver.now;
+    const int published = receiver.positions;
+    receiver.feed(gga("123530"));
+    receiver.feed(GSA);
+    QCOMPARE(receiver.positions, published);
+    receiver.feed(rmc("123530"));
+    QCOMPARE(receiver.positions, published + 1);
+    QCOMPARE(receiver.published->navigation.fixType, GPSFixQuality::Fix3D);
+    QCOMPARE(receiver.published->navigation.timestampUs, positionReceipt);
+    QVERIFY(receiver.published->velocityValid);
+}
+
+void GPSNMEAStreamTest::_epochWithoutGga()
+{
+    // A receiver that sends its RMC every second and its GGA every other second.
+    NMEAReceiver receiver;
+    int withGga = 0;
+    for (int epoch = 0; epoch < 8; ++epoch) {
+        const QByteArray utc = QByteArray::number(123519 + epoch);
+        receiver.now += EPOCH_INTERVAL_US;
+        if (epoch % 2 == 0) {
+            receiver.feed(gga(utc));
+            ++withGga;
+        }
+        receiver.feed(rmc(utc));
+        // Only a GGA's position is published.
+        QCOMPARE(receiver.positions, withGga);
+        // An epoch without a GGA does not show what follows one, so two epochs with a GGA show that its RMC does, and
+        // the third waits for it.
+        if (withGga > 2) {
+            QVERIFY(receiver.published->velocityValid);
+        }
+    }
 }
 
 void GPSNMEAStreamTest::_timeDoesNotAdvance_data()
