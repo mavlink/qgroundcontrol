@@ -20,11 +20,16 @@ a name that the set no longer has therefore stays where it was: the record and t
 list what belongs to the publication, and the command warns of the names that the previous
 record lists and this set lacks.
 
-Before its first upload each command reads that record with the job's AWS credentials and stops
-when the directory would go backwards, when it holds another repository's build, or when S3
-does not say what it holds: only "no such key" counts as nothing published.
-``publish_decide.py`` reads the record without credentials, which is enough to decide whether
-a publishing job is worth starting.
+Before its first upload each command reads that record and stops when the directory would go
+backwards, when it holds another repository's build, or when S3 does not say what it holds.
+``--record-read`` (``PUBLISH_RECORD_READ``) says how. ``public``, the default, fetches the
+record's public URL, as ``publish_decide.py`` does and as anyone can: the role needs no read
+permission, a missing object (403, or 404) counts as nothing published, and any other answer
+stops the command. A record that exists and is not public therefore passes for none, which is
+why each command reads its own record back from that URL after the upload and fails when it
+cannot. ``credentialed`` reads with ``aws s3api get-object`` instead, which tells the two apart:
+only "no such key" counts as nothing published. It needs ``s3:GetObject`` on the records and
+``s3:ListBucket`` on the bucket.
 
 ``latest/`` is the exception: it held a release before this workflow recorded any, so without
 a record ``promote`` stops instead of taking it for empty. ``--force-latest``, which only a
@@ -94,6 +99,10 @@ S3_URL = "https://qgroundcontrol.s3.us-west-2.amazonaws.com"
 LATEST_PREFIX = "latest"
 STATE_NAME = "published.json"
 STATE_SCHEMA_VERSION = 1
+# How a command reads the record of the directory it is about to write: from the public URL,
+# or with the job's AWS credentials. The first is the default.
+RECORD_READS = ("public", "credentialed")
+RECORD_READ_VARIABLE = "PUBLISH_RECORD_READ"
 _COMMIT = re.compile(r"[0-9a-f]{40}")
 _REF = re.compile(r"refs/(?:heads|tags)/([A-Za-z0-9._-]+)")
 # S3's answer to a read of an object that does not exist, given only to a caller that may list
@@ -243,9 +252,9 @@ def public_record(prefix: str) -> Record | None:
     """Return what ``<prefix>/published.json`` records as anyone can read it, or None.
 
     None is no proof that nothing is published: S3 answers 403 both for a missing object and
-    for one that is not public. It only lets a publishing job start, which reads the record
-    again with its credentials (``read_record``). Raises PublishedStateError when the record
-    cannot be fetched or does not name a commit.
+    for one that is not public. A command finds out that its own record is not public by
+    reading it back after the upload (``execute``), and ``read_record`` tells the two apart.
+    Raises PublishedStateError when the record cannot be fetched or does not name a commit.
     """
     url = f"{S3_URL}/{prefix}/{STATE_NAME}"
     try:
@@ -284,6 +293,22 @@ def read_record(prefix: str, scratch: Path) -> Record | None:
         return _record(source, scratch.read_bytes())
     except OSError as exc:
         raise PublishedStateError(f"cannot read {source}: {exc}") from exc
+
+
+def held_record(prefix: str, read: str, scratch: Path) -> Record | None:
+    """Return the record of what *prefix*/ holds before anything is uploaded there, or None.
+
+    *read* is one of RECORD_READS. Raises PublishedStateError when the read does not say what
+    the directory holds.
+    """
+    if read == "credentialed":
+        return read_record(prefix, scratch)
+    try:
+        return public_record(prefix)
+    except PublishedStateError as exc:
+        raise PublishedStateError(
+            f"{exc}, so nothing is uploaded: what the directory holds is unknown"
+        ) from exc
 
 
 def regression(
@@ -350,11 +375,16 @@ def execute(plan: S3Plan, state: dict[str, Any], state_path: Path) -> None:
     try:
         record = public_record(plan.prefix)
     except PublishedStateError as error:
-        record, why = None, f": {error}"
+        record, why = None, f" ({error})"
     if record is None or record.commit != state["commit"]:
         raise UploadError(
-            f"s3://{S3_BUCKET}/{plan.state_key} was uploaded but cannot be read back, so later "
-            f"runs cannot tell what this directory holds{why}"
+            f"s3://{S3_BUCKET}/{plan.state_key} was uploaded but cannot be read back from "
+            f"{S3_URL}/{plan.state_key}{why}. A run that reads the record there (the default) "
+            "takes a record it cannot read for none, which switches the never-regress check "
+            "off: an older commit can then replace a newer one in a builds/ directory, and "
+            "latest/ refuses every release. Do not ignore this failure: make the object "
+            "publicly readable (the bucket's public-access and ACL settings), then re-run "
+            "this job."
         )
 
 
@@ -393,7 +423,7 @@ def _run(args: argparse.Namespace, files: PublishSet, plan: S3Plan, *, force: bo
         return 0
     state_path = files.directory / STATE_NAME
     try:
-        held = read_record(plan.prefix, state_path.with_suffix(".held.json"))
+        held = held_record(plan.prefix, args.record_read, state_path.with_suffix(".held.json"))
         refused = regression(held, files, plan.prefix, force=force)
     except (PublishedStateError, subprocess.CalledProcessError) as exc:
         gh_error(str(getattr(exc, "stderr", None) or exc).strip(), title=f"{title} not published")
@@ -531,6 +561,13 @@ def main(argv: list[str] | None = None) -> int:
             default=env_flag("PUBLISH_DRY_RUN"),
             help="Print what would be uploaded without uploading (default: $PUBLISH_DRY_RUN)",
         )
+        command.add_argument(
+            "--record-read",
+            default=env_default(RECORD_READ_VARIABLE, RECORD_READS[0]),
+            metavar=f"{{{','.join(RECORD_READS)}}}",
+            help="Read the record of what the directory holds from its public URL, or with the "
+            f"AWS credentials (default: ${RECORD_READ_VARIABLE}, else {RECORD_READS[0]})",
+        )
         if name == "promote":
             command.add_argument(
                 "--force-latest",
@@ -573,6 +610,12 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_seed(args)
     if args.command == "invalidate":
         return cmd_invalidate(args)
+    if args.record_read not in RECORD_READS:
+        gh_error(
+            f"The record read must be {' or '.join(RECORD_READS)}, not {args.record_read!r} "
+            f"(--record-read, {RECORD_READ_VARIABLE})"
+        )
+        return 1
     try:
         files = load_set(args.directory, ref=args.ref, commit=args.commit)
     except PublishSetError as exc:

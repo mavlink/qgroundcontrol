@@ -564,23 +564,53 @@ it publishes without any repository variable, from the first build that complete
   branch's commit is published to a target only when it is ahead of that commit (GitHub's compare
   API). A commit the target already holds is published again only by a dispatch, which is how
   packages rebuilt for the same commit (a re-run build) get published. Each publishing job
-  repeats the check when it gets its turn (`publish_decide.py confirm`). For a tag, `confirm`
-  and the scripts that write (`aws_upload.py publish` and `promote`, `release_assets.py`)
-  resolve the tag again, following an annotated tag to its commit, and publish nothing once it
-  was moved or deleted (`publish_set.tag_problem`). A target whose commit is not an ancestor (a
-  rewritten `Stable*` branch) fails the run until someone deletes its record.
-- **S3 records**: `decide` and `confirm` read `published.json` from the bucket's public endpoint
-  (not CloudFront, whose copy can be stale). A missing object and a private one both answer 403
-  there, so that read only decides whether a job starts. `aws_upload.py` reads the record again
-  with the job's credentials before its first upload. Only "no such key" means that nothing is
-  published, and for `latest/` not even that (below); access denied or any other failure stops
-  the job with nothing uploaded, and so does a record that is newer than the set. After the
-  upload, the record must also be readable from the public endpoint, as the packages are. A
-  record names its repository, and one that another repository wrote is not compared with: its
-  commits mean nothing here. The decision reports it and starts the job, so that a dry run in a
-  fork, which reads upstream's bucket, does not fail over a branch that "was rewritten", and
-  `aws_upload.py` refuses to replace it. The record also lists the workflow runs that built the
-  files (`builds`: workflow, run, attempt, and conclusion at publication).
+  repeats the check when it gets its turn (`publish_decide.py confirm`), and `aws_upload.py`
+  makes it once more on the record as it reads it before its first upload: over the record's
+  public URL by default, which costs the role no permission and cannot tell a record that is
+  not public from none (_S3 records_, next). For a tag, `confirm` and the scripts that write
+  (`aws_upload.py publish` and `promote`, `release_assets.py`) resolve the tag again,
+  following an annotated tag to its commit, and publish nothing once it was moved or deleted
+  (`publish_set.tag_problem`). A target whose commit is not an ancestor (a rewritten `Stable*`
+  branch) fails the run until someone deletes its record.
+- **S3 records**: every reader takes `published.json` from the bucket's public endpoint (not
+  CloudFront, whose copy can be stale): `decide` and `confirm`, to see whether a job starts,
+  and by default `aws_upload.py` itself, before its first upload (`--record-read public`). The
+  record is uploaded `public-read` like the packages, so the read is an anonymous HTTPS GET.
+  The role needs no read permission for it, and keeps the permissions that the build jobs'
+  uploads always used. The bucket cannot be listed, so a missing object answers 403 there (404
+  if it could be), and either means that nothing is published, for `latest/` not even that
+  (below). Any other answer stops the job with nothing uploaded: a 5xx, no connection after
+  the retries, a body that is not a record. So does a record that is newer than the set.
+  - **The price of the public read**: a record that exists and is not public answers 403 as
+    well, and passes for none. `latest/` then refuses every release. A `builds/<ref>/`
+    directory is compared with nothing, so an older commit would replace a newer one there.
+    The read-back is what catches it: after each upload the job fetches its own record from
+    the same URL, and fails when it cannot, with an error that says to make the object public
+    before anything else is published. A record therefore cannot stay unreadable unnoticed,
+    but the upload that finds it out has happened by then.
+  - **The credentialed read** (`--record-read credentialed`) reads with
+    `aws s3api get-object` instead. Only "no such key" then means that nothing is published,
+    and access denied stops the job before it uploads, so a record that is not public is
+    still compared with. To switch to it, add `PUBLISH_RECORD_READ: credentialed` to the
+    `env` of the `s3-builds` and `s3-latest` jobs, where `publish.yml` has a comment for it.
+    Grant the role the two permissions that only this read takes first: `s3:GetObject` on the
+    records and `s3:ListBucket` on the bucket ([AWS setup](#aws-setup)). No repository
+    variable selects the read, and a value other than the two fails the job.
+  - **Dry runs** start no `aws` command with either read, and configure no credentials. What
+    they read of S3 is the public record, in `decide` and `confirm`, which is an HTTPS GET
+    and no AWS API call.
+
+  After the upload, the record must be readable from the public endpoint with either read,
+  as the packages are. A record names its repository, and one that another repository wrote
+  is not compared with: its commits mean nothing here. The decision reports it and starts the
+  job, so that a dry run in a fork, which reads upstream's bucket, does not fail over a branch
+  that "was rewritten", and `aws_upload.py` refuses to replace it. The record also lists the
+  workflow runs that built the files (`builds`: workflow, run, attempt, and conclusion at
+  publication)
+  (`tools/tests/ci/test_aws_upload.py::test_a_public_record_that_cannot_be_read_stops_the_job_before_it_uploads_anything`,
+  `tools/tests/ci/test_aws_upload.py::test_a_record_that_the_public_endpoint_hides_is_found_by_the_read_back_of_the_next_write`,
+  `tools/tests/ci/test_aws_upload.py::test_a_dry_run_uploads_nothing_and_makes_no_call_that_needs_credentials`,
+  `test_publish_workflow.py::test_the_record_is_read_from_its_public_url_which_needs_no_permission_of_the_role`).
 - **`latest/`** is ordered by release version, not by commit. `v5.1.6` replaces `v5.1.5`, also
   when both tag one commit. A tag older than the release `latest/` holds (a late run, or a patch
   release on an older Stable line) is published to its `builds/<tag>/` only. The release it
@@ -592,9 +622,9 @@ it publishes without any repository variable, from the first build that complete
   `builds/<tag>/`, and the `S3 latest/` job then fails with nothing uploaded, naming the two
   ways on: [seed the record](#seeding-the-latest-record) and re-run the job, or dispatch with
   `force_latest`. The decision reads the public endpoint, where a missing record and a private
-  one look alike, so it starts the job instead of skipping `latest/`; the job's read with
-  credentials decides. A dry run reports this for the `latest` target and reads nothing with
-  credentials.
+  one look alike, so it starts the job instead of skipping `latest/`; the job reads the record
+  again, by either read, and refuses without one. A dry run reports this for the `latest`
+  target and starts no `aws` command.
 - **`force_latest`** (a dispatch input) replaces whatever `latest/` holds: a newer release (a
   rollback), a release without a record, or a record that names no release tag, which stops
   the decision otherwise. It counts only in a run dispatched from `master`: a completed build
@@ -845,11 +875,10 @@ run `builds/master/`, which the user guide links, keeps the last build that was 
 the merge. Older branches upload for themselves as before. Upstream had neither a `daily` tag
 nor a `daily` release, and no `published.json` in `builds/master/` or `latest/`, on 2026-11-12.
 
-**Before the merge**, the AWS role must have the permissions and the trust under
-[AWS setup](#aws-setup), and pass the check there. Two of the permissions are new, because the
-build jobs never read from the bucket: `s3:GetObject` on the records and `s3:ListBucket`. A
-dry run asks for no credentials, so nothing but that check shows whether the role is right
-before the first publication does.
+**Before the merge**, nothing has to change in AWS. The role uploads and invalidates as the
+build jobs did with it, and the record is read over its public URL, which takes no permission.
+Make the two anonymous checks under [AWS setup](#aws-setup). A dry run asks for no
+credentials, so the first publication is the first run that uses the role from this workflow.
 
 **Before the first release tag** that this workflow publishes (a tag on a branch cut from
 `master` after the merge), `latest/published.json` must be
@@ -862,10 +891,11 @@ decides _✅ publish_ with the targets `daily` and `s3`, both "nothing is publis
 _Fetch and verify_ verifies six packages. _GitHub daily release_ then creates the `daily` tag
 at the commit and the prerelease _QGroundControl Daily Build_ with the six packages and their
 six checksums. _S3 builds/_ reads `builds/master/published.json`, which does not exist yet,
-uploads the same twelve files and then the record, and invalidates `/builds/master/*` in
-CloudFront. The two jobs do not depend on each other: when one fails, the other's publication
-stands. The `daily` tag has not been created or moved under upstream's _Tag Protection_ ruleset
-yet (_Daily release_ above), so the first runs are the first that show it.
+uploads the same twelve files and then the record, reads the record back from its public URL,
+and invalidates `/builds/master/*` in CloudFront. The two jobs do not depend on each other:
+when one fails, the other's publication stands. The `daily` tag has not been created or moved
+under upstream's _Tag Protection_ ruleset yet (_Daily release_ above), so the first runs are
+the first that show it.
 
 **Check it**:
 
@@ -876,9 +906,9 @@ yet (_Daily release_ above), so the first runs are the first that show it.
   and six `.sha256` files, whose notes name the commit.
 - `curl -fsS https://qgroundcontrol.s3.us-west-2.amazonaws.com/builds/master/published.json`
   names the commit and lists its `builds`.
-- A red _S3 builds/_ job is the role: [AWS setup](#aws-setup) says what each message means.
-  Correct the role and use _Re-run failed jobs_ within the three days that the `publish-set`
-  artifact is kept, or `gh workflow run publish.yml -f ref=master` later.
+- A red _S3 builds/_ job is AWS: [AWS setup](#aws-setup) says what each message means.
+  Correct what it names and use _Re-run failed jobs_ within the three days that the
+  `publish-set` artifact is kept, or `gh workflow run publish.yml -f ref=master` later.
 - A green run whose _Fetch and verify_ reads "nothing to publish yet" names a package that the
   commit's failed build did not produce: re-running that build's failed jobs publishes the
   commit, and so does the next commit that builds.
@@ -917,61 +947,46 @@ Upstream has `AWS_ROLE_ARN` and `AWS_DISTRIBUTION_ID` and neither key (secret na
 2026-11-12). With keys in place of a role, the IAM user needs the permissions below, and no
 trust policy is involved. Without a role and without keys, both jobs warn, upload nothing, and
 pass. Without `AWS_DISTRIBUTION_ID` the uploads go ahead and the invalidation is skipped with a
-warning. A dry run asks for no credentials. The `decide` job and each job's `confirm` step read
-`published.json` over HTTPS as anyone can, without credentials.
+warning. A dry run asks for no credentials and starts no `aws` command. The `decide` job,
+each job's `confirm` step, and by default the upload itself read `published.json` over HTTPS
+as anyone can: an anonymous GET of a public object, not an AWS API call. A dry run makes the
+reads of `decide` and `confirm` like any other run.
 
-**Calls and permissions.** The jobs call AWS through three `aws` commands (`aws_upload.py`,
-`common/aws.py`), and these are all the permissions that the commands need:
+**Calls and permissions.** As `publish.yml` runs them, the jobs call AWS through two `aws`
+commands (`aws_upload.py`, `common/aws.py`), and these are all the permissions that the role
+needs. They are the ones that the build jobs used with it, so nothing has to be granted:
 
-| Call                                            | IAM actions                       | Resources                                                                                                  |
-| ----------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `aws s3api get-object`                          | `s3:GetObject`                    | `arn:aws:s3:::qgroundcontrol/builds/*/published.json`, `arn:aws:s3:::qgroundcontrol/latest/published.json` |
-| The same call, for a record that does not exist | `s3:ListBucket`                   | `arn:aws:s3:::qgroundcontrol`                                                                              |
-| `aws s3 cp --acl public-read`                   | `s3:PutObject`, `s3:PutObjectAcl` | `arn:aws:s3:::qgroundcontrol/builds/*`, `arn:aws:s3:::qgroundcontrol/latest/*`                             |
-| `aws cloudfront create-invalidation`            | `cloudfront:CreateInvalidation`   | `arn:aws:cloudfront::<account>:distribution/<AWS_DISTRIBUTION_ID>`                                         |
+| Call                                 | IAM actions                       | Resources                                                                      |
+| ------------------------------------ | --------------------------------- | ------------------------------------------------------------------------------ |
+| `aws s3 cp --acl public-read`        | `s3:PutObject`, `s3:PutObjectAcl` | `arn:aws:s3:::qgroundcontrol/builds/*`, `arn:aws:s3:::qgroundcontrol/latest/*` |
+| `aws cloudfront create-invalidation` | `cloudfront:CreateInvalidation`   | `arn:aws:cloudfront::<account>:distribution/<AWS_DISTRIBUTION_ID>`             |
 
-1. `aws s3api get-object --bucket qgroundcontrol --key <dir>/published.json <file>` reads the
-   directory's record before anything is uploaded, in `publish` and in `promote`. `<dir>` is
-   `builds/<ref>` (`builds/master`, `builds/Stable_V5.2`, `builds/v5.2.0`) or `latest`. S3
-   answers `NoSuchKey` for a missing object only to a caller that may list the bucket, and
-   `AccessDenied` to every other. The job takes `NoSuchKey` alone for "nothing is published",
-   so without `s3:ListBucket` the first publication of every branch and tag fails. Grant it on
-   the bucket without a condition.
-2. `aws s3 cp <file> s3://qgroundcontrol/<dir>/<name> --acl public-read` uploads each package,
-   each `.sha256`, and last the record. The ACL is why `s3:PutObjectAcl` is needed. No content
-   type is passed: the CLI derives it from the name (`application/json` for the record). The
-   CLI uploads a large file in parts, which `s3:PutObject` covers.
-3. `aws cloudfront create-invalidation --distribution-id <id> --paths <path>` is sent once
+1. `aws s3 cp <file> s3://qgroundcontrol/<dir>/<name> --acl public-read` uploads each package,
+   each `.sha256`, and last the record. `<dir>` is `builds/<ref>` (`builds/master`,
+   `builds/Stable_V5.2`, `builds/v5.2.0`) or `latest`. The ACL is why `s3:PutObjectAcl` is
+   needed. No content type is passed: the CLI derives it from the name (`application/json` for
+   the record). The CLI uploads a large file in parts, which `s3:PutObject` covers.
+2. `aws cloudfront create-invalidation --distribution-id <id> --paths <path>` is sent once
    by each job, in the step after its upload (the `invalidate` command), with one wildcard
    path: `/builds/<ref>/*` by _S3 builds/_ and `/latest/*` by _S3 latest/_.
 
-After the record's upload the job fetches it from the public URL. That is no AWS call, but the
-object must be public, which the ACL makes it. Nothing is listed, copied, or deleted, so the
-role needs no `s3:DeleteObject` and no action besides these. The bucket's own settings are the
-ones that the build jobs relied on, which uploaded with the same `aws s3 cp` command: it
-accepts ACLs, public ones included.
+The record is read without AWS credentials: before the first upload, to see what the directory
+holds, and after the record's upload, to see that anyone can read it. Both are GETs of
+`https://qgroundcontrol.s3.us-west-2.amazonaws.com/<dir>/published.json`. They need the bucket
+to do two things, which it does today (read on 2026-11-12): serve an object that was uploaded
+`public-read` (200), and answer 403 or 404 for a key that does not exist. Nothing is listed,
+copied, or deleted, so the role needs no `s3:GetObject` on `builds/` or `latest/`, no
+`s3:ListBucket`, no `s3:DeleteObject`, and no action besides these. The bucket's own settings
+are the ones that the build jobs relied on, which uploaded with the same `aws s3 cp` command:
+it accepts ACLs, public ones included.
 
-The role's permission policy in full, with the statement that Mirror GStreamer needs (below):
+The role's permission policy in full for the public read, with the statement that Mirror
+GStreamer needs (below):
 
 ```json
 {
   "Version": "2012-10-17",
   "Statement": [
-    {
-      "Sid": "ReadPublishedRecords",
-      "Effect": "Allow",
-      "Action": "s3:GetObject",
-      "Resource": [
-        "arn:aws:s3:::qgroundcontrol/builds/*/published.json",
-        "arn:aws:s3:::qgroundcontrol/latest/published.json"
-      ]
-    },
-    {
-      "Sid": "TellAMissingRecordFromADeniedOne",
-      "Effect": "Allow",
-      "Action": "s3:ListBucket",
-      "Resource": "arn:aws:s3:::qgroundcontrol"
-    },
     {
       "Sid": "UploadPublicFiles",
       "Effect": "Allow",
@@ -992,6 +1007,49 @@ The role's permission policy in full, with the statement that Mirror GStreamer n
     }
   ]
 }
+```
+
+**Only for the credentialed read.** With `PUBLISH_RECORD_READ: credentialed` in the `env` of
+the two jobs (_S3 records_ above), `publish` and `promote` read the record before their first
+upload with a third command, and the role needs two permissions more. Neither is needed, or
+used, while the read is public:
+
+| Call                                            | IAM actions     | Resources                                                                                                  |
+| ----------------------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------- |
+| `aws s3api get-object`                          | `s3:GetObject`  | `arn:aws:s3:::qgroundcontrol/builds/*/published.json`, `arn:aws:s3:::qgroundcontrol/latest/published.json` |
+| The same call, for a record that does not exist | `s3:ListBucket` | `arn:aws:s3:::qgroundcontrol`                                                                              |
+
+`aws s3api get-object --bucket qgroundcontrol --key <dir>/published.json <file>` is the call.
+S3 answers `NoSuchKey` for a missing object only to a caller that may list the bucket, and
+`AccessDenied` to every other. The job takes `NoSuchKey` alone for "nothing is published", so
+without `s3:ListBucket` the first publication of every branch and tag fails. Grant it on the
+bucket without a condition. The statements to add to the policy above:
+
+```json
+[
+  {
+    "Sid": "ReadPublishedRecords",
+    "Effect": "Allow",
+    "Action": "s3:GetObject",
+    "Resource": [
+      "arn:aws:s3:::qgroundcontrol/builds/*/published.json",
+      "arn:aws:s3:::qgroundcontrol/latest/published.json"
+    ]
+  },
+  {
+    "Sid": "TellAMissingRecordFromADeniedOne",
+    "Effect": "Allow",
+    "Action": "s3:ListBucket",
+    "Resource": "arn:aws:s3:::qgroundcontrol"
+  }
+]
+```
+
+Check them with the role's credentials before the line is added. This must fail with
+`NoSuchKey`; `AccessDenied` means that one of the two is missing:
+
+```sh
+aws s3api get-object --bucket qgroundcontrol --key builds/none/published.json /dev/null
 ```
 
 **Trust.** `aws-credentials` assumes the role with `sts:AssumeRoleWithWebIdentity`, through
@@ -1066,33 +1124,40 @@ the branch it was dispatched from. It calls `aws s3api head-object` and
 `aws s3 cp --acl public-read` on `dependencies/gstreamer/<platform>/<file>`, so the role also
 needs `s3:GetObject`, `s3:PutObject`, and `s3:PutObjectAcl` on
 `arn:aws:s3:::qgroundcontrol/dependencies/gstreamer/*`: a role narrowed to `builds/*` and
-`latest/*` stops the mirror. `runner-images.yml` uses another role, the secret
-`RUNS_ON_AMI_ROLE_ARN`, with EC2 permissions in the RunsOn stack's account
+`latest/*` stops the mirror. Without `s3:GetObject` there it does not fail: it cannot see
+what the bucket has, and uploads each file again. `runner-images.yml` uses another role, the
+secret `RUNS_ON_AMI_ROLE_ARN`, with EC2 permissions in the RunsOn stack's account
 (`.github/runner-images/README.md`), and never touches the bucket.
 
-**Check before the merge.** With the role's credentials, this must fail with `NoSuchKey`, which
-shows `s3:GetObject` on the records and `s3:ListBucket`; `AccessDenied` means that one of them
-is missing:
+**Check before the merge.** Two requests that anyone can make show what the public read
+depends on. The first must print `200`: an object that the role uploaded with the `public-read`
+ACL is public. The second must print `403` or `404` until the first publication, and `200`
+with the record after it; any other status would stop the job. Both held on 2026-11-12 (`200`
+and `403`):
 
 ```sh
-aws s3api get-object --bucket qgroundcontrol --key builds/none/published.json /dev/null
+base=https://qgroundcontrol.s3.us-west-2.amazonaws.com
+curl -sS -o /dev/null -w '%{http_code}\n' "$base/builds/master/QGroundControl-x86_64.AppImage.sha256"
+curl -sS -o /dev/null -w '%{http_code}\n' "$base/builds/master/published.json"
 ```
 
-A trust policy that admits GitHub alone gives an administrator no such credentials. The policy
-simulator asks the same of the role's own policies without assuming it (it does not see the
-bucket's policy or settings), and `get-role` prints the trust policy. Neither was run against
+The role itself is used as before: `master`'s build jobs uploaded to `builds/master/` with it
+on 2026-11-12, which shows the trust for `refs/heads/master` and the two upload permissions.
+The build jobs invalidated for release tags only (`/latest/<file>`), last in the `v5.1.5`
+builds of 2026-10-01, whose upload steps passed (run 36878129961). The first publication is
+the first to invalidate for `builds/master/`, with the same `cloudfront:CreateInvalidation`; a
+role without it fails that step alone, after the upload. To see the role's own policies
+without assuming it, an administrator can ask the policy simulator (it does not see the
+bucket's policy or settings) and print the trust policy. Neither command was run against
 upstream's account:
 
 ```sh
 role=<the ARN in AWS_ROLE_ARN>
 bucket=arn:aws:s3:::qgroundcontrol
 aws iam simulate-principal-policy --policy-source-arn "$role" \
-  --action-names s3:GetObject s3:PutObject s3:PutObjectAcl \
+  --action-names s3:PutObject s3:PutObjectAcl \
   --resource-arns "$bucket/builds/master/published.json" "$bucket/latest/published.json" \
   --query 'EvaluationResults[].[EvalActionName,EvalResourceName,EvalDecision]' --output text
-aws iam simulate-principal-policy --policy-source-arn "$role" \
-  --action-names s3:ListBucket --resource-arns "$bucket" \
-  --query 'EvaluationResults[].[EvalActionName,EvalDecision]' --output text
 aws iam simulate-principal-policy --policy-source-arn "$role" \
   --action-names cloudfront:CreateInvalidation \
   --resource-arns "arn:aws:cloudfront::<account>:distribution/<AWS_DISTRIBUTION_ID>" \
@@ -1109,17 +1174,28 @@ and the GitHub Release assets use no AWS.
   `Not authorized to perform sts:AssumeRoleWithWebIdentity`: the trust policy does not admit
   `repo:mavlink/qgroundcontrol:ref:refs/heads/master` with the audience `sts.amazonaws.com`,
   or the secret names another role.
+- `cannot read https://qgroundcontrol.s3.us-west-2.amazonaws.com/<dir>/published.json`, with
+  `HTTP 5xx`, a failed connection, or a JSON error, and
+  `so nothing is uploaded: what the directory holds is unknown`: the public read of the record
+  got another answer than the record, 403, or 404. Nothing was uploaded. Re-run the job when
+  S3 was at fault. When the object is not a record, someone replaced it: write it again
+  ([seeding](#seeding-the-latest-record) shows the form).
 - `cannot read s3://qgroundcontrol/<dir>/published.json, so nothing is uploaded`, with AWS's
-  `(AccessDenied) when calling the GetObject operation` and the list of permissions. For a
-  directory without a record (`builds/master/` in the first run, and every new branch and
-  tag), `s3:ListBucket` is missing, or `s3:GetObject` is. For a directory that has one,
+  `(AccessDenied) when calling the GetObject operation` and the list of permissions: only
+  with the credentialed read. For a directory without a record (every new branch and tag),
+  `s3:ListBucket` is missing, or `s3:GetObject` is. For a directory that has one,
   `s3:GetObject` is missing. Nothing was uploaded.
 - `S3 upload failed for s3://qgroundcontrol/<key>`, with AWS's
   `(AccessDenied) when calling the PutObject operation` (`CreateMultipartUpload` for a large
   file): `s3:PutObject` or `s3:PutObjectAcl` is missing for that key, or the bucket refuses a
   public ACL. The record is written last, so the directory still records what it held before.
-- `was uploaded but cannot be read back`: the upload passed, and the public URL does not serve
-  the record, so the object is not public.
+- `was uploaded but cannot be read back from <URL>`: the upload passed, and the public URL
+  does not serve the record, so the object is not public (the bucket's public-access or ACL
+  settings changed), or S3 failed at that moment, which the message then names. Do not leave
+  it: the public read takes a record that it cannot read for none, so the next publish of a
+  `builds/<ref>/` directory would be compared with nothing, and `latest/` would refuse every
+  release. Restore the bucket's public access and re-run the job, which finds the record and
+  goes on to the invalidation; a dispatch for the ref uploads everything again.
 - `CloudFront builds/<ref>/ not invalidated` or `CloudFront latest/ not invalidated`, which
   says that the files and the record are in S3 and are correct and that only the invalidation
   failed, with AWS's `(AccessDenied) when calling the CreateInvalidation operation`:
@@ -1184,11 +1260,12 @@ their GitHub Release from here: attach them by hand.
 
   The upload is the command the workflow runs for every file: the `public-read` ACL, and the
   content type that the AWS CLI derives from the name, `application/json`. `curl` must print
-  the record, because the decision reads it from that URL. A publish that stopped for want of
-  the record then goes on with _Re-run failed jobs_, for the three days its `publish-set`
-  artifact is kept. From then on a newer release is promoted and an older one refused, as with
-  any record. The seed lists no files, so the first promotion cannot warn of files left from
-  the earlier uploads: compare `aws s3 ls s3://qgroundcontrol/latest/` with its summary once.
+  the record, because the decision and the upload read it from that URL. A publish that
+  stopped for want of the record then goes on with _Re-run failed jobs_, for the three days
+  its `publish-set` artifact is kept. From then on a newer release is promoted and an older
+  one refused, as with any record. The seed lists no files, so the first promotion cannot
+  warn of files left from the earlier uploads: compare
+  `aws s3 ls s3://qgroundcontrol/latest/` with its summary once.
 - **Or force the first promotion**:
   `gh workflow run publish.yml -f ref=vX.Y.Z -f force_latest=true` publishes the tag to
   `latest/` whatever that holds, and writes the record. Nothing is compared, so use it only

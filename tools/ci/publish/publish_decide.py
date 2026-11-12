@@ -31,10 +31,11 @@ a ref named by hand (``--ref``), which stands for that ref's newest complete bui
    which keeps its files unless a request by hand sets ``--force-release``.
 
 ``confirm`` repeats steps 3 to 5 for one target from inside the job that writes it, where runs
-take turns. S3 is read without credentials here, so a directory that seems to hold nothing is
-checked again by ``aws_upload.py``, with credentials, before it uploads. A record that another
-repository wrote is reported and not compared with: a dry run in a fork reads upstream's
-bucket. Whether the packages carry publish markers is ``publish_set.py``'s part, after download.
+take turns. S3 is read without credentials here, and ``aws_upload.py`` reads the record again
+before it uploads: from the same public URL, or with credentials when it is told to. A record
+that another repository wrote is reported and not compared with: a dry run in a fork reads
+upstream's bucket. Whether the packages carry publish markers is ``publish_set.py``'s part,
+after download.
 """
 
 from __future__ import annotations
@@ -271,7 +272,7 @@ def release_verdict(
     Without a public record (*held* is None) the answer is to start the job. ``latest/`` held a
     release before it had a record, and a missing record reads like a private one from here, so
     skipping the target and taking it for empty would both be wrong. ``aws_upload.py promote``
-    reads the bucket's own record and refuses without one, unless forced.
+    reads the record again and refuses without one, unless forced.
     """
     version = release_version(tag)
     if version is None:
@@ -280,7 +281,7 @@ def release_verdict(
         if force:
             return True, "has no public record of what it holds, and is replaced as requested"
         return True, (
-            "has no public record of what it holds: its job reads the bucket's own record, and "
+            "has no public record of what it holds: its job reads the record again, and "
             "without one stops until the record is seeded or the release is published by hand "
             "with force_latest"
         )

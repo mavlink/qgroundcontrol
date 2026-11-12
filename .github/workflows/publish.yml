@@ -252,6 +252,10 @@ jobs:
       PUBLISH_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       # Only whether credentials exist; without any the upload step warns and uploads nothing.
       HAS_AWS_CREDENTIALS: ${{ secrets.AWS_ROLE_ARN != '' || (secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '') }}
+      # The upload reads published.json from its public URL. To read it with the role instead,
+      # add `PUBLISH_RECORD_READ: credentialed` here and to s3-latest, once the role has
+      # s3:GetObject on the published.json objects and s3:ListBucket on the bucket
+      # (platforms.md#aws-setup).
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
@@ -271,8 +275,8 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
-      # From the public record. The upload reads the record again with the job's credentials,
-      # and stops before it writes when the directory holds a newer commit or S3 does not say.
+      # From the public record. The upload reads the record again, and stops before it writes
+      # when the directory holds a newer commit or S3 does not say.
       - name: Confirm builds/ is behind this commit
         id: confirm
         run: python3 tools/ci/publish/publish_decide.py confirm --target s3
@@ -377,8 +381,8 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       # Refuses any tag that is not vX.Y.Z on a Stable* branch, as the decision already did. Unless
-      # force_latest is set, it also refuses a release older than the one the bucket's own record
-      # names, and any release while latest/ has no record (platforms.md#seeding-the-latest-record).
+      # force_latest is set, it also refuses a release older than the one latest/'s record names,
+      # and any release while latest/ has no record (platforms.md#seeding-the-latest-record).
       - name: Upload to latest/
         if: steps.confirm.outputs.proceed == 'true'
         run: python3 tools/ci/publish/aws_upload.py promote --set "${RUNNER_TEMP}/publish-set"

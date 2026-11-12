@@ -339,6 +339,9 @@ Store uploads and builder images of the jobs that ran aren't undone.
   Its jobs (_GitHub daily release_ for `master`, _S3 builds/_, _S3 latest/_, _GitHub Release assets_) fail independently, so use _Re-run failed jobs_ on the run within three days; a job whose target already holds the release does nothing.
   If _S3 latest/_ failed partway, `latest/` holds a mix of two releases until that job passes.
   If _S3 builds/_ or _S3 latest/_ failed in its _Invalidate … in CloudFront_ step, the files are uploaded and correct, and re-running the job sends only the invalidation again.
+  If one of them failed because its record _was uploaded but cannot be read back_, the files are uploaded, but the download server doesn't let anyone read `published.json`.
+  Don't ignore that: _Publish Builds_ reads this record to keep an older build from replacing a newer one.
+  Have someone with access to the S3 bucket make the object public again, then re-run the job.
   If it failed because `latest/` _has no publication record_, nothing was uploaded there and `builds/vX.Y.Z/` is complete: have the record written (see [Pre-flight](#release_preflight)) and re-run the failed job.
   To start a publish by hand, run the workflow from `master` with the tag as its `ref`:
 

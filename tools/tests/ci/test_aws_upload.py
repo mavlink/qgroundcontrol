@@ -159,10 +159,11 @@ class Aws:
     """Stand-in for the AWS CLI, git, GitHub's compare API and the bucket's public endpoint."""
 
     def __init__(self, monkeypatch: pytest.MonkeyPatch, stable_branches: str = "") -> None:
-        # Every command that writes, and every record read with credentials: its key and how
-        # many writes preceded it.
+        # Every command that writes, and every record read, with credentials (`reads`) or
+        # from the public endpoint (`fetches`): its key and how many writes preceded it.
         self.commands: list[list[str]] = []
         self.reads: list[tuple[str, int]] = []
+        self.fetches: list[tuple[str, int]] = []
         self.git: list[tuple[str, ...]] = []
         self.failing: set[str] = set()
         # The call that fails, counted from 1 over every `aws` command, what the CLI prints
@@ -173,8 +174,12 @@ class Aws:
         self.missing = False
         self.git_returncode = 0
         self.stable_branches = stable_branches
-        # Whether the public endpoint serves the records, and why a read with credentials fails.
+        # Whether the public endpoint serves the records, what it answers the next reads of
+        # a key in place of its record, its status for a key without one, and why a read
+        # with credentials fails.
         self.readable = True
+        self.answers: dict[str, list[bytes | Exception]] = {}
+        self.missing_status = 403
         self.read_error: str | None = None
         # Records by key: what `aws s3 cp` uploaded.
         self.records: dict[str, dict] = {}
@@ -248,8 +253,16 @@ class Aws:
 
     def _fetch(self, url: str, **_: object) -> bytes:
         key = url.removeprefix("https://qgroundcontrol.s3.us-west-2.amazonaws.com/")
-        if not self.readable or key not in self.records:
+        self.fetches.append((key, len(self.commands)))
+        if self.answers.get(key):
+            answer = self.answers[key].pop(0)
+            if isinstance(answer, Exception):
+                raise answer
+            return answer
+        if not self.readable:
             raise _http_error(403)
+        if key not in self.records:
+            raise _http_error(self.missing_status)
         return json.dumps(self.records[key]).encode()
 
     @property
@@ -264,6 +277,13 @@ class Aws:
     @property
     def invalidations(self) -> list[list[str]]:
         return [command for command in self.commands if command[1] == "cloudfront"]
+
+
+@pytest.fixture(params=aws_upload.RECORD_READS)
+def record_read(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> str:
+    """Run the test once with each way of reading the record that a directory holds."""
+    monkeypatch.setenv("PUBLISH_RECORD_READ", request.param)
+    return request.param
 
 
 def _run(command: str, files: PublishSet, *extra: str) -> int:
@@ -565,21 +585,48 @@ def test_a_branch_s_packages_ask_nothing_about_tags(
     assert aws.requests == []
 
 
-@pytest.mark.parametrize("command", ["publish", "promote"])
-def test_a_dry_run_uploads_nothing(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, gh_summary: Path, command: str
+# Every command as a job runs it: the two that read a record, with each way to read it.
+COMMANDS = [
+    *(
+        pytest.param(command, ("--record-read", read), id=f"{command} {read}")
+        for command in ("publish", "promote")
+        for read in aws_upload.RECORD_READS
+    ),
+    pytest.param("invalidate", ("--distribution-id", DISTRIBUTION), id="invalidate"),
+    pytest.param(
+        "invalidate", ("--latest", "--distribution-id", DISTRIBUTION), id="invalidate latest"
+    ),
+]
+
+
+def _command(command: str, options: tuple[str, ...], files: PublishSet) -> int:
+    if command == "invalidate":
+        return main([command, "--ref", files.ref, *options])
+    return _run(command, files, *options)
+
+
+@pytest.mark.parametrize(("command", "options"), COMMANDS)
+@pytest.mark.parametrize("asked", ["flag", "environment"])
+def test_a_dry_run_uploads_nothing_and_makes_no_call_that_needs_credentials(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    gh_summary: Path,
+    command: str,
+    options: tuple[str, ...],
+    asked: str,
 ) -> None:
+    # A dry run configures no credentials, so the `aws` CLI must not be started at all,
+    # however the record is read. A read of the record's public URL is no such call.
     aws = Aws(monkeypatch, stable_branches="origin/Stable_V5.1\n")
+    _seed(aws)
     files = write_set(tmp_path / "set", ref=TAG, commit=TAG_COMMIT)
+    monkeypatch.setenv("PUBLISH_DRY_RUN", str(asked == "environment").lower())
 
-    assert _run(command, files, "--dry-run") == 0
-    monkeypatch.setenv("PUBLISH_DRY_RUN", "true")
-    assert _run(command, files) == 0
+    assert _command(command, (*options, *(["--dry-run"] if asked == "flag" else [])), files) == 0
 
-    # Not even a read: a dry run has no AWS credentials.
-    assert (aws.commands, aws.reads) == ([], [])
+    assert (aws.calls, aws.commands, aws.reads) == (0, [], [])
     assert not (files.directory / "published.json").exists()
-    assert "dry run: nothing was uploaded" in gh_summary.read_text(encoding="utf-8")
+    assert "dry run: nothing was" in gh_summary.read_text(encoding="utf-8")
 
 
 def test_without_credentials_nothing_is_uploaded_and_the_job_passes_with_a_warning(
@@ -612,27 +659,30 @@ def test_a_failed_upload_stops_before_the_record(
     assert public_record("builds/master") is None
 
 
-@pytest.mark.parametrize("status", [403, 503])
 def test_a_record_that_cannot_be_read_back_fails_the_publish(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], status: int
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    # A record the public endpoint does not serve would read as "nothing published" forever,
-    # and neither does an endpoint that fails say what the directory holds.
-    Aws(monkeypatch)
-    _serve(monkeypatch, _http_error(status))
+    # The endpoint fails after the upload: nothing says that the record can be read.
+    aws = Aws(monkeypatch)
+    aws.answers["builds/master/published.json"] = [_http_error(403), _http_error(503)]
     files = write_set(tmp_path / "set")
 
     assert _run("publish", files) == 1
 
-    error = "::error title=S3 builds/master/ not published::s3://qgroundcontrol/builds/master/"
-    assert f"{error}published.json was uploaded but cannot be read back" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    url = "https://qgroundcontrol.s3.us-west-2.amazonaws.com/builds/master/published.json"
+    assert (
+        "::error title=S3 builds/master/ not published::s3://qgroundcontrol/builds/master/"
+        f"published.json was uploaded but cannot be read back from {url} (cannot read {url}: "
+        "HTTP 503). A run that reads the record there"
+    ) in out
 
 
 @pytest.mark.parametrize(
     ("command", "prefix"), [("publish", "builds/v5.1.5"), ("promote", "latest")]
 )
-def test_the_record_is_read_with_the_job_s_credentials_before_the_first_upload(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, command: str, prefix: str
+def test_the_record_is_read_before_the_first_upload(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, record_read: str, command: str, prefix: str
 ) -> None:
     # builds/v5.1.5/ has no record: the tag's first publication. latest/ holds v5.1.4.
     aws = Aws(monkeypatch, stable_branches="origin/Stable_V5.1\n")
@@ -641,12 +691,203 @@ def test_the_record_is_read_with_the_job_s_credentials_before_the_first_upload(
 
     assert _run(command, files) == 0
 
-    assert aws.reads == [(f"{prefix}/published.json", 0)]
-    assert aws.records[f"{prefix}/published.json"]["commit"] == TAG_COMMIT
+    record = f"{prefix}/published.json"
+    # The public endpoint is read once more after the record's upload: the read-back.
+    read_back = (record, 2 * len(NAMES) + 1)
+    if record_read == "credentialed":
+        assert (aws.reads, aws.fetches) == ([(record, 0)], [read_back])
+    else:
+        assert (aws.reads, aws.fetches) == ([], [(record, 0), read_back])
+    assert aws.records[record]["commit"] == TAG_COMMIT
+
+
+@pytest.mark.parametrize(
+    ("option", "variable", "read"),
+    [
+        # Nothing set, and a variable that a workflow passes on empty: the public read.
+        ((), None, "public"),
+        ((), "", "public"),
+        ((), "public", "public"),
+        ((), "credentialed", "credentialed"),
+        (("--record-read", "credentialed"), None, "credentialed"),
+        # The option wins over the variable.
+        (("--record-read", "public"), "credentialed", "public"),
+        (("--record-read", "credentialed"), "public", "credentialed"),
+    ],
+)
+@pytest.mark.parametrize("command", ["publish", "promote"])
+def test_the_record_is_read_as_the_option_or_the_variable_says_and_publicly_by_default(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    command: str,
+    option: tuple[str, ...],
+    variable: str | None,
+    read: str,
+) -> None:
+    aws = Aws(monkeypatch, stable_branches="origin/Stable_V5.1\n")
+    _seed(aws)
+    if variable is None:
+        monkeypatch.delenv("PUBLISH_RECORD_READ", raising=False)
+    else:
+        monkeypatch.setenv("PUBLISH_RECORD_READ", variable)
+    files = write_set(tmp_path / "set", ref=TAG, commit=TAG_COMMIT)
+
+    assert _run(command, files, *option) == 0
+
+    # Only the credentialed read starts `aws s3api get-object`.
+    assert bool(aws.reads) is (read == "credentialed")
+    assert aws.calls == 2 * len(NAMES) + 1 + len(aws.reads)
+
+
+@pytest.mark.parametrize(
+    ("option", "variable"),
+    [
+        (("--record-read", "private"), None),
+        (("--record-read", ""), None),
+        ((), "Credentialed"),
+        ((), "true"),
+        # The variable does not stand in for an option that is wrong.
+        (("--record-read", "nonsense"), "credentialed"),
+    ],
+)
+@pytest.mark.parametrize("command", ["publish", "promote"])
+def test_an_unknown_way_to_read_the_record_is_refused_before_anything_is_read(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    command: str,
+    option: tuple[str, ...],
+    variable: str | None,
+) -> None:
+    aws = Aws(monkeypatch, stable_branches="origin/Stable_V5.1\n")
+    _seed(aws)
+    if variable is None:
+        monkeypatch.delenv("PUBLISH_RECORD_READ", raising=False)
+    else:
+        monkeypatch.setenv("PUBLISH_RECORD_READ", variable)
+    files = write_set(tmp_path / "set", ref=TAG, commit=TAG_COMMIT)
+
+    assert _run(command, files, *option) == 1
+
+    assert (aws.calls, aws.fetches) == (0, [])
+    value = option[1] if option else variable
+    assert (
+        f"::error::The record read must be public or credentialed, not {value!r} "
+        "(--record-read, PUBLISH_RECORD_READ)"
+    ) in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("status", [403, 404])
+def test_a_directory_whose_public_record_is_missing_holds_nothing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, status: int
+) -> None:
+    # The bucket cannot be listed, so S3 answers 403 for a missing key to an anonymous
+    # caller, and 404 if it ever can be.
+    aws = Aws(monkeypatch)
+    aws.missing_status = status
+    files = write_set(tmp_path / "set")
+
+    assert _run("publish", files) == 0
+
+    assert aws.reads == []
+    assert aws.fetches[0] == ("builds/master/published.json", 0)
+    assert public_record("builds/master") == Record(COMMIT, MASTER, tuple(NAMES), REPO)
+
+
+@pytest.mark.parametrize(
+    ("command", "prefix"), [("publish", "builds/v5.1.5"), ("promote", "latest")]
+)
+@pytest.mark.parametrize(
+    ("answer", "problem"),
+    [
+        (_http_error(500), "published.json: HTTP 500"),
+        (_http_error(400), "published.json: HTTP 400"),
+        # What `fetch_bytes` raises once its attempts at a connection are used up.
+        (RuntimeError("Failed to fetch after 3 attempts: timed out"), "after 3 attempts"),
+        (OSError("Network is unreachable"), "Network is unreachable"),
+        (b"<html>Service Unavailable</html>", "Expecting value"),
+        (b'{"ref": "refs/tags/v5.1.4"}', "published.json does not record a commit"),
+    ],
+    ids=["500", "400", "no connection", "no network", "not json", "no commit"],
+)
+def test_a_public_record_that_cannot_be_read_stops_the_job_before_it_uploads_anything(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    command: str,
+    prefix: str,
+    answer: bytes | Exception,
+    problem: str,
+) -> None:
+    # Only "no such object" means that nothing is published: any other answer leaves open
+    # that the directory holds a newer build.
+    aws = Aws(monkeypatch, stable_branches="origin/Stable_V5.1\n")
+    _seed(aws)
+    aws.answers[f"{prefix}/published.json"] = [answer]
+    files = write_set(tmp_path / "set", ref=TAG, commit=TAG_COMMIT)
+
+    assert _run(command, files) == 1
+
+    assert (aws.calls, aws.commands) == (0, [])
+    out = capsys.readouterr().out
+    url = f"https://qgroundcontrol.s3.us-west-2.amazonaws.com/{prefix}/published.json"
+    assert out.count("::error") == 1
+    assert f"::error title=S3 {prefix}/ not published::" in out
+    assert url in out and problem in out
+    assert "so nothing is uploaded: what the directory holds is unknown" in out
+
+
+def test_a_record_that_the_public_endpoint_hides_is_found_by_the_read_back_of_the_next_write(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # builds/master/ holds COMMIT, but anonymous readers get 403, as they do for a missing
+    # record. The public read cannot tell the two apart, so the older commit is uploaded: the
+    # read-back of its record is what fails the job and says why that matters.
+    aws = Aws(monkeypatch)
+    aws.records["builds/master/published.json"] = {"ref": MASTER, "commit": COMMIT}
+    aws.readable = False
+    files = write_set(tmp_path / "set", commit=OLDER_COMMIT)
+
+    assert _run("publish", files) == 1
+
+    assert aws.keys[-1] == "builds/master/published.json"
+    assert (
+        "::error title=S3 builds/master/ not published::s3://qgroundcontrol/builds/master/"
+        "published.json was uploaded but cannot be read back from https://qgroundcontrol.s3."
+        "us-west-2.amazonaws.com/builds/master/published.json. A run that reads the record "
+        "there (the default) takes a record it cannot read for none, which switches the "
+        "never-regress check off: an older commit can then replace a newer one in a builds/ "
+        "directory, and latest/ refuses every release. Do not ignore this failure: make the "
+        "object publicly readable (the bucket's public-access and ACL settings), then re-run "
+        "this job."
+    ) in capsys.readouterr().out
+
+
+def test_a_newer_commit_in_a_branch_s_directory_is_not_replaced_by_an_older_one(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    record_read: str,
+) -> None:
+    aws = Aws(monkeypatch)
+    aws.records["builds/master/published.json"] = {"ref": MASTER, "commit": COMMIT}
+    files = write_set(tmp_path / "set", commit=OLDER_COMMIT)
+
+    assert _run("publish", files) == 1
+
+    assert aws.commands == []
+    assert aws.records["builds/master/published.json"]["commit"] == COMMIT
+    assert (
+        "::error title=S3 builds/master/ not published::Nothing is uploaded: builds/master/ "
+        f"holds {COMMIT}, and {OLDER_COMMIT} is behind relative to it"
+    ) in capsys.readouterr().out
 
 
 def test_latest_without_a_record_is_not_taken_for_empty(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    record_read: str,
 ) -> None:
     # latest/ holds the release that the build jobs uploaded for themselves, and no record:
     # nothing says that it is older than v5.1.5, whose builds have just completed.
@@ -690,6 +931,7 @@ def test_a_seeded_record_orders_the_first_release_that_is_promoted(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
+    record_read: str,
     held: str,
     promoted: bool,
 ) -> None:
@@ -775,9 +1017,9 @@ def test_a_record_the_role_cannot_read_stops_the_job_before_it_uploads_anything(
     aws.read_error = error
     files = write_set(tmp_path / "set", ref=TAG, commit=TAG_COMMIT)
 
-    assert _run(command, files) == 1
+    assert _run(command, files, "--record-read", "credentialed") == 1
 
-    assert aws.commands == []
+    assert (aws.commands, aws.fetches) == ([], [])
     out = capsys.readouterr().out
     assert "published.json, so nothing is uploaded" in out
     for permission in (
@@ -793,13 +1035,14 @@ def test_a_newer_build_whose_record_the_public_endpoint_hides_is_not_overwritten
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     # builds/master/ holds COMMIT, but anonymous readers get 403, as they do for a missing
-    # record, so the decision took the directory for empty and sent an older commit.
+    # record, so the decision took the directory for empty and sent an older commit. The
+    # read with credentials sees the record.
     aws = Aws(monkeypatch)
     aws.records["builds/master/published.json"] = {"ref": MASTER, "commit": COMMIT}
     aws.readable = False
     files = write_set(tmp_path / "set", commit=OLDER_COMMIT)
 
-    assert _run("publish", files) == 1
+    assert _run("publish", files, "--record-read", "credentialed") == 1
 
     assert aws.commands == []
     assert aws.records["builds/master/published.json"]["commit"] == COMMIT
@@ -807,7 +1050,10 @@ def test_a_newer_build_whose_record_the_public_endpoint_hides_is_not_overwritten
 
 
 def test_a_record_that_names_no_commit_stops_the_job_too(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    record_read: str,
 ) -> None:
     aws = Aws(monkeypatch)
     aws.records["builds/master/published.json"] = {"ref": MASTER}
@@ -846,7 +1092,12 @@ def test_a_branch_s_directory_moves_forward_and_takes_its_commit_again(
     ],
 )
 def test_latest_goes_back_to_an_older_release_only_when_forced(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, held: str, force: str, promoted: bool
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    record_read: str,
+    held: str,
+    force: str,
+    promoted: bool,
 ) -> None:
     aws = Aws(monkeypatch, stable_branches="origin/Stable_V5.1\n")
     aws.records["latest/published.json"] = {"ref": held, "commit": COMMIT}
@@ -884,6 +1135,7 @@ def test_another_repository_s_build_is_neither_compared_with_nor_replaced(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
+    record_read: str,
     command: str,
     prefix: str,
     ref: str,
@@ -991,37 +1243,28 @@ AWS_FAILURES = (
 )
 
 
-@pytest.mark.parametrize(
-    ("command", "ref", "commit", "extra"),
-    [
-        ("publish", MASTER, COMMIT, ()),
-        ("promote", TAG, TAG_COMMIT, ()),
-        ("invalidate", MASTER, COMMIT, ("--distribution-id", DISTRIBUTION)),
-        ("invalidate", TAG, TAG_COMMIT, ("--latest", "--distribution-id", DISTRIBUTION)),
-    ],
-)
+@pytest.mark.parametrize(("command", "options"), COMMANDS)
 def test_whichever_aws_call_fails_the_command_reports_an_error_and_fails(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
     command: str,
-    ref: str,
-    commit: str,
-    extra: tuple[str, ...],
+    options: tuple[str, ...],
 ) -> None:
     def run(directory: str, failing_call: int | None, failure: str | None) -> tuple[Aws, int]:
         aws = Aws(monkeypatch, stable_branches="origin/Stable_V5.1\n")
         _seed(aws)
         aws.failing_call, aws.missing = failing_call, failure is None
         aws.error = failure or ""
-        if command == "invalidate":
-            return aws, main([command, "--ref", ref, *extra])
+        files = write_set(tmp_path / directory, ref=TAG, commit=TAG_COMMIT)
         # An exception that escapes here is a traceback in the job's log.
-        return aws, _run(command, write_set(tmp_path / directory, ref=ref, commit=commit))
+        return aws, _command(command, options, files)
 
-    # An upload reads the record, writes each package with its checksum, then the record.
+    # An upload writes each package with its checksum, then the record, after the read of
+    # the record that the directory holds, which only the credentialed read asks of AWS.
     aws, status = run("passes", None, "")
-    calls = 1 if command == "invalidate" else 2 * len(NAMES) + 2
+    calls = 1 if command == "invalidate" else 2 * len(NAMES) + 1 + len(aws.reads)
+    assert bool(aws.reads) is ("credentialed" in options)
     assert (status, aws.calls) == (0, calls)
     for call in range(1, calls + 1):
         for number, failure in enumerate(AWS_FAILURES):

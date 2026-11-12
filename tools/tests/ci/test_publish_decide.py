@@ -883,9 +883,9 @@ def test_latest_without_a_public_record_is_left_to_the_job_that_reads_the_bucket
 ) -> None:
     # latest/ holds whatever the build jobs uploaded for themselves, and no record. From here a
     # missing record and a private one look the same, so the decision neither skips latest/ nor
-    # takes it for empty: its job starts, reads the bucket's own record and stops without one.
+    # takes it for empty: its job starts, reads the record again and stops without one.
     left_to_the_job = (
-        "has no public record of what it holds: its job reads the bucket's own record, and "
+        "has no public record of what it holds: its job reads the record again, and "
         "without one stops until the record is seeded or the release is published by hand with "
         "force_latest"
     )
@@ -915,9 +915,9 @@ def test_a_dry_run_reports_what_happens_to_a_latest_without_a_record(
     outputs = read_github_file(gh_output)
     assert (outputs["s3"], outputs["latest"], outputs["dry-run"]) == ("true", "true", "true")
     assert (
-        "| Target `latest` | has no public record of what it holds: its job reads the bucket's "
-        "own record, and without one stops until the record is seeded or the release is "
-        "published by hand with force_latest |"
+        "| Target `latest` | has no public record of what it holds: its job reads the record "
+        "again, and without one stops until the record is seeded or the release is published "
+        "by hand with force_latest |"
     ) in gh_summary.read_text(encoding="utf-8")
 
 

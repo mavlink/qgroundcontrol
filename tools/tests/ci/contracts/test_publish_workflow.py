@@ -6,6 +6,7 @@ import re
 from typing import Any
 
 import pytest
+from ci.publish.aws_upload import RECORD_READ_VARIABLE
 from ci.publish.publish_set import PUBLISHABLE_CONCLUSIONS
 
 from ..._helpers import (
@@ -271,6 +272,17 @@ def test_a_fork_s_draft_release_gets_packages_only_when_the_fork_opts_in(
 ) -> None:
     expression = _decide_env("PUBLISH_RELEASE_ASSETS")
     assert bool(evaluate_expression(expression, context)) is attached
+
+
+def test_the_record_is_read_from_its_public_url_which_needs_no_permission_of_the_role() -> None:
+    # aws_upload.py reads with credentials only when its variable or its option says so. The
+    # workflow sets neither: the role has not been given the permissions that such a read takes.
+    workflow = load_workflow(WORKFLOW)
+    settings = [workflow.get("env", {})]
+    for job in workflow["jobs"].values():
+        settings += [job.get("env", {}), *(step.get("env", {}) for step in job["steps"])]
+        assert not any("--record-read" in str(step.get("run", "")) for step in job["steps"])
+    assert not any(RECORD_READ_VARIABLE in env for env in settings)
 
 
 @pytest.mark.parametrize(
