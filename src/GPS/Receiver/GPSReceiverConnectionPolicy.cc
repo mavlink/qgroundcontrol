@@ -321,7 +321,8 @@ bool GPSReceiverConnectionPolicy::_connectConfigured(bool allowPersistentChanges
                                     type, check.request);
     }
     if (check.connection == RTKSettings::Udp) {
-        return _receiver.connectUdp(static_cast<quint16>(_configuration.udpPort), type, check.request);
+        // connectability() lets only a passive receiver through.
+        return _receiver.connectUdp(static_cast<quint16>(_configuration.udpPort), check.request);
     }
     // What follows depends on the devices present, so automatic connection retries it.
     const QString device = _configuration.serialDevice.trimmed();

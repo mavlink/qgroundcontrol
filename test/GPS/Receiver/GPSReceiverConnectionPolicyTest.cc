@@ -261,6 +261,39 @@ void GPSReceiverConnectionPolicyTest::_connectConfiguredValidationErrors()
     QCOMPARE(harness.attempts(), attempts);
 }
 
+void GPSReceiverConnectionPolicyTest::_udpConnectsOnlyPassiveReceivers_data()
+{
+    QTest::addColumn<int>("manufacturer");
+    QTest::newRow("Automatic") << GPS_AUTOMATIC_MANUFACTURER;
+    QTest::newRow("unknown") << 99;
+    for (const GPSReceiverDescriptor& family : gpsReceiverDescriptors()) {
+        QTest::newRow(QByteArray(family.name.data(), family.name.size()).constData()) << family.manufacturerId;
+    }
+}
+
+void GPSReceiverConnectionPolicyTest::_udpConnectsOnlyPassiveReceivers()
+{
+    QFETCH(int, manufacturer);
+    // UDP only receives, so its connection takes no receiver type. Whatever manufacturer the settings hold, a
+    // configured base is refused before one is opened.
+    auto configuration = receiverConfiguration();
+    configuration.baseReceiverManufacturer = manufacturer;
+    configuration.connectionType = RTKSettings::Udp;
+    configuration.autoConnect = false;
+    PolicyHarness harness(configuration);
+    GPSReceiver& receiver = harness.receiver;
+    QVERIFY(!receiver.connectReceiver());
+    QVERIFY(!receiver.errorMessage().isEmpty());
+    QCOMPARE(harness.attempts(), 0);
+
+    // With the same manufacturer left in the settings, a passive receiver's connection is passive.
+    configuration.receiverRole = RTKSettings::Passive;
+    receiver.setConfiguration(configuration);
+    QVERIFY(receiver.connectReceiver());
+    QCOMPARE(harness.worker()->type(), GPSType::Passive);
+    QCOMPARE(receiver.activeRole(), RTKSettings::Passive);
+}
+
 void GPSReceiverConnectionPolicyTest::_configurationChangeCancelsRetry_data()
 {
     QTest::addColumn<QString>("change");

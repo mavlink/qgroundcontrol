@@ -326,12 +326,12 @@ bool GPSReceiver::connectTcp(const QString& host, quint16 port, GPSType type, GP
         QStringLiteral("tcp:%1").arg(endpoint), std::move(request), {}, endpoint);
 }
 
-bool GPSReceiver::connectUdp(quint16 port, GPSType type, GPSReceiverConfig request)
+bool GPSReceiver::connectUdp(quint16 port, GPSReceiverConfig request)
 {
     //: %1 is the local UDP port the receiver's data arrives on
     const QString endpoint = tr("UDP port %1").arg(port);
     return _connectReceiver(
-        type,
+        GPSType::Passive,
         [port](GPSCancelToken cancelToken) { return std::make_unique<UDPGPSTransport>(port, std::move(cancelToken)); },
         QStringLiteral("udp:%1").arg(port), std::move(request), {}, endpoint);
 }

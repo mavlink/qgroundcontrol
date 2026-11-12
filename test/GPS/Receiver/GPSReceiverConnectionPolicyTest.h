@@ -12,6 +12,8 @@ private slots:
     void _lostConnectionRetriesWithBackoff();
     void _connectConfiguredValidationErrors_data();
     void _connectConfiguredValidationErrors();
+    void _udpConnectsOnlyPassiveReceivers_data();
+    void _udpConnectsOnlyPassiveReceivers();
     void _configurationChangeCancelsRetry_data();
     void _configurationChangeCancelsRetry();
     void _unconnectableConfigurationIsNotRetried_data();

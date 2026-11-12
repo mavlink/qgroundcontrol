@@ -92,7 +92,9 @@ public:
     virtual void setConnectionError(const QString& message) = 0;
     virtual void endConnection(ShownError error) = 0;
     virtual bool connectTcp(const QString& host, quint16 port, GPSType type, GPSReceiverConfig request) = 0;
-    virtual bool connectUdp(quint16 port, GPSType type, GPSReceiverConfig request) = 0;
+    /// UDP only receives, so the connection takes no receiver type: its receiver is a passive one, which is sent
+    /// nothing.
+    virtual bool connectUdp(quint16 port, GPSReceiverConfig request) = 0;
     /// @a claim is the policy's claim of @a device from the receiver's GPSReceiverSerialPorts.
     virtual bool connectSerial(const QString& device, GPSType type, GPSReceiverConfig request,
                                GPSSerialClaim claim) = 0;

@@ -292,7 +292,7 @@ private:
 
     void endConnection(ShownError error) override;
     bool connectTcp(const QString& host, quint16 port, GPSType type, GPSReceiverConfig request) override;
-    bool connectUdp(quint16 port, GPSType type, GPSReceiverConfig request) override;
+    bool connectUdp(quint16 port, GPSReceiverConfig request) override;
     bool connectSerial(const QString& device, GPSType type, GPSReceiverConfig request, GPSSerialClaim claim) override;
     /// Ends a serial session whose device the scan no longer lists.
     void _onSerialPortsScanned(const QStringList& devices);
