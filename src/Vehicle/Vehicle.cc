@@ -2783,11 +2783,14 @@ void Vehicle::_updateHomepoint()
         const double altitude =
             gcsObservation ? gcsObservation->altitudeMslMeters().value_or(homeAltitude) : homeAltitude;
         if (coordinate().isValid() && gcsPosition.isValid() && qIsFinite(altitude)) {
+            // The ground station's position has no heading. In this command 0 is a yaw angle, and NaN leaves the
+            // vehicle's default heading.
+            const float noYaw = static_cast<float>(qQNaN());
             if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
-                sendMavCommandInt(defaultComponentId(), MAV_CMD_DO_SET_HOME, MAV_FRAME_GLOBAL, false, 0, 0, 0, 0,
+                sendMavCommandInt(defaultComponentId(), MAV_CMD_DO_SET_HOME, MAV_FRAME_GLOBAL, false, 0, 0, 0, noYaw,
                                   gcsPosition.latitude(), gcsPosition.longitude(), static_cast<float>(altitude));
             } else {
-                sendMavCommand(defaultComponentId(), MAV_CMD_DO_SET_HOME, false, 0, 0, 0, 0,
+                sendMavCommand(defaultComponentId(), MAV_CMD_DO_SET_HOME, false, 0, 0, 0, noYaw,
                                static_cast<float>(gcsPosition.latitude()), static_cast<float>(gcsPosition.longitude()),
                                static_cast<float>(altitude));
             }

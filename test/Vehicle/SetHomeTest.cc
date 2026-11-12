@@ -120,6 +120,8 @@ void verifyOneCommandLong(const SentSetHomeCommands& sent, const QGeoCoordinate&
     QCOMPARE(sent.asCommandLong.size(), 1);
     const mavlink_command_long_t& command = sent.asCommandLong.constFirst();
     QCOMPARE(command.param1, 0.0f);  // use the location in the command, not the current position
+    // No yaw: home keeps the vehicle's default heading.
+    QVERIFY(qIsNaN(command.param4));
     // COMMAND_LONG carries the location as floats, about half a meter apart at this latitude.
     QCOMPARE(command.param5, static_cast<float>(coord.latitude()));
     QCOMPARE(command.param6, static_cast<float>(coord.longitude()));
@@ -139,6 +141,8 @@ void SetHomeTest::_verifySetHomeCommandInt(const QGeoCoordinate& coord, double a
     QCOMPARE(command.command, static_cast<uint16_t>(MAV_CMD_DO_SET_HOME));
     QCOMPARE(command.frame, static_cast<uint8_t>(MAV_FRAME_GLOBAL));
     QCOMPARE(command.param1, 0.0f);  // use the location in the command, not the current position
+    // No yaw: home keeps the vehicle's default heading.
+    QVERIFY(qIsNaN(command.param4));
     QCOMPARE(command.x, static_cast<int32_t>(coord.latitude() * 1e7));
     QCOMPARE(command.y, static_cast<int32_t>(coord.longitude() * 1e7));
     QCOMPARE(command.z, static_cast<float>(amslAltitude));

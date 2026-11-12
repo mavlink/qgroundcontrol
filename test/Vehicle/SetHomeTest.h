@@ -6,8 +6,8 @@
 
 /// Verifies how MAV_CMD_DO_SET_HOME is sent for both "Set Home Here" and the GCS-position home
 /// update: as COMMAND_INT in MAV_FRAME_GLOBAL when the vehicle advertises
-/// MAV_PROTOCOL_CAPABILITY_COMMAND_INT (MockLink does), as COMMAND_LONG when it does not, and
-/// with which altitude, for a vehicle with and without a home position.
+/// MAV_PROTOCOL_CAPABILITY_COMMAND_INT (MockLink does), as COMMAND_LONG when it does not, without
+/// a yaw, and with which altitude, for a vehicle with and without a home position.
 class SetHomeTest : public VehicleTest
 {
     Q_OBJECT
@@ -26,7 +26,7 @@ private slots:
     void _gcsPositionUpdateSendsCommandLong();
 
 private:
-    /// Waits for a DO_SET_HOME COMMAND_INT and checks its frame and location
+    /// Waits for a DO_SET_HOME COMMAND_INT and checks its frame, unset yaw and location
     void _verifySetHomeCommandInt(const QGeoCoordinate& coord, double amslAltitude);
 
     /// Replaces the connected vehicle with one that reports its capabilities without COMMAND_INT
