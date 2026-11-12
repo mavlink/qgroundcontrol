@@ -1116,33 +1116,49 @@ void GPSReceiverTest::_passiveInputStatus_data()
     QTest::addColumn<bool>("forward");
     QTest::addColumn<QString>("detected");
     QTest::addColumn<QString>("message");
+    // The receiver is the position receiver, which forwards no corrections whatever its settings say.
+    QTest::addColumn<bool>("positionReceiver");
     constexpr int none = -1;
     QTest::newRow("no-data") << GPSInputProblem::NoData << none << true << QString()
                              << QStringLiteral(
                                     "No data from the receiver on rtk.test:2101. Check the device and "
-                                    "that no other program is using it.");
+                                    "that no other program is using it.")
+                             << false;
     QTest::newRow("not-gnss") << GPSInputProblem::NotGNSS << none << true << QString()
                               << QStringLiteral(
-                                     "Receiving data that isn't GNSS output. Check the device and baud rate.");
+                                     "Receiving data that isn't GNSS output. Check the device and baud rate.")
+                              << false;
     QTest::newRow("ubx") << GPSInputProblem::NoPositions << static_cast<int>(GPSType::UBlox) << true
                          << QStringLiteral("u-blox (UBX)")
                          << QStringLiteral(
                                 "Receiving u-blox UBX data without position messages. Enable NAV-PVT or "
-                                "NMEA output.");
+                                "NMEA output.")
+                         << false;
     QTest::newRow("sbf") << GPSInputProblem::NoPositions << static_cast<int>(GPSType::Septentrio) << true
                          << QStringLiteral("Septentrio (SBF)")
                          << QStringLiteral(
                                 "Receiving Septentrio SBF data without position messages. Enable "
-                                "PVTGeodetic or NMEA output.");
+                                "PVTGeodetic or NMEA output.")
+                         << false;
     QTest::newRow("nmea") << GPSInputProblem::NoPositions << static_cast<int>(GPSType::Passive) << true
                           << QStringLiteral("NMEA")
-                          << QStringLiteral("Receiving NMEA data without position messages. Enable GGA output.");
+                          << QStringLiteral("Receiving NMEA data without position messages. Enable GGA output.")
+                          << false;
     QTest::newRow("corrections-forwarded")
-        << GPSInputProblem::CorrectionsOnly << none << true << QString() << QString();
-    QTest::newRow("corrections-dropped") << GPSInputProblem::CorrectionsOnly << none << false << QString()
-                                         << QStringLiteral(
-                                                "Receiving RTCM corrections without position messages. "
-                                                "Turn on Forward receiver RTCM to send them to vehicles.");
+        << GPSInputProblem::CorrectionsOnly << none << true << QString() << QString() << false;
+    QTest::newRow("corrections-dropped")
+        << GPSInputProblem::CorrectionsOnly << none << false << QString()
+        << QStringLiteral(
+               "Receiving RTCM corrections without position messages. Set Use receiver as to Existing base "
+               "station to send them to vehicles.")
+        << false;
+    // The advice names a setting the receiver has: the position receiver has no use to select.
+    QTest::newRow("corrections-of-position-receiver")
+        << GPSInputProblem::CorrectionsOnly << none << false << QString()
+        << QStringLiteral(
+               "Receiving RTCM corrections without position messages. The position receiver's corrections are "
+               "not sent to vehicles; enable its position output, such as NMEA GGA.")
+        << true;
 }
 
 void GPSReceiverTest::_passiveInputStatus()
@@ -1152,7 +1168,8 @@ void GPSReceiverTest::_passiveInputStatus()
     QFETCH(bool, forward);
     QFETCH(QString, detected);
     QFETCH(QString, message);
-    ScriptedGPSReceiver harness;
+    QFETCH(bool, positionReceiver);
+    ScriptedGPSReceiver harness(nullptr, {.positionOnly = positionReceiver});
     GPSReceiver& receiver = harness.receiver;
     auto configuration = receiverConfiguration(kPassiveManufacturer);
     configuration.forwardReceiverRtcm = forward;

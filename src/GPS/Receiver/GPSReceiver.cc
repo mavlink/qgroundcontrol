@@ -336,7 +336,7 @@ void GPSReceiver::_onReceiverDetected()
 void GPSReceiver::_onInputProblem(GPSInputProblem problem)
 {
     _setError(GPSReceiverMessages::inputProblem(problem, _session ? _session->detectedType() : std::nullopt,
-                                                activeEndpoint(), forwardingCorrections()));
+                                                activeEndpoint(), forwardingCorrections(), _positionOnly));
     _emitChanges();
 }
 

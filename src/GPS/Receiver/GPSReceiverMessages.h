@@ -24,9 +24,10 @@ namespace GPSReceiverMessages {
 [[nodiscard]] QString consentRefused(const QString& detail, GPSType family);
 
 /// Why a passive receiver delivers no position, for the protocol @a detected in its output; empty when positions
-/// arrive, or when forwarding is all a corrections-only receiver needs to do.
+/// arrive, or when forwarding is all a corrections-only receiver needs to do. @a positionReceiver: the receiver is
+/// the position receiver, whose corrections are never forwarded.
 [[nodiscard]] QString inputProblem(GPSInputProblem problem, std::optional<GPSType> detected, const QString& endpoint,
-                                   bool forwardingCorrections);
+                                   bool forwardingCorrections, bool positionReceiver);
 
 /// The warning that the receiver produces more output than its connection carries.
 [[nodiscard]] QString outputOverflow(RTKSettings::ReceiverRole role, bool compactObservations);

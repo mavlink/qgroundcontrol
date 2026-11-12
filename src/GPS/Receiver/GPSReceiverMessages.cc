@@ -143,7 +143,7 @@ QString consentRefused(const QString& detail, GPSType family)
 }
 
 QString inputProblem(GPSInputProblem problem, std::optional<GPSType> detected, const QString& endpoint,
-                     bool forwardingCorrections)
+                     bool forwardingCorrections, bool positionReceiver)
 {
     switch (problem) {
         case GPSInputProblem::None:
@@ -175,10 +175,18 @@ QString inputProblem(GPSInputProblem problem, std::optional<GPSType> detected, c
             break;
         case GPSInputProblem::CorrectionsOnly:
             // Forwarding them is all a corrections-only receiver needs to do.
-            return forwardingCorrections ? QString()
-                                         : GPSReceiver::tr(
-                                               "Receiving RTCM corrections without position messages. Turn on "
-                                               "Forward receiver RTCM to send them to vehicles.");
+            if (forwardingCorrections) {
+                return {};
+            }
+            if (positionReceiver) {
+                return GPSReceiver::tr(
+                    "Receiving RTCM corrections without position messages. The position receiver's corrections are "
+                    "not sent to vehicles; enable its position output, such as NMEA GGA.");
+            }
+            //: "Use receiver as" and "Existing base station" are a setting of the GNSS Receiver page and its choice
+            return GPSReceiver::tr(
+                "Receiving RTCM corrections without position messages. Set Use receiver as to Existing base station "
+                "to send them to vehicles.");
     }
     return {};
 }
