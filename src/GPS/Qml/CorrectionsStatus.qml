@@ -28,29 +28,6 @@ QGCGroupBox {
     readonly property string _udpInputError: root.corrections.udpInputError
     readonly property string _udpOutputError: root.corrections.udpOutputError
 
-    /// @a meters in the application's horizontal distance unit: whole meters or feet, and kilometers or miles from
-    /// one of those on, where the map scale changes its unit too, with one decimal below 100. The farthest base
-    /// station there can be then takes five digits, which the GPS indicator's drop-down has room for.
-    function _distanceText(meters) {
-        const conversion = QGroundControl.unitsConversion
-        const feet = QGroundControl.settingsManager.unitsSettings.horizontalDistanceUnits.rawValue
-                     === UnitsSettings.HorizontalDistanceUnitsFeet
-        const unitsPerLargeUnit = feet ? 5280 : 1000
-        // Rounded as it is shown, so that 999.6 m reads "1.0 km" and not "1000 m".
-        const units = Math.round(conversion.metersToAppSettingsHorizontalDistanceUnits(meters))
-        if (units < unitsPerLargeUnit) {
-            return conversion.metersToAppSettingsHorizontalDistanceUnitsString(meters, 0)
-        }
-        const largeUnits = units / unitsPerLargeUnit
-        const number = largeUnits.toFixed(largeUnits < 99.95 ? 1 : 0)
-        if (feet) {
-            //: %1 is a distance in miles, such as 12.3 or 1250
-            return qsTr("%1 mi").arg(number)
-        }
-        //: %1 is a distance in kilometers, such as 12.3 or 1250
-        return qsTr("%1 km").arg(number)
-    }
-
     heading: qsTr("Corrections Status")
     visible: root.showWhenInactive || root._active || root._udpInputError !== "" || root._udpOutputError !== ""
 
@@ -119,7 +96,7 @@ QGCGroupBox {
         objectName: "correctionsBaseDistance"
         visible: root._baseKnown && root.gcsPosition.isValid
         label: qsTr("Base distance from GCS")
-        labelText: root._distanceText(root._basePosition.distanceTo(root.gcsPosition))
+        labelText: GPSUnits.distanceText(root._basePosition.distanceTo(root.gcsPosition))
         labelTextFormat: Text.PlainText
     }
 

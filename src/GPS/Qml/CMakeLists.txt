@@ -6,6 +6,12 @@
 
 qt_add_library(GPSModule STATIC)
 
+set_source_files_properties(
+    GPSUnits.qml
+    PROPERTIES
+        QT_QML_SINGLETON_TYPE TRUE
+)
+
 qt_add_qml_module(
     GPSModule
     URI QGroundControl.GPS
@@ -34,6 +40,7 @@ qt_add_qml_module(
         GPSReceiverSettings.qml
         GPSReceiverSettingsGroup.qml
         GPSReceiverStatus.qml
+        GPSUnits.qml
         GPSWrappingRow.qml
         NTRIPConnectionStatus.qml
         NTRIPMountpointBrowser.qml
