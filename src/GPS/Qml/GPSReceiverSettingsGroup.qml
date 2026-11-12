@@ -15,10 +15,13 @@ QGCGroupBox {
     readonly property bool configuredBase: role === RTKSettings.ConfiguredBase
     readonly property int baseMode: settings.baseMode.rawValue
     readonly property gpsReceiverPresentation presentation: receiver.configuredPresentation
+    /// What the notes of one receiver family follow: the selected manufacturer or, with automatic detection, the one
+    /// that was identified for the connection that runs. Until then it offers what no single receiver does, which
+    /// _familyKnown tells.
+    readonly property gpsReceiverPresentation _family: presentation.automatic ? receiver.activePresentation
+                                                                             : presentation
+    readonly property bool _familyKnown: !_family.automatic
     // A pending automatic reconnect keeps the saved connection; stop it before editing.
     readonly property bool _active: receiver.state !== GPSReceiver.Disconnected
     readonly property bool _editable: !_active
-    // Automatic detection words the Quectel notes for a receiver that may not be one.
-    readonly property string _quectelOnly: presentation.automatic
-                                           ? qsTr("Applies only if a Quectel receiver is identified.") + " " : ""
 }

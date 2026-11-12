@@ -42,14 +42,15 @@ qt_add_qml_module(
         GPSReceiverBaseSites.qml
         GPSReceiverBaseStation.qml
         GPSReceiverBluetoothDevice.qml
-        GPSReceiverConnectControls.qml
         GPSReceiverConnection.qml
         GPSReceiverConnectionRow.qml
+        GPSReceiverFlashConsent.qml
         GPSReceiverRecording.qml
         GPSReceiverSerialPort.qml
         GPSReceiverSettingsGroup.qml
         GPSReceiverStatus.qml
         GPSReceiverSurveyProgress.qml
+        GPSReceiverUse.qml
         GPSSatelliteSignalBars.qml
         GPSSatelliteView.qml
         GPSSkyPlot.qml

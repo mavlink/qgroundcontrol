@@ -7,7 +7,8 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.GPS
 
-/// Which receiver to connect and how to reach it: its role, family, connection and device.
+/// What the receiver is used as, which receiver to connect and how to reach it, and its connection: Connect, with
+/// what the receiver is doing and why a connection failed.
 GPSReceiverSettingsGroup {
     id: root
 
@@ -23,21 +24,9 @@ GPSReceiverSettingsGroup {
 
     heading: qsTr("GNSS Receiver")
 
-    GPSFactComboField {
-        fact: root.settings.receiverRole
-        comboBox.objectName: "rtkReceiverRole"
-        comboBox.enabled: root._editable
-        note: root.configuredBase
-              ? qsTr("QGroundControl configures a supported receiver as an RTK base station and forwards its RTCM corrections to vehicles.")
-              : qsTr("QGroundControl never configures this receiver. Its NMEA, u-blox UBX or Septentrio SBF position output provides the ground station position. Configure the receiver's output externally and select its baud rate, or Auto to find the rate by listening, which takes up to 20 seconds. No survey-in status is inferred.")
-    }
-
-    GPSFactSwitchField {
-        fact: root.settings.forwardReceiverRtcm
-        note: root.settings.forwardReceiverRtcm.shortDescription
-        shown: !root.configuredBase
-        toggle.objectName: "rtkForwardReceiverRtcm"
-        toggle.enabled: root._editable
+    GPSReceiverUse {
+        settings: root.settings
+        editable: root._editable
     }
 
     GPSFactComboField {
@@ -120,6 +109,13 @@ GPSReceiverSettingsGroup {
         configured: root.configuredBase
     }
 
+    // Beside the device, which it can leave to USB discovery.
+    GPSFactSwitchField {
+        fact: root.autoConnectFact
+        note: root.autoConnectFact.rawValue ? root.autoConnectFact.shortDescription : ""
+        toggle.objectName: "rtkAutoConnect"
+    }
+
     QGCNoteLabel {
         visible: root._editable && root.configuredBase
         text: root.presentation.automatic
@@ -128,4 +124,14 @@ GPSReceiverSettingsGroup {
                 ? qsTr("Select a receiver type and its connection to connect manually. Auto baud detects the rate of configurable receivers.")
                 : qsTr("Connect only the selected receiver; automatic connections configure it too. A USB adapter's identity only decides which USB ports are tried, not the GNSS manufacturer.")
     }
+
+    GPSReceiverRecording { receiver: root.receiver }
+
+    GPSReceiverFlashConsent {
+        receiver: root.receiver
+        editable: root._editable
+    }
+
+    // Last, below what it connects: Connect, with the receiver's state beside it and its problem below.
+    GPSReceiverConnectionRow { receiver: root.receiver }
 }

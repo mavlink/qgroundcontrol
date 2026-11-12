@@ -25,9 +25,9 @@ private slots:
     void _tcpConnectionFields();
     void _bluetoothDevicePicker();
     void _bluetoothPickerListsLinkConfigurationDevices();
-    void _roleSelectsFields();
+    void _useSelectsRoleAndFields();
     void _automaticManufacturer();
-    void _automaticOffersQuectelConsent();
+    void _automaticCollapsesQuectelConsent();
     void _compactCorrectionsToggle();
     void _correctionConstellations();
     void _recordingSwitch();

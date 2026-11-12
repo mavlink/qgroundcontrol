@@ -6,53 +6,51 @@
         "rtkSettings": "QGroundControl.settingsManager.rtkSettings",
         "gpsReceiver": "QGroundControl.gpsManager.receiver",
         "canBeRtkBase": "gpsReceiver.configuredPresentation.rtkBase",
-        "fixedBaseMode": "rtkSettings.baseMode.rawValue === BaseModeDefinition.BaseFixed"
+        "fixedBaseMode": "rtkSettings.baseMode.rawValue === BaseModeDefinition.BaseFixed",
+        "receiverReports": "gpsReceiver.state === GPSReceiver.Connecting || gpsReceiver.state === GPSReceiver.Connected"
     },
     "groups": [
         {
-            "component": "GPSReceiverStatus",
-            "properties": {
-                "showWhenDisconnected": true
-            },
-            "sectionName": "GNSS Receiver Status",
-            "keywords": ["rtk", "gnss", "gps", "base station", "receiver", "status", "connect", "disconnect", "fix", "satellites", "jamming", "spoofing"]
-        },
-        {
-            "comment": "This group and the next three are the receiver's settings.",
+            "comment": "The page follows the task: what the receiver is used as and what to connect, with Connect, then what a base station does, then what the receiver reports.",
             "component": "GPSReceiverConnection",
             "sectionName": "GNSS Receiver",
-            "keywords": ["rtk", "gnss", "gps", "nmea", "external gps", "base station", "receiver", "role", "passive", "position only", "u-blox", "septentrio", "automatic", "detection", "serial", "tcp", "udp"]
+            "keywords": ["rtk", "gnss", "gps", "nmea", "external gps", "base station", "existing base", "receiver", "use receiver as", "role", "passive", "position only", "forward", "u-blox", "septentrio", "trimble", "quectel", "unicore", "femtomes", "automatic", "detection", "manufacturer", "serial", "baud rate", "tcp", "udp", "bluetooth", "scan", "connect", "disconnect", "startup", "auto connect", "reconnect", "flash save", "record"]
         },
         {
             "comment": "showWhen repeats the component's own visible, so the sidebar lists the section while it has content.",
             "component": "GPSReceiverBaseStation",
             "showWhen": "canBeRtkBase || !gpsReceiver.baseModeSupported",
             "sectionName": "RTK Base Station",
-            "keywords": ["base mode", "survey-in", "fixed position"]
+            "keywords": ["base mode", "survey-in", "fixed position", "averaging", "base position", "latitude", "longitude", "ecef", "antenna height", "constellations", "glonass", "galileo", "beidou", "qzss", "compact rtcm", "msm4"]
         },
         {
             "comment": "showWhen repeats the component's own visible, as for the base station.",
             "component": "GPSReceiverBaseSites",
             "showWhen": "canBeRtkBase && fixedBaseMode",
             "sectionName": "Saved Base Sites",
-            "keywords": ["fixed position"]
+            "keywords": ["fixed position", "saved sites", "site", "base position", "antenna height"]
         },
         {
-            "component": "GPSReceiverConnectControls",
-            "sectionName": "Connection Options",
-            "keywords": ["automatic", "startup", "auto connect", "compact rtcm", "msm4", "flash save", "record"]
+            "comment": "Connect is in the first group, so the status has rows only while a connection is open or being opened. showWhen repeats the component's own visible.",
+            "component": "GPSReceiverStatus",
+            "properties": {
+                "showConnection": false
+            },
+            "showWhen": "receiverReports",
+            "sectionName": "GNSS Receiver Status",
+            "keywords": ["rtk", "gnss", "gps", "base station", "receiver", "status", "fix", "satellites", "satellite signals", "sky plot", "constellations", "survey", "survey progress", "base position", "position check", "detected", "jamming", "spoofing", "antenna"]
         },
         {
             "comment": "A second receiver, out of use by default: the component shows its connection and status once it is in use.",
             "component": "GPSPositionReceiver",
             "showWhen": "QGroundControl.settingsManager.positionReceiverSettings.userVisible",
             "sectionName": "Position Receiver",
-            "keywords": ["position receiver", "second receiver", "gcs position", "ground station position", "nmea", "external gps", "passive", "position only", "base station", "tripod", "serial", "tcp", "udp"]
+            "keywords": ["position receiver", "second receiver", "gcs position", "ground station position", "nmea", "external gps", "passive", "position only", "base station", "tripod", "serial", "baud rate", "tcp", "udp", "bluetooth", "scan", "connect", "disconnect", "record"]
         },
         {
             "component": "GcsPositionStatus",
             "sectionName": "GCS Position",
-            "keywords": ["gcs position", "ground station position", "position source", "internal gps", "this device", "nmea", "gps"]
+            "keywords": ["gcs position", "ground station position", "position source", "internal gps", "this device", "position receiver", "nmea", "gps"]
         }
     ]
 }

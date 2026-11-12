@@ -94,7 +94,8 @@ QVariant portEntries(const QStringList& paths)
 }
 
 /// The groups of the receiver settings over saved settings for a manufacturer and a scripted receiver that follows
-/// them, and the receiver status, which has Connect: what the settings page shows one below the other.
+/// them, and the receiver status: what the settings page shows one below the other. Connect is the first group's;
+/// the status has one too, as it has outside the page.
 struct Panel
 {
     explicit Panel(int manufacturer, bool serialLinks = true)
@@ -114,7 +115,7 @@ struct Panel
         connection.insert(QStringLiteral("serialBaudRates"), QVariant::fromValue(QList<int>{115200, 230400}));
         for (const auto& [file, properties] :
              {std::pair{"GPSReceiverConnection.qml", connection}, std::pair{"GPSReceiverBaseStation.qml", shared},
-              std::pair{"GPSReceiverBaseSites.qml", shared}, std::pair{"GPSReceiverConnectControls.qml", shared}}) {
+              std::pair{"GPSReceiverBaseSites.qml", shared}}) {
             groups.push_back(engine.create(
                 TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/") + QString::fromLatin1(file)), properties));
             if (!groups.back()) {
@@ -1081,11 +1082,11 @@ void GPSReceiverSettingsTest::_bluetoothPickerListsLinkConfigurationDevices()
     QCOMPARE(device->property("currentText").toString(), QStringLiteral("Rover – 00:11:22:33:44:02"));
 }
 
-void GPSReceiverSettingsTest::_roleSelectsFields()
+void GPSReceiverSettingsTest::_useSelectsRoleAndFields()
 {
     Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
-    auto* role = panel.find("rtkReceiverRole");
+    auto* use = panel.find("rtkReceiverUse");
     auto* manufacturer = panel.find("rtkManufacturer");
     auto* survey = panel.find("rtkSurveyMode");
     auto* udpPort = panel.find("rtkUdpPort");
@@ -1093,21 +1094,57 @@ void GPSReceiverSettingsTest::_roleSelectsFields()
     auto* device = panel.find("rtkSerialDevice");
     auto* autoConnect = panel.find("rtkAutoConnect");
     auto* connect = panel.find("rtkConnectButton");
-    QVERIFY(role && manufacturer && survey && udpPort && udpExplanation && device && autoConnect && connect);
+    QVERIFY(use && manufacturer && survey && udpPort && udpExplanation && device && autoConnect && connect);
     RTKSettings* const settings = panel.settings.settings;
     GPSReceiver& receiver = panel.receiver.gps;
-    QVERIFY(role->isVisible() && manufacturer->isVisible() && survey->isVisible());
-    QVERIFY(autoConnect->isVisible());
-    QVERIFY(connect->isEnabled());
+    Fact* const role = settings->receiverRole();
+    Fact* const forward = settings->forwardReceiverRtcm();
+    const auto shown = [use] { return use->property("currentText").toString(); };
+    const auto choose = [use](int index) { return QMetaObject::invokeMethod(use, "activated", Q_ARG(int, index)); };
+    const QString base = QStringLiteral("RTK base station");
+    const QString existingBase = QStringLiteral("Existing base station");
+    const QString positionOnly = QStringLiteral("Position only");
+    QCOMPARE(use->property("model").toStringList(), (QStringList{base, existingBase, positionOnly}));
 
-    // A receiver QGroundControl does not configure hides every base setting.
-    settings->receiverRole()->setRawValue(RTKSettings::Passive);
-    settings->forwardReceiverRtcm()->setRawValue(false);
+    // A base station is a configured base, whose corrections are forwarded whatever the second setting holds: the
+    // choice leaves that setting as it is.
+    QCOMPARE(shown(), base);
+    QVERIFY(manufacturer->isVisible() && survey->isVisible() && autoConnect->isVisible());
+    QVERIFY(connect->isEnabled());
+    forward->setRawValue(false);
+    QCOMPARE(shown(), base);
+    QVERIFY(choose(0));
+    QCOMPARE(role->rawValue().toInt(), int(RTKSettings::ConfiguredBase));
+    QVERIFY(!forward->rawValue().toBool());
+
+    // A receiver QGroundControl does not configure hides every base setting. Its two uses differ in the second
+    // setting alone.
+    QVERIFY(choose(1));
+    QCOMPARE(role->rawValue().toInt(), int(RTKSettings::Passive));
+    QVERIFY(forward->rawValue().toBool());
+    QCOMPARE(shown(), existingBase);
+    QVERIFY(!manufacturer->isVisible());
+    QVERIFY(!survey->isVisible());
+    QVERIFY(choose(2));
+    QCOMPARE(role->rawValue().toInt(), int(RTKSettings::Passive));
+    QVERIFY(!forward->rawValue().toBool());
+    QCOMPARE(shown(), positionOnly);
     QVERIFY(!manufacturer->isVisible());
     QVERIFY(!survey->isVisible());
     QCOMPARE(device->isVisible(), receiver.serialSupported());
     QVERIFY(autoConnect->isVisible());
     QVERIFY(connect->isEnabled());
+
+    // The choice follows the settings, and a role that is no role's value is that of a receiver that is not
+    // configured, as the receiver takes it.
+    forward->setRawValue(true);
+    QCOMPARE(shown(), existingBase);
+    role->setRawValue(0);
+    QCOMPARE(shown(), existingBase);
+    forward->setRawValue(false);
+    QCOMPARE(shown(), positionOnly);
+    QCOMPARE(role->rawValue().toInt(), 0);
+    role->setRawValue(RTKSettings::Passive);
 
     settings->connectionType()->setRawValue(RTKSettings::Udp);
     QVERIFY(udpPort->isVisible() && udpExplanation->isVisible());
@@ -1119,10 +1156,14 @@ void GPSReceiverSettingsTest::_roleSelectsFields()
     QCOMPARE(panel.receiver.worker()->type(), GPSType::Passive);
     QCOMPARE(receiver.activeRole(), RTKSettings::Passive);
     QVERIFY(!receiver.forwardingCorrections());
+    // The use is part of what is connected, so it is locked meanwhile.
+    QVERIFY(!use->isEnabled());
     receiver.disconnectReceiver();
+    QVERIFY(use->isEnabled());
 
     // UDP cannot carry base configuration.
-    settings->receiverRole()->setRawValue(RTKSettings::ConfiguredBase);
+    QVERIFY(choose(0));
+    QCOMPARE(role->rawValue().toInt(), int(RTKSettings::ConfiguredBase));
     QVERIFY(udpPort->isVisible());
     QVERIFY(!connect->isEnabled());
     QVERIFY(udpExplanation->property("text").toString().contains(QStringLiteral("serial, TCP or Bluetooth")));
@@ -1180,39 +1221,86 @@ void GPSReceiverSettingsTest::_automaticManufacturer()
     QVERIFY(!detected->isVisible());
 }
 
-void GPSReceiverSettingsTest::_automaticOffersQuectelConsent()
+void GPSReceiverSettingsTest::_automaticCollapsesQuectelConsent()
 {
     Panel panel(GPS_AUTOMATIC_MANUFACTURER);
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
+    auto* toggle = panel.find("rtkPersistentChangesToggle");
     auto* consent = panel.find("rtkPersistentChangesCheckBox");
     auto* consentWarning = panel.find("rtkPersistentConsentWarning");
     auto* restartNote = panel.find("rtkPersistentConfigurationWarning");
     auto* surveyNote = panel.find("rtkSurveySavesPosition");
     auto* connect = panel.find<QObject>("rtkConnectButton");
-    QVERIFY(consent && consentWarning && restartNote && surveyNote && connect);
-    // A factory LG290P needs this consent, so Automatic offers it and words it for an identified Quectel receiver.
+    QVERIFY(toggle && consent && consentWarning && restartNote && surveyNote && connect);
+    SettingsReceiver& receiver = panel.receiver;
+    const auto press = [toggle] { return QMetaObject::invokeMethod(toggle, "clicked"); };
+    const auto action = [toggle] { return toggle->property("buttonText").toString(); };
+    // Until a receiver is identified, no user reads what only a Quectel receiver needs: one row offers it.
+    QVERIFY(toggle->isVisible());
+    QCOMPARE(action(), QStringLiteral("Show"));
     for (auto* item : {consent, consentWarning, restartNote, surveyNote}) {
+        QVERIFY2(!item->isVisible(), qPrintable(item->objectName()));
+    }
+
+    // A factory LG290P needs this consent, so the row shows it, worded for an identified Quectel receiver.
+    QVERIFY(press());
+    QCOMPARE(action(), QStringLiteral("Hide"));
+    for (auto* item : {consent, consentWarning}) {
         QVERIFY2(item->isVisible(), qPrintable(item->objectName()));
         QVERIFY2(item->property("text").toString().contains(QStringLiteral("if a Quectel receiver is identified"),
                                                             Qt::CaseInsensitive),
                  qPrintable(item->property("text").toString()));
     }
     QVERIFY(consent->isEnabled());
+    // The permission is given where it can be seen: hidden, it is withdrawn.
+    QVERIFY(QMetaObject::invokeMethod(consent, "click"));
+    QVERIFY(receiver.gps.persistentChangesAllowed());
+    QVERIFY(press());
+    QVERIFY(!consent->isVisible());
+    QVERIFY(!receiver.gps.persistentChangesAllowed());
+
+    // A connection without it, which the identified receiver refuses for want of it, shows it without being asked,
+    // and the notes on a Quectel base while the receiver is known to be one.
+    QVERIFY(QMetaObject::invokeMethod(connect, "click"));
+    QCOMPARE(receiver.workers.count(), 1);
+    QCOMPARE(receiver.worker()->type(), GPSType::Automatic);
+    QVERIFY(!receiver.worker()->capturedConfig().allowPersistentChanges);
+    QVERIFY(!restartNote->isVisible() && !surveyNote->isVisible());
+    receiver.worker()->detected(GPSType::Quectel);
+    QVERIFY(restartNote->isVisible() && surveyNote->isVisible());
+    QVERIFY(!restartNote->property("text").toString().contains(QStringLiteral("identified")));
+    QVERIFY(!consent->isVisible());
+    expectLogMessage("GPS.Receiver.GPSReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("did not accept configuration")));
+    receiver.worker()->fail(GPSConnectionError::ConsentRequired,
+                            QStringLiteral("LG290P role mismatch: save the requested base role externally"));
+    verifyExpectedLogMessage();
+    receiver.workers.finishRetired();
+    QVERIFY(receiver.gps.persistentChangesRequired());
+    QVERIFY(consent->isVisible() && consentWarning->isVisible());
+    QCOMPARE(action(), QStringLiteral("Hide"));
+    QVERIFY(consent->isEnabled());
+    QVERIFY(!restartNote->isVisible());
+
+    // Given, it goes with the next connection, which uses it up.
     QVERIFY(QMetaObject::invokeMethod(consent, "click"));
     QVERIFY(QMetaObject::invokeMethod(connect, "click"));
-    QCOMPARE(panel.receiver.workers.count(), 1);
-    QCOMPARE(panel.receiver.worker()->type(), GPSType::Automatic);
-    QVERIFY(panel.receiver.worker()->capturedConfig().allowPersistentChanges);
+    QCOMPARE(receiver.workers.count(), 2);
+    QVERIFY(receiver.worker()->capturedConfig().allowPersistentChanges);
     QVERIFY(!consent->property("checked").toBool());
-    panel.receiver.gps.disconnectReceiver();
+    QVERIFY(!receiver.gps.persistentChangesRequired());
+    receiver.gps.disconnectReceiver();
 
+    // A selected manufacturer has what applies to it, without a row to show it, and the others have none of it.
     RTKSettings* const settings = panel.settings.settings;
     settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::UBlox));
-    QVERIFY(!consent->isVisible());
+    QVERIFY(!toggle->isVisible() && !consent->isVisible());
     QVERIFY(!restartNote->isVisible());
     settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::Quectel));
-    QVERIFY(consent->isVisible());
+    QVERIFY(!toggle->isVisible());
+    QVERIFY(consent->isVisible() && consentWarning->isVisible() && restartNote->isVisible() && surveyNote->isVisible());
     QCOMPARE(consent->property("text").toString(), QStringLiteral("Allow flash save and restart"));
+    QVERIFY(!consentWarning->property("text").toString().contains(QStringLiteral("identified")));
 }
 
 void GPSReceiverSettingsTest::_compactCorrectionsToggle()
@@ -1643,21 +1731,20 @@ void GPSReceiverSettingsTest::_settingsPageListsGroups()
     QFETCH(BaseModeDefinition::Mode, baseMode);
     QFETCH(bool, baseStation);
     QFETCH(bool, baseSites);
-    // The settings page shows the groups of the form one by one, so that its sidebar and search reach each of them.
-    // Its definition states when the two base groups are shown apart from the groups themselves, so the sidebar, the
-    // page and the groups have to agree.
+    // The settings page shows the receiver's settings group by group, in the order of the task, so that its sidebar
+    // and search reach each of them. Its definition states when a group is shown apart from the group itself, so the
+    // sidebar, the page and the groups have to agree.
     RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::UBlox));
     settings.saved.setFactValue(settings.settings->receiverRole(), role);
     settings.saved.setFactValue(settings.settings->baseReceiverManufacturer(), manufacturer);
     settings.saved.setFactValue(settings.settings->baseMode(), static_cast<int>(baseMode));
     // The page shows the application's receiver, which follows the saved settings only outside tests.
+    AppReceiver scripted;
     GPSReceiver* const receiver = GPSManager::instance()->receiver();
-    const GPSReceiver::Configuration unbound = receiver->configuration();
-    const auto restore = qScopeGuard([receiver, unbound]() { receiver->setConfiguration(unbound); });
-    GPSReceiver::Configuration selected = unbound;
-    selected.receiverRole = static_cast<RTKSettings::ReceiverRole>(role);
-    selected.baseReceiverManufacturer = manufacturer;
+    GPSReceiver::Configuration selected =
+        receiverConfiguration(role == RTKSettings::Passive ? kPassiveManufacturer : manufacturer);
     selected.autoConnect = false;
+    useTcp(selected);
     receiver->setConfiguration(selected);
     TestFixtures::QmlEngine engine;
     auto page = engine.create(QByteArrayLiteral(R"(
@@ -1688,49 +1775,86 @@ void GPSReceiverSettingsTest::_settingsPageListsGroups()
         }
     )"));
     QVERIFY2(sidebar, qPrintable(engine.lastError()));
-    QVariant listed;
-    QVERIFY(QMetaObject::invokeMethod(sidebar.get(), "receiverSections", Q_RETURN_ARG(QVariant, listed)));
-    QStringList sections{QStringLiteral("GNSS Receiver Status"), QStringLiteral("GNSS Receiver")};
+    const auto listed = [&sidebar]() {
+        QVariant sections;
+        QMetaObject::invokeMethod(sidebar.get(), "receiverSections", Q_RETURN_ARG(QVariant, sections));
+        return sections.value<QJSValue>().toVariant().toStringList();
+    };
+    // What the receiver is used as and what to connect, then what a base station does, then what the receiver
+    // reports, then the second receiver and the position the ground station has from them.
+    QStringList sections{QStringLiteral("GNSS Receiver")};
     if (baseStation) {
         sections.append(QStringLiteral("RTK Base Station"));
     }
     if (baseSites) {
         sections.append(QStringLiteral("Saved Base Sites"));
     }
-    sections.append(
-        {QStringLiteral("Connection Options"), QStringLiteral("Position Receiver"), QStringLiteral("GCS Position")});
-    QCOMPARE(listed.value<QJSValue>().toVariant().toStringList(), sections);
+    const qsizetype statusSection = sections.size();
+    sections.append({QStringLiteral("Position Receiver"), QStringLiteral("GCS Position")});
+    QCOMPARE(listed(), sections);
 
     // The page's group of a control: the child of the page layout that holds it.
-    const auto group = [&page](const char* control) -> QQuickItem* {
+    QQuickItem* layout = nullptr;
+    const auto group = [&page, &layout](const char* control) -> QQuickItem* {
         auto* item = page->findChild<QQuickItem*>(QString::fromLatin1(control));
         while (item && item->parentItem() && item->parentItem()->objectName() != QLatin1String("settingsPageLayout")) {
             item = item->parentItem();
         }
-        return item && item->parentItem() ? item : nullptr;
+        if (!item || !item->parentItem()) {
+            return nullptr;
+        }
+        layout = item->parentItem();
+        return item;
     };
-    auto* status = group("rtkConnectButton");
-    auto* connection = group("rtkReceiverRole");
+    auto* connection = group("rtkReceiverUse");
     auto* baseStationGroup = group("rtkFixedMode");
     auto* baseSitesGroup = group("rtkBaseSiteName");
-    auto* options = group("rtkAutoConnect");
-    QVERIFY(status && connection && baseStationGroup && baseSitesGroup && options);
-    // Connect is in the status group, which the page always shows.
-    QCOMPARE(status, group("rtkReceiverStatus"));
-    QVERIFY(status->isVisible() && connection->isVisible() && options->isVisible());
-    // The group of the remaining options is headed as the sidebar lists it, not after the button that left it.
-    const auto headed = TestFixtures::findItems(
-        options, [](QQuickItem* item) { return !item->property("heading").toString().isEmpty(); });
-    QCOMPARE(headed.size(), 1);
-    QCOMPARE(headed.first()->property("heading").toString(), QStringLiteral("Connection Options"));
+    auto* status = group("rtkFixType");
+    auto* positionReceiver = group("positionReceiverEnabled");
+    auto* groundStation = group("gcsPositionSelectedSource");
+    QVERIFY(connection && baseStationGroup && baseSitesGroup && status && positionReceiver && groundStation);
+    const QList<QQuickItem*> order{connection, baseStationGroup, baseSitesGroup,
+                                   status,     positionReceiver, groundStation};
+    const QList<QQuickItem*> groups = layout->childItems();
+    for (qsizetype i = 1; i < order.size(); ++i) {
+        QVERIFY2(groups.indexOf(order.at(i - 1)) < groups.indexOf(order.at(i)), qPrintable(QString::number(i)));
+    }
+    // The first group ends with Connect, below what it connects and beside the device: automatic connection and
+    // the recording of a connection are in it too. The page has that one Connect.
+    const auto shownConnect = [&page]() {
+        return TestFixtures::findItems(qobject_cast<QQuickItem*>(page.get()), [](QQuickItem* item) {
+            return item->isVisible() && item->objectName() == QLatin1String("rtkConnectButton");
+        });
+    };
+    QCOMPARE(group("rtkConnectButton"), connection);
+    QCOMPARE(group("rtkAutoConnect"), connection);
+    QCOMPARE(group("rtkRecordReceiverData"), connection);
+    QCOMPARE(shownConnect().size(), 1);
+    QVERIFY(connection->isVisible() && positionReceiver->isVisible() && groundStation->isVisible());
     QCOMPARE(baseStationGroup->isVisible(), baseStation);
     QCOMPARE(baseSitesGroup->isVisible(), baseSites);
+    // What the corrections of a base carry is a setting of the base station.
+    QCOMPARE(group("rtkCompactRtcm"), baseStationGroup);
     for (const auto& [file, shown] :
          {std::pair{"GPSReceiverBaseStation.qml", baseStation}, std::pair{"GPSReceiverBaseSites.qml", baseSites}}) {
         auto part = engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/") + QString::fromLatin1(file)));
         QVERIFY2(part, qPrintable(engine.lastError()));
         QVERIFY2(part->property("visible").toBool() == shown, file);
     }
+
+    // Without a receiver the status has nothing to show. With one, it comes after the settings, with no Connect of
+    // its own.
+    QVERIFY(!status->isVisible());
+    if (!receiver->canConnect()) {
+        return;
+    }
+    QVERIFY(receiver->connectReceiver());
+    QVERIFY(status->isVisible());
+    sections.insert(statusSection, QStringLiteral("GNSS Receiver Status"));
+    QCOMPARE(listed(), sections);
+    const QList<QQuickItem*> connects = shownConnect();
+    QCOMPARE(connects.size(), 1);
+    QVERIFY(connection->isAncestorOf(connects.first()));
 }
 
 UT_REGISTER_TEST(GPSReceiverSettingsTest, TestLabel::Unit)

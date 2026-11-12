@@ -9,19 +9,24 @@ import QGroundControl.FactControls
 import QGroundControl.GPS
 
 /// The GNSS receiver's connection, with Connect and the receiver's problem, and its live status, shared by the GPS
-/// indicator and the receiver settings page.
+/// indicator and the receiver settings page. The page has the connection below the settings it connects, and shows
+/// the status without it.
 QGCGroupBox {
     id: root
 
     property GPSReceiver receiver: QGroundControl.gpsManager.receiver
     /// The receiver's status Facts.
     property GPSReceiverFactGroup facts: root.receiver.facts
+    /// Show the connection, with Connect, above the status.
+    property bool showConnection: true
     /// Keep the group, and so Connect, visible without a receiver.
     property bool showWhenDisconnected: false
     /// What the connection row says without a receiver.
     property alias disconnectedText: connection.disconnectedText
 
     readonly property bool _connected: root.receiver.state === GPSReceiver.Connected
+    /// A connection is open or being opened, so there is something to report.
+    readonly property bool _reports: root._connected || root.receiver.state === GPSReceiver.Connecting
     readonly property bool _surveyConnected: root.receiver.activeBaseMode === BaseModeDefinition.BaseSurveyIn
     // A finished survey is the moment to keep its position, so the next connection can start as a fixed base.
     readonly property bool _surveyComplete: root._connected && root._surveyConnected
@@ -45,7 +50,9 @@ QGCGroupBox {
     }
 
     heading: qsTr("GNSS Receiver Status")
-    visible: root.receiver.state !== GPSReceiver.Disconnected || root.showWhenDisconnected
+    // A receiver that waits to be connected again has the connection's row to say so, and nothing to report.
+    visible: root.showConnection ? root.receiver.state !== GPSReceiver.Disconnected || root.showWhenDisconnected
+                                 : root._reports
 
     /// A status Fact, labelled with its description.
     component FactRow: LabelledLabel {
@@ -58,6 +65,7 @@ QGCGroupBox {
     GPSReceiverConnectionRow {
         id: connection
         receiver: root.receiver
+        visible: root.showConnection
     }
 
     LabelledLabel {

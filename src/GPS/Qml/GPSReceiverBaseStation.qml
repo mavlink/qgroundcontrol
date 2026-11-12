@@ -7,7 +7,8 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.GPS
 
-/// How a configured base finds its position: the base mode and that mode's parameters.
+/// What a base station does: how it finds its position, with that base mode's parameters, and what its corrections
+/// carry.
 GPSReceiverSettingsGroup {
     id: root
 
@@ -27,16 +28,18 @@ GPSReceiverSettingsGroup {
         wrapMode: Text.Wrap
     }
 
+    // The notes of one receiver family, for a receiver that is known to be of it.
     QGCNoteLabel {
         objectName: "rtkPersistentConfigurationWarning"
-        visible: root.presentation.restartOnConnect
-        text: root._quectelOnly + qsTr("Without permission to save, Quectel role and base settings must already match settings saved externally. The receiver restarts on connection. Survey-In counts accepted 1 Hz observations; its accuracy limit filters each observation and does not guarantee final position accuracy.")
+        visible: root._familyKnown && root._family.restartOnConnect
+        text: qsTr("Without permission to save, Quectel role and base settings must already match settings saved externally. The receiver restarts on connection. Survey-In counts accepted 1 Hz observations; its accuracy limit filters each observation and does not guarantee final position accuracy.")
     }
 
     QGCNoteLabel {
         objectName: "rtkSurveySavesPosition"
-        visible: root.presentation.surveyMaySavePosition && root.baseMode === BaseModeDefinition.BaseSurveyIn
-        text: root._quectelOnly + qsTr("The Quectel receiver may automatically store the completed survey position in its own memory.")
+        visible: root._familyKnown && root._family.surveyMaySavePosition
+                 && root.baseMode === BaseModeDefinition.BaseSurveyIn
+        text: qsTr("The Quectel receiver may automatically store the completed survey position in its own memory.")
     }
 
     ColumnLayout {
@@ -152,5 +155,13 @@ GPSReceiverSettingsGroup {
         selectable: root.presentation.correctionConstellations
         shown: root.presentation.rtkBase && root.presentation.correctionConstellations !== 0
         enabled: root._editable
+    }
+
+    GPSFactSwitchField {
+        fact: root.settings.compactRtcmCorrections
+        note: root.settings.compactRtcmCorrections.shortDescription
+        shown: root.presentation.rtkBase && root.presentation.compactObservations
+        toggle.objectName: "rtkCompactRtcm"
+        toggle.enabled: root._editable
     }
 }

@@ -6,8 +6,8 @@ import QtQuick.Layouts
 import QGroundControl
 import QGroundControl.Controls
 
-/// A label above its control, which keeps the GPS panels usable in the narrow indicator drawer. An optional note
-/// goes below the control.
+/// A label above its control, which keeps the GPS panels usable on a narrow settings page. An optional note goes
+/// below the control.
 ColumnLayout {
     id: root
 

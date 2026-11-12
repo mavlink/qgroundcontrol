@@ -1460,18 +1460,20 @@ class TestRealPageDefinitions:
     def test_gnss_receiver_page(self, repo_root: Path):
         pages_dir = repo_root / "src" / "AppSettings" / "pages"
         receiver = load_page_def(pages_dir / "GNSSReceiver.SettingsUI.json")
-        # The receiver form is listed group by group, so the sidebar and the search reach each of them.
+        # The receiver's settings are listed group by group, so the sidebar and the search reach each of them, in
+        # the order of the task: what to connect, with Connect, what a base station does, what the receiver reports.
         assert [group.component for group in receiver.groups] == [
-            "GPSReceiverStatus",
             "GPSReceiverConnection",
             "GPSReceiverBaseStation",
             "GPSReceiverBaseSites",
-            "GPSReceiverConnectControls",
+            "GPSReceiverStatus",
             "GPSPositionReceiver",
             "GcsPositionStatus",
         ]
-        # The status section says so when no receiver is connected instead of showing an empty page.
-        assert receiver.groups[0].properties == {"showWhenDisconnected": "true"}
+        # Connect is in the first group, so the status is listed only while it has a receiver to report.
+        status = receiver.groups[3]
+        assert status.properties == {"showConnection": "false"}
+        assert status.showWhen == "receiverReports" and "receiverReports" in receiver.bindings
         # Only the receiver page edits the GCS position source.
         comm_links = load_page_def(pages_dir / "CommLinks.SettingsUI.json")
         assert "GcsPositionStatus" not in {group.component for group in comm_links.groups}
