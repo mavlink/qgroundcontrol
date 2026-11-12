@@ -554,12 +554,14 @@ QGClibarchive::ReadResult decompressStreamToFile(struct archive* a, const QStrin
 }
 
 /// Create the directory an extraction writes to, with the directories above it
-/// @return Completed, or WriteDenied or WriteFailed if the directory is not there and cannot be made
+/// @return Completed, or after a warning WriteDenied or WriteFailed if the directory is not there and cannot
+///         be made
 QGClibarchive::ReadResult createOutputDirectory(const QString& directoryPath)
 {
     if (QGCFileHelper::ensureDirectoryExists(directoryPath)) {
         return QGClibarchive::ReadResult::Completed;
     }
+    qCWarning(QGClibarchiveLog) << "Failed to create output directory:" << directoryPath;
     return isWriteDenied(directoryPath) ? QGClibarchive::ReadResult::WriteDenied
                                         : QGClibarchive::ReadResult::WriteFailed;
 }
@@ -1350,12 +1352,13 @@ bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirec
     }
 
     const QString parentDirectoryPath = outputInfo.absoluteDir().absolutePath();
-    outcome = createOutputDirectory(parentDirectoryPath);
-    if (outcome != ReadResult::Completed) {
+    if (!QGCFileHelper::ensureDirectoryExists(parentDirectoryPath)) {
         qCWarning(QGClibarchiveLog) << "Failed to create output parent directory:" << parentDirectoryPath;
+        if (isWriteDenied(parentDirectoryPath)) {
+            outcome = ReadResult::WriteDenied;
+        }
         return false;
     }
-    outcome = ReadResult::WriteFailed;
 
     // Pre-check: verify archive can be opened and get stats for disk space check
     const ArchiveStats stats = getArchiveStats(archivePath);

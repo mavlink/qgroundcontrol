@@ -2053,9 +2053,10 @@ void QGCCompressionTest::_testExtractToFileErrors_data()
         addRow("damaged inside the entry") << "damaged" << "full.txt" << false << "Read error" << Error::InvalidArchive;
         addRow("not an archive") << "garbage" << "last.txt" << false << "Unrecognized archive format"
                                  << Error::InvalidArchive;
-        // The directory that cannot be made is not logged, the file that cannot be opened in it is
+        // What cannot be made is the output directory, or the file for the function that is given its path
         addRow("output cannot be written")
-            << "whole" << "last.txt" << true << (oneFile ? "Failed to open output file" : "") << Error::IoError;
+            << "whole" << "last.txt" << true
+            << (oneFile ? "Failed to open output file" : "Failed to create output directory") << Error::IoError;
         // Asked for by name, the link fails the call. A pattern is left with nothing that matches it.
         addRow("link") << "whole" << "soft.txt" << false << "Skipping symlink: soft.txt"
                        << (byName ? Error::UnsupportedFormat : Error::FileNotInArchive);
@@ -2171,15 +2172,15 @@ void QGCCompressionTest::_testOutputWithoutPermission_data()
         << "decompressFile-empty" << true << "Failed to write output file";
     QTest::newRow("decompressFromDevice") << "decompressFromDevice" << true << noFile;
 
-    // The directory that cannot be made is not logged, except by the function that has to make the one above it
-    QTest::newRow("extractArchive, no directory") << "extractArchive" << false << "";
-    QTest::newRow("extractFromDevice, no directory") << "extractFromDevice" << false << "";
+    const char* const noDirectory = "Failed to create output directory";
+    QTest::newRow("extractArchive, no directory") << "extractArchive" << false << noDirectory;
+    QTest::newRow("extractFromDevice, no directory") << "extractFromDevice" << false << noDirectory;
     QTest::newRow("extractArchiveAtomic, no directory")
         << "extractArchiveAtomic" << false << "Failed to create output parent directory";
-    QTest::newRow("extractArchiveFiltered, no directory") << "extractArchiveFiltered" << false << "";
-    QTest::newRow("extractFiles, no directory") << "extractFiles" << false << "";
-    QTest::newRow("extractByPattern, no directory") << "extractByPattern" << false << "";
-    // Nor is the directory of an output file, which fails where the file is opened
+    QTest::newRow("extractArchiveFiltered, no directory") << "extractArchiveFiltered" << false << noDirectory;
+    QTest::newRow("extractFiles, no directory") << "extractFiles" << false << noDirectory;
+    QTest::newRow("extractByPattern, no directory") << "extractByPattern" << false << noDirectory;
+    // A function that is given the path of a file fails where the file is opened
     QTest::newRow("extractFile, no directory") << "extractFile" << false << noFile;
     QTest::newRow("decompressFile, no directory") << "decompressFile" << false << noFile;
 }
@@ -2217,9 +2218,7 @@ void QGCCompressionTest::_testOutputWithoutPermission()
     const QString outputFile = outputDir + "/manifest.json";
     const auto everyEntry = [](const QGCCompression::ArchiveEntry&) { return true; };
 
-    if (!warning.isEmpty()) {
-        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression(warning));
-    }
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression(warning));
     bool written = true;
     if (api == "extractArchive") {
         written = QGCCompression::extractArchive(zipPath, outputDir);
@@ -2245,9 +2244,7 @@ void QGCCompressionTest::_testOutputWithoutPermission()
     } else {
         QFAIL("Unknown row");
     }
-    if (!warning.isEmpty()) {
-        verifyExpectedLogMessage();
-    }
+    verifyExpectedLogMessage();
 
     // The input is whole and the output could be written elsewhere: the code tells what to change
     QVERIFY(!written);
@@ -2316,11 +2313,11 @@ void QGCCompressionTest::_testBlockedOutput_data()
     QTest::addColumn<QString>("api");
     QTest::addColumn<QString>("warning");
 
-    // The directory that cannot be made is not logged, except by the function that has to make the one above it
-    QTest::newRow("extractArchive") << "extractArchive" << "";
-    QTest::newRow("extractFromDevice") << "extractFromDevice" << "";
+    const char* const noDirectory = "Failed to create output directory";
+    QTest::newRow("extractArchive") << "extractArchive" << noDirectory;
+    QTest::newRow("extractFromDevice") << "extractFromDevice" << noDirectory;
     QTest::newRow("extractArchiveAtomic") << "extractArchiveAtomic" << "Failed to create output parent directory";
-    QTest::newRow("extractArchiveFiltered") << "extractArchiveFiltered" << "";
+    QTest::newRow("extractArchiveFiltered") << "extractArchiveFiltered" << noDirectory;
     QTest::newRow("decompressFile") << "decompressFile" << "Failed to open output file";
     QTest::newRow("decompressFromDevice") << "decompressFromDevice" << "Failed to open output file";
 }
@@ -2342,9 +2339,7 @@ void QGCCompressionTest::_testBlockedOutput()
     QFile gzip(gzipPath);
     QVERIFY(gzip.open(QIODevice::ReadOnly));
 
-    if (!warning.isEmpty()) {
-        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression(warning));
-    }
+    expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression(warning));
     bool written = true;
     if (api == "extractArchive") {
         written = QGCCompression::extractArchive(zipPath, outputDir);
@@ -2362,9 +2357,7 @@ void QGCCompressionTest::_testBlockedOutput()
     } else {
         QFAIL("Unknown row");
     }
-    if (!warning.isEmpty()) {
-        verifyExpectedLogMessage();
-    }
+    verifyExpectedLogMessage();
 
     // The input is whole: what failed is the output, and not for lack of permission
     QVERIFY(!written);
