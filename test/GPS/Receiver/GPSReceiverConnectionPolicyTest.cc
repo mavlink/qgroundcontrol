@@ -628,20 +628,22 @@ void GPSReceiverConnectionPolicyTest::_observerActsOnLostSession()
 
 void GPSReceiverConnectionPolicyTest::_observerActsOnReport_data()
 {
-    // The fix is the last status Fact a position report writes and the survey state the last a survey report writes,
-    // each notified in the middle of the handler.
-    QTest::addColumn<bool>("survey");
+    // Each status Fact is notified as it is written, in the middle of the handler: the first one a report writes
+    // with the rest of the report still to come, and the last one before the receiver has taken the report in.
+    QTest::addColumn<QByteArray>("observed");
     QTest::addColumn<bool>("reconnects");
-    QTest::newRow("position-reconnects") << false << true;
-    QTest::newRow("position-disconnects") << false << false;
-    QTest::newRow("survey-reconnects") << true << true;
-    QTest::newRow("survey-disconnects") << true << false;
+    for (const char* const observed : {"fixType", "jammingState", "baseState", "currentDuration", "numSatellites"}) {
+        QTest::addRow("%s-reconnects", observed) << QByteArray(observed) << true;
+        QTest::addRow("%s-disconnects", observed) << QByteArray(observed) << false;
+    }
 }
 
 void GPSReceiverConnectionPolicyTest::_observerActsOnReport()
 {
-    QFETCH(bool, survey);
+    QFETCH(QByteArray, observed);
     QFETCH(bool, reconnects);
+    const bool survey = observed == "baseState" || observed == "currentDuration";
+    const bool satellites = observed == "numSatellites";
     auto configuration = survey ? receiverConfiguration() : tcpConfiguration();
     useTcp(configuration);
     PolicyHarness harness(configuration);
@@ -652,16 +654,24 @@ void GPSReceiverConnectionPolicyTest::_observerActsOnReport()
     GPSPositionReport position = locatedFix(GPSFixQuality::Fix3D);
     GPSBaseStatus surveyed{.state = GPSBaseState::Active,
                            .position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
-                           .meanAccuracyMeters = 1.0};
+                           .meanAccuracyMeters = 1.0,
+                           .duration = std::chrono::seconds(60)};
+    GPSSatelliteReport counts;
+    counts.inView = 10;
+    counts.used = 6;
     if (survey) {
         harness.worker()->baseStatus(surveyed);
+    } else if (satellites) {
+        harness.worker()->satellites(counts);
     } else {
         harness.worker()->position(position);
         QVERIFY(receiver.acceptedPositionObservation(GPSObservation::PositionUse::GroundStation));
     }
+    Fact* const fact = facts.getFact(QString::fromLatin1(observed));
+    QVERIFY(fact);
     QObject observer;
     bool acted = false;
-    connect(survey ? facts.baseState() : facts.fixType(), &Fact::rawValueChanged, &observer, [&] {
+    connect(fact, &Fact::rawValueChanged, &observer, [&] {
         if (!receiver.hasReceiver() || std::exchange(acted, true)) {
             return;
         }
@@ -673,10 +683,16 @@ void GPSReceiverConnectionPolicyTest::_observerActsOnReport()
 
     if (survey) {
         surveyed.state = GPSBaseState::Valid;
+        surveyed.duration = std::chrono::seconds(120);
         harness.worker()->baseStatus(surveyed);
+    } else if (satellites) {
+        counts.inView = 12;
+        counts.used = 9;
+        harness.worker()->satellites(counts);
     } else {
         position.navigation.fixType = GPSFixQuality::RTKFixed;
         position.integrity.jamming.state = GPSIntegrityReport::JammingState::Warning;
+        position.integrity.spoofing.state = GPSIntegrityReport::SpoofingState::Indicated;
         position.integrity.outputOverflowUs = 100;
         harness.worker()->position(position);
     }
@@ -685,6 +701,7 @@ void GPSReceiverConnectionPolicyTest::_observerActsOnReport()
     QCOMPARE(receiver.hasReceiver(), reconnects);
     QCOMPARE(harness.attempts(), reconnects ? 2 : 1);
     QCOMPARE(solution(facts), Solution{});
+    QCOMPARE(baseState(facts), GPSBaseState::Inactive);
     QVERIFY(!facts.canSaveCurrentBasePosition());
     QVERIFY(receiver.errorMessage().isEmpty());
     QVERIFY(!receiver.acceptedPositionObservation(GPSObservation::PositionUse::GroundStation));

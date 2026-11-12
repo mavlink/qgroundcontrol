@@ -44,6 +44,13 @@ void GPSReceiverFactGroup::_update(Fact& fact, const QVariant& value)
     }
 }
 
+void GPSReceiverFactGroup::_write(quint64 status, Fact& fact, const QVariant& value)
+{
+    if (status == _resets) {
+        _update(fact, value);
+    }
+}
+
 void GPSReceiverFactGroup::_restoreDefaults(std::initializer_list<Fact*> facts)
 {
     for (Fact* fact : facts) {
@@ -63,12 +70,13 @@ void GPSReceiverFactGroup::_setSurveyTarget(const std::optional<GPSBaseStationCo
 
 void GPSReceiverFactGroup::_setBaseStatus(const GPSBaseStatus& report)
 {
+    const quint64 status = _resets;
     const double accuracy = report.meanAccuracyMeters.value_or(qQNaN());
-    _update(_currentDurationFact, static_cast<qint64>(report.duration.count()));
-    _update(_currentAccuracyFact, accuracy);
-    _update(_baseLatitudeFact, report.position.latitudeDegrees);
-    _update(_baseLongitudeFact, report.position.longitudeDegrees);
-    _update(_baseHeightFact, report.position.altitudeMeters);
+    _write(status, _currentDurationFact, static_cast<qint64>(report.duration.count()));
+    _write(status, _currentAccuracyFact, accuracy);
+    _write(status, _baseLatitudeFact, report.position.latitudeDegrees);
+    _write(status, _baseLongitudeFact, report.position.longitudeDegrees);
+    _write(status, _baseHeightFact, report.position.altitudeMeters);
     const bool valid = report.state == GPSBaseState::Valid;
     const bool active = report.state == GPSBaseState::Active;
     if (active) {
@@ -82,9 +90,11 @@ void GPSReceiverFactGroup::_setBaseStatus(const GPSBaseStatus& report)
             base = fixed;
         }
     }
-    _setCurrentBasePosition(base);
-    // Last: an observer of the base state may end the session, which resets this status.
-    _update(_baseStateFact, static_cast<int>(report.state));
+    if (status == _resets) {
+        _setCurrentBasePosition(base);
+    }
+    // Last: its observers find the rest of the report with it.
+    _write(status, _baseStateFact, static_cast<int>(report.state));
 }
 
 void GPSReceiverFactGroup::_setSatellites(const GPSSatelliteReport& report)
@@ -102,17 +112,19 @@ void GPSReceiverFactGroup::_setSatellites(const GPSSatelliteReport& report)
     }
     // Before the Facts, which notify as they are written.
     _constellations = std::move(constellations);
-    _update(_numSatellitesFact, report.inView.value_or(-1));
-    _update(_numSatellitesUsedFact, report.used.value_or(-1));
+    const quint64 status = _resets;
+    _write(status, _numSatellitesFact, report.inView.value_or(-1));
+    _write(status, _numSatellitesUsedFact, report.used.value_or(-1));
 }
 
 void GPSReceiverFactGroup::_setSolution(GPSFixQuality fixType, const GPSIntegrityReport& integrity)
 {
-    _update(_jammingStateFact, static_cast<int>(integrity.jamming.state));
-    _update(_spoofingStateFact, static_cast<int>(integrity.spoofing.state));
-    _update(_antennaStateFact, static_cast<int>(integrity.antenna.state));
+    const quint64 status = _resets;
+    _write(status, _jammingStateFact, static_cast<int>(integrity.jamming.state));
+    _write(status, _spoofingStateFact, static_cast<int>(integrity.spoofing.state));
+    _write(status, _antennaStateFact, static_cast<int>(integrity.antenna.state));
     // Last, as the base state is, for an observer of the fix.
-    _update(_fixTypeFact, static_cast<int>(fixType));
+    _write(status, _fixTypeFact, static_cast<int>(fixType));
 }
 
 void GPSReceiverFactGroup::_clearSolution()
@@ -124,6 +136,7 @@ void GPSReceiverFactGroup::_clearSolution()
 
 void GPSReceiverFactGroup::_reset()
 {
+    ++_resets;
     _restoreDefaults({&_currentDurationFact, &_currentAccuracyFact, &_targetDurationFact, &_targetAccuracyFact,
                       &_baseStateFact, &_baseLatitudeFact, &_baseLongitudeFact, &_baseHeightFact, &_numSatellitesFact,
                       &_numSatellitesUsedFact, &_fixTypeFact, &_jammingStateFact, &_spoofingStateFact,

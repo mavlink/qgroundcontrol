@@ -143,6 +143,10 @@ private:
     void _setConfigured(bool configured) { _setTelemetryAvailable(configured); }
 
     static void _update(Fact& fact, const QVariant& value);
+    /// Writes a value of a report into the status it was reported for: the one whose writer read _resets as
+    /// @a status. The Facts notify as they are written, and an observer of one may end the session, which resets
+    /// the status: what the report holds after that is the ended session's and is not written.
+    void _write(quint64 status, Fact& fact, const QVariant& value);
     static void _restoreDefaults(std::initializer_list<Fact*> facts);
     void _setCurrentBasePosition(const std::optional<GPSBaseStationConfig::Fixed>& base);
     void _setCurrentBasePositionSaved(bool saved);
@@ -152,6 +156,8 @@ private:
     bool _currentBasePositionSaved = false;
     bool _receiverWarning = false;
     QList<GPSConstellationSatellites> _constellations;
+    /// How often the status was reset, which tells the writer of a report that the status it began with is gone.
+    quint64 _resets = 0;
 
     Fact _currentDurationFact = Fact(0, QStringLiteral("currentDuration"), FactMetaData::valueTypeDouble);
     Fact _currentAccuracyFact = Fact(0, QStringLiteral("currentAccuracy"), FactMetaData::valueTypeDouble);
