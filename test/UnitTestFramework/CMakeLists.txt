@@ -23,6 +23,15 @@ set_source_files_properties(
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+# Placeholder tile that UnitTestTileGenerator serves through the tile cache
+qt_add_resources(
+    ${CMAKE_PROJECT_NAME} unittest_tile_resources
+    PREFIX "/res"
+    BASE "${CMAKE_CURRENT_SOURCE_DIR}"
+    FILES
+        "${CMAKE_CURRENT_SOURCE_DIR}/notile.png"
+)
+
 add_subdirectory(BaseClasses)
 add_subdirectory(Benchmarking)
 add_subdirectory(Fixtures)

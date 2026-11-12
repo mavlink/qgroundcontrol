@@ -106,12 +106,3 @@ target_precompile_headers(
         <QtNetwork/QNetworkRequest>
         <QtQml/QQmlEngine>
 )
-
-# Placeholder tile that the unit test tile generator (test/UnitTestFramework) serves through the tile cache.
-qt_add_resources(
-    ${CMAKE_PROJECT_NAME} qtlocationplugin_resources
-    PREFIX "/res"
-    BASE "${CMAKE_SOURCE_DIR}/resources"
-    FILES
-        "${CMAKE_SOURCE_DIR}/resources/notile.png"
-)
