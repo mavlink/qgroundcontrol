@@ -24,6 +24,8 @@ private slots:
     void _workerCanOutliveManager();
     void _shutdownJoinsRetiredWorkers_data();
     void _shutdownJoinsRetiredWorkers();
+    void _scriptedWorkersEndWithReceiver_data();
+    void _scriptedWorkersEndWithReceiver();
     void _notificationsFollowCompletedConnection();
     void _receiverFramesAreValidated_data();
     void _receiverFramesAreValidated();

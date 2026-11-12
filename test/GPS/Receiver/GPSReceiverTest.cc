@@ -955,6 +955,42 @@ void GPSReceiverTest::_shutdownJoinsRetiredWorkers()
     QTRY_VERIFY_WITH_TIMEOUT(active.isNull(), TestTimeout::mediumMs());
 }
 
+void GPSReceiverTest::_scriptedWorkersEndWithReceiver_data()
+{
+    QTest::addColumn<bool>("receiverFirst");
+    QTest::newRow("receiver-destroyed-first") << true;
+    QTest::newRow("factory-destroyed-first") << false;
+}
+
+void GPSReceiverTest::_scriptedWorkersEndWithReceiver()
+{
+    QFETCH(bool, receiverFirst);
+    // A receiver that is destroyed with a receiver connected leaves its worker to finish by itself, which a scripted
+    // worker never does: the suites' receivers must not leave theirs behind, whichever is destroyed first.
+    QPointer<ScriptedReceiverWorker> retired;
+    QPointer<ScriptedReceiverWorker> active;
+    {
+        auto workers = std::make_unique<ScriptedReceiverWorkerFactory>();
+        auto receiver = std::make_unique<GPSReceiver>();
+        receiver->setWorkerFactory(workers->workerFactory());
+        QVERIFY(connectOverTcp(*receiver));
+        retired = workers->current();
+        receiver->disconnectReceiver();
+        QVERIFY(receiver->connectReceiver());
+        active = workers->current();
+        QVERIFY(retired && active && retired != active);
+        if (receiverFirst) {
+            receiver.reset();
+            workers.reset();
+        } else {
+            workers.reset();
+            receiver.reset();
+        }
+    }
+    QVERIFY(retired.isNull());
+    QVERIFY(active.isNull());
+}
+
 void GPSReceiverTest::_receiverFramesAreValidated_data()
 {
     // The receiver's stream demultiplexer drops frames that fail their CRC; RTCMConformanceTest covers that.

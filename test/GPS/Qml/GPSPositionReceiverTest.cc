@@ -41,9 +41,6 @@ struct Section
         return {.bluetooth = bluetooth.side()};
     }
 
-    // Scripted workers never run, so the receiver's shutdown is what deletes those of its ended sessions.
-    ~Section() { receiver.shutdown(); }
-
     Section(const Section&) = delete;
     Section& operator=(const Section&) = delete;
 
