@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
@@ -45,6 +47,7 @@ public:
     /// @a scheduler runs the timers of every GPS service; the manager creates one when none is given. @a serialPorts
     /// lists and claims the serial devices of both receivers; they are the application's when none is given.
     /// @a bluetooth is what the Bluetooth connections of both receivers are built on: the build's when none is given.
+    /// The Bluetooth device pickers of both receivers scan with one device discovery, which the manager owns.
     GPSManager(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr,
                SerialPortManager* serialPorts = nullptr, const GPSBluetoothPlatform* bluetooth = nullptr);
     ~GPSManager();
@@ -87,6 +90,9 @@ private:
     RuntimeScheduler* const _scheduler;
     GPSCorrectionManager* const _corrections;
     PositionManager* const _positionManager;
+    /// The device discovery of both receivers' Bluetooth sides, created as a child of the manager when a device
+    /// picker first asks for it: the radio runs one scan at a time.
+    const std::function<QObject*()> _bluetoothDiscovery;
     GPSReceiver* const _receiver;
     GPSReceiver* const _positionReceiver;
     NTRIPConnectedVehicles* const _connectedVehicles;

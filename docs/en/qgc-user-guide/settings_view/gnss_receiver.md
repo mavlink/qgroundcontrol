@@ -272,6 +272,7 @@ With the base on a tripod, the ground station position is then the tripod's, and
 - QGC never configures the position receiver and sends it nothing.
   It reads the output a [receiver that is not configured](#passive) has: standard NMEA, u-blox UBX or Septentrio SBF, over **Serial** (with the receiver's baud rate, or **Auto**), **TCP**, **UDP** or **Bluetooth**.
   _Bluetooth_ connects a handheld receiver, or a Bluetooth serial adapter that runs at its receiver's baud rate, with the [device choice](#receiver) the GNSS receiver has, where the platform has Bluetooth serial connections.
+  The two device choices share one scan: the devices it finds are listed for both receivers, whichever started it.
   RTCM that it sends is not forwarded to vehicles.
 - While the setting is on, the position receiver is the only receiver that provides the ground station position, whether or not it is connected or has a fix.
   The GNSS receiver's position is never used then.

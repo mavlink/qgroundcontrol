@@ -25,6 +25,7 @@
 #include "GPSReceiverConnectionPolicy.h"
 #include "GPSReceiverFactGroup.h"
 #include "GPSSettingsBindings.h"
+#include "PositionReceiverSettings.h"
 #include "QGCPalette.h"
 #include "Qml/Support/GPSPanelFixtures.h"
 #include "QmlTesting/QmlFixtures.h"
@@ -1106,6 +1107,86 @@ void GPSReceiverSettingsTest::_bluetoothPickerListsLinkConfigurationDevices()
     QCOMPARE(settings.settings->bluetoothDeviceAddress()->rawValue().toString(), QStringLiteral("00:11:22:33:44:02"));
     QCOMPARE(settings.settings->bluetoothDeviceName()->rawValue().toString(), QStringLiteral("Rover"));
     QCOMPARE(device->property("currentText").toString(), QStringLiteral("Rover – 00:11:22:33:44:02"));
+}
+
+void GPSReceiverSettingsTest::_bluetoothPickersShareScan()
+{
+    // The pickers of the GNSS receiver and of the position receiver, which scan with one discovery.
+    RTKSettingsFixture settings(kPassiveManufacturer);
+    PositionReceiverSettings* const position = SettingsManager::instance()->positionReceiverSettings();
+    settings.saved.setFactValue(position->bluetoothDeviceAddress(), QString());
+    settings.saved.setFactValue(position->bluetoothDeviceName(), QString());
+    ScriptedBluetoothDiscovery discovery;
+    TestFixtures::QmlEngine engine;
+    const auto create = [&](Fact* address, Fact* name) {
+        return engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverBluetoothDevice.qml")),
+                             {{QStringLiteral("addressFact"), QVariant::fromValue(address)},
+                              {QStringLiteral("nameFact"), QVariant::fromValue(name)},
+                              {QStringLiteral("discovery"), QVariant::fromValue(&discovery)}});
+    };
+    const std::unique_ptr<QObject> receiverOwner =
+        create(settings.settings->bluetoothDeviceAddress(), settings.settings->bluetoothDeviceName());
+    QVERIFY2(receiverOwner, qPrintable(engine.lastError()));
+    std::unique_ptr<QObject> positionOwner =
+        create(position->bluetoothDeviceAddress(), position->bluetoothDeviceName());
+    QVERIFY2(positionOwner, qPrintable(engine.lastError()));
+    QObject* const receiverPicker = receiverOwner.get();
+    QObject* const positionPicker = positionOwner.get();
+    const auto part = [](const QObject* picker, const char* name) {
+        return picker->findChild<QObject*>(QString::fromLatin1(name));
+    };
+    const auto text = [&part](const QObject* picker, const char* name) {
+        return part(picker, name)->property("text").toString();
+    };
+    const auto entries = [&part](const QObject* picker) {
+        return part(picker, "rtkBluetoothDevice")->property("model").toStringList().mid(1);
+    };
+    const auto scan = [&part](const QObject* picker) {
+        return QMetaObject::invokeMethod(part(picker, "rtkBluetoothScan"), "clicked");
+    };
+    const QString stop = QCoreApplication::translate("GPSReceiverBluetoothDevice", "Stop Scan");
+    const QString handheld = QStringLiteral("Handheld – 00:11:22:33:44:05");
+
+    // A scan one picker starts is the radio's: both show it and list what it finds.
+    QVERIFY(scan(receiverPicker));
+    QCOMPARE(discovery.scans, 1);
+    discovery.find(QStringLiteral("Handheld"), QStringLiteral("00:11:22:33:44:05"));
+    for (const QObject* const picker : {receiverPicker, positionPicker}) {
+        QCOMPARE(text(picker, "rtkBluetoothScan"), stop);
+        QCOMPARE(entries(picker), QStringList{handheld});
+    }
+
+    // It is not the other picker's to end when that one is locked, as by its receiver connecting, or hidden.
+    QVERIFY(positionPicker->setProperty("editable", false));
+    QVERIFY(positionPicker->setProperty("visible", false));
+    QVERIFY(discovery.scanning());
+    QVERIFY(positionPicker->setProperty("visible", true));
+    QVERIFY(positionPicker->setProperty("editable", true));
+    // Stop is the user's, in either picker, and so is choosing a device.
+    QVERIFY(scan(positionPicker));
+    QVERIFY(!discovery.scanning());
+    QCOMPARE(discovery.scans, 1);
+    QVERIFY(scan(receiverPicker));
+    discovery.find(QStringLiteral("Handheld"), QStringLiteral("00:11:22:33:44:05"));
+    QVERIFY(QMetaObject::invokeMethod(part(positionPicker, "rtkBluetoothDevice"), "activated", Q_ARG(int, 1)));
+    QCOMPARE(position->bluetoothDeviceAddress()->rawValue().toString(), QStringLiteral("00:11:22:33:44:05"));
+    QVERIFY(!discovery.scanning());
+
+    // A scan that fails says why in both, until the next one, whichever picker starts it.
+    QVERIFY(scan(positionPicker));
+    discovery.fail(QStringLiteral("Device is powered off"));
+    for (const QObject* const picker : {receiverPicker, positionPicker}) {
+        QCOMPARE(text(picker, "rtkBluetoothScanError"), QStringLiteral("Device is powered off"));
+    }
+    QVERIFY(scan(positionPicker));
+    for (const QObject* const picker : {receiverPicker, positionPicker}) {
+        QVERIFY(text(picker, "rtkBluetoothScanError").isEmpty());
+    }
+
+    // The picker that started a scan ends it when it goes, as when its page is left.
+    QVERIFY(discovery.scanning());
+    positionOwner.reset();
+    QVERIFY(!discovery.scanning());
 }
 
 void GPSReceiverSettingsTest::_useSelectsRoleAndFields()

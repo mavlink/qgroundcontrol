@@ -32,7 +32,12 @@ public:
     /// The device discovery of the application's Bluetooth links, a BluetoothConfiguration in its classic mode,
     /// whose devicesModel the device picker lists and whose startScan() and stopScan() it calls. Created when first
     /// asked for, and null where receivers do not connect over Bluetooth. Nothing is scanned before the picker asks.
+    /// It is this side's own, unless setSharedDiscovery() gave it one to share.
     QObject* discovery();
+
+    /// The device pickers of several receivers scan with the one radio, so their sides share the discovery
+    /// @a shared returns, which must outlive them. It is asked for when discovery() is, and creates nothing before.
+    void setSharedDiscovery(std::function<QObject*()> shared) { _sharedDiscovery = std::move(shared); }
 
     /// @a address is a Bluetooth device address as the settings hold it, such as 00:11:22:AA:BB:CC.
     [[nodiscard]] static bool validAddress(const QString& address);
@@ -52,5 +57,6 @@ public:
 private:
     const GPSBluetoothPlatform _platform;
     QObject* _discovery = nullptr;
+    std::function<QObject*()> _sharedDiscovery;
     std::function<QString(const QString&)> _refusal;
 };

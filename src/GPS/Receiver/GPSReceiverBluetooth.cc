@@ -16,7 +16,13 @@ GPSReceiverBluetooth::GPSReceiverBluetooth(QObject* parent, GPSBluetoothPlatform
 
 QObject* GPSReceiverBluetooth::discovery()
 {
-    if (!_discovery && supported() && _platform.createDiscovery) {
+    if (!supported()) {
+        return nullptr;
+    }
+    if (_sharedDiscovery) {
+        return _sharedDiscovery();
+    }
+    if (!_discovery && _platform.createDiscovery) {
         _discovery = _platform.createDiscovery(this);
     }
     return _discovery;

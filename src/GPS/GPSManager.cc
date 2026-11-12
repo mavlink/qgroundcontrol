@@ -1,6 +1,7 @@
 #include "GPSManager.h"
 
 #include <functional>
+#include <memory>
 #include <utility>
 
 #include <QtCore/QApplicationStatic>
@@ -62,14 +63,29 @@ std::function<GPSReceiverSerialPorts*(QObject*)> serialSide(
 #endif
 }
 
-/// The receiver's Bluetooth side over @a platform, or over the build's without one, which leaves to another receiver
-/// the devices @a refusal gives a reason for.
+/// One device discovery of @a platform, or of the build's without one, for every caller: created as a child of
+/// @a owner when first asked for.
+std::function<QObject*()> sharedBluetoothDiscovery(const GPSBluetoothPlatform* platform, QObject* owner)
+{
+    return [create = (platform ? *platform : GPSBluetoothPlatform::system()).createDiscovery, owner,
+            discovery = std::make_shared<QPointer<QObject>>()]() -> QObject* {
+        if (!*discovery && create) {
+            *discovery = create(owner);
+        }
+        return *discovery;
+    };
+}
+
+/// The receiver's Bluetooth side over @a platform, or over the build's without one, which scans with @a discovery
+/// and leaves to another receiver the devices @a refusal gives a reason for.
 std::function<GPSReceiverBluetooth*(QObject*)> bluetoothSide(const GPSBluetoothPlatform* platform,
+                                                             std::function<QObject*()> discovery,
                                                              std::function<QString(const QString&)> refusal = {})
 {
-    return [platform = platform ? *platform : GPSBluetoothPlatform::system(),
+    return [platform = platform ? *platform : GPSBluetoothPlatform::system(), discovery = std::move(discovery),
             refusal = std::move(refusal)](QObject* parent) {
         auto* const bluetooth = new GPSReceiverBluetooth(parent, platform);
+        bluetooth->setSharedDiscovery(discovery);
         bluetooth->setRefusal(refusal);
         return bluetooth;
     };
@@ -79,11 +95,12 @@ GPSReceiver::Dependencies receiverDependencies(GPSCorrectionManager* corrections
                                                SerialPortManager* serialPorts,
                                                std::function<bool(const QString&)> discoveryExcluded,
                                                const GPSBluetoothPlatform* bluetooth,
+                                               std::function<QObject*()> bluetoothDiscovery,
                                                std::function<QString(const QString&)> bluetoothRefusal)
 {
     GPSReceiver::Dependencies dependencies{.corrections = corrections, .positions = positions};
     dependencies.serial = serialSide(serialPorts, std::move(discoveryExcluded));
-    dependencies.bluetooth = bluetoothSide(bluetooth, std::move(bluetoothRefusal));
+    dependencies.bluetooth = bluetoothSide(bluetooth, std::move(bluetoothDiscovery), std::move(bluetoothRefusal));
     dependencies.recordingDirectory = []() { return saveFolder(QStringLiteral("GPSReceiver")); };
     // What "Detect automatically" finds on each link is kept in the settings, for its next connection there.
     dependencies.detectedReceiver = [](const QString& link) {
@@ -98,11 +115,12 @@ GPSReceiver::Dependencies receiverDependencies(GPSCorrectionManager* corrections
 /// The position receiver has no correction manager, since what RTCM it sends is not a correction source, and
 /// nothing to remember of a detection, since it is never asked what it is.
 GPSReceiver::Dependencies positionReceiverDependencies(PositionManager* positions, SerialPortManager* serialPorts,
-                                                       const GPSBluetoothPlatform* bluetooth)
+                                                       const GPSBluetoothPlatform* bluetooth,
+                                                       std::function<QObject*()> bluetoothDiscovery)
 {
     GPSReceiver::Dependencies dependencies{.positions = positions, .positionOnly = true};
     dependencies.serial = serialSide(serialPorts);
-    dependencies.bluetooth = bluetoothSide(bluetooth);
+    dependencies.bluetooth = bluetoothSide(bluetooth, std::move(bluetoothDiscovery));
     // A folder of its own: both receivers name a recording by the time it started and the receiver type.
     dependencies.recordingDirectory = []() { return saveFolder(QStringLiteral("GPSPositionReceiver")); };
     return dependencies;
@@ -121,14 +139,16 @@ GPSManager::GPSManager(QObject* parent, RuntimeScheduler* scheduler, SerialPortM
     , _scheduler(RuntimeScheduler::orDefault(scheduler, nullptr))
     , _corrections(new GPSCorrectionManager(this, _scheduler, {.logDirectory = correctionLogDirectory}))
     , _positionManager(new PositionManager(this, _scheduler))
-    , _receiver(
-          new GPSReceiver(this, _scheduler,
-                          receiverDependencies(
-                              _corrections, _positionManager, serialPorts,
-                              [this](const QString& device) { return _positionReceiverUses(device); }, bluetooth,
-                              [this](const QString& address) { return _positionReceiverBluetoothRefusal(address); })))
+    , _bluetoothDiscovery(sharedBluetoothDiscovery(bluetooth, this))
+    , _receiver(new GPSReceiver(
+          this, _scheduler,
+          receiverDependencies(
+              _corrections, _positionManager, serialPorts,
+              [this](const QString& device) { return _positionReceiverUses(device); }, bluetooth, _bluetoothDiscovery,
+              [this](const QString& address) { return _positionReceiverBluetoothRefusal(address); })))
     , _positionReceiver(
-          new GPSReceiver(this, _scheduler, positionReceiverDependencies(_positionManager, serialPorts, bluetooth)))
+          new GPSReceiver(this, _scheduler,
+                          positionReceiverDependencies(_positionManager, serialPorts, bluetooth, _bluetoothDiscovery)))
     , _connectedVehicles(new NTRIPConnectedVehicles(this))
     , _ntripManager(new NTRIPManager(this, _scheduler,
                                      {.corrections = _corrections,

@@ -514,6 +514,24 @@ void GPSManagerTest::_bluetoothDeviceIsThePositionReceivers()
     QCOMPARE(baseWorkers.count(), 2);
 }
 
+void GPSManagerTest::_receiversShareBluetoothDiscovery()
+{
+    GPSTest::ScriptedBluetooth bluetooth;
+    const GPSBluetoothPlatform platform = bluetooth.platform();
+    ManualScheduler scheduler;
+    GPSManager manager(nullptr, &scheduler, nullptr, &platform);
+    // No discovery exists, and nothing scans, before a device picker asks for one.
+    QVERIFY(!bluetooth.discovery);
+    QObject* const discovery = manager.positionReceiver()->bluetoothDiscovery();
+    QVERIFY(discovery);
+    QCOMPARE(bluetooth.discovery.data(), discovery);
+    // The pickers of both receivers scan with it, as the radio runs one scan at a time: the other receiver's asks
+    // for no discovery of its own.
+    QCOMPARE(manager.receiver()->bluetoothDiscovery(), discovery);
+    QCOMPARE(bluetooth.discovery.data(), discovery);
+    QCOMPARE(bluetooth.discovery->scans, 0);
+}
+
 void GPSManagerTest::_vehicleGpsTracking()
 {
     ManualScheduler scheduler;
