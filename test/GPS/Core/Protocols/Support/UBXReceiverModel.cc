@@ -4,6 +4,7 @@
 #include <array>
 #include <chrono>
 #include <cstring>
+#include <string_view>
 #include <utility>
 
 #include "Protocols/Support/ProtocolTestPackets.h"
@@ -47,6 +48,20 @@ uint32_t configValue(const QByteArray& bytes, qsizetype offset, qsizetype width)
         value |= uint64_t(static_cast<uint8_t>(bytes[offset + i])) << (8 * i);
     }
     return static_cast<uint32_t>(value);
+}
+
+/// The firmware a receiver that the model's fields describe reports: a version its module has, that of the module's
+/// preset where there is one.
+std::string_view firmwareOf(std::string_view module)
+{
+    constexpr std::pair<std::string_view, std::string_view> FIRMWARE[] = {
+        {"X20P", "HPG 2.00"}, {"F10N", "SPG 6.00"}, {"M9N", "SPG 4.04"}, {"M8P", "HPG 1.40"}};
+    for (const auto& [name, firmware] : FIRMWARE) {
+        if (module.find(name) != std::string_view::npos) {
+            return firmware;
+        }
+    }
+    return "HPG 1.32";
 }
 
 void appendConfigValue(QByteArray& bytes, uint32_t value, unsigned width)
@@ -279,7 +294,8 @@ QByteArray UBXReceiverModel::_identityPayload()
         return _presetIdentity;
     }
     QByteArray version(70, '\0');
-    std::memcpy(version.data(), "HPG 1.32", 8);
+    const std::string_view firmware = firmwareOf(module);
+    std::memcpy(version.data(), firmware.data(), firmware.size());
     const std::string hardwareVersion = hardware.empty() ? (legacy                 ? "00080000"
                                                             : module == "ZED-X20P" ? "000B0000"
                                                                                    : "00190000")

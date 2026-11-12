@@ -1,7 +1,7 @@
 about NEO-M9N discovered at 9600
 request type=ublox role=rtk-base mode=survey-in accuracy=1.0000m duration=60s compact=0 persistent=0 baud=0
 configure configured=0 baud=0->0 failure=protocol ready=0 elapsed=4060ms
-  identity "NEO-M9N HPG 1.32"
+  identity "NEO-M9N SPG 4.04"
   error "NEO-M9N cannot run as an RTK base station"
   baud 38400 configured
   write "UBX-MON-VER" 8 timed-out required

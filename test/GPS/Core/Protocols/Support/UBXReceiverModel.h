@@ -21,7 +21,8 @@
 namespace GPSTest {
 
 /// Stateful UBX model: receiver configuration survives transport sessions. A receiver preset reports its recorded
-/// identity; otherwise the module, hardware, protocol and legacy fields describe the receiver.
+/// identity; otherwise the module, hardware, protocol and legacy fields describe the receiver, which reports a
+/// firmware version of that module.
 class UBXReceiverModel : public ScriptedReceiver::Model
 {
 public:

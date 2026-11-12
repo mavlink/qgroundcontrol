@@ -1,7 +1,7 @@
 about ZED-X20P, fixed base with MSM4
 request type=ublox role=rtk-base mode=fixed lat=47.00000000 lon=8.00000000 alt=500.0000 accuracy=1.00000m compact=1 persistent=0 baud=115200
 configure configured=1 baud=115200->115200 failure=none ready=1 elapsed=20ms
-  identity "ZED-X20P HPG 1.32"
+  identity "ZED-X20P HPG 2.00"
   baud 115200 configured
   write "UBX-MON-VER" 8 acknowledged required
     b5620a0400000e34
