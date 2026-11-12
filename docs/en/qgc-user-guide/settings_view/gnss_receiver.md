@@ -52,6 +52,7 @@ The settings are:
   - **Receiver host** and **Receiver TCP port:** The receiver or bridge to connect to. A bridge must already run the receiver link at 115200 baud.
   - **Receiver UDP port:** The local port the receiver's output arrives on. The first sender is used until it stops sending.
   - **Serial device:** The receiver's port. The list names each port by its USB description, such as _u-blox GNSS receiver – /dev/ttyACM0_, and marks ports another connection, such as a vehicle link, uses as _(in use)_.
+    Where only one serial device can be open at a time, as with Android's USB serial driver, **Connect** says so while another connection has one open: disconnect that connection first.
     For a configured base with **Connect automatically** on, _Any RTK receiver on USB_ connects to the first receiver whose USB adapter is a known RTK receiver.
   - **Baud rate:** The serial rate. _Auto_ lets a configured base detect the rate; a passive receiver needs the rate it already uses. _Custom_ accepts any other rate.
 - **Base mode** (_Configured base_ only), as the receiver supports it:

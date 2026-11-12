@@ -32,6 +32,7 @@ public:
     void forgetRtkReceivers() override { _rtkReceivers.clear(); }
 
     GPSSerialClaim claim(const QString& device) override;
+    bool held(const QString& device) const override;
     GPSReceiverWorker::TransportFactory transportFactory(const QString& device, GPSSerialClaim claim) const override;
 
 private:

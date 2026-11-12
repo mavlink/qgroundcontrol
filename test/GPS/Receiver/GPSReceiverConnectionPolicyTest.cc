@@ -189,6 +189,11 @@ void GPSReceiverConnectionPolicyTest::_connectConfiguredValidationErrors_data()
     row("serial-bootloader", serialDevice);
     row("invalid-baud", baudRate);
     row("passive-auto-baud", baudRate);
+    // Where only one serial device can be open at a time, as with Android's USB serial driver.
+    row("single-port-in-use", GPSReceiverConnectionPolicy::tr("The selected serial device is already in use."));
+    row("single-port-other-in-use",
+        GPSReceiverConnectionPolicy::tr("Another connection has a serial device open, and only one can be open at a "
+                                        "time. Disconnect it first."));
 #endif
 }
 
@@ -217,7 +222,8 @@ void GPSReceiverConnectionPolicyTest::_connectConfiguredValidationErrors()
     PolicyHarness harness(configuration);
 #else
     QList<SerialPortManager::Port> inventory{rtkPort()};
-    if (reason.startsWith(QStringLiteral("serial-")) || reason == QStringLiteral("invalid-baud")) {
+    if (reason.startsWith(QStringLiteral("serial-")) || reason.startsWith(QStringLiteral("single-port-")) ||
+        reason == QStringLiteral("invalid-baud")) {
         configuration = GPSTest::serialConfiguration(gpsReceiverManufacturerForType(GPSType::UBlox),
                                                      QStringLiteral("/test/rtk"), 115200);
         configuration.autoConnect = false;
@@ -236,6 +242,14 @@ void GPSReceiverConnectionPolicyTest::_connectConfiguredValidationErrors()
         inventory = {serialPort(configuration.serialDevice)};
     }
     PolicyHarness harness(configuration, inventory);
+    // Another connection, such as a vehicle link, holds the selected device or another one.
+    (void) harness.ports.availablePorts();
+    harness.ports.setSinglePortOnly(reason.startsWith(QStringLiteral("single-port-")));
+    const auto vehicleLink = reason == QStringLiteral("single-port-in-use")
+                                 ? harness.ports.reservePort(configuration.serialDevice)
+                             : reason == QStringLiteral("single-port-other-in-use")
+                                 ? harness.ports.reservePort(QStringLiteral("/test/mavlink"))
+                                 : nullptr;
 #endif
     if (reason == QStringLiteral("already-connected")) {
         QVERIFY(harness.receiver.connectReceiver());

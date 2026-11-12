@@ -325,7 +325,12 @@ bool GPSReceiverConnectionPolicy::_connectConfigured(bool allowPersistentChanges
     }
     GPSSerialClaim claim = _serial.claim(device);
     if (!claim) {
-        _refuse({.error = tr("The selected serial device is already in use."), .serialDevice = device});
+        // A device that nothing holds is refused where only one can be open at a time, while another is.
+        _refuse({.error = _serial.held(device)
+                              ? tr("The selected serial device is already in use.")
+                              : tr("Another connection has a serial device open, and only one can be open at a time. "
+                                   "Disconnect it first."),
+                 .serialDevice = device});
         return false;
     }
     return _receiver.connectSerial(device, type, check.request, std::move(claim));

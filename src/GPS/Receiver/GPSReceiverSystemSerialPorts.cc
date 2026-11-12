@@ -97,6 +97,11 @@ GPSSerialClaim GPSReceiverSystemSerialPorts::claim(const QString& device)
     return reservation;
 }
 
+bool GPSReceiverSystemSerialPorts::held(const QString& device) const
+{
+    return _manager && _manager->isPortReserved(device);
+}
+
 GPSReceiverWorker::TransportFactory GPSReceiverSystemSerialPorts::transportFactory(const QString& device,
                                                                                    GPSSerialClaim claim) const
 {

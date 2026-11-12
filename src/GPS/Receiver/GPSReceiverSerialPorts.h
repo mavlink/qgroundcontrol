@@ -76,8 +76,12 @@ public:
     /// Forgets since when the RTK receivers have been listed, so each waits again from its next listing.
     virtual void forgetRtkReceivers() {}
 
-    /// Claims the device until the last copy is released; empty when it is in use.
+    /// Claims the device until the last copy is released. Empty when it is in use, and where only one serial device
+    /// can be open at a time, as with Android's USB serial driver, while any other is: held() tells the two apart.
     virtual GPSSerialClaim claim([[maybe_unused]] const QString& device) { return {}; }
+
+    /// A connection holds the device: another one, or a session of this receiver whose worker has not stopped.
+    virtual bool held([[maybe_unused]] const QString& device) const { return false; }
 
     /// Opens @a device for a session, which holds @a claim until its worker has stopped. Empty where no device opens.
     virtual GPSReceiverWorker::TransportFactory transportFactory([[maybe_unused]] const QString& device,
