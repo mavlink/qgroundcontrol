@@ -78,6 +78,11 @@ public:
 
     bool fatalError() const override { return false; }
 
+    unsigned fixedBaudRate() const override { return _fixedBaudRate; }
+
+    /// The link is a network bridge, which runs at this rate alone.
+    void setFixedBaudRate(unsigned baudRate) { _fixedBaudRate = baudRate; }
+
     GPSReadResult read(std::span<uint8_t> buffer, std::chrono::milliseconds) override
     {
         if (isCancelled()) {
@@ -127,6 +132,7 @@ private:
     int _chunkBytes;
     std::optional<int> _acceptedBytes;
     unsigned _baudRate = 0;
+    unsigned _fixedBaudRate = 0;
 };
 
 constexpr const char* RECORDING_LOG = "GPS.Transport.GPSRecordingTransport";
@@ -271,6 +277,89 @@ void GPSRecordingTransportTest::_recordsLinkTrafficInOrder()
                             }));
 }
 
+void GPSRecordingTransportTest::_recordsSessionSettings_data()
+{
+    using Session = GPSRecordingTransport::Session;
+    QTest::addColumn<std::optional<Session>>("session");
+    QTest::addColumn<unsigned>("fixedBaudRate");
+    QTest::addColumn<QByteArray>("settings");
+    QTest::newRow("survey") << std::optional(
+                                   Session{GPSType::UBlox,
+                                           {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2.5,
+                                                                                            .duration = 180s}}}})
+                            << 0U
+                            << QByteArray(
+                                   "type=ublox,baud=0,fixed-baud=0,save=0,compact=0,"
+                                   "base=survey,duration=180,accuracy=2.5");
+    // Coordinates with every digit a double holds, on a network bridge.
+    QTest::newRow("fixed") << std::optional(Session{
+                                  GPSType::Automatic,
+                                  {.base = {.mode =
+                                                GPSBaseStationConfig::Fixed{
+                                                    .position = {47.397741900000014, -122.54559380000002, 488.25},
+                                                    .accuracyMeters = 0.5f},
+                                            .compactObservations = true},
+                                   .baudRate = 230400,
+                                   .allowPersistentChanges = true}})
+                           << GPSTransport::BRIDGE_BAUD_RATE
+                           << QByteArray(
+                                  "type=automatic,baud=230400,fixed-baud=115200,save=1,compact=1,base=fixed,"
+                                  "latitude=47.397741900000014,longitude=-122.54559380000002,altitude=488.25,"
+                                  "accuracy=0.5");
+    QTest::newRow("averaging")
+        << std::optional(Session{GPSType::Unicore, {.base = {.mode = GPSBaseStationConfig::ReceiverAveraging{90s}}}})
+        << 0U
+        << QByteArray(
+               "type=unicore,baud=0,fixed-baud=0,save=0,compact=0,"
+               "base=averaging,duration=90");
+    QTest::newRow("passive") << std::optional(Session{GPSType::Passive, {.baudRate = 115200}}) << 0U
+                             << QByteArray(
+                                    "type=passive,baud=115200,fixed-baud=0,save=0,compact=0,"
+                                    "base=survey,duration=0,accuracy=0");
+    // A recorder that was not told its session writes the recording as before.
+    QTest::newRow("not-given") << std::optional<Session>() << 0U << QByteArray();
+}
+
+void GPSRecordingTransportTest::_recordsSessionSettings()
+{
+    QFETCH(std::optional<GPSRecordingTransport::Session>, session);
+    QFETCH(unsigned, fixedBaudRate);
+    QFETCH(QByteArray, settings);
+    TestFixtures::TempDirFixture directory;
+    const QString file = QDir(directory.path()).filePath(QStringLiteral("session.log"));
+    GPSTestClock clock(GPSTestClock::START_US);
+    {
+        auto link = std::make_unique<MemoryGPSTransport>();
+        link->setFixedBaudRate(fixedBaudRate);
+        GPSRecordingTransport recorder(std::move(link), file, GPSRecordingTransport::MAX_FILE_BYTES, {}, session,
+                                       clock.source());
+        QCOMPARE(recorder.open().status, GPSOpenStatus::Opened);
+        // The records carry the time of the session's clock, which stands still unless the session waits.
+        clock.advanceBy(1500us);
+        QVERIFY(recorder.setBaudRate(38400));
+    }
+    QFile recording(file);
+    QVERIFY(recording.open(QIODevice::ReadOnly));
+    QCOMPARE(recording.readAll(), QByteArray(HEADER_LINE) +
+                                      (settings.isEmpty() ? QByteArray() : "0 SETTINGS " + settings + '\n') +
+                                      "1500 BAUD 38400\n");
+
+    QString error;
+    std::optional<GPSRecordingSettings> read;
+    QCOMPARE(GPSRecordingReader::readFile(file, &error, &read),
+             (QList<GPSRecordingRecord>{
+                 {.time = 1500us, .kind = GPSRecordingRecord::Kind::BaudRate, .bytes = {}, .baudRate = 38400}}));
+    QCOMPARE(error, QString());
+    QCOMPARE(read.has_value(), session.has_value());
+    if (session) {
+        QCOMPARE(read->type, session->type);
+        QCOMPARE(read->fixedBaudRate, fixedBaudRate);
+        QCOMPARE(read->config.baudRate, session->config.baudRate);
+        QCOMPARE(read->config.allowPersistentChanges, session->config.allowPersistentChanges);
+        QVERIFY(read->config.base == session->config.base);
+    }
+}
+
 void GPSRecordingTransportTest::_recordingReplaysToSameEvents()
 {
     TestFixtures::TempDirFixture directory;
@@ -364,6 +453,18 @@ void GPSRecordingTransportTest::_readerStopsAtDamage_data()
     QTest::newRow("no-bytes") << header + "0 RX \n"
                               << 0 << QStringLiteral("line 2: not whole bytes in lower-case hexadecimal");
     QTest::newRow("no-baud-rate") << header + "0 BAUD fast\n" << 0 << QStringLiteral("line 2: not a baud rate");
+    const QByteArray settings("0 SETTINGS type=ublox,baud=0,fixed-baud=0,save=0,compact=0,base=survey,duration=60");
+    QTest::newRow("settings-after-a-record") << header + "0 RX aa\n" + settings + ",accuracy=2\n"
+                                             << 1 << QStringLiteral("line 3: the settings are not the first record");
+    QTest::newRow("settings-of-no-receiver")
+        << header + QByteArray(settings).replace("ublox", "sextant") + ",accuracy=2\n0 RX aa\n"
+        << 0 << QStringLiteral("line 2: not the settings of a session");
+    QTest::newRow("setting-missing") << header + settings + "\n0 RX aa\n"
+                                     << 0 << QStringLiteral("line 2: not the settings of a session");
+    QTest::newRow("setting-of-another-base-mode") << header + settings + ",accuracy=2,latitude=47\n0 RX aa\n"
+                                                  << 0 << QStringLiteral("line 2: not the settings of a session");
+    QTest::newRow("setting-not-a-number") << header + settings + ",accuracy=two\n0 RX aa\n"
+                                          << 0 << QStringLiteral("line 2: not the settings of a session");
 }
 
 void GPSRecordingTransportTest::_readerStopsAtDamage()

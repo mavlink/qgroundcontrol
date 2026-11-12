@@ -1022,13 +1022,18 @@ void GPSReceiverTest::_recordsSessionsStartedWhileOn()
     QCOMPARE(QDir(directory.path()).entryList(QDir::Files), QStringList{QFileInfo(file).fileName()});
     QString damage;
     QByteArray received;
-    for (const GPSTest::GPSRecordingRecord& record : GPSTest::GPSRecordingReader::readFile(file, &damage)) {
+    std::optional<GPSTest::GPSRecordingSettings> settings;
+    for (const GPSTest::GPSRecordingRecord& record : GPSTest::GPSRecordingReader::readFile(file, &damage, &settings)) {
         if (record.kind == GPSTest::GPSRecordingRecord::Kind::Received) {
             received += record.bytes;
         }
     }
     QCOMPARE(damage, QString());
     QCOMPARE(received, stream);
+    // The recording says what its session was asked to do and on which kind of link.
+    QVERIFY(settings);
+    QCOMPARE(settings->type, GPSType::Passive);
+    QCOMPARE(settings->fixedBaudRate, GPSTransport::BRIDGE_BAUD_RATE);
 }
 
 void GPSReceiverTest::_recordingFileClearsWhenRecordingFails()

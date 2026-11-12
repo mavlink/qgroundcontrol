@@ -305,7 +305,8 @@ private:
                           const QString& endpoint = {});
     /// Names the new session's recording and returns @a transportFactory wrapped to record the link it opens, or
     /// unchanged when sessions are not recorded.
-    GPSReceiverWorker::TransportFactory _recorded(GPSReceiverWorker::TransportFactory transportFactory, GPSType type);
+    GPSReceiverWorker::TransportFactory _recorded(GPSReceiverWorker::TransportFactory transportFactory, GPSType type,
+                                                  const GPSReceiverConfig& request);
     void _endSession(GPSConnectionError error, const QString& detail, GPSReceiverSessionEnd end);
     /// The retired session is deleted later, so it may be retired from inside its own signals.
     void _retireSession();

@@ -21,16 +21,39 @@ call that crossed the link, in the order the session made them.
 
 | Record | Holds | Not recorded |
 | --- | --- | --- |
+| `SETTINGS` | What the session was asked to do, once, before the other records | |
 | `RX` | The bytes one read returned | Reads that timed out or failed |
 | `TX` | The bytes the link accepted from one write | What the link refused of a write |
 | `BAUD` | The baud rate the link changed to | A rate the link refused |
 
 Each record starts with the microseconds from the start of the recording, when the link first
-opened, to the return of its call. So a recording holds both directions and the baud rate changes
-with their times, not only what the receiver sent. It does not hold the receiver type and the UTC
-start time, which are in the file name, the connection and base settings of the session, or the
-end of the connection. An `RX` record is one read, not one message: frames are split and joined as
-the session read them.
+opened, to the return of its call, on the clock the session runs on. So a recording holds both
+directions and the baud rate changes with their times, not only what the receiver sent. An `RX`
+record is one read, not one message: frames are split and joined as the session read them. One
+recording holds one session: QGroundControl and the runner on a physical transport start a file
+for each.
+
+The `SETTINGS` record is what decides the commands a session sends, as `key=value` pairs:
+
+```text
+0 SETTINGS type=ublox,baud=0,fixed-baud=0,save=0,compact=0,base=survey,duration=60,accuracy=2
+```
+
+| Key | Value |
+| --- | --- |
+| `type` | The receiver type, as in the file name: a family, `passive` or `automatic` |
+| `baud` | The selected baud rate; 0 lets the driver detect it |
+| `fixed-baud` | The one rate the link runs at: 115200 for TCP and UDP, 0 for a serial port |
+| `save` | 1 with consent to save settings to the receiver's flash |
+| `compact` | 1 for compact (MSM4) corrections |
+| `base` | `survey` with `duration` (s) and `accuracy` (m), `fixed` with `latitude`, `longitude` (degrees), `altitude` and `accuracy` (m), or `averaging` with `duration` (s) |
+
+QGroundControl and the runner write it. A recording without it, as one made by a recorder that
+was not given its session, is read as before. The numbers are written so that they read back
+exactly: a fixed position that differs in its last digit gives other command bytes.
+
+A recording does not hold the UTC start time, which is in the file name, the end of the
+connection, or what the link refused.
 
 `GPSRecordingReader` (`test/GPS/Core/Transport/Support`) is the only parser of the format. The
 replay transport, the runner, the receiver simulator and the tests read recordings through it. It
@@ -47,7 +70,7 @@ only with the sender's agreement, and name the sender, the receiver and its firm
 
 1. **Decode it** as QGroundControl does, without the receiver. `--family` is the receiver type in
    the file name, or the family that an `automatic` session detected, and the role and base
-   options are the session's:
+   options are those of the session's `SETTINGS` record:
 
    ```sh
    $R --replay 20260102T030405.006Z-ublox.log --action configure --family ublox

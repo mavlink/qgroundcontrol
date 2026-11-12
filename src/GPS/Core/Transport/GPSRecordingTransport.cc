@@ -2,21 +2,43 @@
 
 #include <algorithm>
 #include <utility>
+#include <variant>
 
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
+#include <QtCore/QLocale>
 #include <QtCore/QMetaEnum>
 
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GPSRecordingTransportLog, "GPS.Transport.GPSRecordingTransport")
 
+namespace {
+
+/// @a type in lower case, as a recording's file name and settings have it.
+QByteArray recordedTypeName(GPSType type)
+{
+    const char* const name = QMetaEnum::fromType<GPSType>().valueToKey(static_cast<int>(type));
+    return name ? QByteArray(name).toLower() : QByteArrayLiteral("gnss");
+}
+
+/// @a value as short as it reads back to the same number.
+QByteArray recordedNumber(double value)
+{
+    return QByteArray::number(value, 'g', QLocale::FloatingPointShortest);
+}
+
+}  // namespace
+
 GPSRecordingTransport::GPSRecordingTransport(std::unique_ptr<GPSTransport> transport, const QString& file,
-                                             qint64 maxFileBytes, std::function<void()> stopped)
+                                             qint64 maxFileBytes, std::function<void()> stopped,
+                                             std::optional<Session> session, GPSClock clock)
     : GPSTransport(transport ? transport->cancelToken() : GPSCancelToken{})
     , _transport(std::move(transport))
     , _path(file)
     , _stopped(std::move(stopped))
+    , _session(std::move(session))
+    , _clock(std::move(clock))
     , _file(&GPSRecordingTransportLog, "Receiver recording", maxFileBytes)
 {
     qCDebug(GPSRecordingTransportLog) << this;
@@ -33,10 +55,31 @@ GPSRecordingTransport::~GPSRecordingTransport()
 
 QString GPSRecordingTransport::sessionFile(const QString& directory, GPSType type, const QDateTime& startedAt)
 {
-    const char* const name = QMetaEnum::fromType<GPSType>().valueToKey(static_cast<int>(type));
     return QDir(directory).filePath(QStringLiteral("%1-%2.log")
                                         .arg(startedAt.toUTC().toString(QStringLiteral("yyyyMMdd'T'HHmmss.zzz'Z'")),
-                                             name ? QString::fromLatin1(name).toLower() : QStringLiteral("gnss")));
+                                             QString::fromLatin1(recordedTypeName(type))));
+}
+
+QByteArray GPSRecordingTransport::settingsRecord(const Session& session, unsigned fixedBaudRate)
+{
+    const GPSReceiverConfig& config = session.config;
+    QByteArray record = "type=" + recordedTypeName(session.type) + ",baud=" + QByteArray::number(config.baudRate) +
+                        ",fixed-baud=" + QByteArray::number(fixedBaudRate) +
+                        ",save=" + QByteArray::number(int(config.allowPersistentChanges)) +
+                        ",compact=" + QByteArray::number(int(config.base.compactObservations));
+    if (const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&config.base.mode)) {
+        record += ",base=fixed,latitude=" + recordedNumber(fixed->position.latitudeDegrees) +
+                  ",longitude=" + recordedNumber(fixed->position.longitudeDegrees) +
+                  ",altitude=" + recordedNumber(fixed->position.altitudeMeters) +
+                  ",accuracy=" + recordedNumber(fixed->accuracyMeters);
+    } else if (const auto* averaging = std::get_if<GPSBaseStationConfig::ReceiverAveraging>(&config.base.mode)) {
+        record += ",base=averaging,duration=" + QByteArray::number(qlonglong(averaging->maximumDuration.count()));
+    } else {
+        const auto& survey = std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode);
+        record += ",base=survey,duration=" + QByteArray::number(qlonglong(survey.duration.count())) +
+                  ",accuracy=" + recordedNumber(survey.accuracyMeters);
+    }
+    return record;
 }
 
 GPSOpenResult GPSRecordingTransport::open()
@@ -112,16 +155,19 @@ void GPSRecordingTransport::_start()
         _notifyStopped();
         return;
     }
-    _clock.start();
+    _startedAtUs = _clock.nowUs();
     _nextFlush.setRemainingTime(FLUSH_INTERVAL, Qt::CoarseTimer);
     qCDebug(GPSRecordingTransportLog) << "Recording receiver data to" << _path;
     _write(QByteArray(FILE_HEADER) + '\n');
+    if (_session) {
+        _record(SETTINGS, settingsRecord(*_session, fixedBaudRate()));
+    }
 }
 
 void GPSRecordingTransport::_record(const char* kind, const QByteArray& value)
 {
     if (recording()) {
-        _write(QByteArray::number(_clock.nsecsElapsed() / 1000) + ' ' + kind + ' ' + value + '\n');
+        _write(QByteArray::number(qulonglong(_clock.nowUs() - _startedAtUs)) + ' ' + kind + ' ' + value + '\n');
     }
 }
 

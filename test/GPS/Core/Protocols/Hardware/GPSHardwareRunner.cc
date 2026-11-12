@@ -753,7 +753,9 @@ int run(const Options& options)
                                                                 QDateTime::currentDateTimeUtc());
         recordings.append(file);
         report.insert("recordings", recordings);
-        return std::make_unique<GPSRecordingTransport>(std::move(transport), file);
+        return std::make_unique<GPSRecordingTransport>(std::move(transport), file,
+                                                       GPSRecordingTransport::MAX_FILE_BYTES, std::function<void()>{},
+                                                       GPSRecordingTransport::Session{options.family, options.config});
     };
     GPSTestClock scriptedClock;
     std::unique_ptr<UBXReceiverModel> receiver;

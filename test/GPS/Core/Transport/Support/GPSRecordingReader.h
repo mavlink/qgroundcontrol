@@ -8,6 +8,9 @@
 #include <QtCore/QList>
 #include <QtCore/QString>
 
+#include "GPSReceiverConfig.h"
+#include "GPSType.h"
+
 class QIODevice;
 
 namespace GPSTest {
@@ -33,6 +36,16 @@ struct GPSRecordingRecord
     bool operator==(const GPSRecordingRecord&) const = default;
 };
 
+/// What a recorded session was asked to do and the link it ran on, from the SETTINGS record of its recording
+/// (GPSRecordingTransport::settingsRecord()): what a replay needs to send the session's commands again.
+struct GPSRecordingSettings
+{
+    GPSType type = GPSType::Automatic;
+    GPSReceiverConfig config{};
+    /// GPSTransport::fixedBaudRate() of the recorded link: zero for a serial port.
+    unsigned fixedBaudRate = 0;
+};
+
 /// The reader of the receiver recording format, which the replay transport and the tests share. It reads a device
 /// that is open for reading record by record, so a recording is never held whole, and returns both directions and
 /// the baud rate changes in file order with their times, which never decrease.
@@ -44,9 +57,13 @@ class GPSRecordingReader
 public:
     explicit GPSRecordingReader(QIODevice& device);
 
-    /// Whether the device holds a recording, whose header line this consumes. Nothing is consumed otherwise, as of a
-    /// file of raw receiver output.
+    /// Whether the device holds a recording, whose header line this consumes, with the settings record when one
+    /// follows it. Nothing is consumed otherwise, as of a file of raw receiver output.
     [[nodiscard]] bool readHeader();
+
+    /// The settings of the recorded session, known after readHeader(); nothing for a recording without them, as one
+    /// whose recorder was not given its session.
+    [[nodiscard]] const std::optional<GPSRecordingSettings>& settings() const { return _settings; }
 
     /// The next record; nothing at the end of the recording and after an error.
     [[nodiscard]] std::optional<GPSRecordingRecord> next();
@@ -55,14 +72,19 @@ public:
     [[nodiscard]] const QString& error() const { return _error; }
 
     /// The records of the recording at @a path up to its end or its first error, which @a error receives: a line
-    /// that is not a record, or a file that cannot be read or is not a recording.
-    [[nodiscard]] static QList<GPSRecordingRecord> readFile(const QString& path, QString* error = nullptr);
+    /// that is not a record, or a file that cannot be read or is not a recording. @a settings receives those of the
+    /// recorded session.
+    [[nodiscard]] static QList<GPSRecordingRecord> readFile(const QString& path, QString* error = nullptr,
+                                                            std::optional<GPSRecordingSettings>* settings = nullptr);
 
 private:
     std::optional<GPSRecordingRecord> _fail(const QString& reason);
+    /// Consumes the settings record when the next line is one.
+    void _readSettings();
 
     QIODevice& _device;
     QString _error;
+    std::optional<GPSRecordingSettings> _settings;
     /// The header is line 1.
     qint64 _line = 1;
     std::chrono::microseconds _latest{0};

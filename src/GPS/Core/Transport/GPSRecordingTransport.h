@@ -4,13 +4,15 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 
 #include <QtCore/QByteArray>
 #include <QtCore/QDeadlineTimer>
-#include <QtCore/QElapsedTimer>
 #include <QtCore/QString>
 
 #include "GPSBoundedFile.h"
+#include "GPSClock.h"
+#include "GPSReceiverConfig.h"
 #include "GPSTransport.h"
 #include "GPSType.h"
 
@@ -19,11 +21,14 @@ class QDateTime;
 /// Records a receiver session: every call passes through to the link it wraps, and what crossed the link goes to a
 /// text file, which the test tooling reads (GPSRecordingReader) and replays (ReplayGPSTransport).
 /// The file starts with FILE_HEADER on a line of its own. Every other line is one record, in the order the session
-/// made the calls: the microseconds from the start of the recording to the return of the call, on a monotonic
+/// made the calls: the microseconds from the start of the recording to the return of the call, on the session's
 /// clock, then one of
 /// - RX and the bytes read from the receiver, in hexadecimal;
 /// - TX and the bytes the link accepted for writing to the receiver, in hexadecimal;
 /// - BAUD and the baud rate the link changed to.
+/// The recording of a session that was described to the recorder holds one more record, before those: SETTINGS and
+/// what the session was asked to do (settingsRecord()), without which its commands cannot be told from another
+/// session's.
 /// The file is a GPSBoundedFile, created when the link first opens, on the thread that owns the transport, and flushed
 /// every FLUSH_INTERVAL and on destruction. It keeps the records that fit in maxFileBytes and then stops growing,
 /// which bounds disk use without a retention policy.
@@ -39,14 +44,35 @@ public:
     static constexpr char RECEIVED[] = "RX";
     static constexpr char SENT[] = "TX";
     static constexpr char BAUD[] = "BAUD";
+    static constexpr char SETTINGS[] = "SETTINGS";
+
+    /// What a session was asked to do, which decides the commands it sends.
+    struct Session
+    {
+        GPSType type = GPSType::Automatic;
+        GPSReceiverConfig config{};
+    };
 
     /// About three hours of a 115200 baud link at full load.
     static constexpr qint64 MAX_FILE_BYTES = qint64{256} * 1024 * 1024;
     static constexpr std::chrono::milliseconds FLUSH_INTERVAL{1000};
 
+    /// The recording holds the settings of @a session, when one is given, and its times are those of @a clock, the
+    /// clock the session runs on: the steady clock unless a test injects one.
     GPSRecordingTransport(std::unique_ptr<GPSTransport> transport, const QString& file,
-                          qint64 maxFileBytes = MAX_FILE_BYTES, std::function<void()> stopped = {});
+                          qint64 maxFileBytes = MAX_FILE_BYTES, std::function<void()> stopped = {},
+                          std::optional<Session> session = {}, GPSClock clock = {});
     ~GPSRecordingTransport() override;
+
+    /// The value of the SETTINGS record of @a session on a link with the fixed baud rate @a fixedBaudRate
+    /// (GPSTransport::fixedBaudRate()): "key=value" pairs separated by commas, numbers as short as they read back
+    /// exactly. Always type (the receiver type in lower case, as in the file name), baud (the selected rate, zero for
+    /// detection), fixed-baud, save and compact (0 or 1: consent to persistent changes, compact observations) and
+    /// base, which the settings of the base mode follow:
+    /// - survey: duration (seconds) and accuracy (metres);
+    /// - fixed: latitude and longitude (degrees), altitude and accuracy (metres);
+    /// - averaging: duration (seconds).
+    [[nodiscard]] static QByteArray settingsRecord(const Session& session, unsigned fixedBaudRate);
 
     /// The recording in @a directory of a session of @a type that starts at @a startedAt:
     /// <yyyyMMdd>T<HHmmss.zzz>Z-<type>.log, in UTC and with the type in lower case. The milliseconds keep sessions
@@ -76,8 +102,10 @@ private:
     std::unique_ptr<GPSTransport> _transport;
     const QString _path;
     std::function<void()> _stopped;
+    const std::optional<Session> _session;
+    const GPSClock _clock;
     GPSBoundedFile _file;
-    QElapsedTimer _clock;
+    uint64_t _startedAtUs = 0;
     QDeadlineTimer _nextFlush;
     bool _started = false;
 };

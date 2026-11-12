@@ -489,7 +489,7 @@ bool GPSReceiver::_connectReceiver(GPSType type, GPSReceiverWorker::TransportFac
     _retireSession();
     _resetStatus();
     _setError();
-    transportFactory = _recorded(std::move(transportFactory), type);
+    transportFactory = _recorded(std::move(transportFactory), type, request);
     const RTKSettings::ReceiverRole role =
         type == GPSType::Passive ? RTKSettings::Passive : RTKSettings::ConfiguredBase;
     auto* const session = new GPSReceiverSession(
@@ -655,7 +655,7 @@ QString GPSReceiver::recordingFile() const
 }
 
 GPSReceiverWorker::TransportFactory GPSReceiver::_recorded(GPSReceiverWorker::TransportFactory transportFactory,
-                                                           GPSType type)
+                                                           GPSType type, const GPSReceiverConfig& request)
 {
     _recordingFile.clear();
     _recordingStopped.reset();
@@ -670,13 +670,15 @@ GPSReceiverWorker::TransportFactory GPSReceiver::_recorded(GPSReceiverWorker::Tr
     _recordingFile =
         GPSRecordingTransport::sessionFile(directory, type, _recordingStartTimes.next(QDateTime::currentDateTimeUtc()));
     _recordingStopped = std::make_shared<std::atomic_bool>(false);
-    return [factory = std::move(transportFactory), file = _recordingFile,
-            stopped = _recordingStopped](GPSCancelToken cancelToken) -> std::unique_ptr<GPSTransport> {
+    return [factory = std::move(transportFactory), file = _recordingFile, stopped = _recordingStopped,
+            session = GPSRecordingTransport::Session{type, request}](
+               GPSCancelToken cancelToken) -> std::unique_ptr<GPSTransport> {
         std::unique_ptr<GPSTransport> transport = factory(std::move(cancelToken));
         if (!transport) {
             return transport;
         }
         return std::make_unique<GPSRecordingTransport>(
-            std::move(transport), file, GPSRecordingTransport::MAX_FILE_BYTES, [stopped]() { stopped->store(true); });
+            std::move(transport), file, GPSRecordingTransport::MAX_FILE_BYTES, [stopped]() { stopped->store(true); },
+            session);
     };
 }
