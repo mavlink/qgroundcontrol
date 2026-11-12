@@ -76,6 +76,8 @@ private slots:
     void _testOutputWithoutPermission();
     void _testInputWithoutPermission_data();
     void _testInputWithoutPermission();
+    void _testBlockedOutput_data();
+    void _testBlockedOutput();
     void _testOperationStartsWithoutError_data();
     void _testOperationStartsWithoutError();
 

@@ -1106,25 +1106,25 @@ void QGCCompressionTest::_testDecompressRejectsStreamWithoutData()
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, failure);
     QVERIFY(!QGCCompression::decompressFile(inputPath, outputPath));
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), Error::IoError);
+    QCOMPARE(QGCCompression::lastError(), Error::InvalidArchive);
 
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, failure);
     QVERIFY(!QGCCompression::decompressFromDevice(&device, outputPath));
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), Error::IoError);
+    QCOMPARE(QGCCompression::lastError(), Error::InvalidArchive);
 
     QVERIFY(device.seek(0));
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, failure);
     QVERIFY(QGCCompression::decompressFromDevice(&device).isEmpty());
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), Error::IoError);
+    QCOMPARE(QGCCompression::lastError(), Error::InvalidArchive);
 
     if (!stream.isEmpty()) {
         // decompressData() refuses data of no bytes before it is looked at: see _testDecompressDataErrors
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, failure);
         QVERIFY(QGCCompression::decompressData(stream).isEmpty());
         verifyExpectedLogMessage();
-        QCOMPARE(QGCCompression::lastError(), Error::IoError);
+        QCOMPARE(QGCCompression::lastError(), Error::InvalidArchive);
     }
 
     // The device does not log: the reason is in its error string
@@ -1373,6 +1373,7 @@ void QGCCompressionTest::_testCorruptArchive()
     QVERIFY2(!success, "Extracting corrupt archive should fail");
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
     // Attempt to list - should return empty or fail
     expectLogMessage("Utilities.QGClibarchive", QtWarningMsg,
                      QRegularExpression("Failed to open file.*Unrecognized archive format"));
@@ -1564,6 +1565,7 @@ void QGCCompressionTest::_testTruncatedArchive()
     QVERIFY(!QGCCompression::extractArchive(archivePath, tempDir.filePath("output")));
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
 
     const QString atomicOutput = tempDir.filePath("atomic_output");
     expectReadFailure();
@@ -1571,6 +1573,7 @@ void QGCCompressionTest::_testTruncatedArchive()
     QVERIFY(!QGCCompression::extractArchiveAtomic(archivePath, atomicOutput));
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
     QVERIFY(!QFileInfo::exists(atomicOutput));
 
     // A search for an entry the archive does not have reads the headers up to the damage, which is
@@ -1664,6 +1667,7 @@ void QGCCompressionTest::_testTruncatedArchive()
     QVERIFY(!QGCCompression::extractArchiveFiltered(archivePath, cutDir, acceptAll));
     verifyExpectedLogMessage();
     verifyExpectedLogMessage();
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
 
     QVERIFY(!QFileInfo::exists(cutDir + QLatin1Char('/') + cutEntry));
 }
@@ -1701,22 +1705,22 @@ void QGCCompressionTest::_testTruncatedStream()
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, fileFailure);
         QVERIFY(!QGCCompression::decompressFile(inputPath, outputPath));
         verifyExpectedLogMessage();
-        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::IoError);
+        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
     } else if (api == "decompressData") {
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, memoryFailure);
         QVERIFY(QGCCompression::decompressData(cut).isEmpty());
         verifyExpectedLogMessage();
-        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::IoError);
+        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
     } else if (api == "decompressFromDevice-file") {
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, fileFailure);
         QVERIFY(!QGCCompression::decompressFromDevice(&device, outputPath));
         verifyExpectedLogMessage();
-        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::IoError);
+        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
     } else if (api == "decompressFromDevice-memory") {
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, memoryFailure);
         QVERIFY(QGCCompression::decompressFromDevice(&device).isEmpty());
         verifyExpectedLogMessage();
-        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::IoError);
+        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
     } else if (api == "readFile") {
         QString errorString;
         expectLogMessage("Utilities.QGCArchiveDeviceBase", QtWarningMsg, memoryFailure);
@@ -2171,6 +2175,67 @@ void QGCCompressionTest::_testInputWithoutPermission()
     QCOMPARE(QGCCompression::lastError(), Error::PermissionDenied);
     QVERIFY(!QFileInfo::exists(outputPath));
 #endif
+}
+
+void QGCCompressionTest::_testBlockedOutput_data()
+{
+    QTest::addColumn<QString>("api");
+    QTest::addColumn<QString>("warning");
+
+    // The directory that cannot be made is not logged, except by the function that has to make the one above it
+    QTest::newRow("extractArchive") << "extractArchive" << "";
+    QTest::newRow("extractFromDevice") << "extractFromDevice" << "";
+    QTest::newRow("extractArchiveAtomic") << "extractArchiveAtomic" << "Failed to create output parent directory";
+    QTest::newRow("extractArchiveFiltered") << "extractArchiveFiltered" << "";
+    QTest::newRow("decompressFile") << "decompressFile" << "Failed to open output file";
+    QTest::newRow("decompressFromDevice") << "decompressFromDevice" << "Failed to open output file";
+}
+
+void QGCCompressionTest::_testBlockedOutput()
+{
+    QFETCH(QString, api);
+    QFETCH(QString, warning);
+
+    // A directory cannot be made below a file, whoever asks
+    QTemporaryDir tempDir;
+    const QString blockerPath = tempDir.filePath("blocker");
+    QVERIFY(_writeFile(blockerPath, "in the way"));
+    const QString outputDir = blockerPath + "/output";
+    const QString zipPath = QStringLiteral(":/unittest/manifest.json.zip");
+    const QString gzipPath = QStringLiteral(":/unittest/manifest.json.gz");
+    QFile zip(zipPath);
+    QVERIFY(zip.open(QIODevice::ReadOnly));
+    QFile gzip(gzipPath);
+    QVERIFY(gzip.open(QIODevice::ReadOnly));
+
+    if (!warning.isEmpty()) {
+        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression(warning));
+    }
+    bool written = true;
+    if (api == "extractArchive") {
+        written = QGCCompression::extractArchive(zipPath, outputDir);
+    } else if (api == "extractFromDevice") {
+        written = QGCCompression::extractFromDevice(&zip, outputDir);
+    } else if (api == "extractArchiveAtomic") {
+        written = QGCCompression::extractArchiveAtomic(zipPath, outputDir + "/atomic");
+    } else if (api == "extractArchiveFiltered") {
+        written = QGCCompression::extractArchiveFiltered(zipPath, outputDir,
+                                                         [](const QGCCompression::ArchiveEntry&) { return true; });
+    } else if (api == "decompressFile") {
+        written = QGCCompression::decompressFile(gzipPath, outputDir + "/manifest.json");
+    } else if (api == "decompressFromDevice") {
+        written = QGCCompression::decompressFromDevice(&gzip, outputDir + "/manifest.json");
+    } else {
+        QFAIL("Unknown row");
+    }
+    if (!warning.isEmpty()) {
+        verifyExpectedLogMessage();
+    }
+
+    // The input is whole: what failed is the output, and not for lack of permission
+    QVERIFY(!written);
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::IoError);
+    QCOMPARE(_readFile(blockerPath), QByteArray("in the way"));
 }
 
 void QGCCompressionTest::_testOperationStartsWithoutError_data()
@@ -3218,7 +3283,7 @@ void QGCCompressionTest::_testExtractArchiveKeepsEntriesBeforeDamage()
         verifyExpectedLogMessage();
     }
     verifyExpectedLogMessage();
-    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::IoError);
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::InvalidArchive);
 
     // Unlike a size limit or a cancellation, damage does not undo the extraction. The entries before it stay,
     // and so does the damaged one: what could be read of it, filled up with zeros to the size it declares

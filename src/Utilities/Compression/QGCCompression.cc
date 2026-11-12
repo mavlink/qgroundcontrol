@@ -287,8 +287,11 @@ static void setOperationError(QGClibarchive::ReadResult result, const QString& m
         setError(Error::Cancelled, message + QStringLiteral(": cancelled"));
     } else if (result == QGClibarchive::ReadResult::WriteDenied) {
         setError(Error::PermissionDenied, message + QStringLiteral(": no permission to write the output"));
-    } else {
+    } else if (result == QGClibarchive::ReadResult::WriteFailed) {
         setError(Error::IoError, message);
+    } else {
+        // What is left is the input, which cannot be read or is damaged
+        setError(Error::InvalidArchive, message);
     }
 }
 
