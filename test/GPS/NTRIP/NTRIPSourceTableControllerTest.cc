@@ -522,6 +522,38 @@ void NTRIPSourceTableControllerTest::_sourceTablePublishesSortedRowsOnce()
     QCOMPARE(counts.size(), 1);
 }
 
+void NTRIPSourceTableControllerTest::_mountpointFilterNarrowsTheModel()
+{
+    ScriptedNTRIPCaster caster;
+    QVERIFY(caster.isListening());
+    NTRIPSourceTableController controller;
+    QSignalSpy filters(&controller, &NTRIPSourceTableController::mountpointFilterChanged);
+    QSignalSpy counts(&controller, &NTRIPSourceTableController::mountpointCountChanged);
+    controller.fetch(caster.connectionConfig());
+    QVERIFY(caster.serveSourceTable(
+        QStringLiteral("STR;BASE1;Rooftop antenna\r\nSTR;BASE2;Field station\r\nENDSOURCETABLE\r\n")));
+    QTRY_COMPARE_WITH_TIMEOUT(controller.fetchStatus(), NTRIPSourceTableController::FetchStatus::Success,
+                              TestTimeout::mediumMs());
+    QCOMPARE(controller.property("mountpointCount").toInt(), 2);
+    QCOMPARE(counts.size(), 1);
+
+    // The panel writes the property. The filter narrows what the model lists, not what the caster has.
+    QVERIFY(controller.setProperty("mountpointFilter", QStringLiteral("field")));
+    QCOMPARE(controller.mountpointFilter(), QStringLiteral("field"));
+    QCOMPARE(filters.size(), 1);
+    auto* model = controller.mountpointModel();
+    QCOMPARE(model->rowCount(), 1);
+    QCOMPARE(model->index(0, 0).data(NTRIPSourceTableModel::MountpointRole).toString(), QStringLiteral("BASE2"));
+    QCOMPARE(controller.mountpointCount(), 2);
+    QCOMPARE(counts.size(), 1);
+
+    controller.setMountpointFilter(QStringLiteral("field"));
+    QCOMPARE(filters.size(), 1);
+    controller.setMountpointFilter(QString());
+    QCOMPARE(filters.size(), 2);
+    QCOMPARE(model->rowCount(), 2);
+}
+
 void NTRIPSourceTableControllerTest::_v1SourceTable_data()
 {
     QTest::addColumn<QByteArray>("separator");

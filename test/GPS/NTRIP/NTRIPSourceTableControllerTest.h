@@ -28,6 +28,7 @@ private slots:
     void _terminatorWithoutLineEnding_data();
     void _terminatorWithoutLineEnding();
     void _sourceTablePublishesSortedRowsOnce();
+    void _mountpointFilterNarrowsTheModel();
     void _v1SourceTable_data();
     void _v1SourceTable();
     void _version1OnlyCaster();

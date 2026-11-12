@@ -62,6 +62,7 @@ set(_qgc_gps_suites
     Qml/GPSCorrectionsPanelTest
     Qml/GPSIndicatorTest
     Qml/GPSReceiverSettingsTest
+    Qml/NTRIPMountpointBrowserTest
     Receiver/GPSReceiverConnectionPolicyTest
     Receiver/GPSReceiverFactGroupTest
     Receiver/GPSReceiverPresentationTest

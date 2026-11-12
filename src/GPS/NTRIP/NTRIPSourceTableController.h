@@ -28,6 +28,11 @@ class NTRIPSourceTableController : public QObject
     Q_PROPERTY(QString fetchError READ fetchError NOTIFY fetchErrorChanged FINAL)
     Q_PROPERTY(QString securityWarning READ securityWarning NOTIFY securityWarningChanged FINAL)
     Q_PROPERTY(QAbstractItemModel* mountpointModel READ mountpointModel CONSTANT FINAL)
+    /// The mountpoints of the fetched table, whatever the filter lists of them.
+    Q_PROPERTY(int mountpointCount READ mountpointCount NOTIFY mountpointCountChanged FINAL)
+    /// The model lists only the mountpoints whose name or identifier contains this text; empty lists them all.
+    Q_PROPERTY(
+        QString mountpointFilter READ mountpointFilter WRITE setMountpointFilter NOTIFY mountpointFilterChanged FINAL)
 
 public:
     enum class FetchStatus
@@ -58,6 +63,11 @@ public:
 
     QAbstractItemModel* mountpointModel() const;
 
+    int mountpointCount() const;
+
+    QString mountpointFilter() const;
+    void setMountpointFilter(const QString& filter);
+
     void fetch(const NTRIPConnectionConfig& config, const QGeoCoordinate& sortCoord = {});
     void cancel();
 
@@ -65,6 +75,8 @@ signals:
     void fetchStatusChanged();
     void fetchErrorChanged();
     void securityWarningChanged();
+    void mountpointCountChanged();
+    void mountpointFilterChanged();
     /// A self-signed caster certificate was trusted on first use; the owner persists the pin.
     void certificatePinned(const QString& pin);
 

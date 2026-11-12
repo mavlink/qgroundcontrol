@@ -32,7 +32,9 @@ NTRIPSourceTableController::NTRIPSourceTableController(QObject* parent, RuntimeS
     , _sortedModel(new NTRIPSourceTableSortModel(_model, this))
     , _scheduler(RuntimeScheduler::orDefault(scheduler, this))
     , _casterVersions(std::move(casterVersions))
-{}
+{
+    connect(_model, &NTRIPSourceTableModel::countChanged, this, &NTRIPSourceTableController::mountpointCountChanged);
+}
 
 NTRIPSourceTableController::~NTRIPSourceTableController()
 {
@@ -43,6 +45,24 @@ NTRIPSourceTableController::~NTRIPSourceTableController()
 QAbstractItemModel* NTRIPSourceTableController::mountpointModel() const
 {
     return _sortedModel;
+}
+
+int NTRIPSourceTableController::mountpointCount() const
+{
+    return _model->count();
+}
+
+QString NTRIPSourceTableController::mountpointFilter() const
+{
+    return _sortedModel->nameFilter();
+}
+
+void NTRIPSourceTableController::setMountpointFilter(const QString& filter)
+{
+    if (filter != _sortedModel->nameFilter()) {
+        _sortedModel->setNameFilter(filter);
+        emit mountpointFilterChanged();
+    }
 }
 
 void NTRIPSourceTableController::fetch(const NTRIPConnectionConfig& config, const QGeoCoordinate& sortCoord)

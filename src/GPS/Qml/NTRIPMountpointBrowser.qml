@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import QtPositioning
 
 import QGroundControl
 import QGroundControl.Controls
@@ -13,13 +14,23 @@ QGCGroupBox {
 
     /// The NTRIP connection setting; the mountpoint is locked while it is on.
     property Fact enabledFact: root._ntrip.ntripServerConnectEnabled
+    /// The connection whose caster is asked for its mountpoints.
+    property NTRIPManager ntripManager: QGroundControl.gpsManager.ntrip
+    /// Where the distances of the mountpoints are measured from while no vehicle reports its position.
+    property geoCoordinate gcsPosition: QGroundControl.positionManager.gcsPosition
 
     readonly property NTRIPSettings _ntrip: QGroundControl.settingsManager.ntripSettings
-    readonly property NTRIPManager _ntripMgr: QGroundControl.gpsManager.ntrip
-    readonly property NTRIPSourceTableController _sourceTable: root._ntripMgr.sourceTableController
+    readonly property NTRIPSourceTableController _sourceTable: root.ntripManager.sourceTableController
     readonly property Vehicle _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     readonly property bool _isActive: root.enabledFact.rawValue
     readonly property bool _fetching: root._sourceTable.fetchStatus === NTRIPSourceTableController.InProgress
+
+    /// The position the mountpoints are listed nearest first from: the active vehicle's or, while there is none
+    /// that knows where it is, the ground station's. Without either the list keeps the caster's order.
+    function _referencePosition() {
+        const vehicle = root._activeVehicle
+        return vehicle && vehicle.coordinate.isValid ? vehicle.coordinate : root.gcsPosition
+    }
 
     Layout.fillWidth:   true
     heading:            qsTr("NTRIP Mountpoint")
@@ -40,9 +51,8 @@ QGCGroupBox {
         QGCButton {
             objectName: "ntripBrowseButton"
             text:       qsTr("Browse")
-            enabled:    !root._isActive && root._ntripMgr.canConnect && !root._fetching
-            onClicked:  root._activeVehicle ? root._ntripMgr.fetchMountpoints(root._activeVehicle.coordinate)
-                                            : root._ntripMgr.fetchMountpoints()
+            enabled:    !root._isActive && root.ntripManager.canConnect && !root._fetching
+            onClicked:  root.ntripManager.fetchMountpoints(root._referencePosition())
         }
     }
 
@@ -64,7 +74,13 @@ QGCGroupBox {
         warning:            true
     }
 
+    NTRIPMountpointFilter {
+        sourceTable:            root._sourceTable
+        listedCount:            mountpointList.count
+    }
+
     NTRIPMountpointList {
+        id:                     mountpointList
         objectName:             "ntripMountpointList"
         Layout.fillWidth:       true
         enabled:                !root._isActive

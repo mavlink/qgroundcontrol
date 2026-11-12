@@ -8,6 +8,11 @@ class NTRIPSourceTableTest : public UnitTest
 
 private slots:
     void _parseSTRLine();
+    void _rowSaysWhatTheStreamNeeds_data();
+    void _rowSaysWhatTheStreamNeeds();
+    void _unusableRowSaysWhy_data();
+    void _unusableRowSaysWhy();
+    void _nameFilterNarrowsSortedRows();
     void _parseFullTable();
     void _shortRow_data();
     void _shortRow();

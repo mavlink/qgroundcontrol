@@ -5,10 +5,12 @@ import QtQuick.Layouts
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.GPS
 
 /// Scrollable list of NTRIP caster mountpoints. Highlights the active selection
 /// and emits mountpointSelected() when the user picks one. The model rows must
-/// expose: index, mountpoint, details.
+/// expose: index, mountpoint, details, notes, problem, distanceKm. A row with a
+/// problem says why the mountpoint cannot work, and can still be picked.
 QGCListView {
     id: root
 
@@ -29,7 +31,11 @@ QGCListView {
         required property int     index
         required property string  mountpoint
         required property string  details
+        required property string  notes
+        required property string  problem
+        required property real    distanceKm
         readonly property bool    selected: entry.mountpoint === root.selectedMountpoint
+        readonly property color   _detailColor: entry.selected ? qgcPal.accentText : qgcPal.colorGrey
 
         width:      ListView.view.width
         height:     mountRow.height + ScreenTools.defaultFontPixelHeight * 0.5
@@ -70,6 +76,14 @@ QGCListView {
                     Item {
                         Layout.fillWidth: true
                     }
+                    QGCLabel {
+                        objectName: "ntripMountpointDistance"
+                        visible:    text !== ""
+                        text:       entry.distanceKm >= 0 ? GPSUnits.distanceText(entry.distanceKm * 1000) : ""
+                        textFormat: Text.PlainText
+                        font.pointSize: ScreenTools.smallFontPointSize
+                        color:      entry._detailColor
+                    }
                 }
 
                 QGCLabel {
@@ -80,7 +94,27 @@ QGCListView {
                     textFormat: Text.PlainText
                     text: entry.details
                     font.pointSize: ScreenTools.smallFontPointSize
-                    color:  entry.selected ? qgcPal.accentText : qgcPal.colorGrey
+                    color:  entry._detailColor
+                }
+
+                QGCLabel {
+                    objectName: "ntripMountpointNotes"
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 0
+                    visible: text !== ""
+                    elide: Text.ElideRight
+                    textFormat: Text.PlainText
+                    text: entry.notes
+                    font.pointSize: ScreenTools.smallFontPointSize
+                    color:  entry._detailColor
+                }
+
+                QGCNoteLabel {
+                    objectName: "ntripMountpointProblem"
+                    visible: text !== ""
+                    text: entry.problem
+                    font.pointSize: ScreenTools.smallFontPointSize
+                    color:  entry.selected ? qgcPal.accentText : qgcPal.warningText
                 }
             }
 

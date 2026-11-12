@@ -44,6 +44,7 @@ qt_add_qml_module(
         GPSWrappingRow.qml
         NTRIPConnectionStatus.qml
         NTRIPMountpointBrowser.qml
+        NTRIPMountpointFilter.qml
         NTRIPMountpointList.qml
         NTRIPPasswordField.qml
         RTCMMessageChips.qml
