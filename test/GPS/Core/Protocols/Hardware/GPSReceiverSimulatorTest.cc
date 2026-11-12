@@ -215,9 +215,32 @@ void GPSReceiverSimulatorTest::_refusesUnknownConfiguration_data()
                                             << QByteArray::fromHex("b5620500020006000d32") << false;
     QTest::newRow("f9p-unknown-message") << Receiver::F9P << QByteArray::fromHex("b56206ff00000515")
                                          << QByteArray::fromHex("b5620500020006ff0c31") << false;
-    // What the older receiver answers to the configuration message of the newer one.
+    // A configuration message the receiver takes, but not as it is: a request without a key, a value without a size
+    // and a value cut short.
+    QTest::newRow("f9p-valget-without-key") << Receiver::F9P << QByteArray::fromHex("b562068b0500000000000197b2")
+                                            << QByteArray::fromHex("b56205000200068b98bd") << false;
+    QTest::newRow("f9p-valset-key-without-size")
+        << Receiver::F9P << QByteArray::fromHex("b562068a09000001000001000300009e3f")
+        << QByteArray::fromHex("b56205000200068a97bc") << false;
+    QTest::newRow("f9p-valset-value-cut-short")
+        << Receiver::F9P << QByteArray::fromHex("b562068a090000010000100003403c2946")
+        << QByteArray::fromHex("b56205000200068a97bc") << false;
+    // What the older receiver answers to the configuration messages of the newer one, which it does not have, and
+    // to a CFG message no receiver has.
     QTest::newRow("m8p-valset") << Receiver::M8PBase << QByteArray::fromHex("b562068a0400000100009511")
-                                << QByteArray::fromHex("b56205000200068a97bc") << true;
+                                << QByteArray::fromHex("b56205000200068a97bc") << false;
+    QTest::newRow("m8p-valget") << Receiver::M8PBase << QByteArray::fromHex("b562068b08000000000001000320bdbb")
+                                << QByteArray::fromHex("b56205000200068b98bd") << false;
+    QTest::newRow("m8p-unknown-message") << Receiver::M8PBase << QByteArray::fromHex("b56206ff00000515")
+                                         << QByteArray::fromHex("b5620500020006ff0c31") << false;
+    // A receiver acknowledges the messages of class CFG. One of another class that it does not know gets no answer:
+    // the answer here is that to the message after it.
+    QTest::newRow("m8p-unknown-message-of-another-class")
+        << Receiver::M8PBase << QByteArray::fromHex("b5620aff00000925b56206ff00000515")
+        << QByteArray::fromHex("b5620500020006ff0c31") << false;
+    QTest::newRow("f9p-unknown-message-of-another-class")
+        << Receiver::F9P << QByteArray::fromHex("b5620aff00000925b56206ff00000515")
+        << QByteArray::fromHex("b5620500020006ff0c31") << false;
 }
 
 void GPSReceiverSimulatorTest::_refusesUnknownConfiguration()

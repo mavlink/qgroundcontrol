@@ -101,9 +101,11 @@ public:
 
     GPSTestClock& clock() const { return *_clock; }
 
-    /// False once the host sent what a driver must not send to this receiver: bytes that are no frame, or a message
-    /// the receiver does not take. A CFG message of that kind gets the ACK-NAK a receiver answers it with; the write
-    /// of any other fails.
+    /// False once the host sent what a driver must not send to this receiver. A message the model does not take is
+    /// answered as a receiver answers one it does not know: with ACK-NAK in class CFG, which a CFG-VALSET or
+    /// CFG-VALGET that cannot be read gets too, and not at all in another class. A receiver before protocol 27 takes
+    /// CFG-PRT, CFG-MSG, CFG-RATE, CFG-NAV5 and CFG-TMODE3 here, fewer messages than such a receiver has. The write
+    /// fails of bytes that are no frame, and of a message the model takes in the driver's form alone.
     bool wireValid = true;
     bool corruptVersionReplies = false;
     /// The reply to CFG-SEC-JAMDET arrives late: after the host's timeout, ahead of the next reply.
@@ -202,6 +204,8 @@ private:
     bool _handleFrame(ScriptedReceiver& receiver, const QByteArray& frame);
     bool _handleValset(ScriptedReceiver& receiver, uint16_t message, const QByteArray& payload);
     bool _handleLegacyFrame(ScriptedReceiver& receiver, uint16_t message, const QByteArray& payload);
+    /// Answers @a message as one the receiver does not take, which the host must not send it.
+    bool _refuse(ScriptedReceiver& receiver, uint16_t message);
     /// Disables time mode as disableReply says; @a apply applies the rest of the command if time mode is disabled.
     bool _disableTimeMode(ScriptedReceiver& receiver, uint8_t messageId, const std::function<void()>& apply);
     bool _replyToSetting(ScriptedReceiver& receiver, uint8_t messageId, DisableReply reply);

@@ -389,11 +389,10 @@ bool UBXReceiverModel::_handleFrame(ScriptedReceiver& receiver, const QByteArray
         response[2] = static_cast<char>(timeMode);
         return _replyToReadback(receiver, CFG_TMODE3, response, TMODE_MODE);
     }
-    if (message == UBX::Msg::CFG_VALGET.value()) {
+    if (message == UBX::Msg::CFG_VALGET.value() && !legacy) {
         if (payload.size() < 8 || payload.size() > 40 || ((payload.size() - 4) % 4) != 0 ||
             payload.first(4) != QByteArray(4, '\0')) {
-            wireValid = false;
-            return false;
+            return _refuse(receiver, message);
         }
         QByteArray response = QByteArray::fromHex("01000000");
         for (qsizetype offset = 4; offset < payload.size(); offset += 4) {
@@ -460,19 +459,27 @@ bool UBXReceiverModel::_handleFrame(ScriptedReceiver& receiver, const QByteArray
         return true;
     }
 
+    if (!configuration) {
+        return _refuse(receiver, message);
+    }
     if (legacy) {
         return _handleLegacyFrame(receiver, message, payload);
     }
     if (message != UBX::Msg::CFG_VALSET.value() || payload.size() < 4) {
-        wireValid = false;
-        if (!configuration) {
-            return false;
-        }
-        // A receiver answers every CFG message, and one it does not accept with ACK-NAK.
-        _queueAck(receiver, static_cast<uint8_t>(message >> 8), false);
-        return true;
+        return _refuse(receiver, message);
     }
     return _handleValset(receiver, message, payload);
+}
+
+bool UBXReceiverModel::_refuse(ScriptedReceiver& receiver, uint16_t message)
+{
+    wireValid = false;
+    // A receiver answers every message of class CFG, and one it does not accept with ACK-NAK. It acknowledges no
+    // other class, so a message of one that it does not know gets no answer.
+    if ((message & 0xff) == UBX::MsgClass::CFG) {
+        _queueAck(receiver, static_cast<uint8_t>(message >> 8), false);
+    }
+    return true;
 }
 
 bool UBXReceiverModel::_handleValset(ScriptedReceiver& receiver, uint16_t message, const QByteArray& payload)
@@ -491,13 +498,11 @@ bool UBXReceiverModel::_handleValset(ScriptedReceiver& receiver, uint16_t messag
         offset += 4;
         const unsigned sizeCode = (key >> 28) & 7;
         if (sizeCode < 1 || sizeCode > 5) {
-            wireValid = false;
-            return false;
+            return _refuse(receiver, message);
         }
         const qsizetype width = sizeCode <= 2 ? 1 : qsizetype{1} << (sizeCode - 2);
         if (offset + width > payload.size()) {
-            wireValid = false;
-            return false;
+            return _refuse(receiver, message);
         }
         settings[key] = configValue(payload, offset, width);
         offset += width;
@@ -594,6 +599,13 @@ bool UBXReceiverModel::_handleValset(ScriptedReceiver& receiver, uint16_t messag
 
 bool UBXReceiverModel::_handleLegacyFrame(ScriptedReceiver& receiver, uint16_t message, const QByteArray& payload)
 {
+    // The configuration messages the driver's plan for these receivers uses. They have neither CFG-VALSET nor
+    // CFG-VALGET, and the model implements none of the others they have.
+    constexpr std::array TAKEN{UBX::Msg::CFG_PRT, UBX::Msg::CFG_MSG, UBX::Msg::CFG_RATE, UBX::Msg::CFG_NAV5,
+                               UBX::Msg::CFG_TMODE3};
+    if (std::ranges::none_of(TAKEN, [message](UBX::MessageId taken) { return taken.value() == message; })) {
+        return _refuse(receiver, message);
+    }
     bool unsupported = false;
     RateAck rateFault = RateAck::OnTime;
     if (message == UBX::Msg::CFG_NAV5.value()) {
@@ -651,9 +663,8 @@ bool UBXReceiverModel::_handleLegacyFrame(ScriptedReceiver& receiver, uint16_t m
         timeMode = mode;
     }
 
-    const bool reject = message == UBX::Msg::CFG_VALSET.value() || unsupported ||
-                        (rejectRtcmActivation && message == UBX::Msg::CFG_RATE.value() &&
-                         LittleEndian::read<uint16_t>(bytesOf(payload), 0).value_or(0) == 1000);
+    const bool reject = unsupported || (rejectRtcmActivation && message == UBX::Msg::CFG_RATE.value() &&
+                                        LittleEndian::read<uint16_t>(bytesOf(payload), 0).value_or(0) == 1000);
     if (!unsupported && message == UBX::Msg::CFG_MSG.value() &&
         LittleEndian::read<uint16_t>(bytesOf(payload), 0).value_or(0) == UBX::Msg::RTCM3_1005.value() &&
         static_cast<uint8_t>(payload[2]) > 0) {
