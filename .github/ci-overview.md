@@ -549,7 +549,10 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
 - **Boot test**: `QGroundControl --simple-boot-test`, which every platform's package runs, also runs QGC's
   GStreamer self-test: H.264 (and, given a decoder, H.265) decoding, MP4 and MKV recording, every feature's
   elements, and for a bundled runtime its plugins, plugin scanner and GIO TLS/proxy modules
-  ([details](../src/VideoManager/GStreamer/README.md#boot-self-test)).
+  ([details](../src/VideoManager/GStreamer/README.md#boot-self-test)). On Android it also runs the USB
+  serial self-test (`AndroidSerial::selfTest()`): Java has every method and field that C++ binds, passes
+  arguments that C++ gave it to each of its native callbacks, and answers calls about a port that does
+  not exist.
 - **Sanitizers**: `Linux-sanitizers` (ASan + UBSan, leak detection on) excludes the `NoSanitizer`
   label. Runtime options come from CTest: `cmake/QGCTest.cmake` sets `*SAN_OPTIONS`
   (`halt_on_error=1`) on every test, overriding the shell environment. ThreadSanitizer runs only on
@@ -656,8 +659,11 @@ when a PR closes, and on demand; the script reads each trigger's settings from t
   `extra-args` cannot hold a space). `android_boot_test.py` grants the app all-files access before
   launching it (QGC otherwise opens the system settings over its window and the boot test never
   completes) and passes only on QGC's `Simple boot test completed` marker; a crash, a process exit
-  or a running app without the marker fails, and the failure annotation quotes the
-  `Simple boot test failed` and `Video.GStreamer.SelfTest` logcat lines. After the marker, main()
+  or a running app without the marker fails, as does a JNI method or field that C++ and Java disagree
+  on, which QGC only logs (`Java method not found:`, `Java field not found:`,
+  `Failed to register native methods for`), and the
+  failure annotation quotes those, the `Simple boot test failed`, the `Video.GStreamer.SelfTest` and
+  the `Android.AndroidSerial.SelfTest` logcat lines. After the marker, main()
   returns, Android destroys the activity and Qt calls `exit()`; the script watches logcat until the
   app's process (the marker line's pid) exits, for up to 30 s (`--exit-timeout`; a process still
   running then only warns). A crash of that process (its `Fatal signal`, `FORTIFY` or
@@ -1041,8 +1047,8 @@ actions after these sections.
 
 ## Tests
 
-`ci-scripts.yml` runs on changes to `.github/`, `tools/`, `deploy/`, CMake files, and other tooling
-configuration:
+`ci-scripts.yml` runs on changes to `.github/`, `tools/`, `deploy/`, CMake files, other tooling
+configuration, and the source files its tests read:
 
 - the full Python suite (`pytest -q -n auto tools/tests`, including the CI script tests in
   `tools/tests/ci`) on Python 3.10 and 3.12 with the `release` group's git-cliff for the
@@ -1065,6 +1071,27 @@ The test jobs use sparse checkouts. `empty_parameter_set_mark = "fail_at_collect
 `tools/pyproject.toml` makes a test that parametrizes over repository files (such as the
 `*.VehicleConfig.json` pages) fail collection when it finds none, so add such inputs to both
 checkouts and to the workflow's `paths`.
+
+`test_android_serial_jni_contract.py` compares the two sides of Android's USB serial JNI binding,
+which no compiler sees together: each Java method
+`src/Android/qtandroidserialport/AndroidSerial.cc` declares with the JNI types of its return value
+and arguments (`JavaMethod<jint, jstring, jlong> open{"open"}`) must be a `public static` method of
+`QGCUsbSerialManager.java` with the signature of those types, the native methods C++ registers must
+be the ones Java declares, and each field C++ declares with its JNI type
+(`JavaField<jint> vendorId{"vendorId"}`) must be a `public final` field of
+`QGCUsbSerialPortInfo.java` with that type. Qt derives each JNI signature from C++ types, and so
+does the test: from those of a declaration, with which alone the compiler lets C++ call the method
+or read the field, and from the return and parameter types of a native function. A signature
+written by hand in C++ fails the test, and so does a declaration under the name of another Java
+method or field than the one it binds. It also compares the values the two sides
+share: the constants of `QGCUsbSerialResult.java` must be the enumerators of `AndroidSerial::Result`
+in `AndroidSerial.h` with the same values (`IO_ERROR` for `IoError`), likewise those of
+`QGCUsbSerialResourceError.java` and `AndroidSerial::ResourceErrorReason`, and `READ_BUF_SIZE` in
+`QGCUsbSerialReader.java` must not exceed `kMaxNativePayloadBytes` in `AndroidSerial.cc`, which
+truncates a longer read. The Linux checkout and `paths` name the seven files
+(`test_ci_scripts_workflow.py` checks them against the test's paths). On a device, a method or field
+mismatch is logged and fails the USB serial self-test, each of which fails the emulator
+[boot test](#platform-notes).
 
 Run the same suite locally with `just test-python`, and the lint hooks with `just lint`.
 
