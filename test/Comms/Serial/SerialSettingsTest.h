@@ -7,4 +7,5 @@ class SerialSettingsTest : public UnitTest
     Q_OBJECT
 private slots:
     void _hotplugKeepsPortIdentity();
+    void _losingItsConfigurationIsQuiet();
 };
