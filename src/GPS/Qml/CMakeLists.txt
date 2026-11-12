@@ -34,6 +34,7 @@ qt_add_qml_module(
         GPSReceiverSettings.qml
         GPSReceiverSettingsGroup.qml
         GPSReceiverStatus.qml
+        GPSWrappingRow.qml
         NTRIPConnectionStatus.qml
         NTRIPMountpointBrowser.qml
         NTRIPMountpointList.qml

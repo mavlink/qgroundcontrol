@@ -29,18 +29,20 @@ QGCGroupBox {
         fact: QGroundControl.settingsManager.rtkSettings.gcsPositionSource
     }
 
-    LabelledLabel {
+    // The source and its status are words and a sentence, which wrap where the box is narrower than they are, as in
+    // the GPS indicator's status column.
+    GPSWrappingRow {
         objectName: "gcsPositionSelectedSource"
         label:     qsTr("Using")
         labelText: root._positionManager.selectedSourceName
-        labelTextFormat: Text.PlainText
+        labelWrapMode: Text.Wrap
     }
 
-    LabelledLabel {
+    GPSWrappingRow {
         objectName: "gcsPositionSourceStatus"
         label:     qsTr("Status")
         labelText: root._positionManager.sourceStatusText
-        labelTextFormat: Text.PlainText
+        labelWrapMode: Text.Wrap
     }
 
     LabelledLabel {

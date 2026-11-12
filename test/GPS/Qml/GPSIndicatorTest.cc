@@ -17,6 +17,7 @@
 #include "MAVLinkLib.h"
 #include "NTRIP/Support/MockNTRIPTransport.h"
 #include "NTRIPSettings.h"
+#include "PositionManager.h"
 #include "QGCPalette.h"
 #include "Qml/Support/GPSPanelFixtures.h"
 #include "QmlTesting/QmlFixtures.h"
@@ -76,6 +77,30 @@ QQuickItem* shownItem(const QObject* root, const char* name)
         }
     }
     return shown;
+}
+
+/// The texts shown under @a box that reach past its left or right edge, or are wider than the room their layout gives
+/// them, each with its extent; empty when every text is inside the box.
+QStringList textsOutside(QQuickItem* box)
+{
+    QStringList outside;
+    const auto texts = TestFixtures::findItems(box, [](QQuickItem* item) {
+        return item->isVisible() && item->property("contentWidth").isValid() &&
+               !item->property("text").toString().isEmpty();
+    });
+    for (QQuickItem* const text : texts) {
+        const QRectF rect = text->mapRectToItem(box, text->boundingRect());
+        const qreal painted = text->property("contentWidth").toReal();
+        if (rect.left() < -1 || rect.right() > box->width() + 1 || painted > text->width() + 1) {
+            outside.append(QStringLiteral("\"%1\" at %2 to %3, painted %4 wide, in a box of %5")
+                               .arg(text->property("text").toString())
+                               .arg(rect.left())
+                               .arg(rect.right())
+                               .arg(painted)
+                               .arg(box->width()));
+        }
+    }
+    return outside;
 }
 }  // namespace
 
@@ -298,6 +323,32 @@ void GPSIndicatorTest::_compactExpandedPageHasSettingsSize()
              qPrintable(QStringLiteral("page %1, side by side %2").arg(item->implicitWidth()).arg(sideBySideWidth)));
     QVERIFY(!connection->isVisible());
     QCOMPARE(panel->y(), 0.0);
+}
+
+void GPSIndicatorTest::_gcsPositionStaysInsideItsBox()
+{
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
+    std::unique_ptr<QObject> page = createIndicatorPage(engine, window, nullptr);
+    QVERIFY2(page, qPrintable(engine.lastError()));
+    QVERIFY(window.show());
+    auto* box = page->findChild<QQuickItem*>(QStringLiteral("gpsIndicatorGcsPosition"));
+    QVERIFY(box && box->isVisible());
+    auto* status = box->findChild<QQuickItem*>(QStringLiteral("gcsPositionSourceStatus"));
+    QVERIFY(status);
+    // The longest status, which is wider than the status column.
+    const QString sentence = PositionManager::tr("Position fix does not meet accuracy requirements");
+    QVERIFY(status->setProperty("labelText", sentence));
+    QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
+    QVERIFY(qAbs(box->width() - page->property("_preferredStatusWidth").toReal()) <= 1);
+    const auto shown = TestFixtures::findItems(status, [&sentence](QQuickItem* item) {
+        return item->property("text").toString() == sentence && item->property("lineCount").isValid();
+    });
+    QCOMPARE(shown.size(), 1);
+    QVERIFY(shown.first()->property("lineCount").toInt() > 1);
+    // It wraps inside the box instead of running past it and taking the other rows' values along.
+    const QStringList outside = textsOutside(box);
+    QVERIFY2(outside.isEmpty(), qPrintable(outside.join(QStringLiteral("; "))));
 }
 
 void GPSIndicatorTest::_pageOffersNtripConnect()
