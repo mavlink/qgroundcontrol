@@ -61,6 +61,18 @@ A caster answers with its source table, or with HTTP status 404 or 410, when it 
 
 A caster that answers with an HTTP redirect is not followed. QGroundControl reports the address the caster names, when it names one, and waits for you to change the server settings and connect again.
 
+## Saved Casters
+
+Keeps casters under a name, so that changing between them does not mean typing them again.
+
+- **Save Caster** — saves the server and mountpoint settings above under the name entered: host address, port, username, password, the two TLS options and the mountpoint. A name that is already saved is replaced. Up to 20 casters are kept.
+- **Use Caster** — copies the selected caster into the server and mountpoint settings. The connection always uses those settings, so a saved caster has no effect until it is used. Like the settings it writes, it is available only while the connection is off.
+- **Delete Caster** — removes the selected caster from the list. The server and mountpoint settings stay as they are.
+
+A saved caster keeps its password. It is stored with the application's settings, as the **Password** above is, and is not encrypted there: anyone who can read the settings file can read it.
+
+A caster that accepts self-signed certificates is saved with the certificate recorded for it, if one was. **Use Caster** never carries the certificate recorded for one caster over to another: when the recorded certificate belongs to another host and port, it is replaced by the one saved with the caster, or forgotten when none was. A certificate recorded after a caster was saved is kept with it only when the caster is saved again.
+
 ## GGA Position Reporting
 
 Network RTK (VRS) casters need the rover position. Select the position QGC reports and how often.

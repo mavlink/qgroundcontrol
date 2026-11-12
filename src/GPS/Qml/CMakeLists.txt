@@ -57,6 +57,7 @@ qt_add_qml_module(
         NTRIPMountpointFilter.qml
         NTRIPMountpointList.qml
         NTRIPPasswordField.qml
+        NTRIPSavedCasters.qml
         RTCMMessageChips.qml
 )
 

@@ -96,6 +96,13 @@
             "type": "string",
             "default": "",
             "label": "NTRIP version 1 casters"
+        },
+        {
+            "name": "ntripSavedCasters",
+            "shortDesc": "Saved NTRIP casters",
+            "type": "string",
+            "default": "",
+            "label": "Saved casters"
         }
     ]
 }

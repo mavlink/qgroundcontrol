@@ -54,6 +54,11 @@
             "keywords": ["mountpoint", "browse", "stream", "source table"]
         },
         {
+            "component": "NTRIPSavedCasters",
+            "sectionName": "Saved Casters",
+            "keywords": ["saved casters", "caster", "profile", "ntrip", "save", "use caster"]
+        },
+        {
             "heading": "GGA Position Reporting",
             "showWhen": "QGroundControl.settingsManager.ntripSettings.userVisible",
             "keywords": ["gga", "vrs", "nmea", "position", "network rtk", "ntrip"],

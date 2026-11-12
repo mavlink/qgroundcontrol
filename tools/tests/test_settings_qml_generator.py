@@ -1433,6 +1433,7 @@ class TestRealPageDefinitions:
             "CorrectionsStatus",
             "NTRIPConnectionStatus",
             "NTRIPMountpointBrowser",
+            "NTRIPSavedCasters",
         }
         for name in (
             "correctionSource",

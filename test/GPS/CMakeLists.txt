@@ -55,6 +55,7 @@ set(_qgc_gps_suites
     NTRIP/NTRIPGgaReporterTest
     NTRIP/NTRIPHttpTransportTest
     NTRIP/NTRIPManagerTest
+    NTRIP/NTRIPSettingsTest
     NTRIP/NTRIPSourceTableControllerTest
     NTRIP/NTRIPSourceTableTest
     NTRIP/NTRIPTlsTest
@@ -67,6 +68,7 @@ set(_qgc_gps_suites
     Qml/GPSReceiverSettingsTest
     Qml/GPSSatelliteViewTest
     Qml/NTRIPMountpointBrowserTest
+    Qml/NTRIPSavedCastersTest
     Receiver/GPSReceiverConnectionPolicyTest
     Receiver/GPSReceiverFactGroupTest
     Receiver/GPSReceiverPresentationTest
