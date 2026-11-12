@@ -7,19 +7,15 @@
     },
     "groups": [
         {
+            "comment": "The page follows the task: which source is in use, then NTRIP as it is filled in, the caster, the mountpoint and Connect, then what is set less often.",
             "component": "CorrectionsStatus",
             "sectionName": "Corrections Status",
-            "keywords": ["corrections", "rtk", "status", "selected stream", "data rate"]
-        },
-        {
-            "component": "NTRIPConnectionStatus",
-            "sectionName": "NTRIP Connection",
-            "keywords": ["ntrip", "rtk", "connection status", "corrections"]
+            "keywords": ["corrections", "rtk", "status", "source", "selected stream", "data rate", "message types", "constellations", "base position", "base distance", "vehicle fix", "baseline", "queued to vehicles"]
         },
         {
             "heading": "NTRIP Server",
             "showWhen": "QGroundControl.settingsManager.ntripSettings.userVisible",
-            "keywords": ["ntrip server", "rtk", "caster", "host", "port", "username", "password", "tls", "vehicle", "data limit", "metered"],
+            "keywords": ["ntrip server", "ntrip", "rtk", "caster", "host", "address", "port", "username", "password", "login", "tls", "encryption", "certificate", "self-signed"],
             "controls": [
                 {
                     "setting": "ntripSettings.ntripServerHostAddress",
@@ -45,7 +41,29 @@
                 {
                     "setting": "ntripSettings.ntripAllowSelfSignedCerts",
                     "enableWhen": "!ntripActive && QGroundControl.settingsManager.ntripSettings.ntripUseTls.rawValue"
-                },
+                }
+            ]
+        },
+        {
+            "component": "NTRIPMountpointBrowser",
+            "sectionName": "NTRIP Mountpoint",
+            "keywords": ["mountpoint", "mount point", "browse", "stream", "source table", "filter", "nearest", "distance"]
+        },
+        {
+            "component": "NTRIPConnectionStatus",
+            "sectionName": "NTRIP Connection",
+            "keywords": ["ntrip", "rtk", "connection status", "corrections", "connect", "disconnect", "retry", "data received"]
+        },
+        {
+            "component": "NTRIPSavedCasters",
+            "sectionName": "Saved Casters",
+            "keywords": ["saved casters", "caster", "profile", "ntrip", "save", "use caster", "delete caster", "failover", "fall back", "backup"]
+        },
+        {
+            "heading": "NTRIP Connection Options",
+            "showWhen": "QGroundControl.settingsManager.ntripSettings.userVisible",
+            "keywords": ["ntrip", "vehicle", "connect only with a vehicle", "data limit", "data cap", "metered", "megabytes"],
+            "controls": [
                 {
                     "setting": "ntripSettings.ntripRequireVehicle"
                 },
@@ -53,16 +71,6 @@
                     "setting": "ntripSettings.ntripDataCapMB"
                 }
             ]
-        },
-        {
-            "component": "NTRIPMountpointBrowser",
-            "sectionName": "NTRIP Mountpoint",
-            "keywords": ["mountpoint", "browse", "stream", "source table"]
-        },
-        {
-            "component": "NTRIPSavedCasters",
-            "sectionName": "Saved Casters",
-            "keywords": ["saved casters", "caster", "profile", "ntrip", "save", "use caster"]
         },
         {
             "heading": "GGA Position Reporting",

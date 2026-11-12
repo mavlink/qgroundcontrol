@@ -7,6 +7,7 @@
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtQml/QJSValue>
 #include <QtQuick/QQuickItem>
 #include <QtQuickTest/quicktest.h>
 #include <QtTest/QSignalSpy>
@@ -79,9 +80,15 @@ void GPSCorrectionsPanelTest::_correctionsStatusShowsSelectedStream()
     auto* source = status->findChild<QObject*>(QStringLiteral("correctionsSelectedSource"));
     auto* stream = status->findChild<QObject*>(QStringLiteral("correctionsSelectedStream"));
     auto* rate = status->findChild<QObject*>(QStringLiteral("correctionsDataRate"));
-    QVERIFY(source && stream && rate);
+    auto* sources = status->findChild<QObject*>(QStringLiteral("correctionsSources"));
+    QVERIFY(source && stream && rate && sources);
     QCOMPARE(source->property("labelText").toString(), QStringLiteral("None"));
     QVERIFY(!rate->property("visible").toBool());
+    // While no source is on, the status says what the sources are.
+    QVERIFY(sources->property("visible").toBool());
+    for (const char* const named : {"NTRIP", "UDP", "base station"}) {
+        QVERIFY2(sources->property("text").toString().contains(QLatin1String(named)), named);
+    }
 
     const QString instance = QStringLiteral("ntrip://caster.example.com:2101/MOUNT");
     // A stream is listed once it delivers corrections.
@@ -98,12 +105,14 @@ void GPSCorrectionsPanelTest::_correctionsStatusShowsSelectedStream()
     QCOMPARE(stream->property("text").toString(), instance);
     QVERIFY(rate->property("visible").toBool());
     QCOMPARE(rate->property("labelText").toString(), QStringLiteral("%1/s").arg(QGC::bigSizeToString(frame.size())));
+    QVERIFY(!sources->property("visible").toBool());
 
     ntrip.reset();
     QVERIFY(advanceHealthSample());
     QCOMPARE(corrections.state(), GPSCorrectionManager::State::Inactive);
     QCOMPARE(corrections.selectedBytesPerSecond(), 0ULL);
     QCOMPARE(source->property("labelText").toString(), QStringLiteral("None"));
+    QVERIFY(sources->property("visible").toBool());
 }
 
 void GPSCorrectionsPanelTest::_correctionsStatusCountsMessageTypes()
@@ -875,6 +884,77 @@ void GPSCorrectionsPanelTest::_ntripMountpointRowLayout()
     QCOMPARE(rows.at(0)->height(), rows.at(1)->height());
     QVERIFY2(rows.at(2)->height() < rows.at(1)->height(),
              qPrintable(QStringLiteral("%1 and %2").arg(rows.at(2)->height()).arg(rows.at(1)->height())));
+}
+
+void GPSCorrectionsPanelTest::_settingsPageListsGroups()
+{
+    // The page follows the task: which source is in use, then NTRIP as a user fills it in, the caster, the
+    // mountpoint and Connect, then what is set less often.
+    TestFixtures::QmlEngine engine;
+    auto page = engine.create(QByteArrayLiteral(R"(
+        import QtQuick
+        import QGroundControl
+        import QGroundControl.AppSettings
+
+        Item {
+            // The page's scroll area takes its palette from the window that shows the page.
+            QGCPalette { id: qgcPal }
+            RTKCorrectionsSettings {}
+        }
+    )"));
+    QVERIFY2(page, qPrintable(engine.lastError()));
+    auto sidebar = engine.create(QByteArrayLiteral(R"(
+        import QGroundControl.AppSettings
+
+        SettingsPagesModel {
+            /// The sections the settings sidebar lists under the RTK Corrections page.
+            function correctionsSections() {
+                for (let i = 0; i < count; i++) {
+                    if (get(i).nameKey === "RTK Corrections") {
+                        return get(i).sections().filter(section => section.visible).map(section => section.name)
+                    }
+                }
+                return []
+            }
+        }
+    )"));
+    QVERIFY2(sidebar, qPrintable(engine.lastError()));
+    QVariant listed;
+    QVERIFY(QMetaObject::invokeMethod(sidebar.get(), "correctionsSections", Q_RETURN_ARG(QVariant, listed)));
+    QCOMPARE(listed.value<QJSValue>().toVariant().toStringList(),
+             (QStringList{QStringLiteral("Corrections Status"), QStringLiteral("NTRIP Server"),
+                          QStringLiteral("NTRIP Mountpoint"), QStringLiteral("NTRIP Connection"),
+                          QStringLiteral("Saved Casters"), QStringLiteral("NTRIP Connection Options"),
+                          QStringLiteral("GGA Position Reporting"), QStringLiteral("UDP RTCM Input"),
+                          QStringLiteral("UDP Forwarding"), QStringLiteral("Correction Routing")}));
+
+    // The page's groups in its order, each by a control it holds: the child of the page layout that holds it.
+    QList<qsizetype> places;
+    for (const char* const control :
+         {"correctionsSelectedSource", "settingsTextField_ntripServerHostAddress", "ntripMountpointField",
+          "ntripConnectButton", "ntripSavedCasterName", "settingsCheckBox_ntripRequireVehicle",
+          "settingsTextField_ntripGgaIntervalSec", "settingsTextField_rtcmUdpInputPort",
+          "settingsTextField_rtcmUdpOutputPort", "correctionsLogSwitch"}) {
+        auto* item = page->findChild<QQuickItem*>(QString::fromLatin1(control));
+        while (item && item->parentItem() && item->parentItem()->objectName() != QLatin1String("settingsPageLayout")) {
+            item = item->parentItem();
+        }
+        QVERIFY2(item && item->parentItem(), control);
+        places.append(item->parentItem()->childItems().indexOf(item));
+    }
+    for (qsizetype i = 1; i < places.size(); ++i) {
+        QVERIFY2(places.at(i - 1) < places.at(i), qPrintable(QString::number(i)));
+    }
+    // The options of the connection that are set once are below it, not among what names the caster.
+    const auto groupOf = [&page](const char* control) {
+        auto* item = page->findChild<QQuickItem*>(QString::fromLatin1(control));
+        while (item && item->parentItem() && item->parentItem()->objectName() != QLatin1String("settingsPageLayout")) {
+            item = item->parentItem();
+        }
+        return item;
+    };
+    QCOMPARE(groupOf("settingsTextField_ntripDataCapMB"), groupOf("settingsCheckBox_ntripRequireVehicle"));
+    QVERIFY(groupOf("settingsTextField_ntripDataCapMB") != groupOf("settingsTextField_ntripServerHostAddress"));
 }
 
 UT_REGISTER_TEST(GPSCorrectionsPanelTest, TestLabel::Unit)

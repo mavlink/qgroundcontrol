@@ -3,7 +3,7 @@
 #include "UnitTest.h"
 
 /// The panels of the RTK Corrections settings page, loaded outside the main window: correction status and the NTRIP
-/// connection and mountpoint controls.
+/// connection and mountpoint controls, and the order of the page's groups.
 class GPSCorrectionsPanelTest : public UnitTest
 {
     Q_OBJECT
@@ -28,4 +28,5 @@ private slots:
     void _ntripLongStatusWrapsWithinPanel();
     void _ntripMountpointRowLayout();
     void _ntripMountpointIsTheStreamsOwn();
+    void _settingsPageListsGroups();
 };

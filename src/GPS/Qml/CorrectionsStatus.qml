@@ -46,6 +46,13 @@ QGCGroupBox {
         labelTextFormat: Text.PlainText
     }
 
+    // What the sources are, while none is on.
+    QGCNoteLabel {
+        objectName: "correctionsSources"
+        visible: !root._active
+        text: qsTr("No correction source is on. Vehicles get corrections from the GNSS receiver while it is a base station, from an NTRIP caster, or from RTCM received over UDP.")
+    }
+
     // Stream endpoints can be long URLs, so they wrap anywhere.
     QGCNoteLabel {
         objectName: "correctionsSelectedStream"

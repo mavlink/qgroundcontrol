@@ -1428,13 +1428,20 @@ class TestRealPageDefinitions:
         settings_dir = repo_root / "src" / "Settings"
         page = load_page_def(pages_dir / "RTKCorrections.SettingsUI.json")
         qml = generate_page_qml(page, settings_dir)
-        components = {group.component for group in page.groups if group.component}
-        assert components == {
+        # Status first, then NTRIP as it is filled in, the caster, the mountpoint and Connect, then what is set
+        # less often.
+        assert [group.component or group.heading for group in page.groups] == [
             "CorrectionsStatus",
-            "NTRIPConnectionStatus",
+            "NTRIP Server",
             "NTRIPMountpointBrowser",
+            "NTRIPConnectionStatus",
             "NTRIPSavedCasters",
-        }
+            "NTRIP Connection Options",
+            "GGA Position Reporting",
+            "UDP RTCM Input",
+            "UDP Forwarding",
+            "Correction Routing",
+        ]
         for name in (
             "correctionSource",
             "ntripWhitelist",
@@ -1450,7 +1457,7 @@ class TestRealPageDefinitions:
         assert 'heading: qsTr("UDP Forwarding")' in qml
         assert "gpsCorrectionSettings.userVisible" in qml
         # The generated NTRIP groups hide with the NTRIP settings group, as its hand-written panels do.
-        assert qml.count("(QGroundControl.settingsManager.ntripSettings.userVisible)") == 2
+        assert qml.count("(QGroundControl.settingsManager.ntripSettings.userVisible)") == 3
         assert "NTRIPPasswordField" in qml
         # The log switch is a setting of the routing, not part of the status the toolbar drop-down shows.
         assert "CorrectionsLogSwitch" in qml
