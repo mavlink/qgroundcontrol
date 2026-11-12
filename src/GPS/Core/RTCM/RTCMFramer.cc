@@ -60,15 +60,15 @@ uint16_t RTCMFramer::_discardCandidate()
         const std::span<const uint8_t> bytes{_bytes.data(), _recoverySize};
         for (uint16_t offset = searchOffset; offset < _recoverySize; ++offset) {
             const auto suffix = bytes.subspan(offset);
-            if (suffix[0] != PREAMBLE || (suffix.size() >= 2 && (suffix[1] & 0xfc))) {
+            if (suffix[0] != PREAMBLE || _reservedBitsSet(suffix)) {
                 continue;
             }
             if (suffix.size() < HEADER_SIZE) {
                 discardSize = (std::min) (discardSize, offset);
                 continue;
             }
-            const size_t payloadSize = ((suffix[1] & 3) << 8) | suffix[2];
-            if (payloadSize < 2) {
+            const size_t payloadSize = _headerPayloadSize(suffix);
+            if (payloadSize < MIN_PAYLOAD_SIZE) {
                 continue;
             }
             const size_t length = HEADER_SIZE + payloadSize + CRC_SIZE;
@@ -96,15 +96,16 @@ bool RTCMFramer::_inspect(uint16_t validatedFrameSize)
     _payloadSize = 0;
     const auto preamble = std::find(_bytes.begin(), _bytes.begin() + _size, PREAMBLE);
     _discardPrefix(static_cast<uint16_t>(preamble - _bytes.begin()));
-    if (_size >= 2 && (_bytes[1] & 0xfc)) {
-        _frameSize = 2;
+    const std::span<const uint8_t> buffered{_bytes.data(), _size};
+    if (_reservedBitsSet(buffered)) {
+        _frameSize = RESERVED_BITS_OFFSET + 1;
         return true;
     }
     if (_size < HEADER_SIZE) {
         return false;
     }
-    _payloadSize = ((_bytes[1] & 3) << 8) | _bytes[2];
-    if (_payloadSize < 2) {
+    _payloadSize = _headerPayloadSize(buffered);
+    if (_payloadSize < MIN_PAYLOAD_SIZE) {
         _frameSize = HEADER_SIZE;
         return true;
     }

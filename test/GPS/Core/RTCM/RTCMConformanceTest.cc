@@ -314,7 +314,7 @@ void RTCMConformanceTest::_frameFields()
         QVERIFY(framer.addByte(static_cast<uint8_t>(frame.back())));
         QVERIFY(framer.valid());
         QCOMPARE(framer.messageId(), messageId);
-        QCOMPARE(framer.payloadLength(), extraPayload + 2);
+        QCOMPARE(framer.payloadSize(), extraPayload + 2);
         const auto view = framer.frame();
         QCOMPARE(QByteArray(reinterpret_cast<const char*>(view.data()), static_cast<qsizetype>(view.size())), frame);
     }
@@ -323,7 +323,7 @@ void RTCMConformanceTest::_frameFields()
     framer.reset();
     QVERIFY(framer.frame().empty());
     QCOMPARE(framer.bufferedSize(), 0);
-    QCOMPARE(framer.payloadLength(), 0);
+    QCOMPARE(framer.payloadSize(), 0);
     QCOMPARE(framer.messageId(), 0);
     QVERIFY(!framer.valid());
 }

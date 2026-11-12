@@ -17,8 +17,15 @@ class RTCMFramer
 {
 public:
     static constexpr uint8_t PREAMBLE = 0xd3;
+    /// The preamble, six reserved bits that are zero and the 10-bit payload size.
     static constexpr uint16_t HEADER_SIZE = 3;
+    /// The byte after the preamble: the reserved bits, then the two high bits of the payload size.
+    static constexpr uint16_t RESERVED_BITS_OFFSET = 1;
+    static constexpr uint8_t RESERVED_BITS = 0xfc;
+    static constexpr uint8_t PAYLOAD_SIZE_HIGH_BITS = 0x03;
     static constexpr uint16_t CRC_SIZE = 3;
+    /// A payload begins with its 12-bit message number.
+    static constexpr uint16_t MIN_PAYLOAD_SIZE = 2;
     static constexpr uint16_t MAX_PAYLOAD_SIZE = 1023;
     static constexpr uint16_t MAX_FRAME_SIZE = HEADER_SIZE + MAX_PAYLOAD_SIZE + CRC_SIZE;
 
@@ -42,18 +49,21 @@ public:
     /// Retained suffix length, including bytes beyond the current candidate.
     uint16_t bufferedSize() const { return _size; }
 
-    uint16_t payloadLength() const { return _payloadSize; }
+    uint16_t payloadSize() const { return _payloadSize; }
 
     uint16_t messageId() const
     {
         const uint16_t available = _frameSize ? _frameSize : _size;
-        return payloadLength() >= 2 ? frameMessageId(std::span<const uint8_t>(_bytes.data(), available)) : 0;
+        return payloadSize() >= MIN_PAYLOAD_SIZE ? frameMessageId(std::span<const uint8_t>(_bytes.data(), available))
+                                                 : 0;
     }
 
     /// Message number from a frame header; zero when the header is incomplete.
     [[nodiscard]] static uint16_t frameMessageId(std::span<const uint8_t> bytes)
     {
-        return bytes.size() >= HEADER_SIZE + 2 && bytes[0] == PREAMBLE ? (bytes[3] << 4) | (bytes[4] >> 4) : 0;
+        return bytes.size() >= HEADER_SIZE + MIN_PAYLOAD_SIZE && bytes[0] == PREAMBLE
+                   ? (bytes[3] << 4) | (bytes[4] >> 4)
+                   : 0;
     }
 
     [[nodiscard]] static uint16_t frameMessageId(QByteArrayView bytes)
@@ -66,10 +76,11 @@ public:
 
     [[nodiscard]] static bool isValidFrame(std::span<const uint8_t> bytes)
     {
-        if (bytes.size() < HEADER_SIZE + 2 + CRC_SIZE || bytes[0] != PREAMBLE || (bytes[1] & 0xfc)) {
+        if (bytes.size() < HEADER_SIZE + MIN_PAYLOAD_SIZE + CRC_SIZE || bytes[0] != PREAMBLE ||
+            _reservedBitsSet(bytes)) {
             return false;
         }
-        const size_t payloadSize = ((bytes[1] & 3) << 8) | bytes[2];
+        const size_t payloadSize = _headerPayloadSize(bytes);
         return bytes.size() == HEADER_SIZE + payloadSize + CRC_SIZE && QGC::crc24q(bytes) == 0;
     }
 
@@ -80,6 +91,18 @@ public:
     }
 
 private:
+    /// Whether @a bytes, which begin with a preamble, reach the reserved bits and have one of them set.
+    [[nodiscard]] static constexpr bool _reservedBitsSet(std::span<const uint8_t> bytes)
+    {
+        return bytes.size() > RESERVED_BITS_OFFSET && (bytes[RESERVED_BITS_OFFSET] & RESERVED_BITS) != 0;
+    }
+
+    /// The payload size in the header that @a bytes begin with.
+    [[nodiscard]] static constexpr uint16_t _headerPayloadSize(std::span<const uint8_t> bytes)
+    {
+        return static_cast<uint16_t>(((bytes[1] & PAYLOAD_SIZE_HIGH_BITS) << 8) | bytes[2]);
+    }
+
     void _discardPrefix(uint16_t count);
     uint16_t _discardCandidate();
     bool _inspect(uint16_t validatedFrameSize);
