@@ -17,7 +17,7 @@
 #include "UBX/UBXMessageSchema.h"
 #include "UBX/UBXProtocol.h"
 
-namespace Msg = UBX::Msg;
+namespace UBX {
 
 namespace {
 
@@ -134,8 +134,6 @@ void decodeSatelliteBlocks(std::span<const uint8_t> payload, GPSDecodedSatellite
 }
 
 }  // namespace
-
-namespace UBX {
 
 GPSReceiveUpdates Protocol::onFrame(const GPSFrame& frame, GPSDecodeContext& context)
 {

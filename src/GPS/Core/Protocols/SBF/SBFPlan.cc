@@ -6,6 +6,8 @@
 
 #include "GPSProtocolMath.h"
 
+namespace SBF::Plan {
+
 namespace {
 
 constexpr std::chrono::milliseconds COMMAND_TIMEOUT{1000};
@@ -19,8 +21,6 @@ void add(GPSCommandSequence& sequence, const QByteArray& command, GPSCommandOpti
 }
 
 }  // namespace
-
-namespace SBF::Plan {
 
 GPSCommandSequence silenceCorrectionOutput()
 {
