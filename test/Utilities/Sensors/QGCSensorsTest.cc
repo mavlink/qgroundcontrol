@@ -204,6 +204,16 @@ QRegularExpression messageEnding(const QString& ending)
     return QRegularExpression(QRegularExpression::escape(ending) + QLatin1Char('$'));
 }
 
+/// Has @a backend report a reading that the sensor's filter keeps if it is @a plausible.
+/// Not a lambda in the test: one that captured the backend would give a class of a test function, which has
+/// external linkage, a member of a type from this namespace (-Wsubobject-linkage in a unity build).
+template <typename Traits, typename Backend>
+void publishReading(Backend* backend, bool plausible)
+{
+    Traits::setReading(backend->nextReading(), plausible);
+    backend->newReadingAvailable();
+}
+
 }  // namespace
 
 void QGCSensorsTest::_testAmbientTemperatureFilter_data()
@@ -346,17 +356,12 @@ void QGCSensorsTest::_checkSensorReportsReadings()
     QVERIFY(backend->sensor()->skipDuplicates());
 
     QSignalSpy updates(&sensor, Traits::updated);
-    const auto publish = [backend](bool plausible) {
-        Traits::setReading(backend->nextReading(), plausible);
-        backend->newReadingAvailable();
-    };
-
-    publish(true);
+    publishReading<Traits>(backend, true);
     QCOMPARE(updates.count(), 1);
     QVERIFY(Traits::reportedPlausibleReading(sensor, updates.constLast()));
 
     // The sensor's filter drops a reading the device cannot have measured.
-    publish(false);
+    publishReading<Traits>(backend, false);
     QCOMPARE(updates.count(), 1);
 
     expectLogMessage(kSensorsLogCategory, QtWarningMsg,
@@ -366,12 +371,12 @@ void QGCSensorsTest::_checkSensorReportsReadings()
 
     sensor.quit();
     QVERIFY(!backend->sensor()->isActive());
-    publish(true);
+    publishReading<Traits>(backend, true);
     QCOMPARE(updates.count(), 1);
 
     QVERIFY(sensor.init());
     QVERIFY(backend->sensor()->isActive());
-    publish(true);
+    publishReading<Traits>(backend, true);
     QCOMPARE(updates.count(), 2);
 }
 
