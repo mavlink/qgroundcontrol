@@ -226,6 +226,11 @@ static bool validateFileInput(const QString& filePath, Format& format)
         setError(Error::FileNotFound, QStringLiteral("File does not exist: ") + filePath);
         return false;
     }
+    if (!QGCFileHelper::isQtResource(filePath) && !QFileInfo(filePath).isReadable()) {
+        qCWarning(QGCCompressionLog) << "No permission to read:" << filePath;
+        setError(Error::PermissionDenied, QStringLiteral("No permission to read: ") + filePath);
+        return false;
+    }
     if (format == Format::Auto) {
         format = detectFormat(filePath);
         if (format == Format::Auto) {
@@ -272,10 +277,16 @@ static void captureFormatInfo()
 }
 
 /// Record the failure of a QGClibarchive operation that takes a size limit
-static void setOperationError(const QString& message)
+/// @param result How the operation ended
+/// @param message What could not be done, which the reason is appended to if it has a code of its own
+static void setOperationError(QGClibarchive::ReadResult result, const QString& message)
 {
     if (QGClibarchive::takeSizeLimitExceeded()) {
         setError(Error::SizeLimitExceeded, message + QStringLiteral(": size limit exceeded"));
+    } else if (result == QGClibarchive::ReadResult::Cancelled) {
+        setError(Error::Cancelled, message + QStringLiteral(": cancelled"));
+    } else if (result == QGClibarchive::ReadResult::WriteDenied) {
+        setError(Error::PermissionDenied, message + QStringLiteral(": no permission to write the output"));
     } else {
         setError(Error::IoError, message);
     }
@@ -303,7 +314,11 @@ static void setExtractionError(QGClibarchive::ReadResult result, const QString& 
         case QGClibarchive::ReadResult::WriteFailed:
             setError(Error::IoError, message + QStringLiteral(": the output cannot be written"));
             return;
+        case QGClibarchive::ReadResult::WriteDenied:
+            setError(Error::PermissionDenied, message + QStringLiteral(": no permission to write the output"));
+            return;
         case QGClibarchive::ReadResult::Completed:
+        case QGClibarchive::ReadResult::Cancelled:
         case QGClibarchive::ReadResult::Failed:
             break;
     }
@@ -625,11 +640,12 @@ bool decompressFile(const QString& inputPath, const QString& outputPath, Format 
 
     // Single-file compression formats
     if (isCompressionFormat(format)) {
+        QGClibarchive::ReadResult result = QGClibarchive::ReadResult::Failed;
         const bool success =
-            QGClibarchive::decompressSingleFile(inputPath, actualOutput, progress, maxDecompressedBytes);
+            QGClibarchive::decompressSingleFile(inputPath, actualOutput, progress, maxDecompressedBytes, &result);
         captureFormatInfo();
         if (!success) {
-            setOperationError(QStringLiteral("Decompression failed: ") + inputPath);
+            setOperationError(result, QStringLiteral("Decompression failed: ") + inputPath);
         }
         return success;
     }
@@ -702,7 +718,7 @@ QByteArray decompressData(const QByteArray& data, Format format, qint64 maxDecom
     QByteArray result = QGClibarchive::decompressDataFromMemory(data, maxDecompressedBytes, &decompressed);
     captureFormatInfo();
     if (!decompressed) {
-        setOperationError(QStringLiteral("Failed to decompress data"));
+        setOperationError(QGClibarchive::ReadResult::Failed, QStringLiteral("Failed to decompress data"));
     }
     return result;
 }
@@ -721,11 +737,12 @@ bool extractArchive(const QString& archivePath, const QString& outputDirectoryPa
     qCDebug(QGCCompressionLog) << "Extracting" << formatName(format) << "archive" << archivePath << "to"
                                << outputDirectoryPath;
 
+    QGClibarchive::ReadResult result = QGClibarchive::ReadResult::Failed;
     const bool success =
-        QGClibarchive::extractAnyArchive(archivePath, outputDirectoryPath, progress, maxDecompressedBytes);
+        QGClibarchive::extractAnyArchive(archivePath, outputDirectoryPath, progress, maxDecompressedBytes, &result);
     captureFormatInfo();
     if (!success) {
-        setOperationError(QStringLiteral("Failed to extract archive: ") + archivePath);
+        setOperationError(result, QStringLiteral("Failed to extract archive: ") + archivePath);
     }
     return success;
 }
@@ -740,11 +757,12 @@ bool extractArchiveAtomic(const QString& archivePath, const QString& outputDirec
     qCDebug(QGCCompressionLog) << "Atomically extracting" << formatName(format) << "archive" << archivePath
                                << "to" << outputDirectoryPath;
 
+    QGClibarchive::ReadResult result = QGClibarchive::ReadResult::Failed;
     const bool success =
-        QGClibarchive::extractArchiveAtomic(archivePath, outputDirectoryPath, progress, maxDecompressedBytes);
+        QGClibarchive::extractArchiveAtomic(archivePath, outputDirectoryPath, progress, maxDecompressedBytes, &result);
     captureFormatInfo();
     if (!success) {
-        setOperationError(QStringLiteral("Failed to atomically extract archive: ") + archivePath);
+        setOperationError(result, QStringLiteral("Failed to atomically extract archive: ") + archivePath);
     }
     return success;
 }
@@ -765,11 +783,12 @@ bool extractArchiveFiltered(const QString& archivePath, const QString& outputDir
 
     qCDebug(QGCCompressionLog) << "Extracting archive with filter:" << archivePath;
 
-    const bool success =
-        QGClibarchive::extractWithFilter(archivePath, outputDirectoryPath, filter, progress, maxDecompressedBytes);
+    QGClibarchive::ReadResult result = QGClibarchive::ReadResult::Failed;
+    const bool success = QGClibarchive::extractWithFilter(archivePath, outputDirectoryPath, filter, progress,
+                                                          maxDecompressedBytes, &result);
     captureFormatInfo();
     if (!success) {
-        setOperationError(QStringLiteral("Failed to extract archive: ") + archivePath);
+        setOperationError(result, QStringLiteral("Failed to extract archive: ") + archivePath);
     }
     return success;
 }
@@ -980,10 +999,12 @@ bool decompressFromDevice(QIODevice* device, const QString& outputPath, Progress
         return false;
     }
     qCDebug(QGCCompressionLog) << "Decompressing from device to" << outputPath;
-    const bool success = QGClibarchive::decompressFromDevice(device, outputPath, progress, maxDecompressedBytes);
+    QGClibarchive::ReadResult result = QGClibarchive::ReadResult::Failed;
+    const bool success =
+        QGClibarchive::decompressFromDevice(device, outputPath, progress, maxDecompressedBytes, &result);
     captureFormatInfo();
     if (!success) {
-        setOperationError(QStringLiteral("Failed to decompress from device"));
+        setOperationError(result, QStringLiteral("Failed to decompress from device"));
     }
     return success;
 }
@@ -999,7 +1020,7 @@ QByteArray decompressFromDevice(QIODevice* device, qint64 maxDecompressedBytes)
     QByteArray result = QGClibarchive::decompressDataFromDevice(device, maxDecompressedBytes, &decompressed);
     captureFormatInfo();
     if (!decompressed) {
-        setOperationError(QStringLiteral("Failed to decompress from device"));
+        setOperationError(QGClibarchive::ReadResult::Failed, QStringLiteral("Failed to decompress from device"));
     }
     return result;
 }
@@ -1011,10 +1032,12 @@ bool extractFromDevice(QIODevice* device, const QString& outputDirectoryPath, Pr
         return false;
     }
     qCDebug(QGCCompressionLog) << "Extracting archive from device to" << outputDirectoryPath;
-    const bool success = QGClibarchive::extractFromDevice(device, outputDirectoryPath, progress, maxDecompressedBytes);
+    QGClibarchive::ReadResult result = QGClibarchive::ReadResult::Failed;
+    const bool success =
+        QGClibarchive::extractFromDevice(device, outputDirectoryPath, progress, maxDecompressedBytes, &result);
     captureFormatInfo();
     if (!success) {
-        setOperationError(QStringLiteral("Failed to extract archive from device"));
+        setOperationError(result, QStringLiteral("Failed to extract archive from device"));
     }
     return success;
 }

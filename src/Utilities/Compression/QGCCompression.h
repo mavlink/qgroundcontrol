@@ -289,7 +289,8 @@ bool fileExists(const QString &archivePath, const QString &fileName,
 /// @return true on success. Otherwise lastError() is Error::FileNotInArchive if the archive was read to its
 ///         end without the file, Error::UnsupportedFormat if it is a hard or symbolic link or a special file
 ///         (FIFO, device node, socket), which are not extracted, Error::InvalidArchive if the archive cannot
-///         be read or is damaged, and Error::IoError if the output cannot be written
+///         be read or is damaged, and Error::IoError if the output cannot be written, or
+///         Error::PermissionDenied if that is for lack of permission
 bool extractFile(const QString &archivePath, const QString &fileName,
                  const QString &outputPath = QString(),
                  Format format = Format::Auto);
@@ -331,7 +332,7 @@ bool extractFiles(const QString &archivePath, const QStringList &fileNames,
 /// @return true if at least one file matched and extracted, false on error or no matches. lastError() is
 ///         Error::FileNotInArchive if the archive was read to its end without a file that matches,
 ///         Error::InvalidArchive if it cannot be read or is damaged, and Error::IoError if the output cannot
-///         be written
+///         be written, or Error::PermissionDenied if that is for lack of permission
 bool extractByPattern(const QString &archivePath, const QStringList &patterns,
                       const QString &outputDirectoryPath,
                       QStringList *extractedFiles = nullptr,

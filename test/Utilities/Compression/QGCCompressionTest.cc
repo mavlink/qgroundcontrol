@@ -2012,6 +2012,167 @@ void QGCCompressionTest::_testDecompressDataErrors()
     QCOMPARE(QGCCompression::lastError(), Error::UnsupportedFormat);
 }
 
+void QGCCompressionTest::_testOutputWithoutPermission_data()
+{
+    QTest::addColumn<QString>("api");
+    // Whether the output directory is there, or has to be made in the directory that may not be written to
+    QTest::addColumn<bool>("outputExists");
+    QTest::addColumn<QString>("warning");
+
+    const char* const noFile = "Failed to open output file";
+    const char* const noEntry = "Failed to write header";
+    QTest::newRow("extractArchive") << "extractArchive" << true << noEntry;
+    QTest::newRow("extractFromDevice") << "extractFromDevice" << true << noEntry;
+    QTest::newRow("extractArchiveAtomic") << "extractArchiveAtomic" << true << "Failed to create staging directory";
+    QTest::newRow("extractArchiveFiltered") << "extractArchiveFiltered" << true << noFile;
+    QTest::newRow("extractFile") << "extractFile" << true << noFile;
+    QTest::newRow("extractFiles") << "extractFiles" << true << noFile;
+    QTest::newRow("extractByPattern") << "extractByPattern" << true << noFile;
+    QTest::newRow("decompressFile") << "decompressFile" << true << noFile;
+    QTest::newRow("decompressFile of an empty stream")
+        << "decompressFile-empty" << true << "Failed to write output file";
+    QTest::newRow("decompressFromDevice") << "decompressFromDevice" << true << noFile;
+
+    // The directory that cannot be made is not logged, except by the function that has to make the one above it
+    QTest::newRow("extractArchive, no directory") << "extractArchive" << false << "";
+    QTest::newRow("extractFromDevice, no directory") << "extractFromDevice" << false << "";
+    QTest::newRow("extractArchiveAtomic, no directory")
+        << "extractArchiveAtomic" << false << "Failed to create output parent directory";
+    QTest::newRow("extractArchiveFiltered, no directory") << "extractArchiveFiltered" << false << "";
+    QTest::newRow("extractFiles, no directory") << "extractFiles" << false << "";
+    QTest::newRow("extractByPattern, no directory") << "extractByPattern" << false << "";
+    // Nor is the directory of an output file, which fails where the file is opened
+    QTest::newRow("extractFile, no directory") << "extractFile" << false << noFile;
+    QTest::newRow("decompressFile, no directory") << "decompressFile" << false << noFile;
+}
+
+void QGCCompressionTest::_testOutputWithoutPermission()
+{
+#ifndef Q_OS_UNIX
+    QSKIP("Needs a directory that the permissions of POSIX keep from being written to");
+#else
+    QFETCH(QString, api);
+    QFETCH(bool, outputExists);
+    QFETCH(QString, warning);
+    using QGCCompression::Error;
+
+    QTemporaryDir tempDir;
+    const QString lockedPath = tempDir.filePath("locked");
+    QVERIFY(QDir().mkdir(lockedPath));
+    QVERIFY(QFile::setPermissions(lockedPath, QFileDevice::ReadOwner | QFileDevice::ExeOwner));
+    const auto unlock = qScopeGuard([&lockedPath]() {
+        QFile::setPermissions(lockedPath, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
+    });
+    if (QFileInfo(lockedPath).isWritable()) {
+        QSKIP("This user may write to a directory whatever its permissions are");
+    }
+
+    const QString zipPath = QStringLiteral(":/unittest/manifest.json.zip");
+    const QString gzipPath = QStringLiteral(":/unittest/manifest.json.gz");
+    const QString emptyGzipPath = tempDir.filePath("empty.gz");
+    QVERIFY(_writeFile(emptyGzipPath, QByteArray::fromHex("1f8b080000000000000303000000000000000000")));
+    QFile zip(zipPath);
+    QVERIFY(zip.open(QIODevice::ReadOnly));
+    QFile gzip(gzipPath);
+    QVERIFY(gzip.open(QIODevice::ReadOnly));
+    const QString outputDir = outputExists ? lockedPath : (lockedPath + "/made");
+    const QString outputFile = outputDir + "/manifest.json";
+    const auto everyEntry = [](const QGCCompression::ArchiveEntry&) { return true; };
+
+    if (!warning.isEmpty()) {
+        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression(warning));
+    }
+    bool written = true;
+    if (api == "extractArchive") {
+        written = QGCCompression::extractArchive(zipPath, outputDir);
+    } else if (api == "extractFromDevice") {
+        written = QGCCompression::extractFromDevice(&zip, outputDir);
+    } else if (api == "extractArchiveAtomic") {
+        // The directory it replaces is made beside the one it extracts to
+        written = QGCCompression::extractArchiveAtomic(zipPath, outputDir + "/atomic");
+    } else if (api == "extractArchiveFiltered") {
+        written = QGCCompression::extractArchiveFiltered(zipPath, outputDir, everyEntry);
+    } else if (api == "extractFile") {
+        written = QGCCompression::extractFile(zipPath, QStringLiteral("manifest.json"), outputFile);
+    } else if (api == "extractFiles") {
+        written = QGCCompression::extractFiles(zipPath, {QStringLiteral("manifest.json")}, outputDir);
+    } else if (api == "extractByPattern") {
+        written = QGCCompression::extractByPattern(zipPath, {QStringLiteral("*.json")}, outputDir);
+    } else if (api == "decompressFile") {
+        written = QGCCompression::decompressFile(gzipPath, outputFile);
+    } else if (api == "decompressFile-empty") {
+        written = QGCCompression::decompressFile(emptyGzipPath, outputFile);
+    } else if (api == "decompressFromDevice") {
+        written = QGCCompression::decompressFromDevice(&gzip, outputFile);
+    } else {
+        QFAIL("Unknown row");
+    }
+    if (!warning.isEmpty()) {
+        verifyExpectedLogMessage();
+    }
+
+    // The input is whole and the output could be written elsewhere: the code tells what to change
+    QVERIFY(!written);
+    QCOMPARE(QGCCompression::lastError(), Error::PermissionDenied);
+    QVERIFY2(QGCCompression::lastErrorString().endsWith(": no permission to write the output"),
+             qPrintable(QGCCompression::lastErrorString()));
+    QCOMPARE(_entriesBelow(lockedPath), QStringList());
+#endif
+}
+
+void QGCCompressionTest::_testInputWithoutPermission_data()
+{
+    QTest::addColumn<QString>("api");
+    QTest::addColumn<QString>("fileName");
+
+    QTest::newRow("listArchive") << "listArchive" << "archive.zip";
+    QTest::newRow("extractArchive") << "extractArchive" << "archive.zip";
+    QTest::newRow("extractFileData") << "extractFileData" << "archive.zip";
+    QTest::newRow("decompressFile") << "decompressFile" << "stream.gz";
+    // The content, which would have to tell the format, cannot be read either
+    QTest::newRow("name without a format") << "extractArchive" << "archive";
+}
+
+void QGCCompressionTest::_testInputWithoutPermission()
+{
+#ifndef Q_OS_UNIX
+    QSKIP("Needs a file that the permissions of POSIX keep from being read");
+#else
+    QFETCH(QString, api);
+    QFETCH(QString, fileName);
+    using QGCCompression::Error;
+
+    QTemporaryDir tempDir;
+    const QString inputPath = tempDir.filePath(fileName);
+    const QString outputPath = tempDir.filePath("output");
+    const bool isStream = fileName.endsWith(".gz");
+    QVERIFY(_writeFile(inputPath, _readFile(isStream ? QStringLiteral(":/unittest/manifest.json.gz")
+                                                     : QStringLiteral(":/unittest/manifest.json.zip"))));
+    QVERIFY(QFile::setPermissions(inputPath, QFileDevice::WriteOwner));
+    if (QFileInfo(inputPath).isReadable()) {
+        QSKIP("This user may read a file whatever its permissions are");
+    }
+
+    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("No permission to read"));
+    if (api == "listArchive") {
+        QVERIFY(QGCCompression::listArchive(inputPath).isEmpty());
+    } else if (api == "extractArchive") {
+        QVERIFY(!QGCCompression::extractArchive(inputPath, outputPath));
+    } else if (api == "extractFileData") {
+        QVERIFY(QGCCompression::extractFileData(inputPath, QStringLiteral("manifest.json")).isEmpty());
+    } else if (api == "decompressFile") {
+        QVERIFY(!QGCCompression::decompressFile(inputPath, outputPath));
+    } else {
+        QFAIL("Unknown row");
+    }
+    verifyExpectedLogMessage();
+
+    // The file is there and may be whole: it is not said to be damaged, or of a format that is not known
+    QCOMPARE(QGCCompression::lastError(), Error::PermissionDenied);
+    QVERIFY(!QFileInfo::exists(outputPath));
+#endif
+}
+
 void QGCCompressionTest::_testOperationStartsWithoutError_data()
 {
     QTest::addColumn<QString>("api");
@@ -2977,12 +3138,49 @@ void QGCCompressionTest::_testExtractionStopsCleanly()
 
     if (cancel) {
         QCOMPARE(progressCalls, 2);
-        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::IoError);
+        QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::Cancelled);
     } else {
         verifyExpectedLogMessage();
         QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::SizeLimitExceeded);
     }
     QCOMPARE(_entriesBelow(outputDir), remaining);
+}
+
+void QGCCompressionTest::_testDecompressionCancelled_data()
+{
+    QTest::addColumn<bool>("fromDevice");
+
+    QTest::newRow("decompressFile") << false;
+    QTest::newRow("decompressFromDevice") << true;
+}
+
+void QGCCompressionTest::_testDecompressionCancelled()
+{
+    QFETCH(bool, fromDevice);
+
+    QTemporaryDir tempDir;
+    const QString inputPath = tempDir.filePath("zeros.gz");
+    const QString outputPath = tempDir.filePath("zeros.bin");
+    QVERIFY(_writeGzipOfZeros(inputPath, 4));
+    QFile device(inputPath);
+    QVERIFY(device.open(QIODevice::ReadOnly));
+
+    int progressCalls = 0;
+    const QGCCompression::ProgressCallback cancel = [&progressCalls](qint64, qint64) {
+        ++progressCalls;
+        return false;
+    };
+    if (fromDevice) {
+        QVERIFY(!QGCCompression::decompressFromDevice(&device, outputPath, cancel));
+    } else {
+        QVERIFY(!QGCCompression::decompressFile(inputPath, outputPath, QGCCompression::Format::Auto, cancel));
+    }
+
+    // The caller that cancelled is told so, and not that the input or the output failed
+    QCOMPARE(progressCalls, 1);
+    QCOMPARE(QGCCompression::lastError(), QGCCompression::Error::Cancelled);
+    QVERIFY2(QGCCompression::lastErrorString().endsWith(": cancelled"), qPrintable(QGCCompression::lastErrorString()));
+    QCOMPARE(_entriesBelow(tempDir.path()), QStringList{QStringLiteral("zeros.gz")});
 }
 
 void QGCCompressionTest::_testExtractArchiveKeepsEntriesBeforeDamage_data()

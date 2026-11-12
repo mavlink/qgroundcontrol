@@ -72,6 +72,10 @@ private slots:
     void _testExtractToFileErrors_data();
     void _testExtractToFileErrors();
     void _testDecompressDataErrors();
+    void _testOutputWithoutPermission_data();
+    void _testOutputWithoutPermission();
+    void _testInputWithoutPermission_data();
+    void _testInputWithoutPermission();
     void _testOperationStartsWithoutError_data();
     void _testOperationStartsWithoutError();
 
@@ -109,6 +113,8 @@ private slots:
     void _testDecompressToMemorySizeLimit();
     void _testExtractionStopsCleanly_data();
     void _testExtractionStopsCleanly();
+    void _testDecompressionCancelled_data();
+    void _testDecompressionCancelled();
     void _testExtractArchiveKeepsEntriesBeforeDamage_data();
     void _testExtractArchiveKeepsEntriesBeforeDamage();
     void _testMaxEntriesArchive();
