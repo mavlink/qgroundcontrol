@@ -609,15 +609,6 @@ void GPSSourceHealthTest::_navigationObservation()
     QCOMPARE(observation.satellitesUsed, std::optional<int>(18));
     QVERIFY(qAbs(observation.heading() - 270) < 1e-3);
 
-    // NMEA receivers without GST report only DOP.
-    navigation.fixType = GPSFixQuality::Differential;
-    navigation.horizontalAccuracyMeters = std::numeric_limits<float>::quiet_NaN();
-    navigation.horizontalDop = 0.5f;
-    const auto dopOnly = GPSObservation::fromNavigation(navigation, 1236);
-    QVERIFY(dopOnly.usable());
-    QCOMPARE(dopOnly.position.attribute(QGeoPositionInfo::HorizontalAccuracy),
-             GPSObservation::horizontalAccuracyFromDop(0.5f));
-
     // A receiver that reports only its height above the ellipsoid.
     navigation.altitudeMslMeters = std::numeric_limits<double>::quiet_NaN();
     const auto ellipsoidOnly = GPSObservation::fromNavigation(navigation, 1237);
@@ -633,6 +624,41 @@ void GPSSourceHealthTest::_navigationObservation()
     QCOMPARE(lost.altitudeDatum, GPSAltitudeDatum::Unknown);
     QVERIFY(lost.position.timestamp().isValid());
     QVERIFY(!GPSObservation::fromNavigation(GPSNavigationValues{}, 1).position.isValid());
+}
+
+void GPSSourceHealthTest::_dopOnlyPosition_data()
+{
+    // An NMEA receiver without GST reports no horizontal accuracy, only HDOP.
+    QTest::addColumn<float>("horizontalDop");
+    QTest::addColumn<bool>("usable");
+    QTest::newRow("open-sky") << 0.8f << true;
+    QTest::newRow("poor-geometry") << 15.0f << true;
+    QTest::newRow("limit") << 19.5f << true;
+    QTest::newRow("beyond-limit") << 20.0f << false;
+    QTest::newRow("no-hdop") << std::numeric_limits<float>::quiet_NaN() << false;
+}
+
+void GPSSourceHealthTest::_dopOnlyPosition()
+{
+    QFETCH(float, horizontalDop);
+    QFETCH(bool, usable);
+    GPSNavigationValues navigation;
+    navigation.fixType = GPSFixQuality::Differential;
+    navigation.latitudeDegrees = 47.5;
+    navigation.longitudeDegrees = 8.25;
+    navigation.horizontalDop = horizontalDop;
+    const auto observation = GPSObservation::fromNavigation(navigation, 1234);
+    QVERIFY(observation.hasNavigationSolution());
+    QCOMPARE(observation.position.hasAttribute(QGeoPositionInfo::HorizontalAccuracy), qIsFinite(horizontalDop));
+    if (qIsFinite(horizontalDop)) {
+        // One standard deviation for a range error of 5.1 m, which is how receivers state a horizontal accuracy.
+        QCOMPARE(observation.position.attribute(QGeoPositionInfo::HorizontalAccuracy), double(horizontalDop) * 5.1);
+    }
+    // A position is usable while it is accurate to 100 m.
+    QCOMPARE(observation.usable(), usable);
+    // The limit is the one of an accuracy the receiver states, which replaces the estimate.
+    navigation.horizontalAccuracyMeters = usable ? 101.0f : 99.0f;
+    QCOMPARE(GPSObservation::fromNavigation(navigation, 1234).usable(), !usable);
 }
 
 void GPSSourceHealthTest::_dopOnlyAltitude_data()

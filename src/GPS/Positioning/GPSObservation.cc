@@ -66,14 +66,13 @@ GPSObservation GPSObservation::fromNavigation(const GPSNavigationValues& navigat
         }
     };
     // Receivers without a metric estimate, such as NMEA without GST, fall back to DOP.
-    const auto accuracy = [](float meters, float dop, double (*fromDop)(double)) {
-        return qIsFinite(meters) && meters > 0 ? meters : (qIsFinite(dop) && dop > 0 ? fromDop(dop) : qQNaN());
+    const auto accuracy = [](float meters, float dop) {
+        return qIsFinite(meters) && meters > 0 ? meters : (qIsFinite(dop) && dop > 0 ? accuracyFromDop(dop) : qQNaN());
     };
     setAttribute(QGeoPositionInfo::HorizontalAccuracy,
-                 accuracy(navigation.horizontalAccuracyMeters, navigation.horizontalDop, horizontalAccuracyFromDop),
-                 false);
+                 accuracy(navigation.horizontalAccuracyMeters, navigation.horizontalDop), false);
     setAttribute(QGeoPositionInfo::VerticalAccuracy,
-                 accuracy(navigation.verticalAccuracyMeters, navigation.verticalDop, verticalAccuracyFromDop), false);
+                 accuracy(navigation.verticalAccuracyMeters, navigation.verticalDop), false);
     setAttribute(QGeoPositionInfo::GroundSpeed, navigation.speedMetersPerSecond, true);
     if (qIsFinite(navigation.courseRadians)) {
         const double degrees = std::fmod(qRadiansToDegrees(static_cast<double>(navigation.courseRadians)), 360.0);
@@ -121,13 +120,7 @@ GPSObservation GPSObservation::fromSurveyedPosition(const GPSEllipsoidPosition& 
     return observation;
 }
 
-double GPSObservation::horizontalAccuracyFromDop(double dop)
-{
-    constexpr double CONFIDENCE_SCALE = 2.0;
-    return dop * DOP_RANGE_ERROR_METERS * CONFIDENCE_SCALE;
-}
-
-double GPSObservation::verticalAccuracyFromDop(double dop)
+double GPSObservation::accuracyFromDop(double dop)
 {
     return dop * DOP_RANGE_ERROR_METERS;
 }

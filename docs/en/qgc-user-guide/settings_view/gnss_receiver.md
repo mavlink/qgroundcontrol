@@ -161,3 +161,6 @@ A connected GNSS receiver can provide the ground station position instead; use t
 The settings are:
 
 - **Source**: _Best available_ uses the GNSS receiver while it has a fix and falls back to this device; select _GNSS receiver_ or _This device_ to use only one.
+
+A position is used while it is accurate to 100 m horizontally; a less accurate one is shown as _Position fix does not meet accuracy requirements_.
+A receiver that states no horizontal accuracy, as an NMEA receiver without GST sentences, counts as accurate to 5.1 m times its HDOP, which is one standard deviation as a stated accuracy is, so its position is used while its HDOP is below 19.6.
