@@ -88,6 +88,9 @@ void MapAttributionUITest::_flyViewMapCreditsItsSources()
     QTRY_VERIFY_WITH_TIMEOUT(!_sceneRect(credit).intersects(pipRect()), TestTimeout::shortMs());
     QVERIFY(!_sceneRect(credit).intersects(_sceneRect(toolStrip)));
     QVERIFY(_sceneRect(map).contains(_sceneRect(credit)));
+    QQuickItem* const scale = findVisibleItem(_rootItem, QStringLiteral("flyViewMapScale"));
+    QVERIFY2(scale, "map scale not visible");
+    QCOMPARE_LE(_sceneRect(scale).bottom(), _sceneRect(credit).top());
 
     // Swapped into the PiP window, the map is too small for a credit
     const QString pipName = QStringLiteral("flyViewPipView");

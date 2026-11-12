@@ -4,6 +4,7 @@
 
 #include <QtCore/QFile>
 #include <QtCore/QPointer>
+#include <QtCore/QRectF>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
@@ -15,6 +16,7 @@
 #include "Fact.h"
 #include "FlyViewSettings.h"
 #include "QGCFileDialogController.h"
+#include "QGCMapEngineManager.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 
@@ -147,6 +149,21 @@ void LogViewerMapUITest::_showsLogPath()
 
     QTRY_VERIFY2_WITH_TIMEOUT(mapShowsCoordinates(map, path), "the map does not show the whole path",
                               TestTimeout::mediumMs());
+
+    // The map credits its imagery, under its scale
+    const QString mapCredit = QGCMapEngineManager::mapAttribution(QGCMapEngineManager::instance()->chosenMap());
+    QVERIFY2(!mapCredit.isEmpty(), "the chosen map has no credit");
+    QQuickItem* const credit = findVisibleItem(map, QStringLiteral("mapAttribution"), TestTimeout::shortMs());
+    QVERIFY2(credit, "the map shows no credit");
+    QCOMPARE(credit->property("text").toString(), mapCredit);
+    QQuickItem* const scale = findVisibleItem(map, QStringLiteral("logViewer_mapScale"));
+    QVERIFY2(scale, "map scale not visible");
+    const auto rectInMap = [map](const QQuickItem* item) {
+        return item->mapRectToItem(map, QRectF(0, 0, item->width(), item->height()));
+    };
+    // The scale ends where the credit begins: half a pixel is for the rounding of the two positions
+    QTRY_COMPARE_LE_WITH_TIMEOUT(rectInMap(scale).bottom(), rectInMap(credit).top() + 0.5, TestTimeout::shortMs());
+
     if (geoMapEngine) {
         QQuickItem* const track = findItem(map, QStringLiteral("logViewer_geoMapTrack"));
         QVERIFY2(track, "track not found");

@@ -204,6 +204,7 @@ Item {
 
         sourceComponent: Item {
             MapScale {
+                objectName: "offlineMapEditor_mapScale"
                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
                 anchors.bottomMargin: anchors.leftMargin + _map.attributionHeight
                 anchors.left: parent.left

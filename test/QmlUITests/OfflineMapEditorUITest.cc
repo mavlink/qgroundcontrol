@@ -1,5 +1,6 @@
 #include "OfflineMapEditorUITest.h"
 
+#include <QtCore/QRectF>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtPositioning/QGeoCoordinate>
@@ -362,6 +363,20 @@ void OfflineMapEditorUITest::_setInfoShowsSetAreaAndMap()
     QQmlExpression flightMapType(qmlContext(map), map, QStringLiteral("activeMapType.name"));
     const QString shownMap = geoMapEngine ? map->property("mapType").toString() : flightMapType.evaluate().toString();
     QCOMPARE(shownMap, typeInMapList ? setType : chosenMap);
+
+    // The map credits the imagery that it shows, under its scale
+    const QString mapCredit = QGCMapEngineManager::mapAttribution(shownMap);
+    QVERIFY2(!mapCredit.isEmpty(), "the shown map has no credit");
+    QQuickItem* const credit = findVisibleItem(map, QStringLiteral("mapAttribution"), TestTimeout::shortMs());
+    QVERIFY2(credit, "the editor's map shows no credit");
+    QCOMPARE(credit->property("text").toString(), mapCredit);
+    QQuickItem* const scale = findVisibleItem(_rootItem, QStringLiteral("offlineMapEditor_mapScale"));
+    QVERIFY2(scale, "map scale not visible");
+    const auto sceneRect = [](const QQuickItem* item) {
+        return item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+    };
+    // The scale ends where the credit begins: half a pixel is for the rounding of the two positions
+    QTRY_COMPARE_LE_WITH_TIMEOUT(sceneRect(scale).bottom(), sceneRect(credit).top() + 0.5, TestTimeout::shortMs());
 
     QVERIFY(clickButton(QStringLiteral("offlineMapEditor_closeButton")));
     QTRY_VERIFY_WITH_TIMEOUT(!findItem(_rootItem, QStringLiteral("offlineMapEditor")), TestTimeout::shortMs());

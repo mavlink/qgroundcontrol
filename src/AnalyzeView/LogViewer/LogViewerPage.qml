@@ -28,6 +28,7 @@ AnalyzePage {
 
     // Scale in the bottom left corner of the map it is a child of, above the map's credit
     component PathMapScale: MapScale {
+        objectName: "logViewer_mapScale"
         anchors.margins: ScreenTools.defaultFontPixelWidth
         anchors.bottomMargin: ScreenTools.defaultFontPixelWidth + mapControl.attributionHeight
         anchors.left: parent.left

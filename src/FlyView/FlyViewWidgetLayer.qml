@@ -174,6 +174,7 @@ Item {
 
         MapScale {
             id:                     mapScale
+            objectName:             "flyViewMapScale"
             anchors.verticalCenter: parent.verticalCenter
             mapControl:             _mapControl
             autoHide:               true
