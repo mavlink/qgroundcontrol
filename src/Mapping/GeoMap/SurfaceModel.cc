@@ -80,9 +80,11 @@ SurfaceModel::SurfaceModel(GeoMapCamera* camera, HeightSource* heightSource, Hei
     _cliffClock.start();
 
     connect(_field, &HeightField::regionChanged, this, &SurfaceModel::_fieldRegionChanged);
-    _tileRetryTimer.setSingleShot(true);
-    connect(&_tileRetryTimer, &QTimer::timeout, this, &SurfaceModel::_retryFailedTiles);
+    connect(&_tileRetry, &TileRetryPacer::roundDue, this, &SurfaceModel::_retryFailedTiles);
     connect(_heightSource, &HeightSource::tileFailed, this, &SurfaceModel::_tileFailed);
+    // The field's regionChanged is no sign of an arrival: an eviction emits it too, and so does a tile that was
+    // held back for an anchor that failed
+    connect(_heightSource, &HeightSource::tileFetched, &_tileRetry, &TileRetryPacer::tileArrived);
     // Resident patches pick up (or drop) monitor state now, not on their next data change
     connect(SettingsManager::instance()->flyViewSettings()->geoMapDebugUI(), &Fact::rawValueChanged, this, [this]() {
         for (auto it = _patches.begin(); it != _patches.end(); ++it) {
@@ -569,8 +571,6 @@ QList<TileMath::TileKey> SurfaceModel::_desiredPatches(const QRectF& visible, co
 
 void SurfaceModel::_fieldRegionChanged(const QRectF& worldRect)
 {
-    _tileRetryIntervalMs = kTileRetryMs;  // a tile arrived: tiles are being served again
-
     // Re-mesh exactly the patches touching the changed region: their field
     // samples (and skirt/normal data downstream) may have changed. Patch edge
     // vertices exactly on the region boundary sample the new data too, hence
@@ -599,18 +599,15 @@ void SurfaceModel::_fieldRegionChanged(const QRectF& worldRect)
 void SurfaceModel::_tileFailed(const TileMath::TileKey& key)
 {
     // A patch asks for its tile only when it is added: one that stays resident would keep the estimate forever
-    if (_tileRetryTimer.isActive()) {
-        return;
-    }
-    qCDebug(GeoMapSurfaceModelLog) << "elevation tile" << key << "failed, retry in" << _tileRetryIntervalMs << "ms";
-    _tileRetryTimer.start(_tileRetryIntervalMs);
+    qCDebug(GeoMapSurfaceModelLog) << "elevation tile" << key << "failed, asking again within"
+                                   << _tileRetry.intervalMs() << "ms";
+    _tileRetry.tileFailed();
 }
 
 void SurfaceModel::_retryFailedTiles()
 {
-    // An outage fails again and again: ask less and less often
-    _tileRetryIntervalMs = qMin(_tileRetryIntervalMs * 2, kTileRetryMaxMs);
-    // The source skips the tiles it has or is fetching: only what failed for a resident patch is fetched
+    // The source skips the tiles it has, is fetching, or knows its provider not to have: only what failed for a
+    // resident patch is fetched
     for (auto it = _patches.cbegin(); it != _patches.cend(); ++it) {
         _heightSource->requestTile(it.key());
     }

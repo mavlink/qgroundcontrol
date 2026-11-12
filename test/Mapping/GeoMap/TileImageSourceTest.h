@@ -17,7 +17,8 @@ private slots:
     void _networkErrorFails();
     void _networkEmptyBodyFails();
     void _networkGarbageBodyFailsAndNotCached();
-    void _bingPlaceholderNotDelivered();
+    void _missingTileReported_data();
+    void _missingTileReported();
     void _cachedUnusableTileFallsBackToNetwork();
     void _cancelAbortsNetworkFetch();
 };

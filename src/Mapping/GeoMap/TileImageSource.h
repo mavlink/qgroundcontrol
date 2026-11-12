@@ -9,15 +9,13 @@
 
 #pragma once
 
-#include <QtCore/QElapsedTimer>
-#include <QtCore/QHash>
 #include <QtCore/QObject>
 #include <QtCore/QString>
 #include <QtGui/QImage>
 
 #include "TileMath.h"
 
-class QGCTileReply;
+class DecodedTileFetcher;
 class QNetworkAccessManager;
 
 /// Async cache-first source of map tile images for draping onto surface patches.
@@ -28,7 +26,8 @@ class QNetworkAccessManager;
 /// back into the cache. Patches are slippy-tile addressed, so one request maps
 /// to exactly one provider tile.
 ///
-/// Results are always delivered asynchronously. No signal is emitted for a
+/// Results are always delivered asynchronously: one of tileImageReady, tileImageFailed
+/// and tileImageMissing for every request. No signal is emitted for a
 /// cancelled request. No internal retries: a failed request stays failed, and
 /// consumers re-request on their own cadence (patch eviction and re-add).
 class TileImageSource : public QObject
@@ -52,26 +51,19 @@ public:
     /// Cancel a pending request, aborting any in-flight network fetch.
     void cancelRequest(int requestId);
 
-    int pendingCount() const { return _pending.count(); }
+    int pendingCount() const;
 
 signals:
     void tileImageReady(int requestId, const QImage& image);
     void tileImageFailed(int requestId);
+    /// The provider has no tile at this position: a new request gets the same answer
+    void tileImageMissing(int requestId);
     /// The user configured another source for the provider (QGCMapEngine::tileSourceChanged): the images delivered
     /// so far are of the previous source, and those of the requests still pending can be.
     void sourceChanged();
 
 private:
-    void _failAsync(int requestId);
-    void _warnFailure(const TileMath::TileKey& key, const QString& reason);
-
-    static constexpr int kFailureWarnIntervalMs = 10000;  ///< throttle for fetch-failure warnings
-
     const QString _mapType;
     const int _mapId;
-    QNetworkAccessManager* _networkManager = nullptr;
-    int _requestIdCounter = 0;
-    /// Requests that have not finished or been cancelled, with their fetch (null while a failure is being delivered)
-    QHash<int, QGCTileReply*> _pending;
-    QElapsedTimer _failureWarnTimer;  ///< restarted on each emitted failure warning
+    DecodedTileFetcher* const _fetcher;  ///< its fetch ids are the request ids
 };

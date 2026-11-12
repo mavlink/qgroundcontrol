@@ -38,8 +38,11 @@ fetches the z10 ancestors of itself and its neighbors, and is held back until th
 are in the field, so fine data doesn't land next to a region with no data at all
 (which would render at 0 m and draw a cliff). A failed anchor stops holding it back:
 fine data with a cliff risk beats no fine data. A tile whose fetch failed is requested
-again by `SurfaceModel` while a patch that needs it is on screen: after 3 s, then at
-doubling intervals up to 30 s until a tile arrives.
+again by `SurfaceModel` while a patch that needs it is on screen, in rounds that
+`TileRetryPacer` spaces out: the first after 3 s, each later one after twice the delay
+of the one before, up to 30 s, until a tile arrives. A tile that the provider does not
+have (it answers HTTP 404) is no failure: it is not requested again, and the ground
+there keeps the coarser data.
 
 Decoded tiles land in the `HeightField`, which presents **one continuous
 heightfield**: it can answer "how high is the ground here?" for *any* position —
@@ -68,13 +71,17 @@ Patch imagery is the same provider tiles QGC uses everywhere else (Google Satell
 OpenStreetMap, ...). `TileImageSource` turns them into the raw `QImage`s that are
 uploaded as Quick 3D textures. It fetches each tile with `QGCTileReply`, the
 cache-first tile request that the QtLocation map and the terrain queries use too,
-and accepts only a tile that decodes as an image.
+and accepts only a tile that decodes as an image. `DecodedTileFetcher` holds what this
+and the elevation fetch share: the request, the decoding, and the warning for a fetch
+that failed, at most one in 10 s.
 
 While a patch's own image is loading, `SurfacePatchModel` composites a stand-in from
 whatever is available — the patch's four child tiles when present (sharper), else a
 cropped piece of the nearest ancestor tile — so the ground never flashes blank.
 Images from removed patches are retired rather than dropped, keeping them available
-as stand-in sources across LOD changes.
+as stand-in sources across LOD changes. An image whose fetch failed is requested again
+as a failed elevation tile is, and a patch whose tile the provider does not have keeps
+its stand-in.
 
 The retired images and the pyramid's decoded tiles are the two in-memory stores that
 the **Max memory cache** setting sizes (`SurfaceModel::memoryStoreTileLimit`). Each

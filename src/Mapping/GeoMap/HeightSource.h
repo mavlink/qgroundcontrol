@@ -9,20 +9,17 @@
 
 #pragma once
 
-#include <QtCore/QHash>
-#include <QtCore/QList>
 #include <QtCore/QObject>
 
 #include "TileMath.h"
 
 class HeightField;
 
-/// Async source of per-patch terrain height grids for the GeoMap surface mesh.
+/// Source of the terrain elevation tiles for the GeoMap surface mesh.
 ///
-/// A patch is addressed by its slippy TileKey. A request returns the heights (meters)
-/// of the (gridSize+1) x (gridSize+1) vertex grid covering the patch, row-major from
-/// the north-west corner. Results are always delivered asynchronously (queued), even
-/// for sources that can answer immediately, so consumers see one consistent flow.
+/// A tile is addressed by its slippy TileKey. requestTile asks for the tile of a patch, and the source puts it
+/// into the attached HeightField. Tiles are always delivered asynchronously (queued), even by sources that can
+/// answer immediately, so consumers see one consistent flow.
 ///
 /// TerrariumTileFetcher adapts the terrarium elevation tile source behind this interface.
 class HeightSource : public QObject
@@ -31,13 +28,6 @@ class HeightSource : public QObject
 
 public:
     explicit HeightSource(QObject* parent = nullptr);
-
-    /// Request the vertex height grid for a patch. Returns a request id (> 0).
-    /// gridSize must be a power of two (see HeightField::samplePatch).
-    virtual int requestPatchHeights(const TileMath::TileKey& key, int gridSize) = 0;
-
-    /// Cancel a pending request. No signal is emitted for a cancelled request.
-    virtual void cancelRequest(int requestId) = 0;
 
     /// Field that receives whole tiles requested via requestTile (not owned)
     void setHeightField(HeightField* field) { _heightField = field; }
@@ -52,24 +42,19 @@ public:
     }
 
 signals:
-    /// heights has (gridSize+1)^2 entries, row-major from the north-west corner
-    void patchHeightsReady(int requestId, const QList<float>& heights);
-    void patchHeightsFailed(int requestId);
+    /// A tile wanted by requestTile came from its provider (\a key as for tileFailed). The field gets it, at once or
+    /// when the tiles it waits for are in.
+    void tileFetched(const TileMath::TileKey& key);
     /// A tile wanted by requestTile could not be fetched (\a key is the tile fetched, which can be an ancestor
     /// of the one requested). The field does not get it until requestTile asks again.
     void tileFailed(const TileMath::TileKey& key);
 
 protected:
-    int _nextRequestId();
-
     HeightField* _heightField = nullptr;  ///< tile delivery target for requestTile (not owned)
-
-private:
-    int _requestIdCounter = 0;
 };
 
-/// Height source used by synchronous procedural implementations: computes the grid
-/// immediately but delivers it through the event loop, honoring cancellation.
+/// Height source used by synchronous procedural implementations: computes the tile
+/// immediately but delivers it through the event loop.
 class ProceduralHeightSource : public HeightSource
 {
     Q_OBJECT
@@ -79,9 +64,6 @@ public:
 
     static constexpr int kSynthGridSize = 33;  ///< samples per edge of a synthesized tile
 
-    int requestPatchHeights(const TileMath::TileKey& key, int gridSize) final;
-    void cancelRequest(int requestId) final;
-
     /// Synthesizes the tile grid from heightAtWorld and inserts it into the
     /// attached field through the event loop (mimicking async tile delivery)
     bool requestTile(const TileMath::TileKey& key) override;
@@ -89,11 +71,6 @@ public:
 protected:
     /// Height in meters at a world-space ground position
     virtual float heightAtWorld(const QPointF& world) const = 0;
-
-private:
-    void _deliver(int requestId);
-
-    QHash<int, QList<float>> _pending;
 };
 
 /// z=0 everywhere (Milestone 1 default)

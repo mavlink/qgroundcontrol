@@ -7,6 +7,8 @@ target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE
         BilinearUV.h
+        DecodedTileFetcher.cc
+        DecodedTileFetcher.h
         ElevationTilePyramid.cc
         ElevationTilePyramid.h
         HeightField.cc
@@ -26,6 +28,8 @@ target_sources(
         TileImageSource.h
         TileMath.cc
         TileMath.h
+        TileRetryPacer.cc
+        TileRetryPacer.h
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

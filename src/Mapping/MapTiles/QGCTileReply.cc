@@ -245,7 +245,7 @@ void QGCTileReply::_networkReplyFinished()
         return;
     }
     if (_provider->isNoTileImage(data)) {
-        _finish(Error::NoTileError, QStringLiteral("network fetch returned Bing no-tile placeholder"));
+        _finish(Error::NoTileError, QStringLiteral("the server has no tile here: it sent its no-tile picture"));
         return;
     }
     if (_provider->isRefusalImage(data)) {

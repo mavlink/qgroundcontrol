@@ -18,6 +18,8 @@
 /// Finishes with a canned body, error and HTTP status; a held reply stays open until finishNow()
 class TileReplyCannedReply : public QNetworkReply
 {
+    Q_OBJECT
+
 public:
     TileReplyCannedReply(const QNetworkRequest& request, const QByteArray& body, NetworkError cannedError,
                          int httpStatus, bool hold, QObject* parent)
@@ -38,8 +40,14 @@ public:
 
     void finishNow() { _finish(_cannedError); }
 
-    /// Finishes a held reply with @a error instead of the canned one
-    void failNow(NetworkError error) { _finish(error); }
+    /// Finishes a held reply with @a error instead of the canned one, and with @a httpStatus when that is given
+    void failNow(NetworkError error, int httpStatus = 0)
+    {
+        if (httpStatus > 0) {
+            setAttribute(QNetworkRequest::HttpStatusCodeAttribute, httpStatus);
+        }
+        _finish(error);
+    }
 
     void abort() final {}
 
@@ -76,6 +84,8 @@ private:
 /// Answers every request with a TileReplyCannedReply built from its public members
 class TileReplyMockNam : public QNetworkAccessManager
 {
+    Q_OBJECT
+
 public:
     using QNetworkAccessManager::QNetworkAccessManager;
 
@@ -99,9 +109,10 @@ protected:
     }
 };
 
-inline QByteArray tileReplyPngBody(const QColor& color = Qt::darkGreen)
+/// A PNG that decodes to an image of @a edgePixels squared and 4 bytes a pixel
+inline QByteArray tileReplyPngBody(const QColor& color = Qt::darkGreen, int edgePixels = 32)
 {
-    QImage image(32, 32, QImage::Format_RGB32);
+    QImage image(edgePixels, edgePixels, QImage::Format_RGB32);
     image.fill(color);
     QByteArray data;
     QBuffer buffer(&data);

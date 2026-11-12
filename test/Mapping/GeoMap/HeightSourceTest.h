@@ -7,10 +7,9 @@ class HeightSourceTest : public UnitTest
     Q_OBJECT
 
 private slots:
-    void _flatDeliversZeros();
-    void _requestIdsIncrement();
-    void _cancelPreventsDelivery();
-    void _invalidGridSizeFails();
-    void _debugDeterministic();
-    void _debugRowMajorFromNorthWest();
+    void _debugTileDeliveredThroughEventLoop();
+    void _debugTileRowMajorFromNorthWest();
+    void _debugHillsWithinAmplitude();
+    void _flatSourceGivesNoTile();
+    void _tileRequestRejected();
 };

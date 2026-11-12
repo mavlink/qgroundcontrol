@@ -28,6 +28,7 @@
 #include "SurfaceModel.h"
 #include "TerrariumTileFetcher.h"
 #include "TileImageSource.h"
+#include "TileRetryPacer.h"
 
 QGC_LOGGING_CATEGORY(GeoMapSurfacePatchModelLog, "GeoMap.SurfacePatchModel")
 QGC_LOGGING_CATEGORY(GeoMapSurfacePatchModelVerboseLog, "GeoMap.SurfacePatchModel.Verbose")
@@ -35,7 +36,10 @@ QGC_LOGGING_CATEGORY(GeoMapSurfacePatchModelVerboseLog, "GeoMap.SurfacePatchMode
 SurfacePatchModel::SurfacePatchModel(QObject* parent)
     : QAbstractListModel(parent)
     , _memoryStoreTileLimit(SurfaceModel::memoryStoreTileLimit())
-{}
+    , _imageRetry(new TileRetryPacer(this))
+{
+    connect(_imageRetry, &TileRetryPacer::roundDue, this, &SurfacePatchModel::_retryFailedImages);
+}
 
 SurfacePatchModel::~SurfacePatchModel() = default;
 
@@ -129,6 +133,7 @@ void SurfacePatchModel::setMapType(const QString& mapType)
         _tileSource = new TileImageSource(_mapType, this, _tileImageNetworkManager);
         connect(_tileSource, &TileImageSource::tileImageReady, this, &SurfacePatchModel::_tileImageReady);
         connect(_tileSource, &TileImageSource::tileImageFailed, this, &SurfacePatchModel::_tileImageFailed);
+        connect(_tileSource, &TileImageSource::tileImageMissing, this, &SurfacePatchModel::_tileImageMissing);
         connect(_tileSource, &TileImageSource::sourceChanged, this, &SurfacePatchModel::_reloadImagery);
         for (const TileMath::TileKey& key : std::as_const(_keys)) {
             _requestTileImage(key);
@@ -147,10 +152,8 @@ void SurfacePatchModel::_resetImagery()
     _imageRequestKey.clear();
     _imageRequestByKey.clear();
     _failedImageKeys.clear();
-    if (_imageRetryTimer) {
-        _imageRetryTimer->stop();
-    }
-    _imageRetryIntervalMs = kImageRetryMs;
+    _missingImageKeys.clear();
+    _imageRetry->reset();
     _retiredOrder.clear();
     _fallbackCache.clear();
     if (!_tileImages.isEmpty()) {
@@ -171,7 +174,7 @@ void SurfacePatchModel::_reloadImagery()
 
 void SurfacePatchModel::_requestTileImage(const TileMath::TileKey& key)
 {
-    if (!_tileSource) {
+    if (!_tileSource || _missingImageKeys.contains(key)) {
         return;
     }
     const int requestId = _tileSource->requestTileImage(key);
@@ -179,16 +182,35 @@ void SurfacePatchModel::_requestTileImage(const TileMath::TileKey& key)
     _imageRequestByKey.insert(key, requestId);
 }
 
-void SurfacePatchModel::_tileImageReady(int requestId, const QImage& image)
+bool SurfacePatchModel::_takeImageRequest(int requestId, TileMath::TileKey& key)
 {
     const auto it = _imageRequestKey.constFind(requestId);
     if (it == _imageRequestKey.constEnd()) {
-        return;
+        return false;
     }
-    const TileMath::TileKey key = it.value();
+    key = it.value();
     _imageRequestKey.erase(it);
     _imageRequestByKey.remove(key);
-    _imageRetryIntervalMs = kImageRetryMs;
+    return true;
+}
+
+int SurfacePatchModel::imageRetryIntervalMs() const
+{
+    return _imageRetry->intervalMs();
+}
+
+void SurfacePatchModel::setImageRetryBaseIntervalMs(int baseIntervalMs)
+{
+    _imageRetry->setBaseIntervalMs(baseIntervalMs);
+}
+
+void SurfacePatchModel::_tileImageReady(int requestId, const QImage& image)
+{
+    TileMath::TileKey key;
+    if (!_takeImageRequest(requestId, key)) {
+        return;
+    }
+    _imageRetry->tileArrived();
 
     const int row = _keys.indexOf(key);
     if (row < 0) {
@@ -248,36 +270,40 @@ void SurfacePatchModel::_notifyTileImageChanged(const TileMath::TileKey& key)
 
 void SurfacePatchModel::_tileImageFailed(int requestId)
 {
-    const auto it = _imageRequestKey.constFind(requestId);
-    if (it == _imageRequestKey.constEnd()) {
+    TileMath::TileKey key;
+    if (!_takeImageRequest(requestId, key)) {
         return;
     }
-    const TileMath::TileKey key = it.value();
-    _imageRequestByKey.remove(key);
-    _imageRequestKey.erase(it);
 
-    // The delegate keeps its fallback meanwhile; a resident patch retries on
-    // the paced timer (patch churn cannot be relied on to re-request - a
+    // The delegate keeps its fallback meanwhile; a resident patch retries in
+    // the paced rounds (patch churn cannot be relied on to re-request - a
     // patch that stays resident would keep the loading fallback forever)
     if (!_keys.contains(key)) {
         return;
     }
     qCDebug(GeoMapSurfacePatchModelLog) << "tile image failed for" << key << "(retry scheduled)";
     _failedImageKeys.insert(key);
-    if (!_imageRetryTimer) {
-        _imageRetryTimer = new QTimer(this);
-        _imageRetryTimer->setSingleShot(true);
-        connect(_imageRetryTimer, &QTimer::timeout, this, &SurfacePatchModel::_retryFailedImages);
+    _imageRetry->tileFailed();
+}
+
+void SurfacePatchModel::_tileImageMissing(int requestId)
+{
+    TileMath::TileKey key;
+    if (!_takeImageRequest(requestId, key)) {
+        return;
     }
-    if (!_imageRetryTimer->isActive()) {
-        _imageRetryTimer->start(_imageRetryIntervalMs);
+
+    // The delegate keeps its fallback, for good: another request would get the same answer
+    qCDebug(GeoMapSurfacePatchModelLog) << "the provider has no tile image for" << key;
+    if (_missingImageKeys.count() >= kMaxMissingImageKeys) {
+        _missingImageKeys.clear();
     }
+    _missingImageKeys.insert(key);
 }
 
 void SurfacePatchModel::_retryFailedImages()
 {
     const QSet<TileMath::TileKey> failed = std::exchange(_failedImageKeys, {});
-    bool retried = false;
     for (const TileMath::TileKey& key : failed) {
         // Re-check residency and in-flight state: churn may have re-requested
         // or removed the patch since the failure
@@ -285,11 +311,6 @@ void SurfacePatchModel::_retryFailedImages()
             continue;
         }
         _requestTileImage(key);
-        retried = true;
-    }
-    if (retried) {
-        // An outage, or a tile its provider does not have, fails again and again: ask less and less often
-        _imageRetryIntervalMs = qMin(_imageRetryIntervalMs * 2, kImageRetryMaxMs);
     }
 }
 
@@ -495,11 +516,6 @@ double SurfacePatchModel::maxRangeMultiplier() const
     return SurfaceModel::kMaxRangeMultiplier;
 }
 
-int SurfacePatchModel::pendingCount() const
-{
-    return _surfaceModel ? _surfaceModel->pendingCount() : 0;
-}
-
 int SurfacePatchModel::maxZoomLevel() const
 {
     int maxZoom = 0;
@@ -566,7 +582,7 @@ void SurfacePatchModel::_statsTick()
         _captureWorstMaxMs = std::max(_captureWorstMaxMs, maxMs);
         _captureWorstAvgMs = std::max(_captureWorstAvgMs, avgMs);
         GeoMapCamera* const camera = _camera();
-        _captureRows.append(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13,%14")
+        _captureRows.append(QStringLiteral("%1,%2,%3,%4,%5,%6,%7,%8,%9,%10,%11,%12,%13")
                                 .arg(_captureClock.elapsed() / 1000.0, 0, 'f', 1)
                                 .arg(stats.updates)
                                 .arg(avgMs, 0, 'f', 3)
@@ -577,7 +593,6 @@ void SurfacePatchModel::_statsTick()
                                 .arg(_statRemoves)
                                 .arg(_statComposites)
                                 .arg(patchCount())
-                                .arg(pendingCount())
                                 .arg(maxZoomLevel())
                                 .arg(camera ? camera->distance() : 0.0, 0, 'f', 0)
                                 .arg(camera ? camera->tilt() : 0.0, 0, 'f', 1));
@@ -601,7 +616,7 @@ void SurfacePatchModel::startCapture()
     _captureWorstAvgMs = 0.0;
     _captureRows.append(
         QStringLiteral("time_s,updates,avg_ms,max_ms,add_avg_ms,add_max_ms,patch_adds,patch_removes,composites,"
-                       "patches,pending,max_zoom,cam_dist_m,cam_tilt_deg"));
+                       "patches,max_zoom,cam_dist_m,cam_tilt_deg"));
     _captureClock.start();
     // Run the sampler directly rather than via statsEnabled: that property is
     // QML-bound to the overlay toggle, and writing it here would fight the

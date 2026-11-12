@@ -80,7 +80,10 @@ void GeoMapPerfUITest::_benchmark()
             pace(200);
         }
     };
-    const auto settle = [patchModel] { QTRY_COMPARE_WITH_TIMEOUT(patchModel->pendingCount(), 0, 30000); };
+    // The tile images of the view are in
+    const auto settle = [patchModel] {
+        QTRY_COMPARE_WITH_TIMEOUT(patchModel->pendingImageCount(), 0, TestTimeout::longMs());
+    };
 
     // Deterministic start pose: 3D mode at street zoom over the bench area.
     // debugHills replaces the terrain pipeline with analytic heights: the

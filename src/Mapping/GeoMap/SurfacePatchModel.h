@@ -30,6 +30,7 @@ class QNetworkAccessManager;
 class QTimer;
 class SurfaceModel;
 class TileImageSource;
+class TileRetryPacer;
 
 Q_MOC_INCLUDE("GeoMapCamera.h")
 Q_MOC_INCLUDE("GeoScene.h")
@@ -51,7 +52,6 @@ class SurfacePatchModel : public QAbstractListModel
     Q_PROPERTY(int gridSize READ gridSize CONSTANT)
     Q_PROPERTY(double maxRangeMultiplier READ maxRangeMultiplier CONSTANT)
     Q_PROPERTY(int patchCount READ patchCount NOTIFY statsChanged)
-    Q_PROPERTY(int pendingCount READ pendingCount NOTIFY statsChanged)
     Q_PROPERTY(int maxZoomLevel READ maxZoomLevel NOTIFY statsChanged)
     Q_PROPERTY(bool statsEnabled READ statsEnabled WRITE setStatsEnabled NOTIFY statsEnabledChanged)
     Q_PROPERTY(QString statsText READ statsText NOTIFY statsTextChanged)
@@ -138,15 +138,16 @@ public:
 
     int patchCount() const { return _keys.count(); }
 
-    int pendingCount() const;
     int maxZoomLevel() const;
 
     /// Tile image requests awaiting delivery or failure
     int pendingImageCount() const { return _imageRequestKey.count(); }
 
-    /// Delay before the tile images that failed are requested again. It doubles, up to a limit, each time they are,
-    /// and starts over when an image arrives.
-    int imageRetryIntervalMs() const { return _imageRetryIntervalMs; }
+    /// Delay before the tile images that failed are requested again (see TileRetryPacer)
+    int imageRetryIntervalMs() const;
+
+    /// The first of these delays, for a test that cannot wait for the production one
+    void setImageRetryBaseIntervalMs(int baseIntervalMs);
 
     /// Network manager for tile imagery fetches, applied at the next
     /// setMapType (test injection seam)
@@ -208,6 +209,7 @@ private slots:
     void _sceneOriginChanged();
     void _tileImageReady(int requestId, const QImage& image);
     void _tileImageFailed(int requestId);
+    void _tileImageMissing(int requestId);
     void _statsTick();
 
 private:
@@ -216,6 +218,8 @@ private:
     void _resetImagery();
     void _reloadImagery();
     void _requestTileImage(const TileMath::TileKey& key);
+    /// Ends the bookkeeping of an image request that was answered; false for a request that is not known any more
+    bool _takeImageRequest(int requestId, TileMath::TileKey& key);
     void _retryFailedImages();
     void _notifyTileImageChanged(const TileMath::TileKey& key);
     void _invalidateFallbacks(const TileMath::TileKey& tile);
@@ -229,10 +233,10 @@ private:
     GeoMapCamera* _camera() const;
 
     static constexpr int kMaxAncestorFallbackLevels = 8;  ///< how far up the quadtree fallback looks
-    static constexpr int kImageRetryMs = 3000;            ///< first pacing for re-requesting failed tile images
-    static constexpr int kImageRetryMaxMs = 30000;        ///< longest pacing, while the same images keep failing
+    /// Bounds _missingImageKeys; at the bound it is emptied, and those images are requested once more
+    static constexpr int kMaxMissingImageKeys = 4096;
     static constexpr double kSegmentSampleSpacingMeters = 30.0;
-    static constexpr int kMaxSegmentSamples = 2000;       ///< full spacing up to GeoMapMissionPath's 50 km pieces
+    static constexpr int kMaxSegmentSamples = 2000;  ///< full spacing up to GeoMapMissionPath's 50 km pieces
 
     /// Cap of each of the two in-memory stores sized from the memory cache setting: the images kept after patch
     /// removal (fallback source) and the height field's decoded tiles. Images of the patches shown are not counted.
@@ -255,9 +259,9 @@ private:
     QHash<int, TileMath::TileKey> _imageRequestKey;    ///< in-flight image request id -> patch
     QHash<TileMath::TileKey, int> _imageRequestByKey;  ///< reverse map for cancellation
     QSet<TileMath::TileKey> _failedImageKeys;          ///< resident patches awaiting an image retry
-    QTimer* _imageRetryTimer = nullptr;
-    int _imageRetryIntervalMs = kImageRetryMs;
-    QList<TileMath::TileKey> _keys;  ///< row order; data fetched from SurfaceModel by key
+    QSet<TileMath::TileKey> _missingImageKeys;         ///< tiles the provider does not have: not requested again
+    TileRetryPacer* const _imageRetry;
+    QList<TileMath::TileKey> _keys;                    ///< row order; data fetched from SurfaceModel by key
 
     // Perf counters sampled by _statsTick (see setStatsEnabled)
     QTimer* _statsTimer = nullptr;

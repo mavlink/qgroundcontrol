@@ -30,6 +30,7 @@ namespace {
 
 const QGeoCoordinate kCenter(47.3977419, 8.5455938);
 constexpr QSizeF kViewport(800, 600);
+constexpr int kRetryBaseMs = 50;  ///< first delay of the paced retry: the production one is seconds
 
 /// Constant-height decoded tile grid
 ElevationTilePyramid::Grid constantGrid(float height, int size = 8)
@@ -395,6 +396,7 @@ void SurfaceModelTest::_failedTilesRequestedAgainForResidentPatches()
     FailingTileSource source;
     HeightField field;
     SurfaceModel model(&camera, &source, &field);
+    model.setTileRetryBaseIntervalMs(kRetryBaseMs);
 
     camera.setViewportSize(kViewport);
     camera.lookAt(kCenter, 0, 0, 2000);
@@ -413,16 +415,20 @@ void SurfaceModelTest::_failedTilesRequestedAgainForResidentPatches()
     QVERIFY(!resident.intersects(firstView));
     source.requested.clear();
 
-    // With the camera at rest, a paced round asks again for the tiles of the resident patches and of no other.
-    // They fail again, so the next round is put off for longer.
-    const int firstRetryMs = model.tileRetryIntervalMs();
-    QTRY_COMPARE_WITH_TIMEOUT(model.tileRetryIntervalMs(), 2 * firstRetryMs, firstRetryMs + TestTimeout::mediumMs());
-    QCOMPARE(source.requested.count(), resident.count());
+    // With the camera at rest, a paced round asks again for the tiles of the resident patches and of no other,
+    // once for each. They fail again, and every round puts the next one off for longer.
+    QTRY_VERIFY_WITH_TIMEOUT(model.tileRetryIntervalMs() > kRetryBaseMs, TestTimeout::mediumMs());
     QCOMPARE(QSet<TileMath::TileKey>(source.requested.cbegin(), source.requested.cend()), resident);
+    QCOMPARE(source.requested.count() % resident.count(), 0);
 
-    // A tile that arrives ends the spacing out
+    // A change of the field is no arrival: a tile held back for an anchor that failed changes it too
+    const int spacedOutMs = model.tileRetryIntervalMs();
     QVERIFY(field.insertTile(TileMath::TileKey{0, 0, 0}, constantGrid(100.0f)));
-    QCOMPARE(model.tileRetryIntervalMs(), firstRetryMs);
+    QCOMPARE(model.tileRetryIntervalMs(), spacedOutMs);
+
+    // A tile that arrives from the source ends the spacing out
+    emit source.tileFetched(TileMath::TileKey{0, 0, 0});
+    QCOMPARE(model.tileRetryIntervalMs(), kRetryBaseMs);
 }
 
 void SurfaceModelTest::_noViewportNoPatches()

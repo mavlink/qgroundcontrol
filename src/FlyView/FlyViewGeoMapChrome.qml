@@ -51,9 +51,8 @@ Item {
             anchors.centerIn: parent
             font.family: ScreenTools.fixedFontFamily
             color: "white"
-            text: qsTr("patches: %1  pending: %2  max zoom: %3")
+            text: qsTr("patches: %1  max zoom: %2")
                       .arg(root.geoMap.patchCount)
-                      .arg(root.geoMap.pendingCount)
                       .arg(root.geoMap.maxZoomLevel)
                   + (root.geoMap.modelStats !== "" ? "\n" + root.geoMap.modelStats : "")
         }

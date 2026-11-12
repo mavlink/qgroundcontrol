@@ -1,13 +1,7 @@
 #include "TileImageSourceTest.h"
 
-#include <cstring>
-
-#include <QtCore/QBuffer>
-#include <QtCore/QFile>
 #include <QtCore/QScopeGuard>
-#include <QtCore/QTimer>
 #include <QtGui/QImage>
-#include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 #include <QtTest/QSignalSpy>
 
@@ -15,6 +9,7 @@
 #include "QGCMapUrlEngine.h"
 #include "TileImageSource.h"
 #include "TileMath.h"
+#include "TileReplyNetworkMock.h"
 #include "UnitTestTileGenerator.h"
 
 namespace {
@@ -33,94 +28,6 @@ QString mapType()
 }
 
 const TileMath::TileKey kKey{4302, 2867, 13};  // Zurich area
-
-/// Serves a canned body (or error) asynchronously; held replies stay open
-/// until finished manually
-class CannedReply : public QNetworkReply
-{
-public:
-    CannedReply(const QNetworkRequest& request, const QByteArray& body, NetworkError cannedError, QObject* parent,
-                bool hold)
-        : QNetworkReply(parent)
-        , _body(body)
-        , _cannedError(cannedError)
-    {
-        setRequest(request);
-        setOperation(QNetworkAccessManager::GetOperation);
-        (void) open(ReadOnly);
-        if (!hold) {
-            QTimer::singleShot(0, this, &CannedReply::finishNow);
-        }
-    }
-
-    void finishNow()
-    {
-        if (_cannedError != NoError) {
-            setError(_cannedError, QStringLiteral("canned error"));
-            emit errorOccurred(_cannedError);
-        }
-        setFinished(true);
-        emit finished();
-    }
-
-    void abort() final {}
-
-    qint64 bytesAvailable() const final { return (_body.size() - _offset) + QNetworkReply::bytesAvailable(); }
-
-protected:
-    qint64 readData(char* data, qint64 maxSize) final
-    {
-        const qint64 n = qMin<qint64>(maxSize, _body.size() - _offset);
-        if (n <= 0) {
-            return (_offset >= _body.size()) ? -1 : 0;
-        }
-        (void) memcpy(data, _body.constData() + _offset, static_cast<size_t>(n));
-        _offset += n;
-        return n;
-    }
-
-private:
-    const QByteArray _body;
-    const NetworkError _cannedError;
-    qint64 _offset = 0;
-};
-
-/// Counts requests and serves the configured body/error
-class MockNam : public QNetworkAccessManager
-{
-public:
-    using QNetworkAccessManager::QNetworkAccessManager;
-
-    QByteArray body;
-    QNetworkReply::NetworkError error = QNetworkReply::NoError;
-    int requestCount = 0;
-    bool holdReplies = false;     ///< replies stay open until finished manually
-    QList<CannedReply*> replies;  ///< creation order, only tracked while holding
-
-protected:
-    QNetworkReply* createRequest(Operation, const QNetworkRequest& request, QIODevice*) final
-    {
-        requestCount++;
-        CannedReply* const reply = new CannedReply(request, body, error, this, holdReplies);
-        if (holdReplies) {
-            replies.append(reply);
-        }
-        return reply;
-    }
-};
-
-/// Any decodable image works as a network tile body
-QByteArray pngBody()
-{
-    QImage image(32, 32, QImage::Format_RGB32);
-    image.fill(Qt::darkGreen);
-    QByteArray data;
-    QBuffer buffer(&data);
-    if (!buffer.open(QIODevice::WriteOnly) || !image.save(&buffer, "PNG")) {
-        return QByteArray();
-    }
-    return data;
-}
 
 }  // namespace
 
@@ -225,8 +132,8 @@ void TileImageSourceTest::_networkFallbackDeliversAndCaches()
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
     const TileMath::TileKey key{kKey.x + 10, kKey.y, kKey.zoom};  // unique: write-back caches this tile
 
-    MockNam nam;
-    nam.body = pngBody();
+    TileReplyMockNam nam;
+    nam.body = tileReplyPngBody();
     QVERIFY(!nam.body.isEmpty());
     TileImageSource source(type, nullptr, &nam);
     QSignalSpy readySpy(&source, &TileImageSource::tileImageReady);
@@ -255,8 +162,8 @@ void TileImageSourceTest::_networkErrorFails()
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
     const TileMath::TileKey key{kKey.x + 11, kKey.y, kKey.zoom};
 
-    MockNam nam;
-    nam.error = QNetworkReply::ContentNotFoundError;
+    TileReplyMockNam nam;
+    nam.error = QNetworkReply::ConnectionRefusedError;
     TileImageSource source(type, nullptr, &nam);
     QSignalSpy readySpy(&source, &TileImageSource::tileImageReady);
     QSignalSpy failedSpy(&source, &TileImageSource::tileImageFailed);
@@ -280,7 +187,7 @@ void TileImageSourceTest::_networkEmptyBodyFails()
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
     const TileMath::TileKey key{kKey.x + 12, kKey.y, kKey.zoom};
 
-    MockNam nam;  // NoError with an empty body: HTTP success carrying nothing
+    TileReplyMockNam nam;  // NoError with an empty body: HTTP success carrying nothing
     TileImageSource source(type, nullptr, &nam);
     QSignalSpy readySpy(&source, &TileImageSource::tileImageReady);
     QSignalSpy failedSpy(&source, &TileImageSource::tileImageFailed);
@@ -305,7 +212,7 @@ void TileImageSourceTest::_networkGarbageBodyFailsAndNotCached()
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
     const TileMath::TileKey key{kKey.x + 13, kKey.y, kKey.zoom};
 
-    MockNam nam;
+    TileReplyMockNam nam;
     nam.body = QByteArrayLiteral("this is not an image");
     TileImageSource source(type, nullptr, &nam);
     QSignalSpy readySpy(&source, &TileImageSource::tileImageReady);
@@ -322,38 +229,53 @@ void TileImageSourceTest::_networkGarbageBodyFailsAndNotCached()
 
     // Garbage was not cached: the retry misses again and re-fetches, this
     // time getting a valid image
-    nam.body = pngBody();
+    nam.body = tileReplyPngBody();
     source.requestTileImage(key);
     QTRY_COMPARE_WITH_TIMEOUT(readySpy.count(), 1, 5000);
     QCOMPARE(nam.requestCount, 2);
 }
 
-void TileImageSourceTest::_bingPlaceholderNotDelivered()
+void TileImageSourceTest::_missingTileReported_data()
 {
-    // Bing serves a placeholder image instead of an HTTP error where it has
-    // no imagery: it decodes fine, but delivering or caching it would drape
-    // it onto patches
-    QFile file(QStringLiteral(":/res/BingNoTileBytes.dat"));
-    QVERIFY(file.open(QFile::ReadOnly));
-    const QByteArray placeholder = file.readAll();
-    QVERIFY(!placeholder.isEmpty());
+    QTest::addColumn<QByteArray>("body");
+    QTest::addColumn<QNetworkReply::NetworkError>("networkError");
+    QTest::addColumn<int>("httpStatus");
+    QTest::addColumn<int>("tileX");
 
-    const TileMath::TileKey key{kKey.x + 14, kKey.y, kKey.zoom};
-    MockNam nam;
-    nam.body = placeholder;
+    // Bing serves a placeholder image instead of an HTTP error where it has no imagery: it decodes fine, but
+    // delivering or caching it would drape it onto patches
+    QTest::newRow("Bing placeholder") << tileReplyBingPlaceholder() << QNetworkReply::NoError << 0 << (kKey.x + 14);
+    QTest::newRow("HTTP 404") << QByteArray() << QNetworkReply::ContentNotFoundError << 404 << (kKey.x + 17);
+}
+
+void TileImageSourceTest::_missingTileReported()
+{
+    QFETCH(QByteArray, body);
+    QFETCH(QNetworkReply::NetworkError, networkError);
+    QFETCH(int, httpStatus);
+    QFETCH(int, tileX);
+    QVERIFY2(!body.isEmpty() || (httpStatus > 0), "the placeholder image is not in the resources");
+
+    TileReplyMockNam nam;
+    nam.body = body;
+    nam.error = networkError;
+    nam.httpStatus = httpStatus;
     TileImageSource source(QStringLiteral("Bing Hybrid"), nullptr, &nam);
     QSignalSpy readySpy(&source, &TileImageSource::tileImageReady);
     QSignalSpy failedSpy(&source, &TileImageSource::tileImageFailed);
+    QSignalSpy missingSpy(&source, &TileImageSource::tileImageMissing);
 
     UnitTestTileGenerator::setForcedMissCount(1);
     const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
 
-    expectLogMessage("GeoMap.TileImageSource", QtWarningMsg, QRegularExpression(QStringLiteral("no-tile placeholder")));
-    source.requestTileImage(key);
-    QTRY_COMPARE_WITH_TIMEOUT(failedSpy.count(), 1, 5000);
-    verifyExpectedLogMessage();
+    // No tile is no failure: nothing is logged, which the log check of the test would report
+    const int requestId = source.requestTileImage(TileMath::TileKey{tileX, kKey.y, kKey.zoom});
+    QTRY_COMPARE_WITH_TIMEOUT(missingSpy.count(), 1, TestTimeout::mediumMs());
+    QCOMPARE(missingSpy.first().at(0).toInt(), requestId);
     QCOMPARE(nam.requestCount, 1);
     QVERIFY(readySpy.isEmpty());
+    QVERIFY(failedSpy.isEmpty());
+    QCOMPARE(source.pendingCount(), 0);
 }
 
 void TileImageSourceTest::_cachedUnusableTileFallsBackToNetwork()
@@ -368,8 +290,8 @@ void TileImageSourceTest::_cachedUnusableTileFallsBackToNetwork()
     getQGCMapEngine()->cacheTile(type, UrlFactory::getTileHash(type, key.x, key.y, key.zoom),
                                  QByteArrayLiteral("garbage"), QStringLiteral("png"));
 
-    MockNam nam;
-    nam.body = pngBody();
+    TileReplyMockNam nam;
+    nam.body = tileReplyPngBody();
     QVERIFY(!nam.body.isEmpty());
     TileImageSource source(type, nullptr, &nam);
     QSignalSpy readySpy(&source, &TileImageSource::tileImageReady);
@@ -394,8 +316,8 @@ void TileImageSourceTest::_cancelAbortsNetworkFetch()
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
     const TileMath::TileKey key{kKey.x + 16, kKey.y, kKey.zoom};
 
-    MockNam nam;
-    nam.body = pngBody();
+    TileReplyMockNam nam;
+    nam.body = tileReplyPngBody();
     nam.holdReplies = true;
     TileImageSource source(type, nullptr, &nam);
     QSignalSpy readySpy(&source, &TileImageSource::tileImageReady);

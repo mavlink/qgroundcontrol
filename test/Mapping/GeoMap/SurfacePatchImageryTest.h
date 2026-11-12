@@ -7,6 +7,8 @@ class SurfacePatchImageryTest : public UnitTest
     Q_OBJECT
 
 private slots:
+    void initTestCase() override;
+
     void _imagesArriveForAllPatches();
     void _emptyMapTypeDisablesImagery();
     void _mapTypeSwitchRefetches();
@@ -16,4 +18,5 @@ private slots:
     void _retiredImagesFollowMemoryCacheSetting();
     void _imagesRecoverAfterGestureChurn();
     void _imagesRecoverAfterTransientOutage();
+    void _missingImagesNotRequestedAgain();
 };

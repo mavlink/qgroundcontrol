@@ -56,7 +56,6 @@ void SurfacePatchModelTest::_emptyWithoutCamera()
     const SurfacePatchModel model;
     QCOMPARE(model.rowCount(), 0);
     QCOMPARE(model.patchCount(), 0);
-    QCOMPARE(model.pendingCount(), 0);
 }
 
 void SurfacePatchModelTest::_populatesFromCamera()
@@ -69,7 +68,6 @@ void SurfacePatchModelTest::_populatesFromCamera()
 
     QCOMPARE_GT(model.rowCount(), 0);
     QCOMPARE(model.rowCount(), model.patchCount());
-    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
 
     // Scene origin anchors at the camera center
     const QPointF expectedOrigin = TileMath::geoToWorld(kCenter);
@@ -84,7 +82,6 @@ void SurfacePatchModelTest::_rolesValid()
     SurfacePatchModel model;
     setupCamera(camera);
     attach(model, scene, camera);
-    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
 
     const int expectedHeights = (model.gridSize() + 1) * (model.gridSize() + 1);
     bool nearOriginPatchSeen = false;
@@ -118,7 +115,6 @@ void SurfacePatchModelTest::_incrementalUpdatesOnMove()
     SurfacePatchModel model;
     setupCamera(camera);
     attach(model, scene, camera);
-    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
 
     QSignalSpy resetSpy(&model, &QAbstractItemModel::modelReset);
     QSignalSpy insertSpy(&model, &QAbstractItemModel::rowsInserted);
@@ -153,7 +149,6 @@ void SurfacePatchModelTest::_reanchorsOnLargeMove()
                 1.0);
 
     // Scene positions stay small after the re-anchor
-    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
     for (int row = 0; row < model.rowCount(); row++) {
         const QModelIndex idx = model.index(row);
         const double span = model.data(idx, SurfacePatchModel::SpanRole).toDouble();
@@ -195,7 +190,6 @@ void SurfacePatchModelTest::_debugHillsSwitchResets()
     SurfacePatchModel model;
     setupCamera(camera);
     attach(model, scene, camera);
-    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
 
     QSignalSpy resetSpy(&model, &QAbstractItemModel::modelReset);
     model.setDebugHills(true);
@@ -320,7 +314,6 @@ void SurfacePatchModelTest::_tileKeyAndHeightFieldExposedToDelegates()
     }
 
     // The exposed field is the live one: model heights come from it
-    QTRY_COMPARE_WITH_TIMEOUT(model.pendingCount(), 0, 5000);
     const QModelIndex first = model.index(0);
     const TileMath::TileKey firstKey{model.data(first, SurfacePatchModel::TileXRole).toInt(),
                                      model.data(first, SurfacePatchModel::TileYRole).toInt(),

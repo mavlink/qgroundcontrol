@@ -26,6 +26,7 @@
 #include "Fact.h"
 #include "FlyViewSettings.h"
 #include "GeoMapCamera.h"
+#include "HeightField.h"
 #include "MapPositionTracker.h"
 #include "MissionController.h"
 #include "MissionManager.h"
@@ -36,6 +37,7 @@
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
 #include "SurfacePatchModel.h"
+#include "TerrariumTileFetcher.h"
 #include "TileMath.h"
 #include "Vehicle.h"
 #include "VideoSettings.h"
@@ -552,10 +554,31 @@ void FlyViewGeoUITest::_testDebugHillsToggle()
         return false;
     };
 
+    // Every patch has its elevation tile, which for a patch finer than the dataset is an ancestor. The tiles are
+    // synthesized one after the other, which takes longer than the other waits of this file allow for.
+    const auto terrainLoaded = [patchModel] {
+        const HeightField* const field = patchModel->heightField();
+        if (!field || (patchModel->rowCount() == 0)) {
+            return false;
+        }
+        for (int row = 0; row < patchModel->rowCount(); row++) {
+            const QModelIndex index = patchModel->index(row);
+            const int zoom = patchModel->data(index, SurfacePatchModel::ZoomRole).toInt();
+            const int shift = qMax(0, zoom - TerrariumTileFetcher::kMaxTileZoom);
+            const TileMath::TileKey tile{patchModel->data(index, SurfacePatchModel::TileXRole).toInt() >> shift,
+                                         patchModel->data(index, SurfacePatchModel::TileYRole).toInt() >> shift,
+                                         zoom - shift};
+            if (!field->hasTile(tile)) {
+                return false;
+            }
+        }
+        return true;
+    };
+
     // Terrain is the default: flat zero heights outside the synthetic regions
     QVERIFY(!patchModel->debugHills());
     QVERIFY(patchModel->terrain());
-    QTRY_COMPARE_WITH_TIMEOUT(patchModel->pendingCount(), 0, kSettleTimeoutMs);
+    QTRY_VERIFY_WITH_TIMEOUT(terrainLoaded(), TestTimeout::longMs());
     QVERIFY(!anyNonZeroHeight());
 
     // Toggle hills on: non-flat heights
@@ -566,7 +589,7 @@ void FlyViewGeoUITest::_testDebugHillsToggle()
     // Toggle back off: terrain source flattens again
     patchModel->setDebugHills(false);
     QVERIFY(!patchModel->debugHills());
-    QTRY_COMPARE_WITH_TIMEOUT(patchModel->pendingCount(), 0, kSettleTimeoutMs);
+    QTRY_VERIFY_WITH_TIMEOUT(terrainLoaded(), TestTimeout::longMs());
     QVERIFY(!anyNonZeroHeight());
 
     stopUI();

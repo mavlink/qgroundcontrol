@@ -70,7 +70,6 @@ Item {
 
     // Live SurfaceModel stats for debug overlays
     property alias patchCount: patchModel.patchCount
-    property alias pendingCount: patchModel.pendingCount
     property alias maxZoomLevel: patchModel.maxZoomLevel
     property alias modelStats: patchModel.statsText
     property alias perfCapturing: patchModel.capturing

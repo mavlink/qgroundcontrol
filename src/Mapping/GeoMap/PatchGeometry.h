@@ -25,7 +25,7 @@ Q_MOC_INCLUDE("HeightField.h")
 /// Local space: origin at the patch center, x east, y north, z up (meters).
 /// The grid has (gridSize+1)^2 vertices spanning [-span/2, +span/2] in x/y,
 /// displaced in z by the height grid (row-major from the north-west corner,
-/// matching HeightSource). Empty heights produce a flat patch at z=0.
+/// matching HeightField::samplePatch). Empty heights produce a flat patch at z=0.
 ///
 /// Skirt geometry hangs from all four edges to hide cracks between adjacent
 /// patches of different LOD levels. UVs map (0,0) at the north-west corner to

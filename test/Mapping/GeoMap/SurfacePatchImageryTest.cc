@@ -3,7 +3,6 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtGui/QColor>
-#include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 #include <QtTest/QSignalSpy>
 
@@ -21,6 +20,7 @@ namespace {
 
 const QGeoCoordinate kCenter(47.3977419, 8.5455938);
 constexpr QSizeF kViewport(800, 600);
+constexpr int kRetryBaseMs = 50;  ///< first delay of the paced retry: the production one is seconds
 
 // The unit-test tile generator serves a placeholder image on every cache miss
 QString mapType()
@@ -28,6 +28,18 @@ QString mapType()
     const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
     for (const QString& type : UrlFactory::getProviderTypes()) {
         if (!elevationTypes.contains(type)) {
+            return type;
+        }
+    }
+    return QString();
+}
+
+QString otherMapType()
+{
+    const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
+    const QString first = mapType();
+    for (const QString& type : UrlFactory::getProviderTypes()) {
+        if (!elevationTypes.contains(type) && (type != first)) {
             return type;
         }
     }
@@ -77,50 +89,14 @@ int rowsReportingImage(const SurfacePatchModel& model)
     return count;
 }
 
-/// Reply that fails asynchronously without touching the network
-class FailingReply : public QNetworkReply
-{
-public:
-    explicit FailingReply(const QNetworkRequest& request, QObject* parent)
-        : QNetworkReply(parent)
-    {
-        setRequest(request);
-        setOperation(QNetworkAccessManager::GetOperation);
-        open(ReadOnly);
-        QMetaObject::invokeMethod(
-            this,
-            [this] {
-                setError(ContentNotFoundError, QStringLiteral("canned failure"));
-                emit errorOccurred(ContentNotFoundError);
-                setFinished(true);
-                emit finished();
-            },
-            Qt::QueuedConnection);
-    }
-
-    void abort() final {}
-
-protected:
-    qint64 readData(char*, qint64) final { return -1; }
-};
-
-/// Every network fetch fails: models a provider/connectivity outage
-class FailingNam : public QNetworkAccessManager
-{
-public:
-    using QNetworkAccessManager::QNetworkAccessManager;
-
-    int requestCount = 0;
-
-protected:
-    QNetworkReply* createRequest(Operation, const QNetworkRequest& request, QIODevice*) final
-    {
-        requestCount++;
-        return new FailingReply(request, this);
-    }
-};
-
 }  // namespace
+
+void SurfacePatchImageryTest::initTestCase()
+{
+    UnitTest::initTestCase();
+    // The tests fetch tiles that the tile cache of the process must not have yet
+    QVERIFY(UnitTestTileGenerator::resetTileCache());
+}
 
 void SurfacePatchImageryTest::_imagesArriveForAllPatches()
 {
@@ -360,12 +336,14 @@ void SurfacePatchImageryTest::_imagesRecoverAfterTransientOutage()
 
     GeoMapCamera camera;
     GeoScene scene;
-    FailingNam nam;  // must outlive the model: its TileImageSource borrows the manager
+    TileReplyMockNam nam;  // must outlive the model: its TileImageSource borrows the manager
+    nam.error = QNetworkReply::ConnectionRefusedError;
     SurfacePatchModel model;
     model.setTileImageNetworkManager(&nam);
+    model.setImageRetryBaseIntervalMs(kRetryBaseMs);
     attach(model, scene, camera);
     model.setMapType(type);
-    QTRY_COMPARE_WITH_TIMEOUT(rowsWithImage(model), model.rowCount(), 5000);
+    QTRY_COMPARE_WITH_TIMEOUT(rowsWithImage(model), model.rowCount(), TestTimeout::mediumMs());
 
     // Transient imagery outage: cache lookups miss and the network fallback
     // fails while a pan brings in new patches (the field scenario: gesture
@@ -378,21 +356,67 @@ void SurfacePatchImageryTest::_imagesRecoverAfterTransientOutage()
     camera.setCenter(QGeoCoordinate(kCenter.latitude() + 0.02, kCenter.longitude() + 0.02));
     model.drainUpdates();
     QCOMPARE_GT(model.rowCount(), 0);
-    QTRY_COMPARE_WITH_TIMEOUT(model.pendingImageCount(), 0, 10000);  // all outage-era requests resolved
+    // The images are requested again, and with the outage lasting every round puts the next one off for longer
+    QTRY_VERIFY_WITH_TIMEOUT(model.imageRetryIntervalMs() > kRetryBaseMs, TestTimeout::mediumMs());
     QCOMPARE_GT(nam.requestCount, 0);
-    QCOMPARE_LT(rowsWithImage(model), model.rowCount());             // the outage left imageless patches
+    QCOMPARE_LT(rowsWithImage(model), model.rowCount());  // the outage left imageless patches
     verifyExpectedLogMessage();
-    // The images are requested again, and with the outage lasting the next retry is put off for longer
-    const int firstRetryIntervalMs = model.imageRetryIntervalMs();
-    QTRY_COMPARE_WITH_TIMEOUT(model.imageRetryIntervalMs(), 2 * firstRetryIntervalMs, 10000);
-    QTRY_COMPARE_WITH_TIMEOUT(model.pendingImageCount(), 0, 10000);
     // Outage ends with the camera at rest: every resident patch must still
     // end up imaged. A row stuck without image (or fallback) renders the dark
     // loading fallback forever - the visible "hole" from the field report.
     UnitTestTileGenerator::setForcedMissCount(0);
-    QTRY_COMPARE_WITH_TIMEOUT(rowsReportingImage(model), model.rowCount(), 15000);
-    QTRY_COMPARE_WITH_TIMEOUT(rowsWithImage(model), model.rowCount(), 15000);
-    QCOMPARE(model.imageRetryIntervalMs(), firstRetryIntervalMs);  // an arriving image ends the spacing out
+    QTRY_COMPARE_WITH_TIMEOUT(rowsReportingImage(model), model.rowCount(), TestTimeout::longMs());
+    QTRY_COMPARE_WITH_TIMEOUT(rowsWithImage(model), model.rowCount(), TestTimeout::longMs());
+    // The images that arrive end the spacing out
+    QTRY_COMPARE_WITH_TIMEOUT(model.imageRetryIntervalMs(), kRetryBaseMs, TestTimeout::longMs());
+}
+
+void SurfacePatchImageryTest::_missingImagesNotRequestedAgain()
+{
+    const QString type = mapType();
+    const QString otherType = otherMapType();
+    QVERIFY2(!type.isEmpty() && !otherType.isEmpty(), "need two non-elevation map providers");
+
+    // Every tile comes from the network, which answers when the test says so
+    UnitTestTileGenerator::setForcedMissCount(10000);
+    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    TileReplyMockNam nam;  // must outlive the model: its TileImageSource borrows the manager
+    nam.holdReplies = true;
+
+    GeoMapCamera camera;
+    GeoScene scene;
+    SurfacePatchModel model;
+    model.setTileImageNetworkManager(&nam);
+    model.setImageRetryBaseIntervalMs(kRetryBaseMs);
+    attach(model, scene, camera);
+    model.setMapType(type);
+    const int patches = model.rowCount();
+    QCOMPARE_GT(patches, 1);
+    QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, patches, TestTimeout::mediumMs());
+
+    // One tile fails. The provider has none of the others, which is no failure: it answers HTTP 404
+    const QUrl failedUrl = nam.requests.constFirst().url();
+    expectLogMessage("GeoMap.TileImageSource", QtWarningMsg, QRegularExpression(QStringLiteral("failed")));
+    nam.replies.at(0)->failNow(QNetworkReply::ConnectionRefusedError);
+    verifyExpectedLogMessage();
+    for (int i = 1; i < patches; i++) {
+        nam.replies.at(i)->failNow(QNetworkReply::ContentNotFoundError, 404);
+    }
+    QCOMPARE(model.pendingImageCount(), 0);
+    QCOMPARE(rowsWithImage(model), 0);
+
+    // The paced rounds ask again for the tile that failed, and for no other. A round makes its requests at once
+    // and the cache answers in request order, so what the first round asks for is here before the request of the
+    // second round.
+    QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, patches + 1, TestTimeout::mediumMs());
+    QCOMPARE(nam.requests.constLast().url(), failedUrl);
+    nam.replies.constLast()->failNow(QNetworkReply::ConnectionRefusedError);
+    QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, patches + 2, TestTimeout::mediumMs());
+    QCOMPARE(nam.requests.constLast().url(), failedUrl);
+
+    // Another map type starts afresh: its provider can have the tiles that this one lacks
+    model.setMapType(otherType);
+    QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, (2 * patches) + 2, TestTimeout::mediumMs());
 }
 
 UT_REGISTER_TEST(SurfacePatchImageryTest, TestLabel::Integration)
