@@ -24,7 +24,7 @@ void MAIN()
     // perpendicular works; use the camera's right vector
     vec3 sideDir = (perpLen > 1e-4) ? (perp / perpLen)
                                     : vec3(VIEW_MATRIX[0][0], VIEW_MATRIX[1][0], VIEW_MATRIX[2][0]);
-    vec3 worldPos = worldCenter + (sideDir * (UV0.x * 0.5 * lineWidth * unitsPerPixel));
+    vec3 worldPos = worldCenter + (sideDir * (UV0.x * 0.5 * ribbonWidth * unitsPerPixel));
     // Scaling view-space position leaves the screen position unchanged but
     // shrinks depth: in 2D mode (depthPull > 0) this defeats the depth test
     // against the flattened terrain, which keeps a residual height above the

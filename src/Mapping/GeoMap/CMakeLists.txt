@@ -68,6 +68,7 @@ qt_add_qml_module(
         SurfacePatchModel.cc
         SurfacePatchModel.h
     QML_FILES
+        FlightPathMaterial.qml
         GeoMap.qml
         GeoMapADSBVehicleItem.qml
         GeoMapAltitude.js

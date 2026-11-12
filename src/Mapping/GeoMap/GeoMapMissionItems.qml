@@ -186,7 +186,8 @@ Item {
             // An item that leaves the mission has its loader released at once and deleted later. A visual whose
             // QML finishes loading in between would be created in the released loader's context, which Qt warns
             // of, so that loading is given up. A visual that is already being created is left to finish: Qt
-            // would delete it piece by piece under its own bindings.
+            // would delete it piece by piece under its own bindings. The loader of MissionItemMapVisual.qml has
+            // the same handler.
             Component.onDestruction: {
                 if (sourceComponent && sourceComponent.status === Component.Loading) {
                     active = false

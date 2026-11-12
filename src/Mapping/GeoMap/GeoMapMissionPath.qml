@@ -62,12 +62,6 @@ GeoMapItem {
     // scene); this bridges its anchor out for the coordinate binding above
     property var _geometry: null
 
-    readonly property var _camera: scene ? scene.camera : null
-
-    // Pixel-to-scene-unit factor at unit distance; the shader scales it by
-    // each vertex's own camera distance
-    readonly property real _screenFactor: _camera ? _camera.unitsPerPixelAtUnitDistance : 0
-
     // terrainHeightAt does not notify: bumped as terrain tiles arrive while a route point waits on its terrain query
     property int _terrainRev: 0
 
@@ -379,23 +373,12 @@ GeoMapItem {
                     scene: root.scene
                 }
 
-                materials: CustomMaterial {
-                    shadingMode: CustomMaterial.Unshaded
-                    cullMode: Material.NoCulling
-                    // Opaque unless the path is dimmed: blending would move it to the transparent pass
-                    sourceBlend: root.node3DOpacity < 1 ? CustomMaterial.SrcAlpha : CustomMaterial.NoBlend
-                    destinationBlend: root.node3DOpacity < 1 ? CustomMaterial.OneMinusSrcAlpha : CustomMaterial.NoBlend
-                    vertexShader: "shaders/flightpath.vert"
-                    fragmentShader: "shaders/flightpath.frag"
-
-                    property real lineWidth: root.lineWidth
-                    property real screenFactor: root._screenFactor
-                    property color pathColor: root.lineColor
-                    property color highlightColor: root.collisionColor
-                    property real pathOpacity: root.node3DOpacity
-                    // Ramps in as the terrain flattens, effectively disabling
-                    // depth testing in 2D mode (see flightpath.vert)
-                    property real depthPull: root.scene ? 0.5 * (1.0 - root.scene.terrainScale) : 0.0
+                materials: FlightPathMaterial {
+                    scene: root.scene
+                    ribbonWidth: root.lineWidth
+                    pathColor: root.lineColor
+                    highlightColor: root.collisionColor
+                    pathOpacity: root.node3DOpacity
                 }
 
                 Component.onCompleted: {

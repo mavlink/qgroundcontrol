@@ -23,7 +23,7 @@ GeoMapItem {
     property real heightAglMeters: 0
     property color color: "orange"
 
-    // Bridges the wall geometry's anchor out of the 3D delegate (see GeoMapFlightPath)
+    // Bridges the wall geometry's anchor out of the 3D delegate (see GeoMapTrack)
     property var _wallGeometry: null
 
     altitudeMode: GeoMapItem.Absolute

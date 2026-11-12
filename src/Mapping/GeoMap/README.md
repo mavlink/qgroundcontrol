@@ -171,7 +171,8 @@ with the 2D content during mode transitions. Built on it:
   shader-billboarded strip with constant on-screen width), flattening back to the
   classic 2D trail as `terrainScale` animates to 0.
 - **`GeoMapTrack.qml`** — the same ribbon for a path known up front, such as a log's
-  track.
+  track. `GeoMapFlightPath` is built on it, and both draw with `FlightPathMaterial.qml`, as
+  `GeoMapMissionPath` does.
 
 Vehicle-related items apply a **home terrain bias** — the difference between the
 elevation dataset's height at the home position and the vehicle's reported home

@@ -39,7 +39,7 @@ Item {
         // An item that leaves the mission has this view released at once and deleted later. A visual whose QML
         // finishes loading in between would be created in the released view's context, which Qt warns of, so that
         // loading is given up. A visual that is already being created is left to finish: Qt would delete it piece
-        // by piece under its own bindings.
+        // by piece under its own bindings. The loader of GeoMapMissionItems.qml has the same handler.
         Component.onDestruction: {
             if (sourceComponent && sourceComponent.status === Component.Loading) {
                 active = false
