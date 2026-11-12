@@ -8,6 +8,7 @@
 #include <QtTest/QSignalSpy>
 #include <QtTest/QTest>
 
+#include "ElevationMapProvider.h"
 #include "Fact.h"
 #include "FlyViewSettings.h"
 #include "GeoMapCamera.h"
@@ -159,6 +160,60 @@ void OfflineMapEditorUITest::_newSetAreaFollowsMap()
     // Looking around for a set's area leaves the map view of Fly View and Plan View where it was
     QCOMPARE(QGroundControlQmlGlobal::flightMapPosition(), sharedPosition);
     QCOMPARE(QGroundControlQmlGlobal::flightMapZoom(), sharedZoom);
+
+    QVERIFY(clickButton(QStringLiteral("offlineMapEditor_cancelButton")));
+    QTRY_VERIFY_WITH_TIMEOUT(!findItem(_rootItem, QStringLiteral("offlineMapEditor")), TestTimeout::shortMs());
+
+    stopUI();
+}
+
+void OfflineMapEditorUITest::_newSetEstimateFollowsChosenType_data()
+{
+    _addEngineRows();
+}
+
+void OfflineMapEditorUITest::_newSetEstimateFollowsChosenType()
+{
+    QFETCH(bool, geoMapEngine);
+
+    _openMapsSettings(geoMapEngine);
+    const auto restoreEngine = qScopeGuard(
+        [this] { SettingsManager::instance()->flyViewSettings()->useGeoMapEngine()->setRawValue(_savedEngine); });
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QVERIFY(clickButtonScrolled(QStringLiteral("offlineMaps_addButton"), QStringLiteral("settingsPageFlickable")));
+    QQuickItem* const map = _editorMap(geoMapEngine);
+    if (!map) {
+        return;
+    }
+    QQuickItem* const editor = findVisibleItem(_rootItem, QStringLiteral("offlineMapEditor"));
+    QVERIFY(editor);
+    QQuickItem* const typeCombo = findVisibleItem(editor, QStringLiteral("offlineMapEditor_mapTypeCombo"));
+    QVERIFY2(typeCombo, "map type list not visible");
+
+    // The manager keeps the estimate of an earlier editor: wait for one of this editor, for the view set here
+    QGCMapEngineManager* const manager = QGCMapEngineManager::instance();
+    QSignalSpy estimateSpy(manager, &QGCMapEngineManager::tileCountChanged);
+    map->setProperty("center", QVariant::fromValue(QGeoCoordinate(47.3977, 8.5456)));
+    map->setProperty("zoomLevel", 10.0);
+    QVERIFY_SIGNAL_COUNT_WAIT(estimateSpy, 1, TestTimeout::mediumMs());
+    const quint64 shownTypeCount = manager->tileCount();
+
+    // The list offers the elevation providers like every other provider, and neither engine's map can show one
+    const QString elevationType = QString::fromLatin1(CopernicusElevationProvider::kProviderKey);
+    const int elevationIndex = static_cast<int>(QGCMapEngineManager::mapList().indexOf(elevationType));
+    QVERIFY2(elevationIndex >= 0, "elevation provider not in the map type list");
+    QVERIFY(QMetaObject::invokeMethod(typeCombo, "activated", Q_ARG(int, elevationIndex)));
+    QCOMPARE(editor->property("mapType").toString(), elevationType);
+    const quint64 chosenTypeCount = manager->tileCount();
+
+    // What the editor asks the manager for when its map moves: the estimate of its type for its view, which has
+    // not changed since the type was chosen
+    QVERIFY(QMetaObject::invokeMethod(editor, "handleChanges"));
+    QCOMPARE(chosenTypeCount, manager->tileCount());
+    QCOMPARE_NE(chosenTypeCount, shownTypeCount);
 
     QVERIFY(clickButton(QStringLiteral("offlineMapEditor_cancelButton")));
     QTRY_VERIFY_WITH_TIMEOUT(!findItem(_rootItem, QStringLiteral("offlineMapEditor")), TestTimeout::shortMs());

@@ -12,6 +12,8 @@ class OfflineMapEditorUITest : public QmlUITestBase
 private slots:
     void _newSetAreaFollowsMap_data();
     void _newSetAreaFollowsMap();
+    void _newSetEstimateFollowsChosenType_data();
+    void _newSetEstimateFollowsChosenType();
     void _defaultSetInfoOpensAndCloses_data();
     void _defaultSetInfoOpensAndCloses();
     void _renamedSetIsListedByItsNewName();

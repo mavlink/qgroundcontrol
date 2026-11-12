@@ -74,7 +74,10 @@ Item {
 
     function updateMap() {
         // The map type is first set before the map is created
-        if (_map && _map.showMapType(mapType)) {
+        if (_map) {
+            // The map keeps what it shows for a type it cannot show, such as an elevation provider. The tile
+            // estimate of a new set follows the type all the same.
+            _map.showMapType(mapType)
             handleChanges()
         }
     }
@@ -601,6 +604,7 @@ Item {
                             }
                             QGCComboBox {
                                 id: mapCombo
+                                objectName: "offlineMapEditor_mapTypeCombo"
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 model: QGroundControl.mapEngineManager.mapList
