@@ -26,6 +26,8 @@ target_sources(
         HeightFieldTest.h
         HeightSourceTest.cc
         HeightSourceTest.h
+        MissionItemVisualLoadTest.cc
+        MissionItemVisualLoadTest.h
         PaperPlaneGeometryTest.cc
         PaperPlaneGeometryTest.h
         PatchGeometryTest.cc
@@ -70,6 +72,7 @@ add_qgc_test(GeoMapItemTest LABELS Unit)
 add_qgc_test(GeoMapProjectedPathTest LABELS Unit)
 add_qgc_test(HeightFieldTest LABELS Unit)
 add_qgc_test(HeightSourceTest LABELS Unit)
+add_qgc_test(MissionItemVisualLoadTest LABELS Unit)
 add_qgc_test(PaperPlaneGeometryTest LABELS Unit)
 add_qgc_test(PatchGeometryTest LABELS Unit)
 add_qgc_test(PatchTextureDataTest LABELS Unit)
