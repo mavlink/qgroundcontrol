@@ -34,6 +34,10 @@ You can create multiple regions by pressing the buttons multiple times, allowing
 1. By default new regions are created as _inclusion_ zones (vehicles must stay within the region).
    Change them to exclusion zones (where the vehicle can't travel) by unchecking the associated _Inclusion_ checkbox in the fence panel.
 
+1. When connected to ArduPilot 4.8 or later, check a circular region's _Home_ checkbox to centre it on the vehicle home position.
+   The circle then moves with home (including when home is changed in flight), so its centre cannot be dragged; it is always an inclusion zone.
+   Other firmware does not support these circles: _QGroundControl_ refuses to upload a plan containing one, and the _Home_ checkbox stays available so you can turn it off.
+
 Depending on the firmware, the GeoFence section may also show fence parameters (e.g. breach action) and a **Breach Return Point** that the vehicle will fly to if it breaches the fence.
 
 ## Edit/Delete a GeoFence

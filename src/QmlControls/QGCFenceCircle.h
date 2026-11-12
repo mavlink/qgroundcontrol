@@ -16,6 +16,8 @@ public:
     const QGCFenceCircle& operator=(const QGCFenceCircle& other);
 
     Q_PROPERTY(bool inclusion READ inclusion WRITE setInclusion NOTIFY inclusionChanged)
+    /// true: circle follows the vehicle home position (MAV_CMD_NAV_FENCE_HOME_CIRCLE_INCLUSION)
+    Q_PROPERTY(bool homeCentered READ homeCentered WRITE setHomeCentered NOTIFY homeCenteredChanged)
 
     /// Saves the QGCFenceCircle to the json object.
     ///     @param json Json object to save to
@@ -29,11 +31,17 @@ public:
 
     // Property methods
 
-    bool inclusion      (void) const { return _inclusion; }
-    void setInclusion   (bool inclusion);
+    bool inclusion(void) const { return _inclusion; }
+
+    void setInclusion(bool inclusion);
+
+    bool homeCentered(void) const { return _homeCentered; }
+
+    void setHomeCentered(bool homeCentered);
 
 signals:
     void inclusionChanged(bool inclusion);
+    void homeCenteredChanged(bool homeCentered);
 
 private slots:
     void _setDirty(void);
@@ -42,8 +50,13 @@ private:
     void _init(void);
 
     bool _inclusion;
+    bool _homeCentered = false;
 
     static constexpr int _jsonCurrentVersion = 1;
+    /// Home-centered circles are written as version 2 so older readers reject them rather than
+    /// loading them as a fixed circle at the saved center
+    static constexpr int _jsonHomeCenteredVersion = 2;
 
     static constexpr const char* _jsonInclusionKey = "inclusion";
+    static constexpr const char* _jsonHomeCenteredKey = "homeCentered";
 };
