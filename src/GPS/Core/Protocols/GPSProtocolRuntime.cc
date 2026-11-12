@@ -9,8 +9,6 @@
 
 QGC_LOGGING_CATEGORY(GPSProtocolRuntimeLog, "GPS.Protocols.Runtime")
 
-using namespace std::chrono_literals;
-
 GPSProtocolRuntime::GPSProtocolRuntime(const GPSReceiverFamily& family, GPSRuntimeIO io, GPSRuntimeObserver observer)
     : GPSProtocolRuntime(family, family.create ? family.create() : nullptr, std::move(io), std::move(observer))
 {
@@ -39,7 +37,7 @@ GPSProtocolRuntime::GPSProtocolRuntime(const GPSReceiverFamily& family, std::uni
     if (!_io.clock.wait) {
         _io.clock.wait = [token = _io.cancelToken](std::chrono::microseconds duration) {
             // The longest sleep between checks for a cancelled wait.
-            constexpr std::chrono::milliseconds CANCEL_POLL = 20ms;
+            constexpr std::chrono::milliseconds CANCEL_POLL{20};
             const auto stopped = [&token] { return token.isCancelled(); };
             const auto until = std::chrono::steady_clock::now() + duration;
             while (!stopped() && std::chrono::steady_clock::now() < until) {
