@@ -31,16 +31,13 @@ guint proposedMinBuffers()
 }
 
 // Advertise every meta API qgcqvideosink/GstQgcFrameMap consume so upstream keeps them;
-// else gst-vaapi/v4l2 strip crop/orientation metas and mapSampleToFrame does a full copy/rotate.
+// else gst-vaapi/v4l2 crop into a copy of each frame instead of attaching the crop meta.
 void addConsumedAllocationMetas(GstQuery* query, bool cropMeta = true)
 {
     gst_query_add_allocation_meta(query, GST_VIDEO_META_API_TYPE, NULL);
     if (cropMeta) {
         gst_query_add_allocation_meta(query, GST_VIDEO_CROP_META_API_TYPE, NULL);
     }
-#if defined(QGC_HAS_GST_VIDEO_ORIENTATION_META)
-    gst_query_add_allocation_meta(query, GST_VIDEO_ORIENTATION_META_API_TYPE, NULL);
-#endif
 #if defined(QGC_HAS_GST_GLMEMORY_GPU_PATH)
     // As upstream's Qt sink asks: glcolorconvert then ends each frame it renders with a sync point, which flushes its
     // context. GstGlVideoBuffer doesn't wait on that fence: it sets one of its own once the frame is mapped.

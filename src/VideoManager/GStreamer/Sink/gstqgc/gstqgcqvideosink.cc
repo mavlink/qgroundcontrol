@@ -65,7 +65,7 @@ struct PrivState
     // Whether the negotiated caps carry a GPU memory feature. Without one, show_frame skips path selection for frames
     // in plain system memory.
     bool gpu_caps = false;
-    // GstVideoOrientationMethod from the stream's image-orientation tag, for frames without an orientation meta.
+    // GstVideoOrientationMethod from the stream's image-orientation tag.
     std::atomic<int> stream_orientation{GST_VIDEO_ORIENTATION_IDENTITY};
     // Live zero-copy CPU frames pinning this sink's decoder buffers; shared because Qt may hold frames past finalize.
     CpuVideoFramePool::PinnedFrameCounter pinned_cpu_frames = std::make_shared<std::atomic<int>>(0);

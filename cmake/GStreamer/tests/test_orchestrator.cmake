@@ -26,7 +26,7 @@ file(MAKE_DIRECTORY "${WORK_DIR}/no-system-pkgconfig")
 set(ENV{PKG_CONFIG_LIBDIR} "${WORK_DIR}/no-system-pkgconfig")
 
 # _qgc_write_fake_sdk(<root> <version> [WITH_PROBE_HEADERS] [OMIT <pc-module>...] [PLUGINS <plugin>...])
-# WITH_PROBE_HEADERS adds the DMABuf and GstVideoOrientationMeta headers the Orchestrator probes for.
+# WITH_PROBE_HEADERS adds the DMABuf header the Orchestrator probes for.
 # Every library ships as .so and .a, and each plugin (default: coreelements) has a .pc file like in the
 # static SDKs.
 function(_qgc_write_fake_sdk root version)
@@ -83,9 +83,6 @@ function(_qgc_write_fake_sdk root version)
     if(ARG_WITH_PROBE_HEADERS)
         file(WRITE "${root}/include/gstreamer-1.0/gst/allocators/gstdmabuf.h"
              "extern \"C\" int gst_is_dmabuf_memory(void *memory);\n"
-        )
-        file(WRITE "${root}/include/gstreamer-1.0/gst/video/gstvideometa.h"
-             "typedef struct { int angle; } GstVideoOrientationMeta;\n"
         )
     endif()
 endfunction()

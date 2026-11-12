@@ -177,9 +177,6 @@ void GstQgcVideoFormatsTest::_testAdvertisedFormatListForOffer()
 
 void GstQgcVideoFormatsTest::_testApplyOrientationToFrameMapping()
 {
-#ifndef QGC_HAS_GST_VIDEO_ORIENTATION_META
-    QSKIP("GStreamer build lacks GstVideoOrientationMeta");
-#else
     // Each GStreamer orientation as QVideoFrame's (rotation, mirrored): GStreamer's diagonal flips become Qt's
     // rotation followed by a mirror.
     struct Case
@@ -208,7 +205,6 @@ void GstQgcVideoFormatsTest::_testApplyOrientationToFrameMapping()
         QCOMPARE(frame.rotation(), c.expectedRot);
         QCOMPARE(frame.mirrored(), c.expectedMirrored);
     }
-#endif
 }
 
 #endif

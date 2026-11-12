@@ -53,7 +53,7 @@ set(_stale
     PC_GStreamer_Core_INCLUDE_DIRS
     pkgcfg_lib_PC_GStreamer_Core_gstreamer-1.0
     pkgcfg_lib_PC_GStreamer_plugin_coreelements_gstcoreelements
-    "QGC_GST_HAS_VIDEO_ORIENTATION_META"
+    QGC_GST_HAS_DMABUF
     QGC_GST_HAS_D3D11
 )
 set(_kept __pkg_config_checked_LIBURING PC_LibUSB_FOUND PKG_CONFIG_EXECUTABLE GStreamer_ROOT_DIR QGC_GST_RESOLVED_ROOT

@@ -191,17 +191,6 @@ qgc_gst_check_plugins(
     SOURCE "${_gst_plugin_source}" ${_gst_static_args}
 )
 
-# GstVideoOrientationMeta is officially in 1.26+, but bundled iOS/Android SDKs sometimes strip it, so test the header.
-# A sizeof() needs no archive, so iOS can probe GStreamer::GStreamer, which carries headers only.
-qgc_gst_check_header(
-    VAR QGC_GST_HAS_VIDEO_ORIENTATION_META
-    HEADER gst/video/gstvideometa.h
-    SYMBOL "sizeof(GstVideoOrientationMeta)"
-)
-if(QGC_GST_HAS_VIDEO_ORIENTATION_META)
-    target_compile_definitions(GStreamer::GStreamer INTERFACE QGC_HAS_GST_VIDEO_ORIENTATION_META=1)
-endif()
-
 # Zero-copy DMABuf GPU path probe: HwBuffers/CMakeLists.txt builds the DMABuf path when QGC_GST_HAS_DMABUF is set. It
 # needs gst-allocators, which the Linux branch of src/.../GStreamer/CMakeLists.txt requests (the Allocators component).
 if(LINUX)

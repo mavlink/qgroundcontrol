@@ -99,8 +99,6 @@ QVideoFrameFormat::ColorRange toQtColorRange(GstVideoColorRange range)
     }
 }
 
-// Operates on the GstVideoOrientationMethod enum, which is in <gst/video/video.h>'s
-// always-present subset — independent of QGC_HAS_GST_VIDEO_ORIENTATION_META.
 void applyOrientationToFrame(QVideoFrame& frame, GstVideoOrientationMethod method)
 {
     switch (method) {
@@ -148,16 +146,9 @@ void applyOrientationToFrame(QVideoFrame& frame, GstVideoOrientationMethod metho
     }
 }
 
-void applyOrientationAndTiming(QVideoFrame& frame, [[maybe_unused]] GstBuffer* buffer, int streamOrientation)
+void applyOrientationAndTiming(QVideoFrame& frame, GstBuffer* buffer, int streamOrientation)
 {
-    // Per-buffer meta wins (per-frame override) when gst-video exports it; stream-level fallback
-    // works on every install.
-#ifdef QGC_HAS_GST_VIDEO_ORIENTATION_META
-    if (GstVideoOrientationMeta* meta = gst_buffer_get_video_orientation_meta(buffer)) {
-        applyOrientationToFrame(frame, meta->orientation);
-    } else
-#endif
-        if (streamOrientation != static_cast<int>(GST_VIDEO_ORIENTATION_IDENTITY)) {
+    if (streamOrientation != static_cast<int>(GST_VIDEO_ORIENTATION_IDENTITY)) {
         applyOrientationToFrame(frame, static_cast<GstVideoOrientationMethod>(streamOrientation));
     }
     if (GST_BUFFER_PTS_IS_VALID(buffer)) {

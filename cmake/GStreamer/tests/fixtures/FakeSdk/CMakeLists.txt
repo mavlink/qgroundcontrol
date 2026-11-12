@@ -212,8 +212,8 @@ endif()
 qgc_test_assert_streq("recorded root" "${EXPECT_ROOT}" "$CACHE{QGC_GST_RESOLVED_ROOT}")
 qgc_test_assert_streq("recorded auto-downloaded" "${EXPECT_AUTO}" "$CACHE{QGC_GST_RESOLVED_AUTO}")
 
-# The fake SDK ships the DMABuf and orientation-meta headers only when EXPECT_PROBES is set,
-# so a stale try-compile result shows up as a mismatch here.
+# The fake SDK ships the DMABuf header only when EXPECT_PROBES is set, so a stale try-compile result shows up as a
+# mismatch here.
 if(EXPECT_PROBES)
     set(_qgc_expected_probe TRUE)
 else()
@@ -225,10 +225,3 @@ else()
     set(_qgc_dmabuf FALSE)
 endif()
 qgc_test_assert_streq("DMABuf probe" "${_qgc_expected_probe}" "${_qgc_dmabuf}")
-get_target_property(_qgc_core_defs GStreamer::GStreamer INTERFACE_COMPILE_DEFINITIONS)
-if("QGC_HAS_GST_VIDEO_ORIENTATION_META=1" IN_LIST _qgc_core_defs)
-    set(_qgc_orientation TRUE)
-else()
-    set(_qgc_orientation FALSE)
-endif()
-qgc_test_assert_streq("orientation-meta probe" "${_qgc_expected_probe}" "${_qgc_orientation}")

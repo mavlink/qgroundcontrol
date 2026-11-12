@@ -111,7 +111,7 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   for 1080p): the sink's `picture-width` and `picture-height` properties give the picture's own size, which the
   receiver reports as the video size.
   Frames carry the rotation and mirroring of the stream's `image-orientation` tag, as a camera mounted sideways sends
-  it, unless a buffer has its own orientation meta. The `VideoOutput` showing them adds the rotation a MAVLink camera
+  it. The `VideoOutput` showing them adds the rotation a MAVLink camera
   reports for the stream (`VideoStreamController::rotation`) on top, as its `orientation`. Its construct-only `gpu-zerocopy` property (passed down by the bin) enables zero-copy import of GPU memory, and its
   `frame-stats` property reports that sink's own frame counts per delivery path, GPU fallbacks, dropped tiled frames
   (`GstQgc::formatSinkStats` in `GstQgcSinkStats.h` formats them) and delivered frames a newer one replaced before the `QVideoSink` took them
