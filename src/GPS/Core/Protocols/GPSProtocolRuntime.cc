@@ -4,6 +4,7 @@
 #include <thread>
 #include <utility>
 
+#include "GPSReceiverDescriptor.h"
 #include "QGCLoggingCategory.h"
 
 QGC_LOGGING_CATEGORY(GPSProtocolRuntimeLog, "GPS.Protocols.Runtime")
@@ -68,6 +69,8 @@ bool GPSProtocolRuntime::configure(const GPSConfig& config, unsigned& baud)
         _demux = GPSStreamDemux(_family.stream);
     }
     if (!_protocol) {
+        _channel.failControl(
+            QStringLiteral("No protocol for the %1 receiver family").arg(gpsReceiverName(_family.type)));
         return false;
     }
     _channel._detectedBaud = config.detectedBaud;

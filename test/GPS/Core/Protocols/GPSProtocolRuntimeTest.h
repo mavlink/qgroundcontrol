@@ -14,6 +14,8 @@ private slots:
     void _readinessSeesSessionFailure();
     /// Each configure() runs on a new protocol object and a stream as the family describes it.
     void _configureStartsFromNewProtocol();
+    /// A family without a protocol fails its configuration with a reason, like every other failure.
+    void _configureWithoutProtocolSaysWhy();
     void _publishAsReceivedKeepsReceipt();
     void _deadlineRemaining_data();
     void _deadlineRemaining();

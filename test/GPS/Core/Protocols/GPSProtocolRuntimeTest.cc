@@ -168,6 +168,21 @@ void GPSProtocolRuntimeTest::_configureStartsFromNewProtocol()
     QCOMPARE(corrections, size_t{1});
 }
 
+void GPSProtocolRuntimeTest::_configureWithoutProtocolSaysWhy()
+{
+    GPSTestClock clock(GPSTestClock::START_US);
+    // The family names no factory.
+    expectLogMessage("GPS.Protocols.Runtime", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("No protocol for receiver family")));
+    GPSProtocolRuntime runtime(UBX_STREAM_FAMILY, makeGPSRuntimeTestIO(clock));
+    verifyExpectedLogMessage();
+    unsigned baud = 115200;
+    QVERIFY(!runtime.configure({}, baud));
+    QCOMPARE(runtime.error(), GPSProtocolError::Protocol);
+    QCOMPARE(runtime.errorDetail(), QStringLiteral("No protocol for the u-blox receiver family"));
+    QVERIFY(!runtime.receiverReady());
+}
+
 void GPSProtocolRuntimeTest::_publishAsReceivedKeepsReceipt()
 {
     GPSTestClock clock(99);
