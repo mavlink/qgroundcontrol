@@ -5,7 +5,6 @@
 #include <memory>
 #include <optional>
 
-#include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtSql/QSqlQuery>
@@ -15,6 +14,7 @@
 #include "AppSettings.h"
 #include "BaseClasses/TerrainTest.h"
 #include "ElevationMapProvider.h"
+#include "Fixtures/RAIIFixtures.h"
 #include "QGCCacheTile.h"
 #include "QGCCachedTileSet.h"
 #include "QGCMapEngine.h"
@@ -582,8 +582,7 @@ void QGCCacheWorkerTest::_testMapEngineEnsureInitializedAcceptsTasks()
 void QGCCacheWorkerTest::_testCreateTileSetKeepsSourceOfItsCreation()
 {
     Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
-    const QVariant savedUrl = customUrl->rawValue();
-    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
+    TestFixtures::SettingsFixture saved;
 
     QTemporaryDir tempDir;
     QGCCacheWorker worker;
@@ -606,9 +605,9 @@ void QGCCacheWorkerTest::_testCreateTileSetKeepsSourceOfItsCreation()
 
     // The set is of the source configured when it is created. The worker computes the keys of its tiles later, and
     // cannot read the settings.
-    customUrl->setRawValue(kCacheWorkerSourceA);
+    saved.setFactValue(customUrl, kCacheWorkerSourceA);
     auto* const createTask = new QGCCreateTileSetTask(tileSet);
-    customUrl->setRawValue(kCacheWorkerSourceB);
+    saved.setFactValue(customUrl, kCacheWorkerSourceB);
 
     QGCCachedTileSet* savedSet = nullptr;
     const QObject createContext;
@@ -644,21 +643,20 @@ void QGCCacheWorkerTest::_testCreateTileSetKeepsSourceOfItsCreation()
 void QGCCacheWorkerTest::_testImportGivesOldTilesTheConfiguredSource()
 {
     Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
-    const QVariant savedUrl = customUrl->rawValue();
-    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
+    TestFixtures::SettingsFixture saved;
 
     QTemporaryDir tempDir;
     const QString importPath = tempDir.filePath("version2.db");
     const QByteArray image("tile of the custom URL");
     QVERIFY(createVersion2CacheWithCustomUrlTile(importPath, 1, 2, 3, image));
 
-    customUrl->setRawValue(kCacheWorkerSourceA);
+    saved.setFactValue(customUrl, kCacheWorkerSourceA);
     QGCCacheWorker worker;
     worker.setDatabaseFile(tempDir.filePath("import_source.db"));
     QVERIFY(_startWorker(worker));
 
     // The source configured when the file is imported, not the one of the time the cache was opened
-    customUrl->setRawValue(kCacheWorkerSourceB);
+    saved.setFactValue(customUrl, kCacheWorkerSourceB);
     auto* const importTask = new QGCImportTileTask(importPath, false);
     bool imported = false;
     const QObject importContext;
@@ -678,8 +676,7 @@ void QGCCacheWorkerTest::_testImportGivesOldTilesTheConfiguredSource()
 void QGCCacheWorkerTest::_testMapEngineGivesOldTilesTheConfiguredSource()
 {
     Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
-    const QVariant savedUrl = customUrl->rawValue();
-    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
+    TestFixtures::SettingsFixture saved;
 
     QTemporaryDir tempDir;
     const QString databasePath = tempDir.filePath("version2.db");
@@ -687,7 +684,7 @@ void QGCCacheWorkerTest::_testMapEngineGivesOldTilesTheConfiguredSource()
     QVERIFY(createVersion2CacheWithCustomUrlTile(databasePath, 1, 2, 3, image));
 
     // The engine takes the source from the settings for the worker thread, which migrates the cache
-    customUrl->setRawValue(kCacheWorkerSourceA);
+    saved.setFactValue(customUrl, kCacheWorkerSourceA);
     QGCMapEngine engine;
     engine.init(databasePath);
 
@@ -713,14 +710,13 @@ void QGCCacheWorkerTest::_testMapEngineReportsSourceChange()
 
     Fact* const setting = SettingsManager::instance()->appSettings()->property(qPrintable(settingName)).value<Fact*>();
     QVERIFY(setting);
-    const QVariant saved = setting->rawValue();
-    const auto restore = qScopeGuard([setting, saved] { setting->setRawValue(saved); });
-    setting->setRawValue(QStringLiteral("source A"));
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(setting, QStringLiteral("source A"));
 
     // A map that is open holds tiles of the source that was configured, so it has to hear of another one
     QGCMapEngine engine;
     QSignalSpy sourceSpy(&engine, &QGCMapEngine::tileSourceChanged);
-    setting->setRawValue(QStringLiteral("source B"));
+    saved.setFactValue(setting, QStringLiteral("source B"));
 
     QCOMPARE(sourceSpy.count(), 1);
     QCOMPARE(sourceSpy.first().first().toInt(), UrlFactory::getMapIdFromProviderType(providerType));

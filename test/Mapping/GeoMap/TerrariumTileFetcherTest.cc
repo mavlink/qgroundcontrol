@@ -130,8 +130,7 @@ void TerrariumTileFetcherTest::_networkFallbackDeliversAndCaches()
     // Two forced generator misses: the first request must fall back to the
     // network; the second must be served by the write-back cached tile (the
     // DB hit precedes the generator, so the second miss stays unconsumed)
-    UnitTestTileGenerator::setForcedMissCount(2);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(2);
 
     QVERIFY(source.requestTile(key));
     QTRY_VERIFY_WITH_TIMEOUT(field.hasTile(key), TestTimeout::mediumMs());
@@ -174,8 +173,7 @@ void TerrariumTileFetcherTest::_networkBadBodyFailsAndNotCached()
     source.setHeightField(&field);
     QSignalSpy failedSpy(&source, &HeightSource::tileFailed);
 
-    UnitTestTileGenerator::setForcedMissCount(2);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(2);
 
     expectLogMessage("GeoMap.TerrariumTileFetcher", QtWarningMsg, QRegularExpression(QStringLiteral("failed")));
     QVERIFY(source.requestTile(key));
@@ -231,8 +229,7 @@ void TerrariumTileFetcherTest::_duplicateTileRequestsShareOneFetch()
     source.setHeightField(&field);
     QSignalSpy regionSpy(&field, &HeightField::regionChanged);
 
-    UnitTestTileGenerator::setForcedMissCount(2);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(2);
 
     // Same tile requested twice before the fetch completes: one shared fetch,
     // one insert
@@ -255,8 +252,7 @@ void TerrariumTileFetcherTest::_heldTileNotRefetched()
     source.setHeightField(&field);
     QSignalSpy regionSpy(&field, &HeightField::regionChanged);
 
-    UnitTestTileGenerator::setForcedMissCount(3);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(3);
 
     QVERIFY(source.requestTile(key));
     QTRY_COMPARE_WITH_TIMEOUT(regionSpy.count(), 1, TestTimeout::mediumMs());
@@ -282,8 +278,7 @@ void TerrariumTileFetcherTest::_tileFetchFailureLeavesFieldIntact()
     QSignalSpy regionSpy(&field, &HeightField::regionChanged);
     QSignalSpy failedSpy(&source, &HeightSource::tileFailed);
 
-    UnitTestTileGenerator::setForcedMissCount(2);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(2);
 
     // Fetch failures must be visible without logging configuration (matches
     // the map tile / Copernicus convention); repeats are throttled
@@ -362,8 +357,7 @@ void TerrariumTileFetcherTest::_fineTileHeldUntilAnchorsArrive()
     source.setHeightField(&field);
     QSignalSpy regionSpy(&field, &HeightField::regionChanged);
 
-    UnitTestTileGenerator::setForcedMissCount(anchorCount + 1);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(anchorCount + 1);
 
     // A fine tile request also fetches the anchor of every tile it touches:
     // its own, plus the neighbors' across an anchor boundary
@@ -416,8 +410,7 @@ void TerrariumTileFetcherTest::_failedAnchorFetchedAgain()
     source.setHeightField(&field);
     QSignalSpy failedSpy(&source, &HeightSource::tileFailed);
 
-    UnitTestTileGenerator::setForcedMissCount(2);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(2);
 
     QVERIFY(source.requestTile(key));
     QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, 2, TestTimeout::mediumMs());
@@ -468,8 +461,7 @@ void TerrariumTileFetcherTest::_residentPatchTileArrivesAfterOutage()
     QSignalSpy failedSpy(&source, &HeightSource::tileFailed);
 
     // Outage: the cache misses and the server cannot be reached
-    UnitTestTileGenerator::setForcedMissCount(10000);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    UnitTestTileGenerator::ForcedMisses forcedMisses(UnitTestTileGenerator::ForcedMisses::kEveryLookup);
     expectLogMessage("GeoMap.TerrariumTileFetcher", QtWarningMsg, QRegularExpression(QStringLiteral("failed")));
     camera.setViewportSize(QSizeF(800, 600));
     camera.lookAt(coord, 0, 0, 2000);
@@ -495,7 +487,7 @@ void TerrariumTileFetcherTest::_residentPatchTileArrivesAfterOutage()
     QVERIFY(!field.hasTile(key));
 
     // The outage ends with the camera at rest: nothing but the paced retry asks for the tile again
-    UnitTestTileGenerator::setForcedMissCount(0);
+    forcedMisses.setCount(0);
     QTRY_VERIFY_WITH_TIMEOUT(field.hasTile(key), TestTimeout::mediumMs());
     // The rounds of the outage put each other off for longer. The tiles that arrive end that.
     QTRY_COMPARE_WITH_TIMEOUT(model.tileRetryIntervalMs(), kRetryBaseMs, TestTimeout::mediumMs());
@@ -517,8 +509,7 @@ void TerrariumTileFetcherTest::_missingTileNotFetchedAgain()
     QSignalSpy replyFinishedSpy(&nam, &QNetworkAccessManager::finished);
 
     // Every lookup misses, not a count of them: lookups that an earlier test left with the cache take from a count
-    UnitTestTileGenerator::setForcedMissCount(10000);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(UnitTestTileGenerator::ForcedMisses::kEveryLookup);
 
     // No tile is no failure: none is reported, and none is logged, which the log check of the test would tell
     QVERIFY(source.requestTile(key));
@@ -553,8 +544,7 @@ void TerrariumTileFetcherTest::_missingAnchorDoesNotHoldFineTile()
     source.setHeightField(&field);
     QSignalSpy failedSpy(&source, &HeightSource::tileFailed);
 
-    UnitTestTileGenerator::setForcedMissCount(2);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(2);
 
     QVERIFY(source.requestTile(key));
     QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, 2, TestTimeout::mediumMs());

@@ -4,11 +4,11 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QRegularExpression>
-#include <QtCore/QScopeGuard>
 #include <QtTest/QSignalSpy>
 
 #include "ElevationMapProvider.h"
 #include "Fact.h"
+#include "Fixtures/RAIIFixtures.h"
 #include "FlightMapSettings.h"
 #include "FlyViewSettings.h"
 #include "HeightField.h"
@@ -16,7 +16,6 @@
 #include "QGCCachedTileSet.h"
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
-#include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
 #include "QmlObjectListModel.h"
 #include "SettingsManager.h"
@@ -47,19 +46,11 @@ QGCTileSet offlineRegionTiles(const QString& type, double leftLon, int minZoom, 
     return tiles;
 }
 
-/// Selects the map engine of the Fly View and of the Plan View until the returned guard is gone
-[[nodiscard]] auto selectGeoMapEngines(bool flyView, bool planView)
+/// Selects the map engine of the Fly View and of the Plan View until \a saved is gone
+void selectGeoMapEngines(TestFixtures::SettingsFixture& saved, bool flyView, bool planView)
 {
-    Fact* const flyViewFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
-    Fact* const planViewFact = SettingsManager::instance()->planViewSettings()->useGeoMapEngine();
-    auto restore = qScopeGuard(
-        [flyViewFact, planViewFact, flyViewSaved = flyViewFact->rawValue(), planViewSaved = planViewFact->rawValue()] {
-            flyViewFact->setRawValue(flyViewSaved);
-            planViewFact->setRawValue(planViewSaved);
-        });
-    flyViewFact->setRawValue(flyView);
-    planViewFact->setRawValue(planView);
-    return restore;
+    saved.setFactValue(SettingsManager::instance()->flyViewSettings()->useGeoMapEngine(), flyView);
+    saved.setFactValue(SettingsManager::instance()->planViewSettings()->useGeoMapEngine(), planView);
 }
 
 /// A manager whose offline sets send their requests to a network stand-in that holds its replies, so that a test
@@ -99,22 +90,6 @@ public:
     TileReplyMockNam networkManager;
     QGCMapEngineManager manager;
 };
-
-/// Waits until the database worker has run the tasks queued so far, and the main thread has handled what they
-/// reported: the worker runs its tasks in order
-[[nodiscard]] bool offlineSetsTasksDone()
-{
-    bool done = false;
-    // Declared after what its signal writes, so that a late signal is dropped
-    const QObject sentinelContext;
-    QGCFetchTileTask* const sentinelTask = new QGCFetchTileTask(QStringLiteral("no such tile"));
-    (void) QObject::connect(sentinelTask, &QGCMapTask::error, &sentinelContext, [&done] { done = true; });
-    if (!getQGCMapEngine()->addTask(sentinelTask)) {
-        sentinelTask->deleteLater();
-        return false;
-    }
-    return QTest::qWaitFor([&done] { return done; }, TestTimeout::mediumMs());
-}
 
 }  // namespace
 
@@ -164,7 +139,8 @@ void QGCMapEngineManagerTest::_testTerrainSet()
     // The setting requires a restart, which the app announces on every change
     ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
                      QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    const auto restoreMapEngines = selectGeoMapEngines(flyViewGeoMap, planViewGeoMap);
+    TestFixtures::SettingsFixture saved;
+    selectGeoMapEngines(saved, flyViewGeoMap, planViewGeoMap);
 
     QGCMapEngine* const engine = getQGCMapEngine();
     engine->ensureInitialized();
@@ -192,7 +168,7 @@ void QGCMapEngineManagerTest::_testTerrainSet()
     const QString name = QStringLiteral("terrain set test: %1").arg(QString::fromLatin1(QTest::currentDataTag()));
     sets.manager.startDownload(name, mapType);
     // The sets are all saved
-    QVERIFY(offlineSetsTasksDone());
+    QVERIFY(UnitTestTileGenerator::waitForCacheTasks());
 
     QVERIFY(sets.tileSet(name));
     QCOMPARE(sets.tileSet(name + QStringLiteral(" Elevation")) != nullptr, fetchElevation);
@@ -212,7 +188,7 @@ void QGCMapEngineManagerTest::_testTerrainSet()
     // No more than these: a set asks for further tiles when a reply ends, which none does here, or when a download
     // list arrives. The lists have all arrived once the worker has run its tasks, and a set has asked for the tiles of
     // a list once the events that the list queued are handled.
-    QVERIFY(offlineSetsTasksDone());
+    QVERIFY(UnitTestTileGenerator::waitForCacheTasks());
     QCoreApplication::processEvents();
     QCOMPARE(sets.networkManager.requestCount, expectedRequestCount);
 }
@@ -246,7 +222,8 @@ void QGCMapEngineManagerTest::_testElevationTypeSet()
     // A set of imagery gets both sets of elevation tiles beside it: GeoMap is used, and elevation is fetched
     ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
                      QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    const auto restoreMapEngines = selectGeoMapEngines(true, false);
+    TestFixtures::SettingsFixture saved;
+    selectGeoMapEngines(saved, true, false);
 
     getQGCMapEngine()->ensureInitialized();
 
@@ -263,7 +240,7 @@ void QGCMapEngineManagerTest::_testElevationTypeSet()
 
     const QString name = QStringLiteral("elevation type test: %1").arg(QString::fromLatin1(QTest::currentDataTag()));
     sets.manager.startDownload(name, elevationType);
-    QVERIFY(offlineSetsTasksDone());
+    QVERIFY(UnitTestTileGenerator::waitForCacheTasks());
 
     const QGCCachedTileSet* const set = sets.tileSet(name);
     QVERIFY(set);
@@ -276,7 +253,7 @@ void QGCMapEngineManagerTest::_testElevationTypeSet()
     // The set requests each of its tiles once, as many as a set requests at a time: see _testTerrainSet for the wait
     const int expectedRequestCount = static_cast<int>(qMin(tiles.tileCount, kTilesRequestedAtOnce));
     QTRY_COMPARE_WITH_TIMEOUT(sets.networkManager.requestCount, expectedRequestCount, TestTimeout::mediumMs());
-    QVERIFY(offlineSetsTasksDone());
+    QVERIFY(UnitTestTileGenerator::waitForCacheTasks());
     QCoreApplication::processEvents();
     QCOMPARE(sets.networkManager.requestCount, expectedRequestCount);
 }
@@ -285,7 +262,8 @@ void QGCMapEngineManagerTest::_testTerrainSetServedFromCache()
 {
     ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
                      QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    const auto restoreMapEngines = selectGeoMapEngines(true, false);
+    TestFixtures::SettingsFixture saved;
+    selectGeoMapEngines(saved, true, false);
 
     getQGCMapEngine()->ensureInitialized();
 
@@ -325,8 +303,7 @@ void QGCMapEngineManagerTest::_testTerrainSetServedFromCache()
     // GeoMap fetches the tiles of the region, and with a tile finer than the anchor zoom the anchors of that tile and
     // of its neighbors, which it waits for. A tile the cache lacks would be asked of the network, which holds its
     // replies, as the forced misses keep the tile generator of the tests from answering for the cache.
-    UnitTestTileGenerator::setForcedMissCount(kTerrainTileCount);
-    const auto resetForcedMisses = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(UnitTestTileGenerator::ForcedMisses::kEveryLookup);
     HeightField heightField;
     TerrariumTileFetcher fetcher(nullptr, &sets.networkManager);
     fetcher.setHeightField(&heightField);
@@ -532,13 +509,9 @@ void QGCMapEngineManagerTest::_testChosenMap()
 
     Fact* const providerFact = SettingsManager::instance()->flightMapSettings()->mapProvider();
     Fact* const typeFact = SettingsManager::instance()->flightMapSettings()->mapType();
-    const auto restoreSettings = qScopeGuard(
-        [providerFact, typeFact, providerBefore = providerFact->rawValue(), typeBefore = typeFact->rawValue()] {
-            providerFact->setRawValue(providerBefore);
-            typeFact->setRawValue(typeBefore);
-        });
-    providerFact->setRawValue(savedProvider);
-    typeFact->setRawValue(savedType);
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(providerFact, savedProvider);
+    saved.setFactValue(typeFact, savedType);
 
     const QGCMapEngineManager manager;
     QCOMPARE(providerFact->rawValue().toString(), provider);

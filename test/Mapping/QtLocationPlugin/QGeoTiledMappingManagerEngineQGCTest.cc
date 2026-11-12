@@ -9,6 +9,7 @@
 #include <QtTest/QSignalSpy>
 
 #include "AppSettings.h"
+#include "Fixtures/RAIIFixtures.h"
 #include "QGCMapEngine.h"
 #include "QGCMapUrlEngine.h"
 #include "QGeoMapIdQGC.h"
@@ -94,9 +95,8 @@ void QGeoTiledMappingManagerEngineQGCTest::_testMapIdTranslationWithGaps()
 void QGeoTiledMappingManagerEngineQGCTest::_testSourceChangeGivesTilesNewVersion()
 {
     Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
-    const QVariant savedUrl = customUrl->rawValue();
-    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
-    customUrl->setRawValue(QStringLiteral("https://a.example/{z}/{x}/{y}.png"));
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(customUrl, QStringLiteral("https://a.example/{z}/{x}/{y}.png"));
 
     QNetworkAccessManager networkManager;
     QGeoServiceProvider::Error error = QGeoServiceProvider::NotSupportedError;
@@ -133,9 +133,8 @@ void QGeoTiledMappingManagerEngineQGCTest::_testFactoryNeedsQmlEngine()
 void QGeoTiledMappingManagerEngineQGCTest::_testCachedTileServedWithoutProviderUrl()
 {
     Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
-    const QVariant savedUrl = customUrl->rawValue();
-    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
-    customUrl->setRawValue(QString());
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(customUrl, QString());
 
     TileReplyMockNam networkManager;
     QGeoServiceProvider::Error error = QGeoServiceProvider::NotSupportedError;
@@ -166,13 +165,11 @@ void QGeoTiledMappingManagerEngineQGCTest::_testCachedTileServedWithoutProviderU
 void QGeoTiledMappingManagerEngineQGCTest::_testUncachedTileFailsWithoutProviderUrl()
 {
     Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
-    const QVariant savedUrl = customUrl->rawValue();
-    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
-    customUrl->setRawValue(QString());
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(customUrl, QString());
 
     // Under unit tests UnitTestTileGenerator serves a tile the cache lacks, unless a miss is forced
-    UnitTestTileGenerator::setForcedMissCount(1);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(1);
 
     TileReplyMockNam networkManager;
     QGeoServiceProvider::Error error = QGeoServiceProvider::NotSupportedError;

@@ -199,6 +199,21 @@ QByteArray syntheticTerrariumTileData(int x, int y, int zoom)
     return _syntheticTerrariumTileData(x, y, zoom);
 }
 
+QString mapProviderType(int index)
+{
+    const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
+    for (const QString& type : UrlFactory::getProviderTypes()) {
+        if (elevationTypes.contains(type)) {
+            continue;
+        }
+        if (index == 0) {
+            return type;
+        }
+        index--;
+    }
+    return QString();
+}
+
 bool resetTileCache()
 {
     bool reset = false;
@@ -211,6 +226,22 @@ bool resetTileCache()
         return false;
     }
     return QTest::qWaitFor([&reset] { return reset; }, TestTimeout::mediumMs());
+}
+
+bool waitForCacheTasks()
+{
+    bool done = false;
+    // Declared after the flag: a signal still queued when this function returns is dropped with its context
+    const QObject context;
+    // The download list of no set: the worker answers it, with an empty list, without looking up a tile
+    QGCGetTileDownloadListTask* const task = new QGCGetTileDownloadListTask(0, 0);
+    (void) QObject::connect(task, &QGCGetTileDownloadListTask::tileListFetched, &context, [&done] { done = true; });
+    (void) QObject::connect(task, &QGCMapTask::error, &context, [&done] { done = true; });
+    if (!getQGCMapEngine()->addTask(task)) {
+        task->deleteLater();
+        return false;
+    }
+    return QTest::qWaitFor([&done] { return done; }, TestTimeout::mediumMs());
 }
 
 void install()

@@ -4,10 +4,10 @@
 
 #include <QtCore/QPointF>
 #include <QtCore/QRegularExpression>
-#include <QtCore/QScopeGuard>
 #include <QtCore/QtNumeric>
 #include <QtTest/QSignalSpy>
 
+#include "Fixtures/RAIIFixtures.h"
 #include "GeoMapCamera.h"
 #include "GeoScene.h"
 #include "HeightField.h"
@@ -337,12 +337,10 @@ void SurfacePatchModelTest::_elevationStoreFollowsMemoryCacheSetting()
     QFETCH(int, megabytes);
     QFETCH(int, expectedTiles);
 
-    Fact* const setting = SettingsManager::instance()->mapsSettings()->maxCacheMemorySize();
-    const QVariant savedValue = setting->rawValue();
-    const auto restoreValue = qScopeGuard([setting, savedValue] { setting->setRawValue(savedValue); });
+    TestFixtures::SettingsFixture saved;
     ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
                      QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    setting->setRawValue(megabytes);
+    saved.setFactValue(SettingsManager::instance()->mapsSettings()->maxCacheMemorySize(), megabytes);
 
     GeoMapCamera camera;
     GeoScene scene;

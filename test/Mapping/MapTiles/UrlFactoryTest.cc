@@ -5,7 +5,6 @@
 
 #include <QtCore/QMap>
 #include <QtCore/QRect>
-#include <QtCore/QScopeGuard>
 
 #include "AppSettings.h"
 #include "ElevationMapProvider.h"
@@ -179,20 +178,19 @@ void UrlFactoryTest::_testTileHashFollowsConfiguredSource()
 
     Fact* const setting = SettingsManager::instance()->appSettings()->property(qPrintable(settingName)).value<Fact*>();
     QVERIFY(setting);
-    const QVariant saved = setting->rawValue();
-    const auto restore = qScopeGuard([setting, saved] { setting->setRawValue(saved); });
+    TestFixtures::SettingsFixture saved;
 
-    setting->setRawValue(sourceA);
+    saved.setFactValue(setting, sourceA);
     QCOMPARE(UrlFactory::getTileHash(providerType, 4270, 2917, 13), hashA);
     // The key the cache worker computes, from the variant it is given
     QCOMPARE(UrlFactory::getTileHash(providerType, 4270, 2917, 13, UrlFactory::cacheVariant(providerType)), hashA);
 
-    setting->setRawValue(sourceB);
+    saved.setFactValue(setting, sourceB);
     const QString hashB = UrlFactory::getTileHash(providerType, 4270, 2917, 13);
     QVERIFY2(hashB != hashA, qPrintable(hashB));
     QCOMPARE(hashB.left(29), hashA.left(29));
 
-    setting->setRawValue(sourceA);
+    saved.setFactValue(setting, sourceA);
     QCOMPARE(UrlFactory::getTileHash(providerType, 4270, 2917, 13), hashA);
 }
 

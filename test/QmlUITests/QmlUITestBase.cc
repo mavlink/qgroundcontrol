@@ -4,11 +4,15 @@
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QEventLoop>
+#include <QtCore/QRectF>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QVariant>
 #include <QtCore/QtMath>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtQml/QQmlApplicationEngine>
+#include <QtQml/QQmlContext>
+#include <QtQml/QQmlExpression>
 #include <QtQml/QQmlIncubationController>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
@@ -20,6 +24,7 @@
 #include "AppSettings.h"
 #include "ColoredSvgImageProvider.h"
 #include "Fact.h"
+#include "FlyViewSettings.h"
 #include "MAVLinkProtocol.h"
 #include "MockLink.h"
 #include "MultiVehicleManager.h"
@@ -87,23 +92,42 @@ void QmlUITestBase::setUseGeoMapPlanEngine(bool use)
     if (!_savedUseGeoMapPlanEngine) {
         _savedUseGeoMapPlanEngine = flag->rawValue().toBool();
     }
-    _setUseGeoMapPlanEngineFact(use);
+    _setGeoMapEngineFact(flag, use);
 }
 
 void QmlUITestBase::_restoreUseGeoMapPlanEngine()
 {
     if (_savedUseGeoMapPlanEngine) {
-        _setUseGeoMapPlanEngineFact(*_savedUseGeoMapPlanEngine);
+        _setGeoMapEngineFact(SettingsManager::instance()->planViewSettings()->useGeoMapEngine(),
+                             *_savedUseGeoMapPlanEngine);
         _savedUseGeoMapPlanEngine.reset();
     }
 }
 
-void QmlUITestBase::_setUseGeoMapPlanEngineFact(bool use)
+void QmlUITestBase::setUseGeoMapFlyEngine(bool use)
+{
+    Fact* const flag = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
+    if (!_savedUseGeoMapFlyEngine) {
+        _savedUseGeoMapFlyEngine = flag->rawValue().toBool();
+    }
+    _setGeoMapEngineFact(flag, use);
+}
+
+void QmlUITestBase::_restoreUseGeoMapFlyEngine()
+{
+    if (_savedUseGeoMapFlyEngine) {
+        _setGeoMapEngineFact(SettingsManager::instance()->flyViewSettings()->useGeoMapEngine(),
+                             *_savedUseGeoMapFlyEngine);
+        _savedUseGeoMapFlyEngine.reset();
+    }
+}
+
+void QmlUITestBase::_setGeoMapEngineFact(Fact* engineFact, bool use)
 {
     // The setting requires a restart, which the app announces on every change
     ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
                      QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    SettingsManager::instance()->planViewSettings()->useGeoMapEngine()->setRawValue(use);
+    engineFact->setRawValue(use);
 }
 
 static QQuickItem* findVisibleItemImmediate(QQuickItem* root, const QString& objectName)
@@ -411,6 +435,42 @@ bool QmlUITestBase::clickItemFraction(const QString& objectName, qreal fractionX
         return false;
     }
     return _clickItemAt(item, fractionX, fractionY, objectName);
+}
+
+void QmlUITestBase::mouseDrag(Qt::MouseButton button, const QPoint& from, const QPoint& delta, int steps)
+{
+    QTest::mousePress(_window, button, Qt::NoModifier, from);
+    for (int i = 1; i <= steps; i++) {
+        QTest::mouseMove(_window, from + ((delta * i) / steps));
+    }
+    QTest::mouseRelease(_window, button, Qt::NoModifier, from + delta);
+}
+
+QPointF QmlUITestBase::mapPoint(QQuickItem* map, const QGeoCoordinate& coordinate)
+{
+    // Both engines' maps have fromCoordinate
+    QQmlExpression expression(qmlContext(map), map,
+                              QStringLiteral("fromCoordinate(QtPositioning.coordinate(%1, %2), false)")
+                                  .arg(coordinate.latitude(), 0, 'f', 7)
+                                  .arg(coordinate.longitude(), 0, 'f', 7));
+    return expression.evaluate().toPointF();
+}
+
+bool QmlUITestBase::mapShowsCoordinates(QQuickItem* map, const QList<QGeoCoordinate>& coordinates)
+{
+    const QRectF mapRect(0, 0, map->width(), map->height());
+    if (mapRect.isEmpty()) {
+        return false;  // the map was just shown and is not laid out yet
+    }
+    QRectF shownRect;
+    for (const QGeoCoordinate& coordinate : coordinates) {
+        const QPointF point = mapPoint(map, coordinate);
+        if (!mapRect.adjusted(-1, -1, 1, 1).contains(point)) {
+            return false;
+        }
+        shownRect = shownRect.isNull() ? QRectF(point, QSizeF(1, 1)) : shownRect.united(QRectF(point, QSizeF(1, 1)));
+    }
+    return qMax(shownRect.width(), shownRect.height()) > (qMin(mapRect.width(), mapRect.height()) / 4);
 }
 
 QQuickItem* QmlUITestBase::findVisibleItemScrolled(const QString& objectName, const QString& flickableObjectName)

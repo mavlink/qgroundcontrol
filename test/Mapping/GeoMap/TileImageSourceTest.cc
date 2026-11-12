@@ -14,19 +14,6 @@
 
 namespace {
 
-// Any registered map provider works: the unit-test tile generator serves a
-// deterministic placeholder image on every cache miss, so no network is hit
-QString mapType()
-{
-    const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
-    for (const QString& type : UrlFactory::getProviderTypes()) {
-        if (!elevationTypes.contains(type)) {
-            return type;
-        }
-    }
-    return QString();
-}
-
 const TileMath::TileKey kKey{4302, 2867, 13};  // Zurich area
 
 }  // namespace
@@ -40,7 +27,7 @@ void TileImageSourceTest::initTestCase()
 
 void TileImageSourceTest::_tileDelivered()
 {
-    const QString type = mapType();
+    const QString type = UnitTestTileGenerator::mapProviderType();
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
 
     TileImageSource source(type);
@@ -63,7 +50,7 @@ void TileImageSourceTest::_tileDelivered()
 
 void TileImageSourceTest::_cancelledRequestSilent()
 {
-    const QString type = mapType();
+    const QString type = UnitTestTileGenerator::mapProviderType();
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
 
     TileImageSource source(type);
@@ -84,7 +71,7 @@ void TileImageSourceTest::_cancelledRequestSilent()
 
 void TileImageSourceTest::_multipleRequestsIndependent()
 {
-    const QString type = mapType();
+    const QString type = UnitTestTileGenerator::mapProviderType();
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
 
     TileImageSource source(type);
@@ -128,7 +115,7 @@ void TileImageSourceTest::_unknownProviderFails()
 
 void TileImageSourceTest::_networkFallbackDeliversAndCaches()
 {
-    const QString type = mapType();
+    const QString type = UnitTestTileGenerator::mapProviderType();
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
     const TileMath::TileKey key{kKey.x + 10, kKey.y, kKey.zoom};  // unique: write-back caches this tile
 
@@ -142,8 +129,7 @@ void TileImageSourceTest::_networkFallbackDeliversAndCaches()
     // Two forced generator misses: the first request must fall back to the
     // network; the second must be served by the write-back cached tile (the
     // DB hit precedes the generator, so the second miss stays unconsumed)
-    UnitTestTileGenerator::setForcedMissCount(2);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(2);
 
     source.requestTileImage(key);
     QTRY_COMPARE_WITH_TIMEOUT(readySpy.count(), 1, 5000);
@@ -158,7 +144,7 @@ void TileImageSourceTest::_networkFallbackDeliversAndCaches()
 
 void TileImageSourceTest::_networkErrorFails()
 {
-    const QString type = mapType();
+    const QString type = UnitTestTileGenerator::mapProviderType();
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
     const TileMath::TileKey key{kKey.x + 11, kKey.y, kKey.zoom};
 
@@ -168,8 +154,7 @@ void TileImageSourceTest::_networkErrorFails()
     QSignalSpy readySpy(&source, &TileImageSource::tileImageReady);
     QSignalSpy failedSpy(&source, &TileImageSource::tileImageFailed);
 
-    UnitTestTileGenerator::setForcedMissCount(1);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(1);
 
     // Fetch failures must be visible without logging configuration
     expectLogMessage("GeoMap.TileImageSource", QtWarningMsg, QRegularExpression(QStringLiteral("network error")));
@@ -183,7 +168,7 @@ void TileImageSourceTest::_networkErrorFails()
 
 void TileImageSourceTest::_networkEmptyBodyFails()
 {
-    const QString type = mapType();
+    const QString type = UnitTestTileGenerator::mapProviderType();
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
     const TileMath::TileKey key{kKey.x + 12, kKey.y, kKey.zoom};
 
@@ -192,8 +177,7 @@ void TileImageSourceTest::_networkEmptyBodyFails()
     QSignalSpy readySpy(&source, &TileImageSource::tileImageReady);
     QSignalSpy failedSpy(&source, &TileImageSource::tileImageFailed);
 
-    UnitTestTileGenerator::setForcedMissCount(1);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(1);
 
     expectLogMessage("GeoMap.TileImageSource", QtWarningMsg, QRegularExpression(QStringLiteral("empty body")));
     const int requestId = source.requestTileImage(key);
@@ -208,7 +192,7 @@ void TileImageSourceTest::_networkGarbageBodyFailsAndNotCached()
     // An HTTP-200 non-image body (e.g. an error page) must fail the request
     // and must NOT be written back to the cache — a cached invalid tile would
     // fail every retry from then on
-    const QString type = mapType();
+    const QString type = UnitTestTileGenerator::mapProviderType();
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
     const TileMath::TileKey key{kKey.x + 13, kKey.y, kKey.zoom};
 
@@ -218,8 +202,7 @@ void TileImageSourceTest::_networkGarbageBodyFailsAndNotCached()
     QSignalSpy readySpy(&source, &TileImageSource::tileImageReady);
     QSignalSpy failedSpy(&source, &TileImageSource::tileImageFailed);
 
-    UnitTestTileGenerator::setForcedMissCount(2);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(2);
 
     expectLogMessage("GeoMap.TileImageSource", QtWarningMsg, QRegularExpression(QStringLiteral("network body is not")));
     source.requestTileImage(key);
@@ -265,8 +248,7 @@ void TileImageSourceTest::_missingTileReported()
     QSignalSpy failedSpy(&source, &TileImageSource::tileImageFailed);
     QSignalSpy missingSpy(&source, &TileImageSource::tileImageMissing);
 
-    UnitTestTileGenerator::setForcedMissCount(1);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(1);
 
     // No tile is no failure: nothing is logged, which the log check of the test would report
     const int requestId = source.requestTileImage(TileMath::TileKey{tileX, kKey.y, kKey.zoom});
@@ -283,7 +265,7 @@ void TileImageSourceTest::_cachedUnusableTileFallsBackToNetwork()
     // Pre-seed the shared cache with an undecodable body: the cache-hit path
     // must treat it as a miss and recover via the network — failing would
     // wedge the tile on the same bytes every paced retry
-    const QString type = mapType();
+    const QString type = UnitTestTileGenerator::mapProviderType();
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
     const TileMath::TileKey key{kKey.x + 15, kKey.y, kKey.zoom};
     // The cache worker runs tasks in order: the store lands before the lookup
@@ -312,7 +294,7 @@ void TileImageSourceTest::_cachedUnusableTileFallsBackToNetwork()
 
 void TileImageSourceTest::_cancelAbortsNetworkFetch()
 {
-    const QString type = mapType();
+    const QString type = UnitTestTileGenerator::mapProviderType();
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
     const TileMath::TileKey key{kKey.x + 16, kKey.y, kKey.zoom};
 
@@ -323,8 +305,7 @@ void TileImageSourceTest::_cancelAbortsNetworkFetch()
     QSignalSpy readySpy(&source, &TileImageSource::tileImageReady);
     QSignalSpy failedSpy(&source, &TileImageSource::tileImageFailed);
 
-    UnitTestTileGenerator::setForcedMissCount(1);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(1);
 
     const int requestId = source.requestTileImage(key);
     QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, 1, 5000);

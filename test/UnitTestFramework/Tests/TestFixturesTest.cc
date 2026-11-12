@@ -293,6 +293,21 @@ void TestFixturesTest::_testSettingsFixtureFactValue()
     QCOMPARE(testFact->rawValue(), originalValue);
 }
 
+void TestFixturesTest::_testSettingsFixtureFactSetTwice()
+{
+    Fact* const testFact = SettingsManager::instance()->appSettings()->offlineEditingVehicleClass();
+    const QVariant originalValue = testFact->rawValue();
+    const QVariant firstValue = (originalValue.toInt() + 1) % 5;
+    const QVariant secondValue = (originalValue.toInt() + 2) % 5;
+    {
+        SettingsFixture settings;
+        settings.setFactValue(testFact, firstValue);
+        settings.setFactValue(testFact, secondValue);
+        QCOMPARE(testFact->rawValue(), secondValue);
+    }
+    QCOMPARE(testFact->rawValue(), originalValue);
+}
+
 // ============================================================================
 // LoggingCategoryFixture Tests
 // ============================================================================

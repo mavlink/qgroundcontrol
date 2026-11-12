@@ -5,13 +5,18 @@
 #include <optional>
 
 #include <QtCore/QHash>
+#include <QtCore/QList>
+#include <QtCore/QPoint>
+#include <QtCore/QPointF>
 #include <QtCore/QPointer>
 #include <QtCore/QUrl>
 #include <QtQml/QQmlAbstractUrlInterceptor>
 
 #include "UnitTest.h"
 
+class Fact;
 class MockLink;
+class QGeoCoordinate;
 class QQmlApplicationEngine;
 class QQuickItem;
 class QQuickWindow;
@@ -53,6 +58,7 @@ protected slots:
         _qmlUrlOverrides.clear();
         _restoreUseTabbedPlanPanel();
         _restoreUseGeoMapPlanEngine();
+        _restoreUseGeoMapFlyEngine();
         UnitTest::cleanup();
     }
 
@@ -74,6 +80,11 @@ protected:
     /// Selects the GeoMap engine (true) or the QtLocation map (false) for the Plan View map on the next startUI().
     /// Restored after each test like setUseTabbedPlanPanel().
     void setUseGeoMapPlanEngine(bool use);
+
+    /// Selects the GeoMap engine (true) or the QtLocation map (false) for the Fly View map on the next startUI(), and
+    /// for the maps that follow the Fly View's engine: those of the offline map editor and of the Log Viewer.
+    /// Restored after each test like setUseTabbedPlanPanel().
+    void setUseGeoMapFlyEngine(bool use);
 
     /// Close the QML window and wait for it to settle.
     void closeUIWindow();
@@ -109,6 +120,16 @@ protected:
     /// within the item ((0.5, 0.5) is the center). Returns false if the item
     /// cannot be found.
     bool clickItemFraction(const QString& objectName, qreal fractionX, qreal fractionY);
+
+    /// Drags with \a button from the window position \a from by \a delta, in \a steps moves of equal length.
+    void mouseDrag(Qt::MouseButton button, const QPoint& from, const QPoint& delta, int steps = 10);
+
+    /// Where \a map, of either engine, draws \a coordinate, in the map's own pixels.
+    static QPointF mapPoint(QQuickItem* map, const QGeoCoordinate& coordinate);
+
+    /// True once \a map, of either engine, shows all of \a coordinates, and large: a place far away or at world
+    /// scale does not count.
+    static bool mapShowsCoordinates(QQuickItem* map, const QList<QGeoCoordinate>& coordinates);
 
     /// Find an item that may live in a virtualized view (ListView/TableView/
     /// TreeView) inside the flickable with \a flickableObjectName. Virtualized
@@ -236,10 +257,12 @@ private:
     std::unique_ptr<QQmlAbstractUrlInterceptor> _qmlUrlInterceptor;
     std::optional<bool> _savedUseTabbedPlanPanel;
     std::optional<bool> _savedUseGeoMapPlanEngine;
+    std::optional<bool> _savedUseGeoMapFlyEngine;
 
     void _restoreUseTabbedPlanPanel();
     void _restoreUseGeoMapPlanEngine();
-    void _setUseGeoMapPlanEngineFact(bool use);
+    void _restoreUseGeoMapFlyEngine();
+    void _setGeoMapEngineFact(Fact* engineFact, bool use);
 
     /// Shared implementation for the verify* helpers: find the visible item,
     /// guard against the property not existing (an invalid QVariant silently

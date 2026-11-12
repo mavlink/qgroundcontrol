@@ -29,17 +29,6 @@ constexpr int kTileSetTestManyTilesZoom = 19;
 constexpr int kTileSetTestRequestsAtOnce = 6;
 constexpr quint32 kTileSetTestDownloadListSize = 256;
 
-QString tileSetTestMapType()
-{
-    const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
-    for (const QString& type : UrlFactory::getProviderTypes()) {
-        if (!elevationTypes.contains(type)) {
-            return type;
-        }
-    }
-    return QString();
-}
-
 /// A set of \a providerType that is saved in the tile cache database and has downloaded nothing. Its region lies
 /// around \a longitude, and its zooms are kTileSetTestMinZoom to \a maxZoom. Null when it could not be saved.
 std::unique_ptr<QGCCachedTileSet> tileSetTestSavedSet(const QString& name, const QString& providerType,
@@ -82,22 +71,6 @@ std::unique_ptr<QGCCachedTileSet> tileSetTestSavedSet(const QString& name, const
         return nullptr;
     }
     return std::unique_ptr<QGCCachedTileSet>(newSet);
-}
-
-/// Waits until the database worker has run the tasks queued so far, and the main thread has handled what they
-/// reported: the worker runs its tasks in order
-[[nodiscard]] bool tileSetTestTasksDone()
-{
-    bool done = false;
-    // Declared after what its signal writes, so that a late signal is dropped
-    const QObject sentinelContext;
-    QGCFetchTileTask* const sentinelTask = new QGCFetchTileTask(QStringLiteral("no such tile"));
-    (void) QObject::connect(sentinelTask, &QGCMapTask::error, &sentinelContext, [&done] { done = true; });
-    if (!getQGCMapEngine()->addTask(sentinelTask)) {
-        sentinelTask->deleteLater();
-        return false;
-    }
-    return QTest::qWaitFor([&done] { return done; }, TestTimeout::mediumMs());
 }
 
 }  // namespace
@@ -352,7 +325,7 @@ void QGCCachedTileSetTest::_testDownload_data()
     QTest::addColumn<bool>("lastTileFails");
     QTest::addColumn<QString>("expectedWarning");
 
-    const QString mapType = tileSetTestMapType();
+    const QString mapType = UnitTestTileGenerator::mapProviderType();
 
     QTest::newRow("tiles stored in the set")
         << mapType << 8.50 << 16 << tileReplyPngBody() << 200 << true << false << false << QString();
@@ -439,7 +412,7 @@ void QGCCachedTileSetTest::_testDownload()
     connect(fetchSetsTask, &QGCFetchTileSetTask::tileSetFetched, &fetchSetsContext,
             [&databaseSets](QGCCachedTileSet* databaseSet) { databaseSets.append(databaseSet); });
     QVERIFY(getQGCMapEngine()->addTask(fetchSetsTask));
-    QVERIFY(tileSetTestTasksDone());
+    QVERIFY(UnitTestTileGenerator::waitForCacheTasks());
 
     const auto databaseSet =
         std::find_if(databaseSets.cbegin(), databaseSets.cend(),
@@ -468,7 +441,7 @@ void QGCCachedTileSetTest::_testCancelDownload()
 
     const QString name = QStringLiteral("cancel test: %1").arg(QString::fromLatin1(QTest::currentDataTag()));
     const std::unique_ptr<QGCCachedTileSet> set =
-        tileSetTestSavedSet(name, tileSetTestMapType(), longitude, kTileSetTestManyTilesZoom);
+        tileSetTestSavedSet(name, UnitTestTileGenerator::mapProviderType(), longitude, kTileSetTestManyTilesZoom);
     QVERIFY(set);
     QCOMPARE_GT(set->totalTileCount(), static_cast<quint32>(kTileSetTestRequestsAtOnce));
     QCOMPARE_LT(set->totalTileCount(), kTileSetTestDownloadListSize);
@@ -523,7 +496,7 @@ void QGCCachedTileSetTest::_testResumeAfterCancel()
 
     const QString name = QStringLiteral("resume test: %1").arg(QString::fromLatin1(QTest::currentDataTag()));
     const std::unique_ptr<QGCCachedTileSet> set =
-        tileSetTestSavedSet(name, tileSetTestMapType(), longitude, kTileSetTestManyTilesZoom);
+        tileSetTestSavedSet(name, UnitTestTileGenerator::mapProviderType(), longitude, kTileSetTestManyTilesZoom);
     QVERIFY(set);
     const quint32 tileCount = set->totalTileCount();
     QCOMPARE_GT(tileCount, static_cast<quint32>(kTileSetTestRequestsAtOnce));
@@ -544,7 +517,7 @@ void QGCCachedTileSetTest::_testResumeAfterCancel()
     QVERIFY(set->downloading());
     // No request is answered before the set has all its download lists: one list too many would add its tiles to
     // those that the set downloads
-    QVERIFY(tileSetTestTasksDone());
+    QVERIFY(UnitTestTileGenerator::waitForCacheTasks());
     QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, abortedCount + kTileSetTestRequestsAtOnce, TestTimeout::mediumMs());
     nam.holdReplies = false;
     const QList<QPointer<TileReplyCannedReply>> heldReplies = nam.replies;

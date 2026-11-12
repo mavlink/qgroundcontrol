@@ -10,6 +10,7 @@
 #include <QtTest/QSignalSpy>
 
 #include "AppSettings.h"
+#include "Fixtures/RAIIFixtures.h"
 #include "MapProvider.h"
 #include "QGCMapEngine.h"
 #include "QGCMapTasks.h"
@@ -25,13 +26,7 @@ namespace {
 /// Any map provider works: under unit tests a cache miss is served by UnitTestTileGenerator unless a miss is forced
 int tileReplyMapId()
 {
-    const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
-    for (const QString& type : UrlFactory::getProviderTypes()) {
-        if (!elevationTypes.contains(type)) {
-            return UrlFactory::getMapIdFromProviderType(type);
-        }
-    }
-    return -1;
+    return UrlFactory::getMapIdFromProviderType(UnitTestTileGenerator::mapProviderType());
 }
 
 constexpr int kTileX = 4302;
@@ -46,16 +41,6 @@ const QString kTileReplySourceB = QStringLiteral("https://b.example/{z}/{x}/{y}.
 /// What a captive portal answers in place of a tile, with the HTTP status of a tile
 const QByteArray kTileReplyPageBody = QByteArrayLiteral("<html><body>Sign in to this network</body></html>");
 
-/// The cache worker answers lookups in order: once this one is answered, so are the lookups started before it
-bool tileReplyCacheLookupsAnswered()
-{
-    TileReplyMockNam nam;
-    QGCTileReply sentinel(&nam, tileReplyMapId(), kTileX + 4, kTileY, kTileZoom);
-    QSignalSpy sentinelSpy(&sentinel, &QGCTileReply::finished);
-    sentinel.start();
-    return sentinelSpy.wait(TestTimeout::mediumMs());
-}
-
 enum class TileReplyCacheAnswer
 {
     None,
@@ -67,8 +52,7 @@ enum class TileReplyCacheAnswer
 /// answer with a tile of its own, and leaves no forced miss behind.
 TileReplyCacheAnswer tileReplyCacheAnswer(const QString& hash)
 {
-    UnitTestTileGenerator::setForcedMissCount(1);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(1);
 
     TileReplyCacheAnswer answer = TileReplyCacheAnswer::None;
     // Declared after what its signals write, so that a late signal is dropped
@@ -139,8 +123,7 @@ void QGCTileReplyTest::_serverTileStoredInCache()
     QVERIFY(!nam.body.isEmpty());
 
     // The second forced miss stays unconsumed when the stored tile answers the second lookup
-    UnitTestTileGenerator::setForcedMissCount(2);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(2);
 
     QGCTileReply fetched(&nam, tileReplyMapId(), tileX, kTileY, kTileZoom);
     QSignalSpy fetchedSpy(&fetched, &QGCTileReply::finished);
@@ -204,17 +187,15 @@ void QGCTileReplyTest::_serverFailure()
 
     // The Custom URL map fetches from the URL that the user set
     Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
-    const QVariant savedUrl = customUrl->rawValue();
-    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
-    customUrl->setRawValue(kTileReplySourceA);
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(customUrl, kTileReplySourceA);
 
     TileReplyMockNam nam;
     nam.body = body;
     nam.error = networkError;
     nam.httpStatus = httpStatus;
 
-    UnitTestTileGenerator::setForcedMissCount(1);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    UnitTestTileGenerator::ForcedMisses forcedMisses(1);
 
     QGCTileReply failed(&nam, mapId, tileX, kTileY, kTileZoom);
     QSignalSpy failedSpy(&failed, &QGCTileReply::finished);
@@ -227,7 +208,7 @@ void QGCTileReplyTest::_serverFailure()
     QCOMPARE(tileReplyCacheAnswer(failed.hash()), TileReplyCacheAnswer::Missing);
 
     // The next request asks the server again
-    UnitTestTileGenerator::setForcedMissCount(1);
+    forcedMisses.setCount(1);
     nam.body = tileReplyPngBody();
     nam.error = QNetworkReply::NoError;
     nam.httpStatus = 200;
@@ -280,7 +261,7 @@ void QGCTileReplyTest::_secondStartDoesNothing()
     reply.start();
 
     // What a further start had begun would be answered before this lookup is
-    QVERIFY(tileReplyCacheLookupsAnswered());
+    QVERIFY(UnitTestTileGenerator::waitForCacheTasks());
     QCOMPARE(finishedSpy.count(), 1);
 }
 
@@ -304,8 +285,7 @@ void QGCTileReplyTest::_validatorRejectsCachedAndServerTiles()
     QCOMPARE(nam.requestCount, 1);
 
     // A rejected server tile fails and is not stored: a request accepting any tile still has to ask the server
-    UnitTestTileGenerator::setForcedMissCount(2);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(2);
     nam.body = tileReplyPngBody(Qt::red);
     QVERIFY(!nam.body.isEmpty() && (nam.body != png));
     QGCTileReply rejected(&nam, tileReplyMapId(), kTileX + 21, kTileY, kTileZoom);
@@ -390,8 +370,7 @@ void QGCTileReplyTest::_abortedReplyStaysSilent()
     nam.body = tileReplyPngBody();
     nam.holdReplies = true;
 
-    UnitTestTileGenerator::setForcedMissCount(1);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(1);
 
     QGCTileReply reply(&nam, tileReplyMapId(), kTileX + 2, kTileY, kTileZoom);
     QSignalSpy finishedSpy(&reply, &QGCTileReply::finished);
@@ -433,7 +412,7 @@ void QGCTileReplyTest::_abortedBeforeQueuedStepStaysSilent()
     reply.abort();
 
     // The step that start() queued is delivered before this lookup is answered
-    QVERIFY(tileReplyCacheLookupsAnswered());
+    QVERIFY(UnitTestTileGenerator::waitForCacheTasks());
     QVERIFY(finishedSpy.isEmpty());
     QVERIFY(!reply.isFinished());
     QCOMPARE(nam.requestCount, 0);
@@ -457,8 +436,7 @@ void QGCTileReplyTest::_deletedDuringCacheLookup()
 
 void QGCTileReplyTest::_networkManagerDestroyedFirst()
 {
-    UnitTestTileGenerator::setForcedMissCount(2);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(2);
 
     // Gone before the cache miss: there is nothing to ask the server with
     auto nam = std::make_unique<TileReplyMockNam>();
@@ -491,8 +469,7 @@ void QGCTileReplyTest::_concurrentRequestsShareOneFetch()
     TileReplyMockNam waitingNam;
     waitingNam.body = png;
 
-    UnitTestTileGenerator::setForcedMissCount(4);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(4);
 
     const int mapId = tileReplyMapId();
     const int tileX = kTileX + 50;
@@ -509,7 +486,7 @@ void QGCTileReplyTest::_concurrentRequestsShareOneFetch()
     waiting.start();
     rejecting.start();
     withdrawn.start();
-    QVERIFY(tileReplyCacheLookupsAnswered());
+    QVERIFY(UnitTestTileGenerator::waitForCacheTasks());
     QCOMPARE(fetchingNam.requestCount, 1);
     QCOMPARE(waitingNam.requestCount, 0);
 
@@ -553,15 +530,14 @@ void QGCTileReplyTest::_waitingRequestFetchesAfterFetchWithoutTile()
     TileReplyMockNam waitingNam;
     waitingNam.body = png;
 
-    UnitTestTileGenerator::setForcedMissCount(2);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(2);
 
     auto fetching = std::make_unique<QGCTileReply>(&fetchingNam, tileReplyMapId(), tileX, kTileY, kTileZoom);
     QGCTileReply waiting(&waitingNam, tileReplyMapId(), tileX, kTileY, kTileZoom);
     QSignalSpy waitingSpy(&waiting, &QGCTileReply::finished);
     fetching->start();
     waiting.start();
-    QVERIFY(tileReplyCacheLookupsAnswered());
+    QVERIFY(UnitTestTileGenerator::waitForCacheTasks());
     QCOMPARE(fetchingNam.requestCount, 1);
     QCOMPARE(waitingNam.requestCount, 0);
 
@@ -608,8 +584,7 @@ void QGCTileReplyTest::_waitingRequestsGetErrorOfFetch()
     waitingNam.body = tileReplyPngBody();
 
     constexpr int kWaitingCount = 3;
-    UnitTestTileGenerator::setForcedMissCount(1 + kWaitingCount);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(1 + kWaitingCount);
 
     const int mapId = tileReplyMapId();
     QGCTileReply fetching(&fetchingNam, mapId, tileX, kTileY, kTileZoom);
@@ -620,7 +595,7 @@ void QGCTileReplyTest::_waitingRequestsGetErrorOfFetch()
         waiting.append(new QGCTileReply(&waitingNam, mapId, tileX, kTileY, kTileZoom, &waitingOwner));
         waiting.constLast()->start();
     }
-    QVERIFY(tileReplyCacheLookupsAnswered());
+    QVERIFY(UnitTestTileGenerator::waitForCacheTasks());
     QCOMPARE(fetchingNam.requestCount, 1);
 
     fetchingNam.replies.at(0)->finishNow();
@@ -644,8 +619,7 @@ void QGCTileReplyTest::_tileSetRequestFetchesForItself()
     TileReplyMockNam setNam;
     setNam.holdReplies = true;
 
-    UnitTestTileGenerator::setForcedMissCount(1);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(1);
 
     const int tileX = kTileX + 54;
     QGCTileReply forMap(&mapNam, tileReplyMapId(), tileX, kTileY, kTileZoom);
@@ -661,13 +635,11 @@ void QGCTileReplyTest::_tileSetRequestFetchesForItself()
 void QGCTileReplyTest::_tileOfOtherSourceNotServed()
 {
     Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
-    const QVariant savedUrl = customUrl->rawValue();
-    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
+    TestFixtures::SettingsFixture saved;
     const int mapId = UrlFactory::getMapIdFromProviderType(kTileReplyCustomUrlType);
 
     // Each source misses the cache once; when it is configured again, its stored tile answers
-    UnitTestTileGenerator::setForcedMissCount(2);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(2);
 
     struct Request
     {
@@ -688,7 +660,7 @@ void QGCTileReplyTest::_tileOfOtherSourceNotServed()
     TileReplyMockNam nam;
     int serverRequests = 0;
     for (const Request& request : requests) {
-        customUrl->setRawValue(request.source);
+        saved.setFactValue(customUrl, request.source);
         nam.body = request.tile;
         if (!request.cached) {
             serverRequests++;
@@ -708,18 +680,16 @@ void QGCTileReplyTest::_tileOfOtherSourceNotServed()
 void QGCTileReplyTest::_sourceChangedDuringRequest()
 {
     Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
-    const QVariant savedUrl = customUrl->rawValue();
-    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
+    TestFixtures::SettingsFixture saved;
     const int mapId = UrlFactory::getMapIdFromProviderType(kTileReplyCustomUrlType);
 
-    UnitTestTileGenerator::setForcedMissCount(1);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(1);
 
     TileReplyMockNam nam;
     nam.body = tileReplyPngBody();
 
     // The source changes while the cache is asked for the tile of source A: the tile is fetched from source B
-    customUrl->setRawValue(kTileReplySourceA);
+    saved.setFactValue(customUrl, kTileReplySourceA);
     QGCTileReply fetched(&nam, mapId, kTileX + 31, kTileY, kTileZoom);
     QSignalSpy fetchedSpy(&fetched, &QGCTileReply::finished);
     fetched.start();
@@ -760,8 +730,7 @@ void QGCTileReplyTest::_requestIdentity()
     TileReplyMockNam nam;
     nam.body = tileReplyPngBody();
 
-    UnitTestTileGenerator::setForcedMissCount(1);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(1);
 
     QGCTileReply reply(&nam, UrlFactory::getMapIdFromProviderType(providerType), tileX, kTileY, kTileZoom);
     QSignalSpy finishedSpy(&reply, &QGCTileReply::finished);

@@ -83,15 +83,10 @@ std::optional<double> radiusToleranceMeters(const GeoMapCamera* cam, const QGeoC
 
 void FlyViewGeoUITest::_testEngineEnabledAtStartup()
 {
-    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
-    const QVariant savedEnabled = geoEngineFact->rawValue();
-    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
+    setUseGeoMapFlyEngine(true);
     Fact* const debugUIFact = SettingsManager::instance()->flyViewSettings()->geoMapDebugUI();
     const QVariant savedDebugUI = debugUIFact->rawValue();
     const auto debugUIGuard = qScopeGuard([debugUIFact, savedDebugUI] { debugUIFact->setRawValue(savedDebugUI); });
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    geoEngineFact->setRawValue(true);
     debugUIFact->setRawValue(false);
 
     // Seed a non-default saved map view (QGroundControlQmlGlobal settings). The
@@ -203,10 +198,7 @@ void FlyViewGeoUITest::_testEngineEnabledAtStartup()
 
 void FlyViewGeoUITest::_testFlyViewEngineSwap()
 {
-    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
-    const QVariant savedEnabled = geoEngineFact->rawValue();
-    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
-    geoEngineFact->setRawValue(false);
+    setUseGeoMapFlyEngine(false);
 
     startUI();
     if (QTest::currentTestFailed())
@@ -224,7 +216,7 @@ void FlyViewGeoUITest::_testFlyViewEngineSwap()
     // The setting is qgcRebootRequired: toggling it at runtime must announce
     // the restart and must NOT swap the engine until the app restarts
     expectAppMessage(QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    geoEngineFact->setRawValue(true);
+    SettingsManager::instance()->flyViewSettings()->useGeoMapEngine()->setRawValue(true);
     verifyExpectedLogMessage();
     QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("flyViewMap")),
              "QtLocation map disappeared after toggling the reboot-required engine setting");
@@ -240,12 +232,7 @@ void FlyViewGeoUITest::_testFlyViewEngineSwap()
 // two-finger twist).
 void FlyViewGeoUITest::_testCameraGestures()
 {
-    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
-    const QVariant savedEnabled = geoEngineFact->rawValue();
-    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    geoEngineFact->setRawValue(true);
+    setUseGeoMapFlyEngine(true);
 
     startUI();
     if (QTest::currentTestFailed())
@@ -278,15 +265,6 @@ void FlyViewGeoUITest::_testCameraGestures()
     // Known pose before every gesture: mercator origin, heading 0, tilt 30,
     // distance 1500 (tilted so orbit/tilt deltas are observable both ways)
     const auto resetPose = [cam] { cam->lookAt(QGeoCoordinate(0, 0), 0, 30, 1500); };
-
-    const auto mouseDrag = [this](Qt::MouseButton button, const QPoint& from, const QPoint& delta) {
-        QTest::mousePress(_window, button, Qt::NoModifier, from);
-        constexpr int steps = 10;
-        for (int i = 1; i <= steps; i++) {
-            QTest::mouseMove(_window, from + ((delta * i) / steps));
-        }
-        QTest::mouseRelease(_window, button, Qt::NoModifier, from + delta);
-    };
 
     // Left drag: pan only — center moves, orientation and distance unchanged
     resetPose();
@@ -452,12 +430,7 @@ void FlyViewGeoUITest::_testCameraGestures()
 // control animates heading back to north-up
 void FlyViewGeoUITest::_testModeToggleAndCompass()
 {
-    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
-    const QVariant savedEnabled = geoEngineFact->rawValue();
-    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    geoEngineFact->setRawValue(true);
+    setUseGeoMapFlyEngine(true);
 
     startUI();
     if (QTest::currentTestFailed())
@@ -498,11 +471,7 @@ void FlyViewGeoUITest::_testModeToggleAndCompass()
 
     // Tilt lock: a vertical right-drag in 2D must not pitch the map
     const QPoint center = viewport->mapToScene(QPointF(viewport->width() / 2, viewport->height() / 2)).toPoint();
-    QTest::mousePress(_window, Qt::RightButton, Qt::NoModifier, center);
-    for (int i = 1; i <= 5; i++) {
-        QTest::mouseMove(_window, center + QPoint(0, -i * 20));
-    }
-    QTest::mouseRelease(_window, Qt::RightButton, Qt::NoModifier, center + QPoint(0, -100));
+    mouseDrag(Qt::RightButton, center, QPoint(0, -100), 5);
     QCOMPARE(cam->tilt(), 0.0);
 
     // Compass reset from a heading past 180: wraps the short way back to north
@@ -521,12 +490,7 @@ void FlyViewGeoUITest::_testModeToggleAndCompass()
 // elevations).
 void FlyViewGeoUITest::_testDebugHillsToggle()
 {
-    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
-    const QVariant savedEnabled = geoEngineFact->rawValue();
-    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    geoEngineFact->setRawValue(true);
+    setUseGeoMapFlyEngine(true);
 
     startUI();
     if (QTest::currentTestFailed())
@@ -618,12 +582,7 @@ void FlyViewGeoUITest::_testCircleEditHandles()
     QFETCH(qreal, distance);
     QFETCH(double, altitude);
 
-    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
-    const QVariant savedEnabled = geoEngineFact->rawValue();
-    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    geoEngineFact->setRawValue(true);
+    setUseGeoMapFlyEngine(true);
 
     startUI();
     if (QTest::currentTestFailed())
@@ -748,12 +707,7 @@ void FlyViewGeoUITest::_testLoiterRadiusEdit()
         QSKIP("ArduPilot support not registered in this build");
     }
 
-    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
-    const QVariant savedEnabled = geoEngineFact->rawValue();
-    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    geoEngineFact->setRawValue(true);
+    setUseGeoMapFlyEngine(true);
 
     runWithMockLink(
         [] { return MockLink::startAPMArduPlaneMockLink(); },
@@ -848,12 +802,7 @@ void FlyViewGeoUITest::_testLoiterRadiusEdit()
 // directions (FlyViewMap parity via QGroundControl.flightMapPosition/Zoom)
 void FlyViewGeoUITest::_testMapViewSharedWithPlanView()
 {
-    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
-    const QVariant savedEnabled = geoEngineFact->rawValue();
-    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    geoEngineFact->setRawValue(true);
+    setUseGeoMapFlyEngine(true);
 
     startUI();
     if (QTest::currentTestFailed())
@@ -899,12 +848,7 @@ void FlyViewGeoUITest::_testMapViewSharedWithPlanView()
 // shared with Plan view still matches what the Fly View shows
 void FlyViewGeoUITest::_testResizeKeepsSharedZoom()
 {
-    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
-    const QVariant savedEnabled = geoEngineFact->rawValue();
-    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    geoEngineFact->setRawValue(true);
+    setUseGeoMapFlyEngine(true);
 
     startUI();
     if (QTest::currentTestFailed())
@@ -937,12 +881,7 @@ void FlyViewGeoUITest::_testResizeKeepsSharedZoom()
 // again, and the PiP zoom is never shared
 void FlyViewGeoUITest::_testPipExitAppliesSharedZoom()
 {
-    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
-    const QVariant savedEnabled = geoEngineFact->rawValue();
-    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    geoEngineFact->setRawValue(true);
+    setUseGeoMapFlyEngine(true);
     // A configured video stream is what makes the Fly View offer PiP
     Fact* const videoSource = SettingsManager::instance()->videoSettings()->videoSource();
     const QVariant savedVideoSource = videoSource->rawValue();
@@ -1008,12 +947,7 @@ void FlyViewGeoUITest::_testZoomToMissionFromVehicle()
 {
     QFETCH(bool, inPip);
 
-    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
-    const QVariant savedEnabled = geoEngineFact->rawValue();
-    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    geoEngineFact->setRawValue(true);
+    setUseGeoMapFlyEngine(true);
     // A configured video stream is what makes the Fly View offer PiP
     Fact* const videoSource = SettingsManager::instance()->videoSettings()->videoSource();
     const QVariant savedVideoSource = videoSource->rawValue();
@@ -1099,12 +1033,7 @@ void FlyViewGeoUITest::_testOverlappingMarkersPicker()
 {
     QFETCH(bool, mode3D);
 
-    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
-    const QVariant savedEnabled = geoEngineFact->rawValue();
-    const auto guard = qScopeGuard([geoEngineFact, savedEnabled] { geoEngineFact->setRawValue(savedEnabled); });
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    geoEngineFact->setRawValue(true);
+    setUseGeoMapFlyEngine(true);
 
     runWithMockLink(
         [] { return MockLink::startPX4MockLinkWithMission(); },

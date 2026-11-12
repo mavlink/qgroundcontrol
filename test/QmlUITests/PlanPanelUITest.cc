@@ -1070,12 +1070,7 @@ void PlanPanelUITest::_testGeoMapRallyMarkerDragMovesOnlyTheCurrentPoint()
     QVERIFY2(map->contains(map->mapFromScene(start)), "The marker is not on screen");
     const QPoint delta(-70, 50);
 
-    QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, start);
-    constexpr int steps = 10;
-    for (int i = 1; i <= steps; i++) {
-        QTest::mouseMove(_window, start + ((delta * i) / steps));
-    }
-    QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, start + delta);
+    mouseDrag(Qt::LeftButton, start, delta);
 
     if (expectMove) {
         QVERIFY2(waitForCondition([&] { return targetCoordinate().distanceTo(before) > 1.0; }, 2000,
@@ -1397,10 +1392,8 @@ void PlanPanelUITest::_testGeoMapTerrainRelativeDragKeepsTheMarkerUnderTheCursor
     const QGeoCoordinate before = targetCoordinate();
     const QPoint start = markerPoint();
     const QPoint delta(-160, 110);
-    QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, start);
     // One big step, so the marker's new height has to come from the pick and not from following the cursor
-    QTest::mouseMove(_window, start + delta);
-    QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, start + delta);
+    mouseDrag(Qt::LeftButton, start, delta, 1);
 
     QVERIFY2(waitForCondition([&] { return targetCoordinate().distanceTo(before) > 1.0; }, 2000,
                               QStringLiteral("marker moved")),

@@ -1,16 +1,15 @@
 #include "SurfacePatchImageryTest.h"
 
 #include <QtCore/QRegularExpression>
-#include <QtCore/QScopeGuard>
 #include <QtGui/QColor>
 #include <QtNetwork/QNetworkReply>
 #include <QtTest/QSignalSpy>
 
 #include "AppSettings.h"
+#include "Fixtures/RAIIFixtures.h"
 #include "GeoMapCamera.h"
 #include "GeoScene.h"
 #include "MapsSettings.h"
-#include "QGCMapUrlEngine.h"
 #include "SettingsManager.h"
 #include "SurfacePatchModel.h"
 #include "TileReplyNetworkMock.h"
@@ -21,30 +20,6 @@ namespace {
 const QGeoCoordinate kCenter(47.3977419, 8.5455938);
 constexpr QSizeF kViewport(800, 600);
 constexpr int kRetryBaseMs = 50;  ///< first delay of the paced retry: the production one is seconds
-
-// The unit-test tile generator serves a placeholder image on every cache miss
-QString mapType()
-{
-    const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
-    for (const QString& type : UrlFactory::getProviderTypes()) {
-        if (!elevationTypes.contains(type)) {
-            return type;
-        }
-    }
-    return QString();
-}
-
-QString otherMapType()
-{
-    const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
-    const QString first = mapType();
-    for (const QString& type : UrlFactory::getProviderTypes()) {
-        if (!elevationTypes.contains(type) && (type != first)) {
-            return type;
-        }
-    }
-    return QString();
-}
 
 void attach(SurfacePatchModel& model, GeoScene& scene, GeoMapCamera& camera)
 {
@@ -100,7 +75,7 @@ void SurfacePatchImageryTest::initTestCase()
 
 void SurfacePatchImageryTest::_imagesArriveForAllPatches()
 {
-    const QString type = mapType();
+    const QString type = UnitTestTileGenerator::mapProviderType();
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
 
     GeoMapCamera camera;
@@ -115,7 +90,7 @@ void SurfacePatchImageryTest::_imagesArriveForAllPatches()
 
 void SurfacePatchImageryTest::_emptyMapTypeDisablesImagery()
 {
-    const QString type = mapType();
+    const QString type = UnitTestTileGenerator::mapProviderType();
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
 
     GeoMapCamera camera;
@@ -137,41 +112,31 @@ void SurfacePatchImageryTest::_emptyMapTypeDisablesImagery()
 
 void SurfacePatchImageryTest::_mapTypeSwitchRefetches()
 {
-    const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
-    QStringList types;
-    for (const QString& type : UrlFactory::getProviderTypes()) {
-        if (!elevationTypes.contains(type)) {
-            types.append(type);
-        }
-        if (types.count() == 2) {
-            break;
-        }
-    }
-    QVERIFY2(types.count() == 2, "need two non-elevation map providers");
+    const QString type = UnitTestTileGenerator::mapProviderType();
+    const QString otherType = UnitTestTileGenerator::mapProviderType(1);
+    QVERIFY2(!type.isEmpty() && !otherType.isEmpty(), "need two non-elevation map providers");
 
     GeoMapCamera camera;
     GeoScene scene;
     SurfacePatchModel model;
     attach(model, scene, camera);
-    model.setMapType(types.first());
+    model.setMapType(type);
     QTRY_COMPARE_WITH_TIMEOUT(rowsWithImage(model), model.rowCount(), 5000);
 
     // Provider switch clears delivered images, then refetches for the new provider
-    model.setMapType(types.last());
+    model.setMapType(otherType);
     QTRY_COMPARE_WITH_TIMEOUT(rowsWithImage(model), model.rowCount(), 5000);
-    QCOMPARE(model.mapType(), types.last());
+    QCOMPARE(model.mapType(), otherType);
 }
 
 void SurfacePatchImageryTest::_sourceChangeRefetches()
 {
     Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
-    const QVariant savedUrl = customUrl->rawValue();
-    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
-    customUrl->setRawValue(QStringLiteral("https://a.example/{z}/{x}/{y}.png"));
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(customUrl, QStringLiteral("https://a.example/{z}/{x}/{y}.png"));
 
     // Every tile comes from the network, which answers in the colour of the source
-    UnitTestTileGenerator::setForcedMissCount(10000);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(UnitTestTileGenerator::ForcedMisses::kEveryLookup);
     TileReplyMockNam nam;  // must outlive the model: its TileImageSource borrows the manager
     nam.body = tileReplyPngBody(Qt::red);
 
@@ -192,7 +157,7 @@ void SurfacePatchImageryTest::_sourceChangeRefetches()
 
 void SurfacePatchImageryTest::_fallbackCoversLodChanges()
 {
-    const QString type = mapType();
+    const QString type = UnitTestTileGenerator::mapProviderType();
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
 
     GeoMapCamera camera;
@@ -246,21 +211,16 @@ void SurfacePatchImageryTest::_retiredImagesFollowMemoryCacheSetting()
     QFETCH(int, tileEdgePixels);
     QFETCH(int, expectedRetired);
 
-    Fact* const setting = SettingsManager::instance()->mapsSettings()->maxCacheMemorySize();
-    const QVariant savedValue = setting->rawValue();
-    const auto restoreValue = qScopeGuard([setting, savedValue] { setting->setRawValue(savedValue); });
+    TestFixtures::SettingsFixture saved;
     ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
                      QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    setting->setRawValue(megabytes);
+    saved.setFactValue(SettingsManager::instance()->mapsSettings()->maxCacheMemorySize(), megabytes);
 
     // Every tile comes from the network, as an image of the size of the row with 4 bytes a pixel. A source of its
     // own for each size keeps these tiles apart in the tile cache of the process.
-    Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
-    const QVariant savedUrl = customUrl->rawValue();
-    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
-    customUrl->setRawValue(QStringLiteral("https://tiles%1.example/{z}/{x}/{y}.png").arg(tileEdgePixels));
-    UnitTestTileGenerator::setForcedMissCount(10000);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    saved.setFactValue(SettingsManager::instance()->appSettings()->customURL(),
+                       QStringLiteral("https://tiles%1.example/{z}/{x}/{y}.png").arg(tileEdgePixels));
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(UnitTestTileGenerator::ForcedMisses::kEveryLookup);
     TileReplyMockNam nam;  // must outlive the model: its TileImageSource borrows the manager
     nam.body = tileReplyPngBody(Qt::darkGreen, tileEdgePixels);
 
@@ -289,7 +249,7 @@ void SurfacePatchImageryTest::_retiredImagesFollowMemoryCacheSetting()
 
 void SurfacePatchImageryTest::_imagesRecoverAfterGestureChurn()
 {
-    const QString type = mapType();
+    const QString type = UnitTestTileGenerator::mapProviderType();
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
 
     GeoMapCamera camera;
@@ -345,7 +305,7 @@ void SurfacePatchImageryTest::_imagesRecoverAfterGestureChurn()
 
 void SurfacePatchImageryTest::_imagesRecoverAfterTransientOutage()
 {
-    const QString type = mapType();
+    const QString type = UnitTestTileGenerator::mapProviderType();
     QVERIFY2(!type.isEmpty(), "no non-elevation map provider registered");
 
     GeoMapCamera camera;
@@ -362,8 +322,7 @@ void SurfacePatchImageryTest::_imagesRecoverAfterTransientOutage()
     // Transient imagery outage: cache lookups miss and the network fallback
     // fails while a pan brings in new patches (the field scenario: gesture
     // during flaky connectivity)
-    UnitTestTileGenerator::setForcedMissCount(10000);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    UnitTestTileGenerator::ForcedMisses outage(UnitTestTileGenerator::ForcedMisses::kEveryLookup);
     // Fetch failures must be visible without logging configuration; repeats
     // within the throttle window stay at debug
     expectLogMessage("GeoMap.TileImageSource", QtWarningMsg, QRegularExpression(QStringLiteral("failed")));
@@ -378,7 +337,7 @@ void SurfacePatchImageryTest::_imagesRecoverAfterTransientOutage()
     // Outage ends with the camera at rest: every resident patch must still
     // end up imaged. A row stuck without image (or fallback) renders the dark
     // loading fallback forever - the visible "hole" from the field report.
-    UnitTestTileGenerator::setForcedMissCount(0);
+    outage.setCount(0);
     QTRY_COMPARE_WITH_TIMEOUT(rowsReportingImage(model), model.rowCount(), TestTimeout::longMs());
     QTRY_COMPARE_WITH_TIMEOUT(rowsWithImage(model), model.rowCount(), TestTimeout::longMs());
     // The images that arrive end the spacing out
@@ -387,13 +346,12 @@ void SurfacePatchImageryTest::_imagesRecoverAfterTransientOutage()
 
 void SurfacePatchImageryTest::_missingImagesNotRequestedAgain()
 {
-    const QString type = mapType();
-    const QString otherType = otherMapType();
+    const QString type = UnitTestTileGenerator::mapProviderType();
+    const QString otherType = UnitTestTileGenerator::mapProviderType(1);
     QVERIFY2(!type.isEmpty() && !otherType.isEmpty(), "need two non-elevation map providers");
 
     // Every tile comes from the network, which answers when the test says so
-    UnitTestTileGenerator::setForcedMissCount(10000);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(UnitTestTileGenerator::ForcedMisses::kEveryLookup);
     TileReplyMockNam nam;  // must outlive the model: its TileImageSource borrows the manager
     nam.holdReplies = true;
 

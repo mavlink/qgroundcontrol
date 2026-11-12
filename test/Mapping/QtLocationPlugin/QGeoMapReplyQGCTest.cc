@@ -36,8 +36,7 @@ void QGeoMapReplyQGCTest::_testTileDelivered()
 
 void QGeoMapReplyQGCTest::_testErrorReported()
 {
-    UnitTestTileGenerator::setForcedMissCount(1);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(1);
 
     // Without a network manager the cache miss cannot be fetched
     QGeoTiledMapReplyQGC mapReply(nullptr, mapReplyTileSpec(4401));

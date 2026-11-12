@@ -94,8 +94,7 @@ void Viewer3DTileQueryTest::_testCoarserZoomWhereServerHasNoTile()
     // Under unit tests UnitTestTileGenerator serves a tile that the cache lacks, unless a miss is forced: the server
     // is asked for the tile of the finest zoom only, or for the tile of every zoom
     constexpr int kMoreMissesThanZooms = 100;
-    UnitTestTileGenerator::setForcedMissCount(tileAtNextZoom ? 1 : kMoreMissesThanZooms);
-    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+    const UnitTestTileGenerator::ForcedMisses forcedMisses(tileAtNextZoom ? 1 : kMoreMissesThanZooms);
 
     QList<int> zoomLevels;
     Viewer3DTileQuery query;
