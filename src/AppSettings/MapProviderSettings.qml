@@ -20,7 +20,10 @@ QGCGroupBox {
 
         onActivated: (index) => {
             _mapProviderFact.rawValue = comboBox.textAt(index)
-            _mapTypeFact.rawValue = _mapEngineManager.mapTypeList(comboBox.textAt(index))[0]
+            const mapTypes = _mapEngineManager.mapTypeList(comboBox.textAt(index))
+            if (mapTypes.length > 0) {
+                _mapTypeFact.rawValue = mapTypes[0]
+            }
         }
 
         Component.onCompleted: {

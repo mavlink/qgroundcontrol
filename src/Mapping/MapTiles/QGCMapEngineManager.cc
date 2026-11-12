@@ -223,14 +223,17 @@ QString QGCMapEngineManager::terrainAttribution()
 
 QStringList QGCMapEngineManager::mapTypeList(const QString& provider)
 {
-    QStringList mapStringList = mapList();
-    mapStringList = mapStringList.filter(QRegularExpression(provider));
+    // A map is named "<provider> <type>"
+    const QString providerPrefix = provider + QLatin1Char(' ');
+    const QStringList maps = mapList();
+    QStringList types;
+    for (const QString& map : maps) {
+        if (map.startsWith(providerPrefix)) {
+            types.append(map.sliced(providerPrefix.size()));
+        }
+    }
 
-    static const QRegularExpression providerType = QRegularExpression(uR"(^([^\ ]*) (.*)$)"_s);
-    (void) mapStringList.replaceInStrings(providerType, "\\2");
-    (void) mapStringList.removeDuplicates();
-
-    return mapStringList;
+    return types;
 }
 
 void QGCMapEngineManager::deleteTileSet(QGCCachedTileSet* tileSet)

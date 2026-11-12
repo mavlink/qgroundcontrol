@@ -12,4 +12,5 @@ private slots:
     void _testTerrainSetServedFromCache();
     void _testMapAttribution_data();
     void _testMapAttribution();
+    void _testMapTypeListNamesMapsOfProvider();
 };

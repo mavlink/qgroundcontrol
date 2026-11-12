@@ -287,4 +287,19 @@ void QGCMapEngineManagerTest::_testMapAttribution()
     QCOMPARE(QGCMapEngineManager::mapAttribution(mapType), attribution);
 }
 
+// The settings select a map by provider and type: every type listed for a provider must name one of its maps.
+// The provider of OpenStreetMap, "Street", is also a word of other providers' map names.
+void QGCMapEngineManagerTest::_testMapTypeListNamesMapsOfProvider()
+{
+    QCOMPARE(QGCMapEngineManager::mapTypeList(QStringLiteral("Street")), QStringList{QStringLiteral("Map")});
+
+    const QStringList maps = QGCMapEngineManager::mapList();
+    for (const QString& provider : QGCMapEngineManager::mapProviderList()) {
+        for (const QString& type : QGCMapEngineManager::mapTypeList(provider)) {
+            const QString map = provider + QLatin1Char(' ') + type;
+            QVERIFY2(maps.contains(map), qPrintable(map));
+        }
+    }
+}
+
 UT_REGISTER_TEST(QGCMapEngineManagerTest, TestLabel::Unit)
