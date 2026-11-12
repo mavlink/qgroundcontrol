@@ -1,14 +1,19 @@
 # GitHub Actions
 
 This directory contains the local actions shared by QGroundControl workflows: composite actions,
-plus `disk-watch`, which is JavaScript because it needs a post step. See
-[`../ci-overview.md`](../ci-overview.md) for workflow layout and CI conventions and
-[`tools/ci/README.md`](../../tools/ci/README.md) for the Python helpers the actions call.
+plus `disk-watch`, which is JavaScript because it needs a post step. See the
+[CI overview](../ci-overview.md) for what runs when and how to change a workflow, the
+[CI notes](../ci-notes/) for design rationale, and
+[`tools/ci/README.md`](../../tools/ci/README.md#script-index) for the Python scripts the actions
+run. Platform jobs typically chain `build-setup`, `install-dependencies`, `cmake-configure`,
+`cmake-build`, tests, packaging, `artifact-report`, `verify-executable`, and `attest-and-upload`.
 
 Workflows reference these actions with `uses: ./.github/actions/<name>`, so a job must check out
-the action directories (and the `tools/` helpers they run) before using them; sparse checkouts list
-them explicitly. The `$/` self-repository syntax is not used: on pull requests from forks the runner
-cannot load actions from the PR merge commit (zizmor's `self-repository` audit is disabled for this).
+the action directories (and the `tools/` helpers they run) before using them; sparse checkouts
+include `.github/actions`
+([rule](../../tools/ci/README.md#shared-code-and-bootstrapping)). The `$/` self-repository syntax
+is not used: on pull requests from forks the runner cannot load actions from the PR merge commit
+(zizmor's `self-repository` audit is disabled for this).
 
 ## Action Index
 
@@ -16,39 +21,50 @@ cannot load actions from the PR merge commit (zizmor's `self-repository` audit i
 | --- | --- |
 | `android-emulator-test` | Boot a fresh x86_64 AVD, install and launch the APK, which must run QGC's `--simple-boot-test` to completion, and collect failure diagnostics, linked from the job summary |
 | `artifact-report` | Compare a package's contents and size with master's same-named artifact in the job summary (warning beyond `size-threshold` percent) and fail when it ships GPL-licensed GStreamer code, or warn with `gpl-findings: warn` (only the Linux AppImage, a known issue); the job needs `actions: read` |
-| `attest-and-upload` | Checksum, SBOM scan, provenance and SBOM attestations, GitHub artifact upload, and optional AWS publish |
-| `aws-credentials` | Configure AWS credentials via OIDC (preferred) or static keys in one step |
+| `attest-and-upload` | Checksum, SBOM scan, provenance and SBOM attestations, and GitHub artifact upload; `publish` marks the package for the Publish Builds workflow, `companion-path` adds an AppImage's `.zsync`, and the action itself publishes nothing |
+| `aws-credentials` | Configure AWS credentials via OIDC (preferred) or static keys in one step; used by the Publish Builds, GStreamer mirror, and runner-image workflows, never by a build |
 | `build-action` | Build a JavaScript action from source when no release ships a rebuilt `dist/` (kept intentionally; no current callers) |
 | `build-setup` | Platform build setup: `build_setup.py` validates the inputs and plans every mode-dependent value, then runner preparation, Python, the CMake and Ninja pinned in `build-config.json`, caches, Xcode/MSVC, Java and the Android SDK/NDK, and Qt for desktop, Android (each requested ABI), or iOS; ends with the job summary's Setup section, also after a failed step, which it names |
 | `cache` | Plan caches with `cache_plan.py`, install ccache/mold, and restore compiler, moc, CPM, and GStreamer SDK caches (each restore result, and the compiler and moc caches' matched key, is an output) |
 | `cmake-build` | Build through `cmake_helper.py`, save build caches after success, upload and link Ninja reports, annotate build errors and PR warnings, and write the job summary's Build section |
-| `cmake-configure` | Configure QGroundControl from a required CMake preset, which sets the build type and testing; requires `qt-cmake` unless `use-qt-cmake` is `false`; writes the job summary's Configure section and, after a failure, annotates the first CMake error and uploads and links the configure logs |
+| `cmake-configure` | Configure QGroundControl from a required CMake preset, which sets the build type and testing, with AppImageLint off (`-DQGC_RUN_APPIMAGELINT=OFF`, ahead of the caller's `extra-args`); requires `qt-cmake` unless `use-qt-cmake` is `false`; writes the job summary's Configure section and, after a failure, annotates the first CMake error and uploads and links the configure logs |
 | `debug-runner` | Open an actor-only SSH session for failed manual runs (callers gate it and set a step timeout) |
 | `deploy-docs` | Deploy built documentation to an external GitHub Pages repository |
 | `disk-watch` | Sample the workspace volume in the background and, from its post step at the end of the job, log and summarize start, peak, and end disk use, warning when the least free space fell below 10% of the volume, kept between 5 and 10 GiB (`build-setup` and `docker` run it first); the only JavaScript action, because composite actions have no post step |
-| `docker` | Build (and optionally push) a QGC builder image with Buildx, run the containerized application build, and report its timings and cache statistics; outputs the image's local tag |
+| `docker` | Build (and optionally push) a QGC builder image with Buildx, run the containerized application build in an unprivileged container, and report its timings and cache statistics; outputs the image's local tag |
 | `free-disk-space` | Wrap `endersonmenezes/free-disk-space` with QGC's shared defaults |
 | `install-dependencies` | Install platform build dependencies (Linux apt packages, macOS Homebrew and GStreamer, Windows MSVC and NSIS; macOS and Windows make three attempts, killing a hung one's process tree) but not the CMake, Ninja, ccache, and mold that `build-setup` pins; on Linux, `category` installs a single `install_dependencies` category |
 | `qt-install` | Reuse a compatible preinstalled Qt SDK or install `build-config.json`'s Qt version with QGC's installer or aqtinstall (`QGC_QT_INSTALLER`, else QGC's), with caching; outputs the version, installer, and source |
-| `run-unit-tests` | Run CTest, then summarize the JUnit results (counts, failures, slowest tests) and annotate failed tests, upload and link artifacts, and Codecov test analytics even after failures |
-| `save-build-cache` | Save compiler and moc caches once per job after successful compilation |
-| `setup-python` | Detect the cache backend, set up uv and Python, and sync `tools/uv.lock` groups into `tools/.venv` |
+| `run-unit-tests` | Run CTest, rerunning failed tests once, then summarize the JUnit results (counts, failures, tests passed on retry, slowest tests) and annotate failed tests, upload and link artifacts, and Codecov test analytics even after failures |
+| `save-build-cache` | Save compiler and moc caches once per job after successful compilation, as a seven-day snapshot artifact on GitHub storage; release tags save none, and Cache Cleanup deletes superseded snapshots |
+| `setup-python` | Detect the cache backend, set up uv, and sync `tools/uv.lock` groups into `tools/.venv` on the Python named in `tools/.python-version` |
 | `test-phase` | Run the Unit and Integration suites through `run-unit-tests`, one job-summary section each |
 | `verify-executable` | Boot-test a built binary, AppImage, DMG, or Windows executable from its directory (a DMG's bundle is first audited: signature, and every library its Mach-O files load); a failure uploads its diagnostics (7 days), linked from the job summary |
 
 ## External Action Reference Policy
 
-QGroundControl intentionally references external GitHub Actions by stable major-version tag, such as
-`actions/checkout@v7`, instead of pinning each action to a full commit SHA. Dependabot monitors these
-references and proposes action updates, while [the zizmor policy](../zizmor.yml) requires a tag or
-other ref pin and rejects unpinned branch references.
-CodeQL excludes `actions/unpinned-tag` to match this policy; other security queries remain enabled.
+Every action and reusable workflow outside `actions/*` and `github/*` is pinned to a full commit
+SHA, followed by a comment with its version, such as
+`step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4`: whoever controls
+an action's repository can move a tag, but not change a commit. GitHub's own actions are
+referenced by version tag, such as `actions/checkout@v7`. Renovate updates the SHA and the comment
+together, adopting a release seven days after it is published
+([how, and how to add an action](../ci-notes/dependencies.md#github-actions)).
 
-Automated findings whose only concern is that a released action tag is mutable or is not a full
-commit SHA are accepted under this repository policy and do not require a code change. Reference
-this section when dismissing or responding to those findings. This exception does not apply to
-unversioned actions, branch references such as `@main`, unknown actions, or any warning that reports
-an additional security problem.
+Three checks enforce the policy. [The zizmor policy](../zizmor.yml) requires the commit SHA
+(`hash-pin`) except for GitHub's own actions (`ref-pin`). A contract test
+(`test_third_party_actions_are_pinned_to_commits_and_githubs_own_to_version_tags` in
+`tools/tests/ci/contracts/test_workflow_security_policy.py`) also requires the version comment,
+and a version tag where zizmor accepts any ref, so a branch reference such as
+`actions/checkout@main` fails CI. CodeQL's `actions/unpinned-tag` query reports a third-party
+action that a workflow references by tag.
+
+Automated findings whose only concern is that an `actions/*` or `github/*` action is referenced by
+a released version tag instead of a full commit SHA are accepted under this repository policy and
+do not require a code change. Reference this section when dismissing or responding to those
+findings. This exception does not apply to third-party actions, unversioned actions, branch
+references such as `@main`, unknown actions, or any warning that reports an additional security
+problem.
 
 ## Action Notes
 
@@ -57,7 +73,9 @@ an additional security problem.
   slower than 60 s. Callers must gate it on a successful build. Integration tests default to two CTest processes (`integration-parallel`); Unit tests use
   one per CPU.
 - **`run-unit-tests`** runs `cmake_helper.py ctest` (`--no-tests=error`, so empty selections
-  fail), selecting by labels and, with `tests-regex`, by test name (`-R`). Reporting steps run
+  fail), selecting by labels and, with `tests-regex`, by test name (`-R`). It reruns failed tests
+  once; a test that then passes is reported as "passed on retry" and no longer fails the step
+  ([when it retries](../../test/README.md#ci-retries-and-the-flaky-label)). Reporting steps run
   after test failures; the failed CTest step still fails the job.
   `junit_report.py` writes the `report-name` section and error annotations for failed tests
   (no `checks: write` needed), and `artifact_link.py` links the uploaded results below it; Codecov
@@ -74,18 +92,10 @@ an additional security problem.
 - **`cache` / `save-build-cache`**: `cache` restores compiler/moc archives and immutable
   CPM/SDK snapshots and exports the save policy; `save-build-cache` checkpoints compiler/moc
   archives once per job after verified success (`cmake-build` calls it for full and `autogen`
-  builds; Docker passes its build report). Its `ccache_helper.py save-plan` step gates PR saves,
-  packs the snapshot, and outputs the cache keys to save (empty skips a cache), even when the
-  gate fails; the cache saves run only if no snapshot upload succeeded.
-- **Compiler snapshots (GitHub storage only)**: `build_cache_artifact.py` keeps compiler/moc
-  snapshots as uncompressed one-day workflow artifacts, outside the dependency-cache quota, so
-  concurrent SDK and dependency cache writes cannot evict a just-completed build's objects.
-  Restores accept the same workflow, source repository, branch, and event class; new branches
-  can also use a trusted default-branch snapshot. Names include platform, build type, variant,
-  key suffix, and branch scope, but not the config hashes in the dependency-cache keys
-  (content-addressed entries stay valid across those edits). Pull requests restore the default
-  branch's snapshot without publishing their own. Any snapshot failure falls back to the
-  dependency cache; after expiry a cold build is possible. RunsOn/S3 keeps its cache/save route.
+  builds; Docker passes its build report). Keys, save gates, the snapshot artifacts, and their
+  retention are described in [caching.md](../ci-notes/caching.md#compiler-and-moc-caches).
+  A release tag restores and saves neither compiler nor moc archives
+  ([caching.md](../ci-notes/caching.md#release-tags)).
 - **`cmake-build`** writes per-invocation Ninja reports and uploads `ninja.log`, `report.json`,
   and `report.md` even after compilation fails. Reports separate moc/code generation and linking,
   deduplicate commands with multiple outputs, and exclude earlier builds in the same directory.
@@ -114,8 +124,20 @@ an additional security problem.
 - **`attest-and-upload`** finds the artifact at `$RUNNER_TEMP/build/<artifact-name>` unless
   `artifact-source-path` overrides it. Pull requests skip the SBOM scan and attestations but
   still upload the checksum, dependency SBOM, and build identity. `attest_helper.py prepare`
-  resolves the attestation subject (`subject-name`, defaulting to `package-name`) and whether to
-  publish to AWS (`upload-aws`, credentials present, and a push or tag dispatch in `mavlink`).
+  resolves the attestation subject (`subject-name`, defaulting to `package-name`). Every caller
+  sets `publish`: `'true'` adds the publish marker to the build identity (`<file>.build.json`),
+  which tells the Publish Builds workflow to publish the package as `artifact-name`
+  ([how](../ci-notes/platforms.md#publish-builds)); the step fails unless `PUBLISHED_BUILDS`
+  lists that name for the workflow. A caller that can mark a package also passes
+  `job-id: ${{ job.check_run_id }}`, the job the publisher looks up. Without a usable id the
+  step warns and the build passes; the publisher then refuses the package in its own run.
+  `companion-path` names a file that goes beside the package on its GitHub Release and nowhere
+  else: the `.zsync` that appimagetool writes for an AppImage with update information, which
+  must be `<artifact-name>.zsync` in the package's directory (the step fails for anything
+  else). It is uploaded in the artifact and listed, with its SHA-256, in the publish marker, so
+  the publisher requires it. The provenance attestation covers the package, the build identity,
+  and the companion file, so the publisher verifies each. The action takes no AWS credentials
+  and uploads nothing outside GitHub.
 - **`verify-executable`** outputs a per-package diagnostics directory and artifact name before
   booting (job, runner OS and architecture, package, a digest of its path, and run attempt, so
   several boot tests in one job or matrix never collide). A failed boot keeps the output there;

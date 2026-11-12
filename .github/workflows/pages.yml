@@ -65,7 +65,7 @@ jobs:
       actions: read
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -74,21 +74,17 @@ jobs:
         uses: actions/checkout@v7
         with:
           sparse-checkout: |
-            .github/actions/setup-python
+            .github/actions
             .github/build-config.json
             src/FactSystem/factmetadata.schema.json
-            tools/ci/__init__.py
-            tools/ci/publish/__init__.py
-            tools/ci/publish/pages_history.py
-            tools/ci/publish/pages_render.py
-            tools/ci/publish/pages_site.py
+            tools/.python-version
             tools/_bootstrap.py
+            tools/ci
             tools/common
-            tools/qgc_tools
             tools/pyproject.toml
+            tools/qgc_tools
+            tools/setup
             tools/uv.lock
-            tools/setup/install_python.py
-            tools/ci/cache/cache_backend.py
           sparse-checkout-cone-mode: false
           fetch-depth: 1
           persist-credentials: false
@@ -126,7 +122,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 

@@ -3,8 +3,11 @@ name: Build Results
 on:
   workflow_run:  # zizmor: ignore[dangerous-triggers] consumes completed-build artifacts + PR metadata; never checks out or runs PR head code
     # GitHub requires literal workflow names here (no expressions). The list is every workflow
-    # with a pull_request trigger, so the last check to finish renders the final comment;
-    # tools/tests/ci/contracts/test_platform_workflow_names.py enforces it.
+    # with a pull_request trigger, so the last check to finish renders the final comment, except
+    # Dependency Review, Check Links, and Docs: each ends within about a minute, before CodeQL,
+    # which runs on every pull request and refreshes their rows. REFRESHED_BY in
+    # tools/tests/ci/contracts/test_platform_workflow_names.py holds those exceptions and
+    # enforces the rest.
     workflows:
       - Linux
       - Windows
@@ -13,14 +16,11 @@ on:
       - iOS
       - pre-commit
       - Code Analysis
-      - Check Links
       - CI Scripts
       - ClusterFuzzLite
       - CodeQL
-      - Dependency Review
       - Dev Container
       - Docker
-      - Docs
       - Doxygen API Docs
       - VM Builds
     types: [completed]
@@ -32,7 +32,8 @@ permissions:
 jobs:
   report-context:
     name: Resolve Report Context
-    # Only pull request builds have a comment to update.
+    # Only pull request builds have a comment to update. The other jobs need this one, so a
+    # push, schedule, dispatch, or merge-queue build ends with every job skipped and no runner.
     if: github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 2
@@ -45,17 +46,14 @@ jobs:
       base_sha: ${{ steps.context.outputs.base_sha }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
       - uses: actions/checkout@v7
         with:
           sparse-checkout: |
-            tools/ci/__init__.py
-            tools/ci/reporting/__init__.py
-            tools/ci/reporting/report_context.py
-            tools/ci/reporting/workflow_runs.py
             tools/_bootstrap.py
+            tools/ci
             tools/common
             tools/qgc_tools
           sparse-checkout-cone-mode: false
@@ -88,7 +86,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -100,23 +98,16 @@ jobs:
         uses: actions/checkout@v7
         with:
           sparse-checkout: |
-            .github/actions/setup-python
+            .github/actions
             .github/build-config.json
-            tools/ci/__init__.py
-            tools/ci/reporting/__init__.py
-            tools/ci/reporting/collect_build_status.py
-            tools/ci/reporting/download_artifacts.py
-            tools/ci/reporting/generate_build_results_comment.py
-            tools/ci/reporting/junit_report.py
-            tools/ci/reporting/report_context.py
-            tools/ci/reporting/workflow_runs.py
+            tools/.python-version
             tools/_bootstrap.py
+            tools/ci
             tools/common
-            tools/qgc_tools
             tools/pyproject.toml
+            tools/qgc_tools
+            tools/setup
             tools/uv.lock
-            tools/setup/install_python.py
-            tools/ci/cache/cache_backend.py
           sparse-checkout-cone-mode: false
           fetch-depth: 1
           persist-credentials: false
@@ -211,7 +202,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -220,13 +211,8 @@ jobs:
         uses: actions/checkout@v7
         with:
           sparse-checkout: |
-            tools/ci/__init__.py
-            tools/ci/reporting/__init__.py
-            tools/ci/reporting/analysis_review.py
-            tools/ci/reporting/download_artifacts.py
-            tools/ci/reporting/report_context.py
-            tools/ci/reporting/workflow_runs.py
             tools/_bootstrap.py
+            tools/ci
             tools/common
             tools/qgc_tools
           sparse-checkout-cone-mode: false

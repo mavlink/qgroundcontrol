@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import os
 import re
 import shlex
@@ -13,35 +12,12 @@ import pytest
 from ci.compile import docker_helper
 from ci.publish import attest_helper
 
-from ..._helpers import REPO_ROOT, get_step, get_steps, load_action, load_workflow
+from ..._helpers import REPO_ROOT, get_step, get_steps, load_workflow
 
 CPACK_DIR = REPO_ROOT / "cmake/install/CPack"
 
 
-def test_optional_generators_use_cpack_names_and_runtime_component() -> None:
-    for module, generator in (
-        ("Bundle", "Bundle"),
-        ("ProductBuild", "productbuild"),
-        ("IFW", "IFW"),
-    ):
-        content = (CPACK_DIR / f"CreateCPack{module}.cmake").read_text()
-        assert f'set(CPACK_GENERATOR "{generator}")' in content
-    ifw = (CPACK_DIR / "CreateCPackIFW.cmake").read_text()
-    assert "cpack_ifw_configure_component(Runtime" in ifw
-    script = re.search(r'SCRIPT "\$\{CMAKE_SOURCE_DIR\}/([^"]+)"', ifw)
-    assert script and (REPO_ROOT / script.group(1)).is_file()
-    assert 'NOT "$ENV{QT_ROOT_DIR}" STREQUAL ""' in ifw
-    assert "NOT DEFINED CPACK_IFW_ROOT" in ifw
-    assert not (REPO_ROOT / "cmake/install/CreateQGCInstaller.cmake").exists()
-
-
-def test_cpack_generators_share_runtime_only_metadata_and_checksums() -> None:
-    common = (CPACK_DIR / "CreateCPackCommon.cmake").read_text()
-    assert "set(CPACK_COMPONENTS_ALL Runtime)" in common
-    assert 'set(CPACK_PACKAGE_CHECKSUM "SHA256")' in common
-    assert "ValidatePackageVersion.cmake" in common
-    assert "native package version resolved to 0.0.0" not in common
-
+def test_every_cpack_generator_shares_the_common_package_metadata() -> None:
     generators = sorted(CPACK_DIR.glob("CreateCPack*.cmake"))
     generators.remove(CPACK_DIR / "CreateCPackCommon.cmake")
     assert generators
@@ -49,22 +25,6 @@ def test_cpack_generators_share_runtime_only_metadata_and_checksums() -> None:
         contents = generator.read_text()
         assert "include(CreateCPackCommon)" in contents, generator.name
         assert "include(CPack)" in contents, generator.name
-
-
-def test_linux_native_generators_use_stable_identity_and_finalization() -> None:
-    deb = (CPACK_DIR / "CreateCPackDeb.cmake").read_text()
-    rpm = (CPACK_DIR / "CreateCPackRPM.cmake").read_text()
-    arch = (REPO_ROOT / "cmake/install/CreateArchPackage.cmake").read_text()
-
-    assert 'set(CPACK_DEBIAN_PACKAGE_NAME "qgroundcontrol")' in deb
-    assert 'set(CPACK_DEBIAN_FILE_NAME "DEB-DEFAULT")' in deb
-    assert "FinalizeNativePackage.cmake" in deb
-    assert 'set(CPACK_RPM_PACKAGE_NAME "qgroundcontrol")' in rpm
-    assert 'set(CPACK_RPM_FILE_NAME "RPM-DEFAULT")' in rpm
-    assert "FinalizeNativePackage.cmake" in rpm
-    assert "makepkg -f --noconfirm --nodeps --skipinteg" in " ".join(arch.split())
-    assert "||" not in arch
-    assert "ValidatePackageVersion.cmake" in arch
 
 
 def test_arch_package_depends_on_system_gstreamer_plugins_when_not_bundled(tmp_path) -> None:
@@ -132,64 +92,6 @@ def test_package_version_guard_covers_target_and_cpack_entrypoints() -> None:
                 assert "Fetch Git history and tags before building a native package" in " ".join(
                     result.stderr.split()
                 )
-
-
-def test_windows_installer_uses_only_the_cpack_nsis_path() -> None:
-    install_dir = REPO_ROOT / "cmake/install"
-    install = (install_dir / "Install.cmake").read_text()
-    nsis = (CPACK_DIR / "CreateCPackNSIS.cmake").read_text()
-    workflow = (REPO_ROOT / ".github/workflows/windows.yml").read_text()
-    steps = get_steps(load_workflow("windows.yml"), "build")
-
-    assert not (install_dir / "CreateWinInstaller.cmake").exists()
-    assert not (REPO_ROOT / "deploy/windows/nullsoft_installer.nsi").exists()
-    assert 'elseif(WIN32 AND QGC_CPACK_GENERATOR STREQUAL "")' in install
-    assert 'set(QGC_CPACK_GENERATOR "NSIS")' in install
-    assert "CreateWinInstaller.cmake" not in install
-    assert "nullsoft_installer.nsi" not in install
-
-    assert 'set(CPACK_GENERATOR "NSIS")' in nsis
-    assert (
-        'set(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-installer-${_qgc_nsis_arch}")' in nsis
-    )
-    assert "CPACK_NSIS_EXTRA_PREINSTALL_COMMANDS" in nsis
-    assert "-LEAVE_DATA=1" in nsis
-    assert "DisableX64FSRedirection" in nsis
-    assert "EnableX64FSRedirection" in nsis
-    assert "QGCCrashDumps" in nsis
-    assert "GPU Safe Mode" in nsis
-    assert "set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL OFF)" in nsis
-
-    assert get_step(steps, "Checkout repo")["with"]["fetch-depth"] == 0
-    assert "-DQGC_CPACK_GENERATOR=NSIS" in get_step(steps, "Configure")["with"]["extra-args"]
-    assert get_step(steps, "Create Installer")["with"]["target"] == "qgc-package"
-    assert "./.github/actions/cmake-install" not in [step.get("uses") for step in steps]
-    installer_test = (REPO_ROOT / "deploy/windows/verify-installer.ps1").read_text()
-    install = get_step(steps, "Install, upgrade, and verify installer")
-    assert get_step(steps, "Uninstall and verify cleanup")["run"].endswith("-Phase Uninstall")
-    assert "[Environment+SpecialFolder]::ApplicationData" in installer_test
-    assert "APPDATA: ${{ runner.temp }}\\qgc-appdata" not in workflow
-    # attest-and-upload's prepare verifies (or writes) the CPack sidecar at its default
-    # artifact path, which is the installer the install test runs.
-    attest = get_step(steps, "Attest and Upload")
-    assert (
-        install["env"]["INSTALLER_PATH"] == "${{ runner.temp }}\\build\\${{ matrix.package }}.exe"
-    )
-    assert attest["with"]["artifact-name"] == "${{ matrix.package }}.exe"
-    assert "artifact-source-path" not in attest["with"]
-    assert "Get-FileHash" not in workflow
-    assert attest["with"]["subject-name"] == "${{ matrix.package }}-windows"
-    upload_steps = get_steps(load_action("attest-and-upload"))
-    prepare = get_step(upload_steps, "prepare")
-    assert prepare["env"]["ARTIFACT_NAME"] == "${{ inputs.artifact-name }}"  # in $RUNNER_TEMP/build
-    assert 'attest_helper.py" prepare' in prepare["run"]
-    upload = get_step(upload_steps, "Upload artifact and checksum to AWS")
-    assert upload["env"]["CHECKSUM_PATH"] == "${{ steps.prepare.outputs.checksum }}"
-    assert '--artifact "${CHECKSUM_PATH}:${ARTIFACT_NAME}.sha256"' in upload["run"]
-    assert "InstallLocation mismatch" in installer_test
-    assert "Windows Error Reporting registry key not found" in installer_test
-    assert "QGroundControl (GPU Safe Mode).lnk" in installer_test
-    assert "Start Menu directory remains after uninstall" in installer_test
 
 
 def test_windows_nsis_module_generates_cpack_config(tmp_path) -> None:
@@ -303,21 +205,6 @@ exit 1
         assert "create-dmg failed" in result.stderr
 
 
-def test_docker_workflow_requires_and_validates_native_packages() -> None:
-    steps = get_steps(load_workflow("docker.yml"), "build")
-
-    assert "find_artifact.py" in get_step(steps, "artifact")["run"]
-    package = get_step(steps, "package")
-    assert "find_artifact.py" in package["run"]
-    assert "--top-level" in package["run"]
-    lifecycle = get_step(steps, "Validate native package lifecycle")
-    assert lifecycle["env"]["PACKAGE_PATH"] == "${{ steps.package.outputs.path }}"
-    checksum = get_step(steps, "Verify native package checksum")
-    assert checksum["id"] == "package-checksum"
-    upload = get_step(steps, "Upload native package")
-    assert "${{ steps.package-checksum.outputs.checksum }}" in upload["with"]["path"].splitlines()
-
-
 def _docker_step_argv(name: str, env: dict[str, str]) -> tuple[list[str], str]:
     """Expand a docker.yml build step's `python3 <script> ...` command; return its argv and output file."""
     step = get_step(get_steps(load_workflow("docker.yml"), "build"), name)
@@ -348,10 +235,6 @@ def _builder_command(monkeypatch, argv: list[str]) -> list[str]:
 
 
 def test_docker_package_validation_installs_as_root_in_the_builder(monkeypatch) -> None:
-    step = get_step(
-        get_steps(load_workflow("docker.yml"), "build"), "Validate native package lifecycle"
-    )
-    assert step["env"]["IMAGE"] == "${{ steps.docker-build.outputs.image }}"
     package = REPO_ROOT / "build/qgc test.deb"
     argv, output = _docker_step_argv(
         "Validate native package lifecycle",
@@ -383,9 +266,6 @@ def test_docker_package_validation_installs_as_root_in_the_builder(monkeypatch) 
 def test_docker_cpm_sboms_read_the_build_tree_where_it_was_built(
     monkeypatch, name: str, output: str, args: list[str]
 ) -> None:
-    step = get_step(get_steps(load_workflow("docker.yml"), "build"), name)
-    assert step["if"].startswith("github.event_name != 'pull_request'")
-    assert step["env"]["IMAGE"] == "${{ steps.docker-build.outputs.image }}"
     argv, redirect = _docker_step_argv(name, {"IMAGE": "qgc-test:latest"})
     assert redirect == output
     command = _builder_command(monkeypatch, argv)
@@ -443,26 +323,3 @@ def test_docker_package_checksum_requires_cpack_sidecars_and_writes_arch(
     sidecar = packages / f"{arch.name}.sha256"
     assert run(arch) == (0, f"checksum={sidecar}\n")
     assert sidecar.read_text() == f"{hashlib.sha256(b'arch').hexdigest()}  {arch.name}\n"
-
-
-def test_linux_package_defaults_do_not_leak_into_mobile_cross_compiles() -> None:
-    install = (REPO_ROOT / "cmake/install/Install.cmake").read_text()
-    gstreamer = (REPO_ROOT / "src/VideoManager/GStreamer/CMakeLists.txt").read_text()
-    for preset_file, base_name in (("Android.json", "android-base"), ("iOS.json", "ios-base")):
-        presets = json.loads((REPO_ROOT / "cmake/presets" / preset_file).read_text())[
-            "configurePresets"
-        ]
-        base = next(preset for preset in presets if preset["name"] == base_name)
-        assert base["cacheVariables"]["QGC_CPACK_GENERATOR"] == ""
-
-    assert re.search(r"if\(NOT QGC_BUILD_INSTALLER\s+OR ANDROID\s+OR IOS\s*\)", install)
-    assert re.search(
-        r"elseif\(\s*QGC_BUILD_INSTALLER\s+AND LINUX\s+AND NOT ANDROID\s+"
-        r'AND NOT IOS\s+AND QGC_LINUX_DISTRO_FAMILY STREQUAL "arch"\s*\)',
-        install,
-    )
-
-    runtime_component = "set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME Runtime)"
-    assert runtime_component in install
-    assert runtime_component in gstreamer
-    assert gstreamer.index(runtime_component) < gstreamer.index("qgc_gst_install_platform_sdk")

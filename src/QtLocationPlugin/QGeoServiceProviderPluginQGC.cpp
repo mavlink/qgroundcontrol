@@ -43,8 +43,18 @@ QGeoMappingManagerEngine *QGeoServiceProviderFactoryQGC::createMappingManagerEng
         *errorString = "";
     }
 
-    Q_ASSERT(m_engine);
-    Q_ASSERT(m_engine->thread() == QThread::currentThread());
+    // The tile fetcher shares the QML engine's network access manager, which belongs to the engine's thread
+    if (!m_engine || (m_engine->thread() != QThread::currentThread())) {
+        qCCritical(QGeoServiceProviderFactoryQGCLog)
+            << "Internal Error: QML engine" << (m_engine ? "lives on another thread" : "not set");
+        if (error) {
+            *error = QGeoServiceProvider::LoaderError;
+        }
+        if (errorString) {
+            *errorString = QStringLiteral("QML engine not available on the calling thread");
+        }
+        return nullptr;
+    }
 
     QNetworkAccessManager *networkManager = m_engine->networkAccessManager();
 

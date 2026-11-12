@@ -3,94 +3,178 @@
 `tools/ci/` contains the Python entrypoints that GitHub Actions workflows and composite actions run
 by file path (`python3 "${GITHUB_WORKSPACE}/tools/ci/<package>/<script>.py"`). Each subpackage
 groups one CI concern; put reusable helpers with multiple consumers in
-[`tools/common/`](../common/README.md) or [`tools/qgc_tools/`](../qgc_tools/README.md).
+[`tools/common/`](../common/README.md) or [`tools/qgc_tools/`](../qgc_tools/README.md). What CI
+runs and how to change it is in the [CI overview](../../.github/ci-overview.md); the composite
+actions are indexed in [`.github/actions/README.md`](../../.github/actions/README.md).
 
-## Packages
+## Script Index
 
-| Package | Scope |
-| --- | --- |
-| `planning/` | Change detection and build-matrix planners |
-| `cache/` | Compiler, moc, CPM, and GitHub Actions cache planning and maintenance |
-| `runner/` | Runner host preparation and managed runner images |
-| `compile/` | CMake and Docker build drivers with timing and compiler-cache reporting |
-| `packaging/` | Locate, validate, and boot-test packaged build outputs |
-| `android/` | Android SDK setup, build retry, lint reporting, and emulator smoke tests |
-| `ios/` | iOS packaging and simulator smoke tests |
-| `publish/` | Attestation, publishing, release gating, draft release notes, and the GitHub Pages site |
-| `reporting/` | Build-results comments, job-summary Setup and test sections, size and coverage reports, and PR labels |
-| `gstreamer/` | GStreamer SDK packaging and mirroring |
-| `security/` | Dependency SBOM generation and vulnerability-scanner installation |
+One section per package and one row per script, generated from the module docstrings: a package's
+scope is the first paragraph of its `__init__.py` docstring, and a script's purpose the first
+paragraph of its own. "Used by" lists the workflows, local actions (`actions/<name>`), and hook
+and recipe files that name the script's path, then the CI scripts that import it. A script's full
+docstring describes its options and behavior; design notes are in
+[`.github/ci-notes/`](../../.github/ci-notes/).
+
+After adding, moving, or redescribing a script, or changing what runs it, regenerate the index:
+
+```bash
+uv run --frozen --project tools python tools/ci_script_index.py
+```
+
+[`test_scripts_docs.py`](../tests/ci/contracts/test_scripts_docs.py) fails when the committed
+index is out of date (`tools/ci_script_index.py --check`), when a script or package has no module
+docstring, and when a script and its test do not pair one to one.
 
 Subpackage names avoid `build*` and `release`: `.gitignore` ignores directories with those names,
 and Ruff skips `build` directories.
 
-## Script Index
+<!-- ci-script-index:start -->
 
-| Script | Purpose |
-| --- | --- |
-| `planning/analysis_matrix.py` | Plan Code Analysis jobs (configure and analyzer arguments per tool family): PR shards and scan scope, one cache-seeding job for master pushes, none when nothing compiled changed |
-| `planning/android_matrix.py` | Library: the Android build legs (hosts, runners, ABIs) for `plan_platform.py` |
-| `planning/detect_changes.py` | Library: decide which platforms an event builds, including the release-tag gate |
-| `planning/plan_docker_builds.py` | Library: select the Docker variants an event builds, each with the image push target |
-| `planning/plan_platform.py` | `_detect-changes.yml`'s planner: change detection and the release-tag gate once, then the Android or Docker matrix |
-| `cache/build_cache_artifact.py` | Retain compiler/moc snapshots as short-lived workflow artifacts and restore them |
-| `cache/cache_backend.py` | Detect whether RunsOn's S3 proxy serves the Actions cache and export `QGC_ACTIONS_CACHE_BACKEND` for `setup-python` |
-| `cache/cache_plan.py` | Resolve the cache action's save policy, scope, keys, ccache budget, compiler/moc/CPM environment, and the sccache pilot's selection |
-| `cache/ccache_helper.py` | Install the pinned, checksum-verified ccache (and mold, plus sccache for the [sccache pilot](../../.github/ci-overview.md#sccache-pilot), on Linux) and plan `save-build-cache`: gate PR saves, pack the snapshot artifact, and choose the cache keys |
-| `cache/cpm_helper.py` | Fingerprint CPM dependencies and the GStreamer SDK config for `cache_plan.py`, and create and apply runner-image CPM seeds |
-| `cache/gh_cache_cleanup.py` | List and optionally delete GitHub Actions caches, taking the branch and mode from `cache-cleanup.yml`'s triggering event (`CLEANUP_*` variables override them) |
-| `runner/analysis_tools.py` | Install the clang-tidy wheel hash-pinned in `build-config.json`, verify `.clang-tidy`, and put LLVM, clang-tidy, and Clazy on `PATH` for `analysis.yml` |
-| `runner/apt_debs_artifact.py` | Restore a Copilot session's apt downloads from the newest `copilot-apt-debs` artifact of a master `copilot-setup-steps.yml` run, extracting only top-level `.deb` files; a failure only warns |
-| `runner/apt_install_retry.py` | Install apt packages with bounded retries, RunsOn's in-region EC2 mirror, and a runner-owned download cache |
-| `runner/build_setup.py` | Validate `build-setup`'s inputs and resolve the values its steps read: Qt hosts, architectures and modules, cache target, Xcode and MSVC selections, Windows ARM64 cross builds' host Qt, Android ABIs and SDK environment, and the `build-config.json` tool versions |
-| `runner/enable_kvm.py` | Open `/dev/kvm` to every user on a nested-virtualization runner |
-| `runner/install_dependencies_helper.py` | `install-dependencies` entry points: plan the Linux apt cache key, install the apt packages or the macOS Homebrew packages and GStreamer (both without the tools CI pins elsewhere), and install Windows MSVC and NSIS (macOS and Windows in three timed attempts that kill a hung attempt's process tree). GStreamer's upstream gets two tries and three minutes before QGC's S3 mirror resumes its checksum-pinned partial download, which also survives a killed attempt |
-| `runner/install_multipass.py` | Install Multipass and wait for daemon readiness; with `--allow-bridge-forwarding`, undo Docker's iptables `FORWARD` drop policy so guests reach the network |
-| `runner/runner_image.py` | Check `runner-images.yml`'s branch and AWS settings, then output, verify, promote, and retire QGC runner AMIs |
-| `runner/validate_runner_configs.py` | `packer-validate` and `runs-on-lint` hooks: validate the runner image Packer template and lint the RunsOn configuration with the Packer and RunsOn CLI pinned in `build-config.json` |
-| `compile/cmake_helper.py` | Run CI configure, build, and CTest steps with standard arguments and timing, tee configure and build output to logs, and write the job summary's Configure (result, duration, preset, generator, configure-check reuse) and Build (result, duration, toolchain, this build's compiler and moc cache hit rates, slowest build steps) sections; after a failure, annotate and summarize the first CMake error or the failed targets and first build errors |
-| `compile/docker_helper.py` | Run Docker builds and repository scripts in builder images, and report compiler identities, timings, and cache statistics |
-| `packaging/appimage_container_boot.py` | Boot-test an AppImage (`--appimage-extract-and-run` under xvfb-run) in a clean container of a distribution it supports, with only the desktop libraries it leaves to the system and no GStreamer or Qt |
-| `packaging/artifact_link.py` | Link an uploaded diagnostics artifact (upload-artifact's `artifact-url`) from the job summary |
-| `packaging/artifact_report.py` | Report a package's contents (NSIS installer through 7-Zip, DMG mounted with `hdiutil`, AppImage through `--appimage-extract`, APK, App Bundle and IPA as zip archives) against the same-named artifact of the newest successful master run of its workflow: package and contents size changes, added and removed files, and the largest file size changes in the job summary, warning beyond a size-change threshold; fail on files named after a library or plugin in `gstreamer_plugin_policy.gpl_denylist` (`.github/build-config.json`) and on GPL encoder markers in mobile ELF and Mach-O binaries, or with `--gpl-findings warn` (`INPUT_GPL_FINDINGS`) report them as warnings and a known issue: the Linux AppImage's, where Ubuntu's `libavcodec`, loaded by the bundled gst-libav plugin, pulls in GPL `libx264` and `libx265` |
-| `packaging/find_artifact.py` | Find exactly one build artifact by glob pattern (fails on none or several), optionally copying it |
-| `packaging/macho_bundle_audit.py` | Audit a macOS app bundle: verify a Developer ID signature with `codesign --verify --deep --strict` (ad-hoc and unsigned bundles get a notice), and fail when a library a Mach-O file loads resolves neither inside the bundle (@rpath, @loader_path, @executable_path) nor to macOS, or an LC_RPATH dyld searches points outside both |
-| `packaging/pe_dependency_audit.py` | Read the import and delay-load tables of every .exe and .dll in a Windows install and fail when a DLL resolves neither to the install's `bin/` or the importer's directory nor to Windows (System32 on Windows, a built-in list elsewhere); the MSVC runtime must ship |
-| `packaging/validate_native_package.py` | Validate native package identity, version, contents, and installed layout |
-| `packaging/verify_executable.py` | Boot-test a built QGroundControl executable, AppImage, or DMG (auditing the DMG's bundle with `macho_bundle_audit.py`); keep a failed boot's output, stacks, crash reports, and minidumps for the diagnostics artifact. `--export-gstreamer-env` instead gives later steps, such as CTest, a Windows build tree's GStreamer environment |
-| `android/android_apk_check.py` | Check every native library in an APK with the NDK's llvm-readelf: 16 KB `PT_LOAD` alignment on the 64-bit ABIs, every `DT_NEEDED` library packaged for its ABI or an NDK system library at the minimum API level, and `libgstreamer_android.so` when the build enables GStreamer; then `zipalign -c -P 16`; write the job summary's APK check section |
-| `android/android_boot_test.py` | Run the emulator boot smoke test: grant the app all-files access, launch it, and pass only on QGC's `Simple boot test completed` marker; a failure annotation quotes `Simple boot test failed` and the `Video.GStreamer.SelfTest` lines. After the marker, watch logcat until the app's process exits (up to 30 s; still running only warns) and fail, without another attempt, on its crash at exit, quoting its `Fatal signal`, `FORTIFY`, `FATAL EXCEPTION` or crash_dump lines |
-| `android/android_build_retry.py` | Retry an Android build after a known intermittent Qt deployment-settings JSON truncation |
-| `android/android_collect_diagnostics.py` | Collect emulator, ADB, AVD, and GStreamer diagnostics |
-| `android/android_lint.py` | Run `gradlew lintRelease` in the Gradle project androiddeployqt generated, annotate the first Error and Fatal issues from lint's XML report at their `android/` sources (else Gradle's errors), and write the job summary's Android Lint section (result, duration, error and warning counts, first errors); exits with Gradle's status |
-| `android/android_sdk_helper.py` | Install the `build-config.json` Android SDK/NDK packages with retries, configure tool paths, and create the PR debug keystore |
-| `ios/ios_boot_test.py` | Run the QGC smoke test in a disposable iOS simulator within a 25-minute budget; save each failed attempt's simulator and CoreSimulator logs and crash reports, annotate the failing phase and attempt, and write the Boot test summary |
-| `ios/ios_package.py` | Select signing profiles and validate/package iOS bundles |
-| `publish/attest_helper.py` | Prepare artifacts for attestation (checksum sidecar, CPM dependency SBOM, build manifest) and decide the AWS publish; verify or write standalone checksums |
-| `publish/aws_upload.py` | Publish artifacts to S3 `builds/<ref>/` (the runner's ref by default), plus `latest/` and one CloudFront invalidation for release tags |
-| `publish/deploy_docs.py` | Deploy generated documentation to an external Pages repository |
-| `publish/pages_history.py` | Library: the Pages dashboard's history of master push builds: fetch the deployed `data/history.json` (any failure but a 404 stops the build, and so does a 404 once a `pages.yml` run has succeeded), collect each new run's result, wall time, Build-step durations, package sizes, JUnit suites and failed tests, `src/` line coverage, and unique Code Analysis warnings, newest first until the 15-minute collection deadline, with two 120-second attempts per artifact, and merge by commit and workflow within the 1,000-commit and 365-day caps |
-| `publish/pages_render.py` | Library: the Pages site's self-contained HTML pages and inline SVG charts (no scripts or external assets), each chart followed by a table of its latest values and linking every run |
-| `publish/pages_site.py` | Build the GitHub Pages site for `pages.yml`: the CI health dashboard, `schemas/` (each `$id` must be its site URL), `downloads/` of the S3 master packages with their SHA-256 sidecars and provenance commits, and `api/` from the latest master Doxygen artifact or a link to api.qgroundcontrol.com (also when its download stalls); `--new-history` (`PAGES_NEW_HISTORY`) starts a new history when the deployed one is gone; checks its pages' internal links and writes the job summary's Pages site section |
-| `publish/release_branch_check.py` | Stop `release.yml` before it drafts a release for a tag that no `origin/Stable*` branch contains |
-| `publish/release_notes.py` | Draft a tag's release notes with git-cliff (`tools/configs/cliff.toml`) and create its draft GitHub Release unless one exists |
-| `reporting/analysis_review.py` | Post a pull request's Code Analysis warnings and errors on lines its diff adds as one inline `COMMENT` review from `build-results.yml`'s own `analysis-review` job: escaped messages (bare URLs and mentions broken) with fenced source excerpts, at most 25 per review, each finding once per line, never repeating a posted finding, noting partial results from an unsuccessful run, and skipping files that one head-to-merge-commit comparison shows the merge changed; failures only warn |
-| `reporting/collect_build_status.py` | Collect platform, pre-commit, Code Analysis, and every other workflow's status for a head SHA (with `--status-out`, each run's state, attempt, duration and total wall time, and failed-step links and lost runners from its jobs) and save the latest runs for `download_artifacts.py` |
-| `reporting/download_artifacts.py` | Download prefix-selected artifacts from matching completed workflow runs into one directory each, with a manifest naming each artifact's workflow and whether it downloaded, and record each workflow's latest run and its distributable artifacts (size, id, expiry) |
-| `reporting/generate_build_results_comment.py` | Render the consolidated PR build-results comment: verdict, per-workflow table, other checks, the PR base's builds, failures, and collapsed tests, coverage, artifact downloads, pre-commit, and Code Analysis details, compared with the base's own builds |
-| `reporting/gh_pr_size_label.py` | Apply a pull request's `size/*` label from its changed lines |
-| `reporting/junit_report.py` | Summarize JUnit results (counts, failures, slowest tests) in the job summary, annotate failed tests and, optionally, slow tests (parsed with `common/junit.py`, like the build-results comment and the Pages dashboard) |
-| `reporting/report_context.py` | Resolve a pull_request build's PR and base commit, and with `--comment` recheck that the build is current and create or update the PR's build-results comment |
-| `reporting/setup_summary.py` | Write the job summary's Setup section for `build-setup`, also after a failed setup step, which it names: runner, image, RunsOn instance, CPUs and RAM, Qt (version, installer, source), CMake, compiler, Xcode, JDK, Android NDK, Python groups, and each build cache's restore result |
-| `reporting/size_analysis.py` | Analyze and report binary-size changes |
-| `reporting/verify_coverage_thresholds.py` | Enforce line and branch coverage thresholds (read from `CMakeCache.txt` with `--build-dir`) |
-| `reporting/workflow_runs.py` | Library: read the triggering `workflow_run` payload and the configured platform workflows, which default the reporting scripts' run-query arguments; validate, select, and group workflow runs; load run snapshots |
-| `gstreamer/mirror_gstreamer.py` | Verify and mirror upstream GStreamer release artifacts to S3 (`mirror-gstreamer.yml` sets its options through `MIRROR_*` variables) |
-| `security/generate_cpm_sbom.py` | Generate a CycloneDX or SPDX SBOM from CPM package metadata and the bundled GStreamer |
-| `security/install_grype.py` | Install checksum-verified Grype release assets into the scan action tool cache |
+<!-- Generated by tools/ci_script_index.py from the module docstrings; do not edit. -->
 
-The script index and one-to-one production test coverage are checked by
-[`tools/tests/ci/contracts/test_scripts_docs.py`](../tests/ci/contracts/test_scripts_docs.py).
+### `android/`
+
+Android SDK setup, build retry, and emulator smoke tests.
+
+| Script | Purpose | Used by |
+| --- | --- | --- |
+| `android/android_apk_check.py` | Check the native libraries an Android APK ships. | `android.yml` |
+| `android/android_boot_test.py` | Run Android emulator boot smoke test for QGroundControl. | `actions/android-emulator-test` |
+| `android/android_build_retry.py` | Retry an Android build after a known intermittent Qt deployment-settings JSON truncation. Exits non-zero if the original failure was unrelated, so non-retriable errors surface fast. | `android.yml` |
+| `android/android_collect_diagnostics.py` | Collect Android emulator failure diagnostics for upload as a CI artifact. | `actions/android-emulator-test` |
+| `android/android_lint.py` | Run Android Lint on the Gradle project that androiddeployqt generated and report its errors. | `android.yml` |
+| `android/android_sdk_helper.py` | Install the Android SDK platform, build tools and NDK, retrying failed sdkmanager downloads. Exports the NDK paths to later steps and runs the Gradle wrapper once; `debug-keystore` instead creates the throwaway signing key for builds that have no release keystore. | `android.yml`, `actions/build-setup` |
+
+### `cache/`
+
+Compiler, moc, CPM, and GitHub Actions cache planning and maintenance.
+
+| Script | Purpose | Used by |
+| --- | --- | --- |
+| `cache/build_cache_artifact.py` | Retain compiler caches outside GitHub's shared dependency-cache eviction pool. | `actions/cache`, `cache/cache_plan.py`, `cache/ccache_helper.py`, `cache/gh_cache_cleanup.py` |
+| `cache/cache_backend.py` | Detect the Actions cache backend for setup-python and export it to $GITHUB_ENV. | `actions/setup-python` |
+| `cache/cache_plan.py` | Plan the cache action: save policy, cache scope, keys, and job environment. | `actions/cache` |
+| `cache/ccache_helper.py` | Ccache helper for CI: install compiler tools and plan build cache saves. | `actions/cache`, `actions/save-build-cache` |
+| `cache/cpm_helper.py` | CPM helper for CI: dependency fingerprints, cache paths, and runner image seeds. | `actions/cache`, `cache/cache_plan.py` |
+| `cache/gh_cache_cleanup.py` | List and optionally delete GitHub Actions caches and superseded compiler-cache snapshots. | `cache-cleanup.yml` |
+
+### `compile/`
+
+CMake and Docker build drivers with timing and compiler-cache reporting.
+
+| Script | Purpose | Used by |
+| --- | --- | --- |
+| `compile/cmake_helper.py` | Run CI's CMake configure, build, and CTest steps and write their job-summary sections. The `ctest` command reruns failed tests once and reports the tests that passed on retry. | `actions/cmake-build`, `actions/cmake-configure`, `actions/run-unit-tests` |
+| `compile/docker_helper.py` | Run the containerized QGroundControl build and repository scripts in a builder image. Retries the build, outputs the image's compiler fingerprint for cache keys, and writes the job summary's Docker build section from the container's timings and cache statistics. | `docker.yml`, `actions/docker` |
+
+### `gstreamer/`
+
+GStreamer SDK packaging and mirroring.
+
+| Script | Purpose | Used by |
+| --- | --- | --- |
+| `gstreamer/mirror_gstreamer.py` | Mirror official upstream GStreamer release artifacts to the QGC S3 bucket. | `mirror-gstreamer.yml` |
+
+### `ios/`
+
+iOS packaging and simulator smoke tests.
+
+| Script | Purpose | Used by |
+| --- | --- | --- |
+| `ios/ios_boot_test.py` | Boot the built QGC app in a disposable iOS simulator and verify its smoke test. | `ios.yml` |
+| `ios/ios_package.py` | Select iOS signing profiles, verify bundles, and package validated IPA files. | `ios.yml` |
+
+### `packaging/`
+
+Locate, validate, and boot-test packaged build outputs.
+
+| Script | Purpose | Used by |
+| --- | --- | --- |
+| `packaging/appimage_container_boot.py` | Boot-test an AppImage in a clean container of a distribution it supports. | `linux.yml` |
+| `packaging/artifact_link.py` | Link an uploaded workflow artifact from the job summary. | `android.yml`, `ios.yml`, `actions/android-emulator-test`, `actions/cmake-build`, `actions/cmake-configure`, `actions/run-unit-tests`, `actions/verify-executable` |
+| `packaging/artifact_report.py` | Report a package's contents against master's artifact and check it for GPL-licensed GStreamer. | `actions/artifact-report` |
+| `packaging/find_artifact.py` | Find exactly one build artifact by glob pattern and emit its path. | `android.yml`, `docker.yml` |
+| `packaging/macho_bundle_audit.py` | Audit a macOS app bundle's code signature and the libraries its Mach-O files load. | `packaging/verify_executable.py` |
+| `packaging/pe_dependency_audit.py` | Check that every DLL an installed Windows QGroundControl imports ships with it or is part of Windows. | `windows.yml` |
+| `packaging/validate_native_package.py` | Validate a native Linux package's identity, version and QGC runtime layout. | `docker.yml` |
+| `packaging/verify_executable.py` | Verify QGroundControl executable with a boot test. | `windows.yml`, `actions/verify-executable`, `packaging/appimage_container_boot.py` |
+
+### `planning/`
+
+Change detection and build-matrix planners.
+
+| Script | Purpose | Used by |
+| --- | --- | --- |
+| `planning/analysis_matrix.py` | Emit the analysis.yml job matrix as a JSON 'include' list plus the analysis toolchain. | `analysis.yml` |
+| `planning/android_matrix.py` | The Android workflow's build legs, for plan_platform.py. | `planning/plan_platform.py` |
+| `planning/detect_changes.py` | Decide which platforms the current GitHub event builds, for plan_platform.py. | `planning/plan_docker_builds.py`, `planning/plan_platform.py` |
+| `planning/plan_docker_builds.py` | Select the Docker workflow's build legs for plan_platform.py. | `planning/plan_platform.py` |
+| `planning/plan_platform.py` | Plan a platform workflow's builds for the current GitHub event. | `_detect-changes.yml` |
+
+### `publish/`
+
+Attestation, artifact and docs publishing, release gating and notes, and the Pages site.
+
+| Script | Purpose | Used by |
+| --- | --- | --- |
+| `publish/attest_helper.py` | Prepare a build artifact for attestation and upload. | `docker.yml`, `actions/attest-and-upload` |
+| `publish/aws_upload.py` | Publish a verified set of build packages to AWS S3 and CloudFront. | `publish.yml`, `publish/publish_decide.py` |
+| `publish/daily_release.py` | Update the rolling `daily` GitHub prerelease to a verified set of master packages. | `publish.yml`, `publish/publish_decide.py`, `publish/release_assets.py` |
+| `publish/deploy_docs.py` | Deploy built documentation to an external GitHub Pages repository. | `actions/deploy-docs` |
+| `publish/pages_history.py` | CI health history for the Pages dashboard: metrics of master push builds over time. | `publish/pages_render.py`, `publish/pages_site.py` |
+| `publish/pages_render.py` | HTML pages and inline SVG charts for the GitHub Pages site. | `publish/pages_site.py` |
+| `publish/pages_site.py` | Build the GitHub Pages site: CI health dashboard, schemas, master downloads, and API docs. | `pages.yml` |
+| `publish/publish_decide.py` | Decide whether a ref's packages are published now, and to which targets. | `publish.yml` |
+| `publish/publish_set.py` | Fetch the packages a commit's platform runs marked for publishing, and verify them. | `publish.yml`, `publish/aws_upload.py`, `publish/daily_release.py`, `publish/publish_decide.py`, `publish/release_assets.py` |
+| `publish/release_assets.py` | Attach a release tag's verified packages to the tag's GitHub Release. | `publish.yml` |
+| `publish/release_branch_check.py` | Fail when a release tag's commit is not on a `Stable*` branch. | `devcontainer.yml`, `release.yml` |
+| `publish/release_notes.py` | Draft release notes for a `vX.Y.Z` tag with git-cliff (`tools/configs/cliff.toml`). | `release.yml`, `justfile` |
+
+### `reporting/`
+
+Build-results comments and reviews, job summaries, size and coverage reports, and PR labels.
+
+| Script | Purpose | Used by |
+| --- | --- | --- |
+| `reporting/analysis_review.py` | Post a pull request's Code Analysis findings on its changed lines as one inline review. | `build-results.yml` |
+| `reporting/collect_build_status.py` | Collect the latest platform, pre-commit, Code Analysis, and other workflow status for a head SHA. | `build-results.yml` |
+| `reporting/download_artifacts.py` | Download build artifacts from completed platform workflow runs. | `build-results.yml` |
+| `reporting/generate_build_results_comment.py` | Generate the Build Results PR comment. | `build-results.yml` |
+| `reporting/gh_pr_size_label.py` | Apply the size/* label for a pull request's changed lines. | `pr-checks.yml` |
+| `reporting/junit_report.py` | Summarize CTest JUnit results in the job summary and annotate failed and slow tests. | `actions/run-unit-tests`, `reporting/generate_build_results_comment.py` |
+| `reporting/report_context.py` | Resolve a completed pull_request build's PR, and publish its build-results comment. | `build-results.yml`, `reporting/analysis_review.py` |
+| `reporting/setup_summary.py` | Write the job summary's Setup section for build-setup. | `actions/build-setup` |
+| `reporting/size_analysis.py` | Analyze binary size using bloaty and standard tools. | `linux.yml` |
+| `reporting/verify_coverage_thresholds.py` | Verify a gcovr JSON coverage summary meets line and branch coverage thresholds. | `linux.yml` |
+| `reporting/workflow_runs.py` | Shared helpers for selecting and grouping GitHub workflow runs. | `reporting/analysis_review.py`, `reporting/collect_build_status.py`, `reporting/download_artifacts.py`, `reporting/generate_build_results_comment.py`, `reporting/report_context.py` |
+
+### `runner/`
+
+Runner host preparation and managed runner images.
+
+| Script | Purpose | Used by |
+| --- | --- | --- |
+| `runner/analysis_tools.py` | Put the analysis.yml job's analysis executables on PATH for its later steps. | `analysis.yml` |
+| `runner/apt_debs_artifact.py` | Restore a Copilot session's apt downloads from the newest master Copilot Setup Steps artifact. | `copilot-setup-steps.yml` |
+| `runner/apt_install_retry.py` | Install apt packages with bounded retries and a runner-owned download cache. | `analysis.yml`, `doxygen.yml`, `vm-builds.yml`, `actions/install-dependencies`, `runner/apt_debs_artifact.py`, `runner/install_dependencies_helper.py` |
+| `runner/build_setup.py` | Plan build-setup: validate its inputs and resolve the values its steps read. | `actions/build-setup` |
+| `runner/enable_kvm.py` | Open /dev/kvm to every user on a nested-virtualization CI runner. | `vm-builds.yml`, `actions/android-emulator-test` |
+| `runner/install_dependencies_helper.py` | CI entry points for the install-dependencies action. | `actions/install-dependencies` |
+| `runner/install_multipass.py` | Install Multipass on an ephemeral Linux CI runner and wait for its daemon. | `vm-builds.yml` |
+| `runner/runner_image.py` | Verify and promote smoke-tested QGC AMIs and retire only expired QGC-owned images. | `runner-images.yml` |
+| `runner/validate_runner_configs.py` | Validate the runner image Packer template and the RunsOn configuration. | `.pre-commit-config.yaml` |
+
+### `security/`
+
+Dependency SBOM generation and vulnerability-scanner installation.
+
+| Script | Purpose | Used by |
+| --- | --- | --- |
+| `security/generate_cpm_sbom.py` | Generate a CycloneDX or SPDX SBOM from a CMake build directory's CPM package metadata. | `docker.yml`, `publish/attest_helper.py` |
+| `security/install_grype.py` | Install verified Linux Grype assets into the scan action's runner tool cache. | `devcontainer.yml`, `docker.yml` |
+
+<!-- ci-script-index:end -->
 
 ## Shared Code and Bootstrapping
 
@@ -112,21 +196,33 @@ from ci.planning.detect_changes import detect_builds
 `ci` is the top import-linter layer: it may import the other `tools/` packages, and none of them may
 import it. Its subpackages are independent of each other (only `publish/attest_helper.py` reuses
 `security/generate_cpm_sbom.py`); move code that several of them need into `common` or `qgc_tools`.
-Keep package `__init__.py` files import-free. Sparse-checkout jobs must include the
-entrypoint, `tools/_bootstrap.py`, imported `ci` modules with their package `__init__.py` files, and
-transitive `common` and `qgc_tools` modules; `test_bootstrap_sparse_checkout.py` verifies that
-closure.
+Keep package `__init__.py` files import-free.
+
+Sparse-checkout jobs check out directories, not single scripts: `tools/_bootstrap.py`, `tools/ci`,
+`tools/common`, and `tools/qgc_tools`, plus `.github/actions`, `tools/setup`, and the Python
+environment files (`tools/.python-version`, `tools/pyproject.toml`, `tools/uv.lock`) where a job
+uses `setup-python`, always with `sparse-checkout-cone-mode: false`.
+[`test_bootstrap_sparse_checkout.py`](../tests/ci/test_bootstrap_sparse_checkout.py) fails when a
+script a job runs, a module it imports, a local action, or a file that action names is outside the
+checkout, and when a workflow or action names a script that does not exist. It does not see data
+files a script reads at run time (`.github/build-config.json`, `deploy/docker/variants.json`), so
+list those by hand.
 
 `cache/cache_backend.py`, `runner/apt_install_retry.py`, `runner/enable_kvm.py`,
 `runner/install_multipass.py`, `runner/runner_image.py`, `packaging/validate_native_package.py`,
 and `ios/ios_boot_test.py` are standalone: they import only the standard library and skip the
-bootstrap. `runner-images.yml` checks out `runner_image.py` by itself, so it must stay that way.
+bootstrap.
 
-Scripts that run before `setup-python` use the runner's system interpreter and must import only the
-standard library and stdlib-only `tools/` modules. `PRE_SETUP_PYTHON_SCRIPTS` in
-[`tools/tests/test_stdlib_only.py`](../tests/test_stdlib_only.py) lists them; the test imports each
-one under `python -I -S` and fails when a job without `setup-python` runs a script missing from the
-list. `setup-python` puts `tools/.venv` first on `PATH`; on Windows `install_python.py` also copies
+Scripts that run before `setup-python`, or in jobs without it, use the runner's system interpreter
+and must import only the standard library and stdlib-only `tools/` modules (`tools/common`,
+`tools/qgc_tools`, and shared `ci` library modules such as `reporting/workflow_runs.py`).
+`PRE_SETUP_PYTHON_SCRIPTS` in [`tools/tests/test_stdlib_only.py`](../tests/test_stdlib_only.py)
+lists them; the test imports each one under `python -I -S`, and every module of the packages in
+`STDLIB_ONLY_PACKAGES`, and fails when a job without `setup-python` runs a script missing from the
+list. The runner images' interpreter versions are in
+[runners.md](../../.github/ci-notes/runners.md#the-runners-python).
+
+`setup-python` puts `tools/.venv` first on `PATH`; on Windows `install_python.py` also copies
 the venv's `python.exe` to `python3.exe`, so later `python3` steps run in the venv on every OS.
 As a fallback for a runner whose `PATH` still prefers its own interpreter, the test also holds every
 script that a composite action runs as `python3` to the same rule; `_VENV_ACTION_SCRIPTS` exempts
@@ -137,8 +233,22 @@ the few that need third-party packages.
 Add `tools/tests/ci/test_<script>.py` with every new production script; every test there must match
 a script. Entry scripts define `main(argv: list[str] | None = None) -> int`
 (`tools/tests/test_bootstrap.py` checks the signature), so tests call `main([...])` instead of
-patching `sys.argv`. Tests of workflows, composite actions, presets, and deploy files go in
-`tools/tests/ci/contracts/`. Load repository YAML through `tools/tests/_helpers.py`
+patching `sys.argv`.
+
+Tests of workflows, composite actions, presets, and deploy files go in
+`tools/tests/ci/contracts/`. A contract test must state a cross-file invariant, sweep every
+workflow or action, or run code; a test that restates one workflow's steps, names, or conditions
+only breaks when that workflow is edited on purpose, and is not accepted. Match actions by name,
+never by version (`uses_action(step, "actions/checkout")`), so a version bump changes no test. The
+helpers for sweeps are in [`tools/tests/ci/_workflows.py`](../tests/ci/_workflows.py):
+`step_groups()` yields the steps of every workflow job and local action, `uses_action()` and
+`local_action()` identify a step's action, `uses_references()` yields each file's `uses:` values
+with the comment after them (the version of an action pinned to a commit SHA, which YAML parsing
+drops), and `path_filter_covers()` tests a trigger's `paths` against a file. The invariants
+contributors most often meet are tabulated with their tests in the
+[CI overview](../../.github/ci-overview.md#invariants).
+
+Load repository YAML through `tools/tests/_helpers.py`
 (`load_workflow()`, `load_action()`, `load_yaml()`, `get_steps()`, `get_step()`): it parses each
 file once with libyaml, keys workflow triggers under `"on"`, and returns a private copy;
 `workflow_names()` and `action_names()` enumerate them. Build temporary git repositories with the
@@ -153,11 +263,25 @@ fails the test. Mark the tests of each script that `windows.yml` runs on Windows
 Windows-specific code paths, with `pytestmark = pytest.mark.windows`; the Windows CI job runs
 `pytest -n 2 --durations=15 -m windows tools/tests` (two xdist workers are a trial; revert to
 serial if CI shows it slower).
-Run the same suite as CI (`pytest -q -n auto tools/tests` in the locked `tools/.venv`):
+
+Run the same suite as CI (`pytest -q -n auto tools/tests`):
 
 ```bash
 just test-python
 ```
+
+The recipe installs the dependency groups CI's Python test job installs: `test`, `terrain`,
+`simulation`, and `release` (git-cliff), so the terrain pipeline, mock vehicle, and release-notes
+tests run instead of skipping. `test` includes the `cmake` package, whose presets schema
+`test_validate_cmake_presets.py` checks the presets against. The `dev` profile has all of them
+but `terrain`, which uv adds when the recipe runs; its rasterio needs a wheel for the platform or
+GDAL to build from source.
+`ci-scripts.yml` runs the suite on Linux on changes to `.github/`,
+`tools/`, `deploy/`, CMake files, and other tooling configuration. Its test jobs use sparse
+checkouts, and `empty_parameter_set_mark = "fail_at_collect"` in `tools/pyproject.toml` makes a
+test that parametrizes over repository files (such as the `*.VehicleConfig.json` pages) fail
+collection when it finds none, so add such inputs to both checkouts and to the workflow's `paths`
+(a contract test fails when a checked-out file does not trigger the workflow).
 
 Tests run in parallel (pytest-xdist) and in random order (pytest-randomly, which also reseeds
 `random`), so a test must not depend on another test's side effects. The run ends with

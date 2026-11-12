@@ -11,9 +11,11 @@ on:
   merge_group:
   workflow_dispatch:
 
+# Only a pull request's superseded runs are cancelled. Every other run has its own group, so a newer
+# push neither cancels it nor replaces it while it waits.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   CODEQL_ACTION_OVERLAY_ANALYSIS: "false"
@@ -40,7 +42,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 

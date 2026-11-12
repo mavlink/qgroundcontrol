@@ -43,18 +43,19 @@ qt_add_resources(
 
 #===========================================================================#
 
-CPMAddPackage(
+# ArduPilot regenerates this metadata on main every few days and tags no releases, so the pin is a commit of main.
+# The parameter definitions are 66 MB of a 440 MB tree, so only they are checked out.
+qgc_git_sparse_checkout(
     NAME ArduPilotParams
     GITHUB_REPOSITORY ArduPilot/ParameterRepository
-    GIT_TAG main
-    GIT_SHALLOW TRUE
-    DOWNLOAD_ONLY TRUE
+    GIT_TAG 7ed73878bfd6ddf11950dc28d94955a00223f997
+    PATTERNS "/*/apm.pdef.json"
+    SOURCE_DIR_VAR _apm_params_dir
 )
-qgc_track_git_head(
-    REPO_PATH "${ArduPilotParams_SOURCE_DIR}"
-    GIT_REF main
-    INTERVAL 3600
-    OFFLINE_OK
+CPMAddPackage(
+    NAME ArduPilotParams
+    SOURCE_DIR "${_apm_params_dir}"
+    DOWNLOAD_ONLY TRUE
 )
 
 # Filters applied to discovered ArduPilot parameter dirs (e.g. "Copter-4.7").

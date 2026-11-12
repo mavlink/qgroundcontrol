@@ -12,6 +12,8 @@ from typing import Any
 
 from qgc_tools.docker_variants import load_variants
 
+from ci.planning.detect_changes import is_build_input
+
 
 def build_args_str(build_args: dict[str, str]) -> str:
     """Render an ordered build-arg map as the newline-joined KEY=VALUE the action expects."""
@@ -46,7 +48,6 @@ def plan_builds(
             "target": v["target"],
             "variant": v["ci_variant"],
             "build_args": build_args_str(v["build_args"]),
-            "fuse": v["fuse"],
             "artifact_pattern": v["artifact_pattern"],
             "package_pattern": v["package_pattern"],
             "push_target": push_target,
@@ -86,6 +87,7 @@ def needs_full_matrix(files: list[str] | None) -> bool:
         "tools/common/**",
         "tools/qgc_tools/**",
         "tools/_bootstrap.py",
+        "tools/.python-version",
         "tools/pyproject.toml",
         "tools/uv.lock",
         "tools/configs/ccache.conf",
@@ -95,5 +97,8 @@ def needs_full_matrix(files: list[str] | None) -> bool:
         "android/**",
     )
     return files is None or any(
-        fnmatch.fnmatchcase(path, pattern) for path in files for pattern in patterns
+        fnmatch.fnmatchcase(path, pattern)
+        for path in files
+        if is_build_input(path)
+        for pattern in patterns
     )

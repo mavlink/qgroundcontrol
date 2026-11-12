@@ -1,6 +1,7 @@
 # QGroundControl Development Commands
 # Install (requires just >=1.48 for `set lazy`):
-#   python tools/setup/install_python.py dev   (recommended; pulls rust-just into tools/.venv)
+#   uv run --frozen --project tools python tools/setup/install_python.py dev
+#   (recommended; pulls rust-just into tools/.venv)
 #   brew install just / cargo install just
 # `apt install just` on Ubuntu ships 1.21 which is too old.
 
@@ -10,6 +11,8 @@ set lazy
 host_os := os()
 python := "uv run --frozen --project tools --group scripts python"
 build_tool := "uv run --frozen --project tools --group build"
+# The ruff-check and ruff-format hooks run this ruff, which reads the root ruff.toml.
+ruff := "uv run --frozen --project tools --group lint ruff"
 qt_version := shell(python + " ./tools/setup/read_config.py --get qt.version")
 cmake_min_version := shell(python + " ./tools/setup/read_config.py --get build.cmake_minimum_version")
 gstreamer_version := shell(python + " ./tools/setup/read_config.py --get gstreamer.version.default")
@@ -35,6 +38,10 @@ default:
 deps:
     @echo "Installing dependencies (requires sudo)..."
     {{ python }} ./tools/setup/install_dependencies
+
+# Install the Qt version build-config.json pins into ~/Qt unless configure already finds it (pass --dry-run to preview)
+qt *ARGS:
+    {{ build_tool }} python ./tools/setup/install_qt.py local {{ qt_root_arg }} {{ ARGS }}
 
 # Install VS Code workspace defaults without overwriting local settings
 vscode:
@@ -64,8 +71,8 @@ clean *ARGS:
 # Clean, configure, and build
 rebuild: clean configure build
 
-# Full setup: deps, configure, build
-setup: deps configure build
+# Full setup: deps, Qt, configure, build
+setup: deps qt configure build
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Quality
@@ -91,6 +98,12 @@ format:
 format-fix:
     uv run --frozen --project tools --group lint python ./tools/analyze.py --tool clang-format --fix
 
+# Apply ruff's lint fixes and formatting (whole tree, or the given paths), then report what is left
+format-fix-python *ARGS:
+    {{ ruff }} check --force-exclude --fix-only {{ ARGS }}
+    {{ ruff }} format --force-exclude {{ ARGS }}
+    {{ ruff }} check --force-exclude {{ ARGS }}
+
 # Run static analysis
 analyze:
     {{ python }} ./tools/analyze.py
@@ -99,9 +112,9 @@ analyze:
 coverage:
     {{ build_tool }} python ./tools/coverage_report.py
 
-# Run all Python tooling tests in parallel, in random order (pass pytest options, e.g. --randomly-seed=N)
+# Run the Python tooling tests CI runs, in parallel and random order (pass pytest options, e.g. --randomly-seed=N)
 test-python *ARGS:
-    uv run --frozen --project tools --group test pytest -q -n auto tools/tests {{ ARGS }}
+    uv run --frozen --project tools --group test --group terrain --group simulation --group release pytest -q -n auto tools/tests {{ ARGS }}
 
 # Run lint + Python + application tests
 check: lint test-python test
@@ -121,7 +134,7 @@ docs:
 
 # Build using Docker (Ubuntu)
 docker:
-    python3 deploy/docker/run_docker.py build ubuntu
+    {{ python }} deploy/docker/run_docker.py build ubuntu
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Utilities
@@ -145,9 +158,9 @@ check-deps:
 check-gstreamer:
     {{ python }} ./tools/check_deps.py --gstreamer
 
-# Update translation sources
-translations:
-    {{ python }} ./tools/translations/qgc_lupdate.py
+# Update translation sources (pass --check to only report tr() calls lupdate rejects)
+translations *ARGS:
+    {{ python }} ./tools/translations/qgc_lupdate.py {{ ARGS }}
 
 # Clean build, caches, generated files, and node_modules
 distclean:

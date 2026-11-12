@@ -197,28 +197,13 @@ def test_run_retries_the_build_once(monkeypatch, capsys, failures, exit_code):
 
     monkeypatch.setattr("common.proc.subprocess.run", run)
     monkeypatch.setattr("common.proc.time", SimpleNamespace(sleep=sleeps.append))
-    args = argparse.Namespace(fuse=True, image="builder:linux", build_type="Release")
-    assert docker_helper.cmd_run(args) == exit_code
+    argv = ["run", "--image", "builder:linux", "--build-type", "Release"]
+    assert docker_helper.main(argv) == exit_code
     if exit_code:
         assert "::error::Docker build failed after 2 attempts." in capsys.readouterr().out
     assert len(calls) == 2
-    assert calls[0][1:] == [
-        "deploy/docker/run_docker.py",
-        "run",
-        "--fuse",
-        "builder:linux",
-        "Release",
-    ]
+    assert calls[0][1:] == ["deploy/docker/run_docker.py", "run", "builder:linux", "Release"]
     assert sleeps == [30]
-
-
-@pytest.mark.parametrize(("enable_fuse", "fuse"), [("true", ["--fuse"]), ("false", []), ("", [])])
-def test_run_reads_fuse_from_the_environment(monkeypatch, enable_fuse, fuse):
-    calls = []
-    monkeypatch.setenv("ENABLE_FUSE", enable_fuse)
-    monkeypatch.setattr(docker_helper, "run_with_retry", lambda command, **_: calls.append(command))
-    assert docker_helper.main(["run", "--image", "sha", "--build-type", "Release"]) == 0
-    assert calls[0][1:] == ["deploy/docker/run_docker.py", "run", *fuse, "sha", "Release"]
 
 
 def test_summary_records_ninja_timings_before_reporting(tmp_path, monkeypatch, gh_output):

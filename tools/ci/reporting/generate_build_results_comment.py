@@ -14,7 +14,7 @@ import logging
 import os
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote, urlsplit, urlunsplit
@@ -38,6 +38,7 @@ from common.junit import JUnitCase, parse_junit
 from common.markdown import code_block, code_span, details, escape_text, md_table, more_items
 from common.xml import XMLParseError
 
+from ci.reporting.junit_report import passed_on_retry
 from ci.reporting.workflow_runs import triggering_run
 
 logger = logging.getLogger(__name__)
@@ -116,6 +117,8 @@ class Suite:
     workflow: str
     cases: tuple[JUnitCase, ...]
     wall_seconds: float | None
+    # Tests that failed and then passed on CI's single retry; cases counts them as passed.
+    retried: tuple[str, ...] = ()
 
     def count(self, outcome: str) -> int:
         return sum(case.outcome == outcome for case in self.cases)
@@ -327,10 +330,12 @@ def load_suites(artifacts_dir: Path) -> list[Suite]:
             continue
         name = clip(directory.name.removeprefix("test-results-"))
         cases: list[JUnitCase] = []
+        retried: list[str] = []
         wall: float | None = None
         for junit in sorted(directory.glob("*.xml")):
             try:
                 found, seconds = parse_junit(junit, name)
+                retried += [case.name for case in passed_on_retry(junit)]
             except (OSError, XMLParseError):
                 logger.warning("Failed to parse JUnit results from %s", junit, exc_info=True)
                 continue
@@ -338,7 +343,9 @@ def load_suites(artifacts_dir: Path) -> list[Suite]:
             if seconds is not None:
                 wall = (wall or 0.0) + seconds
         if cases:
-            suites.append(Suite(name, workflows.get(directory.name, ""), tuple(cases), wall))
+            suites.append(
+                Suite(name, workflows.get(directory.name, ""), tuple(cases), wall, tuple(retried))
+            )
     return suites
 
 
@@ -689,6 +696,8 @@ def render_table(report: Report) -> str:
             if suites
             else "—"
         )
+        if retried := sum(len(s.retried) for s in suites):
+            tests += f", ⚠️ {format_count(retried)} passed on retry"
         state = _state(entry)
         label = STATE_LABELS.get(state, state)
         if state == "skipped":
@@ -967,6 +976,13 @@ def render_tests(report: Report, limits: Limits) -> str:
         f"Tests: {format_count(passed)} passed, {format_count(failed)} failed, "
         f"{format_count(skipped)} skipped in {_plural(len(report.suites), 'suite')}"
     )
+    retried: dict[str, tuple[str, ...]] = {}
+    for suite in report.suites:
+        for name in suite.retried:
+            retried[name] = (*retried.get(name, ()), suite.name)
+    if retried:
+        summary += f"; {format_count(len(retried))} passed on retry"
+        body += f"\n\n{_test_name_lines('Passed on retry', retried, limits.test_names)}"
     if changes is not None and changes.compared:
         summary += (
             f"; {format_count(len(changes.added))} added, "
@@ -1235,7 +1251,7 @@ def render(report: Report, limits: Limits) -> str:
 def generate_comment(
     env: Mapping[str, str], base_dir: Path, now_utc: datetime | None = None
 ) -> str:
-    report = collect_report(env, base_dir, now_utc or datetime.now(timezone.utc))
+    report = collect_report(env, base_dir, now_utc or datetime.now(UTC))
     comment = ""
     for limits in LIMIT_STEPS:
         comment = render(report, limits)

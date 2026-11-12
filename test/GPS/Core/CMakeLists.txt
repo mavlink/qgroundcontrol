@@ -6,7 +6,12 @@
 
 add_subdirectory(Transport/Support)
 add_subdirectory(Protocols/Support)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSTestTransports QGCGPSProtocolTestSupport)
+target_link_libraries(
+    QGCUnitTests
+    PRIVATE
+        QGCGPSTestTransports
+        QGCGPSProtocolTestSupport
+)
 add_subdirectory(Protocols)
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT CMAKE_CROSSCOMPILING)
     add_subdirectory(Transport/Android)

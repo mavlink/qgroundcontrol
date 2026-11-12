@@ -29,7 +29,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -39,14 +39,14 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
           sparse-checkout: |
-            .github/actions/aws-credentials
+            .github/actions
             .github/build-config.json
             .github/runner-images
-            tools/ci/runner/runner_image.py
             tools/_bootstrap.py
+            tools/ci
             tools/common
             tools/qgc_tools
-            tools/setup/read_config.py
+            tools/setup
           sparse-checkout-cone-mode: false
 
       # Images build only from the default branch, with the AMI role and subnet configured.
@@ -69,7 +69,7 @@ jobs:
 
       # The same Packer release as the packer-validate hook.
       - name: Setup Packer
-        uses: hashicorp/setup-packer@v3
+        uses: hashicorp/setup-packer@ce93c3c08a6c2ff2275bf4b54ff0d9a75f6c9789 # v3.4.0
         with:
           version: ${{ steps.build-config.outputs.tools_packer_version }}
 
@@ -112,7 +112,11 @@ jobs:
         with:
           fetch-depth: 1
           persist-credentials: false
-          sparse-checkout: tools/ci/runner/runner_image.py
+          sparse-checkout: |
+            tools/_bootstrap.py
+            tools/ci
+            tools/common
+            tools/qgc_tools
           sparse-checkout-cone-mode: false
 
       - name: Verify runner image
@@ -128,7 +132,7 @@ jobs:
       id-token: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
       - uses: actions/checkout@v7

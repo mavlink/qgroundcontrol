@@ -51,6 +51,15 @@ def test_is_release_tag(ref_name: str, expected: bool) -> None:
     assert release_tag_check.is_release_tag(ref_name) is expected
 
 
+def test_a_release_version_is_the_tag_s_numbers() -> None:
+    version = release_tag_check.release_version
+    # Numbers, not text: v5.1.10 is newer than v5.1.6, and v5.10.0 than v5.2.0.
+    tags = ("v5.1.6", "v5.1.10", "v5.2.0", "v5.10.0")
+    assert [version(tag) for tag in tags] == [(5, 1, 6), (5, 1, 10), (5, 2, 0), (5, 10, 0)]
+    assert version("v5.2.0-dev") is None
+    assert version("5.1.6") is None
+
+
 @pytest.mark.parametrize(
     ("ref_name", "stdout", "expected"),
     [
@@ -64,3 +73,18 @@ def test_check_release_tag(
 ) -> None:
     _stub_git(monkeypatch, stdout)
     assert release_tag_check.check_release_tag(ref_name) is expected
+
+
+def test_check_release_tag_asks_about_the_tags_commit(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Publish Builds runs in a checkout of the default branch, where HEAD is not the tag.
+    asked: list[tuple[str, ...]] = []
+
+    def run_git(*args: str, **_: object):
+        asked.append(args)
+        return completed("origin/Stable_V5.1\n")
+
+    monkeypatch.setattr(release_tag_check, "run_git", run_git)
+
+    assert release_tag_check.check_release_tag("v5.1.5", commit="3a67d31") is True
+    assert release_tag_check.check_release_tag("v5.1.5") is True
+    assert [args[3] for args in asked] == ["3a67d31", "HEAD"]

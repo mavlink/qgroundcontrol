@@ -85,6 +85,9 @@ def main(argv: list[str] | None = None) -> int:
                 f"-DCMAKE_BUILD_TYPE={build_type}",
                 "-DQGC_BUILD_TESTING=OFF",
                 "-DQGC_STABLE_BUILD=OFF",
+                # As in CI's cmake-configure action: appimagelint only warns, and its Launchpad
+                # lookup holds up packaging for minutes when that host is unreachable.
+                "-DQGC_RUN_APPIMAGELINT=OFF",
                 f"-DCMAKE_PREFIX_PATH={qt_root}",
             ],
             check=True,

@@ -21,9 +21,6 @@ services:
     volumes:
       - ../..:/project/source
       - ../../build:/project/build
-    cap_add: [SYS_ADMIN]
-    devices: ["/dev/fuse"]
-    security_opt: ["apparmor:unconfined"]
   ubuntu-2204:
     build:
       context: ../..
@@ -43,9 +40,6 @@ services:
     volumes:
       - ../..:/project/source
       - ../../build:/project/build
-    cap_add: [SYS_ADMIN]
-    devices: ["/dev/fuse"]
-    security_opt: ["apparmor:unconfined"]
   ubuntu-2604:
     build:
       context: ../..
@@ -62,9 +56,6 @@ services:
     volumes:
       - ../..:/project/source
       - ../../build:/project/build
-    cap_add: [SYS_ADMIN]
-    devices: ["/dev/fuse"]
-    security_opt: ["apparmor:unconfined"]
   debian:
     build:
       context: ../..
@@ -81,9 +72,6 @@ services:
     volumes:
       - ../..:/project/source
       - ../../build:/project/build
-    cap_add: [SYS_ADMIN]
-    devices: ["/dev/fuse"]
-    security_opt: ["apparmor:unconfined"]
   fedora:
     build:
       context: ../..

@@ -1,7 +1,7 @@
 [project]
 name = "qgc-tools"
 version = "0.0.0"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 
 [dependency-groups]
 scripts = [
@@ -12,7 +12,6 @@ scripts = [
   # fastcrc ships no Windows ARM64 wheel, and mavgen falls back to pure-Python CRCs without it.
   "fastcrc>=0.3; platform_machine != 'ARM64'",
   "jinja2>=3.1",
-  "tomli>=2.0; python_version < '3.11'",
 ]
 precommit = [
   # prek runs .pre-commit-config.yaml; pre-commit stays as a fallback runner for one release.
@@ -30,6 +29,8 @@ test = [
   "syrupy>=6.1",
   "jsonschema>=4.23",
   "pyyaml>=6",
+  # Ships the presets schema test_validate_cmake_presets.py validates against; build sets the range.
+  "cmake",
 ]
 qt = [
   {include-group = "scripts"},
@@ -54,12 +55,17 @@ simulation = [
 release = [
   "git-cliff==2.14.2",
 ]
+# The first-setup profile. simulation is here because CI's Python test job installs it, so the mock
+# vehicle tests run instead of skipping. terrain is not: rasterio ships wheels only for macOS 15+,
+# glibc 2.28+ and Windows, and elsewhere builds from source against GDAL. `just test-python` and the
+# pyright hook name the terrain group themselves.
 dev = [
   {include-group = "test"},
   {include-group = "lint"},
   {include-group = "build"},
   {include-group = "qt"},
   {include-group = "release"},
+  {include-group = "simulation"},
 ]
 # The devcontainer's /opt/qgc-venv syncs only scripts, qt and build, so build keeps prek, gcovr and
 # just; install_dependencies installs build on Linux.
@@ -67,7 +73,9 @@ build = [
   {include-group = "scripts"},
   {include-group = "precommit"},
   {include-group = "coverage"},
-  "cmake>=3.28,<4",
+  # The lock stays on the major of CI's build.cmake_version (.github/build-config.json), so local builds
+  # meet the same policies; the floor is the project's minimum CMake.
+  "cmake>=3.28,<5",
   "meson",
   "ninja",
   "rust-just>=1.55.1",
@@ -83,7 +91,7 @@ lint = [
 
 [tool.uv]
 default-groups = []
-# The single uv version: CI installs this floor exactly, as do install_uv.py and the Docker image.
+# The single uv version: CI installs this floor exactly, as do install_uv.py and the builder and fuzzing images.
 required-version = ">=0.12.8"
 
 [tool.uv.sources]
@@ -95,7 +103,8 @@ aqtinstall = { git = "https://github.com/miurahr/aqtinstall", rev = "6f0f842da47
 pythonpath = ["."]
 testpaths = ["tests"]
 addopts = ["--strict-markers"]
-cache_dir = "../.cache/pytest"
+# Under tools/: pytest 9.2 fails at startup when cache_dir contains `..`.
+cache_dir = ".cache/pytest"
 # A parametrization over repository files that finds none (e.g. missing from a CI sparse checkout)
 # fails collection instead of silently skipping.
 empty_parameter_set_mark = "fail_at_collect"

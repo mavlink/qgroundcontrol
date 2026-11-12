@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 import pytest
@@ -18,13 +18,14 @@ from common.analysis_diagnostics import load_unique_warnings
 
 from .._helpers import write_files
 from ..test_junit import ASAN_FAILURE, QT_FAILURE, TIMEOUT_OUTPUT, junit_xml
+from .test_cmake_helper import FLAKY, merged_junit, passed
 
 if TYPE_CHECKING:
     from pathlib import Path
 
     from syrupy.assertion import SnapshotAssertion
 
-NOW = datetime(2026, 2, 17, 12, 0, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 2, 17, 12, 0, 0, tzinfo=UTC)
 HEAD = "0123456789abcdef0123456789abcdef01234567"
 BASE = "a" * 40
 # GitHub's merge of HEAD into the base branch, which Code Analysis checks out.
@@ -804,6 +805,27 @@ def test_unreadable_junit_is_skipped(tmp_path: Path, caplog: pytest.LogCaptureFi
     comment = generate_comment({}, tmp_path, NOW)
     assert "Failed to parse JUnit results" in caplog.text
     assert "<details><summary>Tests:" not in comment
+
+
+def test_tests_that_passed_on_retry_are_flagged_not_failed(tmp_path: Path) -> None:
+    env = write_scenario(tmp_path, "all-passed")
+    integration = _passing("Integration", 60, 4.0)
+    write_files(
+        tmp_path,
+        {
+            "artifacts/test-results-linux-coverage-integration/junit.xml": merged_junit(
+                [*integration, FLAKY], [passed(FLAKY)]
+            )
+        },
+    )
+    comment = generate_comment(env, tmp_path, NOW)
+    assert _verdict(comment).startswith("✅ **All builds passed**")
+    assert "| Linux | ✅ Passed | 26m 50s | 878 passed, ⚠️ 1 passed on retry |" in comment
+    assert (
+        "<details><summary>Tests: 1,327 passed, 0 failed, 1 skipped in 7 suites; "
+        "1 passed on retry; 1 added, 1 removed vs base</summary>"
+    ) in comment
+    assert "Passed on retry: `MissionControllerTest` (linux-coverage-integration)" in comment
 
 
 def test_tests_added_and_removed_versus_the_base_build(tmp_path: Path) -> None:

@@ -25,8 +25,11 @@ on:
       - 'src/Settings/**'
       - 'src/AppSettings/pages/**'
       - 'src/**/*.VehicleConfig.json'
+      - 'src/**/CMakeLists.txt'
+      - 'src/**/*.cmake'
       - 'src/Vehicle/FactGroups/VehicleGPSFactGroup.h'
       - 'src/FactSystem/factmetadata.schema.json'
+      - 'src/VideoManager/GStreamer/README.md'
       - 'docs/.vitepress/config.mjs'
       - 'docs/en/qgc-user-guide/getting_started/download_and_install.md'
   push:
@@ -36,32 +39,23 @@ on:
     paths: *tooling-paths
   workflow_dispatch:
 
+# Only a pull request's superseded runs are cancelled. Every other run has its own group, so a newer
+# push neither cancels it nor replaces it while it waits.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
   test-ci-scripts:
-    name: Test CI Scripts (py${{ matrix.python-version }})
+    name: Test CI Scripts (py3.12)
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # release provides git-cliff for test_release_notes.py.
-          - python-version: '3.10'
-            groups: test,release
-          # One leg installs numpy and rasterio (terrain) and pymavlink (simulation) so
-          # test_terrain_pipeline.py and test_mock_vehicle.py run instead of skipping.
-          - python-version: '3.12'
-            groups: test,terrain,simulation,release
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -83,9 +77,13 @@ jobs:
             docs/.vitepress/config.mjs
             docs/en/qgc-user-guide/getting_started/download_and_install.md
             justfile
+            pyrightconfig.json
+            ruff.toml
             src/AppSettings/pages
             src/Settings
             src/**/*.VehicleConfig.json
+            src/**/CMakeLists.txt
+            src/**/*.cmake
             src/Vehicle/FactGroups/VehicleGPSFactGroup.h
             src/FactSystem/factmetadata.schema.json
             src/VideoManager/GStreamer/README.md
@@ -95,11 +93,14 @@ jobs:
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
+      # release provides git-cliff for test_release_notes.py; numpy and rasterio (terrain) and
+      # pymavlink (simulation) let test_terrain_pipeline.py and test_mock_vehicle.py run instead
+      # of skipping. test itself carries the cmake package, whose presets schema
+      # test_validate_cmake_presets.py checks the presets against.
       - name: Setup Python
         uses: ./.github/actions/setup-python
         with:
-          groups: ${{ matrix.groups }}
-          python-version: ${{ matrix.python-version }}
+          groups: test,terrain,simulation,release
 
       - name: Run CI script tests
         run: pytest -q -n auto tools/tests
@@ -110,7 +111,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -133,7 +134,6 @@ jobs:
         uses: ./.github/actions/setup-python
         with:
           groups: test
-          python-version: '3.12'
 
       # Collection imports every test module and expands every parametrization, so the checkout
       # needs .github and the VehicleConfig pages test_config_qml_generator.py enumerates;

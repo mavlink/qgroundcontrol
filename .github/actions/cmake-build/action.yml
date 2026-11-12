@@ -74,7 +74,7 @@ runs:
       id: reviewdog
       continue-on-error: true
       if: inputs.reviewdog == 'true' && env.REVIEWDOG_LOG != ''
-      uses: reviewdog/action-setup@v1
+      uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
 
     - name: Annotate compiler warnings
       if: inputs.reviewdog == 'true' && env.REVIEWDOG_LOG != '' && steps.reviewdog.outcome == 'success'

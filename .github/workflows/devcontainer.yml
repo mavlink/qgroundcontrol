@@ -2,16 +2,17 @@ name: Dev Container
 
 # Publishes the Dockerfile's devcontainer target as ghcr.io/mavlink/qgc-dev, one image for
 # linux/amd64 and linux/arm64, each built natively. Upstream master pushes that change the image's
-# inputs publish `latest`; release tags publish their version. Pull requests, forks, and manual
-# runs only build. .devcontainer/devcontainer.json reuses the published layers as a build cache.
+# inputs publish `latest`; release tags on a Stable* branch publish their version. Pull requests,
+# forks, and manual runs only build. .devcontainer/devcontainer.json reuses the published layers as
+# a build cache.
 on:
   push:
     branches: [master]
-    # GitHub skips path filters for tag pushes, so every release tag publishes.
+    # GitHub skips path filters for tag pushes, so every release tag starts a run.
     tags: ['v[0-9]+.[0-9]+.[0-9]+']
     # Every file the Dockerfile copies into the base, linux, and devcontainer* stages;
     # tools/tests/ci/contracts/test_devcontainer_workflow.py keeps the list complete.
-    paths: &image-inputs
+    paths:
       - '.devcontainer/**'
       - '.dockerignore'
       - '.github/build-config.json'
@@ -23,6 +24,7 @@ on:
       - 'deploy/docker/lib/**'
       - 'deploy/docker/qgc-android.sh'
       - 'deploy/docker/smoke_devcontainer.py'
+      - 'tools/.python-version'
       - 'tools/_bootstrap.py'
       - 'tools/common/**'
       - 'tools/pyproject.toml'
@@ -35,13 +37,42 @@ on:
       - 'tools/setup/qt_installer/**'
       - 'tools/setup/read_config.py'
       - 'tools/uv.lock'
+  # The image inputs without the locked Python environment (tools/pyproject.toml and tools/uv.lock):
+  # a pull request that changes only those, such as Renovate's lock updates, builds Linux alone
+  # (PYTHON_ENVIRONMENT_FILES in detect_changes.py). The contract test compares the two lists.
   pull_request:
-    paths: *image-inputs
+    paths:
+      - '.devcontainer/**'
+      - '.dockerignore'
+      - '.github/build-config.json'
+      - '.github/workflows/devcontainer.yml'
+      - 'deploy/docker/Dockerfile'
+      - 'deploy/docker/entrypoint.py'
+      - 'deploy/docker/entrypoint.sh'
+      - 'deploy/docker/install_android_sdk.sh'
+      - 'deploy/docker/lib/**'
+      - 'deploy/docker/qgc-android.sh'
+      - 'deploy/docker/smoke_devcontainer.py'
+      - 'tools/.python-version'
+      - 'tools/_bootstrap.py'
+      - 'tools/common/**'
+      - 'tools/qgc_tools/**'
+      - 'tools/setup/build_clazy.py'
+      - 'tools/setup/install_analysis_tools.py'
+      - 'tools/setup/install_ccache.py'
+      - 'tools/setup/install_dependencies/**'
+      - 'tools/setup/install_qt.py'
+      - 'tools/setup/qt_installer/**'
+      - 'tools/setup/read_config.py'
   workflow_dispatch:
 
+# Only a pull request's superseded runs are cancelled. The pushes to one branch or tag take turns
+# and are never cancelled mid-run: each publishes that ref's images, and the newest must publish
+# last. A push run still waiting for its turn gives way to a newer push. A run started by hand
+# has a group of its own: in the ref's group it would replace the waiting push run.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -54,6 +85,38 @@ env:
     amd64 the Android SDK
 
 jobs:
+  # Release tags are cut on Stable* branches. Like release.yml, this stops a pushed vX.Y.Z tag that
+  # no Stable* branch contains, before anything is built or published. The job itself runs on every
+  # event: a skipped job would also skip the jobs that need it.
+  release-tag:
+    name: Check Release Tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      # fetch-depth 0 fetches every tag and every branch as origin/*, which the check reads.
+      - name: Checkout release tag check
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          sparse-checkout: |
+            tools/_bootstrap.py
+            tools/ci
+            tools/common
+            tools/qgc_tools
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Require a Stable branch tag
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        run: python3 tools/ci/publish/release_branch_check.py --ref "${GITHUB_REF}"
+
   build:
     name: Dev Container ${{ matrix.arch }}
     runs-on: >-
@@ -63,6 +126,7 @@ jobs:
           github.run_id, github.run_attempt, strategy.job-index, matrix.runson_runner) ||
         matrix.hosted_runner
       }}
+    needs: release-tag
     timeout-minutes: 120
     permissions:
       contents: read
@@ -86,13 +150,13 @@ jobs:
       # The Harden-Runner community tier audits GitHub-hosted runners only, not RunsOn.
       - name: Harden Runner
         if: runner.environment == 'github-hosted'
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
       # On RunsOn, the type=gha Buildx cache goes to S3.
       - name: Enable RunsOn magic cache
-        uses: runs-on/action@v2
+        uses: runs-on/action@13fbb6a39310a0dac9ab4716da2c4e74a3326dfc # v2.7.0
         with:
           show_costs: summary
 
@@ -114,11 +178,11 @@ jobs:
         run: echo "publish=${PUBLISH}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Image labels
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ${{ env.IMAGE }}
           labels: |
@@ -126,7 +190,7 @@ jobs:
             org.opencontainers.image.description=${{ env.IMAGE_DESCRIPTION }}
 
       - name: Build image
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: ./deploy/docker/Dockerfile
@@ -149,7 +213,7 @@ jobs:
       # Builds the image as VS Code does, adding devcontainer.json's features on the cached layers
       # above, then runs its postCreateCommand and checks the login environment it creates.
       - name: Test devcontainer.json
-        uses: devcontainers/ci@v0.3
+        uses: devcontainers/ci@513af61f4de4f75d37e4438f184ba4358f0fc1ca # v0.3.1900000450
         with:
           push: never
           runCmd: qtpaths --qt-version && test -f .vscode/settings.json
@@ -157,7 +221,7 @@ jobs:
       # Pushes and manual runs inventory and scan the image; pull requests skip it.
       - name: Generate image SBOM
         if: github.event_name != 'pull_request'
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
           image: qgc-dev:ci
           format: cyclonedx-json
@@ -174,7 +238,7 @@ jobs:
       - name: Scan image
         if: github.event_name != 'pull_request'
         id: grype
-        uses: anchore/scan-action@v7
+        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
         with:
           grype-version: ${{ steps.install-grype.outputs.version }}
           sbom: image-sbom.cdx.json
@@ -192,7 +256,7 @@ jobs:
 
       - name: Login to GHCR
         if: steps.policy.outputs.publish == 'true'
-        uses: docker/login-action@v4
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -203,7 +267,7 @@ jobs:
       - name: Push image by digest
         id: push
         if: steps.policy.outputs.publish == 'true'
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: ./deploy/docker/Dockerfile
@@ -266,7 +330,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -283,7 +347,7 @@ jobs:
           echo "digest=${digest}" >> "$GITHUB_OUTPUT"
 
       - name: Login to GHCR
-        uses: docker/login-action@v4
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -313,7 +377,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -326,7 +390,7 @@ jobs:
 
       - name: Image tags
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ${{ env.IMAGE }}
           flavor: latest=false
@@ -335,10 +399,10 @@ jobs:
             type=ref,event=tag
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Login to GHCR
-        uses: docker/login-action@v4
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}

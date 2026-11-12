@@ -3,19 +3,20 @@
 from __future__ import annotations
 
 import subprocess
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from ci.runner import runner_image as runner
 
-NOW = datetime(2026, 9, 14, tzinfo=timezone.utc)
+NOW = datetime(2026, 9, 14, tzinfo=UTC)
 
 
 def image(number, age, candidate=False):
     return {
         "ImageId": f"ami-{number:017x}",
         "Name": (runner.CANDIDATE_PREFIX if candidate else runner.PREFIX) + str(number),
-        "CreationDate": (NOW - timedelta(days=age)).isoformat(),
+        # The format EC2 reports
+        "CreationDate": (NOW - timedelta(days=age)).strftime("%Y-%m-%dT%H:%M:%S.000Z"),
         "State": "available",
         "Tags": [
             {"Key": "Project", "Value": "qgroundcontrol"},

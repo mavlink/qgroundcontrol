@@ -10,12 +10,17 @@ read by `save-build-cache` go to GITHUB_ENV.
 QGC_COMPILER_CACHE=sccache (the RunsOn sccache pilot) selects sccache when runs-on/action
 has exported its S3 bucket: the ccache archive is neither restored nor saved
 (QGC_CCACHE_KEY stays empty) and sccache reads and writes S3 objects directly.
+
+A release tag (refs/tags/vX.Y.Z) compiles without a compiler or moc cache: no key restores or
+saves one, CCACHE_DISABLE and MOCCACHE_DISABLE make both launchers run the real tool, and cache
+directories left in the workspace are removed. The CPM and GStreamer SDK caches stay.
 """
 
 from __future__ import annotations
 
 import argparse
 import os
+import shutil
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,8 +30,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import _bootstrap as _bootstrap
 from common.gh_actions import append_github_env, gh_warning, write_github_output
+from qgc_tools.release_tag_check import is_release_tag
 
-from ci.cache.build_cache_artifact import artifact_name
+from ci.cache.build_cache_artifact import CACHE_ROOTS, artifact_name
 from ci.cache.cpm_helper import (
     compute_cpm_fingerprint,
     compute_gstreamer_fingerprint,
@@ -62,6 +68,7 @@ class CacheInputs:
     save_cache: str = "auto"
     event: str = ""
     ref_name: str = ""
+    ref_type: str = ""
     pr_number: str = ""
     backend: str = "github"
     run_id: str = ""
@@ -85,6 +92,7 @@ class CacheInputs:
             save_cache=env.get("INPUT_SAVE_CACHE", "auto"),
             event=env.get("GITHUB_EVENT_NAME", ""),
             ref_name=env.get("GITHUB_REF_NAME", ""),
+            ref_type=env.get("GITHUB_REF_TYPE", ""),
             pr_number=env.get("PR_NUMBER", ""),
             backend=env.get("QGC_ACTIONS_CACHE_BACKEND", "github"),
             run_id=env.get("GITHUB_RUN_ID", ""),
@@ -130,6 +138,31 @@ def scoped_save_policy(requested: str, save: str, event: str, backend: str) -> s
     if event == "merge_group" or (event == "pull_request" and backend != "s3"):
         return "false"
     return save
+
+
+def builds_release(ref_type: str, ref_name: str) -> bool:
+    """Whether the job builds a release tag, whose packages are compiled from scratch.
+
+    The name is the release tag of qgc_tools.release_tag_check. Change detection has already
+    stopped the platform builds of a tag that no Stable* branch contains.
+    """
+    return ref_type == "tag" and is_release_tag(ref_name)
+
+
+def discard_local_caches(workspace: Path) -> None:
+    """Remove the compiler and moc cache directories a runner kept from an earlier job.
+
+    Hosted and RunsOn runners start with an empty workspace; a runner that persists between
+    jobs does not. Docker builds compile into the mounted workspace, so an empty directory
+    keeps them cold even in a container started without the CCACHE_DISABLE and MOCCACHE_DISABLE
+    that run_docker.py forwards.
+    """
+    for root in CACHE_ROOTS:
+        path = workspace / root
+        if path.is_symlink():
+            path.unlink()
+        elif path.exists():
+            shutil.rmtree(path)
 
 
 def _same(value: str, expected: str) -> bool:
@@ -243,7 +276,10 @@ def sccache_environment(workspace: Path, temp: Path, *, writable: bool) -> dict[
 
 
 def plan_caches(inputs: CacheInputs, workspace: Path) -> CachePlan:
-    """Resolve every key and decision, creating the compiler and CPM cache directories."""
+    """Resolve every key and decision, creating the compiler and CPM cache directories.
+
+    A release tag's compiler and moc cache directories are emptied instead.
+    """
     host, target, build_type = inputs.host, inputs.target, inputs.build_type
     scope = determine_cache_scope(inputs.event, inputs.ref_name, inputs.pr_number)
     save = save_policy(inputs.save_cache, inputs.event)
@@ -281,7 +317,17 @@ def plan_caches(inputs: CacheInputs, workspace: Path) -> CachePlan:
         "gst_mode": "",
     }
 
-    tool = compiler_cache_tool(inputs.compiler_cache, inputs.sccache_bucket)
+    uncached = builds_release(inputs.ref_type, inputs.ref_name)
+    if uncached:
+        print(f"Release tag {inputs.ref_name}: compiling without a compiler or moc cache")
+        discard_local_caches(workspace)
+        outputs.update(
+            ccache_key="", ccache_restore_keys="", moccache_key="", moccache_restore_keys=""
+        )
+        # The sccache pilot's S3 prefix is shared by every branch, so a release leaves it alone.
+        tool = "ccache"
+    else:
+        tool = compiler_cache_tool(inputs.compiler_cache, inputs.sccache_bucket)
     if tool == "sccache":
         # sccache reads and writes S3 objects itself: no ccache archive is restored or saved.
         outputs.update(ccache_key="", ccache_restore_keys="")
@@ -302,12 +348,15 @@ def plan_caches(inputs: CacheInputs, workspace: Path) -> CachePlan:
             ),
         )
         Path(environment["CCACHE_DIR"]).mkdir(parents=True, exist_ok=True)
+    if uncached:
+        # Both launchers stay configured and run the real compiler and moc.
+        environment.update(CCACHE_DISABLE="1", MOCCACHE_DISABLE="1")
     environment["QGC_COMPILER_CACHE_TOOL"] = tool
 
     root = workspace.resolve()
     environment.update(prepare_cpm_cache(CPM_MODULES, workspace))
     fingerprint = compute_cpm_fingerprint(root)
-    if tool == "ccache":
+    if tool == "ccache" and not uncached:
         environment.update(
             check_result_cache_environment(
                 environment["CCACHE_DIR"], fingerprint, inputs.runner_image
@@ -338,7 +387,10 @@ def plan_caches(inputs: CacheInputs, workspace: Path) -> CachePlan:
     environment.update(
         {
             "QGC_BUILD_CACHE_ARTIFACT": str(
-                tool == "ccache" and inputs.backend != "s3" and inputs.event in ARTIFACT_EVENTS
+                tool == "ccache"
+                and not uncached
+                and inputs.backend != "s3"
+                and inputs.event in ARTIFACT_EVENTS
             ).lower(),
             "QGC_BUILD_CACHE_ARTIFACT_NAME": artifact_name(
                 f"{ccache_leg}-{scope}", f"{moccache_base}-{moccache_leg}"
@@ -347,7 +399,7 @@ def plan_caches(inputs: CacheInputs, workspace: Path) -> CachePlan:
                 f"{ccache_leg}-shared", f"moccache-{host}-{target}-shared-{moccache_leg}"
             ),
             "MOCCACHE_STATS": "1",
-            "QGC_SAVE_BUILD_CACHE": scoped_save,
+            "QGC_SAVE_BUILD_CACHE": "false" if uncached else scoped_save,
             "QGC_CCACHE_KEY": outputs["ccache_key"],
             "QGC_MOCCACHE_KEY": outputs["moccache_key"],
             "QGC_PR_CACHE_SAVE_MIN_MISSES": PR_SAVE_MIN_MISSES,

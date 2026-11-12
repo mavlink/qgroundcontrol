@@ -62,7 +62,7 @@ target_sources(
         gstqgc/GstQgcVideoFormatsTest.h
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Encoded streams the tests send instead of encoding their own (GstTest::FixtureRtpSender): the app's self-test
 # samples, made by src/VideoManager/GStreamer/Runtime/Media/generate.sh.

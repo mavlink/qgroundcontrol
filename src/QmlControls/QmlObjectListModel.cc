@@ -16,8 +16,12 @@ QMetaMethod childDirtyChangedSlot()
 {
     const QMetaObject* metaObject = &ObjectListModelBase::staticMetaObject;
     const int slotIndex = metaObject->indexOfSlot(kChildDirtyChangedSlotSignature);
-    Q_ASSERT_X(slotIndex >= 0, "childDirtyChangedSlot", "slot signature mismatch — update kChildDirtyChangedSlotSignature");
-    return (slotIndex >= 0) ? metaObject->method(slotIndex) : QMetaMethod();
+    if (slotIndex < 0) {
+        qCCritical(QmlObjectListModelLog)
+            << "Internal Error: slot signature mismatch — update kChildDirtyChangedSlotSignature";
+        return QMetaMethod();
+    }
+    return metaObject->method(slotIndex);
 }
 
 QMetaMethod dirtyChangedSignal(const QObject* object)

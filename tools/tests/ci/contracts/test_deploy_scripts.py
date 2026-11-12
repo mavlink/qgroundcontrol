@@ -45,7 +45,8 @@ def test_docker_cli_uses_variants_without_shell_evaluation(tmp_path, variant):
     assert build[build.index("--target") + 1] == config["target"]
     for key, value in config["build_args"].items():
         assert f"{key}={value}" in build
-    assert ("/dev/fuse" in run) == config["fuse"]
+    # The build needs no FUSE device or added capability: packaging runs with APPIMAGE_EXTRACT_AND_RUN.
+    assert not {"--privileged", "--cap-add", "--device", "--security-opt"} & set(run)
     assert run[run.index("--user") + 1] == f"{os.getuid()}:{os.getgid()}"
     assert f"{tmp_path / 'output with spaces'}:/project/build" in run
     assert run[-2:] == [config["image"], "Release"]
@@ -272,6 +273,14 @@ def test_vagrant_provisions_as_root_and_builds_as_user(module, tmp_path, monkeyp
     assert any("rsync" in command and command[0] == "runuser" for command in commands) == (not ci)
     assert not any("su" in command or "-c" in command for command in commands)
     assert calls[0][1]["env"]["DEBIAN_FRONTEND"] == "noninteractive"
+    # uv installs the environment's Python outside root's home, where the vagrant user can run it.
+    setup, setup_options = next(
+        call
+        for call in calls
+        if str(tmp_path.resolve() / "tools/setup/install_python.py") in call[0]
+    )
+    assert "--python" not in setup
+    assert setup_options["env"]["UV_PYTHON_INSTALL_DIR"] == "/opt/qgc-python"
 
 
 @pytest.mark.parametrize("target", ["native", "cross", "android"])
@@ -364,6 +373,24 @@ def test_docker_forwards_budgets_but_not_host_paths(module, monkeypatch, tmp_pat
     assert "MOCCACHE_MAX_SIZE=256M" in calls[0]
     assert not any("/host/" in arg for arg in calls[0])
     assert f"{tmp_path}:/project/source" in calls[0]
+
+
+def test_docker_turns_the_launchers_off_in_the_container_for_a_release_tag(
+    module, monkeypatch, tmp_path
+):
+    script = module("deploy/docker/run_docker.py")
+    monkeypatch.setenv("SOURCE_DIR", str(tmp_path))
+    calls = []
+    monkeypatch.setattr(script.subprocess, "run", lambda command, **kwargs: calls.append(command))
+    for name in ("CCACHE_DISABLE", "MOCCACHE_DISABLE"):
+        monkeypatch.delenv(name, raising=False)
+    script.run_image("builder", "Release")
+    # cache_plan.py exports both for a release tag.
+    monkeypatch.setenv("CCACHE_DISABLE", "1")
+    monkeypatch.setenv("MOCCACHE_DISABLE", "1")
+    script.run_image("builder", "Release")
+    assert not any("DISABLE" in arg for arg in calls[0])
+    assert {"CCACHE_DISABLE=1", "MOCCACHE_DISABLE=1"} <= set(calls[1])
 
 
 @pytest.mark.parametrize(

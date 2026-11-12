@@ -81,7 +81,12 @@ def test_fingerprint_includes_dependency_defaults_and_patches(tmp_path):
     changed = compute_cpm_fingerprint(tmp_path)
     assert before != changed
     (tmp_path / "src/dependency.patch").write_text("a patch\n")
-    assert changed != compute_cpm_fingerprint(tmp_path)
+    patched = compute_cpm_fingerprint(tmp_path)
+    assert changed != patched
+    # The sparse checkout module declares no package but decides what a cached checkout holds.
+    (tmp_path / "cmake/modules").mkdir()
+    (tmp_path / "cmake/modules/GitSparseCheckout.cmake").write_text("function(checkout)\n")
+    assert patched != compute_cpm_fingerprint(tmp_path)
 
 
 def test_fingerprint_ignores_build_scripts_without_dependency_declarations(tmp_path):

@@ -26,6 +26,11 @@ runs:
     # jinja generators see the locked dependencies. It tees CMake's output to cmake-configure.log in
     # the build directory and writes the job summary's Configure section; a failure also annotates
     # the first CMake error.
+    #
+    # CI never runs appimagelint after creating an AppImage: its distribution check only warns, and
+    # its Launchpad lookup cost about nine minutes whenever that host was unreachable. linux.yml's
+    # appimage-distros job boots the AppImage on the oldest supported distributions instead. The
+    # option precedes the caller's arguments, so `extra-args` can turn it back on.
     - name: Configure
       id: configure
       shell: bash
@@ -33,7 +38,7 @@ runs:
       env:
         INPUT_BUILD_DIR: ${{ inputs.build-dir }}
         INPUT_PRESET: ${{ inputs.preset }}
-        INPUT_EXTRA_ARGS: ${{ inputs.extra-args }}
+        INPUT_EXTRA_ARGS: -DQGC_RUN_APPIMAGELINT=OFF ${{ inputs.extra-args }}
         INPUT_USE_QT_CMAKE: ${{ inputs.use-qt-cmake }}
 
     # CMake 4 records its try_compile and find_* results in CMakeConfigureLog.yaml, not

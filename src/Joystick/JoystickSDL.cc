@@ -18,8 +18,10 @@
 
 QGC_LOGGING_CATEGORY(JoystickSDLLog, "Joystick.JoystickSDL")
 
-/// Discovery cache - main thread only, cleared in shutdown()
+/// Discovery cache - changed on the main thread only, cleared in shutdown().
+/// The mutex is for the copy discover() returns when called off the main thread.
 static QMap<QString, Joystick*> s_discoveryCache;
+static QMutex s_discoveryCacheMutex;
 
 /// SDL event watcher - uses Qt::QueuedConnection for thread safety
 static bool sdlEventWatcher(void *userdata, SDL_Event *event)
@@ -169,6 +171,7 @@ void JoystickSDL::shutdown(bool deleteDiscoveryCache)
     SDL_RemoveEventWatch(sdlEventWatcher, nullptr);
     SDLJoystick::shutdown();
 
+    const QMutexLocker cacheLocker(&s_discoveryCacheMutex);
     if (deleteDiscoveryCache) {
         qDeleteAll(s_discoveryCache);
     }
@@ -177,7 +180,12 @@ void JoystickSDL::shutdown(bool deleteDiscoveryCache)
 
 QMap<QString, Joystick*> JoystickSDL::discover()
 {
-    Q_ASSERT(QThread::isMainThread());
+    if (!QThread::isMainThread()) {
+        // An empty map would make the caller delete joysticks that the cache still points to
+        qCCritical(JoystickSDLLog) << "Internal Error: called off the main thread, returning the previous discovery";
+        const QMutexLocker cacheLocker(&s_discoveryCacheMutex);
+        return s_discoveryCache;
+    }
 
     QMap<QString, Joystick*> current;
 
@@ -187,6 +195,8 @@ QMap<QString, Joystick*> JoystickSDL::discover()
     SDLJoystick::pumpEvents();
 
     SDLJoystick::JoystickLock lock;
+    // After the SDL lock, which an off-thread caller may hold while it waits for the cache
+    const QMutexLocker cacheLocker(&s_discoveryCacheMutex);
 
     int count = 0;
     SDL_JoystickID *ids = SDL_GetJoysticks(&count);

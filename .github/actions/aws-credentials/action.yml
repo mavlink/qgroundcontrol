@@ -1,7 +1,7 @@
 name: AWS Credentials
 description: >-
   Configure AWS credentials via OIDC (preferred) or static keys. Shared by
-  attest-and-upload and the GStreamer and runner-image workflows so they
+  the Publish Builds, GStreamer and runner-image workflows so they
   can't drift on configure-aws-credentials version or inputs.
 
 inputs:
@@ -30,7 +30,7 @@ runs:
     # static keys are only passed without one.
     - name: Configure AWS Credentials
       if: inputs.aws-role-arn != '' || inputs.aws-key-id != ''
-      uses: aws-actions/configure-aws-credentials@v6
+      uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
       with:
         role-to-assume: ${{ inputs.aws-role-arn }}
         aws-access-key-id: ${{ inputs.aws-role-arn == '' && inputs.aws-key-id || '' }}

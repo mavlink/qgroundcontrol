@@ -1,97 +1,92 @@
-"""Detect drift between platform workflow display names and the places that
-match against them by literal string.
+"""Detect drift between workflow display names and the places that match them by literal string.
 
-GitHub provides no expression-based way to wait for workflows by file name,
-so `build-results.yml`'s `workflow_run.workflows` matches by `name:`. A rename
-of any platform workflow silently stops its build-results reporting. These
-tests fail CI loudly when names drift.
+GitHub provides no expression-based way to wait for workflows by file name, so `workflow_run`
+triggers and `build-config.json`'s platform list match by `name:`. Renaming a workflow silently
+stops its build-results reporting and its Pages records. These tests fail CI loudly instead.
 """
 
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING
 
-from ..._helpers import REPO_ROOT, load_workflow, load_yaml
+from ci.reporting.collect_build_status import ANALYSIS_WORKFLOW, PRECOMMIT_WORKFLOW
 
-if TYPE_CHECKING:
-    from pathlib import Path
-
-WORKFLOWS_DIR = REPO_ROOT / ".github" / "workflows"
-BUILD_CONFIG_JSON = REPO_ROOT / ".github" / "build-config.json"
-
-PLATFORM_FILES: dict[str, str] = {
-    "Linux": "linux.yml",
-    "Windows": "windows.yml",
-    "MacOS": "macos.yml",
-    "Android": "android.yml",
-    "iOS": "ios.yml",
-}
+from ..._helpers import REPO_ROOT, load_workflow, workflow_names
 
 
-def _workflow_name(path: Path) -> str:
-    return load_yaml(path).get("name", "")
-
-
-def _pull_request_workflows() -> set[str]:
-    """Display names of every workflow a pull_request event runs; the comment lists them all."""
-    names = set()
-    for path in WORKFLOWS_DIR.glob("*.yml"):
-        doc = load_yaml(path)
-        on = doc.get("on")
-        if (isinstance(on, dict) and "pull_request" in on) or on == "pull_request":
-            names.add(str(doc.get("name", "")))
-    return names
+def _workflows() -> dict[str, dict]:
+    """Every workflow by its display name."""
+    return {
+        str(document.get("name", "")): document for document in map(load_workflow, workflow_names())
+    }
 
 
 def _platform_workflows() -> list[str]:
-    raw = (
-        json.loads(BUILD_CONFIG_JSON.read_text(encoding="utf-8"))
-        .get("build", {})
-        .get("platform_workflows", "")
-    )
-    assert raw, "platform_workflows missing from build-config.json"
-    return [n.strip() for n in raw.split(",") if n.strip()]
+    config = json.loads((REPO_ROOT / ".github/build-config.json").read_text(encoding="utf-8"))
+    raw = config["build"]["platform_workflows"]
+    return [name.strip() for name in raw.split(",") if name.strip()]
 
 
-def test_workflow_file_name_matches_build_config() -> None:
+def test_build_config_platform_workflows_name_existing_workflows() -> None:
     configured = _platform_workflows()
-    assert sorted(configured) == sorted(PLATFORM_FILES), (
-        f"build-config.json platform_workflows {configured} no longer match "
-        f"the known file mapping {sorted(PLATFORM_FILES)} — update this test."
-    )
-    for expected_name, filename in PLATFORM_FILES.items():
-        actual = _workflow_name(WORKFLOWS_DIR / filename)
-        assert actual == expected_name, (
-            f"{filename} `name:` is {actual!r}; expected {expected_name!r}. "
-            "Renaming silently breaks build-results.yml's workflow_run trigger."
-        )
+    assert configured
+    assert set(configured) <= set(_workflows())
+
+
+def test_workflow_run_triggers_name_existing_workflows() -> None:
+    workflows = _workflows()
+    followed = {
+        name: document["on"]["workflow_run"]["workflows"]
+        for name, document in workflows.items()
+        if isinstance(document["on"], dict) and "workflow_run" in document["on"]
+    }
+    assert followed
+    for name, names in followed.items():
+        assert set(names) <= set(workflows), name
+
+
+# Pull-request workflows that do not trigger build-results.yml, with the trigger that refreshes
+# their row in the comment. In two weeks of upstream runs each ended within about a minute and
+# was never the last check of its commit (.github/ci-notes/reporting.md); add a workflow only
+# with the same evidence.
+REFRESHED_BY = {
+    "Check Links": "CodeQL",
+    "Dependency Review": "CodeQL",
+    "Docs": "CodeQL",
+}
+
+
+def _pull_request_filters(document: dict) -> dict | None:
+    """The settings of a workflow's pull_request trigger, or None without that trigger."""
+    triggers = document["on"]
+    if isinstance(triggers, str):
+        triggers = [triggers]
+    if "pull_request" not in triggers:
+        return None
+    return (triggers["pull_request"] if isinstance(triggers, dict) else None) or {}
 
 
 def test_build_results_triggers_on_every_pull_request_workflow() -> None:
-    """A check left out of the trigger list could fail after the final comment and never show."""
-    on = load_workflow("build-results.yml").get("on")
-    assert isinstance(on, dict), "build-results.yml `on:` is not a mapping"
-    workflow_run = on.get("workflow_run")
-    assert isinstance(workflow_run, dict), "missing workflow_run trigger"
-    workflows = workflow_run.get("workflows")
-    assert isinstance(workflows, list), "workflow_run.workflows must be a list"
+    """A check left out could fail after the final comment and never show.
 
-    trigger = {str(w) for w in workflows}
-    expected = _pull_request_workflows()
-    assert set(_platform_workflows()) <= expected
-    assert {"pre-commit", "Code Analysis", "CI Scripts"} <= expected
-    assert sorted(trigger) == sorted(expected), (
-        f"not triggering build-results.yml: {sorted(expected - trigger)}; "
-        f"not a pull_request workflow: {sorted(trigger - expected)}"
+    The exceptions are in REFRESHED_BY, each with a trigger that runs on every pull request.
+    """
+    trigger = set(load_workflow("build-results.yml")["on"]["workflow_run"]["workflows"])
+    pull_request = {
+        name: filters
+        for name, document in _workflows().items()
+        if (filters := _pull_request_filters(document)) is not None
+    }
+    # The comment renders these workflows' artifacts, so each one's completion must update it.
+    assert {*_platform_workflows(), PRECOMMIT_WORKFLOW, ANALYSIS_WORKFLOW} <= trigger
+    assert not trigger & REFRESHED_BY.keys()
+    reported = trigger | REFRESHED_BY.keys()
+    assert reported == pull_request.keys(), (
+        f"neither a trigger nor in REFRESHED_BY: {sorted(pull_request.keys() - reported)}; "
+        f"not a pull_request workflow: {sorted(reported - pull_request.keys())}"
     )
-
-
-def test_build_results_reuses_the_resolved_pr_context() -> None:
-    doc = load_workflow("build-results.yml")
-    outputs = doc["jobs"]["report-context"]["outputs"]
-    assert outputs["base_sha"] == "${{ steps.context.outputs.base_sha }}"
-    steps = doc["jobs"]["post-pr-comment"]["steps"]
-    report = next(step for step in steps if step.get("name") == "Generate combined report")
-    assert report["env"]["BASE_SHA"] == "${{ needs.report-context.outputs.base_sha }}"
-    assert report["env"]["PR_NUMBER"] == "${{ needs.report-context.outputs.pr }}"
+    for name, refresher in REFRESHED_BY.items():
+        assert refresher in trigger, name
+        # A path, branch, or type filter could skip the refresher on a pull request that
+        # runs the workflow it stands in for.
+        assert not pull_request[refresher], refresher

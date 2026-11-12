@@ -115,7 +115,7 @@ def test_configure_exports_root_of_selected_qt_cmake(
 
 
 def test_configure_requires_qt_cmake_by_default(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     def unexpected_run(*_args: object, **_kwargs: object) -> None:
         raise AssertionError("cmake should not run when qt-cmake is unavailable")
@@ -124,6 +124,12 @@ def test_configure_requires_qt_cmake_by_default(
     monkeypatch.setattr(f"{MODULE}.subprocess.run", unexpected_run)
 
     assert configure(CMakeConfig(source_dir=tmp_path, build_dir=tmp_path / "build")) == 1
+    # The error names the recipe that installs Qt where find_qt_cmake() looks; plain cmake
+    # (--no-qt-cmake) would only fail later, at find_package(Qt6).
+    error = capsys.readouterr().err
+    assert "Run `just qt`" in error
+    assert "QT_ROOT_DIR" in error
+    assert "--no-qt-cmake" not in error
 
 
 def test_configure_writes_no_github_output(

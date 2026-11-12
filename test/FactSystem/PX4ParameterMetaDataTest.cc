@@ -1,12 +1,16 @@
 #include "PX4ParameterMetaDataTest.h"
-#include "ParameterMetaData.h"
-#include "ParameterMetaDataTestHelper.h"
-#include "PX4ParameterMetaData.h"
+
+#include <memory>
 
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonObject>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QThread>
+
+#include "PX4ParameterMetaData.h"
+#include "ParameterMetaData.h"
+#include "ParameterMetaDataTestHelper.h"
 
 using namespace Qt::StringLiterals;
 
@@ -435,6 +439,27 @@ void PX4ParameterMetaDataTest::_loadMissingFile()
     FactMetaData *fact = meta.getMetaDataForFact("ANY_PARAM", FactMetaData::valueTypeFloat);
     QVERIFY(fact);
     QVERIFY(fact->name().isEmpty());
+}
+
+void PX4ParameterMetaDataTest::_rejectOtherThread()
+{
+    PX4ParameterMetaData meta;
+    bool factRejected = false;
+
+    expectLogMessage("FirmwarePlugin.ParameterMetaData", QtCriticalMsg,
+                     QRegularExpression("loadParameterFactMetaDataFile called from wrong thread"));
+    expectLogMessage("FirmwarePlugin.ParameterMetaData", QtCriticalMsg,
+                     QRegularExpression("getMetaDataForFact called from wrong thread"));
+    const std::unique_ptr<QThread> thread(QThread::create([&meta, &factRejected]() {
+        meta.loadParameterFactMetaDataFile(QStringLiteral("/nonexistent/path/file.json"));
+        factRejected = (meta.getMetaDataForFact("ANY_PARAM", FactMetaData::valueTypeFloat) == nullptr);
+    }));
+    thread->start();
+    QVERIFY(thread->wait(TestTimeout::mediumMs()));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+
+    QVERIFY(factRejected);
 }
 
 void PX4ParameterMetaDataTest::_loadBundledPX4MetaData()

@@ -33,7 +33,7 @@ target_sources(
         LogViewerControllerTest.h
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_qgc_test(MAVLinkChartControllerTest LABELS Unit AnalyzeView)
 add_qgc_test(MAVLinkConsoleControllerTest LABELS Unit AnalyzeView)

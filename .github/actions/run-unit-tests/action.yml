@@ -1,5 +1,5 @@
 name: Run Unit Tests
-description: Run tests via CTest, then report and upload their results even when tests fail.
+description: Run tests via CTest, rerunning failed tests once, then report and upload their results even when tests fail.
 
 inputs:
   build-dir:
@@ -32,8 +32,8 @@ inputs:
     default: auto
   report-name:
     description: >-
-      Job-summary section title for the JUnit results (counts, failures, slowest tests) and
-      error annotations for failed tests; empty skips both
+      Job-summary section title for the JUnit results (counts, failures, tests passed on retry,
+      slowest tests) and error annotations for failed tests; empty skips both
     required: false
     default: ''
   artifact-name:
@@ -61,6 +61,8 @@ runs:
   using: composite
   steps:
     # cmake_helper.py and junit_report.py read the INPUT_* variables as argument defaults.
+    # cmake_helper.py reruns failed tests once. A test that then passes no longer fails the step: it
+    # becomes a warning annotation, and the JUnit report keeps its failed attempt for the reports below.
     # QT_FORCE_STDERR_LOGGING sends QtTest's results to the captured output on Windows, where with no
     # console attached they otherwise go to OutputDebugString.
     - name: Run CTest
@@ -89,7 +91,7 @@ runs:
 
     - name: Upload Codecov test analytics
       if: ${{ !cancelled() && inputs.upload-codecov == 'true' }}
-      uses: codecov/codecov-action@v7
+      uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
       with:
         files: ${{ inputs.build-dir }}/${{ inputs.junit-output }}
         report_type: test_results

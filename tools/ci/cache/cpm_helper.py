@@ -56,6 +56,8 @@ def compute_cpm_fingerprint(root: Path) -> str:
         root / "cmake/CustomOptions.cmake",
         root / "cmake/modules/CPM.cmake",
         root / "cmake/modules/CPMPatchCache.cmake",
+        # Decides which files the checkouts it fetches hold, without declaring a CPM package.
+        root / "cmake/modules/GitSparseCheckout.cmake",
         root / ".github/build-config.json",
     ]:
         if exact.exists():

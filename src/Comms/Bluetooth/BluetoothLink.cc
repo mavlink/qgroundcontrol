@@ -15,7 +15,6 @@ BluetoothLink::BluetoothLink(SharedLinkConfigurationPtr &config, QObject *parent
     , _bluetoothConfig(qobject_cast<BluetoothConfiguration*>(config.get()))
     , _workerThread(new QThread(this))
 {
-    Q_ASSERT(_bluetoothConfig);
     if (!_bluetoothConfig) {
         qCCritical(BluetoothLinkLog) << "Invalid BluetoothConfiguration";
         return;

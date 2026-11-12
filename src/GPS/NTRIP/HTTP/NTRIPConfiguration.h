@@ -1,10 +1,14 @@
 #pragma once
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QString>
 #include <QtCore/QUrl>
 
 struct NTRIPConnectionConfig
 {
+    Q_DECLARE_TR_FUNCTIONS(NTRIPConnectionConfig)
+
+public:
     QString host;
     int port = 2101;
     QString username;

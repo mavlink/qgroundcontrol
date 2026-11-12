@@ -72,7 +72,7 @@ def test_workflow_upload_identity_tracks_configured_abis_without_renaming_payloa
     )
     assert upload["with"]["artifact-name"] == "${{ env.PACKAGE }}.apk"
     assert upload["with"]["subject-name"] == "${{ env.PACKAGE }}-${{ matrix.host }}"
-    assert upload["with"]["upload-aws"] == "${{ matrix.primary }}"
+    assert upload["with"]["publish"] == "${{ matrix.primary }}"
     assert upload["if"] == "${{ !matrix.emulator }}"
     assert steps["Deploy to Play Store"]["with"]["releaseFiles"] == (
         "${{ runner.temp }}/build/${{ env.PACKAGE }}.apk"

@@ -6,10 +6,6 @@ inputs:
     description: 'Dependency groups to install (comma-separated: scripts, precommit, test, qt, coverage, build, lint, terrain, release, dev, all)'
     required: false
     default: 'scripts'
-  python-version:
-    description: 'Python version'
-    required: false
-    default: '3.12'
 
 runs:
   using: composite
@@ -22,22 +18,24 @@ runs:
       with:
         script: await exec.exec('python3', ['tools/ci/cache/cache_backend.py'])
 
-    - name: Setup uv and Python ${{ inputs.python-version }}
-      uses: astral-sh/setup-uv@v10.2.0
+    - name: Setup uv
+      uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       with:
         # These inputs are evaluated again during nested post-job cleanup.
         enable-cache: ${{ env.QGC_ACTIONS_CACHE_BACKEND == 's3' }}
         cache-python: ${{ env.QGC_ACTIONS_CACHE_BACKEND == 's3' }}
         cache-dependency-glob: tools/uv.lock
-        python-version: ${{ inputs.python-version }}
         # Installs exactly the required-version floor, matching install_uv.py and the Docker image.
         version-file: tools/pyproject.toml
         resolution-strategy: lowest
 
-    # install_python.py also adds the environment's bin/Scripts directory to GITHUB_PATH.
+    # `--project tools` makes uv read the Python version from tools/.python-version, for the
+    # installer and for the environment it builds; `--no-project` keeps the installer on an
+    # interpreter outside that environment. install_python.py also adds the environment's
+    # bin/Scripts directory to GITHUB_PATH.
     - name: Install dependencies
       shell: bash
       env:
         GROUPS: ${{ inputs.groups }}
       run: |
-        uv run --no-project python tools/setup/install_python.py "$GROUPS"
+        uv run --no-project --project tools python tools/setup/install_python.py "$GROUPS"

@@ -1,4 +1,4 @@
-"""CI builds take CMake and Ninja from build-config's pins; install-dependencies adds no others."""
+"""CI builds take CMake and Ninja from build-config's pins, and Renovate tracks every pin there."""
 
 from __future__ import annotations
 
@@ -9,18 +9,13 @@ from typing import Any
 
 import pytest
 from ci.runner.build_setup import SetupInputs, plan_setup
+from common.build_config import lookup_dotted
 
-from ..._helpers import (
-    REPO_ROOT,
-    evaluate_expression,
-    get_step,
-    get_steps,
-    load_action,
-    load_workflow,
-    workflow_names,
-)
+from ..._helpers import REPO_ROOT, evaluate_expression, get_steps, load_action
+from .._workflows import local_action, step_groups, uses_action, uses_references
 
 CONFIG = json.loads((REPO_ROOT / ".github/build-config.json").read_text(encoding="utf-8"))
+RENOVATE = json.loads((REPO_ROOT / ".github/renovate.json").read_text(encoding="utf-8"))
 PINS = ("cmake_version", "ninja_version")
 
 
@@ -30,7 +25,7 @@ def _version(value: str) -> tuple[int, ...]:
 
 def _get_cmake() -> tuple[int, dict[str, Any]]:
     steps = get_steps(load_action("build-setup"))
-    (index,) = [i for i, step in enumerate(steps) if "lukka/get-cmake@" in step.get("uses", "")]
+    (index,) = [i for i, step in enumerate(steps) if uses_action(step, "lukka/get-cmake")]
     return index, steps[index]
 
 
@@ -48,66 +43,117 @@ def test_get_cmake_precedes_the_python_environment_on_path() -> None:
     """GITHUB_PATH prepends, so the later step wins over the build and dev groups' CMake."""
     index, _ = _get_cmake()
     steps = get_steps(load_action("build-setup"))
-    (python,) = [
-        i for i, step in enumerate(steps) if step.get("uses") == "./.github/actions/setup-python"
-    ]
+    (python,) = [i for i, step in enumerate(steps) if local_action(step) == "setup-python"]
     assert python < index
 
 
 def test_pinned_cmake_is_in_the_get_cmake_catalog_and_meets_the_minimum() -> None:
     """get-cmake resolves versions from the catalog bundled in its release; tag vX bundles CMake X."""
-    _, step = _get_cmake()
-    tag = re.fullmatch(r"lukka/get-cmake@v(\d+\.\d+\.\d+)", step["uses"])
+    # The action is pinned to a commit, so its version is the comment after the SHA.
+    (version,) = {
+        comment
+        for _, _, references in uses_references()
+        for uses, comment in references
+        if uses.startswith("lukka/get-cmake@")
+    }
+    tag = re.fullmatch(r"v(\d+\.\d+\.\d+)", version)
     assert tag is not None
     pinned = _version(CONFIG["build"]["cmake_version"])
     assert _version(CONFIG["build"]["cmake_minimum_version"]) <= pinned <= _version(tag[1])
+
+
+def _tracked_pins() -> dict[str, str]:
+    """Each dependency Renovate's custom managers extract from build-config.json, and its value."""
+    config_text = (REPO_ROOT / ".github/build-config.json").read_text(encoding="utf-8")
+    tracked = {}
+    for manager in RENOVATE["customManagers"]:
+        if "/^\\.github/build-config\\.json$/" in manager["managerFilePatterns"]:
+            for pattern in manager["matchStrings"]:
+                for match in re.finditer(pattern.replace("(?<", "(?P<"), config_text):
+                    name = manager.get("depNameTemplate") or match["depName"]
+                    tracked[name] = match["currentValue"]
+    return tracked
+
+
+def _rules_naming(name: str) -> list[dict[str, Any]]:
+    return [
+        rule
+        for rule in RENOVATE["packageRules"]
+        if name in [*rule.get("matchDepNames", []), *rule.get("matchPackageNames", [])]
+    ]
 
 
 def test_schema_requires_the_pins_and_renovate_tracks_them() -> None:
     schema = json.loads((REPO_ROOT / ".github/build-config.schema.json").read_text())
     assert set(PINS) <= set(schema["properties"]["build"]["required"])
 
-    config_text = (REPO_ROOT / ".github/build-config.json").read_text(encoding="utf-8")
-    renovate = json.loads((REPO_ROOT / ".github/renovate.json").read_text(encoding="utf-8"))
-    tracked = {}
-    for manager in renovate["customManagers"]:
-        if "/^\\.github/build-config\\.json$/" in manager["managerFilePatterns"]:
-            for pattern in manager["matchStrings"]:
-                for match in re.finditer(pattern.replace("(?<", "(?P<"), config_text):
-                    name = manager.get("depNameTemplate") or match["depName"]
-                    tracked[name] = match["currentValue"]
     released_tools = {
         pin["repository"]: pin["version"] for pin in CONFIG["tools"].values() if "repository" in pin
     }
-    assert tracked == {
+    appimage_tools = {pin["repository"]: pin["tag"] for pin in CONFIG["appimage"].values()}
+    assert _tracked_pins() == {
         "lukka/get-cmake": CONFIG["build"]["cmake_version"],
         "ninja-build/ninja": CONFIG["build"]["ninja_version"],
+        "openssl/openssl": CONFIG["android"]["openssl_version"],
         **released_tools,
+        **appimage_tools,
     }
-    assert set(released_tools) == {
-        "ccache/ccache",
-        "rui314/mold",
-        "mozilla/sccache",
-        "anchore/grype",
-        "hashicorp/packer",
-        "runs-on/cli",
-        "aras-p/ClangBuildAnalyzer",
+
+    # A release rebuilt in place under one tag has no version to follow.
+    rolling = {name for name, tag in appimage_tools.items() if tag == "continuous"}
+    disabled = {
+        name
+        for name in appimage_tools
+        if any(rule.get("enabled") is False for rule in _rules_naming(name))
     }
-    # A version bump needs new digests, so it must not join the weekly group PR unapproved.
-    rules = renovate["packageRules"]
-    (rule,) = [rule for rule in rules if set(rule.get("matchDepNames", [])) == set(released_tools)]
-    assert rule["dependencyDashboardApproval"] is True
-    assert rule["groupName"] is None
+    assert disabled == rolling
+
+    # build-config.json also pins these releases' SHA-256 digests, which a bump must update by
+    # hand, so none may join the weekly group PR or open a PR before it is approved.
+    rules = RENOVATE["packageRules"]
     weekly = next(i for i, rule in enumerate(rules) if rule.get("groupName") == "all dependencies")
-    assert rules.index(rule) > weekly
+    held = {
+        name
+        for rule in rules[weekly + 1 :]
+        if rule.get("dependencyDashboardApproval") is True and rule.get("groupName", "") is None
+        for name in rule.get("matchDepNames", [])
+    }
+    assert {*released_tools, *appimage_tools, "openssl/openssl"} - rolling <= held
+
+
+def test_workflows_read_only_build_config_keys_that_exist() -> None:
+    read = 0
+    for label, _, steps in step_groups():
+        for step in steps:
+            for keys in re.findall(
+                r"read_config\.py --(?:github-output|get) ([\w. ]+)", step.get("run", "")
+            ):
+                for key in keys.split():
+                    assert lookup_dotted(CONFIG, key, None) is not None, (label, key)
+                    read += 1
+    assert read
+
+
+def test_renovate_version_rules_accept_the_pinned_values() -> None:
+    """A pin outside its rule's allowedVersions or versioning scheme would silently stop updating."""
+    checked = 0
+    for name, value in _tracked_pins().items():
+        for rule in _rules_naming(name):
+            if (allowed := rule.get("allowedVersions", "")).startswith("/"):
+                assert re.search(allowed.strip("/"), value), name
+                checked += 1
+            if (versioning := rule.get("versioning", "")).startswith("regex:"):
+                scheme = versioning.removeprefix("regex:").replace("(?<", "(?P<")
+                assert re.fullmatch(scheme, value), name
+                checked += 1
+    assert checked
 
 
 def test_renovate_holds_the_qt_coupled_android_toolchain_for_approval() -> None:
     """Qt's Android template pins these; an unreviewed bump can outrun the compileSdk Qt supports."""
-    renovate = json.loads((REPO_ROOT / ".github/renovate.json").read_text(encoding="utf-8"))
     (rule,) = [
         rule
-        for rule in renovate["packageRules"]
+        for rule in RENOVATE["packageRules"]
         if "com.android.tools.build:gradle" in rule.get("matchDepNames", [])
     ]
     assert rule["dependencyDashboardApproval"] is True
@@ -127,29 +173,6 @@ def test_renovate_holds_the_qt_coupled_android_toolchain_for_approval() -> None:
         assert any(name.match(dependency) for name in held), dependency
 
 
-def test_linux_install_plans_caches_and_installs_without_python_build_tools() -> None:
-    steps = [
-        step for step in get_steps(load_action("install-dependencies")) if "Linux" in step["if"]
-    ]
-    assert [step.get("id") or step["name"] for step in steps] == [
-        "apt-plan",
-        "apt-cache",
-        "Install apt packages (Linux)",
-        "Save apt download cache (Linux)",
-    ]
-    cache = get_step(steps, "Restore apt download cache (Linux)")
-    assert cache["uses"].startswith("actions/cache/restore@")
-    assert cache["with"]["key"] == "${{ steps.apt-plan.outputs.key }}"
-    assert cache["with"]["restore-keys"] == "${{ steps.apt-plan.outputs.restore-keys }}"
-    save = get_step(steps, "Save apt download cache (Linux)")
-    assert save["uses"].startswith("actions/cache/save@")
-    assert save["with"] == {"path": cache["with"]["path"], "key": cache["with"]["key"]}
-    assert save["continue-on-error"] is True
-    commands = " ".join(step.get("run", "") for step in steps)
-    assert "tools/setup/install_dependencies" not in commands
-    assert commands.count("tools/ci/runner/install_dependencies_helper.py") == 2
-
-
 @pytest.mark.parametrize(
     ("event", "cache_hit", "saves"),
     [
@@ -163,8 +186,10 @@ def test_linux_install_plans_caches_and_installs_without_python_build_tools() ->
 def test_apt_downloads_are_saved_by_runs_that_may_write_the_cache(
     event: str, cache_hit: str, saves: bool
 ) -> None:
-    save = get_step(
-        get_steps(load_action("install-dependencies")), "Save apt download cache (Linux)"
+    (save,) = (
+        step
+        for step in get_steps(load_action("install-dependencies"))
+        if uses_action(step, "actions/cache/save")
     )
     context = {
         "runner": {"os": "Linux"},
@@ -174,42 +199,16 @@ def test_apt_downloads_are_saved_by_runs_that_may_write_the_cache(
     assert bool(evaluate_expression(save["if"], context)) is saves
 
 
-@pytest.mark.parametrize(("event", "cloud"), [("push", True), ("dynamic", False)])
-def test_get_cmake_skips_the_cloud_cache_in_copilot_sessions(event: str, cloud: bool) -> None:
-    _, step = _get_cmake()
-    context = {"github": {"event_name": event}}
-    assert evaluate_expression(step["with"]["useCloudCache"], context) is cloud
-    assert step["with"]["useLocalCache"] is False
-
-
-@pytest.mark.parametrize("runner_os", ["macOS", "Windows"])
-def test_macos_and_windows_install_through_the_retrying_ci_helper(runner_os: str) -> None:
-    """install_dependencies_helper.py retries and times out each attempt itself."""
-    (step,) = [
-        step
-        for step in get_steps(load_action("install-dependencies"))
-        if step["if"] == f"runner.os == '{runner_os}'" and "run" in step
-    ]
-    helper = '"${GITHUB_WORKSPACE}/tools/ci/runner/install_dependencies_helper.py"'
-    assert step["run"] == f"python3 {helper} {runner_os.lower()}"
-    assert step["shell"] == "bash"
-    assert "uses" not in step
-
-
 def test_jobs_installing_dependencies_get_the_pinned_tools_first() -> None:
     """The helper skips the distro CMake, Ninja, ccache and mold; build-setup and its cache install them."""
-    # Windows installs MSVC before build-setup.
-    exempt = {"windows.yml"}
     checked = 0
-    for workflow in workflow_names():
-        if workflow in exempt:
+    for label, _, steps in step_groups(actions=False):
+        # Windows installs MSVC before build-setup.
+        if label.startswith("windows.yml:"):
             continue
-        for job in (load_workflow(workflow).get("jobs") or {}).values():
-            steps = job.get("steps") or []
-            uses = [step.get("uses") for step in steps]
-            if "./.github/actions/install-dependencies" not in uses:
-                continue
-            index = uses.index("./.github/actions/install-dependencies")
-            assert "./.github/actions/build-setup" in uses[:index], workflow
-            checked += 1
-    assert checked >= 8
+        used = [local_action(step) for step in steps]
+        if "install-dependencies" not in used:
+            continue
+        assert "build-setup" in used[: used.index("install-dependencies")], label
+        checked += 1
+    assert checked

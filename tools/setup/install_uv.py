@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import tomllib
 from pathlib import Path
 
 PYPROJECT = Path(__file__).resolve().parents[1] / "pyproject.toml"
@@ -16,12 +17,9 @@ PYPROJECT = Path(__file__).resolve().parents[1] / "pyproject.toml"
 
 def required_version(pyproject: Path = PYPROJECT) -> str:
     """Return the version named by the `[tool.uv] required-version` floor in tools/pyproject.toml."""
-    # Regex rather than TOML: this runs before any package, including tomli on Python 3.10, exists.
-    match = re.search(
-        r'^required-version\s*=\s*"(?:>=|==)(\d+\.\d+\.\d+)"$',
-        pyproject.read_text(encoding="utf-8"),
-        re.MULTILINE,
-    )
+    with pyproject.open("rb") as stream:
+        floor = tomllib.load(stream).get("tool", {}).get("uv", {}).get("required-version")
+    match = re.fullmatch(r"(?:>=|==)(\d+\.\d+\.\d+)", str(floor))
     if not match:
         raise ValueError(f"{pyproject} must set [tool.uv] required-version to '>=X.Y.Z'")
     return match[1]

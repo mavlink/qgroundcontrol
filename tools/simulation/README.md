@@ -6,10 +6,10 @@ Tools for testing QGroundControl without physical hardware. Run them from the re
 
 | Tool | Use Case | Setup |
 | --- | --- | --- |
-| `mock_vehicle.py` | UI testing, quick checks | `python3 tools/setup/install_python.py simulation` (pymavlink), then activate `tools/.venv` |
+| `mock_vehicle.py` | UI testing, quick checks | `uv run --frozen --project tools python tools/setup/install_python.py simulation` (pymavlink), then activate `tools/.venv` |
 | `run_arducopter_sitl.py` | Full simulation, mission testing | Docker, or an ArduPilot SITL build with `--native` |
-| `fly_plan.py` | Fly a QGC `.plan` in ArduPilot or PX4 SITL and record the track and images | `python3 tools/setup/install_python.py simulation` (pymavlink), then activate `tools/.venv` |
-| `rc_transmitter.py` | RC transmitter for PX4 SITL: flight modes, switches, RC loss | `python3 tools/setup/install_python.py simulation` (pymavlink), then activate `tools/.venv` |
+| `fly_plan.py` | Fly a QGC `.plan` in ArduPilot or PX4 SITL and record the track and images | `uv run --frozen --project tools python tools/setup/install_python.py simulation` (pymavlink), then activate `tools/.venv` |
+| `rc_transmitter.py` | RC transmitter for PX4 SITL: flight modes, switches, RC loss | `uv run --frozen --project tools python tools/setup/install_python.py simulation` (pymavlink), then activate `tools/.venv` |
 | `mock_ntrip_caster.py` | NTRIP/RTK client testing | Python standard library only |
 
 ## Mock Vehicle (Lightweight)

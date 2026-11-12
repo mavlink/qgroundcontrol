@@ -3,12 +3,15 @@
 Install the Qt SDK with QGC's installer (tools/setup/qt_installer) or the locked aqtinstall.
 
 `--installer` (or QGC_QT_INSTALLER) picks the tool; QGC's installer is the default and aqt the
-fallback. The qt-install GitHub Action calls `plan` (Qt version, installer, cache key and path, a
-reusable preinstalled SDK, whether to save the cache, and the resolved request as one-line JSON)
-before restoring its cache and `ensure --plan` (reuse or install, report where Qt came from, then
-export the environment) after it. `compare` checks that both installers produce the same tree.
+fallback. `local` (`just qt`) installs the configured Qt for this machine into ~/Qt, where
+tools/configure.py looks for it, unless configure already finds it. The qt-install GitHub Action
+calls `plan` (Qt version, installer, cache key and path, a reusable preinstalled SDK, whether to
+save the cache, and the resolved request as one-line JSON) before restoring its cache and
+`ensure --plan` (reuse or install, report where Qt came from, then export the environment) after
+it. `compare` checks that both installers produce the same tree.
 
 Usage:
+    python tools/setup/install_qt.py local
     python tools/setup/install_qt.py install --version 6.8.3 --host linux --arch linux_gcc_64
     python tools/setup/install_qt.py install --from-config --host mac --arch clang_64
     python tools/setup/install_qt.py plan --host linux --arch linux_gcc_64 --outdir .qt/Qt
@@ -39,11 +42,13 @@ from common.gh_actions import (
     write_github_output,
     write_step_summary,
 )
+from common.platform import host_arch
 from common.proc import run_with_retry
+from common.qt import find_qt_tool, qt_version_key
 from qgc_tools.python_env import tool_command
 from setup.qt_installer.compare import compare_trees, render_markdown
 from setup.qt_installer.install import ensure_host_desktop, install
-from setup.qt_installer.repo import QtRequest, resolve_arch_dir
+from setup.qt_installer.repo import QtRequest, effective_host, host_desktop_arch, resolve_arch_dir
 
 INSTALLERS = ("qgc", "aqt")
 
@@ -265,6 +270,57 @@ def ensure_qt(plan: QtPlan, cache_hit: bool = False) -> tuple[Path, str]:
     return qt_root, "installed"
 
 
+def local_desktop_qt() -> tuple[str, str]:
+    """Return the Qt host and desktop arch for the machine running this script."""
+    host = effective_host("all_os")
+    # Qt's macOS kit is universal; Linux and Windows have a separate ARM64 host.
+    if host != "mac" and host_arch() == "aarch64":
+        host += "_arm64"
+    return host, host_desktop_arch(host, "")
+
+
+def install_local_qt(qt_root: Path | None, installer: str, dry_run: bool) -> int:
+    """Install the configured Qt into ~/Qt unless tools/configure.py already finds it.
+
+    *qt_root* is configure's `--qt-root`. Like configure, the search honours it and $QT_ROOT_DIR
+    before the standard install directories.
+    """
+    qt = configured_qt()
+    version = qt["version"]
+    found = find_qt_tool("qt-cmake", version=version, qt_root=qt_root)
+    if found:
+        root = found.parent.parent
+        if qt_version_key(found) != tuple(int(part) for part in version.split(".")):
+            selector = "--qt-root (QT_DIR)" if root == qt_root else "QT_ROOT_DIR"
+            print(
+                f"Not installing Qt {version}: {selector} selects the Qt at {root}, which "
+                f"configure uses. Without it this command installs Qt {version}."
+            )
+            return 0
+        print(f"Qt {version} is already installed at {root}; nothing to do.")
+    else:
+        host, arch = local_desktop_qt()
+        outdir = Path.home() / "Qt"
+        if dry_run:
+            print(f"Would install Qt {version} ({arch}) into {outdir}")
+            return 0
+        print(f"Installing Qt {version} ({arch}) into {outdir}")
+        root = install_qt(
+            host, "desktop", version, arch, outdir, qt["modules"], installer=installer
+        )
+        print(f"Qt installed at {root}")
+
+    # Configure takes the newest kit of its first install directory that has one (C:/Qt before
+    # ~/Qt on Windows), which need not be the configured version.
+    selected = find_qt_tool("qt-cmake", qt_root=qt_root)
+    if selected and selected.parent.parent != root:
+        print(
+            f"Configure selects the Qt at {selected.parent.parent} instead; "
+            f"set QT_ROOT_DIR={root} to build with Qt {version}."
+        )
+    return 0
+
+
 def compare_installs(reference: Path, candidate: Path, version: str, arch: str) -> int:
     """Report how the QGC installer's tree differs from aqt's; 1 when beyond the known differences."""
     arch_root = f"{version}/{resolve_arch_dir(arch)}"
@@ -275,16 +331,20 @@ def compare_installs(reference: Path, candidate: Path, version: str, arch: str) 
     return 0 if result.ok else 1
 
 
-def _add_arch_args(p: argparse.ArgumentParser) -> None:
-    p.add_argument("--arch", required=True)
-    p.add_argument("--modules", default="")
-    p.add_argument("--archives", default="")
+def _add_installer_arg(p: argparse.ArgumentParser) -> None:
     p.add_argument(
         "--installer",
         choices=("", *INSTALLERS),
         default="",
         help="Default: $QGC_QT_INSTALLER, else qgc (aqt remains as a fallback)",
     )
+
+
+def _add_arch_args(p: argparse.ArgumentParser) -> None:
+    p.add_argument("--arch", required=True)
+    p.add_argument("--modules", default="")
+    p.add_argument("--archives", default="")
+    _add_installer_arg(p)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -302,6 +362,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     install_p.add_argument("--target", default="desktop")
     install_p.add_argument("--outdir", type=Path, default=Path(".qt"))
     _add_arch_args(install_p)
+
+    local_p = sub.add_parser(
+        "local",
+        help="Install the configured Qt for this machine into ~/Qt unless configure already finds it",
+    )
+    local_p.add_argument(
+        "--qt-root", type=Path, help="Qt kit configure is told to use (its --qt-root)"
+    )
+    local_p.add_argument(
+        "--dry-run", action="store_true", help="Report what would be installed without installing"
+    )
+    _add_installer_arg(local_p)
 
     plan_p = sub.add_parser(
         "plan",
@@ -363,6 +435,9 @@ def main(argv: list[str] | None = None) -> int:
     except ValueError as error:
         gh_error(str(error))
         return 1
+
+    if args.command == "local":
+        return install_local_qt(args.qt_root, installer, args.dry_run)
 
     if args.command == "plan":
         request = QtPlan(

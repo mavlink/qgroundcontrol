@@ -746,7 +746,7 @@ def _run_main(monkeypatch, tmp_path, result, *args):
     [(0, 0), (2, 2), (BOOT_TIMEOUT_EXIT_CODE, BOOT_TIMEOUT_EXIT_CODE), (-11, 1), (3221225477, 1)],
 )
 def test_step_exits_with_a_code_the_shell_can_report(monkeypatch, tmp_path, code, step_code):
-    """0xC0000005 overflowed Python 3.10's exit status on Windows, which MSYS bash reported as 127."""
+    """0xC0000005 overflows the exit status of Python before 3.13 on Windows; MSYS bash reported 127."""
     assert _run_main(monkeypatch, tmp_path, (code, "")) == step_code
 
 

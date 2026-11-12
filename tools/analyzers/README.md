@@ -3,7 +3,7 @@
 Backends for [`tools/analyze.py`](../analyze.py) and QGC-specific static analyzers for C++ code.
 For `analyze.py` usage and compiler-analysis prerequisites, see
 [tools/README.md](../README.md#analyzepy); for CI planning, sharding, and result caching, see
-[ci-overview.md](../../.github/ci-overview.md).
+[the CI notes](../../.github/ci-notes/platforms.md#code-analysis).
 
 ## Compiler Analysis Output
 
