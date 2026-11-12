@@ -351,6 +351,29 @@ void GPSIndicatorTest::_gcsPositionStaysInsideItsBox()
     QVERIFY2(outside.isEmpty(), qPrintable(outside.join(QStringLiteral("; "))));
 }
 
+void GPSIndicatorTest::_statusColumnKeepsItsWidth()
+{
+    // A drawer that leaves the status column less than it prefers, and not whole pixels: the page's layout rounds
+    // the size it gives the column.
+    const qreal available = 200.4;
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
+    std::unique_ptr<QObject> page =
+        createIndicatorPage(engine, window, nullptr, {{QStringLiteral("availableWidth"), available}});
+    QVERIFY2(page, qPrintable(engine.lastError()));
+    auto* item = qobject_cast<QQuickItem*>(page.get());
+    QVERIFY(item);
+    QVERIFY(available < page->property("_preferredStatusWidth").toReal());
+    QVERIFY(window.show());
+    QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
+    auto* box = page->findChild<QQuickItem*>(QStringLiteral("gpsIndicatorGcsPosition"));
+    QVERIFY(box && box->isVisible());
+    // The column and its boxes take the width that is available, not the width of their widest row.
+    QVERIFY2(qAbs(box->width() - available) <= 1, qPrintable(QStringLiteral("box %1").arg(box->width())));
+    QVERIFY2(qAbs(item->implicitWidth() - available) <= 1,
+             qPrintable(QStringLiteral("page %1").arg(item->implicitWidth())));
+}
+
 void GPSIndicatorTest::_pageOffersNtripConnect()
 {
     TestFixtures::SettingsFixture saved;

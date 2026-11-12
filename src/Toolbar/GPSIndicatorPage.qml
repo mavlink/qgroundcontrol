@@ -82,116 +82,124 @@ ToolIndicatorPage {
         }
     }
 
+    // The page's loader takes each view's size from its implicit size once the page's layout has sized the loader. A
+    // layout computes its implicit width from its contents, so a plain item supplies each view's width.
     contentComponent: Component {
-        ColumnLayout {
-            width: Math.min(root._preferredStatusWidth, root.availableWidth)
-            spacing: ScreenTools.defaultFontPixelHeight / 2
+        Item {
+            implicitWidth: Math.min(root._preferredStatusWidth, root.availableWidth)
+            implicitHeight: statusColumn.implicitHeight
 
-            QGCGroupBox {
-                Layout.minimumWidth: 0
-                heading: qsTr("Vehicle GPS Status")
-                visible: root._vehicleGps
+            ColumnLayout {
+                id: statusColumn
+                width: parent.width
+                spacing: ScreenTools.defaultFontPixelHeight / 2
 
-                LabelledLabel {
-                    label: qsTr("Satellites")
-                    labelText: root._gps?.count.valueString ?? ""
-                }
-                LabelledLabel {
-                    label: root._gps?.lock.shortDescription ?? ""
-                    labelText: root._gps?.lock.enumStringValue ?? ""
-                }
-                MeasurementLabel {
-                    objectName: "vehicleGpsHdop"
-                    fact: root._gps?.hdop ?? null
-                }
-                MeasurementLabel {
-                    objectName: "vehicleGpsVdop"
-                    fact: root._gps?.vdop ?? null
-                }
-                MeasurementLabel {
-                    objectName: "vehicleGpsHorizontalAccuracy"
-                    fact: root._gps?.horizontalAccuracy ?? null
-                    nonNegative: true
-                }
-                MeasurementLabel {
-                    objectName: "vehicleGpsVerticalAccuracy"
-                    fact: root._gps?.verticalAccuracy ?? null
-                    nonNegative: true
-                }
-                MeasurementLabel {
-                    objectName: "vehicleGpsRtkBaseline"
-                    fact: root._gps?.rtkBaseline ?? null
-                }
-                MeasurementLabel {
-                    objectName: "vehicleGpsRtkRate"
-                    fact: root._gps?.rtkRate ?? null
-                }
-                MeasurementLabel {
-                    objectName: "vehicleGpsRtkSatellites"
-                    fact: root._gps?.rtkSatellites ?? null
-                    nonNegative: true
-                }
-                MeasurementLabel {
-                    fact: root._gps?.courseOverGround ?? null
-                }
-                LabelledLabel {
-                    label: qsTr("GPS Error")
-                    labelText: root._gps?.systemErrorText ?? ""
-                    visible: (root._gps?.systemErrors.value ?? 0) > 0
-                }
-            }
+                QGCGroupBox {
+                    Layout.minimumWidth: 0
+                    heading: qsTr("Vehicle GPS Status")
+                    visible: root._vehicleGps
 
-            // Each receiver that reports is listed; the headings name them only when both do.
-            ResilienceGroup {
-                id: gps1Resilience
-                objectName: "gps1Resilience"
-                heading: gps2Resilience.reported ? qsTr("GPS 1 Resilience") : qsTr("GPS Resilience Status")
-                facts: root._gps
-            }
+                    LabelledLabel {
+                        label: qsTr("Satellites")
+                        labelText: root._gps?.count.valueString ?? ""
+                    }
+                    LabelledLabel {
+                        label: root._gps?.lock.shortDescription ?? ""
+                        labelText: root._gps?.lock.enumStringValue ?? ""
+                    }
+                    MeasurementLabel {
+                        objectName: "vehicleGpsHdop"
+                        fact: root._gps?.hdop ?? null
+                    }
+                    MeasurementLabel {
+                        objectName: "vehicleGpsVdop"
+                        fact: root._gps?.vdop ?? null
+                    }
+                    MeasurementLabel {
+                        objectName: "vehicleGpsHorizontalAccuracy"
+                        fact: root._gps?.horizontalAccuracy ?? null
+                        nonNegative: true
+                    }
+                    MeasurementLabel {
+                        objectName: "vehicleGpsVerticalAccuracy"
+                        fact: root._gps?.verticalAccuracy ?? null
+                        nonNegative: true
+                    }
+                    MeasurementLabel {
+                        objectName: "vehicleGpsRtkBaseline"
+                        fact: root._gps?.rtkBaseline ?? null
+                    }
+                    MeasurementLabel {
+                        objectName: "vehicleGpsRtkRate"
+                        fact: root._gps?.rtkRate ?? null
+                    }
+                    MeasurementLabel {
+                        objectName: "vehicleGpsRtkSatellites"
+                        fact: root._gps?.rtkSatellites ?? null
+                        nonNegative: true
+                    }
+                    MeasurementLabel {
+                        fact: root._gps?.courseOverGround ?? null
+                    }
+                    LabelledLabel {
+                        label: qsTr("GPS Error")
+                        labelText: root._gps?.systemErrorText ?? ""
+                        visible: (root._gps?.systemErrors.value ?? 0) > 0
+                    }
+                }
 
-            ResilienceGroup {
-                id: gps2Resilience
-                objectName: "gps2Resilience"
-                heading: gps1Resilience.reported ? qsTr("GPS 2 Resilience") : qsTr("GPS Resilience Status")
-                facts: root.activeVehicle?.gps2 ?? null
-            }
+                // Each receiver that reports is listed; the headings name them only when both do.
+                ResilienceGroup {
+                    id: gps1Resilience
+                    objectName: "gps1Resilience"
+                    heading: gps2Resilience.reported ? qsTr("GPS 1 Resilience") : qsTr("GPS Resilience Status")
+                    facts: root._gps
+                }
 
-            // It has Connect, so beside a vehicle's GPS status it is shown once a receiver is set up, as the caster
-            // is, and while the settings that set it up are open.
-            GPSReceiverStatus {
-                id: receiverStatus
+                ResilienceGroup {
+                    id: gps2Resilience
+                    objectName: "gps2Resilience"
+                    heading: gps1Resilience.reported ? qsTr("GPS 2 Resilience") : qsTr("GPS Resilience Status")
+                    facts: root.activeVehicle?.gps2 ?? null
+                }
 
-                Layout.minimumWidth: 0
-                showWhenDisconnected: !root._vehicleGps || root.expanded || receiverStatus.receiver.hasEndpoint
-                                      || receiverStatus.receiver.errorMessage !== ""
-                disconnectedText: qsTr("No GNSS receiver connected. Expand for settings.")
-            }
+                // It has Connect, so beside a vehicle's GPS status it is shown once a receiver is set up, as the caster
+                // is, and while the settings that set it up are open.
+                GPSReceiverStatus {
+                    id: receiverStatus
 
-            CorrectionsStatus {
-                objectName: "gpsIndicatorCorrections"
-                Layout.minimumWidth: 0
-                showWhenInactive: false
-                showCoordinates: false
-            }
+                    Layout.minimumWidth: 0
+                    showWhenDisconnected: !root._vehicleGps || root.expanded || receiverStatus.receiver.hasEndpoint
+                                          || receiverStatus.receiver.errorMessage !== ""
+                    disconnectedText: qsTr("No GNSS receiver connected. Expand for settings.")
+                }
 
-            NTRIPConnectionStatus {
-                objectName: "gpsIndicatorNtrip"
-                Layout.minimumWidth: 0
-                heading: qsTr("NTRIP")
-                visible: root._ntripConfigured
-            }
+                CorrectionsStatus {
+                    objectName: "gpsIndicatorCorrections"
+                    Layout.minimumWidth: 0
+                    showWhenInactive: false
+                    showCoordinates: false
+                }
 
-            GcsPositionStatus {
-                objectName: "gpsIndicatorGcsPosition"
-                Layout.minimumWidth: 0
-                sourceEditable: false
-                showCoordinates: false
+                NTRIPConnectionStatus {
+                    objectName: "gpsIndicatorNtrip"
+                    Layout.minimumWidth: 0
+                    heading: qsTr("NTRIP")
+                    visible: root._ntripConfigured
+                }
+
+                GcsPositionStatus {
+                    objectName: "gpsIndicatorGcsPosition"
+                    Layout.minimumWidth: 0
+                    sourceEditable: false
+                    showCoordinates: false
+                }
             }
         }
     }
 
-    // The indicator's loader sizes the panel from its implicit width. A layout would compute it from its contents, and
-    // QGCNoteLabel's zero preferred width keeps the notes from adding any, so a plain item supplies the width.
+    // The settings' own implicit width would be too small: QGCNoteLabel's zero preferred width keeps the notes from
+    // adding any.
     expandedComponent: Component {
         Item {
             implicitWidth: root._settingsWidth
