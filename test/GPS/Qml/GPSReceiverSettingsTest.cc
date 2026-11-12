@@ -234,7 +234,7 @@ struct BaseStatus
             return {};
         }
         const QObject* const factLabel = row->property("factLabel").value<QObject*>();
-        return (factLabel ? factLabel->property("text") : row->property("labelText")).toString().trimmed();
+        return (factLabel ? factLabel->property("text") : row->property("labelText")).toString();
     }
 
     void report(const GPSBaseStatus& baseStatus) const { harness.workers.current()->baseStatus(baseStatus); }

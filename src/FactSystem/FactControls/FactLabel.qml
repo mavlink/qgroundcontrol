@@ -8,5 +8,5 @@ QGCLabel {
     property bool showUnits:    true
     property Fact fact:         Fact { }
 
-    text: fact.valueString + (showUnits ? " " + fact.units : "")
+    text: fact.valueString + (showUnits && fact.units ? " " + fact.units : "")
 }
