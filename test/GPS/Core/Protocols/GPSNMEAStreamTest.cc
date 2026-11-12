@@ -914,6 +914,30 @@ void GPSNMEAStreamTest::_sentenceOfAnotherTalker()
     }
 }
 
+void GPSNMEAStreamTest::_receiverWithoutGga_data()
+{
+    QTest::addColumn<QByteArrayList>("epoch");
+    // What receivers without a GGA were seen to send: a time reference its RMC with ZDA, a depth sounder its GLL.
+    QTest::newRow("rmc-and-zda") << QByteArrayList{rmc("123519"), "GPZDA,123519,23,03,1994,00,00"};
+    QTest::newRow("gll") << QByteArrayList{sentenceOf("GLL", "123519")};
+}
+
+void GPSNMEAStreamTest::_receiverWithoutGga()
+{
+    QFETCH(QByteArrayList, epoch);
+    NMEAReceiver receiver;
+    for (int report = 0; report < 4; ++report) {
+        receiver.now += EPOCH_INTERVAL_US;
+        for (QByteArray sentence : epoch) {
+            receiver.feed(sentence.replace("123519", QByteArray::number(123519 + report)));
+        }
+    }
+    // An RMC or a GLL has the position, but neither its accuracy nor the HDOP that one is estimated from, and a
+    // position of unknown accuracy is not used as the ground station's. None is published, so that the receiver is
+    // reported as sending no position, which asks for its GGA.
+    QVERIFY(!receiver.published);
+}
+
 void GPSNMEAStreamTest::_vdopEpoch_data()
 {
     QTest::addColumn<QByteArray>("firstUtc");

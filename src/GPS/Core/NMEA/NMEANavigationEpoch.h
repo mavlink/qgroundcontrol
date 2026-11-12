@@ -66,6 +66,11 @@ struct NavigationUpdate
 /// after an epoch was published is not published: not with that epoch, because every published position is a new
 /// observation, and not with the next, whose solution it does not describe.
 ///
+/// An epoch without a GGA publishes no position. Its RMC or GLL has one, but without altitude and satellite count, and
+/// without the accuracy, or the HDOP to estimate one from, that the consumers of a ground station position require.
+/// Published, it would serve the GGA sent to an NTRIP caster alone, and the receiver would no longer be reported as
+/// sending no position, which is what asks for its GGA.
+///
 /// An RMC or GST names its epoch, so it follows its GGA whenever it arrives, and the position waits for it as long as
 /// the receiver takes to send it. At 4800 baud that is 0.6 to 0.8 s when the GSV sentences come between them, which
 /// some receivers send in every epoch and others in every few: a limit on the wait would publish those epochs, or the
