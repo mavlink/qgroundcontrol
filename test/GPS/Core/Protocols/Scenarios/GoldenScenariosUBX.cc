@@ -27,8 +27,12 @@ void addUblox(Table& table)
               stream);
     table.add(type, "profile-m8p-base-fixed-compact", "M8P base profile, fixed base with MSM4",
               ubxProfile(Receiver::M8PBase), compact(fixed));
+    table.add(type, "profile-m8p-base-fixed-gps-galileo", "M8P base profile, fixed base sending GPS and Galileo",
+              ubxProfile(Receiver::M8PBase), sending(fixed, GPSCorrectionConstellation::Galileo));
     table.add(type, "profile-f9p-survey", "F9P profile, survey-in", ubxProfile(Receiver::F9P), survey, stream);
     table.add(type, "profile-f9p-fixed", "F9P profile, fixed base", ubxProfile(Receiver::F9P), fixed);
+    table.add(type, "profile-f9p-fixed-gps-galileo", "F9P profile, fixed base sending GPS and Galileo",
+              ubxProfile(Receiver::F9P), sending(fixed, GPSCorrectionConstellation::Galileo));
     // UBXProtocolTest checks the other receivers without base support.
     table.add(type, "profile-m8n-survey", "Receiver profile without base support", ubxProfile(Receiver::M8N), survey);
     table

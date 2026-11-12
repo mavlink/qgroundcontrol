@@ -19,17 +19,24 @@ QList<Command> role(const Command& baseMode, Reply baseReadback)
     };
 }
 
-QList<Command> output()
+QList<Command> output(GPSCorrectionConstellations constellations)
 {
-    return {
+    QList<Command> commands{
         {"BESTNAVXYZA 1"},  // base status every second
         {"RTCM1005 1"},     // station coordinates
         {"RTCM1033 10"},    // receiver and antenna descriptors every 10 s
         {"RTCM1074 1"},     // GPS MSM4
-        {"RTCM1084 1"},     // GLONASS MSM4
-        {"RTCM1094 1"},     // Galileo MSM4
-        {"RTCM1124 1"},     // BeiDou MSM4
     };
+    if (constellations.testFlag(GPSCorrectionConstellation::GLONASS)) {
+        commands.append({"RTCM1084 1"});  // GLONASS MSM4
+    }
+    if (constellations.testFlag(GPSCorrectionConstellation::Galileo)) {
+        commands.append({"RTCM1094 1"});  // Galileo MSM4
+    }
+    if (constellations.testFlag(GPSCorrectionConstellation::BeiDou)) {
+        commands.append({"RTCM1124 1"});  // BeiDou MSM4
+    }
+    return commands;
 }
 
 }  // namespace
@@ -39,21 +46,21 @@ Command identify()
     return {"VERSIONA", Reply::Version};
 }
 
-BaseStation averagingBase(std::chrono::seconds maximum)
+BaseStation averagingBase(std::chrono::seconds maximum, GPSCorrectionConstellations constellations)
 {
     // Distance 0 forces newly averaged coordinates; it is not an accuracy threshold.
     const QByteArray mode = "MODE BASE TIME " + QByteArray::number(static_cast<qint64>(maximum.count())) + " 0";
-    return {.role = role({mode}, Reply::AveragingMode), .output = output()};
+    return {.role = role({mode}, Reply::AveragingMode), .output = output(constellations)};
 }
 
-BaseStation fixedBase(const GPSProtocolMath::Ecef& position)
+BaseStation fixedBase(const GPSProtocolMath::Ecef& position, GPSCorrectionConstellations constellations)
 {
     const QByteArray mode = "MODE BASE " + gpsFixedDecimal(position.x, ECEF_DECIMALS) + ' ' +
                             gpsFixedDecimal(position.y, ECEF_DECIMALS) + ' ' +
                             gpsFixedDecimal(position.z, ECEF_DECIMALS);
     // Read back before subscribing, so queued periodic output cannot satisfy the query.
     QList<Command> commands{{"BESTNAVXYZA", Reply::FixedPosition}};
-    commands += output();
+    commands += output(constellations);
     return {.role = role({.text = mode, .label = "MODE BASE (fixed position)"}, Reply::FixedMode), .output = commands};
 }
 

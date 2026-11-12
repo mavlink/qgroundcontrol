@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <optional>
 #include <type_traits>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -314,10 +315,29 @@ QString describeRequest(GPSType type, const GPSReceiverConfig& config)
             }
         },
         config.base.mode);
-    return QStringLiteral("type=%1 role=%2 mode=%3 compact=%4 persistent=%5 baud=%6")
-        .arg(typeName(type), type == GPSType::Passive ? QStringLiteral("passive") : QStringLiteral("rtk-base"), mode,
-             flag(config.base.compactObservations), flag(config.allowPersistentChanges))
-        .arg(config.baudRate);
+    QString request =
+        QStringLiteral("type=%1 role=%2 mode=%3 compact=%4 persistent=%5 baud=%6")
+            .arg(typeName(type), type == GPSType::Passive ? QStringLiteral("passive") : QStringLiteral("rtk-base"),
+                 mode, flag(config.base.compactObservations), flag(config.allowPersistentChanges))
+            .arg(config.baudRate);
+    // Named only where a request leaves constellations out of the corrections, so every other transcript reads the
+    // same.
+    if (const auto omitted = config.base.omittedConstellations()) {
+        QStringList sent{QStringLiteral("gps")};
+        const std::pair<GPSCorrectionConstellation, const char*> names[] = {
+            {GPSCorrectionConstellation::GLONASS, "glonass"},
+            {GPSCorrectionConstellation::Galileo, "galileo"},
+            {GPSCorrectionConstellation::BeiDou, "beidou"},
+            {GPSCorrectionConstellation::QZSS, "qzss"},
+        };
+        for (const auto& [constellation, name] : names) {
+            if (!omitted.testFlag(constellation)) {
+                sent.append(QLatin1StringView(name));
+            }
+        }
+        request += QStringLiteral(" constellations=") + sent.join(QLatin1Char('+'));
+    }
+    return request;
 }
 
 namespace {

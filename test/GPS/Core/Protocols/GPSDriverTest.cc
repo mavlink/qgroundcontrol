@@ -477,6 +477,14 @@ void GPSDriverTest::_automaticDetection_data()
     QTest::newRow("septentrio-compact-falls-back")
         << GPSType::Septentrio << GPSReceiverConfig{.base = compact} << QString()
         << QStringLiteral("has no compact \\(MSM4\\) RTCM option");
+    // A family that sends its own set of constellations sends it whatever the request leaves out.
+    GPSBaseStationConfig gpsOnly = survey;
+    gpsOnly.correctionConstellations = {};
+    QTest::newRow("septentrio-constellations-fall-back")
+        << GPSType::Septentrio << GPSReceiverConfig{.base = gpsOnly} << QString()
+        << QStringLiteral("has no choice of RTCM constellations");
+    QTest::newRow("ublox-keeps-constellations")
+        << GPSType::UBlox << GPSReceiverConfig{.base = gpsOnly} << QString() << QString();
     QTest::newRow("septentrio-averaging-unsupported")
         << GPSType::Septentrio << GPSReceiverConfig{.base = averaging}
         << QStringLiteral("Detected Septentrio receiver does not support receiver-managed averaging")

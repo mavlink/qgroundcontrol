@@ -81,6 +81,8 @@ public:
     /// - survey: duration (seconds) and accuracy (metres);
     /// - fixed: latitude and longitude (degrees), altitude and accuracy (metres);
     /// - averaging: duration (seconds).
+    /// Before base, and only where a base leaves constellations out of its corrections: constellations (the
+    /// GPSCorrectionConstellation bits of those it sends besides GPS).
     [[nodiscard]] static QByteArray settingsRecord(const Session& session, unsigned fixedBaudRate);
 
     /// How a TX-REFUSED record names @a answer, the status of a write of which the link accepted nothing: completed,

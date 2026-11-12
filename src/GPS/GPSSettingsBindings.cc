@@ -103,6 +103,12 @@ NTRIPConfig ntripFromSettings(NTRIPSettings* settings, FactReader& read)
     return configuration;
 }
 
+// baseCorrectionConstellations holds the bits of GPSCorrectionConstellation, which RTKSettings names for the form.
+static_assert(RTKSettings::Glonass == static_cast<int>(GPSCorrectionConstellation::GLONASS) &&
+              RTKSettings::Galileo == static_cast<int>(GPSCorrectionConstellation::Galileo) &&
+              RTKSettings::BeiDou == static_cast<int>(GPSCorrectionConstellation::BeiDou) &&
+              RTKSettings::Qzss == static_cast<int>(GPSCorrectionConstellation::QZSS));
+
 /// Every base setting is read, whichever mode is selected, so each is watched.
 GPSBaseStationConfig baseStationFromSettings(RTKSettings* settings, FactReader& read)
 {
@@ -129,7 +135,10 @@ GPSBaseStationConfig baseStationFromSettings(RTKSettings* settings, FactReader& 
     const GPSBaseStationConfig::ReceiverAveraging averaging{
         .maximumDuration = std::chrono::seconds(read(settings->receiverAveragingDuration()).value<uint32_t>())};
 
-    GPSBaseStationConfig base{.compactObservations = read(settings->compactRtcmCorrections()).toBool()};
+    const auto constellations =
+        GPSCorrectionConstellations::fromInt(read(settings->baseCorrectionConstellations()).toInt());
+    GPSBaseStationConfig base{.compactObservations = read(settings->compactRtcmCorrections()).toBool(),
+                              .correctionConstellations = constellations & GPS_ALL_CORRECTION_CONSTELLATIONS};
     switch (mode) {
         case Mode::BaseFixed:
             base.mode = fixed;

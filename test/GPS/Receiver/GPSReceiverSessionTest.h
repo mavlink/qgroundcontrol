@@ -13,6 +13,7 @@ private slots:
     void _settingsDiagnostics_data();
     void _settingsDiagnostics();
     void _compactObservationsFollowSupport();
+    void _correctionConstellationsFollowSupport();
     void _persistentConsent_data();
     void _persistentConsent();
     void _baseStationState();

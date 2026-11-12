@@ -199,8 +199,9 @@ struct ValsetBatch
 [[nodiscard]] ValsetBatch disableTimeMode();
 [[nodiscard]] ValsetBatch surveyIn(const GPSBaseStationConfig::SurveyIn& survey);
 [[nodiscard]] ValsetBatch fixedBase(const GPSBaseStationConfig::Fixed& fixed);
-/// Base output at 1 Hz: station position, observations in the selected MSM format and GLONASS biases.
-[[nodiscard]] ValsetBatch rtcmOutput(bool compactObservations);
+/// Base output at 1 Hz: station position, the observations of GPS and of the constellations @a base selects, in its
+/// MSM format, and GLONASS biases with GLONASS observations. A constellation left out has its output set to zero.
+[[nodiscard]] ValsetBatch rtcmOutput(const GPSBaseStationConfig& base);
 
 /// Messages a protocol 27+ receiver can send unasked and their CFG-MSGOUT keys, which a message ID does not imply.
 struct UnexpectedOutput
@@ -265,7 +266,9 @@ struct RTCMOutput
     RTCMContent content;
 };
 
-[[nodiscard]] std::array<RTCMOutput, 6> legacyRTCMOutput(bool compactObservations);
+/// The outputs of rtcmOutput() as CFG-MSG rates. A constellation @a base leaves out has rate zero, and counts for
+/// nothing.
+[[nodiscard]] std::array<RTCMOutput, 6> legacyRTCMOutput(const GPSBaseStationConfig& base);
 [[nodiscard]] CfgTmode3 legacySurveyIn(const GPSBaseStationConfig::SurveyIn& survey);
 [[nodiscard]] CfgTmode3 legacyFixedBase(const GPSBaseStationConfig::Fixed& fixed);
 

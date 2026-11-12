@@ -67,6 +67,11 @@ QByteArray GPSRecordingTransport::settingsRecord(const Session& session, unsigne
                         ",fixed-baud=" + QByteArray::number(fixedBaudRate) +
                         ",save=" + QByteArray::number(int(config.allowPersistentChanges)) +
                         ",compact=" + QByteArray::number(int(config.base.compactObservations));
+    // Only where a base leaves constellations out of its corrections, so every other record reads as before.
+    if (config.base.omittedConstellations()) {
+        const auto sent = config.base.correctionConstellations & GPS_ALL_CORRECTION_CONSTELLATIONS;
+        record += ",constellations=" + QByteArray::number(sent.toInt());
+    }
     if (const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&config.base.mode)) {
         record += ",base=fixed,latitude=" + recordedNumber(fixed->position.latitudeDegrees) +
                   ",longitude=" + recordedNumber(fixed->position.longitudeDegrees) +

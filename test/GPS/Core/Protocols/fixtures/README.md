@@ -63,6 +63,7 @@ The `SETTINGS` record is what decides the commands a session sends, as `key=valu
 | `fixed-baud` | The one rate the link runs at: 115200 for TCP and UDP, 0 for a serial port |
 | `save` | 1 with consent to save settings to the receiver's flash |
 | `compact` | 1 for compact (MSM4) corrections |
+| `constellations` | Only where a base leaves constellations out of its corrections: the sum of those it sends besides GPS, 1 GLONASS, 2 Galileo, 4 BeiDou, 8 QZSS |
 | `base` | `survey` with `duration` (s) and `accuracy` (m), `fixed` with `latitude`, `longitude` (degrees), `altitude` and `accuracy` (m), or `averaging` with `duration` (s) |
 
 QGroundControl and the runner write it. A recording without it, as one made by a recorder that

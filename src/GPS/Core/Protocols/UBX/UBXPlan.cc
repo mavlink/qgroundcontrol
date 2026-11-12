@@ -22,6 +22,15 @@ constexpr Observations MSM4{{Cfg::MSGOUT_RTCM_3X_TYPE1074, Cfg::MSGOUT_RTCM_3X_T
                              Cfg::MSGOUT_RTCM_3X_TYPE1124},
                             {Msg::RTCM3_1074, Msg::RTCM3_1084, Msg::RTCM3_1094, Msg::RTCM3_1124}};
 
+/// The output rate of the observations at @a index of Observations: once per measurement, or none for a constellation
+/// @a base leaves out. Those of GPS, the first, are always sent.
+uint8_t observationRate(const GPSBaseStationConfig& base, size_t index)
+{
+    constexpr std::array AFTER_GPS{GPSCorrectionConstellation::GLONASS, GPSCorrectionConstellation::Galileo,
+                                   GPSCorrectionConstellation::BeiDou};
+    return (index == 0 || base.correctionConstellations.testFlag(AFTER_GPS[index - 1])) ? 1 : NO_OUTPUT;
+}
+
 /// CFG-TMODE-MODE, and the mode in bits 7..0 of the CFG-TMODE3 flags.
 constexpr uint8_t TIME_MODE_DISABLED = 0;
 constexpr uint8_t TIME_MODE_SURVEY_IN = 1;
@@ -192,18 +201,19 @@ ValsetBatch fixedBase(const GPSBaseStationConfig::Fixed& fixed)
                       {Cfg::TMODE_FIXED_POS_ACC, accuracyWireUnits(fixed.accuracyMeters)}}};
 }
 
-ValsetBatch rtcmOutput(bool compactObservations)
+ValsetBatch rtcmOutput(const GPSBaseStationConfig& base)
 {
-    const auto& on = compactObservations ? MSM4 : MSM7;
-    const auto& off = compactObservations ? MSM7 : MSM4;
+    const auto& on = base.compactObservations ? MSM4 : MSM7;
+    const auto& off = base.compactObservations ? MSM7 : MSM4;
     return {.policy = NakPolicy::Tolerate,
             .items = {{Cfg::RATE_MEAS, BASE_MEASUREMENT_PERIOD_MS},
                       {Cfg::MSGOUT_RTCM_3X_TYPE1005, 1},  // stationary reference station position
-                      {on.keys[0], 1},
-                      {on.keys[1], 1},
-                      {Cfg::MSGOUT_RTCM_3X_TYPE1230, 1},  // GLONASS code-phase biases
-                      {on.keys[2], 1},
-                      {on.keys[3], 1},
+                      {on.keys[0], observationRate(base, 0)},
+                      {on.keys[1], observationRate(base, 1)},
+                      // GLONASS code-phase biases, which go with the GLONASS observations
+                      {Cfg::MSGOUT_RTCM_3X_TYPE1230, observationRate(base, 1)},
+                      {on.keys[2], observationRate(base, 2)},
+                      {on.keys[3], observationRate(base, 3)},
                       {off.keys[0], NO_OUTPUT},
                       {off.keys[1], NO_OUTPUT},
                       {off.keys[2], NO_OUTPUT},
@@ -262,15 +272,21 @@ std::array<MessageRate, 2> legacyBaseStatus()
     return {{{Msg::NAV_SVIN, NO_OUTPUT}, {Msg::NAV_SVINFO, BASE_SATELLITE_INFO_RATE}}};
 }
 
-std::array<RTCMOutput, 6> legacyRTCMOutput(bool compactObservations)
+std::array<RTCMOutput, 6> legacyRTCMOutput(const GPSBaseStationConfig& base)
 {
-    const auto& observations = compactObservations ? MSM4 : MSM7;
+    const auto& observations = base.compactObservations ? MSM4 : MSM7;
+    // Observations that are left out are written as no output, which gives a rover nothing.
+    const auto output = [&base, &observations](size_t index) -> RTCMOutput {
+        const uint8_t rate = observationRate(base, index);
+        return {{observations.messages[index], rate},
+                rate == NO_OUTPUT ? RTCMContent::Optional : RTCMContent::Observations};
+    };
     return {{{{Msg::RTCM3_1005, 5}, RTCMContent::StationPosition},  // the station position can be sent at a lower rate
-             {{observations.messages[0], 1}, RTCMContent::Observations},
-             {{observations.messages[1], 1}, RTCMContent::Observations},
-             {{Msg::RTCM3_1230, 1}, RTCMContent::Optional},
-             {{observations.messages[2], 1}, RTCMContent::Observations},
-             {{observations.messages[3], 1}, RTCMContent::Observations}}};
+             output(0),
+             output(1),
+             {{Msg::RTCM3_1230, observationRate(base, 1)}, RTCMContent::Optional},
+             output(2),
+             output(3)}};
 }
 
 CfgTmode3 legacySurveyIn(const GPSBaseStationConfig::SurveyIn& survey)

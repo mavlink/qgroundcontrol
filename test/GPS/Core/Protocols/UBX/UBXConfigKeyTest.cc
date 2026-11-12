@@ -237,8 +237,8 @@ void UBXConfigKeyTest::_plannedKeys()
         Plan::disableTimeMode(),
         Plan::surveyIn(std::get<GPSBaseStationConfig::SurveyIn>(surveyIn().mode)),
         Plan::fixedBase(std::get<GPSBaseStationConfig::Fixed>(fixedBase().mode)),
-        Plan::rtcmOutput(false),
-        Plan::rtcmOutput(true),
+        Plan::rtcmOutput({}),
+        Plan::rtcmOutput({.compactObservations = true}),
     };
     for (const auto& profile : UBX::RECEIVER_PROFILES) {
         for (auto& batch : Plan::portsAndNavigation(profile)) {

@@ -10,4 +10,5 @@ class GPSReceiverPresentationTest : public UnitTest
 private slots:
     void _presentation_data();
     void _presentation();
+    void _correctionConstellations();
 };

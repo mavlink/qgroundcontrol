@@ -14,6 +14,8 @@ void addUnicore(Table& table)
     };
     table.add(type, "averaging", "UM982 receiver averaging", unicore(), average, stream);
     table.add(type, "fixed", "UM982 fixed base", unicore(), fixed, stream);
+    table.add(type, "fixed-gps-galileo", "UM982 fixed base sending GPS and Galileo", unicore(),
+              sending(fixed, GPSCorrectionConstellation::Galileo));
     table.add(type, "auto-baud-460800", "Detects a receiver at 460800",
               unicore([](UnicoreBench& b) { b.model.availableBaud = 460800; }), average);
     table.add(type, "explicit-baud-mismatch", "Explicit 9600 while the receiver is at 115200", unicore(),

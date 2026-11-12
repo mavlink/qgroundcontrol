@@ -283,8 +283,8 @@ void planOutputDecoded(GPSTestClock&)
                                  Cfg::MSGOUT_RTCM_3X_TYPE1087, Cfg::MSGOUT_RTCM_3X_TYPE1094,
                                  Cfg::MSGOUT_RTCM_3X_TYPE1097, Cfg::MSGOUT_RTCM_3X_TYPE1124,
                                  Cfg::MSGOUT_RTCM_3X_TYPE1127, Cfg::MSGOUT_RTCM_3X_TYPE1230};
-    std::vector<Plan::ValsetBatch> batches{Plan::surveyIn({.accuracyMeters = 1, .duration = 60s}),
-                                           Plan::rtcmOutput(false), Plan::rtcmOutput(true)};
+    std::vector<Plan::ValsetBatch> batches{Plan::surveyIn({.accuracyMeters = 1, .duration = 60s}), Plan::rtcmOutput({}),
+                                           Plan::rtcmOutput({.compactObservations = true})};
     for (const auto& profile : UBX::RECEIVER_PROFILES) {
         std::ranges::move(Plan::messageOutput({profile}), std::back_inserter(batches));
     }
@@ -305,7 +305,7 @@ void planOutputDecoded(GPSTestClock&)
     std::ranges::copy(Plan::legacyMessageOutput(), std::back_inserter(legacy));
     std::ranges::copy(Plan::legacyBaseStatus(), std::back_inserter(legacy));
     for (const bool compact : {false, true}) {
-        for (const auto& output : Plan::legacyRTCMOutput(compact)) {
+        for (const auto& output : Plan::legacyRTCMOutput({.compactObservations = compact})) {
             legacy.push_back(output.rate);
         }
     }
@@ -1384,7 +1384,7 @@ void slowLegacyRTCMActivation(GPSTestClock& clock)
         QCOMPARE(f.receiver.model.configurationWrites, writes);
         QVERIFY(!failed(f.driver));
         QCOMPARE(f.receiver.model.modes, modes);
-        for (const auto& output : UBX::Plan::legacyRTCMOutput(false)) {
+        for (const auto& output : UBX::Plan::legacyRTCMOutput({})) {
             QCOMPARE(f.receiver.model.messageRates.at(output.rate.message.value()), output.rate.rate);
         }
         QVERIFY(f.log.warnings().isEmpty());
@@ -1826,6 +1826,108 @@ void fixedBaseCheck(GPSTestClock& clock)
     QVERIFY(!survey.receiver.log.latest<GPSBaseStatus>().fixedCheck);
 }
 
+/// A base sends the observations of GPS and of the constellations it selects, in its MSM format, and the GLONASS
+/// biases with the GLONASS observations. Every other observation output is written as zero, since a receiver keeps
+/// what an earlier session turned on.
+void ubloxCorrectionConstellations(GPSTestClock& clock)
+{
+    namespace Plan = UBX::Plan;
+    using Constellation = GPSCorrectionConstellation;
+
+    const struct
+    {
+        UBX::MsgOutKey msm7Key;
+        UBX::MessageId msm7;
+        UBX::MsgOutKey msm4Key;
+        UBX::MessageId msm4;
+        /// Empty for GPS, which is always sent.
+        GPSCorrectionConstellations constellation;
+    } observations[] = {
+        {Cfg::MSGOUT_RTCM_3X_TYPE1077, Msg::RTCM3_1077, Cfg::MSGOUT_RTCM_3X_TYPE1074, Msg::RTCM3_1074, {}},
+        {Cfg::MSGOUT_RTCM_3X_TYPE1087, Msg::RTCM3_1087, Cfg::MSGOUT_RTCM_3X_TYPE1084, Msg::RTCM3_1084,
+         Constellation::GLONASS},
+        {Cfg::MSGOUT_RTCM_3X_TYPE1097, Msg::RTCM3_1097, Cfg::MSGOUT_RTCM_3X_TYPE1094, Msg::RTCM3_1094,
+         Constellation::Galileo},
+        {Cfg::MSGOUT_RTCM_3X_TYPE1127, Msg::RTCM3_1127, Cfg::MSGOUT_RTCM_3X_TYPE1124, Msg::RTCM3_1124,
+         Constellation::BeiDou},
+    };
+
+    const struct
+    {
+        const char* name;
+        GPSCorrectionConstellations sent;
+        bool compact;
+    } cases[] = {
+        {"all", GPS_ALL_CORRECTION_CONSTELLATIONS, false},
+        {"gps-only", {}, false},
+        {"gps-galileo-compact", Constellation::Galileo, true},
+        {"without-glonass", Constellation::Galileo | Constellation::BeiDou | Constellation::QZSS, false},
+    };
+
+    for (const bool legacy : {false, true}) {
+        for (const auto& scenario : cases) {
+            Fixture f(clock);
+            f.receiver.model.legacy = legacy;
+            if (legacy) {
+                f.receiver.model.module = "NEO-M8P";
+            }
+            f.receiver.model.ownPosition = GPSEllipsoidPosition{47, 8, 500};
+            f.base = fixedBaseAt(47, 8, 500, 1);
+            f.base.compactObservations = scenario.compact;
+            f.base.correctionConstellations = scenario.sent;
+            QVERIFY2(f.configure(), scenario.name);
+            QVERIFY2(f.driver.receiverReady(), scenario.name);
+            const auto rate = [&f, legacy](UBX::MsgOutKey key, UBX::MessageId message) -> unsigned {
+                return legacy ? f.receiver.model.messageRates.at(message.value())
+                              : f.receiver.model.currentSettings.at(key.port(UBX::MsgOutPort::UART1).id);
+            };
+            for (const auto& output : observations) {
+                const unsigned sent = !output.constellation || scenario.sent.testFlags(output.constellation);
+                const QByteArray what = QByteArray(scenario.name) + ' ' + UBX::messageName(output.msm7);
+                QVERIFY2(rate(output.msm7Key, output.msm7) == (scenario.compact ? 0 : sent), what.constData());
+                QVERIFY2(rate(output.msm4Key, output.msm4) == (scenario.compact ? sent : 0), what.constData());
+            }
+            QVERIFY2(
+                rate(Cfg::MSGOUT_RTCM_3X_TYPE1230, Msg::RTCM3_1230) == scenario.sent.testFlag(Constellation::GLONASS),
+                scenario.name);
+            QVERIFY2(rate(Cfg::MSGOUT_RTCM_3X_TYPE1005, Msg::RTCM3_1005) > 0, scenario.name);
+            QVERIFY2(f.log.warnings().isEmpty(), scenario.name);
+        }
+    }
+
+    // The batch holds the same keys in the same order whatever is selected, and the plan has no QZSS message.
+    const auto all = Plan::rtcmOutput({});
+    const auto gpsOnly = Plan::rtcmOutput({.correctionConstellations = {}});
+    const auto withoutQzss = Plan::rtcmOutput(
+        {.correctionConstellations = Constellation::GLONASS | Constellation::Galileo | Constellation::BeiDou});
+    QCOMPARE(gpsOnly.items.size(), all.items.size());
+    QCOMPARE(withoutQzss.items.size(), all.items.size());
+    for (size_t item = 0; item < all.items.size(); ++item) {
+        QCOMPARE(gpsOnly.items[item].key, all.items[item].key);
+        QCOMPARE(withoutQzss.items[item].key, all.items[item].key);
+        QCOMPARE(withoutQzss.items[item].value, all.items[item].value);
+    }
+
+    // A constellation that is left out does not make a legacy base one: firmware that rejects the GPS observations
+    // starts a base on those of GLONASS, and none when only GPS is selected.
+    for (const bool gpsOnlyBase : {false, true}) {
+        Fixture f(clock);
+        f.receiver.model.legacy = true;
+        f.receiver.model.module = "NEO-M8P";
+        f.receiver.model.ownPosition = GPSEllipsoidPosition{47, 8, 500};
+        f.receiver.model.unsupportedMessages = {Msg::RTCM3_1077.value()};
+        f.base = fixedBaseAt(47, 8, 500, 1);
+        if (gpsOnlyBase) {
+            f.base.correctionConstellations = {};
+        }
+        QCOMPARE(f.configure(), !gpsOnlyBase);
+        QCOMPARE(f.log.warnings(),
+                 (gpsOnlyBase ? QStringList{QStringLiteral(
+                                    "Receiver rejected the RTCM station position or every observation message")}
+                              : QStringList{}));
+    }
+}
+
 constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"isolated-frame-control", isolatedFrameAndControl},
     {"late-readback-replies", lateReadbackReplies},
@@ -1848,6 +1950,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"out-of-range-coordinates", outOfRangeCoordinates},
     {"largest-fixed-accuracy", largestFixedAccuracy},
     {"fixed-base-check", fixedBaseCheck},
+    {"correction-constellations", ubloxCorrectionConstellations},
     {"navigation-fix-flags", navigationFixFlags},
     {"transactional-frames", transactionalFrames},
     {"reentrant-payload", reentrantPayload},

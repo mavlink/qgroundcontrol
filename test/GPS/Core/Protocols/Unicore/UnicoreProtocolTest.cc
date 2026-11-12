@@ -511,10 +511,40 @@ void scheduledAveragingAndBoot(GPSTestClock& clock)
     }
 }
 
+/// The base asks for the observations of GPS and of the constellations it selects. The others need no command: the
+/// role commands begin by stopping every log on the port.
+void unicoreCorrectionConstellations(GPSTestClock& clock)
+{
+    using Constellation = GPSCorrectionConstellation;
+
+    for (const bool fixed : {false, true}) {
+        for (const GPSCorrectionConstellations sent :
+             {GPS_ALL_CORRECTION_CONSTELLATIONS, GPSCorrectionConstellations{},
+              GPSCorrectionConstellations{Constellation::Galileo | Constellation::QZSS}}) {
+            clock.reset();
+            Receiver receiver(clock);
+            GPSProtocolRuntime driver = receiver.runtime(Unicore::FAMILY);
+            GPSConfig config = baseConfig(fixed);
+            config.base.correctionConstellations = sent;
+            unsigned rate = 115200;
+            QVERIFY(driver.configure(config, rate));
+            QVERIFY(driver.receiverReady());
+            const auto& commands = receiver.commands();
+            QVERIFY(std::find(commands.begin(), commands.end(), "UNLOG\r\n") <
+                    std::find(commands.begin(), commands.end(), "RTCM1074 1\r\n"));
+            QVERIFY(receiver.sent("RTCM1005 1") && receiver.sent("RTCM1033 10") && receiver.sent("RTCM1074 1"));
+            QCOMPARE(receiver.sent("RTCM1084"), sent.testFlag(Constellation::GLONASS));
+            QCOMPARE(receiver.sent("RTCM1094"), sent.testFlag(Constellation::Galileo));
+            QCOMPARE(receiver.sent("RTCM1124"), sent.testFlag(Constellation::BeiDou));
+        }
+    }
+}
+
 constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"identity-and-role", identityAndRole},
     {"reject-before-mutation", rejectBeforeMutation},
     {"fixed-base-and-transition", fixedBaseAndTransition},
+    {"correction-constellations", unicoreCorrectionConstellations},
     {"fixed-mode-readback", fixedModeReadback},
     {"averaging-evidence-and-restart", averagingEvidenceAndRestart},
     {"readback-failures", readbackFailures},

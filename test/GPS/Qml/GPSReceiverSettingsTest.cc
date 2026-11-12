@@ -1046,6 +1046,52 @@ void GPSReceiverSettingsTest::_compactCorrectionsToggle()
     QVERIFY(!toggle->isEnabled());
 }
 
+void GPSReceiverSettingsTest::_correctionConstellations()
+{
+    Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));
+    QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
+    RTKSettings* const settings = panel.settings.settings;
+    Fact* const selection = settings->baseCorrectionConstellations();
+    auto* group = panel.find("rtkCorrectionConstellations");
+    auto* gps = panel.find("rtkCorrectionsGps");
+    auto* glonass = panel.find("rtkCorrectionsGlonass");
+    auto* galileo = panel.find("rtkCorrectionsGalileo");
+    auto* beiDou = panel.find("rtkCorrectionsBeiDou");
+    auto* qzss = panel.find("rtkCorrectionsQzss");
+    QVERIFY(group && gps && glonass && galileo && beiDou && qzss);
+    const auto checked = [](const QQuickItem* box) { return box->property("checked").toBool(); };
+    QVERIFY(group->isVisible());
+    // GPS observations are always sent, and a u-blox base has no QZSS observations to leave out.
+    QVERIFY(gps->isVisible() && checked(gps) && !gps->isEnabled());
+    QVERIFY(glonass->isVisible() && galileo->isVisible() && beiDou->isVisible() && !qzss->isVisible());
+    QVERIFY(checked(glonass) && checked(galileo) && checked(beiDou));
+
+    QVERIFY(QMetaObject::invokeMethod(glonass, "click"));
+    QCOMPARE(selection->rawValue().toInt(), RTKSettings::Galileo | RTKSettings::BeiDou | RTKSettings::Qzss);
+    QVERIFY(!checked(glonass) && checked(galileo));
+    // The boxes follow the setting.
+    selection->setRawValue(int(RTKSettings::Glonass));
+    QVERIFY(checked(glonass) && !checked(galileo) && !checked(beiDou));
+    QVERIFY(QMetaObject::invokeMethod(galileo, "click"));
+    QCOMPARE(selection->rawValue().toInt(), RTKSettings::Glonass | RTKSettings::Galileo);
+
+    // Which constellations a family can leave out is the receiver presentation's; a family that sends its own set
+    // has no choice to show.
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::Trimble));
+    QVERIFY(group->isVisible() && qzss->isVisible());
+    for (const GPSType type : {GPSType::Septentrio, GPSType::Quectel, GPSType::Femto}) {
+        settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(type));
+        QVERIFY(!group->isVisible());
+    }
+    settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::UBlox));
+    QVERIFY(group->isVisible());
+
+    QVERIFY(panel.receiver.gps.connectReceiver());
+    QCOMPARE(panel.receiver.worker()->capturedConfig().base.correctionConstellations,
+             GPSCorrectionConstellation::GLONASS | GPSCorrectionConstellation::Galileo);
+    QVERIFY(!galileo->isEnabled());
+}
+
 void GPSReceiverSettingsTest::_recordingSwitch()
 {
     Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));

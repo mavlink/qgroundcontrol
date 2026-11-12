@@ -8,13 +8,17 @@ using namespace Qt::StringLiterals;
 namespace {
 using Accuracy = GPSReceiverDescriptor::SurveyAccuracy;
 using Duration = GPSReceiverDescriptor::SurveyDuration;
+using Constellation = GPSCorrectionConstellation;
 
 constexpr std::array DESCRIPTORS{
     GPSReceiverDescriptor{
         .type = GPSType::Trimble,
         .name = "Trimble"_L1,
         .manufacturerId = 1,
-        .capabilities = {.recognized = true, .rtkBase = true, .surveyIn = true},
+        .capabilities = {.recognized = true,
+                         .rtkBase = true,
+                         .surveyIn = true,
+                         .correctionConstellations = GPS_ALL_CORRECTION_CONSTELLATIONS},
         .surveyDuration = Duration::ElapsedTime,
         .configurableSurveyDuration = true,
     },
@@ -40,7 +44,13 @@ constexpr std::array DESCRIPTORS{
         .name = "u-blox"_L1,
         .manufacturerId = 4,
         .protocol = "UBX"_L1,
-        .capabilities = {.recognized = true, .rtkBase = true, .surveyIn = true, .compactObservations = true},
+        // The plan sends no QZSS observations.
+        .capabilities = {.recognized = true,
+                         .rtkBase = true,
+                         .surveyIn = true,
+                         .compactObservations = true,
+                         .correctionConstellations =
+                             Constellation::GLONASS | Constellation::Galileo | Constellation::BeiDou},
         .surveyAccuracy = Accuracy::PositionAccuracy,
         .surveyDuration = Duration::ElapsedTime,
         .configurableSurveyDuration = true,
@@ -50,7 +60,12 @@ constexpr std::array DESCRIPTORS{
         .type = GPSType::Unicore,
         .name = "Unicore"_L1,
         .manufacturerId = 5,
-        .capabilities = {.recognized = true, .rtkBase = true, .receiverAveraging = true},
+        // The plan sends no QZSS observations.
+        .capabilities = {.recognized = true,
+                         .rtkBase = true,
+                         .receiverAveraging = true,
+                         .correctionConstellations =
+                             Constellation::GLONASS | Constellation::Galileo | Constellation::BeiDou},
     },
     GPSReceiverDescriptor{
         .type = GPSType::Quectel,
@@ -166,6 +181,7 @@ GPSReceiverCapabilities gpsReceiverCapabilities(GPSType type)
             combined.receiverAveraging |= capabilities.receiverAveraging;
             combined.persistentConfiguration |= capabilities.persistentConfiguration;
             combined.compactObservations |= capabilities.compactObservations;
+            combined.correctionConstellations |= capabilities.correctionConstellations;
         }
         return combined;
     }

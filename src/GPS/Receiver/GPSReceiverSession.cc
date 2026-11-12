@@ -39,6 +39,10 @@ GPSReceiverConfig gpsReceiverConfigFor(const GPSBaseStationConfig& base, GPSType
         config.base = base;
         // The option is hidden for receivers that cannot send MSM4, so it never blocks their connection.
         config.base.compactObservations = base.compactObservations && gpsReceiverCapabilities(type).compactObservations;
+        // So is the choice of constellations for receivers that send their own set.
+        if (!gpsReceiverCapabilities(type).correctionConstellations) {
+            config.base.correctionConstellations = GPS_ALL_CORRECTION_CONSTELLATIONS;
+        }
     }
     QString diagnostic = gpsReceiverConfigError(type, config);
     if (error) {

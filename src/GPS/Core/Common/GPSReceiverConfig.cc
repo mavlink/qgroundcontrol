@@ -56,6 +56,10 @@ GPSReceiverConfigError validateOptions(const GPSReceiverConfig& config, const GP
         if (config.base.compactObservations && !capabilities.compactObservations) {
             return GPSReceiverConfigError::UnsupportedCompactObservations;
         }
+        // A family that can leave constellations out sends none of those it has no message for.
+        if (config.base.omittedConstellations() && !capabilities.correctionConstellations) {
+            return GPSReceiverConfigError::UnsupportedCorrectionConstellations;
+        }
         const GPSReceiverConfigError error = gpsValidateBaseStationConfig(config.base);
         if (error != GPSReceiverConfigError::None) {
             return error;
@@ -110,6 +114,9 @@ QString gpsReceiverConfigErrorText(GPSReceiverConfigError error)
         case GPSReceiverConfigError::UnsupportedCompactObservations:
             return QCoreApplication::translate("GPSReceiverConfig",
                                                "This receiver cannot send compact (MSM4) RTCM corrections");
+        case GPSReceiverConfigError::UnsupportedCorrectionConstellations:
+            return QCoreApplication::translate(
+                "GPSReceiverConfig", "This receiver cannot leave a constellation out of its RTCM corrections");
     }
     return QCoreApplication::translate("GPSReceiverConfig", "Invalid GPS receiver configuration");
 }
@@ -119,7 +126,8 @@ QString gpsReceiverConfigError(GPSType type, const GPSReceiverConfig& config)
     return gpsReceiverConfigErrorText(gpsValidateReceiverConfig(type, config));
 }
 
-GPSReceiverConfig gpsReceiverConfigForDetected(GPSType detected, GPSReceiverConfig config, bool* compactFallback)
+GPSReceiverConfig gpsReceiverConfigForDetected(GPSType detected, GPSReceiverConfig config, bool* compactFallback,
+                                               bool* constellationFallback)
 {
     const GPSReceiverCapabilities capabilities = gpsReceiverCapabilities(detected);
     config.allowPersistentChanges = config.allowPersistentChanges && capabilities.persistentConfiguration;
@@ -129,6 +137,13 @@ GPSReceiverConfig gpsReceiverConfigForDetected(GPSType detected, GPSReceiverConf
     }
     if (compactFallback) {
         *compactFallback = fallback;
+    }
+    const bool allConstellations = config.base.omittedConstellations() && !capabilities.correctionConstellations;
+    if (allConstellations) {
+        config.base.correctionConstellations = GPS_ALL_CORRECTION_CONSTELLATIONS;
+    }
+    if (constellationFallback) {
+        *constellationFallback = allConstellations;
     }
     return config;
 }

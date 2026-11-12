@@ -71,4 +71,15 @@ GPSCommandSequence sequence(std::span<const Setting> settings, char port)
     return result;
 }
 
+GPSCommandSequence rtcmOutput(GPSCorrectionConstellations constellations, char port)
+{
+    GPSCommandSequence result;
+    for (const RTCMOutput& output : RTCM_OUTPUTS) {
+        const bool sent = !output.constellation || constellations.testFlags(output.constellation);
+        result.steps.emplace_back(
+            gpsCommand(line(sent ? output.on : output.off, port), RESPONSE_TIMEOUT, acknowledgement));
+    }
+    return result;
+}
+
 }  // namespace Ashtech::Plan

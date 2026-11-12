@@ -283,7 +283,8 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
     }
     baud = detection.baud;
     qCDebug(UnicoreProtocolLog).noquote() << "Unicore" << _model << "firmware" << _firmware;
-    const auto plan = fixed ? Plan::fixedBase(_fixedECEF) : Plan::averagingBase(averaging->maximumDuration);
+    const auto sent = config.base.correctionConstellations;
+    const auto plan = fixed ? Plan::fixedBase(_fixedECEF, sent) : Plan::averagingBase(averaging->maximumDuration, sent);
     if (!channel.runRequired(_sequence(plan.role))) {
         return _failAttempt(channel);
     }

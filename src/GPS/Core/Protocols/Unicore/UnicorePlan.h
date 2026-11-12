@@ -8,6 +8,7 @@
 #include <QtCore/QList>
 
 #include "GPSProtocolMath.h"
+#include "GPSReceiverConfig.h"
 
 /// UM980/UM982 base-station configuration as command lists, in the order they are sent, from the Unicore N4 Commands
 /// and Logs Reference Book EN R1.6 (sections 3, 7.3.1, 7.3.27 and 7.3.44). Each command is one "<text>\r\n" line for
@@ -50,12 +51,14 @@ struct BaseStation
 {
     /// Stops logs, forces a fresh role transition through the rover role, enables NMEA output and sets the base mode.
     QList<Command> role;
-    /// Sent once base status is monitored: the fixed-position readback, then base status and RTCM3 output.
+    /// Sent once base status is monitored: the fixed-position readback, then base status and RTCM3 output. The
+    /// observations of a constellation the base leaves out are not asked for, which is enough after the UNLOG of
+    /// @a role.
     QList<Command> output;
 };
 
-/// Receiver-managed averaging for at most @a maximum.
-[[nodiscard]] BaseStation averagingBase(std::chrono::seconds maximum);
+/// Receiver-managed averaging for at most @a maximum, sending the observations of GPS and of @a constellations.
+[[nodiscard]] BaseStation averagingBase(std::chrono::seconds maximum, GPSCorrectionConstellations constellations);
 
 /// Decimals of the ECEF coordinates fixedBase() sends and the receiver reads back: 0.1 mm.
 inline constexpr int ECEF_DECIMALS = 4;
@@ -63,7 +66,7 @@ inline constexpr int ECEF_DECIMALS = 4;
 /// rounding to ECEF_DECIMALS with a wide margin; it is not survey accuracy.
 inline constexpr double SAME_POSITION_TOLERANCE_METERS = 0.02;
 
-/// A fixed base at @a position, in ECEF metres.
-[[nodiscard]] BaseStation fixedBase(const GPSProtocolMath::Ecef& position);
+/// A fixed base at @a position, in ECEF metres, sending the observations of GPS and of @a constellations.
+[[nodiscard]] BaseStation fixedBase(const GPSProtocolMath::Ecef& position, GPSCorrectionConstellations constellations);
 
 }  // namespace Unicore::Plan

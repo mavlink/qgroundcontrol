@@ -91,6 +91,12 @@ The settings are:
     Leave it at zero when the position is the antenna's own, as a surveyed one is.
     [Saved base sites](#base_sites) keep several such positions under a name.
   - **Receiver-managed averaging:** The receiver averages its position for up to **Maximum averaging time**, without an accuracy guarantee (Unicore).
+- **Constellations in corrections** (u-blox, Trimble and Unicore, _Configured base_ only): The constellations whose observations the base sends to rovers.
+  GPS is always sent. Clear _GLONASS_, _Galileo_, _BeiDou_ or, for a Trimble receiver, _QZSS_ to leave its observations out, for a slow telemetry link or for rovers that use fewer constellations.
+  Rovers then fix with the constellations that remain, so leave out only what the link cannot carry.
+  It selects the messages the base sends, not the satellites it tracks: the receiver keeps using every constellation for its own position.
+  The other receivers send their own set. With _Detect automatically_ all four are offered, and a receiver that sends its own set does so whatever is selected, which the application log notes.
+  **Constellations** in the [Corrections status](ntrip_rtk.md#corrections-status) shows what the base sends.
 - **Compact RTCM corrections (MSM4)** (u-blox): Sends MSM4 instead of MSM7 observations, about a third less correction bandwidth for slow telemetry links.
 - **Allow flash save and restart** (Quectel): For the next connection only, lets QGroundControl save base settings to the receiver's flash and restart it.
 - **Connect automatically:** On by default. QGroundControl connects the saved receiver when it starts, reconnects it with increasing delays when the connection is lost, and reconnects a serial receiver as soon as it is plugged back in.
@@ -105,7 +111,7 @@ The settings are:
   Each connection gets a file in the `GPSReceiver` folder of the [Application Load/Save Path](general.md#load_save_path), named with the UTC time it started and the receiver type, such as `20260102T030405.006Z-ublox.log`.
   The file's path is shown below the switch while the connection lasts.
   The file holds the raw receiver input and output: every byte the receiver sent and every byte QGroundControl sent to it, with the baud rate changes.
-  It starts with the settings the connection was made with: the receiver type, the baud rate, the corrections format, the permission to save to the receiver's flash, and the base mode with its survey limits or fixed position.
+  It starts with the settings the connection was made with: the receiver type, the baud rate, the corrections format and the constellations in them when some are left out, the permission to save to the receiver's flash, and the base mode with its survey limits or fixed position.
   It therefore includes the receiver's positions and the base station location, so share it only where that is acceptable.
   It is a text file: after a heading line, each line is the time in microseconds since the recording started, then `SETTINGS` and the connection's settings, `RX` and the bytes received in hexadecimal, `TX` and the bytes sent, `BAUD` and the new baud rate, or, for what the connection refused, `TX-REFUSED` with the reason and the bytes that were not sent, or `BAUD-REFUSED` with the baud rate.
   A recording stops when its file reaches 256 MB or cannot be written: the application log reports it and the path is no longer shown. The connection continues either way.

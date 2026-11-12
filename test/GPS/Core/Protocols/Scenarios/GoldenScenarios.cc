@@ -233,6 +233,12 @@ GPSReceiverConfig compact(GPSReceiverConfig config)
     return config;
 }
 
+GPSReceiverConfig sending(GPSReceiverConfig config, GPSCorrectionConstellations constellations)
+{
+    config.base.correctionConstellations = constellations;
+    return config;
+}
+
 GPSReceiverConfig persistent(GPSReceiverConfig config)
 {
     config.allowPersistentChanges = true;

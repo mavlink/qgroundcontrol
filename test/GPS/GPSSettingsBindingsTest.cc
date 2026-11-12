@@ -62,6 +62,8 @@ void GPSSettingsBindingsTest::_receiverSettingsMapping()
     saved.setFactValue(settings.surveyInMinObservationDuration(), 195);
     saved.setFactValue(settings.receiverAveragingDuration(), 321);
     saved.setFactValue(settings.compactRtcmCorrections(), true);
+    // Bits no constellation has are not a selection.
+    saved.setFactValue(settings.baseCorrectionConstellations(), RTKSettings::Galileo | RTKSettings::BeiDou | 0x40);
     const auto type = gpsReceiverTypeForManufacturer(manufacturer);
     QVERIFY(type);
     ScriptedGPSReceiver harness;
@@ -89,6 +91,9 @@ void GPSSettingsBindingsTest::_receiverSettingsMapping()
     QVERIFY(config.base.mode == expected);
     // Automatic keeps the compact MSM4 option until detection, which falls back to MSM7 on receivers without it.
     QVERIFY(config.base.compactObservations);
+    // So it keeps the constellations selected for the corrections.
+    QCOMPARE(config.base.correctionConstellations,
+             GPSCorrectionConstellation::Galileo | GPSCorrectionConstellation::BeiDou);
 }
 
 void GPSSettingsBindingsTest::_receiverSettingsBinding()

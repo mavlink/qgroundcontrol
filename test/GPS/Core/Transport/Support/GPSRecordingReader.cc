@@ -100,6 +100,9 @@ public:
 
     bool flag(const char* key) { return integer<int>(key, 0, 1) == 1; }
 
+    /// Whether a field a record need not hold is there to read.
+    bool has(const char* key) const { return _fields.contains(key); }
+
     bool allRead() const { return _valid && _fields.isEmpty(); }
 
 private:
@@ -120,6 +123,10 @@ std::optional<GPSRecordingSettings> recordedSettings(const QByteArray& value)
     settings.fixedBaudRate = fields.integer<unsigned>("fixed-baud", 0, GPS_MAX_BAUD_RATE);
     settings.config.allowPersistentChanges = fields.flag("save");
     settings.config.base.compactObservations = fields.flag("compact");
+    if (fields.has("constellations")) {
+        settings.config.base.correctionConstellations = GPSCorrectionConstellations::fromInt(
+            fields.integer<int>("constellations", 0, GPS_ALL_CORRECTION_CONSTELLATIONS.toInt()));
+    }
     const QByteArray base = fields.text("base");
     constexpr qlonglong MAX_SECONDS = std::chrono::seconds::max().count();
     if (base == "fixed") {

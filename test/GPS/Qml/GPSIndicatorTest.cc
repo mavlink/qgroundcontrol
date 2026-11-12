@@ -259,7 +259,8 @@ void GPSIndicatorTest::_receiverBesideVehicleGps()
 
 void GPSIndicatorTest::_compactExpandedPageHasSettingsSize()
 {
-    // Status of a vehicle GPS, a surveyed base and a caster, which is taller than the settings of that base.
+    // Status of a vehicle GPS with its resilience report, a surveyed base and a caster, which is taller than the
+    // settings of that base.
     RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::UBlox));
     NTRIPSettings* const ntrip = SettingsManager::instance()->ntripSettings();
     settings.saved.setFactValue(ntrip->ntripServerConnectEnabled(), false);
@@ -275,6 +276,12 @@ void GPSIndicatorTest::_compactExpandedPageHasSettingsSize()
                                                          .satellitesVisible = 10,
                                                          .horizontalAccuracyMm = 2500,
                                                          .verticalAccuracyMm = 4500}));
+    mavlink_gnss_integrity_t integrity{};
+    integrity.jamming_state = 1;
+    integrity.spoofing_state = 1;
+    mavlink_message_t integrityReport{};
+    mavlink_msg_gnss_integrity_encode(1, 1, &integrityReport, &integrity);
+    gps->handleMessage(&vehicle, integrityReport);
     AppReceiver base;
     QVERIFY(base.connect());
     GPSReceiverFactGroup* const facts = base.facts();
@@ -295,6 +302,7 @@ void GPSIndicatorTest::_compactExpandedPageHasSettingsSize()
     QVERIFY(page->setProperty("availableWidth", sideBySideWidth - 1));
     QVERIFY(window.show());
     QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
+    QVERIFY(shownItem(page.get(), "gps1Resilience"));
     const qreal statusHeight = item->implicitHeight();
     // Beside a vehicle's GPS status too, the collapsed page has the receiver's button.
     QVERIFY(shownItem(page.get(), "rtkConnectButton"));

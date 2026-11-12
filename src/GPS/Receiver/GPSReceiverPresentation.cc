@@ -18,6 +18,7 @@ GPSReceiverPresentation buildPresentation(int manufacturer)
         presentation.surveyIn |= descriptor.capabilities.surveyIn;
         presentation.receiverAveraging |= descriptor.capabilities.receiverAveraging;
         presentation.compactObservations |= descriptor.capabilities.compactObservations;
+        presentation.correctionConstellations |= descriptor.capabilities.correctionConstellations.toInt();
         presentation.surveyAccuracy |= descriptor.surveyAccuracy != Accuracy::Unavailable;
         presentation.surveyDuration |= descriptor.configurableSurveyDuration;
         presentation.fixedBaseAccuracy |= descriptor.fixedBaseAccuracy;

@@ -17,6 +17,7 @@ struct GPSReceiverPresentation
     Q_PROPERTY(bool surveyIn MEMBER surveyIn FINAL)
     Q_PROPERTY(bool receiverAveraging MEMBER receiverAveraging FINAL)
     Q_PROPERTY(bool compactObservations MEMBER compactObservations FINAL)
+    Q_PROPERTY(int correctionConstellations MEMBER correctionConstellations FINAL)
     Q_PROPERTY(bool passive MEMBER passive FINAL)
     Q_PROPERTY(bool surveyAccuracy MEMBER surveyAccuracy FINAL)
     Q_PROPERTY(bool surveyDuration MEMBER surveyDuration FINAL)
@@ -36,6 +37,8 @@ public:
     bool surveyIn = false;
     bool receiverAveraging = false;
     bool compactObservations = false;
+    /// The constellations a base can leave out of its corrections, as GPSCorrectionConstellation bits.
+    int correctionConstellations = 0;
     bool passive = false;
     bool surveyAccuracy = false;
     bool surveyDuration = false;

@@ -8,8 +8,7 @@
 #include <QtCore/QByteArray>
 
 #include "GPSCommand.h"
-
-struct GPSEllipsoidPosition;
+#include "GPSReceiverConfig.h"
 
 /// Ashtech/Trimble receiver configuration as data, in the order it is sent. $PASHS commands set and $PASHQ commands
 /// query; the receiver answers with $PASHR. "{port}" stands for the port letter the receiver reported in $PASHR,PRT.
@@ -62,18 +61,29 @@ inline constexpr std::array STATION{
     Setting{"$PASHS,STI,0001"},             // base station ID
 };
 
-/// RTCM3 output once the base position is known: each constellation's observations once, as MSM4.
+/// An RTCM3 output of the base.
+struct RTCMOutput
+{
+    std::string_view on;
+    /// Sent instead of @a on while the base leaves out the observations of @a constellation: the receiver keeps an
+    /// output that an earlier session turned on.
+    std::string_view off{};
+    GPSCorrectionConstellations constellation{};
+};
+
+/// RTCM3 output once the base position is known: each constellation's observations once a second, as MSM4.
 inline constexpr std::array RTCM_OUTPUTS{
-    Setting{"$PASHS,NME,POS,{port},ON,0.2"},  // position output reduced to 5 Hz
-    Setting{"$PASHS,RT3,1074,{port},ON,1"},   // GPS observations
-    Setting{"$PASHS,RT3,1084,{port},ON,1"},   // GLONASS observations
-    Setting{"$PASHS,RT3,1094,{port},ON,1"},   // Galileo observations
-    Setting{"$PASHS,RT3,1114,{port},ON,1"},   // QZSS observations
-    Setting{"$PASHS,RT3,1124,{port},ON,1"},   // BeiDou observations
-    Setting{"$PASHS,RT3,1005,{port},ON,1"},   // station position
-    Setting{"$PASHS,RT3,1006,{port},ON,1"},   // station position with antenna height
-    Setting{"$PASHS,RT3,1033,{port},ON,31"},  // antenna and receiver name
-    Setting{"$PASHS,RT3,1230,{port},ON"},     // GLONASS code-phase biases
+    RTCMOutput{"$PASHS,NME,POS,{port},ON,0.2"},  // position output reduced to 5 Hz
+    RTCMOutput{"$PASHS,RT3,1074,{port},ON,1"},   // GPS observations
+    RTCMOutput{"$PASHS,RT3,1084,{port},ON,1", "$PASHS,RT3,1084,{port},OFF", GPSCorrectionConstellation::GLONASS},
+    RTCMOutput{"$PASHS,RT3,1094,{port},ON,1", "$PASHS,RT3,1094,{port},OFF", GPSCorrectionConstellation::Galileo},
+    RTCMOutput{"$PASHS,RT3,1114,{port},ON,1", "$PASHS,RT3,1114,{port},OFF", GPSCorrectionConstellation::QZSS},
+    RTCMOutput{"$PASHS,RT3,1124,{port},ON,1", "$PASHS,RT3,1124,{port},OFF", GPSCorrectionConstellation::BeiDou},
+    RTCMOutput{"$PASHS,RT3,1005,{port},ON,1"},   // station position
+    RTCMOutput{"$PASHS,RT3,1006,{port},ON,1"},   // station position with antenna height
+    RTCMOutput{"$PASHS,RT3,1033,{port},ON,31"},  // antenna and receiver name
+    // GLONASS code-phase biases, which go with the GLONASS observations
+    RTCMOutput{"$PASHS,RT3,1230,{port},ON", "$PASHS,RT3,1230,{port},OFF", GPSCorrectionConstellation::GLONASS},
 };
 
 /// A NAK rejects any command.
@@ -92,7 +102,7 @@ inline constexpr std::array RTCM_OUTPUTS{
 /// Its $PASHR,RECEIPT start receipt acknowledges it, and the finish receipt carries the averaged position.
 [[nodiscard]] QByteArray surveyStart(std::chrono::seconds duration);
 
-/// Fixed base, sent after the first position, then RTCM_OUTPUTS: the $PASHS,POS line for @a position, with unsigned
+/// Fixed base, sent after the first position, then rtcmOutput(): the $PASHS,POS line for @a position, with unsigned
 /// ddmm.mmmmmmmm and dddmm.mmmmmmmm and hemisphere letters, and the height in metres.
 [[nodiscard]] QByteArray fixedPosition(const GPSEllipsoidPosition& position);
 
@@ -101,5 +111,8 @@ inline constexpr std::array RTCM_OUTPUTS{
 
 /// @a settings for @a port, each acknowledged by an ACK.
 [[nodiscard]] GPSCommandSequence sequence(std::span<const Setting> settings, char port);
+
+/// RTCM_OUTPUTS for @a port with the observations of GPS and of @a constellations, each acknowledged by an ACK.
+[[nodiscard]] GPSCommandSequence rtcmOutput(GPSCorrectionConstellations constellations, char port);
 
 }  // namespace Ashtech::Plan

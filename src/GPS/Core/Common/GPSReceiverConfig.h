@@ -5,6 +5,7 @@
 #include <limits>
 #include <variant>
 
+#include <QtCore/QFlags>
 #include <QtCore/QString>
 
 #include "GPSType.h"
@@ -18,6 +19,22 @@ struct GPSEllipsoidPosition
 
     bool operator==(const GPSEllipsoidPosition&) const = default;
 };
+
+/// A constellation besides GPS whose observations a base sends in its corrections. Callers persist these values, so
+/// they must not change.
+enum class GPSCorrectionConstellation : uint8_t
+{
+    GLONASS = 1 << 0,
+    Galileo = 1 << 1,
+    BeiDou = 1 << 2,
+    QZSS = 1 << 3,
+};
+Q_DECLARE_FLAGS(GPSCorrectionConstellations, GPSCorrectionConstellation)
+Q_DECLARE_OPERATORS_FOR_FLAGS(GPSCorrectionConstellations)
+
+inline constexpr GPSCorrectionConstellations GPS_ALL_CORRECTION_CONSTELLATIONS =
+    GPSCorrectionConstellation::GLONASS | GPSCorrectionConstellation::Galileo | GPSCorrectionConstellation::BeiDou |
+    GPSCorrectionConstellation::QZSS;
 
 /// Configuration used only by the RTK base-station role.
 struct GPSBaseStationConfig
@@ -53,6 +70,16 @@ struct GPSBaseStationConfig
     Mode mode = SurveyIn{};
     /// MSM4 instead of MSM7 observations: about a third less correction bandwidth, without Doppler.
     bool compactObservations = false;
+    /// The constellations besides GPS whose observations the corrections carry; those of GPS always are. It selects
+    /// the messages a base sends, not the satellites its receiver tracks. A family sends those of them it has messages
+    /// for (GPSReceiverCapabilities::correctionConstellations names the ones it can leave out).
+    GPSCorrectionConstellations correctionConstellations = GPS_ALL_CORRECTION_CONSTELLATIONS;
+
+    /// The constellations of GPS_ALL_CORRECTION_CONSTELLATIONS whose observations are left out.
+    [[nodiscard]] constexpr GPSCorrectionConstellations omittedConstellations() const
+    {
+        return GPS_ALL_CORRECTION_CONSTELLATIONS & ~correctionConstellations;
+    }
 
     bool operator==(const GPSBaseStationConfig&) const = default;
 };
@@ -79,6 +106,7 @@ enum class GPSReceiverConfigError
     InvalidBaudRate,
     UnsupportedPersistentConfiguration,
     UnsupportedCompactObservations,
+    UnsupportedCorrectionConstellations,
 };
 
 /// The range of explicit serial rates a receiver connection accepts.
@@ -106,9 +134,12 @@ inline constexpr uint32_t GPS_MAX_BAUD_RATE = 4000000;
 /// Fits a GPSType::Automatic request to the family detection found. Consent to persistent changes is a permission, so
 /// it lapses where the family has no persistent configuration; a compact-observation request lapses where the family
 /// has no compact option, which then sends its standard observations, and @a compactFallback, when given, reports that.
-/// Any other option the family lacks is kept, for gpsDetectedReceiverConfigError() to report.
+/// A request that leaves constellations out of the corrections lapses likewise where the family always sends its own
+/// set, which @a constellationFallback reports. Any other option the family lacks is kept, for
+/// gpsDetectedReceiverConfigError() to report.
 [[nodiscard]] GPSReceiverConfig gpsReceiverConfigForDetected(GPSType detected, GPSReceiverConfig config,
-                                                             bool* compactFallback = nullptr);
+                                                             bool* compactFallback = nullptr,
+                                                             bool* constellationFallback = nullptr);
 
 /// Why the @a detected family cannot perform @a config, naming the family and the option, such as "Detected
 /// Septentrio receiver does not support receiver-managed averaging"; empty when it can.

@@ -289,6 +289,46 @@ void ashtechFixedBaseCheck(GPSTestClock& clock)
     QVERIFY(!survey.surveys().back().fixedCheck);
 }
 
+/// The base asks for the observations of GPS and of the constellations it selects and turns the others off, which an
+/// earlier session may have left on. The GLONASS biases go with the GLONASS observations.
+void ashtechCorrectionConstellations(GPSTestClock& clock)
+{
+    using Constellation = GPSCorrectionConstellation;
+
+    const struct
+    {
+        int message;
+        Constellation constellation;
+    } outputs[] = {
+        {1084, Constellation::GLONASS}, {1094, Constellation::Galileo}, {1114, Constellation::QZSS},
+        {1124, Constellation::BeiDou},  {1230, Constellation::GLONASS},
+    };
+
+    for (const GPSCorrectionConstellations sent :
+         {GPS_ALL_CORRECTION_CONSTELLATIONS, GPSCorrectionConstellations{},
+          GPSCorrectionConstellations{Constellation::Galileo | Constellation::QZSS}}) {
+        clock.reset(GPSTestClock::START_US);
+        Base receiver(clock);
+        GPSConfig config{};
+        config.base = fixedBaseAt(47, 8, 500);
+        config.base.correctionConstellations = sent;
+        unsigned baudRate = 115200;
+        QVERIFY(receiver.driver.configure(config, baudRate));
+        (void) receiver.driver.consume({});
+        // The first position sets the fixed position and the RTCM output.
+        QVERIFY(receiver.startSurvey());
+        QVERIFY(receiver.peer.sent("$PASHS,RT3,1074,A,ON,1"));
+        QVERIFY(receiver.peer.sent("$PASHS,RT3,1005,A,ON,1"));
+        for (const auto& output : outputs) {
+            const QByteArray command = "$PASHS,RT3," + QByteArray::number(output.message) + ",A,";
+            const bool on = sent.testFlag(output.constellation);
+            QVERIFY2(receiver.peer.sent(command + "ON") == on, command.constData());
+            QVERIFY2(receiver.peer.sent(command + "OFF") == !on, command.constData());
+        }
+        QCOMPARE(receiver.peer.log.commands.back().outcome, GPSCommandOutcome::Acknowledged);
+    }
+}
+
 /// The base setup waits for the first position, so a ready receiver that sends no $PASHR,POS at all fails the
 /// session; one that sends them without a fix keeps waiting.
 void ashtechNoPositionOutput(GPSTestClock& clock)
@@ -524,6 +564,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"failed-survey", ashtechFailedSurvey},
     {"fixed-base-valid-before-corrections", ashtechFixedBaseValidBeforeCorrections},
     {"fixed-base-check", ashtechFixedBaseCheck},
+    {"correction-constellations", ashtechCorrectionConstellations},
     {"no-position-output", ashtechNoPositionOutput},
     {"other-board-is-not-a-base", ashtechOtherBoardIsNotABase},
     {"port-reply-needs-one-letter", ashtechPortReplyNeedsOneLetter},

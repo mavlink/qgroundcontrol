@@ -33,6 +33,9 @@ constexpr GPSBaseStationConfig VALID_SURVEY{
 constexpr GPSBaseStationConfig VALID_FIXED{
     .mode = GPSBaseStationConfig::Fixed{
         .position = {.latitudeDegrees = 0.0, .longitudeDegrees = 0.0, .altitudeMeters = 0.0f}}};
+/// Every constellation a base can leave out of its corrections but QZSS, which only the Trimble plan has a message for.
+constexpr GPSCorrectionConstellations WITHOUT_QZSS =
+    GPSCorrectionConstellation::GLONASS | GPSCorrectionConstellation::Galileo | GPSCorrectionConstellation::BeiDou;
 }  // namespace
 
 void GPSReceiverConfigTest::_unknownDefaults()
@@ -156,14 +159,25 @@ void GPSReceiverConfigTest::_capabilities_data()
     QTest::addColumn<GPSType>("type");
     QTest::addColumn<GPSReceiverCapabilities>("expected");
     constexpr GPSReceiverCapabilities survey{.recognized = true, .rtkBase = true, .surveyIn = true};
-    QTest::newRow("trimble") << GPSType::Trimble << survey;
+    // The observations a family's plan has a message of their own for can be left out of the corrections.
+    QTest::newRow("trimble") << GPSType::Trimble
+                             << GPSReceiverCapabilities{.recognized = true,
+                                                        .rtkBase = true,
+                                                        .surveyIn = true,
+                                                        .correctionConstellations = GPS_ALL_CORRECTION_CONSTELLATIONS};
     QTest::newRow("septentrio") << GPSType::Septentrio << survey;
     QTest::newRow("femto") << GPSType::Femto << survey;
     QTest::newRow("ublox") << GPSType::UBlox
-                           << GPSReceiverCapabilities{
-                                  .recognized = true, .rtkBase = true, .surveyIn = true, .compactObservations = true};
+                           << GPSReceiverCapabilities{.recognized = true,
+                                                      .rtkBase = true,
+                                                      .surveyIn = true,
+                                                      .compactObservations = true,
+                                                      .correctionConstellations = WITHOUT_QZSS};
     QTest::newRow("unicore") << GPSType::Unicore
-                             << GPSReceiverCapabilities{.recognized = true, .rtkBase = true, .receiverAveraging = true};
+                             << GPSReceiverCapabilities{.recognized = true,
+                                                        .rtkBase = true,
+                                                        .receiverAveraging = true,
+                                                        .correctionConstellations = WITHOUT_QZSS};
     QTest::newRow("quectel") << GPSType::Quectel
                              << GPSReceiverCapabilities{.recognized = true,
                                                         .rtkBase = true,
@@ -172,12 +186,14 @@ void GPSReceiverConfigTest::_capabilities_data()
     QTest::newRow("passive") << GPSType::Passive << GPSReceiverCapabilities{.recognized = true, .passive = true};
     // Automatic accepts every option some base family supports, until detection names the family.
     QTest::newRow("automatic") << GPSType::Automatic
-                               << GPSReceiverCapabilities{.recognized = true,
-                                                          .rtkBase = true,
-                                                          .surveyIn = true,
-                                                          .receiverAveraging = true,
-                                                          .persistentConfiguration = true,
-                                                          .compactObservations = true};
+                               << GPSReceiverCapabilities{
+                                      .recognized = true,
+                                      .rtkBase = true,
+                                      .surveyIn = true,
+                                      .receiverAveraging = true,
+                                      .persistentConfiguration = true,
+                                      .compactObservations = true,
+                                      .correctionConstellations = GPS_ALL_CORRECTION_CONSTELLATIONS};
     for (int value : {-1, 8, 255}) {
         QTest::addRow("unknown-type-%d", value) << static_cast<GPSType>(value) << GPSReceiverCapabilities{};
     }
@@ -195,6 +211,7 @@ void GPSReceiverConfigTest::_capabilities()
     QCOMPARE(actual.passive, expected.passive);
     QCOMPARE(actual.persistentConfiguration, expected.persistentConfiguration);
     QCOMPARE(actual.compactObservations, expected.compactObservations);
+    QCOMPARE(actual.correctionConstellations, expected.correctionConstellations);
 }
 
 void GPSReceiverConfigTest::_receiverValidation_data()
@@ -246,6 +263,23 @@ void GPSReceiverConfigTest::_receiverValidation_data()
     }
     QTest::newRow("passive-rejects-compact-observations")
         << GPSType::Passive << GPSReceiverConfig{.base = {.compactObservations = true}, .baudRate = 115200}
+        << Error::UnsupportedBaseMode;
+    // GPS observations alone, and every constellation but the one only the Trimble plan has a message for.
+    for (const auto type : {GPSType::UBlox, GPSType::Trimble, GPSType::Unicore}) {
+        for (const auto constellations : {GPSCorrectionConstellations{}, WITHOUT_QZSS}) {
+            QTest::addRow("correction-constellations-%d-%d", static_cast<int>(type), constellations.toInt())
+                << type
+                << GPSReceiverConfig{.base = {.mode = VALID_FIXED.mode, .correctionConstellations = constellations}}
+                << Error::None;
+        }
+    }
+    for (const auto type : {GPSType::Septentrio, GPSType::Femto, GPSType::Quectel}) {
+        QTest::addRow("unsupported-correction-constellations-%d", static_cast<int>(type))
+            << type << GPSReceiverConfig{.base = {.mode = VALID_FIXED.mode, .correctionConstellations = WITHOUT_QZSS}}
+            << Error::UnsupportedCorrectionConstellations;
+    }
+    QTest::newRow("passive-rejects-correction-constellations")
+        << GPSType::Passive << GPSReceiverConfig{.base = {.correctionConstellations = {}}, .baudRate = 115200}
         << Error::UnsupportedBaseMode;
     for (const auto type : {GPSType::UBlox, GPSType::Quectel}) {
         QTest::addRow("unsupported-receiver-averaging-%d", static_cast<int>(type))
@@ -337,22 +371,36 @@ void GPSReceiverConfigTest::_detectedReceiverFit_data()
     QTest::addColumn<bool>("persistent");
     QTest::addColumn<bool>("compact");
     QTest::addColumn<bool>("fallback");
+    QTest::addColumn<GPSCorrectionConstellations>("constellations");
+    QTest::addColumn<bool>("constellationFallback");
     QTest::addColumn<QString>("error");
 
+    constexpr GPSCorrectionConstellations all = GPS_ALL_CORRECTION_CONSTELLATIONS;
+    constexpr GPSCorrectionConstellations galileo = GPSCorrectionConstellation::Galileo;
     GPSReceiverConfig compactSurvey{.base = VALID_SURVEY, .allowPersistentChanges = true};
     compactSurvey.base.compactObservations = true;
     const GPSReceiverConfig averaging{
         .base = {.mode = GPSBaseStationConfig::ReceiverAveraging{.maximumDuration = 60s}}};
     const GPSReceiverConfig survey{.base = VALID_SURVEY};
+    GPSReceiverConfig galileoSurvey = survey;
+    galileoSurvey.base.correctionConstellations = galileo;
     // Consent is a permission, kept only where the family can save settings; MSM4 falls back to MSM7 elsewhere.
-    QTest::newRow("ublox-keeps-compact") << GPSType::UBlox << compactSurvey << false << true << false << QString();
-    QTest::newRow("quectel-keeps-consent") << GPSType::Quectel << compactSurvey << true << false << true << QString();
+    QTest::newRow("ublox-keeps-compact") << GPSType::UBlox << compactSurvey << false << true << false << all << false
+                                         << QString();
+    QTest::newRow("quectel-keeps-consent")
+        << GPSType::Quectel << compactSurvey << true << false << true << all << false << QString();
     QTest::newRow("septentrio-averaging")
-        << GPSType::Septentrio << averaging << false << false << false
+        << GPSType::Septentrio << averaging << false << false << false << all << false
         << QStringLiteral("Detected Septentrio receiver does not support receiver-managed averaging");
-    QTest::newRow("unicore-survey") << GPSType::Unicore << survey << false << false << false
+    QTest::newRow("unicore-survey") << GPSType::Unicore << survey << false << false << false << all << false
                                     << QStringLiteral("Detected Unicore receiver does not support survey-in");
-    QTest::newRow("unicore-averaging") << GPSType::Unicore << averaging << false << false << false << QString();
+    QTest::newRow("unicore-averaging") << GPSType::Unicore << averaging << false << false << false << all << false
+                                       << QString();
+    // A family that can leave constellations out keeps the selection; one that sends its own set sends all of it.
+    QTest::newRow("ublox-keeps-constellations")
+        << GPSType::UBlox << galileoSurvey << false << false << false << galileo << false << QString();
+    QTest::newRow("septentrio-sends-its-constellations")
+        << GPSType::Septentrio << galileoSurvey << false << false << false << all << true << QString();
 }
 
 void GPSReceiverConfigTest::_detectedReceiverFit()
@@ -362,13 +410,19 @@ void GPSReceiverConfigTest::_detectedReceiverFit()
     QFETCH(bool, persistent);
     QFETCH(bool, compact);
     QFETCH(bool, fallback);
+    QFETCH(GPSCorrectionConstellations, constellations);
+    QFETCH(bool, constellationFallback);
     QFETCH(QString, error);
     QVERIFY(gpsReceiverConfigError(GPSType::Automatic, request).isEmpty());
     bool compactFallback = !fallback;
-    const GPSReceiverConfig fitted = gpsReceiverConfigForDetected(detected, request, &compactFallback);
+    bool allConstellations = !constellationFallback;
+    const GPSReceiverConfig fitted =
+        gpsReceiverConfigForDetected(detected, request, &compactFallback, &allConstellations);
     QCOMPARE(fitted.allowPersistentChanges, persistent);
     QCOMPARE(fitted.base.compactObservations, compact);
     QCOMPARE(compactFallback, fallback);
+    QCOMPARE(fitted.base.correctionConstellations, constellations);
+    QCOMPARE(allConstellations, constellationFallback);
     QVERIFY(fitted.base.mode == request.base.mode);
     QCOMPARE(gpsDetectedReceiverConfigError(detected, fitted), error);
 }

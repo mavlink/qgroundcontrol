@@ -92,10 +92,10 @@ struct [[nodiscard]] GPSReceiveResult
 
 /// Hosts a native receiver family and adapts its decoded events to public reports. GPSType::Automatic detects the
 /// family on every configure(), then fits the request to it: consent to persistent changes lapses where the family has
-/// none, a compact-observation request lapses with a warning where the family has no compact option, and an
-/// unsupported base mode fails, naming the family. Detection first asks the family of a hint (setDetectionHint()) to
-/// identify itself, with the family's read-only identity query, and scans every family at every rate
-/// (GPSReceiverDetector) without a hint or when that family does not answer.
+/// none, a compact-observation request or a selection of constellations lapses with a warning where the family has
+/// no such option, and an unsupported base mode fails, naming the family. Detection first asks the family of a hint
+/// (setDetectionHint()) to identify itself, with the family's read-only identity query, and scans every family at every
+/// rate (GPSReceiverDetector) without a hint or when that family does not answer.
 class GPSDriver
 {
 public:

@@ -382,7 +382,7 @@ Protocol::RTCMActivation Protocol::_activateRTCMOutput(GPSCommandChannel& channe
     if (!_identity.protocol27) {
         return _activateLegacyRTCMOutput(channel);
     }
-    const bool activated = _transactValset(channel, Plan::rtcmOutput(_base.compactObservations)).succeeded();
+    const bool activated = _transactValset(channel, Plan::rtcmOutput(_base)).succeeded();
     return activated ? RTCMActivation::Active : RTCMActivation::Failed;
 }
 
@@ -419,7 +419,7 @@ Protocol::RTCMActivation Protocol::_activateLegacyRTCMOutput(GPSCommandChannel& 
     }
     // The base status rates come first; their rejection is ignored, as that of an optional RTCM message.
     const auto status = Plan::legacyBaseStatus();
-    const auto rtcm = Plan::legacyRTCMOutput(_base.compactObservations);
+    const auto rtcm = Plan::legacyRTCMOutput(_base);
     bool unanswered = false;
     for (; progress.next < status.size() + rtcm.size(); ++progress.next) {
         // Send a rate only with time for its poll; a late reply would be credited to the next command.

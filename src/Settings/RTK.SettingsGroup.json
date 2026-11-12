@@ -240,6 +240,16 @@
             "units": "vertical m",
             "decimalPlaces": 3,
             "label": "Antenna height"
+        },
+        {
+            "name": "baseCorrectionConstellations",
+            "shortDesc": "The constellations whose observations the base sends to rovers. Fewer of them need less correction bandwidth, for example on slow telemetry radios, and rovers then fix with those alone. The receiver keeps tracking all of them.",
+            "longDesc": "Bit mask of the constellations besides GPS whose observations a configured RTK base sends in its RTCM corrections: 1 GLONASS, 2 Galileo, 4 BeiDou, 8 QZSS. GPS observations are always sent.",
+            "type": "uint8",
+            "default": 15,
+            "min": 0,
+            "max": 15,
+            "label": "Constellations in corrections"
         }
     ]
 }

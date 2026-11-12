@@ -130,6 +130,8 @@ GPSReceiverConfig fixedBase(double latitude, double longitude, float altitude, f
 GPSReceiverConfig averaging(int64_t seconds, uint32_t baud = 0);
 GPSReceiverConfig passiveInput(uint32_t baud);
 GPSReceiverConfig compact(GPSReceiverConfig config);
+/// @a config sending the observations of GPS and of @a constellations.
+GPSReceiverConfig sending(GPSReceiverConfig config, GPSCorrectionConstellations constellations);
 GPSReceiverConfig persistent(GPSReceiverConfig config);
 
 // ---------------------------------------------------------------------------------------------------------------

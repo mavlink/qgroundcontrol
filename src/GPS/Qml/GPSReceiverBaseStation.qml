@@ -146,4 +146,11 @@ GPSReceiverSettingsGroup {
             shown: root.presentation.fixedBaseAccuracy
         }
     }
+
+    GPSReceiverBaseConstellations {
+        fact: root.settings.baseCorrectionConstellations
+        selectable: root.presentation.correctionConstellations
+        shown: root.presentation.rtkBase && root.presentation.correctionConstellations !== 0
+        enabled: root._editable
+    }
 }

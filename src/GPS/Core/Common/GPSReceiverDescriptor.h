@@ -6,6 +6,7 @@
 #include <QtCore/QLatin1StringView>
 #include <QtCore/QString>
 
+#include "GPSReceiverConfig.h"
 #include "GPSType.h"
 
 /// Software request support, not a guarantee for every physical receiver model or firmware.
@@ -18,6 +19,9 @@ struct GPSReceiverCapabilities
     bool passive = false;
     bool persistentConfiguration = false;
     bool compactObservations = false;
+    /// The constellations whose observations a base can leave out of its corrections; none where a base always sends
+    /// the family's own set.
+    GPSCorrectionConstellations correctionConstellations{};
 };
 
 /// The persisted manufacturer that detects the receiver family on every connect (GPSType::Automatic). Its settings view

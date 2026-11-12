@@ -107,6 +107,16 @@ public:
     };
     Q_ENUM(BasePositionFormat)
 
+    /// Bits of baseCorrectionConstellations: the constellations besides GPS whose observations a base sends.
+    enum CorrectionConstellation : quint8
+    {
+        Glonass = 1 << 0,
+        Galileo = 1 << 1,
+        BeiDou = 1 << 2,
+        Qzss = 1 << 3,
+    };
+    Q_ENUM(CorrectionConstellation)
+
     /// Limits of the saved base sites, as an enum so that QML reads them from the type.
     enum BaseSiteLimit : int
     {
@@ -170,6 +180,7 @@ public:
     DEFINE_SETTINGFACT(detectedReceivers)
     DEFINE_SETTINGFACT(fixedBasePositionFormat)
     DEFINE_SETTINGFACT(fixedBaseAntennaHeight)
+    DEFINE_SETTINGFACT(baseCorrectionConstellations)
 
 signals:
     void baseSitesChanged();

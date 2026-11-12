@@ -425,6 +425,15 @@ void GPSRecordingTransportTest::_recordsSessionSettings_data()
         << QByteArray(
                "type=unicore,baud=0,fixed-baud=0,save=0,compact=0,"
                "base=averaging,duration=90");
+    // A base that leaves constellations out of its corrections names the ones it sends besides GPS.
+    QTest::newRow("constellations") << std::optional(Session{
+                                           GPSType::Unicore,
+                                           {.base = {.mode = GPSBaseStationConfig::ReceiverAveraging{90s},
+                                                     .correctionConstellations = GPSCorrectionConstellation::Galileo}}})
+                                    << 0U
+                                    << QByteArray(
+                                           "type=unicore,baud=0,fixed-baud=0,save=0,compact=0,constellations=2,"
+                                           "base=averaging,duration=90");
     QTest::newRow("passive") << std::optional(Session{GPSType::Passive, {.baudRate = 115200}}) << 0U
                              << QByteArray(
                                     "type=passive,baud=115200,fixed-baud=0,save=0,compact=0,"

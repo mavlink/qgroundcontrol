@@ -580,7 +580,7 @@ void Protocol::_setUpBase(GPSCommandChannel& channel)
 
 void Protocol::_activateRTCMOutput(GPSCommandChannel& channel)
 {
-    (void) channel.runRequired(Plan::sequence(Plan::RTCM_OUTPUTS, _port));
+    (void) channel.runRequired(Plan::rtcmOutput(_base.correctionConstellations, _port));
 }
 
 GPSCommandOutcome Protocol::_portReply(std::string_view reply)

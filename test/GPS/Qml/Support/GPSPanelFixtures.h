@@ -43,6 +43,8 @@ struct RTKSettingsFixture
         saved.setFactValue(settings->fixedBasePositionFormat(), RTKSettings::Geodetic);
         saved.setFactValue(settings->fixedBaseAntennaHeight(), 0);
         saved.setFactValue(settings->compactRtcmCorrections(), false);
+        saved.setFactValue(settings->baseCorrectionConstellations(),
+                           settings->baseCorrectionConstellations()->rawDefaultValue());
         saved.setFactValue(settings->connectionType(), RTKSettings::Serial);
         // Builds without serial links connect the saved serial selection over TCP.
         saved.setFactValue(settings->tcpHost(), QStringLiteral("127.0.0.1"));

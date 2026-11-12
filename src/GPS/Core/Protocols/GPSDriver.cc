@@ -277,10 +277,17 @@ bool GPSDriver::_configureDetected(GPSRuntimeIO io, GPSRuntimeObserver observer,
         _sinks.onReceiverDetected(detected);
     }
     bool compactFallback = false;
-    const GPSReceiverConfig config = gpsReceiverConfigForDetected(detected, _config, &compactFallback);
+    bool constellationFallback = false;
+    const GPSReceiverConfig config =
+        gpsReceiverConfigForDetected(detected, _config, &compactFallback, &constellationFallback);
     if (compactFallback) {
         qCWarning(GPSDriverLog).noquote()
             << QStringLiteral("Detected %1 receiver has no compact (MSM4) RTCM option; it sends its standard set")
+                   .arg(name);
+    }
+    if (constellationFallback) {
+        qCWarning(GPSDriverLog).noquote()
+            << QStringLiteral("Detected %1 receiver has no choice of RTCM constellations; it sends its standard set")
                    .arg(name);
     }
     if (const QString error = gpsDetectedReceiverConfigError(detected, config); !error.isEmpty()) {

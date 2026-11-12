@@ -132,6 +132,24 @@ void GPSReceiverSessionTest::_compactObservationsFollowSupport()
     }
 }
 
+void GPSReceiverSessionTest::_correctionConstellationsFollowSupport()
+{
+    auto settings = savedSettings(0);
+    settings.correctionConstellations = GPSCorrectionConstellation::Galileo;
+    QString error;
+    QCOMPARE(gpsReceiverConfigFor(settings, GPSType::UBlox, 115200, false, &error).base.correctionConstellations,
+             settings.correctionConstellations);
+    QVERIFY(error.isEmpty());
+    // Receivers that send their own set ignore the hidden option instead of failing to connect.
+    QCOMPARE(gpsReceiverConfigFor(settings, GPSType::Septentrio, 115200, false, &error).base.correctionConstellations,
+             GPS_ALL_CORRECTION_CONSTELLATIONS);
+    QVERIFY(error.isEmpty());
+    // Automatic keeps the selection for the family it detects.
+    QCOMPARE(gpsReceiverConfigFor(settings, GPSType::Automatic, 115200, false, &error).base.correctionConstellations,
+             settings.correctionConstellations);
+    QVERIFY(error.isEmpty());
+}
+
 void GPSReceiverSessionTest::_persistentConsent_data()
 {
     QTest::addColumn<GPSType>("type");

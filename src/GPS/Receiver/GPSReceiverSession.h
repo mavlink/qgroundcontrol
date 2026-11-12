@@ -54,8 +54,9 @@ struct GPSDetectionProgress
 };
 
 /// Builds the receiver request for one connection: a passive receiver gets no base settings, and compact
-/// observations apply only where the family supports them. @a error, when given, receives the translated diagnostic,
-/// which is empty when the receiver supports the request; the request is returned either way.
+/// observations and a selection of constellations apply only where the family supports them. @a error, when given,
+/// receives the translated diagnostic, which is empty when the receiver supports the request; the request is returned
+/// either way.
 [[nodiscard]] GPSReceiverConfig gpsReceiverConfigFor(const GPSBaseStationConfig& base, GPSType type, uint32_t baudRate,
                                                      bool allowPersistentChanges, QString* error);
 
