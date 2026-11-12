@@ -122,6 +122,9 @@ private:
     /// What a 3xx answer means for the user, naming the Location target when the caster gave one.
     static QString _redirectDetail(int status, const QHttpHeaders& headers);
     void _fail(Result& result, const QString& detail, NTRIPError code = NTRIPError::InvalidHttpResponse);
+    /// Fails a request for corrections that the caster answered with its source table, as it does for a mountpoint
+    /// it does not have.
+    void _failAsSourceTable(Result& result);
 
     QHttpHeaders _headers;
     NTRIPHttpPurpose _purpose;

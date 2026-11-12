@@ -92,6 +92,9 @@ public:
     /// Sends @a bytes after the request. False unless isConnected() and the socket accepted every byte; the owner
     /// decides how to report it.
     bool write(const QByteArray& bytes);
+    /// The detail of a failure because the socket did not accept every byte: of the request, which the session
+    /// reports itself, or of a write().
+    static QString incompleteWriteDetail();
     /// The connection is open and the request has been sent on it, so the caster reads what is written from now on
     /// as following the request.
     bool isConnected() const;

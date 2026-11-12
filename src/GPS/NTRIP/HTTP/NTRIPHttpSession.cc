@@ -196,7 +196,7 @@ void NTRIPHttpSession::_establish()
         }
     }
     if (_socket->write(_request) != _request.size()) {
-        _fail(NTRIPError::SocketError, tr("Socket did not accept the complete NTRIP write"));
+        _fail(NTRIPError::SocketError, incompleteWriteDetail());
         return;
     }
     _requestSent = true;
@@ -206,6 +206,11 @@ void NTRIPHttpSession::_establish()
 bool NTRIPHttpSession::write(const QByteArray& bytes)
 {
     return isConnected() && _socket->write(bytes) == bytes.size();
+}
+
+QString NTRIPHttpSession::incompleteWriteDetail()
+{
+    return tr("Socket did not accept the complete NTRIP write");
 }
 
 bool NTRIPHttpSession::isConnected() const

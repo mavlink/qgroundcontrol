@@ -145,6 +145,11 @@ void NTRIPHttpDecoder::_fail(Result& result, const QString& detail, NTRIPError c
     result.failure = NTRIPFailure{code, detail};
 }
 
+void NTRIPHttpDecoder::_failAsSourceTable(Result& result)
+{
+    _fail(result, tr("Caster returned a source table; select a valid mountpoint"), NTRIPError::InvalidMountpoint);
+}
+
 void NTRIPHttpDecoder::_finishError(Result& result)
 {
     const QString preview = errorPreview(QString::fromUtf8(_errorBody));
@@ -288,8 +293,7 @@ void NTRIPHttpDecoder::_statusLineReceived(Result& result)
             _state = State::IcyHeaders;
             result.connected = true;
         } else {
-            _fail(result, tr("Caster returned a source table; select a valid mountpoint"),
-                  NTRIPError::InvalidMountpoint);
+            _failAsSourceTable(result);
         }
     } else if (_line.first(3).compare("ICY", Qt::CaseInsensitive) == 0 && _status.code == 200) {
         _state = State::IcyHeaders;
@@ -419,8 +423,7 @@ bool NTRIPHttpDecoder::_acceptContent(Result& result)
     for (const auto& value : _headers.values(QHttpHeaders::WellKnownHeader::ContentType)) {
         if (_purpose == NTRIPHttpPurpose::Corrections &&
             value.split(';').first().trimmed().compare("gnss/sourcetable", Qt::CaseInsensitive) == 0) {
-            _fail(result, tr("Caster returned a source table; select a valid mountpoint"),
-                  NTRIPError::InvalidMountpoint);
+            _failAsSourceTable(result);
             return false;
         }
     }

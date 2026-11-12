@@ -197,7 +197,7 @@ void NTRIPHttpTransport::sendNMEA(const QByteArray& nmea)
     }
 
     if (!_session->write(nmea)) {
-        _fail({NTRIPError::SocketError, tr("Socket did not accept the complete NTRIP write")});
+        _fail({NTRIPError::SocketError, NTRIPHttpSession::incompleteWriteDetail()});
         return;
     }
     _expectData();
