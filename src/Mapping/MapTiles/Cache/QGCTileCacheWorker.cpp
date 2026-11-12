@@ -1,7 +1,6 @@
 #include "QGCTileCacheWorker.h"
 
 #include <QtCore/QCoreApplication>
-#include <QtCore/QSettings>
 
 #include "QGCCacheTile.h"
 #include "QGCCachedTileSet.h"
@@ -93,9 +92,7 @@ void QGCCacheWorker::run()
     }
 
     if (_database->isValid()) {
-        if (_database->connectDB()) {
-            _database->deleteBingNoTileTiles();
-        }
+        (void) _database->connectDB();
     }
 
     _dbValid = _database->isValid();
@@ -448,12 +445,6 @@ void QGCCacheWorker::_importSets(QGCMapTask* mtask)
     if (!result.success) {
         task->setError(result.errorString);
         return;
-    }
-
-    if (task->replace() && _database->isValid()) {
-        QSettings settings;
-        settings.remove(QLatin1String(QGCTileCacheDatabase::kBingNoTileDoneKey));
-        _database->deleteBingNoTileTiles();
     }
 
     task->setImportCompleted();

@@ -253,18 +253,37 @@ void QGCTileReplyTest::_validatorRejectsCachedAndServerTiles()
     QCOMPARE(nam.requestCount, 3);
 }
 
+void QGCTileReplyTest::_unusableCachedTileIsReplaced_data()
+{
+    QTest::addColumn<QString>("type");
+    QTest::addColumn<int>("tileX");  // a tile of its own for every row
+    QTest::addColumn<QByteArray>("unusable");
+    QTest::addColumn<bool>("rejectedByValidator");
+
+    const QString mapType = UrlFactory::getProviderTypeFromMapId(tileReplyMapId());
+    QTest::newRow("tile that the validator rejects") << mapType << (kTileX + 40) << tileReplyPngBody(Qt::red) << true;
+    // The picture that Bing sends for a place without imagery, which the cache of an older version can hold
+    QTest::newRow("no-tile picture of the provider")
+        << QStringLiteral("Bing Hybrid") << (kTileX + 41) << tileReplyBingPlaceholder() << false;
+}
+
 // A tile in the cache that cannot be used, as a notice of refusal that was cached as a tile is, gives way to the
 // tile that is fetched in its place: it is not fetched again and again
 void QGCTileReplyTest::_unusableCachedTileIsReplaced()
 {
-    const QByteArray unusable = tileReplyPngBody(Qt::red);
+    QFETCH(QString, type);
+    QFETCH(int, tileX);
+    QFETCH(QByteArray, unusable);
+    QFETCH(bool, rejectedByValidator);
+
     const QByteArray usable = tileReplyPngBody();
     QVERIFY(!unusable.isEmpty() && (unusable != usable));
-    const auto rejectUnusable = [unusable](const QByteArray& data) { return data != unusable; };
+    QGCTileReply::Validator rejectUnusable;
+    if (rejectedByValidator) {
+        rejectUnusable = [unusable](const QByteArray& data) { return data != unusable; };
+    }
 
-    const int mapId = tileReplyMapId();
-    const int tileX = kTileX + 40;
-    const QString type = UrlFactory::getProviderTypeFromMapId(mapId);
+    const int mapId = UrlFactory::getMapIdFromProviderType(type);
     QGCMapEngine* const engine = getQGCMapEngine();
     engine->ensureInitialized();
     engine->cacheTile(type, UrlFactory::getTileHash(type, tileX, kTileY, kTileZoom), unusable, QStringLiteral("png"));

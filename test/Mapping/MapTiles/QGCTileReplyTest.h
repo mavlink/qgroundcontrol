@@ -17,6 +17,7 @@ private slots:
     void _secondStartDoesNothing_data();
     void _secondStartDoesNothing();
     void _validatorRejectsCachedAndServerTiles();
+    void _unusableCachedTileIsReplaced_data();
     void _unusableCachedTileIsReplaced();
     void _abortedReplyStaysSilent();
     void _abortedBeforeQueuedStepStaysSilent_data();

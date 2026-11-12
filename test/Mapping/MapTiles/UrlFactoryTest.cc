@@ -494,7 +494,6 @@ void UrlFactoryTest::_testGetMapProviderValid()
     auto provider = UrlFactory::getMapProviderFromMapId(id);
     QVERIFY(provider != nullptr);
     QCOMPARE(provider->getMapName(), kBingRoad);
-    QVERIFY(provider->isBingProvider());
 
     auto byType = UrlFactory::getMapProviderFromProviderType(kBingRoad);
     QVERIFY(byType != nullptr);

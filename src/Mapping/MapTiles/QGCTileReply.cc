@@ -2,7 +2,6 @@
 
 #include <chrono>
 
-#include <QtCore/QFile>
 #include <QtCore/QGlobalStatic>
 #include <QtCore/QHash>
 #include <QtNetwork/QNetworkAccessManager>
@@ -238,7 +237,7 @@ void QGCTileReply::_networkReplyFinished()
         _finish(Error::DataError, QStringLiteral("network fetch returned empty body"));
         return;
     }
-    if (_isNoTilePlaceholder(data)) {
+    if (_provider->isNoTileImage(data)) {
         _finish(Error::NoTileError, QStringLiteral("network fetch returned Bing no-tile placeholder"));
         return;
     }
@@ -322,17 +321,6 @@ void QGCTileReply::_finish(Error error, const QString& errorString)
 
 bool QGCTileReply::_isUsable(const QByteArray& data) const
 {
-    return !data.isEmpty() && !_isNoTilePlaceholder(data) && !_provider->isRefusalImage(data) &&
+    return !data.isEmpty() && !_provider->isNoTileImage(data) && !_provider->isRefusalImage(data) &&
            (!_validator || _validator(data));
-}
-
-bool QGCTileReply::_isNoTilePlaceholder(const QByteArray& data) const
-{
-    // Bing answers with a placeholder image, not with an HTTP error, where it has no imagery
-    static const QByteArray bingNoTileImage = [] {
-        QFile file(QStringLiteral(":/res/BingNoTileBytes.dat"));
-        return file.open(QFile::ReadOnly) ? file.readAll() : QByteArray();
-    }();
-
-    return _provider->isBingProvider() && !bingNoTileImage.isEmpty() && (data == bingNoTileImage);
 }

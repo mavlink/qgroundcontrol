@@ -40,7 +40,6 @@ private slots:
     void _testSaveTileLinksToDifferentSet();
     void _testExportImportNoLingeringConnections();
     void _testCreateTileSet();
-    void _testDeleteBingNoTileTiles();
     void _testDeleteDefaultSetInvalidatesCache();
     void _testPruneCacheMultipleBatches();
     void _testSchemaVersionSetOnFreshDB();

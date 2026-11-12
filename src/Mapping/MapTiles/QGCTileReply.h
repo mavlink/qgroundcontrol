@@ -103,7 +103,6 @@ private:
     void _endFetch();
     void _finish(Error error, const QString& errorString = QString());
     bool _isUsable(const QByteArray& data) const;
-    bool _isNoTilePlaceholder(const QByteArray& data) const;
 
     QPointer<QNetworkAccessManager> _networkManager;
     const int _mapId;

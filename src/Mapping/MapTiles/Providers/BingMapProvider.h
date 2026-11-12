@@ -15,7 +15,8 @@ protected:
     {}
 
 public:
-    bool isBingProvider() const final { return true; }
+    /// Bing answers with this picture, not with an HTTP error, where it has no imagery
+    bool isNoTileImage(QByteArrayView image) const final;
 
     QString attribution() const final { return QStringLiteral("© Microsoft"); }
 

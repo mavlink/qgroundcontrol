@@ -8,7 +8,6 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
-#include <QtCore/QSettings>
 #include <QtCore/QTemporaryDir>
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlError>
@@ -969,36 +968,6 @@ void QGCTileCacheDatabaseTest::_testCreateTileSet()
         }
     }
     QVERIFY(found);
-}
-
-void QGCTileCacheDatabaseTest::_testDeleteBingNoTileTiles()
-{
-    QTemporaryDir tempDir;
-    auto db = _createInitializedDB(tempDir);
-
-    QFile file(QStringLiteral(":/res/BingNoTileBytes.dat"));
-    if (!file.open(QFile::ReadOnly)) {
-        QSKIP("BingNoTileBytes.dat resource not available");
-    }
-    const QByteArray noTileBytes = file.readAll();
-    file.close();
-    QVERIFY(!noTileBytes.isEmpty());
-
-    QVERIFY(db->saveTile(QStringLiteral("bing_notile_1"), QStringLiteral("png"), noTileBytes, kFixedProviderType,
-                         QGCTileCacheDatabase::kInvalidTileSet));
-    QVERIFY(db->saveTile(QStringLiteral("normal_tile"), QStringLiteral("png"), QByteArray(50, 'N'), kFixedProviderType,
-                         QGCTileCacheDatabase::kInvalidTileSet));
-
-    QVERIFY(db->findTile(QStringLiteral("bing_notile_1")).has_value());
-    QVERIFY(db->findTile(QStringLiteral("normal_tile")).has_value());
-
-    QSettings settings;
-    settings.remove(QStringLiteral("_deleteBingNoTileTilesDone"));
-
-    db->deleteBingNoTileTiles();
-
-    QVERIFY(!db->findTile(QStringLiteral("bing_notile_1")).has_value());
-    QVERIFY(db->findTile(QStringLiteral("normal_tile")).has_value());
 }
 
 void QGCTileCacheDatabaseTest::_testDeleteDefaultSetInvalidatesCache()

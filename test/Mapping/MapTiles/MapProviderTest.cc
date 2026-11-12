@@ -231,7 +231,6 @@ void MapProviderTest::_testGettersReturnConstructorValues()
     QCOMPARE(p.getAverageSize(), static_cast<quint32>(7777));
     QCOMPARE(p.getMapStyle(), MapProvider::CustomMap);
     QVERIFY(!p.isElevationProvider());
-    QVERIFY(!p.isBingProvider());
 }
 
 // --- Attribution ---

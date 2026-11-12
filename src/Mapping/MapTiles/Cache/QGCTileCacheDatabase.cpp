@@ -7,7 +7,6 @@
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QScopeGuard>
-#include <QtCore/QSettings>
 #include <QtCore/QUuid>
 #include <QtSql/QSqlDatabase>
 #include <QtSql/QSqlError>
@@ -994,70 +993,6 @@ qint64 QGCTileCacheDatabase::releaseFreePages(int maxPages)
         checkpointWriteAheadLog(query);
     }
     return pagesLeft;
-}
-
-void QGCTileCacheDatabase::deleteBingNoTileTiles()
-{
-    if (!_ensureConnected()) {
-        return;
-    }
-
-    QSettings settings;
-    if (settings.value(QLatin1String(kBingNoTileDoneKey), false).toBool()) {
-        return;
-    }
-
-    QFile file(QStringLiteral(":/res/BingNoTileBytes.dat"));
-    if (!file.open(QFile::ReadOnly)) {
-        qCWarning(QGCTileCacheDatabaseLog) << "Failed to Open File" << file.fileName() << ":" << file.errorString();
-        return;
-    }
-
-    const QByteArray noTileBytes = file.readAll();
-    file.close();
-
-    QSqlQuery query(_database());
-    query.setForwardOnly(true);
-    if (!query.prepare("SELECT tileID, hash FROM Tiles WHERE LENGTH(tile) = ? AND tile = ?")) {
-        qCWarning(QGCTileCacheDatabaseLog) << "Failed to prepare Bing no-tile query";
-        return;
-    }
-    query.addBindValue(noTileBytes.length());
-    query.addBindValue(noTileBytes);
-    if (!query.exec()) {
-        qCWarning(QGCTileCacheDatabaseLog) << "query failed";
-        return;
-    }
-
-    QList<quint64> idsToDelete;
-    while (query.next()) {
-        idsToDelete.append(query.value(0).toULongLong());
-        qCDebug(QGCTileCacheDatabaseLog) << "HASH:" << query.value(1).toString();
-    }
-
-    if (idsToDelete.isEmpty()) {
-        settings.setValue(QLatin1String(kBingNoTileDoneKey), true);
-        return;
-    }
-
-    QGCSqlHelper::Transaction txn(_database());
-    if (!txn.ok()) {
-        return;
-    }
-
-    bool allSucceeded = true;
-    for (qsizetype offset = 0; offset < idsToDelete.size(); offset += kPruneBatchSize) {
-        const qsizetype batchEnd = qMin(offset + static_cast<qsizetype>(kPruneBatchSize), idsToDelete.size());
-        const QList<quint64> batch = idsToDelete.mid(offset, batchEnd - offset);
-        if (!_deleteTilesByIDs(batch)) {
-            allSucceeded = false;
-            break;
-        }
-    }
-
-    if (allSucceeded && txn.commit()) {
-        settings.setValue(QLatin1String(kBingNoTileDoneKey), true);
-    }
 }
 
 TotalsResult QGCTileCacheDatabase::computeTotals()

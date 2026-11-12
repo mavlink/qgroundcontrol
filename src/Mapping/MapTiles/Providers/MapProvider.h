@@ -68,6 +68,14 @@ public:
         return false;
     }
 
+    /// True for an image that the provider's servers send, with the HTTP status of a tile, where the provider has no
+    /// tile. It is not a tile: one that is fetched is not cached, and one that is in the cache is fetched again.
+    virtual bool isNoTileImage(QByteArrayView image) const
+    {
+        Q_UNUSED(image);
+        return false;
+    }
+
     /// The credit that the provider's terms ask for where its tiles are shown. Empty for a source the user sets.
     virtual QString attribution() const { return QString(); }
 
@@ -86,8 +94,6 @@ public:
     virtual double tileY2lat(int y, int z) const;
 
     virtual bool isElevationProvider() const { return false; }
-
-    virtual bool isBingProvider() const { return false; }
 
     /// False hides the provider from user-facing provider selection lists
     virtual bool isUserSelectable() const { return true; }
