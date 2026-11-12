@@ -203,7 +203,7 @@ public:
 private:
     QString _getURL(int x, int y, int zoom) const final;
 
-    const QString _mapUrl = QStringLiteral("http://map.eniro.com/geowebcache/service/tms1.0.0/map/%1/%2/%3.%4");
+    const QString _mapUrl = QStringLiteral("https://map.eniro.com/geowebcache/service/tms1.0.0/map/%1/%2/%3.%4");
 };
 
 class MapQuestMapProvider : public MapProvider

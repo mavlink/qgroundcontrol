@@ -26,6 +26,8 @@ private slots:
     void _testGetTileURLByType();
     void _testGetTileURLByMapId();
     void _testGetTileURLInvalidInputs();
+    void _testTileUrlScheme_data();
+    void _testTileUrlScheme();
     void _testAverageSizeForKnownProviders();
     void _testAverageSizeForInvalidType();
     void _testIsElevationTrue();

@@ -9,6 +9,7 @@
 
 #include "AppSettings.h"
 #include "ElevationMapProvider.h"
+#include "Fixtures/RAIIFixtures.h"
 #include "MapProvider.h"
 #include "QGCMapUrlEngine.h"
 #include "QGCTileSet.h"
@@ -245,6 +246,49 @@ void UrlFactoryTest::_testGetTileURLInvalidInputs()
 {
     QVERIFY(UrlFactory::getTileURL(QString(), 0, 0, 1).isEmpty());
     QVERIFY(UrlFactory::getTileURL(-1, 0, 0, 1).isEmpty());
+}
+
+void UrlFactoryTest::_testTileUrlScheme_data()
+{
+    QTest::addColumn<QString>("providerType");
+    QTest::addColumn<QString>("scheme");
+
+    // A request carries the tile a user looks at and often a token (Esri: a header, others: the URL), so it goes
+    // over HTTPS. The exceptions, each with what keeps it on HTTP:
+    const QStringList plainHttp = {
+        // otile[0-3].mqcdn.com are in no DNS: the service is gone, whatever the scheme
+        QStringLiteral("MapQuest Map"),
+        QStringLiteral("MapQuest Sat"),
+        // api.vworld.kr has a certificate that verifies, but a request without a valid key got an HTTP 502 or no
+        // answer over either scheme: that it serves tiles over HTTPS is not verified
+        QStringLiteral("VWorld Street Map"),
+        QStringLiteral("VWorld Satellite Map"),
+    };
+
+    for (const QString& type : UrlFactory::getProviderTypes()) {
+        // The URL of this one is the user's
+        if (type == QStringLiteral("CustomURL Custom")) {
+            continue;
+        }
+        QTest::newRow(qPrintable(type)) << type
+                                        << (plainHttp.contains(type) ? QStringLiteral("http")
+                                                                     : QStringLiteral("https"));
+    }
+}
+
+void UrlFactoryTest::_testTileUrlScheme()
+{
+    QFETCH(QString, providerType);
+    QFETCH(QString, scheme);
+
+    // Mapbox and TianDiTu have no URL without a token
+    AppSettings* const appSettings = SettingsManager::instance()->appSettings();
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(appSettings->mapboxToken(), QStringLiteral("token"));
+    saved.setFactValue(appSettings->tiandituToken(), QStringLiteral("token"));
+
+    // A tile in Korea: VWorld has a URL for no other
+    QCOMPARE(UrlFactory::getTileURL(providerType, 873, 396, 10).scheme(), scheme);
 }
 
 // --- averageSizeForType ---
