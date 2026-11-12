@@ -757,11 +757,14 @@ void FlyViewGeoUITest::_testLoiterRadiusEdit()
                                              ->forwardFlightGoToLocationLoiterRad()
                                              ->rawValue()
                                              .toDouble();
-            // The map one-shot centers on the first vehicle position and follows the vehicle back into view:
-            // wait out the one-shot and edit next to the vehicle so the camera stays put under the drags
+            // The map one-shot centers on the first vehicle position: wait it out. The map also moves a vehicle
+            // that is out of view or under a Fly View widget to the middle, half a second at most after it gets
+            // there, and with the edit in the middle the vehicle is under the instrument panel: turned off, so
+            // the camera stays put under the drags
             auto* const positionTracker = geoMap->findChild<MapPositionTracker*>();
             QVERIFY2(positionTracker, "MapPositionTracker not found");
             QTRY_VERIFY_WITH_TIMEOUT(positionTracker->firstVehiclePositionReceived(), kItemAppearTimeoutMs);
+            QVERIFY(geoMap->setProperty("followOffscreenVehicle", false));
             const QGeoCoordinate loiterCenter = vehicle->coordinate().atDistanceAndAzimuth(100, 0);
             cam->lookAt(loiterCenter, 0, 0, 600);
             QVERIFY(QMetaObject::invokeMethod(gotoItem, "show", Q_ARG(QVariant, QVariant::fromValue(loiterCenter))));
