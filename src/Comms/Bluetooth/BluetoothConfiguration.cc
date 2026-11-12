@@ -512,6 +512,12 @@ void BluetoothConfiguration::setDeviceByAddress(const QString &address)
     }
 }
 
+void BluetoothConfiguration::setDeviceInfo(const QBluetoothDeviceInfo& info)
+{
+    stopScan();
+    _applySelectedDevice(info);
+}
+
 void BluetoothConfiguration::_applySelectedDevice(const QBluetoothDeviceInfo &info)
 {
     _device = info;

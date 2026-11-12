@@ -23,4 +23,5 @@ private slots:
     void _testBleDiscoveryWithUnknownCoreConfigIsListed();
     void _testAdapterDiscoverablePropertyMeta();
     void _testDestroyDuringAsyncRefresh();
+    void _testSetDeviceInfoSelectsUnscannedDevice();
 };

@@ -53,6 +53,8 @@ public:
     Q_INVOKABLE void stopScan();
     Q_INVOKABLE void setDevice(const QString &name);
     Q_INVOKABLE void setDeviceByAddress(const QString &address);
+    /// Selects @a info as it is given, for a device that is known by its address without a scan having found it.
+    void setDeviceInfo(const QBluetoothDeviceInfo& info);
 
     // Pairing support (Classic Bluetooth only)
     Q_INVOKABLE void requestPairing(const QString &address);

@@ -320,4 +320,20 @@ void BluetoothConfigurationTest::_testDestroyDuringAsyncRefresh()
     QVERIFY2(true, "destruction during async refresh must not crash");
 }
 
+void BluetoothConfigurationTest::_testSetDeviceInfoSelectsUnscannedDevice()
+{
+    BluetoothConfiguration config("TestBT_setDeviceInfo");
+    QSignalSpy deviceSpy(&config, &BluetoothConfiguration::deviceChanged);
+
+    // A device known by its address is selected without a scan having listed it.
+    const QBluetoothAddress address(QStringLiteral("12:34:56:78:9A:BC"));
+    config.setDeviceInfo(QBluetoothDeviceInfo(address, QStringLiteral("Receiver"), 0));
+
+    QCOMPARE(deviceSpy.count(), 1);
+    QCOMPARE(config.device().address(), address);
+    QCOMPARE(config.deviceName(), QStringLiteral("Receiver"));
+    QVERIFY(config.devicesModel().isEmpty());
+    QVERIFY(!config.scanning());
+}
+
 UT_REGISTER_TEST(BluetoothConfigurationTest, TestLabel::Unit, TestLabel::Comms)
