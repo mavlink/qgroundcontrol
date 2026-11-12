@@ -35,7 +35,6 @@ constexpr const char* kUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv
 #elif defined Q_OS_ANDROID
 constexpr const char* kUserAgent = "Mozilla/5.0 (Android 13; Tablet; rv:68.0) Gecko/68.0 Firefox/112.0";
 #elif defined Q_OS_LINUX
-// TODO: Detect Wayland vs X11
 constexpr const char* kUserAgent = "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/112.0";
 #else
 constexpr const char* kUserAgent = "Qt Location based application";
@@ -45,7 +44,6 @@ QNetworkRequest tileRequest(const MapProvider& provider, int x, int y, int zoom)
 {
     QNetworkRequest request;
     request.setUrl(provider.getTileURL(x, y, zoom));
-    request.setPriority(QNetworkRequest::NormalPriority);
     request.setTransferTimeout(10000);
 
     // Headers
@@ -61,19 +59,13 @@ QNetworkRequest tileRequest(const MapProvider& provider, int x, int y, int zoom)
     if (!token.isEmpty()) {
         request.setRawHeader(QByteArrayLiteral("User-Token"), token);
     }
-    request.setRawHeader(QByteArrayLiteral("Connection"), QByteArrayLiteral("keep-alive"));
     request.setAttribute(QNetworkRequest::ConnectionCacheExpiryTimeoutSecondsAttribute, kConnectionCacheExpirySecs);
     request.setTcpKeepAliveIdleTimeBeforeProbes(kTcpKeepAliveIdle);
     request.setTcpKeepAliveIntervalBetweenProbes(kTcpKeepAliveInterval);
     request.setTcpKeepAliveProbeCount(kTcpKeepAliveProbeCount);
 
-    // Attributes
-    request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
+    // Qt reads this only for a file or resource URL, which a custom URL can be: the file is then opened off this thread
     request.setAttribute(QNetworkRequest::BackgroundRequestAttribute, true);
-    request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, true);
-    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
-    request.setAttribute(QNetworkRequest::Http2AllowedAttribute, true);
-    request.setAttribute(QNetworkRequest::DoNotBufferUploadDataAttribute, false);
 
     return request;
 }
