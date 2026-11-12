@@ -207,6 +207,8 @@ cmake -S test/GPS/Standalone -B build-gps -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCM
 cmake --build build-gps && ctest --test-dir build-gps
 ```
 
+[test/GPS/README.md](../../test/GPS/README.md) says which kind of test a change needs, and describes the test
+doubles and the tests of a receiver family.
 [test/README.md](../../test/README.md#gps-protocol-golden-transcripts) describes the goldens, the standalone build
 and the fuzzers. The [fixtures README](../../test/GPS/Core/Protocols/fixtures/README.md) describes receiver
 recordings, their replay and the hardware runner.
