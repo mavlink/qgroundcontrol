@@ -21,6 +21,9 @@ struct QGCCacheTile;
 /// is asked once. A request for an offline tile set takes no part in this.
 ///
 /// Independent of QtLocation, so every map engine and the terrain queries fetch tiles the same way.
+///
+/// For the main thread only: a request reads the settings of its provider, and the requests share their fetches
+/// without a lock.
 class QGCTileReply : public QObject
 {
     Q_OBJECT

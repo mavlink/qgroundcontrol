@@ -168,10 +168,7 @@ void QGCCachedTileSet::_prepareDownload()
         QGCTileReply* const reply = new QGCTileReply(_networkManager, tile->type, tile->x, tile->y, tile->z, this);
         reply->setTileSet(_id);
         (void) connect(reply, &QGCTileReply::finished, this, [this, reply, hash] { _tileReplyFinished(reply, hash); });
-        {
-            QMutexLocker lock(&_repliesMutex);
-            (void) _replies.insert(hash, reply);
-        }
+        (void) _replies.insert(hash, reply);
         reply->start();
 
         if (!_batchRequested && !_noMoreTiles && (_tilesToDownload.count() < (kConcurrentDownloads * 10))) {
@@ -183,10 +180,7 @@ void QGCCachedTileSet::_prepareDownload()
 void QGCCachedTileSet::_tileReplyFinished(QGCTileReply* reply, const QString& hash)
 {
     reply->deleteLater();
-    {
-        QMutexLocker lock(&_repliesMutex);
-        (void) _replies.remove(hash);
-    }
+    (void) _replies.remove(hash);
 
     if (reply->error() == QGCTileReply::Error::NoTileError) {
         // Nothing to download: the set is complete without a tile its provider does not have

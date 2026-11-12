@@ -2,7 +2,6 @@
 
 #include <QtCore/QDateTime>
 #include <QtCore/QHash>
-#include <QtCore/QMutex>
 #include <QtCore/QObject>
 #include <QtCore/QQueue>
 #include <QtCore/QString>
@@ -278,7 +277,6 @@ private:
     QDateTime _creationDate;
 
     QHash<QString, QGCTileReply*> _replies;
-    QMutex _repliesMutex;
     QQueue<QGCTile*> _tilesToDownload;
     QGCMapEngineManager* _manager = nullptr;
     QNetworkAccessManager* _networkManager = nullptr;
