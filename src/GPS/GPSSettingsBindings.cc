@@ -16,6 +16,7 @@
 #include "PositionReceiverSettings.h"
 #include "QGCLoggingCategory.h"
 #include "RTKSettings.h"
+#include "SettingsGroup.h"
 
 QGC_LOGGING_CATEGORY(GPSSettingsBindingsLog, "GPS.GPSSettingsBindings")
 
@@ -252,12 +253,20 @@ bool redacted(const Fact* fact)
     return names.contains(fact->name());
 }
 
+/// The setting with its stored group, such as "RTK/connectionType": the groups of the two receivers have settings
+/// of the same names.
+QString settingName(const Fact* fact)
+{
+    const auto* const group = qobject_cast<const SettingsGroup*>(fact->parent());
+    return group ? QStringLiteral("%1/%2").arg(group->settingsGroup(), fact->name()) : fact->name();
+}
+
 void logSetting(const Fact* fact)
 {
     const QString value = fact->rawValue().toString();
     const QString shown =
         !redacted(fact) ? value : (value.isEmpty() ? QStringLiteral("<empty>") : QStringLiteral("<set>"));
-    qCDebug(GPSSettingsBindingsLog).noquote() << fact->name() << "=" << shown;
+    qCDebug(GPSSettingsBindingsLog).noquote() << settingName(fact) << "=" << shown;
 }
 
 /// @a settings is a settings group, or the groups a configuration is built from.

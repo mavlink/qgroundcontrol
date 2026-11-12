@@ -386,34 +386,41 @@ void GPSSettingsBindingsTest::_ntripActionsFollowConnectionSetting()
 
 void GPSSettingsBindingsTest::_settingsLogRedactsSecrets_data()
 {
+    QTest::addColumn<QString>("group");
     QTest::addColumn<Fact*>("fact");
     QTest::addColumn<QVariant>("value");
     QTest::addColumn<QVariant>("changed");
     QTest::addColumn<bool>("redacted");
     NTRIPSettings* const ntrip = SettingsManager::instance()->ntripSettings();
     RTKSettings* const rtk = SettingsManager::instance()->rtkSettings();
-    QTest::newRow("ntrip-password") << ntrip->ntripPassword() << QVariant(QStringLiteral("private-password"))
+    const QString ntripGroup = QStringLiteral("NTRIP");
+    const QString rtkGroup = QStringLiteral("RTK");
+    QTest::newRow("ntrip-password") << ntripGroup << ntrip->ntripPassword()
+                                    << QVariant(QStringLiteral("private-password"))
                                     << QVariant(QStringLiteral("changed-password")) << true;
     // The saved casters are stored with their passwords.
     const auto casters = [](const char* password) {
         return QVariant(QStringLiteral(R"([{"name":"Backup","host":"backup.example.com","port":2101,"password":"%1"}])")
                             .arg(QLatin1String(password)));
     };
-    QTest::newRow("ntrip-saved-casters") << ntrip->ntripSavedCasters() << casters("private-password")
+    QTest::newRow("ntrip-saved-casters") << ntripGroup << ntrip->ntripSavedCasters() << casters("private-password")
                                          << casters("changed-password") << true;
-    QTest::newRow("ntrip-mountpoint") << ntrip->ntripMountpoint() << QVariant(QStringLiteral("MOUNT"))
+    QTest::newRow("ntrip-mountpoint") << ntripGroup << ntrip->ntripMountpoint() << QVariant(QStringLiteral("MOUNT"))
                                       << QVariant(QStringLiteral("OTHER")) << false;
-    QTest::newRow("base-latitude") << rtk->fixedBasePositionLatitude() << QVariant(12.3456789) << QVariant(12.5678)
-                                   << true;
-    QTest::newRow("base-longitude") << rtk->fixedBasePositionLongitude() << QVariant(98.7654321) << QVariant(98.1234)
-                                    << true;
-    QTest::newRow("base-altitude") << rtk->fixedBasePositionAltitude() << QVariant(543.21) << QVariant(432.1) << true;
-    QTest::newRow("base-mode") << rtk->baseMode() << QVariant(static_cast<int>(BaseModeDefinition::Mode::BaseFixed))
+    QTest::newRow("base-latitude") << rtkGroup << rtk->fixedBasePositionLatitude() << QVariant(12.3456789)
+                                   << QVariant(12.5678) << true;
+    QTest::newRow("base-longitude") << rtkGroup << rtk->fixedBasePositionLongitude() << QVariant(98.7654321)
+                                    << QVariant(98.1234) << true;
+    QTest::newRow("base-altitude") << rtkGroup << rtk->fixedBasePositionAltitude() << QVariant(543.21)
+                                   << QVariant(432.1) << true;
+    QTest::newRow("base-mode") << rtkGroup << rtk->baseMode()
+                               << QVariant(static_cast<int>(BaseModeDefinition::Mode::BaseFixed))
                                << QVariant(static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn)) << false;
 }
 
 void GPSSettingsBindingsTest::_settingsLogRedactsSecrets()
 {
+    QFETCH(QString, group);
     QFETCH(Fact*, fact);
     QFETCH(QVariant, value);
     QFETCH(QVariant, changed);
@@ -434,7 +441,9 @@ void GPSSettingsBindingsTest::_settingsLogRedactsSecrets()
 
     // The bindings log each setting when bound and when it changes, a redacted one only as set or empty.
     const QStringList logged = GPSTest::debugMessages(category);
-    const auto line = [&fact](const QString& shown) { return QStringLiteral("%1 = %2").arg(fact->name(), shown); };
+    const auto line = [&](const QString& shown) {
+        return QStringLiteral("%1/%2 = %3").arg(group, fact->name(), shown);
+    };
     if (redacted) {
         QCOMPARE(logged.count(line(QStringLiteral("<set>"))), 2);
         const QString all = logged.join(QLatin1Char('\n'));
@@ -443,6 +452,34 @@ void GPSSettingsBindingsTest::_settingsLogRedactsSecrets()
         QCOMPARE(logged.count(line(boundValue)), 1);
         QCOMPARE(logged.count(line(changedValue)), 1);
     }
+}
+
+void GPSSettingsBindingsTest::_settingsLogNamesGroup()
+{
+    // Both receivers have a connection type, and the log tells whose changed.
+    TestFixtures::SettingsFixture saved;
+    Fact* const receiverConnection = SettingsManager::instance()->rtkSettings()->connectionType();
+    Fact* const positionConnection = SettingsManager::instance()->positionReceiverSettings()->connectionType();
+    saved.setFactValue(receiverConnection, RTKSettings::Serial);
+    saved.setFactValue(positionConnection, RTKSettings::Serial);
+    const QString category = QStringLiteral("GPS.GPSSettingsBindings");
+    const TestFixtures::LoggingCategoryFixture logging(category);
+    ignoreLogMessage("GPS.GPSSettingsBindings", QtDebugMsg, QRegularExpression(QStringLiteral(".*")));
+    GPSReceiver receiver;
+    GPSSettingsBindings::bindReceiver(SettingsManager::instance()->rtkSettings(), &receiver);
+    GPSReceiver positionReceiver;
+    GPSSettingsBindings::bindPositionReceiver(SettingsManager::instance()->positionReceiverSettings(),
+                                              &positionReceiver);
+    positionConnection->setRawValue(RTKSettings::Tcp);
+
+    const QStringList logged = GPSTest::debugMessages(category);
+    const auto line = [](const char* group, RTKSettings::ConnectionType connection) {
+        return QStringLiteral("%1/connectionType = %2").arg(QLatin1String(group)).arg(static_cast<int>(connection));
+    };
+    QCOMPARE(logged.count(line("RTK", RTKSettings::Serial)), 1);
+    QCOMPARE(logged.count(line("RTK", RTKSettings::Tcp)), 0);
+    QCOMPARE(logged.count(line("PositionReceiver", RTKSettings::Serial)), 1);
+    QCOMPARE(logged.count(line("PositionReceiver", RTKSettings::Tcp)), 1);
 }
 
 void GPSSettingsBindingsTest::_settingsBindingsCoverEveryFact_data()

@@ -20,6 +20,7 @@ private slots:
     void _ntripActionsFollowConnectionSetting();
     void _settingsLogRedactsSecrets_data();
     void _settingsLogRedactsSecrets();
+    void _settingsLogNamesGroup();
     void _settingsBindingsCoverEveryFact_data();
     void _settingsBindingsCoverEveryFact();
 };
