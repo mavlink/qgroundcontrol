@@ -309,14 +309,13 @@ void QGCArchiveModelTest::_testNonExistentArchive()
 {
     QGCArchiveModel model;
     QSignalSpy loadingSpy(&model, &QGCArchiveModel::loadingComplete);
-    expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
+    // The archive is read once: the listing tells why it failed
     expectLogMessage("Utilities.QGCCompression", QtWarningMsg, QRegularExpression("File does not exist"));
     model.setArchivePath("/nonexistent/path/archive.zip");
     verifyExpectedLogMessage();
-    verifyExpectedLogMessage();
     QCOMPARE(loadingSpy.count(), 1);
     QCOMPARE(loadingSpy.first().first().toBool(), false);
-    QVERIFY(!model.errorString().isEmpty());
+    QCOMPARE(model.errorString(), QStringLiteral("File does not exist: /nonexistent/path/archive.zip"));
     QCOMPARE(model.count(), 0);
 }
 

@@ -101,7 +101,7 @@ protected:
     /// @return true if data was read, false on EOF or error
     bool fillBuffer();
 
-    /// Capture format info from the archive after first header read
+    /// Take the format info the reader has recorded once the first header is read
     void captureFormatInfo();
 
     /// Record why open() or a read failed, for errorString() and QIODevice::errorString()

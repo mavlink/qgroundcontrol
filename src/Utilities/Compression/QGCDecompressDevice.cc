@@ -49,6 +49,7 @@ bool QGCDecompressDevice::prepareForReading()
     }
 
     _headerRead = true;
+    _reader->captureFormat();
     captureFormatInfo();
 
     qCDebug(QGCDecompressDeviceLog) << "Opened compressed stream, format:" << _formatName

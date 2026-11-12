@@ -57,7 +57,7 @@ private slots:
     void _testProgressCallbackExtract_data();
     void _testProgressCallbackExtract();
 
-    // Format reported for the last operation
+    // Format reported by an operation
     void _testDetectedFormat_data();
     void _testDetectedFormat();
     void _testDetectedFormatAfterFailure_data();
@@ -86,8 +86,8 @@ private slots:
     void _testInputWithoutPermission();
     void _testBlockedOutput_data();
     void _testBlockedOutput();
-    void _testOperationStartsWithoutError_data();
-    void _testOperationStartsWithoutError();
+    void _testOutcomeBeforeInput_data();
+    void _testOutcomeBeforeInput();
 
     // QIODevice-based operations
     void _testDecompressFromDevice();
@@ -114,7 +114,6 @@ private slots:
     void _testSparseFileExtraction();
 
     // Thread safety
-    void _testThreadLocalState();
     void _testConcurrentExtractions();
 
     // Boundary conditions
@@ -177,7 +176,7 @@ private:
         qint64 maxBytes = 0;
     };
 
-    /// What an entry point of QGCCompression returns besides whether it succeeded
+    /// What an entry point of QGCCompression gives back besides its outcome
     struct Results
     {
         QByteArray data = {};                              ///< Of the entry points that read to memory
@@ -194,9 +193,10 @@ private:
 
     /// Calls the entry point of QGCCompression that a row of test data names: a function, or
     /// "decompressFromDevice-file" and "decompressFromDevice-memory" for the two of that name
-    /// @param results If not null, receives what the entry point returned
-    /// @return Whether it succeeded
-    static bool _call(const QString& api, const Inputs& inputs, Results* results = nullptr);
+    /// @param results If not null, receives what the entry point gave back. Where the entry point is handed
+    ///        something to fill, it is handed it with content, so that a failure has to empty it
+    /// @return What the entry point returned
+    static QGCCompression::Outcome _call(const QString& api, const Inputs& inputs, Results* results = nullptr);
 
     /// Whether @a api decompresses a single stream, and not an archive
     static bool _isStreamEntryPoint(const QString& api) { return api.startsWith(QLatin1String("decompress")); }

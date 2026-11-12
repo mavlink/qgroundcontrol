@@ -244,16 +244,13 @@ void QGCArchiveModel::_loadArchive()
     qCDebug(QGCArchiveModelLog) << "Loading archive:" << _archivePath;
 
     // Load entries using QGCCompression (already sorted with QCollator)
-    QList<QGCCompression::ArchiveEntry> entries = QGCCompression::listArchiveDetailed(_archivePath);
-
-    if (entries.isEmpty() && !_archivePath.isEmpty()) {
-        // Check if it was an error or just empty archive
-        if (!QGCCompression::validateArchive(_archivePath)) {
-            _setErrorString(QGCCompression::lastErrorString());
-            _setLoading(false);
-            emit loadingComplete(false);
-            return;
-        }
+    QList<QGCCompression::ArchiveEntry> entries;
+    const QGCCompression::Outcome listed = QGCCompression::listArchiveDetailed(_archivePath, entries);
+    if (!listed) {
+        _setErrorString(listed.message);
+        _setLoading(false);
+        emit loadingComplete(false);
+        return;
     }
 
     // Calculate statistics

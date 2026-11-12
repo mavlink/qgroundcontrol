@@ -11,14 +11,13 @@ QGC_LOGGING_CATEGORY(QGCCompressionJobLog, "Utilities.QGCCompressionJob")
 // Construction / Destruction
 // ============================================================================
 
-QGCCompressionJob::QGCCompressionJob(QObject *parent)
+QGCCompressionJob::QGCCompressionJob(QObject* parent)
     : QObject(parent)
-    , _watcher(new QFutureWatcher<bool>(this))
+    , _watcher(new QFutureWatcher<QGCCompression::Outcome>(this))
 {
-    connect(_watcher, &QFutureWatcher<bool>::progressValueChanged,
-            this, &QGCCompressionJob::_onProgressValueChanged);
-    connect(_watcher, &QFutureWatcher<bool>::finished,
-            this, &QGCCompressionJob::_onFutureFinished);
+    connect(_watcher, &QFutureWatcher<QGCCompression::Outcome>::progressValueChanged, this,
+            &QGCCompressionJob::_onProgressValueChanged);
+    connect(_watcher, &QFutureWatcher<QGCCompression::Outcome>::finished, this, &QGCCompressionJob::_onFutureFinished);
 }
 
 QGCCompressionJob::~QGCCompressionJob()
@@ -33,9 +32,9 @@ QGCCompressionJob::~QGCCompressionJob()
 // Static Async Methods
 // ============================================================================
 
-QFuture<bool> QGCCompressionJob::extractArchiveAsync(const QString &archivePath,
-                                                      const QString &outputDirectoryPath,
-                                                      qint64 maxBytes)
+QFuture<QGCCompression::Outcome> QGCCompressionJob::extractArchiveAsync(const QString& archivePath,
+                                                                        const QString& outputDirectoryPath,
+                                                                        qint64 maxBytes)
 {
     const auto cancelRequested = std::make_shared<std::atomic_bool>(false);
     auto work = [archivePath, outputDirectoryPath, maxBytes](QGCCompression::ProgressCallback progress) {
@@ -47,9 +46,8 @@ QFuture<bool> QGCCompressionJob::extractArchiveAsync(const QString &archivePath,
     return _runWithProgress(work, cancelRequested);
 }
 
-QFuture<bool> QGCCompressionJob::decompressFileAsync(const QString &inputPath,
-                                                      const QString &outputPath,
-                                                      qint64 maxBytes)
+QFuture<QGCCompression::Outcome> QGCCompressionJob::decompressFileAsync(const QString& inputPath,
+                                                                        const QString& outputPath, qint64 maxBytes)
 {
     const auto cancelRequested = std::make_shared<std::atomic_bool>(false);
     auto work = [inputPath, outputPath, maxBytes](QGCCompression::ProgressCallback progress) {
@@ -160,10 +158,9 @@ void QGCCompressionJob::_onFutureFinished()
         qCDebug(QGCCompressionJobLog) << "Operation cancelled:" << static_cast<int>(_operation);
     } else {
         try {
-            success = _future.result();
-            if (!success && _workError) {
-                error = *_workError;
-            }
+            const QGCCompression::Outcome outcome = _future.result();
+            success = static_cast<bool>(outcome);
+            error = outcome.message;
         } catch (const std::exception &e) {
             error = QString::fromUtf8(e.what());
         }
@@ -183,7 +180,6 @@ void QGCCompressionJob::_onFutureFinished()
     _setRunning(false);
     _operation = Operation::None;
     _cancelRequested.reset();
-    _workError.reset();
 
     emit finished(success);
 }
@@ -220,19 +216,20 @@ void QGCCompressionJob::_startOperation(Operation op, const QString &source,
     _setErrorString(QString());
     _setRunning(true);
     _cancelRequested = std::make_shared<std::atomic_bool>(false);
-    _workError = std::make_shared<QString>();
 
     // Create and start the future
-    _future = _runWithProgress(std::move(work), _cancelRequested, _workError);
+    _future = _runWithProgress(std::move(work), _cancelRequested);
     _watcher->setFuture(_future);
 }
 
-QFuture<bool> QGCCompressionJob::_runWithProgress(WorkFunction work,
-                                                  const std::shared_ptr<std::atomic_bool>& cancelRequested,
-                                                  const std::shared_ptr<QString>& errorString)
+QFuture<QGCCompression::Outcome> QGCCompressionJob::_runWithProgress(
+    WorkFunction work, const std::shared_ptr<std::atomic_bool>& cancelRequested)
 {
+    using QGCCompression::Error;
+    using QGCCompression::Outcome;
+
     // QtConcurrent passes in the promise of the returned future, so progress and cancellation reach the caller
-    return QtConcurrent::run([work = std::move(work), cancelRequested, errorString](QPromise<bool>& promise) {
+    return QtConcurrent::run([work = std::move(work), cancelRequested](QPromise<Outcome>& promise) {
         promise.setProgressRange(0, 100);
 
         // Progress callback that updates QPromise and checks for cancellation
@@ -255,28 +252,20 @@ QFuture<bool> QGCCompressionJob::_runWithProgress(WorkFunction work,
             return true;  // Continue
         };
 
-        bool success = false;
+        Outcome outcome{.error = Error::Cancelled, .message = QGCCompression::errorName(Error::Cancelled)};
         try {
-            if (cancelRequested && cancelRequested->load(std::memory_order_acquire)) {
-                success = false;
-            } else {
-                success = work(progressCallback);
-                if (!success && errorString) {
-                    *errorString = QGCCompression::lastErrorString();
-                }
+            if (!cancelRequested || !cancelRequested->load(std::memory_order_acquire)) {
+                outcome = work(progressCallback);
             }
         } catch (const std::exception &e) {
             qCWarning(QGCCompressionJobLog) << "Exception during compression operation:" << e.what();
-            success = false;
-            if (errorString) {
-                *errorString = QString::fromUtf8(e.what());
-            }
+            outcome = {.error = Error::InternalError, .message = QString::fromUtf8(e.what())};
         }
 
-        if (success) {
+        if (outcome) {
             promise.setProgressValue(100);
         }
-        promise.addResult(success);
+        promise.addResult(outcome);
     });
 }
 

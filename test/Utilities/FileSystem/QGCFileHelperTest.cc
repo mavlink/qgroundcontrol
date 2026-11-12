@@ -343,7 +343,8 @@ void QGCFileHelperTest::_testToLocalPathCompressionInterop()
     QCOMPARE(QGCCompression::detectFormat(archivePath), QGCCompression::Format::ZIP);
     QVERIFY(QGCCompression::validateArchive(archivePath));
 
-    const QStringList entries = QGCCompression::listArchive(archivePath);
+    QStringList entries;
+    QVERIFY(QGCCompression::listArchive(archivePath, entries));
     QVERIFY(entries.contains(QStringLiteral("manifest.json")));
 
     const QString extractDir = tempDir.filePath("from_url_extract");

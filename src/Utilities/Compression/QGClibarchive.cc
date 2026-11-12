@@ -14,19 +14,7 @@
 
 QGC_LOGGING_CATEGORY(QGClibarchiveLog, "Utilities.QGClibarchive")
 
-// ============================================================================
-// Thread-Local Format Detection State
-// ============================================================================
-
 namespace {
-
-struct FormatState
-{
-    QString formatName;
-    QString filterName;
-};
-
-thread_local FormatState t_formatState;
 
 /// Why libarchive could not open a reader
 /// libarchive has no text for some failures: 3.8.8 has none for a gzip stream that ends before its trailer
@@ -37,37 +25,7 @@ QString openFailureReason(struct archive* a)
                                                       : QStringLiteral("Truncated or unreadable input");
 }
 
-void updateFormatState(const QGClibarchive::ArchiveReader& reader)
-{
-    t_formatState.formatName = reader.formatName();
-    t_formatState.filterName = reader.filterName();
-
-    if (!t_formatState.formatName.isEmpty()) {
-        qCDebug(QGClibarchiveLog) << "Detected format:" << t_formatState.formatName
-                                  << "filter:" << t_formatState.filterName;
-    }
-}
-
 }  // namespace
-
-namespace QGClibarchive {
-
-QString lastDetectedFormatName()
-{
-    return t_formatState.formatName;
-}
-
-QString lastDetectedFilterName()
-{
-    return t_formatState.filterName;
-}
-
-void clearLastDetectedFormat()
-{
-    t_formatState = {};
-}
-
-}  // namespace QGClibarchive
 
 // ============================================================================
 // libarchive callbacks for QIODevice streaming
@@ -162,7 +120,7 @@ la_int64_t deviceSeekCallback(struct archive*, void* clientData, la_int64_t offs
 // Utility Functions
 // ============================================================================
 
-EntryWalk forEachEntry(const ArchiveReader& reader, const EntryVisitor& visitor)
+EntryWalk forEachEntry(ArchiveReader& reader, const EntryVisitor& visitor)
 {
     struct archive* const a = reader.handle();
     struct archive_entry* entry = nullptr;
@@ -181,9 +139,8 @@ EntryWalk forEachEntry(const ArchiveReader& reader, const EntryVisitor& visitor)
                 qCWarning(QGClibarchiveLog) << "Failed to read archive entry:" << archive_error_string(a);
                 return EntryWalk::Failed;
         }
-        // libarchive knows the format once it has read the first header
         if (!formatKnown) {
-            updateFormatState(reader);
+            reader.captureFormat();
             formatKnown = true;
         }
         if (!visitor(entry)) {
@@ -717,8 +674,8 @@ struct EntrySelection
 /// @param progress Optional progress callback
 /// @param maxBytes Maximum total decompressed bytes (0 = unlimited)
 /// @return Error::None on success
-Error extractArchiveEntries(const ArchiveReader& reader, const QString& outputDirectoryPath,
-                            const EntrySelection& selection, const ProgressCallback& progress, qint64 maxBytes)
+Error extractArchiveEntries(ArchiveReader& reader, const QString& outputDirectoryPath, const EntrySelection& selection,
+                            const ProgressCallback& progress, qint64 maxBytes)
 {
     DiskWriterPtr writer(archive_write_disk_new());
     if (!writer) {
@@ -858,7 +815,7 @@ Error extractArchiveFrom(ArchiveReader& reader, const Source& source, const QStr
 /// @param entry If not null, receives the entry when it is found
 /// @return Error::None if the reader is on the entry, FileNotInArchive if the archive has no such entry, or
 ///         InvalidArchive if the archive is damaged before it
-Error findEntry(const ArchiveReader& reader, const QString& fileName, struct archive_entry** entry = nullptr)
+Error findEntry(ArchiveReader& reader, const QString& fileName, struct archive_entry** entry = nullptr)
 {
     const EntryWalk walk = forEachEntry(reader, [&](struct archive_entry* candidate) {
         if (QString::fromUtf8(archive_entry_pathname(candidate)) != fileName) {
@@ -884,7 +841,7 @@ Error findEntry(const ArchiveReader& reader, const QString& fileName, struct arc
 /// As findEntry(), for a caller that hands the entry over alone, as a file or as data
 /// A warning is logged if the archive does not have the entry, or has it and it is one that is not extracted,
 /// which is UnsupportedFormat: none of those has data, so it would look like a file that is empty.
-Error findEntryToRead(const ArchiveReader& reader, const QString& fileName, struct archive_entry*& entry)
+Error findEntryToRead(ArchiveReader& reader, const QString& fileName, struct archive_entry*& entry)
 {
     const Error found = findEntry(reader, fileName, &entry);
     if (found == Error::FileNotInArchive) {
@@ -908,13 +865,13 @@ enum class StreamHeader
 /// Read the header of the one entry that a single compressed stream is read as
 /// @param plainAllowed Whether an input that is not compressed is read as it is (Data) instead of being refused
 ///        (NotCompressed)
-StreamHeader readStreamHeader(const ArchiveReader& reader, bool plainAllowed = false)
+StreamHeader readStreamHeader(ArchiveReader& reader, bool plainAllowed = false)
 {
     struct archive* const a = reader.handle();
     struct archive_entry* entry = nullptr;
     const int header = archive_read_next_header(a, &entry);
     if (header == ARCHIVE_OK) {
-        updateFormatState(reader);
+        reader.captureFormat();
         // The raw format takes any input that has bytes, also one that no decompression filter is in the chain
         // for, which it hands through as it is
         if (archive_filter_count(a) <= 1) {
@@ -927,7 +884,7 @@ StreamHeader readStreamHeader(const ArchiveReader& reader, bool plainAllowed = f
         return StreamHeader::Data;
     }
     if (isEmptyStream(a, header)) {
-        updateFormatState(reader);
+        reader.captureFormat();
         return StreamHeader::Empty;
     }
 
@@ -976,23 +933,17 @@ qint64 ArchiveReader::dataSize() const
     return 0;
 }
 
-QString ArchiveReader::formatName() const
+void ArchiveReader::captureFormat()
 {
-    if (!_archive) {
-        return {};
-    }
-    const char* name = archive_format_name(_archive.get());
-    return name ? QString::fromUtf8(name) : QString();
-}
-
-QString ArchiveReader::filterName() const
-{
-    if (!_archive) {
-        return {};
-    }
+    const char* format = archive_format_name(_archive.get());
+    _formatName = format ? QString::fromUtf8(format) : QString();
     // Filter 0 is the one the format reads from: the decompression, or the input itself, which is called "none"
-    const char* name = archive_filter_name(_archive.get(), 0);
-    return name ? QString::fromUtf8(name) : QStringLiteral("none");
+    const char* filter = archive_filter_name(_archive.get(), 0);
+    _filterName = filter ? QString::fromUtf8(filter) : QStringLiteral("none");
+
+    if (!_formatName.isEmpty()) {
+        qCDebug(QGClibarchiveLog) << "Detected format:" << _formatName << "filter:" << _filterName;
+    }
 }
 
 void ArchiveReader::close()
@@ -1008,6 +959,8 @@ bool ArchiveReader::_create(ReaderMode mode, const QByteArray& signature, QStrin
     close();
     _mode = mode;
     _unsupportedStream = false;
+    _formatName.clear();
+    _filterName.clear();
 
     if (mode == ReaderMode::RawFormat) {
         reason = undecodableStreamReason(signature);
@@ -1617,8 +1570,10 @@ Error decompressSingleFile(ArchiveReader& reader, const Source& source, const QS
 template <typename Source>
 Error decompressToMemory(ArchiveReader& reader, const Source& source, qint64 maxBytes, QByteArray& data)
 {
+    // The reader has what it reads once it is open: the data may be given back in the source
+    const bool opened = reader.open(source, ReaderMode::RawFormat);
     data.clear();
-    if (!reader.open(source, ReaderMode::RawFormat)) {
+    if (!opened) {
         return streamOpenFailure(reader);
     }
 

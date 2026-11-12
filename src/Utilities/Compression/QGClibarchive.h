@@ -156,14 +156,19 @@ public:
     /// @return Size in bytes: size of the data in memory, file size, or device size (0 if unknown)
     qint64 dataSize() const;
 
-    /// Get the detected archive format name (after reading first header)
+    /// Record the format and the filter of the input, which libarchive knows once it has read the first header
+    /// forEachEntry() does it. A caller that reads the first header of the open reader itself does it then.
+    void captureFormat();
+
+    /// Get the detected archive format name
     /// Everything that tells the format or the filter of an input asks here.
-    /// @return Format name like "ZIP 2.0 (deflation)", "POSIX ustar", "RAW", or empty if not detected
-    QString formatName() const;
+    /// @return Format name like "ZIP 2.0 (deflation)", "POSIX ustar", "RAW", or empty if no header has been read
+    ///         since the last open. It stays when the reader is closed
+    QString formatName() const { return _formatName; }
 
     /// Get the detected compression filter name
-    /// @return Filter name like "gzip", "xz", "zstd", "none", or empty if the reader is not open
-    QString filterName() const;
+    /// @return Filter name like "gzip", "xz", "zstd", "none", or empty as formatName() is
+    QString filterName() const { return _filterName; }
 
 private:
     struct Deleter
@@ -182,6 +187,8 @@ private:
     DeviceSource _source;    // Device for streaming reads
     std::unique_ptr<struct archive, Deleter> _archive;
     QString _filePath;  // Stored path for size queries
+    QString _formatName;
+    QString _filterName;
     ReaderMode _mode = ReaderMode::AllFormats;
     bool _unsupportedStream = false;
 };
@@ -235,10 +242,10 @@ using EntryVisitor = std::function<bool(struct archive_entry* entry)>;
 /// its end, so a caller cannot take a read error for the end of the archive. What is unread of the
 /// data of an entry is skipped before the next one. An entry libarchive reads with a warning (for
 /// example a pathname it could not convert) is usable: the warning is logged and the entry visited.
-/// The first entry also sets what lastDetectedFormatName() and lastDetectedFilterName() return.
+/// The first entry also sets what the reader tells of the format.
 /// @param reader Open archive reader
 /// @param visitor Called with each entry header, when the data of that entry can be read from @a reader
-EntryWalk forEachEntry(const ArchiveReader& reader, const EntryVisitor& visitor);
+EntryWalk forEachEntry(ArchiveReader& reader, const EntryVisitor& visitor);
 
 // ============================================================================
 // Utility Functions
@@ -271,7 +278,8 @@ bool openArchiveForReading(struct archive *a, const QString &filePath, QByteArra
 
 // Each operation below is what the function of QGCCompression that calls it does once its arguments are
 // checked: that function documents it. The operation opens the reader it is given, which tells the caller
-// more of a failure afterwards (mode(), unsupportedStream()), and returns how it ended:
+// the format of the input afterwards and more of a failure (mode(), unsupportedStream()), and returns how it
+// ended:
 //   None               Every entry asked for was read to its end, and written if it was to be
 //   FileNotInArchive   The archive was read to its end without an entry that was asked for
 //   UnsupportedFormat  An entry asked for by name is one that is not extracted: a directory, a link, a special
@@ -342,22 +350,5 @@ Error decompressSingleFile(ArchiveReader& reader, const Source& source, const QS
 /// Decompress a single compressed stream (not empty) into @a data
 template <typename Source>
 Error decompressToMemory(ArchiveReader& reader, const Source& source, qint64 maxBytes, QByteArray& data);
-
-// ============================================================================
-// Format Detection (Thread-Local State)
-// ============================================================================
-
-/// Get the detected format name from the last archive operation (thread-local)
-/// @return Format name like "ZIP 2.0 (deflation)", "POSIX ustar", "RAW", or empty
-QString lastDetectedFormatName();
-
-/// Get the detected filter name from the last archive operation (thread-local)
-/// @return Filter name like "gzip", "xz", "zstd", "none", or empty
-QString lastDetectedFilterName();
-
-/// Forget the format and filter detected on this thread (thread-local)
-/// They are recorded when the first header of an archive is read. An operation that fails before that
-/// records nothing, and would be described by what the operation before it detected.
-void clearLastDetectedFormat();
 
 } // namespace QGClibarchive

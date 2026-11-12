@@ -11,7 +11,7 @@
 namespace QGCCompression {
 
 // ============================================================================
-// Error Codes
+// Outcome of an Operation
 // ============================================================================
 
 /// Error codes for decompression operations
@@ -27,6 +27,21 @@ enum class Error
     FileNotInArchive,   ///< Requested file not found in archive
     IoError,            ///< Output cannot be written, or a device to read from is not open
     InternalError       ///< Unexpected internal error
+};
+
+/// How an operation ended, which is what it returns. It converts to true if the operation succeeded.
+/// What the operation read comes back through a reference parameter. That is empty after a failure, and also
+/// after the success of reading a compressed file or an entry without data, or an archive without entries.
+struct [[nodiscard]] Outcome
+{
+    Error error = Error::None;  ///< Why the operation failed
+    QString message = {};       ///< What could not be done and why, empty on success
+    /// Format libarchive detected, like "ZIP 2.0 (deflation)", "POSIX ustar" or "RAW". Empty, as filterName is,
+    /// if the operation ended before it had read the first header of its input
+    QString formatName = {};
+    QString filterName = {};  ///< Compression it detected, like "gzip", "xz" or "zstd", or "none"
+
+    explicit operator bool() const { return error == Error::None; }
 };
 
 // ============================================================================
