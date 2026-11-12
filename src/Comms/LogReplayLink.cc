@@ -108,11 +108,6 @@ void LogReplayWorker::connectToLog()
         return;
     }
 
-    if (MultiVehicleManager::instance()->activeVehicle()) {
-        emit errorOccurred(tr("You must close all connections prior to replaying a log."));
-        return;
-    }
-
     if (!_loadLogFile()) {
         disconnectFromLog();
         return;
@@ -481,6 +476,12 @@ bool LogReplayLink::isConnected() const
 
 bool LogReplayLink::_connect()
 {
+    // Checked here and not by the worker: the active vehicle belongs to this thread
+    if (MultiVehicleManager::instance()->activeVehicle()) {
+        _onErrorOccurred(tr("You must close all connections prior to replaying a log."));
+        return false;
+    }
+
     return QMetaObject::invokeMethod(_worker, "connectToLog", Qt::QueuedConnection);
 }
 

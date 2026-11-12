@@ -199,6 +199,28 @@ void LinkManagerTest::_testManualConnectRefusedWhileSuspended()
     QVERIFY(config->link());
 }
 
+void LinkManagerTest::_testLogReplayRefusedWithActiveVehicle()
+{
+    QVERIFY(createMockLinkAndWaitForVehicle(QStringLiteral("ReplayRefusedMock")));
+    const qsizetype cLinks = linkManager()->links().count();
+
+    const char* const logName = "LogReplayRefused.tlog";
+    const auto cleanup = qScopeGuard([this, logName] {
+        for (const SharedLinkConfigurationPtr& config : _configsNamed(logName)) {
+            linkManager()->removeConfiguration(config.get());
+        }
+    });
+
+    // Refused where the replay is started, which leaves no link behind that never connects
+    expectLogMessage("Comms.LogReplayLink", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("You must close all connections")));
+    expectAppMessage(QRegularExpression(QStringLiteral("You must close all connections prior to replaying a log")));
+    QVERIFY(!linkManager()->startLogReplay(QLatin1String(logName)));
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QCOMPARE(linkManager()->links().count(), cLinks);
+}
+
 void LinkManagerTest::_testUdpUnresolvedHostFailsConnect()
 {
     UDPConfiguration* const udpConfig = new UDPConfiguration(QStringLiteral("UnresolvedUdp"));

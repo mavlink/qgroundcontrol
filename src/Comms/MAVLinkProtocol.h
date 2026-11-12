@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+
 #include <QtCore/QByteArray>
 #include <QtCore/QCache>
 #include <QtCore/QObject>
@@ -80,7 +82,7 @@ private:
     QFile* _tempLogFile = nullptr;
 
     bool _logSuspendError = false;
-    bool _logSuspendReplay = false;
+    std::atomic<bool> _logSuspendReplay{false};  ///< Set by the log replay worker on its own thread
     bool _vehicleWasArmed = false;
 
     /// Per-(channel, sysid, compid) last sequence ID. Channel-scoped so traffic on link A doesn't perturb expected
