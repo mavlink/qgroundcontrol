@@ -125,10 +125,11 @@ A position, from a receiver's bytes to the ground station position:
    `GPSCommandChannel::receiveCycle()` reads the `GPSTransport`.
 2. `GPSStreamDemux` frames the bytes. The family's protocol decodes a frame in `onFrame()` and publishes a
    `GPSDecodedPosition` through its `GPSDecodeContext`.
-3. `GPSDriver` adapts it to a `GPSPositionReport` for `GPSDriverSinks::onPosition`, and the worker emits
-   `positionUpdated()`, queued to the main thread.
-4. `GPSReceiverSession` relays it to `GPSReceiver`, which writes the status Facts (`GPSReceiverFactGroup`) and
-   gives its `GPSSourceHealth` a `GPSObservation`. A base that knows its antenna position reports that one.
+3. `GPSDriver` adapts it to a `GPSPositionReport` for `GPSDriverSinks::onPosition`, and the worker reports it as a
+   `GPSReceiverEvent` with its one signal, `reported()`, queued to the main thread.
+4. `GPSReceiverSession` takes what it keeps of an event and passes it on to `GPSReceiver`, which visits it: for a
+   position it writes the status Facts (`GPSReceiverFactGroup`) and gives its `GPSSourceHealth` a `GPSObservation`.
+   A base that knows its antenna position reports that one.
 5. `PositionManager` chooses between the receiver source and this device's source and publishes `gcsPosition`.
 6. Readers bind to it or ask `PositionManager::acceptedObservation()` for the use they have.
 
@@ -138,7 +139,8 @@ An RTCM frame, from its source to a vehicle link:
    `NTRIPHttpTransport` cuts frames with an `RTCMFrameDecoder` and emits `correctionFrameReceived()`, queued to
    `NTRIPManager`.
 2. From the local base: steps 1 and 2 above, where the family calls `publishRTCM()`. `GPSDriver` drops the frame unless
-   the base state allows it, the worker emits `rtcmDataReceived()` and `GPSReceiverSession` forwards it.
+   the base state allows it, the worker reports it as a `GPSReceiverRTCM` event with the time it was read, and
+   `GPSReceiverSession` forwards it.
 3. Either source calls `GPSCorrectionSourceHandle::submit()`. `GPSCorrectionManager` applies the message filter,
    and `GPSCorrectionSelector` passes frames of the selected stream while they are fresh.
 4. `RTCMMAVLink` packs the frame into `GPS_RTCM_DATA` fragments of 180 bytes (`RTCMMAVLinkPacket`) and sends them

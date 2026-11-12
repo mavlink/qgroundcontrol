@@ -26,6 +26,7 @@
 #include "Protocols/Support/ReceiverBench.h"
 #include "Protocols/Support/SBFReceiverModel.h"
 #include "Protocols/Support/ScriptedReceiver.h"
+#include "Protocols/Support/WorkerReports.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
 #endif
@@ -115,7 +116,7 @@ void GPSReceiverWorkerTest::_transportLifetimeStaysOnWorker()
         },
         GPSType::UBlox, GPSReceiverConfig{});
     stopWorker = [&worker]() { worker.stop(); };
-    QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
+    WorkerReports<GPSReceiverEnded> errors(worker);
     if (cancel == QStringLiteral("before-start")) {
         worker.stop();
     }
@@ -135,9 +136,9 @@ void GPSReceiverWorkerTest::_transportLifetimeStaysOnWorker()
     QVERIFY(trace.factoryAliveDuringDestruction);
     QCOMPARE(errors.size(), cancel == QStringLiteral("none") ? 1 : 0);
     if (!errors.isEmpty()) {
-        QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::OpenFailed);
+        QCOMPARE(errors.first().error, GPSConnectionError::OpenFailed);
         // The transport's reason reaches the session.
-        QCOMPARE(errors.first().at(1).toString(), QStringLiteral("test port is busy"));
+        QCOMPARE(errors.first().detail, QStringLiteral("test port is busy"));
     }
 }
 
@@ -156,11 +157,11 @@ void GPSReceiverWorkerTest::_missingTransportReportsOpenFailure()
         factory = [](GPSCancelToken) { return std::unique_ptr<GPSTransport>{}; };
     }
     GPSReceiverWorker worker(std::move(factory), GPSType::UBlox, GPSReceiverConfig{});
-    QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
+    WorkerReports<GPSReceiverEnded> errors(worker);
     worker.start();
     QVERIFY(worker.wait(TestTimeout::shortDuration()));
-    QCOMPARE(errors.count(), 1);
-    QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::OpenFailed);
+    QCOMPARE(errors.size(), 1);
+    QCOMPARE(errors.first().error, GPSConnectionError::OpenFailed);
 }
 
 void GPSReceiverWorkerTest::_workerLifecycle()
@@ -329,7 +330,7 @@ void GPSReceiverWorkerTest::_positionFixTransitions()
         GPSReceiverWorker worker(
             [](GPSCancelToken cancelToken) { return std::make_unique<FixSequenceTransport>(std::move(cancelToken)); },
             GPSType::Passive, {.baudRate = 115200});
-        QSignalSpy positions(&worker, &GPSReceiverWorker::positionUpdated);
+        WorkerReports<GPSPositionReport> positions(worker);
         worker.start();
         const bool finished = worker.wait(TestTimeout::shortDuration());
         if (!finished) {
@@ -342,7 +343,7 @@ void GPSReceiverWorkerTest::_positionFixTransitions()
                                   Fix::RTKFixed, Fix::RTKFixed, Fix::NoFix};
         QCOMPARE(positions.size(), expected.size());
         for (qsizetype i = 0; i < expected.size(); ++i) {
-            const auto report = qvariant_cast<GPSPositionReport>(positions[i].first());
+            const GPSPositionReport report = positions.at(i);
             QCOMPARE(report.navigation.fixType, expected[i]);
             if (expected[i] != Fix::NoFix) {
                 QVERIFY(qAbs(report.navigation.latitudeDegrees - 48.1173) < 1e-6);
@@ -363,21 +364,16 @@ void GPSReceiverWorkerTest::_satelliteExpiryDoesNotRenewLiveness()
         GPSType::Passive, {.baudRate = 115200}, nullptr, clock.source());
     std::atomic_bool freshView = false;
     std::atomic_bool expiredView = false;
-    connect(
-        &worker, &GPSReceiverWorker::connectionError, &worker, [&] { endedAtUs = clock.nowUs(); },
-        Qt::DirectConnection);
-    connect(
-        &worker, &GPSReceiverWorker::satelliteInfoUpdated, &worker,
-        [&](const GPSSatelliteReport& report) {
-            if (report.timestampUs && report.inView.value_or(0)) {
-                freshView = true;
-            } else if (!report.timestampUs && freshView.load()) {
-                expiredView = true;
-            }
-        },
-        Qt::DirectConnection);
-    QSignalSpy positions(&worker, &GPSReceiverWorker::positionUpdated);
-    QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
+    onReport<GPSReceiverEnded>(worker, [&](const auto&) { endedAtUs = clock.nowUs(); });
+    onReport<GPSSatelliteReport>(worker, [&](const GPSSatelliteReport& report) {
+        if (report.timestampUs && report.inView.value_or(0)) {
+            freshView = true;
+        } else if (!report.timestampUs && freshView.load()) {
+            expiredView = true;
+        }
+    });
+    WorkerReports<GPSPositionReport> positions(worker);
+    WorkerReports<GPSReceiverEnded> errors(worker);
     worker.start();
     const bool finished = worker.wait(TestTimeout::longDuration());
     if (!finished) {
@@ -389,7 +385,7 @@ void GPSReceiverWorkerTest::_satelliteExpiryDoesNotRenewLiveness()
     QVERIFY(expiredView.load());
     QCOMPARE(positions.size(), 2);
     QCOMPARE(errors.size(), 1);
-    QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);
+    QCOMPARE(errors.first().error, GPSConnectionError::DeviceError);
     QCOMPARE(lastPositionAtUs.load(), GPSTestClock::START_US + durationUs(ExpiringSatelliteTransport::POSITION_AT));
     // The session ends one inactivity window after the last position; an expiry credited as traffic would extend it.
     QCOMPARE(endedAtUs.load(), lastPositionAtUs.load() + durationUs(GPSReceiverWorker::IDLE_SESSION_TIMEOUT));
@@ -423,23 +419,17 @@ void GPSReceiverWorkerTest::_passiveInputProblems()
     uint64_t readyAtUs = 0;
     std::vector<GPSType> detected;
     std::vector<std::pair<GPSInputProblem, uint64_t>> reports;
-    connect(
-        &worker, &GPSReceiverWorker::receiverReady, &worker, [&] { readyAtUs = clock.nowUs(); }, Qt::DirectConnection);
-    connect(
-        &worker, &GPSReceiverWorker::receiverDetected, &worker, [&](GPSType type) { detected.push_back(type); },
-        Qt::DirectConnection);
-    connect(
-        &worker, &GPSReceiverWorker::inputProblem, &worker,
-        [&](GPSInputProblem reported) {
-            reports.emplace_back(reported, clock.nowUs());
-            // Positions clear the report; the session runs on until stopped.
-            if (reported == GPSInputProblem::None) {
-                worker.stop();
-            }
-            positions = true;
-        },
-        Qt::DirectConnection);
-    QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
+    onReport<GPSReceiverReady>(worker, [&](const auto&) { readyAtUs = clock.nowUs(); });
+    onReport<GPSReceiverDetected>(worker, [&](const GPSReceiverDetected& report) { detected.push_back(report.type); });
+    onReport<GPSInputProblem>(worker, [&](GPSInputProblem reported) {
+        reports.emplace_back(reported, clock.nowUs());
+        // Positions clear the report; the session runs on until stopped.
+        if (reported == GPSInputProblem::None) {
+            worker.stop();
+        }
+        positions = true;
+    });
+    WorkerReports<GPSReceiverEnded> errors(worker);
     worker.start();
     const bool finished = worker.wait(TestTimeout::longDuration());
     if (!finished) {
@@ -482,22 +472,15 @@ void GPSReceiverWorkerTest::_ancillaryTraffic()
             return transport;
         },
         GPSType::Septentrio, {.base = fixedBaseAt(47, 8, 500)}, nullptr, clock.source());
-    connect(
-        &worker, &GPSReceiverWorker::receiverReady, &worker,
-        [&] {
-            readyAtUs = clock.nowUs();
-            peer->streaming = true;
-        },
-        Qt::DirectConnection);
-    connect(
-        &worker, &GPSReceiverWorker::connectionError, &worker, [&] { endedAtUs = clock.nowUs(); },
-        Qt::DirectConnection);
-    connect(
-        &worker, &GPSReceiverWorker::satelliteInfoUpdated, &worker, [&](const auto&) { worker.stop(); },
-        Qt::DirectConnection);
-    QSignalSpy ready(&worker, &GPSReceiverWorker::receiverReady);
-    QSignalSpy satellites(&worker, &GPSReceiverWorker::satelliteInfoUpdated);
-    QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
+    onReport<GPSReceiverReady>(worker, [&](const auto&) {
+        readyAtUs = clock.nowUs();
+        peer->streaming = true;
+    });
+    onReport<GPSReceiverEnded>(worker, [&](const auto&) { endedAtUs = clock.nowUs(); });
+    onReport<GPSSatelliteReport>(worker, [&](const auto&) { worker.stop(); });
+    WorkerReports<GPSReceiverReady> ready(worker);
+    WorkerReports<GPSSatelliteReport> satellites(worker);
+    WorkerReports<GPSReceiverEnded> errors(worker);
     worker.start();
     const bool finished = worker.wait(TestTimeout::mediumDuration());
     if (!finished) {
@@ -509,14 +492,14 @@ void GPSReceiverWorkerTest::_ancillaryTraffic()
     QCOMPARE(satellites.size(), sendUsage ? 1 : 0);
     QCOMPARE(errors.size(), sendUsage ? 0 : 1);
     if (sendUsage) {
-        const auto report = qvariant_cast<GPSSatelliteReport>(satellites.first().first());
+        const GPSSatelliteReport report = satellites.first();
         QVERIFY(!report.inView);
         QCOMPARE(report.used, std::optional<int>{12});
     } else {
         // Blocks without useful data are activity, which never extends the inactivity window.
         QVERIFY(peer->streamReads > 1);
         QCOMPARE(endedAtUs.load(), readyAtUs.load() + durationUs(GPSReceiverWorker::IDLE_SESSION_TIMEOUT));
-        QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);
+        QCOMPARE(errors.first().error, GPSConnectionError::DeviceError);
     }
 }
 
@@ -537,20 +520,16 @@ void GPSReceiverWorkerTest::_configuredReceiverRidesOutSilence()
         GPSType::Septentrio, {.base = fixedBaseAt(47, 8, 500)}, nullptr, clock.source());
     uint64_t readyAtUs = 0;
     std::vector<std::pair<GPSInputProblem, uint64_t>> reports;
-    connect(
-        &worker, &GPSReceiverWorker::receiverReady, &worker, [&] { readyAtUs = clock.nowUs(); }, Qt::DirectConnection);
-    connect(
-        &worker, &GPSReceiverWorker::inputProblem, &worker,
-        [&](GPSInputProblem reported) {
-            reports.emplace_back(reported, clock.nowUs());
-            if (reported == GPSInputProblem::None) {
-                worker.stop();
-            }
-            // The receiver's output returns.
-            peer->streaming = true;
-        },
-        Qt::DirectConnection);
-    QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
+    onReport<GPSReceiverReady>(worker, [&](const auto&) { readyAtUs = clock.nowUs(); });
+    onReport<GPSInputProblem>(worker, [&](GPSInputProblem reported) {
+        reports.emplace_back(reported, clock.nowUs());
+        if (reported == GPSInputProblem::None) {
+            worker.stop();
+        }
+        // The receiver's output returns.
+        peer->streaming = true;
+    });
+    WorkerReports<GPSReceiverEnded> errors(worker);
     worker.start();
     const bool finished = worker.wait(TestTimeout::mediumDuration());
     if (!finished) {
@@ -588,20 +567,20 @@ void GPSReceiverWorkerTest::_configuredReceiverReportsReadyThenLoss()
             return transport;
         },
         GPSType::Femto, GPSReceiverConfig{.base = config}, nullptr, clock.source());
-    QSignalSpy ready(&worker, &GPSReceiverWorker::receiverReady);
-    QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
-    QSignalSpy baseStatuses(&worker, &GPSReceiverWorker::baseStatusUpdated);
+    WorkerReports<GPSReceiverReady> ready(worker);
+    WorkerReports<GPSReceiverEnded> errors(worker);
+    WorkerReports<GPSBaseStatus> baseStatuses(worker);
     worker.start();
     QVERIFY(worker.wait(TestTimeout::mediumDuration()));
     verifyExpectedLogMessage();
     QCOMPARE(ready.size(), 1);
     QCOMPARE(errors.size(), 1);
-    QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().first()), GPSConnectionError::DeviceError);
+    QCOMPARE(errors.first().error, GPSConnectionError::DeviceError);
     // The transport's diagnostic reaches the receiver's message.
-    QCOMPARE(errors.first().at(1).toString(), QStringLiteral("Scripted receiver connection lost"));
+    QCOMPARE(errors.first().detail, QStringLiteral("Scripted receiver connection lost"));
     if (const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&config.mode)) {
         QCOMPARE(baseStatuses.size(), 1);
-        const auto status = qvariant_cast<GPSBaseStatus>(baseStatuses.first().first());
+        const GPSBaseStatus status = baseStatuses.first();
         QCOMPARE(status.position.latitudeDegrees, fixed->position.latitudeDegrees);
         QCOMPARE(status.position.longitudeDegrees, fixed->position.longitudeDegrees);
         QCOMPARE(status.position.altitudeMeters, fixed->position.altitudeMeters);
@@ -627,24 +606,24 @@ void GPSReceiverWorkerTest::_automaticSessionFollowsHint()
     const GPSDetectionHint hint{.family = GPSType::Femto, .baud = 230400, .foundBaud = 230400};
     worker.setDetectionHint(hint);
     QCOMPARE(worker.detectionHint(), hint);
-    QSignalSpy looking(&worker, &GPSReceiverWorker::detecting);
-    QSignalSpy detected(&worker, &GPSReceiverWorker::receiverDetected);
-    QSignalSpy ready(&worker, &GPSReceiverWorker::receiverReady);
-    QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
+    WorkerReports<GPSDetectionProgress> looking(worker);
+    WorkerReports<GPSReceiverDetected> detected(worker);
+    WorkerReports<GPSReceiverReady> ready(worker);
+    WorkerReports<GPSReceiverEnded> errors(worker);
     QSignalSpy reports(&worker, &GPSReceiverWorker::reported);
-    connect(&worker, &GPSReceiverWorker::receiverReady, &worker, [&worker] { worker.stop(); }, Qt::DirectConnection);
+    onReport<GPSReceiverReady>(worker, [&worker](const auto&) { worker.stop(); });
     worker.start();
     QVERIFY(worker.wait(TestTimeout::mediumDuration()));
     QCOMPARE(errors.size(), 0);
     // Only the hinted family was asked, at the hinted rate, which detection itself never tries for it.
     QCOMPARE(looking.size(), 1);
-    QCOMPARE(qvariant_cast<GPSType>(looking.first().at(0)), GPSType::Femto);
-    QCOMPARE(looking.first().at(1).toUInt(), 230400U);
-    QVERIFY(looking.first().at(2).toBool());
+    QCOMPARE(looking.first().family, GPSType::Femto);
+    QCOMPARE(looking.first().baud, 230400U);
+    QVERIFY(looking.first().remembered);
     QCOMPARE(detected.size(), 1);
-    QCOMPARE(qvariant_cast<GPSType>(detected.first().first()), GPSType::Femto);
+    QCOMPARE(detected.first().type, GPSType::Femto);
     QCOMPARE(ready.size(), 1);
-    QCOMPARE(qvariant_cast<GPSDetectionHint>(ready.first().at(1)), hint);
+    QCOMPARE(ready.first().detected, hint);
     // One signal carries every kind of report, in the order the session makes them: a fixed base reports its
     // position while it is configured, between the detection and the ready receiver.
     const auto report = [&reports](qsizetype index) {
@@ -695,8 +674,8 @@ void GPSReceiverWorkerTest::_quectelConsentRefusal()
             return quectelTransport(std::move(cancelToken), clock, role, base, identity);
         },
         GPSType::Quectel, GPSReceiverConfig{.base = surveyInBase(15, 60s)}, nullptr, clock.source());
-    QSignalSpy ready(&worker, &GPSReceiverWorker::receiverReady);
-    QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
+    WorkerReports<GPSReceiverReady> ready(worker);
+    WorkerReports<GPSReceiverEnded> errors(worker);
     const QRegularExpression diagnostic(QRegularExpression::escape(detail));
     expectLogMessage("GPS.GPSDriver", QtWarningMsg, diagnostic);
     worker.start();
@@ -704,8 +683,8 @@ void GPSReceiverWorkerTest::_quectelConsentRefusal()
     verifyExpectedLogMessage();
     QVERIFY(ready.isEmpty());
     QCOMPARE(errors.size(), 1);
-    QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().at(0)), error);
-    const QString message = errors.first().at(1).toString();
+    QCOMPARE(errors.first().error, error);
+    const QString message = errors.first().detail;
     QVERIFY2(message.startsWith(detail), qPrintable(message));
     // A receiver that is refused is named; one that only needs consent is not in question.
     const bool refused = error == GPSConnectionError::ConfigFailed;
@@ -725,13 +704,13 @@ void GPSReceiverWorkerTest::_namedReceiverIsNotRepeated()
             return transport;
         },
         GPSType::Trimble, GPSReceiverConfig{.base = surveyInBase(1, 100s)}, nullptr, clock.source());
-    QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
+    WorkerReports<GPSReceiverEnded> errors(worker);
     expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression(QStringLiteral("Driver configuration failed")));
     worker.start();
     QVERIFY(worker.wait(TestTimeout::mediumDuration()));
     verifyExpectedLogMessage();
     QCOMPARE(errors.size(), 1);
-    QCOMPARE(errors.first().at(1).toString(),
+    QCOMPARE(errors.first().detail,
              QStringLiteral("Trimble BD982 cannot run as an RTK base station; only the MB-Two can"));
 }
 

@@ -10,7 +10,6 @@
 #include <QtCore/QList>
 #include <QtCore/QSet>
 #include <QtNetwork/QTcpSocket>
-#include <QtTest/QSignalSpy>
 
 #include "Fixtures/RAIIFixtures.h"
 #include "GPSReceiverWorker.h"
@@ -19,6 +18,7 @@
 #include "Protocols/Support/GPSBaseStationConfigs.h"
 #include "Protocols/Support/GPSProtocolTestData.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
+#include "Protocols/Support/WorkerReports.h"
 #include "RTCMFramer.h"
 #include "RTCMStationPosition.h"
 #include "TCPGPSTransport.h"
@@ -84,21 +84,21 @@ void GPSReceiverSimulatorTest::_workerConfiguresBase()
             return std::make_unique<TCPGPSTransport>(QStringLiteral("127.0.0.1"), port, std::move(cancelToken));
         },
         type, GPSReceiverConfig{.base = base});
-    QSignalSpy ready(&worker, &GPSReceiverWorker::receiverReady);
-    QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
-    QSignalSpy positions(&worker, &GPSReceiverWorker::positionUpdated);
-    QSignalSpy satellites(&worker, &GPSReceiverWorker::satelliteInfoUpdated);
-    QSignalSpy baseStatuses(&worker, &GPSReceiverWorker::baseStatusUpdated);
-    QSignalSpy corrections(&worker, &GPSReceiverWorker::rtcmDataReceived);
+    WorkerReports<GPSReceiverReady> ready(worker);
+    WorkerReports<GPSReceiverEnded> errors(worker);
+    WorkerReports<GPSPositionReport> positions(worker);
+    WorkerReports<GPSSatelliteReport> satellites(worker);
+    WorkerReports<GPSBaseStatus> baseStatuses(worker);
+    WorkerReports<GPSReceiverRTCM> corrections(worker);
     const auto failure = [&errors] {
-        return errors.isEmpty() ? QByteArray("no error reported") : errors.first().at(1).toString().toUtf8();
+        return errors.isEmpty() ? QByteArray("no error reported") : errors.first().detail.toUtf8();
     };
     worker.start();
 
     // The worker's driver configures the receiver across the socket.
     QTRY_VERIFY2_WITH_TIMEOUT(!ready.isEmpty() || !errors.isEmpty(), failure().constData(), TestTimeout::longMs());
     QVERIFY2(errors.isEmpty(), failure().constData());
-    QCOMPARE(ready.first().first().toString(), identity);
+    QCOMPARE(ready.first().identity, identity);
 
     // The base sends its station position and the observations of four constellations once its position is valid,
     // and reports that position, its fix and its satellites. What the receiver sent before it was configured can
@@ -107,20 +107,15 @@ void GPSReceiverSimulatorTest::_workerConfiguresBase()
     GPSEllipsoidPosition station;
     qsizetype counted = 0;
     const QSet<int> expected{1005, 1077, 1087, 1097, 1127, 1230};
-    const auto baseStatus = [&baseStatuses] {
-        return baseStatuses.isEmpty() ? GPSBaseStatus{} : qvariant_cast<GPSBaseStatus>(baseStatuses.last().first());
-    };
-    const auto fix = [&positions] {
-        return positions.isEmpty() ? GPSNavigationValues{}
-                                   : qvariant_cast<GPSPositionReport>(positions.last().first()).navigation;
-    };
+    const auto baseStatus = [&baseStatuses] { return baseStatuses.isEmpty() ? GPSBaseStatus{} : baseStatuses.last(); };
+    const auto fix = [&positions] { return positions.isEmpty() ? GPSNavigationValues{} : positions.last().navigation; };
     const auto fixPosition = [&fix]() -> GPSEllipsoidPosition {
         const GPSNavigationValues navigation = fix();
         return {navigation.latitudeDegrees, navigation.longitudeDegrees, navigation.altitudeEllipsoidMeters};
     };
     const auto settled = [&] {
         for (; counted < corrections.size(); ++counted) {
-            const QByteArray frame = corrections.at(counted).first().toByteArray();
+            const QByteArray frame = corrections.at(counted).frame;
             messages.insert(RTCMFramer::frameMessageId(frame));
             if (const auto reported = RTCMStationPosition::fromFrame(frame)) {
                 station = reported->position;
@@ -156,7 +151,7 @@ void GPSReceiverSimulatorTest::_workerConfiguresBase()
     QCOMPARE(simulator.connections(), 1);
     QCOMPARE(messages, expected);
     QCOMPARE(fix().fixType, GPSPositionReport::FixType::Fix3D);
-    const auto sky = qvariant_cast<GPSSatelliteReport>(satellites.last().first());
+    const GPSSatelliteReport sky = satellites.last();
     QCOMPARE(sky.inView.value_or(-1), 17);
     QCOMPARE(sky.used.value_or(-1), 14);
     // Each satellite of the simulator's sky is described, under its constellation, by either satellite message.
@@ -195,8 +190,7 @@ void GPSReceiverSimulatorTest::_workerConfiguresBase()
                  qPrintable(QString::number(*status.meanAccuracyMeters)));
         GPSBaseStatus earlier;
         earlier.state = GPSBaseState::Active;
-        for (const auto& arguments : std::as_const(baseStatuses)) {
-            const auto later = qvariant_cast<GPSBaseStatus>(arguments.first());
+        for (const GPSBaseStatus& later : baseStatuses.all()) {
             QVERIFY(later.duration >= earlier.duration);
             QVERIFY(later.state == GPSBaseState::Valid || earlier.state == GPSBaseState::Active);
             earlier = later;

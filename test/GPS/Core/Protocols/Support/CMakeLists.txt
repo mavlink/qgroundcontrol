@@ -27,6 +27,7 @@ add_library(
     UBXReceiverModel.cc
     UBXReceiverModel.h
     UnicoreReceiverModel.h
+    WorkerReports.h
 )
 # The golden transcripts (../golden), which are application-free too: their recorder and text here, and their
 # scenarios, decode table and checks in ../Scenarios, included as "Protocols/Scenarios/<header>".

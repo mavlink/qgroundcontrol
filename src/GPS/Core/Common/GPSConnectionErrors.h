@@ -27,7 +27,7 @@ enum class GPSInputProblem
     NoData = 1,
     /// Bytes arrive, but no GNSS output.
     NotGNSS = 2,
-    /// The protocol identified in the input (GPSReceiverWorker::receiverDetected()) carries no position messages.
+    /// The protocol identified in the input (GPSReceiverDetected) carries no position messages.
     NoPositions = 3,
     /// Only RTCM corrections arrive.
     CorrectionsOnly = 4,
