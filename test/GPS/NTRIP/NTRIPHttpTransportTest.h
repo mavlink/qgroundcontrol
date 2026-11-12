@@ -43,6 +43,8 @@ private slots:
     void _validFrameWatchdog();
     void _silentStreamWatchdog_data();
     void _silentStreamWatchdog();
+    void _firstDataEndsTheLongWait_data();
+    void _firstDataEndsTheLongWait();
 
     // Observers that stop or restart the transport
     void _handshakeRetiresAttempt_data();

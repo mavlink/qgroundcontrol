@@ -57,8 +57,8 @@ private slots:
     void _missingMountpointDoesNotStartTransport();
     void _correctionIngressKeepsSessionAndIdentity();
     void _ggaSettingsUseInjectedProviders();
-    void _connectedWithoutPositionSaysSo_data();
-    void _connectedWithoutPositionSaysSo();
+    void _connectedMessageSaysWhatTheStreamWaitsFor_data();
+    void _connectedMessageSaysWhatTheStreamWaitsFor();
     void _mountpointChangeReconnects();
     void _transportDiagnosticsReachManager();
     void _statusCallbackStopsTransition();

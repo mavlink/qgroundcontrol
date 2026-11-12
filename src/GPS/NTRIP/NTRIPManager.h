@@ -187,7 +187,8 @@ private:
     /// Default user-visible message for a state. Callers may override via detail.
     static QString _defaultMessageFor(ConnectionStatus state);
     /// The message of the Connected state. A network RTK (VRS) mountpoint sends nothing until it is told a position,
-    /// so the message says when none has been reported and no corrections have arrived.
+    /// and may then take a minute or more over its first corrections, so until corrections arrive the message says
+    /// which of the two the stream waits for.
     QString _connectedMessage() const;
     /// Publishes _connectedMessage() while connected; the other states publish their own message.
     void _refreshConnectedMessage();

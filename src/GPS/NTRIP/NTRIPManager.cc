@@ -341,9 +341,11 @@ QString NTRIPManager::_defaultMessageFor(ConnectionStatus state)
 
 QString NTRIPManager::_connectedMessage() const
 {
-    const bool waiting = _ggaReporter.currentSource().isEmpty() && _stats.messagesReceived() == 0;
-    return waiting ? tr("Connected, waiting for a position to report")
-                   : _defaultMessageFor(ConnectionStatus::Connected);
+    if (_stats.messagesReceived() > 0) {
+        return _defaultMessageFor(ConnectionStatus::Connected);
+    }
+    return _ggaReporter.currentSource().isEmpty() ? tr("Connected, waiting for a position to report")
+                                                  : tr("Connected, waiting for corrections");
 }
 
 void NTRIPManager::_refreshConnectedMessage()

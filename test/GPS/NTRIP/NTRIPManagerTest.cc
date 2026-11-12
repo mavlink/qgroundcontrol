@@ -965,7 +965,7 @@ void NTRIPManagerTest::_ggaSettingsUseInjectedProviders()
     manager.shutdown();
 }
 
-void NTRIPManagerTest::_connectedWithoutPositionSaysSo_data()
+void NTRIPManagerTest::_connectedMessageSaysWhatTheStreamWaitsFor_data()
 {
     QTest::addColumn<bool>("positionArrives");
     QTest::newRow("position-arrives") << true;
@@ -973,7 +973,7 @@ void NTRIPManagerTest::_connectedWithoutPositionSaysSo_data()
     QTest::newRow("corrections-arrive") << false;
 }
 
-void NTRIPManagerTest::_connectedWithoutPositionSaysSo()
+void NTRIPManagerTest::_connectedMessageSaysWhatTheStreamWaitsFor()
 {
     QFETCH(bool, positionArrives);
     ManualScheduler scheduler;
@@ -990,13 +990,16 @@ void NTRIPManagerTest::_connectedWithoutPositionSaysSo()
 
     QSignalSpy messages(&manager, &NTRIPManager::statusMessageChanged);
     if (positionArrives) {
+        // It may then take a minute or more over its first corrections.
         position = ggaObservation(QGeoCoordinate(47, 8, 500));
         QVERIFY(scheduler.advanceBy(NTRIPGgaReporter::FAST_RETRY_INTERVAL));
         QCOMPARE(transport->sentNmea.size(), 1);
-    } else {
-        transport->simulateRtcmData(GPSTest::rtcmMessage(1005), 1005, scheduler.nowMs());
-        deliverQueuedCalls();
+        QCOMPARE(manager.statusMessage(), NTRIPManager::tr("Connected, waiting for corrections"));
+        QCOMPARE(messages.size(), 1);
+        messages.clear();
     }
+    transport->simulateRtcmData(GPSTest::rtcmMessage(1005), 1005, scheduler.nowMs());
+    deliverQueuedCalls();
     QCOMPARE(manager.statusMessage(), NTRIPManager::tr("Connected"));
     QCOMPARE(messages.size(), 1);
     manager.shutdown();

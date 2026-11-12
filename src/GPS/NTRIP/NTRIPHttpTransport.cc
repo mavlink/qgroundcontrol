@@ -53,6 +53,7 @@ void NTRIPHttpTransport::stop()
 NTRIPHttpSession* NTRIPHttpTransport::_attachSession(NTRIPHttpSession* session)
 {
     _rtcmDecoder.reset();
+    _dataReceived = false;
     _dataSinceValidFrame = false;
     _session = session;
     // A retired session is disconnected, and a failed attempt sets _stopped, so these run only for the live attempt.
@@ -64,6 +65,10 @@ NTRIPHttpSession* NTRIPHttpTransport::_attachSession(NTRIPHttpSession* session)
     connect(session, &NTRIPHttpSession::responseStarted, this, &NTRIPHttpTransport::_onResponseStarted);
     connect(session, &NTRIPHttpSession::bodyReceived, this, [this](const QByteArray& body, qint64 receivedAtMs) {
         _dataSinceValidFrame = true;
+        if (!std::exchange(_dataReceived, true)) {
+            // The wait for the first data is over: the stall clock starts again, with the stall timeout.
+            _dataWatchdogTask.cancel();
+        }
         _expectData();
         _parseRtcm(body, receivedAtMs);
     });
@@ -96,26 +101,32 @@ void NTRIPHttpTransport::_startConnectTimeout()
     });
 }
 
+std::chrono::milliseconds NTRIPHttpTransport::_stallTimeout() const
+{
+    return _dataReceived ? DATA_WATCHDOG : FIRST_DATA_TIMEOUT;
+}
+
 void NTRIPHttpTransport::_expectData()
 {
     if (_dataWatchdogTask.active()) {
         return;
     }
     _lastValidFrameMs = _nowMs();
-    _startDataWatchdog(DATA_WATCHDOG);
+    _startDataWatchdog(_stallTimeout());
 }
 
 void NTRIPHttpTransport::_startDataWatchdog(std::chrono::milliseconds delay)
 {
     // Valid frames only record their time; the single timer re-arms for the remainder when it expires early.
     _dataWatchdogTask.schedule(delay, [this]() {
+        const std::chrono::milliseconds allowed = _stallTimeout();
         const std::chrono::milliseconds idle{_nowMs() - _lastValidFrameMs};
-        if (idle < DATA_WATCHDOG) {
-            _startDataWatchdog(DATA_WATCHDOG - idle);
+        if (idle < allowed) {
+            _startDataWatchdog(allowed - idle);
         } else if (_dataSinceValidFrame) {
             _fail({NTRIPError::InvalidStream, tr("No valid RTCM corrections received")});
         } else {
-            const auto secs = std::chrono::duration_cast<std::chrono::seconds>(DATA_WATCHDOG).count();
+            const auto secs = std::chrono::duration_cast<std::chrono::seconds>(allowed).count();
             qCWarning(NTRIPHttpTransportLog) << "No data received for" << secs << "seconds";
             _fail({NTRIPError::DataWatchdog, tr("No data received for %1 seconds").arg(secs)});
         }

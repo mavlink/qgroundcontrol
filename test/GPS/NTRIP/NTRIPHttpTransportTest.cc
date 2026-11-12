@@ -38,6 +38,9 @@ void NTRIPHttpTransportTest::_feed(NTRIPHttpTransport& transport, QByteArrayView
 }
 
 namespace {
+/// A position report as a caster receives it.
+const QByteArray kPositionReport = "$GPGGA,120000.00,4700.0000,N,00800.0000,E,1,12,1.0,500.0,M,0.0,M,,*65\r\n";
+
 /// A write-only socket that admits as many bytes per write as @a admit returns.
 class WriteSocket : public QTcpSocket
 {
@@ -484,14 +487,17 @@ void NTRIPHttpTransportTest::_validFrameWatchdog()
 void NTRIPHttpTransportTest::_silentStreamWatchdog_data()
 {
     QTest::addColumn<bool>("corrections");
-    QTest::newRow("after-corrections") << true;
-    // A network RTK (VRS) mountpoint sends nothing before it is told a position, however long that takes.
-    QTest::newRow("after-position-report") << false;
+    QTest::addColumn<std::chrono::milliseconds>("allowed");
+    QTest::newRow("after-corrections") << true << NTRIPHttpTransport::DATA_WATCHDOG;
+    // A network RTK (VRS) mountpoint sends nothing before it is told a position, however long that takes, and may
+    // then take longer over its first corrections than a stream may stall.
+    QTest::newRow("after-position-report") << false << NTRIPHttpTransport::FIRST_DATA_TIMEOUT;
 }
 
 void NTRIPHttpTransportTest::_silentStreamWatchdog()
 {
     QFETCH(bool, corrections);
+    QFETCH(std::chrono::milliseconds, allowed);
     CasterSession session;
     const QSignalSpy& errors = session.signal("error");
     auto* connection = session.start();
@@ -503,11 +509,11 @@ void NTRIPHttpTransportTest::_silentStreamWatchdog()
         QTRY_COMPARE_WITH_TIMEOUT(session.spy.count("correctionFrameReceived"), 1, TestTimeout::mediumMs());
     } else {
         QTRY_COMPARE_WITH_TIMEOUT(session.spy.count("connected"), 1, TestTimeout::mediumMs());
-        QVERIFY(session.scheduler.advanceBy(10 * NTRIPHttpTransport::DATA_WATCHDOG));
+        QVERIFY(session.scheduler.advanceBy(10 * NTRIPHttpTransport::FIRST_DATA_TIMEOUT));
         QVERIFY(errors.isEmpty());
-        session.transport.sendNMEA("$GPGGA,120000.00,4700.0000,N,00800.0000,E,1,12,1.0,500.0,M,0.0,M,,*65\r\n");
+        session.transport.sendNMEA(kPositionReport);
     }
-    QVERIFY(session.scheduler.advanceBy(NTRIPHttpTransport::DATA_WATCHDOG - std::chrono::milliseconds(1)));
+    QVERIFY(session.scheduler.advanceBy(allowed - std::chrono::milliseconds(1)));
     QVERIFY(errors.isEmpty());
     expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg,
                      QRegularExpression(QStringLiteral("^No data received for")));
@@ -516,7 +522,55 @@ void NTRIPHttpTransportTest::_silentStreamWatchdog()
     QCOMPARE(errors.size(), 1);
     const auto failure = failureAt(errors);
     QCOMPARE(failure.code, NTRIPError::DataWatchdog);
-    QVERIFY(failure.detail.contains(QStringLiteral("No data received")));
+    QCOMPARE(failure.detail, NTRIPHttpTransport::tr("No data received for %1 seconds")
+                                 .arg(std::chrono::duration_cast<std::chrono::seconds>(allowed).count()));
+    QCOMPARE(session.scheduler.pendingCount(), 0);
+}
+
+void NTRIPHttpTransportTest::_firstDataEndsTheLongWait_data()
+{
+    QTest::addColumn<bool>("corrections");
+    QTest::newRow("corrections") << true;
+    // A stream in another format has the stall timeout to show a valid message, from its first data on.
+    QTest::newRow("other-data") << false;
+}
+
+void NTRIPHttpTransportTest::_firstDataEndsTheLongWait()
+{
+    QFETCH(bool, corrections);
+    CasterSession session;
+    const QSignalSpy& errors = session.signal("error");
+    auto* connection = session.start();
+    QVERIFY(connection);
+    QVERIFY(connection->waitForRequest().endsWith("\r\n\r\n"));
+    const QByteArray response = "HTTP/1.1 200 OK\r\n\r\n";
+    QCOMPARE(connection->write(response), response.size());
+    QTRY_COMPARE_WITH_TIMEOUT(session.spy.count("connected"), 1, TestTimeout::mediumMs());
+    session.transport.sendNMEA(kPositionReport);
+
+    // The caster computes its first corrections for longer than a stream may stall.
+    QVERIFY(session.scheduler.advanceBy(NTRIPHttpTransport::FIRST_DATA_TIMEOUT - std::chrono::milliseconds(1)));
+    QVERIFY(errors.isEmpty());
+    auto* httpSession = session.transport.findChild<NTRIPHttpSession*>();
+    QVERIFY(httpSession);
+    QSignalSpy received(httpSession, &NTRIPHttpSession::bodyReceived);
+    const QByteArray data = corrections ? GPSTest::rtcmMessage(1005) : QByteArray("another format");
+    QCOMPARE(connection->write(data), data.size());
+    QTRY_COMPARE_WITH_TIMEOUT(received.size(), 1, TestTimeout::mediumMs());
+
+    // From its first data on the stream is held to the stall timeout.
+    QVERIFY(session.scheduler.advanceBy(NTRIPHttpTransport::DATA_WATCHDOG - std::chrono::milliseconds(1)));
+    QVERIFY(errors.isEmpty());
+    if (corrections) {
+        expectLogMessage("GPS.NTRIPHttpTransport", QtWarningMsg,
+                         QRegularExpression(QStringLiteral("^No data received for 30 seconds")));
+    }
+    QVERIFY(session.scheduler.advanceBy(std::chrono::milliseconds(1)));
+    if (corrections) {
+        verifyExpectedLogMessage();
+    }
+    QCOMPARE(errors.size(), 1);
+    QCOMPARE(failureAt(errors).code, corrections ? NTRIPError::DataWatchdog : NTRIPError::InvalidStream);
     QCOMPARE(session.scheduler.pendingCount(), 0);
 }
 

@@ -16,6 +16,8 @@ The toolbar GNSS indicator also offers **Connect** once an NTRIP server is confi
 Shows the NTRIP connection state with message and byte counters, the age of the last correction, and a Connect/Disconnect button.
 The counters count everything the caster sends, including messages the [RTCM message filter](#correction-routing) keeps from vehicles.
 
+QGroundControl reconnects when a stream that has delivered data sends nothing for 30 seconds. A stream that has not delivered anything yet has longer: it waits without a limit while there is no position to report to the caster, and 2 minutes once one has been reported ([GGA Position Reporting](#gga-position-reporting)).
+
 ## NTRIP Server
 
 - **Host address** — NTRIP caster hostname or IP
@@ -42,7 +44,9 @@ A caster that answers with an HTTP redirect is not followed. QGroundControl repo
 
 Network RTK (VRS) casters need the rover position. Select the position QGC reports and how often.
 
-A network RTK mountpoint sends nothing until it has received a position. While none is available, for example before the vehicle has a GPS fix, QGroundControl stays connected and the connection status reads **Connected, waiting for a position to report**. The 30-second limit on a silent stream starts with the first position reported or the first data received.
+A network RTK mountpoint sends nothing until it has received a position. While none is available, for example before the vehicle has a GPS fix, QGroundControl stays connected and the connection status reads **Connected, waiting for a position to report**.
+
+Once it has a position, the caster works out corrections for it before it sends any, which can take a minute or more. Until the first corrections arrive the connection status reads **Connected, waiting for corrections**, and QGroundControl gives the caster 2 minutes from the first position reported to send its first data before it reconnects. From the first data on, the [30-second limit](#ntrip-connection) on a silent stream applies.
 
 The report carries the selected position's height above mean sea level and the geoid separation that goes with it.
 A height above the WGS84 ellipsoid, as the position of an Android device or of a base station has, is converted with the EGM96 geoid model built into QGroundControl.
