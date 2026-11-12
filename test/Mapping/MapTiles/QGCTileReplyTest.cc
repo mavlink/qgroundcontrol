@@ -4,6 +4,7 @@
 
 #include <QtCore/QPointer>
 #include <QtCore/QScopeGuard>
+#include <QtCore/QUrl>
 #include <QtTest/QSignalSpy>
 
 #include "AppSettings.h"
@@ -502,6 +503,7 @@ void QGCTileReplyTest::_sourceChangedDuringRequest()
     QVERIFY_SIGNAL_COUNT_WAIT(fetchedSpy, 1, TestTimeout::mediumMs());
     QCOMPARE(fetched.error(), QGCTileReply::Error::NoError);
     QCOMPARE(nam.requestCount, 1);
+    QCOMPARE(nam.requests.constFirst().url().host(), QUrl(kTileReplySourceB).host());
 
     // It is stored as a tile of source B
     QGCTileReply cached(&nam, mapId, kTileX + 31, kTileY, kTileZoom);
@@ -541,9 +543,9 @@ void QGCTileReplyTest::_requestIdentity()
     QSignalSpy finishedSpy(&reply, &QGCTileReply::finished);
     QVERIFY(reply.start());
     QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::mediumMs());
-    QCOMPARE(nam.replies.count(), 1);
+    QCOMPARE(nam.requests.count(), 1);
 
-    const QNetworkRequest request = nam.replies.constFirst()->request();
+    const QNetworkRequest request = nam.requests.constFirst();
     const QString userAgent = request.header(QNetworkRequest::UserAgentHeader).toString();
     QCOMPARE(userAgent == QGCNetworkHelper::defaultUserAgent(), namesApplication);
     QCOMPARE(request.hasRawHeader("Referer"), !namesApplication);

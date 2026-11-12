@@ -304,7 +304,7 @@ void QGCMapEngineManagerTest::_testMapAttribution_data()
         << QStringLiteral("Svalbard Topo") << QStringLiteral("© Norwegian Polar Institute");
 
     QTest::newRow("GeoMap terrain") << QString::fromLatin1(TerrariumElevationProvider::kProviderKey)
-                                    << QGCMapEngineManager::terrainAttribution();
+                                    << QStringLiteral("Terrain: Mapzen, USGS, NOAA and other sources");
     QTest::newRow("source that the user sets") << QStringLiteral("CustomURL Custom") << QString();
     QTest::newRow("not a map") << QStringLiteral("No Such Map") << QString();
 }
@@ -315,6 +315,12 @@ void QGCMapEngineManagerTest::_testMapAttribution()
     QFETCH(QString, attribution);
 
     QCOMPARE(QGCMapEngineManager::mapAttribution(mapType), attribution);
+}
+
+void QGCMapEngineManagerTest::_testTerrainAttribution()
+{
+    QCOMPARE(QGCMapEngineManager::terrainAttribution(),
+             QStringLiteral("Terrain: Mapzen, USGS, NOAA and other sources"));
 }
 
 // The settings select a map by provider and type: the providers and their types must lead to every map, and to

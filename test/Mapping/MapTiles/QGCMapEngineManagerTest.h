@@ -15,6 +15,7 @@ private slots:
     void _testNewSetTellsManagerOfItsSelection();
     void _testMapAttribution_data();
     void _testMapAttribution();
+    void _testTerrainAttribution();
     void _testProviderAndTypeSelectEveryMap();
     void _testChosenMap_data();
     void _testChosenMap();

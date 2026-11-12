@@ -373,13 +373,16 @@ void QGCCachedTileSetTest::_testDownload()
     // so the sets are all reported once the task queued after them is.
     QList<QGCCachedTileSet*> databaseSets;
     const auto deleteSets = qScopeGuard([&databaseSets] { qDeleteAll(databaseSets); });
+    // The context of a task's signal is declared after what the signal writes, so that a late signal is dropped
+    const QObject fetchSetsContext;
     QGCFetchTileSetTask* const fetchSetsTask = new QGCFetchTileSetTask();
-    connect(fetchSetsTask, &QGCFetchTileSetTask::tileSetFetched, this,
+    connect(fetchSetsTask, &QGCFetchTileSetTask::tileSetFetched, &fetchSetsContext,
             [&databaseSets](QGCCachedTileSet* databaseSet) { databaseSets.append(databaseSet); });
     QVERIFY(engine->addTask(fetchSetsTask));
     bool setsReported = false;
+    const QObject sentinelContext;
     QGCFetchTileTask* const sentinelTask = new QGCFetchTileTask(QStringLiteral("no such tile"));
-    connect(sentinelTask, &QGCMapTask::error, this, [&setsReported] { setsReported = true; });
+    connect(sentinelTask, &QGCMapTask::error, &sentinelContext, [&setsReported] { setsReported = true; });
     QVERIFY(engine->addTask(sentinelTask));
     QTRY_VERIFY_WITH_TIMEOUT(setsReported, TestTimeout::mediumMs());
 

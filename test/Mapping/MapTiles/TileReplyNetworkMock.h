@@ -4,11 +4,14 @@
 
 #include <QtCore/QBuffer>
 #include <QtCore/QFile>
+#include <QtCore/QList>
+#include <QtCore/QPointer>
 #include <QtCore/QTimer>
 #include <QtGui/QColor>
 #include <QtGui/QImage>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QNetworkRequest>
 
 // Network stand-ins for tests of tile fetching: no request leaves the process.
 
@@ -81,12 +84,15 @@ public:
     int httpStatus = 0;
     bool holdReplies = false;
     int requestCount = 0;
-    QList<TileReplyCannedReply*> replies;
+    QList<QNetworkRequest> requests;
+    /// Null once the reply is deleted: the code under test deletes a reply that finished
+    QList<QPointer<TileReplyCannedReply>> replies;
 
 protected:
     QNetworkReply* createRequest(Operation, const QNetworkRequest& request, QIODevice*) final
     {
         requestCount++;
+        requests.append(request);
         auto* const reply = new TileReplyCannedReply(request, body, error, httpStatus, holdReplies, this);
         replies.append(reply);
         return reply;

@@ -107,8 +107,10 @@ void QGCCacheWorkerTest::initTestCase()
 bool QGCCacheWorkerTest::_startWorker(QGCCacheWorker& worker, int timeoutMs)
 {
     bool totalsReceived = false;
-    auto conn =
-        connect(&worker, &QGCCacheWorker::updateTotals, this, [&]() { totalsReceived = true; }, Qt::QueuedConnection);
+    // Declared after what the lambda writes: a signal still queued when this function returns is dropped with it
+    const QObject totalsContext;
+    auto conn = connect(
+        &worker, &QGCCacheWorker::updateTotals, &totalsContext, [&]() { totalsReceived = true; }, Qt::QueuedConnection);
 
     auto* initTask = new QGCMapTask(QGCMapTask::TaskType::taskInit);
     if (!worker.enqueueTask(initTask)) {
@@ -176,8 +178,9 @@ void QGCCacheWorkerTest::_testUpdateTotalsOnInit()
 
     quint32 totalTiles = UINT32_MAX;
     quint64 totalSize = UINT64_MAX;
+    const QObject totalsContext;
     auto conn = connect(
-        &worker, &QGCCacheWorker::updateTotals, this,
+        &worker, &QGCCacheWorker::updateTotals, &totalsContext,
         [&](quint32 tiles, quint64 size, quint32, quint64) {
             totalTiles = tiles;
             totalSize = size;
@@ -210,11 +213,13 @@ void QGCCacheWorkerTest::_testSaveAndFetchTile()
     auto* fetchTask = new QGCFetchTileTask(QStringLiteral("h1"));
     std::optional<QGCCacheTile> fetched;
     bool fetchError = false;
+    // Declared after what the lambdas write: a signal still queued when this function returns is dropped with it
+    const QObject fetchContext;
     connect(
-        fetchTask, &QGCFetchTileTask::tileFetched, this, [&](const QGCCacheTile& t) { fetched = t; },
+        fetchTask, &QGCFetchTileTask::tileFetched, &fetchContext, [&](const QGCCacheTile& t) { fetched = t; },
         Qt::QueuedConnection);
     connect(
-        fetchTask, &QGCMapTask::error, this, [&](QGCMapTask::TaskType, const QString&) { fetchError = true; },
+        fetchTask, &QGCMapTask::error, &fetchContext, [&](QGCMapTask::TaskType, const QString&) { fetchError = true; },
         Qt::QueuedConnection);
 
     QVERIFY(worker.enqueueTask(fetchTask));
@@ -240,11 +245,12 @@ void QGCCacheWorkerTest::_testFetchTileNotFound()
     auto* fetchTask = new QGCFetchTileTask(QStringLiteral("nonexistent"));
     std::optional<QGCCacheTile> fetched;
     bool fetchError = false;
+    const QObject fetchContext;
     connect(
-        fetchTask, &QGCFetchTileTask::tileFetched, this, [&](const QGCCacheTile& t) { fetched = t; },
+        fetchTask, &QGCFetchTileTask::tileFetched, &fetchContext, [&](const QGCCacheTile& t) { fetched = t; },
         Qt::QueuedConnection);
     connect(
-        fetchTask, &QGCMapTask::error, this, [&](QGCMapTask::TaskType, const QString&) { fetchError = true; },
+        fetchTask, &QGCMapTask::error, &fetchContext, [&](QGCMapTask::TaskType, const QString&) { fetchError = true; },
         Qt::QueuedConnection);
 
     QVERIFY(worker.enqueueTask(fetchTask));
@@ -271,11 +277,12 @@ void QGCCacheWorkerTest::_testFetchMapTileMissServesFakeTile()
     auto* fetchTask = new QGCFetchTileTask(hash);
     std::optional<QGCCacheTile> fetched;
     bool fetchError = false;
+    const QObject fetchContext;
     connect(
-        fetchTask, &QGCFetchTileTask::tileFetched, this, [&](const QGCCacheTile& t) { fetched = t; },
+        fetchTask, &QGCFetchTileTask::tileFetched, &fetchContext, [&](const QGCCacheTile& t) { fetched = t; },
         Qt::QueuedConnection);
     connect(
-        fetchTask, &QGCMapTask::error, this, [&](QGCMapTask::TaskType, const QString&) { fetchError = true; },
+        fetchTask, &QGCMapTask::error, &fetchContext, [&](QGCMapTask::TaskType, const QString&) { fetchError = true; },
         Qt::QueuedConnection);
 
     QVERIFY(worker.enqueueTask(fetchTask));
@@ -312,11 +319,12 @@ void QGCCacheWorkerTest::_testFetchElevationTileMissServesSyntheticTerrain()
     auto* fetchTask = new QGCFetchTileTask(hash);
     std::optional<QGCCacheTile> fetched;
     bool fetchError = false;
+    const QObject fetchContext;
     connect(
-        fetchTask, &QGCFetchTileTask::tileFetched, this, [&](const QGCCacheTile& t) { fetched = t; },
+        fetchTask, &QGCFetchTileTask::tileFetched, &fetchContext, [&](const QGCCacheTile& t) { fetched = t; },
         Qt::QueuedConnection);
     connect(
-        fetchTask, &QGCMapTask::error, this, [&](QGCMapTask::TaskType, const QString&) { fetchError = true; },
+        fetchTask, &QGCMapTask::error, &fetchContext, [&](QGCMapTask::TaskType, const QString&) { fetchError = true; },
         Qt::QueuedConnection);
 
     QVERIFY(worker.enqueueTask(fetchTask));
@@ -341,11 +349,12 @@ void QGCCacheWorkerTest::_testFetchElevationTileMissServesSyntheticTerrain()
     auto* farTask = new QGCFetchTileTask(UrlFactory::getTileHash(elevationType, farX, farY, 1));
     std::optional<QGCCacheTile> farFetched;
     bool farError = false;
+    const QObject farContext;
     connect(
-        farTask, &QGCFetchTileTask::tileFetched, this, [&](const QGCCacheTile& t) { farFetched = t; },
+        farTask, &QGCFetchTileTask::tileFetched, &farContext, [&](const QGCCacheTile& t) { farFetched = t; },
         Qt::QueuedConnection);
     connect(
-        farTask, &QGCMapTask::error, this, [&](QGCMapTask::TaskType, const QString&) { farError = true; },
+        farTask, &QGCMapTask::error, &farContext, [&](QGCMapTask::TaskType, const QString&) { farError = true; },
         Qt::QueuedConnection);
     QVERIFY(worker.enqueueTask(farTask));
     QTRY_VERIFY_WITH_TIMEOUT(farFetched || farError, TestTimeout::mediumMs());
@@ -369,14 +378,16 @@ void QGCCacheWorkerTest::_testFetchTileSets()
 
     // Wait for updateTotals after the fetch task completes to know all sets were emitted
     bool taskDone = false;
-    auto totalsConn =
-        connect(&worker, &QGCCacheWorker::updateTotals, this, [&]() { taskDone = true; }, Qt::QueuedConnection);
+    const QObject totalsContext;
+    auto totalsConn = connect(
+        &worker, &QGCCacheWorker::updateTotals, &totalsContext, [&]() { taskDone = true; }, Qt::QueuedConnection);
 
     QList<QGCCachedTileSet*> sets;
     auto* fetchTask = new QGCFetchTileSetTask();
+    const QObject fetchContext;
     connect(
-        fetchTask, &QGCFetchTileSetTask::tileSetFetched, this, [&](QGCCachedTileSet* set) { sets.append(set); },
-        Qt::QueuedConnection);
+        fetchTask, &QGCFetchTileSetTask::tileSetFetched, &fetchContext,
+        [&](QGCCachedTileSet* set) { sets.append(set); }, Qt::QueuedConnection);
 
     QVERIFY(worker.enqueueTask(fetchTask));
     QTRY_VERIFY_WITH_TIMEOUT(taskDone, TestTimeout::mediumMs());
@@ -412,12 +423,13 @@ void QGCCacheWorkerTest::_testCreateAndDeleteTileSet()
     auto* createTask = new QGCCreateTileSetTask(tileSet);
     QGCCachedTileSet* savedSet = nullptr;
     bool createError = false;
+    const QObject createContext;
     connect(
-        createTask, &QGCCreateTileSetTask::tileSetSaved, this, [&](QGCCachedTileSet* set) { savedSet = set; },
+        createTask, &QGCCreateTileSetTask::tileSetSaved, &createContext, [&](QGCCachedTileSet* set) { savedSet = set; },
         Qt::QueuedConnection);
     connect(
-        createTask, &QGCMapTask::error, this, [&](QGCMapTask::TaskType, const QString&) { createError = true; },
-        Qt::QueuedConnection);
+        createTask, &QGCMapTask::error, &createContext,
+        [&](QGCMapTask::TaskType, const QString&) { createError = true; }, Qt::QueuedConnection);
 
     QVERIFY(worker.enqueueTask(createTask));
     QTRY_VERIFY_WITH_TIMEOUT(savedSet || createError, TestTimeout::mediumMs());
@@ -429,8 +441,9 @@ void QGCCacheWorkerTest::_testCreateAndDeleteTileSet()
     const quint64 setID = savedSet->id();
     auto* deleteTask = new QGCDeleteTileSetTask(setID);
     quint64 deletedID = 0;
+    const QObject deleteContext;
     connect(
-        deleteTask, &QGCDeleteTileSetTask::tileSetDeleted, this, [&](quint64 id) { deletedID = id; },
+        deleteTask, &QGCDeleteTileSetTask::tileSetDeleted, &deleteContext, [&](quint64 id) { deletedID = id; },
         Qt::QueuedConnection);
 
     QVERIFY(worker.enqueueTask(deleteTask));
@@ -458,14 +471,16 @@ void QGCCacheWorkerTest::_testPruneCache()
 
     auto* pruneTask = new QGCPruneCacheTask(500);
     bool pruneDone = false;
-    connect(pruneTask, &QGCPruneCacheTask::pruned, this, [&]() { pruneDone = true; }, Qt::QueuedConnection);
+    const QObject pruneContext;
+    connect(pruneTask, &QGCPruneCacheTask::pruned, &pruneContext, [&]() { pruneDone = true; }, Qt::QueuedConnection);
     QVERIFY(worker.enqueueTask(pruneTask));
     QTRY_VERIFY_WITH_TIMEOUT(pruneDone, TestTimeout::mediumMs());
 
     // Trigger totals to verify count decreased
     quint32 remaining = UINT32_MAX;
+    const QObject totalsContext;
     auto conn = connect(
-        &worker, &QGCCacheWorker::updateTotals, this,
+        &worker, &QGCCacheWorker::updateTotals, &totalsContext,
         [&](quint32 tiles, quint64, quint32, quint64) { remaining = tiles; }, Qt::QueuedConnection);
     QVERIFY(worker.enqueueTask(new QGCMapTask(QGCMapTask::TaskType::taskInit)));
     QTRY_VERIFY_WITH_TIMEOUT(remaining != UINT32_MAX, TestTimeout::mediumMs());
@@ -490,15 +505,17 @@ void QGCCacheWorkerTest::_testResetDatabase()
 
     auto* resetTask = new QGCResetTask();
     bool resetDone = false;
-    connect(resetTask, &QGCResetTask::resetCompleted, this, [&]() { resetDone = true; }, Qt::QueuedConnection);
+    const QObject resetContext;
+    connect(resetTask, &QGCResetTask::resetCompleted, &resetContext, [&]() { resetDone = true; }, Qt::QueuedConnection);
     QVERIFY(worker.enqueueTask(resetTask));
     QTRY_VERIFY_WITH_TIMEOUT(resetDone, TestTimeout::mediumMs());
 
     // Verify saved tile is gone
     auto* fetchTask = new QGCFetchTileTask(QStringLiteral("r1"));
     bool fetchError = false;
+    const QObject fetchContext;
     connect(
-        fetchTask, &QGCMapTask::error, this, [&](QGCMapTask::TaskType, const QString&) { fetchError = true; },
+        fetchTask, &QGCMapTask::error, &fetchContext, [&](QGCMapTask::TaskType, const QString&) { fetchError = true; },
         Qt::QueuedConnection);
     QVERIFY(worker.enqueueTask(fetchTask));
     QTRY_VERIFY_WITH_TIMEOUT(fetchError, TestTimeout::mediumMs());
@@ -602,8 +619,9 @@ void QGCCacheWorkerTest::_testCreateTileSetKeepsSourceOfItsCreation()
     customUrl->setRawValue(kCacheWorkerSourceB);
 
     QGCCachedTileSet* savedSet = nullptr;
+    const QObject createContext;
     connect(
-        createTask, &QGCCreateTileSetTask::tileSetSaved, this, [&](QGCCachedTileSet* set) { savedSet = set; },
+        createTask, &QGCCreateTileSetTask::tileSetSaved, &createContext, [&](QGCCachedTileSet* set) { savedSet = set; },
         Qt::QueuedConnection);
     QVERIFY(worker.enqueueTask(createTask));
     QTRY_VERIFY_WITH_TIMEOUT(savedSet, TestTimeout::mediumMs());
@@ -611,8 +629,9 @@ void QGCCacheWorkerTest::_testCreateTileSetKeepsSourceOfItsCreation()
 
     auto* const listTask = new QGCGetTileDownloadListTask(savedSet->id(), 10);
     std::optional<QStringList> hashes;
+    const QObject listContext;
     connect(
-        listTask, &QGCGetTileDownloadListTask::tileListFetched, this,
+        listTask, &QGCGetTileDownloadListTask::tileListFetched, &listContext,
         [&](const QQueue<QGCTile*>& tiles) {
             hashes = QStringList();
             for (const QGCTile* tile : tiles) {
@@ -650,8 +669,10 @@ void QGCCacheWorkerTest::_testImportGivesOldTilesTheConfiguredSource()
     customUrl->setRawValue(kCacheWorkerSourceB);
     auto* const importTask = new QGCImportTileTask(importPath, false);
     bool imported = false;
+    const QObject importContext;
     connect(
-        importTask, &QGCImportTileTask::actionCompleted, this, [&imported] { imported = true; }, Qt::QueuedConnection);
+        importTask, &QGCImportTileTask::actionCompleted, &importContext, [&imported] { imported = true; },
+        Qt::QueuedConnection);
     QVERIFY(worker.enqueueTask(importTask));
     QTRY_VERIFY_WITH_TIMEOUT(imported, TestTimeout::mediumMs());
 
