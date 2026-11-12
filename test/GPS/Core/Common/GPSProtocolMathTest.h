@@ -10,6 +10,8 @@ class GPSProtocolMathTest : public UnitTest
 private slots:
     void _ecefConversion_data();
     void _ecefConversion();
+    void _ecefInverse_data();
+    void _ecefInverse();
     void _utcMicroseconds_data();
     void _utcMicroseconds();
     void _towAdvances_data();

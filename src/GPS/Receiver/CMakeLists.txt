@@ -3,6 +3,8 @@
 target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE
+        GPSFixedBaseEcef.cc
+        GPSFixedBaseEcef.h
         GPSReceiver.cc
         GPSReceiver.h
         GPSReceiverConnectionPolicy.cc

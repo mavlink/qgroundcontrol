@@ -388,12 +388,13 @@ void GPSSettingsBindingsTest::_settingsBindingsCoverEveryFact_data()
     QTest::addColumn<QList<Fact*>>("unbound");
 
     // A new setting must be bound, unless no service reads it: RTKSettings itself keeps the saved base sites and the
-    // receivers detected on each link.
+    // receivers detected on each link, and only the form reads how it shows the fixed base position.
     SettingsManager* const settings = SettingsManager::instance();
     QTest::newRow("RTK") << static_cast<SettingsGroup*>(settings->rtkSettings())
                          << GPSSettingsBindings::_boundFacts(settings->rtkSettings())
                          << QList<Fact*>{settings->rtkSettings()->savedBaseSites(),
-                                         settings->rtkSettings()->detectedReceivers()};
+                                         settings->rtkSettings()->detectedReceivers(),
+                                         settings->rtkSettings()->fixedBasePositionFormat()};
     QTest::newRow("NTRIP") << static_cast<SettingsGroup*>(settings->ntripSettings())
                            << GPSSettingsBindings::_boundFacts(settings->ntripSettings()) << QList<Fact*>{};
     QTest::newRow("GPSCorrection") << static_cast<SettingsGroup*>(settings->gpsCorrectionSettings())

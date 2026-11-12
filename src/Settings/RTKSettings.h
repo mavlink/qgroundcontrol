@@ -95,6 +95,14 @@ public:
     };
     Q_ENUM(ConnectionType)
 
+    /// Persisted values of fixedBasePositionFormat: how the form shows the one saved fixed base position.
+    enum BasePositionFormat : quint8
+    {
+        Geodetic = 0,
+        Ecef = 1,
+    };
+    Q_ENUM(BasePositionFormat)
+
     /// Limits of the saved base sites, as an enum so that QML reads them from the type.
     enum BaseSiteLimit : int
     {
@@ -154,6 +162,7 @@ public:
     DEFINE_SETTINGFACT(compactRtcmCorrections)
     DEFINE_SETTINGFACT(savedBaseSites)
     DEFINE_SETTINGFACT(detectedReceivers)
+    DEFINE_SETTINGFACT(fixedBasePositionFormat)
 
 signals:
     void baseSitesChanged();

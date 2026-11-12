@@ -69,6 +69,7 @@ set(_qgc_gps_suites
     Qml/GPSSatelliteViewTest
     Qml/NTRIPMountpointBrowserTest
     Qml/NTRIPSavedCastersTest
+    Receiver/GPSFixedBaseEcefTest
     Receiver/GPSReceiverConnectionPolicyTest
     Receiver/GPSReceiverFactGroupTest
     Receiver/GPSReceiverPresentationTest

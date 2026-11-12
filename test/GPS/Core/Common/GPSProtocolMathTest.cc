@@ -51,6 +51,35 @@ void GPSProtocolMathTest::_ecefConversion()
     QVERIFY(std::abs(restored.altitudeMeters - position.altitudeMeters) < 0.00001f);
 }
 
+void GPSProtocolMathTest::_ecefInverse_data()
+{
+    QTest::addColumn<double>("x");
+    QTest::addColumn<double>("y");
+    QTest::addColumn<double>("z");
+    QTest::addColumn<GPSEllipsoidPosition>("position");
+    QTest::newRow("oblique") << 3194419.145061 << 3194419.145061 << 4487348.408866 << GPSEllipsoidPosition{45, 45, 0};
+    QTest::newRow("north-pole") << 0.0 << 0.0 << 6356752.314245 << GPSEllipsoidPosition{90, 0, 0};
+    QTest::newRow("south-pole-below-ellipsoid") << 0.0 << 0.0 << -6356722.314245 << GPSEllipsoidPosition{-90, 0, -30};
+    // One metre either side of the date line: the longitude keeps its sign and stays within 180 degrees.
+    QTest::newRow("west-of-date-line") << -6378137.0 << 1.0 << 0.0 << GPSEllipsoidPosition{0, 179.999991016847, 0};
+    QTest::newRow("east-of-date-line") << -6378137.0 << -1.0 << 0.0 << GPSEllipsoidPosition{0, -179.999991016847, 0};
+}
+
+void GPSProtocolMathTest::_ecefInverse()
+{
+    QFETCH(double, x);
+    QFETCH(double, y);
+    QFETCH(double, z);
+    QFETCH(GPSEllipsoidPosition, position);
+    const GPSEllipsoidPosition restored = GPSProtocolMath::fromEcef({x, y, z});
+    QVERIFY(std::abs(restored.latitudeDegrees - position.latitudeDegrees) < 1e-9);
+    // Every longitude is the pole's.
+    if (std::abs(position.latitudeDegrees) != 90) {
+        QVERIFY(std::abs(restored.longitudeDegrees - position.longitudeDegrees) < 1e-9);
+    }
+    QVERIFY(std::abs(restored.altitudeMeters - position.altitudeMeters) < 1e-6);
+}
+
 void GPSProtocolMathTest::_utcMicroseconds_data()
 {
     QTest::addColumn<QList<int>>("calendar");

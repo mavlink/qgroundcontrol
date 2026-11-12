@@ -40,6 +40,7 @@ struct RTKSettingsFixture
         saved.setFactValue(settings->fixedBasePositionLongitude(), 0);
         saved.setFactValue(settings->fixedBasePositionAltitude(), 0);
         saved.setFactValue(settings->fixedBasePositionAccuracy(), 0);
+        saved.setFactValue(settings->fixedBasePositionFormat(), RTKSettings::Geodetic);
         saved.setFactValue(settings->compactRtcmCorrections(), false);
         saved.setFactValue(settings->connectionType(), RTKSettings::Serial);
         // Builds without serial links connect the saved serial selection over TCP.

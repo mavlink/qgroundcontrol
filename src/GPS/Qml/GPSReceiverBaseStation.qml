@@ -12,6 +12,8 @@ GPSReceiverSettingsGroup {
     id: root
 
     readonly property list<string> _baseModeNames: settings.baseMode.enumStrings
+    /// The fixed position is shown as ECEF coordinates instead of latitude, longitude and height.
+    readonly property bool _ecef: settings.fixedBasePositionFormat.rawValue === RTKSettings.Ecef
 
     heading: qsTr("RTK Base Station")
     // A passive receiver has no base settings. A manufacturer no receiver family has supports no base mode, which
@@ -111,9 +113,29 @@ GPSReceiverSettingsGroup {
         visible: root.baseMode === BaseModeDefinition.BaseFixed && root.presentation.rtkBase
         enabled: root._editable
 
-        GPSFactTextField { fact: root.settings.fixedBasePositionLatitude }
-        GPSFactTextField { fact: root.settings.fixedBasePositionLongitude }
-        GPSFactTextField { fact: root.settings.fixedBasePositionAltitude }
+        GPSFactComboField {
+            fact: root.settings.fixedBasePositionFormat
+            comboBox.objectName: "rtkFixedBaseFormat"
+        }
+        GPSFactTextField {
+            objectName: "rtkFixedBaseLatitude"
+            fact: root.settings.fixedBasePositionLatitude
+            shown: !root._ecef
+        }
+        GPSFactTextField {
+            objectName: "rtkFixedBaseLongitude"
+            fact: root.settings.fixedBasePositionLongitude
+            shown: !root._ecef
+        }
+        GPSFactTextField {
+            objectName: "rtkFixedBaseAltitude"
+            fact: root.settings.fixedBasePositionAltitude
+            shown: !root._ecef
+        }
+        GPSReceiverBaseEcef {
+            settings: root.settings
+            visible: root._ecef
+        }
         GPSFactTextField {
             fact: root.settings.fixedBasePositionAccuracy
             shown: root.presentation.fixedBaseAccuracy

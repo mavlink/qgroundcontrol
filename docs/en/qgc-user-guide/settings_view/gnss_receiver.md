@@ -82,6 +82,9 @@ The settings are:
     **Survey-In accuracy** (u-blox) is the position accuracy the survey must reach, and **Min observation time** how long it lasts at least.
     A Quectel receiver shows **Observation accuracy limit**, which filters each 1 Hz observation, and **Accepted observation time**, which counts the accepted observations.
   - **Fixed position:** The base starts from a known position: **Base Position Latitude**, **Base Position Longitude**, **Base Position Alt (WGS84)** and, for u-blox, **Base Position Accuracy**.
+    **Base position format** shows the same position as _ECEF X/Y/Z_ instead, in meters with 0.1 mm, as a surveyor's or a reference station's data sheet gives it: **Base Position X (ECEF, m)**, **Y** and **Z**.
+    One position is saved, as latitude, longitude and height, and both formats show it: a value you only look at does not change, and a coordinate you edit moves the position by that much.
+    While X, Y and Z are not a position near the Earth's surface, as after the first of three new coordinates, a note says that the base position is unchanged.
     [Saved base sites](#base_sites) keep several such positions under a name.
   - **Receiver-managed averaging:** The receiver averages its position for up to **Maximum averaging time**, without an accuracy guarantee (Unicore).
 - **Compact RTCM corrections (MSM4)** (u-blox): Sends MSM4 instead of MSM7 observations, about a third less correction bandwidth for slow telemetry links.

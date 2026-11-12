@@ -181,7 +181,7 @@
             "name": "fixedBasePositionAltitude",
             "shortDesc": "Base Position Alt (WGS84)",
             "longDesc": "Defines the altitude of the fixed RTK base position.",
-            "type": "float",
+            "type": "double",
             "default": 0,
             "units": "vertical m",
             "decimalPlaces": 2,
@@ -219,6 +219,16 @@
             "type": "string",
             "default": "",
             "label": "Detected receivers"
+        },
+        {
+            "name": "fixedBasePositionFormat",
+            "shortDesc": "Base position format",
+            "longDesc": "How the fixed RTK base position is entered and shown: as latitude, longitude and height above the WGS84 ellipsoid, or as ECEF X, Y and Z in meters. Both show the one saved position.",
+            "type": "uint8",
+            "enumStrings": "Latitude/longitude/height,ECEF X/Y/Z",
+            "enumValues": "0,1",
+            "default": 0,
+            "label": "Base position format"
         }
     ]
 }

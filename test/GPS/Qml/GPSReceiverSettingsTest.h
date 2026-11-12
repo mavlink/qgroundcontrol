@@ -17,6 +17,7 @@ private slots:
     void _surveySaveNeedsApplicationReceiver();
     void _surveySavedAsSite();
     void _baseSitePicker();
+    void _fixedPositionAsEcef();
     void _statusListsConstellations();
     void _connectionRowFollowsReceiver();
     void _tcpConnectionFields_data();
