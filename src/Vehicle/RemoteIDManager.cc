@@ -316,11 +316,7 @@ void RemoteIDManager::_sendSystem()
         }
 
         const auto sourceStatus = positionManager->sourceStatus();
-        const auto positioningError = positionManager->gcsPositioningError();
-        if (positioningError != QGeoPositionInfoSource::NoError &&
-            positioningError != QGeoPositionInfoSource::UpdateTimeoutError) {
-            _updateGcsPositionStatus(false, QString("GCS GPS data error: %1").arg(positioningError));
-        } else if (sourceStatus != PositionManager::SourceStatus::Active) {
+        if (sourceStatus != PositionManager::SourceStatus::Active) {
             const bool waiting = sourceStatus == PositionManager::SourceStatus::WaitingForFix ||
                                  sourceStatus == PositionManager::SourceStatus::PermissionRequired;
             _updateGcsPositionStatus(false, waiting ? QString() : positionManager->sourceStatusText());

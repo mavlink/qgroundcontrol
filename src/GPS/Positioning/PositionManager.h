@@ -145,8 +145,6 @@ public:
         GPSObservation::PositionUse use = GPSObservation::PositionUse::GroundStation,
         std::optional<std::chrono::milliseconds> maximumAge = std::nullopt) const;
 
-    QGeoPositionInfoSource::Error gcsPositioningError() const { return _gcsPositioningError; }
-
 signals:
     void selectionChanged();
     void gcsPositionChanged(QGeoCoordinate gcsPosition);

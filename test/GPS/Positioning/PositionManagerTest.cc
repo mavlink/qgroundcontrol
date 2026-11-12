@@ -617,13 +617,11 @@ void PositionManagerTest::_backendStatus()
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(5)));
     QCOMPARE(service.sourceStatus(), Status::Stale);
     platform.fail(QGeoPositionInfoSource::AccessError);
-    QCOMPARE(service.gcsPositioningError(), QGeoPositionInfoSource::AccessError);
     QCOMPARE(service.sourceStatus(), Status::PermissionDenied);
     platform.publish(fix(scheduler).position);
     QCOMPARE(service.sourceStatus(), Status::Active);
     platform.fail(QGeoPositionInfoSource::ClosedError);
     QCOMPARE(service.sourceStatus(), Status::BackendUnavailable);
-    QCOMPARE(service.gcsPositioningError(), QGeoPositionInfoSource::ClosedError);
     PositionSource custom;
     service.setInternalPositionSource(&platform, Status::WaitingForFix);
     QSignalSpy selection(&service, &PositionManager::selectionChanged);
@@ -652,7 +650,6 @@ void PositionManagerTest::_backendTimeoutPreservesFreshness()
     QVERIFY(scheduler.advanceBy(std::chrono::seconds(2)));
     QSignalSpy positions(&service, &PositionManager::gcsPositionChanged);
     source.fail(QGeoPositionInfoSource::UpdateTimeoutError);
-    QCOMPARE(service.gcsPositioningError(), QGeoPositionInfoSource::UpdateTimeoutError);
     QCOMPARE(service.sourceStatus(), hasFix ? Status::Active : Status::WaitingForFix);
     QCOMPARE(service.gcsPosition().isValid(), hasFix);
     QVERIFY(positions.isEmpty());
@@ -661,7 +658,6 @@ void PositionManagerTest::_backendTimeoutPreservesFreshness()
     QVERIFY(!service.gcsPosition().isValid());
     source.publish(fix(scheduler).position);
     QCOMPARE(service.sourceStatus(), Status::Active);
-    QCOMPARE(service.gcsPositioningError(), QGeoPositionInfoSource::NoError);
 }
 
 void PositionManagerTest::_deviceRunsUnlessReceiverOnly()

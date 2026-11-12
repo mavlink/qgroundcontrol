@@ -146,12 +146,12 @@ void RemoteIDManagerTest::_liveGpsFailureDiagnostics_data()
                            << QStringLiteral("Position data is stale");
     QTest::newRow("inaccurate") << int(QGeoPositionInfoSource::NoError) << PositionManager::SourceStatus::InvalidFix
                                 << QStringLiteral("Position fix does not meet accuracy requirements");
-    QTest::newRow("permission-denied")
-        << int(QGeoPositionInfoSource::AccessError) << PositionManager::SourceStatus::PermissionDenied
-        << QStringLiteral("GCS GPS data error: %1").arg(QGeoPositionInfoSource::AccessError);
-    QTest::newRow("backend-unavailable")
-        << int(QGeoPositionInfoSource::ClosedError) << PositionManager::SourceStatus::BackendUnavailable
-        << QStringLiteral("GCS GPS data error: %1").arg(QGeoPositionInfoSource::ClosedError);
+    QTest::newRow("permission-denied") << int(QGeoPositionInfoSource::AccessError)
+                                       << PositionManager::SourceStatus::PermissionDenied
+                                       << QStringLiteral("Location permission denied");
+    QTest::newRow("backend-unavailable") << int(QGeoPositionInfoSource::ClosedError)
+                                         << PositionManager::SourceStatus::BackendUnavailable
+                                         << QStringLiteral("No positioning backend is available on this device");
 }
 
 void RemoteIDManagerTest::_liveGpsFailureDiagnostics()
