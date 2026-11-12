@@ -688,9 +688,11 @@ void QGCApplication::shutdown()
             }
         }
 
+        // Only directories that are this run's own. Android gives the app the same ones under any application
+        // name, so there they also hold the settings and caches of its normal runs.
         for (const auto location : {QStandardPaths::AppConfigLocation, QStandardPaths::CacheLocation}) {
             QDir dir(QStandardPaths::writableLocation(location));
-            if (dir.exists()) {
+            if (dir.exists() && dir.absolutePath().contains(applicationName())) {
                 if (dir.removeRecursively()) {
                     qCDebug(QGCApplicationLog) << "Removed test run directory:" << dir.absolutePath();
                 } else {
