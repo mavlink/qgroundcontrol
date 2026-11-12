@@ -4,6 +4,7 @@
 #include <limits>
 #include <memory>
 
+#include <QtCore/QDeadlineTimer>
 #include <QtCore/QList>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
@@ -175,6 +176,14 @@ private:
     void _updateSerialPorts();
     /// If the configuration's serial port is in use, a message is displayed to the user and true is returned.
     bool _serialPortInUseMsg(const LinkConfiguration& config);
+#ifdef Q_OS_ANDROID
+    /// Asks the user for the USB permission that the configuration's device still needs, and returns whether it
+    /// did. The link is then connected once the user has granted it, not now.
+    bool _awaitUsbPermission(const SharedLinkConfigurationPtr& config);
+    void _connectLinkAwaitingUsbPermission();
+    std::weak_ptr<LinkConfiguration> _configAwaitingUsbPermission;
+    QDeadlineTimer _usbPermissionDeadline;
+#endif
     std::unique_ptr<SerialAutoConnect> _serialAutoConnect;
     QStringList _commPortList;
     QStringList _commPortDisplayList;

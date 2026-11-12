@@ -128,6 +128,22 @@ void AndroidGPSCompatibilityTest::_cancellationAfterFullWriteCompletes()
     QCOMPARE(transport.write(payload, QDeadlineTimer(WRITE_DEADLINE_MS)).status, GPSWriteStatus::Cancelled);
 }
 
+void AndroidGPSCompatibilityTest::_missingUsbPermissionIsToldInThePortsWords()
+{
+    java().openResult = AndroidSerial::Result::PermissionDenied;
+    java().lastErrorDetail = QStringLiteral("The user has not answered the request yet");
+    GPSCancelSource stop;
+    // With no time to wait for the user's answer.
+    SerialGPSTransport transport(AndroidSerialFake::usbPortName, stop.token(), 0ms);
+    expectLogMessage("GPS.Transport.SerialGPSTransport", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Failed to open Serial Device")));
+    const GPSOpenResult result = transport.open();
+    verifyExpectedLogMessage();
+    QCOMPARE(result.status, GPSOpenStatus::TimedOut);
+    QCOMPARE(result.detail,
+             QStringLiteral("USB permission has not been granted: The user has not answered the request yet"));
+}
+
 void AndroidGPSCompatibilityTest::_quietReadTimeoutAndCancellation()
 {
     GPSCancelSource stop;

@@ -14,6 +14,7 @@ private slots:
     void _testOccupiedSerialAutoConnectRecovers();
     void _testReservedSerialPortNotOpened();
     void _testManualConnectToSerialPortInUseSaysWhy();
+    void _testSerialLinkSavedByStableName();
     void _testSerialReservationFollowsLink();
 #endif
     void _testReconnectsDroppedAutoConnectLink();

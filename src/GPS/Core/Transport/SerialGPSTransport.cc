@@ -26,6 +26,10 @@ QString openFailure(const QSerialPort& serial, const QString& device)
             //: %1 is a serial device, such as /dev/ttyACM0 or COM3
             return QCoreApplication::translate("SerialGPSTransport", "%1 was not found").arg(device);
         case QSerialPort::PermissionError:
+#ifdef Q_OS_ANDROID
+            // The port tells which it is: QGC may not use the USB device yet, or the port is open already.
+            return serial.errorString();
+#else
 #ifdef Q_OS_UNIX
             // A device held by another program reports a permission error too.
             if (const QFileInfo file(device); file.exists() && !(file.isReadable() && file.isWritable())) {
@@ -35,6 +39,7 @@ QString openFailure(const QSerialPort& serial, const QString& device)
 #endif
             //: %1 is a serial device, such as /dev/ttyACM0 or COM3
             return QCoreApplication::translate("SerialGPSTransport", "%1 is in use by another program").arg(device);
+#endif
         default:
             return serial.errorString();
     }

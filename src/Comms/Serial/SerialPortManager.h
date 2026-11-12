@@ -21,6 +21,8 @@ class SerialPortManager : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("Managed by QGroundControl")
 
+    friend class LinkManagerTest;
+
     Q_PROPERTY(QStringList serialPorts READ serialPorts NOTIFY serialPortsChanged)
     Q_PROPERTY(QStringList serialBaudRates READ supportedBaudRates CONSTANT)
 
@@ -36,11 +38,23 @@ public:
         QString physicalDeviceId = {};
         QString description = {};
         QString displayName = {};
+        /// Finds the port again once its device has been replugged, which gives it another system location. Empty
+        /// where the platform has no such name. Devices of a kind that report the same serial number, or none,
+        /// share theirs.
+        QString stableName = {};
+
+        /// Whether @a name is the port's system location, port name or stable name.
+        bool hasName(const QString& name) const
+        {
+            return !name.isEmpty() && (name == systemLocation || name == portName || name == stableName);
+        }
     };
 
     struct Reservation
     {
         QString systemLocation;
+        /// What holds the port, in words for the user; empty when the holder gave none.
+        QString owner = {};
     };
 
     using ReservationPtr = std::shared_ptr<const Reservation>;
@@ -69,32 +83,43 @@ public:
     QStringList serialPorts() const { return _serialPorts; }
 
     static QStringList supportedBaudRates();
-    ReservationPtr reservePort(const QString& systemLocation);
+    ReservationPtr reservePort(const QString& systemLocation, const QString& owner = {});
     bool canReservePort(const QString& systemLocation) const;
     bool isPortReserved(const QString& systemLocation) const;
-    bool anyPortReserved() const;
+    /// The owner the port is reserved with; empty when it is not reserved or its holder gave none.
+    QString reservationOwner(const QString& systemLocation) const;
+    /// Whether both names are of one listed port, or are the same name.
+    bool isSamePort(const QString& first, const QString& second) const;
+    /// The name for a saved configuration to keep of the listed port with this system location or port name: the
+    /// port's stable name if it has one that no other listed port shares, else its system location. Any other
+    /// name is returned as it is.
+    QString persistentName(const QString& name) const;
 
     /// Routing exclusions survive reconnects without marking the hardware occupied.
     ReservationPtr excludeFromAutoConnect(const QString& systemLocation);
     bool canAutoConnectPort(const QString& systemLocation) const;
     bool isAutoConnectExcluded(const QString& systemLocation) const;
 
-    void setSinglePortOnly(bool enabled) { _singlePortOnly = enabled; }
-
 signals:
     void serialPortsChanged();
-    /// Emitted only after a fresh scan, never for a retained Android snapshot. Includes native names and paths.
+    /// Emitted only after a fresh scan, with every name of the ports it lists.
     void portsEnumerated(const QStringList& availablePorts);
 
 private:
     static QList<Port> _enumeratePorts();
+    /// The only listed port with this name, or null. A stable name that several listed ports share stands for
+    /// none of them: the first one found could be on another vehicle than the one that was meant.
+    const Port* _portNamed(const QString& name) const;
+    /// The system location of the listed port with this name, or the name itself if it stands for no listed port.
+    QString _systemLocation(const QString& name) const;
+    /// The live reservation of the port with this name, under whichever of the port's names it was made.
+    ReservationPtr _reservationOf(const QString& name) const;
     Enumerator _enumerator;
     QList<Port> _ports;
     QStringList _serialPorts;
     QElapsedTimer _scanTimer;
     QHash<QString, std::weak_ptr<const Reservation>> _reservations;
     QHash<QString, std::weak_ptr<const Reservation>> _autoConnectExclusions;
-    bool _singlePortOnly = false;
 };
 
 /// Ports a scan lists for the first time wait SerialPortManager::NEW_PORT_SETTLE_DELAY before automatic connection

@@ -446,13 +446,15 @@ void GPSReceiverConnectionPolicyTest::_savedReceiverReplacesDiscovery()
     QCOMPARE(harness.worker()->type(), GPSType::quectel);
     for (const auto& port : inventory) {
         QCOMPARE(harness.ports.canReservePort(port.systemLocation), port.systemLocation != endpoint);
+        QCOMPARE(harness.ports.reservationOwner(port.systemLocation),
+                 (port.systemLocation == endpoint) ? QStringLiteral("the GPS receiver") : QString());
     }
 }
 
 void GPSReceiverConnectionPolicyTest::_excludedPorts_data()
 {
     QTest::addColumn<QString>("reason");
-    for (const auto* reason : {"bootloader", "busy", "passive-role", "single-port", "other-board"}) {
+    for (const auto* reason : {"bootloader", "busy", "passive-role", "other-board"}) {
         QTest::newRow(reason) << QString::fromLatin1(reason);
     }
 }
@@ -474,9 +476,6 @@ void GPSReceiverConnectionPolicyTest::_excludedPorts()
     SerialPortManager::ReservationPtr reservation;
     if (reason == QStringLiteral("busy")) {
         reservation = harness.ports.reservePort(port.systemLocation);
-    } else if (reason == QStringLiteral("single-port")) {
-        harness.ports.setSinglePortOnly(true);
-        reservation = harness.ports.reservePort(QStringLiteral("/test/mavlink"));
     }
     QVERIFY(harness.discover());
     QCOMPARE(harness.attempts(), 0);

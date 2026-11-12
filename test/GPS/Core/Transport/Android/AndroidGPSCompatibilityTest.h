@@ -15,4 +15,5 @@ private slots:
     void _expiredConfigurationSendsNothing();
     void _cancellationAfterFullWriteCompletes();
     void _quietReadTimeoutAndCancellation();
+    void _missingUsbPermissionIsToldInThePortsWords();
 };
