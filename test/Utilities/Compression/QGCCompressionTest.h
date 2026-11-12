@@ -159,18 +159,8 @@ private slots:
     void _benchmarkListArchive();
 
 private:
-    bool _compareFiles(const QString& file1, const QString& file2);
-
-    static quint32 _crc32(const QByteArray& data);
-
-    static bool _writeFile(const QString& path, const QByteArray& data);
-    static QByteArray _readFile(const QString& path);
-
     /// Paths of everything below @a directoryPath, relative to it and sorted
     static QStringList _entriesBelow(const QString& directoryPath);
-
-    /// One member of a gzip file, holding @a payload
-    static QByteArray _gzipMember(const QByteArray& payload);
 
     /// Writes a gzip file of @a firstMember followed by @a memberCount members, each expanding to 64 KiB of zeros
     static bool _writeGzipOfZeros(const QString& path, int memberCount, const QByteArray& firstMember = {});

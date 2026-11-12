@@ -1,17 +1,18 @@
 #include "QGCCachedFileDownloadTest.h"
 
+#include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QRegularExpression>
+#include <QtCore/QTemporaryDir>
 #include <QtNetwork/QNetworkCacheMetaData>
 #include <QtNetwork/QNetworkDiskCache>
 #include <QtNetwork/QNetworkRequest>
 #include <QtTest/QSignalSpy>
 
+#include "FileFixtures.h"
 #include "LocalHttpTestServer.h"
 #include "QGCCachedFileDownload.h"
 #include "QGCFileDownload.h"
-#include <QtCore/QTemporaryDir>
-#include <QtCore/QDir>
 
 namespace {
 
@@ -48,10 +49,9 @@ bool startCachedDownload(QGCCachedFileDownload& downloader, int entryPoint, cons
 /// Content of the file that a finished() emission reports. The file is removed.
 QByteArray takeCachedDownloadContent(const QList<QVariant>& finishedArguments)
 {
-    QFile file(finishedArguments.at(1).toString());
-    const QByteArray content = file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
-    file.close();
-    file.remove();
+    const QString path = finishedArguments.at(1).toString();
+    const QByteArray content = TestFixtures::readFile(path);
+    QFile::remove(path);
     return content;
 }
 

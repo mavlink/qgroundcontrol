@@ -11,43 +11,13 @@
 #include <QtCore/QTemporaryFile>
 #include <QtTest/QSignalSpy>
 
-#include "CRC32.h"
+#include "FileFixtures.h"
 #include "LocalHttpTestServer.h"
 #include "QGCCompression.h"
 #include "QGCFileDownload.h"
 #include "QGCFileHelper.h"
 
 namespace {
-
-bool writeDownloadTestFile(const QString& path, const QByteArray& data)
-{
-    QFile file(path);
-    return file.open(QIODevice::WriteOnly) && (file.write(data) == data.size());
-}
-
-QByteArray readDownloadTestFile(const QString& path)
-{
-    QFile file(path);
-    return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
-}
-
-/// A gzip stream of @a payload, from the deflate data that qCompress() makes
-QByteArray downloadTestGzip(const QByteArray& payload)
-{
-    // qCompress() output: 4-byte length, 2-byte zlib header, deflate stream, 4-byte Adler-32
-    const QByteArray zlibStream = qCompress(payload);
-    QByteArray gzip = QByteArray::fromHex("1f8b08000000000000ff");
-    gzip.append(zlibStream.mid(6, zlibStream.size() - 10));
-    const std::span<const uint8_t> payloadBytes(reinterpret_cast<const uint8_t*>(payload.constData()),
-                                                static_cast<size_t>(payload.size()));
-    const quint32 crc = ~QGC::crc32Update(payloadBytes, 0xFFFFFFFFU);
-    for (const quint32 field : {crc, static_cast<quint32>(payload.size())}) {
-        for (int shift = 0; shift < 32; shift += 8) {
-            gzip.append(static_cast<char>((field >> shift) & 0xFFU));
-        }
-    }
-    return gzip;
-}
 
 /// True if the file that carried a download to memory, and the directory made for it, are gone
 bool downloadToMemoryLeftNothing(const QGCFileDownload& downloader)
@@ -263,8 +233,8 @@ void QGCFileDownloadTest::_testFileDownloadSameFileNameStaysSeparate()
     QVERIFY(QDir(sourceDir.path()).mkpath(QStringLiteral("second")));
     const QString firstSource = sourceDir.filePath(QStringLiteral("first/") + fileName);
     const QString secondSource = sourceDir.filePath(QStringLiteral("second/") + fileName);
-    QVERIFY(writeDownloadTestFile(firstSource, firstPayload));
-    QVERIFY(writeDownloadTestFile(secondSource, secondPayload));
+    QVERIFY(TestFixtures::writeFile(firstSource, firstPayload));
+    QVERIFY(TestFixtures::writeFile(secondSource, secondPayload));
 
     QGCFileDownload firstDownloader(this);
     QGCFileDownload secondDownloader(this);
@@ -283,8 +253,8 @@ void QGCFileDownloadTest::_testFileDownloadSameFileNameStaysSeparate()
     const QString secondPath = secondFinishedSpy.first().at(1).toString();
     QCOMPARE(QFileInfo(firstPath).fileName(), fileName);
     QCOMPARE(QFileInfo(secondPath).fileName(), fileName);
-    QCOMPARE(readDownloadTestFile(firstPath), firstPayload);
-    QCOMPARE(readDownloadTestFile(secondPath), secondPayload);
+    QCOMPARE(TestFixtures::readFile(firstPath), firstPayload);
+    QCOMPARE(TestFixtures::readFile(secondPath), secondPayload);
 
     QFile::remove(firstPath);
     QFile::remove(secondPath);
@@ -306,8 +276,8 @@ void QGCFileDownloadTest::_testFileDownloadLocalSourceInTempDirSurvives()
     QVERIFY(finishedSpy.first().at(0).toBool());
 
     const QString localPath = finishedSpy.first().at(1).toString();
-    QCOMPARE(readDownloadTestFile(source.fileName()), payload);
-    QCOMPARE(readDownloadTestFile(localPath), payload);
+    QCOMPARE(TestFixtures::readFile(source.fileName()), payload);
+    QCOMPARE(TestFixtures::readFile(localPath), payload);
 
     QFile::remove(localPath);
 }
@@ -418,7 +388,7 @@ void QGCFileDownloadTest::_testFileDownloadFollowsRedirect()
     const QList<QVariant> args = finishedSpy.first();
     QVERIFY2(args.at(0).toBool(), qPrintable(args.at(2).toString()));
     const QString localPath = args.at(1).toString();
-    QCOMPARE(readDownloadTestFile(localPath), payload);
+    QCOMPARE(TestFixtures::readFile(localPath), payload);
     // Callers tell the file type from the name, which stays the one that was asked for
     QCOMPARE(QFileInfo(localPath).fileName(), QStringLiteral("moved.bin"));
 
@@ -446,7 +416,7 @@ void QGCFileDownloadTest::_testFileDownloadRefusesRedirect()
     const QByteArray payload("redirect target");
     QTemporaryDir targetDir;
     const QString targetFile = targetDir.filePath(QStringLiteral("target.bin"));
-    QVERIFY(writeDownloadTestFile(targetFile, payload));
+    QVERIFY(TestFixtures::writeFile(targetFile, payload));
     TestFixtures::LocalHttpTestServer targetServer;
     QVERIFY2(targetServer.listen(), "Could not start local test HTTP server");
     targetServer.installHttpResponder(payload);
@@ -495,7 +465,7 @@ void QGCFileDownloadTest::_testStartToMemoryDeliversContent()
     QString url;
     if (source == DownloadFromResource) {
         url = QStringLiteral(":/unittest/arducopter.apj");
-        payload = readDownloadTestFile(url);
+        payload = TestFixtures::readFile(url);
         QVERIFY(!payload.isEmpty());
     } else {
         QVERIFY2(server.listen(), "Could not start local test HTTP server");
@@ -581,9 +551,9 @@ void QGCFileDownloadTest::_testStartToMemoryFailsAsStart()
             expectedHash = QString(64, QLatin1Char('0'));
             break;
         case DownloadFailsDecompression: {
-            const QByteArray gzip = downloadTestGzip(QByteArray(64 * 1024, 'x'));
+            const QByteArray gzip = TestFixtures::gzipMember(QByteArray(64 * 1024, 'x'));
             url = sourceDir.filePath(QStringLiteral("damaged.json.gz"));
-            QVERIFY(writeDownloadTestFile(url, gzip.left(gzip.size() / 2)));
+            QVERIFY(TestFixtures::writeFile(url, gzip.left(gzip.size() / 2)));
             autoDecompress = true;
             break;
         }
@@ -684,7 +654,7 @@ void QGCFileDownloadTest::_testStartToMemoryLimit()
     const QByteArray content(contentSize, 'x');
     TestFixtures::LocalHttpTestServer server;
     QVERIFY2(server.listen(), "Could not start local test HTTP server");
-    server.installHttpResponder((body == DownloadBodyGzip) ? downloadTestGzip(content) : content);
+    server.installHttpResponder((body == DownloadBodyGzip) ? TestFixtures::gzipMember(content) : content);
 
     QGCFileDownload downloader(this);
     downloader.setAutoDecompress(namedGzip);
@@ -730,7 +700,7 @@ void QGCFileDownloadTest::_testStartToMemoryAutoDecompress()
     QFETCH(bool, autoDecompress);
 
     const QString url = QStringLiteral(":/unittest/manifest.json.gz");
-    const QByteArray compressed = readDownloadTestFile(url);
+    const QByteArray compressed = TestFixtures::readFile(url);
     const QByteArray decompressed = QGCCompression::decompressData(compressed);
     QVERIFY(!decompressed.isEmpty());
     QVERIFY(decompressed != compressed);
@@ -892,7 +862,7 @@ void QGCFileDownloadTest::_testAutoDecompressBodyNotCompressed()
     QFETCH(bool, toMemory);
 
     const QByteArray content = QByteArray("{\"name\": \"manifest\"}\n").repeated(200);
-    const QByteArray gzip = downloadTestGzip(content);
+    const QByteArray gzip = TestFixtures::gzipMember(content);
     TestFixtures::LocalHttpTestServer server;
     QVERIFY2(server.listen(), "Could not start local test HTTP server");
     switch (body) {
@@ -945,7 +915,7 @@ void QGCFileDownloadTest::_testAutoDecompressBodyNotCompressed()
         // name it was downloaded with
         QCOMPARE(localFile.fileName(), QStringLiteral("manifest.json"));
         QCOMPARE(downloader.localPath(), localFile.filePath());
-        QCOMPARE(readDownloadTestFile(localFile.filePath()), content);
+        QCOMPARE(TestFixtures::readFile(localFile.filePath()), content);
         QCOMPARE(localFile.dir().entryList(QDir::Files), QStringList{QStringLiteral("manifest.json")});
     } else {
         // A failed decompression hands over the file as it was downloaded

@@ -7,6 +7,7 @@
 #include <QtTest/QSignalSpy>
 #include <QtTextToSpeech/QVoice>
 
+#include "FileFixtures.h"
 #include "PiperTtsEngine.h"
 #include "TestFixtures.h"
 
@@ -14,20 +15,10 @@ namespace {
 
 constexpr char kPiperLogCategory[] = "Utilities.PiperTtsEngine";
 
-bool writePiperTestFile(const QString& path, const QByteArray& content, bool executable = false)
+bool writePiperStandIn(const QString& path, const QByteArray& script)
 {
-    QFile file(path);
-    if (!file.open(QIODevice::WriteOnly) || (file.write(content) != content.size())) {
-        return false;
-    }
-    file.close();
-    return !executable || file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
-}
-
-QByteArray readPiperTestFile(const QString& path)
-{
-    QFile file(path);
-    return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
+    return TestFixtures::writeFile(path, script) &&
+           QFile::setPermissions(path, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
 }
 
 /// What a stand-in does once the engine has started it with a voice.
@@ -77,32 +68,32 @@ public:
                 "    echo \"Wrote $4/$count.wav\"\n"
                 "done\n";
         }
-        return writePiperTestFile(_dir.filePath(name), script, true);
+        return writePiperStandIn(_dir.filePath(name), script);
     }
 
     /// Installs a program with Piper's name that is something else.
     bool installOtherProgram(const QString& name)
     {
-        return writePiperTestFile(_dir.filePath(name), "#!/bin/sh\necho \"usage: piper [--version]\"\n", true);
+        return writePiperStandIn(_dir.filePath(name), "#!/bin/sh\necho \"usage: piper [--version]\"\n");
     }
 
     /// Installs an executable file that cannot be started.
     bool installBrokenProgram(const QString& name)
     {
-        return writePiperTestFile(_dir.filePath(name), "#!/nonexistent/interpreter\n", true);
+        return writePiperStandIn(_dir.filePath(name), "#!/nonexistent/interpreter\n");
     }
 
     /// The path and the arguments of the stand-in the engine last started with a voice.
     QStringList arguments() const
     {
-        return QString::fromUtf8(readPiperTestFile(_dir.filePath(QStringLiteral("arguments"))))
+        return QString::fromUtf8(TestFixtures::readFile(_dir.filePath(QStringLiteral("arguments"))))
             .split(QLatin1Char('\n'), Qt::SkipEmptyParts);
     }
 
     /// The lines the stand-in has read.
     QStringList utterances() const
     {
-        return QString::fromUtf8(readPiperTestFile(_dir.filePath(QStringLiteral("utterances"))))
+        return QString::fromUtf8(TestFixtures::readFile(_dir.filePath(QStringLiteral("utterances"))))
             .split(QLatin1Char('\n'), Qt::SkipEmptyParts);
     }
 
@@ -136,13 +127,14 @@ void PiperTtsEngineTest::initTestCase()
     QVERIFY(dataDir.mkpath(QStringLiteral("share/piper-voices/unusable")));
     for (const QString& locale : {QStringLiteral("en_US"), QStringLiteral("de_DE")}) {
         const QString model = _modelPath(locale + QStringLiteral("-test"));
-        QVERIFY(writePiperTestFile(model, "not a model"));
-        QVERIFY(writePiperTestFile(model + QStringLiteral(".json"),
-                                   QStringLiteral(R"({"language": {"code": "%1"}})").arg(locale).toUtf8()));
+        QVERIFY(TestFixtures::writeFile(model, "not a model"));
+        QVERIFY(TestFixtures::writeFile(model + QStringLiteral(".json"),
+                                        QStringLiteral(R"({"language": {"code": "%1"}})").arg(locale).toUtf8()));
     }
-    QVERIFY(writePiperTestFile(_modelPath(QStringLiteral("unusable/no-config")), "not a model"));
-    QVERIFY(writePiperTestFile(_modelPath(QStringLiteral("unusable/no-language")), "not a model"));
-    QVERIFY(writePiperTestFile(_modelPath(QStringLiteral("unusable/no-language")) + QStringLiteral(".json"), "{}"));
+    QVERIFY(TestFixtures::writeFile(_modelPath(QStringLiteral("unusable/no-config")), "not a model"));
+    QVERIFY(TestFixtures::writeFile(_modelPath(QStringLiteral("unusable/no-language")), "not a model"));
+    QVERIFY(
+        TestFixtures::writeFile(_modelPath(QStringLiteral("unusable/no-language")) + QStringLiteral(".json"), "{}"));
 
     const TestFixtures::EnvVarFixture restoreDataHome("XDG_DATA_HOME");
     const TestFixtures::EnvVarFixture restoreDataDirs("XDG_DATA_DIRS");

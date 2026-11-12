@@ -10,6 +10,7 @@
 #include <QtCore/QTemporaryDir>
 #include <QtCore/QTextStream>
 
+#include "FileFixtures.h"
 #include "QGCArchiveFile.h"
 #include "QGCDecompressDevice.h"
 #include "UnitTest.h"
@@ -21,15 +22,8 @@ void QGCStreamingDecompressionTest::_testDecompressDeviceFromFile()
 {
     QTemporaryDir tempDir;
     // Copy resource to temp file for testing
-    QFile resource(":/unittest/manifest.json.gz");
-    QVERIFY(resource.open(QIODevice::ReadOnly));
-    const QByteArray compressedData = resource.readAll();
-    resource.close();
     const QString tempFile = tempDir.filePath("test.json.gz");
-    QFile outFile(tempFile);
-    QVERIFY(outFile.open(QIODevice::WriteOnly));
-    outFile.write(compressedData);
-    outFile.close();
+    QVERIFY(QFile::copy(":/unittest/manifest.json.gz", tempFile));
     // Test decompression from file
     QGCDecompressDevice device(tempFile);
     QVERIFY(device.open(QIODevice::ReadOnly));
@@ -43,12 +37,8 @@ void QGCStreamingDecompressionTest::_testDecompressDeviceFromFile()
 void QGCStreamingDecompressionTest::_testDecompressDeviceFromQBuffer()
 {
     // Load compressed data into QBuffer
-    QFile resource(":/unittest/manifest.json.gz");
-    QVERIFY(resource.open(QIODevice::ReadOnly));
-    const QByteArray compressedData = resource.readAll();
-    resource.close();
     QBuffer buffer;
-    buffer.setData(compressedData);
+    buffer.setData(TestFixtures::readFile(":/unittest/manifest.json.gz"));
     QVERIFY(buffer.open(QIODevice::ReadOnly));
     QGCDecompressDevice device(&buffer);
     QVERIFY(device.open(QIODevice::ReadOnly));
@@ -181,12 +171,8 @@ void QGCStreamingDecompressionTest::_testArchiveFileFrom7z()
 void QGCStreamingDecompressionTest::_testArchiveFileFromQBuffer()
 {
     // Load archive into QBuffer
-    QFile resource(":/unittest/manifest.json.zip");
-    QVERIFY(resource.open(QIODevice::ReadOnly));
-    const QByteArray archiveData = resource.readAll();
-    resource.close();
     QBuffer buffer;
-    buffer.setData(archiveData);
+    buffer.setData(TestFixtures::readFile(":/unittest/manifest.json.zip"));
     QVERIFY(buffer.open(QIODevice::ReadOnly));
     QGCArchiveFile device(&buffer, "manifest.json");
     QVERIFY(device.open(QIODevice::ReadOnly));
@@ -322,10 +308,8 @@ void QGCStreamingDecompressionTest::_testErrorString()
 {
     QFETCH(bool, archive);
 
-    QFile resource(archive ? ":/unittest/manifest.json.zip" : ":/unittest/manifest.json.gz");
-    QVERIFY(resource.open(QIODevice::ReadOnly));
     QBuffer source;
-    source.setData(resource.readAll());
+    source.setData(TestFixtures::readFile(archive ? ":/unittest/manifest.json.zip" : ":/unittest/manifest.json.gz"));
     std::unique_ptr<QGCArchiveDeviceBase> device;
     if (archive) {
         device = std::make_unique<QGCArchiveFile>(&source, QStringLiteral("manifest.json"));

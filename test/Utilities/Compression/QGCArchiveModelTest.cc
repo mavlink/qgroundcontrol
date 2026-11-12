@@ -6,6 +6,7 @@
 #include <QtTest/QAbstractItemModelTester>
 #include <QtTest/QSignalSpy>
 
+#include "FileFixtures.h"
 #include "QGCArchiveModel.h"
 #include "UnitTest.h"
 
@@ -289,10 +290,7 @@ void QGCArchiveModelTest::_testInvalidArchive()
     QTemporaryDir tempDir;
     // Create a corrupt archive
     const QString corruptPath = tempDir.path() + "/corrupt.zip";
-    QFile corrupt(corruptPath);
-    QVERIFY(corrupt.open(QIODevice::WriteOnly));
-    corrupt.write("This is not a valid ZIP file");
-    corrupt.close();
+    QVERIFY(TestFixtures::writeFile(corruptPath, "This is not a valid ZIP file"));
     QGCArchiveModel model;
     QSignalSpy errorSpy(&model, &QGCArchiveModel::errorStringChanged);
     QSignalSpy loadingSpy(&model, &QGCArchiveModel::loadingComplete);
