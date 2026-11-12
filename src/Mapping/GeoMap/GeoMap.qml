@@ -35,9 +35,7 @@ Item {
 
     /// Imagery the map shows, named as QGCMapEngineManager.mapList names it. The map the user chose, unless a
     /// view shows another one.
-    property string mapType: QGroundControl.mapEngineManager.mapName(
-                                 QGroundControl.settingsManager.flightMapSettings.mapProvider.rawValue,
-                                 QGroundControl.settingsManager.flightMapSettings.mapType.rawValue)
+    property string mapType: QGroundControl.mapEngineManager.chosenMap
 
     /// false: the surface is flat and no elevation is fetched, for a map that stays in 2D
     property alias terrain: patchModel.terrain

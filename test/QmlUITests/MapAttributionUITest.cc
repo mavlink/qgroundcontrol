@@ -83,8 +83,7 @@ void MapAttributionUITest::_flyViewMapCreditsItsSources()
     QVERIFY(!_sceneRect(credit).intersects(_sceneRect(toolStrip)));
     QVERIFY(_sceneRect(map).contains(_sceneRect(credit)));
 
-    // The credit follows the map that the user chooses. Every step below names a map that exists, as the GeoMap
-    // engine warns of one that does not.
+    // The credit follows the map that the user chooses
     mapProviderFact->setRawValue(QStringLiteral("Mapbox"));
     const QString mapboxCredit = QGCMapEngineManager::mapAttribution(QStringLiteral("Mapbox Hybrid"));
     QTRY_COMPARE_WITH_TIMEOUT(creditText(), mapboxCredit, TestTimeout::shortMs());
@@ -104,12 +103,14 @@ void MapAttributionUITest::_flyViewMapCreditsItsSources()
 
     // The map of OpenAIP has no type: its provider selects it, whatever type is left of the provider before
     mapProviderFact->setRawValue(QStringLiteral("OpenAIP"));
-    QTRY_COMPARE_WITH_TIMEOUT(creditText(), QGCMapEngineManager::mapAttribution(QStringLiteral("OpenAIP")),
-                              TestTimeout::shortMs());
+    const QString openAipCredit = QGCMapEngineManager::mapAttribution(QStringLiteral("OpenAIP"));
+    QTRY_COMPARE_WITH_TIMEOUT(creditText(), openAipCredit, TestTimeout::shortMs());
 
+    // The settings page sets the provider, then the type. The two name no map in between: the map stays
+    mapProviderFact->setRawValue(QStringLiteral("CustomURL"));
+    QCOMPARE(creditText(), openAipCredit);
     // The source that the user sets has no one to credit
     mapTypeFact->setRawValue(QStringLiteral("Custom"));
-    mapProviderFact->setRawValue(QStringLiteral("CustomURL"));
     QTRY_VERIFY_WITH_TIMEOUT(!credit->isVisible(), TestTimeout::shortMs());
 
     stopUI();

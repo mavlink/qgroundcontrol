@@ -46,6 +46,13 @@ QGCMapEngineManager::QGCMapEngineManager(QObject* parent)
 
     (void) connect(getQGCMapEngine(), &QGCMapEngine::updateTotals, this, &QGCMapEngineManager::_updateTotals,
                    Qt::UniqueConnection);
+
+    // Saved settings that name no map are taken as they are: there is no map chosen before them to keep
+    _chosenMap = _mapOfSettings();
+    if (FlightMapSettings* const settings = SettingsManager::instance()->flightMapSettings()) {
+        (void) connect(settings->mapProvider(), &Fact::rawValueChanged, this, &QGCMapEngineManager::_updateChosenMap);
+        (void) connect(settings->mapType(), &Fact::rawValueChanged, this, &QGCMapEngineManager::_updateChosenMap);
+    }
 }
 
 QGCMapEngineManager::~QGCMapEngineManager()
@@ -496,6 +503,25 @@ QString QGCMapEngineManager::getUniqueName() const
         if (!findName(name)) {
             return name;
         }
+    }
+}
+
+QString QGCMapEngineManager::_mapOfSettings()
+{
+    FlightMapSettings* const settings = SettingsManager::instance()->flightMapSettings();
+    if (!settings) {
+        return QString();
+    }
+
+    return mapName(settings->mapProvider()->rawValue().toString(), settings->mapType()->rawValue().toString());
+}
+
+void QGCMapEngineManager::_updateChosenMap()
+{
+    const QString map = _mapOfSettings();
+    if ((map != _chosenMap) && mapList().contains(map)) {
+        _chosenMap = map;
+        emit chosenMapChanged();
     }
 }
 

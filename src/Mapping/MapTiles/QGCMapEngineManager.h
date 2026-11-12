@@ -26,6 +26,10 @@ class QGCMapEngineManager : public QObject
     Q_PROPERTY(QString tileCountStr READ tileCountStr NOTIFY tileCountChanged)
     Q_PROPERTY(QString tileSizeStr READ tileSizeStr NOTIFY tileSizeChanged)
     Q_PROPERTY(QStringList mapList READ mapList CONSTANT)
+    /// Name of the map the user chose, as mapList has it. The settings select the map by a provider and a type that
+    /// are set one after the other and name no map in between: the map chosen before stays until they name one.
+    /// Saved settings that name no map make a name that is not in mapList, until the user chooses a map.
+    Q_PROPERTY(QString chosenMap READ chosenMap NOTIFY chosenMapChanged)
     Q_PROPERTY(QStringList mapProviderList READ mapProviderList CONSTANT)
     Q_PROPERTY(QStringList elevationProviderList READ elevationProviderList CONSTANT)
     Q_PROPERTY(QString terrainAttribution READ terrainAttribution CONSTANT)
@@ -88,6 +92,8 @@ public:
 
     QString errorMessage() const { return _errorMessage; }
 
+    QString chosenMap() const { return _chosenMap; }
+
     QString tileCountStr() const;
     QString tileSizeStr() const;
 
@@ -127,6 +133,7 @@ public:
 
 signals:
     void actionProgressChanged();
+    void chosenMapChanged();
     void errorMessageChanged();
     void fetchElevationChanged();
     void freeDiskSpaceChanged();
@@ -151,10 +158,13 @@ private slots:
     void _tileSetFetched(QGCCachedTileSet* tileSets);
     void _tileSetSaved(QGCCachedTileSet* set);
     void _updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
+    void _updateChosenMap();
     void _handleExtractionProgress(qreal progress);
     void _handleExtractionFinished(bool success);
 
 private:
+    /// The name that the provider and the type in the settings make: no map has it while one of the two is being set
+    static QString _mapOfSettings();
     /// Stores a set of \a tiles for the region of the current view and starts its download
     void _createTileSet(const QString& name, const QString& mapType, int minZoom, int maxZoom, const QGCTileSet& tiles);
 
@@ -175,6 +185,7 @@ private:
     int _actionProgress = 0;
     quint64 _setID = UINT64_MAX;
     QString _errorMessage;
+    QString _chosenMap;
     bool _fetchElevation = true;
     bool _importReplace = false;
     QGCCompressionJob* _extractionJob = nullptr;
