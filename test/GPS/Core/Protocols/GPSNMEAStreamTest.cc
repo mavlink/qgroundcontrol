@@ -368,6 +368,8 @@ void GPSNMEAStreamTest::_sentenceNotWaitedFor()
         receiver.feed(gga(utc));
         QCOMPARE(receiver.positions, epoch + 1);
         QCOMPARE(receiver.published->navigation.timestampUs, receiver.now);
+        // The RMC that came after the epoch before was published is not published with this one either.
+        QVERIFY(!receiver.published->velocityValid);
         if (epoch % everyEpochs == 0) {
             receiver.now += delayUs;
             receiver.feed(rmc(utc));
@@ -500,6 +502,9 @@ void GPSNMEAStreamTest::_awaitedSentenceLaterThanMetadataAge_data()
     QTest::addColumn<QByteArray>("type");
     QTest::newRow("rmc") << QByteArray("RMC");
     QTest::newRow("gst") << QByteArray("GST");
+    // Without a time of their own, they join the epoch that waits for them.
+    QTest::newRow("gsa") << QByteArray("GSA");
+    QTest::newRow("vtg") << QByteArray("VTG");
 }
 
 void GPSNMEAStreamTest::_awaitedSentenceLaterThanMetadataAge()
@@ -526,8 +531,9 @@ void GPSNMEAStreamTest::_awaitedSentenceLaterThanMetadataAge()
         QCOMPARE(navigation.timestampUs, positionReceipt);
         if (delayUs > MAX_AGE_US) {
             // Two epochs have shown the sentence, so this one waited for it and is published with it.
-            QVERIFY(type == "RMC" ? receiver.published->velocityValid
-                                  : std::isfinite(navigation.horizontalAccuracyMeters));
+            QVERIFY(type == "GST"   ? std::isfinite(navigation.horizontalAccuracyMeters)
+                    : type == "GSA" ? std::isfinite(navigation.verticalDop)
+                                    : receiver.published->velocityValid);
         }
     }
 }
@@ -668,7 +674,7 @@ void GPSNMEAStreamTest::_unassociatedGsa_data()
 {
     QTest::addColumn<qint64>("ageUs");
     QTest::newRow("before-position") << qint64(0);
-    QTest::newRow("expired-position") << qint64(2000001);
+    QTest::newRow("after-published-position") << qint64(2000001);
     QTest::newRow("clock-regression") << qint64(-1);
 }
 
@@ -680,6 +686,7 @@ void GPSNMEAStreamTest::_unassociatedGsa()
         receiver.feed(gga("123519"));
         receiver.now = static_cast<uint64_t>(static_cast<qint64>(receiver.now) + ageUs);
     }
+    // No epoch has begun, or the current one went out: the GSA is not published, with it or with the next one.
     receiver.feed(GSA);
     QVERIFY(!receiver.published || std::isnan(receiver.published->navigation.verticalDop));
     receiver.now = 4000000;

@@ -258,13 +258,13 @@ NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinAccuracy(c
 NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinUntimed(const Sentence& sentence,
                                                                               uint64_t receivedAtUs)
 {
-    auto* const stored = &_current;
-    if (!stored->active ||
-        !MonotonicClock::withinAge(stored->epoch.positionReceivedAtUs, receivedAtUs, METADATA_MAX_AGE)) {
+    // Without a time of its own the sentence belongs to the current epoch, however long after its position: only a
+    // GGA, RMC or GLL begins another.
+    if (!_current.active) {
         return nullptr;
     }
 
-    auto& epoch = stored->epoch;
+    auto& epoch = _current.epoch;
     if (sentence.type() == "GSA") {
         if (sentence.count < Field::GSA_MIN_FIELDS) {
             return nullptr;
@@ -273,15 +273,15 @@ NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinUntimed(co
             epoch.horizontalDop = nonnegativeNumber(sentence.fields[Field::GSA_HDOP]);
         }
         addReported(epoch.verticalDop, nonnegativeNumber(sentence.fields[Field::GSA_VDOP]));
-        _add(*stored, Addition::GSA, receivedAtUs);
+        _add(_current, Addition::GSA, receivedAtUs);
     } else if (const auto velocity = vtg(sentence)) {
         addReported(epoch.speedMetersPerSecond, finiteValue(velocity->speedMetersPerSecond));
         addReported(epoch.courseDegrees, finiteValue(velocity->courseDegrees));
-        _add(*stored, Addition::VTG, receivedAtUs);
+        _add(_current, Addition::VTG, receivedAtUs);
     } else {
         return nullptr;
     }
-    return stored;
+    return &_current;
 }
 
 }  // namespace NMEA

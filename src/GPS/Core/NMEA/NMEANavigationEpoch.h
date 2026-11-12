@@ -60,11 +60,12 @@ struct NavigationUpdate
 /// leaves the value an earlier one supplied. An epoch is published when its GGA arrives, unless the receiver sends
 /// more of it after the GGA: the sentences that followed the GGA in both previous epochs are waited for, so that a
 /// receiver that sends GGA first is published with its speed, course, DOP and accuracy, at the last of those
-/// sentences. What arrives after an epoch was published is not published.
+/// sentences. What arrives after an epoch was published is not published: not with that epoch, because every
+/// published position is a new observation, and not with the next, whose solution it does not describe.
 ///
 /// A sentence follows its GGA only in the first half of the interval between the last two GGA; one that arrives later
-/// is not waited for in the epochs to come. An epoch that still waits when the next one begins is published then as
-/// it stands, unless the same sentence publishes the next one.
+/// completes an epoch that waits for it, but is not waited for in the epochs to come. An epoch that still waits when
+/// the next one begins is published then as it stands, unless the same sentence publishes the next one.
 ///
 /// An epoch has one GGA, one RMC, one GLL and one GST. A GGA, RMC or GLL that comes again with the same time begins
 /// another epoch, which takes nothing from the one before it: the next report of a receiver that prints whole seconds
