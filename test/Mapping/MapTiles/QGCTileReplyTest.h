@@ -28,6 +28,8 @@ private slots:
     void _concurrentRequestsShareOneFetch();
     void _waitingRequestFetchesAfterFetchWithoutTile_data();
     void _waitingRequestFetchesAfterFetchWithoutTile();
+    void _waitingRequestsGetErrorOfFetch_data();
+    void _waitingRequestsGetErrorOfFetch();
     void _tileSetRequestFetchesForItself();
     void _tileOfOtherSourceNotServed();
     void _sourceChangedDuringRequest();

@@ -1,6 +1,7 @@
 #include "QGCTileReplyTest.h"
 
 #include <memory>
+#include <utility>
 
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
@@ -537,7 +538,6 @@ void QGCTileReplyTest::_waitingRequestFetchesAfterFetchWithoutTile_data()
 
     QTest::newRow("aborted") << (kTileX + 51) << QStringLiteral("aborted");
     QTest::newRow("deleted") << (kTileX + 52) << QStringLiteral("deleted");
-    QTest::newRow("failed") << (kTileX + 53) << QStringLiteral("failed");
 }
 
 // A request must not wait for ever, or fail, because of what became of another consumer's request
@@ -567,17 +567,72 @@ void QGCTileReplyTest::_waitingRequestFetchesAfterFetchWithoutTile()
 
     if (ending == QStringLiteral("aborted")) {
         fetching->abort();
-    } else if (ending == QStringLiteral("deleted")) {
-        fetching.reset();
     } else {
-        fetchingNam.replies.at(0)->failNow(QNetworkReply::TimeoutError);
-        QCOMPARE(fetching->error(), QGCTileReply::Error::NetworkError);
+        fetching.reset();
     }
 
     QVERIFY_SIGNAL_COUNT_WAIT(waitingSpy, 1, TestTimeout::mediumMs());
     QCOMPARE(waiting.error(), QGCTileReply::Error::NoError);
     QCOMPARE(waiting.data(), png);
     QCOMPARE(waitingNam.requestCount, 1);
+}
+
+void QGCTileReplyTest::_waitingRequestsGetErrorOfFetch_data()
+{
+    QTest::addColumn<int>("tileX");  // a tile of its own for every row
+    QTest::addColumn<QNetworkReply::NetworkError>("networkError");
+    QTest::addColumn<int>("httpStatus");
+    QTest::addColumn<QGCTileReply::Error>("expectedError");
+
+    QTest::newRow("server not reached") << (kTileX + 55) << QNetworkReply::TimeoutError << 0
+                                        << QGCTileReply::Error::NetworkError;
+    QTest::newRow("provider has no tile")
+        << (kTileX + 56) << QNetworkReply::ContentNotFoundError << 404 << QGCTileReply::Error::NoTileError;
+}
+
+// The server would answer the waiting requests as it answered the fetch: they do not ask it in turn, each after the
+// transfer timeout of the one before
+void QGCTileReplyTest::_waitingRequestsGetErrorOfFetch()
+{
+    QFETCH(int, tileX);
+    QFETCH(QNetworkReply::NetworkError, networkError);
+    QFETCH(int, httpStatus);
+    QFETCH(QGCTileReply::Error, expectedError);
+
+    TileReplyMockNam fetchingNam;
+    fetchingNam.error = networkError;
+    fetchingNam.httpStatus = httpStatus;
+    fetchingNam.holdReplies = true;
+    // A request that asked the server for itself would get a tile
+    TileReplyMockNam waitingNam;
+    waitingNam.body = tileReplyPngBody();
+
+    constexpr int kWaitingCount = 3;
+    UnitTestTileGenerator::setForcedMissCount(1 + kWaitingCount);
+    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+
+    const int mapId = tileReplyMapId();
+    QGCTileReply fetching(&fetchingNam, mapId, tileX, kTileY, kTileZoom);
+    fetching.start();
+    QObject waitingOwner;
+    QList<QGCTileReply*> waiting;
+    for (int i = 0; i < kWaitingCount; i++) {
+        waiting.append(new QGCTileReply(&waitingNam, mapId, tileX, kTileY, kTileZoom, &waitingOwner));
+        waiting.constLast()->start();
+    }
+    QVERIFY(tileReplyCacheLookupsAnswered());
+    QCOMPARE(fetchingNam.requestCount, 1);
+
+    fetchingNam.replies.at(0)->finishNow();
+    QCOMPARE(fetching.error(), expectedError);
+    for (const QGCTileReply* const reply : std::as_const(waiting)) {
+        QTRY_VERIFY_WITH_TIMEOUT(reply->isFinished(), TestTimeout::mediumMs());
+        QCOMPARE(reply->error(), expectedError);
+        QCOMPARE(reply->errorString(), fetching.errorString());
+        QVERIFY(reply->data().isEmpty());
+    }
+    QCOMPARE(fetchingNam.requestCount, 1);
+    QCOMPARE(waitingNam.requestCount, 0);
 }
 
 // The request that fetches a tile for an offline set stores it in that set: the tile another request fetches is

@@ -22,7 +22,9 @@ struct QGCCacheTile;
 /// provider.
 ///
 /// Requests that miss the cache while another request is fetching the same tile wait for that fetch, so the server
-/// is asked once. A request for an offline tile set takes no part in this.
+/// is asked once: they finish with its tile, which each checks with its own validator, or with its error, the
+/// DataError of the fetching request's validator included. One of them fetches the tile itself when the fetching
+/// request is aborted or deleted. A request for an offline tile set takes no part in this.
 ///
 /// Independent of QtLocation, so every map engine and the terrain queries fetch tiles the same way.
 ///
@@ -84,8 +86,10 @@ signals:
     /// Emitted once, after start() returned
     void finished();
 
-    /// Tells the requests waiting for this one's fetch that it ended; \a data is empty when it did not get the tile
-    void fetchEnded(const QByteArray& data, const QString& format, QPrivateSignal);
+    /// Tells the requests waiting for this one's fetch how it ended: with the tile \a data, with \a error, or with
+    /// neither when this request was aborted or deleted
+    void fetchEnded(const QByteArray& data, const QString& format, QGCTileReply::Error error,
+                    const QString& errorString, QPrivateSignal);
 
 private:
     enum class State
@@ -103,7 +107,7 @@ private:
     void _cacheLookupFinished(const QGCCacheTile* tile);
     void _fetchFromServer();
     void _networkReplyFinished();
-    void _awaitedFetchEnded(const QByteArray& data, const QString& format);
+    void _awaitedFetchEnded(const QByteArray& data, const QString& format, Error error, const QString& errorString);
     void _endFetch();
     void _finish(Error error, const QString& errorString = QString());
     bool _isUsable(const QByteArray& data) const;

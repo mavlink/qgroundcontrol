@@ -282,14 +282,20 @@ void QGCTileReply::_networkReplyFinished()
     _finish(Error::NoError);
 }
 
-void QGCTileReply::_awaitedFetchEnded(const QByteArray& data, const QString& format)
+void QGCTileReply::_awaitedFetchEnded(const QByteArray& data, const QString& format, Error error,
+                                      const QString& errorString)
 {
     if (_state != State::Waiting) {
         return;
     }
 
+    if (error != Error::NoError) {
+        // The server would answer this request as it answered the other one
+        _finish(error, errorString);
+        return;
+    }
     if (data.isEmpty()) {
-        // What failed for the other request, or what it gave up, can still succeed for this one
+        // The other request was aborted or deleted, which tells nothing about the tile
         _fetchFromServer();
         return;
     }
@@ -316,7 +322,7 @@ void QGCTileReply::_endFetch()
     }
     fetches->erase(fetch);
 
-    emit fetchEnded(_data, _format, QPrivateSignal());
+    emit fetchEnded(_data, _format, _error, _errorString, QPrivateSignal());
 }
 
 void QGCTileReply::_finish(Error error, const QString& errorString)
