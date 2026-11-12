@@ -74,6 +74,16 @@ enum DownloadTestFailure
     DownloadFailsDecompression,
 };
 
+/// What a server sends for a download, under a name that ends in .gz unless the body is DownloadBodyPlain
+enum DownloadTestBody
+{
+    DownloadBodyPlain,            ///< The content, under a name that tells nothing
+    DownloadBodyGzip,             ///< The content as a gzip stream
+    DownloadBodyPlainNamedGzip,   ///< The content as it is
+    DownloadBodyDecodedByClient,  ///< The gzip stream as a content encoding, which the HTTP client takes off
+    DownloadBodyTruncatedGzip,    ///< The first half of the gzip stream
+};
+
 QByteArray downloadTestRedirectResponse(int httpStatus, const QString& location)
 {
     return "HTTP/1.1 " + QByteArray::number(httpStatus) + " Redirect\r\nLocation: " + location.toUtf8() +
@@ -639,46 +649,52 @@ void QGCFileDownloadTest::_testStartToMemoryFailsAsStart()
 void QGCFileDownloadTest::_testStartToMemoryLimit_data()
 {
     QTest::addColumn<int>("contentSize");
-    QTest::addColumn<bool>("compressed");
+    QTest::addColumn<int>("body");
     QTest::addColumn<QStringList>("warnings");  // as "category|pattern"; empty: the content is handed over
     QTest::addColumn<QString>("error");
 
     constexpr int limit = 4096;
     const QString tooLarge = QStringLiteral("Download is larger than the limit of 4096 bytes");
     const QStringList tooLargeWarning{QStringLiteral("Utilities.QGCFileDownload|") + tooLarge};
-    QTest::newRow("at the limit") << limit << false << QStringList() << QString();
-    QTest::newRow("one byte more") << (limit + 1) << false << tooLargeWarning << tooLarge;
-    QTest::newRow("many times more") << (256 * limit) << false << tooLargeWarning << tooLarge;
-    QTest::newRow("decompressed, at the limit") << limit << true << QStringList() << QString();
+    QTest::newRow("at the limit") << limit << int(DownloadBodyPlain) << QStringList() << QString();
+    QTest::newRow("one byte more") << (limit + 1) << int(DownloadBodyPlain) << tooLargeWarning << tooLarge;
+    QTest::newRow("many times more") << (256 * limit) << int(DownloadBodyPlain) << tooLargeWarning << tooLarge;
+    QTest::newRow("decompressed, at the limit") << limit << int(DownloadBodyGzip) << QStringList() << QString();
     QTest::newRow("decompressed, one byte more")
-        << (limit + 1) << true
+        << (limit + 1) << int(DownloadBodyGzip)
         << QStringList{QStringLiteral("Utilities.QGClibarchive|Size limit exceeded"),
                        QStringLiteral("Utilities.QGCFileDownload|Decompression failed:")}
         << QStringLiteral("Decompression failed: .*size limit exceeded");
+    // A body that is not compressed under a name that says so is handed over as it is, within the same limit
+    QTest::newRow("not compressed, at the limit")
+        << limit << int(DownloadBodyPlainNamedGzip) << QStringList() << QString();
+    QTest::newRow("not compressed, one byte more")
+        << (limit + 1) << int(DownloadBodyPlainNamedGzip) << tooLargeWarning << tooLarge;
 }
 
 void QGCFileDownloadTest::_testStartToMemoryLimit()
 {
     QFETCH(int, contentSize);
-    QFETCH(bool, compressed);
+    QFETCH(int, body);
     QFETCH(QStringList, warnings);
     QFETCH(QString, error);
+    const bool namedGzip = (body != DownloadBodyPlain);
 
     // Compresses to a fraction of the limit, so only the decompressed size can exceed it
     const QByteArray content(contentSize, 'x');
     TestFixtures::LocalHttpTestServer server;
     QVERIFY2(server.listen(), "Could not start local test HTTP server");
-    server.installHttpResponder(compressed ? downloadTestGzip(content) : content);
+    server.installHttpResponder((body == DownloadBodyGzip) ? downloadTestGzip(content) : content);
 
     QGCFileDownload downloader(this);
-    downloader.setAutoDecompress(compressed);
+    downloader.setAutoDecompress(namedGzip);
     QSignalSpy memorySpy(&downloader, &QGCFileDownload::finishedToMemory);
     for (const QString& warning : warnings) {
         expectLogMessage(qPrintable(warning.section(QLatin1Char('|'), 0, 0)), QtWarningMsg,
                          QRegularExpression(warning.section(QLatin1Char('|'), 1)));
     }
     QVERIFY(downloader.startToMemory(
-        server.url(compressed ? QStringLiteral("/content.bin.gz") : QStringLiteral("/content.bin")), 4096));
+        server.url(namedGzip ? QStringLiteral("/content.bin.gz") : QStringLiteral("/content.bin")), 4096));
     QVERIFY_SIGNAL_WAIT(memorySpy, TestTimeout::mediumMs());
     for (qsizetype i = 0; i < warnings.count(); i++) {
         verifyExpectedLogMessage();
@@ -851,6 +867,91 @@ void QGCFileDownloadTest::_testAutoDecompressUncompressedFile()
     QVERIFY2(QFileInfo(resultLocalFile).size() > 0, "Downloaded file is empty");
     // Cleanup
     QFile::remove(resultLocalFile);
+}
+
+void QGCFileDownloadTest::_testAutoDecompressBodyNotCompressed_data()
+{
+    QTest::addColumn<int>("body");
+    QTest::addColumn<bool>("toMemory");
+
+    // A server that sends the file with a content encoding: the client decodes the body, and the name the file
+    // is saved under still says that it is compressed
+    QTest::newRow("decoded by the client, to a file") << int(DownloadBodyDecodedByClient) << false;
+    QTest::newRow("decoded by the client, to memory") << int(DownloadBodyDecodedByClient) << true;
+    // A server that has the content under that name
+    QTest::newRow("not compressed, to a file") << int(DownloadBodyPlainNamedGzip) << false;
+    QTest::newRow("not compressed, to memory") << int(DownloadBodyPlainNamedGzip) << true;
+    // What is compressed as its name says has to decompress
+    QTest::newRow("truncated gzip, to a file") << int(DownloadBodyTruncatedGzip) << false;
+    QTest::newRow("truncated gzip, to memory") << int(DownloadBodyTruncatedGzip) << true;
+}
+
+void QGCFileDownloadTest::_testAutoDecompressBodyNotCompressed()
+{
+    QFETCH(int, body);
+    QFETCH(bool, toMemory);
+
+    const QByteArray content = QByteArray("{\"name\": \"manifest\"}\n").repeated(200);
+    const QByteArray gzip = downloadTestGzip(content);
+    TestFixtures::LocalHttpTestServer server;
+    QVERIFY2(server.listen(), "Could not start local test HTTP server");
+    switch (body) {
+        case DownloadBodyDecodedByClient:
+            server.installRawResponder(
+                "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: application/json\r\n"
+                "Content-Encoding: gzip\r\nContent-Length: " +
+                QByteArray::number(gzip.size()) + "\r\n\r\n" + gzip);
+            break;
+        case DownloadBodyPlainNamedGzip:
+            server.installHttpResponder(content);
+            break;
+        case DownloadBodyTruncatedGzip:
+            server.installHttpResponder(gzip.left(gzip.size() / 2));
+            break;
+        default:
+            QFAIL("Unknown row");
+    }
+    const bool delivered = (body != DownloadBodyTruncatedGzip);
+    if (!delivered) {
+        expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("(?i)truncated gzip input"));
+        expectLogMessage("Utilities.QGCFileDownload", QtWarningMsg, QRegularExpression("Decompression failed:"));
+    }
+
+    QGCFileDownload downloader(this);
+    downloader.setAutoDecompress(true);
+    QSignalSpy fileSpy(&downloader, &QGCFileDownload::finished);
+    QSignalSpy memorySpy(&downloader, &QGCFileDownload::finishedToMemory);
+    const QString url = server.url(QStringLiteral("/manifest.json.gz"));
+    QVERIFY(toMemory ? downloader.startToMemory(url) : downloader.start(url));
+    QVERIFY_SIGNAL_WAIT(toMemory ? memorySpy : fileSpy, TestTimeout::mediumMs());
+    if (!delivered) {
+        verifyExpectedLogMessage();
+        verifyExpectedLogMessage();
+    }
+
+    if (toMemory) {
+        const QList<QVariant> args = memorySpy.first();
+        QVERIFY2(args.at(0).toBool() == delivered, qPrintable(args.at(2).toString()));
+        QCOMPARE(args.at(1).toByteArray(), delivered ? content : QByteArray());
+        QVERIFY(downloadToMemoryLeftNothing(downloader));
+        return;
+    }
+
+    const QList<QVariant> args = fileSpy.first();
+    QVERIFY2(args.at(0).toBool() == delivered, qPrintable(args.at(2).toString()));
+    const QFileInfo localFile(args.at(1).toString());
+    if (delivered) {
+        // As after a decompression: the content under the name without the extension, and nothing under the
+        // name it was downloaded with
+        QCOMPARE(localFile.fileName(), QStringLiteral("manifest.json"));
+        QCOMPARE(downloader.localPath(), localFile.filePath());
+        QCOMPARE(readDownloadTestFile(localFile.filePath()), content);
+        QCOMPARE(localFile.dir().entryList(QDir::Files), QStringList{QStringLiteral("manifest.json")});
+    } else {
+        // A failed decompression hands over the file as it was downloaded
+        QCOMPARE(localFile.fileName(), QStringLiteral("manifest.json.gz"));
+    }
+    QVERIFY(QFile::remove(localFile.filePath()));
 }
 
 // ============================================================================

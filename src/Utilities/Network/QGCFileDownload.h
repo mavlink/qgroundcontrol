@@ -85,6 +85,9 @@ class QGCFileDownload : public QObject
     Q_PROPERTY(qint64 bytesReceived READ bytesReceived NOTIFY bytesReceivedChanged FINAL)
 
     /// Whether to auto-decompress compressed files after download
+    /// The result has the name of the download without the extension of its compression. A file whose name
+    /// has such an extension and whose content is not compressed, as a body that the server sent with a
+    /// content encoding and the network stack decoded, is handed over as it is under that name too.
     Q_PROPERTY(bool autoDecompress READ autoDecompress WRITE setAutoDecompress NOTIFY autoDecompressChanged FINAL)
 
     /// Custom output path (empty = the URL's file name, in a directory of its own under the temp directory,

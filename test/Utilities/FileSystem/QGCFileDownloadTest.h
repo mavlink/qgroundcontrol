@@ -38,6 +38,8 @@ private slots:
     void _testAutoDecompressGzip();
     void _testAutoDecompressDisabled();
     void _testAutoDecompressUncompressedFile();
+    void _testAutoDecompressBodyNotCompressed_data();
+    void _testAutoDecompressBodyNotCompressed();
 
     // Integration tests (download + compression)
     void _testDownloadAndExtractZip();

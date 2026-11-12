@@ -687,5 +687,7 @@ void QGCFileDownload::_startDecompression()
     // 0 would tell the job that there is no limit
     const qint64 maxDecompressedBytes =
         _toMemory ? qMax<qint64>(_maxMemoryBytes, 1) : QGCCompression::kDefaultMaxDecompressedFileBytes;
-    _decompressionJob->decompressFile(_localPath, decompressedPath, maxDecompressedBytes);
+    // The name of the file is all that says it is compressed. A body that the server sent with a content
+    // encoding has been decoded by the network stack, and is then the content as it is: the job copies it.
+    _decompressionJob->decompressOrCopyFile(_localPath, decompressedPath, maxDecompressedBytes);
 }
