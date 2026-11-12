@@ -4,8 +4,6 @@
 #include <QtCore/QDir>
 #include <QtCore/QDirIterator>
 #include <QtCore/QRegularExpression>
-#include <QtCore/QSettings>
-#include <QtCore/QStorageInfo>
 #include <QtCore/QTemporaryDir>
 #include <QtQml/QQmlEngine>
 
@@ -211,20 +209,6 @@ void QGCMapEngineManager::_tileSetSaved(QGCCachedTileSet* set)
     set->createDownloadTask();
 }
 
-void QGCMapEngineManager::saveSetting(const QString& key, const QString& value)
-{
-    QSettings settings;
-    settings.beginGroup(kQmlOfflineMapKeyName);
-    settings.setValue(key, value);
-}
-
-QString QGCMapEngineManager::loadSetting(const QString& key, const QString& defaultValue)
-{
-    QSettings settings;
-    settings.beginGroup(kQmlOfflineMapKeyName);
-    return settings.value(key, defaultValue).toString();
-}
-
 QString QGCMapEngineManager::mapAttribution(const QString& mapType)
 {
     for (const SharedMapProvider& provider : UrlFactory::getProviders()) {
@@ -399,16 +383,6 @@ void QGCMapEngineManager::selectAll()
         QGCCachedTileSet* const set = qobject_cast<QGCCachedTileSet*>(_tileSets->get(i));
         if (set) {
             set->setSelected(true);
-        }
-    }
-}
-
-void QGCMapEngineManager::selectNone()
-{
-    for (qsizetype i = 0; i < _tileSets->count(); i++) {
-        QGCCachedTileSet* const set = qobject_cast<QGCCachedTileSet*>(_tileSets->get(i));
-        if (set) {
-            set->setSelected(false);
         }
     }
 }

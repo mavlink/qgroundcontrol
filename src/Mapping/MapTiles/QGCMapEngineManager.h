@@ -12,8 +12,6 @@ class QmlObjectListModel;
 class QGCMapEngineManager : public QObject
 {
     Q_OBJECT
-    // QML_ELEMENT
-    // QML_UNCREATABLE("")
     Q_MOC_INCLUDE("QmlObjectListModel.h")
     Q_MOC_INCLUDE("QGCCachedTileSet.h")
     Q_PROPERTY(bool fetchElevation MEMBER _fetchElevation NOTIFY fetchElevationChanged)
@@ -30,10 +28,10 @@ class QGCMapEngineManager : public QObject
     /// are set one after the other and name no map in between: the map chosen before stays until they name one.
     /// Saved settings that name no map are repaired when the manager is created: they get the first type of their
     /// provider, or the default map when no map has that provider.
-    Q_PROPERTY(QString chosenMap READ chosenMap NOTIFY chosenMapChanged)
+    Q_PROPERTY(QString chosenMap READ chosenMap NOTIFY chosenMapChanged FINAL)
     Q_PROPERTY(QStringList mapProviderList READ mapProviderList CONSTANT)
     Q_PROPERTY(QStringList elevationProviderList READ elevationProviderList CONSTANT)
-    Q_PROPERTY(QString terrainAttribution READ terrainAttribution CONSTANT)
+    Q_PROPERTY(QString terrainAttribution READ terrainAttribution CONSTANT FINAL)
     Q_PROPERTY(quint64 tileCount READ tileCount NOTIFY tileCountChanged)
     Q_PROPERTY(quint64 tileSize READ tileSize NOTIFY tileSizeChanged)
 
@@ -64,11 +62,7 @@ public:
     Q_INVOKABLE void deleteTileSet(QGCCachedTileSet* tileSet);
     Q_INVOKABLE void loadTileSets();
     Q_INVOKABLE void renameTileSet(QGCCachedTileSet* tileSet, const QString& newName);
-
-    Q_INVOKABLE void resetAction() { setImportAction(ImportAction::ActionNone); }
-
     Q_INVOKABLE void selectAll();
-    Q_INVOKABLE void selectNone();
     /// Creates the sets that updateForCurrentView() counted the tiles of, and starts their downloads
     Q_INVOKABLE void startDownload(const QString& name, const QString& mapType);
     /// Counts the tiles of the sets that startDownload() creates for a view. Imagery \a mapName gets a set of the
@@ -77,12 +71,10 @@ public:
     Q_INVOKABLE void updateForCurrentView(double lon0, double lat0, double lon1, double lat1, int minZoom, int maxZoom,
                                           const QString& mapName);
 
-    Q_INVOKABLE static QString loadSetting(const QString& key, const QString& defaultValue);
     /// The credit of the provider \a mapType, named as mapList() names it. Empty for a name that is not in that
     /// list, and for a provider without a credit.
     Q_INVOKABLE static QString mapAttribution(const QString& mapType);
     Q_INVOKABLE static QStringList mapTypeList(const QString& provider);
-    Q_INVOKABLE static void saveSetting(const QString& key, const QString& value);
 
     ImportAction importAction() const { return _importAction; }
 
@@ -141,7 +133,6 @@ signals:
     void chosenMapChanged();
     void errorMessageChanged();
     void fetchElevationChanged();
-    void freeDiskSpaceChanged();
     void importActionChanged();
     void importReplaceChanged();
     void selectedCountChanged();
@@ -194,7 +185,6 @@ private:
     int _terrainMinZoom = 0;
     int _terrainMaxZoom = 0;
     int _actionProgress = 0;
-    quint64 _setID = UINT64_MAX;
     QString _errorMessage;
     QString _chosenMap;
     bool _fetchElevation = true;
@@ -202,7 +192,6 @@ private:
     QGCCompressionJob* _extractionJob = nullptr;
     QString _extractionOutputDir;
 
-    static constexpr const char* kQmlOfflineMapKeyName = "QGCOfflineMap";
     /// The zoom in the keys of the tiles of an elevation provider that has no zoom levels: the terrain queries ask
     /// the tile cache for it
     static constexpr int kElevationZoom = 1;

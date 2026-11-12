@@ -316,15 +316,9 @@ public:
 
     QHash<int, QString> cacheVariants() const { return m_cacheVariants; }
 
-    int progress() const { return m_progress; }
-
     void setImportCompleted() { emit actionCompleted(); }
 
-    void setProgress(int percentage)
-    {
-        m_progress = percentage;
-        emit actionProgress(percentage);
-    }
+    void setProgress(int percentage) { emit actionProgress(percentage); }
 
 signals:
     void actionCompleted();
@@ -334,7 +328,6 @@ private:
     const QString m_path;
     const bool m_replace = false;
     const QHash<int, QString> m_cacheVariants;
-    int m_progress = 0;
 };
 
 //-----------------------------------------------------------------------------
