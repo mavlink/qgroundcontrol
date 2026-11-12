@@ -10,6 +10,7 @@ private slots:
     void initTestCase() override;
 
     void _cachedTileServedWithoutNetwork();
+    void _serverTileStoredInCache_data();
     void _serverTileStoredInCache();
     void _serverFailure_data();
     void _serverFailure();

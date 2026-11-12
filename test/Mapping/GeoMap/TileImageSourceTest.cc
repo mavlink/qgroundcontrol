@@ -314,7 +314,7 @@ void TileImageSourceTest::_networkGarbageBodyFailsAndNotCached()
     UnitTestTileGenerator::setForcedMissCount(2);
     const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
 
-    expectLogMessage("GeoMap.TileImageSource", QtWarningMsg, QRegularExpression(QStringLiteral("not a usable tile")));
+    expectLogMessage("GeoMap.TileImageSource", QtWarningMsg, QRegularExpression(QStringLiteral("network body is not")));
     source.requestTileImage(key);
     QTRY_COMPARE_WITH_TIMEOUT(failedSpy.count(), 1, 5000);
     verifyExpectedLogMessage();

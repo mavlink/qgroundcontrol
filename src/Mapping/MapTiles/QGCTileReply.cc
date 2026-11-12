@@ -259,6 +259,9 @@ void QGCTileReply::_networkReplyFinished()
             _finish(Error::DataError, QStringLiteral("network body failed to serialize as a terrain tile"));
             return;
         }
+    } else if (MapProvider::imageFormatFromSignature(data).isEmpty()) {
+        _finish(Error::DataError, QStringLiteral("network body is not a picture, %1 bytes").arg(data.size()));
+        return;
     }
 
     if (_validator && !_validator(data)) {
@@ -328,6 +331,8 @@ void QGCTileReply::_finish(Error error, const QString& errorString)
 
 bool QGCTileReply::_isUsable(const QByteArray& data) const
 {
-    return !data.isEmpty() && !_provider->isNoTileImage(data) && !_provider->isRefusalImage(data) &&
-           (!_validator || _validator(data));
+    // An elevation tile is no picture: it is in its provider's serialized form
+    const bool isPicture = !MapProvider::imageFormatFromSignature(data).isEmpty();
+    return !data.isEmpty() && (isPicture || _provider->isElevationProvider()) && !_provider->isNoTileImage(data) &&
+           !_provider->isRefusalImage(data) && (!_validator || _validator(data));
 }

@@ -39,7 +39,13 @@ public:
 
     QUrl getTileURL(int x, int y, int zoom) const;
 
+    /// The format of \a image by its signature, or else the format of the provider's tiles. Empty for fewer than 3
+    /// bytes.
     QString getImageFormat(QByteArrayView image) const;
+
+    /// The format of \a image by its signature: "png", "jpg", "gif" or "webp". Empty for what is none of these
+    /// pictures.
+    static QString imageFormatFromSignature(QByteArrayView image);
 
     quint32 getAverageSize() const { return _averageSize; }
 

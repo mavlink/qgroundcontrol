@@ -42,6 +42,9 @@ const QString kTileReplyCustomUrlType = QStringLiteral("CustomURL Custom");
 const QString kTileReplySourceA = QStringLiteral("https://a.example/{z}/{x}/{y}.png");
 const QString kTileReplySourceB = QStringLiteral("https://b.example/{z}/{x}/{y}.png");
 
+/// What a captive portal answers in place of a tile, with the HTTP status of a tile
+const QByteArray kTileReplyPageBody = QByteArrayLiteral("<html><body>Sign in to this network</body></html>");
+
 /// The cache worker answers lookups in order: once this one is answered, so are the lookups started before it
 bool tileReplyCacheLookupsAnswered()
 {
@@ -50,6 +53,35 @@ bool tileReplyCacheLookupsAnswered()
     QSignalSpy sentinelSpy(&sentinel, &QGCTileReply::finished);
     sentinel.start();
     return sentinelSpy.wait(TestTimeout::mediumMs());
+}
+
+enum class TileReplyCacheAnswer
+{
+    None,
+    Stored,
+    Missing,
+};
+
+/// Whether the tile cache has stored the tile \a hash. Forces the miss that UnitTestTileGenerator would otherwise
+/// answer with a tile of its own, and leaves no forced miss behind.
+TileReplyCacheAnswer tileReplyCacheAnswer(const QString& hash)
+{
+    UnitTestTileGenerator::setForcedMissCount(1);
+    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+
+    TileReplyCacheAnswer answer = TileReplyCacheAnswer::None;
+    // Declared after what its signals write, so that a late signal is dropped
+    const QObject context;
+    QGCFetchTileTask* const task = new QGCFetchTileTask(hash);
+    (void) QObject::connect(task, &QGCFetchTileTask::tileFetched, &context,
+                            [&answer] { answer = TileReplyCacheAnswer::Stored; });
+    (void) QObject::connect(task, &QGCMapTask::error, &context, [&answer] { answer = TileReplyCacheAnswer::Missing; });
+    if (!getQGCMapEngine()->addTask(task)) {
+        task->deleteLater();
+        return TileReplyCacheAnswer::None;
+    }
+    (void) QTest::qWaitFor([&answer] { return answer != TileReplyCacheAnswer::None; }, TestTimeout::mediumMs());
+    return answer;
 }
 
 }  // namespace
@@ -79,32 +111,53 @@ void QGCTileReplyTest::_cachedTileServedWithoutNetwork()
     QCOMPARE(nam.requestCount, 0);
 }
 
+void QGCTileReplyTest::_serverTileStoredInCache_data()
+{
+    QTest::addColumn<int>("tileX");  // a tile of its own for every row
+    QTest::addColumn<QByteArray>("body");
+    QTest::addColumn<QString>("format");
+
+    // A map tile is told by the signature of its picture format. Only the PNG is a picture beyond it.
+    QTest::newRow("PNG") << (kTileX + 1) << tileReplyPngBody() << QStringLiteral("png");
+    QTest::newRow("JPEG") << (kTileX + 70) << (QByteArray("\xFF\xD8\xFF\xE0", 4) + QByteArray(64, 'j'))
+                          << QStringLiteral("jpg");
+    QTest::newRow("GIF") << (kTileX + 71) << (QByteArrayLiteral("GIF89a") + QByteArray(64, 'g'))
+                         << QStringLiteral("gif");
+    QTest::newRow("WebP") << (kTileX + 72) << (QByteArray("RIFF\x48\x00\x00\x00WEBP", 12) + QByteArray(64, 'w'))
+                          << QStringLiteral("webp");
+}
+
 void QGCTileReplyTest::_serverTileStoredInCache()
 {
+    QFETCH(int, tileX);
+    QFETCH(QByteArray, body);
+    QFETCH(QString, format);
+
     TileReplyMockNam nam;
-    nam.body = tileReplyPngBody();
+    nam.body = body;
     QVERIFY(!nam.body.isEmpty());
 
     // The second forced miss stays unconsumed when the stored tile answers the second lookup
     UnitTestTileGenerator::setForcedMissCount(2);
     const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
 
-    QGCTileReply fetched(&nam, tileReplyMapId(), kTileX + 1, kTileY, kTileZoom);
+    QGCTileReply fetched(&nam, tileReplyMapId(), tileX, kTileY, kTileZoom);
     QSignalSpy fetchedSpy(&fetched, &QGCTileReply::finished);
     fetched.start();
     QVERIFY_SIGNAL_COUNT_WAIT(fetchedSpy, 1, TestTimeout::mediumMs());
     QCOMPARE(fetched.error(), QGCTileReply::Error::NoError);
     QVERIFY(!fetched.isCached());
     QCOMPARE(fetched.data(), nam.body);
-    QCOMPARE(fetched.format(), QStringLiteral("png"));
+    QCOMPARE(fetched.format(), format);
     QCOMPARE(nam.requestCount, 1);
 
-    QGCTileReply cached(&nam, tileReplyMapId(), kTileX + 1, kTileY, kTileZoom);
+    QGCTileReply cached(&nam, tileReplyMapId(), tileX, kTileY, kTileZoom);
     QSignalSpy cachedSpy(&cached, &QGCTileReply::finished);
     cached.start();
     QVERIFY_SIGNAL_COUNT_WAIT(cachedSpy, 1, TestTimeout::mediumMs());
     QVERIFY(cached.isCached());
     QCOMPARE(cached.data(), nam.body);
+    QCOMPARE(cached.format(), format);
     QCOMPARE(nam.requestCount, 1);
 }
 
@@ -133,6 +186,8 @@ void QGCTileReplyTest::_serverFailure_data()
     QTest::newRow("http 404 of the Custom URL map")
         << kTileReplyCustomUrlType << (kTileX + 15) << QByteArray() << QNetworkReply::ContentNotFoundError << 404
         << QGCTileReply::Error::NetworkError;
+    QTest::newRow("page in place of a picture") << mapType << (kTileX + 16) << kTileReplyPageBody
+                                                << QNetworkReply::NoError << 200 << QGCTileReply::Error::DataError;
 }
 
 void QGCTileReplyTest::_serverFailure()
@@ -157,7 +212,7 @@ void QGCTileReplyTest::_serverFailure()
     nam.error = networkError;
     nam.httpStatus = httpStatus;
 
-    UnitTestTileGenerator::setForcedMissCount(2);
+    UnitTestTileGenerator::setForcedMissCount(1);
     const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
 
     QGCTileReply failed(&nam, mapId, tileX, kTileY, kTileZoom);
@@ -168,8 +223,10 @@ void QGCTileReplyTest::_serverFailure()
     QVERIFY(!failed.errorString().isEmpty());
     QVERIFY(failed.data().isEmpty());
     QCOMPARE(nam.requestCount, 1);
+    QCOMPARE(tileReplyCacheAnswer(failed.hash()), TileReplyCacheAnswer::Missing);
 
-    // Nothing was stored: the next request misses the cache again and asks the server
+    // The next request asks the server again
+    UnitTestTileGenerator::setForcedMissCount(1);
     nam.body = tileReplyPngBody();
     nam.error = QNetworkReply::NoError;
     nam.httpStatus = 200;
@@ -248,7 +305,8 @@ void QGCTileReplyTest::_validatorRejectsCachedAndServerTiles()
     // A rejected server tile fails and is not stored: a request accepting any tile still has to ask the server
     UnitTestTileGenerator::setForcedMissCount(2);
     const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
-    nam.body = QByteArrayLiteral("not the accepted tile");
+    nam.body = tileReplyPngBody(Qt::red);
+    QVERIFY(!nam.body.isEmpty() && (nam.body != png));
     QGCTileReply rejected(&nam, tileReplyMapId(), kTileX + 21, kTileY, kTileZoom);
     rejected.setValidator(acceptPng);
     QSignalSpy rejectedSpy(&rejected, &QGCTileReply::finished);
@@ -278,6 +336,7 @@ void QGCTileReplyTest::_unusableCachedTileIsReplaced_data()
     // The picture that Bing sends for a place without imagery, which the cache of an older version can hold
     QTest::newRow("no-tile picture of the provider")
         << QStringLiteral("Bing Hybrid") << (kTileX + 41) << tileReplyBingPlaceholder() << false;
+    QTest::newRow("page in place of a picture") << mapType << (kTileX + 42) << kTileReplyPageBody << false;
 }
 
 // A tile in the cache that cannot be used, as a notice of refusal that was cached as a tile is, gives way to the

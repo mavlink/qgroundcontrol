@@ -17,6 +17,10 @@ struct QGCCacheTile;
 /// A request for one map or elevation tile. The tile comes from the shared tile cache or, on a miss, from the
 /// provider's server; a tile fetched from the server is stored in the cache.
 ///
+/// A map tile is a PNG, JPEG, GIF or WebP picture, told by its signature: any other answer of the server is a DataError
+/// and is not stored, and any other entry of the cache is fetched again. An elevation tile is checked by its
+/// provider.
+///
 /// Requests that miss the cache while another request is fetching the same tile wait for that fetch, so the server
 /// is asked once. A request for an offline tile set takes no part in this.
 ///

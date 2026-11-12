@@ -47,6 +47,12 @@ QString MapProvider::getImageFormat(QByteArrayView image) const
         return QString();
     }
 
+    const QString format = imageFormatFromSignature(image);
+    return format.isEmpty() ? _imageFormat : format;
+}
+
+QString MapProvider::imageFormatFromSignature(QByteArrayView image)
+{
     static constexpr QByteArrayView pngSignature("\x89\x50\x4E\x47\x0D\x0A\x1A\x0A");
     if (image.startsWith(pngSignature)) {
         return QStringLiteral("png");
@@ -62,7 +68,14 @@ QString MapProvider::getImageFormat(QByteArrayView image) const
         return QStringLiteral("gif");
     }
 
-    return _imageFormat;
+    // A RIFF file, whose form type follows the four bytes of its size
+    static constexpr QByteArrayView riffSignature("RIFF");
+    static constexpr QByteArrayView webpFormType("WEBP");
+    if (image.startsWith(riffSignature) && (image.size() >= 12) && (image.sliced(8, 4) == webpFormType)) {
+        return QStringLiteral("webp");
+    }
+
+    return QString();
 }
 
 QString MapProvider::_tileXYToQuadKey(int tileX, int tileY, int levelOfDetail) const
