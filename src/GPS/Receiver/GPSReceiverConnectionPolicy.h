@@ -40,14 +40,15 @@ enum class GPSReceiverSessionOutcome
 /// connects it at startup and when the setting is turned on, reconnects it with backoff after a lost connection, and
 /// reconnects an unplugged serial receiver as soon as its port returns. A connection the user starts is kept once it
 /// reaches the receiver. A configured base without a saved serial device is discovered on USB instead, trying only
-/// ports whose USB identity is a known RTK receiver adapter, with the saved manufacturer. The user's Disconnect pauses
-/// both until the user connects again or turns the setting back on. With the setting off, receivers connect only when
-/// the user asks, and a lost connection is reported. Automatic attempts never pass flash-save consent. A saved or
-/// discovered receiver whose configuration cannot connect is reported once and not retried until the configuration
-/// changes or the user connects; a Connect that is refused for that reason leaves the changed configuration to be
-/// connected automatically all the same. The policy reports why a connection cannot start or is waiting for its port,
-/// and withdraws the reason a connection could not start once the configuration no longer has it; the receiver words
-/// how a session ended.
+/// ports whose USB identity is a known RTK receiver adapter, with the saved manufacturer; while another connection
+/// keeps such a receiver closed, where only one serial device can be open at a time, it says so. The user's
+/// Disconnect pauses both until the user connects again or turns the setting back on. With the setting off, receivers
+/// connect only when the user asks, and a lost connection is reported. Automatic attempts never pass flash-save
+/// consent. A saved or discovered receiver whose configuration cannot connect is reported once and not retried until
+/// the configuration changes or the user connects; a Connect that is refused for that reason leaves the changed
+/// configuration to be connected automatically all the same. The policy reports why a connection cannot start or is
+/// waiting for its port, and withdraws the reason a connection could not start once the configuration no longer has
+/// it; the receiver words how a session ended.
 class GPSReceiverConnectionPolicy
 {
     Q_DECLARE_TR_FUNCTIONS(GPSReceiverConnectionPolicy)
@@ -101,6 +102,8 @@ private:
         QString error;
         /// The serial device that was missing or in use; empty when the configuration itself cannot connect.
         QString serialDevice;
+        /// Discovery's reason: the receiver it found stays closed while another connection has a serial device open.
+        bool discovery = false;
     };
 
     bool _hasSavedReceiver() const;

@@ -129,6 +129,9 @@ void GPSReceiverConnectionPolicy::_refuse(Refusal refusal)
 
 bool GPSReceiverConnectionPolicy::_refusalApplies() const
 {
+    if (_refusal->discovery) {
+        return _discoveryEnabled();
+    }
     if (_refusal->serialDevice.isEmpty()) {
         return _connectability.error == _refusal->error;
     }
@@ -358,6 +361,19 @@ void GPSReceiverConnectionPolicy::_updateDiscovery()
     }
     if (const QString device = _serial.settledRtkReceiver(_scheduler->nowUs()); !device.isEmpty()) {
         _connectDiscovered(device);
+        return;
+    }
+    // Nothing is connected while another connection keeps the receiver closed, which is said for as long as it lasts.
+    const bool said = _refusal && _refusal->discovery;
+    if (_serial.rtkReceiverKeptClosed()) {
+        if (!said) {
+            _refuse({.error = tr("An RTK receiver is on USB, but another connection has a serial device open, and "
+                                 "only one can be open at a time. Disconnect it to connect the receiver."),
+                     .serialDevice = {},
+                     .discovery = true});
+        }
+    } else if (said) {
+        _showError({});
     }
 }
 

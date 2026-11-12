@@ -28,6 +28,7 @@ public:
     void refreshEntries() override;
     bool available(const QString& device) const override;
     QString settledRtkReceiver(quint64 nowUs) override;
+    bool rtkReceiverKeptClosed() const override;
 
     void forgetRtkReceivers() override { _rtkReceivers.clear(); }
 
@@ -36,8 +37,10 @@ public:
     GPSReceiverWorker::TransportFactory transportFactory(const QString& device, GPSSerialClaim claim) const override;
 
 private:
-    /// Free devices whose USB identity is a known RTK receiver adapter, one per physical device.
-    QStringList _freeRtkReceivers() const;
+    /// Devices whose USB identity is a known RTK receiver adapter, one per physical device, free or not.
+    QStringList _listedRtkReceivers() const;
+    /// A claim made here is still held: by this receiver's session, or by a retired one whose worker has not stopped.
+    bool _heldHere() const;
 
     const QPointer<SerialPortManager> _manager;
     /// The devices of the last scan, which the entries are made of.

@@ -62,6 +62,7 @@ The settings are:
     A saved device that is not plugged in is marked _(unavailable)_.
     A mark comes before the name, such as _(in use) u-blox GNSS receiver – /dev/ttyACM0_, so that it stays readable where the list is too narrow for a long name.
     For a configured base with **Connect automatically** on, _Any RTK receiver on USB_ connects to the first receiver whose USB adapter is a known RTK receiver.
+    Where only one serial device can be open at a time, it connects no receiver while another connection has a device open, and the [receiver status](#status) says so for a receiver that is plugged in.
   - **Baud rate:** The serial rate. _Auto_ lets a configured base detect the rate; a passive receiver needs the rate it already uses. _Custom_ accepts any other rate.
 - **Base mode** (_Configured base_ only), as the receiver supports it:
   - **Survey-In:** The receiver surveys its own position.

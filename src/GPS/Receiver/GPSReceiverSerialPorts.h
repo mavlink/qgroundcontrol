@@ -74,6 +74,10 @@ public:
     /// as a newly plugged device needs before it is opened. Empty while there is none.
     virtual QString settledRtkReceiver([[maybe_unused]] quint64 nowUs) { return {}; }
 
+    /// An RTK receiver that discovery would connect is listed and stays closed: only one serial device can be open at
+    /// a time, and another QGroundControl connection, such as a vehicle link, has one open.
+    virtual bool rtkReceiverKeptClosed() const { return false; }
+
     /// Forgets since when the RTK receivers have been listed, so each waits again from its next listing.
     virtual void forgetRtkReceivers() {}
 

@@ -55,7 +55,7 @@ bool GPSReceiverSystemSerialPorts::available(const QString& device) const
                        [&device](const auto& port) { return port.systemLocation == device && !port.bootloader; });
 }
 
-QStringList GPSReceiverSystemSerialPorts::_freeRtkReceivers() const
+QStringList GPSReceiverSystemSerialPorts::_listedRtkReceivers() const
 {
     QStringList receivers;
     if (!_manager) {
@@ -68,8 +68,7 @@ QStringList GPSReceiverSystemSerialPorts::_freeRtkReceivers() const
         }
         // A labelled NMEA interface remains a receiver candidate on composite GPS devices.
         const bool primary = SerialPortManager::isPrimaryInterface(port, seenDevices);
-        if ((primary || port.description.contains(QStringLiteral("NMEA"))) &&
-            _manager->canReservePort(port.systemLocation)) {
+        if (primary || port.description.contains(QStringLiteral("NMEA"))) {
             receivers.append(port.systemLocation);
         }
     }
@@ -78,14 +77,32 @@ QStringList GPSReceiverSystemSerialPorts::_freeRtkReceivers() const
 
 QString GPSReceiverSystemSerialPorts::settledRtkReceiver(quint64 nowUs)
 {
-    const QStringList receivers = _freeRtkReceivers();
+    QStringList receivers = _listedRtkReceivers();
+    receivers.removeIf([this](const QString& device) { return !_manager->canReservePort(device); });
     _rtkReceivers.removeIf([&receivers](const QString& device) { return !receivers.contains(device); });
-    for (const QString& device : receivers) {
+    for (const QString& device : std::as_const(receivers)) {
         if (_rtkReceivers.settled(device, nowUs)) {
             return device;
         }
     }
     return {};
+}
+
+bool GPSReceiverSystemSerialPorts::rtkReceiverKeptClosed() const
+{
+    // A session of this receiver keeps the other devices closed too, and is not another connection.
+    if (_heldHere()) {
+        return false;
+    }
+    const QStringList receivers = _listedRtkReceivers();
+    return std::any_of(receivers.cbegin(), receivers.cend(), [this](const QString& device) {
+        return !_manager->isPortReserved(device) && !_manager->canReservePort(device);
+    });
+}
+
+bool GPSReceiverSystemSerialPorts::_heldHere() const
+{
+    return std::any_of(_claims.cbegin(), _claims.cend(), [](const auto& claim) { return !claim.expired(); });
 }
 
 GPSSerialClaim GPSReceiverSystemSerialPorts::claim(const QString& device)
@@ -118,8 +135,7 @@ void GPSReceiverSystemSerialPorts::refreshEntries()
     }
     // The marks tell what other connections hold. A session of this receiver keeps the other devices closed too
     // where only one can be open at a time, and marks them no more than its own.
-    const bool heldHere =
-        std::any_of(_claims.cbegin(), _claims.cend(), [](const auto& claim) { return !claim.expired(); });
+    const bool heldHere = _heldHere();
     QList<GPSSerialPortEntry> entries;
     entries.reserve(_scannedPorts.size());
     for (const auto& port : std::as_const(_scannedPorts)) {

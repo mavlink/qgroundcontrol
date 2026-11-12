@@ -1028,6 +1028,59 @@ void GPSReceiverConnectionPolicyTest::_excludedPorts()
     QCOMPARE(harness.attempts(), 0);
 }
 
+void GPSReceiverConnectionPolicyTest::_discoveryReportsReceiverKeptClosed_data()
+{
+    QTest::addColumn<bool>("receiverListed");
+    QTest::newRow("rtk-receiver") << true;
+    // With no receiver to open there is nothing to report.
+    QTest::newRow("no-rtk-receiver") << false;
+}
+
+void GPSReceiverConnectionPolicyTest::_discoveryReportsReceiverKeptClosed()
+{
+    QFETCH(bool, receiverListed);
+    // Where only one serial device can be open at a time, as with Android's USB serial driver, a vehicle link keeps
+    // every other device closed, so discovery connects nothing.
+    const QString linkPort = QStringLiteral("/test/mavlink");
+    QList<SerialPortManager::Port> listed{serialPort(linkPort)};
+    if (receiverListed) {
+        listed.append(rtkPort());
+    }
+    auto configuration = discoveryConfiguration();
+    PolicyHarness harness(configuration, listed);
+    GPSReceiver& receiver = harness.receiver;
+    (void) harness.ports.availablePorts();
+    harness.ports.setSinglePortOnly(true);
+    auto vehicleLink = harness.ports.reservePort(linkPort);
+    QVERIFY(vehicleLink);
+    const QString keptClosed =
+        receiverListed ? GPSReceiverConnectionPolicy::tr(
+                             "An RTK receiver is on USB, but another connection has a serial device open, and only "
+                             "one can be open at a time. Disconnect it to connect the receiver.")
+                       : QString();
+    QSignalSpy errors(&receiver, &GPSReceiver::errorMessageChanged);
+    QVERIFY(harness.discover());
+    QCOMPARE(harness.attempts(), 0);
+    QCOMPARE(receiver.errorMessage(), keptClosed);
+    QCOMPARE(errors.size(), receiverListed ? 1 : 0);
+
+    // The reason is discovery's: it goes when a device is selected, and returns with discovery.
+    configuration.serialDevice = linkPort;
+    receiver.setConfiguration(configuration);
+    QVERIFY(receiver.errorMessage().isEmpty());
+    configuration.serialDevice.clear();
+    receiver.setConfiguration(configuration);
+    harness.update();
+    QCOMPARE(receiver.errorMessage(), keptClosed);
+
+    // Once the link ends the reason goes, and the receiver connects as one that was just plugged in.
+    vehicleLink.reset();
+    harness.update();
+    QVERIFY(receiver.errorMessage().isEmpty());
+    QVERIFY(harness.discover());
+    QCOMPARE(harness.attempts(), receiverListed ? 1 : 0);
+}
+
 void GPSReceiverConnectionPolicyTest::_retryBacksOffAndRespectsReservations()
 {
     PolicyHarness harness(discoveryConfiguration(), {rtkPort()});

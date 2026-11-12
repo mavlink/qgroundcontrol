@@ -39,6 +39,8 @@ private slots:
     void _savedReceiverReplacesDiscovery();
     void _excludedPorts_data();
     void _excludedPorts();
+    void _discoveryReportsReceiverKeptClosed_data();
+    void _discoveryReportsReceiverKeptClosed();
     void _retryBacksOffAndRespectsReservations();
     void _compositeReceiverSelection_data();
     void _compositeReceiverSelection();
