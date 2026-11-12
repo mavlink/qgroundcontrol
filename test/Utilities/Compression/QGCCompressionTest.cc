@@ -1220,6 +1220,17 @@ void QGCCompressionTest::_testDetectedFormat_data()
     QTest::newRow("extractFromDevice") << "extractFromDevice" << zip << "^ZIP" << "none";
     QTest::newRow("extractArchiveFiltered") << "extractArchiveFiltered" << zip << "^ZIP" << "none";
     QTest::newRow("extractFileDataFromDevice") << "extractFileDataFromDevice" << sevenZip << "^7-Zip" << "none";
+    QTest::newRow("extractFile") << "extractFile" << zip << "^ZIP" << "none";
+    QTest::newRow("extractFileData") << "extractFileData" << sevenZip << "^7-Zip" << "none";
+    QTest::newRow("extractFiles") << "extractFiles" << zip << "^ZIP" << "none";
+    QTest::newRow("extractByPattern") << "extractByPattern" << sevenZip << "^7-Zip" << "none";
+    QTest::newRow("listArchive") << "listArchive" << zip << "^ZIP" << "none";
+    QTest::newRow("listArchiveDetailed") << "listArchiveDetailed" << sevenZip << "^7-Zip" << "none";
+    QTest::newRow("getArchiveStats") << "getArchiveStats" << zip << "^ZIP" << "none";
+    QTest::newRow("validateArchive") << "validateArchive" << sevenZip << "^7-Zip" << "none";
+    QTest::newRow("fileExists") << "fileExists" << zip << "^ZIP" << "none";
+    // The archive was opened and its first header read, which is what tells the format
+    QTest::newRow("fileExists of an absent entry") << "fileExists-absent" << sevenZip << "^7-Zip" << "none";
 }
 
 void QGCCompressionTest::_testDetectedFormat()
@@ -1266,6 +1277,26 @@ void QGCCompressionTest::_testDetectedFormat()
                                                        [](const QGCCompression::ArchiveEntry&) { return true; }));
     } else if (api == "extractFileDataFromDevice") {
         QVERIFY(!QGCCompression::extractFileDataFromDevice(&device, QStringLiteral("manifest.json")).isEmpty());
+    } else if (api == "extractFile") {
+        QVERIFY(QGCCompression::extractFile(resource, QStringLiteral("manifest.json"), outputPath));
+    } else if (api == "extractFileData") {
+        QVERIFY(!QGCCompression::extractFileData(resource, QStringLiteral("manifest.json")).isEmpty());
+    } else if (api == "extractFiles") {
+        QVERIFY(QGCCompression::extractFiles(resource, {QStringLiteral("manifest.json")}, outputPath));
+    } else if (api == "extractByPattern") {
+        QVERIFY(QGCCompression::extractByPattern(resource, {QStringLiteral("*.json")}, outputPath));
+    } else if (api == "listArchive") {
+        QVERIFY(!QGCCompression::listArchive(resource).isEmpty());
+    } else if (api == "listArchiveDetailed") {
+        QVERIFY(!QGCCompression::listArchiveDetailed(resource).isEmpty());
+    } else if (api == "getArchiveStats") {
+        QCOMPARE(QGCCompression::getArchiveStats(resource).fileCount, 1);
+    } else if (api == "validateArchive") {
+        QVERIFY(QGCCompression::validateArchive(resource));
+    } else if (api == "fileExists") {
+        QVERIFY(QGCCompression::fileExists(resource, QStringLiteral("manifest.json")));
+    } else if (api == "fileExists-absent") {
+        QVERIFY(!QGCCompression::fileExists(resource, QStringLiteral("absent.txt")));
     } else {
         QFAIL("Unknown row");
     }

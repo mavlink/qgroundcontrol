@@ -803,6 +803,7 @@ QStringList listArchive(const QString& archivePath, Format format)
     }
     bool listed = false;
     QStringList entries = QGClibarchive::listArchiveEntries(archivePath, &listed);
+    captureFormatInfo();
     if (!listed) {
         setArchiveReadError(archivePath);
     }
@@ -824,6 +825,7 @@ QList<ArchiveEntry> listArchiveDetailed(const QString& archivePath, Format forma
     }
     bool listed = false;
     QList<ArchiveEntry> entries = QGClibarchive::listArchiveEntriesDetailed(archivePath, &listed);
+    captureFormatInfo();
     if (!listed) {
         setArchiveReadError(archivePath);
     }
@@ -847,6 +849,7 @@ ArchiveStats getArchiveStats(const QString& archivePath, Format format)
     }
     bool counted = false;
     const ArchiveStats stats = QGClibarchive::getArchiveStats(archivePath, &counted);
+    captureFormatInfo();
     if (!counted) {
         setArchiveReadError(archivePath);
     }
@@ -860,6 +863,7 @@ bool validateArchive(const QString& archivePath, Format format)
     }
     qCDebug(QGCCompressionLog) << "Validating archive:" << archivePath;
     const bool valid = QGClibarchive::validateArchive(archivePath);
+    captureFormatInfo();
     if (!valid) {
         setArchiveReadError(archivePath);
     }
@@ -878,7 +882,9 @@ bool fileExists(const QString& archivePath, const QString& fileName, Format form
     if (!validateArchiveInput(archivePath, format)) {
         return false;
     }
-    switch (QGClibarchive::findEntryInArchive(archivePath, fileName)) {
+    const QGClibarchive::NextEntry found = QGClibarchive::findEntryInArchive(archivePath, fileName);
+    captureFormatInfo();
+    switch (found) {
         case QGClibarchive::NextEntry::Found:
             return true;
         case QGClibarchive::NextEntry::End:
@@ -908,6 +914,7 @@ bool extractFile(const QString& archivePath, const QString& fileName, const QStr
     qCDebug(QGCCompressionLog) << "Extracting" << fileName << "from" << archivePath << "to" << actualOutput;
     QGClibarchive::ReadResult result = QGClibarchive::ReadResult::Failed;
     const bool success = QGClibarchive::extractSingleFile(archivePath, fileName, actualOutput, &result);
+    captureFormatInfo();
     if (!success) {
         setExtractionError(result, QStringLiteral("Could not extract %1 from %2").arg(fileName, archivePath));
     }
@@ -930,6 +937,7 @@ QByteArray extractFileData(const QString& archivePath, const QString& fileName, 
     qCDebug(QGCCompressionLog) << "Extracting" << fileName << "from" << archivePath << "to memory";
     QGClibarchive::ReadResult read = QGClibarchive::ReadResult::Failed;
     QByteArray result = QGClibarchive::extractFileToMemory(archivePath, fileName, maxDecompressedBytes, &read);
+    captureFormatInfo();
     // The data does not tell a failure: an entry can have none
     if (read != QGClibarchive::ReadResult::Completed) {
         if (QGClibarchive::takeSizeLimitExceeded()) {
@@ -962,6 +970,7 @@ bool extractFiles(const QString& archivePath, const QStringList& fileNames, cons
     qCDebug(QGCCompressionLog) << "Extracting" << fileNames.size() << "files from" << archivePath;
     QGClibarchive::ReadResult result = QGClibarchive::ReadResult::Failed;
     const bool success = QGClibarchive::extractMultipleFiles(archivePath, fileNames, outputDirectoryPath, &result);
+    captureFormatInfo();
     if (!success) {
         setExtractionError(result, QStringLiteral("Could not extract all requested files from ") + archivePath);
     }
@@ -984,6 +993,7 @@ bool extractByPattern(const QString& archivePath, const QStringList& patterns, c
     QGClibarchive::ReadResult result = QGClibarchive::ReadResult::Failed;
     const bool success =
         QGClibarchive::extractByPattern(archivePath, patterns, outputDirectoryPath, extractedFiles, &result);
+    captureFormatInfo();
     if (!success) {
         setExtractionError(result,
                            QStringLiteral("Could not extract files that match the patterns from ") + archivePath);

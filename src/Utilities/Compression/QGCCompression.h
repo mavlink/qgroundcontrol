@@ -135,7 +135,8 @@ QString strippedPath(const QString &filePath);
 
 /// Get the detected archive format name from the last operation (thread-local)
 /// Returns names like "ZIP 2.0", "POSIX ustar", "RAW", etc.
-/// Empty string if no format was detected
+/// Every function that sets lastError() records the format when it has read the first header of its input.
+/// Empty string if no format was detected: the operation ended before that
 QString detectedFormatName();
 
 /// Get the detected compression filter name from the last operation (thread-local)
