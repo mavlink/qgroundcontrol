@@ -12,6 +12,22 @@
 
 QGC_LOGGING_CATEGORY(GPSReceiverWorkerLog, "GPS.Core.GPSReceiverWorker")
 
+namespace {
+
+/// @a error of a failed configuration, followed by what the receiver identified itself as unless the error already
+/// names all of it. A receiver that did not identify itself has no @a identity.
+QString namingReceiver(const QString& error, const QString& identity)
+{
+    const auto parts = QStringView(identity).split(u' ', Qt::SkipEmptyParts);
+    if (std::ranges::all_of(parts, [&error](QStringView part) { return error.contains(part); })) {
+        return error;
+    }
+    return error + (error.endsWith(u'.') ? QStringLiteral(" ") : QStringLiteral(". ")) +
+           QStringLiteral("The receiver identified itself as %1").arg(identity);
+}
+
+}  // namespace
+
 GPSReceiverWorker::GPSReceiverWorker(TransportFactory transportFactory, GPSType type, const GPSReceiverConfig& config,
                                      QObject* parent, GPSClock clock)
     : QObject(parent)
@@ -105,10 +121,15 @@ void GPSReceiverWorker::_runSession()
     GPSDriver driver(_type, *transport, _config, std::move(sinks), _clock);
 
     if (!driver.configure()) {
-        if (!cancelToken.isCancelled()) {
-            emit connectionError(driver.configurationNeedsConsent() ? GPSConnectionError::ConsentRequired
-                                                                    : GPSConnectionError::ConfigFailed,
-                                 driver.configurationError());
+        if (cancelToken.isCancelled()) {
+            return;
+        }
+        // Consent is asked of the user, whichever receiver answered; any other failure may be the receiver's.
+        if (driver.configurationNeedsConsent()) {
+            emit connectionError(GPSConnectionError::ConsentRequired, driver.configurationError());
+        } else {
+            emit connectionError(GPSConnectionError::ConfigFailed,
+                                 namingReceiver(driver.configurationError(), driver.receiverIdentity()));
         }
         return;
     }

@@ -78,6 +78,7 @@ The settings are:
   A recording stops when its file reaches 256 MB or cannot be written: the application log reports it and the path is no longer shown. The connection continues either way.
 
 The message below the connection line of the [receiver status](#status) explains a failed or lost connection.
+When a receiver identified itself before its configuration failed, the message names its model and firmware.
 When a u-blox receiver reports that it produces more output than its connection carries, the message warns until 30 seconds after the last report: use a higher baud rate or turn on **Compact RTCM corrections (MSM4)**.
 
 ### RTK Base Station {#base_station}

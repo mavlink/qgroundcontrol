@@ -70,7 +70,8 @@ signals:
     /// RTCM output the receiver sent, stamped with the steady clock when it was read.
     void rtcmDataReceived(const QByteArray& message, qint64 receivedAtMs);
     void baseStatusUpdated(const GPSBaseStatus& report);
-    /// @a detail is the transport's or the protocol's diagnostic, or empty when it gave none.
+    /// @a detail is the transport's or the protocol's diagnostic, or empty when it gave none. That of a configuration
+    /// the receiver failed also says what the receiver identified itself as, unless the diagnostic names it.
     void connectionError(GPSConnectionError error, const QString& detail = {});
     /// The family a GPSType::Automatic session detected, before it configures the receiver, or the protocol a passive
     /// session's input carries (GPSDriverSinks::onReceiverDetected).

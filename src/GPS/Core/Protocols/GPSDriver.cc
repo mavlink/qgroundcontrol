@@ -48,6 +48,8 @@ struct GPSDriver::State
     std::unique_ptr<GPSReceiverSignatures> signatures;
     std::vector<GPSConfigurationEvidence> evidence;
     QString configurationError;
+    /// What the receiver of a failed configuration identified itself as; its runtime is gone.
+    QString failedIdentity;
     bool consentRequired = false;
     bool configuring = false;
     /// The base status published last is Valid.
@@ -93,7 +95,7 @@ bool GPSDriver::configurationNeedsConsent() const
 
 QString GPSDriver::receiverIdentity() const
 {
-    return _state->runtime ? _state->runtime->identity() : QString();
+    return _state->runtime ? _state->runtime->identity() : _state->failedIdentity;
 }
 
 bool GPSDriver::configure()
@@ -260,6 +262,7 @@ bool GPSDriver::_configureFamily(const GPSReceiverFamily& family, GPSRuntimeIO i
         }
         _state->configurationError = error;
         _state->consentRequired = _state->runtime->error() == GPSProtocolError::ConsentRequired;
+        _state->failedIdentity = _state->runtime->identity();
         qCWarning(GPSDriverLog) << "Driver configuration failed for type" << family.type << error;
         _state->runtime.reset();
         return false;

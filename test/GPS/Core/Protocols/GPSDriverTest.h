@@ -30,6 +30,8 @@ private slots:
     void _detectionSkipsRefusedRate();
     void _mismatchHint_data();
     void _mismatchHint();
+    /// The identity a receiver reported stays available when its configuration fails.
+    void _failedConfigurationKeepsIdentity();
     void _satelliteExpiry_data();
     void _satelliteExpiry();
     void _satelliteUsageSources();

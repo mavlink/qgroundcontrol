@@ -593,6 +593,25 @@ void GPSDriverTest::_mismatchHint()
     QVERIFY(!driver.configurationNeedsConsent());
 }
 
+void GPSDriverTest::_failedConfigurationKeepsIdentity()
+{
+    GPSTestClock clock(GPSTestClock::START_US);
+    // A receiver that identifies itself and cannot be a base.
+    ModelReceiver<UBXReceiverModel> transport(clock, UBXReceiverModel::Receiver::M8N);
+    GPSDriver driver(GPSType::UBlox, transport, {.base = surveyInBase(2, 180s)}, {}, clock.source());
+    QVERIFY(driver.receiverIdentity().isEmpty());
+    expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
+    QVERIFY(!driver.configure());
+    verifyExpectedLogMessage();
+    QCOMPARE(driver.receiverIdentity(), QStringLiteral("NEO-M8N SPG 3.01"));
+    // The identity is the attempt's: a receiver that no longer answers has none.
+    transport.faults.rules.push_back(silence({}));
+    expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
+    QVERIFY(!driver.configure());
+    verifyExpectedLogMessage();
+    QVERIFY(driver.receiverIdentity().isEmpty());
+}
+
 void GPSDriverTest::_satelliteExpiry_data()
 {
     QTest::addColumn<bool>("positionTraffic");

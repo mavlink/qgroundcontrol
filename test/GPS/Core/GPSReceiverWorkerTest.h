@@ -28,4 +28,5 @@ private slots:
     void _configuredReceiverReportsReadyThenLoss();
     void _quectelConsentRefusal_data();
     void _quectelConsentRefusal();
+    void _namedReceiverIsNotRepeated();
 };

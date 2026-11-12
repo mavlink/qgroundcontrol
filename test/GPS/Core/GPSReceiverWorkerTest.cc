@@ -17,6 +17,7 @@
 #include "GPSReceiverConfig.h"
 #include "GPSReceiverWorker.h"
 #include "NMEASentence.h"
+#include "Protocols/Support/AshtechReceiverModel.h"
 #include "Protocols/Support/FemtoReceiverModel.h"
 #include "Protocols/Support/GPSBaseStationConfigs.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
@@ -654,7 +655,34 @@ void GPSReceiverWorkerTest::_quectelConsentRefusal()
     QVERIFY(ready.isEmpty());
     QCOMPARE(errors.size(), 1);
     QCOMPARE(qvariant_cast<GPSConnectionError>(errors.first().at(0)), error);
-    QVERIFY2(errors.first().at(1).toString().startsWith(detail), qPrintable(errors.first().at(1).toString()));
+    const QString message = errors.first().at(1).toString();
+    QVERIFY2(message.startsWith(detail), qPrintable(message));
+    // A receiver that is refused is named; one that only needs consent is not in question.
+    const bool refused = error == GPSConnectionError::ConfigFailed;
+    QCOMPARE(message.contains(QStringLiteral("identified itself")), refused);
+    QVERIFY2(!refused || message.endsWith(QStringLiteral(". The receiver identified itself as LC29HAANR11A03S")),
+             qPrintable(message));
+}
+
+void GPSReceiverWorkerTest::_namedReceiverIsNotRepeated()
+{
+    // The failure of a board that cannot be a base names the board itself.
+    GPSTestClock clock(GPSTestClock::START_US);
+    GPSReceiverWorker worker(
+        [&clock](GPSCancelToken cancelToken) {
+            auto transport = std::make_unique<ModelReceiver<AshtechReceiverModel>>(std::move(cancelToken), clock);
+            transport->model.board = "BD982";
+            return transport;
+        },
+        GPSType::Trimble, GPSReceiverConfig{.base = surveyInBase(1, 100s)}, nullptr, clock.source());
+    QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
+    expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression(QStringLiteral("Driver configuration failed")));
+    worker.start();
+    QVERIFY(worker.wait(TestTimeout::mediumDuration()));
+    verifyExpectedLogMessage();
+    QCOMPARE(errors.size(), 1);
+    QCOMPARE(errors.first().at(1).toString(),
+             QStringLiteral("Trimble BD982 cannot run as an RTK base station; only the MB-Two can"));
 }
 
 void GPSReceiverWorkerTest::_inputMonitorClassification()

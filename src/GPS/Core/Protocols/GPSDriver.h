@@ -114,7 +114,8 @@ public:
     /// Whether the latest configure() failed because the receiver needs persistent changes the request did not allow.
     [[nodiscard]] bool configurationNeedsConsent() const;
 
-    /// Receiver model and firmware reported by the configured protocol; empty when unknown.
+    /// Receiver model and firmware the latest configure() read, also when it failed after the receiver identified
+    /// itself; empty when unknown.
     [[nodiscard]] QString receiverIdentity() const;
 
 private:
