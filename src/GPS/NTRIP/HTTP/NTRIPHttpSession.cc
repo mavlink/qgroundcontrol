@@ -79,7 +79,7 @@ QString NTRIPHttpSession::open(const NTRIPConnectionConfig& config, std::shared_
     _version = version;
     _config = config;
     _casterVersions = std::move(casterVersions);
-    _endpoint = QStringLiteral("%1:%2").arg(config.host).arg(static_cast<quint16>(config.port));
+    _endpoint = config.endpoint();
     _connect();
     return {};
 }

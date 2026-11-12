@@ -102,6 +102,30 @@ void NTRIPManagerTest::_canConnectNeedsCasterHost()
     QCOMPARE(changes.size(), 2);
 }
 
+void NTRIPManagerTest::_statusKeepsPlaceMarkers_data()
+{
+    QTest::addColumn<QString>("host");
+    // A link-local IPv6 address with a numeric zone, as Windows writes it.
+    QTest::newRow("zone-index") << QStringLiteral("fe80::1%2");
+    QTest::newRow("first-marker") << QStringLiteral("a%1b");
+}
+
+void NTRIPManagerTest::_statusKeepsPlaceMarkers()
+{
+    QFETCH(QString, host);
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    auto configuration = mockCasterConfiguration();
+    configuration.connection.host = host;
+    auto* transport = injectMockTransport(manager);
+    initialize(manager, configuration);
+    QCOMPARE(manager.statusMessage(), QStringLiteral("Connecting to %1:2101...").arg(host));
+    // What a caster answers is text of its own as well.
+    const QString detail = QStringLiteral("HTTP 503: %1 busy %2");
+    _fail(transport, detail);
+    QCOMPARE(manager.statusMessage(), QStringLiteral("Reconnecting in 1s: ") + detail);
+}
+
 void NTRIPManagerTest::_transportFactory()
 {
     NTRIPManager manager;
@@ -380,10 +404,10 @@ void NTRIPManagerTest::_reconnectGivesUpAfterAttemptCeiling()
         QVERIFY(scheduler.advanceBy(std::chrono::seconds(30)));
         QCOMPARE(transport->startCount, 1);
     }
-    _fail(transport, QStringLiteral("last refusal"));
+    _fail(transport, QStringLiteral("last refusal %1"));
     QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
     QCOMPARE(manager.statusMessage(),
-             QStringLiteral("Gave up after %1 reconnect attempts: last refusal").arg(ATTEMPTS));
+             QStringLiteral("Gave up after %1 reconnect attempts: ").arg(ATTEMPTS) + QStringLiteral("last refusal %1"));
 }
 
 void NTRIPManagerTest::_reconnectCancelStopsTimer()

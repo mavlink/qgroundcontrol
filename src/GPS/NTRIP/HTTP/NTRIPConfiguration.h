@@ -22,6 +22,8 @@ public:
     bool operator==(const NTRIPConnectionConfig&) const = default;
     [[nodiscard]] QString validationError() const;
     [[nodiscard]] QString streamValidationError() const;
+    /// "host:port", as a certificate pin names the caster.
+    [[nodiscard]] QString endpoint() const;
     /// The caster's HTTP(S) URL, with the mountpoint as its path when @a withMountpoint is set, else "/".
     [[nodiscard]] QUrl url(bool withMountpoint = true) const;
     /// Credentials go to the caster without TLS.

@@ -46,6 +46,12 @@ QString NTRIPConnectionConfig::streamValidationError() const
     return {};
 }
 
+QString NTRIPConnectionConfig::endpoint() const
+{
+    // Joined, not arg(): a host may hold a place marker, such as the zone of "fe80::1%2".
+    return host + QLatin1Char(':') + QString::number(static_cast<quint16>(port));
+}
+
 QUrl NTRIPConnectionConfig::url(bool withMountpoint) const
 {
     QUrl url;

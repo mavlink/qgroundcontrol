@@ -50,4 +50,28 @@ void NTRIPConfigurationTest::_validity()
     QCOMPARE(config.streamValidationError().isEmpty(), streamValid);
 }
 
+void NTRIPConfigurationTest::_endpointKeepsPlaceMarkers_data()
+{
+    QTest::addColumn<QString>("host");
+    QTest::addColumn<int>("port");
+    QTest::addColumn<QString>("endpoint");
+    QTest::newRow("name") << QStringLiteral("caster.example.com") << 2101 << QStringLiteral("caster.example.com:2101");
+    // A link-local IPv6 address with a numeric zone, as Windows writes it.
+    QTest::newRow("zone-index") << QStringLiteral("fe80::1%2") << 2101 << QStringLiteral("fe80::1%2:2101");
+    QTest::newRow("first-marker") << QStringLiteral("a%1b") << 2101 << QStringLiteral("a%1b:2101");
+    // Must not name the same caster as the host "a5".
+    QTest::newRow("second-marker") << QStringLiteral("a%2") << 5 << QStringLiteral("a%2:5");
+}
+
+void NTRIPConfigurationTest::_endpointKeepsPlaceMarkers()
+{
+    QFETCH(QString, host);
+    QFETCH(int, port);
+    QFETCH(QString, endpoint);
+    NTRIPConnectionConfig config;
+    config.host = host;
+    config.port = port;
+    QCOMPARE(config.endpoint(), endpoint);
+}
+
 UT_REGISTER_TEST_LIGHTWEIGHT(NTRIPConfigurationTest, TestLabel::Unit)

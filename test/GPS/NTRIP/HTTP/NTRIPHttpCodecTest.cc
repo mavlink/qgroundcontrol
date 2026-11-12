@@ -348,6 +348,8 @@ void NTRIPHttpCodecTest::_errorDiagnostics_data()
                                         << QStringLiteral("Access denied Retry later") << 0;
     const QByteArray markupReason = "HTTP/1.1 503 <b>Busy</b>\tretry  later\r\nContent-Length: 0\r\n\r\n";
     QTest::newRow("markup-in-reason") << markupReason << http << QStringLiteral("HTTP 503: Busy retry later") << 0;
+    QTest::newRow("place-markers-in-reason") << QByteArray("HTTP/1.1 503 %1 busy %2\r\nContent-Length: 0\r\n\r\n")
+                                             << http << QStringLiteral("HTTP 503: %1 busy %2") << 0;
     // Redirects are not followed, so repeating the request cannot succeed; the target is caster text like the rest.
     const QByteArray moved = "HTTP/1.1 301 Moved Permanently\r\n";
     QTest::newRow("redirect") << moved + "Location: https://caster.example:2102/MOUNT\r\nContent-Length: 0\r\n\r\n"
