@@ -1320,6 +1320,7 @@ void PlanPanelUITest::_testGeoMapTerrainRelativeDragKeepsTheMarkerUnderTheCursor
     QQuickItem* map = nullptr;
     std::function<QGeoCoordinate()> targetCoordinate;
     std::function<QQuickItem*()> findMarker;
+    std::function<bool()> setTerrainAltitudePending = [] { return true; };
     if (rallyPoint) {
         firmwareFact->setRawValue(QGCMAVLink::FirmwareClassArduPilot);
         QQuickItem* rallyMarker = nullptr;
@@ -1348,6 +1349,11 @@ void PlanPanelUITest::_testGeoMapTerrainRelativeDragKeepsTheMarkerUnderTheCursor
         VisualMissionItem* const target = controller->currentPlanViewItem();
         QVERIFY(target);
         targetCoordinate = [target] { return target->coordinate(); };
+        // Back to waiting on the terrain query, as the item is after every move
+        setTerrainAltitudePending = [target] {
+            return QMetaObject::invokeMethod(target, "_terrainDataReceived", Q_ARG(bool, false),
+                                             Q_ARG(QList<double>, QList<double>()));
+        };
         findMarker = [&map, target]() -> QQuickItem* {
             for (QQuickItem* const marker : findGeoMapWaypointMarkers(map)) {
                 if (marker->property("item").value<QObject*>() == target) {
@@ -1399,6 +1405,10 @@ void PlanPanelUITest::_testGeoMapTerrainRelativeDragKeepsTheMarkerUnderTheCursor
     QVERIFY2(waitForCondition([&] { return targetCoordinate().distanceTo(before) > 1.0; }, 2000,
                               QStringLiteral("marker moved")),
              "Dragging the current marker did not move it");
+    // A waypoint is drawn at its height above the rendered terrain while it waits for its terrain query. The query
+    // knows nothing of the debug hills, so its answer moves the marker, and the one asked before the drag can come at
+    // any moment.
+    QVERIFY(setTerrainAltitudePending());
     const QPoint end = markerPoint();
     QVERIFY2((end - (start + delta)).manhattanLength() <= 6,
              qPrintable(QStringLiteral("Marker ended at %1,%2 instead of under the cursor at %3,%4")
