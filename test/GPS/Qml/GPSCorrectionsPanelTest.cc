@@ -546,14 +546,16 @@ void GPSCorrectionsPanelTest::_ntripLongStatusWrapsWithinPanel()
     QVERIFY2(buttonRight.x() <= panelItem->width(), qPrintable(QString::number(buttonRight.x())));
 }
 
-void GPSCorrectionsPanelTest::_ntripMountpointButtonsAligned()
+void GPSCorrectionsPanelTest::_ntripMountpointRowLayout()
 {
     NTRIPSourceTableModel model;
+    // The last row only names its mountpoint, as a short source-table record does.
     model.parseSourceTable(QStringLiteral(
         "STR;LONG;Long;RTCM 3.3;1005(1),1077(1);2;GPS+GLO+GAL+BDS+SBAS+QZSS;NET;FRA;0;0;0;0;gen;none;B;N;15200;\r\n"
         "STR;S;Short;RTCM 3.3;1005(1);2;GPS;NET;FRA;0;0;0;0;gen;none;N;N;0;\r\n"
+        "STR;BARE\r\n"
         "ENDSOURCETABLE\r\n"));
-    QCOMPARE(model.rowCount(), 2);
+    QCOMPARE(model.rowCount(), 3);
     TestFixtures::QmlWindowFixture window(640, 400);
     TestFixtures::QmlEngine engine;
     std::unique_ptr<QObject> list =
@@ -571,11 +573,22 @@ void GPSCorrectionsPanelTest::_ntripMountpointButtonsAligned()
             return item->inherits("QQuickAbstractButton") && item->isVisible() && item->width() > 0;
         });
     };
-    QTRY_COMPARE_WITH_TIMEOUT(buttons().size(), 2, TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(buttons().size(), 3, TestTimeout::mediumMs());
     const auto right = [listItem](QQuickItem* button) {
         return button->mapToItem(listItem, QPointF(button->width(), 0)).x();
     };
     QTRY_COMPARE_WITH_TIMEOUT(right(buttons().at(0)), right(buttons().at(1)), TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(right(buttons().at(0)), right(buttons().at(2)), TestTimeout::mediumMs());
+
+    // A row without details has no line for them.
+    const auto rows =
+        TestFixtures::findItems(listItem, [](QQuickItem* item) { return item->property("mountpoint").isValid(); });
+    QCOMPARE(rows.size(), 3);
+    QCOMPARE(rows.at(2)->property("mountpoint").toString(), QStringLiteral("BARE"));
+    QVERIFY(rows.at(2)->property("details").toString().isEmpty());
+    QCOMPARE(rows.at(0)->height(), rows.at(1)->height());
+    QVERIFY2(rows.at(2)->height() < rows.at(1)->height(),
+             qPrintable(QStringLiteral("%1 and %2").arg(rows.at(2)->height()).arg(rows.at(1)->height())));
 }
 
 UT_REGISTER_TEST(GPSCorrectionsPanelTest, TestLabel::Unit)

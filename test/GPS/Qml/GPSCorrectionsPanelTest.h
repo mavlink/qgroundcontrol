@@ -21,5 +21,5 @@ private slots:
     void _ntripConnectionActionIsIdempotent();
     void _ntripMountpointLockedWhileActive();
     void _ntripLongStatusWrapsWithinPanel();
-    void _ntripMountpointButtonsAligned();
+    void _ntripMountpointRowLayout();
 };

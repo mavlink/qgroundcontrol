@@ -44,7 +44,8 @@ QGCListView {
             anchors.verticalCenter: parent.verticalCenter
             anchors.margins: ScreenTools.defaultFontPixelWidth
 
-            // The filling details label lets this column take the free space, keeping buttons right-aligned.
+            // The filler of the name row lets this column take the free space, keeping buttons right-aligned in
+            // rows with and without details.
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
@@ -66,11 +67,15 @@ QGCListView {
                         font.pointSize: ScreenTools.smallFontPointSize
                         color:      qgcPal.accentText
                     }
+                    Item {
+                        Layout.fillWidth: true
+                    }
                 }
 
                 QGCLabel {
                     Layout.fillWidth: true
                     Layout.minimumWidth: 0
+                    visible: text !== ""
                     elide: Text.ElideRight
                     textFormat: Text.PlainText
                     text: entry.details
