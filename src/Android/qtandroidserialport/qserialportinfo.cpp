@@ -74,13 +74,14 @@ QSerialPortInfo::QSerialPortInfo(const QSerialPort &port)
 
     This constructor finds the relevant serial port among the available ones
     according to the port name \a name, and constructs the serial port info
-    instance for that port.
+    instance for that port. A port that was opened by its stableName() goes by
+    that name, so it is found by it as well.
 */
 QSerialPortInfo::QSerialPortInfo(const QString &name)
 {
     const auto infos = QSerialPortInfo::availablePorts();
     for (const QSerialPortInfo &info : infos) {
-        if (name == info.portName()) {
+        if (name == info.portName() || (!name.isEmpty() && name == info.stableName())) {
             *this = info;
             break;
         }
@@ -127,6 +128,23 @@ QString QSerialPortInfo::portName() const
 {
     Q_D(const QSerialPortInfo);
     return !d ? QString() : d->portName;
+}
+
+/*!
+    Returns a name that still opens the serial port after its USB device is
+    unplugged and plugged back in, which gives it another portName(). Pass it
+    to QSerialPort::setPortName(). Empty if the port has no such name: until
+    the user lets QGC open the device, and for a POSIX port, whose portName()
+    does not change.
+
+    This function is a QGroundControl addition.
+
+    \sa portName()
+*/
+QString QSerialPortInfo::stableName() const
+{
+    Q_D(const QSerialPortInfo);
+    return !d ? QString() : d->stableName;
 }
 
 /*!

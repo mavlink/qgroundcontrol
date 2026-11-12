@@ -18,7 +18,7 @@
 #include "SerialLink.h"
 #include "SerialPortManager.h"
 #ifdef Q_OS_ANDROID
-#include "AndroidSerial.h"
+#include "AndroidSerialPorts.h"
 #include "AppSettings.h"
 #endif
 #endif
@@ -71,9 +71,9 @@ void LinkManager::init()
 #ifndef QGC_NO_SERIAL_LINK
 #ifdef Q_OS_ANDROID
     // The serial backend is fixed at startup. Changing the setting requires an app restart.
-    AndroidSerial::setUsePosixSerial(
+    AndroidSerialPorts::setUsePosixSerial(
         SettingsManager::instance()->appSettings()->androidUsePosixSerial()->rawValue().toBool());
-    SerialPortManager::instance()->setSinglePortOnly(!AndroidSerial::usePosixSerial());
+    SerialPortManager::instance()->setSinglePortOnly(!AndroidSerialPorts::usePosixSerial());
 #endif
     if (!_serialAutoConnect) {
         _serialAutoConnect = std::make_unique<SerialAutoConnect>(

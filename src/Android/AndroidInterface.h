@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QtCore/QJniEnvironment>
-#include <QtCore/QLoggingCategory>
 #include <QtCore/QString>
 
 #include <functional>
@@ -71,30 +70,4 @@ private:
     JNIEnv* _env = nullptr;
     T _ref = nullptr;
 };
-
-template <typename... Args>
-inline bool callStaticIntMethod(QJniEnvironment& env, jclass cls, jmethodID method, const char* caller,
-                                const QLoggingCategory& logCategory, jint& result, Args... args)
-{
-    result = env->CallStaticIntMethod(cls, method, args...);
-    if (env.checkAndClearExceptions()) {
-        qCWarning(logCategory) << "Exception occurred while calling" << caller;
-        return false;
-    }
-
-    return true;
-}
-
-template <typename... Args>
-inline bool callStaticBooleanMethod(QJniEnvironment& env, jclass cls, jmethodID method, const char* caller,
-                                    const QLoggingCategory& logCategory, jboolean& result, Args... args)
-{
-    result = env->CallStaticBooleanMethod(cls, method, args...);
-    if (env.checkAndClearExceptions()) {
-        qCWarning(logCategory) << "Exception occurred while calling" << caller;
-        return false;
-    }
-
-    return true;
-}
 }  // namespace AndroidInterface

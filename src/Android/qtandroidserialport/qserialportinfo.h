@@ -29,6 +29,7 @@ public:
     void swap(QSerialPortInfo& other);
 
     QString portName() const;
+    QString stableName() const;
     QString systemLocation() const;
     QString description() const;
     QString manufacturer() const;
@@ -46,7 +47,6 @@ public:
     static QList<QSerialPortInfo> availablePorts();
 
 private:
-    friend QList<QSerialPortInfo> availablePortsByFiltersOfDevices(bool& ok);
     std::unique_ptr<QSerialPortInfoPrivate> d_ptr;
 };
 

@@ -1,9 +1,6 @@
-// POSIX serial backend for Android devices which expose accessible /dev/tty* nodes
-// (e.g. rooted devices with built-in serial ports). Selected at startup via
-// AndroidSerial::setUsePosixSerial().
+// The POSIX backend of QSerialPort: a serial device node, such as the built-in UART that a rooted device
+// exposes as /dev/ttyS1.
 
-#include <QtCore/QDeadlineTimer>
-#include <QtCore/QSocketNotifier>
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
@@ -11,6 +8,10 @@
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
+
+#include <QtCore/QDeadlineTimer>
+#include <QtCore/QPointer>
+#include <QtCore/QSocketNotifier>
 
 #include "qserialport_p.h"
 
@@ -86,14 +87,80 @@ speed_t baudRateToSpeed(qint32 baudRate)
     }
 }
 
-}  // namespace
-
-bool QSerialPortPrivate::_posixOpen(QIODevice::OpenMode mode)
+// The kernel's interface for the baud rates that termios has no constant for. It is declared here, as in Qt's
+// own serial port, because the header that declares it, <asm/termbits.h>, also defines struct termios again.
+struct KernelTermios2
 {
-    Q_Q(QSerialPort);
+    tcflag_t c_iflag;
+    tcflag_t c_oflag;
+    tcflag_t c_cflag;
+    tcflag_t c_lflag;
+    cc_t c_line;
+    cc_t c_cc[19];
+    speed_t c_ispeed;
+    speed_t c_ospeed;
+};
 
-    qCDebug(AndroidSerialPortLog) << "Opening (POSIX)" << systemLocation;
+constexpr unsigned long kGetTermios2 = _IOR('T', 0x2A, KernelTermios2);
+constexpr unsigned long kSetTermios2 = _IOW('T', 0x2B, KernelTermios2);
+// BOTHER: the rate is the number in c_ispeed and c_ospeed.
+constexpr tcflag_t kOtherBaudRate = 0010000;
 
+int pollTimeoutMs(const QDeadlineTimer& deadline)
+{
+    return deadline.isForever() ? -1 : static_cast<int>(qMax<qint64>(0, deadline.remainingTime()));
+}
+
+class PosixSerialPortBackend final : public QSerialPortBackend
+{
+public:
+    explicit PosixSerialPortBackend(QSerialPortPrivate& port)
+        : _port(port)
+    {}
+
+    ~PosixSerialPortBackend() override { close(); }
+
+    bool open(QIODevice::OpenMode mode) override;
+    void close() override;
+    bool startReading() override;
+    bool stopReading() override;
+    bool waitForInput(const QDeadlineTimer& deadline) override;
+    qint64 startWrite(const char* data, qint64 maxSize) override;
+    bool waitForWritable(const QDeadlineTimer& deadline) override;
+    bool setParameters(qint32 baudRate, QSerialPort::DataBits dataBits, QSerialPort::StopBits stopBits,
+                       QSerialPort::Parity parity, const QString& failureText) override;
+    bool setFlowControl(QSerialPort::FlowControl flowControl) override;
+    bool setBreakEnabled(bool set) override;
+    bool clear(QSerialPort::Directions directions) override;
+    QSerialPort::PinoutSignals pinoutSignals() override;
+    bool setDataTerminalReady(bool set) override;
+    bool setRequestToSend(bool set) override;
+
+private:
+    /// Sets a baud rate that termios has no constant for.
+    bool _setCustomBaudRate(qint32 baudRate);
+    /// Sets the device's whole configuration, as termios takes it.
+    bool _applySettings(qint32 baudRate, QSerialPort::DataBits dataBits, QSerialPort::StopBits stopBits,
+                        QSerialPort::Parity parity, QSerialPort::FlowControl flowControl);
+    bool _setControlLine(int line, bool set, const char* lineName, const QString& failureText);
+    /// Passes what the device has to read on to the port. Returns false if it reported an error instead.
+    bool _readActivated();
+    /// The device takes output again.
+    void _writeActivated();
+    void _readFailed(int readError);
+
+    QSerialPortPrivate& _port;
+    int _descriptor = -1;
+    QPointer<QSocketNotifier> _readNotifier;
+    // Whether the port has answered that it has no room for more input. The device is not read until the port
+    // starts reading again, so the kernel holds its input meanwhile, as it does for desktop QSerialPort.
+    bool _readPaused = false;
+    // Enabled while the device takes no more output, to tell the port when it does again.
+    QPointer<QSocketNotifier> _writeNotifier;
+};
+
+bool PosixSerialPortBackend::open(QIODevice::OpenMode mode)
+{
     int flags = O_NOCTTY | O_NONBLOCK;
     if ((mode & QIODevice::ReadWrite) == QIODevice::ReadWrite) {
         flags |= O_RDWR;
@@ -103,91 +170,148 @@ bool QSerialPortPrivate::_posixOpen(QIODevice::OpenMode mode)
         flags |= O_RDONLY;
     }
 
-    descriptor = ::open(systemLocation.toLocal8Bit().constData(), flags);
+    const int descriptor = ::open(_port.systemLocation.toLocal8Bit().constData(), flags);
     if (descriptor == -1) {
-        qCWarning(AndroidSerialPortLog) << "Error opening" << systemLocation << ":" << strerror(errno);
-        const QSerialPort::SerialPortError openError = (errno == ENOENT)   ? QSerialPort::DeviceNotFoundError
-                                                       : (errno == EACCES) ? QSerialPort::PermissionError
-                                                                           : QSerialPort::OpenError;
-        setError(QSerialPortErrorInfo(openError, QString::fromLocal8Bit(strerror(errno))));
+        const int openErrno = errno;
+        qCWarning(AndroidSerialPortLog) << "Error opening" << _port.systemLocation << ":" << strerror(openErrno);
+        const QSerialPort::SerialPortError openError = (openErrno == ENOENT)   ? QSerialPort::DeviceNotFoundError
+                                                       : (openErrno == EACCES) ? QSerialPort::PermissionError
+                                                                               : QSerialPort::OpenError;
+        _port.setError(QSerialPortErrorInfo(openError, QString::fromLocal8Bit(strerror(openErrno))));
         return false;
     }
 
     if (::isatty(descriptor) == 0) {
-        qCWarning(AndroidSerialPortLog) << systemLocation << "is not a tty device";
-        setError(QSerialPortErrorInfo(QSerialPort::OpenError, QSerialPort::tr("Not a tty device")));
-        _posixClose();
+        qCWarning(AndroidSerialPortLog) << _port.systemLocation << "is not a tty device";
+        (void) ::close(descriptor);
+        _port.setError(QSerialPortErrorInfo(QSerialPort::OpenError, QSerialPort::tr("Not a tty device")));
         return false;
     }
 
     // Request exclusive access. Failure is not fatal.
     if (::ioctl(descriptor, TIOCEXCL) == -1) {
-        qCDebug(AndroidSerialPortLog) << "Failed to set exclusive access on" << systemLocation << ":"
+        qCDebug(AndroidSerialPortLog) << "Failed to set exclusive access on" << _port.systemLocation << ":"
                                       << strerror(errno);
     }
 
-    if (!_posixApplyPortSettings(inputBaudRate, dataBits, stopBits, parity, flowControl)) {
-        qCWarning(AndroidSerialPortLog) << "Failed to set serial port parameters for" << systemLocation;
-        _posixClose();
+    _descriptor = descriptor;
+    _port.descriptor = descriptor;
+
+    QSerialPort* const q = _port.q_func();
+    if (mode & QIODevice::ReadOnly) {
+        _readNotifier = new QSocketNotifier(descriptor, QSocketNotifier::Read, q);
+        // The port starts reading once it has applied its settings.
+        _readNotifier->setEnabled(false);
+        QObject::connect(_readNotifier, &QSocketNotifier::activated, q, [this]() { (void) _readActivated(); });
+    }
+    if (mode & QIODevice::WriteOnly) {
+        _writeNotifier = new QSocketNotifier(descriptor, QSocketNotifier::Write, q);
+        _writeNotifier->setEnabled(false);
+        QObject::connect(_writeNotifier, &QSocketNotifier::activated, q, [this]() { _writeActivated(); });
+    }
+
+    return true;
+}
+
+void PosixSerialPortBackend::close()
+{
+    delete _readNotifier.data();
+    delete _writeNotifier.data();
+    _readPaused = false;
+
+    if (_descriptor != -1) {
+        // The exclusive access that open() took outlives this descriptor while anyone else holds the device
+        // open, and would refuse the next open.
+        (void) ::ioctl(_descriptor, TIOCNXCL);
+        if (::close(_descriptor) == -1) {
+            qCWarning(AndroidSerialPortLog) << "Failed to close" << _port.systemLocation << ":" << strerror(errno);
+        }
+        _descriptor = -1;
+    }
+}
+
+bool PosixSerialPortBackend::startReading()
+{
+    _readPaused = false;
+    if (_readNotifier) {
+        _readNotifier->setEnabled(true);
+    }
+
+    return true;
+}
+
+bool PosixSerialPortBackend::stopReading()
+{
+    if (_readNotifier) {
+        _readNotifier->setEnabled(false);
+    }
+
+    return true;
+}
+
+bool PosixSerialPortBackend::waitForInput(const QDeadlineTimer& deadline)
+{
+    // While the device takes no more output, also wake when it does, so that the port can go on writing.
+    const bool writeBlocked = _writeNotifier && _writeNotifier->isEnabled();
+    // Input that the port has no room for stays with the device, and does not end the wait.
+    const short events = static_cast<short>((_readPaused ? 0 : POLLIN) | (writeBlocked ? POLLOUT : 0));
+    struct pollfd pfd = {_descriptor, events, 0};
+    const int ready = ::poll(&pfd, 1, pollTimeoutMs(deadline));
+    if (ready < 0) {
+        if (errno == EINTR) {
+            return true;
+        }
+        const int pollErrno = errno;
+        qCWarning(AndroidSerialPortLog) << "Poll error on" << _port.systemLocation << ":" << strerror(pollErrno);
+        _port.setError(QSerialPortErrorInfo(QSerialPort::ReadError, QString::fromLocal8Bit(strerror(pollErrno))));
+        return false;
+    }
+    if (ready == 0) {
+        return true;
+    }
+    if (pfd.revents & POLLOUT) {
+        _writeActivated();
+    }
+    if (!(pfd.revents & ~POLLOUT)) {
+        return true;
+    }
+
+    // Read on any other wakeup, an error or hangup too: a read that fails reports the real error.
+    const bool hungUp = pfd.revents & (POLLERR | POLLHUP | POLLNVAL);
+    const bool readSucceeded = _readActivated();
+    if (_port.inputArrived()) {
+        return true;
+    }
+    if (!readSucceeded) {
+        return false;
+    }
+    if (hungUp) {
+        // Nothing to read from a descriptor that hung up: report it rather than poll it until the deadline.
+        _port.setError(QSerialPortErrorInfo(QSerialPort::ResourceError, QSerialPort::tr("Device disconnected")));
         return false;
     }
 
-    (void) _posixClear(QSerialPort::AllDirections);
-
-    if (mode & QIODevice::ReadOnly) {
-        _posixReadNotifier = new QSocketNotifier(descriptor, QSocketNotifier::Read, q);
-        QObject::connect(_posixReadNotifier, &QSocketNotifier::activated, q, [this]() { _posixReadActivated(); });
-    }
-
     return true;
 }
 
-void QSerialPortPrivate::_posixClose()
-{
-    qCDebug(AndroidSerialPortLog) << "Closing (POSIX)" << systemLocation;
-
-    delete _posixReadNotifier;
-    _posixReadNotifier = nullptr;
-
-    if (descriptor != -1) {
-        if (::close(descriptor) == -1) {
-            qCWarning(AndroidSerialPortLog) << "Failed to close" << systemLocation << ":" << strerror(errno);
-        }
-        descriptor = -1;
-    }
-}
-
-bool QSerialPortPrivate::_posixStartAsyncRead()
-{
-    if (_posixReadNotifier) {
-        _posixReadNotifier->setEnabled(true);
-    }
-
-    // Deliver any data still pending in the intermediate buffer.
-    _scheduleReadyRead();
-
-    return true;
-}
-
-bool QSerialPortPrivate::_posixStopAsyncRead()
-{
-    if (_posixReadNotifier) {
-        _posixReadNotifier->setEnabled(false);
-    }
-
-    return true;
-}
-
-void QSerialPortPrivate::_posixReadActivated()
+bool PosixSerialPortBackend::_readActivated()
 {
     char readBuf[4096];
+    bool gotData = false;
 
     for (;;) {
-        const ssize_t bytesRead = ::read(descriptor, readBuf, sizeof(readBuf));
+        const ssize_t bytesRead = ::read(_descriptor, readBuf, sizeof(readBuf));
         if (bytesRead > 0) {
-            newDataArrived(readBuf, static_cast<int>(bytesRead));
+            gotData = true;
+            if (!_port.newDataArrived(readBuf, static_cast<int>(bytesRead))) {
+                _readPaused = true;
+                if (_readNotifier) {
+                    _readNotifier->setEnabled(false);
+                }
+                return true;
+            }
             if (bytesRead < static_cast<ssize_t>(sizeof(readBuf))) {
-                break;
+                return true;
             }
             continue;
         }
@@ -196,86 +320,111 @@ void QSerialPortPrivate::_posixReadActivated()
             continue;
         }
 
-        if ((bytesRead < 0) && (errno != EAGAIN) && (errno != EWOULDBLOCK)) {
-            qCWarning(AndroidSerialPortLog) << "Read error on" << systemLocation << ":" << strerror(errno);
-            setError(QSerialPortErrorInfo(QSerialPort::ReadError, QString::fromLocal8Bit(strerror(errno))));
+        if (bytesRead < 0) {
+            if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
+                return true;
+            }
+            _readFailed(errno);
+            return false;
         }
 
-        break;
+        if (gotData) {
+            return true;
+        }
+        // The descriptor was reported readable, so having nothing to read means the device hung up.
+        _readFailed(0);
+        return false;
     }
 }
 
-qint64 QSerialPortPrivate::_posixWrite(const char* data, qint64 maxSize, int timeoutMs)
+void PosixSerialPortBackend::_readFailed(int readError)
 {
-    qint64 totalWritten = 0;
-    QDeadlineTimer deadline(timeoutMs);
-
-    while (totalWritten < maxSize) {
-        const ssize_t written = ::write(descriptor, data + totalWritten, static_cast<size_t>(maxSize - totalWritten));
-        if (written > 0) {
-            totalWritten += written;
-            continue;
-        }
-
-        if ((written < 0) && (errno != EAGAIN) && (errno != EWOULDBLOCK) && (errno != EINTR)) {
-            qCWarning(AndroidSerialPortLog) << "Write error on" << systemLocation << ":" << strerror(errno);
-            return -1;
-        }
-
-        if (deadline.hasExpired()) {
-            qCWarning(AndroidSerialPortLog) << "Write timeout on" << systemLocation;
-            return -1;
-        }
-
-        struct pollfd pfd = {descriptor, POLLOUT, 0};
-        const int pollTimeout = deadline.isForever() ? -1 : static_cast<int>(qMax<qint64>(0, deadline.remainingTime()));
-        (void) ::poll(&pfd, 1, pollTimeout);
+    const bool deviceGone =
+        (readError == 0) || (readError == EIO) || (readError == ENODEV) || (readError == ENXIO) || (readError == EBADF);
+    if (!deviceGone) {
+        qCWarning(AndroidSerialPortLog) << "Read error on" << _port.systemLocation << ":" << strerror(readError);
+        _port.setError(QSerialPortErrorInfo(QSerialPort::ReadError, QString::fromLocal8Bit(strerror(readError))));
+        return;
     }
 
-    return totalWritten;
+    // Like desktop QSerialPort: a vanished device is a ResourceError, which tells the owner to close the port.
+    // Its descriptor stays readable for good, so it must not keep waking the event loop.
+    if (_readNotifier) {
+        _readNotifier->setEnabled(false);
+    }
+    qCWarning(AndroidSerialPortLog) << "Device lost on" << _port.systemLocation << ":"
+                                    << (readError == 0 ? "hung up" : strerror(readError));
+    _port.setError(QSerialPortErrorInfo(QSerialPort::ResourceError, QSerialPort::tr("Device disconnected")));
 }
 
-qint64 QSerialPortPrivate::_posixWriteWithProgress(const char* data, qint64 maxSize, int timeoutMs)
+qint64 PosixSerialPortBackend::startWrite(const char* data, qint64 maxSize)
 {
-    qint64 totalWritten = 0;
-    // Match the USB backend: zero waits without limit.
-    const QDeadlineTimer deadline =
-        timeoutMs == 0 ? QDeadlineTimer(QDeadlineTimer::Forever) : QDeadlineTimer(timeoutMs);
+    ssize_t written;
+    do {
+        written = ::write(_descriptor, data, static_cast<size_t>(maxSize));
+    } while ((written < 0) && (errno == EINTR));
 
-    while (totalWritten < maxSize) {
-        const ssize_t written = ::write(descriptor, data + totalWritten, static_cast<size_t>(maxSize - totalWritten));
-        if (written > 0) {
-            totalWritten += written;
-            continue;
-        }
-
-        if ((written < 0) && (errno != EAGAIN) && (errno != EWOULDBLOCK) && (errno != EINTR)) {
-            qCWarning(AndroidSerialPortLog) << "Write error on" << systemLocation << ":" << strerror(errno);
-            // Report bytes already sent; the next write reports the error.
-            return totalWritten > 0 ? totalWritten : -1;
-        }
-
-        if (deadline.hasExpired()) {
-            // A short count is a timeout, not an error.
-            qCDebug(AndroidSerialPortLog) << "Write timeout on" << systemLocation << "after" << totalWritten << "bytes";
-            return totalWritten;
-        }
-
-        struct pollfd pfd = {descriptor, POLLOUT, 0};
-        const int pollTimeout = deadline.isForever() ? -1 : static_cast<int>(qMax<qint64>(0, deadline.remainingTime()));
-        (void) ::poll(&pfd, 1, pollTimeout);
+    if ((written < 0) && (errno != EAGAIN) && (errno != EWOULDBLOCK)) {
+        const int writeErrno = errno;
+        qCWarning(AndroidSerialPortLog) << "Write error on" << _port.systemLocation << ":" << strerror(writeErrno);
+        // Like the USB backend and desktop QSerialPort: a vanished device is a ResourceError.
+        const bool deviceGone = (writeErrno == EIO) || (writeErrno == ENODEV) || (writeErrno == ENXIO);
+        _port.setError(deviceGone
+                           ? QSerialPortErrorInfo(QSerialPort::ResourceError, QSerialPort::tr("Device disconnected"))
+                           : QSerialPortErrorInfo(QSerialPort::WriteError, QSerialPort::tr("Failed to write to port")));
+        return -1;
     }
 
-    return totalWritten;
+    const qint64 taken = (written > 0) ? written : 0;
+    if ((taken < maxSize) && _writeNotifier) {
+        // The device takes no more for now.
+        _writeNotifier->setEnabled(true);
+    }
+    if (taken > 0) {
+        _port.writeCompleted(taken);
+    }
+
+    return taken;
 }
 
-bool QSerialPortPrivate::_posixApplyPortSettings(qint32 baudRate, QSerialPort::DataBits dataBits_,
-                                                 QSerialPort::StopBits stopBits_, QSerialPort::Parity parity_,
-                                                 QSerialPort::FlowControl flowControl_)
+void PosixSerialPortBackend::_writeActivated()
+{
+    if (_writeNotifier) {
+        _writeNotifier->setEnabled(false);
+    }
+    _port.writeCompleted(0);
+}
+
+bool PosixSerialPortBackend::waitForWritable(const QDeadlineTimer& deadline)
+{
+    struct pollfd pfd = {_descriptor, POLLOUT, 0};
+    if (::poll(&pfd, 1, pollTimeoutMs(deadline)) > 0) {
+        _writeActivated();
+    }
+
+    return true;
+}
+
+bool PosixSerialPortBackend::setParameters(qint32 baudRate, QSerialPort::DataBits dataBits,
+                                           QSerialPort::StopBits stopBits, QSerialPort::Parity parity, const QString&)
+{
+    return _applySettings(baudRate, dataBits, stopBits, parity, _port.flowControl);
+}
+
+bool PosixSerialPortBackend::setFlowControl(QSerialPort::FlowControl flowControl)
+{
+    return _applySettings(_port.inputBaudRate, _port.dataBits, _port.stopBits, _port.parity, flowControl);
+}
+
+bool PosixSerialPortBackend::_applySettings(qint32 baudRate, QSerialPort::DataBits dataBits,
+                                            QSerialPort::StopBits stopBits, QSerialPort::Parity parity,
+                                            QSerialPort::FlowControl flowControl)
 {
     struct termios tio;
-    if (::tcgetattr(descriptor, &tio) == -1) {
-        setError(QSerialPortErrorInfo(QSerialPort::UnknownError, QString::fromLocal8Bit(strerror(errno))));
+    if (::tcgetattr(_descriptor, &tio) == -1) {
+        const int getErrno = errno;
+        qCWarning(AndroidSerialPortLog) << "tcgetattr failed on" << _port.systemLocation << ":" << strerror(getErrno);
+        _port.setError(QSerialPortErrorInfo(QSerialPort::UnknownError, QString::fromLocal8Bit(strerror(getErrno))));
         return false;
     }
 
@@ -284,18 +433,24 @@ bool QSerialPortPrivate::_posixApplyPortSettings(qint32 baudRate, QSerialPort::D
     tio.c_cc[VMIN] = 0;
     tio.c_cc[VTIME] = 0;
 
-    const speed_t speed = baudRateToSpeed(baudRate);
-    if (speed == B0) {
-        qCWarning(AndroidSerialPortLog) << "Unsupported baud rate:" << baudRate;
-        setError(
+    // A closed port keeps any rate it is given. One without a constant goes to the kernel as a number, which
+    // takes 0 for a hang-up and a negative one for a huge rate.
+    if (baudRate <= 0) {
+        qCWarning(AndroidSerialPortLog) << "Unsupported baud rate" << baudRate << "on" << _port.systemLocation;
+        _port.setError(
             QSerialPortErrorInfo(QSerialPort::UnsupportedOperationError, QSerialPort::tr("Unsupported baud rate")));
         return false;
     }
-    (void) ::cfsetispeed(&tio, speed);
-    (void) ::cfsetospeed(&tio, speed);
+
+    // A rate without a constant is set afterwards, on its own.
+    const speed_t speed = baudRateToSpeed(baudRate);
+    if (speed != B0) {
+        (void) ::cfsetispeed(&tio, speed);
+        (void) ::cfsetospeed(&tio, speed);
+    }
 
     tio.c_cflag &= ~CSIZE;
-    switch (dataBits_) {
+    switch (dataBits) {
         case QSerialPort::Data5:
             tio.c_cflag |= CS5;
             break;
@@ -311,25 +466,31 @@ bool QSerialPortPrivate::_posixApplyPortSettings(qint32 baudRate, QSerialPort::D
             break;
     }
 
-    switch (parity_) {
+    // CMSPAR makes the parity bit constant: a mark with PARODD, otherwise a space.
+    tio.c_cflag &= ~(PARENB | PARODD | CMSPAR);
+    switch (parity) {
         case QSerialPort::NoParity:
-            tio.c_cflag &= ~PARENB;
             break;
         case QSerialPort::EvenParity:
             tio.c_cflag |= PARENB;
-            tio.c_cflag &= ~PARODD;
             break;
         case QSerialPort::OddParity:
             tio.c_cflag |= (PARENB | PARODD);
             break;
+        case QSerialPort::SpaceParity:
+            tio.c_cflag |= (PARENB | CMSPAR);
+            break;
+        case QSerialPort::MarkParity:
+            tio.c_cflag |= (PARENB | CMSPAR | PARODD);
+            break;
         default:
-            qCWarning(AndroidSerialPortLog) << "Unsupported parity:" << parity_;
-            setError(
+            qCWarning(AndroidSerialPortLog) << "Unsupported parity:" << parity;
+            _port.setError(
                 QSerialPortErrorInfo(QSerialPort::UnsupportedOperationError, QSerialPort::tr("Unsupported parity")));
             return false;
     }
 
-    switch (stopBits_) {
+    switch (stopBits) {
         case QSerialPort::OneStop:
             tio.c_cflag &= ~CSTOPB;
             break;
@@ -337,13 +498,13 @@ bool QSerialPortPrivate::_posixApplyPortSettings(qint32 baudRate, QSerialPort::D
             tio.c_cflag |= CSTOPB;
             break;
         default:
-            qCWarning(AndroidSerialPortLog) << "Unsupported stop bits:" << stopBits_;
-            setError(
+            qCWarning(AndroidSerialPortLog) << "Unsupported stop bits:" << stopBits;
+            _port.setError(
                 QSerialPortErrorInfo(QSerialPort::UnsupportedOperationError, QSerialPort::tr("Unsupported stop bits")));
             return false;
     }
 
-    switch (flowControl_) {
+    switch (flowControl) {
         case QSerialPort::NoFlowControl:
             tio.c_cflag &= ~CRTSCTS;
             tio.c_iflag &= ~(IXON | IXOFF);
@@ -357,22 +518,44 @@ bool QSerialPortPrivate::_posixApplyPortSettings(qint32 baudRate, QSerialPort::D
             tio.c_iflag |= (IXON | IXOFF);
             break;
         default:
-            qCWarning(AndroidSerialPortLog) << "Unsupported flow control:" << flowControl_;
-            setError(QSerialPortErrorInfo(QSerialPort::UnsupportedOperationError,
-                                          QSerialPort::tr("Unsupported flow control")));
+            qCWarning(AndroidSerialPortLog) << "Unsupported flow control:" << flowControl;
+            _port.setError(QSerialPortErrorInfo(QSerialPort::UnsupportedOperationError,
+                                                QSerialPort::tr("Unsupported flow control")));
             return false;
     }
 
-    if (::tcsetattr(descriptor, TCSANOW, &tio) == -1) {
-        qCWarning(AndroidSerialPortLog) << "tcsetattr failed on" << systemLocation << ":" << strerror(errno);
-        setError(QSerialPortErrorInfo(QSerialPort::UnknownError, QString::fromLocal8Bit(strerror(errno))));
+    if (::tcsetattr(_descriptor, TCSANOW, &tio) == -1) {
+        const int setErrno = errno;
+        qCWarning(AndroidSerialPortLog) << "tcsetattr failed on" << _port.systemLocation << ":" << strerror(setErrno);
+        _port.setError(QSerialPortErrorInfo(QSerialPort::UnknownError, QString::fromLocal8Bit(strerror(setErrno))));
         return false;
     }
 
-    return true;
+    return (speed != B0) || _setCustomBaudRate(baudRate);
 }
 
-bool QSerialPortPrivate::_posixClear(QSerialPort::Directions directions)
+bool PosixSerialPortBackend::_setCustomBaudRate(qint32 baudRate)
+{
+    KernelTermios2 tio;
+    if (::ioctl(_descriptor, kGetTermios2, &tio) != -1) {
+        tio.c_cflag &= ~CBAUD;
+        tio.c_cflag |= kOtherBaudRate;
+        tio.c_ispeed = static_cast<speed_t>(baudRate);
+        tio.c_ospeed = static_cast<speed_t>(baudRate);
+        if (::ioctl(_descriptor, kSetTermios2, &tio) != -1) {
+            return true;
+        }
+    }
+
+    const int setErrno = errno;
+    qCWarning(AndroidSerialPortLog) << "Unsupported baud rate" << baudRate << "on" << _port.systemLocation << ":"
+                                    << strerror(setErrno);
+    _port.setError(
+        QSerialPortErrorInfo(QSerialPort::UnsupportedOperationError, QSerialPort::tr("Unsupported baud rate")));
+    return false;
+}
+
+bool PosixSerialPortBackend::clear(QSerialPort::Directions directions)
 {
     int queues = 0;
     if (directions == QSerialPort::AllDirections) {
@@ -385,21 +568,23 @@ bool QSerialPortPrivate::_posixClear(QSerialPort::Directions directions)
         return true;
     }
 
-    if (::tcflush(descriptor, queues) == -1) {
-        qCWarning(AndroidSerialPortLog) << "tcflush failed on" << systemLocation << ":" << strerror(errno);
-        setError(QSerialPortErrorInfo(QSerialPort::UnknownError, QString::fromLocal8Bit(strerror(errno))));
+    if (::tcflush(_descriptor, queues) == -1) {
+        const int flushErrno = errno;
+        qCWarning(AndroidSerialPortLog) << "tcflush failed on" << _port.systemLocation << ":" << strerror(flushErrno);
+        _port.setError(QSerialPortErrorInfo(QSerialPort::UnknownError, QString::fromLocal8Bit(strerror(flushErrno))));
         return false;
     }
 
     return true;
 }
 
-QSerialPort::PinoutSignals QSerialPortPrivate::_posixPinoutSignals()
+QSerialPort::PinoutSignals PosixSerialPortBackend::pinoutSignals()
 {
     int arg = 0;
-    if (::ioctl(descriptor, TIOCMGET, &arg) == -1) {
-        qCWarning(AndroidSerialPortLog) << "TIOCMGET failed on" << systemLocation << ":" << strerror(errno);
-        setError(QSerialPortErrorInfo(QSerialPort::UnknownError, QString::fromLocal8Bit(strerror(errno))));
+    if (::ioctl(_descriptor, TIOCMGET, &arg) == -1) {
+        const int getErrno = errno;
+        qCWarning(AndroidSerialPortLog) << "TIOCMGET failed on" << _port.systemLocation << ":" << strerror(getErrno);
+        _port.setError(QSerialPortErrorInfo(QSerialPort::UnknownError, QString::fromLocal8Bit(strerror(getErrno))));
         return QSerialPort::NoSignal;
     }
 
@@ -432,115 +617,47 @@ QSerialPort::PinoutSignals QSerialPortPrivate::_posixPinoutSignals()
     return signals_;
 }
 
-static bool setControlLine(int descriptor, int line, bool set)
+bool PosixSerialPortBackend::_setControlLine(int line, bool set, const char* lineName, const QString& failureText)
 {
-    return (::ioctl(descriptor, set ? TIOCMBIS : TIOCMBIC, &line) != -1);
-}
-
-bool QSerialPortPrivate::_posixSetDataTerminalReady(bool set)
-{
-    if (!setControlLine(descriptor, TIOCM_DTR, set)) {
-        const int dtrError = errno;
-        const auto code = dtrError == ENOTTY || dtrError == EOPNOTSUPP ? QSerialPort::UnsupportedOperationError
-                                                                       : QSerialPort::UnknownError;
-        qCDebug(AndroidSerialPortLog) << "Failed to set DTR on" << systemLocation << ":" << strerror(dtrError);
-        setError(QSerialPortErrorInfo(code, QSerialPort::tr("Failed to set DTR")));
-        return false;
+    if (::ioctl(_descriptor, set ? TIOCMBIS : TIOCMBIC, &line) != -1) {
+        return true;
     }
 
-    return true;
-}
-
-bool QSerialPortPrivate::_posixSetRequestToSend(bool set)
-{
-    if (!setControlLine(descriptor, TIOCM_RTS, set)) {
-        const int rtsError = errno;
-        const auto code = rtsError == ENOTTY || rtsError == EOPNOTSUPP ? QSerialPort::UnsupportedOperationError
-                                                                       : QSerialPort::UnknownError;
-        qCDebug(AndroidSerialPortLog) << "Failed to set RTS on" << systemLocation << ":" << strerror(rtsError);
-        setError(QSerialPortErrorInfo(code, QSerialPort::tr("Failed to set RTS")));
-        return false;
-    }
-
-    return true;
-}
-
-bool QSerialPortPrivate::_posixSetBreakEnabled(bool set)
-{
-    if (::ioctl(descriptor, set ? TIOCSBRK : TIOCCBRK) == -1) {
-        qCWarning(AndroidSerialPortLog) << "Failed to set break on" << systemLocation << ":" << strerror(errno);
-        setError(QSerialPortErrorInfo(QSerialPort::UnknownError, QSerialPort::tr("Failed to set Break Enabled")));
-        return false;
-    }
-
-    return true;
-}
-
-bool QSerialPortPrivate::_posixWaitForReadyRead(int msecs)
-{
-    {
-        QMutexLocker locker(&_readMutex);
-        if (!buffer.isEmpty()) {
-            return true;
-        }
-        if (_pendingSizeLocked() > 0) {
-            (void) _drainPendingDataLocked();
-            return true;
-        }
-    }
-
-    QDeadlineTimer deadline(msecs);
-    for (;;) {
-        struct pollfd pfd = {descriptor, POLLIN, 0};
-        const int pollTimeout = deadline.isForever() ? -1 : static_cast<int>(qMax<qint64>(0, deadline.remainingTime()));
-        const int ret = ::poll(&pfd, 1, pollTimeout);
-        if (ret < 0) {
-            if (errno == EINTR) {
-                continue;
-            }
-            qCWarning(AndroidSerialPortLog) << "Poll error on" << systemLocation << ":" << strerror(errno);
-            setError(QSerialPortErrorInfo(QSerialPort::ReadError, QString::fromLocal8Bit(strerror(errno))));
-            return false;
-        }
-
-        if (ret > 0) {
-            // Attempt the read on any wakeup (POLLIN/POLLERR/POLLHUP); a failed read
-            // surfaces the real error via _posixReadActivated.
-            _posixReadActivated();
-
-            {
-                QMutexLocker locker(&_readMutex);
-                if (_pendingSizeLocked() > 0) {
-                    (void) _drainPendingDataLocked();
-                }
-                if (!buffer.isEmpty()) {
-                    return true;
-                }
-            }
-
-            // A read error was reported with no data delivered: surface it instead
-            // of looping until the deadline stamps TimeoutError over it.
-            if (error != QSerialPort::NoError) {
-                return false;
-            }
-
-            // No data delivered on an error/hangup wakeup: bail out rather than
-            // busy-spinning on a dead descriptor until the deadline.
-            if (pfd.revents & (POLLERR | POLLHUP | POLLNVAL)) {
-                if (error == QSerialPort::NoError) {
-                    setError(QSerialPortErrorInfo(QSerialPort::ResourceError, QSerialPort::tr("Device disconnected")));
-                }
-                return false;
-            }
-        }
-
-        if (deadline.hasExpired()) {
-            break;
-        }
-    }
-
-    setError(QSerialPortErrorInfo(QSerialPort::TimeoutError, QSerialPort::tr("Timeout while waiting for ready read")));
+    const int lineErrno = errno;
+    const auto code = (lineErrno == ENOTTY) || (lineErrno == EOPNOTSUPP) ? QSerialPort::UnsupportedOperationError
+                                                                         : QSerialPort::UnknownError;
+    qCDebug(AndroidSerialPortLog) << "Failed to set" << lineName << "on" << _port.systemLocation << ":"
+                                  << strerror(lineErrno);
+    _port.setError(QSerialPortErrorInfo(code, failureText));
     return false;
+}
+
+bool PosixSerialPortBackend::setDataTerminalReady(bool set)
+{
+    return _setControlLine(TIOCM_DTR, set, "DTR", QSerialPort::tr("Failed to set DTR"));
+}
+
+bool PosixSerialPortBackend::setRequestToSend(bool set)
+{
+    return _setControlLine(TIOCM_RTS, set, "RTS", QSerialPort::tr("Failed to set RTS"));
+}
+
+bool PosixSerialPortBackend::setBreakEnabled(bool set)
+{
+    if (::ioctl(_descriptor, set ? TIOCSBRK : TIOCCBRK) == -1) {
+        qCWarning(AndroidSerialPortLog) << "Failed to set break on" << _port.systemLocation << ":" << strerror(errno);
+        _port.setError(QSerialPortErrorInfo(QSerialPort::UnknownError, QSerialPort::tr("Failed to set Break Enabled")));
+        return false;
+    }
+
+    return true;
+}
+
+}  // namespace
+
+std::unique_ptr<QSerialPortBackend> createPosixSerialPortBackend(QSerialPortPrivate& port)
+{
+    return std::make_unique<PosixSerialPortBackend>(port);
 }
 
 QT_END_NAMESPACE

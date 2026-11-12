@@ -6,9 +6,15 @@
 
 add_subdirectory(Transport/Support)
 add_subdirectory(Protocols/Support)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE QGCGPSTestTransports QGCGPSProtocolTestSupport)
+target_link_libraries(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE
+        QGCGPSTestTransports
+        QGCGPSProtocolTestSupport
+)
 add_subdirectory(Protocols)
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT CMAKE_CROSSCOMPILING)
+# test/Android builds the Android serial port for the host, on Linux only.
+if(TARGET QGCAndroidSerialTestBackend)
     add_subdirectory(Transport/Android)
 endif()
 

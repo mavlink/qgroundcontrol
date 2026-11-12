@@ -8,18 +8,20 @@
 -keepclasseswithmembers class org.mavlink.qgroundcontrol.QGCActivity {
     native <methods>;
 }
--keepclasseswithmembers class org.mavlink.qgroundcontrol.QGCUsbSerialManager {
+-keepclasseswithmembers class org.mavlink.qgroundcontrol.serial.QGCUsbSerialManager {
     native <methods>;
 }
 # Static methods are resolved from C++ by method name/signature.
 -keepclassmembers class org.mavlink.qgroundcontrol.QGCActivity {
     public static *;
 }
--keepclassmembers class org.mavlink.qgroundcontrol.QGCUsbSerialManager {
+-keepclassmembers class org.mavlink.qgroundcontrol.serial.QGCUsbSerialManager {
     public static *;
 }
--keep class org.mavlink.qgroundcontrol.QGCUsbId { *; }
--keep class org.mavlink.qgroundcontrol.QGCUsbSerialProber { *; }
+# C++ names this class in JNI signatures and reads its fields by name.
+-keep class org.mavlink.qgroundcontrol.serial.QGCUsbSerialPortInfo {
+    public <fields>;
+}
 -keep class org.mavlink.qgroundcontrol.QGCLogger { *; }
 -keep class org.mavlink.qgroundcontrol.QGCSDLManager { *; }
 
@@ -29,9 +31,6 @@
 # GStreamer - Java callback classes are reached from native plugin code
 -keep class org.freedesktop.gstreamer.** { *; }
 -keep class org.freedesktop.gstreamer.androidmedia.** { *; }
-
-# usb-serial-for-android
--keep class com.hoho.android.usbserial.** { *; }
 
 # AndroidX FileProvider
 -keep class androidx.core.content.FileProvider { *; }
