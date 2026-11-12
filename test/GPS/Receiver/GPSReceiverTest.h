@@ -29,6 +29,9 @@ private slots:
     void _outputOverflowWarning();
 #ifndef QGC_NO_SERIAL_LINK
     void _serialPortEntries();
+    void _serialPortEntryValue_data();
+    void _serialPortEntryValue();
+    void _stableNamedPortsInUse();
     void _serialReservationSurvivesDelayedStop();
     void _manualPassiveBaudPreserved_data();
     void _manualPassiveBaudPreserved();

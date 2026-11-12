@@ -8,6 +8,10 @@ import QGroundControl.Controls
 ColumnLayout {
     property var linkManager: QGroundControl.linkManager
 
+    // Whether the selected port can be set to hardware flow control. An Android USB adapter whose driver has none
+    // refuses to open with it, so a link to such a port is not left with it.
+    property bool _flowControlAvailable: true
+
     spacing: _rowSpacing
 
     function saveSettings() {
@@ -16,6 +20,16 @@ ColumnLayout {
             if (baud > 0) {
                 subEditConfig.baud = baud
             }
+        }
+    }
+
+    function _refreshFlowControl() {
+        if (!subEditConfig) {
+            return
+        }
+        _flowControlAvailable = linkManager.serialPortHasFlowControl(subEditConfig.portName)
+        if (!_flowControlAvailable && subEditConfig.flowControl !== 0) {
+            subEditConfig.flowControl = 0
         }
     }
 
@@ -141,7 +155,9 @@ ColumnLayout {
 
         QGCCheckBox {
             Layout.columnSpan:  2
+            objectName:         "flowControlCheckBox"
             text:               qsTr("Enable Flow Control")
+            enabled:            _flowControlAvailable
             checked:            subEditConfig ? subEditConfig.flowControl !== 0 : false
             onCheckedChanged:   { if (subEditConfig) subEditConfig.flowControl = checked ? 1 : 0 }
         }
@@ -207,4 +223,15 @@ ColumnLayout {
             onActivated: (index) => { subEditConfig.stopBits = index + 1 }
         }
     }
+
+    Connections {
+        target: linkManager
+        function onCommPortsChanged() { _refreshFlowControl() }
+    }
+    Connections {
+        target: subEditConfig
+        function onPortNameChanged() { _refreshFlowControl() }
+    }
+
+    Component.onCompleted: _refreshFlowControl()
 }

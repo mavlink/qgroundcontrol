@@ -29,8 +29,8 @@ public:
     /// enables and the certificate pin trusted on first use. Call before NTRIPManager::init().
     static void bindNtrip(NTRIPSettings* settings, NTRIPManager* ntrip);
 
-    /// Supplies the receiver settings to @a receiver now and whenever they change. Call before the receiver is
-    /// allowed to connect.
+    /// Supplies the receiver settings to @a receiver now and whenever they change, and stores the name that the
+    /// receiver finds its serial device again by. Call before the receiver is allowed to connect.
     static void bindReceiver(RTKSettings* settings, GPSReceiver* receiver);
 
     /// Applies the GCS position settings to @a positions now and whenever they change. Call before

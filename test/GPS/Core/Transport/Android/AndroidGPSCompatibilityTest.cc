@@ -19,8 +19,8 @@ using namespace std::chrono_literals;
 namespace {
 QStringList warnings;
 
-/// A write deadline the simulated Java side meets at once.
-constexpr int WRITE_DEADLINE_MS = 100;
+/// Short, so the write that has to run out of time keeps the test fast.
+constexpr int EXPIRING_WRITE_MS = 100;
 
 void captureWarnings(QtMsgType type, const QMessageLogContext&, const QString& message)
 {
@@ -77,7 +77,8 @@ void AndroidGPSCompatibilityTest::_backendWriteResults()
         expectLogMessage("Android.AndroidSerialPort", QtWarningMsg,
                          QRegularExpression(QStringLiteral("^Failed to write to port")));
     }
-    const auto result = transport.write(payload, QDeadlineTimer(WRITE_DEADLINE_MS));
+    const bool expires = (status == int(GPSWriteStatus::TimedOut));
+    const auto result = transport.write(payload, QDeadlineTimer(expires ? EXPIRING_WRITE_MS : TestTimeout::shortMs()));
     if (step < 0) {
         verifyExpectedLogMessage();
     }
@@ -89,7 +90,7 @@ void AndroidGPSCompatibilityTest::_backendWriteResults()
     QCOMPARE(java().writeCalls, 1);
     if (fatal) {
         const int calls = java().writeCalls;
-        QCOMPARE(transport.write(payload, QDeadlineTimer(WRITE_DEADLINE_MS)).acceptedBytes, 0);
+        QCOMPARE(transport.write(payload, QDeadlineTimer(TestTimeout::shortMs())).acceptedBytes, 0);
         QCOMPARE(java().writeCalls, calls);
     }
 }
@@ -102,7 +103,7 @@ void AndroidGPSCompatibilityTest::_expiredConfigurationSendsNothing()
     QCOMPARE(transport.write("*", QDeadlineTimer(0)).status, GPSWriteStatus::TimedOut);
     QCOMPARE(java().writeCalls, 0);
     stop.cancel();
-    QCOMPARE(transport.write("*", QDeadlineTimer(WRITE_DEADLINE_MS)).status, GPSWriteStatus::Cancelled);
+    QCOMPARE(transport.write("*", QDeadlineTimer(TestTimeout::shortMs())).status, GPSWriteStatus::Cancelled);
     QCOMPARE(java().writeCalls, 0);
 }
 
@@ -116,11 +117,26 @@ void AndroidGPSCompatibilityTest::_cancellationAfterFullWriteCompletes()
         return length;
     };
     const std::array<uint8_t, 4> payload{};
-    const auto result = transport.write(payload, QDeadlineTimer(WRITE_DEADLINE_MS));
+    const auto result = transport.write(payload, QDeadlineTimer(TestTimeout::shortMs()));
     QCOMPARE(result.status, GPSWriteStatus::Completed);
     QCOMPARE(result.writtenBytes, 4);
     QCOMPARE(result.uncertainBytes(), 0);
-    QCOMPARE(transport.write(payload, QDeadlineTimer(WRITE_DEADLINE_MS)).status, GPSWriteStatus::Cancelled);
+    QCOMPARE(transport.write(payload, QDeadlineTimer(TestTimeout::shortMs())).status, GPSWriteStatus::Cancelled);
+}
+
+void AndroidGPSCompatibilityTest::_missingUsbPermissionIsToldInThePortsWords()
+{
+    java().openResult = AndroidSerial::Result::PermissionPending;
+    GPSCancelSource stop;
+    // With no time to wait for the user's answer.
+    SerialGPSTransport transport(AndroidSerialFake::usbPortName, stop.token(), 0ms);
+    expectLogMessage("GPS.Transport.SerialGPSTransport", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Failed to open Serial Device")));
+    const GPSOpenResult result = transport.open();
+    verifyExpectedLogMessage();
+    QCOMPARE(result.status, GPSOpenStatus::TimedOut);
+    QCOMPARE(result.detail,
+             QStringLiteral("USB permission has not been granted. The request has not been answered yet"));
 }
 
 void AndroidGPSCompatibilityTest::_quietReadTimeoutAndCancellation()

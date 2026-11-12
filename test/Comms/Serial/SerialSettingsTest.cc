@@ -23,8 +23,10 @@ struct SerialSettingsPage
                 property var serialPorts: []
                 property var serialPortStrings: []
                 property var serialBaudRates: ["57600"]
+                property var portsWithoutFlowControl: []
                 signal commPortsChanged()
                 signal commPortStringsChanged()
+                function serialPortHasFlowControl(name) { return portsWithoutFlowControl.indexOf(name) < 0 }
             }
         )",
                                    QUrl());
@@ -87,6 +89,49 @@ void SerialSettingsTest::_hotplugKeepsPortIdentity()
     QVERIFY(update({}, {}));
     QCOMPARE(config.portName(), QStringLiteral("/test/B"));
     QVERIFY(!combo->property("enabled").toBool());
+}
+
+void SerialSettingsTest::_portWithoutFlowControlGetsNone()
+{
+    SerialConfiguration config(QStringLiteral("Settings test"));
+    config.setFlowControl(QSerialPort::HardwareControl);
+    SerialSettingsPage settings;
+    settings.create(config);
+    QVERIFY2(settings.page, qPrintable(settings.error));
+    QObject* const inventory = settings.inventory.get();
+    auto* box = settings.page->findChild<QObject*>(QStringLiteral("flowControlCheckBox"));
+    QVERIFY(box);
+
+    // A radio on an adapter with RTS and CTS, and a flight controller whose USB port has no such lines.
+    const QString radio = QStringLiteral("/test/radio");
+    const QString board = QStringLiteral("/test/board");
+    inventory->setProperty("portsWithoutFlowControl", QStringList{board});
+    inventory->setProperty("serialPorts", QStringList{radio, board});
+    inventory->setProperty("serialPortStrings", QStringList{QStringLiteral("Radio"), QStringLiteral("Board")});
+    QVERIFY(QMetaObject::invokeMethod(inventory, "commPortsChanged"));
+    QCOMPARE(config.portName(), radio);
+    QVERIFY(box->property("enabled").toBool());
+    QVERIFY(box->property("checked").toBool());
+    QCOMPARE(config.flowControl(), QSerialPort::HardwareControl);
+
+    // The port would refuse to open with a flow control that it does not have.
+    config.setPortName(board);
+    QVERIFY(!box->property("enabled").toBool());
+    QVERIFY(!box->property("checked").toBool());
+    QCOMPARE(config.flowControl(), QSerialPort::NoFlowControl);
+
+    // The user may turn it on again for a port that has it.
+    config.setPortName(radio);
+    QVERIFY(box->property("enabled").toBool());
+    QCOMPARE(config.flowControl(), QSerialPort::NoFlowControl);
+    QVERIFY(box->setProperty("checked", true));
+    QCOMPARE(config.flowControl(), QSerialPort::HardwareControl);
+
+    // What a port can do is known once its device is attached, which may be while the page is open.
+    inventory->setProperty("portsWithoutFlowControl", QStringList{radio, board});
+    QVERIFY(QMetaObject::invokeMethod(inventory, "commPortsChanged"));
+    QVERIFY(!box->property("enabled").toBool());
+    QCOMPARE(config.flowControl(), QSerialPort::NoFlowControl);
 }
 
 void SerialSettingsTest::_losingItsConfigurationIsQuiet()

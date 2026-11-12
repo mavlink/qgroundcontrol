@@ -117,9 +117,8 @@ QStringList SerialConfiguration::supportedBaudRates()
 SerialConnectionSettings SerialConfiguration::connectionSettings() const
 {
     const auto ports = SerialPortManager::instance()->availablePorts();
-    const bool bootloader = std::any_of(ports.cbegin(), ports.cend(), [this](const auto& port) {
-        return (port.systemLocation == _portName || port.portName == _portName) && port.bootloader;
-    });
+    const bool bootloader =
+        std::ranges::any_of(ports, [this](const auto& port) { return port.hasName(_portName) && port.bootloader; });
     return {_portName, _baud, _dataBits, _flowControl, _stopBits, _parity, _dtrForceLow, isAutoConnect(), bootloader};
 }
 

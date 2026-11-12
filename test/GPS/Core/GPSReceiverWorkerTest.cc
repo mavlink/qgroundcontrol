@@ -655,11 +655,7 @@ void GPSReceiverWorkerTest::_finishedReceiverReleasesReservation_data()
 void GPSReceiverWorkerTest::_finishedReceiverReleasesReservation()
 {
     QFETCH(bool, cancelled);
-    QList<SerialPortManager::Port> inventory{
-        {QStringLiteral("/test/gps"), QStringLiteral("gps"), QGCSerialPortInfo::BoardTypeRTKGPS, QString()}};
-    SerialPortManager ports(nullptr, [&]() { return inventory; });
-    ports.setSinglePortOnly(true);
-    QCOMPARE(ports.availablePorts().size(), 1);
+    SerialPortManager ports;
     auto reservation = ports.reservePort(QStringLiteral("/test/gps"));
     QVERIFY(reservation);
     GPSReceiverWorker worker(
@@ -668,12 +664,9 @@ void GPSReceiverWorkerTest::_finishedReceiverReleasesReservation()
     if (cancelled) {
         worker.stop();
     }
-    QVERIFY(!ports.canReservePort(QStringLiteral("/test/mavlink")));
-    inventory.clear();
+    QVERIFY(!ports.canReservePort(QStringLiteral("/test/gps")));
     worker.start();
     QVERIFY(worker.wait(TestTimeout::shortDuration()));
-    QVERIFY(!ports.anyPortReserved());
-    QVERIFY(ports.reservePort(QStringLiteral("/test/mavlink")));
-    QTRY_VERIFY_WITH_TIMEOUT(ports.availablePorts().isEmpty(), TestTimeout::mediumMs());
+    QVERIFY(ports.reservePort(QStringLiteral("/test/gps")));
 }
 #endif

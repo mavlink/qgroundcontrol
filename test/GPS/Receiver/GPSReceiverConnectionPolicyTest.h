@@ -29,7 +29,16 @@ private slots:
     void _disconnectPausesAutomaticConnection();
     void _savedSerialWaitsForReturningPort_data();
     void _savedSerialWaitsForReturningPort();
+    void _savedStableNameFindsRepluggedPort_data();
+    void _savedStableNameFindsRepluggedPort();
+    void _waitingMessageNamesPort_data();
+    void _waitingMessageNamesPort();
+    void _userConnectAsksForAccess();
+    void _userConnectAsksForDeviceWithoutAccess();
+    void _otherNameOfPortKeepsReconnecting();
     void _retryOfListedPortBacksOff();
+    void _discoveryPassesOverReceiverWithoutAccess_data();
+    void _discoveryPassesOverReceiverWithoutAccess();
     void _discoveryUsesSavedManufacturer_data();
     void _discoveryUsesSavedManufacturer();
 #endif

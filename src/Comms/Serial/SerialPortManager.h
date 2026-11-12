@@ -3,6 +3,7 @@
 #include <chrono>
 #include <functional>
 #include <memory>
+#include <optional>
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QHash>
@@ -21,6 +22,9 @@ class SerialPortManager : public QObject
     QML_ELEMENT
     QML_UNCREATABLE("Managed by QGroundControl")
 
+    friend class GPSReceiverConnectionPolicyTest;
+    friend class LinkManagerTest;
+
     Q_PROPERTY(QStringList serialPorts READ serialPorts NOTIFY serialPortsChanged)
     Q_PROPERTY(QStringList serialBaudRates READ supportedBaudRates CONSTANT)
 
@@ -36,11 +40,26 @@ public:
         QString physicalDeviceId = {};
         QString description = {};
         QString displayName = {};
+        /// Finds the port again once its device has been replugged, which gives it another system location. Empty
+        /// where the platform has no such name. Devices of a kind that report the same serial number, or none,
+        /// share theirs.
+        QString stableName = {};
+        /// Whether the port can be set to hardware flow control. On Android the driver of a USB device may have
+        /// none, and its port then refuses the setting.
+        bool hardwareFlowControl = true;
+
+        /// Whether @a name is the port's system location, port name or stable name.
+        bool hasName(const QString& name) const
+        {
+            return !name.isEmpty() && (name == systemLocation || name == portName || name == stableName);
+        }
     };
 
     struct Reservation
     {
         QString systemLocation;
+        /// What holds the port, in words for the user; empty when the holder gave none.
+        QString owner = {};
     };
 
     using ReservationPtr = std::shared_ptr<const Reservation>;
@@ -69,32 +88,76 @@ public:
     QStringList serialPorts() const { return _serialPorts; }
 
     static QStringList supportedBaudRates();
-    ReservationPtr reservePort(const QString& systemLocation);
+    ReservationPtr reservePort(const QString& systemLocation, const QString& owner = {});
     bool canReservePort(const QString& systemLocation) const;
     bool isPortReserved(const QString& systemLocation) const;
-    bool anyPortReserved() const;
+    /// The owner the port is reserved with; empty when it is not reserved or its holder gave none.
+    QString reservationOwner(const QString& systemLocation) const;
+    /// Whether both names are of one listed port, or are the same name.
+    bool isSamePort(const QString& first, const QString& second) const;
+    /// The name for a saved configuration to keep of the listed port with this system location or port name: the
+    /// port's stable name if it has one that no other listed port shares, else its system location. Any other
+    /// name is returned as it is.
+    QString persistentName(const QString& name) const;
+    /// The only listed port with this name, whichever of its names that is. None when no listed port has the name,
+    /// or when several share it as their stable name.
+    std::optional<Port> port(const QString& name) const;
+
+    /// Whether QGC has the user's permission to open the port, or needs none. Android alone has such a
+    /// permission, for the device of a USB port: such a port has access only while its device is attached and
+    /// the user has let QGC open it.
+    bool hasAccess(const QString& name) const;
+    /// Asks the user to let QGC open the port, and returns whether it did. It does not for a port that has access
+    /// already, that takes no permission, or whose device is not attached. The user answers later, and the port
+    /// does not open until then; a scan of the ports follows a grant. Opening a port asks by itself, once for
+    /// each time its device is attached. This asks whenever it is called, also after a denial, so call it only
+    /// for a connection that the user has asked for.
+    bool requestAccess(const QString& name);
+    /// Whether the user has refused to let QGC open the port, and has not been asked again since. A scan of the
+    /// ports follows a refusal, as it follows a grant.
+    bool accessDenied(const QString& name) const;
 
     /// Routing exclusions survive reconnects without marking the hardware occupied.
     ReservationPtr excludeFromAutoConnect(const QString& systemLocation);
     bool canAutoConnectPort(const QString& systemLocation) const;
     bool isAutoConnectExcluded(const QString& systemLocation) const;
 
-    void setSinglePortOnly(bool enabled) { _singlePortOnly = enabled; }
-
 signals:
     void serialPortsChanged();
-    /// Emitted only after a fresh scan, never for a retained Android snapshot. Includes native names and paths.
+    /// Emitted only after a fresh scan, with every name of the ports it lists.
     void portsEnumerated(const QStringList& availablePorts);
 
 private:
     static QList<Port> _enumeratePorts();
+    static bool _hasPlatformAccess(const QString& name);
+    static bool _requestPlatformAccess(const QString& name);
+    static bool _platformAccessDenied(const QString& name);
+    /// The only listed port with this name, or null. A stable name that several listed ports share stands for
+    /// none of them: the first one found could be on another vehicle than the one that was meant.
+    const Port* _portNamed(const QString& name) const;
+    /// The system location of the listed port with this name, or the name itself if it stands for no listed port.
+    QString _systemLocation(const QString& name) const;
+    /// The live reservation of the port with this name, under whichever of the port's names it was made.
+    ReservationPtr _reservationOf(const QString& name) const;
+
+    struct ReservedPort
+    {
+        std::weak_ptr<const Reservation> reservation;
+        /// Where the port was when a scan last found it by the name that it is reserved by. It still finds the
+        /// reservation once that name has come to stand for several ports, and so for none.
+        QString listedLocation;
+    };
     Enumerator _enumerator;
+    /// What hasAccess(), requestAccess() and accessDenied() answer with. Tests replace them, as they do the
+    /// enumerator.
+    std::function<bool(const QString& name)> _hasAccess = &_hasPlatformAccess;
+    std::function<bool(const QString& name)> _requestAccess = &_requestPlatformAccess;
+    std::function<bool(const QString& name)> _accessDenied = &_platformAccessDenied;
     QList<Port> _ports;
     QStringList _serialPorts;
     QElapsedTimer _scanTimer;
-    QHash<QString, std::weak_ptr<const Reservation>> _reservations;
+    QHash<QString, ReservedPort> _reservations;
     QHash<QString, std::weak_ptr<const Reservation>> _autoConnectExclusions;
-    bool _singlePortOnly = false;
 };
 
 /// Ports a scan lists for the first time wait SerialPortManager::NEW_PORT_SETTLE_DELAY before automatic connection

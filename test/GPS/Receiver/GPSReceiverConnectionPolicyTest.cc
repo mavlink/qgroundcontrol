@@ -446,13 +446,15 @@ void GPSReceiverConnectionPolicyTest::_savedReceiverReplacesDiscovery()
     QCOMPARE(harness.worker()->type(), GPSType::quectel);
     for (const auto& port : inventory) {
         QCOMPARE(harness.ports.canReservePort(port.systemLocation), port.systemLocation != endpoint);
+        QCOMPARE(harness.ports.reservationOwner(port.systemLocation),
+                 (port.systemLocation == endpoint) ? QStringLiteral("the GPS receiver") : QString());
     }
 }
 
 void GPSReceiverConnectionPolicyTest::_excludedPorts_data()
 {
     QTest::addColumn<QString>("reason");
-    for (const auto* reason : {"bootloader", "busy", "passive-role", "single-port", "other-board"}) {
+    for (const auto* reason : {"bootloader", "busy", "passive-role", "other-board"}) {
         QTest::newRow(reason) << QString::fromLatin1(reason);
     }
 }
@@ -474,9 +476,6 @@ void GPSReceiverConnectionPolicyTest::_excludedPorts()
     SerialPortManager::ReservationPtr reservation;
     if (reason == QStringLiteral("busy")) {
         reservation = harness.ports.reservePort(port.systemLocation);
-    } else if (reason == QStringLiteral("single-port")) {
-        harness.ports.setSinglePortOnly(true);
-        reservation = harness.ports.reservePort(QStringLiteral("/test/mavlink"));
     }
     QVERIFY(harness.discover());
     QCOMPARE(harness.attempts(), 0);
@@ -687,6 +686,168 @@ void GPSReceiverConnectionPolicyTest::_savedSerialWaitsForReturningPort()
     QVERIFY(receiver.errorMessage().isEmpty());
 }
 
+void GPSReceiverConnectionPolicyTest::_savedStableNameFindsRepluggedPort_data()
+{
+    QTest::addColumn<bool>("scannedWhileUnplugged");
+    QTest::newRow("unplugged-then-replugged") << true;
+    // Both happen between two scans, so the stable name never leaves the list.
+    QTest::newRow("replugged-between-scans") << false;
+}
+
+void GPSReceiverConnectionPolicyTest::_savedStableNameFindsRepluggedPort()
+{
+    QFETCH(bool, scannedWhileUnplugged);
+    const QString stableName = QStringLiteral("usb:1546:01a9:R1");
+    const QString location = QStringLiteral("/test/usb/001/004");
+    const QString replugged = QStringLiteral("/test/usb/001/009");
+    auto configuration = savedSerialConfiguration();
+    configuration.serialDevice = stableName;
+    PolicyHarness harness(configuration, {usbPort(location, stableName)});
+    GPSReceiver& receiver = harness.receiver;
+
+    // The saved name finds the port, which the session opens and holds by its system location.
+    harness.update();
+    QCOMPARE(harness.attempts(), 1);
+    QCOMPARE(receiver.activeEndpoint(), location);
+    QVERIFY(harness.ports.isPortReserved(location));
+    harness.worker()->ready();
+
+    // Replugged, the device has another system location. The session ends with the one it opened, and the saved name
+    // finds the new one while the worker of the ended session still holds the old one.
+    const QString unplugged = GPSReceiver::tr("Receiver unplugged. Reconnecting when it is plugged back in.");
+    if (scannedWhileUnplugged) {
+        harness.serial.plug({});
+        QCOMPARE(receiver.errorMessage(), unplugged);
+    }
+    harness.serial.plug({usbPort(replugged, stableName)});
+    QVERIFY(!receiver.hasReceiver());
+    QCOMPARE(receiver.errorMessage(), unplugged);
+    harness.update();
+    QCOMPARE(harness.attempts(), 2);
+    QCOMPARE(receiver.activeEndpoint(), replugged);
+    QVERIFY(harness.ports.isPortReserved(replugged));
+}
+
+void GPSReceiverConnectionPolicyTest::_waitingMessageNamesPort_data()
+{
+    QTest::addColumn<bool>("listed");
+    QTest::addColumn<QString>("message");
+    // A listed port goes by its system location, as in the device picker, and never by its stable name.
+    QTest::newRow("listed-in-bootloader")
+        << true << GPSReceiver::tr("Waiting for the receiver on %1.").arg(QStringLiteral("/test/usb/001/004"));
+    // Without its device a USB port on Android has no name that the user knows it by.
+    QTest::newRow("usb-device-not-listed") << false << GPSReceiver::tr("Waiting for the receiver on USB.");
+}
+
+void GPSReceiverConnectionPolicyTest::_waitingMessageNamesPort()
+{
+    QFETCH(bool, listed);
+    QFETCH(QString, message);
+    const QString stableName = QStringLiteral("usb:1546:01a9:R1");
+    SerialPortManager::Port port = usbPort(QStringLiteral("/test/usb/001/004"), stableName);
+    port.bootloader = true;
+    auto configuration = savedSerialConfiguration();
+    configuration.serialDevice = stableName;
+    PolicyHarness harness(configuration, listed ? QList{port} : QList<SerialPortManager::Port>{});
+    // As on Android, where QGC has no access to a USB port whose device is not attached.
+    harness.ports._hasAccess = [](const QString&) { return false; };
+
+    harness.update();
+    QCOMPARE(harness.attempts(), 0);
+    QCOMPARE(harness.receiver.errorMessage(), message);
+}
+
+void GPSReceiverConnectionPolicyTest::_userConnectAsksForAccess()
+{
+    const QString device = QStringLiteral("/test/saved");
+    PolicyHarness harness(savedSerialConfiguration(), {serialPort(device)});
+    GPSReceiver& receiver = harness.receiver;
+    QStringList asked;
+    harness.ports._requestAccess = [&asked](const QString& name) {
+        asked.append(name);
+        return true;
+    };
+
+    // Automatic connection opens the port without being told to, so it never asks the user again: neither at
+    // startup nor when the receiver returns.
+    harness.update();
+    QCOMPARE(harness.attempts(), 1);
+    harness.worker()->ready();
+    harness.serial.plug({});
+    harness.releaseRetired();
+    harness.serial.plug({serialPort(device)});
+    harness.update();
+    QCOMPARE(harness.attempts(), 2);
+    QVERIFY(asked.isEmpty());
+
+    // The user's Connect asks, and connects without waiting for the answer, which opening the port picks up.
+    receiver.disconnectReceiver();
+    harness.releaseRetired();
+    QVERIFY(receiver.connectReceiver());
+    QCOMPARE(asked, QStringList{device});
+    QCOMPARE(harness.attempts(), 3);
+
+    // A Connect that is refused while a receiver is connected asks for nothing.
+    QVERIFY(!receiver.connectReceiver());
+    QCOMPARE(asked.size(), 1);
+}
+
+void GPSReceiverConnectionPolicyTest::_userConnectAsksForDeviceWithoutAccess()
+{
+    // Android lists a device that QGC may not open without its stable name, so the saved name finds no port, and the
+    // automatic connection waits.
+    const QString stableName = QStringLiteral("usb:1546:01a9:R1");
+    const QString location = QStringLiteral("/test/usb/001/004");
+    auto configuration = savedSerialConfiguration();
+    configuration.serialDevice = stableName;
+    PolicyHarness harness(configuration, {serialPort(location)});
+    GPSReceiver& receiver = harness.receiver;
+    QStringList asked;
+    harness.ports._requestAccess = [&asked](const QString& name) {
+        asked.append(name);
+        return true;
+    };
+    harness.update();
+    QCOMPARE(harness.attempts(), 0);
+
+    QVERIFY(!receiver.connectReceiver());
+    QCOMPARE(asked, QStringList{stableName});
+    QCOMPARE(receiver.errorMessage(),
+             GPSReceiver::tr("Allow QGroundControl to open the receiver's USB device, then connect."));
+    QCOMPARE(harness.attempts(), 0);
+
+    // Allowed, the port has its stable name, and the automatic connection that waited for it connects.
+    harness.serial.plug({usbPort(location, stableName)});
+    harness.update();
+    QCOMPARE(harness.attempts(), 1);
+    QCOMPARE(receiver.activeEndpoint(), location);
+}
+
+void GPSReceiverConnectionPolicyTest::_otherNameOfPortKeepsReconnecting()
+{
+    const QString stableName = QStringLiteral("usb:1546:01a9:R1");
+    const QString location = QStringLiteral("/test/usb/001/004");
+    auto configuration = savedSerialConfiguration();
+    configuration.serialDevice = location;
+    PolicyHarness harness(configuration, {usbPort(location, stableName)});
+    GPSReceiver& receiver = harness.receiver;
+    harness.update();
+    QCOMPARE(harness.attempts(), 1);
+    harness.worker()->ready();
+
+    // The settings store the stable name of the port once the receiver is connected on it. That is the same
+    // connection, unlike another port, which _configurationChangeCancelsRetry covers.
+    configuration.serialDevice = stableName;
+    receiver.setConfiguration(configuration);
+    QVERIFY(receiver.hasReceiver());
+    QCOMPARE(harness.attempts(), 1);
+    expectLogMessage(kReceiverLog, QtWarningMsg, QRegularExpression(QStringLiteral("session ended")));
+    harness.worker()->fail(GPSConnectionError::DeviceError);
+    verifyExpectedLogMessage();
+    QVERIFY(receiver.reconnecting());
+    QVERIFY(_retryPending(receiver));
+}
+
 void GPSReceiverConnectionPolicyTest::_retryOfListedPortBacksOff()
 {
     PolicyHarness harness(savedSerialConfiguration(), {serialPort(QStringLiteral("/test/saved"))});
@@ -715,6 +876,41 @@ void GPSReceiverConnectionPolicyTest::_retryOfListedPortBacksOff()
     QVERIFY(harness.scheduler.advanceBy(std::chrono::milliseconds(1)));
     harness.update();
     QCOMPARE(harness.attempts(), 2);
+}
+
+void GPSReceiverConnectionPolicyTest::_discoveryPassesOverReceiverWithoutAccess_data()
+{
+    QTest::addColumn<bool>("otherAllowedAtStart");
+    QTest::newRow("other-receiver-allowed-before-discovery") << true;
+    QTest::newRow("other-receiver-allowed-during-an-attempt") << false;
+}
+
+void GPSReceiverConnectionPolicyTest::_discoveryPassesOverReceiverWithoutAccess()
+{
+    QFETCH(bool, otherAllowedAtStart);
+    const SerialPortManager::Port first = rtkPort(QStringLiteral("/test/receiver-first"));
+    const SerialPortManager::Port other = rtkPort(QStringLiteral("/test/receiver-other"));
+    PolicyHarness harness(discoveryConfiguration(), {first, other});
+    bool otherAllowed = otherAllowedAtStart;
+    harness.ports._hasAccess = [&otherAllowed, &other](const QString& name) {
+        return otherAllowed && name == other.systemLocation;
+    };
+
+    QVERIFY(harness.discover());
+    QCOMPARE(harness.attempts(), 1);
+    if (!otherAllowedAtStart) {
+        // With no receiver allowed the first one listed is tried, and opening it asks the user. They allow the
+        // other one, and the attempt runs out.
+        QCOMPARE(harness.receiver.activeEndpoint(), first.systemLocation);
+        otherAllowed = true;
+        expectLogMessage(kReceiverLog, QtWarningMsg, QRegularExpression(QStringLiteral("session ended")));
+        harness.worker()->fail(GPSConnectionError::OpenFailed);
+        verifyExpectedLogMessage();
+        harness.releaseRetired();
+        QVERIFY(harness.discover());
+        QCOMPARE(harness.attempts(), 2);
+    }
+    QCOMPARE(harness.receiver.activeEndpoint(), other.systemLocation);
 }
 
 void GPSReceiverConnectionPolicyTest::_discoveryUsesSavedManufacturer_data()

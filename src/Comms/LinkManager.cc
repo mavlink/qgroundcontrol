@@ -28,6 +28,7 @@
 #endif
 
 #include <algorithm>
+#include <chrono>
 #include <utility>
 
 #include <QtCore/QApplicationStatic>
@@ -51,6 +52,9 @@ LinkManager::LinkManager(QObject *parent)
     (void) qRegisterMetaType<QGCSerialPortInfo>("QGCSerialPortInfo");
     (void) connect(SerialPortManager::instance(), &SerialPortManager::portsEnumerated, this,
                    &LinkManager::_updateSerialPorts);
+    // On Android the user's answer to a request for USB permission starts a scan of the ports.
+    (void) connect(SerialPortManager::instance(), &SerialPortManager::portsEnumerated, this,
+                   &LinkManager::_connectLinkAwaitingUsbPermission);
 #endif
 }
 
@@ -70,10 +74,14 @@ void LinkManager::init()
 
 #ifndef QGC_NO_SERIAL_LINK
 #ifdef Q_OS_ANDROID
-    // The serial backend is fixed at startup. Changing the setting requires an app restart.
-    AndroidSerialAccess::setUsePosixSerial(
-        SettingsManager::instance()->appSettings()->androidUsePosixSerial()->rawValue().toBool());
-    SerialPortManager::instance()->setSinglePortOnly(!AndroidSerialAccess::usePosixSerial());
+    Fact* const usePosixSerial = SettingsManager::instance()->appSettings()->androidUsePosixSerial();
+    AndroidSerialAccess::setUsePosixSerial(usePosixSerial->rawValue().toBool());
+    // The setting applies at once. Turning it off takes the device nodes off the port list, which closes a link
+    // or a GPS receiver that has one open, as when its device is unplugged.
+    (void) connect(usePosixSerial, &Fact::rawValueChanged, this, [](const QVariant& value) {
+        AndroidSerialAccess::setUsePosixSerial(value.toBool());
+        SerialPortManager::instance()->rescan();
+    });
 #endif
     if (!_serialAutoConnect) {
         _serialAutoConnect = std::make_unique<SerialAutoConnect>(
@@ -109,6 +117,9 @@ void LinkManager::createConnectedLink(const LinkConfiguration *config)
             if (_serialPortInUseMsg(*sharedConfig)) {
                 continue;
             }
+            if (_awaitUsbPermission(sharedConfig)) {
+                continue;
+            }
 #endif
             createConnectedLink(sharedConfig);
         }
@@ -138,9 +149,8 @@ bool LinkManager::_serialPortInUseMsg(const LinkConfiguration& config)
         return false;
     }
 
-    // Either the port itself is in use, or another one is where only one serial port can be open at a time. A
-    // link that has it can be named for the user to disconnect. What else reserves a port, as the GPS does, cannot.
-    const bool portReserved = SerialPortManager::instance()->isPortReserved(port);
+    // A link that has the port can be named for the user to disconnect. What else reserves a port, as the GPS
+    // does, is named if it said what it is.
     const QList<SharedLinkInterfacePtr> currentLinks = links();
     for (const SharedLinkInterfacePtr& link : currentLinks) {
         const SharedLinkConfigurationPtr linkConfig = link->linkConfiguration();
@@ -148,7 +158,7 @@ bool LinkManager::_serialPortInUseMsg(const LinkConfiguration& config)
         if (!linkSerialConfig) {
             continue;
         }
-        if (linkSerialConfig->portName().trimmed() == port) {
+        if (SerialPortManager::instance()->isSamePort(linkSerialConfig->portName(), port)) {
             // Said in so many words: a link that was connected automatically is named after what QGC takes the
             // device for, which the user may not know it by.
             QGC::showAppMessage(
@@ -156,15 +166,72 @@ bool LinkManager::_serialPortInUseMsg(const LinkConfiguration& config)
                     .arg(config.name(), linkConfig->name()));
             return true;
         }
-        if (!portReserved) {
-            QGC::showAppMessage(tr("Cannot connect '%1' while '%2' is connected. Disconnect it first.")
-                                    .arg(config.name(), linkConfig->name()));
-            return true;
-        }
     }
 
-    QGC::showAppMessage(tr("Cannot connect '%1': the serial port is in use.").arg(config.name()));
+    const QString owner = SerialPortManager::instance()->reservationOwner(port);
+    if (owner.isEmpty()) {
+        QGC::showAppMessage(tr("Cannot connect '%1': the serial port is in use.").arg(config.name()));
+    } else {
+        //: %2 is what has the port open, such as "the GPS receiver"
+        QGC::showAppMessage(tr("Cannot connect '%1': the serial port is in use by %2.").arg(config.name(), owner));
+    }
     return true;
+}
+
+bool LinkManager::_awaitUsbPermission(const SharedLinkConfigurationPtr& config)
+{
+    // The user asked for this connection, so they are asked again for a USB device that they have denied QGC:
+    // opening the port asks only once for each time the device is attached. The port cannot be opened until
+    // they answer, so the link is connected once they have allowed it.
+    const auto* serialConfig = qobject_cast<const SerialConfiguration*>(config.get());
+    if (!serialConfig || !SerialPortManager::instance()->requestAccess(serialConfig->portName())) {
+        // A link that waits for its permission goes on waiting: this connection has nothing to ask for.
+        return false;
+    }
+
+    qCDebug(LinkManagerLog) << "Connecting" << config->name() << "once the user allows its USB device";
+    // As when a link is connected at once: the user wants this link, whatever they stopped before.
+    config->setSuppressAutoReconnect(false);
+    _configAwaitingUsbPermission = config;
+    // A permission that the user grants later than this, by other means, connects nothing by itself.
+    _usbPermissionDeadline.setRemainingTime(std::chrono::minutes(1));
+    return true;
+}
+
+void LinkManager::_connectLinkAwaitingUsbPermission()
+{
+    SharedLinkConfigurationPtr config = _configAwaitingUsbPermission.lock();
+    if (!config) {
+        return;
+    }
+    if (_usbPermissionDeadline.hasExpired()) {
+        _configAwaitingUsbPermission.reset();
+        return;
+    }
+
+    const auto* serialConfig = qobject_cast<const SerialConfiguration*>(config.get());
+    if (serialConfig && SerialPortManager::instance()->accessDenied(serialConfig->portName())) {
+        // The user has answered, so nothing is left to wait for. They are told only of a link that they still want.
+        qCDebug(LinkManagerLog) << "USB device refused, not connecting" << config->name();
+        _configAwaitingUsbPermission.reset();
+        if (!config->link() && !config->suppressAutoReconnect()) {
+            QGC::showAppMessage(tr("Cannot connect '%1': USB permission was denied.").arg(config->name()));
+        }
+        return;
+    }
+    if (_connectionsSuspended || !serialConfig || !SerialPortManager::instance()->hasAccess(serialConfig->portName())) {
+        return;
+    }
+
+    // Not if the link was connected or stopped by other means since the user asked for it.
+    if (!config->link() && !config->suppressAutoReconnect()) {
+        qCDebug(LinkManagerLog) << "USB device allowed, connecting" << config->name();
+        if (!createConnectedLink(config)) {
+            // An automatic connection may be trying the port at this moment. The next scan tries again.
+            return;
+        }
+    }
+    _configAwaitingUsbPermission.reset();
 }
 #endif
 
@@ -269,6 +336,13 @@ void LinkManager::_linkConnected()
     const SharedLinkConfigurationPtr config = link ? link->linkConfiguration() : nullptr;
     if (config) {
         config->noteConnected();
+#ifndef QGC_NO_SERIAL_LINK
+        // The port is open, so on Android the user has let QGC open its device by now, if only after the link
+        // was saved.
+        if (_usePersistentPortName(config.get())) {
+            saveLinkConfigurationList();
+        }
+#endif
     }
 }
 
@@ -673,6 +747,10 @@ void LinkManager::endConfigurationEditing(LinkConfiguration *config, LinkConfigu
     }
 
     config->copyFrom(editedConfig);
+#ifndef QGC_NO_SERIAL_LINK
+    // The persistent name of the port may have changed while the editor was open.
+    (void) _usePersistentPortName(config);
+#endif
     saveLinkConfigurationList();
     emit config->nameChanged(config->name());
     // Discard temporary duplicate
@@ -687,6 +765,10 @@ void LinkManager::endCreateConfiguration(LinkConfiguration *config)
     }
 
     addConfiguration(config);
+#ifndef QGC_NO_SERIAL_LINK
+    // The persistent name of the port may have changed since the port was chosen in the editor.
+    (void) _usePersistentPortName(config);
+#endif
     saveLinkConfigurationList();
 }
 
@@ -708,13 +790,17 @@ LinkConfiguration *LinkManager::startConfigurationEditing(LinkConfiguration *con
         return nullptr;
     }
 
+    LinkConfiguration* const editedConfig = LinkConfiguration::duplicateSettings(config);
 #ifndef QGC_NO_SERIAL_LINK
-    if (config->type() == LinkConfiguration::TypeSerial) {
+    if (auto* const serialConfig = qobject_cast<SerialConfiguration*>(editedConfig)) {
         _updateSerialPorts();
+        // The editor lists ports by their persistent names, so a link saved by the system location of its port
+        // takes that name here.
+        serialConfig->setPortName(SerialPortManager::instance()->persistentName(serialConfig->portName()));
     }
 #endif
 
-    return LinkConfiguration::duplicateSettings(config);
+    return editedConfig;
 }
 
 void LinkManager::removeConfiguration(LinkConfiguration *config)
@@ -892,8 +978,7 @@ void LinkManager::_updateSerialPorts()
     QStringList displayList;
     const auto inventory = SerialPortManager::instance()->availablePorts();
     for (const SerialPortManager::Port& info : inventory) {
-        const QString port = info.systemLocation;
-        portList += port;
+        portList += SerialPortManager::instance()->persistentName(info.systemLocation);
         displayList += info.displayName.isEmpty() ? info.portName : info.displayName;
     }
     const bool portsChanged = _commPortList != portList;
@@ -906,6 +991,24 @@ void LinkManager::_updateSerialPorts()
     if (displayChanged) {
         emit commPortStringsChanged();
     }
+}
+
+bool LinkManager::_usePersistentPortName(LinkConfiguration* config)
+{
+    auto* const serialConfig = qobject_cast<SerialConfiguration*>(config);
+    // A dynamic configuration is not saved: automatic connection makes one for a port each time it finds it.
+    if (!serialConfig || serialConfig->isDynamic()) {
+        return false;
+    }
+
+    // Asked of the last scan, which is recent: the inventory is scanned every second, and on Android also when
+    // the user lets QGC open a device.
+    const QString persistentName = SerialPortManager::instance()->persistentName(serialConfig->portName());
+    if (persistentName == serialConfig->portName()) {
+        return false;
+    }
+    serialConfig->setPortName(persistentName);
+    return true;
 }
 
 QStringList LinkManager::serialPortStrings()
@@ -929,6 +1032,12 @@ QStringList LinkManager::serialPorts()
 QStringList LinkManager::serialBaudRates()
 {
     return SerialConfiguration::supportedBaudRates();
+}
+
+bool LinkManager::serialPortHasFlowControl(const QString& portName) const
+{
+    const std::optional<SerialPortManager::Port> port = SerialPortManager::instance()->port(portName);
+    return !port || port->hardwareFlowControl;
 }
 
 #endif // QGC_NO_SERIAL_LINK

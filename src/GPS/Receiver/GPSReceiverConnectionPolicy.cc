@@ -173,11 +173,16 @@ bool GPSReceiverConnectionPolicy::_discoveryEnabled() const
 void GPSReceiverConnectionPolicy::_updateSaved()
 {
     if (_configuration.effectiveConnectionType() == RTKSettings::Serial) {
-        if (!_serialDeviceAvailable(_configuration.serialDevice.trimmed())) {
+        const QString device = _configuration.serialDevice.trimmed();
+        if (!_serialDeviceAvailable(device)) {
             if (!std::exchange(_waitingForPort, true)) {
-                //: %1 is a serial device, such as /dev/ttyACM0 or COM3
-                _receiver.setConnectionError(
-                    tr("Waiting for the receiver on %1.").arg(_configuration.serialDevice.trimmed()));
+                const QString label = _serialDeviceLabel(device);
+                if (label.isEmpty()) {
+                    _receiver.setConnectionError(tr("Waiting for the receiver on USB."));
+                } else {
+                    //: %1 is a serial device, such as /dev/ttyACM0 or COM3
+                    _receiver.setConnectionError(tr("Waiting for the receiver on %1.").arg(label));
+                }
             }
             return;
         }
@@ -207,6 +212,15 @@ bool GPSReceiverConnectionPolicy::_serialDeviceAvailable([[maybe_unused]] const 
     return false;
 #else
     return _receiver.serialPortAvailable(device);
+#endif
+}
+
+QString GPSReceiverConnectionPolicy::_serialDeviceLabel(const QString& device) const
+{
+#ifdef QGC_NO_SERIAL_LINK
+    return device;
+#else
+    return _receiver.serialPortLabel(device);
 #endif
 }
 
@@ -268,21 +282,31 @@ bool GPSReceiverConnectionPolicy::_connectConfigured(bool allowPersistentChanges
 void GPSReceiverConnectionPolicy::_updateDiscovery()
 {
 #ifndef QGC_NO_SERIAL_LINK
+    const QStringList receivers = _receiver.rtkReceiverPorts();
+    // On Android the user allows each USB device by itself, and may never allow the first receiver listed. One
+    // that QGC may not open is passed over while it may open another.
+    QStringList allowed;
+    for (const QString& device : receivers) {
+        if (_receiver.serialPortAllowed(device)) {
+            allowed.append(device);
+        }
+    }
     if (_owner == Owner::Discovered) {
-        if (_serialDeviceAvailable(_autoPort)) {
+        const bool passedOver = !allowed.isEmpty() && !_receiver.serialPortAllowed(_autoPort);
+        if (_serialDeviceAvailable(_autoPort) && !passedOver) {
             if (!_retryDeadlineUs || _scheduler->nowUs() >= *_retryDeadlineUs) {
                 _connectDiscovered(_autoPort);
             }
             return;
         }
-        // The receiver being retried was unplugged; discovery finds it again when it returns.
+        // The receiver being retried was unplugged, and discovery finds it again when it returns, or is passed over.
         _owner = Owner::None;
         _cancelRetries();
     }
-    const QStringList receivers = _receiver.rtkReceiverPorts();
     _waitingPorts.removeIf([&receivers](const QString& device) { return !receivers.contains(device); });
+    const QStringList& candidates = allowed.isEmpty() ? receivers : allowed;
     const quint64 nowUs = _scheduler->nowUs();
-    for (const QString& device : receivers) {
+    for (const QString& device : candidates) {
         if (_waitingPorts.settled(device, nowUs)) {
             _connectDiscovered(device);
             return;

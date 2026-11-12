@@ -33,10 +33,11 @@ enum class GPSReceiverSessionOutcome
 /// connects it at startup and when the setting is turned on, reconnects it with backoff after a lost connection, and
 /// reconnects an unplugged serial receiver as soon as its port returns. A connection the user starts is kept once it
 /// reaches the receiver. A configured base without a saved serial device is discovered on USB instead, trying only
-/// ports whose USB identity is a known RTK receiver adapter, with the saved manufacturer. The user's Disconnect pauses
-/// both until the user connects again or turns the setting back on. With the setting off, receivers connect only when
-/// the user asks, and a lost connection is reported. Automatic attempts never pass flash-save consent. The policy
-/// reports why a connection cannot start or is waiting for its port; the receiver words how a session ended.
+/// ports whose USB identity is a known RTK receiver adapter, with the saved manufacturer, and passing over one that
+/// QGC may not open while it may open another. The user's Disconnect pauses both until the user connects again or
+/// turns the setting back on. With the setting off, receivers connect only when the user asks, and a lost connection
+/// is reported. Automatic attempts never pass flash-save consent. The policy reports why a connection cannot start
+/// or is waiting for its port; the receiver words how a session ended.
 class GPSReceiverConnectionPolicy
 {
     Q_DECLARE_TR_FUNCTIONS(GPSReceiverConnectionPolicy)
@@ -83,6 +84,7 @@ private:
     void _scheduleRetry();
     void _cancelRetries();
     bool _serialDeviceAvailable(const QString& device) const;
+    QString _serialDeviceLabel(const QString& device) const;
     void _updateDiscovery();
 #ifndef QGC_NO_SERIAL_LINK
     /// Connects a discovered receiver; while another connection holds its port, a later update tries again without

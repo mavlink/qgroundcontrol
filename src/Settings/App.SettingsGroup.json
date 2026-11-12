@@ -251,10 +251,9 @@
         {
             "name": "androidUsePosixSerial",
             "shortDesc": "Makes the device's built-in serial ports available in addition to USB serial devices.",
-            "longDesc": "If this option is enabled, the built-in serial ports (/dev/tty*) are available in addition to USB serial devices. This requires a device which allows access to the serial ports.",
+            "longDesc": "If this option is enabled, the built-in serial ports (/dev/tty*) are available in addition to USB serial devices. This requires a device which allows access to the serial ports. Turning the option off closes connections that use a built-in serial port.",
             "type": "bool",
             "default": false,
-            "qgcRebootRequired": true,
             "label": "Use built-in serial ports",
             "keywords": "serial,posix,uart,tty,android"
         },

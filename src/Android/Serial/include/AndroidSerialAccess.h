@@ -6,8 +6,8 @@
 /// QSerialPortInfo::availablePorts() lists, and when the user is asked again for a USB permission.
 namespace AndroidSerialAccess {
 // Whether the list has, after the USB ports, the serial device nodes too: the /dev/tty* that some devices, such
-// as rooted ones, let an app open (POSIX). The app sets it once at startup, from its androidUsePosixSerial
-// setting. How a port opens depends on its name alone.
+// as rooted ones, let an app open (POSIX). The app sets it from its androidUsePosixSerial setting, at startup and
+// whenever the setting changes. How a port opens depends on its name alone.
 void setUsePosixSerial(bool use);
 bool usePosixSerial();
 /// Whether the device has a serial port node that QGC may read and write.
