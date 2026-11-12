@@ -129,6 +129,9 @@ void BluetoothWorkerTest::_testDisconnectResetsReconnectState()
 {
     BluetoothConfiguration config("TestBT_disconnectReset");
 
+    // Use BLE worker — a Classic worker's failed connect falls back to a service discovery, which
+    // without a device address searches for devices with the host's adapter
+    config.setMode(BluetoothConfiguration::BluetoothMode::ModeLowEnergy);
     std::unique_ptr<BluetoothWorker> worker(BluetoothWorker::create(&config));
 
     // Call connectLink to set intentionalDisconnect = false internally
