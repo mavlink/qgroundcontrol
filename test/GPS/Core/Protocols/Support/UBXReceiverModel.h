@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <chrono>
 #include <cstdint>
 #include <deque>
@@ -106,8 +107,12 @@ public:
     /// False once the host sent what a driver must not send to this receiver. A message the model does not take is
     /// answered as a receiver answers one it does not know: with ACK-NAK in class CFG, which a CFG-VALSET or
     /// CFG-VALGET that cannot be read gets too, and not at all in another class. A receiver before protocol 27 takes
-    /// CFG-PRT, CFG-MSG, CFG-RATE, CFG-NAV5 and CFG-TMODE3 here, fewer messages than such a receiver has. The write
-    /// fails of bytes that are no frame, and of a message the model takes in the driver's form alone.
+    /// CFG-PRT, CFG-MSG, CFG-RATE, CFG-NAV5 and CFG-TMODE3 here, fewer messages than such a receiver has, set and
+    /// polled in the forms it has of them: CFG-PRT for one port or several, polled for one port or for the port in
+    /// use, and CFG-MSG for the port in use or for all six. A poll's answer holds what the host set of the message and
+    /// zero for the rest, as the model has no factory configuration, and another length of the message gets ACK-NAK.
+    /// The write fails of bytes that are no frame, and of a MON-VER or NAV-SVIN poll the driver must not send as it
+    /// is.
     bool wireValid = true;
     bool corruptVersionReplies = false;
     /// The reply to CFG-SEC-JAMDET arrives late: after the host's timeout, ahead of the next reply.
@@ -227,6 +232,10 @@ private:
     bool _handleFrame(ScriptedReceiver& receiver, const QByteArray& frame);
     bool _handleValset(ScriptedReceiver& receiver, uint16_t message, const QByteArray& payload);
     bool _handleLegacyFrame(ScriptedReceiver& receiver, uint16_t message, const QByteArray& payload);
+    bool _handleLegacyPorts(ScriptedReceiver& receiver, const QByteArray& payload);
+    bool _handleLegacyMessageRate(ScriptedReceiver& receiver, const QByteArray& payload);
+    /// Answers a poll of @a message with @a payload, and acknowledges it.
+    bool _answerPoll(ScriptedReceiver& receiver, uint16_t message, const QByteArray& payload);
     /// Answers @a message as one the receiver does not take, which the host must not send it.
     bool _refuse(ScriptedReceiver& receiver, uint16_t message);
     /// Disables time mode as disableReply says; @a apply applies the rest of the command if time mode is disabled.
@@ -260,6 +269,12 @@ private:
     std::deque<DelayedResponse> _delayed;
     QByteArray _heldBaudAck;
     std::optional<uint64_t> _ownPositionDueUs;
+    /// The I/O ports a CFG-MSG holds a rate for.
+    static constexpr qsizetype PORTS = 6;
+    /// What a legacy receiver was last set to: each port of CFG-PRT, CFG-RATE, and the CFG-MSG rates on every port.
+    std::map<uint8_t, QByteArray> _ports;
+    QByteArray _legacyRate = QByteArray(6, '\0');
+    std::map<uint16_t, std::array<uint8_t, PORTS>> _portRates;
 };
 
 }  // namespace GPSTest

@@ -18,9 +18,11 @@
 #include "Protocols/Hardware/GPSReceiverSimulator.h"
 #include "Protocols/Support/GPSBaseStationConfigs.h"
 #include "Protocols/Support/GPSProtocolTestData.h"
+#include "Protocols/Support/ProtocolTestPackets.h"
 #include "RTCMFramer.h"
 #include "RTCMStationPosition.h"
 #include "TCPGPSTransport.h"
+#include "UBX/UBXFrame.h"
 
 using namespace std::chrono_literals;
 using namespace GPSTest;
@@ -202,7 +204,7 @@ void GPSReceiverSimulatorTest::_workerConfiguresBase()
     }
 }
 
-void GPSReceiverSimulatorTest::_refusesUnknownConfiguration_data()
+void GPSReceiverSimulatorTest::_answersConfiguration_data()
 {
     using Receiver = UBXReceiverModel::Receiver;
     QTest::addColumn<Receiver>("receiver");
@@ -241,9 +243,76 @@ void GPSReceiverSimulatorTest::_refusesUnknownConfiguration_data()
     QTest::newRow("f9p-unknown-message-of-another-class")
         << Receiver::F9P << QByteArray::fromHex("b5620aff00000925b56206ff00000515")
         << QByteArray::fromHex("b5620500020006ff0c31") << false;
+
+    // The receiver before protocol 27 takes its configuration messages set and polled, in every form it has of
+    // them. It answers a poll with the message, which holds what was set, and then acknowledges it.
+    namespace Msg = UBX::Msg;
+    const auto frame = [](UBX::MessageId message, const QByteArray& payload) {
+        return ubxBytes(message.value(), payload);
+    };
+    const auto ack = [](UBX::MessageId message) { return ubxBytes(Msg::ACK_ACK.value(), {message.cls, message.id}); };
+    const auto nak = [](UBX::MessageId message) { return ubxBytes(Msg::ACK_NAK.value(), {message.cls, message.id}); };
+    const QByteArray poll;
+    // The SPI port, which the driver leaves alone: UBX in and out.
+    QByteArray spi(20, '\0');
+    spi[0] = 4;
+    spi[12] = spi[14] = 0x01;
+    QTest::newRow("m8p-another-port") << Receiver::M8PBase
+                                      << frame(Msg::CFG_PRT, spi) + frame(Msg::CFG_PRT, spi.first(1))
+                                      << ack(Msg::CFG_PRT) + frame(Msg::CFG_PRT, spi) + ack(Msg::CFG_PRT) << true;
+    // The rates of a message on the six ports at once: NAV-POSLLH, which the simulator does not send, every epoch on
+    // UART1 and USB.
+    const QByteArray rates = QByteArray::fromHex("0102000100010000");
+    QTest::newRow("m8p-message-rates-of-all-ports")
+        << Receiver::M8PBase << frame(Msg::CFG_MSG, rates) + frame(Msg::CFG_MSG, rates.first(2))
+        << ack(Msg::CFG_MSG) + frame(Msg::CFG_MSG, rates) + ack(Msg::CFG_MSG) << true;
+    // 5 Hz in UTC.
+    const QByteArray rate = QByteArray::fromHex("c80001000000");
+    QTest::newRow("m8p-measurement-rate")
+        << Receiver::M8PBase << frame(Msg::CFG_RATE, rate) + frame(Msg::CFG_RATE, poll)
+        << ack(Msg::CFG_RATE) + frame(Msg::CFG_RATE, rate) + ack(Msg::CFG_RATE) << true;
+    // The stationary dynamic model, and a fix mode that the mask leaves as it is.
+    QByteArray navigation(36, '\0');
+    navigation[0] = 0x01;
+    navigation[2] = 2;
+    navigation[3] = 3;
+    QByteArray navigationSet(36, '\0');
+    navigationSet[2] = 2;
+    QTest::newRow("m8p-navigation") << Receiver::M8PBase
+                                    << frame(Msg::CFG_NAV5, navigation) + frame(Msg::CFG_NAV5, poll)
+                                    << ack(Msg::CFG_NAV5) + frame(Msg::CFG_NAV5, navigationSet) + ack(Msg::CFG_NAV5)
+                                    << true;
+    // A poll that names no port is for the one it arrives on, UART1 here, of which nothing was set.
+    QByteArray uart1(20, '\0');
+    uart1[0] = 1;
+    QTest::newRow("m8p-port-in-use") << Receiver::M8PBase << frame(Msg::CFG_PRT, poll)
+                                     << frame(Msg::CFG_PRT, uart1) + ack(Msg::CFG_PRT) << true;
+    // A port it does not have, and each message in a length it does not have.
+    QByteArray noPort(20, '\0');
+    noPort[0] = 5;
+    QTest::newRow("m8p-port-it-does-not-have")
+        << Receiver::M8PBase << frame(Msg::CFG_PRT, noPort) << nak(Msg::CFG_PRT) << false;
+
+    const struct
+    {
+        const char* name;
+        UBX::MessageId message;
+        qsizetype length;
+    } wrongLengths[] = {
+        {"m8p-port-cut-short", Msg::CFG_PRT, 19},
+        {"m8p-message-rate-too-long", Msg::CFG_MSG, 4},
+        {"m8p-measurement-rate-cut-short", Msg::CFG_RATE, 5},
+        {"m8p-navigation-cut-short", Msg::CFG_NAV5, 35},
+        {"m8p-time-mode-cut-short", Msg::CFG_TMODE3, 39},
+    };
+
+    for (const auto& row : wrongLengths) {
+        QTest::newRow(row.name) << Receiver::M8PBase << frame(row.message, QByteArray(row.length, '\0'))
+                                << nak(row.message) << false;
+    }
 }
 
-void GPSReceiverSimulatorTest::_refusesUnknownConfiguration()
+void GPSReceiverSimulatorTest::_answersConfiguration()
 {
     QFETCH(UBXReceiverModel::Receiver, receiver);
     QFETCH(QByteArray, command);
@@ -258,7 +327,7 @@ void GPSReceiverSimulatorTest::_refusesUnknownConfiguration()
     QCOMPARE(client.write(command), command.size());
     QTRY_COMPARE_WITH_TIMEOUT(client.bytesAvailable(), answer.size(), TestTimeout::mediumMs());
     QCOMPARE(client.readAll().toHex(), answer.toHex());
-    // The answer does not make the message one the driver may send to that receiver.
+    // An ACK-NAK does not make the message one the driver may send to that receiver.
     QCOMPARE(simulator.wireValid(), driverMaySend);
 }
 

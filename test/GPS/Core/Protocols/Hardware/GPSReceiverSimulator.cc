@@ -50,6 +50,8 @@ constexpr double DEGREES = 1e-7;
 constexpr double DEGREES_HP = 1e-9;
 constexpr double HEIGHT_M = 1e-2;
 constexpr double HEIGHT_HP_M = 1e-4;
+/// The payloads of the settings noted here: the model answers any other length of them with ACK-NAK.
+constexpr size_t CFG_RATE_BYTES = 6;
 constexpr size_t CFG_TMODE3_BYTES = 40;
 /// The CFG-TMODE3 flag of a position in latitude, longitude and height rather than ECEF.
 constexpr uint16_t CFG_TMODE3_LLA = 0x0100;
@@ -196,7 +198,7 @@ void GPSReceiverSimulator::frame(const GPSFrame& frame)
 
 void GPSReceiverSimulator::_noteLegacySetting(const GPSFrame& frame)
 {
-    if (frame.messageId == UBX::Msg::CFG_RATE.value()) {
+    if (frame.messageId == UBX::Msg::CFG_RATE.value() && frame.payload.size() == CFG_RATE_BYTES) {
         if (const auto period = field<uint16_t>(frame, 0); period > 0) {
             _legacy.measurementPeriod = std::chrono::milliseconds(period);
         }

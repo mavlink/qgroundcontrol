@@ -21,6 +21,16 @@ constexpr uint8_t CFG_CFG = 0x09;
 constexpr uint8_t PORT_UART1 = 1;
 constexpr uint8_t PORT_USB = 3;
 constexpr uint8_t CFG_TMODE3 = 0x71;
+/// The payload sizes of the messages a receiver before protocol 27 is configured with; CFG-PRT holds that many bytes
+/// for each port.
+constexpr qsizetype CFG_PRT_BYTES = 20;
+constexpr qsizetype CFG_RATE_BYTES = 6;
+constexpr qsizetype CFG_NAV5_BYTES = 36;
+constexpr qsizetype CFG_TMODE3_BYTES = 40;
+/// CFG-PRT numbers the I/O ports from zero: DDC, UART1, UART2, USB and SPI.
+constexpr uint8_t LAST_PORT = 4;
+/// CFG-NAV5 mask: the message sets the dynamic model.
+constexpr uint16_t NAV5_DYNAMIC_MODEL = 0x0001;
 constexpr uint8_t CFG_VALSET = 0x8a;
 constexpr uint8_t CFG_VALGET = 0x8b;
 constexpr uint32_t TMODE_MODE = 0x20030001;
@@ -417,9 +427,10 @@ bool UBXReceiverModel::_handleFrame(ScriptedReceiver& receiver, const QByteArray
     if (message == UBX::Msg::MON_VER.value()) {
         identityBauds.push_back(hostBaud);
     }
-    if (configuration && message != UBX::Msg::CFG_VALGET.value() &&
-        !(message == UBX::Msg::CFG_TMODE3.value() && payload.isEmpty()) &&
-        !(message == UBX::Msg::CFG_MSG.value() && payload.size() == 2)) {
+    const bool poll = message == UBX::Msg::CFG_VALGET.value() || payload.isEmpty() ||
+                      (message == UBX::Msg::CFG_MSG.value() && payload.size() == 2) ||
+                      (message == UBX::Msg::CFG_PRT.value() && payload.size() == 1);
+    if (configuration && !poll) {
         ++configurationWrites;
     }
     if (configuration && ((message >> 8) == CFG_RST || (message >> 8) == CFG_CFG)) {
@@ -646,85 +657,157 @@ bool UBXReceiverModel::_handleLegacyFrame(ScriptedReceiver& receiver, uint16_t m
 {
     // The configuration messages the driver's plan for these receivers uses. They have neither CFG-VALSET nor
     // CFG-VALGET, and the model implements none of the others they have.
-    constexpr std::array TAKEN{UBX::Msg::CFG_PRT, UBX::Msg::CFG_MSG, UBX::Msg::CFG_RATE, UBX::Msg::CFG_NAV5,
-                               UBX::Msg::CFG_TMODE3};
-    if (std::ranges::none_of(TAKEN, [message](UBX::MessageId taken) { return taken.value() == message; })) {
-        return _refuse(receiver, message);
-    }
-    bool unsupported = false;
-    RateAck rateFault = RateAck::OnTime;
-    if (message == UBX::Msg::CFG_NAV5.value()) {
-        if (payload.size() <= 2) {
-            wireValid = false;
-            return false;
-        }
-        navigationModel = static_cast<uint8_t>(payload[2]);
-    } else if (message == UBX::Msg::CFG_PRT.value()) {
-        if (payload.size() != 40 || static_cast<uint8_t>(payload[0]) != PORT_UART1 ||
-            static_cast<uint8_t>(payload[20]) != PORT_USB) {
-            wireValid = false;
-            return false;
-        }
-        const auto rate = LittleEndian::read<uint32_t>(bytesOf(payload), 8).value_or(0);
-        if (rate != LittleEndian::read<uint32_t>(bytesOf(payload), 28).value_or(0)) {
-            wireValid = false;
-            return false;
-        }
-        if (receiverBaud != 0 && rate != receiverBaud) {
-            receiverBaud = rate;
-            if (loseBaudAck) {
-                return true;
+    const auto id = static_cast<uint8_t>(message >> 8);
+    switch (message) {
+        case UBX::Msg::CFG_PRT.value():
+            return _handleLegacyPorts(receiver, payload);
+        case UBX::Msg::CFG_MSG.value():
+            return _handleLegacyMessageRate(receiver, payload);
+        case UBX::Msg::CFG_RATE.value(): {
+            if (payload.isEmpty()) {
+                return _answerPoll(receiver, message, _legacyRate);
             }
-        }
-    } else if (message == UBX::Msg::CFG_MSG.value()) {
-        if (payload.size() == 2) {
-            return _replyToRatePoll(receiver, LittleEndian::read<uint16_t>(bytesOf(payload), 0).value_or(0));
-        }
-        if (payload.size() != 3) {
-            wireValid = false;
-            return false;
-        }
-        const auto output = LittleEndian::read<uint16_t>(bytesOf(payload), 0).value_or(0);
-        if (output == rateAckMessage) {
-            rateFault = rateAck;
-        }
-        if (rateFault == RateAck::Ignored) {
+            if (payload.size() != CFG_RATE_BYTES) {
+                return _refuse(receiver, message);
+            }
+            const bool reject =
+                rejectRtcmActivation && LittleEndian::read<uint16_t>(bytesOf(payload), 0).value_or(0) == 1000;
+            if (!reject) {
+                _legacyRate = payload;
+            }
+            _queueAck(receiver, id, !reject);
             return true;
         }
-        unsupported = std::ranges::find(unsupportedMessages, output) != unsupportedMessages.end() ||
-                      (rejectRtcmActivation && (output & 0xff) == UBX::MsgClass::RTCM3 && payload[2] != 0);
-        if (!unsupported) {
-            messageRates[output] = static_cast<uint8_t>(payload[2]);
+        case UBX::Msg::CFG_NAV5.value(): {
+            if (payload.isEmpty()) {
+                QByteArray navigation(CFG_NAV5_BYTES, '\0');
+                navigation[2] = static_cast<char>(navigationModel);
+                return _answerPoll(receiver, message, navigation);
+            }
+            if (payload.size() != CFG_NAV5_BYTES) {
+                return _refuse(receiver, message);
+            }
+            if ((LittleEndian::read<uint16_t>(bytesOf(payload), 0).value_or(0) & NAV5_DYNAMIC_MODEL) != 0) {
+                navigationModel = static_cast<uint8_t>(payload[2]);
+            }
+            _queueAck(receiver, id, true);
+            return true;
         }
-    } else if (message == UBX::Msg::CFG_TMODE3.value()) {
-        const uint32_t mode = LittleEndian::read<uint16_t>(bytesOf(payload), 2).value_or(0) & 0xff;
-        modes.push_back(mode);
-        fixedAccuracy = LittleEndian::read<uint32_t>(bytesOf(payload), 20).value_or(0);
-        surveyDuration = LittleEndian::read<uint32_t>(bytesOf(payload), 24).value_or(0);
-        if (mode == 0) {
-            disabledAt = _clock->nowUs();
-            return _disableTimeMode(receiver, CFG_TMODE3, [] {});
+        case UBX::Msg::CFG_TMODE3.value(): {
+            if (payload.size() != CFG_TMODE3_BYTES) {
+                return _refuse(receiver, message);
+            }
+            const uint32_t mode = LittleEndian::read<uint16_t>(bytesOf(payload), 2).value_or(0) & 0xff;
+            modes.push_back(mode);
+            fixedAccuracy = LittleEndian::read<uint32_t>(bytesOf(payload), 20).value_or(0);
+            surveyDuration = LittleEndian::read<uint32_t>(bytesOf(payload), 24).value_or(0);
+            if (mode == 0) {
+                disabledAt = _clock->nowUs();
+                return _disableTimeMode(receiver, CFG_TMODE3, [] {});
+            }
+            const bool reject = mode == 2 && rejectFixedPosition;
+            if (!reject) {
+                timeMode = mode;
+            }
+            _queueAck(receiver, id, !reject);
+            return true;
         }
-        unsupported = mode == 2 && rejectFixedPosition;
-        if (!unsupported) {
-            timeMode = mode;
+        default:
+            return _refuse(receiver, message);
+    }
+}
+
+bool UBXReceiverModel::_handleLegacyPorts(ScriptedReceiver& receiver, const QByteArray& payload)
+{
+    const uint16_t message = UBX::Msg::CFG_PRT.value();
+    // A poll names a port, or none for the port it arrives on.
+    if (payload.size() <= 1) {
+        const uint8_t port = payload.isEmpty() ? (usb ? PORT_USB : PORT_UART1) : static_cast<uint8_t>(payload[0]);
+        if (port > LAST_PORT) {
+            return _refuse(receiver, message);
+        }
+        QByteArray configuration(CFG_PRT_BYTES, '\0');
+        configuration[0] = static_cast<char>(port);
+        if (const auto set = _ports.find(port); set != _ports.end()) {
+            configuration = set->second;
+        }
+        return _answerPoll(receiver, message, configuration);
+    }
+    // One port, or several one after another.
+    if (payload.size() % CFG_PRT_BYTES != 0) {
+        return _refuse(receiver, message);
+    }
+    for (qsizetype offset = 0; offset < payload.size(); offset += CFG_PRT_BYTES) {
+        if (static_cast<uint8_t>(payload[offset]) > LAST_PORT) {
+            return _refuse(receiver, message);
         }
     }
-
-    const bool reject = unsupported || (rejectRtcmActivation && message == UBX::Msg::CFG_RATE.value() &&
-                                        LittleEndian::read<uint16_t>(bytesOf(payload), 0).value_or(0) == 1000);
-    if (!unsupported && message == UBX::Msg::CFG_MSG.value() &&
-        LittleEndian::read<uint16_t>(bytesOf(payload), 0).value_or(0) == UBX::Msg::RTCM3_1005.value() &&
-        static_cast<uint8_t>(payload[2]) > 0) {
-        ++rtcmEnables;
+    bool ackLost = false;
+    for (qsizetype offset = 0; offset < payload.size(); offset += CFG_PRT_BYTES) {
+        const auto port = static_cast<uint8_t>(payload[offset]);
+        _ports[port] = payload.sliced(offset, CFG_PRT_BYTES);
+        const auto rate = LittleEndian::read<uint32_t>(bytesOf(payload), offset + 8).value_or(0);
+        if (port == PORT_UART1 && receiverBaud != 0 && rate != receiverBaud) {
+            receiverBaud = rate;
+            ackLost = loseBaudAck;
+        }
     }
+    if (!ackLost) {
+        _queueAck(receiver, static_cast<uint8_t>(message >> 8), true);
+    }
+    return true;
+}
 
+bool UBXReceiverModel::_handleLegacyMessageRate(ScriptedReceiver& receiver, const QByteArray& payload)
+{
+    const uint16_t message = UBX::Msg::CFG_MSG.value();
+    const auto output = LittleEndian::read<uint16_t>(bytesOf(payload), 0).value_or(0);
+    if (payload.size() == 2) {
+        return _replyToRatePoll(receiver, output);
+    }
+    // The rate on the port the command arrives on, or the rates on every port.
+    const bool everyPort = payload.size() == 2 + PORTS;
+    if (payload.size() != 3 && !everyPort) {
+        return _refuse(receiver, message);
+    }
+    const RateAck fault = output == rateAckMessage ? rateAck : RateAck::OnTime;
+    if (fault == RateAck::Ignored) {
+        return true;
+    }
+    const size_t port = usb ? PORT_USB : PORT_UART1;
+    std::array<uint8_t, PORTS> rates{};
+    if (const auto set = _portRates.find(output); set != _portRates.end()) {
+        rates = set->second;
+    }
+    if (everyPort) {
+        for (size_t index = 0; index < rates.size(); ++index) {
+            rates[index] = static_cast<uint8_t>(payload[2 + static_cast<qsizetype>(index)]);
+        }
+    } else {
+        rates[port] = static_cast<uint8_t>(payload[2]);
+    }
+    const bool reject = std::ranges::find(unsupportedMessages, output) != unsupportedMessages.end() ||
+                        (rejectRtcmActivation && (output & 0xff) == UBX::MsgClass::RTCM3 && rates[port] != 0);
+    if (!reject) {
+        _portRates[output] = rates;
+        messageRates[output] = rates[port];
+        if (output == UBX::Msg::RTCM3_1005.value() && rates[port] > 0) {
+            ++rtcmEnables;
+        }
+    }
     const Response ack{_ackFrame(message, !reject)};
-    if (rateFault == RateAck::Late) {
+    if (fault == RateAck::Late) {
         _heldReply = ack;
-    } else if (rateFault != RateAck::Lost) {
+    } else if (fault != RateAck::Lost) {
         _queueResponse(receiver, ack);
     }
+    return true;
+}
+
+bool UBXReceiverModel::_answerPoll(ScriptedReceiver& receiver, uint16_t message, const QByteArray& payload)
+{
+    _queueResponse(receiver, Response{_frame(message, bytesOf(payload))});
+    _queueAck(receiver, static_cast<uint8_t>(message >> 8), true);
     return true;
 }
 
@@ -757,10 +840,15 @@ bool UBXReceiverModel::_replyToRatePoll(ScriptedReceiver& receiver, uint16_t out
     }
     const bool unsupported = std::ranges::find(unsupportedMessages, output) != unsupportedMessages.end();
     if (!unsupported) {
-        // The rate a CFG-MSG sets applies to the port the command arrived on.
-        QByteArray rates(8, '\0');
+        QByteArray rates(2 + PORTS, '\0');
         rates[0] = static_cast<char>(output & 0xff);
         rates[1] = static_cast<char>(output >> 8);
+        if (const auto set = _portRates.find(output); set != _portRates.end()) {
+            for (size_t index = 0; index < set->second.size(); ++index) {
+                rates[2 + static_cast<qsizetype>(index)] = static_cast<char>(set->second[index]);
+            }
+        }
+        // messageRates holds the rate on the port the command arrived on.
         const auto rate = messageRates.find(output);
         rates[2 + (usb ? PORT_USB : PORT_UART1)] = static_cast<char>(rate == messageRates.end() ? 0 : rate->second);
         _queueResponse(receiver, Response{_frame(CFG_CLASS, 0x01, rates)});
