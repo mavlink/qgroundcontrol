@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include <QtCore/QCoreApplication>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtTest/QSignalSpy>
@@ -205,10 +206,15 @@ void QGCMapEngineManagerTest::_testTerrainSet()
     }
 
     const auto requestedAtOnce = [](const QGCTileSet& tiles) { return qMin(tiles.tileCount, kTilesRequestedAtOnce); };
-    QTRY_COMPARE_WITH_TIMEOUT(
-        sets.networkManager.requestCount,
-        static_cast<int>(requestedAtOnce(imageTiles) + requestedAtOnce(elevationTiles) + requestedAtOnce(terrainTiles)),
-        TestTimeout::mediumMs());
+    const int expectedRequestCount =
+        static_cast<int>(requestedAtOnce(imageTiles) + requestedAtOnce(elevationTiles) + requestedAtOnce(terrainTiles));
+    QTRY_COMPARE_WITH_TIMEOUT(sets.networkManager.requestCount, expectedRequestCount, TestTimeout::mediumMs());
+    // No more than these: a set asks for further tiles when a reply ends, which none does here, or when a download
+    // list arrives. The lists have all arrived once the worker has run its tasks, and a set has asked for the tiles of
+    // a list once the events that the list queued are handled.
+    QVERIFY(offlineSetsTasksDone());
+    QCoreApplication::processEvents();
+    QCOMPARE(sets.networkManager.requestCount, expectedRequestCount);
 }
 
 void QGCMapEngineManagerTest::_testElevationTypeSet_data()
