@@ -1406,8 +1406,8 @@ void PlanPanelUITest::_testGeoMapTerrainRelativeDragKeepsTheMarkerUnderTheCursor
                               QStringLiteral("marker moved")),
              "Dragging the current marker did not move it");
     // A waypoint is drawn at its height above the rendered terrain while it waits for its terrain query. The query
-    // knows nothing of the debug hills, so its answer moves the marker, and the one asked before the drag can come at
-    // any moment.
+    // knows nothing of the debug hills, so its answer moves the marker, and the one for the new position can come
+    // before the marker is read.
     QVERIFY(setTerrainAltitudePending());
     const QPoint end = markerPoint();
     QVERIFY2((end - (start + delta)).manhattanLength() <= 6,
