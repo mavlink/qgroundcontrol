@@ -65,8 +65,11 @@ public:
     /// With @a casterVersions, a caster that accepted a version 1 request is asked in that form first, until it
     /// closes such a request without answering.
     QString open(const NTRIPConnectionConfig& config, std::shared_ptr<NTRIPCasterVersions> casterVersions = {});
-    /// False unless the socket accepted every byte; the owner decides how to report it.
+    /// Sends @a bytes after the request. False unless isConnected() and the socket accepted every byte; the owner
+    /// decides how to report it.
     bool write(const QByteArray& bytes);
+    /// The connection is open and the request has been sent on it, so the caster reads what is written from now on
+    /// as following the request.
     bool isConnected() const;
 
     /// An error status arrived and its body is still being read.

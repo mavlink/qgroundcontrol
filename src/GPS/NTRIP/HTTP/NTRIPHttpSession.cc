@@ -168,7 +168,7 @@ void NTRIPHttpSession::_establish()
             return;
         }
     }
-    if (!write(_request)) {
+    if (_socket->write(_request) != _request.size()) {
         _fail(NTRIPError::SocketError, tr("Socket did not accept the complete NTRIP write"));
         return;
     }
@@ -178,16 +178,13 @@ void NTRIPHttpSession::_establish()
 
 bool NTRIPHttpSession::write(const QByteArray& bytes)
 {
-    const auto socket = _socket;
-    if (_ended || !socket) {
-        return false;
-    }
-    return socket->write(bytes) == bytes.size();
+    return isConnected() && _socket->write(bytes) == bytes.size();
 }
 
 bool NTRIPHttpSession::isConnected() const
 {
-    return !_ended && _socket && _socket->state() == QAbstractSocket::ConnectedState;
+    // A TLS socket is connected, and queues what is written to it, from before its handshake; the request goes first.
+    return !_ended && _requestSent && _socket && _socket->state() == QAbstractSocket::ConnectedState;
 }
 
 void NTRIPHttpSession::_read()

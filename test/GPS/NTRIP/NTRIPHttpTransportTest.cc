@@ -301,14 +301,19 @@ void NTRIPHttpTransportTest::_writeAdmissionFailure()
     QFETCH(bool, nmea);
     NTRIPHttpTransport transport(connectionConfig());
     auto* socket = new WriteSocket(&transport);
-    socket->admit = [accepted](qint64) { return accepted; };
     NTRIPHttpSession* const session = _attachSession(transport);
     session->_attach(socket);
+    session->_request = NTRIPHttpRequest::build(connectionConfig()).bytes;
     QSignalSpy errors(&transport, &NTRIPTransport::error);
+    if (nmea) {
+        // A position report is written only after the request.
+        session->_establish();
+        QVERIFY(errors.isEmpty());
+    }
+    socket->admit = [accepted](qint64) { return accepted; };
     if (nmea) {
         transport.sendNMEA(QByteArrayLiteral("$GPGGA"));
     } else {
-        session->_request = NTRIPHttpRequest::build(connectionConfig()).bytes;
         session->_establish();
     }
     QCOMPARE(errors.size(), 1);

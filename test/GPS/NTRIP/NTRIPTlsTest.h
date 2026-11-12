@@ -13,6 +13,7 @@ private slots:
     void _certificatePolicy_data();
     void _certificatePolicy();
     void _unansweredRequestIsRepeated();
+    void _requestPrecedesPositionReport();
     void _sourceTablePolicyChanges_data();
     void _sourceTablePolicyChanges();
     void _retireAttempt_data();

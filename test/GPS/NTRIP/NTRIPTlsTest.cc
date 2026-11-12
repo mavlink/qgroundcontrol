@@ -247,6 +247,34 @@ void NTRIPTlsTest::_unansweredRequestIsRepeated()
     transport.stop();
 }
 
+void NTRIPTlsTest::_requestPrecedesPositionReport()
+{
+    ScriptedNTRIPCaster caster(ScriptedNTRIPCaster::Transport::Tls);
+    QVERIFY(caster.isListening());
+    auto configuration = caster.connectionConfig();
+    configuration.allowSelfSignedCerts = true;
+    NTRIPHttpTransport transport(configuration);
+    _expectTlsWarnings(true);
+    transport.start();
+    // A TLS socket is connected from before its handshake, and sends what is written to it then once encrypted.
+    auto* socket = transport.findChild<QSslSocket*>();
+    QVERIFY(socket);
+    bool reportedBeforeHandshake = false;
+    connect(socket, &QSslSocket::connected, this, [&]() {
+        reportedBeforeHandshake = !socket->isEncrypted();
+        transport.sendNMEA("$GPGGA,120000.00,4700.0000,N,00800.0000,E,1,12,1.0,500.0,M,0.0,M,,*65\r\n");
+    });
+    auto* connection = caster.waitForConnection();
+    QVERIFY(connection && connection->peer);
+    QVERIFY(reportedBeforeHandshake);
+    // A caster reads the request first; anything before it is not one.
+    const QByteArray received = connection->waitForRequest();
+    _verifyTlsWarnings();
+    QVERIFY2(received.startsWith("GET /TEST HTTP/1.1\r\n"), received.constData());
+    QVERIFY(!received.contains("$GPGGA"));
+    transport.stop();
+}
+
 void NTRIPTlsTest::_sourceTablePolicyChanges_data()
 {
     QTest::addColumn<bool>("duringFetch");
