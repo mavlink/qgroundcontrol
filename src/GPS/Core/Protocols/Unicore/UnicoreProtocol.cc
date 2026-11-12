@@ -165,8 +165,8 @@ bool modeMatches(std::string_view mode, Plan::Reply reply, const GPSProtocolMath
 ///
 /// Decodes standard NMEA epochs, RTCM3, command acknowledgements and the VERSIONA, MODE and BESTNAVXYZA logs, offering
 /// each valid reply to the pending command, and monitors the base: the base is valid while fresh BESTNAVXYZA epochs
-/// report FIXEDPOS at the configured coordinates, at most STATUS_MAX_AGE apart. Once ready, a reboot, another mode
-/// or a lost base ends readiness.
+/// report FIXEDPOS at the configured coordinates, at most STATUS_MAX_AGE apart, and one that still averages needs the
+/// log to keep arriving as often. Once ready, a reboot, another mode or a lost base ends readiness.
 class Protocol final : public GPSNMEAFamilyProtocol
 {
 public:
@@ -176,14 +176,14 @@ public:
     QString identity() const override { return gpsReceiverIdentity(_model, _firmware); }
 
     /// The state a successful configuration for a fixed or averaging base leaves, without publishing an initial status.
-    bool armDecodeOnly(const GPSConfig& config, GPSDecodeContext&) override
+    bool armDecodeOnly(const GPSConfig& config, GPSDecodeContext& context) override
     {
         if (std::holds_alternative<GPSBaseStationConfig::SurveyIn>(config.base.mode)) {
             return false;
         }
         _setBase(config.base.mode);
         _monitorBase = true;
-        _ready = true;
+        _becomeReady(context);
         return true;
     }
 
@@ -198,12 +198,15 @@ public:
 
 protected:
     GPSReceiveUpdates _decodeLine(std::string_view line, GPSDecodeContext& context) override;
-    /// Ends readiness when base status expired or a failure is recorded.
+    /// Ends readiness when a failure is recorded, the status of a valid base expired, or the status output of one that
+    /// still averages stopped.
     void _expire(GPSDecodeContext& context) override;
 
 private:
     /// The base the receiver must run: its mode readback and, for a fixed base, its coordinates.
     void _setBase(const GPSBaseStationConfig::Mode& mode);
+    /// The receiver runs as configured from now on, with STATUS_MAX_AGE for its first status log.
+    void _becomeReady(GPSDecodeContext& context);
     /// Sends Plan::identify(). Clears _rejection.
     GPSCommandSequence::Result _identify(GPSCommandChannel& channel);
     /// Commands whose replies _match() verifies.
@@ -237,6 +240,8 @@ private:
     GPSProtocolMath::Ecef _fixedECEF;
     GPSProtocolMath::Ecef _baseECEF;
     uint64_t _lastBaseStatus = 0;
+    /// When the receiver became ready or last sent a BESTNAVXYZA log, whatever its time and solution.
+    uint64_t _statusOutputAtUs = 0;
     std::optional<uint64_t> _lastBaseEpoch;
     bool _monitorBase = false;
     bool _baseValid = false;
@@ -286,7 +291,7 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
     if (!channel.runRequired(_sequence(plan.output))) {
         return _failAttempt(channel);
     }
-    _ready = true;
+    _becomeReady(channel.context());
     return true;
 }
 
@@ -298,6 +303,12 @@ void Protocol::_setBase(const GPSBaseStationConfig::Mode& mode)
     if (fixed) {
         _fixedECEF = GPSProtocolMath::toEcef(fixed->position);
     }
+}
+
+void Protocol::_becomeReady(GPSDecodeContext& context)
+{
+    _ready = true;
+    _statusOutputAtUs = context.nowUs();
 }
 
 GPSCommandSequence::Result Protocol::_identify(GPSCommandChannel& channel)
@@ -428,6 +439,8 @@ GPSReceiveUpdates Protocol::_decodeLine(std::string_view line, GPSDecodeContext&
         if (!_monitorBase) {
             return GPSReceiveUpdate::Activity;
         }
+        // Any status log shows that the output runs, including one without fine time, which reports no status yet.
+        _statusOutputAtUs = context.nowUs();
         const auto week = NMEA::number<uint16_t>(header[Field::HEADER_WEEK]);
         const auto milliseconds = NMEA::number<uint32_t>(header[Field::HEADER_WEEK_MILLISECONDS]);
         if (header[Field::HEADER_TIME_SYSTEM] != TIME_SYSTEM_GPS ||
@@ -537,8 +550,13 @@ void Protocol::_invalidateBase(GPSDecodeContext& context, const QString& reason)
 
 void Protocol::_expire(GPSDecodeContext& context)
 {
-    if (_ready && (context.failed() ||
-                   (_baseValid && !MonotonicClock::withinAge(_lastBaseStatus, context.nowUs(), STATUS_MAX_AGE)))) {
+    if (!_ready) {
+        return;
+    }
+    // A base that still averages has no valid status to lose, but without its status output it would wait as an
+    // averaging base for ever while other output keeps the session alive.
+    const uint64_t latest = _baseValid ? _lastBaseStatus : _statusOutputAtUs;
+    if (context.failed() || !MonotonicClock::withinAge(latest, context.nowUs(), STATUS_MAX_AGE)) {
         _invalidateBase(context, QStringLiteral("Unicore base status stopped arriving"));
     }
 }

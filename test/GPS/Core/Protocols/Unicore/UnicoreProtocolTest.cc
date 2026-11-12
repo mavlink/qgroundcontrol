@@ -246,7 +246,12 @@ void averagingEvidenceAndRestart(GPSTestClock& clock)
     QVERIFY(std::isnan(receiver.log.latest<GPSBaseStatus>().position.altitudeMeters));
     QVERIFY(!receiver.log.latest<GPSBaseStatus>().meanAccuracyMeters.has_value() &&
             surveyDuration(receiver.log.latest<GPSBaseStatus>()) == 0);
-    clock.advanceBy(7200000000ULL);
+    // The receiver ends the averaging: status without a fixed position keeps the base waiting past the duration.
+    uint32_t tow = 378117000;
+    for (int second = 0; second < 120; ++second) {
+        clock.advanceBy(1000000);
+        consume(driver, position("SINGLE", receiver.model.coordinates, tow += 1000));
+    }
     driver.consume(correction());
     QCOMPARE(receiver.log.correctionsWhileValid, 0);
     QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 2);
@@ -356,6 +361,38 @@ void corruptStatusAndExpiry(GPSTestClock& clock)
         QVERIFY(!driver.receiverReady());
         QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 0);
     }
+}
+
+/// A base that is still averaging has no valid status to expire, so its status output has to keep arriving: without
+/// it the base would wait for ever while other output keeps the session alive.
+void averagingStatusStops(GPSTestClock& clock)
+{
+    clock.reset();
+    Receiver receiver(clock);
+    GPSProtocolRuntime driver = receiver.runtime(Unicore::FAMILY);
+    unsigned rate = 115200;
+    QVERIFY(driver.configure(baseConfig(false), rate));
+    // Status without fine time, as after a cold start, reports no position yet but shows that the output runs.
+    std::string coarse = position("SINGLE", receiver.model.coordinates);
+    coarse.resize(coarse.find('*'));
+    coarse.replace(coarse.find("FINE"), 4, "COARSE");
+    coarse = GPSTest::unicoreChecked(coarse, true);
+    for (int second = 0; second < 8; ++second) {
+        clock.advanceBy(1000000);
+        consume(driver, coarse);
+    }
+    QVERIFY(driver.receiverReady());
+    QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 2);
+    // Positions do not stand in for the status.
+    const std::string fix = nmeaSentence("GPGGA,123519.00,4700.00000,N,00800.00000,E,1,12,0.9,450.000,M,50.000,M,,");
+    for (int second = 0; second < 6; ++second) {
+        QVERIFY(driver.receiverReady());
+        clock.advanceBy(1000000);
+        consume(driver, fix);
+    }
+    QVERIFY(!driver.receiverReady());
+    QCOMPARE(driver.errorDetail(), QStringLiteral("Unicore base status stopped arriving"));
+    QCOMPARE(surveyFlags(receiver.log.latest<GPSBaseStatus>()), 0);
 }
 
 void restartAndReadErrors(GPSTestClock& clock)
@@ -482,6 +519,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"averaging-evidence-and-restart", averagingEvidenceAndRestart},
     {"readback-failures", readbackFailures},
     {"corrupt-status-and-expiry", corruptStatusAndExpiry},
+    {"averaging-status-stops", averagingStatusStops},
     {"restart-and-read-errors", restartAndReadErrors},
     {"measurement-freshness-and-rollover", measurementFreshnessAndRollover},
     {"scheduled-averaging-and-boot", scheduledAveragingAndBoot},
