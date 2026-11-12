@@ -198,6 +198,7 @@ DropButton {
 
 
             QGCButton {
+                objectName:         "centerMap_specifiedLocationButton"
                 text:               qsTr("Specified Location")
                 Layout.fillWidth:   true
 

@@ -15,6 +15,7 @@ QGCGroupBox {
     property Fact _elevationProviderFact: QGroundControl.settingsManager.flightMapSettings.elevationMapProvider
 
     LabelledComboBox {
+        objectName: "mapSettings_providerCombo"
         label: qsTr("Provider")
         model: _mapEngineManager.mapProviderList
 
@@ -34,6 +35,7 @@ QGCGroupBox {
     }
 
     LabelledComboBox {
+        objectName: "mapSettings_typeCombo"
         label: qsTr("Type")
         model: _mapEngineManager.mapTypeList(_mapProviderFact.rawValue)
         // The only map of a provider can have no type

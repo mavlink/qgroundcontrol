@@ -213,6 +213,7 @@ Item {
             }
 
             CenterMapDropButton {
+                objectName: "offlineMapEditor_centerMapButton"
                 topMargin: 0
                 anchors.margins: _margins
                 anchors.left: parent.left
@@ -348,6 +349,7 @@ Item {
                         onClicked: tileSet.cancelDownloadTask()
                     }
                     QGCButton {
+                        objectName: "offlineMapEditor_deleteButton"
                         text: qsTr("Delete")
                         width: ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 6 : 10)
                         onClicked: deleteConfirmationDialogFactory.open()
@@ -541,6 +543,7 @@ Item {
                             QGCLabel { text: qsTr("Name:") }
                             QGCTextField {
                                 id: setName
+                                objectName: "offlineMapEditor_newSetNameField"
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 Component.onCompleted: text = QGroundControl.mapEngineManager.getUniqueName()
@@ -742,6 +745,7 @@ Item {
                             spacing: ScreenTools.defaultFontPixelWidth
                             anchors.horizontalCenter: parent.horizontalCenter
                             QGCButton {
+                                objectName: "offlineMapEditor_downloadButton"
                                 text: qsTr("Download")
                                 width: (addNewSetColumn.width * 0.5) - (addButtonRow.spacing * 0.5)
                                 enabled: !_tooManyTiles && setName.text.length > 0

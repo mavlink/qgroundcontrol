@@ -535,6 +535,7 @@ AnalyzePage {
                             // ---- Altitude chart ----
                             LogViewerAltChart {
                                 id: _altChart
+                                objectName: "logViewer_altChart"
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 14
                                 visible: _mapTab._showAltChart && !_mapTab._altChartCollapsed

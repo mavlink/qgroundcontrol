@@ -5,20 +5,15 @@
 #include <QtCore/QFile>
 #include <QtCore/QPointer>
 #include <QtCore/QRectF>
-#include <QtCore/QRegularExpression>
-#include <QtCore/QScopeGuard>
 #include <QtCore/QTemporaryDir>
 #include <QtQml/QQmlContext>
 #include <QtQml/QQmlExpression>
 #include <QtQuick/QQuickItem>
 #include <QtTest/QTest>
 
-#include "Fact.h"
-#include "FlyViewSettings.h"
 #include "QGCFileDialogController.h"
 #include "QGCMapEngineManager.h"
 #include "QGroundControlQmlGlobal.h"
-#include "SettingsManager.h"
 
 UT_REGISTER_TEST(LogViewerMapUITest, TestLabel::Integration)
 
@@ -57,34 +52,7 @@ bool LogViewerMapUITest::_writePositionLog(const QString& filePath, const QList<
     return file.open(QIODevice::WriteOnly) && (file.write(bytes) == bytes.size());
 }
 
-/// Where the map draws a coordinate, in the map's own pixels. Both engines' maps have fromCoordinate.
-QPointF LogViewerMapUITest::_mapPoint(QQuickItem* map, const QGeoCoordinate& coordinate)
-{
-    QQmlExpression expression(qmlContext(map), map,
-                              QStringLiteral("fromCoordinate(QtPositioning.coordinate(%1, %2), false)")
-                                  .arg(coordinate.latitude(), 0, 'f', 7)
-                                  .arg(coordinate.longitude(), 0, 'f', 7));
-    return expression.evaluate().toPointF();
-}
-
-bool LogViewerMapUITest::mapShowsCoordinates(QQuickItem* map, const QList<QGeoCoordinate>& coordinates)
-{
-    const QRectF mapRect(0, 0, map->width(), map->height());
-    if (mapRect.isEmpty()) {
-        return false;  // the map was just shown and is not laid out yet
-    }
-    QRectF shownRect;
-    for (const QGeoCoordinate& coordinate : coordinates) {
-        const QPointF point = _mapPoint(map, coordinate);
-        if (!mapRect.adjusted(-1, -1, 1, 1).contains(point)) {
-            return false;
-        }
-        shownRect = shownRect.isNull() ? QRectF(point, QSizeF(1, 1)) : shownRect.united(QRectF(point, QSizeF(1, 1)));
-    }
-    return qMax(shownRect.width(), shownRect.height()) > (qMin(mapRect.width(), mapRect.height()) / 4);
-}
-
-void LogViewerMapUITest::_showsLogPath_data()
+void LogViewerMapUITest::_addEngineRows()
 {
     QTest::addColumn<bool>("geoMapEngine");
 
@@ -92,26 +60,22 @@ void LogViewerMapUITest::_showsLogPath_data()
     QTest::newRow("GeoMap") << true;
 }
 
-void LogViewerMapUITest::_showsLogPath()
+QList<QGeoCoordinate> LogViewerMapUITest::_logPath()
 {
-    QFETCH(bool, geoMapEngine);
-
-    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
-    const QVariant savedEngine = geoEngineFact->rawValue();
-    const auto restoreEngine = qScopeGuard([geoEngineFact, savedEngine] { geoEngineFact->setRawValue(savedEngine); });
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    geoEngineFact->setRawValue(geoMapEngine);
-
-    // A place of its own, away from the map view the other views share
-    const QList<QGeoCoordinate> path = {
+    return {
         QGeoCoordinate(-35.3632, 149.1652), QGeoCoordinate(-35.3600, 149.1652), QGeoCoordinate(-35.3600, 149.1700),
         QGeoCoordinate(-35.3632, 149.1700), QGeoCoordinate(-35.3650, 149.1676),
     };
-    QTemporaryDir logDir;
-    QVERIFY(logDir.isValid());
-    const QString logFile = logDir.filePath(QStringLiteral("track.bin"));
-    QVERIFY(_writePositionLog(logFile, path));
+}
+
+QString LogViewerMapUITest::_mapName(bool geoMapEngine)
+{
+    return geoMapEngine ? QStringLiteral("logViewer_geoMap") : QStringLiteral("logViewer_flightMap");
+}
+
+void LogViewerMapUITest::_openLogViewer(bool geoMapEngine)
+{
+    setUseGeoMapFlyEngine(geoMapEngine);
 
     startUI();
     if (QTest::currentTestFailed()) {
@@ -124,28 +88,70 @@ void LogViewerMapUITest::_showsLogPath()
 
     QVERIFY(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewAnalyze")));
     QVERIFY2(clickButton(QStringLiteral("analyzeButton_Log Viewer")), "Log Viewer analyze page button not found");
+}
+
+QQuickItem* LogViewerMapUITest::_openLog(const QString& logFile, bool geoMapEngine)
+{
+    QGCFileDialogController::setTestNextFileForAccept(logFile);
+    if (!clickButton(QStringLiteral("logViewer_openBinButton"))) {
+        QTest::qFail("button to open a log not found", __FILE__, __LINE__);
+        return nullptr;
+    }
+
+    // The engine setting picks the map, and the other engine's map is not created
+    const QString mapName = _mapName(geoMapEngine);
+    const QString otherMapName = _mapName(!geoMapEngine);
+    QQuickItem* const map = findItem(_rootItem, mapName);
+    if (!map) {
+        QTest::qFail(qPrintable(mapName + QStringLiteral(" not created")), __FILE__, __LINE__);
+        return nullptr;
+    }
+    if (findItem(_rootItem, otherMapName)) {
+        QTest::qFail(qPrintable(otherMapName + QStringLiteral(" was created")), __FILE__, __LINE__);
+        return nullptr;
+    }
+
+    QQmlExpression logHasPath(qmlContext(map), map, QStringLiteral("_mapTab._hasPath"));
+    if (!QTest::qWaitFor([&logHasPath] { return logHasPath.evaluate().toBool(); }, TestTimeout::mediumMs())) {
+        QTest::qFail("the page has no path of the log", __FILE__, __LINE__);
+        return nullptr;
+    }
+    return map;
+}
+
+void LogViewerMapUITest::_showsLogPath_data()
+{
+    _addEngineRows();
+}
+
+void LogViewerMapUITest::_showsLogPath()
+{
+    QFETCH(bool, geoMapEngine);
+
+    const QList<QGeoCoordinate> path = _logPath();
+    QTemporaryDir logDir;
+    QVERIFY(logDir.isValid());
+    const QString logFile = logDir.filePath(QStringLiteral("track.bin"));
+    QVERIFY(_writePositionLog(logFile, path));
+
+    _openLogViewer(geoMapEngine);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
     // Read here: the Fly View map, shown at startup, settles the shared view to what its window can show
     const QGeoCoordinate sharedPosition = QGroundControlQmlGlobal::flightMapPosition();
     const double sharedZoom = QGroundControlQmlGlobal::flightMapZoom();
-    QGCFileDialogController::setTestNextFileForAccept(logFile);
-    QVERIFY(clickButton(QStringLiteral("logViewer_openBinButton")));
-
-    // The engine setting picks the map, and the other engine's map is not created
-    const QString mapName = geoMapEngine ? QStringLiteral("logViewer_geoMap") : QStringLiteral("logViewer_flightMap");
-    const QString otherMapName =
-        geoMapEngine ? QStringLiteral("logViewer_flightMap") : QStringLiteral("logViewer_geoMap");
-    QQuickItem* const map = findItem(_rootItem, mapName);
-    QVERIFY2(map, qPrintable(mapName + QStringLiteral(" not created")));
-    QVERIFY2(!findItem(_rootItem, otherMapName), qPrintable(otherMapName + QStringLiteral(" was created")));
+    QQuickItem* const map = _openLog(logFile, geoMapEngine);
+    if (!map) {
+        return;
+    }
 
     // The log is read before the tab of the map is shown for the first time: the map is asked for the path while
     // it has no size, and shows it once it has one
-    QQmlExpression logHasPath(qmlContext(map), map, QStringLiteral("_mapTab._hasPath"));
-    QTRY_VERIFY_WITH_TIMEOUT(logHasPath.evaluate().toBool(), TestTimeout::mediumMs());
     QVERIFY2(map->width() <= 0 || map->height() <= 0, "the map has a size before its tab was shown");
     QVERIFY(clickButton(QStringLiteral("logViewer_mapTabButton")));
-    QVERIFY2(findVisibleItem(_rootItem, mapName, TestTimeout::mediumMs()),
-             qPrintable(mapName + QStringLiteral(" not visible")));
+    QVERIFY2(findVisibleItem(_rootItem, _mapName(geoMapEngine), TestTimeout::mediumMs()),
+             "the map of the log is not visible");
 
     QTRY_VERIFY2_WITH_TIMEOUT(mapShowsCoordinates(map, path), "the map does not show the whole path",
                               TestTimeout::mediumMs());
@@ -174,8 +180,7 @@ void LogViewerMapUITest::_showsLogPath()
     QQuickItem* const dot = findVisibleItem(map, QStringLiteral("logViewer_positionDot"), TestTimeout::mediumMs());
     QVERIFY2(dot, "position dot not visible");
     const auto dotCenter = [dot, map] { return dot->mapToItem(map, QPointF(dot->width() / 2, dot->height() / 2)); };
-    QTRY_COMPARE_LT_WITH_TIMEOUT((dotCenter() - _mapPoint(map, path[2])).manhattanLength(), 3.0,
-                                 TestTimeout::shortMs());
+    QTRY_COMPARE_LT_WITH_TIMEOUT((dotCenter() - mapPoint(map, path[2])).manhattanLength(), 3.0, TestTimeout::shortMs());
 
     // The log's place stays the log viewer's: Fly View and Plan View keep theirs
     QCOMPARE(QGroundControlQmlGlobal::flightMapPosition(), sharedPosition);
@@ -186,6 +191,69 @@ void LogViewerMapUITest::_showsLogPath()
     const QPointer<QQuickItem> unloadedMap(map);
     QVERIFY(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewFly")));
     QTRY_VERIFY_WITH_TIMEOUT(unloadedMap.isNull(), TestTimeout::shortMs());
+
+    stopUI();
+}
+
+void LogViewerMapUITest::_chartCursorMovesPositionDot_data()
+{
+    _addEngineRows();
+}
+
+void LogViewerMapUITest::_chartCursorMovesPositionDot()
+{
+    QFETCH(bool, geoMapEngine);
+
+    const QList<QGeoCoordinate> path = _logPath();
+    QTemporaryDir logDir;
+    QVERIFY(logDir.isValid());
+    const QString logFile = logDir.filePath(QStringLiteral("track.bin"));
+    QVERIFY(_writePositionLog(logFile, path));
+
+    _openLogViewer(geoMapEngine);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+    QQuickItem* const map = _openLog(logFile, geoMapEngine);
+    if (!map) {
+        return;
+    }
+    QVERIFY(clickButton(QStringLiteral("logViewer_mapTabButton")));
+    QTRY_VERIFY2_WITH_TIMEOUT(mapShowsCoordinates(map, path), "the map does not show the whole path",
+                              TestTimeout::mediumMs());
+
+    // The log has a point of the path for every second. The dot is on the point whose time is nearest to that of
+    // the cursor of the charts, which the page keeps in seconds: -1 while it has no cursor.
+    QQuickItem* const dot = findVisibleItem(map, QStringLiteral("logViewer_positionDot"), TestTimeout::mediumMs());
+    QVERIFY2(dot, "position dot not visible");
+    const auto dotCenter = [dot, map] { return dot->mapToItem(map, QPointF(dot->width() / 2, dot->height() / 2)); };
+    QQmlExpression secondsAfterFirstPoint(qmlContext(map), map,
+                                          QStringLiteral("_mapTab._sharedCursorT - logParser.minTimestamp"));
+    const auto cursorPoint = [&secondsAfterFirstPoint, &path]() -> int {
+        const double seconds = secondsAfterFirstPoint.evaluate().toDouble();
+        return qIsNaN(seconds) ? -1 : qBound(0, qRound(seconds), int(path.size()) - 1);
+    };
+
+    // A log that was just loaded has the cursor in its middle
+    constexpr int kMiddlePoint = 2;
+    QTRY_COMPARE_WITH_TIMEOUT(cursorPoint(), kMiddlePoint, TestTimeout::shortMs());
+    QTRY_COMPARE_LT_WITH_TIMEOUT((dotCenter() - mapPoint(map, path[kMiddlePoint])).manhattanLength(), 3.0,
+                                 TestTimeout::shortMs());
+
+    // A click in the altitude chart under the map puts the cursor there: near the end of the log
+    const QString altitudeChart = QStringLiteral("logViewer_altChart");
+    QVERIFY(clickItemFraction(altitudeChart, 0.9, 0.5));
+    QTRY_COMPARE_GT_WITH_TIMEOUT(cursorPoint(), kMiddlePoint, TestTimeout::shortMs());
+    const int laterPoint = cursorPoint();
+    QTRY_COMPARE_LT_WITH_TIMEOUT((dotCenter() - mapPoint(map, path[laterPoint])).manhattanLength(), 3.0,
+                                 TestTimeout::shortMs());
+
+    // And near its start
+    QVERIFY(clickItemFraction(altitudeChart, 0.1, 0.5));
+    QTRY_VERIFY_WITH_TIMEOUT((cursorPoint() >= 0) && (cursorPoint() < kMiddlePoint), TestTimeout::shortMs());
+    const int earlierPoint = cursorPoint();
+    QTRY_COMPARE_LT_WITH_TIMEOUT((dotCenter() - mapPoint(map, path[earlierPoint])).manhattanLength(), 3.0,
+                                 TestTimeout::shortMs());
 
     stopUI();
 }

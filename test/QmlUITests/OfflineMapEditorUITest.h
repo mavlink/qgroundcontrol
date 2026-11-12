@@ -5,16 +5,22 @@
 class QGeoRectangle;
 class QQuickItem;
 
-/// UI tests for the offline map set editor of the Maps settings page, on both map engines.
+/// UI tests for the Maps settings page: the choice of the map and the offline map set editor, on both map engines.
 class OfflineMapEditorUITest : public QmlUITestBase
 {
     Q_OBJECT
 
 private slots:
+    void initTestCase() override;
+
     void _newSetAreaFollowsMap_data();
     void _newSetAreaFollowsMap();
     void _newSetEstimateFollowsChosenType_data();
     void _newSetEstimateFollowsChosenType();
+    void _newSetMapCentersOnSpecifiedPosition_data();
+    void _newSetMapCentersOnSpecifiedPosition();
+    void _newSetIsListedAndDownloads_data();
+    void _newSetIsListedAndDownloads();
     void _defaultSetInfoOpensAndCloses_data();
     void _defaultSetInfoOpensAndCloses();
     void _setInfoShowsSetAreaAndMap_data();
@@ -22,6 +28,9 @@ private slots:
     void _mapEngineErrorOpensOneDialog();
     void _setCannotBeEditedDuringImport();
     void _renamedSetIsListedByItsNewName();
+    void _deletedSetLeavesTheList();
+    void _providerAndTypeCombosChooseTheMap_data();
+    void _providerAndTypeCombosChooseTheMap();
 
 private:
     void _addEngineRows();
@@ -36,8 +45,9 @@ private:
     bool _clickSetEditButton(const QString& setName);
     /// The editor's map, once it is laid out. Fails the test when the editor shows the other engine's map.
     QQuickItem* _editorMap(bool geoMapEngine);
-    void _mouseDrag(Qt::MouseButton button, const QPoint& from, const QPoint& delta);
+    /// Types \a text into the text field \a field in place of what it shows, and ends the edit
+    bool _typeIntoField(QQuickItem* field, const QString& text);
+    /// Chooses \a text in the combo box of the labelled combo box \a objectName, as a click on its list does
+    bool _chooseInCombo(const QString& objectName, const QString& text);
     static int _visibleItemCount(const QQuickItem* root, const QString& objectName);
-
-    QVariant _savedEngine;
 };

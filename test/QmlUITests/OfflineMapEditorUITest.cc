@@ -1,7 +1,9 @@
 #include "OfflineMapEditorUITest.h"
 
+#include <utility>
+
+#include <QtCore/QPointer>
 #include <QtCore/QRectF>
-#include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtPositioning/QGeoRectangle>
@@ -14,17 +16,109 @@
 
 #include "ElevationMapProvider.h"
 #include "Fact.h"
-#include "FlyViewSettings.h"
+#include "Fixtures/RAIIFixtures.h"
+#include "FlightMapSettings.h"
 #include "GeoMapCamera.h"
-#include "LogViewerMapUITest.h"
+#include "OfflineMapsSettings.h"
 #include "QGCCachedTileSet.h"
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
 #include "QGCMapTasks.h"
+#include "QGCMapUrlEngine.h"
 #include "QGroundControlQmlGlobal.h"
+#include "QmlObjectListModel.h"
 #include "SettingsManager.h"
+#include "TileReplyNetworkMock.h"
+#include "UnitTestTileGenerator.h"
+#include "UnitsSettings.h"
 
 UT_REGISTER_TEST(OfflineMapEditorUITest, TestLabel::Integration)
+
+namespace {
+
+/// The sets of the map engine manager that the settings page lists the sets of
+QList<QGCCachedTileSet*> offlineMapEditorSets()
+{
+    QList<QGCCachedTileSet*> sets;
+    for (QObject* const object : std::as_const(*QGCMapEngineManager::instance()->tileSets()->objectList())) {
+        if (QGCCachedTileSet* const set = qobject_cast<QGCCachedTileSet*>(object)) {
+            sets.append(set);
+        }
+    }
+    return sets;
+}
+
+QGCCachedTileSet* offlineMapEditorSet(const QString& name)
+{
+    for (QGCCachedTileSet* const set : offlineMapEditorSets()) {
+        if (set->name() == name) {
+            return set;
+        }
+    }
+    return nullptr;
+}
+
+/// While it lives, the sets that the settings page lists download from a network stand-in that holds its replies:
+/// a set asks the network for its tiles without asking the cache, so the tile generator of the tests cannot answer
+/// for it. In the end the set \a setName is deleted with its tiles, and no set is left downloading.
+class OfflineMapEditorDownloads
+{
+public:
+    explicit OfflineMapEditorDownloads(const QString& setName)
+        : _setName(setName)
+    {
+        networkManager.body = tileReplyPngBody();
+        networkManager.holdReplies = true;
+        // A new set is listed before it asks for its tiles
+        QGCMapEngineManager* const manager = QGCMapEngineManager::instance();
+        _listedConnection =
+            QObject::connect(manager, &QGCMapEngineManager::tileSetsChanged, manager, [this] { _useStandIn(); });
+        _useStandIn();
+    }
+
+    ~OfflineMapEditorDownloads()
+    {
+        // A set that the cache worker is still saving is listed, and given the stand-in, once it is saved
+        (void) UnitTestTileGenerator::waitForCacheTasks();
+        (void) QObject::disconnect(_listedConnection);
+        for (QGCCachedTileSet* const set : offlineMapEditorSets()) {
+            // No set is left with a request that it would make without the stand-in
+            if (set->downloading()) {
+                set->cancelDownloadTask();
+            }
+            set->setNetworkManager(nullptr);
+            if (set->name() == _setName) {
+                QGCMapEngineManager::instance()->deleteTileSet(set);
+            }
+        }
+        (void) QTest::qWaitFor([this] { return !offlineMapEditorSet(_setName); }, TestTimeout::mediumMs());
+    }
+
+    OfflineMapEditorDownloads(const OfflineMapEditorDownloads&) = delete;
+    OfflineMapEditorDownloads& operator=(const OfflineMapEditorDownloads&) = delete;
+
+    TileReplyMockNam networkManager;
+
+private:
+    void _useStandIn()
+    {
+        for (QGCCachedTileSet* const set : offlineMapEditorSets()) {
+            set->setNetworkManager(&networkManager);
+        }
+    }
+
+    const QString _setName;
+    QMetaObject::Connection _listedConnection;
+};
+
+}  // namespace
+
+void OfflineMapEditorUITest::initTestCase()
+{
+    QmlUITestBase::initTestCase();
+    // A new set downloads the tiles that the tile cache of the process lacks, and its test counts them
+    QVERIFY(UnitTestTileGenerator::resetTileCache());
+}
 
 void OfflineMapEditorUITest::_addEngineRows()
 {
@@ -76,11 +170,7 @@ void OfflineMapEditorUITest::_deleteSet(quint64 setId)
 
 void OfflineMapEditorUITest::_openMapsSettings(bool geoMapEngine)
 {
-    Fact* const geoEngineFact = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
-    _savedEngine = geoEngineFact->rawValue();
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    geoEngineFact->setRawValue(geoMapEngine);
+    setUseGeoMapFlyEngine(geoMapEngine);
 
     startUI();
     if (QTest::currentTestFailed()) {
@@ -134,14 +224,44 @@ QQuickItem* OfflineMapEditorUITest::_editorMap(bool geoMapEngine)
     return map;
 }
 
-void OfflineMapEditorUITest::_mouseDrag(Qt::MouseButton button, const QPoint& from, const QPoint& delta)
+bool OfflineMapEditorUITest::_typeIntoField(QQuickItem* field, const QString& text)
 {
-    QTest::mousePress(_window, button, Qt::NoModifier, from);
-    constexpr int kSteps = 10;
-    for (int i = 1; i <= kSteps; i++) {
-        QTest::mouseMove(_window, from + ((delta * i) / kSteps));
+    if (!field) {
+        QTest::qFail("no text field to type into", __FILE__, __LINE__);
+        return false;
     }
-    QTest::mouseRelease(_window, button, Qt::NoModifier, from + delta);
+    if (!_clickItemAt(field, 0.5, 0.5, field->objectName())) {
+        return false;
+    }
+    if (!QTest::qWaitFor([field] { return field->hasActiveFocus(); }, TestTimeout::shortMs())) {
+        QTest::qFail("the text field did not take the keyboard focus", __FILE__, __LINE__);
+        return false;
+    }
+    // A field selects its text when it gets the focus, and not when it has the focus already
+    (void) QMetaObject::invokeMethod(field, "selectAll");
+    for (const QChar& character : text) {
+        QTest::keyClick(_window, character.toLatin1());
+    }
+    QTest::keyClick(_window, Qt::Key_Return);
+    return true;
+}
+
+bool OfflineMapEditorUITest::_chooseInCombo(const QString& objectName, const QString& text)
+{
+    QQuickItem* const labelledCombo = findVisibleItem(_rootItem, objectName);
+    QQuickItem* const combo = labelledCombo ? labelledCombo->property("comboBox").value<QQuickItem*>() : nullptr;
+    if (!combo) {
+        QTest::qFail(qPrintable(objectName + QStringLiteral(" not visible")), __FILE__, __LINE__);
+        return false;
+    }
+    int index = -1;
+    if (!QMetaObject::invokeMethod(combo, "find", Q_RETURN_ARG(int, index), Q_ARG(QString, text)) || (index < 0)) {
+        QTest::qFail(qPrintable(QStringLiteral("%1 does not offer %2").arg(objectName, text)), __FILE__, __LINE__);
+        return false;
+    }
+    // What a click on an item of the list does: the item becomes the current one, and the combo box tells of it
+    return combo->setProperty("currentIndex", index) &&
+           QMetaObject::invokeMethod(combo, "activated", Q_ARG(int, index));
 }
 
 int OfflineMapEditorUITest::_visibleItemCount(const QQuickItem* root, const QString& objectName)
@@ -163,8 +283,6 @@ void OfflineMapEditorUITest::_newSetAreaFollowsMap()
     QFETCH(bool, geoMapEngine);
 
     _openMapsSettings(geoMapEngine);
-    const auto restoreEngine = qScopeGuard(
-        [this] { SettingsManager::instance()->flyViewSettings()->useGeoMapEngine()->setRawValue(_savedEngine); });
     if (QTest::currentTestFailed()) {
         return;
     }
@@ -201,11 +319,11 @@ void OfflineMapEditorUITest::_newSetAreaFollowsMap()
         // The view must stay the upright rectangle a set is made of: the drag that orbits the Fly View map does
         // nothing here. The pans before and after it show that drags do reach the map.
         QGeoCoordinate center = camera->center();
-        _mouseDrag(Qt::LeftButton, mapCenter, QPoint(60, 40));
+        mouseDrag(Qt::LeftButton, mapCenter, QPoint(60, 40));
         QTRY_COMPARE_GT_WITH_TIMEOUT(camera->center().distanceTo(center), 1.0, TestTimeout::mediumMs());
-        _mouseDrag(Qt::RightButton, mapCenter, QPoint(qRound(map->width() / 4), 0));
+        mouseDrag(Qt::RightButton, mapCenter, QPoint(qRound(map->width() / 4), 0));
         center = camera->center();
-        _mouseDrag(Qt::LeftButton, mapCenter, QPoint(60, 40));
+        mouseDrag(Qt::LeftButton, mapCenter, QPoint(60, 40));
         QTRY_COMPARE_GT_WITH_TIMEOUT(camera->center().distanceTo(center), 1.0, TestTimeout::mediumMs());
         QCOMPARE(camera->heading(), 0.0);
         QCOMPARE(camera->tilt(), 0.0);
@@ -231,8 +349,6 @@ void OfflineMapEditorUITest::_newSetEstimateFollowsChosenType()
     QFETCH(bool, geoMapEngine);
 
     _openMapsSettings(geoMapEngine);
-    const auto restoreEngine = qScopeGuard(
-        [this] { SettingsManager::instance()->flyViewSettings()->useGeoMapEngine()->setRawValue(_savedEngine); });
     if (QTest::currentTestFailed()) {
         return;
     }
@@ -275,6 +391,175 @@ void OfflineMapEditorUITest::_newSetEstimateFollowsChosenType()
     stopUI();
 }
 
+void OfflineMapEditorUITest::_newSetMapCentersOnSpecifiedPosition_data()
+{
+    _addEngineRows();
+}
+
+void OfflineMapEditorUITest::_newSetMapCentersOnSpecifiedPosition()
+{
+    QFETCH(bool, geoMapEngine);
+
+    // The dialog asks for a position in the coordinate format of the units settings
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(SettingsManager::instance()->unitsSettings()->coordinateFormat(),
+                       UnitsSettings::CoordinateFormatDecimal);
+
+    _openMapsSettings(geoMapEngine);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QVERIFY(clickButtonScrolled(QStringLiteral("offlineMaps_addButton"), QStringLiteral("settingsPageFlickable")));
+    QQuickItem* const map = _editorMap(geoMapEngine);
+    if (!map) {
+        return;
+    }
+
+    // The button at the top left of the editor's map offers what to center the map on
+    QVERIFY(clickButton(QStringLiteral("offlineMapEditor_centerMapButton")));
+    const QString specifiedLocationButton = QStringLiteral("centerMap_specifiedLocationButton");
+    QVERIFY2(findVisibleItem(_rootItem, specifiedLocationButton, TestTimeout::shortMs()),
+             "the button to center the map does not offer a specified location");
+    QVERIFY(clickButton(specifiedLocationButton));
+    QVERIFY(waitForDialog(QStringLiteral("Specify Position")));
+
+    // A place of its own, away from the map view the other views share
+    const QGeoCoordinate position(-35.3632, 149.1652);
+    QQuickItem* const latitude =
+        findVisibleItem(_rootItem, QStringLiteral("editPosition_latitude"), TestTimeout::shortMs());
+    QQuickItem* const longitude = findVisibleItem(_rootItem, QStringLiteral("editPosition_longitude"));
+    QVERIFY2(latitude && longitude, "the dialog does not ask for a latitude and a longitude");
+    QVERIFY(_typeIntoField(latitude->property("textField").value<QQuickItem*>(),
+                           QString::number(position.latitude(), 'f', 7)));
+    QVERIFY(_typeIntoField(longitude->property("textField").value<QQuickItem*>(),
+                           QString::number(position.longitude(), 'f', 7)));
+    QVERIFY(clickButton(QStringLiteral("editPosition_moveButton")));
+    QTRY_VERIFY_WITH_TIMEOUT(!dialogVisible(QStringLiteral("Specify Position")), TestTimeout::shortMs());
+
+    // A GeoMap is where its camera looks
+    const GeoMapCamera* const camera =
+        geoMapEngine ? map->findChild<GeoMapCamera*>(QStringLiteral("geoMapCamera")) : nullptr;
+    QVERIFY2(camera || !geoMapEngine, "GeoMapCamera not found");
+    const auto mapCenter = [map, camera] {
+        return camera ? camera->center() : map->property("center").value<QGeoCoordinate>();
+    };
+    QTRY_COMPARE_LT_WITH_TIMEOUT(mapCenter().distanceTo(position), 1.0, TestTimeout::shortMs());
+
+    QVERIFY(clickButton(QStringLiteral("offlineMapEditor_cancelButton")));
+    QTRY_VERIFY_WITH_TIMEOUT(!findItem(_rootItem, QStringLiteral("offlineMapEditor")), TestTimeout::shortMs());
+
+    stopUI();
+}
+
+void OfflineMapEditorUITest::_newSetIsListedAndDownloads_data()
+{
+    _addEngineRows();
+}
+
+void OfflineMapEditorUITest::_newSetIsListedAndDownloads()
+{
+    QFETCH(bool, geoMapEngine);
+
+    // A set of one zoom level and of a map that needs no token, without the sets of elevation tiles that a set of
+    // imagery gets beside it
+    constexpr int kZoom = 16;
+    constexpr quint32 kMostTiles = 256;  // what the map of a window shows at the zoom of the set is far fewer
+    constexpr int kRequestsAtOnce = 6;
+    const QString chosenMap = QStringLiteral("Bing Hybrid");
+    SettingsManager* const settings = SettingsManager::instance();
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(settings->flightMapSettings()->mapProvider(), QStringLiteral("Bing"));
+    saved.setFactValue(settings->flightMapSettings()->mapType(), QStringLiteral("Hybrid"));
+    saved.setFactValue(settings->offlineMapsSettings()->minZoomLevelDownload(), kZoom);
+    saved.setFactValue(settings->offlineMapsSettings()->maxZoomLevelDownload(), kZoom);
+    QGCMapEngineManager* const manager = QGCMapEngineManager::instance();
+    const auto restoreFetchElevation = qScopeGuard([manager, fetchElevation = manager->property("fetchElevation")] {
+        (void) manager->setProperty("fetchElevation", fetchElevation);
+    });
+    QVERIFY(manager->setProperty("fetchElevation", false));
+
+    _openMapsSettings(geoMapEngine);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+    // The page asks the cache for its sets as it opens. A set that arrives while the editor is open gives the new
+    // set its default name again: they are all there once the cache worker has answered.
+    QVERIFY2(
+        findVisibleItem(_rootItem, QStringLiteral("offlineMaps_editButton_Default Tile Set"), TestTimeout::mediumMs()),
+        "the page does not list the default set");
+    QVERIFY(UnitTestTileGenerator::waitForCacheTasks());
+
+    const QString setName = QStringLiteral("Download test %1 %2")
+                                .arg(QCoreApplication::applicationPid())
+                                .arg(QString::fromLatin1(QTest::currentDataTag()));
+    OfflineMapEditorDownloads downloads(setName);
+
+    QVERIFY(clickButtonScrolled(QStringLiteral("offlineMaps_addButton"), QStringLiteral("settingsPageFlickable")));
+    QQuickItem* const map = _editorMap(geoMapEngine);
+    if (!map) {
+        return;
+    }
+
+    // A place of its own, shown at the zoom of the set: the set is of the few tiles that the map shows
+    const QGeoCoordinate center(-35.3632, 149.1652);
+    map->setProperty("center", QVariant::fromValue(center));
+    map->setProperty("zoomLevel", double(kZoom));
+    QTRY_COMPARE_LT_WITH_TIMEOUT(
+        (mapPoint(map, center) - QPointF(map->width() / 2, map->height() / 2)).manhattanLength(), 3.0,
+        TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT((manager->tileCount() > 0) && (manager->tileCount() <= kMostTiles),
+                             TestTimeout::mediumMs());
+
+    QQuickItem* const nameField = findVisibleItem(_rootItem, QStringLiteral("offlineMapEditor_newSetNameField"));
+    QVERIFY2(nameField, "name field of the new set not visible");
+    nameField->setProperty("text", setName);
+    QVERIFY(verifyEnabled(QStringLiteral("offlineMapEditor_downloadButton"), true, QStringLiteral("named new set")));
+    QVERIFY(clickButton(QStringLiteral("offlineMapEditor_downloadButton")));
+    QTRY_VERIFY_WITH_TIMEOUT(!findItem(_rootItem, QStringLiteral("offlineMapEditor")), TestTimeout::shortMs());
+
+    // The manager has the set, of the chosen map and of the tiles of the area that the map showed
+    QTRY_VERIFY_WITH_TIMEOUT(offlineMapEditorSet(setName), TestTimeout::mediumMs());
+    const QPointer<QGCCachedTileSet> set = offlineMapEditorSet(setName);
+    QCOMPARE(set->type(), chosenMap);
+    QCOMPARE(set->minZoom(), kZoom);
+    QCOMPARE(set->maxZoom(), kZoom);
+    const QGeoRectangle area(QGeoCoordinate(set->topleftLat(), set->topleftLon()),
+                             QGeoCoordinate(set->bottomRightLat(), set->bottomRightLon()));
+    QVERIFY2(area.contains(center), "the set is not of the area that the map showed");
+    const quint32 tileCount = set->totalTileCount();
+    QCOMPARE(quint64(tileCount), UrlFactory::getTileCount(kZoom, set->topleftLon(), set->topleftLat(),
+                                                          set->bottomRightLon(), set->bottomRightLat(), chosenMap)
+                                     .tileCount);
+    QCOMPARE_GT(tileCount, 0U);
+    QCOMPARE_LE(tileCount, kMostTiles);
+
+    // The page lists the set
+    QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("offlineMaps_editButton_") + setName, TestTimeout::mediumMs()),
+             "the list does not show the new set");
+
+    // The set downloads: it asks for as many of its tiles as a set asks for at a time
+    QVERIFY(set->downloading());
+    QTRY_COMPARE_WITH_TIMEOUT(downloads.networkManager.requestCount, qMin(int(tileCount), kRequestsAtOnce),
+                              TestTimeout::mediumMs());
+
+    // With every answer it asks for another tile, until it has them all
+    downloads.networkManager.holdReplies = false;
+    const QList<QPointer<TileReplyCannedReply>> heldReplies = downloads.networkManager.replies;
+    for (const QPointer<TileReplyCannedReply>& reply : heldReplies) {
+        if (reply) {
+            reply->finishNow();
+        }
+    }
+    QTRY_VERIFY_WITH_TIMEOUT(set && !set->downloading(), TestTimeout::mediumMs());
+    QCOMPARE(set->savedTileCount(), tileCount);
+    QCOMPARE(set->errorCount(), 0U);
+    QVERIFY(set->complete());
+    QCOMPARE(downloads.networkManager.requestCount, int(tileCount));
+
+    stopUI();
+}
+
 void OfflineMapEditorUITest::_defaultSetInfoOpensAndCloses_data()
 {
     _addEngineRows();
@@ -285,8 +570,6 @@ void OfflineMapEditorUITest::_defaultSetInfoOpensAndCloses()
     QFETCH(bool, geoMapEngine);
 
     _openMapsSettings(geoMapEngine);
-    const auto restoreEngine = qScopeGuard(
-        [this] { SettingsManager::instance()->flyViewSettings()->useGeoMapEngine()->setRawValue(_savedEngine); });
     if (QTest::currentTestFailed()) {
         return;
     }
@@ -350,8 +633,6 @@ void OfflineMapEditorUITest::_setInfoShowsSetAreaAndMap()
     }
 
     _openMapsSettings(geoMapEngine);
-    const auto restoreEngine = qScopeGuard(
-        [this] { SettingsManager::instance()->flyViewSettings()->useGeoMapEngine()->setRawValue(_savedEngine); });
     if (QTest::currentTestFailed()) {
         return;
     }
@@ -362,7 +643,7 @@ void OfflineMapEditorUITest::_setInfoShowsSetAreaAndMap()
         return;
     }
 
-    QTRY_VERIFY2_WITH_TIMEOUT(LogViewerMapUITest::mapShowsCoordinates(map, {area.topLeft(), area.bottomRight()}),
+    QTRY_VERIFY2_WITH_TIMEOUT(mapShowsCoordinates(map, {area.topLeft(), area.bottomRight()}),
                               "the map does not show the area of the set", TestTimeout::mediumMs());
 
     // The map shows the set's map. It keeps its own when the set's is none: a GeoMap would warn of a map type
@@ -394,8 +675,6 @@ void OfflineMapEditorUITest::_setInfoShowsSetAreaAndMap()
 void OfflineMapEditorUITest::_mapEngineErrorOpensOneDialog()
 {
     _openMapsSettings(/*geoMapEngine*/ false);
-    const auto restoreEngine = qScopeGuard(
-        [this] { SettingsManager::instance()->flyViewSettings()->useGeoMapEngine()->setRawValue(_savedEngine); });
     if (QTest::currentTestFailed()) {
         return;
     }
@@ -424,8 +703,6 @@ void OfflineMapEditorUITest::_mapEngineErrorOpensOneDialog()
 void OfflineMapEditorUITest::_setCannotBeEditedDuringImport()
 {
     _openMapsSettings(/*geoMapEngine*/ false);
-    const auto restoreEngine = qScopeGuard(
-        [this] { SettingsManager::instance()->flyViewSettings()->useGeoMapEngine()->setRawValue(_savedEngine); });
     if (QTest::currentTestFailed()) {
         return;
     }
@@ -459,8 +736,6 @@ void OfflineMapEditorUITest::_renamedSetIsListedByItsNewName()
     }
 
     _openMapsSettings(/*geoMapEngine*/ false);
-    const auto restoreEngine = qScopeGuard(
-        [this] { SettingsManager::instance()->flyViewSettings()->useGeoMapEngine()->setRawValue(_savedEngine); });
     if (QTest::currentTestFailed()) {
         return;
     }
@@ -478,6 +753,127 @@ void OfflineMapEditorUITest::_renamedSetIsListedByItsNewName()
                                      QStringLiteral("settingsPageFlickable")),
              "the list does not show the new name");
     QVERIFY(!findItem(_rootItem, QStringLiteral("offlineMaps_editButton_") + oldName));
+
+    stopUI();
+}
+
+void OfflineMapEditorUITest::_deletedSetLeavesTheList()
+{
+    // A set with one of its tiles stored: the editor offers to delete a set that has stored something
+    const QString setName = QStringLiteral("Delete test %1").arg(QCoreApplication::applicationPid());
+    const QString mapType = QGCMapEngineManager::mapList().constFirst();
+    const QGeoRectangle area(QGeoCoordinate(47.3906, 8.4991), QGeoCoordinate(47.3902, 8.4995));
+    constexpr int kSetZoom = 3;  // the zoom of the sets that _saveSet() saves
+    quint64 setId = 0;
+    const auto deleteSavedSet = qScopeGuard([&setId] { _deleteSet(setId); });
+    _saveSet(setName, mapType, area, setId);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+    const QString tileHash =
+        UrlFactory::getTileHash(mapType, UrlFactory::long2tileX(mapType, area.topLeft().longitude(), kSetZoom),
+                                UrlFactory::lat2tileY(mapType, area.topLeft().latitude(), kSetZoom), kSetZoom);
+    getQGCMapEngine()->cacheTile(mapType, tileHash, tileReplyPngBody(), QStringLiteral("png"), setId);
+    QVERIFY(UnitTestTileGenerator::waitForCacheTasks());
+
+    _openMapsSettings(/*geoMapEngine*/ false);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QVERIFY(_clickSetEditButton(setName));
+    if (!_editorMap(/*geoMapEngine*/ false)) {
+        return;
+    }
+    const QString deleteButton = QStringLiteral("offlineMapEditor_deleteButton");
+    QVERIFY(verifyEnabled(deleteButton, true, QStringLiteral("set with a stored tile")));
+    QVERIFY(clickButton(deleteButton));
+    QVERIFY(waitForDialog(QStringLiteral("Confirm Delete")));
+    QVERIFY(acceptDialog());
+
+    // The editor closes, and the set leaves the manager and the list of the page
+    QTRY_VERIFY_WITH_TIMEOUT(!findItem(_rootItem, QStringLiteral("offlineMapEditor")), TestTimeout::shortMs());
+    QTRY_VERIFY_WITH_TIMEOUT(!offlineMapEditorSet(setName), TestTimeout::mediumMs());
+    QTRY_VERIFY_WITH_TIMEOUT(!findItem(_rootItem, QStringLiteral("offlineMaps_editButton_") + setName),
+                             TestTimeout::shortMs());
+
+    stopUI();
+}
+
+void OfflineMapEditorUITest::_providerAndTypeCombosChooseTheMap_data()
+{
+    _addEngineRows();
+}
+
+void OfflineMapEditorUITest::_providerAndTypeCombosChooseTheMap()
+{
+    QFETCH(bool, geoMapEngine);
+
+    const QString bing = QStringLiteral("Bing");
+    const QString google = QStringLiteral("Google");
+    const QString openAip = QStringLiteral("OpenAIP");
+    const QStringList bingTypes = QGCMapEngineManager::mapTypeList(bing);
+    const QStringList googleTypes = QGCMapEngineManager::mapTypeList(google);
+    QVERIFY(bingTypes.contains(QStringLiteral("Hybrid")));
+    QCOMPARE_GE(googleTypes.size(), 2);
+    QVERIFY(QGCMapEngineManager::mapTypeList(openAip).isEmpty());
+
+    Fact* const providerFact = SettingsManager::instance()->flightMapSettings()->mapProvider();
+    Fact* const typeFact = SettingsManager::instance()->flightMapSettings()->mapType();
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(providerFact, bing);
+    saved.setFactValue(typeFact, QStringLiteral("Hybrid"));
+
+    _openMapsSettings(geoMapEngine);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    // The Fly View stays loaded under the settings: its map shows the map that is chosen here
+    QQuickItem* const flyViewMap =
+        findItem(_rootItem, geoMapEngine ? QStringLiteral("flyViewGeoMapAdapter") : QStringLiteral("flyViewMap"));
+    QVERIFY2(flyViewMap, "Fly View map not found");
+    QQmlExpression shownMapName(qmlContext(flyViewMap), flyViewMap,
+                                geoMapEngine ? QStringLiteral("geoMap.mapType") : QStringLiteral("activeMapType.name"));
+    const auto shownMap = [&shownMapName] { return shownMapName.evaluate().toString(); };
+    const QGCMapEngineManager* const manager = QGCMapEngineManager::instance();
+    const QString providerCombo = QStringLiteral("mapSettings_providerCombo");
+    const QString typeCombo = QStringLiteral("mapSettings_typeCombo");
+
+    // The combos show the map of the settings
+    QVERIFY(verifyProperty(providerCombo, "currentText", bing, QStringLiteral("page opened")));
+    QVERIFY(verifyProperty(typeCombo, "currentText", QStringLiteral("Hybrid"), QStringLiteral("page opened")));
+    QTRY_COMPARE_WITH_TIMEOUT(shownMap(), QStringLiteral("Bing Hybrid"), TestTimeout::mediumMs());
+
+    // A provider comes with the first of its types
+    const QString firstGoogleMap = QGCMapEngineManager::mapName(google, googleTypes.constFirst());
+    QVERIFY(_chooseInCombo(providerCombo, google));
+    QCOMPARE(providerFact->rawValue().toString(), google);
+    QCOMPARE(typeFact->rawValue().toString(), googleTypes.constFirst());
+    QCOMPARE(manager->chosenMap(), firstGoogleMap);
+    QVERIFY(verifyProperty(typeCombo, "currentText", googleTypes.constFirst(), QStringLiteral("provider chosen")));
+    QTRY_COMPARE_WITH_TIMEOUT(shownMap(), firstGoogleMap, TestTimeout::shortMs());
+
+    // Another type of the provider
+    const QString lastGoogleMap = QGCMapEngineManager::mapName(google, googleTypes.constLast());
+    QVERIFY(_chooseInCombo(typeCombo, googleTypes.constLast()));
+    QCOMPARE(providerFact->rawValue().toString(), google);
+    QCOMPARE(typeFact->rawValue().toString(), googleTypes.constLast());
+    QCOMPARE(manager->chosenMap(), lastGoogleMap);
+    QTRY_COMPARE_WITH_TIMEOUT(shownMap(), lastGoogleMap, TestTimeout::shortMs());
+
+    // The map of OpenAIP has no type: there is none to choose
+    QVERIFY(_chooseInCombo(providerCombo, openAip));
+    QCOMPARE(manager->chosenMap(), openAip);
+    QVERIFY(verifyVisibility(typeCombo, false, QStringLiteral("provider whose map has no type")));
+    QTRY_COMPARE_WITH_TIMEOUT(shownMap(), openAip, TestTimeout::shortMs());
+
+    // A provider with types brings the choice back
+    const QString firstBingMap = QGCMapEngineManager::mapName(bing, bingTypes.constFirst());
+    QVERIFY(_chooseInCombo(providerCombo, bing));
+    QCOMPARE(manager->chosenMap(), firstBingMap);
+    QVERIFY(verifyProperty(typeCombo, "currentText", bingTypes.constFirst(), QStringLiteral("provider with types")));
+    QTRY_COMPARE_WITH_TIMEOUT(shownMap(), firstBingMap, TestTimeout::shortMs());
 
     stopUI();
 }
