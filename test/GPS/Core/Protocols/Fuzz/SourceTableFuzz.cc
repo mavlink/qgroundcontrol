@@ -67,7 +67,9 @@ void checkList(const NTRIPSourceTableModel& model, const NTRIPSourceTableSortMod
             requireTable(index.data(role).isValid());
         }
         const QString mountpoint = index.data(NTRIPSourceTableModel::MountpointRole).toString();
-        requireTable(!mountpoint.isEmpty() && !mountpoint.contains(u';') && !mountpoint.contains(u'\n'));
+        requireTable(!mountpoint.isEmpty() && !mountpoint.contains(u';'));
+        requireTable(
+            std::ranges::none_of(mountpoint, [](QChar ch) { return ch.unicode() < 0x20 || ch.unicode() == 0x7f; }));
         const double km = index.data(NTRIPSourceTableModel::DistanceKmRole).toDouble();
         const bool known = km >= 0;
         requireTable(known ? referenceKnown && km <= SOURCE_TABLE_MAX_DISTANCE_KM : km == -1.0);

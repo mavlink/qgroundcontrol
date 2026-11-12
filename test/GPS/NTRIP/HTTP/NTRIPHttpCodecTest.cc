@@ -134,6 +134,7 @@ void NTRIPHttpCodecTest::_buildRequestRejectsInvalidConfig_data()
     QTest::newRow("host-space") << QStringLiteral("caster example") << QStringLiteral("TEST");
     QTest::newRow("host-del") << QStringLiteral("caster\x7f") << QStringLiteral("TEST");
     QTest::newRow("mountpoint-crlf") << QStringLiteral("localhost") << QStringLiteral("TEST\r\nInjected: value");
+    QTest::newRow("mountpoint-cr") << QStringLiteral("localhost") << QStringLiteral("TEST\rOTHER");
     QTest::newRow("mountpoint-space") << QStringLiteral("localhost") << QStringLiteral("TEST OTHER");
     QTest::newRow("mountpoint-del") << QStringLiteral("localhost") << QStringLiteral("TEST\x7f");
     QTest::newRow("mountpoint-empty") << QStringLiteral("localhost") << QString();

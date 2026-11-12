@@ -62,6 +62,10 @@ void NTRIPSourceTableTest::_shortRow_data()
     QTest::newRow("no-name") << QStringLiteral("STR;;Rooftop antenna;RTCM 3.2") << false << QString();
     QTest::newRow("blank-name") << QStringLiteral("STR; ;Rooftop antenna") << false << QString();
     QTest::newRow("type-only") << QStringLiteral("STR") << false << QString();
+    // A control character does not show in the list, where such a name would look like one that can be requested.
+    QTest::newRow("carriage-return-in-name") << QStringLiteral("STR;BA\rSE;Rooftop antenna") << false << QString();
+    QTest::newRow("tab-in-name") << QStringLiteral("STR;BA\tSE;Rooftop antenna") << false << QString();
+    QTest::newRow("delete-in-name") << QStringLiteral("STR;BA\x7fSE;Rooftop antenna") << false << QString();
 }
 
 void NTRIPSourceTableTest::_shortRow()
