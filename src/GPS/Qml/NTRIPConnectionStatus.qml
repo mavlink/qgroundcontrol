@@ -20,6 +20,9 @@ QGCGroupBox {
     readonly property int    _status:    root.ntripManager.connectionStatus
     readonly property NTRIPConnectionStats _stats: root.ntripManager.connectionStats
     readonly property bool   _connected: root._status === NTRIPManager.Connected
+    /// The row's action starts a connection in these states and ends it in the others.
+    readonly property bool   _startsConnection: root._status === NTRIPManager.Disconnected
+                                                || root._status === NTRIPManager.Error
     readonly property string _ggaSource: root.ntripManager.ggaSource
     readonly property string _securityWarning: root.ntripManager.securityWarning
     readonly property string _mountpoint: root._ntripSettings.ntripMountpoint.valueString
@@ -45,19 +48,17 @@ QGCGroupBox {
         statusText: root.ntripManager.statusMessage
         buttonText: {
             switch (root._status) {
-            case NTRIPManager.Connecting:   return qsTr("Connecting…")
-            case NTRIPManager.Reconnecting: return qsTr("Cancel reconnect")
-            case NTRIPManager.Connected:    return qsTr("Disconnect")
+            case NTRIPManager.Disconnected: return qsTr("Connect")
             case NTRIPManager.Error:        return qsTr("Retry")
-            default:                        return qsTr("Connect")
+            case NTRIPManager.Reconnecting: return qsTr("Cancel reconnect")
+            default:                        return qsTr("Disconnect")
             }
         }
-        // Only Connect needs a caster to connect to.
-        buttonEnabled: root._status === NTRIPManager.Disconnected ? root.ntripManager.canConnect
-                                                                  : root._status !== NTRIPManager.Connecting
+        // Connect and Retry need a caster to connect to; a connection being opened can be stopped, as a reconnect can.
+        buttonEnabled: !root._startsConnection || root.ntripManager.canConnect
         // Explicit targets keep repeated clicks idempotent while the manager debounces the setting change.
         onClicked: {
-            if (root._status === NTRIPManager.Disconnected || root._status === NTRIPManager.Error) {
+            if (root._startsConnection) {
                 root.ntripManager.connectCaster()
             } else {
                 root.ntripManager.disconnectCaster()

@@ -16,6 +16,7 @@ private slots:
     void _correctionsStatusShowsMessageFilterError();
     void _correctionsLogSwitch();
     void _ntripErrorActionRetries();
+    void _ntripRetryNeedsCaster();
     void _ntripConnectionActionIsIdempotent_data();
     void _ntripConnectionActionIsIdempotent();
     void _ntripMountpointLockedWhileActive();

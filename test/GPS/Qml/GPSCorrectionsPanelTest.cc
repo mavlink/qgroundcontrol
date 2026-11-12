@@ -382,7 +382,9 @@ void GPSCorrectionsPanelTest::_ntripErrorActionRetries()
     QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Connecting);
     QCOMPARE(requests.size(), 1);
     QVERIFY(requests.constLast().constFirst().toBool());
-    QVERIFY(!button->property("enabled").toBool());
+    // The attempt can be stopped by the row's own action, so the second one goes.
+    QCOMPARE(button->property("text").toString(), QStringLiteral("Disconnect"));
+    QVERIFY(button->property("enabled").toBool());
     QTRY_VERIFY_WITH_TIMEOUT(!disconnect->property("visible").toBool(), TestTimeout::shortMs());
     fail(retry);
     QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
@@ -393,12 +395,40 @@ void GPSCorrectionsPanelTest::_ntripErrorActionRetries()
     QCOMPARE(retry->startCount, 1);
 }
 
+void GPSCorrectionsPanelTest::_ntripRetryNeedsCaster()
+{
+    ScriptedNTRIP ntrip;
+    // A connection that is on without a caster host fails as it starts, and stays on.
+    NTRIPManager::Configuration configuration = ntrip.manager.configuration();
+    configuration.connection.host.clear();
+    ntrip.manager.setConfiguration(configuration);
+    expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("NTRIP config invalid")));
+    ntrip.manager.init();
+    verifyExpectedLogMessage();
+    QCOMPARE(ntrip.manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
+
+    TestFixtures::QmlWindowFixture window(640, 400);
+    TestFixtures::QmlEngine engine;
+    std::unique_ptr<QObject> panel = createConnectionPanel(engine, window, ntrip.manager);
+    QVERIFY2(panel, qPrintable(engine.lastError()));
+    auto* button = panel->findChild<QObject*>(QStringLiteral("ntripConnectButton"));
+    auto* disconnect = panel->findChild<QObject*>(QStringLiteral("ntripDisconnectButton"));
+    QVERIFY(button && disconnect);
+    // Retrying would fail the same way; turning the connection off unlocks the settings that name a caster.
+    QCOMPARE(button->property("text").toString(), QStringLiteral("Retry"));
+    QVERIFY(!button->property("enabled").toBool());
+    QVERIFY(disconnect->property("enabled").toBool());
+    ntrip.manager.setConfiguration(mockCasterConfiguration());
+    QVERIFY(button->property("enabled").toBool());
+}
+
 void GPSCorrectionsPanelTest::_ntripConnectionActionIsIdempotent_data()
 {
     QTest::addColumn<int>("status");
     // What the action asks the connection setting to be.
     QTest::addColumn<bool>("requested");
     QTest::newRow("disconnect") << static_cast<int>(NTRIPManager::ConnectionStatus::Connected) << false;
+    QTest::newRow("stop-connecting") << static_cast<int>(NTRIPManager::ConnectionStatus::Connecting) << false;
     QTest::newRow("cancel-reconnect") << static_cast<int>(NTRIPManager::ConnectionStatus::Reconnecting) << false;
     QTest::newRow("connect") << static_cast<int>(NTRIPManager::ConnectionStatus::Disconnected) << true;
 }
@@ -409,7 +439,9 @@ void GPSCorrectionsPanelTest::_ntripConnectionActionIsIdempotent()
     QFETCH(bool, requested);
     ScriptedNTRIP ntrip;
     if (status != static_cast<int>(NTRIPManager::ConnectionStatus::Disconnected)) {
-        MockNTRIPTransport* transport = ntrip.nextTransport(true);
+        // A caster that does not answer leaves the attempt connecting.
+        MockNTRIPTransport* transport =
+            ntrip.nextTransport(status != static_cast<int>(NTRIPManager::ConnectionStatus::Connecting));
         ntrip.manager.init();
         if (status == static_cast<int>(NTRIPManager::ConnectionStatus::Reconnecting)) {
             expectLogMessage("GPS.NTRIPManager", QtWarningMsg,
