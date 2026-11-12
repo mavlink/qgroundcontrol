@@ -541,17 +541,17 @@ RowLayout {
                         id:             sensorStatusGrid
                         rowSpacing:     _spacing
                         columnSpacing:  _spacing
-                        rows:           _activeVehicle.sysStatusSensorInfo.sensorNames.length
+                        rows:           _activeVehicle ? _activeVehicle.sysStatusSensorInfo.sensorNames.length : 0
                         flow:           GridLayout.TopToBottom
                         visible:        parametersReady && !_healthAndArmingChecksSupported
 
                         Repeater {
-                            model: _activeVehicle.sysStatusSensorInfo.sensorNames
+                            model: _activeVehicle ? _activeVehicle.sysStatusSensorInfo.sensorNames : [ ]
                             QGCLabel { text: modelData }
                         }
 
                         Repeater {
-                            model: _activeVehicle.sysStatusSensorInfo.sensorStatus
+                            model: _activeVehicle ? _activeVehicle.sysStatusSensorInfo.sensorStatus : [ ]
                             QGCLabel { text: modelData }
                         }
                     }

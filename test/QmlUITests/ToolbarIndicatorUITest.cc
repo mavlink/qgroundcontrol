@@ -2,6 +2,8 @@
 
 #include <functional>
 
+#include <QtCore/QCoreApplication>
+#include <QtCore/QDeadlineTimer>
 #include <QtCore/QFile>
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
@@ -641,6 +643,40 @@ void ToolbarIndicatorUITest::_testIndicatorDrawerClosesOnVehicleDisconnect()
                         QVERIFY2(!findVisibleItem(_rootItem, drawerName, 0),
                                  "Indicator drawer still open after the vehicle disconnected");
                     });
+}
+
+void ToolbarIndicatorUITest::_testMainStatusDropdownToleratesClearedVehicle()
+{
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLink(); },
+        [this](QPointer<MockLink> mockLink, Vehicle*) {
+            const QString indicatorName = QStringLiteral("toolbar_mainStatusIndicator");
+            QQuickItem* const indicator = findVisibleItem(_rootItem, indicatorName, TestTimeout::mediumMs());
+            QVERIFY2(indicator, "Main status indicator not visible");
+            QVERIFY(_clickItemAt(indicator, 0.5, 0.5, indicatorName));
+            QVERIFY2(findVisibleItem(_rootItem, QStringLiteral("mainStatusOverallStatusTab"), TestTimeout::mediumMs()),
+                     "Main status dropdown did not open");
+            QQuickItem* const drawerLoader = findVisibleItem(_rootItem, QStringLiteral("indicatorDrawerLoader"), 0);
+            QVERIFY(drawerLoader);
+            const QPointer<QObject> dropdown = drawerLoader->property("item").value<QObject*>();
+            QVERIFY(dropdown);
+
+            // The dropdown closes when the link goes and is deleted by the event loop, and a timer
+            // clears the active vehicle. An event loop that is late for the timer clears the vehicle
+            // first: the dropdown's bindings are then evaluated without one, and strict log checking
+            // fails the test on a binding that needs it. Not QTest::qWaitFor(), which deletes the
+            // dropdown after its first pass.
+            mockLink->disconnect();
+            const MultiVehicleManager* const vehicleManager = MultiVehicleManager::instance();
+            const QDeadlineTimer deadline(TestTimeout::mediumDuration());
+            while (vehicleManager->activeVehicle() && !deadline.hasExpired()) {
+                QCoreApplication::processEvents();
+            }
+            QVERIFY2(!vehicleManager->activeVehicle(), "Timeout waiting for vehicle disconnection");
+            QVERIFY2(dropdown, "The dropdown was deleted before the active vehicle was cleared");
+
+            QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        });
 }
 
 void ToolbarIndicatorUITest::_testVehicleMessagesMarkReadAndClear()
