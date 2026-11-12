@@ -273,9 +273,19 @@ QString parseOptions(QCommandLineParser& parser, Options& options)
     if (options.fault == "rtcm-nak-cancel" && options.action != "cancel") {
         return "rtcm-nak-cancel requires --action cancel";
     }
-    if (options.transport != "scripted" &&
-        (parser.isSet("fault") || parser.isSet("survey-state") || parser.isSet("model"))) {
-        return "Scripted receiver options cannot be applied to a physical transport";
+    if (options.transport != "scripted") {
+        for (const char* name : {"model", "fault", "survey-state"}) {
+            if (!parser.isSet(name)) {
+                continue;
+            }
+            return options.transport == "replay"
+                       ? QString(
+                             "--%1 describes the scripted receiver, and --replay puts the recording in its place: "
+                             "leave --%1 out to use the recording, or --replay to use the scripted receiver")
+                             .arg(name)
+                       : QString("--%1 describes the scripted receiver and cannot be applied to a physical transport")
+                             .arg(name);
+        }
     }
     bool valid = true;
     auto integer = [&](const QString& name, int minimum, int maximum) {

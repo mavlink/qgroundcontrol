@@ -367,7 +367,18 @@ def check_record_and_replay(binary: str) -> None:
 
     run(binary, ["--replay", str(capture), "--transport", "tcp", *passive], 2)
     run(binary, ["--replay", str(capture), "--record", "recordings", *passive], 2)
-    run(binary, ["--replay", str(capture), "--fault", "nak", *replay], 2)
+    # The options of the scripted receiver do not apply to a recording, which takes its place, and the message says
+    # which option that is and what to leave out. A recording is not a physical transport, which refuses them too.
+    for option in (["--fault", "nak"], ["--model", "m8p"], ["--survey-state", "none"]):
+        refused = run(binary, ["--replay", str(capture), *option, *replay], 2)
+        assert refused["detail"].startswith(f"{option[0]} describes the scripted receiver"), refused
+        assert "physical" not in refused["detail"], refused
+        assert f"leave {option[0]} out" in refused["detail"], refused
+    refused = run(binary, ["--serve", "0", "--replay", str(capture), "--model", "m8p"], 2)
+    assert "leave --model out" in refused["detail"], refused
+    refused = run(binary, ["--transport", "tcp", "--device", "127.0.0.1:1", "--model", "m8p"], 2)
+    assert refused["detail"].startswith("--model describes the scripted receiver"), refused
+    assert "physical transport" in refused["detail"], refused
     run(binary, ["--replay", str(capture), "--action", "suite", *passive[2:]], 2)
     run(binary, ["--replay-baud", "9600"], 2)
     run(binary, ["--extract", "received.ubx"], 2)
