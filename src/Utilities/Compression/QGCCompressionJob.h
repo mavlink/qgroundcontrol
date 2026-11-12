@@ -3,13 +3,13 @@
 /// @file QGCCompressionJob.h
 /// @brief QObject wrapper for async compression operations using QtConcurrent/QPromise
 
-#include "QGCCompression.h"
+#include <functional>
 
-#include <atomic>
-#include <memory>
 #include <QtCore/QFuture>
 #include <QtCore/QFutureWatcher>
 #include <QtCore/QObject>
+
+#include "QGCCompression.h"
 
 /// \brief QObject wrapper for compression operations with progress signals
 ///
@@ -85,9 +85,14 @@ public:
         ExtractArchiveAtomic,
         DecompressFile,
         ExtractFile,
-        ExtractFiles
+        ExtractFiles,
+        Custom  ///< Work that was given to start()
     };
     Q_ENUM(Operation)
+
+    /// What a job runs on its worker thread. It is given the callback to report progress to, which returns false
+    /// once the job is cancelled, and returns how it ended.
+    using Work = std::function<QGCCompression::Outcome(QGCCompression::ProgressCallback)>;
 
     explicit QGCCompressionJob(QObject *parent = nullptr);
     ~QGCCompressionJob() override;
@@ -106,9 +111,19 @@ public:
     /// Returns invalid future if no operation is running
     QFuture<QGCCompression::Outcome> future() const { return _future; }
 
+    /// Run @a work as the operation of this job, which is what each slot does with one function of QGCCompression
+    /// Does nothing, after a warning, while an operation is running.
+    /// @param source What sourcePath() tells of the operation
+    /// @param output What outputPath() tells of the operation
+    void start(Work work, const QString& source = {}, const QString& output = {});
+
     // ========================================================================
     // Static Async Methods (return QFuture directly)
     // ========================================================================
+
+    /// Run @a work on a worker thread, which is what the two functions below do with one function of QGCCompression
+    /// @return Future of the outcome, with progress reporting (0-100). Cancelling it cancels the work
+    static QFuture<QGCCompression::Outcome> run(Work work);
 
     /// Extract archive asynchronously, returns QFuture with progress support
     /// @param archivePath Path to archive file
@@ -195,16 +210,10 @@ private slots:
     void _onFutureFinished();
 
 private:
-    using WorkFunction = std::function<QGCCompression::Outcome(QGCCompression::ProgressCallback)>;
-
-    void _startOperation(Operation op, const QString &source, const QString &output,
-                         WorkFunction work);
+    void _startOperation(Operation op, const QString& source, const QString& output, Work work);
     void _setProgress(qreal progress);
     void _setRunning(bool running);
     void _setErrorString(const QString &error);
-
-    static QFuture<QGCCompression::Outcome> _runWithProgress(WorkFunction work,
-                                                             const std::shared_ptr<std::atomic_bool>& cancelRequested);
 
     QFutureWatcher<QGCCompression::Outcome>* _watcher = nullptr;
     QFuture<QGCCompression::Outcome> _future;
@@ -215,5 +224,4 @@ private:
     QString _sourcePath;
     QString _outputPath;
     Operation _operation = Operation::None;
-    std::shared_ptr<std::atomic_bool> _cancelRequested;
 };

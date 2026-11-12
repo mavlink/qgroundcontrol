@@ -3006,6 +3006,39 @@ void QGCCompressionTest::_testCompressionJobPlainInput()
     QCOMPARE(TestFixtures::readFile(inputPath), plain);
 }
 
+void QGCCompressionTest::_testCompressionJobWork()
+{
+    using QGCCompression::Error;
+    using QGCCompression::Outcome;
+
+    // Work that is no function of QGCCompression: it tells how far it is and how it ended
+    const QGCCompressionJob::Work work = [](QGCCompression::ProgressCallback progress) {
+        const bool cancelled = !progress(50, 100);
+        return Outcome{.error = cancelled ? Error::Cancelled : Error::IoError,
+                       .message = QStringLiteral("the work failed")};
+    };
+
+    QGCCompressionJob job;
+    QSignalSpy finishedSpy(&job, &QGCCompressionJob::finished);
+    job.start(work, QStringLiteral("from"), QStringLiteral("to"));
+    QVERIFY(job.isRunning());
+    QCOMPARE(job.currentOperation(), QGCCompressionJob::Operation::Custom);
+    QCOMPARE(job.sourcePath(), QStringLiteral("from"));
+    QCOMPARE(job.outputPath(), QStringLiteral("to"));
+    QVERIFY_SIGNAL_WAIT(finishedSpy, TestTimeout::mediumMs());
+    QVERIFY(!finishedSpy.first().first().toBool());
+    QCOMPARE(job.errorString(), QStringLiteral("the work failed"));
+    QCOMPARE(job.progress(), 0.5);
+    QCOMPARE(job.future().result().error, Error::IoError);
+
+    // The same work without a job
+    QFuture<Outcome> future = QGCCompressionJob::run(work);
+    future.waitForFinished();
+    QCOMPARE(future.result().error, Error::IoError);
+    QCOMPARE(future.result().message, QStringLiteral("the work failed"));
+    QCOMPARE(future.progressValue(), 50);
+}
+
 // ============================================================================
 // Sparse File Handling Tests
 // ============================================================================

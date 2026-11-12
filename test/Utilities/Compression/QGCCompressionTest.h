@@ -108,6 +108,7 @@ private slots:
     void _testCompressionJobErrorString();
     void _testCompressionJobPlainInput_data();
     void _testCompressionJobPlainInput();
+    void _testCompressionJobWork();
 
     // Sparse file handling
     void _testSparseFileExtraction_data();
