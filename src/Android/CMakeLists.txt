@@ -23,7 +23,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_
 # ----------------------------------------------------------------------------
 # Android Serial Port Support
 # ----------------------------------------------------------------------------
-add_subdirectory(qtandroidserialport)
+add_subdirectory(Serial)
 
 # ----------------------------------------------------------------------------
 # Qt Android Extensions (2GIS) — selective compile

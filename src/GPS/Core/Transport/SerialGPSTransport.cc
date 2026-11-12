@@ -6,11 +6,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QFileInfo>
-#ifdef Q_OS_ANDROID
-#include "qserialport.h"
-#else
 #include <QtSerialPort/QSerialPort>
-#endif
 
 #include "QGCLoggingCategory.h"
 

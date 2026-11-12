@@ -96,6 +96,8 @@ android {
         // Let JVM unit tests call android.jar stubs such as android.util.Log, which otherwise throw.
         unitTests.returnDefaultValues = true
         unitTests.all {
+            // QGCUsbSerialDeviceFilterTest reads it, so a change to it has to run the tests again.
+            inputs.file('res/xml/device_filter.xml')
             // Gradle prints only the class and line of a failed test's exception otherwise, without what the test
             // expected and what it got.
             testLogging {

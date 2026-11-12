@@ -1,0 +1,5 @@
+#pragma once
+
+// On Android QGC's own serial port takes the place of Qt Serial Port's, under the same header name, so that code
+// which uses a serial port includes <QtSerialPort/QSerialPort> on every platform.
+#include "../../AndroidSerialPort.h"
