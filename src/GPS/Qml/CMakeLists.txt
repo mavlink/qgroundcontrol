@@ -31,6 +31,7 @@ qt_add_qml_module(
         GPSFactSwitchField.qml
         GPSFactTextField.qml
         GPSField.qml
+        GPSReceiverBasePosition.qml
         GPSReceiverBaseSites.qml
         GPSReceiverBaseStation.qml
         GPSReceiverConnectControls.qml
@@ -41,6 +42,7 @@ qt_add_qml_module(
         GPSReceiverSettings.qml
         GPSReceiverSettingsGroup.qml
         GPSReceiverStatus.qml
+        GPSReceiverSurveyProgress.qml
         GPSSatelliteSignalBars.qml
         GPSSatelliteView.qml
         GPSSkyPlot.qml

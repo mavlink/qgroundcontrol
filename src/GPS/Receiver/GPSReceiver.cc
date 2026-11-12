@@ -1,6 +1,7 @@
 #include "GPSReceiver.h"
 
 #include <utility>
+#include <variant>
 
 #include <QtCore/QDateTime>
 #include <QtCore/QDeadlineTimer>
@@ -496,6 +497,9 @@ bool GPSReceiver::_connectReceiver(GPSType type, GPSReceiverWorker::TransportFac
     transportFactory = _recorded(std::move(transportFactory), type, request);
     const RTKSettings::ReceiverRole role =
         type == GPSType::Passive ? RTKSettings::Passive : RTKSettings::ConfiguredBase;
+    const auto* const survey =
+        role == RTKSettings::ConfiguredBase ? std::get_if<GPSBaseStationConfig::SurveyIn>(&request.base.mode) : nullptr;
+    _facts->_setSurveyTarget(survey ? std::optional(*survey) : std::nullopt);
     auto* const session = new GPSReceiverSession(
         ++_sessionCount,
         {.type = type,

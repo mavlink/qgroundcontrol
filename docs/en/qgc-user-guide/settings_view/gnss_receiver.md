@@ -18,6 +18,15 @@ While a survey or the receiver's own averaging runs, it sends none until that co
 Otherwise the status reads _Waiting for a valid base position; the base sends no corrections until then_, as before the receiver confirms a fixed position or after it loses its position.
 [Corrections are sent](#base_station) once the base position is valid.
 A Septentrio base is the exception: its corrections do not wait for the base position, so its status does not say this.
+While a base surveys its position, the status shows how far the survey is, as far as the receiver reports that:
+
+- A u-blox receiver reports the survey's **Duration** and **Current Accuracy**. Each is shown with what it has to reach, the minimum observation time and the survey accuracy, such as _95 of 180 s_, and with a bar. The survey ends once both are reached.
+- A Quectel receiver reports its **Accepted observation time**, shown with the configured one and a bar, and its **Current Accuracy**. The accuracy has nothing to reach, because the receiver applies its limit to each observation.
+- Trimble, Septentrio and Femtomes receivers average their position and report only when they are done. **Averaging** shows the time since QGroundControl started the averaging, and for a Trimble receiver also the time it was asked to average for. There is no bar, because the receiver reports no progress.
+- A Unicore receiver reports no time either, so only the status line says that it averages.
+
+Once the receiver reports a valid base position, the status shows it as **Base Position Latitude**, **Base Position Longitude** and **Base Position Alt (WGS84)**: the result of the survey or averaging, or the fixed position the base was given.
+A Trimble receiver reports the position it averaged without a height.
 While the vehicle reports no GPS, the toolbar GNSS indicator shows the receiver, and a configured base in a word: _Survey_ while it determines its position, _Waiting_ while it has no valid base position and sends no corrections, and _Base_ otherwise.
 An identified receiver family or output protocol is shown as _Detected_.
 **Constellations** lists the satellites of each satellite system in view as used/in view, such as _GPS 8/10, Galileo 6/7_; a dash replaces the used count when the receiver does not report which satellites it uses.

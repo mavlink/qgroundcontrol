@@ -10,6 +10,10 @@ class GPSReceiverSettingsTest : public UnitTest
 private slots:
     void _surveySaveWorkflow();
     void _surveyCompletePrompt();
+    void _surveyProgress_data();
+    void _surveyProgress();
+    void _basePositionShownOnceValid_data();
+    void _basePositionShownOnceValid();
     void _surveySaveNeedsApplicationReceiver();
     void _surveySavedAsSite();
     void _baseSitePicker();

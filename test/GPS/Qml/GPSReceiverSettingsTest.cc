@@ -1,5 +1,6 @@
 #include "GPSReceiverSettingsTest.h"
 
+#include <chrono>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -144,6 +145,60 @@ bool showsWhole(const QQuickItem* label, const QString& mark)
     return metrics.horizontalAdvance(text.left(at + mark.size()) + QChar(0x2026)) <= label->width();
 }
 
+/// The receiver status over a scripted base of @a family, connected and ready, whose status Facts publish at once.
+/// The base surveys its position for 180 s to 2 m where the family surveys, and averages it otherwise.
+struct BaseStatus
+{
+    explicit BaseStatus(GPSType family, const std::optional<GPSBaseStationConfig>& base = {})
+    {
+        TestFixtures::SettingsFixture& saved = units;
+        UnitsSettings* const unitsSettings = SettingsManager::instance()->unitsSettings();
+        saved.setFactValue(unitsSettings->horizontalDistanceUnits(), UnitsSettings::HorizontalDistanceUnitsMeters);
+        saved.setFactValue(unitsSettings->verticalDistanceUnits(), UnitsSettings::VerticalDistanceUnitsMeters);
+        configuration = receiverConfiguration(gpsReceiverManufacturerForType(family));
+        if (base) {
+            configuration.base = *base;
+        } else if (!gpsReceiverCapabilities(family).surveyIn) {
+            configuration.base = averagingBase(std::chrono::seconds{60});
+        }
+        harness.receiver.facts()->setLiveUpdates(true);
+    }
+
+    /// Connects the base and creates its status; false on failure, with the reason in the engine's lastError().
+    [[nodiscard]] bool create()
+    {
+        if (!connectOverTcp(harness.receiver, configuration)) {
+            return false;
+        }
+        harness.workers.current()->ready();
+        status = engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
+                               {{QStringLiteral("receiver"), QVariant::fromValue(&harness.receiver)},
+                                {QStringLiteral("facts"), QVariant::fromValue(harness.receiver.facts())}});
+        return status != nullptr;
+    }
+
+    QObject* find(const char* name) const { return status->findChild<QObject*>(QString::fromLatin1(name)); }
+
+    /// What a status row shows as its value: the text of a row that is shown, else an empty one.
+    QString value(const char* name) const
+    {
+        const QObject* const row = find(name);
+        if (!row || !row->property("visible").toBool()) {
+            return {};
+        }
+        const QObject* const factLabel = row->property("factLabel").value<QObject*>();
+        return (factLabel ? factLabel->property("text") : row->property("labelText")).toString().trimmed();
+    }
+
+    void report(const GPSBaseStatus& baseStatus) const { harness.workers.current()->baseStatus(baseStatus); }
+
+    TestFixtures::SettingsFixture units;
+    GPSReceiver::Configuration configuration;
+    ScriptedGPSReceiver harness;
+    TestFixtures::QmlEngine engine;
+    std::unique_ptr<QObject> status;
+};
+
 QStringList siteNames(const RTKSettings* settings)
 {
     QStringList names;
@@ -225,7 +280,7 @@ void GPSReceiverSettingsTest::_surveyCompletePrompt()
     base.survey(0.75, true);
     QVERIFY(!prompt->property("visible").toBool());
     QCOMPARE(accuracy->property("label").toString(),
-             QCoreApplication::translate("GPSReceiverStatus", "Current Accuracy"));
+             QCoreApplication::translate("GPSReceiverSurveyProgress", "Current Accuracy"));
 
     // A position without a known accuracy cannot start a fixed base.
     base.survey(std::nullopt);
@@ -237,7 +292,8 @@ void GPSReceiverSettingsTest::_surveyCompletePrompt()
     base.survey(0.75);
     QVERIFY(prompt->property("visible").toBool());
     QVERIFY(save->property("visible").toBool());
-    QCOMPARE(accuracy->property("label").toString(), QCoreApplication::translate("GPSReceiverStatus", "Accuracy"));
+    QCOMPARE(accuracy->property("label").toString(),
+             QCoreApplication::translate("GPSReceiverSurveyProgress", "Accuracy"));
     QVERIFY(QMetaObject::invokeMethod(save, "clicked"));
     QCOMPARE(settings.settings->fixedBasePositionLatitude()->rawValue().toDouble(), kSurveyedPosition.latitudeDegrees);
     QCOMPARE(settings.settings->fixedBasePositionAccuracy()->rawValue().toDouble(), 0.75);
@@ -256,6 +312,163 @@ void GPSReceiverSettingsTest::_surveyCompletePrompt()
     base.survey(0.75);
     QVERIFY(save->property("visible").toBool());
     QVERIFY(otherSave->property("visible").toBool());
+}
+
+void GPSReceiverSettingsTest::_surveyProgress_data()
+{
+    QTest::addColumn<GPSType>("family");
+    // What the receiver reports of a running survey besides its state.
+    QTest::addColumn<bool>("reportsTime");
+    QTest::addColumn<bool>("reportsAccuracy");
+    // What the status shows of it: the label and value of the time row and whether it has a bar, then the value of
+    // the accuracy row and whether that has one. An empty label or value is a row that is not shown.
+    QTest::addColumn<QString>("timeLabel");
+    QTest::addColumn<QString>("time");
+    QTest::addColumn<bool>("timeBar");
+    QTest::addColumn<QString>("accuracy");
+    QTest::addColumn<bool>("accuracyBar");
+    const auto row = [](GPSType family, bool reportsTime, bool reportsAccuracy, const char* timeLabel, const char* time,
+                        bool timeBar, const char* accuracy, bool accuracyBar) {
+        QTest::newRow(qPrintable(gpsReceiverName(family)))
+            << family << reportsTime << reportsAccuracy << QString::fromLatin1(timeLabel) << QString::fromLatin1(time)
+            << timeBar << QString::fromLatin1(accuracy) << accuracyBar;
+    };
+    // A u-blox receiver reports the survey's time and accuracy, which have to reach the configured minimum and limit.
+    row(GPSType::UBlox, true, true, "Duration", "95 of 180 s", true, "2.50 of 2.00 m", true);
+    // A Quectel receiver reports the observations it accepted, of those configured. Its limit filters each
+    // observation, so the accuracy of the survey has none to reach.
+    row(GPSType::Quectel, true, true, "Accepted observation time", "95 of 180 s", true, "2.50 m", false);
+    // A Trimble receiver averages for the configured time and reports only when it is done: the time is the
+    // connection's own count, which gets no bar.
+    row(GPSType::Trimble, true, false, "Averaging", "95 of 180 s", false, "", false);
+    // Septentrio and Femtomes receivers average for as long as they decide to.
+    row(GPSType::Septentrio, true, false, "Averaging", "95 s", false, "", false);
+    row(GPSType::Femto, true, false, "Averaging", "95 s", false, "", false);
+    // A Unicore receiver averages without any report of how far it is: only the status line says that it does.
+    row(GPSType::Unicore, false, false, "", "", false, "", false);
+}
+
+void GPSReceiverSettingsTest::_surveyProgress()
+{
+    QFETCH(GPSType, family);
+    QFETCH(bool, reportsTime);
+    QFETCH(bool, reportsAccuracy);
+    QFETCH(QString, timeLabel);
+    QFETCH(QString, time);
+    QFETCH(bool, timeBar);
+    QFETCH(QString, accuracy);
+    QFETCH(bool, accuracyBar);
+    BaseStatus base(family);
+    QVERIFY2(base.create(), qPrintable(base.engine.lastError()));
+    auto* timeRow = base.find("rtkSurveyDuration");
+    auto* timeProgress = base.find("rtkSurveyDurationProgress");
+    auto* accuracyRow = base.find("rtkSurveyAccuracy");
+    auto* accuracyProgress = base.find("rtkSurveyAccuracyProgress");
+    auto* panel = qobject_cast<QQuickItem*>(base.status.get());
+    QVERIFY(panel && timeRow && timeProgress && accuracyRow && accuracyProgress);
+    const qreal width = panel->implicitWidth();
+    const auto translated = [](const QString& text) {
+        return QCoreApplication::translate("GPSReceiverSurveyProgress", qPrintable(text));
+    };
+    const auto shown = [](const QObject* item) { return item->property("visible").toBool(); };
+
+    GPSBaseStatus survey{.state = GPSBaseState::Active};
+    if (reportsTime) {
+        survey.duration = std::chrono::seconds{95};
+    }
+    if (reportsAccuracy) {
+        survey.position = kSurveyedPosition;
+        survey.meanAccuracyMeters = 2.5;
+    }
+    base.report(survey);
+    QCOMPARE(base.value("rtkSurveyDuration"), time);
+    if (!time.isEmpty()) {
+        QCOMPARE(timeRow->property("label").toString(), translated(timeLabel));
+    }
+    QCOMPARE(shown(timeProgress), timeBar);
+    if (timeBar) {
+        QCOMPARE(timeProgress->property("value").toDouble(), 95. / 180.);
+    }
+    QCOMPARE(base.value("rtkSurveyAccuracy"), accuracy);
+    if (!accuracy.isEmpty()) {
+        QCOMPARE(accuracyRow->property("label").toString(), translated(QStringLiteral("Current Accuracy")));
+    }
+    QCOMPARE(shown(accuracyProgress), accuracyBar);
+    // A bar is as wide as the panel is, and does not widen it.
+    QCOMPARE(panel->implicitWidth(), width);
+    if (accuracyBar) {
+        // The bar fills as the accuracy comes down to the limit.
+        QCOMPARE(accuracyProgress->property("value").toDouble(), 2. / 2.5);
+        survey.meanAccuracyMeters = 1.6;
+        base.report(survey);
+        QCOMPARE(accuracyProgress->property("value").toDouble(), 1.);
+    }
+
+    // The finished survey keeps its time and accuracy, with nothing left to reach.
+    survey.state = GPSBaseState::Valid;
+    survey.position = kSurveyedPosition;
+    if (reportsTime) {
+        survey.duration = std::chrono::seconds{181};
+    }
+    if (reportsAccuracy) {
+        survey.meanAccuracyMeters = 1.9;
+    }
+    base.report(survey);
+    QCOMPARE(base.value("rtkSurveyDuration"), reportsTime ? QStringLiteral("181 s") : QString());
+    QCOMPARE(base.value("rtkSurveyAccuracy"), reportsAccuracy ? QStringLiteral("1.90 m") : QString());
+    if (reportsAccuracy) {
+        QCOMPARE(accuracyRow->property("label").toString(), translated(QStringLiteral("Accuracy")));
+    }
+    QVERIFY(!shown(timeProgress) && !shown(accuracyProgress));
+}
+
+void GPSReceiverSettingsTest::_basePositionShownOnceValid_data()
+{
+    QTest::addColumn<GPSType>("family");
+    QTest::addColumn<GPSBaseStationConfig>("base");
+    QTest::addColumn<GPSEllipsoidPosition>("position");
+    QTest::addColumn<QString>("height");
+    const GPSBaseStationConfig survey = surveyInBase(2., std::chrono::seconds{180});
+    QTest::newRow("surveyed") << GPSType::UBlox << survey << kSurveyedPosition << QStringLiteral("512.25 m");
+    // A Trimble receiver reports the position it averaged without its height.
+    QTest::newRow("without-height") << GPSType::Trimble << survey
+                                    << GPSEllipsoidPosition{.latitudeDegrees = kSurveyedPosition.latitudeDegrees,
+                                                            .longitudeDegrees = kSurveyedPosition.longitudeDegrees}
+                                    << QString();
+    QTest::newRow("averaged") << GPSType::Unicore << averagingBase(std::chrono::seconds{60}) << kSurveyedPosition
+                              << QStringLiteral("512.25 m");
+    // A fixed base shows the position it was given, once the receiver uses it.
+    QTest::newRow("fixed") << GPSType::UBlox
+                           << fixedBaseAt(kSurveyedPosition.latitudeDegrees, kSurveyedPosition.longitudeDegrees,
+                                          kSurveyedPosition.altitudeMeters, 1)
+                           << kSurveyedPosition << QStringLiteral("512.25 m");
+}
+
+void GPSReceiverSettingsTest::_basePositionShownOnceValid()
+{
+    QFETCH(GPSType, family);
+    QFETCH(GPSBaseStationConfig, base);
+    QFETCH(GPSEllipsoidPosition, position);
+    QFETCH(QString, height);
+    BaseStatus status(family, base);
+    QVERIFY2(status.create(), qPrintable(status.engine.lastError()));
+    QVERIFY(status.find("rtkBaseLatitude") && status.find("rtkBaseLongitude") && status.find("rtkBaseHeight"));
+    const auto shownPosition = [&status] {
+        return QStringList{status.value("rtkBaseLatitude"), status.value("rtkBaseLongitude"),
+                           status.value("rtkBaseHeight")};
+    };
+    const QStringList none{QString(), QString(), QString()};
+    QCOMPARE(shownPosition(), none);
+
+    // What a receiver reports while it determines its position, such as the mean of a running survey, is not the
+    // base position yet.
+    status.report({.state = GPSBaseState::Active, .position = position});
+    QCOMPARE(shownPosition(), none);
+    status.report({.state = GPSBaseState::Valid, .position = position});
+    QCOMPARE(shownPosition(), (QStringList{QStringLiteral("47.123456789"), QStringLiteral("8.987654321"), height}));
+    // A base that lost its position shows none.
+    status.report({});
+    QCOMPARE(shownPosition(), none);
 }
 
 void GPSReceiverSettingsTest::_surveySaveNeedsApplicationReceiver()

@@ -42,6 +42,8 @@ class GPSReceiverFactGroup : public FactGroup
     QML_UNCREATABLE("Provided by GPSReceiver")
     Q_PROPERTY(Fact* currentDuration READ currentDuration CONSTANT FINAL)
     Q_PROPERTY(Fact* currentAccuracy READ currentAccuracy CONSTANT FINAL)
+    Q_PROPERTY(Fact* targetDuration READ targetDuration CONSTANT FINAL)
+    Q_PROPERTY(Fact* targetAccuracy READ targetAccuracy CONSTANT FINAL)
     Q_PROPERTY(Fact* baseState READ baseState CONSTANT FINAL)
     Q_PROPERTY(Fact* baseLatitude READ baseLatitude CONSTANT FINAL)
     Q_PROPERTY(Fact* baseLongitude READ baseLongitude CONSTANT FINAL)
@@ -73,6 +75,13 @@ public:
     Fact* currentDuration() { return &_currentDurationFact; }
 
     Fact* currentAccuracy() { return &_currentAccuracyFact; }
+
+    /// The time and the accuracy the connected base was asked to survey its position for, which each receiver family
+    /// applies in its own way or not at all. Zero and unavailable for a base that does not survey, for a passive
+    /// receiver and without a receiver.
+    Fact* targetDuration() { return &_targetDurationFact; }
+
+    Fact* targetAccuracy() { return &_targetAccuracyFact; }
 
     /// What a configured base reports of its base position, in every base mode.
     Fact* baseState() { return &_baseStateFact; }
@@ -121,6 +130,8 @@ private:
     explicit GPSReceiverFactGroup(QObject* parent);
 
     // Written by GPSReceiver.
+    /// The survey a base is connected for; none for a base in another mode and for a passive receiver.
+    void _setSurveyTarget(const std::optional<GPSBaseStationConfig::SurveyIn>& survey);
     void _setBaseStatus(const GPSBaseStatus& report);
     void _setSatellites(const GPSSatelliteReport& report);
     void _setSolution(GPSFixQuality fixType, const GPSIntegrityReport& integrity);
@@ -144,6 +155,8 @@ private:
 
     Fact _currentDurationFact = Fact(0, QStringLiteral("currentDuration"), FactMetaData::valueTypeDouble);
     Fact _currentAccuracyFact = Fact(0, QStringLiteral("currentAccuracy"), FactMetaData::valueTypeDouble);
+    Fact _targetDurationFact = Fact(0, QStringLiteral("targetDuration"), FactMetaData::valueTypeDouble);
+    Fact _targetAccuracyFact = Fact(0, QStringLiteral("targetAccuracy"), FactMetaData::valueTypeDouble);
     Fact _baseStateFact = Fact(0, QStringLiteral("baseState"), FactMetaData::valueTypeUint8);
     Fact _baseLatitudeFact = Fact(0, QStringLiteral("baseLatitude"), FactMetaData::valueTypeDouble);
     Fact _baseLongitudeFact = Fact(0, QStringLiteral("baseLongitude"), FactMetaData::valueTypeDouble);

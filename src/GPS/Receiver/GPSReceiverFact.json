@@ -8,13 +8,31 @@
     "shortDesc": "Current Survey-In Accuracy",
     "longDesc": "Receiver-reported base position accuracy. Unavailable accuracy is not inferred from a valid fix and cannot be saved as fixed-base accuracy.",
     "type":             "double",
-    "decimalPlaces":    1,
+    "decimalPlaces":    2,
     "units":            "m",
     "default":          null
 },
 {
     "name":             "currentDuration",
     "shortDesc": "Current Survey-In Duration",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "units":            "s",
+    "default":          0
+},
+{
+    "name":             "targetAccuracy",
+    "shortDesc": "Survey-In Accuracy Limit",
+    "longDesc": "The accuracy limit the connected base was asked to survey its position with, which each receiver family applies in its own way or not at all. Unavailable for a base that does not survey.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m",
+    "default":          null
+},
+{
+    "name":             "targetDuration",
+    "shortDesc": "Survey-In Minimum Duration",
+    "longDesc": "The time the connected base was asked to survey its position for, which each receiver family applies in its own way or not at all. Zero for a base that does not survey.",
     "type":             "double",
     "decimalPlaces":    0,
     "units":            "s",

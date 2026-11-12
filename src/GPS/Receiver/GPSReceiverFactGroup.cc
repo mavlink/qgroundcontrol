@@ -17,6 +17,8 @@ GPSReceiverFactGroup::GPSReceiverFactGroup(QObject* parent)
 {
     _addFact(&_currentDurationFact);
     _addFact(&_currentAccuracyFact);
+    _addFact(&_targetDurationFact);
+    _addFact(&_targetAccuracyFact);
     _addFact(&_baseStateFact);
     _addFact(&_baseLatitudeFact);
     _addFact(&_baseLongitudeFact);
@@ -47,6 +49,16 @@ void GPSReceiverFactGroup::_restoreDefaults(std::initializer_list<Fact*> facts)
     for (Fact* fact : facts) {
         _update(*fact, fact->rawDefaultValue());
     }
+}
+
+void GPSReceiverFactGroup::_setSurveyTarget(const std::optional<GPSBaseStationConfig::SurveyIn>& survey)
+{
+    if (!survey) {
+        _restoreDefaults({&_targetDurationFact, &_targetAccuracyFact});
+        return;
+    }
+    _update(_targetDurationFact, static_cast<qint64>(survey->duration.count()));
+    _update(_targetAccuracyFact, survey->accuracyMeters);
 }
 
 void GPSReceiverFactGroup::_setBaseStatus(const GPSBaseStatus& report)
@@ -112,9 +124,10 @@ void GPSReceiverFactGroup::_clearSolution()
 
 void GPSReceiverFactGroup::_reset()
 {
-    _restoreDefaults({&_currentDurationFact, &_currentAccuracyFact, &_baseStateFact, &_baseLatitudeFact,
-                      &_baseLongitudeFact, &_baseHeightFact, &_numSatellitesFact, &_numSatellitesUsedFact,
-                      &_fixTypeFact, &_jammingStateFact, &_spoofingStateFact, &_antennaStateFact});
+    _restoreDefaults({&_currentDurationFact, &_currentAccuracyFact, &_targetDurationFact, &_targetAccuracyFact,
+                      &_baseStateFact, &_baseLatitudeFact, &_baseLongitudeFact, &_baseHeightFact, &_numSatellitesFact,
+                      &_numSatellitesUsedFact, &_fixTypeFact, &_jammingStateFact, &_spoofingStateFact,
+                      &_antennaStateFact});
     _constellations.clear();
     _setCurrentBasePosition(std::nullopt);
     _setTelemetryAvailable(false);

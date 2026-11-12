@@ -163,6 +163,48 @@ void GPSReceiverFactGroupTest::_baseStatusFacts()
     QVERIFY(unreported());
 }
 
+void GPSReceiverFactGroupTest::_surveyTarget_data()
+{
+    QTest::addColumn<int>("manufacturer");
+    QTest::addColumn<GPSBaseStationConfig>("base");
+    QTest::addColumn<bool>("surveyed");
+    const int ublox = gpsReceiverManufacturerForType(GPSType::UBlox);
+    const GPSBaseStationConfig survey = surveyInBase(1.25, std::chrono::seconds{240});
+    QTest::newRow("survey-in") << ublox << survey << true;
+    // The survey is asked of whichever family is detected.
+    QTest::newRow("automatic") << GPS_AUTOMATIC_MANUFACTURER << survey << true;
+    QTest::newRow("fixed") << ublox << fixedBaseAt(47, 8, 500, 1) << false;
+    QTest::newRow("averaging") << gpsReceiverManufacturerForType(GPSType::Unicore)
+                               << averagingBase(std::chrono::seconds{60}) << false;
+    // A passive receiver is asked for nothing, whatever base the settings hold.
+    QTest::newRow("passive") << kPassiveManufacturer << survey << false;
+}
+
+void GPSReceiverFactGroupTest::_surveyTarget()
+{
+    QFETCH(int, manufacturer);
+    QFETCH(GPSBaseStationConfig, base);
+    QFETCH(bool, surveyed);
+    ScriptedGPSReceiver harness;
+    GPSReceiverFactGroup& facts = *harness.receiver.facts();
+    const auto untargeted = [&facts] {
+        return facts.targetDuration()->rawValue().toLongLong() == 0 &&
+               std::isnan(facts.targetAccuracy()->rawValue().toDouble());
+    };
+    auto configuration = receiverConfiguration(manufacturer);
+    configuration.base = base;
+    QVERIFY(connectOverTcp(harness.receiver, configuration));
+    // What the survey has to reach is the connection's, known before the receiver reports anything.
+    if (surveyed) {
+        QCOMPARE(facts.targetDuration()->rawValue().toLongLong(), 240);
+        QCOMPARE(facts.targetAccuracy()->rawValue().toDouble(), 1.25);
+    } else {
+        QVERIFY(untargeted());
+    }
+    harness.receiver.disconnectReceiver();
+    QVERIFY(untargeted());
+}
+
 void GPSReceiverFactGroupTest::_currentBaseSaveValidity_data()
 {
     QTest::addColumn<QString>("field");

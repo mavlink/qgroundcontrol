@@ -22,7 +22,6 @@ QGCGroupBox {
     property alias disconnectedText: connection.disconnectedText
 
     readonly property bool _connected: root.receiver.state === GPSReceiver.Connected
-    readonly property gpsReceiverPresentation _presentation: root.receiver.activePresentation
     readonly property bool _surveyConnected: root.receiver.activeBaseMode === BaseModeDefinition.BaseSurveyIn
     // A finished survey is the moment to keep its position, so the next connection can start as a fixed base.
     readonly property bool _surveyComplete: root._connected && root._surveyConnected
@@ -135,22 +134,9 @@ QGCGroupBox {
         visible: root._connected && root.facts.antennaState.rawValue > 0
     }
 
-    LabelledFactLabel {
-        objectName: "rtkSurveyDuration"
-        label: root._presentation.acceptedObservationTime ? qsTr("Accepted observation time") : qsTr("Duration")
-        fact: root.facts.currentDuration
-        factLabel.textFormat: Text.PlainText
-        visible: root._connected && root._presentation.reportsSurveyDuration && root._surveyConnected
-    }
+    GPSReceiverSurveyProgress { receiver: root.receiver; facts: root.facts }
 
-    LabelledFactLabel {
-        objectName: "rtkSurveyAccuracy"
-        label: root.facts.baseState.value === GPSReceiverFactGroup.BaseState.Valid ? qsTr("Accuracy")
-                                                                                   : qsTr("Current Accuracy")
-        fact: root.facts.currentAccuracy
-        factLabel.textFormat: Text.PlainText
-        visible: root._connected && root._surveyConnected && root.facts.currentAccuracy.value > 0
-    }
+    GPSReceiverBasePosition { receiver: root.receiver; facts: root.facts }
 
     QGCNoteLabel {
         objectName: "rtkSurveyCompletePrompt"
