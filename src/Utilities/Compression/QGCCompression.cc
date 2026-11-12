@@ -693,24 +693,11 @@ bool extractArchiveFiltered(const QString& archivePath, const QString& outputDir
 
 QStringList listArchive(const QString& archivePath, Format format)
 {
-    if (!validateArchiveInput(archivePath, format)) {
-        return {};
+    QStringList names;
+    for (const ArchiveEntry& entry : listArchiveDetailed(archivePath, format)) {
+        names.append(entry.name);
     }
-    bool listed = false;
-    QStringList entries = QGClibarchive::listArchiveEntries(archivePath, &listed);
-    captureFormatInfo();
-    if (!listed) {
-        setArchiveReadError(archivePath);
-    }
-
-    // Natural sort: "file2.txt" before "file10.txt"
-    // Use English locale for consistent cross-platform numeric collation
-    QCollator collator{QLocale{QLocale::English}};
-    collator.setNumericMode(true);
-    collator.setCaseSensitivity(Qt::CaseInsensitive);
-    std::sort(entries.begin(), entries.end(), collator);
-
-    return entries;
+    return names;
 }
 
 QList<ArchiveEntry> listArchiveDetailed(const QString& archivePath, Format format)

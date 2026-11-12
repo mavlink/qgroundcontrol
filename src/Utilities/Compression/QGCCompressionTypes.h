@@ -46,6 +46,22 @@ struct ArchiveStats {
     QString largestFileName;         ///< Name of largest file
 };
 
+/// Count an entry in the statistics of its archive
+inline void addTo(ArchiveStats& stats, const ArchiveEntry& entry)
+{
+    stats.totalEntries++;
+    if (entry.isDirectory) {
+        stats.directoryCount++;
+        return;
+    }
+    stats.fileCount++;
+    stats.totalUncompressedSize += entry.size;
+    if (entry.size > stats.largestFileSize) {
+        stats.largestFileSize = entry.size;
+        stats.largestFileName = entry.name;
+    }
+}
+
 /// Entry filter callback for selective extraction
 /// Called for each entry before extraction; return true to extract, false to skip
 /// @param entry Metadata for the archive entry

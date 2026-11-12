@@ -257,18 +257,13 @@ void QGCArchiveModel::_loadArchive()
     }
 
     // Calculate statistics
-    int fileCount = 0;
-    int dirCount = 0;
-    qint64 totalSize = 0;
-
+    QGCCompression::ArchiveStats stats;
     for (const auto &entry : entries) {
-        if (entry.isDirectory) {
-            dirCount++;
-        } else {
-            fileCount++;
-            totalSize += entry.size;
-        }
+        QGCCompression::addTo(stats, entry);
     }
+    const int fileCount = stats.fileCount;
+    const int dirCount = stats.directoryCount;
+    const qint64 totalSize = stats.totalUncompressedSize;
 
     // Store all entries
     _allEntries = std::move(entries);

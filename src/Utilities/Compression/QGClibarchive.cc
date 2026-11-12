@@ -1770,33 +1770,6 @@ NextEntry findEntryInArchive(const QString& archivePath, const QString& fileName
     return findEntry(reader.handle(), fileName);
 }
 
-QStringList listArchiveEntries(const QString& archivePath, bool* ok)
-{
-    if (ok != nullptr) {
-        *ok = false;
-    }
-
-    ArchiveReader reader;
-    if (!reader.open(archivePath, ReaderMode::AllFormats)) {
-        return {};
-    }
-
-    QStringList entries;
-    const EntryWalk walk = forEachEntry(reader.handle(), [&entries](struct archive_entry* entry) {
-        entries.append(QString::fromUtf8(archive_entry_pathname(entry)));
-        return true;
-    });
-    if (walk != EntryWalk::Completed) {
-        return {};
-    }
-    if (ok != nullptr) {
-        *ok = true;
-    }
-
-    qCDebug(QGClibarchiveLog) << "Listed" << entries.size() << "entries in" << archivePath;
-    return entries;
-}
-
 QList<ArchiveEntry> listArchiveEntriesDetailed(const QString& archivePath, bool* ok)
 {
     if (ok != nullptr) {
@@ -1838,20 +1811,7 @@ ArchiveStats getArchiveStats(const QString& archivePath, bool* ok)
     ArchiveStats stats;
 
     const EntryWalk walk = forEachEntry(reader.handle(), [&stats](struct archive_entry* entry) {
-        stats.totalEntries++;
-
-        if (archive_entry_filetype(entry) == AE_IFDIR) {
-            stats.directoryCount++;
-        } else {
-            stats.fileCount++;
-            const qint64 size = archive_entry_size(entry);
-            stats.totalUncompressedSize += size;
-
-            if (size > stats.largestFileSize) {
-                stats.largestFileSize = size;
-                stats.largestFileName = QString::fromUtf8(archive_entry_pathname(entry));
-            }
-        }
+        addTo(stats, toArchiveEntry(entry));
         return true;
     });
 

@@ -380,13 +380,6 @@ bool validateArchive(const QString &archivePath);
 ///         the archive cannot be opened or is damaged before the entry
 NextEntry findEntryInArchive(const QString& archivePath, const QString& fileName);
 
-/// List all entries in an archive
-/// @param archivePath Path to the archive file (or Qt resource path)
-/// @param ok If not null, receives whether the archive was read to its end: one without entries lists as
-///        empty too
-/// @return List of entry names, empty on failure
-QStringList listArchiveEntries(const QString& archivePath, bool* ok = nullptr);
-
 /// List all entries in an archive with detailed metadata
 /// @param archivePath Path to the archive file (or Qt resource path)
 /// @param ok If not null, receives whether the archive was read to its end: one without entries lists as
