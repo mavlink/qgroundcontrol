@@ -1,6 +1,7 @@
 #include "MapProvider.h"
 
 #include <QGCLoggingCategory.h>
+#include <QtCore/QCryptographicHash>
 #include <QtCore/QLocale>
 #include <QtCore/QStringList>
 #include <QtCore/QUrl>
@@ -76,6 +77,11 @@ QString MapProvider::imageFormatFromSignature(QByteArrayView image)
     }
 
     return QString();
+}
+
+bool MapProvider::_hasSha256(QByteArrayView image, qsizetype size, QByteArrayView sha256Hex)
+{
+    return (image.size() == size) && (QCryptographicHash::hash(image, QCryptographicHash::Sha256).toHex() == sha256Hex);
 }
 
 QString MapProvider::_tileXYToQuadKey(int tileX, int tileY, int levelOfDetail) const

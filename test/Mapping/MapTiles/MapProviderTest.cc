@@ -20,6 +20,7 @@ public:
     {}
 
     using MapProvider::_getServerNum;
+    using MapProvider::_hasSha256;
     using MapProvider::_tileXYToQuadKey;
 
 private:
@@ -252,6 +253,15 @@ void MapProviderTest::_testTileIsNoRefusalImage()
 {
     constexpr qsizetype kRefusalSize = 6672;
     QVERIFY(!OpenStreetMapProvider().isRefusalImage(QByteArray(kRefusalSize, 'x')));
+}
+
+// The refusal itself is not in the sources. What tells it is: the size and the SHA-256 of an image, here those of
+// the test vector "abc" of FIPS 180-2.
+void MapProviderTest::_testImageToldBySizeAndSha256()
+{
+    constexpr QByteArrayView kAbcSha256("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+    QVERIFY(TestableMapProvider::_hasSha256(QByteArrayView("abc"), 3, kAbcSha256));
+    QVERIFY(!TestableMapProvider::_hasSha256(QByteArrayView("abd"), 3, kAbcSha256));
 }
 
 UT_REGISTER_TEST(MapProviderTest, TestLabel::Unit)

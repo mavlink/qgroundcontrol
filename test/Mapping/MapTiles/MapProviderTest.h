@@ -32,4 +32,5 @@ private slots:
     void _testGettersReturnConstructorValues();
     void _testFixedSourcesHaveAttribution();
     void _testTileIsNoRefusalImage();
+    void _testImageToldBySizeAndSha256();
 };

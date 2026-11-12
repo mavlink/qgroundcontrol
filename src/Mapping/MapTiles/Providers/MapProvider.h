@@ -111,6 +111,10 @@ protected:
     QString _tileXYToQuadKey(int tileX, int tileY, int levelOfDetail) const;
     int _getServerNum(int x, int y, int max) const;
 
+    /// True for an \a image of \a size bytes whose SHA-256 is \a sha256Hex, in lower-case hex digits. Tells an image
+    /// that is not kept in the sources. The size spares hashing other images.
+    static bool _hasSha256(QByteArrayView image, qsizetype size, QByteArrayView sha256Hex);
+
     virtual QString _getURL(int x, int y, int zoom) const = 0;
 
     const QString _mapName;
