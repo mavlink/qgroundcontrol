@@ -99,6 +99,8 @@ private:
 // SingleInstanceLockFixture - RAII wrapper for RunGuard lock ownership
 // ============================================================================
 
+/// On XDG platforms the lock is kept in the runtime directory. A process whose environment names none is given a
+/// private one (XDG_RUNTIME_DIR) by its first fixture, which production code that takes the lock then uses too.
 class SingleInstanceLockFixture
 {
 public:
