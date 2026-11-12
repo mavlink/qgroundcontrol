@@ -41,8 +41,6 @@ private:
 
 namespace {
 
-using Claim = GPSStreamDemux::Framer::Claim;
-
 class RTCM3Framer final : public GPSStreamDemux::Framer
 {
 public:
@@ -304,6 +302,7 @@ GPSStreamDemux& GPSStreamDemux::operator=(GPSStreamDemux&&) noexcept = default;
 
 void GPSStreamDemux::push(uint8_t byte, Handler& handler)
 {
+    using Claim = Framer::Claim;
     std::array<Claim, FRAMER_COUNT> claims{};
     Framer* exclusive = nullptr;
     for (size_t index = 0; index < _framers.size(); ++index) {

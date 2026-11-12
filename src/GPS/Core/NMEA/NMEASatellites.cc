@@ -6,6 +6,7 @@
 
 #include "NMEASentence.h"
 
+namespace NMEA {
 namespace {
 constexpr size_t GSV_PAGE_COUNT_FIELD = 1;
 constexpr size_t GSV_PAGE_NUMBER_FIELD = 2;
@@ -18,24 +19,22 @@ constexpr int MAX_GSV_SATELLITES = MAX_GSV_PAGES * GSV_SATELLITES_PER_PAGE;
 constexpr int MAX_GSV_SIGNAL_ID = 15;
 constexpr int MAX_GSV_SATELLITE_ID = 999;
 
-bool validNavigation(const NMEA::Sentence& input)
+bool validNavigation(const Sentence& input)
 {
-    const auto status = NMEA::navigationStatus(input);
+    const auto status = navigationStatus(input);
     if (!status) {
         return false;
     }
     if (input.type() == "GGA") {
-        return NMEA::gga(input).has_value() || (input.count >= NMEA::Field::GGA_MIN_FIELDS && !status->valid);
+        return gga(input).has_value() || (input.count >= Field::GGA_MIN_FIELDS && !status->valid);
     }
-    if (input.type() != "RMC" || input.count < NMEA::Field::RMC_MIN_FIELDS ||
-        !NMEA::rmcDate(input.fields[NMEA::Field::RMC_DATE])) {
+    if (input.type() != "RMC" || input.count < Field::RMC_MIN_FIELDS || !rmcDate(input.fields[Field::RMC_DATE])) {
         return false;
     }
-    return !status->valid || NMEA::rmc(input).has_value();
+    return !status->valid || rmc(input).has_value();
 }
 }  // namespace
 
-namespace NMEA {
 GPSConstellation satelliteConstellation(std::string_view talker, std::optional<int> systemId,
                                         std::optional<int> satelliteId)
 {

@@ -7,6 +7,7 @@
 
 #include "Checksums.h"
 
+namespace NMEA {
 namespace {
 constexpr double DEGREE_MINUTE_SCALE = 100.0;
 constexpr double MAX_LATITUDE_DEGREES = 90.0;
@@ -31,7 +32,7 @@ constexpr unsigned MONTHS_PER_YEAR = 12;
 constexpr int MIN_YEAR = 1;
 constexpr int MAX_YEAR = 9999;
 
-std::optional<NMEA::UtcDate> dateFromParts(unsigned day, unsigned month, int year)
+std::optional<UtcDate> dateFromParts(unsigned day, unsigned month, int year)
 {
     // std::chrono's day, month and year narrow their argument, so ok() alone would validate the truncated value.
     if (day < 1 || day > MAX_DAY_OF_MONTH || month < 1 || month > MONTHS_PER_YEAR || year < MIN_YEAR ||
@@ -41,20 +42,10 @@ std::optional<NMEA::UtcDate> dateFromParts(unsigned day, unsigned month, int yea
     if (!std::chrono::year_month_day{std::chrono::year{year}, std::chrono::month{month}, std::chrono::day{day}}.ok()) {
         return {};
     }
-    return NMEA::UtcDate{year, month, day};
+    return UtcDate{year, month, day};
 }
-
-constexpr int MINUTE_DECIMAL_PLACES = 4;
-// Minutes below this take a leading zero to fill their two integer digits.
-constexpr double TWO_DIGIT_MINUTES = 10.0;
-constexpr double MINUTE_FRACTION_SCALE = 10000.0;
-constexpr int LATITUDE_DEGREE_DIGITS = 2;
-constexpr int LONGITUDE_DEGREE_DIGITS = 3;
-constexpr int ALTITUDE_DECIMAL_PLACES = 1;
-constexpr int DOP_DECIMAL_PLACES = 1;
 }  // namespace
 
-namespace NMEA {
 unsigned char checksum(std::string_view body)
 {
     return QGC::nmeaChecksum({reinterpret_cast<const uint8_t*>(body.data()), body.size()});
@@ -418,6 +409,17 @@ std::optional<GST> gst(const Sentence& input)
 }  // namespace NMEA
 
 namespace NMEAUtils {
+namespace {
+constexpr int MINUTE_DECIMAL_PLACES = 4;
+// Minutes below this take a leading zero to fill their two integer digits.
+constexpr double TWO_DIGIT_MINUTES = 10.0;
+constexpr double MINUTE_FRACTION_SCALE = 10000.0;
+constexpr int LATITUDE_DEGREE_DIGITS = 2;
+constexpr int LONGITUDE_DEGREE_DIGITS = 3;
+constexpr int ALTITUDE_DECIMAL_PLACES = 1;
+constexpr int DOP_DECIMAL_PLACES = 1;
+}  // namespace
+
 QByteArray frame(QByteArrayView body)
 {
     const char checksum = static_cast<char>(NMEA::checksum(body));
@@ -426,9 +428,9 @@ QByteArray frame(QByteArrayView body)
 
 QByteArray makeGGA(const NMEA::GGA& fix, const QTime& utc)
 {
-    if (!utc.isValid() || !std::isfinite(fix.latitude) || std::abs(fix.latitude) > MAX_LATITUDE_DEGREES ||
-        !std::isfinite(fix.longitude) || std::abs(fix.longitude) > MAX_LONGITUDE_DEGREES || std::isinf(fix.altitude) ||
-        std::isinf(fix.geoidSeparation) || std::isinf(fix.hdop) || fix.hdop < 0.0 ||
+    if (!utc.isValid() || !std::isfinite(fix.latitude) || std::abs(fix.latitude) > NMEA::MAX_LATITUDE_DEGREES ||
+        !std::isfinite(fix.longitude) || std::abs(fix.longitude) > NMEA::MAX_LONGITUDE_DEGREES ||
+        std::isinf(fix.altitude) || std::isinf(fix.geoidSeparation) || std::isinf(fix.hdop) || fix.hdop < 0.0 ||
         fix.quality > NMEA::GgaQuality::MAX_STANDARD) {
         return {};
     }
