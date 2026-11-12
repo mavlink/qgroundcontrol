@@ -63,3 +63,7 @@ struct GPSReceiverEnded
 using GPSReceiverEvent =
     std::variant<GPSPositionReport, GPSSatelliteReport, GPSBaseStatus, GPSReceiverRTCM, GPSDetectionProgress,
                  GPSReceiverDetected, GPSReceiverReady, GPSInputProblem, GPSReceiverEnded>;
+
+// An event of any kind takes the size of the largest, and each is copied when it is queued to the receiver's thread.
+// What only some events carry in bulk, a satellite list or an RTCM frame, therefore sits behind a shared pointer.
+static_assert(sizeof(GPSReceiverEvent) <= 256, "a receiver event holds bulk data inline");

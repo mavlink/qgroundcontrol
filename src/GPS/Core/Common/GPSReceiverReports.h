@@ -9,6 +9,7 @@
 #include <optional>
 #include <span>
 
+#include <QtCore/QList>
 #include <QtCore/QObject>
 
 #include "GPSReceiverConfig.h"
@@ -233,14 +234,14 @@ struct GPSSatelliteReport
     /// Empty for a receiver that only counts its satellites.
     [[nodiscard]] std::span<const GPSSatellite> satellitesInView() const
     {
-        return std::span(satellites).first(std::min<size_t>(satelliteCount, satellites.size()));
+        return {satellites.constData(), static_cast<size_t>(satellites.size())};
     }
 
     /// Appends to satellitesInView(); ignored once MAX_SATELLITES are listed.
     void addSatellite(const GPSSatellite& satellite)
     {
-        if (satelliteCount < satellites.size()) {
-            satellites[satelliteCount++] = satellite;
+        if (static_cast<size_t>(satellites.size()) < MAX_SATELLITES) {
+            satellites.append(satellite);
         }
     }
 
@@ -252,9 +253,9 @@ struct GPSSatelliteReport
     /// equal reports compare equal.
     std::array<Constellation, MAX_CONSTELLATIONS> constellations{};
     uint8_t constellationCount = 0;
-    /// Backs satellitesInView() with its first satelliteCount entries, the others default as for the constellations.
-    std::array<GPSSatellite, MAX_SATELLITES> satellites{};
-    uint8_t satelliteCount = 0;
+    /// Backs satellitesInView(). Copies of the report share the list until one changes it, so that the report, and
+    /// with it every GPSReceiverEvent, stays small.
+    QList<GPSSatellite> satellites;
 
     bool operator==(const GPSSatelliteReport&) const = default;
 };
