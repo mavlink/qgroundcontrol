@@ -10,17 +10,17 @@ Item {
     id:             control
 
     property bool   showIndicator:  true
-    property Vehicle _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-    property VehicleGPSFactGroup _gps: _activeVehicle ? _activeVehicle.gps : null
-    property VehicleGPSFactGroup _gps2: _activeVehicle ? _activeVehicle.gps2 : null
+    readonly property Vehicle _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    readonly property VehicleGPSFactGroup _gps: _activeVehicle ? _activeVehicle.gps : null
+    readonly property VehicleGPSFactGroup _gps2: _activeVehicle ? _activeVehicle.gps2 : null
     readonly property bool _vehicleGps: !!_gps && _gps.telemetryAvailable
-    property GPSReceiver _receiver: QGroundControl.gpsManager.receiver
+    readonly property GPSReceiver _receiver: QGroundControl.gpsManager.receiver
     readonly property GPSReceiverFactGroup _receiverFacts: _receiver.facts
     readonly property bool _receiverConnected: _receiver.state === GPSReceiver.Connected
     readonly property bool _receiverWarning: _receiverConnected && _receiverFacts.receiverWarning
     readonly property int _receiverSatellites: _receiverFacts.numSatellitesUsed.rawValue
     readonly property string _receiverDetail: _receiver.summaryLabel
-    property int    _correctionState: QGroundControl.gpsManager.corrections.state
+    readonly property int _correctionState: QGroundControl.gpsManager.corrections.state
     readonly property bool _showRtk: _correctionState !== GPSCorrectionManager.Inactive
     // The icons show the worse of the two receivers.
     readonly property VehicleGPSFactGroup _authenticationSource:
