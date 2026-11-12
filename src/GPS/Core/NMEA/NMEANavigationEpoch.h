@@ -18,7 +18,6 @@ struct NavigationEpoch
     uint64_t receivedAtUs = 0;
     /// Receipt of the GGA.
     uint64_t positionReceivedAtUs = 0;
-    uint64_t sequence = 0;
     GPSFixQuality fixQuality = GPSFixQuality::Unknown;
     std::optional<unsigned> ggaQuality;
 
@@ -107,6 +106,8 @@ private:
         bool active = false;
         int key = 0;
         NavigationEpoch epoch;
+        /// The place of the GGA among the sentences, which tells whether a fix loss came after it.
+        uint64_t sequence = 0;
         Positions positions;
         /// The additions received, before or after the GGA.
         Additions additions;
@@ -123,7 +124,7 @@ private:
     /// @a position; @a overdue is that epoch when it was still waiting.
     StoredEpoch& _positionEpoch(std::optional<int> timeMs, Position position, std::optional<NavigationEpoch>& overdue);
     std::optional<NavigationEpoch> _end(StoredEpoch& stored);
-    bool _hiddenByFixLoss(const NavigationEpoch& epoch) const;
+    bool _hiddenByFixLoss(const StoredEpoch& stored) const;
     void _add(StoredEpoch& stored, Addition addition, uint64_t receivedAtUs) const;
     bool _complete(const StoredEpoch& stored) const;
     StoredEpoch* _joinPosition(const Sentence& sentence, uint64_t receivedAtUs,
