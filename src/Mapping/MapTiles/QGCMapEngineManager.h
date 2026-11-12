@@ -69,7 +69,11 @@ public:
 
     Q_INVOKABLE void selectAll();
     Q_INVOKABLE void selectNone();
+    /// Creates the sets that updateForCurrentView() counted the tiles of, and starts their downloads
     Q_INVOKABLE void startDownload(const QString& name, const QString& mapType);
+    /// Counts the tiles of the sets that startDownload() creates for a view. Imagery \a mapName gets a set of the
+    /// zooms \a minZoom to \a maxZoom and, when elevation is fetched, the sets of elevation tiles beside it. An
+    /// elevation provider \a mapName gets one set, of the zooms that the provider has for those of the view.
     Q_INVOKABLE void updateForCurrentView(double lon0, double lat0, double lon1, double lat1, int minZoom, int maxZoom,
                                           const QString& mapName);
 
@@ -197,4 +201,7 @@ private:
     QString _extractionOutputDir;
 
     static constexpr const char* kQmlOfflineMapKeyName = "QGCOfflineMap";
+    /// The zoom in the keys of the tiles of an elevation provider that has no zoom levels: the terrain queries ask
+    /// the tile cache for it
+    static constexpr int kElevationZoom = 1;
 };

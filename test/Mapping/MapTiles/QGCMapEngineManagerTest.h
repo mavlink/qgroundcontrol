@@ -11,6 +11,8 @@ private slots:
 
     void _testTerrainSet_data();
     void _testTerrainSet();
+    void _testElevationTypeSet_data();
+    void _testElevationTypeSet();
     void _testTerrainSetServedFromCache();
     void _testNewSetTellsManagerOfItsSelection();
     void _testMapAttribution_data();

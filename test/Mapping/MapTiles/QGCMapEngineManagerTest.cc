@@ -99,6 +99,22 @@ public:
     QGCMapEngineManager manager;
 };
 
+/// Waits until the database worker has run the tasks queued so far, and the main thread has handled what they
+/// reported: the worker runs its tasks in order
+[[nodiscard]] bool offlineSetsTasksDone()
+{
+    bool done = false;
+    // Declared after what its signal writes, so that a late signal is dropped
+    const QObject sentinelContext;
+    QGCFetchTileTask* const sentinelTask = new QGCFetchTileTask(QStringLiteral("no such tile"));
+    (void) QObject::connect(sentinelTask, &QGCMapTask::error, &sentinelContext, [&done] { done = true; });
+    if (!getQGCMapEngine()->addTask(sentinelTask)) {
+        sentinelTask->deleteLater();
+        return false;
+    }
+    return QTest::qWaitFor([&done] { return done; }, TestTimeout::mediumMs());
+}
+
 }  // namespace
 
 void QGCMapEngineManagerTest::initTestCase()
@@ -173,22 +189,9 @@ void QGCMapEngineManagerTest::_testTerrainSet()
     QCOMPARE(sets.manager.tileSize(), imageTiles.tileSize + elevationTiles.tileSize + terrainTiles.tileSize);
 
     const QString name = QStringLiteral("terrain set test: %1").arg(QString::fromLatin1(QTest::currentDataTag()));
-    if (!fetchElevation) {
-        expectLogMessage("MapTiles.QGCMapEngineManager", QtWarningMsg,
-                         QRegularExpression(QStringLiteral("No Tiles to save")));
-    }
     sets.manager.startDownload(name, mapType);
-    if (!fetchElevation) {
-        verifyExpectedLogMessage();
-    }
-
-    // The database worker runs tasks in order, so the sets are all saved once the task queued after them is done
-    bool setsSaved = false;
-    const QObject sentinelContext;
-    QGCFetchTileTask* const sentinelTask = new QGCFetchTileTask(QStringLiteral("no such tile"));
-    connect(sentinelTask, &QGCMapTask::error, &sentinelContext, [&setsSaved] { setsSaved = true; });
-    QVERIFY(engine->addTask(sentinelTask));
-    QTRY_VERIFY_WITH_TIMEOUT(setsSaved, TestTimeout::mediumMs());
+    // The sets are all saved
+    QVERIFY(offlineSetsTasksDone());
 
     QVERIFY(sets.tileSet(name));
     QCOMPARE(sets.tileSet(name + QStringLiteral(" Elevation")) != nullptr, fetchElevation);
@@ -206,6 +209,70 @@ void QGCMapEngineManagerTest::_testTerrainSet()
         sets.networkManager.requestCount,
         static_cast<int>(requestedAtOnce(imageTiles) + requestedAtOnce(elevationTiles) + requestedAtOnce(terrainTiles)),
         TestTimeout::mediumMs());
+}
+
+void QGCMapEngineManagerTest::_testElevationTypeSet_data()
+{
+    QTest::addColumn<QString>("elevationType");
+    QTest::addColumn<int>("minZoom");
+    QTest::addColumn<int>("maxZoom");
+    QTest::addColumn<int>("setMinZoom");
+    QTest::addColumn<int>("setMaxZoom");
+
+    // The tiles have no zoom levels: the set has each once, with the zoom that the terrain queries ask the cache for
+    QTest::newRow("tiles without zoom levels")
+        << QString::fromLatin1(CopernicusElevationProvider::kProviderKey) << 12 << 14 << 1 << 1;
+    // The set that an imagery set of these zooms gets for GeoMap: Terrarium serves no finer zoom than its last
+    QTest::newRow("tiles of the zooms that the provider serves")
+        << QString::fromLatin1(TerrariumElevationProvider::kProviderKey) << 16 << 17
+        << TerrariumElevationProvider::kAnchorZoom << TerrariumElevationProvider::kMaxZoom;
+}
+
+// "Add New Set" offers the elevation providers as types of a set
+void QGCMapEngineManagerTest::_testElevationTypeSet()
+{
+    QFETCH(QString, elevationType);
+    QFETCH(int, minZoom);
+    QFETCH(int, maxZoom);
+    QFETCH(int, setMinZoom);
+    QFETCH(int, setMaxZoom);
+
+    // A set of imagery gets both sets of elevation tiles beside it: GeoMap is used, and elevation is fetched
+    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
+                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    const auto restoreMapEngines = selectGeoMapEngines(true, false);
+
+    getQGCMapEngine()->ensureInitialized();
+
+    constexpr double kLeftLon = 8.4991;
+    const QGCTileSet tiles = offlineRegionTiles(elevationType, kLeftLon, setMinZoom, setMaxZoom);
+    QCOMPARE_GE(tiles.tileCount, quint64(setMaxZoom - setMinZoom + 1));
+
+    OfflineSetsFixture sets;
+    QVERIFY(sets.manager.property("fetchElevation").toBool());
+    sets.manager.updateForCurrentView(kLeftLon, kOfflineRegionTopLat, kLeftLon + kOfflineRegionLonSpan,
+                                      kOfflineRegionBottomLat, minZoom, maxZoom, elevationType);
+    QCOMPARE(sets.manager.tileCount(), tiles.tileCount);
+    QCOMPARE(sets.manager.tileSize(), tiles.tileSize);
+
+    const QString name = QStringLiteral("elevation type test: %1").arg(QString::fromLatin1(QTest::currentDataTag()));
+    sets.manager.startDownload(name, elevationType);
+    QVERIFY(offlineSetsTasksDone());
+
+    const QGCCachedTileSet* const set = sets.tileSet(name);
+    QVERIFY(set);
+    QCOMPARE(sets.manager.tileSets()->count(), 1);
+    QCOMPARE(set->type(), elevationType);
+    QCOMPARE(set->minZoom(), setMinZoom);
+    QCOMPARE(set->maxZoom(), setMaxZoom);
+    QCOMPARE(set->totalTileCount(), static_cast<quint32>(tiles.tileCount));
+
+    // The set requests each of its tiles once, as many as a set requests at a time: see _testTerrainSet for the wait
+    const int expectedRequestCount = static_cast<int>(qMin(tiles.tileCount, kTilesRequestedAtOnce));
+    QTRY_COMPARE_WITH_TIMEOUT(sets.networkManager.requestCount, expectedRequestCount, TestTimeout::mediumMs());
+    QVERIFY(offlineSetsTasksDone());
+    QCoreApplication::processEvents();
+    QCOMPARE(sets.networkManager.requestCount, expectedRequestCount);
 }
 
 void QGCMapEngineManagerTest::_testTerrainSetServedFromCache()

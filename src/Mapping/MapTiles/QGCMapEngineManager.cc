@@ -77,25 +77,37 @@ void QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double 
     _elevationSet.clear();
     _terrainSet.clear();
 
-    for (int z = minZoom; z <= maxZoom; z++) {
+    // GeoMap fetches the Terrarium tile of every imagery tile, at most as fine as Terrarium serves, and the anchor
+    // zoom tiles around every tile finer than those
+    _terrainMaxZoom = qMin(maxZoom, TerrariumElevationProvider::kMaxZoom);
+    _terrainMinZoom = qMin(minZoom, qMin(_terrainMaxZoom, TerrariumElevationProvider::kAnchorZoom));
+    const QString terrainProviderName = QString::fromLatin1(TerrariumElevationProvider::kProviderKey);
+
+    // An elevation provider does not have the zooms of the view: a set of Terrarium tiles has those that GeoMap
+    // fetches, and a set of tiles without zoom levels the one that their keys have
+    const bool elevationMap = UrlFactory::isElevation(UrlFactory::getMapIdFromProviderType(mapName));
+    if (mapName == terrainProviderName) {
+        _minZoom = _terrainMinZoom;
+        _maxZoom = _terrainMaxZoom;
+    } else if (elevationMap) {
+        _minZoom = kElevationZoom;
+        _maxZoom = kElevationZoom;
+    }
+
+    for (int z = _minZoom; z <= _maxZoom; z++) {
         const QGCTileSet set = UrlFactory::getTileCount(z, lon0, lat0, lon1, lat1, mapName);
         _imageSet += set;
     }
 
-    if (_fetchElevation) {
+    if (_fetchElevation && !elevationMap) {
         const QString elevationProviderName =
             SettingsManager::instance()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
-        const QGCTileSet set = UrlFactory::getTileCount(1, lon0, lat0, lon1, lat1, elevationProviderName);
+        const QGCTileSet set = UrlFactory::getTileCount(kElevationZoom, lon0, lat0, lon1, lat1, elevationProviderName);
         _elevationSet += set;
 
         const SettingsManager* const settings = SettingsManager::instance();
         if (settings->flyViewSettings()->useGeoMapEngine()->rawValue().toBool() ||
             settings->planViewSettings()->useGeoMapEngine()->rawValue().toBool()) {
-            // GeoMap fetches the Terrarium tile of every imagery tile, at most as fine as Terrarium serves, and the
-            // anchor zoom tiles around every tile finer than those
-            _terrainMaxZoom = qMin(maxZoom, TerrariumElevationProvider::kMaxZoom);
-            _terrainMinZoom = qMin(minZoom, qMin(_terrainMaxZoom, TerrariumElevationProvider::kAnchorZoom));
-            const QString terrainProviderName = QString::fromLatin1(TerrariumElevationProvider::kProviderKey);
             for (int z = _terrainMinZoom; z <= _terrainMaxZoom; z++) {
                 _terrainSet += UrlFactory::getTileCount(z, lon0, lat0, lon1, lat1, terrainProviderName);
             }
@@ -146,24 +158,23 @@ void QGCMapEngineManager::_tileSetFetched(QGCCachedTileSet* tileSet)
 
 void QGCMapEngineManager::startDownload(const QString& name, const QString& mapType)
 {
-    if (_imageSet.tileSize > 0) {
-        _createTileSet(name, mapType, _minZoom, _maxZoom, _imageSet);
-    } else {
+    if (tileCount() == 0) {
         qCWarning(QGCMapEngineManagerLog) << "No Tiles to save";
+        return;
     }
 
-    const int mapid = UrlFactory::getMapIdFromProviderType(mapType);
-    if (_fetchElevation && !UrlFactory::isElevation(mapid)) {
+    if (_imageSet.tileCount > 0) {
+        _createTileSet(name, mapType, _minZoom, _maxZoom, _imageSet);
+    }
+    if (_elevationSet.tileCount > 0) {
         const QString elevationProviderName =
             SettingsManager::instance()->flightMapSettings()->elevationMapProvider()->rawValue().toString();
-        _createTileSet(name + QStringLiteral(" Elevation"), elevationProviderName, 1, 1, _elevationSet);
-        if (_terrainSet.tileCount > 0) {
-            _createTileSet(name + QStringLiteral(" Terrain"),
-                           QString::fromLatin1(TerrariumElevationProvider::kProviderKey), _terrainMinZoom,
-                           _terrainMaxZoom, _terrainSet);
-        }
-    } else {
-        qCWarning(QGCMapEngineManagerLog) << "No Tiles to save";
+        _createTileSet(name + QStringLiteral(" Elevation"), elevationProviderName, kElevationZoom, kElevationZoom,
+                       _elevationSet);
+    }
+    if (_terrainSet.tileCount > 0) {
+        _createTileSet(name + QStringLiteral(" Terrain"), QString::fromLatin1(TerrariumElevationProvider::kProviderKey),
+                       _terrainMinZoom, _terrainMaxZoom, _terrainSet);
     }
 }
 
