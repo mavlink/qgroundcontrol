@@ -1,5 +1,8 @@
 #include "QGCCompression.h"
 
+#include <algorithm>
+#include <iterator>
+
 #include <QtCore/QCollator>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
@@ -8,9 +11,6 @@
 #include <QtCore/QMimeDatabase>
 #include <QtCore/QMimeType>
 #include <QtCore/QtEndian>
-
-#include <algorithm>
-#include <cstring>
 
 #include "QGCDecompressDevice.h"
 #include "QGCFileHelper.h"
@@ -22,7 +22,7 @@ QGC_LOGGING_CATEGORY(QGCCompressionLog, "Utilities.QGCCompression")
 namespace QGCCompression {
 
 // ============================================================================
-// Format Detection Constants
+// Formats
 // ============================================================================
 
 namespace {
@@ -35,69 +35,71 @@ constexpr size_t kTarUstarOffset = 257;
 constexpr size_t kTarUstarMagicLen = 5;
 constexpr size_t kMinBytesForTar = 263;  // kTarUstarOffset + kTarUstarMagicLen + 1
 
-// Magic byte sequences for format detection
-constexpr unsigned char kMagicZip[] = {0x50, 0x4B};                         // "PK"
-constexpr unsigned char kZipLocalFile = 0x03;                               // PK\x03\x04 - local file header
-constexpr unsigned char kZipEmptyArchive = 0x05;                            // PK\x05\x06 - empty archive
-constexpr unsigned char kZipSpannedArchive = 0x07;                          // PK\x07\x08 - spanned archive
-constexpr unsigned char kMagic7z[] = {0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C};  // "7z\xBC\xAF'\x1C"
-constexpr unsigned char kMagicGzip[] = {0x1F, 0x8B};
-constexpr unsigned char kMagicXz[] = {0xFD, 0x37, 0x7A, 0x58, 0x5A, 0x00};  // "\xFD7zXZ\0"
-constexpr unsigned char kMagicZstd[] = {0x28, 0xB5, 0x2F, 0xFD};
-constexpr unsigned char kMagicBzip2[] = {0x42, 0x5A, 0x68};                 // "BZh"
-constexpr unsigned char kMagicLz4[] = {0x04, 0x22, 0x4D, 0x18};
+/// What is known of a format: every function that tells about formats looks it up here
+struct FormatInfo
+{
+    Format format;
+    bool isArchive;                ///< Holds several files; otherwise it is a single compressed stream
+    const char* name;              ///< formatName()
+    const char* suffixes[3];       ///< In lower case. The first one is formatExtension()
+    const char* mimeTypes[2];      ///< Names Qt's MIME database has for the format
+    QByteArrayView signatures[3];  ///< What a file of the format starts with (TAR: see kTarUstarOffset)
+};
+
+// Looked through in this order. The compressed TAR formats come first, because their suffixes end in those of
+// the compression, and TAR last, because its signature is not at the start of the file.
+constexpr FormatInfo kFormats[] = {
+    {Format::TAR_GZ, true, "TAR.GZ", {".tar.gz", ".tgz"}, {"application/x-compressed-tar"}, {}},
+    {Format::TAR_XZ, true, "TAR.XZ", {".tar.xz", ".txz"}, {"application/x-xz-compressed-tar"}, {}},
+    {Format::TAR_ZSTD, true, "TAR.ZSTD", {".tar.zst", ".tar.zstd"}, {"application/x-zstd-compressed-tar"}, {}},
+    {Format::TAR_BZ2,
+     true,
+     "TAR.BZ2",
+     {".tar.bz2", ".tbz2", ".tbz"},
+     {"application/x-bzip2-compressed-tar", "application/x-bzip-compressed-tar"},
+     {}},
+    {Format::TAR_LZ4, true, "TAR.LZ4", {".tar.lz4"}, {"application/x-lz4-compressed-tar"}, {}},
+    // Local file header, empty archive, spanned archive
+    {Format::ZIP,
+     true,
+     "ZIP",
+     {".zip"},
+     {"application/zip", "application/x-zip-compressed"},
+     {"PK\x03", "PK\x05", "PK\x07"}},
+    {Format::SEVENZ, true, "7-Zip", {".7z"}, {"application/x-7z-compressed"}, {"7z\xBC\xAF\x27\x1C"}},
+    {Format::GZIP, false, "GZIP", {".gz", ".gzip"}, {"application/gzip", "application/x-gzip"}, {"\x1F\x8B"}},
+    // "\xFD7zXZ" and a zero byte, which a view of the literal alone would leave out
+    {Format::XZ, false, "XZ/LZMA", {".xz", ".lzma"}, {"application/x-xz"}, {{"\xFD\x37\x7A\x58\x5A\x00", 6}}},
+    {Format::ZSTD,
+     false,
+     "Zstandard",
+     {".zst", ".zstd"},
+     {"application/zstd", "application/x-zstd"},
+     {"\x28\xB5\x2F\xFD"}},
+    {Format::BZIP2, false, "BZip2", {".bz2", ".bzip2"}, {"application/x-bzip2", "application/bzip2"}, {"BZh"}},
+    {Format::LZ4, false, "LZ4", {".lz4"}, {"application/x-lz4"}, {"\x04\x22\x4D\x18"}},
+    {Format::TAR, true, "TAR", {".tar"}, {"application/x-tar"}, {}},
+};
+
+/// @return What is known of @a format, nullptr for Format::Auto
+const FormatInfo* formatInfo(Format format)
+{
+    const auto info = std::ranges::find(kFormats, format, &FormatInfo::format);
+    return (info != std::end(kFormats)) ? &*info : nullptr;
+}
 
 /// Convert Qt MIME type name to Format
 /// @param mimeType MIME type name (e.g., "application/gzip")
 /// @return Corresponding Format, or Format::Auto if not recognized
 Format formatFromMimeType(const QString& mimeType)
 {
-    // Archive formats
-    if (mimeType == QLatin1String("application/zip") || mimeType == QLatin1String("application/x-zip-compressed")) {
-        return Format::ZIP;
+    for (const FormatInfo& info : kFormats) {
+        for (const char* name : info.mimeTypes) {
+            if ((name != nullptr) && (mimeType == QLatin1StringView(name))) {
+                return info.format;
+            }
+        }
     }
-    if (mimeType == QLatin1String("application/x-7z-compressed")) {
-        return Format::SEVENZ;
-    }
-    if (mimeType == QLatin1String("application/x-tar")) {
-        return Format::TAR;
-    }
-
-    // Compression formats
-    if (mimeType == QLatin1String("application/gzip") || mimeType == QLatin1String("application/x-gzip")) {
-        return Format::GZIP;
-    }
-    if (mimeType == QLatin1String("application/x-xz")) {
-        return Format::XZ;
-    }
-    if (mimeType == QLatin1String("application/zstd") || mimeType == QLatin1String("application/x-zstd")) {
-        return Format::ZSTD;
-    }
-    if (mimeType == QLatin1String("application/x-bzip2") || mimeType == QLatin1String("application/bzip2")) {
-        return Format::BZIP2;
-    }
-    if (mimeType == QLatin1String("application/x-lz4")) {
-        return Format::LZ4;
-    }
-
-    // Compound TAR formats (Qt may detect these as compressed TAR)
-    if (mimeType == QLatin1String("application/x-compressed-tar")) {
-        return Format::TAR_GZ;  // Most common, fallback will refine
-    }
-    if (mimeType == QLatin1String("application/x-xz-compressed-tar")) {
-        return Format::TAR_XZ;
-    }
-    if (mimeType == QLatin1String("application/x-zstd-compressed-tar")) {
-        return Format::TAR_ZSTD;
-    }
-    if (mimeType == QLatin1String("application/x-bzip2-compressed-tar") ||
-        mimeType == QLatin1String("application/x-bzip-compressed-tar")) {
-        return Format::TAR_BZ2;
-    }
-    if (mimeType == QLatin1String("application/x-lz4-compressed-tar")) {
-        return Format::TAR_LZ4;
-    }
-
     return Format::Auto;
 }
 
@@ -343,50 +345,13 @@ static void setExtractionError(QGClibarchive::ReadResult result, const QString& 
 static Format detectFormatFromExtension(const QString& filePath)
 {
     const QString lower = filePath.toLower();
-
-    // Check compound extensions first
-    if (lower.endsWith(".tar.gz") || lower.endsWith(".tgz")) {
-        return Format::TAR_GZ;
+    for (const FormatInfo& info : kFormats) {
+        for (const char* suffix : info.suffixes) {
+            if ((suffix != nullptr) && lower.endsWith(QLatin1StringView(suffix))) {
+                return info.format;
+            }
+        }
     }
-    if (lower.endsWith(".tar.xz") || lower.endsWith(".txz")) {
-        return Format::TAR_XZ;
-    }
-    if (lower.endsWith(".tar.zst") || lower.endsWith(".tar.zstd")) {
-        return Format::TAR_ZSTD;
-    }
-    if (lower.endsWith(".tar.bz2") || lower.endsWith(".tbz2") || lower.endsWith(".tbz")) {
-        return Format::TAR_BZ2;
-    }
-    if (lower.endsWith(".tar.lz4")) {
-        return Format::TAR_LZ4;
-    }
-
-    // Check single extensions
-    if (lower.endsWith(".zip")) {
-        return Format::ZIP;
-    }
-    if (lower.endsWith(".7z")) {
-        return Format::SEVENZ;
-    }
-    if (lower.endsWith(".gz") || lower.endsWith(".gzip")) {
-        return Format::GZIP;
-    }
-    if (lower.endsWith(".xz") || lower.endsWith(".lzma")) {
-        return Format::XZ;
-    }
-    if (lower.endsWith(".zst") || lower.endsWith(".zstd")) {
-        return Format::ZSTD;
-    }
-    if (lower.endsWith(".bz2") || lower.endsWith(".bzip2")) {
-        return Format::BZIP2;
-    }
-    if (lower.endsWith(".lz4")) {
-        return Format::LZ4;
-    }
-    if (lower.endsWith(".tar")) {
-        return Format::TAR;
-    }
-
     return Format::Auto;
 }
 
@@ -446,42 +411,12 @@ Format detectFormatFromData(const QByteArray& data)
         return Format::Auto;
     }
 
-    const auto* bytes = reinterpret_cast<const unsigned char*>(data.constData());
-
-    // ZIP: PK\x03\x04 (local file) or PK\x05\x06 (empty) or PK\x07\x08 (spanned)
-    if (bytes[0] == kMagicZip[0] && bytes[1] == kMagicZip[1] &&
-        (bytes[2] == kZipLocalFile || bytes[2] == kZipEmptyArchive || bytes[2] == kZipSpannedArchive)) {
-        return Format::ZIP;
-    }
-
-    // 7-Zip
-    if (memcmp(bytes, kMagic7z, sizeof(kMagic7z)) == 0) {
-        return Format::SEVENZ;
-    }
-
-    // GZIP
-    if (memcmp(bytes, kMagicGzip, sizeof(kMagicGzip)) == 0) {
-        return Format::GZIP;
-    }
-
-    // XZ
-    if (memcmp(bytes, kMagicXz, sizeof(kMagicXz)) == 0) {
-        return Format::XZ;
-    }
-
-    // ZSTD
-    if (memcmp(bytes, kMagicZstd, sizeof(kMagicZstd)) == 0) {
-        return Format::ZSTD;
-    }
-
-    // BZip2
-    if (memcmp(bytes, kMagicBzip2, sizeof(kMagicBzip2)) == 0) {
-        return Format::BZIP2;
-    }
-
-    // LZ4
-    if (memcmp(bytes, kMagicLz4, sizeof(kMagicLz4)) == 0) {
-        return Format::LZ4;
+    for (const FormatInfo& info : kFormats) {
+        for (const QByteArrayView signature : info.signatures) {
+            if (!signature.isEmpty() && data.startsWith(signature)) {
+                return info.format;
+            }
+        }
     }
 
     // TAR: Check for ustar magic at offset 257
@@ -507,103 +442,26 @@ Format detectFormatFromData(const QByteArray& data)
 
 QString formatExtension(Format format)
 {
-    switch (format) {
-        case Format::ZIP:
-            return QStringLiteral(".zip");
-        case Format::SEVENZ:
-            return QStringLiteral(".7z");
-        case Format::GZIP:
-            return QStringLiteral(".gz");
-        case Format::XZ:
-            return QStringLiteral(".xz");
-        case Format::ZSTD:
-            return QStringLiteral(".zst");
-        case Format::BZIP2:
-            return QStringLiteral(".bz2");
-        case Format::LZ4:
-            return QStringLiteral(".lz4");
-        case Format::TAR:
-            return QStringLiteral(".tar");
-        case Format::TAR_GZ:
-            return QStringLiteral(".tar.gz");
-        case Format::TAR_XZ:
-            return QStringLiteral(".tar.xz");
-        case Format::TAR_ZSTD:
-            return QStringLiteral(".tar.zst");
-        case Format::TAR_BZ2:
-            return QStringLiteral(".tar.bz2");
-        case Format::TAR_LZ4:
-            return QStringLiteral(".tar.lz4");
-        case Format::Auto:
-            return QString();
-    }
-    Q_UNREACHABLE();
+    const FormatInfo* const info = formatInfo(format);
+    return (info != nullptr) ? QString::fromLatin1(info->suffixes[0]) : QString();
 }
 
 QString formatName(Format format)
 {
-    switch (format) {
-        case Format::Auto:
-            return QStringLiteral("Auto");
-        case Format::ZIP:
-            return QStringLiteral("ZIP");
-        case Format::SEVENZ:
-            return QStringLiteral("7-Zip");
-        case Format::GZIP:
-            return QStringLiteral("GZIP");
-        case Format::XZ:
-            return QStringLiteral("XZ/LZMA");
-        case Format::ZSTD:
-            return QStringLiteral("Zstandard");
-        case Format::BZIP2:
-            return QStringLiteral("BZip2");
-        case Format::LZ4:
-            return QStringLiteral("LZ4");
-        case Format::TAR:
-            return QStringLiteral("TAR");
-        case Format::TAR_GZ:
-            return QStringLiteral("TAR.GZ");
-        case Format::TAR_XZ:
-            return QStringLiteral("TAR.XZ");
-        case Format::TAR_ZSTD:
-            return QStringLiteral("TAR.ZSTD");
-        case Format::TAR_BZ2:
-            return QStringLiteral("TAR.BZ2");
-        case Format::TAR_LZ4:
-            return QStringLiteral("TAR.LZ4");
-    }
-    Q_UNREACHABLE();
+    const FormatInfo* const info = formatInfo(format);
+    return (info != nullptr) ? QString::fromLatin1(info->name) : QStringLiteral("Auto");
 }
 
 bool isArchiveFormat(Format format)
 {
-    switch (format) {
-        case Format::ZIP:
-        case Format::SEVENZ:
-        case Format::TAR:
-        case Format::TAR_GZ:
-        case Format::TAR_XZ:
-        case Format::TAR_ZSTD:
-        case Format::TAR_BZ2:
-        case Format::TAR_LZ4:
-            return true;
-        default:
-            return false;
-    }
+    const FormatInfo* const info = formatInfo(format);
+    return (info != nullptr) && info->isArchive;
 }
 
 bool isCompressionFormat(Format format)
 {
-    switch (format) {
-        case Format::GZIP:
-        case Format::XZ:
-        case Format::ZSTD:
-        case Format::BZIP2:
-        case Format::LZ4:
-            return true;
-        default:
-            return false;
-    }
+    const FormatInfo* const info = formatInfo(format);
+    return (info != nullptr) && !info->isArchive;
 }
 
 QString strippedPath(const QString& filePath)
