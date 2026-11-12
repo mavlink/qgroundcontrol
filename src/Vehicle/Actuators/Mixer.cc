@@ -94,7 +94,10 @@ void ChannelConfigInstanceVirtualAxis::allInstancesInitialized(QmlObjectListMode
             _axes[2] = channelConfigInstance;
         }
     }
-    Q_ASSERT(_axes[0] && _axes[1] && _axes[2]);
+    if (!_axes[0] || !_axes[1] || !_axes[2]) {
+        qCCritical(MixerLog) << "Internal Error: virtual axis created without all three axis instances";
+        return;
+    }
 
     for (int i = 0; i < 3; ++i) {
         if (!_axes[i]->fact())

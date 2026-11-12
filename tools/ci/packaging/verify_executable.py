@@ -313,8 +313,9 @@ def _describe_exit_code(code: int) -> str:
 def _step_exit_code(code: int) -> int:
     """Return *code* when a shell can report it, else 1.
 
-    Python 3.10 on Windows exits with -1 for a SystemExit code above 2**31, such as 0xC0000005, and
-    the step's MSYS bash reports any exit status of 0xC0000000 or more except a few as 127.
+    Before 3.13, Python on Windows exits with -1 for a SystemExit code above 2**31, such as
+    0xC0000005, and the step's MSYS bash reports any exit status of 0xC0000000 or more except a few
+    as 127.
     """
     return code if 0 <= code <= 0xFF else 1
 

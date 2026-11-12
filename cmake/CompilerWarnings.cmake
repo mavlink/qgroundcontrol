@@ -170,7 +170,7 @@ function(qgc_disable_dependency_warnings target)
     endif()
 endfunction()
 
-# Applies QGC warning, coverage, sanitizer and unity policy to a project target, once.
+# Applies QGC warning, autogen dependency, coverage, sanitizer and unity policy to a project target, once.
 function(qgc_configure_target target)
     if(NOT TARGET "${target}")
         message(FATAL_ERROR "QGC: qgc_configure_target: Target '${target}' does not exist")
@@ -201,6 +201,16 @@ function(qgc_configure_target target)
             ${target} PRIVATE
             -Wno-error=shadow
             -Wno-error=unused-parameter
+        )
+    endif()
+    if(_automoc AND QGC_AUTOGEN_TARGET_DEPENDS)
+        # moc reads sources and generated headers, never built libraries. Forwarding the target's own dependencies
+        # makes its autogen step wait for every archive it links, which builds the libraries one after another.
+        set_property(TARGET ${target} PROPERTY AUTOGEN_ORIGIN_DEPENDS OFF)
+        set_property(
+            TARGET ${target}
+            APPEND
+            PROPERTY AUTOGEN_TARGET_DEPENDS ${QGC_AUTOGEN_TARGET_DEPENDS}
         )
     endif()
     if(COMMAND qgc_apply_coverage_to_target)

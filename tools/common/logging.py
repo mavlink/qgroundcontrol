@@ -15,14 +15,12 @@ from __future__ import annotations
 
 import os
 import sys
-from enum import Enum
+from enum import StrEnum
 from typing import TextIO
 
 
-class Color(str, Enum):
+class Color(StrEnum):
     """ANSI color codes for terminal output."""
-
-    __str__ = str.__str__  # StrEnum-equivalent; stdlib StrEnum is 3.11+
 
     RED = "\033[0;31m"
     GREEN = "\033[0;32m"

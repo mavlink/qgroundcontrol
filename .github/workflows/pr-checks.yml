@@ -23,33 +23,27 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
+      # A squash merge commits the title, so it must be a subject the conventional-commit-msg hook in
+      # .pre-commit-config.yaml accepts, here with the text after the type limited to 80 characters;
+      # test_workflow_security_policy.py compares the two patterns. Bots open pull requests with
+      # these titles too: Renovate's `deps` type, GitHub's `Revert "..."`.
       - name: Check PR title format
-        continue-on-error: true
-        uses: amannn/action-semantic-pull-request@v6
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          types: |
-            feat
-            fix
-            docs
-            style
-            refactor
-            perf
-            test
-            build
-            ci
-            chore
-            revert
-            deps
-          requireScope: false
-          subjectPattern: ^.{1,80}$
-          subjectPatternError: PR title must be 80 characters or less.
-          validateSingleCommit: false
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          TITLE_PATTERN: '^((feat|fix|perf|revert|docs|style|chore|refactor|test|build|ci|deps)(\([^)\n]+\))?!?: \S.{0,79}$|(fixup|squash|amend)! |Merge |Revert ")'
+        run: |
+          title="$(gh pr view "${PR_NUMBER}" --json title --jq .title)"
+          echo "PR title: ${title}"
+          if ! grep -qP -- "${TITLE_PATTERN}" <<<"${title}"; then
+            echo "::error title=PR title::Expected '<type>(<scope>): <subject>' with a subject of at most 80 characters; see Commit & Review Conventions in AGENTS.md."
+            exit 1
+          fi
 
   label:
     name: Label PR
@@ -63,22 +57,22 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
       - uses: actions/checkout@v7
         with:
           sparse-checkout: |
-            tools/ci/reporting/gh_pr_size_label.py
             tools/_bootstrap.py
+            tools/ci
             tools/common
             tools/qgc_tools
           sparse-checkout-cone-mode: false
           fetch-depth: 1
           persist-credentials: false
 
-      # Non-blocking, like the title check: labels and the XL notice are advisory.
+      # Non-blocking, unlike the title check: labels and the XL notice are advisory.
       - name: Label PR by size
         continue-on-error: true
         env:

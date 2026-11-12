@@ -228,12 +228,19 @@ void VehicleConfigUITestBase::clickThroughAllComponentsAllLocales(Vehicle *vehic
     ignoreLogMessage("API.QGCApplication", QtWarningMsg,
                      QRegularExpression(QStringLiteral("Error loading json localization for .*")));
 
+    // Fact announces the restart before the new language loads, so the notice is worded in the language
+    // in effect when the setting changes: match its current translation, not the English source
+    const auto expectRestartNotice = [this] {
+        expectAppMessage(QRegularExpression(
+            QRegularExpression::escape(Fact::tr("Restart application for changes to take effect."))));
+    };
+
     // The stored locale is machine-dependent: force English so the first pass and
     // the anchor text capture are actually English.
     // Language is a reboot-required setting: each change announces a restart via
     // an app message dialog which must be dismissed before clicking the UI.
     if (languageFact->rawValue().toInt() != QLocale::English) {
-        expectAppMessage(QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+        expectRestartNotice();
         languageFact->setRawValue(QLocale::English);
         QVERIFY2(acceptDialog(5000), "Restart-required dialog never shown after switching language to English");
         verifyExpectedLogMessage();
@@ -252,7 +259,7 @@ void VehicleConfigUITestBase::clickThroughAllComponentsAllLocales(Vehicle *vehic
     const QString englishAnchorText = anchor->property("text").toString();
 
     qgcApp()->resetRebootMessageDebounce();
-    expectAppMessage(QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+    expectRestartNotice();
     languageFact->setRawValue(QLocale::Chinese);
     QVERIFY2(acceptDialog(5000), "Restart-required dialog never shown after switching language to Chinese");
     verifyExpectedLogMessage();
@@ -271,7 +278,7 @@ void VehicleConfigUITestBase::clickThroughAllComponentsAllLocales(Vehicle *vehic
     if (languageFact->rawValue() != savedLanguage) {
         // showRebootAppMessage() debounces repeats: reset so the restore change shows its own dialog
         qgcApp()->resetRebootMessageDebounce();
-        expectAppMessage(QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
+        expectRestartNotice();
         languageFact->setRawValue(savedLanguage);
         QVERIFY2(acceptDialog(5000), "Restart-required dialog never shown after restoring language");
         verifyExpectedLogMessage();

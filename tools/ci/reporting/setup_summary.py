@@ -235,9 +235,13 @@ def setup_facts(env: Mapping[str, str], host: Host | None = None) -> list[tuple[
             BACKENDS.get(get("QGC_ACTIONS_CACHE_BACKEND"), get("QGC_ACTIONS_CACHE_BACKEND")),
         ),
     ]
+    # cache_plan.py sets CCACHE_DISABLE only for a release tag, which restores and saves neither.
+    uncached = "off: release tag" if get("CCACHE_DISABLE") else ""
     ccache_key = ""
     ccache_fallback = ""
-    if get("QGC_COMPILER_CACHE_TOOL") == "sccache":
+    if uncached:
+        compiler_cache = uncached
+    elif get("QGC_COMPILER_CACHE_TOOL") == "sccache":
         compiler_cache = "sccache reads S3 directly (no archive)"
     else:
         compiler_cache = f"ccache {restore_result(get('COMPILER_CACHE'))}"
@@ -249,13 +253,16 @@ def setup_facts(env: Mapping[str, str], host: Host | None = None) -> list[tuple[
         ("Compiler cache", compiler_cache),
         ("ccache primary key", ccache_key),
         ("ccache restored key", ccache_fallback),
-        ("moc cache", restore_result(get("MOC_CACHE"))),
+        ("moc cache", uncached or restore_result(get("MOC_CACHE"))),
         ("moc restored key", fallback_key(get("MOC_CACHE"), get("MOC_CACHE_KEY"))),
         ("CPM sources", restore_result(get("CPM_CACHE"))),
         ("GStreamer SDK", restore_result(get("GSTREAMER_CACHE")) if get("GSTREAMER_MODE") else ""),
         (
             "Build cache saves",
-            "after a successful build" if parse_bool(saves) else "restore only" if saves else "",
+            uncached
+            or (
+                "after a successful build" if parse_bool(saves) else "restore only" if saves else ""
+            ),
         ),
     ]
     return facts

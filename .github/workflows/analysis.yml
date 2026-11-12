@@ -73,10 +73,11 @@ on:
         default: false
         type: boolean
 
+# Only a pull request's superseded runs are cancelled. Every other run has its own group, so a newer
+# push neither cancels it nor replaces it while it waits.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ (inputs.tool || 'compiler') }}
-  # Master runs save the shared result cache, so let them finish instead of cancelling each other.
-  cancel-in-progress: ${{ github.event_name != 'push' }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -94,7 +95,7 @@ jobs:
       clazy_sha256: ${{ steps.plan.outputs.clazy_sha256 }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -106,8 +107,8 @@ jobs:
           sparse-checkout: |
             /src/
             .github/build-config.json
-            tools/ci/planning/analysis_matrix.py
             tools/_bootstrap.py
+            tools/ci
             tools/common
             tools/qgc_tools
           sparse-checkout-cone-mode: false
@@ -147,12 +148,12 @@ jobs:
       # The Harden-Runner community tier audits GitHub-hosted runners only, not RunsOn.
       - name: Harden Runner
         if: runner.environment == 'github-hosted'
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
       - name: Enable RunsOn magic cache
-        uses: runs-on/action@v2
+        uses: runs-on/action@13fbb6a39310a0dac9ab4716da2c4e74a3326dfc # v2.7.0
         with:
           show_costs: summary
 

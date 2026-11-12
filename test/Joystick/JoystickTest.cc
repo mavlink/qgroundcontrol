@@ -89,6 +89,30 @@ void JoystickTest::_multipleJoysticksTest()
     QVERIFY(js1 != js2);
 }
 
+void JoystickTest::_discoverOffMainThreadTest()
+{
+    _mockJoystick =
+        std::unique_ptr<MockJoystick>(MockJoystick::create(QStringLiteral("Off Thread Controller"), 4, 8, 1));
+    QVERIFY(_mockJoystick->isValid());
+    _pumpEvents();
+    _discoveredJoysticks = JoystickSDL::discover();
+    QVERIFY(_findJoystickByInstanceId(_mockJoystick->instanceId()) != nullptr);
+
+    // A discovery would now drop the joystick
+    _mockJoystick.reset();
+    _pumpEvents();
+
+    expectLogMessage("Joystick.JoystickSDL", QtCriticalMsg, QRegularExpression(QStringLiteral("off the main thread")));
+    QMap<QString, Joystick*> offThreadResult;
+    const std::unique_ptr<QThread> thread(
+        QThread::create([&offThreadResult]() { offThreadResult = JoystickSDL::discover(); }));
+    thread->start();
+    QVERIFY(thread->wait(TestTimeout::mediumMs()));
+    verifyExpectedLogMessage();
+
+    QCOMPARE(offThreadResult, _discoveredJoysticks);
+}
+
 //-----------------------------------------------------------------------------
 // Identity Tests
 //-----------------------------------------------------------------------------

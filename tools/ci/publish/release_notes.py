@@ -5,7 +5,7 @@ The notes cover the commits since the previous ``vX.Y.Z`` tag reachable from the
 for a first release). A tag that does not exist yet drafts the unreleased commits since the last
 release reachable from ``HEAD``.
 ``--draft`` creates a draft GitHub Release with the notes unless a release for the tag already
-exists; an existing release is never modified. Release assets are uploaded by hand.
+exists; an existing release is never modified. ``release_assets.py`` attaches the packages.
 
 Usage:
     python3 tools/ci/publish/release_notes.py v5.1.5

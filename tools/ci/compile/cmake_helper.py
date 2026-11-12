@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""CMake build and configure helpers for CI.
+"""Run CI's CMake configure, build, and CTest steps and write their job-summary sections.
+The `ctest` command reruns failed tests once and reports the tests that passed on retry.
 
 Subcommands:
     build       Run cmake --build with CI-friendly output and timing, teeing it to a log, then
@@ -10,7 +11,10 @@ Subcommands:
                 build directory, then write the job summary's Configure section: result,
                 duration, preset, generator, configure-check reuse and, after a failure, the
                 first CMake error, which also becomes an error annotation
-    ctest       Run CTest with standardized arguments and timing
+    ctest       Run CTest with standardized arguments and timing, then rerun failed tests once.
+                A test that passes the second time no longer fails the step: the JUnit report
+                records its first attempt in a <flakyFailure> element and the test becomes a
+                warning annotation. Failures with a sanitizer report are final
 """
 
 from __future__ import annotations
@@ -25,6 +29,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -73,6 +78,12 @@ if TYPE_CHECKING:
 BUILD_LOG = "build-output.log"
 CONFIGURE_LOG = "cmake-configure.log"
 CONFIGURE_TAIL_LINES = 40
+# In four weeks of CI no flaky run had more than two failed tests; more are a broken build or runner.
+MAX_RETRIED_TESTS = 5
+# A sanitizer finding stays a failure even if the test would pass the next time.
+SANITIZER_REPORT = re.compile(r"(?:ERROR|WARNING|SUMMARY): \w+Sanitizer\b|\bruntime error: ")
+# The element Maven Surefire writes for a failed attempt of a test that then passed.
+FLAKY_FAILURE = "flakyFailure"
 REPO_ROOT = find_repo_root(Path(__file__))
 
 
@@ -574,24 +585,127 @@ def _maybe_wrap_xvfb(cmd: list[str]) -> list[str]:
     return cmd
 
 
+def _read_junit(path: Path) -> ET.Element:
+    """Return the root of a JUnit report that CTest wrote.
+
+    CTest writes no DTD, so one is refused: without it there are no entities to expand.
+    """
+    data = path.read_bytes()
+    if b"<!DOCTYPE" in data:
+        raise ET.ParseError("unexpected DTD")
+    return ET.fromstring(data)
+
+
+def _failed_cases(root: ET.Element) -> dict[str, ET.Element]:
+    return {
+        case.get("name", ""): case
+        for case in root.iter("testcase")
+        if case.find("failure") is not None
+    }
+
+
+def _seconds(element: ET.Element) -> float:
+    try:
+        return float(element.get("time", "0"))
+    except ValueError:
+        return 0.0
+
+
+def merge_retry(first: ET.Element, retry: ET.Element) -> list[str]:
+    """Fold a retry run's JUnit results into the first run's; return the tests that then passed.
+
+    Each of them gets the retry's passing <testcase>, holding the failed first attempt (message,
+    time and output) in a <flakyFailure> child that JUnit readers unaware of the element skip.
+    Tests that failed again keep their first report.
+    """
+    reruns = {case.get("name", ""): case for case in retry.iter("testcase")}
+    passed = []
+    for index, case in enumerate(list(first)):
+        failure = case.find("failure")
+        rerun = reruns.get(case.get("name", ""))
+        if failure is None or rerun is None or rerun.get("status") != "run":
+            continue
+        message = failure.get("message", "")
+        flaky = ET.Element(
+            FLAKY_FAILURE, {"message": message, "type": message, "time": case.get("time", "0")}
+        )
+        ET.SubElement(flaky, "system-out").text = case.findtext("system-out") or ""
+        rerun.insert(0, flaky)
+        first[index] = rerun
+        passed.append(case.get("name", ""))
+    first.set("failures", str(len(_failed_cases(first))))
+    first.set("time", str(_seconds(first) + _seconds(retry)))
+    return passed
+
+
+def retry_failed_tests(runner: list[str], junit: Path, ctest_output: Path, exit_code: int) -> int:
+    """Rerun the tests of a failed CTest run once; return 0 when all of them then pass.
+
+    Otherwise the result is *exit_code*, the first run's. Nothing is rerun when a failure has a
+    sanitizer report, when more than MAX_RETRIED_TESTS tests failed, or when the JUnit report
+    names no failed test (CTest itself failed, or found no tests).
+    """
+    try:
+        first = _read_junit(junit)
+    except (OSError, ET.ParseError) as error:
+        print(f"Not retrying: cannot read {junit}: {error}", flush=True)
+        return exit_code
+    failed = _failed_cases(first)
+    if not failed:
+        return exit_code
+    findings = sorted(
+        name
+        for name, case in failed.items()
+        if SANITIZER_REPORT.search(case.findtext("system-out") or "")
+    )
+    if findings:
+        print(f"Not retrying: sanitizer report in {', '.join(findings)}", flush=True)
+        return exit_code
+    if len(failed) > MAX_RETRIED_TESTS:
+        print(f"Not retrying: {len(failed)} tests failed (limit {MAX_RETRIED_TESTS})", flush=True)
+        return exit_code
+
+    print(f"Retrying failed tests once: {', '.join(sorted(failed))}", flush=True)
+    retry_junit = junit.with_name(f"{junit.stem}-retry{junit.suffix}")
+    retry_output = ctest_output.with_name(f"{ctest_output.stem}-retry{ctest_output.suffix}")
+    # --rerun-failed selects what CTest itself recorded as failed, including tests it could not run.
+    cmd = [*runner, "--rerun-failed", "--output-junit", str(retry_junit)]
+    retry_exit = run_tee(_maybe_wrap_xvfb(cmd), retry_output)
+    try:
+        with ctest_output.open("a", encoding="utf-8") as output:
+            output.write(retry_output.read_text(encoding="utf-8", errors="replace"))
+        retry_output.unlink()
+        passed = merge_retry(first, _read_junit(retry_junit))
+        ET.ElementTree(first).write(junit, encoding="UTF-8", xml_declaration=True)
+        retry_junit.unlink()
+    except (OSError, ET.ParseError) as error:
+        gh_warning(f"Cannot merge the retry's results into {junit}: {error}")
+        return exit_code
+    for name in passed:
+        gh_warning(f"{name} failed, then passed on retry", title="Flaky test")
+    return 0 if retry_exit == 0 and len(passed) == len(failed) else exit_code
+
+
 def cmd_ctest(args: argparse.Namespace) -> int:
-    """Run CTest with standardized arguments and timing."""
+    """Run CTest with standardized arguments and timing, retrying failed tests once."""
     try:
         jobs = detect_jobs(args.jobs)
     except ValueError as error:
         gh_error(str(error))
         return 1
-    cmd = [
+    # CTest keeps 300 KiB of a failed test's output, by default its start. "middle" also keeps the
+    # end, where a sanitizer report is, for the JUnit report.
+    runner = [
         "ctest",
         "--output-on-failure",
-        "--no-tests=error",
-        "--output-junit",
-        args.junit_output,
+        "--test-output-truncation",
+        "middle",
         "--parallel",
         str(jobs),
     ]
     if build_type := args.build_type or multi_config_build_type():
-        cmd += ["-C", build_type]
+        runner += ["-C", build_type]
+    cmd = [*runner, "--no-tests=error", "--output-junit", args.junit_output]
     if args.include_labels:
         cmd += ["-L", args.include_labels]
     if args.exclude_labels:
@@ -601,6 +715,10 @@ def cmd_ctest(args: argparse.Namespace) -> int:
 
     start = time.monotonic()
     exit_code = run_tee(_maybe_wrap_xvfb(cmd), args.ctest_output)
+    if exit_code:
+        exit_code = retry_failed_tests(
+            runner, Path(args.junit_output), Path(args.ctest_output), exit_code
+        )
     duration = int(time.monotonic() - start)
     print(f"Tests completed in {duration}s", flush=True)
     return exit_code

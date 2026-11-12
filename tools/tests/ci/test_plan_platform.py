@@ -71,6 +71,25 @@ def test_platforms_with_their_own_matrix_plan_only_whether_to_build(
     assert _plan(gh_output, platform) == (should_build, [])
 
 
+@pytest.mark.parametrize(
+    ("platform", "should_build"),
+    [
+        ("linux", "true"),
+        ("windows", "false"),
+        ("macos", "false"),
+        ("ios", "false"),
+        ("android", "false"),
+        ("docker", "false"),
+    ],
+)
+def test_lock_file_update_plans_only_the_linux_build(
+    event: pytest.MonkeyPatch, gh_output: Path, platform: str, should_build: str
+) -> None:
+    event.setenv("EVENT_NAME", "pull_request")
+    event.setattr(detect_changes, "get_changed_files", lambda: ["tools/uv.lock"])
+    assert _plan(gh_output, platform) == (should_build, [])
+
+
 def test_unknown_platform_is_rejected() -> None:
     with pytest.raises(SystemExit):
         main(["--platform", "docker-linux"])
@@ -143,9 +162,21 @@ def _docker_platforms(gh_output: Path) -> tuple[str, list[str]]:
     ("changed", "expected"),
     [
         (["docs/index.md"], []),
-        (["src/Vehicle/Vehicle.cc"], ["Linux-Ubuntu-24.04", "Android"]),
+        # The builder images do not depend on application sources, tests or translations.
+        (["src/Vehicle/Vehicle.cc"], []),
+        (
+            [
+                "src/FlyView/FlyView.qml",
+                "test/QmlUITests/FlyViewTest.cc",
+                "translations/qgc_source_fr_FR.ts",
+            ],
+            [],
+        ),
+        ([".github/actions/cache/action.yml"], ["Linux-Ubuntu-24.04", "Android"]),
         (["android/AndroidManifest.xml"], ["Android"]),
         (["deploy/linux/AppImage.sh"], ALL_BUT_ANDROID),
+        (["deploy/docker/Dockerfile"], ALL),
+        (["src/Vehicle/CMakeLists.txt"], ALL),
         (None, ALL),
     ],
 )
@@ -212,6 +243,7 @@ def test_docker_legs_carry_the_events_push_target(
     event.setenv("EVENT_NAME", event_name)
     event.setenv("GITHUB_REPOSITORY", repository)
     event.setenv("GITHUB_REF", ref)
+    event.setattr(detect_changes, "get_changed_files", lambda: ["deploy/docker/Dockerfile"])
     if ref.startswith("refs/tags/"):
         event.setenv("GITHUB_REF_TYPE", "tag")
         event.setattr(detect_changes, "check_release_tag", lambda *_: True)

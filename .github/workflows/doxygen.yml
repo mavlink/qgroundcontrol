@@ -25,7 +25,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -63,7 +63,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -71,9 +71,9 @@ jobs:
         uses: actions/checkout@v7
         with:
           sparse-checkout: |
-            .github/actions/deploy-docs
-            tools/ci/publish/deploy_docs.py
+            .github/actions
             tools/_bootstrap.py
+            tools/ci
             tools/common
             tools/qgc_tools
           sparse-checkout-cone-mode: false

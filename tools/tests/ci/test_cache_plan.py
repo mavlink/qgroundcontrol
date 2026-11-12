@@ -73,7 +73,7 @@ def test_pull_request_keys_match_the_previous_action(workspace) -> None:
     fingerprint = compute_cpm_fingerprint(workspace.resolve())
     ccache = "ccache-linux-linux_gcc_64-Release"
     moc = "moccache-linux-linux_gcc_64"
-    cpm = "cpm-sources-v2-linux-linux_gcc_64"
+    cpm = "cpm-sources-v3-linux-linux_gcc_64"
 
     assert result.outputs == {
         "ccache_key": f"{ccache}-pr-42-{CCACHE_HASH}-7-1",
@@ -131,7 +131,7 @@ def test_variant_and_suffix_keys_match_the_previous_action(workspace) -> None:
     fingerprint = compute_cpm_fingerprint(workspace.resolve())
     ccache = "ccache-linux-linux_gcc_64-Debug-custom"
     moc = "moccache-linux-linux_gcc_64-shared"
-    cpm = "cpm-sources-v2-linux-linux_gcc_64"
+    cpm = "cpm-sources-v3-linux-linux_gcc_64"
 
     assert result.outputs["ccache_key"] == f"{ccache}-custom-debug-shared-{CCACHE_HASH}-7-1"
     assert restore_keys(result.outputs["ccache_restore_keys"]) == [
@@ -350,6 +350,99 @@ def test_artifact_snapshots_follow_backend_and_event(workspace, backend, event, 
 
 
 SCCACHE = {"compiler_cache": "sccache", "sccache_bucket": "runs-on-cache"}
+RELEASE_TAG = {"ref_type": "tag", "ref_name": "v5.1.5"}
+COMPILER_AND_MOC_KEYS = (
+    "ccache_key",
+    "ccache_restore_keys",
+    "moccache_key",
+    "moccache_restore_keys",
+)
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {},
+        {"backend": "s3"},
+        # A dispatch on the tag bypasses the workflows' tag filter and builds the same packages.
+        {"event": "workflow_dispatch"},
+        {"host": "windows", "target": "win64_msvc2022_64"},
+        {"build_type": "Debug", "variant": "coverage"},
+        SCCACHE,
+    ],
+)
+def test_release_tag_compiles_without_a_compiler_or_moc_cache(workspace, changes, capsys) -> None:
+    release = plan(workspace, **RELEASE_TAG, **changes)
+    branch = plan(workspace, **{**RELEASE_TAG, **changes, "ref_type": "branch"})
+
+    assert not any(release.outputs[name] for name in COMPILER_AND_MOC_KEYS)
+    assert {
+        "QGC_BUILD_CACHE_ARTIFACT": "false",
+        "QGC_SAVE_BUILD_CACHE": "false",
+        "QGC_CCACHE_KEY": "",
+        "QGC_MOCCACHE_KEY": "",
+        "CCACHE_DISABLE": "1",
+        "MOCCACHE_DISABLE": "1",
+        "QGC_COMPILER_CACHE_TOOL": "ccache",
+        "CCACHE_DIR": f"{workspace.as_posix()}/.cache/ccache",
+    }.items() <= release.env.items()
+    # Neither the shared sccache prefix nor saved configure-check results reach a release.
+    assert not [name for name in release.env if name.startswith(("SCCACHE_", "QGC_CHECK_RESULT_"))]
+    assert "::warning::" not in capsys.readouterr().out
+    # The fingerprint-keyed source caches are planned as for a branch of the same name.
+    for name in set(branch.outputs) - set(COMPILER_AND_MOC_KEYS):
+        assert release.outputs[name] == branch.outputs[name], name
+
+
+def test_release_tag_discards_cache_directories_left_in_the_workspace(workspace) -> None:
+    for leftover in (".cache/ccache/0/1/object", ".cache/moccache/entry/moc.cpp"):
+        (workspace / leftover).parent.mkdir(parents=True)
+        (workspace / leftover).write_text("from an earlier job")
+    (workspace / ".cache/CPM/package").mkdir(parents=True)
+
+    plan(workspace)
+    assert (workspace / ".cache/ccache/0/1/object").is_file()
+    assert (workspace / ".cache/moccache/entry/moc.cpp").is_file()
+
+    plan(workspace, **RELEASE_TAG)
+    # A container build reads the mounted directory, whatever environment it is started with.
+    assert list((workspace / ".cache/ccache").iterdir()) == []
+    assert not (workspace / ".cache/moccache").exists()
+    assert (workspace / ".cache/CPM/package").is_dir()
+
+
+@pytest.mark.parametrize(
+    ("changes", "save"),
+    [
+        # A version marker on master is a tag, but not a release.
+        ({"ref_type": "tag", "ref_name": "v5.2.0-dev"}, "true"),
+        ({"ref_type": "tag", "ref_name": "v5.1"}, "true"),
+        ({"ref_type": "branch", "ref_name": "master"}, "true"),
+        ({"ref_type": "branch", "ref_name": "Stable_V5.1"}, "true"),
+        # A branch may have a release tag's name.
+        ({"ref_type": "branch", "ref_name": "v5.1.5"}, "true"),
+        (
+            {
+                "ref_type": "branch",
+                "event": "pull_request",
+                "ref_name": "42/merge",
+                "pr_number": "42",
+            },
+            "false",
+        ),
+    ],
+)
+def test_other_refs_keep_their_compiler_and_moc_caches(workspace, changes, save) -> None:
+    result = plan(workspace, **changes)
+
+    # The ref type decides nothing for them, so they plan as before it was read.
+    assert result == plan(workspace, **{**changes, "ref_type": ""})
+    assert all(result.outputs[name] for name in COMPILER_AND_MOC_KEYS)
+    assert result.env["QGC_BUILD_CACHE_ARTIFACT"] == "true"
+    assert result.env["QGC_SAVE_BUILD_CACHE"] == save
+    assert result.env["QGC_CCACHE_KEY"] == result.outputs["ccache_key"]
+    assert not {"CCACHE_DISABLE", "MOCCACHE_DISABLE"} & result.env.keys()
+    assert "QGC_CHECK_RESULT_CACHE_DIR" in result.env
 
 
 def test_sccache_pilot_replaces_the_ccache_archive(workspace, tmp_path) -> None:
@@ -477,6 +570,31 @@ def test_main_exports_outputs_and_environment(workspace, monkeypatch, gh_output,
     assert exported["QGC_CCACHE_KEY"] == f"{ccache}-simulator-pr-9-{CCACHE_HASH}-11-3"
     assert exported["CPM_CACHE_PATH"] == ".cache/CPM"
     assert exported["MOCCACHE_STATS"] == "1"
+
+
+def test_main_reads_the_release_tag_from_the_job_environment(
+    workspace, monkeypatch, gh_output, gh_env
+) -> None:
+    for name, value in {
+        "INPUT_HOST": "linux",
+        "INPUT_TARGET": "linux_gcc_64",
+        "INPUT_BUILD_TYPE": "Release",
+        "GITHUB_EVENT_NAME": "push",
+        "GITHUB_REF_TYPE": "tag",
+        "GITHUB_REF_NAME": "v5.1.5",
+        "COMPILER_CACHE_HASH": CCACHE_HASH,
+        "MOC_CACHE_HASH": MOC_HASH,
+    }.items():
+        monkeypatch.setenv(name, value)
+
+    assert main([]) == 0
+
+    outputs = read_github_file(gh_output)
+    assert not any(outputs[name] for name in COMPILER_AND_MOC_KEYS)
+    assert outputs["cpm_mode"] == "save"
+    exported = read_github_file(gh_env)
+    assert (exported["CCACHE_DISABLE"], exported["MOCCACHE_DISABLE"]) == ("1", "1")
+    assert exported["QGC_SAVE_BUILD_CACHE"] == "false"
 
 
 def test_main_selects_sccache_from_the_job_environment(

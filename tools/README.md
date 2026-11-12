@@ -23,14 +23,12 @@ condensed day-to-day workflow.
 
 ## Quick Start
 
-Install uv, then the locked `dev` Python profile into `tools/.venv`; the profile includes `just`:
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then the locked `dev` Python
+profile into `tools/.venv`; the profile includes `just`. uv installs the Python the tools run on
+([Python Environment](#python-environment)), so the system Python is not used:
 
 ```bash
-# Linux/macOS; on Windows install uv from https://docs.astral.sh/uv/getting-started/installation/
-python3 tools/setup/install_uv.py
-export PATH="$HOME/.local/bin:$PATH"
-
-python3 tools/setup/install_python.py dev   # Windows: python tools/setup/install_python.py dev
+uv run --frozen --project tools python tools/setup/install_python.py dev
 . tools/.venv/bin/activate                  # PowerShell: . tools/.venv/Scripts/Activate.ps1
 ```
 
@@ -41,7 +39,7 @@ Everyday loop:
 
 ```bash
 just             # List all recipes
-just setup       # First-time: deps + configure + build
+just setup       # First-time: deps + Qt + configure + build
 just build       # Incremental build
 just check       # lint + Python tooling tests + application tests — run before declaring done
 ```
@@ -54,6 +52,7 @@ tools/
 ├── analyze.py               # Static analysis and formatting (clang-format, clang-tidy, clazy, qmllint, qmlformat)
 ├── build_profile.py         # Summarize Ninja and Clang time-trace build hotspots
 ├── check_deps.py            # Check for outdated dependencies
+├── ci_script_index.py       # Generate the CI script index in ci/README.md from module docstrings
 ├── clean.py                 # Clean build artifacts and caches
 ├── configure.py             # CMake configuration wrapper
 ├── coverage_report.py       # Code coverage reports
@@ -98,10 +97,11 @@ versions from `.github/build-config.json` ([Centralized Configuration](#centrali
 
 ### Setup
 
-| Recipe            | Description                                                    |
-| ----------------- | -------------------------------------------------------------- |
-| `just deps`       | Auto-detect and install system build dependencies              |
-| `just vscode`     | Install missing VS Code workspace files from tracked templates |
+| Recipe           | Description                                                                                   |
+| ---------------- | --------------------------------------------------------------------------------------------- |
+| `just deps`      | Auto-detect and install system build dependencies                                             |
+| `just qt [ARGS]` | Install the configured Qt into `~/Qt` unless configure already finds it; `--dry-run` previews |
+| `just vscode`    | Install missing VS Code workspace files from tracked templates                                |
 
 ### Build
 
@@ -112,21 +112,22 @@ versions from `.github/build-config.json` ([Centralized Configuration](#centrali
 | `just release`      | Configure and build in Release mode (testing disabled)                                           |
 | `just clean [ARGS]` | Clean the build directory; forwards `ARGS` to `tools/clean.py` (`--cache`, `--all`, `--dry-run`) |
 | `just rebuild`      | `clean` + `configure` + `build`                                                                  |
-| `just setup`        | Full first-time setup: `deps` + `configure` + `build`                                            |
+| `just setup`        | Full first-time setup: `deps` + `qt` + `configure` + `build`                                     |
 
 ### Quality
 
-| Recipe                  | Description                                                                                           |
-| ----------------------- | ----------------------------------------------------------------------------------------------------- |
-| `just test`             | Run application tests via CTest; defaults to labels `Unit`/`Integration`, excluding `Flaky`/`Network` |
-| `just test-python`      | Run the Python tooling tests (`tools/tests`, incl. `tools/tests/ci`) in parallel, in random order     |
-| `just lint [ARGS]`      | Run non-manual hooks on all files with prek (`prek run --all-files`); `ARGS` select hooks/stages      |
-| `just lint-docs [ARGS]` | Lint English docs with only the docs hooks (every page; `--changed` for branch changes)               |
-| `just format`           | Check clang-format on lines changed since the default branch (no changes)                             |
-| `just format-fix`       | Apply clang-format to lines changed since the default branch                                          |
-| `just analyze`          | Run static analysis (`tools/analyze.py`, default tool clang-tidy)                                     |
-| `just coverage`         | Build with coverage instrumentation, run tests, generate report                                       |
-| `just check`            | `lint` + `test-python` + `test` — run before declaring a task done                                    |
+| Recipe                          | Description                                                                                               |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `just test`                     | Run application tests via CTest; defaults to labels `Unit`/`Integration`, excluding `Flaky`/`Network`     |
+| `just test-python [ARGS]`       | Run the Python tooling tests (`tools/tests`) with CI's dependency groups, in parallel, in random order    |
+| `just lint [ARGS]`              | Run non-manual hooks on all files with prek (`prek run --all-files`); `ARGS` select hooks/stages          |
+| `just lint-docs [ARGS]`         | Lint English docs with only the docs hooks (every page; `--changed` for branch changes)                   |
+| `just format`                   | Check clang-format on lines changed since the default branch (no changes)                                 |
+| `just format-fix`               | Apply clang-format to lines changed since the default branch                                              |
+| `just format-fix-python [ARGS]` | Apply Ruff's lint fixes and formatting (Python files, Python blocks in Markdown), or only to `ARGS` paths |
+| `just analyze`                  | Run static analysis (`tools/analyze.py`, default tool clang-tidy)                                         |
+| `just coverage`                 | Build with coverage instrumentation, run tests, generate report                                           |
+| `just check`                    | `lint` + `test-python` + `test` — run before declaring a task done                                        |
 
 Override `test` label filters via environment variables or positional args:
 
@@ -151,7 +152,7 @@ just test "Slow" "Network"             # override via positional args (labels, e
 | `just info`              | Print resolved build configuration (Qt version/dir, CMake min, GStreamer, jobs, ...)                  |
 | `just check-deps`        | Check Qt, GStreamer, Python, and build tool versions (`tools/check_deps.py`)                          |
 | `just check-gstreamer`   | Check the latest GStreamer patch common to all SDK platforms                                          |
-| `just translations`      | Update translation sources (`tools/translations/qgc_lupdate.py`)                                      |
+| `just translations`      | Update translation sources (`tools/translations/qgc_lupdate.py`); `--check` only reports bad `tr()`   |
 | `just distclean`         | Clean build, caches, generated files, and `node_modules/`                                             |
 | `just validate-configs`  | Validate build settings and link exceptions ([Centralized Configuration](#centralized-configuration)) |
 | `just release-notes TAG` | Print draft release notes for a `vX.Y.Z` tag ([Release notes](#release-notes))                        |
@@ -168,7 +169,9 @@ Repository configure/build/test/workflow presets are rooted at [`../CMakePresets
 Use `CMakeUserPresets.json` for machine-local paths or derived presets; it is ignored by Git and
 preserved by `just clean`. `tools/configure.py` (behind `just configure`) requires the Qt kit's
 `qt-cmake`, found through `--qt-root` (`QT_DIR` for `just`), `QT_ROOT_DIR`, or the newest standard
-Qt install for the host architecture. Use `--no-qt-cmake` only when supplying an explicit target
+Qt install for the host architecture (`~/Qt`, then `/opt/Qt` on Linux and `/Applications/Qt` on
+macOS; `C:/Qt`, then `~/Qt` on Windows). `just qt` installs the configured Qt into `~/Qt`
+([Qt installer](#qt-installer)). Use `--no-qt-cmake` only when supplying an explicit target
 toolchain, as Android CI does. `configure.py` configures into the selected preset's `binaryDir`,
 where `cmake --build --preset` and `ctest --preset` look for the tree; `-B` overrides it.
 
@@ -216,8 +219,8 @@ devcontainer image does; `source .cache/analysis-tools/env.sh` (its default pref
 `tools/analyze.py`. `--tool clang-tidy --fix` applies the selected translation units' fixes with
 `clang-apply-replacements` ([analyzers/README.md](analyzers/README.md#clang-tidy-fixes)); CI never
 applies fixes. The clang-tidy and Clazy pre-commit hooks run only with `--hook-stage manual`;
-fast hooks remain the required PR gate. CI sharding and result caching are described in
-[ci-overview.md](../.github/ci-overview.md); output files and profiling in
+fast hooks remain the PR lint check. CI sharding and result caching are described in the
+[Code Analysis notes](../.github/ci-notes/platforms.md#code-analysis); output files and profiling in
 [analyzers/README.md](analyzers/README.md).
 
 **QML:** `--tool qmllint --qml-build` checks QML against the generated `<build-dir>/qml` type
@@ -242,21 +245,39 @@ python tools/pre_commit.py --prepare-cache                       # Install the h
 ```
 
 The selected hooks run in one `prek run` call; its output streams to the console and, with
-`--results-dir`, into `pre-commit-output.txt`. `--ci` skips the local-only `trufflehog` hook unless
-`SKIP` is already set. `--prepare-cache` installs every hook environment except
-`CACHE_SKIPPED_HOOKS` (TruffleHog and the Renovate validator) and then runs `prek cache gc`; the
-pre-commit workflow runs it on pushes that miss the prek cache, and saves the cache only when the
-install succeeded.
+`--results-dir`, into `pre-commit-output.txt`. A failed run ends with the command that repeats it
+and, for the report-only Ruff and clang-format hooks, the recipe that applies their fixes
+(`just format-fix-python`, `just format-fix`); the CI job summary shows the same text. `--ci`
+skips the local-only `trufflehog` hook unless `SKIP` is already set. `--prepare-cache` installs
+every hook environment except `CACHE_SKIPPED_HOOKS` (TruffleHog and the Renovate validator) and
+then runs `prek cache gc`; the pre-commit workflow runs it on pushes that miss the prek cache, and
+saves the cache only when the install succeeded
+([workflow notes](../.github/ci-notes/platforms.md#lint-docs-and-security-workflows)).
 
 The `precommit` group pins prek, which also accepts pre-commit's commands and options
 (`prek run <id> --hook-stage manual --files <paths>`, `SKIP=<id>`). The configuration stays
 compatible with stock pre-commit, which the group keeps as a fallback runner for one release.
 `editorconfig-checker` enforces [`.editorconfig`](../.editorconfig) with the exclusions and relaxed
 checks in `configs/editorconfig-checker.json`; `cmake-presets-schema` validates `CMakePresets.json` and
-`cmake/presets/*.json` offline against the schema shipped in the locked `cmake` package.
-Manual-stage hooks run only on request: `clang-tidy`, `clazy`, the CI validators that download pinned
-tools (`renovate-config-validator`, `packer-validate`, `runs-on-lint`, which `pre_commit.py --ci` also
-runs on the changed files), and
+`cmake/presets/*.json` offline against the schema shipped in the locked `cmake` package;
+`check-renovate` schema-checks `.github/renovate.json`. The C++ formatting hook checks modified
+regions against the PR merge base (or `HEAD` locally), following `CODING_STYLE.md`; new files and
+unchanged files supplied in a full sweep are checked in full. `prek install` also installs a
+`commit-msg` hook enforcing Conventional Commits; `default_stages` keeps the other hooks out of
+that stage.
+
+Most hooks check only the changed files, so a changed configuration or locked tool version
+rechecks everything it governs: `ruff-check-tree` and `ruff-format-tree` run over the whole tree
+when `ruff.toml`, `tools/pyproject.toml`, or `tools/uv.lock` change; Pyright, which always checks
+the whole project, also runs for `pyrightconfig.json`, `tools/pyproject.toml`, and
+`tools/uv.lock`; and import-linter for `tools/pyproject.toml` and `tools/uv.lock`. A changed docs
+lint configuration (`.vale.ini`, `.markdownlint*`, `.typos.toml`, `.pre-commit-config.yaml`,
+`tools/pre_commit.py`) likewise rechecks every English page with the docs hooks.
+
+Manual-stage hooks run only on request: `clang-tidy`, `clazy` (CI runs both in `analysis.yml`), the
+CI validators that download pinned tools (`renovate-config-validator`, `packer-validate`,
+`runs-on-lint`, which `pre_commit.py --ci` also runs, each only when its own files change; Packer
+and the RunsOn CLI are the `build-config.json` pins, verified and cached in `.cache/tools/`), and
 three formatter trials that report differences without rewriting files: `gersemi` (CMake,
 `configs/gersemirc.yaml`), `yamlfmt` (`configs/yamlfmt.yaml`), and `qmlformat` (`analyzers/qmlformat.py`,
 `.qmlformat.ini`). For example, `just lint gersemi --hook-stage manual` checks every CMake file.
@@ -268,7 +289,7 @@ Clean build artifacts and caches. Underlies `just clean` and `just distclean`.
 ```bash
 python tools/clean.py              # Clean build directory
 python tools/clean.py --all        # Clean everything (build, caches, node_modules/, Python bytecode outside venvs)
-python tools/clean.py --cache      # Clean only repo-local caches (.cache, incl. ccache and the clangd index, plus a legacy .ccache)
+python tools/clean.py --cache      # Clean only repo-local caches (.cache, incl. ccache and the clangd index; pytest's tools/.cache; a legacy .ccache)
 python tools/clean.py --dry-run    # Show what would be removed
 ```
 
@@ -305,7 +326,7 @@ Content-addressed cache for Qt's moc, wired in through `AUTOMOC_EXECUTABLE` whil
 `tools/moccache/__pycache__`. A moc run loads only `core.py`; `trim.py` (LRU eviction) and `stats.py`
 (hit/miss reports) are imported only for their subcommands or a due auto-trim, keeping each cache
 hit's startup short. The stats and trim commands run through the launcher too
-(`python3 tools/moccache_launcher.py --show-stats ...`).
+(`python tools/moccache_launcher.py --show-stats ...`).
 Misses fall through to the real moc and never fail the build. The
 [dev guide Build Caching section](../docs/en/qgc-dev-guide/getting_started/index.md#build-caching)
 covers the cache key, environment variables, and stats commands. Tests:
@@ -382,6 +403,18 @@ just release-notes v5.1.5                                # Notes for an existing
 python tools/ci/publish/release_notes.py v5.2.0          # Same script; v5.2.0 not tagged yet
 ```
 
+### ci_script_index.py
+
+Regenerates the script index in [`ci/README.md`](ci/README.md#script-index) from the module
+docstrings of `tools/ci/` and from the workflows, actions, hooks, and recipes that name each
+script. Run it after adding, moving, or redescribing a CI script; `--check`, which the Python
+tests run, fails when the committed index is out of date.
+
+```bash
+python tools/ci_script_index.py           # Rewrite the index
+python tools/ci_script_index.py --check   # Verify it
+```
+
 ### PX4 metadata
 
 `px4-metadata.yml` runs `update_px4_metadata.py` daily and opens a pull request when the bundled PX4
@@ -390,14 +423,16 @@ changes upstream. It retries both downloads from artifacts.px4.io and replaces n
 both are valid: well-formed airframe XML without a DTD, and xz-compressed JSON that lists parameters.
 
 ```bash
-python3 tools/update_px4_metadata.py
+python tools/update_px4_metadata.py
 ```
 
 ## Setup Scripts
 
 Scripts in `setup/` configure development environments and read versions from
-`.github/build-config.json`. They need only the standard library, so they also run with the host
-`python3` before `tools/.venv` exists. `install_dependencies` is a package
+`.github/build-config.json`. They need only the standard library, so they also run before
+`tools/.venv` has any packages: `uv run --frozen --project tools python` runs them on a fresh
+checkout, as does a host `python3` of the [required version](#python-environment).
+`install_dependencies` is a package
 (`tools/setup/install_dependencies/`) run through its `__main__.py`; without `--platform` it
 detects the host. `build_gstreamer.py` is the entry for the `setup/gstreamer/` package: `config`
 (build settings, and the Meson options, one per plugin of `gstreamer.plugins`), `host` (commands, host arch and jobs), `meson` (Linux,
@@ -414,7 +449,7 @@ install prefix, such as a source build's.
 | `install_dependencies --platform windows` | Windows               | Install GStreamer (optional `--vulkan`, `--msvc`, `--msvc-arm64`, `--nsis`)            |
 | `install_uv.py`                           | Linux, macOS          | Install the uv release named by `required-version` when `uv` is not on `PATH`          |
 | `install_python.py`                       | All                   | Install locked Python tool groups via uv ([Python Environment](#python-environment))   |
-| `install_qt.py`                           | All                   | Install Qt with [QGC's installer or aqtinstall](#qt-installer) (CI: `plan`/`ensure`)   |
+| `install_qt.py`                           | All                   | Install Qt with [QGC's installer or aqtinstall](#qt-installer) (`just qt`: `local`)    |
 | `setup_vscode.py`                         | All                   | Install missing VS Code workspace files from tracked templates                         |
 | `read_config.py`                          | All                   | Read `.github/build-config.json`                                                       |
 | `build_gstreamer.py`                      | All                   | Build GStreamer from source (optional)                                                 |
@@ -435,37 +470,48 @@ Locally, the Linux installers also sync the locked `build` group (CMake, Ninja, 
 `build.ninja_version` pins in `build-config.json`, which `build-setup` installs.
 
 On macOS and Windows, the GStreamer packages come from the official server, falling back to
-QGroundControl's public S3 mirror. Both sources are verified against the SHA-256 checksums
+QGroundControl's public S3 mirror: the official server gets two tries and three minutes, then the
+mirror resumes the partial download. Both sources are verified against the SHA-256 checksums
 pinned in `.github/build-config.json`; installation stops if a package cannot be verified.
 
 ```bash
 # Linux: Install all dependencies
-python3 tools/setup/install_dependencies --platform debian
+uv run --frozen --project tools python tools/setup/install_dependencies --platform debian
 
 # Linux: build tools plus Gradle's JDK only, for Android builds
-python3 tools/setup/install_dependencies --platform debian --category android
+uv run --frozen --project tools python tools/setup/install_dependencies --platform debian --category android
 
 # macOS: Install all dependencies
-python3 tools/setup/install_dependencies --platform macos
+uv run --frozen --project tools python tools/setup/install_dependencies --platform macos
 
 # Windows (as Admin):
-python .\tools\setup\install_dependencies --platform windows
+uv run --frozen --project tools python tools/setup/install_dependencies --platform windows
 
-# Install Qt from the configured version and modules
-python3 tools/setup/install_qt.py install --from-config --host linux --arch linux_gcc_64
+# Install the configured Qt for this machine into ~/Qt, where configure looks (just qt)
+uv run --frozen --project tools --group build python tools/setup/install_qt.py local
+
+# Install a chosen kit of the configured Qt; without --outdir it lands in ./.qt, which configure does not search
+uv run --frozen --project tools --group build python tools/setup/install_qt.py install --from-config --host linux --arch linux_gcc_64 --outdir ~/Qt
 
 # Build GStreamer from source (optional — CMake auto-downloads pre-built SDKs)
-python3 tools/setup/install_dependencies --platform debian --category gstreamer_build
-python3 tools/setup/build_gstreamer.py --platform linux --prefix /opt/gstreamer
+uv run --frozen --project tools python tools/setup/install_dependencies --platform debian --category gstreamer_build
+uv run --frozen --project tools python tools/setup/build_gstreamer.py --platform linux --prefix /opt/gstreamer
 
 # Build Clazy like the Code Analysis workflow; then put .cache/clazy/bin on PATH
-python3 tools/setup/build_clazy.py --prefix .cache/clazy
+uv run --frozen --project tools python tools/setup/build_clazy.py --prefix .cache/clazy
 
 # Read build config values
-python3 tools/setup/read_config.py --get qt.version
+uv run --frozen --project tools python tools/setup/read_config.py --get qt.version
 ```
 
 ### Qt installer
+
+`install_qt.py local` (`just qt`) installs the Qt version and modules in
+`.github/build-config.json` for the host's desktop kit into `~/Qt`, the first directory
+`tools/configure.py` searches outside Windows. It installs nothing when configure already finds
+that version in a standard install directory or through `QT_ROOT_DIR` or `--qt-root`, or when one
+of those two selects another Qt, and it names the kit configure selects when that is not the
+installed one. CI's `qt-install` action calls `plan` and `ensure` instead.
 
 `install_qt.py` installs Qt with one of two tools, chosen by `--installer` or `QGC_QT_INSTALLER`:
 
@@ -491,23 +537,40 @@ installer, so neither tool restores the other's tree.
 `install_python.py` installs dependency groups defined in `tools/pyproject.toml`:
 `scripts`, `precommit`, `test`, `qt`, `coverage`, `build`, `dev` (default), `lint`, `terrain`,
 `simulation`, `release`, and `all`. Groups compose smaller profiles: `dev` includes the build, Qt,
-lint, test, and release (git-cliff) tools. `build` adds CMake, Ninja, Meson, `just`, prek (with
-pre-commit), and gcovr; `simulation` adds pymavlink for the `simulation/` MAVLink tools. The Pyright
+lint, test, release (git-cliff), and simulation tools. It leaves out `terrain`: rasterio has wheels
+only for macOS 15 or newer, glibc 2.28 or newer, and Windows, and builds from source against GDAL
+elsewhere. `just test-python` adds `terrain` to run the Python tests as CI does; without the
+release, terrain, and simulation groups the release-notes, terrain, and mock-vehicle tests skip.
+`test` also installs the `cmake` package for the preset schema tests; `build` sets its range.
+`build` adds CMake, Ninja, Meson, `just`, prek (with
+pre-commit), and gcovr; its CMake requirement is `cmake>=3.28,<5`, and `tools/uv.lock` holds the
+major version of CI's `build.cmake_version` pin (`test_cmake_version_alignment.py` ties the two),
+which the `just` recipes run through `uv run --group build`. `simulation` adds pymavlink for the
+`simulation/` MAVLink tools. The Pyright
 hook also syncs `terrain` so it can type-check `tools/terrain`. `--list-groups` prints each group's packages. `[tool.uv] required-version` in
-`tools/pyproject.toml` is the single uv version: CI, `install_uv.py`, and the Docker image install
+`tools/pyproject.toml` is the single uv version: CI, `install_uv.py`, and the builder and fuzzing images install
 exactly that floor, and older uv releases refuse the project (run `uv self update`).
+
+`tools/.python-version` names the one Python the tools run on. uv reads it wherever it is given the
+project (`--project tools`): it builds `tools/.venv`, CI's environment, and the Docker and Vagrant
+environments on that version, downloading it when the host has none, and rebuilds an environment
+left on another version. `requires-python`, Ruff's `target-version`, and Pyright's `pythonVersion`
+follow it (`just validate-configs` checks them), so no tools code needs to run on an older Python.
+uv is therefore the only prerequisite; a host `python3` is used only when a script is run with it
+directly, and then it must be at least that version.
 
 All Python dependencies are resolved in `tools/uv.lock`. Setup requires uv and uses
 `uv sync --frozen --inexact` into `tools/.venv`, so repeating it with a smaller group preserves
 installed tools. Use `--replace` only to deliberately replace the profile; `--check` validates the
-running interpreter's installed versions and Python/platform markers without installing. CMake,
-VS Code, and CI use the same environment; CMake creates it with the `scripts` group when it is
-missing (`QGC_AUTO_PYTHON_VENV`).
+running interpreter's version, installed versions, and Python/platform markers without installing.
+CMake, VS Code, and CI use the same environment; CMake creates it with uv and the `scripts` group
+when it is missing, and repairs one that fails `--check` (`QGC_AUTO_PYTHON_VENV`).
 
 For an image-owned environment, set `QGC_TOOLS_PROJECT` to the directory containing
 `pyproject.toml` and `uv.lock`, and `QGC_PYTHON_ENV` to the environment directory.
-Docker uses `/opt/qgc-tools` and `/opt/qgc-venv`. Qt installs that fall back to aqtinstall use
-the locked `qt` group ([Qt installer](#qt-installer)).
+Docker uses `/opt/qgc-tools` and `/opt/qgc-venv`, with uv's Python in `/opt/qgc-python`
+(`UV_PYTHON_INSTALL_DIR`) so the non-root build user can run it. Qt installs that fall back to
+aqtinstall use the locked `qt` group ([Qt installer](#qt-installer)).
 
 `common/` contains low-level utilities ([module index](common/README.md)); `qgc_tools/` holds
 shared policy such as the Python environment, configure-preset selection, Docker variants, and
@@ -597,7 +660,9 @@ These areas have their own READMEs:
 
 - [ci/](ci/README.md) — the GitHub Actions entrypoints, in subpackages such as `planning/`,
   `cache/`, `compile/`, `publish/`, and `reporting/`; workflows run them by path, and their tests
-  live in `tests/ci/` (workflow and action contracts in `tests/ci/contracts/`).
+  live in `tests/ci/` (workflow and action contracts in `tests/ci/contracts/`). The
+  [CI overview](../.github/ci-overview.md) describes what runs on a pull request and how to change
+  CI.
 - [simulation/](simulation/README.md) — `mock_vehicle.py`, a lightweight MAVLink vehicle on
   UDP 14550, `run_arducopter_sitl.py`, ArduCopter SITL in Docker or from a local build on
   `tcp://localhost:5760`, `fly_plan.py`, which flies a `.plan` in ArduPilot or PX4 SITL and
@@ -605,7 +670,8 @@ These areas have their own READMEs:
   `127.0.0.1:2101` for testing RTK corrections, and `rc_transmitter.py`, a web page of RC channel
   sliders for PX4 SITL.
 - [translations/](translations/README.md) — `just translations` runs `qgc_lupdate.py` (lupdate,
-  the JSON string extractor, and `pseudo_loc.py`); `check_placeholders.py` guards translation
+  the JSON string extractor, and `pseudo_loc.py`); with `--check` it only reports the `tr()` calls
+  lupdate rejects or cannot extract, as Linux CI does. `check_placeholders.py` guards translation
   placeholders.
 - [terrain/](terrain/README.md) — `terrain_tiles.py` builds, validates, and uploads the
   terrarium elevation tiles GeoMap renders; it needs the `terrain` group.
@@ -640,17 +706,23 @@ files. Open the repository in VS Code and install the recommended extensions.
 
 ## Centralized Configuration
 
-Version numbers and build settings are centralized in `.github/build-config.json`, grouped into
-`qt`, `android`, `apple`, `build`, `gstreamer`, and `analysis` objects (schema:
-`.github/build-config.schema.json`). Scripts read it so local development and CI use the same
+Version numbers and build settings are centralized in `.github/build-config.json`. Its sections,
+and every key, type, and required field, are defined by
+[`.github/build-config.schema.json`](../.github/build-config.schema.json); read the schema rather
+than a list here. Scripts and CMake read the file so local development and CI use the same
 versions. Read a value with its dotted path, e.g. `read_config.py --get qt.version` or
-`--get android.ndk_full_version`; exported env vars and CI outputs derive from the path
-(`android.ndk_full_version` → `ANDROID_NDK_FULL_VERSION` / `android_ndk_full_version`).
+`--get android.ndk_full_version`, with `common.build_config.get_build_config_value()`, or, as CI
+step outputs, with `read_config.py --github-output <dotted.path>...` (dots become underscores);
+exported env vars and CI outputs derive from the path (`android.ndk_full_version` →
+`ANDROID_NDK_FULL_VERSION` / `android_ndk_full_version`). How the pins are updated (Renovate,
+digests by hand) is described in the
+[dependency notes](../.github/ci-notes/dependencies.md) and the
+[CI overview](../.github/ci-overview.md#bump-a-pinned-tool).
 
 Run `just validate-configs` after changing build versions, schemas, or link exceptions.
 It validates required fields, minimum versions, SDK ordering, checksum coverage, and exception expiry.
 The pre-commit gate triggers on schema-only edits too. External link exceptions in `configs/lychee.toml`
 are exact URLs with a review deadline. Docs builds check English internal links without
 exceptions; the all-locale build allows a finite list of existing translation links in
-`docs/.vitepress/config.mjs`. CI's documentation checks are described in
-[ci-overview.md](../.github/ci-overview.md).
+`docs/.vitepress/config.mjs`. CI's documentation checks are described in the
+[workflow notes](../.github/ci-notes/platforms.md#lint-docs-and-security-workflows).

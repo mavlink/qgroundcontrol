@@ -4,13 +4,16 @@ from __future__ import annotations
 
 import io
 import json
+import re
 import subprocess
 import tarfile
 
 import pytest
 from ci.cache import build_cache_artifact as cache
+from hypothesis import given
+from hypothesis import strategies as st
 
-from .._helpers import completed, get_step, get_steps, load_action
+from .._helpers import completed, evaluate_expression, get_step, get_steps, load_action
 
 pytestmark = pytest.mark.windows
 
@@ -24,6 +27,52 @@ def run(run_id=2, **changes):
         "event": "pull_request",
         **changes,
     }
+
+
+RUNS = st.fixed_dictionaries(
+    {
+        "id": st.integers(1, 3),
+        "workflow_id": st.sampled_from([None, 11, 12]),
+        "head_branch": st.sampled_from([None, "master", "feature"]),
+        "head_repository": st.sampled_from([None, {"id": 22}, {"id": 33}]),
+        "event": st.sampled_from(
+            ["push", "schedule", "workflow_dispatch", "pull_request", "pull_request_target"]
+        ),
+    }
+)
+
+
+@given(current=RUNS, candidate=RUNS)
+def test_a_job_restores_snapshots_of_exactly_one_restore_group(current, candidate):
+    # gh_cache_cleanup.py keeps the newest snapshots of each group, which is safe only while a
+    # job can restore from no other group, and from every other run of its own.
+    group = cache.restore_group(candidate)
+    if cache.compatible_run(current, candidate):
+        assert group == cache.restore_group(current)
+    elif group == cache.restore_group(current) and candidate["id"] != current["id"]:
+        assert not all(group) or group[3] == "pull_request_target"
+    repository = {"id": 22, "default_branch": "master"}
+    if cache.trusted_baseline(current, candidate, repository):
+        assert group == (current["workflow_id"], "master", 22, "trusted")
+
+
+@pytest.mark.parametrize(
+    ("name", "snapshot"),
+    [
+        (cache.artifact_name("ccache-linux-shared", "moccache-linux-shared-Release"), True),
+        ("compiler-cache-v2-" + "0" * 64, True),
+        ("compiler-cache-v2-" + "0" * 63, False),
+        ("compiler-cache-v2-" + "0" * 65, False),
+        ("compiler-cache-v2-" + "g" * 64, False),
+        ("compiler-cache-v1-" + "0" * 64, False),
+        ("compiler-cache-v2-" + "0" * 64 + "\n", False),
+        ("x-compiler-cache-v2-" + "0" * 64, False),
+        ("publish-set", False),
+        (None, False),
+    ],
+)
+def test_only_an_artifact_name_is_a_snapshot_name(name, snapshot):
+    assert cache.is_snapshot_name(name) is snapshot
 
 
 def test_same_producer_can_restore_even_when_later_packaging_failed():
@@ -166,7 +215,7 @@ def test_cache_actions_save_artifact_once_with_s3_and_upload_failure_fallback():
     assert upload["if"] == "steps.plan.outputs.artifact_path != ''"
     assert upload["continue-on-error"] is True
     assert upload["with"]["path"] == "${{ steps.plan.outputs.artifact_path }}"
-    assert upload["with"]["retention-days"] == 1
+    assert upload["with"]["retention-days"] == 7
     assert upload["with"]["compression-level"] == 0
     for save, name in zip(saves, ("ccache", "moccache"), strict=True):
         key = f"steps.plan.outputs.{name}_key"
@@ -271,12 +320,23 @@ def test_artifact_restore_step_cannot_fail_the_job():
     steps = get_steps(load_action("cache"))
     restore = get_step(steps, "artifact-cache")
     assert restore["continue-on-error"] is True
-    fallbacks = [
-        step for step in steps if "steps.artifact-cache.outputs.restored" in step.get("if", "")
-    ]
-    fallback = "steps.artifact-cache.outputs.restored != 'true'"
-    # The sccache pilot restores no ccache archive.
-    assert {step["with"]["path"]: step["if"] for step in fallbacks} == {
-        ".cache/ccache": f"{fallback} && env.QGC_COMPILER_CACHE_TOOL == 'ccache'",
-        ".cache/moccache": fallback,
+    fallbacks = {
+        step["with"]["path"]: step
+        for step in steps
+        if "steps.artifact-cache.outputs.restored" in step.get("if", "")
     }
+    assert set(fallbacks) == set(cache.CACHE_ROOTS)
+
+    for step in fallbacks.values():
+        (output,) = re.findall(r"steps\.plan\.outputs\.(\w+)", step["with"]["key"])
+
+        def runs(restored: str, key: str, step=step, output=output) -> bool:
+            outputs = {"artifact-cache": {"outputs": {"restored": restored}}}
+            outputs["plan"] = {"outputs": {output: key}}
+            return bool(evaluate_expression(step["if"], {"steps": outputs}))
+
+        assert runs("false", "key")
+        assert not runs("true", "key")
+        # The sccache pilot plans no ccache key and a release tag neither key; restoring an
+        # empty key would fail the job.
+        assert not runs("false", "")

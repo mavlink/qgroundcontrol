@@ -8,11 +8,16 @@ client into a snap scope and snap-confine refuses to start it (Multipass >= 1.17
 --allow-bridge-forwarding then lets guests reach the network: Docker sets the iptables FORWARD
 policy to DROP, which blocks the Multipass bridge's NAT. (libvirt adds its own rules, so the
 Vagrant job does not need it.)
+
+--allow-store-outage is for a job that is informational: when the snap store does not supply
+Multipass, the script warns, reports `installed=false` as a step output and exits 0, so the job
+skips its build instead of failing. Any other failure still fails.
 """
 
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -22,6 +27,27 @@ from pathlib import Path
 SOCKET = Path("/var/snap/multipass/common/multipass_socket")
 SOCKET_ATTEMPTS = 30
 CATALOG_ATTEMPTS = 15
+STORE_ATTEMPTS = 3
+
+
+class SnapStoreError(RuntimeError):
+    """The snap store did not supply Multipass."""
+
+
+def _from_store(*command: str) -> None:
+    """Run a snap command that needs the snap store; try again after a pause when it fails."""
+    for attempt in range(1, STORE_ATTEMPTS + 1):
+        if subprocess.run(["sudo", "snap", *command], check=False).returncode == 0:
+            return
+        if attempt < STORE_ATTEMPTS:
+            time.sleep(15 * attempt)
+    raise SnapStoreError(f"`snap {' '.join(command)}` failed {STORE_ATTEMPTS} times")
+
+
+def _report_installed(installed: bool) -> None:
+    if path := os.environ.get("GITHUB_OUTPUT"):
+        with open(path, "a", encoding="utf-8") as output:
+            output.write(f"installed={str(installed).lower()}\n")
 
 
 def install() -> None:
@@ -35,9 +61,9 @@ def install() -> None:
         )
         subprocess.run(["sudo", "systemctl", "enable", "--now", "snapd.socket"], check=True)
     subprocess.run(["sudo", "snap", "wait", "system", "seed.loaded"], check=True, timeout=300)
-    subprocess.run(["sudo", "snap", "install", "multipass"], check=True)
+    _from_store("install", "multipass")
     # Cached runner images can carry retired image manifests; refresh before launch.
-    subprocess.run(["sudo", "snap", "refresh", "multipass"], check=True)
+    _from_store("refresh", "multipass")
     for attempt in range(SOCKET_ATTEMPTS):
         if SOCKET.is_socket():
             break
@@ -81,15 +107,32 @@ def main(argv: list[str] | None = None) -> int:
         help="After installing, set the iptables FORWARD policy to ACCEPT and enable IPv4 "
         "forwarding (changes the host firewall; for ephemeral runners)",
     )
+    parser.add_argument(
+        "--allow-store-outage",
+        action="store_true",
+        help="When the snap store does not supply Multipass, warn, report installed=false as a "
+        "step output and exit 0 instead of failing",
+    )
     args = parser.parse_args(argv)
     try:
         install()
         if args.allow_bridge_forwarding:
             allow_bridge_forwarding()
+    except SnapStoreError as error:
+        if not args.allow_store_outage:
+            print(f"Multipass installation failed: {error}", file=sys.stderr)
+            return 1
+        print(
+            f"::warning title=Multipass build skipped::{error}: the snap store did not supply "
+            "Multipass, so the VM build did not run. The store's error is in this step's log."
+        )
+        _report_installed(False)
         return 0
     except (OSError, subprocess.SubprocessError) as error:
         print(f"Multipass installation failed: {error}", file=sys.stderr)
         return 1
+    _report_installed(True)
+    return 0
 
 
 if __name__ == "__main__":

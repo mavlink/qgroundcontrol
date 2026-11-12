@@ -189,6 +189,9 @@ def build(build_type: str, timings: dict[str, float] | None = None) -> None:
         else:
             # preset-exception: Linux has no platform-specific MinSizeRel preset.
             configure = ["qt-cmake", *common, "-G", "Ninja", f"-DCMAKE_BUILD_TYPE={build_type}"]
+        # As in CI's cmake-configure action: appimagelint only warns, and its Launchpad lookup
+        # holds up packaging for minutes when that host is unreachable.
+        configure.append("-DQGC_RUN_APPIMAGELINT=OFF")
     run_phase("configure", configure, timings)
     run_phase(
         "build",

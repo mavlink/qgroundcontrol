@@ -9,10 +9,11 @@
   "labels": [
     "dependencies"
   ],
-  "ignorePaths": [
-    ".github/workflows/**"
+  "ignorePaths": [],
+  "description": [
+    "Manages npm, Python, pre-commit, development environments, Gradle dependencies and Wrapper, Node versions, Dockerfiles, and GitHub Actions in workflows and composite actions. Dependabot only supplies the security alerts behind the vulnerabilityAlerts PRs; its own update PRs are turned off.",
+    "An open PR changes only inside its schedule (updateNotScheduled) and is rebased only when it conflicts (rebaseWhen). By default Renovate pushed the grouped PR again for every release of a grouped dependency and after master moved, and each push runs every platform pipeline. The vulnerabilityAlerts PR is always in schedule. To update a PR sooner, tick the rebase checkbox in its description"
   ],
-  "description": "Manages npm, Python, pre-commit, development environments, Gradle dependencies and Wrapper, Node versions, Dockerfiles, and composite actions. Dependabot owns .github/workflows, which are excluded here.",
   "enabledManagers": [
     "devcontainer",
     "dockerfile",
@@ -27,19 +28,20 @@
   ],
   "customManagers": [
     {
-      "description": "Docker variant base images; docker-compose.yml is generated from variants.json, so both update together",
+      "description": "Docker variant base images; docker-compose.yml is generated from variants.json and test_plan_docker_builds.py pins the same build args, so all three update together. ignorePaths must stay set: without it config:recommended skips **/tests/**",
       "customType": "regex",
       "managerFilePatterns": [
         "/^deploy/docker/variants\\.json$/",
-        "/^deploy/docker/docker-compose\\.yml$/"
+        "/^deploy/docker/docker-compose\\.yml$/",
+        "/^tools/tests/ci/test_plan_docker_builds\\.py$/"
       ],
       "matchStrings": [
-        "BASE_REF\"?: \"(?<depName>[^:\"]+):(?<currentValue>[^@\"]+)@(?<currentDigest>sha256:[a-f0-9]{64})\""
+        "BASE_REF(?:\"?: \"|=)(?<depName>[^:\"]+):(?<currentValue>[^@\"]+)@(?<currentDigest>sha256:[a-f0-9]{64})\""
       ],
       "datasourceTemplate": "docker"
     },
     {
-      "description": "The uv required-version floor tracks the Dockerfile's uv image tag; tools/validate_configs.py requires them to match",
+      "description": "The uv required-version floor, which tools/validate_configs.py requires to match the uv image tag in the builder and fuzzing Dockerfiles. It follows uv's PyPI releases, not the image: Renovate passes every dependency updated in pyproject.toml to `uv lock --upgrade-package`, which rejects an image name and fails the lock file update",
       "customType": "regex",
       "managerFilePatterns": [
         "/^tools/pyproject\\.toml$/"
@@ -47,8 +49,8 @@
       "matchStrings": [
         "required-version = \">=(?<currentValue>[^\"]+)\""
       ],
-      "depNameTemplate": "ghcr.io/astral-sh/uv",
-      "datasourceTemplate": "docker"
+      "depNameTemplate": "uv",
+      "datasourceTemplate": "pypi"
     },
     {
       "description": "The CMake that build-setup installs with lukka/get-cmake, which resolves versions from a catalog bundled in each of its releases. Its tags name the newest CMake in that catalog, so following them keeps the pin installable; the github-actions manager bumps the action in the same group PR",
@@ -87,21 +89,63 @@
       ],
       "datasourceTemplate": "github-releases",
       "extractVersionTemplate": "^v(?<version>\\d+\\.\\d+\\.\\d+)$"
+    },
+    {
+      "description": "The OpenSSL release that cmake/modules/AndroidOpenSSL.cmake builds for Android, tracked by OpenSSL's openssl-X.Y.Z GitHub releases",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.github/build-config\\.json$/"
+      ],
+      "matchStrings": [
+        "\"openssl_version\": \"(?<currentValue>[^\"]+)\""
+      ],
+      "depNameTemplate": "openssl/openssl",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^openssl-(?<version>\\d+\\.\\d+\\.\\d+)$"
+    },
+    {
+      "description": "AppImage packaging tools in build-config.json's appimage section (linuxdeploy, appimagetool, appimagelint), tracked by their GitHub release tags",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.github/build-config\\.json$/"
+      ],
+      "matchStrings": [
+        "\"repository\": \"(?<depName>[^\"]+)\",\\s*\"tag\": \"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "description": "C++ libraries that CPMAddPackage fetches from GitHub at a version tag. The patterns cover each field order in use: VERSION before the repository, VERSION after it, a tag alone (v, vulkan-sdk- or expat's R_ form), and a version variable set just above the call. VERSION and GIT_TAG repeat the version, so both are rewritten. A package pinned to a commit, or to a tag that is not a version, does not match: tools/tests/ci/contracts/test_renovate_cpm_pins.py lists every package left untracked. ArduPilot's parameter repository commit has its own manager below, and no package tracks a branch head",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)CMakeLists\\.txt$/",
+        "/\\.cmake$/"
+      ],
+      "matchStrings": [
+        "NAME\\s+\\S+\\s+VERSION\\s+(?<currentValue>\\d+(?:\\.\\d+)+)\\s+GITHUB_REPOSITORY\\s+(?<depName>\\S+)\\s+GIT_TAG\\s+\\S+",
+        "NAME\\s+\\S+\\s+GITHUB_REPOSITORY\\s+(?<depName>\\S+)\\s+VERSION\\s+(?<currentValue>\\d+(?:\\.\\d+)+)(?:\\s+GIT_TAG\\s+\\S+)?",
+        "NAME\\s+\\S+\\s+GITHUB_REPOSITORY\\s+(?<depName>\\S+)\\s+GIT_TAG\\s+(?:v|vulkan-sdk-)(?<currentValue>\\d+(?:\\.\\d+)+)\\s",
+        "NAME\\s+\\S+\\s+GITHUB_REPOSITORY\\s+(?<depName>\\S+)\\s+GIT_TAG\\s+(?<currentValue>R_\\d+_\\d+_\\d+)\\s",
+        "set\\(\\w+_VERSION\\s+(?<currentValue>\\d+(?:\\.\\d+)+)\\)\\s+CPMAddPackage\\(\\s+NAME\\s+\\S+\\s+VERSION\\s+\\$\\{\\w+\\}\\s+GITHUB_REPOSITORY\\s+(?<depName>\\S+)"
+      ],
+      "datasourceTemplate": "github-tags",
+      "extractVersionTemplate": "^v(?<version>\\d+(?:\\.\\d+)+)$"
+    },
+    {
+      "description": "ArduPilot's parameter metadata, which qgc_git_sparse_checkout fetches at a commit of the main branch: ArduPilot regenerates it there every few days and tags no releases, so the pin follows the branch head",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^src/FirmwarePlugin/APM/CMakeLists\\.txt$/"
+      ],
+      "matchStrings": [
+        "GITHUB_REPOSITORY\\s+(?<depName>ArduPilot/ParameterRepository)\\s+GIT_TAG\\s+(?<currentDigest>[a-f0-9]{40})"
+      ],
+      "currentValueTemplate": "main",
+      "packageNameTemplate": "https://github.com/{{{depName}}}",
+      "datasourceTemplate": "git-refs"
     }
   ],
   "packageRules": [
-    {
-      "description": "Auto-merge patch updates after CI passes",
-      "matchManagers": [
-        "npm",
-        "pep621",
-        "pre-commit"
-      ],
-      "matchUpdateTypes": [
-        "patch"
-      ],
-      "automerge": true
-    },
     {
       "description": "Combine every update except Android into one weekly PR, so coupled pins such as the uv required-version floor and the Dockerfile's uv image land together",
       "groupName": "all dependencies",
@@ -172,6 +216,161 @@
       ],
       "groupName": null,
       "dependencyDashboardApproval": true
+    },
+    {
+      "description": "The Android OpenSSL and AppImage tool pins also carry SHA-256 digests in build-config.json, which a bump must update by hand, so each opens its own PR only after approval on the Dependency Dashboard",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDepNames": [
+        "openssl/openssl",
+        "linuxdeploy/linuxdeploy",
+        "AppImage/appimagetool"
+      ],
+      "groupName": null,
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Android builds stay on OpenSSL 3.5, the long-term support series maintained until April 2030; widen this to move to a later series",
+      "matchPackageNames": [
+        "openssl/openssl"
+      ],
+      "allowedVersions": "/^3\\.5\\./"
+    },
+    {
+      "description": "linuxdeploy tags its releases 1-alpha-YYYYMMDD-N, and its rolling continuous release is not a version",
+      "matchPackageNames": [
+        "linuxdeploy/linuxdeploy"
+      ],
+      "versioning": "regex:^(?<major>1)-alpha-(?<minor>\\d{8})-(?<patch>\\d+)$"
+    },
+    {
+      "description": "appimagelint publishes only its rolling continuous release, which has no version to follow; build-config.json pins that build's digest instead",
+      "matchPackageNames": [
+        "TheAssassin/appimagelint"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Each Ubuntu builder variant is named for its release, so its base image takes digest updates only. The regex manager lacks the dockerfile manager's Ubuntu versioning and would offer 22.10 as a minor update of 22.04",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "public.ecr.aws/docker/library/ubuntu"
+      ],
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "patch"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "tools/pyproject.toml pins aqtinstall to the head of miurahr/aqtinstall#1048 for Qt 6.12; Renovate would move the pin to the default branch, which lacks that change. Updates resume once aqtinstall returns to PyPI",
+      "matchDatasources": [
+        "git-refs"
+      ],
+      "matchDepNames": [
+        "aqtinstall"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Adopt a GitHub Actions release only after 7 days, so a compromised release can be withdrawn first. The CMake pin follows lukka/get-cmake's tags and must move with that action",
+      "matchManagers": [
+        "github-actions",
+        "custom.regex"
+      ],
+      "matchDatasources": [
+        "github-tags"
+      ],
+      "matchFileNames": [
+        ".github/**"
+      ],
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "description": "Pin every action and reusable workflow outside actions/* and github/* to a commit SHA, with its version in a trailing comment that Renovate updates together with the SHA: whoever controls an action's repository can move a tag, which the release cooldown above does not notice. GitHub's own actions stay on version tags. zizmor's unpinned-uses policy and tools/tests/ci/contracts/test_workflow_security_policy.py enforce the same split",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDepTypes": [
+        "action",
+        "workflow"
+      ],
+      "matchPackageNames": [
+        "!actions/**",
+        "!github/**"
+      ],
+      "pinDigests": true
+    },
+    {
+      "description": "Runner images and job containers in workflows are platform choices, not routine updates",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDatasources": [
+        "github-runners",
+        "docker"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "The CPM libraries ship in the application, so each update is reviewed on its own: no grouping, and a PR only after approval on the Dependency Dashboard",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchFileNames": [
+        "**/CMakeLists.txt",
+        "**/*.cmake"
+      ],
+      "groupName": null,
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "ArduPilot's parameter metadata needs no approval: before it was pinned every build fetched the head of main, so each new commit arrives as its own scheduled PR",
+      "matchDepNames": [
+        "ArduPilot/ParameterRepository"
+      ],
+      "dependencyDashboardApproval": false
+    },
+    {
+      "description": "SDL tags its releases release-X.Y.Z",
+      "matchPackageNames": [
+        "libsdl-org/SDL"
+      ],
+      "extractVersion": "^release-(?<version>\\d+(?:\\.\\d+)+)$"
+    },
+    {
+      "description": "Clipper2 tags its releases Clipper2_X.Y.Z",
+      "matchPackageNames": [
+        "AngusJohnson/Clipper2"
+      ],
+      "extractVersion": "^Clipper2_(?<version>\\d+(?:\\.\\d+)+)$"
+    },
+    {
+      "description": "GeographicLib tags its releases rX.Y",
+      "matchPackageNames": [
+        "geographiclib/geographiclib"
+      ],
+      "extractVersion": "^r(?<version>\\d+(?:\\.\\d+)+)$"
+    },
+    {
+      "description": "Vulkan-Headers is pinned to its four-part vulkan-sdk-X.Y.Z.N tags, not its vX.Y.Z tags",
+      "matchPackageNames": [
+        "KhronosGroup/Vulkan-Headers"
+      ],
+      "extractVersion": "^vulkan-sdk-(?<version>\\d+(?:\\.\\d+)+)$",
+      "versioning": "loose"
+    },
+    {
+      "description": "Expat tags its releases R_X_Y_Z, and the whole tag is the pinned value",
+      "matchPackageNames": [
+        "libexpat/libexpat"
+      ],
+      "extractVersion": "^(?<version>R_\\d+_\\d+_\\d+)$",
+      "versioning": "regex:^R_(?<major>\\d+)_(?<minor>\\d+)_(?<patch>\\d+)$"
     }
   ],
   "major": {
@@ -182,8 +381,14 @@
   "schedule": [
     "before 6am on monday"
   ],
+  "updateNotScheduled": false,
+  "rebaseWhen": "conflicted",
   "timezone": "UTC",
   "vulnerabilityAlerts": {
+    "description": "One PR for every security fix, major or not, so packages that constrain each other resolve together. It takes the newest fixed version, because the lowest one can carry a later advisory",
+    "groupName": "vulnerable dependencies",
+    "separateMajorMinor": false,
+    "vulnerabilityFixStrategy": "highest",
     "labels": [
       "security",
       "priority"

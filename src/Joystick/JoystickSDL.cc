@@ -1,13 +1,14 @@
 #include "JoystickSDL.h"
-#include "JoystickManager.h"
-#include "SDLJoystick.h"
-#include "QGCLoggingCategory.h"
-
-#include <QtCore/QMetaObject>
-#include <QtCore/QThread>
 
 #include <array>
 
+#include <QtCore/QMetaObject>
+#include <QtCore/QMutex>
+#include <QtCore/QThread>
+
+#include "JoystickManager.h"
+#include "QGCLoggingCategory.h"
+#include "SDLJoystick.h"
 #include <SDL3/SDL.h>
 
 // This is used for testing manual control extensions which require additional axes but all you have is a gamepad/joystick with limited axes.
@@ -18,8 +19,12 @@
 
 QGC_LOGGING_CATEGORY(JoystickSDLLog, "Joystick.JoystickSDL")
 
-/// Discovery cache - main thread only, cleared in shutdown()
+/// Discovery cache - the last discover()'s joysticks. Only the main thread changes it; shutdown() empties it.
+/// The mutex guards the map alone, for the copy discover() returns off the main thread. Lock order: the SDL
+/// joystick lock, if held, comes first, and nothing that can block or re-enter runs under the mutex (only a
+/// copy, swap or assignment of the map).
 static QMap<QString, Joystick*> s_discoveryCache;
+static QMutex s_discoveryCacheMutex;
 
 /// SDL event watcher - uses Qt::QueuedConnection for thread safety
 static bool sdlEventWatcher(void *userdata, SDL_Event *event)
@@ -169,17 +174,32 @@ void JoystickSDL::shutdown(bool deleteDiscoveryCache)
     SDL_RemoveEventWatch(sdlEventWatcher, nullptr);
     SDLJoystick::shutdown();
 
-    if (deleteDiscoveryCache) {
-        qDeleteAll(s_discoveryCache);
+    QMap<QString, Joystick*> cache;
+    {
+        const QMutexLocker cacheLocker(&s_discoveryCacheMutex);
+        cache.swap(s_discoveryCache);
     }
-    s_discoveryCache.clear();
+    if (deleteDiscoveryCache) {
+        qDeleteAll(cache);
+    }
 }
 
 QMap<QString, Joystick*> JoystickSDL::discover()
 {
-    Q_ASSERT(QThread::isMainThread());
+    if (!QThread::isMainThread()) {
+        // An empty map would make the caller delete joysticks that the cache still points to
+        qCCritical(JoystickSDLLog) << "Internal Error: called off the main thread, returning the previous discovery";
+        const QMutexLocker cacheLocker(&s_discoveryCacheMutex);
+        return s_discoveryCache;
+    }
 
     QMap<QString, Joystick*> current;
+    // Working copy of the cache: joysticks found again move to current, the rest are deleted at the end
+    QMap<QString, Joystick*> previous;
+    {
+        const QMutexLocker cacheLocker(&s_discoveryCacheMutex);
+        previous = s_discoveryCache;
+    }
 
     qCDebug(JoystickSDLLog) << "Discovering joysticks";
 
@@ -213,19 +233,19 @@ QMap<QString, Joystick*> JoystickSDL::discover()
 
         // Check cache by instance ID (reconnection of same device)
         bool foundInCache = false;
-        for (auto it = s_discoveryCache.begin(); it != s_discoveryCache.end(); ++it) {
+        for (auto it = previous.begin(); it != previous.end(); ++it) {
             auto *cachedJs = static_cast<JoystickSDL*>(it.value());
             if (static_cast<SDL_JoystickID>(cachedJs->instanceId()) == jid) {
                 if (cachedJs->name() == baseName) {
                     name = it.key();
                     current[name] = cachedJs;
-                    s_discoveryCache.erase(it);
+                    previous.erase(it);
                     foundInCache = true;
                 } else {
                     // SDL instance ids can be recycled. If the id matches but the reported
                     // name changed, treat it as a new device and drop the stale cached object.
                     cachedJs->deleteLater();
-                    s_discoveryCache.erase(it);
+                    previous.erase(it);
                 }
                 break;
             }
@@ -235,17 +255,17 @@ QMap<QString, Joystick*> JoystickSDL::discover()
         }
 
         // Check cache by name (for joysticks that were disconnected and reconnected)
-        if (s_discoveryCache.contains(name) && !current.contains(name)) {
-            current[name] = s_discoveryCache[name];
+        if (previous.contains(name) && !current.contains(name)) {
+            current[name] = previous[name];
             auto *js = static_cast<JoystickSDL*>(current[name]);
             js->setInstanceId(jid);
-            (void) s_discoveryCache.remove(name);
+            (void) previous.remove(name);
             continue;
         }
 
         // Handle duplicate names by appending a number
         int duplicateIndex = 2;
-        while (current.contains(name) || s_discoveryCache.contains(name)) {
+        while (current.contains(name) || previous.contains(name)) {
             name = QStringLiteral("%1 #%2").arg(baseName).arg(duplicateIndex++);
         }
 
@@ -322,10 +342,11 @@ QMap<QString, Joystick*> JoystickSDL::discover()
         qCDebug(JoystickSDLLog) << "  " << it.key() << "instanceId:" << js->instanceId();
     }
 
-    for (auto *joystick : std::as_const(s_discoveryCache)) {
+    for (auto* joystick : std::as_const(previous)) {
         joystick->deleteLater();
     }
 
+    const QMutexLocker cacheLocker(&s_discoveryCacheMutex);
     s_discoveryCache = current;
     return current;
 }

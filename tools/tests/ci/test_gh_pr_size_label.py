@@ -244,5 +244,5 @@ def test_label_job_runs_trusted_script_without_third_party_labeler() -> None:
     assert not any("pr-size-labeler" in step.get("uses", "") for step in job["steps"])
     # Path labels follow the advisory size step, so a size-label failure cannot skip them.
     labeler = job["steps"][-1]
-    assert labeler["uses"] == "actions/labeler@v7"
+    assert labeler["uses"].startswith("actions/labeler@")
     assert labeler["with"] == {"repo-token": "${{ github.token }}", "sync-labels": True}

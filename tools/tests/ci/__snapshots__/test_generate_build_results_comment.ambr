@@ -66,10 +66,12 @@
   
   <details><summary>Code Analysis: ✅ Passed, 2 warnings on changed lines</summary>
   
-  Warnings on lines this pull request changed:
+  Warnings on lines this pull request changed, `bugprone-*` and `clang-analyzer-*` first:
   
   - [`src/MissionManager/MissionController.cc:7`](https://github.com/mavlink/qgroundcontrol/blob/fedcba9876543210fedcba9876543210fedcba98/src/MissionManager/MissionController.cc#L7) `modernize-use-nodiscard` (clang-tidy)
   - [`src/Vehicle/Vehicle.h:10`](https://github.com/mavlink/qgroundcontrol/blob/fedcba9876543210fedcba9876543210fedcba98/src/Vehicle/Vehicle.h#L10) `modernize-use-nodiscard` (clang-tidy)
+  
+  By check: `modernize-use-nodiscard` 2
   
   | Tool | Files analyzed | On changed lines | All warnings | Errors |
   | --- | ---: | ---: | ---: | ---: |
@@ -211,10 +213,12 @@
   
   <details><summary>Code Analysis: ✅ Passed, 2 warnings on changed lines</summary>
   
-  Warnings on lines this pull request changed:
+  Warnings on lines this pull request changed, `bugprone-*` and `clang-analyzer-*` first:
   
   - [`src/MissionManager/MissionController.cc:7`](https://github.com/mavlink/qgroundcontrol/blob/fedcba9876543210fedcba9876543210fedcba98/src/MissionManager/MissionController.cc#L7) `modernize-use-nodiscard` (clang-tidy)
   - [`src/Vehicle/Vehicle.h:10`](https://github.com/mavlink/qgroundcontrol/blob/fedcba9876543210fedcba9876543210fedcba98/src/Vehicle/Vehicle.h#L10) `modernize-use-nodiscard` (clang-tidy)
+  
+  By check: `modernize-use-nodiscard` 2
   
   | Tool | Files analyzed | On changed lines | All warnings | Errors |
   | --- | ---: | ---: | ---: | ---: |
@@ -298,10 +302,12 @@
   
   <details><summary>Code Analysis: ✅ Passed, 2 warnings on changed lines</summary>
   
-  Warnings on lines this pull request changed:
+  Warnings on lines this pull request changed, `bugprone-*` and `clang-analyzer-*` first:
   
   - [`src/MissionManager/MissionController.cc:7`](https://github.com/mavlink/qgroundcontrol/blob/fedcba9876543210fedcba9876543210fedcba98/src/MissionManager/MissionController.cc#L7) `modernize-use-nodiscard` (clang-tidy)
   - [`src/Vehicle/Vehicle.h:10`](https://github.com/mavlink/qgroundcontrol/blob/fedcba9876543210fedcba9876543210fedcba98/src/Vehicle/Vehicle.h#L10) `modernize-use-nodiscard` (clang-tidy)
+  
+  By check: `modernize-use-nodiscard` 2
   
   | Tool | Files analyzed | On changed lines | All warnings | Errors |
   | --- | ---: | ---: | ---: | ---: |
@@ -609,10 +615,12 @@
   
   <details><summary>Code Analysis: ✅ Passed, 2 warnings on changed lines</summary>
   
-  Warnings on lines this pull request changed:
+  Warnings on lines this pull request changed, `bugprone-*` and `clang-analyzer-*` first:
   
   - [`src/MissionManager/MissionController.cc:7`](https://github.com/mavlink/qgroundcontrol/blob/fedcba9876543210fedcba9876543210fedcba98/src/MissionManager/MissionController.cc#L7) `modernize-use-nodiscard` (clang-tidy)
   - [`src/Vehicle/Vehicle.h:10`](https://github.com/mavlink/qgroundcontrol/blob/fedcba9876543210fedcba9876543210fedcba98/src/Vehicle/Vehicle.h#L10) `modernize-use-nodiscard` (clang-tidy)
+  
+  By check: `modernize-use-nodiscard` 2
   
   | Tool | Files analyzed | On changed lines | All warnings | Errors |
   | --- | ---: | ---: | ---: | ---: |

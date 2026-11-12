@@ -1,7 +1,7 @@
 # Ruff configuration for QGroundControl Python tools
 # https://docs.astral.sh/ruff/
 
-target-version = "py310"
+target-version = "py312"
 line-length = 100
 cache-dir = ".cache/ruff"
 

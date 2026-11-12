@@ -67,6 +67,21 @@ function(qgc_test_sandbox var name)
     )
 endfunction()
 
+# Makes git, in this process and those it starts, read no configuration but <home>/.gitconfig, so that a developer's
+# signing, URL rewriting or template settings cannot reach a test repository.
+# cmakelang reads set(ENV{<name>}) as a variable name.
+# cmake-lint: disable=C0103
+function(qgc_test_isolate_git home)
+    file(MAKE_DIRECTORY "${home}")
+    set(ENV{HOME} "${home}")
+    set(ENV{XDG_CONFIG_HOME} "${home}/.config")
+    set(ENV{GIT_CONFIG_NOSYSTEM} 1)
+    # Git 2.32 and later read a GIT_CONFIG_GLOBAL from the calling environment instead of HOME.
+    set(ENV{GIT_CONFIG_GLOBAL} "${home}/.gitconfig")
+    # Git 2.31 and later take further settings from GIT_CONFIG_KEY_<n> and GIT_CONFIG_VALUE_<n>.
+    unset(ENV{GIT_CONFIG_COUNT})
+endfunction()
+
 # Sets the variables <var>... in the caller to the "|"-separated fields of <case>, in order.
 function(qgc_test_split case)
     string(REPLACE "|" ";" _fields "${case}")

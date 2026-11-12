@@ -137,6 +137,49 @@ if(TEST_CASE STREQUAL "unity-project-targets")
     return()
 endif()
 
+if(TEST_CASE MATCHES "^autogen-project-targets-(standard|custom)$")
+    set(QGC_ENABLE_WERROR OFF)
+    # Only the standard build names the generated headers its moc steps wait for; a custom build keeps CMake's graph.
+    if(CMAKE_MATCH_1 STREQUAL "standard")
+        set(QGC_AUTOGEN_TARGET_DEPENDS generated-headers)
+    endif()
+    include("${QGC_MODULE_DIR}/CompilerWarnings.cmake")
+
+    add_custom_target(generated-headers COMMENT "Stand-in for the generated protocol headers")
+    add_custom_target(own-generator COMMENT "Stand-in for a generator only this library's moc reads")
+    add_library(MocLibrary STATIC main.cpp)
+    add_library(PlainLibrary STATIC main.cpp)
+    set_target_properties(
+        MocLibrary
+        PROPERTIES
+            AUTOMOC ON
+            AUTOGEN_TARGET_DEPENDS own-generator
+    )
+    qgc_configure_directory_targets("${CMAKE_CURRENT_SOURCE_DIR}")
+
+    get_target_property(_moc_origin_depends MocLibrary AUTOGEN_ORIGIN_DEPENDS)
+    get_target_property(_moc_target_depends MocLibrary AUTOGEN_TARGET_DEPENDS)
+    get_target_property(_plain_target_depends PlainLibrary AUTOGEN_TARGET_DEPENDS)
+    if(CMAKE_MATCH_1 STREQUAL "standard")
+        if(_moc_origin_depends OR NOT _moc_target_depends STREQUAL "own-generator;generated-headers")
+            message(
+                FATAL_ERROR
+                    "moc still waits for linked libraries, or lost a prerequisite: "
+                    "AUTOGEN_ORIGIN_DEPENDS=${_moc_origin_depends} AUTOGEN_TARGET_DEPENDS=${_moc_target_depends}"
+            )
+        endif()
+    elseif(NOT _moc_origin_depends OR NOT _moc_target_depends STREQUAL "own-generator")
+        message(
+            FATAL_ERROR "A custom build's autogen graph was changed: "
+                        "AUTOGEN_ORIGIN_DEPENDS=${_moc_origin_depends} AUTOGEN_TARGET_DEPENDS=${_moc_target_depends}"
+        )
+    endif()
+    if(_plain_target_depends)
+        message(FATAL_ERROR "A target without AUTOMOC received autogen dependencies: ${_plain_target_depends}")
+    endif()
+    return()
+endif()
+
 if(TEST_CASE STREQUAL "coverage-project-targets")
     set(CMAKE_BUILD_TYPE
         Debug
@@ -595,6 +638,18 @@ if(TEST_CASE STREQUAL "python-venv-stale-cache")
     if(DEFINED CACHE{Python3_EXECUTABLE} OR DEFINED CACHE{Python_EXECUTABLE})
         message(FATAL_ERROR "Stale Python interpreter cache entries were not cleared")
     endif()
+    return()
+endif()
+
+if(TEST_CASE STREQUAL "python-venv-missing-uv")
+    # No environment to reuse, and nowhere for find_program to look for uv.
+    set(ENV{QGC_PYTHON_ENV} "${CMAKE_CURRENT_BINARY_DIR}/missing-venv")
+    foreach(
+        _search IN ITEMS PACKAGE_ROOT_PATH CMAKE_PATH CMAKE_ENVIRONMENT_PATH SYSTEM_ENVIRONMENT_PATH CMAKE_SYSTEM_PATH
+    )
+        set(CMAKE_FIND_USE_${_search} OFF)
+    endforeach()
+    include("${QGC_MODULE_DIR}/modules/PythonVenv.cmake")
     return()
 endif()
 

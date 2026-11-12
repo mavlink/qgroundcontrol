@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 from common.build_config import derive_ios_qt_modules, load_build_config
+from qgc_tools.cmake_configure import find_qt_cmake
 from setup import install_qt
 from setup.install_qt import (
     QtPlan,
@@ -125,6 +126,121 @@ def test_qgc_installer_gets_an_absolute_output_directory(
     assert qgc_installs == [
         ("install", QtRequest("linux", "desktop", "6.12.0", "linux_gcc_64", (), ("qtbase", "icu")))
     ]
+
+
+class TestLocal:
+    """`local` (`just qt`) installs the configured Qt into ~/Qt unless configure already finds it."""
+
+    @pytest.fixture(autouse=True)
+    def _linux_host_with_empty_home(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+        config = tmp_path / "build-config.json"
+        config.write_text(
+            json.dumps({"qt": {"version": "6.8.3", "modules": "qtcharts qtlocation"}})
+        )
+        monkeypatch.setenv("CONFIG_FILE", str(config))
+        monkeypatch.delenv("QT_ROOT_DIR", raising=False)
+        monkeypatch.setattr("common.qt.Path.home", lambda: tmp_path / "home")
+        for check in ("is_windows", "is_macos", "is_linux"):
+            monkeypatch.setattr(f"common.qt.{check}", lambda: False)
+        monkeypatch.setattr("common.qt.host_arch", lambda: "x86_64")
+        monkeypatch.setattr(install_qt, "local_desktop_qt", lambda: ("linux", "linux_gcc_64"))
+
+    @pytest.fixture
+    def installs(self, monkeypatch: pytest.MonkeyPatch) -> list[tuple[object, ...]]:
+        """Record install_qt() calls instead of downloading; each creates the kit's qt-cmake."""
+        calls: list[tuple[object, ...]] = []
+
+        def fake_install_qt(host, target, version, arch, outdir, modules, **_kwargs) -> Path:
+            calls.append((host, target, version, arch, outdir, modules))
+            return self._kit(outdir / version / resolve_arch_dir(arch))
+
+        monkeypatch.setattr(install_qt, "install_qt", fake_install_qt)
+        return calls
+
+    @staticmethod
+    def _kit(root: Path) -> Path:
+        qt_cmake = root / "bin" / "qt-cmake"
+        qt_cmake.parent.mkdir(parents=True)
+        qt_cmake.touch(mode=0o755)
+        return root
+
+    def test_installs_the_configured_qt_where_configure_finds_it(
+        self, tmp_path: Path, installs, capsys
+    ) -> None:
+        assert install_qt.main(["local"]) == 0
+
+        outdir = tmp_path / "home" / "Qt"
+        assert installs == [
+            ("linux", "desktop", "6.8.3", "linux_gcc_64", outdir, "qtcharts qtlocation")
+        ]
+        assert find_qt_cmake() == outdir / "6.8.3" / "gcc_64" / "bin" / "qt-cmake"
+        assert capsys.readouterr().out.splitlines() == [
+            f"Installing Qt 6.8.3 (linux_gcc_64) into {outdir}",
+            f"Qt installed at {outdir / '6.8.3' / 'gcc_64'}",
+        ]
+
+    def test_installed_version_is_a_no_op(self, tmp_path: Path, installs, capsys) -> None:
+        root = self._kit(tmp_path / "home" / "Qt" / "6.8.3" / "gcc_64")
+
+        assert install_qt.main(["local"]) == 0
+        assert installs == []
+        assert (
+            capsys.readouterr().out == f"Qt 6.8.3 is already installed at {root}; nothing to do.\n"
+        )
+
+    def test_dry_run_reports_without_installing(self, tmp_path: Path, installs, capsys) -> None:
+        assert install_qt.main(["local", "--dry-run"]) == 0
+        assert installs == []
+        assert capsys.readouterr().out == (
+            f"Would install Qt 6.8.3 (linux_gcc_64) into {tmp_path / 'home' / 'Qt'}\n"
+        )
+
+    @pytest.mark.parametrize("selector", ["--qt-root (QT_DIR)", "QT_ROOT_DIR"])
+    def test_another_qt_selected_for_configure_is_left_alone(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, installs, capsys, selector: str
+    ) -> None:
+        root = self._kit(tmp_path / "custom" / "6.7.0" / "gcc_64")
+        argv = ["local"]
+        if selector == "QT_ROOT_DIR":
+            monkeypatch.setenv("QT_ROOT_DIR", str(root))
+        else:
+            argv += ["--qt-root", str(root)]
+
+        assert install_qt.main(argv) == 0
+        assert installs == []
+        assert capsys.readouterr().out.startswith(f"Not installing Qt 6.8.3: {selector} selects")
+
+    def test_names_the_kit_configure_selects_instead(
+        self, tmp_path: Path, installs, capsys
+    ) -> None:
+        home_qt = tmp_path / "home" / "Qt"
+        newer = self._kit(home_qt / "6.9.0" / "gcc_64")
+
+        assert install_qt.main(["local"]) == 0
+        assert capsys.readouterr().out.splitlines()[-1] == (
+            f"Configure selects the Qt at {newer} instead; "
+            f"set QT_ROOT_DIR={home_qt / '6.8.3' / 'gcc_64'} to build with Qt 6.8.3."
+        )
+
+
+@pytest.mark.parametrize(
+    ("os_host", "machine", "host", "arch", "kit_dir"),
+    [
+        ("linux", "x86_64", "linux", "linux_gcc_64", "gcc_64"),
+        ("linux", "aarch64", "linux_arm64", "linux_gcc_arm64", "gcc_arm64"),
+        ("mac", "aarch64", "mac", "clang_64", "macos"),
+        ("windows", "x86_64", "windows", "win64_msvc2022_64", "msvc2022_64"),
+        ("windows", "aarch64", "windows_arm64", "win64_msvc2022_arm64", "msvc2022_arm64"),
+    ],
+)
+def test_local_desktop_qt_is_the_kit_ci_installs_and_configure_searches(
+    monkeypatch: pytest.MonkeyPatch, os_host, machine, host, arch, kit_dir
+) -> None:
+    monkeypatch.setattr(install_qt, "effective_host", lambda _host: os_host)
+    monkeypatch.setattr(install_qt, "host_arch", lambda: machine)
+
+    assert install_qt.local_desktop_qt() == (host, arch)
+    assert resolve_arch_dir(arch) == kit_dir
 
 
 class TestInstallerSelection:

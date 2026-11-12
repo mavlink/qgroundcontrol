@@ -14,8 +14,20 @@ function(qgc_add_benchmark_support target)
     qgc_disable_dependency_warnings(nanobench)
     target_link_libraries(${target} PRIVATE nanobench)
 
-    target_sources(${target} PRIVATE ${PROJECT_SOURCE_DIR}/test/UnitTestFramework/Benchmarking/Benchmarking.cc
-                                     ${PROJECT_SOURCE_DIR}/test/UnitTestFramework/Benchmarking/Benchmarking.h
+    target_sources(
+        ${target}
+        PRIVATE
+            ${PROJECT_SOURCE_DIR}/test/UnitTestFramework/Benchmarking/Benchmarking.cc
+            ${PROJECT_SOURCE_DIR}/test/UnitTestFramework/Benchmarking/Benchmarking.h
+    )
+    # Benchmarking.cc compiles nanobench's implementation, which the header's include guard would drop in a unity
+    # batch after a source that includes Benchmarking.h.
+    set_source_files_properties(
+        ${PROJECT_SOURCE_DIR}/test/UnitTestFramework/Benchmarking/Benchmarking.cc
+        TARGET_DIRECTORY
+        ${target}
+        PROPERTIES
+            SKIP_UNITY_BUILD_INCLUSION ON
     )
 
     target_include_directories(${target} PRIVATE ${PROJECT_SOURCE_DIR}/test/UnitTestFramework/Benchmarking)
@@ -31,20 +43,25 @@ function(qgc_add_property_support target)
         GITHUB_REPOSITORY emil-e/rapidcheck
         GIT_TAG b96a4e626ef4c7348dcd16c500353c2f997a9f3f
         SYSTEM YES
-        OPTIONS "RC_ENABLE_GTEST OFF"
-                "RC_ENABLE_DOCTEST OFF"
-                "RC_ENABLE_CATCH OFF"
-                "RC_ENABLE_GMOCK OFF"
-                "RC_ENABLE_BOOST OFF"
-                "RC_ENABLE_BOOST_TEST OFF"
-                "RC_ENABLE_TESTS OFF"
-                "RC_ENABLE_EXAMPLES OFF"
+        OPTIONS
+            "RC_ENABLE_GTEST OFF"
+            "RC_ENABLE_DOCTEST OFF"
+            "RC_ENABLE_CATCH OFF"
+            "RC_ENABLE_GMOCK OFF"
+            "RC_ENABLE_BOOST OFF"
+            "RC_ENABLE_BOOST_TEST OFF"
+            "RC_ENABLE_TESTS OFF"
+            "RC_ENABLE_EXAMPLES OFF"
     )
 
     qgc_disable_dependency_warnings(rapidcheck)
     target_link_libraries(${target} PRIVATE rapidcheck)
 
-    target_sources(${target} PRIVATE ${PROJECT_SOURCE_DIR}/test/UnitTestFramework/PropertyTesting/PropertyTesting.h)
+    target_sources(
+        ${target}
+        PRIVATE
+            ${PROJECT_SOURCE_DIR}/test/UnitTestFramework/PropertyTesting/PropertyTesting.h
+    )
 
     target_include_directories(${target} PRIVATE ${PROJECT_SOURCE_DIR}/test/UnitTestFramework/PropertyTesting)
 endfunction()

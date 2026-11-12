@@ -15,7 +15,7 @@ BUILD_TYPES = ("Release", "Debug", "RelWithDebInfo", "MinSizeRel")
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-def run_image(image: str, build_type: str, *, fuse: bool = False) -> None:
+def run_image(image: str, build_type: str) -> None:
     source = Path(os.environ.get("SOURCE_DIR", Path.cwd())).resolve()
     build = Path(os.environ.get("BUILD_DIR", source / "build")).resolve()
     build.mkdir(parents=True, exist_ok=True)
@@ -34,18 +34,16 @@ def run_image(image: str, build_type: str, *, fuse: bool = False) -> None:
         f"JOBS={os.environ.get('JOBS', '')}",
     ]
     # Paths are translated inside the container; only portable cache settings cross this boundary.
-    for name in ("CCACHE_MAXSIZE", "CCACHE_NOFILECLONE", "MOCCACHE_MAX_SIZE", "MOCCACHE_STATS"):
+    for name in (
+        "CCACHE_DISABLE",
+        "CCACHE_MAXSIZE",
+        "CCACHE_NOFILECLONE",
+        "MOCCACHE_DISABLE",
+        "MOCCACHE_MAX_SIZE",
+        "MOCCACHE_STATS",
+    ):
         if name in os.environ:
             command += ["--env", f"{name}={os.environ[name]}"]
-    if fuse:
-        command += [
-            "--cap-add",
-            "SYS_ADMIN",
-            "--device",
-            "/dev/fuse",
-            "--security-opt",
-            "apparmor:unconfined",
-        ]
     command += [
         "-v",
         f"{source}:/project/source",
@@ -75,7 +73,7 @@ def build_variant(variant_id: str, build_type: str) -> None:
     if variant_id == "aarch64":
         os.environ.setdefault("BUILD_DIR", str(REPO_ROOT / "build-aarch64"))
         os.environ.setdefault("JOBS", str(max(1, (os.cpu_count() or 1) // 2)))
-    run_image(image, build_type, fuse=variant["fuse"])
+    run_image(image, build_type)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -87,13 +85,12 @@ def main(argv: list[str] | None = None) -> int:
     run = commands.add_parser("run", help="Run an existing builder image")
     run.add_argument("image")
     run.add_argument("build_type", nargs="?", default="Release", choices=BUILD_TYPES)
-    run.add_argument("--fuse", action="store_true")
     args = parser.parse_args(argv)
     try:
         if args.command == "build":
             build_variant(args.variant, args.build_type)
         else:
-            run_image(args.image, args.build_type, fuse=args.fuse)
+            run_image(args.image, args.build_type)
         return 0
     except (OSError, subprocess.CalledProcessError) as error:
         print(f"Docker build failed: {error}", file=sys.stderr)

@@ -13,7 +13,10 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) for commit m
 
 ## Automatic Release Note Generation
 
-Release notes are generated from the following GitHub labels, which should be set on Pull Requests as appropriate:
+The draft release notes that CI creates for a release tag list commit subjects, grouped by their Conventional Commits type, so the commit message decides how a change is described.
+See [Release Notes](../release_branching_process.md#release_notes) for what each mechanism produces.
+
+GitHub's own _Generate release notes_ button groups pull requests by the following labels, which should be set on Pull Requests as appropriate:
 
 - "RN: MAJOR FEATURE"
 - "RN: MINOR FEATURE"

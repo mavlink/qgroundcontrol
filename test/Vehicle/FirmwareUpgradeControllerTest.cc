@@ -1,11 +1,12 @@
 #include "FirmwareUpgradeControllerTest.h"
 
 #include <QtCore/QFile>
+#include <QtCore/QTemporaryDir>
 #include <QtCore/QTextStream>
 #include <QtTest/QSignalSpy>
 
+#include "FirmwareImage.h"
 #include "FirmwareUpgradeController.h"
-#include <QtCore/QTemporaryDir>
 
 void FirmwareUpgradeControllerTest::_manifestCompleteErrorClearsDownloadingState()
 {
@@ -188,6 +189,33 @@ void FirmwareUpgradeControllerTest::_px4ReleasesCompleteOnlyStableKeepsBetaEmpty
 
     QCOMPARE(controller._px4StableVersion, QStringLiteral("v1.15.2"));
     QVERIFY(controller._px4BetaVersion.isEmpty());
+}
+
+void FirmwareUpgradeControllerTest::_binImageSizeMustBeMultipleOf4()
+{
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const auto writeImage = [&tempDir](const QString& name, qsizetype size) {
+        QFile file(tempDir.filePath(name));
+        if (file.open(QIODevice::WriteOnly)) {
+            file.write(QByteArray(size, '\xff'));
+        }
+        return file.fileName();
+    };
+
+    FirmwareImage image;
+    QSignalSpy statusSpy(&image, &FirmwareImage::statusMessage);
+    QVERIFY(statusSpy.isValid());
+
+    // The bootloader would reject the final 2-byte chunk after the board was erased
+    QVERIFY(!image.load(writeImage(QStringLiteral("unaligned.bin"), 70), 0));
+    QCOMPARE(statusSpy.size(), 1);
+    QVERIFY(statusSpy.first().first().toString().contains(QStringLiteral("multiple of 4")));
+    QCOMPARE(image.imageSize(), 0U);
+
+    QVERIFY(image.load(writeImage(QStringLiteral("aligned.bin"), 72), 0));
+    QCOMPARE(image.imageSize(), 72U);
+    QCOMPARE(statusSpy.size(), 1);
 }
 
 UT_REGISTER_TEST(FirmwareUpgradeControllerTest, TestLabel::Unit, TestLabel::Vehicle)

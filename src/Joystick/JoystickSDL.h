@@ -139,6 +139,8 @@ public:
 
     [[nodiscard]] static bool init();
     static void shutdown(bool deleteDiscoveryCache = true);
+    /// Main thread only. Off the main thread it logs an error and returns the previous discovery,
+    /// whose joysticks the main thread may delete at any time.
     static QMap<QString, Joystick*> discover();
 
 private:

@@ -1,7 +1,8 @@
 name: Cache Cleanup
 
 on:
-  # Periodic GC leaves room for fresh rolling build caches.
+  # Periodic GC leaves room for fresh rolling build caches, and deletes the compiler-cache
+  # snapshot artifacts that newer snapshots superseded.
   schedule:
     - cron: '17 */6 * * *'
   # Deletes the closed PR's merge-ref caches.
@@ -14,12 +15,12 @@ on:
         required: false
         type: string
       dry-run:
-        description: 'List caches without deleting'
+        description: 'List caches and superseded snapshots without deleting'
         required: false
         type: boolean
         default: true
       mode:
-        description: 'prune = keep newest build/dependency cache generations; wipe = delete all listed caches'
+        description: 'prune = keep newest build/dependency cache generations and compiler-cache snapshots; wipe = delete all listed caches'
         required: false
         type: choice
         options:
@@ -37,11 +38,11 @@ jobs:
     timeout-minutes: ${{ github.event_name == 'pull_request_target' && 5 || 30 }}
     permissions:
       contents: read
-      # Required to delete cache entries.
+      # Required to delete cache entries and superseded compiler-cache snapshot artifacts.
       actions: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -49,7 +50,7 @@ jobs:
         with:
           sparse-checkout: |
             tools/_bootstrap.py
-            tools/ci/cache/gh_cache_cleanup.py
+            tools/ci
             tools/common
             tools/qgc_tools
           sparse-checkout-cone-mode: false
@@ -57,6 +58,8 @@ jobs:
           persist-credentials: false
 
       # The script takes the branch, deletion, summary, and prune mode from the triggering event.
+      # A prune also deletes superseded compiler-cache snapshots; it fails, deleting none, when
+      # it cannot list the artifacts completely.
       - name: List and clean caches
         env:
           GH_TOKEN: ${{ github.token }}

@@ -4,7 +4,8 @@ Each compiler-analysis job (clang-tidy, Clazy) writes ``<tool>-diagnostics.json`
 ``{"tool": ..., "commit": ..., "diagnostics": {file: [[line, column, severity, check], ...]}}``,
 plus, on pull requests, ``"changed"`` for the lines the pull request changed, whose rows add each
 diagnostic's message and the source excerpt printed under it. ``commit`` is the analyzed
-checkout, whose line numbers the rows use.
+checkout, whose line numbers the rows use. ``is_bug_class`` is the one definition of the findings
+that pull request reports put first.
 """
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ __all__ = [
     "MAX_CONTEXT_CHARS",
     "MAX_MESSAGE_CHARS",
     "AnalysisWarning",
+    "is_bug_class",
     "load_analysis_commit",
     "load_changed_findings",
     "load_unique_warnings",
@@ -53,6 +55,21 @@ class AnalysisWarning:
     message: str = ""
     severity: str = "warning"
     context: str = ""
+
+
+def is_bug_class(finding: AnalysisWarning) -> bool:
+    """Return whether *finding* reports a likely bug rather than style or cost.
+
+    That is an error from any tool, or a clang-tidy ``bugprone-*`` or ``clang-analyzer-*``
+    warning. A pull request gets these as inline review comments and first in its Build Results
+    comment; every other warning (``performance-*``, Clazy) is only in that comment.
+    """
+    if finding.severity == "error":
+        return True
+    # clang-tidy joins the enabled aliases of one check with commas.
+    return finding.tool == "clang-tidy" and any(
+        name.startswith(("bugprone-", "clang-analyzer-")) for name in finding.check.split(",")
+    )
 
 
 def _warnings(

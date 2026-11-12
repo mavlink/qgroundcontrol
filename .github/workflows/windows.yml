@@ -26,9 +26,13 @@ on:
           - Release
           - Debug
 
+# Only a pull request's superseded runs are cancelled. The pushes to one branch or tag take turns
+# and are never cancelled mid-run: Publish Builds publishes a commit from its push runs, once
+# every platform has one. A push run still waiting for its turn gives way to a newer push. A run
+# started by hand has a group of its own: in the ref's group it would replace the waiting push run.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -103,18 +107,18 @@ jobs:
       # The Harden-Runner community tier audits GitHub-hosted runners only, not RunsOn.
       - name: Harden Runner
         if: runner.environment == 'github-hosted'
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
       - name: Record build timeline
-        uses: Kesin11/actions-timeline@v3
+        uses: Kesin11/actions-timeline@460b1f8a750077029ad3589824d371b200e91dcf # v3.2.1
         continue-on-error: true
         with:
           show-waiting-runner: true
 
       - name: Enable RunsOn magic cache
-        uses: runs-on/action@v2
+        uses: runs-on/action@13fbb6a39310a0dac9ab4716da2c4e74a3326dfc # v2.7.0
         with:
           show_costs: summary
 
@@ -224,11 +228,8 @@ jobs:
           artifact-name: ${{ matrix.package }}.exe
           package-name: ${{ matrix.package }}
           subject-name: ${{ matrix.package }}-windows
-          aws-role-arn: ${{ secrets.AWS_ROLE_ARN }}
-          aws-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-distribution-id: ${{ secrets.AWS_DISTRIBUTION_ID }}
-          upload-aws: ${{ matrix.variant == 'arm64-cross' && 'false' || 'true' }}
+          publish: ${{ matrix.variant != 'arm64-cross' }}
+          job-id: ${{ job.check_run_id }}
 
       - name: Debug failed runner
         if: ${{ failure() && !cancelled() && inputs.debug_runner && github.ref_type == 'branch' }}
@@ -264,12 +265,12 @@ jobs:
       # The Harden-Runner community tier audits GitHub-hosted runners only, not RunsOn.
       - name: Harden Runner
         if: runner.environment == 'github-hosted'
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
       - name: Enable RunsOn magic cache
-        uses: runs-on/action@v2
+        uses: runs-on/action@13fbb6a39310a0dac9ab4716da2c4e74a3326dfc # v2.7.0
         with:
           show_costs: summary
 
@@ -331,8 +332,8 @@ jobs:
         timeout-minutes: 15
         uses: ./.github/actions/debug-runner
 
-  # The required status check: a skipped matrix job reports an unexpanded name, so branch
-  # protection requires this stable name instead. always(): a skipped gate would count as passing.
+  # The check a ruleset should require (none does today): a skipped matrix job reports an
+  # unexpanded name, so this job has the stable one. always(): a skipped gate would count as passing.
   windows-ok:
     name: Windows
     if: always()
@@ -342,12 +343,12 @@ jobs:
     permissions: {}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
       - name: Require every leg to pass
-        uses: re-actors/alls-green@v1.3.0
+        uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
         with:
           allowed-skips: build, gstreamer-tests
           jobs: ${{ toJSON(needs) }}

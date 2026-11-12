@@ -43,9 +43,11 @@ on:
       - 'cmake/presets/**'
   workflow_dispatch:
 
+# Only a pull request's superseded runs are cancelled. Every other run has its own group, so a newer
+# push neither cancels it nor replaces it while it waits.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -67,12 +69,12 @@ jobs:
       # The Harden-Runner community tier audits GitHub-hosted runners only, not RunsOn.
       - name: Harden Runner
         if: runner.environment == 'github-hosted'
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
       - name: Enable RunsOn magic cache
-        uses: runs-on/action@v2
+        uses: runs-on/action@13fbb6a39310a0dac9ab4716da2c4e74a3326dfc # v2.7.0
         with:
           show_costs: summary
 
@@ -85,10 +87,14 @@ jobs:
       - name: Enable KVM
         run: python3 tools/ci/runner/enable_kvm.py
 
+      # An unreachable snap store says nothing about the build: the job then warns and skips the
+      # steps below instead of showing a failure.
       - name: Install Multipass and allow VM bridge networking
-        run: python3 tools/ci/runner/install_multipass.py --allow-bridge-forwarding
+        id: multipass
+        run: python3 tools/ci/runner/install_multipass.py --allow-bridge-forwarding --allow-store-outage
 
       - name: Build QGC in Multipass VM
+        if: steps.multipass.outputs.installed == 'true'
         env:
           QGC_SOURCE_DIR: ${{ github.workspace }}
           # Pin the LTS via the `release:` remote: the bare-launch `lts` alias only promotes at
@@ -106,6 +112,7 @@ jobs:
             python3 deploy/multipass/run_multipass.py
 
       - name: Upload AppImage
+        if: steps.multipass.outputs.installed == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: qgc-multipass-appimage
@@ -123,12 +130,12 @@ jobs:
       # The Harden-Runner community tier audits GitHub-hosted runners only, not RunsOn.
       - name: Harden Runner
         if: runner.environment == 'github-hosted'
-        uses: step-security/harden-runner@v2
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
       - name: Enable RunsOn magic cache
-        uses: runs-on/action@v2
+        uses: runs-on/action@13fbb6a39310a0dac9ab4716da2c4e74a3326dfc # v2.7.0
         with:
           show_costs: summary
 

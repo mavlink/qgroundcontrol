@@ -185,6 +185,26 @@ def test_android_lists_target_qt_installs_and_the_gstreamer_sdk() -> None:
     assert ndk.startswith("r")
 
 
+def test_a_release_tag_reports_its_compiler_and_moc_caches_off() -> None:
+    # What cache_plan.py exports for a release tag: no keys, no saves, both launchers disabled.
+    facts = dict(
+        mod.setup_facts(
+            {
+                **LINUX_COVERAGE,
+                "QGC_CCACHE_KEY": "",
+                "QGC_SAVE_BUILD_CACHE": "false",
+                "COMPILER_CACHE": "",
+                "MOC_CACHE": "",
+                "CCACHE_DISABLE": "1",
+            }
+        )
+    )
+    off = "off: release tag"
+    assert (facts["Compiler cache"], facts["moc cache"], facts["Build cache saves"]) == (off,) * 3
+    assert facts["ccache primary key"] == ""
+    assert facts["CPM sources"] == "restored (exact key)"
+
+
 def test_sccache_pilot() -> None:
     sccache = dict(mod.setup_facts({**LINUX_COVERAGE, "QGC_COMPILER_CACHE_TOOL": "sccache"}))
     assert sccache["Compiler cache"] == "sccache reads S3 directly (no archive)"

@@ -29,17 +29,53 @@ PLATFORMS = (
     "docker-android",
 )
 
-# Patterns that trigger a build for ANY platform
-_COMMON_PATTERNS: list[str] = [
+# Paths that no platform build runs or reads. They are checked first, so a path they do not name
+# keeps triggering whatever the build patterns below say: when unsure, leave a path out.
+# test_detect_changes.py fails if a script that a platform workflow runs or imports is listed.
+_NOT_BUILD_INPUTS: list[str] = [
+    r"\.md$",
+    # Developer, lint, documentation and maintenance entry points.
+    r"^tools/(analyze|build_profile|check_deps|ci_script_index|clean|configure|pre_commit"
+    r"|terrain_tiles|update_px4_metadata|validate_cmake_presets|validate_configs)\.py$",
+    r"^tools/(analyzers|coding-style|simulation|terrain)/",
+    # CMake's memcheck setup reads the Valgrind suppressions.
+    r"^tools/debuggers/(?!valgrind\.supp$)",
+    r"^tools/translations/check_placeholders\.py$",
+    # Scripts of other workflows: analysis, cache cleanup, docs, Pages, publishing, releases,
+    # pull request reports, runner images and VM builds.
+    r"^tools/ci/cache/gh_cache_cleanup\.py$",
+    r"^tools/ci/gstreamer/",
+    r"^tools/ci/planning/analysis_matrix\.py$",
+    r"^tools/ci/publish/(aws_upload|daily_release|deploy_docs|pages_\w+|publish_\w+"
+    r"|release_assets|release_branch_check|release_notes)\.py$",
+    r"^tools/ci/reporting/(analysis_review|collect_build_status|download_artifacts"
+    r"|generate_build_results_comment|gh_pr_size_label|report_context|workflow_runs)\.py$",
+    r"^tools/ci/runner/(analysis_tools|apt_debs_artifact|install_multipass|runner_image"
+    r"|validate_runner_configs)\.py$",
+]
+_NOT_BUILD_INPUT_RES = [re.compile(pattern) for pattern in _NOT_BUILD_INPUTS]
+
+# The locked Python environment, which every job installs the same way. A change to these files
+# alone (Renovate's lock updates) builds Linux only, as the canary for the other platforms.
+PYTHON_ENVIRONMENT_FILES = ("tools/pyproject.toml", "tools/uv.lock")
+
+# Application sources, resources and tests: every native platform builds them. The Docker builder
+# images do not depend on them, so Docker builds only for the CMake files among them.
+_SOURCE_PATTERNS: list[str] = [
     r"^src/",
-    r"^CMakeLists\.txt$",
-    r"^CMakePresets\.json$",
-    r"^cmake/",
-    r"^libs/",
     r"^resources/",
     r"^translations/",
     r"^.*\.qrc$",
     r"^test/",
+]
+_SOURCE_CMAKE_PATTERN = r"^(src|resources|translations|test)/(.*/)?(CMakeLists\.txt|[^/]+\.cmake)$"
+
+# Patterns that trigger a build for ANY platform
+_COMMON_PATTERNS: list[str] = [
+    r"^CMakeLists\.txt$",
+    r"^CMakePresets\.json$",
+    r"^cmake/",
+    r"^libs/",
     r"^\.github/actions/",
     r"^tools/ci/",
     r"^\.github/build-config\.json$",
@@ -97,7 +133,8 @@ def workflow_name_for_platform(platform: str) -> str:
 def build_patterns(platform: str) -> list[re.Pattern[str]]:
     """Build the list of compiled regex patterns for a platform."""
     wf = workflow_name_for_platform(platform)
-    raw: list[str] = list(_COMMON_PATTERNS)
+    raw = [_SOURCE_CMAKE_PATTERN] if platform.startswith("docker-") else list(_SOURCE_PATTERNS)
+    raw.extend(_COMMON_PATTERNS)
     raw.append(rf"^deploy/{re.escape(platform)}/")
     raw.append(rf"^\.github/workflows/{re.escape(wf)}\.yml$")
     raw.extend(_PLATFORM_PATTERNS.get(platform, []))
@@ -109,11 +146,18 @@ def build_patterns(platform: str) -> list[re.Pattern[str]]:
     return [re.compile(p) for p in raw]
 
 
+def is_build_input(path: str) -> bool:
+    """Whether *path* can affect a build: False only for paths that _NOT_BUILD_INPUTS names."""
+    return bool(path) and not any(pattern.search(path) for pattern in _NOT_BUILD_INPUT_RES)
+
+
 def has_relevant_changes(files: Sequence[str], platform: str) -> bool:
-    """Check if any changed file matches the platform's patterns."""
+    """Check if any changed file is a build input that matches the platform's patterns."""
     patterns = build_patterns(platform)
     for f in files:
-        if not f:
+        if not is_build_input(f):
+            continue
+        if f in PYTHON_ENVIRONMENT_FILES and platform != "linux":
             continue
         for p in patterns:
             if p.search(f):

@@ -361,6 +361,7 @@ Tool configuration:
 
 - `.clang-format` - C++ formatting (the `clang-format` pre-commit hook and `just format`/`format-fix` check changed regions)
 - `.clang-tidy` - C++ static analysis (`just analyze`)
+- `ruff.toml` - Python linting and formatting (the report-only `ruff-check` and `ruff-format` hooks; `just format-fix-python` applies the fixes)
 - `.qmlformat.ini` - QML formatting (`qmlformat`; the manual-stage `qmlformat` hook reports differences)
 - `.qmllint.ini` - QML linting (the `qmllint` pre-commit hook)
 - `.editorconfig` - Editor settings (the `editorconfig-checker` hook enforces them)

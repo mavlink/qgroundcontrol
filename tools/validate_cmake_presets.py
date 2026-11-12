@@ -3,8 +3,8 @@
 Usage:
     python tools/validate_cmake_presets.py [FILE...]
 
-Without files, checks CMakePresets.json and cmake/presets/*.json. The schema ships with the `build`
-group's cmake package, which tools/uv.lock pins, so the check works offline.
+Without files, checks CMakePresets.json and cmake/presets/*.json. The schema ships with the cmake
+package of the `build` and `test` groups, which tools/uv.lock pins, so the check works offline.
 """
 
 from __future__ import annotations
@@ -12,13 +12,16 @@ from __future__ import annotations
 import argparse
 from importlib import metadata
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import _bootstrap as _bootstrap
 from common.io import read_json
 from common.logging import log_error, log_ok
 from common.paths import REPO_ROOT
 from jsonschema import validators
+
+if TYPE_CHECKING:
+    from jsonschema.protocols import Validator
 
 SCHEMA_SUFFIX = "Help/manual/presets/schema.json"
 
@@ -31,8 +34,21 @@ def presets_schema_path() -> Path:
     raise FileNotFoundError(f"cmake package has no {SCHEMA_SUFFIX}")
 
 
+def validator_class_for(schema: dict[str, Any]) -> type[Validator]:
+    """Return the validator for the JSON Schema dialect *schema* declares.
+
+    jsonschema matches `$schema` against each draft's own identifier and deprecates falling back to
+    the newest draft for any other. CMake 4.3 and later name draft 2020-12 with an `http` URI, but
+    the drafts since 2019-09 are identified by `https` ones.
+    """
+    dialect = schema.get("$schema")
+    if isinstance(dialect, str) and dialect.startswith("http://json-schema.org/draft/20"):
+        schema = {"$schema": dialect.replace("http://", "https://", 1)}
+    return validators.validator_for(schema)
+
+
 def validate_presets(files: list[Path], schema: dict[str, Any]) -> list[str]:
-    validator_class = validators.validator_for(schema)
+    validator_class = validator_class_for(schema)
     validator_class.check_schema(schema)
     validator = validator_class(schema)
     errors: list[str] = []

@@ -34,7 +34,12 @@ PRE_SETUP_PYTHON_SCRIPTS: tuple[str, ...] = (
     "tools/ci/gstreamer/mirror_gstreamer.py",
     "tools/ci/planning/analysis_matrix.py",
     "tools/ci/planning/plan_platform.py",
+    "tools/ci/publish/aws_upload.py",
+    "tools/ci/publish/daily_release.py",
     "tools/ci/publish/deploy_docs.py",
+    "tools/ci/publish/publish_decide.py",
+    "tools/ci/publish/publish_set.py",
+    "tools/ci/publish/release_assets.py",
     "tools/ci/reporting/analysis_review.py",
     "tools/ci/reporting/collect_build_status.py",
     "tools/ci/reporting/download_artifacts.py",
@@ -176,3 +181,15 @@ def test_jobs_without_setup_python_run_only_listed_scripts() -> None:
                 if script not in STDLIB_ONLY_SCRIPTS
             ]
     assert not unlisted, "Add these to PRE_SETUP_PYTHON_SCRIPTS:\n" + "\n".join(unlisted)
+
+
+def test_no_job_runs_on_an_image_with_a_python3_below_the_tools_floor() -> None:
+    # Steps ahead of setup-python run on the runner's python3, which is 3.10 on ubuntu-22.04.
+    outdated = re.compile(r"\bubuntu-(?:20|22)\.04\b")
+    jobs = [
+        f"{workflow}:{job_name}"
+        for workflow in workflow_names()
+        for job_name, job in (load_workflow(workflow).get("jobs") or {}).items()
+        if outdated.search(str(job))
+    ]
+    assert not jobs

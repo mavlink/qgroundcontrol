@@ -93,8 +93,6 @@ bool LinkInterface::mavlinkChannelIsSet() const
 
 bool LinkInterface::_allocateMavlinkChannel()
 {
-    Q_ASSERT(!mavlinkChannelIsSet());
-
     if (mavlinkChannelIsSet()) {
         qCWarning(LinkInterfaceLog) << "already have" << _mavlinkChannel;
         return true;

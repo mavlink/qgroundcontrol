@@ -2,40 +2,20 @@
 # Clang-Tidy configuration for C++20 and Qt 6
 
 ---
-# The last six Checks entries disable cppcoreguidelines aliases of enabled checks, so each finding reports once.
+# Bug, analyzer, and performance checks only (tools/analyzers/README.md#check-policy); the excluded ones flag:
+# - any adjacent parameters of one type, exceptions in code that never throws, and QObjects their parent deletes;
+# - one QGC idiom each: `1 << n` flag values, static Qt objects and logging categories, enums wider than one byte.
 Checks: >
   -*,
   bugprone-*,
+  clang-analyzer-*,
+  performance-*,
   -bugprone-easily-swappable-parameters,
   -bugprone-exception-escape,
-  clang-analyzer-*,
   -clang-analyzer-cplusplus.NewDeleteLeaks,
-  misc-include-cleaner,
-  modernize-*,
-  -modernize-use-trailing-return-type,
-  -modernize-avoid-c-arrays,
-  -modernize-use-default-member-init,
-  performance-*,
-  readability-*,
-  -readability-magic-numbers,
-  -readability-identifier-length,
-  -readability-function-cognitive-complexity,
-  cppcoreguidelines-*,
-  -cppcoreguidelines-avoid-magic-numbers,
-  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
-  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
-  -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
-  -cppcoreguidelines-pro-type-vararg,
-  -cppcoreguidelines-pro-type-static-cast-downcast,
-  -cppcoreguidelines-avoid-const-or-ref-data-members,
-  -cppcoreguidelines-owning-memory,
-  -cppcoreguidelines-non-private-member-variables-in-classes,
-  -cppcoreguidelines-explicit-virtual-functions,
-  -cppcoreguidelines-macro-to-enum,
-  -cppcoreguidelines-narrowing-conversions,
-  -cppcoreguidelines-noexcept-destructor,
-  -cppcoreguidelines-noexcept-move-operations,
-  -cppcoreguidelines-noexcept-swap,
+  -bugprone-signed-bitwise,
+  -bugprone-throwing-static-initialization,
+  -performance-enum-size,
 
 # Promote high-signal bug classes to errors; everything else stays a warning.
 WarningsAsErrors: >
@@ -48,48 +28,12 @@ WarningsAsErrors: >
   clang-analyzer-cplusplus.Move
 
 CheckOptions:
-  # Naming conventions (match QGC style)
-  - key: readability-identifier-naming.ClassCase
-    value: CamelCase
-  - key: readability-identifier-naming.StructCase
-    value: CamelCase
-  - key: readability-identifier-naming.EnumCase
-    value: CamelCase
-  - key: readability-identifier-naming.FunctionCase
-    value: camelBack
-  - key: readability-identifier-naming.VariableCase
-    value: camelBack
-  - key: readability-identifier-naming.PrivateMethodCase
-    value: camelBack
-  - key: readability-identifier-naming.PrivateMethodPrefix
-    value: '_'
-  - key: readability-identifier-naming.PrivateMemberPrefix
-    value: '_'
-  - key: readability-identifier-naming.ProtectedMemberPrefix
-    value: '_'
-  - key: readability-identifier-naming.ConstexprVariableCase
-    value: CamelCase
-
-  # Performance options
   - key: performance-for-range-copy.WarnOnAllAutoCopies
     value: 'true'
 
-  # include-cleaner stays a warning. It would replace Qt <QtModule/QClass> includes, QGC's MAVLink wrappers,
-  # and GStreamer/GLib umbrella headers with internal headers, so it ignores those and Qt-generated files.
-  - key: misc-include-cleaner.IgnoreHeaders
-    value: >-
-      /include/Qt[A-Za-z0-9]+/.*;
-      /Qt[A-Za-z0-9]+\.framework/.*;
-      /include/mavlink/.*;
-      /(MAVLinkLib|QGCMAVLink|MAVLinkEnums|MAVLinkMessageType)\.h;
-      /gstreamer-1\.0/.*;
-      /glib-2\.0/.*;
-      _autogen/.*;
-      moc_[^/]*;
-      [^/]*\.moc;
-      qrc_[^/]*;
-      ui_[^/]*\.h
-
+# A config file cannot name the checkout, so this also matches a dependency's src/, test/, or tools/ directory;
+# tools/analyze.py anchors it to the checkout (--header-filter). ExcludeHeaderFilterRegex is not used because
+# clang-tidy and clangd 18 reject a config file that has it.
 HeaderFilterRegex: '^.*/(src|test|tools)/.*\.(h|hpp)$'
 FormatStyle: file
 ...

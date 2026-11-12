@@ -5,7 +5,7 @@
 #include "Platform.h"
 
 #ifdef QGC_UNITTEST_BUILD
-    #include "UnitTestList.h"
+#include "UnitTestEntryPoint.h"
 #endif
 
 QGC_LOGGING_CATEGORY_ON(MainLog, "Main")

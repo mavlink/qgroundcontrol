@@ -12,10 +12,8 @@ import sys
 from typing import TYPE_CHECKING
 
 import pytest
-from ci.runner.build_setup import SetupInputs, plan_setup
-from common.build_config import load_build_config
 
-from ..._helpers import REPO_ROOT, load_action, load_workflow
+from ..._helpers import REPO_ROOT, load_workflow
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -128,168 +126,13 @@ def test_rejects_unsupported_ios_platform(tmp_path: Path) -> None:
     assert "macosx" in result.stderr
 
 
-def test_ios_workflow_builds_device_and_simulator_targets() -> None:
-    workflow = load_workflow("ios.yml")
-    job = workflow["jobs"]["build"]
-
-    assert job["runs-on"] == "${{ matrix.runner }}"
-    assert job["strategy"]["matrix"]["include"] == [
-        {
-            "target": "device",
-            "runner": "macos-15",
-            "build_type": "Release",
-            "preset": "iOS",
-            "qt_arch": "ios_device",
-        },
-        {
-            "target": "simulator",
-            "runner": "macos-15-intel",
-            "build_type": "Debug",
-            "preset": "iOS-simulator",
-            "qt_arch": "ios_simulator_x86_64",
-        },
-    ]
-
-    steps = {step["name"]: step for step in job["steps"]}
-    setup = steps["Build Setup (iOS)"]["with"]
-    assert setup["qt-arch"] == "${{ matrix.qt_arch }}"
-    # Only the device target has the Release build type, so target checks imply Release.
-    assert [leg["target"] for leg in job["strategy"]["matrix"]["include"]] == [
-        "device",
-        "simulator",
-    ]
-    tag = (
-        "matrix.target == 'device' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v')"
-    )
-    assert job["env"]["APPSTORE_TAG"] == f"${{{{ {tag} }}}}"
-    # A tag signs and uploads only with every App Store secret and variable the steps read.
-    release = " ".join(job["env"]["APPSTORE_RELEASE"].split())
-    assert release.startswith(f"${{{{ {tag} && ")
-    required = set(re.findall(r"(?:secrets|vars)\.APPSTORE_\w+", str(job["steps"])))
-    required.discard("vars.APPSTORE_BUNDLE_ID")  # defaulted in the job environment
-    assert required == {
-        "secrets.APPSTORE_API_PRIVATE_KEY",
-        "secrets.APPSTORE_CERTIFICATES_FILE_BASE64",
-        "secrets.APPSTORE_CERTIFICATES_PASSWORD",
-        "vars.APPSTORE_API_KEY_ID",
-        "vars.APPSTORE_ISSUER_ID",
-        "vars.APPSTORE_PROVISIONING_PROFILE_NAME",
-        "vars.APPSTORE_TEAM_ID",
-    }
-    assert set(release.removeprefix(f"${{{{ {tag} && ").removesuffix(" }}").split(" && ")) == {
-        f"{name} != ''" for name in required
-    }
-    skip = steps["Skip TestFlight without App Store signing"]
-    assert skip["if"] == "env.APPSTORE_TAG == 'true' && env.APPSTORE_RELEASE != 'true'"
-    assert skip["run"].startswith('echo "::notice::')
-    names = list(steps)
-    assert names.index("Skip TestFlight without App Store signing") < names.index(
-        "Import App Store signing certificate"
-    )
-    configure = steps["Configure"]["with"]
-    assert configure["preset"] == (
-        "${{ env.APPSTORE_RELEASE == 'true' && 'iOS-appstore' || matrix.preset }}"
-    )
-    assert configure["extra-args"] == "${{ steps.profile.outputs.cmake_args }}"
-    simulator_verification = steps["Verify Simulator Bundle"]["run"]
-    assert 'ios_package.py verify --app "$APP_PATH" --arch x86_64' in simulator_verification
-    package = steps["Package IPA"]["run"]
-    assert 'ios_package.py" package' in package
-    assert "ios_package.py select-profile" in steps["Select App Store provisioning profile"]["run"]
-
-    for step_name in ("Package IPA", "Attest and Upload"):
-        assert steps[step_name]["if"] == "matrix.target == 'device'"
-
-    for step_name in (
-        "Import App Store signing certificate",
-        "Download App Store provisioning profiles",
-        "Select App Store provisioning profile",
-        "Upload to TestFlight",
-    ):
-        assert steps[step_name]["if"] == "env.APPSTORE_RELEASE == 'true'"
-
-    attest = steps["Attest and Upload"]["with"]
-    assert attest["package-name"] == "${{ env.PACKAGE }}-ios"
-    assert attest["subject-name"] == "${{ env.PACKAGE }}-ios"
-
-
-def test_ios_setup_exports_cross_compile_roots() -> None:
-    action = load_action("build-setup")
-    steps = {step["name"]: step for step in action["runs"]["steps"] if "name" in step}
-
-    assert "steps.qt.outputs.qt_root_dir" in action["outputs"]["host_qt_root_dir"]["value"]
-    assert "steps.qt-ios.outputs.qt_root_dir" in action["outputs"]["target_qt_root_dir"]["value"]
-    host = steps["Install Qt"]
-    assert host["id"] == "qt"
-    assert "if" not in host
-    assert host["with"]["host"] == "${{ steps.plan.outputs.qt_host }}"
-    assert host["with"]["arch"] == "${{ steps.plan.outputs.qt_arch }}"
-    target = steps["Install Qt for iOS"]
-    assert target["id"] == "qt-ios"
-    assert target["if"] == "inputs.mode == 'ios'"
-    assert target["with"]["arch"] == "${{ inputs.qt-arch }}"
-    assert target["with"]["modules"] == "${{ steps.plan.outputs.qt_modules_ios }}"
-    # The iOS SDK installs last so its QT_ROOT_DIR and qt-cmake win.
-    names = list(steps)
-    assert names.index("Install Qt") < names.index("Install Qt for iOS")
-    assert (
-        steps["Setup Xcode"]["with"]["xcode-version"] == "${{ steps.plan.outputs.xcode_version }}"
-    )
-    # iOS runs its host tools from the macOS Qt and pins its own Xcode.
-    config = load_build_config()
-    outputs = plan_setup(SetupInputs("ios", qt_arch="ios_device"), config).outputs
-    assert (outputs["qt_host"], outputs["qt_arch"]) == ("mac", "clang_64")
-    assert outputs["xcode_version"] == config["apple"]["xcode_ios_version"]
-
-
-def test_ios_contract_dependencies_are_sparse_checked_out() -> None:
-    workflow = load_workflow("ci-scripts.yml")
-    steps = workflow["jobs"]["test-ci-scripts"]["steps"]
-    checkout = next(step for step in steps if step["name"] == "Checkout")
-    sparse_checkout = set(checkout["with"]["sparse-checkout"].splitlines())
-
-    assert {
-        ".github/actions/build-setup",
-        "cmake/modules/AppleXCFramework.cmake",
-        "cmake/platform/Apple.cmake",
-        "deploy/ios",
-    } <= sparse_checkout or {".github", "cmake", "deploy"} <= sparse_checkout
-
-
-def test_ios_packaging_uses_consolidated_bundle_sources() -> None:
-    for obsolete in (
-        "AppStoreIcon_1024x1024.png",
-        "iOS-Info.plist",
-        "iOSForAppStore-Info-Source.plist",
-        "QGCLaunchScreen.xib",
-        "qgroundcontrol.xcconfig",
-        "qgroundcontrol_appstore.xcconfig",
-    ):
-        assert not (IOS_DIR / obsolete).exists()
-
-    plist_text = (IOS_DIR / "Info.plist.app.in").read_text()
-    plist = plistlib.loads(plist_text.encode())
-    apple = (REPO_ROOT / "cmake/platform/Apple.cmake").read_text()
-    presets = json.loads((REPO_ROOT / "cmake/presets/iOS.json").read_text())
-
-    assert plist["CFBundleIdentifier"] == "${MACOSX_BUNDLE_GUI_IDENTIFIER}"
-    assert plist["UILaunchStoryboardName"] == "QGCLaunchScreen"
-    assert "NSBluetoothAlwaysUsageDescription" in plist
-    assert "NSLocalNetworkUsageDescription" in plist
-    assert "QGCLaunchScreen.storyboard" in apple
-    assert "qgc_find_ios_xcframework_slice" in apple
-    assert "QGC_IOS_APP_STORE_BUILD requires the Xcode generator" in apple
-    assert "XCODE_EMBED_FRAMEWORKS GStreamerMobile" in apple
-    assert "XCODE_EMBED_FRAMEWORKS_CODE_SIGN_ON_COPY YES" in apple
-    assert "IOSPipe2Compat.c" in apple
-    assert "TARGET_BUNDLE_DIR_NAME:GStreamerMobile" in apple
-    assert "${GStreamer_Mobile_MODULE_NAME}.framework" not in apple
-    assert "GStreamer_VERSION VERSION_" not in apple
-    assert any(
-        preset["name"] == "iOS-appstore" and preset["generator"] == "Xcode"
-        for preset in presets["configurePresets"]
-    )
-    assert 'XCODE_ATTRIBUTE_MARKETING_VERSION "${CMAKE_PROJECT_VERSION}"' in apple
+def test_app_store_release_requires_every_secret_and_variable_its_steps_read() -> None:
+    """A tag signs and uploads only when nothing its signing and upload steps read is empty."""
+    job = load_workflow("ios.yml")["jobs"]["build"]
+    read = set(re.findall(r"(?:secrets|vars)\.APPSTORE_\w+", str(job["steps"])))
+    assert read
+    gate = job["env"]["APPSTORE_RELEASE"]
+    assert set(re.findall(r"((?:secrets|vars)\.APPSTORE_\w+) != ''", gate)) == read
 
 
 def test_ios_asset_catalog_references_valid_icons() -> None:

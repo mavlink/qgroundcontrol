@@ -25,6 +25,10 @@ from common.io import extract_tar_data
 CACHE_ROOTS = (".cache/ccache", ".cache/moccache")
 # Snapshots are several GB; a stalled download falls back to the dependency cache.
 DOWNLOAD_TIMEOUT_SECONDS = 900
+# Bump the version when CACHE_ROOTS changes: unpack_cache rejects older layouts after download.
+_NAME_PREFIX = "compiler-cache-v2-"
+# A run of one of these events restores the snapshots of the others, never a pull request's.
+_TRUSTED_EVENTS = frozenset({"push", "schedule", "workflow_dispatch"})
 # Any of these falls back to the dependency cache instead of failing the job.
 _SNAPSHOT_ERRORS = (
     OSError,
@@ -40,8 +44,15 @@ _SNAPSHOT_ERRORS = (
 def artifact_name(compiler_key: str, moc_key: str) -> str:
     """Keys include platform, configuration, compiler identity, and branch scope."""
     digest = hashlib.sha256(f"{compiler_key}\n{moc_key}".encode()).hexdigest()
-    # Bump the version when CACHE_ROOTS changes: unpack_cache rejects older layouts after download.
-    return f"compiler-cache-v2-{digest}"
+    return f"{_NAME_PREFIX}{digest}"
+
+
+def is_snapshot_name(name: object) -> bool:
+    """Whether *name* is exactly an ``artifact_name()``: the versioned prefix and a SHA-256."""
+    return (
+        isinstance(name, str)
+        and re.fullmatch(rf"{re.escape(_NAME_PREFIX)}[0-9a-f]{{64}}", name) is not None
+    )
 
 
 def _head_repository_id(run: dict[str, Any]) -> Any:
@@ -59,9 +70,9 @@ def compatible_run(current: dict[str, Any], candidate: dict[str, Any]) -> bool:
     repository_id = _head_repository_id(current)
     if not repository_id or _head_repository_id(candidate) != repository_id:
         return False
-    allowed = {"push", "schedule", "workflow_dispatch"}
+    allowed = _TRUSTED_EVENTS
     if current.get("event") == "pull_request":
-        allowed = {"pull_request"}
+        allowed = frozenset({"pull_request"})
     elif current.get("event") not in allowed:
         return False
     return candidate.get("event") in allowed
@@ -74,9 +85,24 @@ def trusted_baseline(
         candidate.get("id") != current.get("id")
         and candidate.get("workflow_id") == current.get("workflow_id")
         and bool(current.get("workflow_id"))
-        and candidate.get("event") in {"push", "schedule", "workflow_dispatch"}
+        and candidate.get("event") in _TRUSTED_EVENTS
         and candidate.get("head_branch") == repository["default_branch"]
         and _head_repository_id(candidate) == repository["id"]
+    )
+
+
+def restore_group(run: dict[str, Any]) -> tuple[Any, ...]:
+    """Return what ``compatible_run`` and ``trusted_baseline`` compare of a producing run.
+
+    Every snapshot one job may restore under a name has the same group, and the job takes the
+    newest, so a cleanup that keeps each group's newest snapshots removes none a job would pick.
+    """
+    event = run.get("event")
+    return (
+        run.get("workflow_id"),
+        run.get("head_branch"),
+        _head_repository_id(run),
+        "trusted" if event in _TRUSTED_EVENTS else event,
     )
 
 

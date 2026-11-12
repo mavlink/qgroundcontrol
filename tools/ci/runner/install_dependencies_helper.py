@@ -19,7 +19,7 @@ import os
 import platform
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -83,7 +83,7 @@ def plan(category: str, *, os_release: Path = Path("/etc/os-release")) -> None:
     distro = f"{release.get('ID', 'linux')}-{release.get('VERSION_ID', 'rolling')}"
     arch = os.environ.get("RUNNER_ARCH") or platform.machine()
     family = "-".join(filter(None, ("apt-debs", category, distro, arch)))
-    month = datetime.now(timezone.utc).strftime("%Y-%m")
+    month = datetime.now(UTC).strftime("%Y-%m")
     digest = hashlib.sha256("\n".join(packages).encode()).hexdigest()
     write_github_output(
         {

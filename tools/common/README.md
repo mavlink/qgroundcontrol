@@ -2,7 +2,7 @@
 
 `tools/common/` contains small, dependency-light helpers shared by QGC developer and CI scripts.
 Import from the module that defines a helper; `common/__init__.py` intentionally does not re-export
-symbols. Explicit imports keep runtime and sparse-checkout dependencies visible.
+symbols. Explicit imports keep each script's runtime dependencies visible.
 
 ```python
 from common.file_traversal import find_repo_root
@@ -13,14 +13,14 @@ from common.proc import run_captured
 
 | Module | Purpose |
 | ------ | ------- |
-| `analysis_diagnostics.py` | analyze.py's `*-diagnostics.json` reports: each tool's unique warnings across shards, and those on changed lines |
+| `analysis_diagnostics.py` | analyze.py's `*-diagnostics.json` reports: each tool's unique warnings across shards, those on changed lines, and which findings are bug-class |
 | `aws.py` | Allowlisted public S3 object checks and uploads |
 | `build_config.py` | `.github/build-config.json` lookup, validation, and CI export |
 | `cmake.py` | CMake cache variable parsing |
 | `coverage_summary.py` | gcovr JSON summary line, function, and branch coverage metrics |
 | `file_traversal.py` | Repository-root discovery and filtered C++ file traversal |
 | `format.py` | Human-readable byte, size-delta, count, duration, percentage, and ratio formatting, and one-line clipped names (`clip`) |
-| `gh_actions.py` | GitHub CLI calls, read-only API retries and JSON reads, workflow artifact archive downloads, GitHub timestamps and durations, annotations (with optional `title`, `file`, `line`, and `col`), log groups, outputs, summaries, and CI detection |
+| `gh_actions.py` | GitHub CLI calls, read-only API retries and JSON reads (optionally `None` for a 404), ref-to-commit and commit-ancestry lookups, workflow artifact archive downloads, GitHub timestamps and durations, annotations (with optional `title`, `file`, `line`, and `col`), log groups, outputs, summaries, and CI detection |
 | `git.py` | Captured Git commands, default-branch discovery, pull request diff refs, diff bases, and changed line ranges |
 | `gstreamer.py` | GStreamer SDK package and mirror URLs and their pinned checksums |
 | `io.py` | JSON/TOML I/O, checksums, atomic writes, and safe archive extraction |
@@ -56,9 +56,9 @@ from common.proc import run_captured
 import as intentional. Library modules without a `__main__` block do not touch `sys.path`.
 `tools/tests/test_bootstrap.py` enforces this shape.
 
-CI jobs that use sparse checkout must include the entrypoint, `tools/_bootstrap.py`, and transitive
-`ci`, `common`, and `qgc_tools` modules. `test_bootstrap_sparse_checkout.py` checks that closure
-automatically.
+CI jobs that use sparse checkout check out this whole directory with `tools/_bootstrap.py`,
+`tools/ci`, and `tools/qgc_tools`, so a new module or import needs no workflow edit
+([rule and enforcing test](../ci/README.md#shared-code-and-bootstrapping)).
 
 ## Adding or Reusing Helpers
 
@@ -69,8 +69,9 @@ output encoding, or platform normalization.
 When a new helper is warranted:
 
 1. Put it in the narrowest existing module; create a module only for a distinct concern.
-2. Keep imports dependency-light and defer optional packages until the function that needs them.
+2. Keep imports dependency-light and defer optional packages until the function that needs them:
+   scripts that run before `setup-python` import these modules on the runner's own Python
+   (`tools/tests/test_stdlib_only.py` imports each such script without site packages).
 3. Export the supported surface through the module's `__all__` when it has one.
 4. Add focused tests under `tools/tests/`.
 5. Run `just test-python` and `just lint` (Ruff, Pyright, and import-linter run as pre-commit hooks).
-6. Update sparse-checkout lists if the automatic policy test reports a missing module.

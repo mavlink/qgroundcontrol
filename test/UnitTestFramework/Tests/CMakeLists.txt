@@ -26,7 +26,7 @@ set_source_files_properties(
         SKIP_UNITY_BUILD_INCLUSION ON
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QGCUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_qgc_test(LocalHttpTestServerTest LABELS Unit)
 add_qgc_test(AllocationTrackerTest LABELS Unit)

@@ -3,6 +3,7 @@
 
 Run from the repository root:
     python3 tools/translations/qgc_lupdate.py
+    python3 tools/translations/qgc_lupdate.py --check  # only report tr() calls lupdate rejects
 
 Honors QT_ROOT_DIR in CI; otherwise auto-detects lupdate via build-config.json.
 """
@@ -13,6 +14,7 @@ import argparse
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -25,6 +27,8 @@ from translations import pseudo_loc, qgc_lupdate_json
 
 _TR_NO_CONTEXT_MARKER = "tr() cannot be called without context"
 _NO_QOBJECT_MARKER = "lacks Q_OBJECT macro"
+_TR_ON_OBJECT_MARKER = "Cannot invoke tr() like this"
+_TS_FILE = Path("translations/qgc.ts")
 
 
 def resolve_lupdate() -> Path:
@@ -39,7 +43,7 @@ def resolve_lupdate() -> Path:
 
 
 def collect_lupdate_errors(output: str) -> list[str]:
-    """Return human-readable error blocks for tr()-without-context / missing Q_OBJECT."""
+    """Return human-readable error blocks for the tr() calls lupdate rejects or cannot extract."""
     errors: list[str] = []
     no_context = [line for line in output.splitlines() if _TR_NO_CONTEXT_MARKER in line]
     if no_context:
@@ -54,17 +58,26 @@ def collect_lupdate_errors(output: str) -> list[str]:
         errors.append(
             "Class uses tr() but is missing Q_OBJECT macro:\n"
             + "\n".join(no_qobject)
-            + "\n  Fix: Add Q_OBJECT to the class declaration in the .h file,"
+            + "\n  Fix: Add Q_OBJECT to the class declaration in the .h file"
+            "\n       (Q_DECLARE_TR_FUNCTIONS(ClassName) when the class is not a QObject),"
             '\n       or replace tr("...") with QCoreApplication::translate("ClassName", "...")'
+        )
+    on_object = [line for line in output.splitlines() if _TR_ON_OBJECT_MARKER in line]
+    if on_object:
+        errors.append(
+            "tr() called through an object, so lupdate does not extract the string:\n"
+            + "\n".join(on_object)
+            + '\n  Fix: Replace object->tr("...") with ClassName::tr("...")'
+            '\n       or QCoreApplication::translate("ClassName", "...")'
         )
     return errors
 
 
-def run_lupdate(lupdate: Path) -> str:
-    """Run lupdate against src/, return combined stdout+stderr."""
+def run_lupdate(lupdate: Path, ts_file: Path = _TS_FILE) -> str:
+    """Run lupdate against src/ into ts_file, return combined stdout+stderr."""
     print(f"Using lupdate: {lupdate}")
     result = subprocess.run(
-        [str(lupdate), "src", "-ts", "translations/qgc.ts", "-no-obsolete"],
+        [str(lupdate), "src", "-ts", str(ts_file), "-no-obsolete"],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
@@ -80,7 +93,12 @@ def run_lupdate(lupdate: Path) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.parse_args()
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Only report tr() calls lupdate cannot extract; leave the translation files untouched",
+    )
+    args = parser.parse_args()
 
     try:
         lupdate = resolve_lupdate()
@@ -89,7 +107,12 @@ def main() -> int:
         return 1
 
     try:
-        output = run_lupdate(lupdate)
+        if args.check:
+            # lupdate has no dry run, so it extracts into a scratch catalog.
+            with tempfile.TemporaryDirectory(prefix="qgc-lupdate-") as scratch_dir:
+                output = run_lupdate(lupdate, Path(scratch_dir) / _TS_FILE.name)
+        else:
+            output = run_lupdate(lupdate)
     except subprocess.CalledProcessError as e:
         print(f"Error: lupdate failed with exit code {e.returncode}", file=sys.stderr)
         return 1
@@ -100,6 +123,10 @@ def main() -> int:
             print(block, file=sys.stderr)
             print("", file=sys.stderr)
         return 1
+
+    if args.check:
+        print("lupdate reported no tr() call it cannot extract")
+        return 0
 
     print("Extracting JSON strings...")
     qgc_lupdate_json.main()

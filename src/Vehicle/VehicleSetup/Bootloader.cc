@@ -352,12 +352,18 @@ bool Bootloader::_binProgram(const FirmwareImage* image)
         return false;
     }
     uint32_t imageSize = (uint32_t)firmwareFile.size();
+    // The bootloader rejects PROTO_PROG_MULTI lengths which are not a multiple of 4. FirmwareImage refuses such
+    // an image when it loads it, before the erase; this guards a caller which skips that.
+    if ((imageSize % 4) != 0) {
+        _errorString = tr("Firmware image size (%1 bytes) is not a multiple of 4").arg(imageSize);
+        return false;
+    }
 
     uint8_t imageBuf[PROG_MULTI_MAX];
     uint32_t bytesSent = 0;
     _imageCRC = 0;
 
-    Q_ASSERT(PROG_MULTI_MAX <= 0x8F);
+    static_assert((PROG_MULTI_MAX <= 0x8F) && ((PROG_MULTI_MAX % 4) == 0));
 
     while (bytesSent < imageSize) {
         int bytesToSend = imageSize - bytesSent;
@@ -365,15 +371,11 @@ bool Bootloader::_binProgram(const FirmwareImage* image)
             bytesToSend = (int)sizeof(imageBuf);
         }
 
-        Q_ASSERT((bytesToSend % 4) == 0);
-
         int bytesRead = firmwareFile.read((char *)imageBuf, bytesToSend);
         if (bytesRead == -1 || bytesRead != bytesToSend) {
             _errorString = tr("Firmware file read failed: %1").arg(firmwareFile.errorString());
             return false;
         }
-
-        Q_ASSERT(bytesToSend <= 0x8F);
 
         bool failed = true;
         if (_write(PROTO_PROG_MULTI) &&
@@ -510,14 +512,17 @@ bool Bootloader::_verifyBytes(const FirmwareImage* image)
 
 bool Bootloader::_binVerifyBytes(const FirmwareImage* image)
 {
-    Q_ASSERT(image->imageIsBinFormat());
-
     QFile firmwareFile(image->binFilename());
     if (!firmwareFile.open(QIODevice::ReadOnly)) {
         _errorString = tr("Unable to open firmware file %1: %2").arg(image->binFilename(), firmwareFile.errorString());
         return false;
     }
     uint32_t imageSize = (uint32_t)firmwareFile.size();
+    // The bootloader rejects PROTO_READ_MULTI lengths which are not a multiple of 4
+    if ((imageSize % 4) != 0) {
+        _errorString = tr("Firmware image size (%1 bytes) is not a multiple of 4").arg(imageSize);
+        return false;
+    }
 
     if (!_sendCommand(PROTO_CHIP_VERIFY)) {
         return false;
@@ -527,7 +532,7 @@ bool Bootloader::_binVerifyBytes(const FirmwareImage* image)
     uint8_t readBuf[READ_MULTI_MAX];
     uint32_t bytesVerified = 0;
 
-    Q_ASSERT(PROG_MULTI_MAX <= 0x8F);
+    static_assert((READ_MULTI_MAX <= 0x8F) && ((READ_MULTI_MAX % 4) == 0));
 
     while (bytesVerified < imageSize) {
         int bytesToRead = imageSize - bytesVerified;
@@ -535,15 +540,11 @@ bool Bootloader::_binVerifyBytes(const FirmwareImage* image)
             bytesToRead = (int)sizeof(readBuf);
         }
 
-        Q_ASSERT((bytesToRead % 4) == 0);
-
         int bytesRead = firmwareFile.read((char *)fileBuf, bytesToRead);
         if (bytesRead == -1 || bytesRead != bytesToRead) {
             _errorString = tr("Firmware file read failed: %1").arg(firmwareFile.errorString());
             return false;
         }
-
-        Q_ASSERT(bytesToRead <= 0x8F);
 
         bool failed = true;
         if (_write(PROTO_READ_MULTI) &&
@@ -580,8 +581,6 @@ bool Bootloader::_binVerifyBytes(const FirmwareImage* image)
 
 bool Bootloader::_ihxVerifyBytes(const FirmwareImage* image)
 {
-    Q_ASSERT(!image->imageIsBinFormat());
-
     uint32_t imageSize = image->imageSize();
     uint32_t bytesVerified = 0;
 
