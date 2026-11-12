@@ -24,10 +24,10 @@ ToolIndicatorPage {
     property real availableWidth: root.Window.width > 0 ? root.Window.width - ScreenTools.defaultFontPixelHeight * 4
                                                         : root._sideBySideWidth
     readonly property bool _compact: root.availableWidth < root._sideBySideWidth
-    // Settings stay usable, rather than collapsing, on windows narrower than the reserved margins.
+    // Settings stay usable, rather than collapsing, on windows narrower than the reserved margins. Beside the status
+    // column they have their preferred width: the page is compact whenever both do not fit.
     readonly property real _settingsWidth: Math.max(ScreenTools.defaultFontPixelWidth * 30,
-        Math.min(root._preferredSettingsWidth,
-                 root.availableWidth - (root._compact ? 0 : root._preferredStatusWidth + root.spacing * 2 + 1)))
+                                                    Math.min(root._preferredSettingsWidth, root.availableWidth))
 
     showExpand: true
     // On narrow screens the expanded view replaces status instead of requiring horizontal scrolling.
