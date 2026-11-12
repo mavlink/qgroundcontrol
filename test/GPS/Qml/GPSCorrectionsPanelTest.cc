@@ -911,6 +911,20 @@ void GPSCorrectionsPanelTest::_receiverHasOneName()
     QCOMPARE(GPSCorrectionManager::sourceName(GPSCorrectionSettings::LocalReceiver), receiver);
 }
 
+void GPSCorrectionsPanelTest::_casterSettingsAreDescribed()
+{
+    // The page shows each of these settings with its description below its label, so a description that repeats the
+    // label says the same thing twice.
+    NTRIPSettings* const ntrip = SettingsManager::instance()->ntripSettings();
+    for (Fact* const fact : {ntrip->ntripServerHostAddress(), ntrip->ntripServerPort(), ntrip->ntripUsername(),
+                             ntrip->ntripUseTls(), ntrip->ntripAllowSelfSignedCerts(), ntrip->ntripRequireVehicle(),
+                             ntrip->ntripDataCapMB(), ntrip->ntripGgaPositionSource(), ntrip->ntripGgaIntervalSec()}) {
+        const QString description = fact->shortDescription();
+        QVERIFY2(!description.isEmpty(), qPrintable(fact->name()));
+        QVERIFY2(description.compare(fact->label(), Qt::CaseInsensitive) != 0, qPrintable(fact->name()));
+    }
+}
+
 void GPSCorrectionsPanelTest::_settingsPageListsGroups()
 {
     // The page follows the task: which source is in use, then NTRIP as a user fills it in, the caster, the

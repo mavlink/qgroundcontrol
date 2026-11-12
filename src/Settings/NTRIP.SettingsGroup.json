@@ -12,21 +12,21 @@
         },
         {
             "name": "ntripServerHostAddress",
-            "shortDesc": "Host address",
+            "shortDesc": "Host name or IP address of the NTRIP caster.",
             "type": "string",
             "default": "",
             "label": "Host address"
         },
         {
             "name": "ntripServerPort",
-            "shortDesc": "Port",
+            "shortDesc": "TCP port of the NTRIP caster. Most casters use 2101.",
             "type": "uint16",
             "default": 2101,
             "label": "Port"
         },
         {
             "name": "ntripUsername",
-            "shortDesc": "Username",
+            "shortDesc": "Name of your account with the caster.",
             "type": "string",
             "default": "",
             "label": "Username"
@@ -48,7 +48,7 @@
         },
         {
             "name": "ntripUseTls",
-            "shortDesc": "Use TLS encryption",
+            "shortDesc": "Connects to the caster with TLS 1.2 or later.",
             "longDesc": "Connect to the caster with TLS 1.2 or later. The caster must offer TLS on that port.",
             "type": "bool",
             "default": false,
@@ -56,7 +56,7 @@
         },
         {
             "name": "ntripAllowSelfSignedCerts",
-            "shortDesc": "Accept self-signed TLS certificates",
+            "shortDesc": "Accepts a caster whose certificate is self-signed. The certificate of the first connection is recorded, and a different one is refused later.",
             "longDesc": "Allow connections to NTRIP casters with self-signed TLS certificates. Disabling this rejects self-signed certificates to prevent man-in-the-middle attacks.",
             "type": "bool",
             "default": false,
@@ -114,7 +114,7 @@
         },
         {
             "name": "ntripRequireVehicle",
-            "shortDesc": "Connect only while a vehicle is connected",
+            "shortDesc": "Waits for a vehicle before it connects, and ends the connection 10 seconds after the last vehicle is gone.",
             "longDesc": "Wait with the NTRIP connection until a vehicle is connected, and end it 10 seconds after the last vehicle is gone.",
             "type": "bool",
             "default": false,

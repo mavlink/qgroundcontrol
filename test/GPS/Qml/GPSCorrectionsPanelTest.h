@@ -29,5 +29,6 @@ private slots:
     void _ntripMountpointRowLayout();
     void _ntripMountpointIsTheStreamsOwn();
     void _receiverHasOneName();
+    void _casterSettingsAreDescribed();
     void _settingsPageListsGroups();
 };
