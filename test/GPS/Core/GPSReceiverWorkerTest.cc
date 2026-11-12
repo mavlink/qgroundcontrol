@@ -5,6 +5,7 @@
 #include <memory>
 #include <optional>
 #include <utility>
+#include <variant>
 
 #include <QtCore/QRegularExpression>
 #include <QtCore/QSemaphore>
@@ -630,6 +631,7 @@ void GPSReceiverWorkerTest::_automaticSessionFollowsHint()
     QSignalSpy detected(&worker, &GPSReceiverWorker::receiverDetected);
     QSignalSpy ready(&worker, &GPSReceiverWorker::receiverReady);
     QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
+    QSignalSpy reports(&worker, &GPSReceiverWorker::reported);
     connect(&worker, &GPSReceiverWorker::receiverReady, &worker, [&worker] { worker.stop(); }, Qt::DirectConnection);
     worker.start();
     QVERIFY(worker.wait(TestTimeout::mediumDuration()));
@@ -643,6 +645,16 @@ void GPSReceiverWorkerTest::_automaticSessionFollowsHint()
     QCOMPARE(qvariant_cast<GPSType>(detected.first().first()), GPSType::Femto);
     QCOMPARE(ready.size(), 1);
     QCOMPARE(qvariant_cast<GPSDetectionHint>(ready.first().at(1)), hint);
+    // One signal carries every kind of report, in the order the session makes them: a fixed base reports its
+    // position while it is configured, between the detection and the ready receiver.
+    const auto report = [&reports](qsizetype index) {
+        return qvariant_cast<GPSReceiverEvent>(reports.at(index).first());
+    };
+    QCOMPARE(reports.size(), 4);
+    QVERIFY(std::holds_alternative<GPSDetectionProgress>(report(0)));
+    QVERIFY(std::holds_alternative<GPSReceiverDetected>(report(1)));
+    QVERIFY(std::holds_alternative<GPSBaseStatus>(report(2)));
+    QVERIFY(std::holds_alternative<GPSReceiverReady>(report(3)));
     // The hint is the session's from its start on.
     worker.setDetectionHint({});
     QCOMPARE(worker.detectionHint(), hint);

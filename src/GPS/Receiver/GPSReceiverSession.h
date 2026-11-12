@@ -39,20 +39,6 @@ struct GPSBaseStationState
     void applyStatus(const GPSBaseStatus& status);
 };
 
-/// What the detection of an Automatic session looks for at the moment.
-struct GPSDetectionProgress
-{
-    /// The family that is asked to identify itself; GPSType::Automatic while detection listens for the output of
-    /// any family.
-    GPSType family = GPSType::Automatic;
-    /// The rate the link runs at meanwhile.
-    unsigned baud = 0;
-    /// The family is asked where the session's hint says it was, before detection scans for any.
-    bool remembered = false;
-
-    bool operator==(const GPSDetectionProgress&) const = default;
-};
-
 /// Builds the receiver request for one connection: a passive receiver gets no base settings, and compact
 /// observations and a selection of constellations apply only where the family supports them. @a error, when given,
 /// receives the translated diagnostic, which is empty when the receiver supports the request; the request is returned

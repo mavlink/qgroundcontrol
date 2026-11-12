@@ -34,7 +34,7 @@ src/GPS/Core * GPSReceiverWorker                              one receiver sessi
 
 | Directory | Owns | Includes, within `src/GPS` |
 | --- | --- | --- |
-| `Core/Common` | `GPSType`, the request (`GPSReceiverConfig`), the reports (`GPSReceiverReports.h`), the family descriptors, the detection hint, clock and math | Nothing |
+| `Core/Common` | `GPSType`, the request (`GPSReceiverConfig`), the reports (`GPSReceiverReports.h`), the event a session reports (`GPSReceiverEvent`), the family descriptors, the detection hint, clock and math | Nothing |
 | `Core/NMEA`, `Core/RTCM`, `Core/Transport` | NMEA sentences and epochs; RTCM framing, station position and stream content; `GPSTransport` with the serial, TCP, UDP, pipe and recording transports | `Core/Common` |
 | `Core/Protocols` | `GPSDriver`, `GPSProtocolRuntime`, `GPSCommandChannel`, `GPSStreamDemux`, `GPSReceiverDetector` and a folder for each family | The three above, `Core/Common` |
 | `Core` | `GPSReceiverWorker` | `Core/Protocols`, `Core/Transport`, `Core/Common` |

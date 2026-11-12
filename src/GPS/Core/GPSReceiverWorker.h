@@ -16,6 +16,7 @@
 #include "GPSConnectionErrors.h"
 #include "GPSDetectionHint.h"
 #include "GPSReceiverConfig.h"
+#include "GPSReceiverEvent.h"
 #include "GPSReceiverReports.h"
 #include "GPSType.h"
 
@@ -95,6 +96,8 @@ signals:
     /// what a GPSType::Automatic session found, as the hint for the next session on its link
     /// (GPSDriver::nextDetectionHint()); any other session has none.
     void receiverReady(const QString& identity = {}, const GPSDetectionHint& detected = {});
+    /// Each of the reports above as one event, in the order the session makes them.
+    void reported(const GPSReceiverEvent& event);
     /// Delivered on this object's thread once the session thread has finished.
     void finished();
 

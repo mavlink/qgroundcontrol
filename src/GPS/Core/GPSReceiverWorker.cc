@@ -98,6 +98,7 @@ void GPSReceiverWorker::_runSession()
     if (opened.status != GPSOpenStatus::Opened) {
         if (!cancelToken.isCancelled()) {
             emit connectionError(GPSConnectionError::OpenFailed, opened.detail);
+            emit reported(GPSReceiverEnded{GPSConnectionError::OpenFailed, opened.detail});
         }
         return;
     }
@@ -111,23 +112,36 @@ void GPSReceiverWorker::_runSession()
     };
     const auto inactiveFor = [this, &inactiveAt] { return inactiveAt.remaining(_clock.nowUs()); };
     GPSDriverSinks sinks;
-    sinks.onPosition = [this](const GPSPositionReport& message) { emit positionUpdated(message); };
-    sinks.onSatelliteInfo = [this](const GPSSatelliteReport& message) { emit satelliteInfoUpdated(message); };
+    sinks.onPosition = [this](const GPSPositionReport& message) {
+        emit positionUpdated(message);
+        emit reported(message);
+    };
+    sinks.onSatelliteInfo = [this](const GPSSatelliteReport& message) {
+        emit satelliteInfoUpdated(message);
+        emit reported(message);
+    };
     // Stamped on receipt with the production scheduler's clock (QtRuntimeScheduler), so consumers can compare it with
     // their scheduler time; the session's injected clock may differ.
     sinks.onRTCM = [this](const QByteArray& message) {
-        emit rtcmDataReceived(message, static_cast<qint64>(MonotonicClock::nowUs() / 1000));
+        const auto receivedAtMs = static_cast<qint64>(MonotonicClock::nowUs() / 1000);
+        emit rtcmDataReceived(message, receivedAtMs);
+        emit reported(GPSReceiverRTCM{message, receivedAtMs});
     };
-    sinks.onBaseStatus = [this](const GPSBaseStatus& report) { emit baseStatusUpdated(report); };
+    sinks.onBaseStatus = [this](const GPSBaseStatus& report) {
+        emit baseStatusUpdated(report);
+        emit reported(report);
+    };
     bool identified = false;
     sinks.onReceiverDetected = [this, &identified](GPSType type) {
         identified = true;
         emit receiverDetected(type);
+        emit reported(GPSReceiverDetected{type});
     };
 
     GPSDriverObserver observer;
     observer.detecting = [this](GPSType family, unsigned baud, bool remembered) {
         emit detecting(family, baud, remembered);
+        emit reported(GPSDetectionProgress{family, baud, remembered});
     };
 
     GPSDriver driver(_type, *transport, _config, std::move(sinks), _clock, std::move(observer));
@@ -140,9 +154,11 @@ void GPSReceiverWorker::_runSession()
         // Consent is asked of the user, whichever receiver answered; any other failure may be the receiver's.
         if (driver.configurationNeedsConsent()) {
             emit connectionError(GPSConnectionError::ConsentRequired, driver.configurationError());
+            emit reported(GPSReceiverEnded{GPSConnectionError::ConsentRequired, driver.configurationError()});
         } else {
-            emit connectionError(GPSConnectionError::ConfigFailed,
-                                 namingReceiver(driver.configurationError(), driver.receiverIdentity()));
+            const QString detail = namingReceiver(driver.configurationError(), driver.receiverIdentity());
+            emit connectionError(GPSConnectionError::ConfigFailed, detail);
+            emit reported(GPSReceiverEnded{GPSConnectionError::ConfigFailed, detail});
         }
         return;
     }
@@ -150,6 +166,7 @@ void GPSReceiverWorker::_runSession()
         return;
     }
     emit receiverReady(driver.receiverIdentity(), driver.nextDetectionHint());
+    emit reported(GPSReceiverReady{driver.receiverIdentity(), driver.nextDetectionHint()});
 
     usefulDataReceived();
     GPSInputMonitor inputMonitor(_clock.nowUs(), USEFUL_DATA_TIMEOUT);
@@ -176,17 +193,21 @@ void GPSReceiverWorker::_runSession()
             const bool silentNow = inactiveFor() <= IDLE_SESSION_TIMEOUT - USEFUL_DATA_TIMEOUT;
             if (std::exchange(silent, silentNow) != silentNow) {
                 emit inputProblem(silentNow ? GPSInputProblem::NoData : GPSInputProblem::None);
+                emit reported(silentNow ? GPSInputProblem::NoData : GPSInputProblem::None);
             }
         } else if (inputMonitor.update(result, identified, _clock.nowUs())) {
             emit inputProblem(inputMonitor.problem());
+            emit reported(inputMonitor.problem());
         }
     }
     if (!cancelToken.isCancelled() && !cancelled) {
-        emit connectionError(
+        const GPSReceiverEnded ended{
             failure.error == GPSProtocolError::Protocol || failure.error == GPSProtocolError::ConsentRequired
                 ? GPSConnectionError::ProtocolError
                 : GPSConnectionError::DeviceError,
-            failure.detail);
+            failure.detail};
+        emit connectionError(ended.error, ended.detail);
+        emit reported(ended);
     }
 
     qCDebug(GPSReceiverWorkerLog) << "Exiting GPS thread";
