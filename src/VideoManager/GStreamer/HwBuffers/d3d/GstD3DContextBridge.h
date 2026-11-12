@@ -21,10 +21,14 @@ public:
     static gint64 readAdapterLuid(gpointer device);
 
 protected:
+    /// @p qrhiBackend is the QRhi backend whose device the bridge shares; under @p secondQrhiBackend, when given, it
+    /// also primes, with a device of its own on that backend's adapter.
     constexpr GstD3DContextBridge(const char* api, std::span<const char* const> contextTypes,
-                                  const QLoggingCategory& (*logCategory)(), int qrhiBackend) noexcept
+                                  const QLoggingCategory& (*logCategory)(), int qrhiBackend,
+                                  int secondQrhiBackend = -1) noexcept
         : GstContextBridgeBase(api, contextTypes, logCategory)
         , _qrhiBackend(qrhiBackend)
+        , _secondQrhiBackend(secondQrhiBackend)
     {}
 
     ~GstD3DContextBridge() = default;
@@ -44,10 +48,11 @@ private:
     GstContext* buildContext(const char* contextType, GstObject* object) final;
     void clearLocked() final;
 
-    /// True when QGCRhiCapture's snapshot reports this bridge's QRhi backend; logs the first mismatch.
+    /// True when QGCRhiCapture's snapshot reports a QRhi backend this bridge primes under; logs the first mismatch.
     bool snapshotBackendMatches();
 
     int _qrhiBackend;
+    int _secondQrhiBackend;
     GstObject* _device = nullptr;
     /// The device-removed-reason notify handler on _device; 0 where GStreamer's device has no such property.
     gulong _removalHandler = 0;

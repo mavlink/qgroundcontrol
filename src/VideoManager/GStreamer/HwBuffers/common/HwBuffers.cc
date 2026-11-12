@@ -19,9 +19,10 @@
 
 #include "GstDmaBufVideoBuffer.h"
 #include "GstDmaBufVulkanImport.h"
-#ifdef QGC_UNITTEST_BUILD
-#include "gstqgc/GstQgcCaps.h"
 #endif
+#if defined(QGC_UNITTEST_BUILD) && (defined(QGC_HAS_GST_DMABUF_GPU_PATH) || \
+                                    (defined(QGC_HAS_GST_D3D11_GPU_PATH) && defined(QGC_HAS_GST_D3D12_GPU_PATH)))
+#include "gstqgc/GstQgcCaps.h"
 #endif
 
 namespace HwBuffers {
@@ -170,6 +171,20 @@ void* dmaBufImportDisplay() noexcept
     return QGCRhiCapture::qtEglDisplay();
 #else
     return nullptr;
+#endif
+}
+
+bool d3d11OpensD3D12() noexcept
+{
+#if defined(QGC_HAS_GST_D3D11_GPU_PATH) && defined(QGC_HAS_GST_D3D12_GPU_PATH)
+#ifdef QGC_UNITTEST_BUILD
+    if (const std::optional<GstQgc::SinkEnvironment> environment = GstQgc::sinkEnvironmentForTest()) {
+        return environment->d3d11OpensD3D12;
+    }
+#endif
+    return QGCRhiCapture::deviceSnapshot().d3d11OpensD3D12.load(std::memory_order_acquire);
+#else
+    return false;
 #endif
 }
 

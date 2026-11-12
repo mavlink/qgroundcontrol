@@ -69,6 +69,7 @@ void clearSnapshot()
     s_snapshot.d3d11Device.store(nullptr, std::memory_order_release);
     s_snapshot.d3d12Device.store(nullptr, std::memory_order_release);
     s_snapshot.adapterLuid.store(0, std::memory_order_release);
+    s_snapshot.d3d11OpensD3D12.store(false, std::memory_order_release);
     s_snapshot.vkVendorId.store(0, std::memory_order_release);
     s_snapshot.vkDeviceId.store(0, std::memory_order_release);
     for (std::atomic<quint64>& half : s_snapshot.vkPipelineCacheUuid) {

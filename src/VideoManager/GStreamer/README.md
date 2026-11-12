@@ -127,8 +127,9 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   - With `gpu-zerocopy`, ahead of it, only the GPU memory the renderer Qt Quick uses can import. Under OpenGL: DMA_DRM
     and DMABuf on EGL while the DMABuf import works (see
     [DMABuf zero-copy diagnostics](#dmabuf-zero-copy-diagnostics)), AHardwareBuffer on EGL (Android), and GLMemory,
-    which reaches Qt through the GL share group, on EGL or GLX. Under Direct3D11: D3D11Memory. Under Direct3D12, the
-    d3d12convert variant (below). Under Vulkan: DMA_DRM in the layouts Qt's device imports (see
+    which reaches Qt through the GL share group, on EGL or GLX. Under Direct3D11: D3D11Memory, and ahead of it NV12
+    and P010 D3D12Memory once Qt's device is known to open it (see D3D12 frames under Direct3D 11). Under
+    Direct3D12, the d3d12convert variant (below). Under Vulkan: DMA_DRM in the layouts Qt's device imports (see
     [DMABuf under Vulkan](#dmabuf-under-vulkan)). Metal and OpenGL on WGL or CGL get system memory only. vtdec's
     IOSurface-backed frames arrive as system memory.
   - GLMemory always carries `texture-target=2D`, the only target the GL path samples. It also makes glcolorconvert
@@ -161,9 +162,9 @@ A QGC-owned plugin (`gstqgc/`) bridging the pipeline into Qt:
   negotiate at all, as the sink doesn't offer the `format:Interlaced` caps feature; decoders that can send both
   send interleaved frames.
 - **Allocation proposal** — the sink asks the decoder for at least five buffers (`kMaxPinnedFrames` + 1), covering the
-  frames Qt may still hold, also of a producer that asks for no pool, and keeps the video and crop metas it reads. D3D11Memory gets no crop meta: the
-  d3d11 decoders then crop a picture that starts off their texture's origin themselves, where the D3D11 path would
-  copy it from the origin. It asks for GL sync metas as upstream's Qt sink does, which has glcolorconvert end each
+  frames Qt may still hold, also of a producer that asks for no pool, and keeps the video and crop metas it reads. D3D11Memory and D3D12Memory get
+  no crop meta: the decoders then crop a picture that starts off their texture's origin themselves, where the D3D
+  paths would copy it from the origin. It asks for GL sync metas as upstream's Qt sink does, which has glcolorconvert end each
   frame with a sync point. The GL path leaves a frame's sync meta alone, since other consumers share the buffer: it
   sets a sync point of its own, in a buffer its texture bundles hand on, and waits for it in Qt's context.
   `QGC_GST_PROPOSE_ALLOCATION_MIN_BUFFERS` overrides the count, as Qt's `QT_GSTREAMER_PROPOSE_ALLOCATION_MIN_BUFFERS`
@@ -184,7 +185,8 @@ them as VkImages itself (`dmabuf/GstDmaBufVulkanImport`):
   the first path whose descriptor matches a frame's memory, and the facade loops over the list for bus messages,
   context queries, restarts and resets.
 - **`GstContextBridgeBase`**: GL, D3D11 and D3D12 bridges hand Qt's GPU device to GStreamer elements through
-  `NEED_CONTEXT` and context queries (the Vulkan bridge can't: see the opt-in paths below). That is the main window's
+  `NEED_CONTEXT` and context queries (the Vulkan bridge can't: see the opt-in paths below). Under a Direct3D 11
+  renderer the D3D12 bridge hands out a device of GStreamer's own on Qt's adapter instead. Qt's is the main window's
   device: a VideoOutput popped out into its own window renders on that window's device, so on Direct3D11 its frames
   take the CPU path. So do Direct3D frames a decoder allocated on another device before the bridge was primed, and
   GLMemory frames from a GL context outside Qt's share group, which gst-gl creates for itself when no element was
@@ -200,12 +202,26 @@ them as VkImages itself (`dmabuf/GstDmaBufVulkanImport`):
 - **D3D11 decoder padding**: decoders pad their textures to their alignment (16 rows for H.264, 128 for HEVC/AV1)
   without crop meta. The picture is copied out on the render thread, as a texture-array slice is, so frames keep the
   picture's size and a CPU layout for that fallback and for screenshots.
-- **D3D12 resource states (not verified)**: the import hands every resource to QRhi as
-  `D3D12_RESOURCE_STATE_COMMON`, and the staging copies of array slices assume that state as well. Qt transitions a
-  texture it samples to a shader-resource state and never back (`QD3D12ResourceBarrierGenerator`, Qt 6.12), so the
-  second use of a staging slot, or of a resource the converter's pool recycles, starts from another state than the
-  one declared. This is read from the sources only: a run under the D3D12 debug layer (`QSG_RHI_DEBUG_LAYER=1`) would
-  tell whether it is reported and needs a transition back.
+- **D3D12 texture arrays**: no slice of a texture array reaches the sink. gst-d3d12's pools hold single textures,
+  and its decoders copy a frame out of a reference-only array before they hand it on. QRhi can't sample one slice, so
+  the path takes none: such a frame would go to the CPU.
+- **D3D12 frames under Direct3D 11**: a Direct3D 11 QRhi samples a D3D12Memory frame without GStreamer using Qt's
+  device. The frame's resource opens as a texture of that device (`gst_d3d12_memory_get_d3d11_texture`, which asks
+  for a shared heap and a render-target binding: the pool the sink proposes has both), the render thread copies the
+  picture out of it as it does for a d3d11 decoder, and signals a fence the two devices share; the frame's buffer
+  goes back to its pool once Direct3D 11 has read it. The sink offers that memory only where Qt's device reports the
+  sharing gst-d3d11 asks of a device for its own interop (`D3D11_SHARED_RESOURCE_TIER_2`, extended resource sharing
+  and shared NV12 textures). WARP reports it and then opens NV12 without its chroma plane; no decoder shares its
+  adapter, so nothing sends it such a frame. The NVIDIA decoders take this path, as they output D3D12Memory when a
+  sink takes it. The d3d12 decoders stay ranked out of autoplug under Direct3D 11, the d3d11 ones being the default
+  there: ranking one in `GST_PLUGIN_FEATURE_RANK` (`d3d12h264dec:MAX`) selects it. A decoder on another adapter than
+  Qt's goes to the CPU path, as with the D3D11 path.
+- **D3D12 resource states**: the import hands every resource to QRhi as `D3D12_RESOURCE_STATE_COMMON`. Qt
+  transitions a texture it samples to a shader-resource state and never back (`QD3D12ResourceBarrierGenerator`,
+  Qt 6.12), while the converter's pool recycles its resources. The D3D12 debug layer reports no state error for it
+  (Qt 6.12.0, GStreamer 1.28.8, Intel Arc, 875 frames). To repeat the run, set `GST_ENABLE_D3D12_DEBUG=1` along
+  with `QSG_RHI_DEBUG_LAYER=1`: the layer can't be turned on for a device GStreamer already created, and Qt then
+  falls back to WARP.
 - **`GstHwPathTelemetry`** tracks process-wide render-time counters (map failures, reuse hits, sync waits) for fallback
   diagnostics. A receiver's `GPU path live` and `GPU path stats` debug lines pair its own sink's `frame-stats` with
   them, both counted from when its session took the sink. Reading never resets the counters: each reader reports the
@@ -538,7 +554,7 @@ gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, cl
 | `GstRecordingSinkTest` | Integration | The recording file sink fed by running pipelines: a mid-stream H.265 MP4 start, frames that carry only a DTS, and the start time and comment each container is tagged with. |
 | `GStreamerHelpersTest` | Integration | The pipeline helpers: adding to a bin, removing a child with or without a flush and while its bin changes state, tee branches, keyframe requests, events sent from GStreamer's thread pool, pads held until linked, and the plugin registry walk. |
 | `GstSelfTestPipelineTest` | Integration | The [boot self-test](#boot-self-test) against the GStreamer the tests run on, and its software retry after a hardware decoder fails mid-stream, which restores the decoder ranks. |
-| `GstHwBuffersPipelineTest` | Integration, GPU | Pipelines that upload into or decode to GPU memory (DMABuf, GLMemory, D3D11/D3D12, IOSurface) and the path each frame takes; D3D11/D3D12 and IOSurface frames are also converted with `QVideoFrame::toImage()` on a QRhi of that API and compared with the CPU frame; the D3D QRhi uses the WARP software adapter when `QSG_RHI_PREFER_SOFTWARE_RENDERER` is set or DXGI lists no hardware adapter. The D3D bridges drop a device GStreamer reports removed. Software frames through the glupload bin and the Windows D3D11 sink. Skips without the device. |
+| `GstHwBuffersPipelineTest` | Integration, GPU | Pipelines that upload into or decode to GPU memory (DMABuf, GLMemory, D3D11/D3D12, IOSurface) and the path each frame takes; D3D11/D3D12 and IOSurface frames are also converted with `QVideoFrame::toImage()` on a QRhi of that API, D3D12 frames on a Direct3D 11 QRhi too, and compared with the CPU frame; the D3D QRhi uses the WARP software adapter when `QSG_RHI_PREFER_SOFTWARE_RENDERER` is set or DXGI lists no hardware adapter, where the NV12 D3D12 frame on Direct3D 11 is skipped (WARP opens it without chroma). The D3D bridges drop a device GStreamer reports removed. Software frames through the glupload bin and the Windows D3D11 sink. Skips without the device. |
 | `GstHwBuffersGlReadbackTest` | Integration, GPU | DMABuf planes and glupload's GLMemory frames imported into a GL QRhi that shares Qt's EGL context, read back pixel by pixel and converted with `QVideoFrame::toImage()` (xcb with `xcb_egl`), also when padded beyond their caps; the frame's own GL sync meta left alone; and a 10-bit planar CPU frame as Qt's shaders convert it. |
 | `GstHwBuffersVulkanReadbackTest` | Integration, GPU | VA-API DMABuf frames imported into a Vulkan QRhi and converted with `QVideoFrame::toImage()`, and a VA stream into the sink under a Vulkan render target (xcb). With `QGC_GST_ENABLE_VULKAN`: the gst-vulkan bridge's device and a VulkanImage frame's refused import. |
 | `GstVideoReceiverPipelineTest` | Integration | `GstVideoReceiver` end to end against the H.264 test stream it sends itself on loopback: states, display, restarts, config changes, a decoder that can't be inserted or is missing, a branch element that fails a push without an error message, a mid-stream resolution change, H.265, MockLink's streams, screenshots. Receivers and servers in every `GstVideoReceiver*Test` listen on port 0, so parallel runs never collide. |

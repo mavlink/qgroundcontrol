@@ -26,6 +26,9 @@ struct DeviceSnapshot
     std::atomic<void*> d3d11Device{nullptr};       ///< ID3D11Device*  (Windows only)
     std::atomic<void*> d3d12Device{nullptr};       ///< ID3D12Device*  (Windows only)
     std::atomic<qint64> adapterLuid{0};            ///< Composed (high<<32)|low LUID, 0 if unknown
+    /// The Direct3D 11 device Qt renders with opens a Direct3D 12 device's resources as textures, as the D3D12 path
+    /// found on the render thread; false for any other backend.
+    std::atomic<bool> d3d11OpensD3D12{false};
     /// The Vulkan physical device Qt renders on, as its VkPhysicalDeviceProperties name it: the VkPhysicalDevice handle
     /// belongs to Qt's VkInstance and matches nothing in another one, such as GStreamer's. Zero unless the backend is
     /// Vulkan and the gst-vulkan path is compiled.

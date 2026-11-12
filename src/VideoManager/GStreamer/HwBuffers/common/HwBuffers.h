@@ -54,6 +54,11 @@ HwVideoBufferContext makeAdapterContext(bool gpuEnabled) noexcept;
 /// (until resetCachedGpuResources()), or no DMABuf path is compiled. Safe off the GUI thread.
 void* dmaBufImportDisplay() noexcept;
 
+/// True when the Direct3D 11 device Qt Quick renders with is known to open a Direct3D 12 device's resources as
+/// textures, which is how the D3D12 path shows a frame there. False until the scene graph publishes that device, and
+/// in builds without both D3D paths. Safe off the GUI thread.
+bool d3d11OpensD3D12() noexcept;
+
 /// Synchronously answer GST_QUERY_CONTEXT through the GPU paths' context bridges; false -> let bus NEED_CONTEXT run.
 bool answerSinkBinContextQuery(GstQuery* query) noexcept;
 

@@ -234,6 +234,10 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant_data()
 #if !defined(QGC_GST_BIN_HAS_GLUPLOAD) && !defined(QGC_GST_BIN_HAS_DIRECT_DMABUF)
     QStringList direct3D11Features;
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
+#if defined(QGC_HAS_GST_D3D12_GPU_PATH)
+    // Offered where Qt's Direct3D 11 device opens it, as this test's environment says it does.
+    direct3D11Features << QStringLiteral("memory:D3D12Memory");
+#endif
     direct3D11Features << QStringLiteral("memory:D3D11Memory");
 #endif
     QTest::newRow("passthrough-d3d11") << int(GstQgc::GpuBinMode::Passthrough) << int(GstQgc::RenderBackend::Direct3D11)
@@ -259,7 +263,8 @@ void GstQgcSinkTest::_testQgcVideoSinkBinGpuBinVariant()
     const GstQgc::ScopedSinkEnvironmentForTest environment(
         {.target = {.backend = static_cast<GstQgc::RenderBackend>(backend), .egl = egl},
          .gpuBin = {.mode = static_cast<GstQgc::GpuBinMode>(mode)},
-         .dmaBufDisplay = kFakeQtEglDisplay});
+         .dmaBufDisplay = kFakeQtEglDisplay,
+         .d3d11OpensD3D12 = true});
 
     GstElement* element = gst_element_factory_make_full("qgcvideosinkbin", "gpu-zerocopy", TRUE, nullptr);
     QVERIFY2(element, "Failed to create qgcvideosinkbin (GPU branch)");
@@ -503,9 +508,10 @@ void GstQgcSinkTest::_testAllocationQueryOffersCropMeta_data()
 
     // gst-va then sends a stream cropped on its left or top without a copy.
     QTest::newRow("DMABuf") << QStringLiteral("memory:DMABuf") << true;
-    // The D3D11 path copies the picture from the texture's origin, so the decoder is left to crop one that starts
+    // The D3D paths copy the picture from the texture's origin, so the decoder is left to crop one that starts
     // elsewhere.
     QTest::newRow("D3D11Memory") << QStringLiteral("memory:D3D11Memory") << false;
+    QTest::newRow("D3D12Memory") << QStringLiteral("memory:D3D12Memory") << false;
 }
 
 void GstQgcSinkTest::_testAllocationQueryOffersCropMeta()
@@ -1134,6 +1140,7 @@ void GstQgcSinkTest::_testQgcQVideoSinkCapsFollowRenderTarget_data()
 #if defined(QGC_HAS_GST_AHARDWAREBUFFER_GPU_PATH)
     openGlOnEgl << QStringLiteral("memory:AHardwareBuffer");
 #endif
+    // No D3D12Memory: Qt's device isn't known to open it here.
     QStringList direct3D11;
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
     direct3D11 << QStringLiteral("memory:D3D11Memory");

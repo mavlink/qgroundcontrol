@@ -238,7 +238,7 @@ set(_qgc_gpu_row_IOSurface
     DEFINE QGC_HAS_GST_IOSURFACE_GPU_PATH
     SOURCES apple/GstIOSurfaceVideoBuffer.mm apple/GstIOSurfaceVideoBuffer.h)
 # Windows D3D11/D3D12 (gst-plugins-bad d3d{11,12}h264dec / vp9dec).
-set(_qgc_d3d12_extra_sources d3d/GstD3D12StagingPool.cc d3d/GstD3D12StagingPool.h)
+set(_qgc_d3d11_extra_sources d3d/GstD3D11PictureCopy.cc d3d/GstD3D11PictureCopy.h)
 foreach(_ver IN ITEMS 11 12)
     set(_qgc_gpu_row_D3D${_ver}
         PLATFORMS WIN32

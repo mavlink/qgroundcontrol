@@ -45,7 +45,7 @@ bool GstD3DContextBridge::snapshotBackendMatches()
         qCDebug(category()) << "QRhi snapshot not yet populated; will retry on next NEED_CONTEXT";
         return false;
     }
-    if (backend != _qrhiBackend) {
+    if ((backend != _qrhiBackend) && (backend != _secondQrhiBackend)) {
         if (!_warnedWrongBackend) {
             qCInfo(category()) << "QRhi backend tag is" << backend << "(not" << apiName() << "); bridge inactive";
             _warnedWrongBackend = true;

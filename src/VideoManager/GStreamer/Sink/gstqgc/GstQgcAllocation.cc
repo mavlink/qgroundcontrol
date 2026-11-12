@@ -93,10 +93,12 @@ bool populateAllocationQuery(GstQuery* query)
         if (!HwBuffers::proposeDeviceBoundPool(query, caps, &vinfo, size, minBuffers)) {
             gst_query_add_allocation_pool(query, NULL, size, minBuffers, 0);
         }
-        // A d3d11 decoder offered crop meta hands over its whole texture when the picture starts off the texture's
-        // origin, with the meta saying where; the D3D11 path copies the picture from the origin. Without the offer the
-        // decoder crops such a picture itself.
-        addConsumedAllocationMetas(query, !gst_caps_features_contains(features, "memory:D3D11Memory"));
+        // A d3d11 or d3d12 decoder offered crop meta hands over its whole texture when the picture starts off the
+        // texture's origin, with the meta saying where; the D3D paths copy the picture from the origin. Without the
+        // offer the decoder crops such a picture itself.
+        const bool d3dMemory = gst_caps_features_contains(features, "memory:D3D11Memory") ||
+                               gst_caps_features_contains(features, "memory:D3D12Memory");
+        addConsumedAllocationMetas(query, !d3dMemory);
         return true;
     }
 

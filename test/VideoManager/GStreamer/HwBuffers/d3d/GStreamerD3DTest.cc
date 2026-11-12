@@ -6,6 +6,7 @@
 #include <gst/gst.h>
 #include <gst/video/video-info.h>
 #include <memory>
+#include <rhi/qrhi.h>
 
 #include <QtCore/QScopeGuard>
 #include <QtMultimedia/QVideoFrameFormat>
@@ -20,7 +21,6 @@
 
 #if defined(Q_OS_WIN) && (defined(QGC_HAS_GST_D3D11_GPU_PATH) || defined(QGC_HAS_GST_D3D12_GPU_PATH))
 #include <algorithm>
-#include <rhi/qrhi.h>
 #include <rhi/qrhi_platform.h>
 #include <thread>
 
@@ -30,9 +30,6 @@
 #include "QGCRhiCapture.h"
 
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-#include <d3d11.h>
-#include <d3d11_4.h>  // ID3D11Multithread
-
 #include "GstD3D11ContextBridge.h"
 #endif
 #if defined(QGC_HAS_GST_D3D12_GPU_PATH)
@@ -40,25 +37,6 @@
 #endif
 
 namespace {
-
-qint64 composeLuid(qint32 high, quint32 low)
-{
-    return (static_cast<qint64>(high) << 32) | (static_cast<qint64>(low) & 0xFFFFFFFFLL);
-}
-
-#if defined(QGC_HAS_GST_D3D11_GPU_PATH)
-/// GStreamer's D3D11 elements share the immediate context of the device they wrap, as QGCRhiCapture protects it.
-void protectImmediateContext(ID3D11DeviceContext* context)
-{
-    ID3D11Multithread* multithread = nullptr;
-    if (context &&
-        SUCCEEDED(context->QueryInterface(__uuidof(ID3D11Multithread), reinterpret_cast<void**>(&multithread))) &&
-        multithread) {
-        (void) multithread->SetMultithreadProtected(TRUE);
-        multithread->Release();
-    }
-}
-#endif
 
 /// A QRhi on @p api, on the software adapter (WARP) when QSG_RHI_PREFER_SOFTWARE_RENDERER is set, as it is in CI, or
 /// when DXGI lists no hardware adapter, as on a runner without a GPU.
@@ -80,19 +58,11 @@ QRhi* createD3DRhi(QRhi::Implementation api, QRhiInitParams* params)
 std::unique_ptr<QRhi> createPublishedRhi(QRhi::Implementation api, QString& failure)
 {
     std::unique_ptr<QRhi> rhi;
-    void* device = nullptr;
-    qint64 adapterLuid = 0;
     switch (api) {
 #if defined(QGC_HAS_GST_D3D11_GPU_PATH)
         case QRhi::D3D11: {
             QRhiD3D11InitParams params;
             rhi.reset(createD3DRhi(QRhi::D3D11, &params));
-            if (const auto* handles =
-                    rhi ? static_cast<const QRhiD3D11NativeHandles*>(rhi->nativeHandles()) : nullptr) {
-                device = handles->dev;
-                adapterLuid = composeLuid(handles->adapterLuidHigh, handles->adapterLuidLow);
-                protectImmediateContext(static_cast<ID3D11DeviceContext*>(handles->context));
-            }
             break;
         }
 #endif
@@ -100,38 +70,36 @@ std::unique_ptr<QRhi> createPublishedRhi(QRhi::Implementation api, QString& fail
         case QRhi::D3D12: {
             QRhiD3D12InitParams params;
             rhi.reset(createD3DRhi(QRhi::D3D12, &params));
-            if (const auto* handles =
-                    rhi ? static_cast<const QRhiD3D12NativeHandles*>(rhi->nativeHandles()) : nullptr) {
-                device = handles->dev;
-                adapterLuid = composeLuid(handles->adapterLuidHigh, handles->adapterLuidLow);
-            }
             break;
         }
 #endif
         default:
             break;
     }
-    if (!rhi || !device) {
-        failure =
-            rhi ? QStringLiteral("QRhi exposes no native device handle") : QStringLiteral("Could not create QRhi");
+    if (!rhi) {
+        failure = QStringLiteral("Could not create QRhi");
         return {};
     }
 
-    QGCRhiCapture::DeviceSnapshot& snapshot = QGCRhiCapture::deviceSnapshot();
-    snapshot.d3d11Device.store((api == QRhi::D3D11) ? device : nullptr, std::memory_order_release);
-    snapshot.d3d12Device.store((api == QRhi::D3D12) ? device : nullptr, std::memory_order_release);
-    snapshot.adapterLuid.store(adapterLuid, std::memory_order_release);
-    snapshot.backend.store(static_cast<int>(api), std::memory_order_release);
+    QGCRhiCapture::publishDeviceSnapshotForTest(rhi.get());
+    const QGCRhiCapture::DeviceSnapshot& snapshot = QGCRhiCapture::deviceSnapshot();
+    const void* const device = (api == QRhi::D3D11) ? snapshot.d3d11Device.load(std::memory_order_acquire)
+                                                    : snapshot.d3d12Device.load(std::memory_order_acquire);
+    if (!device) {
+        failure = QStringLiteral("QRhi exposes no native device handle");
+        return {};
+    }
     return rhi;
 }
 
 struct SnapshotGuard
 {
     SnapshotGuard()
-        : backend(QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire)),
-          d3d11Device(QGCRhiCapture::deviceSnapshot().d3d11Device.load(std::memory_order_acquire)),
-          d3d12Device(QGCRhiCapture::deviceSnapshot().d3d12Device.load(std::memory_order_acquire)),
-          adapterLuid(QGCRhiCapture::deviceSnapshot().adapterLuid.load(std::memory_order_acquire))
+        : backend(QGCRhiCapture::deviceSnapshot().backend.load(std::memory_order_acquire))
+        , d3d11Device(QGCRhiCapture::deviceSnapshot().d3d11Device.load(std::memory_order_acquire))
+        , d3d12Device(QGCRhiCapture::deviceSnapshot().d3d12Device.load(std::memory_order_acquire))
+        , adapterLuid(QGCRhiCapture::deviceSnapshot().adapterLuid.load(std::memory_order_acquire))
+        , d3d11OpensD3D12(QGCRhiCapture::deviceSnapshot().d3d11OpensD3D12.load(std::memory_order_acquire))
     {}
 
     ~SnapshotGuard()
@@ -139,6 +107,7 @@ struct SnapshotGuard
         QGCRhiCapture::deviceSnapshot().d3d11Device.store(d3d11Device, std::memory_order_release);
         QGCRhiCapture::deviceSnapshot().d3d12Device.store(d3d12Device, std::memory_order_release);
         QGCRhiCapture::deviceSnapshot().adapterLuid.store(adapterLuid, std::memory_order_release);
+        QGCRhiCapture::deviceSnapshot().d3d11OpensD3D12.store(d3d11OpensD3D12, std::memory_order_release);
         QGCRhiCapture::deviceSnapshot().backend.store(backend, std::memory_order_release);
     }
 
@@ -146,6 +115,7 @@ struct SnapshotGuard
     void* d3d11Device = nullptr;
     void* d3d12Device = nullptr;
     qint64 adapterLuid = 0;
+    bool d3d11OpensD3D12 = false;
 };
 
 /// The device @p path's context bridge shares now; null when it isn't primed.
@@ -372,6 +342,7 @@ void GstHwBuffersPipelineTest::_testD3D12MemoryDispatch()
 void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi_data()
 {
     QTest::addColumn<int>("path");
+    QTest::addColumn<int>("rhiApi");            ///< What Qt renders with.
     QTest::addColumn<QString>("format");        ///< Uploaded.
     QTest::addColumn<QString>("outputFormat");  ///< Imported.
     QTest::addColumn<int>("pixelFormat");
@@ -380,12 +351,17 @@ void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi_data()
     const QString rgba = QStringLiteral("RGBA");
     const QString nv12 = QStringLiteral("NV12");
     const int rgba8888 = int(QVideoFrameFormat::Format_RGBA8888);
-    QTest::newRow("d3d11-rgba") << int(HwVideoBufferPath::D3D11) << rgba << rgba << rgba8888 << 1;
-    QTest::newRow("d3d11-nv12") << int(HwVideoBufferPath::D3D11) << nv12 << nv12 << int(QVideoFrameFormat::Format_NV12)
-                                << 2;
-    QTest::newRow("d3d12-rgba") << int(HwVideoBufferPath::D3D12) << rgba << rgba << rgba8888 << 1;
+    const int nv12Frame = int(QVideoFrameFormat::Format_NV12);
+    const int d3d11 = int(HwVideoBufferPath::D3D11);
+    const int d3d12 = int(HwVideoBufferPath::D3D12);
+    QTest::newRow("d3d11-rgba") << d3d11 << int(QRhi::D3D11) << rgba << rgba << rgba8888 << 1;
+    QTest::newRow("d3d11-nv12") << d3d11 << int(QRhi::D3D11) << nv12 << nv12 << nv12Frame << 2;
+    QTest::newRow("d3d12-rgba") << d3d12 << int(QRhi::D3D12) << rgba << rgba << rgba8888 << 1;
     // As the D3D12Convert bin does: Qt's D3D12 QRhi can't sample NV12's planes, so d3d12convert makes it RGBA.
-    QTest::newRow("d3d12-nv12") << int(HwVideoBufferPath::D3D12) << nv12 << rgba << rgba8888 << 1;
+    QTest::newRow("d3d12-nv12") << d3d12 << int(QRhi::D3D12) << nv12 << rgba << rgba8888 << 1;
+    // A Direct3D 11 QRhi samples the texture a D3D12 resource opens as on its device, planes and all.
+    QTest::newRow("d3d12-rgba-on-d3d11") << d3d12 << int(QRhi::D3D11) << rgba << rgba << rgba8888 << 1;
+    QTest::newRow("d3d12-nv12-on-d3d11") << d3d12 << int(QRhi::D3D11) << nv12 << nv12 << nv12Frame << 2;
 }
 
 void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi()
@@ -394,6 +370,7 @@ void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi()
     QSKIP("D3D GPU paths not compiled in this build");
 #else
     QFETCH(int, path);
+    QFETCH(int, rhiApi);
     QFETCH(QString, format);
     QFETCH(QString, outputFormat);
     QFETCH(int, pixelFormat);
@@ -420,9 +397,13 @@ void GstHwBuffersPipelineTest::_testD3DMapTexturesWithQRhi()
     // A runner whose WARP adapter can't create this device skips the test; QRhi warns first.
     ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("^Failed to create D3D1[12] device")));
     QString failure;
-    const std::unique_ptr<QRhi> rhi = createPublishedRhi(d3d11 ? QRhi::D3D11 : QRhi::D3D12, failure);
+    const std::unique_ptr<QRhi> rhi = createPublishedRhi(static_cast<QRhi::Implementation>(rhiApi), failure);
     if (!rhi) {
         QSKIP(qPrintable(failure));
+    }
+    if (!d3d11 && (rhiApi == int(QRhi::D3D11)) &&
+        !QGCRhiCapture::deviceSnapshot().d3d11OpensD3D12.load(std::memory_order_acquire)) {
+        QSKIP("This Direct3D 11 device doesn't open Direct3D 12 resources");
     }
 
     bridge->reset();
@@ -450,6 +431,7 @@ void GstHwBuffersPipelineTest::_testD3DFrameToImage()
     QSKIP("D3D GPU paths not compiled in this build");
 #else
     QFETCH(int, path);
+    QFETCH(int, rhiApi);
     QFETCH(QString, format);
     QFETCH(QString, outputFormat);
     QFETCH(int, pixelFormat);
@@ -475,9 +457,18 @@ void GstHwBuffersPipelineTest::_testD3DFrameToImage()
     // A runner whose WARP adapter can't create this device skips the test; QRhi warns first.
     ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("^Failed to create D3D1[12] device")));
     QString failure;
-    const std::unique_ptr<QRhi> rhi = createPublishedRhi(d3d11 ? QRhi::D3D11 : QRhi::D3D12, failure);
+    const std::unique_ptr<QRhi> rhi = createPublishedRhi(static_cast<QRhi::Implementation>(rhiApi), failure);
     if (!rhi) {
         QSKIP(qPrintable(failure));
+    }
+    if (!d3d11 && (rhiApi == int(QRhi::D3D11)) &&
+        !QGCRhiCapture::deviceSnapshot().d3d11OpensD3D12.load(std::memory_order_acquire)) {
+        QSKIP("This Direct3D 11 device doesn't open Direct3D 12 resources");
+    }
+    // WARP says it does, and then opens an NV12 resource with its luma plane only. No decoder runs on WARP.
+    if (!d3d11 && (rhiApi == int(QRhi::D3D11)) && (format == QStringLiteral("NV12")) &&
+        (rhi->driverInfo().deviceType == QRhiDriverInfo::CpuDevice)) {
+        QSKIP("WARP opens a D3D12 device's NV12 resource without its chroma plane");
     }
 
     bridge->reset();
