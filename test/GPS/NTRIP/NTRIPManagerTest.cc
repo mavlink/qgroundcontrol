@@ -31,6 +31,46 @@ void initialize(NTRIPManager& manager, const NTRIPManager::Configuration& config
     manager.init();
 }
 
+/// The casters a manager's connection attempts go to, in order, each attempt a mock transport.
+class Attempts
+{
+public:
+    explicit Attempts(NTRIPManager& manager, bool autoConnect = false)
+    {
+        manager.setTransportFactory(
+            [this, autoConnect](const NTRIPManager::Configuration& configuration, QObject* parent) {
+                hosts.append(configuration.connection.host);
+                latest = new MockNTRIPTransport(parent);
+                latest->autoConnect = autoConnect;
+                return latest;
+            });
+    }
+
+    QStringList hosts;
+    QPointer<MockNTRIPTransport> latest;
+};
+
+const QString kBackupHost = QStringLiteral("backup.example.com");
+
+/// A saved caster at @a host, which differs from mockCasterConfiguration()'s.
+NTRIPManager::SavedCaster savedCaster(const QString& name, const QString& host = kBackupHost)
+{
+    NTRIPManager::SavedCaster caster;
+    caster.name = name;
+    caster.connection = mockCasterConfiguration().connection;
+    caster.connection.host = host;
+    return caster;
+}
+
+/// mockCasterConfiguration() with @a casters saved and failover on.
+NTRIPManager::Configuration failoverConfiguration(const QList<NTRIPManager::SavedCaster>& casters)
+{
+    NTRIPManager::Configuration configuration = mockCasterConfiguration();
+    configuration.failover = true;
+    configuration.savedCasters = casters;
+    return configuration;
+}
+
 class FakeNetworkMonitor : public QGCNetworkAvailabilityMonitor
 {
 public:
@@ -50,6 +90,21 @@ void NTRIPManagerTest::_fail(MockNTRIPTransport* transport, const QString& detai
     transport->simulateError(code, detail, retryAfter);
     deliverQueuedCalls();
     verifyExpectedLogMessage();
+}
+
+bool NTRIPManagerTest::_failAttempts(NTRIPManager& manager, ManualScheduler& scheduler,
+                                     QPointer<MockNTRIPTransport>& latest, int times)
+{
+    for (int attempt = 0; attempt < times; ++attempt) {
+        const MockNTRIPTransport* const failed = latest;
+        _fail(latest, QStringLiteral("unreachable"));
+        // No delay between attempts is longer.
+        if (manager.connectionStatus() != NTRIPManager::ConnectionStatus::Reconnecting ||
+            !scheduler.advanceBy(std::chrono::seconds(30)) || latest == failed) {
+            return false;
+        }
+    }
+    return true;
 }
 
 void NTRIPManagerTest::_stopFromIdleIsNoop()
@@ -1150,6 +1205,247 @@ void NTRIPManagerTest::_transportDiagnosticsReachManager()
     // Only the valid frame the filter takes reaches vehicles; the filtered and the corrupt one do not.
     QCOMPARE(routed, QList<QByteArray>{accepted});
     mgr.shutdown();
+}
+
+void NTRIPManagerTest::_failoverGoesOnAfterThreeFailures_data()
+{
+    QTest::addColumn<bool>("failover");
+    QTest::newRow("on") << true;
+    // Saved casters alone change nothing: the entered caster is retried as before.
+    QTest::newRow("off") << false;
+}
+
+void NTRIPManagerTest::_failoverGoesOnAfterThreeFailures()
+{
+    using Status = NTRIPManager::ConnectionStatus;
+    QFETCH(bool, failover);
+    const QString entered = mockCasterConfiguration().connection.host;
+    const QString suffix = QStringLiteral(" (saved caster Backup)");
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    Attempts attempts(manager);
+    auto configuration = failoverConfiguration({savedCaster(QStringLiteral("Backup"))});
+    configuration.failover = failover;
+    initialize(manager, configuration);
+
+    // The delays between attempts are those of a single caster, whichever caster the next attempt goes to.
+    for (const int seconds : {1, 2, 4}) {
+        QVERIFY(!manager.statusMessage().endsWith(suffix));
+        _fail(attempts.latest, QStringLiteral("unreachable"));
+        QCOMPARE(manager.connectionStatus(), Status::Reconnecting);
+        QVERIFY(manager.statusMessage().contains(QStringLiteral("in %1s: unreachable").arg(seconds)));
+        QVERIFY(scheduler.advanceBy(std::chrono::seconds(seconds) - std::chrono::milliseconds(1)));
+        QCOMPARE(manager.connectionStatus(), Status::Reconnecting);
+        QVERIFY(scheduler.advanceBy(std::chrono::milliseconds(1)));
+        QCOMPARE(manager.connectionStatus(), Status::Connecting);
+    }
+    // Three failed attempts without corrections leave the entered caster for the next saved one.
+    const QString fourth = failover ? kBackupHost : entered;
+    QCOMPARE(attempts.hosts, (QStringList{entered, entered, entered, fourth}));
+    // The status says so for as long as the caster in use is not the one entered.
+    QCOMPARE(manager.statusMessage().endsWith(suffix), failover);
+    QVERIFY(manager.statusMessage().contains(fourth));
+    attempts.latest->simulateRtcmData(GPSTest::rtcmMessage(1005), 1005, scheduler.nowMs());
+    deliverQueuedCalls();
+    QCOMPARE(manager.connectionStatus(), Status::Connected);
+    QCOMPARE(manager.statusMessage(),
+             failover ? NTRIPManager::tr("Connected") + suffix : NTRIPManager::tr("Connected"));
+
+    // A caster that served is kept: it has three attempts again before the next one is tried.
+    _fail(attempts.latest, QStringLiteral("dropped"), NTRIPError::ServerDisconnected);
+    QCOMPARE(manager.statusMessage().endsWith(suffix), failover);
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(1)));
+    QCOMPARE(attempts.hosts.last(), fourth);
+    manager.shutdown();
+}
+
+void NTRIPManagerTest::_failoverLeavesAWrongLoginToTheUser()
+{
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    Attempts attempts(manager);
+    initialize(manager, failoverConfiguration({savedCaster(QStringLiteral("Backup"))}));
+    // What is wrong with the caster that is entered is for the user to see, not to be hidden by another caster.
+    _fail(attempts.latest, QStringLiteral("check username and password"), NTRIPError::AuthFailed);
+    QCOMPARE(manager.connectionStatus(), NTRIPManager::ConnectionStatus::Error);
+    QCOMPARE(manager.statusMessage(), QStringLiteral("check username and password"));
+    QVERIFY(scheduler.advanceBy(NTRIPFailure::MAX_RETRY_AFTER));
+    QCOMPARE(attempts.hosts.size(), 1);
+}
+
+void NTRIPManagerTest::_failoverLeavesOutASavedCasterThatRefuses()
+{
+    using Status = NTRIPManager::ConnectionStatus;
+    const QString entered = mockCasterConfiguration().connection.host;
+    const QString third = QStringLiteral("third.example.com");
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    Attempts attempts(manager);
+    initialize(manager, failoverConfiguration(
+                            {savedCaster(QStringLiteral("Backup")), savedCaster(QStringLiteral("Third"), third)}));
+    QVERIFY(_failAttempts(manager, scheduler, attempts.latest, 3));
+    QCOMPARE(attempts.hosts.last(), kBackupHost);
+
+    // A saved caster that refuses the login would refuse it again: the next one is tried, and the connection goes
+    // on instead of ending with an error about a caster that is not the one entered.
+    expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("NTRIP error:")));
+    expectLogMessage("GPS.NTRIPManager", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Leaving out saved caster \"Backup\"")));
+    attempts.latest->simulateError(NTRIPError::AuthFailed, QStringLiteral("check username and password"));
+    deliverQueuedCalls();
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+    QCOMPARE(manager.connectionStatus(), Status::Reconnecting);
+    QVERIFY(manager.statusMessage().endsWith(QStringLiteral("check username and password (saved caster Third)")));
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(30)));
+    QCOMPARE(attempts.hosts.last(), third);
+
+    // After the last saved caster comes the entered one again, and then the saved casters without the one left out.
+    QVERIFY(_failAttempts(manager, scheduler, attempts.latest, 3));
+    QCOMPARE(attempts.hosts.last(), entered);
+    QVERIFY(!manager.statusMessage().contains(QStringLiteral("saved caster")));
+    QVERIFY(_failAttempts(manager, scheduler, attempts.latest, 3));
+    QCOMPARE(attempts.hosts.last(), third);
+    QCOMPARE(attempts.hosts.count(kBackupHost), 1);
+    manager.shutdown();
+}
+
+void NTRIPManagerTest::_failoverTakesOnlyCastersItCanUse_data()
+{
+    QTest::addColumn<NTRIPManager::SavedCaster>("caster");
+    QTest::addColumn<bool>("used");
+    const auto changed = [](auto change) {
+        NTRIPManager::SavedCaster caster = savedCaster(QStringLiteral("Backup"));
+        change(caster.connection);
+        return caster;
+    };
+    QTest::newRow("another-host") << changed([](NTRIPConnectionConfig&) {}) << true;
+    // The caster that is entered, saved: only its trusted certificate may differ.
+    QTest::newRow("the-entered-caster") << changed([](NTRIPConnectionConfig& connection) {
+        connection.host = mockCasterConfiguration().connection.host;
+        connection.pinnedCertificate = QStringLiteral("caster.example.com:2101|") + QString(64, u'a');
+    }) << false;
+    QTest::newRow("another-mountpoint-of-the-entered-caster") << changed([](NTRIPConnectionConfig& connection) {
+        connection.host = mockCasterConfiguration().connection.host;
+        connection.mountpoint = QStringLiteral("OTHER");
+    }) << true;
+    QTest::newRow("no-mountpoint") << changed([](NTRIPConnectionConfig& connection) { connection.mountpoint.clear(); })
+                                   << false;
+    // A self-signed certificate is accepted only against the one trusted before.
+    QTest::newRow("self-signed-never-trusted") << changed([](NTRIPConnectionConfig& connection) {
+        connection.useTls = true;
+        connection.allowSelfSignedCerts = true;
+    }) << false;
+    QTest::newRow("self-signed-trusted") << changed([](NTRIPConnectionConfig& connection) {
+        connection.useTls = true;
+        connection.allowSelfSignedCerts = true;
+        connection.pinnedCertificate = connection.endpoint() + QLatin1Char('|') + QString(64, u'a');
+    }) << true;
+}
+
+void NTRIPManagerTest::_failoverTakesOnlyCastersItCanUse()
+{
+    QFETCH(NTRIPManager::SavedCaster, caster);
+    QFETCH(bool, used);
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    QList<NTRIPConnectionConfig> attempted;
+    QPointer<MockNTRIPTransport> latest;
+    manager.setTransportFactory([&](const NTRIPManager::Configuration& configuration, QObject* parent) {
+        attempted.append(configuration.connection);
+        latest = new MockNTRIPTransport(parent);
+        return latest.data();
+    });
+    const auto configuration = failoverConfiguration({caster});
+    initialize(manager, configuration);
+    QVERIFY(_failAttempts(manager, scheduler, latest, 3));
+    QCOMPARE(attempted.size(), 4);
+    QCOMPARE(attempted.last(), used ? caster.connection : configuration.connection);
+    QCOMPARE(manager.statusMessage().endsWith(QStringLiteral("(saved caster Backup)")), used);
+    manager.shutdown();
+}
+
+void NTRIPManagerTest::_failoverDropsAnotherCastersRetryAfter()
+{
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    Attempts attempts(manager);
+    initialize(manager, failoverConfiguration({savedCaster(QStringLiteral("Backup"))}));
+    QVERIFY(_failAttempts(manager, scheduler, attempts.latest, 2));
+    // The entered caster asks to be left alone for five minutes, which says nothing of the next caster.
+    _fail(attempts.latest, QStringLiteral("busy"), NTRIPError::HttpError, std::chrono::seconds(300));
+    QVERIFY(manager.statusMessage().contains(QStringLiteral("in 4s: busy")));
+    QVERIFY(scheduler.advanceBy(std::chrono::seconds(4)));
+    QCOMPARE(attempts.hosts.last(), kBackupHost);
+    // On the caster that asks, it still holds.
+    _fail(attempts.latest, QStringLiteral("busy too"), NTRIPError::HttpError, std::chrono::seconds(300));
+    QVERIFY(manager.statusMessage().contains(QStringLiteral("in 300s: busy too")));
+    manager.shutdown();
+}
+
+void NTRIPManagerTest::_failoverStartsAgainFromTheEnteredCaster_data()
+{
+    QTest::addColumn<int>("action");
+    QTest::newRow("disconnect-and-connect") << 0;
+    QTest::newRow("saved-casters-change") << 1;
+    QTest::newRow("failover-turned-off") << 2;
+    QTest::newRow("mountpoint-change") << 3;
+}
+
+void NTRIPManagerTest::_failoverStartsAgainFromTheEnteredCaster()
+{
+    using Status = NTRIPManager::ConnectionStatus;
+    QFETCH(int, action);
+    const QString entered = mockCasterConfiguration().connection.host;
+    ManualScheduler scheduler;
+    NTRIPManager manager(nullptr, &scheduler);
+    Attempts attempts(manager, true);
+    auto configuration = failoverConfiguration({savedCaster(QStringLiteral("Backup"))});
+    initialize(manager, configuration);
+    QCOMPARE(manager.connectionStatus(), Status::Connected);
+
+    // While the entered caster is in use, the saved casters can change without a word to the stream.
+    configuration.savedCasters.append(savedCaster(QStringLiteral("Third"), QStringLiteral("third.example.com")));
+    manager.setConfiguration(configuration);
+    QVERIFY(scheduler.advanceBy(SettingsDebounce));
+    QCOMPARE(attempts.hosts, QStringList{entered});
+
+    QVERIFY(_failAttempts(manager, scheduler, attempts.latest, 3));
+    QCOMPARE(attempts.hosts.last(), kBackupHost);
+    QCOMPARE(manager.connectionStatus(), Status::Connected);
+    QVERIFY(manager.statusMessage().endsWith(QStringLiteral("(saved caster Backup)")));
+    // The certificate setting is the entered caster's: nothing a saved caster's connection reports is stored in it.
+    QSignalSpy pins(&manager, &NTRIPManager::certificatePinChanged);
+    emit attempts.latest->certificatePinned(QStringLiteral("backup.example.com:2101|") + QString(64, u'b'));
+    QVERIFY(pins.isEmpty());
+    QVERIFY(manager.configuration().connection.pinnedCertificate.isEmpty());
+
+    const qsizetype before = attempts.hosts.size();
+    switch (action) {
+        case 0:
+            configuration.enabled = false;
+            manager.setConfiguration(configuration);
+            QVERIFY(scheduler.advanceBy(SettingsDebounce));
+            QCOMPARE(manager.statusMessage(), NTRIPManager::tr("Disconnected"));
+            configuration.enabled = true;
+            break;
+        case 1:
+            configuration.savedCasters.removeLast();
+            break;
+        case 2:
+            configuration.failover = false;
+            break;
+        default:
+            configuration.connection.mountpoint = QStringLiteral("OTHER");
+            break;
+    }
+    manager.setConfiguration(configuration);
+    QVERIFY(scheduler.advanceBy(SettingsDebounce));
+    QCOMPARE(attempts.hosts.size(), before + 1);
+    QCOMPARE(attempts.hosts.last(), entered);
+    QCOMPARE(manager.connectionStatus(), Status::Connected);
+    QVERIFY(!manager.statusMessage().contains(QStringLiteral("saved caster")));
+    manager.shutdown();
 }
 
 UT_REGISTER_TEST_LIGHTWEIGHT(NTRIPManagerTest, TestLabel::Unit)

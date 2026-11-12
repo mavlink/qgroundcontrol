@@ -25,7 +25,8 @@ QGCGroupBox {
                                                 || root._status === NTRIPManager.Error
     readonly property string _ggaSource: root.ntripManager.ggaSource
     readonly property string _securityWarning: root.ntripManager.securityWarning
-    readonly property string _mountpoint: root._ntripSettings.ntripMountpoint.valueString
+    /// Of the stream this connection receives, which during failover is not the mountpoint that is entered.
+    readonly property string _mountpoint: root.ntripManager.streamMountpoint
 
     heading: qsTr("NTRIP Connection")
     visible: root._ntripSettings.userVisible
@@ -82,6 +83,7 @@ QGCGroupBox {
     // The mountpoint, the data received and the data queued to vehicles can be wider than the status column of the
     // GPS indicator's drop-down has room for, so the values of these rows wrap.
     GPSWrappingRow {
+        objectName:      "ntripMountpoint"
         label:           qsTr("Mountpoint")
         labelText:       root._mountpoint
         visible:         root._mountpoint !== "" && root._connected

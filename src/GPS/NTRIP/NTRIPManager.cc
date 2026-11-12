@@ -1,6 +1,8 @@
 #include "NTRIPManager.h"
 
+#include <algorithm>
 #include <chrono>
+#include <iterator>
 #include <utility>
 
 #include <QtCore/QUrl>
@@ -112,7 +114,14 @@ QString NTRIPManager::securityWarning() const
 QString NTRIPManager::statusMessage() const
 {
     // No state has been entered before the first connection.
-    return _statusMessage.isEmpty() ? _defaultMessageFor(_connectionStatus) : _statusMessage;
+    const QString message = _statusMessage.isEmpty() ? _defaultMessageFor(_connectionStatus) : _statusMessage;
+    if (!_savedCaster) {
+        return message;
+    }
+    // One arg() pass: a second would take a "%1" in the message or the name for a place marker.
+    //: %1 is the connection status, such as "Connected"; %2 the name of the saved caster in use instead of the
+    //: caster that is entered
+    return tr("%1 (saved caster %2)").arg(message, _savedCaster->name);
 }
 
 void NTRIPManager::init()
@@ -135,6 +144,8 @@ void NTRIPManager::setConfiguration(const Configuration& configuration)
     const bool streamChanged =
         configuration.enabled != _configuration.enabled || configuration.connection != _configuration.connection;
     const bool castersChanged = configuration.version1Casters != _configuration.version1Casters;
+    const bool failoverChanged =
+        configuration.failover != _configuration.failover || configuration.savedCasters != _configuration.savedCasters;
     const bool couldConnect = canConnect();
     _configuration = configuration;
     // Opting out forgets the pinned certificate, so opting in again trusts the caster's current certificate.
@@ -146,7 +157,8 @@ void NTRIPManager::setConfiguration(const Configuration& configuration)
     if (_initialized && ggaChanged) {
         _ggaReporter.configure(configuration.gga);
     }
-    if (_initialized && streamChanged) {
+    // The saved caster in use may have changed or gone, so the connection starts again from the entered one.
+    if (_initialized && (streamChanged || (failoverChanged && _savedCaster))) {
         _settingsDebounceTask.schedule(SETTINGS_DEBOUNCE, [this]() { _applyConfiguration(); });
     }
     if (pinForgotten) {
@@ -225,7 +237,7 @@ void NTRIPManager::_start()
     _settingsDebounceTask.cancel();
     _cancelReconnect();
     _reconnectBackoff.reset();
-    _streamServed = false;
+    _useEnteredCaster();
     _dispatch(Event::StartRequested);
     _publish();
 }
@@ -244,11 +256,17 @@ void NTRIPManager::_publish()
     if (std::exchange(_notified.status, _connectionStatus) != _connectionStatus) {
         emit connectionStatusChanged();
     }
-    if (std::exchange(_notified.message, _statusMessage) != _statusMessage) {
+    const QString savedCaster = _savedCaster ? _savedCaster->name : QString();
+    const bool messageChanged = std::exchange(_notified.message, _statusMessage) != _statusMessage;
+    if (std::exchange(_notified.savedCaster, savedCaster) != savedCaster || messageChanged) {
         emit statusMessageChanged();
     }
     if (const QString warning = securityWarning(); std::exchange(_notified.securityWarning, warning) != warning) {
         emit securityWarningChanged();
+    }
+    if (const QString mountpoint = streamMountpoint();
+        std::exchange(_notified.streamMountpoint, mountpoint) != mountpoint) {
+        emit streamMountpointChanged();
     }
 }
 
@@ -369,6 +387,7 @@ void NTRIPManager::_onEnterState(ConnectionStatus to, std::chrono::milliseconds 
             _cancelReconnect();
             _stopStreaming();
             _running = {};
+            _useEnteredCaster();
             if (to == ConnectionStatus::Disconnected) {
                 _correctionSource.reset();
             }
@@ -448,7 +467,7 @@ bool NTRIPManager::_shouldWaitForNetwork() const
 
 bool NTRIPManager::_casterIsLoopback() const
 {
-    const QString host = _configuration.connection.host.trimmed();
+    const QString host = _casterConnection().host.trimmed();
     if (host.compare(QStringLiteral("localhost"), Qt::CaseInsensitive) == 0) {
         return true;
     }
@@ -467,7 +486,8 @@ void NTRIPManager::_openSession()
 {
     _stopStreaming();
 
-    const Configuration config = _configuration;
+    Configuration config = _configuration;
+    config.connection = _casterConnection();
     const auto& connection = config.connection;
 
     _correctionSource.reset();
@@ -494,7 +514,7 @@ void NTRIPManager::_openSession()
     _running = config;
     _stats.reset();
 
-    NTRIPTransport* transport = _transportFactory ? _transportFactory(_configuration, this) : nullptr;
+    NTRIPTransport* transport = _transportFactory ? _transportFactory(_running, this) : nullptr;
     if (!transport) {
         transport = new NTRIPHttpTransport(connection, this, _scheduler, _casterVersions);
     }
@@ -563,20 +583,85 @@ void NTRIPManager::_onTransportError(const NTRIPFailure& failure)
     qCWarning(NTRIPManagerLog) << "NTRIP error:" << code << detail;
     _lastFailureDetail = detail;
 
-    if (_isEnabled() && isRetryable(code, _streamServed)) {
-        const auto backoffMs = _reconnectBackoff.peek(failure.retryAfter).count();
-        qCDebug(NTRIPManagerLog) << "NTRIP reconnecting in" << backoffMs << "ms (attempt"
-                                 << (_reconnectBackoff.attempts() + 1) << ")";
-        _dispatch(Event::TransportError, tr("Reconnecting in %1s: %2").arg(backoffMs / 1000).arg(detail),
-                  failure.retryAfter);
-    } else {
+    const bool retryable = isRetryable(code, _streamServed);
+    // What is wrong with the entered caster is the user's to see; a saved caster that fails so is left out instead.
+    if (!_isEnabled() || (!retryable && !_savedCaster)) {
         _dispatch(Event::TransportFatalError, detail);
+        _publish();
+        return;
     }
+    bool nextCaster = false;
+    if (!retryable) {
+        qCWarning(NTRIPManagerLog) << "Leaving out saved caster" << _savedCaster->name << "until the next start";
+        _castersLeftOut.append(_savedCaster->name);
+        nextCaster = _goToNextCaster();
+    } else if (++_casterFailures >= FAILOVER_ATTEMPTS && _configuration.failover) {
+        nextCaster = _goToNextCaster();
+    }
+    // A caster's Retry-After says nothing of another caster.
+    const auto retryAfter = nextCaster ? std::chrono::milliseconds{} : failure.retryAfter;
+    const auto backoffMs = _reconnectBackoff.peek(retryAfter).count();
+    qCDebug(NTRIPManagerLog) << "NTRIP reconnecting in" << backoffMs << "ms (attempt"
+                             << (_reconnectBackoff.attempts() + 1) << ")";
+    _dispatch(Event::TransportError, tr("Reconnecting in %1s: %2").arg(backoffMs / 1000).arg(detail), retryAfter);
     _publish();
+}
+
+const NTRIPConnectionConfig& NTRIPManager::_casterConnection() const
+{
+    return _savedCaster ? _savedCaster->connection : _configuration.connection;
+}
+
+bool NTRIPManager::_usableForFailover(const SavedCaster& caster) const
+{
+    NTRIPConnectionConfig saved = caster.connection;
+    NTRIPConnectionConfig entered = _configuration.connection;
+    // Its certificate could be any: none was trusted for it to compare with.
+    const bool unchecked = saved.useTls && saved.allowSelfSignedCerts && saved.pinnedCertificate.isEmpty();
+    saved.pinnedCertificate.clear();
+    entered.pinnedCertificate.clear();
+    return saved != entered && !unchecked && saved.streamValidationError().isEmpty() &&
+           !_castersLeftOut.contains(caster.name);
+}
+
+bool NTRIPManager::_goToNextCaster()
+{
+    const QList<SavedCaster>& casters = _configuration.savedCasters;
+    // After the saved caster in use, or from the first one after the entered caster.
+    qsizetype next = 0;
+    if (_savedCaster) {
+        const auto inUse = std::ranges::find(casters, _savedCaster->name, &SavedCaster::name);
+        next = inUse == casters.cend() ? casters.size() : std::distance(casters.cbegin(), inUse) + 1;
+    }
+    for (; next < casters.size(); ++next) {
+        if (_usableForFailover(casters.at(next))) {
+            break;
+        }
+    }
+    // The entered caster follows the last saved one.
+    if (next >= casters.size() && !_savedCaster) {
+        return false;
+    }
+    _savedCaster = next < casters.size() ? std::optional(casters.at(next)) : std::nullopt;
+    _casterFailures = 0;
+    _streamServed = false;
+    return true;
+}
+
+void NTRIPManager::_useEnteredCaster()
+{
+    _savedCaster.reset();
+    _castersLeftOut.clear();
+    _casterFailures = 0;
+    _streamServed = false;
 }
 
 void NTRIPManager::_onCertificatePinned(const QString& pin)
 {
+    // The stored pin is the entered caster's. A saved caster is used only with its own, so it reports none.
+    if (_savedCaster) {
+        return;
+    }
     // The running transport already trusts the certificate, so storing its pin must not reconnect.
     _running.connection.pinnedCertificate = pin;
     _setPinnedCertificate(pin);
@@ -614,6 +699,7 @@ void NTRIPManager::_onCorrectionFrame(const RTCMDecodedFrame& frame)
 
     // Only corrections show the caster serves this stream; one that accepts and then drops must keep backing off.
     _reconnectBackoff.reset();
+    _casterFailures = 0;
     _streamServed = true;
 }
 
@@ -633,9 +719,9 @@ void NTRIPManager::_applyConfiguration()
         // Disconnected / Error / Reconnecting: start fresh. The connecting
         // path re-reads settings, so the new values take effect there.
         _start();
-    } else if (newConfig.connection != _running.connection) {
+    } else if (_savedCaster || newConfig.connection != _running.connection) {
         qCDebug(NTRIPManagerLog) << "NTRIP transport-affecting setting changed, reconnecting";
-        _streamServed = false;
+        _useEnteredCaster();
         _dispatch(Event::HotReconfigure);
     }
     _publish();

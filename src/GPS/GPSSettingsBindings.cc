@@ -83,6 +83,21 @@ NTRIPConfig ntripFromSettings(NTRIPSettings* settings, FactReader& read)
     }
     configuration.gga.interval = std::chrono::seconds(read(settings->ntripGgaIntervalSec()).toUInt());
     configuration.version1Casters = read(settings->ntripVersion1Casters()).toString();
+    configuration.failover = read(settings->ntripFailoverEnabled()).toBool();
+    // Read to be watched: the settings have parsed the stored list by the time a change reaches this binding.
+    (void) read(settings->ntripSavedCasters());
+    for (const NTRIPSavedCaster& saved : settings->savedCasters()) {
+        NTRIPConnectionConfig caster;
+        caster.host = saved.host;
+        caster.port = saved.port;
+        caster.username = saved.username;
+        caster.password = saved.password;
+        caster.mountpoint = saved.mountpoint;
+        caster.useTls = saved.useTls;
+        caster.allowSelfSignedCerts = saved.allowSelfSignedCerts;
+        caster.pinnedCertificate = saved.pinnedCertificate;
+        configuration.savedCasters.append({saved.name, caster});
+    }
     return configuration;
 }
 
@@ -184,6 +199,8 @@ bool redacted(const Fact* fact)
 {
     static const QSet<QString> names{
         QString::fromLatin1(NTRIPSettings::ntripPasswordName),
+        // Each saved caster is stored with its password.
+        QString::fromLatin1(NTRIPSettings::ntripSavedCastersName),
         QString::fromLatin1(RTKSettings::fixedBasePositionLatitudeName),
         QString::fromLatin1(RTKSettings::fixedBasePositionLongitudeName),
         QString::fromLatin1(RTKSettings::fixedBasePositionAltitudeName),

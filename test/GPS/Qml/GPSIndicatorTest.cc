@@ -371,7 +371,6 @@ void GPSIndicatorTest::_ntripStaysInsideItsBox()
     NTRIPSettings* const settings = SettingsManager::instance()->ntripSettings();
     saved.setFactValue(settings->ntripServerConnectEnabled(), false);
     const QString mountpoint = QStringLiteral("VRS_RTCM32_MSM7_NEAREST_STATION");
-    saved.setFactValue(settings->ntripMountpoint(), mountpoint);
     // The page shows the box once the application's caster is named. Its rows follow a stream of this test, which
     // has reported a position and whose corrections went to a vehicle, so that every row shows.
     const GPSTest::CasterHost caster(GPSManager::instance()->ntrip(), QStringLiteral("caster.example"));
@@ -380,7 +379,9 @@ void GPSIndicatorTest::_ntripStaysInsideItsBox()
     QList<QByteArray> routed;
     captureVehicleFrames(corrections, routed);
     NTRIPManager ntrip(nullptr, &scheduler, {.corrections = &corrections});
-    ntrip.setConfiguration(mockCasterConfiguration());
+    auto configuration = mockCasterConfiguration();
+    configuration.connection.mountpoint = mountpoint;
+    ntrip.setConfiguration(configuration);
     ntrip.setGgaPositionProvider(NTRIPGgaReporter::PositionSource::RTKReceiver,
                                  [] { return ggaObservation(QGeoCoordinate(47.3, 8.5, 400)); });
     MockNTRIPTransport* const transport = injectMockTransport(ntrip, true);

@@ -73,6 +73,18 @@ A saved caster keeps its password. It is stored with the application's settings,
 
 A caster that accepts self-signed certificates is saved with the certificate recorded for it, if one was. **Use Caster** never carries the certificate recorded for one caster over to another: when the recorded certificate belongs to another host and port, it is replaced by the one saved with the caster, or forgotten when none was. A certificate recorded after a caster was saved is kept with it only when the caster is saved again.
 
+### Falling back to saved casters {#failover}
+
+**Fall back to saved casters** is off by default. With it on, QGroundControl goes on to the saved casters when the caster in use cannot be reached or stops serving, instead of retrying that one alone:
+
+- It starts with the caster that is entered, then takes the saved casters in the order of the list, and after the last one the entered caster again.
+- It leaves a caster after three failed attempts in a row without any corrections between them. The pauses between attempts are the same as without this option, whichever caster the next attempt goes to, and after 100 attempts without corrections it gives up as before.
+- A failure that is not retried still ends the connection with its error when the caster is the one entered: a refused login, a mountpoint the caster does not have, or a certificate that is not accepted. These are yours to correct, and another caster would only hide them. A saved caster that fails in such a way is left out until the connection is started again, and the next one is tried.
+- It does not return to an earlier caster while the one in use delivers corrections. **Connect**, **Retry** and any change of the server or mountpoint settings start again with the entered caster. So does a change of the saved casters or of this option while a saved caster is in use.
+- A saved caster takes no part when it is the same as the entered one, when it has no mountpoint, or when it accepts self-signed certificates and none was recorded for it when it was saved: its certificate could not be compared with one trusted before.
+
+While a saved caster is in use, or is the next to be tried, the connection status ends with its name, such as **Connected (saved caster Backup)**, and **Mountpoint** under [NTRIP Connection](#ntrip-connection) shows that caster's mountpoint.
+
 ## GGA Position Reporting
 
 Network RTK (VRS) casters need the rover position. Select the position QGC reports and how often.

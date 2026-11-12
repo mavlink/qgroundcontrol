@@ -219,6 +219,8 @@ void GPSSettingsBindingsTest::_ntripSettingsBinding()
     saved.setFactValue(settings->ntripGgaPositionSource(), static_cast<int>(expected.gga.source));
     saved.setFactValue(settings->ntripGgaIntervalSec(), 7);
     saved.setFactValue(settings->ntripVersion1Casters(), expected.version1Casters);
+    saved.setFactValue(settings->ntripFailoverEnabled(), false);
+    saved.setFactValue(settings->ntripSavedCasters(), QString());
 
     NTRIPManager manager;
     GPSSettingsBindings::bindNtrip(settings, &manager);
@@ -234,6 +236,18 @@ void GPSSettingsBindingsTest::_ntripSettingsBinding()
     deliverQueuedCalls();
     QCOMPARE(settings->ntripVersion1Casters()->rawValue().toString(), casters);
     QCOMPARE(manager.configuration().version1Casters, casters);
+
+    // The manager is given the saved casters to go on to, as they are when the list changes, and whether it may.
+    settings->ntripServerConnectEnabled()->setRawValue(false);
+    QVERIFY(settings->saveConnectionAsCaster(QStringLiteral("Backup")));
+    settings->ntripFailoverEnabled()->setRawValue(true);
+    QVERIFY(manager.configuration().failover);
+    QCOMPARE(manager.configuration().savedCasters.size(), 1);
+    const NTRIPManager::SavedCaster backup = manager.configuration().savedCasters.constFirst();
+    QCOMPARE(backup.name, QStringLiteral("Backup"));
+    QCOMPARE(backup.connection, expected.connection);
+    QVERIFY(settings->removeSavedCaster(backup.name));
+    QVERIFY(manager.configuration().savedCasters.isEmpty());
 
     // A stored source that names none would report no position at all.
     expectLogMessage("GPS.GPSSettingsBindings", QtWarningMsg,
@@ -310,6 +324,13 @@ void GPSSettingsBindingsTest::_settingsLogRedactsSecrets_data()
     RTKSettings* const rtk = SettingsManager::instance()->rtkSettings();
     QTest::newRow("ntrip-password") << ntrip->ntripPassword() << QVariant(QStringLiteral("private-password"))
                                     << QVariant(QStringLiteral("changed-password")) << true;
+    // The saved casters are stored with their passwords.
+    const auto casters = [](const char* password) {
+        return QVariant(QStringLiteral(R"([{"name":"Backup","host":"backup.example.com","port":2101,"password":"%1"}])")
+                            .arg(QLatin1String(password)));
+    };
+    QTest::newRow("ntrip-saved-casters") << ntrip->ntripSavedCasters() << casters("private-password")
+                                         << casters("changed-password") << true;
     QTest::newRow("ntrip-mountpoint") << ntrip->ntripMountpoint() << QVariant(QStringLiteral("MOUNT"))
                                       << QVariant(QStringLiteral("OTHER")) << false;
     QTest::newRow("base-latitude") << rtk->fixedBasePositionLatitude() << QVariant(12.3456789) << QVariant(12.5678)
@@ -361,15 +382,14 @@ void GPSSettingsBindingsTest::_settingsBindingsCoverEveryFact_data()
     QTest::addColumn<QList<Fact*>>("unbound");
 
     // A new setting must be bound, unless no service reads it: RTKSettings itself keeps the saved base sites and the
-    // receivers detected on each link, and NTRIPSettings the saved casters.
+    // receivers detected on each link.
     SettingsManager* const settings = SettingsManager::instance();
     QTest::newRow("RTK") << static_cast<SettingsGroup*>(settings->rtkSettings())
                          << GPSSettingsBindings::_boundFacts(settings->rtkSettings())
                          << QList<Fact*>{settings->rtkSettings()->savedBaseSites(),
                                          settings->rtkSettings()->detectedReceivers()};
     QTest::newRow("NTRIP") << static_cast<SettingsGroup*>(settings->ntripSettings())
-                           << GPSSettingsBindings::_boundFacts(settings->ntripSettings())
-                           << QList<Fact*>{settings->ntripSettings()->ntripSavedCasters()};
+                           << GPSSettingsBindings::_boundFacts(settings->ntripSettings()) << QList<Fact*>{};
     QTest::newRow("GPSCorrection") << static_cast<SettingsGroup*>(settings->gpsCorrectionSettings())
                                    << GPSSettingsBindings::_boundFacts(settings->gpsCorrectionSettings())
                                    << QList<Fact*>{};

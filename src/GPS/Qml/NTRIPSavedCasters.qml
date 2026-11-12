@@ -104,6 +104,12 @@ QGCGroupBox {
         }
     }
 
+    GPSFactSwitchField {
+        fact: root._ntrip.ntripFailoverEnabled
+        note: root._ntrip.ntripFailoverEnabled.shortDescription
+        toggle.objectName: "ntripFailoverSwitch"
+    }
+
     Connections {
         target: root._ntrip
         function onSavedCastersChanged() { casterSave.failed = false }

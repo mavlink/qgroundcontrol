@@ -103,6 +103,14 @@
             "type": "string",
             "default": "",
             "label": "Saved casters"
+        },
+        {
+            "name": "ntripFailoverEnabled",
+            "shortDesc": "Go on to the saved casters when this caster cannot be reached",
+            "longDesc": "When the caster that is entered cannot be reached or stops serving, connect to the saved casters in turn instead of retrying it alone. A wrong login or mountpoint of the entered caster still stops the connection.",
+            "type": "bool",
+            "default": false,
+            "label": "Fall back to saved casters"
         }
     ]
 }

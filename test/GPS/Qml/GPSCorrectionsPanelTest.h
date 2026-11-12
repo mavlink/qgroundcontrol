@@ -27,4 +27,5 @@ private slots:
     void _ntripMountpointLockedWhileActive();
     void _ntripLongStatusWrapsWithinPanel();
     void _ntripMountpointRowLayout();
+    void _ntripMountpointIsTheStreamsOwn();
 };

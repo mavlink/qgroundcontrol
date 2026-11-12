@@ -787,6 +787,51 @@ void GPSCorrectionsPanelTest::_ntripLongStatusWrapsWithinPanel()
     QVERIFY2(buttonRight.x() <= panelItem->width(), qPrintable(QString::number(buttonRight.x())));
 }
 
+void GPSCorrectionsPanelTest::_ntripMountpointIsTheStreamsOwn()
+{
+    using Status = NTRIPManager::ConnectionStatus;
+    ScriptedNTRIP ntrip;
+    NTRIPManager::Configuration configuration = ntrip.manager.configuration();
+    NTRIPManager::SavedCaster backup;
+    backup.name = QStringLiteral("Backup");
+    backup.connection = configuration.connection;
+    backup.connection.host = QStringLiteral("backup.example.com");
+    backup.connection.mountpoint = QStringLiteral("BACKUP");
+    configuration.failover = true;
+    configuration.savedCasters = {backup};
+    ntrip.manager.setConfiguration(configuration);
+    QPointer<MockNTRIPTransport> transport = ntrip.nextTransport(true);
+    ntrip.manager.init();
+    QCOMPARE(ntrip.manager.connectionStatus(), Status::Connected);
+
+    TestFixtures::QmlWindowFixture window(640, 400);
+    TestFixtures::QmlEngine engine;
+    const std::unique_ptr<QObject> panel = createConnectionPanel(engine, window, ntrip.manager);
+    QVERIFY2(panel, qPrintable(engine.lastError()));
+    QVERIFY(window.show());
+    const auto* const row = panel->findChild<QQuickItem*>(QStringLiteral("ntripMountpoint"));
+    QVERIFY(row);
+    // The row names the mountpoint of the stream the panel's connection receives.
+    QVERIFY(row->isVisible());
+    QCOMPARE(row->property("labelText").toString(), configuration.connection.mountpoint);
+
+    // Failover goes on to a saved caster, whose mountpoint is another: the row follows the status beside it.
+    for (int attempt = 0; attempt < 3; ++attempt) {
+        expectLogMessage("GPS.NTRIPManager", QtWarningMsg, QRegularExpression(QStringLiteral("NTRIP error:")));
+        transport->simulateError(NTRIPError::SocketError, QStringLiteral("unreachable"));
+        deliverQueuedCalls();
+        verifyExpectedLogMessage();
+        transport = ntrip.nextTransport(true);
+        QVERIFY(ntrip.scheduler.advanceBy(std::chrono::seconds(30)));
+    }
+    QCOMPARE(ntrip.manager.connectionStatus(), Status::Connected);
+    QVERIFY(ntrip.manager.statusMessage().endsWith(QStringLiteral("(saved caster Backup)")));
+    QVERIFY(showsText(panel.get(), ntrip.manager.statusMessage()));
+    QVERIFY(row->isVisible());
+    QCOMPARE(row->property("labelText").toString(), backup.connection.mountpoint);
+    ntrip.manager.shutdown();
+}
+
 void GPSCorrectionsPanelTest::_ntripMountpointRowLayout()
 {
     NTRIPSourceTableModel model;

@@ -2,12 +2,16 @@
 
 #include <chrono>
 
+#include <QtCore/QPointer>
+
 #include "NTRIPError.h"
 #include "UnitTest.h"
 
 namespace GPSTest {
 class MockNTRIPTransport;
 }
+class ManualScheduler;
+class NTRIPManager;
 
 /// Tests observable NTRIP state transitions and reconnect behavior.
 class NTRIPManagerTest : public UnitTest
@@ -17,6 +21,9 @@ class NTRIPManagerTest : public UnitTest
     /// Fails @a transport and delivers the failure, which the manager logs.
     void _fail(GPSTest::MockNTRIPTransport* transport, const QString& detail, NTRIPError code = NTRIPError::SocketError,
                std::chrono::milliseconds retryAfter = {});
+    /// Fails the attempt in progress @a times, each followed by the next attempt. False unless each was made.
+    bool _failAttempts(NTRIPManager& manager, ManualScheduler& scheduler, QPointer<GPSTest::MockNTRIPTransport>& latest,
+                       int times);
 
 private slots:
     void _stopFromIdleIsNoop();
@@ -67,4 +74,15 @@ private slots:
     void _statusCallbackStopsTransition();
     void _connectedCallbackStopsTransition_data();
     void _connectedCallbackStopsTransition();
+
+    // Failover to the saved casters.
+    void _failoverGoesOnAfterThreeFailures_data();
+    void _failoverGoesOnAfterThreeFailures();
+    void _failoverLeavesAWrongLoginToTheUser();
+    void _failoverLeavesOutASavedCasterThatRefuses();
+    void _failoverTakesOnlyCastersItCanUse_data();
+    void _failoverTakesOnlyCastersItCanUse();
+    void _failoverDropsAnotherCastersRetryAfter();
+    void _failoverStartsAgainFromTheEnteredCaster_data();
+    void _failoverStartsAgainFromTheEnteredCaster();
 };

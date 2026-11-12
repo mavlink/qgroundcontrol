@@ -3,10 +3,13 @@
 #include <chrono>
 #include <functional>
 #include <memory>
+#include <optional>
 
+#include <QtCore/QList>
 #include <QtCore/QObject>
 #include <QtCore/QPointer>
 #include <QtCore/QString>
+#include <QtCore/QStringList>
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
@@ -41,6 +44,22 @@ struct NTRIPManagerDependencies
 /// registration, and opens a new transport; Reconnecting, Error and Disconnected
 /// retire the transport; only Disconnected releases the registration; and the
 /// manager schedules reconnects.
+///
+/// Failover (Configuration::failover) goes on to the saved casters when the caster in use cannot be reached:
+/// - Order: the caster that is entered, then the saved casters in their order, then the entered one again. A saved
+///   caster takes no part when it is the entered one, has no mountpoint or is otherwise not valid, or accepts
+///   self-signed certificates without one saved with it to check against.
+/// - A caster is left for the next after FAILOVER_ATTEMPTS failed attempts in a row without corrections between
+///   them. Only failures that are retried count. The delays between attempts are the same as for one caster, across
+///   casters, and so is the limit of MAX_RECONNECT_ATTEMPTS; what a caster asks for in Retry-After delays only an
+///   attempt on that caster.
+/// - A failure that is not retried, such as a refused login or a mountpoint the caster does not have, still ends
+///   the connection with that error when the caster is the entered one. A saved caster that fails so is left out
+///   until the connection is started again, and the next one is tried.
+/// - Nothing returns to an earlier caster while the one in use serves: only the order above does, after the last
+///   saved caster. Every start of the connection begins with the entered caster: Connect, Retry, a change of the
+///   connection settings, and, while a saved caster is in use, a change of the saved casters or of failover.
+/// - While the caster in use, or the next to be tried, is a saved one, the status message ends with its name.
 class NTRIPManager : public QObject
 {
     Q_OBJECT
@@ -51,6 +70,9 @@ class NTRIPManager : public QObject
     /// What the connection is doing, or why it stopped; never empty.
     Q_PROPERTY(QString statusMessage READ statusMessage NOTIFY statusMessageChanged FINAL)
     Q_PROPERTY(QString securityWarning READ securityWarning NOTIFY securityWarningChanged FINAL)
+    /// The mountpoint of the stream that is connected or being connected: the entered caster's or, during failover,
+    /// a saved caster's. Empty while the connection is off or ended with an error.
+    Q_PROPERTY(QString streamMountpoint READ streamMountpoint NOTIFY streamMountpointChanged FINAL)
     Q_PROPERTY(QString ggaSource READ ggaSource NOTIFY ggaSourceChanged FINAL)
     /// A caster host is configured, so there is a caster to connect to and to ask for its mountpoints.
     Q_PROPERTY(bool canConnect READ canConnect NOTIFY canConnectChanged FINAL)
@@ -87,6 +109,14 @@ public:
     };
     Q_ENUM(Event)
 
+    /// A caster kept under a name beside the one that is entered.
+    struct SavedCaster
+    {
+        QString name;
+        NTRIPConnectionConfig connection;
+        bool operator==(const SavedCaster&) const = default;
+    };
+
     /// The NTRIP settings as values; the application's settings binding supplies them.
     struct Configuration
     {
@@ -96,6 +126,10 @@ public:
         /// The casters an earlier run found to take NTRIP version 1 requests only, as version1CastersChanged()
         /// reported them.
         QString version1Casters;
+        /// Go on to savedCasters when the entered caster cannot be reached.
+        bool failover = false;
+        /// In the order failover takes them.
+        QList<SavedCaster> savedCasters = {};
         bool operator==(const Configuration&) const = default;
     };
 
@@ -119,6 +153,8 @@ public:
 
     /// Set while a connected stream sends its credentials without TLS.
     QString securityWarning() const;
+
+    QString streamMountpoint() const { return _running.connection.mountpoint; }
 
     QString ggaSource() const { return _ggaReporter.currentSource(); }
 
@@ -152,6 +188,7 @@ signals:
     void connectionStatusChanged();
     void statusMessageChanged();
     void securityWarningChanged();
+    void streamMountpointChanged();
     void ggaSourceChanged();
     void canConnectChanged();
     /// The user turned the saved connection on or off; the settings should store it.
@@ -168,7 +205,10 @@ private:
     {
         ConnectionStatus status = ConnectionStatus::Disconnected;
         QString message;
+        /// The saved caster the message names; empty for the entered one.
+        QString savedCaster;
         QString securityWarning;
+        QString streamMountpoint;
     };
 
     /// Emits one change signal for each property that differs from what the signals last announced. Public operations
@@ -208,6 +248,17 @@ private:
 
     // The single-shot reconnect timer fires ReconnectDue; a failure after the attempt ceiling fires ReconnectGaveUp.
     static constexpr int MAX_RECONNECT_ATTEMPTS = 100;
+    /// Failed attempts in a row, without corrections, after which failover leaves a caster.
+    static constexpr int FAILOVER_ATTEMPTS = 3;
+
+    /// The connection of the caster in use: a saved one during failover, else the entered one.
+    const NTRIPConnectionConfig& _casterConnection() const;
+    /// Whether failover may go to @a caster.
+    bool _usableForFailover(const SavedCaster& caster) const;
+    /// Makes the next caster in failover's order the one in use. False, changing nothing, when there is no other.
+    bool _goToNextCaster();
+    /// Makes the entered caster the one in use, as at every start.
+    void _useEnteredCaster();
 
     void _scheduleReconnect(std::chrono::milliseconds retryAfter = {});
 
@@ -266,6 +317,12 @@ private:
     /// Corrections have arrived over the current connection settings since they were last started, so a source
     /// table in place of the stream means the mountpoint went offline, not that it is wrong.
     bool _streamServed = false;
+    /// The saved caster in use during failover; none while it is the entered one.
+    std::optional<SavedCaster> _savedCaster;
+    /// The saved casters that failed in a way that is not retried, by name, since the connection was started.
+    QStringList _castersLeftOut;
+    /// Failed attempts on the caster in use since it was taken up or last sent corrections.
+    int _casterFailures = 0;
     bool _waitingForNetwork = false;
     bool _initialized = false;
     bool _shutdown = false;

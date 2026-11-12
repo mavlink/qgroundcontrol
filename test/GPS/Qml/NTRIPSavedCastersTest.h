@@ -12,4 +12,5 @@ private slots:
     void _savesAndUsesTheEnteredCaster();
     void _usingWaitsForADisconnect();
     void _saveSaysWhenItCannot();
+    void _failoverSwitchSetsTheSetting();
 };

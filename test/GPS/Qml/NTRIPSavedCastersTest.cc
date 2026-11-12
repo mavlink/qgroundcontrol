@@ -31,6 +31,7 @@ struct EnteredCaster
         saved.setFactValue(settings->ntripAllowSelfSignedCerts(), false);
         saved.setFactValue(settings->ntripPinnedCertificate(), QString());
         saved.setFactValue(settings->ntripSavedCasters(), QString());
+        saved.setFactValue(settings->ntripFailoverEnabled(), false);
     }
 
     QString host() const { return settings->ntripServerHostAddress()->rawValue().toString(); }
@@ -169,6 +170,26 @@ void NTRIPSavedCastersTest::_saveSaysWhenItCannot()
     QVERIFY(!shown(group, "ntripSavedCasterSaveFailed"));
     QVERIFY(press(group, "ntripSavedCasterSave"));
     QCOMPARE(settings->savedCasters().constLast().name, QStringLiteral("One more"));
+}
+
+void NTRIPSavedCastersTest::_failoverSwitchSetsTheSetting()
+{
+    EnteredCaster entered;
+    Fact* const failover = entered.settings->ntripFailoverEnabled();
+    // The connection may be on: the manager takes a change of failover as it comes.
+    entered.settings->ntripServerConnectEnabled()->setRawValue(true);
+    TestFixtures::QmlWindowFixture window(640, 600);
+    TestFixtures::QmlEngine engine;
+    const std::unique_ptr<QObject> group = createGroup(engine, window);
+    QVERIFY2(group, qPrintable(engine.lastError()));
+    QVERIFY(window.show());
+    QVERIFY(shown(group, "ntripFailoverSwitch"));
+    QVERIFY(!part(group, "ntripFailoverSwitch")->property("checked").toBool());
+    QVERIFY(press(group, "ntripFailoverSwitch"));
+    QVERIFY(failover->rawValue().toBool());
+    // The switch follows the setting, however that changes.
+    failover->setRawValue(false);
+    QVERIFY(!part(group, "ntripFailoverSwitch")->property("checked").toBool());
 }
 
 UT_REGISTER_TEST(NTRIPSavedCastersTest, TestLabel::Unit)
