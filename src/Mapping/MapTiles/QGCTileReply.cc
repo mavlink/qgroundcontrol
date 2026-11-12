@@ -3,6 +3,9 @@
 #include <chrono>
 
 #include <QtCore/QFile>
+#include <QtCore/QGlobalStatic>
+#include <QtCore/QHash>
+#include <QtCore/QMutex>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkRequest>
@@ -76,6 +79,17 @@ QNetworkRequest tileRequest(const MapProvider& provider, int x, int y, int zoom)
     return request;
 }
 
+/// The request that is fetching a tile from its server, by the hash of the tile. Locked, as requests live on the
+/// threads of their owners. A global static tells when it is gone: a singleton destroyed after it, as the
+/// application exits, still destroys its requests.
+struct TileFetches
+{
+    QMutex mutex;
+    QHash<QString, QGCTileReply*> requestByHash;
+};
+
+Q_GLOBAL_STATIC(TileFetches, tileFetches)
+
 }  // namespace
 
 QGCTileReply::QGCTileReply(QNetworkAccessManager* networkManager, int mapId, int x, int y, int zoom, QObject* parent)
@@ -138,6 +152,7 @@ void QGCTileReply::abort()
         return;
     }
     _state = State::Aborted;
+    _endFetch();
 
     if (QNetworkReply* const reply = _networkReply.data()) {
         _networkReply.clear();  // its finished() is ignored from here on
@@ -180,6 +195,20 @@ void QGCTileReply::_fetchFromServer()
     if (request.url().isEmpty()) {
         _finish(Error::NetworkError, QStringLiteral("provider has no URL for the tile"));
         return;
+    }
+
+    // A tile of an offline set is stored in the set by the request that fetches it
+    TileFetches* const fetches = (_tileSet == UINT64_MAX) ? tileFetches() : nullptr;
+    if (fetches) {
+        const QMutexLocker locker(&fetches->mutex);
+        if (QGCTileReply* const fetching = fetches->requestByHash.value(_hash)) {
+            qCDebug(QGCTileReplyLog) << "tile" << _hash << "is being fetched for another request, waiting for it";
+            _state = State::Waiting;
+            (void) connect(fetching, &QGCTileReply::fetchEnded, this, &QGCTileReply::_awaitedFetchEnded,
+                           Qt::QueuedConnection);
+            return;
+        }
+        fetches->requestByHash.insert(_hash, this);
     }
     request.setOriginatingObject(this);
 
@@ -250,11 +279,53 @@ void QGCTileReply::_networkReplyFinished()
     _finish(Error::NoError);
 }
 
+void QGCTileReply::_awaitedFetchEnded(const QByteArray& data, const QString& format)
+{
+    if (_state != State::Waiting) {
+        return;
+    }
+
+    if (data.isEmpty()) {
+        // What failed for the other request, or what it gave up, can still succeed for this one
+        _fetchFromServer();
+        return;
+    }
+    if (_validator && !_validator(data)) {
+        _finish(Error::DataError, QStringLiteral("network body is not a usable tile, %1 bytes").arg(data.size()));
+        return;
+    }
+
+    qCDebug(QGCTileReplyLog) << "tile" << _hash << "fetched for another request," << data.size() << "bytes";
+    _data = data;
+    _format = format;
+    _finish(Error::NoError);
+}
+
+void QGCTileReply::_endFetch()
+{
+    TileFetches* const fetches = tileFetches();
+    if (!fetches) {
+        return;
+    }
+    {
+        const QMutexLocker locker(&fetches->mutex);
+        const auto fetch = fetches->requestByHash.constFind(_hash);
+        if ((fetch == fetches->requestByHash.cend()) || (fetch.value() != this)) {
+            return;
+        }
+        fetches->requestByHash.erase(fetch);
+    }
+
+    emit fetchEnded(_data, _format, QPrivateSignal());
+}
+
 void QGCTileReply::_finish(Error error, const QString& errorString)
 {
     _state = State::Finished;
     _error = error;
     _errorString = errorString;
+    // Before finished(): its receiver is free to delete this request
+    _endFetch();
     emit finished();
 }
 

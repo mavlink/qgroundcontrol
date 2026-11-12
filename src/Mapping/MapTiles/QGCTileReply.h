@@ -17,6 +17,9 @@ struct QGCCacheTile;
 /// A request for one map or elevation tile. The tile comes from the shared tile cache or, on a miss, from the
 /// provider's server; a tile fetched from the server is stored in the cache.
 ///
+/// Requests that miss the cache while another request is fetching the same tile wait for that fetch, so the server
+/// is asked once. A request for an offline tile set takes no part in this.
+///
 /// Independent of QtLocation, so every map engine and the terrain queries fetch tiles the same way.
 class QGCTileReply : public QObject
 {
@@ -72,6 +75,9 @@ signals:
     /// Emitted once, after start() returned
     void finished();
 
+    /// Tells the requests waiting for this one's fetch that it ended; \a data is empty when it did not get the tile
+    void fetchEnded(const QByteArray& data, const QString& format, QPrivateSignal);
+
 private:
     enum class State
     {
@@ -79,6 +85,7 @@ private:
         Starting,
         CacheLookup,
         Network,
+        Waiting,  ///< Another request is fetching the tile from the server
         Finished,
         Aborted,
     };
@@ -86,6 +93,8 @@ private:
     void _cacheLookupFinished(const QGCCacheTile* tile);
     void _fetchFromServer();
     void _networkReplyFinished();
+    void _awaitedFetchEnded(const QByteArray& data, const QString& format);
+    void _endFetch();
     void _finish(Error error, const QString& errorString = QString());
     bool _isUsable(const QByteArray& data) const;
     bool _isNoTilePlaceholder(const QByteArray& data) const;

@@ -1,5 +1,7 @@
 #include "QGCTileReplyTest.h"
 
+#include <memory>
+
 #include <QtCore/QPointer>
 #include <QtCore/QScopeGuard>
 #include <QtTest/QSignalSpy>
@@ -36,6 +38,15 @@ constexpr int kTileZoom = 13;
 const QString kTileReplyCustomUrlType = QStringLiteral("CustomURL Custom");
 const QString kTileReplySourceA = QStringLiteral("https://a.example/{z}/{x}/{y}.png");
 const QString kTileReplySourceB = QStringLiteral("https://b.example/{z}/{x}/{y}.png");
+
+/// The cache worker answers lookups in order: once this one is answered, so are the lookups started before it
+bool tileReplyCacheLookupsAnswered()
+{
+    TileReplyMockNam nam;
+    QGCTileReply sentinel(&nam, tileReplyMapId(), kTileX + 4, kTileY, kTileZoom);
+    QSignalSpy sentinelSpy(&sentinel, &QGCTileReply::finished);
+    return sentinel.start() && sentinelSpy.wait(TestTimeout::mediumMs());
+}
 
 }  // namespace
 
@@ -288,6 +299,131 @@ void QGCTileReplyTest::_networkManagerDestroyedFirst()
     QTRY_COMPARE_WITH_TIMEOUT(nam->requestCount, 1, TestTimeout::mediumMs());
     delete nam;
     delete fetching;
+}
+
+// Two maps that show the same place ask for the same tiles at the same moment: the server is asked once
+void QGCTileReplyTest::_concurrentRequestsShareOneFetch()
+{
+    const QByteArray png = tileReplyPngBody();
+
+    // Every consumer of tiles has a network manager of its own
+    TileReplyMockNam fetchingNam;
+    fetchingNam.body = png;
+    fetchingNam.holdReplies = true;
+    TileReplyMockNam waitingNam;
+    waitingNam.body = png;
+
+    UnitTestTileGenerator::setForcedMissCount(4);
+    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+
+    const int mapId = tileReplyMapId();
+    const int tileX = kTileX + 50;
+    QGCTileReply fetching(&fetchingNam, mapId, tileX, kTileY, kTileZoom);
+    QGCTileReply waiting(&waitingNam, mapId, tileX, kTileY, kTileZoom);
+    QGCTileReply rejecting(&waitingNam, mapId, tileX, kTileY, kTileZoom);
+    rejecting.setValidator([](const QByteArray&) { return false; });
+    QGCTileReply withdrawn(&waitingNam, mapId, tileX, kTileY, kTileZoom);
+    QSignalSpy fetchingSpy(&fetching, &QGCTileReply::finished);
+    QSignalSpy waitingSpy(&waiting, &QGCTileReply::finished);
+    QSignalSpy rejectingSpy(&rejecting, &QGCTileReply::finished);
+    QSignalSpy withdrawnSpy(&withdrawn, &QGCTileReply::finished);
+    QVERIFY(fetching.start());
+    QVERIFY(waiting.start());
+    QVERIFY(rejecting.start());
+    QVERIFY(withdrawn.start());
+    QVERIFY(tileReplyCacheLookupsAnswered());
+    QCOMPARE(fetchingNam.requestCount, 1);
+    QCOMPARE(waitingNam.requestCount, 0);
+
+    // A request that stops waiting leaves the fetch to the others
+    withdrawn.abort();
+    fetchingNam.replies.at(0)->finishNow();
+    QVERIFY_SIGNAL_COUNT_WAIT(waitingSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(fetchingSpy.count(), 1);
+    for (const QGCTileReply* const reply : {&fetching, &waiting}) {
+        QCOMPARE(reply->error(), QGCTileReply::Error::NoError);
+        QVERIFY(!reply->isCached());
+        QCOMPARE(reply->data(), png);
+        QCOMPARE(reply->format(), QStringLiteral("png"));
+    }
+    // Every request checks the tile for itself
+    QVERIFY_SIGNAL_COUNT_WAIT(rejectingSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(rejecting.error(), QGCTileReply::Error::DataError);
+    QVERIFY(withdrawnSpy.isEmpty());
+    QCOMPARE(waitingNam.requestCount, 0);
+}
+
+void QGCTileReplyTest::_waitingRequestFetchesAfterFetchWithoutTile_data()
+{
+    QTest::addColumn<int>("tileX");  // a tile of its own for every row
+    QTest::addColumn<QString>("ending");
+
+    QTest::newRow("aborted") << (kTileX + 51) << QStringLiteral("aborted");
+    QTest::newRow("deleted") << (kTileX + 52) << QStringLiteral("deleted");
+    QTest::newRow("failed") << (kTileX + 53) << QStringLiteral("failed");
+}
+
+// A request must not wait for ever, or fail, because of what became of another consumer's request
+void QGCTileReplyTest::_waitingRequestFetchesAfterFetchWithoutTile()
+{
+    QFETCH(int, tileX);
+    QFETCH(QString, ending);
+
+    const QByteArray png = tileReplyPngBody();
+    TileReplyMockNam fetchingNam;
+    fetchingNam.body = png;
+    fetchingNam.holdReplies = true;
+    TileReplyMockNam waitingNam;
+    waitingNam.body = png;
+
+    UnitTestTileGenerator::setForcedMissCount(2);
+    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+
+    auto fetching = std::make_unique<QGCTileReply>(&fetchingNam, tileReplyMapId(), tileX, kTileY, kTileZoom);
+    QGCTileReply waiting(&waitingNam, tileReplyMapId(), tileX, kTileY, kTileZoom);
+    QSignalSpy waitingSpy(&waiting, &QGCTileReply::finished);
+    QVERIFY(fetching->start());
+    QVERIFY(waiting.start());
+    QVERIFY(tileReplyCacheLookupsAnswered());
+    QCOMPARE(fetchingNam.requestCount, 1);
+    QCOMPARE(waitingNam.requestCount, 0);
+
+    if (ending == QStringLiteral("aborted")) {
+        fetching->abort();
+    } else if (ending == QStringLiteral("deleted")) {
+        fetching.reset();
+    } else {
+        fetchingNam.replies.at(0)->failNow(QNetworkReply::TimeoutError);
+        QCOMPARE(fetching->error(), QGCTileReply::Error::NetworkError);
+    }
+
+    QVERIFY_SIGNAL_COUNT_WAIT(waitingSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(waiting.error(), QGCTileReply::Error::NoError);
+    QCOMPARE(waiting.data(), png);
+    QCOMPARE(waitingNam.requestCount, 1);
+}
+
+// The request that fetches a tile for an offline set stores it in that set: the tile another request fetches is
+// not in the set
+void QGCTileReplyTest::_tileSetRequestFetchesForItself()
+{
+    TileReplyMockNam mapNam;
+    mapNam.holdReplies = true;
+    TileReplyMockNam setNam;
+    setNam.holdReplies = true;
+
+    UnitTestTileGenerator::setForcedMissCount(1);
+    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+
+    const int tileX = kTileX + 54;
+    QGCTileReply forMap(&mapNam, tileReplyMapId(), tileX, kTileY, kTileZoom);
+    QVERIFY(forMap.start());
+    QTRY_COMPARE_WITH_TIMEOUT(mapNam.requestCount, 1, TestTimeout::mediumMs());
+
+    QGCTileReply forSet(&setNam, tileReplyMapId(), tileX, kTileY, kTileZoom);
+    forSet.setTileSet(1);
+    QVERIFY(forSet.start());
+    QTRY_COMPARE_WITH_TIMEOUT(setNam.requestCount, 1, TestTimeout::mediumMs());
 }
 
 void QGCTileReplyTest::_tileOfOtherSourceNotServed()
