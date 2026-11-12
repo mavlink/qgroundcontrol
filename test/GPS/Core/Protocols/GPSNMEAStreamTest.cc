@@ -744,6 +744,53 @@ void GPSNMEAStreamTest::_epochWithoutGga()
     }
 }
 
+void GPSNMEAStreamTest::_positionNotFromSatellites_data()
+{
+    QTest::addColumn<QByteArrayList>("order");
+    QTest::addColumn<QByteArray>("quality");
+    QTest::addColumn<QByteArray>("mode");
+    QTest::addColumn<GPSFixQuality>("fixType");
+    // A Garmin 10x that loses its satellites reports a dead-reckoned position.
+    QTest::newRow("dead-reckoning") << QByteArrayList{"GGA", "GSA", "RMC"} << QByteArray("6") << QByteArray("E")
+                                    << GPSFixQuality::Extrapolated;
+    // A Garmin handheld receiver in its simulator mode.
+    QTest::newRow("simulator") << QByteArrayList{"RMC", "GGA", "GSA", "GLL"} << QByteArray("8") << QByteArray("S")
+                               << GPSFixQuality::Fix3D;
+    QTest::newRow("manual-input") << QByteArrayList{"GGA", "RMC"} << QByteArray("7") << QByteArray("M")
+                                  << GPSFixQuality::Fix3D;
+}
+
+void GPSNMEAStreamTest::_positionNotFromSatellites()
+{
+    QFETCH(QByteArrayList, order);
+    QFETCH(QByteArray, quality);
+    QFETCH(QByteArray, mode);
+    QFETCH(GPSFixQuality, fixType);
+    NMEAReceiver receiver;
+    for (int epoch = 0; epoch < 4; ++epoch) {
+        const QByteArray utc = QByteArray::number(123519 + epoch);
+        receiver.now += EPOCH_INTERVAL_US;
+        for (const auto& type : order) {
+            if (type == "GGA") {
+                receiver.feed("GPGGA," + utc + ",4807.038,N,01131.000,E," + quality + ",00,0.9,100.0,M,10.0,M,,");
+            } else if (type == "RMC") {
+                receiver.feed("GPRMC," + utc + ",V,4807.038,N,01131.000,E,2.0,90.0,230394,,," + mode);
+            } else if (type == "GLL") {
+                receiver.feed("GPGLL,4807.038,N,01131.000,E," + utc + ",V," + mode);
+            } else {
+                receiver.feed(sentenceOf(type, utc));
+            }
+        }
+        // The status of the RMC and the GLL is void for every position that is not a satellite fix. Their mode says
+        // what the GGA's quality says, so they declare no fix loss and the RMC is the epoch's.
+        QCOMPARE(receiver.positions, epoch + 1);
+        QCOMPARE(receiver.published->navigation.fixType, fixType);
+        if (epoch >= 2) {
+            QVERIFY(receiver.published->velocityValid);
+        }
+    }
+}
+
 void GPSNMEAStreamTest::_timeDoesNotAdvance_data()
 {
     QTest::addColumn<QByteArrayList>("order");

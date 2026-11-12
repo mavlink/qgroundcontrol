@@ -752,6 +752,14 @@ void NMEASentenceTest::_navigationStatus_data()
     QTest::newRow("rmc-invalid-time") << QByteArray("GPRMC,,V") << 0 << -1;
     QTest::newRow("gll-invalid") << QByteArray("GPGLL,,,,,120001,V") << 0 << 43201000;
     QTest::newRow("gll-valid") << QByteArray("GPGLL,,,,,120001,A") << 1 << 43201000;
+    // A dead-reckoned, manually entered or simulated position has status V, and the mode indicator says which it is.
+    QTest::newRow("rmc-estimated") << QByteArray("GPRMC,120001,V,,,,,,,,,,E") << 1 << 43201000;
+    QTest::newRow("rmc-manual") << QByteArray("GPRMC,120001,V,,,,,,,,,,M") << 1 << 43201000;
+    QTest::newRow("rmc-simulated") << QByteArray("GPRMC,120001,V,,,,,,,,,,S") << 1 << 43201000;
+    QTest::newRow("rmc-not-valid") << QByteArray("GPRMC,120001,V,,,,,,,,,,N") << 0 << 43201000;
+    QTest::newRow("rmc-void-autonomous") << QByteArray("GPRMC,120001,V,,,,,,,,,,A") << 0 << 43201000;
+    QTest::newRow("gll-simulated") << QByteArray("GPGLL,,,,,120001,V,S") << 1 << 43201000;
+    QTest::newRow("gll-not-valid") << QByteArray("GPGLL,,,,,120001,V,N") << 0 << 43201000;
     QTest::newRow("gsa-invalid") << QByteArray("GPGSA,A,1") << 0 << -1;
     QTest::newRow("gsa-two-dimensional") << QByteArray("GPGSA,A,2") << 1 << -1;
     QTest::newRow("gsa-three-dimensional") << QByteArray("GPGSA,A,3") << 1 << -1;

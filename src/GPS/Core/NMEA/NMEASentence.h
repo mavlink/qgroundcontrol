@@ -45,6 +45,8 @@ constexpr size_t RMC_SPEED_KNOTS = 7;
 constexpr size_t RMC_COURSE = 8;
 constexpr size_t RMC_DATE = 9;
 constexpr size_t RMC_MIN_FIELDS = RMC_DATE + 1;
+/// The mode indicator, which receivers older than NMEA 0183 version 2.3 do not send.
+constexpr size_t RMC_MODE = 12;
 constexpr size_t GLL_LATITUDE = 1;
 constexpr size_t GLL_LATITUDE_HEMISPHERE = 2;
 constexpr size_t GLL_LONGITUDE = 3;
@@ -52,6 +54,7 @@ constexpr size_t GLL_LONGITUDE_HEMISPHERE = 4;
 constexpr size_t GLL_TIME = 5;
 constexpr size_t GLL_STATUS = 6;
 constexpr size_t GLL_MIN_FIELDS = GLL_STATUS + 1;
+constexpr size_t GLL_MODE = 7;
 constexpr size_t GSA_DIMENSION = 2;
 constexpr size_t GSA_FIRST_SATELLITE = 3;
 constexpr size_t GSA_SATELLITE_SLOTS = 12;
@@ -260,6 +263,7 @@ struct RMC
     double courseDegrees = NAN;
 };
 
+/// An RMC that reports a position, as navigationStatus() tells, with both coordinates.
 [[nodiscard]] std::optional<RMC> rmc(const Sentence& input);
 
 struct GLL
@@ -269,6 +273,7 @@ struct GLL
     std::optional<int> utcMilliseconds;
 };
 
+/// A GLL that reports a position, as navigationStatus() tells, with both coordinates.
 [[nodiscard]] std::optional<GLL> gll(const Sentence& input);
 
 struct VTG
@@ -294,7 +299,10 @@ struct NavigationStatus
 };
 
 /// Receiver-declared validity, independent of coordinate availability. A valid flag alone is not a usable fix.
-/// GSA is untimed; malformed/unsupported status fields return no observation.
+/// GSA is untimed; malformed/unsupported status fields return no observation. An RMC or GLL has status A only for a
+/// satellite fix. A dead-reckoned, manually entered or simulated position, which a GGA reports with quality
+/// ESTIMATED, MANUAL or SIMULATION, has status V and the mode indicator E, M or S, and is valid here as that GGA is:
+/// only a status V without such a mode declares that the receiver has no position.
 [[nodiscard]] std::optional<NavigationStatus> navigationStatus(const Sentence& input);
 
 struct GST

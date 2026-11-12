@@ -44,6 +44,17 @@ std::optional<UtcDate> dateFromParts(unsigned day, unsigned month, int year)
     }
     return UtcDate{year, month, day};
 }
+
+std::string_view fieldOrEmpty(const Sentence& input, size_t index)
+{
+    return input.count > index ? input.fields[index] : std::string_view();
+}
+
+/// Whether an RMC or GLL with @a status and mode indicator @a mode reports a position (navigationStatus()).
+bool reportsPosition(std::string_view status, std::string_view mode)
+{
+    return status == "A" || (status == "V" && (mode == "E" || mode == "M" || mode == "S"));
+}
 }  // namespace
 
 unsigned char checksum(std::string_view body)
@@ -270,7 +281,8 @@ std::optional<UtcDate> rmcDate(std::string_view field)
 
 std::optional<RMC> rmc(const Sentence& input)
 {
-    if (input.type() != "RMC" || input.count < Field::RMC_MIN_FIELDS || input.fields[Field::RMC_STATUS] != "A") {
+    if (input.type() != "RMC" || input.count < Field::RMC_MIN_FIELDS ||
+        !reportsPosition(input.fields[Field::RMC_STATUS], fieldOrEmpty(input, Field::RMC_MODE))) {
         return {};
     }
     const auto& f = input.fields;
@@ -292,7 +304,8 @@ std::optional<RMC> rmc(const Sentence& input)
 
 std::optional<GLL> gll(const Sentence& input)
 {
-    if (input.type() != "GLL" || input.count < Field::GLL_MIN_FIELDS || input.fields[Field::GLL_STATUS] != "A") {
+    if (input.type() != "GLL" || input.count < Field::GLL_MIN_FIELDS ||
+        !reportsPosition(input.fields[Field::GLL_STATUS], fieldOrEmpty(input, Field::GLL_MODE))) {
         return {};
     }
     const auto& f = input.fields;
@@ -379,8 +392,10 @@ std::optional<NavigationStatus> navigationStatus(const Sentence& input)
     } else if (type == "RMC" || type == "GLL") {
         const auto status = type == "RMC" ? Field::RMC_STATUS : Field::GLL_STATUS;
         const auto time = type == "RMC" ? Field::UTC_TIME : Field::GLL_TIME;
+        const auto mode = type == "RMC" ? Field::RMC_MODE : Field::GLL_MODE;
         if (input.count > status && (fields[status] == "A" || fields[status] == "V")) {
-            return NavigationStatus{fields[status] == "A", utcMilliseconds(fields[time])};
+            return NavigationStatus{reportsPosition(fields[status], fieldOrEmpty(input, mode)),
+                                    utcMilliseconds(fields[time])};
         }
     }
     return std::nullopt;

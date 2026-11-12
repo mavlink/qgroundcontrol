@@ -34,6 +34,8 @@ private slots:
     void _fixLossKeepsSentenceOrder_data();
     void _fixLossKeepsSentenceOrder();
     void _epochWithoutGga();
+    void _positionNotFromSatellites_data();
+    void _positionNotFromSatellites();
     void _timeDoesNotAdvance_data();
     void _timeDoesNotAdvance();
     void _timeStepsBack();
