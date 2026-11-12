@@ -5,7 +5,10 @@
 
 #include "MonotonicClock.h"
 
+namespace NMEA {
+
 namespace {
+
 std::optional<double> finiteValue(double value)
 {
     return std::isfinite(value) ? std::optional<double>(value) : std::nullopt;
@@ -13,7 +16,7 @@ std::optional<double> finiteValue(double value)
 
 std::optional<double> nonnegativeNumber(std::string_view field)
 {
-    const auto value = NMEA::number<double>(field);
+    const auto value = number<double>(field);
     return value && *value >= 0.0 ? value : std::nullopt;
 }
 
@@ -25,13 +28,12 @@ void addReported(std::optional<double>& value, std::optional<double> reported)
     }
 }
 
-void markReceipt(NMEA::NavigationEpoch& epoch, uint64_t receivedAtUs)
+void markReceipt(NavigationEpoch& epoch, uint64_t receivedAtUs)
 {
     epoch.receivedAtUs = epoch.receivedAtUs == 0 ? receivedAtUs : (std::min) (epoch.receivedAtUs, receivedAtUs);
 }
-}  // namespace
 
-namespace NMEA {
+}  // namespace
 
 std::optional<double> NavigationEpoch::altitudeEllipsoidMeters() const
 {
