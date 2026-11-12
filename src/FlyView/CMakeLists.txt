@@ -19,8 +19,10 @@ qt_add_qml_module(
         FlyViewAdditionalActionsList.qml
         FlyViewAdditionalActionsPanel.qml
         FlyViewAdditionalCustomActionsList.qml
+        FlyViewBaseStation.qml
         FlyViewBottomRightRowLayout.qml
         FlyViewCustomLayer.qml
+        FlyViewGeoBaseStation.qml
         FlyViewGeoMap.qml
         FlyViewGeoMapAdapter.qml
         FlyViewGeoMapChrome.qml

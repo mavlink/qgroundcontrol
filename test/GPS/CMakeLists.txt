@@ -60,6 +60,7 @@ set(_qgc_gps_suites
     NTRIP/NTRIPTlsTest
     Positioning/GPSSourceHealthTest
     Positioning/PositionManagerTest
+    Qml/GPSBaseStationMapTest
     Qml/GPSCorrectionsPanelTest
     Qml/GPSIndicatorTest
     Qml/GPSReceiverSettingsTest

@@ -213,6 +213,13 @@ GeoMapView {
         homeTerrainBias: root._activeVehicleHomeTerrainBias
     }
 
+    // The base station of the RTK corrections, with a line to the active vehicle
+    FlyViewGeoBaseStation {
+        scene: root.scene
+        surfaceModel: root.surfaceModel
+        isSatelliteMap: root.isSatelliteMap
+    }
+
     // Allow custom builds to add map items (QGCCorePlugin::customGeoMapItems)
     Repeater {
         model: QGroundControl.corePlugin.customGeoMapItems

@@ -243,6 +243,12 @@ FlightMap {
         }
     }
 
+    // The base station of the RTK corrections, with a line to the active vehicle
+    FlyViewBaseStation {
+        map:        _root
+        visible:    !pipMode
+    }
+
     // Allow custom builds to add map items
     CustomMapItems {
         map:            _root
