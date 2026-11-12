@@ -162,6 +162,8 @@ public:
     {}
 };
 
+/// Kartverket's cache service has no base map layer: this map shows the tiles of Statkart Topo. It stays, as cached
+/// tiles and offline sets carry its id.
 class StatkartBaseMapProvider : public StatkartMapProvider
 {
 public:

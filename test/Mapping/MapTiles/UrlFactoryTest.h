@@ -16,15 +16,10 @@ private slots:
     void _testMapIdFromInvalidType();
     void _testProviderTypeFromInvalidId();
     void _testMapIdsArePermanent();
-    void _testHashFromProviderTypeValid();
-    void _testProviderTypeFromHashRoundtrip();
-    void _testHashFromInvalidType();
-    void _testProviderTypeFromInvalidHash();
     void _testGetTileHashFormat();
+    void _testGetTileHashWithoutProvider();
     void _testTileHashFollowsConfiguredSource_data();
     void _testTileHashFollowsConfiguredSource();
-    void _testTileHashToTypeRoundtrip();
-    void _testTileHashToTypeInvalid();
     void _testGetImageFormatByType();
     void _testGetImageFormatByMapId();
     void _testGetImageFormatInvalidInputs();

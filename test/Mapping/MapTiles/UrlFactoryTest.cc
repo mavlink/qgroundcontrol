@@ -130,46 +130,21 @@ void UrlFactoryTest::_testMapIdsArePermanent()
     }
 }
 
-// --- Hash <-> ProviderType roundtrip ---
-
-void UrlFactoryTest::_testHashFromProviderTypeValid()
-{
-    const int hash = UrlFactory::hashFromProviderType(kBingRoad);
-    const int id = UrlFactory::getMapIdFromProviderType(kBingRoad);
-    QCOMPARE(hash, id);
-}
-
-void UrlFactoryTest::_testProviderTypeFromHashRoundtrip()
-{
-    const QStringList types = UrlFactory::getProviderTypes();
-    for (const auto& type : types) {
-        const int hash = UrlFactory::hashFromProviderType(type);
-        QVERIFY2(hash > 0, qPrintable(QStringLiteral("Bad hash for: %1").arg(type)));
-        const QString recovered = UrlFactory::providerTypeFromHash(hash);
-        QCOMPARE(recovered, type);
-    }
-}
-
-void UrlFactoryTest::_testHashFromInvalidType()
-{
-    expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("provider not found for type:"));
-    QCOMPARE(UrlFactory::hashFromProviderType(QString()), -1);
-    verifyExpectedLogMessage();
-}
-
-void UrlFactoryTest::_testProviderTypeFromInvalidHash()
-{
-    expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("provider not found from hash:"));
-    QVERIFY(UrlFactory::providerTypeFromHash(0).isEmpty());
-    verifyExpectedLogMessage();
-}
-
-// --- Tile hash encode/decode ---
+// --- Tile hash ---
 
 void UrlFactoryTest::_testGetTileHashFormat()
 {
     // "%010d%08d%08d%03d" of provider id, x, y and zoom. A cached tile is found by this key only.
     QCOMPARE(UrlFactory::getTileHash(kBingHybrid, 4270, 2917, 13), QStringLiteral("00000000080000427000002917013"));
+}
+
+void UrlFactoryTest::_testGetTileHashWithoutProvider()
+{
+    // The key has the id -1. Unlike getMapIdFromProviderType(), an empty name is reported too: the key is all the
+    // caller gets.
+    expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("provider not found for type:"));
+    QCOMPARE(UrlFactory::getTileHash(QString(), 4270, 2917, 13), QStringLiteral("-0000000010000427000002917013"));
+    verifyExpectedLogMessage();
 }
 
 void UrlFactoryTest::_testTileHashFollowsConfiguredSource_data()
@@ -218,23 +193,6 @@ void UrlFactoryTest::_testTileHashFollowsConfiguredSource()
 
     setting->setRawValue(sourceA);
     QCOMPARE(UrlFactory::getTileHash(providerType, 4270, 2917, 13), hashA);
-}
-
-void UrlFactoryTest::_testTileHashToTypeRoundtrip()
-{
-    const QStringList types = UrlFactory::getProviderTypes();
-    for (const auto& type : types) {
-        const QString hash = UrlFactory::getTileHash(type, 42, 99, 7);
-        const QString recovered = UrlFactory::tileHashToType(hash);
-        QCOMPARE(recovered, type);
-    }
-}
-
-void UrlFactoryTest::_testTileHashToTypeInvalid()
-{
-    expectLogMessage("MapTiles.QGCMapUrlEngine", QtWarningMsg, QRegularExpression("provider not found from hash:"));
-    QVERIFY(UrlFactory::tileHashToType(QStringLiteral("garbage")).isEmpty());
-    verifyExpectedLogMessage();
 }
 
 // --- Image format via facade ---

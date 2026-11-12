@@ -19,7 +19,7 @@ QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "MapTiles.QGCMapUrlEngine")
 template <typename Provider>
 SharedMapProvider UrlFactory::_provider(int mapId)
 {
-    const std::shared_ptr<Provider> provider = std::make_shared<Provider>();
+    std::shared_ptr<Provider> provider = std::make_shared<Provider>();
     provider->_mapId = mapId;
     return provider;
 }
@@ -170,8 +170,6 @@ QGCTileSet UrlFactory::getTileCount(int zoom, double topleftLon, double topleftL
 {
     const SharedMapProvider provider = getMapProviderFromProviderType(mapType);
     if (provider) {
-        // TODO: zoom = qBound(QGeoCameraCapabilities.minimumZoomLevel(), zoom,
-        // QGeoCameraCapabilities.maximumZoomLevel());
         zoom = qBound(1, zoom, QGC_MAX_MAP_ZOOM);
         return provider->getTileCount(zoom, topleftLon, topleftLat, bottomRightLon, bottomRightLat);
     }
@@ -211,36 +209,35 @@ SharedMapProvider UrlFactory::getMapProviderFromMapId(int mapId)
     return nullptr;
 }
 
-SharedMapProvider UrlFactory::getMapProviderFromProviderType(QStringView type)
+SharedMapProvider UrlFactory::_findProvider(QStringView type)
 {
-    if (type.isEmpty()) {
-        return nullptr;
-    }
-
     for (const SharedMapProvider& provider : _providers) {
         if (provider->getMapName() == type) {
             return provider;
         }
     }
 
-    qCWarning(QGCMapUrlEngineLog) << "type not found:" << type;
     return nullptr;
+}
+
+SharedMapProvider UrlFactory::getMapProviderFromProviderType(QStringView type)
+{
+    if (type.isEmpty()) {
+        return nullptr;
+    }
+
+    SharedMapProvider provider = _findProvider(type);
+    if (!provider) {
+        qCWarning(QGCMapUrlEngineLog) << "type not found:" << type;
+    }
+
+    return provider;
 }
 
 int UrlFactory::getMapIdFromProviderType(QStringView type)
 {
-    if (type.isEmpty()) {
-        return -1;
-    }
-
-    for (const SharedMapProvider& provider : _providers) {
-        if (provider->getMapName() == type) {
-            return provider->getMapId();
-        }
-    }
-
-    qCWarning(QGCMapUrlEngineLog) << "type not found:" << type;
-    return -1;
+    const SharedMapProvider provider = getMapProviderFromProviderType(type);
+    return provider ? provider->getMapId() : -1;
 }
 
 QStringList UrlFactory::getElevationProviderTypes()
@@ -265,19 +262,6 @@ QStringList UrlFactory::getProviderTypes()
     return types;
 }
 
-QString UrlFactory::providerTypeFromHash(int hash)
-{
-    for (const SharedMapProvider& provider : _providers) {
-        const QString mapName = provider->getMapName();
-        if (hashFromProviderType(mapName) == hash) {
-            return mapName;
-        }
-    }
-
-    qCWarning(QGCMapUrlEngineLog) << "provider not found from hash:" << hash;
-    return QString("");
-}
-
 QMap<int, int> UrlFactory::legacyMapIds()
 {
     // Version 1 numbered the providers of its list from 1. The list was the providers 1 to 41 in the order of their
@@ -297,33 +281,27 @@ QMap<int, int> UrlFactory::legacyMapIds()
     return ids;
 }
 
-int UrlFactory::hashFromProviderType(QStringView type)
-{
-    for (const SharedMapProvider& provider : _providers) {
-        if (provider->getMapName() == type) {
-            return provider->getMapId();
-        }
-    }
-
-    qCWarning(QGCMapUrlEngineLog) << "provider not found for type:" << type;
-    return -1;
-}
-
-QString UrlFactory::tileHashToType(QStringView tileHash)
-{
-    const int providerHash = tileHash.mid(0, 10).toInt();
-    return providerTypeFromHash(providerHash);
-}
-
 QString UrlFactory::getTileHash(QStringView type, int x, int y, int z)
 {
-    return getTileHash(type, x, y, z, cacheVariant(type));
+    const SharedMapProvider provider = _findProvider(type);
+    return _tileHash(provider, type, x, y, z, provider ? provider->cacheVariant() : QString());
 }
 
 QString UrlFactory::getTileHash(QStringView type, int x, int y, int z, QStringView cacheVariant)
 {
-    const int hash = hashFromProviderType(type);
-    return QString::asprintf("%010d%08d%08d%03d", hash, x, y, z) + cacheVariantSuffix(cacheVariant);
+    return _tileHash(_findProvider(type), type, x, y, z, cacheVariant);
+}
+
+QString UrlFactory::_tileHash(const SharedMapProvider& provider, QStringView type, int x, int y, int z,
+                              QStringView cacheVariant)
+{
+    if (!provider) {
+        // The key is all the caller gets: only this tells that it is the key of no provider
+        qCWarning(QGCMapUrlEngineLog) << "provider not found for type:" << type;
+    }
+
+    const int mapId = provider ? provider->getMapId() : -1;
+    return QString::asprintf("%010d%08d%08d%03d", mapId, x, y, z) + cacheVariantSuffix(cacheVariant);
 }
 
 QString UrlFactory::cacheVariantSuffix(QStringView cacheVariant)
@@ -339,13 +317,8 @@ QString UrlFactory::cacheVariantSuffix(QStringView cacheVariant)
 
 QString UrlFactory::cacheVariant(QStringView type)
 {
-    for (const SharedMapProvider& provider : _providers) {
-        if (provider->getMapName() == type) {
-            return provider->cacheVariant();
-        }
-    }
-
-    return QString();
+    const SharedMapProvider provider = _findProvider(type);
+    return provider ? provider->cacheVariant() : QString();
 }
 
 QHash<int, QString> UrlFactory::cacheVariants()

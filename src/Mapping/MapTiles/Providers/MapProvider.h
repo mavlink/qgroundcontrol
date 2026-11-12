@@ -41,7 +41,6 @@ public:
 
     QString getImageFormat(QByteArrayView image) const;
 
-    // TODO: Download Random Tile And Use That Size Instead?
     quint32 getAverageSize() const { return _averageSize; }
 
     MapStyle getMapStyle() const { return _mapStyle; }
