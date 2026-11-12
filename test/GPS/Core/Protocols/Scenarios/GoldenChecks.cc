@@ -5,6 +5,7 @@
 
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
+#include <QtCore/QHash>
 #include <QtCore/QSet>
 
 #include "Protocols/Support/GoldenFormat.h"
@@ -32,6 +33,16 @@ QString goldenRoot()
 QString goldenFile(const QString& name)
 {
     return name + QStringLiteral(".golden");
+}
+
+/// The stream phase the golden @a name records, from its `stream` line on; empty when no event follows that line.
+QString recordedStream(const QString& name)
+{
+    QString golden = QString::fromUtf8(readFile(QDir(goldenRoot()).filePath(goldenFile(name))).value_or(QByteArray()));
+    golden.remove(u'\r');
+    const qsizetype phase = golden.indexOf(QLatin1String("\nstream "));
+    const bool events = phase >= 0 && golden.indexOf(u'\n', phase + 1) < golden.size() - 1;
+    return events ? golden.mid(phase + 1) : QString();
 }
 
 QString scenarioTranscript(const ScenarioDef& scenario)
@@ -222,14 +233,27 @@ QString checkGoldenFiles()
 
     QSet<QString> names;
     QSet<QString> expected;
+    // The first golden of its family to record each stream phase.
+    QHash<QString, QString> streams;
     for (const auto& scenario : scenarios()) {
         const QString name = goldenName(scenario);
         if (names.contains(name)) {
             problems << QStringLiteral("Two scenarios are named ") + name;
         }
         names.insert(name);
-        if (!scenario.sameAs) {
-            expected.insert(goldenFile(name));
+        if (scenario.sameAs) {
+            continue;
+        }
+        expected.insert(goldenFile(name));
+        const QString stream = recordedStream(name);
+        if (stream.isEmpty()) {
+            continue;
+        }
+        QString& first = streams[typeName(scenario.type) + u'\n' + stream];
+        if (first.isEmpty()) {
+            first = name;
+        } else {
+            problems << QStringLiteral("%1 repeats the stream phase of %2: leave its stream empty").arg(name, first);
         }
     }
     for (const auto& decoder : decoders()) {

@@ -58,8 +58,8 @@ QString goldenName(const DecoderDef& decoder);
 /// decoder it is the same as does.
 [[nodiscard]] QString checkDecoder(const DecoderDef& decoder);
 
-/// Every data file has a decoder, no two scenarios share a name, and the golden files are those of the scenarios and
-/// decoders.
+/// Every data file has a decoder, no two scenarios share a name, the golden files are those of the scenarios and
+/// decoders, and no two of a family record the same stream phase.
 [[nodiscard]] QString checkGoldenFiles();
 
 }  // namespace GPSTest::GoldenScenario

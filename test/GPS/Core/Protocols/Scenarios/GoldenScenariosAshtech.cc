@@ -29,7 +29,7 @@ void addTrimble(Table& table)
     table.add(type, "explicit-baud-change-ignored", "Receiver at 38400 ignores the speed command", at38400(false),
               surveyIn(1, 100, 38400), stream);
     table.add(type, "explicit-baud-unlisted", "Explicit 4800, not an Ashtech probe rate, is tried as given", ashtech(),
-              surveyIn(1, 100, 4800), stream);
+              surveyIn(1, 100, 4800));
     table.add(type, "port-query-timeout", "Receiver never answers the port query (identity)",
               rules({silence("$PASHQ,PRT")}), survey, stream);
     table.add(type, "port-query-nak", "Receiver rejects the port query", rules({reply(startsWith("$PASHQ,PRT"), nak)}),

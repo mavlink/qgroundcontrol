@@ -26,7 +26,7 @@ void addUblox(Table& table)
     table.add(type, "profile-m8p-base-fixed", "M8P base profile, fixed base", ubxProfile(Receiver::M8PBase), fixed,
               stream);
     table.add(type, "profile-m8p-base-fixed-compact", "M8P base profile, fixed base with MSM4",
-              ubxProfile(Receiver::M8PBase), compact(fixed), stream);
+              ubxProfile(Receiver::M8PBase), compact(fixed));
     table.add(type, "profile-f9p-survey", "F9P profile, survey-in", ubxProfile(Receiver::F9P), survey, stream);
     table.add(type, "profile-f9p-fixed", "F9P profile, fixed base", ubxProfile(Receiver::F9P), fixed);
     // UBXProtocolTest checks the other receivers without base support.
@@ -118,7 +118,7 @@ void addUblox(Table& table)
     table.add(type, "wire-f9p-l1l5-survey", "ZED-F9P L1/L5 firmware (FWVER=HPGL1L5), survey-in",
               ubxWire(module("ZED-F9P FWVER=HPGL1L5")), wireSurvey);
     table.add(type, "wire-x20-fixed-compact", "ZED-X20P, fixed base with MSM4", ubxWire(module("ZED-X20P")),
-              compact(wireFixed), stream);
+              compact(wireFixed));
     table.add(type, "wire-f9p-legacy-protocol", "ZED-F9P hardware reporting PROTVER 20.30", ubxWire([](UBXBench& b) {
                   b.model.legacy = true;
                   b.model.hardware = "00190000";
