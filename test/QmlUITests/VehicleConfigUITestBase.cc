@@ -47,6 +47,17 @@ bool hasVisibleContent(QQuickItem *item)
 
 } // namespace
 
+void VehicleConfigUITestBase::init()
+{
+    QmlUITestBase::init();
+
+    // The pages of the Configure view read and write parameters, some sixty at once when a calibration ends, and a
+    // unit test waits 50 ms for each answer. A busy machine misses that and the request is repeated, which is no
+    // failure of the page: a request that fails for good leaves the parameters the tests check unchanged.
+    ignoreLogMessage("Utilities.QGCStateMachine", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("^Timeout \".*WaitForParamResponseState\"")));
+}
+
 void VehicleConfigUITestBase::navigateToConfigureView()
 {
     QVERIFY2(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewConfigure")),

@@ -15,6 +15,9 @@ class VehicleConfigUITestBase : public QmlUITestBase
 {
     Q_OBJECT
 
+protected slots:
+    void init() override;
+
 protected:
     /// objectName of an item with a text property on the Sensors page, whose text is a QML qsTr string so it
     /// retranslates when the language changes. Used by clickThroughAllComponentsAllLocales() to verify the switch.
