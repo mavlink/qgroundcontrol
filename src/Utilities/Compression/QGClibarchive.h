@@ -134,7 +134,7 @@ public:
     /// @param data Archive or compressed stream (shared with the reader, not copied)
     /// @param mode Format support mode (AllFormats or RawFormat)
     /// @return true on success
-    bool openMemory(const QByteArray& data, ReaderMode mode);
+    bool open(const QByteArray& data, ReaderMode mode);
 
     /// Close the archive. The reader can be opened again.
     void close();
@@ -173,7 +173,7 @@ private:
     bool _create(ReaderMode mode, const QByteArray& signature, QString& reason);
 
     // Declared before the reader, which reads from them and so is the first to go
-    QByteArray _memoryData;  // Data read from memory: a Qt resource, or the bytes given to openMemory()
+    QByteArray _memoryData;  // Data read from memory: a Qt resource, or the bytes given to open()
     DeviceSource _source;    // Device for streaming reads
     std::unique_ptr<struct archive, Deleter> _archive;
     QString _filePath;  // Stored path for size queries
@@ -271,6 +271,9 @@ ArchiveEntry toArchiveEntry(struct archive_entry *entry);
 // Low-level Operations
 // ============================================================================
 
+// An operation that takes a Source is written once for what ArchiveReader::open() takes. QGClibarchive.cc
+// defines it for the kinds of source its @param names.
+
 /// Open an archive for reading, handling both Qt resources and regular files
 /// Qt resources are loaded into resourceData; regular files are streamed
 /// @param a Initialized archive reader (call archive_read_support_* first)
@@ -301,14 +304,15 @@ enum class ReadResult
 
 /// Extract any supported archive format using libarchive's auto-detection
 /// Supports: ZIP, 7z, TAR (plain or compressed)
-/// @param archivePath Path to the archive file (or Qt resource path)
+/// @param source Path to the archive file (or Qt resource path), or the open QIODevice to read the archive from
 /// @param outputDirectoryPath Path where files will be extracted
 /// @param progress Optional progress callback (return false to cancel)
 /// @param maxBytes Maximum total decompressed bytes (0 = unlimited)
 /// @param result If not null, receives how the extraction ended
 /// @return true on success, false on failure or size limit exceeded
-bool extractAnyArchive(const QString& archivePath, const QString& outputDirectoryPath,
-                       ProgressCallback progress = nullptr, qint64 maxBytes = 0, ReadResult* result = nullptr);
+template <typename Source>
+bool extractAnyArchive(const Source& source, const QString& outputDirectoryPath, ProgressCallback progress = nullptr,
+                       qint64 maxBytes = 0, ReadResult* result = nullptr);
 
 /// Extract archive atomically using a temporary staging directory
 /// Provides all-or-nothing semantics: if extraction fails, no partial files remain.
@@ -333,12 +337,13 @@ bool extractSingleFile(const QString& archivePath, const QString& fileName, cons
                        ReadResult* result = nullptr);
 
 /// Extract a single file from any archive directly to memory
-/// @param archivePath Path to the archive file (or Qt resource path)
+/// @param source Path to the archive file (or Qt resource path), or the open QIODevice to read the archive from
 /// @param fileName Name of file inside archive
 /// @param maxBytes Maximum size of the file (0 = unlimited)
 /// @param result If not null, receives how the extraction ended
 /// @return File contents, or empty QByteArray if not found, larger than maxBytes or extraction failed
-QByteArray extractFileToMemory(const QString& archivePath, const QString& fileName, qint64 maxBytes = 0,
+template <typename Source>
+QByteArray extractFileToMemory(const Source& source, const QString& fileName, qint64 maxBytes = 0,
                                ReadResult* result = nullptr);
 
 /// Extract multiple files from any archive by name in one pass
@@ -412,8 +417,8 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
 // Single-File Decompression
 // ============================================================================
 
-/// Decompress a single compressed file (.gz, .xz, .zst, etc.) to disk
-/// @param inputPath Path to compressed file (or Qt resource path)
+/// Decompress a single compressed stream (.gz, .xz, .zst, etc.) to a file
+/// @param source Path to the compressed file (or Qt resource path), or the open QIODevice to read the stream from
 /// @param outputPath Path for decompressed output
 /// @param progress Optional progress callback
 /// @param maxBytes Maximum decompressed bytes (0 = unlimited)
@@ -421,57 +426,18 @@ bool extractWithFilter(const QString& archivePath, const QString& outputDirector
 /// @param copyPlainInput Whether an input that is not compressed is written to the output as it is, within
 ///        maxBytes, instead of being refused as NotCompressed
 /// @return true on success, false on failure or size limit exceeded
-bool decompressSingleFile(const QString& inputPath, const QString& outputPath, ProgressCallback progress = nullptr,
+template <typename Source>
+bool decompressSingleFile(const Source& source, const QString& outputPath, ProgressCallback progress = nullptr,
                           qint64 maxBytes = 0, ReadResult* result = nullptr, bool copyPlainInput = false);
 
-/// Decompress data in memory
-/// @param data Compressed input data
+/// Decompress a single compressed stream to memory
+/// @param source The compressed data (not empty), or the open QIODevice to read the stream from
 /// @param maxBytes Maximum decompressed bytes (0 = unlimited)
 /// @param result If not null, receives how the decompression ended: a stream of an empty file gives nothing
 ///        too
 /// @return Decompressed data, or empty on failure or size limit exceeded
-QByteArray decompressDataFromMemory(const QByteArray& data, qint64 maxBytes = 0, ReadResult* result = nullptr);
-
-// ============================================================================
-// QIODevice-based Operations (streaming)
-// ============================================================================
-
-/// Extract archive from QIODevice to directory
-/// @param device QIODevice to read from (must be open and readable)
-/// @param outputDirectoryPath Path where files will be extracted
-/// @param progress Optional progress callback (return false to cancel)
-/// @param maxBytes Maximum total decompressed bytes (0 = unlimited)
-/// @param result If not null, receives how the extraction ended
-/// @return true on success, false on failure or size limit exceeded
-bool extractFromDevice(QIODevice* device, const QString& outputDirectoryPath, ProgressCallback progress = nullptr,
-                       qint64 maxBytes = 0, ReadResult* result = nullptr);
-
-/// Extract a single file from archive device directly to memory
-/// @param device QIODevice to read from (must be open and readable)
-/// @param fileName Name of file inside archive
-/// @param maxBytes Maximum size of the file (0 = unlimited)
-/// @param result If not null, receives how the extraction ended
-/// @return File contents, or empty QByteArray if not found or larger than maxBytes
-QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName, qint64 maxBytes = 0,
-                                     ReadResult* result = nullptr);
-
-/// Decompress single-file format from QIODevice to disk
-/// @param device QIODevice to read from (must be open and readable)
-/// @param outputPath Output file path
-/// @param progress Optional progress callback
-/// @param maxBytes Maximum decompressed bytes (0 = unlimited)
-/// @param result If not null, receives how the decompression ended
-/// @return true on success, false on failure or size limit exceeded
-bool decompressFromDevice(QIODevice* device, const QString& outputPath, ProgressCallback progress = nullptr,
-                          qint64 maxBytes = 0, ReadResult* result = nullptr);
-
-/// Decompress single-file format from QIODevice to memory
-/// @param device QIODevice to read from (must be open and readable)
-/// @param maxBytes Maximum decompressed bytes (0 = unlimited)
-/// @param result If not null, receives how the decompression ended: a stream of an empty file gives nothing
-///        too
-/// @return Decompressed data, or empty QByteArray on failure or size limit exceeded
-QByteArray decompressDataFromDevice(QIODevice* device, qint64 maxBytes = 0, ReadResult* result = nullptr);
+template <typename Source>
+QByteArray decompressToMemory(const Source& source, qint64 maxBytes = 0, ReadResult* result = nullptr);
 
 // ============================================================================
 // Format Detection (Thread-Local State)

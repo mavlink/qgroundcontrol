@@ -613,7 +613,7 @@ QByteArray decompressData(const QByteArray& data, Format format, qint64 maxDecom
 
     // The data does not tell a failure: a stream of an empty file has none
     QGClibarchive::ReadResult read = QGClibarchive::ReadResult::Failed;
-    QByteArray result = QGClibarchive::decompressDataFromMemory(data, maxDecompressedBytes, &read);
+    QByteArray result = QGClibarchive::decompressToMemory(data, maxDecompressedBytes, &read);
     captureFormatInfo();
     if (read != QGClibarchive::ReadResult::Completed) {
         setOperationError(read, QStringLiteral("Failed to decompress data"));
@@ -909,7 +909,7 @@ bool decompressFromDevice(QIODevice* device, const QString& outputPath, Progress
     qCDebug(QGCCompressionLog) << "Decompressing from device to" << outputPath;
     QGClibarchive::ReadResult result = QGClibarchive::ReadResult::Failed;
     const bool success =
-        QGClibarchive::decompressFromDevice(device, outputPath, progress, maxDecompressedBytes, &result);
+        QGClibarchive::decompressSingleFile(device, outputPath, progress, maxDecompressedBytes, &result);
     captureFormatInfo();
     if (!success) {
         setOperationError(result, QStringLiteral("Failed to decompress from device"));
@@ -925,7 +925,7 @@ QByteArray decompressFromDevice(QIODevice* device, qint64 maxDecompressedBytes)
     qCDebug(QGCCompressionLog) << "Decompressing from device to memory";
     // The data does not tell a failure: a stream of an empty file has none
     QGClibarchive::ReadResult read = QGClibarchive::ReadResult::Failed;
-    QByteArray result = QGClibarchive::decompressDataFromDevice(device, maxDecompressedBytes, &read);
+    QByteArray result = QGClibarchive::decompressToMemory(device, maxDecompressedBytes, &read);
     captureFormatInfo();
     if (read != QGClibarchive::ReadResult::Completed) {
         setOperationError(read, QStringLiteral("Failed to decompress from device"));
@@ -942,7 +942,7 @@ bool extractFromDevice(QIODevice* device, const QString& outputDirectoryPath, Pr
     qCDebug(QGCCompressionLog) << "Extracting archive from device to" << outputDirectoryPath;
     QGClibarchive::ReadResult result = QGClibarchive::ReadResult::Failed;
     const bool success =
-        QGClibarchive::extractFromDevice(device, outputDirectoryPath, progress, maxDecompressedBytes, &result);
+        QGClibarchive::extractAnyArchive(device, outputDirectoryPath, progress, maxDecompressedBytes, &result);
     captureFormatInfo();
     if (!success) {
         setOperationError(result, QStringLiteral("Failed to extract archive from device"));
@@ -962,7 +962,7 @@ QByteArray extractFileDataFromDevice(QIODevice* device, const QString& fileName,
     }
     qCDebug(QGCCompressionLog) << "Extracting" << fileName << "from device to memory";
     QGClibarchive::ReadResult read = QGClibarchive::ReadResult::Failed;
-    QByteArray result = QGClibarchive::extractFileDataFromDevice(device, fileName, maxDecompressedBytes, &read);
+    QByteArray result = QGClibarchive::extractFileToMemory(device, fileName, maxDecompressedBytes, &read);
     captureFormatInfo();
     // The data does not tell a failure: an entry can have none
     if (read != QGClibarchive::ReadResult::Completed) {
