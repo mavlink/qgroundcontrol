@@ -48,7 +48,7 @@ When the stream stops while a connected vehicle had an RTK fix from it, QGroundC
 
 ## NTRIP Caster {#ntrip-caster}
 
-- **Host address** — NTRIP caster hostname or IP
+- **Host address** — NTRIP caster hostname or IP address. Enter an IPv6 address without brackets, as `fe80::1`; the status shows it with them, as in `[fe80::1]:2101`.
 - **Port** — NTRIP caster port (default: 2101)
 - **Username** — NTRIP account username
 - **Password** — NTRIP account password (with show/hide toggle)

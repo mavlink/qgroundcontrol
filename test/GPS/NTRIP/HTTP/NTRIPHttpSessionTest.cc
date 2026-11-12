@@ -68,6 +68,31 @@ void NTRIPHttpSessionTest::_responseEndsWithFinished()
     QVERIFY(!session.write(QByteArrayLiteral("late")));
 }
 
+void NTRIPHttpSessionTest::_connectsToAnIPv6Literal()
+{
+    ScriptedNTRIPCaster caster(ScriptedNTRIPCaster::Transport::Tcp, ScriptedNTRIPCaster::Certificate::Loopback,
+                               QHostAddress::LocalHostIPv6);
+    if (!caster.isListening()) {
+        QSKIP("This host has no IPv6 loopback address");
+    }
+    const NTRIPConnectionConfig config = caster.connectionConfig();
+    QCOMPARE(config.host, QStringLiteral("::1"));
+    NTRIPHttpSession session;
+    QSignalSpy started(&session, &NTRIPHttpSession::responseStarted);
+    QSignalSpy failed(&session, &NTRIPHttpSession::failed);
+    QVERIFY(session.open(config).isEmpty());
+    auto* connection = caster.waitForConnection();
+    QVERIFY(connection && connection->peer);
+    // The request names the literal in brackets, which keep its port apart from it.
+    const QByteArray request = connection->waitForRequest();
+    QVERIFY2(request.contains("\r\nHost: [::1]:" + QByteArray::number(caster.port()) + "\r\n"), request.constData());
+    const QByteArray response = "ICY 200 OK\r\n\r\n";
+    QCOMPARE(connection->write(response), response.size());
+    QTRY_COMPARE_WITH_TIMEOUT(started.size(), 1, TestTimeout::mediumMs());
+    QVERIFY(failed.isEmpty());
+    session.abort();
+}
+
 void NTRIPHttpSessionTest::_invalidConfigDoesNotConnect()
 {
     NTRIPHttpSession session;
@@ -235,6 +260,13 @@ void NTRIPHttpSessionTest::_casterVersionsKeepTheLatestCasters()
     QCOMPARE(versions.versionFor(other), NTRIPVersion::Version1);
     other.useTls = true;
     QCOMPARE(versions.versionFor(other), NTRIPVersion::Version2);
+
+    // An IPv6 literal is remembered in brackets, which keep its port apart from it.
+    NTRIPCasterVersions literals;
+    auto literal = caster(0);
+    literal.host = QStringLiteral("fe80::1");
+    literals.setVersion(literal, NTRIPVersion::Version1);
+    QCOMPARE(literals.saved(), QStringLiteral("http://[fe80::1]:2101/"));
 }
 
 void NTRIPHttpSessionTest::_casterVersionsAreSavedAndRestored_data()

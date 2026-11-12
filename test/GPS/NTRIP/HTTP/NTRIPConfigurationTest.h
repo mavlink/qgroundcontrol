@@ -9,6 +9,6 @@ class NTRIPConfigurationTest : public UnitTest
 private slots:
     void _validity_data();
     void _validity();
-    void _endpointKeepsPlaceMarkers_data();
-    void _endpointKeepsPlaceMarkers();
+    void _endpointJoinsHostAndPort_data();
+    void _endpointJoinsHostAndPort();
 };

@@ -202,24 +202,29 @@ void NTRIPManagerTest::_canConnectNeedsCasterHost()
     QCOMPARE(changes.size(), 2);
 }
 
-void NTRIPManagerTest::_statusKeepsPlaceMarkers_data()
+void NTRIPManagerTest::_statusNamesTheCaster_data()
 {
     QTest::addColumn<QString>("host");
-    // A link-local IPv6 address with a numeric zone, as Windows writes it.
-    QTest::newRow("zone-index") << QStringLiteral("fe80::1%2");
-    QTest::newRow("first-marker") << QStringLiteral("a%1b");
+    QTest::addColumn<QString>("endpoint");
+    QTest::newRow("name") << QStringLiteral("caster.example.com") << QStringLiteral("caster.example.com:2101");
+    // In brackets, as in a URL: "fe80::1:2101" reads as another address.
+    QTest::newRow("ipv6") << QStringLiteral("fe80::1") << QStringLiteral("[fe80::1]:2101");
+    // A link-local IPv6 address with a numeric zone, as Windows writes it: the zone is no place marker.
+    QTest::newRow("zone-index") << QStringLiteral("fe80::1%2") << QStringLiteral("[fe80::1%2]:2101");
+    QTest::newRow("first-marker") << QStringLiteral("a%1b") << QStringLiteral("a%1b:2101");
 }
 
-void NTRIPManagerTest::_statusKeepsPlaceMarkers()
+void NTRIPManagerTest::_statusNamesTheCaster()
 {
     QFETCH(QString, host);
+    QFETCH(QString, endpoint);
     ManualScheduler scheduler;
     NTRIPManager manager(nullptr, &scheduler);
     auto configuration = mockCasterConfiguration();
     configuration.connection.host = host;
     auto* transport = injectMockTransport(manager);
     initialize(manager, configuration);
-    QCOMPARE(manager.statusMessage(), QStringLiteral("Connecting to %1:2101...").arg(host));
+    QCOMPARE(manager.statusMessage(), QStringLiteral("Connecting to ") + endpoint + QStringLiteral("..."));
     // What a caster answers is text of its own as well.
     const QString detail = QStringLiteral("HTTP 503: %1 busy %2");
     _fail(transport, detail);

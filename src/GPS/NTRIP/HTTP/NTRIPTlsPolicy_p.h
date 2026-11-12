@@ -7,7 +7,7 @@
 #include <QtNetwork/QSslError>
 
 namespace NTRIPTlsPolicy {
-/// Binds the certificate's SHA-256 digest to one caster endpoint ("host:port").
+/// Binds the certificate's SHA-256 digest to one caster endpoint, as NTRIPConnectionConfig::endpoint() names it.
 [[nodiscard]] inline QString certificatePin(const QString& endpoint, const QSslCertificate& certificate)
 {
     return endpoint + QLatin1Char('|') + QString::fromLatin1(certificate.digest(QCryptographicHash::Sha256).toHex());

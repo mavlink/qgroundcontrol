@@ -48,8 +48,11 @@ QString NTRIPConnectionConfig::streamValidationError() const
 
 QString NTRIPConnectionConfig::endpoint() const
 {
+    // The port follows the last colon: "fe80::1:2101" would read as another address, without a port.
+    const bool literal = host.contains(QLatin1Char(':')) && !host.startsWith(QLatin1Char('['));
     // Joined, not arg(): a host may hold a place marker, such as the zone of "fe80::1%2".
-    return host + QLatin1Char(':') + QString::number(static_cast<quint16>(port));
+    return (literal ? QLatin1Char('[') + host + QLatin1Char(']') : host) + QLatin1Char(':') +
+           QString::number(static_cast<quint16>(port));
 }
 
 QUrl NTRIPConnectionConfig::url(bool withMountpoint) const

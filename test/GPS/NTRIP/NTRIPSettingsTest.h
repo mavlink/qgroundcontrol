@@ -15,4 +15,6 @@ private slots:
     void _savedCasterBecomesConnection();
     void _savedCasterKeepsItsOwnCertificate_data();
     void _savedCasterKeepsItsOwnCertificate();
+    void _pinNamesAnIPv6CasterInBrackets_data();
+    void _pinNamesAnIPv6CasterInBrackets();
 };

@@ -102,7 +102,10 @@ void NTRIPHttpCodecTest::_buildRequestAuthority_data()
     QTest::addColumn<QByteArray>("authority");
     QTest::newRow("hostname") << QStringLiteral("Caster.Example.com") << 2101 << QByteArray("caster.example.com:2101");
     QTest::newRow("ipv4") << QStringLiteral("127.0.0.1") << 8080 << QByteArray("127.0.0.1:8080");
+    // An IPv6 literal is in brackets, which keep its port apart from it, and in its shortest form.
     QTest::newRow("ipv6") << QStringLiteral("::1") << 2101 << QByteArray("[::1]:2101");
+    QTest::newRow("ipv6-long-form") << QStringLiteral("2001:DB8:0:0:0:0:0:1") << 2101
+                                    << QByteArray("[2001:db8::1]:2101");
 }
 
 void NTRIPHttpCodecTest::_buildRequestAuthority()
@@ -120,8 +123,8 @@ void NTRIPHttpCodecTest::_buildRequestAuthority()
     const auto table = NTRIPHttpRequest::build(configuration, NTRIPHttpPurpose::SourceTable);
     QVERIFY(stream.error.isEmpty());
     QVERIFY(table.error.isEmpty());
-    QVERIFY(stream.bytes.contains("Host: " + authority + "\r\n"));
-    QVERIFY(table.bytes.contains("Host: " + authority + "\r\n"));
+    QVERIFY2(stream.bytes.contains("\r\nHost: " + authority + "\r\n"), stream.bytes.constData());
+    QVERIFY2(table.bytes.contains("\r\nHost: " + authority + "\r\n"), table.bytes.constData());
     QCOMPARE(table.bytes.sliced(table.bytes.indexOf("\r\n")), stream.bytes.sliced(stream.bytes.indexOf("\r\n")));
     QVERIFY(table.bytes.startsWith("GET / HTTP/1.1\r\n"));
 }

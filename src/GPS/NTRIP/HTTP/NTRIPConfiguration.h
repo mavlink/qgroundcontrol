@@ -16,13 +16,15 @@ public:
     QString mountpoint;
     bool useTls = false;
     bool allowSelfSignedCerts = false;
-    /// "host:port|sha256-hex" of the self-signed certificate trusted on first use; other endpoints ignore it.
+    /// endpoint(), "|" and the SHA-256 digest, in hexadecimal, of the self-signed certificate trusted on first use;
+    /// other endpoints ignore it.
     QString pinnedCertificate;
 
     bool operator==(const NTRIPConnectionConfig&) const = default;
     [[nodiscard]] QString validationError() const;
     [[nodiscard]] QString streamValidationError() const;
-    /// "host:port", as a certificate pin names the caster.
+    /// "host:port", as the status and a certificate pin name the caster. An IPv6 literal is in brackets, as in a
+    /// URL: "[fe80::1]:2101".
     [[nodiscard]] QString endpoint() const;
     /// The caster's HTTP(S) URL, with the mountpoint as its path when @a withMountpoint is set, else "/".
     [[nodiscard]] QUrl url(bool withMountpoint = true) const;

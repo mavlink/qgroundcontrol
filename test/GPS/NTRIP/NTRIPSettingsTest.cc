@@ -300,4 +300,58 @@ void NTRIPSettingsTest::_savedCasterKeepsItsOwnCertificate()
     QCOMPARE(settings.ntripServerHostAddress()->rawValue().toString(), north.host);
 }
 
+void NTRIPSettingsTest::_pinNamesAnIPv6CasterInBrackets_data()
+{
+    QTest::addColumn<QString>("host");
+    QTest::addColumn<int>("port");
+    // The caster a stored pin names, and how the settings hold that pin.
+    QTest::addColumn<QString>("stored");
+    QTest::addColumn<QString>("held");
+    // The pin is the one of the caster at host and port.
+    QTest::addColumn<bool>("own");
+    const QString name = QStringLiteral("caster.example.com");
+    const QString literal = QStringLiteral("fe80::1");
+    QTest::newRow("name") << name << 2101 << QStringLiteral("caster.example.com:2101")
+                          << QStringLiteral("caster.example.com:2101") << true;
+    QTest::newRow("ipv6") << literal << 2101 << QStringLiteral("[fe80::1]:2101") << QStringLiteral("[fe80::1]:2101")
+                          << true;
+    // A literal was stored without brackets once. Its port follows its last colon, so it names one caster only.
+    QTest::newRow("ipv6-stored-without-brackets")
+        << literal << 2101 << QStringLiteral("fe80::1:2101") << QStringLiteral("[fe80::1]:2101") << true;
+    QTest::newRow("zone-stored-without-brackets")
+        << QStringLiteral("fe80::1%2") << 2101 << QStringLiteral("fe80::1%2:2101") << QStringLiteral("[fe80::1%2]:2101")
+        << true;
+    // The pin of fe80::1:2101 at port 443 is not the one of fe80::1, at either port.
+    QTest::newRow("another-host-that-starts-the-same")
+        << literal << 2101 << QStringLiteral("fe80::1:2101:443") << QStringLiteral("[fe80::1:2101]:443") << false;
+    QTest::newRow("another-host-at-its-port")
+        << literal << 443 << QStringLiteral("fe80::1:2101:443") << QStringLiteral("[fe80::1:2101]:443") << false;
+}
+
+void NTRIPSettingsTest::_pinNamesAnIPv6CasterInBrackets()
+{
+    QFETCH(QString, host);
+    QFETCH(int, port);
+    QFETCH(QString, stored);
+    QFETCH(QString, held);
+    QFETCH(bool, own);
+    const QString digest = QLatin1Char('|') + QString(64, u'a');
+    NTRIPConnectionConfig connection;
+    connection.host = host;
+    connection.port = port;
+    // The settings name a caster as its connection does.
+    QCOMPARE(held == connection.endpoint(), own);
+
+    NTRIPSettings settings;
+    settings.ntripPinnedCertificate()->setRawValue(stored + digest);
+    QCOMPARE(settings.ntripPinnedCertificate()->rawValue().toString(), held + digest);
+
+    // A saved caster keeps the pin that names it, and no other.
+    settings.ntripSavedCasters()->setRawValue(
+        QStringLiteral("[%1]").arg(casterJson(kNorth.name, host, QString::number(port),
+                                              QStringLiteral(",\"pinnedCertificate\":\"%1\"").arg(stored + digest))));
+    QCOMPARE(settings.savedCasters().size(), 1);
+    QCOMPARE(settings.savedCasters().first().pinnedCertificate, own ? held + digest : QString());
+}
+
 UT_REGISTER_TEST(NTRIPSettingsTest, TestLabel::Unit)

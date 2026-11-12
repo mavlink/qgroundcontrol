@@ -87,7 +87,7 @@ QString NTRIPHttpSession::open(const NTRIPConnectionConfig& config, std::shared_
 void NTRIPHttpSession::_connect()
 {
     const auto port = static_cast<quint16>(_config.port);
-    qCDebug(NTRIPHttpSessionLog) << "connectToHost" << _config.host << ":" << _config.port << "TLS" << _config.useTls;
+    qCDebug(NTRIPHttpSessionLog) << "connectToHost" << _endpoint << "TLS" << _config.useTls;
     if (!_config.useTls) {
         auto* socket = new QTcpSocket(this);
         _attach(socket);

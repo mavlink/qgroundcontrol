@@ -24,7 +24,7 @@
 
 namespace GPSTest {
 
-/// A loopback NTRIP caster, over TCP or TLS, whose responses each test writes by hand.
+/// A loopback NTRIP caster, over TCP or TLS and IPv4 or IPv6, whose responses each test writes by hand.
 class ScriptedNTRIPCaster
 {
 public:
@@ -76,7 +76,10 @@ public:
         QByteArray request;
     };
 
-    explicit ScriptedNTRIPCaster(Transport transport = Transport::Tcp, Certificate certificate = Certificate::Loopback)
+    /// Listens at @a address of this host, which connectionConfig() names as the caster's host.
+    explicit ScriptedNTRIPCaster(Transport transport = Transport::Tcp, Certificate certificate = Certificate::Loopback,
+                                 const QHostAddress& address = QHostAddress::LocalHost)
+        : _host(address.toString())
     {
         if (transport == Transport::Tls) {
             auto server = std::make_unique<QSslServer>();
@@ -85,7 +88,7 @@ public:
         } else {
             _server = std::make_unique<QTcpServer>();
         }
-        _listening = _server->listen(QHostAddress::LocalHost);
+        _listening = _server->listen(address);
     }
 
     bool isListening() const { return _listening; }
@@ -105,6 +108,7 @@ public:
     NTRIPConnectionConfig connectionConfig(const QString& mountpoint = QStringLiteral("TEST")) const
     {
         NTRIPConnectionConfig config = GPSTest::connectionConfig(port(), mountpoint);
+        config.host = _host;
         config.useTls = tlsServer() != nullptr;
         return config;
     }
@@ -201,6 +205,7 @@ private:
         return configuration;
     }
 
+    const QString _host;
     std::unique_ptr<QTcpServer> _server;
     std::vector<std::unique_ptr<Connection>> _connections;
     bool _listening = false;

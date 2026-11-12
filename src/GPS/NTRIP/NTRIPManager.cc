@@ -608,8 +608,8 @@ void NTRIPManager::_openSession()
                              << " mount=" << connection.mountpoint;
 
     // Replace the generic "Connecting..." with a host-specific message.
-    // One arg() pass: a second would take a "%1" in the host for a place marker.
-    _statusMessage = tr("Connecting to %1:%2...").arg(connection.host, QString::number(connection.port));
+    //: %1 is the caster's host and port, such as caster.example.com:2101
+    _statusMessage = tr("Connecting to %1...").arg(connection.endpoint());
 
     _running = config;
     _stats.reset();

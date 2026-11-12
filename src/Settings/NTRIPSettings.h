@@ -88,7 +88,8 @@ public:
     DEFINE_SETTINGFACT(ntripUseTls)
     DEFINE_SETTINGFACT(ntripAllowSelfSignedCerts)
     /// Not shown in the UI: host:port and SHA-256 digest of the self-signed caster certificate trusted on first
-    /// connection, cleared when self-signed certificates are no longer accepted.
+    /// connection, cleared when self-signed certificates are no longer accepted. An IPv6 literal is in brackets,
+    /// "[fe80::1]:2101": a pin stored without them, as it once was, is rewritten when it is read.
     DEFINE_SETTINGFACT(ntripPinnedCertificate)
     DEFINE_SETTINGFACT(ntripGgaPositionSource)
     DEFINE_SETTINGFACT(ntripGgaIntervalSec)
@@ -108,6 +109,8 @@ signals:
 private:
     /// Reads the casters from ntripSavedCasters, dropping the entries that are not valid.
     void _loadSavedCasters();
+    /// Rewrites an ntripPinnedCertificate that names an IPv6 literal without brackets.
+    void _bracketPinnedLiteral();
     void _storeSavedCasters(const QList<NTRIPSavedCaster>& casters);
 
     QList<NTRIPSavedCaster> _savedCasters;

@@ -8,6 +8,7 @@ class NTRIPHttpSessionTest : public UnitTest
 
 private slots:
     void _responseEndsWithFinished();
+    void _connectsToAnIPv6Literal();
     void _invalidConfigDoesNotConnect();
     void _refusedConnectionFailsOnce();
     void _unansweredRequestIsRepeatedInVersion1_data();

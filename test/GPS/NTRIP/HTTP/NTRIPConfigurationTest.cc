@@ -50,20 +50,27 @@ void NTRIPConfigurationTest::_validity()
     QCOMPARE(config.streamValidationError().isEmpty(), streamValid);
 }
 
-void NTRIPConfigurationTest::_endpointKeepsPlaceMarkers_data()
+void NTRIPConfigurationTest::_endpointJoinsHostAndPort_data()
 {
     QTest::addColumn<QString>("host");
     QTest::addColumn<int>("port");
     QTest::addColumn<QString>("endpoint");
     QTest::newRow("name") << QStringLiteral("caster.example.com") << 2101 << QStringLiteral("caster.example.com:2101");
-    // A link-local IPv6 address with a numeric zone, as Windows writes it.
-    QTest::newRow("zone-index") << QStringLiteral("fe80::1%2") << 2101 << QStringLiteral("fe80::1%2:2101");
+    QTest::newRow("ipv4") << QStringLiteral("192.0.2.7") << 80 << QStringLiteral("192.0.2.7:80");
+    // An IPv6 literal goes in brackets, as in a URL: "fe80::1:2101" reads as another address, without a port.
+    QTest::newRow("ipv6") << QStringLiteral("fe80::1") << 2101 << QStringLiteral("[fe80::1]:2101");
+    QTest::newRow("ipv6-loopback") << QStringLiteral("::1") << 443 << QStringLiteral("[::1]:443");
+    QTest::newRow("ipv6-that-ends-as-a-port")
+        << QStringLiteral("fe80::1:2101") << 443 << QStringLiteral("[fe80::1:2101]:443");
+    QTest::newRow("ipv6-in-brackets") << QStringLiteral("[fe80::1]") << 2101 << QStringLiteral("[fe80::1]:2101");
+    // A link-local IPv6 address with a numeric zone, as Windows writes it: the zone is no place marker.
+    QTest::newRow("zone-index") << QStringLiteral("fe80::1%2") << 2101 << QStringLiteral("[fe80::1%2]:2101");
     QTest::newRow("first-marker") << QStringLiteral("a%1b") << 2101 << QStringLiteral("a%1b:2101");
     // Must not name the same caster as the host "a5".
     QTest::newRow("second-marker") << QStringLiteral("a%2") << 5 << QStringLiteral("a%2:5");
 }
 
-void NTRIPConfigurationTest::_endpointKeepsPlaceMarkers()
+void NTRIPConfigurationTest::_endpointJoinsHostAndPort()
 {
     QFETCH(QString, host);
     QFETCH(int, port);

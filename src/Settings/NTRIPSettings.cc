@@ -26,10 +26,29 @@ constexpr QLatin1StringView kCasterAllowSelfSigned("allowSelfSignedCerts");
 constexpr QLatin1StringView kCasterPin("pinnedCertificate");
 
 /// Whether @a pin is the trusted certificate of @a caster: a pin starts with the host and port it was trusted for,
-/// as NTRIPConnectionConfig::endpoint() writes them.
+/// as NTRIPConnectionConfig::endpoint() writes them, with an IPv6 literal in brackets.
 bool pinNamesCaster(const QString& pin, const NTRIPSavedCaster& caster)
 {
-    return pin.startsWith(caster.host + QLatin1Char(':') + QString::number(caster.port) + QLatin1Char('|'));
+    const bool literal = caster.host.contains(QLatin1Char(':')) && !caster.host.startsWith(QLatin1Char('['));
+    const QString host = literal ? QLatin1Char('[') + caster.host + QLatin1Char(']') : caster.host;
+    return pin.startsWith(host + QLatin1Char(':') + QString::number(caster.port) + QLatin1Char('|'));
+}
+
+/// @a pin as it is written now. One stored before IPv6 literals went in brackets starts with "fe80::1:2101": its
+/// port follows its last colon, so it names one host and port, which go in brackets here. Any other pin is returned
+/// as it is.
+QString pinWithLiteralInBrackets(const QString& pin)
+{
+    const qsizetype digest = pin.lastIndexOf(QLatin1Char('|'));
+    const qsizetype port = digest < 0 ? -1 : pin.lastIndexOf(QLatin1Char(':'), digest);
+    if (port < 0) {
+        return pin;
+    }
+    const QString host = pin.first(port);
+    if (!host.contains(QLatin1Char(':')) || host.startsWith(QLatin1Char('['))) {
+        return pin;
+    }
+    return QLatin1Char('[') + host + QLatin1Char(']') + pin.sliced(port);
 }
 
 bool validSavedCaster(const NTRIPSavedCaster& caster)
@@ -42,11 +61,12 @@ bool validSavedCaster(const NTRIPSavedCaster& caster)
            bounded(caster.mountpoint);
 }
 
-/// @a caster as it is saved: its name without surrounding spaces, and its pin only when it accepts self-signed
-/// certificates and the pin is its own.
+/// @a caster as it is saved: its name without surrounding spaces, and its pin, as it is written now, only when it
+/// accepts self-signed certificates and the pin is its own.
 NTRIPSavedCaster savedCasterAsStored(NTRIPSavedCaster caster)
 {
     caster.name = caster.name.trimmed();
+    caster.pinnedCertificate = pinWithLiteralInBrackets(caster.pinnedCertificate);
     if (!caster.allowSelfSignedCerts || !pinNamesCaster(caster.pinnedCertificate, caster)) {
         caster.pinnedCertificate.clear();
     }
@@ -107,6 +127,8 @@ DECLARE_SETTINGGROUP(NTRIP, "NTRIP")
 {
     (void) connect(ntripSavedCasters(), &Fact::rawValueChanged, this, &NTRIPSettings::_loadSavedCasters);
     _loadSavedCasters();
+    (void) connect(ntripPinnedCertificate(), &Fact::rawValueChanged, this, &NTRIPSettings::_bracketPinnedLiteral);
+    _bracketPinnedLiteral();
 }
 
 bool NTRIPSettings::saveCaster(const NTRIPSavedCaster& caster)
@@ -175,6 +197,14 @@ bool NTRIPSettings::removeSavedCaster(const QString& casterName)
     }
     _storeSavedCasters(casters);
     return true;
+}
+
+void NTRIPSettings::_bracketPinnedLiteral()
+{
+    const QString pin = ntripPinnedCertificate()->rawValue().toString();
+    if (const QString current = pinWithLiteralInBrackets(pin); current != pin) {
+        ntripPinnedCertificate()->setRawValue(current);
+    }
 }
 
 void NTRIPSettings::_loadSavedCasters()

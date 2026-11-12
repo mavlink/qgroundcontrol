@@ -32,8 +32,8 @@ private slots:
     void _stopFromIdleIsNoop();
     void _statusMessageNamesStateWithoutDetail();
     void _canConnectNeedsCasterHost();
-    void _statusKeepsPlaceMarkers_data();
-    void _statusKeepsPlaceMarkers();
+    void _statusNamesTheCaster_data();
+    void _statusNamesTheCaster();
     void _transportFactory();
     void _stopCancelsDeferredSettings_data();
     void _stopCancelsDeferredSettings();
