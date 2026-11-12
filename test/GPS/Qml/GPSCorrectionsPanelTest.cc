@@ -215,8 +215,8 @@ void GPSCorrectionsPanelTest::_correctionsStatusShowsBaseStation()
     using namespace std::chrono_literals;
     using State = GPSCorrectionManager::State;
     TestFixtures::SettingsFixture saved;
-    saved.setFactValue(SettingsManager::instance()->unitsSettings()->horizontalDistanceUnits(),
-                       UnitsSettings::HorizontalDistanceUnitsMeters);
+    Fact* const units = SettingsManager::instance()->unitsSettings()->horizontalDistanceUnits();
+    saved.setFactValue(units, UnitsSettings::HorizontalDistanceUnitsMeters);
     ManualScheduler scheduler;
     GPSCorrectionManager corrections(nullptr, &scheduler);
     QSignalSpy positionChanges(&corrections, &GPSCorrectionManager::basePositionChanged);
@@ -251,7 +251,10 @@ void GPSCorrectionsPanelTest::_correctionsStatusShowsBaseStation()
     QVERIFY(status->setProperty("gcsPosition",
                                 QVariant::fromValue(corrections.basePosition().atDistanceAndAzimuth(2500, 90))));
     QVERIFY(distance->property("visible").toBool());
-    QCOMPARE(distance->property("labelText").toString(), QStringLiteral("2500 m"));
+    QCOMPARE(distance->property("labelText").toString(), QStringLiteral("2.5 km"));
+    // The distance follows the units setting while it is shown.
+    units->setRawValue(UnitsSettings::HorizontalDistanceUnitsFeet);
+    QCOMPARE(distance->property("labelText").toString(), QStringLiteral("1.6 mi"));
     // A panel that hides the coordinates, as the toolbar drop-down does, keeps the distance.
     QVERIFY(status->setProperty("showCoordinates", false));
     QVERIFY(!position->property("visible").toBool());
@@ -278,6 +281,54 @@ void GPSCorrectionsPanelTest::_correctionsStatusShowsBaseStation()
     QVERIFY(scheduler.advanceBy(100ms));
     QCOMPARE(corrections.selectedStream().source, static_cast<int>(GPSCorrectionSettings::LocalReceiver));
     QVERIFY(!position->property("visible").toBool());
+}
+
+void GPSCorrectionsPanelTest::_correctionsStatusBaseDistanceUnits_data()
+{
+    QTest::addColumn<int>("units");
+    QTest::addColumn<double>("meters");
+    QTest::addColumn<QString>("shown");
+    const auto row = [](const char* name, UnitsSettings::HorizontalDistanceUnits units, double meters,
+                        const char* shown) {
+        QTest::newRow(name) << int(units) << meters << QString::fromLatin1(shown);
+    };
+    constexpr double metersPerMile = 1609.344;
+    // Whole meters or feet up to a kilometer or a mile, then those with one decimal, and whole from 100 on.
+    row("meters", UnitsSettings::HorizontalDistanceUnitsMeters, 999, "999 m");
+    row("kilometer", UnitsSettings::HorizontalDistanceUnitsMeters, 1000, "1.0 km");
+    row("kilometers", UnitsSettings::HorizontalDistanceUnitsMeters, 99900, "99.9 km");
+    row("whole-kilometers", UnitsSettings::HorizontalDistanceUnitsMeters, 100000, "100 km");
+    row("feet", UnitsSettings::HorizontalDistanceUnitsFeet, 1609, "5279 ft");
+    row("mile", UnitsSettings::HorizontalDistanceUnitsFeet, metersPerMile, "1.0 mi");
+    row("miles", UnitsSettings::HorizontalDistanceUnitsFeet, 99.9 * metersPerMile, "99.9 mi");
+    row("whole-miles", UnitsSettings::HorizontalDistanceUnitsFeet, 100 * metersPerMile, "100 mi");
+}
+
+void GPSCorrectionsPanelTest::_correctionsStatusBaseDistanceUnits()
+{
+    using namespace std::chrono_literals;
+    QFETCH(int, units);
+    QFETCH(double, meters);
+    QFETCH(QString, shown);
+    TestFixtures::SettingsFixture saved;
+    saved.setFactValue(SettingsManager::instance()->unitsSettings()->horizontalDistanceUnits(), units);
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler);
+    const auto ntrip = corrections.openSource(GPSCorrectionSettings::Ntrip, QStringLiteral("caster/MOUNT"));
+    // The RTCM 1005 frame of the recording Core/Protocols/fixtures/mixed.gps.
+    ntrip->submit(QByteArray::fromHex("d300133ed000038a58d9493c872f34109d07d6af48205ad7f7"), scheduler.nowMs());
+    QVERIFY(scheduler.advanceBy(100ms));
+    QVERIFY(corrections.basePosition().isValid());
+    TestFixtures::QmlEngine engine;
+    std::unique_ptr<QObject> status =
+        engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/CorrectionsStatus.qml")),
+                      {{QStringLiteral("corrections"), QVariant::fromValue(&corrections)},
+                       {QStringLiteral("gcsPosition"),
+                        QVariant::fromValue(corrections.basePosition().atDistanceAndAzimuth(meters, 90))}});
+    QVERIFY2(status, qPrintable(engine.lastError()));
+    auto* distance = status->findChild<QObject*>(QStringLiteral("correctionsBaseDistance"));
+    QVERIFY(distance && distance->property("visible").toBool());
+    QCOMPARE(distance->property("labelText").toString(), shown);
 }
 
 void GPSCorrectionsPanelTest::_correctionsStatusShowsMessageFilterError()

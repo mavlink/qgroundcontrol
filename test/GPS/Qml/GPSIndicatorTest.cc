@@ -414,13 +414,21 @@ void GPSIndicatorTest::_ntripStaysInsideItsBox()
     QVERIFY(lineCount(box, mountpoint) > 1);
 }
 
+void GPSIndicatorTest::_correctionsStayInsideTheirBox_data()
+{
+    QTest::addColumn<int>("units");
+    QTest::addColumn<QString>("farthest");
+    QTest::newRow("miles") << int(UnitsSettings::HorizontalDistanceUnitsFeet) << QStringLiteral("12437 mi");
+    QTest::newRow("kilometers") << int(UnitsSettings::HorizontalDistanceUnitsMeters) << QStringLiteral("20015 km");
+}
+
 void GPSIndicatorTest::_correctionsStayInsideTheirBox()
 {
     using namespace std::chrono_literals;
+    QFETCH(int, units);
+    QFETCH(QString, farthest);
     TestFixtures::SettingsFixture saved;
-    // Feet give the longer distance.
-    saved.setFactValue(SettingsManager::instance()->unitsSettings()->horizontalDistanceUnits(),
-                       UnitsSettings::HorizontalDistanceUnitsFeet);
+    saved.setFactValue(SettingsManager::instance()->unitsSettings()->horizontalDistanceUnits(), units);
     // The source with the longest name, which has announced its base station.
     ManualScheduler scheduler;
     GPSCorrectionManager corrections(nullptr, &scheduler);
@@ -441,9 +449,11 @@ void GPSIndicatorTest::_correctionsStayInsideTheirBox()
     auto* box = page->findChild<QQuickItem*>(QStringLiteral("gpsIndicatorCorrections"));
     QVERIFY(box);
     QVERIFY(box->setProperty("corrections", QVariant::fromValue(&corrections)));
-    // A base station 100 km away, farther than its corrections are of use.
-    QVERIFY(box->setProperty("gcsPosition",
-                             QVariant::fromValue(corrections.basePosition().atDistanceAndAzimuth(100000, 90))));
+    // A base station on the other side of the earth, which a mountpoint picked by mistake can be: the longest
+    // distance there is.
+    const QGeoCoordinate base = corrections.basePosition();
+    QVERIFY(
+        box->setProperty("gcsPosition", QVariant::fromValue(QGeoCoordinate(-base.latitude(), base.longitude() - 180))));
     QVERIFY(box->isVisible());
     auto* source = box->findChild<QQuickItem*>(QStringLiteral("correctionsSelectedSource"));
     auto* rate = box->findChild<QQuickItem*>(QStringLiteral("correctionsDataRate"));
@@ -452,7 +462,6 @@ void GPSIndicatorTest::_correctionsStayInsideTheirBox()
     QCOMPARE(source->property("labelText").toString(),
              GPSCorrectionManager::sourceName(static_cast<int>(GPSCorrectionSettings::LocalReceiver)));
     QVERIFY(rate->isVisible() && distance->isVisible());
-    QCOMPARE(distance->property("labelText").toString(), QStringLiteral("328084 ft"));
     // The longest rate.
     QVERIFY(rate->setProperty("labelText", QStringLiteral("1,023.9KB/s")));
     QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
@@ -460,6 +469,7 @@ void GPSIndicatorTest::_correctionsStayInsideTheirBox()
     // These rows do not wrap, so they must fit.
     const QStringList outside = textsOutside(box);
     QVERIFY2(outside.isEmpty(), qPrintable(outside.join(QStringLiteral("; "))));
+    QCOMPARE(distance->property("labelText").toString(), farthest);
 }
 
 void GPSIndicatorTest::_statusColumnKeepsItsWidth()

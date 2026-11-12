@@ -13,6 +13,8 @@ private slots:
     void _correctionsStatusCountsMessageTypes();
     void _correctionsStatusShowsMessageRates();
     void _correctionsStatusShowsBaseStation();
+    void _correctionsStatusBaseDistanceUnits_data();
+    void _correctionsStatusBaseDistanceUnits();
     void _correctionsStatusShowsMessageFilterError();
     void _correctionsLogSwitch();
     void _ntripErrorActionRetries();
