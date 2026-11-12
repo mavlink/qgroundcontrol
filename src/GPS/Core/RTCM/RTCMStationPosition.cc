@@ -5,6 +5,7 @@
 #include <span>
 
 #include "GPSProtocolMath.h"
+#include "RTCMBits.h"
 #include "RTCMFramer.h"
 
 namespace {
@@ -24,19 +25,9 @@ constexpr size_t ANTENNA_HEIGHT_BITS = 16;
 /// Coordinates and the antenna height count 0.1 mm.
 constexpr double METERS_PER_UNIT = 0.0001;
 
-/// The @a width bits at bit @a offset of @a payload, most significant bit first.
-uint64_t bitField(std::span<const uint8_t> payload, size_t offset, size_t width)
-{
-    uint64_t value = 0;
-    for (size_t bit = offset; bit < offset + width; ++bit) {
-        value = (value << 1) | ((payload[bit / 8] >> (7 - bit % 8)) & 1U);
-    }
-    return value;
-}
-
 double ecefMeters(std::span<const uint8_t> payload, size_t offset)
 {
-    const auto raw = static_cast<int64_t>(bitField(payload, offset, ECEF_BITS));
+    const auto raw = static_cast<int64_t>(RTCMBits::field(payload, offset, ECEF_BITS));
     // Two's complement in 38 bits: flipping the sign bit and subtracting its weight extends it.
     constexpr int64_t SIGN_BIT = int64_t{1} << (ECEF_BITS - 1);
     return static_cast<double>((raw ^ SIGN_BIT) - SIGN_BIT) * METERS_PER_UNIT;
@@ -65,8 +56,8 @@ std::optional<RTCMStationPosition> RTCMStationPosition::fromFrame(QByteArrayView
     RTCMStationPosition station;
     station.position = GPSProtocolMath::fromEcef(ecef);
     if (hasAntennaHeight) {
-        station.antennaHeightMeters =
-            static_cast<double>(bitField(payload, ANTENNA_HEIGHT_OFFSET, ANTENNA_HEIGHT_BITS)) * METERS_PER_UNIT;
+        const uint64_t height = RTCMBits::field(payload, ANTENNA_HEIGHT_OFFSET, ANTENNA_HEIGHT_BITS);
+        station.antennaHeightMeters = static_cast<double>(height) * METERS_PER_UNIT;
     }
     return station;
 }

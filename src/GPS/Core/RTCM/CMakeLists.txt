@@ -7,6 +7,7 @@
 target_sources(
     QGCGPSCore
     PRIVATE
+        RTCMBits.h
         RTCMFramer.cc
         RTCMFramer.h
         RTCMStationPosition.cc
