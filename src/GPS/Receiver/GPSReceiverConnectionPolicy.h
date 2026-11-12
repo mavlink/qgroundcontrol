@@ -44,9 +44,10 @@ enum class GPSReceiverSessionOutcome
 /// both until the user connects again or turns the setting back on. With the setting off, receivers connect only when
 /// the user asks, and a lost connection is reported. Automatic attempts never pass flash-save consent. A saved or
 /// discovered receiver whose configuration cannot connect is reported once and not retried until the configuration
-/// changes or the user connects. The policy reports why a connection cannot start or is waiting for its port, and
-/// withdraws the reason a connection could not start once the configuration no longer has it; the receiver words how a
-/// session ended.
+/// changes or the user connects; a Connect that is refused for that reason leaves the changed configuration to be
+/// connected automatically all the same. The policy reports why a connection cannot start or is waiting for its port,
+/// and withdraws the reason a connection could not start once the configuration no longer has it; the receiver words
+/// how a session ended.
 class GPSReceiverConnectionPolicy
 {
     Q_DECLARE_TR_FUNCTIONS(GPSReceiverConnectionPolicy)
@@ -135,7 +136,8 @@ private:
     bool _keepConnected = false;
     /// The user disconnected; nothing connects automatically until the user connects again.
     bool _paused = false;
-    /// The configuration cannot connect; nothing connects automatically until it changes or the user connects.
+    /// The configuration cannot connect, as an automatic attempt found, or the user's Connect of a saved receiver;
+    /// nothing connects automatically until it changes or the user connects.
     bool _unconnectable = false;
     bool _waitingForPort = false;
     /// Set while its error is the one on display: nothing else was shown and no connection started since.

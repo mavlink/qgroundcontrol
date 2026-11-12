@@ -103,8 +103,11 @@ void GPSReceiverConnectionPolicy::configurationChanged(const GPSReceiverConfigur
         _keepConnected = _owner == Owner::Saved && !connectionChanged;
     }
     if (std::exchange(_unconnectable, false)) {
-        // The changed configuration is tried as at startup, and the message about the previous one is stale.
-        _showError({});
+        // The changed configuration is tried as at startup, and the message about the previous one is stale. A
+        // refused Connect's message stays while the configuration has its reason.
+        if (!_refusal) {
+            _showError({});
+        }
         _startPending = true;
     }
     if (_refusal && !_refusalApplies()) {
@@ -178,6 +181,9 @@ bool GPSReceiverConnectionPolicy::connectConfigured(bool allowPersistentChanges)
     reset();
     _paused = false;
     if (!_connectConfigured(allowPersistentChanges)) {
+        // As after an automatic attempt, a saved receiver whose configuration cannot connect is tried again once
+        // the configuration changes.
+        _unconnectable = _hasSavedReceiver() && !_connectability.error.isEmpty();
         return false;
     }
     _owner = Owner::Saved;
