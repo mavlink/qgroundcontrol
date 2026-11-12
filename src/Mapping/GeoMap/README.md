@@ -140,8 +140,8 @@ scene, patch model, `View3D`, gesture handlers, fog haze over the distant LOD ri
 and the 2D↔3D mode animation.
 
 `GeoMapView.qml` extends it into the shared base of the Fly and Plan views: the writable
-`center`/`zoomLevel` and the `toCoordinate`/`fromCoordinate`/`setVisibleRegion` functions that
-`FlightMap` offers, the view shared across both views and restarts, and optionally the
+`center`/`zoomLevel` and the `toCoordinate`/`fromCoordinate`/`setVisibleRegion`/`showMapType` functions
+that `FlightMap` offers, the view shared across both views and restarts, and optionally the
 `GeoMapControls` (2D/3D toggle, compass) and a map scale. The Plan View embeds them; the Fly View
 places them itself, because it also positions the occluders and the picture-in-picture swap.
 A region asked for with `setVisibleRegion` while the view has no size is shown once it has one.

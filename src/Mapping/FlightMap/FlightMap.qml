@@ -69,15 +69,19 @@ Map {
         map:    _map
     }
 
-    function updateActiveMapType() {
-        var chosenMap = QGroundControl.mapEngineManager.chosenMap
-
-        for (var i = 0; i < _map.supportedMapTypes.length; i++) {
-            if (chosenMap === _map.supportedMapTypes[i].name) {
+    /// Shows the map that mapType names, as QGCMapEngineManager.mapList names it. The map keeps what it shows
+    /// for a name that is none of its map types, such as an elevation provider's.
+    function showMapType(mapType) {
+        for (let i = 0; i < _map.supportedMapTypes.length; i++) {
+            if (mapType === _map.supportedMapTypes[i].name) {
                 _map.activeMapType = _map.supportedMapTypes[i]
                 return
             }
         }
+    }
+
+    function updateActiveMapType() {
+        showMapType(QGroundControl.mapEngineManager.chosenMap)
     }
 
     onMapReadyChanged: {

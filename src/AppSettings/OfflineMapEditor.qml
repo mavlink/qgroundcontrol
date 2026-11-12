@@ -11,7 +11,7 @@ import QGroundControl.GeoMap
 
 /// Editor of an offline map set, over a map that fills it: the area of a new set is what that map shows.
 /// The map is a QtLocation FlightMap or a GeoMapView. The editor uses what both offer (center, zoomLevel,
-/// toCoordinate, isSatelliteMap, ...) and two functions each engine's map adds: showMapType(mapType) and
+/// toCoordinate, isSatelliteMap, showMapType, ...) and one function each engine's map adds:
 /// showSetArea(topLeft, bottomRight).
 Item {
     id: _editor
@@ -60,10 +60,10 @@ Item {
 
     function handleChanges() {
         if (isMapInteractive) {
-            var xr = Math.round(_map.width) - 1  // Must be within boundaries of visible map
-            var yr = Math.round(_map.height) - 1 // Must be within boundaries of visible map
-            var c0 = _map.toCoordinate(Qt.point(0, 0), false /* clipToViewPort */)
-            var c1 = _map.toCoordinate(Qt.point(xr, yr), false /* clipToViewPort */)
+            const xr = Math.round(_map.width) - 1  // Must be within boundaries of visible map
+            const yr = Math.round(_map.height) - 1 // Must be within boundaries of visible map
+            const c0 = _map.toCoordinate(Qt.point(0, 0), false /* clipToViewPort */)
+            const c1 = _map.toCoordinate(Qt.point(xr, yr), false /* clipToViewPort */)
             if (!c0.isValid || !c1.isValid) {
                 // The map has no size yet
                 return
@@ -94,32 +94,11 @@ Item {
         isMapInteractive = false
         if (!tileSet.defaultSet) {
             mapType = tileSet.mapTypeStr
-            _map.center = midPoint(tileSet.topleftLat, tileSet.bottomRightLat, tileSet.topleftLon, tileSet.bottomRightLon)
             //-- Delineate Set Region
             _map.showSetArea(QtPositioning.coordinate(tileSet.topleftLat, tileSet.topleftLon),
                              QtPositioning.coordinate(tileSet.bottomRightLat, tileSet.bottomRightLon))
         }
         infoViewComponent.createObject(_editor)
-    }
-
-    function toRadian(deg) {
-        return deg * Math.PI / 180
-    }
-
-    function toDegree(rad) {
-        return rad * 180 / Math.PI
-    }
-
-    function midPoint(lat1, lat2, lon1, lon2) {
-        var dLon = toRadian(lon2 - lon1)
-        lat1 = toRadian(lat1)
-        lat2 = toRadian(lat2)
-        lon1 = toRadian(lon1)
-        var Bx = Math.cos(lat2) * Math.cos(dLon)
-        var By = Math.cos(lat2) * Math.sin(dLon)
-        var lat3 = Math.atan2(Math.sin(lat1) + Math.sin(lat2), Math.sqrt((Math.cos(lat1) + Bx) * (Math.cos(lat1) + Bx) + By * By))
-        var lon3 = lon1 + Math.atan2(By, Math.cos(lat1) + Bx)
-        return QtPositioning.coordinate(toDegree(lat3), toDegree(lon3))
     }
 
     function resetMapToDefaults() {
@@ -146,21 +125,13 @@ Item {
         id: flightMapComponent
 
         FlightMap {
-            /// Returns false for a type the map cannot show, such as an elevation set's
-            function showMapType(mapType) {
-                for (var i = 0; i < supportedMapTypes.length; i++) {
-                    if (mapType === supportedMapTypes[i].name) {
-                        activeMapType = supportedMapTypes[i]
-                        return true
-                    }
-                }
-                return false
-            }
-
             function showSetArea(topLeft, bottomRight) {
                 mapBoundary.topLeft = topLeft
                 mapBoundary.bottomRight = bottomRight
                 mapBoundary.visible = true
+                // The fit below takes each corner where it is drawn: on the side of the map's center where it is
+                // nearer. From a center half a world away the corners can be on both sides, and it fits the world.
+                center = QtPositioning.rectangle(topLeft, bottomRight).center
                 // Some times, for whatever reason, the bounding box is correct (around ETH for instance), but the rectangle is drawn across the planet.
                 // When that happens, the "fitViewportToVisibleMapItems()" below makes the map to zoom to the entire earth.
                 fitViewportToVisibleMapItems()
@@ -190,15 +161,6 @@ Item {
         // Its view is its own: looking at a set elsewhere must not move the map of the Fly View.
         GeoMapView {
             id: geoMap
-
-            /// Returns false for a type the map cannot show, such as an elevation set's
-            function showMapType(mapType) {
-                if (QGroundControl.mapEngineManager.mapProviderList.indexOf(mapType.split(" ")[0]) < 0) {
-                    return false
-                }
-                geoMap.mapType = mapType
-                return true
-            }
 
             function showSetArea(topLeft, bottomRight) {
                 setArea.coordinates = [ topLeft, QtPositioning.coordinate(topLeft.latitude, bottomRight.longitude),

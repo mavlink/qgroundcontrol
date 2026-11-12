@@ -3,6 +3,9 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtPositioning/QGeoCoordinate>
+#include <QtPositioning/QGeoRectangle>
+#include <QtQml/QQmlContext>
+#include <QtQml/QQmlExpression>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QSignalSpy>
@@ -12,6 +15,7 @@
 #include "Fact.h"
 #include "FlyViewSettings.h"
 #include "GeoMapCamera.h"
+#include "LogViewerMapUITest.h"
 #include "QGCCachedTileSet.h"
 #include "QGCMapEngine.h"
 #include "QGCMapEngineManager.h"
@@ -27,6 +31,46 @@ void OfflineMapEditorUITest::_addEngineRows()
 
     QTest::newRow("QtLocation") << false;
     QTest::newRow("GeoMap") << true;
+}
+
+void OfflineMapEditorUITest::_saveSet(const QString& name, const QString& shownType, const QGeoRectangle& area,
+                                      quint64& setId)
+{
+    QGCMapEngine* const engine = getQGCMapEngine();
+    engine->ensureInitialized();
+    const QStringList maps = QGCMapEngineManager::mapList();
+    QGCCachedTileSet* const savedSet = new QGCCachedTileSet(name);
+    savedSet->setMapTypeStr(shownType);
+    // The tiles of the set need a map of the list
+    savedSet->setType(maps.contains(shownType) ? shownType : maps.constFirst());
+    savedSet->setTopleftLat(area.topLeft().latitude());
+    savedSet->setTopleftLon(area.topLeft().longitude());
+    savedSet->setBottomRightLat(area.bottomRight().latitude());
+    savedSet->setBottomRightLon(area.bottomRight().longitude());
+    savedSet->setMinZoom(3);
+    savedSet->setMaxZoom(3);
+    savedSet->setTotalTileCount(1);
+    // The task owns the set until it is saved
+    QGCCreateTileSetTask* const createTask = new QGCCreateTileSetTask(savedSet);
+    QSignalSpy savedSpy(createTask, &QGCCreateTileSetTask::tileSetSaved);
+    QVERIFY(engine->addTask(createTask));
+    QVERIFY_SIGNAL_COUNT_WAIT(savedSpy, 1, TestTimeout::mediumMs());
+    setId = savedSet->id();
+    delete savedSet;
+}
+
+void OfflineMapEditorUITest::_deleteSet(quint64 setId)
+{
+    if (setId == 0) {
+        return;  // the set was not saved
+    }
+    QGCDeleteTileSetTask* const deleteTask = new QGCDeleteTileSetTask(setId);
+    const QSignalSpy deletedSpy(deleteTask, &QGCDeleteTileSetTask::tileSetDeleted);
+    if (getQGCMapEngine()->addTask(deleteTask)) {
+        (void) QTest::qWaitFor([&deletedSpy] { return !deletedSpy.isEmpty(); }, TestTimeout::mediumMs());
+    } else {
+        delete deleteTask;
+    }
 }
 
 void OfflineMapEditorUITest::_openMapsSettings(bool geoMapEngine)
@@ -261,6 +305,70 @@ void OfflineMapEditorUITest::_defaultSetInfoOpensAndCloses()
     stopUI();
 }
 
+void OfflineMapEditorUITest::_setInfoShowsSetAreaAndMap_data()
+{
+    QTest::addColumn<bool>("geoMapEngine");
+    QTest::addColumn<bool>("typeInMapList");
+
+    QTest::newRow("QtLocation") << false << true;
+    QTest::newRow("GeoMap") << true << true;
+    // A set of an earlier version, of a map that the list has no more
+    QTest::newRow("QtLocation, type no longer a map") << false << false;
+    QTest::newRow("GeoMap, type no longer a map") << true << false;
+}
+
+void OfflineMapEditorUITest::_setInfoShowsSetAreaAndMap()
+{
+    QFETCH(bool, geoMapEngine);
+    QFETCH(bool, typeInMapList);
+
+    // Another map than the chosen one, which the editor's map shows first
+    const QString chosenMap = QGCMapEngineManager::instance()->chosenMap();
+    const QStringList maps = QGCMapEngineManager::mapList();
+    const QString otherMap = (maps.constFirst() != chosenMap) ? maps.constFirst() : maps.at(1);
+    // The type that is no longer a map still has a provider of the list
+    const QString setType =
+        typeInMapList ? otherMap : otherMap.section(QLatin1Char(' '), 0, 0) + QStringLiteral(" Removed");
+    QVERIFY(maps.contains(setType) == typeInMapList);
+    // A place of its own, away from the map view the other views share
+    const QGeoRectangle area(QGeoCoordinate(-35.35, 149.15), QGeoCoordinate(-35.37, 149.18));
+    const QString setName = QStringLiteral("Info test %1").arg(QCoreApplication::applicationPid());
+    quint64 setId = 0;
+    const auto deleteSavedSet = qScopeGuard([&setId] { _deleteSet(setId); });
+    _saveSet(setName, setType, area, setId);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    _openMapsSettings(geoMapEngine);
+    const auto restoreEngine = qScopeGuard(
+        [this] { SettingsManager::instance()->flyViewSettings()->useGeoMapEngine()->setRawValue(_savedEngine); });
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+
+    QVERIFY(clickButtonScrolled(QStringLiteral("offlineMaps_editButton_") + setName,
+                                QStringLiteral("settingsPageFlickable")));
+    QQuickItem* const map = _editorMap(geoMapEngine);
+    if (!map) {
+        return;
+    }
+
+    QTRY_VERIFY2_WITH_TIMEOUT(LogViewerMapUITest::mapShowsCoordinates(map, {area.topLeft(), area.bottomRight()}),
+                              "the map does not show the area of the set", TestTimeout::mediumMs());
+
+    // The map shows the set's map. It keeps its own when the set's is none: a GeoMap would warn of a map type
+    // that it does not know, which fails the test.
+    QQmlExpression flightMapType(qmlContext(map), map, QStringLiteral("activeMapType.name"));
+    const QString shownMap = geoMapEngine ? map->property("mapType").toString() : flightMapType.evaluate().toString();
+    QCOMPARE(shownMap, typeInMapList ? setType : chosenMap);
+
+    QVERIFY(clickButton(QStringLiteral("offlineMapEditor_closeButton")));
+    QTRY_VERIFY_WITH_TIMEOUT(!findItem(_rootItem, QStringLiteral("offlineMapEditor")), TestTimeout::shortMs());
+
+    stopUI();
+}
+
 void OfflineMapEditorUITest::_setCannotBeEditedDuringImport()
 {
     _openMapsSettings(/*geoMapEngine*/ false);
@@ -288,38 +396,15 @@ void OfflineMapEditorUITest::_setCannotBeEditedDuringImport()
 
 void OfflineMapEditorUITest::_renamedSetIsListedByItsNewName()
 {
-    // A set that is only in the database, like one of an earlier run: nothing downloads its tiles
-    QGCMapEngine* const engine = getQGCMapEngine();
-    engine->ensureInitialized();
-    const QString mapType = QGCMapEngineManager::mapList().constFirst();
     const QString oldName = QStringLiteral("Rename test %1").arg(QCoreApplication::applicationPid());
     const QString newName = oldName + QStringLiteral(" renamed");
-    QGCCachedTileSet* const savedSet = new QGCCachedTileSet(oldName);
-    savedSet->setMapTypeStr(mapType);
-    savedSet->setType(mapType);
-    savedSet->setTopleftLat(47.3906);
-    savedSet->setTopleftLon(8.4991);
-    savedSet->setBottomRightLat(47.3902);
-    savedSet->setBottomRightLon(8.4995);
-    savedSet->setMinZoom(3);
-    savedSet->setMaxZoom(3);
-    savedSet->setTotalTileCount(1);
-    // The task owns the set until it is saved
-    QGCCreateTileSetTask* const createTask = new QGCCreateTileSetTask(savedSet);
-    QSignalSpy savedSpy(createTask, &QGCCreateTileSetTask::tileSetSaved);
-    QVERIFY(engine->addTask(createTask));
-    QVERIFY_SIGNAL_COUNT_WAIT(savedSpy, 1, TestTimeout::mediumMs());
-    const quint64 setId = savedSet->id();
-    delete savedSet;
-    const auto deleteSavedSet = qScopeGuard([engine, setId] {
-        QGCDeleteTileSetTask* const deleteTask = new QGCDeleteTileSetTask(setId);
-        const QSignalSpy deletedSpy(deleteTask, &QGCDeleteTileSetTask::tileSetDeleted);
-        if (engine->addTask(deleteTask)) {
-            (void) QTest::qWaitFor([&deletedSpy] { return !deletedSpy.isEmpty(); }, TestTimeout::mediumMs());
-        } else {
-            delete deleteTask;
-        }
-    });
+    quint64 setId = 0;
+    const auto deleteSavedSet = qScopeGuard([&setId] { _deleteSet(setId); });
+    _saveSet(oldName, QGCMapEngineManager::mapList().constFirst(),
+             QGeoRectangle(QGeoCoordinate(47.3906, 8.4991), QGeoCoordinate(47.3902, 8.4995)), setId);
+    if (QTest::currentTestFailed()) {
+        return;
+    }
 
     _openMapsSettings(/*geoMapEngine*/ false);
     const auto restoreEngine = qScopeGuard(

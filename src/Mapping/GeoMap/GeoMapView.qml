@@ -78,6 +78,17 @@ GeoMap {
         specifyMapPositionDialogFactory.open()
     }
 
+    /// FlightMap.showMapType contract: shows the map that mapType names, as QGCMapEngineManager.mapList names it,
+    /// instead of the map the user chose. The map keeps what it shows for a name that is no map, such as an
+    /// elevation provider's or a map that the list no longer has.
+    function showMapType(mapType) {
+        const manager = QGroundControl.mapEngineManager
+        // mapList has the elevation providers as well. mapProviderList, the providers of the maps, has none of them.
+        if (manager.mapList.indexOf(mapType) >= 0 && manager.mapProviderList.indexOf(mapType.split(" ")[0]) >= 0) {
+            root.mapType = mapType
+        }
+    }
+
     // Zoom level to distance depends on the viewport size, so this also runs on every resize
     function _applyZoomLevel() {
         if (!_viewportValid()) {
