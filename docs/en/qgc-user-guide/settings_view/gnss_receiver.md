@@ -25,7 +25,8 @@ While a base surveys its position, the status shows how far the survey is, as fa
 - Trimble, Septentrio and Femtomes receivers average their position and report only when they are done. **Averaging** shows the time since QGroundControl started the averaging, and for a Trimble receiver also the time it was asked to average for. There is no bar, because the receiver reports no progress.
 - A Unicore receiver reports no time either, so only the status line says that it averages.
 
-Once the receiver reports a valid base position, the status shows it as **Base Position Latitude**, **Base Position Longitude** and **Base Position Alt (WGS84)**: the result of the survey or averaging, or the fixed position the base was given.
+Once the receiver reports a valid base position, the status shows it as **Base Position Latitude**, **Base Position Longitude** and **Base Antenna Alt (WGS84)**: the result of the survey or averaging, or the fixed position the base was given.
+It is where the antenna is, so for a fixed position with an **Antenna height** its height is that much above the **Base Position Alt (WGS84)** of the settings.
 A Trimble receiver reports the position it averaged without a height.
 While the vehicle reports no GPS, the toolbar GNSS indicator shows the receiver, and a configured base in a word: _Survey_ while it determines its position, _Waiting_ while it has no valid base position and sends no corrections, and _Base_ otherwise.
 An identified receiver family or output protocol is shown as _Detected_.
@@ -85,6 +86,9 @@ The settings are:
     **Base position format** shows the same position as _ECEF X/Y/Z_ instead, in meters with 0.1 mm, as a surveyor's or a reference station's data sheet gives it: **Base Position X (ECEF, m)**, **Y** and **Z**.
     One position is saved, as latitude, longitude and height, and both formats show it: a value you only look at does not change, and a coordinate you edit moves the position by that much.
     While X, Y and Z are not a position near the Earth's surface, as after the first of three new coordinates, a note says that the base position is unchanged.
+    **Antenna height** is how far the antenna's reference point, usually the bottom of its mount, is above that position, measured vertically.
+    Enter it when the position is that of a mark on the ground and the antenna stands above it on a tripod or a mast: the receiver is then given the antenna's position, the base position's height plus the antenna height, and the base announces that position to rovers.
+    Leave it at zero when the position is the antenna's own, as a surveyed one is.
     [Saved base sites](#base_sites) keep several such positions under a name.
   - **Receiver-managed averaging:** The receiver averages its position for up to **Maximum averaging time**, without an accuracy guarantee (Unicore).
 - **Compact RTCM corrections (MSM4)** (u-blox): Sends MSM4 instead of MSM7 observations, about a third less correction bandwidth for slow telemetry links.
@@ -132,6 +136,7 @@ For more information see [RTK GPS](https://docs.px4.io/en/advanced_features/rtk-
 ::: tip
 Survey-In is time consuming, so save its result: when a survey completes, the receiver status offers **Save Survey Position**.
 Select **Fixed position** to start the base from the saved position next time.
+A survey finds where the antenna is, so saving it sets **Antenna height** to zero.
 The values persist across QGC reboots until they are changed.
 :::
 
@@ -142,8 +147,9 @@ To work from several places, keep each position as a named site:
 
 - When a survey completes, enter a **Site name** before you select **Save Survey Position**.
   The surveyed position becomes the fixed base position and is also kept under that name.
-- With **Fixed position** selected, enter a name under **Save base position as site** and select **Save Site** to keep the base position the settings show.
-- Under **Saved base sites**, select a site and **Use Site** to make it the fixed base position, or **Delete Site** to remove it.
+- With **Fixed position** selected, enter a name under **Save base position as site** and select **Save Site** to keep the base position the settings show, with its **Antenna height**.
+- Under **Saved base sites**, select a site and **Use Site** to make it the fixed base position, with the antenna height it was saved with, or **Delete Site** to remove it.
+  A site saved by a version without antenna heights has none.
   Selecting a site changes nothing until you use it.
   A connected base keeps the position it started from, so disconnect the receiver to use a site.
 

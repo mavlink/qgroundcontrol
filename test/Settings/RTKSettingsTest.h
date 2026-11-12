@@ -21,5 +21,6 @@ private slots:
     void _baseSitesLoad();
     void _baseSitesSaveAndRemove();
     void _baseSiteBecomesFixedPosition();
+    void _baseSiteAntennaHeightLoads();
     void _detectedReceiversAreRemembered();
 };

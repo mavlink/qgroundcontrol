@@ -115,10 +115,13 @@ GPSBaseStationConfig baseStationFromSettings(RTKSettings* settings, FactReader& 
     } else {
         qCWarning(GPSSettingsBindingsLog) << "Invalid base mode; using survey-in";
     }
+    // A receiver is given where its antenna is, which is the antenna height above the saved position: a height is
+    // measured along the ellipsoid's normal, so it adds to the ellipsoid height and leaves latitude and longitude.
     const GPSBaseStationConfig::Fixed fixed{
         .position = {.latitudeDegrees = read(settings->fixedBasePositionLatitude()).toDouble(),
                      .longitudeDegrees = read(settings->fixedBasePositionLongitude()).toDouble(),
-                     .altitudeMeters = read(settings->fixedBasePositionAltitude()).toDouble()},
+                     .altitudeMeters = read(settings->fixedBasePositionAltitude()).toDouble() +
+                                       read(settings->fixedBaseAntennaHeight()).toDouble()},
         .accuracyMeters = read(settings->fixedBasePositionAccuracy()).toFloat()};
     const GPSBaseStationConfig::SurveyIn surveyIn{
         .accuracyMeters = read(settings->surveyInAccuracyLimit()).toDouble(),

@@ -252,8 +252,10 @@ void GPSReceiverSettingsTest::_surveySaveWorkflow()
     QVERIFY(!fixed->isEnabled());
     QVERIFY(!manufacturerControl->isEnabled());
 
-    // The application's receiver completes a survey; GPSManager keeps its position for a fixed-position start.
+    // The application's receiver completes a survey; GPSManager keeps its position for a fixed-position start. A
+    // survey finds where the antenna is, so the antenna height an earlier fixed position had no longer applies.
     RTKSettings* const settings = panel.settings.settings;
+    settings->fixedBaseAntennaHeight()->setRawValue(1.5);
     AppReceiver base;
     QVERIFY(base.connect());
     base.survey(0.75);
@@ -262,6 +264,7 @@ void GPSReceiverSettingsTest::_surveySaveWorkflow()
     QCOMPARE(settings->fixedBasePositionLongitude()->rawValue().toDouble(), kSurveyedPosition.longitudeDegrees);
     QCOMPARE(settings->fixedBasePositionAltitude()->rawValue().toFloat(), kSurveyedPosition.altitudeMeters);
     QCOMPARE(settings->fixedBasePositionAccuracy()->rawValue().toDouble(), 0.75);
+    QCOMPARE(settings->fixedBaseAntennaHeight()->rawValue().toDouble(), 0.);
     QCOMPARE(settings->baseMode()->rawValue().toInt(), 0);
 
     QVERIFY(QMetaObject::invokeMethod(connect, "click"));
@@ -469,6 +472,8 @@ void GPSReceiverSettingsTest::_basePositionShownOnceValid()
     BaseStatus status(family, base);
     QVERIFY2(status.create(), qPrintable(status.engine.lastError()));
     QVERIFY(status.find("rtkBaseLatitude") && status.find("rtkBaseLongitude") && status.find("rtkBaseHeight"));
+    // The height is the antenna's, which a fixed position's antenna height puts above the position entered.
+    QCOMPARE(status.find("rtkBaseHeight")->property("label").toString(), QStringLiteral("Base Antenna Alt (WGS84)"));
     const auto shownPosition = [&status] {
         return QStringList{status.value("rtkBaseLatitude"), status.value("rtkBaseLongitude"),
                            status.value("rtkBaseHeight")};
@@ -571,6 +576,10 @@ void GPSReceiverSettingsTest::_baseSitePicker()
     saved.setFactValue(settings->fixedBasePositionLongitude(), 8.25);
     saved.setFactValue(settings->fixedBasePositionAltitude(), 512.5);
     saved.setFactValue(settings->fixedBasePositionAccuracy(), 0.75);
+    saved.setFactValue(settings->fixedBaseAntennaHeight(), 1.5);
+    // The antenna height is entered in the application's unit for heights.
+    saved.setFactValue(SettingsManager::instance()->unitsSettings()->verticalDistanceUnits(),
+                       UnitsSettings::VerticalDistanceUnitsMeters);
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
     auto* picker = panel.find("rtkBaseSitePicker");
     auto* use = panel.find("rtkBaseSiteUse");
@@ -578,7 +587,13 @@ void GPSReceiverSettingsTest::_baseSitePicker()
     auto* name = panel.find("rtkBaseSiteName");
     auto* save = panel.find("rtkBaseSiteSave");
     auto* failed = panel.find("rtkBaseSiteSaveFailed");
-    QVERIFY(picker && use && remove && name && save && failed);
+    auto* antennaHeight = panel.find("rtkFixedBaseAntennaHeight");
+    QVERIFY(picker && use && remove && name && save && failed && antennaHeight);
+    // The antenna height belongs to the fixed position: a base that surveys finds where its antenna is.
+    QVERIFY(antennaHeight->isVisible());
+    settings->baseMode()->setRawValue(static_cast<int>(BaseModeDefinition::Mode::BaseSurveyIn));
+    QVERIFY(!antennaHeight->isVisible());
+    settings->baseMode()->setRawValue(static_cast<int>(BaseModeDefinition::Mode::BaseFixed));
     // Without a saved site there is nothing to pick, and a site needs a name, which the settings limit.
     QVERIFY(!picker->isVisible());
     QVERIFY(name->isVisible());
@@ -590,6 +605,8 @@ void GPSReceiverSettingsTest::_baseSitePicker()
     QVERIFY(name->setProperty("text", north));
     QVERIFY(QMetaObject::invokeMethod(save, "clicked"));
     settings->fixedBasePositionLatitude()->setRawValue(-33.5);
+    QVERIFY(enterText(antennaHeight, QStringLiteral("0.25")));
+    QCOMPARE(settings->fixedBaseAntennaHeight()->rawValue().toDouble(), 0.25);
     QVERIFY(name->setProperty("text", south));
     QVERIFY(QMetaObject::invokeMethod(save, "clicked"));
     QCOMPARE(siteNames(settings), (QStringList{north, south}));
@@ -602,11 +619,13 @@ void GPSReceiverSettingsTest::_baseSitePicker()
     QCOMPARE(settings->fixedBasePositionLatitude()->rawValue().toDouble(), -33.5);
     QVERIFY(QMetaObject::invokeMethod(use, "clicked"));
     QCOMPARE(settings->fixedBasePositionLatitude()->rawValue().toDouble(), 47.5);
+    QCOMPARE(settings->fixedBaseAntennaHeight()->rawValue().toDouble(), 1.5);
     QVERIFY(panel.receiver.gps.connectReceiver());
-    const GPSBaseStationConfig::Mode northPosition = GPSBaseStationConfig::Fixed{
-        .position = {.latitudeDegrees = 47.5, .longitudeDegrees = 8.25, .altitudeMeters = 512.5},
+    // The receiver is given where the antenna is: the site's antenna height above its position.
+    const GPSBaseStationConfig::Mode northAntenna = GPSBaseStationConfig::Fixed{
+        .position = {.latitudeDegrees = 47.5, .longitudeDegrees = 8.25, .altitudeMeters = 514.},
         .accuracyMeters = 0.75f};
-    QVERIFY(panel.receiver.worker()->capturedConfig().base.mode == northPosition);
+    QVERIFY(panel.receiver.worker()->capturedConfig().base.mode == northAntenna);
     // A connected receiver keeps its position, which can still be saved as a site.
     QVERIFY(!use->isEnabled());
     QVERIFY(save->isEnabled() && remove->isEnabled());

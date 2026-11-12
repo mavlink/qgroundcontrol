@@ -125,12 +125,16 @@ constexpr QLatin1StringView kSiteLatitude("latitude");
 constexpr QLatin1StringView kSiteLongitude("longitude");
 constexpr QLatin1StringView kSiteAltitude("altitude");
 constexpr QLatin1StringView kSiteAccuracy("accuracy");
+constexpr QLatin1StringView kSiteAntennaHeight("antennaHeight");
+/// The largest fixedBaseAntennaHeight, in meters.
+constexpr double kMaxAntennaHeight = 100.;
 
 bool validBaseSite(const RTKBaseSite& site)
 {
     return !site.name.isEmpty() && site.name.size() <= RTKSettings::MaxBaseSiteNameLength &&
            std::isfinite(site.latitude) && std::abs(site.latitude) <= 90. && std::isfinite(site.longitude) &&
-           std::abs(site.longitude) <= 180. && std::isfinite(site.altitude) && std::isfinite(site.accuracy);
+           std::abs(site.longitude) <= 180. && std::isfinite(site.altitude) && std::isfinite(site.accuracy) &&
+           site.antennaHeight >= 0. && site.antennaHeight <= kMaxAntennaHeight;
 }
 
 /// The site a saved entry holds; empty for an entry that is not a valid site.
@@ -142,25 +146,25 @@ std::optional<RTKBaseSite> baseSiteFromJson(const QJsonValue& entry)
     const QJsonValue longitude = object.value(kSiteLongitude);
     const QJsonValue altitude = object.value(kSiteAltitude);
     const QJsonValue accuracy = object.value(kSiteAccuracy);
+    // A site saved before sites had an antenna height has none.
+    const QJsonValue antennaHeight = object.value(kSiteAntennaHeight);
     if (!name.isString() || !latitude.isDouble() || !longitude.isDouble() || !altitude.isDouble() ||
-        !accuracy.isDouble()) {
+        !accuracy.isDouble() || !(antennaHeight.isDouble() || antennaHeight.isUndefined())) {
         return std::nullopt;
     }
     const RTKBaseSite site{.name = name.toString().trimmed(),
                            .latitude = latitude.toDouble(),
                            .longitude = longitude.toDouble(),
                            .altitude = altitude.toDouble(),
-                           .accuracy = accuracy.toDouble()};
+                           .accuracy = accuracy.toDouble(),
+                           .antennaHeight = antennaHeight.toDouble()};
     return validBaseSite(site) ? std::optional(site) : std::nullopt;
 }
 
 QJsonObject baseSiteToJson(const RTKBaseSite& site)
 {
-    return {{kSiteName, site.name},
-            {kSiteLatitude, site.latitude},
-            {kSiteLongitude, site.longitude},
-            {kSiteAltitude, site.altitude},
-            {kSiteAccuracy, site.accuracy}};
+    return {{kSiteName, site.name},         {kSiteLatitude, site.latitude}, {kSiteLongitude, site.longitude},
+            {kSiteAltitude, site.altitude}, {kSiteAccuracy, site.accuracy}, {kSiteAntennaHeight, site.antennaHeight}};
 }
 
 // The keys of a remembered receiver.
@@ -210,7 +214,8 @@ bool RTKSettings::saveFixedBasePositionAsSite(const QString& siteName)
                          .latitude = fixedBasePositionLatitude()->rawValue().toDouble(),
                          .longitude = fixedBasePositionLongitude()->rawValue().toDouble(),
                          .altitude = fixedBasePositionAltitude()->rawValue().toDouble(),
-                         .accuracy = fixedBasePositionAccuracy()->rawValue().toDouble()});
+                         .accuracy = fixedBasePositionAccuracy()->rawValue().toDouble(),
+                         .antennaHeight = fixedBaseAntennaHeight()->rawValue().toDouble()});
 }
 
 bool RTKSettings::useBaseSite(const QString& siteName)
@@ -225,6 +230,7 @@ bool RTKSettings::useBaseSite(const QString& siteName)
     fixedBasePositionLongitude()->setRawValue(site.longitude);
     fixedBasePositionAltitude()->setRawValue(site.altitude);
     fixedBasePositionAccuracy()->setRawValue(site.accuracy);
+    fixedBaseAntennaHeight()->setRawValue(site.antennaHeight);
     return true;
 }
 
@@ -345,3 +351,4 @@ DECLARE_SETTINGSFACT(RTKSettings, compactRtcmCorrections)
 DECLARE_SETTINGSFACT(RTKSettings, savedBaseSites)
 DECLARE_SETTINGSFACT(RTKSettings, detectedReceivers)
 DECLARE_SETTINGSFACT(RTKSettings, fixedBasePositionFormat)
+DECLARE_SETTINGSFACT(RTKSettings, fixedBaseAntennaHeight)

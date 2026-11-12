@@ -31,6 +31,8 @@ struct GPSBaseStationConfig
 
     struct Fixed
     {
+        /// Where the antenna's reference point is, which is what a base announces in RTCM 1005 and 1006. The caller
+        /// adds the height an antenna has above a surveyed mark.
         GPSEllipsoidPosition position{};
         float accuracyMeters = 0.0f;
         bool operator==(const Fixed&) const = default;

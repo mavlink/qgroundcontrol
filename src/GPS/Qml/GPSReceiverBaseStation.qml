@@ -137,6 +137,11 @@ GPSReceiverSettingsGroup {
             visible: root._ecef
         }
         GPSFactTextField {
+            objectName: "rtkFixedBaseAntennaHeight"
+            fact: root.settings.fixedBaseAntennaHeight
+            note: root.settings.fixedBaseAntennaHeight.shortDescription
+        }
+        GPSFactTextField {
             fact: root.settings.fixedBasePositionAccuracy
             shown: root.presentation.fixedBaseAccuracy
         }

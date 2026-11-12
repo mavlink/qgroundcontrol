@@ -65,8 +65,8 @@
 },
 {
     "name":             "baseHeight",
-    "shortDesc": "Base Position Alt (WGS84)",
-    "longDesc": "Height above the WGS84 ellipsoid of the base position the receiver reports, valid or not, such as the mean of a running survey. Unavailable while it reports none.",
+    "shortDesc": "Base Antenna Alt (WGS84)",
+    "longDesc": "Height above the WGS84 ellipsoid of the base position the receiver reports, valid or not, such as the mean of a running survey. It is the height of the antenna: a fixed base position's height plus its antenna height. Unavailable while it reports none.",
     "type":             "double",
     "decimalPlaces":    2,
     "units":            "vertical m",

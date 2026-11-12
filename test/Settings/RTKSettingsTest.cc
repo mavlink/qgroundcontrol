@@ -372,21 +372,28 @@ void RTKSettingsTest::_baseSitesSaveAndRemove()
 void RTKSettingsTest::_baseSiteBecomesFixedPosition()
 {
     RTKSettings rtk;
-    const auto setFixedPosition = [&rtk](double latitude, double longitude, double altitude, double accuracy) {
+    const auto setFixedPosition = [&rtk](double latitude, double longitude, double altitude, double accuracy,
+                                         double antennaHeight) {
         rtk.fixedBasePositionLatitude()->setRawValue(latitude);
         rtk.fixedBasePositionLongitude()->setRawValue(longitude);
         rtk.fixedBasePositionAltitude()->setRawValue(altitude);
         rtk.fixedBasePositionAccuracy()->setRawValue(accuracy);
+        rtk.fixedBaseAntennaHeight()->setRawValue(antennaHeight);
     };
     const QString name = QStringLiteral("North field");
-    setFixedPosition(47.123456789, 8.987654321, 512.25, 0.75);
+    setFixedPosition(47.123456789, 8.987654321, 512.25, 0.75, 1.5);
     QVERIFY(rtk.saveFixedBasePositionAsSite(name));
-    const RTKBaseSite north{
-        .name = name, .latitude = 47.123456789, .longitude = 8.987654321, .altitude = 512.25, .accuracy = 0.75};
+    const RTKBaseSite north{.name = name,
+                            .latitude = 47.123456789,
+                            .longitude = 8.987654321,
+                            .altitude = 512.25,
+                            .accuracy = 0.75,
+                            .antennaHeight = 1.5};
     QCOMPARE(rtk.baseSites(), QList<RTKBaseSite>{north});
 
-    // The fixed position stays the one the receiver is configured from; a site only replaces it when used.
-    setFixedPosition(-33.5, -70.25, 20., 2.);
+    // The fixed position stays the one the receiver is configured from; a site only replaces it when used, with the
+    // height its antenna has above it.
+    setFixedPosition(-33.5, -70.25, 20., 2., 0.25);
     QVERIFY(!rtk.useBaseSite(QStringLiteral("South field")));
     QCOMPARE(rtk.fixedBasePositionLatitude()->rawValue().toDouble(), -33.5);
     QVERIFY(rtk.useBaseSite(name));
@@ -394,6 +401,31 @@ void RTKSettingsTest::_baseSiteBecomesFixedPosition()
     QCOMPARE(rtk.fixedBasePositionLongitude()->rawValue().toDouble(), north.longitude);
     QCOMPARE(rtk.fixedBasePositionAltitude()->rawValue().toDouble(), north.altitude);
     QCOMPARE(rtk.fixedBasePositionAccuracy()->rawValue().toDouble(), north.accuracy);
+    QCOMPARE(rtk.fixedBaseAntennaHeight()->rawValue().toDouble(), north.antennaHeight);
+}
+
+void RTKSettingsTest::_baseSiteAntennaHeightLoads()
+{
+    RTKSettings rtk;
+    const auto site = [](const char* name, const char* antennaHeight) {
+        return QStringLiteral(R"({"name":"%1","latitude":47.5,"longitude":8.25,"altitude":512.5,"accuracy":0.75%2})")
+            .arg(QLatin1StringView(name), QLatin1StringView(antennaHeight));
+    };
+    // A site saved before sites had an antenna height has none; a value that is no height makes the entry no site.
+    const QStringList entries{site("Before", ""), site("Tripod", R"(,"antennaHeight":1.5)"),
+                              site("Text", R"(,"antennaHeight":"1.5")"), site("Below", R"(,"antennaHeight":-0.5)"),
+                              site("Mast", R"(,"antennaHeight":100.5)")};
+    expectLogMessage("GPS.Settings.RTKSettings", QtWarningMsg, QRegularExpression(QStringLiteral("Dropped 3 of 5 ")));
+    rtk.savedBaseSites()->setRawValue(QStringLiteral("[%1]").arg(entries.join(QLatin1Char(','))));
+    verifyExpectedLogMessage();
+    QCOMPARE(siteNames(rtk), (QStringList{QStringLiteral("Before"), QStringLiteral("Tripod")}));
+    QCOMPARE(rtk.baseSites().first().antennaHeight, 0.);
+    QCOMPARE(rtk.baseSites().last().antennaHeight, 1.5);
+    // A height that is none is not saved either.
+    RTKBaseSite below = rtk.baseSites().last();
+    below.antennaHeight = -0.5;
+    QVERIFY(!rtk.saveBaseSite(below));
+    QCOMPARE(rtk.baseSites().last().antennaHeight, 1.5);
 }
 
 void RTKSettingsTest::_detectedReceiversAreRemembered()

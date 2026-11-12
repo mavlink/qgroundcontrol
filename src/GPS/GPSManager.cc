@@ -153,6 +153,8 @@ bool GPSManager::saveCurrentBasePosition(const QString& siteName)
     settings->fixedBasePositionLongitude()->setRawValue(base->position.longitudeDegrees);
     settings->fixedBasePositionAltitude()->setRawValue(base->position.altitudeMeters);
     settings->fixedBasePositionAccuracy()->setRawValue(base->accuracyMeters);
+    // A base reports where its antenna is, so the saved position has no antenna above it.
+    settings->fixedBaseAntennaHeight()->setRawValue(0.);
     return true;
 }
 
