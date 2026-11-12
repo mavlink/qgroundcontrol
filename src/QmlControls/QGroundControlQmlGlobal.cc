@@ -309,7 +309,7 @@ QString QGroundControlQmlGlobal::elevationProviderName()
 
 QString QGroundControlQmlGlobal::elevationProviderNotice()
 {
-    return _settingsManager->flightMapSettings()->elevationMapProvider()->rawValue().toString();
+    return QGCMapEngineManager::mapAttribution(elevationProviderName());
 }
 
 QString QGroundControlQmlGlobal::parameterFileExtension() const

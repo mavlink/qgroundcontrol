@@ -25,6 +25,7 @@ Map {
     property bool   planView:                       false   ///< true: map being using for Plan view, items should be draggable
     property bool   pinchZoomDisabledByVirtualJoysticks: false ///< true: disable pinch-to-zoom while virtual joystick thumbs are down
     property bool   showAttribution:                true    ///< false: the imagery is not credited, for a map that is a small picture beside a larger one
+    property string viewAttribution:                ""      ///< Credit of what a view draws beside the map from another source: it follows the credit of the imagery
     property alias  attributionLeftMargin:          attribution.leftMargin  ///< Larger margins keep the credit clear of what a view puts in the bottom left corner
     property alias  attributionBottomMargin:        attribution.bottomMargin
     readonly property real attributionHeight:       attribution.visible ? attribution.height : 0 ///< For a view to put its own controls above the credit
@@ -258,7 +259,7 @@ Map {
         id:         attribution
         objectName: "mapAttribution"
         map:        _map
-        text:       QGroundControl.mapEngineManager.mapAttribution(_map.activeMapType.name)
+        credits:    [QGroundControl.mapEngineManager.mapAttribution(_map.activeMapType.name), _map.viewAttribution]
         visible:    _map.showAttribution && text !== ""
     }
 } // Map

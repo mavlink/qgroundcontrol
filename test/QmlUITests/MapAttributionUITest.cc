@@ -3,6 +3,7 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtGui/QColor>
+#include <QtPositioning/QGeoCoordinate>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <QtTest/QTest>
@@ -11,6 +12,8 @@
 #include "FlightMapSettings.h"
 #include "FlyViewSettings.h"
 #include "GeoMapCamera.h"
+#include "MissionController.h"
+#include "PlanViewSettings.h"
 #include "QGCMapEngineManager.h"
 #include "QGCMapPalette.h"
 #include "SettingsManager.h"
@@ -154,6 +157,98 @@ void MapAttributionUITest::_flyViewMapCreditsItsSources()
     // The source that the user sets has no one to credit
     mapTypeFact->setRawValue(QStringLiteral("Custom"));
     QTRY_VERIFY_WITH_TIMEOUT(!credit->isVisible(), TestTimeout::shortMs());
+
+    stopUI();
+}
+
+void MapAttributionUITest::_planViewMapCreditsItsSources_data()
+{
+    QTest::addColumn<bool>("geoMapEngine");
+
+    QTest::newRow("QtLocation") << false;
+    QTest::newRow("GeoMap") << true;
+}
+
+void MapAttributionUITest::_planViewMapCreditsItsSources()
+{
+    QFETCH(bool, geoMapEngine);
+
+    SettingsManager* const settings = SettingsManager::instance();
+    Fact* const mapProviderFact = settings->flightMapSettings()->mapProvider();
+    Fact* const mapTypeFact = settings->flightMapSettings()->mapType();
+    Fact* const missionStatusFact = settings->planViewSettings()->showMissionItemStatus();
+    const auto restoreSettings =
+        qScopeGuard([mapProviderFact, mapTypeFact, missionStatusFact, savedMapProvider = mapProviderFact->rawValue(),
+                     savedMapType = mapTypeFact->rawValue(), savedMissionStatus = missionStatusFact->rawValue()] {
+            mapProviderFact->setRawValue(savedMapProvider);
+            mapTypeFact->setRawValue(savedMapType);
+            missionStatusFact->setRawValue(savedMissionStatus);
+        });
+    mapProviderFact->setRawValue(QStringLiteral("Bing"));
+    mapTypeFact->setRawValue(QStringLiteral("Hybrid"));
+    missionStatusFact->setRawValue(true);
+    // The Plan View has a GeoMap beside its tabbed panel only
+    setUseTabbedPlanPanel(true);
+    setUseGeoMapPlanEngine(geoMapEngine);
+
+    startUI();
+    if (QTest::currentTestFailed()) {
+        return;
+    }
+    if (geoMapEngine) {
+        QVERIFY2(expectSoftwareBackendWarnings(/*strict*/ false).has_value(),
+                 "No renderer interface on the main window");
+    }
+
+    QVERIFY(clickToolSelectDropdownButton(QStringLiteral("toolbar_viewPlan")));
+    QQuickItem* const planView = findVisibleItem(_rootItem, QStringLiteral("mainView_plan"), TestTimeout::mediumMs());
+    QVERIFY2(planView, "Plan View not visible");
+    QQuickItem* const map = findVisibleItem(planView, QStringLiteral("planView_map"), TestTimeout::mediumMs());
+    QVERIFY2(map, "Plan View map not visible");
+    // Only a GeoMap has a camera
+    QCOMPARE(map->property("camera").isValid(), geoMapEngine);
+    QQuickItem* const credit = findVisibleItem(map, QStringLiteral("mapAttribution"), TestTimeout::mediumMs());
+    QVERIFY2(credit, "the map shows no credit");
+    const auto creditText = [credit] { return credit->property("text").toString(); };
+    const QString imageryCredit = QGCMapEngineManager::mapAttribution(QStringLiteral("Bing Hybrid"));
+    QTRY_COMPARE_WITH_TIMEOUT(creditText(), imageryCredit, TestTimeout::shortMs());
+
+    // The tabbed panel shows the tool strip and the mission status on its Mission tab, which a plan without a home
+    // position does not open. A click on the map sets that position: the test sets it as the click does.
+    auto* const missionController =
+        qobject_cast<MissionController*>(planView->property("_missionController").value<QObject*>());
+    QVERIFY2(missionController, "the Plan View has no mission controller");
+    missionController->setHomePosition(QGeoCoordinate(47.397742, 8.545594));
+    const QString missionTab = QStringLiteral("planPanel_tab_mission");
+    QVERIFY(verifyEnabled(missionTab, true, QStringLiteral("plan with a home position")));
+    QVERIFY(clickButton(missionTab));
+    QQuickItem* const toolStrip =
+        findVisibleItem(planView, QStringLiteral("planView_toolStrip"), TestTimeout::shortMs());
+    QVERIFY2(toolStrip, "tool strip not visible");
+    QQuickItem* const missionStatus =
+        findVisibleItem(planView, QStringLiteral("planView_missionStatus"), TestTimeout::shortMs());
+    QVERIFY2(missionStatus, "mission status not visible");
+
+    // The mission status draws the heights of the elevation provider, as the terrain profile of the mission: while
+    // it does, that provider is credited after the imagery
+    const QString elevationCredit = QGCMapEngineManager::mapAttribution(
+        settings->flightMapSettings()->elevationMapProvider()->rawValue().toString());
+    QVERIFY2(!elevationCredit.isEmpty(), "the elevation provider has no credit");
+    QTRY_COMPARE_WITH_TIMEOUT(creditText(), imageryCredit + QStringLiteral(" | ") + elevationCredit,
+                              TestTimeout::shortMs());
+
+    // The credit is on the map, clear of what the Plan View puts in that corner, and under the scale
+    QTRY_COMPARE_GE_WITH_TIMEOUT(_sceneRect(credit).left(), _sceneRect(toolStrip).right(), TestTimeout::shortMs());
+    QTRY_COMPARE_LE_WITH_TIMEOUT(_sceneRect(credit).bottom(), _sceneRect(missionStatus).top(), TestTimeout::shortMs());
+    QVERIFY(_sceneRect(map).contains(_sceneRect(credit)));
+    QQuickItem* const scale =
+        findVisibleItem(planView, geoMapEngine ? QStringLiteral("geoMapScale") : QStringLiteral("planView_mapScale"));
+    QVERIFY2(scale, "map scale not visible");
+    QCOMPARE_LE(_sceneRect(scale).bottom(), _sceneRect(credit).top());
+
+    // Without the terrain profile, the Plan View draws nothing of the elevation provider
+    missionStatusFact->setRawValue(false);
+    QTRY_COMPARE_WITH_TIMEOUT(creditText(), imageryCredit, TestTimeout::shortMs());
 
     stopUI();
 }

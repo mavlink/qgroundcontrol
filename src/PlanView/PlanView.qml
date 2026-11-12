@@ -50,6 +50,8 @@ Item {
     // Margins which keep what the map shows in its bottom left corner clear of the tool strip and of the mission status
     readonly property real  _mapCornerLeftMargin: _leftToolWidth + _margin
     readonly property real  _mapCornerBottomMargin: (missionStatus.visible ? mainPlanViewArea.height - missionStatus.y : 0) + _margin
+    // The terrain profile draws the heights of the elevation provider
+    readonly property string _terrainProfileAttribution: terrainStatus.visible ? QGroundControl.elevationProviderNotice : ""
 
     readonly property int _layerMission: PlanEditLayers.layerMission
     readonly property int _layerPlan: PlanEditLayers.layerPlan
@@ -363,6 +365,7 @@ Item {
                 controlsTopMargin: _root._toolsMargin
                 attributionLeftMargin: _root._mapCornerLeftMargin
                 attributionBottomMargin: _root._mapCornerBottomMargin
+                viewAttribution: _root._terrainProfileAttribution
                 _nonInteractiveOpacity: _root._nonInteractiveOpacity
 
                 onMapClicked: (mouse) => _root._onEditorMapClicked(mouse)
@@ -382,6 +385,7 @@ Item {
                 planView: true
                 attributionLeftMargin: _root._mapCornerLeftMargin
                 attributionBottomMargin: _root._mapCornerBottomMargin
+                viewAttribution: _root._terrainProfileAttribution
 
                 zoomLevel: QGroundControl.flightMapZoom
                 center: QGroundControl.flightMapPosition
@@ -538,6 +542,7 @@ Item {
         // Left tool strip
         ToolStrip {
             id: toolStrip
+            objectName: "planView_toolStrip"
             anchors.margins: _toolsMargin
             anchors.left: parent.left
             anchors.top: parent.top
@@ -646,6 +651,7 @@ Item {
 
         // The GeoMap engine shows its own scale next to its camera controls
         MapScale {
+            objectName: "planView_mapScale"
             anchors.margins: _toolsMargin
             anchors.left: toolStrip.right
             anchors.top: parent.top
@@ -780,6 +786,7 @@ Item {
 
         RowLayout {
             id: missionStatus
+            objectName: "planView_missionStatus"
             anchors.margins: _toolsMargin
             anchors.left: _calcLeftAnchor()
             anchors.right: rightPanel.left

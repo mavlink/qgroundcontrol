@@ -47,12 +47,13 @@ Item {
     property real   _widgetMargin:          ScreenTools.defaultFontPixelWidth * 0.75
     property var    _layerOccluders:        widgetLayer.occluders
     property var    _mapOccluders:          _layerOccluders.all.concat(customOverlay.customOccluders).map(r => Qt.rect(r.x + widgetLayer.x, r.y + widgetLayer.y, r.width, r.height))
-    // Margins which keep what the map shows in its bottom left corner clear of the tool strip, and of the PiP window and the virtual joystick
-    // of the main window. A map that is popped out to a window of its own has that corner free.
-    property real   _mapCornerLeftMargin:   _mainWindowIsMap ? widgetLayer.x + _layerOccluders.toolStrip.x + _layerOccluders.toolStrip.width + _widgetMargin
-                                                             : _margins
-    property real   _mapCornerBottomMargin: _mainWindowIsMap ? mapHolder.height - widgetLayer.y - Math.min(_layerOccluders.pipView.y, _layerOccluders.virtualJoystickLeft.y) + ScreenTools.defaultFontPixelWidth / 2
-                                                             : _margins
+    // Margins which keep what a view shows in the bottom left corner of the main window clear of the tool strip, and of the PiP window and
+    // the virtual joystick
+    property real   _windowCornerLeftMargin:   widgetLayer.x + _layerOccluders.toolStrip.x + _layerOccluders.toolStrip.width + _widgetMargin
+    property real   _windowCornerBottomMargin: mapHolder.height - widgetLayer.y - Math.min(_layerOccluders.pipView.y, _layerOccluders.virtualJoystickLeft.y) + ScreenTools.defaultFontPixelWidth / 2
+    // A map that is popped out to a window of its own has that corner free
+    property real   _mapCornerLeftMargin:   _mainWindowIsMap ? _windowCornerLeftMargin : _margins
+    property real   _mapCornerBottomMargin: _mainWindowIsMap ? _windowCornerBottomMargin : _margins
 
     property real   _fullItemZorder:    0
     property real   _pipItemZorder:     QGroundControl.zOrderWidgets
@@ -194,6 +195,19 @@ Item {
             z:            1
             anchors.fill: parent
             visible:      _is3DMode
+        }
+
+        // The 3D View fills the main window, whichever of the map and the video is in the PiP window
+        Binding {
+            target:   viewer3DLoader.item
+            property: "attributionLeftMargin"
+            value:    _root._windowCornerLeftMargin
+        }
+
+        Binding {
+            target:   viewer3DLoader.item
+            property: "attributionBottomMargin"
+            value:    _root._windowCornerBottomMargin
         }
 
         Connections {

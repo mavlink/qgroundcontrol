@@ -39,6 +39,8 @@ GeoMap {
     property alias attributionBottomMargin: attribution.bottomMargin
     /// For a view to put its own controls above the credit
     readonly property real attributionHeight: attribution.visible ? attribution.height : 0
+    /// Credit of what a view draws beside the map from another source: it follows the credits of the map
+    property string viewAttribution: ""
 
     readonly property bool isSatelliteMap: QGroundControl.mapEngineManager.isSatelliteMap(root.mapType)
     readonly property var gcsPosition: QGroundControl.positionManager.gcsPosition
@@ -190,14 +192,13 @@ GeoMap {
         objectName: "mapAttribution"
         z: 1  // Above the content that views add
         map: root
-        text: {
-            const credits = [QGroundControl.mapEngineManager.mapAttribution(root.mapType)]
+        credits: [
+            QGroundControl.mapEngineManager.mapAttribution(root.mapType),
             // The relief is drawn in 3D only
-            if (root.terrain && root.camera.mode === GeoMapCamera.Mode3D) {
-                credits.push(QGroundControl.mapEngineManager.terrainAttribution)
-            }
-            return credits.filter(credit => credit !== "").join(" | ")
-        }
+            (root.terrain && root.camera.mode === GeoMapCamera.Mode3D)
+                ? QGroundControl.mapEngineManager.terrainAttribution : "",
+            root.viewAttribution
+        ]
         visible: root.showAttribution && text !== ""
     }
 
@@ -217,6 +218,7 @@ GeoMap {
             }
 
             MapScale {
+                objectName: "geoMapScale"
                 anchors.verticalCenter: parent.verticalCenter
                 mapControl: root
                 autoHide: true

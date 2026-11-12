@@ -3,6 +3,7 @@ import QtQuick3D
 
 import QGroundControl
 import QGroundControl.Controls
+import QGroundControl.FlightMap
 
 View3D {
     id: topView
@@ -12,9 +13,17 @@ View3D {
     readonly property real _viewDistance: 50000
     readonly property var _gpsRef: QGCViewer3DManager.gpsRef
     readonly property bool _mapLoaded: QGCViewer3DManager.mapProvider ? QGCViewer3DManager.mapProvider.mapLoaded : false
+    // Viewer3DTerrainTexture draws the ground with the imagery of the map that the user chose
+    readonly property string _groundMap: QGroundControl.mapEngineManager.chosenMap
 
     // Exposed so FlyView can position the scale bar alongside the other widgets
     readonly property Viewer3DCameraController cameraController: _cameraController
+
+    /// As a map has it, for the labels that lie on the view
+    readonly property bool isSatelliteMap: QGroundControl.mapEngineManager.isSatelliteMap(_groundMap)
+    /// Larger margins keep the credit clear of what a view puts in the bottom left corner
+    property alias attributionLeftMargin: attribution.leftMargin
+    property alias attributionBottomMargin: attribution.bottomMargin
 
     camera: standAloneScene.cameraOne
 
@@ -186,6 +195,14 @@ View3D {
     Viewer3DCameraControls {
         anchors.fill: parent
         controller: cameraController
+    }
+
+    MapAttribution {
+        id: attribution
+        objectName: "mapAttribution"
+        map: topView
+        credits: [QGroundControl.mapEngineManager.mapAttribution(topView._groundMap)]
+        visible: text !== ""
     }
 
     TapHandler {

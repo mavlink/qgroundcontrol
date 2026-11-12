@@ -14,6 +14,8 @@ class MapAttributionUITest : public QmlUITestBase
 private slots:
     void _flyViewMapCreditsItsSources_data();
     void _flyViewMapCreditsItsSources();
+    void _planViewMapCreditsItsSources_data();
+    void _planViewMapCreditsItsSources();
 
 private:
     static QRectF _sceneRect(const QQuickItem* item);
