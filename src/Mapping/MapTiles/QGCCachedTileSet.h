@@ -52,7 +52,9 @@ public:
     ~QGCCachedTileSet();
 
     Q_INVOKABLE void createDownloadTask();
+    /// Downloads the tiles that the set lacks: those that failed, and those a cancel left
     Q_INVOKABLE void resumeDownloadTask();
+    /// Stops the download at once: the requests in flight are aborted, and are no errors of the set
     Q_INVOKABLE void cancelDownloadTask();
 
     const QString& name() const { return _name; }
@@ -241,10 +243,8 @@ signals:
     void selectedChanged();
     void nameChanged();
 
-private slots:
-    void _tileListFetched(const QQueue<QGCTile*>& tiles);
-
 private:
+    void _tileListFetched(const QQueue<QGCTile*>& tiles, quint32 downloadSerial);
     void _prepareDownload();
     void _doneWithDownload();
     void _tileReplyFinished(QGCTileReply* reply, const QString& hash);
@@ -273,7 +273,8 @@ private:
     bool _noMoreTiles = false;
     bool _batchRequested = false;
     bool _selected = false;
-    bool _cancelPending = false;
+    /// Counts the cancelled downloads: a download list is used by the download that asked for it only
+    quint32 _downloadSerial = 0;
     QDateTime _creationDate;
 
     QHash<QString, QGCTileReply*> _replies;

@@ -26,4 +26,8 @@ private slots:
     void _testSetSelectedEmitsSignal();
     void _testDownload_data();
     void _testDownload();
+    void _testCancelDownload_data();
+    void _testCancelDownload();
+    void _testResumeAfterCancel_data();
+    void _testResumeAfterCancel();
 };

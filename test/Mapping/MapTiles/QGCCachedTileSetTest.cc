@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <memory>
 
+#include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtTest/QSignalSpy>
@@ -14,6 +15,92 @@
 #include "QGCMapUrlEngine.h"
 #include "TileReplyNetworkMock.h"
 #include "UnitTestTileGenerator.h"
+
+namespace {
+
+// The region of a download test lies within one tile at this zoom
+constexpr int kTileSetTestMinZoom = 14;
+constexpr double kTileSetTestTopLat = 47.3905;
+constexpr double kTileSetTestBottomLat = 47.3895;
+constexpr double kTileSetTestHalfLonSpan = 0.0005;
+// With this zoom the region has more tiles than a set requests at a time, and fewer than the database gives a set
+// to download at a time
+constexpr int kTileSetTestManyTilesZoom = 19;
+constexpr int kTileSetTestRequestsAtOnce = 6;
+constexpr quint32 kTileSetTestDownloadListSize = 256;
+
+QString tileSetTestMapType()
+{
+    const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
+    for (const QString& type : UrlFactory::getProviderTypes()) {
+        if (!elevationTypes.contains(type)) {
+            return type;
+        }
+    }
+    return QString();
+}
+
+/// A set of \a providerType that is saved in the tile cache database and has downloaded nothing. Its region lies
+/// around \a longitude, and its zooms are kTileSetTestMinZoom to \a maxZoom. Null when it could not be saved.
+std::unique_ptr<QGCCachedTileSet> tileSetTestSavedSet(const QString& name, const QString& providerType,
+                                                      double longitude, int maxZoom)
+{
+    const double leftLon = longitude - kTileSetTestHalfLonSpan;
+    const double rightLon = longitude + kTileSetTestHalfLonSpan;
+    quint32 tileCount = 0;
+    for (int zoom = kTileSetTestMinZoom; zoom <= maxZoom; zoom++) {
+        const QGCTileSet tiles =
+            UrlFactory::getTileCount(zoom, leftLon, kTileSetTestTopLat, rightLon, kTileSetTestBottomLat, providerType);
+        tileCount += tiles.tileCount;
+    }
+
+    QGCMapEngine* const engine = getQGCMapEngine();
+    engine->ensureInitialized();
+
+    QGCCachedTileSet* const newSet = new QGCCachedTileSet(name);
+    newSet->setMapTypeStr(providerType);
+    newSet->setType(providerType);
+    newSet->setTopleftLat(kTileSetTestTopLat);
+    newSet->setTopleftLon(leftLon);
+    newSet->setBottomRightLat(kTileSetTestBottomLat);
+    newSet->setBottomRightLon(rightLon);
+    newSet->setMinZoom(kTileSetTestMinZoom);
+    newSet->setMaxZoom(maxZoom);
+    newSet->setTotalTileCount(tileCount);
+
+    bool saved = false;
+    // Declared after what its signal writes, so that a late signal is dropped
+    const QObject savedContext;
+    // The task owns the set until it is saved
+    QGCCreateTileSetTask* const createTask = new QGCCreateTileSetTask(newSet);
+    (void) QObject::connect(createTask, &QGCCreateTileSetTask::tileSetSaved, &savedContext, [&saved] { saved = true; });
+    if (!engine->addTask(createTask)) {
+        createTask->deleteLater();
+        return nullptr;
+    }
+    if (!QTest::qWaitFor([&saved] { return saved; }, TestTimeout::mediumMs())) {
+        return nullptr;
+    }
+    return std::unique_ptr<QGCCachedTileSet>(newSet);
+}
+
+/// Waits until the database worker has run the tasks queued so far, and the main thread has handled what they
+/// reported: the worker runs its tasks in order
+[[nodiscard]] bool tileSetTestTasksDone()
+{
+    bool done = false;
+    // Declared after what its signal writes, so that a late signal is dropped
+    const QObject sentinelContext;
+    QGCFetchTileTask* const sentinelTask = new QGCFetchTileTask(QStringLiteral("no such tile"));
+    (void) QObject::connect(sentinelTask, &QGCMapTask::error, &sentinelContext, [&done] { done = true; });
+    if (!getQGCMapEngine()->addTask(sentinelTask)) {
+        sentinelTask->deleteLater();
+        return false;
+    }
+    return QTest::qWaitFor([&done] { return done; }, TestTimeout::mediumMs());
+}
+
+}  // namespace
 
 void QGCCachedTileSetTest::initTestCase()
 {
@@ -264,14 +351,7 @@ void QGCCachedTileSetTest::_testDownload_data()
     QTest::addColumn<bool>("lastTileFails");
     QTest::addColumn<QString>("expectedWarning");
 
-    QString mapType;
-    const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
-    for (const QString& type : UrlFactory::getProviderTypes()) {
-        if (!elevationTypes.contains(type)) {
-            mapType = type;
-            break;
-        }
-    }
+    const QString mapType = tileSetTestMapType();
 
     QTest::newRow("tiles stored in the set")
         << mapType << 8.50 << 16 << tileReplyPngBody() << true << false << false << QString();
@@ -301,40 +381,13 @@ void QGCCachedTileSetTest::_testDownload()
 
     QVERIFY(!providerType.isEmpty());
 
-    // The region lies within one tile at zoom 14
-    constexpr int kMinZoom = 14;
-    constexpr double kTopLat = 47.3905;
-    constexpr double kBottomLat = 47.3895;
-    const double leftLon = longitude - 0.0005;
-    const double rightLon = longitude + 0.0005;
-    quint32 tileCount = 0;
-    for (int zoom = kMinZoom; zoom <= maxZoom; zoom++) {
-        tileCount += UrlFactory::getTileCount(zoom, leftLon, kTopLat, rightLon, kBottomLat, providerType).tileCount;
-    }
-    QCOMPARE_GE(tileCount, static_cast<quint32>(maxZoom - kMinZoom + 1));
+    const QString name = QStringLiteral("download test: %1").arg(QString::fromLatin1(QTest::currentDataTag()));
+    const std::unique_ptr<QGCCachedTileSet> set = tileSetTestSavedSet(name, providerType, longitude, maxZoom);
+    QVERIFY(set);
+    const quint32 tileCount = set->totalTileCount();
+    QCOMPARE_GE(tileCount, static_cast<quint32>(maxZoom - kTileSetTestMinZoom + 1));
     const quint32 failedCount = lastTileFails ? 1U : (failed ? tileCount : 0U);
     const quint32 storedCount = stored ? (tileCount - failedCount) : 0U;
-
-    QGCMapEngine* const engine = getQGCMapEngine();
-    engine->ensureInitialized();
-
-    const QString name = QStringLiteral("download test: %1").arg(QString::fromLatin1(QTest::currentDataTag()));
-    QGCCachedTileSet* const newSet = new QGCCachedTileSet(name);
-    newSet->setMapTypeStr(providerType);
-    newSet->setType(providerType);
-    newSet->setTopleftLat(kTopLat);
-    newSet->setTopleftLon(leftLon);
-    newSet->setBottomRightLat(kBottomLat);
-    newSet->setBottomRightLon(rightLon);
-    newSet->setMinZoom(kMinZoom);
-    newSet->setMaxZoom(maxZoom);
-    newSet->setTotalTileCount(tileCount);
-
-    QGCCreateTileSetTask* const createTask = new QGCCreateTileSetTask(newSet);
-    QSignalSpy savedSpy(createTask, &QGCCreateTileSetTask::tileSetSaved);
-    QVERIFY(engine->addTask(createTask));
-    QVERIFY_SIGNAL_COUNT_WAIT(savedSpy, 1, TestTimeout::mediumMs());
-    const std::unique_ptr<QGCCachedTileSet> set(newSet);  // a saved set no longer belongs to its task
 
     TileReplyMockNam nam;
     nam.body = serverBody;
@@ -369,8 +422,7 @@ void QGCCachedTileSetTest::_testDownload()
     }
 
     // The set as the database has it, which is what a restart loads: its tiles are stored in it, not only in the
-    // default set, and it is complete unless a tile is left to download. The database worker runs tasks in order,
-    // so the sets are all reported once the task queued after them is.
+    // default set, and it is complete unless a tile is left to download.
     QList<QGCCachedTileSet*> databaseSets;
     const auto deleteSets = qScopeGuard([&databaseSets] { qDeleteAll(databaseSets); });
     // The context of a task's signal is declared after what the signal writes, so that a late signal is dropped
@@ -378,13 +430,8 @@ void QGCCachedTileSetTest::_testDownload()
     QGCFetchTileSetTask* const fetchSetsTask = new QGCFetchTileSetTask();
     connect(fetchSetsTask, &QGCFetchTileSetTask::tileSetFetched, &fetchSetsContext,
             [&databaseSets](QGCCachedTileSet* databaseSet) { databaseSets.append(databaseSet); });
-    QVERIFY(engine->addTask(fetchSetsTask));
-    bool setsReported = false;
-    const QObject sentinelContext;
-    QGCFetchTileTask* const sentinelTask = new QGCFetchTileTask(QStringLiteral("no such tile"));
-    connect(sentinelTask, &QGCMapTask::error, &sentinelContext, [&setsReported] { setsReported = true; });
-    QVERIFY(engine->addTask(sentinelTask));
-    QTRY_VERIFY_WITH_TIMEOUT(setsReported, TestTimeout::mediumMs());
+    QVERIFY(getQGCMapEngine()->addTask(fetchSetsTask));
+    QVERIFY(tileSetTestTasksDone());
 
     const auto databaseSet =
         std::find_if(databaseSets.cbegin(), databaseSets.cend(),
@@ -392,6 +439,118 @@ void QGCCachedTileSetTest::_testDownload()
     QVERIFY(databaseSet != databaseSets.cend());
     QCOMPARE((*databaseSet)->savedTileCount(), storedCount);
     QCOMPARE((*databaseSet)->complete(), failedCount == 0U);
+}
+
+void QGCCachedTileSetTest::_testCancelDownload_data()
+{
+    QTest::addColumn<double>("longitude");  // a region of its own for every row
+    QTest::addColumn<bool>("cancelInSlot");
+
+    QTest::newRow("while its requests are in flight") << 8.90 << false;
+    // The set was about to go on with the download when it emitted the signal
+    QTest::newRow("in a slot of a signal of the set") << 9.00 << true;
+}
+
+// A cancel stops the download at once: also when the set has been given all its tiles to download, which a set
+// with fewer of them than the database gives it at a time has from the start
+void QGCCachedTileSetTest::_testCancelDownload()
+{
+    QFETCH(double, longitude);
+    QFETCH(bool, cancelInSlot);
+
+    const QString name = QStringLiteral("cancel test: %1").arg(QString::fromLatin1(QTest::currentDataTag()));
+    const std::unique_ptr<QGCCachedTileSet> set =
+        tileSetTestSavedSet(name, tileSetTestMapType(), longitude, kTileSetTestManyTilesZoom);
+    QVERIFY(set);
+    QCOMPARE_GT(set->totalTileCount(), static_cast<quint32>(kTileSetTestRequestsAtOnce));
+    QCOMPARE_LT(set->totalTileCount(), kTileSetTestDownloadListSize);
+
+    TileReplyMockNam nam;
+    nam.body = tileReplyPngBody();
+    nam.holdReplies = true;
+    set->setNetworkManager(&nam);
+    set->createDownloadTask();
+    QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, kTileSetTestRequestsAtOnce, TestTimeout::mediumMs());
+
+    quint32 savedCount = 0;
+    if (cancelInSlot) {
+        (void) connect(set.get(), &QGCCachedTileSet::savedTileCountChanged, set.get(),
+                       &QGCCachedTileSet::cancelDownloadTask);
+        nam.replies.constFirst()->finishNow();
+        savedCount = 1;
+    } else {
+        set->cancelDownloadTask();
+    }
+    QVERIFY(!set->downloading());
+    QVERIFY(!set->complete());
+    QCOMPARE(set->savedTileCount(), savedCount);
+
+    // The requests in flight are aborted, which deletes their replies. They are no errors of the set, and no tile is
+    // requested in their place.
+    const auto repliesDeleted = [&nam] {
+        return std::all_of(nam.replies.cbegin(), nam.replies.cend(),
+                           [](const QPointer<TileReplyCannedReply>& reply) { return reply.isNull(); });
+    };
+    QTRY_VERIFY_WITH_TIMEOUT(repliesDeleted(), TestTimeout::mediumMs());
+    QCOMPARE(set->errorCount(), 0U);
+    QCOMPARE(nam.requestCount, kTileSetTestRequestsAtOnce);
+    QVERIFY(!set->downloading());
+}
+
+void QGCCachedTileSetTest::_testResumeAfterCancel_data()
+{
+    QTest::addColumn<double>("longitude");  // a region of its own for every row
+    QTest::addColumn<bool>("requestsInFlight");
+
+    QTest::newRow("cancelled with requests in flight") << 9.10 << true;
+    // The list is of the download that was cancelled: the resumed one asks for a list of its own
+    QTest::newRow("cancelled before its download list arrived") << 9.20 << false;
+}
+
+// A resume downloads every tile that the cancelled download left, once
+void QGCCachedTileSetTest::_testResumeAfterCancel()
+{
+    QFETCH(double, longitude);
+    QFETCH(bool, requestsInFlight);
+
+    const QString name = QStringLiteral("resume test: %1").arg(QString::fromLatin1(QTest::currentDataTag()));
+    const std::unique_ptr<QGCCachedTileSet> set =
+        tileSetTestSavedSet(name, tileSetTestMapType(), longitude, kTileSetTestManyTilesZoom);
+    QVERIFY(set);
+    const quint32 tileCount = set->totalTileCount();
+    QCOMPARE_GT(tileCount, static_cast<quint32>(kTileSetTestRequestsAtOnce));
+    QCOMPARE_LT(tileCount, kTileSetTestDownloadListSize);
+
+    TileReplyMockNam nam;
+    nam.body = tileReplyPngBody();
+    nam.holdReplies = true;
+    set->setNetworkManager(&nam);
+    set->createDownloadTask();
+    if (requestsInFlight) {
+        QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, kTileSetTestRequestsAtOnce, TestTimeout::mediumMs());
+    }
+    const int abortedCount = nam.requestCount;
+    set->cancelDownloadTask();
+
+    set->resumeDownloadTask();
+    QVERIFY(set->downloading());
+    // No request is answered before the set has all its download lists: one list too many would add its tiles to
+    // those that the set downloads
+    QVERIFY(tileSetTestTasksDone());
+    QTRY_COMPARE_WITH_TIMEOUT(nam.requestCount, abortedCount + kTileSetTestRequestsAtOnce, TestTimeout::mediumMs());
+    nam.holdReplies = false;
+    const QList<QPointer<TileReplyCannedReply>> heldReplies = nam.replies;
+    for (const QPointer<TileReplyCannedReply>& reply : heldReplies) {
+        if (reply) {
+            reply->finishNow();
+        }
+    }
+
+    QTRY_VERIFY_WITH_TIMEOUT(!set->downloading(), TestTimeout::mediumMs());
+    QCOMPARE(set->savedTileCount(), tileCount);
+    QVERIFY(set->complete());
+    QCOMPARE(set->errorCount(), 0U);
+    QCOMPARE(nam.requestCount, abortedCount + static_cast<int>(tileCount));
 }
 
 UT_REGISTER_TEST(QGCCachedTileSetTest, TestLabel::Unit)

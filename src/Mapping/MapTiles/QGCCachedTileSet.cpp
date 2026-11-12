@@ -1,6 +1,7 @@
 #include "QGCCachedTileSet.h"
 
 #include <memory>
+#include <utility>
 
 #include <QtNetwork/QNetworkAccessManager>
 
@@ -59,11 +60,6 @@ QString QGCCachedTileSet::downloadStatus() const
 
 void QGCCachedTileSet::createDownloadTask()
 {
-    if (_cancelPending) {
-        setDownloading(false);
-        return;
-    }
-
     if (!_downloading) {
         setErrorCount(0);
         setDownloading(true);
@@ -71,7 +67,9 @@ void QGCCachedTileSet::createDownloadTask()
     }
 
     QGCGetTileDownloadListTask* task = new QGCGetTileDownloadListTask(_id, kTileBatchSize);
-    (void) connect(task, &QGCGetTileDownloadListTask::tileListFetched, this, &QGCCachedTileSet::_tileListFetched);
+    (void) connect(
+        task, &QGCGetTileDownloadListTask::tileListFetched, this,
+        [this, serial = _downloadSerial](const QQueue<QGCTile*>& tiles) { _tileListFetched(tiles, serial); });
     if (_manager) {
         (void) connect(task, &QGCMapTask::error, _manager, &QGCMapEngineManager::taskError);
     }
@@ -87,8 +85,11 @@ void QGCCachedTileSet::createDownloadTask()
 
 void QGCCachedTileSet::resumeDownloadTask()
 {
-    _cancelPending = false;
+    if (_downloading) {
+        return;
+    }
 
+    // Also the tiles that a cancelled download was given: the database has them as being downloaded
     QGCUpdateTileDownloadStateTask* task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StatePending, "*");
     if (!getQGCMapEngine()->addTask(task)) {
         task->deleteLater();
@@ -99,11 +100,31 @@ void QGCCachedTileSet::resumeDownloadTask()
 
 void QGCCachedTileSet::cancelDownloadTask()
 {
-    _cancelPending = true;
+    // A download list that is still to arrive is dropped
+    _downloadSerial++;
+    _batchRequested = false;
+
+    qDeleteAll(_tilesToDownload);
+    _tilesToDownload.clear();
+
+    // An aborted request does not finish: its tile is no error of the set, and stays to be fetched
+    for (QGCTileReply* const reply : std::as_const(_replies)) {
+        reply->abort();
+        reply->deleteLater();
+    }
+    _replies.clear();
+
+    setDownloading(false);
 }
 
-void QGCCachedTileSet::_tileListFetched(const QQueue<QGCTile*>& tiles)
+void QGCCachedTileSet::_tileListFetched(const QQueue<QGCTile*>& tiles, quint32 downloadSerial)
 {
+    if (downloadSerial != _downloadSerial) {
+        // The list of a download that was cancelled: a resume gets these tiles from the database again
+        qDeleteAll(tiles);
+        return;
+    }
+
     _batchRequested = false;
     if (tiles.size() < kTileBatchSize) {
         _noMoreTiles = true;
@@ -146,6 +167,11 @@ void QGCCachedTileSet::_doneWithDownload()
 
 void QGCCachedTileSet::_prepareDownload()
 {
+    // A slot of a signal of this set can have cancelled the download that the caller goes on with
+    if (!_downloading) {
+        return;
+    }
+
     if (_tilesToDownload.isEmpty()) {
         if (_noMoreTiles) {
             // A tile that is still being fetched can fail, so the download is done with the last answer
