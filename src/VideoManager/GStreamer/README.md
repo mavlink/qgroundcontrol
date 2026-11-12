@@ -622,7 +622,7 @@ The whole self-test takes well under a second on a working runtime, gives each p
 
 ## Pipeline Observability
 
-QGC supports the standard GStreamer observability env vars. Set them before launching QGC. `GST_DEBUG`, `GST_DEBUG_FILE` and `GST_TRACERS` switch to GStreamer's native log output (see [GStreamer Logging](#gstreamer-logging)), so tracer records keep the format the GStreamer tools expect.
+QGC supports the standard GStreamer observability env vars. Set them before launching QGC. `GST_DEBUG`, `GST_DEBUG_FILE` and `GST_TRACERS` switch to GStreamer's native log output (see [GStreamer Logging](#gstreamer-logging)), so tracer records keep the format the GStreamer tools expect. The tracers below (`latency`, `dots`, `leaks`) are in GStreamer's `coretracers` plugin, which the plugin allowlist includes, so an installed QGC has them too.
 
 ### Pipeline graph dumps (`.dot` files)
 
