@@ -67,6 +67,7 @@ QGCGroupBox {
 
         QGCLabel {
             text: qsTr("Message Types")
+            textFormat: Text.PlainText
             font.pointSize: ScreenTools.smallFontPointSize
             color: qgcPal.colorGrey
         }

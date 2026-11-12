@@ -133,6 +133,7 @@ QGCGroupBox {
         objectName: "rtkSurveyDuration"
         label: root._presentation.acceptedObservationTime ? qsTr("Accepted observation time") : qsTr("Duration")
         fact: root.facts.currentDuration
+        factLabel.textFormat: Text.PlainText
         visible: root._connected && root._presentation.reportsSurveyDuration && root._surveyConnected
     }
 
@@ -141,6 +142,7 @@ QGCGroupBox {
         label: root.facts.baseState.value === GPSReceiverFactGroup.BaseState.Valid ? qsTr("Accuracy")
                                                                                    : qsTr("Current Accuracy")
         fact: root.facts.currentAccuracy
+        factLabel.textFormat: Text.PlainText
         visible: root._connected && root._surveyConnected && root.facts.currentAccuracy.value > 0
     }
 

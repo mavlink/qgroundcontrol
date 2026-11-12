@@ -51,6 +51,7 @@ ToolIndicatorPage {
 
         visible: reported
         labelText: reported ? fact.enumStringValue : ""
+        labelTextFormat: Text.PlainText
     }
 
     // Only states the receiver reports are listed.
@@ -102,10 +103,12 @@ ToolIndicatorPage {
                     LabelledLabel {
                         label: qsTr("Satellites")
                         labelText: root._gps?.count.valueString ?? ""
+                        labelTextFormat: Text.PlainText
                     }
                     LabelledLabel {
                         label: root._gps?.lock.shortDescription ?? ""
                         labelText: root._gps?.lock.enumStringValue ?? ""
+                        labelTextFormat: Text.PlainText
                     }
                     MeasurementLabel {
                         objectName: "vehicleGpsHdop"
@@ -144,6 +147,7 @@ ToolIndicatorPage {
                     LabelledLabel {
                         label: qsTr("GPS Error")
                         labelText: root._gps?.systemErrorText ?? ""
+                        labelTextFormat: Text.PlainText
                         visible: (root._gps?.systemErrors.value ?? 0) > 0
                     }
                 }
