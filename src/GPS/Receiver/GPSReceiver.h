@@ -27,6 +27,7 @@ class GPSReceiverConnectionPolicy;
 class GPSReceiverFactGroup;
 class GPSReceiverSession;
 enum class GPSReceiverSessionEnd;
+class GPSSatelliteModel;
 class GPSSourceHealth;
 class PositionManager;
 class RuntimeScheduler;
@@ -58,6 +59,7 @@ class GPSReceiver : public QObject, private GPSReceiverConnector
     QML_ELEMENT
     QML_UNCREATABLE("Managed by GPSManager")
     Q_MOC_INCLUDE("GPSReceiverFactGroup.h")
+    Q_MOC_INCLUDE("GPSSatelliteModel.h")
 
     Q_PROPERTY(GPSReceiverFactGroup* facts READ facts CONSTANT FINAL)
     /// GPSReceiverFactGroup::constellations(): the satellites used and in view of each constellation in view.
@@ -99,6 +101,9 @@ class GPSReceiver : public QObject, private GPSReceiverConnector
     /// The file the current session is recorded to; empty when it is not recorded, and from the receiver's next
     /// report on once the recording stopped after a file error or at its size limit.
     Q_PROPERTY(QString recordingFile READ recordingFile NOTIFY recordingFileChanged FINAL)
+    /// The satellites the receiver has in view, as far as it describes them: empty for a receiver that only counts its
+    /// satellites, and without one.
+    Q_PROPERTY(GPSSatelliteModel* satellites READ satellites CONSTANT FINAL)
 
     friend class GPSReceiverTest;
     friend class GPSSettingsBindingsTest;
@@ -237,6 +242,8 @@ public:
     /// the session started at and the receiver type.
     QString recordingFile() const;
 
+    GPSSatelliteModel* satellites() const { return _satellites; }
+
 signals:
     void receiverChanged();
     void constellationsChanged();
@@ -370,4 +377,5 @@ private:
     std::shared_ptr<std::atomic_bool> _recordingStopped;
     QString _notifiedRecordingFile;
     bool _recordSessions = false;
+    GPSSatelliteModel* const _satellites;
 };

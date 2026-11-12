@@ -111,6 +111,12 @@ QGCGroupBox {
         labelWrapMode: Text.Wrap
     }
 
+    GPSSatelliteView {
+        objectName: "rtkSatelliteView"
+        satellites: root.receiver.satellites
+        visible: root._connected && root.receiver.satellites.count > 0
+    }
+
     FactRow {
         objectName: "rtkJamming"
         fact: root.facts.jammingState

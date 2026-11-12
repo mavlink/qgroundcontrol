@@ -18,6 +18,8 @@ target_sources(
         GPSReceiverSerialPorts.h
         GPSReceiverSession.cc
         GPSReceiverSession.h
+        GPSSatelliteModel.cc
+        GPSSatelliteModel.h
 )
 # The serial devices behind GPSReceiverSerialPorts, which is the whole serial side of a build without serial links.
 if(NOT QGC_NO_SERIAL_LINK)

@@ -25,6 +25,7 @@ qt_add_qml_module(
         CorrectionsLogSwitch.qml
         CorrectionsStatus.qml
         GcsPositionStatus.qml
+        GPSConstellationPalette.qml
         GPSFactComboField.qml
         GPSFactField.qml
         GPSFactSwitchField.qml
@@ -40,6 +41,9 @@ qt_add_qml_module(
         GPSReceiverSettings.qml
         GPSReceiverSettingsGroup.qml
         GPSReceiverStatus.qml
+        GPSSatelliteSignalBars.qml
+        GPSSatelliteView.qml
+        GPSSkyPlot.qml
         GPSUnits.qml
         GPSWrappingRow.qml
         NTRIPConnectionStatus.qml

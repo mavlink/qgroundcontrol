@@ -62,12 +62,14 @@ set(_qgc_gps_suites
     Qml/GPSCorrectionsPanelTest
     Qml/GPSIndicatorTest
     Qml/GPSReceiverSettingsTest
+    Qml/GPSSatelliteViewTest
     Qml/NTRIPMountpointBrowserTest
     Receiver/GPSReceiverConnectionPolicyTest
     Receiver/GPSReceiverFactGroupTest
     Receiver/GPSReceiverPresentationTest
     Receiver/GPSReceiverSessionTest
     Receiver/GPSReceiverTest
+    Receiver/GPSSatelliteModelTest
 )
 qgc_add_gps_suites(Unit ${_qgc_gps_suites})
 qgc_add_gps_suites("Integration;Vehicle" Corrections/RTCMMAVLinkVehicleTest)

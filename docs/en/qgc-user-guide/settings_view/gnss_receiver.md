@@ -22,6 +22,12 @@ While the vehicle reports no GPS, the toolbar GNSS indicator shows the receiver,
 An identified receiver family or output protocol is shown as _Detected_.
 **Constellations** lists the satellites of each satellite system in view as used/in view, such as _GPS 8/10, Galileo 6/7_; a dash replaces the used count when the receiver does not report which satellites it uses.
 The row is not shown when the receiver does not report which system its satellites belong to.
+**Satellite Signals** shows the satellites one by one, for a receiver that describes them: u-blox receivers do (UBX NAV-SAT, or NAV-SVINFO on older receivers), and so does any receiver that sends NMEA GSV.
+**Show** opens the view and **Hide** closes it; it starts open on the settings page and closed in the narrower drop-down of the GNSS indicator.
+Each satellite has a bar as tall as its signal is strong (C/N0, a full bar at 50 dB-Hz), after the name of its satellite system and in that system's color.
+The sky plot places each satellite by azimuth and elevation, with north at the top, the horizon as the rim and the point overhead in the center; its rings mark 30 and 60 degrees of elevation.
+A filled bar or marker is a satellite the receiver uses in its solution.
+A receiver that does not report this, as one that sends GSV without GSA, shows outlines only.
 The **Antenna** is shown as _OK_, _Open_ or _Short_ when the receiver supervises its antenna and reports it (u-blox MON-RF or MON-HW, also from a passive receiver); an open or shorted antenna turns the GNSS indicator orange, as jamming does.
 
 ## GNSS Receiver {#receiver}

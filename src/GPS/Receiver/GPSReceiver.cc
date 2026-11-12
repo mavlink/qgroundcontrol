@@ -14,6 +14,7 @@
 #include "GPSReceiverMessages.h"
 #include "GPSReceiverSession.h"
 #include "GPSRecordingTransport.h"
+#include "GPSSatelliteModel.h"
 #include "GPSSourceHealth.h"
 #include "PositionManager.h"
 #include "QGCLoggingCategory.h"
@@ -65,6 +66,7 @@ GPSReceiver::GPSReceiver(QObject* parent, RuntimeScheduler* scheduler, const Dep
     , _outputOverflowTask(_scheduler, this)
     , _pollTask(_scheduler, this)
     , _recordingDirectory(dependencies.recordingDirectory)
+    , _satellites(new GPSSatelliteModel(this))
 {
     qCDebug(GPSReceiverLog) << this;
     // A silent receiver stays connected, so its last solution must not remain on display.
@@ -195,6 +197,7 @@ void GPSReceiver::_emitChanges()
 void GPSReceiver::_resetStatus()
 {
     _facts->_reset();
+    _satellites->setSatellites({});
     _outputOverflowUs = 0;
     _outputOverflowTask.cancel();
     _outputOverflowWarning.clear();
@@ -203,6 +206,7 @@ void GPSReceiver::_resetStatus()
 void GPSReceiver::_clearStaleSolution()
 {
     _facts->_clearSolution();
+    _satellites->setSatellites({});
     _emitChanges();
 }
 
@@ -595,6 +599,9 @@ void GPSReceiver::_onSatelliteInfoUpdated(const GPSSatelliteReport& msg)
     qCDebug(GPSReceiverLog) << QStringLiteral("%1 in view, %2 used")
                                    .arg(inView)
                                    .arg(msg.used ? QString::number(used) : QStringLiteral("unknown"));
+    // Before the Facts, which notify as they are written: an observer of one may end the session, which empties the
+    // model.
+    _satellites->setSatellites(msg.satellitesInView());
     _facts->_setSatellites(msg);
     _emitChanges();
 }
