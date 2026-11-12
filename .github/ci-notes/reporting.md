@@ -58,7 +58,9 @@ actions after these sections. What each action uploads after a failure is listed
   artifacts and job summary reports are produced either way.
 - **Coverage**: GCC uses atomic counter updates for worker threads; gcovr tolerates the known GCC
   negative-counter bug and reports discarded counters. Codecov receives only the Cobertura
-  `coverage.xml`, over OIDC (fork PRs upload tokenless); the step summary, threshold check, and
+  `coverage.xml`, over OIDC (fork PRs upload tokenless), and posts its pull request comment but
+  no `codecov/project` or `codecov/patch` check (`.github/codecov.yml`): both were informational,
+  and Codecov sometimes left one "in progress" for good. The step summary, threshold check, and
   build-results comment read gcovr's `coverage-summary.json`. `coverage_report.py` fails before
   generating them when the tests wrote no `.gcda` counters. `verify_coverage_thresholds.py
   --build-dir` reads thresholds from `CMakeCache.txt` and compares exact covered/total counts, not
