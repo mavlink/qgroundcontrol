@@ -1460,6 +1460,10 @@ void GPSReceiverTest::_configurationDiagnosticRetained()
     QVERIFY(!receiver.facts()->telemetryAvailable());
     QCOMPARE(receiver.reconnecting(), reconnecting);
     QCOMPARE(receiver.errorMessage(), expected);
+    // The settings show the permission for a receiver that asked for it, while they show that failure.
+    QCOMPARE(receiver.persistentChangesRequired(), error == GPSConnectionError::ConsentRequired);
+    receiver.setConnectionError(QString());
+    QVERIFY(!receiver.persistentChangesRequired());
 }
 
 void GPSReceiverTest::_persistentConsentScope_data()

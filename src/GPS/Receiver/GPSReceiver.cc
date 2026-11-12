@@ -210,7 +210,10 @@ void GPSReceiver::_emitChanges()
         emit persistentChangesAllowedChanged();
     }
     const QString error = errorMessage();
-    if (std::exchange(_notified.errorMessage, error) != error) {
+    const bool errorChanged = std::exchange(_notified.errorMessage, error) != error;
+    const bool requiredChanged =
+        std::exchange(_notified.persistentChangesRequired, _persistentChangesRequired) != _persistentChangesRequired;
+    if (errorChanged || requiredChanged) {
         emit errorMessageChanged();
     }
     const QList<GPSConstellationSatellites> satellites = constellations();
@@ -352,14 +355,15 @@ void GPSReceiver::_endSession(GPSConnectionError error, const QString& detail, G
     if (outcome == GPSReceiverSessionOutcome::AutoRetrying && error == GPSConnectionError::ConsentRequired &&
         !detail.isEmpty() && family) {
         qCWarning(GPSReceiverLog) << "GPS receiver did not accept configuration";
-        _setError(GPSReceiverMessages::consentRefused(detail, family->type));
+        _setError(GPSReceiverMessages::consentRefused(detail, family->type), true);
     } else {
         if (outcome == GPSReceiverSessionOutcome::AutoRetrying || outcome == GPSReceiverSessionOutcome::Retrying) {
             qCWarning(GPSReceiverLog) << "GPS receiver session ended:" << error << detail;
         } else if (outcome == GPSReceiverSessionOutcome::None && !portRemoved) {
             logConnectionError(error, detail);
         }
-        _setError(GPSReceiverMessages::sessionEnded(outcome, error, detail, end));
+        _setError(GPSReceiverMessages::sessionEnded(outcome, error, detail, end),
+                  error == GPSConnectionError::ConsentRequired);
     }
     // Last, because the session's registrations notify as they end and the status Facts as they reset, and an
     // observer may connect or disconnect from there.

@@ -98,6 +98,8 @@ class GPSReceiver : public QObject, private GPSReceiverConnector
     /// The one-use permission to write receiver flash, for the configuration currently selected.
     Q_PROPERTY(bool persistentChangesAllowed READ persistentChangesAllowed WRITE setPersistentChangesAllowed NOTIFY
                    persistentChangesAllowedChanged FINAL)
+    /// The connection that errorMessage() reports ended because the receiver needs that permission.
+    Q_PROPERTY(bool persistentChangesRequired READ persistentChangesRequired NOTIFY errorMessageChanged FINAL)
     Q_PROPERTY(RTKSettings::ConnectionType effectiveConnectionType READ effectiveConnectionType NOTIFY
                    configurationChanged FINAL)
     Q_PROPERTY(bool connectionSupported READ connectionSupported NOTIFY configurationChanged FINAL)
@@ -262,6 +264,8 @@ public:
     /// Granting permission only lasts until the configuration changes, a session starts or ends, or it is used.
     void setPersistentChangesAllowed(bool allowed);
 
+    bool persistentChangesRequired() const { return _persistentChangesRequired; }
+
     RTKSettings::ConnectionType effectiveConnectionType() const { return _connectability.connection; }
 
     /// UDP only receives, so a receiver QGroundControl configures needs serial, TCP or Bluetooth.
@@ -330,6 +334,7 @@ private:
         quint64 configurationRevision = 0;
         bool persistentChangesAllowed = false;
         QString errorMessage;
+        bool persistentChangesRequired = false;
         ReceiverState receiver;
         QString statusText;
         QString summaryLabel;
@@ -383,7 +388,13 @@ private:
     /// Waits for the workers of retired sessions and deletes those that have exited.
     void _joinRetiredWorkers();
 
-    void _setError(const QString& message = {}) { _errorMessage = message; }
+    /// @a consentRequired: the message is of a connection the receiver ended for want of the permission to write its
+    /// flash.
+    void _setError(const QString& message = {}, bool consentRequired = false)
+    {
+        _errorMessage = message;
+        _persistentChangesRequired = consentRequired;
+    }
 
     /// Shows the output-overflow warning for a report the receiver has not had before.
     void _updateOutputOverflow(uint64_t receiptUs);
@@ -423,6 +434,7 @@ private:
     Notified _notified;
     bool _destroying = false;
     bool _persistentChangesAllowed = false;
+    bool _persistentChangesRequired = false;
     /// The constellations last notified, as the values in Notified are.
     QList<GPSConstellationSatellites> _notifiedConstellations;
     /// shutdown() is running.
