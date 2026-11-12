@@ -21,4 +21,5 @@ private slots:
     void _testClassicDiscoveryTimerStopsOnError();
     void _testDestroyClassicWorker();
     void _testDestroyBleWorker();
+    void _testLinkWithoutBluetoothConfiguration();
 };
