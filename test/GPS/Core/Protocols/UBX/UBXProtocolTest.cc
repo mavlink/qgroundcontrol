@@ -739,6 +739,36 @@ void reentrantPayload(GPSTestClock& clock)
     QCOMPARE(receiver.model.transportOperations, 0);
 }
 
+/// The identity is read from its frame before the unknown board is logged, for the same reason.
+void reentrantIdentity(GPSTestClock& clock)
+{
+    const GPSProtocolLogCapture log;
+    UBXReceiver receiver(clock);
+    GPSProtocolRuntime driver(UBX::FAMILY, ubxLink(receiver));
+    // The MON-VER of hardware no profile names, with the extensions that follow its versions.
+    Bytes version(UBX::WIRE_SIZE<UBX::MonVer> + 3 * UBX::WIRE_SIZE<UBX::MonVerExtension>, 0);
+    const auto put = [&version](size_t offset, std::string_view text) {
+        std::ranges::copy(text, version.begin() + static_cast<std::ptrdiff_t>(offset));
+    };
+    put(0, "EXT CORE 9.99");
+    put(30, "00770000");
+    put(40, "FWVER=HPG 9.99");
+    put(70, "PROTVER=99.00");
+    put(100, "MOD=ZED-F99P");
+    bool reentered = false;
+    const WarningHook hook([&](const QString& message) {
+        if (!reentered && message.startsWith(u"unknown board hw")) {
+            reentered = true;
+            // As long as the identity, so the nested frame takes all of its storage.
+            (void) driver.consume(ubxFrame(Msg::INF_NOTICE.value(), Bytes(version.size(), 'x')));
+        }
+    });
+    (void) driver.decode(ubxFrame(Msg::MON_VER.value(), version));
+    QVERIFY(reentered);
+    QCOMPARE(log.warnings(), QStringList{"unknown board hw: 00770000"});
+    QCOMPARE(driver.identity(), QStringLiteral("ZED-F99P HPG 9.99"));
+}
+
 void isolatedFrameAndControl(GPSTestClock& clock)
 {
     UBX::FrameDecoder decoder;
@@ -1717,6 +1747,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"navigation-fix-flags", navigationFixFlags},
     {"transactional-frames", transactionalFrames},
     {"reentrant-payload", reentrantPayload},
+    {"reentrant-identity", reentrantIdentity},
     {"reconfigure-does-not-reuse-stop-confirmation", reconfigureDoesNotReuseStopConfirmation},
     {"reconfigure-forgets-identity", reconfigureForgetsIdentity},
     {"survey-stop-poll-failures", surveyStopPollFailures},

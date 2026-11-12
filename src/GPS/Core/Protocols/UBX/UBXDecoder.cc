@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <array>
 #include <string_view>
+#include <utility>
 #include <variant>
 
 #include <QtCore/QByteArrayView>
@@ -463,17 +464,16 @@ GPSReceiveUpdates Protocol::_decodeSurveyIn(std::span<const uint8_t> payload, GP
 
 void Protocol::_decodeMonVer(std::span<const uint8_t> payload)
 {
-    auto& identity = _identity;
-    identity = {};
+    // Read whole before any of it is logged: a message handler may decode more traffic, which reuses the frame's
+    // storage.
+    Identity identity;
     const auto version = Wire::decode<UBX::MonVer>(payload);
     identity.firmware = cString(version.swVersion).toByteArray();
     // https://forum.u-blox.com/index.php/9432/need-help-decoding-ubx-mon-ver-hardware-string
     const QByteArrayView hardware = cString(version.hwVersion);
     identity.hardware = hardware.toByteArray();
     identity.board = UBX::boardFromHardwareVersion(hardware);
-    if (identity.board == UBX::Board::Unknown) {
-        qCWarning(UBXProtocolLog).noquote() << QStringLiteral("unknown board hw: %1").arg(QString::fromUtf8(hardware));
-    }
+    const bool unknownHardware = identity.board == UBX::Board::Unknown;
     identity.protocol27 = UBX::receiverProfile(identity.board).protocol27;
     for (size_t offset = UBX::WIRE_SIZE<UBX::MonVer>; offset < payload.size();
          offset += UBX::WIRE_SIZE<UBX::MonVerExtension>) {
@@ -486,7 +486,6 @@ void Protocol::_decodeMonVer(std::span<const uint8_t> payload)
                 identity.timeModeUnsupported = true;
             }
             identity.firmware = field.sliced(6).toByteArray();
-            qCDebug(UBXProtocolLog) << "u-blox firmware version:" << identity.firmware;
             if (identity.board == UBX::Board::UBlox9 && field.contains("HPGL1L5")) {
                 identity.board = UBX::Board::UBlox9F9PL1L5;
             }
@@ -495,12 +494,11 @@ void Protocol::_decodeMonVer(std::span<const uint8_t> payload)
         if (const auto at = extension.indexOf("PROTVER="); at >= 0) {
             const QByteArrayView text = extension.sliced(at + 8);
             identity.protocolVersion = text.toByteArray();
-            qCDebug(UBXProtocolLog) << "u-blox protocol version:" << text;
             const std::string_view protocol(text.data(), size_t(text.size()));
             const auto major = NMEA::number<unsigned>(protocol.substr(0, protocol.find('.')));
             if (!major || *major == 0) {
                 identity.board = UBX::Board::Unknown;
-                return;
+                break;
             }
             identity.protocol27 = *major >= 27;
             if (*major < 20) {
@@ -520,9 +518,15 @@ void Protocol::_decodeMonVer(std::span<const uint8_t> payload)
             } else if (identity.board == UBX::Board::UBlox10 && field.contains("DAN-F10N")) {
                 identity.board = UBX::Board::UBlox10L1L5;
             }
-            qCDebug(UBXProtocolLog) << "u-blox module:" << identity.model;
         }
     }
+    _identity = std::move(identity);
+    if (unknownHardware) {
+        qCWarning(UBXProtocolLog).noquote() << QStringLiteral("unknown board hw: %1").arg(QString::fromUtf8(hardware));
+    }
+    qCDebug(UBXProtocolLog) << "u-blox firmware version:" << _identity.firmware;
+    qCDebug(UBXProtocolLog) << "u-blox protocol version:" << _identity.protocolVersion;
+    qCDebug(UBXProtocolLog) << "u-blox module:" << _identity.model;
 }
 
 void Protocol::_decodeSatellites(uint16_t message, std::span<const uint8_t> payload)
