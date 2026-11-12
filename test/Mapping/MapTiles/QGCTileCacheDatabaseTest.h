@@ -48,10 +48,13 @@ private slots:
     void _testMigrateVersion1RenumbersProviders();
     void _testMigrateVersion1KeepsPermanentIds();
     void _testMigrateFailureResetsCache();
+    void _testResetFailureFailsInit();
     void _testImportVersion1_data();
     void _testImportVersion1();
-    void _testImportMergeRefusesVersion0();
-    void _testImportMergeRefusesNewerVersion();
+    void _testImportRefusesVersion_data();
+    void _testImportRefusesVersion();
+    void _testImportMigrateFailureKeepsCache_data();
+    void _testImportMigrateFailureKeepsCache();
     void _testVersion2TilesGetCacheVariant_data();
     void _testVersion2TilesGetCacheVariant();
     void _testVersion1TilesGetCacheVariantOfPermanentId();

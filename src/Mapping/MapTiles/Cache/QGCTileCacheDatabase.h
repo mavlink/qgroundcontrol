@@ -95,6 +95,8 @@ private:
     bool _migrate(QSqlDatabase db, int version);
     static bool _renumberMapIds(QSqlDatabase db, const QMap<int, int>& legacyMapIds);
     static bool _adoptCacheVariants(QSqlDatabase db, const QHash<int, QString>& cacheVariants);
+    /// The schema version of the file at \a path when it can be imported. Otherwise \a errorString says why not.
+    static std::optional<int> _importableVersion(const QString& path, QString& errorString);
     bool _createDB(QSqlDatabase db, bool createDefault = true);
     quint64 _getDefaultTileSet();
     bool _deleteTilesByIDs(const QList<quint64>& ids);
@@ -111,6 +113,8 @@ private:
     bool _connected = false;
     bool _valid = false;
     bool _failed = false;
+    /// Off for a file that is being imported: when it cannot be migrated, init() fails and leaves it as it is
+    bool _resetOnMigrationFailure = true;
     static constexpr int kPruneBatchSize = 128;
     static constexpr const char* kUniqueTilesSubquery =
         "SELECT A.tileID FROM SetTiles A JOIN SetTiles B ON A.tileID = B.tileID "

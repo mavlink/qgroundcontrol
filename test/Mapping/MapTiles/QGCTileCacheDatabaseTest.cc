@@ -1184,6 +1184,35 @@ void QGCTileCacheDatabaseTest::_testMigrateFailureResetsCache()
     QCOMPARE(tileCacheRows(path, kTileCacheSetsSql), QStringList{QStringLiteral("1|Default Tile Set|-1")});
 }
 
+void QGCTileCacheDatabaseTest::_testResetFailureFailsInit()
+{
+    // A cache of an unknown version is reset. Here its tiles cannot be dropped: a table that is not of the cache
+    // refers to one of them.
+    QTemporaryDir tempDir;
+    const QString path = tempDir.filePath("newer.db");
+    const QString newerVersion = QString::number(QGCTileCacheDatabase::kSchemaVersion + 1);
+    const QStringList rows =
+        version1Rows() +
+        QStringList{
+            QStringLiteral("CREATE TABLE TileNotes (tileID INTEGER NOT NULL REFERENCES Tiles(tileID))"),
+            QStringLiteral("INSERT INTO TileNotes(tileID) VALUES(1)"),
+            QStringLiteral("PRAGMA user_version = %1").arg(newerVersion),
+        };
+    QCOMPARE(createVersion1TileCache(path, rows), QString());
+
+    QGCTileCacheDatabase db(path);
+    expectLogMessage("MapTiles.QGCTileCacheDatabase", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Unknown schema version")));
+    expectLogMessage("MapTiles.QGCTileCacheDatabase", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Failed to drop tables")));
+    QVERIFY(!db.init());
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+
+    // The tiles that are left are not marked as tiles of the current version
+    QCOMPARE(tileCacheRows(path, kTileCacheVersionSql), QStringList{newerVersion});
+}
+
 void QGCTileCacheDatabaseTest::_testImportVersion1_data()
 {
     QTest::addColumn<bool>("replace");
@@ -1226,35 +1255,86 @@ void QGCTileCacheDatabaseTest::_testImportVersion1()
     QCOMPARE(QDir(tempDir.path()).entryList({QStringLiteral("*.import*")}), QStringList());
 }
 
-void QGCTileCacheDatabaseTest::_testImportMergeRefusesVersion0()
+void QGCTileCacheDatabaseTest::_testImportRefusesVersion_data()
 {
+    QTest::addColumn<bool>("replace");
+    QTest::addColumn<int>("version");
+    QTest::addColumn<QString>("error");
+    const int newerVersion = QGCTileCacheDatabase::kSchemaVersion + 1;
+    QTest::newRow("merge, version 0") << false << 0 << QStringLiteral("too old");
+    QTest::newRow("merge, newer version") << false << newerVersion << QStringLiteral("newer version");
+    QTest::newRow("replace, version 0") << true << 0 << QStringLiteral("too old");
+    QTest::newRow("replace, newer version") << true << newerVersion << QStringLiteral("newer version");
+}
+
+void QGCTileCacheDatabaseTest::_testImportRefusesVersion()
+{
+    QFETCH(bool, replace);
+    QFETCH(int, version);
+    QFETCH(QString, error);
+
     QTemporaryDir tempDir;
-    const QString importPath = tempDir.filePath("version0.db");
-    const QString version0 = QStringLiteral("PRAGMA user_version = 0");
-    QCOMPARE(createVersion1TileCache(importPath, version1Rows() + QStringList{version0}), QString());
+    const QString importPath = tempDir.filePath("other.db");
+    const QString versionSql = QStringLiteral("PRAGMA user_version = %1").arg(version);
+    QCOMPARE(createVersion1TileCache(importPath, version1Rows() + QStringList{versionSql}), QString());
 
     auto db = _createInitializedDB(tempDir);
-    const DatabaseResult result = db->importSetsMerge(importPath, nullptr);
+    QVERIFY(db);
+    QVERIFY(db->saveTile(QStringLiteral("kept"), QStringLiteral("png"), QByteArray(8, 'K'), kFixedProviderType,
+                         QGCTileCacheDatabase::kInvalidTileSet));
+
+    const DatabaseResult result =
+        replace ? db->importSetsReplace(importPath, nullptr) : db->importSetsMerge(importPath, nullptr);
     QVERIFY(!result.success);
-    QVERIFY2(result.errorString.contains(QStringLiteral("too old")), qPrintable(result.errorString));
-    QCOMPARE(db->computeTotals().totalCount, 0U);
+    QVERIFY2(result.errorString.contains(error), qPrintable(result.errorString));
+    // The cache has the tile it had, and no tile of the file
+    QVERIFY(db->findTile(QStringLiteral("kept")).has_value());
+    QCOMPARE(db->computeTotals().totalCount, 1U);
     // Refused before the file is copied to be migrated
     QCOMPARE(QDir(tempDir.path()).entryList({QStringLiteral("*.import*")}), QStringList());
 }
 
-void QGCTileCacheDatabaseTest::_testImportMergeRefusesNewerVersion()
+void QGCTileCacheDatabaseTest::_testImportMigrateFailureKeepsCache_data()
 {
-    QTemporaryDir tempDir;
-    const QString importPath = tempDir.filePath("newer.db");
-    const QString newerVersion =
-        QStringLiteral("PRAGMA user_version = %1").arg(QGCTileCacheDatabase::kSchemaVersion + 1);
-    QCOMPARE(createVersion1TileCache(importPath, version1Rows() + QStringList{newerVersion}), QString());
+    QTest::addColumn<bool>("replace");
+    QTest::addColumn<QString>("error");
+    QTest::newRow("replace") << true << QStringLiteral("Failed to initialize tile cache database after import");
+    QTest::newRow("merge") << false << QStringLiteral("Failed to migrate import database");
+}
 
-    auto db = _createInitializedDB(tempDir);
-    const DatabaseResult result = db->importSetsMerge(importPath, nullptr);
+void QGCTileCacheDatabaseTest::_testImportMigrateFailureKeepsCache()
+{
+    QFETCH(bool, replace);
+    QFETCH(QString, error);
+
+    // Renumbered, the tile of provider 1 of the file has the key of a tile that stays where it is
+    QTemporaryDir tempDir;
+    const QString importPath = tempDir.filePath("version1.db");
+    QCOMPARE(createVersion1TileCache(importPath, version1Rows()), QString());
+
+    QGCTileCacheDatabase db(tempDir.filePath("tiles.db"));
+    db.setLegacyMapIds({{1, 6}});
+    QVERIFY(db.init());
+    QVERIFY(db.connectDB());
+    QVERIFY(db.saveTile(QStringLiteral("kept"), QStringLiteral("png"), QByteArray(8, 'K'), kFixedProviderType,
+                        QGCTileCacheDatabase::kInvalidTileSet));
+
+    expectLogMessage("MapTiles.QGCTileCacheDatabase", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Failed to renumber provider 1 to 6")));
+    expectLogMessage("MapTiles.QGCTileCacheDatabase", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("Failed to migrate schema version 1 to")));
+    const DatabaseResult result =
+        replace ? db.importSetsReplace(importPath, nullptr) : db.importSetsMerge(importPath, nullptr);
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
     QVERIFY(!result.success);
-    QVERIFY2(result.errorString.contains(QStringLiteral("newer version")), qPrintable(result.errorString));
-    QCOMPARE(db->computeTotals().totalCount, 0U);
+    QCOMPARE(result.errorString, error);
+
+    // The cache is open and has the tile it had, and no tile of the file
+    QVERIFY(db.findTile(QStringLiteral("kept")).has_value());
+    QCOMPARE(db.computeTotals().totalCount, 1U);
+    // Neither the copy that was to be migrated nor the backup of the cache is left
+    QCOMPARE(QDir(tempDir.path()).entryList({QStringLiteral("*.import*"), QStringLiteral("*.bak")}), QStringList());
 }
 
 void QGCTileCacheDatabaseTest::_testVersion2TilesGetCacheVariant_data()

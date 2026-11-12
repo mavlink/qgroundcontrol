@@ -46,6 +46,26 @@ static void checkpointWriteAheadLog(QSqlQuery& query)
     query.finish();
 }
 
+/// Drops the tables of the cache. When one is left, the caller must not go on to _createDB(): that would mark the
+/// rows of that table as rows of the current schema version.
+static bool dropTileCacheTables(QSqlQuery& query)
+{
+    if (query.exec("DROP TABLE IF EXISTS TilesDownload") && query.exec("DROP TABLE IF EXISTS SetTiles") &&
+        query.exec("DROP TABLE IF EXISTS Tiles") && query.exec("DROP TABLE IF EXISTS TileSets")) {
+        return true;
+    }
+    qCWarning(QGCTileCacheDatabaseLog) << "Failed to drop tables:" << query.lastError().text();
+    return false;
+}
+
+/// Removes a database file and the files SQLite keeps next to it in WAL mode
+static void removeDatabaseFiles(const QString& path)
+{
+    for (const char* suffix : {"", "-wal", "-shm"}) {
+        (void) QFile::remove(path + QLatin1String(suffix));
+    }
+}
+
 QGCTileCacheDatabase::QGCTileCacheDatabase(const QString& databasePath)
     : _databasePath(databasePath)
     , _connectionName(QStringLiteral("QGCTileCache_%1").arg(s_connectionCounter.fetch_add(1)))
@@ -100,10 +120,7 @@ bool QGCTileCacheDatabase::_checkSchemaVersion()
             qCWarning(QGCTileCacheDatabaseLog)
                 << "Legacy database detected (no schema version). Discarding cached tiles and rebuilding.";
             _defaultSet = kInvalidTileSet;
-            query.exec("DROP TABLE IF EXISTS TilesDownload");
-            query.exec("DROP TABLE IF EXISTS SetTiles");
-            query.exec("DROP TABLE IF EXISTS Tiles");
-            query.exec("DROP TABLE IF EXISTS TileSets");
+            return dropTileCacheTables(query);
         }
         return true;
     }
@@ -112,6 +129,11 @@ bool QGCTileCacheDatabase::_checkSchemaVersion()
         if (_migrate(db, version)) {
             return true;
         }
+        if (!_resetOnMigrationFailure) {
+            qCWarning(QGCTileCacheDatabaseLog)
+                << "Failed to migrate schema version" << version << "to" << kSchemaVersion;
+            return false;
+        }
         qCWarning(QGCTileCacheDatabaseLog)
             << "Failed to migrate schema version" << version << "to" << kSchemaVersion << ". Resetting cache.";
     } else {
@@ -119,11 +141,7 @@ bool QGCTileCacheDatabase::_checkSchemaVersion()
             << "Unknown schema version" << version << "(expected" << kSchemaVersion << "). Resetting cache.";
     }
     _defaultSet = kInvalidTileSet;
-    query.exec("DROP TABLE IF EXISTS TilesDownload");
-    query.exec("DROP TABLE IF EXISTS SetTiles");
-    query.exec("DROP TABLE IF EXISTS Tiles");
-    query.exec("DROP TABLE IF EXISTS TileSets");
-    return true;
+    return dropTileCacheTables(query);
 }
 
 bool QGCTileCacheDatabase::_migrate(QSqlDatabase db, int version)
@@ -688,9 +706,7 @@ bool QGCTileCacheDatabase::resetDatabase()
         return false;
     }
     QSqlQuery query(_database());
-    if (!query.exec("DROP TABLE IF EXISTS TilesDownload") || !query.exec("DROP TABLE IF EXISTS SetTiles") ||
-        !query.exec("DROP TABLE IF EXISTS Tiles") || !query.exec("DROP TABLE IF EXISTS TileSets")) {
-        qCWarning(QGCTileCacheDatabaseLog) << "Failed to drop tables:" << query.lastError().text();
+    if (!dropTileCacheTables(query)) {
         return false;
     }
     if (!txn.commit()) {
@@ -1084,11 +1100,38 @@ SetTotalsResult QGCTileCacheDatabase::computeSetTotals(quint64 setID, bool isDef
     return result;
 }
 
+std::optional<int> QGCTileCacheDatabase::_importableVersion(const QString& path, QString& errorString)
+{
+    std::optional<int> version;
+    const QGCSqlHelper::ScopedConnection versionDB(path, /*readOnly=*/true, QStringLiteral("QGeoTileImportSession"));
+    if (versionDB.isValid()) {
+        QSqlDatabase db = versionDB.database();
+        version = QGCSqlHelper::userVersion(db);
+    }
+    if (!version) {
+        errorString = "Error opening import database";
+        return std::nullopt;
+    }
+    // Version 0 cannot be migrated: see _checkSchemaVersion(), which discards a cache of that version
+    if (*version < 1) {
+        errorString = "Import database was written by a version of QGroundControl that is too old";
+        return std::nullopt;
+    }
+    if (*version > kSchemaVersion) {
+        errorString = "Import database was written by a newer version of QGroundControl";
+        return std::nullopt;
+    }
+    return version;
+}
+
 DatabaseResult QGCTileCacheDatabase::importSetsReplace(const QString& path, ProgressCallback progressCb)
 {
     DatabaseResult result;
     if (QFileInfo(path).canonicalFilePath() == QFileInfo(_databasePath).canonicalFilePath()) {
         result.errorString = "Import path must differ from the active database";
+        return result;
+    }
+    if (!_importableVersion(path, result.errorString)) {
         return result;
     }
     _defaultSet = kInvalidTileSet;
@@ -1108,13 +1151,23 @@ DatabaseResult QGCTileCacheDatabase::importSetsReplace(const QString& path, Prog
         _failed = true;
         return result;
     }
-    (void) QFile::remove(backupPath);
     if (progressCb)
         progressCb(25);
-    init();
-    if (!_valid) {
+    // The file is not the cache yet: one that cannot be migrated is not reset, and the cache is put back
+    _resetOnMigrationFailure = false;
+    const bool imported = init();
+    _resetOnMigrationFailure = true;
+    if (!imported) {
         result.errorString = QStringLiteral("Failed to initialize tile cache database after import");
+        removeDatabaseFiles(_databasePath);
+        if (hasBackup) {
+            (void) QFile::rename(backupPath, _databasePath);
+        }
+        if (init()) {
+            connectDB();
+        }
     } else {
+        (void) QFile::remove(backupPath);
         if (progressCb)
             progressCb(50);
         connectDB();
@@ -1124,7 +1177,7 @@ DatabaseResult QGCTileCacheDatabase::importSetsReplace(const QString& path, Prog
     }
     if (progressCb)
         progressCb(100);
-    result.success = _valid;
+    result.success = result.errorString.isEmpty();
     return result;
 }
 
@@ -1140,36 +1193,15 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString& path, Progre
         return result;
     }
 
-    std::optional<int> importVersion;
-    {
-        QGCSqlHelper::ScopedConnection versionDB(path, /*readOnly=*/true, QStringLiteral("QGeoTileImportSession"));
-        if (versionDB.isValid()) {
-            QSqlDatabase db = versionDB.database();
-            importVersion = QGCSqlHelper::userVersion(db);
-        }
-    }
+    const std::optional<int> importVersion = _importableVersion(path, result.errorString);
     if (!importVersion) {
-        result.errorString = "Error opening import database";
-        return result;
-    }
-    // Version 0 cannot be migrated: see _checkSchemaVersion(), which discards a cache of that version
-    if (*importVersion < 1) {
-        result.errorString = "Import database was written by a version of QGroundControl that is too old";
-        return result;
-    }
-    if (*importVersion > kSchemaVersion) {
-        result.errorString = "Import database was written by a newer version of QGroundControl";
         return result;
     }
 
     // An older file is migrated in a copy next to the cache: the file to import stays as it is
     QString importPath = path;
     const QString migratedPath = _databasePath + QStringLiteral(".import");
-    const auto removeMigrated = qScopeGuard([&migratedPath] {
-        for (const char* suffix : {"", "-wal", "-shm"}) {
-            (void) QFile::remove(migratedPath + QLatin1String(suffix));
-        }
-    });
+    const auto removeMigrated = qScopeGuard([&migratedPath] { removeDatabaseFiles(migratedPath); });
     if (*importVersion < kSchemaVersion) {
         (void) QFile::remove(migratedPath);
         if (!QFile::copy(path, migratedPath)) {
@@ -1182,6 +1214,7 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString& path, Progre
         QGCTileCacheDatabase migrated(migratedPath);
         migrated.setLegacyMapIds(_legacyMapIds);
         migrated.setCacheVariants(_cacheVariants);
+        migrated._resetOnMigrationFailure = false;
         if (!migrated.init()) {
             result.errorString = "Failed to migrate import database";
             return result;
