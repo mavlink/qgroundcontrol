@@ -1,10 +1,28 @@
 #pragma once
 
 #include <QtCore/QByteArray>
+#include <QtCore/QDateTime>
 #include <QtCore/QFile>
 #include <QtCore/QString>
 
 class QLoggingCategory;
+
+/// The start times of one writer's files, which are named by the millisecond they start in. No two are the same, so a
+/// file that starts within the millisecond of the one before it gets a name of its own instead of being refused as
+/// that earlier file, and the names sort in the order the files started.
+class GPSFileStartTimes
+{
+public:
+    /// The start time of the next file: @a now, or the millisecond after the previous one while @a now is not later.
+    [[nodiscard]] QDateTime next(const QDateTime& now)
+    {
+        _last = _last.isValid() && now <= _last ? _last.addMSecs(1) : now;
+        return _last;
+    }
+
+private:
+    QDateTime _last;
+};
 
 /// A file that records are appended to, such as a receiver recording or a correction log.
 /// The file is written through QFile's buffer, which flush() and close() write out. It keeps the records that fit in
@@ -36,7 +54,8 @@ public:
     Q_DISABLE_COPY_MOVE(GPSBoundedFile)
 
     /// Starts @a file, creating its folder, in place of the file that was open. A file that exists is an earlier one
-    /// and is kept, so the file does not start. Returns whether it is open.
+    /// and is kept, so the file does not start: a writer names its files with GPSFileStartTimes to keep them apart.
+    /// Returns whether it is open.
     bool open(const QString& file);
     /// Appends @a record, whole or not at all. Returns whether the file is still open.
     bool write(const QByteArray& record);

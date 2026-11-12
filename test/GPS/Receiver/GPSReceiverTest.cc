@@ -1061,6 +1061,35 @@ void GPSReceiverTest::_recordingFileClearsWhenRecordingFails()
     receiver.shutdown();
 }
 
+void GPSReceiverTest::_recordingsStartedTogetherGetOwnFiles()
+{
+    TestFixtures::TempDirFixture directory;
+    ManualScheduler scheduler;
+    ScriptedGPSReceiver harness(&scheduler, {.recordingDirectory = [&directory] { return directory.path(); }});
+    GPSReceiver& receiver = harness.receiver;
+    auto configuration = receiverConfiguration(kPassiveManufacturer);
+    useTcp(configuration);
+    configuration.autoConnect = false;
+    receiver.setConfiguration(configuration);
+    receiver.setRecordSessions(true);
+
+    // A recording is named by the millisecond its session starts in. These sessions follow each other far faster than
+    // that, as one that an observer starts from the end of the one before does, and a recording is never made over
+    // an earlier one of its name.
+    QStringList files;
+    for (int session = 0; session < 100; ++session) {
+        QVERIFY(receiver.connectReceiver());
+        files.append(receiver.recordingFile());
+        receiver.disconnectReceiver();
+        harness.workers.finishRetired();
+    }
+    // Each has a name of its own, and the names sort in the order the sessions started.
+    QStringList ordered = files;
+    ordered.removeDuplicates();
+    ordered.sort();
+    QCOMPARE(files, ordered);
+}
+
 void GPSReceiverTest::_withoutSerialLinksSerialSelectionUsesTcp()
 {
     // The serial side of a build without serial links, on any build.

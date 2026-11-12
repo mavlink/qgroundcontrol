@@ -600,7 +600,7 @@ void GPSCorrectionManagerTest::_logThatCannotStart()
 
 void GPSCorrectionManagerTest::_logKeepsExistingFile()
 {
-    // Two logs can be named alike: started within one millisecond, or after the clock was set back.
+    // Two logs can be named alike after the clock was set back.
     TestFixtures::TempDirFixture directory;
     const QString earlier = directory.createFile(QStringLiteral("20260102T030405.006Z.rtcm3"), "earlier log");
     RTCMLogFile log;
@@ -617,7 +617,7 @@ void GPSCorrectionManagerTest::_logKeepsExistingFile()
 void GPSCorrectionManagerTest::_logEndsAtSizeLimit()
 {
     TestFixtures::TempDirFixture directory;
-    QString folder = directory.path();
+    const QString folder = directory.path();
     const QByteArray frame = GPSTest::rtcmMessage(1077, 100);
     ManualScheduler scheduler;
     // Room for two frames and part of a third.
@@ -643,16 +643,34 @@ void GPSCorrectionManagerTest::_logEndsAtSizeLimit()
     QVERIFY(corrections.logFile().isEmpty());
     QCOMPARE(corrections.logError(), GPSCorrectionManager::tr("The log reached its size limit of %1 and stopped.")
                                          .arg(QGC::bigSizeToString(2 * frame.size() + 10)));
+void GPSCorrectionManagerTest::_logsStartedTogetherGetOwnFiles()
+{
+    TestFixtures::TempDirFixture directory;
+    const QString folder = directory.path();
+    ManualScheduler scheduler;
+    GPSCorrectionManager corrections(nullptr, &scheduler, {.logDirectory = [&folder] { return folder; }});
+
+    // A log is named by the millisecond it starts in. These start far more often than that, as a log that is turned
+    // on again from a signal of the one before does, and none is refused as an earlier log of its name.
+    QStringList files;
+    for (int start = 0; start < 100; ++start) {
+        corrections.setLogToFile(true);
+        QVERIFY2(corrections.logToFile(), qPrintable(corrections.logError()));
+        files.append(QFileInfo(corrections.logFile()).fileName());
+        corrections.setLogToFile(false);
+    }
+    // Their names sort in the order they started.
+    QCOMPARE(QDir(folder).entryList(QDir::Files, QDir::Name), files);
+}
+
     QCOMPARE(changes.size(), 1);
     source->submit(frame, scheduler.nowMs());
     QCOMPARE(sent.size(), 4);
     QCOMPARE(readFile(file), frame + frame);
 
-    // The reason stays until the log is turned on again. A log started within the same millisecond would be named
-    // as the one that ended, so this one goes to a folder of its own.
+    // The reason stays until the log is turned on again, which starts a file of its own in the same folder.
     QVERIFY(advanceTick(scheduler));
     QVERIFY(!corrections.logError().isEmpty());
-    folder = QDir(directory.path()).filePath(QStringLiteral("next"));
     corrections.setLogToFile(true);
     QVERIFY(corrections.logToFile());
     QVERIFY(corrections.logError().isEmpty());

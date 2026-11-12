@@ -664,7 +664,8 @@ GPSReceiverWorker::TransportFactory GPSReceiver::_recorded(GPSReceiverWorker::Tr
         qCWarning(GPSReceiverLog) << "No folder to record the receiver session to";
         return transportFactory;
     }
-    _recordingFile = GPSRecordingTransport::sessionFile(directory, type, QDateTime::currentDateTimeUtc());
+    _recordingFile =
+        GPSRecordingTransport::sessionFile(directory, type, _recordingStartTimes.next(QDateTime::currentDateTimeUtc()));
     _recordingStopped = std::make_shared<std::atomic_bool>(false);
     return [factory = std::move(transportFactory), file = _recordingFile,
             stopped = _recordingStopped](GPSCancelToken cancelToken) -> std::unique_ptr<GPSTransport> {

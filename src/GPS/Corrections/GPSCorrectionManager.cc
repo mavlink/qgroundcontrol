@@ -352,7 +352,7 @@ QString GPSCorrectionManager::_startLog()
         qCWarning(GPSCorrectionManagerLog) << "No folder to log the corrections to";
         return tr("Cannot log the corrections: there is no folder to save the log to.");
     }
-    if (_log.open(RTCMLogFile::fileName(directory, QDateTime::currentDateTimeUtc()))) {
+    if (_log.open(RTCMLogFile::fileName(directory, _logStartTimes.next(QDateTime::currentDateTimeUtc())))) {
         return {};
     }
     if (_log.end() == GPSBoundedFile::End::FolderError) {

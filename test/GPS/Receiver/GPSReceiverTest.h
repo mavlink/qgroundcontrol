@@ -43,6 +43,7 @@ private slots:
     void _outputOverflowWarning();
     void _recordsSessionsStartedWhileOn();
     void _recordingFileClearsWhenRecordingFails();
+    void _recordingsStartedTogetherGetOwnFiles();
     void _withoutSerialLinksSerialSelectionUsesTcp();
     void _configuredPresentation_data();
     void _configuredPresentation();

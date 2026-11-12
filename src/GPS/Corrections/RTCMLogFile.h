@@ -22,7 +22,8 @@ public:
     Q_DISABLE_COPY_MOVE(RTCMLogFile)
 
     /// The log in @a directory of a stream logged from @a startedAt on: <yyyyMMdd>T<HHmmss.zzz>Z.rtcm3, in UTC. The
-    /// milliseconds keep logs that follow each other in files of their own.
+    /// milliseconds keep logs that follow each other in files of their own, given start times that differ
+    /// (GPSFileStartTimes).
     [[nodiscard]] static QString fileName(const QString& directory, const QDateTime& startedAt);
 
     /// Starts @a file, creating its folder, in place of the log that was open. A file that exists is an earlier log

@@ -255,6 +255,9 @@ private:
     const std::function<QString()> _logDirectory;
     const qint64 _maxLogFileBytes;
     RTCMLogFile _log;
+    /// The start times the logs are named by, so that a log turned on within the millisecond of the one before it
+    /// gets a file of its own.
+    GPSFileStartTimes _logStartTimes;
     QString _logError;
     std::optional<Configuration> _configuration;
     State _state = State::Inactive;

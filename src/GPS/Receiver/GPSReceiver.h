@@ -12,6 +12,7 @@
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+#include "GPSBoundedFile.h"
 #include "GPSObservation.h"
 #include "GPSReceiverConnector.h"
 #include "GPSReceiverDescriptor.h"
@@ -357,6 +358,9 @@ private:
     /// shutdown() is running.
     bool _shuttingDown = false;
     const std::function<QString()> _recordingDirectory;
+    /// The start times the recordings are named by, so that sessions which start within one millisecond are recorded
+    /// to files of their own.
+    GPSFileStartTimes _recordingStartTimes;
     /// The recording of the latest session.
     QString _recordingFile;
     /// Set on the worker thread when that recording stopped before its session.
