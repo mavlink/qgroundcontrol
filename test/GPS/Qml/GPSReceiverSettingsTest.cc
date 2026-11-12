@@ -829,6 +829,32 @@ void GPSReceiverSettingsTest::_statusListsConstellations()
     QVERIFY(!row->property("visible").toBool());
 }
 
+void GPSReceiverSettingsTest::_statusOrder()
+{
+    // The status reads as the work goes: the connection and what is connected, what a base is doing with the survey
+    // to save, then the satellites it does that with and what the receiver warns of. The view of each satellite, the
+    // tallest part and the one needed least often, is last.
+    BaseStatus base(GPSType::UBlox);
+    QVERIFY2(base.create(), qPrintable(base.engine.lastError()));
+    auto* const fix = qobject_cast<QQuickItem*>(base.find("rtkFixType"));
+    QVERIFY(fix && fix->parentItem());
+    QQuickItem* const rows = fix->parentItem();
+    qsizetype last = -1;
+    for (const char* const name :
+         {"rtkReceiverStatus", "rtkDetectedReceiver", "rtkReceiverEndpoint", "rtkFixType", "rtkSurveyDuration",
+          "rtkBaseLatitude", "rtkFixedBaseCheck", "rtkSurveySaveButton", "rtkSatellitesUsed", "rtkConstellations",
+          "rtkJamming", "rtkAntenna", "rtkSatelliteView"}) {
+        // The row of the status that holds the item.
+        auto* row = qobject_cast<QQuickItem*>(base.find(name));
+        while (row && row->parentItem() != rows) {
+            row = row->parentItem();
+        }
+        const qsizetype place = row ? rows->childItems().indexOf(row) : -1;
+        QVERIFY2(place > last, name);
+        last = place;
+    }
+}
+
 void GPSReceiverSettingsTest::_connectionRowFollowsReceiver()
 {
     Panel panel(gpsReceiverManufacturerForType(GPSType::UBlox));

@@ -101,51 +101,7 @@ QGCGroupBox {
         labelWrapMode: Text.Wrap
     }
 
-    FactRow {
-        objectName: "rtkSatellitesInView"
-        fact: root.facts.numSatellites
-        visible: root._connected && root.facts.numSatellites.value >= 0
-    }
-
-    FactRow {
-        objectName: "rtkSatellitesUsed"
-        fact: root.facts.numSatellitesUsed
-        visible: root._connected && root.facts.numSatellitesUsed.value >= 0
-    }
-
-    GPSWrappingRow {
-        objectName: "rtkConstellations"
-        visible: root._connected && root._constellations.length > 0
-        //: Label of the satellites used and in view of each satellite constellation, such as GPS and Galileo
-        label: qsTr("Constellations")
-        labelText: root._constellationsText(root._constellations)
-        labelWrapMode: Text.Wrap
-    }
-
-    GPSSatelliteView {
-        objectName: "rtkSatelliteView"
-        satellites: root.receiver.satellites
-        visible: root._connected && root.receiver.satellites.count > 0
-    }
-
-    FactRow {
-        objectName: "rtkJamming"
-        fact: root.facts.jammingState
-        visible: root._connected && root.facts.jammingState.rawValue > 0
-    }
-
-    FactRow {
-        objectName: "rtkSpoofing"
-        fact: root.facts.spoofingState
-        visible: root._connected && root.facts.spoofingState.rawValue > 0
-    }
-
-    FactRow {
-        objectName: "rtkAntenna"
-        fact: root.facts.antennaState
-        visible: root._connected && root.facts.antennaState.rawValue > 0
-    }
-
+    // What a base is doing comes before the satellites it does it with.
     GPSReceiverSurveyProgress { receiver: root.receiver; facts: root.facts }
 
     GPSReceiverBasePosition { receiver: root.receiver; facts: root.facts }
@@ -202,5 +158,51 @@ QGCGroupBox {
             target: QGroundControl.settingsManager.rtkSettings
             function onBaseSitesChanged() { surveySave.failed = false }
         }
+    }
+
+    FactRow {
+        objectName: "rtkSatellitesInView"
+        fact: root.facts.numSatellites
+        visible: root._connected && root.facts.numSatellites.value >= 0
+    }
+
+    FactRow {
+        objectName: "rtkSatellitesUsed"
+        fact: root.facts.numSatellitesUsed
+        visible: root._connected && root.facts.numSatellitesUsed.value >= 0
+    }
+
+    GPSWrappingRow {
+        objectName: "rtkConstellations"
+        visible: root._connected && root._constellations.length > 0
+        //: Label of the satellites used and in view of each satellite constellation, such as GPS and Galileo
+        label: qsTr("Constellations")
+        labelText: root._constellationsText(root._constellations)
+        labelWrapMode: Text.Wrap
+    }
+
+    FactRow {
+        objectName: "rtkJamming"
+        fact: root.facts.jammingState
+        visible: root._connected && root.facts.jammingState.rawValue > 0
+    }
+
+    FactRow {
+        objectName: "rtkSpoofing"
+        fact: root.facts.spoofingState
+        visible: root._connected && root.facts.spoofingState.rawValue > 0
+    }
+
+    FactRow {
+        objectName: "rtkAntenna"
+        fact: root.facts.antennaState
+        visible: root._connected && root.facts.antennaState.rawValue > 0
+    }
+
+    // Last: the tallest part of the status, and the one needed least often.
+    GPSSatelliteView {
+        objectName: "rtkSatelliteView"
+        satellites: root.receiver.satellites
+        visible: root._connected && root.receiver.satellites.count > 0
     }
 }

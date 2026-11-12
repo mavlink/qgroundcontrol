@@ -20,6 +20,7 @@ private slots:
     void _baseSitePicker();
     void _fixedPositionAsEcef();
     void _statusListsConstellations();
+    void _statusOrder();
     void _connectionRowFollowsReceiver();
     void _tcpConnectionFields_data();
     void _tcpConnectionFields();
