@@ -214,7 +214,7 @@ _Existing base station_ and _Position only_ use the receiver's existing output w
 
 - The receiver may output standard NMEA, u-blox UBX or Septentrio SBF; QGC identifies the protocol from the data and shows it as _Detected_ in the receiver status.
   When a receiver sends both NMEA and a binary protocol, positions come from the one recognized first, until it stops reporting positions.
-- With NMEA, the position comes from the GGA sentence.
+- With NMEA, the position comes from the GGA sentence, or from the GNS sentence of a receiver that sends that instead.
   RMC or VTG add the speed and heading, and GST or GSA the accuracy.
   A position that the receiver marks as dead-reckoned is shown with the fix type _DR_, not as a lost fix.
   The position of a receiver that sends RMC or GST after GGA is used once it has sent them, which at 4800 baud can be most of a second later; a higher baud rate shortens that.

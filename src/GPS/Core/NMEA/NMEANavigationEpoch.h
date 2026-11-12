@@ -17,9 +17,11 @@ namespace NMEA {
 struct NavigationEpoch
 {
     std::optional<int> timeMs;
-    /// Receipt of the GGA, or of the sentence that declared a fix loss.
+    /// Receipt of the GGA or GNS that holds the position, or of the sentence that declared a fix loss.
     uint64_t positionReceivedAtUs = 0;
     GPSFixQuality fixQuality = GPSFixQuality::Unknown;
+    /// The quality of the GGA that holds the position, or the one its GNS stands for; empty while the epoch has
+    /// neither.
     std::optional<unsigned> ggaQuality;
 
     double latitude = NAN;
@@ -66,6 +68,11 @@ struct NavigationUpdate
 /// after an epoch was published is not published: not with that epoch, because every published position is a new
 /// observation, and not with the next, whose solution it does not describe.
 ///
+/// A GNS reports what a GGA does and stands for it: GGA here means the first of the two that an epoch has. Where a
+/// receiver sends both they agree in everything but the satellites used, which the GNS counts for every constellation
+/// and the GGA of a GPS talker for GPS alone. A GNS that follows the epoch's GGA therefore adds its count: it names
+/// its epoch as an RMC does and is waited for in the same way. A GGA that follows the epoch's GNS adds nothing.
+///
 /// An epoch without a GGA publishes no position. Its RMC or GLL has one, but without altitude and satellite count, and
 /// without the accuracy, or the HDOP to estimate one from, that the consumers of a ground station position require.
 /// Published, it would serve the GGA sent to an NTRIP caster alone, and the receiver would no longer be reported as
@@ -80,16 +87,17 @@ struct NavigationUpdate
 /// come. An epoch that still waits when the next one begins is published then as it stands, unless the same sentence
 /// publishes the next one.
 ///
-/// An epoch has one GGA, one RMC, one GLL and one GST. A GGA, RMC or GLL that comes again with the same time from the
-/// same talker begins another epoch, which takes nothing from the one before it: the next report of a receiver that
-/// prints whole seconds at a faster rate, or whose time stands still. From another talker it repeats the epoch's
-/// sentence for another constellation, as the GLGGA that a SiRFstar V sends after its GPGGA does with the GLONASS
-/// satellite count: the first one is the epoch's, and the others add nothing. A GST that comes again is kept for that
-/// epoch.
+/// An epoch has one GGA, one GNS, one RMC, one GLL and one GST. A GGA, GNS, RMC or GLL that comes again with the same
+/// time from the same talker begins another epoch, which takes nothing from the one before it: the next report of a
+/// receiver that prints whole seconds at a faster rate, or whose time stands still. From another talker it repeats
+/// the epoch's sentence for another constellation, as the GLGGA that a SiRFstar V sends after its GPGGA does with the
+/// GLONASS satellite count: the first one is the epoch's, and the others add nothing. A GST that comes again is kept
+/// for that epoch.
 ///
-/// Two epochs are kept, the only ones a sentence can join: the current one, which the last GGA, RMC or GLL belongs
-/// to, and one that a GST began ahead of the GGA, RMC or GLL of its time. An epoch that ended is forgotten, so a time
-/// of day that comes again, as from a receiver whose time stepped back, begins an epoch that takes nothing from it.
+/// Two epochs are kept, the only ones a sentence can join: the current one, which the last GGA, GNS, RMC or GLL
+/// belongs to, and one that a GST began ahead of the GGA, GNS, RMC or GLL of its time. An epoch that ended is
+/// forgotten, so a time of day that comes again, as from a receiver whose time stepped back, begins an epoch that
+/// takes nothing from it.
 class NavigationEpochAssembler
 {
 public:
@@ -105,6 +113,7 @@ private:
         VTG = 0x2,
         GSA = 0x4,
         GST = 0x8,
+        GNS = 0x10,
     };
     Q_DECLARE_FLAGS(Additions, Addition)
 
@@ -112,10 +121,11 @@ private:
     enum class Position : uint8_t
     {
         GGA,
+        GNS,
         RMC,
         GLL,
     };
-    static constexpr size_t POSITION_COUNT = 3;
+    static constexpr size_t POSITION_COUNT = 4;
 
     /// The two letters that name a sentence's sender, such as GP or GN.
     using Talker = std::array<char, Sentence::TALKER_LENGTH>;

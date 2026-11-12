@@ -190,6 +190,9 @@ void NMEASentenceTest::_navigationFixLoss_data()
     // gga() rejects a larger count, so the fix loss reports none.
     QTest::newRow("gga-too-many-satellites") << QByteArray("$GPGGA,092751.000,,,,,0,256,,,,,,,") << -1;
     QTest::newRow("rmc-status-void") << QByteArray("$GPRMC,092751.000,V,,,,,,,280511,,,N") << -1;
+    // A SiRF TriG receiver and a Quectel EG25-G without a fix, as gpsd's regression logs have them.
+    QTest::newRow("gns-no-constellation-used") << QByteArray("$GNGNS,074150.799,,,,,NNNN,00,,,0.0,,0000") << 0;
+    QTest::newRow("gns-without-count") << QByteArray("$GNGNS,191434.96,,,,,NNN,,,,,,") << -1;
 }
 
 void NMEASentenceTest::_navigationFixLoss()
@@ -738,6 +741,119 @@ void NMEASentenceTest::_ggaValidity()
     }
 }
 
+void NMEASentenceTest::_gnsQuality_data()
+{
+    QTest::addColumn<QByteArray>("modes");
+    QTest::addColumn<int>("quality");
+    using namespace NMEA::GgaQuality;
+    // One letter for each constellation; the logs have these.
+    QTest::newRow("AANN") << QByteArray("AANN") << int(GPS);
+    QTest::newRow("AAAAN") << QByteArray("AAAAN") << int(GPS);
+    QTest::newRow("NNNN") << QByteArray("NNNN") << int(INVALID);
+    // GPS is not used, and the first letter alone would say that there is no fix.
+    QTest::newRow("NDD") << QByteArray("NDD") << int(DIFFERENTIAL);
+    // The best mode among the constellations; no log has two different ones that are not N.
+    QTest::newRow("RF") << QByteArray("RF") << int(RTK_FIXED);
+    QTest::newRow("DF") << QByteArray("DF") << int(RTK_FLOAT);
+    QTest::newRow("PD") << QByteArray("PD") << int(DIFFERENTIAL);
+    QTest::newRow("AP") << QByteArray("AP") << int(PPS);
+    QTest::newRow("EA") << QByteArray("EA") << int(GPS);
+    QTest::newRow("NE") << QByteArray("NE") << int(ESTIMATED);
+    QTest::newRow("M") << QByteArray("M") << int(MANUAL);
+    QTest::newRow("S") << QByteArray("S") << int(SIMULATION);
+    QTest::newRow("empty") << QByteArray() << -1;
+    QTest::newRow("unknown-letter") << QByteArray("AX") << -1;
+    QTest::newRow("lower-case") << QByteArray("a") << -1;
+}
+
+void NMEASentenceTest::_gnsQuality()
+{
+    QFETCH(QByteArray, modes);
+    QFETCH(int, quality);
+    const auto actual = NMEA::gnsQuality({modes.constData(), static_cast<size_t>(modes.size())});
+    QCOMPARE(actual ? int(*actual) : -1, quality);
+}
+
+void NMEASentenceTest::_gnsFix_data()
+{
+    QTest::addColumn<QByteArray>("body");
+    QTest::addColumn<int>("quality");
+    QTest::addColumn<int>("satellites");
+    QTest::addColumn<double>("latitude");
+    QTest::addColumn<double>("longitude");
+    QTest::addColumn<double>("hdop");
+    QTest::addColumn<double>("altitude");
+    QTest::addColumn<double>("geoidSeparation");
+    constexpr double NONE = std::numeric_limits<double>::quiet_NaN();
+
+    const struct
+    {
+        const char* name;
+        const char* body;
+        int quality;
+        int satellites;
+        double latitude;
+        double longitude;
+        double hdop;
+        double altitude;
+        double geoidSeparation;
+    } rows[] = {
+        // Sentences of gpsd's regression logs.
+        {"ericsson-gru04", "GNGNS,213712.000,4111.59903,N,11156.54809,W,AANN,13,0.93,01482.5,-016.5,,", 1, 13,
+         41.1933171667, -111.9424681667, 0.93, 1482.5, -16.5},
+        // The navigational status V that ends it says nothing of the fix.
+        {"furuno-without-gps", "GNGNS,120213.000,5957.0062,N,01100.6429,E,NDD,11,1.3,168.9,39.5,,,V", 2, 11,
+         59.9501033333, 11.010715, 1.3, 168.9, 39.5},
+        {"polarx2-without-altitude", "GPGNS,112257.00,3844.24011,N,00908.43828,W,AN,03,10.5,,,,", 1, 3, 38.7373351667,
+         -9.140638, 10.5, NONE, NONE},
+        {"telit-pls83", "GNGNS,043539.00,4333.190206,N,00127.618380,E,AAAAN,14,1.3,250.8,50.0,,,V", 1, 14, 43.5531701,
+         1.4603063333, 1.3, 250.8, 50.0},
+        {"sirf-trig-no-fix", "GNGNS,074150.799,,,,,NNNN,00,,,0.0,,0000", 0, 0, NONE, NONE, NONE, NONE, 0.0},
+        {"quectel-eg25-no-fix", "GNGNS,191434.96,,,,,NNN,,,,,,", 0, -1, NONE, NONE, NONE, NONE, NONE},
+        // Not from a log: NMEA 0183 lets a sentence for each constellation follow the combined one, with that one's
+        // satellites and correction age and nothing else. It reports no position and declares no fix loss.
+        {"single-constellation", "GPGNS,122310.2,,,,,,7,,,,5.2,23", -1, -1, NONE, NONE, NONE, NONE, NONE},
+        {"fix-without-coordinates", "GNGNS,120000,,,,,AN,05,1.0,10.0,1.0,,", -1, -1, NONE, NONE, NONE, NONE, NONE},
+        {"unknown-mode", "GNGNS,120000,4807.038,N,01131.000,E,AX,05,1.0,10.0,1.0,,", -1, -1, NONE, NONE, NONE, NONE,
+         NONE},
+        {"without-station", "GNGNS,120000,4807.038,N,01131.000,E,AN,05,1.0,10.0,1.0,", -1, -1, NONE, NONE, NONE, NONE,
+         NONE},
+    };
+
+    for (const auto& row : rows) {
+        QTest::newRow(row.name) << QByteArray(row.body) << row.quality << row.satellites << row.latitude
+                                << row.longitude << row.hdop << row.altitude << row.geoidSeparation;
+    }
+}
+
+void NMEASentenceTest::_gnsFix()
+{
+    QFETCH(QByteArray, body);
+    QFETCH(int, quality);
+    QFETCH(int, satellites);
+    QFETCH(double, latitude);
+    QFETCH(double, longitude);
+    QFETCH(double, hdop);
+    QFETCH(double, altitude);
+    QFETCH(double, geoidSeparation);
+    const auto wire = GPSTest::repairChecksum('$' + body);
+    const auto sentence = NMEA::sentence({wire.constData(), static_cast<size_t>(wire.size())});
+    QVERIFY(sentence);
+    const auto fix = NMEA::gns(*sentence);
+    QCOMPARE(fix.has_value(), quality >= 0);
+    // Only a GNS does: a GGA parser must not take it for its own.
+    QVERIFY(!NMEA::gga(*sentence));
+    if (fix) {
+        QCOMPARE(int(fix->quality), quality);
+        QCOMPARE(fix->satellitesUsed, satellites < 0 ? std::nullopt : std::optional<unsigned>(satellites));
+        QVERIFY(GPSTest::matches(fix->latitude, latitude, 1e-9));
+        QVERIFY(GPSTest::matches(fix->longitude, longitude, 1e-9));
+        QVERIFY(GPSTest::matches(fix->hdop, hdop));
+        QVERIFY(GPSTest::matches(fix->altitude, altitude));
+        QVERIFY(GPSTest::matches(fix->geoidSeparation, geoidSeparation));
+    }
+}
+
 void NMEASentenceTest::_navigationStatus_data()
 {
     QTest::addColumn<QByteArray>("body");
@@ -760,6 +876,12 @@ void NMEASentenceTest::_navigationStatus_data()
     QTest::newRow("rmc-void-autonomous") << QByteArray("GPRMC,120001,V,,,,,,,,,,A") << 0 << 43201000;
     QTest::newRow("gll-simulated") << QByteArray("GPGLL,,,,,120001,V,S") << 1 << 43201000;
     QTest::newRow("gll-not-valid") << QByteArray("GPGLL,,,,,120001,V,N") << 0 << 43201000;
+    // A GNS has a mode for each constellation, and a fix when one of them is used.
+    QTest::newRow("gns-fix") << QByteArray("GNGNS,120001,,,,,AANN") << 1 << 43201000;
+    QTest::newRow("gns-fix-without-gps") << QByteArray("GNGNS,120001,,,,,NDD") << 1 << 43201000;
+    QTest::newRow("gns-no-fix") << QByteArray("GNGNS,120001,,,,,NNN") << 0 << 43201000;
+    QTest::newRow("gns-without-mode") << QByteArray("GPGNS,120001,,,,,") << -1 << -1;
+    QTest::newRow("gns-unknown-mode") << QByteArray("GNGNS,120001,,,,,AX") << -1 << -1;
     QTest::newRow("gsa-invalid") << QByteArray("GPGSA,A,1") << 0 << -1;
     QTest::newRow("gsa-two-dimensional") << QByteArray("GPGSA,A,2") << 1 << -1;
     QTest::newRow("gsa-three-dimensional") << QByteArray("GPGSA,A,3") << 1 << -1;

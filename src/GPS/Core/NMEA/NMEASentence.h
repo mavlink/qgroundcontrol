@@ -36,6 +36,13 @@ constexpr size_t GGA_ALTITUDE_UNITS = 10;
 constexpr size_t GGA_GEOID_SEPARATION = 11;
 constexpr size_t GGA_GEOID_UNITS = 12;
 constexpr size_t GGA_MIN_FIELDS = GGA_GEOID_UNITS + 1;
+/// A GNS has its coordinates, satellites used and HDOP where a GGA has them, and its mode indicator where a GGA has
+/// its quality. Its altitude and geoid separation are in metres and have no units field.
+constexpr size_t GNS_MODE = GGA_QUALITY;
+constexpr size_t GNS_ALTITUDE = 9;
+constexpr size_t GNS_GEOID_SEPARATION = 10;
+constexpr size_t GNS_STATION_ID = 12;
+constexpr size_t GNS_MIN_FIELDS = GNS_STATION_ID + 1;
 constexpr size_t RMC_STATUS = 2;
 constexpr size_t RMC_LATITUDE = 3;
 constexpr size_t RMC_LATITUDE_HEMISPHERE = 4;
@@ -235,6 +242,21 @@ struct GGA
 /// Quality zero is a valid fix-loss observation with empty coordinates and optional hemisphere fields.
 [[nodiscard]] std::optional<GGA> gga(const Sentence& input);
 
+/// The GGA quality that the mode indicator of a GNS stands for. The indicator has one letter for each constellation
+/// the receiver reports on, GPS first: N for a constellation the position does not use, and for the others A, D, P,
+/// R, F, E, M or S, which name what the qualities GPS, DIFFERENTIAL, PPS, RTK_FIXED, RTK_FLOAT, ESTIMATED, MANUAL and
+/// SIMULATION do. The quality is that of the best mode among them, RTK before differential before autonomous: a
+/// receiver that uses GLONASS and Galileo without GPS reports NDD beside a GGA of quality DIFFERENTIAL. nullopt for
+/// an empty indicator, which the GNS of a single constellation that follows a combined one may have, and for a letter
+/// that is no mode.
+[[nodiscard]] std::optional<unsigned> gnsQuality(std::string_view modes);
+
+/// A GNS as the GGA it stands for, with the quality of gnsQuality(): where a receiver sends both they report the same
+/// position, HDOP, altitude and geoid separation. Its satellites used are those of every constellation, where the GGA
+/// of a GPS talker counts the GPS satellites. The navigational status that ends it since NMEA 0183 version 4.1 tells
+/// of integrity, not of the fix, and is not read.
+[[nodiscard]] std::optional<GGA> gns(const Sentence& input);
+
 std::optional<int> utcMilliseconds(std::string_view field);
 
 /// A course over ground in degrees, 0 to 360; nullopt when the field is empty, malformed or out of range.
@@ -299,10 +321,11 @@ struct NavigationStatus
 };
 
 /// Receiver-declared validity, independent of coordinate availability. A valid flag alone is not a usable fix.
-/// GSA is untimed; malformed/unsupported status fields return no observation. An RMC or GLL has status A only for a
-/// satellite fix. A dead-reckoned, manually entered or simulated position, which a GGA reports with quality
-/// ESTIMATED, MANUAL or SIMULATION, has status V and the mode indicator E, M or S, and is valid here as that GGA is:
-/// only a status V without such a mode declares that the receiver has no position.
+/// GSA is untimed; malformed/unsupported status fields return no observation. A GNS is valid as the GGA of its
+/// gnsQuality() is. An RMC or GLL has status A only for a satellite fix. A dead-reckoned, manually entered or
+/// simulated position, which a GGA reports with quality ESTIMATED, MANUAL or SIMULATION, has status V and the mode
+/// indicator E, M or S, and is valid here as that GGA is: only a status V without such a mode declares that the
+/// receiver has no position.
 [[nodiscard]] std::optional<NavigationStatus> navigationStatus(const Sentence& input);
 
 struct GST

@@ -53,7 +53,7 @@ std::optional<NavigationUpdate> NavigationEpochAssembler::ingest(const Sentence&
             loss.timeMs = navigation->utcMilliseconds;
             loss.positionReceivedAtUs = receivedAtUs;
             loss.fixQuality = GPSFixQuality::NoFix;
-            if (sentence.type() == "GGA" && sentence.count > Field::GGA_SATELLITES_USED) {
+            if ((sentence.type() == "GGA" || sentence.type() == "GNS") && sentence.count > Field::GGA_SATELLITES_USED) {
                 loss.satellitesUsed = ggaSatellitesUsed(sentence.fields[Field::GGA_SATELLITES_USED]);
             }
             return NavigationUpdate{.type = NavigationUpdate::Type::FixLoss, .epoch = loss};
@@ -146,10 +146,10 @@ void NavigationEpochAssembler::_add(StoredEpoch& stored, Addition addition, uint
     if (!stored.epoch.ggaQuality) {
         return;
     }
-    // An RMC or GST names the epoch it belongs to, however late it arrives. A GSA or VTG does not, and late in the
-    // interval it may open the next epoch's burst. The first GGA has no interval: the epoch after it confirms what
-    // followed it.
-    const bool timed = addition == Addition::RMC || addition == Addition::GST;
+    // An RMC, GST or GNS names the epoch it belongs to, however late it arrives. A GSA or VTG does not, and late in
+    // the interval it may open the next epoch's burst. The first GGA has no interval: the epoch after it confirms
+    // what followed it.
+    const bool timed = addition == Addition::RMC || addition == Addition::GST || addition == Addition::GNS;
     const auto sinceGga = MonotonicClock::age(stored.epoch.positionReceivedAtUs, receivedAtUs);
     if (sinceGga && (timed || _ggaInterval == std::chrono::microseconds::zero() || *sinceGga <= _ggaInterval / 2)) {
         stored.followers |= addition;
@@ -169,23 +169,40 @@ NavigationEpochAssembler::StoredEpoch* NavigationEpochAssembler::_joinPosition(c
                                                                                std::optional<NavigationEpoch>& overdue)
 {
     // Position sentences reach here only with a receiver-declared valid fix; ingest() reports fix loss first.
-    if (const auto ggaFix = gga(sentence)) {
-        auto* const stored = _positionEpoch(utcMilliseconds(sentence.fields[Field::UTC_TIME]), Position::GGA,
-                                            sentence.talker(), overdue);
+    const auto ggaFix = gga(sentence);
+    const auto gnsFix = ggaFix ? std::nullopt : gns(sentence);
+    if (ggaFix || gnsFix) {
+        const GGA& fix = ggaFix ? *ggaFix : *gnsFix;
+        auto* const stored = _positionEpoch(utcMilliseconds(sentence.fields[Field::UTC_TIME]),
+                                            ggaFix ? Position::GGA : Position::GNS, sentence.talker(), overdue);
         if (!stored) {
             return &_current;
         }
         auto& epoch = stored->epoch;
-        epoch.ggaQuality = ggaFix->quality;
-        epoch.fixQuality = fixQuality(ggaFix->quality, GPSFixQuality::Fix3D);
-        epoch.latitude = ggaFix->latitude;
-        epoch.longitude = ggaFix->longitude;
-        epoch.altitudeMslMeters = finiteValue(ggaFix->altitude);
-        epoch.geoidSeparationMeters = finiteValue(ggaFix->geoidSeparation);
-        epoch.satellitesUsed = ggaFix->satellitesUsed;
-        epoch.horizontalDop = finiteValue(ggaFix->hdop);
+        if (epoch.ggaQuality) {
+            // The other of the two holds the position. The GNS counts the satellites of every constellation.
+            if (gnsFix) {
+                if (fix.satellitesUsed) {
+                    epoch.satellitesUsed = fix.satellitesUsed;
+                }
+                _add(*stored, Addition::GNS, receivedAtUs);
+            }
+            return stored;
+        }
+        epoch.ggaQuality = fix.quality;
+        epoch.fixQuality = fixQuality(fix.quality, GPSFixQuality::Fix3D);
+        epoch.latitude = fix.latitude;
+        epoch.longitude = fix.longitude;
+        epoch.altitudeMslMeters = finiteValue(fix.altitude);
+        epoch.geoidSeparationMeters = finiteValue(fix.geoidSeparation);
+        epoch.satellitesUsed = fix.satellitesUsed;
+        epoch.horizontalDop = finiteValue(fix.hdop);
         epoch.positionReceivedAtUs = receivedAtUs;
         stored->sequence = _sequence;
+        if (gnsFix) {
+            // An epoch that waits for the GNS after its GGA has it.
+            stored->additions |= Addition::GNS;
+        }
         _ggaInterval = MonotonicClock::age(_ggaReceivedAtUs, receivedAtUs).value_or(std::chrono::microseconds::zero());
         _ggaReceivedAtUs = receivedAtUs;
         return stored;

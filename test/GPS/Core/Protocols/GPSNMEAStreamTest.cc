@@ -938,6 +938,75 @@ void GPSNMEAStreamTest::_receiverWithoutGga()
     QVERIFY(!receiver.published);
 }
 
+void GPSNMEAStreamTest::_gnsEpoch_data()
+{
+    QTest::addColumn<QByteArrayList>("epoch");
+    QTest::addColumn<QByteArray>("utc");
+    QTest::addColumn<int>("satellites");
+    QTest::addColumn<GPSFixQuality>("fixType");
+    QTest::addColumn<double>("altitudeMsl");
+    QTest::addColumn<double>("altitudeEllipsoid");
+    // One epoch of each receiver as gpsd's regression logs have it, without its GSV sentences.
+    // An Ericsson GRU 04 sends GNS every second and a GGA once a minute.
+    QTest::newRow("gns-without-gga")
+        << QByteArrayList{"GNZDA,213712.000,12,02,2026,,",
+                          "GNGNS,213712.000,4111.59903,N,11156.54809,W,AANN,13,0.93,01482.5,-016.5,,",
+                          "GNVTG,000.0,T,348.3,M,000.0,N,000.1,K,A", "GNGLL,4111.59903,N,11156.54809,W,213712.000,A,A"}
+        << QByteArray("213712.000") << 13 << GPSFixQuality::Fix3D << 1482.5 << 1466.0;
+    // A Furuno GT-88 that uses GLONASS and Galileo: its GGA counts the GPS satellites, of which it uses none.
+    QTest::newRow("gns-before-gga")
+        << QByteArrayList{"GNRMC,120213.000,A,5957.0062,N,01100.6429,E,0.00,0.00,310722,,,D,V",
+                          "GNGNS,120213.000,5957.0062,N,01100.6429,E,NDD,11,1.3,168.9,39.5,,,V",
+                          "GNGGA,120213.000,5957.0062,N,01100.6429,E,2,00,1.3,168.9,M,39.5,M,,",
+                          "GNGSA,A,3,68,69,70,78,84,85,,,,,,,1.5,1.3,1.0,2",
+                          "GNGSA,A,3,04,05,09,11,36,,,,,,,,1.5,1.3,1.0,3"}
+        << QByteArray("120213.000") << 11 << GPSFixQuality::Differential << 168.9 << 208.4;
+    // A Telit PLS83 sends a GGA for GPS and one for Galileo, then the GNS that counts every constellation.
+    QTest::newRow("gns-after-gga")
+        << QByteArrayList{"GPGGA,043539.00,4333.190206,N,00127.618380,E,1,05,1.3,250.8,M,50.0,M,,",
+                          "GAGGA,043539.00,4333.190206,N,00127.618380,E,1,01,1.3,250.8,M,50.0,M,,",
+                          "GNGNS,043539.00,4333.190206,N,00127.618380,E,AAAAN,14,1.3,250.8,50.0,,,V",
+                          "GPVTG,,T,1.7,M,0.0,N,0.0,K,A",
+                          "GAVTG,,T,1.7,M,0.0,N,0.0,K,A",
+                          "GPRMC,043539.00,A,4333.190206,N,00127.618380,E,0.0,,040925,1.7,W,A,V",
+                          "GARMC,043539.00,A,4333.190206,N,00127.618380,E,0.0,,040925,1.7,W,A,V"}
+        << QByteArray("043539.00") << 14 << GPSFixQuality::Fix3D << 250.8 << 300.8;
+}
+
+void GPSNMEAStreamTest::_gnsEpoch()
+{
+    QFETCH(QByteArrayList, epoch);
+    QFETCH(QByteArray, utc);
+    QFETCH(int, satellites);
+    QFETCH(GPSFixQuality, fixType);
+    QFETCH(double, altitudeMsl);
+    QFETCH(double, altitudeEllipsoid);
+    NMEAReceiver receiver;
+    for (int report = 1; report <= 4; ++report) {
+        // The receiver's time, a second later for each report.
+        QByteArray time = utc;
+        time.replace(4, 2, QByteArray::number(utc.mid(4, 2).toInt() + report));
+        QVERIFY(NMEA::utcMilliseconds({time.constData(), static_cast<size_t>(time.size())}));
+        receiver.now += EPOCH_INTERVAL_US;
+        for (QByteArray sentence : epoch) {
+            receiver.now += SENTENCE_INTERVAL_US;
+            receiver.feed(sentence.replace(utc, time));
+        }
+        // The GNS holds the position where no GGA came before it, and each epoch is published once.
+        QCOMPARE(receiver.positions, report);
+        const auto& navigation = receiver.published->navigation;
+        QCOMPARE(navigation.fixType, fixType);
+        QCOMPARE(navigation.altitudeMslMeters, altitudeMsl);
+        QVERIFY(qAbs(navigation.altitudeEllipsoidMeters - altitudeEllipsoid) < 1e-9);
+        // Two reports show what the receiver sends after its GGA, and so that its GNS does: the position then waits
+        // for the count of every constellation, which a GGA that follows the GNS does not replace.
+        if (report > 2) {
+            QCOMPARE(navigation.satellitesUsed, std::optional<uint8_t>(satellites));
+            QVERIFY(receiver.published->velocityValid);
+        }
+    }
+}
+
 void GPSNMEAStreamTest::_vdopEpoch_data()
 {
     QTest::addColumn<QByteArray>("firstUtc");

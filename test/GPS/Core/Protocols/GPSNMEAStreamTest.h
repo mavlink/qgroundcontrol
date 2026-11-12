@@ -43,6 +43,8 @@ private slots:
     void _sentenceOfAnotherTalker();
     void _receiverWithoutGga_data();
     void _receiverWithoutGga();
+    void _gnsEpoch_data();
+    void _gnsEpoch();
     void _vdopEpoch_data();
     void _vdopEpoch();
     void _unassociatedGsa_data();

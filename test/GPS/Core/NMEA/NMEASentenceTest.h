@@ -42,6 +42,10 @@ private slots:
     void _nmeaWireContract();
     void _ggaValidity_data();
     void _ggaValidity();
+    void _gnsQuality_data();
+    void _gnsQuality();
+    void _gnsFix_data();
+    void _gnsFix();
     void _navigationStatus_data();
     void _navigationStatus();
     void _fixtureSentences();

@@ -1,5 +1,6 @@
 #include "NMEASentence.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
@@ -54,6 +55,40 @@ std::string_view fieldOrEmpty(const Sentence& input, size_t index)
 bool reportsPosition(std::string_view status, std::string_view mode)
 {
     return status == "A" || (status == "V" && (mode == "E" || mode == "M" || mode == "S"));
+}
+
+/// What a GGA and a GNS report in the same fields: the coordinates, the satellites used and the HDOP. Only a sentence
+/// of @a quality INVALID may come without coordinates.
+std::optional<GGA> fixFields(const Sentence& input, unsigned quality)
+{
+    const auto& f = input.fields;
+    const auto latitude = coordinate(f[Field::GGA_LATITUDE], f[Field::GGA_LATITUDE_HEMISPHERE], Coordinate::Latitude);
+    const auto longitude =
+        coordinate(f[Field::GGA_LONGITUDE], f[Field::GGA_LONGITUDE_HEMISPHERE], Coordinate::Longitude);
+    const auto satellites = ggaSatellitesUsed(f[Field::GGA_SATELLITES_USED]);
+    // A count beyond the range makes the sentence malformed; an empty or unreadable one is only unknown.
+    const bool satellitesOutOfRange = !satellites && number<unsigned>(f[Field::GGA_SATELLITES_USED]);
+    if (satellitesOutOfRange) {
+        return {};
+    }
+    const auto latitudeHemisphere = f[Field::GGA_LATITUDE_HEMISPHERE];
+    const auto longitudeHemisphere = f[Field::GGA_LONGITUDE_HEMISPHERE];
+    const bool missingLatitude = f[Field::GGA_LATITUDE].empty() &&
+                                 (latitudeHemisphere.empty() || latitudeHemisphere == "N" || latitudeHemisphere == "S");
+    const bool missingLongitude =
+        f[Field::GGA_LONGITUDE].empty() &&
+        (longitudeHemisphere.empty() || longitudeHemisphere == "E" || longitudeHemisphere == "W");
+    if ((!latitude && !(quality == GgaQuality::INVALID && missingLatitude)) ||
+        (!longitude && !(quality == GgaQuality::INVALID && missingLongitude))) {
+        return {};
+    }
+    GGA result{latitude.value_or(NAN), longitude.value_or(NAN)};
+    result.quality = quality;
+    result.satellitesUsed = satellites;
+    if (const auto hdop = number<double>(f[Field::GGA_HDOP]); hdop && *hdop >= 0) {
+        result.hdop = *hdop;
+    }
+    return result;
 }
 }  // namespace
 
@@ -182,39 +217,59 @@ std::optional<GGA> gga(const Sentence& input)
         return {};
     }
     const auto& f = input.fields;
-    const auto latitude = coordinate(f[Field::GGA_LATITUDE], f[Field::GGA_LATITUDE_HEMISPHERE], Coordinate::Latitude);
-    const auto longitude =
-        coordinate(f[Field::GGA_LONGITUDE], f[Field::GGA_LONGITUDE_HEMISPHERE], Coordinate::Longitude);
     const auto quality = number<unsigned>(f[Field::GGA_QUALITY]);
-    const auto satellites = ggaSatellitesUsed(f[Field::GGA_SATELLITES_USED]);
-    // A count beyond the range makes the sentence malformed; an empty or unreadable one is only unknown.
-    const bool satellitesOutOfRange = !satellites && number<unsigned>(f[Field::GGA_SATELLITES_USED]);
-    if (!quality || *quality > GgaQuality::MAX_RECEIVED || satellitesOutOfRange) {
+    if (!quality || *quality > GgaQuality::MAX_RECEIVED) {
         return {};
     }
-    const auto latitudeHemisphere = f[Field::GGA_LATITUDE_HEMISPHERE];
-    const auto longitudeHemisphere = f[Field::GGA_LONGITUDE_HEMISPHERE];
-    const bool missingLatitude = f[Field::GGA_LATITUDE].empty() &&
-                                 (latitudeHemisphere.empty() || latitudeHemisphere == "N" || latitudeHemisphere == "S");
-    const bool missingLongitude =
-        f[Field::GGA_LONGITUDE].empty() &&
-        (longitudeHemisphere.empty() || longitudeHemisphere == "E" || longitudeHemisphere == "W");
-    if ((!latitude && !(*quality == GgaQuality::INVALID && missingLatitude)) ||
-        (!longitude && !(*quality == GgaQuality::INVALID && missingLongitude))) {
+    auto result = fixFields(input, *quality);
+    if (!result) {
         return {};
-    }
-    GGA result{latitude.value_or(NAN), longitude.value_or(NAN)};
-    result.quality = *quality;
-    result.satellitesUsed = satellites;
-    if (const auto hdop = number<double>(f[Field::GGA_HDOP]); hdop && *hdop >= 0) {
-        result.hdop = *hdop;
     }
     if (f[Field::GGA_ALTITUDE_UNITS] == "M") {
-        result.altitude = number<double>(f[Field::GGA_ALTITUDE]).value_or(NAN);
+        result->altitude = number<double>(f[Field::GGA_ALTITUDE]).value_or(NAN);
     }
     if (f[Field::GGA_GEOID_UNITS] == "M") {
-        result.geoidSeparation = number<double>(f[Field::GGA_GEOID_SEPARATION]).value_or(NAN);
+        result->geoidSeparation = number<double>(f[Field::GGA_GEOID_SEPARATION]).value_or(NAN);
     }
+    return result;
+}
+
+std::optional<unsigned> gnsQuality(std::string_view modes)
+{
+    // The best mode first, as fixQuality() orders the qualities they stand for.
+    constexpr std::string_view LETTERS = "RFDPAEMSN";
+    constexpr std::array<unsigned, LETTERS.size()> QUALITIES{
+        GgaQuality::RTK_FIXED, GgaQuality::RTK_FLOAT, GgaQuality::DIFFERENTIAL, GgaQuality::PPS,    GgaQuality::GPS,
+        GgaQuality::ESTIMATED, GgaQuality::MANUAL,    GgaQuality::SIMULATION,   GgaQuality::INVALID};
+    if (modes.empty()) {
+        return {};
+    }
+    size_t best = LETTERS.size();
+    for (const char mode : modes) {
+        const auto rank = LETTERS.find(mode);
+        if (rank == std::string_view::npos) {
+            return {};
+        }
+        best = (std::min) (best, rank);
+    }
+    return QUALITIES[best];
+}
+
+std::optional<GGA> gns(const Sentence& input)
+{
+    if (input.type() != "GNS" || input.count < Field::GNS_MIN_FIELDS) {
+        return {};
+    }
+    const auto quality = gnsQuality(input.fields[Field::GNS_MODE]);
+    if (!quality) {
+        return {};
+    }
+    auto result = fixFields(input, *quality);
+    if (!result) {
+        return {};
+    }
+    result->altitude = number<double>(input.fields[Field::GNS_ALTITUDE]).value_or(NAN);
+    result->geoidSeparation = number<double>(input.fields[Field::GNS_GEOID_SEPARATION]).value_or(NAN);
     return result;
 }
 
@@ -382,6 +437,10 @@ std::optional<NavigationStatus> navigationStatus(const Sentence& input)
     if (type == "GGA" && input.count > Field::GGA_QUALITY) {
         const auto quality = number<unsigned>(fields[Field::GGA_QUALITY]);
         if (quality && *quality <= GgaQuality::MAX_RECEIVED) {
+            return NavigationStatus{*quality != GgaQuality::INVALID, utcMilliseconds(fields[Field::UTC_TIME])};
+        }
+    } else if (type == "GNS" && input.count > Field::GNS_MODE) {
+        if (const auto quality = gnsQuality(fields[Field::GNS_MODE])) {
             return NavigationStatus{*quality != GgaQuality::INVALID, utcMilliseconds(fields[Field::UTC_TIME])};
         }
     } else if (type == "GSA" && input.count > Field::GSA_DIMENSION) {
