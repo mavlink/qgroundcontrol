@@ -34,7 +34,7 @@ src/GPS/Core * GPSReceiverWorker                              one receiver sessi
 
 | Directory | Owns | Includes, within `src/GPS` |
 | --- | --- | --- |
-| `Core/Common` | `GPSType`, the request (`GPSReceiverConfig`), the reports (`GPSReceiverReports.h`), the family descriptors, clock and math | Nothing |
+| `Core/Common` | `GPSType`, the request (`GPSReceiverConfig`), the reports (`GPSReceiverReports.h`), the family descriptors, the detection hint, clock and math | Nothing |
 | `Core/NMEA`, `Core/RTCM`, `Core/Transport` | NMEA sentences and epochs; RTCM framing, station position and stream content; `GPSTransport` with the serial, TCP, UDP, pipe and recording transports | `Core/Common` |
 | `Core/Protocols` | `GPSDriver`, `GPSProtocolRuntime`, `GPSCommandChannel`, `GPSStreamDemux`, `GPSReceiverDetector` and a folder for each family | The three above, `Core/Common` |
 | `Core` | `GPSReceiverWorker` | `Core/Protocols`, `Core/Transport`, `Core/Common` |
@@ -61,9 +61,9 @@ Two rules hold this together:
 - **`Core` and `NTRIP/HTTP` are free of the application.** They are the libraries `QGCGPSCore` and `QGCNTRIPHttp`: no
   settings, Facts, QML or `Vehicle`, only Qt without QML and utility libraries. `test/GPS/Standalone` builds them on
   their own, so an application header there breaks that build. The `Core/Protocols` headers are private to `QGCGPSCore`.
-- **The include directions have no cycle.** One include goes against the table: `Core/Protocols/GPSDriver.h` takes
-  `GPSDetectionHint.h` from the worker's directory. Inside `Core/Protocols`, the shared code includes family headers in
-  one file: `GPSStreamDemux.cc` takes the framers of `SBFBlocks.h` and `UBXFrame.h`.
+- **The include directions have no cycle.** No include goes against the table, and no header of another directory
+  includes a `Core/Protocols` header. Inside `Core/Protocols`, the shared code includes family headers in one file:
+  `GPSStreamDemux.cc` takes the framers of `SBFBlocks.h` and `UBXFrame.h`.
 
 ## Glossary
 
