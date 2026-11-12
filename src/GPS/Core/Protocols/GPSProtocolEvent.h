@@ -1,6 +1,5 @@
 #pragma once
 
-#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <optional>
@@ -10,6 +9,7 @@
 
 #include <QtCore/QByteArray>
 #include <QtCore/QFlags>
+#include <QtCore/QList>
 
 #include "GPSReceiverReports.h"
 #include "GPSType.h"
@@ -65,8 +65,8 @@ struct GPSDecodedSatellites
     /// listed.
     void listSatellite(const GPSSatellite& satellite)
     {
-        if (satelliteCount < satellites.size()) {
-            satellites[satelliteCount++] = satellite;
+        if (satellites.size() < SAT_INFO_MAX_SATELLITES) {
+            satellites.append(satellite);
         }
     }
 
@@ -88,17 +88,26 @@ struct GPSDecodedSatellites
     /// The satellites listed, in the order the decoder listed them.
     [[nodiscard]] std::span<const GPSSatellite> satellitesInView() const
     {
-        return std::span(satellites).first(std::min<size_t>(satelliteCount, satellites.size()));
+        return {satellites.constData(), static_cast<size_t>(satellites.size())};
+    }
+
+    /// Empties the report for the decoder that fills it for each message. The list keeps its storage unless a
+    /// published copy still shares it, so a report that is filled again does not allocate.
+    void clear()
+    {
+        fullSnapshot = true;
+        count = 0;
+        constellations = {};
+        satellites.clear();
     }
 
     // Full snapshots retire omitted constellations; deltas preserve them.
     bool fullSnapshot = true;
     uint8_t count = 0;
     std::array<Constellation, MAX_CONSTELLATIONS> constellations{};
-    /// The satellites in view of the constellations above, where the receiver describes them: the first
-    /// satelliteCount entries.
-    uint8_t satelliteCount = 0;
-    std::array<GPSSatellite, SAT_INFO_MAX_SATELLITES> satellites{};
+    /// The satellites in view of the constellations above, where the receiver describes them. Copies of the report
+    /// share the list until one changes it, so that the report, and with it every event, stays small.
+    QList<GPSSatellite> satellites;
 };
 
 struct GPSDecodedSatelliteUsage
@@ -128,6 +137,10 @@ struct GPSInputProtocol
 
 using GPSProtocolEvent = std::variant<GPSDecodedPosition, GPSIntegrityReport, GPSDecodedSatellites,
                                       GPSDecodedSatelliteUsage, GPSBaseStatus, GPSRTCMFrame, GPSInputProtocol>;
+
+// An event of any kind takes the size of the largest. What only some events carry in bulk, a satellite list or an
+// RTCM frame, therefore sits behind a shared pointer: a list of 128 satellites inline makes every event 1880 bytes.
+static_assert(sizeof(GPSProtocolEvent) <= 384, "a decoded event holds bulk data inline");
 
 /// Events decoded from one span of received bytes, in publication order.
 struct GPSEventBatch

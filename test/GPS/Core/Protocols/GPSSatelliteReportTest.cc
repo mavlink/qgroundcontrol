@@ -389,6 +389,48 @@ void GPSSatelliteReportTest::_ubxLegacyNumbering()
                                            {GPSConstellation::SBAS, 2, 1}}));
 }
 
+void GPSSatelliteReportTest::_eventSharesItsSatellites()
+{
+    GPSTestClock clock(GPSTestClock::START_US);
+    GPSProtocolRuntime runtime(UBX::FAMILY, makeDecoderOnlyIO(clock));
+    runtime.armNavigationDecode({.corrections = true});
+    const auto rover = fixtureBytes(ROVER);
+    const auto session = fixtureBytes(SESSION);
+    QVERIFY(rover && session);
+    const auto satelliteEvent = [](const GPSEventBatch& batch) -> const GPSDecodedSatellites* {
+        for (const auto& event : batch.events) {
+            if (const auto* satellites = std::get_if<GPSDecodedSatellites>(&event)) {
+                return satellites;
+            }
+        }
+        return nullptr;
+    };
+    const auto listed = [&clock](const GPSDecodedSatellites& event) {
+        return satellitesOf(GPSDecodedData::SatelliteCounts().update(event, clock.nowUs()));
+    };
+
+    // An event does not hold its satellites: it shares the list of the report the decoder fills for each message.
+    // One that is kept still lists its own after the decoder went on to the next message.
+    const GPSEventBatch kept = runtime.decode(*rover);
+    const GPSEventBatch next = runtime.decode(*session);
+    QVERIFY(satelliteEvent(kept) && satelliteEvent(next));
+    QCOMPARE(listed(*satelliteEvent(kept)), capturedIn(ROVER));
+    QCOMPARE(listed(*satelliteEvent(next)), capturedIn(SESSION));
+
+    // Once a batch is delivered and gone, as every batch of a session is, the next report fills the same storage:
+    // decoding the satellites allocates nothing.
+    const GPSSatellite* storage = nullptr;
+    for (int message = 0; message < 3; ++message) {
+        const GPSEventBatch batch = runtime.decode(*rover);
+        const auto* satellites = satelliteEvent(batch);
+        QVERIFY(satellites);
+        if (storage) {
+            QCOMPARE(satellites->satellitesInView().data(), storage);
+        }
+        storage = satellites->satellitesInView().data();
+    }
+}
+
 void GPSSatelliteReportTest::_nmeaCaptureSatellites()
 {
     // An Ashtech AC12: GSA names three satellites in use of the ten its GSV pages describe, two of them SBAS.

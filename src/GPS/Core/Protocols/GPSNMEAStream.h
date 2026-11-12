@@ -89,6 +89,8 @@ private:
     /// The systems of the epoch a line completed, published as one report by _finishLine() after the line's vendor
     /// events.
     NMEA::SatelliteEpoch _pendingSatellites;
+    /// The report of the last epoch published, kept for the storage of its satellite list.
+    GPSDecodedSatellites _satelliteReport;
     NMEA::NavigationEpochAssembler _navigationAssembler;
     Navigation _navigation = Navigation::StandardNMEA;
 };

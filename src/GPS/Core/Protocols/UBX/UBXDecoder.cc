@@ -610,7 +610,7 @@ void Protocol::_decodeMonVer(std::span<const uint8_t> payload)
 
 void Protocol::_decodeSatellites(uint16_t message, std::span<const uint8_t> payload)
 {
-    _satellites = {};
+    _satellites.clear();
     if (message == Msg::NAV_SAT.value()) {
         constexpr GPSConstellation SYSTEMS[] = {
             GPSConstellation::GPS,     GPSConstellation::SBAS, GPSConstellation::Galileo, GPSConstellation::BeiDou,

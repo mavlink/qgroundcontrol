@@ -61,6 +61,7 @@ void GPSNMEAStream::reset(GPSStreamDemux& stream)
     stream.reset();
     _satelliteAssembler.clear();
     _pendingSatellites.clear();
+    _satelliteReport.clear();
     _navigationAssembler.reset();
     _position = {};
 }
@@ -150,11 +151,11 @@ void GPSNMEAStream::_publishSatellites(GPSDecodeContext& context)
         return;
     }
     // One report for the epoch: it names each of its systems once, and a consumer gets them together.
-    GPSDecodedSatellites report;
-    report.fullSnapshot = false;
+    _satelliteReport.clear();
+    _satelliteReport.fullSnapshot = false;
     for (const auto& system : _pendingSatellites) {
-        addSystem(report, system);
+        addSystem(_satelliteReport, system);
     }
-    context.publishSatellites(report);
+    context.publishSatellites(_satelliteReport);
     _pendingSatellites.clear();
 }
