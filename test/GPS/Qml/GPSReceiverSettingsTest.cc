@@ -517,7 +517,7 @@ void GPSReceiverSettingsTest::_tcpConnectionFields()
     QVERIFY(!tcpOnly->isVisible());
     settings->baseReceiverManufacturer()->setRawValue(gpsReceiverManufacturerForType(GPSType::Quectel));
     QVERIFY(consent->property("visible").toBool());
-    // Which settings withdraw the permission is GPSReceiverSettingsBindingTest's; the checkbox follows the receiver.
+    // Which settings withdraw the permission is GPSReceiverTest's; the checkbox follows the receiver.
     QVERIFY(QMetaObject::invokeMethod(consent, "click"));
     QVERIFY(consent->property("checked").toBool());
     settings->tcpHost()->setRawValue(QStringLiteral("bridge"));
@@ -745,7 +745,7 @@ void GPSReceiverSettingsTest::_consentIsOneUse()
     failToOpen();
     QVERIFY(!receiver.gps.hasReceiver());
 
-    // Which settings withdraw the permission is GPSReceiverSettingsBindingTest's; the checkbox follows the receiver.
+    // Which settings withdraw the permission is GPSReceiverTest's; the checkbox follows the receiver.
     RTKSettings* const settings = panel.settings.settings;
     QVERIFY(QMetaObject::invokeMethod(consent, "click"));
     QVERIFY(consent->property("checked").toBool());

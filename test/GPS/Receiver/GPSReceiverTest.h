@@ -44,6 +44,16 @@ private slots:
     void _recordsSessionsStartedWhileOn();
     void _recordingFileClearsWhenRecordingFails();
     void _withoutSerialLinksSerialSelectionUsesTcp();
+    void _configuredPresentation_data();
+    void _configuredPresentation();
+    void _configurationDiagnosticRetained_data();
+    void _configurationDiagnosticRetained();
+    void _persistentConsentScope_data();
+    void _persistentConsentScope();
+    void _persistentConsentIsSpentOnConnect_data();
+    void _persistentConsentIsSpentOnConnect();
+    void _effectiveConnection_data();
+    void _effectiveConnection();
 #ifndef QGC_NO_SERIAL_LINK
     void _serialPortEntries();
     void _serialReservationSurvivesDelayedStop();
