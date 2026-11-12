@@ -531,8 +531,10 @@ void DecodingBranch::_onDecoderElementAdded(GstBin* decodebin, GstBin* /*subBin*
         return;
     }
 
-    // Live streams: once a frame is late, the videodecoder base class advances earliest_time and drops every frame
-    // after it. Turned off here, before the decoder sees data, for each decoder decodebin3 plugs, later swaps included.
+    // Live streams: once a frame is late, a QoS event has the videodecoder base class drop the frames due before the
+    // time it names. Turned off here, before the decoder sees data, for each decoder decodebin3 plugs, later swaps
+    // included. That stops the base class only: avdec and amcvideodec act on the event's deadline themselves, and it
+    // is the sink bin's own "qos", off by default, that sends them none.
     if (g_object_class_find_property(G_OBJECT_GET_CLASS(element), "qos")) {
         g_object_set(element, "qos", FALSE, nullptr);
     }
