@@ -16,11 +16,6 @@
 
 QGC_LOGGING_CATEGORY(UBXProtocolLog, "GPS.Protocols.UBX")
 
-namespace Cfg = UBX::Cfg;
-namespace Msg = UBX::Msg;
-namespace Plan = UBX::Plan;
-using Plan::NakPolicy;
-
 namespace UBX {
 
 namespace {
@@ -577,10 +572,10 @@ bool Protocol::_runPlan(GPSCommandChannel& channel, const std::vector<UBX::Plan:
             continue;
         }
         const bool acknowledged = _transactValset(channel, batch).succeeded();
-        if (channel.failed() || (!acknowledged && batch.policy == NakPolicy::Fail)) {
+        if (channel.failed() || (!acknowledged && batch.policy == Plan::NakPolicy::Fail)) {
             return false;
         }
-        if (!acknowledged && batch.policy == NakPolicy::Warn) {
+        if (!acknowledged && batch.policy == Plan::NakPolicy::Warn) {
             qCWarning(UBXProtocolLog) << batch.warning;
         }
     }
