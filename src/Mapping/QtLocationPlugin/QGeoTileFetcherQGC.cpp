@@ -3,7 +3,6 @@
 #include <QtLocation/private/qgeotiledmappingmanagerengine_p.h>
 #include <QtLocation/private/qgeotilespec_p.h>
 
-#include "MapProvider.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapUrlEngine.h"
 #include "QGeoMapIdQGC.h"
@@ -28,10 +27,6 @@ QGeoTiledMapReply* QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec& spec)
 {
     const SharedMapProvider provider = UrlFactory::getMapProviderFromMapId(QGeoMapIdQGC::toProviderId(spec.mapId()));
     if (!provider) {
-        return nullptr;
-    }
-
-    if (provider->getTileURL(spec.x(), spec.y(), spec.zoom()).isEmpty()) {
         return nullptr;
     }
 

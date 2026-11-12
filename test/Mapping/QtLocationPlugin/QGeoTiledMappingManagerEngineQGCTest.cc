@@ -3,15 +3,40 @@
 #include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtLocation/private/qgeomaptype_p.h>
+#include <QtLocation/private/qgeotilefetcher_p.h>
+#include <QtLocation/private/qgeotilespec_p.h>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtTest/QSignalSpy>
 
 #include "AppSettings.h"
+#include "QGCMapEngine.h"
 #include "QGCMapUrlEngine.h"
 #include "QGeoMapIdQGC.h"
 #include "QGeoServiceProviderPluginQGC.h"
 #include "QGeoTiledMappingManagerEngineQGC.h"
 #include "SettingsManager.h"
+#include "TileReplyNetworkMock.h"
+#include "UnitTestTileGenerator.h"
+
+namespace {
+
+/// The provider that fetches from the URL template the user sets: it has no URL for a tile while that is empty
+const QString kMappingEngineCustomUrlType = QStringLiteral("CustomURL Custom");
+
+QGeoTileSpec mappingEngineCustomUrlTileSpec(int x)
+{
+    const int mapId = QGeoMapIdQGC::fromProviderId(UrlFactory::getMapIdFromProviderType(kMappingEngineCustomUrlType));
+    return QGeoTileSpec(QStringLiteral("QGroundControl"), mapId, 13, x, 2867);
+}
+
+}  // namespace
+
+void QGeoTiledMappingManagerEngineQGCTest::initTestCase()
+{
+    UnitTest::initTestCase();
+    // _testUncachedTileFailsWithoutProviderUrl requests a tile that the tile cache of the process must not have
+    QVERIFY(UnitTestTileGenerator::resetTileCache());
+}
 
 void QGeoTiledMappingManagerEngineQGCTest::_testElevationProvidersAreNotMapTypes()
 {
@@ -103,6 +128,73 @@ void QGeoTiledMappingManagerEngineQGCTest::_testFactoryNeedsQmlEngine()
     verifyExpectedLogMessage();
     QCOMPARE_NE(error, QGeoServiceProvider::NoError);
     QVERIFY(!errorString.isEmpty());
+}
+
+void QGeoTiledMappingManagerEngineQGCTest::_testCachedTileServedWithoutProviderUrl()
+{
+    Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
+    const QVariant savedUrl = customUrl->rawValue();
+    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
+    customUrl->setRawValue(QString());
+
+    TileReplyMockNam networkManager;
+    QGeoServiceProvider::Error error = QGeoServiceProvider::NotSupportedError;
+    QString errorString;
+    QGeoTiledMappingManagerEngineQGC engine(&error, &errorString, &networkManager);
+    QCOMPARE(error, QGeoServiceProvider::NoError);
+    QGeoTileFetcher* const fetcher = engine.tileFetcher();
+    QSignalSpy finishedSpy(fetcher, &QGeoTileFetcher::tileFinished);
+    QSignalSpy errorSpy(fetcher, &QGeoTileFetcher::tileError);
+
+    const QGeoTileSpec spec = mappingEngineCustomUrlTileSpec(4410);
+    const QByteArray tile = tileReplyPngBody();
+    QVERIFY(!tile.isEmpty());
+    // The cache worker runs tasks in order: the tile is stored before the fetcher asks for it
+    getQGCMapEngine()->cacheTile(kMappingEngineCustomUrlType,
+                                 UrlFactory::getTileHash(kMappingEngineCustomUrlType, spec.x(), spec.y(), spec.zoom()),
+                                 tile, QStringLiteral("png"));
+
+    fetcher->updateTileRequests({spec}, {});
+
+    QVERIFY_SIGNAL_COUNT_WAIT(finishedSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(finishedSpy.constFirst().at(0).value<QGeoTileSpec>(), spec);
+    QCOMPARE(finishedSpy.constFirst().at(1).toByteArray(), tile);
+    QVERIFY(errorSpy.isEmpty());
+    QCOMPARE(networkManager.requestCount, 0);
+}
+
+void QGeoTiledMappingManagerEngineQGCTest::_testUncachedTileFailsWithoutProviderUrl()
+{
+    Fact* const customUrl = SettingsManager::instance()->appSettings()->customURL();
+    const QVariant savedUrl = customUrl->rawValue();
+    const auto restoreUrl = qScopeGuard([customUrl, savedUrl] { customUrl->setRawValue(savedUrl); });
+    customUrl->setRawValue(QString());
+
+    // Under unit tests UnitTestTileGenerator serves a tile the cache lacks, unless a miss is forced
+    UnitTestTileGenerator::setForcedMissCount(1);
+    const auto guard = qScopeGuard([] { UnitTestTileGenerator::setForcedMissCount(0); });
+
+    TileReplyMockNam networkManager;
+    QGeoServiceProvider::Error error = QGeoServiceProvider::NotSupportedError;
+    QString errorString;
+    QGeoTiledMappingManagerEngineQGC engine(&error, &errorString, &networkManager);
+    QCOMPARE(error, QGeoServiceProvider::NoError);
+    QGeoTileFetcher* const fetcher = engine.tileFetcher();
+    QSignalSpy finishedSpy(fetcher, &QGeoTileFetcher::tileFinished);
+    QSignalSpy errorSpy(fetcher, &QGeoTileFetcher::tileError);
+
+    const QGeoTileSpec spec = mappingEngineCustomUrlTileSpec(4411);
+    expectLogMessage("QtLocationPlugin.QGeoTiledMapReplyQGC", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("has no URL")));
+    fetcher->updateTileRequests({spec}, {});
+
+    // An error, as QtLocation's maps wait for ever for a tile that ends with neither a tile nor an error
+    QVERIFY_SIGNAL_COUNT_WAIT(errorSpy, 1, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(errorSpy.constFirst().at(0).value<QGeoTileSpec>(), spec);
+    QVERIFY(!errorSpy.constFirst().at(1).toString().isEmpty());
+    QVERIFY(finishedSpy.isEmpty());
+    QCOMPARE(networkManager.requestCount, 0);
 }
 
 UT_REGISTER_TEST(QGeoTiledMappingManagerEngineQGCTest, TestLabel::Unit)
