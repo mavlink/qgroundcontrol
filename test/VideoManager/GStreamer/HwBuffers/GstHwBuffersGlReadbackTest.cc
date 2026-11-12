@@ -693,6 +693,58 @@ void GstHwBuffersGlReadbackTest::_testGlMemoryFrameToImage()
 #endif
 }
 
+void GstHwBuffersGlReadbackTest::_testTenBitPlanarFrameToImage()
+{
+#if !defined(QGC_TEST_GLMEMORY_READBACK)
+    QSKIP("Needs Qt's OpenGL QRhi, as the GLMemory tests do");
+#else
+    // Qt converts the frame with shaders on a QRhi of its own; it has no CPU conversion for this format.
+    if (!_glRhi()) {
+        QSKIP(qPrintable(_rhiUnavailable));
+    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("videotestsrc", "videoconvert", "appsink");
+
+    // A frame as a software Main 10 decoder sends it, through the sink, and the same frame converted by GStreamer.
+    QVideoSink videoSink;
+    QVideoFrame frame;
+    QObject owner;
+    QObject::connect(&videoSink, &QVideoSink::videoFrameChanged, &owner, [&frame](const QVideoFrame& delivered) {
+        if (delivered.isValid()) {
+            frame = delivered;
+        }
+    });
+    GstTest::TestPipeline pipeline;
+    QVERIFY2(pipeline.launch(QStringLiteral("videotestsrc num-buffers=1 pattern=smpte ! "
+                                            "video/x-raw,format=I420_10LE,width=64,height=48,framerate=30/1 ! "
+                                            "tee name=t t. ! queue ! qgcvideosinkbin name=sink "
+                                            "t. ! queue ! videoconvert ! video/x-raw,format=BGRA ! "
+                                            "appsink name=reference sync=false")),
+             qPrintable(pipeline.error()));
+    QVERIFY(GStreamer::setupQVideoSinkElement(pipeline.element("sink").get(), &videoSink, &owner));
+    QVERIFY(pipeline.play());
+    GstSample* const reference = gst_app_sink_try_pull_sample(GST_APP_SINK(pipeline.element("reference").get()),
+                                                              GstTest::clockTime(TestTimeout::mediumDuration()));
+    QVERIFY2(reference, "the pipeline produced no frame");
+    const auto unrefReference = qScopeGuard([reference] { gst_sample_unref(reference); });
+    QVERIFY_TRUE_WAIT(frame.isValid(), TestTimeout::mediumMs());
+
+    // The decoder's own format, with nothing converted ahead of the sink.
+    QCOMPARE(frame.pixelFormat(), QVideoFrameFormat::Format_YUV420P10);
+
+    GstVideoInfo info;
+    QVERIFY(gst_video_info_from_caps(&info, gst_sample_get_caps(reference)));
+    GstVideoFrame converted;
+    QVERIFY(gst_video_frame_map(&converted, &info, gst_sample_get_buffer(reference), GST_MAP_READ));
+    const auto unmapConverted = qScopeGuard([&converted] { gst_video_frame_unmap(&converted); });
+    // BGRA bytes are QImage's ARGB32 on a little-endian host.
+    const QImage expected(static_cast<const uchar*>(GST_VIDEO_FRAME_PLANE_DATA(&converted, 0)),
+                          GST_VIDEO_FRAME_WIDTH(&converted), GST_VIDEO_FRAME_HEIGHT(&converted),
+                          GST_VIDEO_FRAME_PLANE_STRIDE(&converted, 0), QImage::Format_ARGB32);
+    const QString mismatch = GstTest::firstImageMismatch(frame.toImage(), expected, /*tolerance=*/4, /*edgeRadius=*/2);
+    QVERIFY2(mismatch.isEmpty(), qPrintable(mismatch));
+#endif
+}
+
 #if defined(QGC_TEST_GLMEMORY_READBACK)
 namespace {
 

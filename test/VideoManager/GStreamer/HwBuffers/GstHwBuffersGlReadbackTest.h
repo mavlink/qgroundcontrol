@@ -32,6 +32,7 @@ private slots:
     void _testGlMemoryFrameReadsBack();
     void _testGlMemoryFrameToImage_data();
     void _testGlMemoryFrameToImage();
+    void _testTenBitPlanarFrameToImage();
     void _testGlMemoryMapLeavesFrameSyncMeta();
     void _testUnsharedGlMemoryTakesCpuPath();
 #endif

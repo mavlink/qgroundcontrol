@@ -154,7 +154,6 @@ void GstQgcVideoFormatsTest::_testAdvertisedFormatListMatchesTable()
         }
     }
     QVERIFY2(list.find("BGRx") == std::string::npos, "accepted-only BGRx must not be advertised");
-    QVERIFY2(list.find("I420_10LE") == std::string::npos, "accepted-only I420_10LE must not be advertised");
     QVERIFY2(list.rfind("{ ", 0) == 0 && list.find(" }") != std::string::npos, "list must be brace-wrapped");
 }
 
