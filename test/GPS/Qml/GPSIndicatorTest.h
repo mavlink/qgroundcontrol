@@ -15,6 +15,7 @@ private slots:
     void _compactExpandedPageHasSettingsSize();
     void _gcsPositionStaysInsideItsBox();
     void _ntripStaysInsideItsBox();
+    void _receiverStaysInsideItsBox();
     void _correctionsStayInsideTheirBox_data();
     void _correctionsStayInsideTheirBox();
     void _statusColumnKeepsItsWidth();

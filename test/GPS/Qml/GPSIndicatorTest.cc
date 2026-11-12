@@ -426,6 +426,33 @@ void GPSIndicatorTest::_ntripStaysInsideItsBox()
     QVERIFY(queued.isEmpty());
 }
 
+void GPSIndicatorTest::_receiverStaysInsideItsBox()
+{
+    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::UBlox));
+    AppReceiver base;
+    QVERIFY(base.connect());
+    // The fix with the longest name, which with its label is wider than the status column.
+    const QString fix = QStringLiteral("3D RTK GPS Lock (float)");
+    settings.saved.setFactValue(base.facts()->fixType(), static_cast<int>(GPSFixQuality::RTKFloat));
+    QCOMPARE(base.facts()->fixType()->enumStringValue(), fix);
+
+    TestFixtures::QmlWindowFixture window;
+    TestFixtures::QmlEngine engine;
+    std::unique_ptr<QObject> page = createIndicatorPage(engine, window, nullptr);
+    QVERIFY2(page, qPrintable(engine.lastError()));
+    QVERIFY(window.show());
+    auto* box = page->findChild<QQuickItem*>(QStringLiteral("gpsIndicatorReceiver"));
+    QVERIFY(box && box->isVisible());
+    auto* row = box->findChild<QQuickItem*>(QStringLiteral("rtkFixType"));
+    QVERIFY(row && row->isVisible());
+    QCOMPARE(row->property("labelText").toString(), fix);
+    QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
+    QVERIFY(qAbs(box->width() - page->property("_preferredStatusWidth").toReal()) <= 1);
+    // It wraps inside the box instead of running past it and taking the other rows' values along.
+    const QStringList outside = textsOutside(box);
+    QVERIFY2(outside.isEmpty(), qPrintable(outside.join(QStringLiteral("; "))));
+}
+
 void GPSIndicatorTest::_correctionsStayInsideTheirBox_data()
 {
     QTest::addColumn<int>("units");

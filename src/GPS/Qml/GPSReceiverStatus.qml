@@ -83,10 +83,14 @@ QGCGroupBox {
     }
 
     // Values the receiver does not report are not shown. Each row appears with its value, at the Facts' update rate.
-    FactRow {
+    // The name of an RTK fix is wider than the status column of the GPS indicator's drop-down has room for beside
+    // its label, so it wraps.
+    GPSWrappingRow {
         objectName: "rtkFixType"
-        fact: root.facts.fixType
         visible: root._connected && root.facts.fixType.value !== GPSFixQuality.Unknown
+        label: root.facts.fixType.shortDescription
+        labelText: root.facts.fixType.enumOrValueString
+        labelWrapMode: Text.Wrap
     }
 
     FactRow {

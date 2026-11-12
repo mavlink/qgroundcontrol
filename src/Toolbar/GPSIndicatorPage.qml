@@ -172,6 +172,7 @@ ToolIndicatorPage {
                 GPSReceiverStatus {
                     id: receiverStatus
 
+                    objectName: "gpsIndicatorReceiver"
                     Layout.minimumWidth: 0
                     showWhenDisconnected: !root._vehicleGps || root.expanded || receiverStatus.receiver.hasEndpoint
                                           || receiverStatus.receiver.errorMessage !== ""
