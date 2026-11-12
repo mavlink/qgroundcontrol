@@ -91,23 +91,12 @@ void QGCCompressionJob::extractArchiveAtomic(const QString &archivePath,
     _startOperation(Operation::ExtractArchiveAtomic, archivePath, outputDirectoryPath, work);
 }
 
-void QGCCompressionJob::decompressFile(const QString &inputPath,
-                                        const QString &outputPath,
-                                        qint64 maxBytes)
+void QGCCompressionJob::decompressFile(const QString& inputPath, const QString& outputPath, qint64 maxBytes,
+                                       QGCCompression::PlainInput plainInput)
 {
-    auto work = [inputPath, outputPath, maxBytes](QGCCompression::ProgressCallback progress) {
-        return QGCCompression::decompressFile(inputPath, outputPath,
-                                               QGCCompression::Format::Auto,
-                                               progress, maxBytes);
-    };
-
-    _startOperation(Operation::DecompressFile, inputPath, outputPath, work);
-}
-
-void QGCCompressionJob::decompressOrCopyFile(const QString& inputPath, const QString& outputPath, qint64 maxBytes)
-{
-    auto work = [inputPath, outputPath, maxBytes](QGCCompression::ProgressCallback progress) {
-        return QGCCompression::decompressOrCopyFile(inputPath, outputPath, progress, maxBytes);
+    auto work = [inputPath, outputPath, maxBytes, plainInput](QGCCompression::ProgressCallback progress) {
+        return QGCCompression::decompressFile(inputPath, outputPath, QGCCompression::Format::Auto, progress, maxBytes,
+                                              plainInput);
     };
 
     _startOperation(Operation::DecompressFile, inputPath, outputPath, work);

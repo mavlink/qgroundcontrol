@@ -154,11 +154,23 @@ constexpr qint64 kDefaultMaxDecompressedMemoryBytes = 256LL * 1024 * 1024;
 /// Default limit for a compressed file that is decompressed to another file (1 GiB)
 constexpr qint64 kDefaultMaxDecompressedFileBytes = 1024LL * 1024 * 1024;
 
+/// What decompressFile() does with a file that is taken for a single compressed stream, by its name or by the
+/// format passed, and is not compressed
+enum class PlainInput
+{
+    Refuse,  ///< Fail with Error::UnsupportedFormat, and write nothing
+    Copy     ///< Write the file to the output as it is
+};
+
 /// Decompress a single file
 /// A compressed file that holds no data, as a compressor writes for an empty file, gives an empty output file.
-/// A file without any bytes is not a compressed file, and is refused. So is a file that is taken for a
-/// compressed one, by its name or by the format passed, and is not compressed, and a bzip2 or LZ4 file in a
-/// build that cannot decode it: nothing is written, and lastError() is Error::UnsupportedFormat.
+/// A file without any bytes is not a compressed file, and is refused. So is a bzip2 or LZ4 file in a build
+/// that cannot decode it, and a file that is not compressed unless plainInput says to copy it: nothing is
+/// written, and lastError() is Error::UnsupportedFormat.
+/// PlainInput::Copy is for a file that has the name of a compressed one and can have been decompressed on its
+/// way: the body of a download is, when its server sends it with a content encoding, which the HTTP client
+/// takes off. The size limit holds for the copy too, and the callback can cancel it. detectedFilterName() is
+/// "none" after a copy. A compressed file that is truncated or corrupt fails either way.
 /// @param inputPath Path to compressed file (or Qt resource path :/)
 /// @param outputPath Path for decompressed output. If empty: inputPath without the extension of the format
 ///        (for GZIP .gz or .gzip), or with ".decompressed" appended if it does not end in one
@@ -166,27 +178,12 @@ constexpr qint64 kDefaultMaxDecompressedFileBytes = 1024LL * 1024 * 1024;
 ///        the file and decides the default output path. An archive format extracts the file as extractArchive()
 ///        does, after a warning, into the directory outputPath.
 /// @param progress Optional progress callback (return false to cancel)
-/// @param maxDecompressedBytes Maximum decompressed size in bytes (0 = unlimited)
-/// @return true on success, false on failure or if size limit exceeded
-bool decompressFile(const QString &inputPath, const QString &outputPath = QString(),
-                    Format format = Format::Auto,
-                    ProgressCallback progress = nullptr,
-                    qint64 maxDecompressedBytes = 0);
-
-/// Decompress a single file, or copy it if it is not compressed
-/// For a file that has the name of a compressed one and can have been decompressed on its way: the body of a
-/// download is, when its server sends it with a content encoding, which the HTTP client takes off. Everything
-/// is as for decompressFile() with Format::Auto, except that a file which is taken for a compressed one and
-/// is not compressed is written to the output as it is, where decompressFile() refuses it. The size limit
-/// holds for the copy too, and the callback can cancel it. detectedFilterName() is "none" after a copy.
-/// A compressed file that is truncated or corrupt fails, as it does for decompressFile().
-/// @param inputPath Path to the file (or Qt resource path :/)
-/// @param outputPath Path for the output. If empty: as for decompressFile()
-/// @param progress Optional progress callback (return false to cancel)
 /// @param maxDecompressedBytes Maximum size of the output in bytes (0 = unlimited)
+/// @param plainInput What to do with a file that is not compressed
 /// @return true on success, false on failure or if size limit exceeded
-bool decompressOrCopyFile(const QString& inputPath, const QString& outputPath = QString(),
-                          ProgressCallback progress = nullptr, qint64 maxDecompressedBytes = 0);
+bool decompressFile(const QString& inputPath, const QString& outputPath = QString(), Format format = Format::Auto,
+                    ProgressCallback progress = nullptr, qint64 maxDecompressedBytes = 0,
+                    PlainInput plainInput = PlainInput::Refuse);
 
 /// Decompress file if it's a compressed format, otherwise return original path
 /// The original path is also returned for a file that has the name of a compressed one and is not compressed.

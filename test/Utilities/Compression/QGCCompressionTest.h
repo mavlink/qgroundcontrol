@@ -49,8 +49,8 @@ private slots:
     void _testDecompressRejectsStreamWithoutData();
     void _testDecompressPlainInput_data();
     void _testDecompressPlainInput();
-    void _testDecompressOrCopyFile_data();
-    void _testDecompressOrCopyFile();
+    void _testDecompressFileCopiesPlainInput_data();
+    void _testDecompressFileCopiesPlainInput();
 
     // Progress callbacks
     void _testProgressCallbackExtract_data();

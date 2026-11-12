@@ -1235,7 +1235,7 @@ void QGCCompressionTest::_testDecompressPlainInput()
     QCOMPARE(_readFile(inputPath), plain);
 }
 
-void QGCCompressionTest::_testDecompressOrCopyFile_data()
+void QGCCompressionTest::_testDecompressFileCopiesPlainInput_data()
 {
     QTest::addColumn<QString>("input");
     QTest::addColumn<int>("limitOffset");  // The limit is the size of the content and this; none if negative
@@ -1247,7 +1247,7 @@ void QGCCompressionTest::_testDecompressOrCopyFile_data()
     constexpr int noLimit = -1;
 
     QTest::newRow("compressed") << "compressed" << noLimit << false << "" << Error::None;
-    // What decompressFile() refuses: a file that only has the name of a compressed one
+    // What decompressFile() refuses unless it is told to copy: a file that only has the name of a compressed one
     QTest::newRow("not compressed") << "plain" << noLimit << false << "" << Error::None;
     // The copy is held to the limit and can be cancelled, as a decompression is
     QTest::newRow("not compressed, at the limit") << "plain" << 0 << false << "" << Error::None;
@@ -1259,7 +1259,7 @@ void QGCCompressionTest::_testDecompressOrCopyFile_data()
         << "truncated" << noLimit << false << "(?i)truncated gzip input" << Error::InvalidArchive;
 }
 
-void QGCCompressionTest::_testDecompressOrCopyFile()
+void QGCCompressionTest::_testDecompressFileCopiesPlainInput()
 {
     QFETCH(QString, input);
     QFETCH(int, limitOffset);
@@ -1289,7 +1289,8 @@ void QGCCompressionTest::_testDecompressOrCopyFile()
     if (!warning.isEmpty()) {
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression(warning));
     }
-    const bool written = QGCCompression::decompressOrCopyFile(inputPath, outputPath, progress, limit);
+    const bool written = QGCCompression::decompressFile(inputPath, outputPath, QGCCompression::Format::Auto, progress,
+                                                        limit, QGCCompression::PlainInput::Copy);
     if (!warning.isEmpty()) {
         verifyExpectedLogMessage();
     }
@@ -3069,8 +3070,8 @@ void QGCCompressionTest::_testCompressionJobPlainInput_data()
 {
     QTest::addColumn<bool>("copy");
 
-    QTest::newRow("decompressFile") << false;
-    QTest::newRow("decompressOrCopyFile") << true;
+    QTest::newRow("PlainInput::Refuse") << false;
+    QTest::newRow("PlainInput::Copy") << true;
 }
 
 void QGCCompressionTest::_testCompressionJobPlainInput()
@@ -3087,8 +3088,10 @@ void QGCCompressionTest::_testCompressionJobPlainInput()
     QGCCompressionJob job;
     QSignalSpy finishedSpy(&job, &QGCCompressionJob::finished);
     if (copy) {
-        job.decompressOrCopyFile(inputPath, outputPath);
+        job.decompressFile(inputPath, outputPath, QGCCompression::kDefaultMaxDecompressedFileBytes,
+                           QGCCompression::PlainInput::Copy);
     } else {
+        // The default, which is what QGCArchiveWatcher runs
         expectLogMessage("Utilities.QGClibarchive", QtWarningMsg, QRegularExpression("Input is not compressed"));
         job.decompressFile(inputPath, outputPath);
     }
@@ -3097,7 +3100,7 @@ void QGCCompressionTest::_testCompressionJobPlainInput()
         verifyExpectedLogMessage();
     }
 
-    // Only the job that was asked to takes the file as it is. The one QGCArchiveWatcher runs fails for it.
+    // Only the job that was asked to takes the file as it is
     QCOMPARE(finishedSpy.first().first().toBool(), copy);
     if (copy) {
         QVERIFY2(job.errorString().isEmpty(), qPrintable(job.errorString()));

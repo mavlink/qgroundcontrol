@@ -144,17 +144,12 @@ public slots:
     /// Decompress single compressed file (.gz, .xz, etc.)
     /// @param inputPath Path to compressed file
     /// @param outputPath Path for decompressed output (empty = auto-detect)
-    /// @param maxBytes Maximum decompressed size (0 = unlimited)
-    void decompressFile(const QString& inputPath, const QString& outputPath = QString(),
-                        qint64 maxBytes = QGCCompression::kDefaultMaxDecompressedFileBytes);
-
-    /// Decompress single file, or copy it if it is not compressed: see QGCCompression::decompressOrCopyFile()
-    /// For a file that only has the name of a compressed one, which decompressFile() fails for
-    /// @param inputPath Path to the file
-    /// @param outputPath Path for the output (empty = auto-detect)
     /// @param maxBytes Maximum size of the output (0 = unlimited)
-    void decompressOrCopyFile(const QString& inputPath, const QString& outputPath = QString(),
-                              qint64 maxBytes = QGCCompression::kDefaultMaxDecompressedFileBytes);
+    /// @param plainInput Whether a file that only has the name of a compressed one fails the job or is copied
+    ///        to the output as it is: see QGCCompression::decompressFile()
+    void decompressFile(const QString& inputPath, const QString& outputPath = QString(),
+                        qint64 maxBytes = QGCCompression::kDefaultMaxDecompressedFileBytes,
+                        QGCCompression::PlainInput plainInput = QGCCompression::PlainInput::Refuse);
 
     /// Extract single file from archive
     /// @param archivePath Path to archive file
