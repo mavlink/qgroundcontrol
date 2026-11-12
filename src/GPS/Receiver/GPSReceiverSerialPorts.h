@@ -53,12 +53,17 @@ public:
     /// The application's serial rates that a receiver accepts as an explicit rate.
     virtual QList<int> baudRates() const { return {}; }
 
-    /// The serial device picker's entries from the last scan: "value" is the system location, "label" the device's
-    /// description and path, marked when another QGroundControl connection, such as a vehicle link, holds the port.
+    /// The serial device picker's entries, of the devices the last scan listed: "value" is the system location,
+    /// "label" the device's description and path, marked when another QGroundControl connection, such as a vehicle
+    /// link, holds the port.
     QList<GPSSerialPortEntry> entries() const { return _entries; }
 
     /// Scans the devices when a scan is due. A scan notifies, as scanned() describes.
     virtual void scanIfDue() {}
+
+    /// Marks the entries of the ports that other connections hold now. Connections claim and release their ports
+    /// without a scan, so the receiver asks for this as often as it polls. Notifies when a mark changed.
+    virtual void refreshEntries() {}
 
     /// The device is plugged in and not in its bootloader.
     virtual bool available([[maybe_unused]] const QString& device) const { return false; }

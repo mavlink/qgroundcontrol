@@ -19,7 +19,9 @@ GPSReceiverSystemSerialPorts::GPSReceiverSystemSerialPorts(SerialPortManager* ma
     if (_manager) {
         connect(_manager, &SerialPortManager::portsEnumerated, this, [this](const QStringList& devices) {
             emit scanned(devices);
-            _updateEntries();
+            // Just after a scan the manager returns that inventory without scanning again.
+            _scannedPorts = _manager->availablePorts();
+            refreshEntries();
         });
     }
 }
@@ -104,13 +106,14 @@ GPSReceiverWorker::TransportFactory GPSReceiverSystemSerialPorts::transportFacto
     };
 }
 
-void GPSReceiverSystemSerialPorts::_updateEntries()
+void GPSReceiverSystemSerialPorts::refreshEntries()
 {
-    // Just after a scan the manager returns that inventory without scanning again.
-    const QList<SerialPortManager::Port> available = _manager->availablePorts();
+    if (!_manager) {
+        return;
+    }
     QList<GPSSerialPortEntry> entries;
-    entries.reserve(available.size());
-    for (const auto& port : available) {
+    entries.reserve(_scannedPorts.size());
+    for (const auto& port : std::as_const(_scannedPorts)) {
         // The USB product string, else the name of a known board.
         const QString name = port.description.trimmed().isEmpty() ? port.boardName : port.description.trimmed();
         //: %1 is a serial device's name, such as u-blox GNSS receiver; %2 its path, such as /dev/ttyACM0 or COM3

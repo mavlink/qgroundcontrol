@@ -457,6 +457,9 @@ void GPSReceiver::tick()
         return;
     }
     _scanSerialPorts();
+    // Other connections claim and release their ports without a scan. Their marks are renewed before the policy
+    // decides, as the scan is: observers of the entries may act too.
+    _serial->refreshEntries();
     _connection->update();
     _emitChanges();
 }

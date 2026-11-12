@@ -25,6 +25,7 @@ public:
 
     QList<int> baudRates() const override;
     void scanIfDue() override;
+    void refreshEntries() override;
     bool available(const QString& device) const override;
     QString settledRtkReceiver(quint64 nowUs) override;
 
@@ -36,9 +37,10 @@ public:
 private:
     /// Free devices whose USB identity is a known RTK receiver adapter, one per physical device.
     QStringList _freeRtkReceivers() const;
-    void _updateEntries();
 
     const QPointer<SerialPortManager> _manager;
+    /// The devices of the last scan, which the entries are made of.
+    QList<SerialPortManager::Port> _scannedPorts;
     /// The claims made here, which never mark their port as in use, even while a retired session's worker still holds
     /// one.
     QHash<QString, std::weak_ptr<const SerialPortManager::Reservation>> _claims;

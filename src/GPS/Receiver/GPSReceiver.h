@@ -143,7 +143,8 @@ public:
 
     const Configuration& configuration() const { return _configuration; }
 
-    /// GPSReceiverSerialPorts::entries(): the serial device picker's entries from the last scan.
+    /// GPSReceiverSerialPorts::entries(): the serial device picker's entries, of the devices the last scan listed and
+    /// marked as other connections hold them when the receiver was last polled.
     QList<GPSSerialPortEntry> serialPortEntries() const { return _serial->entries(); }
 
     /// The application's serial rates that a receiver accepts as an explicit rate; empty without serial links.
@@ -158,7 +159,8 @@ public:
     Q_INVOKABLE void disconnectReceiver();
     /// Runs tick() every POLL_INTERVAL until shutdown(), skipping ticks while @a suspended returns true.
     void startConnectionPolling(std::function<bool()> suspended = {});
-    /// One step of automatic connection: connections due, reconnections, and USB discovery.
+    /// One step of automatic connection: connections due, reconnections, and USB discovery. It also brings the serial
+    /// port entries up to date with the ports other connections hold.
     void tick();
     /// Stops polling and disconnects, then waits up to SHUTDOWN_TIMEOUT for the workers of retired sessions, which
     /// otherwise finish on their own once the event loop delivers their exit. An observer's connectReceiver() from a

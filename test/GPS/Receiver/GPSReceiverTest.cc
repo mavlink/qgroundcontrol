@@ -1413,16 +1413,31 @@ void GPSReceiverTest::_serialPortEntries()
                                                   }));
     QCOMPARE(entries(&GPSSerialPortEntry::value).first(), QStringLiteral("/dev/ttyACM0"));
 
-    // The mark follows the vehicle link at the next scan; the receiver's own claim never marks its port, even while
-    // a disconnected session's worker still holds it.
+    // A link releases its port without a scan, so the mark follows it when the receiver is next polled. The
+    // receiver's own claim never marks its port, even while a disconnected session's worker still holds it.
     vehicleLink.reset();
     receiver.disconnectReceiver();
-    serial.manager.rescan();
+    receiver.tick();
     QCOMPARE(entries(&GPSSerialPortEntry::label).at(1), QStringLiteral("CubeOrange+ – /dev/ttyACM1"));
     QVERIFY(serial.manager.isPortReserved(QStringLiteral("/dev/ttyACM0")));
     QCOMPARE(entries(&GPSSerialPortEntry::label).first(), QStringLiteral("u-blox GNSS receiver – /dev/ttyACM0"));
     harness.workers.finishRetired();
     QVERIFY(!serial.manager.isPortReserved(QStringLiteral("/dev/ttyACM0")));
+
+    // Where only one port can be open at a time, nothing is scanned while a link holds its port, and the port is
+    // marked all the same.
+    serial.manager.setSinglePortOnly(true);
+    QSignalSpy scans(&serial.manager, &SerialPortManager::portsEnumerated);
+    vehicleLink = serial.manager.reservePort(QStringLiteral("/dev/ttyACM1"));
+    QVERIFY(vehicleLink);
+    changes.clear();
+    receiver.tick();
+    QCOMPARE(entries(&GPSSerialPortEntry::label).at(1), QStringLiteral("CubeOrange+ – /dev/ttyACM1 (in use)"));
+    QCOMPARE(changes.size(), 1);
+    QVERIFY(scans.isEmpty());
+    // Polled again, the entries are as they were, so their views are left alone.
+    receiver.tick();
+    QCOMPARE(changes.size(), 1);
 }
 
 void GPSReceiverTest::_serialReservationSurvivesDelayedStop()
