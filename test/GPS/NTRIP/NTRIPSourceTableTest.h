@@ -16,6 +16,8 @@ private slots:
     void _parseFullTable();
     void _shortRow_data();
     void _shortRow();
+    void _rowShowsOnlyWhatPrints_data();
+    void _rowShowsOnlyWhatPrints();
     void _updateDistancesAll();
     void _singleMountpointDistanceNotification();
     void _emptyTable();

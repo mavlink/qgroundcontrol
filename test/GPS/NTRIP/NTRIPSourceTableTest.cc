@@ -237,10 +237,6 @@ void NTRIPSourceTableTest::_shortRow_data()
     QTest::newRow("no-name") << QStringLiteral("STR;;Rooftop antenna;RTCM 3.2") << false << QString();
     QTest::newRow("blank-name") << QStringLiteral("STR; ;Rooftop antenna") << false << QString();
     QTest::newRow("type-only") << QStringLiteral("STR") << false << QString();
-    // A control character does not show in the list, where such a name would look like one that can be requested.
-    QTest::newRow("carriage-return-in-name") << QStringLiteral("STR;BA\rSE;Rooftop antenna") << false << QString();
-    QTest::newRow("tab-in-name") << QStringLiteral("STR;BA\tSE;Rooftop antenna") << false << QString();
-    QTest::newRow("delete-in-name") << QStringLiteral("STR;BA\x7fSE;Rooftop antenna") << false << QString();
 }
 
 void NTRIPSourceTableTest::_shortRow()
@@ -258,6 +254,69 @@ void NTRIPSourceTableTest::_shortRow()
         // A row without coordinates has no distance.
         QCOMPARE(model.data(index, NTRIPSourceTableModel::DistanceKmRole).toDouble(), -1.0);
     }
+}
+
+void NTRIPSourceTableTest::_rowShowsOnlyWhatPrints_data()
+{
+    QTest::addColumn<QChar>("character");
+    QTest::addColumn<bool>("shown");
+    QTest::newRow("escape") << QChar(0x1b) << false;
+    QTest::newRow("tab") << QChar(u'\t') << false;
+    QTest::newRow("carriage-return") << QChar(u'\r') << false;
+    QTest::newRow("delete") << QChar(0x7f) << false;
+    QTest::newRow("next-line") << QChar(0x85) << false;
+    QTest::newRow("line-separator") << QChar(0x2028) << false;
+    QTest::newRow("paragraph-separator") << QChar(0x2029) << false;
+    // What sets the direction of the text after it would reorder the rest of the row.
+    QTest::newRow("left-to-right-embedding") << QChar(0x202a) << false;
+    QTest::newRow("pop-directional-formatting") << QChar(0x202c) << false;
+    QTest::newRow("right-to-left-override") << QChar(0x202e) << false;
+    QTest::newRow("right-to-left-isolate") << QChar(0x2067) << false;
+    QTest::newRow("pop-directional-isolate") << QChar(0x2069) << false;
+    // Text in a script that is written from right to left stays, with the marks that belong to it.
+    QTest::newRow("hebrew-letter") << QChar(0x05d0) << true;
+    QTest::newRow("right-to-left-mark") << QChar(0x200f) << true;
+    QTest::newRow("zero-width-non-joiner") << QChar(0x200c) << true;
+}
+
+void NTRIPSourceTableTest::_rowShowsOnlyWhatPrints()
+{
+    QFETCH(QChar, character);
+    QFETCH(bool, shown);
+    // The character inside each field that is shown as text, and before and after two of them.
+    const auto with = [character](const QString& text) { return text.first(2) + character + text.sliced(2); };
+    const auto shows = [character, shown](const QString& text) {
+        return shown ? text.first(2) + character + text.sliced(2) : text;
+    };
+    const QString row = QStringLiteral("STR;%1;%2;%3;%4;2;%5;NET;%6;40;-74;0;0;gen;none;B;N;4800\r\n");
+    const QString town = QStringLiteral("Town");
+    const QString format = QStringLiteral("CMR+");
+    const QString messages = QStringLiteral("1005(10)");
+    const QString systems = QStringLiteral("GPS+GLO");
+    const QString country = QStringLiteral("DEU");
+    NTRIPSourceTableModel model;
+    model.parseSourceTable(row.arg(QStringLiteral("NAME"), character + with(town) + character, with(format),
+                                   with(messages), with(systems), character + with(country) + character));
+    QCOMPARE(model.count(), 1);
+    const NTRIPMountpoint& mountpoint = model.mountpoints().constFirst();
+    const QString around = shown ? QString(character) : QString();
+    QCOMPARE(mountpoint.identifier, around + shows(town) + around);
+    QCOMPARE(mountpoint.format, shows(format));
+    QCOMPARE(mountpoint.messages, shows(messages));
+    QCOMPARE(mountpoint.navSystem, shows(systems));
+    QCOMPARE(mountpoint.country, around + shows(country) + around);
+    const auto index = model.index(0, 0);
+    QCOMPARE(model.data(index, NTRIPSourceTableModel::DetailsRole).toString(),
+             QStringLiteral("%1 · %2 · %3 · L1+L2 · %4 · 4800 bps")
+                 .arg(mountpoint.identifier, shows(format), shows(systems), mountpoint.country));
+    QCOMPARE(model.data(index, NTRIPSourceTableModel::NotesRole).toString(),
+             QStringLiteral("Needs a login · Messages %1").arg(shows(messages)));
+    QCOMPARE(model.data(index, NTRIPSourceTableModel::ProblemRole).toString(),
+             QStringLiteral("Listed as %1: only RTCM 3 corrections can be used.").arg(shows(format)));
+
+    // A name is requested as it is listed, so one that would not show as it is, is not listed.
+    model.parseSourceTable(row.arg(with(QStringLiteral("NAME")), town, format, messages, systems, country));
+    QCOMPARE(model.count(), shown ? 1 : 0);
 }
 
 void NTRIPSourceTableTest::_updateDistancesAll()

@@ -9,16 +9,18 @@
 #include <QtCore/QList>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
+#include <QtCore/QVariant>
 #include <QtPositioning/QGeoCoordinate>
 
 #include "NTRIPSourceTable.h"
 
 // The fuzzer of the NTRIP source table, which a caster sends: the input is the body of its reply. The body arrives in
 // pieces, and after each piece the check for the table's last line has to agree with the definition of that line. The
-// whole body then becomes the mountpoint list. Its rows are checked against the fields of the table's rows, and its
-// distance order while the reference position appears, moves and goes away and while a name filter narrows it. The
-// seeds (../corpus/source-table) are a caster's table, RTKLIB's short rows, rows with odd and missing fields, rows of
-// every format, carrier and authentication, lines that only resemble the last line, and rows at equal and unknown
+// whole body then becomes the mountpoint list. Its rows are checked against the fields of the table's rows, its text
+// for characters that do not show as themselves, and its distance order while the reference position appears, moves
+// and goes away and while a name filter narrows it. The seeds (../corpus/source-table) are a caster's table, RTKLIB's
+// short rows, rows with odd and missing fields, rows of every format, carrier and authentication, rows with control
+// and direction characters in their fields, lines that only resemble the last line, and rows at equal and unknown
 // distances.
 
 namespace {
@@ -54,15 +56,58 @@ bool hasEndLine(QByteArrayView body, bool ended)
     return false;
 }
 
-// This rule and listsOtherFormat() restate the table's own under other names: a unity build compiles
-// NTRIPSourceTable.cc into this file's translation unit.
-bool containsControlCharacter(const QString& text)
+// The rules below restate the table's own under other names: a unity build compiles NTRIPSourceTable.cc into this
+// file's translation unit.
+
+/// Whether the list shows @a ch as itself, by what Unicode says of it: not a control character, not a line or
+/// paragraph separator, and not a character that sets the direction of the text after it.
+bool showsAsItself(QChar ch)
 {
-    return std::ranges::any_of(text, [](QChar ch) { return ch.unicode() < 0x20 || ch.unicode() == 0x7f; });
+    switch (ch.category()) {
+        case QChar::Other_Control:
+        case QChar::Separator_Line:
+        case QChar::Separator_Paragraph:
+            return false;
+        default:
+            break;
+    }
+    switch (ch.direction()) {
+        case QChar::DirLRE:
+        case QChar::DirLRO:
+        case QChar::DirRLE:
+        case QChar::DirRLO:
+        case QChar::DirPDF:
+        case QChar::DirLRI:
+        case QChar::DirRLI:
+        case QChar::DirFSI:
+        case QChar::DirPDI:
+            return false;
+        default:
+            return true;
+    }
+}
+
+bool showsAsItself(const QString& text)
+{
+    return std::ranges::all_of(text, [](QChar ch) { return showsAsItself(ch); });
+}
+
+/// The field @a field of a row as the list shows its text: without the characters that do not show as themselves,
+/// and then without the spaces around the rest.
+QString shownField(const QString& field)
+{
+    QString text;
+    for (const QChar ch : field) {
+        if (showsAsItself(ch)) {
+            text.append(ch);
+        }
+    }
+    return text.trimmed();
 }
 
 /// The STR rows of @a table that name a mountpoint, each as its fields without the spaces around them. A row is a
-/// line, its fields are what its semicolons separate, and the second one is the name.
+/// line, its fields are what its semicolons separate, and the second one is the name, which is requested as it is
+/// listed and so has to show as it is.
 QList<QStringList> mountpointRows(const QString& table)
 {
     QList<QStringList> rows;
@@ -72,7 +117,7 @@ QList<QStringList> mountpointRows(const QString& table)
             field = field.trimmed();
         }
         const QString name = fields.value(1);
-        if (fields.constFirst().toUpper() == u"STR" && !name.isEmpty() && !containsControlCharacter(name)) {
+        if (fields.constFirst().toUpper() == u"STR" && !name.isEmpty() && showsAsItself(name)) {
             rows.append(fields);
         }
     }
@@ -96,8 +141,9 @@ bool listsOtherFormat(const QString& format)
 }
 
 /// The list has the rows of the table in its order, with the fields at their places in an STR row: the messages
-/// fifth, the carrier sixth, the NMEA flag twelfth and the authentication sixteenth, each unknown unless it is one of
-/// the format's values. A row has a problem exactly when it lists another format than RTCM 3 or Digest
+/// fifth, the carrier sixth, the navigation systems seventh, the country ninth, the NMEA flag twelfth and the
+/// authentication sixteenth, each unknown unless it is one of the format's values. The fields that are text are
+/// what shows of them. A row has a problem exactly when it lists another format than RTCM 3 or Digest
 /// authentication, and notes exactly when it asks for something or lists its messages.
 void checkRows(const NTRIPSourceTableModel& model, const QList<QStringList>& rows)
 {
@@ -107,8 +153,11 @@ void checkRows(const NTRIPSourceTableModel& model, const QList<QStringList>& row
     for (qsizetype row = 0; row < rows.size(); ++row) {
         const NTRIPMountpoint& mountpoint = model.mountpoints().at(row);
         const QStringList& fields = rows.at(row);
-        requireTable(mountpoint.mountpoint == fields.value(1) && mountpoint.identifier == fields.value(2));
-        requireTable(mountpoint.format == fields.value(3) && mountpoint.messages == fields.value(4));
+        requireTable(mountpoint.mountpoint == fields.value(1) && mountpoint.identifier == shownField(fields.value(2)));
+        requireTable(mountpoint.format == shownField(fields.value(3)));
+        requireTable(mountpoint.messages == shownField(fields.value(4)));
+        requireTable(mountpoint.navSystem == shownField(fields.value(6)));
+        requireTable(mountpoint.country == shownField(fields.value(8)));
         const QString carrier = fields.value(5);
         requireTable((mountpoint.carrier == Carrier::None) == (carrier == u"0"));
         requireTable((mountpoint.carrier == Carrier::L1) == (carrier == u"1"));
@@ -161,8 +210,9 @@ void checkNameFilter(const NTRIPSourceTableModel& model, NTRIPSourceTableSortMod
     requireTable(listedRows(sorted) == all);
 }
 
-/// Every row names a mountpoint and has a distance only from a known reference position, and the sorted list holds
-/// each row once: known distances ascending, unknown ones last and the caster's order among equal ones.
+/// Every row names a mountpoint, shows no character that would not show as itself, and has a distance only from a
+/// known reference position, and the sorted list holds each row once: known distances ascending, unknown ones last
+/// and the caster's order among equal ones.
 void checkList(const NTRIPSourceTableModel& model, const NTRIPSourceTableSortModel& sorted, bool referenceKnown)
 {
     requireTable(model.count() == model.rowCount() && sorted.count() == model.count());
@@ -175,12 +225,12 @@ void checkList(const NTRIPSourceTableModel& model, const NTRIPSourceTableSortMod
         requireTable(sourceRow >= 0 && sourceRow < model.count() && !listed[static_cast<size_t>(sourceRow)]);
         listed[static_cast<size_t>(sourceRow)] = true;
         for (int role = NTRIPSourceTableModel::MountpointRole; role <= NTRIPSourceTableModel::ProblemRole; ++role) {
-            requireTable(index.data(role).isValid());
+            const QVariant value = index.data(role);
+            requireTable(value.isValid());
+            requireTable(value.typeId() != QMetaType::QString || showsAsItself(value.toString()));
         }
         const QString mountpoint = index.data(NTRIPSourceTableModel::MountpointRole).toString();
         requireTable(!mountpoint.isEmpty() && !mountpoint.contains(u';'));
-        requireTable(
-            std::ranges::none_of(mountpoint, [](QChar ch) { return ch.unicode() < 0x20 || ch.unicode() == 0x7f; }));
         const double km = index.data(NTRIPSourceTableModel::DistanceKmRole).toDouble();
         const bool known = km >= 0;
         requireTable(known ? referenceKnown && km <= SOURCE_TABLE_MAX_DISTANCE_KM : km == -1.0);

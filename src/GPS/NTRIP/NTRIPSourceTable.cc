@@ -26,11 +26,25 @@ enum class StrField : qsizetype
     Bitrate = 17,
 };
 
-/// A control character, such as a bare carriage return left inside a field. NTRIPConnectionConfig refuses a
-/// mountpoint that has one.
-bool hasControlCharacter(const QString& text)
+/// A character the list would not show as itself: a control character, such as a bare carriage return or an escape
+/// left inside a field, a line or paragraph separator, or one that sets the direction of the text after it, which
+/// would reorder the rest of the row.
+bool isUnshownCharacter(QChar ch)
 {
-    return std::ranges::any_of(text, [](QChar ch) { return ch.unicode() < 0x20 || ch.unicode() == 0x7f; });
+    const char16_t code = ch.unicode();
+    const bool control = code < 0x20 || (code >= 0x7f && code < 0xa0);
+    const bool lineBreak = code == 0x2028 || code == 0x2029;
+    // The embeddings and overrides with the character that ends them, and the isolates with theirs.
+    const bool direction = (code >= 0x202a && code <= 0x202e) || (code >= 0x2066 && code <= 0x2069);
+    return control || lineBreak || direction;
+}
+
+/// @a field without the characters the list would not show as themselves and the spaces around the rest. A caster
+/// writes these bytes, and the list shows them as text.
+QString withoutUnshownCharacters(QString field)
+{
+    field.removeIf(isUnshownCharacter);
+    return field.trimmed();
 }
 
 NTRIPMountpoint::Carrier carrierOf(const QString& field)
@@ -103,21 +117,25 @@ std::optional<NTRIPMountpoint> NTRIPMountpoint::fromSourceTableLine(const QStrin
     const auto field = [&fields](StrField position) {
         return fields.value(static_cast<qsizetype>(position)).trimmed();
     };
+    const auto text = [&fields](StrField position) {
+        return withoutUnshownCharacters(fields.value(static_cast<qsizetype>(position)));
+    };
     const QString name = field(StrField::Mountpoint);
-    // A control character does not show in the list: the name would look like one that can be requested, and
-    // selecting it would save a name that every connection is refused for.
-    if (field(StrField::Type).toUpper() != QStringLiteral("STR") || name.isEmpty() || hasControlCharacter(name)) {
+    // The name is requested as it is listed. One with a character that does not show would look like another name,
+    // and with a control character every connection is refused for it.
+    if (field(StrField::Type).toUpper() != QStringLiteral("STR") || name.isEmpty() ||
+        std::ranges::any_of(name, isUnshownCharacter)) {
         return std::nullopt;
     }
 
     NTRIPMountpoint mp;
     mp.mountpoint = name;
-    mp.identifier = field(StrField::Identifier);
-    mp.format = field(StrField::Format);
-    mp.messages = field(StrField::Messages);
+    mp.identifier = text(StrField::Identifier);
+    mp.format = text(StrField::Format);
+    mp.messages = text(StrField::Messages);
     mp.carrier = carrierOf(field(StrField::Carrier));
-    mp.navSystem = field(StrField::NavSystem);
-    mp.country = field(StrField::Country);
+    mp.navSystem = text(StrField::NavSystem);
+    mp.country = text(StrField::Country);
     const auto parseCoord = [](const QString& s, double limit) -> double {
         bool ok = false;
         const double v = s.trimmed().toDouble(&ok);

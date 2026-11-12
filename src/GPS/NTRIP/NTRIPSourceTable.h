@@ -19,6 +19,8 @@
 /// The parsed fields of an NTRIP source-table STR row that the mountpoint list shows, sorts or filters by. All fields
 /// are immutable after parse except distanceKm, which is recomputed by updateDistances(). Each property is a model role
 /// of the same name. Only the mountpoint name is required: a field the row does not have is empty, zero or unknown.
+/// The text is the caster's, so no field holds a character that would not show as itself: a control character, a line
+/// or paragraph separator, or one that sets the direction of the text after it.
 struct NTRIPMountpoint
 {
     Q_GADGET
@@ -73,7 +75,8 @@ public:
     double latitude = qQNaN();
     double longitude = qQNaN();
 
-    /// Parses one source-table line ("STR;..."); none unless it is an STR row that names a mountpoint.
+    /// Parses one source-table line ("STR;..."); none unless it is an STR row that names a mountpoint, by a name that
+    /// shows as it is. The characters that would not show are left out of the other fields.
     static std::optional<NTRIPMountpoint> fromSourceTableLine(const QString& line);
 
     /// Recompute distanceKm, or mark it unknown for invalid reference/mountpoint coordinates.
