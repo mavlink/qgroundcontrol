@@ -36,8 +36,8 @@ struct [[nodiscard]] Outcome
 {
     Error error = Error::None;  ///< Why the operation failed
     QString message = {};       ///< What could not be done and why, empty on success
-    /// Format libarchive detected, like "ZIP 2.0 (deflation)", "POSIX ustar" or "RAW". Empty, as filterName is,
-    /// if the operation ended before it had read the first header of its input
+    /// Format libarchive detected, like "ZIP 2.0 (deflation)", "POSIX ustar", or "raw" for a single compressed
+    /// stream. Empty, as filterName is, if the operation ended before it had read the first header of its input
     QString formatName = {};
     QString filterName = {};  ///< Compression it detected, like "gzip", "xz" or "zstd", or "none"
 

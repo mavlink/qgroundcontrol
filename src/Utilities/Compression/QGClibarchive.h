@@ -162,7 +162,7 @@ public:
 
     /// Get the detected archive format name
     /// Everything that tells the format or the filter of an input asks here.
-    /// @return Format name like "ZIP 2.0 (deflation)", "POSIX ustar", "RAW", or empty if no header has been read
+    /// @return Format name like "ZIP 2.0 (deflation)", "POSIX ustar", "raw", or empty if no header has been read
     ///         since the last open. It stays when the reader is closed
     QString formatName() const { return _formatName; }
 
@@ -290,7 +290,8 @@ bool openArchiveForReading(struct archive *a, const QString &filePath, QByteArra
 //   Cancelled          The progress callback returned false
 //   SizeLimitExceeded  What the input holds is larger than maxBytes (0 = unlimited)
 //   InvalidArchive     The input cannot be read or is damaged
-// A failure has been logged as a warning. Data that an operation returns is empty unless it returns None.
+// A failure has been logged as a warning, but for Cancelled and for patterns that match nothing. Data that an
+// operation returns is empty unless it returns None.
 //
 // An operation that takes a Source is written once for what ArchiveReader::open() takes. QGClibarchive.cc
 // defines it for a path and for a QIODevice, and decompressToMemory() for a QByteArray instead of a path.
