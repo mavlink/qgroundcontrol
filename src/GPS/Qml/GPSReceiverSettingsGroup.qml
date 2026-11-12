@@ -5,7 +5,7 @@ import QGroundControl.Controls
 import QGroundControl.GPS
 
 /// A group of the GNSS receiver settings: the receiver, its saved settings and what the selected receiver offers,
-/// which the controls of every group follow. GPSReceiverSettings shows the groups as one form.
+/// which the controls of every group follow. The settings page shows the groups one below the other.
 QGCGroupBox {
     property GPSReceiver receiver: QGroundControl.gpsManager.receiver
     property RTKSettings settings: QGroundControl.settingsManager.rtkSettings

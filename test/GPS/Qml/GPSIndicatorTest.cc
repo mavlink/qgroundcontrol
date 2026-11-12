@@ -68,8 +68,8 @@ QColor colorOf(const QObject* item)
     return item->property("color").value<QColor>();
 }
 
-/// The one shown item of that name under @a root; null when none or several are shown. The page has the receiver
-/// status, and so Connect, in both of its views.
+/// The one shown item of that name under @a root; null when none or several are shown. The page has the status of
+/// two receivers, and so two Connect buttons, once a position receiver is in use.
 QQuickItem* shownItem(const QObject* root, const char* name)
 {
     QQuickItem* shown = nullptr;
@@ -126,27 +126,6 @@ int lineCount(QQuickItem* box, const QString& text)
 }
 }  // namespace
 
-void GPSIndicatorTest::_pagePanelUsesApplicationReceiver()
-{
-    // GPSReceiverSettingsTest covers the panel; the drawer shows it for the application's receiver and settings.
-    RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::Quectel));
-    GPSReceiver* const receiver = GPSManager::instance()->receiver();
-    TestFixtures::QmlWindowFixture window;
-    TestFixtures::QmlEngine engine;
-    std::unique_ptr<QObject> page = createIndicatorPage(engine, window, nullptr, {{QStringLiteral("expanded"), true}});
-    QVERIFY2(page, qPrintable(engine.lastError()));
-    auto* consent = page->findChild<QObject*>(QStringLiteral("rtkPersistentChangesCheckBox"));
-    QVERIFY(consent);
-    if (!consent->property("visible").toBool()) {
-        QSKIP("Persistent receiver settings require serial support");
-    }
-    QVERIFY(!consent->property("checked").toBool());
-    QVERIFY(QMetaObject::invokeMethod(consent, "click"));
-    QVERIFY(receiver->persistentChangesAllowed());
-    receiver->setPersistentChangesAllowed(false);
-    QVERIFY(!consent->property("checked").toBool());
-}
-
 void GPSIndicatorTest::_pageFitsWidth_data()
 {
     QTest::addColumn<int>("width");
@@ -171,7 +150,6 @@ void GPSIndicatorTest::_pageFitsWidth()
     auto* item = qobject_cast<QQuickItem*>(page.get());
     QVERIFY(item);
     QVERIFY(window.show());
-    QVERIFY(!page->property("expanded").toBool());
     QTRY_VERIFY_WITH_TIMEOUT(item->height() > 0 && item->implicitHeight() > 0, TestTimeout::shortMs());
     QVERIFY(item->width() <= width + 1);
 
@@ -185,7 +163,7 @@ void GPSIndicatorTest::_pageFitsWidth()
     QVERIFY(!satellites->isVisible());
     QVERIFY(!usage->isVisible());
     // The status row, with its Connect button, fits the page. TCP connections are available even without serial
-    // support, so the collapsed page offers Connect.
+    // support, so the page offers Connect.
     QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
     QVERIFY(status->mapRectToItem(item, status->boundingRect()).right() <= width + 1);
     QQuickItem* connect = shownItem(page.get(), "rtkConnectButton");
@@ -206,24 +184,12 @@ void GPSIndicatorTest::_pageFitsWidth()
     QCOMPARE(status->property("statusText").toString(), disconnectedText);
     QVERIFY(item->height() > 0);
 
-    // Expanded, the page shows the receiver settings within its width.
-    QVERIFY(page->setProperty("expanded", true));
-    QTRY_VERIFY_WITH_TIMEOUT(page->findChild<QQuickItem*>(QStringLiteral("gpsReceiverSettings")),
-                             TestTimeout::shortMs());
-    auto* panel = page->findChild<QQuickItem*>(QStringLiteral("gpsReceiverSettings"));
-    QTRY_VERIFY_WITH_TIMEOUT(panel->width() > 0, TestTimeout::mediumMs());
-    // Once laid out, the panel has the width the page reserves for it, not the much smaller width its wrapped notes
-    // report.
-    QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
-    QVERIFY2(qAbs(panel->width() - page->property("_settingsWidth").toReal()) <= 1,
-             qPrintable(QStringLiteral("panel width %1").arg(panel->width())));
-    QTRY_VERIFY_WITH_TIMEOUT(item->width() <= width + 1, TestTimeout::mediumMs());
-    QVERIFY(panel->mapRectToItem(item, panel->boundingRect()).right() <= width + 1);
-    // Beside the settings or, where the page is too narrow for both, above them, one Connect stays in reach.
-    connect = shownItem(page.get(), "rtkConnectButton");
-    QVERIFY(connect);
-    QVERIFY(connect->isEnabled());
-    QVERIFY(connect->mapRectToItem(item, connect->boundingRect()).right() <= width + 1);
+    // The links to the settings pages fit the page too.
+    for (const char* const name : {"gpsIndicatorReceiverSettings", "gpsIndicatorCorrectionsSettings"}) {
+        QQuickItem* const link = shownItem(page.get(), name);
+        QVERIFY2(link, name);
+        QVERIFY2(link->mapRectToItem(item, link->boundingRect()).right() <= width + 1, name);
+    }
 }
 
 void GPSIndicatorTest::_receiverBesideVehicleGps()
@@ -252,23 +218,16 @@ void GPSIndicatorTest::_receiverBesideVehicleGps()
     // A receiver that is not set up adds nothing to a vehicle's GPS status.
     QVERIFY(!shownItem(page.get(), "rtkConnectButton"));
 
-    // While its settings are open it is shown, so they can be seen to take effect.
-    QVERIFY(page->setProperty("expanded", true));
-    QTRY_VERIFY_WITH_TIMEOUT(shownItem(page.get(), "rtkConnectButton"), TestTimeout::shortMs());
-    QVERIFY(page->setProperty("expanded", false));
-    QTRY_VERIFY_WITH_TIMEOUT(!shownItem(page.get(), "rtkConnectButton"), TestTimeout::shortMs());
-
-    // Once the settings name the receiver, the collapsed page offers Connect beside the vehicle's status.
+    // Once the settings name the receiver, the page offers Connect beside the vehicle's status.
     configuration.tcpHost = QStringLiteral("rtk.test");
     receiver->setConfiguration(configuration);
     QTRY_VERIFY_WITH_TIMEOUT(shownItem(page.get(), "rtkConnectButton"), TestTimeout::shortMs());
     QVERIFY(shownItem(page.get(), "rtkConnectButton")->isEnabled());
 }
 
-void GPSIndicatorTest::_compactExpandedPageHasSettingsSize()
+void GPSIndicatorTest::_holdsStatusAndActions()
 {
-    // Status of a vehicle GPS with its resilience report, a surveyed base and a caster, which is taller than the
-    // settings of that base.
+    // A vehicle that reports its GPS, a connected base and a caster that is set up: every group the page has.
     RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::UBlox));
     NTRIPSettings* const ntrip = SettingsManager::instance()->ntripSettings();
     settings.saved.setFactValue(ntrip->ntripServerConnectEnabled(), false);
@@ -277,27 +236,9 @@ void GPSIndicatorTest::_compactExpandedPageHasSettingsSize()
     auto* gps = vehicle.gpsFactGroup();
     QVERIFY(gps);
     gps->setLiveUpdates(true);
-    gps->handleMessage(&vehicle, GPSTest::gpsRawMessage({.fixType = GPS_FIX_TYPE_3D_FIX,
-                                                         .eph = 80,
-                                                         .epv = 120,
-                                                         .cog = 100,
-                                                         .satellitesVisible = 10,
-                                                         .horizontalAccuracyMm = 2500,
-                                                         .verticalAccuracyMm = 4500}));
-    mavlink_gnss_integrity_t integrity{};
-    integrity.jamming_state = 1;
-    integrity.spoofing_state = 1;
-    mavlink_message_t integrityReport{};
-    mavlink_msg_gnss_integrity_encode(1, 1, &integrityReport, &integrity);
-    gps->handleMessage(&vehicle, integrityReport);
+    gps->handleMessage(&vehicle, GPSTest::gpsRawMessage({.fixType = GPS_FIX_TYPE_3D_FIX, .satellitesVisible = 10}));
     AppReceiver base;
     QVERIFY(base.connect());
-    GPSReceiverFactGroup* const facts = base.facts();
-    for (Fact* reported : {facts->fixType(), facts->numSatellites(), facts->numSatellitesUsed(), facts->jammingState(),
-                           facts->spoofingState(), facts->antennaState()}) {
-        settings.saved.setFactValue(reported, 1);
-    }
-    base.survey(0.75);
 
     TestFixtures::QmlWindowFixture window;
     TestFixtures::QmlEngine engine;
@@ -305,54 +246,44 @@ void GPSIndicatorTest::_compactExpandedPageHasSettingsSize()
     QVERIFY2(page, qPrintable(engine.lastError()));
     auto* item = qobject_cast<QQuickItem*>(page.get());
     QVERIFY(item);
-    // The widest layout that still replaces status with the settings.
-    const qreal sideBySideWidth = page->property("_sideBySideWidth").toReal();
-    QVERIFY(page->setProperty("availableWidth", sideBySideWidth - 1));
     QVERIFY(window.show());
+    // The corrections of the base are shown once the correction manager has seen its source, a moment after the
+    // base connected.
+    auto* corrections = page->findChild<QQuickItem*>(QStringLiteral("gpsIndicatorCorrections"));
+    QVERIFY(corrections);
+    QTRY_VERIFY_WITH_TIMEOUT(corrections->isVisible(), TestTimeout::mediumMs());
     QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
-    QVERIFY(shownItem(page.get(), "gps1Resilience"));
-    const qreal statusHeight = item->implicitHeight();
-    // Beside a vehicle's GPS status too, the collapsed page has the receiver's button.
-    QVERIFY(shownItem(page.get(), "rtkConnectButton"));
 
-    QVERIFY(page->setProperty("expanded", true));
-    QTRY_VERIFY_WITH_TIMEOUT(page->findChild<QQuickItem*>(QStringLiteral("gpsReceiverSettings")),
-                             TestTimeout::shortMs());
-    auto* panel = page->findChild<QQuickItem*>(QStringLiteral("gpsReceiverSettings"));
-    auto* connection = page->findChild<QQuickItem*>(QStringLiteral("gpsCompactReceiverConnection"));
-    QVERIFY(connection);
-    QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
-    // The settings replace the status column, so the receiver's connection row, which has Connect, is shown above
-    // them.
-    QVERIFY(connection->isVisible());
-    QCOMPARE(connection->mapToItem(item, QPointF()), QPointF());
-    QVERIFY(panel->height() > 0 && panel->y() > connection->height());
-    const qreal settingsHeight = panel->mapToItem(item, QPointF(0, panel->height())).y();
-    QVERIFY2(statusHeight > settingsHeight,
-             qPrintable(QStringLiteral("status %1, settings %2").arg(statusHeight).arg(settingsHeight)));
-    // The drawer takes the page's implicit size, which the hidden status column must not add to: neither its height,
-    // nor the spacing and the divider that separate it from the settings.
-    QVERIFY2(qAbs(item->implicitHeight() - settingsHeight) <= 1,
-             qPrintable(QStringLiteral("page %1, settings %2").arg(item->implicitHeight()).arg(settingsHeight)));
-    QVERIFY2(qAbs(item->implicitWidth() - panel->width()) <= 1,
-             qPrintable(QStringLiteral("page %1, settings %2").arg(item->implicitWidth()).arg(panel->width())));
-    QCOMPARE(panel->mapToItem(item, QPointF()).x(), 0.0);
+    // Status, from the vehicle to the ground station, and the links to the settings pages last.
+    qreal bottom = 0;
+    for (const char* const name : {"gpsIndicatorVehicle", "gpsIndicatorReceiver", "gpsIndicatorCorrections",
+                                   "gpsIndicatorNtrip", "gpsIndicatorGcsPosition", "gpsIndicatorSettings"}) {
+        QQuickItem* const group = shownItem(page.get(), name);
+        QVERIFY2(group, name);
+        const QRectF rect = group->mapRectToItem(item, group->boundingRect());
+        QVERIFY2(rect.top() >= bottom && rect.height() > 0, name);
+        bottom = rect.bottom();
+    }
+    QVERIFY2(qAbs(item->implicitHeight() - bottom) <= 1,
+             qPrintable(QStringLiteral("page %1, groups %2").arg(item->implicitHeight()).arg(bottom)));
+    // The actions that are needed in flight: the receiver's connection and the caster's.
+    QQuickItem* const receiverAction = shownItem(page.get(), "rtkConnectButton");
+    QQuickItem* const casterAction = shownItem(page.get(), "ntripConnectButton");
+    QVERIFY(receiverAction && receiverAction->isEnabled());
+    QVERIFY(casterAction && casterAction->isEnabled());
 
-    // Narrower than the settings prefer, they take the whole width.
-    const qreal narrowWidth = page->property("_preferredSettingsWidth").toReal() * 0.75;
-    QVERIFY(page->setProperty("availableWidth", narrowWidth));
-    QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
-    QVERIFY2(qAbs(panel->width() - narrowWidth) <= 1,
-             qPrintable(QStringLiteral("settings %1, available %2").arg(panel->width()).arg(narrowWidth)));
-
-    // Widened to fit both, status and the divider return beside the settings, which no longer need a row of their
-    // own to connect.
-    QVERIFY(page->setProperty("availableWidth", sideBySideWidth));
-    QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
-    QVERIFY2(qAbs(item->implicitWidth() - sideBySideWidth) <= 1,
-             qPrintable(QStringLiteral("page %1, side by side %2").arg(item->implicitWidth()).arg(sideBySideWidth)));
-    QVERIFY(!connection->isVisible());
-    QCOMPARE(panel->y(), 0.0);
+    // No setting is edited here. The page has no expanded view, and none of the receiver's form, which is on the
+    // settings page the first link is named after.
+    QVERIFY(!page->property("_showExpand").toBool());
+    for (const char* const name : {"rtkManufacturer", "rtkConnectionType", "rtkSerialDevice", "rtkAutoConnect",
+                                   "rtkPersistentChangesCheckBox"}) {
+        QVERIFY2(!page->findChild<QObject*>(QString::fromLatin1(name)), name);
+    }
+    QQuickItem* const receiverLink = shownItem(page.get(), "gpsIndicatorReceiverSettings");
+    QQuickItem* const correctionsLink = shownItem(page.get(), "gpsIndicatorCorrectionsSettings");
+    QVERIFY(receiverLink && correctionsLink);
+    QCOMPARE(receiverLink->property("label").toString(), QStringLiteral("GNSS Receiver"));
+    QCOMPARE(correctionsLink->property("label").toString(), QStringLiteral("RTK Corrections"));
 }
 
 void GPSIndicatorTest::_gcsPositionStaysInsideItsBox()

@@ -6,6 +6,7 @@
 #include <optional>
 #include <utility>
 #include <variant>
+#include <vector>
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QRegularExpression>
@@ -92,8 +93,8 @@ QVariant portEntries(const QStringList& paths)
     return QVariant::fromValue(entries);
 }
 
-/// The receiver settings panel over saved settings for a manufacturer, a scripted receiver that follows them, and the
-/// receiver status, which has Connect, as the settings page and the indicator's drop-down show them together.
+/// The groups of the receiver settings over saved settings for a manufacturer and a scripted receiver that follows
+/// them, and the receiver status, which has Connect: what the settings page shows one below the other.
 struct Panel
 {
     explicit Panel(int manufacturer, bool serialLinks = true)
@@ -101,38 +102,76 @@ struct Panel
         , receiver(settings.settings, serialLinks)
     {}
 
-    /// Creates the panel and the status; false on failure, with the reason in the engine's lastError().
+    /// Creates the groups and the status; false on failure, with the reason in the engine's lastError().
     [[nodiscard]] bool create()
     {
-        item = engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverSettings.qml")),
-                             {{QStringLiteral("receiver"), QVariant::fromValue(&receiver.gps)},
-                              {QStringLiteral("settings"), QVariant::fromValue(settings.settings)},
-                              {QStringLiteral("autoConnectFact"), QVariant::fromValue(settings.autoConnect)},
-                              {QStringLiteral("serialPorts"), portEntries(QStringLiteral("/test/receiver"))},
-                              {QStringLiteral("serialBaudRates"), QVariant::fromValue(QList<int>{115200, 230400})}});
-        if (!item) {
-            return false;
+        const QVariantMap shared{{QStringLiteral("parent"), QVariant::fromValue(&page)},
+                                 {QStringLiteral("receiver"), QVariant::fromValue(&receiver.gps)},
+                                 {QStringLiteral("settings"), QVariant::fromValue(settings.settings)},
+                                 {QStringLiteral("autoConnectFact"), QVariant::fromValue(settings.autoConnect)}};
+        QVariantMap connection = shared;
+        connection.insert(QStringLiteral("serialPorts"), portEntries(QStringLiteral("/test/receiver")));
+        connection.insert(QStringLiteral("serialBaudRates"), QVariant::fromValue(QList<int>{115200, 230400}));
+        for (const auto& [file, properties] :
+             {std::pair{"GPSReceiverConnection.qml", connection}, std::pair{"GPSReceiverBaseStation.qml", shared},
+              std::pair{"GPSReceiverBaseSites.qml", shared}, std::pair{"GPSReceiverConnectControls.qml", shared}}) {
+            groups.push_back(engine.create(
+                TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/") + QString::fromLatin1(file)), properties));
+            if (!groups.back()) {
+                return false;
+            }
         }
         status = engine.create(TestFixtures::sourceQmlUrl(QStringLiteral("GPS/Qml/GPSReceiverStatus.qml")),
-                               {{QStringLiteral("receiver"), QVariant::fromValue(&receiver.gps)},
+                               {{QStringLiteral("parent"), QVariant::fromValue(&page)},
+                                {QStringLiteral("receiver"), QVariant::fromValue(&receiver.gps)},
                                 {QStringLiteral("facts"), QVariant::fromValue(receiver.gps.facts())},
                                 {QStringLiteral("showWhenDisconnected"), true}});
         return status != nullptr;
     }
 
-    /// A control of the panel, else of the status.
+    /// The group that says which receiver to connect, which has the serial devices to choose from.
+    QObject* connection() const { return groups.front().get(); }
+
+    /// The group that holds the control @a name; null when none does.
+    QQuickItem* groupOf(const char* name) const
+    {
+        for (const auto& group : groups) {
+            if (group && group->findChild<QObject*>(QString::fromLatin1(name))) {
+                return qobject_cast<QQuickItem*>(group.get());
+            }
+        }
+        return nullptr;
+    }
+
+    /// Leaves the group that holds the control @a name, as leaving the settings page does.
+    void destroyGroupOf(const char* name)
+    {
+        for (auto& group : groups) {
+            if (group && group->findChild<QObject*>(QString::fromLatin1(name))) {
+                group.reset();
+            }
+        }
+    }
+
+    /// A control of the groups, else of the status.
     template <typename T = QQuickItem>
     T* find(const char* name) const
     {
         const QString objectName = QString::fromLatin1(name);
-        T* const control = item->findChild<T*>(objectName);
-        return control ? control : status->findChild<T*>(objectName);
+        for (const auto& group : groups) {
+            if (T* const control = group ? group->findChild<T*>(objectName) : nullptr) {
+                return control;
+            }
+        }
+        return status->findChild<T*>(objectName);
     }
 
     RTKSettingsFixture settings;
     SettingsReceiver receiver;
+    /// Stands in for the page: a group that hides itself shows again only inside a parent that is shown.
+    QQuickItem page;
     TestFixtures::QmlEngine engine;
-    std::unique_ptr<QObject> item;
+    std::vector<std::unique_ptr<QObject>> groups;
     std::unique_ptr<QObject> status;
 };
 
@@ -1314,10 +1353,10 @@ void GPSReceiverSettingsTest::_consentIsOneUse()
     QVERIFY(QMetaObject::invokeMethod(connect, "click"));
     QVERIFY(!receiver.gps.hasReceiver());
     QVERIFY(!consent->property("checked").toBool());
-    // Leaving the panel withdraws a permission given for the configuration it showed.
+    // Leaving the page withdraws a permission given for the configuration it showed.
     QVERIFY(QMetaObject::invokeMethod(consent, "click"));
     QVERIFY(receiver.gps.persistentChangesAllowed());
-    panel.item.reset();
+    panel.destroyGroupOf("rtkPersistentChangesCheckBox");
     QVERIFY(!receiver.gps.persistentChangesAllowed());
 }
 
@@ -1338,14 +1377,13 @@ void GPSReceiverSettingsTest::_warningWidth()
     TestFixtures::QmlWindowFixture window(width, 800);
     Panel panel(gpsReceiverManufacturerForType(GPSType::Quectel));
     QVERIFY2(panel.create(), qPrintable(panel.engine.lastError()));
-    auto* item = qobject_cast<QQuickItem*>(panel.item.get());
-    QVERIFY(item);
-    item->setParentItem(window.contentItem());
-    item->setWidth(width);
     QVERIFY(window.show());
     for (const auto* name : {"rtkPersistentConfigurationWarning", "rtkPersistentConsentWarning"}) {
         auto* warning = panel.find(name);
-        QVERIFY(warning);
+        QQuickItem* const item = panel.groupOf(name);
+        QVERIFY(warning && item);
+        item->setParentItem(window.contentItem());
+        item->setWidth(width);
         if (longText) {
             const QString translated = QStringLiteral(
                 "Empfänger-Konfiguration und dauerhafte Speicherung benötigen Ihre ausdrückliche "
@@ -1388,7 +1426,7 @@ void GPSReceiverSettingsTest::_serialSelectionTracksFacts()
     QVERIFY(device->property("currentText").toString().contains(QStringLiteral("/test/missing")));
     QVERIFY(device->property("currentText").toString().contains(QStringLiteral("unavailable")));
     const QString label = QStringLiteral("Receiver – /test/missing");
-    QVERIFY(panel.item->setProperty("serialPorts", portEntries(QStringLiteral("/test/missing"), label)));
+    QVERIFY(panel.connection()->setProperty("serialPorts", portEntries(QStringLiteral("/test/missing"), label)));
     QCOMPARE(device->property("currentText").toString(), label);
     // With Connect automatically on, a configured base can leave the device to USB discovery.
     const QString anyReceiver = QCoreApplication::translate("GPSReceiverConnection", "Any RTK receiver on USB");
@@ -1447,23 +1485,23 @@ void GPSReceiverSettingsTest::_serialSelectionSurvivesChoiceChanges()
             .arg(combo->property("currentText").toString());
     };
     // A combo box selects its first entry when its choices are replaced, so neither selection is the first one.
-    QVERIFY(panel.item->setProperty("serialPorts", portEntries({receiver, other})));
+    QVERIFY(panel.connection()->setProperty("serialPorts", portEntries({receiver, other})));
     settings->serialDevice()->setRawValue(other);
     settings->serialBaudRate()->setRawValue(230400);
     QCOMPARE(selection(device), QStringLiteral("1: /test/other"));
     QCOMPARE(selection(baud), QStringLiteral("2: 230400"));
 
     // Plugging in a port lists it; unplugging the selected one keeps it, as unavailable.
-    QVERIFY(panel.item->setProperty("serialPorts", portEntries({receiver, other, plugged})));
+    QVERIFY(panel.connection()->setProperty("serialPorts", portEntries({receiver, other, plugged})));
     QCOMPARE(selection(device), QStringLiteral("1: /test/other"));
-    QVERIFY(panel.item->setProperty("serialPorts", portEntries({receiver, plugged})));
+    QVERIFY(panel.connection()->setProperty("serialPorts", portEntries({receiver, plugged})));
     QCOMPARE(selection(device), QStringLiteral("2: (unavailable) /test/other"));
     // Connect automatically lists USB discovery above the ports.
     panel.settings.autoConnect->setRawValue(true);
     QCOMPARE(selection(device), QStringLiteral("3: (unavailable) /test/other"));
 
     // A receiver may list other rates.
-    QVERIFY(panel.item->setProperty("serialBaudRates", QVariant::fromValue(QList<int>{57600, 115200, 230400})));
+    QVERIFY(panel.connection()->setProperty("serialBaudRates", QVariant::fromValue(QList<int>{57600, 115200, 230400})));
     QCOMPARE(selection(baud), QStringLiteral("3: 230400"));
     QCOMPARE(settings->serialDevice()->rawValue().toString(), other);
     QCOMPARE(settings->serialBaudRate()->rawValue().toInt(), 230400);
@@ -1508,8 +1546,8 @@ void GPSReceiverSettingsTest::_serialDeviceMarkOnNarrowPanel()
     GPSReceiver& receiver = panel.receiver.gps;
     receiver.tick();
     panel.settings.settings->serialDevice()->setRawValue(device);
-    QVERIFY(panel.item->setProperty("serialPorts", QVariant::fromValue(receiver.serialPortEntries())));
-    auto* item = qobject_cast<QQuickItem*>(panel.item.get());
+    QVERIFY(panel.connection()->setProperty("serialPorts", QVariant::fromValue(receiver.serialPortEntries())));
+    auto* item = qobject_cast<QQuickItem*>(panel.connection());
     QVERIFY(item);
     item->setParentItem(window.contentItem());
     item->setWidth(width);

@@ -47,7 +47,6 @@ qt_add_qml_module(
         GPSReceiverConnectionRow.qml
         GPSReceiverRecording.qml
         GPSReceiverSerialPort.qml
-        GPSReceiverSettings.qml
         GPSReceiverSettingsGroup.qml
         GPSReceiverStatus.qml
         GPSReceiverSurveyProgress.qml

@@ -18,7 +18,7 @@
             "keywords": ["rtk", "gnss", "gps", "base station", "receiver", "status", "connect", "disconnect", "fix", "satellites", "jamming", "spoofing"]
         },
         {
-            "comment": "This group and the next three are the groups GPSReceiverSettings shows as one form.",
+            "comment": "This group and the next three are the receiver's settings.",
             "component": "GPSReceiverConnection",
             "sectionName": "GNSS Receiver",
             "keywords": ["rtk", "gnss", "gps", "nmea", "external gps", "base station", "receiver", "role", "passive", "position only", "u-blox", "septentrio", "automatic", "detection", "serial", "tcp", "udp"]

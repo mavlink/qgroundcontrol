@@ -26,6 +26,8 @@ public:
 private slots:
     void _testPX4Indicators();
     void _testAPMCopterIndicators();
+    void _testGPSIndicatorOpensSettingsPages_data();
+    void _testGPSIndicatorOpensSettingsPages();
     void _testEmergencyStopReplacesDisarmInFlight_data();
     void _testEmergencyStopReplacesDisarmInFlight();
     void _testActionsDisabledWhileVehicleNotReady();

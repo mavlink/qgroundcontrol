@@ -242,7 +242,7 @@ void ToolbarIndicatorUITest::_runIndicatorTest(
     static const IndicatorSpec kIndicators[] = {
         {"toolbar_mainStatusIndicator", "MainStatus", false},
         {"toolbar_flightModeIndicator", "FlightMode", true},
-        {"toolbar_gpsIndicator", "GPS", true},
+        {"toolbar_gpsIndicator", "GPS", false},
         {"toolbar_batteryIndicator", "Battery", true},
         {"toolbar_remoteIDIndicator", "RemoteID", true},
         {"toolbar_gimbalIndicator", "Gimbal", true},
@@ -283,6 +283,46 @@ void ToolbarIndicatorUITest::_testAPMCopterIndicators()
     _runIndicatorTest(
         [] { return MockLink::startAPMArduCopterMockLink(MockConfiguration::OptionEnableGimbal); },
         QStringLiteral("APMCopter"));
+}
+
+void ToolbarIndicatorUITest::_testGPSIndicatorOpensSettingsPages_data()
+{
+    QTest::addColumn<QString>("link");
+    QTest::addColumn<QString>("page");
+
+    QTest::addRow("receiver") << QStringLiteral("gpsIndicatorReceiverSettings")
+                              << QStringLiteral("settingsPage_GNSSReceiver");
+    QTest::addRow("corrections") << QStringLiteral("gpsIndicatorCorrectionsSettings")
+                                 << QStringLiteral("settingsPage_RTKCorrections");
+}
+
+void ToolbarIndicatorUITest::_testGPSIndicatorOpensSettingsPages()
+{
+    QFETCH(QString, link);
+    QFETCH(QString, page);
+
+    runWithMockLink(
+        [] { return MockLink::startPX4MockLink(); },
+        [&](QPointer<MockLink>, Vehicle*) {
+            const QString indicatorName = QStringLiteral("toolbar_gpsIndicator");
+            const QString drawerName = QStringLiteral("indicatorDrawerLoader");
+            QQuickItem* const indicator = findVisibleItem(_rootItem, indicatorName, TestTimeout::mediumMs());
+            QVERIFY2(indicator, "GPS indicator not visible");
+            QVERIFY(_clickItemAt(indicator, 0.5, 0.5, indicatorName));
+            QVERIFY2(findVisibleItem(_rootItem, drawerName, TestTimeout::mediumMs()), "GPS drop-down did not open");
+
+            // The drop-down has status and actions only, so it has nothing to expand: a row links to each settings page
+            QVERIFY2(!findVisibleItem(_rootItem, QStringLiteral("indicatorDrawerExpandButton"), 0),
+                     "GPS drop-down offers an expanded view");
+            QQuickItem* const row = findVisibleItem(_rootItem, link, TestTimeout::mediumMs());
+            QVERIFY2(row, qPrintable(QStringLiteral("%1 not shown in the GPS drop-down").arg(link)));
+            // The row's button is at its right end
+            QVERIFY(_clickItemAt(row, 0.9, 0.5, link));
+
+            QVERIFY2(findVisibleItem(_rootItem, page, TestTimeout::mediumMs()),
+                     qPrintable(QStringLiteral("%1 not shown after pressing %2").arg(page, link)));
+            QVERIFY2(!findVisibleItem(_rootItem, drawerName, 0), "GPS drop-down still open over the settings page");
+        });
 }
 
 void ToolbarIndicatorUITest::_testEmergencyStopReplacesDisarmInFlight_data()

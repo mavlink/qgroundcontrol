@@ -7,7 +7,9 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.GPS
 
-// Drawer of the GPS indicator: vehicle GPS, GNSS receiver, corrections, and GCS position.
+// Drop-down of the GPS indicator: the status of the vehicle's GPS, of the receivers, of the corrections and of the
+// ground station position, with the actions that are needed in flight. Its last group opens the settings pages that
+// set them up.
 ToolIndicatorPage {
     id: root
 
@@ -18,20 +20,17 @@ ToolIndicatorPage {
     readonly property VehicleGPSFactGroup _gps: root.activeVehicle ? root.activeVehicle.gps : null
     readonly property bool _vehicleGps: !!root._gps && root._gps.telemetryAvailable
     readonly property real _preferredStatusWidth: ScreenTools.defaultFontPixelWidth * 36
-    readonly property real _preferredSettingsWidth: ScreenTools.defaultFontPixelWidth * 56
-    readonly property real _sideBySideWidth: root._preferredStatusWidth + root._preferredSettingsWidth
-                                             + root.spacing * 2 + 1
     property real availableWidth: root.Window.width > 0 ? root.Window.width - ScreenTools.defaultFontPixelHeight * 4
-                                                        : root._sideBySideWidth
-    readonly property bool _compact: root.availableWidth < root._sideBySideWidth
-    // Settings stay usable, rather than collapsing, on windows narrower than the reserved margins. Beside the status
-    // column they have their preferred width: the page is compact whenever both do not fit.
-    readonly property real _settingsWidth: Math.max(ScreenTools.defaultFontPixelWidth * 30,
-                                                    Math.min(root._preferredSettingsWidth, root.availableWidth))
+                                                        : root._preferredStatusWidth
 
-    showExpand: true
-    // On narrow screens the expanded view replaces status instead of requiring horizontal scrolling.
-    contentVisible: !root.expanded || !root._compact
+    /// Shows a page of the application settings in place of the drop-down. @a page is the page's name in
+    /// SettingsPages.json, which is not translated.
+    function _showSettingsPage(page) {
+        if (mainWindow.allowViewSwitch()) {
+            mainWindow.closeIndicatorDrawer()
+            mainWindow.showSettingsTool(page)
+        }
+    }
 
     // A vehicle GPS value, labelled with its description, shown while the vehicle reports it.
     component MeasurementLabel: LabelledLabel {
@@ -83,8 +82,8 @@ ToolIndicatorPage {
         }
     }
 
-    // The page's loader takes each view's size from its implicit size once the page's layout has sized the loader. A
-    // layout computes its implicit width from its contents, so a plain item supplies each view's width.
+    // The page's loader takes the view's size from its implicit size once the page's layout has sized the loader. A
+    // layout computes its implicit width from its contents, so a plain item supplies the view's width.
     contentComponent: Component {
         Item {
             implicitWidth: Math.min(root._preferredStatusWidth, root.availableWidth)
@@ -96,6 +95,7 @@ ToolIndicatorPage {
                 spacing: ScreenTools.defaultFontPixelHeight / 2
 
                 QGCGroupBox {
+                    objectName: "gpsIndicatorVehicle"
                     Layout.minimumWidth: 0
                     heading: qsTr("Vehicle GPS Status")
                     visible: root._vehicleGps
@@ -168,15 +168,14 @@ ToolIndicatorPage {
                 }
 
                 // It has Connect, so beside a vehicle's GPS status it is shown once a receiver is set up, as the caster
-                // is, and while the settings that set it up are open.
+                // is.
                 GPSReceiverStatus {
                     id: receiverStatus
 
                     objectName: "gpsIndicatorReceiver"
                     Layout.minimumWidth: 0
-                    showWhenDisconnected: !root._vehicleGps || root.expanded || receiverStatus.receiver.hasEndpoint
+                    showWhenDisconnected: !root._vehicleGps || receiverStatus.receiver.hasEndpoint
                                           || receiverStatus.receiver.errorMessage !== ""
-                    disconnectedText: qsTr("No GNSS receiver connected. Expand for settings.")
                 }
 
                 // Shown while the position receiver is in use.
@@ -204,32 +203,25 @@ ToolIndicatorPage {
                     sourceEditable: false
                     showCoordinates: false
                 }
-            }
-        }
-    }
 
-    // The settings' own implicit width would be too small: QGCNoteLabel's zero preferred width keeps the notes from
-    // adding any.
-    expandedComponent: Component {
-        Item {
-            implicitWidth: root._settingsWidth
-            implicitHeight: expandedColumn.implicitHeight
-
-            ColumnLayout {
-                id: expandedColumn
-                width: parent.width
-                spacing: ScreenTools.defaultFontPixelHeight / 2
-
-                // The compact layout shows the settings in place of the status column, so the receiver's connection,
-                // which has Connect and the receiver's problem, comes with them.
-                GPSReceiverConnectionRow {
-                    objectName: "gpsCompactReceiverConnection"
-                    visible: root._compact
-                }
-
-                GPSReceiverSettings {
-                    objectName: "gpsReceiverSettings"
+                // What the status rows report is set up on these pages, which the drop-down has no room for.
+                QGCGroupBox {
+                    objectName: "gpsIndicatorSettings"
                     Layout.minimumWidth: 0
+
+                    LabelledButton {
+                        objectName: "gpsIndicatorReceiverSettings"
+                        label: qsTr("GNSS Receiver")
+                        buttonText: qsTr("Configure")
+                        onClicked: root._showSettingsPage("GNSS Receiver")
+                    }
+
+                    LabelledButton {
+                        objectName: "gpsIndicatorCorrectionsSettings"
+                        label: qsTr("RTK Corrections")
+                        buttonText: qsTr("Configure")
+                        onClicked: root._showSettingsPage("RTK Corrections")
+                    }
                 }
             }
         }
