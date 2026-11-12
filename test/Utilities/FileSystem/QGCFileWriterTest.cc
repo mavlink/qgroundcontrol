@@ -1,6 +1,12 @@
 #include "QGCFileWriterTest.h"
 
+#ifdef Q_OS_LINUX
+#include <sys/syscall.h>
+#include <unistd.h>
+#endif
+
 #include <atomic>
+#include <memory>
 
 #include <QtCore/QDir>
 #include <QtCore/QFile>
@@ -9,9 +15,19 @@
 #include <QtCore/QScopeGuard>
 #include <QtCore/QSemaphore>
 #include <QtCore/QTemporaryDir>
+#include <QtCore/QThread>
 #include <QtTest/QSignalSpy>
 
 #include "QGCFileWriter.h"
+
+#ifdef Q_OS_LINUX
+// Whether the kernel has the thread asleep, as it is while it waits for another thread to exit
+static bool fileWriterTestThreadSleeps(long kernelThreadId)
+{
+    QFile status(QStringLiteral("/proc/self/task/%1/status").arg(kernelThreadId));
+    return status.open(QIODevice::ReadOnly) && status.readAll().contains("\nState:\tS");
+}
+#endif
 
 QByteArray QGCFileWriterTest::_fileContents(const QString& path)
 {
@@ -198,6 +214,90 @@ void QGCFileWriterTest::_testCloseReportsWriteError()
     QVERIFY(writer.flush(TestTimeout::mediumMs()));
     QCOMPARE(_fileContents(goodPath), QByteArray("recovered"));
     QCOMPARE(errorSpy.count(), 1);
+}
+
+void QGCFileWriterTest::_testWriteWhileClosingAfterError()
+{
+#ifdef Q_OS_LINUX
+    // Opens for writing, but every write fails with "no space left on device"
+    const QString fullDevice = QStringLiteral("/dev/full");
+    if (!QFile::exists(fullDevice)) {
+        QSKIP("Needs /dev/full to provoke a write error");
+    }
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString goodPath = tempDir.filePath(QStringLiteral("out.log"));
+
+    QSemaphore workerExiting;
+    QSemaphore releaseWorker;
+    QSemaphore written;
+    std::atomic<long> closeThreadId{0};
+
+    QGCFileWriter writer;
+    QSignalSpy errorSpy(&writer, &QGCFileWriter::errorOccurred);
+    const std::unique_ptr<QThread> closeThread(QThread::create([&writer, &closeThreadId]() {
+        closeThreadId.store(::syscall(SYS_gettid));
+        writer.close();
+    }));
+    const std::unique_ptr<QThread> writeThread(QThread::create([&writer, &written]() {
+        writer.write("kept;");
+        written.release();
+    }));
+    // Runs before the writer is destroyed, which waits for its worker.
+    const auto releaseOnExit = qScopeGuard([&releaseWorker, &closeThread, &writeThread]() {
+        releaseWorker.release();
+        (void) closeThread->wait();
+        (void) writeThread->wait();
+    });
+
+    // The formatter runs in the worker, whose write fails. It has the worker wait on its way out, with its error
+    // set, until the test lets it go.
+    writer.setFilePath(fullDevice);
+    // Qt's complaint about appending to a character device
+    expectLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("Cannot call seek")));
+    writer.writeDeferred([&workerExiting, &releaseWorker]() {
+        QThread* const worker = QThread::currentThread();
+        (void) QObject::connect(
+            worker, &QThread::finished, worker,
+            [&workerExiting, &releaseWorker]() {
+                workerExiting.release();
+                releaseWorker.acquire();
+            },
+            Qt::DirectConnection);
+        return QByteArray("lost;");
+    });
+    QVERIFY(workerExiting.tryAcquire(1, TestTimeout::mediumMs()));
+    verifyExpectedLogMessage();
+    QVERIFY(writer.hasError());
+
+    // close() waits for the worker to exit, and does not hold the mutex while it waits. Nothing else can make its
+    // thread sleep here.
+    closeThread->start();
+    QTRY_VERIFY_WITH_TIMEOUT(fileWriterTestThreadSleeps(closeThreadId.load()), TestTimeout::mediumMs());
+
+    // write() finds the error meanwhile. It used to join the worker which close() was waiting for and to start
+    // another, which close() then took for the one it had stopped.
+    writeThread->start();
+    QVERIFY2(written.tryAcquire(1, TestTimeout::mediumMs()),
+             "write() waited for the worker which close() was waiting for");
+    releaseWorker.release();
+    QVERIFY(closeThread->wait(TestTimeout::mediumMs()));
+
+    // close() has stopped the only worker there was. What was written meanwhile waits for the next one.
+    QVERIFY(!writer.isRunning());
+    QVERIFY(!writer.hasError());
+    QCOMPARE(writer.pendingBytes(), qint64(5));
+
+    writer.setFilePath(goodPath);
+    writer.write("next;");
+    QVERIFY(writer.flush(TestTimeout::mediumMs()));
+    QCOMPARE(_fileContents(goodPath), QByteArray("kept;next;"));
+    QVERIFY_SIGNAL_COUNT_WAIT(errorSpy, 1, TestTimeout::mediumMs());
+    QCOMPARE(errorSpy.count(), 1);
+#else
+    QSKIP("Needs /dev/full to provoke a write error, and /proc to see that close() is waiting");
+#endif
 }
 
 void QGCFileWriterTest::_testDestructorWritesQueuedData()

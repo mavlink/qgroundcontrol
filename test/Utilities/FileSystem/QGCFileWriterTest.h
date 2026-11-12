@@ -15,6 +15,7 @@ private slots:
     void _testRecoversAfterError();
     void _testCloseReportsWriteError_data();
     void _testCloseReportsWriteError();
+    void _testWriteWhileClosingAfterError();
     void _testDestructorWritesQueuedData();
     void _testCloseWritesQueuedDataAndNextWriteReopens();
     void _testChangingPathSwitchesFile();

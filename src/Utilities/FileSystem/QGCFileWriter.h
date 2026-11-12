@@ -62,6 +62,7 @@ private:
     };
 
     mutable QMutex _mutex;
+    QMutex _stopMutex;  ///< Held by _stop() from start to end. Locked before _mutex.
     QWaitCondition _condition;
     QWaitCondition _flushedCondition;
     QList<WorkItem> _queue;
@@ -73,6 +74,8 @@ private:
     QString _lastError;
 
     QThread *_thread = nullptr;
+    // Guarded by _mutex. While set, _thread belongs to _stop(): nothing else joins, deletes or replaces it.
+    bool _stopping = false;
     std::atomic<bool> _isOpen{false};
     std::atomic<bool> _hasError{false};
     std::atomic<bool> _quit{false};

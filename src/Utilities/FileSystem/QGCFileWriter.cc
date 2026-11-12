@@ -138,8 +138,8 @@ void QGCFileWriter::_clearErrorLocked()
     }
 
     // The failed worker is exiting and no longer locks the mutex (see _setError()), so it can be joined here.
-    // That lets the next write start a new one.
-    if (_thread) {
+    // That lets the next write start a new one. A worker which _stop() is waiting for is left to _stop().
+    if (_thread && !_stopping) {
         _thread->wait();
         _thread->deleteLater();
         _thread = nullptr;
@@ -162,19 +162,26 @@ void QGCFileWriter::_startLocked()
 
 void QGCFileWriter::_stop()
 {
+    // One caller at a time: the worker is joined without _mutex, which it needs to write what is queued
+    const QMutexLocker stopLocker(&_stopMutex);
+
+    QThread* thread = nullptr;
     {
         const QMutexLocker locker(&_mutex);
         if (!_thread) {
             return;
         }
+        thread = _thread;
+        _stopping = true;
         _quit.store(true, std::memory_order_relaxed);
     }
     _condition.wakeOne();
-    _thread->wait();
-    _thread->deleteLater();
+    thread->wait();
 
     const QMutexLocker locker(&_mutex);
+    thread->deleteLater();
     _thread = nullptr;
+    _stopping = false;
     _isOpen.store(false, std::memory_order_relaxed);
 }
 
