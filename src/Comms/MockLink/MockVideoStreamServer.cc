@@ -36,7 +36,10 @@ constexpr const char* kH264InBandHeaders = "h264parse config-interval=-1";
 // x265enc are GPL, so only a desktop GStreamer that installs them provides them, and mobile builds never bundle them.
 constexpr const char* kOpenH264Encoder = "openh264enc complexity=low rate-control=bitrate bitrate=2000000 gop-size=30";
 constexpr const char* kX264Encoder = "x264enc tune=zerolatency speed-preset=ultrafast bitrate=2000 key-int-max=30";
-constexpr const char* kH265Encoder = "x265enc tune=zerolatency speed-preset=ultrafast bitrate=2000 key-int-max=30";
+// No x265 thread pool: its workers run below normal priority, so they starve while every core is busy, and the
+// stream falls to a few frames a second. One thread at normal priority encodes this stream several times real-time.
+constexpr const char* kH265Encoder =
+    "x265enc tune=zerolatency speed-preset=ultrafast bitrate=2000 key-int-max=30 option-string=pools=none";
 
 // The H.264 encoder description for gst_parse_launch, or nullptr when no H.264 encoder is installed.
 const char* h264Encoder()
