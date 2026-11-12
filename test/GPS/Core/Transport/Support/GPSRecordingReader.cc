@@ -31,6 +31,18 @@ std::optional<QByteArray> terminated(QByteArray line)
     return line;
 }
 
+/// The answer of a link to a write of which it accepted nothing, as a TX-REFUSED record names it.
+std::optional<GPSWriteStatus> recordedAnswer(const QByteArray& name)
+{
+    for (const GPSWriteStatus answer :
+         {GPSWriteStatus::Completed, GPSWriteStatus::TimedOut, GPSWriteStatus::Error, GPSWriteStatus::Unsupported}) {
+        if (name == GPSRecordingTransport::refusalName(answer)) {
+            return answer;
+        }
+    }
+    return std::nullopt;
+}
+
 /// Longer than any settings record.
 constexpr qint64 MAX_SETTINGS_LINE_BYTES = 1024;
 
@@ -178,8 +190,11 @@ std::optional<GPSRecordingRecord> GPSRecordingReader::next()
         return _fail(QStringLiteral("the recording ends within a record"));
     }
     const QByteArrayList fields = line->split(' ');
-    if (fields.size() != 3) {
-        return _fail(QStringLiteral("not a time, a kind and a value"));
+    // A refused write has the answer of the link before its value.
+    const bool refusedWrite = fields.size() > 1 && fields[1] == GPSRecordingTransport::SENT_REFUSED;
+    if (fields.size() != (refusedWrite ? 4 : 3)) {
+        return _fail(refusedWrite ? QStringLiteral("not a time, a kind, the answer of the link and a value")
+                                  : QStringLiteral("not a time, a kind and a value"));
     }
     bool timed = false;
     GPSRecordingRecord record;
@@ -187,20 +202,30 @@ std::optional<GPSRecordingRecord> GPSRecordingReader::next()
     if (!timed || record.time < _latest) {
         return _fail(QStringLiteral("not a time at or after the time of the record before it"));
     }
-    const QByteArray& value = fields[2];
-    if (fields[1] == GPSRecordingTransport::BAUD) {
+    const QByteArray& value = fields.last();
+    if (fields[1] == GPSRecordingTransport::BAUD || fields[1] == GPSRecordingTransport::BAUD_REFUSED) {
         bool valid = false;
-        record.kind = GPSRecordingRecord::Kind::BaudRate;
+        record.kind = fields[1] == GPSRecordingTransport::BAUD ? GPSRecordingRecord::Kind::BaudRate
+                                                               : GPSRecordingRecord::Kind::RefusedBaudRate;
         record.baudRate = value.toUInt(&valid);
         if (!valid) {
             return _fail(QStringLiteral("not a baud rate"));
         }
-    } else if (fields[1] == GPSRecordingTransport::RECEIVED || fields[1] == GPSRecordingTransport::SENT) {
+    } else if (fields[1] == GPSRecordingTransport::RECEIVED || fields[1] == GPSRecordingTransport::SENT ||
+               refusedWrite) {
+        if (refusedWrite) {
+            const std::optional<GPSWriteStatus> answer = recordedAnswer(fields[2]);
+            if (!answer) {
+                return _fail(QStringLiteral("not completed, timed-out, error or unsupported"));
+            }
+            record.answer = *answer;
+        }
         if (!hexadecimal(value)) {
             return _fail(QStringLiteral("not whole bytes in lower-case hexadecimal"));
         }
-        record.kind = fields[1] == GPSRecordingTransport::SENT ? GPSRecordingRecord::Kind::Sent
-                                                               : GPSRecordingRecord::Kind::Received;
+        record.kind = refusedWrite                               ? GPSRecordingRecord::Kind::RefusedWrite
+                      : fields[1] == GPSRecordingTransport::SENT ? GPSRecordingRecord::Kind::Sent
+                                                                 : GPSRecordingRecord::Kind::Received;
         record.bytes = QByteArray::fromHex(value);
     } else if (fields[1] == GPSRecordingTransport::SETTINGS) {
         return _fail(QStringLiteral("the settings are not the first record"));

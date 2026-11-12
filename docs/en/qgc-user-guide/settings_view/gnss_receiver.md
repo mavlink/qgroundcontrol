@@ -78,7 +78,7 @@ The settings are:
   The file holds the raw receiver input and output: every byte the receiver sent and every byte QGroundControl sent to it, with the baud rate changes.
   It starts with the settings the connection was made with: the receiver type, the baud rate, the corrections format, the permission to save to the receiver's flash, and the base mode with its survey limits or fixed position.
   It therefore includes the receiver's positions and the base station location, so share it only where that is acceptable.
-  It is a text file: after a heading line, each line is the time in microseconds since the recording started, then `SETTINGS` and the connection's settings, `RX` and the bytes received in hexadecimal, `TX` and the bytes sent, or `BAUD` and the new baud rate.
+  It is a text file: after a heading line, each line is the time in microseconds since the recording started, then `SETTINGS` and the connection's settings, `RX` and the bytes received in hexadecimal, `TX` and the bytes sent, `BAUD` and the new baud rate, or, for what the connection refused, `TX-REFUSED` with the reason and the bytes that were not sent, or `BAUD-REFUSED` with the baud rate.
   A recording stops when its file reaches 256 MB or cannot be written: the application log reports it and the path is no longer shown. The connection continues either way.
 
 The message below the connection line of the [receiver status](#status) explains a failed or lost connection.

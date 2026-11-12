@@ -110,6 +110,9 @@ public:
     /// Writes from now on take the first @a bytes of what they are given and then time out.
     void acceptBytes(int bytes) { _acceptedBytes = bytes; }
 
+    /// Writes from now on are refused whole, with @a answer.
+    void refuseWrites(GPSWriteStatus answer) { _refusal = answer; }
+
     bool drained() const { return _offset >= _input.size(); }
 
     const QByteArray& written() const { return _written; }
@@ -119,6 +122,9 @@ public:
 protected:
     GPSWriteResult writeData(QByteArrayView bytes, QDeadlineTimer) override
     {
+        if (_refusal) {
+            return {*_refusal};
+        }
         const auto length = static_cast<int>(bytes.size());
         const int accepted = (std::min) (_acceptedBytes.value_or(length), length);
         _written.append(bytes.first(accepted));
@@ -131,6 +137,7 @@ private:
     qsizetype _offset = 0;
     int _chunkBytes;
     std::optional<int> _acceptedBytes;
+    std::optional<GPSWriteStatus> _refusal;
     unsigned _baudRate = 0;
     unsigned _fixedBaudRate = 0;
 };
@@ -182,6 +189,13 @@ QByteArrayList records(const QString& path)
                 break;
             case GPSRecordingRecord::Kind::BaudRate:
                 lines.append("BAUD " + QByteArray::number(record.baudRate));
+                break;
+            case GPSRecordingRecord::Kind::RefusedWrite:
+                lines.append("TX-REFUSED " + QByteArray(GPSRecordingTransport::refusalName(record.answer)) + ' ' +
+                             record.bytes.toHex());
+                break;
+            case GPSRecordingRecord::Kind::RefusedBaudRate:
+                lines.append("BAUD-REFUSED " + QByteArray::number(record.baudRate));
                 break;
         }
     }
@@ -266,15 +280,76 @@ void GPSRecordingTransportTest::_recordsLinkTrafficInOrder()
         QCOMPARE(recorder.read(buffer, 0ms).status, GPSReadStatus::TimedOut);
         QCOMPARE(link->written(), command + command.first(3));
     }
-    // What the link refused, a rate or the rest of a write, never crossed it.
+    // The rest of a write that the link accepted the start of is not recorded.
     QCOMPARE(records(file), (QByteArrayList{
                                 "BAUD 38400",
+                                "BAUD-REFUSED 1200",
                                 "RX " + input.first(40).toHex(),
                                 "TX " + command.toHex(),
                                 "RX " + input.sliced(40, 40).toHex(),
                                 "TX " + command.first(3).toHex(),
                                 "RX " + input.sliced(80).toHex(),
                             }));
+}
+
+void GPSRecordingTransportTest::_recordsWhatLinkRefused_data()
+{
+    QTest::addColumn<GPSWriteStatus>("answer");
+    QTest::addColumn<QByteArray>("record");
+    // UDP carries no writes.
+    QTest::newRow("unsupported") << GPSWriteStatus::Unsupported << QByteArray("TX-REFUSED unsupported b5620a04");
+    QTest::newRow("timed-out") << GPSWriteStatus::TimedOut << QByteArray("TX-REFUSED timed-out b5620a04");
+    QTest::newRow("error") << GPSWriteStatus::Error << QByteArray("TX-REFUSED error b5620a04");
+    QTest::newRow("completed") << GPSWriteStatus::Completed << QByteArray("TX-REFUSED completed b5620a04");
+    // The session was stopped; no link refused it.
+    QTest::newRow("cancelled") << GPSWriteStatus::Cancelled << QByteArray();
+}
+
+void GPSRecordingTransportTest::_recordsWhatLinkRefused()
+{
+    QFETCH(GPSWriteStatus, answer);
+    QFETCH(QByteArray, record);
+    TestFixtures::TempDirFixture directory;
+    const QString file = QDir(directory.path()).filePath(QStringLiteral("session.log"));
+    GPSTestClock clock(GPSTestClock::START_US);
+    GPSCancelSource stop;
+    {
+        auto inner = std::make_unique<MemoryGPSTransport>(QByteArray(), 64, stop.token());
+        MemoryGPSTransport* const link = inner.get();
+        GPSRecordingTransport recorder(std::move(inner), file, GPSRecordingTransport::MAX_FILE_BYTES, {}, {},
+                                       clock.source());
+        QCOMPARE(recorder.open().status, GPSOpenStatus::Opened);
+        clock.advanceBy(1500us);
+        QVERIFY(!recorder.setBaudRate(MemoryGPSTransport::REFUSED_BAUD_RATE));
+        clock.advanceBy(1s);
+        link->refuseWrites(answer);
+        const GPSWriteResult refused = writeBytes(recorder, QByteArray::fromHex("b5620a04"));
+        QCOMPARE(refused.status, answer);
+        QCOMPARE(refused.acceptedBytes, 0);
+        QVERIFY(link->written().isEmpty());
+        // Nor does a link refuse the rate of a session that was stopped.
+        QVERIFY(stop.cancel());
+        QVERIFY(!recorder.setBaudRate(MemoryGPSTransport::REFUSED_BAUD_RATE));
+    }
+    QFile recording(file);
+    QVERIFY(recording.open(QIODevice::ReadOnly));
+    QCOMPARE(recording.readAll(), QByteArray(HEADER_LINE) + "1500 BAUD-REFUSED 1200\n" +
+                                      (record.isEmpty() ? QByteArray() : "1001500 " + record + '\n'));
+
+    QList<GPSRecordingRecord> expected{{.time = 1500us,
+                                        .kind = GPSRecordingRecord::Kind::RefusedBaudRate,
+                                        .bytes = {},
+                                        .baudRate = MemoryGPSTransport::REFUSED_BAUD_RATE}};
+    if (!record.isEmpty()) {
+        expected.append({.time = 1001500us,
+                         .kind = GPSRecordingRecord::Kind::RefusedWrite,
+                         .bytes = QByteArray::fromHex("b5620a04"),
+                         .baudRate = 0,
+                         .answer = answer});
+    }
+    QString error;
+    QCOMPARE(GPSRecordingReader::readFile(file, &error), expected);
+    QCOMPARE(error, QString());
 }
 
 void GPSRecordingTransportTest::_recordsSessionSettings_data()
@@ -399,12 +474,20 @@ void GPSRecordingTransportTest::_readerReturnsBothDirectionsWithTimes()
                             "0 BAUD 115200\n"
                             "1500 TX b5620a0400000e34\n"
                             "1500 RX b562\n"
-                            "2250000 RX 0a04\n";
+                            "2250000 RX 0a04\n"
+                            "2250000 BAUD-REFUSED 921600\n"
+                            "2750000 TX-REFUSED timed-out b5620a04\n";
     const QList<GPSRecordingRecord> expected{
         {.time = 0us, .kind = Kind::BaudRate, .bytes = {}, .baudRate = 115200},
         {.time = 1500us, .kind = Kind::Sent, .bytes = QByteArray::fromHex("b5620a0400000e34"), .baudRate = 0},
         {.time = 1500us, .kind = Kind::Received, .bytes = QByteArray::fromHex("b562"), .baudRate = 0},
         {.time = 2250ms, .kind = Kind::Received, .bytes = QByteArray::fromHex("0a04"), .baudRate = 0},
+        {.time = 2250ms, .kind = Kind::RefusedBaudRate, .bytes = {}, .baudRate = 921600},
+        {.time = 2750ms,
+         .kind = Kind::RefusedWrite,
+         .bytes = QByteArray::fromHex("b5620a04"),
+         .baudRate = 0,
+         .answer = GPSWriteStatus::TimedOut},
     };
     for (const QByteArray& lineEnding : {QByteArray("\n"), QByteArray("\r\n")}) {
         QByteArray converted = text;
@@ -453,6 +536,23 @@ void GPSRecordingTransportTest::_readerStopsAtDamage_data()
     QTest::newRow("no-bytes") << header + "0 RX \n"
                               << 0 << QStringLiteral("line 2: not whole bytes in lower-case hexadecimal");
     QTest::newRow("no-baud-rate") << header + "0 BAUD fast\n" << 0 << QStringLiteral("line 2: not a baud rate");
+    QTest::newRow("no-refused-baud-rate") << header + "0 BAUD-REFUSED\n"
+                                          << 0 << QStringLiteral("line 2: not a time, a kind and a value");
+    QTest::newRow("refused-baud-rate-with-an-answer") << header + "0 BAUD-REFUSED unsupported 9600\n"
+                                                      << 0 << QStringLiteral("line 2: not a time, a kind and a value");
+    QTest::newRow("refused-write-without-answer")
+        << header + "0 RX aa\n5 TX-REFUSED b562\n"
+        << 1 << QStringLiteral("line 3: not a time, a kind, the answer of the link and a value");
+    QTest::newRow("refused-write-with-another-answer")
+        << header + "0 TX-REFUSED refused b562\n"
+        << 0 << QStringLiteral("line 2: not completed, timed-out, error or unsupported");
+    // A cancelled write was not refused by its link.
+    QTest::newRow("refused-write-cancelled")
+        << header + "0 TX-REFUSED cancelled b562\n"
+        << 0 << QStringLiteral("line 2: not completed, timed-out, error or unsupported");
+    QTest::newRow("refused-write-of-half-a-byte")
+        << header + "0 TX-REFUSED unsupported b56\n"
+        << 0 << QStringLiteral("line 2: not whole bytes in lower-case hexadecimal");
     const QByteArray settings("0 SETTINGS type=ublox,baud=0,fixed-baud=0,save=0,compact=0,base=survey,duration=60");
     QTest::newRow("settings-after-a-record") << header + "0 RX aa\n" + settings + ",accuracy=2\n"
                                              << 1 << QStringLiteral("line 3: the settings are not the first record");
@@ -507,7 +607,10 @@ void GPSRecordingTransportTest::_replayKeepsRecordedTimes()
     // The receiver's second answer came 60 ms into the session; what the session sent takes no time to replay.
     constexpr std::chrono::milliseconds SECOND_ANSWER{60};
     const QString file = directory.createFile(
-        QStringLiteral("session.log"), QByteArray(HEADER_LINE) + "0 RX aa\n1000 TX cc\n60000 RX bb\n60000 BAUD 9600\n");
+        QStringLiteral("session.log"),
+        QByteArray(HEADER_LINE) +
+            "0 RX aa\n1000 TX cc\n1000 TX-REFUSED unsupported dd\n60000 RX bb\n60000 BAUD-REFUSED 4800\n"
+            "60000 BAUD 9600\n");
     GPSCancelSource stop;
     ReplayGPSTransport replay(file, stop.token());
     replay.setRecordedTiming(true);
@@ -525,6 +628,7 @@ void GPSRecordingTransportTest::_replayKeepsRecordedTimes()
     // Only a lower bound: the replay never runs ahead of the recording.
     QVERIFY2(elapsed.durationElapsed() >= SECOND_ANSWER, qPrintable(QString::number(elapsed.elapsed())));
     QCOMPARE(received, QByteArray::fromHex("aabb"));
+    // Without what the link refused.
     QCOMPARE(replay.sentBytes(), 1);
     QCOMPARE(replay.baudRateChanges(), 1);
 }

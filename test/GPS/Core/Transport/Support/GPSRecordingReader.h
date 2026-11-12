@@ -9,29 +9,35 @@
 #include <QtCore/QString>
 
 #include "GPSReceiverConfig.h"
+#include "GPSTransport.h"
 #include "GPSType.h"
 
 class QIODevice;
 
 namespace GPSTest {
 
-/// One record of a receiver recording (GPSRecordingTransport): what crossed the link, in which direction, and when.
+/// One record of a receiver recording (GPSRecordingTransport): what crossed the link, in which direction, or what the
+/// link refused, and when.
 struct GPSRecordingRecord
 {
     enum class Kind : uint8_t
     {
-        Received,  ///< Bytes the session read from the receiver.
-        Sent,      ///< Bytes the link accepted from the session for the receiver.
-        BaudRate,  ///< The baud rate the session changed the link to.
+        Received,         ///< Bytes the session read from the receiver.
+        Sent,             ///< Bytes the link accepted from the session for the receiver.
+        BaudRate,         ///< The baud rate the session changed the link to.
+        RefusedWrite,     ///< The bytes of one write of the session, of which the link accepted nothing.
+        RefusedBaudRate,  ///< A baud rate the link refused to change to.
     };
 
     /// From the start of the recording to the return of the recorded call.
     std::chrono::microseconds time{0};
     Kind kind = Kind::Received;
-    /// Of a Received or Sent record.
+    /// Of a Received, Sent or RefusedWrite record.
     QByteArray bytes;
-    /// Of a BaudRate record.
+    /// Of a BaudRate or RefusedBaudRate record.
     unsigned baudRate = 0;
+    /// Of a RefusedWrite record: how the link answered the write, which is never GPSWriteStatus::Cancelled.
+    GPSWriteStatus answer = GPSWriteStatus::Completed;
 
     bool operator==(const GPSRecordingRecord&) const = default;
 };
@@ -47,8 +53,8 @@ struct GPSRecordingSettings
 };
 
 /// The reader of the receiver recording format, which the replay transports and the tests share. It reads a device
-/// that is open for reading record by record, so a recording is never held whole, and returns both directions and
-/// the baud rate changes in file order with their times, which never decrease.
+/// that is open for reading record by record, so a recording is never held whole, and returns both directions, the
+/// baud rate changes and what the link refused in file order with their times, which never decrease.
 /// A line that is not a record ends the reading with an error that names the line. So does a last line without its
 /// line ending: the recorder buffers its file, so the recording of a session that was killed can end within a
 /// record. Lines may end in CR LF, as after a transfer that converted them.

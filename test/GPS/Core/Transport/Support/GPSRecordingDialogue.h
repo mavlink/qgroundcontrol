@@ -24,7 +24,8 @@ struct GPSDialogueDivergence
 {
     /// The line of the record in the recording that the session did not reproduce.
     qint64 line = 0;
-    /// That record with its time, such as "TX 8 bytes b5620a0400000e34 at 0.004211 s".
+    /// That record with its time, such as "TX 8 bytes b5620a0400000e34 at 0.004211 s" or "BAUD-REFUSED 921600 at
+    /// 0.000102 s".
     QString recorded;
     /// What the driver did in its place, with the time of the replay.
     QString driver;
@@ -39,19 +40,21 @@ struct GPSDialogueDivergence
 /// - A read returns the bytes of the next RX record, one recorded read at a time, once the clock has reached the
 ///   record's time or the read's timeout reaches it, give or take READ_LATENESS. Any other read times out and moves
 ///   the clock by its timeout: a recording holds no read that returned nothing, so the driver's own timeouts stand
-///   in for them. While the next record is a TX or a BAUD the recorded session acted before it read more, so reads
+///   in for them. While the next record is anything else the recorded session acted before it read more, so reads
 ///   time out.
 /// - The bytes the driver writes must be those of the TX records that follow, in order. Only the bytes count, not how
 ///   the write calls divide them.
-/// - A baud rate the driver sets must be that of the next BAUD record. A link with a fixed rate refuses any other
-///   rate without a record, as it did.
+/// - A write of the bytes of the next TX-REFUSED record gets the answer of the recorded link, which accepted none of
+///   them. That link refused one write, so here the call counts: it must hold those bytes and no others.
+/// - A baud rate the driver sets must be that of the next BAUD record, or of the next BAUD-REFUSED record, which
+///   refuses it as the recorded link did and leaves the link working.
 /// - Reproducing a record moves the clock up to the record's time.
-/// The first thing the driver does that the recording does not have is the divergence(), and so is a TX or BAUD
-/// record the driver leaves unwritten for MISSING_WRITE_LIMIT. The link then reports cancellation, which ends the
-/// driver's session without a failure. It does so too once the driver goes on after the last record: a recording does
-/// not say what its session did after that.
-/// A recording does not hold a baud rate its link refused, or a write of which its link accepted nothing. A session
-/// that met either diverges where it did.
+/// The first thing the driver does that the recording does not have is the divergence(), and so is a record other
+/// than an RX that the driver leaves unwritten for MISSING_WRITE_LIMIT. The link then reports cancellation, which ends
+/// the driver's session without a failure. It does so too once the driver goes on after the last record: a recording
+/// does not say what its session did after that.
+/// A recording made before refusals were recorded holds neither kind. Its link refuses any rate but its fixed one, as
+/// that link did. A session that met another refusal diverges where it did.
 class GPSDialogueTransport final : public GPSTransport
 {
 public:
@@ -60,9 +63,9 @@ public:
     /// then found its deadline passed would otherwise act before the data it had when it was recorded. Shorter than
     /// any read slice or command timeout of the drivers.
     static constexpr std::chrono::milliseconds READ_LATENESS{2};
-    /// A session that has not written a recorded TX, or set a recorded BAUD, this long after the record's time and
-    /// after the record before it never will: the receiver worker ends a configured session after as long without
-    /// useful data, and no driver waits longer before it writes.
+    /// A session that has not written a recorded TX or TX-REFUSED, or set a recorded BAUD or BAUD-REFUSED, this long
+    /// after the record's time and after the record before it never will: the receiver worker ends a configured
+    /// session after as long without useful data, and no driver waits longer before it writes.
     static constexpr std::chrono::seconds MISSING_WRITE_LIMIT{30};
 
     GPSDialogueTransport(const QString& recording, GPSTestClock& clock);
@@ -99,8 +102,10 @@ public:
 
     [[nodiscard]] qint64 receivedBytes() const { return _receivedBytes; }
 
+    /// Without the writes the link refused.
     [[nodiscard]] qint64 sentBytes() const { return _sentBytes; }
 
+    /// Without the rates the link refused.
     [[nodiscard]] int baudRateChanges() const { return _baudRateChanges; }
 
 protected:

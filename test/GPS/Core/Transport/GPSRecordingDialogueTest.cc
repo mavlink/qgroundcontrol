@@ -1,5 +1,6 @@
 #include "GPSRecordingDialogueTest.h"
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <memory>
@@ -36,13 +37,23 @@ constexpr const char* PASSIVE_SESSION =
     "0 SETTINGS type=passive,baud=115200,fixed-baud=0,save=0,compact=0,base=survey,duration=0,accuracy=0\n"
     "0 BAUD 115200\n";
 
+/// What the link of a session refuses while it goes on working.
+struct Refusals
+{
+    /// A baud rate, as a serial adapter that does not support it; zero, none.
+    unsigned baudRate = 0;
+    /// Every write, as a UDP link, which carries none.
+    bool writes = false;
+};
+
 /// The receiver of a scenario as the link a recorder owns.
 class BenchLink final : public GPSTransport
 {
 public:
-    explicit BenchLink(ReceiverBench& bench)
+    BenchLink(ReceiverBench& bench, Refusals refusals)
         : GPSTransport(bench.cancelToken())
         , _bench(bench)
+        , _refusals(refusals)
     {}
 
     // The scenario prepared its receiver, which opening it would reset.
@@ -54,7 +65,10 @@ public:
 
     std::chrono::milliseconds configurationWriteTimeout() const override { return _bench.configurationWriteTimeout(); }
 
-    bool setBaudRate(unsigned baudRate) override { return _bench.setBaudRate(baudRate); }
+    bool setBaudRate(unsigned baudRate) override
+    {
+        return baudRate != _refusals.baudRate && _bench.setBaudRate(baudRate);
+    }
 
     GPSReadResult read(std::span<uint8_t> buffer, std::chrono::milliseconds timeout) override
     {
@@ -64,17 +78,20 @@ public:
 protected:
     GPSWriteResult writeData(QByteArrayView bytes, QDeadlineTimer deadline) override
     {
-        return _bench.write(bytes, deadline);
+        return _refusals.writes ? GPSWriteResult{GPSWriteStatus::Unsupported} : _bench.write(bytes, deadline);
     }
 
 private:
     ReceiverBench& _bench;
+    const Refusals _refusals;
 };
 
 /// Runs @a scenario as the golden transcripts do, GPSDriver against the scenario's receiver model on a virtual clock,
-/// through the recorder, which writes the session to @a file with the times of that clock.
-void recordScenario(const ScenarioDef& scenario, const QString& file)
+/// through the recorder, which writes the session to @a file with the times of that clock. The link refuses what
+/// @a refusals says.
+void recordScenario(const ScenarioDef& scenario, const QString& file, Refusals refusals = {})
 {
+    QFile::remove(file);
     GPSTestClock clock(GOLDEN_START_US);
     const auto bench = scenario.bench(clock);
     bench->startSession();
@@ -82,7 +99,8 @@ void recordScenario(const ScenarioDef& scenario, const QString& file)
     if (bench->wait) {
         sessionClock.wait = bench->wait;
     }
-    GPSRecordingTransport recorder(std::make_unique<BenchLink>(*bench), file, GPSRecordingTransport::MAX_FILE_BYTES, {},
+    GPSRecordingTransport recorder(std::make_unique<BenchLink>(*bench, refusals), file,
+                                   GPSRecordingTransport::MAX_FILE_BYTES, {},
                                    GPSRecordingTransport::Session{scenario.type, scenario.config}, sessionClock);
     (void) recorder.open();
     GPSDriver driver(scenario.type, recorder, scenario.config, {}, sessionClock);
@@ -110,7 +128,8 @@ void recordScenario(const ScenarioDef& scenario, const QString& file)
 }
 
 /// What a session sent and the rates it set, in order: "TX <bytes>" and "BAUD <rate>", with the bytes between two
-/// rate changes as one entry however the writes divided them.
+/// other entries as one entry however the writes divided them. And what its link refused, as the recording has it:
+/// "TX-REFUSED <answer> <bytes>" for each write and "BAUD-REFUSED <rate>".
 struct Wire
 {
     QByteArrayList entries;
@@ -124,6 +143,13 @@ struct Wire
     }
 
     void baudRate(unsigned rate) { entries.append("BAUD " + QByteArray::number(rate)); }
+
+    void refusedWrite(GPSWriteStatus answer, const QByteArray& bytes)
+    {
+        entries.append("TX-REFUSED " + QByteArray(GPSRecordingTransport::refusalName(answer)) + ' ' + bytes.toHex());
+    }
+
+    void refusedBaudRate(unsigned rate) { entries.append("BAUD-REFUSED " + QByteArray::number(rate)); }
 };
 
 /// The wire of the session a recording holds.
@@ -131,16 +157,27 @@ QByteArrayList recordedWire(const QList<GPSRecordingRecord>& records)
 {
     Wire wire;
     for (const GPSRecordingRecord& record : records) {
-        if (record.kind == GPSRecordingRecord::Kind::Sent) {
-            wire.sent(record.bytes);
-        } else if (record.kind == GPSRecordingRecord::Kind::BaudRate) {
-            wire.baudRate(record.baudRate);
+        switch (record.kind) {
+            case GPSRecordingRecord::Kind::Received:
+                break;
+            case GPSRecordingRecord::Kind::Sent:
+                wire.sent(record.bytes);
+                break;
+            case GPSRecordingRecord::Kind::BaudRate:
+                wire.baudRate(record.baudRate);
+                break;
+            case GPSRecordingRecord::Kind::RefusedWrite:
+                wire.refusedWrite(record.answer, record.bytes);
+                break;
+            case GPSRecordingRecord::Kind::RefusedBaudRate:
+                wire.refusedBaudRate(record.baudRate);
+                break;
         }
     }
     return wire.entries;
 }
 
-/// The wire of @a scenario as its golden transcript records it: what the link accepted.
+/// The wire of @a scenario as its golden transcript records it: what the link accepted and what it refused.
 QByteArrayList goldenWire(const ScenarioDef& scenario)
 {
     GPSTestClock clock(GOLDEN_START_US);
@@ -151,9 +188,15 @@ QByteArrayList goldenWire(const ScenarioDef& scenario)
         if (const auto* write = std::get_if<Golden::Write>(&record.value)) {
             if (write->acceptedBytes > 0) {
                 wire.sent(write->bytes.first(write->acceptedBytes));
+            } else if (write->status != GPSWriteStatus::Cancelled) {
+                wire.refusedWrite(write->status, write->bytes);
             }
-        } else if (const auto* baud = std::get_if<Golden::Baud>(&record.value); baud && baud->accepted) {
-            wire.baudRate(baud->rate);
+        } else if (const auto* baud = std::get_if<Golden::Baud>(&record.value)) {
+            if (baud->accepted) {
+                wire.baudRate(baud->rate);
+            } else {
+                wire.refusedBaudRate(baud->rate);
+            }
         }
     }
     return wire.entries;
@@ -165,6 +208,37 @@ QByteArrayList recordingLines(const QString& file)
     QByteArrayList lines = readFile(file).value_or(QByteArray()).split('\n');
     lines.removeLast();
     return lines;
+}
+
+/// A link that refuses something the session of a recording met, and the kind of record that says so.
+struct RefusingLink
+{
+    const char* name;
+    Refusals refusals;
+    GPSRecordingRecord::Kind refusal;
+};
+
+/// The links that refuse what the session with the recording @a lines did on a link that refused nothing: the first
+/// baud rate it set, and its writes.
+QList<RefusingLink> refusingLinks(const QByteArrayList& lines)
+{
+    QList<RefusingLink> links;
+    bool wrote = false;
+    unsigned firstRate = 0;
+    for (const QByteArray& line : lines.sliced(2)) {
+        const QByteArrayList record = line.split(' ');
+        wrote = wrote || record[1] == GPSRecordingTransport::SENT;
+        if (firstRate == 0 && record[1] == GPSRecordingTransport::BAUD) {
+            firstRate = record[2].toUInt();
+        }
+    }
+    if (firstRate != 0) {
+        links.append({"refused a baud rate", {.baudRate = firstRate}, GPSRecordingRecord::Kind::RefusedBaudRate});
+    }
+    if (wrote) {
+        links.append({"refused every write", {.writes = true}, GPSRecordingRecord::Kind::RefusedWrite});
+    }
+    return links;
 }
 
 QString writeRecording(TestFixtures::TempDirFixture& directory, const QString& name, const QByteArrayList& lines)
@@ -185,8 +259,9 @@ struct ChangedRecording
     QString driver;
 };
 
-/// Every recording that differs from @a lines in one TX byte, in one baud rate, or by one TX record that the session
-/// wrote as soon as it had read the receiver's bytes before it and that the receiver answered.
+/// Every recording that differs from @a lines in one byte of a write, accepted or refused, in one baud rate, set or
+/// refused, or by one TX record that the session wrote as soon as it had read the receiver's bytes before it and that
+/// the receiver answered.
 QList<ChangedRecording> changedRecordings(const QByteArrayList& lines)
 {
     QList<ChangedRecording> changed;
@@ -222,6 +297,25 @@ QList<ChangedRecording> changedRecordings(const QByteArrayList& lines)
                     {"dropped TX record", other, line, QStringLiteral("RX "),
                      QStringLiteral("wrote %1 bytes %2").arg(bytes.size()).arg(QLatin1StringView(record[2]))});
             }
+        } else if (record[1] == GPSRecordingTransport::BAUD_REFUSED) {
+            const QByteArray rate = record[2] == "9600" ? "19200" : "9600";
+            QByteArrayList other = lines;
+            other[index] = time + " BAUD-REFUSED " + rate;
+            changed.append({"changed refused baud rate", other, line,
+                            QStringLiteral("BAUD-REFUSED %1 at").arg(QLatin1StringView(rate)),
+                            QStringLiteral("set the link to %1 baud at").arg(QLatin1StringView(record[2]))});
+        } else if (record[1] == GPSRecordingTransport::SENT_REFUSED) {
+            QByteArray bytes = QByteArray::fromHex(record[3]);
+            const qsizetype byte = bytes.size() / 2;
+            bytes[byte] ^= 0x01;
+            QByteArrayList other = lines;
+            other[index] = time + " TX-REFUSED " + record[2] + ' ' + bytes.toHex();
+            changed.append({"changed refused TX byte", other, line,
+                            QStringLiteral("TX-REFUSED %1 %2 bytes %3 at")
+                                .arg(QLatin1StringView(record[2]))
+                                .arg(bytes.size())
+                                .arg(QLatin1StringView(bytes.toHex())),
+                            QStringLiteral("which differ from byte %1 of the record").arg(byte + 1)});
         }
     }
     return changed;
@@ -287,6 +381,34 @@ void GPSRecordingDialogueTest::_modelSessionReplays()
     QCOMPARE(replayed.settings->type, scenario.type);
 }
 
+void GPSRecordingDialogueTest::_refusedSessionReplays_data()
+{
+    _modelSessionReplays_data();
+}
+
+void GPSRecordingDialogueTest::_refusedSessionReplays()
+{
+    QFETCH(int, index);
+    const ScenarioDef& scenario = scenarios()[static_cast<size_t>(index)];
+    TestFixtures::TempDirFixture directory;
+    const QString file = QDir(directory.path()).filePath(QStringLiteral("session.recording"));
+    recordScenario(scenario, file);
+    for (const RefusingLink& link : refusingLinks(recordingLines(file))) {
+        recordScenario(scenario, file, link.refusals);
+        QString damage;
+        const QList<GPSRecordingRecord> records = GPSRecordingReader::readFile(file, &damage);
+        QVERIFY2(damage.isEmpty(), link.name);
+        // The recording says what the link refused, where it did.
+        QVERIFY2(std::ranges::any_of(records, [&link](const auto& record) { return record.kind == link.refusal; }),
+                 link.name);
+
+        const GPSDialogueResult replayed = replayDialogue(file);
+        QVERIFY2(replayed.passed(),
+                 qPrintable(QLatin1StringView(link.name) + QStringLiteral(": ") + replayed.failure()));
+        QCOMPARE(replayed.records, records.size());
+    }
+}
+
 void GPSRecordingDialogueTest::_changedRecordingFails_data()
 {
     QTest::addColumn<GPSType>("family");
@@ -307,25 +429,34 @@ void GPSRecordingDialogueTest::_changedRecordingFails()
             continue;
         }
         const QString file = QDir(directory.path()).filePath(QStringLiteral("session.recording"));
-        QFile::remove(file);
         recordScenario(scenario, file);
-        for (const ChangedRecording& changed : changedRecordings(recordingLines(file))) {
-            const GPSDialogueResult replayed =
-                replayDialogue(writeRecording(directory, QStringLiteral("changed.recording"), changed.lines));
-            const QString found = QStringLiteral("%1, %2 on line %3: %4")
-                                      .arg(goldenName(scenario), QLatin1StringView(changed.change))
-                                      .arg(changed.line)
-                                      .arg(replayed.passed() ? QStringLiteral("passed") : replayed.failure());
-            QVERIFY2(replayed.divergence, qPrintable(found));
-            QVERIFY2(replayed.divergence->line == changed.line, qPrintable(found));
-            QVERIFY2(replayed.divergence->recorded.startsWith(changed.recorded), qPrintable(found));
-            QVERIFY2(replayed.divergence->driver.contains(changed.driver), qPrintable(found));
-            ++changes[QLatin1StringView(changed.change)];
+        // The session on a link that refuses nothing, and on those that refuse what it did there.
+        QList<std::pair<const char*, QByteArrayList>> sessions{{"refused nothing", recordingLines(file)}};
+        for (const RefusingLink& link : refusingLinks(sessions.first().second)) {
+            recordScenario(scenario, file, link.refusals);
+            sessions.append({link.name, recordingLines(file)});
+        }
+        for (const auto& [link, lines] : sessions) {
+            for (const ChangedRecording& changed : changedRecordings(lines)) {
+                const GPSDialogueResult replayed =
+                    replayDialogue(writeRecording(directory, QStringLiteral("changed.recording"), changed.lines));
+                const QString found =
+                    QStringLiteral("%1, link that %2, %3 on line %4: %5")
+                        .arg(goldenName(scenario), QLatin1StringView(link), QLatin1StringView(changed.change))
+                        .arg(changed.line)
+                        .arg(replayed.passed() ? QStringLiteral("passed") : replayed.failure());
+                QVERIFY2(replayed.divergence, qPrintable(found));
+                QVERIFY2(replayed.divergence->line == changed.line, qPrintable(found));
+                QVERIFY2(replayed.divergence->recorded.startsWith(changed.recorded), qPrintable(found));
+                QVERIFY2(replayed.divergence->driver.contains(changed.driver), qPrintable(found));
+                ++changes[QLatin1StringView(changed.change)];
+            }
         }
     }
-    QVERIFY(changes.value(QStringLiteral("changed TX byte")) > 0);
-    QVERIFY(changes.value(QStringLiteral("changed baud rate")) > 0);
-    QVERIFY(changes.value(QStringLiteral("dropped TX record")) > 0);
+    for (const char* change : {"changed TX byte", "changed baud rate", "dropped TX record", "changed refused TX byte",
+                               "changed refused baud rate"}) {
+        QVERIFY2(changes.value(QLatin1StringView(change)) > 0, change);
+    }
 }
 
 void GPSRecordingDialogueTest::_receivedBytesArriveAtRecordedTimes()
@@ -373,14 +504,18 @@ void GPSRecordingDialogueTest::_writesAreComparedAsOneStream()
     const QString file = directory.createFile(
         QStringLiteral("session.recording"),
         QByteArray(HEADER_LINE) + QByteArray(SETTINGS_LINE).replace("fixed-baud=0", "fixed-baud=115200") +
-            "0 BAUD 115200\n0 TX aabb\n0 TX cc\n10 RX 01\n20 TX ddee\n");
+            "0 BAUD-REFUSED 57600\n0 BAUD 115200\n0 TX aabb\n0 TX cc\n10 RX 01\n20 TX ddee\n");
     GPSTestClock clock(GPSTestClock::START_US);
     GPSDialogueTransport link(file, clock);
     QCOMPARE(link.open().status, GPSOpenStatus::Opened);
     QCOMPARE(link.fixedBaudRate(), 115200U);
 
-    // The recorded link ran at one rate: it refused any other, which a recording does not hold.
+    // The recorded link ran at one rate: it refused any other, also where the recording does not say so, as one made
+    // before refusals were recorded.
     QVERIFY(!link.setBaudRate(9600));
+    QCOMPARE(link.records(), 0);
+    QVERIFY(!link.setBaudRate(57600));
+    QCOMPARE(link.records(), 1);
     QVERIFY(link.setBaudRate(115200));
     // The recorded session wrote before it read more, so the receiver's next bytes wait for the driver.
     QCOMPARE(Read(link, 100ms).status, GPSReadStatus::TimedOut);
@@ -394,8 +529,54 @@ void GPSRecordingDialogueTest::_writesAreComparedAsOneStream()
 
     QVERIFY(link.finished());
     QVERIFY(!link.divergence());
-    QCOMPARE(link.records(), 5);
+    QCOMPARE(link.records(), 6);
     QCOMPARE(link.sentBytes(), 5);
+    QCOMPARE(link.baudRateChanges(), 1);
+}
+
+void GPSRecordingDialogueTest::_refusalsGetTheRecordedAnswer()
+{
+    const QByteArray records =
+        "1000 BAUD-REFUSED 921600\n"
+        "2000 BAUD 460800\n"
+        "3000 TX-REFUSED unsupported aabb\n"
+        "503000 TX-REFUSED timed-out aabb\n"
+        "504000 TX aabb\n"
+        "505000 RX 01\n";
+    TestFixtures::TempDirFixture directory;
+    const QString file =
+        directory.createFile(QStringLiteral("session.recording"), QByteArray(HEADER_LINE) + SETTINGS_LINE + records);
+    constexpr uint64_t START_US = GPSTestClock::START_US;
+    GPSTestClock clock(START_US);
+    GPSDialogueTransport link(file, clock);
+    QCOMPARE(link.open().status, GPSOpenStatus::Opened);
+
+    // The recorded session asked for the rate before it read more.
+    QCOMPARE(Read(link, 0ms).status, GPSReadStatus::TimedOut);
+    // The link refuses the rate and works on, as the adapter did that could not run at it.
+    QVERIFY(!link.setBaudRate(921600));
+    QVERIFY(!link.fatalError());
+    QVERIFY(!link.isCancelled());
+    QCOMPARE(clock.nowUs(), START_US + 1000);
+    QVERIFY(link.setBaudRate(460800));
+    // Each refused write gets the answer its link gave, when it gave it: the second took that link's timeout.
+    GPSWriteResult refused = link.write(QByteArray::fromHex("aabb"), QDeadlineTimer(TestTimeout::shortDuration()));
+    QCOMPARE(refused.status, GPSWriteStatus::Unsupported);
+    QCOMPARE(refused.acceptedBytes, 0);
+    QCOMPARE(clock.nowUs(), START_US + 3000);
+    refused = link.write(QByteArray::fromHex("aabb"), QDeadlineTimer(TestTimeout::shortDuration()));
+    QCOMPARE(refused.status, GPSWriteStatus::TimedOut);
+    QCOMPARE(refused.acceptedBytes, 0);
+    QCOMPARE(clock.nowUs(), START_US + 503000);
+    QCOMPARE(Read(link, 0ms).status, GPSReadStatus::TimedOut);
+    QCOMPARE(writeHex(link, "aabb"), GPSWriteStatus::Completed);
+    QCOMPARE(Read(link, 10ms).bytes, "01");
+
+    QVERIFY(link.finished());
+    QVERIFY(!link.divergence());
+    QCOMPARE(link.records(), 6);
+    // What the link refused was neither sent nor a change of rate.
+    QCOMPARE(link.sentBytes(), 2);
     QCOMPARE(link.baudRateChanges(), 1);
 }
 
@@ -438,6 +619,42 @@ void GPSRecordingDialogueTest::_departureNamesTheRecord_data()
     QTest::newRow("no-rate-set") << QByteArray("0 BAUD 9600\n") << QStringList{"read 31000", "read 1"} << 3
                                  << "BAUD 9600 at 0.000000 s"
                                  << "has not set that rate at 31.000000 s";
+    QTest::newRow("another-rate-than-refused")
+        << QByteArray("0 BAUD-REFUSED 9600\n") << QStringList{"baud 115200"} << 3 << "BAUD-REFUSED 9600 at 0.000000 s"
+        << "set the link to 115200 baud at 0.000000 s";
+    QTest::newRow("a-refused-rate-for-a-write")
+        << QByteArray("0 TX aa\n0 BAUD-REFUSED 9600\n") << QStringList{"write aa", "write bb"} << 4
+        << "BAUD-REFUSED 9600 at 0.000000 s"
+        << "wrote 1 bytes bb at 0.000000 s";
+    QTest::newRow("refused-rate-not-set") << QByteArray("0 BAUD-REFUSED 9600\n") << QStringList{"read 31000", "read 1"}
+                                          << 3 << "BAUD-REFUSED 9600 at 0.000000 s"
+                                          << "has not set that rate at 31.000000 s";
+    QTest::newRow("another-byte-than-refused")
+        << QByteArray("1000 TX-REFUSED unsupported aabbcc\n") << QStringList{"write aab0cc"} << 3
+        << "TX-REFUSED unsupported 3 bytes aabbcc at 0.001000 s"
+        << "wrote 3 bytes aab0cc there, which differ from byte 2 of the record at 0.000000 s";
+    // The link refused one write. What it would have done with another one, the recording does not say.
+    QTest::newRow("more-than-refused") << QByteArray("0 TX-REFUSED error aabb\n1000 RX 01\n")
+                                       << QStringList{"write aabbcc"} << 3
+                                       << "TX-REFUSED error 2 bytes aabb at 0.000000 s"
+                                       << "wrote 3 bytes aabbcc in one write, not the bytes of the record alone at "
+                                          "0.000000 s";
+    QTest::newRow("part-of-refused") << QByteArray("0 TX-REFUSED timed-out aabb\n") << QStringList{"write aa"} << 3
+                                     << "TX-REFUSED timed-out 2 bytes aabb at 0.000000 s"
+                                     << "wrote 1 bytes aa in one write, not the bytes of the record alone at "
+                                        "0.000000 s";
+    QTest::newRow("refused-with-the-write-before")
+        << QByteArray("0 TX aa\n0 TX-REFUSED unsupported bb\n") << QStringList{"write aabb"} << 4
+        << "TX-REFUSED unsupported 1 bytes bb at 0.000000 s"
+        << "wrote 2 bytes aabb in one write, not the bytes of the record alone at 0.000000 s";
+    QTest::newRow("a-rate-for-a-refused-write")
+        << QByteArray("0 TX-REFUSED unsupported aa\n") << QStringList{"baud 9600"} << 3
+        << "TX-REFUSED unsupported 1 bytes aa at 0.000000 s"
+        << "set the link to 9600 baud at 0.000000 s";
+    QTest::newRow("refused-write-not-written")
+        << QByteArray("1000000 TX-REFUSED unsupported aa\n") << QStringList{"read 20000", "read 20000", "read 20000"}
+        << 3 << "TX-REFUSED unsupported 1 bytes aa at 1.000000 s"
+        << "wrote nothing at 40.000000 s";
     QTest::newRow("session-ended") << QByteArray("0 TX aa\n1000 RX 01\n") << QStringList{"write aa", "end gave up"} << 4
                                    << "RX 1 bytes 01 at 0.001000 s"
                                    << "ended its session (gave up) at 0.000000 s";
@@ -498,6 +715,8 @@ void GPSRecordingDialogueTest::_unusableRecordingIsAnError_data()
     QTest::newRow("settings-of-no-session") << header + "0 SETTINGS type=ublox\n0 BAUD 115200\n"
                                             << "line 2: not the settings of a session";
     QTest::newRow("damaged-first-record") << header + SETTINGS_LINE + "0 BAUD fast\n" << "line 3: not a baud rate";
+    QTest::newRow("refusal-without-answer") << header + SETTINGS_LINE + "0 TX-REFUSED b562\n"
+                                            << "line 3: not a time, a kind, the answer of the link and a value";
     // Found once the driver has reproduced the record before it.
     QTest::newRow("damaged-later-record") << header + PASSIVE_SESSION + "10 RX b56\n"
                                           << "line 4: not whole bytes in lower-case hexadecimal";

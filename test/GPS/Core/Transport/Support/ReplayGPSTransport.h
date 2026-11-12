@@ -51,9 +51,10 @@ public:
     [[nodiscard]] bool recording() const { return _recording; }
 
     /// The bytes the recorded session sent, in the records read so far: all of them once the capture is finished.
+    /// Without the writes its link refused.
     [[nodiscard]] qint64 sentBytes() const { return _sentBytes; }
 
-    /// The baud rate changes of the recorded session, in the records read so far.
+    /// The baud rate changes of the recorded session, in the records read so far, without the rates its link refused.
     [[nodiscard]] int baudRateChanges() const { return _baudRateChanges; }
 
 protected:

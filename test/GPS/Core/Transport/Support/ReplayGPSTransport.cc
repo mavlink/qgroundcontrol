@@ -123,6 +123,9 @@ void ReplayGPSTransport::_load()
                 case GPSRecordingRecord::Kind::BaudRate:
                     ++_baudRateChanges;
                     break;
+                case GPSRecordingRecord::Kind::RefusedWrite:
+                case GPSRecordingRecord::Kind::RefusedBaudRate:
+                    break;
             }
         }
         if (_file.error() != QFileDevice::NoError) {

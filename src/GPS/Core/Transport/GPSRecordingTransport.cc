@@ -82,6 +82,23 @@ QByteArray GPSRecordingTransport::settingsRecord(const Session& session, unsigne
     return record;
 }
 
+const char* GPSRecordingTransport::refusalName(GPSWriteStatus answer)
+{
+    switch (answer) {
+        case GPSWriteStatus::Completed:
+            return "completed";
+        case GPSWriteStatus::TimedOut:
+            return "timed-out";
+        case GPSWriteStatus::Error:
+            return "error";
+        case GPSWriteStatus::Unsupported:
+            return "unsupported";
+        case GPSWriteStatus::Cancelled:
+            break;
+    }
+    return nullptr;
+}
+
 GPSOpenResult GPSRecordingTransport::open()
 {
     if (!_transport) {
@@ -126,12 +143,15 @@ std::chrono::milliseconds GPSRecordingTransport::configurationWriteTimeout() con
 
 bool GPSRecordingTransport::setBaudRate(unsigned baudRate)
 {
-    if (!_transport || !_transport->setBaudRate(baudRate)) {
+    if (!_transport) {
         return false;
     }
-    _record(BAUD, QByteArray::number(baudRate));
+    const bool changed = _transport->setBaudRate(baudRate);
+    if (changed || !isCancelled()) {
+        _record(changed ? BAUD : BAUD_REFUSED, QByteArray::number(baudRate));
+    }
     _flushIfDue();
-    return true;
+    return changed;
 }
 
 GPSWriteResult GPSRecordingTransport::writeData(QByteArrayView bytes, QDeadlineTimer deadline)
@@ -141,8 +161,13 @@ GPSWriteResult GPSRecordingTransport::writeData(QByteArrayView bytes, QDeadlineT
     }
     GPSWriteResult result = _transport->write(bytes, deadline);
     const QByteArrayView accepted = bytes.first(std::clamp<qsizetype>(result.acceptedBytes, 0, bytes.size()));
-    if (recording() && !accepted.isEmpty()) {
+    if (!recording()) {
+        return result;
+    }
+    if (!accepted.isEmpty()) {
         _record(SENT, accepted.toByteArray().toHex());
+    } else if (const char* const answer = refusalName(result.status)) {
+        _record(SENT_REFUSED, QByteArray(answer) + ' ' + bytes.toByteArray().toHex());
     }
     _flushIfDue();
     return result;

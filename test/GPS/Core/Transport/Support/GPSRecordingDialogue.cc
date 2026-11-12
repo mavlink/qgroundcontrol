@@ -6,6 +6,7 @@
 
 #include "GPSDriver.h"
 #include "GPSReceiverWorker.h"
+#include "GPSRecordingTransport.h"
 #include "Protocols/Support/GPSTestClock.h"
 
 namespace GPSTest {
@@ -102,7 +103,9 @@ GPSReadResult GPSDialogueTransport::read(std::span<uint8_t> buffer, std::chrono:
     const uint64_t until = now + microsecondsOf(timeout);
     if (_record->kind != GPSRecordingRecord::Kind::Received) {
         if (now > (std::max) (_dueUs(), _progressUs) + microsecondsOf(MISSING_WRITE_LIMIT)) {
-            _diverge(_record->kind == GPSRecordingRecord::Kind::BaudRate ? QStringLiteral("has not set that rate")
+            const bool rate = _record->kind == GPSRecordingRecord::Kind::BaudRate ||
+                              _record->kind == GPSRecordingRecord::Kind::RefusedBaudRate;
+            _diverge(rate          ? QStringLiteral("has not set that rate")
                      : _offset > 0 ? QStringLiteral("wrote only its first %1 bytes").arg(_offset)
                                    : QStringLiteral("wrote nothing"));
             return {GPSReadStatus::Cancelled};
@@ -127,21 +130,25 @@ bool GPSDialogueTransport::setBaudRate(unsigned baudRate)
     if (isCancelled() || fatalError()) {
         return false;
     }
-    if (fixedBaudRate() != 0 && baudRate != fixedBaudRate()) {
+    const bool refused =
+        _record && _record->kind == GPSRecordingRecord::Kind::RefusedBaudRate && _record->baudRate == baudRate;
+    // The recorded link refused any rate but its own, which a recording made before refusals were recorded does not
+    // say.
+    if (!refused && fixedBaudRate() != 0 && baudRate != fixedBaudRate()) {
         return false;
     }
     if (!_record) {
         cancel();
         return false;
     }
-    if (_record->kind != GPSRecordingRecord::Kind::BaudRate || _record->baudRate != baudRate) {
+    if (!refused && (_record->kind != GPSRecordingRecord::Kind::BaudRate || _record->baudRate != baudRate)) {
         _diverge(QStringLiteral("set the link to %1 baud").arg(baudRate));
         return false;
     }
-    ++_baudRateChanges;
+    _baudRateChanges += refused ? 0 : 1;
     _clock.advanceTo(_dueUs());
     _reproduced();
-    return true;
+    return !refused;
 }
 
 GPSWriteResult GPSDialogueTransport::writeData(QByteArrayView bytes, QDeadlineTimer)
@@ -156,7 +163,8 @@ GPSWriteResult GPSDialogueTransport::writeData(QByteArrayView bytes, QDeadlineTi
             break;
         }
         const QByteArrayView rest = bytes.sliced(written);
-        if (_record->kind != GPSRecordingRecord::Kind::Sent) {
+        const bool refused = _record->kind == GPSRecordingRecord::Kind::RefusedWrite;
+        if (_record->kind != GPSRecordingRecord::Kind::Sent && !refused) {
             _diverge(QStringLiteral("wrote %1").arg(bytesText(rest)));
             break;
         }
@@ -168,6 +176,18 @@ GPSWriteResult GPSDialogueTransport::writeData(QByteArrayView bytes, QDeadlineTi
                          .arg(bytesText(rest.first(count)))
                          .arg(_offset + same + 1));
             break;
+        }
+        if (refused) {
+            // The link refused one write whole, so only that write gets its answer.
+            if (written > 0 || rest.size() != recorded.size()) {
+                _diverge(
+                    QStringLiteral("wrote %1 in one write, not the bytes of the record alone").arg(bytesText(bytes)));
+                break;
+            }
+            const GPSWriteStatus answer = _record->answer;
+            _clock.advanceTo(_dueUs());
+            _reproduced();
+            return {answer};
         }
         written += count;
         _offset += count;
@@ -237,6 +257,14 @@ QString GPSDialogueTransport::_describeRecord() const
             break;
         case GPSRecordingRecord::Kind::BaudRate:
             record = QStringLiteral("BAUD %1").arg(_record->baudRate);
+            break;
+        case GPSRecordingRecord::Kind::RefusedWrite:
+            record = QStringLiteral("TX-REFUSED %1 %2")
+                         .arg(QLatin1StringView(GPSRecordingTransport::refusalName(_record->answer)),
+                              bytesText(_record->bytes));
+            break;
+        case GPSRecordingRecord::Kind::RefusedBaudRate:
+            record = QStringLiteral("BAUD-REFUSED %1").arg(_record->baudRate);
             break;
     }
     return QStringLiteral("%1 at %2").arg(record, secondsText(microsecondsOf(_record->time)));

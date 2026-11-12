@@ -18,15 +18,20 @@
 
 class QDateTime;
 
-/// Records a receiver session: every call passes through to the link it wraps, and what crossed the link goes to a
-/// text file, which the test tooling reads (GPSRecordingReader) and replays (ReplayGPSTransport), also as a dialogue
-/// that checks what a driver sends (GPSDialogueTransport).
+/// Records a receiver session: every call passes through to the link it wraps, and what crossed the link, or was
+/// refused by it, goes to a text file, which the test tooling reads (GPSRecordingReader) and replays
+/// (ReplayGPSTransport), also as a dialogue that checks what a driver sends (GPSDialogueTransport).
 /// The file starts with FILE_HEADER on a line of its own. Every other line is one record, in the order the session
 /// made the calls: the microseconds from the start of the recording to the return of the call, on the session's
 /// clock, then one of
 /// - RX and the bytes read from the receiver, in hexadecimal;
 /// - TX and the bytes the link accepted for writing to the receiver, in hexadecimal;
-/// - BAUD and the baud rate the link changed to.
+/// - BAUD and the baud rate the link changed to;
+/// - TX-REFUSED, how the link answered a write of which it accepted nothing (refusalName()), and the bytes of that
+///   write, in hexadecimal;
+/// - BAUD-REFUSED and a baud rate the link did not change to.
+/// A session goes on after either refusal, which is why they are recorded. A call that the session's own
+/// cancellation ended is not, nor is the rest of a write of which the link accepted the start: neither session goes on.
 /// The recording of a session that was described to the recorder holds one more record, before those: SETTINGS and
 /// what the session was asked to do (settingsRecord()), without which its commands cannot be told from another
 /// session's.
@@ -45,6 +50,8 @@ public:
     static constexpr char RECEIVED[] = "RX";
     static constexpr char SENT[] = "TX";
     static constexpr char BAUD[] = "BAUD";
+    static constexpr char SENT_REFUSED[] = "TX-REFUSED";
+    static constexpr char BAUD_REFUSED[] = "BAUD-REFUSED";
     static constexpr char SETTINGS[] = "SETTINGS";
 
     /// What a session was asked to do, which decides the commands it sends.
@@ -74,6 +81,10 @@ public:
     /// - fixed: latitude and longitude (degrees), altitude and accuracy (metres);
     /// - averaging: duration (seconds).
     [[nodiscard]] static QByteArray settingsRecord(const Session& session, unsigned fixedBaudRate);
+
+    /// How a TX-REFUSED record names @a answer, the status of a write of which the link accepted nothing: completed,
+    /// timed-out, error or unsupported. Null for a cancelled write, which the session's end refused, not the link.
+    [[nodiscard]] static const char* refusalName(GPSWriteStatus answer);
 
     /// The recording in @a directory of a session of @a type that starts at @a startedAt:
     /// <yyyyMMdd>T<HHmmss.zzz>Z-<type>.log, in UTC and with the type in lower case. The milliseconds keep sessions

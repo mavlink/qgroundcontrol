@@ -18,14 +18,16 @@ QGroundControl records a connection while **Record receiver data** is on
 ([user guide](../../../../../docs/en/qgc-user-guide/settings_view/gnss_receiver.md)), and the
 runner records its own with `--record <directory>`. Both write through `GPSRecordingTransport`
 (`src/GPS/Core/Transport`), whose header describes the file: a header line, then one line for each
-call that crossed the link, in the order the session made them.
+call that crossed the link or that the link refused, in the order the session made them.
 
 | Record | Holds | Not recorded |
 | --- | --- | --- |
 | `SETTINGS` | What the session was asked to do, once, before the other records | |
 | `RX` | The bytes one read returned | Reads that timed out or failed |
-| `TX` | The bytes the link accepted from one write | What the link refused of a write |
-| `BAUD` | The baud rate the link changed to | A rate the link refused |
+| `TX` | The bytes the link accepted from one write | The rest of a write that the link accepted the start of |
+| `TX-REFUSED` | How the link answered one write of which it accepted nothing, then the bytes of that write | A write that was cancelled |
+| `BAUD` | The baud rate the link changed to | |
+| `BAUD-REFUSED` | A baud rate the link refused | A rate asked for after the session was stopped |
 
 Each record starts with the microseconds from the start of the recording, when the link first
 opened, to the return of its call, on the clock the session runs on. So a recording holds both
@@ -33,6 +35,16 @@ directions and the baud rate changes with their times, not only what the receive
 record is one read, not one message: frames are split and joined as the session read them. One
 recording holds one session: QGroundControl and the runner on a physical transport start a file
 for each.
+
+A session goes on after the two refusals, so its recording holds them: detection tries the next
+rate when a serial adapter cannot run at one, and a link that carries no writes, as UDP, refuses
+a command without ending the session. The answer of a `TX-REFUSED` is `unsupported`, `timed-out`,
+`error` or `completed`:
+
+```text
+1203 BAUD-REFUSED 921600
+1650 TX-REFUSED unsupported b5620a0400000e34
+```
 
 The `SETTINGS` record is what decides the commands a session sends, as `key=value` pairs:
 
@@ -55,8 +67,8 @@ until the line is added by hand from what the sender says the settings were. The
 written so that they read back exactly: a fixed position that differs in its last digit gives
 other command bytes.
 
-A recording does not hold the UTC start time, which is in the file name, the end of the
-connection, or what the link refused.
+A recording does not hold the UTC start time, which is in the file name, or the end of the
+connection.
 
 `GPSRecordingReader` (`test/GPS/Core/Transport/Support`) is the only parser of the format. The
 replay transport, the runner, the receiver simulator and the tests read recordings through it. It
@@ -119,11 +131,14 @@ plays the recording (`GPSDialogueTransport` in `test/GPS/Core/Transport/Support`
 - The receiver's bytes arrive one recorded read at a time, at their recorded times. A recording
   holds no read that returned nothing, so a read that ends before the next bytes arrived times
   out after the timeout the driver gave it.
-- While the next record is a `TX` or a `BAUD`, the recorded session acted before it read more:
+- While the next record is anything but an `RX`, the recorded session acted before it read more:
   reads time out until the driver has acted.
 - What the driver writes must be the bytes of the `TX` records that follow, in order. Only the
   bytes count, not how the write calls divide them.
 - A baud rate the driver sets must be that of the next `BAUD` record.
+- A write of the bytes of the next `TX-REFUSED` record gets the answer the recorded link gave, and
+  the rate of the next `BAUD-REFUSED` record is refused, so that the driver goes on as the
+  recorded session did. The link refused one write, so the driver has to make the same one.
 
 The first thing the driver does that the recording does not hold ends the replay. So does a
 command the driver has not sent 30 seconds after the recording has it, and a session the driver
@@ -141,10 +156,10 @@ for.
 
 What a replay cannot tell from a driver that changed:
 
-- **What the link refused.** A baud rate the link refused and a write of which it accepted nothing
-  are not recorded. The replay has no record to answer them from and diverges where the session
-  met one: at a rate a serial adapter does not support, or at the first command of a configured
-  receiver on UDP, which carries no writes.
+- **What the link refused, in an older recording.** A recording made before the `TX-REFUSED` and
+  `BAUD-REFUSED` records existed holds neither. The replay has no record to answer from and
+  diverges where the session met a refusal: at a rate a serial adapter does not support, or at
+  the first command of a configured receiver on UDP, which carries no writes.
 - **A reply at a deadline.** Between two records the replay's clock runs on the driver's own
   timeouts, which a real link overruns a little; data recorded up to 2 ms after the end of a read
   counts as returned by that read. A reply that came closer than that to a deadline of the driver
@@ -165,9 +180,11 @@ divergence. No recording of a receiver has been added yet. To add one:
 
 The same suite makes a recording of every golden scenario at run time, from the driver's session
 with the scenario's receiver model, and requires each to replay, and to fail at the changed line
-when one `TX` byte or one `BAUD` is changed or one answered `TX` record is removed. Those
-recordings are not fixtures: they pass by construction, and the golden transcripts pin the same
-bytes.
+when one `TX` byte or one `BAUD` is changed or one answered `TX` record is removed. It records
+each scenario again on a link that refuses the first baud rate the session sets, and on one that
+refuses every write, and requires those sessions to replay too, and to fail at the changed line
+when the rate of a `BAUD-REFUSED` or one byte of a `TX-REFUSED` is changed. Those recordings are
+not fixtures: they pass by construction, and the golden transcripts pin the same bytes.
 
 ### When the driver's commands change on purpose
 
