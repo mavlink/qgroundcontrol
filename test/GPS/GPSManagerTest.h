@@ -14,6 +14,8 @@ private slots:
     void _positionReceiverGivesGcsPosition_data();
     void _positionReceiverGivesGcsPosition();
     void _discoveryLeavesPositionReceiverDevice();
+    void _positionReceiverOverBluetooth();
+    void _bluetoothDeviceIsThePositionReceivers();
     void _vehicleGpsTracking();
     void _vehicleGpsEllipsoidHeight_data();
     void _vehicleGpsEllipsoidHeight();

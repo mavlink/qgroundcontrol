@@ -4,6 +4,7 @@
 #include <QtCore/QString>
 #include <QtQmlIntegration/QtQmlIntegration>
 
+struct GPSBluetoothPlatform;
 class GPSCorrectionManager;
 class GPSReceiver;
 class NTRIPConnectedVehicles;
@@ -43,8 +44,9 @@ class GPSManager : public QObject
 public:
     /// @a scheduler runs the timers of every GPS service; the manager creates one when none is given. @a serialPorts
     /// lists and claims the serial devices of both receivers; they are the application's when none is given.
+    /// @a bluetooth is what the Bluetooth connections of both receivers are built on: the build's when none is given.
     GPSManager(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr,
-               SerialPortManager* serialPorts = nullptr);
+               SerialPortManager* serialPorts = nullptr, const GPSBluetoothPlatform* bluetooth = nullptr);
     ~GPSManager();
 
     static GPSManager* instance();
@@ -78,6 +80,9 @@ private:
     /// The position receiver is in use on the serial @a device, which receiver()'s USB discovery then leaves alone:
     /// discovery configures the receiver it finds as a base station.
     bool _positionReceiverUses(const QString& device) const;
+    /// Why receiver() does not connect the Bluetooth device at @a address, as shown to the user: the position
+    /// receiver is in use on it, and a device takes one connection. Empty for any other device.
+    QString _positionReceiverBluetoothRefusal(const QString& address) const;
 
     RuntimeScheduler* const _scheduler;
     GPSCorrectionManager* const _corrections;

@@ -344,8 +344,14 @@ bool GPSReceiverConnectionPolicy::_connectConfigured(bool allowPersistentChanges
         return _receiver.connectUdp(static_cast<quint16>(_configuration.udpPort), check.request);
     }
     if (check.connection == RTKSettings::Bluetooth) {
-        return _receiver.connectBluetooth(_configuration.bluetoothAddress.trimmed(),
-                                          _configuration.bluetoothName.trimmed(), type, check.request);
+        const QString address = _configuration.bluetoothAddress.trimmed();
+        // A device that is another receiver's is refused. Whose it is can change without this configuration, so
+        // automatic connection retries it.
+        if (const QString refusal = _bluetooth.refusal(address); !refusal.isEmpty()) {
+            _refuse({.error = refusal, .serialDevice = {}});
+            return false;
+        }
+        return _receiver.connectBluetooth(address, _configuration.bluetoothName.trimmed(), type, check.request);
     }
     // What follows depends on the devices present, so automatic connection retries it.
     const QString device = _configuration.serialDevice.trimmed();

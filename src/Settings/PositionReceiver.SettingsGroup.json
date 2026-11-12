@@ -14,10 +14,10 @@
         {
             "name": "connectionType",
             "shortDesc": "Receiver connection",
-            "longDesc": "Serial connects a receiver on a local port. TCP connects a receiver's network port or a serial-to-TCP bridge. UDP listens for the receiver's output.",
+            "longDesc": "Serial connects a receiver on a local port. TCP connects a receiver's network port or a serial-to-TCP bridge. UDP listens for the receiver's output. Bluetooth connects a receiver, or a Bluetooth serial adapter in front of one, over the serial port profile.",
             "type": "uint8",
-            "enumStrings": "Serial,TCP,UDP",
-            "enumValues": "0,1,2",
+            "enumStrings": "Serial,TCP,UDP,Bluetooth",
+            "enumValues": "0,1,2,3",
             "default": 0,
             "label": "Receiver connection"
         },
@@ -68,6 +68,22 @@
             "max": 4000000,
             "decimalPlaces": 0,
             "label": "Baud rate"
+        },
+        {
+            "name": "bluetoothDeviceAddress",
+            "shortDesc": "Bluetooth device",
+            "longDesc": "Address of the position receiver's Bluetooth device, such as 00:11:22:AA:BB:CC. The position receiver's settings select it from the devices a scan finds. While the position receiver is in use, the GNSS receiver does not connect to this device.",
+            "type": "string",
+            "default": "",
+            "label": "Bluetooth device"
+        },
+        {
+            "name": "bluetoothDeviceName",
+            "shortDesc": "Bluetooth device name",
+            "longDesc": "What the selected Bluetooth device calls itself, which the position receiver's settings show with its address.",
+            "type": "string",
+            "default": "",
+            "label": "Bluetooth device name"
         }
     ]
 }

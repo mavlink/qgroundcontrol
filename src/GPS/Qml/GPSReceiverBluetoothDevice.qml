@@ -16,6 +16,8 @@ ColumnLayout {
     /// devicesModel and scans with its startScan() and stopScan(). Null where receivers do not connect over Bluetooth.
     property var discovery: null
     property bool editable: true
+    /// What the picker says of the selected device's connection.
+    property string connectionNote: qsTr("The receiver connects over the Bluetooth serial port profile. A Bluetooth serial adapter must already run the receiver link at 115200 baud; QGroundControl cannot change an adapter's rate.")
 
     readonly property string _address: String(addressFact.rawValue)
     readonly property string _name: String(nameFact.rawValue)
@@ -100,7 +102,7 @@ ColumnLayout {
                   ? qsTr("Scanning for Bluetooth devices...")
                   : root._address === ""
                     ? qsTr("No Bluetooth device is selected. Pair the receiver with this device, then scan and select it.")
-                    : qsTr("The receiver connects over the Bluetooth serial port profile. A Bluetooth serial adapter must already run the receiver link at 115200 baud; QGroundControl cannot change an adapter's rate.")
+                    : root.connectionNote
         }
     }
 

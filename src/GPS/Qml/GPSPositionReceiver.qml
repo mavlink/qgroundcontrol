@@ -24,6 +24,7 @@ QGCGroupBox {
     readonly property bool _udp: receiver.effectiveConnectionType === RTKSettings.Udp
     readonly property bool _tcp: receiver.effectiveConnectionType === RTKSettings.Tcp
     readonly property bool _serial: receiver.effectiveConnectionType === RTKSettings.Serial
+    readonly property bool _bluetooth: receiver.effectiveConnectionType === RTKSettings.Bluetooth
 
     heading: qsTr("Position Receiver")
 
@@ -79,6 +80,19 @@ QGCGroupBox {
         serialPorts: root.serialPorts
         serialBaudRates: root.serialBaudRates
         editable: root._editable
+    }
+
+    GPSReceiverBluetoothDevice {
+        objectName: "positionReceiverBluetoothDevice"
+        Layout.minimumWidth: 0
+        visible: root._inUse && root._bluetooth
+        addressFact: root.settings.bluetoothDeviceAddress
+        nameFact: root.settings.bluetoothDeviceName
+        // Asked for only once a Bluetooth connection is selected, as the receiver creates it then.
+        discovery: root._inUse && root._bluetooth ? root.receiver.bluetoothDiscovery : null
+        editable: root._editable
+        // Nothing is sent to this receiver, so no rate is asked of an adapter but the receiver's own.
+        connectionNote: qsTr("The receiver connects over the Bluetooth serial port profile. A Bluetooth serial adapter must already run the receiver link at the receiver's baud rate.")
     }
 
     QGCNoteLabel {

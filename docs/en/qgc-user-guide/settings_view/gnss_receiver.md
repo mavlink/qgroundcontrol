@@ -216,7 +216,8 @@ With the base on a tripod, the ground station position is then the tripod's, and
 **Use a position receiver** connects a second receiver that only provides the ground station position, such as the operator's own receiver beside the ground station.
 
 - QGC never configures the position receiver and sends it nothing.
-  It reads the output a [passive receiver](#passive) has: standard NMEA, u-blox UBX or Septentrio SBF, over **Serial** (with the receiver's baud rate, or **Auto**), **TCP** or **UDP**.
+  It reads the output a [passive receiver](#passive) has: standard NMEA, u-blox UBX or Septentrio SBF, over **Serial** (with the receiver's baud rate, or **Auto**), **TCP**, **UDP** or **Bluetooth**.
+  _Bluetooth_ connects a handheld receiver, or a Bluetooth serial adapter that runs at its receiver's baud rate, with the [device choice](#receiver) the GNSS receiver has, where the platform has Bluetooth serial connections.
   RTCM that it sends is not forwarded to vehicles.
 - While the setting is on, the position receiver is the only receiver that provides the ground station position, whether or not it is connected or has a fix.
   The GNSS receiver's position is never used then.
@@ -226,6 +227,7 @@ With the base on a tripod, the ground station position is then the tripod's, and
   **Disconnect** pauses that until you select **Connect** again, and turning the setting off disconnects it.
 - A configured base that looks for an RTK receiver on USB never connects to the serial device selected for the position receiver, so the position receiver can be an RTK receiver on USB as well.
   Select different serial devices, and different UDP ports, for the two receivers.
+- A Bluetooth device takes one connection. While the position receiver is in use on a Bluetooth device, that device is the position receiver's, connected or not: the GNSS receiver does not connect to it, says so in its status, and connects once the position receiver is turned off or set to another device.
 - Its status, below its settings and in the toolbar's GNSS drop-down, shows what the [receiver status](#status) shows for the GNSS receiver.
   **Record receiver data** records its connections to the `GPSPositionReceiver` folder.
 

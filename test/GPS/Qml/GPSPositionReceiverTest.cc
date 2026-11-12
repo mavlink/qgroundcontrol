@@ -15,6 +15,7 @@
 #include "QmlTesting/QmlFixtures.h"
 #include "RTKSettings.h"
 #include "Receiver/Support/GPSReceiverTestSupport.h"
+#include "Receiver/Support/ScriptedBluetooth.h"
 #include "Receiver/Support/ScriptedReceiverWorker.h"
 #include "SettingsManager.h"
 
@@ -24,12 +25,20 @@ namespace {
 
 /// The Position Receiver section over settings of its own and a scripted receiver that follows them, as the
 /// application's position receiver follows the application's. The settings start as a new installation has them.
+/// The receiver's Bluetooth is scripted too, and absent without @a bluetoothLinks, as in a build without them.
 struct Section
 {
-    Section()
+    explicit Section(bool bluetoothLinks = true)
+        : scripted(nullptr, dependencies(bluetoothLinks))
     {
         GPSSettingsBindings::bindPositionReceiver(&settings, &receiver);
         receiver.facts()->setLiveUpdates(true);
+    }
+
+    GPSReceiver::Dependencies dependencies(bool bluetoothLinks)
+    {
+        bluetooth.supported = bluetoothLinks;
+        return {.bluetooth = bluetooth.side()};
     }
 
     // Scripted workers never run, so the receiver's shutdown is what deletes those of its ended sessions.
@@ -69,6 +78,7 @@ struct Section
     }
 
     PositionReceiverSettings settings;
+    ScriptedBluetooth bluetooth;
     ScriptedGPSReceiver scripted;
     GPSReceiver& receiver = scripted.receiver;
     TestFixtures::QmlEngine engine;
@@ -165,6 +175,78 @@ void GPSPositionReceiverTest::_connectsAndDisconnectsFromSection()
     QVERIFY(!section.receiver.hasReceiver());
     QVERIFY(!host->isVisible());
     QTRY_VERIFY_WITH_TIMEOUT(!section.find("positionReceiverStatus"), TestTimeout::shortMs());
+}
+
+void GPSPositionReceiverTest::_bluetoothDeviceChoice()
+{
+    Section section;
+    section.settings.enabled()->setRawValue(true);
+    QVERIFY2(section.create(), qPrintable(section.engine.lastError()));
+    auto* const type = section.find<QObject>("positionReceiverConnectionType");
+    auto* const picker = section.find("positionReceiverBluetoothDevice");
+    auto* const connect = section.find("rtkConnectButton");
+    QVERIFY(type && picker && connect);
+    auto* const device = picker->findChild<QQuickItem*>(QStringLiteral("rtkBluetoothDevice"));
+    auto* const scan = picker->findChild<QQuickItem*>(QStringLiteral("rtkBluetoothScan"));
+    auto* const note = picker->findChild<QQuickItem*>(QStringLiteral("rtkBluetoothNote"));
+    QVERIFY(device && scan && note);
+    ScriptedBluetooth& bluetooth = section.bluetooth;
+
+    // Bluetooth is offered with the other connections, and the device choice and its discovery come with it.
+    QVERIFY(type->property("model").toStringList().contains(QStringLiteral("Bluetooth")));
+    QVERIFY(!picker->isVisible());
+    QVERIFY(!bluetooth.discovery);
+    section.settings.connectionType()->setRawValue(RTKSettings::Bluetooth);
+    QVERIFY(picker->isVisible() && device->isVisible() && scan->isVisible());
+    QVERIFY(!section.shows("positionReceiverTcpHost") && !section.shows("positionReceiverUdpPort") &&
+            !section.shows("positionReceiverSerialPort"));
+    QVERIFY(bluetooth.discovery);
+    QCOMPARE(bluetooth.discovery->scans, 0);
+    QVERIFY(!section.receiver.hasEndpoint());
+
+    // The device a scan finds and the user chooses is saved as the position receiver's.
+    QVERIFY(QMetaObject::invokeMethod(scan, "clicked"));
+    QCOMPARE(bluetooth.discovery->scans, 1);
+    bluetooth.discovery->find(QStringLiteral("Handheld"), QStringLiteral("00:11:22:33:44:05"));
+    QVERIFY(QMetaObject::invokeMethod(device, "activated", Q_ARG(int, 1)));
+    QCOMPARE(section.settings.bluetoothDeviceAddress()->rawValue().toString(), QStringLiteral("00:11:22:33:44:05"));
+    QCOMPARE(section.settings.bluetoothDeviceName()->rawValue().toString(), QStringLiteral("Handheld"));
+    QVERIFY(!bluetooth.discovery->scanning());
+    QVERIFY(section.receiver.hasEndpoint());
+    // An adapter in front of a receiver that is never configured runs at that receiver's rate, whatever it is.
+    QVERIFY2(note->property("text").toString().contains(QStringLiteral("at the receiver's baud rate")),
+             qPrintable(note->property("text").toString()));
+
+    // Connect opens that device, as a receiver that is sent nothing, and locks the choice.
+    QVERIFY(QMetaObject::invokeMethod(connect, "click"));
+    QCOMPARE(section.receiver.activeEndpoint(), QStringLiteral("Handheld (00:11:22:33:44:05)"));
+    QCOMPARE(section.scripted.workers.current()->type(), GPSType::Passive);
+    QVERIFY(!scan->isEnabled());
+
+    // A scan ends with the choice: when the position receiver is taken out of use, as when its page is left.
+    section.receiver.disconnectReceiver();
+    for (const bool leavePage : {false, true}) {
+        section.settings.enabled()->setRawValue(true);
+        section.item->setProperty("visible", true);
+        QVERIFY(QMetaObject::invokeMethod(scan, "clicked"));
+        QVERIFY(bluetooth.discovery->scanning());
+        if (leavePage) {
+            section.item->setProperty("visible", false);
+        } else {
+            section.settings.enabled()->setRawValue(false);
+        }
+        QVERIFY(!picker->isVisible());
+        QVERIFY2(!bluetooth.discovery->scanning(), leavePage ? "page left" : "out of use");
+    }
+
+    // Where receivers have no Bluetooth connections, none is offered.
+    Section without(false);
+    without.settings.enabled()->setRawValue(true);
+    QVERIFY2(without.create(), qPrintable(without.engine.lastError()));
+    auto* const offered = without.find<QObject>("positionReceiverConnectionType");
+    QVERIFY(offered);
+    QVERIFY(!offered->property("model").toStringList().contains(QStringLiteral("Bluetooth")));
+    QVERIFY(!without.shows("positionReceiverBluetoothDevice"));
 }
 
 void GPSPositionReceiverTest::_dropDownShowsStatusWhileInUse()

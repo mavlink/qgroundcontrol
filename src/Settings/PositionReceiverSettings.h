@@ -27,4 +27,6 @@ public:
     DEFINE_SETTINGFACT(udpPort)
     DEFINE_SETTINGFACT(serialDevice)
     DEFINE_SETTINGFACT(serialBaudRate)
+    DEFINE_SETTINGFACT(bluetoothDeviceAddress)
+    DEFINE_SETTINGFACT(bluetoothDeviceName)
 };

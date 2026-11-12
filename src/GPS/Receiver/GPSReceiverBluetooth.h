@@ -1,6 +1,8 @@
 #pragma once
 
 #include <chrono>
+#include <functional>
+#include <utility>
 
 #include <QtCore/QObject>
 #include <QtCore/QString>
@@ -35,6 +37,13 @@ public:
     /// @a address is a Bluetooth device address as the settings hold it, such as 00:11:22:AA:BB:CC.
     [[nodiscard]] static bool validAddress(const QString& address);
 
+    /// A device takes one connection, and @a reason tells why this receiver leaves the device at an address to
+    /// another one, as shown to the user; it returns an empty text for a device this receiver may connect.
+    void setRefusal(std::function<QString(const QString& address)> reason) { _refusal = std::move(reason); }
+
+    /// Why this receiver does not connect the device at @a address; empty when it may.
+    [[nodiscard]] QString refusal(const QString& address) const { return _refusal ? _refusal(address) : QString(); }
+
     /// Opens the device at @a address for a session: the transport of a pipe whose other end, a GPSBluetoothLink,
     /// lives on this object's thread and ends with the session. @a name is what the device calls itself. Empty
     /// where receivers do not connect over Bluetooth, and for an address that is not valid.
@@ -43,4 +52,5 @@ public:
 private:
     const GPSBluetoothPlatform _platform;
     QObject* _discovery = nullptr;
+    std::function<QString(const QString&)> _refusal;
 };

@@ -186,6 +186,8 @@ ReceiverConfig positionReceiverFromSettings(PositionReceiverSettings* settings, 
     configuration.udpPort = read(settings->udpPort()).toUInt();
     configuration.serialDevice = read(settings->serialDevice()).toString();
     configuration.serialBaudRate = read(settings->serialBaudRate()).toUInt();
+    configuration.bluetoothAddress = read(settings->bluetoothDeviceAddress()).toString();
+    configuration.bluetoothName = read(settings->bluetoothDeviceName()).toString();
     // In use, it is kept connected as a saved receiver is.
     configuration.autoConnect = read(settings->enabled()).toBool();
     return configuration;
@@ -225,6 +227,14 @@ void withoutConnection(Fact* connectionType, RTKSettings::ConnectionType connect
     }
     if (connectionType->rawValue().toInt() == connection) {
         connectionType->setRawValue(connectionType->rawDefaultValue());
+    }
+}
+
+/// Offers @a receiver's settings the connections it has: a Bluetooth one only where it connects over it.
+void offerConnections(Fact* connectionType, const GPSReceiver* receiver)
+{
+    if (!receiver->bluetoothSupported()) {
+        withoutConnection(connectionType, RTKSettings::Bluetooth);
     }
 }
 
@@ -334,9 +344,7 @@ void GPSSettingsBindings::bindReceiver(RTKSettings* settings, GPSReceiver* recei
     if (!settings || !receiver) {
         return;
     }
-    if (!receiver->bluetoothSupported()) {
-        withoutConnection(settings->connectionType(), RTKSettings::Bluetooth);
-    }
+    offerConnections(settings->connectionType(), receiver);
     bind(settings, receiverFromSettings, receiver, &GPSReceiver::setConfiguration);
 }
 
@@ -345,6 +353,7 @@ void GPSSettingsBindings::bindPositionReceiver(PositionReceiverSettings* setting
     if (!settings || !receiver) {
         return;
     }
+    offerConnections(settings->connectionType(), receiver);
     bind(settings, positionReceiverFromSettings, receiver, &GPSReceiver::setConfiguration);
     // Out of use it is not wanted connected either. The RTK receiver's automatic connection, turned off, leaves
     // the connection the user made.

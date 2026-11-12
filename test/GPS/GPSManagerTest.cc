@@ -1,6 +1,7 @@
 #include "GPSManagerTest.h"
 
 #include <chrono>
+#include <cmath>
 #include <memory>
 
 #include <QtCore/QDateTime>
@@ -28,10 +29,13 @@
 #include "NTRIPVehicleGgaSource.h"
 #include "PositionManager.h"
 #include "PositionReceiverSettings.h"
+#include "Protocols/Support/GPSProtocolTestData.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
+#include "Protocols/fixtures/GPSFixtureExpectations.h"
 #include "QmlTesting/QmlFixtures.h"
 #include "RTKSettings.h"
 #include "Receiver/Support/GPSReceiverTestSupport.h"
+#include "Receiver/Support/ScriptedBluetooth.h"
 #include "Receiver/Support/ScriptedReceiverWorker.h"
 #include "SettingsManager.h"
 #include "Support/GPSTestHelpers.h"
@@ -378,6 +382,134 @@ void GPSManagerTest::_discoveryLeavesPositionReceiverDevice()
     QCOMPARE(baseWorkers.count(), 2);
     QCOMPARE(manager.receiver()->activeEndpoint(), QStringLiteral("/test/position-first"));
 #endif
+}
+
+void GPSManagerTest::_positionReceiverOverBluetooth()
+{
+    using namespace std::chrono_literals;
+    TestFixtures::SettingsFixture saved;
+    SettingsManager* const settings = SettingsManager::instance();
+    PositionReceiverSettings* const position = settings->positionReceiverSettings();
+    saved.setFactValue(settings->ntripSettings()->ntripServerConnectEnabled(), false);
+    // The GNSS receiver has nothing to connect. The position receiver is a handheld receiver on Bluetooth.
+    saved.setFactValue(settings->rtkSettings()->autoConnect(), false);
+    saved.setFactValue(settings->rtkSettings()->gcsPositionSource(),
+                       static_cast<int>(PositionManager::SourceMode::Automatic));
+    saved.setFactValue(position->connectionType(), RTKSettings::Bluetooth);
+    saved.setFactValue(position->bluetoothDeviceAddress(), QStringLiteral("00:11:22:AA:BB:CC"));
+    saved.setFactValue(position->bluetoothDeviceName(), QStringLiteral("Handheld"));
+    saved.setFactValue(position->enabled(), true);
+    GPSTest::ScriptedBluetooth bluetooth;
+    const GPSBluetoothPlatform platform = bluetooth.platform();
+    ManualScheduler scheduler;
+    GPSManager manager(nullptr, &scheduler, nullptr, &platform);
+    manager.positionManager()->setPlatformSourceFactory([](QObject* parent) {
+        auto* const source = new GPSTest::PositionSource;
+        source->setParent(parent);
+        return source;
+    });
+    manager.init();
+    GPSReceiver* const receiver = manager.positionReceiver();
+    QVERIFY(receiver->bluetoothSupported());
+
+    // In use on a saved device, it connects by itself: a receiver session on its own thread, whose link the
+    // scripted Bluetooth end makes on this one.
+    QVERIFY(scheduler.advanceBy(1s));
+    QVERIFY(receiver->hasReceiver());
+    QCOMPARE(receiver->activeEndpoint(), QStringLiteral("Handheld (00:11:22:AA:BB:CC)"));
+    QTRY_VERIFY_WITH_TIMEOUT(bluetooth.worker() && bluetooth.asked().connects == 1, TestTimeout::mediumMs());
+    bluetooth.worker()->accept();
+    QTRY_COMPARE_WITH_TIMEOUT(receiver->state(), GPSReceiver::State::Connected, TestTimeout::mediumMs());
+
+    // The position a u-blox receiver's recorded output carries is the ground station's, and the receiver is sent
+    // nothing.
+    const QByteArray recording = GPSTest::dataFile(GPSTest::FIXTURE_DIR, QStringLiteral("navigation.ubx"));
+    QVERIFY(!recording.isEmpty());
+    bluetooth.worker()->receive(recording);
+    PositionManager* const positions = manager.positionManager();
+    QTRY_VERIFY_WITH_TIMEOUT(positions->gcsPosition().isValid(), TestTimeout::mediumMs());
+    QVERIFY(std::abs(positions->gcsPosition().latitude() - GPSFixture::positions[0].latitude) < 1e-6);
+    QVERIFY(std::abs(positions->gcsPosition().longitude() - GPSFixture::positions[0].longitude) < 1e-6);
+    QCOMPARE(positions->selectedSource(), PositionManager::SelectedSource::Receiver);
+    QCOMPARE(positions->selectedSourceName(), PositionManager::tr("Position receiver"));
+    QVERIFY(bluetooth.asked().written.isEmpty());
+    QVERIFY(!manager.receiver()->hasReceiver());
+}
+
+void GPSManagerTest::_bluetoothDeviceIsThePositionReceivers()
+{
+    using namespace std::chrono_literals;
+    TestFixtures::SettingsFixture saved;
+    SettingsManager* const settings = SettingsManager::instance();
+    RTKSettings* const rtk = settings->rtkSettings();
+    PositionReceiverSettings* const position = settings->positionReceiverSettings();
+    saved.setFactValue(settings->ntripSettings()->ntripServerConnectEnabled(), false);
+    // Both receivers name one Bluetooth device, and the GNSS receiver would configure it as a base station.
+    saved.setFactValue(rtk->receiverRole(), RTKSettings::ConfiguredBase);
+    saved.setFactValue(rtk->baseReceiverManufacturer(), gpsReceiverManufacturerForType(GPSType::UBlox));
+    saved.setFactValue(rtk->connectionType(), RTKSettings::Bluetooth);
+    saved.setFactValue(rtk->bluetoothDeviceAddress(), QStringLiteral("00:11:22:aa:bb:cc"));
+    saved.setFactValue(rtk->bluetoothDeviceName(), QStringLiteral("Handheld"));
+    saved.setFactValue(rtk->autoConnect(), true);
+    saved.setFactValue(position->connectionType(), RTKSettings::Bluetooth);
+    saved.setFactValue(position->bluetoothDeviceAddress(), QStringLiteral("00:11:22:AA:BB:CC"));
+    saved.setFactValue(position->bluetoothDeviceName(), QStringLiteral("Handheld"));
+    saved.setFactValue(position->enabled(), true);
+    GPSTest::ScriptedBluetooth bluetooth;
+    const GPSBluetoothPlatform platform = bluetooth.platform();
+    ManualScheduler scheduler;
+    GPSManager manager(nullptr, &scheduler, nullptr, &platform);
+    manager.positionManager()->setPlatformSourceFactory([](QObject* parent) {
+        auto* const source = new GPSTest::PositionSource;
+        source->setParent(parent);
+        return source;
+    });
+    // Scripted sessions open no link, so each counts as a connection to the device.
+    GPSTest::ScriptedReceiverWorkerFactory baseWorkers;
+    GPSTest::ScriptedReceiverWorkerFactory positionWorkers;
+    GPSReceiver* const receiver = manager.receiver();
+    receiver->setWorkerFactory(baseWorkers.workerFactory());
+    manager.positionReceiver()->setWorkerFactory(positionWorkers.workerFactory());
+    manager.init();
+    const QString refusal = GPSManager::tr(
+        "The position receiver uses this Bluetooth device. Select another device "
+        "for one of the receivers, or turn the position receiver off.");
+
+    // In use, the position receiver has the device, as a receiver that is sent nothing. The GNSS receiver's
+    // automatic connection is refused, says why, and is tried again.
+    QVERIFY(scheduler.advanceBy(5s));
+    QCOMPARE(positionWorkers.count(), 1);
+    QCOMPARE(positionWorkers.current()->type(), GPSType::Passive);
+    QCOMPARE(baseWorkers.count(), 0);
+    QCOMPARE(receiver->errorMessage(), refusal);
+    QVERIFY(receiver->reconnecting());
+
+    // The device stays the position receiver's while that is not connected.
+    manager.positionReceiver()->disconnectReceiver();
+    positionWorkers.finishRetired();
+    QVERIFY(scheduler.advanceBy(5s));
+    QCOMPARE(baseWorkers.count(), 0);
+    QCOMPARE(receiver->errorMessage(), refusal);
+
+    // Out of use, the position receiver leaves the device to the GNSS receiver, whose next attempt connects it.
+    position->enabled()->setRawValue(false);
+    QVERIFY(scheduler.advanceBy(31s));
+    QCOMPARE(baseWorkers.count(), 1);
+    QCOMPARE(receiver->activeEndpoint(), QStringLiteral("Handheld (00:11:22:aa:bb:cc)"));
+    QVERIFY(receiver->errorMessage().isEmpty());
+
+    // The user's Connect is refused as the automatic one is, once the position receiver is in use again.
+    receiver->disconnectReceiver();
+    baseWorkers.finishRetired();
+    position->enabled()->setRawValue(true);
+    QVERIFY(!receiver->connectReceiver());
+    QCOMPARE(baseWorkers.count(), 1);
+    QCOMPARE(receiver->errorMessage(), refusal);
+    // On another device, the GNSS receiver connects beside it.
+    rtk->bluetoothDeviceAddress()->setRawValue(QStringLiteral("00:11:22:AA:BB:DD"));
+    QVERIFY(receiver->errorMessage().isEmpty());
+    QVERIFY(receiver->connectReceiver());
+    QCOMPARE(baseWorkers.count(), 2);
 }
 
 void GPSManagerTest::_vehicleGpsTracking()

@@ -11,5 +11,6 @@ class GPSPositionReceiverTest : public UnitTest
 private slots:
     void _showsConnectionOnceInUse();
     void _connectsAndDisconnectsFromSection();
+    void _bluetoothDeviceChoice();
     void _dropDownShowsStatusWhileInUse();
 };

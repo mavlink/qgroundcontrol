@@ -152,6 +152,9 @@ void GPSSettingsBindingsTest::_positionReceiverSettingsBinding()
     ScriptedGPSReceiver harness;
     GPSReceiver& receiver = harness.receiver;
     PositionManager positions;
+    // It offers the connections the RTK receiver does.
+    QCOMPARE(settings.connectionType()->enumValues(), rtk.connectionType()->enumValues());
+    QCOMPARE(settings.connectionType()->enumStrings(), rtk.connectionType()->enumStrings());
     GPSSettingsBindings::bindPositionReceiver(&settings, &receiver);
     GPSSettingsBindings::bindPosition(&rtk, &settings, &positions);
     // Out of use until the user turns it on, which leaves the RTK receiver the receiver source.
@@ -164,6 +167,8 @@ void GPSSettingsBindingsTest::_positionReceiverSettingsBinding()
     settings.udpPort()->setRawValue(14500);
     settings.serialDevice()->setRawValue(QStringLiteral("/test/position"));
     settings.serialBaudRate()->setRawValue(0);
+    settings.bluetoothDeviceAddress()->setRawValue(QStringLiteral("00:11:22:AA:BB:CC"));
+    settings.bluetoothDeviceName()->setRawValue(QStringLiteral("Handheld"));
     settings.enabled()->setRawValue(true);
     rtk.gcsPositionSource()->setRawValue(static_cast<int>(PositionManager::SourceMode::ReceiverOnly));
 
@@ -178,6 +183,8 @@ void GPSSettingsBindingsTest::_positionReceiverSettingsBinding()
     QCOMPARE(configuration.udpPort, 14500U);
     QCOMPARE(configuration.serialDevice, QStringLiteral("/test/position"));
     QCOMPARE(configuration.serialBaudRate, 0U);
+    QCOMPARE(configuration.bluetoothAddress, QStringLiteral("00:11:22:AA:BB:CC"));
+    QCOMPARE(configuration.bluetoothName, QStringLiteral("Handheld"));
     QVERIFY(configuration.autoConnect);
     QCOMPARE(positions.configuration().receiver, PositionManager::Receiver::Position);
     QCOMPARE(positions.configuration().sourceMode, PositionManager::SourceMode::ReceiverOnly);
@@ -195,34 +202,44 @@ void GPSSettingsBindingsTest::_positionReceiverSettingsBinding()
 void GPSSettingsBindingsTest::_bluetoothOfferedWhereReceiversConnectOverIt_data()
 {
     QTest::addColumn<bool>("supported");
-    QTest::newRow("bluetooth") << true;
+    QTest::addColumn<bool>("positionReceiver");
+    QTest::newRow("bluetooth") << true << false;
     // A build without Bluetooth sockets, on any build.
-    QTest::newRow("no-bluetooth") << false;
+    QTest::newRow("no-bluetooth") << false << false;
+    // The position receiver is offered it where the RTK receiver is.
+    QTest::newRow("position-receiver-bluetooth") << true << true;
+    QTest::newRow("position-receiver-no-bluetooth") << false << true;
 }
 
 void GPSSettingsBindingsTest::_bluetoothOfferedWhereReceiversConnectOverIt()
 {
     QFETCH(bool, supported);
+    QFETCH(bool, positionReceiver);
     RTKSettings settings;
+    PositionReceiverSettings positionSettings;
+    Fact* const connectionType = positionReceiver ? positionSettings.connectionType() : settings.connectionType();
     TestFixtures::SettingsFixture saved;
-    saved.setFactValue(settings.connectionType(), RTKSettings::Bluetooth);
+    saved.setFactValue(connectionType, RTKSettings::Bluetooth);
     saved.setFactValue(settings.autoConnect(), false);
-    const auto offered = [&settings] {
-        return settings.connectionType()->enumStrings().contains(QStringLiteral("Bluetooth"));
+    const auto offered = [connectionType] {
+        return connectionType->enumStrings().contains(QStringLiteral("Bluetooth"));
     };
     QVERIFY(offered());
     ScriptedBluetooth bluetooth;
     bluetooth.supported = supported;
     GPSReceiver receiver(nullptr, nullptr, {.bluetooth = bluetooth.side()});
-    QSignalSpy enumsChanged(settings.connectionType(), &Fact::enumsChanged);
-    GPSSettingsBindings::bindReceiver(&settings, &receiver);
+    QSignalSpy enumsChanged(connectionType, &Fact::enumsChanged);
+    if (positionReceiver) {
+        GPSSettingsBindings::bindPositionReceiver(&positionSettings, &receiver);
+    } else {
+        GPSSettingsBindings::bindReceiver(&settings, &receiver);
+    }
 
     // The connection is offered only to a receiver that has it, and a saved selection of it is kept only there.
     QCOMPARE(offered(), supported);
     QCOMPARE(enumsChanged.size(), supported ? 0 : 1);
-    QCOMPARE(settings.connectionType()->enumStrings().size(), settings.connectionType()->enumValues().size());
-    QCOMPARE(settings.connectionType()->rawValue().toInt(),
-             supported ? int(RTKSettings::Bluetooth) : int(RTKSettings::Serial));
+    QCOMPARE(connectionType->enumStrings().size(), connectionType->enumValues().size());
+    QCOMPARE(connectionType->rawValue().toInt(), supported ? int(RTKSettings::Bluetooth) : int(RTKSettings::Serial));
     QCOMPARE(receiver.configuration().connectionType, supported ? RTKSettings::Bluetooth : RTKSettings::Serial);
 }
 
