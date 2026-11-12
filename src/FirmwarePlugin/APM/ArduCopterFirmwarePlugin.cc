@@ -176,7 +176,19 @@ int ArduCopterFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVe
 
 bool ArduCopterFirmwarePlugin::multiRotorXConfig(Vehicle *vehicle) const
 {
-    return (vehicle->parameterManager()->getParameter(ParameterManager::defaultComponentId, "FRAME")->rawValue().toInt() != 0);
+    // ArduCopter 3.5 replaced FRAME with FRAME_CLASS/FRAME_TYPE. Both use 0 for a plus frame.
+    static const QStringList frameTypeParams = {QStringLiteral("FRAME_TYPE"), QStringLiteral("FRAME")};
+    constexpr int frameTypePlus = 0;
+
+    ParameterManager* const parameterManager = vehicle->parameterManager();
+    for (const QString& frameTypeParam : frameTypeParams) {
+        if (parameterManager->parameterExists(ParameterManager::defaultComponentId, frameTypeParam)) {
+            return (parameterManager->getParameter(ParameterManager::defaultComponentId, frameTypeParam)
+                        ->rawValue()
+                        .toInt() != frameTypePlus);
+        }
+    }
+    return true;
 }
 
 QString ArduCopterFirmwarePlugin::pauseFlightMode() const
