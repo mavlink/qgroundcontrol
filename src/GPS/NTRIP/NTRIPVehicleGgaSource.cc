@@ -101,11 +101,22 @@ void NTRIPVehicleGgaSource::setVehicle(Vehicle* vehicle)
                                      _gps = GpsReport{.position = position,
                                                       .fixType = fixType,
                                                       .horizontalDop = gps->hdop()->rawValue().toDouble(),
+                                                      .altitudeEllipsoidMeters = std::nullopt,
                                                       .receivedAtUs = _scheduler->nowUs()};
                                  });
     }
     _messageConnection =
         connect(vehicle, &Vehicle::mavlinkMessageReceived, this, [this](const mavlink_message_t& message) {
+            if (message.msgid == MAVLINK_MSG_ID_GPS_RAW_INT) {
+                mavlink_gps_raw_int_t raw;
+                mavlink_msg_gps_raw_int_decode(&message, &raw);
+                // The vehicle's fact groups take a message before its observers, so the report is this message's.
+                // Zero is a vehicle that does not report the height.
+                if (_gps && raw.alt_ellipsoid != 0) {
+                    _gps->altitudeEllipsoidMeters = GPSProtocolMath::metersFromMillimeters(raw.alt_ellipsoid);
+                }
+                return;
+            }
             if (message.msgid != MAVLINK_MSG_ID_GLOBAL_POSITION_INT) {
                 return;
             }
@@ -136,6 +147,7 @@ std::optional<GPSObservation> NTRIPVehicleGgaSource::gpsObservation() const
     }
     GPSObservation observation = vehicleObservation(_gps->position, fixQuality(_gps->fixType), _gps->receivedAtUs);
     observation.receiverFixValid = observation.fixQuality != GPSObservation::FixQuality::NoFix;
+    observation.altitudeEllipsoidMeters = _gps->altitudeEllipsoidMeters;
     if (qIsFinite(_gps->horizontalDop)) {
         observation.horizontalDop = _gps->horizontalDop;
     }

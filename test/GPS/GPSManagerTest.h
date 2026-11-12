@@ -12,6 +12,8 @@ private slots:
     void _sourceModeMatchesSetting();
     void _connectionPolling();
     void _vehicleGpsTracking();
+    void _vehicleGpsEllipsoidHeight_data();
+    void _vehicleGpsEllipsoidHeight();
     void _vehicleEstimateTracking();
     void _groundStationGgaReportsAnyAltitudeDatum_data();
     void _groundStationGgaReportsAnyAltitudeDatum();

@@ -30,7 +30,9 @@ public:
     /// Tracks @a vehicle's reports; reports from before this call are not used.
     void setVehicle(Vehicle* vehicle);
 
-    /// The fresh observation from the vehicle's GPS with a fix.
+    /// The fresh observation from the vehicle's GPS with a fix. It has the receiver's height above the ellipsoid
+    /// beside its altitude when the vehicle reports one (GPS_RAW_INT.alt_ellipsoid), so that a GGA carries the
+    /// receiver's own geoid separation.
     std::optional<GPSObservation> gpsObservation() const;
     /// The fresh observation from the vehicle's GLOBAL_POSITION_INT estimate.
     std::optional<GPSObservation> estimateObservation() const;
@@ -41,6 +43,8 @@ private:
         QGeoPositionInfo position;
         int fixType = 0;
         double horizontalDop = qQNaN();
+        /// GPS_RAW_INT.alt_ellipsoid, which follows the report it belongs to.
+        std::optional<double> altitudeEllipsoidMeters;
         quint64 receivedAtUs = 0;
     };
 

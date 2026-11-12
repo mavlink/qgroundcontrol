@@ -189,6 +189,50 @@ void GPSManagerTest::_vehicleGpsTracking()
     QVERIFY(!observation());
 }
 
+void GPSManagerTest::_vehicleGpsEllipsoidHeight_data()
+{
+    // GPS_RAW_INT.alt_ellipsoid of each report in millimeters; zero when the vehicle does not report the height.
+    QTest::addColumn<QList<int>>("ellipsoidMm");
+    // The height above the ellipsoid of the last report's observation, beside 450 m above mean sea level; none is NaN.
+    QTest::addColumn<double>("ellipsoid");
+    // The receiver's own geoid separation of 30 m, where the EGM96 model has 48.4 m.
+    QTest::newRow("reported") << QList<int>{480000} << 480.0;
+    QTest::newRow("not-reported") << QList<int>{0} << qQNaN();
+    QTest::newRow("no-longer-reported") << QList<int>{480000, 0} << qQNaN();
+}
+
+void GPSManagerTest::_vehicleGpsEllipsoidHeight()
+{
+    QFETCH(QList<int>, ellipsoidMm);
+    QFETCH(double, ellipsoid);
+    ManualScheduler scheduler;
+    NTRIPVehicleGgaSource source(&scheduler);
+    Vehicle vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR);
+    source.setVehicle(&vehicle);
+    for (const int reported : ellipsoidMm) {
+        mavlink_gps_raw_int_t raw{};
+        raw.lat = 470000000;
+        raw.lon = 80000000;
+        raw.alt = 450000;
+        raw.alt_ellipsoid = reported;
+        raw.fix_type = GPS_FIX_TYPE_3D_FIX;
+        mavlink_message_t message{};
+        mavlink_msg_gps_raw_int_encode(1, MAV_COMP_ID_AUTOPILOT1, &message, &raw);
+        // As Vehicle hands a message on: to its fact groups, then to its observers.
+        vehicle.gpsFactGroup()->handleMessage(&vehicle, message);
+        emit vehicle.mavlinkMessageReceived(message);
+    }
+    const auto observation = source.gpsObservation();
+    QVERIFY(observation);
+    QCOMPARE(observation->altitudeDatum, GPSAltitudeDatum::MeanSeaLevel);
+    QCOMPARE(observation->position.coordinate().altitude(), 450.0);
+    QCOMPARE(observation->altitudeEllipsoidMeters.value_or(qQNaN()), ellipsoid);
+    if (qIsFinite(ellipsoid)) {
+        // What the GGA sent to a caster carries as the geoid separation.
+        QCOMPARE(observation->geoidSeparationMeters().value_or(qQNaN()), ellipsoid - 450.0);
+    }
+}
+
 void GPSManagerTest::_vehicleEstimateTracking()
 {
     ManualScheduler scheduler;

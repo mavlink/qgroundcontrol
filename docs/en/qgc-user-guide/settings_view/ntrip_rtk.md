@@ -50,7 +50,9 @@ A network RTK mountpoint sends nothing until it has received a position. While n
 Once it has a position, the caster works out corrections for it before it sends any, which can take a minute or more. Until the first corrections arrive the connection status reads **Connected, waiting for corrections**, and QGroundControl gives the caster 2 minutes from the first position reported to send its first data before it reconnects. From the first data on, the [30-second limit](#ntrip-connection) on a silent stream applies.
 
 The report carries the selected position's height above mean sea level and the geoid separation that goes with it.
-A height above the WGS84 ellipsoid, as the position of an Android device or of a base station has, is converted with the EGM96 geoid model built into QGroundControl.
+When the position comes with its height above the WGS84 ellipsoid as well, the separation is the receiver's own, the difference between the two heights. A local receiver's position usually has both, and so has the vehicle GPS position when the vehicle reports the ellipsoid height (`alt_ellipsoid` in `GPS_RAW_INT`), as PX4 and ArduPilot do for most receivers.
+Otherwise the separation comes from the EGM96 geoid model built into QGroundControl.
+A height above the WGS84 ellipsoid alone, as the position of an Android device or of a base station has, is converted with that model.
 A height of unknown reference, as the position of a Linux device has, is reported as it is, and a position without a height is reported with height 0, both without a geoid separation. A caster places the rover by its latitude and longitude.
 
 ## UDP RTCM Input
