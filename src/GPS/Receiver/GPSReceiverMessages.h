@@ -31,6 +31,10 @@ namespace GPSReceiverMessages {
 /// The warning that the receiver produces more output than its connection carries.
 [[nodiscard]] QString outputOverflow(RTKSettings::ReceiverRole role, bool compactObservations);
 
+/// The warning that the position a fixed base was given lies @a distanceMeters from the one its receiver computed
+/// itself.
+[[nodiscard]] QString fixedBaseFar(double distanceMeters);
+
 /// The short label of a fix type; empty for an unknown one.
 [[nodiscard]] QString fixLabel(GPSFixQuality fixType);
 
@@ -54,6 +58,8 @@ struct ReceiverStatus
     GPSBaseState baseState = GPSBaseState::Inactive;
     /// The base's corrections wait for a valid base position, so none are forwarded.
     bool correctionsWithheld = false;
+    /// A fixed base waits for its receiver's own position, which the fixed one is checked against.
+    bool awaitingOwnPosition = false;
 };
 
 /// The receiver status sentence; empty when no receiver is connected or being connected.

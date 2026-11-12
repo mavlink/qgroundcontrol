@@ -1,5 +1,6 @@
 #include "GPSReceiver.h"
 
+#include <cmath>
 #include <utility>
 #include <variant>
 
@@ -7,6 +8,7 @@
 #include <QtCore/QDeadlineTimer>
 #include <QtCore/QScopedValueRollback>
 
+#include "AppMessages.h"
 #include "GPSCorrectionManager.h"
 #include "GPSReceiverConfig.h"
 #include "GPSReceiverConnectionPolicy.h"
@@ -154,7 +156,34 @@ GPSReceiver::ReceiverState GPSReceiver::_receiverState() const
             .endpoint = activeEndpoint(),
             .identity = receiverIdentity(),
             .detected = detectedReceiver(),
-            .presentation = activePresentation()};
+            .presentation = activePresentation(),
+            .fixedBaseCheck = fixedBaseCheck(),
+            .fixedBaseCheckDistance = std::isnan(fixedBaseCheckDistance()) ? 0 : fixedBaseCheckDistance()};
+}
+
+GPSReceiver::FixedBaseCheck GPSReceiver::fixedBaseCheck() const
+{
+    const std::optional<GPSFixedBaseCheck> check = _session ? _session->fixedBaseCheck() : std::nullopt;
+    if (!check) {
+        return FixedBaseCheck::None;
+    }
+    switch (check->result) {
+        case GPSFixedBaseCheck::Result::Waiting:
+            return FixedBaseCheck::Waiting;
+        case GPSFixedBaseCheck::Result::Unchecked:
+            return FixedBaseCheck::Unchecked;
+        case GPSFixedBaseCheck::Result::Plausible:
+            return FixedBaseCheck::Plausible;
+        case GPSFixedBaseCheck::Result::Implausible:
+            return FixedBaseCheck::Implausible;
+    }
+    return FixedBaseCheck::None;
+}
+
+double GPSReceiver::fixedBaseCheckDistance() const
+{
+    const std::optional<GPSFixedBaseCheck> check = _session ? _session->fixedBaseCheck() : std::nullopt;
+    return check ? check->distanceMeters : qQNaN();
 }
 
 void GPSReceiver::_emitChanges()
@@ -216,7 +245,14 @@ void GPSReceiver::_clearStaleSolution()
 
 QString GPSReceiver::errorMessage() const
 {
-    return _errorMessage.isEmpty() ? _outputOverflowWarning : _errorMessage;
+    if (!_errorMessage.isEmpty()) {
+        return _errorMessage;
+    }
+    // A wrong base position stays wrong while the base runs, and matters more than output it drops.
+    if (fixedBaseCheck() == FixedBaseCheck::Implausible) {
+        return GPSReceiverMessages::fixedBaseFar(fixedBaseCheckDistance());
+    }
+    return _outputOverflowWarning;
 }
 
 QList<GPSConstellationSatellites> GPSReceiver::constellations() const
@@ -325,6 +361,12 @@ void GPSReceiver::_endSession(GPSConnectionError error, const QString& detail, G
 
 void GPSReceiver::_onBaseStatusUpdated(const GPSBaseStatus& status)
 {
+    // A family reports the result of its check once, so this tells of a wrong position once. The base runs on: the
+    // user may know the position better than a receiver without corrections does.
+    if (status.fixedCheck && status.fixedCheck->result == GPSFixedBaseCheck::Result::Implausible) {
+        qCWarning(GPSReceiverLog) << "The fixed base position is far from the receiver's own position";
+        QGC::showCriticalVehicleMessage(GPSReceiverMessages::fixedBaseFar(status.fixedCheck->distanceMeters));
+    }
     _facts->_setBaseStatus(status);
     _emitChanges();
 }
@@ -676,7 +718,8 @@ QString GPSReceiver::statusText() const
                                                 .forwardingCorrections = forwardingCorrections(),
                                                 .baseMode = _activeBaseMode(),
                                                 .baseState = _activeBaseState(),
-                                                .correctionsWithheld = _session && _session->correctionsWithheld()});
+                                                .correctionsWithheld = _session && _session->correctionsWithheld(),
+                                                .awaitingOwnPosition = fixedBaseCheck() == FixedBaseCheck::Waiting});
 }
 
 QString GPSReceiver::summaryLabel() const

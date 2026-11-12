@@ -258,6 +258,10 @@ GPSReceiveUpdates Protocol::_decode(uint16_t message, std::span<const uint8_t> p
         }
         return GPSReceiveUpdate::Activity;
     }
+    if (_ownPositionWanted && message == Msg::NAV_PVT.value()) {
+        _decodeOwnPosition(payload);
+        return GPSReceiveUpdate::Activity;
+    }
     if (!_accept(message, payload)) {
         return {};
     }
@@ -492,6 +496,21 @@ GPSReceiveUpdates Protocol::_decodeHandled(uint16_t message, std::span<const uin
     // The integrity messages above update the integrity report.
     context.publishIntegrity(_integrity);
     return GPSReceiveUpdate::Activity;
+}
+
+void Protocol::_decodeOwnPosition(std::span<const uint8_t> payload)
+{
+    const auto pvt = Wire::decode<UBX::NavPvt>(payload);
+    // A time-only fix is the position a receiver in time mode holds, and a fix the receiver itself puts further off
+    // than the check allows cannot judge the fixed position.
+    constexpr auto MAX_ACCURACY_MM = static_cast<uint32_t>(GPSFixedBaseCheck::PLAUSIBLE_DISTANCE_METERS * 1e3);
+    if (pvt.fixType != PVT_FIX_3D || !(pvt.flags & FIX_OK) || pvt.hAcc > MAX_ACCURACY_MM ||
+        pvt.vAcc > MAX_ACCURACY_MM) {
+        return;
+    }
+    _ownPosition = GPSEllipsoidPosition{.latitudeDegrees = UBX::latitudeDegrees(pvt.lat),
+                                        .longitudeDegrees = UBX::longitudeDegrees(pvt.lon),
+                                        .altitudeMeters = pvt.height * 1e-3};
 }
 
 GPSReceiveUpdates Protocol::_decodeSurveyIn(std::span<const uint8_t> payload, GPSDecodeContext& context)

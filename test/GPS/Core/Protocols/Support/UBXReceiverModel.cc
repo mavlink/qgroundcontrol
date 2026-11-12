@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <cmath>
 #include <cstring>
 #include <string_view>
 #include <utility>
@@ -229,7 +230,35 @@ void UBXReceiverModel::onProtocolReadWait(ScriptedReceiver& receiver, GPSDeadlin
         _deliverDelayed(receiver);
         return;
     }
+    if (_ownPositionDueUs && timeMode == 0 && *_ownPositionDueUs <= deadline.untilUs) {
+        _clock->advanceTo(std::max(*_ownPositionDueUs, _clock->nowUs()));
+        _ownPositionDueUs.reset();
+        receiver.queueReply(_ownPositionFrame());
+        return;
+    }
     _clock->advanceTo(deadline.untilUs + 1);
+}
+
+QByteArray UBXReceiverModel::_ownPositionFrame() const
+{
+    QByteArray payload(92, '\0');
+    const auto set = [&payload](qsizetype offset, uint32_t value, unsigned width) {
+        for (unsigned i = 0; i < width; ++i) {
+            payload[offset + i] = static_cast<char>(value >> (8 * i));
+        }
+    };
+    const auto scaled = [](double value, double unit) { return static_cast<uint32_t>(std::llround(value / unit)); };
+    set(11, 0x07, 1);  // validDate, validTime and fullyResolved
+    set(20, ownPositionFix.fixType, 1);
+    set(21, 0x01, 1);  // gnssFixOK
+    set(23, 12, 1);    // numSV
+    set(24, scaled(ownPosition->longitudeDegrees, 1e-7), 4);
+    set(28, scaled(ownPosition->latitudeDegrees, 1e-7), 4);
+    set(32, scaled(ownPosition->altitudeMeters, 1e-3), 4);
+    set(36, scaled(ownPosition->altitudeMeters, 1e-3), 4);
+    set(40, ownPositionFix.horizontalAccuracyMm, 4);
+    set(44, ownPositionFix.verticalAccuracyMm, 4);
+    return _frame(0x01, 0x07, payload);
 }
 
 int UBXReceiverModel::readChunkSize(const ScriptedReceiver& receiver, int requested, int available) const
@@ -709,6 +738,10 @@ bool UBXReceiverModel::_disableTimeMode(ScriptedReceiver& receiver, uint8_t mess
             retainedSurveyDuration = 0;
         }
         apply();
+        if (ownPosition) {
+            _ownPositionDueUs =
+                _clock->nowUs() + static_cast<uint64_t>(std::chrono::microseconds(OWN_POSITION_DELAY).count());
+        }
     }
     return _replyToSetting(receiver, messageId, disableReply);
 }

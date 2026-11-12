@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -10,6 +11,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtCore/QPointer>
+#include <QtCore/QRegularExpression>
 #include <QtCore/QScopeGuard>
 #include <QtCore/QSemaphore>
 #include <QtCore/QTimer>
@@ -39,9 +41,11 @@
 #include "RTKSettings.h"
 #include "Receiver/Support/GPSReceiverTestSupport.h"
 #include "Receiver/Support/ScriptedReceiverWorker.h"
+#include "SettingsManager.h"
 #include "Support/GPSTestHelpers.h"
 #include "Transport/Support/GPSRecordingReader.h"
 #include "Transport/Support/UnusedUdpPort.h"
+#include "UnitsSettings.h"
 
 using namespace std::chrono_literals;
 using namespace GPSTest;
@@ -661,6 +665,79 @@ void GPSReceiverTest::_fixedBasePositionIsGcsPosition()
     QCOMPARE(gpsFixQualityFromValue(receiver.facts()->fixType()->rawValue().toInt()), GPSFixQuality::NoFix);
     receiver.disconnectReceiver();
     QVERIFY(!positions.gcsPosition().isValid());
+}
+
+void GPSReceiverTest::_fixedBaseCheck()
+{
+    using Check = GPSReceiver::FixedBaseCheck;
+    using Result = GPSFixedBaseCheck::Result;
+    TestFixtures::SettingsFixture units;
+    units.setFactValue(SettingsManager::instance()->unitsSettings()->horizontalDistanceUnits(),
+                       UnitsSettings::HorizontalDistanceUnitsMeters);
+    ScriptedGPSReceiver harness;
+    auto& receiver = harness.receiver;
+    auto configuration = receiverConfiguration();
+    const GPSEllipsoidPosition position{.latitudeDegrees = 47.5, .longitudeDegrees = 8.25, .altitudeMeters = 480};
+    configuration.base.mode = GPSBaseStationConfig::Fixed{.position = position, .accuracyMeters = 1.0f};
+    QSignalSpy changed(&receiver, &GPSReceiver::receiverChanged);
+    const QString waiting =
+        QStringLiteral("Waiting for the receiver's own position, to check the fixed position against it");
+
+    // A receiver that is given the position while it is configured waits for its own before that.
+    QVERIFY(connectOverTcp(receiver, configuration));
+    auto* worker = harness.workers.current();
+    QCOMPARE(receiver.fixedBaseCheck(), Check::None);
+    QCOMPARE(receiver.statusText(), QStringLiteral("Connecting to receiver..."));
+    worker->baseStatus({.fixedCheck = GPSFixedBaseCheck{}});
+    QCOMPARE(receiver.fixedBaseCheck(), Check::Waiting);
+    QCOMPARE(receiver.statusText(), waiting + QStringLiteral("..."));
+    QVERIFY(receiver.errorMessage().isEmpty());
+
+    // The two positions are too far apart for one place: the receiver has a problem that stays, and says so once.
+    changed.clear();
+    expectLogMessage("GPS.Receiver.GPSReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("fixed base position is far")));
+    worker->baseStatus({.state = GPSBaseState::Valid,
+                        .position = position,
+                        .fixedCheck = GPSFixedBaseCheck{.result = Result::Implausible, .distanceMeters = 12449}});
+    verifyExpectedLogMessage();
+    worker->ready();
+    QCOMPARE(receiver.fixedBaseCheck(), Check::Implausible);
+    QCOMPARE(receiver.fixedBaseCheckDistance(), 12449.);
+    QVERIFY(!changed.isEmpty());
+    QVERIFY2(receiver.errorMessage().startsWith(
+                 QStringLiteral("The fixed base position is 12.4 km from the position the receiver found on its own.")),
+             qPrintable(receiver.errorMessage()));
+    // It only warns: the base is valid and its corrections go out.
+    QCOMPARE(receiver.statusText(), QStringLiteral("Fixed position"));
+    QVERIFY(receiver.forwardingCorrections());
+    // The statuses that follow do not repeat the result, which stays with the connection.
+    worker->baseStatus({.state = GPSBaseState::Valid, .position = position});
+    QCOMPARE(receiver.fixedBaseCheck(), Check::Implausible);
+    receiver.disconnectReceiver();
+    QCOMPARE(receiver.fixedBaseCheck(), Check::None);
+    QVERIFY(std::isnan(receiver.fixedBaseCheckDistance()));
+    QVERIFY(receiver.errorMessage().isEmpty());
+
+    // A receiver that is given the position once it runs waits as a connected base that sends no corrections yet.
+    QVERIFY(connectOverTcp(receiver, configuration));
+    worker = harness.workers.current();
+    worker->ready();
+    worker->baseStatus({.state = GPSBaseState::Active, .fixedCheck = GPSFixedBaseCheck{}});
+    QCOMPARE(receiver.statusText(), waiting + QStringLiteral("; the base sends no corrections until then"));
+    // A position within reach, and no position to compare with, are no problem.
+    worker->baseStatus({.state = GPSBaseState::Valid,
+                        .position = position,
+                        .fixedCheck = GPSFixedBaseCheck{.result = Result::Plausible, .distanceMeters = 3.4}});
+    QCOMPARE(receiver.fixedBaseCheck(), Check::Plausible);
+    QVERIFY(receiver.errorMessage().isEmpty());
+    QCOMPARE(receiver.statusText(), QStringLiteral("Fixed position"));
+    worker->baseStatus({.state = GPSBaseState::Valid,
+                        .position = position,
+                        .fixedCheck = GPSFixedBaseCheck{.result = Result::Unchecked}});
+    QCOMPARE(receiver.fixedBaseCheck(), Check::Unchecked);
+    QVERIFY(std::isnan(receiver.fixedBaseCheckDistance()));
+    QVERIFY(receiver.errorMessage().isEmpty());
 }
 
 void GPSReceiverTest::_surveyedBasePositionIsGcsPosition()

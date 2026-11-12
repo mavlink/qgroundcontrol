@@ -32,6 +32,8 @@ struct GPSBaseStationState
     std::optional<std::pair<GPSEllipsoidPosition, double>> position;
     /// Accuracy of a base position reported without one: the fixed position's, or the limit of a survey-in.
     std::optional<double> assumedAccuracyMeters;
+    /// The check of a fixed position, as last reported: the statuses that follow its result do not repeat it.
+    std::optional<GPSFixedBaseCheck> fixedCheck;
 
     /// A base in any mode takes the reported state, and adopts a valid, located position and otherwise has none.
     void applyStatus(const GPSBaseStatus& status);
@@ -124,6 +126,11 @@ public:
     /// What a configured base last reported of its base position; Inactive until it reports, and for a passive
     /// receiver.
     GPSBaseState baseState() const { return _base.state; }
+
+    /// How the position a fixed base was given compares with one its receiver computed itself, or that the receiver
+    /// is waited for to compute one. Empty for a base in another mode, for a family that does not check, and until
+    /// the receiver reports.
+    std::optional<GPSFixedBaseCheck> fixedBaseCheck() const { return _base.fixedCheck; }
 
     /// The receiver's corrections wait for a valid base position, which it does not report, so none are forwarded.
     /// Never for the families whose corrections do not wait for it (forwardsCorrectionsWithoutBase()).

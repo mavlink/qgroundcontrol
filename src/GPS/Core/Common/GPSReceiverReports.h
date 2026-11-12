@@ -269,6 +269,38 @@ enum class GPSBaseState
     Valid,
 };
 
+/// How the position a fixed base is given compares with one its receiver computed on its own, without corrections,
+/// before it was given that position. A receiver that holds a fixed position reports only that one, so a position
+/// entered for another place, or with a wrong sign, otherwise shows nowhere: the base sends corrections for it and no
+/// rover can use them.
+struct GPSFixedBaseCheck
+{
+    enum class Result : uint8_t
+    {
+        /// The receiver has not computed a position yet. It is given the fixed position once it has, and after
+        /// WAIT at the latest.
+        Waiting,
+        /// The receiver computed no position within WAIT, as one without a view of the sky does not.
+        Unchecked,
+        /// The two positions lie within PLAUSIBLE_DISTANCE_METERS of each other.
+        Plausible,
+        /// The two positions lie further apart.
+        Implausible,
+    };
+
+    /// How far a receiver's own position may lie from the fixed one. Without corrections a receiver finds itself
+    /// within a few metres, and within some tens of metres with few satellites or right after it started, while a
+    /// position of another site, or one with a wrong sign, is kilometres off.
+    static constexpr double PLAUSIBLE_DISTANCE_METERS = 50;
+    /// How long a family that has to wait for its receiver's own position waits. A receiver that just started under
+    /// an open sky has its first position within about half a minute.
+    static constexpr std::chrono::seconds WAIT{30};
+
+    Result result = Result::Waiting;
+    /// The straight-line distance between the two positions; NaN unless they were compared.
+    double distanceMeters = std::numeric_limits<double>::quiet_NaN();
+};
+
 /// What a configured base station reports about its position, in every base mode.
 struct GPSBaseStatus
 {
@@ -281,4 +313,8 @@ struct GPSBaseStatus
     std::optional<double> meanAccuracyMeters = std::nullopt;
     /// How long a survey has run or ran; zero for a fixed position.
     std::chrono::seconds duration{0};
+    /// The check of a fixed position, in the statuses that tell of it: a family that checks reports Waiting before it
+    /// gives its receiver the position and the result with the position's first valid status. Empty in every other
+    /// status, and for the families that do not check.
+    std::optional<GPSFixedBaseCheck> fixedCheck = std::nullopt;
 };

@@ -122,6 +122,20 @@ Until then, and whenever the receiver stops reporting it, the [receiver status](
 A Septentrio receiver is the exception: its corrections are sent as soon as it is configured.
 The corrections pass the [RTCM message filter](ntrip_rtk.md#correction-routing) before they reach vehicles.
 
+A fixed position that is another place's, or has a wrong sign, makes the base send corrections that no rover can use, and the receiver does not show it: once it holds a fixed position, that is the only one it reports.
+A u-blox or Trimble receiver is therefore given the fixed position only after it found a position of its own, which QGroundControl compares with it:
+
+- A u-blox receiver is waited for up to 30 seconds, while the [status line](#status) reads _Waiting for the receiver's own position, to check the fixed position against it..._.
+  A receiver without a view of the sky finds none, so after that time the base starts unchecked.
+  A Trimble receiver starts as a base from its first position in any case.
+- The receiver status then shows **Position check**: how far the fixed position is from the receiver's own, or _Not checked: the receiver found no position of its own_.
+- More than 50 m apart is too far for one place. QGroundControl then says so once, and the message stays below the connection line: _The fixed base position is 12.4 km from the position the receiver found on its own_.
+  It only warns: the base runs and sends its corrections, as you may know the position better than a receiver without corrections does, which finds itself within a few meters.
+  Check the coordinates and their signs, and that the [saved site](#base_sites) is this one.
+
+The other receivers are not compared this way.
+A Septentrio or Femtomes receiver reports only the position it was given, and QGroundControl reads back from a Unicore or Quectel receiver that it uses the position.
+
 Connecting configures the receiver again, which restarts a survey.
 So when a configured base stops sending, QGroundControl reports after a few seconds that no data arrives and keeps the connection for 30 seconds.
 Only if the receiver stays silent that long does the connection end and, with **Connect automatically**, get made again.

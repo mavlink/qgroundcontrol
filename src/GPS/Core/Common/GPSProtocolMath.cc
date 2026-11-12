@@ -35,6 +35,17 @@ bool nearEarthSurface(const Ecef& position)
     return radius >= EARTH_SURFACE_MIN_RADIUS_METERS && radius <= EARTH_SURFACE_MAX_RADIUS_METERS;
 }
 
+GPSFixedBaseCheck checkFixedBase(const GPSEllipsoidPosition& fixed, const GPSEllipsoidPosition& own)
+{
+    const double apart = distance(toEcef(fixed), toEcef(own));
+    if (!std::isfinite(apart)) {
+        return {.result = GPSFixedBaseCheck::Result::Unchecked};
+    }
+    return {.result = apart <= GPSFixedBaseCheck::PLAUSIBLE_DISTANCE_METERS ? GPSFixedBaseCheck::Result::Plausible
+                                                                            : GPSFixedBaseCheck::Result::Implausible,
+            .distanceMeters = apart};
+}
+
 uint64_t utcMicroseconds(int year, int month, int day, int hour, int minute, int second, int32_t nsec)
 {
     using namespace std::chrono;

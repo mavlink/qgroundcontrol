@@ -112,6 +112,11 @@ class GPSReceiver : public QObject, private GPSReceiverConnector
     /// The satellites the receiver has in view, as far as it describes them: empty for a receiver that only counts its
     /// satellites, and without one.
     Q_PROPERTY(GPSSatelliteModel* satellites READ satellites CONSTANT FINAL)
+    /// How the position a connected fixed base was given compares with one its receiver computed itself before; None
+    /// for a base in another mode, for a receiver family that does not check, and without a receiver.
+    Q_PROPERTY(FixedBaseCheck fixedBaseCheck READ fixedBaseCheck NOTIFY receiverChanged FINAL)
+    /// The distance between those two positions, in meters; NaN unless they were compared.
+    Q_PROPERTY(double fixedBaseCheckDistance READ fixedBaseCheckDistance NOTIFY receiverChanged FINAL)
 
     friend class GPSReceiverTest;
     friend class GPSSettingsBindingsTest;
@@ -143,6 +148,20 @@ public:
         Connected,
     };
     Q_ENUM(State)
+
+    /// GPSFixedBaseCheck::Result, which QGCGPSCore declares without QML, and None for no check.
+    enum class FixedBaseCheck
+    {
+        None,
+        /// The receiver is waited for to compute a position of its own, before it is given the fixed one.
+        Waiting,
+        /// The receiver had none in time, as one without a view of the sky does not.
+        Unchecked,
+        Plausible,
+        /// The two positions lie too far apart to be the same place.
+        Implausible,
+    };
+    Q_ENUM(FixedBaseCheck)
 
     explicit GPSReceiver(QObject* parent = nullptr, RuntimeScheduler* scheduler = nullptr,
                          const Dependencies& dependencies = {});
@@ -252,6 +271,10 @@ public:
 
     GPSSatelliteModel* satellites() const { return _satellites; }
 
+    FixedBaseCheck fixedBaseCheck() const;
+
+    double fixedBaseCheckDistance() const;
+
 signals:
     void receiverChanged();
     void constellationsChanged();
@@ -282,6 +305,9 @@ private:
         QString identity;
         QString detected;
         GPSReceiverPresentation presentation;
+        FixedBaseCheck fixedBaseCheck = FixedBaseCheck::None;
+        /// Zero unless the two positions were compared, so that equal states compare equal.
+        double fixedBaseCheckDistance = 0;
         bool operator==(const ReceiverState&) const = default;
     };
 

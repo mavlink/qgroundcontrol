@@ -437,6 +437,8 @@ private:
     bool _baseSetupDone = false;
     /// The configured receiver reported its first valid position, so the base setup is due.
     bool _baseSetupPending = false;
+    /// That position, which the receiver computed before it was given a fixed one.
+    GPSEllipsoidPosition _ownPosition{};
     /// Position averaging finished, so RTCM output is due.
     bool _rtcmActivationPending = false;
     /// The survey-start command is outstanding, and its start receipt acknowledges it.
@@ -499,7 +501,12 @@ bool Protocol::configure(GPSCommandChannel& channel, GPSConfig config, unsigned&
     }
     (void) channel.runSequence(Plan::sequence(Plan::OUTPUTS, _port));
 
-    channel.context().publishBaseStatus(GPSBaseState::Active, {});
+    // A fixed base, too, is set up from the receiver's first position, which then checks the fixed one.
+    GPSBaseStatus status{.state = GPSBaseState::Active};
+    if (std::holds_alternative<GPSBaseStationConfig::Fixed>(_base.mode)) {
+        status.fixedCheck = GPSFixedBaseCheck{};
+    }
+    channel.context().publishBaseStatus(status);
     _positionOutputAtUs = channel.context().nowUs();
     _ready = true;
     return !channel.failed();
@@ -538,7 +545,11 @@ void Protocol::_setUpBase(GPSCommandChannel& channel)
             return;
         }
         // Reported before RTCM output starts, as the receiver sends corrections while the output commands still run.
-        context.publishBaseStatus(GPSBaseState::Valid, {}, fixed->position);
+        // $PASHR,POS is the position the receiver computes, so the one that started this setup checks the fixed one.
+        GPSBaseStatus status{.state = GPSBaseState::Valid,
+                             .position = fixed->position,
+                             .fixedCheck = GPSProtocolMath::checkFixedBase(fixed->position, _ownPosition)};
+        context.publishBaseStatus(status);
         _activateRTCMOutput(channel);
         if (channel.failed()) {
             return;
@@ -693,6 +704,9 @@ std::optional<GPSReceiveUpdates> Protocol::_handlePosition(const NMEA::Sentence&
         // The first valid position sets up the configured receiver as a base station.
         if (_ready && !_baseSetupDone) {
             _baseSetupPending = true;
+            _ownPosition = {.latitudeDegrees = fix->latitudeDegrees,
+                            .longitudeDegrees = fix->longitudeDegrees,
+                            .altitudeMeters = fix->altitudeEllipsoidMeters};
         }
     }
 

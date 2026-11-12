@@ -15,6 +15,7 @@
 #include <QtCore/QString>
 
 #include "GPSCommandChannel.h"
+#include "GPSReceiverConfig.h"
 #include "Protocols/Support/GPSTestClock.h"
 #include "Protocols/Support/ScriptedReceiver.h"
 
@@ -140,6 +141,20 @@ public:
     quint32 faultReadbackKey = 0;
     /// The time mode in effect: 0 disabled, 1 survey-in, 2 fixed.
     unsigned timeMode = 0;
+    /// Where the receiver finds itself outside time mode: it then sends ownPositionFix there OWN_POSITION_DELAY after
+    /// time mode was disabled, once. Unset, as by default, the receiver has no position of its own.
+    std::optional<GPSEllipsoidPosition> ownPosition;
+
+    /// The fix of that position: NAV-PVT fixType, and its horizontal and vertical accuracy in millimetres.
+    struct OwnPositionFix
+    {
+        uint8_t fixType = 3;
+        uint32_t horizontalAccuracyMm = 1500;
+        uint32_t verticalAccuracyMm = 2500;
+    };
+
+    OwnPositionFix ownPositionFix;
+    static constexpr std::chrono::seconds OWN_POSITION_DELAY{1};
     unsigned navigationModel = 0;
     unsigned surveyDuration = 0;
     uint32_t fixedAccuracy = 0;
@@ -224,6 +239,8 @@ private:
     /// Delivers the delayed replies due by now.
     void _deliverDelayed(ScriptedReceiver& receiver);
     QByteArray _identityPayload();
+    /// A NAV-PVT of ownPositionFix at ownPosition.
+    QByteArray _ownPositionFrame() const;
 
     GPSTestClock* _clock;
     ScriptedReceiver* _receiver = nullptr;
@@ -235,6 +252,7 @@ private:
     std::optional<Response> _heldReply;
     std::deque<DelayedResponse> _delayed;
     QByteArray _heldBaudAck;
+    std::optional<uint64_t> _ownPositionDueUs;
 };
 
 }  // namespace GPSTest

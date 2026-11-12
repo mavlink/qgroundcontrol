@@ -25,7 +25,7 @@ configure configured=1 baud=115200->115200 failure=none ready=1 elapsed=0ms
     text "$PASHS,NME,POS,A,ON,0.05\r\n"
   write "$PASHS,NME,GSV,A,ON,1" 23 acknowledged optional
     text "$PASHS,NME,GSV,A,ON,1\r\n"
-  survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1
+  survey active=1 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1 check=waiting apart=nan
 stream failure=protocol ready=0
   write "$PASHS,POS (fixed position)" 57 acknowledged required
     text "$PASHS,POS,4700.00000000,N,800.00000000,E,500.00000,PC1\r\n"
@@ -34,4 +34,4 @@ stream failure=protocol ready=0
   write "$PASHS,RT3,1074,A,ON,1" 24 rejected required
     text "$PASHS,RT3,1074,A,ON,1\r\n"
   position fix=rtk-float lat=47.00000000 lon=8.00000000 msl=nan ellipsoid=500.0000 hacc=0.6403 vacc=0.9000 hdop=1.000 vdop=1.000 speed=5.1444 course=1.570796 used=12 utc=1325072701000000 velocity=1 receipt=1
-  survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1
+  survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1 check=plausible apart=0.000

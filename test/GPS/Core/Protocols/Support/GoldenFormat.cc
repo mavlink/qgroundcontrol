@@ -172,6 +172,21 @@ QString flag(bool value)
     return value ? QStringLiteral("1") : QStringLiteral("0");
 }
 
+QString fixedCheckName(GPSFixedBaseCheck::Result result)
+{
+    switch (result) {
+        case GPSFixedBaseCheck::Result::Waiting:
+            return QStringLiteral("waiting");
+        case GPSFixedBaseCheck::Result::Unchecked:
+            return QStringLiteral("unchecked");
+        case GPSFixedBaseCheck::Result::Plausible:
+            return QStringLiteral("plausible");
+        case GPSFixedBaseCheck::Result::Implausible:
+            return QStringLiteral("implausible");
+    }
+    return QStringLiteral("?");
+}
+
 /// Host receipt times are normalized to whether the receipt exists.
 QString receipt(uint64_t timestampUs)
 {
@@ -384,7 +399,7 @@ QString formatEvent(const Event& event)
                     .arg(optionalNumber(report.used), receipt(report.timestampUs));
             } else if constexpr (std::is_same_v<Report, Survey>) {
                 const auto& survey = report.survey;
-                return QStringList{
+                QStringList fields{
                     QStringLiteral("survey active=") + flag(survey.state == GPSBaseState::Active),
                     QStringLiteral("valid=") + flag(survey.state == GPSBaseState::Valid),
                     QStringLiteral("duration=%1s").arg(survey.duration.count()),
@@ -394,8 +409,13 @@ QString formatEvent(const Event& event)
                     QStringLiteral("lon=") + decimal(survey.position.longitudeDegrees, 8),
                     QStringLiteral("alt=") + decimal(survey.position.altitudeMeters, 4),
                     QStringLiteral("receipt=") + receipt(report.timestampUs),
+                };
+                // Only the statuses that tell of the check of a fixed position name it.
+                if (survey.fixedCheck) {
+                    fields.append(QStringLiteral("check=") + fixedCheckName(survey.fixedCheck->result));
+                    fields.append(QStringLiteral("apart=") + decimal(survey.fixedCheck->distanceMeters, 3));
                 }
-                    .join(u' ');
+                return fields.join(u' ');
             } else if constexpr (std::is_same_v<Report, GPSInputProtocol>) {
                 return QStringLiteral("input type=") + typeName(report.family);
             } else {

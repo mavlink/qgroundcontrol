@@ -10,6 +10,7 @@
 #include <QtCore/QByteArray>
 
 #include "GPSReceiverConfig.h"
+#include "GPSReceiverReports.h"
 
 /// Unit conversions and geodesy shared by receiver families and their callers.
 namespace GPSProtocolMath {
@@ -72,6 +73,10 @@ inline constexpr double EARTH_SURFACE_MAX_RADIUS_METERS = 7000000;
 /// Whether @a position lies in that band, as a receiver's coordinates do; false for the zero or unknown coordinates
 /// of an unset base.
 [[nodiscard]] bool nearEarthSurface(const Ecef& position);
+
+/// Compares the position a fixed base is given, @a fixed, with @a own, one its receiver computed itself. Unchecked
+/// when one of them is not finite.
+[[nodiscard]] GPSFixedBaseCheck checkFixedBase(const GPSEllipsoidPosition& fixed, const GPSEllipsoidPosition& own);
 
 /// Microseconds since the Unix epoch of a receiver's UTC calendar fields plus @a nsec, which may be negative. Fields
 /// beyond their range carry into the next larger unit, as a leap second's 60 does. 0 when the date is implausible or

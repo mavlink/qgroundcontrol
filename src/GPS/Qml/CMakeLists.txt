@@ -35,6 +35,7 @@ qt_add_qml_module(
         GPSField.qml
         GPSPositionReceiver.qml
         GPSPositionReceiverStatus.qml
+        GPSReceiverBaseCheck.qml
         GPSReceiverBaseEcef.qml
         GPSReceiverBasePosition.qml
         GPSReceiverBaseSites.qml

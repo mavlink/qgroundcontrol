@@ -12,6 +12,8 @@ private slots:
     void _ecefConversion();
     void _ecefInverse_data();
     void _ecefInverse();
+    void _fixedBaseCheck_data();
+    void _fixedBaseCheck();
     void _utcMicroseconds_data();
     void _utcMicroseconds();
     void _towAdvances_data();

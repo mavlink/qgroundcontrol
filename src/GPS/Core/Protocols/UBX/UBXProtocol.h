@@ -143,6 +143,8 @@ private:
     void _decodeEpoch(uint16_t message, std::span<const uint8_t> payload, EpochAssembler::Epoch& epoch);
     GPSReceiveUpdates _decodeHandled(uint16_t message, std::span<const uint8_t> payload, GPSDecodeContext& context);
     GPSReceiveUpdates _decodeSurveyIn(std::span<const uint8_t> payload, GPSDecodeContext& context);
+    /// Keeps the position of a NAV-PVT the receiver computed itself, for _checkFixedBase().
+    void _decodeOwnPosition(std::span<const uint8_t> payload);
     void _decodeMonVer(std::span<const uint8_t> payload);
     void _decodeSatellites(uint16_t message, std::span<const uint8_t> payload);
 
@@ -158,9 +160,14 @@ private:
     bool _restartLegacySurveyIn(GPSCommandChannel& channel);
     bool _disableTimeMode(GPSCommandChannel& channel);
     bool _waitForSurveyStop(GPSCommandChannel& channel);
-    /// Starts RTCM output for the fixed position the receiver accepted and, once it runs, reports the base valid: no
-    /// receiver message does, as NAV-SVIN describes a survey-in.
-    RTCMActivation _startFixedBase(GPSCommandChannel& channel, const GPSBaseStationConfig::Fixed& fixed);
+    /// Compares @a fixed with a position the receiver computes itself, before it is given @a fixed: in time mode it
+    /// reports the position it holds. Reports that it waits, then leaves time mode and reads NAV-PVT for up to
+    /// GPSFixedBaseCheck::WAIT. A receiver that keeps its time mode, or has no position by then, goes unchecked.
+    GPSFixedBaseCheck _checkFixedBase(GPSCommandChannel& channel, const GPSBaseStationConfig::Fixed& fixed);
+    /// Starts RTCM output for the fixed position the receiver accepted and, once it runs, reports the base valid, with
+    /// @a check: no receiver message does, as NAV-SVIN describes a survey-in.
+    RTCMActivation _startFixedBase(GPSCommandChannel& channel, const GPSBaseStationConfig::Fixed& fixed,
+                                   const GPSFixedBaseCheck& check);
     RTCMActivation _activateRTCMOutput(GPSCommandChannel& channel);
     RTCMActivation _activateLegacyRTCMOutput(GPSCommandChannel& channel);
     void _disableUnexpectedMessage(GPSCommandChannel& channel, uint16_t message);
@@ -198,6 +205,9 @@ private:
     std::optional<uint8_t> _timeModeReadback = std::nullopt;
     /// NAV-SVIN reported survey-in neither active nor valid.
     bool _surveyStopped = false;
+    /// NAV-PVT is decoded for the receiver's own position, which _checkFixedBase() waits for.
+    bool _ownPositionWanted = false;
+    std::optional<GPSEllipsoidPosition> _ownPosition = std::nullopt;
     bool _ready = false;
     /// SEC-SIG jammingState supersedes the deprecated MON-RF flags.
     bool _secSigSeen = false;

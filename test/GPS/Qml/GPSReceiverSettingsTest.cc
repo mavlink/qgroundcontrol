@@ -492,6 +492,36 @@ void GPSReceiverSettingsTest::_basePositionShownOnceValid()
     QCOMPARE(shownPosition(), none);
 }
 
+void GPSReceiverSettingsTest::_fixedBaseCheckRow()
+{
+    using Result = GPSFixedBaseCheck::Result;
+    BaseStatus status(GPSType::UBlox, fixedBaseAt(kSurveyedPosition.latitudeDegrees, kSurveyedPosition.longitudeDegrees,
+                                                  kSurveyedPosition.altitudeMeters, 1));
+    QVERIFY2(status.create(), qPrintable(status.engine.lastError()));
+    QVERIFY(status.find("rtkFixedBaseCheck"));
+    // Nothing to tell of until the receiver's own position was waited for.
+    QCOMPARE(status.value("rtkFixedBaseCheck"), QString());
+    status.report({.fixedCheck = GPSFixedBaseCheck{}});
+    QCOMPARE(status.value("rtkFixedBaseCheck"), QString());
+    const auto valid = [&status](Result result, double apart) {
+        status.report({.state = GPSBaseState::Valid,
+                       .position = kSurveyedPosition,
+                       .fixedCheck = GPSFixedBaseCheck{.result = result, .distanceMeters = apart}});
+    };
+    valid(Result::Plausible, 3.4);
+    QCOMPARE(status.value("rtkFixedBaseCheck"), QStringLiteral("3 m from the receiver's own position"));
+    valid(Result::Unchecked, qQNaN());
+    QCOMPARE(status.value("rtkFixedBaseCheck"),
+             QStringLiteral("Not checked: the receiver found no position of its own"));
+    // A distance too large for one place is the receiver's problem as well, which the connection line shows.
+    expectLogMessage("GPS.Receiver.GPSReceiver", QtWarningMsg,
+                     QRegularExpression(QStringLiteral("fixed base position is far")));
+    valid(Result::Implausible, 12449);
+    verifyExpectedLogMessage();
+    QCOMPARE(status.value("rtkFixedBaseCheck"), QStringLiteral("12.4 km from the receiver's own position"));
+    QVERIFY(status.harness.receiver.errorMessage().contains(QStringLiteral("12.4 km")));
+}
+
 void GPSReceiverSettingsTest::_surveySaveNeedsApplicationReceiver()
 {
     RTKSettingsFixture settings(gpsReceiverManufacturerForType(GPSType::UBlox));

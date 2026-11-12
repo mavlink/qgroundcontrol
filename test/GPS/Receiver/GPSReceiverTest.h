@@ -19,6 +19,7 @@ private slots:
     void _retiredWorkerCannotUpdateReplacement();
     void _receiverPublishesGcsPosition();
     void _fixedBasePositionIsGcsPosition();
+    void _fixedBaseCheck();
     void _surveyedBasePositionIsGcsPosition();
     void _workerCanOutliveManager();
     void _shutdownJoinsRetiredWorkers_data();

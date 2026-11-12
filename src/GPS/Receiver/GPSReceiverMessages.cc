@@ -1,5 +1,8 @@
 #include "GPSReceiverMessages.h"
 
+#include <cmath>
+
+#include "FactMetaData.h"
 #include "GPSReceiver.h"
 #include "GPSReceiverDescriptor.h"
 
@@ -60,6 +63,23 @@ QString identifyingStatus(const std::optional<GPSDetectionProgress>& detecting)
     return GPSReceiver::tr("Identifying receiver: trying %1 at %2 baud, as last time...")
         .arg(family)
         .arg(detecting->baud);
+}
+
+/// @a meters in the application's horizontal distance unit, as the GPS panels show a distance (GPSUnits.qml): whole
+/// meters or feet, and kilometers or miles from one of those on.
+QString distanceText(double meters)
+{
+    const QString unit = FactMetaData::appSettingsHorizontalDistanceUnitsString();
+    const double units = std::round(FactMetaData::metersToAppSettingsHorizontalDistanceUnits(meters).toDouble());
+    const bool feet = unit == QLatin1String("ft");
+    const double unitsPerLargeUnit = feet ? 5280 : 1000;
+    if (units < unitsPerLargeUnit) {
+        return QStringLiteral("%1 %2").arg(units, 0, 'f', 0).arg(unit);
+    }
+    const double largeUnits = units / unitsPerLargeUnit;
+    const QString number = QString::number(largeUnits, 'f', largeUnits < 99.95 ? 1 : 0);
+    //: %1 is a distance in miles or in kilometers, such as 12.3 or 1250
+    return feet ? GPSReceiver::tr("%1 mi").arg(number) : GPSReceiver::tr("%1 km").arg(number);
 }
 
 }  // namespace
@@ -181,6 +201,16 @@ QString outputOverflow(RTKSettings::ReceiverRole role, bool compactObservations)
         "Use a higher baud rate or turn on Compact RTCM corrections (MSM4).");
 }
 
+QString fixedBaseFar(double distanceMeters)
+{
+    //: %1 is a distance with its unit, such as 12.4 km
+    return GPSReceiver::tr(
+               "The fixed base position is %1 from the position the receiver found on its own. Rovers cannot "
+               "use corrections for a wrong base position: check its coordinates and their signs, and that "
+               "the saved site is this one.")
+        .arg(distanceText(distanceMeters));
+}
+
 QString fixLabel(GPSFixQuality fixType)
 {
     switch (fixType) {
@@ -236,6 +266,10 @@ QString receiverStatus(const ReceiverStatus& status)
         case GPSReceiver::State::Reconnecting:
             return GPSReceiver::tr("Connecting automatically...");
         case GPSReceiver::State::Connecting:
+            if (status.awaitingOwnPosition) {
+                return GPSReceiver::tr(
+                    "Waiting for the receiver's own position, to check the fixed position against it...");
+            }
             return status.identifying ? identifyingStatus(status.detecting)
                                       : GPSReceiver::tr("Connecting to receiver...");
         case GPSReceiver::State::Connected:
@@ -246,6 +280,11 @@ QString receiverStatus(const ReceiverStatus& status)
                                             : GPSReceiver::tr("Passive receiver connected; position only");
     }
     const bool determining = status.baseState == GPSBaseState::Active;
+    if (status.correctionsWithheld && status.awaitingOwnPosition) {
+        return GPSReceiver::tr(
+            "Waiting for the receiver's own position, to check the fixed position against it; "
+            "the base sends no corrections until then");
+    }
     if (status.correctionsWithheld) {
         if (determining && status.baseMode == Mode::BaseSurveyIn) {
             return GPSReceiver::tr("Survey-In active; the base sends no corrections until it completes");

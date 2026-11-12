@@ -1,6 +1,6 @@
 about M8P base profile, fixed base
 request type=ublox role=rtk-base mode=fixed lat=47.00000000 lon=8.00000000 alt=500.0000 accuracy=1.00000m compact=0 persistent=0 baud=0
-configure configured=1 baud=115200->115200 failure=none ready=1 elapsed=20ms
+configure configured=1 baud=115200->115200 failure=none ready=1 elapsed=30020ms
   identity "NEO-M8P-2 HPG 1.40"
   baud 115200 configured
   write "UBX-MON-VER" 8 acknowledged required
@@ -48,6 +48,7 @@ configure configured=1 baud=115200->115200 failure=none ready=1 elapsed=20ms
     00000000000000000000000000009f93
   write "UBX-CFG-TMODE3 disabled readback" 8 readback-verified required
     b56206710000776b
+  evidence "UBX-NAV-PVT own position" timed-out optional accepted=0 written=0
   write "UBX-CFG-TMODE3" 48 acknowledged required
     b562067128000000020180a1031c00b4c40450c3000000000000102700000000
     0000000000000000000000000000a8b7
@@ -69,7 +70,8 @@ configure configured=1 baud=115200->115200 failure=none ready=1 elapsed=20ms
     b56206010300f5610161e1
   write "UBX-CFG-MSG" 11 acknowledged required
     b56206010300f57f017f1d
-  survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1
+  survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1 check=waiting apart=nan
+  survey active=0 valid=1 duration=0s accuracy=- lat=47.00000000 lon=8.00000000 alt=500.0000 receipt=1 check=unchecked apart=nan
 stream failure=none ready=1
   satellites full=1 gps:view=2/1,use=1/1 glonass:view=1/1,use=1/1 sky gps-1:45/120/40/used gps-2:45/120/40/unused glonass-3:45/120/40/used
   position fix=3d lat=47.00000000 lon=8.00000000 msl=450.0000 ellipsoid=500.0000 hacc=1.5000 vacc=2.5000 hdop=nan vdop=nan speed=0.2240 course=1.107150 used=12 utc=1704164646000000 velocity=1 receipt=1

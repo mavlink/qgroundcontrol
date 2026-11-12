@@ -8,6 +8,7 @@
 
 #include "GPSCommandChannel.h"
 #include "GPSDeadline.h"
+#include "GPSProtocolMath.h"
 #include "GPSReceiverFamilies.h"
 #include "LittleEndian.h"
 #include "NMEASentence.h"
@@ -225,10 +226,11 @@ bool Protocol::_restartSurveyIn(GPSCommandChannel& channel)
     }
     (void) _transactValset(channel, Plan::disableRTCMOutput());
     if (const auto* fixed = std::get_if<GPSBaseStationConfig::Fixed>(&_base.mode)) {
-        if (!_transactValset(channel, Plan::fixedBase(*fixed)).succeeded()) {
+        const GPSFixedBaseCheck check = _checkFixedBase(channel, *fixed);
+        if (channel.failed() || !_transactValset(channel, Plan::fixedBase(*fixed)).succeeded()) {
             return false;
         }
-        return _startFixedBase(channel, *fixed) == RTCMActivation::Active;
+        return _startFixedBase(channel, *fixed, check) == RTCMActivation::Active;
     }
     const auto* survey = std::get_if<GPSBaseStationConfig::SurveyIn>(&_base.mode);
     if (!survey) {
@@ -254,12 +256,13 @@ bool Protocol::_restartLegacySurveyIn(GPSCommandChannel& channel)
         return false;
     }
     if (fixed) {
+        const GPSFixedBaseCheck check = _checkFixedBase(channel, *fixed);
         const auto timeMode = Wire::encode(Plan::legacyFixedBase(*fixed));
-        if (!_sendAcknowledged(channel, Msg::CFG_TMODE3, timeMode)) {
+        if (channel.failed() || !_sendAcknowledged(channel, Msg::CFG_TMODE3, timeMode)) {
             return false;
         }
         // The legacy activation fails on the outputs it confirmed, so its last command need not have failed.
-        const auto activation = _startFixedBase(channel, *fixed);
+        const auto activation = _startFixedBase(channel, *fixed, check);
         if (activation == RTCMActivation::Failed) {
             channel.failControl(QString(RTCM_ACTIVATION_FAILURE));
         }
@@ -333,11 +336,43 @@ bool Protocol::_waitForSurveyStop(GPSCommandChannel& channel)
     return true;
 }
 
-Protocol::RTCMActivation Protocol::_startFixedBase(GPSCommandChannel& channel, const GPSBaseStationConfig::Fixed& fixed)
+GPSFixedBaseCheck Protocol::_checkFixedBase(GPSCommandChannel& channel, const GPSBaseStationConfig::Fixed& fixed)
+{
+    constexpr GPSFixedBaseCheck UNCHECKED{.result = GPSFixedBaseCheck::Result::Unchecked};
+    GPSBaseStatus waiting{.fixedCheck = GPSFixedBaseCheck{}};
+    channel.context().publishBaseStatus(waiting);
+    // Delivered now: the next decode may be the wait's last.
+    (void) channel.flush();
+    // The legacy configuration has left time mode by now. A receiver that keeps its time mode keeps the position it
+    // holds, so the step is optional: an unanswered one is then settled by readback instead of refusing the next.
+    if (_identity.protocol27) {
+        auto leaveTimeMode = Plan::disableTimeMode();
+        leaveTimeMode.policy = Plan::NakPolicy::Tolerate;
+        if (!_transactValset(channel, leaveTimeMode).succeeded()) {
+            return UNCHECKED;
+        }
+    }
+    channel.beginCommand(
+        {.command = "UBX-NAV-PVT own position", .timeout = GPSFixedBaseCheck::WAIT, .required = false});
+    _ownPosition.reset();
+    _ownPositionWanted = true;
+    const bool found = channel.receiveUntil([this] { return _ownPosition.has_value(); }, GPSFixedBaseCheck::WAIT);
+    _ownPositionWanted = false;
+    if (channel.failed()) {
+        channel.finishCommand(channel.failureOutcome());
+        return UNCHECKED;
+    }
+    channel.finishCommand(found ? GPSCommandOutcome::ReadbackVerified : GPSCommandOutcome::TimedOut);
+    return found ? GPSProtocolMath::checkFixedBase(fixed.position, *_ownPosition) : UNCHECKED;
+}
+
+Protocol::RTCMActivation Protocol::_startFixedBase(GPSCommandChannel& channel, const GPSBaseStationConfig::Fixed& fixed,
+                                                   const GPSFixedBaseCheck& check)
 {
     const auto activation = _activateRTCMOutput(channel);
     if (activation == RTCMActivation::Active) {
-        channel.context().publishBaseStatus(GPSBaseState::Valid, {}, fixed.position);
+        GPSBaseStatus status{.state = GPSBaseState::Valid, .position = fixed.position, .fixedCheck = check};
+        channel.context().publishBaseStatus(status);
     }
     return activation;
 }

@@ -237,6 +237,58 @@ void ashtechFixedBaseValidBeforeCorrections(GPSTestClock& clock)
     QCOMPARE(receiver.peer.log.correctionsWhileValid, 1);
 }
 
+/// A fixed base is set up from the receiver's first position, which the receiver computed itself and which therefore
+/// checks the fixed one. The base starts whatever the result.
+void ashtechFixedBaseCheck(GPSTestClock& clock)
+{
+    using Result = GPSFixedBaseCheck::Result;
+
+    const struct
+    {
+        const char* position;
+        Result result;
+    } cases[] = {
+        // 20 m above the fixed position, and at 8 degrees west instead of east.
+        {"PASHR,POS,0,12,172814.0,4700.0000000,N,00800.0000000,E,520.000,0,90,10,0,1,1,1,1,", Result::Plausible},
+        {"PASHR,POS,0,12,172814.0,4700.0000000,N,00800.0000000,W,500.000,0,90,10,0,1,1,1,1,", Result::Implausible},
+    };
+
+    for (const auto& scenario : cases) {
+        clock.reset(GPSTestClock::START_US);
+        Base receiver(clock);
+        GPSConfig config{};
+        config.base = fixedBaseAt(47, 8, 500);
+        unsigned baudRate = 115200;
+        QVERIFY(receiver.driver.configure(config, baudRate));
+        (void) receiver.driver.consume({});
+        // Until the first position the base waits, and says what for.
+        QCOMPARE(receiver.surveys().size(), 1U);
+        QCOMPARE(receiver.surveys().back().state, GPSBaseState::Active);
+        QVERIFY(receiver.surveys().back().fixedCheck &&
+                receiver.surveys().back().fixedCheck->result == Result::Waiting);
+
+        (void) receiver.driver.consume(nmeaPacket(scenario.position));
+        (void) receiver.driver.receive(std::chrono::milliseconds{1});
+        QCOMPARE(receiver.driver.error(), GPSProtocolError::None);
+        QVERIFY(receiver.peer.sent("$PASHS,POS,4700.00000000,N,800.00000000,E,500.00000,PC1"));
+        const GPSBaseStatus valid = receiver.surveys().back();
+        QCOMPARE(valid.state, GPSBaseState::Valid);
+        QVERIFY(valid.fixedCheck && valid.fixedCheck->result == scenario.result);
+        QVERIFY(scenario.result == Result::Plausible ? std::abs(valid.fixedCheck->distanceMeters - 20) < 0.001
+                                                     : valid.fixedCheck->distanceMeters > 1000000);
+    }
+
+    // A base that surveys reports no check.
+    clock.reset(GPSTestClock::START_US);
+    Base survey(clock);
+    GPSConfig config{};
+    config.base = surveyInBase(1, 100s);
+    unsigned baudRate = 115200;
+    QVERIFY(survey.driver.configure(config, baudRate));
+    (void) survey.driver.consume({});
+    QVERIFY(!survey.surveys().back().fixedCheck);
+}
+
 /// The base setup waits for the first position, so a ready receiver that sends no $PASHR,POS at all fails the
 /// session; one that sends them without a fix keeps waiting.
 void ashtechNoPositionOutput(GPSTestClock& clock)
@@ -471,6 +523,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"survey-receipts", ashtechSurveyReceipts},
     {"failed-survey", ashtechFailedSurvey},
     {"fixed-base-valid-before-corrections", ashtechFixedBaseValidBeforeCorrections},
+    {"fixed-base-check", ashtechFixedBaseCheck},
     {"no-position-output", ashtechNoPositionOutput},
     {"other-board-is-not-a-base", ashtechOtherBoardIsNotABase},
     {"port-reply-needs-one-letter", ashtechPortReplyNeedsOneLetter},

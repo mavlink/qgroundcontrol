@@ -24,6 +24,11 @@ void addTrimble(Table& table)
     };
     table.add(type, "survey", "MB-Two, survey-in started by the first position", ashtech(), survey, stream);
     table.add(type, "fixed", "MB-Two, fixed base", ashtech(), fixed, stream);
+    table.add(type, "fixed-far", "MB-Two finds itself far from a fixed position with a wrong sign", ashtech(), fixed,
+              {
+                  {nmea("PASHR,POS,0,12,114501.00,4700.00000,N,00800.00000,W,500.000,0,90,10,0,1,1,1,1,"), 1000ms},
+                  {rtcm1005(), 1000ms},
+              });
     table.add(type, "explicit-baud-change", "Receiver at 38400 follows the speed command to 115200", at38400(true),
               surveyIn(1, 100, 38400));
     table.add(type, "explicit-baud-change-ignored", "Receiver at 38400 ignores the speed command", at38400(false),

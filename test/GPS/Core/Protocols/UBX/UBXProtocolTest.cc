@@ -1727,6 +1727,105 @@ void reconfigureForgetsIdentity(GPSTestClock& clock)
     QCOMPARE(f.driver.identity(), QString());
 }
 
+/// A fixed base is given its position only once the receiver, outside time mode, computed one of its own, or after
+/// GPSFixedBaseCheck::WAIT without one. The two are compared, and the base starts whatever the result.
+void fixedBaseCheck(GPSTestClock& clock)
+{
+    using Result = GPSFixedBaseCheck::Result;
+    using Fix = UBXReceiverModel::OwnPositionFix;
+    constexpr uint8_t TIME_ONLY = 5;
+
+    const struct
+    {
+        const char* name;
+        bool legacy;
+        std::optional<GPSEllipsoidPosition> own;
+        Fix fix;
+        Result result;
+        /// Whether the receiver's position ended the wait.
+        bool found;
+    } cases[] = {
+        {"near", false, GPSEllipsoidPosition{47, 8, 520}, {}, Result::Plausible, true},
+        {"near-legacy", true, GPSEllipsoidPosition{47, 8, 520}, {}, Result::Plausible, true},
+        // 47 degrees north and 8 degrees west: the longitude's sign.
+        {"wrong-sign", false, GPSEllipsoidPosition{47, -8, 500}, {}, Result::Implausible, true},
+        {"wrong-sign-legacy", true, GPSEllipsoidPosition{47, -8, 500}, {}, Result::Implausible, true},
+        {"no-position", false, std::nullopt, {}, Result::Unchecked, false},
+        {"no-position-legacy", true, std::nullopt, {}, Result::Unchecked, false},
+        // The position a receiver holds in time mode, and one it puts further off than the check allows, judge nothing.
+        {"time-only-fix", false, GPSEllipsoidPosition{47, -8, 500}, Fix{.fixType = TIME_ONLY}, Result::Unchecked,
+         false},
+        {"inaccurate-fix", false, GPSEllipsoidPosition{47, -8, 500}, Fix{.horizontalAccuracyMm = 50001},
+         Result::Unchecked, false},
+    };
+
+    for (const auto& scenario : cases) {
+        Fixture f(clock);
+        f.receiver.model.legacy = scenario.legacy;
+        if (scenario.legacy) {
+            f.receiver.model.module = "NEO-M8P";
+        }
+        // Left in fixed mode by an earlier session, when it reports the position it holds.
+        f.receiver.model.timeMode = 2;
+        f.receiver.model.ownPosition = scenario.own;
+        f.receiver.model.ownPositionFix = scenario.fix;
+        f.base = fixedBaseAt(47, 8, 500, 1);
+        const uint64_t started = clock.nowUs();
+        QVERIFY2(f.configure(), scenario.name);
+        QVERIFY2(f.driver.receiverReady(), scenario.name);
+        // Time mode is left for the receiver's own position, and the fixed position follows either way.
+        QVERIFY2(f.receiver.model.modes == std::vector<uint32_t>({0, 2}), scenario.name);
+        QCOMPARE(f.receiver.model.timeMode, 2U);
+        QCOMPARE(f.receiver.model.rtcmEnables, 1U);
+        const auto statuses = f.receiver.log.reports<GPSBaseStatus>();
+        QVERIFY2(statuses.size() == 2, scenario.name);
+        // The wait is reported before it starts, the result with the valid position.
+        QCOMPARE(statuses[0].state, GPSBaseState::Inactive);
+        QVERIFY(statuses[0].fixedCheck && statuses[0].fixedCheck->result == Result::Waiting);
+        QCOMPARE(statuses[1].state, GPSBaseState::Valid);
+        QVERIFY2(statuses[1].fixedCheck && statuses[1].fixedCheck->result == scenario.result, scenario.name);
+        const auto wait =
+            std::ranges::find(f.evidence(), QByteArray("UBX-NAV-PVT own position"), &GPSConfigurationEvidence::command);
+        QVERIFY2(wait != f.evidence().end() && !wait->required, scenario.name);
+        QVERIFY2(wait->outcome == (scenario.found ? GPSCommandOutcome::ReadbackVerified : GPSCommandOutcome::TimedOut),
+                 scenario.name);
+        const auto elapsed = std::chrono::microseconds(clock.nowUs() - started);
+        if (scenario.found) {
+            QVERIFY2(elapsed < GPSFixedBaseCheck::WAIT, scenario.name);
+            const double apart = statuses[1].fixedCheck->distanceMeters;
+            QVERIFY2(scenario.result == Result::Plausible ? std::abs(apart - 20) < 0.001 : apart > 1000000,
+                     scenario.name);
+        } else {
+            // The base waits no longer than that for a receiver without a position.
+            QVERIFY2(elapsed >= GPSFixedBaseCheck::WAIT && elapsed < GPSFixedBaseCheck::WAIT + 2s, scenario.name);
+        }
+        QVERIFY2(f.log.warnings().isEmpty(), scenario.name);
+    }
+
+    // A receiver that does not leave time mode keeps the position it holds: unchecked without a wait, and the base
+    // starts.
+    Fixture kept(clock);
+    kept.receiver.model.disableReply = UBXReceiverModel::DisableReply::Nak;
+    kept.receiver.model.timeMode = 2;
+    kept.receiver.model.ownPosition = GPSEllipsoidPosition{47, -8, 500};
+    kept.base = fixedBaseAt(47, 8, 500, 1);
+    const uint64_t started = clock.nowUs();
+    QVERIFY(kept.configure());
+    QVERIFY(std::chrono::microseconds(clock.nowUs() - started) < 1s);
+    QCOMPARE(kept.receiver.log.latest<GPSBaseStatus>().state, GPSBaseState::Valid);
+    QVERIFY(kept.receiver.log.latest<GPSBaseStatus>().fixedCheck->result == Result::Unchecked);
+    QVERIFY(std::ranges::find(kept.evidence(), QByteArray("UBX-NAV-PVT own position"),
+                              &GPSConfigurationEvidence::command) == kept.evidence().end());
+
+    // A base that surveys reports no check.
+    Fixture survey(clock);
+    QVERIFY(survey.configure());
+    survey.receiver.model.queueSurveyReply(SurveyReply::Valid);
+    (void) survey.driver.receive(100ms);
+    QCOMPARE(survey.receiver.log.latest<GPSBaseStatus>().state, GPSBaseState::Valid);
+    QVERIFY(!survey.receiver.log.latest<GPSBaseStatus>().fixedCheck);
+}
+
 constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"isolated-frame-control", isolatedFrameAndControl},
     {"late-readback-replies", lateReadbackReplies},
@@ -1748,6 +1847,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"identification-write-budget", identificationWriteBudget},
     {"out-of-range-coordinates", outOfRangeCoordinates},
     {"largest-fixed-accuracy", largestFixedAccuracy},
+    {"fixed-base-check", fixedBaseCheck},
     {"navigation-fix-flags", navigationFixFlags},
     {"transactional-frames", transactionalFrames},
     {"reentrant-payload", reentrantPayload},

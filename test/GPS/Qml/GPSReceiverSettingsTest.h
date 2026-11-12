@@ -14,6 +14,7 @@ private slots:
     void _surveyProgress();
     void _basePositionShownOnceValid_data();
     void _basePositionShownOnceValid();
+    void _fixedBaseCheckRow();
     void _surveySaveNeedsApplicationReceiver();
     void _surveySavedAsSite();
     void _baseSitePicker();

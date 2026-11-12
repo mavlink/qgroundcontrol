@@ -85,6 +85,16 @@ void addUblox(Table& table)
     table.add(type, "profile-m8p-base-fixed-rtcm-rejected", "M8P rejects RTCM activation for a fixed base",
               ubxProfile(Receiver::M8PBase, [](UBXBench& b) { b.model.rejectRtcmActivation = true; }), fixed);
 
+    // The check of a fixed position against the one the receiver computes itself, a second after it left time mode.
+    // The receivers above have none, and are given the fixed position after the wait for one.
+    const auto finds = [](GPSEllipsoidPosition own) { return [own](UBXBench& b) { b.model.ownPosition = own; }; };
+    table.add(type, "profile-f9p-fixed-checked", "F9P finds itself 20 m from the fixed position",
+              ubxProfile(Receiver::F9P, finds({47, 8, 520})), fixed);
+    table.add(type, "profile-f9p-fixed-far", "F9P finds itself far from a fixed position with a wrong sign",
+              ubxProfile(Receiver::F9P, finds({47, -8, 500})), fixed);
+    table.add(type, "profile-m8p-base-fixed-checked", "M8P finds itself 20 m from the fixed position",
+              ubxProfile(Receiver::M8PBase, finds({47, 8, 520})), fixed);
+
     // The gate on a base's corrections: GPSDriver forwards none while it configures the receiver, and none of a
     // survey before the base position is valid.
     table.add(type, "profile-f9p-fixed-rtcm-while-configuring", "F9P sends a correction while it is configured",

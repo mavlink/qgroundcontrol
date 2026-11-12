@@ -1,6 +1,6 @@
 about F9P rejects RTCM activation for a fixed base
 request type=ublox role=rtk-base mode=fixed lat=47.00000000 lon=8.00000000 alt=500.0000 accuracy=1.00000m compact=0 persistent=0 baud=0
-configure configured=0 baud=115200->115200 failure=protocol ready=0 elapsed=20ms
+configure configured=0 baud=115200->115200 failure=protocol ready=0 elapsed=30020ms
   identity "ZED-F9P HPG 1.32"
   error "u-blox receiver rejected 'UBX-CFG-VALSET'"
   baud 115200 configured
@@ -39,6 +39,9 @@ configure configured=0 baud=115200->115200 failure=protocol ready=0 elapsed=20ms
     912000d4029120000403912000060391200019039120001b03912000d7029120
     00d9029120005f0391200061039120006403912000660391200069039120006b
     039120006e039120007003912000eb56
+  write "UBX-CFG-VALSET" 17 acknowledged optional
+    b562068a0900000100000100032000be7f
+  evidence "UBX-NAV-PVT own position" timed-out optional accepted=0 written=0
   write "UBX-CFG-VALSET" 69 acknowledged required
     b562068a3d0000010000010003200202000320010900034080a1031c0c000320
     000a00034000b4c4040d000320000b00034050c300000e000320000f00034010
@@ -49,3 +52,4 @@ configure configured=0 baud=115200->115200 failure=protocol ready=0 elapsed=20ms
     2001d702912001d9029120015f03912000610391200064039120006603912000
     69039120006b039120006e03912000700391200089009120008b009120001600
     91200218009120025860
+  survey active=0 valid=0 duration=0s accuracy=- lat=nan lon=nan alt=nan receipt=1 check=waiting apart=nan

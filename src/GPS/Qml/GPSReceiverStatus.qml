@@ -138,6 +138,8 @@ QGCGroupBox {
 
     GPSReceiverBasePosition { receiver: root.receiver; facts: root.facts }
 
+    GPSReceiverBaseCheck { receiver: root.receiver }
+
     QGCNoteLabel {
         objectName: "rtkSurveyCompletePrompt"
         visible: surveySave.offered

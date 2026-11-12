@@ -1,5 +1,6 @@
 #include "GPSProtocolMathTest.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <ctime>
@@ -78,6 +79,39 @@ void GPSProtocolMathTest::_ecefInverse()
         QVERIFY(std::abs(restored.longitudeDegrees - position.longitudeDegrees) < 1e-9);
     }
     QVERIFY(std::abs(restored.altitudeMeters - position.altitudeMeters) < 1e-6);
+}
+
+void GPSProtocolMathTest::_fixedBaseCheck_data()
+{
+    using Result = GPSFixedBaseCheck::Result;
+    QTest::addColumn<GPSEllipsoidPosition>("own");
+    QTest::addColumn<Result>("result");
+    QTest::addColumn<double>("apart");
+    // Against 47 degrees north, 8 degrees east and 500 m. A metre of latitude is about 9e-6 degrees.
+    QTest::newRow("same") << GPSEllipsoidPosition{47, 8, 500} << Result::Plausible << 0.0;
+    QTest::newRow("within-reach") << GPSEllipsoidPosition{47, 8, 549} << Result::Plausible << 49.0;
+    QTest::newRow("beyond-reach") << GPSEllipsoidPosition{47, 8, 551} << Result::Implausible << 51.0;
+    QTest::newRow("height-below") << GPSEllipsoidPosition{47, 8, 440} << Result::Implausible << 60.0;
+    QTest::newRow("across-the-street") << GPSEllipsoidPosition{47.0004, 8, 500} << Result::Plausible << 44.472;
+    QTest::newRow("next-village") << GPSEllipsoidPosition{47.02, 8, 500} << Result::Implausible << 2223.6;
+    QTest::newRow("wrong-longitude-sign") << GPSEllipsoidPosition{47, -8, 500} << Result::Implausible << 1213041.0;
+    QTest::newRow("no-position") << GPSEllipsoidPosition{} << Result::Unchecked << qQNaN();
+}
+
+void GPSProtocolMathTest::_fixedBaseCheck()
+{
+    QFETCH(GPSEllipsoidPosition, own);
+    QFETCH(GPSFixedBaseCheck::Result, result);
+    QFETCH(double, apart);
+    const GPSFixedBaseCheck check = GPSProtocolMath::checkFixedBase({47, 8, 500}, own);
+    QCOMPARE(check.result, result);
+    if (std::isnan(apart)) {
+        QVERIFY(std::isnan(check.distanceMeters));
+    } else {
+        // The far distances are as good as their figures.
+        QVERIFY2(std::abs(check.distanceMeters - apart) <= (std::max) (0.01, apart * 1e-4),
+                 qPrintable(QString::number(check.distanceMeters, 'f', 3)));
+    }
 }
 
 void GPSProtocolMathTest::_utcMicroseconds_data()

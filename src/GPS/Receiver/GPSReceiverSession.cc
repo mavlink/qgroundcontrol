@@ -17,6 +17,9 @@ void GPSBaseStationState::applyStatus(const GPSBaseStatus& status)
         return;
     }
     state = status.state;
+    if (status.fixedCheck) {
+        fixedCheck = status.fixedCheck;
+    }
     const bool located =
         std::isfinite(status.position.latitudeDegrees) && std::isfinite(status.position.longitudeDegrees);
     const double accuracy =
