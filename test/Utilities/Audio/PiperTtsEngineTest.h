@@ -21,6 +21,8 @@ private slots:
     void _testPiperExitIsAnError();
     void _testChangingLocaleRestartsPiper();
     void _testSaysEachTextAsOneLine();
+    void _testEmptyTextKeepsEarlierUtterance_data();
+    void _testEmptyTextKeepsEarlierUtterance();
     void _testStopDiscardsCanceledUtterances();
 
 private:

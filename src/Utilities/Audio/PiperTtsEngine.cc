@@ -316,7 +316,10 @@ void PiperTtsEngine::say(const QString& text)
     const QString line = text.simplified();
     _setState(QTextToSpeech::State::Speaking);
     if (line.isEmpty()) {
-        _setState(QTextToSpeech::State::Ready);
+        // Nothing to say, but an earlier utterance may still be waiting for Piper or playing
+        if ((_pendingCount == 0) && _unsentInput.isEmpty() && _playingFile.isEmpty()) {
+            _setState(QTextToSpeech::State::Ready);
+        }
         return;
     }
 

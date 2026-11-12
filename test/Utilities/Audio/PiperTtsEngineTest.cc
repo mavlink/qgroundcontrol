@@ -346,6 +346,45 @@ void PiperTtsEngineTest::_testSaysEachTextAsOneLine()
     QCOMPARE(searchPath.utterances(), (QStringList{QStringLiteral("first utterance"), QStringLiteral("second")}));
 }
 
+void PiperTtsEngineTest::_testEmptyTextKeepsEarlierUtterance_data()
+{
+    QTest::addColumn<bool>("piperRunning");
+
+    // The earlier utterance is kept until a candidate is verified to be Piper
+    QTest::newRow("earlier utterance not sent yet") << false;
+    QTest::newRow("earlier utterance sent to Piper") << true;
+}
+
+void PiperTtsEngineTest::_testEmptyTextKeepsEarlierUtterance()
+{
+    QFETCH(bool, piperRunning);
+
+    PiperSearchPath searchPath;
+    QVERIFY(searchPath.isValid());
+    QVERIFY(searchPath.installPiper());
+    // Qt's own complaint about the empty WAV files the stand-in names.
+    ignoreLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("^QSoundEffect")));
+
+    PiperTtsEngine engine;
+    if (piperRunning) {
+        QTRY_COMPARE_WITH_TIMEOUT(searchPath.arguments().size(), 5, TestTimeout::mediumMs());
+    }
+    QSignalSpy stateSpy(&engine, &QTextToSpeechEngine::stateChanged);
+    expectLogMessage(kPiperLogCategory, QtWarningMsg, QRegularExpression(QStringLiteral("Failed to play .*/1\\.wav")));
+    engine.say(QStringLiteral("earlier"));
+    QCOMPARE(engine.state(), QTextToSpeech::State::Speaking);
+
+    // There is nothing to say, but the engine is not done with the earlier utterance.
+    engine.say(QStringLiteral(" \n "));
+    QCOMPARE(engine.state(), QTextToSpeech::State::Speaking);
+    QCOMPARE(stateSpy.count(), 1);
+
+    QTRY_COMPARE_WITH_TIMEOUT(engine.state(), QTextToSpeech::State::Ready, TestTimeout::mediumMs());
+    verifyExpectedLogMessage();
+    QCOMPARE(stateSpy.count(), 2);
+    QCOMPARE(searchPath.utterances(), QStringList{QStringLiteral("earlier")});
+}
+
 void PiperTtsEngineTest::_testStopDiscardsCanceledUtterances()
 {
     PiperSearchPath searchPath;
