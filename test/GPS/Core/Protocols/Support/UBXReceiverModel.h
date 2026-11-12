@@ -137,8 +137,15 @@ public:
     /// The NAK of a CFG-VALSET with an unsupported key is lost.
     bool loseUnsupportedNak = false;
     DisableReply disableReply = DisableReply::Ack;
+    /// How the receiver answers a readback, a CFG-TMODE3 poll or a CFG-VALGET. It answers a poll of class CFG with the
+    /// polled message and then acknowledges it, so an answer is followed by an ACK-ACK that names the polled message.
     ReadbackReply readbackReply = ReadbackReply::Value;
     quint32 faultReadbackKey = 0;
+    /// That ACK-ACK arrives this long after the readback, in order with other replies: output the receiver sends
+    /// unasked can come between the answer and it.
+    std::chrono::microseconds readbackAckDelay{0};
+    /// Legacy receivers reject the fixed position of a CFG-TMODE3.
+    bool rejectFixedPosition = false;
     /// The time mode in effect: 0 disabled, 1 survey-in, 2 fixed.
     unsigned timeMode = 0;
     /// Where the receiver finds itself outside time mode: it then sends ownPositionFix there OWN_POSITION_DELAY after

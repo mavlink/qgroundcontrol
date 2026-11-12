@@ -26,6 +26,12 @@ struct MessageRates
     PortRates rates;
 };
 
+/// The time mode a CFG-TMODE3 poll returns.
+struct TimeMode
+{
+    uint8_t mode;
+};
+
 /// Owns control-response correlation: decoding reports replies through accept(); only configuration opens requests.
 class ReceiverController
 {
@@ -77,6 +83,9 @@ public:
                 ++_ratePoll->repliesBeforeRates;
                 _ratePoll->rejected = _ratePoll->rejected || !response.accepted;
             }
+        }
+        if (_timeModePoll && _timeModePoll->mode && response.accepted && response.message == Msg::CFG_TMODE3.value()) {
+            _timeModePoll->acknowledged = true;
         }
     }
 
@@ -171,6 +180,29 @@ public:
         }
     }
 
+    /// Attributes the replies to a CFG-TMODE3 poll. A receiver answers a poll with the polled message and then
+    /// acknowledges it, and replies arrive in order: an ACK ahead of the time mode answers an earlier command, and the
+    /// one after it ends the poll. That ACK names only CFG-TMODE3, so a poll left without it has a reply still to come
+    /// that the next CFG-TMODE3 would take for its own.
+    void beginTimeModePoll() { _timeModePoll = TimeModePoll{}; }
+
+    void finishTimeModePoll() { _timeModePoll.reset(); }
+
+    bool timeModePollPending() const { return _timeModePoll.has_value(); }
+
+    /// The polled time mode, once it arrived.
+    std::optional<uint8_t> polledTimeMode() const { return _timeModePoll ? _timeModePoll->mode : std::nullopt; }
+
+    /// The poll's ACK followed its time mode: nothing more is to arrive for it.
+    bool timeModePollSettled() const { return _timeModePoll && _timeModePoll->mode && _timeModePoll->acknowledged; }
+
+    void accept(TimeMode response)
+    {
+        if (_timeModePoll) {
+            _timeModePoll->mode = response.mode;
+        }
+    }
+
 private:
     struct RatePoll
     {
@@ -178,6 +210,12 @@ private:
         std::optional<PortRates> rates{};
         unsigned repliesBeforeRates = 0;
         bool rejected = false;
+        bool acknowledged = false;
+    };
+
+    struct TimeModePoll
+    {
+        std::optional<uint8_t> mode{};
         bool acknowledged = false;
     };
 
@@ -209,6 +247,7 @@ private:
     /// Readbacks settled without their reply, each of which can still arrive.
     unsigned _readbackRepliesOutstanding = 0;
     std::optional<RatePoll> _ratePoll;
+    std::optional<TimeModePoll> _timeModePoll;
 };
 
 }  // namespace UBX

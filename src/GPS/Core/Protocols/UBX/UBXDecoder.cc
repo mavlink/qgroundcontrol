@@ -228,7 +228,7 @@ void Protocol::_setMode(const Mode& mode, GPSStreamDemux& stream)
 
 bool Protocol::completeReceiveCycle(GPSReceiveUpdates handled)
 {
-    const bool ready = (_timeModeReadbackPending && _timeModeReadback.has_value()) ||
+    const bool ready = _controller.timeModePollSettled() ||
                        (_controller.readbackPending() && _controller.readbackReady()) ||
                        (_ready ? handled.testFlag(GPSReceiveUpdate::Position) : handled != GPSReceiveUpdates{});
     if (ready) {
@@ -298,7 +298,7 @@ bool Protocol::_accept(uint16_t message, std::span<const uint8_t> payload)
     }
     switch (message) {
         case Msg::CFG_TMODE3.value():
-            return _timeModeReadbackPending;
+            return _controller.timeModePollPending();
         case Msg::CFG_VALGET.value():
             return _controller.readbackPending() || _controller.readbackReplyOutstanding();
         case Msg::CFG_MSG.value():
@@ -312,10 +312,12 @@ bool Protocol::_accept(uint16_t message, std::span<const uint8_t> payload)
         case Msg::INF_WARNING.value():
             return payload.size() < UBX::MAX_CONTROL_PAYLOAD_SIZE;
         case Msg::ACK_ACK.value():
-            return _controller.awaitingAcknowledgement() || _controller.ratePollPending();
+            return _controller.awaitingAcknowledgement() || _controller.ratePollPending() ||
+                   _controller.timeModePollPending();
         case Msg::ACK_NAK.value():
             return _controller.awaitingAcknowledgement() || _controller.readbackPending() ||
-                   _controller.readbackReplyOutstanding() || _controller.ratePollPending() || _timeModeReadbackPending;
+                   _controller.readbackReplyOutstanding() || _controller.ratePollPending() ||
+                   _controller.timeModePollPending();
         default:
             return disable();
     }
@@ -474,7 +476,7 @@ GPSReceiveUpdates Protocol::_decodeHandled(uint16_t message, std::span<const uin
         }
         case Msg::CFG_TMODE3.value():
             if (payload[0] == 0 && payload[1] == 0) {
-                _timeModeReadback = payload[2];
+                _controller.accept(UBX::TimeMode{payload[2]});
             }
             return {};
         case Msg::CFG_VALGET.value():

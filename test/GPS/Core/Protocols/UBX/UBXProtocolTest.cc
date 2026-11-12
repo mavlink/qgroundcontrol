@@ -1354,6 +1354,32 @@ void legacyRTCMRatePolls(GPSTestClock& clock)
     }
 }
 
+/// A legacy receiver answers the CFG-TMODE3 poll that reads the disabled time mode back with the message and then an
+/// ACK-ACK, which names only CFG-TMODE3. The readback ends with that ACK, so that it is not taken for the reply to the
+/// time mode written next: the profile-m8p-base-fixed-rejected golden pins a fixed position rejected after it.
+void legacyTimeModePollAcknowledgement(GPSTestClock& clock)
+{
+    // A poll whose ACK is still to come when its time is up is not answered: no time mode is written after it.
+    Fixture f(clock);
+    f.receiver.model.legacy = true;
+    f.receiver.model.module = "NEO-M8P";
+    f.receiver.model.readbackAckDelay = UBX::Plan::CONFIG_TIMEOUT + 50ms;
+    f.base = fixedBaseAt(47, 8, 500, 1);
+    QVERIFY(!f.configure());
+    QCOMPARE(f.evidence().back().command, QByteArray("UBX-CFG-TMODE3 disabled readback"));
+    QCOMPARE(f.evidence().back().outcome, GPSCommandOutcome::TimedOut);
+    QCOMPARE(f.receiver.model.modes, std::vector<uint32_t>({0}));
+
+    // Replies arrive in order: an ACK ahead of the polled time mode answers an earlier command.
+    UBX::ReceiverController controller;
+    controller.beginTimeModePoll();
+    controller.accept(UBX::Acknowledgement{Msg::CFG_TMODE3.value(), true});
+    controller.accept(UBX::TimeMode{.mode = 0});
+    QVERIFY(controller.polledTimeMode() == 0 && !controller.timeModePollSettled());
+    controller.accept(UBX::Acknowledgement{Msg::CFG_TMODE3.value(), true});
+    QVERIFY(controller.timeModePollSettled());
+}
+
 /// A slow M8 answers each command up to a second late, so RTCM activation after survey-in does not fit one streaming
 /// service. Activation waits for the base rate's ACK, sends a rate only with time left for its poll, and resumes in the
 /// next service: the session and the finished survey survive, and every RTCM message is configured.
@@ -1939,6 +1965,7 @@ constexpr GPSTest::ProtocolScenario SCENARIOS[] = {
     {"acknowledged-and-rejected-in-one-read", acknowledgedAndRejectedInOneRead},
     {"rejected-optional-batch", rejectedOptionalBatch},
     {"legacy-rtcm-rate-polls", legacyRTCMRatePolls},
+    {"legacy-time-mode-poll-acknowledgement", legacyTimeModePollAcknowledgement},
     {"slow-legacy-rtcm-activation", slowLegacyRTCMActivation},
     {"silent-legacy-rtcm-activation", silentLegacyRTCMActivation},
     {"integrity-original-receipts", integrityReceipts},

@@ -296,21 +296,22 @@ bool Protocol::_disableTimeMode(GPSCommandChannel& channel)
     if (!_sendAcknowledged(channel, Msg::CFG_TMODE3, disabled)) {
         return false;
     }
-    _timeModeReadbackPending = true;
-    _timeModeReadback.reset();
+    auto& controller = _controller;
+    controller.beginTimeModePoll();
     if (!_send(channel, Msg::CFG_TMODE3, {}, {"UBX-CFG-TMODE3 disabled readback", Plan::CONFIG_TIMEOUT})) {
-        _timeModeReadbackPending = false;
+        controller.finishTimeModePoll();
         return false;
     }
-    const auto result = channel.awaitReply([this] {
-        if (_controller.lateRejection()) {
+    // The readback ends with the poll's ACK. The receiver's own output can come ahead of it and end the wait that
+    // follows, and the time mode written after that wait would then take the ACK for its own.
+    const auto result = channel.awaitReply([&controller] {
+        const auto mode = controller.polledTimeMode();
+        if (controller.lateRejection() || (mode && *mode != 0)) {
             return GPSCommandOutcome::Rejected;
         }
-        return !_timeModeReadback        ? GPSCommandOutcome::Pending
-               : *_timeModeReadback == 0 ? GPSCommandOutcome::ReadbackVerified
-                                         : GPSCommandOutcome::Rejected;
+        return controller.timeModePollSettled() ? GPSCommandOutcome::ReadbackVerified : GPSCommandOutcome::Pending;
     });
-    _timeModeReadbackPending = false;
+    controller.finishTimeModePoll();
     return result.outcome == GPSCommandOutcome::ReadbackVerified;
 }
 

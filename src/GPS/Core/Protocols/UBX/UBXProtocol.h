@@ -200,9 +200,6 @@ private:
     ReceiverController _controller{};
     Mode _mode{};
     Requests _requests{};
-    /// CFG-TMODE3 is decoded while configuration polls it.
-    bool _timeModeReadbackPending = false;
-    std::optional<uint8_t> _timeModeReadback = std::nullopt;
     /// NAV-SVIN reported survey-in neither active nor valid.
     bool _surveyStopped = false;
     /// NAV-PVT is decoded for the receiver's own position, which _checkFixedBase() waits for.

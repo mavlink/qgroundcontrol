@@ -705,7 +705,10 @@ bool UBXReceiverModel::_handleLegacyFrame(ScriptedReceiver& receiver, uint16_t m
             disabledAt = _clock->nowUs();
             return _disableTimeMode(receiver, CFG_TMODE3, [] {});
         }
-        timeMode = mode;
+        unsupported = mode == 2 && rejectFixedPosition;
+        if (!unsupported) {
+            timeMode = mode;
+        }
     }
 
     const bool reject = unsupported || (rejectRtcmActivation && message == UBX::Msg::CFG_RATE.value() &&
@@ -796,6 +799,7 @@ bool UBXReceiverModel::_replyToSetting(ScriptedReceiver& receiver, uint8_t messa
 
 bool UBXReceiverModel::_replyToReadback(ScriptedReceiver& receiver, uint8_t messageId, QByteArray payload, quint32 key)
 {
+    const uint8_t polled = messageId;
     const auto reply = faultReadbackKey == 0 || faultReadbackKey == key ? readbackReply : ReadbackReply::Value;
     switch (reply) {
         case ReadbackReply::Value:
@@ -851,6 +855,7 @@ bool UBXReceiverModel::_replyToReadback(ScriptedReceiver& receiver, uint8_t mess
         response.back() ^= 0x01;
     }
     _queueResponse(receiver, Response{response});
+    _queueAck(receiver, polled, true, readbackAckDelay);
     return true;
 }
 
