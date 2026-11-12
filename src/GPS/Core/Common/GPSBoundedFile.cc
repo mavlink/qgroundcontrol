@@ -20,11 +20,13 @@ bool GPSBoundedFile::open(const QString& file)
     close();
     _file.setFileName(file);
     _bytes = 0;
+    _end = End::None;
+    _errorString.clear();
     const QString directory = QFileInfo(_file).absolutePath();
     if (!QDir().mkpath(directory)) {
-        _fail(QStringLiteral("Cannot create the folder %1").arg(directory));
+        _fail(End::FolderError, QStringLiteral("Cannot create the folder %1").arg(directory));
     } else if (!_file.open(QIODevice::WriteOnly | QIODevice::NewOnly)) {
-        _fail(_file.errorString());
+        _fail(End::FileError, _file.errorString());
     }
     return isOpen();
 }
@@ -38,9 +40,11 @@ bool GPSBoundedFile::write(const QByteArray& record)
     if (_bytes + record.size() > _maxBytes) {
         qCWarning(_category) << _subject << "reached its size limit of" << _maxBytes
                              << "bytes and stopped:" << _file.fileName();
+        // Before the last records are written out, whose failure is the reason to report instead.
+        _end = End::SizeLimit;
         close();
     } else if (_file.write(record) != record.size()) {
-        _fail(_file.errorString());
+        _fail(End::FileError, _file.errorString());
     } else {
         _bytes += record.size();
     }
@@ -50,7 +54,7 @@ bool GPSBoundedFile::write(const QByteArray& record)
 bool GPSBoundedFile::flush()
 {
     if (isOpen() && !_file.flush()) {
-        _fail(_file.errorString());
+        _fail(End::FileError, _file.errorString());
     }
     return isOpen();
 }
@@ -62,8 +66,10 @@ void GPSBoundedFile::close()
     }
 }
 
-void GPSBoundedFile::_fail(const QString& error)
+void GPSBoundedFile::_fail(End end, const QString& error)
 {
     qCWarning(_category) << _subject << "stopped after a file error:" << _file.fileName() << error;
+    _end = end;
+    _errorString = end == End::FileError ? error : QString();
     _file.close();
 }

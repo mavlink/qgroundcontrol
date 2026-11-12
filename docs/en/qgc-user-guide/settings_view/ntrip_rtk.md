@@ -87,4 +87,4 @@ It is off each time QGroundControl starts. Each time it is turned on it starts a
 The file's path is shown below the switch while the log is written.
 The file holds the RTCM 3 messages exactly as vehicles and UDP forwarding receive them, one after the other, which is the raw RTCM 3 format other tools read: only the stream selected for vehicles, without the messages the RTCM message filter leaves out.
 It therefore includes the base station location, so share it only where that is acceptable.
-A log stops when its file reaches 256 MB or cannot be written: the switch turns off, the application log reports it and the path is no longer shown. The corrections continue either way.
+A log stops when its file reaches 256 MB or cannot be written: the switch turns off, the path is no longer shown, and a message below the switch says why until the log is turned on again. A log that cannot start says why in the same place. The corrections continue either way.

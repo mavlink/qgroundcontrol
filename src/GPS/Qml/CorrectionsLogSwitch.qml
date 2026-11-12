@@ -7,7 +7,7 @@ import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.GPS
 
-/// Switch that logs the correction stream sent to vehicles, with the file being written.
+/// Switch that logs the correction stream sent to vehicles, with the file being written or why none is.
 ColumnLayout {
     id: root
 
@@ -29,5 +29,13 @@ ColumnLayout {
         objectName: "correctionsLogFile"
         visible: text !== ""
         text: root.corrections.logFile !== "" ? qsTr("Log file: %1").arg(root.corrections.logFile) : ""
+    }
+
+    // Why the log could not start or stopped on its own, which turns the switch off.
+    QGCNoteLabel {
+        objectName: "correctionsLogError"
+        visible: text !== ""
+        text: root.corrections.logError
+        warning: true
     }
 }

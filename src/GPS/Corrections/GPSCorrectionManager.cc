@@ -10,6 +10,7 @@
 #include <QtNetwork/QNetworkInterface>
 
 #include "MonotonicClock.h"
+#include "QGCFormat.h"
 #include "QGCLoggingCategory.h"
 #include "RTCMFramer.h"
 #include "RTCMStationPosition.h"
@@ -69,7 +70,8 @@ GPSCorrectionManager::GPSCorrectionManager(QObject* parent, RuntimeScheduler* sc
     , _selectedRate([scheduler = _scheduler]() { return scheduler->nowUs(); })
     , _udpInput(this, _scheduler)
     , _logDirectory(dependencies.logDirectory)
-    , _log(dependencies.maxLogFileBytes)
+    , _maxLogFileBytes(dependencies.maxLogFileBytes)
+    , _log(_maxLogFileBytes)
 {
     qCDebug(GPSCorrectionManagerLog) << this;
     connect(&_udpInput, &RTCMUdpInput::frameReceived, this,
@@ -83,7 +85,7 @@ GPSCorrectionManager::GPSCorrectionManager(QObject* parent, RuntimeScheduler* sc
         _selectedRate.refresh();
         _refresh();
         if (_log.isOpen() && !_log.flush()) {
-            emit logChanged();
+            _reportLogStopped();
         }
     });
     _refresh();
@@ -278,7 +280,7 @@ void GPSCorrectionManager::_submit(GPSCorrectionSettings::CorrectionSource sourc
         }
         _forwardToUdpOutput(data);
         if (_log.isOpen() && !_log.write(data)) {
-            emit logChanged();
+            _reportLogStopped();
         }
     }
     _scheduleRefresh();
@@ -335,16 +337,42 @@ void GPSCorrectionManager::setLogToFile(bool log)
         return;
     }
     if (log) {
-        const QString directory = _logDirectory ? _logDirectory() : QString();
-        if (directory.isEmpty()) {
-            qCWarning(GPSCorrectionManagerLog) << "No folder to log the corrections to";
-        } else {
-            _log.open(RTCMLogFile::fileName(directory, QDateTime::currentDateTimeUtc()));
-        }
+        _logError = _startLog();
     } else {
         _log.close();
     }
     // Also for a log that could not start, so that a switch bound to the property goes back to off.
+    emit logChanged();
+}
+
+QString GPSCorrectionManager::_startLog()
+{
+    const QString directory = _logDirectory ? _logDirectory() : QString();
+    if (directory.isEmpty()) {
+        qCWarning(GPSCorrectionManagerLog) << "No folder to log the corrections to";
+        return tr("Cannot log the corrections: there is no folder to save the log to.");
+    }
+    if (_log.open(RTCMLogFile::fileName(directory, QDateTime::currentDateTimeUtc()))) {
+        return {};
+    }
+    if (_log.end() == GPSBoundedFile::End::FolderError) {
+        //: %1 is the path of a folder
+        return tr("Cannot log the corrections: the folder %1 cannot be created.").arg(directory);
+    }
+    //: %1 is the reason the system gives, such as "Permission denied"
+    return tr("Cannot log the corrections: %1").arg(_log.errorString());
+}
+
+void GPSCorrectionManager::_reportLogStopped()
+{
+    if (_log.end() == GPSBoundedFile::End::SizeLimit) {
+        //: %1 is a data size, such as 256.0MB
+        _logError = tr("The log reached its size limit of %1 and stopped.")
+                        .arg(QGC::bigSizeToString(static_cast<quint64>(_maxLogFileBytes)));
+    } else {
+        //: %1 is the reason the system gives, such as "No space left on device"
+        _logError = tr("The log stopped after a file error: %1").arg(_log.errorString());
+    }
     emit logChanged();
 }
 

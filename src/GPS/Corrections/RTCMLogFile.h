@@ -42,6 +42,12 @@ public:
     /// The path of the open log; empty while none is open.
     [[nodiscard]] QString file() const { return _file.file(); }
 
+    /// Why the log is not open since open() was last called; see GPSBoundedFile::end().
+    [[nodiscard]] GPSBoundedFile::End end() const { return _file.end(); }
+
+    /// The system's reason for a file error; see GPSBoundedFile::errorString().
+    [[nodiscard]] QString errorString() const { return _file.errorString(); }
+
 private:
     GPSBoundedFile _file;
 };

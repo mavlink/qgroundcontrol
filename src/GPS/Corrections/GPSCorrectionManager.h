@@ -71,10 +71,12 @@ class GPSCorrectionManager : public QObject
     Q_PROPERTY(QString udpOutputError READ udpOutputError NOTIFY udpOutputChanged FINAL)
     Q_PROPERTY(QString messageFilterError READ messageFilterError NOTIFY messageFilterChanged FINAL)
     /// Logs the frames routed from now on to a new file. Off at startup and never saved, and off again once the log
-    /// ended after a file error or at its size limit.
+    /// ended after a file error or at its size limit, which logError() then reports.
     Q_PROPERTY(bool logToFile READ logToFile WRITE setLogToFile NOTIFY logChanged FINAL)
     /// The file the routed stream is logged to; empty while it is not logged.
     Q_PROPERTY(QString logFile READ logFile NOTIFY logChanged FINAL)
+    /// Why the log could not start or ended on its own; empty otherwise, and once the log is turned on again.
+    Q_PROPERTY(QString logError READ logError NOTIFY logChanged FINAL)
     Q_PROPERTY(RTCMMessageCountModel* messageCounts READ messageCounts CONSTANT FINAL)
     Q_PROPERTY(QGeoCoordinate basePosition READ basePosition NOTIFY basePositionChanged FINAL)
 
@@ -179,6 +181,10 @@ public:
 
     QString logFile() const { return _log.file(); }
 
+    /// For the user: that there is no folder for the log, that its file could not be created or written, with the
+    /// system's reason, or that it reached its size limit.
+    QString logError() const { return _logError; }
+
     /// The selected stream's frames per RTCM message ID, and how often each arrives. They start again when another
     /// stream is selected, and are empty while none is.
     RTCMMessageCountModel* messageCounts() { return &_messageCounts; }
@@ -228,6 +234,10 @@ private:
 
     void _scheduleRefresh();
     void _refresh();
+    /// Starts a log in the Dependencies' log folder. @return why it did not start, for the user; empty when it did.
+    [[nodiscard]] QString _startLog();
+    /// Publishes why the log ended, which a failed write or flush just closed.
+    void _reportLogStopped();
 
     /// messageFilterError() names at most this many of the messages the filter left out.
     static constexpr qsizetype MAX_LEFT_OUT_NAMED = 12;
@@ -243,7 +253,9 @@ private:
     std::unique_ptr<GPSCorrectionSourceHandle> _udpSource;
     UdpForwarder _udpOutput{this};
     const std::function<QString()> _logDirectory;
+    const qint64 _maxLogFileBytes;
     RTCMLogFile _log;
+    QString _logError;
     std::optional<Configuration> _configuration;
     State _state = State::Inactive;
     GPSCorrectionStream _selected;

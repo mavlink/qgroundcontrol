@@ -3,6 +3,7 @@
 #include <chrono>
 #include <memory>
 
+#include <QtCore/QDir>
 #include <QtCore/QPointer>
 #include <QtCore/QRegularExpression>
 #include <QtPositioning/QGeoCoordinate>
@@ -318,9 +319,11 @@ void GPSCorrectionsPanelTest::_correctionsLogSwitch()
     QVERIFY2(log, qPrintable(engine.lastError()));
     auto* toggle = log->findChild<QObject*>(QStringLiteral("correctionsLogSwitch"));
     auto* file = log->findChild<QObject*>(QStringLiteral("correctionsLogFile"));
-    QVERIFY(toggle && file);
+    auto* error = log->findChild<QObject*>(QStringLiteral("correctionsLogError"));
+    QVERIFY(toggle && file && error);
     QVERIFY(!toggle->property("checked").toBool());
     QVERIFY(!file->property("visible").toBool());
+    QVERIFY(!error->property("visible").toBool());
 
     QVERIFY(QMetaObject::invokeMethod(toggle, "click"));
     QVERIFY(corrections.logToFile());
@@ -334,7 +337,8 @@ void GPSCorrectionsPanelTest::_correctionsLogSwitch()
     QVERIFY(!toggle->property("checked").toBool());
     QVERIFY(!file->property("visible").toBool());
 
-    // A log that cannot start, here for a regular file where its folder should be, leaves the switch off.
+    // A log that cannot start, here for a regular file where its folder should be, leaves the switch off and says
+    // why.
     folder = directory.createFile(QStringLiteral("GPSCorrections"), "not a folder");
     expectLogMessage("GPS.Corrections.RTCMLogFile", QtWarningMsg, QRegularExpression(QStringLiteral("file error")));
     QVERIFY(QMetaObject::invokeMethod(toggle, "click"));
@@ -342,6 +346,16 @@ void GPSCorrectionsPanelTest::_correctionsLogSwitch()
     QVERIFY(!corrections.logToFile());
     QVERIFY(!toggle->property("checked").toBool());
     QVERIFY(!file->property("visible").toBool());
+    QVERIFY(error->property("visible").toBool());
+    QVERIFY(!corrections.logError().isEmpty());
+    QCOMPARE(error->property("text").toString(), corrections.logError());
+
+    // The reason goes once a log starts. A log started within the same millisecond would be named as the first one,
+    // so this one goes to a folder of its own.
+    folder = QDir(directory.path()).filePath(QStringLiteral("next"));
+    QVERIFY(QMetaObject::invokeMethod(toggle, "click"));
+    QVERIFY(toggle->property("checked").toBool());
+    QVERIFY(!error->property("visible").toBool());
 }
 
 void GPSCorrectionsPanelTest::_ntripErrorActionRetries()

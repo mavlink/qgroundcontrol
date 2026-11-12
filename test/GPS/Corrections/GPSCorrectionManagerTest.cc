@@ -21,6 +21,7 @@
 #include "NTRIPSettings.h"
 #include "Protocols/Support/GPSProtocolTestData.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
+#include "QGCFormat.h"
 #include "RTCMFramer.h"
 #include "RTCMMessageCountModel.h"
 #include "RTCMUdpInput.h"
@@ -576,13 +577,19 @@ void GPSCorrectionManagerTest::_logThatCannotStart()
     captureVehicleFrames(corrections, sent);
     QSignalSpy changes(&corrections, &GPSCorrectionManager::logChanged);
 
+    QVERIFY(corrections.logError().isEmpty());
     expectLogMessage(category.toLatin1().constData(), QtWarningMsg, QRegularExpression(warning));
     corrections.setLogToFile(true);
     verifyExpectedLogMessage();
     QVERIFY(!corrections.logToFile());
     QVERIFY(corrections.logFile().isEmpty());
-    // Notified although nothing changed, so that a switch bound to the property goes back to off.
+    // Notified although the log stays off, so that a switch bound to the property goes back to off.
     QCOMPARE(changes.size(), 1);
+    // The user is told why, not only the application log.
+    QCOMPARE(corrections.logError(),
+             folderKnown
+                 ? GPSCorrectionManager::tr("Cannot log the corrections: the folder %1 cannot be created.").arg(folder)
+                 : GPSCorrectionManager::tr("Cannot log the corrections: there is no folder to save the log to."));
 
     // The corrections are routed all the same.
     const auto source = corrections.openSource(GPSCorrectionSettings::Ntrip, {});
@@ -601,18 +608,21 @@ void GPSCorrectionManagerTest::_logKeepsExistingFile()
     QVERIFY(!log.open(earlier));
     verifyExpectedLogMessage();
     QVERIFY(log.file().isEmpty());
+    // The system's reason is kept for the user.
+    QCOMPARE(log.end(), GPSBoundedFile::End::FileError);
+    QVERIFY(!log.errorString().isEmpty());
     QCOMPARE(readFile(earlier), QByteArray("earlier log"));
 }
 
 void GPSCorrectionManagerTest::_logEndsAtSizeLimit()
 {
     TestFixtures::TempDirFixture directory;
+    QString folder = directory.path();
     const QByteArray frame = GPSTest::rtcmMessage(1077, 100);
     ManualScheduler scheduler;
     // Room for two frames and part of a third.
     GPSCorrectionManager corrections(
-        nullptr, &scheduler,
-        {.logDirectory = [&directory] { return directory.path(); }, .maxLogFileBytes = 2 * frame.size() + 10});
+        nullptr, &scheduler, {.logDirectory = [&folder] { return folder; }, .maxLogFileBytes = 2 * frame.size() + 10});
     QList<QByteArray> sent;
     captureVehicleFrames(corrections, sent);
     corrections.setLogToFile(true);
@@ -628,13 +638,25 @@ void GPSCorrectionManagerTest::_logEndsAtSizeLimit()
     source->submit(frame, scheduler.nowMs());
     verifyExpectedLogMessage();
 
-    // The log ended and no longer names its file; it holds whole frames, and the routing went on.
+    // The log ended, says why and no longer names its file; it holds whole frames, and the routing went on.
     QVERIFY(!corrections.logToFile());
     QVERIFY(corrections.logFile().isEmpty());
+    QCOMPARE(corrections.logError(), GPSCorrectionManager::tr("The log reached its size limit of %1 and stopped.")
+                                         .arg(QGC::bigSizeToString(2 * frame.size() + 10)));
     QCOMPARE(changes.size(), 1);
     source->submit(frame, scheduler.nowMs());
     QCOMPARE(sent.size(), 4);
     QCOMPARE(readFile(file), frame + frame);
+
+    // The reason stays until the log is turned on again. A log started within the same millisecond would be named
+    // as the one that ended, so this one goes to a folder of its own.
+    QVERIFY(advanceTick(scheduler));
+    QVERIFY(!corrections.logError().isEmpty());
+    folder = QDir(directory.path()).filePath(QStringLiteral("next"));
+    corrections.setLogToFile(true);
+    QVERIFY(corrections.logToFile());
+    QVERIFY(corrections.logError().isEmpty());
+    QCOMPARE(changes.size(), 2);
 }
 
 void GPSCorrectionManagerTest::_udpOutputForwardsSelectedStream()
