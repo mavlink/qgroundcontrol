@@ -293,8 +293,8 @@ endfunction()
 
 # _qgc_gst_create_ios_targets()
 # Creates the GStreamer:: targets and GStreamer::mobile from the merged archive GSTREAMER_XCFRAMEWORK_LIB, without
-# pkg-config, and sets GStreamer_VERSION and GSTREAMER_STATIC_PLUGINS in the caller's scope. Every target comes from
-# that one archive, so the steps share its state in one function.
+# pkg-config, and sets GStreamer_VERSION, GStreamer_LIBAVCODEC_VERSION and GSTREAMER_STATIC_PLUGINS in the caller's
+# scope. Every target comes from that one archive, so the steps share its state in one function.
 # cmake-lint: disable=R0912,R0915
 function(_qgc_gst_create_ios_targets)
     qgc_gst_layout_get(INCLUDE_PATH _gst_include_path)
@@ -302,6 +302,11 @@ function(_qgc_gst_create_ios_targets)
     _qgc_gst_ios_sdk_version("${_gst_include_path}" GStreamer_VERSION)
     set(GStreamer_VERSION
         "${GStreamer_VERSION}"
+        PARENT_SCOPE
+    )
+    _qgc_gst_libavcodec_header_version("${_gst_include_path}" GStreamer_LIBAVCODEC_VERSION)
+    set(GStreamer_LIBAVCODEC_VERSION
+        "${GStreamer_LIBAVCODEC_VERSION}"
         PARENT_SCOPE
     )
 

@@ -33,6 +33,37 @@ function(_qgc_gst_header_version include_dir out_var)
     )
 endfunction()
 
+# _qgc_gst_libavcodec_header_version(<include_dir> <out_var>)
+# Returns libavcodec's <major>.<minor>.<micro>, the version of its pkg-config file, from the LIBAVCODEC_VERSION_*
+# defines of libavcodec/version_major.h and libavcodec/version.h under <include_dir>, or "" without them. For an SDK
+# without pkg-config files (iOS).
+function(_qgc_gst_libavcodec_header_version include_dir out_var)
+    set(_defines "")
+    foreach(_header IN ITEMS version_major.h version.h)
+        if(EXISTS "${include_dir}/libavcodec/${_header}")
+            file(STRINGS "${include_dir}/libavcodec/${_header}" _lines
+                 REGEX "^#define LIBAVCODEC_VERSION_(MAJOR|MINOR|MICRO) +[0-9]+"
+            )
+            list(APPEND _defines ${_lines})
+        endif()
+    endforeach()
+    set(_parts "")
+    foreach(_part IN ITEMS MAJOR MINOR MICRO)
+        if(_defines MATCHES "#define LIBAVCODEC_VERSION_${_part} +([0-9]+)")
+            list(APPEND _parts "${CMAKE_MATCH_1}")
+        endif()
+    endforeach()
+    set(_version "")
+    list(LENGTH _parts _count)
+    if(_count EQUAL 3)
+        list(JOIN _parts "." _version)
+    endif()
+    set(${out_var}
+        "${_version}"
+        PARENT_SCOPE
+    )
+endfunction()
+
 # _qgc_gst_select_sdk_root(<out_root> <out_auto> <user_root> <requested_version>)
 # Chooses the root platform discovery starts from: the user's root, else the previously
 # auto-downloaded root while it still exists and was fetched for <requested_version>.

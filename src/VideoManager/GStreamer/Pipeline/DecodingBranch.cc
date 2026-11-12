@@ -4,6 +4,7 @@
 
 #include "GStreamerDecoderRanks.h"
 #include "GStreamerHelpers.h"
+#include "GStreamerLibavWorkaround.h"
 #include "GstVideoReceiver.h"
 #include "HwBuffers/common/HwBuffers.h"
 #include "PipelineDotDumper.h"
@@ -579,10 +580,12 @@ void DecodingBranch::_onDecoderElementAdded(GstBin* decodebin, GstBin* /*subBin*
     if (!live) {
         decodeWithoutDelay(element);
     }
+    const bool singleThread = GStreamer::avoidHevcWavefrontDeadlock(element);
 
     qCDebug(GstVideoReceiverLog).noquote()
         << "Decodebin3 selected" << GStreamer::describeDecoderFactory(factory) << "- QoS disabled"
-        << (live ? "" : "- set to decode without delay, as the source isn't live");
+        << (live ? "" : "- set to decode without delay, as the source isn't live")
+        << (singleThread ? "- on one thread, as this FFmpeg's HEVC slice threads can deadlock" : "");
     const QString name = QString::fromUtf8(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
     const bool hardware = GStreamer::isHardwareDecoderFactory(factory);
 

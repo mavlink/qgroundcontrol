@@ -130,6 +130,8 @@ target_sources(
         Runtime/GStreamerEnvironment.h
         Runtime/GStreamerHelpers.cc
         Runtime/GStreamerHelpers.h
+        Runtime/GStreamerLibavWorkaround.cc
+        Runtime/GStreamerLibavWorkaround.h
         Runtime/GStreamerLogging.cc
         Runtime/GStreamerLogging.h
         Runtime/GStreamerSelfTest.cc
@@ -199,6 +201,17 @@ set_source_files_properties(
     PROPERTIES
         SKIP_UNITY_BUILD_INCLUSION ON
 )
+
+# avdec_h265 of one FFmpeg release can deadlock: the workaround is told which libavcodec the libav plugin has.
+if(GStreamer_LIBAVCODEC_VERSION)
+    set_source_files_properties(
+        Runtime/GStreamerLibavWorkaround.cc
+        TARGET_DIRECTORY
+        ${CMAKE_PROJECT_NAME}
+        PROPERTIES
+            COMPILE_DEFINITIONS QGC_GST_LIBAVCODEC_VERSION="${GStreamer_LIBAVCODEC_VERSION}"
+    )
+endif()
 
 # The iOS SDK ships no CA list / no keychain-via-OpenSSL; bundle a Mozilla NSS extract for
 # libgioopenssl (fetched at configure time, IOS.cmake). On the app target for MACOSX_PACKAGE_LOCATION.

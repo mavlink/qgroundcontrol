@@ -161,7 +161,8 @@ How CI runs, retries, and reports the application tests is described in
 - **iOS**: `ios.yml` builds a Release device bundle and a Debug x86_64 simulator bundle, installing
   Qt's separate `ios_device` and `ios_simulator_x86_64` SDKs. The simulator stays on x86_64 because
   Qt's bundled FFmpeg has no arm64 simulator slice. Simulator builds run `ios_boot_test.py`, which
-  launches with `--simple-boot-test` and requires QGC's success marker. Cold boots have a
+  launches with `--simple-boot-test`, logging QGC's startup and its GStreamer self-test, and requires QGC's
+  success marker. Cold boots have a
   600-second deadline and at most two fresh-device attempts (`--boot-timeout` 1–900 s,
   `--boot-attempts` 1–2). Boot and installation failures, and a launch that times out before QGC
   prints anything, are retried on a fresh device; QGC failures are not. Install and launch each

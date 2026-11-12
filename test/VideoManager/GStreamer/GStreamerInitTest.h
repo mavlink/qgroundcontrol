@@ -25,6 +25,8 @@ private slots:
     void _testMissingPluginFeatures_data();
     void _testMissingPluginFeatures();
     void _testUdpSrcUnlockSerializedBefore1_24_10();
+    void _testHevcWavefrontDeadlockAvoided_data();
+    void _testHevcWavefrontDeadlockAvoided();
     void _testBundledPluginIssues_data();
     void _testBundledPluginIssues();
     void _testPluginScannerStartFailure_data();

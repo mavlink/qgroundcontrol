@@ -18,6 +18,7 @@
 #include "Fixtures/RAIIFixtures.h"
 #include "GStreamer.h"
 #include "GStreamerDecoderRanks.h"
+#include "GStreamerLibavWorkaround.h"
 #include "GStreamerLogging.h"
 #include "GStreamerSelfTest.h"
 #include "GStreamerTestHelpers.h"
@@ -313,6 +314,36 @@ void GStreamerInitTest::_testUdpSrcUnlockSerializedBefore1_24_10()
     }
     QCOMPARE(GStreamer::udpSrcUnlockSerialized(),
              !gst_plugin_feature_check_version(GST_PLUGIN_FEATURE(factory.get()), 1, 24, 10));
+}
+
+void GStreamerInitTest::_testHevcWavefrontDeadlockAvoided_data()
+{
+    QTest::addColumn<QByteArray>("factory");
+    QTest::addColumn<QByteArray>("libavcodecVersion");
+    QTest::addColumn<int>("maxThreads");
+
+    QTest::newRow("HEVC, FFmpeg 7.1.0") << QByteArray("avdec_h265") << QByteArray("61.19.100") << 1;
+    QTest::newRow("HEVC, FFmpeg 7.1.1") << QByteArray("avdec_h265") << QByteArray("61.19.101") << 0;
+    QTest::newRow("HEVC, FFmpeg unknown") << QByteArray("avdec_h265") << QByteArray() << 0;
+    QTest::newRow("H.264, FFmpeg 7.1.0") << QByteArray("avdec_h264") << QByteArray("61.19.100") << 0;
+}
+
+void GStreamerInitTest::_testHevcWavefrontDeadlockAvoided()
+{
+    GSTTEST_REQUIRE_GSTREAMER();
+    QFETCH(QByteArray, factory);
+    QFETCH(QByteArray, libavcodecVersion);
+    QFETCH(int, maxThreads);
+
+    GSTTEST_SKIP_UNLESS_FACTORIES(factory.constData());
+    const GStreamer::GstElementPtr decoder = GStreamer::makeElement(factory.constData());
+    QVERIFY(decoder);
+
+    QCOMPARE(GStreamer::avoidHevcWavefrontDeadlock(decoder.get(), QLatin1StringView(libavcodecVersion)),
+             maxThreads == 1);
+    gint threads = -1;
+    g_object_get(decoder.get(), "max-threads", &threads, nullptr);
+    QCOMPARE(threads, maxThreads);
 }
 
 void GStreamerInitTest::_testBundledPluginIssues_data()

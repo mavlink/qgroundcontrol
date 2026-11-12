@@ -7,7 +7,7 @@
 # GStreamer_ROOT_DIR, QGC_GST_VERSION, QGC_GST_USE_HOMEBREW (macOS) and PKG_CONFIG_ARGN.
 # Sets, in the including directory, the discovery outputs (Platform.cmake), recorded in the layout store (Layout.cmake)
 # and copied into their GStreamer_*/GSTREAMER_* variables (qgc_gst_restore_pkgconfig_env undoes their pkg-config
-# environment) and GStreamer_VERSION, GSTREAMER_SELECTED_COMPONENTS, GSTREAMER_PLUGINS,
+# environment) and GStreamer_VERSION, GStreamer_LIBAVCODEC_VERSION, GSTREAMER_SELECTED_COMPONENTS, GSTREAMER_PLUGINS,
 # GSTREAMER_STATIC_PLUGINS and G_IO_MODULES (mobile), GStreamer_<component>_FOUND (optional components) and
 # QGC_GST_HAS_DMABUF (Linux).
 
@@ -218,9 +218,17 @@ qgc_gst_layout_set(AVAILABLE_PLUGINS "${_gst_available_plugins}")
 qgc_gst_layout_set(BUNDLED_PLUGINS "${_qgc_gst_shipped_plugins}")
 list(LENGTH GSTREAMER_PLUGINS _qgc_gst_plugin_total)
 list(LENGTH _qgc_gst_shipped_plugins _qgc_gst_plugin_count)
+# libavcodec's version arms a workaround in the video code: "unknown" means the SDK has neither its pkg-config file
+# nor, on iOS, its version headers.
+if(GStreamer_LIBAVCODEC_VERSION)
+    set(_qgc_gst_libavcodec "${GStreamer_LIBAVCODEC_VERSION}")
+else()
+    set(_qgc_gst_libavcodec "unknown")
+endif()
 message(
     STATUS "QGCGStreamer: version=${GStreamer_VERSION} path=${_qgc_gst_path} root=${GStreamer_ROOT_DIR} "
-           "plugins=${_qgc_gst_plugin_count}/${_qgc_gst_plugin_total} auto_downloaded=${GStreamer_AUTO_DOWNLOADED}"
+           "plugins=${_qgc_gst_plugin_count}/${_qgc_gst_plugin_total} auto_downloaded=${GStreamer_AUTO_DOWNLOADED} "
+           "libavcodec=${_qgc_gst_libavcodec}"
 )
 
 # Post-configure tooling (tools/ci/packaging/verify_executable.py, generate_cpm_sbom.py) and PrintSummary read the

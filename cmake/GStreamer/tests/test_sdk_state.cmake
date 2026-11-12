@@ -14,6 +14,19 @@ _qgc_gst_header_version("${_sandbox}/missing" _version)
 qgc_test_assert_streq("no header" "" "${_version}")
 qgc_test_pass("SDK version")
 
+# As FFmpeg 5.1 and later write them: the major version in a header of its own.
+file(WRITE "${_sandbox}/include/libavcodec/version_major.h" "#define LIBAVCODEC_VERSION_MAJOR  61\n")
+file(WRITE "${_sandbox}/include/libavcodec/version.h"
+     "#include \"version_major.h\"\n#define LIBAVCODEC_VERSION_MINOR  19\n#define LIBAVCODEC_VERSION_MICRO 100\n"
+     "#define LIBAVCODEC_VERSION_INT  AV_VERSION_INT(LIBAVCODEC_VERSION_MAJOR, \\\n"
+)
+_qgc_gst_libavcodec_header_version("${_sandbox}/include" _version)
+qgc_test_assert_streq("libavcodec header version" "61.19.100" "${_version}")
+file(REMOVE "${_sandbox}/include/libavcodec/version_major.h")
+_qgc_gst_libavcodec_header_version("${_sandbox}/include" _version)
+qgc_test_assert_streq("libavcodec without its major version" "" "${_version}")
+qgc_test_pass("libavcodec version")
+
 # cmake-lint: disable=C0103
 set(QGC_GST_RESOLVED_PACKAGES
     "https://example.invalid/sdk.tar.xz|0123"
