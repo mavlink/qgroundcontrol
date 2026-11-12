@@ -87,8 +87,9 @@ public:
     [[nodiscard]] static const char* refusalName(GPSWriteStatus answer);
 
     /// The recording in @a directory of a session of @a type that starts at @a startedAt:
-    /// <yyyyMMdd>T<HHmmss.zzz>Z-<type>.log, in UTC and with the type in lower case. The milliseconds keep sessions
-    /// that follow each other at once in files of their own.
+    /// <yyyyMMdd>T<HHmmss.zzz>Z-<type>.log, in UTC and with the type in lower case. The name does not keep two
+    /// sessions apart that start in the same millisecond, and the recorder does not write over a file: a caller takes
+    /// @a startedAt from GPSFileStartTimes, which gives each of its sessions a time of its own.
     [[nodiscard]] static QString sessionFile(const QString& directory, GPSType type, const QDateTime& startedAt);
 
     GPSOpenResult open() override;
