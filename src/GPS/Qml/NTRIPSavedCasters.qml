@@ -12,7 +12,7 @@ QGCGroupBox {
     id: root
 
     readonly property NTRIPSettings _ntrip: QGroundControl.settingsManager.ntripSettings
-    /// The server and mountpoint settings are locked while the connection is on, and a saved caster would write them.
+    /// The caster and mountpoint settings are locked while the connection is on, and a saved caster would write them.
     readonly property bool _isActive: root._ntrip.ntripServerConnectEnabled.rawValue
 
     Layout.fillWidth: true
@@ -25,7 +25,7 @@ QGCGroupBox {
         label: qsTr("Saved casters")
         note: root._isActive
               ? qsTr("Disconnect to use a saved caster.")
-              : qsTr("Use Caster replaces the server and mountpoint settings above with the selected caster.")
+              : qsTr("Use Caster replaces the caster and mountpoint settings above with the selected caster.")
         visible: root._ntrip.savedCasters.length > 0
 
         QGCComboBox {
@@ -64,7 +64,7 @@ QGCGroupBox {
     }
 
     GPSField {
-        label: qsTr("Save the server and mountpoint settings as a caster")
+        label: qsTr("Save the caster and mountpoint settings above under a name")
         note: qsTr("A saved caster keeps its username and password.")
 
         QGCTextField {

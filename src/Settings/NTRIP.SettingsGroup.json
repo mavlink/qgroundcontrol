@@ -4,11 +4,11 @@
     "QGC.MetaData.Facts": [
         {
             "name": "ntripServerConnectEnabled",
-            "shortDesc": "Connect to NTRIP server",
-            "longDesc": "Connect to NTRIP server using specified address/port",
+            "shortDesc": "Connect to NTRIP caster",
+            "longDesc": "Connect to the NTRIP caster at the host address and port that are set",
             "type": "bool",
             "default": false,
-            "label": "Connect to NTRIP server"
+            "label": "Connect to NTRIP caster"
         },
         {
             "name": "ntripServerHostAddress",
@@ -19,10 +19,10 @@
         },
         {
             "name": "ntripServerPort",
-            "shortDesc": "Server port",
+            "shortDesc": "Port",
             "type": "uint16",
             "default": 2101,
-            "label": "Server port"
+            "label": "Port"
         },
         {
             "name": "ntripUsername",
@@ -40,16 +40,16 @@
         },
         {
             "name": "ntripMountpoint",
-            "shortDesc": "Mount Point",
+            "shortDesc": "Mountpoint",
             "longDesc": "Name of the caster's mountpoint to receive corrections from. NTRIP does not connect without one.",
             "type": "string",
             "default": "",
-            "label": "Mount Point"
+            "label": "Mountpoint"
         },
         {
             "name": "ntripUseTls",
             "shortDesc": "Use TLS encryption",
-            "longDesc": "Connect to the caster with TLS 1.2 or later. The caster must offer TLS on the server port.",
+            "longDesc": "Connect to the caster with TLS 1.2 or later. The caster must offer TLS on that port.",
             "type": "bool",
             "default": false,
             "label": "Use TLS encryption"
@@ -74,7 +74,7 @@
             "shortDesc": "Position reported to the caster. Network (VRS) mountpoints need it; Auto selects the best available source.",
             "longDesc": "Position source for NMEA GGA sentences sent to the NTRIP caster. Auto selects the best available source.",
             "type": "uint8",
-            "enumStrings": "Auto,Vehicle GPS,Vehicle EKF,RTK Receiver,GCS Position",
+            "enumStrings": "Auto,Vehicle GPS,Vehicle EKF,GNSS receiver,Ground station position",
             "enumValues": "0,1,2,3,4",
             "default": 0,
             "label": "GGA Position Source"

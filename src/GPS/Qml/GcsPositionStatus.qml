@@ -28,7 +28,7 @@ QGCGroupBox {
         return accuracy.toFixed(1) + " " + conversion.appSettingsHorizontalDistanceUnitsString
     }
 
-    heading: qsTr("GCS Position")
+    heading: qsTr("Ground Station Position")
 
     LabelledFactComboBox {
         objectName: "gcsPositionSource"

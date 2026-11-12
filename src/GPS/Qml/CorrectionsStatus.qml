@@ -111,7 +111,7 @@ QGCGroupBox {
     LabelledLabel {
         objectName: "correctionsBaseDistance"
         visible: root._baseKnown && root.gcsPosition.isValid
-        label: qsTr("Base distance from GCS")
+        label: qsTr("Base to ground station")
         labelText: GPSUnits.distanceText(root._basePosition.distanceTo(root.gcsPosition))
         labelTextFormat: Text.PlainText
     }

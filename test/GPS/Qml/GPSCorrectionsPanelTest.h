@@ -28,5 +28,6 @@ private slots:
     void _ntripLongStatusWrapsWithinPanel();
     void _ntripMountpointRowLayout();
     void _ntripMountpointIsTheStreamsOwn();
+    void _receiverHasOneName();
     void _settingsPageListsGroups();
 };

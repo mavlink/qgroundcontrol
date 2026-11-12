@@ -422,10 +422,10 @@ void GPSReceiverTest::_statusTextFollowsState_data()
     // A passive receiver's sentences do not depend on a base station's survey.
     QTest::newRow("forwarding") << kPassiveManufacturer << true << QStringLiteral("ready")
                                 << QList{State::Connecting, State::Connected}
-                                << GPSReceiver::tr("Passive receiver connected; forwarding its RTCM");
+                                << GPSReceiver::tr("Existing base station connected; forwarding its RTCM");
     QTest::newRow("position-only") << kPassiveManufacturer << false << QStringLiteral("ready")
                                    << QList{State::Connecting, State::Connected}
-                                   << GPSReceiver::tr("Passive receiver connected; position only");
+                                   << GPSReceiver::tr("Receiver connected; position only");
     QTest::newRow("lost") << kPassiveManufacturer << true << QStringLiteral("lost")
                           << QList{State::Connecting, State::Connected, State::Reconnecting}
                           << GPSReceiver::tr("Connecting automatically...");
@@ -522,7 +522,7 @@ void GPSReceiverTest::_statusTextSaysWhenNoCorrectionsAreSent_data()
                                          << States{GPSBaseState::Active} << GPSReceiver::tr("Survey-In active");
     // A passive receiver is no base of this session: what it forwards is not held back.
     QTest::newRow("passive") << GPSType::Passive << false << Mode::BaseSurveyIn << States{GPSBaseState::Inactive}
-                             << GPSReceiver::tr("Passive receiver connected; forwarding its RTCM");
+                             << GPSReceiver::tr("Existing base station connected; forwarding its RTCM");
 }
 
 void GPSReceiverTest::_statusTextSaysWhenNoCorrectionsAreSent()

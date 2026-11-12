@@ -49,7 +49,7 @@
         },
         {
             "component": "GcsPositionStatus",
-            "sectionName": "GCS Position",
+            "sectionName": "Ground Station Position",
             "keywords": ["gcs position", "ground station position", "position source", "internal gps", "this device", "position receiver", "nmea", "gps"]
         }
     ]

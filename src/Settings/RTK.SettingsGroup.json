@@ -5,16 +5,16 @@
         {
             "name": "receiverRole",
             "shortDesc": "Receiver role",
-            "longDesc": "Passive uses the receiver's existing output without configuring it: its NMEA, u-blox UBX or Septentrio SBF position output provides the ground station position, and its RTCM output can be forwarded to vehicles. Configured base sets up a supported receiver as an RTK base station.",
+            "longDesc": "Not configured uses the receiver's existing output as it is: its NMEA, u-blox UBX or Septentrio SBF position output provides the ground station position, and its RTCM output can be forwarded to vehicles, as that of an existing base station. RTK base station sets up a supported receiver as an RTK base station. The GNSS Receiver settings show this setting and Forward receiver RTCM as one choice, Use receiver as.",
             "type": "uint8",
-            "enumStrings": "Passive,Configured base",
+            "enumStrings": "Not configured,RTK base station",
             "enumValues": "1,2",
             "default": 2,
             "label": "Receiver role"
         },
         {
             "name": "forwardReceiverRtcm",
-            "shortDesc": "Makes a passive receiver that already outputs RTCM, such as a pre-configured base station, a correction source for vehicles.",
+            "shortDesc": "Makes a receiver that is not configured and already sends RTCM, an existing base station, a correction source for vehicles.",
             "type": "bool",
             "default": true,
             "label": "Forward receiver RTCM"
@@ -71,7 +71,7 @@
         {
             "name": "autoConnect",
             "shortDesc": "Connects the saved receiver at startup and reconnects it when the connection is lost or the receiver is plugged back in. Disconnect pauses this until you connect again.",
-            "longDesc": "Connect the saved receiver when QGroundControl starts, reconnect it with increasing delays when the connection is lost, and reconnect a serial receiver as soon as it is plugged back in. A configured base without a saved serial device connects to an RTK receiver detected on USB instead. Disconnect pauses automatic connection until you connect again. When off, receivers connect only when you select Connect, and a lost connection is reported. Automatic connections never save settings to receiver flash.",
+            "longDesc": "Connect the saved receiver when QGroundControl starts, reconnect it with increasing delays when the connection is lost, and reconnect a serial receiver as soon as it is plugged back in. An RTK base station without a saved serial device connects to an RTK receiver detected on USB instead. Disconnect pauses automatic connection until you connect again. When off, receivers connect only when you select Connect, and a lost connection is reported. Automatic connections never save settings to receiver flash.",
             "type": "bool",
             "default": true,
             "label": "Connect automatically",
@@ -79,19 +79,19 @@
         },
         {
             "name": "gcsPositionSource",
-            "shortDesc": "GCS position source",
+            "shortDesc": "Ground station position source",
             "longDesc": "Source of the ground station position. Best available uses the connected GNSS receiver, then this device, and switches when the preferred source loses its fix.",
             "type": "uint32",
             "enumStrings": "Best available,GNSS receiver,This device",
             "enumValues": "0,1,2",
             "default": 0,
-            "label": "GCS position source",
+            "label": "Ground station position source",
             "keywords": "gcs position,ground station position,gps,gnss,rtk,nmea,location"
         },
         {
             "name": "serialDevice",
             "shortDesc": "Serial device",
-            "longDesc": "Explicitly selected receiver port. Leave it empty for a configured base to connect to an RTK receiver detected on USB; generic USB serial adapters are not automatically identified as GNSS receivers.",
+            "longDesc": "Explicitly selected receiver port. Leave it empty for an RTK base station to connect to an RTK receiver detected on USB; generic USB serial adapters are not automatically identified as GNSS receivers.",
             "type": "string",
             "default": "",
             "label": "Serial device"
@@ -99,7 +99,7 @@
         {
             "name": "serialBaudRate",
             "shortDesc": "Baud rate",
-            "longDesc": "Serial rate for an explicitly selected receiver. Auto (0) finds the rate: a configurable receiver is probed at the rates its family uses, and a passive receiver is listened for at the usual rates without being sent anything.",
+            "longDesc": "Serial rate for an explicitly selected receiver. Auto (0) finds the rate: an RTK base station is probed at the rates its family uses, and a receiver that is not configured is listened for at the usual rates without being sent anything.",
             "type": "uint32",
             "default": 115200,
             "min": 0,

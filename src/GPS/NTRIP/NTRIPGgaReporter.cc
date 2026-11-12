@@ -81,9 +81,9 @@ QString NTRIPGgaReporter::_sourceLabel(PositionSource source)
         case PositionSource::VehicleEKF:
             return tr("Vehicle EKF");
         case PositionSource::RTKReceiver:
-            return tr("RTK Receiver");
+            return tr("GNSS receiver");
         case PositionSource::GCSPosition:
-            return tr("GCS Position");
+            return tr("Ground station position");
         case PositionSource::Auto:
             break;
     }

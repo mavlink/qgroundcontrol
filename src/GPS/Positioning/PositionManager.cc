@@ -475,7 +475,7 @@ QString PositionManager::selectedSourceName() const
         case SelectedSource::Receiver:
             return _configuration.receiver == Receiver::Position ? tr("Position receiver") : tr("GNSS receiver");
         case SelectedSource::Internal:
-            return _usingPluginSource ? tr("Plugin positioning") : tr("Internal positioning");
+            return _usingPluginSource ? tr("Plugin positioning") : tr("This device");
     }
     return {};
 }
@@ -490,7 +490,7 @@ QString PositionManager::sourceStatusText() const
         case SourceStatus::PermissionDenied:
             return tr("Location permission denied");
         case SourceStatus::BackendUnavailable:
-            return tr("No internal positioning backend is available");
+            return tr("No positioning backend is available on this device");
         case SourceStatus::WaitingForFix:
             return tr("Waiting for a position fix");
         case SourceStatus::Active:

@@ -15,6 +15,7 @@
 #include "Fact.h"
 #include "Fixtures/RAIIFixtures.h"
 #include "GPSCorrectionManager.h"
+#include "GPSCorrectionSettings.h"
 #include "MAVLinkLib.h"
 #include "ManualScheduler.h"
 #include "NTRIP/Support/MockNTRIPTransport.h"
@@ -22,11 +23,13 @@
 #include "NTRIPSettings.h"
 #include "NTRIPSourceTable.h"
 #include "NTRIPSourceTableController.h"
+#include "PositionManager.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "QGCFormat.h"
 #include "QmlObjectListModel.h"
 #include "QmlTesting/QmlFixtures.h"
 #include "RTCM/Support/RTCMTestFrames.h"
+#include "RTKSettings.h"
 #include "SettingsManager.h"
 #include "Support/GPSTestHelpers.h"
 #include "UnitsSettings.h"
@@ -886,6 +889,28 @@ void GPSCorrectionsPanelTest::_ntripMountpointRowLayout()
              qPrintable(QStringLiteral("%1 and %2").arg(rows.at(2)->height()).arg(rows.at(1)->height())));
 }
 
+void GPSCorrectionsPanelTest::_receiverHasOneName()
+{
+    // The receiver of the GNSS Receiver page is a source of three things: of corrections, of the position reported to
+    // a caster and of the ground station position. Where each is chosen, it has the name of the page that sets it up.
+    const QString receiver = QStringLiteral("GNSS receiver");
+    const auto choice = [](Fact* fact, int value) {
+        const qsizetype index = fact->enumValues().indexOf(QVariant(value));
+        return index < 0 ? QString() : fact->enumStrings().at(index);
+    };
+    SettingsManager* const settings = SettingsManager::instance();
+    QCOMPARE(choice(settings->gpsCorrectionSettings()->correctionSource(), GPSCorrectionSettings::LocalReceiver),
+             receiver);
+    QCOMPARE(choice(settings->ntripSettings()->ntripGgaPositionSource(),
+                    static_cast<int>(NTRIPGgaReporter::PositionSource::RTKReceiver)),
+             receiver);
+    QCOMPARE(choice(settings->rtkSettings()->gcsPositionSource(),
+                    static_cast<int>(PositionManager::SourceMode::ReceiverOnly)),
+             receiver);
+    // The Corrections status reports the source it chose under the same name.
+    QCOMPARE(GPSCorrectionManager::sourceName(GPSCorrectionSettings::LocalReceiver), receiver);
+}
+
 void GPSCorrectionsPanelTest::_settingsPageListsGroups()
 {
     // The page follows the task: which source is in use, then NTRIP as a user fills it in, the caster, the
@@ -922,7 +947,7 @@ void GPSCorrectionsPanelTest::_settingsPageListsGroups()
     QVariant listed;
     QVERIFY(QMetaObject::invokeMethod(sidebar.get(), "correctionsSections", Q_RETURN_ARG(QVariant, listed)));
     QCOMPARE(listed.value<QJSValue>().toVariant().toStringList(),
-             (QStringList{QStringLiteral("Corrections Status"), QStringLiteral("NTRIP Server"),
+             (QStringList{QStringLiteral("Corrections Status"), QStringLiteral("NTRIP Caster"),
                           QStringLiteral("NTRIP Mountpoint"), QStringLiteral("NTRIP Connection"),
                           QStringLiteral("Saved Casters"), QStringLiteral("NTRIP Connection Options"),
                           QStringLiteral("GGA Position Reporting"), QStringLiteral("UDP RTCM Input"),

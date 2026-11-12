@@ -1127,7 +1127,7 @@ void NTRIPManagerTest::_ggaSettingsUseInjectedProviders()
     configuration.gga = {Source::GCSPosition, std::chrono::seconds{1}};
     manager.setConfiguration(configuration);
     QVERIFY(scheduler.advanceBy(std::chrono::seconds{1}));
-    QCOMPARE(manager.ggaSource(), NTRIPGgaReporter::tr("GCS Position"));
+    QCOMPARE(manager.ggaSource(), NTRIPGgaReporter::tr("Ground station position"));
     QVERIFY(transport->sentNmea.size() >= 2);
     QCOMPARE(transport->startCount, 1);
     QCOMPARE(transport->stopCount, 0);

@@ -195,7 +195,7 @@ void PositionManagerTest::_sourcesShareAcceptance()
     QCOMPARE(remoteId->position.coordinate(), observation.position.coordinate());
     QCOMPARE(remoteId->altitudeDatum, GPSAltitudeDatum::Unknown);
     QCOMPARE(service.selectedSourceName(),
-             custom ? PositionManager::tr("Plugin positioning") : PositionManager::tr("Internal positioning"));
+             custom ? PositionManager::tr("Plugin positioning") : PositionManager::tr("This device"));
     observation.position.setAttribute(QGeoPositionInfo::HorizontalAccuracy, 101);
     source.publish(observation.position);
     QCOMPARE(service.sourceStatus(), Status::InvalidFix);

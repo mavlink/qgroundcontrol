@@ -91,7 +91,7 @@ GPSReceiverConnectability GPSReceiverConnectionPolicy::connectability(const GPSR
     if (!result.type) {
         result.error = tr("Select a receiver type before connecting.");
     } else if (!result.connectionSupported) {
-        result.error = tr("A configured base needs a serial, TCP or Bluetooth connection. UDP only receives data.");
+        result.error = tr("An RTK base station needs a serial, TCP or Bluetooth connection. UDP only receives data.");
     } else if (!result.hasEndpoint) {
         result.error = endpointError;
     } else if (!result.baseModeSupported) {

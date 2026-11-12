@@ -13,9 +13,9 @@
             "keywords": ["corrections", "rtk", "status", "source", "selected stream", "data rate", "message types", "constellations", "base position", "base distance", "vehicle fix", "baseline", "queued to vehicles"]
         },
         {
-            "heading": "NTRIP Server",
+            "heading": "NTRIP Caster",
             "showWhen": "QGroundControl.settingsManager.ntripSettings.userVisible",
-            "keywords": ["ntrip server", "ntrip", "rtk", "caster", "host", "address", "port", "username", "password", "login", "tls", "encryption", "certificate", "self-signed"],
+            "keywords": ["ntrip caster", "ntrip server", "ntrip", "rtk", "caster", "host", "address", "port", "username", "password", "login", "tls", "encryption", "certificate", "self-signed"],
             "controls": [
                 {
                     "setting": "ntripSettings.ntripServerHostAddress",

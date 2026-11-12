@@ -394,7 +394,7 @@ QString GPSCorrectionManager::sourceName(int source)
 {
     switch (static_cast<GPSCorrectionSettings::CorrectionSource>(source)) {
         case GPSCorrectionSettings::LocalReceiver:
-            return tr("Local base station");
+            return tr("GNSS receiver");
         case GPSCorrectionSettings::Ntrip:
             return tr("NTRIP");
         case GPSCorrectionSettings::Udp:

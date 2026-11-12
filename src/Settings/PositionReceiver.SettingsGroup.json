@@ -53,7 +53,7 @@
         {
             "name": "serialDevice",
             "shortDesc": "Serial device",
-            "longDesc": "The position receiver's port. While the position receiver is in use, a configured base never connects to this device when it looks for an RTK receiver on USB.",
+            "longDesc": "The position receiver's port. While the position receiver is in use, an RTK base station never connects to this device when it looks for an RTK receiver on USB.",
             "type": "string",
             "default": "",
             "label": "Serial device"

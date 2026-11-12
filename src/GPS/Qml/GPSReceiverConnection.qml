@@ -83,7 +83,7 @@ GPSReceiverSettingsGroup {
             objectName: "rtkUdpExplanation"
             warning: !root._connectionSupported
             text: root._connectionSupported ? root.settings.udpPort.shortDescription
-                                            : qsTr("A configured base needs a serial, TCP or Bluetooth connection. UDP only receives data.")
+                                            : qsTr("An RTK base station needs a serial, TCP or Bluetooth connection. UDP only receives data.")
         }
     }
 

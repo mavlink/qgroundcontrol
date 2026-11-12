@@ -178,8 +178,9 @@ void GPSReceiverConnectionPolicyTest::_connectConfiguredValidationErrors_data()
     row("tcp-host", tcpAddress);
     row("tcp-port", tcpAddress);
     row("udp-port", GPSReceiverConnectionPolicy::tr("Enter the UDP port that receives the data."));
-    row("base-over-udp", GPSReceiverConnectionPolicy::tr(
-                             "A configured base needs a serial, TCP or Bluetooth connection. UDP only receives data."));
+    row("base-over-udp",
+        GPSReceiverConnectionPolicy::tr(
+            "An RTK base station needs a serial, TCP or Bluetooth connection. UDP only receives data."));
     const QString bluetoothDevice = GPSReceiverConnectionPolicy::tr("Select the receiver's Bluetooth device.");
     row("bluetooth-device", bluetoothDevice);
     // An address is six bytes.
@@ -388,7 +389,7 @@ void GPSReceiverConnectionPolicyTest::_unconnectableConfigurationIsNotRetried()
         broken = fixed;
         broken.receiverRole = RTKSettings::ConfiguredBase;
         error = GPSReceiverConnectionPolicy::tr(
-            "A configured base needs a serial, TCP or Bluetooth connection. UDP only receives data.");
+            "An RTK base station needs a serial, TCP or Bluetooth connection. UDP only receives data.");
     }
 #ifdef QGC_NO_SERIAL_LINK
     PolicyHarness harness(broken);

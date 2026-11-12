@@ -123,7 +123,7 @@ void NTRIPGgaReporterTest::_gcsObservation()
     });
     provider.start(&transport);
     QCOMPARE(transport.sentNmea.size(), accepted ? 1 : 0);
-    QCOMPARE(provider.currentSource(), accepted ? NTRIPGgaReporter::tr("GCS Position") : QString());
+    QCOMPARE(provider.currentSource(), accepted ? NTRIPGgaReporter::tr("Ground station position") : QString());
     if (accepted) {
         const auto& wire = transport.sentNmea.first();
         const auto decoded = NMEA::sentence(std::string_view(wire.constData(), wire.size()));
@@ -230,7 +230,7 @@ void NTRIPGgaReporterTest::_ggaSelectionDiagnostics()
     sendFastRetry();
     verifyExpectedLogMessage();
     QCOMPARE(debugMessages(kGgaReporterLog), expected);
-    QCOMPARE(provider.currentSource(), NTRIPGgaReporter::tr("GCS Position"));
+    QCOMPARE(provider.currentSource(), NTRIPGgaReporter::tr("Ground station position"));
     QCOMPARE(transport.sentNmea.size(), 1);
     QVERIFY(checksumValid(transport.sentNmea.last()));
 
@@ -255,7 +255,7 @@ void NTRIPGgaReporterTest::_ggaSelectionDiagnostics()
     sendNormal();
     verifyExpectedLogMessage();
     QCOMPARE(debugMessages(kGgaReporterLog), expected);
-    QCOMPARE(provider.currentSource(), NTRIPGgaReporter::tr("GCS Position"));
+    QCOMPARE(provider.currentSource(), NTRIPGgaReporter::tr("Ground station position"));
     QCOMPARE(transport.sentNmea.size(), 4);
 
     provider.configure({Source::RTKReceiver, interval});
@@ -351,7 +351,7 @@ void NTRIPGgaReporterTest::_ggaIntervalChangesRestartCadence()
     QVERIFY(!sourceChanged.isEmpty());
     provider.stop();
     QCOMPARE(transport.sentNmea.size(), 2);
-    QCOMPARE(sourceChanged.first().first().toString(), NTRIPGgaReporter::tr("RTK Receiver"));
+    QCOMPARE(sourceChanged.first().first().toString(), NTRIPGgaReporter::tr("GNSS receiver"));
 }
 
 void NTRIPGgaReporterTest::_ggaConfigurationPreservesFastRetry()
@@ -372,7 +372,7 @@ void NTRIPGgaReporterTest::_ggaConfigurationPreservesFastRetry()
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds{1}));
     QVERIFY(!sourceChanged.isEmpty());
     QCOMPARE(transport.sentNmea.size(), 1);
-    QCOMPARE(provider.currentSource(), NTRIPGgaReporter::tr("RTK Receiver"));
+    QCOMPARE(provider.currentSource(), NTRIPGgaReporter::tr("GNSS receiver"));
     // Cadence keeps running while polling.
     QVERIFY(scheduler.advanceBy(std::chrono::milliseconds{100}));
     QCOMPARE(transport.sentNmea.size(), 2);

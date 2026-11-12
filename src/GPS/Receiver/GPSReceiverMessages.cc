@@ -276,8 +276,8 @@ QString receiverStatus(const ReceiverStatus& status)
             break;
     }
     if (status.role == RTKSettings::Passive) {
-        return status.forwardingCorrections ? GPSReceiver::tr("Passive receiver connected; forwarding its RTCM")
-                                            : GPSReceiver::tr("Passive receiver connected; position only");
+        return status.forwardingCorrections ? GPSReceiver::tr("Existing base station connected; forwarding its RTCM")
+                                            : GPSReceiver::tr("Receiver connected; position only");
     }
     const bool determining = status.baseState == GPSBaseState::Active;
     if (status.correctionsWithheld && status.awaitingOwnPosition) {

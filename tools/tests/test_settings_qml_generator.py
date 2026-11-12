@@ -1432,7 +1432,7 @@ class TestRealPageDefinitions:
         # less often.
         assert [group.component or group.heading for group in page.groups] == [
             "CorrectionsStatus",
-            "NTRIP Server",
+            "NTRIP Caster",
             "NTRIPMountpointBrowser",
             "NTRIPConnectionStatus",
             "NTRIPSavedCasters",

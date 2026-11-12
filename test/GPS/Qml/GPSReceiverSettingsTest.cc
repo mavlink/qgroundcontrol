@@ -1790,7 +1790,7 @@ void GPSReceiverSettingsTest::_settingsPageListsGroups()
         sections.append(QStringLiteral("Saved Base Sites"));
     }
     const qsizetype statusSection = sections.size();
-    sections.append({QStringLiteral("Position Receiver"), QStringLiteral("GCS Position")});
+    sections.append({QStringLiteral("Position Receiver"), QStringLiteral("Ground Station Position")});
     QCOMPARE(listed(), sections);
 
     // The page's group of a control: the child of the page layout that holds it.

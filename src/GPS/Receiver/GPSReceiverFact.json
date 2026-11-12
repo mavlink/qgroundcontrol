@@ -41,7 +41,7 @@
 {
     "name":             "baseState",
     "shortDesc": "Base Position",
-    "longDesc": "What a configured base reports of its base position, in every base mode: none, one that a survey or the receiver's own averaging is determining, or a valid one, from a finished survey or a fixed position.",
+    "longDesc": "What an RTK base station reports of its base position, in every base mode: none, one that a survey or the receiver's own averaging is determining, or a valid one, from a finished survey or a fixed position.",
     "type":             "uint8",
     "enumStrings":      "None,Determining,Valid",
     "enumValues":       "0,1,2",
