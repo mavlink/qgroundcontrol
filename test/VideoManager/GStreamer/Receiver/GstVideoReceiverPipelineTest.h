@@ -17,6 +17,8 @@ private slots:
     void _testOutputDetachKeepsPipeline();
     void _testRestartRebuildsVideoSink();
     void _testDecoderQosDisabled();
+    void _testDecoderDelayFollowsSourceLiveness_data();
+    void _testDecoderDelayFollowsSourceLiveness();
     void _testDisplaySinkHasLatencyOnceLinked();
     void _testFailingHardwareDecoderGivesWayToTheNext();
     void _testFailedDecoderLeavesAutoplugOnlyForAnother_data();

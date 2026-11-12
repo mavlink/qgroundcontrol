@@ -79,6 +79,32 @@ quint64 sinkLateFramesDropped(GstElement* sink)
     return dropped;
 }
 
+/// Whether a live source feeds @p decodebin, as the decoders inside it ask their own upstream.
+bool fedByLiveSource(GstElement* decodebin)
+{
+    const GStreamer::GstPadPtr sinkPad = GStreamer::adoptPad(gst_element_get_static_pad(decodebin, "sink"));
+    const GStreamer::GstQueryPtr query = GStreamer::adoptQuery(gst_query_new_latency());
+    gboolean live = FALSE;
+    if (sinkPad && gst_pad_peer_query(sinkPad.get(), query.get())) {
+        gst_query_parse_latency(query.get(), &live, nullptr, nullptr);
+    }
+    return live;
+}
+
+/// Has @p decoder give out each frame as soon as it can, as it does by itself behind a live source. Each property is
+/// set where the decoder has it and takes the value.
+void decodeWithoutDelay(GstElement* decoder)
+{
+    GObject* const object = G_OBJECT(decoder);
+    // libav: every frame thread holds a frame back.
+    gst_util_set_object_arg(object, "thread-type", "slice");
+    // nvcodec: frames held back to pipeline decoding with display.
+    gst_util_set_object_arg(object, "max-display-delay", "0");
+    // The stateless H.264 decoders (va, d3d11, d3d12, v4l2sl, nv; GStreamer 1.20): a frame leaves the picture buffer
+    // once its place in the output order is known, not when the buffer is full.
+    gst_util_set_object_arg(object, "compliance", "normal");
+}
+
 bool isInside(GstObject* object, GstElement* element)
 {
     return element && object && gst_object_has_as_ancestor(object, GST_OBJECT_CAST(element));
@@ -479,9 +505,15 @@ void DecodingBranch::_onDecoderElementAdded(GstBin* decodebin, GstBin* /*subBin*
     if (g_object_class_find_property(G_OBJECT_GET_CLASS(element), "qos")) {
         g_object_set(element, "qos", FALSE, nullptr);
     }
+    // A decoder takes a source that isn't live (tcp://) for a file, and trades delay for throughput.
+    const bool live = fedByLiveSource(GST_ELEMENT(decodebin));
+    if (!live) {
+        decodeWithoutDelay(element);
+    }
 
     qCDebug(GstVideoReceiverLog).noquote()
-        << "Decodebin3 selected" << GStreamer::describeDecoderFactory(factory) << "- QoS disabled";
+        << "Decodebin3 selected" << GStreamer::describeDecoderFactory(factory) << "- QoS disabled"
+        << (live ? "" : "- set to decode without delay, as the source isn't live");
     const QString name = QString::fromUtf8(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory)));
     const bool hardware = GStreamer::isHardwareDecoderFactory(factory);
 

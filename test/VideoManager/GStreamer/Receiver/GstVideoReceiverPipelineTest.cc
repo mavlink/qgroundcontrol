@@ -326,6 +326,68 @@ void GstVideoReceiverPipelineTest::_testDecoderQosDisabled()
     QVERIFY2(qosEnabled.isEmpty(), qPrintable(qosEnabled.join(u',')));
 }
 
+void GstVideoReceiverPipelineTest::_testDecoderDelayFollowsSourceLiveness_data()
+{
+    QTest::addColumn<int>("streamType");
+    QTest::addColumn<QString>("threadType");
+
+    using StreamType = MockVideoStreamServer::StreamType;
+    // Behind a live source libav picks slice threads by itself, so its setting is left alone.
+    QTest::newRow("mpeg-ts udp is live") << int(StreamType::MpegTsUdp) << QStringLiteral("auto");
+    // tcpclientsrc isn't live: left alone, libav would add frame threads, each of which holds a frame back.
+    QTest::newRow("mpeg-ts tcp is not live") << int(StreamType::MpegTsTcp) << QStringLiteral("slice");
+}
+
+void GstVideoReceiverPipelineTest::_testDecoderDelayFollowsSourceLiveness()
+{
+#ifndef QGC_HAS_MOCK_VIDEO_STREAM_SERVER
+    QSKIP("MockVideoStreamServer is only built into single-config Debug builds");
+#else
+    QFETCH(int, streamType);
+    QFETCH(QString, threadType);
+
+    const auto type = static_cast<MockVideoStreamServer::StreamType>(streamType);
+    if (!MockVideoStreamServer::isStreamTypeAvailable(type)) {
+        QSKIP("This GStreamer install lacks the stream type's encoder or muxer");
+    }
+    GSTTEST_SKIP_UNLESS_FACTORIES("avdec_h264");
+    // libav's decoder on every host. Outlives the receiver.
+    const GstTest::DecoderRankSnapshot decoderRanks;
+    GStreamer::setCodecPriorities(VideoDecoderOption::Software);
+
+    MockVideoStreamServer server;
+    const bool receiverListens = (type == MockVideoStreamServer::StreamType::MpegTsUdp);
+    if (!receiverListens) {
+        QVERIFY(server.start(type, QStringLiteral("127.0.0.1"), 0));
+    }
+    Receiver stream(receiverListens ? loopbackUri(QLatin1StringView("mpegts"), 0) : server.servedUri());
+    stream.receiver->setActive(true);
+    if (receiverListens) {
+        QVERIFY(stream.waitForState(State::Connecting));
+        QVERIFY(server.start(type, QStringLiteral("127.0.0.1"), stream.udpPort()));
+    }
+    QVERIFY(stream.waitForState(State::Streaming));
+    QVERIFY(stream.display());
+    QCOMPARE(stream.receiver->decoderName(), QStringLiteral("avdec_h264"));
+
+    QString decoderThreadType;
+    QVERIFY(runOnPipeline(stream.receiver.get(), [&decoderThreadType](GstElement* pipeline) {
+        const GStreamer::GstElementPtr decoder = GstTest::findByFactory(pipeline, "avdec_h264");
+        GParamSpec* const spec =
+            decoder ? g_object_class_find_property(G_OBJECT_GET_CLASS(decoder.get()), "thread-type") : nullptr;
+        if (!spec || !G_IS_PARAM_SPEC_FLAGS(spec)) {
+            return;
+        }
+        guint flags = 0;
+        g_object_get(decoder.get(), "thread-type", &flags, nullptr);
+        if (const GFlagsValue* const value = g_flags_get_first_value(G_PARAM_SPEC_FLAGS(spec)->flags_class, flags)) {
+            decoderThreadType = QString::fromLatin1(value->value_nick);
+        }
+    }));
+    QCOMPARE(decoderThreadType, threadType);
+#endif
+}
+
 void GstVideoReceiverPipelineTest::_testDisplaySinkHasLatencyOnceLinked()
 {
     // No LATENCY message follows the link: the stub decoder posts none, and the sink gets no frame to post one for.
