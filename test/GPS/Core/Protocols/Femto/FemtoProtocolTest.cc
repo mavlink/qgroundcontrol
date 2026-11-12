@@ -12,6 +12,7 @@
 #include "GPSReceiverConfig.h"
 #include "GPSReceiverFamilies.h"
 #include "Protocols/Support/FemtoReceiverModel.h"
+#include "Protocols/Support/GPSBaseStationConfigs.h"
 #include "Protocols/Support/GPSProtocolTestBase.h"
 #include "Protocols/Support/ReceiverBench.h"
 
@@ -59,7 +60,7 @@ void configurationDecodesInterleavedTraffic(GPSTestClock& clock)
         peer.faults.rules.push_back(latestReply("UNLOGALL", gga + QByteArray("<UNLOGALL OK\0", 13), 1, 1));
         GPSProtocolRuntime driver = peer.runtime(Femto::FAMILY);
         GPSConfig config;
-        config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .duration = 60s}};
+        config.base = surveyInBase(1, 60s);
         unsigned baud = 115200;
         QVERIFY(driver.configure(config, baud));
         QCOMPARE(peer.log.count<GPSDecodedSatelliteUsage>(), 1);
@@ -133,12 +134,7 @@ void FemtoProtocolTest::_receiverMode()
     };
     GPSProtocolRuntime driver(Femto::FAMILY, std::move(io));
     GPSConfig config{};
-    config.base = {
-        .mode = fixed ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
-                            .position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
-                            .accuracyMeters = 1.0f}}
-                      : GPSBaseStationConfig::Mode{
-                            GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1.25, .duration = 60s}}};
+    config.base = fixed ? fixedBaseAt(47.0, 8.0, 500.0f, 1.0f) : surveyInBase(1.25, 60s);
     unsigned baudRate = 115200;
     const bool configured = driver.configure(config, baudRate);
     if (!rejectedCommand.isEmpty()) {

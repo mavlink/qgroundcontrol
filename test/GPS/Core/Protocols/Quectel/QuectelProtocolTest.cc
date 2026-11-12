@@ -12,6 +12,7 @@
 #include "GPSProtocolRuntime.h"
 #include "GPSReceiverFamilies.h"
 #include "NMEASentence.h"
+#include "Protocols/Support/GPSBaseStationConfigs.h"
 #include "Protocols/Support/GPSProtocolTestBase.h"
 #include "Protocols/Support/QuectelReceiverModel.h"
 #include "Protocols/Support/ReceiverBench.h"
@@ -38,19 +39,12 @@ using Receiver = ModelReceiver<QuectelReceiverModel>;
 
 GPSConfig surveyConfig()
 {
-    GPSConfig config;
-    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).duration = 60s;
-    std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 15;
-    return config;
+    return {.base = surveyInBase(15, 60s)};
 }
 
 GPSConfig fixedConfig()
 {
-    auto config = surveyConfig();
-    config.base.mode = GPSBaseStationConfig::Fixed{};
-    std::get<GPSBaseStationConfig::Fixed>(config.base.mode).position = {
-        .latitudeDegrees = 0, .longitudeDegrees = 90, .altitudeMeters = 100};
-    return config;
+    return {.base = fixedBaseAt(0, 90, 100)};
 }
 
 void feed(GPSProtocolRuntime& driver, std::string_view line, size_t chunk = 3)

@@ -10,6 +10,7 @@
 
 #include "GPSProtocolRuntime.h"
 #include "GPSReceiverFamilies.h"
+#include "Protocols/Support/GPSBaseStationConfigs.h"
 #include "Protocols/Support/GPSProtocolTestBase.h"
 #include "Protocols/Support/ReceiverBench.h"
 #include "Protocols/Support/UnicoreReceiverModel.h"
@@ -65,11 +66,7 @@ enum class CommandFault
 
 GPSConfig baseConfig(bool fixed)
 {
-    GPSConfig config{};
-    config.base.mode = fixed ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
-                                   .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}
-                             : GPSBaseStationConfig::Mode{GPSBaseStationConfig::ReceiverAveraging{}};
-    return config;
+    return {.base = fixed ? fixedBaseAt(47, 8, 500) : averagingBase(60s)};
 }
 
 void identityAndRole(GPSTestClock& clock)
@@ -195,9 +192,7 @@ void fixedModeReadback(GPSTestClock& clock)
     // coordinates within a millimetre.
     constexpr std::string_view UM980_FIXED_MODE =
         "#MODE,97,GPS,FINE,2283,499142000,0,0,18,22;MODE BASE -1280206.5680 -4716804.4030 4086665.4840,*60\r\n";
-    GPSConfig config{};
-    config.base.mode = GPSBaseStationConfig::Fixed{
-        .position = {.latitudeDegrees = 40.09029479, .longitudeDegrees = -105.18505761, .altitudeMeters = 1560.089}};
+    const GPSConfig config{.base = fixedBaseAt(40.09029479, -105.18505761, 1560.089)};
 
     // The receiver repeats the commanded coordinates after the role, or reports the role alone.
     for (const bool coordinates : {true, false}) {

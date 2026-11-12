@@ -22,6 +22,7 @@
 #include "GPSTime.h"
 #include "LittleEndian.h"
 #include "NMEASentence.h"
+#include "Protocols/Support/GPSBaseStationConfigs.h"
 #include "Protocols/Support/GPSProtocolTestBase.h"
 #include "Protocols/Support/ReceiverBench.h"
 #include "Protocols/Support/ScriptedReceiver.h"
@@ -145,8 +146,7 @@ struct Fixture
     {
         clock.reset();
         log.clear();
-        std::get<GPSBaseStationConfig::SurveyIn>(base.mode).accuracyMeters = 1.25;
-        std::get<GPSBaseStationConfig::SurveyIn>(base.mode).duration = 60s;
+        base = surveyInBase(1.25, 60s);
     }
 
     /// The commands of the latest configure().
@@ -995,9 +995,7 @@ void legacyRTCMActivation(GPSTestClock& clock)
             f.receiver.model.module = "NEO-M8P";
             f.receiver.model.unsupportedMessages = scenario.unsupported;
             if (fixed) {
-                f.base = {.mode = GPSBaseStationConfig::Fixed{
-                              .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500},
-                              .accuracyMeters = 1}};
+                f.base = fixedBaseAt(47, 8, 500, 1);
                 QCOMPARE(f.configure(), scenario.active);
                 QCOMPARE(f.driver.receiverReady(), scenario.active);
                 // The failure names the missing output, whichever command was the last one.
@@ -1076,7 +1074,7 @@ struct ProfileBench
     bool configure()
     {
         GPSConfig config;
-        config.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2, .duration = 180s}};
+        config.base = surveyInBase(2, 180s);
         unsigned baud = 115200;
         return runtime.configure(config, baud);
     }
@@ -1291,9 +1289,7 @@ void legacyRTCMRatePolls(GPSTestClock& clock)
         f.receiver.model.silentRatePoll = scenario.silentPoll;
         f.receiver.model.ratePollAckDelay = scenario.pollAckDelay;
         f.receiver.model.unsupportedMessages = scenario.unsupported;
-        f.base = {.mode = GPSBaseStationConfig::Fixed{
-                      .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500},
-                      .accuracyMeters = 1}};
+        f.base = fixedBaseAt(47, 8, 500, 1);
         QCOMPARE(f.configure(), scenario.active);
         QCOMPARE(f.receiver.model.ratePolls, 1);
         QCOMPARE(f.log.warnings(), (scenario.stops ? unanswered : QStringList{}));

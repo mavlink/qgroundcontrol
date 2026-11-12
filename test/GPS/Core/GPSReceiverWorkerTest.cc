@@ -18,6 +18,7 @@
 #include "GPSReceiverWorker.h"
 #include "NMEASentence.h"
 #include "Protocols/Support/FemtoReceiverModel.h"
+#include "Protocols/Support/GPSBaseStationConfigs.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "Protocols/Support/QuectelReceiverModel.h"
 #include "Protocols/Support/ReceiverBench.h"
@@ -478,11 +479,7 @@ void GPSReceiverWorkerTest::_ancillaryTraffic()
             transport->setClock(&clock);
             return transport;
         },
-        GPSType::Septentrio,
-        {.base = {.mode =
-                      GPSBaseStationConfig::Fixed{
-                          .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}},
-        nullptr, clock.source());
+        GPSType::Septentrio, {.base = fixedBaseAt(47, 8, 500)}, nullptr, clock.source());
     connect(
         &worker, &GPSReceiverWorker::receiverReady, &worker,
         [&] {
@@ -535,11 +532,7 @@ void GPSReceiverWorkerTest::_configuredReceiverRidesOutSilence()
             transport->setClock(&clock);
             return transport;
         },
-        GPSType::Septentrio,
-        {.base = {.mode =
-                      GPSBaseStationConfig::Fixed{
-                          .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}},
-        nullptr, clock.source());
+        GPSType::Septentrio, {.base = fixedBaseAt(47, 8, 500)}, nullptr, clock.source());
     uint64_t readyAtUs = 0;
     std::vector<std::pair<GPSInputProblem, uint64_t>> reports;
     connect(
@@ -575,11 +568,8 @@ void GPSReceiverWorkerTest::_configuredReceiverRidesOutSilence()
 void GPSReceiverWorkerTest::_configuredReceiverReportsReadyThenLoss_data()
 {
     QTest::addColumn<GPSBaseStationConfig>("config");
-    QTest::newRow("survey") << GPSBaseStationConfig{.mode = GPSBaseStationConfig::SurveyIn{2, 180s}};
-    QTest::newRow("fixed-wire-limits") << GPSBaseStationConfig{
-        .mode = GPSBaseStationConfig::Fixed{
-            .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 21474836.0f},
-            .accuracyMeters = 429496.71875f}};
+    QTest::newRow("survey") << surveyInBase(2, 180s);
+    QTest::newRow("fixed-wire-limits") << fixedBaseAt(47, 8, 21474836.0f, 429496.71875f);
 }
 
 void GPSReceiverWorkerTest::_configuredReceiverReportsReadyThenLoss()
@@ -653,9 +643,7 @@ void GPSReceiverWorkerTest::_quectelConsentRefusal()
         [&clock, role, base = base.toStdString(), identity = identity.toStdString()](GPSCancelToken cancelToken) {
             return quectelTransport(std::move(cancelToken), clock, role, base, identity);
         },
-        GPSType::Quectel,
-        GPSReceiverConfig{.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 15, .duration = 60s}}},
-        nullptr, clock.source());
+        GPSType::Quectel, GPSReceiverConfig{.base = surveyInBase(15, 60s)}, nullptr, clock.source());
     QSignalSpy ready(&worker, &GPSReceiverWorker::receiverReady);
     QSignalSpy errors(&worker, &GPSReceiverWorker::connectionError);
     const QRegularExpression diagnostic(QRegularExpression::escape(detail));

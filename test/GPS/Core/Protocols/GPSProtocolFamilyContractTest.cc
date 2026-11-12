@@ -18,6 +18,7 @@
 #include "LittleEndian.h"
 #include "Protocols/Scenarios/GoldenScenarios.h"
 #include "Protocols/Support/AshtechReceiverModel.h"
+#include "Protocols/Support/GPSBaseStationConfigs.h"
 #include "Protocols/Support/GPSModelViolations.h"
 #include "Protocols/Support/GPSProtocolTestBase.h"
 #include "Protocols/Support/QuectelReceiverModel.h"
@@ -122,17 +123,17 @@ GPSConfig validConfig(const ProtocolFamily& family)
         return {};
     }
     if (capabilities(family).receiverAveraging) {
-        return {.base = {.mode = GPSBaseStationConfig::ReceiverAveraging{.maximumDuration = 60s}}};
+        return {.base = averagingBase(60s)};
     }
     if (family.type == GPSType::Quectel) {
-        return {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 15, .duration = 60s}}};
+        return {.base = surveyInBase(15, 60s)};
     }
-    return {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .duration = 60s}}};
+    return {.base = surveyInBase(1, 60s)};
 }
 
 GPSConfig surveyConfig()
 {
-    return {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .duration = 60s}}};
+    return {.base = surveyInBase(1, 60s)};
 }
 
 void addFamilyRows()
@@ -445,10 +446,9 @@ void GPSProtocolFamilyContractTest::_linkFailure()
     auto receiver = createHost(family, link.io());
     GPSConfig config{};
     if (capabilities(family).receiverAveraging) {
-        config.base.mode = GPSBaseStationConfig::ReceiverAveraging{.maximumDuration = 60s};
+        config.base = averagingBase(60s);
     } else if (!passive) {
-        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).accuracyMeters = 1;
-        std::get<GPSBaseStationConfig::SurveyIn>(config.base.mode).duration = 60s;
+        config.base = surveyInBase(1, 60s);
     }
     unsigned baudRate = passive ? 115200 : 0;
     const bool configured = receiver->configure(config, baudRate);

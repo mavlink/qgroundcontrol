@@ -15,6 +15,7 @@
 #include "GPSProtocolRuntime.h"
 #include "GPSReceiverFamilies.h"
 #include "LittleEndian.h"
+#include "Protocols/Support/GPSBaseStationConfigs.h"
 #include "Protocols/Support/GPSProtocolTestBase.h"
 #include "Protocols/Support/ReceiverBench.h"
 #include "Protocols/Support/SBFReceiverModel.h"
@@ -65,19 +66,6 @@ std::vector<uint8_t> bytes(const PVTBody& v)
 using Receiver = ModelReceiver<SBFReceiverModel>;
 
 const QByteArray REJECTED = "$R? rejected\n";
-
-GPSConfig surveyIn()
-{
-    return {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1, .duration = 60s}}};
-}
-
-GPSConfig fixedBase(double latitude, double longitude, float altitude, float accuracy = 0.0f)
-{
-    return {.base = {.mode = GPSBaseStationConfig::Fixed{.position = {.latitudeDegrees = latitude,
-                                                                      .longitudeDegrees = longitude,
-                                                                      .altitudeMeters = altitude},
-                                                         .accuracyMeters = accuracy}}};
-}
 
 // Decoding
 
@@ -322,7 +310,7 @@ void confirmationPolicy(GPSTestClock& clock)
         }
         LoggedRuntime sbf(SBF::FAMILY, receiver.io());
         unsigned baud = 115200;
-        QCOMPARE(sbf->configure(surveyIn(), baud), !rejected);
+        QCOMPARE(sbf->configure({.base = surveyInBase(1, 60s)}, baud), !rejected);
         if (!rejected) {
             continue;
         }
@@ -335,7 +323,7 @@ void confirmationPolicy(GPSTestClock& clock)
     receiver.model.readChunk = GPSCommandChannel::READ_CHUNK_SIZE;
     LoggedRuntime sbf(SBF::FAMILY, receiver.io());
     unsigned baud = 115200;
-    QVERIFY(!sbf->configure(surveyIn(), baud));
+    QVERIFY(!sbf->configure({.base = surveyInBase(1, 60s)}, baud));
     QCOMPARE(receiver.commands().back(), "setGeodeticDatum, WGS84\n");
 }
 
@@ -346,7 +334,7 @@ void selectedPortAndPrecision(GPSTestClock& clock)
         peer.faults.rules.push_back(latestReply("\n\r", QByteArray(port) + ">"));
         LoggedRuntime sbf(SBF::FAMILY, peer.io());
         unsigned baud = 115200;
-        QVERIFY(sbf->configure(fixedBase(47.397742491, -8.545593291, 500.125f), baud));
+        QVERIFY(sbf->configure({.base = fixedBaseAt(47.397742491, -8.545593291, 500.125f)}, baud));
         QVERIFY(peer.sent(QByteArray("setDataInOut, ") + port + ", Auto, RTCMv3+SBF"));
         QVERIFY(peer.sent(QByteArray("setSBFOutput, Stream1, ") + port + ", +PVTGeodetic"));
         QVERIFY(peer.sent("setStaticPosGeodetic, Geodetic1, 47.397742491, -8.545593291, 500.1250, WGS84"));
@@ -356,7 +344,7 @@ void selectedPortAndPrecision(GPSTestClock& clock)
     Receiver peer(clock);
     LoggedRuntime sbf(SBF::FAMILY, peer.io());
     unsigned baud = 115200;
-    QVERIFY(sbf->configure(fixedBase(-0.0, 8.0, 500.03125f), baud));
+    QVERIFY(sbf->configure({.base = fixedBaseAt(-0.0, 8.0, 500.03125f)}, baud));
     QVERIFY(peer.sent("setStaticPosGeodetic, Geodetic1, -0.000000000, 8.000000000, 500.0312, WGS84\n"));
 }
 
@@ -367,7 +355,7 @@ void datumRejection(GPSTestClock& clock)
         Receiver peer(clock);
         LoggedRuntime sbf(SBF::FAMILY, peer.io());
         unsigned baud = 115200;
-        QVERIFY(sbf->configure(surveyIn(), baud));
+        QVERIFY(sbf->configure({.base = surveyInBase(1, 60s)}, baud));
         auto payload = bytes({.mode = 3, .latitude = 0.5, .longitude = 1, .height = 500});
         payload.resize(82);
         payload[59] = datum;
@@ -404,7 +392,7 @@ void noSolutionEpoch(GPSTestClock& clock)
     Receiver peer(clock);
     LoggedRuntime sbf(SBF::FAMILY, peer.io());
     unsigned baud = 115200;
-    QVERIFY(sbf->configure(fixedBase(47, 8, 500), baud));
+    QVERIFY(sbf->configure({.base = fixedBaseAt(47, 8, 500)}, baud));
     (void) sbf->consume(sbfBlock(SBF::BlockId::PVT_GEODETIC, unavailable, 1000));
     QCOMPARE(sbf->error(), GPSProtocolError::None);
     QVERIFY(sbf->receiverReady());
@@ -445,7 +433,7 @@ void frameOwnership(GPSTestClock& clock)
     Receiver receiver(clock);
     LoggedRuntime sbf(SBF::FAMILY, receiver.io());
     unsigned baudRate = 115200;
-    QVERIFY(sbf->configure(fixedBase(47, 8, 500, 1), baudRate));
+    QVERIFY(sbf->configure({.base = fixedBaseAt(47, 8, 500, 1)}, baudRate));
     const auto corrections = [&sbf] { return sbf.reports<GPSRTCMFrame>().size(); };
     const auto fixes = [&sbf] { return sbf.reports<GPSDecodedPosition>().size(); };
     const auto correction = rtcmPacket(std::array<uint8_t, 2>{0x3e, 0xd0});
@@ -499,7 +487,7 @@ void surveyEvidence(GPSTestClock& clock)
     const auto duration = [&surveys] { return surveyDuration(surveys.back()); };
 
     for (bool fixed : {false, true, false}) {
-        const GPSConfig config = fixed ? fixedBase(47, 8, 500) : surveyIn();
+        const GPSConfig config{.base = fixed ? fixedBaseAt(47, 8, 500) : surveyInBase(1, 60s)};
         QVERIFY(sbf->configure(config, baudRate));
         QVERIFY(sbf->receiverReady());
         // A standalone solution without the determination flag is not a completed fixed base.
@@ -558,7 +546,7 @@ void configurationDecodesInterleavedTraffic(GPSTestClock& clock)
         latestReply("setDataInOut", toByteArray(frame) + "$R: setDataInOut,COM1,,-RTCMv3-RTCMv2-CMRv2\n", 1, 1));
     LoggedRuntime sbf(SBF::FAMILY, peer.io());
     unsigned baud = 115200;
-    QVERIFY(sbf->configure(surveyIn(), baud));
+    QVERIFY(sbf->configure({.base = surveyInBase(1, 60s)}, baud));
     QCOMPARE(sbf.reports<GPSDecodedPosition>().size(), 1);
     QVERIFY(std::abs(sbf.position.navigation.latitudeDegrees - 0.5 * RAD_TO_DEG) < 1e-6);
 }

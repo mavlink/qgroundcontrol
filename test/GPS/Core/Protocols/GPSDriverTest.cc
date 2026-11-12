@@ -13,6 +13,7 @@
 #include "GPSReceiverFamilies.h"
 #include "Protocols/Support/AshtechReceiverModel.h"
 #include "Protocols/Support/FemtoReceiverModel.h"
+#include "Protocols/Support/GPSBaseStationConfigs.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "Protocols/Support/ReceiverBench.h"
 #include "Protocols/Support/SBFReceiverModel.h"
@@ -75,11 +76,7 @@ void GPSDriverTest::_ashtechSatelliteSnapshots()
     std::vector<GPSSatelliteReport> snapshots;
     GPSDriverSinks sinks;
     sinks.onSatelliteInfo = [&](const auto& snapshot) { snapshots.push_back(snapshot); };
-    GPSDriver driver(GPSType::Trimble, link,
-                     {.base = {.mode = GPSBaseStationConfig::Fixed{.position = {.latitudeDegrees = 47,
-                                                                                .longitudeDegrees = 8,
-                                                                                .altitudeMeters = 500}}}},
-                     sinks, clock.source());
+    GPSDriver driver(GPSType::Trimble, link, {.base = fixedBaseAt(47, 8, 500)}, sinks, clock.source());
     QVERIFY(driver.configure());
     unsigned epoch = 120000;
     const auto feed = [&](QByteArrayView body) {
@@ -122,12 +119,7 @@ void GPSDriverTest::_nativeIntegrityProvenance()
     std::vector<GPSPositionReport> positions;
     GPSDriverSinks sinks;
     sinks.onPosition = [&](const auto& report) { positions.push_back(report); };
-    GPSDriver driver(GPSType::UBlox, transport,
-                     {.base = {.mode = GPSBaseStationConfig::Fixed{.position = {.latitudeDegrees = 47,
-                                                                                .longitudeDegrees = 8,
-                                                                                .altitudeMeters = 500},
-                                                                   .accuracyMeters = 1}}},
-                     sinks, clock.source());
+    GPSDriver driver(GPSType::UBlox, transport, {.base = fixedBaseAt(47, 8, 500, 1)}, sinks, clock.source());
     QVERIFY(driver.configure());
     receiver.coalesceReplies = true;
     const auto navigation = [&](uint32_t tow) {
@@ -176,11 +168,7 @@ void GPSDriverTest::_femtoSatelliteUsage()
     std::vector<GPSSatelliteReport> reports;
     GPSDriverSinks sinks;
     sinks.onSatelliteInfo = [&](const auto& report) { reports.push_back(report); };
-    GPSDriver driver(GPSType::Femto, link,
-                     {.base = {.mode = GPSBaseStationConfig::Fixed{.position = {.latitudeDegrees = 47,
-                                                                                .longitudeDegrees = 8,
-                                                                                .altitudeMeters = 500}}}},
-                     sinks, clock.source());
+    GPSDriver driver(GPSType::Femto, link, {.base = fixedBaseAt(47, 8, 500)}, sinks, clock.source());
     QVERIFY(driver.configure());
     for (const auto& count : {QByteArray("12"), QByteArray("00"), QByteArray()}) {
         send(link, nmeaBytes("GPGGA,123519,4807.038,N,01131.000,E,1," + count + ",0.9,545.4,M,46.9,M,,"));
@@ -200,11 +188,7 @@ void GPSDriverTest::_receiveOutcomes()
 {
     GPSTestClock clock(GPSTestClock::START_US);
     ModelReceiver<FemtoReceiverModel> link(clock);
-    GPSDriver driver(GPSType::Femto, link,
-                     {.base = {.mode = GPSBaseStationConfig::Fixed{.position = {.latitudeDegrees = 47,
-                                                                                .longitudeDegrees = 8,
-                                                                                .altitudeMeters = 500}}}},
-                     {}, clock.source());
+    GPSDriver driver(GPSType::Femto, link, {.base = fixedBaseAt(47, 8, 500)}, {}, clock.source());
     QCOMPARE(driver.receiveOutcome(0ms).error, GPSProtocolError::InvalidArgument);
     QVERIFY(driver.configure());
     QVERIFY(driver.configurationError().isEmpty());
@@ -259,9 +243,7 @@ void GPSDriverTest::_rtcmActivationRejected()
     GPSTestClock clock(GPSTestClock::START_US);
     ModelReceiver<UBXReceiverModel> transport(clock, UBXReceiverModel::Receiver::F9P);
     auto& receiver = transport.model;
-    GPSDriver driver(GPSType::UBlox, transport,
-                     {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2, .duration = 1s}}}, {},
-                     clock.source());
+    GPSDriver driver(GPSType::UBlox, transport, {.base = surveyInBase(2, 1s)}, {}, clock.source());
     QVERIFY(driver.configure());
     receiver.rejectRtcmActivation = true;
     QByteArray survey(40, '\0');
@@ -301,12 +283,7 @@ void GPSDriverTest::_configurationDeadline()
     ConfigurationProbeTransport transport;
     transport.cap = std::chrono::milliseconds(capMs);
     transport.delayReturn = delayReturn;
-    GPSDriver driver(GPSType::UBlox, transport,
-                     {.base = {.mode = GPSBaseStationConfig::Fixed{.position = {.latitudeDegrees = 47,
-                                                                                .longitudeDegrees = 8,
-                                                                                .altitudeMeters = 500},
-                                                                   .accuracyMeters = 1}}},
-                     {}, transport.clock.source());
+    GPSDriver driver(GPSType::UBlox, transport, {.base = fixedBaseAt(47, 8, 500, 1)}, {}, transport.clock.source());
     expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
     QVERIFY(!driver.configure());
     verifyExpectedLogMessage();
@@ -338,12 +315,7 @@ void GPSDriverTest::_configurationWriteEvidence()
     ModelReceiver<ScriptedReceiver::Model> link(clock);
     link.setWriteHandler(
         [result](const QByteArray&, const ScriptedReceiver::WriteContext&) { return std::optional(result); });
-    GPSDriver driver(GPSType::UBlox, link,
-                     {.base = {.mode = GPSBaseStationConfig::Fixed{.position = {.latitudeDegrees = 47,
-                                                                                .longitudeDegrees = 8,
-                                                                                .altitudeMeters = 500},
-                                                                   .accuracyMeters = 1}}},
-                     {}, clock.source());
+    GPSDriver driver(GPSType::UBlox, link, {.base = fixedBaseAt(47, 8, 500, 1)}, {}, clock.source());
     expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));
     QVERIFY(!driver.configure());
     verifyExpectedLogMessage();
@@ -377,13 +349,7 @@ void GPSDriverTest::_ubloxRoleTransition()
     auto& receiver = transport.model;
     {
         GPSReceiverConfig config;
-        config.base = {
-            .mode = fixed
-                        ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
-                              .position = {.latitudeDegrees = 47.0, .longitudeDegrees = 8.0, .altitudeMeters = 500.0f},
-                              .accuracyMeters = 0.0f}}
-                        : GPSBaseStationConfig::Mode{
-                              GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2.0, .duration = 180s}}};
+        config.base = fixed ? fixedBaseAt(47.0, 8.0, 500.0f, 0.0f) : surveyInBase(2.0, 180s);
         GPSDriver base(GPSType::UBlox, transport, config, {}, clock.source());
         QVERIFY(base.configure());
         QCOMPARE(receiver.timeMode, fixed ? 2u : 1u);
@@ -498,8 +464,8 @@ void GPSDriverTest::_automaticDetection_data()
     QTest::addColumn<QString>("error");
     QTest::addColumn<QString>("warning");
 
-    const GPSBaseStationConfig survey{.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2, .duration = 180s}};
-    const GPSBaseStationConfig averaging{.mode = GPSBaseStationConfig::ReceiverAveraging{.maximumDuration = 60s}};
+    const GPSBaseStationConfig survey = surveyInBase(2, 180s);
+    const GPSBaseStationConfig averaging = averagingBase(60s);
     QTest::newRow("ublox") << GPSType::UBlox << GPSReceiverConfig{.base = survey} << QString() << QString();
     // Consent is a permission: a family without persistent configuration ignores it.
     QTest::newRow("ublox-ignores-consent")
@@ -553,9 +519,7 @@ void GPSDriverTest::_automaticDetectionCancelled()
     int reported = 0;
     GPSDriverSinks sinks;
     sinks.onReceiverDetected = [&](GPSType) { ++reported; };
-    GPSDriver driver(GPSType::Automatic, link.transport,
-                     {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2, .duration = 180s}}}, sinks,
-                     link.clock.source());
+    GPSDriver driver(GPSType::Automatic, link.transport, {.base = surveyInBase(2, 180s)}, sinks, link.clock.source());
     expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression("Receiver detection failed"));
     QVERIFY(!driver.configure());
     verifyExpectedLogMessage();
@@ -579,9 +543,7 @@ void GPSDriverTest::_detectionSkipsRefusedRate()
     QList<GPSType> reported;
     GPSDriverSinks sinks;
     sinks.onReceiverDetected = [&](GPSType type) { reported.append(type); };
-    GPSDriver driver(GPSType::Automatic, link.transport,
-                     {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2, .duration = 180s}}}, sinks,
-                     link.clock.source());
+    GPSDriver driver(GPSType::Automatic, link.transport, {.base = surveyInBase(2, 180s)}, sinks, link.clock.source());
     // Configuration then needs the refused rate and names it.
     const QString error = QStringLiteral("Detected u-blox receiver at 38400 baud: The link cannot run at 115200 baud");
     expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression(QRegularExpression::escape(error)));
@@ -617,9 +579,7 @@ void GPSDriverTest::_mismatchHint()
     QFETCH(QString, error);
     AutomaticLink link(receiver);
     link.septentrio.model.streaming = false;
-    const GPSReceiverConfig config{
-        .base = {.mode = GPSBaseStationConfig::Fixed{
-                     .position = {.latitudeDegrees = 47.123, .longitudeDegrees = 8.456, .altitudeMeters = 500}}}};
+    const GPSReceiverConfig config{.base = fixedBaseAt(47.123, 8.456, 500)};
     GPSDriver driver(type, link.transport, config, {}, link.clock.source());
     if (!error.isEmpty()) {
         expectLogMessage("GPS.GPSDriver", QtWarningMsg, QRegularExpression("Driver configuration failed"));

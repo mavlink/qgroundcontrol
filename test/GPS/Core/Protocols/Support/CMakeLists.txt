@@ -1,8 +1,9 @@
 # ============================================================================
 # GPS Protocol Test Support
-# The application-free receiver models, scripted links, clock and packet builders that the protocol suites, the
-# hardware runner and the fuzzer share. Consumers include them as "Protocols/Support/<header>", rooted at
-# test/GPS/Core; the helpers that need the unit test framework are sources of the application (../CMakeLists.txt).
+# The application-free receiver models, scripted links, clock, and packet and base-configuration builders that the
+# protocol suites, the hardware runner and the fuzzer share. Consumers include them as "Protocols/Support/<header>",
+# rooted at test/GPS/Core; the helpers that need the unit test framework are sources of the application
+# (../CMakeLists.txt).
 # ============================================================================
 
 add_library(
@@ -10,6 +11,7 @@ add_library(
     AshtechReceiverModel.h
     DetectionReceiver.h
     FemtoReceiverModel.h
+    GPSBaseStationConfigs.h
     GPSEventSummary.h
     GPSModelViolations.h
     GPSProtocolTestData.h

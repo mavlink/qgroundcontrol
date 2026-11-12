@@ -14,6 +14,7 @@
 #include "GPSProtocolRuntime.h"
 #include "GPSReceiverFamilies.h"
 #include "LittleEndian.h"
+#include "Protocols/Support/GPSBaseStationConfigs.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "Protocols/Support/ReceiverBench.h"
 #include "Protocols/Support/UBXReceiverModel.h"
@@ -155,18 +156,12 @@ bool isNamed(uint32_t id)
 
 GPSBaseStationConfig surveyIn()
 {
-    GPSBaseStationConfig base;
-    base.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = 1.25, .duration = 60s};
-    return base;
+    return surveyInBase(1.25, 60s);
 }
 
 GPSBaseStationConfig fixedBase()
 {
-    GPSBaseStationConfig base;
-    base.mode = GPSBaseStationConfig::Fixed{
-        .position = {.latitudeDegrees = -47.123456789, .longitudeDegrees = 8.987654321, .altitudeMeters = 512.3456},
-        .accuracyMeters = 0.25f};
-    return base;
+    return fixedBaseAt(-47.123456789, 8.987654321, 512.3456, 0.25f);
 }
 
 /// The CFG-VALSET and CFG-VALGET poll frames among @a commands, as the payload after the four header bytes.

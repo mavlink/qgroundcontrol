@@ -8,6 +8,7 @@
 
 #include "GPSReceiver.h"
 #include "GPSReceiverFactGroup.h"
+#include "Protocols/Support/GPSBaseStationConfigs.h"
 #include "Receiver/Support/ScriptedReceiverWorker.h"
 #ifndef QGC_NO_SERIAL_LINK
 #include "SerialPortManager.h"
@@ -33,8 +34,7 @@ inline GPSReceiver::Configuration receiverConfiguration(
     GPSReceiver::Configuration configuration;
     configuration.udpPort = 14401;
     configuration.serialBaudRate = 115200;
-    configuration.base.mode =
-        GPSBaseStationConfig::SurveyIn{.accuracyMeters = 2., .duration = std::chrono::seconds{180}};
+    configuration.base = surveyInBase(2., std::chrono::seconds{180});
     if (manufacturer == kPassiveManufacturer) {
         configuration.receiverRole = RTKSettings::Passive;
     } else {

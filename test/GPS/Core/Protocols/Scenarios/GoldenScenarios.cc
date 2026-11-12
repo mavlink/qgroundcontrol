@@ -2,6 +2,7 @@
 
 #include "Protocols/Support/AshtechReceiverModel.h"
 #include "Protocols/Support/FemtoReceiverModel.h"
+#include "Protocols/Support/GPSBaseStationConfigs.h"
 #include "Protocols/Support/QuectelReceiverModel.h"
 #include "Protocols/Support/SBFReceiverModel.h"
 #include "Protocols/Support/UBXReceiverModel.h"
@@ -208,24 +209,17 @@ std::vector<StreamStep> passiveStream()
 
 GPSReceiverConfig surveyIn(double accuracyMeters, int64_t seconds, uint32_t baud)
 {
-    return {.base = {.mode = GPSBaseStationConfig::SurveyIn{.accuracyMeters = accuracyMeters,
-                                                            .duration = std::chrono::seconds(seconds)}},
-            .baudRate = baud};
+    return {.base = surveyInBase(accuracyMeters, std::chrono::seconds(seconds)), .baudRate = baud};
 }
 
 GPSReceiverConfig fixedBase(double latitude, double longitude, float altitude, float accuracy, uint32_t baud)
 {
-    return {.base = {.mode = GPSBaseStationConfig::Fixed{.position = {.latitudeDegrees = latitude,
-                                                                      .longitudeDegrees = longitude,
-                                                                      .altitudeMeters = altitude},
-                                                         .accuracyMeters = accuracy}},
-            .baudRate = baud};
+    return {.base = fixedBaseAt(latitude, longitude, altitude, accuracy), .baudRate = baud};
 }
 
 GPSReceiverConfig averaging(int64_t seconds, uint32_t baud)
 {
-    return {.base = {.mode = GPSBaseStationConfig::ReceiverAveraging{.maximumDuration = std::chrono::seconds(seconds)}},
-            .baudRate = baud};
+    return {.base = averagingBase(std::chrono::seconds(seconds)), .baudRate = baud};
 }
 
 GPSReceiverConfig passiveInput(uint32_t baud)

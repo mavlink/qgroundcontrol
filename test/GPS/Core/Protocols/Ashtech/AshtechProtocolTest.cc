@@ -17,6 +17,7 @@
 #include "NMEASatellites.h"
 #include "NMEASentence.h"
 #include "Protocols/Support/AshtechReceiverModel.h"
+#include "Protocols/Support/GPSBaseStationConfigs.h"
 #include "Protocols/Support/GPSProtocolTestBase.h"
 #include "Protocols/Support/ProtocolTestPackets.h"
 #include "Protocols/Support/ReceiverBench.h"
@@ -38,11 +39,7 @@ struct Base
     [[nodiscard]] bool configure(bool fixed = false)
     {
         GPSConfig config{};
-        config.base = {
-            .mode = fixed ? GPSBaseStationConfig::Mode{GPSBaseStationConfig::Fixed{
-                                .position = {.latitudeDegrees = 47, .longitudeDegrees = 8, .altitudeMeters = 500}}}
-                          : GPSBaseStationConfig::Mode{GPSBaseStationConfig::SurveyIn{
-                                .accuracyMeters = 1, .duration = std::chrono::seconds{100}}}};
+        config.base = fixed ? fixedBaseAt(47, 8, 500) : surveyInBase(1, 100s);
         unsigned baudRate = 115200;
         if (!driver.configure(config, baudRate) || !driver.receiverReady()) {
             return false;
