@@ -290,7 +290,11 @@ GPSDialogueResult replayDialogue(const QString& recording, const std::function<b
         return result;
     }
     {
-        GPSDriver driver(result.settings->type, link, result.settings->config, {}, clock.source());
+        GPSDriverSinks sinks;
+        if (result.settings->type == GPSType::Automatic) {
+            sinks.onReceiverDetected = [&result](GPSType family) { result.detected = family; };
+        }
+        GPSDriver driver(result.settings->type, link, result.settings->config, std::move(sinks), clock.source());
         QString ended;
         result.configured = driver.configure();
         result.configurationError = driver.configurationError();

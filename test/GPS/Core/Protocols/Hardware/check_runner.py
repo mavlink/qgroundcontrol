@@ -125,6 +125,78 @@ def check_serve(binary: str) -> None:
     assert report["outcome"] == "failed" and "missing.log" in report["detail"], report
 
 
+def check_detected_session(binary: str) -> None:
+    # A session of --family automatic is one the driver detects the receiver in, as the application's "Detect
+    # automatically": the scripted receiver is found to be a u-blox one and configured as a base.
+    with TemporaryDirectory(prefix="gps-detect-", dir=Path.cwd()) as directory:
+        report = run(
+            binary,
+            [
+                "--family",
+                "automatic",
+                "--action",
+                "configure",
+                "--observe-ms",
+                "20",
+                "--record",
+                str(Path(directory) / "GPS"),
+            ],
+            3,
+        )
+        assert report["receiver_family"] == "automatic", report
+        stage = report["stages"][0]
+        checks = {item["name"]: item for item in stage["checks"]}
+        assert checks["configure_return"]["status"] == "passed", stage
+        assert stage["detected_family"] == "ublox", stage
+        assert stage["receiver_identity"] == "ZED-F9P HPG 1.32", stage
+        # The evidence of a u-blox receiver's settings, which the family the driver found decides.
+        settings = {item["setting"]: item for item in stage["requested_setting_observations"]}
+        assert settings["time_mode"]["matching_write_observed"], stage
+        # Its recording is named as the application names a detected session's, and replays as one.
+        recording = Path(report["recordings"][0])
+        assert re.fullmatch(r"\d{8}T\d{6}\.\d{3}Z-automatic\.log", recording.name), recording
+        replayed = run(
+            binary, ["--replay", str(recording), "--dialogue", "--action", "configure"], 0
+        )
+        assert replayed["outcome"] == "reproduced" and replayed["configured"], replayed
+        assert replayed["receiver_family"] == "automatic", replayed
+        assert replayed["detected_family"] == "ublox", replayed
+        # Decoding takes the decoder of one family, which a detected session does not name: the family its dialogue
+        # reports does.
+        refused = run(
+            binary,
+            ["--replay", str(recording), "--action", "configure", "--family", "automatic"],
+            2,
+        )
+        assert "--dialogue" in refused["detail"] and "detected" in refused["detail"], refused
+        decoded = run(
+            binary,
+            [
+                "--replay",
+                str(recording),
+                "--action",
+                "configure",
+                "--family",
+                replayed["detected_family"],
+            ],
+            0,
+        )
+        assert decoded["positions"]["fix_types"]["3d"] > 0, decoded
+    # A session that configures a named family reports no detection.
+    report = run(binary, ["--action", "configure", "--observe-ms", "20"], 3)
+    assert "detected_family" not in report["stages"][0], report
+    # Detection can take 45 s before a configuration that takes as long, so the deadline of a stage allows both.
+    endpoint = ["--transport", "tcp", "--device", "127.0.0.1:1", "--family", "automatic"]
+    report = run(binary, endpoint, 0)
+    assert report["outcome"] == "not_run" and report["requested"]["role"] == "base", report
+    assert report["deadlines"]["open_and_configure_ms"] == 105000, report
+    report = run(binary, [*endpoint, "--timeout-ms", "1000"], 0)
+    assert report["deadlines"]["open_and_configure_ms"] == 1000, report
+    # Passive input is decoded as it comes: there is no receiver to detect.
+    refused = run(binary, [*endpoint, "--role", "passive", "--baud", "115200"], 2)
+    assert "--family passive" in refused["detail"], refused
+
+
 def numbers(value: object) -> Iterator[float]:
     if isinstance(value, dict):
         for item in cast("dict[str, object]", value).values():
@@ -544,6 +616,7 @@ def main() -> None:
             "not_run" if fault == "rtcm-nak" else "failed"
         ), stage
     check_record_and_replay(binary)
+    check_detected_session(binary)
     check_serve(binary)
     print(
         "Native GPS runner safety, survey provenance, failure, record/replay and simulator contracts passed"

@@ -157,6 +157,8 @@ struct GPSDialogueResult
     bool configured = false;
     QString configurationError;
     QString receiverIdentity;
+    /// The family the driver of a GPSType::Automatic session detected, which decided its commands.
+    std::optional<GPSType> detected;
     /// The records the session reproduced, and what they hold.
     int records = 0;
     qint64 receivedBytes = 0;
