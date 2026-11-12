@@ -1,10 +1,12 @@
 #include "FirmwarePluginTest.h"
 
+#include <QtCore/QRegularExpression>
 #include <QtCore/QString>
 
 #include "ArduCopterFirmwarePlugin.h"
 #include "ArduSubFirmwarePlugin.h"
 #include "FirmwarePlugin.h"
+#include "PX4FirmwarePlugin.h"
 
 void FirmwarePluginTest::_stableFirmwareNotifiedOncePerVersion_data()
 {
@@ -33,6 +35,31 @@ void FirmwarePluginTest::_arduSubHasNoRtlFlightMode()
 {
     QVERIFY(ArduSubFirmwarePlugin().rtlFlightMode().isEmpty());
     QVERIFY(!ArduCopterFirmwarePlugin().rtlFlightMode().isEmpty());
+}
+
+void FirmwarePluginTest::_baseAsyncCommandsReportUnsupported()
+{
+    const QRegularExpression message(QStringLiteral("Guided mode not supported by Vehicle\\."));
+    expectAppMessage(message);
+    expectAppMessage(message);
+
+    FirmwarePlugin plugin;
+    plugin.pauseVehicleAsync(nullptr);
+    plugin.startMissionAsync(nullptr);
+
+    verifyExpectedLogMessage();
+    verifyExpectedLogMessage();
+}
+
+void FirmwarePluginTest::_asyncNullVehicleReturns()
+{
+    ArduCopterFirmwarePlugin apm;
+    apm.startMissionAsync(nullptr);
+    apm.pauseVehicleAsync(nullptr);
+
+    PX4FirmwarePlugin px4;
+    px4.startMissionAsync(nullptr);
+    px4.pauseVehicleAsync(nullptr);
 }
 
 UT_REGISTER_TEST(FirmwarePluginTest, TestLabel::Unit, TestLabel::Vehicle)

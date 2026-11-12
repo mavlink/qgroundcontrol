@@ -1,21 +1,7 @@
 #include "MockLink.h"
-#include "MAVLinkLib.h"
-#include "LinkManager.h"
-#include "MAVLinkProtocol.h"
-#include "MAVLinkSigning.h"
-#include "SecureMemory.h"
-#include "MockLinkCamera.h"
-#include "MockLinkFTP.h"
-#include "MockLinkGimbal.h"
-#include "MockLinkWorker.h"
-#include "QGCLoggingCategory.h"
-#include "FirmwarePlugin.h"
-#include "FactMetaData.h"
-#include "ParameterManager.h"
-#include "AppMessages.h"
-#include "QGCMath.h"
 
-#include "MockVideoStreamServer.h"
+#include <cmath>
+#include <cstring>
 
 #include <QtCore/QFile>
 #include <QtCore/QJsonArray>
@@ -23,14 +9,29 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QLatin1StringView>
 #include <QtCore/QMutexLocker>
-#include <QtCore/QSet>
 #include <QtCore/QRandomGenerator>
+#include <QtCore/QSet>
 #include <QtCore/QTemporaryFile>
 #include <QtCore/QThread>
 #include <QtCore/QTimer>
 
-#include <cmath>
-#include <cstring>
+#include "AppMessages.h"
+#include "FactMetaData.h"
+#include "FirmwarePlugin.h"
+#include "LinkManager.h"
+#include "MAVLinkLib.h"
+#include "MAVLinkProtocol.h"
+#include "MAVLinkSigning.h"
+#include "MockLinkCamera.h"
+#include "MockLinkFTP.h"
+#include "MockLinkGimbal.h"
+#include "MockLinkWorker.h"
+#include "MockVideoStreamServer.h"
+#include "ParameterManager.h"
+#include "QGCLoggingCategory.h"
+#include "QGCMAVLink.h"
+#include "QGCMath.h"
+#include "SecureMemory.h"
 
 QGC_LOGGING_CATEGORY(MockLinkLog, "Comms.MockLink.MockLink")
 QGC_LOGGING_CATEGORY(MockLinkVerboseLog, "Comms.MockLink.MockLink:verbose")
@@ -616,11 +617,12 @@ void MockLink::_loadParams()
 {
     QFile paramFile;
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-        if (_vehicleType == MAV_TYPE_FIXED_WING) {
+        // ArduPilot VTOL runs the plane firmware, so it uses the plane parameter set.
+        if (QGCMAVLink::isFixedWing(_vehicleType) || QGCMAVLink::isVTOL(_vehicleType)) {
             paramFile.setFileName(":/FirmwarePlugin/APM/Plane.OfflineEditing.params");
-        } else if (_vehicleType == MAV_TYPE_SUBMARINE ) {
+        } else if (_vehicleType == MAV_TYPE_SUBMARINE) {
             paramFile.setFileName(":/FirmwarePlugin/APM/Sub.OfflineEditing.params");
-        } else if (_vehicleType == MAV_TYPE_GROUND_ROVER ) {
+        } else if (_vehicleType == MAV_TYPE_GROUND_ROVER) {
             paramFile.setFileName(":/FirmwarePlugin/APM/Rover.OfflineEditing.params");
         } else {
             paramFile.setFileName(":/FirmwarePlugin/APM/Copter.OfflineEditing.params");
@@ -3700,15 +3702,18 @@ const QList<MockLink::FlightMode_t> &MockLink::_flightModeList() const
         return _availableFlightModes;
     }
 
-    switch (_vehicleType) {
-    case MAV_TYPE_FIXED_WING:
+    // ArduPilot VTOL runs the plane firmware, so it advertises plane flight modes.
+    if (QGCMAVLink::isFixedWing(_vehicleType) || QGCMAVLink::isVTOL(_vehicleType)) {
         return _apmPlaneAvailableFlightModes;
-    case MAV_TYPE_GROUND_ROVER:
-        return _apmRoverAvailableFlightModes;
-    case MAV_TYPE_SUBMARINE:
-        return _apmSubAvailableFlightModes;
-    default:
-        return _apmCopterAvailableFlightModes;
+    }
+
+    switch (_vehicleType) {
+        case MAV_TYPE_GROUND_ROVER:
+            return _apmRoverAvailableFlightModes;
+        case MAV_TYPE_SUBMARINE:
+            return _apmSubAvailableFlightModes;
+        default:
+            return _apmCopterAvailableFlightModes;
     }
 }
 

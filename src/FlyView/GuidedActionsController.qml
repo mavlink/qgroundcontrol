@@ -607,9 +607,10 @@ Item {
             selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
             for (i = 0; i < selectedVehicles.count; i++) {
                 var vehicle = selectedVehicles.get(i)
-                if (vehicle.armed === true){
-                    vehicle.startMission()
+                if (vehicle.underway === true && vehicle.flightMode === vehicle.missionFlightMode) {
+                    continue
                 }
+                vehicle.startMissionAsync()
             }
             break
         case actionArm:
@@ -618,7 +619,7 @@ Item {
         case actionMVArm:
             selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
             for (i = 0; i < selectedVehicles.count; i++) {
-                selectedVehicles.get(i).armed = true
+                selectedVehicles.get(i).armVehicleAsync()
             }
             break
         case actionForceArm:
@@ -678,7 +679,7 @@ Item {
         case actionMVPause:
             selectedVehicles = QGroundControl.multiVehicleManager.selectedVehicles
             for (i = 0; i < selectedVehicles.count; i++) {
-                selectedVehicles.get(i).pauseVehicle()
+                selectedVehicles.get(i).pauseVehicleAsync()
             }
             break
         case actionROI: {
