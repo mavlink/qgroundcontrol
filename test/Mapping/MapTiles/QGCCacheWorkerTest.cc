@@ -20,13 +20,13 @@
 #include "QGCMapEngine.h"
 #include "QGCMapTasks.h"
 #include "QGCMapUrlEngine.h"
-#include "QGCSqlHelper.h"
 #include "QGCTileCacheDatabase.h"
 #include "QGCTileCacheWorker.h"
 #include "QGCTileSet.h"
 #include "SettingsManager.h"
 #include "TerrainTile.h"
 #include "TerrainTileCopernicus.h"
+#include "TileCacheTestHelpers.h"
 
 static const QString kTestProviderType = QStringLiteral("Bing Road");
 
@@ -85,14 +85,6 @@ bool addLargeTileSet(const QString& path, const QString& name, int tileCount, qu
         }
     }
     return !deleteSet || db.deleteTileSet(id);
-}
-
-/// The unused pages of the cache file, read as another process would. -1 when they cannot be read.
-qint64 cacheWorkerFreePages(const QString& path)
-{
-    const QGCSqlHelper::ScopedConnection connection(path, /*readOnly=*/true, QStringLiteral("CacheWorkerTestPages"));
-    QSqlQuery query(connection.database());
-    return (query.exec(QStringLiteral("PRAGMA freelist_count")) && query.next()) ? query.value(0).toLongLong() : -1;
 }
 
 }  // namespace
@@ -755,19 +747,19 @@ void QGCCacheWorkerTest::_testFreePagesReleasedWhenIdle()
     QVERIFY(addLargeTileSet(path, QStringLiteral("set"), tileCount, &setID));
     QVERIFY(addLargeTileSet(path, QStringLiteral("default"), tileCount, nullptr));
     QVERIFY(addLargeTileSet(path, QStringLiteral("deleted"), tileCount, &deletedSetID, true));
-    QVERIFY(cacheWorkerFreePages(path) > 0);
+    QVERIFY(tileCacheFreePages(path) > 0);
 
     // The unused pages at the time the task reports that it is done, read on the worker thread: the task does not
     // wait for their release. Declared before the worker, which uses them until it is destroyed.
     std::atomic<qint64> pagesWhenDone = -1;
-    const auto readPages = [&pagesWhenDone, &path] { pagesWhenDone = cacheWorkerFreePages(path); };
+    const auto readPages = [&pagesWhenDone, &path] { pagesWhenDone = tileCacheFreePages(path); };
 
     // The worker releases the pages once it has started, without a task to make it. From here on it has nothing
     // left to release until a task frees pages.
     QGCCacheWorker worker;
     worker.setDatabaseFile(path);
     QVERIFY(_startWorker(worker));
-    QTRY_COMPARE_WITH_TIMEOUT(cacheWorkerFreePages(path), 0, TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(tileCacheFreePages(path), 0, TestTimeout::mediumMs());
 
     QGCMapTask* mapTask = nullptr;
     if (task == QStringLiteral("delete set")) {
@@ -791,7 +783,7 @@ void QGCCacheWorkerTest::_testFreePagesReleasedWhenIdle()
     QTRY_VERIFY_WITH_TIMEOUT(pagesWhenDone >= 0, TestTimeout::mediumMs());
     QVERIFY(pagesWhenDone > 0);
 
-    QTRY_COMPARE_WITH_TIMEOUT(cacheWorkerFreePages(path), 0, TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(tileCacheFreePages(path), 0, TestTimeout::mediumMs());
 
     worker.stop();
     worker.wait(TestTimeout::mediumMs());
@@ -821,7 +813,7 @@ void QGCCacheWorkerTest::_testTileFetchedBeforeFreePagesReleased()
         fetchTask, &QGCFetchTileTask::tileFetched, this,
         [&](const QGCCacheTile& tile) {
             image = tile.img;
-            pagesWhenFetched = cacheWorkerFreePages(path);
+            pagesWhenFetched = tileCacheFreePages(path);
         },
         Qt::DirectConnection);
     auto* const deleteTask = new QGCDeleteTileSetTask(setID);
@@ -834,7 +826,7 @@ void QGCCacheWorkerTest::_testTileFetchedBeforeFreePagesReleased()
     QTRY_VERIFY_WITH_TIMEOUT(pagesWhenFetched >= 0, TestTimeout::mediumMs());
     QCOMPARE(image, QByteArray(kCacheWorkerLargeTileSize, 'T'));
     QVERIFY(pagesWhenFetched > 0);
-    QTRY_COMPARE_WITH_TIMEOUT(cacheWorkerFreePages(path), 0, TestTimeout::mediumMs());
+    QTRY_COMPARE_WITH_TIMEOUT(tileCacheFreePages(path), 0, TestTimeout::mediumMs());
 
     worker.stop();
     worker.wait(TestTimeout::mediumMs());

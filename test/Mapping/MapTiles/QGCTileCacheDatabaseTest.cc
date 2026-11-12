@@ -21,6 +21,7 @@
 #include "QGCTile.h"
 #include "QGCTileCacheDatabase.h"
 #include "QGCTileSet.h"
+#include "TileCacheTestHelpers.h"
 
 static const QString kFixedProviderType = QStringLiteral("Bing Road");
 
@@ -126,11 +127,6 @@ QMap<int, int> shiftedLegacyMapIds()
         ids.insert(legacyId, legacyId + 5);
     }
     return ids;
-}
-
-qint64 tileCacheFreePages(const QString& path)
-{
-    return tileCacheRows(path, QStringLiteral("PRAGMA freelist_count")).value(0).toLongLong();
 }
 
 constexpr int kLargeTileCount = 20;
