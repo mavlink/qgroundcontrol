@@ -37,6 +37,7 @@ public:
     void writeDeferred(FormatFunc formatter);
     /// Waits until everything queued so far is flushed to the file. Returns false on timeout or error.
     bool flush(int timeoutMs = 5000);
+    /// Writes what is queued and stops the writer. A write that fails here is an error like any other.
     void close();
     /// An error drops what is queued and stops the writer. Clearing it, or writing again, starts it anew.
     void clearError();

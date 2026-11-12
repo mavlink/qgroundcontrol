@@ -272,6 +272,8 @@ void QGCFileWriter::_workerLoop()
     }
 
     // Drain remaining queue
+    bool drainError = false;
+    QString drainErrorString;
     {
         QMutexLocker locker(&_mutex);
         for (auto &item : _queue) {
@@ -279,17 +281,26 @@ void QGCFileWriter::_workerLoop()
                 item.data = item.formatter();
                 item.formatter = nullptr;
             }
-            if (!item.data.isEmpty()) {
-                file.write(item.data);
+            if (!item.data.isEmpty() && !drainError) {
+                drainError = file.write(item.data) < 0;
             }
         }
         _pendingBytes.store(0, std::memory_order_relaxed);
         _queue.clear();
+        // As above, the errors of buffered writes only show up in flush()
+        if (drainError || !file.flush()) {
+            drainError = true;
+            drainErrorString = file.errorString();
+        }
         file.close();
         _writtenCount = _queuedCount;
     }
 
     _isOpen.store(false, std::memory_order_relaxed);
     _fileSize.store(0, std::memory_order_relaxed);
+    if (drainError) {
+        _setError(drainErrorString);
+        return;
+    }
     _flushedCondition.wakeAll();
 }

@@ -145,6 +145,61 @@ void QGCFileWriterTest::_testRecoversAfterError()
     QCOMPARE(errorSpy.count(), 1);
 }
 
+void QGCFileWriterTest::_testCloseReportsWriteError_data()
+{
+    QTest::addColumn<bool>("flushFirst");
+
+    // Which of the worker's two write paths gets the data depends on timing; the caller sees the same either way.
+    // Here the worker usually finds the request to close before it has looked at its queue, and writes what is
+    // queued on its way out.
+    QTest::newRow("closed right after the first write") << false;
+    // Here it is usually waiting for data, and takes the write as a batch before it finds the request to close.
+    QTest::newRow("closed after an earlier flush") << true;
+}
+
+void QGCFileWriterTest::_testCloseReportsWriteError()
+{
+    QFETCH(bool, flushFirst);
+
+    // Opens for writing, but every write fails with "no space left on device"
+    const QString fullDevice = QStringLiteral("/dev/full");
+    if (!QFile::exists(fullDevice)) {
+        QSKIP("Needs /dev/full to provoke a write error");
+    }
+
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const QString goodPath = tempDir.filePath(QStringLiteral("out.log"));
+
+    QGCFileWriter writer;
+    QSignalSpy errorSpy(&writer, &QGCFileWriter::errorOccurred);
+    writer.setFilePath(fullDevice);
+    // Qt's complaint about appending to a character device
+    expectLogMessage("default", QtWarningMsg, QRegularExpression(QStringLiteral("Cannot call seek")));
+    if (flushFirst) {
+        // Opens the file without writing to it
+        writer.writeDeferred([]() { return QByteArray(); });
+        QVERIFY(writer.flush(TestTimeout::mediumMs()));
+    }
+    writer.write("lost");
+    writer.close();
+    verifyExpectedLogMessage();
+
+    QVERIFY(writer.hasError());
+    QVERIFY(!writer.lastError().isEmpty());
+    QVERIFY(!writer.isRunning());
+    QVERIFY(!writer.isOpen());
+    QCOMPARE(writer.pendingBytes(), qint64(0));
+    QVERIFY_SIGNAL_COUNT_WAIT(errorSpy, 1, TestTimeout::mediumMs());
+
+    writer.setFilePath(goodPath);
+    QVERIFY(!writer.hasError());
+    writer.write("recovered");
+    QVERIFY(writer.flush(TestTimeout::mediumMs()));
+    QCOMPARE(_fileContents(goodPath), QByteArray("recovered"));
+    QCOMPARE(errorSpy.count(), 1);
+}
+
 void QGCFileWriterTest::_testDestructorWritesQueuedData()
 {
     QTemporaryDir tempDir;
