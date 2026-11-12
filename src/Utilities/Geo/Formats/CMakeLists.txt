@@ -53,8 +53,6 @@ target_link_libraries(
         Qt6::QmlIntegration
         Qt6::Xml
     PRIVATE
-        Qt6::Location
-        Qt6::LocationPrivate
         shp
         QGCGeoMath
         QGCLogging

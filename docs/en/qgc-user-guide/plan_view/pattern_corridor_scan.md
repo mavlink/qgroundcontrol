@@ -18,6 +18,7 @@ To create a corridor scan:
 1. On the map drag the ends of the corridor to the start and end positions of the scan, respectively.
 1. Click the `(+)` symbol at the centre of a line to create a new vertex.
    The new vertex can then be dragged into position to follow the path of the desired corridor.
+1. To use a path from a file instead, press **Load KML/SHP/GeoJSON...** in the _Polyline Tools_ at the top of the map and select a KML, SHP or GeoJSON file.
 
 The corridor scan settings are covered in the next section.
 

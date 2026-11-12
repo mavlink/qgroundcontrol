@@ -23,6 +23,13 @@ The [Plan View](../plan_view/plan_view.md) map can use the GeoMap engine too. Go
 
 In this preview the Plan View displays the plan on the GeoMap: mission items and path, the planned home position, and the geofence and rally points. Clicking the map sets the home position and inserts waypoints, ROIs and rally points as usual, and clicking a mission item marker selects that item. Drag the marker of the selected waypoint to move it. Dragging other items, editing fence polygons and circles, and editing patterns directly on the map are not supported yet, use the Plan panel instead.
 
+### Log Viewer and Offline Maps
+
+With the Fly View setting on, two more maps use the GeoMap engine. Both stay in 2D, top-down and north-up:
+
+- The map of the [Log Viewer](../analyze_view/log_viewer.md), because the path of a log is drawn without its altitude.
+- The map on which an [offline map set](../settings_view/maps.md) is added or shown, because the area of a set is the rectangle of ground on screen.
+
 ## View Controls
 
 Camera gestures follow Google Earth semantics: the ground point under the cursor when a gesture starts stays pinned under the cursor throughout the gesture.
@@ -50,7 +57,7 @@ Keyboard modifiers provide alternatives to the multi-button mouse gestures (usef
 
 ## Imagery and Terrain
 
-The GeoMap engine drapes the same map imagery you have selected in **Application Settings > Maps** over its terrain surface. Terrain elevation comes from the [Mapzen/Tilezen Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) dataset, which combines the following sources:
+The GeoMap engine drapes the same map imagery you have selected in **Application Settings > Maps** over its terrain surface. The map credits the imagery provider in its bottom left corner, and in 3D mode the terrain as well, in short. Terrain elevation comes from the [Mapzen/Tilezen Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) dataset, which combines the following sources:
 
 - ArcticDEM terrain data DEM(s) were created from DigitalGlobe, Inc., imagery and funded under National Science Foundation awards 1043681, 1559691, and 1542736
 - Australia terrain data © Commonwealth of Australia (Geoscience Australia) 2017
@@ -63,3 +70,5 @@ The GeoMap engine drapes the same map imagery you have selected in **Application
 - Norway terrain data © Kartverket
 - United Kingdom terrain data © Environment Agency copyright and/or database right 2015. All rights reserved
 - United States 3DEP (formerly NED) and global GMTED2010 and SRTM terrain data courtesy of the U.S. Geological Survey
+
+To have this terrain without an internet connection, enable the GeoMap engine before you download an [offline map set](../settings_view/maps.md#offline-maps), and keep **Fetch elevation data** checked. The terrain of the area is then downloaded as a set of its own, named after the map set with "Terrain" appended.

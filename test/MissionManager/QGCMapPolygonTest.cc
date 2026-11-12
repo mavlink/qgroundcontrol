@@ -159,6 +159,11 @@ void QGCMapPolygonTest::_testVertexManipulation()
 void QGCMapPolygonTest::_testKMLLoad()
 {
     QVERIFY(_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonGood.kml")));
+    QVERIFY(_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/polygon.geojson")));
+    QCOMPARE(_mapPolygon->count(), 4);
+    expectAppMessage(QRegularExpression("GeoJSON file load failed.*No Polygon found"));
+    QVERIFY(!_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/polyline.geojson")));
+    verifyExpectedLogMessage();
     expectAppMessage(QRegularExpression("KML file load failed.*PolygonBadXml"));
     QVERIFY(!_mapPolygon->loadKMLOrSHPFile(QStringLiteral(":/unittest/PolygonBadXml.kml")));
     verifyExpectedLogMessage();

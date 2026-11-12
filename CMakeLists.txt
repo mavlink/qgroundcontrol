@@ -473,7 +473,7 @@ if(QGC_BUILD_TESTING)
     # Marks test-capable builds at the preprocessor level so production code can
     # compile out unit-test-only hooks (e.g. QGCCacheWorker::setUnitTestTileGenerator).
     # Directory scope is intentional: the hooks live in sources compiled into several
-    # targets (${CMAKE_PROJECT_NAME}, QGroundControlModule, QGCLocation), so a single
+    # targets (${CMAKE_PROJECT_NAME}, QGroundControlModule, QGCMapTiles), so a single
     # target-scoped definition would not cover them all.
     add_compile_definitions(QGC_UNITTEST_BUILD)
 endif()

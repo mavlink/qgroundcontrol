@@ -1,5 +1,7 @@
 #include "UnitTestTileGenerator.h"
 
+#include <limits>
+
 #include <QtCore/QAtomicInt>
 #include <QtCore/QBuffer>
 #include <QtCore/QFile>
@@ -10,17 +12,17 @@
 #include <QtCore/QTemporaryDir>
 #include <QtGui/QImage>
 #include <QtPositioning/QGeoCoordinate>
-#include <limits>
 
 #include "BaseClasses/TerrainTest.h"
 #include "ElevationMapProvider.h"
 #include "QGCCacheTile.h"
+#include "QGCCacheWorker.h"
 #include "QGCLoggingCategory.h"
 #include "QGCMapEngine.h"
-#include "QGCMapUrlEngine.h"
-#include "QGCTileCacheWorker.h"
+#include "QGCMapTasks.h"
 #include "TerrainTileCopernicus.h"
 #include "TileMath.h"
+#include "UrlFactory.h"
 
 QGC_LOGGING_CATEGORY(UnitTestTileGeneratorLog, "Test.UnitTestTileGenerator")
 
@@ -33,8 +35,10 @@ QAtomicInt s_forcedMissCount;
 /// "not found" warnings on garbage hashes.
 QString _providerTypeFromHash(const QString& hash)
 {
-    // Hash format: "%010d%08d%08d%03d" (provider map id, x, y, zoom)
-    if (hash.size() != 29) {
+    // Hash format: "%010d%08d%08d%03d" (provider map id, x, y, zoom), followed by '-' and 8 hex digits for a
+    // provider with a cache variant
+    const bool hasCacheVariant = (hash.size() == 38) && (hash.at(29) == QLatin1Char('-'));
+    if ((hash.size() != 29) && !hasCacheVariant) {
         return QString();
     }
 
@@ -45,7 +49,7 @@ QString _providerTypeFromHash(const QString& hash)
     }
 
     for (const QString& type : UrlFactory::getProviderTypes()) {
-        if (UrlFactory::getQtMapIdFromProviderType(type) == providerId) {
+        if (UrlFactory::getMapIdFromProviderType(type) == providerId) {
             return type;
         }
     }
@@ -195,6 +199,51 @@ QByteArray syntheticTerrariumTileData(int x, int y, int zoom)
     return _syntheticTerrariumTileData(x, y, zoom);
 }
 
+QString mapProviderType(int index)
+{
+    const QStringList elevationTypes = UrlFactory::getElevationProviderTypes();
+    for (const QString& type : UrlFactory::getProviderTypes()) {
+        if (elevationTypes.contains(type)) {
+            continue;
+        }
+        if (index == 0) {
+            return type;
+        }
+        index--;
+    }
+    return QString();
+}
+
+bool resetTileCache()
+{
+    bool reset = false;
+    // Declared after the flag: a signal still queued when this function returns is dropped with its context
+    const QObject context;
+    QGCResetTask* const task = new QGCResetTask();
+    (void) QObject::connect(task, &QGCResetTask::resetCompleted, &context, [&reset] { reset = true; });
+    if (!QGCMapEngine::instance()->addTask(task)) {
+        task->deleteLater();
+        return false;
+    }
+    return QTest::qWaitFor([&reset] { return reset; }, TestTimeout::mediumMs());
+}
+
+bool waitForCacheTasks()
+{
+    bool done = false;
+    // Declared after the flag: a signal still queued when this function returns is dropped with its context
+    const QObject context;
+    // The download list of no set: the worker answers it, with an empty list, without looking up a tile
+    QGCGetTileDownloadListTask* const task = new QGCGetTileDownloadListTask(0, 0);
+    (void) QObject::connect(task, &QGCGetTileDownloadListTask::tileListFetched, &context, [&done] { done = true; });
+    (void) QObject::connect(task, &QGCMapTask::error, &context, [&done] { done = true; });
+    if (!QGCMapEngine::instance()->addTask(task)) {
+        task->deleteLater();
+        return false;
+    }
+    return QTest::qWaitFor([&done] { return done; }, TestTimeout::mediumMs());
+}
+
 void install()
 {
     QGCCacheWorker::setUnitTestTileGenerator(&generateTile);
@@ -212,12 +261,12 @@ void initMapEngine()
         qFatal("UnitTestTileGenerator: failed to create temp dir for tile cache db: %s",
                qPrintable(tempDir.errorString()));
     }
-    getQGCMapEngine()->init(tempDir.filePath(QStringLiteral("qgc_unit_test_tile_cache.db")));
+    QGCMapEngine::instance()->init(tempDir.filePath(QStringLiteral("qgc_unit_test_tile_cache.db")));
 }
 
 void shutdownMapEngine()
 {
-    getQGCMapEngine()->shutdown();
+    QGCMapEngine::instance()->shutdown();
 }
 
 }  // namespace UnitTestTileGenerator

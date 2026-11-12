@@ -47,6 +47,13 @@ Item {
     readonly property real  _rightToolWidth: rightPanel.width + rightPanel.anchors.rightMargin
     // This is the center rectangle of the map which is not obscured by tools
     readonly property rect  _centerViewport: Qt.rect(_leftToolWidth + _margin, _margin, mainPlanViewArea.width - _leftToolWidth - _rightToolWidth - (_margin * 2), (missionStatus.visible ? missionStatus.y : mainPlanViewArea.height - _margin) - _margin)
+    // Margins which keep what the map shows in its bottom left corner clear of the tool strip, of the mission status
+    // and of the panel on the right
+    readonly property real  _mapCornerLeftMargin: _leftToolWidth + _margin
+    readonly property real  _mapCornerRightMargin: _rightToolWidth + _margin
+    readonly property real  _mapCornerBottomMargin: (missionStatus.visible ? mainPlanViewArea.height - missionStatus.y : 0) + _margin
+    // The terrain profile draws the heights of the elevation provider
+    readonly property string _terrainProfileAttribution: terrainStatus.visible ? QGroundControl.elevationProviderNotice : ""
 
     readonly property int _layerMission: PlanEditLayers.layerMission
     readonly property int _layerPlan: PlanEditLayers.layerPlan
@@ -358,6 +365,10 @@ Item {
                 showScale: true
                 controlsLeftMargin: _root._leftToolWidth + _root._toolsMargin
                 controlsTopMargin: _root._toolsMargin
+                attributionLeftMargin: _root._mapCornerLeftMargin
+                attributionBottomMargin: _root._mapCornerBottomMargin
+                attributionRightMargin: _root._mapCornerRightMargin
+                viewAttribution: _root._terrainProfileAttribution
                 _nonInteractiveOpacity: _root._nonInteractiveOpacity
 
                 onMapClicked: (mouse) => _root._onEditorMapClicked(mouse)
@@ -375,6 +386,10 @@ Item {
                 allowGCSLocationCenter: true
                 allowVehicleLocationCenter: true
                 planView: true
+                attributionLeftMargin: _root._mapCornerLeftMargin
+                attributionBottomMargin: _root._mapCornerBottomMargin
+                attributionRightMargin: _root._mapCornerRightMargin
+                viewAttribution: _root._terrainProfileAttribution
 
                 zoomLevel: QGroundControl.flightMapZoom
                 center: QGroundControl.flightMapPosition
@@ -531,6 +546,7 @@ Item {
         // Left tool strip
         ToolStrip {
             id: toolStrip
+            objectName: "planView_toolStrip"
             anchors.margins: _toolsMargin
             anchors.left: parent.left
             anchors.top: parent.top
@@ -639,6 +655,7 @@ Item {
 
         // The GeoMap engine shows its own scale next to its camera controls
         MapScale {
+            objectName: "planView_mapScale"
             anchors.margins: _toolsMargin
             anchors.left: toolStrip.right
             anchors.top: parent.top
@@ -773,6 +790,7 @@ Item {
 
         RowLayout {
             id: missionStatus
+            objectName: "planView_missionStatus"
             anchors.margins: _toolsMargin
             anchors.left: _calcLeftAnchor()
             anchors.right: rightPanel.left

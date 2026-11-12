@@ -17,6 +17,7 @@
 #include "SettingsManager.h"
 #include "SimpleMissionItem.h"
 #include "SpeedSection.h"
+#include "TerrainQuery.h"
 #include "UnitTest.h"
 #include "Vehicle.h"
 
@@ -454,6 +455,32 @@ void SimpleMissionItemTest::_testFlyViewTerrainQuery()
 
     // Non-terrain FlyView items must not have queried
     QVERIFY(qIsNaN(relativeItem->terrainAltitude()));
+}
+
+void SimpleMissionItemTest::_testTerrainAnswerForPreviousCoordinateIsDiscarded()
+{
+    // North-west of Point Nemo is outside the synthetic regions, where the terrain is at 0 m
+    const QGeoCoordinate firstCoord(TerrainTest::pointNemo().latitude() + 0.05,
+                                    TerrainTest::pointNemo().longitude() - 0.05);
+    const QGeoCoordinate secondCoord = UnitTestTerrainData::flat10Region.center();
+
+    MissionItem missionItem(1, MAV_CMD_NAV_WAYPOINT, MAV_FRAME_GLOBAL_RELATIVE_ALT, 0, 0, 0, 0, firstCoord.latitude(),
+                            firstCoord.longitude(), 40.0,
+                            true,    // autoContinue
+                            false);  // isCurrentItem
+    SimpleMissionItem* const item = new SimpleMissionItem(planController(), false /* flyView */, missionItem);
+
+    // Stands in for the item's timer: the query for the first coordinate is in flight
+    item->_reallyUpdateTerrainAltitude();
+    TerrainAtCoordinateQuery* const firstQuery = item->_currentTerrainAtCoordinateQuery;
+    QVERIFY(firstQuery);
+
+    item->setCoordinate(secondCoord);
+    firstQuery->signalTerrainData(true, {UnitTestTerrainData::heightAt(firstCoord)});
+
+    QVERIFY2(qIsNaN(item->terrainAltitude()), "The moved item took the terrain height of its previous coordinate");
+    QTRY_COMPARE_WITH_TIMEOUT(item->terrainAltitude(), UnitTestTerrainData::Flat10Region::amslElevation,
+                              TestTimeout::mediumMs());
 }
 
 UT_REGISTER_TEST(SimpleMissionItemTest, TestLabel::Unit, TestLabel::MissionManager)

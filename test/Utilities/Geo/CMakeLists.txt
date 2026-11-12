@@ -37,6 +37,8 @@ qt_add_resources(
         polygon.shx
         polyline.kml
         polygon.kml
+        polyline.geojson
+        polygon.geojson
 )
 
 add_qgc_test(GeoTest LABELS Unit Utilities)

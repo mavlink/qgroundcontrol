@@ -1,0 +1,80 @@
+#pragma once
+
+#include <QtCore/QMutex>
+#include <QtCore/QObject>
+#include <QtCore/QPointer>
+#include <QtCore/QQueue>
+#include <QtPositioning/QGeoCoordinate>
+
+#include "TerrainQueryInterface.h"
+
+class TerrainTile;
+class QNetworkAccessManager;
+
+class TerrainTileManager : public QObject
+{
+    Q_OBJECT
+public:
+    /// \a networkManager fetches the tiles instead of the network manager of the map engine (test injection seam):
+    /// it is not owned and must outlive this object
+    explicit TerrainTileManager(QObject* parent = nullptr, QNetworkAccessManager* networkManager = nullptr);
+    ~TerrainTileManager();
+
+    static TerrainTileManager* instance();
+
+    /// Either returns altitudes from cache or queues database request
+    ///     @param[out] error true: altitude not returned due to error, false: altitudes returned
+    ///     @return true: altitude returned (check error as well), false: database query queued (altitudes not returned)
+    bool getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes, bool& error);
+
+    void addCoordinateQuery(TerrainQueryInterface* terrainQueryInterface, const QList<QGeoCoordinate>& coordinates);
+    void addPathQuery(TerrainQueryInterface* terrainQueryInterface, const QGeoCoordinate& startPoint,
+                      const QGeoCoordinate& endPoint);
+    void addCarpetQuery(TerrainQueryInterface* terrainQueryInterface, const QGeoCoordinate& swCoord,
+                        const QGeoCoordinate& neCoord, bool statsOnly);
+
+private slots:
+    void _terrainDone();
+
+private:
+    /// Returns a list of individual coordinates along the requested path spaced according to the terrain tile value
+    /// spacing
+    static QList<QGeoCoordinate> _pathQueryToCoords(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord,
+                                                    double& distanceBetween, double& finalDistanceBetween);
+    void _tileFailed();
+    /// Returns false for data that is not a valid tile
+    bool _cacheTile(const QByteArray& data, const QString& hash);
+    TerrainTile* _getCachedTile(const QString& hash);
+    bool _isFailedTile(const QString& hash);
+    bool _recordFailedTile(
+        const QString& hash);  ///< Records a failed fetch; returns true if this is the first failure for the tile
+    void _clearFailedTile(const QString& hash);
+    static void _processCarpetResults(const QList<double>& altitudes, int gridSizeLat, int gridSizeLon, bool statsOnly,
+                                      double& minHeight, double& maxHeight, QList<QList<double>>& carpet);
+
+    struct QueuedRequestInfo_t
+    {
+        QPointer<TerrainQueryInterface> terrainQueryInterface;
+        TerrainQuery::QueryMode queryMode;
+        double distanceBetween;       ///< Distance between each returned height
+        double finalDistanceBetween;  ///< Distance between for final height
+        QList<QGeoCoordinate> coordinates;
+        bool carpetStatsOnly;         ///< For carpet queries: return only stats
+        int carpetGridSizeLat;        ///< For carpet queries: number of rows
+        int carpetGridSizeLon;        ///< For carpet queries: number of columns
+    };
+
+    QQueue<QueuedRequestInfo_t> _requestQueue;
+    TerrainQuery::State _state = TerrainQuery::State::Idle;
+
+    QMutex _tilesMutex;  ///< Guards both _tiles and _failedTiles
+    QHash<QString, TerrainTile*> _tiles;
+    QHash<QString, qint64>
+        _failedTiles;  ///< Tile hash -> ms since epoch of last failed fetch; suppresses immediate retries
+    qint64 _lastFailedTileSweepMs = 0;  ///< ms since epoch of last expired-entry sweep of _failedTiles
+
+    /// Null: the network manager of the map engine
+    QNetworkAccessManager* _networkManager = nullptr;
+
+    static constexpr qint64 kFailedTileBackoffMs = 5000;
+};

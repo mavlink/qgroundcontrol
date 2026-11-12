@@ -37,6 +37,7 @@ To create a scan:
 
    - Drag the opaque vertices on the map to the edge of the structure (example circled in mauve above).
    - If the structure footprint is more than a simple square you can click the semi-transparent circles between the vertices to create a new vertex.
+   - To use a footprint from a file instead, press **Load KML/SHP/GeoJSON...** in the _Polygon Tools_ at the top of the map and select a KML, SHP or GeoJSON file.
 
 1. You can also change to a circular footprint by clicking on the central "vertex" (marked in red) and selecting _Circle_ in the popup menu.
 

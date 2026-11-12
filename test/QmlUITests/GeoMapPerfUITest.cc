@@ -2,8 +2,6 @@
 
 #include <QtCore/QEventLoop>
 #include <QtCore/QPoint>
-#include <QtCore/QRegularExpression>
-#include <QtCore/QScopeGuard>
 #include <QtCore/QTextStream>
 #include <QtCore/QTimer>
 #include <QtPositioning/QGeoCoordinate>
@@ -13,10 +11,7 @@
 
 #include <optional>
 
-#include "Fact.h"
-#include "FlyViewSettings.h"
 #include "GeoMapCamera.h"
-#include "SettingsManager.h"
 #include "SurfacePatchModel.h"
 
 UT_REGISTER_TEST_STANDALONE(GeoMapPerfUITest, TestLabel::Integration)
@@ -29,12 +24,7 @@ const QGeoCoordinate kBenchCenter(47.6329078, -122.0876875);
 
 void GeoMapPerfUITest::_benchmark()
 {
-    Fact* const enabled = SettingsManager::instance()->flyViewSettings()->useGeoMapEngine();
-    const QVariant savedEnabled = enabled->rawValue();
-    const auto guard = qScopeGuard([enabled, savedEnabled] { enabled->setRawValue(savedEnabled); });
-    ignoreLogMessage("API.QGCApplication.AppMessage", QtDebugMsg,
-                     QRegularExpression(QStringLiteral("Restart application for changes to take effect")));
-    enabled->setRawValue(true);
+    setUseGeoMapFlyEngine(true);
 
     startUI();
     if (QTest::currentTestFailed())
@@ -80,7 +70,10 @@ void GeoMapPerfUITest::_benchmark()
             pace(200);
         }
     };
-    const auto settle = [patchModel] { QTRY_COMPARE_WITH_TIMEOUT(patchModel->pendingCount(), 0, 30000); };
+    // The tile images of the view are in
+    const auto settle = [patchModel] {
+        QTRY_COMPARE_WITH_TIMEOUT(patchModel->pendingImageCount(), 0, TestTimeout::longMs());
+    };
 
     // Deterministic start pose: 3D mode at street zoom over the bench area.
     // debugHills replaces the terrain pipeline with analytic heights: the

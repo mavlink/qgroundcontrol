@@ -32,6 +32,7 @@ private slots:
     void _testTerrainDependentLoadQueriesTerrain_data();
     void _testTerrainDependentLoadQueriesTerrain();
     void _testFlyViewTerrainQuery();
+    void _testTerrainAnswerForPreviousCoordinateIsDiscarded();
 
 private:
     void _testEditorFactsWorker(QGCMAVLinkTypes::VehicleClass_t vehicleClass, QGCMAVLinkTypes::VehicleClass_t vtolMode);

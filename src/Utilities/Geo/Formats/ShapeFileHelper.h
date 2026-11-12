@@ -5,7 +5,7 @@
 #include <QtPositioning/QGeoCoordinate>
 #include <QtQmlIntegration/QtQmlIntegration>
 
-/// \brief Routines for loading polygons or polylines from KML or SHP files.
+/// \brief Routines for loading polygons or polylines from KML, SHP or GeoJSON files.
 ///
 class ShapeFileHelper : public QObject
 {
@@ -49,12 +49,14 @@ public:
 
     static constexpr const char *kmlFileExtension = ".kml";
     static constexpr const char *shpFileExtension = ".shp";
+    static constexpr const char* geoJsonFileExtension = ".geojson";
 
 private:
     enum class ShapeFileType {
         None,
         KML,
-        SHP
+        SHP,
+        GeoJson
     };
     static ShapeFileType _getShapeFileType(const QString &file, QString &errorString);
 };

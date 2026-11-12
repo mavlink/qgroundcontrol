@@ -38,7 +38,8 @@ Item {
 
                 OfflineMapInfo {
                     tileSet:    object
-                    enabled:    !object.deleting
+                    // An import that ends replaces the set objects: an editor opened meanwhile would lose its set
+                    enabled:    !object.deleting && !root._currentlyImportOrExporting
                     onClicked:  offlineMapEditorComponent.createObject(mainWindow.contentItem, { tileSet: object }).showInfo()
                 }
             }
@@ -46,6 +47,7 @@ Item {
             LabelledButton {
                 label:      qsTr("Add New Set")
                 buttonText: qsTr("Add")
+                buttonObjectName: "offlineMaps_addButton"
                 enabled:    !_currentlyImportOrExporting
                 onClicked:  offlineMapEditorComponent.createObject(mainWindow.contentItem).addNewSet()
             }
@@ -194,6 +196,7 @@ Item {
 
         OfflineMapEditor {
             id:             offlineMapEditor
+            objectName:     "offlineMapEditor"
             anchors.fill:   parent
             z:              QGroundControl.zOrderTopMost
         }

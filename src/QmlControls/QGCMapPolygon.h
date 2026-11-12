@@ -66,7 +66,7 @@ public:
     /// @return false if no single offset polygon could be produced; the polygon is left unchanged
     Q_INVOKABLE bool offset(double distance);
 
-    /// Loads a polygon from a KML/SHP file
+    /// Loads a polygon from a KML, SHP or GeoJSON file
     /// @return true: success
     Q_INVOKABLE bool loadKMLOrSHPFile(const QString& file);
 

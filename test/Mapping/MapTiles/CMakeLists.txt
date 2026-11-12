@@ -1,0 +1,44 @@
+# ============================================================================
+# MapTiles Unit Tests
+# Tests for the map providers, the tile cache and offline tile sets
+# ============================================================================
+
+target_sources(
+    QGCUnitTests
+    PRIVATE
+        EsriAttributionTest.cc
+        EsriAttributionTest.h
+        MapProviderTest.cc
+        MapProviderTest.h
+        QGCMapEngineManagerArchiveTest.cc
+        QGCMapEngineManagerArchiveTest.h
+        QGCMapEngineManagerTest.cc
+        QGCMapEngineManagerTest.h
+        QGCCachedTileSetTest.cc
+        QGCCachedTileSetTest.h
+        QGCCacheWorkerTest.cc
+        QGCCacheWorkerTest.h
+        QGCTileCacheDatabaseTest.cc
+        QGCTileCacheDatabaseTest.h
+        QGCTileReplyTest.cc
+        QGCTileReplyTest.h
+        QGCTileSetTest.cc
+        QGCTileSetTest.h
+        TileCacheTestHelpers.h
+        TileReplyNetworkMock.h
+        UrlFactoryTest.cc
+        UrlFactoryTest.h
+)
+
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_qgc_test(EsriAttributionTest LABELS Unit)
+add_qgc_test(MapProviderTest LABELS Unit)
+add_qgc_test(QGCCacheWorkerTest LABELS Unit)
+add_qgc_test(QGCCachedTileSetTest LABELS Unit)
+add_qgc_test(QGCMapEngineManagerArchiveTest LABELS Unit RESOURCE_LOCK TempFiles)
+add_qgc_test(QGCMapEngineManagerTest LABELS Unit)
+add_qgc_test(QGCTileCacheDatabaseTest LABELS Unit)
+add_qgc_test(QGCTileReplyTest LABELS Unit)
+add_qgc_test(QGCTileSetTest LABELS Unit)
+add_qgc_test(UrlFactoryTest LABELS Unit)

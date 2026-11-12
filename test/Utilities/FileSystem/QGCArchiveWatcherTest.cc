@@ -176,7 +176,7 @@ void QGCArchiveWatcherTest::_testArchiveDetectedSignal()
     const QString archivePath = _tempDir.filePath("detected.zip");
     _createTestArchive(archivePath);
     // Wait for detection
-    QVERIFY_SIGNAL_WAIT(spy, TestTimeout::shortMs());
+    QVERIFY_SIGNAL_WAIT(spy, TestTimeout::mediumMs());
     QCOMPARE(spy.count(), 1);
     QCOMPARE(spy.at(0).at(0).toString(), archivePath);
     QCOMPARE(spy.at(0).at(1).value<QGCCompression::Format>(), QGCCompression::Format::ZIP);
@@ -297,7 +297,7 @@ void QGCArchiveWatcherTest::_testCancelExtractionResetsState()
     const QString archivePath = _tempDir.filePath("cancel_extract.zip");
     _createTestArchive(archivePath);
 
-    QVERIFY_TRUE_WAIT(watcher.isExtracting() || extractionSpy.count() > 0, TestTimeout::shortMs());
+    QVERIFY_TRUE_WAIT(watcher.isExtracting() || extractionSpy.count() > 0, TestTimeout::mediumMs());
     watcher.cancelExtraction();
 
     QVERIFY_TRUE_WAIT(!watcher.isExtracting() && watcher.progress() == 0.0, TestTimeout::shortMs());

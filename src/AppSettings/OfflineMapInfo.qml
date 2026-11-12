@@ -19,6 +19,7 @@ RowLayout {
     QGCLabel {
         Layout.fillWidth:   true
         text:               tileSet.name
+        elide:              Text.ElideRight
     }
 
     QGCLabel {
@@ -35,6 +36,7 @@ RowLayout {
     }
 
     QGCButton {
+        objectName: "offlineMaps_editButton_" + tileSet.name
         text:       qsTr("Edit")
         onClicked:  control.clicked()
     }

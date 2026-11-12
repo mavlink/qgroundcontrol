@@ -142,6 +142,7 @@ Item {
 
     FlyViewToolStrip {
         id:                     toolStrip
+        objectName:             "flyViewToolStrip"
         anchors.left:           parent.left
         anchors.top:            parent.top
         z:                      QGroundControl.zOrderWidgets
@@ -173,6 +174,7 @@ Item {
 
         MapScale {
             id:                     mapScale
+            objectName:             "flyViewMapScale"
             anchors.verticalCenter: parent.verticalCenter
             mapControl:             _mapControl
             autoHide:               true

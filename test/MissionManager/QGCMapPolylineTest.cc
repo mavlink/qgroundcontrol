@@ -171,6 +171,9 @@ void QGCMapPolylineTest::_testShapeLoad()
     QVERIFY(_mapPolyline->loadKMLOrSHPFile(shpFile));
     const QString kmlFile = _copyRes(tempDir.path(), "polyline.kml");
     QVERIFY(_mapPolyline->loadKMLOrSHPFile(kmlFile));
+    const QString geoJsonFile = _copyRes(tempDir.path(), "polyline.geojson");
+    QVERIFY(_mapPolyline->loadKMLOrSHPFile(geoJsonFile));
+    QCOMPARE(_mapPolyline->count(), 3);
 }
 
 void QGCMapPolylineTest::_testSelectVertex()

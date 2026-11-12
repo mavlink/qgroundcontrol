@@ -33,8 +33,7 @@ Item {
     readonly property bool _debugUIEnabled: QGroundControl.settingsManager.flyViewSettings.geoMapDebugUI.rawValue
 
     // Bottom-left overlay: live SurfaceModel stats for manual verification;
-    // last line adds the perf counters while Stats is on. Terrain dataset
-    // attribution lives in the user guide (docs/en/qgc-user-guide/fly_view/geoview.md)
+    // last line adds the perf counters while Stats is on
     Rectangle {
         anchors.left: parent.left
         anchors.bottom: parent.bottom
@@ -52,9 +51,8 @@ Item {
             anchors.centerIn: parent
             font.family: ScreenTools.fixedFontFamily
             color: "white"
-            text: qsTr("patches: %1  pending: %2  max zoom: %3")
+            text: qsTr("patches: %1  max zoom: %2")
                       .arg(root.geoMap.patchCount)
-                      .arg(root.geoMap.pendingCount)
                       .arg(root.geoMap.maxZoomLevel)
                   + (root.geoMap.modelStats !== "" ? "\n" + root.geoMap.modelStats : "")
         }

@@ -162,6 +162,13 @@ void VisualMissionItem::_updateTerrainAltitude(void)
         return;
     }
 
+    // The answer of a query in flight is for the previous coordinate
+    if (_currentTerrainAtCoordinateQuery) {
+        disconnect(_currentTerrainAtCoordinateQuery, &TerrainAtCoordinateQuery::terrainDataReceived, this,
+                   &VisualMissionItem::_terrainDataReceived);
+        _currentTerrainAtCoordinateQuery = nullptr;
+    }
+
     _terrainAltitude = qQNaN();
     emit terrainAltitudeChanged(qQNaN());
 

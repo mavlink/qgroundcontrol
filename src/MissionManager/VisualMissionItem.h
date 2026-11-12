@@ -308,4 +308,8 @@ private:
 
     double _lastLatTerrainQuery = 0;
     double _lastLonTerrainQuery = 0;
+
+#ifdef QGC_UNITTEST_BUILD
+    friend class SimpleMissionItemTest;
+#endif
 };

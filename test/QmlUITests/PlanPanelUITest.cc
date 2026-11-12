@@ -1070,12 +1070,7 @@ void PlanPanelUITest::_testGeoMapRallyMarkerDragMovesOnlyTheCurrentPoint()
     QVERIFY2(map->contains(map->mapFromScene(start)), "The marker is not on screen");
     const QPoint delta(-70, 50);
 
-    QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, start);
-    constexpr int steps = 10;
-    for (int i = 1; i <= steps; i++) {
-        QTest::mouseMove(_window, start + ((delta * i) / steps));
-    }
-    QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, start + delta);
+    mouseDrag(Qt::LeftButton, start, delta);
 
     if (expectMove) {
         QVERIFY2(waitForCondition([&] { return targetCoordinate().distanceTo(before) > 1.0; }, 2000,
@@ -1320,6 +1315,7 @@ void PlanPanelUITest::_testGeoMapTerrainRelativeDragKeepsTheMarkerUnderTheCursor
     QQuickItem* map = nullptr;
     std::function<QGeoCoordinate()> targetCoordinate;
     std::function<QQuickItem*()> findMarker;
+    std::function<bool()> setTerrainAltitudePending = [] { return true; };
     if (rallyPoint) {
         firmwareFact->setRawValue(QGCMAVLink::FirmwareClassArduPilot);
         QQuickItem* rallyMarker = nullptr;
@@ -1348,6 +1344,11 @@ void PlanPanelUITest::_testGeoMapTerrainRelativeDragKeepsTheMarkerUnderTheCursor
         VisualMissionItem* const target = controller->currentPlanViewItem();
         QVERIFY(target);
         targetCoordinate = [target] { return target->coordinate(); };
+        // Back to waiting on the terrain query, as the item is after every move
+        setTerrainAltitudePending = [target] {
+            return QMetaObject::invokeMethod(target, "_terrainDataReceived", Q_ARG(bool, false),
+                                             Q_ARG(QList<double>, QList<double>()));
+        };
         findMarker = [&map, target]() -> QQuickItem* {
             for (QQuickItem* const marker : findGeoMapWaypointMarkers(map)) {
                 if (marker->property("item").value<QObject*>() == target) {
@@ -1391,14 +1392,16 @@ void PlanPanelUITest::_testGeoMapTerrainRelativeDragKeepsTheMarkerUnderTheCursor
     const QGeoCoordinate before = targetCoordinate();
     const QPoint start = markerPoint();
     const QPoint delta(-160, 110);
-    QTest::mousePress(_window, Qt::LeftButton, Qt::NoModifier, start);
     // One big step, so the marker's new height has to come from the pick and not from following the cursor
-    QTest::mouseMove(_window, start + delta);
-    QTest::mouseRelease(_window, Qt::LeftButton, Qt::NoModifier, start + delta);
+    mouseDrag(Qt::LeftButton, start, delta, 1);
 
     QVERIFY2(waitForCondition([&] { return targetCoordinate().distanceTo(before) > 1.0; }, 2000,
                               QStringLiteral("marker moved")),
              "Dragging the current marker did not move it");
+    // A waypoint is drawn at its height above the rendered terrain while it waits for its terrain query. The query
+    // knows nothing of the debug hills, so its answer moves the marker, and the one for the new position can come
+    // before the marker is read.
+    QVERIFY(setTerrainAltitudePending());
     const QPoint end = markerPoint();
     QVERIFY2((end - (start + delta)).manhattanLength() <= 6,
              qPrintable(QStringLiteral("Marker ended at %1,%2 instead of under the cursor at %3,%4")

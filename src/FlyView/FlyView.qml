@@ -47,6 +47,18 @@ Item {
     property real   _widgetMargin:          ScreenTools.defaultFontPixelWidth * 0.75
     property var    _layerOccluders:        widgetLayer.occluders
     property var    _mapOccluders:          _layerOccluders.all.concat(customOverlay.customOccluders).map(r => Qt.rect(r.x + widgetLayer.x, r.y + widgetLayer.y, r.width, r.height))
+    // Margins which keep what a view shows in the bottom left corner of the main window clear of the tool strip, and of the PiP window and
+    // the virtual joystick
+    property real   _windowCornerLeftMargin:   widgetLayer.x + _layerOccluders.toolStrip.x + _layerOccluders.toolStrip.width + _widgetMargin
+    property real   _windowCornerBottomMargin: mapHolder.height - widgetLayer.y - Math.min(_layerOccluders.pipView.y, _layerOccluders.virtualJoystickLeft.y) + ScreenTools.defaultFontPixelWidth / 2
+    // What a view shows there ends before the instruments of the bottom right corner, where it lies as low as they do
+    property real   _windowCornerRightMargin:  _windowCornerBottomMargin < mapHolder.height - widgetLayer.y - _layerOccluders.bottomRight.y
+                                                   ? mapHolder.width - widgetLayer.x - _layerOccluders.bottomRight.x + _widgetMargin
+                                                   : _margins
+    // A map that is popped out to a window of its own has that corner free
+    property real   _mapCornerLeftMargin:   _mainWindowIsMap ? _windowCornerLeftMargin : _margins
+    property real   _mapCornerBottomMargin: _mainWindowIsMap ? _windowCornerBottomMargin : _margins
+    property real   _mapCornerRightMargin:  _mainWindowIsMap ? _windowCornerRightMargin : _margins
 
     property real   _fullItemZorder:    0
     property real   _pipItemZorder:     QGroundControl.zOrderWidgets
@@ -81,6 +93,9 @@ Item {
                 pipMode:                !_mainWindowIsMap
                 viewportRect:           Qt.rect(widgetLayer.x, widgetLayer.y, widgetLayer.width, widgetLayer.height)
                 occluders:              _mapOccluders
+                attributionLeftMargin:  _mapCornerLeftMargin
+                attributionBottomMargin: _mapCornerBottomMargin
+                attributionRightMargin: _mapCornerRightMargin
                 mapName:                "FlightDisplayView"
                 enabled:                !_is3DMode
                 visible:                !_is3DMode
@@ -99,7 +114,9 @@ Item {
                 viewportRect:           Qt.rect(widgetLayer.x, widgetLayer.y, widgetLayer.width, widgetLayer.height)
                 occluders:              _mapOccluders
                 chromeTopMargin:        widgetLayer.y + _layerOccluders.topRight.y + _layerOccluders.topRight.height + _widgetMargin
-                chromeBottomMargin:     mapHolder.height - widgetLayer.y - Math.min(_layerOccluders.pipView.y, _layerOccluders.virtualJoystickLeft.y) + ScreenTools.defaultFontPixelWidth / 2
+                chromeBottomMargin:     _mapCornerBottomMargin
+                attributionLeftMargin:  _mapCornerLeftMargin
+                attributionRightMargin: _mapCornerRightMargin
                 mapName:                "FlightDisplayView"
                 enabled:                !_is3DMode
                 visible:                !_is3DMode
@@ -185,6 +202,25 @@ Item {
             z:            1
             anchors.fill: parent
             visible:      _is3DMode
+        }
+
+        // The 3D View fills the main window, whichever of the map and the video is in the PiP window
+        Binding {
+            target:   viewer3DLoader.item
+            property: "attributionLeftMargin"
+            value:    _root._windowCornerLeftMargin
+        }
+
+        Binding {
+            target:   viewer3DLoader.item
+            property: "attributionBottomMargin"
+            value:    _root._windowCornerBottomMargin
+        }
+
+        Binding {
+            target:   viewer3DLoader.item
+            property: "attributionRightMargin"
+            value:    _root._windowCornerRightMargin
         }
 
         Connections {

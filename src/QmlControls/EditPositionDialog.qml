@@ -51,6 +51,7 @@ QGCPopupDialog {
         }
 
         LabelledFactTextField {
+            objectName:         "editPosition_latitude"
             label:              qsTr("Latitude")
             fact:               controller.latitude
             textFieldPreferredWidth: _textFieldWidth
@@ -59,6 +60,7 @@ QGCPopupDialog {
         }
 
         LabelledFactTextField {
+            objectName:         "editPosition_longitude"
             label:              qsTr("Longitude")
             fact:               controller.longitude
             textFieldPreferredWidth: _textFieldWidth
@@ -174,6 +176,7 @@ QGCPopupDialog {
         LabelledButton {
             label:               qsTr("Set position")
             buttonText:          qsTr("Move")
+            buttonObjectName:    "editPosition_moveButton"
             onClicked: {
                 let positionValid = true
                 if (_showGeographic)

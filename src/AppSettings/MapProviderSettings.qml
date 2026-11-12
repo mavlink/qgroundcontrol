@@ -15,12 +15,16 @@ QGCGroupBox {
     property Fact _elevationProviderFact: QGroundControl.settingsManager.flightMapSettings.elevationMapProvider
 
     LabelledComboBox {
+        objectName: "mapSettings_providerCombo"
         label: qsTr("Provider")
         model: _mapEngineManager.mapProviderList
 
         onActivated: (index) => {
             _mapProviderFact.rawValue = comboBox.textAt(index)
-            _mapTypeFact.rawValue = _mapEngineManager.mapTypeList(comboBox.textAt(index))[0]
+            const mapTypes = _mapEngineManager.mapTypeList(comboBox.textAt(index))
+            if (mapTypes.length > 0) {
+                _mapTypeFact.rawValue = mapTypes[0]
+            }
         }
 
         Component.onCompleted: {
@@ -31,8 +35,11 @@ QGCGroupBox {
     }
 
     LabelledComboBox {
+        objectName: "mapSettings_typeCombo"
         label: qsTr("Type")
         model: _mapEngineManager.mapTypeList(_mapProviderFact.rawValue)
+        // The only map of a provider can have no type
+        visible: model.length > 0
 
         onActivated: (index) => { _mapTypeFact.rawValue = comboBox.textAt(index) }
 

@@ -1,5 +1,6 @@
 #include "Viewer3DUITest.h"
 
+#include <QtCore/QRectF>
 #include <QtCore/QtMath>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QMouseEvent>
@@ -11,6 +12,7 @@
 
 #include "Fact.h"
 #include "MockLink.h"
+#include "QGCMapEngineManager.h"
 #include "SettingsManager.h"
 #include "Vehicle.h"
 #include "Viewer3DCameraController.h"
@@ -32,6 +34,21 @@ void Viewer3DUITest::_test3DViewShowsVehicle()
 
             QQuickItem* const view = findVisibleItem(_rootItem, QStringLiteral("viewer3DView"), 15000);
             QVERIFY2(view, "3D view never became visible");
+
+            // The view credits the map whose imagery it draws on its ground, beside the tool strip that lies on it
+            const QString mapCredit = QGCMapEngineManager::mapAttribution(QGCMapEngineManager::instance()->chosenMap());
+            QVERIFY2(!mapCredit.isEmpty(), "the chosen map has no credit");
+            QQuickItem* const credit = findVisibleItem(view, QStringLiteral("mapAttribution"), TestTimeout::mediumMs());
+            QVERIFY2(credit, "the 3D view shows no credit");
+            QCOMPARE(credit->property("text").toString(), mapCredit);
+            QQuickItem* const toolStrip = findVisibleItem(_rootItem, QStringLiteral("flyViewToolStrip"));
+            QVERIFY2(toolStrip, "tool strip not visible");
+            const auto sceneRect = [](const QQuickItem* item) {
+                return item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+            };
+            QTRY_COMPARE_GE_WITH_TIMEOUT(sceneRect(credit).left(), sceneRect(toolStrip).right(),
+                                         TestTimeout::shortMs());
+            QVERIFY(sceneRect(view).contains(sceneRect(credit)));
 
             // Drone model is created per-vehicle once the scene loads
             QObject* droneModel = nullptr;

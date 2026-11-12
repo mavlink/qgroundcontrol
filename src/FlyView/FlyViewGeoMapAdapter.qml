@@ -38,6 +38,8 @@ Item {
     property alias zoomLevel: geoMapControl.zoomLevel
     property alias isSatelliteMap: geoMapControl.isSatelliteMap
     property alias pinchZoomDisabledByVirtualJoysticks: geoMapControl.pinchZoomDisabledByVirtualJoysticks
+    property alias attributionLeftMargin: geoMapControl.attributionLeftMargin
+    property alias attributionRightMargin: geoMapControl.attributionRightMargin
 
     // Escape hatch for GeoMap-specific chrome/controls
     readonly property var geoMap: geoMapControl
@@ -86,6 +88,8 @@ Item {
         anchors.fill: parent
         followViewportRect: root.viewportRect
         followOccluders: root.occluders
+        showAttribution: _pipState.state !== _pipState.pipState
+        attributionBottomMargin: root.chromeBottomMargin
 
         sharedZoom: !root.pipMode
         // The PiP window is too small for free camera panning to be useful
@@ -133,7 +137,7 @@ Item {
         geoMap: geoMapControl
         visible: !root.pipMode
         buttonsTopMargin: root.chromeTopMargin
-        overlayBottomMargin: root.chromeBottomMargin
+        overlayBottomMargin: root.chromeBottomMargin + geoMapControl.attributionHeight
     }
 
     PipState {

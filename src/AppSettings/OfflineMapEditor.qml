@@ -7,20 +7,24 @@ import QtPositioning
 import QGroundControl
 import QGroundControl.Controls
 import QGroundControl.FlightMap
+import QGroundControl.GeoMap
 
-FlightMap {
-    id: _map
-    allowGCSLocationCenter: true
-    allowVehicleLocationCenter: false
-    mapName: "OfflineMap"
+/// Editor of an offline map set, over a map that fills it: the area of a new set is what that map shows.
+/// The map is a QtLocation FlightMap or a GeoMapView. The editor uses what both offer (center, zoomLevel,
+/// toCoordinate, isSatelliteMap, showMapType, ...) and one function each engine's map adds:
+/// showSetArea(topLeft, bottomRight).
+Item {
+    id: _editor
 
     property var tileSet: null
 
+    property var _map: _mapLoader.item
+    property bool _useGeoMap: false
+
     property var _settingsManager: QGroundControl.settingsManager
     property var _settings: _settingsManager.offlineMapsSettings
-    property var _fmSettings: _settingsManager.flightMapSettings
 
-    property string mapType: _fmSettings.mapProvider.value + " " + _fmSettings.mapType.value
+    property string mapType: QGroundControl.mapEngineManager.chosenMap
     property bool isMapInteractive: false
     property bool _showPreview: true
     property bool _defaultSet: tileSet && tileSet.defaultSet
@@ -29,7 +33,7 @@ FlightMap {
     property bool _saveRealEstate: ScreenTools.isTinyScreen || ScreenTools.isShortScreen
     property real _adjustableFontPointSize: _saveRealEstate ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
 
-    property string _mapAdjustedColor: _map.isSatelliteMap ? "white" : "black"
+    property string _mapAdjustedColor: _map && _map.isSatelliteMap ? "white" : "black"
     property bool _tooManyTiles: QGroundControl.mapEngineManager.tileCount > _maxTilesForDownload
     property var _addNewSetViewObject: null
 
@@ -39,45 +43,44 @@ FlightMap {
 
     readonly property int _maxTilesForDownload: _settings.maxTilesForDownload.rawValue
 
-    property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
-
     QGCPalette { id: qgcPal }
 
     Component.onCompleted: {
-        QGroundControl.mapEngineManager.loadTileSets()
+        // The engine is chosen when the editor opens, as the Fly View chooses its own at startup
+        _useGeoMap = _settingsManager.flyViewSettings.useGeoMapEngine.rawValue
+        _mapLoader.sourceComponent = _useGeoMap ? geoMapComponent : flightMapComponent
         resetMapToDefaults()
         updateMap()
     }
 
-    Connections {
-        target: QGroundControl.mapEngineManager
-        function onErrorMessageChanged() { errorDialogFactory.open() }
-    }
-
     function handleChanges() {
         if (isMapInteractive) {
-            var xr = Math.round(_map.width) - 1  // Must be within boundaries of visible map
-            var yr = Math.round(_map.height) - 1 // Must be within boundaries of visible map
-            var c0 = _map.toCoordinate(Qt.point(0, 0), false /* clipToViewPort */)
-            var c1 = _map.toCoordinate(Qt.point(xr, yr), false /* clipToViewPort */)
+            const xr = Math.round(_map.width) - 1  // Must be within boundaries of visible map
+            const yr = Math.round(_map.height) - 1 // Must be within boundaries of visible map
+            const c0 = _map.toCoordinate(Qt.point(0, 0), false /* clipToViewPort */)
+            const c1 = _map.toCoordinate(Qt.point(xr, yr), false /* clipToViewPort */)
+            if (!c0.isValid || !c1.isValid) {
+                // The map has no size yet
+                return
+            }
             QGroundControl.mapEngineManager.updateForCurrentView(c0.longitude, c0.latitude, c1.longitude, c1.latitude, _addNewSetViewObject.sliderMinZoom.value, _addNewSetViewObject.sliderMaxZoom.value, mapType)
         }
     }
 
     function updateMap() {
-        for (var i = 0; i < _map.supportedMapTypes.length; i++) {
-            if (mapType === _map.supportedMapTypes[i].name) {
-                _map.activeMapType = _map.supportedMapTypes[i]
-                handleChanges()
-                return
-            }
+        // The map type is first set before the map is created
+        if (_map) {
+            // The map keeps what it shows for a type it cannot show, such as an elevation provider. The tile
+            // estimate of a new set follows the type all the same.
+            _map.showMapType(mapType)
+            handleChanges()
         }
     }
 
     function addNewSet() {
-        _addNewSetViewObject = addNewSetViewComponent.createObject(_map)
+        _addNewSetViewObject = addNewSetViewComponent.createObject(_editor)
         isMapInteractive = true
-        mapType = _fmSettings.mapProvider.value + " " + _fmSettings.mapType.value
+        mapType = QGroundControl.mapEngineManager.chosenMap
         resetMapToDefaults()
         handleChanges()
     }
@@ -86,40 +89,11 @@ FlightMap {
         isMapInteractive = false
         if (!tileSet.defaultSet) {
             mapType = tileSet.mapTypeStr
-            _map.center = midPoint(tileSet.topleftLat, tileSet.bottomRightLat, tileSet.topleftLon, tileSet.bottomRightLon)
             //-- Delineate Set Region
-            var x0 = tileSet.topleftLon
-            var x1 = tileSet.bottomRightLon
-            var y0 = tileSet.topleftLat
-            var y1 = tileSet.bottomRightLat
-            mapBoundary.topLeft = QtPositioning.coordinate(y0, x0)
-            mapBoundary.bottomRight = QtPositioning.coordinate(y1, x1)
-            mapBoundary.visible = true
-            // Some times, for whatever reason, the bounding box is correct (around ETH for instance), but the rectangle is drawn across the planet.
-            // When that happens, the "_map.fitViewportToMapItems()" below makes the map to zoom to the entire earth.
-            _map.fitViewportToVisibleMapItems()
+            _map.showSetArea(QtPositioning.coordinate(tileSet.topleftLat, tileSet.topleftLon),
+                             QtPositioning.coordinate(tileSet.bottomRightLat, tileSet.bottomRightLon))
         }
-        infoViewComponent.createObject(_map)
-    }
-
-    function toRadian(deg) {
-        return deg * Math.PI / 180
-    }
-
-    function toDegree(rad) {
-        return rad * 180 / Math.PI
-    }
-
-    function midPoint(lat1, lat2, lon1, lon2) {
-        var dLon = toRadian(lon2 - lon1)
-        lat1 = toRadian(lat1)
-        lat2 = toRadian(lat2)
-        lon1 = toRadian(lon1)
-        var Bx = Math.cos(lat2) * Math.cos(dLon)
-        var By = Math.cos(lat2) * Math.sin(dLon)
-        var lat3 = Math.atan2(Math.sin(lat1) + Math.sin(lat2), Math.sqrt((Math.cos(lat1) + Bx) * (Math.cos(lat1) + Bx) + By * By))
-        var lon3 = lon1 + Math.atan2(By, Math.cos(lat1) + Bx)
-        return QtPositioning.coordinate(toDegree(lat3), toDegree(lon3))
+        infoViewComponent.createObject(_editor)
     }
 
     function resetMapToDefaults() {
@@ -129,27 +103,127 @@ FlightMap {
 
     onMapTypeChanged: updateMap()
 
-    MapRectangle {
-        id: mapBoundary
-        border.width: 2
-        border.color: "red"
-        color: Qt.rgba(1, 0, 0, 0.05)
-        smooth: true
-        antialiasing: true
-        visible: false
+    // Under the map: a GeoMap takes only the gestures it handles, and the rest must not reach the settings page
+    // that the editor covers. Its drags can still be taken over by the map.
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.AllButtons
+        onWheel: (wheel) => wheel.accepted = true
     }
 
-    onCenterChanged: handleChanges()
-    onZoomLevelChanged: handleChanges()
-    onWidthChanged: handleChanges()
-    onHeightChanged: handleChanges()
+    Loader {
+        id: _mapLoader
+        anchors.fill: parent
+    }
 
-    MapScale {
-        anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
-        anchors.bottomMargin: anchors.leftMargin
-        anchors.left: parent.left
-        anchors.bottom: parent.bottom
-        mapControl: _map
+    Component {
+        id: flightMapComponent
+
+        FlightMap {
+            function showSetArea(topLeft, bottomRight) {
+                mapBoundary.topLeft = topLeft
+                mapBoundary.bottomRight = bottomRight
+                mapBoundary.visible = true
+                // The fit below takes each corner where it is drawn: on the side of the map's center where it is
+                // nearer. From a center half a world away the corners can be on both sides, and it fits the world.
+                center = QtPositioning.rectangle(topLeft, bottomRight).center
+                // Some times, for whatever reason, the bounding box is correct (around ETH for instance), but the rectangle is drawn across the planet.
+                // When that happens, the "fitViewportToVisibleMapItems()" below makes the map to zoom to the entire earth.
+                fitViewportToVisibleMapItems()
+            }
+
+            objectName: "offlineMapEditor_flightMap"
+            allowGCSLocationCenter: true
+            allowVehicleLocationCenter: false
+            mapName: "OfflineMap"
+
+            MapRectangle {
+                id: mapBoundary
+                border.width: 2
+                border.color: "red"
+                color: Qt.rgba(1, 0, 0, 0.05)
+                smooth: true
+                antialiasing: true
+                visible: false
+            }
+        }
+    }
+
+    Component {
+        id: geoMapComponent
+
+        // Flat, top-down and north-up like the QtLocation map: the area of a set is the rectangle of ground on screen.
+        // Its view is its own: looking at a set elsewhere must not move the map of the Fly View.
+        GeoMapView {
+            id: geoMap
+
+            function showSetArea(topLeft, bottomRight) {
+                setArea.coordinates = [ topLeft, QtPositioning.coordinate(topLeft.latitude, bottomRight.longitude),
+                                        bottomRight, QtPositioning.coordinate(bottomRight.latitude, topLeft.longitude) ]
+                setArea.visible = true
+                // Room around the area, so that its outline is not on the edge of the map
+                const latitudeMargin = (topLeft.latitude - bottomRight.latitude) * 0.1
+                const longitudeMargin = (bottomRight.longitude - topLeft.longitude) * 0.1
+                setVisibleRegion(QtPositioning.rectangle(
+                    QtPositioning.coordinate(Math.min(topLeft.latitude + latitudeMargin, 85), Math.max(topLeft.longitude - longitudeMargin, -180)),
+                    QtPositioning.coordinate(Math.max(bottomRight.latitude - latitudeMargin, -85), Math.min(bottomRight.longitude + longitudeMargin, 180))))
+            }
+
+            objectName: "offlineMapEditor_geoMap"
+            sharedView: false
+            terrain: false
+            allowRotation: false
+            allowGCSLocationCenter: true
+            allowVehicleLocationCenter: false
+            followOffscreenVehicle: false
+
+            GeoMapPolygon {
+                id: setArea
+                scene: geoMap.scene
+                surfaceModel: geoMap.surfaceModel
+                strokeColor: "red"
+                strokeWidth: 2
+                fillColor: Qt.rgba(1, 0, 0, 0.05)
+                visible: false
+            }
+        }
+    }
+
+    Connections {
+        target: _map
+        function onCenterChanged() { handleChanges() }
+        function onZoomLevelChanged() { handleChanges() }
+        function onWidthChanged() { handleChanges() }
+        function onHeightChanged() { handleChanges() }
+    }
+
+    // What lies on the map whatever its engine. Created once the map is, as it reads the map's properties.
+    Loader {
+        anchors.fill: parent
+        active: _map !== null
+
+        sourceComponent: Item {
+            MapScale {
+                objectName: "offlineMapEditor_mapScale"
+                anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
+                anchors.bottomMargin: anchors.leftMargin + _map.attributionHeight
+                anchors.left: parent.left
+                anchors.bottom: parent.bottom
+                mapControl: _map
+            }
+
+            CenterMapDropButton {
+                objectName: "offlineMapEditor_centerMapButton"
+                topMargin: 0
+                anchors.margins: _margins
+                anchors.left: parent.left
+                anchors.top: parent.top
+                map: _map
+                showMission: false
+                showAllItems: false
+                visible: _addNewSetViewObject
+            }
+        }
     }
 
     //-----------------------------------------------------------------
@@ -186,6 +260,7 @@ FlightMap {
                 }
                 QGCTextField {
                     id: editSetName
+                    objectName: "offlineMapEditor_setNameField"
                     anchors.left: parent.left
                     anchors.right: parent.right
                     visible: !_defaultSet
@@ -274,12 +349,14 @@ FlightMap {
                         onClicked: tileSet.cancelDownloadTask()
                     }
                     QGCButton {
+                        objectName: "offlineMapEditor_deleteButton"
                         text: qsTr("Delete")
                         width: ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 6 : 10)
                         onClicked: deleteConfirmationDialogFactory.open()
                         enabled: tileSet && tileSet.savedTileSize > 0
                     }
                     QGCButton {
+                        objectName: "offlineMapEditor_okButton"
                         text: qsTr("Ok")
                         width: ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 6 : 10)
                         visible: !_defaultSet
@@ -288,13 +365,14 @@ FlightMap {
                             if (editSetName.text !== tileSet.name) {
                                 QGroundControl.mapEngineManager.renameTileSet(tileSet, editSetName.text)
                             }
-                            _map.destroy()
+                            _editor.destroy()
                         }
                     }
                     QGCButton {
+                        objectName: "offlineMapEditor_closeButton"
                         text: _defaultSet ? qsTr("Close") : qsTr("Cancel")
                         width: ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 6 : 10)
-                        onClicked: _map.destroy()
+                        onClicked: _editor.destroy()
                     }
                 }
             }
@@ -323,81 +401,94 @@ FlightMap {
                     onClicked: _showPreview = !_showPreview
                 }
 
-                Map {
-                    id: minZoomPreview
-                    width: addNewSetView.width / 4
-                    height: addNewSetView.height / 4
-                    center: _map.center
-                    activeMapType: _map.activeMapType
-                    zoomLevel: sliderMinZoom.value
-                    visible: _showPreview
+                Repeater {
+                    model: [
+                        { slider: sliderMinZoom, label: qsTr("Min Zoom: %1") },
+                        { slider: sliderMaxZoom, label: qsTr("Max Zoom: %1") }
+                    ]
 
-                    property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+                    // What the map looks like at one end of the set's zoom range
+                    Item {
+                        id: zoomPreview
+                        objectName: "offlineMapEditor_zoomPreview"
+                        width: addNewSetView.width / 4
+                        height: addNewSetView.height / 4
+                        visible: _showPreview
 
-                    plugin: Plugin { name: "QGroundControl" }
+                        required property var modelData
+                        readonly property real zoomLevel: modelData.slider.value
 
-                    MapScale {
-                        anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
-                        anchors.bottomMargin: anchors.leftMargin
-                        anchors.left: parent.left
-                        anchors.bottom: parent.bottom
-                        mapControl: parent
-                    }
-
-                    Rectangle {
-                        anchors.fill: parent
-                        border.color: _mapAdjustedColor
-                        color: "transparent"
-
-                        QGCMapLabel {
-                            anchors.centerIn: parent
-                            map: minZoomPreview
-                            text: qsTr("Min Zoom: %1").arg(sliderMinZoom.value)
-                        }
-                        MouseArea {
+                        Loader {
                             anchors.fill: parent
-                            onClicked: _showPreview = false
+                            sourceComponent: _useGeoMap ? geoMapPreviewComponent : flightMapPreviewComponent
                         }
-                    }
-                } // Map
 
-                Map {
-                    id: maxZoomPreview
-                    width: minZoomPreview.width
-                    height: minZoomPreview.height
-                    center: _map.center
-                    activeMapType: _map.activeMapType
-                    zoomLevel: sliderMaxZoom.value
-                    visible: _showPreview
+                        Component {
+                            id: flightMapPreviewComponent
 
-                    property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
+                            Map {
+                                center: _map.center
+                                activeMapType: _map.activeMapType
+                                zoomLevel: zoomPreview.zoomLevel
 
-                    plugin: Plugin { name: "QGroundControl" }
+                                property bool isSatelliteMap: QGroundControl.mapEngineManager.isSatelliteMap(activeMapType.name)
 
-                    MapScale {
-                        anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
-                        anchors.bottomMargin: anchors.leftMargin
-                        anchors.left: parent.left
-                        anchors.bottom: parent.bottom
-                        mapControl: parent
-                    }
+                                plugin: Plugin { name: "QGroundControl" }
 
-                    Rectangle {
-                        anchors.fill: parent
-                        border.color: _mapAdjustedColor
-                        color: "transparent"
-
-                        QGCMapLabel {
-                            anchors.centerIn: parent
-                            map: maxZoomPreview
-                            text: qsTr("Max Zoom: %1").arg(sliderMaxZoom.value)
+                                MapScale {
+                                    anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
+                                    anchors.bottomMargin: anchors.leftMargin
+                                    anchors.left: parent.left
+                                    anchors.bottom: parent.bottom
+                                    mapControl: parent
+                                }
+                            }
                         }
-                        MouseArea {
+
+                        Component {
+                            id: geoMapPreviewComponent
+
+                            // A picture of the zoom level: it takes no gestures, the editor's map is the one to move
+                            GeoMapView {
+                                id: geoMapPreview
+                                enabled: false
+                                sharedView: false
+                                terrain: false
+                                allowRotation: false
+                                showAttribution: false
+                                mapType: _map.mapType
+
+                                // Not bindings on center and zoomLevel themselves: GeoMapView assigns to them
+                                Binding { target: geoMapPreview; property: "center"; value: _map.center }
+                                Binding { target: geoMapPreview; property: "zoomLevel"; value: zoomPreview.zoomLevel }
+
+                                MapScale {
+                                    anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
+                                    anchors.bottomMargin: anchors.leftMargin
+                                    anchors.left: parent.left
+                                    anchors.bottom: parent.bottom
+                                    mapControl: geoMapPreview
+                                }
+                            }
+                        }
+
+                        Rectangle {
                             anchors.fill: parent
-                            onClicked: _showPreview = false
+                            border.color: _mapAdjustedColor
+                            color: "transparent"
+
+                            QGCMapLabel {
+                                anchors.centerIn: parent
+                                map: _map
+                                text: zoomPreview.modelData.label.arg(zoomPreview.zoomLevel)
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: _showPreview = false
+                            }
                         }
                     }
-                } // Map
+                }
             }
 
             Rectangle {
@@ -452,6 +543,7 @@ FlightMap {
                             QGCLabel { text: qsTr("Name:") }
                             QGCTextField {
                                 id: setName
+                                objectName: "offlineMapEditor_newSetNameField"
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 Component.onCompleted: text = QGroundControl.mapEngineManager.getUniqueName()
@@ -473,6 +565,7 @@ FlightMap {
                             }
                             QGCComboBox {
                                 id: mapCombo
+                                objectName: "offlineMapEditor_mapTypeCombo"
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 model: QGroundControl.mapEngineManager.mapList
@@ -652,6 +745,7 @@ FlightMap {
                             spacing: ScreenTools.defaultFontPixelWidth
                             anchors.horizontalCenter: parent.horizontalCenter
                             QGCButton {
+                                objectName: "offlineMapEditor_downloadButton"
                                 text: qsTr("Download")
                                 width: (addNewSetColumn.width * 0.5) - (addButtonRow.spacing * 0.5)
                                 enabled: !_tooManyTiles && setName.text.length > 0
@@ -660,47 +754,20 @@ FlightMap {
                                         duplicateName.visible = true
                                     } else {
                                         QGroundControl.mapEngineManager.startDownload(setName.text, mapType)
-                                        _map.destroy()
+                                        _editor.destroy()
                                     }
                                 }
                             }
                             QGCButton {
+                                objectName: "offlineMapEditor_cancelButton"
                                 text: qsTr("Cancel")
                                 width: (addNewSetColumn.width * 0.5) - (addButtonRow.spacing * 0.5)
-                                onClicked: _map.destroy()
+                                onClicked: _editor.destroy()
                             }
                         }
                     }
                 }
             }
-        }
-    }
-
-    CenterMapDropButton {
-        id: centerMapButton
-        topMargin: 0
-        anchors.margins: _margins
-        anchors.left: parent.left
-        anchors.top: parent.top
-        map: _map
-        showMission: false
-        showAllItems: false
-        visible: _addNewSetViewObject
-    }
-
-    QGCPopupDialogFactory {
-        id: errorDialogFactory
-
-        dialogComponent: errorDialogComponent
-    }
-
-    Component {
-        id: errorDialogComponent
-
-        QGCSimpleMessageDialog {
-            title: qsTr("Error Message")
-            text: QGroundControl.mapEngineManager.errorMessage
-            buttons: Dialog.Close
         }
     }
 
@@ -722,7 +789,7 @@ FlightMap {
 
             onAccepted: {
                 QGroundControl.mapEngineManager.deleteTileSet(tileSet)
-                _map.destroy()
+                _editor.destroy()
             }
         }
     }
