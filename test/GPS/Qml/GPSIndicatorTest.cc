@@ -408,13 +408,10 @@ void GPSIndicatorTest::_ntripStaysInsideItsBox()
     auto* box = page->findChild<QQuickItem*>(QStringLiteral("gpsIndicatorNtrip"));
     QVERIFY(box && box->isVisible());
     QVERIFY(box->setProperty("ntripManager", QVariant::fromValue(&ntrip)));
-    QVERIFY(box->setProperty("corrections", QVariant::fromValue(&corrections)));
-    // The longest values the counters show.
+    // The longest value the counter shows.
     auto* received = box->findChild<QQuickItem*>(QStringLiteral("ntripDataReceived"));
-    auto* queued = box->findChild<QQuickItem*>(QStringLiteral("ntripQueuedToVehicles"));
-    QVERIFY(received && received->isVisible() && queued && queued->isVisible());
+    QVERIFY(received && received->isVisible());
     QVERIFY(received->setProperty("labelText", QStringLiteral("1,023.9MB (1,023.9KB/s)")));
-    QVERIFY(queued->setProperty("labelText", QStringLiteral("1,023.9MB (any\u00A0source)")));
     QVERIFY(QQuickTest::qWaitForPolish(window.window(), TestTimeout::mediumMs()));
     QVERIFY(qAbs(box->width() - page->property("_preferredStatusWidth").toReal()) <= 1);
     // The rows wrap inside the box instead of widening its layout, which would take every value of the box and the
@@ -422,6 +419,11 @@ void GPSIndicatorTest::_ntripStaysInsideItsBox()
     const QStringList outside = textsOutside(box);
     QVERIFY2(outside.isEmpty(), qPrintable(outside.join(QStringLiteral("; "))));
     QVERIFY(lineCount(box, mountpoint) > 1);
+    // What went on to vehicles is the Corrections status's to show, from whichever source it came.
+    const auto queued = TestFixtures::findItems(box, [](QQuickItem* item) {
+        return item->isVisible() && item->property("label").toString() == QStringLiteral("Queued to vehicles");
+    });
+    QVERIFY(queued.isEmpty());
 }
 
 void GPSIndicatorTest::_correctionsStayInsideTheirBox_data()

@@ -13,8 +13,6 @@ QGCGroupBox {
     id: root
 
     property NTRIPManager ntripManager: QGroundControl.gpsManager.ntrip
-    /// Supplies the bytes queued to vehicle links.
-    property GPSCorrectionManager corrections: QGroundControl.gpsManager.corrections
 
     readonly property NTRIPSettings _ntripSettings: QGroundControl.settingsManager.ntripSettings
     readonly property int    _status:    root.ntripManager.connectionStatus
@@ -80,8 +78,8 @@ QGCGroupBox {
         visible:        root._stats.dataStale && root._connected
     }
 
-    // The mountpoint, the data received and the data queued to vehicles can be wider than the status column of the
-    // GPS indicator's drop-down has room for, so the values of these rows wrap.
+    // The mountpoint and the data received can be wider than the status column of the GPS indicator's drop-down has
+    // room for, so the values of these rows wrap.
     GPSWrappingRow {
         objectName:      "ntripMountpoint"
         label:           qsTr("Mountpoint")
@@ -119,17 +117,6 @@ QGCGroupBox {
         text:           qsTr("Warning: Data usage: %1 — consider connection costs").arg(QGroundControl.bigSizeToString(root._stats.bytesReceived))
         warning:        true
         visible:        root._connected && root._stats.dataUsageHigh
-    }
-
-    GPSWrappingRow {
-        objectName: "ntripQueuedToVehicles"
-        label:     qsTr("Queued to vehicles")
-        //: %1 is the size of the corrections queued to vehicles, from whichever source they came. The space in
-        //: "any source" is a no-break space.
-        labelText: qsTr("%1 (any\u00A0source)")
-                       .arg(QGroundControl.bigSizeToString(root.corrections.vehicleBytesSubmitted))
-        labelWrapMode: Text.Wrap
-        visible:   root._connected && root.corrections.vehicleBytesSubmitted > 0
     }
 
     LabelledLabel {
