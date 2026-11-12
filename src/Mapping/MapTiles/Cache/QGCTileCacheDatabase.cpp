@@ -66,6 +66,81 @@ static void removeDatabaseFiles(const QString& path)
     }
 }
 
+/// Adds \a set to the tile sets of the database of \a query, whose lastInsertId() is then the id of the set. On
+/// failure \a prepared tells which step failed: preparing the statement (false) or running it (true).
+static bool insertTileCacheSet(QSqlQuery& query, const TileSetRecord& set, bool& prepared)
+{
+    prepared = query.prepare(
+        "INSERT INTO TileSets("
+        "name, typeStr, topleftLat, topleftLon, bottomRightLat, bottomRightLon, minZoom, "
+        "maxZoom, type, numTiles, defaultSet, date"
+        ") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    if (!prepared) {
+        return false;
+    }
+    query.addBindValue(set.name);
+    query.addBindValue(set.mapTypeStr);
+    query.addBindValue(set.topleftLat);
+    query.addBindValue(set.topleftLon);
+    query.addBindValue(set.bottomRightLat);
+    query.addBindValue(set.bottomRightLon);
+    query.addBindValue(set.minZoom);
+    query.addBindValue(set.maxZoom);
+    query.addBindValue(set.type);
+    query.addBindValue(set.numTiles);
+    query.addBindValue(set.defaultSet);
+    query.addBindValue(set.date);
+    return query.exec();
+}
+
+/// What copyTileToTileCacheSet() did. Where a statement failed, QSqlQuery::lastError() of its query says why.
+enum class TileCacheCopy
+{
+    Linked,             ///< The set has the tile, and had not before
+    NotLinked,          ///< The set had the tile, or the statement that links it could not be prepared
+    LinkFailed,         ///< The statement that links the tile failed
+    NoTile,             ///< The tile was neither added nor found
+    InsertNotPrepared,  ///< The statement that adds the tile could not be prepared
+};
+
+/// Copies a tile to the database of \a query and links it to the set \a setID there. A tile that database has
+/// under \a hash stays as it is, and is the one linked.
+static TileCacheCopy copyTileToTileCacheSet(QSqlQuery& query, quint64 setID, const QString& hash, const QString& format,
+                                            const QByteArray& img, int type, quint64 date)
+{
+    if (!query.prepare("INSERT INTO Tiles(hash, format, tile, size, type, date) VALUES(?, ?, ?, ?, ?, ?)")) {
+        return TileCacheCopy::InsertNotPrepared;
+    }
+    query.addBindValue(hash);
+    query.addBindValue(format);
+    query.addBindValue(img);
+    query.addBindValue(img.size());
+    query.addBindValue(type);
+    query.addBindValue(date);
+    quint64 tileID = 0;
+    if (query.exec()) {
+        tileID = query.lastInsertId().toULongLong();
+    } else if (query.prepare("SELECT tileID FROM Tiles WHERE hash = ?")) {
+        query.addBindValue(hash);
+        if (query.exec() && query.next()) {
+            tileID = query.value(0).toULongLong();
+        }
+    }
+    if (tileID == 0) {
+        return TileCacheCopy::NoTile;
+    }
+
+    if (!query.prepare("INSERT OR IGNORE INTO SetTiles(tileID, setID) VALUES(?, ?)")) {
+        return TileCacheCopy::NotLinked;
+    }
+    query.addBindValue(tileID);
+    query.addBindValue(setID);
+    if (!query.exec()) {
+        return TileCacheCopy::LinkFailed;
+    }
+    return (query.numRowsAffected() > 0) ? TileCacheCopy::Linked : TileCacheCopy::NotLinked;
+}
+
 QGCTileCacheDatabase::QGCTileCacheDatabase(const QString& databasePath)
     : _databasePath(databasePath)
     , _connectionName(QStringLiteral("QGCTileCache_%1").arg(s_connectionCounter.fetch_add(1)))
@@ -461,28 +536,23 @@ std::optional<quint64> QGCTileCacheDatabase::createTileSet(const QString& name, 
     }
 
     QSqlQuery query(_database());
-    if (!query.prepare("INSERT INTO TileSets("
-                       "name, typeStr, topleftLat, topleftLon, bottomRightLat, bottomRightLon, minZoom, maxZoom, type, "
-                       "numTiles, date"
-                       ") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
-        qCWarning(QGCTileCacheDatabaseLog)
-            << "Map Cache SQL error (prepare createTileSet):" << query.lastError().text();
-        return std::nullopt;
-    }
-    query.addBindValue(name);
-    query.addBindValue(mapTypeStr);
-    query.addBindValue(topleftLat);
-    query.addBindValue(topleftLon);
-    query.addBindValue(bottomRightLat);
-    query.addBindValue(bottomRightLon);
-    query.addBindValue(minZoom);
-    query.addBindValue(maxZoom);
-    query.addBindValue(UrlFactory::getMapIdFromProviderType(type));
-    query.addBindValue(numTiles);
-    query.addBindValue(QDateTime::currentSecsSinceEpoch());
-    if (!query.exec()) {
-        qCWarning(QGCTileCacheDatabaseLog)
-            << "Map Cache SQL error (add tileSet into TileSets):" << query.lastError().text();
+    const int mapTypeId = UrlFactory::getMapIdFromProviderType(type);
+    const TileSetRecord record{.name = name,
+                               .mapTypeStr = mapTypeStr,
+                               .topleftLat = topleftLat,
+                               .topleftLon = topleftLon,
+                               .bottomRightLat = bottomRightLat,
+                               .bottomRightLon = bottomRightLon,
+                               .minZoom = minZoom,
+                               .maxZoom = maxZoom,
+                               .type = mapTypeId,
+                               .numTiles = numTiles,
+                               .date = static_cast<quint64>(QDateTime::currentSecsSinceEpoch())};
+    bool prepared = false;
+    if (!insertTileCacheSet(query, record, prepared)) {
+        qCWarning(QGCTileCacheDatabaseLog) << (prepared ? "Map Cache SQL error (add tileSet into TileSets):"
+                                                        : "Map Cache SQL error (prepare createTileSet):")
+                                           << query.lastError().text();
         return std::nullopt;
     }
 
@@ -490,7 +560,6 @@ std::optional<quint64> QGCTileCacheDatabase::createTileSet(const QString& name, 
 
     // Process tiles in streaming batches to avoid holding all coordinates in memory
     constexpr int kHashBatchSize = 500;
-    const int mapTypeId = UrlFactory::getMapIdFromProviderType(type);
 
     struct TileCoord
     {
@@ -1241,17 +1310,18 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString& path, Progre
         if (query.exec("SELECT * FROM TileSets ORDER BY defaultSet DESC, name ASC")) {
             quint64 currentCount = 0;
             while (query.next()) {
-                QString name = query.value("name").toString();
+                TileSetRecord set;
+                set.name = query.value("name").toString();
                 const quint64 setID = query.value("setID").toULongLong();
-                const QString mapType = query.value("typeStr").toString();
-                const double topleftLat = query.value("topleftLat").toDouble();
-                const double topleftLon = query.value("topleftLon").toDouble();
-                const double bottomRightLat = query.value("bottomRightLat").toDouble();
-                const double bottomRightLon = query.value("bottomRightLon").toDouble();
-                const int minZoom = query.value("minZoom").toInt();
-                const int maxZoom = query.value("maxZoom").toInt();
-                const int type = query.value("type").toInt();
-                const quint32 numTiles = query.value("numTiles").toUInt();
+                set.mapTypeStr = query.value("typeStr").toString();
+                set.topleftLat = query.value("topleftLat").toDouble();
+                set.topleftLon = query.value("topleftLon").toDouble();
+                set.bottomRightLat = query.value("bottomRightLat").toDouble();
+                set.bottomRightLon = query.value("bottomRightLon").toDouble();
+                set.minZoom = query.value("minZoom").toInt();
+                set.maxZoom = query.value("maxZoom").toInt();
+                set.type = query.value("type").toInt();
+                set.numTiles = query.value("numTiles").toUInt();
                 const int defaultSet = query.value("defaultSet").toInt();
                 quint64 insertSetID = _getDefaultTileSet();
 
@@ -1263,29 +1333,13 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString& path, Progre
                 }
 
                 if (defaultSet == 0) {
-                    name = _deduplicateSetName(name);
+                    set.name = _deduplicateSetName(set.name);
+                    set.date = static_cast<quint64>(QDateTime::currentSecsSinceEpoch());
                     QSqlQuery cQuery(_database());
-                    if (!cQuery.prepare("INSERT INTO TileSets("
-                                        "name, typeStr, topleftLat, topleftLon, bottomRightLat, bottomRightLon, "
-                                        "minZoom, maxZoom, type, numTiles, defaultSet, date"
-                                        ") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
-                        result.errorString = "Error preparing tile set insert";
-                        break;
-                    }
-                    cQuery.addBindValue(name);
-                    cQuery.addBindValue(mapType);
-                    cQuery.addBindValue(topleftLat);
-                    cQuery.addBindValue(topleftLon);
-                    cQuery.addBindValue(bottomRightLat);
-                    cQuery.addBindValue(bottomRightLon);
-                    cQuery.addBindValue(minZoom);
-                    cQuery.addBindValue(maxZoom);
-                    cQuery.addBindValue(type);
-                    cQuery.addBindValue(numTiles);
-                    cQuery.addBindValue(defaultSet);
-                    cQuery.addBindValue(QDateTime::currentSecsSinceEpoch());
-                    if (!cQuery.exec()) {
-                        result.errorString = "Error adding imported tile set to database";
+                    bool prepared = false;
+                    if (!insertTileCacheSet(cQuery, set, prepared)) {
+                        result.errorString =
+                            prepared ? "Error adding imported tile set to database" : "Error preparing tile set insert";
                         break;
                     }
                     insertSetID = cQuery.lastInsertId().toULongLong();
@@ -1293,7 +1347,7 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString& path, Progre
 
                 quint64 tilesIterated = 0;
                 const quint64 tilesSaved = _copyTilesForSet(importDB.database(), setID, insertSetID, currentCount,
-                                                            tileCount, lastProgress, progressCb, &tilesIterated, false);
+                                                            tileCount, lastProgress, progressCb, &tilesIterated);
                 if (tilesSaved > 0) {
                     tilesImported = true;
                     QSqlQuery cQuery(_database());
@@ -1312,7 +1366,7 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString& path, Progre
                 }
 
                 if (!txn.commit()) {
-                    qCWarning(QGCTileCacheDatabaseLog) << "Failed to commit import transaction for set:" << name;
+                    qCWarning(QGCTileCacheDatabaseLog) << "Failed to commit import transaction for set:" << set.name;
                     continue;
                 }
 
@@ -1322,7 +1376,7 @@ DatabaseResult QGCTileCacheDatabase::importSetsMerge(const QString& path, Progre
                 }
 
                 if ((tilesSaved == 0) && (defaultSet == 0)) {
-                    qCDebug(QGCTileCacheDatabaseLog) << "No unique tiles in" << name << "Removing it.";
+                    qCDebug(QGCTileCacheDatabaseLog) << "No unique tiles in" << set.name << "Removing it.";
                     deleteTileSet(insertSetID);
                 }
             }
@@ -1407,27 +1461,10 @@ DatabaseResult QGCTileCacheDatabase::exportSets(const QList<TileSetRecord>& sets
         }
 
         QSqlQuery exportQuery(exportDB.database());
-        if (!exportQuery.prepare("INSERT INTO TileSets("
-                                 "name, typeStr, topleftLat, topleftLon, bottomRightLat, bottomRightLon, minZoom, "
-                                 "maxZoom, type, numTiles, defaultSet, date"
-                                 ") VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
-            result.errorString = "Error preparing tile set insert for export";
-            break;
-        }
-        exportQuery.addBindValue(set.name);
-        exportQuery.addBindValue(set.mapTypeStr);
-        exportQuery.addBindValue(set.topleftLat);
-        exportQuery.addBindValue(set.topleftLon);
-        exportQuery.addBindValue(set.bottomRightLat);
-        exportQuery.addBindValue(set.bottomRightLon);
-        exportQuery.addBindValue(set.minZoom);
-        exportQuery.addBindValue(set.maxZoom);
-        exportQuery.addBindValue(set.type);
-        exportQuery.addBindValue(set.numTiles);
-        exportQuery.addBindValue(set.defaultSet);
-        exportQuery.addBindValue(set.date);
-        if (!exportQuery.exec()) {
-            result.errorString = "Error adding tile set to exported database";
+        bool prepared = false;
+        if (!insertTileCacheSet(exportQuery, set, prepared)) {
+            result.errorString =
+                prepared ? "Error adding tile set to exported database" : "Error preparing tile set insert for export";
             break;
         }
 
@@ -1441,43 +1478,19 @@ DatabaseResult QGCTileCacheDatabase::exportSets(const QList<TileSetRecord>& sets
             const int tileType = query.value(3).toInt();
             const quint64 tileDate = query.value(4).toULongLong();
 
-            quint64 exportTileID = 0;
-            if (!exportQuery.prepare(
-                    "INSERT INTO Tiles(hash, format, tile, size, type, date) VALUES(?, ?, ?, ?, ?, ?)")) {
+            const TileCacheCopy copied =
+                copyTileToTileCacheSet(exportQuery, exportSetID, hash, format, img, tileType, tileDate);
+            if (copied == TileCacheCopy::InsertNotPrepared) {
                 qCWarning(QGCTileCacheDatabaseLog)
                     << "Failed to prepare tile INSERT for export:" << exportQuery.lastError().text();
                 skippedTiles++;
                 continue;
             }
-            exportQuery.addBindValue(hash);
-            exportQuery.addBindValue(format);
-            exportQuery.addBindValue(img);
-            exportQuery.addBindValue(img.size());
-            exportQuery.addBindValue(tileType);
-            exportQuery.addBindValue(tileDate);
-            if (exportQuery.exec()) {
-                exportTileID = exportQuery.lastInsertId().toULongLong();
-            } else {
-                QSqlQuery lookup(exportDB.database());
-                if (lookup.prepare("SELECT tileID FROM Tiles WHERE hash = ?")) {
-                    lookup.addBindValue(hash);
-                    if (lookup.exec() && lookup.next()) {
-                        exportTileID = lookup.value(0).toULongLong();
-                    }
-                }
-            }
-
-            if (exportTileID > 0) {
-                if (exportQuery.prepare("INSERT OR IGNORE INTO SetTiles(tileID, setID) VALUES(?, ?)")) {
-                    exportQuery.addBindValue(exportTileID);
-                    exportQuery.addBindValue(exportSetID);
-                    if (!exportQuery.exec()) {
-                        qCWarning(QGCTileCacheDatabaseLog)
-                            << "Failed to link tile to set in export:" << exportQuery.lastError().text();
-                    }
-                }
-            } else {
+            if (copied == TileCacheCopy::NoTile) {
                 skippedTiles++;
+            } else if (copied == TileCacheCopy::LinkFailed) {
+                qCWarning(QGCTileCacheDatabaseLog)
+                    << "Failed to link tile to set in export:" << exportQuery.lastError().text();
             }
             currentCount++;
             if (progressCb) {
@@ -1679,8 +1692,7 @@ QString QGCTileCacheDatabase::_deduplicateSetName(const QString& name)
 
 quint64 QGCTileCacheDatabase::_copyTilesForSet(QSqlDatabase srcDB, quint64 srcSetID, quint64 dstSetID,
                                                quint64& currentCount, quint64 tileCount, int& lastProgress,
-                                               ProgressCallback progressCb, quint64* tilesIteratedOut,
-                                               bool useTransaction)
+                                               ProgressCallback progressCb, quint64* tilesIteratedOut)
 {
     QSqlQuery subQuery(srcDB);
     subQuery.setForwardOnly(true);
@@ -1700,17 +1712,6 @@ quint64 QGCTileCacheDatabase::_copyTilesForSet(QSqlDatabase srcDB, quint64 srcSe
     quint64 tilesFound = 0;
     quint64 tilesLinked = 0;
 
-    std::unique_ptr<QGCSqlHelper::Transaction> txn;
-    if (useTransaction) {
-        txn = std::make_unique<QGCSqlHelper::Transaction>(_database());
-        if (!txn->ok()) {
-            qCWarning(QGCTileCacheDatabaseLog) << "Failed to start transaction for merge import";
-            if (tilesIteratedOut)
-                *tilesIteratedOut = 0;
-            return 0;
-        }
-    }
-
     QSqlQuery cQuery(_database());
     while (subQuery.next()) {
         tilesFound++;
@@ -1720,34 +1721,8 @@ quint64 QGCTileCacheDatabase::_copyTilesForSet(QSqlDatabase srcDB, quint64 srcSe
         const int tileType = subQuery.value(3).toInt();
         const quint64 tileDate = subQuery.value(4).toULongLong();
 
-        quint64 importTileID = 0;
-        if (cQuery.prepare("INSERT INTO Tiles(hash, format, tile, size, type, date) VALUES(?, ?, ?, ?, ?, ?)")) {
-            cQuery.addBindValue(hash);
-            cQuery.addBindValue(format);
-            cQuery.addBindValue(img);
-            cQuery.addBindValue(img.size());
-            cQuery.addBindValue(tileType);
-            cQuery.addBindValue(tileDate);
-            if (cQuery.exec()) {
-                importTileID = cQuery.lastInsertId().toULongLong();
-            } else {
-                if (cQuery.prepare("SELECT tileID FROM Tiles WHERE hash = ?")) {
-                    cQuery.addBindValue(hash);
-                    if (cQuery.exec() && cQuery.next()) {
-                        importTileID = cQuery.value(0).toULongLong();
-                    }
-                }
-            }
-        }
-
-        if (importTileID > 0) {
-            if (cQuery.prepare("INSERT OR IGNORE INTO SetTiles(tileID, setID) VALUES(?, ?)")) {
-                cQuery.addBindValue(importTileID);
-                cQuery.addBindValue(dstSetID);
-                if (cQuery.exec() && cQuery.numRowsAffected() > 0) {
-                    tilesLinked++;
-                }
-            }
+        if (copyTileToTileCacheSet(cQuery, dstSetID, hash, format, img, tileType, tileDate) == TileCacheCopy::Linked) {
+            tilesLinked++;
         }
 
         currentCount++;
@@ -1759,13 +1734,6 @@ quint64 QGCTileCacheDatabase::_copyTilesForSet(QSqlDatabase srcDB, quint64 srcSe
                 progressCb(progress);
             }
         }
-    }
-
-    if (txn && !txn->commit()) {
-        qCWarning(QGCTileCacheDatabaseLog) << "Failed to commit merge import transaction";
-        if (tilesIteratedOut)
-            *tilesIteratedOut = tilesFound;
-        return 0;
     }
 
     if (tilesIteratedOut)

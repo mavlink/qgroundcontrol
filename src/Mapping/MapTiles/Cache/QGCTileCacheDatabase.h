@@ -103,7 +103,7 @@ private:
     QString _deduplicateSetName(const QString& name);
     quint64 _copyTilesForSet(QSqlDatabase srcDB, quint64 srcSetID, quint64 dstSetID, quint64& currentCount,
                              quint64 tileCount, int& lastProgress, ProgressCallback progressCb,
-                             quint64* tilesIteratedOut, bool useTransaction = true);
+                             quint64* tilesIteratedOut);
 
     QString _databasePath;
     QString _connectionName;
